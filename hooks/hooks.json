@@ -1,0 +1,92 @@
+{
+  "hooks": {
+    "SessionStart": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "bash forge/scripts/auto-resume.sh 2>/dev/null || bash ~/.claude/skills/forge/scripts/auto-resume.sh 2>/dev/null || true",
+            "timeout": 5
+          }
+        ]
+      }
+    ],
+    "UserPromptSubmit": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "if [ -f .forge/status.md ]; then echo '=== Forge Context ==='; head -50 .forge/plans/*.md 2>/dev/null; echo '=== Recent Progress ==='; tail -20 .forge/progress/*.md 2>/dev/null; fi"
+          }
+        ]
+      }
+    ],
+    "PreToolUse": [
+      {
+        "matcher": "Write|Edit|Bash",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "head -30 .forge/plans/*.md 2>/dev/null || true"
+          }
+        ]
+      },
+      {
+        "matcher": "Write|Edit",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "bash forge/scripts/check-frozen.sh \"$TOOL_INPUT_FILE\" 2>/dev/null || bash ~/.claude/skills/forge/scripts/check-frozen.sh \"$TOOL_INPUT_FILE\" 2>/dev/null || true",
+            "timeout": 5
+          }
+        ]
+      }
+    ],
+    "PostToolUse": [
+      {
+        "matcher": "Write|Edit",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "if [ -f .forge/status.md ]; then echo '📝 代码已修改。请记得更新 .forge/progress/ 中的任务状态。'; fi"
+          }
+        ]
+      }
+    ],
+    "Stop": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "if [ -f .forge/progress/*.md ] 2>/dev/null; then incomplete=$(grep -c '\\- \\[ \\]' .forge/progress/*.md 2>/dev/null || echo 0); if [ \"$incomplete\" -gt 0 ]; then echo '⚠️ 仍有未完成的任务。下次会话可使用 /forge resume 恢复上下文。'; else echo '✅ 任务已完成。建议运行 /forge learn 沉淀本次开发经验。'; fi; fi"
+          },
+          {
+            "type": "command",
+            "command": "bash forge/scripts/persistent-loop.sh 2>/dev/null || bash ~/.claude/skills/forge/scripts/persistent-loop.sh 2>/dev/null || true",
+            "timeout": 5
+          }
+        ]
+      }
+    ],
+    "TeammateIdle": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "phase=$(grep '^phase:' .forge/status.md 2>/dev/null | sed 's/phase: *\"\\{0,1\\}//;s/\"\\{0,1\\} *$//'); if [ \"$phase\" = 'review' ] || [ \"$phase\" = 'decide' ]; then echo '队友空闲。请检查是否所有评审/决策维度都已完成输出，未完成的队友应继续工作。'; fi"
+          }
+        ]
+      }
+    ],
+    "TaskCompleted": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "echo '✅ 团队任务已完成。负责人请汇总队友输出并检查是否需要合并发现。'"
+          }
+        ]
+      }
+    ]
+  }
+}
