@@ -43,7 +43,7 @@ Forge 的核心能力：
 ### 方式一：直接克隆（最快上手）
 
 ```bash
-git clone https://github.com/anthropics/forge.git ~/.claude/skills/forge
+git clone https://github.com/kkkman22/Forge.git ~/.claude/skills/forge
 ```
 
 ### 方式二：分发包安装（干净部署）
@@ -52,7 +52,7 @@ git clone https://github.com/anthropics/forge.git ~/.claude/skills/forge
 
 ```bash
 # 先克隆仓库到任意位置
-git clone https://github.com/anthropics/forge.git /tmp/forge
+git clone https://github.com/kkkman22/Forge.git /tmp/forge
 
 # 构建分发包
 bash /tmp/forge/scripts/build-dist.sh
