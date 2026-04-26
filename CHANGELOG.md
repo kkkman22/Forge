@@ -2,6 +2,36 @@
 
 All notable changes to Forge will be documented in this file.
 
+## [2.1.0] - 2026-04-26
+
+### Added
+
+- **Restatement Checkpoint 机制**：build 阶段新增周期性上下文刷新，对抗长任务中的注意力衰减
+  - 可配置的 `restatement_interval`（默认 3，范围 2–10），每 N 个任务触发一次 Checkpoint
+  - 异常触发：Subagent 返回 BLOCKED/NEEDS_CONTEXT/DONE_WITH_CONCERNS 时立即执行
+  - 中间会话日志（`sessions/*-interim.md`）支持 `/forge resume` 精确恢复
+  - 失败重试 Restatement：TDD GREEN 阶段失败时，重试前强制重申上下文，防止机械重复
+  - 轻量路径完全排除 Restatement（改动足够小，无注意力衰减风险）
+- **CI 验证范围扩展**：新增 shellcheck 静态分析、`hooks.json` JSON schema 验证、`SKILL.md` frontmatter 完整性检查
+- **`install-dist.sh` 路径安全校验**：拒绝空路径和危险系统路径（`/`、`$HOME`、`/usr` 等），防止误操作
+- **`init.sh` 增强**：新增 `handoffs/` 目录创建；从模板复制 `metrics.md` 和 `tool-health.md`；hooks 合并失败时提供详细的手动操作指引
+- **`state.ts` 受保护区写入提示**：`checkWritePermission` 对 guarded zone 返回追加操作提示，而非静默放行
+- **CLAUDE.md 模板新增 §2.5 上下文刷新纪律**：将 Restatement 规则写入项目宪法
+- **`config.md` 模板新增 `restatement_interval` 配置项**
+
+### Changed
+
+- **`check-frozen.sh` 重写为 TypeScript 优先**：shell 脚本改为 thin wrapper，优先调用编译后的 `check-frozen.js`；fallback 保留原有 shell 解析逻辑
+- **冻结文件保护改为硬阻断**：`check-frozen.sh` 对 locked/approved 文件以 `exit 1` 阻断写入（原先仅打印警告）
+- **Hooks 升级**：Write/Edit hook 从 shell 脚本切换到 Node.js 调用；新增 Bash 工具的冻结文件保护 hook
+- **CI `sync-dist` 改为 `verify-dist`**：不再自动提交 dist 变更，改为校验失败时报错，要求开发者本地构建后提交
+- **`/forge resume` 增强**：优先读取 `*-interim.md` 中间日志恢复上下文；恢复后首次派发 Subagent 前立即执行 Restatement Checkpoint
+- **`forge-build` 流程图更新**：标准路径和全量路径流程图增加 Restatement 循环和异常触发分支
+
+### Fixed
+
+- `install-dist.sh` 修复 `--target ""` 空路径导致的潜在危险操作
+
 ## [2.0.1] - 2026-04-24
 
 ### Changed

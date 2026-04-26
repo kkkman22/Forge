@@ -25,6 +25,7 @@ error()   { echo -e "${RED}❌${NC} $1"; }
 
 # ---------- 参数解析 ----------
 TARGET=""
+TARGET_SET="false"
 DRY_RUN="false"
 BACKUP="false"
 
@@ -38,7 +39,7 @@ while [[ $# -gt 0 ]]; do
       fi
       shift 2
       ;;
-    --target) TARGET="$2"; shift 2 ;;
+    --target) TARGET="$2"; TARGET_SET="true"; shift 2 ;;
     --dry-run) DRY_RUN="true"; shift ;;
     --backup) BACKUP="true"; shift ;;
     *) error "未知参数: $1"; exit 1 ;;
@@ -46,7 +47,42 @@ while [[ $# -gt 0 ]]; do
 done
 
 BUNDLE_DIR="${FORGE_ROOT}/dist/claude-code/bundles/forge"
-TARGET="${TARGET:-${HOME}/.claude/skills/forge}"
+
+# ---------- 路径安全校验 ----------
+# Apply default only if --target was not explicitly provided
+if [[ "${TARGET_SET}" == "false" ]]; then
+  TARGET="${HOME}/.claude/skills/forge"
+fi
+
+# Reject empty TARGET (e.g. --target "")
+if [[ -z "${TARGET}" ]]; then
+  error "目标路径为空，拒绝执行安装。"
+  exit 1
+fi
+
+# Resolve TARGET to an absolute path for safe comparison
+if command -v realpath &>/dev/null; then
+  RESOLVED_TARGET="$(realpath -m -- "${TARGET}" 2>/dev/null || echo "${TARGET}")"
+else
+  # Fallback: expand to absolute path manually
+  case "${TARGET}" in
+    /*) RESOLVED_TARGET="${TARGET}" ;;
+    *)  RESOLVED_TARGET="$(pwd)/${TARGET}" ;;
+  esac
+fi
+
+# Remove trailing slashes for consistent comparison (but preserve "/" itself)
+RESOLVED_TARGET="${RESOLVED_TARGET%/}"
+[[ -z "${RESOLVED_TARGET}" ]] && RESOLVED_TARGET="/"
+
+DANGEROUS_PATHS="/ ${HOME} /usr /etc /var /bin /sbin /opt /tmp /lib /sys /proc /dev"
+
+for dangerous in ${DANGEROUS_PATHS}; do
+  if [[ "${RESOLVED_TARGET}" == "${dangerous}" ]]; then
+    error "目标路径 '${TARGET}' (解析为 '${RESOLVED_TARGET}') 是危险的系统路径，拒绝执行。"
+    exit 1
+  fi
+done
 
 # ---------- 检查分发包 ----------
 if [[ ! -d "${BUNDLE_DIR}" ]]; then

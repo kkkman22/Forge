@@ -14,7 +14,7 @@ Forge 的核心能力：
 - **三维路由**（复杂度 × 任务类型 × 项目阶段）自动匹配执行路径
 - **统一状态**目录 `.forge/`，跨命令状态感知和会话恢复
 - **按需加载**，单次会话约 10K tokens
-- **硬性门禁**，关键流程节点强制检查，冻结文件技术级保护
+- **流程门禁**，关键流程节点强制检查，冻结文件通过 PreToolUse Hook 保护
 - **并行执行**，DAG 任务图支持多 Subagent 并行调度
 
 ---
@@ -70,7 +70,7 @@ rm -rf /tmp/forge
 - `--dry-run`：预览将安装的文件，不实际复制
 - `--backup`：安装前备份已有的同名目录
 
-> **分发包自动同步**：每次 push 到 main 分支后，CI 会自动重新构建 dist 包并提交，确保分发包与源定义始终一致。
+> **分发包同步校验**：每次 push 到 main 分支后，CI 会校验 dist 包是否与源码同步，不一致时 CI 失败。
 
 ---
 
@@ -243,9 +243,16 @@ Forge 路由器从三个维度分析任务：
 
 | 区域 | 规则 | 文件 |
 |------|------|------|
-| 🔒 **冻结区** | 锁定/批准后 AI 不可修改，Hook 自动拦截 | `specs/`（locked）、`plans/`（approved）、`config.md` |
-| 🛡️ **受保护区** | AI 可追加，不可删除或覆盖 | `progress/`、`reviews/`、`knowledge/instincts.md`、`knowledge/known-failures.md`、`knowledge/solutions/` |
+| 🔒 **冻结区** | 锁定/批准后 AI 不可修改，PreToolUse Hook 通过非零退出码阻断写入（覆盖 Write/Edit/Bash 工具路径） | `specs/`（locked）、`plans/`（approved）、`config.md` |
+| 🛡️ **受保护区** | AI 可追加，不可删除或覆盖（建议性约束，后续将通过 diff 分析实现强制校验） | `progress/`、`reviews/`、`knowledge/instincts.md`、`knowledge/known-failures.md`、`knowledge/solutions/` |
 | 🟢 **开放区** | AI 可自由修改 | `status.md`、`decisions/`、`findings/`、`debug/`、`knowledge/sessions/` |
+
+### Hook 行为说明
+
+Forge 通过 Claude Code 的 [Hooks](https://docs.anthropic.com/en/docs/claude-code/hooks) 机制实现状态保护和上下文注入：
+
+- **执行上下文注入**：Write、Edit、Bash 工具触发前，PreToolUse Hook 自动打印 `.forge/plans/*.md` 前 30 行内容，为 AI 提供当前计划的执行上下文。
+- **冻结文件保护**：Write/Edit 工具写入 `.forge/` 冻结区文件时，PreToolUse Hook 调用 `check-frozen.sh` 检查文件的 frontmatter status，对 `locked`/`approved` 文件以非零退出码阻断写入。Bash 工具执行的命令中若涉及 `.forge/` 冻结区路径，同样触发 `check-frozen.sh` 进行保护。
 
 ---
 
@@ -269,13 +276,17 @@ Forge 路由器从三个维度分析任务：
 │   └── <topic>.md
 ├── reviews/                     # /forge review 输出
 │   └── <topic>.md              #   评审报告
+├── handoffs/                    # 跨阶段决策传递
 ├── knowledge/                   # /forge learn 输出
 │   ├── solutions/              #   解决方案文档
 │   │   └── <topic>.md
 │   ├── sessions/               #   会话日志
 │   │   └── <date>-<topic>.md
+│   ├── patterns/               #   经验模式分类
 │   ├── known-failures.md       #   已知失败模式
 │   ├── instincts.md            #   经验模式库
+│   ├── metrics.md              #   指标追踪
+│   ├── tool-health.md          #   工具健康度
 │   └── skill-feedback.md       #   SKILL 执行反馈（自进化数据源）
 ├── debug/                       # /forge debug 记录
 │   └── <topic>.md
@@ -387,7 +398,7 @@ forge/
 │   └── install-dist.sh         #   安装分发包
 ├── dist/                        # 分发包（CI 自动构建）
 │   └── claude-code/bundles/forge/
-├── src/                         # 核心逻辑（14 个纯函数模块）
+├── src/                         # 核心逻辑（30 个 TypeScript 模块，含纯函数模块及有状态/运行时模块：CLI、SDK 适配器、副作用执行器、运行管理器等）
 │   ├── router.ts               #   三维路由分类 + 行为提示
 │   ├── decide.ts               #   Designer 条件触发 + 决策路径
 │   ├── spec.ts                 #   Spec 生命周期 + 棕地验证
@@ -402,8 +413,8 @@ forge/
 │   ├── state.ts                #   状态验证 + 保护区 + 文件锁
 │   ├── task-graph.ts           #   DAG 调度 + 并行执行引擎
 │   └── handoff.ts              #   跨阶段决策传递
-├── test/                        # 430 个属性测试（fast-check PBT）
-├── .github/workflows/ci.yml    # CI：typecheck + lint + coverage + dist 自动同步
+├── test/                        # 724 个测试（44 个测试文件，其中 32 个为 fast-check 属性测试文件）
+├── .github/workflows/ci.yml    # CI：typecheck + lint + coverage + dist 同步校验
 ├── biome.json                   # Linter / Formatter 配置
 ├── tsconfig.json                # TypeScript strict 配置
 ├── vitest.config.ts             # 测试 + 覆盖率门禁（≥80%）
@@ -435,9 +446,9 @@ npm run test:coverage # 测试 + 覆盖率报告
 bash scripts/build-dist.sh
 ```
 
-**技术栈**：TypeScript 5.9（strict）、Vitest 3.2、fast-check 4.7（属性测试）、Biome 2.4（lint + format）。零运行时依赖。
+**技术栈**：TypeScript 5.9（strict）、Vitest 3.2、fast-check 4.7（属性测试）、Biome 2.4（lint + format）。运行时依赖：`@anthropic-ai/claude-agent-sdk`、`commander`。
 
-**测试策略**：430 个属性测试验证不变量（invariant），而非特定输入输出。覆盖率 98%+ statements、92%+ branches、100% functions。
+**测试策略**：724 个测试（44 个测试文件，其中 32 个为 fast-check 属性测试文件）验证不变量（invariant），而非特定输入输出。覆盖率 91.68% statements、91.89% branches、98.7% functions。
 
 ---
 

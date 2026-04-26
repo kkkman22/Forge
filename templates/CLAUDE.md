@@ -75,6 +75,19 @@
 2. **质疑架构**——问题可能不在代码层面
 3. 与开发者讨论，重新评估方向
 
+### 2.5 上下文刷新纪律
+
+在标准路径和全量路径的 build 阶段，主 Agent 必须执行周期性的 Restatement Checkpoint：
+
+- **每完成 N 个任务**（N 由 config.md 的 restatement_interval 配置，默认 3），
+  暂停编排，重读 progress 和 status，在上下文尾部追加 Restatement 摘要。
+- **Sub-Agent 返回异常状态时**（BLOCKED / NEEDS_CONTEXT / DONE_WITH_CONCERNS），
+  在处理之前先执行一次 Restatement。
+- **Restatement 不修改 System Prompt**，只追加到对话尾部。
+
+这条纪律的目的是对抗长任务中的注意力衰减。如果你发现自己在跳过探针、
+合并步骤、或不检查 Sub-Agent 状态，说明你需要一次 Restatement。
+
 ---
 
 ## 3. 评审纪律

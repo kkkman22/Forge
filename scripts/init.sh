@@ -169,11 +169,23 @@ directories=(
   ".forge/knowledge/patterns"
   ".forge/debug"
   ".forge/archive"
+  ".forge/handoffs"
 )
 
 for dir in "${directories[@]}"; do
   mkdir -p "${PROJECT_ROOT}/${dir}"
 done
+
+# --- 从模板复制 metrics.md 和 tool-health.md ---
+if [[ -f "${FORGE_ROOT}/templates/metrics.md" ]]; then
+  sed "s/YYYY-MM-DD/$(date +%Y-%m-%d)/g" \
+    "${FORGE_ROOT}/templates/metrics.md" > "${PROJECT_ROOT}/.forge/knowledge/metrics.md"
+fi
+
+if [[ -f "${FORGE_ROOT}/templates/tool-health.md" ]]; then
+  sed "s/YYYY-MM-DD/$(date +%Y-%m-%d)/g" \
+    "${FORGE_ROOT}/templates/tool-health.md" > "${PROJECT_ROOT}/.forge/knowledge/tool-health.md"
+fi
 
 # --- 写入 config.md ---
 init_date="$(date +%Y-%m-%d)"
@@ -393,9 +405,36 @@ if [[ -f "${hooks_source}" ]]; then
           settings.hooks = hooks.hooks;
           fs.writeFileSync('${settings_file}', JSON.stringify(settings, null, 2) + '\n');
         " 2>/dev/null && success "Forge Hooks 已合并到 .claude/settings.json" \
-          || warn ".claude/settings.json 已存在但无 hooks。请手动将 ${hooks_source} 中的 hooks 合并到 settings.json。"
+          || {
+          warn "无法自动合并 hooks 配置到 .claude/settings.json。请手动操作："
+          echo ""
+          echo "  1. 打开 .claude/settings.json"
+          echo "  2. 在文件的 JSON 对象中添加或合并以下 \"hooks\" 配置："
+          echo ""
+          if [[ -f "${hooks_source}" ]]; then
+            # Pretty-print just the hooks value from hooks.json
+            node -e "
+              const hooks = JSON.parse(require('fs').readFileSync('${hooks_source}', 'utf-8'));
+              const snippet = { hooks: hooks.hooks };
+              console.log(JSON.stringify(snippet, null, 2));
+            " 2>/dev/null || cat "${hooks_source}"
+          fi
+          echo ""
+          echo "  3. 确保合并后的文件是合法的 JSON 格式"
+          echo "  4. 保存文件"
+          echo ""
+        }
       else
-        warn ".claude/settings.json 已存在但无 hooks。请手动将 ${hooks_source} 中的 hooks 合并到 settings.json。"
+        warn "未检测到 node 命令，无法自动合并 hooks 配置。请手动操作："
+        echo ""
+        echo "  1. 打开 .claude/settings.json"
+        echo "  2. 在文件的 JSON 对象中添加或合并以下 \"hooks\" 配置："
+        echo ""
+        echo "     （hooks 内容请参考 ${hooks_source} 文件）"
+        echo ""
+        echo "  3. 确保合并后的文件是合法的 JSON 格式"
+        echo "  4. 保存文件"
+        echo ""
       fi
     fi
   else
@@ -421,9 +460,37 @@ if [[ -f "${settings_file}" ]]; then
         settings.env.CLAUDE_CODE_EXPERIMENTAL_AGENT_TEAMS = '1';
         fs.writeFileSync('${settings_file}', JSON.stringify(settings, null, 2) + '\n');
       " 2>/dev/null && success "Agent Teams 已启用（CLAUDE_CODE_EXPERIMENTAL_AGENT_TEAMS=1）" \
-        || warn "无法自动启用 Agent Teams。请手动在 .claude/settings.json 中添加 env.CLAUDE_CODE_EXPERIMENTAL_AGENT_TEAMS = \"1\""
+        || {
+        warn "无法自动启用 Agent Teams 环境变量。请手动操作："
+        echo ""
+        echo "  1. 打开 .claude/settings.json"
+        echo "  2. 在文件的 JSON 对象中添加或合并以下 \"env\" 配置："
+        echo ""
+        echo '  {
+    "env": {
+      "CLAUDE_CODE_EXPERIMENTAL_AGENT_TEAMS": "1"
+    }
+  }'
+        echo ""
+        echo "  3. 如果文件中已有 \"env\" 字段，请将上述键值对合并到现有 \"env\" 对象中"
+        echo "  4. 保存文件"
+        echo ""
+      }
     else
-      warn "无法自动启用 Agent Teams。请手动在 .claude/settings.json 中添加 env.CLAUDE_CODE_EXPERIMENTAL_AGENT_TEAMS = \"1\""
+      warn "未检测到 node 命令，无法自动启用 Agent Teams。请手动操作："
+      echo ""
+      echo "  1. 打开 .claude/settings.json"
+      echo "  2. 在文件的 JSON 对象中添加或合并以下 \"env\" 配置："
+      echo ""
+      echo '  {
+    "env": {
+      "CLAUDE_CODE_EXPERIMENTAL_AGENT_TEAMS": "1"
+    }
+  }'
+      echo ""
+      echo "  3. 如果文件中已有 \"env\" 字段，请将上述键值对合并到现有 \"env\" 对象中"
+      echo "  4. 保存文件"
+      echo ""
     fi
   fi
 fi

@@ -95,6 +95,75 @@ disable-model-invocation: true
    - 执行原子提交（使用 plan 中定义的 commit message）。
 4. 所有任务完成后，运行全量测试确认无回归。
 
+**Restatement Checkpoint（上下文刷新）**：
+
+Restatement 是编排循环的**强制步骤**，不是可选优化。跳过 Restatement 等于允许注意力衰减侵蚀执行质量。
+
+在标准路径的编排循环中，主 Agent 必须维护一个 Restatement 计数器来周期性刷新上下文：
+
+**计数器初始化**：在 build 开始时，将 Restatement 计数器初始化为 N（N = config.md 的 `restatement_interval`，默认 3，范围 2–10。若字段缺失则使用默认值 3，不阻断执行）。
+
+**计数器检查（派发前）**：在派发下一个 Subagent 之前，检查计数器是否为零。当计数器归零时，执行 Restatement Checkpoint，然后再进入 Closure-First 探针。
+
+**Checkpoint 执行步骤**：
+
+1. **重读状态**：重读 `.forge/progress/<topic>.md` 和 `.forge/status.md`，获取最新进度和行为提示。
+2. **刷新知识**：重读 `.forge/knowledge/instincts.md`，匹配当前阶段相关的直觉模式。
+3. **追加摘要**：在当前上下文尾部追加结构化的 Restatement 摘要（格式见下方）。Restatement 只追加到上下文尾部（Context Tail），**不修改 System Prompt**，以保护 KV Cache。
+4. **写入中间日志**：更新 `.forge/knowledge/sessions/<date>-<topic>-interim.md`（详见 §7.1.1）。
+5. **重置计数器**：计数器重置为 N，继续执行。
+
+**计数器递减**：每个任务完成后（更新 progress、原子提交之后），将计数器减 1。
+
+**Restatement 摘要格式**（5 个必需区块）：
+
+```
+━━━ 📋 Restatement Checkpoint（Task N/M 完成后）━━━
+
+📊 进度：已完成 N/M 个任务
+  ✅ <已完成的任务列表>
+  🔜 <下一个任务>（下一步）
+  ⏸️ <未开始的任务列表>
+
+🎯 下一步：Task X — <完整标题和文件路径>
+
+⚠️ 执行纪律重申：
+  • TDD 铁律：RED → GREEN → REFACTOR，不可跳过任何阶段
+  • 原子提交：一个任务一个 commit，不合并
+  • 验证铁律：[Command] → [Output] → [Claim]，不接受"应该可以了"
+  • Subagent 状态必须检查：DONE / DONE_WITH_CONCERNS / NEEDS_CONTEXT / BLOCKED
+  • Closure-First 探针：每个任务前必须执行 2 Probe + 1 Verify
+
+🧠 活跃的行为提示：
+  • <从 status.md hints 字段提取的当前活跃提示>
+
+📚 匹配的直觉模式：
+  • <从 instincts.md 匹配的模式，附 confidence>
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+```
+
+**异常触发的 Restatement**：
+
+当 Subagent 返回 **BLOCKED**、**NEEDS_CONTEXT** 或 **DONE_WITH_CONCERNS** 时，无论计数器状态如何，**立即**执行一次 Restatement Checkpoint（在处理该异常状态之前）。异常触发的 Restatement **不重置**周期计数器——周期计数器继续独立倒数。
+
+异常触发的 Restatement 摘要在标准 5 区块基础上增加一个异常区块：
+
+```
+🚨 异常状态：Subagent 返回 <BLOCKED|NEEDS_CONTEXT|DONE_WITH_CONCERNS>
+  任务：Task N — <标题>
+  原因：<Subagent 报告的原因>
+  
+  处理协议：
+  • BLOCKED → 评估阻塞原因（上下文不足/任务过大/Plan 问题）
+  • NEEDS_CONTEXT → 提供缺失上下文，重新派发
+  • DONE_WITH_CONCERNS → 阅读疑虑，判断是否需要先解决
+```
+
+**轻量路径排除**：轻量路径（Light Path）完全排除在所有 Restatement 行为之外——不初始化计数器、不执行 Checkpoint、不写入中间日志、不追加 Restatement 摘要。轻量路径的改动足够小（≤ 1 文件，≤ 20 行），不存在注意力衰减问题。
+
+**Token 成本约束**：单次 Restatement Checkpoint（状态重读 + 摘要生成 + 中间日志写入）消耗不超过 1,500 tokens。10 个任务（N=3）的总 Restatement 开销不超过总 Token 消耗的 10%。
+
 **Subagent 隔离的意义**：每个 Subagent 拥有新鲜上下文，不会被之前任务的残留信息干扰。任务之间的依赖通过文件系统（代码变更）传递，而非上下文传递。
 
 **Subagent 状态处理协议**：
@@ -122,6 +191,19 @@ disable-model-invocation: true
 6. **验证命令**：任务完成后必须运行的命令
 7. **完成前自检**：TDD 完成后、报告状态前，执行轻量自检（见下方）
 8. **禁止事项**：不要修改任务范围外的文件，不要跳过测试
+9. **失敗重試 Restatement**：如果 TDD 循环中 GREEN 阶段测试未通过需要重试，在每次重试前先在当前上下文中重申以下内容，防止机械重复同一种失败的尝试：
+
+```
+重试前确认：
+ - 当前任务：<任务标题>
+ - 目标文件：<文件路径>
+ - 失败原因：<上一次失败的具体原因>
+ - 已尝试次数：N/3
+ - 关键约束：<从知识回流中提取的相关 instincts>
+ - 方向检查：这次重试是否在用和上次不同的方法？如果不是，停下来重新分析。
+```
+
+这条 Restatement 确保每次重试都是有意识的，而不是机械地重复上一次的尝试。如果方向检查发现正在重复同一种方法，Sub-Agent 必须停下来重新分析问题，而不是继续尝试。
 
 **Subagent 调用方式**：
 
@@ -174,12 +256,26 @@ Agent(
 2. 研究发现汇总到 `.forge/findings/<topic>.md`。
 3. 研究者之间共享发现、相互补充。
 
+**研究阶段不使用 Restatement**：阶段一由 Agent Team 并行执行，主 Agent 只等待结果汇总，上下文膨胀有限。因此研究阶段**不初始化 Restatement 计数器、不执行 Checkpoint、不写入中间日志**。
+
 **阶段二：分模块实现（Subagent）**
 
 1. 基于研究发现和 Plan，将任务按模块分组。
 2. 对每个模块启动一个 Subagent 执行 TDD 循环。
 3. **可选 Git Worktree**：当模块改动存在重叠时，为每个模块创建独立的 Git Worktree，实现文件系统级隔离。
 4. 模块完成后合并 Worktree，解决冲突。
+
+**Restatement Checkpoint（上下文刷新）**：
+
+阶段二的分模块实现使用与 §3.2 标准路径**完全相同**的 Restatement 机制。具体来说：
+
+- **计数器初始化**：在阶段二开始时（研究完成、进入实现后），将 Restatement 计数器初始化为 N（N = config.md 的 `restatement_interval`，默认 3，范围 2–10。若字段缺失则使用默认值 3，不阻断执行）。
+- **计数器检查（派发前）**：在派发下一个 Subagent 之前，检查计数器是否为零。当计数器归零时，执行 Restatement Checkpoint，然后再进入 Closure-First 探针。
+- **Checkpoint 执行步骤**：与 §3.2 相同——(1) 重读 progress、status、instincts 文件，(2) 追加 Restatement 摘要到上下文尾部（不修改 System Prompt），(3) 写入中间日志，(4) 重置计数器为 N。
+- **计数器递减**：每个模块任务完成后，将计数器减 1。
+- **Restatement 摘要格式**：与 §3.2 相同的 5 区块格式（进度、下一步、执行纪律重申、活跃行为提示、匹配直觉模式）。
+- **异常触发**：当 Subagent 返回 BLOCKED、NEEDS_CONTEXT 或 DONE_WITH_CONCERNS 时，立即执行 Restatement Checkpoint（不重置周期计数器），摘要中增加异常区块。与 §3.2 逻辑一致。
+- **轻量路径排除**：轻量路径完全不适用 Restatement（见 §3.2 说明）。
 
 **Git Worktree 使用条件**：
 
@@ -491,6 +587,46 @@ updated: "YYYY-MM-DD HH:mm"
 （无）
 ```
 
+### 7.1.1 中間会話日志
+
+每次 Restatement Checkpoint 触発時、同歩更新中間会話日志：
+
+**文件路径**：`.forge/knowledge/sessions/<date>-<topic>-interim.md`
+
+**格式**：
+
+```markdown
+---
+date: "YYYY-MM-DD"
+task: "<任務描述>"
+tier: "<当前档位>"
+checkpoint: N
+phase: "build"
+---
+
+## 中間検査点 #N
+
+### 進度快照
+- 已完成：Task 1-N（共 M 個）
+- 下一歩：Task X — <標題>
+
+### 関鍵発見
+- <執行過程中的重要発見>
+
+### 活躍約束
+- <当前生効的行為提示和 instincts>
+
+### 異常記録
+- <BLOCKED/NEEDS_CONTEXT/失敗重試記録、無則写"無">
+```
+
+**規則**：
+- 每次 Checkpoint 覆蓋同一個 interim 文件（不累積多個文件）
+- 控制在 15 行以内
+- `/forge learn` 完成後削除 interim 文件
+- build 全部任務完成且全量測試通過後削除 interim 文件
+- `/forge resume` 優先読取 interim 文件恢復上下文
+
 ### 7.2 Phase 更新
 
 **每个命令完成后**，更新 `.forge/status.md` 的 `phase` 字段为命令序列中的下一个命令。这确保 `/forge status` 和 `/forge resume` 能准确反映当前阶段。
@@ -596,27 +732,61 @@ updated: "YYYY-MM-DD HH:mm"
     │  └──┬───┘   └────┬─────┘
     │     │ 通过       │ 通过
     │     ▼            ▼
-    │  ┌──────┐   ┌──────────┐
-    │  │Subagt│   │阶段一     │
-    │  │逐任务│   │Agent Team │
-    │  │TDD   │   │并行研究   │
-    │  └──┬───┘   └────┬─────┘
-    │     │            ▼
-    │     │       ┌──────────┐
-    │     │       │阶段二     │
-    │     │       │Subagent   │
-    │     │       │分模块实现  │
-    │     │       └────┬─────┘
-    │     │            │
-    ▼     ▼            ▼
-  ┌─────────────────────┐
-  │  更新 progress       │
-  │  原子提交            │
-  │  全量测试            │
-  └──────────┬──────────┘
-             │
-             ▼
-        下一步：/forge review
+    │  ┌──────────────────┐   ┌──────────┐
+    │  │ 初始化            │   │阶段一     │
+    │  │ Restatement      │   │Agent Team │
+    │  │ 计数器 = N       │   │并行研究   │
+    │  └──────┬───────────┘   └────┬─────┘
+    │         │                    ▼
+    │         ▼               ┌──────────┐
+    │  ┌──────────────────┐   │阶段二     │
+    │  │ 计数器 == 0 ?    │──是──→ Restatement Checkpoint
+    │  └──────┬───────────┘         │   │Subagent   │
+    │         │ 否                  │   │分模块实现  │
+    │         │                     │   └────┬─────┘
+    │         │  ┌──────────────────┘        │
+    │         │  │                           │
+    │         ▼  ▼                           │
+    │  ┌──────────────────┐                  │
+    │  │ Closure-First    │                  │
+    │  │ 探针             │                  │
+    │  └──────┬───────────┘                  │
+    │         │                              │
+    │         ▼                              │
+    │  ┌──────────────────┐                  │
+    │  │ 启动 Subagent    │                  │
+    │  │ TDD 循环         │                  │
+    │  └──────┬───────────┘                  │
+    │         │                              │
+    │         ▼                              │
+    │  ┌──────────────────┐                  │
+    │  │ 检查 Subagent    │──异常──→ 异常触发 Restatement
+    │  │ 返回状态         │          │       │
+    │  └──────┬───────────┘          │       │
+    │         │ DONE                 │       │
+    │         │  ┌───────────────────┘       │
+    │         ▼  ▼                           │
+    │  ┌──────────────────┐                  │
+    │  │ 更新 progress    │                  │
+    │  │ 原子提交         │                  │
+    │  │ 计数器 -1        │                  │
+    │  └──────┬───────────┘                  │
+    │         │                              │
+    │         ▼                              │
+    │  ┌──────────────────┐                  │
+    │  │ 还有任务？       │──是──→ 回到"计数器 == 0 ?"
+    │  └──────┬───────────┘                  │
+    │         │ 否                           │
+    │         ▼                              │
+    │  ┌──────────────────┐                  │
+    │  │ 全量测试         │                  │
+    │  │ 删除 interim 日志│                  │
+    │  └──────┬───────────┘                  │
+    │         │                              │
+    ▼         ▼                              ▼
+  ┌─────────────────────────────────────────────┐
+  │                下一步：/forge review          │
+  └─────────────────────────────────────────────┘
 ```
 
 ### 失败升级流程

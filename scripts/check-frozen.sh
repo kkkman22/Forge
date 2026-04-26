@@ -2,27 +2,33 @@
 # ============================================================================
 # check-frozen.sh — PreToolUse hook for frozen file protection
 #
-# Called before Write/Edit operations on .forge/ files.
-# Reads the target file's YAML frontmatter and blocks writes to files
-# with status "locked" or "approved".
+# Thin wrapper that delegates to the TypeScript implementation when available.
+# Falls back to the original shell-based parsing if node is not available or
+# the compiled JS file does not exist.
 #
-# Input: The tool use context is available via environment or stdin.
-#        This script checks all .forge/specs/, .forge/plans/, .forge/config.md
-#        files that might be targeted.
-#
-# Exit: Always exits 0 (hook output is read by the agent, not exit code).
-#       Prints a blocking message if the write should be prevented.
+# Exit: Exits 1 for files with status "locked" or "approved" (hard block).
+#       Exits 0 for all other cases (non-frozen files, no status, etc.).
 # ============================================================================
 
 set -euo pipefail
 
-# The hook receives the file path being written as an argument or via context.
-# In Claude Code hooks, the tool input is available in the hook output context.
-# We scan for .forge/ files with frozen status proactively.
+# ---------------------------------------------------------------------------
+# Try the TypeScript-compiled version first
+# ---------------------------------------------------------------------------
+SCRIPT_DIR="$(dirname "$0")"
+JS_FILE="${SCRIPT_DIR}/../dist/src/check-frozen.js"
+
+if command -v node &>/dev/null && [[ -f "${JS_FILE}" ]]; then
+  exec node "${JS_FILE}" "$@"
+fi
+
+# ---------------------------------------------------------------------------
+# Fallback: original shell-based parsing
+# ---------------------------------------------------------------------------
 
 TARGET_FILE="${1:-}"
 
-# If no argument, try to detect from recent tool context (fallback: do nothing)
+# If no argument, nothing to check
 if [[ -z "${TARGET_FILE}" ]]; then
   exit 0
 fi
@@ -57,9 +63,11 @@ case "${STATUS}" in
   locked)
     echo "🔒 写入被阻断：${TARGET_FILE} 状态为 \"locked\"，属于冻结区。"
     echo "需要用户明确解锁后才能修改。请勿重试此写入操作。"
+    exit 1
     ;;
   approved)
     echo "🔒 写入被阻断：${TARGET_FILE} 状态为 \"approved\"，属于冻结区。"
     echo "需要用户明确解锁后才能修改。请勿重试此写入操作。"
+    exit 1
     ;;
 esac
