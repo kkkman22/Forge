@@ -66,7 +66,7 @@ if [ -n "$progress_files" ]; then
 fi
 
 # Show latest handoff if available
-latest_handoff=$(ls -t "$FORGE_DIR"/handoffs/*.md 2>/dev/null | head -1)
+latest_handoff=$(find "$FORGE_DIR/handoffs" -maxdepth 1 -name '*.md' -print0 2>/dev/null | xargs -0 ls -t 2>/dev/null | head -1)
 if [ -n "$latest_handoff" ]; then
   echo "━━━ 最近的 Handoff ━━━"
   # Show only the Decided section (most important for context recovery)
@@ -76,7 +76,7 @@ fi
 
 # Show review status if in review/test/ship phase
 if [ "$phase" = "review" ] || [ "$phase" = "test" ] || [ "$phase" = "ship" ]; then
-  latest_review=$(ls -t "$FORGE_DIR"/reviews/*.md 2>/dev/null | head -1)
+  latest_review=$(find "$FORGE_DIR/reviews" -maxdepth 1 -name '*.md' -print0 2>/dev/null | xargs -0 ls -t 2>/dev/null | head -1)
   if [ -n "$latest_review" ]; then
     result=$(read_field "$latest_review" "result")
     p0=$(read_field "$latest_review" "p0_count")

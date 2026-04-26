@@ -104,7 +104,7 @@ echo ""
 if [[ "${DRY_RUN}" == "true" ]]; then
   info "[Dry Run] 将复制以下文件到 ${TARGET}/:"
   find "${BUNDLE_DIR}" -type f | while read -r f; do
-    rel="${f#${BUNDLE_DIR}/}"
+    rel="${f#"${BUNDLE_DIR}"/}"
     echo "  ${rel}"
   done
   echo ""
