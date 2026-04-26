@@ -252,7 +252,7 @@ Forge 路由器从三个维度分析任务：
 Forge 通过 Claude Code 的 [Hooks](https://docs.anthropic.com/en/docs/claude-code/hooks) 机制实现状态保护和上下文注入：
 
 - **执行上下文注入**：Write、Edit、Bash 工具触发前，PreToolUse Hook 自动打印 `.forge/plans/*.md` 前 30 行内容，为 AI 提供当前计划的执行上下文。
-- **冻结文件保护**：Write/Edit 工具写入 `.forge/` 冻结区文件时，PreToolUse Hook 调用 `check-frozen.sh` 检查文件的 frontmatter status，对 `locked`/`approved` 文件以非零退出码阻断写入。Bash 工具执行的命令中若涉及 `.forge/` 冻结区路径，同样触发 `check-frozen.sh` 进行保护。
+- **冻结文件保护**：Write/Edit 工具写入 `.forge/` 冻结区文件时，PreToolUse Hook 调用 `check-frozen.js`（TypeScript 编译产物，shell 脚本 `check-frozen.sh` 作为 fallback）检查文件的 frontmatter status，对 `locked`/`approved` 文件以非零退出码阻断写入。Bash 工具执行的命令中若涉及 `.forge/` 冻结区路径，同样触发保护。
 
 ---
 
@@ -315,6 +315,81 @@ Forge 的 Plan 阶段支持为任务声明依赖关系（`dependsOn` 字段）�
 Wave 1: task-1, task-2（并行）
 Wave 2: task-3, task-4（并行，task-1/2 完成后）
 Wave 3: task-5（task-3/4 完成后）
+```
+
+---
+
+## Forge Loop — 自主执行引擎
+
+Forge Loop 是基于 [Claude Agent SDK](https://docs.anthropic.com/en/docs/claude-agent-sdk) 构建的自主循环执行引擎。它以 CLI 工具 `forge-loop` 的形式运行，接收一个目标描述后自主迭代执行，无需人工逐步干预。
+
+### 核心架构
+
+```
+forge-loop <objective>
+    │
+    ├── SdkDriver          迭代循环驱动器
+    │     ├── Orchestrator  纯函数状态机（idle → running → waiting → aborted/stopped）
+    │     ├── EffectExecutor 副作用执行器（git commit/rollback/backoff）
+    │     └── SdkAgentAdapter  Claude Agent SDK 适配层
+    │
+    ├── RunManager          运行生命周期管理（目录、分支、notes 持久化）
+    ├── ContextAccumulator  跨迭代上下文累积（notes document）
+    ├── FailureHandler      失败处理（指数退避 + 熔断器）
+    └── WorktreeManager     Git Worktree 隔离执行
+```
+
+### 工作流程
+
+1. **启动**：校验 Git 仓库状态 → 创建 `forge/<objective>` 分支 → 初始化运行目录
+2. **迭代**：每轮调用 Agent SDK 执行任务 → Orchestrator 根据结果决定下一步
+   - 成功 → `git commit` → 调度下一轮
+   - 软失败 → `git rollback` → 重试
+   - 硬失败 → `git rollback` → 指数退避等待后重试
+3. **终止**：达到迭代/token 上限、满足停止条件、连续失败熔断、或用户中断（Ctrl+C）
+
+### 安全机制
+
+- **Git 事务**：每次成功迭代自动提交，失败自动回滚（回滚前 `git stash` 保底）
+- **熔断器**：连续失败达到阈值（默认 3 次）自动中止，防止无限循环
+- **指数退避**：硬失败后等待时间递增，避免频繁重试
+- **Worktree 隔离**：`--worktree` 模式在独立工作树中执行，不影响主分支（并发上限可配置）
+- **防休眠**：自动阻止系统休眠（macOS `caffeinate` / Linux `systemd-inhibit`）
+- **优雅关闭**：SIGINT/SIGTERM 信号触发安全停止，清理所有资源
+
+### 使用方式
+
+```bash
+# 基本用法
+forge-loop "为用户 API 添加分页功能"
+
+# 设置迭代上限
+forge-loop "重构认证模块" --max-iterations 10
+
+# 设置 token 上限
+forge-loop "优化数据库查询" --max-tokens 500000
+
+# 自然语言停止条件
+forge-loop "修复所有 lint 错误" --stop-when "所有 lint 检查通过"
+
+# 在独立 worktree 中执行
+forge-loop "添加单元测试" --worktree
+
+# 设置预算上限
+forge-loop "实现搜索功能" --max-budget-usd 5.00
+
+# 关闭防休眠
+forge-loop "快速修复" --prevent-sleep off
+```
+
+### 构建与运行
+
+```bash
+# 编译 TypeScript
+npm run typecheck
+
+# forge-loop 入口在 dist/src/forge-loop-cli.js
+# package.json 中已配置 bin: { "forge-loop": "dist/src/forge-loop-cli.js" }
 ```
 
 ---
@@ -392,13 +467,29 @@ forge/
 ├── templates/                   # 文件模板（CLAUDE.md、config、状态文件）
 ├── scripts/
 │   ├── init.sh                 #   项目初始化
-│   ├── check-frozen.sh         #   冻结文件保护（PreToolUse Hook）
+│   ├── check-frozen.sh         #   冻结文件保护（PreToolUse Hook shell wrapper）
+│   ├── auto-resume.sh          #   SessionStart Hook 自动恢复上下文
+│   ├── persistent-loop.sh      #   Stop Hook 自动修复循环
 │   ├── validate-knowledge.sh   #   知识库健康检查
 │   ├── build-dist.sh           #   构建分发包
 │   └── install-dist.sh         #   安装分发包
 ├── dist/                        # 分发包（CI 自动构建）
 │   └── claude-code/bundles/forge/
 ├── src/                         # 核心逻辑（30 个 TypeScript 模块，含纯函数模块及有状态/运行时模块：CLI、SDK 适配器、副作用执行器、运行管理器等）
+│   ├── forge-loop-cli.ts       #   自主循环 CLI 入口（Commander 参数解析 + 信号处理）
+│   ├── sdk-driver.ts           #   迭代循环驱动器（调度 Agent → 处理结果 → 执行副作用）
+│   ├── orchestrator.ts         #   纯函数状态机（状态转换 + 副作用描述）
+│   ├── effect-executor.ts      #   副作用执行器（git commit/rollback/backoff）
+│   ├── sdk-agent-adapter.ts    #   Claude Agent SDK 适配层
+│   ├── run-manager.ts          #   运行生命周期管理（目录、分支、worktree）
+│   ├── context-accumulator.ts  #   跨迭代上下文累积（notes document）
+│   ├── failure-handler.ts      #   失败处理（指数退避 + 熔断器）
+│   ├── worktree-manager.ts     #   Git Worktree 隔离执行
+│   ├── sleep-preventer.ts      #   防休眠命令构建（macOS/Linux）
+│   ├── git-transaction.ts      #   Git 命令构建（注入安全）
+│   ├── agent-output.ts         #   Agent 输出 schema 构建
+│   ├── agent-adapter.ts        #   Agent 接口抽象
+│   ├── loop-types.ts           #   类型定义（LoopConfig、RunLimits、OrchestratorState 等）
 │   ├── router.ts               #   三维路由分类 + 行为提示
 │   ├── decide.ts               #   Designer 条件触发 + 决策路径
 │   ├── spec.ts                 #   Spec 生命周期 + 棕地验证
@@ -409,11 +500,13 @@ forge/
 │   ├── ship.ts                 #   三重交付门禁
 │   ├── learn.ts                #   知识文档 + 维护 + 反馈分析
 │   ├── debug.ts                #   假设验证 + 四阶段状态机
+│   ├── check-frozen.ts         #   冻结文件保护（YAML frontmatter status 检查）
 │   ├── resume.ts               #   五问题恢复
 │   ├── state.ts                #   状态验证 + 保护区 + 文件锁
 │   ├── task-graph.ts           #   DAG 调度 + 并行执行引擎
-│   └── handoff.ts              #   跨阶段决策传递
-├── test/                        # 724 个测试（44 个测试文件，其中 32 个为 fast-check 属性测试文件）
+│   ├── handoff.ts              #   跨阶段决策传递
+│   └── loop-index.ts           #   自主循环模块统一入口
+├── test/                        # 724 个测试（44 个测试文件，其中 36 个为 fast-check 属性测试文件）
 ├── .github/workflows/ci.yml    # CI：typecheck + lint + coverage + dist 同步校验
 ├── biome.json                   # Linter / Formatter 配置
 ├── tsconfig.json                # TypeScript strict 配置
@@ -448,7 +541,7 @@ bash scripts/build-dist.sh
 
 **技术栈**：TypeScript 5.9（strict）、Vitest 3.2、fast-check 4.7（属性测试）、Biome 2.4（lint + format）。运行时依赖：`@anthropic-ai/claude-agent-sdk`、`commander`。
 
-**测试策略**：724 个测试（44 个测试文件，其中 32 个为 fast-check 属性测试文件）验证不变量（invariant），而非特定输入输出。覆盖率 91.68% statements、91.89% branches、98.7% functions。
+**测试策略**：724 个测试（44 个测试文件，其中 36 个为 fast-check 属性测试文件）验证不变量（invariant），而非特定输入输出。覆盖率 90.47% statements、92.16% branches、98.72% functions。
 
 ---
 

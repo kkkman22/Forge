@@ -8,6 +8,12 @@ All notable changes to Forge will be documented in this file.
 
 - **CI Actions 升级至 Node.js 24 运行时**：`actions/checkout` v4→v5、`actions/setup-node` v4→v6，消除 GitHub Actions Node.js 20 弃用警告
 - **CI 构建 Node.js 版本升级**：20→22（当前 LTS）
+- **README 新增 Forge Loop 章节**：完整介绍自主执行引擎的架构、工作流程、安全机制和 CLI 用法；更新 `src/` 目录结构，列出所有 Loop 相关模块
+- **文档审计与修正**：
+  - README：属性测试文件数 32→36、覆盖率数据更新为实际值（90.47% statements / 92.16% branches / 98.72% functions）
+  - README：scripts/ 列表补全 `auto-resume.sh` 和 `persistent-loop.sh`；src/ 列表补全 `check-frozen.ts` 和 `loop-index.ts`
+  - README：冻结文件保护说明修正为调用 `check-frozen.js`（非 `.sh`）
+  - ROADMAP：v2.1 已完成列表补充 Forge Loop、回滚安全网、权限绕过文档化；v2.2 移除已完成项
 
 ### Fixed
 
