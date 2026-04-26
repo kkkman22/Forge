@@ -36,11 +36,68 @@ v2.1 遗留的审核报告修复项 + 补充加固。
   - `parseListSection` 中正则转义替换字符串修正（当前替换字符串包含错误的 UUID 值）
   - 新增正则特殊字符标题的解析测试覆盖
 
+- **Forge Loop npm 发包**
+
+  当前 Forge Skills 和 Forge Loop 杂糅在同一个仓库中。Skills 通过分发包（纯 Markdown + Shell）零依赖分发，但 Loop 需要用户克隆仓库、`npm install`、`npx tsc`，体验很重。解决方案：**同一仓库两条分发管线**——Skills 继续走分发包，Loop 走 npm 发包。
+
+  - 将 `forge-loop` 发布到 npm，用户 `npx forge-loop "目标"` 一行即可使用
+  - 调整 `package.json`：`private: false`，配置 `files` 字段只发布 `dist/src/` 和运行时依赖
+  - CI 新增 npm publish 步骤（tag 触发，如 `v2.2.0`）
+  - 不拆仓库，不影响现有分发包流程
+
+  ```
+  # 分发包用户（只用 /forge 命令）
+  bash install-dist.sh                        # 零依赖，复制即用
+
+  # Loop 用户（自主执行引擎）
+  npx forge-loop "修复所有 lint 错误"          # npm 自动下载，自动解析依赖
+  ```
+
 ---
 
 ## 中期 — v2.x（平台改进）
 
 在核心稳定的基础上，提升开发体验和可维护性。
+
+- **Forge Loop × Skills 融合**（核心演进方向）
+
+  当前 Forge Loop（自主执行引擎）和 Forge Skills（`/forge` 交互式命令）是两套割裂的系统。Loop 通过 Agent SDK 启动独立的 Claude Code 会话自主迭代，但会话内部不感知 Forge 的 SKILL 体系、状态目录和路由机制。目标是让两者真正互补：
+
+  - **Loop 驱动 Skills**：Forge Loop 的每轮迭代内部调用 Forge Skills，而非当通用自主循环引擎
+    ```
+    forge-loop "为用户 API 添加分页功能"
+      ├─ 迭代 1: router → 标准路径（自主模式，跳过确认）
+      ├─ 迭代 2: plan → 拆解任务（自主模式，跳过确认）
+      ├─ 迭代 3: build → 执行任务 1（commit）
+      ├─ 迭代 4: build → 执行任务 2（commit）
+      ├─ 迭代 5: review → 发现 P0（rollback + 自动重试）
+      ├─ 迭代 6: 修复 P0 → review 通过（commit）
+      ├─ 迭代 7: test → 验证
+      └─ 迭代 8: ship → 默认保留分支
+    ```
+  - **Skills 双模式运行**：解决 Loop 完全自动化与 Skills 人工确认之间的矛盾。每个 SKILL 支持两种运行模式，通过 `.forge/status.md` 中的 `mode` 字段切换。Loop 启动时写入 `mode: autonomous`，结束时清除。
+
+    | 确认点 | 交互模式（`/forge`） | 自主模式（`forge-loop`） |
+    |--------|---------|---------|
+    | Router 档位确认 | 等用户确认或覆盖 | 直接采用 AI 建议 |
+    | Plan 任务拆解确认 | 等用户确认 | 直接执行 |
+    | Build 暂停确认 | 轻量路径每两步暂停 | 不暂停，连续执行 |
+    | Review P0/P1 处理 | 提示用户决定 | 自动进入修复循环（熔断上限保护） |
+    | Ship 交付方式 | 用户选择 | 默认保留分支（最安全选项） |
+
+    核心逻辑（路由分析、任务拆解、TDD 执行、三层评审、质量门禁）完全复用，只是决策权从"人确认"切换到"预设策略自动决策"。质量保障不降级——review 照常运行，P0 照常触发修复循环，只是不再等人点确认。
+  - **状态感知**：Loop 读取 `.forge/status.md` 和 `.forge/plans/*.md`，根据当前阶段决定下一轮调用哪个 SKILL
+  - **门禁复用**：Loop 的迭代成功/失败判定复用 Skills 的质量门禁（review P0/P1、test 通过率、ship 三重检查）
+  - **分发包可用**：评估将 Loop 核心逻辑（迭代/commit/rollback/熔断）SKILL 化的可行性，使分发包用户也能通过 `/forge loop` 使用自主执行模式
+
+  互补定位：
+  | | `/forge`（Skills） | `forge-loop`（Loop） |
+  |---|---|---|
+  | 驱动方式 | 人在 Claude Code 对话中 | 程序在终端中，无人值守 |
+  | 人机协作 | 每个阶段可介入、确认、覆盖 | 只设定目标和约束 |
+  | 适用场景 | 需求模糊、需要人类判断 | 目标明确、可自动验证 |
+  | Git 事务 | 无（人工管理） | 自动 commit/rollback |
+  | 失败处理 | 人工决策 | 指数退避 + 熔断器 |
 
 - **平台抽象层评估**
   - 评估将 Claude Code 特定 API 抽象为通用接口的可行性

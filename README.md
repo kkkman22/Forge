@@ -40,15 +40,17 @@ Forge 的核心能力：
 
 ## 安装
 
-### 方式一：直接克隆（最快上手）
+### 方式一：直接克隆（推荐，完整功能）
 
 ```bash
 git clone https://github.com/kkkman22/Forge.git ~/.claude/skills/forge
 ```
 
-### 方式二：分发包安装（干净部署）
+克隆安装包含完整功能：`/forge` 交互式命令 + Forge Loop 自主执行引擎。如需使用 Forge Loop，还需执行 `npm install && npx tsc`。
 
-分发包只包含运行所需的文件，不含开发依赖。适合团队统一部署。
+### 方式二：分发包安装（轻量部署）
+
+分发包只包含 `/forge` 交互式命令所需的文件（skills、agents、teams、hooks、scripts、templates），不含 Forge Loop 及其依赖。适合只需要 `/forge` 命令的团队统一部署。
 
 ```bash
 # 先克隆仓库到任意位置
@@ -321,7 +323,16 @@ Wave 3: task-5（task-3/4 完成后）
 
 ## Forge Loop — 自主执行引擎
 
-Forge Loop 是基于 [Claude Agent SDK](https://docs.anthropic.com/en/docs/claude-agent-sdk) 构建的自主循环执行引擎。它以 CLI 工具 `forge-loop` 的形式运行，接收一个目标描述后自主迭代执行，无需人工逐步干预。
+> **注意**：Forge Loop 是独立于 `/forge` 命令的高级功能，需要完整仓库（克隆安装方式）。分发包安装方式不包含 Forge Loop。
+
+Forge Loop 是基于 [Claude Agent SDK](https://docs.anthropic.com/en/docs/claude-agent-sdk) 构建的自主循环执行引擎。与 `/forge` 命令（在 Claude Code 对话中由 AI 解释执行）不同，Forge Loop 是一个独立的 Node.js CLI 程序，在系统终端中运行，通过 Agent SDK 驱动 Claude Code 自主迭代执行任务，无需人工逐步干预。
+
+### 前置条件
+
+- **完整仓库**：必须通过克隆方式安装（分发包不含 Forge Loop）
+- **Claude Code**：Forge Loop 通过 Agent SDK 调用 Claude Code，需要已安装 Claude Code
+- **依赖安装**：`npm install`（自动安装 `@anthropic-ai/claude-agent-sdk` 和 `commander`）
+- **TypeScript 编译**：`npx tsc`（编译到 `dist/src/`）
 
 ### 核心架构
 
@@ -385,12 +396,19 @@ forge-loop "快速修复" --prevent-sleep off
 ### 构建与运行
 
 ```bash
-# 编译 TypeScript
-npm run typecheck
+# 1. 安装依赖
+npm install
 
-# forge-loop 入口在 dist/src/forge-loop-cli.js
-# package.json 中已配置 bin: { "forge-loop": "dist/src/forge-loop-cli.js" }
+# 2. 编译 TypeScript
+npx tsc
+
+# 3. 运行（以下三种方式任选）
+npx forge-loop "你的目标"                    # 通过 npx
+node dist/src/forge-loop-cli.js "你的目标"   # 直接调用
+npm link && forge-loop "你的目标"            # 全局链接后直接使用
 ```
+
+> `/forge` 是在 Claude Code 对话中使用的交互式命令，`forge-loop` 是在系统终端中运行的自主循环程序。两者互补：前者适合人机协作，后者适合无人值守的批量任务。未来计划让 Forge Loop 的每轮迭代内部调用 Forge Skills，实现结构化流程 + 自主循环的深度融合（参见 [ROADMAP](ROADMAP.md)）。
 
 ---
 
