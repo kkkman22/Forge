@@ -11,12 +11,12 @@
 import * as fc from "fast-check";
 import { describe, expect, it } from "vitest";
 import {
-    buildIterationPrompt,
-    formatIterationEntry,
-    formatListSection,
-    formatNotesDocument,
-    parseListSection,
-    parseNotesDocument
+  buildIterationPrompt,
+  formatIterationEntry,
+  formatListSection,
+  formatNotesDocument,
+  parseListSection,
+  parseNotesDocument,
 } from "../src/context-accumulator.js";
 import type { IterationEntry, NotesDocument } from "../src/loop-types.js";
 
@@ -304,7 +304,9 @@ const REGEX_SPECIAL_CHARS = [".", "*", "+", "?", "^", "$", "{", "}", "(", ")", "
  */
 const regexSpecialTitleArb: fc.Arbitrary<string> = fc
   .tuple(
-    fc.array(fc.constantFrom(...REGEX_SPECIAL_CHARS), { minLength: 1, maxLength: 4 }).map((a) => a.join("")),
+    fc
+      .array(fc.constantFrom(...REGEX_SPECIAL_CHARS), { minLength: 1, maxLength: 4 })
+      .map((a) => a.join("")),
     cleanLineArb,
     fc.integer({ min: 0, max: 80 }),
   )
