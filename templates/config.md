@@ -3,6 +3,7 @@ project: "<项目名称>"
 stack: ["TypeScript", "React", "Node.js"]
 security_level: 1  # 1=标准, 2=高, 3=最高
 knowledge_limit: 20
+restatement_interval: 3  # Range: 2–10, default: 3. Triggers Restatement Checkpoint every N tasks
 ---
 
 ## 状态文件保护分区

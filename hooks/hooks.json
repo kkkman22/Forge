@@ -36,7 +36,17 @@
         "hooks": [
           {
             "type": "command",
-            "command": "bash forge/scripts/check-frozen.sh \"$TOOL_INPUT_FILE\" 2>/dev/null || bash ~/.claude/skills/forge/scripts/check-frozen.sh \"$TOOL_INPUT_FILE\" 2>/dev/null || true",
+            "command": "node forge/dist/src/check-frozen.js \"$TOOL_INPUT_FILE\" 2>/dev/null || node ~/.claude/skills/forge/dist/src/check-frozen.js \"$TOOL_INPUT_FILE\" 2>/dev/null",
+            "timeout": 5
+          }
+        ]
+      },
+      {
+        "matcher": "Bash",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "echo \"$TOOL_INPUT\" | grep -oE '\\.forge/(specs|plans)/[^ '\"'\"'\"'\"']*|.forge/config\\.md' | sort -u | while read -r f; do node forge/dist/src/check-frozen.js \"$f\" 2>/dev/null || node ~/.claude/skills/forge/dist/src/check-frozen.js \"$f\" 2>/dev/null; done",
             "timeout": 5
           }
         ]

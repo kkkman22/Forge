@@ -73,7 +73,7 @@ cat > "${CC_BUNDLE}/INSTALL.md" << 'EOF'
 ## 快速安装
 
 ```bash
-git clone https://github.com/anthropics/forge.git ~/.claude/skills/forge
+git clone https://github.com/kkkman22/Forge.git ~/.claude/skills/forge
 ```
 
 ## 初始化项目

@@ -196,6 +196,10 @@ export function checkWritePermission(
 ): { blocked: boolean; reason: string } {
   const zone = getProtectionZone(forgePath);
 
+  if (zone === "guarded") {
+    return { blocked: false, reason: "⚠️ 受保护区文件，仅允许追加操作" };
+  }
+
   if (zone !== "frozen") {
     return { blocked: false, reason: "" };
   }
