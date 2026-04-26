@@ -9,6 +9,13 @@ All notable changes to Forge will be documented in this file.
 - **CI Actions 升级至 Node.js 24 运行时**：`actions/checkout` v4→v5、`actions/setup-node` v4→v6，消除 GitHub Actions Node.js 20 弃用警告
 - **CI 构建 Node.js 版本升级**：20→22（当前 LTS）
 
+### Fixed
+
+- **Shellcheck 合规**：修复 4 个脚本共 7 处 shellcheck 警告
+  - `auto-resume.sh` / `persistent-loop.sh`：`ls -t *.md` 替换为 `find + xargs ls -t`（SC2012）
+  - `init.sh`：移除多余 `echo` 包裹（SC2005）；`A && B || C` 重写为 `if/then/else`（SC2015）
+  - `install-dist.sh`：`${f#${BUNDLE_DIR}/}` 内层变量加引号（SC2295）
+
 ## [2.1.0] - 2026-04-26
 
 ### Added

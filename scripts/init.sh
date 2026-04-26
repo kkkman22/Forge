@@ -39,7 +39,7 @@ detect_forge_root() {
 
   # 情况 1：脚本在 forge/scripts/ 下（开发模式或手动 clone）
   if [[ -d "${script_dir}/../agents" && -d "${script_dir}/../teams" ]]; then
-    echo "$(cd "${script_dir}/.." && pwd)"
+    (cd "${script_dir}/.." && pwd)
     return
   fi
 
@@ -398,14 +398,15 @@ if [[ -f "${hooks_source}" ]]; then
     else
       # Attempt to merge hooks into existing settings.json using Node.js
       if command -v node &>/dev/null; then
-        node -e "
+        if node -e "
           const fs = require('fs');
           const settings = JSON.parse(fs.readFileSync('${settings_file}', 'utf-8'));
           const hooks = JSON.parse(fs.readFileSync('${hooks_source}', 'utf-8'));
           settings.hooks = hooks.hooks;
           fs.writeFileSync('${settings_file}', JSON.stringify(settings, null, 2) + '\n');
-        " 2>/dev/null && success "Forge Hooks 已合并到 .claude/settings.json" \
-          || {
+        " 2>/dev/null; then
+          success "Forge Hooks 已合并到 .claude/settings.json"
+        else
           warn "无法自动合并 hooks 配置到 .claude/settings.json。请手动操作："
           echo ""
           echo "  1. 打开 .claude/settings.json"
@@ -423,7 +424,7 @@ if [[ -f "${hooks_source}" ]]; then
           echo "  3. 确保合并后的文件是合法的 JSON 格式"
           echo "  4. 保存文件"
           echo ""
-        }
+        fi
       else
         warn "未检测到 node 命令，无法自动合并 hooks 配置。请手动操作："
         echo ""
@@ -453,14 +454,15 @@ if [[ -f "${settings_file}" ]]; then
     info "Agent Teams 环境变量已配置"
   else
     if command -v node &>/dev/null; then
-      node -e "
+      if node -e "
         const fs = require('fs');
         const settings = JSON.parse(fs.readFileSync('${settings_file}', 'utf-8'));
         if (!settings.env) settings.env = {};
         settings.env.CLAUDE_CODE_EXPERIMENTAL_AGENT_TEAMS = '1';
         fs.writeFileSync('${settings_file}', JSON.stringify(settings, null, 2) + '\n');
-      " 2>/dev/null && success "Agent Teams 已启用（CLAUDE_CODE_EXPERIMENTAL_AGENT_TEAMS=1）" \
-        || {
+      " 2>/dev/null; then
+        success "Agent Teams 已启用（CLAUDE_CODE_EXPERIMENTAL_AGENT_TEAMS=1）"
+      else
         warn "无法自动启用 Agent Teams 环境变量。请手动操作："
         echo ""
         echo "  1. 打开 .claude/settings.json"
@@ -475,7 +477,7 @@ if [[ -f "${settings_file}" ]]; then
         echo "  3. 如果文件中已有 \"env\" 字段，请将上述键值对合并到现有 \"env\" 对象中"
         echo "  4. 保存文件"
         echo ""
-      }
+      fi
     else
       warn "未检测到 node 命令，无法自动启用 Agent Teams。请手动操作："
       echo ""

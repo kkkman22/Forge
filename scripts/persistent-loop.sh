@@ -63,7 +63,7 @@ count_blocking_issues() {
   fi
   # Find the most recent review file
   local latest
-  latest=$(ls -t "$review_dir"/*.md 2>/dev/null | head -1)
+  latest=$(find "$review_dir" -maxdepth 1 -name '*.md' -print0 2>/dev/null | xargs -0 ls -t 2>/dev/null | head -1)
   if [ -z "$latest" ]; then
     echo "0"
     return
