@@ -3,3 +3,4 @@ dist/claude-code/bundles/
 .DS_Store
 *.tsbuildinfo
 coverage/
+.kiro/

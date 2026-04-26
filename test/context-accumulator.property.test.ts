@@ -11,11 +11,12 @@
 import * as fc from "fast-check";
 import { describe, expect, it } from "vitest";
 import {
-  buildIterationPrompt,
-  formatIterationEntry,
-  formatNotesDocument,
-  parseListSection,
-  parseNotesDocument,
+    buildIterationPrompt,
+    formatIterationEntry,
+    formatListSection,
+    formatNotesDocument,
+    parseListSection,
+    parseNotesDocument
 } from "../src/context-accumulator.js";
 import type { IterationEntry, NotesDocument } from "../src/loop-types.js";
 
@@ -284,6 +285,88 @@ describe("Feature: gnhf-inspired-enhancements, Property 8: Notes 格式往返一
           expect(roundTripped.keyLearnings).toEqual(original.keyLearnings);
         }
       }),
+      { numRuns: 200 },
+    );
+  });
+});
+
+// ---------------------------------------------------------------------------
+// Feature: v2-2-legacy-fixes, Property 1: parseListSection regex special character round-trip
+// ---------------------------------------------------------------------------
+
+/** All regex special characters that parseListSection must escape. */
+const REGEX_SPECIAL_CHARS = [".", "*", "+", "?", "^", "$", "{", "}", "(", ")", "|", "[", "]", "\\"];
+
+/**
+ * Arbitrary that generates a section title containing at least one regex
+ * special character. Inserts characters from the special set into a random
+ * base string so that all special characters are covered across runs.
+ */
+const regexSpecialTitleArb: fc.Arbitrary<string> = fc
+  .tuple(
+    fc.array(fc.constantFrom(...REGEX_SPECIAL_CHARS), { minLength: 1, maxLength: 4 }).map((a) => a.join("")),
+    cleanLineArb,
+    fc.integer({ min: 0, max: 80 }),
+  )
+  .map(([specials, base, pos]) => {
+    const insertAt = Math.min(pos, base.length);
+    return `${base.slice(0, insertAt)}${specials}${base.slice(insertAt)}`;
+  })
+  .filter((s) => s.trim().length > 0 && !s.includes("\n"))
+  .map((s) => s.replace(/\*\*/g, "xx").replace(/#{3}/g, "H"))
+  .filter((s) => s.trim().length > 0);
+
+describe("Feature: v2-2-legacy-fixes, Property 1: parseListSection regex special character round-trip", () => {
+  /**
+   * **Validates: Requirements 1.1, 1.2, 1.3, 2.1, 2.2**
+   *
+   * For any section title containing regex special characters and any
+   * non-empty list of valid bullet items, formatting with formatListSection
+   * then parsing back with parseListSection produces the original items.
+   */
+  it("round-trips arbitrary titles with regex special characters through format → parse", () => {
+    fc.assert(
+      fc.property(
+        regexSpecialTitleArb,
+        fc.array(cleanLineArb, { minLength: 1, maxLength: 8 }),
+        (title, items) => {
+          const formatted = formatListSection(title, items);
+          const parsed = parseListSection(formatted, title);
+          expect(parsed).toEqual(items);
+        },
+      ),
+      { numRuns: 200 },
+    );
+  });
+});
+
+// ---------------------------------------------------------------------------
+// Feature: v2-2-legacy-fixes, Property 2: parseListSection returns empty array for non-matching titles with special characters
+// ---------------------------------------------------------------------------
+
+describe("Feature: v2-2-legacy-fixes, Property 2: parseListSection returns empty array for non-matching titles with special characters", () => {
+  /**
+   * **Validates: Requirements 1.4**
+   *
+   * For any section title containing regex special characters and any
+   * Markdown block that does NOT contain that title as a bold section header,
+   * parseListSection SHALL return an empty array.
+   */
+  it("returns empty array when block does not contain the generated title as a bold section header", () => {
+    fc.assert(
+      fc.property(
+        regexSpecialTitleArb,
+        cleanLineArb,
+        fc.array(cleanLineArb, { minLength: 1, maxLength: 5 }),
+        (title, otherTitle, items) => {
+          // Ensure the "other" title used in the block is different from the search title
+          const differentTitle = otherTitle === title ? `${otherTitle}DIFFERENT` : otherTitle;
+          // Build a Markdown block that uses a different bold section header
+          const block = `**${differentTitle}:**\n${items.map((item) => `- ${item}`).join("\n")}\n`;
+          const parsed = parseListSection(block, title);
+          expect(parsed).toEqual([]);
+        },
+      ),
       { numRuns: 200 },
     );
   });
