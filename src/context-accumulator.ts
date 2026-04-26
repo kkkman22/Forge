@@ -22,7 +22,7 @@ import type { IterationEntry, NotesDocument } from "./loop-types.js";
  * Returns an empty string when `items` is empty so that round-trip
  * parsing can distinguish "no items" from "empty section header".
  */
-function formatListSection(title: string, items: string[]): string {
+export function formatListSection(title: string, items: string[]): string {
   if (items.length === 0) return "";
   return `**${title}:**\n${items.map((item) => `- ${item}`).join("\n")}\n`;
 }

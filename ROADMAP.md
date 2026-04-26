@@ -28,30 +28,14 @@
 
 ---
 
-## 短期 — v2.2（遗留修复）
+## v2.2 已完成（2026-04-26）
 
-v2.1 遗留的审核报告修复项 + 补充加固。
-
-- **context-accumulator 正则 bug 修复**
-  - `parseListSection` 中正则转义替换字符串修正（当前替换字符串包含错误的 UUID 值）
-  - 新增正则特殊字符标题的解析测试覆盖
-
-- **Forge Loop npm 发包**
-
-  当前 Forge Skills 和 Forge Loop 杂糅在同一个仓库中。Skills 通过分发包（纯 Markdown + Shell）零依赖分发，但 Loop 需要用户克隆仓库、`npm install`、`npx tsc`，体验很重。解决方案：**同一仓库两条分发管线**——Skills 继续走分发包，Loop 走 npm 发包。
-
-  - 将 `forge-loop` 发布到 npm，用户 `npx forge-loop "目标"` 一行即可使用
-  - 调整 `package.json`：`private: false`，配置 `files` 字段只发布 `dist/src/` 和运行时依赖
-  - CI 新增 npm publish 步骤（tag 触发，如 `v2.2.0`）
-  - 不拆仓库，不影响现有分发包流程
-
-  ```
-  # 分发包用户（只用 /forge 命令）
-  bash install-dist.sh                        # 零依赖，复制即用
-
-  # Loop 用户（自主执行引擎）
-  npx forge-loop "修复所有 lint 错误"          # npm 自动下载，自动解析依赖
-  ```
+- ✅ **`parseListSection` 正则 bug 修复** — 替换字符串从错误的 UUID 值修正为标准的 `"\\$&"` 反向引用，修复含正则特殊字符的 section title 无法解析的问题
+- ✅ **正则特殊字符 property-based 测试** — 新增 2 个 PBT（round-trip 一致性 + non-matching title 返回空数组，各 200 次迭代）
+- ✅ **Forge Loop npm 发包** — `npx forge-loop "目标"` 一行即可使用自主执行引擎
+  - `package.json`：`name` → `forge-loop`、`private` → `false`、`files: ["dist/src/"]`
+  - CI 新增独立 `publish` job（Git tag `v*` 触发，含 typecheck → test → tsc → npm publish）
+  - 现有 Skills 分发包流程不受影响
 
 ---
 

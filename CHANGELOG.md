@@ -2,6 +2,25 @@
 
 All notable changes to Forge will be documented in this file.
 
+## [2.2.0] - 2026-04-26
+
+### Added
+
+- **npm 公开发布支持**：`forge-loop` 现可通过 `npx forge-loop "目标"` 一行命令使用，无需克隆仓库手动编译
+  - `package.json` 配置 `files: ["dist/src/"]`，仅发布编译后的运行时源码
+  - 包名从 `forge` 改为 `forge-loop`，与 CLI 命令名一致
+  - `private` 设为 `false`，允许 npm 公开发布
+- **CI npm publish job**：`.github/workflows/ci.yml` 新增独立 `publish` job，Git tag `v*` push 时自动发布
+  - 发布前执行完整的 typecheck → test → tsc 编译流水线
+  - 使用 `NPM_TOKEN` secret 认证 npm registry
+- **parseListSection 正则特殊字符 property-based 测试**：
+  - Property 1：regex special character round-trip（`formatListSection` → `parseListSection` 往返一致性，200 次迭代）
+  - Property 2：non-matching title with special characters returns empty array（200 次迭代）
+
+### Fixed
+
+- **`parseListSection` 正则转义替换字符串**：`String.prototype.replace` 的替换字符串从错误的 UUID 值修正为标准的 `"\\$&"` 反向引用模式，修复含正则特殊字符（`(`, `)`, `[`, `]`, `+`, `*` 等）的 section title 无法正确解析的问题
+
 ## [2.1.1] - 2026-04-26
 
 ### Changed
