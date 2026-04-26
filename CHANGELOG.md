@@ -2,6 +2,13 @@
 
 All notable changes to Forge will be documented in this file.
 
+## [2.1.1] - 2026-04-26
+
+### Changed
+
+- **CI Actions 升级至 Node.js 24 运行时**：`actions/checkout` v4→v5、`actions/setup-node` v4→v6，消除 GitHub Actions Node.js 20 弃用警告
+- **CI 构建 Node.js 版本升级**：20→22（当前 LTS）
+
 ## [2.1.0] - 2026-04-26
 
 ### Added
