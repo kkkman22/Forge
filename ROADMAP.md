@@ -6,6 +6,7 @@
 
 ## v2.1 已完成（2026-04-26）
 
+- ✅ **Forge Loop 自主执行引擎** — 基于 Claude Agent SDK 的自主循环 CLI（`forge-loop`），含纯函数状态机、Git 事务、指数退避 + 熔断器、Worktree 隔离、防休眠、优雅关闭
 - ✅ **运行时依赖版本锁定** — `package.json` dependencies 使用精确版本
 - ✅ **check-frozen.sh 重写为 TypeScript** — shell thin wrapper + TS 实现，保留 fallback
 - ✅ **CI 验证范围扩展** — shellcheck、hooks.json 验证、SKILL.md frontmatter 检查
@@ -16,6 +17,14 @@
 - ✅ **init.sh 增强** — handoffs 目录、模板复制、hooks 合并失败时详细指引
 - ✅ **CI sync-dist → verify-dist** — 不再自动提交，改为校验失败报错
 - ✅ **forge-resume 增强** — 优先读取 interim 日志，恢复后立即执行 Restatement
+- ✅ **回滚安全网** — `executeRollback` 执行 `git reset --hard` 前自动 `git stash`，stash 失败不阻断回滚
+- ✅ **权限绕过文档化** — `sdk-agent-adapter.ts` 中 `bypassPermissions` 已添加设计决策注释
+
+## v2.1.1 已完成（2026-04-26）
+
+- ✅ **CI Actions 升级至 Node.js 24 运行时** — `actions/checkout` v4→v5、`actions/setup-node` v4→v6
+- ✅ **CI 构建 Node.js 版本升级** — 20→22（当前 LTS）
+- ✅ **Shellcheck 合规** — 修复 4 个脚本共 7 处 shellcheck 警告
 
 ---
 
@@ -24,16 +33,8 @@
 v2.1 遗留的审核报告修复项 + 补充加固。
 
 - **context-accumulator 正则 bug 修复**
-  - `parseListSection` 中正则转义替换字符串修正
+  - `parseListSection` 中正则转义替换字符串修正（当前替换字符串包含错误的 UUID 值）
   - 新增正则特殊字符标题的解析测试覆盖
-
-- **回滚安全网（git stash before reset）**
-  - `executeRollback` 执行破坏性操作前自动 `git stash --include-untracked`
-  - stash 失败不阻断回滚流程，日志记录操作结果
-
-- **权限绕过文档化**
-  - `sdk-agent-adapter.ts` 中 `bypassPermissions` 的设计决策注释
-  - 说明上层保护机制（hooks、冻结区、状态门禁）的职责分工
 
 ---
 
