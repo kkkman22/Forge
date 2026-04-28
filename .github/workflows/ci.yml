@@ -21,11 +21,11 @@ jobs:
       - run: npm run lint
       - name: Verify docs generation
         run: npm run docs
+      - name: Build dist bundle
+        run: bash scripts/build-dist.sh
       - run: npm run test:coverage
       - name: Check README metrics
         run: bash scripts/check-readme-metrics.sh
-      - name: Build dist bundle
-        run: bash scripts/build-dist.sh
       - name: Verify dist bundle
         run: |
           test -f dist/claude-code/bundles/forge/INSTALL.md
