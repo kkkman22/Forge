@@ -29,6 +29,7 @@ import { formatNotesDocument } from "./context-accumulator.js";
 import { EffectExecutor } from "./effect-executor.js";
 import { type I18nConfig, parseTranslationFile, translate } from "./i18n.js";
 import { detectLocale } from "./locale-detector.js";
+import { createLogEntry, createLogSink, type LogSinkConfig } from "./logger/index.js";
 import type { LoopConfig, RunLimits } from "./loop-types.js";
 import type { TaskType } from "./pua-engine.js";
 import { branchExists, RunManager } from "./run-manager.js";
@@ -142,6 +143,8 @@ interface CliOptions {
   puaTaskType?: string;
   resume?: string;
   lang?: string;
+  logFormat?: string;
+  logLevel?: string;
 }
 
 // ---------------------------------------------------------------------------
@@ -172,6 +175,8 @@ async function main(): Promise<void> {
     )
     .option("--resume <branchName>", "Resume an existing run on a forge/ branch")
     .option("--lang <locale>", "Set display language (zh|en)")
+    .option("--log-format <text|json>", "Log output format (text|json)", "text")
+    .option("--log-level <debug|info|warn|error>", "Minimum log level", "info")
     .action(async (objective: string, opts: CliOptions) => {
       const cwd = process.cwd();
       const preventSleep = opts.preventSleep !== "off";
@@ -246,6 +251,23 @@ async function main(): Promise<void> {
       if (opts.lang && !SUPPORTED_LOCALES.has(opts.lang)) {
         throw new CliError(
           `Error: Invalid --lang value "${opts.lang}". Valid options: ${[...SUPPORTED_LOCALES].join(", ")}`,
+        );
+      }
+
+      // ---------------------------------------------------------------
+      // Validate --log-format and --log-level values (Req 2.4, 3.1)
+      // ---------------------------------------------------------------
+      const VALID_LOG_FORMATS = new Set(["text", "json"]);
+      const VALID_LOG_LEVELS = new Set(["debug", "info", "warn", "error"]);
+
+      if (opts.logFormat && !VALID_LOG_FORMATS.has(opts.logFormat)) {
+        throw new CliError(
+          `Error: Invalid --log-format value "${opts.logFormat}". Valid options: ${[...VALID_LOG_FORMATS].join(", ")}`,
+        );
+      }
+      if (opts.logLevel && !VALID_LOG_LEVELS.has(opts.logLevel)) {
+        throw new CliError(
+          `Error: Invalid --log-level value "${opts.logLevel}". Valid options: ${[...VALID_LOG_LEVELS].join(", ")}`,
         );
       }
 
@@ -439,6 +461,15 @@ async function main(): Promise<void> {
       }
 
       // ---------------------------------------------------------------
+      // Create LogSink (Req 2.1, 3.1)
+      // ---------------------------------------------------------------
+      const logSinkConfig: LogSinkConfig = {
+        format: (opts.logFormat as "text" | "json") ?? "text",
+        level: (opts.logLevel as "debug" | "info" | "warn" | "error") ?? "info",
+      };
+      const logSink = createLogSink(logSinkConfig);
+
+      // ---------------------------------------------------------------
       // Create EffectExecutor and SdkDriver
       // ---------------------------------------------------------------
       const effectExecutor = new EffectExecutor({
@@ -447,7 +478,7 @@ async function main(): Promise<void> {
           RunManager.persistNotes(runSetup.notesPath, content);
         },
         onLog: (message: string) => {
-          console.log(message);
+          logSink.log(createLogEntry("effect_log", "info", message, { runId: runSetup.runId }));
         },
       });
 
@@ -476,6 +507,7 @@ async function main(): Promise<void> {
                 ? ("general" as TaskType)
                 : undefined,
           t: _t,
+          logSinkConfig,
         },
         effectExecutor,
         agentAdapter,
