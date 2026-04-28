@@ -1,0 +1,26 @@
+import type { LogEntry, LogLevel } from "./types.js";
+
+interface LogContext {
+  runId?: string;
+  iteration?: number;
+  phase?: string;
+  branchName?: string;
+  commitCount?: number;
+}
+
+export function createLogEntry(
+  event: string,
+  level: LogLevel,
+  message: string,
+  context: LogContext = {},
+  metadata?: Record<string, unknown>,
+): LogEntry {
+  return {
+    timestamp: new Date().toISOString(),
+    level,
+    event,
+    message,
+    ...context,
+    ...(metadata !== undefined ? { metadata } : {}),
+  };
+}

@@ -206,8 +206,8 @@ describe("StatusFile write failure degradation (Requirement 6.7)", () => {
   });
 
   it("logs a warning but does NOT abort when writeStatusFile throws during cleanup", async () => {
-    const warnSpy = vi.spyOn(console, "warn").mockImplementation(() => {});
-    vi.spyOn(console, "log").mockImplementation(() => {});
+    const logSpy = vi.spyOn(console, "log").mockImplementation(() => {});
+    vi.spyOn(console, "warn").mockImplementation(() => {});
 
     // Make clearLoopFields throw to simulate write failure during cleanup
     vi.mocked(clearLoopFields).mockImplementation(() => {
@@ -235,11 +235,11 @@ describe("StatusFile write failure degradation (Requirement 6.7)", () => {
     expect(result.notesDocument.entries).toHaveLength(1);
 
     // Warning should be logged about the cleanup failure
-    expect(warnSpy).toHaveBeenCalled();
-    const warningMessages = warnSpy.mock.calls.map((call) => call[0]);
-    const hasCleanupWarning = warningMessages.some(
+    expect(logSpy).toHaveBeenCalled();
+    const logMessages = logSpy.mock.calls.map((call) => call[0]);
+    const hasCleanupWarning = logMessages.some(
       (msg: string) =>
-        msg.includes("statusFieldClearFailed") ||
+        msg.includes("status_field_clear_failed") ||
         msg.includes("clear") ||
         msg.includes("StatusFile"),
     );

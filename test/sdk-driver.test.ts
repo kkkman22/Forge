@@ -267,7 +267,11 @@ describe("successful iteration", () => {
 
     await driver.run();
 
-    expect(consoleSpy).toHaveBeenCalledWith(expect.stringContaining("driver.loop.iterationTokens"));
+    const logMessages = consoleSpy.mock.calls.map((call) => call[0]);
+    const hasTokenLog = logMessages.some((msg: string) =>
+      msg.includes("driver.loop.iterationTokens"),
+    );
+    expect(hasTokenLog).toBe(true);
   });
 });
 
@@ -387,7 +391,11 @@ describe("hard failure (SDK throw)", () => {
 
     // Token usage should be logged with the i18n key for hard failure
     // The hard failure path uses zeroUsage but the state machine still tracks cumulative
-    expect(consoleSpy).toHaveBeenCalledWith(expect.stringContaining("driver.loop.iterationTokens"));
+    const logMessages = consoleSpy.mock.calls.map((call) => call[0]);
+    const hasTokenLog = logMessages.some((msg: string) =>
+      msg.includes("driver.loop.iterationTokens"),
+    );
+    expect(hasTokenLog).toBe(true);
   });
 });
 
@@ -613,9 +621,11 @@ describe("token usage logging", () => {
     await driver.run();
 
     // Should log iteration tokens using the i18n key (no t() configured → key fallback)
-    expect(consoleSpy).toHaveBeenCalledTimes(1);
-    const logMessage = consoleSpy.mock.calls[0][0];
-    expect(logMessage).toContain("driver.loop.iterationTokens");
+    const logMessages = consoleSpy.mock.calls.map((call) => call[0]);
+    const hasTokenLog = logMessages.some((msg: string) =>
+      msg.includes("driver.loop.iterationTokens"),
+    );
+    expect(hasTokenLog).toBe(true);
   });
 
   it("logs cumulative token totals across multiple iterations", async () => {
@@ -632,10 +642,12 @@ describe("token usage logging", () => {
 
     await driver.run();
 
-    expect(consoleSpy).toHaveBeenCalledTimes(2);
-    // Both logs should use the i18n key
-    expect(consoleSpy.mock.calls[0][0]).toContain("driver.loop.iterationTokens");
-    expect(consoleSpy.mock.calls[1][0]).toContain("driver.loop.iterationTokens");
+    // Both iterations should log token usage with the i18n key
+    const logMessages = consoleSpy.mock.calls.map((call) => call[0]);
+    const tokenLogs = logMessages.filter((msg: string) =>
+      msg.includes("driver.loop.iterationTokens"),
+    );
+    expect(tokenLogs.length).toBeGreaterThanOrEqual(2);
   });
 });
 
@@ -708,8 +720,8 @@ describe("empty objective validation", () => {
 // ---------------------------------------------------------------------------
 
 describe("hooks validation during run()", () => {
-  it("emits console.warn with 'hooks protection missing' when hooks are absent", async () => {
-    const warnSpy = vi.spyOn(console, "warn").mockImplementation(() => {});
+  it("emits warning with 'hooks protection missing' when hooks are absent", async () => {
+    const logSpy = vi.spyOn(console, "log").mockImplementation(() => {});
     const executor = createMockEffectExecutor();
     executor.executeEffects.mockImplementation(async () => {
       executor.aborted = true;
@@ -720,13 +732,15 @@ describe("hooks validation during run()", () => {
 
     await driver.run();
 
-    expect(warnSpy).toHaveBeenCalledWith(
-      expect.stringContaining("driver.warning.hooksProtectionMissing"),
+    const logMessages = logSpy.mock.calls.map((call) => call[0]);
+    const hasHooksWarning = logMessages.some((msg: string) =>
+      msg.includes("driver.warning.hooksProtectionMissing"),
     );
+    expect(hasHooksWarning).toBe(true);
   });
 
   it("does not block startup when hooks validation fails", async () => {
-    vi.spyOn(console, "warn").mockImplementation(() => {});
+    vi.spyOn(console, "log").mockImplementation(() => {});
     const executor = createMockEffectExecutor();
     const agent = createMockAgent();
     const driver = new SdkDriver(
@@ -743,7 +757,7 @@ describe("hooks validation during run()", () => {
   });
 
   it("handles unexpected errors in hooks validation gracefully", async () => {
-    const warnSpy = vi.spyOn(console, "warn").mockImplementation(() => {});
+    const logSpy = vi.spyOn(console, "log").mockImplementation(() => {});
     const executor = createMockEffectExecutor();
     executor.executeEffects.mockImplementation(async () => {
       executor.aborted = true;
@@ -755,10 +769,12 @@ describe("hooks validation during run()", () => {
     // Should not throw even when hooks validation encounters issues
     const result = await driver.run();
 
-    // Warn was called with hooks protection missing (i18n key)
-    expect(warnSpy).toHaveBeenCalledWith(
-      expect.stringContaining("driver.warning.hooksProtectionMissing"),
+    // Warning was logged with hooks protection missing (i18n key)
+    const logMessages = logSpy.mock.calls.map((call) => call[0]);
+    const hasHooksWarning = logMessages.some((msg: string) =>
+      msg.includes("driver.warning.hooksProtectionMissing"),
     );
+    expect(hasHooksWarning).toBe(true);
     // Driver still produced a result (startup was not blocked)
     expect(result).toBeDefined();
     expect(result.notesDocument).toBeDefined();

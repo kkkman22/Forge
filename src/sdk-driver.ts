@@ -20,6 +20,14 @@ import {
   formatNotesDocument,
 } from "./context-accumulator.js";
 import { type EffectExecutorInterface, FrozenZoneViolation } from "./effect-executor.js";
+import {
+  computePerformanceBaseline,
+  createIterationTiming,
+  createLogEntry,
+  createLogSink,
+  type IterationTiming,
+  type LogSinkConfig,
+} from "./logger/index.js";
 import type {
   AgentInterface,
   AgentOutput,
@@ -50,6 +58,13 @@ import {
 } from "./sdk-status-helpers.js";
 import { determineNextSkill, shouldCommitForPhase } from "./skill-scheduler.js";
 import { extractLoopFields } from "./status-file-ext.js";
+
+const ZERO_TOKEN_USAGE: TokenUsage = {
+  inputTokens: 0,
+  outputTokens: 0,
+  cacheReadTokens: 0,
+  cacheCreationTokens: 0,
+};
 
 // ---------------------------------------------------------------------------
 // Configuration and result types
@@ -109,6 +124,8 @@ export interface SdkDriverConfig {
   readProgressFile?: () => string;
   /** Optional translation function for i18n support. When not provided, English strings are used. */
   t?: TranslateFn;
+  /** Log sink configuration for structured logging. When not provided, defaults to text/info. */
+  logSinkConfig?: LogSinkConfig;
 }
 
 /** Result returned when the driver loop exits. */
@@ -192,6 +209,12 @@ export class SdkDriver {
   /** StatusFile I/O interface for delegating to helper functions. */
   private readonly statusFileIO: StatusFileIO | undefined;
 
+  /** Structured logger for observability. */
+  private readonly logger: ReturnType<typeof createLogSink>;
+
+  /** Iteration timing accumulator for performance baseline. */
+  private readonly iterationTimings: IterationTiming[] = [];
+
   constructor(
     config: SdkDriverConfig,
     effectExecutor: EffectExecutorInterface,
@@ -206,6 +229,9 @@ export class SdkDriver {
     this.config = { ...config, skillAware: config.skillAware ?? false };
     this.effectExecutor = effectExecutor;
     this.agentAdapter = agentAdapter;
+
+    // Initialize structured logger.
+    this.logger = createLogSink(config.logSinkConfig ?? { format: "text", level: "info" });
 
     // Initialize orchestrator state.
     this.orchestratorState = createInitialState();
@@ -228,7 +254,10 @@ export class SdkDriver {
           writeStatusFile: (content) => {
             if (this.statusFileIO) this.statusFileIO.write(content);
           },
-          warn: (msg) => console.warn(msg),
+          warn: (msg) =>
+            this.logger.log(
+              createLogEntry("pua_warning", "warn", msg, { runId: this.config.runId }),
+            ),
         },
         config.puaTaskType ?? "general",
       );
@@ -261,17 +290,27 @@ export class SdkDriver {
     try {
       const hooksResult = validateHooksPresence(this.config.cwd);
       if (!hooksResult.valid) {
-        console.warn(
-          this.t("driver.warning.hooksProtectionMissing", {
-            reason: hooksResult.reason ?? "unknown",
-          }),
+        this.logger.log(
+          createLogEntry(
+            "hooks_missing",
+            "warn",
+            this.t("driver.warning.hooksProtectionMissing", {
+              reason: hooksResult.reason ?? "unknown",
+            }),
+            { runId: this.config.runId },
+          ),
         );
       }
     } catch (err) {
-      console.warn(
-        this.t("driver.warning.hooksProtectionMissing", {
-          reason: `unexpected error during hooks validation — ${err instanceof Error ? err.message : String(err)}`,
-        }),
+      this.logger.log(
+        createLogEntry(
+          "hooks_validation_failed",
+          "warn",
+          this.t("driver.warning.hooksProtectionMissing", {
+            reason: `unexpected error during hooks validation — ${err instanceof Error ? err.message : String(err)}`,
+          }),
+          { runId: this.config.runId },
+        ),
       );
     }
 
@@ -284,10 +323,15 @@ export class SdkDriver {
           this.config.presetTier ?? "standard",
         );
       } catch (err) {
-        console.warn(
-          this.t("driver.warning.statusFieldInitFailed", {
-            error: err instanceof Error ? err.message : String(err),
-          }),
+        this.logger.log(
+          createLogEntry(
+            "status_field_init_failed",
+            "warn",
+            this.t("driver.warning.statusFieldInitFailed", {
+              error: err instanceof Error ? err.message : String(err),
+            }),
+            { runId: this.config.runId },
+          ),
         );
       }
     }
@@ -313,6 +357,7 @@ export class SdkDriver {
         // Check for schedule_iteration effect.
         if (this.hasEffect(this.lastEffects, "schedule_iteration")) {
           await this.executeIteration();
+          // Timing is recorded inside each execute*Iteration method
           continue;
         }
 
@@ -336,17 +381,39 @@ export class SdkDriver {
 
       return this.buildResult();
     } finally {
+      // Output performance baseline (Req 5.1–5.4).
+      const baseline = computePerformanceBaseline(this.iterationTimings);
+      this.logger.log(
+        createLogEntry(
+          "performance_baseline",
+          "info",
+          "Run performance summary",
+          {
+            runId: this.config.runId,
+          },
+          { ...baseline },
+        ),
+      );
+
       // Output structured completion/abort summary (Req 9.1–9.5).
       // Placed in finally block so it runs on both normal and abnormal exits.
       if (this.config.skillAware) {
         try {
           const summary = this.formatCompletionSummary();
-          console.log(summary);
+          this.logger.log(
+            createLogEntry("completion_summary", "info", summary, { runId: this.config.runId }),
+          );
         } catch (err) {
-          console.warn(
-            this.t("driver.warning.completionSummaryFailed", {
-              error: err instanceof Error ? err.message : String(err),
-            }),
+          this.logger.log(
+            createLogEntry(
+              "completion_summary_failed",
+              "warn",
+              "Failed to format completion summary",
+              {
+                runId: this.config.runId,
+              },
+              { error: err instanceof Error ? err.message : String(err) },
+            ),
           );
         }
       }
@@ -356,10 +423,16 @@ export class SdkDriver {
         try {
           clearLoopFieldsOnShutdown(this.statusFileIO, this.loopCompletedNormally);
         } catch (err) {
-          console.warn(
-            this.t("driver.warning.statusFieldClearFailed", {
-              error: err instanceof Error ? err.message : String(err),
-            }),
+          this.logger.log(
+            createLogEntry(
+              "status_field_clear_failed",
+              "warn",
+              "Failed to clear loop status fields",
+              {
+                runId: this.config.runId,
+              },
+              { error: err instanceof Error ? err.message : String(err) },
+            ),
           );
         }
       }
@@ -369,10 +442,16 @@ export class SdkDriver {
         try {
           this.puaStateManager?.safeClearFields();
         } catch (err) {
-          console.warn(
-            this.t("driver.warning.puaFieldClearFailed", {
-              error: err instanceof Error ? (err.stack ?? err.message) : String(err),
-            }),
+          this.logger.log(
+            createLogEntry(
+              "pua_field_clear_failed",
+              "warn",
+              "Failed to clear PUA fields",
+              {
+                runId: this.config.runId,
+              },
+              { error: err instanceof Error ? (err.stack ?? err.message) : String(err) },
+            ),
           );
         }
       }
@@ -450,6 +529,7 @@ export class SdkDriver {
    */
   private async executeGenericIteration(): Promise<void> {
     const iterationNumber = this.orchestratorState.currentIteration + 1;
+    const iterStartMs = Date.now();
 
     // Build the iteration prompt with current notes content.
     const prompt = buildIterationPrompt({
@@ -465,12 +545,14 @@ export class SdkDriver {
 
     let event: OrchestratorEvent;
     let iterationEntry: IterationEntry;
+    let agentEndMs = iterStartMs;
 
     try {
       // Invoke the agent adapter.
       const agentResult = await this.agentAdapter.run(prompt, this.config.cwd, {
         signal: this.currentAbortController.signal,
       });
+      agentEndMs = Date.now();
 
       const output: AgentOutput = agentResult.output;
       const usage: TokenUsage = agentResult.usage;
@@ -512,12 +594,7 @@ export class SdkDriver {
     } catch (error) {
       // Hard failure — SDK error or validation error.
       const errorMessage = error instanceof Error ? error.message : String(error);
-      const zeroUsage: TokenUsage = {
-        inputTokens: 0,
-        outputTokens: 0,
-        cacheReadTokens: 0,
-        cacheCreationTokens: 0,
-      };
+      const zeroUsage: TokenUsage = ZERO_TOKEN_USAGE;
 
       event = {
         type: "iteration_hard_failure",
@@ -592,12 +669,7 @@ export class SdkDriver {
 
       // Dispatch iteration_hard_failure from the original state — this triggers
       // rollback and does NOT increment commitCount.
-      const zeroUsage: TokenUsage = {
-        inputTokens: 0,
-        outputTokens: 0,
-        cacheReadTokens: 0,
-        cacheCreationTokens: 0,
-      };
+      const zeroUsage: TokenUsage = ZERO_TOKEN_USAGE;
       const failureResult = transition(
         this.orchestratorState,
         { type: "iteration_hard_failure", error: effectMessage, tokenUsage: zeroUsage },
@@ -627,6 +699,23 @@ export class SdkDriver {
       iterationEntry,
       "tokenUsage" in event ? event.tokenUsage : undefined,
     );
+
+    // Record iteration timing (Req 4.1–4.4).
+    const effectEndMs = Date.now();
+    const timing = createIterationTiming(iterStartMs, agentEndMs, effectEndMs);
+    this.iterationTimings.push(timing);
+    this.logger.log(
+      createLogEntry(
+        "iteration_timing",
+        "debug",
+        "Iteration timing",
+        {
+          runId: this.config.runId,
+          iteration: iterationNumber,
+        },
+        { ...timing },
+      ),
+    );
   }
 
   /**
@@ -646,6 +735,7 @@ export class SdkDriver {
    */
   private async executeSkillAwareIteration(): Promise<void> {
     const iterationNumber = this.orchestratorState.currentIteration + 1;
+    const iterStartMs = Date.now();
     const puaEnabled = this.config.puaEnabled === true;
 
     // Read current StatusFile to determine next skill phase.
@@ -707,12 +797,14 @@ export class SdkDriver {
     let iterationSuccess = false;
     let iterationSummary = "";
     let completedPhase: string | undefined;
+    let agentEndMs = iterStartMs;
 
     try {
       // Invoke the agent adapter.
       const agentResult = await this.agentAdapter.run(prompt, this.config.cwd, {
         signal: this.currentAbortController.signal,
       });
+      agentEndMs = Date.now();
 
       const output: AgentOutput = agentResult.output;
       const usage: TokenUsage = agentResult.usage;
@@ -798,12 +890,7 @@ export class SdkDriver {
       }
     } catch (error) {
       const errorMessage = error instanceof Error ? error.message : String(error);
-      const zeroUsage: TokenUsage = {
-        inputTokens: 0,
-        outputTokens: 0,
-        cacheReadTokens: 0,
-        cacheCreationTokens: 0,
-      };
+      const zeroUsage: TokenUsage = ZERO_TOKEN_USAGE;
 
       event = {
         type: "iteration_hard_failure",
@@ -892,12 +979,7 @@ export class SdkDriver {
       this.orchestratorState = preTransitionState;
 
       // Dispatch iteration_hard_failure from the original state.
-      const zeroUsage: TokenUsage = {
-        inputTokens: 0,
-        outputTokens: 0,
-        cacheReadTokens: 0,
-        cacheCreationTokens: 0,
-      };
+      const zeroUsage: TokenUsage = ZERO_TOKEN_USAGE;
       const failureResult = transition(
         this.orchestratorState,
         { type: "iteration_hard_failure", error: effectMessage, tokenUsage: zeroUsage },
@@ -953,6 +1035,23 @@ export class SdkDriver {
 
     // Update StatusFile with current phase and iteration (non-critical).
     safeUpdateIterationStatusHelper(this.statusFileIO, nextPhase, iterationNumber);
+
+    // Record iteration timing (Req 4.1–4.4).
+    const effectEndMs = Date.now();
+    const timing = createIterationTiming(iterStartMs, agentEndMs, effectEndMs);
+    this.iterationTimings.push(timing);
+    this.logger.log(
+      createLogEntry(
+        "iteration_timing",
+        "debug",
+        "Iteration timing",
+        {
+          runId: this.config.runId,
+          iteration: iterationNumber,
+        },
+        { ...timing },
+      ),
+    );
   }
 
   // -------------------------------------------------------------------------
@@ -989,8 +1088,13 @@ export class SdkDriver {
     try {
       return reader();
     } catch (err) {
-      console.warn(
-        `[debug] readFileContent failed: ${err instanceof Error ? err.message : String(err)}`,
+      this.logger.log(
+        createLogEntry(
+          "read_file_content_failed",
+          "debug",
+          `readFileContent failed: ${err instanceof Error ? err.message : String(err)}`,
+          { runId: this.config.runId },
+        ),
       );
       return null;
     }
@@ -1065,7 +1169,23 @@ export class SdkDriver {
       totalInputTokens: String(state.totalInputTokens),
       totalOutputTokens: String(state.totalOutputTokens),
     });
-    console.log(message);
+    this.logger.log(
+      createLogEntry(
+        "token_usage",
+        "info",
+        message,
+        {
+          runId: this.config.runId,
+          iteration: state.currentIteration,
+        },
+        {
+          inputTokens: usage.inputTokens,
+          outputTokens: usage.outputTokens,
+          totalInputTokens: state.totalInputTokens,
+          totalOutputTokens: state.totalOutputTokens,
+        },
+      ),
+    );
   }
 
   // -------------------------------------------------------------------------
@@ -1079,7 +1199,16 @@ export class SdkDriver {
       await this.effectExecutor.executeEffects(effects, signal);
     } catch (error) {
       const message = error instanceof Error ? error.message : String(error);
-      console.log(this.t("driver.loop.effectExecutionFailed", { message }));
+      this.logger.log(
+        createLogEntry(
+          "effect_execution_failed",
+          "error",
+          this.t("driver.loop.effectExecutionFailed", { message }),
+          {
+            runId: this.config.runId,
+          },
+        ),
+      );
       throw error;
     }
   }
@@ -1326,8 +1455,13 @@ export class SdkDriver {
           .map((i) => `${i.severity}: ${i.description}`);
       }
     } catch (err) {
-      console.warn(
-        `[debug] collectUnresolvedIssues failed: ${err instanceof Error ? err.message : String(err)}`,
+      this.logger.log(
+        createLogEntry(
+          "collect_issues_failed",
+          "debug",
+          `collectUnresolvedIssues failed: ${err instanceof Error ? err.message : String(err)}`,
+          { runId: this.config.runId },
+        ),
       );
     }
     return [];
@@ -1364,7 +1498,7 @@ export function detectSkillAwareMode(cwd: string): boolean {
   try {
     return existsSync(join(cwd, ".forge"));
   } catch (err) {
-    console.warn(
+    console.error(
       `[debug] detectSkillAwareMode failed for "${cwd}": ${err instanceof Error ? err.message : String(err)}`,
     );
     return false;
