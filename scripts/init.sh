@@ -190,6 +190,19 @@ fi
 # --- 写入 config.md ---
 init_date="$(date +%Y-%m-%d)"
 
+# --- Copy evolved-rules.md template ---
+if [[ -f "${FORGE_ROOT}/templates/evolved-rules.md" ]]; then
+  sed -e "s/{{init_date}}/${init_date}/g" \
+      -e "s/{{max_rules}}/15/g" \
+    "${FORGE_ROOT}/templates/evolved-rules.md" > "${PROJECT_ROOT}/.forge/knowledge/evolved-rules.md"
+fi
+
+# --- Copy rule-changelog.md template ---
+if [[ -f "${FORGE_ROOT}/templates/rule-changelog.md" ]]; then
+  sed "s/{{init_date}}/${init_date}/g" \
+    "${FORGE_ROOT}/templates/rule-changelog.md" > "${PROJECT_ROOT}/.forge/knowledge/rule-changelog.md"
+fi
+
 # 将技术栈转为 YAML 数组格式
 IFS=',' read -ra stack_array <<< "${tech_stack}"
 stack_yaml=""

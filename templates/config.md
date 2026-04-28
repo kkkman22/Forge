@@ -33,6 +33,8 @@ verify_max_attempts: 3      # 验证失败后最大重试次数，默认 3，超
 - `.forge/knowledge/instincts.md`（只能追加或更新置信度，不能删除已有模式，除非 `/forge learn` 维护清理）
 - `.forge/knowledge/known-failures.md`（只能追加或更新，不能删除已有失败模式，除非维护清理）
 - `.forge/knowledge/solutions/*.md`（只能追加或合并，不能随意删除，除非 `/forge learn` 维护清理）
+- `.forge/knowledge/evolved-rules.md`（only updatable by `/forge learn` rule distillation, not deletable outside maintenance）
+- `.forge/knowledge/rule-changelog.md`（append-only — only new entries, no deletion of history）
 
 ### 🟢 开放区（Open）— AI 可自由修改
 

@@ -347,6 +347,239 @@ instincts.md 中每个模式的 Confidence_Score 必须在 **0.3 至 0.9** 范�
 - **0.3**：最低可接受的置信度，低于此值的模式应被清理
 - **0.9**：最高置信度，表示经过大量实践验证
 
+### 6.5 Error-Prevention Rule Distillation（错误预防规则蒸馏）
+
+跨项目模式检测完成后，从积累的知识数据中蒸馏出"错误预防规则"——Claude 在没有明确指导时会犯错的高价值模式。蒸馏出的规则写入 `.forge/knowledge/evolved-rules.md`（最多 15 条），在每次会话开始时通过 SessionStart hook 注入 Claude 上下文。
+
+**核心原则**：只添加"没有这条规则 Claude 就会犯错"的规则——不是知识转储。
+
+#### 6.5.1 数据源
+
+规则蒸馏从以下四个数据源 + 会话日志中提取候选：
+
+| 数据源 | 文件路径 | 提取内容 |
+|--------|---------|---------|
+| 已知失败模式 | `.forge/knowledge/known-failures.md` | 反复出现的失败模式（occurrence >= 3） |
+| 直觉模式 | `.forge/knowledge/instincts.md` | 高置信度的经验法则（confidence >= 0.8） |
+| SKILL 反馈 | `.forge/knowledge/skill-feedback.md` | 反复不适用的 SKILL 指导（frequency >= 3） |
+| 执行指标 | `.forge/knowledge/metrics.md` | 质量维度的退化趋势（连续 3+ 会话退化） |
+| 会话日志 | `.forge/knowledge/sessions/*.md` | 跨会话重复出现的同一问题（3+ 会话） |
+
+#### 6.5.2 蒸馏算法
+
+```
+1. READ evolved-rules.md → current_rules[], rule_count, max_rules
+2. READ known-failures.md → failures[]
+3. READ instincts.md → instincts[]
+4. READ skill-feedback.md → feedback[]
+5. READ metrics.md → metrics_history[]
+6. SCAN session journals → cross_session_issues[]
+
+7. candidates = []
+8. FOR each failure WHERE occurrence >= 3:
+     candidates.push(transform(failure))
+9. FOR each instinct WHERE confidence >= 0.8:
+     candidates.push(transform(instinct))
+10. FOR each feedback WHERE frequency >= 3:
+      candidates.push(transform(feedback))
+11. FOR each cross_session_issue WHERE sessions >= 3:
+      candidates.push(transform(cross_session_issue))
+12. FOR each metric_dimension WHERE degradation_trend >= 3 sessions:
+      candidates.push(friction_adjustment(metric_dimension))
+
+13. IF candidates is empty:
+      OUTPUT "No qualifying entries found. Skipping rule distillation."
+      RETURN
+
+14. FOR each candidate:
+      a. APPLY exclusion filter (architecture, file paths, best practices, raw data, tool standards)
+      b. APPLY conflict detection against current_rules[]
+      c. IF conflict found: mark candidate with conflict info
+      d. APPLY capacity check: if rule_count >= max_rules, identify lowest-value rule for retirement
+
+15. PRESENT proposals to user (including conflicts and retirement suggestions)
+16. FOR each approved proposal:
+      a. WRITE rule to evolved-rules.md
+      b. UPDATE rule_count frontmatter
+      c. APPEND entry to rule-changelog.md
+      d. IF retirement: REMOVE retired rule, APPEND retirement entry to changelog
+```
+
+#### 6.5.3 转换过程（transform）
+
+每个达到阈值的知识条目通过以下步骤转换为规则候选：
+
+```
+1. EXTRACT raw pattern — 从知识条目中提取原始模式
+2. DISTILL into concise rule statement — 蒸馏为一句可执行的规则声明
+3. DECLARE what specific error the rule prevents — 声明该规则防止的具体错误（可测试的失败场景）
+4. ASSIGN confidence — 从源条目继承置信度
+5. SET last_triggered — 设置为当前日期
+```
+
+**转换示例**：
+
+| 源数据 | 转换结果 |
+|--------|---------|
+| known-failures: "异步导出未设超时，导致连接池耗尽"（occurrence: 4） | **Content**: 所有异步导出操作必须设置 30 秒超时<br/>**Prevents**: 异步导出无超时导致连接池耗尽和服务不可用 |
+| instincts: "数据库迁移前必须备份"（confidence: 0.9） | **Content**: 执行数据库迁移前必须创建备份并验证可恢复<br/>**Prevents**: 迁移失败时无法回滚导致数据丢失 |
+| skill-feedback: "TDD 铁律在数据迁移任务中过于严格"（frequency: 3） | **Content**: 一次性数据迁移脚本使用简化验证流程（运行 + 检查结果）<br/>**Prevents**: 对一次性脚本强制 TDD 导致不必要的开销和延迟 |
+
+#### 6.5.4 阈值条件
+
+五类知识条目的蒸馏阈值：
+
+| 类别 | 数据源 | 阈值 | 说明 |
+|------|--------|------|------|
+| 项目特定陷阱 | known-failures.md | occurrence >= 3 | 同一失败模式出现 3 次以上 |
+| 重复纠正模式 | instincts.md | confidence >= 0.8 | 高置信度的直觉模式 |
+| 环境/工具怪癖 | skill-feedback.md | frequency >= 3 | 同一 SKILL 反馈出现 3 次以上 |
+| 跨会话行为纠正 | session journals | 同一问题出现在 3+ 会话 | 扫描会话日志识别重复问题 |
+| 规则摩擦调整 | metrics.md | 连续 3+ 会话退化趋势 | 某质量维度持续下降，可能由现有规则引起 |
+
+**静默通过**：如果没有任何知识条目达到阈值，输出提示并跳过蒸馏阶段：
+
+```
+ℹ️ No qualifying entries found. Skipping rule distillation.
+```
+
+#### 6.5.5 排除过滤器
+
+以下内容**不是**有效的规则候选，即使达到阈值也必须排除：
+
+- **架构描述**：可从代码推断的架构信息
+- **文件路径列表**：项目结构信息
+- **通用最佳实践**：Claude 已经知道的通用知识
+- **原始知识数据**：属于知识文件而非规则的原始数据
+- **工具已执行的标准**：已由现有工具（如 Biome 代码风格）执行的标准
+
+#### 6.5.6 冲突检测
+
+生成候选后，必须与 evolved-rules.md 中的现有规则进行冲突检测：
+
+1. 比较新候选的 `Prevents` 声明与现有规则的 `Prevents` 声明。
+2. 如果两条规则引用**同一系统组件**且有**矛盾的指令**，标记为冲突。
+3. 冲突候选在提案中标注冲突信息，由用户选择：
+   - 保留现有规则
+   - 替换为新规则
+   - 同时保留两条
+
+**冲突提示**：
+
+```
+⚠️ 规则冲突检测
+
+新提案与现有规则冲突：
+  现有：R3 — 所有 API 调用使用 10 秒超时
+  新提案：外部支付 API 调用使用 60 秒超时
+
+两条规则引用同一组件（API 超时），但指令矛盾。
+选择：(1) 保留现有  (2) 替换为新规则  (3) 同时保留
+```
+
+#### 6.5.7 容量管理与退役
+
+evolved-rules.md 最多容纳 **15 条规则**。当规则数达到上限时：
+
+1. 计算每条现有规则的**价值分数**：
+
+```
+value = confidence × recency_factor
+
+recency_factor:
+  - 最近 2 个会话内触发过: 1.0
+  - 3-4 个会话前触发: 0.7
+  - 5+ 个会话前触发（陈旧）: 0.3
+```
+
+2. 价值分数最低的规则成为退役候选。
+3. 如果新提案的置信度低于所有现有规则，跳过该提案并记录原因。
+
+**退役提示**：
+
+```
+📋 规则退役建议
+
+evolved-rules.md 已满（15/15）。
+为添加新规则，建议退役价值最低的规则：
+
+  R7: "CSS Grid 布局优先于 Flexbox 用于页面级布局"
+  confidence: 0.5, last_triggered: 8 sessions ago
+  value = 0.5 × 0.3 = 0.15
+
+退役此规则以腾出空间？(y/n)
+```
+
+#### 6.5.8 陈旧检测
+
+每次蒸馏阶段执行时，扫描 evolved-rules.md 中所有规则的 `last_triggered` 字段：
+
+- 如果 `last_triggered` 距今超过 **5 个会话**（通过计算 `.forge/knowledge/sessions/` 目录中的条目数确定），标记为陈旧候选。
+- 陈旧规则包含在退役提案中，向用户展示陈旧原因。
+- 用户可以选择退役陈旧规则或保留（如果认为规则仍有价值）。
+
+**陈旧检测输出**：
+
+```
+🕐 陈旧规则检测
+
+以下规则超过 5 个会话未被触发：
+  R4: "批量导入必须使用事务包裹"（last_triggered: 7 sessions ago）
+  R9: "日志输出使用结构化 JSON 格式"（last_triggered: 5 sessions ago）
+
+建议审阅并考虑退役。
+```
+
+#### 6.5.9 提案展示与审批
+
+所有候选经过排除过滤、冲突检测和容量检查后，以提案形式展示给用户：
+
+```
+📋 Rule Proposal #1
+
+  Title: 异步导出必须设置超时
+  Content: 所有异步导出操作必须设置 30 秒超时，防止连接池耗尽
+  Prevents: 异步导出无超时导致连接池耗尽和服务不可用
+  Source: known-failures.md — "异步导出超时" (occurrence: 4)
+  Confidence: 0.75
+
+  Approve? (y/n)
+```
+
+**审批规则**：
+
+- 每条提案独立审批，用户可以逐条选择
+- 被拒绝的提案不写入，不记录（下次蒸馏时如果仍达阈值会再次提出）
+- 所有提案被拒绝时，不修改 evolved-rules.md，直接进入下一阶段
+
+#### 6.5.10 写入与变更日志
+
+用户批准提案后：
+
+1. **写入规则**：将规则追加到 evolved-rules.md，使用 `### R{N}: {title}` 格式
+2. **更新 frontmatter**：更新 `rule_count` 和 `updated` 字段
+3. **记录变更**：在 `.forge/knowledge/rule-changelog.md` 追加条目
+
+```markdown
+### 2025-01-15 — added: R5 异步导出必须设置超时
+
+**Action**: added
+**Source**: known-failures.md — "异步导出超时" (occurrence: 4)
+**Confidence**: 0.75
+**Reason**: 同一失败模式出现 4 次，蒸馏为错误预防规则
+```
+
+4. **退役写入**（如有）：从 evolved-rules.md 移除退役规则，在 changelog 追加退役条目
+
+```markdown
+### 2025-01-15 — retired: R7 CSS Grid 布局优先于 Flexbox
+
+**Action**: retired
+**Source**: staleness — 8 sessions since last triggered
+**Confidence**: 0.5
+**Reason**: 超过 5 个会话未被触发，价值分数 0.15（最低）
+```
+
 ---
 
 ## 7. 知识库维护
@@ -668,6 +901,19 @@ duration: "<实际耗时>"
   ┌─────────────────────┐
   │  跨项目模式检测       │  是否建议提升到 patterns/？
   └──────────┬──────────┘
+             │
+             ▼
+  ┌─────────────────────────────┐
+  │  错误预防规则蒸馏             │  Error-Prevention Rule Distillation
+  │                             │
+  │  1. 读取 4 个数据源          │  known-failures, instincts,
+  │  2. 应用阈值生成候选         │  skill-feedback, metrics
+  │  3. 排除过滤 + 冲突检测      │
+  │  4. 容量管理                │
+  │  5. 向用户展示提案           │
+  │  6. 写入已批准的规则         │
+  │  7. 更新 changelog          │
+  └──────────┬──────────────────┘
              │
              ▼
   ┌─────────────────────┐

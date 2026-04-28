@@ -63,6 +63,16 @@ const EXPECTED_SESSION_START_HOOKS: HookMatcher[] = [
       },
     ],
   },
+  {
+    hooks: [
+      {
+        type: "command",
+        command:
+          "if [ -f .forge/knowledge/evolved-rules.md ]; then echo '=== Evolved Rules ==='; cat .forge/knowledge/evolved-rules.md; fi",
+        timeout: 5,
+      },
+    ],
+  },
 ];
 
 const EXPECTED_USER_PROMPT_SUBMIT_HOOKS: HookMatcher[] = [
@@ -103,6 +113,15 @@ const EXPECTED_STOP_HOOKS: HookMatcher[] = [
         command:
           "bash forge/scripts/persistent-loop.sh 2>/dev/null || bash ~/.claude/skills/forge/scripts/persistent-loop.sh 2>/dev/null || true",
         timeout: 5,
+      },
+    ],
+  },
+  {
+    hooks: [
+      {
+        type: "command",
+        command:
+          "if [ -f .forge/knowledge/evolved-rules.md ] && grep -q 'PENDING' .forge/knowledge/evolved-rules.md 2>/dev/null; then echo '⚠️ 有待审核的规则提案。运行 /forge learn 查看并审批。'; fi",
       },
     ],
   },
