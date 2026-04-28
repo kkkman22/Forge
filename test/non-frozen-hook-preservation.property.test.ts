@@ -121,7 +121,8 @@ const EXPECTED_STOP_HOOKS: HookMatcher[] = [
       {
         type: "command",
         command:
-          "if [ -f .forge/knowledge/evolved-rules.md ] && grep -q 'PENDING' .forge/knowledge/evolved-rules.md 2>/dev/null; then echo '⚠️ 有待审核的规则提案。运行 /forge learn 查看并审批。'; fi",
+          "if [ -f .forge/knowledge/evolved-rules.md ] && grep -q 'PENDING' .forge/knowledge/evolved-rules.md 2>/dev/null; then count=$(grep -c 'PENDING' .forge/knowledge/evolved-rules.md 2>/dev/null || echo 0); echo \"⚠️ 有 $count 条待审核的规则提案。运行 /forge learn 查看并审批。\"; fi",
+        timeout: 5,
       },
     ],
   },
