@@ -1,112 +1,154 @@
-# CLAUDE.md
+# Forge — 项目宪法
 
-This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
+> 本文件由 `forge init` 自动生成，是 Claude Code 在本项目中的行为准则。
+> 所有 Agent（包括 Subagent 和 Agent Team 成员）必须遵守本宪法。
 
-## Project Overview
+---
 
-Forge is a unified AI coding workflow framework with two main components:
-1. **`/forge` commands** — 13 interactive SKILL.md files loaded on-demand in Claude Code sessions (skills, agents, teams, hooks, templates)
-2. **`forge-loop` CLI** — An autonomous loop execution engine built on the Claude Agent SDK, run from a system terminal
+## 1. 任务路由规则
 
-## Commands
+所有任务通过 `/forge` 入口进入三级路由。AI 分析任务复杂度并建议档位，用户确认或覆盖。
 
-```bash
-# Full CI check (typecheck + lint + test + README metrics)
-npm run check
+### 三级路由
 
-# Individual checks
-npm run typecheck          # TypeScript strict mode
-npm run lint               # Biome lint (src/ + test/)
-npm run lint:fix           # Auto-fix lint issues
-npm run test               # Vitest (all tests)
-npm run test:coverage      # Vitest with coverage (≥80% lines/functions)
-npm run test:watch         # Watch mode
+| 档位 | 判定条件 | 命令序列 |
+|------|---------|---------|
+| **轻量** | 影响文件 ≤ 1 且改动 ≤ 20 行 | `build → review` |
+| **标准** | 需求明确或已有 Spec | `plan → build → review → test → ship` |
+| **全量** | 新服务 / 新数据库 / 认证变更 / 需求模糊 | `decide → spec → plan → build → review → test → ship → learn` |
 
-# Run a single test file
-npx vitest run test/orchestrator.property.test.ts
+### 路由原则
 
-# Build dist bundle (skills + agents + templates for distribution)
-bash scripts/build-dist.sh
+- **用户覆盖优先**：用户明确指定档位时，以用户为准，无论 AI 建议如何。
+- **宁重勿轻**：无法判定时，选择更重的档位。轻量路径跳过了 spec/plan/test，只适用于真正的小改动。
+- **不可跳步**：选定档位后，必须按序执行对应的命令序列，不得跳过任何步骤。
 
-# Compile TypeScript (for forge-loop CLI)
-npx tsc
-```
+---
 
-## Architecture
+## 2. 执行纪律
 
-### Core Design Principle: Pure Functions + Effect Separation
+### 2.1 TDD 强制
 
-`src/` is split into two categories:
-- **Pure function modules** (orchestrator, router, failure-handler, git-transaction, context-accumulator, agent-output, plan, spec, state, etc.) — no side effects, no I/O. These use a pattern where functions accept state and return new state + effect descriptions, without executing them.
-- **Runtime modules** (sdk-driver, sdk-agent-adapter, effect-executor, run-manager, forge-loop-cli) — orchestrate I/O by executing the effects described by pure functions.
+所有实现任务必须遵循 **RED → GREEN → REFACTOR** 循环：
 
-The Orchestrator (`src/orchestrator.ts`) is a pure state machine: `idle → running → waiting → aborted/stopped`. It emits `OrchestratorEffect` descriptions that the SdkDriver executes.
+1. **RED**：先写失败的测试，确认测试能检测到缺失的功能
+2. **GREEN**：写最少的代码让测试通过
+3. **REFACTOR**：在测试保护下重构代码
 
-### Loop Execution Pipeline
+**铁律**：如果发现代码先于测试编写——删除代码，从测试开始。没有例外。
 
-```
-forge-loop CLI → SdkDriver → Orchestrator (state transitions)
-                           → EffectExecutor (git commit/rollback/backoff)
-                           → SdkAgentAdapter (Claude Agent SDK)
-                           → RunManager (lifecycle, branches, worktrees)
-                           → ContextAccumulator (cross-iteration notes)
-                           → FailureHandler (exponential backoff + circuit breaker)
-```
+### 2.2 前置检查
 
-### Three-Dimensional Router
+在标准和全量路径下，`/forge build` 启动前必须通过两道门禁：
 
-`src/router.ts` classifies tasks along three dimensions:
-- **Tier** (light/standard/full) → which commands to run
-- **TaskType** (frontend/backend/fullstack/data/infra/docs) → how commands behave
-- **ProjectPhase** (greenfield/iteration/refactor/bugfix) → what to emphasize
+| 门禁 | 条件 | 未通过时 |
+|------|------|---------|
+| Spec 锁定 | `.forge/specs/` 中对应 Spec 的 status 为 `locked` | 阻断 build，提示先完成 `/forge spec` |
+| Plan 批准 | `.forge/plans/` 中对应 Plan 的 status 为 `approved` | 阻断 build，提示先完成 `/forge plan` |
 
-### Skill/Agent/Team Layer
+未通过门禁时，**禁止以任何理由绕过**。
 
-- `skills/*/SKILL.md` — AI behavior specifications (loaded on-demand per command)
-- `agents/*.md` — Subagent role definitions (explore, debugger, spec-check, quality-check, security-check, etc.)
-- `teams/*/config.json` — Agent Team configurations (decide, review)
-- `hooks/hooks.json` — PreToolUse hooks for frozen zone protection + context injection
-- `commands/forge.md` — Forge command entry point
-- `templates/` — File templates (config, status, CLAUDE.md)
+### 2.3 验证铁律
 
-### State Management
+> **没有运行验证命令 = 不能声明通过。**
 
-`.forge/` directory holds all runtime state. Files use Markdown + YAML frontmatter. Three protection zones:
-- **Frozen** (specs locked, plans approved, config) — PreToolUse Hook blocks writes
-- **Protected** (progress, reviews, knowledge) — append-only
-- **Open** (status, decisions, findings, debug) — free to modify
+- 每个任务完成后，必须运行对应的验证命令（测试、类型检查、lint 等）
+- 验证必须基于**刚刚运行**的命令输出，拒绝引用之前的测试结果
+- 以下声明一律拒绝接受：
+  - "应该可以了"
+  - "看起来没问题"
+  - "之前测试通过了"
+  - "逻辑上没问题"
+- 每个完成的任务必须执行**原子提交**（一个任务一个 commit）
 
-## Tech Stack
+### 2.4 三次换路
 
-- TypeScript 5.9 (strict mode), ES2022 target, ESNext modules
-- Vitest 3.2 + fast-check 4.7 (property-based testing)
-- Biome 2.4 (lint + format, no ESLint/Prettier)
-- Runtime deps: `@anthropic-ai/claude-agent-sdk`, `commander`
-- Node.js ≥ 20
+当同一修复连续失败 **3 次**时：
 
-## Testing Conventions
+1. **立即停止**当前修复尝试
+2. **进入 `/forge debug`** 进行结构化根因分析
+3. 禁止第 4 次尝试同一方向的修复
 
-- All `src/` functions must have corresponding property tests (`test/*.property.test.ts`)
-- Tests verify **invariants**, not specific input/output pairs
-- Contract tests (`test/contract.test.ts`, `test/contract.*.test.ts`) validate cross-file consistency (hooks, skills, scripts)
-- Coverage thresholds: ≥80% lines, ≥80% functions, ≥70% branches
+在 `/forge debug` 中，如果同一假设连续验证失败 3 次：
 
-## Code Style
+1. **停止修复**
+2. **质疑架构**——问题可能不在代码层面
+3. 与开发者讨论，重新评估方向
 
-- 2-space indent, double quotes, 100-char line width (enforced by Biome)
-- Import organization enabled (Biome `organizeImports`)
-- No comments explaining WHAT — only WHY when non-obvious
-- YAML frontmatter in all state files and SKILL.md files
+### 2.5 上下文刷新纪律
 
-## Security Model
+在标准路径和全量路径的 build 阶段，主 Agent 必须执行周期性的 Restatement Checkpoint：
 
-The SDK agent adapter bypasses SDK-level permission prompts (`bypassPermissions`) because Forge Loop runs unattended. Access control is enforced by upper layers:
-1. PreToolUse Hook intercept (Write/Edit/Bash on `.forge/` frozen files)
-2. Frozen zone protection (`src/check-frozen.ts` → `src/state.ts`)
-3. State gate checks in build/ship orchestration
-4. Inner-layer commit guard in `src/effect-executor.ts` (scans staged `.forge/` files before commit)
+- **每完成 N 个任务**（N 由 config.md 的 restatement_interval 配置，默认 3），
+  暂停编排，重读 progress 和 status，在上下文尾部追加 Restatement 摘要。
+- **Sub-Agent 返回异常状态时**（BLOCKED / NEEDS_CONTEXT / DONE_WITH_CONCERNS），
+  在处理之前先执行一次 Restatement。
+- **Restatement 不修改 System Prompt**，只追加到对话尾部。
 
-Any modification to hooks configuration or frozen zone logic requires careful review.
+这条纪律的目的是对抗长任务中的注意力衰减。如果你发现自己在跳过探针、
+合并步骤、或不检查 Sub-Agent 状态，说明你需要一次 Restatement。
+
+---
+
+## 3. 评审纪律
+
+### 3.1 执行与评估分离
+
+- **写代码的 Agent 不评审自己的代码**
+- `/forge review` 使用独立的 Agent Team（spec-check、quality-check、security-check）
+- 评审者只对照 Spec 和代码质量标准，不受实现过程的上下文影响
+
+### 3.2 三层评审
+
+| 层级 | 评审者 | 检查内容 |
+|------|--------|---------|
+| **Layer 1: Spec 对齐** | spec-check | 每个需求是否实现、每个场景是否覆盖、是否存在超出 Spec 的实现（scope creep） |
+| **Layer 2: 代码质量** | quality-check | 命名一致性、错误处理完整性、性能热点、测试覆盖率、代码重复、可维护性 |
+| **Layer 3: 安全与风险** | security-check | 硬编码密钥、注入风险、不安全依赖、权限边界、敏感数据泄露 |
+
+### 3.3 P0/P1 必须修复
+
+问题按严重度分级：
+
+| 级别 | 含义 | 处理 |
+|------|------|------|
+| **P0** | 阻塞发布 | 必须立即修复，**阻断 `/forge ship`** |
+| **P1** | 高影响 | 必须在发布前修复，**阻断 `/forge ship`** |
+| P2 | 中影响 | 应该修复，可协商时间 |
+| P3 | 低影响 | 建议改进，开发者自行决定 |
+
+**铁律**：存在 P0 或 P1 问题时，`/forge ship` 被阻断。修复后必须重新评审。
+
+---
+
+## 4. 知识纪律
+
+### 4.1 完成即沉淀
+
+每次开发完成后，必须执行 `/forge learn` 从五个维度提取经验：
+
+1. **问题模式**：遇到了什么类型的问题
+2. **解决方案**：最终如何解决的
+3. **踩坑记录**：走了哪些弯路
+4. **决策理由**：为什么选择这个方案而非其他
+5. **可复用模式**：哪些做法可以复用到未来的任务
+
+知识文档输出到 `.forge/knowledge/solutions/`，高频模式写入 `.forge/knowledge/instincts.md`。
+
+### 4.2 知识库上限
+
+- 知识库文档数量上限：**20** 个（默认 20，可在 `.forge/config.md` 中配置）
+- 超出上限时，按置信度排序，清理最低置信度的文档
+- **Confidence < 0.3 的模式自动清理**——低置信度的经验不值得保留
+- 高频模式写入 `instincts.md` 时附带 Confidence Score（0.3 - 0.9）
+
+### 4.3 知识回流
+
+- `/forge plan` 执行时自动搜索 Knowledge Base 中的相关经验
+- `/forge build` 执行时自动搜索 Knowledge Base 中的历史踩坑记录
+- 知识不是写完就放着——它必须在后续任务中被主动检索和应用
+
+---
 
 ## 5. Self-Evolution Protocol
 
@@ -152,3 +194,21 @@ The following are NOT valid rule candidates:
 - General best practices Claude already knows
 - Raw knowledge data (belongs in knowledge files, not rules)
 - Standards enforced by existing tools (e.g., Biome code style)
+
+---
+
+## 项目信息
+
+- **项目名称**：Forge
+- **技术栈**：TypeScirpt,JaveScript,Shell
+- **安全级别**：标准（Level 1）
+- **初始化时间**：2026-04-28
+
+## Agent Team 配置
+
+`/forge decide` 和 `/forge review` 使用 Claude Code Agent Teams 特性。队友类型引用 `.claude/agents/` 下的 subagent 定义文件：
+
+- **decide 团队**：product、architect、security（默认），designer（UI 任务时动态加入）
+- **review 团队**：spec-check、quality-check、security-check
+
+启动团队时，使用 subagent 定义名称生成队友。团队完成后清理资源。

@@ -5,6 +5,8 @@ dist/claude-code/bundles/
 coverage/
 .kiro/
 .claude/
+.forge/debug/
+.forge/archive/
 
 
 # dist manifest is tracked (used by CI to verify dist sync)
