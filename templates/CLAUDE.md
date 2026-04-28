@@ -150,6 +150,53 @@
 
 ---
 
+## 5. Self-Evolution Protocol
+
+### 5.1 Evolved Rules
+
+At session start, read `.forge/knowledge/evolved-rules.md` and treat its rules as project-specific error-prevention directives. These rules are distilled from accumulated project knowledge and represent patterns where Claude would make mistakes without explicit guidance.
+
+### 5.2 Updatable Knowledge Categories
+
+The following categories qualify as rule candidates:
+
+| Category | Source | Threshold |
+|----------|--------|-----------|
+| Project-specific traps | known-failures.md | occurrence >= 3 |
+| Repeated correction patterns | instincts.md | confidence >= 0.8 |
+| Environment/tool quirks | skill-feedback.md | frequency >= 3 |
+| Cross-session behavior corrections | session journals | same issue in 3+ sessions |
+| Rule friction adjustments | metrics.md | 3+ session degradation trend |
+
+### 5.3 Trigger Conditions
+
+Rules are proposed only when knowledge entries meet the numeric thresholds above. `/forge learn` evaluates these thresholds during the rule distillation stage.
+
+### 5.4 Correction Protocol
+
+1. **Propose** — Present the rule with evidence from knowledge sources
+2. **Declare** — State what specific error the rule prevents
+3. **Approve** — User reviews and approves/rejects the proposal
+4. **Log** — Record the change in `.forge/knowledge/rule-changelog.md`
+
+### 5.5 Constraints
+
+- **15-rule cap** — evolved-rules.md holds at most 15 rules. New rules require retiring low-value existing rules when at capacity.
+- **Staleness policy** — Rules not triggered in the last 5 sessions are flagged for retirement review.
+- **Guarded zone** — evolved-rules.md is in the Guarded protection zone: updatable only by `/forge learn` rule distillation, not deletable outside maintenance.
+- **Sections 1–4 are immutable** — Owned by `forge init`. The self-evolution mechanism never modifies them.
+
+### 5.6 Exclusions
+
+The following are NOT valid rule candidates:
+- Architecture descriptions inferable from code
+- File path lists
+- General best practices Claude already knows
+- Raw knowledge data (belongs in knowledge files, not rules)
+- Standards enforced by existing tools (e.g., Biome code style)
+
+---
+
 ## 项目信息
 
 - **项目名称**：{{project_name}}
