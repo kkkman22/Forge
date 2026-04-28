@@ -55,7 +55,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "echo \"$TOOL_INPUT\" | grep -oE '\\.forge/(specs|plans)/[^ '\"'\"'\"'\"']*|.forge/config\\.md' | sort -u | while read -r f; do node forge/dist/src/check-frozen.js \"$f\" 2>/dev/null || node ~/.claude/skills/forge/dist/src/check-frozen.js \"$f\" 2>/dev/null; done",
+            "command": "echo \"$TOOL_INPUT\" | grep -oE '\\.forge/(specs|plans)/[a-zA-Z0-9_.-]+|\\.forge/config\\.md' | sort -u | while read -r f; do node forge/dist/src/check-frozen.js \"$f\" 2>/dev/null || node ~/.claude/skills/forge/dist/src/check-frozen.js \"$f\" 2>/dev/null; done",
             "timeout": 5
           }
         ]
