@@ -449,7 +449,13 @@ describe("Property 8: 导入模式 Spec 创建", () => {
         importSourceArb,
         (feature, date, purpose, requirements, exclusions, importSource) => {
           const spec = createImportedSpec(
-            feature, date, purpose, requirements, exclusions, importSource, false,
+            feature,
+            date,
+            purpose,
+            requirements,
+            exclusions,
+            importSource,
+            false,
           );
 
           expect(spec.frontmatter.status).toBe("draft");
@@ -477,7 +483,14 @@ describe("Property 8: 导入模式 Spec 创建", () => {
         validDeltaArb,
         (feature, date, purpose, requirements, exclusions, importSource, delta) => {
           const spec = createImportedSpec(
-            feature, date, purpose, requirements, exclusions, importSource, true, delta,
+            feature,
+            date,
+            purpose,
+            requirements,
+            exclusions,
+            importSource,
+            true,
+            delta,
           );
 
           expect(spec.isBrownfield).toBe(true);
@@ -500,7 +513,13 @@ describe("Property 8: 导入模式 Spec 创建", () => {
         importSourceArb,
         (feature, date, purpose, requirements, exclusions, importSource) => {
           const spec = createImportedSpec(
-            feature, date, purpose, requirements, exclusions, importSource, false,
+            feature,
+            date,
+            purpose,
+            requirements,
+            exclusions,
+            importSource,
+            false,
           );
           const result = confirmSpec(spec);
 
@@ -527,7 +546,13 @@ describe("Property 8: 导入模式 Spec 创建", () => {
         importSourceArb,
         (feature, date, purpose, requirements, exclusions, importSource) => {
           const spec = createImportedSpec(
-            feature, date, purpose, requirements, exclusions, importSource, false,
+            feature,
+            date,
+            purpose,
+            requirements,
+            exclusions,
+            importSource,
+            false,
           );
           const rejected = rejectSpec(spec);
 
@@ -550,7 +575,13 @@ describe("Property 8: 导入模式 Spec 创建", () => {
         importSourceArb,
         (feature, date, purpose, requirements, exclusions, importSource) => {
           const spec = createImportedSpec(
-            feature, date, purpose, requirements, exclusions, importSource, false,
+            feature,
+            date,
+            purpose,
+            requirements,
+            exclusions,
+            importSource,
+            false,
           );
 
           expect(validateTestability(spec.requirements)).toBe(true);
