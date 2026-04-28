@@ -12,11 +12,11 @@
 import * as fc from "fast-check";
 import { describe, expect, it } from "vitest";
 import {
-    type I18nConfig,
-    type TranslationData,
-    interpolate,
-    lookupKey,
-    translate,
+  type I18nConfig,
+  interpolate,
+  lookupKey,
+  type TranslationData,
+  translate,
 } from "../src/i18n.js";
 
 // ---------------------------------------------------------------------------
@@ -30,9 +30,7 @@ const keySegmentArb = fc
   .filter((s) => s !== "__proto__");
 
 /** Generate a simple leaf string value (non-empty, no nested structure concerns). */
-const leafValueArb = fc
-  .string({ minLength: 1, maxLength: 50 })
-  .filter((s) => s.trim().length > 0);
+const leafValueArb = fc.string({ minLength: 1, maxLength: 50 }).filter((s) => s.trim().length > 0);
 
 /**
  * Generate a valid `TranslationData` object (recursive nested string map).
@@ -184,7 +182,7 @@ describe("Feature: i18n-support, Property 2: 点分隔路径查找正确性", ()
         fc.array(keySegmentArb, { minLength: 1, maxLength: 5 }),
         (data, segments) => {
           const path = segments.join(".");
-          const result = lookupKey(data, path);
+          lookupKey(data, path);
           // If the path happens to exist and is a string, that's fine — we just
           // verify the function doesn't crash. For truly non-existent paths,
           // we append a guaranteed-missing segment.
@@ -337,7 +335,9 @@ describe("Feature: i18n-support, Property 4: 字符串插值完备性", () => {
               }),
               // Generate static text segments between placeholders
               fc.array(
-                fc.string({ minLength: 0, maxLength: 20 }).filter((s) => !s.includes("{") && !s.includes("}")),
+                fc
+                  .string({ minLength: 0, maxLength: 20 })
+                  .filter((s) => !s.includes("{") && !s.includes("}")),
                 { minLength: uniqueNames.length + 1, maxLength: uniqueNames.length + 1 },
               ),
             )
@@ -352,7 +352,7 @@ describe("Feature: i18n-support, Property 4: 字符串插值完备性", () => {
           // Build template: text0 {name0} text1 {name1} text2 ...
           let template = "";
           for (let i = 0; i < names.length; i++) {
-            template += textSegments[i] + `{${names[i]}}`;
+            template += `${textSegments[i]}{${names[i]}}`;
           }
           template += textSegments[names.length];
 
@@ -394,17 +394,18 @@ describe("Feature: i18n-support, Property 4: 字符串插值完备性", () => {
     fc.assert(
       fc.property(
         fc.array(placeholderNameArb, { minLength: 1, maxLength: 5 }),
-        fc
-          .array(
-            fc.string({ minLength: 0, maxLength: 20 }).filter((s) => !s.includes("{") && !s.includes("}")),
-            { minLength: 2, maxLength: 6 },
-          ),
+        fc.array(
+          fc
+            .string({ minLength: 0, maxLength: 20 })
+            .filter((s) => !s.includes("{") && !s.includes("}")),
+          { minLength: 2, maxLength: 6 },
+        ),
         (names, textParts) => {
           const uniqueNames = [...new Set(names)];
           // Build template with placeholders
           let template = textParts[0] || "";
           for (let i = 0; i < uniqueNames.length; i++) {
-            template += `{${uniqueNames[i]}}` + (textParts[i + 1] || "");
+            template += `{${uniqueNames[i]}}${textParts[i + 1] || ""}`;
           }
 
           const result = interpolate(template, {});
@@ -423,7 +424,9 @@ describe("Feature: i18n-support, Property 4: 字符串插值完备性", () => {
   it("interpolate returns original string when no placeholders present", () => {
     fc.assert(
       fc.property(
-        fc.string({ minLength: 0, maxLength: 100 }).filter((s) => !s.includes("{") && !s.includes("}")),
+        fc
+          .string({ minLength: 0, maxLength: 100 })
+          .filter((s) => !s.includes("{") && !s.includes("}")),
         fc.dictionary(placeholderNameArb, leafValueArb, { minKeys: 0, maxKeys: 3 }),
         (template, params) => {
           expect(interpolate(template, params)).toBe(template);

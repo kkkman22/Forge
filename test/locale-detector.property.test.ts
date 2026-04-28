@@ -11,10 +11,10 @@
 import * as fc from "fast-check";
 import { describe, expect, it } from "vitest";
 import {
-    detectLocale,
-    normalizeLocale,
-    type LocaleSources,
-    type SupportedLocales,
+  detectLocale,
+  type LocaleSources,
+  normalizeLocale,
+  type SupportedLocales,
 } from "../src/locale-detector.js";
 
 // ---------------------------------------------------------------------------

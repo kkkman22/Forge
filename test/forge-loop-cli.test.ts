@@ -10,10 +10,10 @@
  * **Validates: Requirements 6.1, 6.2, 6.3, 6.4, 6.5, 6.6, 6.7, 6.8, 6.9, 6.10, 4.1, 4.2, 4.3, 4.6, 4.7, 7.1, 7.3, 7.4, 7.6**
  */
 
-import { Command } from "commander";
 import { existsSync, mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join as pathJoin } from "node:path";
+import { Command } from "commander";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 import { buildAgentOutputSchema } from "../src/agent-output.js";

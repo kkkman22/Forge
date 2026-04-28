@@ -42,6 +42,7 @@ verify_max_attempts: 3      # 验证失败后最大重试次数，默认 3，超
 - `.forge/decisions/*.md`（决策文档）
 - `.forge/findings/*.md`（研究发现）
 - `.forge/debug/*.md`（调试记录）
+- `.forge/inbox/`（外部规格暂存区 — 开发者放置 PM 交付的 spec 文档，供 `/forge spec <file>` 导入）
 - `.forge/knowledge/sessions/*.md`（会话上下文）
 - `.forge/knowledge/metrics.md`（指标追踪）
 - `.forge/knowledge/tool-health.md`（工具健康度）

@@ -92,13 +92,12 @@ export function detectLocale(
   supported: SupportedLocales,
   defaultLocale = "en",
 ): LocaleResult {
-  const sourceEntries: { key: "cli" | "config" | "env" | "system"; value: string | undefined }[] =
-    [
-      { key: "cli", value: sources.cliLang },
-      { key: "config", value: sources.configLang },
-      { key: "env", value: sources.envLang },
-      { key: "system", value: sources.systemLocale },
-    ];
+  const sourceEntries: { key: "cli" | "config" | "env" | "system"; value: string | undefined }[] = [
+    { key: "cli", value: sources.cliLang },
+    { key: "config", value: sources.configLang },
+    { key: "env", value: sources.envLang },
+    { key: "system", value: sources.systemLocale },
+  ];
 
   let firstUnsupported: string | null = null;
 

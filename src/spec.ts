@@ -20,6 +20,8 @@ export interface SpecFrontmatter {
   feature: string;
   status: "draft" | "locked";
   date: string;
+  /** External spec source path (import mode only). */
+  importSource?: string;
 }
 
 export interface Requirement {
@@ -107,6 +109,37 @@ export function rejectSpec(spec: SpecDocument): SpecDocument {
       ...spec.frontmatter,
       status: "draft",
     },
+  };
+}
+
+/**
+ * Create an imported Spec document from external source.
+ *
+ * Wraps externally-sourced requirements into a SpecDocument with importSource
+ * tracking. Used when a developer provides a PM spec via `/forge spec <file>`.
+ */
+export function createImportedSpec(
+  feature: string,
+  date: string,
+  purpose: string,
+  requirements: Requirement[],
+  exclusions: string[],
+  importSource: string,
+  isBrownfield: boolean,
+  delta?: DeltaSection,
+): SpecDocument {
+  return {
+    frontmatter: {
+      feature,
+      status: "draft",
+      date,
+      importSource,
+    },
+    purpose,
+    requirements,
+    exclusions,
+    isBrownfield,
+    delta,
   };
 }
 

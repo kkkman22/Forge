@@ -40,15 +40,15 @@ vi.mock("node:fs", () => ({
 import { execFileSync } from "node:child_process";
 import { randomUUID } from "node:crypto";
 import {
-    existsSync,
-    mkdirSync,
-    openSync,
-    readdirSync,
-    readFileSync,
-    unlinkSync,
-    writeFileSync,
+  existsSync,
+  mkdirSync,
+  openSync,
+  readdirSync,
+  readFileSync,
+  unlinkSync,
+  writeFileSync,
 } from "node:fs";
-import { acquireFileLock, releaseFileLock, RunManager } from "../src/run-manager.js";
+import { acquireFileLock, RunManager, releaseFileLock } from "../src/run-manager.js";
 
 // ---------------------------------------------------------------------------
 // Constants

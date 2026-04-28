@@ -11,10 +11,10 @@
 import type { Mock } from "vitest";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import type {
-    AgentInterface,
-    AgentResult,
-    AgentRunOptions,
-    TokenUsage,
+  AgentInterface,
+  AgentResult,
+  AgentRunOptions,
+  TokenUsage,
 } from "../src/loop-types.js";
 
 // Mock RunManager.persistNotes before importing SdkDriver
@@ -720,7 +720,9 @@ describe("hooks validation during run()", () => {
 
     await driver.run();
 
-    expect(warnSpy).toHaveBeenCalledWith(expect.stringContaining("driver.warning.hooksProtectionMissing"));
+    expect(warnSpy).toHaveBeenCalledWith(
+      expect.stringContaining("driver.warning.hooksProtectionMissing"),
+    );
   });
 
   it("does not block startup when hooks validation fails", async () => {
@@ -754,7 +756,9 @@ describe("hooks validation during run()", () => {
     const result = await driver.run();
 
     // Warn was called with hooks protection missing (i18n key)
-    expect(warnSpy).toHaveBeenCalledWith(expect.stringContaining("driver.warning.hooksProtectionMissing"));
+    expect(warnSpy).toHaveBeenCalledWith(
+      expect.stringContaining("driver.warning.hooksProtectionMissing"),
+    );
     // Driver still produced a result (startup was not blocked)
     expect(result).toBeDefined();
     expect(result.notesDocument).toBeDefined();

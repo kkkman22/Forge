@@ -19,10 +19,10 @@
 import type { Mock } from "vitest";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import type {
-    AgentInterface,
-    AgentResult,
-    AgentRunOptions,
-    TokenUsage,
+  AgentInterface,
+  AgentResult,
+  AgentRunOptions,
+  TokenUsage,
 } from "../src/loop-types.js";
 
 // Mock RunManager.persistNotes before importing SdkDriver
@@ -682,7 +682,9 @@ describe("circuit breaker: review blocked × 3 → aborted", () => {
     const hasSummary = logCalls.some(
       (msg: unknown) =>
         typeof msg === "string" &&
-        (msg.includes("driver.summary.completedTitle") || msg.includes("driver.summary.errorTitle") || msg.includes("driver.summary.circuitBreakerTitle")),
+        (msg.includes("driver.summary.completedTitle") ||
+          msg.includes("driver.summary.errorTitle") ||
+          msg.includes("driver.summary.circuitBreakerTitle")),
     );
     expect(hasSummary).toBe(true);
   });
