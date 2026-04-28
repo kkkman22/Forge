@@ -84,7 +84,7 @@ echo ""
 
 # --- 项目名称（自动检测） ---
 default_name="$(basename "${PROJECT_ROOT}")"
-read -rp "$(echo -e "${BLUE}?${NC}") 项目名称 [${default_name}]: " project_name
+read -rep "$(echo -e "${BLUE}?${NC}") 项目名称 [${default_name}]: " project_name
 project_name="${project_name:-${default_name}}"
 
 # --- 技术栈 ---
@@ -108,7 +108,7 @@ case "${stack_choice}" in
   5)    tech_stack="Go, Gin" ;;
   6)    tech_stack="Java, Spring Boot" ;;
   7)
-    read -rp "$(echo -e "${BLUE}?${NC}") 请输入技术栈（逗号分隔）: " tech_stack
+    read -rep "$(echo -e "${BLUE}?${NC}") 请输入技术栈（逗号分隔）: " tech_stack
     ;;
   *)    tech_stack="${stack_choice}" ;;
 esac
