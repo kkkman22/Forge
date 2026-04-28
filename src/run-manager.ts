@@ -13,16 +13,16 @@
 import { execFileSync } from "node:child_process";
 import { randomUUID } from "node:crypto";
 import {
-    closeSync,
-    constants,
-    existsSync,
-    mkdirSync,
-    openSync,
-    readdirSync,
-    readFileSync,
-    rmSync,
-    unlinkSync,
-    writeFileSync,
+  closeSync,
+  constants,
+  existsSync,
+  mkdirSync,
+  openSync,
+  readdirSync,
+  readFileSync,
+  rmSync,
+  unlinkSync,
+  writeFileSync,
 } from "node:fs";
 import path from "node:path";
 import { formatNotesDocument, parseNotesDocument } from "./context-accumulator.js";

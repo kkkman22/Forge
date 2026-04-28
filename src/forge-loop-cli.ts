@@ -16,11 +16,11 @@
  * **Validates: Requirements 1.4, 1.6, 6.1–6.10, 4.5, 4.6, 4.7**
  */
 
-import { startup } from "@anthropic-ai/claude-agent-sdk";
-import { Command } from "commander";
 import { type ChildProcess, execFileSync, spawn } from "node:child_process";
 import { copyFileSync, existsSync, mkdirSync, readFileSync } from "node:fs";
 import path from "node:path";
+import { startup } from "@anthropic-ai/claude-agent-sdk";
+import { Command } from "commander";
 
 import { buildAgentOutputSchema } from "./agent-output.js";
 import { CliError } from "./cli-error.js";
@@ -313,9 +313,7 @@ async function main(): Promise<void> {
             if (phaseMatch) {
               const phase = phaseMatch[1].trim();
               if (phase && phase !== "completed" && phase !== "aborted") {
-                console.warn(
-                  _t("cli.warning.activeTask", { phase }),
-                );
+                console.warn(_t("cli.warning.activeTask", { phase }));
               }
             }
           }
@@ -397,9 +395,7 @@ async function main(): Promise<void> {
           // run directory itself could not be found for this branch.
           const notesContent = readFileSync(resumed.notesPath, "utf-8");
           if (!notesContent.includes(resumeBranch)) {
-            throw new CliError(
-              _t("cli.error.noRunDirectory", { branch: resumeBranch }),
-            );
+            throw new CliError(_t("cli.error.noRunDirectory", { branch: resumeBranch }));
           }
         }
 
@@ -516,7 +512,11 @@ async function main(): Promise<void> {
             const worktreeNotesPath = runSetup.notesPath;
             const backupResult = backupWorktreeNotes(worktreeNotesPath, mainRepoRunDir);
             if (!backupResult.success) {
-              console.warn(_t("cli.warning.worktreeNotesBackupFailed", { error: backupResult.error ?? "unknown" }));
+              console.warn(
+                _t("cli.warning.worktreeNotesBackupFailed", {
+                  error: backupResult.error ?? "unknown",
+                }),
+              );
             }
 
             try {

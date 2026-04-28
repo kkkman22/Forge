@@ -10,11 +10,7 @@
  */
 import * as fc from "fast-check";
 import { describe, expect, it } from "vitest";
-import {
-    buildDefaultConfig,
-    extractConfigLang,
-    writeConfigLang,
-} from "../src/config-store.js";
+import { buildDefaultConfig, extractConfigLang, writeConfigLang } from "../src/config-store.js";
 import { extractStringField, parseFrontmatter } from "../src/frontmatter.js";
 
 // ---------------------------------------------------------------------------

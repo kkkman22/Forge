@@ -55,10 +55,10 @@ vi.mock("../src/status-file-ext.js", () => ({
 
 import type { EffectExecutorInterface } from "../src/effect-executor.js";
 import type {
-    AgentInterface,
-    AgentResult,
-    AgentRunOptions,
-    TokenUsage,
+  AgentInterface,
+  AgentResult,
+  AgentRunOptions,
+  TokenUsage,
 } from "../src/loop-types.js";
 import { SdkDriver, type SdkDriverConfig } from "../src/sdk-driver.js";
 import { clearLoopFields, extractLoopFields } from "../src/status-file-ext.js";
@@ -238,7 +238,10 @@ describe("StatusFile write failure degradation (Requirement 6.7)", () => {
     expect(warnSpy).toHaveBeenCalled();
     const warningMessages = warnSpy.mock.calls.map((call) => call[0]);
     const hasCleanupWarning = warningMessages.some(
-      (msg: string) => msg.includes("statusFieldClearFailed") || msg.includes("clear") || msg.includes("StatusFile"),
+      (msg: string) =>
+        msg.includes("statusFieldClearFailed") ||
+        msg.includes("clear") ||
+        msg.includes("StatusFile"),
     );
     expect(hasCleanupWarning).toBe(true);
   });

@@ -8,10 +8,7 @@
  */
 import * as fc from "fast-check";
 import { describe, expect, it } from "vitest";
-import {
-    buildSkillCandidates,
-    resolveSkillFile
-} from "../src/skill-resolver.js";
+import { buildSkillCandidates, resolveSkillFile } from "../src/skill-resolver.js";
 
 // ---------------------------------------------------------------------------
 // Generators
@@ -47,9 +44,7 @@ const localeArb = fc.constantFrom(...LOCALES);
 /**
  * Generate a pair of (locale, defaultLocale) that are guaranteed to differ.
  */
-const differentLocalesArb = fc
-  .tuple(localeArb, localeArb)
-  .filter(([a, b]) => a !== b);
+const differentLocalesArb = fc.tuple(localeArb, localeArb).filter(([a, b]) => a !== b);
 
 // ---------------------------------------------------------------------------
 // Feature: i18n-support, Property 8: SKILL 文件解析与回退
@@ -147,20 +142,16 @@ describe("Feature: i18n-support, Property 8: SKILL 文件解析与回退", () =>
    */
   it("falls back to default SKILL.md when no candidate exists", () => {
     fc.assert(
-      fc.property(
-        skillNameArb,
-        differentLocalesArb,
-        (skillName, [locale, defaultLocale]) => {
-          const candidates = buildSkillCandidates(skillName, locale, defaultLocale);
+      fc.property(skillNameArb, differentLocalesArb, (skillName, [locale, defaultLocale]) => {
+        const candidates = buildSkillCandidates(skillName, locale, defaultLocale);
 
-          // No file exists
-          const result = resolveSkillFile(candidates, () => false);
+        // No file exists
+        const result = resolveSkillFile(candidates, () => false);
 
-          expect(result.isFallback).toBe(true);
-          // Falls back to the last candidate (default SKILL.md)
-          expect(result.filePath).toBe(`skills/${skillName}/SKILL.md`);
-        },
-      ),
+        expect(result.isFallback).toBe(true);
+        // Falls back to the last candidate (default SKILL.md)
+        expect(result.filePath).toBe(`skills/${skillName}/SKILL.md`);
+      }),
       { numRuns: 200 },
     );
   });

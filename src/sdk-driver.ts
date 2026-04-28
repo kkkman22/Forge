@@ -14,23 +14,23 @@
 import { existsSync, readFileSync } from "node:fs";
 import { join } from "node:path";
 import {
-    appendEntry,
-    buildIterationPrompt,
-    buildSkillAwarePrompt,
-    formatNotesDocument,
+  appendEntry,
+  buildIterationPrompt,
+  buildSkillAwarePrompt,
+  formatNotesDocument,
 } from "./context-accumulator.js";
 import { type EffectExecutorInterface, FrozenZoneViolation } from "./effect-executor.js";
 import type {
-    AgentInterface,
-    AgentOutput,
-    IterationEntry,
-    LoopConfig,
-    NotesDocument,
-    OrchestratorEffect,
-    OrchestratorEvent,
-    OrchestratorState,
-    RunLimits,
-    TokenUsage,
+  AgentInterface,
+  AgentOutput,
+  IterationEntry,
+  LoopConfig,
+  NotesDocument,
+  OrchestratorEffect,
+  OrchestratorEvent,
+  OrchestratorState,
+  RunLimits,
+  TokenUsage,
 } from "./loop-types.js";
 import { createInitialState, transition } from "./orchestrator.js";
 import type { PuaContext, TaskType } from "./pua-engine.js";
@@ -40,13 +40,13 @@ import { evaluateReviewGate } from "./quality-gate.js";
 import { RunManager, type TranslateFn } from "./run-manager.js";
 import { evaluateGateForPhase } from "./sdk-quality-helpers.js";
 import {
-    clearLoopFieldsOnShutdown,
-    getPhaseFromStatus,
-    getTierFromStatus,
-    initializeLoopFields,
-    safeReadStatusFile,
-    safeUpdateIterationStatus as safeUpdateIterationStatusHelper,
-    type StatusFileIO,
+  clearLoopFieldsOnShutdown,
+  getPhaseFromStatus,
+  getTierFromStatus,
+  initializeLoopFields,
+  type StatusFileIO,
+  safeReadStatusFile,
+  safeUpdateIterationStatus as safeUpdateIterationStatusHelper,
 } from "./sdk-status-helpers.js";
 import { determineNextSkill, shouldCommitForPhase } from "./skill-scheduler.js";
 import { extractLoopFields } from "./status-file-ext.js";
@@ -261,7 +261,11 @@ export class SdkDriver {
     try {
       const hooksResult = validateHooksPresence(this.config.cwd);
       if (!hooksResult.valid) {
-        console.warn(this.t("driver.warning.hooksProtectionMissing", { reason: hooksResult.reason ?? "unknown" }));
+        console.warn(
+          this.t("driver.warning.hooksProtectionMissing", {
+            reason: hooksResult.reason ?? "unknown",
+          }),
+        );
       }
     } catch (err) {
       console.warn(

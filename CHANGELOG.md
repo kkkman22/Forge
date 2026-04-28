@@ -2,6 +2,24 @@
 
 All notable changes to Forge will be documented in this file.
 
+## [2.3.0] - 2026-04-28
+
+### Added
+
+- **Spec 导入模式**：`/forge spec <file-path>` 支持从外部规格文档导入并转化为 Forge 格式
+  - 开发者可将产品经理交付的 spec 文档放入 `.forge/inbox/`，通过 `/forge spec .forge/inbox/xxx.md` 导入
+  - 导入后自动执行转化 → Review（五项自检）→ Lock 流程，复用现有规格引擎的全部质量保障
+  - 转化规则：提取目的/需求/场景/不做什么/Delta，将验收标准适配为"当...则..."格式，自动去除实现细节
+  - `SpecFrontmatter` 新增 `importSource` 字段记录原始文件路径，便于追溯
+  - 新增 4 个导入边界情况处理：文件不存在、无法提取需求、原文包含实现细节、与已有 spec 冲突
+- **`.forge/inbox/` 目录**：外部规格暂存区，开发者放置 PM 交付的 spec 文档供导入使用
+- **`createImportedSpec()` 纯函数**：`src/spec.ts` 新增导入模式创建函数，支持 forge-loop 自主执行引擎调用
+- **Property 8 测试**：`test/spec.property.test.ts` 新增 5 个属性测试覆盖导入模式的 draft 状态、brownfield Delta 兼容性、confirm/reject 兼容性和 testability 兼容性
+
+### Changed
+
+- `templates/config.md` 开放区新增 `.forge/inbox/` 目录说明
+
 ## [2.2.0] - 2026-04-26
 
 ### Added

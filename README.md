@@ -163,6 +163,11 @@ rm -rf /tmp/forge
 /forge ship    # 交付
 /forge learn   # 沉淀经验
 
+# 从 PM 交付的 spec 导入（跳过 spec 生成，走标准路径）
+/forge spec .forge/inbox/pm-notification-spec.md  # 导入并锁定
+/forge plan    # 基于导入的 spec 拆解任务
+/forge build   # 实现
+
 # 辅助命令
 /forge status  # 查看当前状态
 /forge resume  # 恢复上次会话
@@ -178,7 +183,7 @@ rm -rf /tmp/forge
 |------|------|------|---------|
 | `/forge` | 入口 | 三维路由，分析任务复杂度并建议档位 | 所有 |
 | `/forge decide` | 决策 | 四视角前置决策（产品/架构/安全/设计） | 全量 |
-| `/forge spec` | 规格 | 将需求固化为可锁定的规格文档 | 全量 |
+| `/forge spec` | 规格 | 将需求固化为可锁定的规格文档，支持从外部文件导入 | 全量 |
 | `/forge plan` | 规划 | 将 Spec 拆解为含 TDD 步骤的原子任务 | 标准、全量 |
 | `/forge build` | 执行 | 按计划以 TDD 方式逐任务实现 | 所有 |
 | `/forge review` | 评审 | 三层独立评审（Spec 对齐/质量/安全） | 所有 |
@@ -247,7 +252,7 @@ Forge 路由器从三个维度分析任务：
 |------|------|------|
 | 🔒 **冻结区** | 锁定/批准后 AI 不可修改，PreToolUse Hook 通过非零退出码阻断写入（覆盖 Write/Edit/Bash 工具路径） | `specs/`（locked）、`plans/`（approved）、`config.md` |
 | 🛡️ **受保护区** | AI 可追加，不可删除或覆盖（建议性约束，后续将通过 diff 分析实现强制校验） | `progress/`、`reviews/`、`knowledge/instincts.md`、`knowledge/known-failures.md`、`knowledge/solutions/` |
-| 🟢 **开放区** | AI 可自由修改 | `status.md`、`decisions/`、`findings/`、`debug/`、`knowledge/sessions/` |
+| 🟢 **开放区** | AI 可自由修改 | `status.md`、`decisions/`、`findings/`、`debug/`、`inbox/`、`knowledge/sessions/` |
 
 ### Hook 行为说明
 
@@ -267,6 +272,8 @@ Forge 通过 Claude Code 的 [Hooks](https://docs.anthropic.com/en/docs/claude-c
 ├── .locks/                      # 并发写入锁文件（自动管理）
 ├── decisions/                   # /forge decide 输出
 │   └── <date>-<topic>.md       #   决策文档
+├── inbox/                       # 外部规格暂存区
+│   └── *.md                    #   PM 交付的 spec 文档（供 /forge spec <file> 导入）
 ├── specs/                       # /forge spec 输出
 │   └── <feature>/              #   功能规格
 │       └── spec.md
