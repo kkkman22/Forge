@@ -43,6 +43,12 @@ export type TaskType = "frontend" | "backend" | "fullstack" | "data" | "infra" |
 export type ProjectPhase = "greenfield" | "iteration" | "refactor" | "bugfix";
 
 // ---------------------------------------------------------------------------
+// WorkNature (work-nature dimension) — determines WHICH command sequence
+// ---------------------------------------------------------------------------
+
+export type WorkNature = "feature" | "refactor" | "bugfix";
+
+// ---------------------------------------------------------------------------
 // Inputs
 // ---------------------------------------------------------------------------
 
@@ -91,6 +97,8 @@ export interface ClassificationResult {
   taskType: TaskType;
   /** Lifecycle dimension — what phase the project is in. */
   projectPhase: ProjectPhase;
+  /** Work-nature dimension — feature, refactor, or bugfix. */
+  work_nature: WorkNature;
   /** Behavioral hints for downstream commands. */
   hints: RouteHint[];
 }
@@ -99,11 +107,116 @@ export interface ClassificationResult {
 // Command sequences per tier (unchanged)
 // ---------------------------------------------------------------------------
 
+/**
+ * Command sequences for each tier in the complete interactive workflow.
+ *
+ * The `full` sequence includes `decide` and `spec` phases because the Router
+ * is responsible for the entire interactive workflow — from initial decision
+ * and specification through to learning. The Skill Scheduler uses a separate
+ * set of sequences that omit these early phases, since it only handles SKILL
+ * execution (plan → build → review → test → ship → learn).
+ *
+ * @see src/skill-scheduler.ts SKILL_COMMAND_SEQUENCES
+ */
 const COMMAND_SEQUENCES: Record<Tier, string[]> = {
   light: ["build", "review"],
   standard: ["plan", "build", "review", "test", "ship"],
   full: ["decide", "spec", "plan", "build", "review", "test", "ship", "learn"],
 };
+
+// ---------------------------------------------------------------------------
+// WorkNature detection — keyword-based classification
+// ---------------------------------------------------------------------------
+
+/** Keywords that indicate a refactor work nature. */
+const REFACTOR_KEYWORDS = [
+  "优化",
+  "重构",
+  "重写",
+  "拆分",
+  "性能改进",
+  "代码整理",
+  "refactor",
+  "optimize",
+  "restructure",
+  "simplify",
+];
+
+/** Keywords that indicate a bugfix work nature. */
+const BUGFIX_KEYWORDS = [
+  "bug",
+  "报错",
+  "异常",
+  "崩溃",
+  "不工作",
+  "修复",
+  "fix",
+  "error",
+  "crash",
+  "broken",
+  "not working",
+];
+
+/**
+ * Detect the work nature from a task description using keyword matching.
+ *
+ * Rules:
+ * - Returns "refactor" when description contains refactor keywords
+ *   and does NOT contain bugfix keywords.
+ * - Returns "bugfix" when description contains bugfix keywords
+ *   and describes existing functionality issues.
+ * - Returns "feature" as default when description is ambiguous or
+ *   doesn't match the above patterns.
+ */
+export function detectWorkNature(description: string): WorkNature {
+  const lower = description.toLowerCase();
+
+  const hasRefactorKeyword = REFACTOR_KEYWORDS.some((kw) => lower.includes(kw.toLowerCase()));
+  const hasBugfixKeyword = BUGFIX_KEYWORDS.some((kw) => lower.includes(kw.toLowerCase()));
+
+  // If both refactor and bugfix keywords are present, default to feature (ambiguous)
+  if (hasRefactorKeyword && hasBugfixKeyword) {
+    return "feature";
+  }
+
+  if (hasBugfixKeyword) {
+    return "bugfix";
+  }
+
+  if (hasRefactorKeyword) {
+    return "refactor";
+  }
+
+  return "feature";
+}
+
+// ---------------------------------------------------------------------------
+// WorkNature × Tier → command sequence key mapping
+// ---------------------------------------------------------------------------
+
+/**
+ * Map a WorkNature × Tier combination to the correct command sequence key
+ * used by the Skill Scheduler.
+ *
+ * Mapping:
+ * - feature + light → "light", feature + standard → "standard", feature + full → "full"
+ * - refactor + light → "refactor_light", refactor + standard/full → "refactor_standard"
+ * - bugfix + light → "fix_light", bugfix + standard/full → "fix_standard"
+ *
+ * @visibleForTesting Currently only used in tests. May be connected to
+ * production call points in the future when the Skill Scheduler consumes
+ * work-nature routing directly.
+ */
+export function getWorkNatureSequenceKey(workNature: WorkNature, tier: Tier): string {
+  if (workNature === "feature") {
+    return tier;
+  }
+  if (workNature === "refactor") {
+    return tier === "light" ? "refactor_light" : "refactor_standard";
+  }
+  // bugfix
+  return tier === "light" ? "fix_light" : "fix_standard";
+}
 
 // ---------------------------------------------------------------------------
 // Tier classification helpers (unchanged logic)
@@ -126,6 +239,26 @@ function hasLightSignals(signals: TaskSignals): boolean {
   return signals.filesAffected <= 1 && signals.linesChanged <= 20;
 }
 
+/**
+ * Determine whether a brownfield project should receive a tier boost.
+ *
+ * Currently implements light → standard promotion only.
+ *
+ * **Design decision — standard → full promotion not implemented:**
+ * A standard → full boost for brownfield projects with `hasAuthChanges` or
+ * `hasNewService` is unnecessary because those signals already trigger the
+ * `full` tier directly via `hasFullSignals()`, which is evaluated before
+ * standard signals in `classifyTier`. There is no reachable code path where
+ * a task has auth changes or a new service AND is classified as `standard` —
+ * those signals always short-circuit to `full` first.
+ *
+ * If future signal combinations allow standard classification alongside
+ * auth/service changes (e.g., a user override or new priority rules),
+ * revisit this function to add standard → full promotion.
+ *
+ * @see classifyTier — tier classification priority order
+ * @see hasFullSignals — signals that directly trigger full tier
+ */
 function shouldBrownfieldBoost(context?: ProjectContext): boolean {
   if (!context) return false;
   return context.projectType === "brownfield" && context.touchesExistingModules;
@@ -538,17 +671,19 @@ export function generateHints(
 // ---------------------------------------------------------------------------
 
 /**
- * Classify a task across three dimensions:
+ * Classify a task across four dimensions:
  *
  * 1. Tier (complexity) — from signals + user override + project context
  * 2. TaskType (domain) — from caller analysis
  * 3. ProjectPhase (lifecycle) — from caller analysis
+ * 4. WorkNature (work nature) — from description keywords or user override
  *
  * The tier determines the command sequence. The task type and project phase
  * generate behavioral hints that downstream skills use to adjust their behavior.
+ * The work nature determines which command sequence variant to use.
  *
  * Backward compatible: taskType defaults to "fullstack", projectPhase defaults
- * to "iteration" when not provided.
+ * to "iteration", workNature defaults to "feature" when not provided.
  */
 export function classifyTask(
   signals: TaskSignals,
@@ -556,6 +691,7 @@ export function classifyTask(
   projectContext?: ProjectContext,
   taskType: TaskType = "fullstack",
   projectPhase: ProjectPhase = "iteration",
+  workNature: WorkNature = "feature",
 ): ClassificationResult {
   const { tier, reason } = classifyTier(signals, userOverride, projectContext);
   const commandSequence = COMMAND_SEQUENCES[tier];
@@ -567,6 +703,7 @@ export function classifyTask(
     commandSequence,
     taskType,
     projectPhase,
+    work_nature: workNature,
     hints,
   };
 }

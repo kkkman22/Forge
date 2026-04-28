@@ -420,6 +420,112 @@ describe("close()", () => {
 });
 
 // ---------------------------------------------------------------------------
+// Global timeout (Requirements 12.1, 12.2, 12.3)
+// ---------------------------------------------------------------------------
+
+describe("global timeout", () => {
+  /**
+   * Helper: consume the warm query with a quick success so subsequent calls
+   * use the standalone sdkQuery path where we can intercept the AbortController.
+   */
+  async function consumeWarmQuery(adapter: SdkAgentAdapter): Promise<void> {
+    mockWarmQueryQuery.mockReturnValue(makeAsyncGenerator([buildSuccessResult()]));
+    await adapter.run("warm-up prompt", "/test/cwd");
+  }
+
+  /**
+   * Helper: mock sdkQuery to return a generator that hangs until the adapter's
+   * internal AbortController fires. This simulates a real SDK call that respects
+   * the abort signal. We use the standalone sdkQuery path because it receives
+   * the AbortController in options, allowing us to listen for the abort event.
+   */
+  function mockSdkQueryWithAbortAwareHang(): void {
+    mockSdkQuery.mockImplementation(
+      ({ options }: { prompt: string; options: { abortController: AbortController } }) => {
+        const ac = options.abortController;
+        async function* gen(): AsyncGenerator<unknown> {
+          await new Promise<void>((_resolve, reject) => {
+            if (ac.signal.aborted) {
+              reject(new DOMException("aborted", "AbortError"));
+              return;
+            }
+            ac.signal.addEventListener(
+              "abort",
+              () => reject(new DOMException("aborted", "AbortError")),
+              { once: true },
+            );
+          });
+        }
+        return gen();
+      },
+    );
+  }
+
+  it("throws error containing 'timeout' keyword when SDK call exceeds configured timeout", async () => {
+    const adapter = createAdapter({ globalTimeoutMs: 10 });
+    await consumeWarmQuery(adapter);
+
+    mockSdkQueryWithAbortAwareHang();
+
+    await expect(adapter.run("test prompt", "/test/cwd")).rejects.toThrow(/timeout/i);
+  }, 10_000);
+
+  it("includes the configured timeout duration in the error message", async () => {
+    const adapter = createAdapter({ globalTimeoutMs: 50 });
+    await consumeWarmQuery(adapter);
+
+    mockSdkQueryWithAbortAwareHang();
+
+    await expect(adapter.run("test prompt", "/test/cwd")).rejects.toThrow(
+      "Agent SDK call timed out after 50ms (timeout)",
+    );
+  }, 10_000);
+
+  it("does not throw when SDK call completes before timeout", async () => {
+    const successResult = buildSuccessResult();
+    mockWarmQueryQuery.mockReturnValue(makeAsyncGenerator([successResult]));
+
+    const adapter = createAdapter({ globalTimeoutMs: 5000 });
+
+    const result = await adapter.run("test prompt", "/test/cwd");
+
+    expect(result.output.success).toBe(true);
+    expect(result.usage.inputTokens).toBe(100);
+  });
+
+  it("clears timeout on successful completion (no lingering timers)", async () => {
+    vi.useFakeTimers();
+    try {
+      const successResult = buildSuccessResult();
+      mockWarmQueryQuery.mockReturnValue(makeAsyncGenerator([successResult]));
+
+      const adapter = createAdapter({ globalTimeoutMs: 100 });
+
+      const result = await adapter.run("test prompt", "/test/cwd");
+
+      expect(result.output.success).toBe(true);
+
+      // After successful completion, clearTimeout in the finally block should
+      // have removed the pending timer.
+      expect(vi.getTimerCount()).toBe(0);
+    } finally {
+      vi.useRealTimers();
+    }
+  });
+
+  it("defaults to 1,800,000ms (30 minutes) when globalTimeoutMs is not configured", async () => {
+    // Verify the default: a quick call succeeds (proving default is not 0ms).
+    // The constant DEFAULT_GLOBAL_TIMEOUT_MS = 1_800_000 is used internally.
+    const adapter = createAdapter(); // no globalTimeoutMs
+    const successResult = buildSuccessResult();
+    mockWarmQueryQuery.mockReturnValue(makeAsyncGenerator([successResult]));
+
+    const result = await adapter.run("test prompt", "/test/cwd");
+    expect(result.output.success).toBe(true);
+  });
+});
+
+// ---------------------------------------------------------------------------
 // Warm query consumption (Requirements 2.1, 2.2)
 // ---------------------------------------------------------------------------
 

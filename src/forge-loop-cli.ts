@@ -16,18 +16,112 @@
  * **Validates: Requirements 1.4, 1.6, 6.1–6.10, 4.5, 4.6, 4.7**
  */
 
-import { type ChildProcess, execFileSync, spawn } from "node:child_process";
 import { startup } from "@anthropic-ai/claude-agent-sdk";
 import { Command } from "commander";
+import { type ChildProcess, execFileSync, spawn } from "node:child_process";
+import { copyFileSync, existsSync, mkdirSync, readFileSync } from "node:fs";
+import path from "node:path";
 
 import { buildAgentOutputSchema } from "./agent-output.js";
+import { CliError } from "./cli-error.js";
+import { extractConfigLang } from "./config-store.js";
+import { formatNotesDocument } from "./context-accumulator.js";
 import { EffectExecutor } from "./effect-executor.js";
+import { type I18nConfig, parseTranslationFile, translate } from "./i18n.js";
+import { detectLocale } from "./locale-detector.js";
 import type { LoopConfig, RunLimits } from "./loop-types.js";
-import { RunManager } from "./run-manager.js";
+import type { TaskType } from "./pua-engine.js";
+import { branchExists, RunManager } from "./run-manager.js";
 import { SdkAgentAdapter } from "./sdk-agent-adapter.js";
-import { SdkDriver } from "./sdk-driver.js";
+import { detectSkillAwareMode, SdkDriver } from "./sdk-driver.js";
 import { buildSleepPreventionCommand } from "./sleep-preventer.js";
 import { decideWorktreeCleanup, isValidWorktreeSource } from "./worktree-manager.js";
+
+// ---------------------------------------------------------------------------
+// Default constants
+// ---------------------------------------------------------------------------
+
+/**
+ * Default base delay in milliseconds for exponential backoff on hard failures.
+ * Used as the default value for `LoopConfig.backoffBaseMs`.
+ */
+export const DEFAULT_BACKOFF_BASE_MS = 60_000;
+
+/**
+ * Default maximum number of concurrent Git worktrees allowed.
+ * Used as the default value for `LoopConfig.maxConcurrentWorktrees`.
+ */
+export const DEFAULT_MAX_CONCURRENT_WORKTREES = 3;
+
+// ---------------------------------------------------------------------------
+// Tier validation
+// ---------------------------------------------------------------------------
+
+/** Known routing tiers for --tier validation. */
+export const VALID_TIERS: ReadonlySet<string> = new Set<string>(["light", "standard", "full"]);
+
+// ---------------------------------------------------------------------------
+// Supported locales
+// ---------------------------------------------------------------------------
+
+/** Supported locale codes for --lang validation. */
+export const SUPPORTED_LOCALES: ReadonlySet<string> = new Set<string>(["zh", "en"]);
+
+// ---------------------------------------------------------------------------
+// PUA task type validation
+// ---------------------------------------------------------------------------
+
+/** Known PUA task types for --pua-task-type validation. */
+const VALID_PUA_TASK_TYPES: ReadonlySet<string> = new Set<string>([
+  "debug",
+  "build",
+  "research",
+  "architecture",
+  "performance",
+  "review",
+  "deploy",
+  "general",
+]);
+
+// ---------------------------------------------------------------------------
+// Worktree notes backup (R4)
+// ---------------------------------------------------------------------------
+
+/**
+ * Copy the notes file from a worktree to the main repo's run directory
+ * before the worktree is deleted.
+ *
+ * This ensures iteration history is preserved even when the worktree is
+ * removed after a zero-commit run. On any failure (missing source file,
+ * permission error, etc.) the function returns `{ success: false }` with
+ * an error description — callers should warn but not block worktree
+ * deletion.
+ *
+ * @param worktreeNotesPath  Absolute path to the notes.md inside the worktree.
+ * @param mainRepoRunDir     Absolute path to the main repo `.forge/runs/<runId>/` directory.
+ * @returns `{ success: true }` on success, `{ success: false, error }` on failure.
+ */
+export function backupWorktreeNotes(
+  worktreeNotesPath: string,
+  mainRepoRunDir: string,
+): { success: boolean; error?: string } {
+  try {
+    if (!existsSync(worktreeNotesPath)) {
+      return { success: false, error: `Notes file not found: ${worktreeNotesPath}` };
+    }
+
+    // Ensure the destination directory exists in the main repo
+    mkdirSync(mainRepoRunDir, { recursive: true });
+
+    const destPath = path.join(mainRepoRunDir, "notes.md");
+    copyFileSync(worktreeNotesPath, destPath);
+
+    return { success: true };
+  } catch (err) {
+    const message = err instanceof Error ? err.message : String(err);
+    return { success: false, error: message };
+  }
+}
 
 // ---------------------------------------------------------------------------
 // CLI options interface
@@ -40,6 +134,14 @@ interface CliOptions {
   preventSleep: string;
   worktree: boolean;
   maxBudgetUsd?: number;
+  tier?: string;
+  type?: string;
+  phase?: string;
+  nature?: string;
+  pua?: boolean;
+  puaTaskType?: string;
+  resume?: string;
+  lang?: string;
 }
 
 // ---------------------------------------------------------------------------
@@ -59,6 +161,17 @@ async function main(): Promise<void> {
     .option("--prevent-sleep <on|off>", "Control sleep prevention", "on")
     .option("--worktree", "Run in a separate Git worktree", false)
     .option("--max-budget-usd <amount>", "Maximum dollar budget", parseFloat)
+    .option("--tier <tier>", "Preset routing tier (light|standard|full)")
+    .option("--type <type>", "Preset task type (frontend|backend|fullstack|data|infra|docs)")
+    .option("--phase <phase>", "Preset project phase (greenfield|iteration|refactor|bugfix)")
+    .option("--nature <nature>", "Preset work nature (feature|refactor|bugfix)")
+    .option("--pua", "Enable PUA Quality Engine", false)
+    .option(
+      "--pua-task-type <type>",
+      "PUA task type (debug|build|research|architecture|performance|review|deploy|general)",
+    )
+    .option("--resume <branchName>", "Resume an existing run on a forge/ branch")
+    .option("--lang <locale>", "Set display language (zh|en)")
     .action(async (objective: string, opts: CliOptions) => {
       const cwd = process.cwd();
       const preventSleep = opts.preventSleep !== "off";
@@ -73,21 +186,19 @@ async function main(): Promise<void> {
           stdio: "pipe",
         });
       } catch {
-        console.error("Error: Current directory is not a Git repository.");
-        process.exit(1);
+        throw new CliError("Error: Current directory is not a Git repository.");
       }
 
-      if (!useWorktree) {
+      if (!useWorktree && !opts.resume) {
         const status = execFileSync("git", ["status", "--porcelain"], {
           cwd,
           encoding: "utf-8",
         }).trim();
 
         if (status !== "") {
-          console.error(
+          throw new CliError(
             "Error: Working tree is not clean. Commit or stash changes before running, or use --worktree.",
           );
-          process.exit(1);
         }
       }
 
@@ -101,10 +212,118 @@ async function main(): Promise<void> {
         }).trim();
 
         if (!isValidWorktreeSource(currentBranch)) {
-          console.error(
+          throw new CliError(
             "Error: Cannot create a worktree from a forge/ branch. Switch to main or another non-forge branch first.",
           );
-          process.exit(1);
+        }
+      }
+
+      // ---------------------------------------------------------------
+      // Detect Skill-aware mode and validate .forge/ directory
+      // ---------------------------------------------------------------
+      const hasForgeDir = detectSkillAwareMode(cwd);
+      const hasSkillOptions = !!(opts.tier || opts.type || opts.phase || opts.nature);
+      const skillAware = hasForgeDir || hasSkillOptions;
+
+      if (!hasForgeDir && hasSkillOptions) {
+        throw new CliError(
+          "Error: --tier, --type, --phase, and --nature require a .forge/ directory. Run `forge init` first.",
+        );
+      }
+
+      // ---------------------------------------------------------------
+      // Validate --tier value against known set (Req 10.4)
+      // ---------------------------------------------------------------
+      if (opts.tier && !VALID_TIERS.has(opts.tier)) {
+        throw new CliError(
+          `Error: Invalid --tier value "${opts.tier}". Valid options: ${[...VALID_TIERS].join(", ")}`,
+        );
+      }
+
+      // ---------------------------------------------------------------
+      // Validate --lang value and detect locale (i18n)
+      // ---------------------------------------------------------------
+      if (opts.lang && !SUPPORTED_LOCALES.has(opts.lang)) {
+        throw new CliError(
+          `Error: Invalid --lang value "${opts.lang}". Valid options: ${[...SUPPORTED_LOCALES].join(", ")}`,
+        );
+      }
+
+      // Read config.md lang field
+      let configLang: string | null = null;
+      try {
+        const configPath = path.join(cwd, ".forge", "config.md");
+        if (existsSync(configPath)) {
+          const configContent = readFileSync(configPath, "utf-8");
+          configLang = extractConfigLang(configContent);
+        }
+      } catch {
+        // Config read failure is non-blocking — continue with other sources.
+      }
+
+      // Detect locale from all sources
+      const localeResult = detectLocale(
+        {
+          cliLang: opts.lang,
+          configLang: configLang ?? undefined,
+          envLang: process.env.FORGE_LANG,
+          systemLocale: process.env.LANG || process.env.LC_ALL,
+        },
+        SUPPORTED_LOCALES,
+      );
+
+      if (localeResult.warning) {
+        console.warn(`Warning: ${localeResult.warning}`);
+      }
+
+      // Load translation files and create I18nConfig
+      const localesDir = path.join(
+        path.dirname(new URL(import.meta.url).pathname),
+        "..",
+        "locales",
+      );
+      const enData = parseTranslationFile(
+        readFileSync(path.join(localesDir, "en.json"), "utf-8"),
+        "locales/en.json",
+      );
+      const zhData = parseTranslationFile(
+        readFileSync(path.join(localesDir, "zh.json"), "utf-8"),
+        "locales/zh.json",
+      );
+
+      const i18nConfig: I18nConfig = {
+        locale: localeResult.locale,
+        defaultLocale: "en",
+        translations: { en: enData, zh: zhData },
+      };
+
+      /** Convenience translation function. */
+      const _t = (key: string, params?: Record<string, string>): string =>
+        translate(i18nConfig, key, params);
+
+      // ---------------------------------------------------------------
+      // Detect active task in StatusFile (Req 10.2)
+      // ---------------------------------------------------------------
+      if (hasForgeDir) {
+        try {
+          const statusFilePath = path.join(cwd, ".forge", "status.md");
+          if (existsSync(statusFilePath)) {
+            const statusContent = readFileSync(statusFilePath, "utf-8");
+            const phaseMatch = statusContent.match(/^phase:\s*"?([^"\n]*)"?\s*$/m);
+            if (phaseMatch) {
+              const phase = phaseMatch[1].trim();
+              if (phase && phase !== "completed" && phase !== "aborted") {
+                console.warn(
+                  _t("cli.warning.activeTask", { phase }),
+                );
+              }
+            }
+          }
+        } catch (err) {
+          // StatusFile read failure is non-blocking — continue startup.
+          console.warn(
+            `[debug] StatusFile read failed during startup: ${err instanceof Error ? err.message : String(err)}`,
+          );
         }
       }
 
@@ -115,8 +334,8 @@ async function main(): Promise<void> {
         agent: "claude",
         maxConsecutiveFailures: 3,
         preventSleep,
-        backoffBaseMs: 60_000,
-        maxConcurrentWorktrees: 3,
+        backoffBaseMs: DEFAULT_BACKOFF_BASE_MS,
+        maxConcurrentWorktrees: DEFAULT_MAX_CONCURRENT_WORKTREES,
       };
 
       const limits: RunLimits = {
@@ -147,17 +366,57 @@ async function main(): Promise<void> {
       });
 
       // ---------------------------------------------------------------
-      // Set up run (new run or worktree)
+      // Set up run (new run, worktree, or resume)
       // ---------------------------------------------------------------
       let runSetup: ReturnType<typeof RunManager.setupNewRun>;
       let worktreePath: string | undefined;
       let effectiveCwd = cwd;
 
-      if (useWorktree) {
+      if (opts.resume) {
+        // --resume <branchName>: restore an existing run (R13)
+        const resumeBranch = opts.resume;
+
+        // Validate that the branch exists
+        if (!branchExists(resumeBranch, cwd)) {
+          throw new CliError(_t("cli.error.branchNotFound", { branch: resumeBranch }));
+        }
+
+        // Checkout the branch before resuming
+        execFileSync("git", ["checkout", resumeBranch], { cwd, stdio: "pipe" });
+
+        // Restore run context and notes
+        const resumed = RunManager.resumeRun(resumeBranch, cwd);
+
+        // Validate that a matching run directory was found (runId is not
+        // a freshly generated UUID — resumeRun creates a new one when no
+        // existing run matches, but the notes will be empty)
+        if (resumed.lastIteration === 0) {
+          // Check if the run directory actually had notes — a lastIteration
+          // of 0 with an existing notes file that has content is still valid
+          // (first iteration may not have completed). We only error when the
+          // run directory itself could not be found for this branch.
+          const notesContent = readFileSync(resumed.notesPath, "utf-8");
+          if (!notesContent.includes(resumeBranch)) {
+            throw new CliError(
+              _t("cli.error.noRunDirectory", { branch: resumeBranch }),
+            );
+          }
+        }
+
+        runSetup = resumed;
+        console.log(
+          _t("cli.loop.resuming", {
+            runId: resumed.runId,
+            branch: resumeBranch,
+            iteration: String(resumed.lastIteration),
+          }),
+        );
+      } else if (useWorktree) {
         const worktreeSetup = RunManager.setupWorktree(
           objective,
           cwd,
           loopConfig.maxConcurrentWorktrees,
+          _t,
         );
         runSetup = worktreeSetup;
         worktreePath = worktreeSetup.worktreePath;
@@ -207,6 +466,20 @@ async function main(): Promise<void> {
           warmQuery,
           baseCommit: runSetup.baseCommit,
           notesPath: runSetup.notesPath,
+          branchName: runSetup.branchName,
+          presetTier: opts.tier,
+          presetTaskType: opts.type,
+          presetProjectPhase: opts.phase,
+          presetWorkNature: opts.nature,
+          skillAware,
+          puaEnabled: opts.pua === true,
+          puaTaskType:
+            opts.puaTaskType && VALID_PUA_TASK_TYPES.has(opts.puaTaskType)
+              ? (opts.puaTaskType as TaskType)
+              : opts.pua
+                ? ("general" as TaskType)
+                : undefined,
+          t: _t,
         },
         effectExecutor,
         agentAdapter,
@@ -231,19 +504,27 @@ async function main(): Promise<void> {
         // Persist final notes.
         RunManager.persistNotes(
           runSetup.notesPath,
-          result.notesDocument.entries.length > 0 ? JSON.stringify(result.notesDocument) : "",
+          result.notesDocument.entries.length > 0 ? formatNotesDocument(result.notesDocument) : "",
         );
 
         // Handle worktree cleanup.
         if (useWorktree && worktreePath) {
           const decision = decideWorktreeCleanup(result.commitCount);
           if (decision.action === "remove") {
+            // Backup notes from worktree to main repo before deletion (R4)
+            const mainRepoRunDir = path.join(cwd, ".forge", "runs", runSetup.runId);
+            const worktreeNotesPath = runSetup.notesPath;
+            const backupResult = backupWorktreeNotes(worktreeNotesPath, mainRepoRunDir);
+            if (!backupResult.success) {
+              console.warn(_t("cli.warning.worktreeNotesBackupFailed", { error: backupResult.error ?? "unknown" }));
+            }
+
             try {
               execFileSync("git", ["worktree", "remove", worktreePath], {
                 cwd,
                 stdio: "pipe",
               });
-              console.log(`Worktree removed: ${decision.reason}`);
+              console.log(_t("cli.loop.worktreeRemoved", { reason: decision.reason }));
             } catch (cleanupError) {
               console.error(
                 `Failed to remove worktree at ${worktreePath}:`,
@@ -251,7 +532,7 @@ async function main(): Promise<void> {
               );
             }
           } else {
-            console.log(`Worktree preserved: ${decision.reason}`);
+            console.log(_t("cli.loop.worktreePreserved", { reason: decision.reason }));
           }
         }
       } finally {
@@ -287,6 +568,10 @@ async function main(): Promise<void> {
 }
 
 main().catch((err: unknown) => {
+  if (err instanceof CliError) {
+    console.error(err.message);
+    process.exit(err.exitCode);
+  }
   const message = err instanceof Error ? err.message : String(err);
   console.error(message);
   process.exit(1);

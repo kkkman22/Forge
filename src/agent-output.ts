@@ -48,13 +48,22 @@ export type ValidationResult = ValidationSuccess | ValidationError;
  * - `key_learnings` (array of strings)
  *
  * When `includeStopField` is `true`, the schema also includes
- * `should_fully_stop` (boolean). All properties listed in `properties`
- * are also listed in `required`, and `additionalProperties` is `false`.
+ * `should_fully_stop` (boolean).
+ *
+ * When `includeSkillFields` is `true`, the schema also includes
+ * `skill_phase_completed` (string), `next_skill_phase` (string),
+ * and `gate_result` (string). These skill fields are optional and
+ * are NOT added to the `required` array.
+ *
+ * `additionalProperties` is always `false`.
  *
  * @param opts  Options controlling schema shape.
  * @returns A valid {@link AgentOutputSchema}.
  */
-export function buildAgentOutputSchema(opts: { includeStopField: boolean }): AgentOutputSchema {
+export function buildAgentOutputSchema(opts: {
+  includeStopField: boolean;
+  includeSkillFields?: boolean;
+}): AgentOutputSchema {
   const properties: Record<string, SchemaProperty> = {
     success: { type: "boolean" },
     summary: { type: "string" },
@@ -66,11 +75,21 @@ export function buildAgentOutputSchema(opts: { includeStopField: boolean }): Age
     properties.should_fully_stop = { type: "boolean" };
   }
 
+  // Required array includes all properties added so far (core + stop field).
+  const required = Object.keys(properties);
+
+  // Skill fields are added to properties but NOT to required — they are optional.
+  if (opts.includeSkillFields) {
+    properties.skill_phase_completed = { type: "string" };
+    properties.next_skill_phase = { type: "string" };
+    properties.gate_result = { type: "string" };
+  }
+
   return {
     type: "object",
     additionalProperties: false,
     properties,
-    required: Object.keys(properties),
+    required,
   };
 }
 
@@ -108,6 +127,9 @@ export function toStringArray(value: unknown): string[] {
  * 4. `key_changes_made` is an array of strings
  * 5. `key_learnings` is an array of strings
  * 6. `should_fully_stop`, if present, is a boolean
+ * 7. `skill_phase_completed`, if present, is a string
+ * 8. `next_skill_phase`, if present, is a string
+ * 9. `gate_result`, if present, is one of "passed", "blocked", "skipped"
  *
  * @param data  The value to validate.
  * @returns A {@link ValidationSuccess} if valid, or a {@link ValidationError} otherwise.
@@ -143,6 +165,21 @@ export function validateAgentOutput(data: unknown): ValidationResult {
 
   if ("should_fully_stop" in obj && typeof obj.should_fully_stop !== "boolean") {
     errors.push("should_fully_stop must be a boolean");
+  }
+
+  if ("skill_phase_completed" in obj && typeof obj.skill_phase_completed !== "string") {
+    errors.push("skill_phase_completed must be a string");
+  }
+
+  if ("next_skill_phase" in obj && typeof obj.next_skill_phase !== "string") {
+    errors.push("next_skill_phase must be a string");
+  }
+
+  if ("gate_result" in obj) {
+    const validGateResults = ["passed", "blocked", "skipped"];
+    if (typeof obj.gate_result !== "string" || !validGateResults.includes(obj.gate_result)) {
+      errors.push('gate_result must be one of "passed", "blocked", "skipped"');
+    }
   }
 
   if (errors.length > 0) {
@@ -182,6 +219,7 @@ export function deserializeAgentOutput(json: string): ValidationResult {
   try {
     parsed = JSON.parse(json);
   } catch {
+    // Intentional silent degradation: invalid JSON is reported as a validation error.
     return { valid: false, errors: ["invalid JSON"] };
   }
   return validateAgentOutput(parsed);

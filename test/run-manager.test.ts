@@ -25,13 +25,30 @@ vi.mock("node:fs", () => ({
   mkdirSync: vi.fn(),
   existsSync: vi.fn(),
   readdirSync: vi.fn(),
+  rmSync: vi.fn(),
+  openSync: vi.fn(),
+  closeSync: vi.fn(),
+  unlinkSync: vi.fn(),
+  constants: {
+    O_CREAT: 64,
+    O_EXCL: 128,
+    O_WRONLY: 1,
+  },
 }));
 
 // Import after mocking
 import { execFileSync } from "node:child_process";
 import { randomUUID } from "node:crypto";
-import { existsSync, mkdirSync, readdirSync, readFileSync, writeFileSync } from "node:fs";
-import { RunManager } from "../src/run-manager.js";
+import {
+    existsSync,
+    mkdirSync,
+    openSync,
+    readdirSync,
+    readFileSync,
+    unlinkSync,
+    writeFileSync,
+} from "node:fs";
+import { acquireFileLock, releaseFileLock, RunManager } from "../src/run-manager.js";
 
 // ---------------------------------------------------------------------------
 // Constants
@@ -48,7 +65,17 @@ const CWD = "/test/repo";
 beforeEach(() => {
   vi.clearAllMocks();
   (randomUUID as Mock).mockReturnValue(FAKE_UUID);
-  (execFileSync as Mock).mockReturnValue(Buffer.from(`${FAKE_SHA}\n`));
+  // Default: branchExists returns false (branch not found), rev-parse HEAD returns SHA
+  (execFileSync as Mock).mockImplementation(
+    (_exec: string, args: string[], _opts?: Record<string, unknown>) => {
+      if (args[0] === "rev-parse" && args[1] === "--verify") {
+        throw new Error("branch not found");
+      }
+      return Buffer.from(`${FAKE_SHA}\n`);
+    },
+  );
+  // Default: openSync succeeds (returns a fake file descriptor)
+  (openSync as Mock).mockReturnValue(42);
 });
 
 afterEach(() => {
@@ -61,30 +88,57 @@ afterEach(() => {
 
 describe("setupNewRun", () => {
   it("creates branch with sanitized name and records base commit", () => {
+    // Mock execFileSync: branchExists check should fail (branch doesn't exist)
+    (execFileSync as Mock).mockImplementation(
+      (_exec: string, args: string[], _opts?: Record<string, unknown>) => {
+        if (args[0] === "rev-parse" && args[1] === "--verify") {
+          throw new Error("branch not found");
+        }
+        return Buffer.from(`${FAKE_SHA}\n`);
+      },
+    );
+
     const result = RunManager.setupNewRun("Add login form", CWD);
 
     const mock = execFileSync as Mock;
 
-    // First call: git rev-parse HEAD to record base commit
+    // First call: branchExists check (git rev-parse --verify refs/heads/forge/Addloginform)
     expect(mock.mock.calls[0][0]).toBe("git");
-    expect(mock.mock.calls[0][1]).toEqual(["rev-parse", "HEAD"]);
-    expect(mock.mock.calls[0][2]).toEqual({ cwd: CWD });
+    expect(mock.mock.calls[0][1]).toEqual([
+      "rev-parse",
+      "--verify",
+      "refs/heads/forge/Addloginform",
+    ]);
 
-    // Second call: git checkout -b forge/<sanitized>
-    // sanitizeBranchName strips spaces (not in [a-zA-Z0-9\-_./])
+    // Second call: git rev-parse HEAD to record base commit
     expect(mock.mock.calls[1][0]).toBe("git");
-    expect(mock.mock.calls[1][1]).toEqual(["checkout", "-b", "forge/Addloginform"]);
+    expect(mock.mock.calls[1][1]).toEqual(["rev-parse", "HEAD"]);
     expect(mock.mock.calls[1][2]).toEqual({ cwd: CWD });
+
+    // Third call: git checkout -b forge/<sanitized>
+    expect(mock.mock.calls[2][0]).toBe("git");
+    expect(mock.mock.calls[2][1]).toEqual(["checkout", "-b", "forge/Addloginform"]);
+    expect(mock.mock.calls[2][2]).toEqual({ cwd: CWD });
 
     // Verify returned setup
     expect(result.runId).toBe(FAKE_UUID);
     expect(result.baseCommit).toBe(FAKE_SHA);
     expect(result.branchName).toBe("forge/Addloginform");
-    expect(result.runDir).toBe(`${CWD}/.forge/runs/${FAKE_UUID}/`);
+    expect(result.runDir).toBe(`${CWD}/.forge/runs/${FAKE_UUID}`);
     expect(result.notesPath).toBe(`${CWD}/.forge/runs/${FAKE_UUID}/notes.md`);
   });
 
   it("falls back to run ID prefix when sanitized name is empty", () => {
+    // Mock execFileSync: branchExists check should fail (branch doesn't exist)
+    (execFileSync as Mock).mockImplementation(
+      (_exec: string, args: string[], _opts?: Record<string, unknown>) => {
+        if (args[0] === "rev-parse" && args[1] === "--verify") {
+          throw new Error("branch not found");
+        }
+        return Buffer.from(`${FAKE_SHA}\n`);
+      },
+    );
+
     // Objective with only special characters that sanitize to empty
     const result = RunManager.setupNewRun("$();&|<>", CWD);
 
@@ -92,20 +146,21 @@ describe("setupNewRun", () => {
 
     // Branch name should use run ID prefix fallback
     const expectedBranch = `forge/run-${FAKE_UUID.slice(0, 8)}`;
-    expect(mock.mock.calls[1][1]).toEqual(["checkout", "-b", expectedBranch]);
+    // Call 0: branchExists, Call 1: rev-parse HEAD, Call 2: checkout -b
+    expect(mock.mock.calls[2][1]).toEqual(["checkout", "-b", expectedBranch]);
     expect(result.branchName).toBe(expectedBranch);
   });
 
   it("creates run directory and initializes notes file", () => {
     RunManager.setupNewRun("test objective", CWD);
 
-    const expectedRunDir = `${CWD}/.forge/runs/${FAKE_UUID}/`;
+    const expectedRunDir = `${CWD}/.forge/runs/${FAKE_UUID}`;
 
     // mkdirSync called with recursive: true
     expect(mkdirSync).toHaveBeenCalledWith(expectedRunDir, { recursive: true });
 
     // writeFileSync called with notes path and initial content
-    const expectedNotesPath = `${expectedRunDir}notes.md`;
+    const expectedNotesPath = `${expectedRunDir}/notes.md`;
     expect(writeFileSync).toHaveBeenCalledWith(
       expectedNotesPath,
       expect.stringContaining(`# Run: ${FAKE_UUID}`),
@@ -245,6 +300,10 @@ describe("setupWorktree", () => {
         if (args[0] === "worktree" && args[1] === "list") {
           return Buffer.from(worktreeOutput);
         }
+        if (args[0] === "rev-parse" && args[1] === "--verify") {
+          // Branch doesn't exist yet
+          throw new Error("branch not found");
+        }
         if (args[0] === "rev-parse") {
           return Buffer.from(`${FAKE_SHA}\n`);
         }
@@ -274,5 +333,351 @@ describe("setupWorktree", () => {
     // Verify run directory and notes were created
     expect(mkdirSync).toHaveBeenCalled();
     expect(writeFileSync).toHaveBeenCalled();
+  });
+});
+
+// ---------------------------------------------------------------------------
+// setupWorktree orphan branch cleanup (Requirements 11.1, 11.2, 11.3)
+// ---------------------------------------------------------------------------
+
+describe("setupWorktree orphan branch cleanup", () => {
+  it("deletes orphan branch when run directory initialization fails", () => {
+    const worktreeOutput = ["worktree /main/repo", "HEAD abc123", "branch refs/heads/main"].join(
+      "\n",
+    );
+
+    // Track calls to identify the branch -D call
+    const gitCalls: string[][] = [];
+
+    (execFileSync as Mock).mockImplementation(
+      (_exec: string, args: string[], _opts?: Record<string, unknown>) => {
+        gitCalls.push(args);
+        if (args[0] === "worktree" && args[1] === "list") {
+          return Buffer.from(worktreeOutput);
+        }
+        if (args[0] === "rev-parse" && args[1] === "--verify") {
+          throw new Error("branch not found");
+        }
+        if (args[0] === "rev-parse") {
+          return Buffer.from(`${FAKE_SHA}\n`);
+        }
+        return Buffer.from("");
+      },
+    );
+
+    (openSync as Mock).mockReturnValue(42);
+
+    // Make mkdirSync succeed for the lock dir but fail for the run dir inside worktree
+    let mkdirCallCount = 0;
+    (mkdirSync as Mock).mockImplementation((_p: string, _opts?: Record<string, unknown>) => {
+      mkdirCallCount++;
+      // First call: lock directory (succeed)
+      // Second call: run directory inside worktree (fail to trigger orphan cleanup)
+      if (mkdirCallCount === 2) {
+        throw new Error("EACCES: permission denied");
+      }
+    });
+
+    expect(() => RunManager.setupWorktree("my task", "/main/repo", 3)).toThrow(
+      /Run directory initialization failed/,
+    );
+
+    // Verify git branch -D was called to clean up the orphan branch
+    const branchDeleteCall = gitCalls.find((call) => call[0] === "branch" && call[1] === "-D");
+    expect(branchDeleteCall).toBeDefined();
+    expect(branchDeleteCall?.[2]).toBe("forge/mytask");
+  });
+
+  it("includes branch name in error message when branch deletion fails", () => {
+    const worktreeOutput = ["worktree /main/repo", "HEAD abc123", "branch refs/heads/main"].join(
+      "\n",
+    );
+
+    (execFileSync as Mock).mockImplementation(
+      (_exec: string, args: string[], _opts?: Record<string, unknown>) => {
+        if (args[0] === "worktree" && args[1] === "list") {
+          return Buffer.from(worktreeOutput);
+        }
+        if (args[0] === "rev-parse" && args[1] === "--verify") {
+          throw new Error("branch not found");
+        }
+        if (args[0] === "rev-parse") {
+          return Buffer.from(`${FAKE_SHA}\n`);
+        }
+        // Make branch -D fail
+        if (args[0] === "branch" && args[1] === "-D") {
+          throw new Error("error: branch not found");
+        }
+        return Buffer.from("");
+      },
+    );
+
+    (openSync as Mock).mockReturnValue(42);
+
+    // Make mkdirSync fail on the second call (run dir inside worktree)
+    let mkdirCallCount = 0;
+    (mkdirSync as Mock).mockImplementation((_p: string, _opts?: Record<string, unknown>) => {
+      mkdirCallCount++;
+      if (mkdirCallCount === 2) {
+        throw new Error("EACCES: permission denied");
+      }
+    });
+
+    try {
+      RunManager.setupWorktree("my task", "/main/repo", 3);
+      // Should not reach here
+      expect.unreachable("Expected setupWorktree to throw");
+    } catch (err) {
+      const message = (err as Error).message;
+      // Error message should mention the orphan branch for manual cleanup
+      expect(message).toContain("forge/mytask");
+      expect(message).toContain("manual cleanup");
+    }
+  });
+
+  it("cleans up worktree before attempting branch deletion", () => {
+    const worktreeOutput = ["worktree /main/repo", "HEAD abc123", "branch refs/heads/main"].join(
+      "\n",
+    );
+
+    const gitCallOrder: string[] = [];
+
+    (execFileSync as Mock).mockImplementation(
+      (_exec: string, args: string[], _opts?: Record<string, unknown>) => {
+        if (args[0] === "worktree" && args[1] === "list") {
+          return Buffer.from(worktreeOutput);
+        }
+        if (args[0] === "rev-parse" && args[1] === "--verify") {
+          throw new Error("branch not found");
+        }
+        if (args[0] === "rev-parse") {
+          return Buffer.from(`${FAKE_SHA}\n`);
+        }
+        if (args[0] === "worktree" && args[1] === "remove") {
+          gitCallOrder.push("worktree-remove");
+          return Buffer.from("");
+        }
+        if (args[0] === "branch" && args[1] === "-D") {
+          gitCallOrder.push("branch-delete");
+          return Buffer.from("");
+        }
+        return Buffer.from("");
+      },
+    );
+
+    (openSync as Mock).mockReturnValue(42);
+
+    // Make mkdirSync fail on the second call (run dir inside worktree)
+    let mkdirCallCount = 0;
+    (mkdirSync as Mock).mockImplementation((_p: string, _opts?: Record<string, unknown>) => {
+      mkdirCallCount++;
+      if (mkdirCallCount === 2) {
+        throw new Error("EACCES: permission denied");
+      }
+    });
+
+    expect(() => RunManager.setupWorktree("my task", "/main/repo", 3)).toThrow();
+
+    // Worktree removal should happen before branch deletion
+    expect(gitCallOrder).toEqual(["worktree-remove", "branch-delete"]);
+  });
+});
+
+// ---------------------------------------------------------------------------
+// acquireFileLock / releaseFileLock (Requirements 2.1, 2.3)
+// ---------------------------------------------------------------------------
+
+describe("acquireFileLock", () => {
+  it("returns file descriptor on successful lock acquisition", () => {
+    (openSync as Mock).mockReturnValue(7);
+
+    const fd = acquireFileLock("/tmp/test.lock", 1000);
+
+    expect(fd).toBe(7);
+    expect(openSync).toHaveBeenCalledTimes(1);
+  });
+
+  it("returns null when lock cannot be acquired within timeout", () => {
+    // Always throw EEXIST to simulate another process holding the lock
+    const eexistErr = Object.assign(new Error("file exists"), { code: "EEXIST" });
+    (openSync as Mock).mockImplementation(() => {
+      throw eexistErr;
+    });
+
+    // Mock Date.now to simulate instant timeout
+    let callCount = 0;
+    vi.spyOn(Date, "now").mockImplementation(() => {
+      callCount++;
+      // First call sets the deadline, subsequent calls exceed it
+      return callCount === 1 ? 0 : 10_000;
+    });
+
+    try {
+      const fd = acquireFileLock("/tmp/test.lock", 100);
+      expect(fd).toBeNull();
+    } finally {
+      vi.spyOn(Date, "now").mockRestore();
+    }
+  });
+
+  it("propagates non-EEXIST errors", () => {
+    const enoentErr = Object.assign(new Error("no such file or directory"), { code: "ENOENT" });
+    (openSync as Mock).mockImplementation(() => {
+      throw enoentErr;
+    });
+
+    expect(() => acquireFileLock("/tmp/test.lock", 1000)).toThrow("no such file or directory");
+  });
+});
+
+describe("releaseFileLock", () => {
+  it("calls unlinkSync to remove the lock file", () => {
+    releaseFileLock("/tmp/test.lock", 7);
+
+    expect(unlinkSync).toHaveBeenCalledWith("/tmp/test.lock");
+  });
+
+  it("does not throw if unlinkSync fails", () => {
+    (unlinkSync as Mock).mockImplementation(() => {
+      throw new Error("permission denied");
+    });
+
+    // Should not throw
+    expect(() => releaseFileLock("/tmp/test.lock", 7)).not.toThrow();
+  });
+});
+
+// ---------------------------------------------------------------------------
+// setupWorktree file-lock integration (Requirements 2.1, 2.2, 2.3, 2.4)
+// ---------------------------------------------------------------------------
+
+describe("setupWorktree file-lock integration", () => {
+  it("acquires and releases file lock during worktree creation", () => {
+    const worktreeOutput = ["worktree /main/repo", "HEAD abc123", "branch refs/heads/main"].join(
+      "\n",
+    );
+
+    (execFileSync as Mock).mockImplementation(
+      (_exec: string, args: string[], _opts?: Record<string, unknown>) => {
+        if (args[0] === "worktree" && args[1] === "list") {
+          return Buffer.from(worktreeOutput);
+        }
+        if (args[0] === "rev-parse" && args[1] === "--verify") {
+          throw new Error("branch not found");
+        }
+        if (args[0] === "rev-parse") {
+          return Buffer.from(`${FAKE_SHA}\n`);
+        }
+        return Buffer.from("");
+      },
+    );
+
+    (openSync as Mock).mockReturnValue(42);
+
+    RunManager.setupWorktree("my task", "/main/repo", 3);
+
+    // Lock was acquired (openSync called with O_CREAT | O_EXCL flags)
+    expect(openSync).toHaveBeenCalled();
+    // Lock was released (unlinkSync called on the lock file)
+    expect(unlinkSync).toHaveBeenCalled();
+  });
+
+  it("throws on lock timeout with descriptive message", () => {
+    const eexistErr = Object.assign(new Error("file exists"), { code: "EEXIST" });
+    (openSync as Mock).mockImplementation(() => {
+      throw eexistErr;
+    });
+
+    // Mock Date.now to simulate instant timeout
+    let callCount = 0;
+    const _originalDateNow = Date.now;
+    vi.spyOn(Date, "now").mockImplementation(() => {
+      callCount++;
+      // First call sets the deadline, subsequent calls exceed it
+      return callCount === 1 ? 0 : 10_000;
+    });
+
+    try {
+      expect(() => RunManager.setupWorktree("my task", "/main/repo", 3)).toThrow(/lock timeout/i);
+    } finally {
+      vi.spyOn(Date, "now").mockRestore();
+    }
+  });
+
+  it("falls back to lockless mode when lock mechanism fails", () => {
+    // Simulate mkdirSync succeeding but openSync throwing a non-EEXIST error
+    // (e.g., permission denied on the lock file itself)
+    const epermErr = Object.assign(new Error("permission denied"), { code: "EPERM" });
+    (openSync as Mock).mockImplementation(() => {
+      throw epermErr;
+    });
+
+    const worktreeOutput = ["worktree /main/repo", "HEAD abc123", "branch refs/heads/main"].join(
+      "\n",
+    );
+
+    (execFileSync as Mock).mockImplementation(
+      (_exec: string, args: string[], _opts?: Record<string, unknown>) => {
+        if (args[0] === "worktree" && args[1] === "list") {
+          return Buffer.from(worktreeOutput);
+        }
+        if (args[0] === "rev-parse" && args[1] === "--verify") {
+          throw new Error("branch not found");
+        }
+        if (args[0] === "rev-parse") {
+          return Buffer.from(`${FAKE_SHA}\n`);
+        }
+        return Buffer.from("");
+      },
+    );
+
+    const warnSpy = vi.spyOn(console, "warn").mockImplementation(() => {});
+
+    // Should NOT throw — falls back to lockless mode
+    const result = RunManager.setupWorktree("my task", "/main/repo", 3);
+
+    expect(result.runId).toBe(FAKE_UUID);
+    expect(warnSpy).toHaveBeenCalledWith(expect.stringContaining("file-lock mechanism failed"));
+
+    warnSpy.mockRestore();
+  });
+
+  it("releases lock even when worktree creation throws", () => {
+    (openSync as Mock).mockReturnValue(42);
+
+    // Make git worktree list return 4 worktrees to trigger concurrency error
+    const worktreeOutput = [
+      "worktree /main/repo",
+      "HEAD abc123",
+      "branch refs/heads/main",
+      "",
+      "worktree /worktrees/wt1",
+      "HEAD def456",
+      "branch refs/heads/forge/wt1",
+      "",
+      "worktree /worktrees/wt2",
+      "HEAD ghi789",
+      "branch refs/heads/forge/wt2",
+      "",
+      "worktree /worktrees/wt3",
+      "HEAD jkl012",
+      "branch refs/heads/forge/wt3",
+    ].join("\n");
+
+    (execFileSync as Mock).mockImplementation(
+      (_exec: string, args: string[], _opts?: Record<string, unknown>) => {
+        if (args[0] === "worktree" && args[1] === "list") {
+          return Buffer.from(worktreeOutput);
+        }
+        return Buffer.from(`${FAKE_SHA}\n`);
+      },
+    );
+
+    expect(() => RunManager.setupWorktree("my task", "/main/repo", 3)).toThrow(
+      /Cannot create worktree/,
+    );
+
+    // Lock should still be released in the finally block
+    expect(unlinkSync).toHaveBeenCalled();
   });
 });

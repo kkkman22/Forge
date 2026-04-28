@@ -416,8 +416,8 @@ npm link && forge-loop "你的目标"            # 全局链接后直接使用
 
 | 方案 | Token 开销 | 说明 |
 |------|-----------|------|
-| Forge 全部 SKILL.md | **~24K** | 13 个 SKILL 文件总量 |
-| Forge 单次会话（按需加载） | **~10K** | 只加载当前命令需要的 SKILL |
+| Forge 全部 SKILL.md | **~24K** <!--approximate--> | 13 个 SKILL 文件总量 |
+| Forge 单次会话（按需加载） | **~10K** <!--approximate--> | 只加载当前命令需要的 SKILL |
 
 按需加载意味着轻量路径只加载 `build` + `review` 两个 SKILL，标准路径加载 5 个，全量路径加载 8 个。辅助命令（status/resume/debug）按需单独加载。
 
@@ -493,7 +493,7 @@ forge/
 │   └── install-dist.sh         #   安装分发包
 ├── dist/                        # 分发包（CI 自动构建）
 │   └── claude-code/bundles/forge/
-├── src/                         # 核心逻辑（30 个 TypeScript 模块，含纯函数模块及有状态/运行时模块：CLI、SDK 适配器、副作用执行器、运行管理器等）
+├── src/                         # 核心逻辑（39 个 TypeScript 模块，含纯函数模块及有状态/运行时模块：CLI、SDK 适配器、副作用执行器、运行管理器等）<!--exact: 39 个 TypeScript 模块-->
 │   ├── forge-loop-cli.ts       #   自主循环 CLI 入口（Commander 参数解析 + 信号处理）
 │   ├── sdk-driver.ts           #   迭代循环驱动器（调度 Agent → 处理结果 → 执行副作用）
 │   ├── orchestrator.ts         #   纯函数状态机（状态转换 + 副作用描述）
@@ -524,7 +524,7 @@ forge/
 │   ├── task-graph.ts           #   DAG 调度 + 并行执行引擎
 │   ├── handoff.ts              #   跨阶段决策传递
 │   └── loop-index.ts           #   自主循环模块统一入口
-├── test/                        # 724 个测试（44 个测试文件，其中 36 个为 fast-check 属性测试文件）
+├── test/                        # 1467 个测试（80 个测试文件，其中 54 个为 fast-check 属性测试文件）<!--exact: 测试数、文件数、属性测试数-->
 ├── .github/workflows/ci.yml    # CI：typecheck + lint + coverage + dist 同步校验
 ├── biome.json                   # Linter / Formatter 配置
 ├── tsconfig.json                # TypeScript strict 配置
@@ -559,7 +559,7 @@ bash scripts/build-dist.sh
 
 **技术栈**：TypeScript 5.9（strict）、Vitest 3.2、fast-check 4.7（属性测试）、Biome 2.4（lint + format）。运行时依赖：`@anthropic-ai/claude-agent-sdk`、`commander`。
 
-**测试策略**：724 个测试（44 个测试文件，其中 36 个为 fast-check 属性测试文件）验证不变量（invariant），而非特定输入输出。覆盖率 90.47% statements、92.16% branches、98.72% functions。
+**测试策略**：1467 个测试（80 个测试文件，其中 54 个为 fast-check 属性测试文件）验证不变量（invariant），而非特定输入输出。覆盖率 90.46% statements、92.01% branches、98.26% functions。<!--exact: 测试数、文件数、属性测试数; approximate: 覆盖率-->
 
 ---
 

@@ -10,8 +10,10 @@
  */
 import * as fc from "fast-check";
 import { describe, expect, it } from "vitest";
+import type { SkillPromptParams } from "../src/context-accumulator.js";
 import {
   buildIterationPrompt,
+  buildSkillAwarePrompt,
   formatIterationEntry,
   formatListSection,
   formatNotesDocument,
@@ -433,5 +435,162 @@ describe("REQ-1: parseListSection handles regex special characters in titles", (
 
     const items = parseListSection(block, "Key (Changes).");
     expect(items).toEqual([]);
+  });
+});
+
+// ---------------------------------------------------------------------------
+// Generators for SkillPromptParams
+// ---------------------------------------------------------------------------
+
+/** Non-empty phase name (single-line, no markdown formatting). */
+const phaseArb = fc.constantFrom(
+  "router",
+  "plan",
+  "build",
+  "review",
+  "test",
+  "ship",
+  "learn",
+  "refactor-scan",
+  "refactor-apply",
+  "fix-analyze",
+  "fix-apply",
+);
+
+/** Tier string. */
+const tierArb = fc.constantFrom("light", "standard", "full");
+
+/** Arbitrary hint object. */
+const hintArb = fc
+  .tuple(cleanLineArb, cleanLineArb, cleanLineArb)
+  .map(([command, tag, description]) => ({ command, tag, description }));
+
+/** Arbitrary fix issue object with severity and description. */
+const fixIssueArb = fc
+  .tuple(fc.constantFrom("P0", "P1", "P2"), cleanLineArb)
+  .map(([severity, description]) => ({ severity, description }));
+
+/** Base prompt params generator. */
+const baseParamsArb = fc
+  .tuple(iterationNumberArb, runIdArb, objectiveArb, notesContentArb)
+  .map(([iteration, runId, objective, notesContent]) => ({
+    iteration,
+    runId,
+    objective,
+    notesContent,
+  }));
+
+/** SkillPromptParams generator with non-empty phase. */
+const skillPromptParamsArb: fc.Arbitrary<SkillPromptParams> = fc
+  .tuple(
+    baseParamsArb,
+    phaseArb,
+    tierArb,
+    fc.option(cleanLineArb, { nil: undefined }),
+    fc.option(cleanLineArb, { nil: undefined }),
+    fc.option(cleanLineArb, { nil: undefined }),
+    fc.option(fc.array(hintArb, { minLength: 0, maxLength: 3 }), { nil: undefined }),
+    fc.option(fc.array(fixIssueArb, { minLength: 0, maxLength: 4 }), { nil: undefined }),
+  )
+  .map(([base, phase, tier, taskType, projectPhase, workNature, hints, fixIssues]) => ({
+    base,
+    skill: { phase, tier, taskType, projectPhase, workNature, hints, fixIssues },
+  }));
+
+/** SkillPromptParams generator that always includes fixIssues with at least one issue. */
+const skillPromptParamsWithFixIssuesArb: fc.Arbitrary<SkillPromptParams> = fc
+  .tuple(baseParamsArb, phaseArb, tierArb, fc.array(fixIssueArb, { minLength: 1, maxLength: 5 }))
+  .map(([base, phase, tier, fixIssues]) => ({
+    base,
+    skill: { phase, tier, fixIssues },
+  }));
+
+// ---------------------------------------------------------------------------
+// Feature: loop-skills-fusion, Property 10: buildSkillAwarePrompt content completeness
+// ---------------------------------------------------------------------------
+
+describe("Feature: loop-skills-fusion, Property 10: buildSkillAwarePrompt content completeness", () => {
+  /**
+   * **Validates: Requirements 1.2, 1.5**
+   *
+   * For any valid SkillPromptParams with a non-empty phase, the output
+   * of buildSkillAwarePrompt() shall contain the phase name.
+   */
+  it("output contains the phase name for any non-empty phase", () => {
+    fc.assert(
+      fc.property(skillPromptParamsArb, (params) => {
+        const output = buildSkillAwarePrompt(params);
+        expect(output).toContain(params.skill.phase);
+      }),
+      { numRuns: 200 },
+    );
+  });
+
+  /**
+   * **Validates: Requirements 1.2**
+   *
+   * For any valid SkillPromptParams with a non-empty phase, the output
+   * of buildSkillAwarePrompt() shall contain the tier.
+   */
+  it("output contains the tier", () => {
+    fc.assert(
+      fc.property(skillPromptParamsArb, (params) => {
+        const output = buildSkillAwarePrompt(params);
+        expect(output).toContain(params.skill.tier);
+      }),
+      { numRuns: 200 },
+    );
+  });
+
+  /**
+   * **Validates: Requirements 1.5**
+   *
+   * For any valid SkillPromptParams, the output of buildSkillAwarePrompt()
+   * shall contain the `mode: autonomous` directive.
+   */
+  it("output contains mode: autonomous directive", () => {
+    fc.assert(
+      fc.property(skillPromptParamsArb, (params) => {
+        const output = buildSkillAwarePrompt(params);
+        expect(output).toContain("mode: autonomous");
+      }),
+      { numRuns: 200 },
+    );
+  });
+
+  /**
+   * **Validates: Requirements 5.2**
+   *
+   * When fixIssues are provided, all issue descriptions shall appear
+   * in the output.
+   */
+  it("all fixIssue descriptions appear in the output when fixIssues are provided", () => {
+    fc.assert(
+      fc.property(skillPromptParamsWithFixIssuesArb, (params) => {
+        const output = buildSkillAwarePrompt(params);
+        for (const issue of params.skill.fixIssues ?? []) {
+          expect(output).toContain(issue.description);
+        }
+      }),
+      { numRuns: 200 },
+    );
+  });
+
+  /**
+   * **Validates: Requirements 5.2**
+   *
+   * When fixIssues are provided, all issue severities shall appear
+   * in the output alongside their descriptions.
+   */
+  it("all fixIssue severities appear in the output when fixIssues are provided", () => {
+    fc.assert(
+      fc.property(skillPromptParamsWithFixIssuesArb, (params) => {
+        const output = buildSkillAwarePrompt(params);
+        for (const issue of params.skill.fixIssues ?? []) {
+          expect(output).toContain(issue.severity);
+        }
+      }),
+      { numRuns: 200 },
+    );
   });
 });

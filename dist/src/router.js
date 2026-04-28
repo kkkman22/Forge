@@ -1,0 +1,514 @@
+/**
+ * Router classification logic for Forge.
+ *
+ * Three routing dimensions:
+ *
+ * 1. **Tier** (complexity) — light / standard / full
+ *    Determines WHICH commands to run.
+ *
+ * 2. **TaskType** (domain) — frontend / backend / fullstack / data / infra / docs
+ *    Determines HOW each command behaves (e.g., review adds a11y checks for frontend).
+ *
+ * 3. **ProjectPhase** (lifecycle) — greenfield / iteration / refactor / bugfix
+ *    Determines WHAT to emphasize (e.g., refactor emphasizes regression tests).
+ *
+ * Priority for tier classification (high → low):
+ *   1. User override (always wins)
+ *   2. Full signals (any match → full, never downgraded)
+ *   3. Standard signals (clear requirements or existing spec)
+ *   4. Light signals (≤ 1 file AND ≤ 20 lines)
+ *   5. Default → standard ("宁重勿轻")
+ *
+ * Project context:
+ *   - projectType: "greenfield" | "brownfield" | "unknown"
+ *   - Brownfield projects boost light → standard when touching existing modules
+ */
+// ---------------------------------------------------------------------------
+// Command sequences per tier (unchanged)
+// ---------------------------------------------------------------------------
+const COMMAND_SEQUENCES = {
+    light: ["build", "review"],
+    standard: ["plan", "build", "review", "test", "ship"],
+    full: ["decide", "spec", "plan", "build", "review", "test", "ship", "learn"],
+};
+// ---------------------------------------------------------------------------
+// WorkNature detection — keyword-based classification
+// ---------------------------------------------------------------------------
+/** Keywords that indicate a refactor work nature. */
+const REFACTOR_KEYWORDS = [
+    "优化",
+    "重构",
+    "重写",
+    "拆分",
+    "性能改进",
+    "代码整理",
+    "refactor",
+    "optimize",
+    "restructure",
+    "simplify",
+];
+/** Keywords that indicate a bugfix work nature. */
+const BUGFIX_KEYWORDS = [
+    "bug",
+    "报错",
+    "异常",
+    "崩溃",
+    "不工作",
+    "修复",
+    "fix",
+    "error",
+    "crash",
+    "broken",
+    "not working",
+];
+/**
+ * Detect the work nature from a task description using keyword matching.
+ *
+ * Rules:
+ * - Returns "refactor" when description contains refactor keywords
+ *   and does NOT contain bugfix keywords.
+ * - Returns "bugfix" when description contains bugfix keywords
+ *   and describes existing functionality issues.
+ * - Returns "feature" as default when description is ambiguous or
+ *   doesn't match the above patterns.
+ */
+export function detectWorkNature(description) {
+    const lower = description.toLowerCase();
+    const hasRefactorKeyword = REFACTOR_KEYWORDS.some((kw) => lower.includes(kw.toLowerCase()));
+    const hasBugfixKeyword = BUGFIX_KEYWORDS.some((kw) => lower.includes(kw.toLowerCase()));
+    // If both refactor and bugfix keywords are present, default to feature (ambiguous)
+    if (hasRefactorKeyword && hasBugfixKeyword) {
+        return "feature";
+    }
+    if (hasBugfixKeyword) {
+        return "bugfix";
+    }
+    if (hasRefactorKeyword) {
+        return "refactor";
+    }
+    return "feature";
+}
+// ---------------------------------------------------------------------------
+// WorkNature × Tier → command sequence key mapping
+// ---------------------------------------------------------------------------
+/**
+ * Map a WorkNature × Tier combination to the correct command sequence key
+ * used by the Skill Scheduler.
+ *
+ * Mapping:
+ * - feature + light → "light", feature + standard → "standard", feature + full → "full"
+ * - refactor + light → "refactor_light", refactor + standard/full → "refactor_standard"
+ * - bugfix + light → "fix_light", bugfix + standard/full → "fix_standard"
+ */
+export function getWorkNatureSequenceKey(workNature, tier) {
+    if (workNature === "feature") {
+        return tier;
+    }
+    if (workNature === "refactor") {
+        return tier === "light" ? "refactor_light" : "refactor_standard";
+    }
+    // bugfix
+    return tier === "light" ? "fix_light" : "fix_standard";
+}
+// ---------------------------------------------------------------------------
+// Tier classification helpers (unchanged logic)
+// ---------------------------------------------------------------------------
+function hasFullSignals(signals) {
+    return (signals.hasNewService ||
+        signals.hasNewDatabase ||
+        signals.hasAuthChanges ||
+        signals.isVagueRequirement);
+}
+function hasStandardSignals(signals) {
+    return signals.hasExistingSpec || signals.hasClearRequirements;
+}
+function hasLightSignals(signals) {
+    return signals.filesAffected <= 1 && signals.linesChanged <= 20;
+}
+function shouldBrownfieldBoost(context) {
+    if (!context)
+        return false;
+    return context.projectType === "brownfield" && context.touchesExistingModules;
+}
+function classifyTier(signals, userOverride, projectContext) {
+    if (userOverride) {
+        return { tier: userOverride, reason: `用户明确指定档位: ${userOverride}` };
+    }
+    if (hasFullSignals(signals)) {
+        const reasons = [];
+        if (signals.hasNewService)
+            reasons.push("涉及新服务");
+        if (signals.hasNewDatabase)
+            reasons.push("涉及新数据库");
+        if (signals.hasAuthChanges)
+            reasons.push("涉及认证体系变更");
+        if (signals.isVagueRequirement)
+            reasons.push("需求描述模糊");
+        return { tier: "full", reason: reasons.join("、") };
+    }
+    if (hasStandardSignals(signals)) {
+        const reasons = [];
+        if (signals.hasExistingSpec)
+            reasons.push("有现成 Spec");
+        if (signals.hasClearRequirements)
+            reasons.push("需求已明确");
+        return { tier: "standard", reason: reasons.join("、") };
+    }
+    if (hasLightSignals(signals)) {
+        if (shouldBrownfieldBoost(projectContext)) {
+            return {
+                tier: "standard",
+                reason: `影响文件 ${signals.filesAffected} 个，改动 ${signals.linesChanged} 行，但项目为棕地且涉及现有模块，提升至标准路径`,
+            };
+        }
+        return {
+            tier: "light",
+            reason: `影响文件 ${signals.filesAffected} 个，改动 ${signals.linesChanged} 行`,
+        };
+    }
+    return { tier: "standard", reason: "无法明确判定，默认选择标准路径" };
+}
+const HINT_RULES = [
+    // ── Frontend hints ──────────────────────────────────────────────────
+    {
+        taskTypes: ["frontend"],
+        projectPhases: [],
+        hint: {
+            command: "review",
+            tag: "a11y-check",
+            description: "增加可访问性检查（WCAG 2.1 AA 级别对照）",
+        },
+    },
+    {
+        taskTypes: ["frontend"],
+        projectPhases: [],
+        hint: {
+            command: "review",
+            tag: "responsive-check",
+            description: "检查响应式布局在主流断点下的表现",
+        },
+    },
+    {
+        taskTypes: ["frontend"],
+        projectPhases: [],
+        hint: {
+            command: "test",
+            tag: "visual-regression",
+            description: "建议运行视觉回归测试（如有配置）",
+        },
+    },
+    {
+        taskTypes: ["frontend"],
+        projectPhases: [],
+        hint: {
+            command: "build",
+            tag: "component-isolation",
+            description: "优先以组件为单位拆分任务，每个组件独立测试",
+        },
+    },
+    // ── Backend hints ───────────────────────────────────────────────────
+    {
+        taskTypes: ["backend"],
+        projectPhases: [],
+        hint: {
+            command: "review",
+            tag: "api-contract-check",
+            description: "检查 API 契约向后兼容性（请求/响应 schema 变更）",
+        },
+    },
+    {
+        taskTypes: ["backend"],
+        projectPhases: [],
+        hint: {
+            command: "review",
+            tag: "n-plus-one-check",
+            description: "重点检查 N+1 查询和数据库性能热点",
+        },
+    },
+    {
+        taskTypes: ["backend"],
+        projectPhases: [],
+        hint: {
+            command: "test",
+            tag: "integration-test",
+            description: "除单元测试外，补充 API 集成测试",
+        },
+    },
+    {
+        taskTypes: ["backend"],
+        projectPhases: [],
+        hint: {
+            command: "build",
+            tag: "migration-safety",
+            description: "数据库变更必须有可回滚的迁移脚本",
+        },
+    },
+    // ── Data hints ──────────────────────────────────────────────────────
+    {
+        taskTypes: ["data"],
+        projectPhases: [],
+        hint: {
+            command: "review",
+            tag: "data-integrity-check",
+            description: "检查数据一致性约束和边界值处理",
+        },
+    },
+    {
+        taskTypes: ["data"],
+        projectPhases: [],
+        hint: {
+            command: "test",
+            tag: "data-validation",
+            description: "测试数据管道的输入验证和异常数据处理",
+        },
+    },
+    {
+        taskTypes: ["data"],
+        projectPhases: [],
+        hint: {
+            command: "plan",
+            tag: "data-volume-estimate",
+            description: "在计划中估算数据量级，选择合适的处理策略",
+        },
+    },
+    // ── Infra hints ─────────────────────────────────────────────────────
+    {
+        taskTypes: ["infra"],
+        projectPhases: [],
+        hint: {
+            command: "review",
+            tag: "iac-drift-check",
+            description: "检查基础设施代码与实际状态的漂移风险",
+        },
+    },
+    {
+        taskTypes: ["infra"],
+        projectPhases: [],
+        hint: {
+            command: "build",
+            tag: "dry-run-first",
+            description: "变更前先执行 dry-run / plan，确认影响范围",
+        },
+    },
+    {
+        taskTypes: ["infra"],
+        projectPhases: [],
+        hint: {
+            command: "review",
+            tag: "blast-radius",
+            description: "评估变更的爆炸半径，标注受影响的服务和环境",
+        },
+    },
+    // ── Docs hints ──────────────────────────────────────────────────────
+    {
+        taskTypes: ["docs"],
+        projectPhases: [],
+        hint: {
+            command: "review",
+            tag: "accuracy-check",
+            description: "对照代码验证文档中的示例和 API 签名是否准确",
+        },
+    },
+    {
+        taskTypes: ["docs"],
+        projectPhases: [],
+        hint: {
+            command: "review",
+            tag: "link-check",
+            description: "检查文档中的链接是否有效",
+        },
+    },
+    // ── Greenfield phase hints ──────────────────────────────────────────
+    {
+        taskTypes: [],
+        projectPhases: ["greenfield"],
+        hint: {
+            command: "plan",
+            tag: "scaffold-first",
+            description: "优先搭建项目骨架和基础设施，再实现业务逻辑",
+        },
+    },
+    {
+        taskTypes: [],
+        projectPhases: ["greenfield"],
+        hint: {
+            command: "decide",
+            tag: "tech-stack-review",
+            description: "决策阶段需评估技术栈选型的长期影响",
+        },
+    },
+    // ── Iteration phase hints ───────────────────────────────────────────
+    {
+        taskTypes: [],
+        projectPhases: ["iteration"],
+        hint: {
+            command: "review",
+            tag: "backward-compat",
+            description: "检查变更对现有用户和 API 消费者的向后兼容性",
+        },
+    },
+    {
+        taskTypes: [],
+        projectPhases: ["iteration"],
+        hint: {
+            command: "test",
+            tag: "regression-suite",
+            description: "确保运行完整回归测试套件",
+        },
+    },
+    // ── Refactor phase hints ────────────────────────────────────────────
+    {
+        taskTypes: [],
+        projectPhases: ["refactor"],
+        hint: {
+            command: "plan",
+            tag: "behavior-preservation",
+            description: "计划中明确标注：每个任务不得改变外部可观察行为",
+        },
+    },
+    {
+        taskTypes: [],
+        projectPhases: ["refactor"],
+        hint: {
+            command: "test",
+            tag: "characterization-tests",
+            description: "重构前先补充特征测试，锁定现有行为",
+        },
+    },
+    {
+        taskTypes: [],
+        projectPhases: ["refactor"],
+        hint: {
+            command: "build",
+            tag: "small-steps",
+            description: "每步重构尽量小，每步都运行测试确认无回归",
+        },
+    },
+    {
+        taskTypes: [],
+        projectPhases: ["refactor"],
+        hint: {
+            command: "review",
+            tag: "behavior-diff",
+            description: "评审重点：确认重构未引入行为变更",
+        },
+    },
+    // ── Bugfix phase hints ──────────────────────────────────────────────
+    {
+        taskTypes: [],
+        projectPhases: ["bugfix"],
+        hint: {
+            command: "build",
+            tag: "reproduce-first",
+            description: "先写复现 bug 的失败测试，再修复（TDD 的 RED 即复现）",
+        },
+    },
+    {
+        taskTypes: [],
+        projectPhases: ["bugfix"],
+        hint: {
+            command: "plan",
+            tag: "root-cause-focus",
+            description: "计划中必须包含根因分析，不只是修复表面症状",
+        },
+    },
+    {
+        taskTypes: [],
+        projectPhases: ["bugfix"],
+        hint: {
+            command: "test",
+            tag: "regression-for-fix",
+            description: "修复后补充回归测试，防止同类 bug 再次出现",
+        },
+    },
+    // ── Cross-dimension: frontend + refactor ────────────────────────────
+    {
+        taskTypes: ["frontend"],
+        projectPhases: ["refactor"],
+        hint: {
+            command: "test",
+            tag: "snapshot-update",
+            description: "重构后检查并更新组件快照测试",
+        },
+    },
+    // ── Cross-dimension: backend + bugfix ───────────────────────────────
+    {
+        taskTypes: ["backend"],
+        projectPhases: ["bugfix"],
+        hint: {
+            command: "review",
+            tag: "error-path-audit",
+            description: "审查错误处理路径，确认 bug 修复覆盖了所有错误分支",
+        },
+    },
+    // ── Cross-dimension: infra + greenfield ─────────────────────────────
+    {
+        taskTypes: ["infra"],
+        projectPhases: ["greenfield"],
+        hint: {
+            command: "decide",
+            tag: "cost-estimate",
+            description: "决策阶段需估算基础设施成本",
+        },
+    },
+];
+/**
+ * Generate hints for a given task type, project phase, and command sequence.
+ * Only returns hints whose command appears in the active command sequence.
+ */
+export function generateHints(taskType, projectPhase, commandSequence) {
+    const commandSet = new Set(commandSequence);
+    const hints = [];
+    for (const rule of HINT_RULES) {
+        // Check task type match (empty = match all)
+        const typeMatch = rule.taskTypes.length === 0 || rule.taskTypes.includes(taskType);
+        // Check phase match (empty = match all)
+        const phaseMatch = rule.projectPhases.length === 0 || rule.projectPhases.includes(projectPhase);
+        // Check command is in active sequence
+        const commandActive = commandSet.has(rule.hint.command);
+        if (typeMatch && phaseMatch && commandActive) {
+            hints.push(rule.hint);
+        }
+    }
+    // Deduplicate by tag (same tag from different rules = keep first)
+    const seen = new Set();
+    return hints.filter((h) => {
+        if (seen.has(h.tag))
+            return false;
+        seen.add(h.tag);
+        return true;
+    });
+}
+// ---------------------------------------------------------------------------
+// Main classification function
+// ---------------------------------------------------------------------------
+/**
+ * Classify a task across four dimensions:
+ *
+ * 1. Tier (complexity) — from signals + user override + project context
+ * 2. TaskType (domain) — from caller analysis
+ * 3. ProjectPhase (lifecycle) — from caller analysis
+ * 4. WorkNature (work nature) — from description keywords or user override
+ *
+ * The tier determines the command sequence. The task type and project phase
+ * generate behavioral hints that downstream skills use to adjust their behavior.
+ * The work nature determines which command sequence variant to use.
+ *
+ * Backward compatible: taskType defaults to "fullstack", projectPhase defaults
+ * to "iteration", workNature defaults to "feature" when not provided.
+ */
+export function classifyTask(signals, userOverride, projectContext, taskType = "fullstack", projectPhase = "iteration", workNature = "feature") {
+    const { tier, reason } = classifyTier(signals, userOverride, projectContext);
+    const commandSequence = COMMAND_SEQUENCES[tier];
+    const hints = generateHints(taskType, projectPhase, commandSequence);
+    return {
+        tier,
+        reason,
+        commandSequence,
+        taskType,
+        projectPhase,
+        work_nature: workNature,
+        hints,
+    };
+}
+//# sourceMappingURL=router.js.map

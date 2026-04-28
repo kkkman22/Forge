@@ -7,6 +7,10 @@
  *   - Property 13: 熔断器阈值正确性
  *
  * **Validates: Requirements 5.3, 5.4, 5.7, 5.8**
+ *
+ * Feature: audit-remediation-v221, Property 4: Backoff lower bound invariant
+ *
+ * **Validates: Requirements 9.1, 9.2**
  */
 import * as fc from "fast-check";
 import { describe, expect, it } from "vitest";
@@ -114,6 +118,54 @@ describe("Feature: gnhf-inspired-enhancements, Property 11: 失败计数器差�
         const next = applyFailure(state, kind);
 
         expect(next).not.toBe(state);
+      }),
+      { numRuns: 200 },
+    );
+  });
+});
+
+// ---------------------------------------------------------------------------
+// Feature: audit-remediation-v221, Property 4: Backoff lower bound invariant
+// ---------------------------------------------------------------------------
+
+describe("Feature: audit-remediation-v221, Property 4: Backoff lower bound invariant", () => {
+  /**
+   * **Validates: Requirements 9.1, 9.2**
+   */
+  it("calculateBackoffMs returns >= baseMs for any consecutiveErrors (including 0 and negatives)", () => {
+    fc.assert(
+      fc.property(fc.integer(), fc.integer({ min: 1 }), (errors, baseMs) => {
+        const result = calculateBackoffMs(errors, baseMs);
+
+        expect(result).toBeGreaterThanOrEqual(baseMs);
+      }),
+      { numRuns: 200 },
+    );
+  });
+
+  /**
+   * **Validates: Requirements 9.1, 9.2**
+   */
+  it("calculateBackoffMs returns >= baseMs when consecutiveErrors is exactly 0", () => {
+    fc.assert(
+      fc.property(fc.integer({ min: 1 }), (baseMs) => {
+        const result = calculateBackoffMs(0, baseMs);
+
+        expect(result).toBeGreaterThanOrEqual(baseMs);
+      }),
+      { numRuns: 200 },
+    );
+  });
+
+  /**
+   * **Validates: Requirements 9.1, 9.2**
+   */
+  it("calculateBackoffMs returns >= baseMs for negative consecutiveErrors", () => {
+    fc.assert(
+      fc.property(fc.integer({ max: -1 }), fc.integer({ min: 1 }), (errors, baseMs) => {
+        const result = calculateBackoffMs(errors, baseMs);
+
+        expect(result).toBeGreaterThanOrEqual(baseMs);
       }),
       { numRuns: 200 },
     );

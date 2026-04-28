@@ -245,7 +245,7 @@ describe("Preservation: Single-run resume returns valid RunSetup", () => {
 
         // RunSetup fields are valid
         expect(result.runId).toBe(existingRunId);
-        expect(result.runDir).toBe(`${CWD}/.forge/runs/${existingRunId}/`);
+        expect(result.runDir).toBe(`${CWD}/.forge/runs/${existingRunId}`);
         expect(result.notesPath).toBe(`${CWD}/.forge/runs/${existingRunId}/notes.md`);
         expect(result.baseCommit).toBe(FAKE_SHA);
         expect(result.branchName).toBe(branchName);
@@ -320,14 +320,14 @@ describe("Preservation: No-run resume creates new run directory", () => {
 
         // A new run is created with the mocked UUID
         expect(result.runId).toBe(FAKE_NEW_UUID);
-        expect(result.runDir).toBe(`${CWD}/.forge/runs/${FAKE_NEW_UUID}/`);
+        expect(result.runDir).toBe(`${CWD}/.forge/runs/${FAKE_NEW_UUID}`);
         expect(result.notesPath).toBe(`${CWD}/.forge/runs/${FAKE_NEW_UUID}/notes.md`);
         expect(result.baseCommit).toBe(FAKE_SHA);
         expect(result.branchName).toBe(branchName);
         expect(result.lastIteration).toBe(0);
 
         // Directory and notes file were created
-        expect(mkdirSync).toHaveBeenCalledWith(`${CWD}/.forge/runs/${FAKE_NEW_UUID}/`, {
+        expect(mkdirSync).toHaveBeenCalledWith(`${CWD}/.forge/runs/${FAKE_NEW_UUID}`, {
           recursive: true,
         });
         expect(writeFileSync).toHaveBeenCalled();
@@ -359,7 +359,7 @@ describe("Preservation: No-run resume creates new run directory", () => {
         const result = RunManager.resumeRun(branchName, CWD);
 
         expect(result.runId).toBe(FAKE_NEW_UUID);
-        expect(result.runDir).toBe(`${CWD}/.forge/runs/${FAKE_NEW_UUID}/`);
+        expect(result.runDir).toBe(`${CWD}/.forge/runs/${FAKE_NEW_UUID}`);
         expect(result.notesPath).toBe(`${CWD}/.forge/runs/${FAKE_NEW_UUID}/notes.md`);
         expect(result.branchName).toBe(branchName);
         expect(result.lastIteration).toBe(0);
@@ -395,7 +395,7 @@ describe("Preservation: setupNewRun produces valid RunSetup", () => {
         // All required fields present and valid
         expect(result.runId).toBe(FAKE_NEW_UUID);
         expect(result.runDir).toContain(FAKE_NEW_UUID);
-        expect(result.runDir).toMatch(/\/$/); // ends with /
+        expect(result.runDir).not.toMatch(/\/$/); // no trailing slash with path.join
         expect(result.baseCommit).toBe(FAKE_SHA);
         expect(result.notesPath).toContain("notes.md");
         expect(result.notesPath).toContain(FAKE_NEW_UUID);

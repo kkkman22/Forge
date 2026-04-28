@@ -35,6 +35,7 @@ export interface AtomicTask {
   tddSteps: TDDSteps;
   verifyCommand: string;
   commitMessage: string;
+  dependsOn?: number[];
 }
 
 // ---------------------------------------------------------------------------
@@ -176,14 +177,60 @@ export function validateAtomicTask(task: AtomicTask): { valid: boolean; errors: 
 }
 
 /**
+ * Validate that the associated spec is in "locked" status before plan execution.
+ *
+ * Per R24: Plan execution requires a locked spec to ensure the plan is based
+ * on a confirmed specification.
+ */
+export function validateSpecLocked(
+  specStatus: string,
+): { valid: true } | { valid: false; error: string } {
+  if (specStatus !== "locked") {
+    return { valid: false, error: "spec not locked" };
+  }
+  return { valid: true };
+}
+
+/**
+ * Validate that all `dependsOn` references in a task list point to existing
+ * `taskNumber` values.
+ *
+ * Per R25: Each task's `dependsOn` array (if present) must only reference
+ * task numbers that exist in the plan.
+ */
+export function validateDependencies(tasks: AtomicTask[]): string[] {
+  const errors: string[] = [];
+  const taskNumbers = new Set(tasks.map((t) => t.taskNumber));
+
+  for (const task of tasks) {
+    if (task.dependsOn) {
+      for (const dep of task.dependsOn) {
+        if (!taskNumbers.has(dep)) {
+          errors.push(`Task ${task.taskNumber} depends on non-existent task ${dep}`);
+        }
+      }
+    }
+  }
+
+  return errors;
+}
+
+/**
  * Validate all tasks in a plan.
  *
- * Returns true only if every task passes validateAtomicTask.
+ * Returns true only if every task passes validateAtomicTask and all
+ * `dependsOn` references are valid.
  */
 export function validatePlanTasks(tasks: AtomicTask[]): boolean {
   if (tasks.length === 0) {
     return false;
   }
 
-  return tasks.every((task) => validateAtomicTask(task).valid);
+  const allTasksValid = tasks.every((task) => validateAtomicTask(task).valid);
+  if (!allTasksValid) {
+    return false;
+  }
+
+  const dependencyErrors = validateDependencies(tasks);
+  return dependencyErrors.length === 0;
 }

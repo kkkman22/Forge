@@ -4,12 +4,18 @@
  * Implements:
  *   - validateStateFile:  Checks that a .forge/ state file uses .md extension
  *                         and structured data uses YAML frontmatter
+ *   - normalizeForgePath: Normalizes file paths to .forge/-relative form,
+ *                         resolving `..` sequences, redundant separators,
+ *                         and absolute path prefixes.
  *
  * Property 15: 状态文件格式统一
  *   - All state files under .forge/ must have .md extension
  *   - Structured data must use YAML frontmatter (--- delimited block at start)
  *   **Validates: Requirements 11.2**
  */
+
+import * as pathPosix from "node:path/posix";
+import { extractStringField, parseFrontmatter } from "./frontmatter.js";
 
 // ---------------------------------------------------------------------------
 // Types
@@ -30,9 +36,6 @@ export interface StateFileValidation {
 // ---------------------------------------------------------------------------
 // Constants
 // ---------------------------------------------------------------------------
-
-/** YAML frontmatter delimiter. */
-const FRONTMATTER_DELIMITER = "---";
 
 /** Valid file extension for all state files. */
 const VALID_EXTENSION = ".md";
@@ -60,17 +63,12 @@ export function validateStateFile(file: StateFile): StateFileValidation {
     errors.push(`文件扩展名不正确：${ext}，应为 ${VALID_EXTENSION}`);
   }
 
-  // Check 2: Content must start with YAML frontmatter
+  // Check 2: Content must have valid YAML frontmatter
   const trimmedContent = file.content.trimStart();
-  if (!trimmedContent.startsWith(FRONTMATTER_DELIMITER)) {
+  if (!trimmedContent.startsWith("---")) {
     errors.push('缺少 YAML frontmatter：文件内容应以 "---" 开头');
-  } else {
-    // Verify the frontmatter is properly closed
-    const afterFirst = trimmedContent.slice(FRONTMATTER_DELIMITER.length);
-    const closingIndex = afterFirst.indexOf(`\n${FRONTMATTER_DELIMITER}`);
-    if (closingIndex === -1) {
-      errors.push('YAML frontmatter 未正确关闭：缺少结束的 "---"');
-    }
+  } else if (parseFrontmatter(file.content) === null) {
+    errors.push('YAML frontmatter 未正确关闭：缺少结束的 "---"');
   }
 
   return {
@@ -95,12 +93,50 @@ export function hasMarkdownExtension(filePath: string): boolean {
  * appearing at the very beginning of the file content.
  */
 export function hasYamlFrontmatter(content: string): boolean {
-  const trimmed = content.trimStart();
-  if (!trimmed.startsWith(FRONTMATTER_DELIMITER)) {
-    return false;
+  return parseFrontmatter(content) !== null;
+}
+
+// ---------------------------------------------------------------------------
+// Path normalization (Req 4)
+// ---------------------------------------------------------------------------
+
+/**
+ * Normalize a file path to its `.forge/`-relative form.
+ *
+ * Steps:
+ *   1. Unify separators to forward slashes (posix)
+ *   2. Apply `path.posix.normalize` to resolve `..` sequences and redundant separators
+ *   3. Strip everything up to and including the last `.forge/` marker
+ *   4. Remove any leading `./` or `/` from the result
+ *
+ * Uses lexical normalization only (no `fs.realpath`), which is correct for
+ * the Hook use case where we check the path as given, not the resolved target.
+ *
+ * @param inputPath - Any path variant: absolute, relative, with `..`, redundant separators, etc.
+ * @returns The `.forge/`-relative path (e.g. "specs/feature/spec.md"), or the
+ *          normalized path as-is if it doesn't contain `.forge/`.
+ *
+ * **Validates: Requirements 4.1, 4.2, 4.3**
+ */
+export function normalizeForgePath(inputPath: string): string {
+  // Step 1: Unify separators to forward slashes
+  let normalized = inputPath.replace(/\\/g, "/");
+
+  // Step 2: Resolve `..` sequences and redundant separators
+  normalized = pathPosix.normalize(normalized);
+
+  // Step 3: Find the last `.forge/` marker and extract the relative portion
+  const forgeMarker = ".forge/";
+  const forgeIndex = normalized.lastIndexOf(forgeMarker);
+
+  if (forgeIndex !== -1) {
+    normalized = normalized.slice(forgeIndex + forgeMarker.length);
   }
-  const afterFirst = trimmed.slice(FRONTMATTER_DELIMITER.length);
-  return afterFirst.indexOf(`\n${FRONTMATTER_DELIMITER}`) !== -1;
+
+  // Step 4: Remove leading `./` or `/`
+  normalized = normalized.replace(/^\.\//, "").replace(/^\/+/, "");
+
+  return normalized;
 }
 
 // ---------------------------------------------------------------------------
@@ -165,16 +201,10 @@ export function getProtectionZone(forgePath: string): ProtectionZone {
  * Returns the status string if found, or null if not present.
  */
 export function extractFrontmatterStatus(content: string): string | null {
-  const trimmed = content.trimStart();
-  if (!trimmed.startsWith(FRONTMATTER_DELIMITER)) return null;
+  const parsed = parseFrontmatter(content);
+  if (!parsed) return null;
 
-  const afterFirst = trimmed.slice(FRONTMATTER_DELIMITER.length);
-  const closingIndex = afterFirst.indexOf(`\n${FRONTMATTER_DELIMITER}`);
-  if (closingIndex === -1) return null;
-
-  const frontmatterBlock = afterFirst.slice(0, closingIndex);
-  const statusMatch = frontmatterBlock.match(/^status:\s*"?([^"\n]+)"?\s*$/m);
-  return statusMatch ? statusMatch[1].trim() : null;
+  return extractStringField(parsed.raw, "status");
 }
 
 /**

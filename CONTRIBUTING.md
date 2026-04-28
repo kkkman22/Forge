@@ -63,6 +63,29 @@ scripts/      # Shell 脚本（init、build-dist、install-dist）
 - 配置一致性通过 `test/contract.test.ts` 验证
 - PR 合并前 CI 必须全绿
 
+## 安全模型 (Security Model)
+
+### SDK 权限绕过策略
+
+`SDK_Agent_Adapter`（`src/sdk-agent-adapter.ts`）在调用 Claude Agent SDK 时使用了 `bypassPermissions` 和 `allowDangerouslySkipPermissions` 选项。这是因为 SDK 内置的交互式权限提示（interactive permission prompts）专为人机交互场景设计，与 Forge Loop 的无人值守自主执行模式不兼容。在自主循环中，没有人类操作员来响应权限弹窗，因此必须绕过 SDK 层的权限检查。
+
+### 上层防线 (Upper Layer Defenses)
+
+绕过 SDK 权限后，访问控制由以下多层防御机制替代：
+
+1. **PreToolUse Hook 拦截** — 通过 `hooks/hooks.json` 中配置的 PreToolUse 钩子，在 Write、Edit、Bash 等工具调用执行前进行拦截，运行冻结区检查以阻止对受保护文件的修改。
+2. **冻结区保护 (Frozen Zone Protection)** — 由 `src/check-frozen.ts` 和 `scripts/check-frozen.sh` 实现，当 `.forge/specs/*`、`.forge/plans/*` 和 `.forge/config.md` 的状态为 "locked" 或 "approved" 时，拒绝对这些文件的写入操作。路径分类和状态解析逻辑统一由 `src/state.ts` 提供，`check-frozen.ts` 作为 CLI 入口委托给 `state.ts`，确保规则来源唯一。
+3. **状态门禁检查 (State Gate Checks)** — `build.ts` 等编排器模块在允许状态转换前，会验证 spec/plan 的当前状态是否满足前置条件。
+4. **内层提交保护 (Inner-Layer Commit Guard)** — `src/effect-executor.ts` 在执行 `git commit` 前，会扫描暂存区中的 `.forge/` 文件，对冻结区文件进行二次校验。即使 Hook 层未能拦截写入，此层也能阻止冻结文件被提交。
+
+### 风险声明
+
+> **警告**：如果上述防御层中的任何一层被禁用或配置错误，`SDK_Agent_Adapter` 将在没有任何访问控制限制的情况下运行。对钩子配置（`hooks/hooks.json`）或冻结区逻辑（`check-frozen.ts` / `state.ts`）的任何修改都必须经过严格审查。
+
+### 实现参考
+
+权限绕过的具体实现位于 `src/sdk-agent-adapter.ts` 第 118–135 行。该段代码包含了 `permissionMode: "bypassPermissions"` 和 `allowDangerouslySkipPermissions: true` 的设置，以及上层防御机制的详细注释说明。
+
 ## 需要帮助？
 
 如果有任何问题，欢迎提 Issue 讨论。

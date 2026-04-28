@@ -220,8 +220,12 @@ git worktree prune
 交付完成后（无论选择哪个选项，丢弃除外），提示执行知识沉淀：
 
 ```
-💡 交付完成。建议运行 /forge learn 沉淀本次开发经验。
+💡 本次开发有值得沉淀的经验吗？（输入 /forge learn 或跳过）
 ```
+
+**Mode 判断**：如果 `.forge/status.md` 中 `mode` 为 `autonomous`，跳过此提示（autonomous 模式下 learn 阶段由 Skill Scheduler 按 tier=full 自动调度）。
+
+> 此提示不阻塞工作流完成——它是在交付流程正式结束后的附加建议，用户说"不用"或不响应时立即跳过。
 
 ---
 
@@ -375,7 +379,7 @@ $ /forge ship
   URL：https://github.com/org/repo/pull/42
 
 🧹 已清理 Git Worktree
-💡 交付完成。建议运行 /forge learn 沉淀本次开发经验。
+💡 本次开发有值得沉淀的经验吗？（输入 /forge learn 或跳过）
 ```
 
 ### 示例 2：门禁未通过

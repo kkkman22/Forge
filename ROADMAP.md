@@ -39,6 +39,247 @@
 
 ---
 
+## v2.2.1 待修复 — 上线审计发现项
+
+> 来源：2026-04-27 上线前深度审核（第二轮），详见 `AUDIT_REPORT.md`。
+> 以下问题均不构成上线阻断，但应在上线后尽快迭代修复。
+
+### 🔴 高风险（优先修复）
+
+#### H-1: SDK 权限绕过缺少运行时验证
+
+**位置**: `src/sdk-agent-adapter.ts:119-134`
+
+SDK 使用 `bypassPermissions` + `allowDangerouslySkipPermissions` 绕过内置权限检查，完全依赖上层保护机制（PreToolUse hooks、冻结区检查、状态门禁）。代码注释详细说明了设计决策，但没有运行时验证这些保护机制是否就位。如果 hooks 被误删或冻结区逻辑被绕过，Agent 可以不受限制地写入任意文件。
+
+**修复方案**:
+- 在 `SdkDriver` 启动时添加轻量级检查：验证 `hooks/hooks.json` 存在且包含 PreToolUse 配置
+- 不阻断启动，但输出 `console.warn` 警告日志
+- 添加集成测试：确认 hooks 缺失时输出警告
+
+---
+
+#### H-2: 并发 Worktree 创建存在竞态窗口
+
+**位置**: `src/run-manager.ts:95-120`
+
+`setupWorktree()` 先通过 `git worktree list` 检查活跃数量，再创建新 worktree。检查与创建之间存在 TOCTOU（Time-of-Check-Time-of-Use）窗口，两个并发调用可能同时通过并发限制检查，导致超出 `maxConcurrentWorktrees` 上限。
+
+**缓解因素**: 实际使用场景中并发创建 worktree 的概率较低；Git 自身对 worktree 有一定的并发保护。
+
+**修复方案**:
+- 使用文件锁（如 `.forge/.locks/worktree.lock`）序列化 worktree 创建操作
+- 实现带超时的锁获取，防止死锁
+
+---
+
+### 🟡 中风险（迭代修复）
+
+#### M-1: Frontmatter 字段提取存在正则注入风险
+
+**位置**: `src/frontmatter.ts:82`
+
+`extractStringField()`、`extractListField()`、`extractNumericField()` 使用 `fieldName` 参数直接构造正则表达式，未转义特殊字符。当前代码库中 `fieldName` 均为硬编码常量，不接受外部输入，实际风险低。但作为公共 API，应做防御性编程。
+
+**修复方案**:
+```typescript
+const escaped = fieldName.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+const regex = new RegExp(`^${escaped}:\\s*"?([^"\\n]*)"?\\s*$`, "m");
+```
+
+---
+
+#### M-2: Effect 执行失败时错误分类不够精细
+
+**位置**: `src/sdk-driver.ts:280-320`
+
+当 effect 执行失败时（如 commit 被冻结区阻断），错误被统一处理为 `iteration_hard_failure`，没有区分"预期阻断"（冻结区违规）和"意外崩溃"（git 命令失败）。这导致冻结区阻断也会触发指数退避和熔断器，而非立即终止。
+
+**修复方案**:
+- 引入错误分类枚举：`FrozenZoneViolation`（预期）vs `GitCommandFailure`（意外）
+- 冻结区违规直接终止循环，不触发退避
+
+---
+
+#### M-3: Backoff 计算的边界条件
+
+**位置**: `src/failure-handler.ts:115`
+
+`calculateBackoffMs()` 在 `consecutiveErrors = 0` 时返回 `baseMs * 2^(-1)` = 30 秒，虽然文档注释说参数"must be ≥ 1"，但没有运行时强制。调用方（orchestrator.ts）仅在 `consecutiveErrors >= 1` 时触发 backoff，实际风险低。
+
+**修复方案**:
+```typescript
+export function calculateBackoffMs(consecutiveErrors: number, baseMs = DEFAULT_BASE_MS): number {
+  return baseMs * 2 ** (Math.max(1, consecutiveErrors) - 1);
+}
+```
+
+---
+
+#### M-4: PUA 状态恢复中的静默错误吞没
+
+**位置**: `src/sdk-driver.ts:410-435`
+
+PUA 引擎状态恢复的多个 try-catch 块仅输出简短 `console.warn`，不包含完整错误堆栈（`err.stack`），增加了生产环境调试难度。
+
+**修复方案**:
+- 在 catch 块中记录 `err instanceof Error ? err.stack : String(err)`
+- 考虑引入结构化日志，区分 warn/error 级别
+
+---
+
+#### M-5: Worktree 创建失败时分支未清理
+
+**位置**: `src/run-manager.ts:130-155`
+
+如果 worktree 初始化（`mkdirSync`）失败，清理逻辑会移除 worktree 但不删除已创建的 Git 分支，导致孤立分支 `forge/<name>` 累积。
+
+**修复方案**:
+```typescript
+catch (initError) {
+  try {
+    execFileSync("git", ["worktree", "remove", "--force", worktreePath], { cwd: repoRoot });
+    execFileSync("git", ["branch", "-D", branchName], { cwd: repoRoot });
+  } catch {
+    // 清理为尽力而为
+  }
+  throw new Error(...);
+}
+```
+
+---
+
+#### M-6: Agent 调用缺少超时机制
+
+**位置**: `src/sdk-agent-adapter.ts:85-120`
+
+Agent SDK 调用通过 async generator 迭代消息，但没有全局超时。如果 SDK 挂起，整个循环将无限阻塞。`AbortController` 可通过外部信号中断，但没有自动超时触发。
+
+**修复方案**:
+- 添加可配置的全局超时（默认 30 分钟），通过 `AbortController` + `setTimeout` 实现
+- 超时后自动 abort 并触发 `iteration_hard_failure`
+
+---
+
+### 🔴 高风险 — 来源：功能逻辑自洽性审核（oc_ad.md）
+
+> 以下问题来自第二份独立审核报告，经源码验证后确认有效且与上述条目不重复。
+
+#### H-3: 分发包冻结保护完全失效（P0）
+
+**位置**: `hooks/hooks.json:38-41`，`scripts/build-dist.sh:58-63`
+
+`hooks.json` 中 PreToolUse Hook 调用 `node forge/dist/src/check-frozen.js`，但 `build-dist.sh` 只复制 shell 脚本（`check-frozen.sh`），不复制编译后的 `.js` 文件。由于 `2>/dev/null || ...` 的静默失败机制，Hook 失败时不报错，导致分发包用户的 `.forge/` 冻结保护完全失效。
+
+**已验证**: `dist/claude-code/bundles/forge/` 中确实不存在 `dist/src/check-frozen.js`，仅有 `scripts/check-frozen.sh`。
+
+**注意**: 此问题仅影响分发包用户（通过 `git clone` 安装的用户）。本地开发环境中 `dist/src/check-frozen.js` 存在，保护正常工作。
+
+**修复方案**（二选一）:
+- **方案 A**: 修改 `hooks/hooks.json`，将 `check-frozen.js` 调用改为 `check-frozen.sh`
+- **方案 B**: 在 `build-dist.sh` 中增加 `dist/src/` 目录的复制
+
+---
+
+#### H-4: Worktree 删除导致 notes 永久丢失（P0）
+
+**位置**: `src/run-manager.ts:281`，`src/forge-loop-cli.ts:294-312`
+
+Notes 存储在 `worktreePath/.forge/runs/<runId>/notes.md`（worktree 内部）。当 `decideWorktreeCleanup` 决定删除 worktree（`commitCount === 0`）时，notes 文件随 worktree 一同被 `git worktree remove` 删除，迭代历史永久丢失。
+
+**修复方案**: 将 notes 统一存储到 repo root 的 `.forge/runs/` 目录下，或在 worktree 删除前备份 notes 到主仓库。
+
+---
+
+#### H-5: notesContent 初始化与文件内容不一致
+
+**位置**: `src/run-manager.ts:127-128`，`src/sdk-driver.ts:177-178`
+
+`RunManager.setupNewRun()` 创建 `notes.md` 时包含 `branchName`：`formatNotesDocument({ runId, branchName, entries: [] })`。但 `SdkDriver` 初始化 `notesContent` 时不包含 `branchName`：`formatNotesDocument({ runId, entries: [] })`。第一次 `persistNotes` 后，文件中的 `Branch:` 行被覆盖丢失。
+
+**修复方案**: `SdkDriver` 构造时传入 `branchName`，使初始 `notesContent` 与文件一致。
+
+---
+
+#### H-6: 熔断器阈值与 PUA L4 阈值不匹配
+
+**位置**: `src/orchestrator.ts`（熔断器阈值 3），`src/pua-engine.ts`（L4 阈值 5+）
+
+熔断器在连续 3 次失败时触发 abort，但 PUA L4（最高压力级别）需要 5+ 次连续失败才激活。这意味着 PUA L4 的高级压力响应永远不会被触发——循环在到达 L4 之前就已被熔断器终止。
+
+**修复方案**（二选一）:
+- 统一阈值：将 PUA L4 阈值降至 3（与熔断器一致）
+- 明确设计意图并文档化：PUA 用于预警（L1-L3），熔断器用于停止
+
+---
+
+### 🟡 中风险 — 来源：功能逻辑自洽性审核（oc_ad.md）
+
+#### M-7: resumeRun 方法存在但从未被调用
+
+**位置**: `src/run-manager.ts:152-201`，`src/forge-loop-cli.ts`
+
+`RunManager.resumeRun()` 有完整实现，但 CLI 入口从未调用。进程崩溃后重启会调用 `setupNewRun` 创建新 run，旧的 notes 和上下文丢失。
+
+**修复方案**（二选一）:
+- **方案 A**: 在 CLI 中添加 `--resume` 标志，连接 `resumeRun` 方法
+- **方案 B**: 移除 `resumeRun` 及相关代码，明确文档化"不支持 resume"
+
+---
+
+#### M-8: abort 信号无法中断 effect 执行
+
+**位置**: `src/sdk-driver.ts:289-297`，`src/effect-executor.ts`
+
+`requestStop()` 的 abort 信号只传递给 Agent Adapter，不传递给 Effect Executor 的 commit/rollback 操作。用户发送 Ctrl+C 后，当前正在执行的 git 操作无法被中断，可能导致用户看到"已停止"但后台仍在执行 git 命令。
+
+**修复方案**: 将 abort signal 传递给 `executeEffects`，在 effect 执行关键点检查 signal 状态。
+
+---
+
+#### M-9: sanitizeBranchName 未完全覆盖 Git 分支名限制
+
+**位置**: `src/git-transaction.ts:79-96`
+
+正则 `ILLEGAL_BRANCH_CHARS_RE = /[^a-zA-Z0-9\-_./]/g` 未排除 `~`、`^`、`*`、`[`、`:` 等 Git 非法字符。`@{` 替换只删除 `@` 留下 `{`。可能生成被 Git 拒绝的分支名，导致运行时 `git checkout -b` 失败。
+
+**修复方案**: sanitize 后调用 `git check-ref-format --branch` 验证分支名有效性，或完善正则覆盖所有 Git 非法字符。
+
+---
+
+#### M-10: buildPressurePrompt 返回值在 handlePuaFailure 中被丢弃（设计意图，非缺陷）
+
+**位置**: `src/sdk-driver.ts:840`
+
+`handlePuaFailure` 中调用 `buildPressurePrompt()` 但未使用返回值。经验证，这是设计意图：PUA 状态被持久化到 StatusFile，下一次迭代开始时从 StatusFile 重建 `puaContext`（含 `pressurePrompt`），再传递给 `buildSkillAwarePrompt`。不需要修复，但建议添加注释说明意图。
+
+---
+
+#### M-11: 硬失败路径不更新 PUA 状态
+
+**位置**: `src/sdk-driver.ts:389-414`
+
+`iteration_hard_failure` 事件（SDK 崩溃、验证错误）不调用 PUA 处理函数，PUA 引擎无法感知硬失败。硬失败可能是更严重的问题，但 PUA 不会因此升级压力等级。
+
+**修复方案**: 在 `executeGenericIteration` 和 `executeSkillAwareIteration` 的 catch 块中添加 `handlePuaFailure` 调用。
+
+---
+
+### 🟢 低风险 — 来源：功能逻辑自洽性审核（oc_ad.md）
+
+| # | 问题 | 位置 | 说明 | 建议 |
+|---|------|------|------|------|
+| L-9 | 状态转换守卫缺失 | orchestrator.ts | `user_interrupt`、`backoff_elapsed`、`stop_condition_met` 无状态前置条件检查，理论上可从 `aborted` 状态触发 | 添加状态守卫，终态拒绝事件 |
+| L-10 | `stop_condition_met` 不增加 `currentIteration` | orchestrator.ts | 迭代计数与实际执行不一致，但 stop 后循环立即终止，实际影响有限 | 统一计数语义 |
+| L-11 | router.ts 与 skill-scheduler.ts full 档位序列不一致 | router.ts, skill-scheduler.ts | router 含 `decide`/`spec`，scheduler 不含。注释说明是设计意图，但可能引发维护困惑 | 添加交叉引用注释 |
+| L-12 | 孤儿导出函数 | router.ts, skill-scheduler.ts | `getWorkNatureSequenceKey`、`getCommandSequence`、`shouldCommitForPhase` 仅测试中使用 | 清理或连接到生产调用点 |
+| L-13 | brownfield 提升逻辑被困 light 分支 | router.ts:625-627 | brownfield 任务仅从 light→standard 提升，永远不会到 full | 评估是否需要 standard→full 提升 |
+| L-14 | confirmSpec 不调用验证函数 | spec.ts | 直接锁定 spec 不经过 `validateTestability` 等验证 | 在 confirmSpec 中调用验证函数 |
+| L-15 | plan.ts 不检查 spec 状态 | plan.ts | 可能在 spec 未锁定时执行 plan | 添加 spec 状态前置检查 |
+| L-16 | AtomicTask 缺少 dependsOn 字段 | plan.ts | 无法表达任务间依赖关系 | 评估是否需要任务依赖 |
+
+---
+
 ## 中期 — v2.x（平台改进）
 
 在核心稳定的基础上，提升开发体验和可维护性。

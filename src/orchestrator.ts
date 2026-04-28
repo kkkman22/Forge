@@ -128,6 +128,16 @@ export function transition(
   event: OrchestratorEvent,
   limits: RunLimits = {},
 ): { state: OrchestratorState; effects: OrchestratorEffect[] } {
+  // Terminal state guard: aborted/stopped states reject all events (R18.1)
+  if (state.status === "aborted" || state.status === "stopped") {
+    return { state, effects: [] };
+  }
+
+  // Idle state guard: only accept "start" events when idle (R18.2)
+  if (state.status === "idle" && event.type !== "start") {
+    return { state, effects: [] };
+  }
+
   switch (event.type) {
     // ----- idle → running -----
     case "start": {
@@ -270,7 +280,7 @@ export function transition(
     // ----- running: stop condition met -----
     case "stop_condition_met": {
       return {
-        state: { ...state, status: "aborted" },
+        state: { ...state, currentIteration: state.currentIteration + 1, status: "aborted" },
         effects: [{ type: "abort", reason: "stop condition met" }],
       };
     }
@@ -297,8 +307,12 @@ export function transition(
     }
 
     default: {
-      // Exhaustive check — should never reach here with valid events
-      return { state, effects: [] };
+      // Exhaustive check — TypeScript will error here if a new event type
+      // is added to OrchestratorEvent but not handled above.
+      const _exhaustive: never = event;
+      throw new Error(
+        `Unhandled orchestrator event type: ${(_exhaustive as OrchestratorEvent).type}`,
+      );
     }
   }
 }

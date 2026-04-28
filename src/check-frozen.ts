@@ -5,14 +5,14 @@
  * Exits with code 1 for "locked" or "approved" files (frozen zone).
  * Exits with code 0 for all other cases.
  *
- * Replaces the shell-based check-frozen.sh with a more robust TypeScript
- * implementation that correctly handles YAML frontmatter format variants
- * (quoted/unquoted values, varying whitespace).
+ * Delegates path classification and status extraction to `state.ts` to
+ * maintain a single source of truth for protection zone rules.
  *
  * **Validates: Requirements REQ-4**
  */
 
 import { existsSync, readFileSync } from "node:fs";
+import { extractFrontmatterStatus, getProtectionZone, normalizeForgePath } from "./state.js";
 
 // ---------------------------------------------------------------------------
 // Constants
@@ -21,9 +21,6 @@ import { existsSync, readFileSync } from "node:fs";
 /** Statuses that indicate a file is frozen and must not be modified. */
 const FROZEN_STATUSES = ["locked", "approved"];
 
-/** Path patterns that define the frozen zone within .forge/. */
-const FROZEN_ZONE_PATTERNS = [".forge/specs/", ".forge/plans/", ".forge/config.md"];
-
 // ---------------------------------------------------------------------------
 // Pure helpers (exported for testability)
 // ---------------------------------------------------------------------------
@@ -31,42 +28,32 @@ const FROZEN_ZONE_PATTERNS = [".forge/specs/", ".forge/plans/", ".forge/config.m
 /**
  * Determine whether a file path falls within a frozen zone.
  *
- * Frozen zones are directories and files under `.forge/` that contain
- * spec/plan state and should not be modified when their status is locked
- * or approved.
+ * Uses `normalizeForgePath()` from `state.ts` to resolve `..` sequences,
+ * strip redundant separators, and handle absolute/relative path variants
+ * before delegating to `getProtectionZone()` — the single authority for
+ * protection zone classification.
  *
- * @param filePath  The path to check.
- * @returns `true` if the path matches a frozen zone pattern.
+ * @param filePath  The path to check (may be absolute, relative, or prefixed).
+ * @returns `true` if the path is in the frozen zone.
+ *
+ * **Validates: Requirements 4.1, 4.2, 4.3**
  */
 export function isFrozenZonePath(filePath: string): boolean {
-  return FROZEN_ZONE_PATTERNS.some((pattern) => filePath.includes(pattern));
+  const relativePath = normalizeForgePath(filePath);
+  return getProtectionZone(relativePath) === "frozen";
 }
 
 /**
  * Extract the `status` value from YAML frontmatter in a string.
  *
- * Expects the content to start with `---` (after optional leading whitespace
- * is already trimmed by the caller). Searches for a `status:` line within
- * the frontmatter block delimited by opening and closing `---` markers.
- *
- * Handles both quoted and unquoted values:
- * - `status: locked`
- * - `status: "locked"`
+ * Delegates to `extractFrontmatterStatus()` from `state.ts` — the single
+ * authority for frontmatter parsing.
  *
  * @param content  The full file content.
  * @returns The extracted status string, or `null` if not found.
  */
 export function extractStatus(content: string): string | null {
-  const trimmed = content.trimStart();
-  if (!trimmed.startsWith("---")) return null;
-
-  // Find the closing --- marker (skip the opening one)
-  const endIndex = trimmed.indexOf("\n---", 3);
-  if (endIndex === -1) return null;
-
-  const frontmatter = trimmed.slice(3, endIndex);
-  const statusMatch = frontmatter.match(/^status:\s*"?([^"\n]*)"?\s*$/m);
-  return statusMatch ? statusMatch[1].trim() : null;
+  return extractFrontmatterStatus(content);
 }
 
 // ---------------------------------------------------------------------------

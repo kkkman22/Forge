@@ -206,6 +206,18 @@ status: "resolved"
 ---
 ```
 
+### 知识沉淀提示
+
+Phase 4 修复验证通过、status 更新为 `"resolved"` 后，输出一句话提示：
+
+```
+💡 要记录这个解决方案吗？（输入 /forge learn 或跳过）
+```
+
+**Mode 判断**：如果 `.forge/status.md` 中 `mode` 为 `autonomous`，跳过此提示（autonomous 模式下 learn 阶段由 Skill Scheduler 按 tier=full 自动调度）。
+
+> 此提示不阻塞工作流完成——它是在调试流程正式结束后的附加建议，用户说"不用"或不响应时立即跳过。
+
 ---
 
 ## 3. 红旗信号列表
@@ -274,6 +286,8 @@ status: "resolved"
              ▼
   ✅ 问题解决
   status: "resolved"
+  💡 要记录这个解决方案吗？（输入 /forge learn 或跳过）
+     （autonomous 模式下跳过此提示）
   运行 /forge build 从中断的任务继续（progress 已记录完成状态）
 ```
 
@@ -406,4 +420,6 @@ $ /forge debug
   根因：db.query 未处理 null 参数，返回 undefined
   修复：在查询层统一过滤 null 参数
   回归测试：已添加
+
+💡 要记录这个解决方案吗？（输入 /forge learn 或跳过）
 ```
