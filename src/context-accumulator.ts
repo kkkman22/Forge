@@ -7,10 +7,12 @@
  * actual file I/O.
  *
  * Design reference: gnhf-inspired-enhancements § context-accumulator.ts
- * **Validates: Requirements 3.1–3.7, 1.2**
+ * **Validates: Requirements 3.1–3.7, 1.2, 2.1–2.6**
  */
 
 import type { IterationEntry, NotesDocument } from "./loop-types.js";
+import type { PuaContext } from "./pua-engine.js";
+import { PROACTIVE_INITIATIVE_CHECKLIST } from "./pua-engine.js";
 
 // ---------------------------------------------------------------------------
 // Internal helpers
@@ -296,4 +298,153 @@ ${params.objective}
 ## Notes
 
 ${params.notesContent}`;
+}
+
+// ---------------------------------------------------------------------------
+// Skill-aware prompt construction
+// ---------------------------------------------------------------------------
+
+/**
+ * Parameters for building a Skill-aware iteration prompt.
+ *
+ * Combines the standard iteration prompt parameters with SKILL context
+ * (phase, tier, hints, fix issues) to guide the agent toward the correct
+ * SKILL invocation during autonomous loop execution.
+ */
+export interface SkillPromptParams {
+  /** Standard iteration prompt parameters (passed to buildIterationPrompt). */
+  base: {
+    iteration: number;
+    runId: string;
+    objective: string;
+    notesContent: string;
+    stopWhen?: string;
+  };
+  /** SKILL context injected after the base prompt. */
+  skill: {
+    /** Current SKILL phase (e.g. "build", "review"). Empty/missing triggers routing. */
+    phase: string;
+    /** Routing tier (e.g. "light", "standard", "full"). */
+    tier: string;
+    /** Task domain type (e.g. "frontend", "backend"). */
+    taskType?: string;
+    /** Project lifecycle phase (e.g. "greenfield", "bugfix"). */
+    projectPhase?: string;
+    /** Work nature (e.g. "feature", "refactor", "bugfix"). */
+    workNature?: string;
+    /** Behavioral hints from the router for downstream skills. */
+    hints?: Array<{ command: string; tag: string; description: string }>;
+    /** P0/P1 issues from a previous review that need fixing. */
+    fixIssues?: Array<{ severity: string; description: string }>;
+  };
+  /**
+   * PUA Quality Engine context (optional).
+   *
+   * When provided, a PUA pressure prompt section is injected after the
+   * SKILL Context section and before the Execution Mode section.
+   * When `pressureLevel` is L3 or L4, the Proactive Initiative Checklist
+   * is additionally injected.
+   *
+   * When undefined, the output is identical to the pre-PUA behavior
+   * (backward compatible).
+   */
+  puaContext?: PuaContext;
+}
+
+/**
+ * Build a Skill-aware iteration prompt.
+ *
+ * Constructs the standard iteration prompt via {@link buildIterationPrompt},
+ * then appends a `## SKILL Context` section containing the current phase,
+ * tier, optional task type / project phase, behavioral hints, and fix issues.
+ *
+ * When `phase` is empty or missing, the prompt instructs the agent to run
+ * routing analysis first (call forge-router). The output always includes a
+ * `mode: autonomous` directive so the agent skips all confirmation points.
+ *
+ * @param params  Skill-aware prompt construction parameters.
+ * @returns Complete prompt string for the agent.
+ */
+export function buildSkillAwarePrompt(params: SkillPromptParams): string {
+  const basePrompt = buildIterationPrompt(params.base);
+
+  const sections: string[] = [];
+
+  sections.push("## SKILL Context");
+  sections.push("");
+
+  // Phase and tier
+  const hasPhase = params.skill.phase !== undefined && params.skill.phase.trim() !== "";
+
+  if (hasPhase) {
+    sections.push(`Current phase: ${params.skill.phase}`);
+    sections.push(`Tier: ${params.skill.tier}`);
+    sections.push("");
+    sections.push(`Execute the **forge-${params.skill.phase}** SKILL for this iteration.`);
+  } else {
+    sections.push(`Tier: ${params.skill.tier}`);
+    sections.push("");
+    sections.push(
+      "No phase is set. Execute routing analysis first by calling **forge-router** to determine the current phase and command sequence.",
+    );
+  }
+
+  // Task type (optional)
+  if (params.skill.taskType) {
+    sections.push(`Task type: ${params.skill.taskType}`);
+  }
+
+  // Project phase (optional)
+  if (params.skill.projectPhase) {
+    sections.push(`Project phase: ${params.skill.projectPhase}`);
+  }
+
+  // Work nature (optional)
+  if (params.skill.workNature) {
+    sections.push(`Work nature: ${params.skill.workNature}`);
+  }
+
+  // Hints (optional)
+  if (params.skill.hints && params.skill.hints.length > 0) {
+    sections.push("");
+    sections.push("### Hints");
+    sections.push("");
+    for (const hint of params.skill.hints) {
+      sections.push(`- [${hint.command}] ${hint.tag}: ${hint.description}`);
+    }
+  }
+
+  // Fix issues (optional)
+  if (params.skill.fixIssues && params.skill.fixIssues.length > 0) {
+    sections.push("");
+    sections.push("### Issues to Fix");
+    sections.push("");
+    for (const issue of params.skill.fixIssues) {
+      sections.push(`- ${issue.severity}: ${issue.description}`);
+    }
+  }
+
+  // PUA Quality Engine injection (after SKILL Context, before Execution Mode)
+  if (params.puaContext !== undefined) {
+    sections.push("");
+    sections.push("## PUA Quality Engine");
+    sections.push("");
+    sections.push(params.puaContext.pressurePrompt);
+
+    // L3/L4: additionally inject Proactive Initiative Checklist
+    if (params.puaContext.pressureLevel === "L3" || params.puaContext.pressureLevel === "L4") {
+      sections.push("");
+      sections.push(PROACTIVE_INITIATIVE_CHECKLIST);
+    }
+  }
+
+  // Autonomous mode directive (always present)
+  sections.push("");
+  sections.push("## Execution Mode");
+  sections.push("");
+  sections.push(
+    "mode: autonomous — Skip all confirmation points and use preset strategies. Do not wait for user input.",
+  );
+
+  return `${basePrompt}\n\n${sections.join("\n")}`;
 }

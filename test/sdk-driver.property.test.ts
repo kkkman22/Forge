@@ -40,6 +40,7 @@ import {
   buildCommitCommand,
   buildResetCommand,
   buildStashCommand,
+  buildStashRefCommand,
 } from "../src/git-transaction.js";
 import type {
   AgentInterface,
@@ -177,6 +178,7 @@ describe("Feature: sdk-autonomous-loop, Property 4: Effect execution order prese
           for (const effect of effects) {
             if (effect.type === "commit") {
               expectedGitCalls.push(["add", "-A"]);
+              expectedGitCalls.push(["diff", "--cached", "--name-only"]);
               expectedGitCalls.push(["commit", "-m", effect.message]);
             } else if (effect.type === "rollback") {
               expectedGitCalls.push([
@@ -185,6 +187,7 @@ describe("Feature: sdk-autonomous-loop, Property 4: Effect execution order prese
                 "-m",
                 "forge-rollback-safety-net",
               ]);
+              expectedGitCalls.push(["rev-parse", "stash@{0}"]);
               expectedGitCalls.push(["reset", "--hard", "HEAD"]);
               expectedGitCalls.push(["clean", "-fd"]);
             }
@@ -247,18 +250,22 @@ describe("Feature: sdk-autonomous-loop, Property 3: Commit effect produces corre
         const commitEffect: OrchestratorEffect = { type: "commit", message };
         await executor.executeEffect(commitEffect);
 
-        // Should have called execFileSync exactly 2 times
-        expect(mock).toHaveBeenCalledTimes(2);
+        // Should have called execFileSync exactly 3 times (add + frozen zone diff + commit)
+        expect(mock).toHaveBeenCalledTimes(3);
 
         // First call: git add -A
         const expectedAddArgs = buildAddAllCommand().args;
         expect(mock.mock.calls[0][0]).toBe("git");
         expect(mock.mock.calls[0][1]).toEqual(expectedAddArgs);
 
-        // Second call: git commit -m <message>
-        const expectedCommitArgs = buildCommitCommand(message).args;
+        // Second call: git diff --cached --name-only (inner-layer frozen zone check)
         expect(mock.mock.calls[1][0]).toBe("git");
-        expect(mock.mock.calls[1][1]).toEqual(expectedCommitArgs);
+        expect(mock.mock.calls[1][1]).toEqual(["diff", "--cached", "--name-only"]);
+
+        // Third call: git commit -m <message>
+        const expectedCommitArgs = buildCommitCommand(message).args;
+        expect(mock.mock.calls[2][0]).toBe("git");
+        expect(mock.mock.calls[2][1]).toEqual(expectedCommitArgs);
       }),
       { numRuns: 200 },
     );
@@ -348,8 +355,8 @@ describe("Feature: sdk-autonomous-loop, Property 5: Git commands executed withou
         const commitEffect: OrchestratorEffect = { type: "commit", message };
         await executor.executeEffect(commitEffect);
 
-        // Should have called execFileSync exactly 2 times (add + commit)
-        expect(mock).toHaveBeenCalledTimes(2);
+        // Should have called execFileSync exactly 3 times (add + frozen zone diff + commit)
+        expect(mock).toHaveBeenCalledTimes(3);
 
         for (let i = 0; i < mock.mock.calls.length; i++) {
           const call = mock.mock.calls[i];
@@ -373,8 +380,11 @@ describe("Feature: sdk-autonomous-loop, Property 5: Git commands executed withou
         const expectedAddArgs = buildAddAllCommand().args;
         expect(mock.mock.calls[0][1]).toEqual(expectedAddArgs);
 
+        // Index 1 is the frozen zone diff check
+        expect(mock.mock.calls[1][1]).toEqual(["diff", "--cached", "--name-only"]);
+
         const expectedCommitArgs = buildCommitCommand(message).args;
-        expect(mock.mock.calls[1][1]).toEqual(expectedCommitArgs);
+        expect(mock.mock.calls[2][1]).toEqual(expectedCommitArgs);
       }),
       { numRuns: 200 },
     );
@@ -401,8 +411,8 @@ describe("Feature: sdk-autonomous-loop, Property 5: Git commands executed withou
         const rollbackEffect: OrchestratorEffect = { type: "rollback" };
         await executor.executeEffect(rollbackEffect);
 
-        // Should have called execFileSync exactly 3 times (stash + reset + clean)
-        expect(mock).toHaveBeenCalledTimes(3);
+        // Should have called execFileSync exactly 4 times (stash + rev-parse + reset + clean)
+        expect(mock).toHaveBeenCalledTimes(4);
 
         for (let i = 0; i < mock.mock.calls.length; i++) {
           const call = mock.mock.calls[i];
@@ -425,11 +435,14 @@ describe("Feature: sdk-autonomous-loop, Property 5: Git commands executed withou
         const expectedStashArgs = buildStashCommand("forge-rollback-safety-net").args;
         expect(mock.mock.calls[0][1]).toEqual(expectedStashArgs);
 
+        const expectedStashRefArgs = buildStashRefCommand().args;
+        expect(mock.mock.calls[1][1]).toEqual(expectedStashRefArgs);
+
         const expectedResetArgs = buildResetCommand().args;
-        expect(mock.mock.calls[1][1]).toEqual(expectedResetArgs);
+        expect(mock.mock.calls[2][1]).toEqual(expectedResetArgs);
 
         const expectedCleanArgs = buildCleanCommand().args;
-        expect(mock.mock.calls[2][1]).toEqual(expectedCleanArgs);
+        expect(mock.mock.calls[3][1]).toEqual(expectedCleanArgs);
       }),
       { numRuns: 200 },
     );
@@ -583,6 +596,8 @@ describe("Feature: sdk-autonomous-loop, Property 1: Driver input validation", ()
       warmQuery: {},
       baseCommit: "abc123",
       notesPath: "/test/runs/test-run-id/notes.md",
+      branchName: "forge/test-branch",
+      skillAware: false,
     };
   }
 

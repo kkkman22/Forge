@@ -8,13 +8,16 @@
  *
  * **Validates: Requirements 3.1, 3.2, 3.3, 3.4, 3.5, 3.6, 3.7**
  */
+import * as fc from "fast-check";
 import { afterEach, beforeEach, describe, expect, it, type Mock, vi } from "vitest";
 import {
   buildAddAllCommand,
   buildCleanCommand,
+  buildCleanDryRunCommand,
   buildCommitCommand,
   buildResetCommand,
   buildStashCommand,
+  buildStashRefCommand,
 } from "../src/git-transaction.js";
 import type { OrchestratorEffect } from "../src/loop-types.js";
 
@@ -25,7 +28,12 @@ vi.mock("node:child_process", () => ({
 
 // Import after mocking
 import { execFileSync } from "node:child_process";
-import { EffectExecutor, type EffectExecutorDeps } from "../src/effect-executor.js";
+import {
+  EffectExecutor,
+  type EffectExecutorDeps,
+  FrozenZoneViolation,
+  UnexpectedEffectError,
+} from "../src/effect-executor.js";
 
 // ---------------------------------------------------------------------------
 // Helpers
@@ -71,15 +79,20 @@ describe("commit effect", () => {
     const expectedCommit = buildCommitCommand(message);
     const mock = execFileSync as Mock;
 
-    expect(mock).toHaveBeenCalledTimes(2);
+    // 3 calls: git add -A, git diff --cached --name-only (frozen zone check), git commit
+    expect(mock).toHaveBeenCalledTimes(3);
 
     // First call: git add -A
     expect(mock.mock.calls[0][0]).toBe(expectedAdd.executable);
     expect(mock.mock.calls[0][1]).toEqual(expectedAdd.args);
 
-    // Second call: git commit -m <message>
-    expect(mock.mock.calls[1][0]).toBe(expectedCommit.executable);
-    expect(mock.mock.calls[1][1]).toEqual(expectedCommit.args);
+    // Second call: git diff --cached --name-only (inner-layer frozen zone check)
+    expect(mock.mock.calls[1][0]).toBe("git");
+    expect(mock.mock.calls[1][1]).toEqual(["diff", "--cached", "--name-only"]);
+
+    // Third call: git commit -m <message>
+    expect(mock.mock.calls[2][0]).toBe(expectedCommit.executable);
+    expect(mock.mock.calls[2][1]).toEqual(expectedCommit.args);
   });
 
   it("passes cwd from deps to execFileSync", async () => {
@@ -117,23 +130,28 @@ describe("rollback effect", () => {
     await executor.executeEffect({ type: "rollback" });
 
     const expectedStash = buildStashCommand("forge-rollback-safety-net");
+    const expectedStashRef = buildStashRefCommand();
     const expectedReset = buildResetCommand();
     const expectedClean = buildCleanCommand();
     const mock = execFileSync as Mock;
 
-    expect(mock).toHaveBeenCalledTimes(3);
+    expect(mock).toHaveBeenCalledTimes(4);
 
     // First call: git stash --include-untracked -m "forge-rollback-safety-net"
     expect(mock.mock.calls[0][0]).toBe(expectedStash.executable);
     expect(mock.mock.calls[0][1]).toEqual(expectedStash.args);
 
-    // Second call: git reset --hard HEAD
-    expect(mock.mock.calls[1][0]).toBe(expectedReset.executable);
-    expect(mock.mock.calls[1][1]).toEqual(expectedReset.args);
+    // Second call: git rev-parse stash@{0}
+    expect(mock.mock.calls[1][0]).toBe(expectedStashRef.executable);
+    expect(mock.mock.calls[1][1]).toEqual(expectedStashRef.args);
 
-    // Third call: git clean -fd
-    expect(mock.mock.calls[2][0]).toBe(expectedClean.executable);
-    expect(mock.mock.calls[2][1]).toEqual(expectedClean.args);
+    // Third call: git reset --hard HEAD
+    expect(mock.mock.calls[2][0]).toBe(expectedReset.executable);
+    expect(mock.mock.calls[2][1]).toEqual(expectedReset.args);
+
+    // Fourth call: git clean -fd
+    expect(mock.mock.calls[3][0]).toBe(expectedClean.executable);
+    expect(mock.mock.calls[3][1]).toEqual(expectedClean.args);
   });
 
   it("passes cwd from deps to execFileSync", async () => {
@@ -178,8 +196,8 @@ describe("rollback stash safety net", () => {
 
     await executor.executeEffect({ type: "rollback" });
 
-    // stash must come before reset and clean
-    expect(callOrder).toEqual(["stash", "reset", "clean"]);
+    // stash must come before rev-parse, reset and clean
+    expect(callOrder).toEqual(["stash", "rev-parse", "reset", "clean"]);
   });
 
   it("still executes reset and clean when stash throws", async () => {
@@ -211,11 +229,20 @@ describe("rollback stash safety net", () => {
   it("logs success message when stash succeeds", async () => {
     const onLog = vi.fn();
     const executor = createExecutor({ onLog });
+    const mock = execFileSync as Mock;
+
+    // Make rev-parse return a fake SHA
+    mock.mockImplementation((_exec: string, args: string[]) => {
+      if (args[0] === "rev-parse") {
+        return Buffer.from("abc123def456\n");
+      }
+      return Buffer.from("");
+    });
 
     await executor.executeEffect({ type: "rollback" });
 
     expect(onLog).toHaveBeenCalledWith(
-      "Safety stash created before rollback (use 'git stash pop' to recover)",
+      "Safety stash created before rollback (stash ref: abc123def456)",
     );
   });
 
@@ -231,6 +258,187 @@ describe("rollback stash safety net", () => {
     await executor.executeEffect({ type: "rollback" });
 
     expect(onLog).toHaveBeenCalledWith("No changes to stash before rollback (clean working tree)");
+  });
+});
+
+// ---------------------------------------------------------------------------
+// Stash ref capture (Requirements 3.1, 3.2, 3.3, 3.4)
+// ---------------------------------------------------------------------------
+
+describe("stash ref capture", () => {
+  it("calls git rev-parse stash@{0} after successful stash", async () => {
+    const executor = createExecutor();
+    const mock = execFileSync as Mock;
+
+    // Stash succeeds, rev-parse returns a SHA
+    mock.mockImplementation((_exec: string, args: string[]) => {
+      if (args[0] === "rev-parse") {
+        return Buffer.from("a1b2c3d4e5f6\n");
+      }
+      return Buffer.from("");
+    });
+
+    await executor.executeEffect({ type: "rollback" });
+
+    const expectedStashRef = buildStashRefCommand();
+    // Second call should be rev-parse stash@{0}
+    expect(mock.mock.calls[1][0]).toBe(expectedStashRef.executable);
+    expect(mock.mock.calls[1][1]).toEqual(expectedStashRef.args);
+  });
+
+  it("logs the stash ref SHA via onLog", async () => {
+    const onLog = vi.fn();
+    const executor = createExecutor({ onLog });
+    const mock = execFileSync as Mock;
+
+    mock.mockImplementation((_exec: string, args: string[]) => {
+      if (args[0] === "rev-parse") {
+        return Buffer.from("deadbeef1234\n");
+      }
+      return Buffer.from("");
+    });
+
+    await executor.executeEffect({ type: "rollback" });
+
+    expect(onLog).toHaveBeenCalledWith(
+      "Safety stash created before rollback (stash ref: deadbeef1234)",
+    );
+  });
+
+  it("records the stash ref via onNotesUpdate", async () => {
+    const onNotesUpdate = vi.fn();
+    const executor = createExecutor({ onNotesUpdate });
+    const mock = execFileSync as Mock;
+
+    mock.mockImplementation((_exec: string, args: string[]) => {
+      if (args[0] === "rev-parse") {
+        return Buffer.from("cafe0123abcd\n");
+      }
+      return Buffer.from("");
+    });
+
+    await executor.executeEffect({ type: "rollback" });
+
+    expect(onNotesUpdate).toHaveBeenCalledWith("Rollback stash ref: cafe0123abcd");
+  });
+
+  it("logs stash ref as 'unknown' when rev-parse fails", async () => {
+    const onLog = vi.fn();
+    const onNotesUpdate = vi.fn();
+    const executor = createExecutor({ onLog, onNotesUpdate });
+    const mock = execFileSync as Mock;
+
+    // Stash succeeds, but rev-parse throws
+    mock.mockImplementation((_exec: string, args: string[]) => {
+      if (args[0] === "rev-parse") {
+        throw new Error("fatal: ref stash@{0} is not a valid ref");
+      }
+      return Buffer.from("");
+    });
+
+    await executor.executeEffect({ type: "rollback" });
+
+    expect(onLog).toHaveBeenCalledWith("Safety stash created before rollback (stash ref: unknown)");
+    expect(onNotesUpdate).toHaveBeenCalledWith("Rollback stash ref: unknown");
+  });
+});
+
+// ---------------------------------------------------------------------------
+// Dry-run rollback mode (Requirements 3.5, 3.6)
+// ---------------------------------------------------------------------------
+
+describe("dry-run rollback mode", () => {
+  it("calls git clean -fdn when dryRun is true", async () => {
+    const executor = createExecutor({ dryRun: true });
+    const mock = execFileSync as Mock;
+
+    mock.mockReturnValue(Buffer.from("Would remove untracked.txt\nWould remove temp/\n"));
+
+    await executor.executeEffect({ type: "rollback" });
+
+    const expectedDryRun = buildCleanDryRunCommand();
+    expect(mock).toHaveBeenCalledTimes(1);
+    expect(mock.mock.calls[0][0]).toBe(expectedDryRun.executable);
+    expect(mock.mock.calls[0][1]).toEqual(expectedDryRun.args);
+  });
+
+  it("logs each file path from dry-run output", async () => {
+    const onLog = vi.fn();
+    const executor = createExecutor({ dryRun: true, onLog });
+    const mock = execFileSync as Mock;
+
+    mock.mockReturnValue(
+      Buffer.from("Would remove untracked.txt\nWould remove temp/\nWould remove build/output.js\n"),
+    );
+
+    await executor.executeEffect({ type: "rollback" });
+
+    // First call is the header message
+    expect(onLog).toHaveBeenCalledWith("Dry-run rollback — listing files that would be cleaned:");
+    // Each file is logged with "would remove:" prefix (with "Would remove " stripped)
+    expect(onLog).toHaveBeenCalledWith("  would remove: untracked.txt");
+    expect(onLog).toHaveBeenCalledWith("  would remove: temp/");
+    expect(onLog).toHaveBeenCalledWith("  would remove: build/output.js");
+  });
+
+  it("logs empty message when no untracked files exist", async () => {
+    const onLog = vi.fn();
+    const executor = createExecutor({ dryRun: true, onLog });
+    const mock = execFileSync as Mock;
+
+    mock.mockReturnValue(Buffer.from(""));
+
+    await executor.executeEffect({ type: "rollback" });
+
+    expect(onLog).toHaveBeenCalledWith("Dry-run rollback — listing files that would be cleaned:");
+    expect(onLog).toHaveBeenCalledWith("  (no untracked files to clean)");
+  });
+
+  it("does NOT call git reset --hard HEAD in dry-run mode", async () => {
+    const executor = createExecutor({ dryRun: true });
+    const mock = execFileSync as Mock;
+
+    mock.mockReturnValue(Buffer.from("Would remove foo.txt\n"));
+
+    await executor.executeEffect({ type: "rollback" });
+
+    // Only one call: git clean -fdn
+    for (const call of mock.mock.calls) {
+      const args = call[1] as string[];
+      expect(args).not.toContain("reset");
+    }
+  });
+
+  it("does NOT call git clean -fd in dry-run mode", async () => {
+    const executor = createExecutor({ dryRun: true });
+    const mock = execFileSync as Mock;
+
+    mock.mockReturnValue(Buffer.from("Would remove foo.txt\n"));
+
+    await executor.executeEffect({ type: "rollback" });
+
+    // The only clean call should be the dry-run variant (-fdn), not the destructive one (-fd)
+    for (const call of mock.mock.calls) {
+      const args = call[1] as string[];
+      if (args[0] === "clean") {
+        expect(args).toContain("-fdn");
+        expect(args).not.toEqual(["clean", "-fd"]);
+      }
+    }
+  });
+
+  it("does NOT call git stash in dry-run mode", async () => {
+    const executor = createExecutor({ dryRun: true });
+    const mock = execFileSync as Mock;
+
+    mock.mockReturnValue(Buffer.from(""));
+
+    await executor.executeEffect({ type: "rollback" });
+
+    for (const call of mock.mock.calls) {
+      const args = call[1] as string[];
+      expect(args[0]).not.toBe("stash");
+    }
   });
 });
 
@@ -384,8 +592,8 @@ describe("executeEffects", () => {
 
     await executor.executeEffects(effects);
 
-    // Rollback: stash then reset then clean, followed by Commit: add then commit
-    expect(callOrder).toEqual(["stash", "reset", "clean", "add", "commit"]);
+    // Rollback: stash then rev-parse then reset then clean, followed by Commit: add then diff then commit
+    expect(callOrder).toEqual(["stash", "rev-parse", "reset", "clean", "add", "diff", "commit"]);
   });
 
   it("executes all effects in the array", async () => {
@@ -396,8 +604,8 @@ describe("executeEffects", () => {
 
     await executor.executeEffects(effects);
 
-    // commit calls execFileSync twice (add + commit)
-    expect(execFileSync).toHaveBeenCalledTimes(2);
+    // commit calls execFileSync 3 times (add + frozen zone diff + commit)
+    expect(execFileSync).toHaveBeenCalledTimes(3);
     // stop sets the flag
     expect(executor.stopped).toBe(true);
   });
@@ -431,5 +639,240 @@ describe("git commands executed without shell", () => {
       const options = call[2];
       expect(options).toEqual({ cwd: "/test/repo" });
     }
+  });
+});
+
+// ---------------------------------------------------------------------------
+// Feature: audit-followup-improvements, Property 2: Dry-run rollback non-destructiveness
+// ---------------------------------------------------------------------------
+
+describe("Feature: audit-followup-improvements, Property 2: Dry-run rollback non-destructiveness", () => {
+  /**
+   * For any set of untracked files reported by `git clean -fdn`, when the
+   * `dryRun` flag is `true`, `executeRollback()` SHALL invoke `onLog` for
+   * every file in the set (plus one header message) AND SHALL NOT invoke
+   * `git reset --hard HEAD` or `git clean -fd` (the destructive commands).
+   * The only `execFileSync` call SHALL be `git clean -fdn`.
+   *
+   * **Validates: Requirements 3.5, 3.6**
+   */
+  it("onLog is called once per file plus header, and no destructive git commands are issued", () => {
+    fc.assert(
+      fc.property(
+        fc.array(fc.string().filter((s) => s.length > 0 && !s.includes("\n"))),
+        (filePaths) => {
+          // Reset mocks for each iteration
+          vi.clearAllMocks();
+
+          const onLog = vi.fn();
+          const onNotesUpdate = vi.fn();
+          const executor = new EffectExecutor({
+            cwd: "/test/repo",
+            onLog,
+            onNotesUpdate,
+            dryRun: true,
+          });
+
+          // Simulate git clean -fdn output: each file prefixed with "Would remove "
+          const gitCleanOutput = filePaths.map((f) => `Would remove ${f}`).join("\n");
+          const mock = execFileSync as Mock;
+          mock.mockReturnValue(Buffer.from(gitCleanOutput));
+
+          // Execute the rollback in dry-run mode (synchronous internally)
+          executor.executeEffect({ type: "rollback" });
+
+          // --- Assertion 1: onLog call count ---
+          // Header message + one call per file (or header + "(no untracked files)" if empty)
+          if (filePaths.length > 0) {
+            // 1 header + N file lines
+            expect(onLog).toHaveBeenCalledTimes(1 + filePaths.length);
+          } else {
+            // 1 header + 1 "(no untracked files to clean)" message
+            expect(onLog).toHaveBeenCalledTimes(2);
+          }
+
+          // --- Assertion 2: execFileSync called exactly once (git clean -fdn) ---
+          expect(mock).toHaveBeenCalledTimes(1);
+          const expectedDryRun = buildCleanDryRunCommand();
+          expect(mock.mock.calls[0][0]).toBe(expectedDryRun.executable);
+          expect(mock.mock.calls[0][1]).toEqual(expectedDryRun.args);
+
+          // --- Assertion 3: No destructive commands ---
+          for (const call of mock.mock.calls) {
+            const args = call[1] as string[];
+            // Must not contain "reset" (git reset --hard HEAD)
+            expect(args[0]).not.toBe("reset");
+            // Must not be destructive clean (git clean -fd without n)
+            if (args[0] === "clean") {
+              expect(args).toContain("-fdn");
+            }
+            // Must not contain "stash" (no stash in dry-run)
+            expect(args[0]).not.toBe("stash");
+          }
+        },
+      ),
+      { numRuns: 100 },
+    );
+  });
+});
+
+// ---------------------------------------------------------------------------
+// FrozenZoneViolation error type (Requirements 8.1, 8.2)
+// ---------------------------------------------------------------------------
+
+describe("FrozenZoneViolation error type", () => {
+  it("has code property set to FROZEN_ZONE_VIOLATION", () => {
+    const err = new FrozenZoneViolation(["file1.md"]);
+    expect(err.code).toBe("FROZEN_ZONE_VIOLATION");
+  });
+
+  it("stores the violating files in the files property", () => {
+    const files = [".forge/specs/my-spec/requirements.md", ".forge/specs/my-spec/design.md"];
+    const err = new FrozenZoneViolation(files);
+    expect(err.files).toEqual(files);
+  });
+
+  it("is an instance of Error", () => {
+    const err = new FrozenZoneViolation(["file.md"]);
+    expect(err).toBeInstanceOf(Error);
+  });
+
+  it("has name set to FrozenZoneViolation", () => {
+    const err = new FrozenZoneViolation(["file.md"]);
+    expect(err.name).toBe("FrozenZoneViolation");
+  });
+
+  it("includes file names in the error message", () => {
+    const files = ["a.md", "b.md"];
+    const err = new FrozenZoneViolation(files);
+    expect(err.message).toContain("a.md");
+    expect(err.message).toContain("b.md");
+  });
+
+  it("is distinguishable from UnexpectedEffectError via instanceof", () => {
+    const frozen = new FrozenZoneViolation(["file.md"]);
+    const unexpected = new UnexpectedEffectError("boom");
+    expect(frozen).toBeInstanceOf(FrozenZoneViolation);
+    expect(frozen).not.toBeInstanceOf(UnexpectedEffectError);
+    expect(unexpected).not.toBeInstanceOf(FrozenZoneViolation);
+  });
+});
+
+// ---------------------------------------------------------------------------
+// UnexpectedEffectError error type (Requirements 8.1, 8.3)
+// ---------------------------------------------------------------------------
+
+describe("UnexpectedEffectError error type", () => {
+  it("has code property set to UNEXPECTED_EFFECT_ERROR", () => {
+    const err = new UnexpectedEffectError("git crashed");
+    expect(err.code).toBe("UNEXPECTED_EFFECT_ERROR");
+  });
+
+  it("is an instance of Error", () => {
+    const err = new UnexpectedEffectError("something broke");
+    expect(err).toBeInstanceOf(Error);
+  });
+
+  it("has name set to UnexpectedEffectError", () => {
+    const err = new UnexpectedEffectError("oops");
+    expect(err.name).toBe("UnexpectedEffectError");
+  });
+
+  it("preserves the error message", () => {
+    const err = new UnexpectedEffectError("git command failed with exit code 128");
+    expect(err.message).toBe("git command failed with exit code 128");
+  });
+});
+
+// ---------------------------------------------------------------------------
+// Abort signal skips remaining effects in executeEffects (Requirement 14.1–14.3)
+// ---------------------------------------------------------------------------
+
+describe("abort signal skips remaining effects", () => {
+  it("skips all effects when signal is already aborted before executeEffects", async () => {
+    const onLog = vi.fn();
+    const executor = createExecutor({ onLog });
+    const controller = new AbortController();
+    controller.abort();
+
+    const effects: OrchestratorEffect[] = [
+      { type: "commit", message: "should not run" },
+      { type: "rollback" },
+      { type: "stop" },
+    ];
+
+    await executor.executeEffects(effects, controller.signal);
+
+    // No git commands should have been called
+    expect(execFileSync).not.toHaveBeenCalled();
+    // stop flag should not be set (effect was skipped)
+    expect(executor.stopped).toBe(false);
+    // Should log the interruption message
+    expect(onLog).toHaveBeenCalledWith("Effect execution interrupted: abort signal received");
+  });
+
+  it("skips remaining effects after abort signal fires mid-execution", async () => {
+    const onLog = vi.fn();
+    const executor = createExecutor({ onLog });
+    const controller = new AbortController();
+
+    const effects: OrchestratorEffect[] = [
+      { type: "abort", reason: "test abort" },
+      { type: "commit", message: "should not run" },
+    ];
+
+    // Abort after the first effect is processed
+    // The abort effect itself sets executor.aborted but doesn't trigger the signal.
+    // We abort the controller after the first effect by hooking into onLog.
+    let effectCount = 0;
+    onLog.mockImplementation(() => {
+      effectCount++;
+      if (effectCount === 1) {
+        controller.abort();
+      }
+    });
+
+    await executor.executeEffects(effects, controller.signal);
+
+    // The abort effect should have been processed
+    expect(executor.aborted).toBe(true);
+    // The commit should have been skipped — only the abort effect's log + interruption log
+    expect(onLog).toHaveBeenCalledWith("Aborted: test abort");
+    expect(onLog).toHaveBeenCalledWith("Effect execution interrupted: abort signal received");
+    // No git commands from the commit
+    expect(execFileSync).not.toHaveBeenCalled();
+  });
+});
+
+// ---------------------------------------------------------------------------
+// Abort signal skips commit and rollback operations (Requirement 14.2)
+// ---------------------------------------------------------------------------
+
+describe("abort signal skips commit and rollback operations", () => {
+  it("commit is skipped when abort signal is already fired", async () => {
+    const onLog = vi.fn();
+    const executor = createExecutor({ onLog });
+    const controller = new AbortController();
+    controller.abort();
+
+    await executor.executeEffect(
+      { type: "commit", message: "should be skipped" },
+      controller.signal,
+    );
+
+    expect(execFileSync).not.toHaveBeenCalled();
+    expect(onLog).toHaveBeenCalledWith("Commit skipped: abort signal received");
+  });
+
+  it("rollback is skipped when abort signal is already fired", async () => {
+    const onLog = vi.fn();
+    const executor = createExecutor({ onLog });
+    const controller = new AbortController();
+    controller.abort();
+
+    await executor.executeEffect({ type: "rollback" }, controller.signal);
+
+    expect(execFileSync).not.toHaveBeenCalled();
+    expect(onLog).toHaveBeenCalledWith("Rollback skipped: abort signal received");
   });
 });

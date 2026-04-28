@@ -1,5 +1,5 @@
 /**
- * Property tests for the Spec engine (Properties 5, 6, 7).
+ * Property tests for the Spec engine (Properties 5, 6, 7, 9).
  *
  * Property 5: Spec 锁定状态转换
  *   - confirmSpec → status "locked", rejectSpec → status "draft"
@@ -12,6 +12,12 @@
  * Property 7: 棕地 Spec 包含 Delta 章节
  *   - Brownfield Specs must have Delta with 新增, 修改, 不变 subsections
  *   **Validates: Requirements 3.6**
+ *
+ * Property 9: confirmSpec 验证前置守卫
+ *   - For any SpecDocument where validateTestability returns false, confirmSpec returns failure
+ *     with non-empty errors. For any brownfield spec where validateBrownfieldDelta returns false,
+ *     same behavior.
+ *   **Validates: Requirements 23.1, 23.2, 23.3**
  */
 import * as fc from "fast-check";
 import { describe, expect, it } from "vitest";
@@ -242,10 +248,15 @@ describe("Property 5: Spec 锁定状态转换", () => {
         // Precondition: spec starts as draft
         expect(spec.frontmatter.status).toBe("draft");
 
-        const confirmed = confirmSpec(spec);
+        const result = confirmSpec(spec);
 
-        // Status must be "locked" after confirmation
-        expect(confirmed.frontmatter.status).toBe("locked");
+        // draftSpecArb generates valid specs (testable requirements, non-brownfield)
+        // so confirmSpec should succeed
+        expect(result.success).toBe(true);
+        if (result.success) {
+          // Status must be "locked" after confirmation
+          expect(result.spec.frontmatter.status).toBe("locked");
+        }
       }),
       { numRuns: 200 },
     );
@@ -269,15 +280,19 @@ describe("Property 5: Spec 锁定状态转换", () => {
   it("confirmSpec preserves all other fields (Req 3.3)", () => {
     fc.assert(
       fc.property(draftSpecArb, (spec) => {
-        const confirmed = confirmSpec(spec);
+        const result = confirmSpec(spec);
 
-        // All fields except status should be preserved
-        expect(confirmed.frontmatter.feature).toBe(spec.frontmatter.feature);
-        expect(confirmed.frontmatter.date).toBe(spec.frontmatter.date);
-        expect(confirmed.purpose).toBe(spec.purpose);
-        expect(confirmed.requirements).toEqual(spec.requirements);
-        expect(confirmed.exclusions).toEqual(spec.exclusions);
-        expect(confirmed.isBrownfield).toBe(spec.isBrownfield);
+        expect(result.success).toBe(true);
+        if (result.success) {
+          const confirmed = result.spec;
+          // All fields except status should be preserved
+          expect(confirmed.frontmatter.feature).toBe(spec.frontmatter.feature);
+          expect(confirmed.frontmatter.date).toBe(spec.frontmatter.date);
+          expect(confirmed.purpose).toBe(spec.purpose);
+          expect(confirmed.requirements).toEqual(spec.requirements);
+          expect(confirmed.exclusions).toEqual(spec.exclusions);
+          expect(confirmed.isBrownfield).toBe(spec.isBrownfield);
+        }
       }),
       { numRuns: 200 },
     );
@@ -303,10 +318,15 @@ describe("Property 5: Spec 锁定状态转换", () => {
   it("confirmSpec is idempotent — confirming a locked spec stays locked", () => {
     fc.assert(
       fc.property(draftSpecArb, (spec) => {
-        const once = confirmSpec(spec);
-        const twice = confirmSpec(once);
-
-        expect(twice.frontmatter.status).toBe("locked");
+        const first = confirmSpec(spec);
+        expect(first.success).toBe(true);
+        if (first.success) {
+          const second = confirmSpec(first.spec);
+          expect(second.success).toBe(true);
+          if (second.success) {
+            expect(second.spec.frontmatter.status).toBe("locked");
+          }
+        }
       }),
       { numRuns: 200 },
     );
@@ -391,6 +411,235 @@ describe("Property 7: 棕地 Spec 包含 Delta 章节", () => {
 
         // Non-brownfield specs don't need Delta, so validation passes
         expect(validateBrownfieldDelta(spec)).toBe(true);
+      }),
+      { numRuns: 200 },
+    );
+  });
+});
+
+// ---------------------------------------------------------------------------
+// Generators — Property 9: confirmSpec validation guard
+// ---------------------------------------------------------------------------
+
+/**
+ * A draft SpecDocument with untestable requirements (non-brownfield).
+ * validateTestability will return false for these specs.
+ */
+const specWithUntestableRequirementsArb: fc.Arbitrary<SpecDocument> = fc
+  .tuple(draftFrontmatterArb, purposeArb, someUntestableRequirementsArb, exclusionsArb)
+  .map(([frontmatter, purpose, requirements, exclusions]) => ({
+    frontmatter,
+    purpose,
+    requirements,
+    exclusions,
+    isBrownfield: false,
+  }));
+
+/**
+ * A brownfield draft SpecDocument with untestable requirements AND missing/incomplete Delta.
+ * Both validateTestability and validateBrownfieldDelta will return false.
+ */
+const brownfieldSpecBothInvalidArb: fc.Arbitrary<SpecDocument> = fc
+  .tuple(draftFrontmatterArb, purposeArb, someUntestableRequirementsArb, exclusionsArb)
+  .map(([frontmatter, purpose, requirements, exclusions]) => ({
+    frontmatter,
+    purpose,
+    requirements,
+    exclusions,
+    isBrownfield: true,
+    // delta is undefined — missing
+  }));
+
+/**
+ * A brownfield draft SpecDocument with VALID testable requirements but MISSING Delta.
+ * validateTestability passes, but validateBrownfieldDelta fails.
+ */
+const brownfieldSpecValidReqsMissingDeltaArb: fc.Arbitrary<SpecDocument> = fc
+  .tuple(
+    draftFrontmatterArb,
+    purposeArb,
+    fc.array(validRequirementArb, { minLength: 1, maxLength: 5 }),
+    exclusionsArb,
+  )
+  .map(([frontmatter, purpose, requirements, exclusions]) => ({
+    frontmatter,
+    purpose,
+    requirements,
+    exclusions,
+    isBrownfield: true,
+    // delta is undefined — missing
+  }));
+
+/**
+ * A brownfield draft SpecDocument with VALID testable requirements but INCOMPLETE Delta.
+ * validateTestability passes, but validateBrownfieldDelta fails.
+ */
+const brownfieldSpecValidReqsIncompleteDeltaArb: fc.Arbitrary<SpecDocument> = fc
+  .tuple(
+    draftFrontmatterArb,
+    purposeArb,
+    fc.array(validRequirementArb, { minLength: 1, maxLength: 5 }),
+    exclusionsArb,
+    incompleteDeltaArb,
+  )
+  .map(([frontmatter, purpose, requirements, exclusions, delta]) => ({
+    frontmatter,
+    purpose,
+    requirements,
+    exclusions,
+    delta,
+    isBrownfield: true,
+  }));
+
+// ---------------------------------------------------------------------------
+// Property 9: confirmSpec 验证前置守卫
+// ---------------------------------------------------------------------------
+
+describe("Property 9: confirmSpec validation guard", () => {
+  /**
+   * **Validates: Requirements 23.1**
+   *
+   * For any SpecDocument where validateTestability returns false,
+   * confirmSpec returns failure with non-empty errors.
+   */
+  it("spec with untestable requirements → confirmSpec returns failure with non-empty errors (Req 23.1)", () => {
+    fc.assert(
+      fc.property(specWithUntestableRequirementsArb, (spec) => {
+        // Precondition: validateTestability must be false for this spec
+        expect(validateTestability(spec.requirements)).toBe(false);
+
+        const result = confirmSpec(spec);
+
+        expect(result.success).toBe(false);
+        if (!result.success) {
+          expect(result.errors.length).toBeGreaterThan(0);
+          expect(result.errors.some((e) => e.toLowerCase().includes("testable"))).toBe(true);
+        }
+      }),
+      { numRuns: 200 },
+    );
+  });
+
+  /**
+   * **Validates: Requirements 23.2**
+   *
+   * For any brownfield SpecDocument where validateBrownfieldDelta returns false
+   * (missing Delta), confirmSpec returns failure with non-empty errors.
+   */
+  it("brownfield spec with missing Delta → confirmSpec returns failure (Req 23.2)", () => {
+    fc.assert(
+      fc.property(brownfieldSpecValidReqsMissingDeltaArb, (spec) => {
+        // Precondition: brownfield with no delta
+        expect(spec.isBrownfield).toBe(true);
+        expect(validateBrownfieldDelta(spec)).toBe(false);
+
+        const result = confirmSpec(spec);
+
+        expect(result.success).toBe(false);
+        if (!result.success) {
+          expect(result.errors.length).toBeGreaterThan(0);
+          expect(result.errors.some((e) => e.toLowerCase().includes("delta"))).toBe(true);
+        }
+      }),
+      { numRuns: 200 },
+    );
+  });
+
+  /**
+   * **Validates: Requirements 23.2**
+   *
+   * For any brownfield SpecDocument where validateBrownfieldDelta returns false
+   * (incomplete Delta), confirmSpec returns failure with non-empty errors.
+   */
+  it("brownfield spec with incomplete Delta → confirmSpec returns failure (Req 23.2)", () => {
+    fc.assert(
+      fc.property(brownfieldSpecValidReqsIncompleteDeltaArb, (spec) => {
+        // Precondition: brownfield with incomplete delta
+        expect(spec.isBrownfield).toBe(true);
+        expect(validateBrownfieldDelta(spec)).toBe(false);
+
+        const result = confirmSpec(spec);
+
+        expect(result.success).toBe(false);
+        if (!result.success) {
+          expect(result.errors.length).toBeGreaterThan(0);
+          expect(result.errors.some((e) => e.toLowerCase().includes("delta"))).toBe(true);
+        }
+      }),
+      { numRuns: 200 },
+    );
+  });
+
+  /**
+   * **Validates: Requirements 23.1, 23.2**
+   *
+   * For any brownfield SpecDocument where BOTH validateTestability and
+   * validateBrownfieldDelta return false, confirmSpec returns failure
+   * with errors covering both issues.
+   */
+  it("brownfield spec with both untestable requirements and missing Delta → confirmSpec returns multiple errors (Req 23.1, 23.2)", () => {
+    fc.assert(
+      fc.property(brownfieldSpecBothInvalidArb, (spec) => {
+        // Precondition: both validations fail
+        expect(validateTestability(spec.requirements)).toBe(false);
+        expect(validateBrownfieldDelta(spec)).toBe(false);
+
+        const result = confirmSpec(spec);
+
+        expect(result.success).toBe(false);
+        if (!result.success) {
+          // Should have at least 2 errors (one for testability, one for delta)
+          expect(result.errors.length).toBeGreaterThanOrEqual(2);
+          expect(result.errors.some((e) => e.toLowerCase().includes("testable"))).toBe(true);
+          expect(result.errors.some((e) => e.toLowerCase().includes("delta"))).toBe(true);
+        }
+      }),
+      { numRuns: 200 },
+    );
+  });
+
+  /**
+   * **Validates: Requirements 23.3**
+   *
+   * For any valid SpecDocument (testable requirements, and if brownfield,
+   * complete Delta), confirmSpec returns success.
+   */
+  it("valid greenfield spec → confirmSpec succeeds (Req 23.3)", () => {
+    fc.assert(
+      fc.property(draftSpecArb, (spec) => {
+        // Precondition: valid greenfield spec
+        expect(validateTestability(spec.requirements)).toBe(true);
+
+        const result = confirmSpec(spec);
+
+        expect(result.success).toBe(true);
+        if (result.success) {
+          expect(result.spec.frontmatter.status).toBe("locked");
+        }
+      }),
+      { numRuns: 200 },
+    );
+  });
+
+  /**
+   * **Validates: Requirements 23.3**
+   *
+   * For any valid brownfield SpecDocument (testable requirements + complete Delta),
+   * confirmSpec returns success.
+   */
+  it("valid brownfield spec with complete Delta → confirmSpec succeeds (Req 23.3)", () => {
+    fc.assert(
+      fc.property(brownfieldSpecWithDeltaArb, (spec) => {
+        // Precondition: valid brownfield spec
+        expect(validateTestability(spec.requirements)).toBe(true);
+        expect(validateBrownfieldDelta(spec)).toBe(true);
+
+        const result = confirmSpec(spec);
+
+        expect(result.success).toBe(true);
+        if (result.success) {
+          expect(result.spec.frontmatter.status).toBe("locked");
+        }
       }),
       { numRuns: 200 },
     );

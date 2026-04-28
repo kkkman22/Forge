@@ -6,7 +6,7 @@
  *   2. src/router.ts tier definitions ↔ README.md tier table
  *   3. Agent files existence ↔ team config references
  */
-import { existsSync, readFileSync } from "node:fs";
+import { existsSync, readdirSync, readFileSync, statSync } from "node:fs";
 import { resolve } from "node:path";
 import { describe, expect, it } from "vitest";
 
@@ -364,6 +364,224 @@ describe("Contract: Agent Team documentation", () => {
     expect(content).toContain("Create an agent team");
     expect(content).toContain("using the spec-check agent type");
     expect(content).toContain("Clean up the team");
+  });
+});
+
+// ---------------------------------------------------------------------------
+// 9.5 hooks.json semantic validation
+// ---------------------------------------------------------------------------
+
+describe("Contract: hooks.json semantic validation", () => {
+  const hooksPath = resolve(ROOT, "hooks/hooks.json");
+  const hooksFile = JSON.parse(readFileSync(hooksPath, "utf-8"));
+  const hooksMap = hooksFile.hooks as Record<
+    string,
+    Array<{ matcher?: string; hooks: Array<{ type: string; command?: string; timeout?: unknown }> }>
+  >;
+
+  const VALID_HOOK_EVENTS = new Set([
+    "SessionStart",
+    "UserPromptSubmit",
+    "PreToolUse",
+    "PostToolUse",
+    "Stop",
+    "TeammateIdle",
+    "TaskCompleted",
+  ]);
+
+  const VALID_TOOL_NAMES = new Set([
+    "Write",
+    "Edit",
+    "Bash",
+    "Read",
+    "Grep",
+    "Glob",
+    "LS",
+    "WebSearch",
+    "WebFetch",
+  ]);
+
+  // Requirement 4.7: Event names match the valid set
+  it("all event names are valid Claude Code hook events", () => {
+    for (const eventName of Object.keys(hooksMap)) {
+      expect(
+        VALID_HOOK_EVENTS.has(eventName),
+        `Invalid hook event name: "${eventName}". Valid events: ${[...VALID_HOOK_EVENTS].join(", ")}`,
+      ).toBe(true);
+    }
+  });
+
+  // Requirement 4.1: Command file references exist or use fallback patterns
+  it("every command references existing files or uses a fallback pattern", () => {
+    const fallbackPatterns = ["|| true", "2>/dev/null", "|| bash"];
+
+    for (const [eventName, matcherGroups] of Object.entries(hooksMap)) {
+      for (const group of matcherGroups) {
+        for (const handler of group.hooks) {
+          if (!handler.command) continue;
+
+          const command = handler.command;
+          const hasFallback = fallbackPatterns.some((pattern) => command.includes(pattern));
+
+          // Extract file paths referenced in the command (e.g. forge/scripts/auto-resume.sh, .forge/status.md)
+          // Look for paths like word/word/word.ext or .word/word.ext
+          const fileRefs = command.match(/(?:[\w.-]+\/)+[\w.*-]+\.\w+/g) || [];
+
+          // Filter to actual file references (not glob patterns with *)
+          const concreteFileRefs = fileRefs.filter(
+            (ref) =>
+              !ref.includes("*") &&
+              !ref.startsWith("$") &&
+              !ref.startsWith("~") &&
+              !ref.includes("stash@"),
+          );
+
+          if (concreteFileRefs.length === 0) continue; // No file references to check
+
+          // If the command has a fallback, it's acceptable even if files don't exist locally
+          if (hasFallback) continue;
+
+          // Without a fallback, at least one referenced file should exist
+          // Commands may reference files conditionally (e.g. `if [ -f .forge/status.md ]`)
+          const hasConditionalCheck = command.includes("if [") || command.includes("[ -f");
+          if (hasConditionalCheck) continue;
+
+          for (const ref of concreteFileRefs) {
+            const filePath = resolve(ROOT, ref);
+            expect(
+              existsSync(filePath),
+              `${eventName} hook command references non-existent file "${ref}" without a fallback pattern. Command: ${command}`,
+            ).toBe(true);
+          }
+        }
+      }
+    }
+  });
+
+  // Requirement 4.2: PreToolUse/PostToolUse matchers use valid tool names
+  it("every matcher field contains only valid Claude Code tool names", () => {
+    for (const [eventName, matcherGroups] of Object.entries(hooksMap)) {
+      for (const group of matcherGroups) {
+        if (!group.matcher) continue;
+
+        const toolNames = group.matcher.split("|");
+        for (const toolName of toolNames) {
+          expect(
+            VALID_TOOL_NAMES.has(toolName),
+            `${eventName} has invalid tool name "${toolName}" in matcher "${group.matcher}". Valid tools: ${[...VALID_TOOL_NAMES].join(", ")}`,
+          ).toBe(true);
+        }
+      }
+    }
+  });
+
+  // Requirement 4.3: Timeout fields are positive integers
+  it("every timeout field is a positive integer", () => {
+    for (const [eventName, matcherGroups] of Object.entries(hooksMap)) {
+      for (const group of matcherGroups) {
+        for (const handler of group.hooks) {
+          if (handler.timeout === undefined) continue;
+
+          expect(
+            typeof handler.timeout === "number" &&
+              Number.isInteger(handler.timeout) &&
+              handler.timeout > 0,
+            `${eventName} hook has invalid timeout: ${JSON.stringify(handler.timeout)} (must be a positive integer)`,
+          ).toBe(true);
+        }
+      }
+    }
+  });
+});
+
+// ---------------------------------------------------------------------------
+// 9.6 scripts semantic validation
+// ---------------------------------------------------------------------------
+
+describe("Contract: scripts semantic validation", () => {
+  const scriptsDir = resolve(ROOT, "scripts");
+  const scriptFiles = readdirSync(scriptsDir)
+    .filter((f) => f.endsWith(".sh"))
+    .map((f) => resolve(scriptsDir, f));
+
+  // Requirement 4.4: Valid shebang line
+  for (const scriptPath of scriptFiles) {
+    const name = scriptPath.replace(`${ROOT}/`, "");
+    it(`${name} starts with a valid shebang line`, () => {
+      const content = readFileSync(scriptPath, "utf-8");
+      const firstLine = content.split("\n")[0];
+      const validShebangs = ["#!/bin/bash", "#!/usr/bin/env bash"];
+      expect(
+        validShebangs.includes(firstLine),
+        `${name} has invalid shebang: "${firstLine}". Expected one of: ${validShebangs.join(", ")}`,
+      ).toBe(true);
+    });
+  }
+
+  // Requirement 4.5: Executable permission bit
+  for (const scriptPath of scriptFiles) {
+    const name = scriptPath.replace(`${ROOT}/`, "");
+    it(`${name} has the execute permission bit set`, () => {
+      const mode = statSync(scriptPath).mode;
+      expect(
+        (mode & 0o111) !== 0,
+        `${name} is not executable (mode: ${mode.toString(8)}). Run: chmod +x ${name}`,
+      ).toBe(true);
+    });
+  }
+});
+
+// ---------------------------------------------------------------------------
+// 9.7 skills content validation
+// ---------------------------------------------------------------------------
+
+describe("Contract: skills content validation", () => {
+  const skillsDir = resolve(ROOT, "skills");
+  const skillDirs = readdirSync(skillsDir, { withFileTypes: true })
+    .filter((d) => d.isDirectory())
+    .map((d) => d.name);
+
+  const skillMdFiles = skillDirs
+    .map((dir) => ({ dir, path: resolve(skillsDir, dir, "SKILL.md") }))
+    .filter(({ path: p }) => existsSync(p));
+
+  // Requirement 4.6: Each SKILL.md has an Instructions heading (or equivalent) after frontmatter
+  for (const { dir, path: skillPath } of skillMdFiles) {
+    it(`skills/${dir}/SKILL.md contains an Instructions heading (or equivalent) after frontmatter`, () => {
+      const content = readFileSync(skillPath, "utf-8");
+
+      // Strip YAML frontmatter (between --- markers)
+      const frontmatterEnd = content.indexOf("---", content.indexOf("---") + 3);
+      expect(
+        frontmatterEnd,
+        `skills/${dir}/SKILL.md has no closing frontmatter delimiter`,
+      ).toBeGreaterThan(0);
+      const bodyContent = content.slice(frontmatterEnd + 3);
+
+      // Match ## Instructions, ## 指令, or any numbered ## heading (e.g. ## 1. 概述)
+      // This confirms the file has substantive content beyond metadata
+      const instructionsPattern = /^##\s+(Instructions|指令|\d+[.\s])/m;
+      expect(
+        instructionsPattern.test(bodyContent),
+        `skills/${dir}/SKILL.md has no Instructions heading (or equivalent numbered section) after frontmatter`,
+      ).toBe(true);
+    });
+  }
+});
+
+// ---------------------------------------------------------------------------
+// 9.8 CI calibration step existence
+// ---------------------------------------------------------------------------
+
+describe("Contract: CI calibration step existence", () => {
+  const ciPath = resolve(ROOT, ".github/workflows/ci.yml");
+
+  it("ci.yml contains a step referencing check-readme-metrics.sh", () => {
+    const content = readFileSync(ciPath, "utf-8");
+    expect(
+      content.includes("check-readme-metrics.sh"),
+      "CI workflow (.github/workflows/ci.yml) does not contain a step referencing check-readme-metrics.sh",
+    ).toBe(true);
   });
 });
 

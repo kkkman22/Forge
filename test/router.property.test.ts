@@ -8,7 +8,13 @@
  */
 import * as fc from "fast-check";
 import { describe, expect, it } from "vitest";
-import { classifyTask, type ProjectContext, type TaskSignals, type Tier } from "../src/router.js";
+import {
+  classifyTask,
+  type ProjectContext,
+  type ProjectType,
+  type TaskSignals,
+  type Tier,
+} from "../src/router.js";
 
 // ---------------------------------------------------------------------------
 // Generators
@@ -308,6 +314,94 @@ describe("Property 23: Brownfield boost", () => {
         expect(withContext.tier).toBe(without.tier);
       }),
       { numRuns: 500 },
+    );
+  });
+});
+
+// ---------------------------------------------------------------------------
+// Property 11: Brownfield boost classification
+// **Validates: Requirements 22.1**
+// ---------------------------------------------------------------------------
+
+/**
+ * Tier ordering for comparison: light < standard < full.
+ */
+const TIER_ORDER: Record<Tier, number> = {
+  light: 0,
+  standard: 1,
+  full: 2,
+};
+
+/** Arbitrary that produces a valid ProjectContext with brownfield + touchesExistingModules. */
+const brownfieldTouchingArb: fc.Arbitrary<ProjectContext> = fc.record({
+  projectType: fc.constant("brownfield" as const),
+  touchesExistingModules: fc.constant(true),
+});
+
+/** Arbitrary that produces any valid ProjectContext. */
+const _projectContextArb: fc.Arbitrary<ProjectContext> = fc.record({
+  projectType: fc.constantFrom(
+    "greenfield" as ProjectType,
+    "brownfield" as ProjectType,
+    "unknown" as ProjectType,
+  ),
+  touchesExistingModules: fc.boolean(),
+});
+
+/**
+ * Generates TaskSignals where hasAuthChanges or hasNewService is true
+ * (the brownfield-relevant high-complexity signals).
+ */
+const signalsWithAuthOrServiceArb: fc.Arbitrary<TaskSignals> = fc
+  .record({
+    filesAffected: fc.integer({ min: 0, max: 100 }),
+    linesChanged: fc.integer({ min: 0, max: 5000 }),
+    hasExistingSpec: fc.boolean(),
+    hasNewService: fc.boolean(),
+    hasNewDatabase: fc.boolean(),
+    hasAuthChanges: fc.boolean(),
+    isVagueRequirement: fc.boolean(),
+    hasClearRequirements: fc.boolean(),
+  })
+  .filter((s) => s.hasAuthChanges || s.hasNewService);
+
+describe("Property 11: Brownfield boost classification", () => {
+  it("brownfield + touchesExistingModules + (hasAuthChanges or hasNewService) → tier is at least standard", () => {
+    fc.assert(
+      fc.property(signalsWithAuthOrServiceArb, brownfieldTouchingArb, (signals, context) => {
+        const result = classifyTask(signals, undefined, context);
+        expect(TIER_ORDER[result.tier]).toBeGreaterThanOrEqual(TIER_ORDER.standard);
+      }),
+      { numRuns: 200 },
+    );
+  });
+
+  it("brownfield + touchesExistingModules with any signals → tier is at least standard (boost ensures no light)", () => {
+    fc.assert(
+      fc.property(taskSignalsArb, brownfieldTouchingArb, (signals, context) => {
+        const result = classifyTask(signals, undefined, context);
+        // Brownfield boost promotes light → standard, so tier is never light
+        // unless a user override forces it
+        expect(TIER_ORDER[result.tier]).toBeGreaterThanOrEqual(TIER_ORDER.standard);
+      }),
+      { numRuns: 200 },
+    );
+  });
+
+  it("non-brownfield context does not affect tier when hasAuthChanges or hasNewService", () => {
+    const nonBrownfieldArb: fc.Arbitrary<ProjectContext> = fc.record({
+      projectType: fc.constantFrom("greenfield" as ProjectType, "unknown" as ProjectType),
+      touchesExistingModules: fc.boolean(),
+    });
+
+    fc.assert(
+      fc.property(signalsWithAuthOrServiceArb, nonBrownfieldArb, (signals, context) => {
+        const withContext = classifyTask(signals, undefined, context);
+        const withoutContext = classifyTask(signals);
+        // hasAuthChanges/hasNewService trigger full via hasFullSignals regardless of context
+        expect(withContext.tier).toBe(withoutContext.tier);
+      }),
+      { numRuns: 200 },
     );
   });
 });

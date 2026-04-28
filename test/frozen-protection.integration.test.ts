@@ -9,7 +9,7 @@
  * bypassing the CLI entry point entirely.
  *
  * A source-sync guard reads the actual source file and verifies that the
- * function signatures and key constants haven't drifted.
+ * function signatures and key delegation patterns haven't drifted.
  *
  * **Validates: Requirements REQ-4, REQ-6**
  */
@@ -33,45 +33,41 @@ if (!source.includes("export function isFrozenZonePath(filePath: string): boolea
   throw new Error("Source sync failed: isFrozenZonePath signature changed in src/check-frozen.ts");
 }
 
-// Verify the constants we depend on
-if (!source.includes('".forge/specs/"')) {
-  throw new Error("Source sync failed: FROZEN_ZONE_PATTERNS changed in src/check-frozen.ts");
+// Verify delegation to state.ts (single source of truth for protection zones)
+if (!source.includes('from "./state.js"')) {
+  throw new Error(
+    "Source sync failed: check-frozen.ts must delegate to state.ts for protection zone rules",
+  );
 }
-if (!source.includes('".forge/plans/"')) {
-  throw new Error("Source sync failed: FROZEN_ZONE_PATTERNS changed in src/check-frozen.ts");
+if (!source.includes("getProtectionZone")) {
+  throw new Error("Source sync failed: check-frozen.ts must use getProtectionZone from state.ts");
 }
-if (!source.includes('".forge/config.md"')) {
-  throw new Error("Source sync failed: FROZEN_ZONE_PATTERNS changed in src/check-frozen.ts");
+if (!source.includes("extractFrontmatterStatus")) {
+  throw new Error(
+    "Source sync failed: check-frozen.ts must use extractFrontmatterStatus from state.ts",
+  );
 }
-
-// Verify the regex pattern used for status extraction
-if (!source.includes(String.raw`/^status:\s*"?([^"\n]*)"?\s*$/m`)) {
-  throw new Error("Source sync failed: status regex changed in src/check-frozen.ts");
+if (!source.includes("normalizeForgePath")) {
+  throw new Error("Source sync failed: check-frozen.ts must use normalizeForgePath from state.ts");
 }
 
 // ---------------------------------------------------------------------------
 // Mock the module to bypass the top-level main() call.
 // The factory re-implements the exported pure functions using the same
-// logic verified by the source-sync guards above.
+// delegation logic verified by the source-sync guards above.
 // ---------------------------------------------------------------------------
 
-const FROZEN_ZONE_PATTERNS = [".forge/specs/", ".forge/plans/", ".forge/config.md"];
+// Import the real state.ts functions (no side effects, safe to import directly)
+import { extractFrontmatterStatus, getProtectionZone, normalizeForgePath } from "../src/state.js";
 
 vi.mock("../src/check-frozen.js", () => ({
   isFrozenZonePath(filePath: string): boolean {
-    return FROZEN_ZONE_PATTERNS.some((pattern) => filePath.includes(pattern));
+    const relativePath = normalizeForgePath(filePath);
+    return getProtectionZone(relativePath) === "frozen";
   },
 
   extractStatus(content: string): string | null {
-    const trimmed = content.trimStart();
-    if (!trimmed.startsWith("---")) return null;
-
-    const endIndex = trimmed.indexOf("\n---", 3);
-    if (endIndex === -1) return null;
-
-    const frontmatter = trimmed.slice(3, endIndex);
-    const statusMatch = frontmatter.match(/^status:\s*"?([^"\n]*)"?\s*$/m);
-    return statusMatch ? statusMatch[1].trim() : null;
+    return extractFrontmatterStatus(content);
   },
 }));
 

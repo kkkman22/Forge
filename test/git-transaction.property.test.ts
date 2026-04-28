@@ -394,3 +394,182 @@ describe("Feature: gnhf-inspired-enhancements, Property 14: Shell 注入安全�
     );
   });
 });
+
+// ---------------------------------------------------------------------------
+// Feature: audit-remediation-v221, Property 5: sanitizeBranchName produces legal Git ref names
+// ---------------------------------------------------------------------------
+
+/**
+ * Feature: audit-remediation-v221, Property 5: sanitizeBranchName produces legal Git ref names
+ */
+describe("Feature: audit-remediation-v221, Property 5: sanitizeBranchName produces legal Git ref names", () => {
+  // -------------------------------------------------------------------------
+  // Generators
+  // -------------------------------------------------------------------------
+
+  /** General arbitrary strings — may contain anything. */
+  const generalStringArb = fc.string({ minLength: 0, maxLength: 200 });
+
+  /** Strings composed entirely of Git-illegal characters and sequences. */
+  const gitIllegalStringArb = fc
+    .array(fc.constantFrom("~", "^", "*", "[", ":", "?", "\\", "@{", "..", " ", "\t", "\n"), {
+      minLength: 1,
+      maxLength: 30,
+    })
+    .map((chars) => chars.join(""));
+
+  /** Strings that contain at least one alphanumeric character (non-degenerate). */
+  const nonDegenerateStringArb = fc
+    .tuple(
+      fc.string({ minLength: 0, maxLength: 50 }),
+      fc
+        .array(fc.constantFrom(..."abcdefghijklmnopqrstuvwxyz0123456789".split("")), {
+          minLength: 1,
+          maxLength: 10,
+        })
+        .map((chars) => chars.join("")),
+      fc.string({ minLength: 0, maxLength: 50 }),
+    )
+    .map(([prefix, alnum, suffix]) => `${prefix}${alnum}${suffix}`);
+
+  // -------------------------------------------------------------------------
+  // Property assertions
+  // -------------------------------------------------------------------------
+
+  /**
+   * **Validates: Requirements 15.1, 15.2, 15.3**
+   *
+   * For any input string, sanitizeBranchName output contains only
+   * whitelisted characters: [a-zA-Z0-9\-_./]
+   */
+  it("output contains only Git-legal characters (whitelist) for any input", () => {
+    fc.assert(
+      fc.property(generalStringArb, (input) => {
+        const result = sanitizeBranchName(input);
+        for (const ch of result) {
+          expect(ch).toMatch(/[a-zA-Z0-9\-_./]/);
+        }
+      }),
+      { numRuns: 200 },
+    );
+  });
+
+  /**
+   * **Validates: Requirements 15.1, 15.2, 15.3**
+   *
+   * For any input string, output never contains Git-illegal sequences:
+   * "..", "@{", trailing ".lock"
+   */
+  it("output never contains '..' or '@{' sequences, nor trailing '.lock'", () => {
+    fc.assert(
+      fc.property(generalStringArb, (input) => {
+        const result = sanitizeBranchName(input);
+        expect(result).not.toContain("..");
+        expect(result).not.toContain("@{");
+        expect(result.toLowerCase()).not.toMatch(/\.lock$/);
+      }),
+      { numRuns: 200 },
+    );
+  });
+
+  /**
+   * **Validates: Requirements 15.1, 15.2, 15.3**
+   *
+   * For any input string, output does not start or end with '.', '/', or '-'.
+   */
+  it("output does not start or end with '.', '/', or '-'", () => {
+    fc.assert(
+      fc.property(generalStringArb, (input) => {
+        const result = sanitizeBranchName(input);
+        if (result.length > 0) {
+          expect(result[0]).not.toMatch(/[./-]/);
+          expect(result[result.length - 1]).not.toMatch(/[./-]/);
+        }
+      }),
+      { numRuns: 200 },
+    );
+  });
+
+  /**
+   * **Validates: Requirements 15.1, 15.2, 15.3**
+   *
+   * For any input string, output does not contain control characters
+   * (chars with code < 0x20 or 0x7F).
+   */
+  it("output does not contain control characters or spaces", () => {
+    fc.assert(
+      fc.property(generalStringArb, (input) => {
+        const result = sanitizeBranchName(input);
+        for (const ch of result) {
+          const code = ch.charCodeAt(0);
+          expect(code).toBeGreaterThanOrEqual(0x20);
+          expect(code).not.toBe(0x7f);
+          expect(ch).not.toBe(" ");
+        }
+      }),
+      { numRuns: 200 },
+    );
+  });
+
+  /**
+   * **Validates: Requirements 15.1, 15.2, 15.3**
+   *
+   * For strings composed entirely of Git-illegal characters, the output
+   * still satisfies all Git ref format rules (may be empty).
+   */
+  it("Git-illegal-only input produces output free of illegal characters", () => {
+    fc.assert(
+      fc.property(gitIllegalStringArb, (input) => {
+        const result = sanitizeBranchName(input);
+
+        // All characters in output must be whitelisted
+        for (const ch of result) {
+          expect(ch).toMatch(/[a-zA-Z0-9\-_./]/);
+        }
+
+        // No illegal sequences
+        expect(result).not.toContain("..");
+        expect(result).not.toContain("@{");
+        expect(result.toLowerCase()).not.toMatch(/\.lock$/);
+
+        // No illegal start/end characters
+        if (result.length > 0) {
+          expect(result[0]).not.toMatch(/[./-]/);
+          expect(result[result.length - 1]).not.toMatch(/[./-]/);
+        }
+      }),
+      { numRuns: 200 },
+    );
+  });
+
+  /**
+   * **Validates: Requirements 15.1, 15.2, 15.3**
+   *
+   * For non-degenerate inputs (containing at least one alphanumeric character),
+   * the output is non-empty.
+   */
+  it("non-degenerate input (with alphanumeric chars) produces non-empty output", () => {
+    fc.assert(
+      fc.property(nonDegenerateStringArb, (input) => {
+        const result = sanitizeBranchName(input);
+        expect(result.length).toBeGreaterThan(0);
+      }),
+      { numRuns: 200 },
+    );
+  });
+
+  /**
+   * **Validates: Requirements 15.1, 15.2, 15.3**
+   *
+   * Output never contains consecutive slashes.
+   */
+  it("output never contains consecutive slashes", () => {
+    fc.assert(
+      fc.property(generalStringArb, (input) => {
+        const result = sanitizeBranchName(input);
+        expect(result).not.toMatch(/\/{2,}/);
+      }),
+      { numRuns: 200 },
+    );
+  });
+});

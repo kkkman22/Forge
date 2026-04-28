@@ -19,7 +19,11 @@ jobs:
       - run: npm ci
       - run: npm run typecheck
       - run: npm run lint
+      - name: Verify docs generation
+        run: npm run docs
       - run: npm run test:coverage
+      - name: Check README metrics
+        run: bash scripts/check-readme-metrics.sh
       - name: Build dist bundle
         run: bash scripts/build-dist.sh
       - name: Verify dist bundle
@@ -65,9 +69,15 @@ jobs:
         run: bash scripts/build-dist.sh
       - name: Check for dist changes
         run: |
-          git add dist/
-          if ! git diff --cached --quiet; then
-            echo "::error::dist is out of sync with source. Run 'bash scripts/build-dist.sh' locally and commit the changes."
+          if [ ! -f dist/claude-code/bundles/.manifest.sha256 ]; then
+            echo "::error::dist manifest not found. Run 'bash scripts/build-dist.sh' locally and commit dist/claude-code/bundles/.manifest.sha256."
+            exit 1
+          fi
+          cp dist/claude-code/bundles/.manifest.sha256 /tmp/old-manifest.sha256
+          bash scripts/build-dist.sh
+          if ! diff -q /tmp/old-manifest.sha256 dist/claude-code/bundles/.manifest.sha256 >/dev/null 2>&1; then
+            echo "::error::dist is out of sync with source. Run 'bash scripts/build-dist.sh' locally and commit the updated .manifest.sha256."
+            diff /tmp/old-manifest.sha256 dist/claude-code/bundles/.manifest.sha256 || true
             exit 1
           fi
 

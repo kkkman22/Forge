@@ -18,7 +18,9 @@ import {
   scanForPlaceholders,
   type TDDSteps,
   validateAtomicTask,
+  validateDependencies,
   validatePlanTasks,
+  validateSpecLocked,
 } from "../src/plan.js";
 
 // ---------------------------------------------------------------------------
@@ -409,3 +411,244 @@ describe("scanForPlaceholders", () => {
     );
   });
 });
+
+// ---------------------------------------------------------------------------
+// validateSpecLocked — R24 tests
+// ---------------------------------------------------------------------------
+
+describe("validateSpecLocked", () => {
+  it('returns valid: true when specStatus is "locked"', () => {
+    const result = validateSpecLocked("locked");
+    expect(result).toEqual({ valid: true });
+  });
+
+  it('returns valid: false with "spec not locked" for non-locked statuses', () => {
+    fc.assert(
+      fc.property(
+        fc.string().filter((s) => s !== "locked"),
+        (status) => {
+          const result = validateSpecLocked(status);
+          expect(result).toEqual({ valid: false, error: "spec not locked" });
+        },
+      ),
+      { numRuns: 100 },
+    );
+  });
+
+  it('returns valid: false for "draft" status', () => {
+    const result = validateSpecLocked("draft");
+    expect(result).toEqual({ valid: false, error: "spec not locked" });
+  });
+
+  it("returns valid: false for empty string", () => {
+    const result = validateSpecLocked("");
+    expect(result).toEqual({ valid: false, error: "spec not locked" });
+  });
+});
+
+// ---------------------------------------------------------------------------
+// validateDependencies — R25 tests
+// ---------------------------------------------------------------------------
+
+describe("validateDependencies", () => {
+  it("returns empty errors when no tasks have dependsOn", () => {
+    fc.assert(
+      fc.property(fc.array(validAtomicTaskArb, { minLength: 1, maxLength: 5 }), (tasks) => {
+        // Ensure no dependsOn fields
+        const tasksWithoutDeps = tasks.map(({ dependsOn, ...rest }) => rest) as AtomicTask[];
+        const errors = validateDependencies(tasksWithoutDeps);
+        expect(errors).toHaveLength(0);
+      }),
+      { numRuns: 100 },
+    );
+  });
+
+  it("returns empty errors when all dependsOn references are valid", () => {
+    const tasks: AtomicTask[] = [
+      { ...makeMinimalTask(1), dependsOn: [] },
+      { ...makeMinimalTask(2), dependsOn: [1] },
+      { ...makeMinimalTask(3), dependsOn: [1, 2] },
+    ];
+    const errors = validateDependencies(tasks);
+    expect(errors).toHaveLength(0);
+  });
+
+  it("returns errors when dependsOn references non-existent task", () => {
+    const tasks: AtomicTask[] = [
+      { ...makeMinimalTask(1) },
+      { ...makeMinimalTask(2), dependsOn: [99] },
+    ];
+    const errors = validateDependencies(tasks);
+    expect(errors).toHaveLength(1);
+    expect(errors[0]).toContain("Task 2");
+    expect(errors[0]).toContain("non-existent task 99");
+  });
+
+  it("returns multiple errors for multiple invalid references", () => {
+    const tasks: AtomicTask[] = [{ ...makeMinimalTask(1), dependsOn: [10, 20] }];
+    const errors = validateDependencies(tasks);
+    expect(errors).toHaveLength(2);
+  });
+
+  it("returns empty errors for empty task list", () => {
+    const errors = validateDependencies([]);
+    expect(errors).toHaveLength(0);
+  });
+});
+
+// ---------------------------------------------------------------------------
+// validatePlanTasks — dependency integration
+// ---------------------------------------------------------------------------
+
+describe("validatePlanTasks with dependsOn", () => {
+  it("fails when a task has an invalid dependency reference", () => {
+    const tasks: AtomicTask[] = [makeMinimalTask(1), { ...makeMinimalTask(2), dependsOn: [99] }];
+    expect(validatePlanTasks(tasks)).toBe(false);
+  });
+
+  it("passes when all dependency references are valid", () => {
+    const tasks: AtomicTask[] = [makeMinimalTask(1), { ...makeMinimalTask(2), dependsOn: [1] }];
+    expect(validatePlanTasks(tasks)).toBe(true);
+  });
+
+  it("passes when tasks have no dependsOn field", () => {
+    const tasks: AtomicTask[] = [makeMinimalTask(1), makeMinimalTask(2)];
+    expect(validatePlanTasks(tasks)).toBe(true);
+  });
+});
+
+// ---------------------------------------------------------------------------
+// Property 10: dependsOn dependency validation
+// ---------------------------------------------------------------------------
+
+describe("Property 10: dependsOn dependency validation", () => {
+  /**
+   * Generator: a list of AtomicTask objects where every dependsOn reference
+   * points to an existing taskNumber in the list. We assign unique sequential
+   * task numbers, then for each task pick dependsOn from the set of all
+   * assigned numbers (excluding self-references for realism, though the
+   * validator doesn't enforce that).
+   *
+   * **Validates: Requirements 25.2, 25.3**
+   */
+  const tasksWithValidDepsArb: fc.Arbitrary<AtomicTask[]> = fc
+    .array(validAtomicTaskArb, { minLength: 1, maxLength: 10 })
+    .chain((baseTasks) => {
+      // Assign unique sequential task numbers
+      const taskNumbers = baseTasks.map((_, i) => i + 1);
+
+      // For each task, generate a subset of existing task numbers as dependsOn
+      const depArbs = baseTasks.map((task, idx) => {
+        const otherNumbers = taskNumbers.filter((n) => n !== taskNumbers[idx]);
+        if (otherNumbers.length === 0) {
+          // Only one task — no possible deps
+          return fc.constant({ ...task, taskNumber: taskNumbers[idx], dependsOn: [] as number[] });
+        }
+        return fc
+          .subarray(otherNumbers, { minLength: 0, maxLength: otherNumbers.length })
+          .map((deps) => ({ ...task, taskNumber: taskNumbers[idx], dependsOn: deps }));
+      });
+
+      return fc.tuple(...(depArbs as [fc.Arbitrary<AtomicTask>, ...fc.Arbitrary<AtomicTask>[]]));
+    })
+    .map((tuple) => [...tuple]);
+
+  /**
+   * Generator: a list of AtomicTask objects where at least one task has a
+   * dependsOn reference to a taskNumber that does NOT exist in the list.
+   * We generate a valid task list, then inject one invalid reference.
+   */
+  const tasksWithInvalidDepsArb: fc.Arbitrary<AtomicTask[]> = fc
+    .tuple(
+      fc.array(validAtomicTaskArb, { minLength: 1, maxLength: 8 }),
+      fc.nat({ max: 50 }), // index selector for which task gets the bad dep
+      fc.integer({ min: 1000, max: 9999 }), // non-existent task number
+    )
+    .map(([baseTasks, idxSeed, badDep]) => {
+      // Assign unique sequential task numbers (1..N)
+      const tasks = baseTasks.map((task, i) => ({
+        ...task,
+        taskNumber: i + 1,
+      }));
+
+      // Pick a task to inject the invalid dependency
+      const targetIdx = idxSeed % tasks.length;
+
+      // Ensure badDep doesn't accidentally match an existing task number
+      const existingNumbers = new Set(tasks.map((t) => t.taskNumber));
+      let invalidDep = badDep;
+      while (existingNumbers.has(invalidDep)) {
+        invalidDep++;
+      }
+
+      // Inject the invalid dependency
+      tasks[targetIdx] = {
+        ...tasks[targetIdx],
+        dependsOn: [...(tasks[targetIdx].dependsOn ?? []), invalidDep],
+      };
+
+      return tasks;
+    });
+
+  it("returns empty errors when all dependsOn references point to existing task numbers", () => {
+    fc.assert(
+      fc.property(tasksWithValidDepsArb, (tasks) => {
+        const errors = validateDependencies(tasks);
+        expect(errors).toHaveLength(0);
+      }),
+      { numRuns: 200 },
+    );
+  });
+
+  it("returns non-empty errors when any dependsOn references a non-existent taskNumber", () => {
+    fc.assert(
+      fc.property(tasksWithInvalidDepsArb, (tasks) => {
+        const errors = validateDependencies(tasks);
+        expect(errors.length).toBeGreaterThan(0);
+      }),
+      { numRuns: 200 },
+    );
+  });
+
+  it("each error message identifies the offending task and missing dependency", () => {
+    fc.assert(
+      fc.property(tasksWithInvalidDepsArb, (tasks) => {
+        const errors = validateDependencies(tasks);
+        // Every error should mention "Task" and "non-existent task"
+        for (const err of errors) {
+          expect(err).toMatch(/Task \d+/);
+          expect(err).toMatch(/non-existent task \d+/);
+        }
+      }),
+      { numRuns: 100 },
+    );
+  });
+});
+
+// ---------------------------------------------------------------------------
+// Helper — minimal valid task for dependency tests
+// ---------------------------------------------------------------------------
+
+function makeMinimalTask(taskNumber: number): AtomicTask {
+  return {
+    taskNumber,
+    title: `Task ${taskNumber}`,
+    filePath: "src/example.ts",
+    estimatedMinutes: 3,
+    tddSteps: {
+      red: {
+        testFile: "test/example.test.ts",
+        testCode: 'it("works", () => expect(true).toBe(true));',
+        runCommand: "npx vitest run",
+      },
+      green: {
+        sourceFile: "src/example.ts",
+        sourceCode: "export function example() { return true; }",
+        runCommand: "npx vitest run",
+      },
+      refactor: "Extract into module",
+    },
+    verifyCommand: "npx vitest run",
+    commitMessage: "feat(example): add example",
+  };
+}

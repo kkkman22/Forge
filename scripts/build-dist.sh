@@ -63,6 +63,21 @@ for script in check-frozen.sh auto-resume.sh persistent-loop.sh; do
 done
 cp "${FORGE_ROOT}/README.md" "${CC_BUNDLE}/README.md"
 
+# Copy compiled check-frozen.js and its dependencies so that the
+# hooks.json "node forge/dist/src/check-frozen.js" path resolves
+# correctly in the distribution package (R3: frozen-zone protection).
+if [[ -f "${FORGE_ROOT}/dist/src/check-frozen.js" ]]; then
+  mkdir -p "${CC_BUNDLE}/dist/src"
+  cp "${FORGE_ROOT}/dist/src/check-frozen.js" "${CC_BUNDLE}/dist/src/"
+  # check-frozen.js → state.js → frontmatter.js (full dependency chain)
+  for dep in state.js frontmatter.js; do
+    if [[ -f "${FORGE_ROOT}/dist/src/${dep}" ]]; then
+      cp "${FORGE_ROOT}/dist/src/${dep}" "${CC_BUNDLE}/dist/src/"
+    fi
+  done
+  info "check-frozen.js 及其依赖已复制到分发包 dist/src/"
+fi
+
 # 写入版本号
 echo "${VERSION}" > "${CC_BUNDLE}/VERSION"
 
@@ -110,6 +125,12 @@ git clone https://github.com/kkkman22/Forge.git ~/.claude/skills/forge
 EOF
 
 success "Claude Code 分发包构建完成: dist/claude-code/bundles/forge/"
+
+# ---------- 生成 manifest 用于 CI 同步校验 ----------
+info "生成 manifest..."
+MANIFEST="${FORGE_ROOT}/dist/claude-code/bundles/.manifest.sha256"
+(cd "${CC_BUNDLE}" && find . -type f | sort | xargs shasum -a 256) > "${MANIFEST}"
+success "Manifest 已生成: dist/claude-code/bundles/.manifest.sha256"
 
 # ============================================================================
 # 汇总

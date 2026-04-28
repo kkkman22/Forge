@@ -8,12 +8,13 @@
  * **Validates: Requirements 1.1, 1.2, 1.5, 4.1, 4.2, 4.3, 4.4, 4.5,
  *   5.1, 5.2, 5.3, 5.4, 8.3, 8.4, 10.4**
  */
+import type { Mock } from "vitest";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import type {
-  AgentInterface,
-  AgentResult,
-  AgentRunOptions,
-  TokenUsage,
+    AgentInterface,
+    AgentResult,
+    AgentRunOptions,
+    TokenUsage,
 } from "../src/loop-types.js";
 
 // Mock RunManager.persistNotes before importing SdkDriver
@@ -23,6 +24,7 @@ vi.mock("../src/run-manager.js", () => ({
   },
 }));
 
+import type { EffectExecutorInterface } from "../src/effect-executor.js";
 import { RunManager } from "../src/run-manager.js";
 import { SdkDriver, type SdkDriverConfig } from "../src/sdk-driver.js";
 
@@ -78,11 +80,13 @@ function createStopResult(): AgentResult {
   };
 }
 
-interface MockEffectExecutor {
-  aborted: boolean;
-  stopped: boolean;
-  executeEffect: ReturnType<typeof vi.fn>;
-  executeEffects: ReturnType<typeof vi.fn>;
+/**
+ * Type-safe mock that satisfies EffectExecutorInterface while exposing vi.fn() methods.
+ * When the real EffectExecutorInterface changes, this type produces compile-time errors.
+ */
+interface MockEffectExecutor extends EffectExecutorInterface {
+  executeEffect: Mock<EffectExecutorInterface["executeEffect"]>;
+  executeEffects: Mock<EffectExecutorInterface["executeEffects"]>;
 }
 
 function createMockEffectExecutor(): MockEffectExecutor {
@@ -121,6 +125,8 @@ function createConfig(overrides?: Partial<SdkDriverConfig>): SdkDriverConfig {
     warmQuery: {},
     baseCommit: "abc123",
     notesPath: "/test/repo/.forge/runs/test-run-id/notes.md",
+    branchName: "forge/build-a-login-form",
+    skillAware: false,
     ...overrides,
   };
 }
@@ -148,7 +154,7 @@ describe("initialization", () => {
     const agent = createMockAgent();
 
     // SdkDriver constructor should not throw
-    const driver = new SdkDriver(config, executor as any, agent);
+    const driver = new SdkDriver(config, executor, agent);
 
     // We can verify initialization by running the driver and checking the result
     // The driver should start with iteration 0 and empty notes
@@ -159,7 +165,7 @@ describe("initialization", () => {
     const executor = createMockEffectExecutor();
     const agent = createMockAgent();
 
-    expect(() => new SdkDriver(createConfig({ objective: "" }), executor as any, agent)).toThrow(
+    expect(() => new SdkDriver(createConfig({ objective: "" }), executor, agent)).toThrow(
       "Objective must be a non-empty string",
     );
   });
@@ -168,7 +174,7 @@ describe("initialization", () => {
     const executor = createMockEffectExecutor();
     const agent = createMockAgent();
 
-    expect(() => new SdkDriver(createConfig({ objective: "   " }), executor as any, agent)).toThrow(
+    expect(() => new SdkDriver(createConfig({ objective: "   " }), executor, agent)).toThrow(
       "Objective must be a non-empty string",
     );
   });
@@ -180,7 +186,7 @@ describe("initialization", () => {
       executor.aborted = true;
     });
     const agent = createMockAgent();
-    const driver = new SdkDriver(createConfig(), executor as any, agent);
+    const driver = new SdkDriver(createConfig(), executor, agent);
 
     const result = await driver.run();
 
@@ -199,11 +205,7 @@ describe("successful iteration", () => {
     const executor = createMockEffectExecutor();
     const agent = createMockAgent();
     // maxIterations: 1 means after 1 iteration the state machine will abort
-    const driver = new SdkDriver(
-      createConfig({ limits: { maxIterations: 1 } }),
-      executor as any,
-      agent,
-    );
+    const driver = new SdkDriver(createConfig({ limits: { maxIterations: 1 } }), executor, agent);
 
     const result = await driver.run();
 
@@ -228,11 +230,7 @@ describe("successful iteration", () => {
   it("appends correct IterationEntry to notes on success", async () => {
     const executor = createMockEffectExecutor();
     const agent = createMockAgent();
-    const driver = new SdkDriver(
-      createConfig({ limits: { maxIterations: 1 } }),
-      executor as any,
-      agent,
-    );
+    const driver = new SdkDriver(createConfig({ limits: { maxIterations: 1 } }), executor, agent);
 
     const result = await driver.run();
 
@@ -250,7 +248,7 @@ describe("successful iteration", () => {
     const executor = createMockEffectExecutor();
     const agent = createMockAgent();
     const config = createConfig({ limits: { maxIterations: 1 } });
-    const driver = new SdkDriver(config, executor as any, agent);
+    const driver = new SdkDriver(config, executor, agent);
 
     await driver.run();
 
@@ -265,18 +263,11 @@ describe("successful iteration", () => {
     const consoleSpy = vi.spyOn(console, "log").mockImplementation(() => {});
     const executor = createMockEffectExecutor();
     const agent = createMockAgent();
-    const driver = new SdkDriver(
-      createConfig({ limits: { maxIterations: 1 } }),
-      executor as any,
-      agent,
-    );
+    const driver = new SdkDriver(createConfig({ limits: { maxIterations: 1 } }), executor, agent);
 
     await driver.run();
 
-    expect(consoleSpy).toHaveBeenCalledWith(expect.stringContaining("input: 100"));
-    expect(consoleSpy).toHaveBeenCalledWith(expect.stringContaining("output: 50"));
-    expect(consoleSpy).toHaveBeenCalledWith(expect.stringContaining("cache read: 10"));
-    expect(consoleSpy).toHaveBeenCalledWith(expect.stringContaining("cache creation: 5"));
+    expect(consoleSpy).toHaveBeenCalledWith(expect.stringContaining("driver.loop.iterationTokens"));
   });
 });
 
@@ -288,11 +279,7 @@ describe("soft failure", () => {
   it("dispatches iteration_soft_failure, rolls back, and schedules next iteration", async () => {
     const executor = createMockEffectExecutor();
     const agent = createMockAgent(async () => createSoftFailureResult());
-    const driver = new SdkDriver(
-      createConfig({ limits: { maxIterations: 1 } }),
-      executor as any,
-      agent,
-    );
+    const driver = new SdkDriver(createConfig({ limits: { maxIterations: 1 } }), executor, agent);
 
     const result = await driver.run();
 
@@ -307,11 +294,7 @@ describe("soft failure", () => {
   it("appends correct IterationEntry to notes on soft failure", async () => {
     const executor = createMockEffectExecutor();
     const agent = createMockAgent(async () => createSoftFailureResult());
-    const driver = new SdkDriver(
-      createConfig({ limits: { maxIterations: 1 } }),
-      executor as any,
-      agent,
-    );
+    const driver = new SdkDriver(createConfig({ limits: { maxIterations: 1 } }), executor, agent);
 
     const result = await driver.run();
 
@@ -335,11 +318,7 @@ describe("hard failure (validation error)", () => {
       throw new Error("Validation failed: missing required field 'summary'");
     });
     // Circuit breaker threshold is 3, so 3 consecutive hard failures will abort
-    const driver = new SdkDriver(
-      createConfig({ limits: { maxIterations: 10 } }),
-      executor as any,
-      agent,
-    );
+    const driver = new SdkDriver(createConfig({ limits: { maxIterations: 10 } }), executor, agent);
 
     const result = await driver.run();
 
@@ -362,11 +341,7 @@ describe("hard failure (validation error)", () => {
       // Succeed on second call to stop the loop
       return createSuccessResult();
     });
-    const driver = new SdkDriver(
-      createConfig({ limits: { maxIterations: 2 } }),
-      executor as any,
-      agent,
-    );
+    const driver = new SdkDriver(createConfig({ limits: { maxIterations: 2 } }), executor, agent);
 
     const result = await driver.run();
 
@@ -391,11 +366,7 @@ describe("hard failure (SDK throw)", () => {
       throw new Error("SDK crashed");
     });
     // Circuit breaker at 3 consecutive failures
-    const driver = new SdkDriver(
-      createConfig({ limits: { maxIterations: 10 } }),
-      executor as any,
-      agent,
-    );
+    const driver = new SdkDriver(createConfig({ limits: { maxIterations: 10 } }), executor, agent);
 
     const result = await driver.run();
 
@@ -410,18 +381,13 @@ describe("hard failure (SDK throw)", () => {
     const agent = createMockAgent(async () => {
       throw new Error("SDK crashed");
     });
-    const driver = new SdkDriver(
-      createConfig({ limits: { maxIterations: 1 } }),
-      executor as any,
-      agent,
-    );
+    const driver = new SdkDriver(createConfig({ limits: { maxIterations: 1 } }), executor, agent);
 
     await driver.run();
 
-    // Token usage should be logged with zeros for hard failure
+    // Token usage should be logged with the i18n key for hard failure
     // The hard failure path uses zeroUsage but the state machine still tracks cumulative
-    // The log should show iteration tokens as 0
-    expect(consoleSpy).toHaveBeenCalledWith(expect.stringContaining("input: 0"));
+    expect(consoleSpy).toHaveBeenCalledWith(expect.stringContaining("driver.loop.iterationTokens"));
   });
 });
 
@@ -433,11 +399,7 @@ describe("should_fully_stop triggers stop_condition_met", () => {
   it("dispatches stop_condition_met and exits loop", async () => {
     const executor = createMockEffectExecutor();
     const agent = createMockAgent(async () => createStopResult());
-    const driver = new SdkDriver(
-      createConfig({ limits: { maxIterations: 10 } }),
-      executor as any,
-      agent,
-    );
+    const driver = new SdkDriver(createConfig({ limits: { maxIterations: 10 } }), executor, agent);
 
     const result = await driver.run();
 
@@ -450,11 +412,7 @@ describe("should_fully_stop triggers stop_condition_met", () => {
   it("still records iteration entry when stop condition is met", async () => {
     const executor = createMockEffectExecutor();
     const agent = createMockAgent(async () => createStopResult());
-    const driver = new SdkDriver(
-      createConfig({ limits: { maxIterations: 10 } }),
-      executor as any,
-      agent,
-    );
+    const driver = new SdkDriver(createConfig({ limits: { maxIterations: 10 } }), executor, agent);
 
     const result = await driver.run();
 
@@ -484,11 +442,7 @@ describe("requestStop()", () => {
       });
     });
 
-    const driver = new SdkDriver(
-      createConfig({ limits: { maxIterations: 10 } }),
-      executor as any,
-      agent,
-    );
+    const driver = new SdkDriver(createConfig({ limits: { maxIterations: 10 } }), executor, agent);
 
     // Start the driver in the background
     const runPromise = driver.run();
@@ -522,11 +476,7 @@ describe("loop exits on terminal states", () => {
   it("exits when state reaches aborted via maxIterations", async () => {
     const executor = createMockEffectExecutor();
     const agent = createMockAgent();
-    const driver = new SdkDriver(
-      createConfig({ limits: { maxIterations: 1 } }),
-      executor as any,
-      agent,
-    );
+    const driver = new SdkDriver(createConfig({ limits: { maxIterations: 1 } }), executor, agent);
 
     const result = await driver.run();
 
@@ -546,11 +496,7 @@ describe("loop exits on terminal states", () => {
       });
     });
 
-    const driver = new SdkDriver(
-      createConfig({ limits: { maxIterations: 10 } }),
-      executor as any,
-      agent,
-    );
+    const driver = new SdkDriver(createConfig({ limits: { maxIterations: 10 } }), executor, agent);
 
     const runPromise = driver.run();
     // Wait for the agent to be invoked
@@ -579,11 +525,7 @@ describe("loop exits on terminal states", () => {
       }
     });
 
-    const driver = new SdkDriver(
-      createConfig({ limits: { maxIterations: 10 } }),
-      executor as any,
-      agent,
-    );
+    const driver = new SdkDriver(createConfig({ limits: { maxIterations: 10 } }), executor, agent);
 
     const _result = await driver.run();
 
@@ -606,11 +548,7 @@ describe("notes accumulation", () => {
       return createSoftFailureResult();
     });
 
-    const driver = new SdkDriver(
-      createConfig({ limits: { maxIterations: 2 } }),
-      executor as any,
-      agent,
-    );
+    const driver = new SdkDriver(createConfig({ limits: { maxIterations: 2 } }), executor, agent);
 
     const result = await driver.run();
 
@@ -646,7 +584,7 @@ describe("notes persistence", () => {
     });
 
     const config = createConfig({ limits: { maxIterations: 2 } });
-    const driver = new SdkDriver(config, executor as any, agent);
+    const driver = new SdkDriver(config, executor, agent);
 
     await driver.run();
 
@@ -670,23 +608,14 @@ describe("token usage logging", () => {
     const consoleSpy = vi.spyOn(console, "log").mockImplementation(() => {});
     const executor = createMockEffectExecutor();
     const agent = createMockAgent();
-    const driver = new SdkDriver(
-      createConfig({ limits: { maxIterations: 1 } }),
-      executor as any,
-      agent,
-    );
+    const driver = new SdkDriver(createConfig({ limits: { maxIterations: 1 } }), executor, agent);
 
     await driver.run();
 
-    // Should log iteration tokens and cumulative tokens
+    // Should log iteration tokens using the i18n key (no t() configured → key fallback)
     expect(consoleSpy).toHaveBeenCalledTimes(1);
     const logMessage = consoleSpy.mock.calls[0][0];
-    expect(logMessage).toContain("Iteration tokens");
-    expect(logMessage).toContain("Cumulative");
-    expect(logMessage).toContain("input: 100");
-    expect(logMessage).toContain("output: 50");
-    expect(logMessage).toContain("cache read: 10");
-    expect(logMessage).toContain("cache creation: 5");
+    expect(logMessage).toContain("driver.loop.iterationTokens");
   });
 
   it("logs cumulative token totals across multiple iterations", async () => {
@@ -699,18 +628,14 @@ describe("token usage logging", () => {
         usage: createMockUsage({ inputTokens: 100 * callNum, outputTokens: 50 * callNum }),
       });
     });
-    const driver = new SdkDriver(
-      createConfig({ limits: { maxIterations: 2 } }),
-      executor as any,
-      agent,
-    );
+    const driver = new SdkDriver(createConfig({ limits: { maxIterations: 2 } }), executor, agent);
 
     await driver.run();
 
     expect(consoleSpy).toHaveBeenCalledTimes(2);
-    // Second log should show cumulative totals
-    const secondLog = consoleSpy.mock.calls[1][0];
-    expect(secondLog).toContain("Cumulative");
+    // Both logs should use the i18n key
+    expect(consoleSpy.mock.calls[0][0]).toContain("driver.loop.iterationTokens");
+    expect(consoleSpy.mock.calls[1][0]).toContain("driver.loop.iterationTokens");
   });
 });
 
@@ -732,11 +657,7 @@ describe("backoff completion", () => {
     });
 
     // Allow enough iterations for: hard failure → backoff → backoff_elapsed → success → abort
-    const driver = new SdkDriver(
-      createConfig({ limits: { maxIterations: 2 } }),
-      executor as any,
-      agent,
-    );
+    const driver = new SdkDriver(createConfig({ limits: { maxIterations: 2 } }), executor, agent);
 
     const result = await driver.run();
 
@@ -759,22 +680,83 @@ describe("empty objective validation", () => {
   it("throws for empty string", () => {
     const executor = createMockEffectExecutor();
     const agent = createMockAgent();
-    expect(() => new SdkDriver(createConfig({ objective: "" }), executor as any, agent)).toThrow();
+    expect(() => new SdkDriver(createConfig({ objective: "" }), executor, agent)).toThrow();
   });
 
   it("throws for whitespace-only string", () => {
     const executor = createMockEffectExecutor();
     const agent = createMockAgent();
-    expect(
-      () => new SdkDriver(createConfig({ objective: "  \t\n  " }), executor as any, agent),
-    ).toThrow();
+    expect(() => new SdkDriver(createConfig({ objective: "  \t\n  " }), executor, agent)).toThrow();
   });
 
   it("accepts non-empty objective", () => {
     const executor = createMockEffectExecutor();
     const agent = createMockAgent();
     expect(
-      () => new SdkDriver(createConfig({ objective: "valid objective" }), executor as any, agent),
+      () => new SdkDriver(createConfig({ objective: "valid objective" }), executor, agent),
     ).not.toThrow();
+  });
+});
+
+// ---------------------------------------------------------------------------
+// validateHooksPresence — tested in test/hooks-validation.property.test.ts
+// (separate file to avoid vi.mock interference with node:fs)
+// ---------------------------------------------------------------------------
+
+// ---------------------------------------------------------------------------
+// Hooks validation during run() (Requirements 1.2, 1.3, 1.4)
+// ---------------------------------------------------------------------------
+
+describe("hooks validation during run()", () => {
+  it("emits console.warn with 'hooks protection missing' when hooks are absent", async () => {
+    const warnSpy = vi.spyOn(console, "warn").mockImplementation(() => {});
+    const executor = createMockEffectExecutor();
+    executor.executeEffects.mockImplementation(async () => {
+      executor.aborted = true;
+    });
+    const agent = createMockAgent();
+    // Use a cwd that won't have hooks/hooks.json
+    const driver = new SdkDriver(createConfig({ cwd: "/nonexistent/path" }), executor, agent);
+
+    await driver.run();
+
+    expect(warnSpy).toHaveBeenCalledWith(expect.stringContaining("driver.warning.hooksProtectionMissing"));
+  });
+
+  it("does not block startup when hooks validation fails", async () => {
+    vi.spyOn(console, "warn").mockImplementation(() => {});
+    const executor = createMockEffectExecutor();
+    const agent = createMockAgent();
+    const driver = new SdkDriver(
+      createConfig({ cwd: "/nonexistent/path", limits: { maxIterations: 1 } }),
+      executor,
+      agent,
+    );
+
+    const result = await driver.run();
+
+    // The driver should still complete its run despite hooks validation failure
+    expect(result.finalState.status).toBe("aborted");
+    expect(agent.run).toHaveBeenCalledTimes(1);
+  });
+
+  it("handles unexpected errors in hooks validation gracefully", async () => {
+    const warnSpy = vi.spyOn(console, "warn").mockImplementation(() => {});
+    const executor = createMockEffectExecutor();
+    executor.executeEffects.mockImplementation(async () => {
+      executor.aborted = true;
+    });
+    const agent = createMockAgent();
+    // Use a cwd that won't have hooks — the validation will fail but not block
+    const driver = new SdkDriver(createConfig({ cwd: "/nonexistent/path" }), executor, agent);
+
+    // Should not throw even when hooks validation encounters issues
+    const result = await driver.run();
+
+    // Warn was called with hooks protection missing (i18n key)
+    expect(warnSpy).toHaveBeenCalledWith(expect.stringContaining("driver.warning.hooksProtectionMissing"));
+    // Driver still produced a result (startup was not blocked)
+    expect(result).toBeDefined();
+    expect(result.notesDocument).toBeDefined();
   });
 });

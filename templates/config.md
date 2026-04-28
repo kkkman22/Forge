@@ -4,6 +4,12 @@ stack: ["TypeScript", "React", "Node.js"]
 security_level: 1  # 1=标准, 2=高, 3=最高
 knowledge_limit: 20
 restatement_interval: 3  # Range: 2–10, default: 3. Triggers Restatement Checkpoint every N tasks
+verify_commands:            # Ralph Loop: Build 完成后自动运行的验证命令列表
+  - "npm run lint"
+  - "npm run typecheck"
+  - "npm test -- --run"
+verify_timeout: 120         # 每条验证命令的超时时间（秒），默认 120
+verify_max_attempts: 3      # 验证失败后最大重试次数，默认 3，超过则触发 soft_failure + rollback
 ---
 
 ## 状态文件保护分区

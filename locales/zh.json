@@ -1,0 +1,58 @@
+{
+  "cli": {
+    "error": {
+      "notGitRepo": "错误：当前目录不是 Git 仓库。",
+      "dirtyWorkTree": "错误：工作区不干净。请先提交或暂存更改，或使用 --worktree 选项。",
+      "invalidWorktreeSource": "错误：无法从 forge/ 分支创建工作树。请先切换到 main 或其他非 forge 分支。",
+      "noForgeDir": "错误：--tier、--type、--phase 和 --nature 需要 .forge/ 目录。请先运行 `forge init`。",
+      "invalidTier": "错误：无效的 --tier 值 \"{tier}\"。有效选项：{validOptions}",
+      "invalidLang": "错误：无效的 --lang 值 \"{lang}\"。有效选项：{validOptions}",
+      "branchNotFound": "错误：分支 \"{branch}\" 不存在。无法恢复。",
+      "noRunDirectory": "错误：未找到分支 \"{branch}\" 的运行目录。无法恢复。"
+    },
+    "warning": {
+      "activeTask": "警告：StatusFile 中有处于 \"{phase}\" 阶段的活跃任务。启动新循环可能会覆盖进行中的状态。",
+      "worktreeNotesBackupFailed": "警告：备份工作树笔记失败：{error}",
+      "unsupportedLocale": "警告：不支持的语言 \"{locale}\"，回退到 \"{fallback}\"。"
+    },
+    "loop": {
+      "resuming": "正在恢复运行 {runId}，分支 {branch}，从第 {iteration} 次迭代开始",
+      "worktreeRemoved": "工作树已移除：{reason}",
+      "worktreePreserved": "工作树已保留：{reason}"
+    }
+  },
+  "runManager": {
+    "warning": {
+      "fileLockFailed": "警告：文件锁机制失败，回退到无锁模式：{error}"
+    }
+  },
+  "driver": {
+    "warning": {
+      "hooksProtectionMissing": "钩子保护缺失：{reason}",
+      "statusFieldInitFailed": "警告：初始化 StatusFile 循环字段失败：{error}",
+      "completionSummaryFailed": "警告：格式化完成摘要失败：{error}",
+      "statusFieldClearFailed": "警告：清除 StatusFile 循环字段失败：{error}",
+      "puaFieldClearFailed": "警告：循环结束时清除 PUA 字段失败：{error}"
+    },
+    "loop": {
+      "effectExecutionFailed": "效果执行失败：{message}",
+      "iterationTokens": "迭代令牌 — 输入：{inputTokens}，输出：{outputTokens}，缓存读取：{cacheReadTokens}，缓存创建：{cacheCreationTokens} | 累计 — 输入：{totalInputTokens}，输出：{totalOutputTokens}"
+    },
+    "summary": {
+      "completedTitle": "✅ 循环完成",
+      "objective": "目标：{objective}",
+      "tier": "层级：{tier}",
+      "iterations": "迭代次数：{count}",
+      "phasesHeader": "阶段：",
+      "phasePassed": "✅ {phase}",
+      "phaseFailed": "❌ {phase}",
+      "branch": "分支：{branch}",
+      "circuitBreakerTitle": "⛔ 循环中止（断路器）",
+      "fixAttemptsExhausted": "修复尝试已用尽：{attempts}/{max}",
+      "unresolvedIssuesHeader": "未解决的问题：",
+      "errorTitle": "❌ 循环中止（错误）",
+      "reason": "原因：{reason}",
+      "recovery": "恢复方法：/forge resume"
+    }
+  }
+}

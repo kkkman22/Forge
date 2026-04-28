@@ -44,21 +44,52 @@ export interface SpecDocument {
 }
 
 // ---------------------------------------------------------------------------
+// Result type for confirmSpec
+// ---------------------------------------------------------------------------
+
+export type ConfirmSpecResult =
+  | { success: true; spec: SpecDocument }
+  | { success: false; errors: string[] };
+
+// ---------------------------------------------------------------------------
 // Spec lifecycle functions
 // ---------------------------------------------------------------------------
 
 /**
  * Confirm (lock) a Spec document.
  *
- * Returns a new SpecDocument with status set to "locked".
+ * Validates the spec before locking:
+ *   1. All requirements must have testable scenarios (validateTestability)
+ *   2. Brownfield specs must have a complete Delta section (validateBrownfieldDelta)
+ *
+ * Returns a success result with the locked SpecDocument, or a failure result
+ * with validation error messages.
+ *
  * Per SKILL.md §2 Step 3, user confirmation transitions draft → locked.
  */
-export function confirmSpec(spec: SpecDocument): SpecDocument {
+export function confirmSpec(spec: SpecDocument): ConfirmSpecResult {
+  const errors: string[] = [];
+
+  if (!validateTestability(spec.requirements)) {
+    errors.push("Not all requirements have testable scenarios");
+  }
+
+  if (spec.isBrownfield && !validateBrownfieldDelta(spec)) {
+    errors.push("Brownfield spec missing complete Delta section");
+  }
+
+  if (errors.length > 0) {
+    return { success: false, errors };
+  }
+
   return {
-    ...spec,
-    frontmatter: {
-      ...spec.frontmatter,
-      status: "locked",
+    success: true,
+    spec: {
+      ...spec,
+      frontmatter: {
+        ...spec.frontmatter,
+        status: "locked",
+      },
     },
   };
 }

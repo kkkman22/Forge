@@ -4,3 +4,11 @@ dist/claude-code/bundles/
 *.tsbuildinfo
 coverage/
 .kiro/
+.claude/
+
+
+# dist manifest is tracked (used by CI to verify dist sync)
+!dist/claude-code/bundles/.manifest.sha256
+
+# Generated API documentation
+docs/api/

@@ -56,43 +56,96 @@ export function containsShellMetacharacters(input: string): boolean {
  * Pattern matching characters that are illegal in Git branch names.
  *
  * Git branch names may contain alphanumeric characters, hyphens, underscores,
- * forward slashes, and dots. Everything else is stripped.
+ * forward slashes, and dots. Everything else is stripped — including
+ * `~`, `^`, `*`, `[`, `:`, `?`, `\`, `@`, `{`, `}`, control characters,
+ * and spaces, which are all forbidden by `git check-ref-format`.
  *
- * Additionally rejects:
- * - Consecutive dots (`..`) — path traversal
+ * Additionally rejects (handled in {@link sanitizeBranchName}):
+ * - Consecutive dots (`..`) — path traversal / Git ref restriction
  * - Trailing `.lock` — reserved by Git
- * - Leading/trailing slashes or dots
- * - Control characters and spaces
+ * - Leading/trailing `.`, `/`, or `-`
+ * - The `@{` reflog syntax sequence
  */
 const ILLEGAL_BRANCH_CHARS_RE = /[^a-zA-Z0-9\-_./]/g;
 
 /**
  * Sanitize a string for use as a Git branch name.
  *
- * Removes characters not valid in branch names (keeps alphanumeric, hyphens,
- * underscores, forward slashes, and dots). Also collapses consecutive dots
- * and slashes, and trims leading/trailing dots, slashes, and dashes.
+ * Produces output that passes `git check-ref-format --branch` by:
+ * 1. Stripping the `@{` reflog sequence (before whitelist, to avoid residual `{`)
+ * 2. Removing all characters outside the `[a-zA-Z0-9\-_./]` whitelist
+ * 3. Collapsing consecutive dots and slashes
+ * 4. Removing trailing `.lock` suffixes (repeatedly, to handle `.lock.lock`)
+ * 5. Trimming leading/trailing `.`, `/`, and `-`
  *
  * @param input  Raw branch name candidate.
  * @returns A cleaned branch name safe for Git.
  */
 export function sanitizeBranchName(input: string): string {
   let result = input
-    // Strip illegal characters
+    // Remove @{ reflog syntax before whitelist strip so neither @ nor { can linger
+    .replace(/@\{/g, "")
+    // Strip illegal characters (whitelist: alphanumeric, hyphen, underscore, dot, slash)
     .replace(ILLEGAL_BRANCH_CHARS_RE, "")
     // Collapse consecutive dots (prevents ".." path traversal)
     .replace(/\.{2,}/g, ".")
     // Collapse consecutive slashes
-    .replace(/\/{2,}/g, "/")
-    // Remove ".lock" suffix (reserved by Git)
-    .replace(/\.lock$/i, "")
-    // Remove control sequences like @{ (reflog syntax)
-    .replace(/@\{/g, "");
+    .replace(/\/{2,}/g, "/");
+
+  // Remove trailing ".lock" repeatedly (handles ".lock.lock" etc.)
+  while (result.toLowerCase().endsWith(".lock")) {
+    result = result.slice(0, -5);
+  }
 
   // Trim leading/trailing dots, slashes, and dashes
   result = result.replace(/^[./-]+/, "").replace(/[./-]+$/, "");
 
   return result;
+}
+
+// ---------------------------------------------------------------------------
+// Branch name deduplication
+// ---------------------------------------------------------------------------
+
+/** Maximum allowed length for a Git branch name. */
+const MAX_BRANCH_NAME_LENGTH = 250;
+
+/**
+ * Generate a unique branch name by appending a deduplication suffix when
+ * the base name collides with an existing branch.
+ *
+ * This is a **pure function**: it takes the candidate name, a run ID, and
+ * the list of existing branch names, and returns a unique name without
+ * performing any I/O.
+ *
+ * When a collision is detected, the first 8 characters of the `runId` are
+ * appended as a `-<suffix>`. The final name is truncated to
+ * `MAX_BRANCH_NAME_LENGTH` (250) characters.
+ *
+ * @param baseName          The desired branch name (e.g. `forge/my-feature`).
+ * @param runId             The unique run identifier (UUID).
+ * @param existingBranches  Array of branch names that already exist.
+ * @returns A branch name guaranteed to not collide with `existingBranches`
+ *          and to be ≤ 250 characters long.
+ */
+export function deduplicateBranchName(
+  baseName: string,
+  runId: string,
+  existingBranches: string[],
+): string {
+  let candidate = baseName;
+
+  if (existingBranches.includes(baseName)) {
+    const suffix = runId.slice(0, 8);
+    candidate = `${baseName}-${suffix}`;
+  }
+
+  // Enforce the 250-character maximum
+  if (candidate.length > MAX_BRANCH_NAME_LENGTH) {
+    candidate = candidate.slice(0, MAX_BRANCH_NAME_LENGTH);
+  }
+
+  return candidate;
 }
 
 // ---------------------------------------------------------------------------
@@ -219,5 +272,36 @@ export function buildStashCommand(message: string): GitCommand {
   return {
     executable: "git",
     args: ["stash", "--include-untracked", "-m", message],
+  };
+}
+
+/**
+ * Build a `git rev-parse stash@{0}` command.
+ *
+ * Captures the SHA of the most recent stash entry. Used after `git stash`
+ * to record the stash ref for recovery purposes during rollback.
+ *
+ * @returns A {@link GitCommand} for resolving the latest stash ref to a SHA.
+ */
+export function buildStashRefCommand(): GitCommand {
+  return {
+    executable: "git",
+    args: ["rev-parse", "stash@{0}"],
+  };
+}
+
+/**
+ * Build a `git clean -fdn` command (dry-run variant).
+ *
+ * Lists untracked files and directories that *would* be removed by
+ * `git clean -fd`, without actually deleting anything. Used in dry-run
+ * rollback mode to show the operator what would be cleaned.
+ *
+ * @returns A {@link GitCommand} for dry-run cleaning of untracked files.
+ */
+export function buildCleanDryRunCommand(): GitCommand {
+  return {
+    executable: "git",
+    args: ["clean", "-fdn"],
   };
 }

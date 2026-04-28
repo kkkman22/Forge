@@ -144,7 +144,7 @@ describe("Bug Condition: resumeRun ignores branchName parameter", () => {
           // NOT the first one. On unfixed code, this will fail because
           // resumeRun returns the first run found (firstRunId).
           expect(result.runId).toBe(secondRunId);
-          expect(result.runDir).toBe(`${CWD}/.forge/runs/${secondRunId}/`);
+          expect(result.runDir).toBe(`${CWD}/.forge/runs/${secondRunId}`);
           expect(result.notesPath).toBe(`${CWD}/.forge/runs/${secondRunId}/notes.md`);
           expect(result.branchName).toBe(requestedBranch);
         },
@@ -174,7 +174,7 @@ describe("Bug Condition: resumeRun ignores branchName parameter", () => {
     // first directory with a notes.md, ignoring the branchName parameter.
     // Expected: should return secondRunId ("run-bbb") matching the branch.
     expect(result.runId).toBe(secondRunId);
-    expect(result.runDir).toBe(`${CWD}/.forge/runs/${secondRunId}/`);
+    expect(result.runDir).toBe(`${CWD}/.forge/runs/${secondRunId}`);
     expect(result.notesPath).toBe(`${CWD}/.forge/runs/${secondRunId}/notes.md`);
   });
 
@@ -209,7 +209,7 @@ describe("Bug Condition: resumeRun ignores branchName parameter", () => {
     // Bug: resumeRun returns the existing run (run-existing) because it
     // ignores the branchName and returns the first run with notes.md.
     expect(result.runId).toBe(FAKE_NEW_UUID);
-    expect(result.runDir).toBe(`${CWD}/.forge/runs/${FAKE_NEW_UUID}/`);
+    expect(result.runDir).toBe(`${CWD}/.forge/runs/${FAKE_NEW_UUID}`);
     expect(mkdirSync).toHaveBeenCalled();
     expect(writeFileSync).toHaveBeenCalled();
   });

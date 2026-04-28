@@ -45,7 +45,21 @@ export interface SdkAgentAdapterConfig {
   outputSchema: AgentOutputSchema;
   /** Maximum budget in USD, if configured. */
   maxBudgetUsd?: number;
+  /**
+   * Global timeout in milliseconds for each SDK `query()` call.
+   * If the call exceeds this duration, it is aborted via `AbortController`
+   * and an error containing "timeout" is thrown.
+   * Defaults to 1,800,000 ms (30 minutes).
+   */
+  globalTimeoutMs?: number;
 }
+
+// ---------------------------------------------------------------------------
+// Constants
+// ---------------------------------------------------------------------------
+
+/** Default global timeout for SDK calls: 30 minutes. */
+const DEFAULT_GLOBAL_TIMEOUT_MS = 1_800_000;
 
 // ---------------------------------------------------------------------------
 // SdkAgentAdapter class
@@ -148,6 +162,13 @@ export class SdkAgentAdapter implements AgentInterface {
     }
     this.activeQuery = queryHandle;
 
+    // Set up global timeout: abort the SDK call if it exceeds the configured
+    // duration. Uses setTimeout + AbortController to enforce the limit.
+    const timeoutMs = this.config.globalTimeoutMs ?? DEFAULT_GLOBAL_TIMEOUT_MS;
+    const timeoutId = setTimeout(() => {
+      abortController.abort("timeout");
+    }, timeoutMs);
+
     try {
       // Iterate the async generator to find the result message.
       let resultMessage: SDKResultMessage | null = null;
@@ -204,7 +225,15 @@ export class SdkAgentAdapter implements AgentInterface {
         output: validation.value,
         usage,
       };
+    } catch (error) {
+      // If the abort was triggered by our timeout, throw a descriptive
+      // timeout error so the upper layer can classify it as iteration_hard_failure.
+      if (abortController.signal.aborted && abortController.signal.reason === "timeout") {
+        throw new Error(`Agent SDK call timed out after ${timeoutMs}ms (timeout)`);
+      }
+      throw error;
     } finally {
+      clearTimeout(timeoutId);
       this.activeQuery = null;
     }
   }

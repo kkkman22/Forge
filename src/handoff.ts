@@ -15,6 +15,8 @@
  *   - Each handoff has a fixed structure: decided / rejected / risks / artifacts / remaining
  */
 
+import { extractStringField, parseFrontmatter } from "./frontmatter.js";
+
 // ---------------------------------------------------------------------------
 // Types
 // ---------------------------------------------------------------------------
@@ -184,29 +186,16 @@ export function renderHandoff(doc: HandoffDocument): string {
  * Returns null if the content is not a valid handoff document.
  */
 export function parseHandoff(content: string): HandoffDocument | null {
-  const trimmed = content.trim();
-  if (!trimmed.startsWith("---")) return null;
+  const parsed = parseFrontmatter(content);
+  if (!parsed) return null;
 
-  const secondDelim = trimmed.indexOf("\n---", 3);
-  if (secondDelim === -1) return null;
+  const frontmatter = parsed.raw;
+  const body = parsed.body.trim();
 
-  const frontmatter = trimmed.slice(3, secondDelim).trim();
-  const body = trimmed.slice(secondDelim + 4).trim();
-
-  // Parse frontmatter
-  let fromStage = "";
-  let toStage = "";
-  let createdAt = "";
-
-  for (const line of frontmatter.split("\n")) {
-    const match = line.match(/^(\w+):\s*"?([^"]*)"?$/);
-    if (match) {
-      const [, key, value] = match;
-      if (key === "from") fromStage = value;
-      else if (key === "to") toStage = value;
-      else if (key === "created") createdAt = value;
-    }
-  }
+  // Parse frontmatter fields using shared extractors
+  const fromStage = extractStringField(frontmatter, "from") ?? "";
+  const toStage = extractStringField(frontmatter, "to") ?? "";
+  const createdAt = extractStringField(frontmatter, "created") ?? "";
 
   if (!fromStage || !toStage || !createdAt) return null;
 

@@ -1,0 +1,39 @@
+{
+  "entryPoints": ["src/"],
+  "entryPointStrategy": "expand",
+  "out": "docs/api",
+  "cleanOutputDir": true,
+  "tsconfig": "tsconfig.json",
+  "name": "Forge Loop",
+  "excludeInternal": true,
+  "exclude": ["test/**/*.ts"],
+  "treatWarningsAsErrors": true,
+  "validation": {
+    "notExported": true,
+    "invalidLink": true
+  },
+  "blockTags": [
+    "@param",
+    "@returns",
+    "@throws",
+    "@example",
+    "@deprecated",
+    "@defaultValue",
+    "@typeParam",
+    "@remarks",
+    "@see",
+    "@since",
+    "@category",
+    "@group",
+    "@satisfies",
+    "@overload",
+    "@template",
+    "@type",
+    "@typedef",
+    "@callback",
+    "@prop",
+    "@property",
+    "@visibleForTesting"
+  ],
+  "ignoredHighlightLanguages": ["gitignore"]
+}

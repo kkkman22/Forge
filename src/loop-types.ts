@@ -43,6 +43,12 @@ export interface AgentOutput {
   key_learnings: string[];
   /** When true, signals the orchestrator to stop the run (used with --stop-when). */
   should_fully_stop?: boolean;
+  /** ★ 新增：本轮完成的 SKILL 阶段 */
+  skill_phase_completed?: string;
+  /** ★ 新增：建议的下一个 SKILL 阶段 */
+  next_skill_phase?: string;
+  /** ★ 新增：质量门禁结果 */
+  gate_result?: "passed" | "blocked" | "skipped";
 }
 
 /** JSON Schema property descriptor for agent output schema construction. */
