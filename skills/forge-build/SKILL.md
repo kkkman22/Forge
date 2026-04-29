@@ -343,6 +343,7 @@ Agent(
 2. 对每个模块启动一个 Subagent 执行 TDD 循环。
 3. **可选 Git Worktree**：当模块改动存在重叠时，为每个模块创建独立的 Git Worktree，实现文件系统级隔离。
 4. 模块完成后合并 Worktree，解决冲突。
+5. 所有模块完成后，执行 Final Validation（与 §3.2 标准路径步骤 4 相同的 `ci_check_command` 优先级逻辑）。
 
 **Restatement Checkpoint（上下文刷新）**：
 
