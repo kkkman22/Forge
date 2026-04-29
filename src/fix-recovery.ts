@@ -49,7 +49,7 @@ export function parseGitLog(
 
   let i = 0;
   while (i < lines.length) {
-    const headerMatch = lines[i].match(/^([a-f0-9]{40})\|(.+)\|(.+)$/);
+    const headerMatch = lines[i].match(/^([a-f0-9]{40})\|(.+?)\|(.+)$/);
     if (headerMatch) {
       const hash = headerMatch[1];
       const message = headerMatch[2];

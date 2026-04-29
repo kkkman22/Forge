@@ -163,9 +163,9 @@ describe("barrel file does not expose internal modules", () => {
 
   // Verify the total number of value exports is exactly what we expect.
   // This catches any accidental additions to the barrel file.
-  it("has exactly 83 value exports", () => {
+  it("has exactly 93 value exports", () => {
     const valueExports = Object.keys(exports).filter((key) => typeof exports[key] !== "undefined");
-    expect(valueExports).toHaveLength(83);
+    expect(valueExports).toHaveLength(93);
     expect(valueExports.sort()).toEqual([
       "CLASSIFICATION_MAP",
       "CliError",
@@ -173,6 +173,7 @@ describe("barrel file does not expose internal modules", () => {
       "ForgeError",
       "INCREMENTAL_THRESHOLD",
       "PHASE_SEQUENCES",
+      "ProcessRegistry",
       "SdkAgentAdapter",
       "SdkDriver",
       "TEST_FILE_PATTERNS",
@@ -188,7 +189,10 @@ describe("barrel file does not expose internal modules", () => {
       "checkShipGateWithChecklist",
       "classifyInterruption",
       "classifySource",
+      "cleanupOrphans",
+      "cleanupStaleSessions",
       "createChecklist",
+      "deletePidFile",
       "deserializeCheckpointMarker",
       "deserializeClassification",
       "deserializeContextBudgetReport",
@@ -199,8 +203,8 @@ describe("barrel file does not expose internal modules", () => {
       "deserializeReviewSummary",
       "deserializeSubagentSummary",
       "deserializeTestOutput",
-      "detectConflict",
       "detectPlanFormat",
+      "detectPpidOrphans",
       "determineVerificationStrategy",
       "evaluateReviewGate",
       "evaluateShipGate",
@@ -211,12 +215,16 @@ describe("barrel file does not expose internal modules", () => {
       "findDependencyGaps",
       "findPhaseInconsistencies",
       "findProgressInconsistencies",
+      "getDescendants",
       "getNextPhase",
       "getPhaseSequence",
+      "hasTaskName",
       "inferTDDPhase",
       "isFixCandidate",
       "isTestFile",
       "isValidTransition",
+      "killProcessGroup",
+      "killProcessTree",
       "matchChangesToTask",
       "matchCommitsToTasks",
       "parseChecklist",
@@ -224,6 +232,7 @@ describe("barrel file does not expose internal modules", () => {
       "parseGitLog",
       "parseGitStatus",
       "parseStatusEntries",
+      "readPidFile",
       "removeTaskEntry",
       "runSubagentsInParallel",
       "scanForPlaceholders",
@@ -250,6 +259,7 @@ describe("barrel file does not expose internal modules", () => {
       "validatePlan",
       "validatePlanTasks",
       "validateSpecLocked",
+      "writePidFile",
     ]);
   });
 });
