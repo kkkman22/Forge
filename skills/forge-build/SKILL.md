@@ -83,9 +83,13 @@ disable-model-invocation: true
 2. 调用 `detectUnshippedBranches(pendingDeliveries, currentTopic)`
    - `pendingDeliveries` 来源：从持久化位置读取的 `PendingDeliveryRecord[]`
    - `currentTopic` 来源：当前任务的 topic
-   - 返回非空时 → ⚠️ 展示警告，提示用户处理未交付分支
+   - 返回非空时 → ⚠️ 展示警告，提供三个选项：
+     1. 立即 ship（切换到该分支执行 `/forge ship`）
+     2. 继续在当前分支（确认后继续 build）
+     3. 切换到新分支（停止 build，切换分支）
 3. 调用 `detectStaleBranches(pendingDeliveries, currentTopic, currentTime)`
    - `currentTime` 来源：`Date.now()`
+   - `thresholdMs` 可在 `.forge/config.md` 中配置（默认 0：任何不同 topic 的 pending delivery 都标记为过期）
    - 返回非空时 → ⚠️ 展示过期分支警告
 
 **提交前 topic 检查**：
