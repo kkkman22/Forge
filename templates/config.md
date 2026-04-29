@@ -10,7 +10,12 @@ verify_commands:            # Ralph Loop: Build 完成后自动运行的验证�
   - "npm test -- --run"
 verify_timeout: 120         # 每条验证命令的超时时间（秒），默认 120
 verify_max_attempts: 3      # 验证失败后最大重试次数，默认 3，超过则触发 soft_failure + rollback
+ci_check_command: ""        # 项目的完整 CI 检查命令（如 "npm run check"），build 全量测试和 test 验证清单必须使用此命令
 ---
+
+## CI 检查命令
+
+build 阶段的全量测试和 test 阶段的验证清单必须使用 `ci_check_command` 中配置的命令，不得自行拼凑部分命令。如果 `ci_check_command` 为空，则按 `verify_commands` 列表逐条执行。
 
 ## 状态文件保护分区
 
