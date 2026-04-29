@@ -22,19 +22,7 @@ Forge 的核心能力：
 ## 前置条件
 
 - **Claude Code**：Forge 是 Claude Code 的 skill 包，需要 Claude Code 环境运行。
-- **Agent Teams**：`/forge decide` 和 `/forge review` 使用 Claude Code 的 [Agent Teams](https://code.claude.com/docs/zh-CN/agent-teams) 特性实现多视角并行评估。Agent Teams 默认禁用，需要手动启用：
-
-  在 `.claude/settings.json` 中添加：
-  ```json
-  {
-    "env": {
-      "CLAUDE_CODE_EXPERIMENTAL_AGENT_TEAMS": "1"
-    }
-  }
-  ```
-  或在 shell 中设置环境变量：`export CLAUDE_CODE_EXPERIMENTAL_AGENT_TEAMS=1`
-
-- **Subagent**：`/forge build` 使用 Claude Code 的 Agent tool 派发独立的 Subagent 执行任务。Forge 的 Agent 定义文件（`agents/*.md`）同时作为 Subagent 定义和 Agent Team 队友类型使用。
+- **Subagent**：`/forge build`、`/forge decide` 和 `/forge review` 使用 Claude Code 的 Agent tool 派发独立的 Subagent 并行执行任务。Forge 的 Agent 定义文件（`agents/*.md`）作为 Subagent 类型定义使用。
 
 ---
 
@@ -50,7 +38,7 @@ git clone https://github.com/kkkman22/Forge.git ~/.claude/skills/forge
 
 ### 方式二：分发包安装（轻量部署）
 
-分发包只包含 `/forge` 交互式命令所需的文件（skills、agents、teams、hooks、scripts、templates），不含 Forge Loop 及其依赖。适合只需要 `/forge` 命令的团队统一部署。
+分发包只包含 `/forge` 交互式命令所需的文件（skills、agents、hooks、scripts、templates），不含 Forge Loop 及其依赖。适合只需要 `/forge` 命令的团队统一部署。
 
 ```bash
 # 先克隆仓库到任意位置
@@ -134,9 +122,8 @@ rm -rf /tmp/forge
 
 - `.forge/` 统一状态目录（含所有子目录和模板文件）
 - `.claude/agents/` 下 7 个 Subagent 角色文件
-- `.claude/teams/` 下 2 个 Agent Team 配置
 - `.claude/commands/` 下 Forge Command 入口
-- `.claude/settings.json` 中 Forge Hooks + Agent Teams 环境变量
+- `.claude/settings.json` 中 Forge Hooks
 - `CLAUDE.md` 项目宪法
 - `.forge/config.md` 项目配置
 
@@ -461,11 +448,11 @@ npm link && forge-loop "你的目标"            # 全局链接后直接使用
 forge/
 ├── skills/                      # 13 个 SKILL.md
 │   ├── forge-router/SKILL.md   #   入口路由（三维分析）
-│   ├── forge-decide/SKILL.md   #   决策引擎（Agent Team）
+│   ├── forge-decide/SKILL.md   #   决策引擎（两轮 Subagent）
 │   ├── forge-spec/SKILL.md     #   规格引擎（锁定机制）
 │   ├── forge-plan/SKILL.md     #   规划引擎（DAG 任务图）
 │   ├── forge-build/SKILL.md    #   执行引擎（TDD + Subagent）
-│   ├── forge-review/SKILL.md   #   评审引擎（三层 Agent Team）
+│   ├── forge-review/SKILL.md   #   评审引擎（三层 Subagent）
 │   ├── forge-test/SKILL.md     #   测试引擎（7 项清单）
 │   ├── forge-ship/SKILL.md     #   交付引擎（三重门禁）
 │   ├── forge-learn/SKILL.md    #   知识引擎（五维度 + 反馈分析）
@@ -484,9 +471,6 @@ forge/
 │   ├── spec-check.md           #   Spec 对齐评审
 │   ├── quality-check.md        #   代码质量评审
 │   └── security-check.md       #   安全评审
-├── teams/                       # 2 个 Agent Team 参考配置
-│   ├── decide/config.json      #   决策团队（3-5 视角）
-│   └── review/config.json      #   评审团队（3 层）
 ├── hooks/hooks.json             # Claude Code Hooks
 ├── commands/forge.md            # Forge Command 入口
 ├── templates/                   # 文件模板（CLAUDE.md、config、状态文件）
@@ -500,7 +484,7 @@ forge/
 │   └── install-dist.sh         #   安装分发包
 ├── dist/                        # 分发包（CI 自动构建）
 │   └── claude-code/bundles/forge/
-├── src/                         # 核心逻辑（51 个 TypeScript 模块，含纯函数模块及有状态/运行时模块：CLI、SDK 适配器、副作用执行器、运行管理器等）<!--exact: 51 个 TypeScript 模块-->
+├── src/                         # 核心逻辑（52 个 TypeScript 模块，含纯函数模块及有状态/运行时模块：CLI、SDK 适配器、副作用执行器、运行管理器等）<!--exact: 52 个 TypeScript 模块-->
 │   ├── forge-loop-cli.ts       #   自主循环 CLI 入口（Commander 参数解析 + 信号处理）
 │   ├── sdk-driver.ts           #   迭代循环驱动器（调度 Agent → 处理结果 → 执行副作用）
 │   ├── orchestrator.ts         #   纯函数状态机（状态转换 + 副作用描述）
@@ -531,11 +515,6 @@ forge/
 │   ├── task-graph.ts           #   DAG 调度 + 并行执行引擎
 │   ├── handoff.ts              #   跨阶段决策传递
 │   └── loop-index.ts           #   自主循环模块统一入口
-├── test/                        # 2201 个测试（118 个测试文件，其中 70 个为 fast-check 属性测试文件）<!--exact: 测试数、文件数、属性测试数-->
-├── .github/workflows/ci.yml    # CI：typecheck + lint + coverage + dist 同步校验
-├── biome.json                   # Linter / Formatter 配置
-├── tsconfig.json                # TypeScript strict 配置
-├── vitest.config.ts             # 测试 + 覆盖率门禁（≥80%）
 ├── package.json                 # Node.js ≥ 20，6 个 devDependencies
 ├── CONTRIBUTING.md              # 贡献指南
 ├── CHANGELOG.md                 # 版本变更记录
@@ -566,7 +545,7 @@ bash scripts/build-dist.sh
 
 **技术栈**：TypeScript 5.9（strict）、Vitest 3.2、fast-check 4.7（属性测试）、Biome 2.4（lint + format）。运行时依赖：`@anthropic-ai/claude-agent-sdk`、`commander`。
 
-**测试策略**：2201 个测试（118 个测试文件，其中 70 个为 fast-check 属性测试文件）验证不变量（invariant），而非特定输入输出。覆盖率 90.38% statements、90.1% branches、96.09% functions。<!--exact: 测试数、文件数、属性测试数; approximate: 覆盖率-->
+**测试策略**：2205 个测试（122 个测试文件，其中 74 个为 fast-check 属性测试文件）验证不变量（invariant），而非特定输入输出。覆盖率 90.38% statements、90.1% branches、96.09% functions。<!--exact: 测试数、文件数、属性测试数; approximate: 覆盖率-->
 
 ---
 

@@ -359,3 +359,99 @@ export function runReportQualityGate(
     items,
   };
 }
+
+// ---------------------------------------------------------------------------
+// Subagent orchestration (Agent Team Migration — R1, R7)
+// ---------------------------------------------------------------------------
+
+import type { SubagentInvocation, SubagentResult } from "./loop-types.js";
+
+/** Context for building review subagent invocations. */
+export interface ReviewSubagentContext {
+  hasSpec: boolean;
+  specPath?: string;
+  changedFiles: string[];
+}
+
+/**
+ * Build the list of SubagentInvocations for a review.
+ *
+ * Always includes quality-check and security-check.
+ * Includes spec-check only when a locked Spec is available (hasSpec === true).
+ */
+export function buildReviewSubagents(context: ReviewSubagentContext): SubagentInvocation[] {
+  const invocations: SubagentInvocation[] = [];
+
+  if (context.hasSpec) {
+    invocations.push({
+      agentType: "spec-check",
+      prompt: `Review spec alignment. Spec path: ${context.specPath ?? "unknown"}. Changed files: ${context.changedFiles.join(", ")}`,
+      permissionMode: "default",
+      maxTurns: 10,
+    });
+  }
+
+  invocations.push({
+    agentType: "quality-check",
+    prompt: `Review code quality. Changed files: ${context.changedFiles.join(", ")}`,
+    permissionMode: "default",
+    maxTurns: 10,
+  });
+
+  invocations.push({
+    agentType: "security-check",
+    prompt: `Review security and risk. Changed files: ${context.changedFiles.join(", ")}`,
+    permissionMode: "default",
+    maxTurns: 10,
+  });
+
+  return invocations;
+}
+
+/**
+ * Merge subagent results through the existing review pipeline.
+ *
+ * Flow: extract findings from successful results → filterByConfidence →
+ *       deduplicateFindings → applyCrossValidation
+ */
+/** Runtime validation for ReviewFinding objects parsed from Subagent output. */
+function isValidReviewFinding(value: unknown): value is ReviewFinding {
+  if (typeof value !== "object" || value === null) return false;
+  const obj = value as Record<string, unknown>;
+  return (
+    typeof obj.severity === "string" &&
+    ["P0", "P1", "P2", "P3"].includes(obj.severity) &&
+    typeof obj.confidence === "number" &&
+    typeof obj.fixRoute === "string" &&
+    typeof obj.filePath === "string" &&
+    typeof obj.lineNumber === "number" &&
+    typeof obj.description === "string" &&
+    typeof obj.suggestion === "string" &&
+    typeof obj.reviewer === "string"
+  );
+}
+
+export function mergeReviewResults(results: SubagentResult[]): MergedFinding[] {
+  const allFindings: ReviewFinding[] = [];
+
+  for (const result of results) {
+    if (result.status === "success" && result.output) {
+      try {
+        const parsed = JSON.parse(result.output);
+        if (Array.isArray(parsed)) {
+          for (const item of parsed) {
+            if (isValidReviewFinding(item)) {
+              allFindings.push(item);
+            }
+          }
+        }
+      } catch {
+        // Output is not JSON — skip this result
+      }
+    }
+  }
+
+  const { included } = filterByConfidence(allFindings);
+  const deduped = deduplicateFindings(included);
+  return applyCrossValidation(deduped);
+}

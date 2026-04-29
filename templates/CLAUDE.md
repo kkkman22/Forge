@@ -1,7 +1,7 @@
 # {{project_name}} — 项目宪法
 
 > 本文件由 `forge init` 自动生成，是 Claude Code 在本项目中的行为准则。
-> 所有 Agent（包括 Subagent 和 Agent Team 成员）必须遵守本宪法。
+> 所有 Agent（包括 Subagent）必须遵守本宪法。
 
 ---
 
@@ -258,11 +258,11 @@ The following are NOT valid rule candidates:
 - **安全级别**：{{security_level}}
 - **初始化时间**：{{init_date}}
 
-## Agent Team 配置
+## Subagent 并行执行配置
 
-`/forge decide` 和 `/forge review` 使用 Claude Code Agent Teams 特性。队友类型引用 `.claude/agents/` 下的 subagent 定义文件：
+`/forge decide` 和 `/forge review` 使用独立 Subagent（通过 Claude Code Agent tool 启动），不使用 Agent Teams。Subagent 类型引用 `.claude/agents/` 下的定义文件：
 
-- **decide 团队**：product、architect、security（默认），designer（UI 任务时动态加入）
-- **review 团队**：spec-check、quality-check、security-check
+- **decide**: product、architect、security（默认），designer（UI 任务时动态加入）。两轮执行：Round 1 并行输出各自视角，Round 2 Critic 交叉审视。
+- **review**: spec-check、quality-check、security-check（并行执行）。轻量模式省略 spec-check。
 
 启动团队时，使用 subagent 定义名称生成队友。团队完成后清理资源。

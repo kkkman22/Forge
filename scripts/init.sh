@@ -6,9 +6,8 @@
 #   1. 交互式收集项目配置（名称、技术栈、安全级别）
 #   2. 创建完整的 .forge/ 目录结构
 #   3. 复制 7 个 Subagent 角色文件到 .claude/agents/
-#   4. 复制 2 个 Agent Team 配置到 .claude/teams/
-#   5. 生成 CLAUDE.md 项目宪法
-#   6. 写入 .forge/config.md
+#   4. 生成 CLAUDE.md 项目宪法
+#   5. 写入 .forge/config.md
 #
 # 用法：
 #   chmod +x forge/scripts/init.sh
@@ -38,7 +37,7 @@ detect_forge_root() {
   script_dir="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 
   # 情况 1：脚本在 forge/scripts/ 下（开发模式或手动 clone）
-  if [[ -d "${script_dir}/../agents" && -d "${script_dir}/../teams" ]]; then
+  if [[ -d "${script_dir}/../agents" ]]; then
     (cd "${script_dir}/.." && pwd)
     return
   fi
@@ -79,7 +78,7 @@ fi
 # Step 1：交互式收集配置
 # ============================================================================
 echo ""
-info "Step 1/6：收集项目信息"
+info "Step 1/5：收集项目信息"
 echo ""
 
 # --- 项目名称（自动检测） ---
@@ -163,7 +162,7 @@ fi
 # ============================================================================
 # Step 2：创建 .forge/ 目录结构
 # ============================================================================
-info "Step 2/6：创建 .forge/ 目录结构"
+info "Step 2/5：创建 .forge/ 目录结构"
 
 directories=(
   ".forge"
@@ -336,7 +335,7 @@ success ".forge/ 目录结构创建完成"
 # ============================================================================
 # Step 3：复制 7 个 Subagent 角色文件
 # ============================================================================
-info "Step 3/6：复制 Agent 角色文件到 .claude/agents/"
+info "Step 3/5：复制 Agent 角色文件到 .claude/agents/"
 
 mkdir -p "${PROJECT_ROOT}/.claude/agents"
 
@@ -360,24 +359,6 @@ done
 
 success "7 个 Agent 角色文件已复制"
 
-# ============================================================================
-# Step 4：复制 2 个 Agent Team 配置
-# ============================================================================
-info "Step 4/6：复制 Agent Team 配置到 .claude/teams/"
-
-mkdir -p "${PROJECT_ROOT}/.claude/teams/decide"
-mkdir -p "${PROJECT_ROOT}/.claude/teams/review"
-
-if [[ -f "${FORGE_ROOT}/teams/decide/config.json" ]]; then
-  cp "${FORGE_ROOT}/teams/decide/config.json" "${PROJECT_ROOT}/.claude/teams/decide/config.json"
-fi
-
-if [[ -f "${FORGE_ROOT}/teams/review/config.json" ]]; then
-  cp "${FORGE_ROOT}/teams/review/config.json" "${PROJECT_ROOT}/.claude/teams/review/config.json"
-fi
-
-success "2 个 Agent Team 配置已复制"
-
 # --- 复制 Command 文件 ---
 mkdir -p "${PROJECT_ROOT}/.claude/commands"
 if [[ -f "${FORGE_ROOT}/commands/forge.md" ]]; then
@@ -388,9 +369,9 @@ else
 fi
 
 # ============================================================================
-# Step 5：生成 CLAUDE.md 项目宪法
+# Step 4：生成 CLAUDE.md 项目宪法
 # ============================================================================
-info "Step 5/6：生成 CLAUDE.md 项目宪法"
+info "Step 4/5：生成 CLAUDE.md 项目宪法"
 
 if [[ -f "${FORGE_ROOT}/templates/CLAUDE.md" ]]; then
   # Use awk instead of sed to avoid issues with special characters in user input
@@ -415,9 +396,9 @@ else
 fi
 
 # ============================================================================
-# Step 6：安装 Hooks 到 .claude/settings.json
+# Step 5：安装 Hooks 到 .claude/settings.json
 # ============================================================================
-info "Step 6：安装 Forge Hooks"
+info "Step 5：安装 Forge Hooks"
 
 settings_file="${PROJECT_ROOT}/.claude/settings.json"
 hooks_source="${FORGE_ROOT}/hooks/hooks.json"
@@ -480,55 +461,6 @@ else
   warn "未找到 hooks.json，跳过 Hooks 安装"
 fi
 
-# --- 启用 Agent Teams 环境变量 ---
-if [[ -f "${settings_file}" ]]; then
-  if grep -q 'CLAUDE_CODE_EXPERIMENTAL_AGENT_TEAMS' "${settings_file}" 2>/dev/null; then
-    info "Agent Teams 环境变量已配置"
-  else
-    if command -v node &>/dev/null; then
-      if node -e "
-        const fs = require('fs');
-        const settings = JSON.parse(fs.readFileSync('${settings_file}', 'utf-8'));
-        if (!settings.env) settings.env = {};
-        settings.env.CLAUDE_CODE_EXPERIMENTAL_AGENT_TEAMS = '1';
-        fs.writeFileSync('${settings_file}', JSON.stringify(settings, null, 2) + '\n');
-      " 2>/dev/null; then
-        success "Agent Teams 已启用（CLAUDE_CODE_EXPERIMENTAL_AGENT_TEAMS=1）"
-      else
-        warn "无法自动启用 Agent Teams 环境变量。请手动操作："
-        echo ""
-        echo "  1. 打开 .claude/settings.json"
-        echo "  2. 在文件的 JSON 对象中添加或合并以下 \"env\" 配置："
-        echo ""
-        echo '  {
-    "env": {
-      "CLAUDE_CODE_EXPERIMENTAL_AGENT_TEAMS": "1"
-    }
-  }'
-        echo ""
-        echo "  3. 如果文件中已有 \"env\" 字段，请将上述键值对合并到现有 \"env\" 对象中"
-        echo "  4. 保存文件"
-        echo ""
-      fi
-    else
-      warn "未检测到 node 命令，无法自动启用 Agent Teams。请手动操作："
-      echo ""
-      echo "  1. 打开 .claude/settings.json"
-      echo "  2. 在文件的 JSON 对象中添加或合并以下 \"env\" 配置："
-      echo ""
-      echo '  {
-    "env": {
-      "CLAUDE_CODE_EXPERIMENTAL_AGENT_TEAMS": "1"
-    }
-  }'
-      echo ""
-      echo "  3. 如果文件中已有 \"env\" 字段，请将上述键值对合并到现有 \"env\" 对象中"
-      echo "  4. 保存文件"
-      echo ""
-    fi
-  fi
-fi
-
 # ============================================================================
 # 完成
 # ============================================================================
@@ -540,7 +472,6 @@ echo ""
 echo "  已创建："
 echo "    📁 .forge/          — 统一状态目录（含所有子目录和模板）"
 echo "    📁 .claude/agents/  — 7 个 Subagent 角色文件"
-echo "    📁 .claude/teams/   — 2 个 Agent Team 配置"
 echo "    📁 .claude/commands/ — Forge Command 入口"
 echo "    📄 .claude/settings.json — Forge Hooks（自动上下文加载）"
 echo "    📄 CLAUDE.md        — 项目宪法"
