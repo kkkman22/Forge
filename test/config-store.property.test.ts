@@ -18,11 +18,11 @@ import * as fc from "fast-check";
 import { describe, expect, it } from "vitest";
 import type { LogConfigFromFile } from "../src/config-store.js";
 import {
-    buildDefaultConfig,
-    extractConfigLang,
-    mergeLogConfig,
-    parseLogConfig,
-    writeConfigLang,
+  buildDefaultConfig,
+  extractConfigLang,
+  mergeLogConfig,
+  parseLogConfig,
+  writeConfigLang,
 } from "../src/config-store.js";
 import { extractStringField, parseFrontmatter } from "../src/frontmatter.js";
 
@@ -231,7 +231,6 @@ describe("Feature: i18n-support, Property 9: Config lang 字段往返与字段�
   });
 });
 
-
 // ---------------------------------------------------------------------------
 // Generators for observability-enhancements log config properties
 // ---------------------------------------------------------------------------
@@ -251,9 +250,7 @@ const validLogLevelArb = fc.constantFrom(
  * Generate a simple log file path (non-empty, no newlines, no quotes, no ---).
  * Constrained to realistic file path characters.
  */
-const logFilePathArb = fc
-  .stringMatching(/^[a-zA-Z0-9_/.\-]{1,40}$/)
-  .filter((s) => s.length > 0);
+const logFilePathArb = fc.stringMatching(/^[a-zA-Z0-9_/.-]{1,40}$/).filter((s) => s.length > 0);
 
 /**
  * Build a frontmatter string containing log config fields.
@@ -303,10 +300,7 @@ const invalidLogLevelArb = fc
   .filter((s) => !s.includes("\n") && !s.includes("---") && !s.includes('"'))
   .filter(
     (s) =>
-      s.trim() !== "debug" &&
-      s.trim() !== "info" &&
-      s.trim() !== "warn" &&
-      s.trim() !== "error",
+      s.trim() !== "debug" && s.trim() !== "info" && s.trim() !== "warn" && s.trim() !== "error",
   )
   .map((s) => s.trim());
 
@@ -386,9 +380,7 @@ describe("Feature: observability-enhancements, Property 4: 配置解析正确性
         validLogLevelArb,
         logFilePathArb,
         otherFieldsArb.filter((fields) =>
-          fields.every(
-            ([k]) => k !== "log_format" && k !== "log_level" && k !== "log_file",
-          ),
+          fields.every(([k]) => k !== "log_format" && k !== "log_level" && k !== "log_file"),
         ),
         (format, level, filePath, extraFields) => {
           const content = buildLogConfigFrontmatter({
