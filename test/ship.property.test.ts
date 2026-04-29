@@ -9,6 +9,7 @@
  */
 import * as fc from "fast-check";
 import { describe, expect, it } from "vitest";
+import type { ChecklistEntry } from "../src/fix-checklist.js";
 import {
   checkShipGate,
   checkShipGateWithChecklist,
@@ -16,7 +17,6 @@ import {
   type ReviewResult,
   type TestResult,
 } from "../src/ship.js";
-import type { ChecklistEntry } from "../src/fix-checklist.js";
 
 // ---------------------------------------------------------------------------
 // Generators
@@ -249,7 +249,12 @@ describe("Feature: forge-review-fix-optimization, Property 19: Ship gate blocks 
           status,
         },
       ];
-      const result = checkShipGateWithChecklist(passedReview, passedTest, completeProgress, checklist);
+      const result = checkShipGateWithChecklist(
+        passedReview,
+        passedTest,
+        completeProgress,
+        checklist,
+      );
       expect(result.allowed).toBe(false);
       expect(result.reasons.some((r) => r.includes("Checklist"))).toBe(true);
     }
@@ -276,7 +281,12 @@ describe("Feature: forge-review-fix-optimization, Property 19: Ship gate blocks 
         fixCommit: "def5678",
       },
     ];
-    const result = checkShipGateWithChecklist(passedReview, passedTest, completeProgress, checklist);
+    const result = checkShipGateWithChecklist(
+      passedReview,
+      passedTest,
+      completeProgress,
+      checklist,
+    );
     expect(result.allowed).toBe(true);
   });
 
