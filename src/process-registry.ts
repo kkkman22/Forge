@@ -1,4 +1,5 @@
-import type { ChildProcess } from "node:child_process";
+import { spawn, execFileSync } from "node:child_process";
+import type { ChildProcess, SpawnOptions, ExecFileSyncOptions } from "node:child_process";
 
 export interface ProcessMetadata {
 	pid: number;
@@ -67,5 +68,30 @@ export class ProcessRegistry {
 
 	size(): number {
 		return this.processes.size;
+	}
+
+	spawnTracked(
+		command: string,
+		args: string[],
+		options: SpawnOptions & { source: string; description?: string },
+	): ChildProcess {
+		const { source, description, ...spawnOpts } = options;
+		const detached = spawnOpts.detached ?? false;
+		const child = spawn(command, args, spawnOpts);
+		this.register(child, { source, detached, description });
+		return child;
+	}
+
+	execTracked(
+		command: string,
+		args: string[],
+		options?: ExecFileSyncOptions & { source?: string; timeout?: number },
+	): string | Buffer {
+		const { source, timeout, ...execOpts } = options ?? {};
+		return execFileSync(command, args, {
+			...execOpts,
+			timeout: timeout ?? 30_000,
+			killSignal: "SIGTERM",
+		});
 	}
 }
