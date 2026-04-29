@@ -25,7 +25,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "if [ -f .forge/status.md ]; then echo '=== Forge Context ==='; head -50 .forge/plans/*.md 2>/dev/null; echo '=== Recent Progress ==='; tail -20 .forge/progress/*.md 2>/dev/null; fi"
+            "command": "if [ -d .forge/status ]; then latest=$(ls -t .forge/status/*.md 2>/dev/null | head -1); if [ -n \"$latest\" ]; then echo '=== Forge Context ==='; head -50 .forge/plans/*.md 2>/dev/null; echo '=== Recent Progress ==='; tail -20 .forge/progress/*.md 2>/dev/null; fi; elif [ -f .forge/status.md ]; then echo '=== Forge Context ==='; head -50 .forge/plans/*.md 2>/dev/null; echo '=== Recent Progress ==='; tail -20 .forge/progress/*.md 2>/dev/null; fi"
           }
         ]
       }
@@ -87,7 +87,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "if [ -f .forge/status.md ]; then echo '📝 代码已修改。请记得更新 .forge/progress/ 中的任务状态。'; fi"
+            "command": "if [ -d .forge/status ] || [ -f .forge/status.md ]; then echo '📝 代码已修改。请记得更新 .forge/progress/ 中的任务状态。'; fi"
           }
         ]
       }
@@ -121,7 +121,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "phase=$(grep '^phase:' .forge/status.md 2>/dev/null | sed 's/phase: *\"\\{0,1\\}//;s/\"\\{0,1\\} *$//'); if [ \"$phase\" = 'review' ] || [ \"$phase\" = 'decide' ]; then echo '队友空闲。请检查是否所有评审/决策维度都已完成输出，未完成的队友应继续工作。'; fi"
+            "command": "if [ -d .forge/status ]; then status_file=$(ls -t .forge/status/*.md 2>/dev/null | head -1); else status_file='.forge/status.md'; fi; phase=$(grep '^phase:' \"$status_file\" 2>/dev/null | sed 's/phase: *\"\\{0,1\\}//;s/\"\\{0,1\\} *$//'); if [ \"$phase\" = 'review' ] || [ \"$phase\" = 'decide' ]; then echo '队友空闲。请检查是否所有评审/决策维度都已完成输出，未完成的队友应继续工作。'; fi"
           }
         ]
       }
