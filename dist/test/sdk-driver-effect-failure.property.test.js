@@ -230,8 +230,8 @@ describe("Feature: forge-audit-remediation, Property 2: Effect exceptions propag
         });
         const driver = new SdkDriver(createConfig({ limits: { maxIterations: 1 } }), executor, agent);
         const result = await driver.run();
-        // The error should have been logged by the executeEffects wrapper
-        expect(consoleSpy).toHaveBeenCalledWith(expect.stringContaining(`Effect execution failed: ${errorMsg}`));
+        // The error should have been logged by the executeEffects wrapper (i18n key fallback)
+        expect(consoleSpy).toHaveBeenCalledWith(expect.stringContaining("driver.loop.effectExecutionFailed"));
         // The iteration should be recorded as failed (not silently swallowed)
         const failedEntries = result.notesDocument.entries.filter((e) => !e.success);
         expect(failedEntries.length).toBeGreaterThanOrEqual(1);

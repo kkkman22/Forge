@@ -13,7 +13,20 @@
 // ---------------------------------------------------------------------------
 /** Default base delay in milliseconds for exponential backoff. */
 const DEFAULT_BASE_MS = 60_000;
-/** Default consecutive-failure threshold for the circuit breaker. */
+/**
+ * Default consecutive-failure threshold for the circuit breaker.
+ *
+ * Design intent: The Circuit Breaker threshold (3) and the PUA L4 threshold (5)
+ * are intentionally different. PUA L1–L3 provide progressive warnings and
+ * methodology switches (2–4 failures), while the Circuit Breaker terminates
+ * the loop at 3 consecutive failures. This means PUA gets 1–2 rounds of
+ * escalation before the Circuit Breaker trips.
+ *
+ * Collaboration: PUA pressures the agent to change approach before the
+ * Circuit Breaker forces termination.
+ *
+ * @see src/pua-engine.ts determinePressureLevel — PUA pressure level thresholds
+ */
 const DEFAULT_CIRCUIT_BREAKER_THRESHOLD = 3;
 // ---------------------------------------------------------------------------
 // State construction

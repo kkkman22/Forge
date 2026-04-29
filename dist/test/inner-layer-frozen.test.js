@@ -14,7 +14,7 @@ vi.mock("node:child_process", () => ({
     execFileSync: vi.fn(),
 }));
 import { execFileSync } from "node:child_process";
-import { EffectExecutor } from "../src/effect-executor.js";
+import { EffectExecutor, FrozenZoneViolation, } from "../src/effect-executor.js";
 import { checkWritePermission, getProtectionZone, normalizeForgePath } from "../src/state.js";
 // ---------------------------------------------------------------------------
 // Helpers
@@ -96,7 +96,15 @@ describe("inner-layer frozen check — unit tests", () => {
         setupStagedFilesMock({
             ".forge/specs/feature/spec.md": "---\nstatus: locked\n---\n# Spec content",
         });
-        await executor.executeEffect({ type: "commit", message: "test commit" });
+        try {
+            await executor.executeEffect({ type: "commit", message: "test commit" });
+            expect.unreachable("Expected FrozenZoneViolation to be thrown");
+        }
+        catch (err) {
+            expect(err).toBeInstanceOf(FrozenZoneViolation);
+            expect(err.files).toContain(".forge/specs/feature/spec.md");
+            expect(err.code).toBe("FROZEN_ZONE_VIOLATION");
+        }
         expect(onLog).toHaveBeenCalledWith(expect.stringContaining("Inner-layer frozen zone check blocked commit"));
         expect(onLog).toHaveBeenCalledWith(expect.stringContaining(".forge/specs/feature/spec.md"));
     });
@@ -110,7 +118,14 @@ describe("inner-layer frozen check — unit tests", () => {
         setupStagedFilesMock({
             ".forge/plans/my-plan.md": "---\nstatus: approved\n---\n# Plan content",
         });
-        await executor.executeEffect({ type: "commit", message: "test commit" });
+        try {
+            await executor.executeEffect({ type: "commit", message: "test commit" });
+            expect.unreachable("Expected FrozenZoneViolation to be thrown");
+        }
+        catch (err) {
+            expect(err).toBeInstanceOf(FrozenZoneViolation);
+            expect(err.files).toContain(".forge/plans/my-plan.md");
+        }
         expect(onLog).toHaveBeenCalledWith(expect.stringContaining("Inner-layer frozen zone check blocked commit"));
         expect(onLog).toHaveBeenCalledWith(expect.stringContaining(".forge/plans/my-plan.md"));
     });
@@ -125,7 +140,14 @@ describe("inner-layer frozen check — unit tests", () => {
         setupStagedFilesMock({
             ".forge/specs/broken/spec.md": null,
         });
-        await executor.executeEffect({ type: "commit", message: "test commit" });
+        try {
+            await executor.executeEffect({ type: "commit", message: "test commit" });
+            expect.unreachable("Expected FrozenZoneViolation to be thrown");
+        }
+        catch (err) {
+            expect(err).toBeInstanceOf(FrozenZoneViolation);
+            expect(err.files).toContain(".forge/specs/broken/spec.md");
+        }
         // Should log a warning about the failed git show
         expect(onLog).toHaveBeenCalledWith("⚠️ Could not read staged version of .forge/specs/broken/spec.md — treating as suspicious");
         // Should also log the blocked commit message (file was added to violations)

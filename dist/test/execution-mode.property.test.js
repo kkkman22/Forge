@@ -2,11 +2,11 @@
  * Property-based tests for the execution-mode module.
  *
  * Covers:
- *   - Property 1: ExecutionMode round-trip（写入/清除往返一致性）
- *   - Property 2: getExecutionMode 解析正确性
- *   - Property 3: 自主模式确認点全自動
+ *   - Property 1: ExecutionMode round-trip consistency（写入/清除往返一致性）
+ *   - Property 2: 自主モード確認点全自動
+ *   - getExecutionMode 解析正確性
  *
- * **Validates: Requirements 1.2, 1.3, 1.4, 1.5, 1.6, 1.7**
+ * **Validates: Requirements 2.2, 2.3, 13.1, 13.4**
  */
 import * as fc from "fast-check";
 import { describe, expect, it } from "vitest";
@@ -81,11 +81,11 @@ const statusFileWithoutModeArb = fc
     .tuple(fc.array(yamlFieldArb, { minLength: 1, maxLength: 5 }), bodyContentArb)
     .map(([fields, body]) => `---\n${fields.join("\n")}\n---\n${body}`);
 // ---------------------------------------------------------------------------
-// Feature: loop-skills-fusion, Property 1: ExecutionMode round-trip
+// Feature: loop-skills-fusion, Property 1: ExecutionMode round-trip consistency
 // ---------------------------------------------------------------------------
-describe("Feature: loop-skills-fusion, Property 1: ExecutionMode round-trip", () => {
+describe("Feature: loop-skills-fusion, Property 1: ExecutionMode round-trip consistency", () => {
     /**
-     * **Validates: Requirements 1.2, 1.3**
+     * **Validates: Requirements 13.1, 13.4**
      *
      * For any valid StatusFile content, writing autonomous mode then clearing
      * it should result in getExecutionMode returning "interactive" (default).
@@ -99,7 +99,7 @@ describe("Feature: loop-skills-fusion, Property 1: ExecutionMode round-trip", ()
         }), { numRuns: 200 });
     });
     /**
-     * **Validates: Requirements 1.2, 1.3**
+     * **Validates: Requirements 13.1, 13.4**
      *
      * For any valid StatusFile content and any mode, writing then clearing
      * should preserve other frontmatter fields. We verify by checking that
@@ -126,7 +126,7 @@ describe("Feature: loop-skills-fusion, Property 1: ExecutionMode round-trip", ()
         }), { numRuns: 200 });
     });
     /**
-     * **Validates: Requirements 1.2**
+     * **Validates: Requirements 13.1**
      *
      * For any valid StatusFile content and any mode, after writeExecutionMode,
      * getExecutionMode should return the written mode.
@@ -193,36 +193,38 @@ describe("Feature: loop-skills-fusion, Property 2: getExecutionMode 解析正確
     });
 });
 // ---------------------------------------------------------------------------
-// Feature: loop-skills-fusion, Property 3: 自主模式確認点全自動
+// Feature: loop-skills-fusion, Property 2: 自主モード確認点全自動
 // ---------------------------------------------------------------------------
-describe("Feature: loop-skills-fusion, Property 3: 自主模式確認点全自動", () => {
+describe("Feature: loop-skills-fusion, Property 2: 自主モード確認点全自動", () => {
     /**
-     * **Validates: Requirements 1.6**
+     * **Validates: Requirements 2.2, 2.3**
      *
      * For any ConfirmationPoint, when mode is autonomous,
-     * resolveConfirmation returns action: "auto".
+     * resolveConfirmation returns action: "auto" with a defined preset string.
      */
-    it("autonomous mode returns auto for all confirmation points", () => {
+    it("autonomous mode returns auto with a defined preset string for all confirmation points", () => {
         fc.assert(fc.property(confirmationPointArb, (point) => {
             const decision = resolveConfirmation("autonomous", point);
             expect(decision.action).toBe("auto");
             expect(decision.preset).toBeDefined();
+            expect(typeof decision.preset).toBe("string");
         }), { numRuns: 200 });
     });
     /**
-     * **Validates: Requirements 1.6**
+     * **Validates: Requirements 2.2, 2.3**
      *
      * For any ConfirmationPoint, when mode is interactive,
-     * resolveConfirmation returns action: "wait_for_user".
+     * resolveConfirmation returns action: "wait_for_user" with no preset.
      */
-    it("interactive mode returns wait_for_user for all confirmation points", () => {
+    it("interactive mode returns wait_for_user with no preset for all confirmation points", () => {
         fc.assert(fc.property(confirmationPointArb, (point) => {
             const decision = resolveConfirmation("interactive", point);
             expect(decision.action).toBe("wait_for_user");
+            expect(decision.preset).toBeUndefined();
         }), { numRuns: 200 });
     });
     /**
-     * **Validates: Requirements 1.7**
+     * **Validates: Requirements 2.2, 2.3**
      *
      * Ship stage preset in autonomous mode should be "keep branch".
      */
@@ -234,7 +236,7 @@ describe("Feature: loop-skills-fusion, Property 3: 自主模式確認点全自�
         }), { numRuns: 200 });
     });
     /**
-     * **Validates: Requirements 1.6, 1.7**
+     * **Validates: Requirements 2.2, 2.3**
      *
      * For any mode and any confirmation point, the decision is deterministic:
      * same inputs always produce the same output.

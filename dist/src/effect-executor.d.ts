@@ -9,7 +9,31 @@
  * Design reference: sdk-autonomous-loop § effect-executor.ts
  * **Validates: Requirements 3.1, 3.2, 3.3, 3.4, 3.5, 3.6, 3.7**
  */
+import { ForgeError } from "./forge-error.js";
 import type { OrchestratorEffect } from "./loop-types.js";
+/**
+ * Thrown when the inner-layer frozen zone check detects that staged files
+ * include locked/approved `.forge/` files. This is a deliberate policy
+ * violation — the loop should terminate immediately without triggering
+ * exponential backoff.
+ *
+ * **Validates: Requirements 8.1, 8.2**
+ */
+export declare class FrozenZoneViolation extends ForgeError {
+    readonly code: "FROZEN_ZONE_VIOLATION";
+    readonly files: string[];
+    constructor(files: string[]);
+}
+/**
+ * Thrown when an effect execution fails for an unexpected reason (e.g. git
+ * command crash, I/O error). The loop should treat this as a hard failure
+ * and trigger `iteration_hard_failure` with exponential backoff.
+ *
+ * **Validates: Requirements 8.1, 8.3**
+ */
+export declare class UnexpectedEffectError extends ForgeError {
+    readonly code: "UNEXPECTED_EFFECT_ERROR";
+}
 /**
  * Dependencies injected into the effect executor.
  *
@@ -81,6 +105,8 @@ export declare class EffectExecutor implements EffectExecutorInterface {
      *
      * Effects are processed in the exact order they appear in the array.
      * No effect is executed before all preceding effects have completed.
+     * If the abort signal fires, remaining effects are skipped and an
+     * interruption message is logged.
      *
      * @param effects     Array of effect descriptors to execute in order.
      * @param abortSignal Optional signal to interrupt long-running effects.
@@ -93,6 +119,9 @@ export declare class EffectExecutor implements EffectExecutorInterface {
      * files. If any frozen file has been modified, the commit is aborted and
      * a rollback is performed instead. This provides defense-in-depth beyond
      * the outer Hook layer.
+     *
+     * If the abort signal has fired, the commit is skipped entirely and an
+     * interruption message is logged.
      *
      * Uses `execFileSync` with argv arrays (no shell) to prevent injection.
      */
@@ -114,6 +143,9 @@ export declare class EffectExecutor implements EffectExecutorInterface {
      * Before the destructive reset, attempts to stash uncommitted changes as a
      * safety net. If the stash fails (e.g. clean working tree), the rollback
      * proceeds normally.
+     *
+     * If the abort signal has fired, the rollback is skipped entirely and an
+     * interruption message is logged.
      *
      * Uses `execFileSync` with argv arrays (no shell) to prevent injection.
      */

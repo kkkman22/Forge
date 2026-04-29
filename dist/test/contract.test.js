@@ -494,4 +494,139 @@ describe("Contract: Agent Team hooks", () => {
         }
     });
 });
+// ---------------------------------------------------------------------------
+// 10. Evolved rules templates
+// ---------------------------------------------------------------------------
+describe("Contract: evolved rules templates", () => {
+    it("templates/evolved-rules.md exists", () => {
+        const tmplPath = resolve(ROOT, "templates/evolved-rules.md");
+        expect(existsSync(tmplPath), "Missing: templates/evolved-rules.md").toBe(true);
+    });
+    it("templates/rule-changelog.md exists", () => {
+        const tmplPath = resolve(ROOT, "templates/rule-changelog.md");
+        expect(existsSync(tmplPath), "Missing: templates/rule-changelog.md").toBe(true);
+    });
+    it("evolved-rules.md template contains YAML frontmatter with updated, rule_count, max_rules fields", () => {
+        const content = readFileSync(resolve(ROOT, "templates/evolved-rules.md"), "utf-8");
+        expect(content).toContain("updated:");
+        expect(content).toContain("rule_count:");
+        expect(content).toContain("max_rules:");
+    });
+    it("rule-changelog.md template contains YAML frontmatter with updated field", () => {
+        const content = readFileSync(resolve(ROOT, "templates/rule-changelog.md"), "utf-8");
+        expect(content).toContain("updated:");
+    });
+});
+// ---------------------------------------------------------------------------
+// 11. CLAUDE.md self-evolution section
+// ---------------------------------------------------------------------------
+describe("Contract: CLAUDE.md self-evolution section", () => {
+    const templatePath = resolve(ROOT, "templates/CLAUDE.md");
+    const template = readFileSync(templatePath, "utf-8");
+    it("CLAUDE.md template contains a Self-Evolution heading (Section 5)", () => {
+        expect(template).toMatch(/##\s+5\.\s+Self-Evolution/);
+    });
+    it("Section references evolved-rules.md", () => {
+        expect(template).toContain("evolved-rules.md");
+    });
+    it("Section documents the five knowledge categories", () => {
+        expect(template).toContain("known-failures");
+        expect(template).toContain("instincts");
+        expect(template).toContain("skill-feedback");
+        expect(template).toContain("session journals");
+        expect(template).toContain("metrics");
+    });
+    it("Section documents the 15-rule cap", () => {
+        expect(template).toContain("15-rule cap");
+    });
+    it("Section documents exclusions", () => {
+        expect(template).toContain("Exclusions");
+        expect(template).toContain("Architecture descriptions");
+        expect(template).toContain("File path lists");
+        expect(template).toContain("General best practices");
+    });
+});
+// ---------------------------------------------------------------------------
+// 12. hooks.json evolved rules integration
+// ---------------------------------------------------------------------------
+describe("Contract: hooks.json evolved rules integration", () => {
+    const hooksPath = resolve(ROOT, "hooks/hooks.json");
+    const hooksFile = JSON.parse(readFileSync(hooksPath, "utf-8"));
+    it("SessionStart contains a hook entry referencing evolved-rules.md", () => {
+        const sessionStartGroups = hooksFile.hooks.SessionStart;
+        const hasEvolvedRulesHook = sessionStartGroups.some((group) => group.hooks.some((h) => h.command?.includes("evolved-rules.md")));
+        expect(hasEvolvedRulesHook, "SessionStart missing hook referencing evolved-rules.md").toBe(true);
+    });
+    it("SessionStart evolved-rules hook uses conditional if [ -f check", () => {
+        const sessionStartGroups = hooksFile.hooks.SessionStart;
+        const evolvedRulesHook = sessionStartGroups
+            .flatMap((group) => group.hooks)
+            .find((h) => h.command?.includes("evolved-rules.md"));
+        expect(evolvedRulesHook?.command).toContain("if [ -f");
+    });
+    it("SessionStart evolved-rules hook has a positive integer timeout", () => {
+        const sessionStartGroups = hooksFile.hooks.SessionStart;
+        const evolvedRulesGroup = sessionStartGroups.find((group) => group.hooks.some((h) => h.command?.includes("evolved-rules.md")));
+        const evolvedRulesHandler = evolvedRulesGroup?.hooks.find((h) => h.command?.includes("evolved-rules.md"));
+        expect(evolvedRulesHandler?.timeout).toBeDefined();
+        expect(typeof evolvedRulesHandler?.timeout === "number" &&
+            Number.isInteger(evolvedRulesHandler.timeout) &&
+            evolvedRulesHandler.timeout > 0, `Timeout must be a positive integer, got: ${evolvedRulesHandler?.timeout}`).toBe(true);
+    });
+    it("Stop contains a hook entry for pending proposals", () => {
+        const stopGroups = hooksFile.hooks.Stop;
+        const hasPendingProposalsHook = stopGroups.some((group) => group.hooks.some((h) => h.command?.includes("PENDING") || h.command?.includes("evolved-rules.md")));
+        expect(hasPendingProposalsHook, "Stop missing hook for pending proposals").toBe(true);
+    });
+});
+// ---------------------------------------------------------------------------
+// 13. config.md evolved rules protection
+// ---------------------------------------------------------------------------
+describe("Contract: config.md evolved rules protection", () => {
+    const configPath = resolve(ROOT, "templates/config.md");
+    const config = readFileSync(configPath, "utf-8");
+    it("config.md template lists evolved-rules.md in the Guarded zone section", () => {
+        // Verify evolved-rules.md appears in the Guarded zone (受保护区)
+        const guardedStart = config.indexOf("受保护区（Guarded）");
+        const openStart = config.indexOf("开放区（Open）");
+        expect(guardedStart, "config.md missing Guarded zone section").toBeGreaterThan(-1);
+        expect(openStart, "config.md missing Open zone section").toBeGreaterThan(-1);
+        const guardedSection = config.slice(guardedStart, openStart);
+        expect(guardedSection.includes("evolved-rules.md"), "evolved-rules.md not listed in Guarded zone").toBe(true);
+    });
+    it("config.md template lists rule-changelog.md in the Guarded zone section", () => {
+        const guardedStart = config.indexOf("受保护区（Guarded）");
+        const openStart = config.indexOf("开放区（Open）");
+        const guardedSection = config.slice(guardedStart, openStart);
+        expect(guardedSection.includes("rule-changelog.md"), "rule-changelog.md not listed in Guarded zone").toBe(true);
+    });
+});
+// ---------------------------------------------------------------------------
+// 14. forge-learn SKILL.md rule distillation
+// ---------------------------------------------------------------------------
+describe("Contract: forge-learn SKILL.md rule distillation", () => {
+    const skillPath = resolve(ROOT, "skills/forge-learn/SKILL.md");
+    const content = readFileSync(skillPath, "utf-8");
+    it("SKILL.md contains a Rule Distillation or equivalent heading", () => {
+        expect(content.match(/Rule Distillation|规则蒸馏/), "SKILL.md missing Rule Distillation heading").not.toBeNull();
+    });
+    it("SKILL.md references all four data sources", () => {
+        expect(content).toContain("known-failures");
+        expect(content).toContain("instincts");
+        expect(content).toContain("skill-feedback");
+        expect(content).toContain("metrics");
+    });
+    it("SKILL.md documents all five threshold conditions", () => {
+        // known-failures: occurrence >= 3
+        expect(content).toMatch(/occurrence\s*>=\s*3/);
+        // instincts: confidence >= 0.8
+        expect(content).toMatch(/confidence\s*>=\s*0\.8/);
+        // skill-feedback: frequency >= 3
+        expect(content).toMatch(/frequency\s*>=\s*3/);
+        // session journals: 3+ sessions
+        expect(content).toMatch(/3\+?\s*会话|3\+?\s*session/i);
+        // metrics: 3+ session degradation
+        expect(content).toMatch(/3\+?\s*session|连续\s*3/i);
+    });
+});
 //# sourceMappingURL=contract.test.js.map

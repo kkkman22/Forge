@@ -73,6 +73,10 @@ export declare function determineNextSkill(input: SchedulerInput): SchedulerResu
  * Returns the ordered list of SKILL phases that should be executed.
  * Falls back to the standard sequence for unknown tiers.
  *
+ * @visibleForTesting Currently only used in tests. May be connected to
+ * production call points in the future when the SdkDriver queries
+ * sequences directly from the Skill Scheduler.
+ *
  * @param tier - The routing tier (light, standard, full).
  * @returns Ordered array of SKILL phases.
  */
@@ -94,6 +98,10 @@ export declare function getCommandSequence(tier: string): SkillPhase[];
  * - **router** → no commit (only produces routing analysis)
  * - **learn** → no commit (only produces knowledge updates)
  * - Any phase with `success=false` → no commit
+ *
+ * @visibleForTesting Currently only used in tests. May be connected to
+ * production call points in the future when the SdkDriver delegates
+ * commit decisions to the Skill Scheduler.
  *
  * **Validates: Requirements 11.1, 11.3, 11.4, 11.5**
  *

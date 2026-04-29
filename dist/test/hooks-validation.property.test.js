@@ -1,10 +1,10 @@
 /**
  * Feature: audit-remediation-v221, Property 1: Hooks validation correctly classifies JSON structures
  */
-import * as fc from "fast-check";
 import { mkdirSync, mkdtempSync, rmSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
+import * as fc from "fast-check";
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
 import { validateHooksPresence } from "../src/sdk-driver.js";
 // ---------------------------------------------------------------------------
@@ -91,7 +91,7 @@ describe("Feature: audit-remediation-v221, Property 1: Hooks validation correctl
                 expect(result.valid).toBe(false);
                 expect(result.reason).toBeDefined();
                 expect(typeof result.reason).toBe("string");
-                expect(result.reason.length).toBeGreaterThan(0);
+                expect(result.reason?.length).toBeGreaterThan(0);
             }
         }), { numRuns: 100 });
     });
@@ -116,7 +116,7 @@ describe("Feature: audit-remediation-v221, Property 1: Hooks validation correctl
             const result = validateHooksPresence(tmpDir);
             expect(result.valid).toBe(false);
             expect(result.reason).toBeDefined();
-            expect(result.reason.length).toBeGreaterThan(0);
+            expect(result.reason?.length).toBeGreaterThan(0);
         }), { numRuns: 100 });
     });
 });

@@ -14,20 +14,47 @@
  * Design reference: sdk-autonomous-loop § forge-loop-cli.ts
  * **Validates: Requirements 1.4, 1.6, 6.1–6.10, 4.5, 4.6, 4.7**
  */
-import { startup } from "@anthropic-ai/claude-agent-sdk";
-import { Command } from "commander";
 import { execFileSync, spawn } from "node:child_process";
 import { copyFileSync, existsSync, mkdirSync, readFileSync } from "node:fs";
 import path from "node:path";
+import { startup } from "@anthropic-ai/claude-agent-sdk";
+import { Command } from "commander";
 import { buildAgentOutputSchema } from "./agent-output.js";
 import { CliError } from "./cli-error.js";
+import { extractConfigLang } from "./config-store.js";
 import { formatNotesDocument } from "./context-accumulator.js";
 import { EffectExecutor } from "./effect-executor.js";
+import { parseTranslationFile, translate } from "./i18n.js";
+import { detectLocale } from "./locale-detector.js";
+import { createLogEntry, createLogSink } from "./logger/index.js";
 import { branchExists, RunManager } from "./run-manager.js";
 import { SdkAgentAdapter } from "./sdk-agent-adapter.js";
 import { detectSkillAwareMode, SdkDriver } from "./sdk-driver.js";
 import { buildSleepPreventionCommand } from "./sleep-preventer.js";
 import { decideWorktreeCleanup, isValidWorktreeSource } from "./worktree-manager.js";
+// ---------------------------------------------------------------------------
+// Default constants
+// ---------------------------------------------------------------------------
+/**
+ * Default base delay in milliseconds for exponential backoff on hard failures.
+ * Used as the default value for `LoopConfig.backoffBaseMs`.
+ */
+export const DEFAULT_BACKOFF_BASE_MS = 60_000;
+/**
+ * Default maximum number of concurrent Git worktrees allowed.
+ * Used as the default value for `LoopConfig.maxConcurrentWorktrees`.
+ */
+export const DEFAULT_MAX_CONCURRENT_WORKTREES = 3;
+// ---------------------------------------------------------------------------
+// Tier validation
+// ---------------------------------------------------------------------------
+/** Known routing tiers for --tier validation. */
+export const VALID_TIERS = new Set(["light", "standard", "full"]);
+// ---------------------------------------------------------------------------
+// Supported locales
+// ---------------------------------------------------------------------------
+/** Supported locale codes for --lang validation. */
+export const SUPPORTED_LOCALES = new Set(["zh", "en"]);
 // ---------------------------------------------------------------------------
 // PUA task type validation
 // ---------------------------------------------------------------------------
@@ -97,6 +124,10 @@ async function main() {
         .option("--pua", "Enable PUA Quality Engine", false)
         .option("--pua-task-type <type>", "PUA task type (debug|build|research|architecture|performance|review|deploy|general)")
         .option("--resume <branchName>", "Resume an existing run on a forge/ branch")
+        .option("--lang <locale>", "Set display language (zh|en)")
+        .option("--log-format <text|json>", "Log output format (text|json)", "text")
+        .option("--log-level <debug|info|warn|error>", "Minimum log level", "info")
+        .option("--sandbox", "Enable sandbox mode with fine-grained access control", false)
         .action(async (objective, opts) => {
         const cwd = process.cwd();
         const preventSleep = opts.preventSleep !== "off";
@@ -144,14 +175,92 @@ async function main() {
             throw new CliError("Error: --tier, --type, --phase, and --nature require a .forge/ directory. Run `forge init` first.");
         }
         // ---------------------------------------------------------------
+        // Validate --tier value against known set (Req 10.4)
+        // ---------------------------------------------------------------
+        if (opts.tier && !VALID_TIERS.has(opts.tier)) {
+            throw new CliError(`Error: Invalid --tier value "${opts.tier}". Valid options: ${[...VALID_TIERS].join(", ")}`);
+        }
+        // ---------------------------------------------------------------
+        // Validate --lang value and detect locale (i18n)
+        // ---------------------------------------------------------------
+        if (opts.lang && !SUPPORTED_LOCALES.has(opts.lang)) {
+            throw new CliError(`Error: Invalid --lang value "${opts.lang}". Valid options: ${[...SUPPORTED_LOCALES].join(", ")}`);
+        }
+        // ---------------------------------------------------------------
+        // Validate --log-format and --log-level values (Req 2.4, 3.1)
+        // ---------------------------------------------------------------
+        const VALID_LOG_FORMATS = new Set(["text", "json"]);
+        const VALID_LOG_LEVELS = new Set(["debug", "info", "warn", "error"]);
+        if (opts.logFormat && !VALID_LOG_FORMATS.has(opts.logFormat)) {
+            throw new CliError(`Error: Invalid --log-format value "${opts.logFormat}". Valid options: ${[...VALID_LOG_FORMATS].join(", ")}`);
+        }
+        if (opts.logLevel && !VALID_LOG_LEVELS.has(opts.logLevel)) {
+            throw new CliError(`Error: Invalid --log-level value "${opts.logLevel}". Valid options: ${[...VALID_LOG_LEVELS].join(", ")}`);
+        }
+        // Read config.md lang field
+        let configLang = null;
+        try {
+            const configPath = path.join(cwd, ".forge", "config.md");
+            if (existsSync(configPath)) {
+                const configContent = readFileSync(configPath, "utf-8");
+                configLang = extractConfigLang(configContent);
+            }
+        }
+        catch {
+            // Config read failure is non-blocking — continue with other sources.
+        }
+        // Detect locale from all sources
+        const localeResult = detectLocale({
+            cliLang: opts.lang,
+            configLang: configLang ?? undefined,
+            envLang: process.env.FORGE_LANG,
+            systemLocale: process.env.LANG || process.env.LC_ALL,
+        }, SUPPORTED_LOCALES);
+        if (localeResult.warning) {
+            console.warn(`Warning: ${localeResult.warning}`);
+        }
+        // Load translation files and create I18nConfig
+        const localesDir = path.join(path.dirname(new URL(import.meta.url).pathname), "..", "locales");
+        const enData = parseTranslationFile(readFileSync(path.join(localesDir, "en.json"), "utf-8"), "locales/en.json");
+        const zhData = parseTranslationFile(readFileSync(path.join(localesDir, "zh.json"), "utf-8"), "locales/zh.json");
+        const i18nConfig = {
+            locale: localeResult.locale,
+            defaultLocale: "en",
+            translations: { en: enData, zh: zhData },
+        };
+        /** Convenience translation function. */
+        const _t = (key, params) => translate(i18nConfig, key, params);
+        // ---------------------------------------------------------------
+        // Detect active task in StatusFile (Req 10.2)
+        // ---------------------------------------------------------------
+        if (hasForgeDir) {
+            try {
+                const statusFilePath = path.join(cwd, ".forge", "status.md");
+                if (existsSync(statusFilePath)) {
+                    const statusContent = readFileSync(statusFilePath, "utf-8");
+                    const phaseMatch = statusContent.match(/^phase:\s*"?([^"\n]*)"?\s*$/m);
+                    if (phaseMatch) {
+                        const phase = phaseMatch[1].trim();
+                        if (phase && phase !== "completed" && phase !== "aborted") {
+                            console.warn(_t("cli.warning.activeTask", { phase }));
+                        }
+                    }
+                }
+            }
+            catch (err) {
+                // StatusFile read failure is non-blocking — continue startup.
+                console.warn(`[debug] StatusFile read failed during startup: ${err instanceof Error ? err.message : String(err)}`);
+            }
+        }
+        // ---------------------------------------------------------------
         // Build LoopConfig and RunLimits
         // ---------------------------------------------------------------
         const loopConfig = {
             agent: "claude",
             maxConsecutiveFailures: 3,
             preventSleep,
-            backoffBaseMs: 60_000,
-            maxConcurrentWorktrees: 3,
+            backoffBaseMs: DEFAULT_BACKOFF_BASE_MS,
+            maxConcurrentWorktrees: DEFAULT_MAX_CONCURRENT_WORKTREES,
         };
         const limits = {
             maxIterations: opts.maxIterations,
@@ -187,7 +296,7 @@ async function main() {
             const resumeBranch = opts.resume;
             // Validate that the branch exists
             if (!branchExists(resumeBranch, cwd)) {
-                throw new CliError(`Error: Branch "${resumeBranch}" does not exist. Cannot resume.`);
+                throw new CliError(_t("cli.error.branchNotFound", { branch: resumeBranch }));
             }
             // Checkout the branch before resuming
             execFileSync("git", ["checkout", resumeBranch], { cwd, stdio: "pipe" });
@@ -203,14 +312,18 @@ async function main() {
                 // run directory itself could not be found for this branch.
                 const notesContent = readFileSync(resumed.notesPath, "utf-8");
                 if (!notesContent.includes(resumeBranch)) {
-                    throw new CliError(`Error: No run directory found for branch "${resumeBranch}". Cannot resume.`);
+                    throw new CliError(_t("cli.error.noRunDirectory", { branch: resumeBranch }));
                 }
             }
             runSetup = resumed;
-            console.log(`Resuming run ${resumed.runId} on branch ${resumeBranch} from iteration ${resumed.lastIteration}`);
+            console.log(_t("cli.loop.resuming", {
+                runId: resumed.runId,
+                branch: resumeBranch,
+                iteration: String(resumed.lastIteration),
+            }));
         }
         else if (useWorktree) {
-            const worktreeSetup = RunManager.setupWorktree(objective, cwd, loopConfig.maxConcurrentWorktrees);
+            const worktreeSetup = RunManager.setupWorktree(objective, cwd, loopConfig.maxConcurrentWorktrees, _t);
             runSetup = worktreeSetup;
             worktreePath = worktreeSetup.worktreePath;
             effectiveCwd = worktreeSetup.worktreePath;
@@ -234,6 +347,14 @@ async function main() {
             }
         }
         // ---------------------------------------------------------------
+        // Create LogSink (Req 2.1, 3.1)
+        // ---------------------------------------------------------------
+        const logSinkConfig = {
+            format: opts.logFormat ?? "text",
+            level: opts.logLevel ?? "info",
+        };
+        const logSink = createLogSink(logSinkConfig);
+        // ---------------------------------------------------------------
         // Create EffectExecutor and SdkDriver
         // ---------------------------------------------------------------
         const effectExecutor = new EffectExecutor({
@@ -242,7 +363,7 @@ async function main() {
                 RunManager.persistNotes(runSetup.notesPath, content);
             },
             onLog: (message) => {
-                console.log(message);
+                logSink.log(createLogEntry("effect_log", "info", message, { runId: runSetup.runId }));
             },
         });
         const driver = new SdkDriver({
@@ -267,6 +388,9 @@ async function main() {
                 : opts.pua
                     ? "general"
                     : undefined,
+            t: _t,
+            logSinkConfig,
+            sandboxEnabled: opts.sandbox === true,
         }, effectExecutor, agentAdapter);
         // ---------------------------------------------------------------
         // Wire signal handlers
@@ -292,21 +416,23 @@ async function main() {
                     const worktreeNotesPath = runSetup.notesPath;
                     const backupResult = backupWorktreeNotes(worktreeNotesPath, mainRepoRunDir);
                     if (!backupResult.success) {
-                        console.warn(`Warning: Failed to backup worktree notes: ${backupResult.error}`);
+                        console.warn(_t("cli.warning.worktreeNotesBackupFailed", {
+                            error: backupResult.error ?? "unknown",
+                        }));
                     }
                     try {
                         execFileSync("git", ["worktree", "remove", worktreePath], {
                             cwd,
                             stdio: "pipe",
                         });
-                        console.log(`Worktree removed: ${decision.reason}`);
+                        console.log(_t("cli.loop.worktreeRemoved", { reason: decision.reason }));
                     }
                     catch (cleanupError) {
                         console.error(`Failed to remove worktree at ${worktreePath}:`, cleanupError instanceof Error ? cleanupError.message : cleanupError);
                     }
                 }
                 else {
-                    console.log(`Worktree preserved: ${decision.reason}`);
+                    console.log(_t("cli.loop.worktreePreserved", { reason: decision.reason }));
                 }
             }
         }

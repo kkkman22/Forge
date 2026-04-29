@@ -338,6 +338,44 @@ describe("Feature: pua-quality-engine, Property 6: Stall 响应确定性映射",
     });
 });
 // ---------------------------------------------------------------------------
+// Feature: audit-remediation-v221, Property 6: PUA pressure level monotonicity
+// ---------------------------------------------------------------------------
+describe("Feature: audit-remediation-v221, Property 6: PUA pressure level monotonicity", () => {
+    /**
+     * **Validates: Requirements 17.3**
+     *
+     * For any sequence of increasing `consecutiveFailures` values with
+     * `stallDetected` held constant, `determinePressureLevel` returns
+     * non-decreasing pressure levels — i.e., the ordinal index of the
+     * returned level shall never decrease as `consecutiveFailures` increases.
+     */
+    it("pressure levels are non-decreasing as consecutiveFailures increases (stallDetected constant)", () => {
+        fc.assert(fc.property(fc.nat({ max: 50 }), fc.nat({ max: 50 }), fc.boolean(), (a, b, stallDetected) => {
+            // Ensure low <= high by sorting
+            const low = Math.min(a, b);
+            const high = Math.max(a, b);
+            const levelLow = determinePressureLevel(low, stallDetected);
+            const levelHigh = determinePressureLevel(high, stallDetected);
+            const idxLow = PRESSURE_LEVEL_ORDER[levelLow];
+            const idxHigh = PRESSURE_LEVEL_ORDER[levelHigh];
+            // Non-decreasing: higher failures must not produce a lower pressure level
+            expect(idxHigh).toBeGreaterThanOrEqual(idxLow);
+        }), { numRuns: 200 });
+    });
+    it("pressure levels are non-decreasing across a full increasing sequence", () => {
+        fc.assert(fc.property(fc.array(fc.nat({ max: 100 }), { minLength: 2, maxLength: 10 }), fc.boolean(), (values, stallDetected) => {
+            // Sort to get an increasing sequence
+            const sorted = [...values].sort((a, b) => a - b);
+            const levels = sorted.map((f) => determinePressureLevel(f, stallDetected));
+            const indices = levels.map((l) => PRESSURE_LEVEL_ORDER[l]);
+            // Verify non-decreasing
+            for (let i = 1; i < indices.length; i++) {
+                expect(indices[i]).toBeGreaterThanOrEqual(indices[i - 1]);
+            }
+        }), { numRuns: 200 });
+    });
+});
+// ---------------------------------------------------------------------------
 // Feature: pua-quality-engine, Property 7: 压力提示内容单调递增
 // ---------------------------------------------------------------------------
 describe("Feature: pua-quality-engine, Property 7: 压力提示内容单调递增", () => {

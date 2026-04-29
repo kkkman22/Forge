@@ -36,7 +36,7 @@ vi.mock("node:fs", () => ({
 import { execFileSync } from "node:child_process";
 import { randomUUID } from "node:crypto";
 import { existsSync, mkdirSync, openSync, readdirSync, readFileSync, unlinkSync, writeFileSync, } from "node:fs";
-import { acquireFileLock, releaseFileLock, RunManager } from "../src/run-manager.js";
+import { acquireFileLock, RunManager, releaseFileLock } from "../src/run-manager.js";
 // ---------------------------------------------------------------------------
 // Constants
 // ---------------------------------------------------------------------------
@@ -454,7 +454,7 @@ describe("setupWorktree file-lock integration", () => {
         });
         // Mock Date.now to simulate instant timeout
         let callCount = 0;
-        const originalDateNow = Date.now;
+        const _originalDateNow = Date.now;
         vi.spyOn(Date, "now").mockImplementation(() => {
             callCount++;
             // First call sets the deadline, subsequent calls exceed it

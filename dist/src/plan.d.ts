@@ -37,6 +37,7 @@ export interface AtomicTask {
     tddSteps: TDDSteps;
     verifyCommand: string;
     commitMessage: string;
+    dependsOn?: number[];
 }
 export declare const FORBIDDEN_PLACEHOLDERS: string[];
 /**
@@ -64,8 +65,29 @@ export declare function validateAtomicTask(task: AtomicTask): {
     errors: string[];
 };
 /**
+ * Validate that the associated spec is in "locked" status before plan execution.
+ *
+ * Per R24: Plan execution requires a locked spec to ensure the plan is based
+ * on a confirmed specification.
+ */
+export declare function validateSpecLocked(specStatus: string): {
+    valid: true;
+} | {
+    valid: false;
+    error: string;
+};
+/**
+ * Validate that all `dependsOn` references in a task list point to existing
+ * `taskNumber` values.
+ *
+ * Per R25: Each task's `dependsOn` array (if present) must only reference
+ * task numbers that exist in the plan.
+ */
+export declare function validateDependencies(tasks: AtomicTask[]): string[];
+/**
  * Validate all tasks in a plan.
  *
- * Returns true only if every task passes validateAtomicTask.
+ * Returns true only if every task passes validateAtomicTask and all
+ * `dependsOn` references are valid.
  */
 export declare function validatePlanTasks(tasks: AtomicTask[]): boolean;

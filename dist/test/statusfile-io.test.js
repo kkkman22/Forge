@@ -21,6 +21,11 @@ vi.mock("../src/skill-scheduler.js", () => ({
         nextPhase: "build",
         reason: "tasks incomplete",
     })),
+    shouldCommitForPhase: vi.fn((phase, success) => {
+        if (!success)
+            return false;
+        return ["build", "plan", "fix", "refactor-apply", "fix-apply"].includes(phase);
+    }),
 }));
 vi.mock("../src/status-file-ext.js", () => ({
     extractLoopFields: vi.fn(() => ({})),
@@ -145,8 +150,8 @@ describe("StatusFile write failure degradation (Requirement 6.7)", () => {
         expect(hasStatusFileWarning).toBe(true);
     });
     it("logs a warning but does NOT abort when writeStatusFile throws during cleanup", async () => {
-        const warnSpy = vi.spyOn(console, "warn").mockImplementation(() => { });
-        vi.spyOn(console, "log").mockImplementation(() => { });
+        const logSpy = vi.spyOn(console, "log").mockImplementation(() => { });
+        vi.spyOn(console, "warn").mockImplementation(() => { });
         // Make clearLoopFields throw to simulate write failure during cleanup
         vi.mocked(clearLoopFields).mockImplementation(() => {
             throw new Error("permission denied");
@@ -167,9 +172,11 @@ describe("StatusFile write failure degradation (Requirement 6.7)", () => {
         expect(result.finalState).toBeDefined();
         expect(result.notesDocument.entries).toHaveLength(1);
         // Warning should be logged about the cleanup failure
-        expect(warnSpy).toHaveBeenCalled();
-        const warningMessages = warnSpy.mock.calls.map((call) => call[0]);
-        const hasCleanupWarning = warningMessages.some((msg) => msg.includes("StatusFile") || msg.includes("clear"));
+        expect(logSpy).toHaveBeenCalled();
+        const logMessages = logSpy.mock.calls.map((call) => call[0]);
+        const hasCleanupWarning = logMessages.some((msg) => msg.includes("status_field_clear_failed") ||
+            msg.includes("clear") ||
+            msg.includes("StatusFile"));
         expect(hasCleanupWarning).toBe(true);
     });
     it("continues execution across multiple iterations despite write failures", async () => {

@@ -14,33 +14,36 @@
 import { existsSync, mkdirSync, readFileSync, rmSync, writeFileSync } from "node:fs";
 import path, { join } from "node:path";
 import {
-  appendEntry,
-  buildIterationPrompt,
-  buildSkillAwarePrompt,
-  formatNotesDocument,
+    appendEntry,
+    buildIterationPrompt,
+    buildSkillAwarePrompt,
+    formatNotesDocument,
 } from "./context-accumulator.js";
 import { type EffectExecutorInterface, FrozenZoneViolation } from "./effect-executor.js";
 import {
-  computePerformanceBaseline,
-  createIterationTiming,
-  createLogEntry,
-  createLogSink,
-  formatPerformanceBaseline,
-  type IterationTiming,
-  type LogSinkConfig,
-  type PerformanceBaseline,
+    buildSubagentTiming,
+    computeExtendedBaseline,
+    createIterationTiming,
+    createLogEntry,
+    createLogSink,
+    detectDegradation,
+    formatPerformanceBaseline,
+    type IterationTiming,
+    type LogSinkConfig,
+    type PerformanceBaseline,
+    type SubagentTiming,
 } from "./logger/index.js";
 import type {
-  AgentInterface,
-  AgentOutput,
-  IterationEntry,
-  LoopConfig,
-  NotesDocument,
-  OrchestratorEffect,
-  OrchestratorEvent,
-  OrchestratorState,
-  RunLimits,
-  TokenUsage,
+    AgentInterface,
+    AgentOutput,
+    IterationEntry,
+    LoopConfig,
+    NotesDocument,
+    OrchestratorEffect,
+    OrchestratorEvent,
+    OrchestratorState,
+    RunLimits,
+    TokenUsage,
 } from "./loop-types.js";
 import { createInitialState, transition } from "./orchestrator.js";
 import type { PuaContext, TaskType } from "./pua-engine.js";
@@ -51,13 +54,13 @@ import { RunManager, type TranslateFn } from "./run-manager.js";
 import { buildDefaultPolicy, type PermissionPolicy, validatePolicy } from "./sandbox-policy.js";
 import { evaluateGateForPhase } from "./sdk-quality-helpers.js";
 import {
-  clearLoopFieldsOnShutdown,
-  getPhaseFromStatus,
-  getTierFromStatus,
-  initializeLoopFields,
-  type StatusFileIO,
-  safeReadStatusFile,
-  safeUpdateIterationStatus as safeUpdateIterationStatusHelper,
+    clearLoopFieldsOnShutdown,
+    getPhaseFromStatus,
+    getTierFromStatus,
+    initializeLoopFields,
+    safeReadStatusFile,
+    safeUpdateIterationStatus as safeUpdateIterationStatusHelper,
+    type StatusFileIO,
 } from "./sdk-status-helpers.js";
 import { determineNextSkill, shouldCommitForPhase } from "./skill-scheduler.js";
 import { extractLoopFields } from "./status-file-ext.js";
@@ -246,6 +249,15 @@ export class SdkDriver {
 
   /** Iteration timing accumulator for performance baseline. */
   private readonly iterationTimings: IterationTiming[] = [];
+
+  /** Subagent timing accumulator for extended performance baseline. */
+  private readonly subagentTimings: SubagentTiming[] = [];
+
+  /** Counter for degradation alerts triggered during the run. */
+  private degradationCount = 0;
+
+  /** Previous SKILL phase name for detecting phase transitions. */
+  private previousPhase: string | undefined;
 
   constructor(
     config: SdkDriverConfig,
@@ -437,9 +449,13 @@ export class SdkDriver {
 
       return this.buildResult();
     } finally {
-      // Output performance baseline (Req 5.1–5.4).
+      // Output performance baseline (Req 5.1–5.4, 6.1, 6.2, 6.4, 6.7).
       // Computed once and reused in formatCompletionSummary (Req 5.2).
-      const baseline = computePerformanceBaseline(this.iterationTimings);
+      const baseline = computeExtendedBaseline(
+        this.iterationTimings,
+        this.subagentTimings,
+        this.degradationCount,
+      );
       this.logger.log(
         createLogEntry(
           "performance_baseline",
@@ -615,11 +631,29 @@ export class SdkDriver {
     let agentEndMs = iterStartMs;
 
     try {
-      // Invoke the agent adapter.
+      // Invoke the agent adapter with subagent timing.
+      const subagentStartMs = Date.now();
       const agentResult = await this.agentAdapter.run(prompt, this.config.cwd, {
         signal: this.currentAbortController.signal,
       });
       agentEndMs = Date.now();
+
+      // Record subagent timing (Req 4.1, 4.2, 4.3).
+      const subTiming = buildSubagentTiming(
+        this.agentAdapter.name,
+        subagentStartMs,
+        agentEndMs,
+      );
+      this.subagentTimings.push(subTiming);
+      this.logger.log(
+        createLogEntry(
+          "subagent_timing",
+          "debug",
+          "Subagent completed",
+          { runId: this.config.runId, iteration: iterationNumber },
+          { ...subTiming },
+        ),
+      );
 
       const output: AgentOutput = agentResult.output;
       const usage: TokenUsage = agentResult.usage;
@@ -867,11 +901,29 @@ export class SdkDriver {
     let agentEndMs = iterStartMs;
 
     try {
-      // Invoke the agent adapter.
+      // Invoke the agent adapter with subagent timing.
+      const subagentStartMs = Date.now();
       const agentResult = await this.agentAdapter.run(prompt, this.config.cwd, {
         signal: this.currentAbortController.signal,
       });
       agentEndMs = Date.now();
+
+      // Record subagent timing (Req 4.1, 4.2, 4.3).
+      const subTiming = buildSubagentTiming(
+        this.agentAdapter.name,
+        subagentStartMs,
+        agentEndMs,
+      );
+      this.subagentTimings.push(subTiming);
+      this.logger.log(
+        createLogEntry(
+          "subagent_timing",
+          "debug",
+          "Subagent completed",
+          { runId: this.config.runId, iteration: iterationNumber },
+          { ...subTiming },
+        ),
+      );
 
       const output: AgentOutput = agentResult.output;
       const usage: TokenUsage = agentResult.usage;
@@ -1103,7 +1155,7 @@ export class SdkDriver {
     // Update StatusFile with current phase and iteration (non-critical).
     safeUpdateIterationStatusHelper(this.statusFileIO, nextPhase, iterationNumber);
 
-    // Record iteration timing (Req 4.1–4.4).
+    // Record iteration timing (Req 4.1–4.4) with phase metadata (Req 3.1, 3.3).
     const effectEndMs = Date.now();
     const timing = createIterationTiming(iterStartMs, agentEndMs, effectEndMs);
     this.iterationTimings.push(timing);
@@ -1115,10 +1167,47 @@ export class SdkDriver {
         {
           runId: this.config.runId,
           iteration: iterationNumber,
+          phase: nextPhase,
         },
-        { ...timing },
+        { ...timing, phase: nextPhase },
       ),
     );
+
+    // Detect phase transition (Req 3.4, 5.3).
+    if (this.previousPhase !== undefined && nextPhase !== this.previousPhase) {
+      this.logger.log(
+        createLogEntry(
+          "skill_phase_transition",
+          "info",
+          `Phase transition: ${this.previousPhase} → ${nextPhase}`,
+          { runId: this.config.runId, iteration: iterationNumber },
+          { fromPhase: this.previousPhase, toPhase: nextPhase },
+        ),
+      );
+    }
+    this.previousPhase = nextPhase;
+
+    // Degradation detection (Req 5.1, 5.2).
+    const degradation = detectDegradation(
+      timing.totalIterationDurationMs,
+      this.iterationTimings.slice(0, -1), // exclude current iteration
+    );
+    if (degradation.isDegraded) {
+      this.degradationCount++;
+      this.logger.log(
+        createLogEntry(
+          "performance_degradation",
+          "warn",
+          `Iteration ${iterationNumber} duration anomaly detected`,
+          { runId: this.config.runId, iteration: iterationNumber },
+          {
+            currentMs: degradation.currentMs,
+            rollingAvgMs: degradation.rollingAvgMs,
+            deviationFactor: degradation.deviationFactor,
+          },
+        ),
+      );
+    }
   }
 
   // -------------------------------------------------------------------------
