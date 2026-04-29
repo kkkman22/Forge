@@ -97,17 +97,45 @@ disable-model-invocation: true
 
 ### Step 3：Task Breakdown（任务拆解）
 
-将 Spec 中的每个需求拆解为原子任务。每个原子任务是一个独立的、可在 2-5 分钟内完成的工作单元。
+将 Spec 中的每个需求拆解为任务。根据是否有 design.md 选择任务格式：
 
-**拆解规则**：
+**格式选择规则**：
 
-1. **粒度**：每个任务预估执行时间 2-5 分钟。太大就拆，太小就合。
+1. **有 design.md** → 使用 **Lightweight Task** 格式（本节下方描述）。Plan 只补充 File Mapping、Task Dependency Graph、Spec Coverage Matrix，具体代码留给 build 阶段按 TDD 编写。
+2. **无 design.md** → 回退到 **Atomic Task** 格式（包含完整 RED/GREEN/REFACTOR 代码），详见第 3 节。
+
+**通用拆解规则**：
+
+1. **粒度**：每个任务是一个独立的行为变更，可在 2-5 分钟内完成。太大就拆，太小就合。
 2. **独立性**：每个任务有明确的输入和输出，完成后可独立验证。
 3. **顺序性**：任务按依赖关系排序，前置任务先执行。
-4. **TDD 强制**：每个任务必须包含 RED → GREEN → REFACTOR 三步。
-5. **完整性**：每个任务包含完整代码，不留空白让执行者去猜。
+4. **完整性**：每个任务包含足够信息让 build 阶段直接开始，不留空白。
 
-**原子任务格式**（详见第 3 节）。
+**Lightweight Task 格式**（当 Spec 包含 design.md 时使用）：
+
+每个任务包含以下字段：
+
+| 字段 | 说明 | 示例 |
+|------|------|------|
+| **任务编号** | 顺序编号 | Task 1 |
+| **任务标题** | 一句话描述任务目标 | 添加 LightweightTask 类型和格式检测 |
+| **目标文件路径** | 从项目根目录的完整相对路径 | `src/plan.ts` |
+| **目标描述** | 一句话说明要实现的行为变更 | 添加 PlanFormat 类型、detectPlanFormat 函数 |
+| **Design Reference** | 指向 design.md 具体章节 | `design.md#components-and-interfaces` |
+| **Property** | 对应 design.md 的 Correctness Property 编号（如适用） | Property 4 |
+| **验证命令** | 验证任务完成的命令 | `npx vitest run --grep "detectPlanFormat"` |
+| **提交信息** | 原子提交的 commit message | `feat(plan): add format detection` |
+| **依赖** | 前置任务编号（可选） | dependsOn: [1, 2] |
+
+**Lightweight Task 不包含完整 RED/GREEN/REFACTOR 代码**。build 阶段根据 Design Reference 读取 design.md 的相关章节，按 TDD 方式编写代码。
+
+**Design Reference 规则**：
+
+1. 格式：`design.md#<章节锚点>`（GitHub 风格锚点：小写、空格转连字符、去特殊字符）。
+2. 每个引用必须包含被引用章节的一句话摘要。
+3. Plan 文档头部的 Design Reference Index 汇总所有引用。
+
+**Atomic Task 格式**（当 Spec 不包含 design.md 时回退使用，详见第 3 节）。
 
 ### Step 4：Self-Check（自检）
 
@@ -117,7 +145,9 @@ disable-model-invocation: true
 |--------|---------|---------|
 | **Spec 覆盖率** | 计划中的任务是否覆盖了 Spec 中的所有需求和场景 | 每个 Spec 需求至少被一个任务覆盖 |
 | **占位符扫描** | 计划中是否包含禁止内容（详见第 4 节） | 零占位符 |
-| **类型一致性** | 计划中引用的所有类型和函数是否在某个任务中有定义 | 所有引用均有对应定义 |
+| **类型一致性** | 计划中引用的所有类型和函数是否在某个任务中有定义（仅 full 格式） | 所有引用均有对应定义 |
+| **Design Reference 有效性** | 所有 Design Reference 指向的 design.md 章节确实存在（仅 lightweight 格式） | 所有引用有效 |
+| **依赖关系** | Task Dependency Graph 无循环且满足拓扑排序 | 无循环依赖 |
 
 **自检输出格式**：
 
@@ -126,7 +156,9 @@ disable-model-invocation: true
 
 ✅ Spec 覆盖率：所有 N 个需求均已覆盖
 ✅ 占位符扫描：未发现禁止内容
-✅ 类型一致性：所有引用的类型和函数均有定义
+✅ 类型一致性：所有引用的类型和函数均有定义（full 格式）
+✅ Design Reference 有效性：所有引用指向已存在的 design.md 章节（lightweight 格式）
+✅ 依赖关系：无循环依赖，拓扑排序正确
 
 自检通过。请审阅计划，批准后开始执行。
 ```
@@ -284,6 +316,7 @@ npm test -- --grep "NotificationService"
 1. 对计划全文进行大小写不敏感的文本扫描。
 2. 匹配上述关键词的精确文本和常见变体（如 `tbd`、`Todo`、`TODO:`、`// TODO`）。
 3. 发现任何匹配项时，定位到具体任务和行，要求替换为具体内容。
+4. **lightweight 格式**：占位符扫描范围调整为任务描述和 Design Reference 字段（不含代码块）。**full 格式**：扫描全文（含代码块）。
 
 **为什么这么严格？** 因为计划是给 Subagent 执行的。Subagent 没有你的上下文，看到 "TBD" 只能猜。猜错了就是返工。
 
@@ -393,6 +426,7 @@ topic: "<主题>"
 status: "draft" | "approved"
 date: "YYYY-MM-DD"
 spec_ref: ".forge/specs/<feature>/spec.md"
+format: "lightweight" | "full"
 ---
 ```
 
@@ -402,6 +436,59 @@ spec_ref: ".forge/specs/<feature>/spec.md"
 | `status` | string | `draft`（草案）或 `approved`（已批准） |
 | `date` | string | 创建或最后修改日期，YYYY-MM-DD 格式 |
 | `spec_ref` | string | 对应的锁定 Spec 路径 |
+| `format` | string | `lightweight`（精简格式）或 `full`（完整格式），缺省默认 `full` |
+
+### Lightweight 格式正文结构（当 Spec 包含 design.md 时）
+
+```markdown
+---
+topic: "<topic>"
+status: "draft"
+date: "YYYY-MM-DD"
+spec_ref: ".kiro/specs/<feature>"
+format: "lightweight"
+---
+
+## Objective
+
+<一段话说明这个计划要实现什么>
+
+## Design Reference Index
+
+| Anchor | Summary |
+|--------|---------|
+| `design.md#components-and-interfaces` | 定义 LightweightTask 接口和验证函数 |
+| `design.md#data-models` | 定义 PlanFormat 类型和 DesignReferenceEntry |
+
+## File Mapping
+
+| 文件路径 | 操作 | 说明 |
+|---------|------|------|
+| `src/plan.ts` | MODIFY | 添加 LightweightTask 验证 |
+| `test/plan.property.test.ts` | MODIFY | 添加轻量格式的属性测试 |
+
+## Task Breakdown
+
+### Task 1: <Title>
+
+- **Goal**: <一句话描述行为变更>
+- **File**: `<file-path>`
+- **Design Reference**: `design.md#<anchor>` — <一句话摘要>
+- **Property**: Property N（如适用）
+- **Depends On**: (none | Task N, Task M)
+- **Verify**: `<command>`
+- **Commit**: `<commit message>`
+
+## Spec Coverage
+
+| Spec 需求 | 覆盖任务 |
+|-----------|---------|
+| 需求 1 | Task 1, Task 2 |
+```
+
+### Full 格式正文结构（当 Spec 不包含 design.md 时）
+
+沿用原有的正文结构（见下方），包含 Research Findings、完整的 RED/GREEN/REFACTOR 步骤。
 
 ### 正文结构
 

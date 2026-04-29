@@ -48,3 +48,30 @@ export { SdkAgentAdapter, type SdkAgentAdapterConfig } from "./sdk-agent-adapter
 
 export type { GateResult } from "./quality-gate.js";
 export { evaluateReviewGate, evaluateShipGate, evaluateTestGate } from "./quality-gate.js";
+
+// ---------------------------------------------------------------------------
+// Plan engine
+// ---------------------------------------------------------------------------
+
+export type {
+  AtomicTask,
+  DesignReferenceEntry,
+  DesignReferenceValidation,
+  LightweightTask,
+  PlanFormat,
+  TDDSteps,
+} from "./plan.js";
+export {
+  detectPlanFormat,
+  extractHeadingAnchors,
+  FORBIDDEN_PLACEHOLDERS,
+  scanForPlaceholders,
+  validateAtomicTask,
+  validateDependencies,
+  validateDesignReferences,
+  validateLightweightPlan,
+  validateLightweightTask,
+  validatePlan,
+  validatePlanTasks,
+  validateSpecLocked,
+} from "./plan.js";
