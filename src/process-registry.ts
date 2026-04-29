@@ -94,4 +94,83 @@ export class ProcessRegistry {
 			killSignal: "SIGTERM",
 		});
 	}
+
+	async shutdownAll(timeoutMs = 5000): Promise<ShutdownResult> {
+		const result: ShutdownResult = {
+			terminated: 0,
+			forcedKill: 0,
+			alreadyExited: 0,
+			errors: [],
+		};
+
+		const entries = Array.from(this.processes.values());
+		const pending = new Map<number, { meta: ProcessMetadata; exited: boolean }>();
+
+		for (const meta of entries) {
+			pending.set(meta.pid, { meta, exited: false });
+			try {
+				if (meta.detached) {
+					process.kill(-meta.pgid, "SIGTERM");
+				} else {
+					process.kill(meta.pid, "SIGTERM");
+				}
+			} catch (err: any) {
+				if (err.code === "ESRCH") {
+					result.alreadyExited++;
+					pending.delete(meta.pid);
+				} else {
+					result.errors.push({ pid: meta.pid, error: err.message });
+				}
+			}
+		}
+
+		if (pending.size > 0) {
+			await new Promise<void>((resolve) => {
+				const timer = setTimeout(() => {
+					for (const [pid, state] of pending) {
+						if (!state.exited) {
+							try {
+								if (state.meta.detached) {
+									process.kill(-state.meta.pgid, "SIGKILL");
+								} else {
+									process.kill(pid, "SIGKILL");
+								}
+								result.forcedKill++;
+							} catch (err: any) {
+								if (err.code === "ESRCH") {
+									result.alreadyExited++;
+								} else {
+									result.errors.push({ pid, error: err.message });
+								}
+							}
+						}
+					}
+					resolve();
+				}, timeoutMs);
+
+				const poll = setInterval(() => {
+					let allGone = true;
+					for (const [pid, state] of pending) {
+						if (!state.exited) {
+							try {
+								process.kill(pid, 0);
+								allGone = false;
+							} catch {
+								state.exited = true;
+								result.terminated++;
+							}
+						}
+					}
+					if (allGone) {
+						clearInterval(poll);
+						clearTimeout(timer);
+						resolve();
+					}
+				}, 50);
+			});
+		}
+
+		this.processes.clear();
+		return result;
+	}
 }
