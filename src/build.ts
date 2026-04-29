@@ -120,3 +120,49 @@ export function analyzeFixAttempts(sequence: FixAttemptSequence): EscalationResu
 export function shouldEscalateToDebug(sequence: FixAttemptSequence): boolean {
   return analyzeFixAttempts(sequence).shouldEscalate;
 }
+
+// ---------------------------------------------------------------------------
+// Subagent orchestration (Agent Team Migration — R3, R7)
+// ---------------------------------------------------------------------------
+
+import type { SubagentInvocation, SubagentResult } from "./loop-types.js";
+
+/**
+ * Build one SubagentInvocation per research topic.
+ *
+ * Each subagent investigates a single research topic independently.
+ */
+export function buildResearchSubagents(topics: string[]): SubagentInvocation[] {
+  return topics.map((topic) => ({
+    agentType: "Explore",
+    prompt: `研究以下主题：${topic}`,
+    permissionMode: "default" as const,
+    maxTurns: 10,
+  }));
+}
+
+/**
+ * Merge successful research subagent outputs into a single findings document.
+ *
+ * All findings from every successful subagent are preserved with no loss.
+ * Failed subagents are noted in the document.
+ */
+export function mergeResearchFindings(results: SubagentResult[]): string {
+  const succeeded = results.filter((r) => r.status === "success" && r.output);
+  const failed = results.filter((r) => r.status !== "success");
+
+  const parts: string[] = [];
+
+  if (failed.length > 0) {
+    parts.push(`部分研究 Subagent 失败（${failed.length}/${results.length}）：`);
+    for (const f of failed) {
+      parts.push(`- ${f.agentType}: ${f.error ?? "unknown error"}`);
+    }
+  }
+
+  for (const s of succeeded) {
+    parts.push(s.output!);
+  }
+
+  return parts.join("\n\n");
+}

@@ -1,7 +1,7 @@
 # Forge — 项目宪法
 
 > 本文件由 `forge init` 自动生成，是 Claude Code 在本项目中的行为准则。
-> 所有 Agent（包括 Subagent 和 Agent Team 成员）必须遵守本宪法。
+> 所有 Agent（包括 Subagent）必须遵守本宪法。
 
 ---
 
@@ -39,14 +39,17 @@
 
 ### 2.2 前置检查
 
-在标准和全量路径下，`/forge build` 启动前必须通过两道门禁：
+在标准和全量路径下，`/forge build` 启动前必须通过三道门禁：
 
 | 门禁 | 条件 | 未通过时 |
 |------|------|---------|
 | Spec 锁定 | `.forge/specs/` 中对应 Spec 的 status 为 `locked` | 阻断 build，提示先完成 `/forge spec` |
 | Plan 批准 | `.forge/plans/` 中对应 Plan 的 status 为 `approved` | 阻断 build，提示先完成 `/forge plan` |
+| 分支隔离 | 当前 Git 分支是 `feature/<topic>` 或 `forge/<topic>` | 自动切换或创建对应分支（工作树不干净时阻断） |
 
 未通过门禁时，**禁止以任何理由绕过**。
+
+**分支隔离门禁**：每个功能的代码必须在其对应的 feature 分支上开发，防止多功能代码混入同一分支。Build 启动时，如果当前分支不是 `feature/<topic>` 或 `forge/<topic>`，自动创建或切换到正确分支。工作树有未提交变更时阻断并提示用户先处理。详见 `forge-build` SKILL §2.1。
 
 ### 2.3 验证铁律
 
@@ -258,11 +261,11 @@ The following are NOT valid rule candidates:
 - **安全级别**：标准（Level 1）
 - **初始化时间**：2026-04-28
 
-## Agent Team 配置
+## Subagent 并行执行配置
 
-`/forge decide` 和 `/forge review` 使用 Claude Code Agent Teams 特性。队友类型引用 `.claude/agents/` 下的 subagent 定义文件：
+`/forge decide` 和 `/forge review` 使用独立 Subagent（通过 Claude Code Agent tool 启动），不使用 Agent Teams。Subagent 类型引用 `.claude/agents/` 下的定义文件：
 
-- **decide 团队**：product、architect、security（默认），designer（UI 任务时动态加入）
-- **review 团队**：spec-check、quality-check、security-check
+- **decide**: product、architect、security（默认），designer（UI 任务时动态加入）。两轮执行：Round 1 并行输出各自视角，Round 2 Critic 交叉审视。
+- **review**: spec-check、quality-check、security-check（并行执行）。轻量模式省略 spec-check。
 
 启动团队时，使用 subagent 定义名称生成队友。团队完成后清理资源。

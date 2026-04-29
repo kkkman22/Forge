@@ -2,7 +2,7 @@
 # ============================================================================
 # forge build-dist — 构建 Claude Code 分发包
 #
-# 从源定义（skills/, agents/, teams/, commands/, hooks/, templates/, scripts/）
+# 从源定义（skills/, agents/, commands/, hooks/, templates/, scripts/）
 # 构建 Claude Code 的分发包到 dist/
 #
 # 用法：
@@ -45,7 +45,6 @@ mkdir -p "${CC_BUNDLE}"
 # 复制核心文件
 cp -r "${FORGE_ROOT}/skills" "${CC_BUNDLE}/skills"
 cp -r "${FORGE_ROOT}/agents" "${CC_BUNDLE}/agents"
-cp -r "${FORGE_ROOT}/teams" "${CC_BUNDLE}/teams"
 cp -r "${FORGE_ROOT}/commands" "${CC_BUNDLE}/commands"
 cp -r "${FORGE_ROOT}/hooks" "${CC_BUNDLE}/hooks"
 cp -r "${FORGE_ROOT}/templates" "${CC_BUNDLE}/templates"
@@ -105,8 +104,7 @@ git clone https://github.com/kkkman22/Forge.git ~/.claude/skills/forge
 ## 前置条件
 
 - Claude Code 环境
-- Claude Code 支持 Agent Teams（用于 /forge decide 和 /forge review）
-- Claude Code 支持 Subagent（用于 /forge build）
+- Claude Code 支持 Subagent（用于 /forge build、/forge decide 和 /forge review）
 
 ## 文件结构
 
@@ -115,7 +113,6 @@ git clone https://github.com/kkkman22/Forge.git ~/.claude/skills/forge
 ├── skills/          # 13 个 SKILL.md
 ├── agents/          # 7 个 Subagent 角色
 ├── commands/        # Forge Command 入口
-├── teams/           # 2 个 Agent Team 配置
 ├── hooks/           # Claude Code Hooks
 ├── templates/       # 文件模板
 ├── scripts/
