@@ -22,11 +22,15 @@ disable-model-invocation: true
 
 ## 2. 数据来源与五问题恢复
 
-### 前置：读取 status.md
+### 前置：读取状态文件
 
-**数据来源**：`.forge/status.md` + `.forge/knowledge/sessions/`
+**数据来源**：`.forge/status.md` 或 `.forge/status/*.md` + `.forge/knowledge/sessions/`
 
-先读取 `status.md` 获取全局上下文：
+**单任务模式**：直接读取 `.forge/status.md`。
+
+**多任务模式**：调用 `listActiveTasks(io, forgeRoot)` 获取活跃任务列表。多个活跃任务时，显示编号列表让用户选择。仅一个活跃任务时自动恢复。
+
+先读取状态文件获取全局上下文：
 
 | 字段 | 用途 |
 |------|------|
