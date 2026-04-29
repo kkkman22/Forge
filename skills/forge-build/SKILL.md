@@ -1121,6 +1121,43 @@ $ /forge build
 
 ---
 
+## 上下文预算管理
+
+本节定义 build 阶段的上下文消耗控制策略。所有信息源按生命周期分类，每类应用对应的裁剪规则。
+
+### 分类与裁剪策略
+
+| 信息源 | 生命周期 | 裁剪策略 |
+|--------|---------|---------|
+| Explore Agent 结果 | Ephemeral（一次性消费） | Explore_Summarizer：转换为结构化摘要（入口点 + 依赖链 + 测试文件 + 关键接口），≤300 tokens |
+| Subagent 执行结果 | Ephemeral（一次性消费） | Subagent_Summary_Protocol：提取状态/任务/变更文件/测试结果/commit/自检，≤200 tokens |
+| 测试运行输出 | Ephemeral（一次性消费） | Test_Output_Trimmer：全通过时单行摘要（≤150 tokens），有失败时仅保留失败详情 |
+| Git Diff/Status | Ephemeral（一次性消费） | Git_Output_Limiter：diff >50 行时文件级摘要，status >30 文件时分类摘要（每类 ≤10） |
+| Plan 任务列表 | Persistent（持久引用） | 保留在 context，Restatement 时刷新 |
+| 当前任务描述 | Persistent（持久引用） | 保留在 context，Restatement 时刷新 |
+| TDD 循环测试输出 | Phase-scoped（阶段引用） | 当前阶段保留，Restatement 时摘要替代 |
+| Progress 更新 | Write-and-discard | 写入 `.forge/progress/` 后只保留确认信息 |
+
+### 裁剪执行时机
+
+1. **Explore Agent 返回后**：立即将全量输出转换为 Explore_Summarizer 格式
+2. **Subagent 返回后**：立即提取 Subagent_Summary_Protocol 字段，丢弃执行日志
+3. **测试运行后**：立即应用 Test_Output_Trimmer
+4. **Git 操作后**：diff/status 输出超过阈值时立即应用 Git_Output_Limiter
+5. **Write-and-discard 操作后**：文件写入完成后立即用确认信息替代全量内容
+
+### Restatement 预算状态行
+
+在 Restatement Checkpoint 的 5 区块摘要中增加第 6 行预算状态：
+
+```
+💾 上下文预算：本轮节省约 ~<saved_tokens> tokens（Explore: <n>, Test: <n>, Git: <n>, Subagent: <n>）
+```
+
+此状态行计入 Restatement 1,500 token 预算。若加上此行导致超出预算，省略预算状态行，优先保证核心 5 区块完整。
+
+---
+
 ## 反射触发器
 
 以下情境不是硬性规则，而是**推理触发器**——当你遇到这些情境时，停下来问自己一个问题，根据答案决定下一步。不要机械地执行阈值判断（"超过 N 行就拆"），而是结合当前上下文做出判断。
