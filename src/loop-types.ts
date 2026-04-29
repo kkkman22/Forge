@@ -316,3 +316,45 @@ export interface ParallelExecutionResult<T = string> {
   /** Failed subagent records. */
   failed: Array<{ agentType: string; error: string }>;
 }
+
+// ---------------------------------------------------------------------------
+// Branch lifecycle enforcement (Branch Lifecycle Enforcement)
+// ---------------------------------------------------------------------------
+
+/** Result of checking whether a branch topic matches the task topic. */
+export interface BranchTopicGateResult {
+  /** Whether the build gate allows proceeding. */
+  allowed: boolean;
+  /** Human-readable reasons when not allowed. */
+  reasons: string[];
+}
+
+/** A pending-delivery record for "keep branch" ship selections. */
+export interface PendingDeliveryRecord {
+  /** The branch name (e.g. "feature/my-topic"). */
+  branchName: string;
+  /** The topic extracted from the branch at recording time. */
+  topic: string;
+  /** Unix timestamp (ms) when the record was created. */
+  timestamp: number;
+}
+
+/** Result of checking whether a commit's topic matches the branch topic. */
+export interface CommitTopicCheckResult {
+  /** Whether the commit is allowed. */
+  allowed: boolean;
+  /** Reason when not allowed. */
+  reason?: string;
+}
+
+/** Warning about an unshipped branch with pending delivery. */
+export interface UnshippedBranchWarning {
+  /** The branch name. */
+  branchName: string;
+  /** The topic associated with the branch. */
+  topic: string;
+  /** Unix timestamp (ms) when the pending delivery was recorded. */
+  timestamp: number;
+  /** Human-readable warning message. */
+  message: string;
+}
