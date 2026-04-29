@@ -266,12 +266,6 @@ export {
 // Branch lifecycle enforcement
 // ---------------------------------------------------------------------------
 
-export type {
-  BranchTopicGateResult,
-  CommitTopicCheckResult,
-  PendingDeliveryRecord,
-  UnshippedBranchWarning,
-} from "./loop-types.js";
 export {
   checkBranchTopicGate,
   checkCommitTopicMatch,
@@ -280,3 +274,9 @@ export {
   extractBranchTopic,
   recordPendingDelivery,
 } from "./branch-lifecycle.js";
+export type {
+  BranchTopicGateResult,
+  CommitTopicCheckResult,
+  PendingDeliveryRecord,
+  UnshippedBranchWarning,
+} from "./loop-types.js";
