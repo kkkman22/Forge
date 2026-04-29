@@ -52,21 +52,49 @@ disable-model-invocation: true
 
 ### §2.1 分支门禁（检查 #4）
 
-**目的**：防止多功能开发时代码提交到错误分支。
+**目的**：防止多功能开发时代码提交到错误分支，包含 topic 级匹配和生命周期检测。
 
 **检查流程**：
 
 1. 获取当前分支：`git branch --show-current`
 2. 确定期望分支：`feature/<topic>` 或 `forge/<topic>`（均接受）
-3. 比对并决策：
+3. 提取 task topic：从 `.forge/status.md` 的 `current_task` 字段获取当前任务 topic
+4. **Topic 匹配检查**：调用 `checkBranchTopicGate(currentBranch, taskTopic)`
+   - `branchName` 来源：`git branch --show-current` 输出
+   - `taskTopic` 来源：`.forge/status.md` 的 `current_task` 字段
+   - 返回 `allowed: false` 时 → 🚫 阻断 build，输出 topic 不匹配原因
+   - 返回 `allowed: true` 时 → ✅ 继续
+5. 比对并决策：
 
 | 当前分支 | 期望分支状态 | 操作 |
 |---------|------------|------|
-| 已在 `feature/<topic>` 或 `forge/<topic>` | — | ✅ 通过 |
+| 已在 `feature/<topic>` 且 topic 匹配 | — | ✅ 通过 |
 | 在其他分支上 | 已存在 | `git checkout <branch>` |
 | 在其他分支上 | 不存在 | `git checkout -b feature/<topic>` |
+| 已在 `feature/<topic>` 但 topic 不匹配 | — | 🚫 阻断，提示切换或创建正确分支 |
 
 **自动切换前提**：工作树必须干净。不干净时阻断，提示先 `git stash` 或 `git commit`。
+
+**未交付分支警告**（build 启动时）：
+
+在分支门禁通过后、任务执行前，检查是否有未完成的分支交付记录：
+
+1. 读取 pending-delivery 记录（存储在 `.forge/status.md` 或配置指定的持久化位置）
+2. 调用 `detectUnshippedBranches(pendingDeliveries, currentTopic)`
+   - `pendingDeliveries` 来源：从持久化位置读取的 `PendingDeliveryRecord[]`
+   - `currentTopic` 来源：当前任务的 topic
+   - 返回非空时 → ⚠️ 展示警告，提示用户处理未交付分支
+3. 调用 `detectStaleBranches(pendingDeliveries, currentTopic, currentTime)`
+   - `currentTime` 来源：`Date.now()`
+   - 返回非空时 → ⚠️ 展示过期分支警告
+
+**提交前 topic 检查**：
+
+每次原子提交前，调用 `checkCommitTopicMatch(currentBranch, commitTopic)`：
+- `branchName` 来源：`git branch --show-current`
+- `commitTopic` 来源：当前任务的 topic
+- 返回 `allowed: false` → 🚫 阻断提交，输出跨 topic 污染警告
+- 返回 `allowed: true` → ✅ 允许提交
 
 **输出格式**（Canonical Example — 分支切换）：
 
@@ -78,9 +106,20 @@ disable-model-invocation: true
 继续 build...
 ```
 
+**输出格式**（Canonical Example — Topic 不匹配）：
+
+```
+🚫 分支 topic 不匹配
+当前分支：feature/skill-document-optimization
+任务 topic：branch-lifecycle-enforcement
+操作：请切换到正确的分支或创建新分支
+  git checkout feature/branch-lifecycle-enforcement
+  或: git checkout -b feature/branch-lifecycle-enforcement
+```
+
 其他场景：分支不存在 → 输出"分支创建"并 `checkout -b`；跨功能分支 → 输出 ⚠️ 警告；工作树不干净 → 🚫 阻断并建议 stash/commit。
 
-**轻量路径例外**：跳过检查 #1 和 #2，但仍需通过 #3 和 #4。
+**轻量路径例外**：跳过检查 #1 和 #2，但仍需通过 #3 和 #4（含 topic 匹配）。
 
 ---
 
