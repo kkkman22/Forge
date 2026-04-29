@@ -44,3 +44,28 @@ export function computePerformanceBaseline(timings: IterationTiming[]): Performa
     avgAgentCallMs: sum(agentDurations) / agentDurations.length,
   };
 }
+
+function formatDuration(ms: number): string {
+  if (Number.isNaN(ms)) return "N/A";
+  if (ms < 1000) return `${ms.toFixed(0)}ms`;
+  const seconds = ms / 1000;
+  if (seconds < 60) return `${seconds.toFixed(1)}s`;
+  const minutes = Math.floor(seconds / 60);
+  const remainingSeconds = (seconds % 60).toFixed(0);
+  return `${minutes}m ${remainingSeconds}s`;
+}
+
+export function formatPerformanceBaseline(baseline: PerformanceBaseline): string {
+  if (baseline.iterationCount === 0) {
+    return "=== Performance Baseline ===\nNo iterations completed (N/A)";
+  }
+
+  const lines = [
+    "=== Performance Baseline ===",
+    `Total run time: ${formatDuration(baseline.totalRunTimeMs)}`,
+    `Iterations: ${baseline.iterationCount}`,
+    `Avg iteration: ${formatDuration(baseline.avgIterationMs)} (min: ${formatDuration(baseline.minIterationMs)}, max: ${formatDuration(baseline.maxIterationMs)})`,
+    `Avg agent call: ${formatDuration(baseline.avgAgentCallMs)}`,
+  ];
+  return lines.join("\n");
+}
