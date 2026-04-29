@@ -14,8 +14,10 @@ import { describe, expect, it } from "vitest";
 import {
   type StatusManagerIO,
   type TaskStatusEntry,
+  archiveTaskStatus,
   getMostRecentActiveTask,
   listActiveTasks,
+  migrateToMultiTask,
   readTaskStatus,
   writeTaskStatus,
 } from "../src/status-manager.js";
@@ -230,5 +232,99 @@ describe("Example: writeTaskStatus graceful degradation", () => {
     };
     // Should not throw
     expect(() => writeTaskStatus(io, FORGE_ROOT, "my-task", "content")).not.toThrow();
+  });
+});
+
+// ---------------------------------------------------------------------------
+// Property 7: Router multi-task routing
+// ---------------------------------------------------------------------------
+
+describe("Property 7: Router multi-task routing", () => {
+  it("writes to task-specific file when other active tasks exist", () => {
+    const files: Record<string, string> = {
+      [`${STATUS_DIR}/existing-task.md`]: makeStatusContent("existing-task", "build"),
+    };
+    const io = createInMemoryIO(files);
+
+    writeTaskStatus(io, FORGE_ROOT, "new-task", makeStatusContent("new-task", "review"));
+
+    // new-task should be written to status/ dir (not status.md)
+    expect(io.exists(`${STATUS_DIR}/new-task.md`)).toBe(true);
+    expect(io.read(`${STATUS_DIR}/new-task.md`)).toContain("new-task");
+    // existing task should be untouched
+    expect(io.read(`${STATUS_DIR}/existing-task.md`)).toContain("existing-task");
+  });
+});
+
+// ---------------------------------------------------------------------------
+// Property 10: Migration data preservation
+// ---------------------------------------------------------------------------
+
+describe("Property 10: Migration data preservation", () => {
+  it("preserves legacy content in task-specific file after migration", () => {
+    const legacyContent = `---\ncurrent_task: "legacy-task"\ntier: "standard"\nphase: "build"\nupdated: "2026-04-28"\n---\n\n# Status\nIn progress...`;
+    const io = createInMemoryIO({ [STATUS_FILE]: legacyContent });
+
+    migrateToMultiTask(io, FORGE_ROOT);
+
+    // Legacy content should be in task-specific file
+    expect(io.exists(`${STATUS_DIR}/legacy-task.md`)).toBe(true);
+    expect(io.read(`${STATUS_DIR}/legacy-task.md`)).toBe(legacyContent);
+  });
+});
+
+// ---------------------------------------------------------------------------
+// Property 11: Abort isolation
+// ---------------------------------------------------------------------------
+
+describe("Property 11: Abort isolation", () => {
+  it("archiving one task leaves other tasks unchanged", () => {
+    const files: Record<string, string> = {
+      [`${STATUS_DIR}/task-a.md`]: makeStatusContent("task-a", "build"),
+      [`${STATUS_DIR}/task-b.md`]: makeStatusContent("task-b", "review"),
+    };
+    const io = createInMemoryIO(files);
+
+    archiveTaskStatus(io, FORGE_ROOT, "task-a", "2026-04-30");
+
+    // task-a should be moved to archive
+    expect(io.exists(`${STATUS_DIR}/task-a.md`)).toBe(false);
+    expect(io.exists(`${FORGE_ROOT}/archive/2026-04-30-task-a/status.md`)).toBe(true);
+    // task-b should be untouched
+    expect(io.read(`${STATUS_DIR}/task-b.md`)).toContain("task-b");
+  });
+});
+
+// ---------------------------------------------------------------------------
+// Example: migration and directory behavior
+// ---------------------------------------------------------------------------
+
+describe("Example: migration triggers on second task write", () => {
+  it("auto-migrates when writing a second task to single-task mode", () => {
+    const legacyContent = makeStatusContent("first-task", "build");
+    const io = createInMemoryIO({ [STATUS_FILE]: legacyContent });
+
+    // Simulate adding a second task — should trigger migration
+    // First, manually set up what writeTaskStatus would see:
+    // status.md exists, status/ dir doesn't
+    writeTaskStatus(io, FORGE_ROOT, "second-task", makeStatusContent("second-task", "review"));
+
+    // After migration, both tasks should be in status/ dir
+    expect(io.exists(`${STATUS_DIR}/first-task.md`)).toBe(true);
+    expect(io.exists(`${STATUS_DIR}/second-task.md`)).toBe(true);
+  });
+});
+
+describe("Example: directory not auto-deleted", () => {
+  it("keeps status/ dir when all tasks complete", () => {
+    const files: Record<string, string> = {
+      [`${STATUS_DIR}/task-a.md`]: makeStatusContent("task-a", "completed"),
+    };
+    const io = createInMemoryIO(files);
+
+    const active = listActiveTasks(io, FORGE_ROOT);
+    expect(active).toHaveLength(0);
+    // Directory still exists
+    expect(io.dirExists(STATUS_DIR)).toBe(true);
   });
 });
