@@ -65,7 +65,7 @@ function makeStatusContent(
   return `---\ncurrent_task: "${task}"\ntier: "${tier}"\nphase: "${phase}"\nupdated: "${updated}"\n---\n`;
 }
 
-function makeTaskFile(taskName: string, phase: string): string {
+function makeTaskFile(taskName: string, phase: string): { path: string; content: string } {
   const taskId = taskName.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-+|-+$/g, "");
   return {
     path: `${STATUS_DIR}/${taskId}.md`,
