@@ -531,7 +531,7 @@ forge/
 │   ├── task-graph.ts           #   DAG 调度 + 并行执行引擎
 │   ├── handoff.ts              #   跨阶段决策传递
 │   └── loop-index.ts           #   自主循环模块统一入口
-├── test/                        # 1982 个测试（108 个测试文件，其中 68 个为 fast-check 属性测试文件）<!--exact: 测试数、文件数、属性测试数-->
+├── test/                        # 2081 个测试（110 个测试文件，其中 68 个为 fast-check 属性测试文件）<!--exact: 测试数、文件数、属性测试数-->
 ├── .github/workflows/ci.yml    # CI：typecheck + lint + coverage + dist 同步校验
 ├── biome.json                   # Linter / Formatter 配置
 ├── tsconfig.json                # TypeScript strict 配置
@@ -566,7 +566,7 @@ bash scripts/build-dist.sh
 
 **技术栈**：TypeScript 5.9（strict）、Vitest 3.2、fast-check 4.7（属性测试）、Biome 2.4（lint + format）。运行时依赖：`@anthropic-ai/claude-agent-sdk`、`commander`。
 
-**测试策略**：1982 个测试（108 个测试文件，其中 68 个为 fast-check 属性测试文件）验证不变量（invariant），而非特定输入输出。覆盖率 90.38% statements、90.1% branches、96.09% functions。<!--exact: 测试数、文件数、属性测试数; approximate: 覆盖率-->
+**测试策略**：2081 个测试（110 个测试文件，其中 68 个为 fast-check 属性测试文件）验证不变量（invariant），而非特定输入输出。覆盖率 90.38% statements、90.1% branches、96.09% functions。<!--exact: 测试数、文件数、属性测试数; approximate: 覆盖率-->
 
 ---
 

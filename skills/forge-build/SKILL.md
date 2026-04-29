@@ -29,7 +29,7 @@ disable-model-invocation: true
 | # | 检查条目 | 验证方法 | 阻断条件 | 不通过时的路由 |
 |---|---------|---------|---------|--------------|
 | 1 | **Spec 门禁** | 扫描 `.forge/specs/` 下所有 `spec.md` 文件，读取 YAML frontmatter 的 `status` 字段 | `status` 不是 `"locked"`（标准路径无 Spec 时豁免，见下方） | → `/forge spec` |
-| 2 | **Plan 门禁** | 扫描 `.forge/plans/` 下所有 `.md` 文件，读取 YAML frontmatter 的 `status` 字段 | `status` 不是 `"approved"` | → `/forge plan` |
+| 2 | **Plan 门禁** | 扫描 `.forge/plans/` 下所有 `.md` 文件，读取 YAML frontmatter 的 `status` 字段（支持 `format: "lightweight"` 和 `format: "full"`，缺省默认 `"full"`） | `status` 不是 `"approved"` | → `/forge plan` |
 | 3 | **`.forge/` 目录结构完整性** | 检查 `.forge/` 目录是否存在，且包含必要的子目录（`specs/`、`plans/`、`progress/`） | `.forge/` 不存在，或缺少必要子目录 | → `forge init` |
 
 **检查逻辑**：
@@ -159,7 +159,7 @@ disable-model-invocation: true
 
 **流程**：
 
-1. 读取 `.forge/plans/<topic>.md` 中的任务列表。
+1. 读取 `.forge/plans/<topic>.md` 中的任务列表，检测 `format` 字段（`lightweight` 或 `full`）。
 2. 对每个原子任务，先执行 **Closure-First 探针**（2 Probe + 1 Verify），再启动 TDD 循环。
 3. 对每个原子任务，启动一个 **Subagent** 执行 TDD 循环：
    - **RED**：写失败的测试，运行确认失败。
@@ -270,7 +270,15 @@ Restatement 是编排循环的**强制步骤**，不是可选优化。跳过 Res
 6. **验证命令**：任务完成后必须运行的命令
 7. **完成前自检**：TDD 完成后、报告状态前，执行轻量自检（见下方）
 8. **禁止事项**：不要修改任务范围外的文件，不要跳过测试
-9. **失敗重試 Restatement**：如果 TDD 循环中 GREEN 阶段测试未通过需要重试，在每次重试前先在当前上下文中重申以下内容，防止机械重复同一种失败的尝试：
+9. **失败重试 Restatement**：如果 TDD 循环中 GREEN 阶段测试未通过需要重试，在每次重试前先在当前上下文中重申以下内容，防止机械重复同一种失败的尝试：
+
+**Lightweight 格式的 TDD 指导**：
+
+当 Plan 的 `format` 为 `lightweight` 时，Subagent 指令中需要额外包含：
+
+- **Design Reference 上下文**：读取任务 `designReference` 指向的 design.md 章节，提取接口签名、数据模型、正确性属性等完整定义，注入到 Subagent 指令中。Subagent 无需读取整个 design.md，只需读取被引用的章节。
+- **TDD 引导方式**：Subagent 根据 Design Reference 中的接口定义和正确性属性编写测试（RED），然后实现代码让测试通过（GREEN），最后重构（REFACTOR）。这与 full 格式下的 TDD 流程一致，区别在于代码的具体内容来自 design.md 而非 Plan 中的预写代码。
+- **Property Ref**：如果任务包含 `propertyRef`，Subagent 必须参考 design.md 中对应的 Correctness Property 编写属性测试。
 
 ```
 重试前确认：

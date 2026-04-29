@@ -4,7 +4,10 @@
  * Implements Plan task validation:
  *   - validateAtomicTask:  Validates a single atomic task has all required fields
  *   - scanForPlaceholders: Scans text for forbidden placeholder content
- *   - validatePlanTasks:   Validates all tasks in a plan
+ *   - validatePlanTasks:   Validates all tasks in a plan (full format)
+ *   - validateLightweightTask / validateLightweightPlan: Lightweight format validation
+ *   - detectPlanFormat:    Detects plan format from frontmatter
+ *   - validatePlan:        Unified dispatcher that routes to the correct validator
  *
  * Per SKILL.md §3, each atomic task must contain:
  *   - Task number, title, file path
@@ -17,8 +20,10 @@
  *   TBD, TODO, 待定, 后续补充, 类似 Task, 添加适当的错误处理
  */
 
+import { extractStringField } from "./frontmatter.js";
+
 // ---------------------------------------------------------------------------
-// Types
+// Types — Full format (Atomic Task)
 // ---------------------------------------------------------------------------
 
 export interface TDDSteps {
@@ -36,6 +41,34 @@ export interface AtomicTask {
   verifyCommand: string;
   commitMessage: string;
   dependsOn?: number[];
+}
+
+// ---------------------------------------------------------------------------
+// Types — Lightweight format
+// ---------------------------------------------------------------------------
+
+export type PlanFormat = "lightweight" | "full";
+
+export interface LightweightTask {
+  taskNumber: number;
+  title: string;
+  filePath: string;
+  goal: string;
+  designReference: string;
+  propertyRef?: number;
+  verifyCommand: string;
+  commitMessage: string;
+  dependsOn?: number[];
+}
+
+export interface DesignReferenceEntry {
+  anchor: string;
+  summary: string;
+}
+
+export interface DesignReferenceValidation {
+  valid: boolean;
+  errors: string[];
 }
 
 // ---------------------------------------------------------------------------
@@ -233,4 +266,175 @@ export function validatePlanTasks(tasks: AtomicTask[]): boolean {
 
   const dependencyErrors = validateDependencies(tasks);
   return dependencyErrors.length === 0;
+}
+
+// ---------------------------------------------------------------------------
+// Lightweight format — format detection
+// ---------------------------------------------------------------------------
+
+export function detectPlanFormat(frontmatter: string): PlanFormat {
+  const value = extractStringField(frontmatter, "format");
+  if (value === "lightweight") return "lightweight";
+  return "full";
+}
+
+// ---------------------------------------------------------------------------
+// Lightweight format — heading anchor extraction
+// ---------------------------------------------------------------------------
+
+export function extractHeadingAnchors(markdownContent: string): string[] {
+  const anchors: string[] = [];
+  const lines = markdownContent.split("\n");
+
+  for (const line of lines) {
+    const match = line.match(/^#{1,6}\s+(.+)$/);
+    if (match) {
+      const headingText = match[1];
+      const anchor = headingText
+        .toLowerCase()
+        .replace(/\s+/g, "-")
+        .replace(/[^a-z0-9\-_]/g, "")
+        .replace(/^-+|-+$/g, "");
+      anchors.push(anchor);
+    }
+  }
+
+  return anchors;
+}
+
+// ---------------------------------------------------------------------------
+// Lightweight format — task validation
+// ---------------------------------------------------------------------------
+
+const DESIGN_REF_PATTERN = /^design\.md#[a-z0-9\-_]+$/;
+
+export function validateLightweightTask(task: LightweightTask): {
+  valid: boolean;
+  errors: string[];
+} {
+  const errors: string[] = [];
+
+  if (!task.title || task.title.trim() === "") errors.push("Missing title");
+  if (!task.filePath || task.filePath.trim() === "") errors.push("Missing file path");
+  if (!task.goal || task.goal.trim() === "") errors.push("Missing goal");
+  if (!task.verifyCommand || task.verifyCommand.trim() === "")
+    errors.push("Missing verify command");
+  if (!task.commitMessage || task.commitMessage.trim() === "")
+    errors.push("Missing commit message");
+
+  if (!task.designReference || task.designReference.trim() === "") {
+    errors.push("Missing design reference");
+  } else if (!DESIGN_REF_PATTERN.test(task.designReference)) {
+    errors.push(`Invalid Design Reference format: ${task.designReference}`);
+  }
+
+  const textFields = [
+    task.title,
+    task.filePath,
+    task.goal,
+    task.designReference,
+    task.verifyCommand,
+    task.commitMessage,
+  ];
+  const allText = textFields.join("\n");
+  const placeholders = scanForPlaceholders(allText);
+  if (placeholders.length > 0) {
+    errors.push(`Found forbidden placeholders: ${placeholders.join(", ")}`);
+  }
+
+  return { valid: errors.length === 0, errors };
+}
+
+export function validateLightweightPlan(tasks: LightweightTask[]): boolean {
+  if (tasks.length === 0) return false;
+
+  const allValid = tasks.every((task) => validateLightweightTask(task).valid);
+  if (!allValid) return false;
+
+  const taskNumbers = new Set(tasks.map((t) => t.taskNumber));
+  for (const task of tasks) {
+    if (task.dependsOn) {
+      for (const dep of task.dependsOn) {
+        if (!taskNumbers.has(dep)) return false;
+      }
+    }
+  }
+
+  return true;
+}
+
+// ---------------------------------------------------------------------------
+// Lightweight format — Design Reference validation
+// ---------------------------------------------------------------------------
+
+export function validateDesignReferences(
+  references: string[],
+  designContent: string,
+): DesignReferenceValidation {
+  const errors: string[] = [];
+  const anchors = extractHeadingAnchors(designContent);
+
+  for (const ref of references) {
+    if (!DESIGN_REF_PATTERN.test(ref)) {
+      errors.push(`Invalid Design Reference format: ${ref}`);
+      continue;
+    }
+    const anchor = ref.replace(/^design\.md#/, "");
+    if (!anchors.includes(anchor)) {
+      errors.push(`Design Reference ${ref} not found in design.md`);
+    }
+  }
+
+  return { valid: errors.length === 0, errors };
+}
+
+// ---------------------------------------------------------------------------
+// Unified plan validation dispatcher
+// ---------------------------------------------------------------------------
+
+export function validatePlan(
+  frontmatter: string,
+  tasks: AtomicTask[] | LightweightTask[],
+  designContent?: string,
+): { valid: boolean; errors: string[]; format: PlanFormat } {
+  const format = detectPlanFormat(frontmatter);
+
+  if (format === "lightweight") {
+    const lwTasks = tasks as LightweightTask[];
+    const planValid = validateLightweightPlan(lwTasks);
+
+    const errors: string[] = [];
+    if (!planValid) {
+      for (const task of lwTasks) {
+        const result = validateLightweightTask(task);
+        if (!result.valid) {
+          errors.push(`Task ${task.taskNumber}: ${result.errors.join(", ")}`);
+        }
+      }
+      const taskNumbers = new Set(lwTasks.map((t) => t.taskNumber));
+      for (const task of lwTasks) {
+        if (task.dependsOn) {
+          for (const dep of task.dependsOn) {
+            if (!taskNumbers.has(dep)) {
+              errors.push(`Task ${task.taskNumber} depends on non-existent task ${dep}`);
+            }
+          }
+        }
+      }
+    }
+
+    if (planValid && designContent) {
+      const refs = lwTasks.map((t) => t.designReference);
+      const refResult = validateDesignReferences(refs, designContent);
+      if (!refResult.valid) {
+        return { valid: false, errors: refResult.errors, format };
+      }
+    }
+
+    return { valid: planValid && errors.length === 0, errors, format };
+  }
+
+  // Full format
+  const valid = validatePlanTasks(tasks as AtomicTask[]);
+  return { valid, errors: valid ? [] : ["One or more tasks failed validation"], format };
 }

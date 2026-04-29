@@ -163,17 +163,29 @@ describe("barrel file does not expose internal modules", () => {
 
   // Verify the total number of value exports is exactly what we expect.
   // This catches any accidental additions to the barrel file.
-  it("has exactly 7 value exports", () => {
+  it("has exactly 19 value exports", () => {
     const valueExports = Object.keys(exports).filter((key) => typeof exports[key] !== "undefined");
-    expect(valueExports).toHaveLength(7);
+    expect(valueExports).toHaveLength(19);
     expect(valueExports.sort()).toEqual([
       "CliError",
+      "FORBIDDEN_PLACEHOLDERS",
       "ForgeError",
       "SdkAgentAdapter",
       "SdkDriver",
+      "detectPlanFormat",
       "evaluateReviewGate",
       "evaluateShipGate",
       "evaluateTestGate",
+      "extractHeadingAnchors",
+      "scanForPlaceholders",
+      "validateAtomicTask",
+      "validateDependencies",
+      "validateDesignReferences",
+      "validateLightweightPlan",
+      "validateLightweightTask",
+      "validatePlan",
+      "validatePlanTasks",
+      "validateSpecLocked",
     ]);
   });
 });
