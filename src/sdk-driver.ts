@@ -232,6 +232,9 @@ export class SdkDriver {
   /** Flag indicating requestStop() has been called. */
   private stopRequested = false;
 
+  /** Cleanup promise from requestStop(), awaitable by callers. */
+  private stopPromise: Promise<void> | null = null;
+
   /** Counter for consecutive review-fix loop iterations (skill-aware mode). */
   private reviewFixAttempts = 0;
 
@@ -572,7 +575,12 @@ export class SdkDriver {
 
     // Execute effects (rollback + stop) — fire and forget since
     // requestStop is called from signal handlers.
-    void this.executeEffects(result.effects);
+    this.stopPromise = this.executeEffects(result.effects);
+  }
+
+  /** Returns the cleanup promise from the last requestStop() call. */
+  getStopPromise(): Promise<void> | null {
+    return this.stopPromise ?? null;
   }
 
   // -------------------------------------------------------------------------
