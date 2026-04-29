@@ -1,10 +1,10 @@
 ---
-current_task: "agent-team-migration"
+current_task: "skill-document-optimization"
 tier: "standard"
-phase: "completed"
+phase: "build"
 updated: "2026-04-29"
 ---
 
 # 项目状态
 
-Agent Team → Subagent 迁移已完成，知识已沉淀，制品已归档。
+SKILL 文档优化：16 个 SKILL.md 从 ~320K 压缩至 ≤192K。

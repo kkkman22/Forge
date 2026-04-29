@@ -55,6 +55,8 @@ export function branchExists(branchName: string, cwd: string): boolean {
     execFileSync("git", ["rev-parse", "--verify", `refs/heads/${branchName}`], {
       cwd,
       stdio: "pipe",
+      timeout: 30_000,
+      killSignal: "SIGTERM",
     });
     return true;
   } catch {
@@ -199,7 +201,11 @@ export class RunManager {
     }
 
     // Record base commit before creating the branch
-    const baseCommit = execFileSync("git", ["rev-parse", "HEAD"], { cwd }).toString().trim();
+    const baseCommit = execFileSync("git", ["rev-parse", "HEAD"], {
+      cwd,
+      timeout: 30_000,
+      killSignal: "SIGTERM",
+    }).toString().trim();
 
     // Create run directory and notes file paths
     const runDir = path.join(cwd, ".forge", "runs", runId);
@@ -207,7 +213,11 @@ export class RunManager {
 
     try {
       // Create the new branch
-      execFileSync("git", ["checkout", "-b", branchName], { cwd });
+      execFileSync("git", ["checkout", "-b", branchName], {
+        cwd,
+        timeout: 30_000,
+        killSignal: "SIGTERM",
+      });
     } catch (error) {
       // Clean up run directory and notes file on branch creation failure
       try {
@@ -245,7 +255,11 @@ export class RunManager {
    */
   static resumeRun(branchName: string, cwd: string): RunSetup & { lastIteration: number } {
     // Record current base commit
-    const baseCommit = execFileSync("git", ["rev-parse", "HEAD"], { cwd }).toString().trim();
+    const baseCommit = execFileSync("git", ["rev-parse", "HEAD"], {
+      cwd,
+      timeout: 30_000,
+      killSignal: "SIGTERM",
+    }).toString().trim();
 
     // Find the run directory — scan .forge/runs/ for a directory with
     // a notes.md that references this branch or has content
@@ -361,6 +375,8 @@ export class RunManager {
       // Count active worktrees
       const worktreeOutput = execFileSync("git", ["worktree", "list", "--porcelain"], {
         cwd: repoRoot,
+        timeout: 30_000,
+        killSignal: "SIGTERM",
       })
         .toString()
         .trim();
@@ -395,12 +411,18 @@ export class RunManager {
       // Record base commit before creating the worktree
       const baseCommit = execFileSync("git", ["rev-parse", "HEAD"], {
         cwd: repoRoot,
+        timeout: 30_000,
+        killSignal: "SIGTERM",
       })
         .toString()
         .trim();
 
       // Create worktree with a new branch
-      execFileSync("git", ["worktree", "add", worktreePath, "-b", branchName], { cwd: repoRoot });
+      execFileSync("git", ["worktree", "add", worktreePath, "-b", branchName], {
+        cwd: repoRoot,
+        timeout: 30_000,
+        killSignal: "SIGTERM",
+      });
 
       // Create run directory inside the worktree — wrap in try/catch to
       // clean up the worktree if directory initialization fails
@@ -417,7 +439,11 @@ export class RunManager {
       } catch (initError) {
         // Worktree was created but run directory init failed — remove worktree
         try {
-          execFileSync("git", ["worktree", "remove", "--force", worktreePath], { cwd: repoRoot });
+          execFileSync("git", ["worktree", "remove", "--force", worktreePath], {
+            cwd: repoRoot,
+            timeout: 30_000,
+            killSignal: "SIGTERM",
+          });
         } catch (err) {
           console.warn(
             `[debug] worktree removal failed for ${worktreePath}: ${err instanceof Error ? err.message : String(err)}`,
@@ -427,7 +453,11 @@ export class RunManager {
         // Clean up the orphan branch created with the worktree (R11)
         let branchCleanupNote = "";
         try {
-          execFileSync("git", ["branch", "-D", branchName], { cwd: repoRoot });
+          execFileSync("git", ["branch", "-D", branchName], {
+            cwd: repoRoot,
+            timeout: 30_000,
+            killSignal: "SIGTERM",
+          });
         } catch (branchErr) {
           // Include branch name in error message for manual cleanup (R11.2)
           const branchErrMsg = branchErr instanceof Error ? branchErr.message : String(branchErr);

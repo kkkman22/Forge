@@ -51,7 +51,7 @@ export function buildCaffeinateCommand(pid: number): SleepPreventionCommand {
   return {
     command: "caffeinate",
     args: ["-i", "-w", String(pid)],
-    detached: true,
+    detached: false,
   };
 }
 
