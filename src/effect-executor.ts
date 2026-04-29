@@ -246,7 +246,17 @@ export class EffectExecutor implements EffectExecutorInterface {
     }
 
     const addCmd = buildAddAllCommand();
-    execFileSync(addCmd.executable, addCmd.args, { cwd: this.deps.cwd });
+    try {
+      execFileSync(addCmd.executable, addCmd.args, {
+        cwd: this.deps.cwd,
+        timeout: 30_000,
+        killSignal: "SIGTERM",
+      });
+    } catch (err) {
+      throw new UnexpectedEffectError(
+        `git add timed out: ${err instanceof Error ? err.message : String(err)}`,
+      );
+    }
 
     // Inner-layer frozen zone check: scan staged files for frozen zone violations.
     // Throws FrozenZoneViolation to signal the driver to terminate the loop
@@ -257,7 +267,11 @@ export class EffectExecutor implements EffectExecutorInterface {
       // Unstage the frozen files to prevent them from being committed
       for (const file of violations) {
         try {
-          execFileSync("git", ["reset", "HEAD", "--", file], { cwd: this.deps.cwd });
+          execFileSync("git", ["reset", "HEAD", "--", file], {
+            cwd: this.deps.cwd,
+            timeout: 30_000,
+            killSignal: "SIGTERM",
+          });
         } catch (err) {
           this.deps.onLog?.(
             `[debug] git reset HEAD failed for ${file}: ${err instanceof Error ? err.message : String(err)}`,
@@ -269,7 +283,11 @@ export class EffectExecutor implements EffectExecutorInterface {
 
     const commitCmd = buildCommitCommand(message);
     try {
-      execFileSync(commitCmd.executable, commitCmd.args, { cwd: this.deps.cwd });
+      execFileSync(commitCmd.executable, commitCmd.args, {
+        cwd: this.deps.cwd,
+        timeout: 30_000,
+        killSignal: "SIGTERM",
+      });
     } catch {
       // Commit may fail if all staged files were unstaged (nothing to commit)
       this.deps.onLog("Commit skipped: no changes to commit after frozen zone filtering");
@@ -292,6 +310,8 @@ export class EffectExecutor implements EffectExecutorInterface {
     try {
       const output = execFileSync("git", ["diff", "--cached", "--name-only"], {
         cwd: this.deps.cwd,
+        timeout: 30_000,
+        killSignal: "SIGTERM",
       })
         .toString()
         .trim();
@@ -308,6 +328,8 @@ export class EffectExecutor implements EffectExecutorInterface {
         try {
           const content = execFileSync("git", ["show", `:${file}`], {
             cwd: this.deps.cwd,
+            timeout: 30_000,
+            killSignal: "SIGTERM",
           }).toString();
 
           const result = checkWritePermission(forgePath, content);
@@ -352,7 +374,11 @@ export class EffectExecutor implements EffectExecutorInterface {
     if (this.deps.dryRun) {
       this.deps.onLog("Dry-run rollback — listing files that would be cleaned:");
       const dryRunCmd = buildCleanDryRunCommand();
-      const output = execFileSync(dryRunCmd.executable, dryRunCmd.args, { cwd: this.deps.cwd })
+      const output = execFileSync(dryRunCmd.executable, dryRunCmd.args, {
+        cwd: this.deps.cwd,
+        timeout: 30_000,
+        killSignal: "SIGTERM",
+      })
         .toString()
         .trim();
       if (output) {
@@ -368,7 +394,11 @@ export class EffectExecutor implements EffectExecutorInterface {
     // Safety net: stash uncommitted changes before destructive rollback
     try {
       const stashCmd = buildStashCommand("forge-rollback-safety-net");
-      execFileSync(stashCmd.executable, stashCmd.args, { cwd: this.deps.cwd });
+      execFileSync(stashCmd.executable, stashCmd.args, {
+        cwd: this.deps.cwd,
+        timeout: 30_000,
+        killSignal: "SIGTERM",
+      });
 
       // Capture the stash ref for recovery purposes
       let stashRef: string;
@@ -376,6 +406,8 @@ export class EffectExecutor implements EffectExecutorInterface {
         const stashRefCmd = buildStashRefCommand();
         stashRef = execFileSync(stashRefCmd.executable, stashRefCmd.args, {
           cwd: this.deps.cwd,
+          timeout: 30_000,
+          killSignal: "SIGTERM",
         })
           .toString()
           .trim();
@@ -394,10 +426,18 @@ export class EffectExecutor implements EffectExecutorInterface {
     }
 
     const resetCmd = buildResetCommand();
-    execFileSync(resetCmd.executable, resetCmd.args, { cwd: this.deps.cwd });
+    execFileSync(resetCmd.executable, resetCmd.args, {
+      cwd: this.deps.cwd,
+      timeout: 30_000,
+      killSignal: "SIGTERM",
+    });
 
     const cleanCmd = buildCleanCommand();
-    execFileSync(cleanCmd.executable, cleanCmd.args, { cwd: this.deps.cwd });
+    execFileSync(cleanCmd.executable, cleanCmd.args, {
+      cwd: this.deps.cwd,
+      timeout: 30_000,
+      killSignal: "SIGTERM",
+    });
   }
 
   /**
@@ -450,15 +490,27 @@ export class EffectExecutor implements EffectExecutorInterface {
    */
   private executeShipMerge(targetBranch: string, featureBranch: string): void {
     const checkoutCmd = buildCheckoutCommand(targetBranch);
-    execFileSync(checkoutCmd.executable, checkoutCmd.args, { cwd: this.deps.cwd });
+    execFileSync(checkoutCmd.executable, checkoutCmd.args, {
+      cwd: this.deps.cwd,
+      timeout: 30_000,
+      killSignal: "SIGTERM",
+    });
 
     try {
       const mergeCmd = buildMergeCommand(featureBranch, true);
-      execFileSync(mergeCmd.executable, mergeCmd.args, { cwd: this.deps.cwd });
+      execFileSync(mergeCmd.executable, mergeCmd.args, {
+        cwd: this.deps.cwd,
+        timeout: 30_000,
+        killSignal: "SIGTERM",
+      });
     } catch (mergeError) {
       try {
         const abortCmd = buildMergeAbortCommand();
-        execFileSync(abortCmd.executable, abortCmd.args, { cwd: this.deps.cwd });
+        execFileSync(abortCmd.executable, abortCmd.args, {
+          cwd: this.deps.cwd,
+          timeout: 30_000,
+          killSignal: "SIGTERM",
+        });
       } catch {
         /* merge --abort failure is non-fatal */
       }
@@ -468,7 +520,11 @@ export class EffectExecutor implements EffectExecutorInterface {
     }
 
     const deleteCmd = buildBranchDeleteCommand(featureBranch, false);
-    execFileSync(deleteCmd.executable, deleteCmd.args, { cwd: this.deps.cwd });
+    execFileSync(deleteCmd.executable, deleteCmd.args, {
+      cwd: this.deps.cwd,
+      timeout: 30_000,
+      killSignal: "SIGTERM",
+    });
   }
 
   /**
@@ -479,11 +535,17 @@ export class EffectExecutor implements EffectExecutorInterface {
    */
   private executeShipPushPr(remote: string, branch: string, title: string, body: string): void {
     const pushCmd = buildPushCommand(remote, branch, true);
-    execFileSync(pushCmd.executable, pushCmd.args, { cwd: this.deps.cwd });
+    execFileSync(pushCmd.executable, pushCmd.args, {
+      cwd: this.deps.cwd,
+      timeout: 30_000,
+      killSignal: "SIGTERM",
+    });
 
     try {
       execFileSync("gh", ["pr", "create", "--title", title, "--body", body], {
         cwd: this.deps.cwd,
+        timeout: 30_000,
+        killSignal: "SIGTERM",
       });
     } catch (prError) {
       this.deps.onLog(
@@ -497,9 +559,17 @@ export class EffectExecutor implements EffectExecutorInterface {
    */
   private executeShipDiscard(branch: string): void {
     const checkoutCmd = buildCheckoutCommand("main");
-    execFileSync(checkoutCmd.executable, checkoutCmd.args, { cwd: this.deps.cwd });
+    execFileSync(checkoutCmd.executable, checkoutCmd.args, {
+      cwd: this.deps.cwd,
+      timeout: 30_000,
+      killSignal: "SIGTERM",
+    });
 
     const deleteCmd = buildBranchDeleteCommand(branch, true);
-    execFileSync(deleteCmd.executable, deleteCmd.args, { cwd: this.deps.cwd });
+    execFileSync(deleteCmd.executable, deleteCmd.args, {
+      cwd: this.deps.cwd,
+      timeout: 30_000,
+      killSignal: "SIGTERM",
+    });
   }
 }
