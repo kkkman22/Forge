@@ -21,6 +21,7 @@ import {
   readTaskStatus,
   writeTaskStatus,
 } from "../src/status-manager.js";
+import { clearLoopFields } from "../src/status-file-ext.js";
 
 // ---------------------------------------------------------------------------
 // In-memory IO implementation for testing
@@ -326,5 +327,35 @@ describe("Example: directory not auto-deleted", () => {
     expect(active).toHaveLength(0);
     // Directory still exists
     expect(io.dirExists(STATUS_DIR)).toBe(true);
+  });
+});
+
+// ---------------------------------------------------------------------------
+// Property 8: Loop cleanup isolation
+// ---------------------------------------------------------------------------
+
+describe("Property 8: Loop cleanup isolation", () => {
+  it("clearing loop fields for one task leaves other tasks unchanged", () => {
+    const taskAContent = `---\ncurrent_task: "task-a"\ntier: "standard"\nphase: "build"\nmode: "autonomous"\nloop_run_id: "run-aaa"\nloop_iteration: 3\nskill_sequence: "plan,build"\nupdated: "2026-04-30"\n---\n`;
+    const taskBContent = `---\ncurrent_task: "task-b"\ntier: "full"\nphase: "review"\nmode: "autonomous"\nloop_run_id: "run-bbb"\nloop_iteration: 5\nskill_sequence: "decide,spec,plan,build"\nupdated: "2026-04-30"\n---\n`;
+
+    const io = createInMemoryIO({
+      [`${STATUS_DIR}/task-a.md`]: taskAContent,
+      [`${STATUS_DIR}/task-b.md`]: taskBContent,
+    });
+
+    // Clear loop fields for task-a
+    const aContent = io.read(`${STATUS_DIR}/task-a.md`);
+    const cleaned = clearLoopFields(aContent);
+    io.write(`${STATUS_DIR}/task-a.md`, cleaned);
+
+    // task-a should have loop fields cleared
+    const aAfter = io.read(`${STATUS_DIR}/task-a.md`);
+    expect(aAfter).not.toContain("loop_run_id");
+    expect(aAfter).not.toContain("loop_iteration");
+    expect(aAfter).toContain("task-a");
+
+    // task-b should be byte-identical to original
+    expect(io.read(`${STATUS_DIR}/task-b.md`)).toBe(taskBContent);
   });
 });
