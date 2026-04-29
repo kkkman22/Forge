@@ -1,6 +1,6 @@
 import type { LogEntry, LogLevel } from "./types.js";
 
-interface LogContext {
+export interface LogContext {
   runId?: string;
   iteration?: number;
   phase?: string;
