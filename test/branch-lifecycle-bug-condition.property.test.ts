@@ -42,11 +42,12 @@ import type {
 
 /** Generates a topic string: lowercase alphanumeric with hyphens, 1-20 chars. */
 const topicArb: fc.Arbitrary<string> = fc
-  .stringOf(fc.constantFrom(..."abcdefghijklmnopqrstuvwxyz0123456789-"), {
+  .array(fc.constantFrom(..."abcdefghijklmnopqrstuvwxyz0123456789-"), {
     minLength: 1,
     maxLength: 20,
   })
-  .filter((s) => !s.startsWith("-") && !s.endsWith("-") && !s.includes("--"));
+  .map((chars) => chars.join(""))
+  .filter((s: string) => !s.startsWith("-") && !s.endsWith("-") && !s.includes("--"));
 
 /** Generates a branch name with valid format: feature/<topic> or forge/<topic>. */
 const branchNameArb: fc.Arbitrary<string> = fc
@@ -309,7 +310,7 @@ describe("Property 4: Stale Branch Detection", () => {
         topicArb,
         topicArb,
         timestampArb,
-        fc.integer({ min: 1, max: 60000 }),
+        fc.integer({ min: 0, max: 59999 }),
         (currentTopic, otherTopic, now, withinThreshold) => {
           fc.pre(currentTopic !== otherTopic);
           const threshold = 60000;
