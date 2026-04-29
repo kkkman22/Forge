@@ -408,3 +408,74 @@ describe("serialize/deserialize", () => {
 		expect(() => ProcessRegistry.deserialize(JSON.stringify({ sessionPid: 1 }))).toThrow();
 	});
 });
+
+describe("Property 4: serialize/deserialize round-trip", () => {
+	it("deserialize(serialize()) produces equivalent metadata list", () => {
+		fc.assert(
+			fc.property(
+				fc.record({
+					sessionPid: fc.integer({ min: 1, max: 65535 }),
+					sessionPgid: fc.integer({ min: 1, max: 65535 }),
+					sessionStartTime: fc.integer({ min: 0, max: Date.now() }),
+					processes: fc.array(
+						fc.record({
+							pid: fc.integer({ min: 1, max: 65535 }),
+							pgid: fc.integer({ min: 1, max: 65535 }),
+							startTime: fc.integer({ min: 0, max: Date.now() }),
+							source: fc.string({ minLength: 1, maxLength: 30 }),
+							detached: fc.boolean(),
+							description: fc.option(fc.string({ maxLength: 50 }), { nil: undefined }),
+						}),
+						{ maxLength: 5 },
+					),
+				}),
+				(original) => {
+					const json = JSON.stringify(original);
+					const restored = ProcessRegistry.deserialize(json);
+					expect(restored.sessionPid).toBe(original.sessionPid);
+					expect(restored.sessionPgid).toBe(original.sessionPgid);
+					expect(restored.sessionStartTime).toBe(original.sessionStartTime);
+					expect(restored.processes).toHaveLength(original.processes.length);
+					for (let i = 0; i < original.processes.length; i++) {
+						expect(restored.processes[i]).toEqual(original.processes[i]);
+					}
+				},
+			),
+			{ numRuns: 100 },
+		);
+	});
+});
+
+describe("Property 5: deserialize rejects invalid JSON", () => {
+	it("throws on any invalid input", () => {
+		fc.assert(
+			fc.property(
+				fc.oneof(
+					fc.constant(""),
+					fc.constant("{"),
+					fc.constant("}"),
+					fc.constant("null"),
+					fc.constant("[]"),
+					fc.constant("42"),
+					fc.string({ minLength: 1, maxLength: 20 }).filter((s) => {
+						try {
+							const p = JSON.parse(s);
+							return !(
+								typeof p.sessionPid === "number" &&
+								typeof p.sessionPgid === "number" &&
+								typeof p.sessionStartTime === "number" &&
+								Array.isArray(p.processes)
+							);
+						} catch {
+							return true;
+						}
+					}),
+				),
+				(invalid) => {
+					expect(() => ProcessRegistry.deserialize(invalid)).toThrow();
+				},
+			),
+			{ numRuns: 100 },
+		);
+	});
+});
