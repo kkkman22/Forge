@@ -14,9 +14,14 @@ import { execFileSync } from "node:child_process";
 import { ForgeError } from "./forge-error.js";
 import {
   buildAddAllCommand,
+  buildBranchDeleteCommand,
+  buildCheckoutCommand,
   buildCleanCommand,
   buildCleanDryRunCommand,
   buildCommitCommand,
+  buildMergeAbortCommand,
+  buildMergeCommand,
+  buildPushCommand,
   buildResetCommand,
   buildStashCommand,
   buildStashRefCommand,
@@ -176,6 +181,21 @@ export class EffectExecutor implements EffectExecutorInterface {
 
       case "schedule_iteration": {
         // No-op at executor level — the driver handles iteration scheduling.
+        return;
+      }
+
+      case "ship_merge": {
+        this.executeShipMerge(effect.targetBranch, effect.featureBranch);
+        return;
+      }
+
+      case "ship_push_pr": {
+        this.executeShipPushPr(effect.remote, effect.branch, effect.title, effect.body);
+        return;
+      }
+
+      case "ship_discard": {
+        this.executeShipDiscard(effect.branch);
         return;
       }
     }
@@ -420,5 +440,66 @@ export class EffectExecutor implements EffectExecutorInterface {
         abortSignal.addEventListener("abort", onAbort, { once: true });
       }
     });
+  }
+
+  /**
+   * Execute a Ship merge: checkout target → merge --no-ff feature → delete feature branch.
+   *
+   * On merge failure, executes `merge --abort` to restore clean state
+   * and throws without deleting the feature branch.
+   */
+  private executeShipMerge(targetBranch: string, featureBranch: string): void {
+    const checkoutCmd = buildCheckoutCommand(targetBranch);
+    execFileSync(checkoutCmd.executable, checkoutCmd.args, { cwd: this.deps.cwd });
+
+    try {
+      const mergeCmd = buildMergeCommand(featureBranch, true);
+      execFileSync(mergeCmd.executable, mergeCmd.args, { cwd: this.deps.cwd });
+    } catch (mergeError) {
+      try {
+        const abortCmd = buildMergeAbortCommand();
+        execFileSync(abortCmd.executable, abortCmd.args, { cwd: this.deps.cwd });
+      } catch {
+        /* merge --abort failure is non-fatal */
+      }
+      throw new UnexpectedEffectError(
+        `Ship merge failed: ${mergeError instanceof Error ? mergeError.message : String(mergeError)}`,
+      );
+    }
+
+    const deleteCmd = buildBranchDeleteCommand(featureBranch, false);
+    execFileSync(deleteCmd.executable, deleteCmd.args, { cwd: this.deps.cwd });
+  }
+
+  /**
+   * Execute a Ship push + PR: push to remote with upstream, then create PR via gh CLI.
+   *
+   * Push failure throws immediately. PR creation failure logs a warning
+   * but does NOT throw — the push result is preserved.
+   */
+  private executeShipPushPr(remote: string, branch: string, title: string, body: string): void {
+    const pushCmd = buildPushCommand(remote, branch, true);
+    execFileSync(pushCmd.executable, pushCmd.args, { cwd: this.deps.cwd });
+
+    try {
+      execFileSync("gh", ["pr", "create", "--title", title, "--body", body], {
+        cwd: this.deps.cwd,
+      });
+    } catch (prError) {
+      this.deps.onLog(
+        `⚠️ PR creation failed: ${prError instanceof Error ? prError.message : String(prError)}. Branch was pushed successfully.`,
+      );
+    }
+  }
+
+  /**
+   * Execute a Ship discard: checkout main → force delete feature branch.
+   */
+  private executeShipDiscard(branch: string): void {
+    const checkoutCmd = buildCheckoutCommand("main");
+    execFileSync(checkoutCmd.executable, checkoutCmd.args, { cwd: this.deps.cwd });
+
+    const deleteCmd = buildBranchDeleteCommand(branch, true);
+    execFileSync(deleteCmd.executable, deleteCmd.args, { cwd: this.deps.cwd });
   }
 }
