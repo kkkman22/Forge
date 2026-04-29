@@ -27,6 +27,11 @@ export function isValidTransition(current: ChecklistStatus, next: ChecklistStatu
   return VALID_TRANSITIONS[current].includes(next);
 }
 
+function assertP0P1(s: string): "P0" | "P1" {
+  if (s !== "P0" && s !== "P1") throw new Error(`Invalid severity: ${s}`);
+  return s;
+}
+
 export function createChecklist(
   findings: Array<{
     severity: string;
@@ -39,7 +44,7 @@ export function createChecklist(
     .filter((f) => f.severity === "P0" || f.severity === "P1")
     .map((f, i) => ({
       findingId: `F-${String(i + 1).padStart(3, "0")}`,
-      severity: f.severity as "P0" | "P1",
+      severity: assertP0P1(f.severity),
       filePath: f.filePath,
       lineNumber: f.lineNumber,
       description: f.description,
@@ -95,8 +100,9 @@ export function serializeChecklist(entries: ChecklistEntry[], topic: string): st
   ];
 
   for (const entry of entries) {
+    const safeDesc = entry.description.replace(/\|/g, "&#124;");
     lines.push(
-      `| ${entry.findingId} | ${entry.severity} | ${entry.filePath}:${entry.lineNumber} | ${entry.description} | ${entry.status} | ${entry.fixCommit ?? "—"} |`,
+      `| ${entry.findingId} | ${entry.severity} | ${entry.filePath}:${entry.lineNumber} | ${safeDesc} | ${entry.status} | ${entry.fixCommit ?? "—"} |`,
     );
   }
 
@@ -108,14 +114,18 @@ export function parseChecklist(content: string): ChecklistEntry[] {
   const lines = content.split("\n");
 
   for (const line of lines) {
-    const m = line.match(/^\| (F-\d+) \| (P[01]) \| (.+):(\d+) \| (.+) \| (\S+) \| (.+) \|$/);
+    const m = line.match(
+      /^\| (F-\d+) \| (P[01]) \| ([^|]+?):(\d+) \| ([^|]+) \| (\S+) \| (.+) \|$/,
+    );
     if (m) {
+      const lineNumber = Number.parseInt(m[4], 10);
+      if (!Number.isFinite(lineNumber)) continue;
       entries.push({
         findingId: m[1],
         severity: m[2] as "P0" | "P1",
         filePath: m[3],
-        lineNumber: Number.parseInt(m[4], 10),
-        description: m[5],
+        lineNumber,
+        description: m[5].replace(/&#124;/g, "|"),
         status: m[6] as ChecklistStatus,
         fixCommit: m[7] === "—" ? undefined : m[7],
       });

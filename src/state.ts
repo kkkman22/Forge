@@ -497,10 +497,14 @@ function parseTasksBlock(raw: string): TaskStatusEntry[] {
     const fieldMatch = line.match(/^ {4}(\w+): "([^"]*)"$/);
     if (fieldMatch && current) {
       const [, key, value] = fieldMatch;
-      if (key === "worktree" && value) {
+      if (key === "tier") {
+        current.tier = value;
+      } else if (key === "phase") {
+        current.phase = value;
+      } else if (key === "updated") {
+        current.updated = value;
+      } else if (key === "worktree" && value) {
         current.worktree = value;
-      } else if (key !== "worktree") {
-        (current as Record<string, string | undefined>)[key] = value;
       }
     }
 
