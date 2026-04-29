@@ -1,9 +1,22 @@
-import { describe, it, expect, beforeEach } from "vitest";
+import { describe, it, expect, beforeEach, vi } from "vitest";
 import * as fc from "fast-check";
+
+const { mockSpawn, mockExecFileSync } = vi.hoisted(() => ({
+	mockSpawn: vi.fn(),
+	mockExecFileSync: vi.fn(),
+}));
+
+vi.mock("node:child_process", () => ({
+	spawn: mockSpawn,
+	execFileSync: mockExecFileSync,
+}));
+
 import { ProcessRegistry } from "../src/process-registry.js";
 
 beforeEach(() => {
 	ProcessRegistry.resetInstance();
+	mockSpawn.mockReset();
+	mockExecFileSync.mockReset();
 });
 
 describe("ProcessRegistry", () => {
@@ -80,6 +93,55 @@ describe("ProcessRegistry", () => {
 
 			const all = reg.getAll();
 			expect(all[0].description).toBe("caffeinate -i -w 1234");
+		});
+	});
+
+	describe("spawnTracked", () => {
+		it("auto-registers spawned child", () => {
+			const reg = ProcessRegistry.getInstance();
+			const mockChild = { pid: 4242, on: vi.fn() };
+			mockSpawn.mockReturnValue(mockChild);
+
+			const result = reg.spawnTracked("echo", ["hello"], {
+				source: "test-spawn",
+				detached: false,
+			} as any);
+
+			expect(result).toBe(mockChild);
+			expect(reg.size()).toBe(1);
+			expect(reg.getAll()[0].source).toBe("test-spawn");
+			expect(mockChild.on).toHaveBeenCalledWith("exit", expect.any(Function));
+		});
+	});
+
+	describe("execTracked", () => {
+		it("executes with default 30s timeout and killSignal SIGTERM", () => {
+			const reg = ProcessRegistry.getInstance();
+			mockExecFileSync.mockReturnValue("ok");
+
+			reg.execTracked("git", ["rev-parse", "HEAD"], { source: "git" });
+
+			expect(mockExecFileSync).toHaveBeenCalledWith(
+				"git",
+				["rev-parse", "HEAD"],
+				expect.objectContaining({
+					timeout: 30_000,
+					killSignal: "SIGTERM",
+				}),
+			);
+		});
+
+		it("allows custom timeout override", () => {
+			const reg = ProcessRegistry.getInstance();
+			mockExecFileSync.mockReturnValue("ok");
+
+			reg.execTracked("git", ["status"], { source: "git", timeout: 5000 });
+
+			expect(mockExecFileSync).toHaveBeenCalledWith(
+				"git",
+				["status"],
+				expect.objectContaining({ timeout: 5000 }),
+			);
 		});
 	});
 
