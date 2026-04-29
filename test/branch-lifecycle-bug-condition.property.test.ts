@@ -22,18 +22,16 @@
 import * as fc from "fast-check";
 import { describe, expect, it } from "vitest";
 import {
-  extractBranchTopic,
   checkBranchTopicGate,
-  recordPendingDelivery,
-  detectStaleBranches,
   checkCommitTopicMatch,
-  detectUnshippedBranches,
+  detectStaleBranches,
+  extractBranchTopic,
+  recordPendingDelivery,
 } from "../src/branch-lifecycle.js";
 import type {
   BranchTopicGateResult,
-  PendingDeliveryRecord,
   CommitTopicCheckResult,
-  UnshippedBranchWarning,
+  PendingDeliveryRecord,
 } from "../src/loop-types.js";
 
 // ---------------------------------------------------------------------------
@@ -58,7 +56,7 @@ const branchNameArb: fc.Arbitrary<string> = fc
 const timestampArb: fc.Arbitrary<number> = fc.integer({ min: 1, max: Number.MAX_SAFE_INTEGER });
 
 /** Generates a PendingDeliveryRecord. */
-const pendingDeliveryArb: fc.Arbitrary<PendingDeliveryRecord> = fc
+const _pendingDeliveryArb: fc.Arbitrary<PendingDeliveryRecord> = fc
   .tuple(branchNameArb, topicArb, timestampArb)
   .map(([branchName, topic, timestamp]) => ({
     branchName,
@@ -70,8 +68,8 @@ const pendingDeliveryArb: fc.Arbitrary<PendingDeliveryRecord> = fc
  * Generates a (branchName, taskTopic) pair where topics DO match.
  * The topic is extracted from the branch name and used as the task topic.
  */
-const matchedTopicPairArb: fc.Arbitrary<{ branchName: string; taskTopic: string }> = branchNameArb
-  .chain((branchName) => {
+const matchedTopicPairArb: fc.Arbitrary<{ branchName: string; taskTopic: string }> =
+  branchNameArb.chain((branchName) => {
     const topic = branchName.split("/").slice(1).join("/");
     return fc.constant({ branchName, taskTopic: topic });
   });
@@ -128,9 +126,9 @@ describe("Property 1: Topic Mismatch Detection", () => {
       fc.constant("main"),
       fc.constant("develop"),
       fc.constant("release/1.0"),
-      fc.string({ minLength: 1, maxLength: 20 }).filter(
-        (s) => !s.startsWith("feature/") && !s.startsWith("forge/"),
-      ),
+      fc
+        .string({ minLength: 1, maxLength: 20 })
+        .filter((s) => !s.startsWith("feature/") && !s.startsWith("forge/")),
     );
 
     fc.assert(
@@ -228,16 +226,12 @@ describe("Property 3: Pending-Delivery Recording", () => {
 
   it("recordPendingDelivery with forge/<topic> branch preserves the full branch name", () => {
     fc.assert(
-      fc.property(
-        topicArb,
-        timestampArb,
-        (topic, timestamp) => {
-          const branchName = `forge/${topic}`;
-          const result = recordPendingDelivery(branchName, topic, timestamp);
+      fc.property(topicArb, timestampArb, (topic, timestamp) => {
+        const branchName = `forge/${topic}`;
+        const result = recordPendingDelivery(branchName, topic, timestamp);
 
-          expect(result.branchName).toBe(branchName);
-        },
-      ),
+        expect(result.branchName).toBe(branchName);
+      }),
       { numRuns: 200 },
     );
   });
@@ -333,9 +327,9 @@ describe("Property 4: Stale Branch Detection", () => {
     fc.assert(
       fc.property(
         topicArb,
-        fc.array(topicArb, { minLength: 1, maxLength: 10 }).filter(
-          (topics) => topics.every((t) => t !== "current-topic"),
-        ),
+        fc
+          .array(topicArb, { minLength: 1, maxLength: 10 })
+          .filter((topics) => topics.every((t) => t !== "current-topic")),
         timestampArb,
         fc.integer({ min: 60001, max: 1000000 }),
         (_currentTopic, otherTopics, now, delta) => {
