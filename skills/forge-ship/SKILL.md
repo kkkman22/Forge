@@ -101,13 +101,16 @@ ci_check_command 已配置为 "npm run check"，但 test 阶段未运行该命�
 
 ### 选项 1：合并到主分支
 
-**操作**：本地 merge 当前分支到主分支，然后删除开发分支。
+**操作**：通过 `ship_merge` 效果执行，经过 `git-transaction.ts` 安全管道。
 
-```bash
-git checkout main
-git merge <feature-branch> --no-ff
-git branch -d <feature-branch>
 ```
+OrchestratorEffect: { type: "ship_merge", targetBranch: "main", featureBranch: "<branch>" }
+→ buildCheckoutCommand("main")        → execFileSync
+→ buildMergeCommand(branch, true)     → execFileSync
+→ buildBranchDeleteCommand(branch, false) → execFileSync
+```
+
+**错误恢复**：merge 失败时自动执行 `merge --abort`，恢复到 merge 前状态。
 
 **适用场景**：个人项目、小团队直接合并。
 
@@ -121,12 +124,15 @@ git branch -d <feature-branch>
 
 ### 选项 2：推送并创建 PR
 
-**操作**：推送当前分支到远程仓库，然后创建 Pull Request。
+**操作**：通过 `ship_push_pr` 效果执行，经过 `git-transaction.ts` 安全管道。
 
-```bash
-git push -u origin <feature-branch>
-gh pr create --title "<PR 标题>" --body "<PR 描述>"
 ```
+OrchestratorEffect: { type: "ship_push_pr", remote: "origin", branch: "<branch>", title, body }
+→ buildPushCommand("origin", branch, true) → execFileSync
+→ gh pr create --title ... --body ...       → execFileSync
+```
+
+**错误恢复**：push 失败时阻断，不创建 PR；PR 创建失败时保留 push 结果并输出警告。
 
 **适用场景**：团队协作、需要 Code Review 的项目。
 
@@ -175,9 +181,12 @@ gh pr create --title "<PR 标题>" --body "<PR 描述>"
 
 **执行丢弃**：
 
-```bash
-git checkout main
-git branch -D <feature-branch>
+通过 `ship_discard` 效果执行，经过 `git-transaction.ts` 安全管道。
+
+```
+OrchestratorEffect: { type: "ship_discard", branch: "<branch>" }
+→ buildCheckoutCommand("main")          → execFileSync
+→ buildBranchDeleteCommand(branch, true) → execFileSync
 ```
 
 **输出**：
@@ -242,7 +251,31 @@ git worktree prune
 
 ---
 
-## 6. 执行流程
+## 6. Autonomous 模式配置
+
+在 `.forge/config.md` frontmatter 中可配置 `ship_default_method` 控制自主模式的交付行为：
+
+```yaml
+---
+project: "MyProject"
+ship_default_method: "push-pr"
+---
+```
+
+**有效值**：
+
+| 值 | 行为 |
+|----|------|
+| `merge` | 自动合并到主分支 |
+| `push-pr` | 自动推送并创建 PR |
+| `keep-branch` | 保留分支（默认值，向后兼容） |
+| `prompt` | 覆盖 autonomous 行为，强制等待用户选择 |
+
+**配置解析**：通过 `parseShipDefaultMethod()` 纯函数解析，无效值安全回退到 `keep-branch` 并输出警告。
+
+---
+
+## 7. 执行流程
 
 ### 完整流程图
 
@@ -285,7 +318,7 @@ git worktree prune
 
 ---
 
-## 7. 边界情况处理
+## 8. 边界情况处理
 
 ### 7.1 Review 未执行
 
@@ -361,7 +394,7 @@ git worktree prune
 
 ---
 
-## 8. 示例
+## 9. 示例
 
 ### 示例 1：门禁通过，选择创建 PR
 
