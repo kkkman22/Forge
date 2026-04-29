@@ -36,27 +36,20 @@ export function extractBranchTopic(branchName: string): string | null {
  * Check whether the branch topic matches the task topic.
  * Returns `{ allowed, reasons }` similar to `checkBuildGate`.
  */
-export function checkBranchTopicGate(
-  branchName: string,
-  taskTopic: string,
-): BranchTopicGateResult {
+export function checkBranchTopicGate(branchName: string, taskTopic: string): BranchTopicGateResult {
   const branchTopic = extractBranchTopic(branchName);
 
   if (branchTopic === null) {
     return {
       allowed: false,
-      reasons: [
-        `分支 "${branchName}" 不符合 feature/<topic> 或 forge/<topic> 格式`,
-      ],
+      reasons: [`分支 "${branchName}" 不符合 feature/<topic> 或 forge/<topic> 格式`],
     };
   }
 
   if (branchTopic !== taskTopic) {
     return {
       allowed: false,
-      reasons: [
-        `分支 topic "${branchTopic}" 与任务 topic "${taskTopic}" 不匹配`,
-      ],
+      reasons: [`分支 topic "${branchTopic}" 与任务 topic "${taskTopic}" 不匹配`],
     };
   }
 
