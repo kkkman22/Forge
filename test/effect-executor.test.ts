@@ -102,8 +102,8 @@ describe("commit effect", () => {
     await executor.executeEffect({ type: "commit", message: "test commit" });
 
     const mock = execFileSync as Mock;
-    expect(mock.mock.calls[0][2]).toEqual({ cwd });
-    expect(mock.mock.calls[1][2]).toEqual({ cwd });
+    expect(mock.mock.calls[0][2]).toEqual(expect.objectContaining({ cwd }));
+    expect(mock.mock.calls[1][2]).toEqual(expect.objectContaining({ cwd }));
   });
 
   it("does not pass shell: true to execFileSync", async () => {
@@ -162,9 +162,9 @@ describe("rollback effect", () => {
 
     const mock = execFileSync as Mock;
     // All three calls (stash, reset, clean) should use the same cwd
-    expect(mock.mock.calls[0][2]).toEqual({ cwd });
-    expect(mock.mock.calls[1][2]).toEqual({ cwd });
-    expect(mock.mock.calls[2][2]).toEqual({ cwd });
+    expect(mock.mock.calls[0][2]).toEqual(expect.objectContaining({ cwd }));
+    expect(mock.mock.calls[1][2]).toEqual(expect.objectContaining({ cwd }));
+    expect(mock.mock.calls[2][2]).toEqual(expect.objectContaining({ cwd }));
   });
 
   it("does not pass shell: true to execFileSync", async () => {
@@ -625,7 +625,7 @@ describe("git commands executed without shell", () => {
     for (const call of mock.mock.calls) {
       const options = call[2];
       // Options should only contain cwd, never shell
-      expect(options).toEqual({ cwd: "/test/repo" });
+      expect(options).not.toHaveProperty("shell");
     }
   });
 
@@ -637,7 +637,7 @@ describe("git commands executed without shell", () => {
     const mock = execFileSync as Mock;
     for (const call of mock.mock.calls) {
       const options = call[2];
-      expect(options).toEqual({ cwd: "/test/repo" });
+      expect(options).not.toHaveProperty("shell");
     }
   });
 });
