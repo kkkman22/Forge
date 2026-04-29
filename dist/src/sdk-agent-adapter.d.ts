@@ -25,6 +25,13 @@ export interface SdkAgentAdapterConfig {
     outputSchema: AgentOutputSchema;
     /** Maximum budget in USD, if configured. */
     maxBudgetUsd?: number;
+    /**
+     * Global timeout in milliseconds for each SDK `query()` call.
+     * If the call exceeds this duration, it is aborted via `AbortController`
+     * and an error containing "timeout" is thrown.
+     * Defaults to 1,800,000 ms (30 minutes).
+     */
+    globalTimeoutMs?: number;
 }
 /**
  * Wraps the Agent SDK's `query()` to implement `AgentInterface`.

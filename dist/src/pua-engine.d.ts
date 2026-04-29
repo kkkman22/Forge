@@ -83,6 +83,14 @@ export declare const METHODOLOGY_DESCRIPTIONS: Record<Methodology, string>;
  * - 4 failures   → L3 (绩效审视)
  * - 5+ failures  → L4 (毕业警告)
  *
+ * Note: The L4 threshold (5 consecutive failures for max pressure) is
+ * intentionally higher than the Circuit Breaker threshold (3 consecutive
+ * failures for termination). PUA L1–L3 escalate warnings and switch
+ * methodologies before the Circuit Breaker trips at 3 failures. L4 is
+ * reached only if the Circuit Breaker is configured with a higher threshold.
+ *
+ * @see src/failure-handler.ts DEFAULT_CIRCUIT_BREAKER_THRESHOLD — Circuit Breaker termination threshold
+ *
  * When `stallDetected` is true, the level is promoted by at least one step
  * (capped at L4).
  *
@@ -135,6 +143,28 @@ export declare function getMethodologyChain(failurePattern: FailurePattern): Met
  */
 export declare function advanceMethodology(chain: Methodology[], currentIndex: number): Methodology | null;
 export declare const FAILURE_PATTERN_COUNTERS: Record<FailurePattern, string>;
+/**
+ * Jaccard similarity threshold for spinning detection.
+ *
+ * When all pairwise Jaccard similarities among the last 3 iteration
+ * summaries exceed this value, the engine flags a "spinning" pattern
+ * (repeatedly tweaking the same spot without real progress).
+ *
+ * Valid range: (0, 1) exclusive — 0 would flag everything, 1 would
+ * never flag.
+ */
+export declare const SPINNING_JACCARD_THRESHOLD = 0.6;
+/**
+ * Maximum number of recent iteration summaries retained for failure
+ * pattern detection.
+ *
+ * The PUA engine keeps a sliding window of the most recent summaries
+ * so that `detectFailurePattern` can analyse trends (e.g. spinning
+ * detection requires at least 3 entries). Older entries are discarded
+ * to bound memory usage and keep pattern detection focused on the
+ * current problem-solving trajectory.
+ */
+export declare const MAX_SUMMARY_HISTORY = 5;
 /**
  * Detect the failure pattern from recent iteration summaries.
  *
@@ -194,7 +224,7 @@ export declare function getStallResponse(consecutiveFailures: number): StallResp
  * @param level - Current pressure level
  * @param methodology - Current methodology (may be null)
  * @param failurePattern - Current failure pattern (may be null)
- * @param stallResponse - Current stall response strategy (may be null)
+ * @param _stallResponse - Current stall response strategy (may be null)
  * @returns Structured pressure prompt text
  */
 export declare function buildPressurePrompt(level: PressureLevel, methodology: Methodology | null, failurePattern: FailurePattern | null, _stallResponse: StallResponse | null): string;

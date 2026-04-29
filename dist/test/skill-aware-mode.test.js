@@ -38,6 +38,11 @@ vi.mock("../src/skill-scheduler.js", () => ({
         nextPhase: "router",
         reason: "no phase set",
     })),
+    shouldCommitForPhase: vi.fn((phase, success) => {
+        if (!success)
+            return false;
+        return ["build", "plan", "fix", "refactor-apply", "fix-apply"].includes(phase);
+    }),
 }));
 // Mock status-file-ext (required by skill-aware path)
 vi.mock("../src/status-file-ext.js", () => ({

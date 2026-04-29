@@ -169,6 +169,7 @@ export function deserializeAgentOutput(json) {
         parsed = JSON.parse(json);
     }
     catch {
+        // Intentional silent degradation: invalid JSON is reported as a validation error.
         return { valid: false, errors: ["invalid JSON"] };
     }
     return validateAgentOutput(parsed);

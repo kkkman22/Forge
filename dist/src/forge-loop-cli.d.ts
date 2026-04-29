@@ -15,6 +15,20 @@
  * **Validates: Requirements 1.4, 1.6, 6.1–6.10, 4.5, 4.6, 4.7**
  */
 /**
+ * Default base delay in milliseconds for exponential backoff on hard failures.
+ * Used as the default value for `LoopConfig.backoffBaseMs`.
+ */
+export declare const DEFAULT_BACKOFF_BASE_MS = 60000;
+/**
+ * Default maximum number of concurrent Git worktrees allowed.
+ * Used as the default value for `LoopConfig.maxConcurrentWorktrees`.
+ */
+export declare const DEFAULT_MAX_CONCURRENT_WORKTREES = 3;
+/** Known routing tiers for --tier validation. */
+export declare const VALID_TIERS: ReadonlySet<string>;
+/** Supported locale codes for --lang validation. */
+export declare const SUPPORTED_LOCALES: ReadonlySet<string>;
+/**
  * Copy the notes file from a worktree to the main repo's run directory
  * before the worktree is deleted.
  *

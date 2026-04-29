@@ -188,6 +188,14 @@ const PRESSURE_LEVELS = ["L0", "L1", "L2", "L3", "L4"];
  * - 4 failures   → L3 (绩效审视)
  * - 5+ failures  → L4 (毕业警告)
  *
+ * Note: The L4 threshold (5 consecutive failures for max pressure) is
+ * intentionally higher than the Circuit Breaker threshold (3 consecutive
+ * failures for termination). PUA L1–L3 escalate warnings and switch
+ * methodologies before the Circuit Breaker trips at 3 failures. L4 is
+ * reached only if the Circuit Breaker is configured with a higher threshold.
+ *
+ * @see src/failure-handler.ts DEFAULT_CIRCUIT_BREAKER_THRESHOLD — Circuit Breaker termination threshold
+ *
  * When `stallDetected` is true, the level is promoted by at least one step
  * (capped at L4).
  *
@@ -379,6 +387,28 @@ const PATTERN_KEYWORDS = {
     },
 };
 /**
+ * Jaccard similarity threshold for spinning detection.
+ *
+ * When all pairwise Jaccard similarities among the last 3 iteration
+ * summaries exceed this value, the engine flags a "spinning" pattern
+ * (repeatedly tweaking the same spot without real progress).
+ *
+ * Valid range: (0, 1) exclusive — 0 would flag everything, 1 would
+ * never flag.
+ */
+export const SPINNING_JACCARD_THRESHOLD = 0.6;
+/**
+ * Maximum number of recent iteration summaries retained for failure
+ * pattern detection.
+ *
+ * The PUA engine keeps a sliding window of the most recent summaries
+ * so that `detectFailurePattern` can analyse trends (e.g. spinning
+ * detection requires at least 3 entries). Older entries are discarded
+ * to bound memory usage and keep pattern detection focused on the
+ * current problem-solving trajectory.
+ */
+export const MAX_SUMMARY_HISTORY = 5;
+/**
  * Tokenize a summary string into a set of lowercase tokens.
  *
  * Splits on whitespace and punctuation, lowercases, and filters out
@@ -430,7 +460,9 @@ function detectSpinning(summaryHistory) {
     const sim01 = jaccardSimilarity(tokenSets[0], tokenSets[1]);
     const sim02 = jaccardSimilarity(tokenSets[0], tokenSets[2]);
     const sim12 = jaccardSimilarity(tokenSets[1], tokenSets[2]);
-    return sim01 > 0.6 && sim02 > 0.6 && sim12 > 0.6;
+    return (sim01 > SPINNING_JACCARD_THRESHOLD &&
+        sim02 > SPINNING_JACCARD_THRESHOLD &&
+        sim12 > SPINNING_JACCARD_THRESHOLD);
 }
 /**
  * Check whether a summary matches a keyword-based failure pattern.
@@ -583,7 +615,7 @@ const PRESSURE_LEVEL_INDEX = {
  * @param level - Current pressure level
  * @param methodology - Current methodology (may be null)
  * @param failurePattern - Current failure pattern (may be null)
- * @param stallResponse - Current stall response strategy (may be null)
+ * @param _stallResponse - Current stall response strategy (may be null)
  * @returns Structured pressure prompt text
  */
 export function buildPressurePrompt(level, methodology, failurePattern, _stallResponse) {

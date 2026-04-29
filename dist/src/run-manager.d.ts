@@ -9,6 +9,8 @@
  * Design reference: sdk-autonomous-loop § run-manager.ts
  * **Validates: Requirements 1.3, 7.1, 7.2, 7.3, 7.4, 5.4**
  */
+/** Translation function signature used for i18n support. */
+export type TranslateFn = (key: string, params?: Record<string, string>) => string;
 /**
  * Check whether a Git branch already exists in the repository.
  *
@@ -108,7 +110,7 @@ export declare class RunManager {
      * @param maxConcurrent  Maximum number of concurrent worktrees allowed.
      * @returns A {@link RunSetup} with an additional `worktreePath` field.
      */
-    static setupWorktree(objective: string, repoRoot: string, maxConcurrent: number): RunSetup & {
+    static setupWorktree(objective: string, repoRoot: string, maxConcurrent: number, t?: TranslateFn): RunSetup & {
         worktreePath: string;
     };
 }

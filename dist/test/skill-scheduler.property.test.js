@@ -203,32 +203,66 @@ describe("Feature: loop-skills-fusion, Property 5: determineNextSkill 状态转�
     });
 });
 // ---------------------------------------------------------------------------
-// Feature: loop-skills-fusion, Property 6: 修复循环熔断保护
+// Feature: loop-skills-fusion, Property 6: SkillScheduler circuit breaker
 // ---------------------------------------------------------------------------
-describe("Feature: loop-skills-fusion, Property 6: 修复循环熔断保护", () => {
+describe("Feature: loop-skills-fusion, Property 6: SkillScheduler circuit breaker", () => {
     /**
-     * **Validates: Requirements 3.11, 8.4**
+     * **Validates: Requirements 5.5, 12.3**
      *
      * For any SchedulerInput where reviewFixAttempts >= maxReviewFixAttempts
      * AND reviewResult="fail", determineNextSkill() returns nextPhase: "aborted".
+     * This must hold regardless of currentPhase, tier, or other fields.
      */
-    it("triggers circuit breaker (aborted) when fix attempts exceed max and review fails", () => {
+    it("triggers circuit breaker (aborted) when fix attempts >= max and review fails", () => {
         fc.assert(fc.property(circuitBreakerArb, (input) => {
             const result = determineNextSkill(input);
             expect(result.nextPhase).toBe("aborted");
         }), { numRuns: 200 });
     });
     /**
-     * **Validates: Requirements 3.11, 8.4**
+     * **Validates: Requirements 5.5, 12.3**
      *
-     * The reason string should mention the attempt counts when circuit breaker triggers.
+     * The reason string should be non-empty when circuit breaker triggers,
+     * providing context about the abort decision.
      */
-    it("provides a reason mentioning attempt counts on circuit breaker", () => {
+    it("provides a non-empty reason when circuit breaker triggers", () => {
         fc.assert(fc.property(circuitBreakerArb, (input) => {
             const result = determineNextSkill(input);
             expect(result.nextPhase).toBe("aborted");
             expect(result.reason).toBeTruthy();
             expect(result.reason.length).toBeGreaterThan(0);
+        }), { numRuns: 200 });
+    });
+    /**
+     * **Validates: Requirements 5.5, 12.3**
+     *
+     * Circuit breaker takes priority over any currentPhase-specific logic.
+     * For any SchedulerInput with reviewFixAttempts >= maxReviewFixAttempts
+     * and reviewResult="fail", the result is always "aborted" regardless of
+     * what currentPhase is set to (build, review, plan, etc.).
+     */
+    it("circuit breaker overrides any currentPhase when attempts >= max and review fails", () => {
+        /** Generator that pairs every valid SkillPhase with circuit breaker conditions. */
+        const allPhasesCircuitBreakerArb = fc
+            .record({
+            currentPhase: skillPhaseArb,
+            tier: fc.option(tierArb, { nil: undefined }),
+            planStatus: fc.option(planStatusArb, { nil: undefined }),
+            hasIncompleteTasks: fc.option(fc.boolean(), { nil: undefined }),
+            reviewResult: fc.constant("fail"),
+            testPassed: fc.option(fc.boolean(), { nil: undefined }),
+            maxReviewFixAttempts: fc.integer({ min: 1, max: 10 }),
+        })
+            .chain((base) => fc.record({
+            ...Object.fromEntries(Object.entries(base).map(([k, v]) => [k, fc.constant(v)])),
+            reviewFixAttempts: fc.integer({
+                min: base.maxReviewFixAttempts,
+                max: base.maxReviewFixAttempts + 5,
+            }),
+        }));
+        fc.assert(fc.property(allPhasesCircuitBreakerArb, (input) => {
+            const result = determineNextSkill(input);
+            expect(result.nextPhase).toBe("aborted");
         }), { numRuns: 200 });
     });
 });
@@ -581,6 +615,387 @@ describe("determineNextSkill correctly advances through new phase sequences", ()
             input.reviewFixAttempts >= input.maxReviewFixAttempts)), (input) => {
             const result = determineNextSkill(input);
             expect(result.nextPhase).toBe("review");
+        }), { numRuns: 200 });
+    });
+});
+// ---------------------------------------------------------------------------
+// Feature: loop-skills-fusion, Property 5: SkillScheduler total function property
+// ---------------------------------------------------------------------------
+describe("Feature: loop-skills-fusion, Property 5: SkillScheduler total function property", () => {
+    // -------------------------------------------------------------------------
+    // Generators specific to this property
+    // -------------------------------------------------------------------------
+    /** Arbitrary unknown currentPhase values — strings NOT in the valid SkillPhase set. */
+    const unknownPhaseArb = fc
+        .string({ minLength: 1, maxLength: 30 })
+        .filter((s) => !VALID_SKILL_PHASES.includes(s));
+    /** Arbitrary SchedulerInput with an unknown currentPhase value. */
+    const unknownPhaseInputArb = fc.record({
+        currentPhase: unknownPhaseArb,
+        tier: fc.option(tierArb, { nil: undefined }),
+        planStatus: fc.option(planStatusArb, { nil: undefined }),
+        hasIncompleteTasks: fc.option(fc.boolean(), { nil: undefined }),
+        reviewResult: fc.option(reviewResultArb, { nil: undefined }),
+        testPassed: fc.option(fc.boolean(), { nil: undefined }),
+        reviewFixAttempts: fc.nat({ max: 10 }),
+        maxReviewFixAttempts: fc.integer({ min: 1, max: 10 }),
+    });
+    /** Terminal SkillPhase values. */
+    const terminalPhaseArb = fc.constantFrom("completed", "aborted");
+    /** Arbitrary SchedulerInput with a terminal currentPhase and no circuit breaker trigger. */
+    const terminalInputArb = fc.record({
+        currentPhase: terminalPhaseArb,
+        tier: fc.option(tierArb, { nil: undefined }),
+        planStatus: fc.option(planStatusArb, { nil: undefined }),
+        hasIncompleteTasks: fc.option(fc.boolean(), { nil: undefined }),
+        reviewResult: fc.option(fc.constantFrom("pass", "fail").filter((r) => r !== "fail"), { nil: undefined }),
+        testPassed: fc.option(fc.boolean(), { nil: undefined }),
+        reviewFixAttempts: fc.constant(0),
+        maxReviewFixAttempts: fc.integer({ min: 1, max: 10 }),
+    });
+    /**
+     * Arbitrary SchedulerInput covering ALL possible combinations:
+     * valid phases, unknown phases, undefined phase, and arbitrary field values.
+     */
+    const anySchedulerInputArb = fc.record({
+        currentPhase: fc.option(fc.oneof(skillPhaseArb, unknownPhaseArb), {
+            nil: undefined,
+        }),
+        tier: fc.option(fc.oneof(tierArb, fc.string({ minLength: 0, maxLength: 20 })), {
+            nil: undefined,
+        }),
+        planStatus: fc.option(fc.oneof(planStatusArb, fc.string({ minLength: 0, maxLength: 20 })), {
+            nil: undefined,
+        }),
+        hasIncompleteTasks: fc.option(fc.boolean(), { nil: undefined }),
+        reviewResult: fc.option(fc.oneof(reviewResultArb, fc.string({ minLength: 0, maxLength: 20 })), {
+            nil: undefined,
+        }),
+        testPassed: fc.option(fc.boolean(), { nil: undefined }),
+        reviewFixAttempts: fc.nat({ max: 20 }),
+        maxReviewFixAttempts: fc.integer({ min: 1, max: 20 }),
+    });
+    // -------------------------------------------------------------------------
+    // Tests
+    // -------------------------------------------------------------------------
+    /**
+     * **Validates: Requirements 12.1**
+     *
+     * determineNextSkill() never throws for any valid SchedulerInput,
+     * including unknown currentPhase values and arbitrary field combinations.
+     */
+    it("never throws for any SchedulerInput (including unknown currentPhase values)", () => {
+        fc.assert(fc.property(anySchedulerInputArb, (input) => {
+            expect(() => determineNextSkill(input)).not.toThrow();
+        }), { numRuns: 200 });
+    });
+    /**
+     * **Validates: Requirements 12.1**
+     *
+     * determineNextSkill() always returns a valid SchedulerResult with a
+     * recognized SkillPhase and a non-empty reason string.
+     */
+    it("always returns a valid SchedulerResult with a recognized SkillPhase", () => {
+        fc.assert(fc.property(anySchedulerInputArb, (input) => {
+            const result = determineNextSkill(input);
+            expect(result).toBeDefined();
+            expect(result.nextPhase).toBeDefined();
+            expect(VALID_SKILL_PHASES).toContain(result.nextPhase);
+            expect(typeof result.reason).toBe("string");
+            expect(result.reason.length).toBeGreaterThan(0);
+        }), { numRuns: 200 });
+    });
+    /**
+     * **Validates: Requirements 12.2**
+     *
+     * Unknown currentPhase values (strings not in SkillPhase) fall back to "router",
+     * unless the circuit breaker triggers first.
+     */
+    it("unknown currentPhase values fall back to router (when circuit breaker is not triggered)", () => {
+        // Filter out inputs where circuit breaker would trigger
+        const unknownNonBreakerArb = unknownPhaseInputArb.filter((input) => !(input.reviewResult === "fail" && input.reviewFixAttempts >= input.maxReviewFixAttempts));
+        fc.assert(fc.property(unknownNonBreakerArb, (input) => {
+            const result = determineNextSkill(input);
+            expect(result.nextPhase).toBe("router");
+        }), { numRuns: 200 });
+    });
+    /**
+     * **Validates: Requirements 12.4**
+     *
+     * Terminal states ("completed", "aborted") return themselves (idempotent).
+     * Uses inputs where circuit breaker does NOT trigger to isolate terminal behavior.
+     */
+    it("terminal states (completed, aborted) return themselves (idempotent)", () => {
+        fc.assert(fc.property(terminalInputArb, (input) => {
+            const result = determineNextSkill(input);
+            expect(result.nextPhase).toBe(input.currentPhase);
+        }), { numRuns: 200 });
+    });
+    /**
+     * **Validates: Requirements 12.4**
+     *
+     * Calling determineNextSkill twice with a terminal state produces the same result
+     * (double-idempotency: feeding the output back in still returns the same phase).
+     */
+    it("terminal states are stable under repeated application", () => {
+        fc.assert(fc.property(terminalInputArb, (input) => {
+            const first = determineNextSkill(input);
+            const second = determineNextSkill({
+                ...input,
+                currentPhase: first.nextPhase,
+            });
+            expect(second.nextPhase).toBe(first.nextPhase);
+        }), { numRuns: 200 });
+    });
+});
+// ---------------------------------------------------------------------------
+// Feature: loop-skills-fusion, Property 7: SkillScheduler convergence
+// ---------------------------------------------------------------------------
+describe("Feature: loop-skills-fusion, Property 7: SkillScheduler convergence", () => {
+    /**
+     * All non-terminal SkillPhase values that the convergence property must hold for.
+     * Terminal phases ("completed", "aborted") are excluded — they are already at rest.
+     */
+    const NON_TERMINAL_PHASES = [
+        "router",
+        "plan",
+        "build",
+        "review",
+        "test",
+        "ship",
+        "learn",
+        "refactor-scan",
+        "refactor-apply",
+        "fix-analyze",
+        "fix-apply",
+    ];
+    /** Arbitrary non-terminal SkillPhase. */
+    const nonTerminalPhaseArb = fc.constantFrom(...NON_TERMINAL_PHASES);
+    /** Arbitrary tier value (includes "full" which adds the learn phase). */
+    const convergenceTierArb = fc.constantFrom("light", "standard", "full");
+    /**
+     * Simulate successive calls to `determineNextSkill()` starting from a
+     * non-terminal phase with "favorable conditions" until a terminal state
+     * is reached or the step budget is exhausted.
+     *
+     * Favorable conditions:
+     *   - planStatus: "approved"
+     *   - hasIncompleteTasks: false
+     *   - reviewResult: "pass"
+     *   - testPassed: true
+     *   - reviewFixAttempts: 0
+     *   - maxReviewFixAttempts: 3
+     *
+     * The "router" phase is a self-loop by design (it returns "router" because
+     * the external driver is responsible for advancing after router execution).
+     * To simulate router completion, when a self-loop on "router" is detected
+     * the simulation advances the phase to "plan" (matching the state diagram:
+     * router → plan on completion).
+     */
+    function simulateConvergence(startPhase, tier, maxSteps) {
+        let currentPhase = startPhase;
+        let steps = 0;
+        while (steps < maxSteps) {
+            const result = determineNextSkill({
+                currentPhase,
+                tier,
+                planStatus: "approved",
+                hasIncompleteTasks: false,
+                reviewResult: "pass",
+                testPassed: true,
+                reviewFixAttempts: 0,
+                maxReviewFixAttempts: 3,
+            });
+            steps++;
+            if (result.nextPhase === "completed" || result.nextPhase === "aborted") {
+                return { converged: true, finalPhase: result.nextPhase, steps };
+            }
+            // Handle the router self-loop: simulate router completion → plan
+            if (result.nextPhase === currentPhase && currentPhase === "router") {
+                currentPhase = "plan";
+                continue;
+            }
+            currentPhase = result.nextPhase;
+        }
+        return { converged: false, finalPhase: currentPhase, steps };
+    }
+    /**
+     * **Validates: Requirements 12.5**
+     *
+     * For any non-terminal SkillPhase as starting currentPhase, simulating
+     * successive transitions with favorable conditions converges to "completed"
+     * or "aborted" within ≤ 20 steps.
+     */
+    it("converges to completed or aborted within 20 steps from any non-terminal phase", () => {
+        fc.assert(fc.property(nonTerminalPhaseArb, convergenceTierArb, (startPhase, tier) => {
+            const { converged, finalPhase, steps } = simulateConvergence(startPhase, tier, 20);
+            expect(converged).toBe(true);
+            expect(["completed", "aborted"]).toContain(finalPhase);
+            expect(steps).toBeLessThanOrEqual(20);
+        }), { numRuns: 200 });
+    });
+    /**
+     * **Validates: Requirements 12.5**
+     *
+     * Convergence always reaches "completed" (not "aborted") under favorable
+     * conditions, since favorable conditions include reviewResult="pass" and
+     * reviewFixAttempts=0 — the circuit breaker never triggers.
+     */
+    it("converges specifically to completed (not aborted) under favorable conditions", () => {
+        fc.assert(fc.property(nonTerminalPhaseArb, convergenceTierArb, (startPhase, tier) => {
+            const { converged, finalPhase } = simulateConvergence(startPhase, tier, 20);
+            expect(converged).toBe(true);
+            expect(finalPhase).toBe("completed");
+        }), { numRuns: 200 });
+    });
+    /**
+     * **Validates: Requirements 12.5**
+     *
+     * The number of steps to convergence is strictly bounded and reasonable.
+     * No non-terminal phase should require more than 10 steps under favorable
+     * conditions (the longest path is router→plan→build→review→test→ship→learn→completed = 7 steps).
+     */
+    it("converges in a reasonable number of steps (≤ 10) under favorable conditions", () => {
+        fc.assert(fc.property(nonTerminalPhaseArb, convergenceTierArb, (startPhase, tier) => {
+            const { converged, steps } = simulateConvergence(startPhase, tier, 20);
+            expect(converged).toBe(true);
+            // Longest path: router(1 self-loop + advance to plan) → plan → build → review → test → ship → learn → completed = 8 steps
+            expect(steps).toBeLessThanOrEqual(10);
+        }), { numRuns: 200 });
+    });
+});
+// ---------------------------------------------------------------------------
+// Feature: loop-skills-fusion, Property 8: shouldCommitForPhase commit strategy correctness
+// ---------------------------------------------------------------------------
+describe("Feature: loop-skills-fusion, Property 8: shouldCommitForPhase commit strategy correctness", () => {
+    // -------------------------------------------------------------------------
+    // Generators
+    // -------------------------------------------------------------------------
+    /** Phases that produce code changes and should be committed on success. */
+    const commitablePhasesArb = fc.constantFrom("build", "plan", "fix", "refactor-apply", "fix-apply");
+    /** Phases that never produce commits regardless of success. */
+    const nonCommitablePhasesArb = fc.constantFrom("review", "test", "ship", "router", "learn", "refactor-scan", "fix-analyze");
+    /** All known phases (commitable + non-commitable). */
+    const ALL_KNOWN_PHASES = [
+        "build",
+        "plan",
+        "fix",
+        "refactor-apply",
+        "fix-apply",
+        "review",
+        "test",
+        "ship",
+        "router",
+        "learn",
+        "refactor-scan",
+        "fix-analyze",
+    ];
+    /** Arbitrary unknown phase strings — not in the known set. */
+    const unknownPhaseArb = fc
+        .string({ minLength: 1, maxLength: 30 })
+        .filter((s) => !ALL_KNOWN_PHASES.includes(s));
+    // -------------------------------------------------------------------------
+    // Tests
+    // -------------------------------------------------------------------------
+    /**
+     * **Validates: Requirements 11.1**
+     *
+     * Commitable phases ("build", "plan", "fix", "refactor-apply", "fix-apply")
+     * with success=true return true.
+     */
+    it("commitable phases with success=true return true", () => {
+        fc.assert(fc.property(commitablePhasesArb, (phase) => {
+            expect(shouldCommitForPhase(phase, true)).toBe(true);
+        }), { numRuns: 200 });
+    });
+    /**
+     * **Validates: Requirements 11.2**
+     *
+     * Non-commitable phases ("review", "test", "ship", "router", "learn",
+     * "refactor-scan", "fix-analyze") return false regardless of success value.
+     */
+    it("non-commitable phases return false regardless of success", () => {
+        fc.assert(fc.property(nonCommitablePhasesArb, fc.boolean(), (phase, success) => {
+            expect(shouldCommitForPhase(phase, success)).toBe(false);
+        }), { numRuns: 200 });
+    });
+    /**
+     * **Validates: Requirements 11.3**
+     *
+     * Any phase (commitable or non-commitable) with success=false returns false.
+     */
+    it("any phase with success=false returns false", () => {
+        fc.assert(fc.property(fc.oneof(commitablePhasesArb, nonCommitablePhasesArb), (phase) => {
+            expect(shouldCommitForPhase(phase, false)).toBe(false);
+        }), { numRuns: 200 });
+    });
+    /**
+     * **Validates: Requirements 11.5**
+     *
+     * Unknown phase strings (not in the known set) return false regardless
+     * of success value.
+     */
+    it("unknown phase strings return false regardless of success", () => {
+        fc.assert(fc.property(unknownPhaseArb, fc.boolean(), (phase, success) => {
+            expect(shouldCommitForPhase(phase, success)).toBe(false);
+        }), { numRuns: 200 });
+    });
+});
+// ---------------------------------------------------------------------------
+// Feature: loop-skills-fusion, Property 9: getCommandSequence safe default
+// ---------------------------------------------------------------------------
+describe("Feature: loop-skills-fusion, Property 9: getCommandSequence safe default", () => {
+    // -------------------------------------------------------------------------
+    // Constants & Generators
+    // -------------------------------------------------------------------------
+    /** The set of known tier strings that have explicit command sequences. */
+    const KNOWN_TIERS = [
+        "light",
+        "standard",
+        "full",
+        "refactor_light",
+        "refactor_standard",
+        "fix_light",
+        "fix_standard",
+    ];
+    /** The standard (default) command sequence returned for unknown tiers. */
+    const STANDARD_SEQUENCE = ["plan", "build", "review", "test", "ship"];
+    /**
+     * Arbitrary tier string that is NOT in the known set.
+     * Generates arbitrary non-empty strings and filters out known tiers.
+     */
+    const unknownTierArb = fc
+        .string({ minLength: 0, maxLength: 50 })
+        .filter((s) => !KNOWN_TIERS.includes(s));
+    // -------------------------------------------------------------------------
+    // Tests
+    // -------------------------------------------------------------------------
+    /**
+     * **Validates: Requirements 12.6**
+     *
+     * For any tier string not in the known set, getCommandSequence() returns
+     * the standard sequence ["plan", "build", "review", "test", "ship"].
+     */
+    it("returns the standard sequence for any unknown tier string", () => {
+        fc.assert(fc.property(unknownTierArb, (tier) => {
+            const sequence = getCommandSequence(tier);
+            expect(sequence).toEqual(STANDARD_SEQUENCE);
+        }), { numRuns: 200 });
+    });
+    /**
+     * **Validates: Requirements 12.6**
+     *
+     * Known tiers return their own specific sequences (not the default).
+     * This ensures the fallback only activates for truly unknown tiers.
+     */
+    it("known tiers return their specific (non-default) or matching sequences", () => {
+        fc.assert(fc.property(fc.constantFrom(...KNOWN_TIERS), (tier) => {
+            const sequence = getCommandSequence(tier);
+            // Every known tier must return a non-empty array of valid SkillPhase values
+            expect(sequence.length).toBeGreaterThan(0);
+            for (const phase of sequence) {
+                expect(VALID_SKILL_PHASES).toContain(phase);
+            }
         }), { numRuns: 200 });
     });
 });

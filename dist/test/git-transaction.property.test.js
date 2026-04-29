@@ -294,12 +294,18 @@ describe("Feature: audit-remediation-v221, Property 5: sanitizeBranchName produc
     const generalStringArb = fc.string({ minLength: 0, maxLength: 200 });
     /** Strings composed entirely of Git-illegal characters and sequences. */
     const gitIllegalStringArb = fc
-        .array(fc.constantFrom("~", "^", "*", "[", ":", "?", "\\", "@{", "..", " ", "\t", "\n"), { minLength: 1, maxLength: 30 })
+        .array(fc.constantFrom("~", "^", "*", "[", ":", "?", "\\", "@{", "..", " ", "\t", "\n"), {
+        minLength: 1,
+        maxLength: 30,
+    })
         .map((chars) => chars.join(""));
     /** Strings that contain at least one alphanumeric character (non-degenerate). */
     const nonDegenerateStringArb = fc
         .tuple(fc.string({ minLength: 0, maxLength: 50 }), fc
-        .array(fc.constantFrom(..."abcdefghijklmnopqrstuvwxyz0123456789".split("")), { minLength: 1, maxLength: 10 })
+        .array(fc.constantFrom(..."abcdefghijklmnopqrstuvwxyz0123456789".split("")), {
+        minLength: 1,
+        maxLength: 10,
+    })
         .map((chars) => chars.join("")), fc.string({ minLength: 0, maxLength: 50 }))
         .map(([prefix, alnum, suffix]) => `${prefix}${alnum}${suffix}`);
     // -------------------------------------------------------------------------

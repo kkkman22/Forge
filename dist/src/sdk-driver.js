@@ -10,14 +10,50 @@
  * **Validates: Requirements 1.1, 1.2, 1.3, 1.5, 2.1–2.7, 3.1–3.7,
  *   4.1–4.6, 5.1–5.4, 8.1–8.4, 9.1–9.3, 10.1–10.5**
  */
-import { existsSync, readFileSync } from "node:fs";
-import { join } from "node:path";
+import { existsSync, mkdirSync, readFileSync, rmSync, writeFileSync } from "node:fs";
+import path, { join } from "node:path";
 import { appendEntry, buildIterationPrompt, buildSkillAwarePrompt, formatNotesDocument, } from "./context-accumulator.js";
+import { FrozenZoneViolation } from "./effect-executor.js";
+import { computePerformanceBaseline, createIterationTiming, createLogEntry, createLogSink, formatPerformanceBaseline, } from "./logger/index.js";
 import { createInitialState, transition } from "./orchestrator.js";
-import { advanceMethodology, buildPressurePrompt, detectFailurePattern, determinePressureLevel, getMethodologyChain, getStallResponse, selectMethodology, } from "./pua-engine.js";
+import { PuaStateManager } from "./pua-state-manager.js";
+import { evaluateReviewGate } from "./quality-gate.js";
 import { RunManager } from "./run-manager.js";
-import { determineNextSkill } from "./skill-scheduler.js";
-import { clearLoopFields, clearPuaFields, extractLoopFields, extractPuaFields, updateIterationStatus, writePuaFields, } from "./status-file-ext.js";
+import { buildDefaultPolicy, validatePolicy } from "./sandbox-policy.js";
+import { evaluateGateForPhase } from "./sdk-quality-helpers.js";
+import { clearLoopFieldsOnShutdown, getPhaseFromStatus, getTierFromStatus, initializeLoopFields, safeReadStatusFile, safeUpdateIterationStatus as safeUpdateIterationStatusHelper, } from "./sdk-status-helpers.js";
+import { determineNextSkill, shouldCommitForPhase } from "./skill-scheduler.js";
+import { extractLoopFields } from "./status-file-ext.js";
+const ZERO_TOKEN_USAGE = {
+    inputTokens: 0,
+    outputTokens: 0,
+    cacheReadTokens: 0,
+    cacheCreationTokens: 0,
+};
+// ---------------------------------------------------------------------------
+// Sandbox policy loading
+// ---------------------------------------------------------------------------
+/**
+ * Load sandbox policy from .forge/sandbox.json or return default.
+ * Validates the config and falls back to default on validation failure.
+ */
+function loadSandboxPolicy(cwd) {
+    const configPath = join(cwd, ".forge", "sandbox.json");
+    if (existsSync(configPath)) {
+        try {
+            const raw = JSON.parse(readFileSync(configPath, "utf-8"));
+            const validation = validatePolicy(raw);
+            if (validation.valid) {
+                return raw;
+            }
+            // Log validation errors but continue with default
+        }
+        catch {
+            // Parse error — fall back to default
+        }
+    }
+    return buildDefaultPolicy(cwd);
+}
 // ---------------------------------------------------------------------------
 // Hooks validation
 // ---------------------------------------------------------------------------
@@ -72,13 +108,16 @@ export class SdkDriver {
     stopRequested = false;
     /** Counter for consecutive review-fix loop iterations (skill-aware mode). */
     reviewFixAttempts = 0;
-    // PUA engine state (only used when puaEnabled is true)
-    /** Most recent iteration summaries (kept to last 5). */
-    summaryHistory = [];
-    /** Current position in the methodology switch chain. */
-    puaMethodologyChainIndex = 0;
-    /** Current methodology switch chain (set when a failure pattern is first detected). */
-    currentMethodologyChain = null;
+    /** Tracks whether the loop completed normally (SkillScheduler returned "completed"). */
+    loopCompletedNormally = false;
+    /** PUA state manager (only instantiated when puaEnabled is true). */
+    puaStateManager = null;
+    /** StatusFile I/O interface for delegating to helper functions. */
+    statusFileIO;
+    /** Structured logger for observability. */
+    logger;
+    /** Iteration timing accumulator for performance baseline. */
+    iterationTimings = [];
     constructor(config, effectExecutor, agentAdapter) {
         // Validate objective is non-empty after trimming.
         if (!config.objective.trim()) {
@@ -88,11 +127,40 @@ export class SdkDriver {
         this.config = { ...config, skillAware: config.skillAware ?? false };
         this.effectExecutor = effectExecutor;
         this.agentAdapter = agentAdapter;
+        // Initialize structured logger.
+        this.logger = createLogSink(config.logSinkConfig ?? { format: "text", level: "info" });
         // Initialize orchestrator state.
         this.orchestratorState = createInitialState();
         // Initialize empty notes document.
         this.notesDocument = { runId: config.runId, branchName: config.branchName, entries: [] };
         this.notesContent = formatNotesDocument(this.notesDocument);
+        // Initialize StatusFile IO interface from config callbacks.
+        this.statusFileIO =
+            config.readStatusFile && config.writeStatusFile
+                ? { read: config.readStatusFile, write: config.writeStatusFile }
+                : undefined;
+        // Initialize PUA state manager when PUA is enabled.
+        if (config.puaEnabled) {
+            this.puaStateManager = new PuaStateManager({
+                readStatusFile: () => safeReadStatusFile(this.statusFileIO),
+                writeStatusFile: (content) => {
+                    if (this.statusFileIO)
+                        this.statusFileIO.write(content);
+                },
+                warn: (msg) => this.logger.log(createLogEntry("pua_warning", "warn", msg, { runId: this.config.runId })),
+            }, config.puaTaskType ?? "general");
+        }
+    }
+    /**
+     * Internal translation helper. Falls back to the key-based default
+     * when no translation function is configured.
+     */
+    t(key, params) {
+        if (this.config.t) {
+            return this.config.t(key, params);
+        }
+        // Fallback: use the English default strings when no t() is provided.
+        return key;
     }
     /**
      * Run the autonomous loop until a termination condition is met.
@@ -108,11 +176,41 @@ export class SdkDriver {
         try {
             const hooksResult = validateHooksPresence(this.config.cwd);
             if (!hooksResult.valid) {
-                console.warn(`hooks protection missing: ${hooksResult.reason}`);
+                this.logger.log(createLogEntry("hooks_missing", "warn", this.t("driver.warning.hooksProtectionMissing", {
+                    reason: hooksResult.reason ?? "unknown",
+                }), { runId: this.config.runId }));
             }
         }
         catch (err) {
-            console.warn(`hooks protection missing: unexpected error during hooks validation — ${err instanceof Error ? err.message : String(err)}`);
+            this.logger.log(createLogEntry("hooks_validation_failed", "warn", this.t("driver.warning.hooksProtectionMissing", {
+                reason: `unexpected error during hooks validation — ${err instanceof Error ? err.message : String(err)}`,
+            }), { runId: this.config.runId }));
+        }
+        // Skill-aware startup: write Loop fields to StatusFile (Req 6.1, 6.5, 10.5).
+        if (this.config.skillAware) {
+            try {
+                initializeLoopFields(this.statusFileIO, this.config.runId, this.config.presetTier ?? "standard");
+            }
+            catch (err) {
+                this.logger.log(createLogEntry("status_field_init_failed", "warn", this.t("driver.warning.statusFieldInitFailed", {
+                    error: err instanceof Error ? err.message : String(err),
+                }), { runId: this.config.runId }));
+            }
+        }
+        // Sandbox mode: write runtime policy file for PreToolUse hook.
+        if (this.config.sandboxEnabled) {
+            try {
+                const sandboxActivePath = path.join(this.config.cwd, ".forge", ".sandbox-active.json");
+                const policy = loadSandboxPolicy(this.config.cwd);
+                mkdirSync(path.dirname(sandboxActivePath), { recursive: true });
+                writeFileSync(sandboxActivePath, JSON.stringify({ projectRoot: this.config.cwd, policy }));
+                this.logger.log(createLogEntry("sandbox_enabled", "info", "Sandbox mode activated", {
+                    runId: this.config.runId,
+                }));
+            }
+            catch (err) {
+                this.logger.log(createLogEntry("sandbox_init_failed", "warn", `Sandbox init failed: ${err instanceof Error ? err.message : String(err)}`, { runId: this.config.runId }));
+            }
         }
         try {
             // Dispatch the start event to kick off the state machine.
@@ -128,6 +226,7 @@ export class SdkDriver {
                 // Check for schedule_iteration effect.
                 if (this.hasEffect(this.lastEffects, "schedule_iteration")) {
                     await this.executeIteration();
+                    // Timing is recorded inside each execute*Iteration method
                     continue;
                 }
                 // Check for start_backoff effect — it was already executed by
@@ -145,22 +244,55 @@ export class SdkDriver {
             return this.buildResult();
         }
         finally {
+            // Output performance baseline (Req 5.1–5.4).
+            // Computed once and reused in formatCompletionSummary (Req 5.2).
+            const baseline = computePerformanceBaseline(this.iterationTimings);
+            this.logger.log(createLogEntry("performance_baseline", "info", "Run performance summary", {
+                runId: this.config.runId,
+            }, { ...baseline }));
+            // Output structured completion/abort summary (Req 9.1–9.5).
+            // Placed in finally block so it runs on both normal and abnormal exits.
+            if (this.config.skillAware) {
+                try {
+                    const summary = this.formatCompletionSummary(baseline);
+                    this.logger.log(createLogEntry("completion_summary", "info", summary, { runId: this.config.runId }));
+                }
+                catch (err) {
+                    this.logger.log(createLogEntry("completion_summary_failed", "warn", "Failed to format completion summary", {
+                        runId: this.config.runId,
+                    }, { error: err instanceof Error ? err.message : String(err) }));
+                }
+            }
             // Skill-aware cleanup: clear Loop fields from StatusFile when loop ends.
             if (this.config.skillAware) {
                 try {
-                    this.clearStatusFileLoopFields();
+                    clearLoopFieldsOnShutdown(this.statusFileIO, this.loopCompletedNormally);
                 }
                 catch (err) {
-                    console.warn(`Warning: failed to clear StatusFile loop fields: ${err instanceof Error ? err.message : String(err)}`);
+                    this.logger.log(createLogEntry("status_field_clear_failed", "warn", "Failed to clear loop status fields", {
+                        runId: this.config.runId,
+                    }, { error: err instanceof Error ? err.message : String(err) }));
                 }
             }
             // PUA cleanup: clear PUA fields from StatusFile when loop ends.
             if (this.config.puaEnabled) {
                 try {
-                    this.safeClearPuaFields();
+                    this.puaStateManager?.safeClearFields();
                 }
                 catch (err) {
-                    console.warn(`Warning: failed to clear PUA fields on loop end: ${err instanceof Error ? (err.stack ?? err.message) : String(err)}`);
+                    this.logger.log(createLogEntry("pua_field_clear_failed", "warn", "Failed to clear PUA fields", {
+                        runId: this.config.runId,
+                    }, { error: err instanceof Error ? (err.stack ?? err.message) : String(err) }));
+                }
+            }
+            // Sandbox cleanup: remove runtime policy file.
+            if (this.config.sandboxEnabled) {
+                try {
+                    const sandboxActivePath = path.join(this.config.cwd, ".forge", ".sandbox-active.json");
+                    rmSync(sandboxActivePath, { force: true });
+                }
+                catch {
+                    // Non-critical: stale file won't affect future runs if sandbox is not enabled.
                 }
             }
             // Cleanup: abort any in-flight agent invocation.
@@ -222,6 +354,7 @@ export class SdkDriver {
      */
     async executeGenericIteration() {
         const iterationNumber = this.orchestratorState.currentIteration + 1;
+        const iterStartMs = Date.now();
         // Build the iteration prompt with current notes content.
         const prompt = buildIterationPrompt({
             iteration: iterationNumber,
@@ -234,11 +367,13 @@ export class SdkDriver {
         this.currentAbortController = new AbortController();
         let event;
         let iterationEntry;
+        let agentEndMs = iterStartMs;
         try {
             // Invoke the agent adapter.
             const agentResult = await this.agentAdapter.run(prompt, this.config.cwd, {
                 signal: this.currentAbortController.signal,
             });
+            agentEndMs = Date.now();
             const output = agentResult.output;
             const usage = agentResult.usage;
             if (output.should_fully_stop) {
@@ -274,12 +409,7 @@ export class SdkDriver {
         catch (error) {
             // Hard failure — SDK error or validation error.
             const errorMessage = error instanceof Error ? error.message : String(error);
-            const zeroUsage = {
-                inputTokens: 0,
-                outputTokens: 0,
-                cacheReadTokens: 0,
-                cacheCreationTokens: 0,
-            };
+            const zeroUsage = ZERO_TOKEN_USAGE;
             event = {
                 type: "iteration_hard_failure",
                 error: errorMessage,
@@ -292,6 +422,10 @@ export class SdkDriver {
                 keyChanges: [],
                 keyLearnings: [],
             };
+            // PUA: escalate pressure on hard failure (Req 17.2)
+            if (this.config.puaEnabled) {
+                this.puaStateManager?.handleFailure(errorMessage, this.orchestratorState.consecutiveFailures);
+            }
         }
         finally {
             this.currentAbortController = null;
@@ -311,16 +445,28 @@ export class SdkDriver {
         }
         catch (effectError) {
             const effectMessage = effectError instanceof Error ? effectError.message : String(effectError);
+            // FrozenZoneViolation: terminate loop directly without backoff (Req 8.2).
+            if (effectError instanceof FrozenZoneViolation) {
+                const abortResult = transition(this.orchestratorState, { type: "stop_condition_met" }, this.config.limits);
+                this.orchestratorState = abortResult.state;
+                this.lastEffects = abortResult.effects;
+                await this.executeEffects(abortResult.effects);
+                iterationEntry = {
+                    number: iterationEntry.number,
+                    success: false,
+                    summary: `Frozen zone violation — loop terminated: ${effectMessage}`,
+                    keyChanges: [],
+                    keyLearnings: [],
+                };
+                this.appendAndPersistNotes(iterationEntry);
+                return;
+            }
+            // UnexpectedEffectError or any other error: trigger iteration_hard_failure + backoff (Req 8.3).
             // Revert to pre-transition state so that commitCount is not incremented.
             this.orchestratorState = preTransitionState;
             // Dispatch iteration_hard_failure from the original state — this triggers
             // rollback and does NOT increment commitCount.
-            const zeroUsage = {
-                inputTokens: 0,
-                outputTokens: 0,
-                cacheReadTokens: 0,
-                cacheCreationTokens: 0,
-            };
+            const zeroUsage = ZERO_TOKEN_USAGE;
             const failureResult = transition(this.orchestratorState, { type: "iteration_hard_failure", error: effectMessage, tokenUsage: zeroUsage }, this.config.limits);
             this.orchestratorState = failureResult.state;
             this.lastEffects = failureResult.effects;
@@ -339,6 +485,14 @@ export class SdkDriver {
         }
         // Append iteration entry to notes and persist.
         this.appendAndPersistNotes(iterationEntry, "tokenUsage" in event ? event.tokenUsage : undefined);
+        // Record iteration timing (Req 4.1–4.4).
+        const effectEndMs = Date.now();
+        const timing = createIterationTiming(iterStartMs, agentEndMs, effectEndMs);
+        this.iterationTimings.push(timing);
+        this.logger.log(createLogEntry("iteration_timing", "debug", "Iteration timing", {
+            runId: this.config.runId,
+            iteration: iterationNumber,
+        }, { ...timing }));
     }
     /**
      * Skill-aware iteration logic.
@@ -357,54 +511,19 @@ export class SdkDriver {
      */
     async executeSkillAwareIteration() {
         const iterationNumber = this.orchestratorState.currentIteration + 1;
+        const iterStartMs = Date.now();
         const puaEnabled = this.config.puaEnabled === true;
         // Read current StatusFile to determine next skill phase.
-        const statusContent = this.readStatusFileContent();
+        const statusContent = safeReadStatusFile(this.statusFileIO);
         const loopFields = extractLoopFields(statusContent);
         // --- PUA: Before iteration — restore state from StatusFile ---
         let puaContext;
-        if (puaEnabled) {
-            try {
-                const puaFields = extractPuaFields(statusContent);
-                // Restore methodology chain state from persisted fields
-                if (puaFields.puaChainIndex !== undefined) {
-                    this.puaMethodologyChainIndex = puaFields.puaChainIndex;
-                }
-                if (puaFields.puaFailurePattern !== undefined && this.currentMethodologyChain === null) {
-                    try {
-                        this.currentMethodologyChain = getMethodologyChain(puaFields.puaFailurePattern);
-                    }
-                    catch {
-                        // Invalid failure pattern — ignore
-                    }
-                }
-                // Build PUA context if we have persisted pressure state
-                if (puaFields.puaPressureLevel !== undefined) {
-                    const methodology = puaFields.puaMethodology ?? null;
-                    const failurePattern = puaFields.puaFailurePattern ?? null;
-                    const consecutiveFailures = this.orchestratorState.consecutiveFailures;
-                    const stallResponse = consecutiveFailures > 0 ? getStallResponse(consecutiveFailures) : null;
-                    const pressurePrompt = buildPressurePrompt(puaFields.puaPressureLevel, methodology, failurePattern, stallResponse);
-                    puaContext = {
-                        pressureLevel: puaFields.puaPressureLevel,
-                        methodology,
-                        failurePattern,
-                        stallResponse,
-                        pressurePrompt,
-                    };
-                }
-            }
-            catch (err) {
-                // PUA engine error — degrade gracefully, continue without PUA
-                console.warn(`Warning: PUA state restoration failed, continuing without PUA: ${err instanceof Error ? (err.stack ?? err.message) : String(err)}`);
-                puaContext = undefined;
-            }
+        if (puaEnabled && this.puaStateManager) {
+            puaContext = this.puaStateManager.restoreContext(statusContent, this.orchestratorState.consecutiveFailures);
         }
         const schedulerResult = determineNextSkill({
-            currentPhase: loopFields.mode
-                ? (this.getPhaseFromStatusContent(statusContent) ?? undefined)
-                : undefined,
-            tier: this.config.presetTier ?? this.getTierFromStatusContent(statusContent),
+            currentPhase: loopFields.mode ? (getPhaseFromStatus(statusContent) ?? undefined) : undefined,
+            tier: this.config.presetTier ?? getTierFromStatus(statusContent),
             planStatus: undefined, // Plan status is determined by the agent
             hasIncompleteTasks: undefined,
             reviewResult: undefined,
@@ -414,6 +533,10 @@ export class SdkDriver {
         });
         // If the scheduler says completed or aborted, signal the agent.
         const nextPhase = schedulerResult.nextPhase;
+        // Track normal completion for StatusFile cleanup (Req 6.3, 6.4).
+        if (nextPhase === "completed") {
+            this.loopCompletedNormally = true;
+        }
         // --- PUA: Build prompt with puaContext when available ---
         const prompt = buildSkillAwarePrompt({
             base: {
@@ -438,13 +561,25 @@ export class SdkDriver {
         let iterationEntry;
         let iterationSuccess = false;
         let iterationSummary = "";
+        let completedPhase;
+        let agentEndMs = iterStartMs;
         try {
             // Invoke the agent adapter.
             const agentResult = await this.agentAdapter.run(prompt, this.config.cwd, {
                 signal: this.currentAbortController.signal,
             });
+            agentEndMs = Date.now();
             const output = agentResult.output;
             const usage = agentResult.usage;
+            // Evaluate quality gates based on the completed skill phase.
+            // This overrides any agent-reported gate_result with an independent evaluation.
+            completedPhase = output.skill_phase_completed;
+            if (completedPhase) {
+                const gateResult = this.evaluateQualityGateForPhase(completedPhase);
+                if (gateResult) {
+                    output.gate_result = gateResult.status;
+                }
+            }
             // Update reviewFixAttempts based on gate_result.
             if (output.gate_result === "passed") {
                 this.reviewFixAttempts = 0;
@@ -454,6 +589,8 @@ export class SdkDriver {
             }
             if (output.should_fully_stop) {
                 // Stop condition met — dispatch stop_condition_met event.
+                // Mark as normal completion for StatusFile cleanup (Req 6.3).
+                this.loopCompletedNormally = true;
                 const stopResult = transition(this.orchestratorState, { type: "stop_condition_met" }, this.config.limits);
                 this.orchestratorState = stopResult.state;
                 this.lastEffects = stopResult.effects;
@@ -463,21 +600,37 @@ export class SdkDriver {
                 this.appendAndPersistNotes(iterationEntry, usage);
                 // PUA: success path — clear state on stop
                 if (puaEnabled) {
-                    this.handlePuaSuccess();
+                    this.puaStateManager?.handleSuccess();
                 }
                 // Update StatusFile (non-critical).
-                this.safeUpdateIterationStatus(nextPhase, iterationNumber);
+                safeUpdateIterationStatusHelper(this.statusFileIO, nextPhase, iterationNumber);
                 return;
             }
             if (output.success) {
-                event = {
-                    type: "iteration_success",
-                    summary: output.summary,
-                    tokenUsage: usage,
-                };
-                iterationEntry = this.buildIterationEntry(iterationNumber, true, output);
-                iterationSuccess = true;
-                iterationSummary = output.summary;
+                // If a test or ship gate returned "blocked", override to soft failure
+                // even though the agent reported success (Req 4.5, 4.7).
+                const isGateBlocked = output.gate_result === "blocked";
+                const isTestOrShipPhase = completedPhase === "test" || completedPhase === "ship";
+                if (isGateBlocked && isTestOrShipPhase) {
+                    event = {
+                        type: "iteration_soft_failure",
+                        summary: output.summary,
+                        tokenUsage: usage,
+                    };
+                    iterationEntry = this.buildIterationEntry(iterationNumber, false, output);
+                    iterationSuccess = false;
+                    iterationSummary = output.summary;
+                }
+                else {
+                    event = {
+                        type: "iteration_success",
+                        summary: output.summary,
+                        tokenUsage: usage,
+                    };
+                    iterationEntry = this.buildIterationEntry(iterationNumber, true, output);
+                    iterationSuccess = true;
+                    iterationSummary = output.summary;
+                }
             }
             else {
                 event = {
@@ -492,12 +645,7 @@ export class SdkDriver {
         }
         catch (error) {
             const errorMessage = error instanceof Error ? error.message : String(error);
-            const zeroUsage = {
-                inputTokens: 0,
-                outputTokens: 0,
-                cacheReadTokens: 0,
-                cacheCreationTokens: 0,
-            };
+            const zeroUsage = ZERO_TOKEN_USAGE;
             event = {
                 type: "iteration_hard_failure",
                 error: errorMessage,
@@ -512,6 +660,10 @@ export class SdkDriver {
             };
             iterationSuccess = false;
             iterationSummary = errorMessage;
+            // PUA: escalate pressure on hard failure (Req 17.1)
+            if (puaEnabled) {
+                this.puaStateManager?.handleFailure(errorMessage, this.orchestratorState.consecutiveFailures);
+            }
         }
         finally {
             this.currentAbortController = null;
@@ -521,24 +673,42 @@ export class SdkDriver {
         // Save pre-transition state in case effect execution fails.
         const preTransitionState = this.orchestratorState;
         this.orchestratorState = result.state;
-        this.lastEffects = result.effects;
-        // Execute the resulting effects.
+        // Apply skill-aware commit strategy: replace/remove commit effects based on
+        // shouldCommitForPhase() and use phase-specific commit messages (Req 7.1–7.7).
+        const effectivePhase = completedPhase ?? nextPhase;
+        const adjustedEffects = this.applySkillAwareCommitStrategy(result.effects, effectivePhase, iterationSuccess, iterationNumber, iterationSummary);
+        this.lastEffects = adjustedEffects;
+        // Execute the resulting effects (commit/rollback, schedule_iteration, etc.).
         // If effect execution fails (e.g., commit throws), revert to pre-transition
         // state and dispatch iteration_hard_failure instead.
         try {
-            await this.executeEffects(result.effects);
+            await this.executeEffects(adjustedEffects);
         }
         catch (effectError) {
             const effectMessage = effectError instanceof Error ? effectError.message : String(effectError);
+            // FrozenZoneViolation: terminate loop directly without backoff (Req 8.2).
+            if (effectError instanceof FrozenZoneViolation) {
+                const abortResult = transition(this.orchestratorState, { type: "stop_condition_met" }, this.config.limits);
+                this.orchestratorState = abortResult.state;
+                this.lastEffects = abortResult.effects;
+                await this.executeEffects(abortResult.effects);
+                iterationEntry = {
+                    number: iterationEntry.number,
+                    success: false,
+                    summary: `Frozen zone violation — loop terminated: ${effectMessage}`,
+                    keyChanges: [],
+                    keyLearnings: [],
+                };
+                this.appendAndPersistNotes(iterationEntry);
+                // Update StatusFile with current phase and iteration (non-critical).
+                safeUpdateIterationStatusHelper(this.statusFileIO, nextPhase, iterationNumber);
+                return;
+            }
+            // UnexpectedEffectError or any other error: trigger iteration_hard_failure + backoff (Req 8.3).
             // Revert to pre-transition state so that commitCount is not incremented.
             this.orchestratorState = preTransitionState;
             // Dispatch iteration_hard_failure from the original state.
-            const zeroUsage = {
-                inputTokens: 0,
-                outputTokens: 0,
-                cacheReadTokens: 0,
-                cacheCreationTokens: 0,
-            };
+            const zeroUsage = ZERO_TOKEN_USAGE;
             const failureResult = transition(this.orchestratorState, { type: "iteration_hard_failure", error: effectMessage, tokenUsage: zeroUsage }, this.config.limits);
             this.orchestratorState = failureResult.state;
             this.lastEffects = failureResult.effects;
@@ -555,10 +725,10 @@ export class SdkDriver {
             this.appendAndPersistNotes(iterationEntry);
             // PUA: treat effect failure as a failure path
             if (puaEnabled) {
-                this.handlePuaFailure(`Effect execution failed: ${effectMessage}`);
+                this.puaStateManager?.handleFailure(`Effect execution failed: ${effectMessage}`, this.orchestratorState.consecutiveFailures);
             }
             // Update StatusFile with current phase and iteration (non-critical).
-            this.safeUpdateIterationStatus(nextPhase, iterationNumber);
+            safeUpdateIterationStatusHelper(this.statusFileIO, nextPhase, iterationNumber);
             return;
         }
         // Append iteration entry to notes and persist.
@@ -566,131 +736,81 @@ export class SdkDriver {
         // --- PUA: After iteration — handle success/failure paths ---
         if (puaEnabled) {
             if (iterationSuccess) {
-                this.handlePuaSuccess();
+                this.puaStateManager?.handleSuccess();
             }
             else {
-                this.handlePuaFailure(iterationSummary);
+                this.puaStateManager?.handleFailure(iterationSummary, this.orchestratorState.consecutiveFailures);
             }
         }
         // Update StatusFile with current phase and iteration (non-critical).
-        this.safeUpdateIterationStatus(nextPhase, iterationNumber);
+        safeUpdateIterationStatusHelper(this.statusFileIO, nextPhase, iterationNumber);
+        // Record iteration timing (Req 4.1–4.4).
+        const effectEndMs = Date.now();
+        const timing = createIterationTiming(iterStartMs, agentEndMs, effectEndMs);
+        this.iterationTimings.push(timing);
+        this.logger.log(createLogEntry("iteration_timing", "debug", "Iteration timing", {
+            runId: this.config.runId,
+            iteration: iterationNumber,
+        }, { ...timing }));
     }
     // -------------------------------------------------------------------------
-    // Private: PUA engine helpers
+    // Private: quality gate evaluation (skill-aware mode)
     // -------------------------------------------------------------------------
     /**
-     * Handle PUA state after a successful iteration.
+     * Evaluate the appropriate quality gate for a completed skill phase.
      *
-     * Clears summary history, resets methodology chain index, and removes
-     * PUA fields from StatusFile.
-     */
-    handlePuaSuccess() {
-        try {
-            this.summaryHistory = [];
-            this.puaMethodologyChainIndex = 0;
-            this.currentMethodologyChain = null;
-            this.safeClearPuaFields();
-        }
-        catch (err) {
-            console.warn(`Warning: PUA success cleanup failed: ${err instanceof Error ? (err.stack ?? err.message) : String(err)}`);
-        }
-    }
-    /**
-     * Handle PUA state after a failed iteration.
+     * Reads the relevant file content via configured callbacks and delegates
+     * to the pure-function gate evaluators. Returns null if no gate applies
+     * to the given phase or if file-reading callbacks are not configured.
      *
-     * Pushes summary to history (keeping last 5), detects failure pattern,
-     * determines pressure level, selects/advances methodology, builds
-     * pressure prompt, and persists PUA state to StatusFile.
+     * @param phase - The skill phase that just completed.
+     * @returns The gate evaluation result, or null if no gate applies.
      */
-    handlePuaFailure(summary) {
+    evaluateQualityGateForPhase(phase) {
+        return evaluateGateForPhase(phase, {
+            readReview: () => this.readReviewFileContent(),
+            readTest: () => this.readTestFileContent(),
+            readProgress: () => this.readProgressFileContent(),
+        });
+    }
+    /**
+     * Read file content via a configured callback.
+     * Returns null if no callback is configured or if reading fails.
+     *
+     * @param reader - The configured file reader callback, or undefined.
+     * @returns File content string, or null.
+     */
+    readFileContent(reader) {
+        if (!reader)
+            return null;
         try {
-            // Push summary to history (keep last 5)
-            this.summaryHistory.push(summary);
-            if (this.summaryHistory.length > 5) {
-                this.summaryHistory = this.summaryHistory.slice(-5);
-            }
-            // Detect failure pattern
-            const failurePattern = detectFailurePattern(this.summaryHistory);
-            // Determine pressure level
-            const consecutiveFailures = this.orchestratorState.consecutiveFailures;
-            const hasStall = failurePattern === "spinning";
-            const pressureLevel = determinePressureLevel(consecutiveFailures, hasStall);
-            // Methodology selection/advancement
-            let methodology = null;
-            if (pressureLevel !== "L0") {
-                if (failurePattern !== null) {
-                    if (this.currentMethodologyChain === null) {
-                        // First time detecting this failure pattern — get the chain
-                        this.currentMethodologyChain = getMethodologyChain(failurePattern);
-                        this.puaMethodologyChainIndex = 0;
-                        methodology = this.currentMethodologyChain[0] ?? null;
-                    }
-                    else {
-                        // Advance in the existing chain
-                        const next = advanceMethodology(this.currentMethodologyChain, this.puaMethodologyChainIndex);
-                        if (next !== null) {
-                            this.puaMethodologyChainIndex++;
-                            methodology = next;
-                        }
-                        else {
-                            // Chain exhausted — don't block Orchestrator's normal circuit-breaking
-                            methodology = null;
-                        }
-                    }
-                }
-                else {
-                    // No failure pattern detected — use task-type-based methodology
-                    methodology = selectMethodology(this.config.puaTaskType ?? "general");
-                }
-            }
-            // Build pressure prompt — return value intentionally discarded.
-            // PUA state (pressureLevel, methodology, failurePattern) is persisted to
-            // StatusFile via safeWritePuaFields below. On the next iteration,
-            // executeSkillAwareIteration restores puaContext from StatusFile and
-            // calls buildPressurePrompt there to produce the prompt string.
-            // @see executeSkillAwareIteration — "PUA: Before iteration — restore state from StatusFile"
-            const stallResponse = getStallResponse(consecutiveFailures);
-            buildPressurePrompt(pressureLevel, methodology, failurePattern, stallResponse);
-            // Persist PUA state to StatusFile
-            this.safeWritePuaFields({
-                puaPressureLevel: pressureLevel,
-                puaMethodology: methodology ?? undefined,
-                puaChainIndex: this.puaMethodologyChainIndex,
-                puaFailurePattern: failurePattern ?? undefined,
-            });
+            return reader();
         }
         catch (err) {
-            // PUA engine error — degrade gracefully, continue without PUA
-            console.warn(`Warning: PUA failure handling failed, continuing without PUA: ${err instanceof Error ? (err.stack ?? err.message) : String(err)}`);
+            this.logger.log(createLogEntry("read_file_content_failed", "debug", `readFileContent failed: ${err instanceof Error ? err.message : String(err)}`, { runId: this.config.runId }));
+            return null;
         }
     }
     /**
-     * Safely write PUA fields to StatusFile.
-     * Wraps in try/catch and logs warning on failure.
+     * Read review file content via the configured callback.
+     * Returns null if no callback is configured or if reading fails.
      */
-    safeWritePuaFields(fields) {
-        try {
-            const currentContent = this.readStatusFileContent();
-            const updatedContent = writePuaFields(currentContent, fields);
-            this.writeStatusFileContent(updatedContent);
-        }
-        catch (err) {
-            console.warn(`Warning: failed to write PUA fields to StatusFile: ${err instanceof Error ? (err.stack ?? err.message) : String(err)}`);
-        }
+    readReviewFileContent() {
+        return this.readFileContent(this.config.readReviewFile);
     }
     /**
-     * Safely clear PUA fields from StatusFile.
-     * Wraps in try/catch and logs warning on failure.
+     * Read test result file content via the configured callback.
+     * Returns null if no callback is configured or if reading fails.
      */
-    safeClearPuaFields() {
-        try {
-            const currentContent = this.readStatusFileContent();
-            const clearedContent = clearPuaFields(currentContent);
-            this.writeStatusFileContent(clearedContent);
-        }
-        catch (err) {
-            console.warn(`Warning: failed to clear PUA fields from StatusFile: ${err instanceof Error ? (err.stack ?? err.message) : String(err)}`);
-        }
+    readTestFileContent() {
+        return this.readFileContent(this.config.readTestFile);
+    }
+    /**
+     * Read progress file content via the configured callback.
+     * Returns null if no callback is configured or if reading fails.
+     */
+    readProgressFileContent() {
+        return this.readFileContent(this.config.readProgressFile);
     }
     // -------------------------------------------------------------------------
     // Private: notes management
@@ -720,10 +840,23 @@ export class SdkDriver {
     /** Log cumulative token usage after an iteration. */
     logTokenUsage(usage) {
         const state = this.orchestratorState;
-        const message = `Iteration tokens — input: ${usage.inputTokens}, output: ${usage.outputTokens}, ` +
-            `cache read: ${usage.cacheReadTokens}, cache creation: ${usage.cacheCreationTokens} | ` +
-            `Cumulative — input: ${state.totalInputTokens}, output: ${state.totalOutputTokens}`;
-        console.log(message);
+        const message = this.t("driver.loop.iterationTokens", {
+            inputTokens: String(usage.inputTokens),
+            outputTokens: String(usage.outputTokens),
+            cacheReadTokens: String(usage.cacheReadTokens),
+            cacheCreationTokens: String(usage.cacheCreationTokens),
+            totalInputTokens: String(state.totalInputTokens),
+            totalOutputTokens: String(state.totalOutputTokens),
+        });
+        this.logger.log(createLogEntry("token_usage", "info", message, {
+            runId: this.config.runId,
+            iteration: state.currentIteration,
+        }, {
+            inputTokens: usage.inputTokens,
+            outputTokens: usage.outputTokens,
+            totalInputTokens: state.totalInputTokens,
+            totalOutputTokens: state.totalOutputTokens,
+        }));
     }
     // -------------------------------------------------------------------------
     // Private: effect execution
@@ -736,74 +869,93 @@ export class SdkDriver {
         }
         catch (error) {
             const message = error instanceof Error ? error.message : String(error);
-            console.log(`Effect execution failed: ${message}`);
+            this.logger.log(createLogEntry("effect_execution_failed", "error", this.t("driver.loop.effectExecutionFailed", { message }), {
+                runId: this.config.runId,
+            }));
             throw error;
         }
     }
     // -------------------------------------------------------------------------
-    // Private: StatusFile helpers (skill-aware mode)
+    // Private: skill-aware commit strategy (Req 7.1–7.7)
     // -------------------------------------------------------------------------
     /**
-     * Read StatusFile content via the configured callback.
-     * Returns empty string if no callback is configured or if reading fails.
+     * Build a phase-specific commit message for a completed SKILL phase.
+     *
+     * Commit message format per phase:
+     * - **build**: uses the agent summary (plan-defined message proxy)
+     * - **plan**: `forge(plan): <topic> plan approved`
+     * - **fix** / **fix-apply**: `forge(fix): resolve P0/P1 from review`
+     * - **refactor-apply**: `forge(refactor): apply refactoring changes`
+     *
+     * Falls back to a generic format for any other commitable phase.
+     *
+     * @param phase - The SKILL phase that completed.
+     * @param iterationNumber - The current iteration number.
+     * @param summary - The agent's iteration summary (used for build phase).
+     * @returns The commit message string.
      */
-    readStatusFileContent() {
-        if (!this.config.readStatusFile)
-            return "";
-        try {
-            return this.config.readStatusFile();
-        }
-        catch {
-            return "";
-        }
-    }
-    /**
-     * Write StatusFile content via the configured callback.
-     * Silently ignores failures (StatusFile updates are non-critical).
-     */
-    writeStatusFileContent(content) {
-        if (!this.config.writeStatusFile)
-            return;
-        this.config.writeStatusFile(content);
-    }
-    /**
-     * Extract the `phase` field from StatusFile content.
-     * Returns null if not found.
-     */
-    getPhaseFromStatusContent(content) {
-        const match = content.match(/^phase:\s*"?([^"\n]*)"?\s*$/m);
-        return match ? match[1].trim() : null;
-    }
-    /**
-     * Extract the `tier` field from StatusFile content.
-     * Returns undefined if not found.
-     */
-    getTierFromStatusContent(content) {
-        const match = content.match(/^tier:\s*"?([^"\n]*)"?\s*$/m);
-        return match ? match[1].trim() : undefined;
-    }
-    /**
-     * Safely update StatusFile with current phase and iteration.
-     * Wraps in try/catch and logs warning on failure (Req 6.7).
-     */
-    safeUpdateIterationStatus(phase, iteration) {
-        try {
-            const currentContent = this.readStatusFileContent();
-            const updatedContent = updateIterationStatus(currentContent, phase, iteration);
-            this.writeStatusFileContent(updatedContent);
-        }
-        catch (err) {
-            console.warn(`Warning: failed to update StatusFile iteration status: ${err instanceof Error ? err.message : String(err)}`);
+    buildCommitMessageForPhase(phase, iterationNumber, summary) {
+        switch (phase) {
+            case "build":
+                // Use agent summary as proxy for plan-defined commit message (Req 7.1).
+                return `forge(build): ${summary}`;
+            case "plan":
+                return `forge(plan): ${this.config.objective} plan approved`;
+            case "fix":
+            case "fix-apply":
+                return "forge(fix): resolve P0/P1 from review";
+            case "refactor-apply":
+                return "forge(refactor): apply refactoring changes";
+            default:
+                return `forge(${phase}): iteration ${iterationNumber} — ${summary}`;
         }
     }
     /**
-     * Clear all Loop-related fields from StatusFile.
-     * Called when the loop ends.
+     * Apply skill-aware commit strategy to the effects produced by the
+     * orchestrator's state transition.
+     *
+     * The orchestrator always produces a `commit` effect on `iteration_success`
+     * and a `rollback` effect on failures. In skill-aware mode, we refine this:
+     *
+     * - If `shouldCommitForPhase(phase, success)` returns `true`:
+     *   Replace the generic commit message with a phase-specific one.
+     * - If `shouldCommitForPhase(phase, success)` returns `false` and the
+     *   iteration succeeded: Remove the `commit` effect (non-commitable phases
+     *   like review/test don't produce code changes) and decrement commitCount.
+     * - If the iteration failed: The orchestrator already produces `rollback`,
+     *   which is correct for commitable phases. For non-commitable phases,
+     *   rollback is harmless (no-op on clean tree).
+     *
+     * @param effects - The effects array from the orchestrator transition.
+     * @param phase - The completed SKILL phase.
+     * @param success - Whether the iteration succeeded.
+     * @param iterationNumber - The current iteration number.
+     * @param summary - The agent's iteration summary.
+     * @returns The modified effects array.
      */
-    clearStatusFileLoopFields() {
-        const currentContent = this.readStatusFileContent();
-        const clearedContent = clearLoopFields(currentContent);
-        this.writeStatusFileContent(clearedContent);
+    applySkillAwareCommitStrategy(effects, phase, success, iterationNumber, summary) {
+        if (shouldCommitForPhase(phase, success)) {
+            // Replace the generic commit message with a phase-specific one (Req 7.1–7.3).
+            const commitMessage = this.buildCommitMessageForPhase(phase, iterationNumber, summary);
+            return effects.map((e) => e.type === "commit" ? { type: "commit", message: commitMessage } : e);
+        }
+        if (success && !shouldCommitForPhase(phase, success)) {
+            // Non-commitable phase succeeded — remove the commit effect (Req 7.4).
+            // Also adjust commitCount since the orchestrator incremented it.
+            const filtered = effects.filter((e) => e.type !== "commit");
+            if (filtered.length !== effects.length) {
+                // A commit effect was removed — decrement the commitCount that the
+                // orchestrator optimistically incremented.
+                this.orchestratorState = {
+                    ...this.orchestratorState,
+                    commitCount: Math.max(0, this.orchestratorState.commitCount - 1),
+                };
+            }
+            return filtered;
+        }
+        // Failed iteration with non-commitable phase — rollback is already in effects
+        // from the orchestrator (harmless no-op on clean tree). No changes needed.
+        return effects;
     }
     // -------------------------------------------------------------------------
     // Private: result construction
@@ -815,6 +967,143 @@ export class SdkDriver {
             notesDocument: this.notesDocument,
             commitCount: this.orchestratorState.commitCount,
         };
+    }
+    // -------------------------------------------------------------------------
+    // Completion summary output (Req 9.1–9.5)
+    // -------------------------------------------------------------------------
+    /**
+     * Format and output a structured completion or abort summary.
+     *
+     * Called at the end of `run()` before returning the result. Outputs
+     * structured console output matching SKILL.md examples:
+     *
+     * - **Normal completion**: objective, tier, total iterations, per-phase
+     *   pass/fail status, branch name.
+     * - **Circuit breaker abort**: unresolved P0/P1 issues list and recovery
+     *   suggestions.
+     * - **Error abort**: error reason and `/forge resume` suggestion.
+     *
+     * **Validates: Requirements 9.1, 9.2, 9.3, 9.4, 9.5**
+     */
+    formatCompletionSummary(baseline) {
+        const state = this.orchestratorState;
+        const lines = [];
+        if (this.loopCompletedNormally) {
+            // --- Normal completion (Req 9.1, 9.4, 9.5) ---
+            lines.push(this.t("driver.summary.completedTitle"));
+            lines.push(this.t("driver.summary.objective", { objective: this.config.objective }));
+            lines.push(this.t("driver.summary.tier", { tier: this.config.presetTier ?? "standard" }));
+            lines.push(this.t("driver.summary.iterations", { count: String(state.currentIteration) }));
+            // Per-phase pass/fail status from notes entries (Req 9.4).
+            const phaseStatus = this.buildPhaseStatusSummary();
+            if (phaseStatus.length > 0) {
+                lines.push(this.t("driver.summary.phasesHeader"));
+                for (const ps of phaseStatus) {
+                    lines.push(`  ${ps}`);
+                }
+            }
+            // Branch name (Req 9.5).
+            if (this.config.branchName) {
+                lines.push(this.t("driver.summary.branch", { branch: this.config.branchName }));
+            }
+        }
+        else if (this.reviewFixAttempts >= this.config.loopConfig.maxConsecutiveFailures) {
+            // --- Circuit breaker abort (Req 9.2) ---
+            lines.push(this.t("driver.summary.circuitBreakerTitle"));
+            lines.push(this.t("driver.summary.fixAttemptsExhausted", {
+                attempts: String(this.reviewFixAttempts),
+                max: String(this.config.loopConfig.maxConsecutiveFailures),
+            }));
+            // Collect unresolved P0/P1 issues from the last review gate evaluation.
+            const unresolvedIssues = this.collectUnresolvedIssues();
+            if (unresolvedIssues.length > 0) {
+                lines.push(this.t("driver.summary.unresolvedIssuesHeader"));
+                for (const issue of unresolvedIssues) {
+                    lines.push(`  ${issue}`);
+                }
+            }
+            lines.push(this.t("driver.summary.recovery"));
+        }
+        else {
+            // --- Error abort (Req 9.3) ---
+            lines.push(this.t("driver.summary.errorTitle"));
+            // Extract the last failure reason from notes entries.
+            const lastFailure = this.getLastFailureReason();
+            if (lastFailure) {
+                lines.push(this.t("driver.summary.reason", { reason: lastFailure }));
+            }
+            lines.push(this.t("driver.summary.recovery"));
+        }
+        // Append performance baseline (Req 5.2).
+        lines.push("");
+        lines.push(formatPerformanceBaseline(baseline));
+        return lines.join("\n");
+    }
+    /**
+     * Build per-phase pass/fail status from the notes document entries.
+     *
+     * Scans iteration entries for `skill_phase_completed` information
+     * embedded in summaries, and aggregates pass/fail per phase.
+     *
+     * @returns Array of formatted phase status strings (e.g., "✅ build", "❌ review").
+     */
+    buildPhaseStatusSummary() {
+        const phaseResults = new Map();
+        for (const entry of this.notesDocument.entries) {
+            // Try to extract phase from the summary pattern "<phase> phase completed/failed"
+            const phaseMatch = entry.summary.match(/^(\S+)\s+phase\s+(completed|failed)/);
+            if (phaseMatch) {
+                const phase = phaseMatch[1];
+                // A phase is considered passed if its last entry was successful
+                phaseResults.set(phase, entry.success);
+            }
+        }
+        const result = [];
+        for (const [phase, passed] of phaseResults) {
+            result.push(passed
+                ? this.t("driver.summary.phasePassed", { phase })
+                : this.t("driver.summary.phaseFailed", { phase }));
+        }
+        return result;
+    }
+    /**
+     * Collect unresolved P0/P1 issues from the last review gate evaluation.
+     *
+     * Reads the review file content (if available) and extracts P0/P1 issues
+     * from the quality gate evaluation.
+     *
+     * @returns Array of formatted issue strings.
+     */
+    collectUnresolvedIssues() {
+        try {
+            const reviewContent = this.readReviewFileContent();
+            if (!reviewContent)
+                return [];
+            const gateResult = evaluateReviewGate(reviewContent);
+            if (gateResult.issues && gateResult.issues.length > 0) {
+                return gateResult.issues
+                    .filter((i) => i.severity === "P0" || i.severity === "P1")
+                    .map((i) => `${i.severity}: ${i.description}`);
+            }
+        }
+        catch (err) {
+            this.logger.log(createLogEntry("collect_issues_failed", "debug", `collectUnresolvedIssues failed: ${err instanceof Error ? err.message : String(err)}`, { runId: this.config.runId }));
+        }
+        return [];
+    }
+    /**
+     * Get the last failure reason from the notes document.
+     *
+     * @returns The summary of the last failed iteration, or null if none.
+     */
+    getLastFailureReason() {
+        for (let i = this.notesDocument.entries.length - 1; i >= 0; i--) {
+            const entry = this.notesDocument.entries[i];
+            if (!entry.success) {
+                return entry.summary;
+            }
+        }
+        return null;
     }
 }
 // ---------------------------------------------------------------------------
@@ -831,7 +1120,8 @@ export function detectSkillAwareMode(cwd) {
     try {
         return existsSync(join(cwd, ".forge"));
     }
-    catch {
+    catch (err) {
+        console.error(`[debug] detectSkillAwareMode failed for "${cwd}": ${err instanceof Error ? err.message : String(err)}`);
         return false;
     }
 }

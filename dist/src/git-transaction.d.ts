@@ -47,7 +47,7 @@ export declare function sanitizeBranchName(input: string): string;
  *
  * When a collision is detected, the first 8 characters of the `runId` are
  * appended as a `-<suffix>`. The final name is truncated to
- * {@link MAX_BRANCH_NAME_LENGTH} characters.
+ * `MAX_BRANCH_NAME_LENGTH` (250) characters.
  *
  * @param baseName          The desired branch name (e.g. `forge/my-feature`).
  * @param runId             The unique run identifier (UUID).

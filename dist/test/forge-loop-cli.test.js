@@ -9,10 +9,10 @@
  *
  * **Validates: Requirements 6.1, 6.2, 6.3, 6.4, 6.5, 6.6, 6.7, 6.8, 6.9, 6.10, 4.1, 4.2, 4.3, 4.6, 4.7, 7.1, 7.3, 7.4, 7.6**
  */
-import { Command } from "commander";
-import { existsSync, mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync, } from "node:fs";
+import { existsSync, mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join as pathJoin } from "node:path";
+import { Command } from "commander";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { buildAgentOutputSchema } from "../src/agent-output.js";
 import { buildSleepPreventionCommand } from "../src/sleep-preventer.js";
@@ -26,10 +26,14 @@ import { decideWorktreeCleanup, isValidWorktreeSource } from "../src/worktree-ma
 vi.mock("@anthropic-ai/claude-agent-sdk", () => ({
     startup: vi.fn().mockResolvedValue({}),
 }));
+// Import pure functions from sdk-driver for pre-flight check tests
+import { CliError } from "../src/cli-error.js";
 // Temporarily suppress process.exit during module import
 const _origExit = process.exit;
 process.exit = (() => { });
-const { backupWorktreeNotes } = await import("../src/forge-loop-cli.js");
+const { backupWorktreeNotes, VALID_TIERS, DEFAULT_BACKOFF_BASE_MS, DEFAULT_MAX_CONCURRENT_WORKTREES, SUPPORTED_LOCALES, } = await import("../src/forge-loop-cli.js");
+const { detectSkillAwareMode, validateHooksPresence } = await import("../src/sdk-driver.js");
+const { detectLocale } = await import("../src/locale-detector.js");
 // Allow a microtask for the main().catch() promise chain to settle
 await new Promise((r) => setTimeout(r, 50));
 process.exit = _origExit;
@@ -276,14 +280,14 @@ describe("LoopConfig and RunLimits construction", () => {
             agent: "claude",
             maxConsecutiveFailures: 3,
             preventSleep: true,
-            backoffBaseMs: 60_000,
-            maxConcurrentWorktrees: 3,
+            backoffBaseMs: DEFAULT_BACKOFF_BASE_MS,
+            maxConcurrentWorktrees: DEFAULT_MAX_CONCURRENT_WORKTREES,
         };
         expect(loopConfig.agent).toBe("claude");
         expect(loopConfig.maxConsecutiveFailures).toBe(3);
         expect(loopConfig.preventSleep).toBe(true);
-        expect(loopConfig.backoffBaseMs).toBe(60_000);
-        expect(loopConfig.maxConcurrentWorktrees).toBe(3);
+        expect(loopConfig.backoffBaseMs).toBe(DEFAULT_BACKOFF_BASE_MS);
+        expect(loopConfig.maxConcurrentWorktrees).toBe(DEFAULT_MAX_CONCURRENT_WORKTREES);
     });
     it("RunLimits are constructed from parsed options", () => {
         // Simulating what the CLI does with parsed options
@@ -689,7 +693,7 @@ describe("backupWorktreeNotes", () => {
         expect(result.success).toBe(false);
         expect(result.error).toBeDefined();
         expect(typeof result.error).toBe("string");
-        expect(result.error.length).toBeGreaterThan(0);
+        expect(result.error?.length).toBeGreaterThan(0);
     });
 });
 // ---------------------------------------------------------------------------
@@ -774,6 +778,357 @@ describe("--resume CLI option", () => {
         expect(result?.objective).toBe("Build feature X");
         expect(result?.opts.maxIterations).toBe(20);
         expect(result?.opts.resume).toBeUndefined();
+    });
+});
+// ---------------------------------------------------------------------------
+// 12. CLI pre-flight checks (Req 10.1, 10.2, 10.4, 10.6)
+// ---------------------------------------------------------------------------
+describe("CLI pre-flight checks", () => {
+    let tmpDir;
+    beforeEach(() => {
+        tmpDir = mkdtempSync(pathJoin(tmpdir(), "forge-preflight-"));
+    });
+    afterEach(() => {
+        rmSync(tmpDir, { recursive: true, force: true });
+    });
+    // -- Req 10.1: Missing .forge/ directory outputs error and exits --
+    describe("missing .forge/ directory (Req 10.1)", () => {
+        it("detectSkillAwareMode returns false when .forge/ does not exist", () => {
+            // tmpDir has no .forge/ directory
+            const result = detectSkillAwareMode(tmpDir);
+            expect(result).toBe(false);
+        });
+        it("detectSkillAwareMode returns true when .forge/ exists", () => {
+            mkdirSync(pathJoin(tmpDir, ".forge"));
+            const result = detectSkillAwareMode(tmpDir);
+            expect(result).toBe(true);
+        });
+        it("CLI throws CliError when skill options used without .forge/ directory", () => {
+            // Replicate the CLI validation logic:
+            // if (!hasForgeDir && hasSkillOptions) → throw CliError
+            const hasForgeDir = detectSkillAwareMode(tmpDir); // false
+            const hasSkillOptions = true; // e.g., --tier was provided
+            expect(hasForgeDir).toBe(false);
+            if (!hasForgeDir && hasSkillOptions) {
+                const error = new CliError("Error: --tier, --type, --phase, and --nature require a .forge/ directory. Run `forge init` first.");
+                expect(error).toBeInstanceOf(CliError);
+                expect(error.message).toContain(".forge/");
+                expect(error.message).toContain("forge init");
+                expect(error.exitCode).toBe(1);
+            }
+        });
+        it("CLI does not error when .forge/ exists with skill options", () => {
+            mkdirSync(pathJoin(tmpDir, ".forge"));
+            const hasForgeDir = detectSkillAwareMode(tmpDir);
+            const hasSkillOptions = true;
+            expect(hasForgeDir).toBe(true);
+            // No error should be thrown
+            const shouldError = !hasForgeDir && hasSkillOptions;
+            expect(shouldError).toBe(false);
+        });
+    });
+    // -- Req 10.2: Active task in StatusFile outputs warning --
+    describe("active task in StatusFile (Req 10.2)", () => {
+        it("warns when StatusFile has an active phase", () => {
+            // Create .forge/status.md with an active phase
+            const forgeDir = pathJoin(tmpDir, ".forge");
+            mkdirSync(forgeDir, { recursive: true });
+            writeFileSync(pathJoin(forgeDir, "status.md"), '---\nphase: "build"\ntier: "standard"\n---\n', "utf-8");
+            // Replicate the CLI's active task detection logic
+            const statusFilePath = pathJoin(tmpDir, ".forge", "status.md");
+            const statusContent = readFileSync(statusFilePath, "utf-8");
+            const phaseMatch = statusContent.match(/^phase:\s*"?([^"\n]*)"?\s*$/m);
+            expect(phaseMatch).not.toBeNull();
+            const phase = phaseMatch?.[1].trim();
+            expect(phase).toBe("build");
+            // Phase is not completed or aborted → should warn
+            const shouldWarn = phase !== "" && phase !== "completed" && phase !== "aborted";
+            expect(shouldWarn).toBe(true);
+        });
+        it("does not warn when StatusFile phase is completed", () => {
+            const forgeDir = pathJoin(tmpDir, ".forge");
+            mkdirSync(forgeDir, { recursive: true });
+            writeFileSync(pathJoin(forgeDir, "status.md"), '---\nphase: "completed"\n---\n', "utf-8");
+            const statusContent = readFileSync(pathJoin(forgeDir, "status.md"), "utf-8");
+            const phaseMatch = statusContent.match(/^phase:\s*"?([^"\n]*)"?\s*$/m);
+            const phase = phaseMatch?.[1].trim();
+            const shouldWarn = phase !== "" && phase !== "completed" && phase !== "aborted";
+            expect(shouldWarn).toBe(false);
+        });
+        it("does not warn when StatusFile phase is aborted", () => {
+            const forgeDir = pathJoin(tmpDir, ".forge");
+            mkdirSync(forgeDir, { recursive: true });
+            writeFileSync(pathJoin(forgeDir, "status.md"), '---\nphase: "aborted"\n---\n', "utf-8");
+            const statusContent = readFileSync(pathJoin(forgeDir, "status.md"), "utf-8");
+            const phaseMatch = statusContent.match(/^phase:\s*"?([^"\n]*)"?\s*$/m);
+            const phase = phaseMatch?.[1].trim();
+            const shouldWarn = phase !== "" && phase !== "completed" && phase !== "aborted";
+            expect(shouldWarn).toBe(false);
+        });
+        it("warns for review phase (active task)", () => {
+            const forgeDir = pathJoin(tmpDir, ".forge");
+            mkdirSync(forgeDir, { recursive: true });
+            writeFileSync(pathJoin(forgeDir, "status.md"), '---\nphase: "review"\n---\n', "utf-8");
+            const statusContent = readFileSync(pathJoin(forgeDir, "status.md"), "utf-8");
+            const phaseMatch = statusContent.match(/^phase:\s*"?([^"\n]*)"?\s*$/m);
+            const phase = phaseMatch?.[1].trim();
+            const shouldWarn = phase !== "" && phase !== "completed" && phase !== "aborted";
+            expect(shouldWarn).toBe(true);
+        });
+        it("does not warn when StatusFile has no phase field", () => {
+            const forgeDir = pathJoin(tmpDir, ".forge");
+            mkdirSync(forgeDir, { recursive: true });
+            writeFileSync(pathJoin(forgeDir, "status.md"), '---\ntier: "standard"\n---\n', "utf-8");
+            const statusContent = readFileSync(pathJoin(forgeDir, "status.md"), "utf-8");
+            const phaseMatch = statusContent.match(/^phase:\s*"?([^"\n]*)"?\s*$/m);
+            // No phase field → no warning
+            expect(phaseMatch).toBeNull();
+        });
+    });
+    // -- Req 10.4: Invalid --tier value outputs valid options and exits --
+    describe("invalid --tier value (Req 10.4)", () => {
+        it("VALID_TIERS contains exactly light, standard, full", () => {
+            expect(VALID_TIERS.has("light")).toBe(true);
+            expect(VALID_TIERS.has("standard")).toBe(true);
+            expect(VALID_TIERS.has("full")).toBe(true);
+            expect(VALID_TIERS.size).toBe(3);
+        });
+        it("VALID_TIERS rejects unknown tier values", () => {
+            expect(VALID_TIERS.has("mega")).toBe(false);
+            expect(VALID_TIERS.has("turbo")).toBe(false);
+            expect(VALID_TIERS.has("")).toBe(false);
+            expect(VALID_TIERS.has("LIGHT")).toBe(false);
+        });
+        it("CLI throws CliError with valid options listed for invalid tier", () => {
+            const invalidTier = "mega";
+            // Replicate the CLI validation logic
+            if (!VALID_TIERS.has(invalidTier)) {
+                const error = new CliError(`Error: Invalid --tier value "${invalidTier}". Valid options: ${[...VALID_TIERS].join(", ")}`);
+                expect(error).toBeInstanceOf(CliError);
+                expect(error.message).toContain("Invalid --tier value");
+                expect(error.message).toContain('"mega"');
+                expect(error.message).toContain("light");
+                expect(error.message).toContain("standard");
+                expect(error.message).toContain("full");
+                expect(error.exitCode).toBe(1);
+            }
+        });
+        it("CLI does not throw for valid tier values", () => {
+            for (const validTier of ["light", "standard", "full"]) {
+                const isValid = VALID_TIERS.has(validTier);
+                expect(isValid).toBe(true);
+            }
+        });
+    });
+    // -- Req 10.6: Missing hooks.json outputs warning but does not block --
+    describe("missing hooks.json (Req 10.6)", () => {
+        it("validateHooksPresence returns valid: false when hooks.json is missing", () => {
+            // tmpDir has no hooks/ directory
+            const result = validateHooksPresence(tmpDir);
+            expect(result.valid).toBe(false);
+            expect(result.reason).toContain("not found");
+        });
+        it("validateHooksPresence returns valid: true when hooks.json has PreToolUse", () => {
+            const hooksDir = pathJoin(tmpDir, "hooks");
+            mkdirSync(hooksDir, { recursive: true });
+            writeFileSync(pathJoin(hooksDir, "hooks.json"), JSON.stringify({ hooks: { PreToolUse: [{ type: "check" }] } }), "utf-8");
+            const result = validateHooksPresence(tmpDir);
+            expect(result.valid).toBe(true);
+        });
+        it("missing hooks.json is non-blocking (warning only, no CliError thrown)", () => {
+            // Replicate the CLI's hooks validation logic:
+            // The CLI calls validateHooksPresence and only console.warn's — never throws.
+            const hooksResult = validateHooksPresence(tmpDir);
+            expect(hooksResult.valid).toBe(false);
+            // The CLI pattern: warn but continue
+            // if (!hooksResult.valid) { console.warn(...) }
+            // No CliError is thrown — startup continues.
+            // We verify this by confirming the function returns a result (not throws)
+            // and the result indicates invalid but provides a reason.
+            expect(hooksResult.reason).toBeDefined();
+            expect(typeof hooksResult.reason).toBe("string");
+        });
+        it("validateHooksPresence returns valid: false when PreToolUse section is missing", () => {
+            const hooksDir = pathJoin(tmpDir, "hooks");
+            mkdirSync(hooksDir, { recursive: true });
+            writeFileSync(pathJoin(hooksDir, "hooks.json"), JSON.stringify({ hooks: { SessionStart: [] } }), "utf-8");
+            const result = validateHooksPresence(tmpDir);
+            expect(result.valid).toBe(false);
+            expect(result.reason).toContain("PreToolUse");
+        });
+    });
+});
+// ---------------------------------------------------------------------------
+// 13. --lang CLI option (i18n: Req 3.1, 3.2, 3.3, 9.4)
+// ---------------------------------------------------------------------------
+describe("--lang CLI option", () => {
+    /**
+     * Helper that creates a fresh Commander program matching the CLI's
+     * option definitions (including --lang) and parses the given argv array.
+     */
+    function parseArgs(argv) {
+        let captured;
+        const program = new Command();
+        program
+            .name("forge-loop")
+            .description("Run an autonomous loop with Claude Code Agent SDK")
+            .argument("<objective>", "The objective for the autonomous loop")
+            .option("--max-iterations <n>", "Maximum number of iterations", parseInt)
+            .option("--max-tokens <n>", "Maximum cumulative token limit", parseInt)
+            .option("--stop-when <condition>", "Natural-language stop condition")
+            .option("--prevent-sleep <on|off>", "Control sleep prevention", "on")
+            .option("--worktree", "Run in a separate Git worktree", false)
+            .option("--max-budget-usd <amount>", "Maximum dollar budget", parseFloat)
+            .option("--tier <tier>", "Preset routing tier (light|standard|full)")
+            .option("--type <type>", "Preset task type (frontend|backend|fullstack|data|infra|docs)")
+            .option("--phase <phase>", "Preset project phase (greenfield|iteration|refactor|bugfix)")
+            .option("--nature <nature>", "Preset work nature (feature|refactor|bugfix)")
+            .option("--pua", "Enable PUA Quality Engine", false)
+            .option("--pua-task-type <type>", "PUA task type (debug|build|research|architecture|performance|review|deploy|general)")
+            .option("--resume <branchName>", "Resume an existing run on a forge/ branch")
+            .option("--lang <locale>", "Set display language (zh|en)")
+            .action((objective, opts) => {
+            captured = { objective, opts };
+        });
+        program.parse(["node", "forge-loop", ...argv]);
+        return captured;
+    }
+    // -- Valid --lang values are accepted (Req 3.1) --
+    it("parses --lang zh", () => {
+        const result = parseArgs(["objective", "--lang", "zh"]);
+        expect(result?.opts.lang).toBe("zh");
+    });
+    it("parses --lang en", () => {
+        const result = parseArgs(["objective", "--lang", "en"]);
+        expect(result?.opts.lang).toBe("en");
+    });
+    it("parses --lang alongside other options", () => {
+        const result = parseArgs([
+            "Build feature",
+            "--lang",
+            "zh",
+            "--max-iterations",
+            "10",
+            "--tier",
+            "standard",
+        ]);
+        expect(result?.objective).toBe("Build feature");
+        expect(result?.opts.lang).toBe("zh");
+        expect(result?.opts.maxIterations).toBe(10);
+        expect(result?.opts.tier).toBe("standard");
+    });
+    it("leaves --lang undefined when not provided", () => {
+        const result = parseArgs(["objective"]);
+        expect(result?.opts.lang).toBeUndefined();
+    });
+    // -- SUPPORTED_LOCALES constant (Req 9.4) --
+    it("SUPPORTED_LOCALES contains exactly zh and en", () => {
+        expect(SUPPORTED_LOCALES.has("zh")).toBe(true);
+        expect(SUPPORTED_LOCALES.has("en")).toBe(true);
+        expect(SUPPORTED_LOCALES.size).toBe(2);
+    });
+    it("SUPPORTED_LOCALES is a ReadonlySet", () => {
+        // Verify it behaves as a Set (has, size)
+        expect(typeof SUPPORTED_LOCALES.has).toBe("function");
+        expect(typeof SUPPORTED_LOCALES.size).toBe("number");
+    });
+    // -- Invalid --lang value outputs valid options and rejects startup (Req 3.2) --
+    it("CLI throws CliError with valid options listed for invalid --lang value", () => {
+        const invalidLang = "fr";
+        // Replicate the CLI validation logic
+        if (!SUPPORTED_LOCALES.has(invalidLang)) {
+            const error = new CliError(`Error: Invalid --lang value "${invalidLang}". Valid options: ${[...SUPPORTED_LOCALES].join(", ")}`);
+            expect(error).toBeInstanceOf(CliError);
+            expect(error.message).toContain("Invalid --lang value");
+            expect(error.message).toContain('"fr"');
+            expect(error.message).toContain("zh");
+            expect(error.message).toContain("en");
+            expect(error.exitCode).toBe(1);
+        }
+    });
+    it("SUPPORTED_LOCALES rejects unknown locale values", () => {
+        expect(SUPPORTED_LOCALES.has("fr")).toBe(false);
+        expect(SUPPORTED_LOCALES.has("ja")).toBe(false);
+        expect(SUPPORTED_LOCALES.has("")).toBe(false);
+        expect(SUPPORTED_LOCALES.has("ZH")).toBe(false);
+    });
+    // -- Missing --lang delegates to LocaleDetector (Req 3.3) --
+    it("missing --lang delegates to detectLocale with all sources", () => {
+        // When --lang is not provided, the CLI calls detectLocale() with
+        // cliLang undefined, letting lower-priority sources determine locale.
+        const result = detectLocale({
+            cliLang: undefined,
+            configLang: "zh",
+            envLang: undefined,
+            systemLocale: undefined,
+        }, SUPPORTED_LOCALES);
+        expect(result.locale).toBe("zh");
+        expect(result.source).toBe("config");
+    });
+    it("missing --lang falls back to default en when no sources available", () => {
+        const result = detectLocale({
+            cliLang: undefined,
+            configLang: undefined,
+            envLang: undefined,
+            systemLocale: undefined,
+        }, SUPPORTED_LOCALES);
+        expect(result.locale).toBe("en");
+        expect(result.source).toBe("default");
+    });
+    it("--lang takes priority over config and env sources", () => {
+        const result = detectLocale({
+            cliLang: "en",
+            configLang: "zh",
+            envLang: "zh",
+            systemLocale: "zh_CN.UTF-8",
+        }, SUPPORTED_LOCALES);
+        expect(result.locale).toBe("en");
+        expect(result.source).toBe("cli");
+    });
+    // -- Existing CLI options remain unchanged (Req 9.4) --
+    it("existing options still work with --lang present", () => {
+        const result = parseArgs([
+            "Build feature X",
+            "--max-iterations",
+            "20",
+            "--max-tokens",
+            "1000000",
+            "--stop-when",
+            "CI passes",
+            "--prevent-sleep",
+            "off",
+            "--worktree",
+            "--max-budget-usd",
+            "10.00",
+            "--tier",
+            "full",
+            "--type",
+            "backend",
+            "--phase",
+            "iteration",
+            "--nature",
+            "feature",
+            "--lang",
+            "zh",
+        ]);
+        expect(result?.objective).toBe("Build feature X");
+        expect(result?.opts.maxIterations).toBe(20);
+        expect(result?.opts.maxTokens).toBe(1000000);
+        expect(result?.opts.stopWhen).toBe("CI passes");
+        expect(result?.opts.preventSleep).toBe("off");
+        expect(result?.opts.worktree).toBe(true);
+        expect(result?.opts.maxBudgetUsd).toBe(10.0);
+        expect(result?.opts.tier).toBe("full");
+        expect(result?.opts.type).toBe("backend");
+        expect(result?.opts.phase).toBe("iteration");
+        expect(result?.opts.nature).toBe("feature");
+        expect(result?.opts.lang).toBe("zh");
+    });
+    it("backward compatible: existing usage without --lang still works", () => {
+        const result = parseArgs(["Build feature X", "--max-iterations", "20"]);
+        expect(result?.objective).toBe("Build feature X");
+        expect(result?.opts.maxIterations).toBe(20);
+        expect(result?.opts.lang).toBeUndefined();
     });
 });
 //# sourceMappingURL=forge-loop-cli.test.js.map

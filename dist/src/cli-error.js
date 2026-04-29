@@ -6,14 +6,15 @@
  * handler becomes the single exit point, making resource cleanup reliable
  * and extensible.
  *
- * **Validates: Requirements 7.1, 7.2, 7.4**
+ * **Validates: Requirements 7.1, 7.2, 7.4, 9.3**
  */
-export class CliError extends Error {
+import { ForgeError } from "./forge-error.js";
+export class CliError extends ForgeError {
     exitCode;
+    code = "CLI_ERROR";
     constructor(message, exitCode = 1) {
         super(message);
         this.exitCode = exitCode;
-        this.name = "CliError";
     }
 }
 //# sourceMappingURL=cli-error.js.map
