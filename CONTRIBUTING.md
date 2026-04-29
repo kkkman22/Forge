@@ -88,3 +88,16 @@ scripts/      # Shell 脚本（init、build-dist、install-dist）
 ## 需要帮助？
 
 如果有任何问题，欢迎提 Issue 讨论。
+
+## SKILL-纯函数对接检查
+
+每次新增或修改 `src/*.ts` 中的 exported 函数时，检查：
+
+1. [ ] 该函数是否被某个 SKILL 文档引用？
+2. [ ] 引用是否包含完整调用路径？
+   - 函数名（含模块路径）
+   - 参数来源（从哪个上下文变量/文件/命令输出获取）
+   - 返回值用途（如何影响后续流程：替换 context / 写入文件 / 阻断流程）
+3. [ ] 如果是 Forge Loop 专用函数（由 SdkDriver/EffectExecutor 直接调用），标注为"非 SKILL 调用"
+
+**例外**：Forge Loop 模块（`orchestrator`、`effect-executor`、`sdk-driver`、`sdk-agent-adapter`、`run-manager`、`failure-handler`、`worktree-manager` 等）的函数由程序直接调用，不需要 SKILL 引用。
