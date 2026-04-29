@@ -25,6 +25,7 @@ import {
   checkBranchTopicGate,
   checkCommitTopicMatch,
   detectStaleBranches,
+  detectUnshippedBranches,
   extractBranchTopic,
   recordPendingDelivery,
 } from "../src/branch-lifecycle.js";
@@ -422,5 +423,83 @@ describe("Property 5: Cross-Topic Commit Prevention", () => {
     const result: CommitTopicCheckResult = checkCommitTopicMatch("feature/a/b", "a");
 
     expect(result.allowed).toBe(false);
+  });
+});
+
+// ---------------------------------------------------------------------------
+// Property 6: detectUnshippedBranches
+// ---------------------------------------------------------------------------
+
+describe("Property 6: Unshipped Branch Detection", () => {
+  it("detectUnshippedBranches returns warnings for different-topic records", () => {
+    fc.assert(
+      fc.property(
+        fc.array(fc.tuple(branchNameArb, topicArb, timestampArb), { minLength: 1, maxLength: 10 }),
+        topicArb,
+        (records, currentTopic) => {
+          fc.pre(records.some(([, topic]) => topic !== currentTopic));
+          const pendingDeliveries: PendingDeliveryRecord[] = records.map(
+            ([branchName, topic, timestamp]) => ({ branchName, topic, timestamp }),
+          );
+
+          const warnings = detectUnshippedBranches(pendingDeliveries, currentTopic);
+
+          for (const w of warnings) {
+            expect(w.topic).not.toBe(currentTopic);
+            expect(w.branchName).toBeDefined();
+            expect(w.timestamp).toBeTypeOf("number");
+            expect(w.message).toContain(w.branchName);
+          }
+        },
+      ),
+      { numRuns: 200 },
+    );
+  });
+
+  it("detectUnshippedBranches returns empty when all topics match", () => {
+    fc.assert(
+      fc.property(topicArb, timestampArb, (topic, timestamp) => {
+        const pendingDeliveries: PendingDeliveryRecord[] = [
+          { branchName: `feature/${topic}`, topic, timestamp },
+        ];
+
+        const warnings = detectUnshippedBranches(pendingDeliveries, topic);
+
+        expect(warnings).toHaveLength(0);
+      }),
+      { numRuns: 200 },
+    );
+  });
+
+  it("detectUnshippedBranches returns empty for empty input", () => {
+    fc.assert(
+      fc.property(topicArb, (currentTopic) => {
+        const warnings = detectUnshippedBranches([], currentTopic);
+
+        expect(warnings).toHaveLength(0);
+      }),
+      { numRuns: 200 },
+    );
+  });
+});
+
+// ---------------------------------------------------------------------------
+// Edge cases
+// ---------------------------------------------------------------------------
+
+describe("Edge cases", () => {
+  it("extractBranchTopic returns null for empty string", () => {
+    expect(extractBranchTopic("")).toBeNull();
+  });
+
+  it("detectStaleBranches with default thresholdMs (no fourth argument)", () => {
+    const records: PendingDeliveryRecord[] = [
+      { branchName: "feature/old-topic", topic: "old-topic", timestamp: 1000 },
+    ];
+
+    // Default thresholdMs=0: any different-topic record is stale regardless of time
+    const stale = detectStaleBranches(records, "new-topic", 1000);
+
+    expect(stale).toHaveLength(1);
   });
 });
