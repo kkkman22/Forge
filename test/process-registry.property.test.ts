@@ -1,4 +1,5 @@
 import { describe, it, expect, beforeEach } from "vitest";
+import * as fc from "fast-check";
 import { ProcessRegistry } from "../src/process-registry.js";
 
 beforeEach(() => {
@@ -79,6 +80,94 @@ describe("ProcessRegistry", () => {
 
 			const all = reg.getAll();
 			expect(all[0].description).toBe("caffeinate -i -w 1234");
+		});
+	});
+
+	describe("Property 1: register preserves metadata", () => {
+		it("for any valid metadata, getAll contains the entry with all fields", () => {
+			fc.assert(
+				fc.property(
+					fc.record({
+						source: fc.string({ minLength: 1, maxLength: 50 }),
+						detached: fc.boolean(),
+						description: fc.option(fc.string({ maxLength: 100 }), {
+							nil: undefined,
+						}),
+					}),
+					fc.integer({ min: 1, max: 65535 }),
+					(metadata, pid) => {
+						ProcessRegistry.resetInstance();
+						const reg = ProcessRegistry.getInstance();
+						const child = { pid, on: () => {} } as any;
+						reg.register(child, metadata);
+
+						const all = reg.getAll();
+						expect(all).toHaveLength(1);
+						expect(all[0].pid).toBe(pid);
+						expect(all[0].source).toBe(metadata.source);
+						expect(all[0].detached).toBe(metadata.detached);
+						expect(all[0].description).toBe(metadata.description);
+						expect(all[0].pgid).toBe(pid);
+						expect(all[0].startTime).toBeTypeOf("number");
+						expect(reg.size()).toBe(all.length);
+					},
+				),
+				{ numRuns: 100 },
+			);
+		});
+	});
+
+	describe("Property 2: unregister removes processes", () => {
+		it("for any registered set and any unregister subset, removed PIDs are gone", () => {
+			fc.assert(
+				fc.property(
+					fc
+						.array(
+							fc.record({
+								pid: fc.integer({ min: 1, max: 65535 }),
+								source: fc.string({ minLength: 1, maxLength: 20 }),
+								detached: fc.boolean(),
+							}),
+							{ minLength: 1, maxLength: 10 },
+						)
+						.filter((arr) => new Set(arr.map((p) => p.pid)).size === arr.length),
+					(entries) => {
+						ProcessRegistry.resetInstance();
+						const reg = ProcessRegistry.getInstance();
+
+						for (const e of entries) {
+							reg.register(
+								{ pid: e.pid, on: () => {} } as any,
+								{ source: e.source, detached: e.detached },
+							);
+						}
+						const sizeBefore = reg.size();
+						expect(sizeBefore).toBe(entries.length);
+
+						// Unregister first half
+						const toRemove = entries.slice(0, Math.ceil(entries.length / 2));
+						for (const e of toRemove) {
+							reg.unregister(e.pid);
+						}
+
+						const allAfter = reg.getAll();
+						const removedPids = new Set(toRemove.map((e) => e.pid));
+						for (const entry of allAfter) {
+							expect(removedPids.has(entry.pid)).toBe(false);
+						}
+						expect(reg.size()).toBe(entries.length - toRemove.length);
+
+						// Remaining entries are unchanged
+						const remainingPids = new Set(
+							entries.slice(Math.ceil(entries.length / 2)).map((e) => e.pid),
+						);
+						for (const entry of allAfter) {
+							expect(remainingPids.has(entry.pid)).toBe(true);
+						}
+					},
+				),
+				{ numRuns: 100 },
+			);
 		});
 	});
 });
