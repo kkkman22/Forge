@@ -174,9 +174,9 @@ export {
   isTestFile,
   matchChangesToTask,
   matchCommitsToTasks,
+  PHASE_SEQUENCES,
   parseGitLog,
   parseGitStatus,
-  PHASE_SEQUENCES,
   serializeCheckpointMarker,
   serializeClassification,
   serializeRecoveryReport,
@@ -189,13 +189,13 @@ export {
 
 export type { ChecklistEntry, ChecklistStatus } from "./fix-checklist.js";
 export {
-  VALID_TRANSITIONS,
   allEntriesVerified,
   createChecklist,
   isValidTransition,
   parseChecklist,
   serializeChecklist,
   updateEntryStatus,
+  VALID_TRANSITIONS,
 } from "./fix-checklist.js";
 
 // ---------------------------------------------------------------------------
@@ -204,9 +204,9 @@ export {
 
 export type { VerificationDecision, VerificationResult } from "./incremental-verifier.js";
 export {
-  INCREMENTAL_THRESHOLD,
   buildVerificationCriteria,
   determineVerificationStrategy,
+  INCREMENTAL_THRESHOLD,
 } from "./incremental-verifier.js";
 
 // ---------------------------------------------------------------------------
@@ -220,7 +220,7 @@ export { isFixCandidate, parseGitLog as parseFixRecoveryGitLog } from "./fix-rec
 // Ship gate (extended)
 // ---------------------------------------------------------------------------
 
-export type { ReviewResult, TestResult, ProgressResult, ShipGateResult } from "./ship.js";
+export type { ProgressResult, ReviewResult, ShipGateResult, TestResult } from "./ship.js";
 export { checkShipGate, checkShipGateWithChecklist } from "./ship.js";
 
 // ---------------------------------------------------------------------------
@@ -229,7 +229,7 @@ export { checkShipGate, checkShipGateWithChecklist } from "./ship.js";
 
 export type { TaskStatusEntry } from "./state.js";
 export {
-  detectConflict,
+  hasTaskName,
   parseStatusEntries,
   removeTaskEntry,
   serializeStatusEntries,
@@ -240,20 +240,6 @@ export {
 // Process lifecycle management
 // ---------------------------------------------------------------------------
 
-export type {
-  ProcessMetadata,
-  SerializedRegistry,
-  ShutdownResult,
-} from "./process-registry.js";
-export { ProcessRegistry } from "./process-registry.js";
-
-export type { ProcessTreeNode } from "./process-tree-cleaner.js";
-export {
-  getDescendants,
-  killProcessGroup,
-  killProcessTree,
-} from "./process-tree-cleaner.js";
-
 export type { OrphanProcess, PidFileContent } from "./orphan-detector.js";
 export {
   cleanupOrphans,
@@ -263,3 +249,15 @@ export {
   readPidFile,
   writePidFile,
 } from "./orphan-detector.js";
+export type {
+  ProcessMetadata,
+  SerializedRegistry,
+  ShutdownResult,
+} from "./process-registry.js";
+export { ProcessRegistry } from "./process-registry.js";
+export type { ProcessTreeNode } from "./process-tree-cleaner.js";
+export {
+  getDescendants,
+  killProcessGroup,
+  killProcessTree,
+} from "./process-tree-cleaner.js";

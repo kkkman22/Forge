@@ -12,7 +12,7 @@ import { describe, expect, it } from "vitest";
 
 import type { TaskStatusEntry } from "../src/state.js";
 import {
-  detectConflict,
+  hasTaskName,
   parseStatusEntries,
   removeTaskEntry,
   serializeStatusEntries,
@@ -20,9 +20,11 @@ import {
 } from "../src/state.js";
 
 const safeString = (min: number, max: number) =>
-  fc.string({ minLength: min, maxLength: max }).filter(
-    (s) => s.trim().length > 0 && !s.includes('"') && !s.includes("\n") && !s.includes("#"),
-  );
+  fc
+    .string({ minLength: min, maxLength: max })
+    .filter(
+      (s) => s.trim().length > 0 && !s.includes('"') && !s.includes("\n") && !s.includes("#"),
+    );
 
 const taskEntryArb: fc.Arbitrary<TaskStatusEntry> = fc.record({
   taskName: safeString(1, 30),
@@ -81,14 +83,14 @@ describe("Feature: forge-review-fix-optimization, Property 22: Multi-task upsert
           // New entry exists in result
           const found = result.find((e) => e.taskName === newEntry.taskName);
           expect(found).toBeDefined();
-          expect(found!.tier).toBe(newEntry.tier);
+          expect(found?.tier).toBe(newEntry.tier);
 
           // All other entries preserved
           for (const original of entries) {
             if (original.taskName !== newEntry.taskName) {
               const match = result.find((e) => e.taskName === original.taskName);
               expect(match).toBeDefined();
-              expect(match!.tier).toBe(original.tier);
+              expect(match?.tier).toBe(original.tier);
             }
           }
         },
@@ -147,7 +149,7 @@ describe("Feature: forge-review-fix-optimization, Property 24: Multi-task confli
         }),
         fc.string({ minLength: 1, maxLength: 30 }),
         (entries, taskName) => {
-          const result = detectConflict(entries, taskName);
+          const result = hasTaskName(entries, taskName);
           const exists = entries.some((e) => e.taskName === taskName);
           expect(result).toBe(exists);
         },

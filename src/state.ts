@@ -384,6 +384,9 @@ export function tryAcquireLock(
  * @param nowIso - Current time as ISO string
  */
 export function createLockInfo(forgePath: string, holder: string, nowIso: string): LockInfo {
+  if (holder.includes("\n")) {
+    throw new Error(`Lock holder must not contain newlines: "${holder}"`);
+  }
   return {
     holder,
     acquiredAt: nowIso,
@@ -484,17 +487,17 @@ function parseTasksBlock(raw: string): TaskStatusEntry[] {
     if (!inTasks) continue;
 
     // New task entry: "  - task: \"name\""
-    const taskMatch = line.match(/^ {2}- task: "([^"]*)"$/);
+    const taskMatch = line.match(/^\s+- task: "([^"]*)"$/);
     if (taskMatch) {
-      if (current?.taskName) {
-        entries.push(current as TaskStatusEntry);
+      if (current && isCompleteEntry(current)) {
+        entries.push(current);
       }
       current = { taskName: taskMatch[1] };
       continue;
     }
 
     // Task field: "    tier: \"standard\""
-    const fieldMatch = line.match(/^ {4}(\w+): "([^"]*)"$/);
+    const fieldMatch = line.match(/^\s+(\w+): "([^"]*)"$/);
     if (fieldMatch && current) {
       const [, key, value] = fieldMatch;
       if (key === "tier") {
@@ -509,19 +512,28 @@ function parseTasksBlock(raw: string): TaskStatusEntry[] {
     }
 
     // Empty line or end of tasks block
-    if (line.trim() === "" && current && current.taskName) {
-      entries.push(current as TaskStatusEntry);
+    if (line.trim() === "" && current) {
+      if (isCompleteEntry(current)) entries.push(current);
       current = null;
       inTasks = false;
     }
   }
 
   // Flush last entry
-  if (current?.taskName) {
-    entries.push(current as TaskStatusEntry);
+  if (current && isCompleteEntry(current)) {
+    entries.push(current);
   }
 
   return entries;
+}
+
+function isCompleteEntry(entry: Partial<TaskStatusEntry>): entry is TaskStatusEntry {
+  return (
+    typeof entry.taskName === "string" &&
+    typeof entry.tier === "string" &&
+    typeof entry.phase === "string" &&
+    typeof entry.updated === "string"
+  );
 }
 
 export function serializeStatusEntries(entries: TaskStatusEntry[]): string {
@@ -561,6 +573,7 @@ export function removeTaskEntry(entries: TaskStatusEntry[], taskName: string): T
   return entries.filter((e) => e.taskName !== taskName);
 }
 
-export function detectConflict(entries: TaskStatusEntry[], taskName: string): boolean {
+/** Check whether a task name already exists in the entries list. */
+export function hasTaskName(entries: TaskStatusEntry[], taskName: string): boolean {
   return entries.some((e) => e.taskName === taskName);
 }

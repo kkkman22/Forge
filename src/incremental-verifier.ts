@@ -27,7 +27,9 @@ export function determineVerificationStrategy(
   linesChanged: number,
   threshold = INCREMENTAL_THRESHOLD,
 ): VerificationDecision {
-  if (linesChanged < 0) linesChanged = 0;
+  if (linesChanged < 0) {
+    throw new Error(`linesChanged must be non-negative, got ${linesChanged}`);
+  }
   return {
     strategy: linesChanged < threshold ? "incremental" : "targeted-review",
     linesChanged,
