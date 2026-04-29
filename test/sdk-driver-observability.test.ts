@@ -60,10 +60,10 @@ vi.mock("../src/status-file-ext.js", () => ({
 
 import type { EffectExecutorInterface } from "../src/effect-executor.js";
 import type {
-    AgentInterface,
-    AgentResult,
-    AgentRunOptions,
-    TokenUsage,
+  AgentInterface,
+  AgentResult,
+  AgentRunOptions,
+  TokenUsage,
 } from "../src/loop-types.js";
 import { SdkDriver, type SdkDriverConfig } from "../src/sdk-driver.js";
 

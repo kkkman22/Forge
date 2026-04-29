@@ -14,36 +14,36 @@
 import { existsSync, mkdirSync, readFileSync, rmSync, writeFileSync } from "node:fs";
 import path, { join } from "node:path";
 import {
-    appendEntry,
-    buildIterationPrompt,
-    buildSkillAwarePrompt,
-    formatNotesDocument,
+  appendEntry,
+  buildIterationPrompt,
+  buildSkillAwarePrompt,
+  formatNotesDocument,
 } from "./context-accumulator.js";
 import { type EffectExecutorInterface, FrozenZoneViolation } from "./effect-executor.js";
 import {
-    buildSubagentTiming,
-    computeExtendedBaseline,
-    createIterationTiming,
-    createLogEntry,
-    createLogSink,
-    detectDegradation,
-    formatPerformanceBaseline,
-    type IterationTiming,
-    type LogSinkConfig,
-    type PerformanceBaseline,
-    type SubagentTiming,
+  buildSubagentTiming,
+  computeExtendedBaseline,
+  createIterationTiming,
+  createLogEntry,
+  createLogSink,
+  detectDegradation,
+  formatPerformanceBaseline,
+  type IterationTiming,
+  type LogSinkConfig,
+  type PerformanceBaseline,
+  type SubagentTiming,
 } from "./logger/index.js";
 import type {
-    AgentInterface,
-    AgentOutput,
-    IterationEntry,
-    LoopConfig,
-    NotesDocument,
-    OrchestratorEffect,
-    OrchestratorEvent,
-    OrchestratorState,
-    RunLimits,
-    TokenUsage,
+  AgentInterface,
+  AgentOutput,
+  IterationEntry,
+  LoopConfig,
+  NotesDocument,
+  OrchestratorEffect,
+  OrchestratorEvent,
+  OrchestratorState,
+  RunLimits,
+  TokenUsage,
 } from "./loop-types.js";
 import { createInitialState, transition } from "./orchestrator.js";
 import type { PuaContext, TaskType } from "./pua-engine.js";
@@ -54,13 +54,13 @@ import { RunManager, type TranslateFn } from "./run-manager.js";
 import { buildDefaultPolicy, type PermissionPolicy, validatePolicy } from "./sandbox-policy.js";
 import { evaluateGateForPhase } from "./sdk-quality-helpers.js";
 import {
-    clearLoopFieldsOnShutdown,
-    getPhaseFromStatus,
-    getTierFromStatus,
-    initializeLoopFields,
-    safeReadStatusFile,
-    safeUpdateIterationStatus as safeUpdateIterationStatusHelper,
-    type StatusFileIO,
+  clearLoopFieldsOnShutdown,
+  getPhaseFromStatus,
+  getTierFromStatus,
+  initializeLoopFields,
+  type StatusFileIO,
+  safeReadStatusFile,
+  safeUpdateIterationStatus as safeUpdateIterationStatusHelper,
 } from "./sdk-status-helpers.js";
 import { determineNextSkill, shouldCommitForPhase } from "./skill-scheduler.js";
 import { extractLoopFields } from "./status-file-ext.js";
@@ -639,11 +639,7 @@ export class SdkDriver {
       agentEndMs = Date.now();
 
       // Record subagent timing (Req 4.1, 4.2, 4.3).
-      const subTiming = buildSubagentTiming(
-        this.agentAdapter.name,
-        subagentStartMs,
-        agentEndMs,
-      );
+      const subTiming = buildSubagentTiming(this.agentAdapter.name, subagentStartMs, agentEndMs);
       this.subagentTimings.push(subTiming);
       this.logger.log(
         createLogEntry(
@@ -909,11 +905,7 @@ export class SdkDriver {
       agentEndMs = Date.now();
 
       // Record subagent timing (Req 4.1, 4.2, 4.3).
-      const subTiming = buildSubagentTiming(
-        this.agentAdapter.name,
-        subagentStartMs,
-        agentEndMs,
-      );
+      const subTiming = buildSubagentTiming(this.agentAdapter.name, subagentStartMs, agentEndMs);
       this.subagentTimings.push(subTiming);
       this.logger.log(
         createLogEntry(

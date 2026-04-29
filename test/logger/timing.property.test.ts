@@ -150,22 +150,19 @@ describe("Feature: observability-enhancements, Property 9: 退化检测正确性
     const { detectDegradation } = await import("../../src/logger/timing.js");
 
     fc.assert(
-      fc.property(
-        fc.array(iterationTimingArb, { minLength: 3, maxLength: 50 }),
-        (history) => {
-          const sum = history.reduce((acc, t) => acc + t.totalIterationDurationMs, 0);
-          const rollingAvg = sum / history.length;
+      fc.property(fc.array(iterationTimingArb, { minLength: 3, maxLength: 50 }), (history) => {
+        const sum = history.reduce((acc, t) => acc + t.totalIterationDurationMs, 0);
+        const rollingAvg = sum / history.length;
 
-          // Pick a currentMs that is strictly greater than 2 × rollingAvg
-          const currentMs = Math.floor(rollingAvg * 2) + 1;
+        // Pick a currentMs that is strictly greater than 2 × rollingAvg
+        const currentMs = Math.floor(rollingAvg * 2) + 1;
 
-          const result = detectDegradation(currentMs, history);
+        const result = detectDegradation(currentMs, history);
 
-          expect(result.isDegraded).toBe(true);
-          expect(result.currentMs).toBe(currentMs);
-          expect(result.rollingAvgMs).toBeCloseTo(rollingAvg, 5);
-        },
-      ),
+        expect(result.isDegraded).toBe(true);
+        expect(result.currentMs).toBe(currentMs);
+        expect(result.rollingAvgMs).toBeCloseTo(rollingAvg, 5);
+      }),
       { numRuns: 200 },
     );
   });
