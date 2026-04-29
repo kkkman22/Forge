@@ -27,13 +27,19 @@ actual_tests=$(npx vitest run --reporter=json 2>/dev/null | node -e "
   let data='';
   process.stdin.on('data', c => data += c);
   process.stdin.on('end', () => {
-    const j = JSON.parse(data);
-    console.log(j.numTotalTests);
+    try {
+      const j = JSON.parse(data);
+      console.log(j.numTotalTests);
+    } catch(e) {
+      console.error('Failed to parse vitest JSON output');
+      process.exit(1);
+    }
   });
-")
+" 2>&1) || true
 
-if [[ -z "${actual_tests}" ]]; then
+if [[ -z "${actual_tests}" ]] || ! [[ "${actual_tests}" =~ ^[0-9]+$ ]]; then
   echo "ERROR: Could not extract total test count from vitest JSON output."
+  echo "Raw output: ${actual_tests}"
   exit 1
 fi
 
