@@ -11,8 +11,8 @@
  *   4.1–4.6, 5.1–5.4, 8.1–8.4, 9.1–9.3, 10.1–10.5**
  */
 
-import { existsSync, readFileSync } from "node:fs";
-import { join } from "node:path";
+import { existsSync, mkdirSync, readFileSync, rmSync, writeFileSync } from "node:fs";
+import path, { join } from "node:path";
 import {
   appendEntry,
   buildIterationPrompt,
@@ -46,6 +46,7 @@ import { PuaStateManager } from "./pua-state-manager.js";
 import type { GateResult } from "./quality-gate.js";
 import { evaluateReviewGate } from "./quality-gate.js";
 import { RunManager, type TranslateFn } from "./run-manager.js";
+import { buildDefaultPolicy, type PermissionPolicy, validatePolicy } from "./sandbox-policy.js";
 import { evaluateGateForPhase } from "./sdk-quality-helpers.js";
 import {
   clearLoopFieldsOnShutdown,
@@ -65,6 +66,33 @@ const ZERO_TOKEN_USAGE: TokenUsage = {
   cacheReadTokens: 0,
   cacheCreationTokens: 0,
 };
+
+// ---------------------------------------------------------------------------
+// Sandbox policy loading
+// ---------------------------------------------------------------------------
+
+/**
+ * Load sandbox policy from .forge/sandbox.json or return default.
+ * Validates the config and falls back to default on validation failure.
+ */
+function loadSandboxPolicy(cwd: string): PermissionPolicy {
+  const configPath = join(cwd, ".forge", "sandbox.json");
+
+  if (existsSync(configPath)) {
+    try {
+      const raw = JSON.parse(readFileSync(configPath, "utf-8"));
+      const validation = validatePolicy(raw);
+      if (validation.valid) {
+        return raw as PermissionPolicy;
+      }
+      // Log validation errors but continue with default
+    } catch {
+      // Parse error — fall back to default
+    }
+  }
+
+  return buildDefaultPolicy(cwd);
+}
 
 // ---------------------------------------------------------------------------
 // Configuration and result types
@@ -126,6 +154,8 @@ export interface SdkDriverConfig {
   t?: TranslateFn;
   /** Log sink configuration for structured logging. When not provided, defaults to text/info. */
   logSinkConfig?: LogSinkConfig;
+  /** Whether to enable sandbox mode with fine-grained access control. */
+  sandboxEnabled?: boolean;
 }
 
 /** Result returned when the driver loop exits. */
@@ -336,6 +366,30 @@ export class SdkDriver {
       }
     }
 
+    // Sandbox mode: write runtime policy file for PreToolUse hook.
+    if (this.config.sandboxEnabled) {
+      try {
+        const sandboxActivePath = path.join(this.config.cwd, ".forge", ".sandbox-active.json");
+        const policy = loadSandboxPolicy(this.config.cwd);
+        mkdirSync(path.dirname(sandboxActivePath), { recursive: true });
+        writeFileSync(sandboxActivePath, JSON.stringify({ projectRoot: this.config.cwd, policy }));
+        this.logger.log(
+          createLogEntry("sandbox_enabled", "info", "Sandbox mode activated", {
+            runId: this.config.runId,
+          }),
+        );
+      } catch (err) {
+        this.logger.log(
+          createLogEntry(
+            "sandbox_init_failed",
+            "warn",
+            `Sandbox init failed: ${err instanceof Error ? err.message : String(err)}`,
+            { runId: this.config.runId },
+          ),
+        );
+      }
+    }
+
     try {
       // Dispatch the start event to kick off the state machine.
       const startResult = transition(
@@ -453,6 +507,16 @@ export class SdkDriver {
               { error: err instanceof Error ? (err.stack ?? err.message) : String(err) },
             ),
           );
+        }
+      }
+
+      // Sandbox cleanup: remove runtime policy file.
+      if (this.config.sandboxEnabled) {
+        try {
+          const sandboxActivePath = path.join(this.config.cwd, ".forge", ".sandbox-active.json");
+          rmSync(sandboxActivePath, { force: true });
+        } catch {
+          // Non-critical: stale file won't affect future runs if sandbox is not enabled.
         }
       }
 
