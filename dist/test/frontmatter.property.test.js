@@ -11,7 +11,7 @@
  */
 import * as fc from "fast-check";
 import { describe, expect, it } from "vitest";
-import { extractListField, extractNumericField, extractStringField, parseFrontmatter } from "../src/frontmatter.js";
+import { extractListField, extractNumericField, extractStringField, parseFrontmatter, } from "../src/frontmatter.js";
 // We also import the modules that consume parseFrontmatter to verify consistency
 import { parseHandoff } from "../src/handoff.js";
 import { evaluateReviewGate } from "../src/quality-gate.js";
@@ -291,7 +291,10 @@ describe("Feature: forge-audit-remediation, Property 8: Frontmatter parsing is c
  * Generators for regex-hostile field names.
  */
 const regexSpecialCharsArb = fc
-    .array(fc.constantFrom(".", "*", "+", "?", "^", "$", "{", "}", "(", ")", "|", "[", "]", "\\"), { minLength: 1, maxLength: 20 })
+    .array(fc.constantFrom(".", "*", "+", "?", "^", "$", "{", "}", "(", ")", "|", "[", "]", "\\"), {
+    minLength: 1,
+    maxLength: 20,
+})
     .map((chars) => chars.join(""));
 const generalStringFieldNameArb = fc.string({ minLength: 1, maxLength: 30 });
 describe("Feature: audit-remediation-v221, Property 3: Frontmatter field extraction regex safety", () => {

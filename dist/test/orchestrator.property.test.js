@@ -60,9 +60,33 @@ const runningStateArb = baseStateFieldsArb.map((fields) => ({
     waitingUntilMs: null,
 }));
 /** Arbitrary OrchestratorEvent — all possible event types. */
-const anyEventArb = fc.oneof(fc.record({ type: fc.constant("start"), limits: runLimitsArb }), fc.record({ type: fc.constant("iteration_success"), summary: summaryArb, tokenUsage: tokenUsageArb }), fc.record({ type: fc.constant("iteration_soft_failure"), summary: summaryArb, tokenUsage: tokenUsageArb }), fc.record({ type: fc.constant("iteration_hard_failure"), error: summaryArb, tokenUsage: tokenUsageArb }), fc.constant({ type: "stop_condition_met" }), fc.constant({ type: "user_interrupt" }), fc.constant({ type: "backoff_elapsed" }));
+const anyEventArb = fc.oneof(fc.record({ type: fc.constant("start"), limits: runLimitsArb }), fc.record({
+    type: fc.constant("iteration_success"),
+    summary: summaryArb,
+    tokenUsage: tokenUsageArb,
+}), fc.record({
+    type: fc.constant("iteration_soft_failure"),
+    summary: summaryArb,
+    tokenUsage: tokenUsageArb,
+}), fc.record({
+    type: fc.constant("iteration_hard_failure"),
+    error: summaryArb,
+    tokenUsage: tokenUsageArb,
+}), fc.constant({ type: "stop_condition_met" }), fc.constant({ type: "user_interrupt" }), fc.constant({ type: "backoff_elapsed" }));
 /** Arbitrary non-start OrchestratorEvent — all event types except "start". */
-const nonStartEventArb = fc.oneof(fc.record({ type: fc.constant("iteration_success"), summary: summaryArb, tokenUsage: tokenUsageArb }), fc.record({ type: fc.constant("iteration_soft_failure"), summary: summaryArb, tokenUsage: tokenUsageArb }), fc.record({ type: fc.constant("iteration_hard_failure"), error: summaryArb, tokenUsage: tokenUsageArb }), fc.constant({ type: "stop_condition_met" }), fc.constant({ type: "user_interrupt" }), fc.constant({ type: "backoff_elapsed" }));
+const nonStartEventArb = fc.oneof(fc.record({
+    type: fc.constant("iteration_success"),
+    summary: summaryArb,
+    tokenUsage: tokenUsageArb,
+}), fc.record({
+    type: fc.constant("iteration_soft_failure"),
+    summary: summaryArb,
+    tokenUsage: tokenUsageArb,
+}), fc.record({
+    type: fc.constant("iteration_hard_failure"),
+    error: summaryArb,
+    tokenUsage: tokenUsageArb,
+}), fc.constant({ type: "stop_condition_met" }), fc.constant({ type: "user_interrupt" }), fc.constant({ type: "backoff_elapsed" }));
 // ---------------------------------------------------------------------------
 // Feature: audit-remediation-v221, Property 7: Terminal/idle state guards
 // ---------------------------------------------------------------------------

@@ -10,8 +10,38 @@
  * **Validates: Requirements 3.1, 3.2, 3.3, 3.4, 3.5, 3.6, 3.7**
  */
 import { execFileSync } from "node:child_process";
+import { ForgeError } from "./forge-error.js";
 import { buildAddAllCommand, buildCleanCommand, buildCleanDryRunCommand, buildCommitCommand, buildResetCommand, buildStashCommand, buildStashRefCommand, } from "./git-transaction.js";
 import { checkWritePermission, normalizeForgePath } from "./state.js";
+// ---------------------------------------------------------------------------
+// Error types
+// ---------------------------------------------------------------------------
+/**
+ * Thrown when the inner-layer frozen zone check detects that staged files
+ * include locked/approved `.forge/` files. This is a deliberate policy
+ * violation — the loop should terminate immediately without triggering
+ * exponential backoff.
+ *
+ * **Validates: Requirements 8.1, 8.2**
+ */
+export class FrozenZoneViolation extends ForgeError {
+    code = "FROZEN_ZONE_VIOLATION";
+    files;
+    constructor(files) {
+        super(`Frozen zone violation: ${files.join(", ")}`);
+        this.files = files;
+    }
+}
+/**
+ * Thrown when an effect execution fails for an unexpected reason (e.g. git
+ * command crash, I/O error). The loop should treat this as a hard failure
+ * and trigger `iteration_hard_failure` with exponential backoff.
+ *
+ * **Validates: Requirements 8.1, 8.3**
+ */
+export class UnexpectedEffectError extends ForgeError {
+    code = "UNEXPECTED_EFFECT_ERROR";
+}
 // ---------------------------------------------------------------------------
 // EffectExecutor class
 // ---------------------------------------------------------------------------
@@ -42,11 +72,11 @@ export class EffectExecutor {
     async executeEffect(effect, abortSignal) {
         switch (effect.type) {
             case "commit": {
-                this.executeCommit(effect.message);
+                this.executeCommit(effect.message, abortSignal);
                 return;
             }
             case "rollback": {
-                this.executeRollback();
+                this.executeRollback(abortSignal);
                 return;
             }
             case "start_backoff": {
@@ -74,12 +104,18 @@ export class EffectExecutor {
      *
      * Effects are processed in the exact order they appear in the array.
      * No effect is executed before all preceding effects have completed.
+     * If the abort signal fires, remaining effects are skipped and an
+     * interruption message is logged.
      *
      * @param effects     Array of effect descriptors to execute in order.
      * @param abortSignal Optional signal to interrupt long-running effects.
      */
     async executeEffects(effects, abortSignal) {
         for (const effect of effects) {
+            if (abortSignal?.aborted) {
+                this.deps.onLog("Effect execution interrupted: abort signal received");
+                return;
+            }
             await this.executeEffect(effect, abortSignal);
         }
     }
@@ -94,12 +130,21 @@ export class EffectExecutor {
      * a rollback is performed instead. This provides defense-in-depth beyond
      * the outer Hook layer.
      *
+     * If the abort signal has fired, the commit is skipped entirely and an
+     * interruption message is logged.
+     *
      * Uses `execFileSync` with argv arrays (no shell) to prevent injection.
      */
-    executeCommit(message) {
+    executeCommit(message, abortSignal) {
+        if (abortSignal?.aborted) {
+            this.deps.onLog("Commit skipped: abort signal received");
+            return;
+        }
         const addCmd = buildAddAllCommand();
         execFileSync(addCmd.executable, addCmd.args, { cwd: this.deps.cwd });
-        // Inner-layer frozen zone check: scan staged files for frozen zone violations
+        // Inner-layer frozen zone check: scan staged files for frozen zone violations.
+        // Throws FrozenZoneViolation to signal the driver to terminate the loop
+        // immediately without triggering exponential backoff.
         const violations = this.checkStagedFrozenFiles();
         if (violations.length > 0) {
             this.deps.onLog(`⚠️ Inner-layer frozen zone check blocked commit: ${violations.join(", ")}`);
@@ -108,10 +153,11 @@ export class EffectExecutor {
                 try {
                     execFileSync("git", ["reset", "HEAD", "--", file], { cwd: this.deps.cwd });
                 }
-                catch {
-                    // Best-effort unstage
+                catch (err) {
+                    this.deps.onLog?.(`[debug] git reset HEAD failed for ${file}: ${err instanceof Error ? err.message : String(err)}`);
                 }
             }
+            throw new FrozenZoneViolation(violations);
         }
         const commitCmd = buildCommitCommand(message);
         try {
@@ -164,8 +210,9 @@ export class EffectExecutor {
                 }
             }
         }
-        catch {
+        catch (err) {
             // git diff may fail in edge cases — don't block the commit
+            this.deps.onLog?.(`[debug] git diff --cached failed: ${err instanceof Error ? err.message : String(err)}`);
         }
         return violations;
     }
@@ -176,9 +223,16 @@ export class EffectExecutor {
      * safety net. If the stash fails (e.g. clean working tree), the rollback
      * proceeds normally.
      *
+     * If the abort signal has fired, the rollback is skipped entirely and an
+     * interruption message is logged.
+     *
      * Uses `execFileSync` with argv arrays (no shell) to prevent injection.
      */
-    executeRollback() {
+    executeRollback(abortSignal) {
+        if (abortSignal?.aborted) {
+            this.deps.onLog("Rollback skipped: abort signal received");
+            return;
+        }
         // Dry-run mode: list files that would be cleaned without performing destructive operations
         if (this.deps.dryRun) {
             this.deps.onLog("Dry-run rollback — listing files that would be cleaned:");
@@ -210,8 +264,9 @@ export class EffectExecutor {
                     .toString()
                     .trim();
             }
-            catch {
+            catch (err) {
                 stashRef = "unknown";
+                this.deps.onLog?.(`[debug] Failed to capture stash ref: ${err instanceof Error ? err.message : String(err)}`);
             }
             this.deps.onLog(`Safety stash created before rollback (stash ref: ${stashRef})`);
             this.deps.onNotesUpdate(`Rollback stash ref: ${stashRef}`);

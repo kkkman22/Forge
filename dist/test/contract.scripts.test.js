@@ -90,4 +90,36 @@ describe("Contract: scripts/ smoke tests (no-arg invocation)", () => {
         });
     }
 });
+// ---------------------------------------------------------------------------
+// Req 3.1–3.3: Distribution package contains check-frozen.js
+// ---------------------------------------------------------------------------
+describe("Contract: distribution package contains check-frozen.js", () => {
+    const distBundlePath = resolve(ROOT, "dist", "claude-code", "bundles", "forge");
+    it("dist/claude-code/bundles/forge/dist/src/check-frozen.js exists", () => {
+        const checkFrozenPath = resolve(distBundlePath, "dist", "src", "check-frozen.js");
+        const exists = (() => {
+            try {
+                statSync(checkFrozenPath);
+                return true;
+            }
+            catch {
+                return false;
+            }
+        })();
+        expect(exists, "check-frozen.js must be present in the distribution package at dist/src/check-frozen.js. " +
+            "Run scripts/build-dist.sh to generate the distribution bundle.").toBe(true);
+    });
+    it("check-frozen.js in distribution package is not empty", () => {
+        const checkFrozenPath = resolve(distBundlePath, "dist", "src", "check-frozen.js");
+        try {
+            const content = readFileSync(checkFrozenPath, "utf-8");
+            expect(content.trim().length).toBeGreaterThan(0);
+        }
+        catch {
+            // If the file doesn't exist, the previous test will catch it.
+            // This test only validates content when the file is present.
+            expect.fail("check-frozen.js not found in distribution package. Run scripts/build-dist.sh first.");
+        }
+    });
+});
 //# sourceMappingURL=contract.scripts.test.js.map

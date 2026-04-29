@@ -51,7 +51,7 @@ export function parseVerifyConfig(frontmatterContent) {
  * This is a pure function that constructs a `VerifyResult` from the given
  * parameters. Actual command execution is handled externally.
  *
- * @param config - The verification configuration.
+ * @param _config - The verification configuration.
  * @param attempt - The current attempt number (1-based).
  * @param failedCommand - The command that failed, or undefined if all passed.
  * @param error - Error message from the failed command, or undefined.

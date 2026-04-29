@@ -89,6 +89,10 @@ export declare function detectWorkNature(description: string): WorkNature;
  * - feature + light → "light", feature + standard → "standard", feature + full → "full"
  * - refactor + light → "refactor_light", refactor + standard/full → "refactor_standard"
  * - bugfix + light → "fix_light", bugfix + standard/full → "fix_standard"
+ *
+ * @visibleForTesting Currently only used in tests. May be connected to
+ * production call points in the future when the Skill Scheduler consumes
+ * work-nature routing directly.
  */
 export declare function getWorkNatureSequenceKey(workNature: WorkNature, tier: Tier): string;
 /**

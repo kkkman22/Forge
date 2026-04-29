@@ -17,7 +17,7 @@ vi.mock("node:child_process", () => ({
 }));
 // Import after mocking
 import { execFileSync } from "node:child_process";
-import { EffectExecutor } from "../src/effect-executor.js";
+import { EffectExecutor, FrozenZoneViolation, UnexpectedEffectError, } from "../src/effect-executor.js";
 // ---------------------------------------------------------------------------
 // Helpers
 // ---------------------------------------------------------------------------
@@ -531,6 +531,135 @@ describe("Feature: audit-followup-improvements, Property 2: Dry-run rollback non
                 expect(args[0]).not.toBe("stash");
             }
         }), { numRuns: 100 });
+    });
+});
+// ---------------------------------------------------------------------------
+// FrozenZoneViolation error type (Requirements 8.1, 8.2)
+// ---------------------------------------------------------------------------
+describe("FrozenZoneViolation error type", () => {
+    it("has code property set to FROZEN_ZONE_VIOLATION", () => {
+        const err = new FrozenZoneViolation(["file1.md"]);
+        expect(err.code).toBe("FROZEN_ZONE_VIOLATION");
+    });
+    it("stores the violating files in the files property", () => {
+        const files = [".forge/specs/my-spec/requirements.md", ".forge/specs/my-spec/design.md"];
+        const err = new FrozenZoneViolation(files);
+        expect(err.files).toEqual(files);
+    });
+    it("is an instance of Error", () => {
+        const err = new FrozenZoneViolation(["file.md"]);
+        expect(err).toBeInstanceOf(Error);
+    });
+    it("has name set to FrozenZoneViolation", () => {
+        const err = new FrozenZoneViolation(["file.md"]);
+        expect(err.name).toBe("FrozenZoneViolation");
+    });
+    it("includes file names in the error message", () => {
+        const files = ["a.md", "b.md"];
+        const err = new FrozenZoneViolation(files);
+        expect(err.message).toContain("a.md");
+        expect(err.message).toContain("b.md");
+    });
+    it("is distinguishable from UnexpectedEffectError via instanceof", () => {
+        const frozen = new FrozenZoneViolation(["file.md"]);
+        const unexpected = new UnexpectedEffectError("boom");
+        expect(frozen).toBeInstanceOf(FrozenZoneViolation);
+        expect(frozen).not.toBeInstanceOf(UnexpectedEffectError);
+        expect(unexpected).not.toBeInstanceOf(FrozenZoneViolation);
+    });
+});
+// ---------------------------------------------------------------------------
+// UnexpectedEffectError error type (Requirements 8.1, 8.3)
+// ---------------------------------------------------------------------------
+describe("UnexpectedEffectError error type", () => {
+    it("has code property set to UNEXPECTED_EFFECT_ERROR", () => {
+        const err = new UnexpectedEffectError("git crashed");
+        expect(err.code).toBe("UNEXPECTED_EFFECT_ERROR");
+    });
+    it("is an instance of Error", () => {
+        const err = new UnexpectedEffectError("something broke");
+        expect(err).toBeInstanceOf(Error);
+    });
+    it("has name set to UnexpectedEffectError", () => {
+        const err = new UnexpectedEffectError("oops");
+        expect(err.name).toBe("UnexpectedEffectError");
+    });
+    it("preserves the error message", () => {
+        const err = new UnexpectedEffectError("git command failed with exit code 128");
+        expect(err.message).toBe("git command failed with exit code 128");
+    });
+});
+// ---------------------------------------------------------------------------
+// Abort signal skips remaining effects in executeEffects (Requirement 14.1–14.3)
+// ---------------------------------------------------------------------------
+describe("abort signal skips remaining effects", () => {
+    it("skips all effects when signal is already aborted before executeEffects", async () => {
+        const onLog = vi.fn();
+        const executor = createExecutor({ onLog });
+        const controller = new AbortController();
+        controller.abort();
+        const effects = [
+            { type: "commit", message: "should not run" },
+            { type: "rollback" },
+            { type: "stop" },
+        ];
+        await executor.executeEffects(effects, controller.signal);
+        // No git commands should have been called
+        expect(execFileSync).not.toHaveBeenCalled();
+        // stop flag should not be set (effect was skipped)
+        expect(executor.stopped).toBe(false);
+        // Should log the interruption message
+        expect(onLog).toHaveBeenCalledWith("Effect execution interrupted: abort signal received");
+    });
+    it("skips remaining effects after abort signal fires mid-execution", async () => {
+        const onLog = vi.fn();
+        const executor = createExecutor({ onLog });
+        const controller = new AbortController();
+        const effects = [
+            { type: "abort", reason: "test abort" },
+            { type: "commit", message: "should not run" },
+        ];
+        // Abort after the first effect is processed
+        // The abort effect itself sets executor.aborted but doesn't trigger the signal.
+        // We abort the controller after the first effect by hooking into onLog.
+        let effectCount = 0;
+        onLog.mockImplementation(() => {
+            effectCount++;
+            if (effectCount === 1) {
+                controller.abort();
+            }
+        });
+        await executor.executeEffects(effects, controller.signal);
+        // The abort effect should have been processed
+        expect(executor.aborted).toBe(true);
+        // The commit should have been skipped — only the abort effect's log + interruption log
+        expect(onLog).toHaveBeenCalledWith("Aborted: test abort");
+        expect(onLog).toHaveBeenCalledWith("Effect execution interrupted: abort signal received");
+        // No git commands from the commit
+        expect(execFileSync).not.toHaveBeenCalled();
+    });
+});
+// ---------------------------------------------------------------------------
+// Abort signal skips commit and rollback operations (Requirement 14.2)
+// ---------------------------------------------------------------------------
+describe("abort signal skips commit and rollback operations", () => {
+    it("commit is skipped when abort signal is already fired", async () => {
+        const onLog = vi.fn();
+        const executor = createExecutor({ onLog });
+        const controller = new AbortController();
+        controller.abort();
+        await executor.executeEffect({ type: "commit", message: "should be skipped" }, controller.signal);
+        expect(execFileSync).not.toHaveBeenCalled();
+        expect(onLog).toHaveBeenCalledWith("Commit skipped: abort signal received");
+    });
+    it("rollback is skipped when abort signal is already fired", async () => {
+        const onLog = vi.fn();
+        const executor = createExecutor({ onLog });
+        const controller = new AbortController();
+        controller.abort();
+        await executor.executeEffect({ type: "rollback" }, controller.signal);
+        expect(execFileSync).not.toHaveBeenCalled();
+        expect(onLog).toHaveBeenCalledWith("Rollback skipped: abort signal received");
     });
 });
 //# sourceMappingURL=effect-executor.test.js.map

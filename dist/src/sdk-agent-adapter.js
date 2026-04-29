@@ -13,6 +13,11 @@
 import { query as sdkQuery, } from "@anthropic-ai/claude-agent-sdk";
 import { validateAgentOutput } from "./agent-output.js";
 // ---------------------------------------------------------------------------
+// Constants
+// ---------------------------------------------------------------------------
+/** Default global timeout for SDK calls: 30 minutes. */
+const DEFAULT_GLOBAL_TIMEOUT_MS = 1_800_000;
+// ---------------------------------------------------------------------------
 // SdkAgentAdapter class
 // ---------------------------------------------------------------------------
 /**
@@ -104,6 +109,12 @@ export class SdkAgentAdapter {
             queryHandle = sdkQuery({ prompt, options: sdkOptions });
         }
         this.activeQuery = queryHandle;
+        // Set up global timeout: abort the SDK call if it exceeds the configured
+        // duration. Uses setTimeout + AbortController to enforce the limit.
+        const timeoutMs = this.config.globalTimeoutMs ?? DEFAULT_GLOBAL_TIMEOUT_MS;
+        const timeoutId = setTimeout(() => {
+            abortController.abort("timeout");
+        }, timeoutMs);
         try {
             // Iterate the async generator to find the result message.
             let resultMessage = null;
@@ -148,7 +159,16 @@ export class SdkAgentAdapter {
                 usage,
             };
         }
+        catch (error) {
+            // If the abort was triggered by our timeout, throw a descriptive
+            // timeout error so the upper layer can classify it as iteration_hard_failure.
+            if (abortController.signal.aborted && abortController.signal.reason === "timeout") {
+                throw new Error(`Agent SDK call timed out after ${timeoutMs}ms (timeout)`);
+            }
+            throw error;
+        }
         finally {
+            clearTimeout(timeoutId);
             this.activeQuery = null;
         }
     }

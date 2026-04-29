@@ -97,14 +97,14 @@ export function releaseFileLock(lockPath, fd) {
     try {
         closeSync(fd);
     }
-    catch {
-        // Best-effort close
+    catch (err) {
+        console.warn(`[debug] closeSync failed for lock fd=${fd}: ${err instanceof Error ? err.message : String(err)}`);
     }
     try {
         unlinkSync(lockPath);
     }
-    catch {
-        // Best-effort removal — the file may already have been deleted
+    catch (err) {
+        console.warn(`[debug] unlinkSync failed for lock path=${lockPath}: ${err instanceof Error ? err.message : String(err)}`);
     }
 }
 // ---------------------------------------------------------------------------
@@ -162,8 +162,8 @@ export class RunManager {
                     rmSync(runDir, { recursive: true, force: true });
                 }
             }
-            catch {
-                // Cleanup is best-effort
+            catch (err) {
+                console.warn(`[debug] run directory cleanup failed for ${runDir}: ${err instanceof Error ? err.message : String(err)}`);
             }
             throw error;
         }
@@ -250,7 +250,7 @@ export class RunManager {
      * @param maxConcurrent  Maximum number of concurrent worktrees allowed.
      * @returns A {@link RunSetup} with an additional `worktreePath` field.
      */
-    static setupWorktree(objective, repoRoot, maxConcurrent) {
+    static setupWorktree(objective, repoRoot, maxConcurrent, t) {
         const runId = randomUUID();
         // --- File-lock serialization (R2) ---
         // Acquire a file lock to serialize the concurrency check + worktree
@@ -274,7 +274,11 @@ export class RunManager {
             }
             // For any other lock mechanism failure (e.g. permissions), fall back
             // to lockless mode and warn (R2.4)
-            console.warn(`Warning: file-lock mechanism failed, falling back to lockless mode: ${lockErr instanceof Error ? lockErr.message : String(lockErr)}`);
+            const lockErrMsg = lockErr instanceof Error ? lockErr.message : String(lockErr);
+            const warningMsg = t
+                ? t("runManager.warning.fileLockFailed", { error: lockErrMsg })
+                : `Warning: file-lock mechanism failed, falling back to lockless mode: ${lockErrMsg}`;
+            console.warn(warningMsg);
         }
         try {
             // --- Critical section: concurrency check + worktree creation ---
@@ -329,8 +333,8 @@ export class RunManager {
                 try {
                     execFileSync("git", ["worktree", "remove", "--force", worktreePath], { cwd: repoRoot });
                 }
-                catch {
-                    // Worktree removal is best-effort
+                catch (err) {
+                    console.warn(`[debug] worktree removal failed for ${worktreePath}: ${err instanceof Error ? err.message : String(err)}`);
                 }
                 // Clean up the orphan branch created with the worktree (R11)
                 let branchCleanupNote = "";

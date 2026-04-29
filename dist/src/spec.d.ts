@@ -15,6 +15,8 @@ export interface SpecFrontmatter {
     feature: string;
     status: "draft" | "locked";
     date: string;
+    /** External spec source path (import mode only). */
+    importSource?: string;
 }
 export interface Requirement {
     title: string;
@@ -34,13 +36,26 @@ export interface SpecDocument {
     delta?: DeltaSection;
     isBrownfield: boolean;
 }
+export type ConfirmSpecResult = {
+    success: true;
+    spec: SpecDocument;
+} | {
+    success: false;
+    errors: string[];
+};
 /**
  * Confirm (lock) a Spec document.
  *
- * Returns a new SpecDocument with status set to "locked".
+ * Validates the spec before locking:
+ *   1. All requirements must have testable scenarios (validateTestability)
+ *   2. Brownfield specs must have a complete Delta section (validateBrownfieldDelta)
+ *
+ * Returns a success result with the locked SpecDocument, or a failure result
+ * with validation error messages.
+ *
  * Per SKILL.md §2 Step 3, user confirmation transitions draft → locked.
  */
-export declare function confirmSpec(spec: SpecDocument): SpecDocument;
+export declare function confirmSpec(spec: SpecDocument): ConfirmSpecResult;
 /**
  * Reject a Spec document.
  *
@@ -48,6 +63,13 @@ export declare function confirmSpec(spec: SpecDocument): SpecDocument;
  * Per SKILL.md §2 Step 3, rejection keeps the spec in draft state.
  */
 export declare function rejectSpec(spec: SpecDocument): SpecDocument;
+/**
+ * Create an imported Spec document from external source.
+ *
+ * Wraps externally-sourced requirements into a SpecDocument with importSource
+ * tracking. Used when a developer provides a PM spec via `/forge spec <file>`.
+ */
+export declare function createImportedSpec(feature: string, date: string, purpose: string, requirements: Requirement[], exclusions: string[], importSource: string, isBrownfield: boolean, delta?: DeltaSection): SpecDocument;
 /**
  * Validate that every requirement has at least one testable scenario.
  *

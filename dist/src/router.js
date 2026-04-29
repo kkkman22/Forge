@@ -26,6 +26,17 @@
 // ---------------------------------------------------------------------------
 // Command sequences per tier (unchanged)
 // ---------------------------------------------------------------------------
+/**
+ * Command sequences for each tier in the complete interactive workflow.
+ *
+ * The `full` sequence includes `decide` and `spec` phases because the Router
+ * is responsible for the entire interactive workflow — from initial decision
+ * and specification through to learning. The Skill Scheduler uses a separate
+ * set of sequences that omit these early phases, since it only handles SKILL
+ * execution (plan → build → review → test → ship → learn).
+ *
+ * @see src/skill-scheduler.ts SKILL_COMMAND_SEQUENCES
+ */
 const COMMAND_SEQUENCES = {
     light: ["build", "review"],
     standard: ["plan", "build", "review", "test", "ship"],
@@ -99,6 +110,10 @@ export function detectWorkNature(description) {
  * - feature + light → "light", feature + standard → "standard", feature + full → "full"
  * - refactor + light → "refactor_light", refactor + standard/full → "refactor_standard"
  * - bugfix + light → "fix_light", bugfix + standard/full → "fix_standard"
+ *
+ * @visibleForTesting Currently only used in tests. May be connected to
+ * production call points in the future when the Skill Scheduler consumes
+ * work-nature routing directly.
  */
 export function getWorkNatureSequenceKey(workNature, tier) {
     if (workNature === "feature") {
@@ -125,6 +140,26 @@ function hasStandardSignals(signals) {
 function hasLightSignals(signals) {
     return signals.filesAffected <= 1 && signals.linesChanged <= 20;
 }
+/**
+ * Determine whether a brownfield project should receive a tier boost.
+ *
+ * Currently implements light → standard promotion only.
+ *
+ * **Design decision — standard → full promotion not implemented:**
+ * A standard → full boost for brownfield projects with `hasAuthChanges` or
+ * `hasNewService` is unnecessary because those signals already trigger the
+ * `full` tier directly via `hasFullSignals()`, which is evaluated before
+ * standard signals in `classifyTier`. There is no reachable code path where
+ * a task has auth changes or a new service AND is classified as `standard` —
+ * those signals always short-circuit to `full` first.
+ *
+ * If future signal combinations allow standard classification alongside
+ * auth/service changes (e.g., a user override or new priority rules),
+ * revisit this function to add standard → full promotion.
+ *
+ * @see classifyTier — tier classification priority order
+ * @see hasFullSignals — signals that directly trigger full tier
+ */
 function shouldBrownfieldBoost(context) {
     if (!context)
         return false;

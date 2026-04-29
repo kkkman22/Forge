@@ -10,9 +10,11 @@
  * **Validates: Requirements 1.1, 1.2, 1.3, 1.5, 2.1–2.7, 3.1–3.7,
  *   4.1–4.6, 5.1–5.4, 8.1–8.4, 9.1–9.3, 10.1–10.5**
  */
-import type { EffectExecutorInterface } from "./effect-executor.js";
+import { type EffectExecutorInterface } from "./effect-executor.js";
+import { type LogSinkConfig, type PerformanceBaseline } from "./logger/index.js";
 import type { AgentInterface, LoopConfig, NotesDocument, OrchestratorState, RunLimits } from "./loop-types.js";
 import type { TaskType } from "./pua-engine.js";
+import { type TranslateFn } from "./run-manager.js";
 /**
  * Configuration for the SDK driver instance.
  *
@@ -59,6 +61,18 @@ export interface SdkDriverConfig {
     readStatusFile?: () => string;
     /** Optional callback to write StatusFile content (for skill-aware mode). */
     writeStatusFile?: (content: string) => void;
+    /** Optional callback to read review report content (for quality gate evaluation). */
+    readReviewFile?: () => string;
+    /** Optional callback to read test result content (for quality gate evaluation). */
+    readTestFile?: () => string;
+    /** Optional callback to read progress content (for quality gate evaluation). */
+    readProgressFile?: () => string;
+    /** Optional translation function for i18n support. When not provided, English strings are used. */
+    t?: TranslateFn;
+    /** Log sink configuration for structured logging. When not provided, defaults to text/info. */
+    logSinkConfig?: LogSinkConfig;
+    /** Whether to enable sandbox mode with fine-grained access control. */
+    sandboxEnabled?: boolean;
 }
 /** Result returned when the driver loop exits. */
 export interface SdkDriverResult {
@@ -104,13 +118,22 @@ export declare class SdkDriver {
     private stopRequested;
     /** Counter for consecutive review-fix loop iterations (skill-aware mode). */
     private reviewFixAttempts;
-    /** Most recent iteration summaries (kept to last 5). */
-    private summaryHistory;
-    /** Current position in the methodology switch chain. */
-    private puaMethodologyChainIndex;
-    /** Current methodology switch chain (set when a failure pattern is first detected). */
-    private currentMethodologyChain;
+    /** Tracks whether the loop completed normally (SkillScheduler returned "completed"). */
+    private loopCompletedNormally;
+    /** PUA state manager (only instantiated when puaEnabled is true). */
+    private readonly puaStateManager;
+    /** StatusFile I/O interface for delegating to helper functions. */
+    private readonly statusFileIO;
+    /** Structured logger for observability. */
+    private readonly logger;
+    /** Iteration timing accumulator for performance baseline. */
+    private readonly iterationTimings;
     constructor(config: SdkDriverConfig, effectExecutor: EffectExecutorInterface, agentAdapter: AgentInterface);
+    /**
+     * Internal translation helper. Falls back to the key-based default
+     * when no translation function is configured.
+     */
+    private t;
     /**
      * Run the autonomous loop until a termination condition is met.
      *
@@ -160,30 +183,39 @@ export declare class SdkDriver {
      */
     private executeSkillAwareIteration;
     /**
-     * Handle PUA state after a successful iteration.
+     * Evaluate the appropriate quality gate for a completed skill phase.
      *
-     * Clears summary history, resets methodology chain index, and removes
-     * PUA fields from StatusFile.
-     */
-    private handlePuaSuccess;
-    /**
-     * Handle PUA state after a failed iteration.
+     * Reads the relevant file content via configured callbacks and delegates
+     * to the pure-function gate evaluators. Returns null if no gate applies
+     * to the given phase or if file-reading callbacks are not configured.
      *
-     * Pushes summary to history (keeping last 5), detects failure pattern,
-     * determines pressure level, selects/advances methodology, builds
-     * pressure prompt, and persists PUA state to StatusFile.
+     * @param phase - The skill phase that just completed.
+     * @returns The gate evaluation result, or null if no gate applies.
      */
-    private handlePuaFailure;
+    private evaluateQualityGateForPhase;
     /**
-     * Safely write PUA fields to StatusFile.
-     * Wraps in try/catch and logs warning on failure.
+     * Read file content via a configured callback.
+     * Returns null if no callback is configured or if reading fails.
+     *
+     * @param reader - The configured file reader callback, or undefined.
+     * @returns File content string, or null.
      */
-    private safeWritePuaFields;
+    private readFileContent;
     /**
-     * Safely clear PUA fields from StatusFile.
-     * Wraps in try/catch and logs warning on failure.
+     * Read review file content via the configured callback.
+     * Returns null if no callback is configured or if reading fails.
      */
-    private safeClearPuaFields;
+    private readReviewFileContent;
+    /**
+     * Read test result file content via the configured callback.
+     * Returns null if no callback is configured or if reading fails.
+     */
+    private readTestFileContent;
+    /**
+     * Read progress file content via the configured callback.
+     * Returns null if no callback is configured or if reading fails.
+     */
+    private readProgressFileContent;
     /** Build an `IterationEntry` from an iteration result. */
     private buildIterationEntry;
     /** Append an iteration entry to the notes document and persist to disk. */
@@ -193,37 +225,87 @@ export declare class SdkDriver {
     /** Execute an array of effects via the effect executor. */
     private executeEffects;
     /**
-     * Read StatusFile content via the configured callback.
-     * Returns empty string if no callback is configured or if reading fails.
+     * Build a phase-specific commit message for a completed SKILL phase.
+     *
+     * Commit message format per phase:
+     * - **build**: uses the agent summary (plan-defined message proxy)
+     * - **plan**: `forge(plan): <topic> plan approved`
+     * - **fix** / **fix-apply**: `forge(fix): resolve P0/P1 from review`
+     * - **refactor-apply**: `forge(refactor): apply refactoring changes`
+     *
+     * Falls back to a generic format for any other commitable phase.
+     *
+     * @param phase - The SKILL phase that completed.
+     * @param iterationNumber - The current iteration number.
+     * @param summary - The agent's iteration summary (used for build phase).
+     * @returns The commit message string.
      */
-    private readStatusFileContent;
+    private buildCommitMessageForPhase;
     /**
-     * Write StatusFile content via the configured callback.
-     * Silently ignores failures (StatusFile updates are non-critical).
+     * Apply skill-aware commit strategy to the effects produced by the
+     * orchestrator's state transition.
+     *
+     * The orchestrator always produces a `commit` effect on `iteration_success`
+     * and a `rollback` effect on failures. In skill-aware mode, we refine this:
+     *
+     * - If `shouldCommitForPhase(phase, success)` returns `true`:
+     *   Replace the generic commit message with a phase-specific one.
+     * - If `shouldCommitForPhase(phase, success)` returns `false` and the
+     *   iteration succeeded: Remove the `commit` effect (non-commitable phases
+     *   like review/test don't produce code changes) and decrement commitCount.
+     * - If the iteration failed: The orchestrator already produces `rollback`,
+     *   which is correct for commitable phases. For non-commitable phases,
+     *   rollback is harmless (no-op on clean tree).
+     *
+     * @param effects - The effects array from the orchestrator transition.
+     * @param phase - The completed SKILL phase.
+     * @param success - Whether the iteration succeeded.
+     * @param iterationNumber - The current iteration number.
+     * @param summary - The agent's iteration summary.
+     * @returns The modified effects array.
      */
-    private writeStatusFileContent;
-    /**
-     * Extract the `phase` field from StatusFile content.
-     * Returns null if not found.
-     */
-    private getPhaseFromStatusContent;
-    /**
-     * Extract the `tier` field from StatusFile content.
-     * Returns undefined if not found.
-     */
-    private getTierFromStatusContent;
-    /**
-     * Safely update StatusFile with current phase and iteration.
-     * Wraps in try/catch and logs warning on failure (Req 6.7).
-     */
-    private safeUpdateIterationStatus;
-    /**
-     * Clear all Loop-related fields from StatusFile.
-     * Called when the loop ends.
-     */
-    private clearStatusFileLoopFields;
+    private applySkillAwareCommitStrategy;
     /** Build the final driver result. */
     private buildResult;
+    /**
+     * Format and output a structured completion or abort summary.
+     *
+     * Called at the end of `run()` before returning the result. Outputs
+     * structured console output matching SKILL.md examples:
+     *
+     * - **Normal completion**: objective, tier, total iterations, per-phase
+     *   pass/fail status, branch name.
+     * - **Circuit breaker abort**: unresolved P0/P1 issues list and recovery
+     *   suggestions.
+     * - **Error abort**: error reason and `/forge resume` suggestion.
+     *
+     * **Validates: Requirements 9.1, 9.2, 9.3, 9.4, 9.5**
+     */
+    formatCompletionSummary(baseline: PerformanceBaseline): string;
+    /**
+     * Build per-phase pass/fail status from the notes document entries.
+     *
+     * Scans iteration entries for `skill_phase_completed` information
+     * embedded in summaries, and aggregates pass/fail per phase.
+     *
+     * @returns Array of formatted phase status strings (e.g., "✅ build", "❌ review").
+     */
+    private buildPhaseStatusSummary;
+    /**
+     * Collect unresolved P0/P1 issues from the last review gate evaluation.
+     *
+     * Reads the review file content (if available) and extracts P0/P1 issues
+     * from the quality gate evaluation.
+     *
+     * @returns Array of formatted issue strings.
+     */
+    private collectUnresolvedIssues;
+    /**
+     * Get the last failure reason from the notes document.
+     *
+     * @returns The summary of the last failed iteration, or null if none.
+     */
+    private getLastFailureReason;
 }
 /**
  * Detect whether Skill-aware mode should be enabled by checking if the

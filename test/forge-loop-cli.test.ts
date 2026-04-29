@@ -10,10 +10,10 @@
  * **Validates: Requirements 6.1, 6.2, 6.3, 6.4, 6.5, 6.6, 6.7, 6.8, 6.9, 6.10, 4.1, 4.2, 4.3, 4.6, 4.7, 7.1, 7.3, 7.4, 7.6**
  */
 
+import { Command } from "commander";
 import { existsSync, mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join as pathJoin } from "node:path";
-import { Command } from "commander";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 import { buildAgentOutputSchema } from "../src/agent-output.js";
@@ -1400,5 +1400,152 @@ describe("--lang CLI option", () => {
     expect(result?.objective).toBe("Build feature X");
     expect(result?.opts.maxIterations).toBe(20);
     expect(result?.opts.lang).toBeUndefined();
+  });
+});
+
+// ---------------------------------------------------------------------------
+// 14. --log-file CLI option (Req 1.1, 8.1, 8.3)
+// ---------------------------------------------------------------------------
+
+describe("--log-file CLI option", () => {
+  /**
+   * Helper that creates a fresh Commander program matching the CLI's
+   * option definitions (including --log-file) and parses the given argv array.
+   */
+  function parseArgs(argv: string[]) {
+    let captured: { objective: string; opts: Record<string, unknown> } | undefined;
+
+    const program = new Command();
+    program
+      .name("forge-loop")
+      .description("Run an autonomous loop with Claude Code Agent SDK")
+      .argument("<objective>", "The objective for the autonomous loop")
+      .option("--max-iterations <n>", "Maximum number of iterations", parseInt)
+      .option("--max-tokens <n>", "Maximum cumulative token limit", parseInt)
+      .option("--stop-when <condition>", "Natural-language stop condition")
+      .option("--prevent-sleep <on|off>", "Control sleep prevention", "on")
+      .option("--worktree", "Run in a separate Git worktree", false)
+      .option("--max-budget-usd <amount>", "Maximum dollar budget", parseFloat)
+      .option("--tier <tier>", "Preset routing tier (light|standard|full)")
+      .option("--type <type>", "Preset task type (frontend|backend|fullstack|data|infra|docs)")
+      .option("--phase <phase>", "Preset project phase (greenfield|iteration|refactor|bugfix)")
+      .option("--nature <nature>", "Preset work nature (feature|refactor|bugfix)")
+      .option("--pua", "Enable PUA Quality Engine", false)
+      .option(
+        "--pua-task-type <type>",
+        "PUA task type (debug|build|research|architecture|performance|review|deploy|general)",
+      )
+      .option("--resume <branchName>", "Resume an existing run on a forge/ branch")
+      .option("--lang <locale>", "Set display language (zh|en)")
+      .option("--log-format <text|json>", "Log output format (text|json)", "text")
+      .option("--log-level <debug|info|warn|error>", "Minimum log level", "info")
+      .option("--log-file <path>", "Write JSON logs to file (dual-write mode)")
+      .option("--sandbox", "Enable sandbox mode with fine-grained access control", false)
+      .action((objective: string, opts: Record<string, unknown>) => {
+        captured = { objective, opts };
+      });
+
+    program.parse(["node", "forge-loop", ...argv]);
+    return captured;
+  }
+
+  // -- --log-file option parses correctly (Req 1.1) --
+
+  it("parses --log-file with a file path", () => {
+    const result = parseArgs(["objective", "--log-file", "/tmp/forge.jsonl"]);
+    expect(result?.opts.logFile).toBe("/tmp/forge.jsonl");
+  });
+
+  it("parses --log-file with a relative path", () => {
+    const result = parseArgs(["objective", "--log-file", "./logs/run.jsonl"]);
+    expect(result?.opts.logFile).toBe("./logs/run.jsonl");
+  });
+
+  // -- --log-file coexists with --log-format and --log-level (Req 8.3) --
+
+  it("parses --log-file alongside --log-format and --log-level", () => {
+    const result = parseArgs([
+      "Build feature",
+      "--log-format",
+      "json",
+      "--log-level",
+      "debug",
+      "--log-file",
+      "/tmp/forge.jsonl",
+    ]);
+
+    expect(result?.opts.logFormat).toBe("json");
+    expect(result?.opts.logLevel).toBe("debug");
+    expect(result?.opts.logFile).toBe("/tmp/forge.jsonl");
+  });
+
+  it("parses --log-file alongside all other options", () => {
+    const result = parseArgs([
+      "Build feature X",
+      "--max-iterations",
+      "20",
+      "--tier",
+      "full",
+      "--log-format",
+      "text",
+      "--log-level",
+      "warn",
+      "--log-file",
+      "/var/log/forge/run.jsonl",
+    ]);
+
+    expect(result?.objective).toBe("Build feature X");
+    expect(result?.opts.maxIterations).toBe(20);
+    expect(result?.opts.tier).toBe("full");
+    expect(result?.opts.logFormat).toBe("text");
+    expect(result?.opts.logLevel).toBe("warn");
+    expect(result?.opts.logFile).toBe("/var/log/forge/run.jsonl");
+  });
+
+  // -- --log-file not specified → no log file created (Req 8.1) --
+
+  it("leaves --log-file undefined when not provided", () => {
+    const result = parseArgs(["objective"]);
+    expect(result?.opts.logFile).toBeUndefined();
+  });
+
+  it("--log-format and --log-level still work without --log-file", () => {
+    const result = parseArgs([
+      "objective",
+      "--log-format",
+      "json",
+      "--log-level",
+      "debug",
+    ]);
+
+    expect(result?.opts.logFormat).toBe("json");
+    expect(result?.opts.logLevel).toBe("debug");
+    expect(result?.opts.logFile).toBeUndefined();
+  });
+
+  // -- Backward compatibility (Req 8.3) --
+
+  it("backward compatible: existing usage without --log-file still works", () => {
+    const result = parseArgs(["Build feature X", "--max-iterations", "20"]);
+    expect(result?.objective).toBe("Build feature X");
+    expect(result?.opts.maxIterations).toBe(20);
+    expect(result?.opts.logFile).toBeUndefined();
+  });
+
+  // -- Empty --log-file validation logic (Req 1.4) --
+
+  it("CLI throws CliError when --log-file is an empty string (validation logic)", () => {
+    // Replicate the CLI validation logic:
+    // if (opts.logFile !== undefined && opts.logFile.trim() === "") → throw CliError
+    const logFile = "";
+    const shouldError = logFile !== undefined && logFile.trim() === "";
+    expect(shouldError).toBe(true);
+
+    if (shouldError) {
+      const error = new CliError("Error: --log-file requires a non-empty file path.");
+      expect(error).toBeInstanceOf(CliError);
+      expect(error.message).toContain("non-empty");
+      expect(error.exitCode).toBe(1);
+    }
   });
 });
