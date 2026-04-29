@@ -96,6 +96,25 @@ export function writeTaskStatus(
       io.mkdirp(statusDir);
       io.write(`${statusDir}/${taskId}.md`, content);
     } else {
+      // Check if this write would create a second active task — auto-migrate
+      const legacyPath = `${forgeRoot}/status.md`;
+      if (io.exists(legacyPath)) {
+        const legacyContent = io.read(legacyPath);
+        const existingTask = extractStringField(
+          parseFrontmatter(legacyContent)?.raw ?? "",
+          "current_task",
+        );
+        if (existingTask && existingTask !== taskName) {
+          // Migrate existing task to multi-file mode
+          migrateToMultiTask(io, forgeRoot);
+          // Now write the new task
+          const taskId = slugify(taskName);
+          const statusDir = `${forgeRoot}/status`;
+          io.mkdirp(statusDir);
+          io.write(`${statusDir}/${taskId}.md`, content);
+          return;
+        }
+      }
       io.write(`${forgeRoot}/status.md`, content);
     }
   } catch {
@@ -166,6 +185,66 @@ export function getMostRecentActiveTask(
     const entryTime = entry.updated ?? "";
     return entryTime > latestTime ? entry : latest;
   });
+}
+
+// ---------------------------------------------------------------------------
+// migrateToMultiTask
+// ---------------------------------------------------------------------------
+
+/**
+ * Migrate from single-task (status.md) to multi-task (status/*.md) mode.
+ *
+ * Steps:
+ *   1. Read current_task from legacy status.md
+ *   2. Slugify to get task-id
+ *   3. Create .forge/status/ directory
+ *   4. Copy legacy content to .forge/status/<task-id>.md
+ *   5. Clear legacy status.md (preserve empty frontmatter)
+ */
+export function migrateToMultiTask(io: StatusManagerIO, forgeRoot: string): void {
+  const legacyPath = `${forgeRoot}/status.md`;
+  if (!io.exists(legacyPath)) return;
+
+  const legacyContent = io.read(legacyPath);
+  const parsed = parseFrontmatter(legacyContent);
+  if (!parsed) return;
+
+  const existingTask = extractStringField(parsed.raw, "current_task");
+  if (!existingTask) return;
+
+  const taskId = slugify(existingTask);
+  const statusDir = `${forgeRoot}/status`;
+  io.mkdirp(statusDir);
+  io.write(`${statusDir}/${taskId}.md`, legacyContent);
+
+  // Clear legacy file with empty frontmatter
+  io.write(legacyPath, "---\n---\n");
+}
+
+// ---------------------------------------------------------------------------
+// archiveTaskStatus
+// ---------------------------------------------------------------------------
+
+/**
+ * Archive a task's status file to .forge/archive/<date>-<task-id>/status.md.
+ */
+export function archiveTaskStatus(
+  io: StatusManagerIO,
+  forgeRoot: string,
+  taskName: string,
+  date: string,
+): void {
+  try {
+    const taskId = slugify(taskName);
+    const srcPath = `${forgeRoot}/status/${taskId}.md`;
+    if (!io.exists(srcPath)) return;
+
+    const archiveDir = `${forgeRoot}/archive/${date}-${taskId}`;
+    io.mkdirp(archiveDir);
+    io.move(srcPath, `${archiveDir}/status.md`);
+  } catch {
+    // Graceful degradation
+  }
 }
 
 // ---------------------------------------------------------------------------
