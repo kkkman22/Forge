@@ -123,6 +123,27 @@
 
 ## 中期 — v2.x（剩余改进）
 
+- **Agent Teams → 独立 Subagent 迁移**（优先级：高）
+  - `/forge review`：三层评审从 Agent Team 改为独立 Subagent 并行执行 + 主 Agent 汇总（已验证可行）
+  - `/forge decide`：四视角决策从 Agent Team 改为两轮 Subagent（第一轮并行评估，第二轮 critic 交叉审查）
+  - `/forge build` 全量路径研究阶段：从 Agent Team 改为独立 Subagent 并行研究
+  - 更新 `forge-review/SKILL.md`、`forge-decide/SKILL.md`、`forge-build/SKILL.md` 中的 Agent Team 配置章节
+  - 更新 `CLAUDE.md` 和 `templates/CLAUDE.md` 中的 Agent Team 相关描述
+  - 清理 `teams/` 目录和 `.claude/teams/` 参考配置
+
+- **上下文预算管理**（优先级：高）
+  - Explore agent 返回结果摘要化（文件签名 + 关键入口点，而非全量代码）
+  - Review 报告只保留 findings 列表，分析过程写入独立文件不留在 context
+  - 测试输出裁剪：vitest 只保留失败用例和摘要统计，通过用例静默
+  - Subagent 结果摘要协议：定义"需要留在 context 的信息"vs"一次性消费后丢弃的信息"
+  - git diff/status 输出限制：超过阈值时只展示文件列表 + 统计，不展示全量 diff
+
+- **错误恢复策略**（优先级：高）
+  - 会话中断后的自动恢复：基于 git log + progress.md + status.md 重建执行状态
+  - `/forge resume` 增强：检测 git 中已完成但 progress 未标记的任务（commit 存在但 progress 未更新）
+  - 长任务拆分策略：build 和 review 可在不同会话中完成，中间状态通过文件系统持久化
+  - 中断点精确定位：区分"任务完成但未提交"、"已提交但 progress 未更新"、"progress 已更新但 phase 未推进"
+
 - **可观测性增强（剩余项）**
   - 结构化 JSON 日志输出（可选格式，便于日志聚合工具消费）
   - 命令执行耗时统计和性能基线（每轮迭代 wall-clock 时间、Agent 调用延迟）
@@ -132,6 +153,15 @@
 ## 长期 — v3.0（社区与生态）
 
 面向社区开放，构建可扩展的 AI 编码工作流生态。
+
+- **Agent Teams 重新评估**（阻塞条件：Claude Code 官方解决以下问题）
+  - 会话恢复：`/resume` 能恢复 in-process teammates（当前官方文档明确标注为已知限制）
+  - 状态持久化：team config 在 context compaction 后不丢失（[#23620](https://github.com/anthropics/claude-code/issues/23620) Open）
+  - Shutdown 可靠性：teammates 关闭不阻塞主流程（当前 shutdown 需等待当前请求完成）
+  - 内存 GC 不破坏 team membership：v2.1.47-v2.1.59 的 GC 优化过度清理了 team 记录（[#29271](https://github.com/anthropics/claude-code/issues/29271) Open）
+  - SendMessage 接收者验证：不存在的接收者应报错而非静默丢失消息（[#25135](https://github.com/anthropics/claude-code/issues/25135) Open）
+  - **跟进策略**：每季度检查上述 issues 状态，官方解决后重新评估 `/forge decide` 和 `/forge review` 是否回迁 Agent Team 模式
+  - **回迁判定标准**：Agent Team 仅用于需要多轮持续对话的场景（成员间实时依赖），fan-out → gather → merge 模式永久使用独立 Subagent
 
 - **社区建设**
   - 贡献者指南完善和 issue 模板标准化
