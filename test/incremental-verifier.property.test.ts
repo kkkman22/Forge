@@ -8,8 +8,8 @@ import * as fc from "fast-check";
 import { describe, expect, it } from "vitest";
 
 import {
-  INCREMENTAL_THRESHOLD,
   determineVerificationStrategy,
+  INCREMENTAL_THRESHOLD,
 } from "../src/incremental-verifier.js";
 
 describe("Feature: forge-review-fix-optimization, Property 20: Verification strategy threshold", () => {

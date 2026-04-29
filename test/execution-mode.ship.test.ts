@@ -11,7 +11,7 @@
  */
 import * as fc from "fast-check";
 import { describe, expect, it } from "vitest";
-import type { ConfirmationPoint, ExecutionMode } from "../src/execution-mode.js";
+import type { ConfirmationPoint } from "../src/execution-mode.js";
 import { parseShipDefaultMethod, resolveConfirmation } from "../src/execution-mode.js";
 
 // ---------------------------------------------------------------------------

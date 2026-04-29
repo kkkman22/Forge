@@ -31,7 +31,7 @@ const VALID_AGENT_TYPES = [
 
 const agentTypeArb = fc.constantFrom(...VALID_AGENT_TYPES);
 
-const permissionModeArb = fc.constantFrom("default", "acceptEdits" as const);
+const _permissionModeArb = fc.constantFrom("default", "acceptEdits" as const);
 
 const subagentResultArb: fc.Arbitrary<SubagentResult> = fc.oneof(
   fc.record({
@@ -81,7 +81,7 @@ describe("Feature: agent-team-migration, Property 2: parallel execution fault to
           const outcome = await runSubagentsInParallel(invocations, executor);
 
           const expectedSucceeded = results.filter((r) => r.status === "success");
-          const expectedFailed = results.filter((r) => r.status !== "success");
+          const _expectedFailed = results.filter((r) => r.status !== "success");
 
           expect(outcome.succeeded.length + outcome.failed.length).toBe(results.length);
           expect(outcome.succeeded.length).toBe(expectedSucceeded.length);

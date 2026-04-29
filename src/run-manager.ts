@@ -205,7 +205,9 @@ export class RunManager {
       cwd,
       timeout: 30_000,
       killSignal: "SIGTERM",
-    }).toString().trim();
+    })
+      .toString()
+      .trim();
 
     // Create run directory and notes file paths
     const runDir = path.join(cwd, ".forge", "runs", runId);
@@ -259,7 +261,9 @@ export class RunManager {
       cwd,
       timeout: 30_000,
       killSignal: "SIGTERM",
-    }).toString().trim();
+    })
+      .toString()
+      .trim();
 
     // Find the run directory — scan .forge/runs/ for a directory with
     // a notes.md that references this branch or has content
