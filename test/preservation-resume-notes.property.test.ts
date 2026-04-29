@@ -407,9 +407,11 @@ describe("Preservation: setupNewRun produces valid RunSetup", () => {
         // Notes file was written
         expect(writeFileSync).toHaveBeenCalledWith(result.notesPath, expect.any(String), "utf-8");
 
-        // Git branch was created
+        // Git branch was created (after branch-exists check and base-commit rev-parse)
         expect(execFileSync).toHaveBeenCalledWith("git", ["checkout", "-b", result.branchName], {
           cwd: CWD,
+          timeout: 30_000,
+          killSignal: "SIGTERM",
         });
       }),
       { numRuns: 50 },
