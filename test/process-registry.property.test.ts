@@ -365,3 +365,46 @@ describe("Property 3: shutdownAll terminates all registered processes", () => {
 		);
 	});
 });
+
+describe("serialize/deserialize", () => {
+	it("serialize returns JSON with session info and processes", () => {
+		const reg = ProcessRegistry.getInstance();
+		reg.register(
+			{ pid: 100, on: () => {} } as any,
+			{ source: "test", detached: false, description: "test proc" },
+		);
+
+		const json = reg.serialize();
+		const parsed = JSON.parse(json);
+		expect(parsed.sessionPid).toBe(process.pid);
+		expect(parsed.sessionPgid).toBe(process.pid);
+		expect(parsed.sessionStartTime).toBeTypeOf("number");
+		expect(parsed.processes).toHaveLength(1);
+		expect(parsed.processes[0].pid).toBe(100);
+		expect(parsed.processes[0].source).toBe("test");
+	});
+
+	it("deserialize reconstructs SerializedRegistry from JSON", () => {
+		const input = {
+			sessionPid: 1234,
+			sessionPgid: 1234,
+			sessionStartTime: 1719000000000,
+			processes: [
+				{ pid: 1235, pgid: 1234, startTime: 1719000001000, source: "sleep", detached: false },
+			],
+		};
+		const result = ProcessRegistry.deserialize(JSON.stringify(input));
+		expect(result.sessionPid).toBe(1234);
+		expect(result.processes).toHaveLength(1);
+		expect(result.processes[0].pid).toBe(1235);
+	});
+
+	it("deserialize throws on invalid JSON", () => {
+		expect(() => ProcessRegistry.deserialize("not json")).toThrow();
+		expect(() => ProcessRegistry.deserialize("")).toThrow();
+	});
+
+	it("deserialize throws on missing required fields", () => {
+		expect(() => ProcessRegistry.deserialize(JSON.stringify({ sessionPid: 1 }))).toThrow();
+	});
+});
