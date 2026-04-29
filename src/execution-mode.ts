@@ -19,6 +19,9 @@ export type ExecutionMode = "interactive" | "autonomous";
 /** Ship delivery method configuration. */
 export type DeliveryMethod = "merge" | "push-pr" | "keep-branch" | "prompt";
 
+/** Actual Ship delivery action (excludes meta-option "prompt", includes destructive "discard"). */
+export type ShipDeliveryOption = "merge" | "push-pr" | "keep-branch" | "discard";
+
 /**
  * Confirmation points where autonomous mode applies preset strategies
  * instead of waiting for user input.
@@ -51,12 +54,14 @@ export interface ConfirmationDecision {
 // ---------------------------------------------------------------------------
 
 /** Valid ship_default_method configuration values. */
-const VALID_DELIVERY_METHODS: ReadonlySet<string> = new Set([
+const VALID_DELIVERY_METHODS: readonly DeliveryMethod[] = [
   "merge",
   "push-pr",
   "keep-branch",
   "prompt",
-]);
+];
+
+const VALID_DELIVERY_METHODS_SET: ReadonlySet<string> = new Set(VALID_DELIVERY_METHODS);
 
 /** YAML frontmatter delimiter. */
 const FRONTMATTER_DELIMITER = "---";
@@ -166,13 +171,13 @@ export function parseShipDefaultMethod(value: string | undefined): {
   }
 
   const trimmed = value.trim().toLowerCase();
-  if (VALID_DELIVERY_METHODS.has(trimmed)) {
-    return { method: trimmed as DeliveryMethod };
+  if (VALID_DELIVERY_METHODS_SET.has(trimmed)) {
+    return { method: VALID_DELIVERY_METHODS.find((m) => m === trimmed)! };
   }
 
   return {
     method: "keep-branch",
-    warning: `Invalid ship_default_method "${value}", falling back to "keep-branch". Valid: ${[...VALID_DELIVERY_METHODS].join(", ")}`,
+    warning: `Invalid ship_default_method "${value}", falling back to "keep-branch". Valid: ${VALID_DELIVERY_METHODS.join(", ")}`,
   };
 }
 
@@ -282,7 +287,7 @@ export function resolveConfirmation(
   if (mode === "autonomous") {
     const preset = configOverride?.[point] ?? AUTONOMOUS_PRESETS[point];
 
-    if (point === "ship_method" && preset === "prompt") {
+    if (preset === "prompt") {
       return { action: "wait_for_user" };
     }
 
