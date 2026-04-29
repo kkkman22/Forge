@@ -145,6 +145,7 @@ interface CliOptions {
   lang?: string;
   logFormat?: string;
   logLevel?: string;
+  sandbox?: boolean;
 }
 
 // ---------------------------------------------------------------------------
@@ -177,6 +178,7 @@ async function main(): Promise<void> {
     .option("--lang <locale>", "Set display language (zh|en)")
     .option("--log-format <text|json>", "Log output format (text|json)", "text")
     .option("--log-level <debug|info|warn|error>", "Minimum log level", "info")
+    .option("--sandbox", "Enable sandbox mode with fine-grained access control", false)
     .action(async (objective: string, opts: CliOptions) => {
       const cwd = process.cwd();
       const preventSleep = opts.preventSleep !== "off";
@@ -508,6 +510,7 @@ async function main(): Promise<void> {
                 : undefined,
           t: _t,
           logSinkConfig,
+          sandboxEnabled: opts.sandbox === true,
         },
         effectExecutor,
         agentAdapter,
