@@ -11,10 +11,12 @@ import * as fc from "fast-check";
 import { describe, expect, it } from "vitest";
 import {
   checkShipGate,
+  checkShipGateWithChecklist,
   type ProgressResult,
   type ReviewResult,
   type TestResult,
 } from "../src/ship.js";
+import type { ChecklistEntry } from "../src/fix-checklist.js";
 
 // ---------------------------------------------------------------------------
 // Generators
@@ -222,5 +224,69 @@ describe("Property 11: Ship 门禁——评审通过且测试通过且任务完�
       }),
       { numRuns: 200 },
     );
+  });
+});
+
+// ---------------------------------------------------------------------------
+// Property 19: Ship gate blocks on unverified checklist entries (Req 10.3)
+// ---------------------------------------------------------------------------
+
+describe("Feature: forge-review-fix-optimization, Property 19: Ship gate blocks on unverified checklist", () => {
+  const passedReview: ReviewResult = { passed: true, p0Count: 0, p1Count: 0 };
+  const passedTest: TestResult = { passed: true };
+  const completeProgress: ProgressResult = { totalTasks: 5, completedTasks: 5 };
+
+  it("any non-verified entry → allowed: false", () => {
+    const statuses: Array<ChecklistEntry["status"]> = ["unfixed", "in-progress", "fixed"];
+    for (const status of statuses) {
+      const checklist: ChecklistEntry[] = [
+        {
+          findingId: "F-001",
+          severity: "P1",
+          filePath: "src/a.ts",
+          lineNumber: 1,
+          description: "test",
+          status,
+        },
+      ];
+      const result = checkShipGateWithChecklist(passedReview, passedTest, completeProgress, checklist);
+      expect(result.allowed).toBe(false);
+      expect(result.reasons.some((r) => r.includes("Checklist"))).toBe(true);
+    }
+  });
+
+  it("all verified + other gates pass → allowed: true", () => {
+    const checklist: ChecklistEntry[] = [
+      {
+        findingId: "F-001",
+        severity: "P0",
+        filePath: "src/a.ts",
+        lineNumber: 1,
+        description: "test",
+        status: "verified",
+        fixCommit: "abc1234",
+      },
+      {
+        findingId: "F-002",
+        severity: "P1",
+        filePath: "src/b.ts",
+        lineNumber: 10,
+        description: "test2",
+        status: "verified",
+        fixCommit: "def5678",
+      },
+    ];
+    const result = checkShipGateWithChecklist(passedReview, passedTest, completeProgress, checklist);
+    expect(result.allowed).toBe(true);
+  });
+
+  it("no checklist provided → behaves like checkShipGate", () => {
+    const result = checkShipGateWithChecklist(passedReview, passedTest, completeProgress);
+    expect(result.allowed).toBe(true);
+  });
+
+  it("empty checklist → behaves like checkShipGate", () => {
+    const result = checkShipGateWithChecklist(passedReview, passedTest, completeProgress, []);
+    expect(result.allowed).toBe(true);
   });
 });

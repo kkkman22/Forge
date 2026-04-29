@@ -22,7 +22,7 @@ import {
 // Safe string: use fc.lorem for words, avoiding pipe chars
 const safeStr = (min: number, max: number) =>
   fc
-    .lorem({ mode: "words", sentenceKind: "basic", maxCount: Math.ceil(max / 5) })
+    .lorem({ mode: "words", maxCount: Math.ceil(max / 5) })
     .filter((s) => s.length >= min && s.length <= max && !s.includes("|"));
 
 const findingArb = fc.record({

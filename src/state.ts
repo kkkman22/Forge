@@ -417,3 +417,146 @@ export function parseLockInfo(content: string): LockInfo | null {
     targetFile: targetMatch[1],
   };
 }
+
+// ---------------------------------------------------------------------------
+// Multi-task status tracking (R8)
+// ---------------------------------------------------------------------------
+
+export interface TaskStatusEntry {
+  taskName: string;
+  tier: string;
+  phase: string;
+  worktree?: string;
+  updated: string;
+}
+
+export function parseStatusEntries(content: string): TaskStatusEntry[] {
+  const fm = parseFrontmatter(content);
+  if (!fm) return [];
+
+  // Multi-task format: detect "tasks:" header in frontmatter
+  const tasksHeader = /^tasks:\s*$/m.test(fm.raw);
+  if (tasksHeader) {
+    return parseTasksBlock(fm.raw);
+  }
+
+  // Legacy single-task format: current_task scalar
+  const currentTask = extractStringField(fm.raw, "current_task");
+  if (currentTask) {
+    return [
+      {
+        taskName: currentTask,
+        tier: extractStringField(fm.raw, "tier") ?? "",
+        phase: extractStringField(fm.raw, "phase") ?? "",
+        updated: extractStringField(fm.raw, "updated") ?? "",
+      },
+    ];
+  }
+
+  return [];
+}
+
+/**
+ * Parse a multi-task YAML block from raw frontmatter text.
+ *
+ * Each task entry follows this indented pattern:
+ * ```
+ * tasks:
+ *   - task: "name"
+ *     tier: "standard"
+ *     phase: "build"
+ *     worktree: "optional"
+ *     updated: "2026-04-29"
+ * ```
+ */
+function parseTasksBlock(raw: string): TaskStatusEntry[] {
+  const entries: TaskStatusEntry[] = [];
+  const lines = raw.split("\n");
+  let inTasks = false;
+  let current: Partial<TaskStatusEntry> | null = null;
+
+  for (const line of lines) {
+    if (/^tasks:\s*$/.test(line)) {
+      inTasks = true;
+      continue;
+    }
+
+    if (!inTasks) continue;
+
+    // New task entry: "  - task: \"name\""
+    const taskMatch = line.match(/^ {2}- task: "([^"]*)"$/);
+    if (taskMatch) {
+      if (current?.taskName) {
+        entries.push(current as TaskStatusEntry);
+      }
+      current = { taskName: taskMatch[1] };
+      continue;
+    }
+
+    // Task field: "    tier: \"standard\""
+    const fieldMatch = line.match(/^ {4}(\w+): "([^"]*)"$/);
+    if (fieldMatch && current) {
+      const [, key, value] = fieldMatch;
+      if (key === "worktree" && value) {
+        current.worktree = value;
+      } else if (key !== "worktree") {
+        (current as Record<string, string | undefined>)[key] = value;
+      }
+    }
+
+    // Empty line or end of tasks block
+    if (line.trim() === "" && current && current.taskName) {
+      entries.push(current as TaskStatusEntry);
+      current = null;
+      inTasks = false;
+    }
+  }
+
+  // Flush last entry
+  if (current?.taskName) {
+    entries.push(current as TaskStatusEntry);
+  }
+
+  return entries;
+}
+
+export function serializeStatusEntries(entries: TaskStatusEntry[]): string {
+  const lines: string[] = ["---", "tasks:"];
+
+  for (const entry of entries) {
+    lines.push(`  - task: "${entry.taskName}"`);
+    lines.push(`    tier: "${entry.tier}"`);
+    lines.push(`    phase: "${entry.phase}"`);
+    if (entry.worktree) {
+      lines.push(`    worktree: "${entry.worktree}"`);
+    }
+    lines.push(`    updated: "${entry.updated}"`);
+  }
+
+  lines.push("---", "");
+  lines.push("# Project Status", "");
+  lines.push(`${entries.length} active task${entries.length !== 1 ? "s" : ""}.`);
+
+  return lines.join("\n");
+}
+
+export function upsertTaskEntry(
+  entries: TaskStatusEntry[],
+  newEntry: TaskStatusEntry,
+): TaskStatusEntry[] {
+  const idx = entries.findIndex((e) => e.taskName === newEntry.taskName);
+  if (idx >= 0) {
+    const updated = [...entries];
+    updated[idx] = newEntry;
+    return updated;
+  }
+  return [...entries, newEntry];
+}
+
+export function removeTaskEntry(entries: TaskStatusEntry[], taskName: string): TaskStatusEntry[] {
+  return entries.filter((e) => e.taskName !== taskName);
+}
+
+export function detectConflict(entries: TaskStatusEntry[], taskName: string): boolean {
+  return entries.some((e) => e.taskName === taskName);
+}

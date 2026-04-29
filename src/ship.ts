@@ -3,20 +3,18 @@
  *
  * Implements:
  *   - checkShipGate: Verifies all three gates pass before ship is allowed
- *
- * Ship gate (Property 11):
- *   Ship is allowed ONLY when:
- *     1. Review passed (no P0/P1 issues)
- *     2. Test passed (all tests and checklist items pass)
- *     3. Progress complete (all tasks marked done)
- *   ANY gate failing → blocked with a specific reason.
+ *   - checkShipGateWithChecklist: Extended gate with P1 Fix Checklist
  *
  * Per design document:
  *   - Requirements 6.6, 6.7: P0/P1 → block ship; only P2/P3 → allow ship
  *   - Requirements 7.5: Test not passed → block ship
  *   - Requirements 8.1, 8.2: All three gates must pass; any failure → block with reason
+ *   - Requirements 10.3: Checklist gate — all P0/P1 entries must be verified
  *   - Requirements 16.3, 16.4: Hard constraints on review and test gates
  */
+
+import type { ChecklistEntry } from "./fix-checklist.js";
+import { allEntriesVerified } from "./fix-checklist.js";
 
 // ---------------------------------------------------------------------------
 // Types
@@ -100,4 +98,29 @@ export function checkShipGate(
     allowed: reasons.length === 0,
     reasons,
   };
+}
+
+/**
+ * Extended ship gate with P1 Fix Checklist verification.
+ *
+ * Adds a fourth gate: all checklist entries must have status "verified".
+ * When checklist is not provided or empty, behaves like checkShipGate.
+ */
+export function checkShipGateWithChecklist(
+  review: ReviewResult,
+  test: TestResult,
+  progress: ProgressResult,
+  checklist?: ChecklistEntry[],
+): ShipGateResult {
+  const result = checkShipGate(review, test, progress);
+
+  if (checklist && checklist.length > 0 && !allEntriesVerified(checklist)) {
+    const unverified = checklist.filter((e) => e.status !== "verified");
+    result.reasons.push(
+      `Checklist 未完成：${unverified.length} 个 P0/P1 条目未验证（${unverified.map((e) => e.findingId).join(", ")}）`,
+    );
+    result.allowed = false;
+  }
+
+  return result;
 }
