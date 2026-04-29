@@ -56,13 +56,20 @@ export {
 // ---------------------------------------------------------------------------
 
 export {
+  BranchValidationError,
   buildAddAllCommand,
+  buildBranchDeleteCommand,
+  buildCheckoutCommand,
   buildCleanCommand,
   buildCommitCommand,
+  buildMergeAbortCommand,
+  buildMergeCommand,
+  buildPushCommand,
   buildResetCommand,
   buildStashCommand,
   containsShellMetacharacters,
   sanitizeBranchName,
+  validateBranchName,
   validatePathSafety,
 } from "./git-transaction.js";
 
