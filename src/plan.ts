@@ -231,7 +231,9 @@ export function validateSpecLocked(
  * Per R25: Each task's `dependsOn` array (if present) must only reference
  * task numbers that exist in the plan.
  */
-export function validateDependencies(tasks: AtomicTask[]): string[] {
+export function validateDependencies(
+  tasks: Array<{ taskNumber: number; dependsOn?: number[] }>,
+): string[] {
   const errors: string[] = [];
   const taskNumbers = new Set(tasks.map((t) => t.taskNumber));
 
@@ -246,6 +248,58 @@ export function validateDependencies(tasks: AtomicTask[]): string[] {
   }
 
   return errors;
+}
+
+/**
+ * Detect cycles in task dependencies using Kahn's algorithm.
+ * Returns an error message if a cycle is found, null otherwise.
+ */
+function detectCycleInTasks(
+  tasks: Array<{ taskNumber: number; dependsOn?: number[] }>,
+): string | null {
+  const inDegree = new Map<number, number>();
+  const adjacency = new Map<number, number[]>();
+
+  for (const task of tasks) {
+    inDegree.set(task.taskNumber, 0);
+    adjacency.set(task.taskNumber, []);
+  }
+
+  for (const task of tasks) {
+    if (task.dependsOn) {
+      for (const dep of task.dependsOn) {
+        if (adjacency.has(dep)) {
+          adjacency.get(dep)?.push(task.taskNumber);
+          inDegree.set(task.taskNumber, (inDegree.get(task.taskNumber) ?? 0) + 1);
+        }
+      }
+    }
+  }
+
+  const queue: number[] = [];
+  for (const [id, degree] of inDegree) {
+    if (degree === 0) queue.push(id);
+  }
+
+  let processed = 0;
+  while (queue.length > 0) {
+    const current = queue.shift()!;
+    processed++;
+    for (const neighbor of adjacency.get(current) ?? []) {
+      const newDegree = (inDegree.get(neighbor) ?? 1) - 1;
+      inDegree.set(neighbor, newDegree);
+      if (newDegree === 0) queue.push(neighbor);
+    }
+  }
+
+  if (processed < tasks.length) {
+    const cycleNodes = tasks
+      .filter((t) => (inDegree.get(t.taskNumber) ?? 0) > 0)
+      .map((t) => t.taskNumber);
+    return `Cycle detected involving tasks: ${cycleNodes.join(", ")}`;
+  }
+
+  return null;
 }
 
 /**
@@ -351,14 +405,9 @@ export function validateLightweightPlan(tasks: LightweightTask[]): boolean {
   const allValid = tasks.every((task) => validateLightweightTask(task).valid);
   if (!allValid) return false;
 
-  const taskNumbers = new Set(tasks.map((t) => t.taskNumber));
-  for (const task of tasks) {
-    if (task.dependsOn) {
-      for (const dep of task.dependsOn) {
-        if (!taskNumbers.has(dep)) return false;
-      }
-    }
-  }
+  if (validateDependencies(tasks).length > 0) return false;
+
+  if (detectCycleInTasks(tasks)) return false;
 
   return true;
 }
@@ -401,37 +450,29 @@ export function validatePlan(
 
   if (format === "lightweight") {
     const lwTasks = tasks as LightweightTask[];
-    const planValid = validateLightweightPlan(lwTasks);
-
     const errors: string[] = [];
-    if (!planValid) {
-      for (const task of lwTasks) {
-        const result = validateLightweightTask(task);
-        if (!result.valid) {
-          errors.push(`Task ${task.taskNumber}: ${result.errors.join(", ")}`);
-        }
-      }
-      const taskNumbers = new Set(lwTasks.map((t) => t.taskNumber));
-      for (const task of lwTasks) {
-        if (task.dependsOn) {
-          for (const dep of task.dependsOn) {
-            if (!taskNumbers.has(dep)) {
-              errors.push(`Task ${task.taskNumber} depends on non-existent task ${dep}`);
-            }
-          }
-        }
+
+    for (const task of lwTasks) {
+      const result = validateLightweightTask(task);
+      if (!result.valid) {
+        errors.push(`Task ${task.taskNumber}: ${result.errors.join(", ")}`);
       }
     }
 
-    if (planValid && designContent) {
+    errors.push(...validateDependencies(lwTasks));
+
+    const cycleError = detectCycleInTasks(lwTasks);
+    if (cycleError) errors.push(cycleError);
+
+    if (designContent) {
       const refs = lwTasks.map((t) => t.designReference);
       const refResult = validateDesignReferences(refs, designContent);
       if (!refResult.valid) {
-        return { valid: false, errors: refResult.errors, format };
+        errors.push(...refResult.errors);
       }
     }
 
-    return { valid: planValid && errors.length === 0, errors, format };
+    return { valid: errors.length === 0, errors, format };
   }
 
   // Full format

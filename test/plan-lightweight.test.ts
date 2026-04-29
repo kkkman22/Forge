@@ -642,3 +642,98 @@ describe("Backward compatibility", () => {
     expect(validatePlanTasks([task])).toBe(true);
   });
 });
+
+// ---------------------------------------------------------------------------
+// P1 Fix verification — cycle detection + validatePlan integration
+// ---------------------------------------------------------------------------
+
+describe("Cycle detection in lightweight plans", () => {
+  const makeTask = (num: number, deps?: number[]): LightweightTask => ({
+    taskNumber: num,
+    title: `Task ${num}`,
+    filePath: `src/file${num}.ts`,
+    goal: `Goal ${num}`,
+    designReference: `design.md#section-${num}`,
+    verifyCommand: "npx vitest",
+    commitMessage: `feat: task${num}`,
+    dependsOn: deps,
+  });
+
+  it("rejects a direct cycle (A → B → A)", () => {
+    const tasks = [makeTask(1, [2]), makeTask(2, [1])];
+    expect(validateLightweightPlan(tasks)).toBe(false);
+  });
+
+  it("rejects a transitive cycle (A → B → C → A)", () => {
+    const tasks = [makeTask(1, [3]), makeTask(2, [1]), makeTask(3, [2])];
+    expect(validateLightweightPlan(tasks)).toBe(false);
+  });
+
+  it("accepts a valid DAG with dependencies", () => {
+    const tasks = [makeTask(1), makeTask(2, [1]), makeTask(3, [1, 2])];
+    expect(validateLightweightPlan(tasks)).toBe(true);
+  });
+
+  it("accepts independent tasks with no dependencies", () => {
+    const tasks = [makeTask(1), makeTask(2), makeTask(3)];
+    expect(validateLightweightPlan(tasks)).toBe(true);
+  });
+
+  it("accepts a self-less chain (A → B → C)", () => {
+    const tasks = [makeTask(1), makeTask(2, [1]), makeTask(3, [2])];
+    expect(validateLightweightPlan(tasks)).toBe(true);
+  });
+});
+
+describe("validatePlan with designContent integration", () => {
+  const lwFrontmatter = 'format: "lightweight"';
+  const designContent = "## Section 1\n\nSome content\n\n## Section 2\n\nMore content";
+
+  const makeTask = (num: number, ref = `design.md#section-${num}`): LightweightTask => ({
+    taskNumber: num,
+    title: `Task ${num}`,
+    filePath: `src/file${num}.ts`,
+    goal: `Goal ${num}`,
+    designReference: ref,
+    verifyCommand: "npx vitest",
+    commitMessage: `feat: task${num}`,
+  });
+
+  it("reports both task errors and design reference errors", () => {
+    const tasks = [
+      makeTask(1, "design.md#section-1"),
+      { ...makeTask(2), goal: "" }, // invalid task
+      makeTask(3, "design.md#nonexistent"), // stale ref
+    ];
+    const result = validatePlan(lwFrontmatter, tasks, designContent);
+    expect(result.valid).toBe(false);
+    // Should have task error for task 2
+    expect(result.errors.some((e) => e.includes("Task 2"))).toBe(true);
+    // Should have design ref error for task 3
+    expect(result.errors.some((e) => e.includes("nonexistent"))).toBe(true);
+  });
+
+  it("reports only design reference errors when tasks are valid but refs are stale", () => {
+    const tasks = [makeTask(1, "design.md#section-1"), makeTask(2, "design.md#missing-section")];
+    const result = validatePlan(lwFrontmatter, tasks, designContent);
+    expect(result.valid).toBe(false);
+    expect(result.errors.some((e) => e.includes("missing-section"))).toBe(true);
+  });
+
+  it("passes when all tasks are valid and all refs exist", () => {
+    const tasks = [makeTask(1, "design.md#section-1"), makeTask(2, "design.md#section-2")];
+    const result = validatePlan(lwFrontmatter, tasks, designContent);
+    expect(result.valid).toBe(true);
+    expect(result.errors).toEqual([]);
+  });
+
+  it("reports cycle errors alongside task errors", () => {
+    const tasks = [
+      { ...makeTask(1), dependsOn: [2] },
+      { ...makeTask(2), dependsOn: [1] },
+    ];
+    const result = validatePlan(lwFrontmatter, tasks, designContent);
+    expect(result.valid).toBe(false);
+    expect(result.errors.some((e) => e.includes("Cycle detected"))).toBe(true);
+  });
+});
