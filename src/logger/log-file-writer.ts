@@ -19,17 +19,13 @@ export function validateFileWritable(filePath: string): void {
 
   const parentDir = dirname(filePath);
   if (!existsSync(parentDir)) {
-    throw new Error(
-      `Parent directory does not exist: ${parentDir}`,
-    );
+    throw new Error(`Parent directory does not exist: ${parentDir}`);
   }
 
   try {
     accessSync(parentDir, constants.W_OK);
   } catch {
-    throw new Error(
-      `Parent directory is not writable: ${parentDir}`,
-    );
+    throw new Error(`Parent directory is not writable: ${parentDir}`);
   }
 }
 

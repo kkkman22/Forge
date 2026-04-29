@@ -16,11 +16,11 @@
  * **Validates: Requirements 1.4, 1.6, 6.1–6.10, 4.5, 4.6, 4.7**
  */
 
-import { startup } from "@anthropic-ai/claude-agent-sdk";
-import { Command } from "commander";
 import { type ChildProcess, execFileSync, spawn } from "node:child_process";
 import { copyFileSync, existsSync, mkdirSync, readFileSync } from "node:fs";
 import path from "node:path";
+import { startup } from "@anthropic-ai/claude-agent-sdk";
+import { Command } from "commander";
 
 import { buildAgentOutputSchema } from "./agent-output.js";
 import { CliError } from "./cli-error.js";
@@ -30,12 +30,12 @@ import { EffectExecutor } from "./effect-executor.js";
 import { type I18nConfig, parseTranslationFile, translate } from "./i18n.js";
 import { detectLocale } from "./locale-detector.js";
 import {
-    createDualSink,
-    createFileWriter,
-    createLogEntry,
-    createLogSink,
-    type LogSinkConfig,
-    validateFileWritable,
+  createDualSink,
+  createFileWriter,
+  createLogEntry,
+  createLogSink,
+  type LogSinkConfig,
+  validateFileWritable,
 } from "./logger/index.js";
 import type { LoopConfig, RunLimits } from "./loop-types.js";
 import type { TaskType } from "./pua-engine.js";
@@ -491,7 +491,11 @@ async function main(): Promise<void> {
       // ---------------------------------------------------------------
 
       // Read log config from .forge/config.md frontmatter
-      let fileLogConfig = { logFormat: null as "text" | "json" | null, logLevel: null as import("./logger/types.js").LogLevel | null, logFile: null as string | null };
+      let fileLogConfig = {
+        logFormat: null as "text" | "json" | null,
+        logLevel: null as import("./logger/types.js").LogLevel | null,
+        logFile: null as string | null,
+      };
       try {
         const configPath = path.join(cwd, ".forge", "config.md");
         if (existsSync(configPath)) {

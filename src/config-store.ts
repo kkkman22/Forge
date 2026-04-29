@@ -171,14 +171,10 @@ export function parseLogConfig(frontmatterRaw: string): LogConfigFromFile {
   const rawFile = extractStringField(parsed.raw, LOG_FILE_FIELD);
 
   const logFormat =
-    rawFormat !== null && VALID_LOG_FORMATS.has(rawFormat)
-      ? (rawFormat as "text" | "json")
-      : null;
+    rawFormat !== null && VALID_LOG_FORMATS.has(rawFormat) ? (rawFormat as "text" | "json") : null;
 
   const logLevel =
-    rawLevel !== null && VALID_LOG_LEVELS.has(rawLevel)
-      ? (rawLevel as LogLevel)
-      : null;
+    rawLevel !== null && VALID_LOG_LEVELS.has(rawLevel) ? (rawLevel as LogLevel) : null;
 
   const logFile = rawFile !== null && rawFile.length > 0 ? rawFile : null;
 
