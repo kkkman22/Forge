@@ -33,7 +33,7 @@ disable-model-invocation: true
 | 门禁 | 检查内容 | 数据来源 | 阻断条件 |
 |------|---------|---------|---------|
 | **Review 门禁** | 评审是否通过（无 P0/P1） | `.forge/reviews/<topic>.md` | `result` 不是 `"pass"` 或 `p0_count > 0` 或 `p1_count > 0` |
-| **Test 门禁** | 测试是否通过 | Layer 1 + Layer 3 验证结果 | 测试未运行或有失败项 |
+| **Test 门禁** | 测试是否通过 | Layer 1 + Layer 3 验证结果；若 `ci_check_command` 已配置，验证 CI 命令已执行并通过 | 测试未运行或有失败项；若 `ci_check_command` 已配置但仅运行了部分命令，标记为门禁警告 |
 | **Progress 门禁** | 所有任务是否完成 | `.forge/progress/<topic>.md` | 存在未标记完成的任务 |
 
 **三道门禁必须同时通过**。任一不通过，阻断 ship 并输出具体原因。
@@ -67,6 +67,19 @@ disable-model-invocation: true
 
 请按提示修复问题后重新运行 /forge ship。
 ```
+
+**CI 命令一致性检查**：
+
+如果 `.forge/config.md` 中 `ci_check_command` 非空，但 `/forge test` 阶段只运行了单独的验证命令（未运行完整的 CI 命令），Ship 门禁输出警告：
+
+```
+⚠️ CI 命令一致性警告
+
+ci_check_command 已配置为 "npm run check"，但 test 阶段未运行该命令。
+建议重新运行 /forge test 以确保使用完整的 CI 检查命令。
+```
+
+此警告不阻断 ship（因为单独命令可能已覆盖相同检查），但强烈建议重新运行。
 
 **全部通过**：
 
