@@ -321,6 +321,25 @@ status: "confirmed"
 
 ---
 
+## 上下文预算管理
+
+本节定义 decide 阶段的上下文消耗控制策略。
+
+### 分类与裁剪策略
+
+| 信息源 | 生命周期 | 裁剪策略 |
+|--------|---------|---------|
+| 视角 Subagent 输出 | Ephemeral（一次性消费） | Subagent_Summary_Protocol：Round 2 输入时只使用摘要，≤200 tokens/视角 |
+| 最终决策文档 | Write-and-discard（写入即丢弃） | 完整决策写入 `.forge/decisions/<topic>.md`，context 中只保留决策结论 |
+
+### 裁剪执行流程
+
+1. **视角 Subagent 完成评估后**：提取 Subagent_Summary_Protocol 摘要，丢弃详细分析过程
+2. **Round 2 输入时**：仅使用 Subagent 摘要作为 Critic 的输入，不重新加载完整输出
+3. **决策文档生成后**：写入 `.forge/decisions/<topic>.md`，context 中只保留最终决策结论（决策结果 + 关键理由）
+
+---
+
 ## 7. 边界情况处理
 
 ### 7.1 安全视角被要求跳过
