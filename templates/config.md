@@ -10,12 +10,39 @@ verify_commands:            # Ralph Loop: Build 完成后自动运行的验证�
   - "npm test -- --run"
 verify_timeout: 120         # 每条验证命令的超时时间（秒），默认 120
 verify_max_attempts: 3      # 验证失败后最大重试次数，默认 3，超过则触发 soft_failure + rollback
-ci_check_command: ""        # 项目的完整 CI 检查命令（如 "npm run check"），build 全量测试和 test 验证清单必须使用此命令
+ci_check_command: ""        # 项目的完整 CI 检查命令（如 "npm run check"），build 全量测试、test 验证清单和 ship Test 门禁必须使用此命令
 ---
 
 ## CI 检查命令
 
-build 阶段的全量测试和 test 阶段的验证清单必须使用 `ci_check_command` 中配置的命令，不得自行拼凑部分命令。如果 `ci_check_command` 为空，则按 `verify_commands` 列表逐条执行。
+### 优先级规则
+
+| 场景 | ci_check_command 非空 | ci_check_command 空/缺失 |
+|------|----------------------|------------------------|
+| build Final Validation | 执行 ci_check_command | 按 verify_commands 逐条执行；若也为空，AI 自动检测 |
+| test Layer 3 清单项 1-4 | 执行 ci_check_command，从输出提取各项状态 | 为每项分别运行对应命令 |
+| ship Test 门禁 | 验证 ci_check_command 已执行并通过 | 按 Layer 1 + Layer 3 结果判定 |
+| TDD 循环（Forge Loop） | 不受影响，始终使用 verify_commands | 使用 verify_commands |
+
+### 回退链
+
+```
+ci_check_command (非空) → 用于全量验证
+       ↓ (空/缺失)
+verify_commands → 逐条执行
+       ↓ (也空/缺失)
+AI 自动检测验证命令
+```
+
+### 配置示例
+
+```yaml
+ci_check_command: "npm run check"    # 完整 CI 检查（build/test/ship 使用）
+verify_commands:                      # TDD 循环使用的逐条验证命令
+  - "npm run lint"
+  - "npm run typecheck"
+  - "npm test -- --run"
+```
 
 ## 状态文件保护分区
 
