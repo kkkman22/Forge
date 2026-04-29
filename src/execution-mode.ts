@@ -16,6 +16,9 @@
 /** Execution mode: interactive (human confirms) or autonomous (auto-decide). */
 export type ExecutionMode = "interactive" | "autonomous";
 
+/** Ship delivery method configuration. */
+export type DeliveryMethod = "merge" | "push-pr" | "keep-branch" | "prompt";
+
 /**
  * Confirmation points where autonomous mode applies preset strategies
  * instead of waiting for user input.
@@ -46,6 +49,14 @@ export interface ConfirmationDecision {
 // ---------------------------------------------------------------------------
 // Constants
 // ---------------------------------------------------------------------------
+
+/** Valid ship_default_method configuration values. */
+const VALID_DELIVERY_METHODS: ReadonlySet<string> = new Set([
+  "merge",
+  "push-pr",
+  "keep-branch",
+  "prompt",
+]);
 
 /** YAML frontmatter delimiter. */
 const FRONTMATTER_DELIMITER = "---";
@@ -137,6 +148,35 @@ function getFrontmatterLines(frontmatter: string): string[] {
 // ---------------------------------------------------------------------------
 
 /**
+ * Parse a `ship_default_method` configuration value (pure function).
+ *
+ * Invalid values fall back to `"keep-branch"` with a warning message.
+ * Undefined input (missing config) returns `"keep-branch"` silently
+ * for backward compatibility.
+ *
+ * @param value  The raw config value, or undefined if not configured.
+ * @returns The parsed delivery method, with an optional warning.
+ */
+export function parseShipDefaultMethod(value: string | undefined): {
+  method: DeliveryMethod;
+  warning?: string;
+} {
+  if (!value) {
+    return { method: "keep-branch" };
+  }
+
+  const trimmed = value.trim().toLowerCase();
+  if (VALID_DELIVERY_METHODS.has(trimmed)) {
+    return { method: trimmed as DeliveryMethod };
+  }
+
+  return {
+    method: "keep-branch",
+    warning: `Invalid ship_default_method "${value}", falling back to "keep-branch". Valid: ${[...VALID_DELIVERY_METHODS].join(", ")}`,
+  };
+}
+
+/**
  * Extract the execution mode from StatusFile content.
  *
  * Parses the YAML frontmatter and looks for a `mode` field.
@@ -224,21 +264,31 @@ export function clearExecutionMode(statusContent: string): string {
  *
  * In autonomous mode, all confirmation points return `action: "auto"` with
  * a preset strategy. The Ship stage preset is "keep branch" (safest option).
+ * When `configOverride` provides a value for `ship_method`, it takes
+ * precedence over the hardcoded preset.
  *
  * In interactive mode, all confirmation points return `action: "wait_for_user"`.
  *
- * @param mode - The current execution mode.
- * @param point - The confirmation point to resolve.
+ * @param mode            The current execution mode.
+ * @param point           The confirmation point to resolve.
+ * @param configOverride  Optional per-point configuration overrides.
  * @returns The confirmation decision.
  */
 export function resolveConfirmation(
   mode: ExecutionMode,
   point: ConfirmationPoint,
+  configOverride?: Partial<Record<ConfirmationPoint, string>>,
 ): ConfirmationDecision {
   if (mode === "autonomous") {
+    const preset = configOverride?.[point] ?? AUTONOMOUS_PRESETS[point];
+
+    if (point === "ship_method" && preset === "prompt") {
+      return { action: "wait_for_user" };
+    }
+
     return {
       action: "auto",
-      preset: AUTONOMOUS_PRESETS[point],
+      preset,
     };
   }
 
