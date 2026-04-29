@@ -85,6 +85,14 @@ disable-model-invocation: true
 
 不做任何 Git 操作，保留当前分支状态。适用场景：稍后处理、等待依赖。可随时重新运行 `/forge ship` 选择其他方式。
 
+**Pending-Delivery 记录**：选择保留分支时，必须调用 `recordPendingDelivery(branchName, topic, timestamp)` 记录交付状态：
+
+- `branchName` 来源：`git branch --show-current` 输出
+- `topic` 来源：`.forge/status.md` 的 `current_task` 字段
+- `timestamp` 来源：`Date.now()`
+
+返回的 `PendingDeliveryRecord` 追加到 `.forge/status.md` 或配置指定的持久化位置。下次 `/forge build` 启动时，`detectUnshippedBranches` 和 `detectStaleBranches` 将读取这些记录并展示警告。
+
 ### 选项 4：丢弃
 
 丢弃当前分支的所有变更。**需要二次确认**：用户输入 `discard` 才执行，输入其他内容则取消。通过 `ship_discard` 效果执行：checkout main → delete branch。

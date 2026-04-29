@@ -261,3 +261,22 @@ export {
   killProcessGroup,
   killProcessTree,
 } from "./process-tree-cleaner.js";
+
+// ---------------------------------------------------------------------------
+// Branch lifecycle enforcement
+// ---------------------------------------------------------------------------
+
+export {
+  checkBranchTopicGate,
+  checkCommitTopicMatch,
+  detectStaleBranches,
+  detectUnshippedBranches,
+  extractBranchTopic,
+  recordPendingDelivery,
+} from "./branch-lifecycle.js";
+export type {
+  BranchTopicGateResult,
+  CommitTopicCheckResult,
+  PendingDeliveryRecord,
+  UnshippedBranchWarning,
+} from "./loop-types.js";
