@@ -235,3 +235,31 @@ export {
   serializeStatusEntries,
   upsertTaskEntry,
 } from "./state.js";
+
+// ---------------------------------------------------------------------------
+// Process lifecycle management
+// ---------------------------------------------------------------------------
+
+export type {
+  ProcessMetadata,
+  SerializedRegistry,
+  ShutdownResult,
+} from "./process-registry.js";
+export { ProcessRegistry } from "./process-registry.js";
+
+export type { ProcessTreeNode } from "./process-tree-cleaner.js";
+export {
+  getDescendants,
+  killProcessGroup,
+  killProcessTree,
+} from "./process-tree-cleaner.js";
+
+export type { OrphanProcess, PidFileContent } from "./orphan-detector.js";
+export {
+  cleanupOrphans,
+  cleanupStaleSessions,
+  deletePidFile,
+  detectPpidOrphans,
+  readPidFile,
+  writePidFile,
+} from "./orphan-detector.js";
