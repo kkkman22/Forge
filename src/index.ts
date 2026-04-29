@@ -117,9 +117,9 @@ export {
 // ---------------------------------------------------------------------------
 
 export type {
+  ParallelExecutionResult,
   SubagentInvocation,
   SubagentResult,
-  ParallelExecutionResult,
 } from "./loop-types.js";
 
 export {

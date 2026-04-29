@@ -172,7 +172,7 @@ export function parseShipDefaultMethod(value: string | undefined): {
 
   const trimmed = value.trim().toLowerCase();
   if (VALID_DELIVERY_METHODS_SET.has(trimmed)) {
-    return { method: VALID_DELIVERY_METHODS.find((m) => m === trimmed)! };
+    return { method: trimmed as (typeof VALID_DELIVERY_METHODS)[number] };
   }
 
   return {
