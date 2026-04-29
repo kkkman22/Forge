@@ -129,11 +129,21 @@ case "${security_choice}" in
   *)    security_level=1; security_label="标准" ;;
 esac
 
+# --- CI 检查命令 ---
+echo ""
+echo "  CI 检查命令（ci_check_command）："
+echo "    运行所有 CI 检查的单条命令（如 npm run check）。"
+echo "    build 全量测试和 test 验证清单将使用此命令，确保本地验证与 CI 一致。"
+echo "    如果留空，将按 verify_commands 列表逐条执行。"
+echo ""
+read -rep "$(echo -e "${BLUE}?${NC}") CI 检查命令（留空跳过）: " ci_check_cmd
+
 echo ""
 success "配置确认："
 echo "  项目名称：${project_name}"
 echo "  技术栈：  ${tech_stack}"
 echo "  安全级别：${security_label}（Level ${security_level}）"
+echo "  CI 检查命令：${ci_check_cmd:-（未配置，将使用 verify_commands）}"
 echo ""
 
 # ---------- 输入清洗（防止 shell 注入） ----------
@@ -144,6 +154,7 @@ sanitize() {
 }
 project_name="$(sanitize "${project_name}")"
 tech_stack="$(sanitize "${tech_stack}")"
+ci_check_cmd="$(sanitize "${ci_check_cmd}")"
 
 if [[ -z "${project_name}" ]]; then
   error "项目名称清洗后为空，请使用合法字符（字母、数字、连字符、下划线）。"
@@ -218,6 +229,7 @@ stack:
 $(printf '%b' "${stack_yaml}" | sed '/^$/d')
 security_level: ${security_level}
 knowledge_limit: 20
+ci_check_command: "${ci_check_cmd}"
 ---
 
 # 项目配置
@@ -227,7 +239,15 @@ knowledge_limit: 20
 - **安全级别**：${security_label}（Level ${security_level}）
 - **知识库上限**：20
 - **初始化时间**：${init_date}
+${ci_check_cmd:+
+## CI 检查命令
 
+build 阶段的全量测试和 test 阶段的验证清单必须使用以下命令，不得自行拼凑：
+
+\`\`\`bash
+${ci_check_cmd}
+\`\`\`
+}
 ## 状态文件保护分区
 
 \`.forge/\` 目录下的文件按修改权限分为三个区域：
