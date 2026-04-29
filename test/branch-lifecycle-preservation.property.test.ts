@@ -13,16 +13,15 @@
  */
 import * as fc from "fast-check";
 import { describe, expect, it } from "vitest";
-import { checkBuildGate, type SpecStatus, type PlanStatus } from "../src/build.js";
+import { checkBuildGate, type PlanStatus, type SpecStatus } from "../src/build.js";
 import {
-  sanitizeBranchName,
+  BranchValidationError,
+  buildBranchDeleteCommand,
   buildCheckoutCommand,
   buildMergeCommand,
-  buildBranchDeleteCommand,
   buildPushCommand,
+  sanitizeBranchName,
   validateBranchName,
-  BranchValidationError,
-  containsShellMetacharacters,
 } from "../src/git-transaction.js";
 
 // ---------------------------------------------------------------------------
@@ -52,19 +51,21 @@ const blockedCombinationArb: fc.Arbitrary<{ spec: SpecStatus; plan: PlanStatus }
 
 /** Valid branch name segment: alphanumeric, hyphens, underscores. */
 const branchSegmentArb = fc
-  .array(fc.constantFrom(..."abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789_-".split("")), {
-    minLength: 1,
-    maxLength: 20,
-  })
+  .array(
+    fc.constantFrom(
+      ..."abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789_-".split(""),
+    ),
+    {
+      minLength: 1,
+      maxLength: 20,
+    },
+  )
   .map((chars) => chars.join(""))
   .filter((s) => s.length > 0);
 
 /** Valid branch name: segments joined by `/`, with prefix. */
 const branchNameArb: fc.Arbitrary<string> = fc
-  .tuple(
-    fc.constantFrom("feature", "forge", "bugfix", "hotfix", "release"),
-    branchSegmentArb,
-  )
+  .tuple(fc.constantFrom("feature", "forge", "bugfix", "hotfix", "release"), branchSegmentArb)
   .map(([prefix, name]) => `${prefix}/${name}`)
   .filter((name) => {
     // Ensure it passes validateBranchName
@@ -77,7 +78,7 @@ const branchNameArb: fc.Arbitrary<string> = fc
   });
 
 /** Any boolean. */
-const booleanArb = fc.boolean();
+const _booleanArb = fc.boolean();
 
 /** Remote name: simple alphanumeric identifiers. */
 const remoteArb: fc.Arbitrary<string> = fc.constantFrom("origin", "upstream");
@@ -238,7 +239,10 @@ describe("Property 2: sanitizeBranchName preservation (Req 3.2)", () => {
       fc.property(
         fc.tuple(
           fc
-            .array(fc.constantFrom(..."abcdefghijklmnopqrstuvwxyz0123456789".split("")), { minLength: 1, maxLength: 10 })
+            .array(fc.constantFrom(..."abcdefghijklmnopqrstuvwxyz0123456789".split("")), {
+              minLength: 1,
+              maxLength: 10,
+            })
             .map((chars) => chars.join("")),
           fc.constant("@{"),
         ),
@@ -393,7 +397,11 @@ describe("Property 4: Branch name validation preservation (Req 3.5, 3.6)", () =>
   it("names with shell metacharacters are rejected", () => {
     fc.assert(
       fc.property(
-        fc.tuple(branchSegmentArb, fc.constantFrom("`", "$(", ";", "&", "|", "\""), branchSegmentArb),
+        fc.tuple(
+          branchSegmentArb,
+          fc.constantFrom("`", "$(", ";", "&", "|", '"'),
+          branchSegmentArb,
+        ),
         ([prefix, meta, suffix]) => {
           const badName = `${prefix}${meta}${suffix}`;
           expect(() => validateBranchName(badName)).toThrow(BranchValidationError);
@@ -417,13 +425,10 @@ describe("Property 4: Branch name validation preservation (Req 3.5, 3.6)", () =>
 
   it("names with '..' are rejected", () => {
     fc.assert(
-      fc.property(
-        fc.tuple(branchSegmentArb, branchSegmentArb),
-        ([a, b]) => {
-          const badName = `${a}..${b}`;
-          expect(() => validateBranchName(badName)).toThrow(BranchValidationError);
-        },
-      ),
+      fc.property(fc.tuple(branchSegmentArb, branchSegmentArb), ([a, b]) => {
+        const badName = `${a}..${b}`;
+        expect(() => validateBranchName(badName)).toThrow(BranchValidationError);
+      }),
       { numRuns: 200 },
     );
   });
@@ -450,28 +455,20 @@ describe("Property 4: Branch name validation preservation (Req 3.5, 3.6)", () =>
 
   it("names with leading dots, slashes, or dashes are rejected", () => {
     fc.assert(
-      fc.property(
-        fc.constantFrom(".", "/", "-"),
-        branchSegmentArb,
-        (prefix, segment) => {
-          const badName = `${prefix}${segment}`;
-          expect(() => validateBranchName(badName)).toThrow(BranchValidationError);
-        },
-      ),
+      fc.property(fc.constantFrom(".", "/", "-"), branchSegmentArb, (prefix, segment) => {
+        const badName = `${prefix}${segment}`;
+        expect(() => validateBranchName(badName)).toThrow(BranchValidationError);
+      }),
       { numRuns: 200 },
     );
   });
 
   it("names with trailing dots, slashes, or dashes are rejected", () => {
     fc.assert(
-      fc.property(
-        branchSegmentArb,
-        fc.constantFrom(".", "/", "-"),
-        (segment, suffix) => {
-          const badName = `${segment}${suffix}`;
-          expect(() => validateBranchName(badName)).toThrow(BranchValidationError);
-        },
-      ),
+      fc.property(branchSegmentArb, fc.constantFrom(".", "/", "-"), (segment, suffix) => {
+        const badName = `${segment}${suffix}`;
+        expect(() => validateBranchName(badName)).toThrow(BranchValidationError);
+      }),
       { numRuns: 200 },
     );
   });
