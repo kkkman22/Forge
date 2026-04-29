@@ -168,7 +168,11 @@ disable-model-invocation: true
 3. 每个任务完成后：
    - 更新 `.forge/progress/<topic>.md`（标记任务完成、记录时间）。
    - 执行原子提交（使用 plan 中定义的 commit message）。
-4. 所有任务完成后，运行全量测试确认无回归。
+4. 所有任务完成后，执行 Final Validation：
+   - 读取 `.forge/config.md` YAML frontmatter 的 `ci_check_command` 字段。
+   - **如果 `ci_check_command` 非空**：执行该命令作为全量验证（如 `npm run check`），禁止替换、省略或部分重构该命令。
+   - **如果 `ci_check_command` 为空或缺失**：按 `verify_commands` 列表逐条执行；若 `verify_commands` 也为空或缺失，回退到 AI 自动检测验证命令。
+   - 使用 P5 证据链格式报告结果：`[Command] → [Output] → [Claim]`。
 
 **Restatement Checkpoint（上下文刷新）**：
 
@@ -339,6 +343,7 @@ Agent(
 2. 对每个模块启动一个 Subagent 执行 TDD 循环。
 3. **可选 Git Worktree**：当模块改动存在重叠时，为每个模块创建独立的 Git Worktree，实现文件系统级隔离。
 4. 模块完成后合并 Worktree，解决冲突。
+5. 所有模块完成后，执行 Final Validation（与 §3.2 标准路径步骤 4 相同的 `ci_check_command` 优先级逻辑）。
 
 **Restatement Checkpoint（上下文刷新）**：
 
@@ -356,6 +361,8 @@ Agent(
 
 - 两个或以上模块修改同一文件 → 使用 Worktree
 - 模块之间无文件重叠 → 不需要 Worktree，直接在主分支执行
+
+**阶段二完成后的全量测试**：与标准路径 §3.2 步骤 4 相同——读取 `.forge/config.md` 的 `ci_check_command` 字段，非空则执行该命令，否则回退到 `verify_commands` 或 AI 自动检测，使用 P5 证据链格式报告结果。
 
 ---
 
@@ -1095,6 +1102,14 @@ $ /forge build
 **为什么这是错的**：这些 Narration 不提供决策信息，只是对即将执行的操作的冗余描述。它们消耗 token、拖慢执行速度、淹没真正重要的输出（TDD 标记、探针结果、验证证据）。用户需要看到的是结果和决策理由，不是操作预告。
 
 **正确做法**：代码编辑时沉默执行，直接调用工具完成修改。只在 Decision_Point（设计选择、意外情况、计划调整、方向变更）时输出简要说明，格式为 `[原因] → [选择] → [依据]`。所有 SKILL 定义的结构化输出（TDD 标记、探针结果等）正常保留。参见 CLAUDE.md §2.6。
+
+### 失败模式 7：自行拼凑验证命令
+
+**错误行为**：在 Final Validation 步骤中，AI 不使用 `.forge/config.md` 中配置的 `ci_check_command`（如 `npm run check`），而是自行拼凑部分验证命令（如单独运行 `npx tsc --noEmit`、`npx biome check src/`），遗漏了完整 CI 检查中包含的其他步骤（如 lint 对 test 文件的检查、typedoc 生成、dist 同步校验、readme metrics 检查等）。
+
+**为什么这是错的**：自行拼凑的命令只覆盖 CI 检查的部分步骤，导致本地验证通过但 CI 失败。开发者在 push 后才发现遗漏的检查项，浪费时间并破坏 CI 信任。`ci_check_command` 的存在就是为了确保本地验证与 CI 完全一致。
+
+**正确做法**：读取 `.forge/config.md` 的 `ci_check_command` 字段，如果非空则原样执行该命令，不做任何替换、省略或拆分。如果 `ci_check_command` 为空，按 `verify_commands` 列表逐条执行。绝不自行拼凑验证命令。
 
 ---
 
