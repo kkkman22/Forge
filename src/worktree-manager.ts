@@ -11,6 +11,7 @@
  */
 
 import path from "node:path";
+import type { ShipDeliveryOption } from "./execution-mode.js";
 import type { WorktreeDecision } from "./loop-types.js";
 
 // ---------------------------------------------------------------------------
@@ -103,19 +104,15 @@ export function computeWorktreePath(repoRoot: string, slug: string): string {
  */
 export function decideWorktreeCleanup(
   commitCount: number,
-  shipOption?: "merge" | "push-pr" | "keep-branch" | "discard",
+  shipOption?: ShipDeliveryOption,
 ): WorktreeDecision {
-  if (shipOption === "merge") {
+  if (shipOption === "merge" || shipOption === "discard") {
     return {
       action: "remove",
-      reason: "Ship merged and deleted branch; removing worktree only",
-    };
-  }
-
-  if (shipOption === "discard") {
-    return {
-      action: "remove",
-      reason: "Ship discarded branch; removing worktree only",
+      reason:
+        shipOption === "merge"
+          ? "Ship merged and deleted branch; removing worktree only"
+          : "Ship discarded branch; removing worktree only",
     };
   }
 
