@@ -1,5 +1,5 @@
 ---
-current_task: "skill-document-optimization"
+current_task: "branch-lifecycle-enforcement"
 tier: "standard"
 phase: "build"
 updated: "2026-04-29"
@@ -7,4 +7,4 @@ updated: "2026-04-29"
 
 # 项目状态
 
-SKILL 文档优化：16 个 SKILL.md 从 ~320K 压缩至 ≤192K。
+Branch Lifecycle Enforcement：修复分支门禁 topic 匹配、keep-branch 追踪、过期检测和跨 topic 提交阻止。
