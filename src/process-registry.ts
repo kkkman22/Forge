@@ -173,4 +173,35 @@ export class ProcessRegistry {
 		this.processes.clear();
 		return result;
 	}
+
+	serialize(): string {
+		return JSON.stringify({
+			sessionPid: process.pid,
+			sessionPgid: process.pid,
+			sessionStartTime: Date.now(),
+			processes: Array.from(this.processes.values()),
+		} satisfies SerializedRegistry);
+	}
+
+	static deserialize(json: string): SerializedRegistry {
+		let parsed: any;
+		try {
+			parsed = JSON.parse(json);
+		} catch {
+			throw new Error(`Invalid JSON in ProcessRegistry deserialize: ${json.slice(0, 50)}`);
+		}
+
+		if (
+			typeof parsed.sessionPid !== "number" ||
+			typeof parsed.sessionPgid !== "number" ||
+			typeof parsed.sessionStartTime !== "number" ||
+			!Array.isArray(parsed.processes)
+		) {
+			throw new Error(
+				"Missing required fields in ProcessRegistry deserialize (sessionPid, sessionPgid, sessionStartTime, processes)",
+			);
+		}
+
+		return parsed as SerializedRegistry;
+	}
 }
