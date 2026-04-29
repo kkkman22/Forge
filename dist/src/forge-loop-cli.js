@@ -21,12 +21,12 @@ import { startup } from "@anthropic-ai/claude-agent-sdk";
 import { Command } from "commander";
 import { buildAgentOutputSchema } from "./agent-output.js";
 import { CliError } from "./cli-error.js";
-import { extractConfigLang } from "./config-store.js";
+import { extractConfigLang, mergeLogConfig, parseLogConfig } from "./config-store.js";
 import { formatNotesDocument } from "./context-accumulator.js";
 import { EffectExecutor } from "./effect-executor.js";
 import { parseTranslationFile, translate } from "./i18n.js";
 import { detectLocale } from "./locale-detector.js";
-import { createLogEntry, createLogSink } from "./logger/index.js";
+import { createDualSink, createFileWriter, createLogEntry, createLogSink, validateFileWritable, } from "./logger/index.js";
 import { branchExists, RunManager } from "./run-manager.js";
 import { SdkAgentAdapter } from "./sdk-agent-adapter.js";
 import { detectSkillAwareMode, SdkDriver } from "./sdk-driver.js";
@@ -127,6 +127,7 @@ async function main() {
         .option("--lang <locale>", "Set display language (zh|en)")
         .option("--log-format <text|json>", "Log output format (text|json)", "text")
         .option("--log-level <debug|info|warn|error>", "Minimum log level", "info")
+        .option("--log-file <path>", "Write JSON logs to file (dual-write mode)")
         .option("--sandbox", "Enable sandbox mode with fine-grained access control", false)
         .action(async (objective, opts) => {
         const cwd = process.cwd();
@@ -196,6 +197,21 @@ async function main() {
         }
         if (opts.logLevel && !VALID_LOG_LEVELS.has(opts.logLevel)) {
             throw new CliError(`Error: Invalid --log-level value "${opts.logLevel}". Valid options: ${[...VALID_LOG_LEVELS].join(", ")}`);
+        }
+        // ---------------------------------------------------------------
+        // Validate --log-file path (Req 1.1, 1.4)
+        // ---------------------------------------------------------------
+        if (opts.logFile !== undefined && opts.logFile.trim() === "") {
+            throw new CliError("Error: --log-file requires a non-empty file path.");
+        }
+        if (opts.logFile) {
+            try {
+                validateFileWritable(opts.logFile);
+            }
+            catch (err) {
+                const message = err instanceof Error ? err.message : String(err);
+                throw new CliError(`Error: --log-file path is not writable: ${message}`);
+            }
         }
         // Read config.md lang field
         let configLang = null;
@@ -347,13 +363,53 @@ async function main() {
             }
         }
         // ---------------------------------------------------------------
-        // Create LogSink (Req 2.1, 3.1)
+        // Create LogSink (Req 1.1, 1.2, 1.3, 2.1, 2.2, 2.3, 8.1, 8.3)
         // ---------------------------------------------------------------
-        const logSinkConfig = {
-            format: opts.logFormat ?? "text",
-            level: opts.logLevel ?? "info",
+        // Read log config from .forge/config.md frontmatter
+        let fileLogConfig = {
+            logFormat: null,
+            logLevel: null,
+            logFile: null,
         };
-        const logSink = createLogSink(logSinkConfig);
+        try {
+            const configPath = path.join(cwd, ".forge", "config.md");
+            if (existsSync(configPath)) {
+                const configContent = readFileSync(configPath, "utf-8");
+                fileLogConfig = parseLogConfig(configContent);
+            }
+        }
+        catch {
+            // Config read failure is non-blocking — continue with defaults.
+        }
+        // Merge CLI options with config file values (CLI takes priority)
+        const resolvedLogConfig = mergeLogConfig({ logFormat: opts.logFormat, logLevel: opts.logLevel, logFile: opts.logFile }, fileLogConfig);
+        // Validate resolved log file path if it came from config file (CLI path already validated above)
+        if (resolvedLogConfig.logFile && !opts.logFile) {
+            try {
+                validateFileWritable(resolvedLogConfig.logFile);
+            }
+            catch (err) {
+                const message = err instanceof Error ? err.message : String(err);
+                throw new CliError(`Error: log_file path from config is not writable: ${message}`);
+            }
+        }
+        const logSinkConfig = {
+            format: resolvedLogConfig.format,
+            level: resolvedLogConfig.level,
+        };
+        let logSink;
+        if (resolvedLogConfig.logFile) {
+            // Dual-write mode: stdout + file
+            const stdoutSink = createLogSink(logSinkConfig);
+            const fileWriter = createFileWriter(resolvedLogConfig.logFile);
+            const fileSinkConfig = { format: "json", level: resolvedLogConfig.level };
+            const fileSink = createLogSink(fileSinkConfig, fileWriter);
+            logSink = createDualSink(stdoutSink, fileSink);
+        }
+        else {
+            // Single sink: stdout only
+            logSink = createLogSink(logSinkConfig);
+        }
         // ---------------------------------------------------------------
         // Create EffectExecutor and SdkDriver
         // ---------------------------------------------------------------

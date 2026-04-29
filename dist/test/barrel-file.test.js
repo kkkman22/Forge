@@ -128,17 +128,49 @@ describe("barrel file does not expose internal modules", () => {
     });
     // Verify the total number of value exports is exactly what we expect.
     // This catches any accidental additions to the barrel file.
-    it("has exactly 7 value exports", () => {
+    it("has exactly 39 value exports", () => {
         const valueExports = Object.keys(exports).filter((key) => typeof exports[key] !== "undefined");
-        expect(valueExports).toHaveLength(7);
+        expect(valueExports).toHaveLength(39);
         expect(valueExports.sort()).toEqual([
+            "CLASSIFICATION_MAP",
             "CliError",
+            "FORBIDDEN_PLACEHOLDERS",
             "ForgeError",
             "SdkAgentAdapter",
             "SdkDriver",
+            "buildSubagentInvocations",
+            "canParseTestOutput",
+            "classifySource",
+            "deserializeContextBudgetReport",
+            "deserializeExploreSummary",
+            "deserializeGitDiff",
+            "deserializeGitStatus",
+            "deserializeReviewSummary",
+            "deserializeSubagentSummary",
+            "deserializeTestOutput",
+            "detectPlanFormat",
             "evaluateReviewGate",
             "evaluateShipGate",
             "evaluateTestGate",
+            "extractHeadingAnchors",
+            "runSubagentsInParallel",
+            "scanForPlaceholders",
+            "serializeContextBudgetReport",
+            "serializeExploreResult",
+            "serializeExploreSummary",
+            "serializeGitDiff",
+            "serializeGitStatus",
+            "serializeReviewSummary",
+            "serializeSubagentSummary",
+            "serializeTestOutput",
+            "validateAtomicTask",
+            "validateDependencies",
+            "validateDesignReferences",
+            "validateLightweightPlan",
+            "validateLightweightTask",
+            "validatePlan",
+            "validatePlanTasks",
+            "validateSpecLocked",
         ]);
     });
 });

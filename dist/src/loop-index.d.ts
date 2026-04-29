@@ -13,7 +13,7 @@
  */
 export type { AgentInterface, AgentName, AgentOutput, AgentOutputSchema, AgentResult, AgentRunOptions, FailureKind, FailureState, GitCommand, IterationEntry, LoopConfig, NotesDocument, OrchestratorEffect, OrchestratorEvent, OrchestratorState, RunLimits, SchemaProperty, SleepPreventionCommand, TokenUsage, WorktreeDecision, } from "./loop-types.js";
 export { applyFailure, applySuccess, calculateBackoffMs, createInitialFailureState, shouldCircuitBreak, } from "./failure-handler.js";
-export { buildAddAllCommand, buildCleanCommand, buildCommitCommand, buildResetCommand, buildStashCommand, containsShellMetacharacters, sanitizeBranchName, validatePathSafety, } from "./git-transaction.js";
+export { BranchValidationError, buildAddAllCommand, buildBranchDeleteCommand, buildCheckoutCommand, buildCleanCommand, buildCommitCommand, buildMergeAbortCommand, buildMergeCommand, buildPushCommand, buildResetCommand, buildStashCommand, containsShellMetacharacters, sanitizeBranchName, validateBranchName, validatePathSafety, } from "./git-transaction.js";
 export { appendEntry, buildIterationPrompt, formatIterationEntry, formatNotesDocument, parseNotesDocument, } from "./context-accumulator.js";
 export type { ValidationError, ValidationResult, ValidationSuccess } from "./agent-output.js";
 export { buildAgentOutputSchema, deserializeAgentOutput, serializeAgentOutput, toStringArray, validateAgentOutput, } from "./agent-output.js";

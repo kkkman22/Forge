@@ -4,7 +4,10 @@
  * Implements Plan task validation:
  *   - validateAtomicTask:  Validates a single atomic task has all required fields
  *   - scanForPlaceholders: Scans text for forbidden placeholder content
- *   - validatePlanTasks:   Validates all tasks in a plan
+ *   - validatePlanTasks:   Validates all tasks in a plan (full format)
+ *   - validateLightweightTask / validateLightweightPlan: Lightweight format validation
+ *   - detectPlanFormat:    Detects plan format from frontmatter
+ *   - validatePlan:        Unified dispatcher that routes to the correct validator
  *
  * Per SKILL.md §3, each atomic task must contain:
  *   - Task number, title, file path
@@ -16,6 +19,7 @@
  * Per SKILL.md §4, forbidden placeholders:
  *   TBD, TODO, 待定, 后续补充, 类似 Task, 添加适当的错误处理
  */
+import { extractStringField } from "./frontmatter.js";
 // ---------------------------------------------------------------------------
 // Constants
 // ---------------------------------------------------------------------------
@@ -27,6 +31,7 @@ export const FORBIDDEN_PLACEHOLDERS = [
     "类似 Task",
     "添加适当的错误处理",
 ];
+const FORBIDDEN_PLACEHOLDERS_LOWER = FORBIDDEN_PLACEHOLDERS.map((p) => p.toLowerCase());
 const MIN_ESTIMATED_MINUTES = 2;
 const MAX_ESTIMATED_MINUTES = 5;
 // ---------------------------------------------------------------------------
@@ -43,9 +48,9 @@ const MAX_ESTIMATED_MINUTES = 5;
 export function scanForPlaceholders(text) {
     const found = [];
     const lowerText = text.toLowerCase();
-    for (const placeholder of FORBIDDEN_PLACEHOLDERS) {
-        if (lowerText.includes(placeholder.toLowerCase())) {
-            found.push(placeholder);
+    for (let i = 0; i < FORBIDDEN_PLACEHOLDERS_LOWER.length; i++) {
+        if (lowerText.includes(FORBIDDEN_PLACEHOLDERS_LOWER[i])) {
+            found.push(FORBIDDEN_PLACEHOLDERS[i]);
         }
     }
     return found;
@@ -165,6 +170,73 @@ export function validateDependencies(tasks) {
     return errors;
 }
 /**
+ * Detect cycles in task dependencies using Kahn's algorithm.
+ * Returns an error message if a cycle is found, null otherwise.
+ */
+function detectCycleInTasks(tasks) {
+    const inDegree = new Map();
+    const adjacency = new Map();
+    for (const task of tasks) {
+        inDegree.set(task.taskNumber, 0);
+        adjacency.set(task.taskNumber, []);
+    }
+    for (const task of tasks) {
+        if (task.dependsOn) {
+            for (const dep of task.dependsOn) {
+                if (adjacency.has(dep)) {
+                    adjacency.get(dep)?.push(task.taskNumber);
+                    inDegree.set(task.taskNumber, (inDegree.get(task.taskNumber) ?? 0) + 1);
+                }
+            }
+        }
+    }
+    const queue = [];
+    for (const [id, degree] of inDegree) {
+        if (degree === 0)
+            queue.push(id);
+    }
+    let processed = 0;
+    while (queue.length > 0) {
+        // biome-ignore lint/style/noNonNullAssertion: shift() is safe — loop guard ensures length > 0
+        const current = queue.shift();
+        processed++;
+        for (const neighbor of adjacency.get(current) ?? []) {
+            const newDegree = (inDegree.get(neighbor) ?? 1) - 1;
+            inDegree.set(neighbor, newDegree);
+            if (newDegree === 0)
+                queue.push(neighbor);
+        }
+    }
+    if (processed < tasks.length) {
+        const cycleNodes = tasks
+            .filter((t) => (inDegree.get(t.taskNumber) ?? 0) > 0)
+            .map((t) => t.taskNumber);
+        return `Cycle detected involving tasks: ${cycleNodes.join(", ")}`;
+    }
+    return null;
+}
+/**
+ * Validate that tasks are in topological order: dependencies appear before dependents.
+ * Returns an error message if ordering is violated, null otherwise.
+ */
+function validateTopologicalOrder(tasks) {
+    const position = new Map();
+    for (let i = 0; i < tasks.length; i++) {
+        position.set(tasks[i].taskNumber, i);
+    }
+    for (const task of tasks) {
+        if (task.dependsOn) {
+            for (const dep of task.dependsOn) {
+                const depPos = position.get(dep);
+                if (depPos !== undefined && depPos > (position.get(task.taskNumber) ?? -1)) {
+                    return `Task ${task.taskNumber} depends on task ${dep}, but task ${dep} appears after task ${task.taskNumber}`;
+                }
+            }
+        }
+    }
+    return null;
+}
+/**
  * Validate all tasks in a plan.
  *
  * Returns true only if every task passes validateAtomicTask and all
@@ -180,5 +252,154 @@ export function validatePlanTasks(tasks) {
     }
     const dependencyErrors = validateDependencies(tasks);
     return dependencyErrors.length === 0;
+}
+// ---------------------------------------------------------------------------
+// Lightweight format — format detection
+// ---------------------------------------------------------------------------
+export function detectPlanFormat(frontmatter) {
+    const value = extractStringField(frontmatter, "format");
+    if (value === "lightweight")
+        return "lightweight";
+    return "full";
+}
+// ---------------------------------------------------------------------------
+// Lightweight format — heading anchor extraction
+// ---------------------------------------------------------------------------
+export function extractHeadingAnchors(markdownContent) {
+    const anchors = [];
+    const lines = markdownContent.split("\n");
+    for (const line of lines) {
+        const match = line.match(/^#{1,6}\s+(.+)$/);
+        if (match) {
+            const headingText = match[1];
+            const anchor = headingText
+                .toLowerCase()
+                .replace(/\s+/g, "-")
+                .replace(/[^a-z0-9\-_]/g, "")
+                .replace(/^-+|-+$/g, "");
+            anchors.push(anchor);
+        }
+    }
+    return anchors;
+}
+// ---------------------------------------------------------------------------
+// Lightweight format — task validation
+// ---------------------------------------------------------------------------
+const DESIGN_REF_PATTERN = /^design\.md#[a-z0-9\-_]+$/;
+export function validateLightweightTask(task) {
+    const errors = [];
+    if (!task.title || task.title.trim() === "")
+        errors.push("Missing title");
+    if (!task.filePath || task.filePath.trim() === "")
+        errors.push("Missing file path");
+    if (!task.goal || task.goal.trim() === "")
+        errors.push("Missing goal");
+    if (!task.verifyCommand || task.verifyCommand.trim() === "")
+        errors.push("Missing verify command");
+    if (!task.commitMessage || task.commitMessage.trim() === "")
+        errors.push("Missing commit message");
+    if (task.propertyRef !== undefined &&
+        (!Number.isFinite(task.propertyRef) ||
+            !Number.isInteger(task.propertyRef) ||
+            task.propertyRef < 1)) {
+        errors.push(`Invalid propertyRef: ${task.propertyRef} (must be a positive integer)`);
+    }
+    if (!task.designReference || task.designReference.trim() === "") {
+        errors.push("Missing design reference");
+    }
+    else if (!DESIGN_REF_PATTERN.test(task.designReference)) {
+        errors.push(`Invalid Design Reference format: ${task.designReference}`);
+    }
+    const textFields = [
+        task.title,
+        task.filePath,
+        task.goal,
+        task.designReference,
+        task.verifyCommand,
+        task.commitMessage,
+    ];
+    const allText = textFields.join("\n");
+    const placeholders = scanForPlaceholders(allText);
+    if (placeholders.length > 0) {
+        errors.push(`Found forbidden placeholders: ${placeholders.join(", ")}`);
+    }
+    return { valid: errors.length === 0, errors };
+}
+export function validateLightweightPlan(tasks) {
+    if (tasks.length === 0)
+        return false;
+    const allValid = tasks.every((task) => validateLightweightTask(task).valid);
+    if (!allValid)
+        return false;
+    if (validateDependencies(tasks).length > 0)
+        return false;
+    if (detectCycleInTasks(tasks))
+        return false;
+    if (validateTopologicalOrder(tasks))
+        return false;
+    return true;
+}
+// ---------------------------------------------------------------------------
+// Lightweight format — Design Reference validation
+// ---------------------------------------------------------------------------
+export function validateDesignReferences(references, designContent) {
+    const errors = [];
+    const anchorSet = new Set(extractHeadingAnchors(designContent));
+    for (const ref of references) {
+        if (!DESIGN_REF_PATTERN.test(ref)) {
+            errors.push(`Invalid Design Reference format: ${ref}`);
+            continue;
+        }
+        const anchor = ref.replace(/^design\.md#/, "");
+        if (!anchorSet.has(anchor)) {
+            errors.push(`Design Reference ${ref} not found in design.md`);
+        }
+    }
+    return { valid: errors.length === 0, errors };
+}
+// ---------------------------------------------------------------------------
+// Unified plan validation dispatcher
+// ---------------------------------------------------------------------------
+export function validatePlan(frontmatter, tasks, designContent) {
+    const format = detectPlanFormat(frontmatter);
+    if (format === "lightweight") {
+        const lwTasks = tasks;
+        const errors = [];
+        for (const task of lwTasks) {
+            const result = validateLightweightTask(task);
+            if (!result.valid) {
+                errors.push(`Task ${task.taskNumber}: ${result.errors.join(", ")}`);
+            }
+        }
+        errors.push(...validateDependencies(lwTasks));
+        const cycleError = detectCycleInTasks(lwTasks);
+        if (cycleError)
+            errors.push(cycleError);
+        const topoError = validateTopologicalOrder(lwTasks);
+        if (topoError)
+            errors.push(topoError);
+        if (designContent) {
+            const refs = lwTasks.map((t) => t.designReference);
+            const refResult = validateDesignReferences(refs, designContent);
+            if (!refResult.valid) {
+                errors.push(...refResult.errors);
+            }
+        }
+        return { valid: errors.length === 0, errors, format };
+    }
+    // Full format
+    const fullTasks = tasks;
+    const fullValid = validatePlanTasks(fullTasks);
+    if (fullValid)
+        return { valid: true, errors: [], format };
+    const errors = [];
+    for (const task of fullTasks) {
+        const result = validateAtomicTask(task);
+        if (!result.valid) {
+            errors.push(`Task ${task.taskNumber}: ${result.errors.join(", ")}`);
+        }
+    }
+    errors.push(...validateDependencies(fullTasks));
+    return { valid: false, errors, format };
 }
 //# sourceMappingURL=plan.js.map

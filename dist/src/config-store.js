@@ -119,12 +119,8 @@ export function parseLogConfig(frontmatterRaw) {
     const rawFormat = extractStringField(parsed.raw, LOG_FORMAT_FIELD);
     const rawLevel = extractStringField(parsed.raw, LOG_LEVEL_FIELD);
     const rawFile = extractStringField(parsed.raw, LOG_FILE_FIELD);
-    const logFormat = rawFormat !== null && VALID_LOG_FORMATS.has(rawFormat)
-        ? rawFormat
-        : null;
-    const logLevel = rawLevel !== null && VALID_LOG_LEVELS.has(rawLevel)
-        ? rawLevel
-        : null;
+    const logFormat = rawFormat !== null && VALID_LOG_FORMATS.has(rawFormat) ? rawFormat : null;
+    const logLevel = rawLevel !== null && VALID_LOG_LEVELS.has(rawLevel) ? rawLevel : null;
     const logFile = rawFile !== null && rawFile.length > 0 ? rawFile : null;
     return { logFormat, logLevel, logFile };
 }

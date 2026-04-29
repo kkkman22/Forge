@@ -128,6 +128,12 @@ export declare class SdkDriver {
     private readonly logger;
     /** Iteration timing accumulator for performance baseline. */
     private readonly iterationTimings;
+    /** Subagent timing accumulator for extended performance baseline. */
+    private readonly subagentTimings;
+    /** Counter for degradation alerts triggered during the run. */
+    private degradationCount;
+    /** Previous SKILL phase name for detecting phase transitions. */
+    private previousPhase;
     constructor(config: SdkDriverConfig, effectExecutor: EffectExecutorInterface, agentAdapter: AgentInterface);
     /**
      * Internal translation helper. Falls back to the key-based default

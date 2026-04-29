@@ -161,4 +161,22 @@ export declare class EffectExecutor implements EffectExecutorInterface {
      * @param abortSignal Optional signal to interrupt the sleep early.
      */
     private executeBackoff;
+    /**
+     * Execute a Ship merge: checkout target → merge --no-ff feature → delete feature branch.
+     *
+     * On merge failure, executes `merge --abort` to restore clean state
+     * and throws without deleting the feature branch.
+     */
+    private executeShipMerge;
+    /**
+     * Execute a Ship push + PR: push to remote with upstream, then create PR via gh CLI.
+     *
+     * Push failure throws immediately. PR creation failure logs a warning
+     * but does NOT throw — the push result is preserved.
+     */
+    private executeShipPushPr;
+    /**
+     * Execute a Ship discard: checkout main → force delete feature branch.
+     */
+    private executeShipDiscard;
 }
