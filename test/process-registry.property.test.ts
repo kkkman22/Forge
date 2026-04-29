@@ -145,6 +145,82 @@ describe("ProcessRegistry", () => {
 		});
 	});
 
+	describe("shutdownAll", () => {
+		it("sends SIGTERM to all registered processes", async () => {
+			const reg = ProcessRegistry.getInstance();
+			const killSpy = vi.spyOn(process, "kill").mockImplementation((pid: number, signal?: any) => {
+				// kill(pid, 0) check: throw ESRCH to simulate process exited after SIGTERM
+				if (signal === 0) {
+					const err = new Error("ESRCH");
+					(err as any).code = "ESRCH";
+					throw err;
+				}
+				return true;
+			});
+
+			reg.register(
+				{ pid: 100, on: () => {} } as any,
+				{ source: "test", detached: false },
+			);
+			reg.register(
+				{ pid: 200, on: () => {} } as any,
+				{ source: "test", detached: false },
+			);
+
+			const result = await reg.shutdownAll();
+
+			expect(killSpy).toHaveBeenCalledWith(100, "SIGTERM");
+			expect(killSpy).toHaveBeenCalledWith(200, "SIGTERM");
+			expect(result.terminated).toBe(2);
+			killSpy.mockRestore();
+		});
+
+		it("SIGKILLs processes that do not exit within timeout", async () => {
+			const reg = ProcessRegistry.getInstance();
+			let sigkillSent = false;
+			const killSpy = vi.spyOn(process, "kill").mockImplementation((pid: number, signal?: any) => {
+				if (signal === "SIGKILL") sigkillSent = true;
+				// After SIGKILL, next kill(pid,0) should fail
+				if (signal === 0 && sigkillSent) {
+					const err = new Error("ESRCH");
+					(err as any).code = "ESRCH";
+					throw err;
+				}
+				return true;
+			});
+
+			reg.register(
+				{ pid: 300, on: () => {} } as any,
+				{ source: "test", detached: false },
+			);
+
+			const result = await reg.shutdownAll(100);
+
+			expect(killSpy).toHaveBeenCalledWith(300, "SIGTERM");
+			expect(killSpy).toHaveBeenCalledWith(300, "SIGKILL");
+			expect(result.forcedKill).toBe(1);
+			killSpy.mockRestore();
+		});
+
+		it("catches ESRCH for already-exited processes", async () => {
+			const reg = ProcessRegistry.getInstance();
+			const killSpy = vi.spyOn(process, "kill").mockImplementation(() => {
+				const err = new Error("kill ESRCH");
+				(err as any).code = "ESRCH";
+				throw err;
+			});
+
+			reg.register(
+				{ pid: 400, on: () => {} } as any,
+				{ source: "test", detached: false },
+			);
+
+			const result = await reg.shutdownAll();
+			expect(result.alreadyExited).toBe(1);
+			killSpy.mockRestore();
+		});
+	});
+
 	describe("Property 1: register preserves metadata", () => {
 		it("for any valid metadata, getAll contains the entry with all fields", () => {
 			fc.assert(
