@@ -11,7 +11,7 @@
  *   4.1–4.6, 5.1–5.4, 8.1–8.4, 9.1–9.3, 10.1–10.5**
  */
 
-import { existsSync, readFileSync, mkdirSync, rmSync, writeFileSync } from "node:fs";
+import { existsSync, mkdirSync, readFileSync, rmSync, writeFileSync } from "node:fs";
 import path, { join } from "node:path";
 import {
   appendEntry,
@@ -46,6 +46,7 @@ import { PuaStateManager } from "./pua-state-manager.js";
 import type { GateResult } from "./quality-gate.js";
 import { evaluateReviewGate } from "./quality-gate.js";
 import { RunManager, type TranslateFn } from "./run-manager.js";
+import { buildDefaultPolicy, type PermissionPolicy, validatePolicy } from "./sandbox-policy.js";
 import { evaluateGateForPhase } from "./sdk-quality-helpers.js";
 import {
   clearLoopFieldsOnShutdown,
@@ -58,7 +59,6 @@ import {
 } from "./sdk-status-helpers.js";
 import { determineNextSkill, shouldCommitForPhase } from "./skill-scheduler.js";
 import { extractLoopFields } from "./status-file-ext.js";
-import { buildDefaultPolicy, validatePolicy, type PermissionPolicy } from "./sandbox-policy.js";
 
 const ZERO_TOKEN_USAGE: TokenUsage = {
   inputTokens: 0,
@@ -374,7 +374,9 @@ export class SdkDriver {
         mkdirSync(path.dirname(sandboxActivePath), { recursive: true });
         writeFileSync(sandboxActivePath, JSON.stringify({ projectRoot: this.config.cwd, policy }));
         this.logger.log(
-          createLogEntry("sandbox_enabled", "info", "Sandbox mode activated", { runId: this.config.runId }),
+          createLogEntry("sandbox_enabled", "info", "Sandbox mode activated", {
+            runId: this.config.runId,
+          }),
         );
       } catch (err) {
         this.logger.log(

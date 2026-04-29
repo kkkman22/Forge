@@ -34,12 +34,7 @@ const filePathArb = fc
   .map((segments) => segments.join("/"));
 
 /** Glob patterns: prefix + double-star + suffix. */
-const globPatternArb = fc.constantFrom(
-  "src/**",
-  "test/**",
-  "**/*.ts",
-  "**",
-);
+const globPatternArb = fc.constantFrom("src/**", "test/**", "**/*.ts", "**");
 
 /** Network endpoints: domain:port. */
 const domainArb = fc
