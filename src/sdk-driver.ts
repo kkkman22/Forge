@@ -25,6 +25,7 @@ import {
   createIterationTiming,
   createLogEntry,
   createLogSink,
+  formatPerformanceBaseline,
   type IterationTiming,
   type LogSinkConfig,
 } from "./logger/index.js";
@@ -1399,6 +1400,11 @@ export class SdkDriver {
 
       lines.push(this.t("driver.summary.recovery"));
     }
+
+    // Append performance baseline (Req 5.2).
+    const baseline = computePerformanceBaseline(this.iterationTimings);
+    lines.push("");
+    lines.push(formatPerformanceBaseline(baseline));
 
     return lines.join("\n");
   }
