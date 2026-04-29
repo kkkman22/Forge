@@ -57,3 +57,27 @@ describe("computePerformanceBaseline", () => {
     expect(baseline.maxIterationMs).toBe(baseline.minIterationMs);
   });
 });
+
+describe("formatPerformanceBaseline", () => {
+  it("should format non-empty baseline as human-readable text", async () => {
+    const { createIterationTiming, computePerformanceBaseline, formatPerformanceBaseline } =
+      await import("../../src/logger/timing.js");
+    const t1 = createIterationTiming(0, 5000, 6000);
+    const t2 = createIterationTiming(7000, 12000, 13000);
+    const baseline = computePerformanceBaseline([t1, t2]);
+    const text = formatPerformanceBaseline(baseline);
+    expect(text).toContain("Performance Baseline");
+    expect(text).toContain("Iterations: 2");
+    expect(text).toContain("Avg iteration:");
+    expect(text).toContain("Avg agent call:");
+  });
+
+  it("should output N/A for empty iterations", async () => {
+    const { computePerformanceBaseline, formatPerformanceBaseline } = await import(
+      "../../src/logger/timing.js"
+    );
+    const baseline = computePerformanceBaseline([]);
+    const text = formatPerformanceBaseline(baseline);
+    expect(text).toContain("N/A");
+  });
+});
