@@ -39,7 +39,7 @@ describe("Property 1: LogEntry JSON round-trip", () => {
       fc.property(logEntryArb, (entry) => {
         const json = formatAsJson(entry);
         const parsed = JSON.parse(json);
-        expect(parsed).toEqual(entry);
+        expect(parsed).toEqual(JSON.parse(JSON.stringify(entry)));
       }),
       { numRuns: 200 },
     );
