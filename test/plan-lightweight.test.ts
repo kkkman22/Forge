@@ -737,3 +737,174 @@ describe("validatePlan with designContent integration", () => {
     expect(result.errors.some((e) => e.includes("Cycle detected"))).toBe(true);
   });
 });
+
+// ---------------------------------------------------------------------------
+// P2 Fix: Topological order validation
+// ---------------------------------------------------------------------------
+
+describe("Topological order validation", () => {
+  const makeTask = (num: number, deps?: number[]): LightweightTask => ({
+    taskNumber: num,
+    title: `Task ${num}`,
+    filePath: `src/file${num}.ts`,
+    goal: `Goal ${num}`,
+    designReference: `design.md#section-${num}`,
+    verifyCommand: "npx vitest",
+    commitMessage: `feat: task${num}`,
+    dependsOn: deps,
+  });
+
+  it("accepts tasks in valid topological order", () => {
+    const tasks = [makeTask(1), makeTask(2, [1]), makeTask(3, [1, 2])];
+    expect(validateLightweightPlan(tasks)).toBe(true);
+  });
+
+  it("rejects tasks in wrong order (dependency appears after dependent)", () => {
+    // Task 1 depends on Task 2, but Task 2 is listed after Task 1
+    const tasks = [makeTask(1, [2]), makeTask(2)];
+    expect(validateLightweightPlan(tasks)).toBe(false);
+  });
+
+  it("reports topological order error in validatePlan", () => {
+    const frontmatter = 'format: "lightweight"';
+    const tasks = [makeTask(1, [2]), makeTask(2)];
+    const result = validatePlan(frontmatter, tasks);
+    expect(result.valid).toBe(false);
+    expect(result.errors.some((e) => e.includes("appears after"))).toBe(true);
+  });
+
+  it("accepts independent tasks in any order", () => {
+    const tasks = [makeTask(3), makeTask(1), makeTask(2)];
+    expect(validateLightweightPlan(tasks)).toBe(true);
+  });
+});
+
+// ---------------------------------------------------------------------------
+// P2 Fix: propertyRef validation
+// ---------------------------------------------------------------------------
+
+describe("propertyRef validation", () => {
+  const validTask: LightweightTask = {
+    taskNumber: 1,
+    title: "Test",
+    filePath: "src/test.ts",
+    goal: "Test goal",
+    designReference: "design.md#test",
+    verifyCommand: "npm test",
+    commitMessage: "feat: test",
+  };
+
+  it("accepts valid propertyRef", () => {
+    expect(validateLightweightTask({ ...validTask, propertyRef: 1 }).valid).toBe(true);
+    expect(validateLightweightTask({ ...validTask, propertyRef: 10 }).valid).toBe(true);
+  });
+
+  it("accepts undefined propertyRef", () => {
+    expect(validateLightweightTask(validTask).valid).toBe(true);
+  });
+
+  it("rejects zero propertyRef", () => {
+    const result = validateLightweightTask({ ...validTask, propertyRef: 0 });
+    expect(result.valid).toBe(false);
+    expect(result.errors.some((e) => e.includes("propertyRef"))).toBe(true);
+  });
+
+  it("rejects negative propertyRef", () => {
+    const result = validateLightweightTask({ ...validTask, propertyRef: -1 });
+    expect(result.valid).toBe(false);
+    expect(result.errors.some((e) => e.includes("propertyRef"))).toBe(true);
+  });
+
+  it("rejects non-integer propertyRef", () => {
+    const result = validateLightweightTask({ ...validTask, propertyRef: 1.5 });
+    expect(result.valid).toBe(false);
+    expect(result.errors.some((e) => e.includes("propertyRef"))).toBe(true);
+  });
+});
+
+// ---------------------------------------------------------------------------
+// P2 Fix: Full format detailed error messages
+// ---------------------------------------------------------------------------
+
+describe("Full format detailed errors in validatePlan", () => {
+  it("returns per-task errors for invalid full-format tasks", () => {
+    const frontmatter = 'format: "full"';
+    const tasks: AtomicTask[] = [
+      {
+        taskNumber: 1,
+        title: "",
+        filePath: "src/test.ts",
+        estimatedMinutes: 3,
+        tddSteps: {
+          red: { testFile: "test/a.ts", testCode: "it('a', ()=>1)", runCommand: "npx vitest" },
+          green: {
+            sourceFile: "src/a.ts",
+            sourceCode: "export const a=1",
+            runCommand: "npx vitest",
+          },
+          refactor: "clean up",
+        },
+        verifyCommand: "npx vitest",
+        commitMessage: "feat: test",
+      },
+    ];
+    const result = validatePlan(frontmatter, tasks);
+    expect(result.valid).toBe(false);
+    expect(result.format).toBe("full");
+    expect(result.errors.some((e) => e.includes("Task 1"))).toBe(true);
+    expect(result.errors.some((e) => e.includes("Missing title"))).toBe(true);
+  });
+
+  it("returns no errors for valid full-format tasks", () => {
+    const frontmatter = 'format: "full"';
+    const tasks: AtomicTask[] = [
+      {
+        taskNumber: 1,
+        title: "Test",
+        filePath: "src/test.ts",
+        estimatedMinutes: 3,
+        tddSteps: {
+          red: { testFile: "test/a.ts", testCode: "it('a', ()=>1)", runCommand: "npx vitest" },
+          green: {
+            sourceFile: "src/a.ts",
+            sourceCode: "export const a=1",
+            runCommand: "npx vitest",
+          },
+          refactor: "clean up",
+        },
+        verifyCommand: "npx vitest",
+        commitMessage: "feat: test",
+      },
+    ];
+    const result = validatePlan(frontmatter, tasks);
+    expect(result.valid).toBe(true);
+    expect(result.errors).toEqual([]);
+  });
+});
+
+// ---------------------------------------------------------------------------
+// P3 Fix: Heading anchor edge cases (confirm DESIGN_REF_PATTERN consistency)
+// ---------------------------------------------------------------------------
+
+describe("Heading anchor edge cases", () => {
+  it("strips trailing hyphens from anchors with trailing special chars", () => {
+    const content = "## Hello !";
+    const anchors = extractHeadingAnchors(content);
+    expect(anchors).toEqual(["hello"]);
+  });
+
+  it("strips leading hyphens from anchors with leading spaces", () => {
+    const content = "##  Hello World";
+    const anchors = extractHeadingAnchors(content);
+    expect(anchors).toEqual(["hello-world"]);
+  });
+
+  it("handles multiple consecutive special characters", () => {
+    const content = "## What's New & Changed!";
+    const anchors = extractHeadingAnchors(content);
+    expect(anchors[0]).toBe("whats-new--changed");
+    // Verify this matches DESIGN_REF_PATTERN when used as reference
+    const ref = `design.md#${anchors[0]}`;
+    expect(validateDesignReferences([ref], content).valid).toBe(true);
+  });
+});
