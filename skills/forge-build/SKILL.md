@@ -31,6 +31,7 @@ disable-model-invocation: true
 | 1 | **Spec 门禁** | 扫描 `.forge/specs/` 下所有 `spec.md` 文件，读取 YAML frontmatter 的 `status` 字段 | `status` 不是 `"locked"`（标准路径无 Spec 时豁免，见下方） | → `/forge spec` |
 | 2 | **Plan 门禁** | 扫描 `.forge/plans/` 下所有 `.md` 文件，读取 YAML frontmatter 的 `status` 字段（支持 `format: "lightweight"` 和 `format: "full"`，缺省默认 `"full"`） | `status` 不是 `"approved"` | → `/forge plan` |
 | 3 | **`.forge/` 目录结构完整性** | 检查 `.forge/` 目录是否存在，且包含必要的子目录（`specs/`、`plans/`、`progress/`） | `.forge/` 不存在，或缺少必要子目录 | → `forge init` |
+| 4 | **分支门禁** | 运行 `git branch --show-current` 获取当前分支名，与当前 topic 的期望分支名比对 | 当前分支不是 `feature/<topic>` 或 `forge/<topic>` | → 自动创建并切换（见下方） |
 
 **检查逻辑**：
 
@@ -38,10 +39,74 @@ disable-model-invocation: true
 2. 扫描 `.forge/specs/` 下所有 `spec.md` 文件，读取 YAML frontmatter。
 3. 扫描 `.forge/plans/` 下所有 `.md` 文件，读取 YAML frontmatter。
 4. 检查与当前任务相关的 spec 和 plan 的 `status` 字段。
+5. **分支检查与自动切换**（检查 #4 详细逻辑见下方 §2.1）。
 
 **Spec 门禁豁免**：如果 Plan 文档中标注了 `spec_ref: "none（基于用户需求描述）"`，说明标准路径下用户选择了无 Spec 模式，Spec 门禁自动豁免，仅检查 Plan 门禁和目录结构完整性。
 
 **所有检查必须同时通过**（豁免情况除外）。任一不通过，阻断 build 并输出结构化拒绝信息。
+
+### §2.1 分支门禁（检查 #4）
+
+**目的**：防止多功能开发时代码提交到错误的分支。每个功能的代码必须在其对应的 feature 分支上开发。
+
+**检查流程**：
+
+1. **获取当前分支**：运行 `git branch --show-current`。
+2. **确定期望分支**：从当前 topic（kebab-case）推导期望分支名。接受以下格式：
+   - `feature/<topic>`（用户手动创建的分支）
+   - `forge/<topic>`（`/forge loop` 自动创建的分支）
+3. **比对并决策**：
+
+| 当前分支 | 期望分支是否存在 | 操作 |
+|---------|----------------|------|
+| 已在 `feature/<topic>` 或 `forge/<topic>` 上 | — | ✅ 通过，继续 build |
+| 在 `main`/`master` 或其他分支上 | `feature/<topic>` 已存在 | 自动 `git checkout feature/<topic>`，输出提示 |
+| 在 `main`/`master` 或其他分支上 | `forge/<topic>` 已存在 | 自动 `git checkout forge/<topic>`，输出提示 |
+| 在 `main`/`master` 或其他分支上 | 都不存在 | 自动 `git checkout -b feature/<topic>`，输出提示 |
+| 在另一个功能的分支上（如 `feature/<other-topic>`） | — | ⚠️ 输出警告并自动切换到正确分支（同上逻辑） |
+
+**自动切换前提**：工作树必须是干净的（无未提交变更）。如果工作树不干净，阻断 build 并提示用户先提交或暂存当前变更。
+
+**输出格式**：
+
+```
+🔀 分支切换
+
+当前分支：main
+期望分支：feature/ship-delivery-unification
+操作：已自动切换到 feature/ship-delivery-unification
+
+继续 build...
+```
+
+```
+🔀 分支创建
+
+当前分支：main
+期望分支：feature/context-budget-management（不存在）
+操作：已创建并切换到 feature/context-budget-management
+
+继续 build...
+```
+
+```
+⚠️ 分支冲突
+
+当前分支：feature/agent-team-migration
+期望分支：feature/ship-delivery-unification
+操作：已自动切换到 feature/ship-delivery-unification
+
+注意：你之前在 feature/agent-team-migration 上工作。请确认这是正确的切换。
+```
+
+```
+🚫 分支切换失败
+
+当前分支：feature/agent-team-migration
+期望分支：feature/ship-delivery-unification
+原因：工作树有未提交的变更，无法安全切换分支
+建议：先运行 git stash 或 git commit 保存当前变更，然后重新运行 /forge build
+```
 
 ### 拒绝输出格式
 
@@ -328,22 +393,22 @@ Agent(
 状态：DONE
 ```
 
-**为什么不做完整的两阶段评审？** 完整评审（spec compliance + code quality 两轮独立 Subagent）每个任务增加 2 次 Subagent 调用，5 个任务就是 10 次额外调用，token 和时间成本过高。轻量自检在 Subagent 内部完成，零额外调用，能拦截 80% 的明显问题（缺失测试、安全漏洞、范围溢出）。剩余的深度评审由 `/forge review` 阶段的 Agent Team 统一处理。
+**为什么不做完整的两阶段评审？** 完整评审（spec compliance + code quality 两轮独立 Subagent）每个任务增加 2 次 Subagent 调用，5 个任务就是 10 次额外调用，token 和时间成本过高。轻量自检在 Subagent 内部完成，零额外调用，能拦截 80% 的明显问题（缺失测试、安全漏洞、范围溢出）。剩余的深度评审由 `/forge review` 阶段的并行 Subagent 统一处理。
 
 ### 3.3 全量路径（Full）
 
 适用于涉及新服务、新数据库、认证体系变更或需求模糊的复杂任务。
 
-**阶段一：并行研究（Agent Team）**
+**阶段一：并行研究（Subagent）**
 
-1. 以 Agent Team 模式启动多个研究者，并行调查：
+1. 通过 Agent tool 并行启动多个独立研究 Subagent，各自调查不同维度：
    - 现有代码架构和依赖关系
    - 相关的第三方库和 API
    - 潜在的技术风险和兼容性问题
-2. 研究发现汇总到 `.forge/findings/<topic>.md`。
-3. 研究者之间共享发现、相互补充。
+2. 各 Subagent 使用 `Promise.allSettled` 等待——失败的 Subagent 记录错误但不阻断其他研究。
+3. 研究发现合并到 `.forge/findings/<topic>.md`。
 
-**研究阶段不使用 Restatement**：阶段一由 Agent Team 并行执行，主 Agent 只等待结果汇总，上下文膨胀有限。因此研究阶段**不初始化 Restatement 计数器、不执行 Checkpoint、不写入中间日志**。
+**研究阶段不使用 Restatement**：阶段一由独立 Subagent 并行执行，主 Agent 只等待结果汇总，上下文膨胀有限。因此研究阶段**不初始化 Restatement 计数器、不执行 Checkpoint、不写入中间日志**。
 
 **阶段二：分模块实现（Subagent）**
 
@@ -832,7 +897,7 @@ updated: "YYYY-MM-DD HH:mm"
     │     ▼            ▼
     │  ┌──────────────────┐   ┌──────────┐
     │  │ 初始化            │   │阶段一     │
-    │  │ Restatement      │   │Agent Team │
+    │  │ Restatement      │   │Subagent   │
     │  │ 计数器 = N       │   │并行研究   │
     │  └──────┬───────────┘   └────┬─────┘
     │         │                    ▼

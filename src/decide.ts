@@ -25,6 +25,9 @@ export interface TeamMember {
   agent: string;
 }
 
+/** Renamed alias for the Subagent migration — semantically equivalent to TeamMember. */
+export type SubagentConfig = TeamMember;
+
 // ---------------------------------------------------------------------------
 // Constants
 // ---------------------------------------------------------------------------
@@ -253,6 +256,11 @@ export function generateDecisionPath(date: string, topic: string): string {
  * - designer is included if and only if the task involves UI changes.
  */
 export function getDecideTeamMembers(context: DecideContext): TeamMember[] {
+  return getDecideSubagents(context);
+}
+
+/** Alias for the Subagent migration — returns the same members. */
+export function getDecideSubagents(context: DecideContext): SubagentConfig[] {
   const members = [...DEFAULT_MEMBERS];
 
   if (involvesUIChanges(context)) {
@@ -260,4 +268,63 @@ export function getDecideTeamMembers(context: DecideContext): TeamMember[] {
   }
 
   return members;
+}
+
+// ---------------------------------------------------------------------------
+// Subagent orchestration (Agent Team Migration — R2, R7)
+// ---------------------------------------------------------------------------
+
+import type { SubagentInvocation } from "./loop-types.js";
+
+const MAX_PERSPECTIVE_TOKENS = 500;
+
+/**
+ * Build Round 1 SubagentInvocations for the decide phase.
+ *
+ * Maps SubagentConfig[] to SubagentInvocation[] with perspective-specific prompts.
+ * Always includes product, architect, security. Includes designer iff involvesUIChanges.
+ */
+export function buildDecideRound1Subagents(context: DecideContext): SubagentInvocation[] {
+  const members = getDecideSubagents(context);
+
+  return members.map((member) => ({
+    agentType: member.agent,
+    prompt: `[${member.role}] 分析任务：${context.taskDescription}。涉及文件：${context.involvedFiles.join(", ")}。请控制在 ${MAX_PERSPECTIVE_TOKENS} tokens 以内。`,
+    permissionMode: "default" as const,
+    maxTurns: 10,
+  }));
+}
+
+/**
+ * Build the Round 2 Critic SubagentInvocation.
+ *
+ * The Critic receives all Round 1 perspective outputs for cross-review.
+ */
+export function buildDecideCriticInvocation(
+  round1Outputs: string[],
+  _context: DecideContext,
+): SubagentInvocation {
+  const allOutputs = round1Outputs.join("\n\n---\n\n");
+
+  return {
+    agentType: "critic",
+    prompt: `交叉审查以下视角输出，找出盲点和不一致：\n\n${allOutputs}`,
+    permissionMode: "default",
+    maxTurns: 10,
+  };
+}
+
+/** Output from the Critic agent for status resolution. */
+export interface CriticOutput {
+  hasBlockingIssues: boolean;
+  issues: string[];
+}
+
+/**
+ * Resolve the decide document status based on Critic output.
+ *
+ * Returns "needs_revision" when blocking issues are present, "confirmed" otherwise.
+ */
+export function resolveDecideStatus(output: CriticOutput): "needs_revision" | "confirmed" {
+  return output.hasBlockingIssues ? "needs_revision" : "confirmed";
 }

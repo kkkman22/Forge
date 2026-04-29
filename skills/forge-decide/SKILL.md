@@ -1,14 +1,14 @@
 ---
 name: forge-decide
-description: "四视角前置决策引擎。以 Agent Team 模式从产品、架构、安全、设计视角进行系统性评估。"
+description: "四视角前置决策引擎。以两轮 Subagent 模式从产品、架构、安全、设计视角进行系统性评估。"
 disable-model-invocation: true
 ---
 
 # /forge decide — 决策引擎
 
 > **触发方式**：全量路径的第一步，或用户直接输入 `/forge decide`
-> **职责**：以 Agent Team 模式从产品、架构、安全、设计四个视角进行前置决策，在编码前明确问题边界、风险和技术方向
-> **Agent 模式**：Agent Team（共享上下文，成员之间相互质疑）
+> **职责**：以两轮 Subagent 模式从产品、架构、安全、设计四个视角进行前置决策，在编码前明确问题边界、风险和技术方向
+> **Agent 模式**：两轮 Subagent（Round 1 并行视角评估，Round 2 Critic 交叉审查）
 
 ---
 
@@ -16,66 +16,77 @@ disable-model-invocation: true
 
 `/forge decide` 在编码开始前，从四个独立视角对任务进行系统性评估。三个核心视角（产品、架构、安全）始终参与，设计视角仅在任务涉及 UI 变更时动态加入。
 
-每个视角由独立的 Agent 角色承担，通过 Agent Team 模式协作，确保视角之间可以相互质疑和补充。
+每个视角由独立的 Subagent 承担，通过两轮 Subagent 模式协作，确保视角之间可以相互质疑和补充。
 
 **核心原则**：先想清楚，再动手。决策阶段的投入远低于返工的代价。
 
 ---
 
-## 2. Agent Team 配置
+## 2. 两轮 Subagent 执行
 
-使用 Claude Code Agent Teams 特性创建决策团队。队友类型引用 `.claude/agents/` 下的 subagent 定义。
+使用 Agent tool 独立启动视角 Subagent，无需创建 Agent Team。决策通过两轮执行完成：Round 1 并行视角评估，Round 2 Critic 交叉审查。
+
+**Round 1 — 视角 Subagent（并行启动）**：
 
 **默认成员**（3 个，始终参与）：
 
-| 队友名称 | Subagent 定义 | 职责 |
+| Subagent 名称 | 定义文件 | 职责 |
 |---------|--------------|------|
-| product | `product` | 产品视角 — 苏格拉底式提问 |
-| architect | `architect` | 架构视角 — 技术方案评估 |
-| security | `security` | 安全视角 — OWASP + STRIDE |
+| product | `.claude/agents/product.md` | 产品视角 — 苏格拉底式提问 |
+| architect | `.claude/agents/architect.md` | 架构视角 — 技术方案评估 |
+| security | `.claude/agents/security.md` | 安全视角 — OWASP + STRIDE |
 
 **动态成员**（条件触发）：
 
-| 队友名称 | Subagent 定义 | 触发条件 |
+| Subagent 名称 | 定义文件 | 触发条件 |
 |---------|--------------|---------|
-| designer | `designer` | 任务涉及 UI 变更时加入 |
-| critic | `critic` | **始终参与**（最后发言，审查其他视角的输出） |
+| designer | `.claude/agents/designer.md` | 任务涉及 UI 变更时加入（`involvesUIChanges()` 返回 true） |
 
-**启动指令**：
+**Round 1 启动方式**：
 
-负责人（当前会话）使用自然语言创建团队。Critic 始终参与，designer 根据是否涉及 UI 变更决定。
-
-默认（含 Critic）：
+默认（3 视角）：
 ```
-Create an agent team with 4 teammates:
-- Spawn a teammate named "product" using the product agent type
-- Spawn a teammate named "architect" using the architect agent type
-- Spawn a teammate named "security" using the security agent type
-- Spawn a teammate named "critic" using the critic agent type
-Require plan approval before they make any changes.
-Product, architect, and security should analyze the task from their perspective first.
-After they report, critic should review ALL their outputs and challenge any gaps, blind spots, or inconsistencies.
+使用 Agent tool 同时启动 3 个独立 Subagent：
+- Agent(prompt="product 视角评估指令，限制 500 tokens", subagent_type="product")
+- Agent(prompt="architect 视角评估指令，限制 500 tokens", subagent_type="architect")
+- Agent(prompt="security 视角评估指令，限制 500 tokens", subagent_type="security")
+使用 Promise.allSettled 等待所有 Subagent 完成。
 ```
 
-含 UI 变更（5 视角）：
+含 UI 变更（4 视角）：
 ```
-Create an agent team with 5 teammates:
-- Spawn a teammate named "product" using the product agent type
-- Spawn a teammate named "architect" using the architect agent type
-- Spawn a teammate named "security" using the security agent type
-- Spawn a teammate named "designer" using the designer agent type
-- Spawn a teammate named "critic" using the critic agent type
-Require plan approval before they make any changes.
-Product, architect, security, and designer should analyze the task from their perspective first.
-After they report, critic should review ALL their outputs and challenge any gaps, blind spots, or inconsistencies.
+使用 Agent tool 同时启动 4 个独立 Subagent：
+- Agent(prompt="product 视角评估指令，限制 500 tokens", subagent_type="product")
+- Agent(prompt="architect 视角评估指令，限制 500 tokens", subagent_type="architect")
+- Agent(prompt="security 视角评估指令，限制 500 tokens", subagent_type="security")
+- Agent(prompt="designer 视角评估指令，限制 500 tokens", subagent_type="designer")
+使用 Promise.allSettled 等待所有 Subagent 完成。
+```
+
+**Designer 条件触发**：designer Subagent 仅当 `involvesUIChanges()` 返回 true 时加入 Round 1。判定逻辑见 §3.4。
+
+**每个视角 Subagent 的输出限制在 500 tokens 以内**。超出时截断并提示精简。
+
+**Round 2 — Critic Subagent（串行，在 Round 1 完成后启动）**：
+
+```
+收集 Round 1 所有视角 Subagent 的输出，启动 Critic Subagent：
+- Agent(prompt="所有 Round 1 视角输出 + 交叉审查指令", subagent_type="critic")
+Critic 审查所有视角输出，寻找盲点和矛盾。
 ```
 
 **Critic 的特殊规则**：
-- Critic **最后发言**——必须等其他视角输出完毕后再审查
-- Critic 审查的是**其他视角的输出**，不是原始任务
+- Critic 在 Round 2 启动——必须在所有 Round 1 视角输出完毕后才能审查
+- Critic 审查的是**所有视角 Subagent 的输出**，不是原始任务
 - 如果 Critic 发现阻塞性问题，决策文档标记为 `needs_revision`，相关视角需要修正后重新输出
+- Critic 标记 `needs_revision` 时，返回具体哪些视角需要修正以及理由
 
-**注意**：`.claude/teams/` 下的 JSON 文件是 SKILL.md 的参考材料，不是 Claude Code 原生的团队配置。Claude Code 的团队配置在运行时自动生成到 `~/.claude/teams/`，不要手动编辑。
+**容错机制**：
+
+- Round 1 使用 `Promise.allSettled`：单个视角 Subagent 失败不阻断其他视角
+- 失败的视角在决策文档中标注"评估失败"
+- Critic 可以指出缺失的视角评估作为发现之一
+- 如果所有 Round 1 Subagent 均失败，决策终止并向用户报告
 
 ---
 
@@ -178,14 +189,10 @@ After they report, critic should review ALL their outputs and challenge any gaps
 
 **不触发的场景**：纯后端 API、数据库变更、CI/CD 配置、纯逻辑重构。
 
-**当触发时**，动态将 designer 加入 Agent Team：
+**当触发时**，在 Round 1 中额外启动 designer Subagent：
 
-```json
-{
-  "name": "designer",
-  "role": "设计视角",
-  "agent": "designer"
-}
+```
+Agent(prompt="designer 视角评估指令，限制 500 tokens", subagent_type="designer")
 ```
 
 **职责**：
@@ -220,41 +227,28 @@ After they report, critic should review ALL their outputs and challenge any gaps
 
 ### Step 2：判定是否需要设计视角
 
-根据第 3.4 节的触发条件，判断任务是否涉及 UI 变更：
+根据第 3.4 节的触发条件，判断任务是否涉及 UI 变更（`involvesUIChanges()`）：
 
-- **涉及 UI 变更** → 将 designer 动态加入 Agent Team，四视角并行评估。
-- **不涉及 UI 变更** → 三视角（产品、架构、安全）并行评估。
+- **涉及 UI 变更** → Round 1 启动 4 个视角 Subagent（含 designer）
+- **不涉及 UI 变更** → Round 1 启动 3 个视角 Subagent（不含 designer）
 
-### Step 3：启动 Agent Team 评估
+### Step 3：Round 1 — 并行视角评估
 
-使用第 2 节中的启动指令创建 Agent Team。各队友并行工作，可以通过消息相互质疑。
+使用第 2 节中的启动方式通过 Agent tool 并行启动视角 Subagent。使用 `Promise.allSettled` 等待所有视角完成。
 
-**产品视角先行**：产品视角以苏格拉底式提问开始，一次一个问题，逐步厘清问题定义、目标用户和成功标准。
+各视角独立工作，输出限制在 500 tokens 以内。
 
-**架构和安全跟进**：在产品视角初步厘清问题后，架构和安全视角基于产品定义进行评估。
+### Step 4：Round 2 — Critic 交叉审查
 
-**设计视角（如触发）**：与架构和安全视角同步进行。
+收集 Round 1 所有视角的输出，启动 Critic Subagent 进行交叉审查。
 
-### Step 4：汇总与否决
-
-汇总各视角的输出，检查是否有否决意见：
-
-- 如果任何视角提出**阻塞性问题**（如严重安全风险、架构不可行），记录到否决记录中，暂停流程与开发者讨论。
-- 如果所有视角通过，生成决策文档。
+Critic 检查是否有否决意见：
+- 如果 Critic 发现阻塞性问题 → 标记 `needs_revision`，相关视角需要修正后重新输出
+- 如果所有视角通过 → 生成决策文档
 
 ### Step 5：输出决策文档
 
 将决策结果写入 `.forge/decisions/<date>-<topic>.md`。
-
-### Step 6：清理团队
-
-决策文档输出后，清理 Agent Team 资源：
-
-1. 要求所有队友关闭：`Ask all teammates to shut down`
-2. 等待队友确认退出
-3. 清理团队：`Clean up the team`
-
-**为什么要清理？** Claude Code 每个会话只能管理一个团队。如果 decide 团队不清理，后续的 review 团队无法创建。
 
 ---
 
@@ -353,7 +347,7 @@ status: "confirmed"
 
 ### 7.2 设计视角误触发
 
-如果设计视角被触发但开发者认为不需要，开发者可以明确说明跳过设计视角。此时从 Agent Team 中移除 designer，仅保留三视角评估。
+如果设计视角被触发但开发者认为不需要，开发者可以明确说明跳过设计视角。此时 Round 1 不启动 designer Subagent，仅保留三视角评估。
 
 ### 7.3 视角之间存在冲突
 
@@ -369,17 +363,6 @@ status: "confirmed"
 
 ```
 ⚠️ 未检测到 .forge/ 目录。请先运行 forge init 初始化项目。
-```
-
-### 7.5 Agent Team 清理失败
-
-如果队友关闭超时或清理失败：
-
-```
-⚠️ Agent Team 清理未完成。部分队友可能仍在运行。
-如果后续需要创建新团队（如 /forge review），请先手动清理：
-  tmux ls                          # 列出会话
-  tmux kill-session -t <session>   # 关闭残留会话
 ```
 
 ---

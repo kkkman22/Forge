@@ -1,6 +1,6 @@
 ---
 name: forge-review
-description: "评审引擎。以 Agent Team 模式运行三层独立评审（Spec 对齐、代码质量、安全与风险）。"
+description: "评审引擎。以 Subagent 并行模式运行三层独立评审（Spec 对齐、代码质量、安全与风险）。"
 disable-model-invocation: true
 ---
 
@@ -14,47 +14,58 @@ disable-model-invocation: true
 
 ## 1. 概述
 
-`/forge review` 通过三层评审（Spec 对齐 → 代码质量 → 安全与风险）对 build 阶段的产出进行独立验证。评审以 Agent Team 模式运行，三个评审者各司其职、交叉验证，最终输出结构化的评审报告。
+`/forge review` 通过三层评审（Spec 对齐 → 代码质量 → 安全与风险）对 build 阶段的产出进行独立验证。评审通过独立 Subagent 并行运行，三个评审者各司其职、交叉验证，最终输出结构化的评审报告。
 
 **核心原则**：执行与评估分离。写代码的人不评审自己的代码。build 阶段的 Agent 和 review 阶段的 Agent 是不同的角色，拥有不同的上下文和关注点。这不是流程冗余，是质量保障。
 
 ---
 
-## 2. Agent Team 配置
+## 2. Subagent 并行执行
 
-使用 Claude Code Agent Teams 特性创建评审团队。队友类型引用 `.claude/agents/` 下的 subagent 定义。
+使用 Agent tool 独立启动评审 Subagent，无需创建 Agent Team。每个评审者作为独立 Subagent 并行运行，互不干扰。
 
-**成员**（3 个）：
+**成员**（3 个 Subagent）：
 
-| 队友名称 | Subagent 定义 | 职责 |
+| Subagent 名称 | 定义文件 | 职责 |
 |---------|--------------|------|
-| spec-check | `spec-check` | Layer 1 — Spec 对齐检查 |
-| quality-check | `quality-check` | Layer 2 — 代码质量检查 |
-| security-check | `security-check` | Layer 3 — 安全与风险检查 |
+| spec-check | `.claude/agents/spec-check.md` | Layer 1 — Spec 对齐检查 |
+| quality-check | `.claude/agents/quality-check.md` | Layer 2 — 代码质量检查 |
+| security-check | `.claude/agents/security-check.md` | Layer 3 — 安全与风险检查 |
 
-**启动指令**：
+**启动方式**：
 
-标准/全量路径（三层评审）：
+标准/全量路径（三层评审）— 通过 Agent tool 并行启动 3 个 Subagent：
 ```
-Create an agent team with 3 teammates:
-- Spawn a teammate named "spec-check" using the spec-check agent type
-- Spawn a teammate named "quality-check" using the quality-check agent type
-- Spawn a teammate named "security-check" using the security-check agent type
-Each teammate should independently review the code changes and report findings.
-Have them share and challenge each other's findings when relevant.
-```
-
-轻量路径或无 Spec 模式（跳过 spec-check）：
-```
-Create an agent team with 2 teammates:
-- Spawn a teammate named "quality-check" using the quality-check agent type
-- Spawn a teammate named "security-check" using the security-check agent type
-Each teammate should independently review the code changes and report findings.
+使用 Agent tool 同时启动 3 个独立 Subagent：
+- Agent(prompt="spec-check 评审指令", subagent_type="spec-check")
+- Agent(prompt="quality-check 评审指令", subagent_type="quality-check")
+- Agent(prompt="security-check 评审指令", subagent_type="security-check")
+使用 Promise.allSettled 等待所有 Subagent 完成，确保单个失败不阻断其他评审。
 ```
 
-**注意**：`.claude/teams/` 下的 JSON 文件是 SKILL.md 的参考材料，不是 Claude Code 原生的团队配置。Claude Code 的团队配置在运行时自动生成到 `~/.claude/teams/`，不要手动编辑。
+轻量路径或无 Spec 模式（跳过 spec-check）— 仅启动 2 个 Subagent：
+```
+使用 Agent tool 同时启动 2 个独立 Subagent：
+- Agent(prompt="quality-check 评审指令", subagent_type="quality-check")
+- Agent(prompt="security-check 评审指令", subagent_type="security-check")
+使用 Promise.allSettled 等待所有 Subagent 完成。
+```
 
-三个评审者并行工作，各自输出独立的评审结果，最后汇总为统一的评审报告。
+**容错机制**：
+
+使用 `Promise.allSettled` 而非 `Promise.all` 确保单个 Subagent 失败不会阻断其他评审：
+- 成功的 Subagent 结果正常纳入合并管线
+- 失败的 Subagent 记录错误信息，在评审报告中标注对应 Layer 为"评审失败"
+- 如果所有 Subagent 均失败，评审终止并向用户报告
+
+**结果合并**：
+
+所有 Subagent 完成后，结果通过现有合并管线处理：
+1. `filterByConfidence` — 过滤置信度 < 0.8 的发现
+2. `deduplicateFindings` — 指纹去重（±3 行容差）
+3. `applyCrossValidation` — 跨评审者一致性验证（+0.10 置信度）
+
+三个评审者并行工作，各自输出独立的评审结果，通过合并管线汇总为统一的评审报告。
 
 ---
 
@@ -405,7 +416,7 @@ Scope Creep：无
          │
          ▼
   ┌─────────────────────────────────┐
-  │  Agent Team 并行评审             │
+  │  Subagent 并行评审               │
   │                                 │
   │  ┌───────────┐ ┌────────────┐ ┌──────────────┐
   │  │spec-check │ │quality-    │ │security-     │
@@ -417,7 +428,7 @@ Scope Creep：无
            │             │               │
            ▼             ▼               ▼
   ┌─────────────────────────────────┐
-  │  发现合并                        │
+  │  Promise.allSettled 合并         │
   │  1. 置信度过滤（< 0.8 过滤）    │
   │  2. 去重（指纹匹配 ±3 行）      │
   │  3. 跨评审者一致性（+0.10）     │
@@ -439,12 +450,6 @@ Scope Creep：无
        ▼     ▼
     🚫 阻断  ✅ 通过
     ship     可以 ship
-             │
-             ▼
-  ┌─────────────────────────────────┐
-  │  清理 Agent Team                │
-  │  关闭队友 → 清理团队资源        │
-  └─────────────────────────────────┘
 ```
 
 ### Step 0：前置检查
@@ -453,25 +458,17 @@ Scope Creep：无
 2. 检查是否有代码变更（build 阶段的产出）。
 3. 读取 `.forge/specs/` 中锁定的 Spec（作为评审基准）。
 
-### Step 1：启动 Agent Team
+### Step 1：启动 Subagent 并行评审
 
-使用第 2 节中的启动指令创建评审团队。根据路径和 Spec 情况选择三人或两人团队。三个评审者并行工作。
+使用第 2 节中的启动方式通过 Agent tool 并行启动评审 Subagent。根据路径和 Spec 情况选择三个或两个 Subagent。使用 `Promise.allSettled` 等待所有 Subagent 完成。
 
 ### Step 2：合并与质量门
 
-收集三个评审者的输出，执行发现合并管线（§7）：置信度过滤 → 去重 → 跨评审者一致性验证 → 报告质量门。
+收集所有 Subagent 的输出，执行发现合并管线（§7）：`filterByConfidence` → `deduplicateFindings` → `applyCrossValidation` → 报告质量门。
 
 ### Step 3：输出报告
 
 将评审报告写入 `.forge/reviews/<topic>.md`，并向用户展示摘要。
-
-### Step 4：清理团队
-
-评审报告输出后，清理 Agent Team 资源：
-
-1. 要求所有队友关闭：`Ask all teammates to shut down`
-2. 等待队友确认退出
-3. 清理团队：`Clean up the team`
 
 ---
 
@@ -479,33 +476,21 @@ Scope Creep：无
 
 ### 11.1 无 Spec（轻量路径）
 
-轻量路径没有锁定的 Spec。此时**不启动 spec-check agent**，仅运行 quality-check 和 security-check 两个评审者：
+轻量路径没有锁定的 Spec。此时**不启动 spec-check Subagent**，仅运行 quality-check 和 security-check 两个评审者：
 
 ```
-ℹ️ 轻量路径：未找到锁定的 Spec，跳过 spec-check agent。
+ℹ️ 轻量路径：未找到锁定的 Spec，跳过 spec-check Subagent。
 仅启动 quality-check + security-check 进行评审。
 ```
 
-**Agent Team 动态裁剪**：轻量路径下，review 的 Agent Team 配置自动裁剪为：
-
-```json
-{
-  "name": "review-light",
-  "members": [
-    {"name": "quality-check", "role": "代码质量", "agent": "quality-check"},
-    {"name": "security-check", "role": "安全与风险", "agent": "security-check"}
-  ]
-}
-```
-
-这避免了 spec-check agent 被加载但无 Spec 可对照的 token 浪费。评审报告中 Layer 1 章节标注"轻量路径，已跳过"。
+**轻量模式**：仅启动 2 个 Subagent（quality-check + security-check），避免 spec-check 被加载但无 Spec 可对照的 token 浪费。评审报告中 Layer 1 章节标注"轻量路径，已跳过"。
 
 ### 11.2 标准路径无 Spec
 
-标准路径下，如果 Plan 文档中标注了 `spec_ref: "none（基于用户需求描述）"`，说明用户选择了无 Spec 模式。此时 **spec-check agent 同样不启动**，行为与轻量路径一致：
+标准路径下，如果 Plan 文档中标注了 `spec_ref: "none（基于用户需求描述）"`，说明用户选择了无 Spec 模式。此时 **spec-check Subagent 同样不启动**，行为与轻量路径一致：
 
 ```
-ℹ️ 标准路径（无 Spec 模式）：Plan 标注 spec_ref: "none"，跳过 spec-check agent。
+ℹ️ 标准路径（无 Spec 模式）：Plan 标注 spec_ref: "none"，跳过 spec-check Subagent。
 仅启动 quality-check + security-check 进行评审。
 ```
 
@@ -533,17 +518,6 @@ Scope Creep：无
 
 ```
 ⚠️ 未检测到 .forge/ 目录。请先运行 forge init 初始化项目。
-```
-
-### 11.5 Agent Team 清理失败
-
-如果队友关闭超时或清理失败：
-
-```
-⚠️ Agent Team 清理未完成。部分队友可能仍在运行。
-如果后续需要创建新团队，请先手动清理：
-  tmux ls                          # 列出会话
-  tmux kill-session -t <session>   # 关闭残留会话
 ```
 
 ---
