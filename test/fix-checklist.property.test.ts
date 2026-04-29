@@ -11,7 +11,6 @@ import { describe, expect, it } from "vitest";
 
 import type { ChecklistEntry, ChecklistStatus } from "../src/fix-checklist.js";
 import {
-  allEntriesVerified,
   createChecklist,
   isValidTransition,
   parseChecklist,
@@ -20,7 +19,7 @@ import {
 } from "../src/fix-checklist.js";
 
 // Safe string: use fc.lorem for words, avoiding pipe chars
-const safeStr = (min: number, max: number) =>
+const _safeStr = (min: number, max: number) =>
   fc
     .lorem({ mode: "words", maxCount: Math.ceil(max / 5) })
     .filter((s) => s.length >= min && s.length <= max && !s.includes("|"));
@@ -114,6 +113,8 @@ describe("Feature: forge-review-fix-optimization, Property 18: Checklist round-t
             expect(parsed[i].status).toBe(entries[i].status);
             if (entries[i].fixCommit) {
               expect(parsed[i].fixCommit).toBe(entries[i].fixCommit);
+            } else {
+              expect(parsed[i].fixCommit).toBeUndefined();
             }
           }
         },

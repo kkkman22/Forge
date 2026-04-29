@@ -79,15 +79,19 @@ export function allEntriesVerified(entries: ChecklistEntry[]): boolean {
   return entries.length > 0 && entries.every((e) => e.status === "verified");
 }
 
-export function serializeChecklist(entries: ChecklistEntry[], topic: string): string {
+export function serializeChecklist(
+  entries: ChecklistEntry[],
+  topic: string,
+  createdAt?: string,
+): string {
   const p0Count = entries.filter((e) => e.severity === "P0").length;
   const p1Count = entries.filter((e) => e.severity === "P1").length;
   const allVerified = allEntriesVerified(entries);
 
   const lines: string[] = [
     "---",
-    `topic: "${topic}"`,
-    `created: "${new Date().toISOString().slice(0, 10)}"`,
+    `topic: "${topic.replace(/"/g, '\\"')}"`,
+    `created: "${createdAt ?? new Date().toISOString().slice(0, 10)}"`,
     `total_p0: ${p0Count}`,
     `total_p1: ${p1Count}`,
     `all_verified: ${allVerified}`,
@@ -120,13 +124,15 @@ export function parseChecklist(content: string): ChecklistEntry[] {
     if (m) {
       const lineNumber = Number.parseInt(m[4], 10);
       if (!Number.isFinite(lineNumber)) continue;
+      const status = m[6];
+      if (!(status in VALID_TRANSITIONS)) continue;
       entries.push({
         findingId: m[1],
         severity: m[2] as "P0" | "P1",
         filePath: m[3],
         lineNumber,
         description: m[5].replace(/&#124;/g, "|"),
-        status: m[6] as ChecklistStatus,
+        status: status as ChecklistStatus,
         fixCommit: m[7] === "—" ? undefined : m[7],
       });
     }

@@ -77,7 +77,8 @@ export function checkShipGate(
     if (review.p1Count > 0) {
       issues.push(`${review.p1Count} 个 P1`);
     }
-    const issueDetail = issues.length > 0 ? `（${issues.join("、")}）` : "";
+    const issueDetail =
+      issues.length > 0 ? `（${issues.join("、")}）` : "（passed=false 但无 P0/P1，数据不一致）";
     reasons.push(`Review 未通过：发现${issueDetail}问题，需要修复后重新评审`);
   }
 
