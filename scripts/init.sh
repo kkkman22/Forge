@@ -138,6 +138,15 @@ echo "    如果留空，将按 verify_commands 列表逐条执行。"
 echo ""
 read -rep "$(echo -e "${BLUE}?${NC}") CI 检查命令（留空跳过）: " ci_check_cmd
 
+# ---------- 输入清洗（防止 shell 注入） ----------
+# 移除换行符和 shell 元字符
+sanitize() {
+  printf '%s' "$1" | tr -d '\n\r' | sed 's/[`$|;&!\\]//g' | sed "s/['\"]//g"
+}
+project_name="$(sanitize "${project_name}")"
+tech_stack="$(sanitize "${tech_stack}")"
+ci_check_cmd="$(sanitize "${ci_check_cmd}")"
+
 echo ""
 success "配置确认："
 echo "  项目名称：${project_name}"
@@ -145,16 +154,6 @@ echo "  技术栈：  ${tech_stack}"
 echo "  安全级别：${security_label}（Level ${security_level}）"
 echo "  CI 检查命令：${ci_check_cmd:-（未配置，将使用 verify_commands）}"
 echo ""
-
-# ---------- 输入清洗（防止 shell 注入） ----------
-# 项目名称只允许字母、数字、连字符、下划线、点、空格和非 ASCII 字符（中文等）
-# 移除 $()、``、|、;、& 等 shell 元字符
-sanitize() {
-  printf '%s' "$1" | sed 's/[`$|;&!\\]//g' | sed "s/['\"]//g"
-}
-project_name="$(sanitize "${project_name}")"
-tech_stack="$(sanitize "${tech_stack}")"
-ci_check_cmd="$(sanitize "${ci_check_cmd}")"
 
 if [[ -z "${project_name}" ]]; then
   error "项目名称清洗后为空，请使用合法字符（字母、数字、连字符、下划线）。"
