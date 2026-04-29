@@ -185,6 +185,11 @@ status: "confirmed"
 | 视角 Subagent 输出 | Subagent_Summary_Protocol：Round 2 输入时只使用摘要，≤200 tokens/视角 |
 | 最终决策文档 | Write-and-discard：完整决策写入 `.forge/decisions/<topic>.md`，context 中只保留决策结论 |
 
+**函数调用**：`serializeSubagentSummary(summary)`
+- 参数：`summary` — 视角 Subagent 原始返回值（需解析为 `SubagentSummary` 类型）
+- 返回：摘要字符串（≤200 tokens）
+- 用途：Round 1 视角输出完成后调用此函数生成摘要，Round 2 输入时使用摘要替代原始输出，控制 context 增长
+
 ---
 
 ## 7. 边界情况处理
