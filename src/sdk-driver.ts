@@ -28,6 +28,7 @@ import {
   formatPerformanceBaseline,
   type IterationTiming,
   type LogSinkConfig,
+  type PerformanceBaseline,
 } from "./logger/index.js";
 import type {
   AgentInterface,
@@ -383,6 +384,7 @@ export class SdkDriver {
       return this.buildResult();
     } finally {
       // Output performance baseline (Req 5.1–5.4).
+      // Computed once and reused in formatCompletionSummary (Req 5.2).
       const baseline = computePerformanceBaseline(this.iterationTimings);
       this.logger.log(
         createLogEntry(
@@ -400,7 +402,7 @@ export class SdkDriver {
       // Placed in finally block so it runs on both normal and abnormal exits.
       if (this.config.skillAware) {
         try {
-          const summary = this.formatCompletionSummary();
+          const summary = this.formatCompletionSummary(baseline);
           this.logger.log(
             createLogEntry("completion_summary", "info", summary, { runId: this.config.runId }),
           );
@@ -1344,7 +1346,7 @@ export class SdkDriver {
    *
    * **Validates: Requirements 9.1, 9.2, 9.3, 9.4, 9.5**
    */
-  formatCompletionSummary(): string {
+  formatCompletionSummary(baseline: PerformanceBaseline): string {
     const state = this.orchestratorState;
     const lines: string[] = [];
 
@@ -1402,7 +1404,6 @@ export class SdkDriver {
     }
 
     // Append performance baseline (Req 5.2).
-    const baseline = computePerformanceBaseline(this.iterationTimings);
     lines.push("");
     lines.push(formatPerformanceBaseline(baseline));
 

@@ -39,8 +39,8 @@ export function computePerformanceBaseline(timings: IterationTiming[]): Performa
       timings[0].iterationStartMs,
     iterationCount: timings.length,
     avgIterationMs: sum(durations) / durations.length,
-    maxIterationMs: Math.max(...durations),
-    minIterationMs: Math.min(...durations),
+    maxIterationMs: durations.reduce((a, b) => Math.max(a, b), -Infinity),
+    minIterationMs: durations.reduce((a, b) => Math.min(a, b), Infinity),
     avgAgentCallMs: sum(agentDurations) / agentDurations.length,
   };
 }
