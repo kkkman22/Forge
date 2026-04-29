@@ -41,17 +41,11 @@ disable-model-invocation: true
 确认中止？(y/n)
 ```
 
-**如果没有进行中的任务**（status.md 的 current_task 为空）：
-
-```
-ℹ️ 当前没有进行中的任务，无需中止。
-```
+如果没有进行中的任务：`ℹ️ 当前没有进行中的任务，无需中止。`
 
 ### Step 2：归档状态文件
 
-将当前任务相关的状态文件移动到 `.forge/archive/<date>-<topic>/`：
-
-归档范围：
+将当前任务相关的状态文件移动到 `.forge/archive/YYYY-MM-DD-<topic>/`：
 
 | 来源 | 归档条件 |
 |------|---------|
@@ -63,13 +57,9 @@ disable-model-invocation: true
 | `.forge/reviews/<topic>*` | 如果存在 |
 | `.forge/debug/<topic>*` | 如果存在 |
 
-**归档目录命名**：`.forge/archive/YYYY-MM-DD-<topic>/`
-
-**归档方式**：移动（不是复制）。归档后原位置不再保留这些文件。
+归档方式：移动（不是复制）。
 
 ### Step 3：重置 status.md
-
-将 `.forge/status.md` 重置为初始状态：
 
 ```yaml
 ---
@@ -99,38 +89,17 @@ status.md 已重置。你可以使用 /forge 开始新任务。
 
 ## 3. 边界情况处理
 
-### 3.1 无 `.forge/` 目录
-
-```
-⚠️ 未检测到 .forge/ 目录。请先运行 forge init 初始化项目。
-```
-
-### 3.2 无进行中的任务
-
-```
-ℹ️ 当前没有进行中的任务，无需中止。
-```
-
-### 3.3 用户取消中止
-
-用户回复 `n` 时：
-
-```
-ℹ️ 已取消中止。当前任务继续。
-```
-
-### 3.4 归档目录已存在
-
-如果 `.forge/archive/YYYY-MM-DD-<topic>/` 已存在（同一天中止过同名任务），追加序号：
-
-```
-.forge/archive/YYYY-MM-DD-<topic>-2/
-```
+| 条件 | 处理 |
+|------|------|
+| 无 `.forge/` 目录 | ⚠️ 请先运行 forge init |
+| 无进行中的任务 | ℹ️ 当前没有进行中的任务，无需中止 |
+| 用户取消中止 | ℹ️ 已取消中止。当前任务继续 |
+| 归档目录已存在 | 追加序号：`.forge/archive/YYYY-MM-DD-<topic>-2/` |
 
 ---
 
 ## 4. 注意事项
 
-- **abort 不会撤销代码变更**。如果 build 阶段已经修改了项目代码并提交了 commit，这些 commit 不会被回滚。abort 只清理 `.forge/` 状态文件。
-- **abort 不会删除知识**。`.forge/knowledge/` 目录不受 abort 影响——已沉淀的知识是项目资产，不随任务中止而丢失。
-- **归档文件可以手动恢复**。如果中止后发现需要恢复，从 `.forge/archive/` 手动移回即可。
+- **abort 不会撤销代码变更**。已提交的 commit 不会被回滚。abort 只清理 `.forge/` 状态文件。
+- **abort 不会删除知识**。`.forge/knowledge/` 目录不受影响——已沉淀的知识是项目资产。
+- **归档文件可以手动恢复**。从 `.forge/archive/` 手动移回即可。

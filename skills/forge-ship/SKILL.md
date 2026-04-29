@@ -18,11 +18,7 @@ disable-model-invocation: true
 
 **核心原则**：交付是一个有意识的决定，不是流程的自动终点。每一次 ship 都需要开发者明确选择交付方式，丢弃操作需要二次确认。
 
-**伪成功禁令**：Ship 阶段绝不允许以下行为：
-- 门禁检查失败时吞掉错误继续交付
-- 用模板化的"通过"结果替代实际检查
-- 在测试未运行时声称"测试通过"
-- 在 Review 报告不存在时声称"评审通过"
+**伪成功禁令**：Ship 阶段绝不允许：门禁失败时吞掉错误继续交付、用模板化"通过"替代实际检查、测试未运行时声称"测试通过"、Review 报告不存在时声称"评审通过"。
 
 ---
 
@@ -33,20 +29,18 @@ disable-model-invocation: true
 | 门禁 | 检查内容 | 数据来源 | 阻断条件 |
 |------|---------|---------|---------|
 | **Review 门禁** | 评审是否通过（无 P0/P1） | `.forge/reviews/<topic>.md` | `result` 不是 `"pass"` 或 `p0_count > 0` 或 `p1_count > 0` |
-| **Test 门禁** | 测试是否通过 | Layer 1 + Layer 3 验证结果；若 `ci_check_command` 已配置，验证 CI 命令已执行并通过 | 测试未运行或有失败项；若 `ci_check_command` 已配置但仅运行了部分命令，标记为门禁警告 |
+| **Test 门禁** | 测试是否通过 | Layer 1 + Layer 3 验证结果；若 `ci_check_command` 已配置，验证 CI 命令已执行并通过 | 测试未运行或有失败项 |
 | **Progress 门禁** | 所有任务是否完成 | `.forge/progress/<topic>.md` | 存在未标记完成的任务 |
 
-**三道门禁必须同时通过**。任一不通过，阻断 ship 并输出具体原因。
+**三道门禁必须同时通过**。任一不通过，阻断 ship。
 
 **门禁证据格式**：
-
-每道门禁的检查结果必须附带实际证据，不接受"看起来通过了"的声明：
 
 ```
 🔍 门禁检查（P5 证据链）
 
 [Check]  Review 门禁 — 读取 .forge/reviews/order-batch-export.md
-[Evidence] result: "pass", p0_count: 0, p1_count: 0, p2_count: 1
+[Evidence] result: "pass", p0_count: 0, p1_count: 0
 [Claim]  ✅ Review 通过（0 P0, 0 P1, 1 P2, 0 P3）
 
 [Check]  Test 门禁 — 运行 npx vitest run
@@ -58,155 +52,15 @@ disable-model-invocation: true
 [Claim]  ✅ Progress 完成（5/5 任务完成）
 ```
 
-```
-🚫 Ship 阻断
+**CI 命令一致性检查**：如果 `ci_check_command` 已配置但 test 阶段只运行了单独命令（未运行完整 CI 命令），输出警告。不阻断 ship 但强烈建议重新运行。
 
-❌ Review 未通过：发现 1 个 P0 和 2 个 P1 问题，需要修复后重新评审
-❌ Test 未通过：类型检查有 3 个错误
-✅ Progress 已完成：5/5 任务完成
-
-请按提示修复问题后重新运行 /forge ship。
-```
-
-**CI 命令一致性检查**：
-
-如果 `.forge/config.md` 中 `ci_check_command` 非空，但 `/forge test` 阶段只运行了单独的验证命令（未运行完整的 CI 命令），Ship 门禁输出警告：
-
-```
-⚠️ CI 命令一致性警告
-
-ci_check_command 已配置为 "npm run check"，但 test 阶段未运行该命令。
-建议重新运行 /forge test 以确保使用完整的 CI 检查命令。
-```
-
-此警告不阻断 ship（因为单独命令可能已覆盖相同检查），但强烈建议重新运行。
-
-**全部通过**：
-
-```
-✅ 门禁检查通过
-
-✅ Review：通过（0 P0, 0 P1, 1 P2, 0 P3）
-✅ Test：通过（42/42 测试通过，清单 7/7）
-✅ Progress：5/5 任务完成
-
-请选择交付方式：
-```
+**全部通过**后进入交付选项选择。
 
 ---
 
 ## 3. 四选项交付
 
 门禁检查全部通过后，提供四种交付选项：
-
-### 选项 1：合并到主分支
-
-**操作**：通过 `ship_merge` 效果执行，经过 `git-transaction.ts` 安全管道。
-
-```
-OrchestratorEffect: { type: "ship_merge", targetBranch: "main", featureBranch: "<branch>" }
-→ buildCheckoutCommand("main")        → execFileSync
-→ buildMergeCommand(branch, true)     → execFileSync
-→ buildBranchDeleteCommand(branch, false) → execFileSync
-```
-
-**错误恢复**：merge 失败时自动执行 `merge --abort`，恢复到 merge 前状态。
-
-**适用场景**：个人项目、小团队直接合并。
-
-**输出**：
-
-```
-✅ 已合并到 main 分支
-  合并提交：abc1234
-  已删除分支：feature/order-batch-export
-```
-
-### 选项 2：推送并创建 PR
-
-**操作**：通过 `ship_push_pr` 效果执行，经过 `git-transaction.ts` 安全管道。
-
-```
-OrchestratorEffect: { type: "ship_push_pr", remote: "origin", branch: "<branch>", title, body }
-→ buildPushCommand("origin", branch, true) → execFileSync
-→ gh pr create --title ... --body ...       → execFileSync
-```
-
-**错误恢复**：push 失败时阻断，不创建 PR；PR 创建失败时保留 push 结果并输出警告。
-
-**适用场景**：团队协作、需要 Code Review 的项目。
-
-**PR 描述自动生成**：
-
-- 标题：从 plan 的 Objective 提取
-- 描述：包含变更摘要、测试结果、评审结果
-
-**输出**：
-
-```
-✅ 已推送并创建 PR
-  分支：feature/order-batch-export
-  PR：#42 — 实现订单批量导出功能
-  URL：https://github.com/org/repo/pull/42
-```
-
-### 选项 3：保留分支
-
-**操作**：不做任何 Git 操作，保留当前分支状态。
-
-**适用场景**：稍后处理、等待其他依赖、需要进一步讨论。
-
-**输出**：
-
-```
-✅ 分支已保留：feature/order-batch-export
-  当前状态：所有门禁通过，随时可以交付
-  稍后可重新运行 /forge ship 选择其他交付方式
-```
-
-### 选项 4：丢弃
-
-**操作**：丢弃当前分支的所有变更。**需要二次确认**。
-
-**二次确认流程**：
-
-```
-⚠️ 丢弃操作将删除当前分支的所有变更，此操作不可逆。
-
-请输入 "discard" 确认丢弃：
-```
-
-- 用户输入 `discard` → 执行丢弃
-- 用户输入其他内容 → 取消丢弃
-
-**执行丢弃**：
-
-通过 `ship_discard` 效果执行，经过 `git-transaction.ts` 安全管道。
-
-```
-OrchestratorEffect: { type: "ship_discard", branch: "<branch>" }
-→ buildCheckoutCommand("main")          → execFileSync
-→ buildBranchDeleteCommand(branch, true) → execFileSync
-```
-
-**输出**：
-
-```
-✅ 已丢弃分支：feature/order-batch-export
-  所有变更已删除
-```
-
-**取消丢弃**：
-
-```
-ℹ️ 丢弃已取消。分支保留：feature/order-batch-export
-```
-
----
-
-## 4. 交付选项展示
-
-门禁通过后，向用户展示四个选项：
 
 ```
 请选择交付方式：
@@ -219,186 +73,81 @@ OrchestratorEffect: { type: "ship_discard", branch: "<branch>" }
 请输入选项编号（1-4）：
 ```
 
----
+### 选项 1：合并到主分支
 
-## 5. 收尾
+通过 `ship_merge` 效果执行：checkout main → merge branch → delete branch。Merge 失败时自动执行 `merge --abort` 恢复。适用场景：个人项目、小团队直接合并。
 
-### 5.1 Worktree 清理
+### 选项 2：推送并创建 PR
 
-如果全量路径使用了 Git Worktree，在交付完成后清理：
+通过 `ship_push_pr` 效果执行：push origin → gh pr create。Push 失败时不创建 PR。适用场景：团队协作。PR 描述自动从 plan Objective 提取。
 
-```bash
-git worktree prune
-```
+### 选项 3：保留分支
 
-**输出**：
+不做任何 Git 操作，保留当前分支状态。适用场景：稍后处理、等待依赖。可随时重新运行 `/forge ship` 选择其他方式。
 
-```
-🧹 已清理 Git Worktree
-```
+### 选项 4：丢弃
 
-### 5.2 提示 `/forge learn`
-
-交付完成后（无论选择哪个选项，丢弃除外），提示执行知识沉淀：
-
-```
-💡 本次开发有值得沉淀的经验吗？（输入 /forge learn 或跳过）
-```
-
-**触发说明**：用户输入 `/forge learn` 后，`/forge` 命令的子命令分发层会直接调用 `forge-learn` skill，不经过路由器。
-
-**Mode 判断**：如果 `.forge/status.md` 中 `mode` 为 `autonomous`，跳过此提示（autonomous 模式下 learn 阶段由 Skill Scheduler 按 tier=full 自动调度）。
-
-> 此提示不阻塞工作流完成——它是在交付流程正式结束后的附加建议，用户说"不用"或不响应时立即跳过。
+丢弃当前分支的所有变更。**需要二次确认**：用户输入 `discard` 才执行，输入其他内容则取消。通过 `ship_discard` 效果执行：checkout main → delete branch。
 
 ---
 
-## 6. Autonomous 模式配置
+## 4. 收尾
+
+### 4.1 Worktree 清理
+
+如果全量路径使用了 Git Worktree，在交付完成后清理：`git worktree prune`
+
+### 4.2 提示 `/forge learn`
+
+交付完成后（丢弃除外），提示执行知识沉淀：`💡 本次开发有值得沉淀的经验吗？（输入 /forge learn 或跳过）`
+
+**Mode 判断**：如果 `mode` 为 `autonomous`，跳过此提示（autonomous 模式下 learn 由 Skill Scheduler 按 tier=full 自动调度）。
+
+> 此提示不阻塞工作流完成——用户说"不用"或不响应时立即跳过。
+
+---
+
+## 5. Autonomous 模式配置
 
 在 `.forge/config.md` frontmatter 中可配置 `ship_default_method` 控制自主模式的交付行为：
-
-```yaml
----
-project: "MyProject"
-ship_default_method: "push-pr"
----
-```
-
-**有效值**：
 
 | 值 | 行为 |
 |----|------|
 | `merge` | 自动合并到主分支 |
 | `push-pr` | 自动推送并创建 PR |
-| `keep-branch` | 保留分支（默认值，向后兼容） |
+| `keep-branch` | 保留分支（默认值） |
 | `prompt` | 覆盖 autonomous 行为，强制等待用户选择 |
 
-**配置解析**：通过 `parseShipDefaultMethod()` 纯函数解析，无效值安全回退到 `keep-branch` 并输出警告。
+无效值安全回退到 `keep-branch` 并输出警告。
 
 ---
 
-## 7. 执行流程
+## 6. 执行流程
 
-### 完整流程图
-
-```
-用户输入 /forge ship
-        │
-        ▼
-  ┌─────────────────────┐
-  │  门禁检查（三道）   │
-  │                     │
-  │  Review 通过？      │
-  │  Test 通过？        │
-  │  Progress 完成？    │
-  └──────────┬──────────┘
-        通过 │     │ 未通过
-             │     ▼
-             │   🚫 阻断，列出未通过项
-             ▼
-  ┌─────────────────────┐
-  │  展示四个交付选项   │
-  └──────────┬──────────┘
-             │
-    ┌────────┼────────┬────────┐
-    │        │        │        │
-    ▼        ▼        ▼        ▼
-  合并     推送+PR   保留     丢弃
-  到 main            分支     ↓
-    │        │        │     二次确认？
-    │        │        │     ┌──┴──┐
-    │        │        │   是│     │否
-    │        │        │     ▼    ▼
-    │        │        │   删除  取消
-    │        │        │   分支
-    ▼        ▼        ▼     ▼
-  ┌─────────────────────┐
-  │  清理 Worktree      │
-  │  提示 /forge learn  │
-  └─────────────────────┘
-```
+1. 门禁检查（三道）：Review 通过？Test 通过？Progress 完成？
+2. 未通过 → 🚫 阻断，列出未通过项
+3. 通过 → 展示四个交付选项
+4. 执行选择的交付方式
+5. 清理 Worktree + 提示 `/forge learn`
 
 ---
 
-## 8. 边界情况处理
+## 7. 边界情况处理
 
-### 7.1 Review 未执行
-
-如果 `.forge/reviews/<topic>.md` 不存在，说明 review 未执行：
-
-```
-🚫 Ship 阻断：评审未执行
-
-未找到评审报告。请先运行 /forge review 完成评审。
-```
-
-### 7.2 Test 未执行
-
-如果测试未在本次会话中运行过：
-
-```
-🚫 Ship 阻断：测试未执行
-
-测试未在本次会话中运行。请先运行 /forge test 完成验证。
-```
-
-### 7.3 Progress 部分完成
-
-如果有未完成的任务：
-
-```
-🚫 Ship 阻断：任务未全部完成
-
-以下任务尚未完成：
-  - [ ] Task 4：添加导出 API 路由
-  - [ ] Task 5：实现下载链接过期逻辑
-
-请完成所有任务后重新运行 /forge ship。
-```
-
-### 7.4 Git 操作失败
-
-如果 Git 操作（push、merge、PR 创建）失败：
-
-```
-⚠️ Git 操作失败：<错误信息>
-
-可能原因：
-1. 远程仓库不可达（网络问题）
-2. 权限不足
-3. 分支冲突
-
-请检查 Git 配置后重试，或选择其他交付方式。
-```
-
-### 7.5 gh CLI 未安装
-
-如果选择"推送并创建 PR"但 `gh` CLI 未安装：
-
-```
-⚠️ 未检测到 gh CLI。创建 PR 需要 GitHub CLI。
-
-安装方式：
-  macOS: brew install gh
-  Linux: sudo apt install gh
-  Windows: winget install GitHub.cli
-
-或者选择选项 1（本地合并）或选项 3（保留分支后手动创建 PR）。
-```
-
-### 7.6 无 `.forge/` 目录
-
-提示先运行初始化：
-
-```
-⚠️ 未检测到 .forge/ 目录。请先运行 forge init 初始化项目。
-```
+| 条件 | 处理 |
+|------|------|
+| Review 未执行 | 🚫 Ship 阻断：评审未执行。请先运行 /forge review |
+| Test 未执行 | 🚫 Ship 阻断：测试未执行。请先运行 /forge test |
+| Progress 部分完成 | 🚫 Ship 阻断：列出未完成任务 |
+| Git 操作失败 | ⚠️ 列出可能原因（网络/权限/冲突），建议检查或选其他方式 |
+| gh CLI 未安装 | ⚠️ 提示安装方式，建议选其他选项 |
+| 无 `.forge/` 目录 | ⚠️ 请先运行 forge init |
 
 ---
 
-## 9. 示例
+## 8. 示例
 
-### 示例 1：门禁通过，选择创建 PR
+### 示例：门禁通过，选择创建 PR
 
 ```
 $ /forge ship
@@ -409,18 +158,10 @@ $ /forge ship
 ✅ Progress：5/5 任务完成
 
 请选择交付方式：
-  1. 合并到主分支
-  2. 推送并创建 PR
-  3. 保留分支
-  4. 丢弃
-
 > 2
 
 📤 推送分支...
-  git push -u origin feature/order-batch-export
-
 📝 创建 PR...
-  gh pr create --title "feat: 实现订单批量导出功能" --body "..."
 
 ✅ 已推送并创建 PR
   PR：#42 — feat: 实现订单批量导出功能
@@ -430,40 +171,6 @@ $ /forge ship
 💡 本次开发有值得沉淀的经验吗？（输入 /forge learn 或跳过）
 ```
 
-### 示例 2：门禁未通过
-
-```
-$ /forge ship
-
-🔍 门禁检查...
-❌ Review：未通过（1 P0, 0 P1）
-✅ Test：通过
-✅ Progress：5/5 任务完成
-
-🚫 Ship 阻断
-
-Review 中存在 P0 问题：
-  1. [security-check] src/config/db.ts：硬编码数据库密码
-
-请修复后运行 /forge review 重新评审，然后重新运行 /forge ship。
-```
-
-### 示例 3：丢弃操作
-
-```
-$ /forge ship
-
-🔍 门禁检查...
-✅ 全部通过
-
-请选择交付方式：
-> 4
-
-⚠️ 丢弃操作将删除当前分支的所有变更，此操作不可逆。
-请输入 "discard" 确认丢弃：
-
-> discard
-
-✅ 已丢弃分支：feature/order-batch-export
-  所有变更已删除
-```
+**其他场景变体**：
+- **门禁未通过**：报告具体未通过项（如 P0 问题），提示修复后重新 review + ship
+- **丢弃操作**：需输入 "discard" 确认，执行后所有变更已删除
