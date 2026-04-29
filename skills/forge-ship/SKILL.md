@@ -245,6 +245,8 @@ git worktree prune
 💡 本次开发有值得沉淀的经验吗？（输入 /forge learn 或跳过）
 ```
 
+**触发说明**：用户输入 `/forge learn` 后，`/forge` 命令的子命令分发层会直接调用 `forge-learn` skill，不经过路由器。
+
 **Mode 判断**：如果 `.forge/status.md` 中 `mode` 为 `autonomous`，跳过此提示（autonomous 模式下 learn 阶段由 Skill Scheduler 按 tier=full 自动调度）。
 
 > 此提示不阻塞工作流完成——它是在交付流程正式结束后的附加建议，用户说"不用"或不响应时立即跳过。

@@ -15,3 +15,9 @@ export { SdkDriver, type SdkDriverConfig, type SdkDriverResult } from "./sdk-dri
 export { SdkAgentAdapter, type SdkAgentAdapterConfig } from "./sdk-agent-adapter.js";
 export type { GateResult } from "./quality-gate.js";
 export { evaluateReviewGate, evaluateShipGate, evaluateTestGate } from "./quality-gate.js";
+export type { AtomicTask, DesignReferenceEntry, DesignReferenceValidation, LightweightTask, PlanFormat, TDDSteps, } from "./plan.js";
+export { detectPlanFormat, extractHeadingAnchors, FORBIDDEN_PLACEHOLDERS, scanForPlaceholders, validateAtomicTask, validateDependencies, validateDesignReferences, validateLightweightPlan, validateLightweightTask, validatePlan, validatePlanTasks, validateSpecLocked, } from "./plan.js";
+export type { ClassificationEntry, ContextBudgetReport, ExploreSummary, GitDiffSummary, GitStatusSummary, InformationLifecycle, ReviewSummary, SubagentSummary, TestOutputSummary, } from "./context-budget.js";
+export { CLASSIFICATION_MAP, canParseTestOutput, classifySource, deserializeContextBudgetReport, deserializeExploreSummary, deserializeGitDiff, deserializeGitStatus, deserializeReviewSummary, deserializeSubagentSummary, deserializeTestOutput, serializeContextBudgetReport, serializeExploreResult, serializeExploreSummary, serializeGitDiff, serializeGitStatus, serializeReviewSummary, serializeSubagentSummary, serializeTestOutput, } from "./context-budget.js";
+export type { SubagentInvocation, SubagentResult, ParallelExecutionResult, } from "./loop-types.js";
+export { buildSubagentInvocations, runSubagentsInParallel, } from "./subagent-runner.js";

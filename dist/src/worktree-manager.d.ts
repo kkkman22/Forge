@@ -9,6 +9,7 @@
  * Design reference: gnhf-inspired-enhancements § worktree-manager.ts
  * **Validates: Requirements 7.1–7.7**
  */
+import type { ShipDeliveryOption } from "./execution-mode.js";
 import type { WorktreeDecision } from "./loop-types.js";
 /**
  * Compute the root directory that holds all worktrees for a given repo.
@@ -38,15 +39,21 @@ export declare function computeWorktreePath(repoRoot: string, slug: string): str
 /**
  * Decide whether to preserve or remove a worktree after a run completes.
  *
- * - **commitCount > 0**: preserve the worktree so the developer can review
- *   and merge the changes.
- * - **commitCount === 0**: remove the worktree since no useful work was
- *   produced.
+ * When `shipOption` is provided, the decision accounts for the Ship delivery
+ * option to avoid duplicate branch operations:
+ * - **merge/discard**: Ship already deleted the branch; remove worktree only.
+ * - **push-pr/keep-branch**: Branch is still in use; preserve worktree.
+ *
+ * When `shipOption` is undefined (non-Ship context), falls back to the
+ * original commitCount-based logic:
+ * - **commitCount > 0**: preserve the worktree for review and merge.
+ * - **commitCount === 0**: remove the worktree to free resources.
  *
  * @param commitCount  Number of commits made during the run.
+ * @param shipOption   Optional Ship delivery option for coordination.
  * @returns A {@link WorktreeDecision} describing the action and reason.
  */
-export declare function decideWorktreeCleanup(commitCount: number): WorktreeDecision;
+export declare function decideWorktreeCleanup(commitCount: number, shipOption?: ShipDeliveryOption): WorktreeDecision;
 /**
  * Check whether a new worktree can be created given the current active count.
  *

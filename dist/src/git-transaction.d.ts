@@ -14,6 +14,16 @@
  */
 import type { GitCommand } from "./loop-types.js";
 /**
+ * Thrown when a branch name fails validation for Ship delivery operations.
+ *
+ * This indicates a bug in the caller — branch names should be sanitized
+ * at creation time and never contain illegal characters at delivery time.
+ */
+export declare class BranchValidationError extends Error {
+    readonly code: "BRANCH_VALIDATION_ERROR";
+    constructor(message: string);
+}
+/**
  * Check whether a string contains shell metacharacters.
  *
  * This is a detection-only function — it does **not** sanitize. Use it to
@@ -37,6 +47,23 @@ export declare function containsShellMetacharacters(input: string): boolean;
  * @returns A cleaned branch name safe for Git.
  */
 export declare function sanitizeBranchName(input: string): string;
+/**
+ * Validate a branch name for Ship delivery operations.
+ *
+ * Unlike `sanitizeBranchName()` which silently cleans, this function **rejects**
+ * invalid names by throwing. Delivery operations should not silently modify
+ * branch names — if a name is invalid at this stage, it indicates a bug
+ * elsewhere (branch was supposed to be sanitized at creation time).
+ *
+ * Rejects names containing:
+ * - Shell metacharacters (backticks, `$(…)`, `"`, `;`, `|`, `&`, `<`, `>`, newlines)
+ * - Git-illegal characters (anything outside `[a-zA-Z0-9\-_./]`)
+ * - Empty strings
+ *
+ * @param branch  The branch name to validate.
+ * @throws {ForgeError} If the branch name contains illegal characters.
+ */
+export declare function validateBranchName(branch: string): void;
 /**
  * Generate a unique branch name by appending a deduplication suffix when
  * the base name collides with an existing branch.
@@ -136,3 +163,44 @@ export declare function buildStashRefCommand(): GitCommand;
  * @returns A {@link GitCommand} for dry-run cleaning of untracked files.
  */
 export declare function buildCleanDryRunCommand(): GitCommand;
+/**
+ * Build a `git checkout <branch>` command.
+ *
+ * @param branch  The branch to check out. Validated for safety.
+ * @returns A {@link GitCommand} for switching branches.
+ */
+export declare function buildCheckoutCommand(branch: string): GitCommand;
+/**
+ * Build a `git merge [--no-ff] <branch>` command.
+ *
+ * @param branch  The branch to merge. Validated for safety.
+ * @param noFf    Whether to use `--no-ff` (no fast-forward).
+ * @returns A {@link GitCommand} for merging a branch.
+ */
+export declare function buildMergeCommand(branch: string, noFf: boolean): GitCommand;
+/**
+ * Build a `git branch -d|-D <branch>` command.
+ *
+ * @param branch  The branch to delete. Validated for safety.
+ * @param force   `true` for force-delete (`-D`), `false` for safe delete (`-d`).
+ * @returns A {@link GitCommand} for deleting a branch.
+ */
+export declare function buildBranchDeleteCommand(branch: string, force: boolean): GitCommand;
+/**
+ * Build a `git push [-u] <remote> <branch>` command.
+ *
+ * @param remote       The remote to push to. Checked for shell metacharacters.
+ * @param branch       The branch to push. Validated for safety.
+ * @param setUpstream  Whether to set the upstream tracking branch (`-u`).
+ * @returns A {@link GitCommand} for pushing to a remote.
+ */
+export declare function buildPushCommand(remote: string, branch: string, setUpstream: boolean): GitCommand;
+/**
+ * Build a `git merge --abort` command.
+ *
+ * Used for error recovery when a merge fails (e.g. due to conflicts).
+ * Restores the working directory to the pre-merge state.
+ *
+ * @returns A {@link GitCommand} for aborting an in-progress merge.
+ */
+export declare function buildMergeAbortCommand(): GitCommand;

@@ -16,7 +16,7 @@
  */
 import * as fc from "fast-check";
 import { describe, expect, it } from "vitest";
-import { buildDefaultConfig, extractConfigLang, writeConfigLang } from "../src/config-store.js";
+import { buildDefaultConfig, extractConfigLang, mergeLogConfig, parseLogConfig, writeConfigLang, } from "../src/config-store.js";
 import { extractStringField, parseFrontmatter } from "../src/frontmatter.js";
 // ---------------------------------------------------------------------------
 // Generators
@@ -186,9 +186,7 @@ const validLogLevelArb = fc.constantFrom("debug", "info", "warn", "error");
  * Generate a simple log file path (non-empty, no newlines, no quotes, no ---).
  * Constrained to realistic file path characters.
  */
-const logFilePathArb = fc
-    .stringMatching(/^[a-zA-Z0-9_/.\-]{1,40}$/)
-    .filter((s) => s.length > 0);
+const logFilePathArb = fc.stringMatching(/^[a-zA-Z0-9_/.-]{1,40}$/).filter((s) => s.length > 0);
 /**
  * Build a frontmatter string containing log config fields.
  * Additional non-log fields can be included to test field isolation.
@@ -228,10 +226,7 @@ const invalidLogLevelArb = fc
     .string({ minLength: 1, maxLength: 20 })
     .filter((s) => s.trim().length > 0)
     .filter((s) => !s.includes("\n") && !s.includes("---") && !s.includes('"'))
-    .filter((s) => s.trim() !== "debug" &&
-    s.trim() !== "info" &&
-    s.trim() !== "warn" &&
-    s.trim() !== "error")
+    .filter((s) => s.trim() !== "debug" && s.trim() !== "info" && s.trim() !== "warn" && s.trim() !== "error")
     .map((s) => s.trim());
 // ---------------------------------------------------------------------------
 // Feature: observability-enhancements, Property 4: 配置解析正确性

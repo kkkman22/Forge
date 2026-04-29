@@ -18,7 +18,7 @@ export { applyFailure, applySuccess, calculateBackoffMs, createInitialFailureSta
 // ---------------------------------------------------------------------------
 // 3. Git transaction
 // ---------------------------------------------------------------------------
-export { buildAddAllCommand, buildCleanCommand, buildCommitCommand, buildResetCommand, buildStashCommand, containsShellMetacharacters, sanitizeBranchName, validatePathSafety, } from "./git-transaction.js";
+export { BranchValidationError, buildAddAllCommand, buildBranchDeleteCommand, buildCheckoutCommand, buildCleanCommand, buildCommitCommand, buildMergeAbortCommand, buildMergeCommand, buildPushCommand, buildResetCommand, buildStashCommand, containsShellMetacharacters, sanitizeBranchName, validateBranchName, validatePathSafety, } from "./git-transaction.js";
 // ---------------------------------------------------------------------------
 // 4. Context accumulator
 // ---------------------------------------------------------------------------
