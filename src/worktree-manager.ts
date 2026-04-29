@@ -87,15 +87,46 @@ export function computeWorktreePath(repoRoot: string, slug: string): string {
 /**
  * Decide whether to preserve or remove a worktree after a run completes.
  *
- * - **commitCount > 0**: preserve the worktree so the developer can review
- *   and merge the changes.
- * - **commitCount === 0**: remove the worktree since no useful work was
- *   produced.
+ * When `shipOption` is provided, the decision accounts for the Ship delivery
+ * option to avoid duplicate branch operations:
+ * - **merge/discard**: Ship already deleted the branch; remove worktree only.
+ * - **push-pr/keep-branch**: Branch is still in use; preserve worktree.
+ *
+ * When `shipOption` is undefined (non-Ship context), falls back to the
+ * original commitCount-based logic:
+ * - **commitCount > 0**: preserve the worktree for review and merge.
+ * - **commitCount === 0**: remove the worktree to free resources.
  *
  * @param commitCount  Number of commits made during the run.
+ * @param shipOption   Optional Ship delivery option for coordination.
  * @returns A {@link WorktreeDecision} describing the action and reason.
  */
-export function decideWorktreeCleanup(commitCount: number): WorktreeDecision {
+export function decideWorktreeCleanup(
+  commitCount: number,
+  shipOption?: "merge" | "push-pr" | "keep-branch" | "discard",
+): WorktreeDecision {
+  if (shipOption === "merge") {
+    return {
+      action: "remove",
+      reason: "Ship merged and deleted branch; removing worktree only",
+    };
+  }
+
+  if (shipOption === "discard") {
+    return {
+      action: "remove",
+      reason: "Ship discarded branch; removing worktree only",
+    };
+  }
+
+  if (shipOption === "push-pr" || shipOption === "keep-branch") {
+    return {
+      action: "preserve",
+      reason: "Branch still in use (pushed/kept); preserving worktree",
+    };
+  }
+
+  // Original logic for non-Ship context
   if (commitCount > 0) {
     return {
       action: "preserve",
