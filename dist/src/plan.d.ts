@@ -4,7 +4,10 @@
  * Implements Plan task validation:
  *   - validateAtomicTask:  Validates a single atomic task has all required fields
  *   - scanForPlaceholders: Scans text for forbidden placeholder content
- *   - validatePlanTasks:   Validates all tasks in a plan
+ *   - validatePlanTasks:   Validates all tasks in a plan (full format)
+ *   - validateLightweightTask / validateLightweightPlan: Lightweight format validation
+ *   - detectPlanFormat:    Detects plan format from frontmatter
+ *   - validatePlan:        Unified dispatcher that routes to the correct validator
  *
  * Per SKILL.md §3, each atomic task must contain:
  *   - Task number, title, file path
@@ -38,6 +41,26 @@ export interface AtomicTask {
     verifyCommand: string;
     commitMessage: string;
     dependsOn?: number[];
+}
+export type PlanFormat = "lightweight" | "full";
+export interface LightweightTask {
+    taskNumber: number;
+    title: string;
+    filePath: string;
+    goal: string;
+    designReference: string;
+    propertyRef?: number;
+    verifyCommand: string;
+    commitMessage: string;
+    dependsOn?: number[];
+}
+export interface DesignReferenceEntry {
+    anchor: string;
+    summary: string;
+}
+export interface DesignReferenceValidation {
+    valid: boolean;
+    errors: string[];
 }
 export declare const FORBIDDEN_PLACEHOLDERS: string[];
 /**
@@ -83,7 +106,10 @@ export declare function validateSpecLocked(specStatus: string): {
  * Per R25: Each task's `dependsOn` array (if present) must only reference
  * task numbers that exist in the plan.
  */
-export declare function validateDependencies(tasks: AtomicTask[]): string[];
+export declare function validateDependencies(tasks: Array<{
+    taskNumber: number;
+    dependsOn?: number[];
+}>): string[];
 /**
  * Validate all tasks in a plan.
  *
@@ -91,3 +117,16 @@ export declare function validateDependencies(tasks: AtomicTask[]): string[];
  * `dependsOn` references are valid.
  */
 export declare function validatePlanTasks(tasks: AtomicTask[]): boolean;
+export declare function detectPlanFormat(frontmatter: string): PlanFormat;
+export declare function extractHeadingAnchors(markdownContent: string): string[];
+export declare function validateLightweightTask(task: LightweightTask): {
+    valid: boolean;
+    errors: string[];
+};
+export declare function validateLightweightPlan(tasks: LightweightTask[]): boolean;
+export declare function validateDesignReferences(references: string[], designContent: string): DesignReferenceValidation;
+export declare function validatePlan(frontmatter: string, tasks: AtomicTask[] | LightweightTask[], designContent?: string): {
+    valid: boolean;
+    errors: string[];
+    format: PlanFormat;
+};

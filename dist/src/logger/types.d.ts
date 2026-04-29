@@ -24,6 +24,14 @@ export interface PerformanceBaseline {
     maxIterationMs: number;
     minIterationMs: number;
     avgAgentCallMs: number;
+    /** Subagent 调用总次数 */
+    subagentCallCount?: number;
+    /** Subagent 平均耗时（毫秒） */
+    avgSubagentMs?: number;
+    /** Subagent 最大耗时（毫秒） */
+    maxSubagentMs?: number;
+    /** 运行期间触发的退化告警次数 */
+    degradationCount?: number;
 }
 export interface LogSinkConfig {
     format: "text" | "json";

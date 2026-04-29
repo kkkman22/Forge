@@ -1,5 +1,5 @@
 ---
-current_task: "plan-document-streamlining"
+current_task: "agent-team-migration"
 tier: "standard"
 phase: "completed"
 updated: "2026-04-29"
@@ -7,4 +7,4 @@ updated: "2026-04-29"
 
 # 项目状态
 
-Plan Document Streamlining 已交付（feature/plan-document-streamlining 分支，待合并到 main）。
+Agent Team → Subagent 迁移已完成，知识已沉淀，制品已归档。

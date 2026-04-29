@@ -176,6 +176,19 @@ export type OrchestratorEffect = {
     reason: string;
 } | {
     type: "stop";
+} | {
+    type: "ship_merge";
+    targetBranch: string;
+    featureBranch: string;
+} | {
+    type: "ship_push_pr";
+    remote: string;
+    branch: string;
+    title: string;
+    body: string;
+} | {
+    type: "ship_discard";
+    branch: string;
 };
 /** Classification of iteration failures. */
 export type FailureKind = "soft" | "hard";
@@ -242,4 +255,39 @@ export interface AgentInterface {
     close?(): Promise<void> | void;
     /** Execute a single iteration with the given prompt. */
     run(prompt: string, cwd: string, options?: AgentRunOptions): Promise<AgentResult>;
+}
+/** Describes a single Subagent invocation's complete parameters. */
+export interface SubagentInvocation {
+    /** Subagent role identifier, corresponding to .claude/agents/ definitions. */
+    agentType: string;
+    /** Task instructions for the subagent. */
+    prompt: string;
+    /** Permission mode for the subagent. */
+    permissionMode: "default" | "acceptEdits";
+    /** Maximum number of turns. */
+    maxTurns: number;
+}
+/** Subagent execution result. */
+export interface SubagentResult {
+    /** Subagent role identifier. */
+    agentType: string;
+    /** Execution status. */
+    status: "success" | "failure" | "timeout";
+    /** Structured output (on success). */
+    output?: string;
+    /** Error message (on failure/timeout). */
+    error?: string;
+}
+/** Parallel execution aggregate result. */
+export interface ParallelExecutionResult<T = string> {
+    /** Successfully completed subagent results. */
+    succeeded: Array<{
+        agentType: string;
+        result: T;
+    }>;
+    /** Failed subagent records. */
+    failed: Array<{
+        agentType: string;
+        error: string;
+    }>;
 }

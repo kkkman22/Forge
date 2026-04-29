@@ -2,9 +2,8 @@
  * Contract tests — verify consistency between source-of-truth files.
  *
  * These tests catch drift between:
- *   1. src/decide.ts UI trigger keywords ↔ teams/decide/config.json dynamic_members
- *   2. src/router.ts tier definitions ↔ README.md tier table
- *   3. Agent files existence ↔ team config references
+ *   1. src/router.ts tier definitions ↔ README.md tier table
+ *   2. Agent files existence ↔ skill definitions
  */
 import { existsSync, readdirSync, readFileSync, statSync } from "node:fs";
 import { resolve } from "node:path";

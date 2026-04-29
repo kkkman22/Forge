@@ -39,4 +39,28 @@ export function createLogSink(config, output = console.log) {
         },
     };
 }
+/**
+ * 创建双写 LogSink：将每条日志同时发送到两个 LogSink。
+ * 用于 --log-file 场景：stdout + 文件同时输出。
+ *
+ * 如果 secondary（文件写入）抛出异常，primary（stdout）不受影响，
+ * secondary 异常降级为 stderr 警告。
+ */
+export function createDualSink(primary, secondary) {
+    return {
+        log(entry) {
+            primary.log(entry);
+            try {
+                secondary.log(entry);
+            }
+            catch (err) {
+                const message = err instanceof Error ? err.message : String(err);
+                console.error(`[WARN] Secondary log sink failed: ${message}`);
+            }
+        },
+        getConfig() {
+            return primary.getConfig();
+        },
+    };
+}
 //# sourceMappingURL=log-sink.js.map

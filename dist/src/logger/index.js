@@ -1,4 +1,5 @@
 export { createLogEntry } from "./log-entry.js";
-export { createLogSink, formatAsJson, formatAsText, formatEntry, shouldLog, } from "./log-sink.js";
-export { computePerformanceBaseline, createIterationTiming, formatPerformanceBaseline, } from "./timing.js";
+export { createFileWriter, validateFileWritable } from "./log-file-writer.js";
+export { createDualSink, createLogSink, formatAsJson, formatAsText, formatEntry, shouldLog, } from "./log-sink.js";
+export { buildSubagentTiming, computeExtendedBaseline, computePerformanceBaseline, createIterationTiming, detectDegradation, formatPerformanceBaseline, } from "./timing.js";
 //# sourceMappingURL=index.js.map
