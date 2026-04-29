@@ -7,7 +7,7 @@
  * **Validates: Requirements 1.3, 1.4, 2.3, 2.4, 4.4**
  */
 
-import { existsSync, mkdirSync, rmSync, writeFileSync } from "node:fs";
+import { mkdirSync, rmSync, writeFileSync } from "node:fs";
 import { resolve } from "node:path";
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
 import {

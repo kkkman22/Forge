@@ -12,10 +12,9 @@ import {
   buildDefaultPolicy,
   checkFileAccess,
   checkNetworkAccess,
-  validatePolicy,
   type FileSystemPolicy,
   type NetworkPolicy,
-  type PermissionPolicy,
+  validatePolicy,
 } from "../src/sandbox-policy.js";
 
 // ---------------------------------------------------------------------------
@@ -242,11 +241,15 @@ describe("buildDefaultPolicy", () => {
 
   it("denies sandbox.json by default to prevent self-modification", () => {
     const policy = buildDefaultPolicy("/projects/my-app");
-    expect(checkFileAccess("/projects/my-app/.forge/sandbox.json", policy.fileSystem).allowed).toBe(false);
+    expect(checkFileAccess("/projects/my-app/.forge/sandbox.json", policy.fileSystem).allowed).toBe(
+      false,
+    );
   });
 
   it("denies .sandbox-active.json by default", () => {
     const policy = buildDefaultPolicy("/projects/my-app");
-    expect(checkFileAccess("/projects/my-app/.forge/.sandbox-active.json", policy.fileSystem).allowed).toBe(false);
+    expect(
+      checkFileAccess("/projects/my-app/.forge/.sandbox-active.json", policy.fileSystem).allowed,
+    ).toBe(false);
   });
 });
