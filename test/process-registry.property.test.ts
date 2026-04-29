@@ -309,3 +309,59 @@ describe("ProcessRegistry", () => {
 		});
 	});
 });
+
+
+describe("Property 3: shutdownAll terminates all registered processes", () => {
+	it("terminated + forcedKill + alreadyExited equals size()", async () => {
+		await fc.assert(
+			fc.asyncProperty(
+				fc
+					.array(
+						fc.record({
+							pid: fc.integer({ min: 1, max: 65535 }),
+							source: fc.string({ minLength: 1, maxLength: 20 }),
+							detached: fc.boolean(),
+							respondsToSigterm: fc.boolean(),
+						}),
+						{ minLength: 0, maxLength: 8 },
+					)
+					.filter((arr) => new Set(arr.map((p) => p.pid)).size === arr.length),
+				async (entries) => {
+					ProcessRegistry.resetInstance();
+					const reg = ProcessRegistry.getInstance();
+					const killSpy = vi.spyOn(process, "kill");
+
+					for (const e of entries) {
+						reg.register(
+							{ pid: e.pid, on: () => {} } as any,
+							{ source: e.source, detached: e.detached },
+						);
+					}
+					const sizeBefore = reg.size();
+
+					killSpy.mockImplementation((pid: number, signal?: any) => {
+						if (signal === "SIGTERM") return true;
+						if (signal === 0) {
+							const entry = entries.find((e) => e.pid === pid);
+							if (entry?.respondsToSigterm) {
+								const err = new Error("ESRCH");
+								(err as any).code = "ESRCH";
+								throw err;
+							}
+							return true;
+						}
+						return true;
+					});
+
+					const result = await reg.shutdownAll(50);
+					expect(result.terminated + result.forcedKill + result.alreadyExited).toBe(
+						sizeBefore,
+					);
+					expect(reg.size()).toBe(0);
+					killSpy.mockRestore();
+				},
+			),
+			{ numRuns: 50 },
+		);
+	});
+});
