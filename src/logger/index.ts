@@ -9,6 +9,7 @@ export {
 export {
   computePerformanceBaseline,
   createIterationTiming,
+  formatPerformanceBaseline,
 } from "./timing.js";
 export type {
   IterationTiming,
