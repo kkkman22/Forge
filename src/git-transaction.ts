@@ -16,6 +16,25 @@
 import type { GitCommand } from "./loop-types.js";
 
 // ---------------------------------------------------------------------------
+// Branch validation error
+// ---------------------------------------------------------------------------
+
+/**
+ * Thrown when a branch name fails validation for Ship delivery operations.
+ *
+ * This indicates a bug in the caller — branch names should be sanitized
+ * at creation time and never contain illegal characters at delivery time.
+ */
+export class BranchValidationError extends Error {
+  readonly code = "BRANCH_VALIDATION_ERROR" as const;
+
+  constructor(message: string) {
+    super(message);
+    this.name = this.constructor.name;
+  }
+}
+
+// ---------------------------------------------------------------------------
 // Shell metacharacter detection
 // ---------------------------------------------------------------------------
 
@@ -101,6 +120,53 @@ export function sanitizeBranchName(input: string): string {
   result = result.replace(/^[./-]+/, "").replace(/[./-]+$/, "");
 
   return result;
+}
+
+// ---------------------------------------------------------------------------
+// Branch name validation (Ship delivery)
+// ---------------------------------------------------------------------------
+
+/**
+ * Validate a branch name for Ship delivery operations.
+ *
+ * Unlike `sanitizeBranchName()` which silently cleans, this function **rejects**
+ * invalid names by throwing. Delivery operations should not silently modify
+ * branch names — if a name is invalid at this stage, it indicates a bug
+ * elsewhere (branch was supposed to be sanitized at creation time).
+ *
+ * Rejects names containing:
+ * - Shell metacharacters (backticks, `$(…)`, `"`, `;`, `|`, `&`, `<`, `>`, newlines)
+ * - Git-illegal characters (anything outside `[a-zA-Z0-9\-_./]`)
+ * - Empty strings
+ *
+ * @param branch  The branch name to validate.
+ * @throws {ForgeError} If the branch name contains illegal characters.
+ */
+export function validateBranchName(branch: string): void {
+  if (!branch || branch.length === 0) {
+    throw new BranchValidationError("Branch name must not be empty");
+  }
+
+  if (containsShellMetacharacters(branch)) {
+    throw new BranchValidationError(`Branch name contains shell metacharacters: "${branch}"`);
+  }
+
+  // Use a fresh regex to avoid sticky lastIndex from the global flag
+  if (/[^a-zA-Z0-9\-_./]/.test(branch)) {
+    throw new BranchValidationError(`Branch name contains illegal Git characters: "${branch}"`);
+  }
+
+  // Reject Git-specific illegal sequences
+  if (branch.includes("..") || branch.includes("@{") || branch.toLowerCase().endsWith(".lock")) {
+    throw new BranchValidationError(`Branch name contains illegal Git sequence: "${branch}"`);
+  }
+
+  // Reject leading/trailing dots, slashes, and dashes
+  if (/^[./-]/.test(branch) || /[./-]$/.test(branch)) {
+    throw new BranchValidationError(
+      `Branch name has illegal leading/trailing character: "${branch}"`,
+    );
+  }
 }
 
 // ---------------------------------------------------------------------------
@@ -303,5 +369,87 @@ export function buildCleanDryRunCommand(): GitCommand {
   return {
     executable: "git",
     args: ["clean", "-fdn"],
+  };
+}
+
+// ---------------------------------------------------------------------------
+// Ship delivery command builders
+// ---------------------------------------------------------------------------
+
+/**
+ * Build a `git checkout <branch>` command.
+ *
+ * @param branch  The branch to check out. Validated for safety.
+ * @returns A {@link GitCommand} for switching branches.
+ */
+export function buildCheckoutCommand(branch: string): GitCommand {
+  validateBranchName(branch);
+  return {
+    executable: "git",
+    args: ["checkout", branch],
+  };
+}
+
+/**
+ * Build a `git merge [--no-ff] <branch>` command.
+ *
+ * @param branch  The branch to merge. Validated for safety.
+ * @param noFf    Whether to use `--no-ff` (no fast-forward).
+ * @returns A {@link GitCommand} for merging a branch.
+ */
+export function buildMergeCommand(branch: string, noFf: boolean): GitCommand {
+  validateBranchName(branch);
+  return {
+    executable: "git",
+    args: noFf ? ["merge", "--no-ff", branch] : ["merge", branch],
+  };
+}
+
+/**
+ * Build a `git branch -d|-D <branch>` command.
+ *
+ * @param branch  The branch to delete. Validated for safety.
+ * @param force   `true` for force-delete (`-D`), `false` for safe delete (`-d`).
+ * @returns A {@link GitCommand} for deleting a branch.
+ */
+export function buildBranchDeleteCommand(branch: string, force: boolean): GitCommand {
+  validateBranchName(branch);
+  return {
+    executable: "git",
+    args: ["branch", force ? "-D" : "-d", branch],
+  };
+}
+
+/**
+ * Build a `git push [-u] <remote> <branch>` command.
+ *
+ * @param remote       The remote to push to. Checked for shell metacharacters.
+ * @param branch       The branch to push. Validated for safety.
+ * @param setUpstream  Whether to set the upstream tracking branch (`-u`).
+ * @returns A {@link GitCommand} for pushing to a remote.
+ */
+export function buildPushCommand(remote: string, branch: string, setUpstream: boolean): GitCommand {
+  validateBranchName(branch);
+  if (containsShellMetacharacters(remote)) {
+    throw new BranchValidationError(`Remote name contains shell metacharacters: "${remote}"`);
+  }
+  return {
+    executable: "git",
+    args: setUpstream ? ["push", "-u", remote, branch] : ["push", remote, branch],
+  };
+}
+
+/**
+ * Build a `git merge --abort` command.
+ *
+ * Used for error recovery when a merge fails (e.g. due to conflicts).
+ * Restores the working directory to the pre-merge state.
+ *
+ * @returns A {@link GitCommand} for aborting an in-progress merge.
+ */
+export function buildMergeAbortCommand(): GitCommand {
+  return {
+    executable: "git",
+    args: ["merge", "--abort"],
   };
 }
