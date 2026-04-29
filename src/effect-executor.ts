@@ -254,7 +254,7 @@ export class EffectExecutor implements EffectExecutorInterface {
       });
     } catch (err) {
       throw new UnexpectedEffectError(
-        `git add timed out: ${err instanceof Error ? err.message : String(err)}`,
+        `git command "${addCmd.executable} ${addCmd.args.join(" ")}" timed out after 30000ms: ${err instanceof Error ? err.message : String(err)}`,
       );
     }
 
