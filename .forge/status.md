@@ -1,10 +1,10 @@
 ---
-current_task: "skill-function-integration-audit"
+current_task: "parallel-status-tracking"
 tier: "standard"
-phase: "completed"
+phase: "review"
 updated: "2026-04-30"
 ---
 
 # 项目状态
 
-SKILL-纯函数对接审计：已完成交付（merge to main）。
+Parallel Status Tracking：标准路径（plan → build → review → test → ship）。Spec 已锁定，Plan 已批准，进入 build 阶段。
