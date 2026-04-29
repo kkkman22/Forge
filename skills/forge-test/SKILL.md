@@ -95,19 +95,45 @@ disable-model-invocation: true
 
 **职责**：逐项检查 7 项完成前验证清单，确保所有交付条件满足。
 
+**CI 检查命令优先级**：
+
+执行 Layer 3 清单前，读取 `.forge/config.md` YAML frontmatter 的 `ci_check_command` 字段：
+- **如果 `ci_check_command` 非空**：执行该命令一次，覆盖清单项 1-4（测试、测试通过、类型检查、Lint）。从合并输出中提取各项的通过/失败状态，逐项报告。
+- **如果 `ci_check_command` 为空或缺失**：按当前行为，为每个清单项分别运行对应的命令。
+
 **7 项清单**：
 
 | # | 检查项 | 验证方式 |
 |---|--------|---------|
-| 1 | **测试刚运行过** | 测试命令在本次会话中执行过，不接受引用之前的结果 |
-| 2 | **所有测试通过** | 测试输出显示零失败 |
-| 3 | **类型检查通过** | 运行 `tsc --noEmit`（TypeScript）或等效命令，零错误 |
-| 4 | **Lint 通过** | 运行 `eslint`/`prettier` 或等效命令，零错误 |
+| 1 | **测试刚运行过** | 若 `ci_check_command` 非空，由 CI 命令统一覆盖；否则单独运行测试命令。不接受引用之前的结果 |
+| 2 | **所有测试通过** | 若 `ci_check_command` 非空，从 CI 命令输出中提取测试结果；否则检查测试输出零失败 |
+| 3 | **类型检查通过** | 若 `ci_check_command` 非空，从 CI 命令输出中提取类型检查结果；否则运行 `tsc --noEmit` 或等效命令 |
+| 4 | **Lint 通过** | 若 `ci_check_command` 非空，从 CI 命令输出中提取 Lint 结果；否则运行 `eslint`/`biome` 或等效命令 |
 | 5 | **验收标准逐条确认** | 对照 Spec 场景汇总表，每个场景有对应的通过证据 |
 | 6 | **无遗留 TODO/FIXME** | 扫描本次变更的文件，无新增的 `TODO`、`FIXME`、`HACK`、`XXX` 注释 |
 | 7 | **Progress 已更新** | `.forge/progress/<topic>.md` 中所有任务标记为已完成 |
 
 **清单输出格式**：
+
+使用 `ci_check_command` 时：
+
+```
+📋 完成前验证清单
+
+ℹ️ 使用 ci_check_command: npm run check
+
+✅ 1. 测试刚运行过（CI 命令在本次会话 14:35 运行）
+✅ 2. 所有测试通过（42/42）
+✅ 3. 类型检查通过（tsc --noEmit：0 errors）
+✅ 4. Lint 通过（biome check：0 errors, 0 warnings）
+✅ 5. 验收标准逐条确认（5/5 场景通过）
+✅ 6. 无遗留 TODO/FIXME（扫描 6 个变更文件：0 个遗留项）
+✅ 7. Progress 已更新（5/5 任务完成）
+
+✅ 验证通过。下一步：/forge ship
+```
+
+未使用 `ci_check_command` 时：
 
 ```
 📋 完成前验证清单
