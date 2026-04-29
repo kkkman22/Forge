@@ -84,6 +84,8 @@ export const FORBIDDEN_PLACEHOLDERS = [
   "添加适当的错误处理",
 ];
 
+const FORBIDDEN_PLACEHOLDERS_LOWER = FORBIDDEN_PLACEHOLDERS.map((p) => p.toLowerCase());
+
 const MIN_ESTIMATED_MINUTES = 2;
 const MAX_ESTIMATED_MINUTES = 5;
 
@@ -103,9 +105,9 @@ export function scanForPlaceholders(text: string): string[] {
   const found: string[] = [];
   const lowerText = text.toLowerCase();
 
-  for (const placeholder of FORBIDDEN_PLACEHOLDERS) {
-    if (lowerText.includes(placeholder.toLowerCase())) {
-      found.push(placeholder);
+  for (let i = 0; i < FORBIDDEN_PLACEHOLDERS_LOWER.length; i++) {
+    if (lowerText.includes(FORBIDDEN_PLACEHOLDERS_LOWER[i])) {
+      found.push(FORBIDDEN_PLACEHOLDERS[i]);
     }
   }
 
@@ -283,6 +285,7 @@ function detectCycleInTasks(
 
   let processed = 0;
   while (queue.length > 0) {
+    // biome-ignore lint/style/noNonNullAssertion: shift() is safe — loop guard ensures length > 0
     const current = queue.shift()!;
     processed++;
     for (const neighbor of adjacency.get(current) ?? []) {
@@ -297,6 +300,32 @@ function detectCycleInTasks(
       .filter((t) => (inDegree.get(t.taskNumber) ?? 0) > 0)
       .map((t) => t.taskNumber);
     return `Cycle detected involving tasks: ${cycleNodes.join(", ")}`;
+  }
+
+  return null;
+}
+
+/**
+ * Validate that tasks are in topological order: dependencies appear before dependents.
+ * Returns an error message if ordering is violated, null otherwise.
+ */
+function validateTopologicalOrder(
+  tasks: Array<{ taskNumber: number; dependsOn?: number[] }>,
+): string | null {
+  const position = new Map<number, number>();
+  for (let i = 0; i < tasks.length; i++) {
+    position.set(tasks[i].taskNumber, i);
+  }
+
+  for (const task of tasks) {
+    if (task.dependsOn) {
+      for (const dep of task.dependsOn) {
+        const depPos = position.get(dep);
+        if (depPos !== undefined && depPos > (position.get(task.taskNumber) ?? -1)) {
+          return `Task ${task.taskNumber} depends on task ${dep}, but task ${dep} appears after task ${task.taskNumber}`;
+        }
+      }
+    }
   }
 
   return null;
@@ -376,6 +405,15 @@ export function validateLightweightTask(task: LightweightTask): {
   if (!task.commitMessage || task.commitMessage.trim() === "")
     errors.push("Missing commit message");
 
+  if (
+    task.propertyRef !== undefined &&
+    (!Number.isFinite(task.propertyRef) ||
+      !Number.isInteger(task.propertyRef) ||
+      task.propertyRef < 1)
+  ) {
+    errors.push(`Invalid propertyRef: ${task.propertyRef} (must be a positive integer)`);
+  }
+
   if (!task.designReference || task.designReference.trim() === "") {
     errors.push("Missing design reference");
   } else if (!DESIGN_REF_PATTERN.test(task.designReference)) {
@@ -409,6 +447,8 @@ export function validateLightweightPlan(tasks: LightweightTask[]): boolean {
 
   if (detectCycleInTasks(tasks)) return false;
 
+  if (validateTopologicalOrder(tasks)) return false;
+
   return true;
 }
 
@@ -421,7 +461,7 @@ export function validateDesignReferences(
   designContent: string,
 ): DesignReferenceValidation {
   const errors: string[] = [];
-  const anchors = extractHeadingAnchors(designContent);
+  const anchorSet = new Set(extractHeadingAnchors(designContent));
 
   for (const ref of references) {
     if (!DESIGN_REF_PATTERN.test(ref)) {
@@ -429,7 +469,7 @@ export function validateDesignReferences(
       continue;
     }
     const anchor = ref.replace(/^design\.md#/, "");
-    if (!anchors.includes(anchor)) {
+    if (!anchorSet.has(anchor)) {
       errors.push(`Design Reference ${ref} not found in design.md`);
     }
   }
@@ -464,6 +504,9 @@ export function validatePlan(
     const cycleError = detectCycleInTasks(lwTasks);
     if (cycleError) errors.push(cycleError);
 
+    const topoError = validateTopologicalOrder(lwTasks);
+    if (topoError) errors.push(topoError);
+
     if (designContent) {
       const refs = lwTasks.map((t) => t.designReference);
       const refResult = validateDesignReferences(refs, designContent);
@@ -476,6 +519,17 @@ export function validatePlan(
   }
 
   // Full format
-  const valid = validatePlanTasks(tasks as AtomicTask[]);
-  return { valid, errors: valid ? [] : ["One or more tasks failed validation"], format };
+  const fullTasks = tasks as AtomicTask[];
+  const fullValid = validatePlanTasks(fullTasks);
+  if (fullValid) return { valid: true, errors: [], format };
+
+  const errors: string[] = [];
+  for (const task of fullTasks) {
+    const result = validateAtomicTask(task);
+    if (!result.valid) {
+      errors.push(`Task ${task.taskNumber}: ${result.errors.join(", ")}`);
+    }
+  }
+  errors.push(...validateDependencies(fullTasks));
+  return { valid: false, errors, format };
 }
