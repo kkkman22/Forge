@@ -1,7 +1,7 @@
 ---
 current_task: "Output Conciseness（输出简洁性）"
 tier: "standard"
-phase: "ship"
+phase: "completed"
 updated: "2026-04-29"
 ---
 

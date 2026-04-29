@@ -16,6 +16,16 @@ knowledge_limit: 20
 - **知识库上限**：20
 - **初始化时间**：2026-04-28
 
+## CI 检查命令
+
+build 阶段的全量测试和 test 阶段的验证清单必须使用以下命令，不得自行拼凑：
+
+```bash
+npm run check    # = tsc --noEmit && biome check src/ test/ && vitest run && bash scripts/check-readme-metrics.sh
+npm run docs     # typedoc 文档生成验证
+bash scripts/build-dist.sh  # 分发包同步校验
+```
+
 ## 状态文件保护分区
 
 `.forge/` 目录下的文件按修改权限分为三个区域：
