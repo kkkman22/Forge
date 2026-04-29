@@ -75,3 +75,54 @@ export {
   validatePlanTasks,
   validateSpecLocked,
 } from "./plan.js";
+
+// ---------------------------------------------------------------------------
+// Context budget management
+// ---------------------------------------------------------------------------
+
+export type {
+  ClassificationEntry,
+  ContextBudgetReport,
+  ExploreSummary,
+  GitDiffSummary,
+  GitStatusSummary,
+  InformationLifecycle,
+  ReviewSummary,
+  SubagentSummary,
+  TestOutputSummary,
+} from "./context-budget.js";
+export {
+  CLASSIFICATION_MAP,
+  canParseTestOutput,
+  classifySource,
+  deserializeContextBudgetReport,
+  deserializeExploreSummary,
+  deserializeGitDiff,
+  deserializeGitStatus,
+  deserializeReviewSummary,
+  deserializeSubagentSummary,
+  deserializeTestOutput,
+  serializeContextBudgetReport,
+  serializeExploreResult,
+  serializeExploreSummary,
+  serializeGitDiff,
+  serializeGitStatus,
+  serializeReviewSummary,
+  serializeSubagentSummary,
+  serializeTestOutput,
+} from "./context-budget.js";
+
+// ---------------------------------------------------------------------------
+// Subagent runner
+// ---------------------------------------------------------------------------
+
+export type {
+  SubagentInvocation,
+  SubagentResult,
+  ParallelExecutionResult,
+} from "./loop-types.js";
+
+export {
+  buildSubagentInvocations,
+  runSubagentsInParallel,
+} from "./subagent-runner.js";
