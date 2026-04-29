@@ -1,10 +1,10 @@
 ---
-current_task: "branch-lifecycle-enforcement"
+current_task: "skill-function-integration-audit"
 tier: "standard"
-phase: "completed"
+phase: "ship"
 updated: "2026-04-30"
 ---
 
 # 项目状态
 
-Branch Lifecycle Enforcement：已完成交付（merge to main）。
+SKILL-纯函数对接审计：标准路径（plan → build → review → test → ship）。Spec 已锁定，Plan 已批准，进入 build 阶段。

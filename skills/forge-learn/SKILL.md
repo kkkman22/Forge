@@ -34,6 +34,16 @@ disable-model-invocation: true
 | `.forge/plans/<topic>.md` | 预估时间 vs 实际时间偏差 |
 | `.forge/specs/<feature>/spec.md` | 场景覆盖率、Scope Creep |
 
+**函数调用**：`analyzeSkillFeedback(entries)`
+- 参数：`entries` — 从 `.forge/knowledge/skill-feedback.md` 解析的反馈条目数组（`SkillFeedbackEntry[]`，每条含 command、scenario、suggestion、frequency）
+- 返回：`{ commandStats: CommandStats[], alertCommands: string[], totalEntries: number }`
+- 用途：识别高失败率命令和不适用 SKILL 场景，`alertCommands` 中的命令需审阅对应 SKILL.md
+
+**函数调用**：`crossValidateFailures(feedbackReasons, knownFailureDescriptions)`
+- 参数：`feedbackReasons` — 从 `analyzeSkillFeedback` 结果中提取的失败原因（`string[]`）；`knownFailureDescriptions` — 从 `.forge/knowledge/known-failures.md` 解析的已知失败描述（`string[]`）
+- 返回：交叉验证后的重复失败原因列表（`string[]`）
+- 用途：确认反复出现的失败模式是否已在 known-failures 中记录，未记录的新模式应添加
+
 ### 分析维度
 
 | 维度 | 指标 | 计算方式 |
@@ -86,6 +96,16 @@ disable-model-invocation: true
 | **踩坑记录** | 弯路、失败尝试、误导性线索 | `.forge/debug/`、`.forge/progress/`（失败记录） |
 | **决策理由** | 决策上下文、权衡过程、否决方案 | `.forge/decisions/`、`.forge/specs/` |
 | **可复用模式** | 可复用的代码/架构/流程模式 | 代码变更、`.forge/specs/`、`.forge/plans/` |
+
+**函数调用**：`generateKnowledgeDocument(title, tags, date, confidence, body)`
+- 参数：`title` — 知识标题（string）；`tags` — 标签数组（`string[]`）；`date` — 日期字符串（YYYY-MM-DD）；`confidence` — 置信度（0.3-0.9）；`body` — 五章节内容对象（含 `problem`、`solution`、`pitfalls`、`decisions`、`reusable`）
+- 返回：完整的 `KnowledgeDocument` 对象（含 frontmatter 和结构化正文）
+- 用途：从五维度提取结果生成标准格式的知识文档，写入 `.forge/knowledge/solutions/<topic>.md`
+
+**函数调用**：`validateKnowledgeFrontmatter(frontmatter)`
+- 参数：`frontmatter` — 待验证的 frontmatter 对象（含 title、tags、date、confidence 字段）
+- 返回：`{ valid: boolean, errors: string[] }`
+- 用途：写入前验证 frontmatter 格式合规（title 非空、tags 非空数组、date 为有效日历日期、confidence 在 0.3-0.9 范围）
 
 ---
 
@@ -252,6 +272,11 @@ instincts.md 中 Confidence_Score < 0.3 的模式自动删除。每次 learn 执
 
 维护完成后必须满足：(1) 文档数 ≤ 上限 (2) 无低置信度模式。
 
+**函数调用**：`maintainKnowledgeBase(state)`
+- 参数：`state` — 当前知识库状态（`KnowledgeBaseState` 类型，含 `documents` 数组、`instinctPatterns` 数组、`limit` 数量上限）
+- 返回：`MaintenanceResult`（含保留/移除的文档和模式列表，及维护后的不变量校验结果）
+- 用途：执行文档上限和置信度下限不变量检查，超限文档按 confidence 从低到高清理，低置信度模式（< 0.3）自动删除
+
 ---
 
 ## 8. 知识回流
@@ -295,8 +320,9 @@ instincts.md 中 Confidence_Score < 0.3 的模式自动删除。每次 learn 执
 9. **高频模式识别**：达到阈值则写入 instincts.md
 10. **跨项目模式检测**：建议提升到 patterns/
 11. **错误预防规则蒸馏**：4 数据源 → 阈值过滤 → 排除 → 冲突 → 容量 → 提案 → 写入
-12. **会话层清理**：归档 sessions/ 中的当前会话
-13. **再次检查上限**：确保维护不变量成立
+12. **上下文预算报告**：调用 `serializeContextBudgetReport(report)` — 参数 `report` 构造方式：`date` 从当前日期获取，`topic` 从 `.forge/status.md` 的 `current_task` 获取，`trimStats` 从本次会话的裁剪前后数据估算（各 trimmer 调用次数和节省 token 数），`totalEstimatedTokens` 为会话总消耗估算；返回：结构化报告字符串。将报告追加到 `.forge/knowledge/sessions/<date>-<topic>.md` 的附录
+13. **会话层清理**：归档 sessions/ 中的当前会话
+14. **再次检查上限**：确保维护不变量成立
 
 ### 9.1 任务归档（learn 完成后自动执行）
 
