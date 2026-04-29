@@ -32,6 +32,16 @@ disable-model-invocation: true
 | **Test 门禁** | 测试是否通过 | Layer 1 + Layer 3 验证结果；若 `ci_check_command` 已配置，验证 CI 命令已执行并通过 | 测试未运行或有失败项 |
 | **Progress 门禁** | 所有任务是否完成 | `.forge/progress/<topic>.md` | 存在未标记完成的任务 |
 
+**函数调用**：`checkShipGate(review, test, progress)`
+- 参数：`review` — 从 `.forge/reviews/<topic>.md` frontmatter 解析的 `ReviewResult`（含 `result`、`p0_count`、`p1_count`）；`test` — 从 Layer 1 + Layer 3 验证结果构造的 `TestResult`（含 `passed`、`failedCount`）；`progress` — 从 `.forge/progress/<topic>.md` 解析的 `ProgressResult`（含 `totalTasks`、`completedTasks`）
+- 返回：`{ allowed: boolean, reasons: string[] }`，`allowed: false` 时 `reasons` 列出所有未通过的门禁
+- 用途：程序化执行三道门禁检查，替代手动逐条验证
+
+**函数调用**：`checkShipGateWithChecklist(review, test, progress, checklist)`
+- 参数：同 `checkShipGate` 的三个参数 + `checklist` — P1 Fix Checklist 条目（`ChecklistEntry[]`，含修复项和验证状态）
+- 返回：`{ allowed: boolean, reasons: string[] }`，额外检查 P1 修复条目是否全部验证通过
+- 用途：当存在 P1 Fix Checklist 时使用此扩展门禁，确保所有 P1 修复已验证
+
 **三道门禁必须同时通过**。任一不通过，阻断 ship。
 
 **门禁证据格式**：
