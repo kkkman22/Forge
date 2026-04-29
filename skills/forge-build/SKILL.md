@@ -50,6 +50,11 @@ disable-model-invocation: true
 
 **Autonomous 模式**返回 JSON：`{"success":false,"summary":"Build 前置检查未通过：<检查>","evidence":"<证据>","suggested_route":"<路由>","reentry_condition":"<重入条件>"}`
 
+**函数调用**：`checkBuildGate(specStatus, planStatus)`
+- 参数：`specStatus` — 从 `.forge/specs/<topic>/spec.md` YAML frontmatter 的 `status` 字段读取；`planStatus` — 从 `.forge/plans/<topic>.md` YAML frontmatter 的 `status` 字段读取
+- 返回：`{ allowed: boolean, reasons: string[] }`，`allowed: false` 时 `reasons` 列出所有未通过的门禁
+- 用途：程序化验证 Spec 锁定和 Plan 批准状态，替代手动逐条检查。返回 `allowed: false` 时使用 §2 拒绝输出格式
+
 ### §2.1 分支门禁（检查 #4）
 
 **目的**：防止多功能开发时代码提交到错误分支，包含 topic 级匹配和生命周期检测。
@@ -243,7 +248,17 @@ Restatement 是编排循环的**强制步骤**，不是可选优化。跳过 Res
 
 **阶段一：并行研究**
 
-通过 Agent tool 并行启动多个研究 Subagent（架构/依赖/风险），用 `Promise.allSettled` 等待。研究发现合并到 `.forge/findings/<topic>.md`。
+**函数调用**：`buildResearchSubagents(topics)`
+- 参数：`topics` — 研究主题列表（`string[]`，从 Plan 的研究问题中提取）
+- 返回：`SubagentInvocation[]`（每个包含 prompt、subagent_type 等配置）
+- 用途：构造并行研究 Subagent 的调用配置，替代手动逐个构造
+
+通过 Agent tool 并行启动多个研究 Subagent（架构/依赖/风险），用 `Promise.allSettled` 等待。
+
+**函数调用**：`mergeResearchFindings(results)`
+- 参数：`results` — `SubagentResult[]`（所有研究 Subagent 的返回结果）
+- 返回：合并后的研究发现字符串
+- 用途：将多个并行研究结果合并为统一文档，写入 `.forge/findings/<topic>.md`
 
 **阶段一不使用 Restatement**：由独立 Subagent 并行执行，主 Agent 只等汇总。
 
@@ -306,6 +321,11 @@ Restatement 是编排循环的**强制步骤**，不是可选优化。跳过 Res
 ### 5.1 连续失败升级
 
 → 遵循 CLAUDE.md §2.4 三次换路
+
+**函数调用**：`analyzeFixAttempts(sequence)`
+- 参数：`sequence` — 当前任务的修复尝试序列（`FixAttemptSequence` 类型，包含每次尝试的结果和原因）
+- 返回：`{ shouldEscalate: boolean, consecutiveFailures: number, escalationIndex: number }`，`shouldEscalate: true` 时触发三次换路
+- 用途：程序化判断连续失败次数，决定是否升级到 `/forge debug`
 
 **升级行为**：连续失败 3 次后切换到 `debugger` agent 进行根因分析（`Agent(prompt="<失败上下文>", subagent_type="general-purpose", permissionMode="acceptEdits", maxTurns=15)`）。debugger 专注：(1) 完整读取错误信息 (2) 一次一个假设 (3) 最小改动修复 (4) 再失败 3 次则报告用户。
 
@@ -472,8 +492,8 @@ $ /forge build
 |--------|---------|---------|
 | Explore Agent 结果 | Ephemeral | Explore_Summarizer：结构化摘要（入口点+依赖链+测试+接口），≤300 tokens |
 | Subagent 执行结果 | Ephemeral | Subagent_Summary_Protocol：提取状态/任务/变更/测试/commit/自检，≤200 tokens |
-| 测试运行输出 | Ephemeral | 全通过单行摘要（≤150 tokens），有失败仅保留失败详情 |
-| Git Diff/Status | Ephemeral | diff >50 行文件级摘要，status >30 文件分类摘要 |
+| 测试运行输出 | Ephemeral | Test_Output_Trimmer：全通过单行摘要（≤150 tokens），有失败仅保留失败详情 |
+| Git Diff/Status | Ephemeral | Git_Output_Limiter：diff >50 行文件级摘要，status >30 文件分类摘要 |
 | Plan 任务列表 | Persistent | 保留在 context，Restatement 时刷新 |
 | 当前任务描述 | Persistent | 保留在 context，Restatement 时刷新 |
 | TDD 循环输出 | Phase-scoped | 当前阶段保留，Restatement 时摘要替代 |
@@ -481,10 +501,10 @@ $ /forge build
 
 ### 裁剪执行时机
 
-1. Explore Agent 返回后 → 立即转换为摘要
-2. Subagent 返回后 → 立即提取摘要，丢弃执行日志
-3. 测试运行后 → 立即应用 Test_Output_Trimmer
-4. Git 操作后 → 超阈值时立即应用 Git_Output_Limiter
+1. Explore Agent 返回后 → 调用 `serializeExploreResult(exploreOutput)` — 参数：Explore Agent 原始返回值（`ExploreSummary | string`）；返回：结构化摘要字符串（≤300 tokens）；用途：替换 context 中的原始 Explore 输出
+2. Subagent 返回后 → 调用 `serializeSubagentSummary(subagentOutput)` — 参数：Subagent 原始返回值（需解析为 `SubagentSummary`）；返回：摘要字符串（≤200 tokens）；用途：替换 context 中的执行日志
+3. 测试运行后 → 调用 `serializeTestOutput(testOutput)` — 参数：测试运行原始输出（需解析为 `TestOutputSummary`）；返回：摘要字符串（≤150 tokens）；用途：替换 context 中的测试输出
+4. Git 操作后 → diff 超 50 行时调用 `serializeGitDiff(diffSummary, lineCount)`（参数：Git diff 输出需解析为 `GitDiffSummary`，`lineCount` 为行数）；status 超 30 文件时调用 `serializeGitStatus(statusSummary, fileCount)`（参数：Git status 输出需解析为 `GitStatusSummary`，`fileCount` 为文件数）；用途：超阈值时替换原始输出
 5. Write-and-discard 后 → 用确认信息替代全量内容
 
 ---
