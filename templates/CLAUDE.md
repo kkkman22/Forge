@@ -149,7 +149,7 @@ SKILL 定义的输出格式 > 简洁性约束。当 SKILL 要求特定输出（�
 ### 3.1 执行与评估分离
 
 - **写代码的 Agent 不评审自己的代码**
-- `/forge review` 使用独立的 Agent Team（spec-check、quality-check、security-check）
+- `/forge review` 使用独立 Subagent（spec-check、quality-check、security-check）
 - 评审者只对照 Spec 和代码质量标准，不受实现过程的上下文影响
 
 ### 3.2 三层评审
