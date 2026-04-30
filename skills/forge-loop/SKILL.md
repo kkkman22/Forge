@@ -61,14 +61,16 @@ disable-model-invocation: true
 1. **Git 仓库检查**：确认当前目录是 Git 仓库。
 2. **工作树清洁检查**：确认工作树无未提交变更（使用 `--worktree` 或 `--resume` 时跳过）。
 3. **`.forge/` 目录检查**：不存在则提示 `forge init`。使用 `--tier`/`--type`/`--phase`/`--nature` 选项时必须存在。
-4. **StatusFile 活跃任务检测**：如果 `.forge/status.md` 中 `phase` 非 `completed`/`aborted`，输出警告。
+4. **StatusFile 活跃任务检测**：如果 `.forge/status.md` 中 `phase` 非 `completed`/`aborted`，输出警告。多任务模式下调用 `listActiveTasks` 展示活跃任务列表。
 5. **`--tier` 值验证**：无效值输出有效选项列表并拒绝启动。
 6. **hooks.json 检查**：检查 `hooks/hooks.json` 是否存在且包含 `PreToolUse` 配置。缺失时输出警告但不阻断启动。
 7. **Worktree 源分支检查**：使用 `--worktree` 时，确认当前不在 `forge/` 分支上。
 
 ### Step 2：写入执行模式
 
-在 `.forge/status.md` 中写入自主模式标记：
+**单任务模式**：在 `.forge/status.md` 中写入自主模式标记。
+
+**多任务模式**：调用 `writeTaskStatus(io, forgeRoot, taskName, content)` 写入 `.forge/status/<task-id>.md`。Loop 字段（`mode`、`loop_run_id`、`loop_iteration`、`skill_sequence`）写入当前任务的 StatusFile，不影响其他任务。
 
 ```yaml
 ---
