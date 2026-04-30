@@ -486,14 +486,33 @@ $ /forge build
 
 ## Context Budget Management
 
-### Classification and Trimming Strategy
+### Hard Token Limits (Iron Law)
 
-| Information Source | Lifecycle | Trimming Strategy |
+The following limits are **mandatory constraints**, enforced at every tool output boundary. Use imperative language: MUST truncate, MUST replace, MUST NOT exceed.
+
+| Source | Trigger | Max Tokens | Mandatory Action |
+|--------|---------|-----------|-----------------|
+| Explore Agent results | Always | 300 | MUST truncate to structured summary: entry points + dependency chain + tests + interfaces |
+| Subagent execution results | Always | 200 | MUST replace full transcript with extract: status / task / changes / test result / commit hash / self-check |
+| Test output (all pass) | All tests pass | 50 | MUST replace with single line: `✅ <pass>/<total> tests passed (<duration>)` |
+| Test output (failures) | Any test fails | 300 | MUST keep only failure names + error messages. MUST discard all passing test details |
+| Git diff | >50 lines | 200 | MUST replace with file-level summary: filename + change type (added/modified/deleted) |
+| Git status | >30 files | 200 | MUST replace with categorized summary |
+| Command output | >100 lines | 200 | MUST keep last 20 lines + error/warning pattern matches |
+
+### Structured Output Exemption
+
+All Structured_Output formats are **exempt** from truncation regardless of token limits:
+- TDD phase markers (🔴 RED / 🟢 GREEN / 🔵 REFACTOR)
+- P5 evidence chains (`[Command] → [Output] → [Claim]`)
+- Restatement summaries
+- Closure-First Probe results
+- Review reports
+
+### Lifecycle Classification
+
+| Information Source | Lifecycle | Handling |
 |--------|---------|---------|
-| Explore Agent results | Ephemeral | Explore_Summarizer: structured summary (entry points + dependency chain + tests + interfaces), ≤300 tokens |
-| Subagent execution results | Ephemeral | Subagent_Summary_Protocol: extract status/task/changes/test/commit/self-check, ≤200 tokens |
-| Test run output | Ephemeral | Test_Output_Trimmer: single-line summary when all pass (≤150 tokens), keep only failure details when failures exist |
-| Git Diff/Status | Ephemeral | Git_Output_Limiter: file-level summary for diff >50 lines, categorized summary for status >30 files |
 | Plan task list | Persistent | Retain in context, refresh at Restatement |
 | Current task description | Persistent | Retain in context, refresh at Restatement |
 | TDD cycle output | Phase-scoped | Retain for current phase, replace with summary at Restatement |
@@ -501,10 +520,10 @@ $ /forge build
 
 ### Trimming Execution Timing
 
-1. After Explore Agent returns → call `serializeExploreResult(exploreOutput)` — Parameters: Explore Agent raw return value (`ExploreSummary | string`); Returns: structured summary string (≤300 tokens); Purpose: replace raw Explore output in context
-2. After Subagent returns → call `serializeSubagentSummary(subagentOutput)` — Parameters: Subagent raw return value (parse as `SubagentSummary`); Returns: summary string (≤200 tokens); Purpose: replace execution log in context
-3. After test run → call `serializeTestOutput(testOutput)` — Parameters: test run raw output (parse as `TestOutputSummary`); Returns: summary string (≤150 tokens); Purpose: replace test output in context
-4. After Git operation → when diff exceeds 50 lines call `serializeGitDiff(diffSummary, lineCount)` (Parameters: Git diff output parsed as `GitDiffSummary`, `lineCount` is line count); when status exceeds 30 files call `serializeGitStatus(statusSummary, fileCount)` (Parameters: Git status output parsed as `GitStatusSummary`, `fileCount` is file count); Purpose: replace raw output when threshold exceeded
+1. After Explore Agent returns → MUST truncate to ≤300 tokens structured summary
+2. After Subagent returns → MUST replace with ≤200 tokens extract
+3. After test run → all pass: MUST replace with ≤50 tokens single line; failures: MUST keep only failures ≤300 tokens
+4. After Git operation → diff >50 lines: MUST replace with file-level summary ≤200 tokens; status >30 files: MUST replace with categorized summary ≤200 tokens
 5. After write-and-discard → replace full content with confirmation info
 
 ---
