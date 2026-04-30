@@ -710,3 +710,68 @@ describe("Contract: forge-learn SKILL.md rule distillation", () => {
     expect(content).toMatch(/3\+?\s*session|连续\s*3/i);
   });
 });
+
+// ---------------------------------------------------------------------------
+// 17. CLAUDE.md ↔ templates/CLAUDE.md sync
+// ---------------------------------------------------------------------------
+
+describe("Contract: CLAUDE.md and template sync", () => {
+  const claudePath = resolve(ROOT, "CLAUDE.md");
+  const templatePath = resolve(ROOT, "templates", "CLAUDE.md");
+  const claude = readFileSync(claudePath, "utf-8");
+  const template = readFileSync(templatePath, "utf-8");
+
+  it("both files have same line count (±2 lines)", () => {
+    const claudeLines = claude.split("\n").length;
+    const templateLines = template.split("\n").length;
+    expect(Math.abs(claudeLines - templateLines)).toBeLessThanOrEqual(2);
+  });
+
+  it("template has all 5 required placeholders", () => {
+    expect(template).toContain("{{project_name}}");
+    expect(template).toContain("{{tech_stack}}");
+    expect(template).toContain("{{security_level}}");
+    expect(template).toContain("{{knowledge_limit}}");
+    expect(template).toContain("{{init_date}}");
+  });
+
+  it("CLAUDE.md does not contain any template placeholders", () => {
+    expect(claude).not.toContain("{{project_name}}");
+    expect(claude).not.toContain("{{tech_stack}}");
+    expect(claude).not.toContain("{{security_level}}");
+    expect(claude).not.toContain("{{knowledge_limit}}");
+    expect(claude).not.toContain("{{init_date}}");
+  });
+});
+
+// ---------------------------------------------------------------------------
+// 18. CLAUDE.md reference pointers resolve to detail doc
+// ---------------------------------------------------------------------------
+
+describe("Contract: CLAUDE.md reference pointers resolve", () => {
+  const claude = readFileSync(resolve(ROOT, "CLAUDE.md"), "utf-8");
+  const detail = readFileSync(resolve(ROOT, "docs", "forge-constitution-detail.md"), "utf-8");
+
+  it("detail doc exists and is non-empty", () => {
+    expect(detail.length).toBeGreaterThan(100);
+  });
+
+  it("each section referenced in CLAUDE.md exists in detail doc", () => {
+    const refs = claude.match(/→ 详见 docs\/forge-constitution-detail\.md §[\d.]+/g);
+    expect(refs).not.toBeNull();
+    if (!refs) return;
+    const sections = [...new Set(refs)].map((r) =>
+      r.replace(/→ 详见 docs\/forge-constitution-detail\.md /, ""),
+    );
+    for (const section of sections) {
+      const sectionNum = section.replace("§", "");
+      const majorSection = sectionNum.split(".")[0];
+      expect(
+        detail.includes(`## §${majorSection}`) ||
+          detail.includes(`### §${sectionNum}`) ||
+          detail.includes(`§${sectionNum}`),
+        `Reference ${section} not found in detail doc`,
+      ).toBe(true);
+    }
+  });
+});
