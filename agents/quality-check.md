@@ -1,7 +1,7 @@
 ---
 name: quality-check
 description: 代码质量评审者。在 /forge review 的 Agent Team 中提供 Layer 2 评审，检查命名一致性、错误处理、性能、测试覆盖率、代码重复和可维护性。
-model: inherit
+model: sonnet
 maxTurns: 15
 tools: Read, Glob, Grep
 permissionMode: plan

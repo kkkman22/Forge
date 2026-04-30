@@ -172,32 +172,22 @@ Restatement is a **mandatory step** in the orchestration loop, not an optional o
 4. **Write Interim Log**: Update `.forge/knowledge/sessions/<date>-<topic>-interim.md`
 5. **Reset Counter**: Reset to N
 
-**Restatement Summary Format** (5 required blocks):
+**Restatement Summary Format** (3 required blocks):
 
 ```
-━━━ 📋 Restatement Checkpoint（Task N/M 完成后）━━━
+━━━ 📋 Restatement（Task N/M）━━━
 
-📊 进度：已完成 N/M 个任务
-  ✅ <已完成的任务列表>
-  🔜 <下一个任务>（下一步）
-  ⏸️ <未开始的任务列表>
+📊 进度：已完成 N/M
+  ✅ <已完成任务列表>
+  🔜 <下一个任务>
 
 🎯 下一步：Task X — <完整标题和文件路径>
 
-⚠️ 执行纪律重申：
-  • TDD 铁律：RED → GREEN → REFACTOR，不可跳过任何阶段
-  • 原子提交：一个任务一个 commit，不合并
-  • 验证铁律：[Command] → [Output] → [Claim]，不接受"应该可以了"
-  • Subagent 状态必须检查：DONE / DONE_WITH_CONCERNS / NEEDS_CONTEXT / BLOCKED
-  • Closure-First 探针：每个任务前必须执行 2 Probe + 1 Verify
+🧠 活跃提示：
+  • <从 status.md hints 提取的活跃提示>
+  • <最相关的 1 个直觉模式匹配，附 confidence>
 
-🧠 活跃的行为提示：
-  • <从 status.md hints 字段提取的当前活跃提示>
-
-📚 匹配的直觉模式：
-  • <从 instincts.md 匹配的模式，附 confidence>
-
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 ```
 
 **Exception-triggered Restatement**: When Subagent returns BLOCKED / NEEDS_CONTEXT / DONE_WITH_CONCERNS, execute Checkpoint **immediately** (do not reset cycle counter). Add exception block to summary:
@@ -209,7 +199,7 @@ Restatement is a **mandatory step** in the orchestration loop, not an optional o
   处理：BLOCKED → 评估原因 | NEEDS_CONTEXT → 补充重派 | DONE_WITH_CONCERNS → 阅读判断
 ```
 
-**Token Cost Constraint**: Single Checkpoint ≤1,500 tokens. 10 tasks (N=3) total overhead ≤ 10% of total tokens.
+**Token Cost Constraint**: Single Checkpoint ≤800 tokens. 10 tasks (N=3) total overhead ≤ 5% of total tokens.
 
 **Subagent Isolation**: Each Subagent has fresh context; dependencies are passed through the file system.
 

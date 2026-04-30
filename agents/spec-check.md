@@ -1,7 +1,7 @@
 ---
 name: spec-check
 description: Spec 对齐评审者。在 /forge review 的 Agent Team 中提供 Layer 1 评审，逐条对照规格检查实现完整性和 scope creep。
-model: inherit
+model: sonnet
 maxTurns: 15
 tools: Read, Glob, Grep
 permissionMode: plan

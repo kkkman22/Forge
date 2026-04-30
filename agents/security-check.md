@@ -1,7 +1,7 @@
 ---
 name: security-check
 description: 安全评审者。在 /forge review 的 Agent Team 中提供 Layer 3 评审，检查硬编码密钥、注入风险、不安全依赖、权限边界和敏感数据泄露。
-model: inherit
+model: sonnet
 maxTurns: 15
 tools: Read, Glob, Grep, WebSearch
 permissionMode: plan

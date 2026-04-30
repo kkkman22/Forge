@@ -415,6 +415,8 @@ npm link && forge-loop "你的目标"            # 全局链接后直接使用
 
 按需加载意味着轻量路径只加载 `build` + `review` 两个 SKILL，标准路径加载 5 个，全量路径加载 8 个。辅助命令（status/resume/debug）按需单独加载。
 
+**进一步节省**：启用 [opusplan 模式](docs/opusplan-guide.md)（plan 用 opus，执行用 sonnet）可额外节省 20-40% token，与 Agent 级模型路由互补。
+
 ---
 
 ## .gitignore 建议
