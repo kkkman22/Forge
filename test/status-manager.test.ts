@@ -1,27 +1,14 @@
-/**
- * Property tests for status-manager module.
- *
- * Feature: parallel-status-tracking
- *
- * Properties tested:
- *   Property 4:  Read fallback resolution
- *   Property 5:  Frontmatter round-trip preservation
- *   Property 6:  Active task listing completeness
- *   Property 9:  Most recent task selection
- */
-import * as fc from "fast-check";
 import { describe, expect, it } from "vitest";
+import { clearLoopFields } from "../src/status-file-ext.js";
 import {
-  type StatusManagerIO,
-  type TaskStatusEntry,
   archiveTaskStatus,
   getMostRecentActiveTask,
   listActiveTasks,
   migrateToMultiTask,
   readTaskStatus,
+  type StatusManagerIO,
   writeTaskStatus,
 } from "../src/status-manager.js";
-import { clearLoopFields } from "../src/status-file-ext.js";
 
 // ---------------------------------------------------------------------------
 // In-memory IO implementation for testing
@@ -31,14 +18,14 @@ function createInMemoryIO(files: Record<string, string> = {}): StatusManagerIO {
   const store = { ...files };
   return {
     exists: (p) => p in store,
-    dirExists: (p) => Object.keys(store).some((k) => k.startsWith(p + "/")),
+    dirExists: (p) => Object.keys(store).some((k) => k.startsWith(`${p}/`)),
     read: (p) => store[p] ?? "",
     write: (p, content) => {
       store[p] = content;
     },
     listDir: (p) =>
       Object.keys(store)
-        .filter((k) => k.startsWith(p + "/"))
+        .filter((k) => k.startsWith(`${p}/`))
         .map((k) => k.slice(p.length + 1)),
     move: (src, dest) => {
       store[dest] = store[src] ?? "";
@@ -65,8 +52,11 @@ function makeStatusContent(
   return `---\ncurrent_task: "${task}"\ntier: "${tier}"\nphase: "${phase}"\nupdated: "${updated}"\n---\n`;
 }
 
-function makeTaskFile(taskName: string, phase: string): { path: string; content: string } {
-  const taskId = taskName.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-+|-+$/g, "");
+function _makeTaskFile(taskName: string, phase: string): { path: string; content: string } {
+  const taskId = taskName
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, "-")
+    .replace(/^-+|-+$/g, "");
   return {
     path: `${STATUS_DIR}/${taskId}.md`,
     content: makeStatusContent(taskName, phase),
@@ -186,7 +176,7 @@ describe("Property 9: Most recent task selection", () => {
     const result = getMostRecentActiveTask(io, FORGE_ROOT);
 
     expect(result).not.toBeNull();
-    expect(result!.taskName).toBe("task-b");
+    expect(result?.taskName).toBe("task-b");
   });
 
   it("returns null when no active tasks", () => {
@@ -196,7 +186,12 @@ describe("Property 9: Most recent task selection", () => {
 
   it("excludes completed and aborted tasks", () => {
     const files: Record<string, string> = {
-      [`${STATUS_DIR}/task-a.md`]: makeStatusContent("task-a", "completed", "standard", "2026-04-30"),
+      [`${STATUS_DIR}/task-a.md`]: makeStatusContent(
+        "task-a",
+        "completed",
+        "standard",
+        "2026-04-30",
+      ),
     };
     const io = createInMemoryIO(files);
     expect(getMostRecentActiveTask(io, FORGE_ROOT)).toBeNull();
