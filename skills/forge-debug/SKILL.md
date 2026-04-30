@@ -12,7 +12,7 @@ disable-model-invocation: true
 
 ---
 
-## 1. 概述
+## 1. Overview
 
 `/forge debug` 以 **Subagent 模式**启动四阶段调试流程，强制按照"调查 → 分析 → 验证 → 修复"的顺序推进。每个阶段有明确的准入和准出条件，阶段之间不可跳跃。
 
@@ -22,9 +22,9 @@ disable-model-invocation: true
 
 ---
 
-## 2. 四阶段流程
+## 2. Four-Phase Process
 
-### Phase 1 — 根因调查（禁止提出修复方案）
+### Phase 1 — Root Cause Investigation (Fix Proposals Prohibited)
 
 **目标**：完整理解问题，建立事实基础。
 
@@ -39,7 +39,7 @@ disable-model-invocation: true
 
 **产出**：`.forge/debug/<topic>.md`（status: "investigating"），包含错误信息、复现步骤、最近变更、数据流追踪、初步假设。
 
-### Phase 2 — 模式分析
+### Phase 2 — Pattern Analysis
 
 **目标**：通过对比和历史经验缩小根因范围。
 
@@ -52,7 +52,7 @@ disable-model-invocation: true
 
 **产出**：更新 debug 文档，追加已知失败模式匹配、正常代码对比、历史踩坑匹配、缩小后的假设。
 
-### Phase 3 — 假设验证
+### Phase 3 — Hypothesis Verification
 
 **目标**：逐一验证假设，找到真正的根因。
 
@@ -75,7 +75,7 @@ disable-model-invocation: true
 
 **产出**：更新 debug 文档，追加假设验证结果表（尝试/改动/结果）。
 
-### Phase 4 — 修复验证
+### Phase 4 — Fix Verification
 
 **目标**：以 TDD 方式实施修复，确保问题解决且无新问题。
 
@@ -97,11 +97,11 @@ disable-model-invocation: true
 
 ---
 
-## 3. 红旗信号列表
+## 3. Red Flag Checklist
 
 以下信号表明调试方向可能有误，需要停下来重新评估：
 
-| 红旗信号 | 建议行动 |
+| Red Flag | Suggested Action |
 |---------|---------|
 | 修复一个问题引入两个新问题 | 回到 Phase 1 重新调查 |
 | 同一假设连续失败 3 次 | 停止修复，质疑架构 |
@@ -112,7 +112,7 @@ disable-model-invocation: true
 
 ---
 
-## 4. 执行流程
+## 4. Execution Flow
 
 1. **Phase 1**：根因调查（禁止提出修复方案）— 完整阅读错误 → 稳定复现 → 检查最近变更 → 追踪数据流
 2. **Phase 2**：模式分析 — 对比正常代码 → 搜索历史踩坑 → 缩小假设范围
@@ -122,9 +122,9 @@ disable-model-invocation: true
 
 ---
 
-## 5. 边界情况处理
+## 5. Edge Case Handling
 
-| 条件 | 处理 |
+| Condition | Handling |
 |------|------|
 | 问题无法复现 | ⚠️ 可能是竞态条件或环境问题。建议增加详细日志、检查并发、对比环境差异 |
 | Phase 1 中尝试提出修复 | 🚫 Phase 1 未完成，不能提出修复方案。先完成所有调查步骤 |
@@ -133,14 +133,14 @@ disable-model-invocation: true
 
 ---
 
-## 6. 示例
+## 6. Examples
 
-### 示例：完整四阶段调试
+### Example: Complete Four-Phase Debug
 
 ```
 $ /forge debug
 
-━━━ Phase 1 — 根因调查 ━━━
+━━━ Phase 1 — Root Cause Investigation ━━━
 
 📖 完整阅读错误信息...
   TypeError: Cannot read properties of undefined (reading 'map')
@@ -150,16 +150,16 @@ $ /forge debug
 📝 检查最近变更... 新增了 status 过滤逻辑，未处理 null 值
 🔍 追踪数据流... db.query({ status: null }) → 返回 undefined（而非空数组）
 
-━━━ Phase 2 — 模式分析 ━━━
+━━━ Phase 2 — Pattern Analysis ━━━
 
 📚 搜索历史踩坑... 匹配：null-parameter-handling.md (confidence: 0.7)
 假设 A（最可能）：db.query 在 status=null 时返回 undefined 而非空数组
 
-━━━ Phase 3 — 假设验证 ━━━
+━━━ Phase 3 — Hypothesis Verification ━━━
 
 验证假设 A：在 query 方法中添加 null 参数检查 → ✅ 问题消失
 
-━━━ Phase 4 — 修复验证 ━━━
+━━━ Phase 4 — Fix Verification ━━━
 
 🔴 RED — test("should return empty array when status is null") → FAIL ✅
 🟢 GREEN — 在 db.query 中添加 null 参数过滤 → PASS ✅

@@ -12,7 +12,7 @@ disable-model-invocation: true
 
 ---
 
-## 1. 概述
+## 1. Overview
 
 `/forge refactor` 是 Forge 工作流中专门处理重构任务的 SKILL。当路由器通过 WorkNature 维度判定任务为重构性质时，自动分流到此工作流。用户无需记忆独立命令——入口仍然是 `/forge`。
 
@@ -22,21 +22,21 @@ disable-model-invocation: true
 
 ---
 
-## 2. 前置检查
+## 2. Pre-flight Checks
 
 在启动重构流程之前，必须逐条验证以下 7 项前置条件。**任一条件命中时，不得继续重构**。
 
-| # | 检查条目 | 命中时的路由 |
-|---|---------|------------|
-| 1 | **是否夹带行为改动** | → 路由器重新判定为 feature 或 bugfix |
-| 2 | **目标是否有测试覆盖** | → 先补测试（`/forge build` 补充测试任务） |
-| 3 | **是否跨模块**（3 个以上独立模块） | → 先走 `/forge spec` 做设计 |
-| 4 | **是否全是风格口味** | → 走 lint/formatter 规则配置 |
-| 5 | **是否生成产物/第三方代码** | → 改源头（生成器配置或上游依赖） |
-| 6 | **范围是否过大**（涉及文件 > 15） | → 缩小范围，分批重构 |
-| 7 | **扫完是否有东西可改** | → "零输出合法"，Agent 返回 `should_fully_stop: true` |
+| # | Check Item | Route on Hit |
+|---|------------|-------------|
+| 1 | **Behavioral change mixed in** | → Router re-classifies as feature or bugfix |
+| 2 | **Target lacks test coverage** | → Add tests first (`/forge build` to add test tasks) |
+| 3 | **Cross-module** (3+ independent modules) | → Run `/forge spec` for design first |
+| 4 | **Purely stylistic** | → Configure lint/formatter rules |
+| 5 | **Generated artifacts / third-party code** | → Fix the source (generator config or upstream dependency) |
+| 6 | **Scope too large** (files affected > 15) | → Narrow scope, refactor in batches |
+| 7 | **Nothing to change after scan** | → "Zero output is valid", Agent returns `should_fully_stop: true` |
 
-**拒绝输出格式**：
+**Rejection output format**:
 
 ```
 🚫 重构前置检查未通过
