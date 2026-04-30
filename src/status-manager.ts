@@ -9,6 +9,8 @@
  * In multi-task mode, each task gets its own file under .forge/status/.
  */
 
+import { basename } from "node:path";
+
 import { extractStringField, parseFrontmatter } from "./frontmatter.js";
 import { isMultiTaskMode, slugify } from "./status-resolver.js";
 
@@ -35,7 +37,7 @@ export interface StatusManagerIO {
   mkdirp: (path: string) => void;
 }
 
-const ACTIVE_PHASES = new Set(["completed", "aborted"]);
+const TERMINAL_PHASES = new Set(["completed", "aborted"]);
 
 // ---------------------------------------------------------------------------
 // readTaskStatus
@@ -51,10 +53,10 @@ export function readTaskStatus(
   forgeRoot: string,
   taskName: string,
 ): string {
-  try {
-    const taskId = slugify(taskName);
-    const taskPath = `${forgeRoot}/status/${taskId}.md`;
+  const taskId = slugify(taskName);
+  const taskPath = `${forgeRoot}/status/${taskId}.md`;
 
+  try {
     if (io.exists(taskPath)) {
       return io.read(taskPath);
     }
@@ -118,7 +120,8 @@ export function writeTaskStatus(
       io.write(`${forgeRoot}/status.md`, content);
     }
   } catch {
-    // Graceful degradation — do not crash
+    // Graceful degradation — spec R2.5: log warning and continue without crashing
+    // TODO: integrate with logging when available
   }
 }
 
@@ -142,7 +145,7 @@ export function listActiveTasks(
   if (io.exists(legacyPath)) {
     const content = io.read(legacyPath);
     const entry = parseTaskEntry(content, legacyPath);
-    if (entry && !ACTIVE_PHASES.has(entry.phase)) {
+    if (entry && !TERMINAL_PHASES.has(entry.phase)) {
       entries.push(entry);
     }
   }
@@ -155,7 +158,7 @@ export function listActiveTasks(
       const filePath = `${statusDir}/${fileName}`;
       const content = io.read(filePath);
       const entry = parseTaskEntry(content, filePath);
-      if (entry && !ACTIVE_PHASES.has(entry.phase)) {
+      if (entry && !TERMINAL_PHASES.has(entry.phase)) {
         entries.push(entry);
       }
     }
@@ -235,6 +238,9 @@ export function archiveTaskStatus(
   date: string,
 ): void {
   try {
+    if (!/^\d{4}-\d{2}-\d{2}$/.test(date)) {
+      throw new Error(`Invalid archive date format: "${date}" — expected YYYY-MM-DD`);
+    }
     const taskId = slugify(taskName);
     const srcPath = `${forgeRoot}/status/${taskId}.md`;
     if (!io.exists(srcPath)) return;
@@ -243,7 +249,8 @@ export function archiveTaskStatus(
     io.mkdirp(archiveDir);
     io.move(srcPath, `${archiveDir}/status.md`);
   } catch {
-    // Graceful degradation
+    // Graceful degradation — spec R2.5: log warning and continue without crashing
+    // TODO: integrate with logging when available
   }
 }
 
@@ -258,7 +265,7 @@ function parseTaskEntry(content: string, filePath: string): TaskStatusEntry | nu
   const taskName = extractStringField(parsed.raw, "current_task");
   if (!taskName) return null;
 
-  const taskId = filePath.split("/").pop()?.replace(".md", "") ?? "";
+  const taskId = basename(filePath, ".md");
   return {
     taskId,
     taskName,
