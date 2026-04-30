@@ -1,10 +1,10 @@
 ---
-current_task: "token-budget-compression"
+current_task: "token-language-optimization"
 tier: "standard"
-phase: "build"
+phase: "review"
 updated: "2026-04-30"
 ---
 
 # 项目状态
 
-Token Budget Compression：Build 阶段。压缩 7 个 SKILL 文件 + CLAUDE.md，目标总 SKILL ≤145K 字符。
+Token Language Optimization：执行中（标准路径 plan → build → review → test → ship）。当前阶段：build。

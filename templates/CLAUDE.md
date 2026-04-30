@@ -5,19 +5,19 @@
 
 ---
 
-## 1. 任务路由规则
+## 1. Task Routing Rules
 
 所有任务通过 `/forge` 入口进入三级路由。AI 分析任务复杂度并建议档位，用户确认或覆盖。
 
-### 三级路由
+### Three-Tier Routing
 
-| 档位 | 判定条件 | 命令序列 |
-|------|---------|---------|
-| **轻量** | 影响文件 ≤ 1 且改动 ≤ 20 行 | `build → review` |
-| **标准** | 需求明确或已有 Spec | `plan → build → review → test → ship` |
-| **全量** | 新服务 / 新数据库 / 认证变更 / 需求模糊 | `decide → spec → plan → build → review → test → ship → learn` |
+| Tier | Condition | Command Sequence |
+|------|-----------|-----------------|
+| **Light** | 影响文件 ≤ 1 且改动 ≤ 20 行 | `build → review` |
+| **Standard** | 需求明确或已有 Spec | `plan → build → review → test → ship` |
+| **Full** | 新服务 / 新数据库 / 认证变更 / 需求模糊 | `decide → spec → plan → build → review → test → ship → learn` |
 
-### 路由原则
+### Routing Principles
 
 - **用户覆盖优先**：用户明确指定档位时，以用户为准，无论 AI 建议如何。
 - **宁重勿轻**：无法判定时，选择更重的档位。轻量路径跳过了 spec/plan/test，只适用于真正的小改动。
@@ -25,9 +25,9 @@
 
 ---
 
-## 2. 执行纪律
+## 2. Execution Discipline
 
-### 2.1 TDD 强制
+### 2.1 TDD Enforcement
 
 所有实现任务必须遵循 **RED → GREEN → REFACTOR** 循环：
 
@@ -37,18 +37,18 @@
 
 **铁律**：如果发现代码先于测试编写——删除代码，从测试开始。没有例外。
 
-### 2.2 前置检查
+### 2.2 Pre-build Checks
 
 在标准和全量路径下，`/forge build` 启动前必须通过两道门禁：
 
-| 门禁 | 条件 | 未通过时 |
-|------|------|---------|
+| Gate | Condition | On Failure |
+|------|-----------|------------|
 | Spec 锁定 | `.forge/specs/` 中对应 Spec 的 status 为 `locked` | 阻断 build，提示先完成 `/forge spec` |
 | Plan 批准 | `.forge/plans/` 中对应 Plan 的 status 为 `approved` | 阻断 build，提示先完成 `/forge plan` |
 
 未通过门禁时，**禁止以任何理由绕过**。
 
-### 2.3 验证铁律
+### 2.3 Verification Iron Law
 
 > **没有运行验证命令 = 不能声明通过。**
 
@@ -61,7 +61,7 @@
   - "逻辑上没问题"
 - 每个完成的任务必须执行**原子提交**（一个任务一个 commit）
 
-### 2.4 三次换路
+### 2.4 Three-Strike Reroute
 
 当同一修复连续失败 **3 次**时：
 
@@ -75,54 +75,97 @@
 2. **质疑架构**——问题可能不在代码层面
 3. 与开发者讨论，重新评估方向
 
-### 2.5 上下文刷新纪律
+### 2.5 Context Refresh Discipline
 
-标准/全量路径的 build 阶段需执行周期性 Restatement Checkpoint，对抗长任务注意力衰减。→ 完整规则（触发条件、N 值配置、摘要格式、异常处理）见 forge-build SKILL.md §3.2。
+在标准路径和全量路径的 build 阶段，主 Agent 必须执行周期性的 Restatement Checkpoint：
 
-### 2.6 输出简洁性
+- **每完成 N 个任务**（N 由 config.md 的 restatement_interval 配置，默认 3），
+  暂停编排，重读 progress 和 status，在上下文尾部追加 Restatement 摘要。
+- **Sub-Agent 返回异常状态时**（BLOCKED / NEEDS_CONTEXT / DONE_WITH_CONCERNS），
+  在处理之前先执行一次 Restatement。
+- **Restatement 不修改 System Prompt**，只追加到对话尾部。
+
+这条纪律的目的是对抗长任务中的注意力衰减。如果你发现自己在跳过探针、
+合并步骤、或不检查 Sub-Agent 状态，说明你需要一次 Restatement。
+
+### 2.6 Output Conciseness
 
 > **原则**：代码编辑时沉默执行，决策点时简要说明。SKILL 定义的结构化输出永远不被压制。
 
-#### 禁止的输出模式
+#### Prohibited Output Patterns
 
-代码编辑时禁止：操作预告、自我对话、逐步解说、步骤枚举、工具调用预告。→ 直接执行编辑，无 Narration。
+在执行代码编辑操作（文件创建、修改、删除）时，以下 Narration 模式被禁止：
 
-#### 保留的输出
+| Pattern Type | Example |
+|---------|------|
+| 操作预告 | "现在我要修改 X 文件" / "Now I'll modify X file" |
+| 自我对话 | "让我添加 Y 字段" / "Let me add Y field" |
+| 逐步解说 | "接下来将 Z 传入 W" / "Next, I'll pass Z into W" |
+| 步骤枚举 | "首先...然后...最后..." / "First...then...finally..." |
+| 工具调用预告 | 对即将执行的工具调用的重复描述 |
 
-以下 Forge 结构化输出不受简洁性约束，必须完整保留：TDD 标记（🔴/🟢/🔵）、Closure-First 探针、Restatement 摘要、P5 证据链、评审报告（P0-P3）、路由分析、前置检查结果、进度更新。
+**Before（冗长）**：
+> 现在我要修改 `src/config.ts` 文件，添加 `logFormat` 字段。让我先找到 `SdkDriverConfig` 接口的定义...好的，找到了。接下来我会在第 15 行添加 `logFormat: string` 字段。然后我需要更新 `createConfig` 函数，将 `logFormat` 参数传入...
 
-#### Decision_Point 输出许可
+**After（简洁）**：
+> *（直接执行编辑，无 Narration）*
 
-设计选择、意外情况、计划调整、方向变更、阻塞报告时允许简要说明。模板：`[原因] → [选择] → [依据]`。
+#### Preserved Output
 
-#### 优先级
+以下 Forge 结构化输出不受简洁性约束影响，必须完整保留：
 
-SKILL 定义的输出格式 > 简洁性约束。SKILL 要求特定输出时，简洁性规则自动让步。
+- TDD 阶段标记：🔴 RED / 🟢 GREEN / 🔵 REFACTOR 及其测试运行结果
+- Closure-First 探针结果：Probe #1, Probe #2, Verify #1 输出块
+- Restatement 摘要：周期性上下文刷新的 5 区块格式
+- P5 证据链：`[Command] → [Output] → [Claim]` 验证格式
+- 评审报告：含严重度等级（P0/P1/P2/P3）的评审发现
+- 路由分析：档位建议、任务类型、项目阶段输出
+- 前置检查结果：门禁检查通过/失败输出
+- 进度更新：任务完成标记和进度摘要
+
+#### Decision_Point Output Permission
+
+在以下决策点，允许简要说明理由：
+
+- **设计选择**：在多个实现方案间做选择时
+- **意外情况**：遇到意外的代码状态、缺失文件或探针失败时
+- **计划调整**：偏离计划或重新排序任务时
+- **方向变更**：失败后切换方案时（如三次换路）
+- **阻塞报告**：报告 BLOCKED 或 NEEDS_CONTEXT 状态时
+
+Decision_Point 输出模板：`[原因] → [选择] → [依据]`
+
+**示例**：
+> 接口签名与 Spec 不一致 → 以 Spec 为准重新定义 → Plan Task 2 明确要求对齐 Spec §3.2
+
+#### Priority
+
+SKILL 定义的输出格式 > 简洁性约束。当 SKILL 要求特定输出（模板、标记、结构化块）时，简洁性规则自动让步。
 
 ---
 
-## 3. 评审纪律
+## 3. Review Discipline
 
-### 3.1 执行与评估分离
+### 3.1 Execution-Assessment Separation
 
 - **写代码的 Agent 不评审自己的代码**
 - `/forge review` 使用独立 Subagent（spec-check、quality-check、security-check）
 - 评审者只对照 Spec 和代码质量标准，不受实现过程的上下文影响
 
-### 3.2 三层评审
+### 3.2 Three-Layer Review
 
-| 层级 | 评审者 | 检查内容 |
-|------|--------|---------|
-| **Layer 1: Spec 对齐** | spec-check | 每个需求是否实现、每个场景是否覆盖、是否存在超出 Spec 的实现（scope creep） |
-| **Layer 2: 代码质量** | quality-check | 命名一致性、错误处理完整性、性能热点、测试覆盖率、代码重复、可维护性 |
-| **Layer 3: 安全与风险** | security-check | 硬编码密钥、注入风险、不安全依赖、权限边界、敏感数据泄露 |
+| Layer | Reviewer | Check Content |
+|-------|----------|--------------|
+| **Layer 1: Spec Alignment** | spec-check | 每个需求是否实现、每个场景是否覆盖、是否存在超出 Spec 的实现（scope creep） |
+| **Layer 2: Code Quality** | quality-check | 命名一致性、错误处理完整性、性能热点、测试覆盖率、代码重复、可维护性 |
+| **Layer 3: Security & Risk** | security-check | 硬编码密钥、注入风险、不安全依赖、权限边界、敏感数据泄露 |
 
-### 3.3 P0/P1 必须修复
+### 3.3 P0/P1 Must Fix
 
 问题按严重度分级：
 
-| 级别 | 含义 | 处理 |
-|------|------|------|
+| Level | Meaning | Handling |
+|-------|---------|----------|
 | **P0** | 阻塞发布 | 必须立即修复，**阻断 `/forge ship`** |
 | **P1** | 高影响 | 必须在发布前修复，**阻断 `/forge ship`** |
 | P2 | 中影响 | 应该修复，可协商时间 |
@@ -132,9 +175,9 @@ SKILL 定义的输出格式 > 简洁性约束。SKILL 要求特定输出时，�
 
 ---
 
-## 4. 知识纪律
+## 4. Knowledge Discipline
 
-### 4.1 完成即沉淀
+### 4.1 Capture on Completion
 
 每次开发完成后，必须执行 `/forge learn` 从五个维度提取经验：
 
@@ -146,14 +189,14 @@ SKILL 定义的输出格式 > 简洁性约束。SKILL 要求特定输出时，�
 
 知识文档输出到 `.forge/knowledge/solutions/`，高频模式写入 `.forge/knowledge/instincts.md`。
 
-### 4.2 知识库上限
+### 4.2 Knowledge Base Limit
 
 - 知识库文档数量上限：**{{knowledge_limit}}** 个（默认 20，可在 `.forge/config.md` 中配置）
 - 超出上限时，按置信度排序，清理最低置信度的文档
 - **Confidence < 0.3 的模式自动清理**——低置信度的经验不值得保留
 - 高频模式写入 `instincts.md` 时附带 Confidence Score（0.3 - 0.9）
 
-### 4.3 知识回流
+### 4.3 Knowledge Backflow
 
 - `/forge plan` 执行时自动搜索 Knowledge Base 中的相关经验
 - `/forge build` 执行时自动搜索 Knowledge Base 中的历史踩坑记录

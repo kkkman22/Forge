@@ -4,15 +4,15 @@ description: "任务中止。安全中止当前任务，归档状态到 .forge/a
 disable-model-invocation: true
 ---
 
-# /forge abort — 任务中止
+# /forge abort — Task Abort
 
-> **触发方式**：用户输入 `/forge abort`
-> **职责**：安全中止当前任务，归档已有状态，清理 status.md，让用户可以干净地开始新任务
-> **输出路径**：`.forge/archive/<date>-<topic>/`（归档）+ `.forge/status.md`（重置）
+> **Trigger**: User inputs `/forge abort`
+> **Responsibility**: Safely abort the current task, archive existing state, clean up status.md, allow the user to cleanly start a new task
+> **Output Path**: `.forge/archive/<date>-<topic>/` (archive) + `.forge/status.md` (reset)
 
 ---
 
-## 1. 概述
+## 1. Overview
 
 `/forge abort` 是 Forge 工作流的安全退出机制。当用户在任何阶段发现当前任务不值得继续（需求不成立、方向错误、优先级变更等），可以通过 abort 干净地中止任务，而不是手动删文件或无视状态开新任务。
 
@@ -20,11 +20,11 @@ disable-model-invocation: true
 
 ---
 
-## 2. 执行流程
+## 2. Execution Flow
 
-### Step 1：确认中止
+### Step 1: Confirm Abort
 
-**单任务模式**：读取 `.forge/status.md`，向用户展示当前任务状态。
+**Single-task mode**: Read `.forge/status.md` and display the current task status to the user.
 
 ```
 ⚠️ 即将中止当前任务
@@ -43,23 +43,23 @@ disable-model-invocation: true
 
 如果没有进行中的任务：`ℹ️ 当前没有进行中的任务，无需中止。`
 
-**多任务模式**：调用 `listActiveTasks(io, forgeRoot)` 显示活跃任务编号列表，用户选择要中止的任务或选择 "abort all"。选择特定任务时仅归档该任务的 StatusFile，其他任务不受影响。选择 "abort all" 时归档所有活跃任务并重置 Legacy_StatusFile。
+**Multi-task mode**: Call `listActiveTasks(io, forgeRoot)` to display a numbered list of active tasks. The user selects a task to abort or chooses "abort all". When a specific task is selected, only that task's StatusFile is archived; other tasks are unaffected. When "abort all" is chosen, all active tasks are archived and the Legacy_StatusFile is reset.
 
-### Step 2：归档状态文件
+### Step 2: Archive State Files
 
-**单任务模式**：将当前任务相关的状态文件移动到 `.forge/archive/YYYY-MM-DD-<topic>/`。
+**Single-task mode**: Move all state files related to the current task to `.forge/archive/YYYY-MM-DD-<topic>/`.
 
-**多任务模式**：调用 `archiveTaskStatus(io, forgeRoot, taskName, date)` 将 `.forge/status/<task-id>.md` 移动到归档目录。其他任务的 StatusFile 不受影响。
+**Multi-task mode**: Call `archiveTaskStatus(io, forgeRoot, taskName, date)` to move `.forge/status/<task-id>.md` to the archive directory. Other tasks' StatusFiles are unaffected.
 
-| 来源 | 归档条件 |
-|------|---------|
-| `.forge/decisions/<topic>*` | 如果存在 |
-| `.forge/specs/<topic>/` | 如果存在 |
-| `.forge/plans/<topic>*` | 如果存在 |
-| `.forge/findings/<topic>*` | 如果存在 |
-| `.forge/progress/<topic>*` | 如果存在 |
-| `.forge/reviews/<topic>*` | 如果存在 |
-| `.forge/debug/<topic>*` | 如果存在 |
+| Source | Archive Condition |
+|--------|-------------------|
+| `.forge/decisions/<topic>*` | If exists |
+| `.forge/specs/<topic>/` | If exists |
+| `.forge/plans/<topic>*` | If exists |
+| `.forge/findings/<topic>*` | If exists |
+| `.forge/progress/<topic>*` | If exists |
+| `.forge/reviews/<topic>*` | If exists |
+| `.forge/debug/<topic>*` | If exists |
 
 归档方式：移动（不是复制）。
 
