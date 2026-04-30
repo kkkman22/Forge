@@ -48,11 +48,7 @@ const TERMINAL_PHASES = new Set(["completed", "aborted"]);
  *
  * Priority: .forge/status/<task-id>.md → .forge/status.md → empty string
  */
-export function readTaskStatus(
-  io: StatusManagerIO,
-  forgeRoot: string,
-  taskName: string,
-): string {
+export function readTaskStatus(io: StatusManagerIO, forgeRoot: string, taskName: string): string {
   const taskId = slugify(taskName);
   const taskPath = `${forgeRoot}/status/${taskId}.md`;
 
@@ -134,10 +130,7 @@ export function writeTaskStatus(
  *
  * Scans both .forge/status.md and .forge/status/*.md.
  */
-export function listActiveTasks(
-  io: StatusManagerIO,
-  forgeRoot: string,
-): TaskStatusEntry[] {
+export function listActiveTasks(io: StatusManagerIO, forgeRoot: string): TaskStatusEntry[] {
   const entries: TaskStatusEntry[] = [];
 
   // Scan legacy status.md
