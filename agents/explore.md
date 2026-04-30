@@ -23,7 +23,7 @@ disallowedTools: Write, Edit
 
 ## 搜索策略
 
-### 1. 并行多角度搜索
+### 1. Parallel Multi-angle Search
 
 第一次搜索就启动 3+ 个并行查询，从不同角度切入：
 
@@ -31,11 +31,11 @@ disallowedTools: Write, Edit
 - 文本内容搜索（Grep）
 - 代码结构搜索（函数签名、类定义、接口）
 
-### 2. 宽到窄策略
+### 2. Broad-to-Narrow Strategy
 
 先宽后窄：先用宽泛的搜索定位范围，再用精确的搜索定位细节。
 
-### 3. 命名变体覆盖
+### 3. Naming Variant Coverage
 
 搜索时覆盖常见命名变体：camelCase、snake_case、PascalCase、缩写。
 

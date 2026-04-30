@@ -12,69 +12,97 @@ disable-model-invocation: true
 
 ---
 
-## 1. 概述
+## 1. Overview
 
-`/forge resume` 通过五个问题重建工作上下文——正在解决什么、当前在哪一步、已知发现、下一步、有什么阻塞。从 `.forge/` 状态文件自动提取答案。
+`/forge resume` 通过五个问题快速重建工作上下文——正在解决什么问题、当前在哪一步、已知发现、下一步是什么、有什么阻塞。它从 `.forge/` 状态文件中自动提取答案，让开发者在新会话中无缝继续之前的工作。
 
-**核心原则**：恢复上下文的成本应接近零。
+**核心原则**：恢复上下文的成本应该接近零。开发者不应该花时间回忆"我上次做到哪了"。
 
 ---
 
-## 2. 数据来源与五问题恢复
+## 2. Data Sources & Five-Question Recovery
 
-### 读取状态文件
+### Prerequisite: Read Status Files
 
-**单任务**：读取 `.forge/status.md`。**多任务**：调用 `listActiveTasks(io, forgeRoot)`，多任务显示编号列表让用户选择，单任务自动恢复。
+**数据来源**：`.forge/status.md` 或 `.forge/status/*.md` + `.forge/knowledge/sessions/`
 
-| 字段 | 用途 |
+**单任务模式**：直接读取 `.forge/status.md`。
+
+**多任务模式**：调用 `listActiveTasks(io, forgeRoot)` 获取活跃任务列表。多个活跃任务时，显示编号列表让用户选择。仅一个活跃任务时自动恢复。
+
+先读取状态文件获取全局上下文：
+
+| Field | Purpose |
 |------|------|
-| `current_task` | 定位 plan/progress/findings 文件 |
-| `tier` | 判断下一步命令 |
-| `phase` | 当前阶段 |
+| `current_task` | 确定当前任务主题，定位对应的 plan/progress/findings 文件 |
+| `tier` | 确定当前档位，判断下一步应执行哪个命令 |
+| `phase` | 确定当前阶段 |
 | `updated` | 上次更新时间 |
 
-### 会话层恢复
+**Session-level recovery**:
 
-1. 检查 `.forge/knowledge/sessions/` 中 `*-interim.md`（中断的执行上下文）
-2. 有 interim：读取进度快照 → 问题 2；关键发现 → 问题 3；异常记录 → 问题 5
-3. 无 interim：读取正式会话日志作补充
+1. 检查 `.forge/knowledge/sessions/` 中是否存在 `*-interim.md` 文件（上次会话中途中断的执行上下文）。
+2. 如果存在 interim 文件：读取"进度快照"→ 问题 2；"关键发现"→ 问题 3；"异常记录"→ 问题 5；"活跃约束"→ 恢复后首次 Restatement 重新注入。
+3. 如果不存在 interim 文件，读取正式会话日志作为补充信息。
 
-**恢复后首次 Restatement**：用户确认继续 build 后，派发第一个 Subagent 前**立即执行一次 Restatement Checkpoint**。
+**恢复后的首次 Restatement**：恢复上下文后，如果用户确认继续 build，在派发第一个 Subagent 之前**立即执行一次 Restatement Checkpoint**。
 
-### 五问题映射
+### Five-Question Mapping
 
-| 问题 | 数据来源 |
+| Question | Data Source |
 |------|---------|
-| 1. 正在解决什么？ | `.forge/plans/<topic>.md` Objective |
-| 2. 当前在哪一步？ | `phase` + progress 中"进行中"任务 |
-| 3. 已知发现？ | `.forge/findings/<topic>.md` |
-| 4. 下一步？ | plan 中下一个未完成任务 |
-| 5. 有什么阻塞？ | progress 中"阻塞"章节 |
+| 1. 正在解决什么问题？ | `.forge/plans/<topic>.md` 的 Objective 章节 |
+| 2. 当前在哪一步？ | `status.md` 的 `phase` + `.forge/progress/<topic>.md` 中的"进行中"任务 |
+| 3. 已知发现是什么？ | `.forge/findings/<topic>.md` |
+| 4. 下一步是什么？ | `.forge/plans/<topic>.md` 的 Task Breakdown 中的下一个任务 |
+| 5. 有什么阻塞？ | `.forge/progress/<topic>.md` 中的"阻塞"章节 |
 
 ---
 
-## 3. 输出格式
+## 3. Output Format
 
 ```
 🔄 Forge 会话恢复
-📊 任务：<current_task> | 档位：<tier> | 阶段：<phase> | 更新：<updated>
-━━━ 1. 问题 ━━━ <Plan Objective>
-━━━ 2. 进度 ━━━ <当前任务描述>
-━━━ 3. 发现 ━━━ <Findings 或"暂无">
-━━━ 4. 下一步 ━━━ <下一任务描述>
-━━━ 5. 阻塞 ━━━ <阻塞项 或"无">
-✅ 自动定位到：<phase 对应命令或 Task N> | 继续？(y/n)
+
+📊 全局状态
+  任务：<current_task>
+  档位：<tier>（轻量/标准/全量）
+  阶段：<phase>
+  上次更新：<updated>
+
+━━━ 1. 正在解决什么问题？ ━━━
+<Plan Objective 内容>
+
+━━━ 2. 当前在哪一步？ ━━━
+当前阶段：<phase>
+<当前进行中的任务描述>
+
+━━━ 3. 已知发现 ━━━
+<Findings 内容，或"暂无发现">
+
+━━━ 4. 下一步是什么？ ━━━
+<下一个待执行的任务描述>
+
+━━━ 5. 有什么阻塞？ ━━━
+<阻塞项列表，或"无阻塞">
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+✅ 上下文已恢复。自动定位到：<phase 对应的命令或 Task N>
+继续执行？(y/n)
 ```
 
 ---
 
 ## 4. 自动定位
 
-1. 有"进行中"任务 → 定位到该任务
-2. 无进行中 → 第一个未完成任务
-3. 全部完成 → 提示进入下一阶段（review/test/ship）
+恢复完成后，自动定位到上次中断的任务：
 
-确认 → 从定位任务继续 `/forge build`；拒绝 → 等待指示。
+1. 读取 Progress 中的"进行中"任务 → 有则定位到该任务
+2. 无进行中任务 → 找到第一个未完成的任务
+3. 所有任务已完成 → 提示进入下一阶段（review/test/ship）
+
+定位后等待用户确认：确认 → 从定位的任务继续 `/forge build`；拒绝 → 等待用户指示。
 
 ---
 
@@ -82,22 +110,44 @@ disable-model-invocation: true
 
 | 条件 | 处理 |
 |------|------|
-| 无 `.forge/` 目录 | ⚠️ 无可恢复上下文。运行 forge init 或 /forge |
-| 无 Plan 文件 | ℹ️ 运行 /forge 开始新任务 |
-| 无 Progress 文件 | 展示全局状态 + Plan，建议从 Task 1 开始 |
-| 所有任务已完成 | 提示运行 /forge review |
+| 无 `.forge/` 目录 | ⚠️ 没有可恢复的工作上下文。请运行 forge init 或 /forge 开始新任务 |
+| 无 Plan 文件 | ℹ️ 未找到计划文件。运行 /forge 开始新任务 |
+| 无 Progress 文件 | 展示全局状态 + Plan Objective，提示"建议从 Task 1 开始执行" |
+| 所有任务已完成 | 提示"Build 阶段已完成。建议运行 /forge review" |
 
 ---
 
 ## 6. 示例
 
+### 示例：正常恢复
+
 ```
 $ /forge resume
-🔄 会话恢复 | 订单批量导出 | 标准 | build | 2025-01-15 14:30
-━━━ 1. 问题 ━━━ 为订单系统提供批量导出功能
-━━━ 2. 进度 ━━━ Task 4/5：实现下载链接过期逻辑
-━━━ 3. 发现 ━━━ 文件存储支持 signed URL；平均 2MB 无需分片
-━━━ 4. 下一步 ━━━ Task 5/5：添加导出历史记录
-━━━ 5. 阻塞 ━━━ 无
-✅ 定位：Task 4 | 继续？(y/n)
+
+🔄 Forge 会话恢复
+
+📊 全局状态
+  任务：为订单管理系统提供批量导出功能
+  档位：标准
+  阶段：build
+  上次更新：2025-01-15 14:30
+
+━━━ 1. 正在解决什么问题？ ━━━
+为订单管理系统提供批量导出功能，让运营人员能够按条件筛选并导出订单数据。
+
+━━━ 2. 当前在哪一步？ ━━━
+Task 4/5：实现下载链接过期逻辑（预估 4 min）
+
+━━━ 3. 已知发现 ━━━
+- 现有的文件存储服务支持 signed URL，可直接用于过期链接
+- 导出文件大小平均 2MB，无需分片
+
+━━━ 4. 下一步是什么？ ━━━
+Task 5/5：添加导出历史记录（预估 3 min）
+
+━━━ 5. 有什么阻塞？ ━━━
+无阻塞
+
+✅ 上下文已恢复。自动定位到：Task 4 — 实现下载链接过期逻辑
+继续执行？(y/n)
 ```
