@@ -6,6 +6,7 @@ stack:
   - "Shell"
 security_level: 1
 knowledge_limit: 20
+max_parallel_agents: 6    # Range: 1-10, default 6
 ---
 
 # 项目配置
