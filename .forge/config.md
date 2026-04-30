@@ -1,8 +1,8 @@
 ---
 project: "Forge"
 stack:
-  - "TypeScirpt"
-  - "JaveScript"
+  - "TypeScript"
+  - "JavaScript"
   - "Shell"
 security_level: 1
 knowledge_limit: 20
@@ -12,7 +12,7 @@ max_parallel_agents: 6    # Range: 1-10, default 6
 # 项目配置
 
 - **项目名称**：Forge
-- **技术栈**：TypeScirpt,JaveScript,Shell
+- **技术栈**：TypeScript,JavaScript,Shell
 - **安全级别**：标准（Level 1）
 - **知识库上限**：20
 - **初始化时间**：2026-04-28
