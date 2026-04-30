@@ -24,7 +24,7 @@ disable-model-invocation: true
 
 ### Step 1：确认中止
 
-读取 `.forge/status.md`，向用户展示当前任务状态：
+**单任务模式**：读取 `.forge/status.md`，向用户展示当前任务状态。
 
 ```
 ⚠️ 即将中止当前任务
@@ -43,9 +43,13 @@ disable-model-invocation: true
 
 如果没有进行中的任务：`ℹ️ 当前没有进行中的任务，无需中止。`
 
+**多任务模式**：调用 `listActiveTasks(io, forgeRoot)` 显示活跃任务编号列表，用户选择要中止的任务或选择 "abort all"。选择特定任务时仅归档该任务的 StatusFile，其他任务不受影响。选择 "abort all" 时归档所有活跃任务并重置 Legacy_StatusFile。
+
 ### Step 2：归档状态文件
 
-将当前任务相关的状态文件移动到 `.forge/archive/YYYY-MM-DD-<topic>/`：
+**单任务模式**：将当前任务相关的状态文件移动到 `.forge/archive/YYYY-MM-DD-<topic>/`。
+
+**多任务模式**：调用 `archiveTaskStatus(io, forgeRoot, taskName, date)` 将 `.forge/status/<task-id>.md` 移动到归档目录。其他任务的 StatusFile 不受影响。
 
 | 来源 | 归档条件 |
 |------|---------|

@@ -149,6 +149,8 @@ export interface SdkDriverConfig {
   readStatusFile?: () => string;
   /** Optional callback to write StatusFile content (for skill-aware mode). */
   writeStatusFile?: (content: string) => void;
+  /** Task name for parallel status tracking. When set, status file routing uses StatusManager. */
+  taskName?: string;
   /** Optional callback to read review report content (for quality gate evaluation). */
   readReviewFile?: () => string;
   /** Optional callback to read test result content (for quality gate evaluation). */
