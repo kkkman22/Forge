@@ -13,7 +13,6 @@ import * as fc from "fast-check";
 import { describe, expect, it } from "vitest";
 import {
   isMultiTaskMode,
-  type ResolvedStatus,
   type ResolverContext,
   resolveStatusPath,
   slugify,
@@ -24,7 +23,7 @@ import {
 // ---------------------------------------------------------------------------
 
 /** ASCII alphanumeric characters. */
-const ASCII_ALPHA_NUMERIC = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
+const _ASCII_ALPHA_NUMERIC = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
 
 /** Check if a string contains at least one ASCII alphanumeric character. */
 function hasAsciiAlphanumeric(s: string): boolean {
@@ -35,9 +34,7 @@ function hasAsciiAlphanumeric(s: string): boolean {
 const alphanumericString = fc.string().filter(hasAsciiAlphanumeric);
 
 /** Arbitrary string that contains NO ASCII alphanumeric characters. */
-const nonAlphanumericString = fc
-  .string({ minLength: 1 })
-  .filter((s) => !hasAsciiAlphanumeric(s));
+const nonAlphanumericString = fc.string({ minLength: 1 }).filter((s) => !hasAsciiAlphanumeric(s));
 
 /** Valid slug pattern: lowercase letters, digits, hyphens, no consecutive/leading/trailing hyphens. */
 const SLUG_PATTERN = /^[a-z0-9]+(-[a-z0-9]+)*$/;
@@ -107,7 +104,7 @@ describe("Property 12: Task name round-trip via frontmatter", () => {
         const statusContent = `---\ncurrent_task: "${taskName}"\n---\n`;
         const match = statusContent.match(/^current_task: "([^"]*)"$/m);
         expect(match).not.toBeNull();
-        expect(match![1]).toBe(taskName);
+        expect(match?.[1]).toBe(taskName);
         expect(taskId).toMatch(SLUG_PATTERN);
       }),
       { numRuns: 100 },
@@ -145,7 +142,10 @@ describe("Example: slugify known inputs", () => {
 // ---------------------------------------------------------------------------
 
 describe("resolveStatusPath", () => {
-  const makeCtx = (taskName: string, dirExists: boolean): ResolverContext & { dirExists: boolean } => ({
+  const _makeCtx = (
+    taskName: string,
+    dirExists: boolean,
+  ): ResolverContext & { dirExists: boolean } => ({
     taskName,
     forgeRoot: "/project/.forge",
     dirExists,
