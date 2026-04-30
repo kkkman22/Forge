@@ -12,7 +12,7 @@ disable-model-invocation: true
 
 ---
 
-## 1. 概述
+## 1. Overview
 
 `/forge review` 通过三层评审（Spec 对齐 → 代码质量 → 安全与风险）对 build 阶段的产出进行独立验证。评审通过独立 Subagent 并行运行，三个评审者各司其职、交叉验证，最终输出结构化的评审报告。
 
@@ -20,17 +20,17 @@ disable-model-invocation: true
 
 ---
 
-## 2. Subagent 并行执行
+## 2. Subagent Parallel Execution
 
 使用 Agent tool 独立启动评审 Subagent，无需创建 Agent Team。
 
 **成员**（3 个 Subagent）：
 
-| Subagent 名称 | 定义文件 | 职责 |
+| Subagent Name | Definition File | Responsibility |
 |---------|--------------|------|
-| spec-check | `.claude/agents/spec-check.md` | Layer 1 — Spec 对齐检查 |
-| quality-check | `.claude/agents/quality-check.md` | Layer 2 — 代码质量检查 |
-| security-check | `.claude/agents/security-check.md` | Layer 3 — 安全与风险检查 |
+| spec-check | `.claude/agents/spec-check.md` | Layer 1 — Spec Alignment Check |
+| quality-check | `.claude/agents/quality-check.md` | Layer 2 — Code Quality Check |
+| security-check | `.claude/agents/security-check.md` | Layer 3 — Security & Risk Check |
 
 **启动方式**：
 
@@ -53,11 +53,11 @@ Agent(prompt="security-check 评审指令", subagent_type="security-check")
 
 ---
 
-## 3. 三层评审
+## 3. Three-Layer Review
 
-### 评审者动态选择
+### Reviewer Dynamic Selection
 
-| 变更信号 | 评审调整 |
+| Change Signal | Review Adjustment |
 |---------|---------|
 | 涉及认证/授权代码 | security-check 升级为深度审查（OWASP Top 10 逐条对照） |
 | 涉及数据库 schema 变更 | quality-check 增加迁移一致性检查 |
@@ -65,11 +65,11 @@ Agent(prompt="security-check 评审指令", subagent_type="security-check")
 | 涉及前端 UI 变更 | quality-check 增加可访问性检查 |
 | 仅涉及内部重构 | spec-check 降级为快速扫描（无新需求时） |
 
-### Layer 1 — Spec 对齐（spec-check）
+### Layer 1 — Spec Alignment (spec-check)
 
 **检查项**：
 
-| 检查项 | 说明 |
+| Check Item | Description |
 |--------|------|
 | **需求覆盖** | Spec 中每个需求是否有对应实现 |
 | **场景覆盖** | Spec 场景汇总表中每个场景是否有对应测试 |
@@ -78,9 +78,9 @@ Agent(prompt="security-check 评审指令", subagent_type="security-check")
 
 **方法**：读取 Spec → 逐条对照代码变更确认实现 → 逐条对照测试确认覆盖 → 扫描识别 Scope Creep → 检查 Delta "不变"文件。
 
-### Layer 2 — 代码质量（quality-check）
+### Layer 2 — Code Quality (quality-check)
 
-| 维度 | 检查内容 |
+| Dimension | Check Content |
 |------|---------|
 | **命名一致性** | 变量、函数、类命名是否遵循项目约定 |
 | **错误处理** | 未捕获异常、空 catch 块、缺失错误边界 |
@@ -89,9 +89,9 @@ Agent(prompt="security-check 评审指令", subagent_type="security-check")
 | **代码重复** | 可提取为公共函数的重复逻辑 |
 | **可维护性** | 函数过长（>50 行）、嵌套过深（>3 层）、职责不单一 |
 
-### Layer 3 — 安全与风险（security-check）
+### Layer 3 — Security & Risk (security-check)
 
-| 维度 | 检查内容 |
+| Dimension | Check Content |
 |------|---------|
 | **硬编码密钥** | API Key、密码、Token、连接字符串 |
 | **注入风险** | SQL 注入、XSS、命令注入、路径遍历 |
@@ -101,15 +101,15 @@ Agent(prompt="security-check 评审指令", subagent_type="security-check")
 
 ---
 
-## 4. 严重度分级
+## 4. Severity Classification
 
 → 遵循 CLAUDE.md §3.3 P0/P1 必须修复。评审特定分级原则：安全问题默认 P0/P1；Spec 未实现为 P1，超出 Spec 为 P2；代码质量通常 P2/P3，影响正确性时升级。
 
 ---
 
-## 5. 修复路由分类
+## 5. Fix Routing Classification
 
-| 修复类别 | 默认处理者 | 含义 |
+| Fix Category | Default Handler | Description |
 |---------|-----------|------|
 | **safe_auto** | 评审者自动修复 | 局部确定性修复，不改变行为契约 |
 | **gated_auto** | 开发者确认后修复 | 涉及行为/权限/契约变更，需确认 |
@@ -120,11 +120,11 @@ Agent(prompt="security-check 评审指令", subagent_type="security-check")
 
 ---
 
-## 6. 置信度过滤
+## 6. Confidence Filtering
 
 每个评审发现附带置信度评分（0.1-1.0）。**低于 0.8 的发现被过滤**。
 
-| 置信度 | 处理 |
+| Confidence | Action |
 |--------|------|
 | ≥ 0.8 | 写入评审报告 |
 | 0.5-0.7 | 记录到 `.forge/reviews/<topic>-low-confidence.md`，不阻断 |
@@ -142,9 +142,9 @@ Agent(prompt="security-check 评审指令", subagent_type="security-check")
 
 ---
 
-## 7. 发现合并与质量门
+## 7. Finding Deduplication and Quality Gate
 
-### 7.1 发现去重
+### 7.1 Finding Deduplication
 
 **去重规则**：指纹 = `normalize(文件路径) + line_bucket(行号, ±3) + normalize(问题描述)`。匹配时合并，保留最高严重度、最高置信度、最保守修复路由，标注所有发现者。
 
@@ -157,15 +157,15 @@ Agent(prompt="security-check 评审指令", subagent_type="security-check")
   [spec-check, quality-check] P1, conf 0.90, src/routes/export.ts:42 — 缺少错误处理（异常未捕获导致 500）
 ```
 
-### 7.2 跨评审者一致性验证
+### 7.2 Cross-Reviewer Consistency Validation
 
 2 个以上独立评审者发现同一问题（去重后同一指纹有多个来源）→ **置信度提升 0.10**（上限 1.0）。独立收敛到同一问题是最强信号。输出标注 `↑` 表示跨评审者提升。
 
-### 7.3 报告质量门
+### 7.3 Report Quality Gate
 
 输出最终报告前，对报告执行 **6 项质量自检**：
 
-| # | 检查项 | 不通过时的处理 |
+| # | Check Item | Action on Failure |
 |---|--------|--------------|
 | 1 | **可操作性** | 模糊建议改写为具体操作 |
 | 2 | **误报排除** | 重新阅读上下文确认问题存在 |
@@ -178,7 +178,7 @@ Agent(prompt="security-check 评审指令", subagent_type="security-check")
 
 ---
 
-## 8. 门禁：P0/P1 存在 → 阻断 `/forge ship`
+## 8. Gate: P0/P1 Present — Block `/forge ship`
 
 **阻断输出**（示例）：
 ```
@@ -202,7 +202,7 @@ P2: 1 个 | P3: 1 个（不阻塞发布）
 
 ---
 
-## 9. 评审报告格式
+## 9. Review Report Format
 
 **输出路径**：`.forge/reviews/<topic>.md`
 
@@ -224,7 +224,7 @@ p3_count: 0
 
 ---
 
-## 10. 执行流程
+## 10. Execution Flow
 
 1. **前置检查**（§13）：检查 `.forge/` 目录、代码变更、锁定 Spec
 2. **启动 Subagent 并行评审**：根据路径选择 3 个或 2 个 Subagent，`Promise.allSettled` 等待
@@ -251,9 +251,9 @@ p3_count: 0
 
 ---
 
-## 11. 边界情况处理
+## 11. Edge Case Handling
 
-| 情况 | 行为 |
+| Condition | Behavior |
 |------|------|
 | 无 Spec（轻量路径） | 不启动 spec-check，仅 quality-check + security-check，Layer 1 标注"已跳过" |
 | 标准路径无 Spec | Plan 标注 `spec_ref: "none"` 时同轻量路径处理 |
@@ -263,9 +263,9 @@ p3_count: 0
 
 ---
 
-## 12. 示例
+## 12. Examples
 
-### 评审通过
+### Review Passed
 
 ```
 $ /forge review
@@ -278,7 +278,7 @@ $ /forge review
 报告已写入：.forge/reviews/order-batch-export.md
 ```
 
-### 评审未通过
+### Review Failed
 
 ```
 $ /forge review
@@ -293,18 +293,18 @@ $ /forge review
 
 ---
 
-## 13. 前置检查
+## 13. Pre-checks
 
 在启动评审前逐条验证。**任一不满足则输出拒绝信息并路由到正确命令**。
 
-### 检查清单
+### Checklist
 
-| # | 检查条目 | 验证方法 | 不通过路由 |
+| # | Check Item | Verification Method | Failure Route |
 |---|---------|---------|-----------|
 | 1 | **是否有代码变更待评审** | 检查 git diff 或 `.forge/progress/` 已完成 build 任务 | → `/forge build` |
 | 2 | **build 阶段是否已完成** | 检查 `.forge/progress/` build 状态或 `status.md` current_phase | → `/forge build` |
 
-### 拒绝输出格式
+### Rejection Output Format
 
 ```
 🚫 评审前置检查未通过
@@ -325,15 +325,15 @@ $ /forge review
 
 其他不通过情况（build 未完成等）使用相同格式，替换对应字段。
 
-### Autonomous 模式行为
+### Autonomous Mode Behavior
 
 前置检查不通过时返回 JSON：`{ success: false, summary, evidence, suggested_route, reentry_condition }`，触发 Forge Loop 的 `soft_failure` 处理。
 
 ---
 
-## 上下文预算管理
+## Context Budget Management
 
-| 信息源 | 生命周期 | 裁剪策略 |
+| Information Source | Lifecycle | Pruning Strategy |
 |--------|---------|---------|
 | 评审者完整输出 | Write-and-discard | 写入 `.forge/reviews/<topic>.md`，context 只保留摘要 |
 | 评审结果摘要 | Ephemeral | Review_Summarizer：severity 分布 + findings 列表 + 文件路径引用，≤400 tokens |
@@ -347,11 +347,11 @@ $ /forge review
 
 ---
 
-## 14. 已知 AI 失败模式
+## 14. Known AI Failure Modes
 
 > 逐条对照以下列表，确认没有正在犯这些错误。
 
-| # | 失败模式 | 错误行为 | 正确做法 |
+| # | Failure Mode | Wrong Behavior | Correct Approach |
 |---|---------|---------|---------|
 | 1 | 全 PASS 无建议 | 每项标"通过"，无具体改进建议 | 即使质量高也应提 P2/P3 建议；确实无问题需说明检查了哪些维度及理由 |
 | 2 | 只看风格不看逻辑 | 仅报告命名/缩进/注释格式，忽略逻辑正确性和安全风险 | 优先检查逻辑和安全（Layer 1/3），语义问题数量应多于风格问题 |
