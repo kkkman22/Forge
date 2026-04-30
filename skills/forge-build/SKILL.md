@@ -168,7 +168,7 @@ Restatement is a **mandatory step** in the orchestration loop, not an optional o
 
 1. **Re-read Status**: Re-read `.forge/progress/<topic>.md` and `.forge/status.md`
 2. **Refresh Knowledge**: Re-read `.forge/knowledge/instincts.md`
-3. **Append Summary**: Append 5-block summary at context tail (do not modify System Prompt)
+3. **Append Summary**: Append 3-block summary at context tail (do not modify System Prompt)
 4. **Write Interim Log**: Update `.forge/knowledge/sessions/<date>-<topic>-interim.md`
 5. **Reset Counter**: Reset to N
 
