@@ -10,7 +10,7 @@ description: "Forge 入口路由器。三维路由：复杂度（档位）× 任
 
 ---
 
-## 0. 三维路由模型
+## 0. Three-Dimensional Routing Model
 
 Forge 路由器从三个维度分析任务：
 
@@ -24,7 +24,7 @@ Forge 路由器从三个维度分析任务：
 
 ---
 
-## 1. 路由流程
+## 1. Routing Flow
 
 当用户输入 `/forge <任务描述>` 时，按以下四步执行：
 
@@ -96,7 +96,7 @@ Forge 路由器从三个维度分析任务：
 
 ---
 
-## 2. 三级档位与命令序列
+## 2. Three-Tier Levels and Command Sequences
 
 | 档位 | 命令序列 | 适用场景 |
 |------|---------|---------|
@@ -106,23 +106,23 @@ Forge 路由器从三个维度分析任务：
 
 ---
 
-## 3. 判定信号详解
+## 3. Routing Signal Details
 
-### 3.1 轻量信号
+### 3.1 Light Signals
 
 以下条件**同时满足**时建议轻量：影响文件 ≤ 1，改动 ≤ 20 行，改动内容是确定性的。典型：修复 typo、调整 CSS 值、修改配置常量。
 
-### 3.2 标准信号
+### 3.2 Standard Signals
 
 以下**任一满足**时建议标准：已有锁定 Spec、需求描述明确、任务影响范围可预估。典型：添加 API 端点、实现明确需求的新组件、有复现步骤的 bug。
 
-### 3.3 全量信号
+### 3.3 Full Signals
 
 以下**任一满足**时建议全量：新服务/新数据库、认证体系变更、需求模糊、多系统集成、影响面不可预估。典型：搭建新后端服务、OAuth/SSO 集成、"需要一个用户系统"。
 
 ---
 
-## 4. 用户覆盖机制
+## 4. User Override Mechanism
 
 用户覆盖是最高优先级，无论 AI 分析结果如何。
 
@@ -144,7 +144,7 @@ Forge 路由器从三个维度分析任务：
 
 ---
 
-## 5. 状态更新
+## 5. Status Update
 
 路由完成后，更新状态文件：
 
@@ -168,9 +168,9 @@ updated: "YYYY-MM-DD HH:mm"
 
 ---
 
-## 6. 分类示例
+## 6. Classification Examples
 
-### 轻量示例
+### Light Examples
 
 | 任务描述 | 类型 | 阶段 | 理由 |
 |---------|------|------|------|
@@ -178,7 +178,7 @@ updated: "YYYY-MM-DD HH:mm"
 | "修复 README 中的 typo" | docs | bugfix | 单文件，改动 1 行 |
 | "把 API_URL 环境变量改成新地址" | infra | iteration | 单文件配置改动 |
 
-### 标准示例
+### Standard Examples
 
 | 任务描述 | 类型 | 阶段 | 关键提示 |
 |---------|------|------|---------|
@@ -187,7 +187,7 @@ updated: "YYYY-MM-DD HH:mm"
 | "重构 UserService 拆分为独立模块" | backend | refactor | behavior-preservation, characterization-tests |
 | "修复用户列表排序 bug" | frontend | bugfix | reproduce-first, regression-for-fix |
 
-### 全量示例
+### Full Examples
 
 | 任务描述 | 类型 | 阶段 | 关键提示 |
 |---------|------|------|---------|

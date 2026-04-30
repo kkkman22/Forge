@@ -4,7 +4,7 @@ description: "修复引擎。通过三阶段流程（analyze → apply → verif
 disable-model-invocation: true
 ---
 
-# /forge fix — 修复引擎
+# /forge fix — Fix Engine
 
 > **触发方式**：路由器判定 WorkNature=bugfix 时自动进入，用户入口仍为 `/forge`
 > **职责**：通过三阶段流程（analyze → apply → verify）执行结构化 Bug 修复，确保根因定位和验证闭环
@@ -12,7 +12,7 @@ disable-model-invocation: true
 
 ---
 
-## 1. 概述
+## 1. Overview
 
 `/forge fix` 是 Forge 工作流中专门处理 Bug 修复任务的 SKILL。当路由器通过 WorkNature 维度判定任务为 bugfix 性质时，自动分流到此工作流。用户无需记忆独立命令——入口仍然是 `/forge`。
 
@@ -22,9 +22,9 @@ disable-model-invocation: true
 
 ---
 
-## 2. 三阶段流程
+## 2. Three-Phase Workflow
 
-### 2.1 Analyze 阶段（fix-analyze）
+### 2.1 Analyze Phase (fix-analyze)
 
 **职责**：通过实际读代码定位根因，产出结构化分析报告。
 
@@ -32,39 +32,39 @@ disable-model-invocation: true
 
 **分析五步**：
 
-| 步骤 | 动作 | 产出 |
-|------|------|------|
-| 1. 定位 | 用 Grep/Glob 搜索相关代码，记录 file:line | 问题代码位置 |
-| 2. 还原 | 追踪正常路径 vs 失败路径的分叉点 | 失败路径描述 |
-| 3. 确认 | 分类根因（逻辑/状态/数据/并发/配置/缺防御） | 根因分类 |
-| 4. 评估 | 评估影响面（哪些模块/功能受影响） | 影响面清单 |
-| 5. 方案 | 提出 2-3 种修复方案 + 推荐 | 方案选项 |
+| Step | Action | Output |
+|------|--------|--------|
+| 1. Locate | 用 Grep/Glob 搜索相关代码，记录 file:line | 问题代码位置 |
+| 2. Reproduce | 追踪正常路径 vs 失败路径的分叉点 | 失败路径描述 |
+| 3. Confirm | 分类根因（逻辑/状态/数据/并发/配置/缺防御） | 根因分类 |
+| 4. Assess | 评估影响面（哪些模块/功能受影响） | 影响面清单 |
+| 5. Propose | 提出 2-3 种修复方案 + 推荐 | 方案选项 |
 
 **分析报告格式**：
 
 ```markdown
 ---
-topic: "<主题>"
+topic: "<topic>"
 date: "YYYY-MM-DD"
 status: "analyzed"
 ---
 
-## 问题定位
-- **位置**：`<file>:<line>`
-- **失败路径**：<正常 vs 失败的分叉描述>
+## Issue Location
+- **Position**: `<file>:<line>`
+- **Failure Path**: <正常 vs 失败的分叉描述>
 
-## 根因分析
-- **分类**：<逻辑/状态/数据/并发/配置/缺防御>
-- **根因**：<具体描述>
+## Root Cause Analysis
+- **Category**: <逻辑/状态/数据/并发/配置/缺防御>
+- **Root Cause**: <具体描述>
 
-## 影响面评估
+## Impact Assessment
 - <受影响的模块/功能>
 
-## 修复方案
-### 方案 A（推荐）
-- **描述** / **改动文件** / **风险**
-### 方案 B
-- **描述** / **改动文件** / **风险**
+## Fix Proposals
+### Proposal A (Recommended)
+- **Description** / **Files to Change** / **Risk**
+### Proposal B
+- **Description** / **Files to Change** / **Risk**
 ```
 
 **双模式行为**：interactive 展示分析结果等待用户选择方案；autonomous 自动选择推荐方案（`fix_analyze_confirm`，preset: `auto-recommend`）。

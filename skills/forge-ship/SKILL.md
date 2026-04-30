@@ -12,7 +12,7 @@ disable-model-invocation: true
 
 ---
 
-## 1. 概述
+## 1. Overview
 
 `/forge ship` 是 Forge 工作流的最后一道关卡——在代码离开开发环境之前，确认所有质量门禁都已通过。它检查三个前置条件（评审通过、测试通过、任务完成），然后提供四种交付选项供开发者选择。
 
@@ -22,15 +22,15 @@ disable-model-invocation: true
 
 ---
 
-## 2. 门禁检查
+## 2. Gate Checks
 
 `/forge ship` 启动前**必须通过三道门禁**，每道门禁的结果必须以 P5 证据链格式呈现（`[Command] → [Output] → [Claim]`）：
 
-| 门禁 | 检查内容 | 数据来源 | 阻断条件 |
-|------|---------|---------|---------|
-| **Review 门禁** | 评审是否通过（无 P0/P1） | `.forge/reviews/<topic>.md` | `result` 不是 `"pass"` 或 `p0_count > 0` 或 `p1_count > 0` |
-| **Test 门禁** | 测试是否通过 | Layer 1 + Layer 3 验证结果；若 `ci_check_command` 已配置，验证 CI 命令已执行并通过 | 测试未运行或有失败项 |
-| **Progress 门禁** | 所有任务是否完成 | `.forge/progress/<topic>.md` | 存在未标记完成的任务 |
+| Gate | Check | Data Source | Block Condition |
+|------|-------|-------------|-----------------|
+| **Review Gate** | 评审是否通过（无 P0/P1） | `.forge/reviews/<topic>.md` | `result` 不是 `"pass"` 或 `p0_count > 0` 或 `p1_count > 0` |
+| **Test Gate** | 测试是否通过 | Layer 1 + Layer 3 验证结果；若 `ci_check_command` 已配置，验证 CI 命令已执行并通过 | 测试未运行或有失败项 |
+| **Progress Gate** | 所有任务是否完成 | `.forge/progress/<topic>.md` | 存在未标记完成的任务 |
 
 **函数调用**：`checkShipGate(review, test, progress)`
 - 参数：`review` — 从 `.forge/reviews/<topic>.md` frontmatter 解析的 `ReviewResult`（含 `result`、`p0_count`、`p1_count`）；`test` — 从 Layer 1 + Layer 3 验证结果构造的 `TestResult`（含 `passed`、`failedCount`）；`progress` — 从 `.forge/progress/<topic>.md` 解析的 `ProgressResult`（含 `totalTasks`、`completedTasks`）
@@ -47,19 +47,19 @@ disable-model-invocation: true
 **门禁证据格式**：
 
 ```
-🔍 门禁检查（P5 证据链）
+🔍 Gate Checks (P5 Evidence Chain)
 
-[Check]  Review 门禁 — 读取 .forge/reviews/order-batch-export.md
+[Check]  Review Gate — read .forge/reviews/order-batch-export.md
 [Evidence] result: "pass", p0_count: 0, p1_count: 0
-[Claim]  ✅ Review 通过（0 P0, 0 P1, 1 P2, 0 P3）
+[Claim]  ✅ Review passed (0 P0, 0 P1, 1 P2, 0 P3)
 
-[Check]  Test 门禁 — 运行 npx vitest run
+[Check]  Test Gate — run npx vitest run
 [Evidence] Test Files: 8 passed, Tests: 42 passed
-[Claim]  ✅ Test 通过（42/42 测试通过）
+[Claim]  ✅ Test passed (42/42 tests passed)
 
-[Check]  Progress 门禁 — 读取 .forge/progress/order-batch-export.md
+[Check]  Progress Gate — read .forge/progress/order-batch-export.md
 [Evidence] 5/5 tasks marked [x]
-[Claim]  ✅ Progress 完成（5/5 任务完成）
+[Claim]  ✅ Progress complete (5/5 tasks complete)
 ```
 
 **CI 命令一致性检查**：如果 `ci_check_command` 已配置但 test 阶段只运行了单独命令（未运行完整 CI 命令），输出警告。不阻断 ship 但强烈建议重新运行。
@@ -68,30 +68,30 @@ disable-model-invocation: true
 
 ---
 
-## 3. 四选项交付
+## 3. Four Delivery Options
 
 门禁检查全部通过后，提供四种交付选项：
 
 ```
 请选择交付方式：
 
-  1. 合并到主分支（本地 merge + 删除分支）
-  2. 推送并创建 PR（git push -u + gh pr create）
-  3. 保留分支（稍后处理）
-  4. 丢弃（需输入 "discard" 确认）
+  1. Merge to main branch (local merge + delete branch)
+  2. Push and create PR (git push -u + gh pr create)
+  3. Keep branch (process later)
+  4. Discard (requires typing "discard" to confirm)
 
 请输入选项编号（1-4）：
 ```
 
-### 选项 1：合并到主分支
+### Option 1: Merge to Main Branch
 
 通过 `ship_merge` 效果执行：checkout main → merge branch → delete branch。Merge 失败时自动执行 `merge --abort` 恢复。适用场景：个人项目、小团队直接合并。
 
-### 选项 2：推送并创建 PR
+### Option 2: Push and Create PR
 
 通过 `ship_push_pr` 效果执行：push origin → gh pr create。Push 失败时不创建 PR。适用场景：团队协作。PR 描述自动从 plan Objective 提取。
 
-### 选项 3：保留分支
+### Option 3: Keep Branch
 
 不做任何 Git 操作，保留当前分支状态。适用场景：稍后处理、等待依赖。可随时重新运行 `/forge ship` 选择其他方式。
 
@@ -103,19 +103,19 @@ disable-model-invocation: true
 
 返回的 `PendingDeliveryRecord` 追加到 `.forge/status.md` 或配置指定的持久化位置。下次 `/forge build` 启动时，`detectUnshippedBranches` 和 `detectStaleBranches` 将读取这些记录并展示警告。
 
-### 选项 4：丢弃
+### Option 4: Discard
 
 丢弃当前分支的所有变更。**需要二次确认**：用户输入 `discard` 才执行，输入其他内容则取消。通过 `ship_discard` 效果执行：checkout main → delete branch。
 
 ---
 
-## 4. 收尾
+## 4. Cleanup
 
-### 4.1 Worktree 清理
+### 4.1 Worktree Cleanup
 
 如果全量路径使用了 Git Worktree，在交付完成后清理：`git worktree prune`
 
-### 4.2 提示 `/forge learn`
+### 4.2 Prompt `/forge learn`
 
 交付完成后（丢弃除外），提示执行知识沉淀：`💡 本次开发有值得沉淀的经验吗？（输入 /forge learn 或跳过）`
 
@@ -125,12 +125,12 @@ disable-model-invocation: true
 
 ---
 
-## 5. Autonomous 模式配置
+## 5. Autonomous Mode Configuration
 
 在 `.forge/config.md` frontmatter 中可配置 `ship_default_method` 控制自主模式的交付行为：
 
-| 值 | 行为 |
-|----|------|
+| Value | Behavior |
+|-------|----------|
 | `merge` | 自动合并到主分支 |
 | `push-pr` | 自动推送并创建 PR |
 | `keep-branch` | 保留分支（默认值） |
@@ -140,20 +140,20 @@ disable-model-invocation: true
 
 ---
 
-## 6. 执行流程
+## 6. Execution Flow
 
-1. 门禁检查（三道）：Review 通过？Test 通过？Progress 完成？
-2. 未通过 → 🚫 阻断，列出未通过项
-3. 通过 → 展示四个交付选项
-4. 执行选择的交付方式
-5. 清理 Worktree + 提示 `/forge learn`
+1. Gate checks (three gates): Review passed? Test passed? Progress complete?
+2. Not passed → 🚫 Block, list failed items
+3. Passed → Show four delivery options
+4. Execute chosen delivery method
+5. Cleanup Worktree + prompt `/forge learn`
 
 ---
 
-## 7. 边界情况处理
+## 7. Edge Case Handling
 
-| 条件 | 处理 |
-|------|------|
+| Condition | Handling |
+|-----------|----------|
 | Review 未执行 | 🚫 Ship 阻断：评审未执行。请先运行 /forge review |
 | Test 未执行 | 🚫 Ship 阻断：测试未执行。请先运行 /forge test |
 | Progress 部分完成 | 🚫 Ship 阻断：列出未完成任务 |
@@ -163,32 +163,32 @@ disable-model-invocation: true
 
 ---
 
-## 8. 示例
+## 8. Examples
 
-### 示例：门禁通过，选择创建 PR
+### Example: Gates Passed, Create PR
 
 ```
 $ /forge ship
 
-🔍 门禁检查...
-✅ Review：通过（0 P0, 0 P1, 1 P2, 0 P3）
-✅ Test：通过（42/42 测试通过，清单 7/7）
-✅ Progress：5/5 任务完成
+🔍 Gate Checks...
+✅ Review: passed (0 P0, 0 P1, 1 P2, 0 P3)
+✅ Test: passed (42/42 tests passed, checklist 7/7)
+✅ Progress: 5/5 tasks complete
 
 请选择交付方式：
 > 2
 
-📤 推送分支...
-📝 创建 PR...
+📤 Pushing branch...
+📝 Creating PR...
 
-✅ 已推送并创建 PR
-  PR：#42 — feat: 实现订单批量导出功能
-  URL：https://github.com/org/repo/pull/42
+✅ Pushed and PR created
+  PR: #42 — feat: 实现订单批量导出功能
+  URL: https://github.com/org/repo/pull/42
 
-🧹 已清理 Git Worktree
+🧹 Git Worktree cleaned up
 💡 本次开发有值得沉淀的经验吗？（输入 /forge learn 或跳过）
 ```
 
-**其他场景变体**：
-- **门禁未通过**：报告具体未通过项（如 P0 问题），提示修复后重新 review + ship
-- **丢弃操作**：需输入 "discard" 确认，执行后所有变更已删除
+**Other Scenario Variants**:
+- **Gates not passed**: Report specific failed items (e.g. P0 issues), prompt to fix and re-run review + ship
+- **Discard operation**: Requires typing "discard" to confirm, all changes deleted after execution

@@ -12,7 +12,7 @@ disable-model-invocation: true
 
 ---
 
-## 1. 概述
+## 1. Overview
 
 `/forge loop` 是 Forge 工作流的自主执行模式——把一个目标描述交给它，它会自动驱动整个 Skills 命令序列（router → plan → build → review → test → ship），无需人工介入。每轮迭代对应一个 SKILL 阶段的执行，通过状态文件跟踪进度，通过质量门禁保障质量，通过熔断器防止无限循环。
 
@@ -22,18 +22,18 @@ disable-model-invocation: true
 
 ---
 
-## 2. 触发方式
+## 2. Trigger
 
-### 基本用法
+### Basic Usage
 
 ```
 /forge loop "为用户 API 添加分页功能"
 ```
 
-### CLI 选项
+### CLI Options
 
-| 选项 | 说明 | 可选值 / 类型 |
-|------|------|--------------|
+| Option | Description | Values / Type |
+|--------|-------------|---------------|
 | `--tier` | 预设路由档位，跳过路由分析 | `light` / `standard` / `full` |
 | `--type` | 预设任务类型 | `frontend` / `backend` / `fullstack` / `data` / `infra` / `docs` |
 | `--phase` | 预设项目阶段 | `greenfield` / `iteration` / `refactor` / `bugfix` |
@@ -54,9 +54,9 @@ disable-model-invocation: true
 
 ---
 
-## 3. 启动流程
+## 3. Startup Sequence
 
-### Step 1：前置检查
+### Step 1: Pre-flight Checks
 
 1. **Git 仓库检查**：确认当前目录是 Git 仓库。
 2. **工作树清洁检查**：确认工作树无未提交变更（使用 `--worktree` 或 `--resume` 时跳过）。
@@ -66,7 +66,7 @@ disable-model-invocation: true
 6. **hooks.json 检查**：检查 `hooks/hooks.json` 是否存在且包含 `PreToolUse` 配置。缺失时输出警告但不阻断启动。
 7. **Worktree 源分支检查**：使用 `--worktree` 时，确认当前不在 `forge/` 分支上。
 
-### Step 2：写入执行模式
+### Step 2: Write Execution Mode
 
 **单任务模式**：在 `.forge/status.md` 中写入自主模式标记。
 
@@ -83,8 +83,8 @@ updated: "YYYY-MM-DD HH:mm"
 ---
 ```
 
-| 字段 | 说明 |
-|------|------|
+| Field | Description |
+|-------|-------------|
 | `mode` | 设为 `"autonomous"`，告知所有 Skills 跳过人工确认点 |
 | `loop_run_id` | 本次 Loop 运行的唯一标识，用于状态追踪 |
 | `loop_iteration` | 当前迭代编号，从 0 开始 |

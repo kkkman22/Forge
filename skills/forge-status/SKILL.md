@@ -4,7 +4,7 @@ description: "状态查询。读取 .forge/ 状态文件展示当前项目工作
 disable-model-invocation: true
 ---
 
-# /forge status — 状态查询
+# /forge status — Status Query
 
 > **触发方式**：用户输入 `/forge status`
 > **职责**：读取 `.forge/status.md` 和 `progress/` 展示当前项目状态
@@ -12,7 +12,7 @@ disable-model-invocation: true
 
 ---
 
-## 1. 概述
+## 1. Overview
 
 `/forge status` 是一个只读命令——它不修改任何状态，只读取 `.forge/` 下的状态文件并以结构化格式展示当前项目的工作状态。帮助开发者快速了解"我在哪里、在做什么、做到哪了"。
 

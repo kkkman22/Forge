@@ -12,7 +12,7 @@ disable-model-invocation: true
 
 ---
 
-## 1. 概述
+## 1. Overview
 
 `/forge decide` 在编码开始前，从四个独立视角对任务进行系统性评估。三个核心视角（产品、架构、安全）始终参与，设计视角仅在任务涉及 UI 变更时动态加入。
 
@@ -22,7 +22,7 @@ disable-model-invocation: true
 
 ---
 
-## 2. 两轮 Subagent 执行
+## 2. Two-Round Subagent Execution
 
 使用 Agent tool 独立启动视角 Subagent，无需创建 Agent Team。
 
