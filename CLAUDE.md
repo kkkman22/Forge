@@ -2,6 +2,7 @@
 
 > 本文件由 `forge init` 自动生成，是 Claude Code 在本项目中的行为准则。
 > 所有 Agent（包括 Subagent）必须遵守本宪法。
+> → 详见 docs/forge-constitution-detail.md
 
 ---
 
@@ -19,9 +20,10 @@
 
 ### Routing Principles
 
-- **用户覆盖优先**：用户明确指定档位时，以用户为准，无论 AI 建议如何。
-- **宁重勿轻**：无法判定时，选择更重的档位。轻量路径跳过了 spec/plan/test，只适用于真正的小改动。
-- **不可跳步**：选定档位后，必须按序执行对应的命令序列，不得跳过任何步骤。
+- **用户覆盖优先**：用户明确指定档位时，以用户为准。
+- **宁重勿轻**：无法判定时，选择更重的档位。
+- **不可跳步**：选定档位后，必须按序执行对应的命令序列。
+→ 详见 docs/forge-constitution-detail.md §1
 
 ---
 
@@ -29,121 +31,48 @@
 
 ### 2.1 TDD Enforcement
 
-所有实现任务必须遵循 **RED → GREEN → REFACTOR** 循环：
-
-1. **RED**：先写失败的测试，确认测试能检测到缺失的功能
-2. **GREEN**：写最少的代码让测试通过
-3. **REFACTOR**：在测试保护下重构代码
+所有实现任务必须遵循 **RED → GREEN → REFACTOR** 循环。
 
 **铁律**：如果发现代码先于测试编写——删除代码，从测试开始。没有例外。
+→ 详见 docs/forge-constitution-detail.md §2.1
 
 ### 2.2 Pre-build Checks
 
-在标准和全量路径下，`/forge build` 启动前必须通过三道门禁：
+在标准和全量路径下，`/forge build` 启动前必须通过三道门禁：Spec 锁定、Plan 批准、分支隔离。
 
-| Gate | Condition | On Failure |
-|------|-----------|------------|
-| Spec 锁定 | `.forge/specs/` 中对应 Spec 的 status 为 `locked` | 阻断 build，提示先完成 `/forge spec` |
-| Plan 批准 | `.forge/plans/` 中对应 Plan 的 status 为 `approved` | 阻断 build，提示先完成 `/forge plan` |
-| 分支隔离 | 当前 Git 分支是 `feature/<topic>` 或 `forge/<topic>` | 自动切换或创建对应分支（工作树不干净时阻断） |
-
-未通过门禁时，**禁止以任何理由绕过**。
-
-**分支隔离门禁**：每个功能的代码必须在其对应的 feature 分支上开发，防止多功能代码混入同一分支。Build 启动时，如果当前分支不是 `feature/<topic>` 或 `forge/<topic>`，自动创建或切换到正确分支。工作树有未提交变更时阻断并提示用户先处理。详见 `forge-build` SKILL §2.1。
+**分支隔离门禁**：每个功能在其对应的 feature 分支上开发，工作树不干净时阻断。
+→ 详见 docs/forge-constitution-detail.md §2.2
 
 ### 2.3 Verification Iron Law
 
 > **没有运行验证命令 = 不能声明通过。**
 
-- 每个任务完成后，必须运行对应的验证命令（测试、类型检查、lint 等）
-- 验证必须基于**刚刚运行**的命令输出，拒绝引用之前的测试结果
-- 以下声明一律拒绝接受：
-  - "应该可以了"
-  - "看起来没问题"
-  - "之前测试通过了"
-  - "逻辑上没问题"
-- 每个完成的任务必须执行**原子提交**（一个任务一个 commit）
+- 每个任务完成后，必须运行对应的验证命令。
+- 验证必须基于**刚刚运行**的命令输出，拒绝引用之前的测试结果。
+- 以下声明一律拒绝接受："应该可以了"、"看起来没问题"、"之前测试通过了"、"逻辑上没问题"。
+- 每个完成的任务必须执行**原子提交**。
+→ 详见 docs/forge-constitution-detail.md §2.3
 
 ### 2.4 Three-Strike Reroute
 
-当同一修复连续失败 **3 次**时：
+当同一修复连续失败 **3 次**时：立即停止当前修复尝试，进入 `/forge debug` 进行结构化根因分析，禁止第 4 次尝试同一方向的修复。
 
-1. **立即停止**当前修复尝试
-2. **进入 `/forge debug`** 进行结构化根因分析
-3. 禁止第 4 次尝试同一方向的修复
-
-在 `/forge debug` 中，如果同一假设连续验证失败 3 次：
-
-1. **停止修复**
-2. **质疑架构**——问题可能不在代码层面
-3. 与开发者讨论，重新评估方向
+在 `/forge debug` 中，如果同一假设连续验证失败 3 次：停止修复，质疑架构，与开发者讨论重新评估方向。
+→ 详见 docs/forge-constitution-detail.md §2.4
 
 ### 2.5 Context Refresh Discipline
 
-在标准路径和全量路径的 build 阶段，主 Agent 必须执行周期性的 Restatement Checkpoint：
-
-- **每完成 N 个任务**（N 由 config.md 的 restatement_interval 配置，默认 3），
-  暂停编排，重读 progress 和 status，在上下文尾部追加 Restatement 摘要。
-- **Sub-Agent 返回异常状态时**（BLOCKED / NEEDS_CONTEXT / DONE_WITH_CONCERNS），
-  在处理之前先执行一次 Restatement。
-- **Restatement 不修改 System Prompt**，只追加到对话尾部。
-
-这条纪律的目的是对抗长任务中的注意力衰减。如果你发现自己在跳过探针、
-合并步骤、或不检查 Sub-Agent 状态，说明你需要一次 Restatement。
+在标准路径和全量路径的 build 阶段，主 Agent 必须执行周期性的 Restatement Checkpoint：每完成 N 个任务（N 由 config.md 配置，默认 3）重读 progress 和 status；Sub-Agent 返回异常状态时执行 Restatement；Restatement 不修改 System Prompt，只追加到对话尾部。
+→ 详见 docs/forge-constitution-detail.md §2.5
 
 ### 2.6 Output Conciseness
 
 > **原则**：代码编辑时沉默执行，决策点时简要说明。SKILL 定义的结构化输出永远不被压制。
 
-#### Prohibited Output Patterns
-
-在执行代码编辑操作（文件创建、修改、删除）时，以下 Narration 模式被禁止：
-
-| Pattern Type | Example |
-|---------|------|
-| 操作预告 | "现在我要修改 X 文件" / "Now I'll modify X file" |
-| 自我对话 | "让我添加 Y 字段" / "Let me add Y field" |
-| 逐步解说 | "接下来将 Z 传入 W" / "Next, I'll pass Z into W" |
-| 步骤枚举 | "首先...然后...最后..." / "First...then...finally..." |
-| 工具调用预告 | 对即将执行的工具调用的重复描述 |
-
-**Before（冗长）**：
-> 现在我要修改 `src/config.ts` 文件，添加 `logFormat` 字段。让我先找到 `SdkDriverConfig` 接口的定义...好的，找到了。接下来我会在第 15 行添加 `logFormat: string` 字段。然后我需要更新 `createConfig` 函数，将 `logFormat` 参数传入...
-
-**After（简洁）**：
-> *（直接执行编辑，无 Narration）*
-
-#### Preserved Output
-
-以下 Forge 结构化输出不受简洁性约束影响，必须完整保留：
-
-- TDD 阶段标记：🔴 RED / 🟢 GREEN / 🔵 REFACTOR 及其测试运行结果
-- Closure-First 探针结果：Probe #1, Probe #2, Verify #1 输出块
-- Restatement 摘要：周期性上下文刷新的 5 区块格式
-- P5 证据链：`[Command] → [Output] → [Claim]` 验证格式
-- 评审报告：含严重度等级（P0/P1/P2/P3）的评审发现
-- 路由分析：档位建议、任务类型、项目阶段输出
-- 前置检查结果：门禁检查通过/失败输出
-- 进度更新：任务完成标记和进度摘要
-
-#### Decision_Point Output Permission
-
-在以下决策点，允许简要说明理由：
-
-- **设计选择**：在多个实现方案间做选择时
-- **意外情况**：遇到意外的代码状态、缺失文件或探针失败时
-- **计划调整**：偏离计划或重新排序任务时
-- **方向变更**：失败后切换方案时（如三次换路）
-- **阻塞报告**：报告 BLOCKED 或 NEEDS_CONTEXT 状态时
-
-Decision_Point 输出模板：`[原因] → [选择] → [依据]`
-
-**示例**：
-> 接口签名与 Spec 不一致 → 以 Spec 为准重新定义 → Plan Task 2 明确要求对齐 Spec §3.2
-
-#### Priority
-
-SKILL 定义的输出格式 > 简洁性约束。当 SKILL 要求特定输出（模板、标记、结构化块）时，简洁性规则自动让步。
+- 禁止操作预告、自我对话、逐步解说、步骤枚举、工具调用预告。
+- 保留所有 Forge 结构化输出：TDD 标记、Closure-First 探针结果、Restatement 摘要、P5 证据链、评审报告、路由分析、前置检查结果、进度更新。
+- Decision_Point（设计选择、意外情况、计划调整、方向变更、阻塞报告）允许简要说明：`[原因] → [选择] → [依据]`。
+→ 详见 docs/forge-constitution-detail.md §2.6
 
 ---
 
@@ -159,13 +88,11 @@ SKILL 定义的输出格式 > 简洁性约束。当 SKILL 要求特定输出（�
 
 | Layer | Reviewer | Check Content |
 |-------|----------|--------------|
-| **Layer 1: Spec Alignment** | spec-check | 每个需求是否实现、每个场景是否覆盖、是否存在超出 Spec 的实现（scope creep） |
-| **Layer 2: Code Quality** | quality-check | 命名一致性、错误处理完整性、性能热点、测试覆盖率、代码重复、可维护性 |
+| **Layer 1: Spec Alignment** | spec-check | 需求实现、场景覆盖、scope creep 检查 |
+| **Layer 2: Code Quality** | quality-check | 命名一致性、错误处理、性能、测试覆盖率、代码重复、可维护性 |
 | **Layer 3: Security & Risk** | security-check | 硬编码密钥、注入风险、不安全依赖、权限边界、敏感数据泄露 |
 
 ### 3.3 P0/P1 Must Fix
-
-问题按严重度分级：
 
 | Level | Meaning | Handling |
 |-------|---------|----------|
@@ -175,6 +102,7 @@ SKILL 定义的输出格式 > 简洁性约束。当 SKILL 要求特定输出（�
 | P3 | 低影响 | 建议改进，开发者自行决定 |
 
 **铁律**：存在 P0 或 P1 问题时，`/forge ship` 被阻断。修复后必须重新评审。
+→ 详见 docs/forge-constitution-detail.md §3
 
 ---
 
@@ -182,28 +110,20 @@ SKILL 定义的输出格式 > 简洁性约束。当 SKILL 要求特定输出（�
 
 ### 4.1 Capture on Completion
 
-每次开发完成后，必须执行 `/forge learn` 从五个维度提取经验：
-
-1. **问题模式**：遇到了什么类型的问题
-2. **解决方案**：最终如何解决的
-3. **踩坑记录**：走了哪些弯路
-4. **决策理由**：为什么选择这个方案而非其他
-5. **可复用模式**：哪些做法可以复用到未来的任务
-
-知识文档输出到 `.forge/knowledge/solutions/`，高频模式写入 `.forge/knowledge/instincts.md`。
+每次开发完成后，必须执行 `/forge learn` 从五个维度提取经验：问题模式、解决方案、踩坑记录、决策理由、可复用模式。
 
 ### 4.2 Knowledge Base Limit
 
 - 知识库文档数量上限：**20** 个（默认 20，可在 `.forge/config.md` 中配置）
 - 超出上限时，按置信度排序，清理最低置信度的文档
-- **Confidence < 0.3 的模式自动清理**——低置信度的经验不值得保留
+- **Confidence < 0.3 的模式自动清理**
 - 高频模式写入 `instincts.md` 时附带 Confidence Score（0.3 - 0.9）
 
 ### 4.3 Knowledge Backflow
 
 - `/forge plan` 执行时自动搜索 Knowledge Base 中的相关经验
 - `/forge build` 执行时自动搜索 Knowledge Base 中的历史踩坑记录
-- 知识不是写完就放着——它必须在后续任务中被主动检索和应用
+→ 详见 docs/forge-constitution-detail.md §4
 
 ---
 
@@ -211,61 +131,48 @@ SKILL 定义的输出格式 > 简洁性约束。当 SKILL 要求特定输出（�
 
 ### 5.1 Evolved Rules
 
-At session start, read `.forge/knowledge/evolved-rules.md` and treat its rules as project-specific error-prevention directives. These rules are distilled from accumulated project knowledge and represent patterns where Claude would make mistakes without explicit guidance.
+At session start, read `.forge/knowledge/evolved-rules.md` and treat its rules as project-specific error-prevention directives.
 
 ### 5.2 Updatable Knowledge Categories
 
-The following categories qualify as rule candidates:
+Categories qualifying as rule candidates: Project-specific traps (known-failures.md, occurrence >= 3), Repeated correction patterns (instincts.md, confidence >= 0.8), Environment/tool quirks (skill-feedback.md, frequency >= 3), Cross-session behavior corrections (session journals, same issue in 3+ sessions), Rule friction adjustments (metrics.md, 3+ session degradation trend).
 
-| Category | Source | Threshold |
-|----------|--------|-----------|
-| Project-specific traps | known-failures.md | occurrence >= 3 |
-| Repeated correction patterns | instincts.md | confidence >= 0.8 |
-| Environment/tool quirks | skill-feedback.md | frequency >= 3 |
-| Cross-session behavior corrections | session journals | same issue in 3+ sessions |
-| Rule friction adjustments | metrics.md | 3+ session degradation trend |
+### 5.3-5.6
 
-### 5.3 Trigger Conditions
+**Trigger Conditions**：Rules proposed only when knowledge entries meet numeric thresholds.
+**Correction Protocol**：Propose → Declare → Approve → Log.
+**Constraints**：15-rule cap, staleness policy (5 sessions), guarded zone, Sections 1–4 immutable.
+**Exclusions**：Architecture descriptions, file path lists, general best practices, raw knowledge data, tool-enforced standards.
+→ 详见 docs/forge-constitution-detail.md §5
 
-Rules are proposed only when knowledge entries meet the numeric thresholds above. `/forge learn` evaluates these thresholds during the rule distillation stage.
+---
 
-### 5.4 Correction Protocol
+## 6. Session Boundaries
 
-1. **Propose** — Present the rule with evidence from knowledge sources
-2. **Declare** — State what specific error the rule prevents
-3. **Approve** — User reviews and approves/rejects the proposal
-4. **Log** — Record the change in `.forge/knowledge/rule-changelog.md`
+每个 `/forge` 命令调用（plan、build、review、test、ship、learn）构成一个自然的 Session_Boundary。阶段间的上下文交接通过 `.forge/` 目录文件系统进行，而非通过对话历史。建议用户在 `/forge` 命令之间开启新的 Claude Code 会话，以避免上下文累积。
 
-### 5.5 Constraints
+**Subagent 隔离**：每个 Subagent 有独立上下文，是防止阶段内上下文膨胀的主要机制。
 
-- **15-rule cap** — evolved-rules.md holds at most 15 rules. New rules require retiring low-value existing rules when at capacity.
-- **Staleness policy** — Rules not triggered in the last 5 sessions are flagged for retirement review.
-- **Guarded zone** — evolved-rules.md is in the Guarded protection zone: updatable only by `/forge learn` rule distillation, not deletable outside maintenance.
-- **Sections 1–4 are immutable** — Owned by `forge init`. The self-evolution mechanism never modifies them.
+**会话恢复**：`/forge resume` 是会话边界后恢复上下文的推荐方法，从 `.forge/progress/` 和 `.forge/knowledge/sessions/` 读取。
 
-### 5.6 Exclusions
-
-The following are NOT valid rule candidates:
-- Architecture descriptions inferable from code
-- File path lists
-- General best practices Claude already knows
-- Raw knowledge data (belongs in knowledge files, not rules)
-- Standards enforced by existing tools (e.g., Biome code style)
+如果用户在单个会话中继续执行多个 `/forge` 命令，Agent 不应阻断执行，但当上下文大小超过 100K tokens 时应记录建议开启新会话的提示。
 
 ---
 
 ## 项目信息
 
 - **项目名称**：Forge
-- **技术栈**：TypeScirpt,JaveScript,Shell
+- **技术栈**：TypeScript, JavaScript, Shell
 - **安全级别**：标准（Level 1）
 - **初始化时间**：2026-04-28
 
 ## Subagent 并行执行配置
 
-`/forge decide` 和 `/forge review` 使用独立 Subagent（通过 Claude Code Agent tool 启动），不使用 Agent Teams。Subagent 类型引用 `.claude/agents/` 下的定义文件：
+`/forge decide` 和 `/forge review` 使用独立 Subagent（通过 Claude Code Agent tool 启动），不使用 Agent Teams。Subagent 类型引用 `.claude/agents/` 下的定义文件。
 
 - **decide**: product、architect、security（默认），designer（UI 任务时动态加入）。两轮执行：Round 1 并行输出各自视角，Round 2 Critic 交叉审视。
 - **review**: spec-check、quality-check、security-check（并行执行）。轻量模式省略 spec-check。
+
+**并发控制**：通过 `.forge/config.md` 中的 `max_parallel_agents` 配置（默认 6）。收到 HTTP 429 限流响应时实施降级：第 1 次等待 30s 并将并发数减半（最小 1）；第 2 次等待 60s 并将并发数降至 2；第 3 次及以上等待 60s 并切换为串行执行（并发数 1）。每次降级记录到 `.forge/knowledge/tool-health.md`。新的 `/forge` 命令启动新会话时将并发数重置为配置的 `max_parallel_agents` 值。
 
 启动团队时，使用 subagent 定义名称生成队友。团队完成后清理资源。
