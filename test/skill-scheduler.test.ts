@@ -17,6 +17,7 @@ import {
   determineNextSkill,
   getCommandSequence,
   type SchedulerInput,
+  shouldCommitForPhase,
 } from "../src/skill-scheduler.js";
 
 // ---------------------------------------------------------------------------
@@ -124,8 +125,8 @@ describe("determineNextSkill: unknown phase → router fallback", () => {
 // ---------------------------------------------------------------------------
 
 describe("getCommandSequence: returns correct sequence per tier", () => {
-  it("light tier returns [build, review]", () => {
-    expect(getCommandSequence("light")).toEqual(["build", "review"]);
+  it("light tier returns [build-light, review]", () => {
+    expect(getCommandSequence("light")).toEqual(["build-light", "review"]);
   });
 
   it("standard tier returns [plan, build, review, test, ship]", () => {
@@ -157,5 +158,46 @@ describe("getCommandSequence: unknown tier defaults to standard", () => {
   it("returns standard sequence for empty string tier", () => {
     const standard = getCommandSequence("standard");
     expect(getCommandSequence("")).toEqual(standard);
+  });
+});
+
+// ---------------------------------------------------------------------------
+// determineNextSkill: build-light phase transitions
+// ---------------------------------------------------------------------------
+
+describe("determineNextSkill: build-light phase transitions", () => {
+  it("stays in build-light when tasks are incomplete", () => {
+    const result = determineNextSkill(
+      makeInput({ currentPhase: "build-light", hasIncompleteTasks: true }),
+    );
+    expect(result.nextPhase).toBe("build-light");
+  });
+
+  it("transitions to review when all tasks are complete", () => {
+    const result = determineNextSkill(
+      makeInput({ currentPhase: "build-light", hasIncompleteTasks: false }),
+    );
+    expect(result.nextPhase).toBe("review");
+  });
+
+  it("transitions to review when hasIncompleteTasks is undefined", () => {
+    const result = determineNextSkill(
+      makeInput({ currentPhase: "build-light", hasIncompleteTasks: undefined }),
+    );
+    expect(result.nextPhase).toBe("review");
+  });
+});
+
+// ---------------------------------------------------------------------------
+// shouldCommitForPhase — build-light
+// ---------------------------------------------------------------------------
+
+describe("shouldCommitForPhase: build-light commit strategy", () => {
+  it("returns true for build-light with success=true", () => {
+    expect(shouldCommitForPhase("build-light", true)).toBe(true);
+  });
+
+  it("returns false for build-light with success=false", () => {
+    expect(shouldCommitForPhase("build-light", false)).toBe(false);
   });
 });
