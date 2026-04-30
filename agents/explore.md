@@ -1,6 +1,7 @@
 ---
 name: explore
 description: "只读代码库搜索专家。快速扫描项目结构、定位文件和代码模式、梳理依赖关系，为 plan 和 build 阶段提供准确的代码库上下文。"
+model: haiku
 disallowedTools: Write, Edit
 ---
 

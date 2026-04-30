@@ -124,7 +124,7 @@ class Calculator {
 
 - TDD 阶段标记：🔴 RED / 🟢 GREEN / 🔵 REFACTOR 及其测试运行结果
 - Closure-First 探针结果：Probe #1, Probe #2, Verify #1 输出块
-- Restatement 摘要：周期性上下文刷新的 5 区块格式
+- Restatement 摘要：周期性上下文刷新的 3 区块格式
 - P5 证据链：`[Command] → [Output] → [Claim]` 验证格式
 - 评审报告：含严重度等级（P0/P1/P2/P3）的评审发现
 - 路由分析：档位建议、任务类型、项目阶段输出
