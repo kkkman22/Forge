@@ -109,9 +109,6 @@ export function resolveStatusPath(
  * @param forgeRoot - Path to the .forge directory
  * @param dirExists - DI function to check directory existence
  */
-export function isMultiTaskMode(
-  forgeRoot: string,
-  dirExists: (path: string) => boolean,
-): boolean {
+export function isMultiTaskMode(forgeRoot: string, dirExists: (path: string) => boolean): boolean {
   return dirExists(`${forgeRoot}/status`);
 }
