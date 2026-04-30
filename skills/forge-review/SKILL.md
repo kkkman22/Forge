@@ -46,6 +46,16 @@ Agent(prompt="security-check 评审指令", subagent_type="security-check")
 
 **容错**：使用 `Promise.allSettled` 而非 `Promise.all`。失败 Subagent 记录错误，标注对应 Layer 为"评审失败"；全部失败则评审终止。
 
+**输出不完整处理**：当 Subagent 返回但输出被截断（缺少结构化评审报告、只有片段文本、无法解析 severity 分布）时：
+
+| 情况 | 处理 |
+|------|------|
+| 输出被截断但可解析部分发现 | 标注 `⚠️ Layer N — 输出不完整（已解析 X 个发现）`，使用已解析部分 |
+| 输出被截断且无法解析 | 标注 `❌ Layer N — 评审输出不完整，需重新执行`，**重新启动该 Subagent**（最多重试 1 次） |
+| 重试后仍不完整 | 标注 `⚠️ Layer N — 评审不完整（重试后仍截断）`，在报告中明确标注，**不得标记为"检查完成"** |
+
+**禁止行为**：不得将截断的评审输出标记为"检查完成"或"无阻断问题"。不完整的评审 ≠ 通过的评审。如果无法获取完整评审结果，必须在报告中明确标注该 Layer 状态为 `incomplete`，并建议重新运行 `/forge review`。
+
 **结果合并管线**：
 1. `filterByConfidence` — 过滤置信度 < 0.8 的发现
 2. `deduplicateFindings` — 指纹去重（±3 行容差）
@@ -212,15 +222,19 @@ P2: 1 个 | P3: 1 个（不阻塞发布）
 ---
 topic: "<主题>"
 date: "YYYY-MM-DD"
-result: "pass" | "fail"
+result: "pass" | "fail" | "incomplete"
 p0_count: 0
 p1_count: 0
 p2_count: 0
 p3_count: 0
+layers:
+  spec_check: "pass" | "fail" | "skipped" | "incomplete"
+  quality_check: "pass" | "fail" | "incomplete"
+  security_check: "pass" | "fail" | "incomplete"
 ---
 ```
 
-**正文结构**：三层 Layer 章节（各自含发现表格）+ 总结（结果 + 各级计数）。`result` 为 `pass`（无 P0/P1）或 `fail`（有 P0/P1）。
+**正文结构**：三层 Layer 章节（各自含发现表格）+ 总结（结果 + 各级计数）。`result` 为 `pass`（无 P0/P1 且所有 Layer 完成）、`fail`（有 P0/P1）或 `incomplete`（有 Layer 未完成评审）。`incomplete` 状态**不允许进入 ship**，必须重新运行 `/forge review`。
 
 ---
 
@@ -228,10 +242,11 @@ p3_count: 0
 
 1. **前置检查**（§13）：检查 `.forge/` 目录、代码变更、锁定 Spec
 2. **启动 Subagent 并行评审**：根据路径选择 3 个或 2 个 Subagent，`Promise.allSettled` 等待
-3. **合并管线**（§7）：`filterByConfidence` → `deduplicateFindings` → `applyCrossValidation`
-4. **报告质量门**（§7.3）：6 项自检，不通过则自动修正
-5. **P0/P1 判定**：存在则阻断 ship，不存在则通过
-6. **输出报告**：写入 `.forge/reviews/<topic>.md` 并展示摘要
+3. **Subagent 状态确认**（Step 1.1）：跟踪每个 Subagent 状态，处理截断/错误/超时，确认全部返回
+4. **合并管线**（§7）：`filterByConfidence` → `deduplicateFindings` → `applyCrossValidation`
+5. **报告质量门**（§7.3）：6 项自检，不通过则自动修正
+6. **P0/P1 判定**：存在则阻断 ship，不存在则通过
+7. **输出报告**：写入 `.forge/reviews/<topic>.md` 并展示摘要
 
 ### Step 0：前置检查
 
@@ -243,9 +258,39 @@ p3_count: 0
 
 **并发控制**：并行 Subagent 数量受 `.forge/config.md` 中 `max_parallel_agents`（默认 6）限制。收到 HTTP 429 时按降级策略减少并发数。详见 CLAUDE.md §6 Session Boundaries。
 
+### Step 1.1：Subagent 状态确认
+
+启动 Subagent 后，主 Agent **必须主动跟踪每个 Subagent 的状态**，不得假设"启动即完成"。
+
+**状态跟踪协议**：
+
+| 阶段 | 主 Agent 行为 |
+|------|-------------|
+| **启动后** | 确认每个 Subagent 已成功启动（收到启动确认），记录启动时间 |
+| **等待中** | 等待所有 Subagent 的 completion notification。如果某个 Subagent 超过预期时间（默认 120s）未返回，输出 `⏳ Layer N — 评审 Subagent 仍在运行...` |
+| **收到返回** | 逐个检查返回状态，按下方状态表处理 |
+| **全部返回** | 确认 3 个（或 2 个）Subagent 全部返回后，才进入 Step 2 合并阶段 |
+
+**Subagent 返回状态处理**：
+
+| 返回状态 | 处理 |
+|---------|------|
+| **正常完成**（含结构化评审报告） | ✅ 提取发现，进入合并管线 |
+| **完成但输出截断** | 按 §2 输出不完整处理规则执行（重试 1 次） |
+| **错误退出**（异常/崩溃） | 标注 `❌ Layer N — 评审失败（错误：<原因>）`，重试 1 次 |
+| **429 限流退出** | 按 CLAUDE.md §6 降级策略等待后重试，不计为评审失败 |
+| **超时未返回** | 超过 180s 未收到 completion notification → 标注 `⚠️ Layer N — 评审超时`，不重试，标记为 `incomplete` |
+
+**关键约束**：
+- **不得在 Subagent 仍在运行时就开始合并结果**——必须等待所有 Subagent 返回或超时
+- **不得跳过未返回的 Subagent**——未返回的 Layer 标记为 `incomplete`，不是 `pass`
+- **每个 Layer 的最终状态必须明确**：`pass` / `fail` / `incomplete` / `skipped`，不允许模糊状态
+
 ### Step 2：合并与质量门
 
-收集所有 Subagent 输出，执行发现合并管线（§7）。
+**前置条件**：Step 1.1 确认所有 Subagent 已返回（或超时标记为 incomplete）。
+
+收集所有 Subagent 输出，执行发现合并管线（§7）。仅合并状态为"正常完成"的 Layer 的发现；`incomplete` 和 `failed` 的 Layer 不参与合并，但其状态会写入最终报告。
 
 ### Step 3：输出报告
 
