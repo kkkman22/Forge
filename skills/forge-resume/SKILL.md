@@ -18,6 +18,8 @@ disable-model-invocation: true
 
 **核心原则**：恢复上下文的成本应该接近零。开发者不应该花时间回忆"我上次做到哪了"。
 
+**Session Boundary Recovery**: 每个 `/forge` 命令构成一个自然的 Session Boundary。`/forge resume` 是会话边界后恢复上下文的推荐方法。它从 `.forge/progress/` 读取任务完成状态，从 `.forge/knowledge/sessions/` 读取会话日志。建议用户在 `/forge` 命令之间开启新的 Claude Code 会话，以避免上下文累积（详见 CLAUDE.md §6 Session Boundaries）。
+
 ---
 
 ## 2. Data Sources & Five-Question Recovery
