@@ -1,5 +1,5 @@
-#!/bin/sh
-# run-with-trim.sh — POSIX verification command wrapper
+#!/usr/bin/env bash
+# run-with-trim.sh — Verification command wrapper
 # Wraps verification commands: success → truncate long output; failure → pass through unchanged
 # Uses only POSIX utilities: tail, head, wc, cat, mktemp
 
