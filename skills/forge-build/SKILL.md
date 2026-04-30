@@ -12,30 +12,30 @@ disable-model-invocation: true
 
 ---
 
-## 1. 概述
+## 1. Overview
 
-`/forge build` 是 Forge 工作流的核心执行阶段——把计划变成代码。它根据路由档位选择三条执行路径之一，对每个任务强制执行 TDD 铁律，并通过原子提交保证每一步都可回溯。
+`/forge build` is the core execution phase of the Forge workflow — turning plans into code. It selects one of three execution paths based on the routing tier, enforces TDD iron rules for each task, and guarantees every step is traceable through atomic commits.
 
 **核心原则**：测试先于代码，验证先于声明。没有运行过的测试 = 不存在的测试。说"应该可以了"等于说"我没验证"。
 
 ---
 
-## 2. 前置检查
+## 2. Pre-build Checks
 
 在标准路径和全量路径下，build 启动前**必须逐条通过以下前置检查**。任一条件不满足时，不得继续 build。
 
-### 检查清单
+### Checklist
 
-| # | 检查条目 | 验证方法 | 阻断条件 | 不通过时的路由 |
+| # | Check Item | Method | Block Condition | Route on Failure |
 |---|---------|---------|---------|--------------|
-| 1 | **Spec 门禁** | 扫描 `.forge/specs/` 下所有 `spec.md` 的 YAML `status` | `status` 不是 `"locked"`（标准路径无 Spec 时豁免） | → `/forge spec` |
-| 2 | **Plan 门禁** | 扫描 `.forge/plans/` 下所有 `.md` 的 YAML `status` | `status` 不是 `"approved"` | → `/forge plan` |
-| 3 | **`.forge/` 目录结构完整性** | 检查 `.forge/` 及其 `specs/`、`plans/`、`progress/` 子目录 | 目录缺失 | → `forge init` |
-| 4 | **分支门禁** | `git branch --show-current` 与 topic 期望分支比对 | 不在 `feature/<topic>` 或 `forge/<topic>` 上 | → 自动切换（见 §2.1） |
+| 1 | **Spec Gate** | Scan `status` field in all `spec.md` under `.forge/specs/` | `status` is not `"locked"` (exempt for standard path without Spec) | → `/forge spec` |
+| 2 | **Plan Gate** | Scan `status` field in all `.md` under `.forge/plans/` | `status` is not `"approved"` | → `/forge plan` |
+| 3 | **`.forge/` Directory Integrity** | Check `.forge/` and its `specs/`, `plans/`, `progress/` subdirectories | Missing directory | → `forge init` |
+| 4 | **Branch Gate** | Compare `git branch --show-current` with expected topic branch | Not on `feature/<topic>` or `forge/<topic>` | → Auto-switch (see §2.1) |
 
-**Spec 门禁豁免**：Plan 标注 `spec_ref: "none（基于用户需求描述）"` 时，仅检查 Plan 门禁和目录结构。
+**Spec Gate Exemption**: When Plan specifies `spec_ref: "none（基于用户需求描述）"`, only check Plan Gate and directory integrity.
 
-**拒绝输出格式**（Canonical Example — Spec 未锁定）：
+**Rejection Output Format** (Canonical Example — Spec Not Locked):
 
 ```
 🚫 Build 前置检查未通过
@@ -46,66 +46,66 @@ disable-model-invocation: true
 重入条件：spec.md 的 status 变为 "locked" 后，重新运行 /forge build
 ```
 
-其他场景替换字段：Plan 未批准 → 证据改为 plan status；目录不完整 → 证据改为缺失目录；多项不通过 → 逐条列出所有失败检查。
+Other scenario substitutions: Plan not approved → change evidence to plan status; directory incomplete → change evidence to missing directory; multiple failures → list all failed checks.
 
-**Autonomous 模式**返回 JSON：`{"success":false,"summary":"Build 前置检查未通过：<检查>","evidence":"<证据>","suggested_route":"<路由>","reentry_condition":"<重入条件>"}`
+**Autonomous mode** returns JSON: `{"success":false,"summary":"Build 前置检查未通过：<检查>","evidence":"<证据>","suggested_route":"<路由>","reentry_condition":"<重入条件>"}`
 
-**函数调用**：`checkBuildGate(specStatus, planStatus)`
-- 参数：`specStatus` — 从 `.forge/specs/<topic>/spec.md` YAML frontmatter 的 `status` 字段读取；`planStatus` — 从 `.forge/plans/<topic>.md` YAML frontmatter 的 `status` 字段读取
-- 返回：`{ allowed: boolean, reasons: string[] }`，`allowed: false` 时 `reasons` 列出所有未通过的门禁
-- 用途：程序化验证 Spec 锁定和 Plan 批准状态，替代手动逐条检查。返回 `allowed: false` 时使用 §2 拒绝输出格式
+**Function Call**: `checkBuildGate(specStatus, planStatus)`
+- Parameters: `specStatus` — read from `status` field in `.forge/specs/<topic>/spec.md` YAML frontmatter; `planStatus` — read from `status` field in `.forge/plans/<topic>.md` YAML frontmatter
+- Returns: `{ allowed: boolean, reasons: string[] }`; when `allowed: false`, `reasons` lists all failed gates
+- Purpose: Programmatically verify Spec locked and Plan approved status, replacing manual per-item checks. When `allowed: false`, use §2 rejection output format
 
-### §2.1 分支门禁（检查 #4）
+### §2.1 Branch Gate (Check #4)
 
-**目的**：防止多功能开发时代码提交到错误分支，包含 topic 级匹配和生命周期检测。
+**Purpose**: Prevent multi-feature commits to wrong branches, including topic-level matching and lifecycle detection.
 
-**检查流程**：
+**Check Flow**:
 
-1. 获取当前分支：`git branch --show-current`
-2. 确定期望分支：`feature/<topic>` 或 `forge/<topic>`（均接受）
-3. 提取 task topic：从 `.forge/status.md` 的 `current_task` 字段获取当前任务 topic
-4. **Topic 匹配检查**：调用 `checkBranchTopicGate(currentBranch, taskTopic)`
-   - `branchName` 来源：`git branch --show-current` 输出
-   - `taskTopic` 来源：`.forge/status.md` 的 `current_task` 字段
-   - 返回 `allowed: false` 时 → 🚫 阻断 build，输出 topic 不匹配原因
-   - 返回 `allowed: true` 时 → ✅ 继续
-5. 比对并决策：
+1. Get current branch: `git branch --show-current`
+2. Determine expected branch: `feature/<topic>` or `forge/<topic>` (both accepted)
+3. Extract task topic: read `current_task` field from `.forge/status.md`
+4. **Topic Match Check**: call `checkBranchTopicGate(currentBranch, taskTopic)`
+   - `branchName` source: `git branch --show-current` output
+   - `taskTopic` source: `current_task` field in `.forge/status.md`
+   - Returns `allowed: false` → 🚫 Block build, output topic mismatch reason
+   - Returns `allowed: true` → ✅ Continue
+5. Compare and decide:
 
-| 当前分支 | 期望分支状态 | 操作 |
+| Current Branch | Expected Branch State | Action |
 |---------|------------|------|
-| 已在 `feature/<topic>` 且 topic 匹配 | — | ✅ 通过 |
-| 在其他分支上 | 已存在 | `git checkout <branch>` |
-| 在其他分支上 | 不存在 | `git checkout -b feature/<topic>` |
-| 已在 `feature/<topic>` 但 topic 不匹配 | — | 🚫 阻断，提示切换或创建正确分支 |
+| Already on `feature/<topic>` with matching topic | — | ✅ Pass |
+| On other branch | Exists | `git checkout <branch>` |
+| On other branch | Does not exist | `git checkout -b feature/<topic>` |
+| Already on `feature/<topic>` but topic mismatch | — | 🚫 Block, prompt to switch or create correct branch |
 
-**自动切换前提**：工作树必须干净。不干净时阻断，提示先 `git stash` 或 `git commit`。
+**Auto-switch Prerequisite**: Working tree must be clean. When dirty, block and prompt `git stash` or `git commit`.
 
-**未交付分支警告**（build 启动时）：
+**Unshipped Branch Warning** (at build start):
 
-在分支门禁通过后、任务执行前，检查是否有未完成的分支交付记录：
+After branch gate passes, before task execution, check for unfinished branch delivery records:
 
-1. 读取 pending-delivery 记录（存储在 `.forge/status.md` 或配置指定的持久化位置）
-2. 调用 `detectUnshippedBranches(pendingDeliveries, currentTopic)`
-   - `pendingDeliveries` 来源：从持久化位置读取的 `PendingDeliveryRecord[]`
-   - `currentTopic` 来源：当前任务的 topic
-   - 返回非空时 → ⚠️ 展示警告，提供三个选项：
-     1. 立即 ship（切换到该分支执行 `/forge ship`）
-     2. 继续在当前分支（确认后继续 build）
-     3. 切换到新分支（停止 build，切换分支）
-3. 调用 `detectStaleBranches(pendingDeliveries, currentTopic, currentTime)`
-   - `currentTime` 来源：`Date.now()`
-   - `thresholdMs` 可在 `.forge/config.md` 中配置（默认 0：任何不同 topic 的 pending delivery 都标记为过期）
-   - 返回非空时 → ⚠️ 展示过期分支警告
+1. Read pending-delivery records (stored in `.forge/status.md` or configured persistence location)
+2. Call `detectUnshippedBranches(pendingDeliveries, currentTopic)`
+   - `pendingDeliveries` source: `PendingDeliveryRecord[]` read from persistence location
+   - `currentTopic` source: current task topic
+   - Returns non-empty → ⚠️ Show warning with three options:
+     1. Ship immediately (switch to that branch and run `/forge ship`)
+     2. Continue on current branch (confirm to proceed with build)
+     3. Switch to new branch (stop build, switch branch)
+3. Call `detectStaleBranches(pendingDeliveries, currentTopic, currentTime)`
+   - `currentTime` source: `Date.now()`
+   - `thresholdMs` configurable in `.forge/config.md` (default 0: any pending delivery with different topic is marked stale)
+   - Returns non-empty → ⚠️ Show stale branch warning
 
-**提交前 topic 检查**：
+**Pre-commit Topic Check**:
 
-每次原子提交前，调用 `checkCommitTopicMatch(currentBranch, commitTopic)`：
-- `branchName` 来源：`git branch --show-current`
-- `commitTopic` 来源：当前任务的 topic
-- 返回 `allowed: false` → 🚫 阻断提交，输出跨 topic 污染警告
-- 返回 `allowed: true` → ✅ 允许提交
+Before each atomic commit, call `checkCommitTopicMatch(currentBranch, commitTopic)`:
+- `branchName` source: `git branch --show-current`
+- `commitTopic` source: current task topic
+- Returns `allowed: false` → 🚫 Block commit, output cross-topic contamination warning
+- Returns `allowed: true` → ✅ Allow commit
 
-**输出格式**（Canonical Example — 分支切换）：
+**Output Format** (Canonical Example — Branch Switch):
 
 ```
 🔀 分支切换
@@ -115,7 +115,7 @@ disable-model-invocation: true
 继续 build...
 ```
 
-**输出格式**（Canonical Example — Topic 不匹配）：
+**Output Format** (Canonical Example — Topic Mismatch):
 
 ```
 🚫 分支 topic 不匹配
@@ -126,53 +126,53 @@ disable-model-invocation: true
   或: git checkout -b feature/branch-lifecycle-enforcement
 ```
 
-其他场景：分支不存在 → 输出"分支创建"并 `checkout -b`；跨功能分支 → 输出 ⚠️ 警告；工作树不干净 → 🚫 阻断并建议 stash/commit。
+Other scenarios: branch does not exist → output "branch creation" and `checkout -b`; cross-feature branch → output ⚠️ warning; dirty working tree → 🚫 block and suggest stash/commit.
 
-**轻量路径例外**：跳过检查 #1 和 #2，但仍需通过 #3 和 #4（含 topic 匹配）。
+**Lightweight Path Exception**: Skip checks #1 and #2, but still require #3 and #4 (including topic matching).
 
 ---
 
-## 3. 三条执行路径
+## 3. Three Execution Paths
 
-### 3.1 轻量路径（Light）
+### 3.1 Lightweight Path (Light)
 
-适用于影响文件 ≤ 1 且改动 ≤ 20 行的小任务。
+Applicable to small tasks affecting ≤ 1 file with ≤ 20 lines of change.
 
-1. 直接修改代码，不启动 Subagent。
-2. **每两步暂停确认**——修改两个位置后暂停，展示变更，等待确认。
-3. 修改完成后运行验证命令。
-4. 提交变更。
+1. Modify code directly, no Subagent launched.
+2. **Pause every two steps** — after modifying two locations, pause, show changes, and wait for confirmation.
+3. After modifications complete, run verification commands.
+4. Commit changes.
 
-**无门禁要求**：跳过 Spec 和 Plan 门禁。**无 Restatement**：改动足够小，不存在注意力衰减问题。
+**No Gate Requirements**: Skip Spec and Plan gates. **No Restatement**: Changes are small enough that attention decay is not a concern.
 
-### 3.2 标准路径（Standard）
+### 3.2 Standard Path (Standard)
 
-适用于有明确需求或现成 Spec 的中等任务。
+Applicable to medium tasks with clear requirements or existing Spec.
 
-**流程**：
+**Flow**:
 
-1. 读取 `.forge/plans/<topic>.md` 任务列表，检测 `format` 字段。
-2. 对每个原子任务，执行 **Closure-First 探针**（§3.4），然后启动 **Subagent** 执行 TDD 循环（RED → GREEN → REFACTOR）。
-3. 每个任务完成后：更新 progress、执行原子提交（Plan 定义的 commit message）。
-4. 所有任务完成后，执行 **Final Validation**（§3.5）。
+1. Read task list from `.forge/plans/<topic>.md`, detect `format` field.
+2. For each atomic task, execute **Closure-First Probes** (§3.4), then launch **Subagent** to run TDD cycle (RED → GREEN → REFACTOR).
+3. After each task completes: update progress, execute atomic commit (using Plan-defined commit message).
+4. After all tasks complete, execute **Final Validation** (§3.5).
 
-**Restatement Checkpoint（上下文刷新）**：
+**Restatement Checkpoint (Context Refresh)**:
 
-Restatement 是编排循环的**强制步骤**，不是可选优化。跳过 Restatement 等于允许注意力衰减侵蚀执行质量。
+Restatement is a **mandatory step** in the orchestration loop, not an optional optimization. Skipping Restatement equals allowing attention decay to erode execution quality.
 
-- **计数器初始化**：build 开始时，初始化为 N（N = config.md `restatement_interval`，默认 3，范围 2–10。缺失则用默认值，不阻断）。
-- **计数器检查**：派发下一个 Subagent 前，计数器归零时执行 Checkpoint，然后再进入探针。
-- **计数器递减**：每个任务完成后（progress 更新 + 原子提交之后）减 1。
+- **Counter Initialization**: At build start, initialize to N (N = config.md `restatement_interval`, default 3, range 2–10. Use default if missing, do not block).
+- **Counter Check**: Before dispatching next Subagent, when counter reaches zero, execute Checkpoint, then proceed to probes.
+- **Counter Decrement**: After each task completes (after progress update + atomic commit), decrement by 1.
 
-**Checkpoint 执行步骤**：
+**Checkpoint Execution Steps**:
 
-1. **重读状态**：重读 `.forge/progress/<topic>.md` 和 `.forge/status.md`
-2. **刷新知识**：重读 `.forge/knowledge/instincts.md`
-3. **追加摘要**：在上下文尾部追加 5 区块摘要（不修改 System Prompt）
-4. **写入中间日志**：更新 `.forge/knowledge/sessions/<date>-<topic>-interim.md`
-5. **重置计数器**：重置为 N
+1. **Re-read Status**: Re-read `.forge/progress/<topic>.md` and `.forge/status.md`
+2. **Refresh Knowledge**: Re-read `.forge/knowledge/instincts.md`
+3. **Append Summary**: Append 5-block summary at context tail (do not modify System Prompt)
+4. **Write Interim Log**: Update `.forge/knowledge/sessions/<date>-<topic>-interim.md`
+5. **Reset Counter**: Reset to N
 
-**Restatement 摘要格式**（5 个必需区块）：
+**Restatement Summary Format** (5 required blocks):
 
 ```
 ━━━ 📋 Restatement Checkpoint（Task N/M 完成后）━━━
@@ -200,7 +200,7 @@ Restatement 是编排循环的**强制步骤**，不是可选优化。跳过 Res
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 ```
 
-**异常触发的 Restatement**：Subagent 返回 BLOCKED / NEEDS_CONTEXT / DONE_WITH_CONCERNS 时，**立即**执行 Checkpoint（不重置周期计数器）。摘要增加异常区块：
+**Exception-triggered Restatement**: When Subagent returns BLOCKED / NEEDS_CONTEXT / DONE_WITH_CONCERNS, execute Checkpoint **immediately** (do not reset cycle counter). Add exception block to summary:
 
 ```
 🚨 异常状态：Subagent 返回 <状态>
@@ -209,249 +209,249 @@ Restatement 是编排循环的**强制步骤**，不是可选优化。跳过 Res
   处理：BLOCKED → 评估原因 | NEEDS_CONTEXT → 补充重派 | DONE_WITH_CONCERNS → 阅读判断
 ```
 
-**Token 成本约束**：单次 Checkpoint ≤1,500 tokens。10 个任务（N=3）总开销 ≤ 总 Token 的 10%。
+**Token Cost Constraint**: Single Checkpoint ≤1,500 tokens. 10 tasks (N=3) total overhead ≤ 10% of total tokens.
 
-**Subagent 隔离**：每个 Subagent 拥有新鲜上下文，依赖通过文件系统传递。
+**Subagent Isolation**: Each Subagent has fresh context; dependencies are passed through the file system.
 
-**Subagent 状态处理协议**：
+**Subagent Status Handling Protocol**:
 
-| 状态 | 处理方式 |
+| Status | Handling |
 |------|---------|
-| **DONE** | 进入评审步骤，然后标记完成 |
-| **DONE_WITH_CONCERNS** | 阅读疑虑。正确性/范围问题 → 先解决再评审。观察性建议 → 记录 findings，继续 |
-| **NEEDS_CONTEXT** | 提供缺失上下文，重新派发 |
-| **BLOCKED** | 评估：1) 上下文不足 → 补充重派；2) 任务过大 → 拆分；3) Plan 问题 → 报告用户 |
+| **DONE** | Enter review step, then mark complete |
+| **DONE_WITH_CONCERNS** | Read concerns. Correctness/scope issues → resolve first then review. Observability suggestions → record findings, continue |
+| **NEEDS_CONTEXT** | Provide missing context, re-dispatch |
+| **BLOCKED** | Evaluate: 1) Insufficient context → supplement and re-dispatch; 2) Task too large → split; 3) Plan issue → report to user |
 
-**绝不**忽略 Subagent 的升级请求。
+**Never** ignore Subagent escalation requests.
 
-**Subagent 指令构造**：为每个 Subagent 包含：(1) Closure-First 探针结果 (2) 任务描述 (3) 文件上下文 (4) 知识回流（instincts/known-failures 匹配） (5) TDD 要求 (6) 验证命令 (7) 完成前自检 (8) 禁止事项（不改范围外文件，不跳测试） (9) 失败重试 Restatement。
+**Subagent Instruction Construction**: For each Subagent include: (1) Closure-First probe results (2) Task description (3) File context (4) Knowledge retrieval (instincts/known-failures matches) (5) TDD requirements (6) Verification commands (7) Pre-completion self-check (8) Prohibitions (no out-of-scope file changes, no skipping tests) (9) Failure retry Restatement.
 
-**Lightweight 格式**：Plan `format: "lightweight"` 时，额外注入 Design Reference 上下文（读取 `designReference` 指向的章节，提取接口定义和正确性属性）。如有 `propertyRef`，必须编写属性测试。
+**Lightweight Format**: When Plan specifies `format: "lightweight"`, additionally inject Design Reference context (read the section pointed to by `designReference`, extract interface definitions and correctness properties). If `propertyRef` exists, property tests must be written.
 
-**Subagent 调用方式**：`Agent(prompt="<指令>", skills=["forge-test"], permissionMode="acceptEdits", maxTurns=20)`
+**Subagent Invocation**: `Agent(prompt="<指令>", skills=["forge-test"], permissionMode="acceptEdits", maxTurns=20)`
 
-预加载 `forge-test` skill 让 Subagent 自动拥有测试引擎完整知识。
+Pre-loading `forge-test` skill gives Subagent automatic full knowledge of the test engine.
 
-**Subagent 完成前自检**：
+**Subagent Pre-completion Self-check**:
 
-| 自检项 | 不通过时的处理 |
+| Self-check Item | Handling on Failure |
 |--------|--------------|
-| Spec 场景覆盖 | 补充测试，重走 RED→GREEN |
-| 安全快扫（硬编码密钥/注入/鉴权） | 立即修复 |
-| 范围检查（仅修改指定文件） | 撤销范围外修改 |
+| Spec scenario coverage | Add tests, re-run RED→GREEN |
+| Security quick scan (hardcoded secrets/injection/auth) | Fix immediately |
+| Scope check (only modify specified files) | Revert out-of-scope changes |
 
 **自检输出**：`📋 任务自检 ✅/❌ Spec 场景 ✅/❌ 安全快扫 ✅/❌ 范围检查 → 状态：DONE`
 
-### 3.3 全量路径（Full）
+### 3.3 Full Path (Full)
 
-适用于涉及新服务、新数据库、认证体系变更或需求模糊的复杂任务。
+Applicable to complex tasks involving new services, new databases, authentication system changes, or ambiguous requirements.
 
-**阶段一：并行研究**
+**Phase 1: Parallel Research**
 
-**函数调用**：`buildResearchSubagents(topics)`
-- 参数：`topics` — 研究主题列表（`string[]`，从 Plan 的研究问题中提取）
-- 返回：`SubagentInvocation[]`（每个包含 prompt、subagent_type 等配置）
-- 用途：构造并行研究 Subagent 的调用配置，替代手动逐个构造
+**Function Call**: `buildResearchSubagents(topics)`
+- Parameters: `topics` — research topic list (`string[]`, extracted from Plan research questions)
+- Returns: `SubagentInvocation[]` (each containing prompt, subagent_type, and other config)
+- Purpose: Construct parallel research Subagent invocation config, replacing manual per-item construction
 
-通过 Agent tool 并行启动多个研究 Subagent（架构/依赖/风险），用 `Promise.allSettled` 等待。
+Launch multiple research Subagents in parallel via Agent tool (architecture/dependencies/risks), await with `Promise.allSettled`.
 
-**函数调用**：`mergeResearchFindings(results)`
-- 参数：`results` — `SubagentResult[]`（所有研究 Subagent 的返回结果）
-- 返回：合并后的研究发现字符串
-- 用途：将多个并行研究结果合并为统一文档，写入 `.forge/findings/<topic>.md`
+**Function Call**: `mergeResearchFindings(results)`
+- Parameters: `results` — `SubagentResult[]` (return results from all research Subagents)
+- Returns: Merged research findings string
+- Purpose: Merge multiple parallel research results into unified document, write to `.forge/findings/<topic>.md`
 
-**阶段一不使用 Restatement**：由独立 Subagent 并行执行，主 Agent 只等汇总。
+**Phase 1 does not use Restatement**: Executed by independent Subagents in parallel; main Agent only waits for aggregation.
 
-**阶段二：分模块实现**
+**Phase 2: Module-by-module Implementation**
 
-1. 基于研究发现和 Plan，将任务按模块分组。
-2. 对每个模块启动 Subagent 执行 TDD 循环。
-3. **可选 Git Worktree**：模块改动有文件重叠时使用，无重叠则直接在主分支执行。
-4. 所有模块完成后执行 Final Validation（§3.5）。
+1. Group tasks by module based on research findings and Plan.
+2. Launch Subagent for each module to run TDD cycle.
+3. **Optional Git Worktree**: Use when module changes have file overlap; if no overlap, execute directly on main branch.
+4. After all modules complete, execute Final Validation (§3.5).
 
-**Restatement Checkpoint**：阶段二的分模块实现使用与 §3.2 **完全相同**的 Restatement 机制（计数器初始化、检查、Checkpoint 步骤、摘要格式、异常触发、轻量路径排除）。阶段二开始时初始化计数器。
+**Restatement Checkpoint**: Phase 2 module-by-module implementation uses the **exact same** Restatement mechanism as §3.2 (counter initialization, checking, Checkpoint steps, summary format, exception trigger, lightweight path exclusion). Initialize counter at Phase 2 start.
 
 ---
 
-## 3.4 Closure-First 探针（2 Probe + 1 Verify）
+## 3.4 Closure-First Probes (2 Probe + 1 Verify)
 
 每个原子任务进入 TDD 循环前，**必须先执行 Closure-First 探针**。借鉴 Vibe-Skills 反死寂设计——避免 AI 在错误假设上浪费 token。
 
-**探针执行方式**：使用 `explore` agent（`Agent(prompt="<探针指令>", subagent_type="explore")`）。
+**Probe Execution Method**: Use `explore` agent (`Agent(prompt="<探针指令>", subagent_type="explore")`).
 
-| 步骤 | 动作 | 目的 |
+| Step | Action | Purpose |
 |------|------|------|
-| **Probe #1** | 检查文件/目录是否存在 | 确认仓库结构与 Plan 假设一致 |
-| **Probe #2** | 搜索相关关键词、函数名、接口名 | 定位代码入口点和依赖关系 |
-| **Verify #1** | 运行最窄范围验证命令 | 确认当前代码库状态健康 |
+| **Probe #1** | Check if files/directories exist | Confirm repo structure matches Plan assumptions |
+| **Probe #2** | Search related keywords, function names, interface names | Locate code entry points and dependency relationships |
+| **Verify #1** | Run narrowest-scope verification command | Confirm current codebase state is healthy |
 
 **探针输出**：`🔍 Closure-First 探针（Task N） Probe #1：✅/❌ <结果> Probe #2：✅/❌ <结果> Verify #1：✅/❌ <结果> → 探针通过/失败`
 
-**失败处理**：Probe #1 失败 → 检查 Plan 是否过时；Probe #2 失败 → 扩大搜索或 NEEDS_CONTEXT；Verify #1 失败 → 先修复现有问题。
+**Failure Handling**: Probe #1 fails → check if Plan is outdated; Probe #2 fails → broaden search or NEEDS_CONTEXT; Verify #1 fails → fix existing issues first.
 
-**轻量路径例外**：跳过探针。
+**Lightweight Path Exception**: Skip probes.
 
 ---
 
 ## 3.5 Final Validation
 
-所有任务完成后执行全量验证：
+After all tasks complete, execute full validation:
 
-1. 读取 `.forge/config.md` 的 `ci_check_command` 字段。
-2. **非空** → 原样执行该命令（禁止替换、省略或拆分）。
-3. **为空/缺失** → 按 `verify_commands` 列表执行；若也为空，回退到 AI 自动检测。
-4. 使用 P5 证据链格式报告：`[Command] → [Output] → [Claim]`。
-
----
-
-## 4. TDD 铁律
-
-→ 遵循 CLAUDE.md §2.1 TDD 强制（RED → GREEN → REFACTOR 不可跳过）
-
-**Build 阶段补充**：
-
-- **Subagent 内 TDD**：每个 Subagent 独立执行完整 TDD 循环。代码先于测试 → 删除代码，从测试重新开始。不保留、不参考、不看已删代码。
-- **每步都要运行**：RED 确认失败、GREEN 确认通过、REFACTOR 确认无回归。RED 阶段测试就通过了 = 测试写错了。
-- **测试在迁就代码 ≠ 代码在满足需求**。先写代码再补测试就是前者。
+1. Read `ci_check_command` field from `.forge/config.md`.
+2. **Non-empty** → Execute the command as-is (no substitution, omission, or splitting).
+3. **Empty/missing** → Execute from `verify_commands` list; if also empty, fall back to AI auto-detection.
+4. Report using P5 evidence chain format: `[Command] → [Output] → [Claim]`.
 
 ---
 
-## 5. 失败处理
+## 4. TDD Iron Rules
 
-### 5.1 连续失败升级
+→ Follow CLAUDE.md §2.1 TDD Enforcement (RED → GREEN → REFACTOR cannot be skipped)
 
-→ 遵循 CLAUDE.md §2.4 三次换路
+**Build Phase Additions**:
 
-**函数调用**：`analyzeFixAttempts(sequence)`
-- 参数：`sequence` — 当前任务的修复尝试序列（`FixAttemptSequence` 类型，包含每次尝试的结果和原因）
-- 返回：`{ shouldEscalate: boolean, consecutiveFailures: number, escalationIndex: number }`，`shouldEscalate: true` 时触发三次换路
-- 用途：程序化判断连续失败次数，决定是否升级到 `/forge debug`
-
-**升级行为**：连续失败 3 次后切换到 `debugger` agent 进行根因分析（`Agent(prompt="<失败上下文>", subagent_type="general-purpose", permissionMode="acceptEdits", maxTurns=15)`）。debugger 专注：(1) 完整读取错误信息 (2) 一次一个假设 (3) 最小改动修复 (4) 再失败 3 次则报告用户。
-
-**升级输出**：`🚫 连续失败 3 次 → 切换 debugger agent。尝试 1/2/3：<原因>`
-
-### 5.2 测试失败处理
-
-GREEN 阶段测试仍失败：(1) 检查测试本身是否有 bug (2) 检查实现是否遗漏条件 (3) 测试问题 → 修正后重走 RED→GREEN (4) 实现问题 → 修正后重跑。
+- **In-Subagent TDD**: Each Subagent independently executes the full TDD cycle. Code written before tests → delete code, restart from tests. Do not retain, reference, or read deleted code.
+- **Run at every step**: RED confirms failure, GREEN confirms pass, REFACTOR confirms no regression. Test passing at RED stage = test was written wrong.
+- **Tests accommodating code ≠ code satisfying requirements**. Writing code first then adding tests is the former.
 
 ---
 
-## 6. 执行纪律
+## 5. Failure Handling
 
-以下纪律是 build 阶段硬性约束：
+### 5.1 Consecutive Failure Escalation
 
-### 6.0 反漂移执行护栏
+→ Follow CLAUDE.md §2.4 Three-strike Reroute
 
-| 禁止行为 | 说明 |
+**Function Call**: `analyzeFixAttempts(sequence)`
+- Parameters: `sequence` — fix attempt sequence for current task (type `FixAttemptSequence`, containing each attempt's result and reason)
+- Returns: `{ shouldEscalate: boolean, consecutiveFailures: number, escalationIndex: number }`; `shouldEscalate: true` triggers three-strike reroute
+- Purpose: Programmatically determine consecutive failure count, decide whether to escalate to `/forge debug`
+
+**Escalation Behavior**: After 3 consecutive failures, switch to `debugger` agent for root cause analysis (`Agent(prompt="<失败上下文>", subagent_type="general-purpose", permissionMode="acceptEdits", maxTurns=15)`). Debugger focuses on: (1) fully reading error messages (2) one hypothesis at a time (3) minimal change fix (4) report to user if 3 more failures.
+
+**Escalation Output**: `🚫 连续失败 3 次 → 切换 debugger agent。尝试 1/2/3：<原因>`
+
+### 5.2 Test Failure Handling
+
+GREEN phase test still failing: (1) Check if test itself has bugs (2) Check if implementation misses conditions (3) Test issue → fix and re-run RED→GREEN (4) Implementation issue → fix and re-run.
+
+---
+
+## 6. Execution Discipline
+
+The following disciplines are hard constraints during the build phase:
+
+### 6.0 Anti-drift Execution Guardrails
+
+| Prohibited Behavior | Description |
 |---------|------|
-| 优化代理信号而放弃冻结目标 | 不得为覆盖率数字写无意义测试，忽略 Spec 核心场景 |
-| 将验证材料吸收为产品真理 | 不得将测试示例数据硬编码为产品逻辑 |
-| 将有限修复重新标记为通用完成 | 不得只修一个边界条件就声称"全部完成" |
-| 静默降级 | 主路径失败时不得悄悄切换降级方案而不告知用户 |
-| 伪成功 | 不得吞掉错误、输出模板化通过结果、或假装成功 |
-| 修改冻结文件 | 不得在 build 阶段修改 locked Spec 或 approved Plan |
+| Optimizing proxy metrics while abandoning frozen targets | Must not write meaningless tests for coverage numbers while ignoring Spec core scenarios |
+| Absorbing verification material as product truth | Must not hardcode test example data as product logic |
+| Relabeling limited fixes as universal completion | Must not fix one edge case and claim "all done" |
+| Silent degradation | Must not silently switch to degraded approach when main path fails without informing user |
+| Pseudo-success | Must not swallow errors, output templated pass results, or pretend success |
+| Modifying frozen files | Must not modify locked Spec or approved Plan during build phase |
 
-如果 Spec 有反漂移声明（主目标/非目标代理信号/验证材料角色），以主目标为唯一判定标准。
+If Spec has anti-drift declarations (primary target / non-target proxy metrics / verification material role), use primary target as the sole judgment criterion.
 
-**状态文件保护**：遵守 `.forge/config.md` 保护分区——🔒冻结区不可改、🛡️受保护区只可追加、🟢开放区可自由修改。违反则立即阻断并报告。
+**Status File Protection**: Observe `.forge/config.md` protection zones — 🔒 Frozen zone immutable, 🛡️ Protected zone append-only, 🟢 Open zone freely modifiable. Violation causes immediate block and report.
 
-### 6.1 先测试后代码
+### 6.1 Test First, Then Code
 
-→ 遵循 CLAUDE.md §2.1 TDD 强制
+→ Follow CLAUDE.md §2.1 TDD Enforcement
 
-### 6.2 原子提交
+### 6.2 Atomic Commits
 
-每个任务一个 commit，使用 Plan 定义的 commit message。不混多任务变更。
+One commit per task, using Plan-defined commit message. Do not mix multi-task changes.
 
-### 6.3 验证后才能声明完成
+### 6.3 Verify Before Declaring Complete
 
-→ 遵循 CLAUDE.md §2.3 验证铁律
+→ Follow CLAUDE.md §2.3 Verification Iron Rules
 
-**P5 证据链**：`[Command] → [Output] → [Claim]`。禁止跳过任何一环。
+**P5 Evidence Chain**: `[Command] → [Output] → [Claim]`. Skipping any link is prohibited.
 
-**验证门函数**：识别 → 运行 → 阅读 → 验证 → 然后标记完成。跳过任何一步 = 在撒谎。
+**Verification Gate Function**: Identify → Run → Read → Verify → Then mark complete. Skipping any step = lying.
 
-**唯一接受的完成证据**：验证命令的实际输出。不接受"应该可以了"、"看起来没问题"、"Subagent 说完成了"。
+**Only Accepted Completion Evidence**: Actual output from verification commands. "Should work", "looks fine", "Subagent said done" are not accepted.
 
-### 6.4 三次换路
+### 6.4 Three-strike Reroute
 
-→ 遵循 CLAUDE.md §2.4 三次换路
+→ Follow CLAUDE.md §2.4 Three-strike Reroute
 
-### 6.5 输出简洁性
+### 6.5 Output Conciseness
 
-→ 遵循 CLAUDE.md §2.6 输出简洁性
+→ Follow CLAUDE.md §2.6 Output Conciseness
 
-本 SKILL 定义的所有结构化输出（TDD 标记、探针结果、Restatement 摘要、P5 证据链、进度更新）不受简洁性约束影响。
+All structured outputs defined in this SKILL (TDD markers, probe results, Restatement summaries, P5 evidence chains, progress updates) are not subject to conciseness constraints.
 
 ---
 
-## 7. 状态更新
+## 7. Status Updates
 
-### 7.1 Progress 更新
+### 7.1 Progress Update
 
-每个任务完成后更新 `.forge/progress/<topic>.md`，标记已完成/进行中/阻塞任务。
+After each task completes, update `.forge/progress/<topic>.md`, marking completed/in-progress/blocked tasks.
 
-### 7.2 中间会话日志
+### 7.2 Interim Session Log
 
-每次 Restatement Checkpoint 同步更新 `.forge/knowledge/sessions/<date>-<topic>-interim.md`（≤15 行，包含进度快照、关键发现、活跃约束、异常记录）。每次覆盖同一文件（不累积）。`/forge learn` 或 build 全部完成后删除。`/forge resume` 优先读取此文件恢复上下文。
+At each Restatement Checkpoint, synchronously update `.forge/knowledge/sessions/<date>-<topic>-interim.md` (≤15 lines, containing progress snapshot, key findings, active constraints, exception records). Overwrite the same file each time (no accumulation). Delete after `/forge learn` or build fully completes. `/forge resume` prioritizes reading this file to restore context.
 
-### 7.3 Phase 更新
+### 7.3 Phase Update
 
-每个命令完成后更新 `.forge/status.md` 的 `phase` 字段为序列中下一个命令。
+After each command completes, update the `phase` field in `.forge/status.md` to the next command in sequence.
 
-### 7.4 验证命令健康度追踪
+### 7.4 Verification Command Health Tracking
 
-Build 阶段记录每个验证命令的执行结果到 `.forge/knowledge/tool-health.md`。
+During build phase, record each verification command's execution result to `.forge/knowledge/tool-health.md`.
 
-**健康度判定**：≥80% → 🟢 健康；50%-79% → 🟡 退化（在下次 plan 知识回流中注入警告）；<50% → 🔴 不健康（建议替代命令或先修环境）。
+**Health Determination**: ≥80% → 🟢 Healthy; 50%-79% → 🟡 Degraded (inject warning in next plan knowledge retrieval); <50% → 🔴 Unhealthy (suggest alternative commands or fix environment first).
 
-**反循环保护**：同一命令的同一失败原因只记录一次。
+**Anti-loop Protection**: Same failure reason for the same command is recorded only once.
 
-### Phase 转换表
+### Phase Transition Table
 
-| 当前命令完成 | phase 更新为 |
+| Current Command Completed | phase Updated To |
 |-------------|-------------|
 | `/forge plan` | `build` |
 | `/forge build` | `review` |
-| `/forge review` | `test`（标准/全量）或 `completed`（轻量） |
+| `/forge review` | `test` (standard/full) or `completed` (lightweight) |
 | `/forge test` | `ship` |
-| `/forge ship` | `learn`（全量）或 `completed`（标准） |
+| `/forge ship` | `learn` (full) or `completed` (standard) |
 | `/forge learn` | `completed` |
 
 ---
 
-## 8. 执行流程
+## 8. Execution Flow
 
-1. **路径判定**：轻量（≤1 文件，≤20 行）/ 标准（有 Spec） / 全量（新服务/数据库/认证/需求模糊）
-2. **前置门禁检查**（标准/全量）：Spec 锁定 + Plan 批准 + 目录完整 + 分支正确
-3. **初始化 Restatement 计数器**（标准/全量）：设为 N（默认 3）
-4. **循环**：Closure-First 探针 → Subagent TDD → 检查状态 → 更新 progress → 原子提交 → 计数器 -1
-5. **全量路径额外**：阶段一并行研究 → 阶段二分模块实现
-6. **Final Validation**：ci_check_command 或 verify_commands
-7. **删除 interim 日志**
+1. **Path Determination**: Lightweight (≤1 file, ≤20 lines) / Standard (has Spec) / Full (new service/database/authentication/ambiguous requirements)
+2. **Pre-build Gate Checks** (standard/full): Spec locked + Plan approved + Directory integrity + Branch correct
+3. **Initialize Restatement Counter** (standard/full): Set to N (default 3)
+4. **Loop**: Closure-First Probes → Subagent TDD → Check status → Update progress → Atomic commit → Counter -1
+5. **Full Path Extra**: Phase 1 parallel research → Phase 2 module-by-module implementation
+6. **Final Validation**: ci_check_command or verify_commands
+7. **Delete interim logs**
 8. → `/forge review`
 
-**失败升级**：同一修复连续失败 3 次 → 计数器 +1 → 达到 3 → 停止 → 进入 `/forge debug`
+**Failure Escalation**: Same fix fails 3 consecutive times → Counter +1 → Reaches 3 → Stop → Enter `/forge debug`
 
 ---
 
-## 9. 边界情况处理
+## 9. Edge Case Handling
 
-| 场景 | 处理方式 |
+| Scenario | Handling |
 |------|---------|
-| Spec 未锁定 | 使用 §2 拒绝输出格式，路由到 `/forge spec` |
-| Plan 未批准 | 使用 §2 拒绝输出格式，路由到 `/forge plan` |
-| Spec + Plan 都未就绪 | §2 多项检查不通过格式，逐条列出 |
-| Subagent 执行超时 | 终止 Subagent → progress 标记阻塞 → 提示 `/forge resume` |
-| Git Worktree 合并冲突 | 暂停合并 → 列出冲突文件 → 等待手动解决 |
-| 无 `.forge/` 目录 | §2 拒绝输出格式，路由到 `forge init` |
+| Spec not locked | Use §2 rejection output format, route to `/forge spec` |
+| Plan not approved | Use §2 rejection output format, route to `/forge plan` |
+| Both Spec + Plan not ready | §2 multiple check failure format, list each item |
+| Subagent execution timeout | Terminate Subagent → mark progress as blocked → prompt `/forge resume` |
+| Git Worktree merge conflict | Pause merge → list conflicting files → wait for manual resolution |
+| No `.forge/` directory | §2 rejection output format, route to `forge init` |
 
 ---
 
-## 10. 示例
+## 10. Examples
 
-**标准路径执行**：
+**Standard Path Execution**:
 
 ```
 $ /forge build
@@ -470,56 +470,56 @@ $ /forge build
 
 ---
 
-## 已知 AI 失败模式
+## Known AI Failure Patterns
 
-| # | 失败模式 | 错误行为 | 正确做法 |
+| # | Failure Pattern | Wrong Behavior | Correct Approach |
 |---|---------|---------|---------|
-| 1 | TDD RED 阶段写实现 | "顺手"把实现也写了 | RED 只写测试，已写实现则删除重来 |
-| 2 | 跳过测试标记完成 | 没运行测试就说"任务完成" | 执行验证门函数，P5 证据链声明完成 |
-| 3 | 多任务混在一个 commit | 把两三个任务变更合为一个提交 | 一个任务一个 commit，用 Plan 定义的 message |
-| 4 | 不读 plan 就写代码 | 凭记忆直接开始写代码 | Build 开始时完整读取 Plan，每个任务前重读描述 |
-| 5 | 顺手改范围外代码 | 看到"不太好"的代码就顺手改了 | 只改 Plan 指定范围，范围外问题记录到 findings |
-| 6 | 逐步解说代码编辑 | 每个操作前输出预告和解释 | 沉默执行，仅在 Decision_Point 输出简要说明 |
-| 7 | 自行拼凑验证命令 | 不用 ci_check_command 而自己拼部分命令 | 原样执行 config.md 的 ci_check_command，不替换省略 |
+| 1 | Writing implementation during TDD RED | "Conveniently" writing implementation too | RED only writes tests; if implementation already written, delete and restart |
+| 2 | Skipping tests and marking complete | Saying "task done" without running tests | Execute verification gate function, declare complete with P5 evidence chain |
+| 3 | Mixing multiple tasks in one commit | Combining two or three task changes into one commit | One task one commit, using Plan-defined message |
+| 4 | Coding without reading plan | Starting to code from memory | Fully read Plan at build start, re-read description before each task |
+| 5 | Casually modifying out-of-scope code | Changing "not great" code seen along the way | Only modify Plan-specified scope, record out-of-scope issues to findings |
+| 6 | Narrating code edits step by step | Outputting preview and explanation before each operation | Execute silently, only output brief notes at Decision_Point |
+| 7 | Self-assembling verification commands | Building partial commands instead of using ci_check_command | Execute config.md's ci_check_command as-is, no substitution or omission |
 
 ---
 
-## 上下文预算管理
+## Context Budget Management
 
-### 分类与裁剪策略
+### Classification and Trimming Strategy
 
-| 信息源 | 生命周期 | 裁剪策略 |
+| Information Source | Lifecycle | Trimming Strategy |
 |--------|---------|---------|
-| Explore Agent 结果 | Ephemeral | Explore_Summarizer：结构化摘要（入口点+依赖链+测试+接口），≤300 tokens |
-| Subagent 执行结果 | Ephemeral | Subagent_Summary_Protocol：提取状态/任务/变更/测试/commit/自检，≤200 tokens |
-| 测试运行输出 | Ephemeral | Test_Output_Trimmer：全通过单行摘要（≤150 tokens），有失败仅保留失败详情 |
-| Git Diff/Status | Ephemeral | Git_Output_Limiter：diff >50 行文件级摘要，status >30 文件分类摘要 |
-| Plan 任务列表 | Persistent | 保留在 context，Restatement 时刷新 |
-| 当前任务描述 | Persistent | 保留在 context，Restatement 时刷新 |
-| TDD 循环输出 | Phase-scoped | 当前阶段保留，Restatement 时摘要替代 |
-| Progress 更新 | Write-and-discard | 写入后只保留确认信息 |
+| Explore Agent results | Ephemeral | Explore_Summarizer: structured summary (entry points + dependency chain + tests + interfaces), ≤300 tokens |
+| Subagent execution results | Ephemeral | Subagent_Summary_Protocol: extract status/task/changes/test/commit/self-check, ≤200 tokens |
+| Test run output | Ephemeral | Test_Output_Trimmer: single-line summary when all pass (≤150 tokens), keep only failure details when failures exist |
+| Git Diff/Status | Ephemeral | Git_Output_Limiter: file-level summary for diff >50 lines, categorized summary for status >30 files |
+| Plan task list | Persistent | Retain in context, refresh at Restatement |
+| Current task description | Persistent | Retain in context, refresh at Restatement |
+| TDD cycle output | Phase-scoped | Retain for current phase, replace with summary at Restatement |
+| Progress updates | Write-and-discard | After writing, only retain confirmation info |
 
-### 裁剪执行时机
+### Trimming Execution Timing
 
-1. Explore Agent 返回后 → 调用 `serializeExploreResult(exploreOutput)` — 参数：Explore Agent 原始返回值（`ExploreSummary | string`）；返回：结构化摘要字符串（≤300 tokens）；用途：替换 context 中的原始 Explore 输出
-2. Subagent 返回后 → 调用 `serializeSubagentSummary(subagentOutput)` — 参数：Subagent 原始返回值（需解析为 `SubagentSummary`）；返回：摘要字符串（≤200 tokens）；用途：替换 context 中的执行日志
-3. 测试运行后 → 调用 `serializeTestOutput(testOutput)` — 参数：测试运行原始输出（需解析为 `TestOutputSummary`）；返回：摘要字符串（≤150 tokens）；用途：替换 context 中的测试输出
-4. Git 操作后 → diff 超 50 行时调用 `serializeGitDiff(diffSummary, lineCount)`（参数：Git diff 输出需解析为 `GitDiffSummary`，`lineCount` 为行数）；status 超 30 文件时调用 `serializeGitStatus(statusSummary, fileCount)`（参数：Git status 输出需解析为 `GitStatusSummary`，`fileCount` 为文件数）；用途：超阈值时替换原始输出
-5. Write-and-discard 后 → 用确认信息替代全量内容
+1. After Explore Agent returns → call `serializeExploreResult(exploreOutput)` — Parameters: Explore Agent raw return value (`ExploreSummary | string`); Returns: structured summary string (≤300 tokens); Purpose: replace raw Explore output in context
+2. After Subagent returns → call `serializeSubagentSummary(subagentOutput)` — Parameters: Subagent raw return value (parse as `SubagentSummary`); Returns: summary string (≤200 tokens); Purpose: replace execution log in context
+3. After test run → call `serializeTestOutput(testOutput)` — Parameters: test run raw output (parse as `TestOutputSummary`); Returns: summary string (≤150 tokens); Purpose: replace test output in context
+4. After Git operation → when diff exceeds 50 lines call `serializeGitDiff(diffSummary, lineCount)` (Parameters: Git diff output parsed as `GitDiffSummary`, `lineCount` is line count); when status exceeds 30 files call `serializeGitStatus(statusSummary, fileCount)` (Parameters: Git status output parsed as `GitStatusSummary`, `fileCount` is file count); Purpose: replace raw output when threshold exceeded
+5. After write-and-discard → replace full content with confirmation info
 
 ---
 
-## 反射触发器
+## Reflection Triggers
 
-以下情境是**推理触发器**——遇到时停下来问自己一个问题，根据答案决定下一步。不机械执行阈值判断，结合上下文做判断。
+The following scenarios are **reasoning triggers** — when encountered, pause and ask yourself a question, then decide next steps based on the answer. Do not mechanically execute threshold judgments; combine with context for judgment.
 
-| 触发情境 | 问自己 | interactive 处理 | autonomous 处理 |
+| Trigger Scenario | Ask Yourself | Interactive Handling | Autonomous Handling |
 |---------|--------|-----------------|----------------|
-| 往已经很长的文件追加代码 | 文件是否在承担太多职责？新代码与核心职责一致吗？ | 向用户说明文件职责范围，询问是否拆分 | 记录到 findings（路径+职责+拆分建议），继续执行 |
-| 给方法很多的类加方法 | 这个类是否变成上帝类？新方法和核心抽象一致吗？ | 展示方法列表和新方法用途，询问是否提取 | 记录到 findings（类名+方法概要+提取建议），继续 |
-| 加 `if (特殊情况)` 分支 | 这在处理合法业务规则，还是给设计缺陷打补丁？ | 说明分支原因，询问是否用策略/多态替代 | 记录到 findings（位置+情况+替代方案），继续 |
-| copy-paste 代码 | 背后是否有可抽取的共同抽象？修改需要改几处？ | 展示重复代码，询问是否提取共享函数 | 记录到 findings（位置+内容+抽取建议），继续 |
-| 给函数加第 4+ 个参数 | 参数是否可归组？函数是否承担太多职责？ | 展示签名和新参数，询问是否引入参数对象 | 记录到 findings（签名+用途+归组建议），继续 |
-| 新写万能工具类 | 函数间有内聚性吗？是否应分散到领域模块？ | 说明函数列表，询问是否按领域分散 | 记录到 findings（类名+函数+归属建议），继续 |
+| Appending code to an already long file | Is the file taking on too many responsibilities? Does the new code align with core responsibilities? | Explain file responsibility scope to user, ask whether to split | Record to findings (path + responsibilities + split suggestion), continue execution |
+| Adding method to a class with many methods | Is this class becoming a god class? Does the new method align with core abstraction? | Show method list and new method purpose, ask whether to extract | Record to findings (class name + method summary + extraction suggestion), continue |
+| Adding `if (special case)` branch | Is this handling a legitimate business rule, or patching a design flaw? | Explain branch reason, ask whether to use strategy/polymorphism replacement | Record to findings (location + situation + alternative), continue |
+| Copy-pasting code | Is there a common abstraction behind this? How many places need change if modified? | Show duplicated code, ask whether to extract shared function | Record to findings (location + content + extraction suggestion), continue |
+| Adding 4+ parameters to a function | Can parameters be grouped? Is the function taking on too many responsibilities? | Show signature and new parameter, ask whether to introduce parameter object | Record to findings (signature + purpose + grouping suggestion), continue |
+| Creating a new utility class | Do the functions have cohesion? Should they be distributed to domain modules? | Explain function list, ask whether to distribute by domain | Record to findings (class name + functions + attribution suggestion), continue |
 
 **关键原则**：反射触发器触发**思考**，不触发**行动**。autonomous 模式下不自行拆分——记录观察，继续执行。

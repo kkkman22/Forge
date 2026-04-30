@@ -12,7 +12,7 @@ disable-model-invocation: true
 
 ---
 
-## 1. 概述
+## 1. Overview
 
 `/forge learn` 是 Forge 工作流的知识沉淀阶段——把一次性的开发经验转化为可复用的知识资产。它以 Subagent 模式从五个维度提取知识，将解决方案文档化，将高频模式写入直觉库，并自动维护知识库的健康度。
 
@@ -20,19 +20,19 @@ disable-model-invocation: true
 
 ---
 
-## 2. 执行质量分析（闭环反馈）
+## 2. Execution Quality Analysis (Closed-loop Feedback)
 
 在知识提取之前，先对本次开发的执行质量进行结构化分析。
 
-### 分析数据源
+### Analysis Data Sources
 
-| 数据源 | 分析内容 |
-|--------|---------|
-| `.forge/progress/<topic>.md` | 一次通过/反复失败/阻塞的任务 |
-| `.forge/reviews/<topic>.md` | P0/P1 数量和反复出现的问题类型 |
-| `.forge/debug/<topic>.md` | 是否触发 debug 及根因 |
-| `.forge/plans/<topic>.md` | 预估时间 vs 实际时间偏差 |
-| `.forge/specs/<feature>/spec.md` | 场景覆盖率、Scope Creep |
+| Data Source | Analysis Content |
+|-------------|-----------------|
+| `.forge/progress/<topic>.md` | First-pass / repeated failures / blocked tasks |
+| `.forge/reviews/<topic>.md` | P0/P1 count and recurring issue types |
+| `.forge/debug/<topic>.md` | Whether debug was triggered and root cause |
+| `.forge/plans/<topic>.md` | Estimated vs actual time deviation |
+| `.forge/specs/<feature>/spec.md` | Scenario coverage rate, Scope Creep |
 
 **函数调用**：`analyzeSkillFeedback(entries)`
 - 参数：`entries` — 从 `.forge/knowledge/skill-feedback.md` 解析的反馈条目数组（`SkillFeedbackEntry[]`，每条含 command、scenario、suggestion、frequency）
@@ -44,16 +44,16 @@ disable-model-invocation: true
 - 返回：交叉验证后的重复失败原因列表（`string[]`）
 - 用途：确认反复出现的失败模式是否已在 known-failures 中记录，未记录的新模式应添加
 
-### 分析维度
+### Analysis Dimensions
 
-| 维度 | 指标 | 计算方式 |
-|------|------|---------|
-| **一次通过率** | 无需返工即完成的比率 | 一次通过任务数 / 总任务数 |
-| **Plan 准确度** | 预估与实际偏差 | 实际总耗时 / 预估总耗时 |
-| **Review 拦截率** | 问题密度 | (P0 + P1) / 总任务数 |
-| **Debug 触发率** | debug 频率 | 触发次数 / 总任务数 |
+| Dimension | Metric | Calculation |
+|-----------|--------|-------------|
+| **First-pass Rate** | Ratio of tasks completed without rework | First-pass tasks / Total tasks |
+| **Plan Accuracy** | Estimated vs actual deviation | Actual total time / Estimated total time |
+| **Review Interception Rate** | Issue density | (P0 + P1) / Total tasks |
+| **Debug Trigger Rate** | Debug frequency | Trigger count / Total tasks |
 
-### 分析输出格式
+### Analysis Output Format
 
 ```
 📊 执行质量分析
@@ -75,27 +75,27 @@ disable-model-invocation: true
   ⚠️ Plan 预估偏差 > 20%：复杂任务需要更多缓冲
 ```
 
-### 改进信号驱动知识提取
+### Improvement Signals Drive Knowledge Extraction
 
 分析的**改进信号**直接作为五维度知识提取的输入：反复失败 → 踩坑记录；Plan 偏差大 → 可复用模式；Review 高频问题 → 直觉模式；Debug 根因 → 解决方案。
 
-### 指标持久化
+### Metrics Persistence
 
 将本次会话指标追加到 `.forge/knowledge/metrics.md`：命令使用统计、路由准确度、四维度执行质量趋势、验证命令健康度。`/forge plan` Research 阶段可读取历史指标校准预估。
 
 ---
 
-## 3. 五维度知识提取
+## 3. Five-Dimension Knowledge Extraction
 
 以 **Subagent 模式**启动知识提取，每个维度由独立 Subagent 处理。
 
-| 维度 | 提取内容 | 数据来源 |
-|------|---------|---------|
-| **问题模式** | 问题类型、触发条件、影响范围 | `.forge/debug/`、`.forge/progress/`（阻塞项） |
-| **解决方案** | 最终方案、实现思路、选型理由 | `.forge/plans/`、代码变更、`.forge/findings/` |
-| **踩坑记录** | 弯路、失败尝试、误导性线索 | `.forge/debug/`、`.forge/progress/`（失败记录） |
-| **决策理由** | 决策上下文、权衡过程、否决方案 | `.forge/decisions/`、`.forge/specs/` |
-| **可复用模式** | 可复用的代码/架构/流程模式 | 代码变更、`.forge/specs/`、`.forge/plans/` |
+| Dimension | Extraction Content | Data Source |
+|-----------|-------------------|------------|
+| **Problem Pattern** | Issue type, trigger condition, impact scope | `.forge/debug/`, `.forge/progress/` (blocked items) |
+| **Solution** | Final approach, implementation rationale, selection reasoning | `.forge/plans/`, code changes, `.forge/findings/` |
+| **Pitfall Record** | Detours, failed attempts, misleading clues | `.forge/debug/`, `.forge/progress/` (failure records) |
+| **Decision Rationale** | Decision context, trade-off process, rejected alternatives | `.forge/decisions/`, `.forge/specs/` |
+| **Reusable Pattern** | Reusable code/architecture/process patterns | Code changes, `.forge/specs/`, `.forge/plans/` |
 
 **函数调用**：`generateKnowledgeDocument(title, tags, date, confidence, body)`
 - 参数：`title` — 知识标题（string）；`tags` — 标签数组（`string[]`）；`date` — 日期字符串（YYYY-MM-DD）；`confidence` — 置信度（0.3-0.9）；`body` — 五章节内容对象（含 `problem`、`solution`、`pitfalls`、`decisions`、`reusable`）
@@ -109,30 +109,30 @@ disable-model-invocation: true
 
 ---
 
-## 4. SKILL 反馈检测
+## 4. SKILL Feedback Detection
 
 五维度提取后，检测 SKILL.md 指导是否有不适用的场景。
 
-| 信号 | 含义 | 示例 |
-|------|------|------|
-| TDD 被合理跳过 | 某些任务不适合严格 TDD | 纯文档、配置修改、数据迁移 |
-| Subagent 自检不适用 | 特定场景下无意义 | 非棕地项目的 Delta 检查 |
-| 路由建议被覆盖 | AI 复杂度判断不准 | AI 建议全量但用户选标准 |
-| Review 层级不匹配 | 某些评审维度不适用 | 纯后端项目的可访问性检查 |
+| Signal | Meaning | Example |
+|--------|---------|---------|
+| TDD legitimately skipped | Certain tasks are not suited for strict TDD | Pure documentation, config changes, data migration |
+| Subagent self-check inapplicable | Meaningless in specific scenarios | Delta check for non-brownfield projects |
+| Routing suggestion overridden | AI complexity judgment inaccurate | AI suggests full but user chooses standard |
+| Review layer mismatch | Certain review dimensions inapplicable | Accessibility check for pure backend projects |
 
 不适用的场景记录到 `.forge/knowledge/skill-feedback.md`（含涉及命令、场景、建议、频次）。同一类反馈频次 ≥ 3 时提醒用户审阅 SKILL.md。**不自动修改** SKILL.md——只记录和提醒。
 
 ---
 
-## 5. 知识文档格式
+## 5. Knowledge Document Format
 
-### 知识库分层架构
+### Knowledge Base Tiered Architecture
 
-| 层级 | 目录 | 生命周期 | 用途 |
-|------|------|---------|------|
-| **会话层** | `sessions/` | 单次会话 | `/forge resume` 恢复上下文 |
-| **项目层** | `solutions/` + `instincts.md` | 项目级持久 | plan/build/debug 回流 |
-| **跨项目层** | `patterns/` | 跨项目持久 | 通用模式（手动迁移，上限 10 个） |
+| Tier | Directory | Lifecycle | Purpose |
+|------|-----------|-----------|---------|
+| **Session Tier** | `sessions/` | Single session | `/forge resume` context recovery |
+| **Project Tier** | `solutions/` + `instincts.md` | Project-level persistent | plan/build/debug backflow |
+| **Cross-project Tier** | `patterns/` | Cross-project persistent | Universal patterns (manual migration, max 10) |
 
 ### YAML Frontmatter
 
@@ -145,18 +145,18 @@ confidence: 0.85
 ---
 ```
 
-### 置信度评分规则
+### Confidence Score Rules
 
-| 分数 | 含义 |
-|------|------|
-| 0.3-0.4 | 初步观察，仅一次验证 |
-| 0.5-0.6 | 2-3 次验证 |
-| 0.7-0.8 | 多次验证，稳定可靠 |
-| 0.9 | 大量实践验证的成熟模式（上限，不用 1.0） |
+| Score | Meaning |
+|-------|---------|
+| 0.3-0.4 | Preliminary observation, verified only once |
+| 0.5-0.6 | Verified 2-3 times |
+| 0.7-0.8 | Verified multiple times, stable and reliable |
+| 0.9 | Mature pattern verified by extensive practice (upper limit, do not use 1.0) |
 
 下限 0.3：低于此值不值得记录。
 
-### 正文结构
+### Body Structure
 
 知识文档包含五个章节：问题模式、解决方案、踩坑记录、决策理由、可复用模式。
 
@@ -164,21 +164,21 @@ confidence: 0.85
 
 ---
 
-## 6. 高频模式与 instincts.md
+## 6. High-Frequency Patterns and instincts.md
 
-### 6.1 高频模式识别
+### 6.1 High-Frequency Pattern Recognition
 
 同一模式在 2+ 知识文档中出现且 confidence ≥ 0.5 时，提升为"直觉"。
 
-### 6.2 instincts.md 格式
+### 6.2 instincts.md Format
 
 每个模式包含：标题、Confidence_Score（0.3-0.9）、Tags、来源、描述。
 
-### 6.3 跨项目模式提升
+### 6.3 Cross-project Pattern Promotion
 
 模式 confidence ≥ 0.8、不依赖特定技术栈、描述通用工程实践时，建议用户提升到 `patterns/`。
 
-### 6.4 Confidence_Score 范围
+### 6.4 Confidence_Score Range
 
 instincts.md 中每个模式必须在 **0.3 至 0.9** 范围内。
 
@@ -188,17 +188,17 @@ instincts.md 中每个模式必须在 **0.3 至 0.9** 范围内。
 
 **核心原则**：只添加"没有这条规则 Claude 就会犯错"的规则——不是知识转储。
 
-#### 6.5.1 数据源
+#### 6.5.1 Data Sources
 
-| 数据源 | 文件路径 | 提取内容 |
-|--------|---------|---------|
-| 已知失败模式 | `.forge/knowledge/known-failures.md` | occurrence >= 3 的失败模式 |
-| 直觉模式 | `.forge/knowledge/instincts.md` | confidence >= 0.8 的经验法则 |
-| SKILL 反馈 | `.forge/knowledge/skill-feedback.md` | frequency >= 3 的不适用的 SKILL 指导 |
-| 执行指标 | `.forge/knowledge/metrics.md` | 连续 3+ 会话退化趋势 |
-| 会话日志 | `.forge/knowledge/sessions/*.md` | 同一问题在 3+ 会话中出现 |
+| Data Source | File Path | Extraction Content |
+|-------------|-----------|-------------------|
+| Known failure patterns | `.forge/knowledge/known-failures.md` | Failure patterns with occurrence >= 3 |
+| Instinct patterns | `.forge/knowledge/instincts.md` | Experience rules with confidence >= 0.8 |
+| SKILL feedback | `.forge/knowledge/skill-feedback.md` | Inapplicable SKILL guidance with frequency >= 3 |
+| Execution metrics | `.forge/knowledge/metrics.md` | Degradation trend across 3+ consecutive sessions |
+| Session journals | `.forge/knowledge/sessions/*.md` | Same issue appearing in 3+ sessions |
 
-#### 6.5.2 蒸馏算法
+#### 6.5.2 Distillation Algorithm
 
 ```
 1. READ evolved-rules.md → current_rules[], rule_count, max_rules
@@ -212,13 +212,13 @@ instincts.md 中每个模式必须在 **0.3 至 0.9** 范围内。
 7. PRESENT proposals → FOR each approved: WRITE + UPDATE changelog
 ```
 
-#### 6.5.3 转换过程
+#### 6.5.3 Transformation Process
 
 每条达标知识转为规则候选：(1) 提取原始模式 (2) 蒸馏为可执行规则声明 (3) 声明防止的具体错误 (4) 继承置信度 (5) 设置 last_triggered。
 
 #### 6.5.4 阈值条件
 
-| 类别 | 数据源 | 阈值 |
+| Category | Data Source | Threshold |
 |------|--------|------|
 | 项目特定陷阱 | known-failures.md | occurrence >= 3 |
 | 重复纠正模式 | instincts.md | confidence >= 0.8 |
@@ -254,21 +254,21 @@ instincts.md 中每个模式必须在 **0.3 至 0.9** 范围内。
 
 ---
 
-## 7. 知识库维护
+## 7. Knowledge Base Maintenance
 
-### 7.1 文档数量上限
+### 7.1 Document Count Limit
 
 `solutions/` 上限 20 个（config.md `knowledge_limit` 可配置）。超限时按 confidence 从低到高删除。
 
-### 7.2 低置信度自动清理
+### 7.2 Low Confidence Auto-cleanup
 
 instincts.md 中 Confidence_Score < 0.3 的模式自动删除。每次 learn 执行时先维护。
 
-### 7.3 高重叠文档合并
+### 7.3 High Overlap Document Merge
 
 写入前检测 tags 重叠度（共同 tags / min(tags 数)）。≥ 50% 时合并到已有文档，更新 date、提升 confidence（+0.1，上限 0.9）、合并 tags。
 
-### 7.4 维护不变量
+### 7.4 Maintenance Invariants
 
 维护完成后必须满足：(1) 文档数 ≤ 上限 (2) 无低置信度模式。
 
@@ -279,57 +279,57 @@ instincts.md 中 Confidence_Score < 0.3 的模式自动删除。每次 learn 执
 
 ---
 
-## 8. 知识回流
+## 8. Knowledge Backflow
 
-### 8.1 Plan 阶段回流（强制）
+### 8.1 Plan Phase Backflow (Mandatory)
 
 `/forge plan` Research 步骤**必须**搜索知识库：匹配 solutions/ tags 和 instincts.md Tags，将相关经验注入 Research Findings。知识库为空时提示但不阻断。
 
-### 8.2 Build 阶段回流（自动）
+### 8.2 Build Phase Backflow (Automatic)
 
 `/forge build` 每个任务自动匹配 instincts.md Tags，注入 Subagent 上下文作为实现参考。
 
-### 8.3 Debug 阶段回流（自动）
+### 8.3 Debug Phase Backflow (Automatic)
 
 `/forge debug` Phase 2 自动搜索 solutions/ 踩坑记录，匹配时直接展示历史方案。
 
-### 8.4 回流效果追踪
+### 8.4 Backflow Effect Tracking
 
 每次回流被实际采用时更新 confidence：有效 → +0.05（上限 0.9）；无效 → -0.1（下限 0.3）。未采用则不变。
 
-### 8.5 已知失败模式记录
+### 8.5 Known Failure Pattern Recording
 
 反复出现的失败模式（2+ 次）记录到 `.forge/knowledge/known-failures.md`（模式/触发条件/根因/解决方案/出现次数/置信度）。已有相同模式则更新次数。build 的 Closure-First 探针和 debug Phase 2 自动搜索此文件。
 
-### 8.6 会话日志
+### 8.6 Session Journal
 
 每次 learn 完成后写入 `.forge/knowledge/sessions/<date>-<topic>.md`（≤20 行，含摘要/关键决策/验证结果/下次建议）。`/forge resume` 优先读取最近 3 条恢复上下文。
 
 ---
 
-## 9. 执行流程
+## 9. Execution Flow
 
-1. **知识库维护**：清理低置信度、检查上限
-2. **回流效果追踪**：更新已引用知识的 confidence
-3. **执行质量分析**：四维度评估 + 改进信号
-4. **指标更新**：写入 metrics.md
-5. **五维度提取**：Subagent 模式（以改进信号为输入）
-6. **SKILL 反馈检测**：检查不适用的 SKILL.md 指导
-7. **生成知识文档**：YAML frontmatter + 五章节
-8. **重叠检测**：≥ 50% 合并，< 50% 创建新文档
-9. **高频模式识别**：达到阈值则写入 instincts.md
-10. **跨项目模式检测**：建议提升到 patterns/
-11. **错误预防规则蒸馏**：4 数据源 → 阈值过滤 → 排除 → 冲突 → 容量 → 提案 → 写入
-12. **上下文预算报告**：调用 `serializeContextBudgetReport(report)` — 参数 `report` 构造方式：`date` 从当前日期获取，`topic` 从 `.forge/status.md` 的 `current_task` 获取，`trimStats` 从本次会话的裁剪前后数据估算（各 trimmer 调用次数和节省 token 数），`totalEstimatedTokens` 为会话总消耗估算；返回：结构化报告字符串。将报告追加到 `.forge/knowledge/sessions/<date>-<topic>.md` 的附录
-13. **会话层清理**：归档 sessions/ 中的当前会话
-14. **再次检查上限**：确保维护不变量成立
+1. **Knowledge base maintenance**: Clean low-confidence, check limits
+2. **Backflow effect tracking**: Update confidence of referenced knowledge
+3. **Execution quality analysis**: Four-dimension assessment + improvement signals
+4. **Metrics update**: Write to metrics.md
+5. **Five-dimension extraction**: Subagent mode (using improvement signals as input)
+6. **SKILL feedback detection**: Check for inapplicable SKILL.md guidance
+7. **Generate knowledge document**: YAML frontmatter + five sections
+8. **Overlap detection**: ≥ 50% merge, < 50% create new document
+9. **High-frequency pattern recognition**: Write to instincts.md when threshold reached
+10. **Cross-project pattern detection**: Suggest promotion to patterns/
+11. **Error-prevention rule distillation**: 4 data sources → threshold filter → exclusion → conflict → capacity → proposal → write
+12. **Context budget report**: Call `serializeContextBudgetReport(report)` — parameter `report` construction: `date` from current date, `topic` from `.forge/status.md` `current_task`, `trimStats` from session trim data (trimmer call counts and token savings), `totalEstimatedTokens` as session total cost estimate; returns: structured report string. Append report to `.forge/knowledge/sessions/<date>-<topic>.md` appendix
+13. **Session layer cleanup**: Archive current session in sessions/
+14. **Re-check limits**: Ensure maintenance invariants hold
 
-### 9.1 任务归档（learn 完成后自动执行）
+### 9.1 Task Archival (Auto After Learn)
 
-知识沉淀完成后，自动将任务制品**复制**归档到 `.forge/archive/<date>-<topic>/`。
+After knowledge is captured, automatically **copy** task artifacts to `.forge/archive/<date>-<topic>/`.
 
-| 源路径 | 归档路径 |
-|--------|---------|
+| Source Path | Archive Path |
+|-------------|-------------|
 | `.forge/decisions/<topic>.md` | `archive/<date>-<topic>/decisions/` |
 | `.forge/specs/<feature>/` | `archive/<date>-<topic>/specs/` |
 | `.forge/plans/<topic>.md` | `archive/<date>-<topic>/plans/` |
@@ -337,14 +337,14 @@ instincts.md 中 Confidence_Score < 0.3 的模式自动删除。每次 learn 执
 | `.forge/reviews/<topic>.md` | `archive/<date>-<topic>/reviews/` |
 | `.forge/debug/<topic>.md` | `archive/<date>-<topic>/debug/` |
 
-归档后更新 `.forge/status.md` phase 为 `"completed"`。不归档 knowledge/ 和 config.md。
+After archival, update `.forge/status.md` phase to `"completed"`. Do not archive knowledge/ and config.md.
 
 ---
 
-## 10. 边界情况处理
+## 10. Edge Case Handling
 
-| 场景 | 处理方式 |
-|------|---------|
+| Scenario | Handling |
+|----------|----------|
 | 首次执行（空知识库） | 创建 solutions/ 和 instincts.md，输出提示 |
 | 无可提取知识 | 提示本次较简单，未识别到新知识 |
 | 知识库已满 | 新文档 confidence 高于最低文档时提示替换确认 |
@@ -352,7 +352,7 @@ instincts.md 中 Confidence_Score < 0.3 的模式自动删除。每次 learn 执
 
 ---
 
-## 11. 示例
+## 11. Examples
 
 **正常知识沉淀**：
 
