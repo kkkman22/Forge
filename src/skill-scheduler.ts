@@ -18,6 +18,7 @@ export type SkillPhase =
   | "router"
   | "plan"
   | "build"
+  | "build-light"
   | "review"
   | "test"
   | "ship"
@@ -75,7 +76,7 @@ export interface SchedulerResult {
  * @see src/router.ts COMMAND_SEQUENCES
  */
 const SKILL_COMMAND_SEQUENCES: Record<string, SkillPhase[]> = {
-  light: ["build", "review"],
+  light: ["build-light", "review"],
   standard: ["plan", "build", "review", "test", "ship"],
   full: ["plan", "build", "review", "test", "ship", "learn"],
   // Refactor workflow sequences
@@ -154,6 +155,17 @@ export function determineNextSkill(input: SchedulerInput): SchedulerResult {
   if (currentPhase === "build") {
     if (hasIncompleteTasks) {
       return { nextPhase: "build", reason: "Incomplete tasks remain, continuing build" };
+    }
+    return { nextPhase: "review", reason: "All tasks complete, proceeding to review" };
+  }
+
+  // Build-light phase (same transitions as build)
+  if (currentPhase === "build-light") {
+    if (hasIncompleteTasks) {
+      return {
+        nextPhase: "build-light",
+        reason: "Incomplete tasks remain, continuing build-light",
+      };
     }
     return { nextPhase: "review", reason: "All tasks complete, proceeding to review" };
   }
@@ -256,7 +268,14 @@ export function getCommandSequence(tier: string): SkillPhase[] {
 // ---------------------------------------------------------------------------
 
 /** Phases that produce code changes and should be committed on success. */
-const COMMITABLE_PHASES = new Set<string>(["build", "plan", "fix", "refactor-apply", "fix-apply"]);
+const COMMITABLE_PHASES = new Set<string>([
+  "build",
+  "build-light",
+  "plan",
+  "fix",
+  "refactor-apply",
+  "fix-apply",
+]);
 
 /**
  * Determine whether a completed SKILL phase should trigger a Git commit.
