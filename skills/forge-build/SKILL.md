@@ -302,6 +302,22 @@ After all tasks complete, execute full validation:
 3. **Empty/missing** → Execute from `verify_commands` list; if also empty, fall back to AI auto-detection.
 4. Report using P5 evidence chain format: `[Command] → [Output] → [Claim]`.
 
+### Three-Layer Output Truncation Defense
+
+When invoking `ci_check_command` during TDD GREEN or REFACTOR phases, wrap with `scripts/run-with-trim.sh`:
+
+```bash
+scripts/run-with-trim.sh npm run check
+```
+
+The three layers work together:
+
+1. **RTK (optional, user-installed)**: If user has RTK globally installed, its hooks auto-compress Bash output (framework-aware, 90+ patterns). Forge does NOT install RTK, does NOT hardcode `rtk` prefix in `ci_check_command`.
+2. **run-with-trim.sh**: Success-only truncation — any framework's success output is noise, truncation is safe and framework-agnostic. Failure output passed through unchanged.
+3. **AI Trimming Iron Law** (§Context Budget Management): Failure output enters context unchanged, AI compresses on subsequent references. Framework-aware via AI semantic understanding.
+
+Failure output compression is handled by Trimming Iron Law, NOT by the wrapper.
+
 ---
 
 ## 4. TDD Iron Rules
