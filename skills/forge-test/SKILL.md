@@ -4,15 +4,15 @@ description: "测试引擎。三层验证（单元测试、浏览器 QA、7 项�
 disable-model-invocation: true
 ---
 
-# /forge test — 测试引擎
+# /forge test — Test Engine
 
-> **触发方式**：标准路径的第四步，全量路径的第六步，或用户直接输入 `/forge test`
-> **职责**：系统化的三层验证，确保代码在单元测试、浏览器 QA 和完成前清单三个层面都通过验证
-> **输出路径**：`.forge/progress/<topic>.md`（更新验证状态）
+> **Trigger**: Step 4 of Standard path, Step 6 of Full path, or user input `/forge test`
+> **Responsibility**: Systematic three-layer verification ensuring code passes at unit test, browser QA, and pre-completion checklist levels
+> **Output Path**: `.forge/progress/<topic>.md`（update verification status）
 
 ---
 
-## 1. 概述
+## 1. Overview
 
 `/forge test` 通过三层验证（单元测试 → 浏览器级 QA → 完成前验证清单）对 build 和 review 阶段的产出进行系统化验证。每一层都有明确的通过标准，最终以 7 项完成前验证清单作为交付门禁。
 
@@ -20,17 +20,17 @@ disable-model-invocation: true
 
 ---
 
-## 2. 三层验证
+## 2. Three-Layer Verification
 
-### Layer 1 — 单元测试
+### Layer 1 — Unit Tests
 
 **职责**：运行项目测试套件，确认所有测试通过且输出干净。
 
 **执行步骤**：
 
-1. 检测项目的测试框架和运行命令（从 `package.json`、`Makefile`、`Cargo.toml` 等配置文件中识别）。
-2. 运行完整测试套件。
-3. 检查测试输出：所有测试通过（零失败）、无 warning（或仅有已知的可忽略 warning）、无 error。
+1. Detect project test framework and run command (from `package.json`, `Makefile`, `Cargo.toml` etc.)
+2. Run full test suite.
+3. Check test output: all tests pass (zero failures), no warnings (or only known ignorable warnings), no errors.
 
 **通过标准**：
 
@@ -42,7 +42,7 @@ disable-model-invocation: true
 
 **未通过时**：报告失败的测试详情，请修复后重新运行 `/forge test`。
 
-### Layer 2 — 浏览器级 QA（条件触发）
+### Layer 2 — Browser-Level QA (Conditional)
 
 **触发条件**：仅当项目为 Web 项目时执行。判定信号：`package.json` 含前端框架依赖、项目中存在 `.html`/`.tsx`/`.jsx`/`.vue`/`.svelte` 文件、`config.md` 的 `stack` 含前端技术。
 
@@ -56,7 +56,7 @@ disable-model-invocation: true
 
 **非 Web 项目**：`ℹ️ Layer 2 — 浏览器级 QA 跳过（非 Web 项目）`
 
-### Layer 3 — 完成前验证清单
+### Layer 3 — Pre-Completion Checklist
 
 **职责**：逐项检查 7 项完成前验证清单，确保所有交付条件满足。
 
@@ -68,15 +68,15 @@ disable-model-invocation: true
 
 **7 项清单**：
 
-| # | 检查项 | 验证方式 |
-|---|--------|---------|
-| 1 | **测试刚运行过** | 若有 ci_check_command 由 CI 命令覆盖；否则单独运行测试命令 |
-| 2 | **所有测试通过** | 从 CI 输出提取或检查测试输出零失败 |
-| 3 | **类型检查通过** | 从 CI 输出提取或运行 `tsc --noEmit` 或等效命令 |
-| 4 | **Lint 通过** | 从 CI 输出提取或运行 eslint/biome 或等效命令 |
-| 5 | **验收标准逐条确认** | 对照 Spec 场景汇总表，每个场景有对应的通过证据 |
-| 6 | **无遗留 TODO/FIXME** | 扫描本次变更的文件，无新增的 TODO/FIXME/HACK/XXX |
-| 7 | **Progress 已更新** | `.forge/progress/<topic>.md` 中所有任务标记为已完成 |
+| # | Check Item | Verification Method |
+|---|-----------|-------------------|
+| 1 | **Tests just ran** | Covered by CI command if ci_check_command exists; otherwise run test command separately |
+| 2 | **All tests pass** | Extract from CI output or check test output for zero failures |
+| 3 | **Type check passes** | Extract from CI output or run `tsc --noEmit` or equivalent |
+| 4 | **Lint passes** | Extract from CI output or run eslint/biome or equivalent |
+| 5 | **Acceptance criteria confirmed item by item** | Compare against Spec scenario summary table, each scenario has corresponding pass evidence |
+| 6 | **No leftover TODO/FIXME** | Scan changed files, no new TODO/FIXME/HACK/XXX |
+| 7 | **Progress updated** | All tasks in `.forge/progress/<topic>.md` marked as completed |
 
 **清单输出格式**：
 
@@ -100,11 +100,11 @@ disable-model-invocation: true
 
 ---
 
-## 3. 验证铁律
+## 3. Verification Iron Rule
 
 → 遵循 CLAUDE.md §2.3 验证铁律。声称工作完成却没有验证，不是效率，是不诚实。
 
-### 3.1 验证门函数
+### 3.1 Verification Gate Function
 
 ```
 1. 识别：什么命令能证明这个声明？
@@ -116,41 +116,41 @@ disable-model-invocation: true
 跳过任何一步 = 在撒谎，不是在验证
 ```
 
-### 3.2 常见虚假声明对照表
+### 3.2 Common False Claims Reference
 
-| 声明 | 需要的证据 | 不算证据 |
-|------|-----------|---------|
-| "测试通过了" | 测试命令输出：0 failures | 之前的运行结果 |
-| "Lint 干净了" | Lint 输出：0 errors | 部分检查、推断 |
-| "构建成功了" | 构建命令：exit 0 | Lint 通过、日志正常 |
-| "Bug 修好了" | 测试原始症状：通过 | 代码改了 |
-| "需求满足了" | 逐条对照清单 | 测试通过 ≠ 需求满足 |
+| Claim | Required Evidence | Not Evidence |
+|-------|------------------|-------------|
+| "Tests pass" | Test command output: 0 failures | Previous run results |
+| "Lint is clean" | Lint output: 0 errors | Partial checks, inference |
+| "Build succeeds" | Build command: exit 0 | Lint passes, logs look normal |
+| "Bug is fixed" | Test the original symptom: passes | Code was changed |
+| "Requirements met" | Item-by-item checklist comparison | Tests pass ≠ requirements met |
 
-### 3.3 Red Flag — 立即停下
+### 3.3 Red Flags — Stop Immediately
 
 出现以下任何信号时**停下来先运行验证**：使用"应该"、"大概"、"看起来"；验证前表达满意；准备提交但没跑验证；信任 Subagent 成功报告；依赖部分验证；疲劳了想赶紧结束。
 
-### 3.4 合理化借口逐条反驳
+### 3.4 Rationalization Excuses Rebuttal
 
-| 借口 | 现实 |
-|------|------|
-| "应该可以了" | 运行验证命令 |
-| "我很有信心" | 信心 ≠ 证据 |
-| "就这一次" | 没有例外 |
-| "Lint 通过了" | Lint ≠ 编译器 ≠ 测试 |
-| "上次测试通过了" | 上次不算，代码可能已变 |
+| Excuse | Reality |
+|--------|---------|
+| "Should be fine" | Run the verification command |
+| "I'm confident" | Confidence ≠ evidence |
+| "Just this once" | No exceptions |
+| "Lint passed" | Lint ≠ compiler ≠ tests |
+| "Tests passed last time" | Last time doesn't count, code may have changed |
 
-### 3.5 拒绝引用之前的测试结果
+### 3.5 Reject Citing Previous Test Results
 
 即使上一步刚运行过测试，如果之后有任何代码变更，测试结果已过期。必须重新运行。
 
-### 3.6 验证命令必须存在
+### 3.6 Verification Commands Must Exist
 
 如果项目没有配置测试命令、类型检查命令或 Lint 命令，不能跳过对应清单项，而是提示配置。
 
 ---
 
-## 4. 门禁：测试未通过 → 阻断 `/forge ship`
+## 4. Gate: Tests Not Passed → Block `/forge ship`
 
 **阻断条件**：Layer 1 未通过 或 Layer 3 任一项未通过。
 
@@ -158,7 +158,7 @@ disable-model-invocation: true
 
 ---
 
-## 5. 执行流程
+## 5. Execution Flow
 
 1. **前置检查**：`.forge/` 目录存在？有代码变更？有测试配置？
 2. **Layer 1**：运行项目测试套件。失败 → 停止
@@ -168,20 +168,20 @@ disable-model-invocation: true
 
 ---
 
-## 6. 边界情况处理
+## 6. Edge Cases
 
-| 条件 | 处理 |
-|------|------|
-| 无测试框架 | ⚠️ 未检测到测试框架。Layer 1 无法执行 |
-| 测试超时（>5 分钟） | ⚠️ 可能原因：未关闭的异步操作、数据量过大、死循环 |
-| 部分清单项无法验证 | 标记为"无法验证"而非"通过"，建议配置对应工具 |
-| 无 `.forge/` 目录 | ⚠️ 请先运行 forge init |
+| Condition | Handling |
+|-----------|----------|
+| No test framework | ⚠️ 未检测到测试框架。Layer 1 无法执行 |
+| Test timeout (>5 min) | ⚠️ 可能原因：未关闭的异步操作、数据量过大、死循环 |
+| Some checklist items unverifiable | Mark as "unverifiable" not "passed", suggest configuring the corresponding tool |
+| No `.forge/` directory | ⚠️ 请先运行 forge init |
 
 ---
 
-## 7. 示例
+## 7. Examples
 
-### 示例：全部通过
+### Example: All Passed
 
 ```
 $ /forge test
