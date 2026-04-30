@@ -462,6 +462,30 @@ else
 fi
 
 # ============================================================================
+# Step 6：安装可选工具（code-review-graph）
+# ============================================================================
+info "Step 6：安装可选工具"
+
+if command -v pip &>/dev/null || command -v pip3 &>/dev/null; then
+  pip_cmd=""
+  if command -v pip &>/dev/null; then
+    pip_cmd="pip"
+  elif command -v pip3 &>/dev/null; then
+    pip_cmd="pip3"
+  fi
+
+  if [[ -n "${pip_cmd}" ]]; then
+    if ${pip_cmd} install code-review-graph &>/dev/null 2>&1; then
+      success "code-review-graph 已安装（Closure-First 探针优化）"
+    else
+      warn "code-review-graph 安装失败，Closure-First 探针将使用 grep 回退方案"
+    fi
+  fi
+else
+  info "未检测到 pip/pip3，跳过 code-review-graph 安装（grep 回退方案可用）"
+fi
+
+# ============================================================================
 # 完成
 # ============================================================================
 echo ""
