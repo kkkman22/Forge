@@ -125,7 +125,7 @@ build 阶段主 Agent 必须执行周期性 Restatement Checkpoint：每完成 N
 
 每个 `/forge` 命令调用构成一个自然的 Session_Boundary。阶段间上下文交接通过 `.forge/` 目录文件系统进行，而非对话历史。建议在 `/forge` 命令之间开启新的 Claude Code 会话。
 
-**Subagent 隔离**：每个 Subagent 有独立上下文，是防止阶段内上下文膨胀的主要机制。**会话恢复**：`/forge resume` 是会话边界后恢复上下文的推荐方法，从 `.forge/progress/` 和 `.forge/knowledge/sessions/` 读取。**并发控制**：通过 `.forge/config.md` 中的 `max_parallel_agents` 配置（默认 6）。HTTP 429 降级：第 1 次等待 30s 并发减半（最小 1）；第 2 次等待 60s 并发降至 2；第 3 次及以上等待 60s 切换串行。降级记录到 `.forge/knowledge/tool-health.md`。新会话重置并发数。
+**Subagent 隔离**：每个 Subagent 有独立上下文，是防止阶段内上下文膨胀的主要机制。**会话恢复**：`/forge resume` 是会话边界后恢复上下文的推荐方法，从 `.forge/progress/` 和 `.forge/knowledge/sessions/` 读取。**并发控制**：通过 `.forge/config.md` 中的 `max_parallel_agents` 配置（默认 6）。HTTP 429 降级：第 1 次等待 30s 并发减半（最小 1）；第 2 次等待 60s 并发降至 2；第 3 次及以上等待 60s 切换串行。降级记录到 `.forge/knowledge/tool-health.md`。新会话重置并发数。**上下文阈值提示**：如果用户在单个会话中继续执行多个 `/forge` 命令，当上下文大小超过 100K tokens 时，Agent 应记录建议开启新会话的提示（不阻断执行）。
 
 ---
 
