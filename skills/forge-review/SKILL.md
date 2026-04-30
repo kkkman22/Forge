@@ -241,6 +241,8 @@ p3_count: 0
 
 通过 Agent tool 并行启动评审 Subagent（§2）。
 
+**并发控制**：并行 Subagent 数量受 `.forge/config.md` 中 `max_parallel_agents`（默认 6）限制。收到 HTTP 429 时按降级策略减少并发数。详见 CLAUDE.md §6 Session Boundaries。
+
 ### Step 2：合并与质量门
 
 收集所有 Subagent 输出，执行发现合并管线（§7）。

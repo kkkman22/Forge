@@ -255,6 +255,8 @@ Applicable to complex tasks involving new services, new databases, authenticatio
 
 Launch multiple research Subagents in parallel via Agent tool (architecture/dependencies/risks), await with `Promise.allSettled`.
 
+**并发控制**：并行 Subagent 数量受 `.forge/config.md` 中 `max_parallel_agents`（默认 6）限制。收到 HTTP 429 时按降级策略减少并发数。详见 CLAUDE.md §6 Session Boundaries。
+
 **Function Call**: `mergeResearchFindings(results)`
 - Parameters: `results` — `SubagentResult[]` (return results from all research Subagents)
 - Returns: Merged research findings string
