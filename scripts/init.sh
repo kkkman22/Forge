@@ -476,12 +476,12 @@ if command -v pip &>/dev/null || command -v pip3 &>/dev/null; then
 
   if [[ -n "${pip_cmd}" ]]; then
     info "正在安装 code-review-graph（Closure-First 探针优化）..."
-    install_output=$(${pip_cmd} install code-review-graph 2>&1) && {
+    if install_output=$(${pip_cmd} install code-review-graph 2>&1); then
       success "code-review-graph 已安装"
-    } || {
+    else
       warn "code-review-graph 安装失败，Closure-First 探针将使用 grep 回退方案"
       echo "    安装日志: ${install_output}" | head -3
-    }
+    fi
   fi
 else
   info "未检测到 pip/pip3，跳过 code-review-graph 安装（grep 回退方案可用）"
