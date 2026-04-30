@@ -1,7 +1,8 @@
 #!/usr/bin/env bash
 # run-with-trim.sh — Verification command wrapper
 # Wraps verification commands: success → truncate long output; failure → pass through unchanged
-# Uses only POSIX utilities: tail, head, wc, cat, mktemp
+# Uses standard utilities: tail, head, wc, cat, mktemp
+# Trust boundary: only invoked by trusted callers (Forge build pipeline). Do not expose to untrusted input.
 
 set -e
 
@@ -27,7 +28,7 @@ echo "── run-with-trim ── $* ── exit:${exit_code} ──"
 # Handle output based on exit code
 if [ $exit_code -eq 0 ]; then
     # Success path: truncate if >30 lines
-    line_count=$(wc -l < "$tmpfile")
+    line_count=$(wc -l < "$tmpfile" | tr -d ' ')
     if [ "$line_count" -gt 30 ]; then
         echo "Output truncated: ${line_count} lines → last 10 lines shown"
         tail -10 "$tmpfile"
