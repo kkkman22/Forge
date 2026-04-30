@@ -1,6 +1,7 @@
 ---
 name: debugger
 description: "根因分析与构建错误修复专家。追踪 bug 到根本原因，用最小改动修复，不做多余的重构。"
+model: inherit
 ---
 
 # Debugger — 根因分析专家
