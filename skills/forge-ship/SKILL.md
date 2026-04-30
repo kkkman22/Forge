@@ -28,7 +28,7 @@ disable-model-invocation: true
 
 | Gate | Check | Data Source | Block Condition |
 |------|-------|-------------|-----------------|
-| **Review Gate** | 评审是否通过（无 P0/P1） | `.forge/reviews/<topic>.md` | `result` 不是 `"pass"` 或 `p0_count > 0` 或 `p1_count > 0` |
+| **Review Gate** | 评审是否通过（无 P0/P1 且无 incomplete Layer） | `.forge/reviews/<topic>.md` | `result` 不是 `"pass"` 或 `p0_count > 0` 或 `p1_count > 0` 或任一 Layer 为 `incomplete` |
 | **Test Gate** | 测试是否通过 | Layer 1 + Layer 3 验证结果；若 `ci_check_command` 已配置，验证 CI 命令已执行并通过 | 测试未运行或有失败项 |
 | **Progress Gate** | 所有任务是否完成 | `.forge/progress/<topic>.md` | 存在未标记完成的任务 |
 
@@ -155,6 +155,7 @@ disable-model-invocation: true
 | Condition | Handling |
 |-----------|----------|
 | Review 未执行 | 🚫 Ship 阻断：评审未执行。请先运行 /forge review |
+| Review 不完整 | 🚫 Ship 阻断：评审报告存在 incomplete Layer。请重新运行 /forge review |
 | Test 未执行 | 🚫 Ship 阻断：测试未执行。请先运行 /forge test |
 | Progress 部分完成 | 🚫 Ship 阻断：列出未完成任务 |
 | Git 操作失败 | ⚠️ 列出可能原因（网络/权限/冲突），建议检查或选其他方式 |

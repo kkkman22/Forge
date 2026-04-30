@@ -211,8 +211,22 @@ Restatement is a **mandatory step** in the orchestration loop, not an optional o
 | **DONE_WITH_CONCERNS** | Read concerns. Correctness/scope issues → resolve first then review. Observability suggestions → record findings, continue |
 | **NEEDS_CONTEXT** | Provide missing context, re-dispatch |
 | **BLOCKED** | Evaluate: 1) Insufficient context → supplement and re-dispatch; 2) Task too large → split; 3) Plan issue → report to user |
+| **429_THROTTLED** | Subagent 因 API 限流退出。不等同于任务失败（见下方恢复流程） |
 
 **Never** ignore Subagent escalation requests.
+
+**429 限流恢复流程**：
+
+当 Subagent 因 HTTP 429 以错误状态退出时，主 Agent **必须**执行以下恢复步骤，不得将 429 视为任务失败：
+
+1. **检查实际完成度**：`git diff --stat` 检查 Subagent 在限流前已完成的文件编辑
+2. **区分完成状态**：
+   - 文件编辑已完成 + 测试已通过 → 标记 DONE，继续下一任务
+   - 文件编辑已完成 + 测试未运行 → 主 Agent 补运行测试验证，通过则标记 DONE
+   - 文件编辑未完成 → 标记 BLOCKED（429），按 CLAUDE.md §6 降级策略等待后重新派发
+3. **不计入 Three-strike**：429 是资源限制，不是逻辑错误
+4. **降级并继续**：按降级策略（并发减半 → 降至 2 → 串行）等待后继续执行剩余任务
+5. **所有任务完成后正常推进**：429 恢复后流程正常进入下一阶段，不得因曾经发生 429 而停滞
 
 **Subagent Instruction Construction**: For each Subagent include: (1) Closure-First probe results (2) Task description (3) File context (4) Knowledge retrieval (instincts/known-failures matches) (5) TDD requirements (6) Verification commands (7) Pre-completion self-check (8) Prohibitions (no out-of-scope file changes, no skipping tests) (9) Failure retry Restatement.
 

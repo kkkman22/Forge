@@ -83,9 +83,64 @@ allowed-tools: Read, Glob, Grep, Skill
   完成
 ```
 
+## 全局分支保护规则
+
+**任何会修改项目文件的阶段**（build、review 修复、test 修复）启动前，必须检查当前分支：
+
+1. 如果在 `main` 或 `master` 分支上 → **阻断**，提示切换到功能分支
+2. 功能分支命名：`feature/<topic>` 或 `forge/<topic>`
+3. `<topic>` 从 `.forge/status.md` 的 `current_task` 字段提取
+
+**不修改项目文件的阶段**（plan、decide、spec、status、learn）可以在任意分支上执行。
+
+**示例阻断输出**：
+```
+🚫 分支保护：当前在 main 分支上，不允许直接修改代码
+请先切换到功能分支：
+  git checkout -b feature/<topic>
+```
+
+此规则是 forge-build §2.1 Branch Gate 的全局扩展，确保即使在 build 之外的修复阶段也不会在 main 上直接提交。
+
+## 阶段间自动推进
+
+当一个阶段完成后，如果命令序列中还有后续阶段，**必须主动提示或执行下一阶段**，不得静默停止。
+
+| 完成阶段 | 下一步行为 |
+|---------|-----------|
+| plan | 提示 → `/forge build` |
+| build | 提示 → `/forge review` |
+| review（通过） | 提示 → `/forge test`（标准/全量）或 `/forge ship`（轻量） |
+| review（未通过） | 提示修复后重新 `/forge review` |
+| test（通过） | 提示 → `/forge ship` |
+| test（未通过） | 提示修复后重新 `/forge test` |
+| ship | 提示 → `/forge learn`（全量）或标记完成（标准） |
+
+**交互模式**下输出提示文本，等待用户确认；**autonomous 模式**下自动调用下一阶段。
+
 ## 注意
 
 - 这是一个 Command（用户主动触发的编排入口），不是 Skill
 - 子命令分发是精确匹配，不是模糊匹配——`/forge learning` 不会匹配 `learn`
 - 内部通过 Skill tool 调用各个 forge skill
 - forge-router skill 保留为任务分析逻辑的载体，仅在非子命令模式下调用
+
+## ⚠️ AI 调用约束（关键）
+
+**所有子 skill（forge-plan、forge-build、forge-review 等）都设置了 `disable-model-invocation: true`，AI 不能直接通过 `Skill("forge-review")` 调用它们。**
+
+正确的调用方式：
+
+```
+✅ 正确：Skill(skill="forge", args="review")
+✅ 正确：Skill(skill="forge", args="plan .forge/specs/xxx")
+✅ 正确：Skill(skill="forge", args="ship")
+
+❌ 错误：Skill(skill="forge-review")        → Unknown skill
+❌ 错误：Skill(skill="forge-plan")           → Unknown skill
+❌ 错误：Skill(skill="forge-ship")           → Unknown skill
+```
+
+**原因**：`forge` 是唯一注册的统一入口 skill。子 skill 目录虽然存在于 `skills/` 下，但 `disable-model-invocation: true` 阻止了 AI 直接调用。所有子命令必须通过 `/forge <子命令>` 路由分发。
+
+**编排后续阶段时**：当 AI 需要自动推进到下一阶段（如 review 通过后进入 test），必须使用 `Skill(skill="forge", args="test")` 而非 `Skill(skill="forge-test")`。
