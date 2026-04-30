@@ -77,16 +77,7 @@
 
 ### 2.5 上下文刷新纪律
 
-在标准路径和全量路径的 build 阶段，主 Agent 必须执行周期性的 Restatement Checkpoint：
-
-- **每完成 N 个任务**（N 由 config.md 的 restatement_interval 配置，默认 3），
-  暂停编排，重读 progress 和 status，在上下文尾部追加 Restatement 摘要。
-- **Sub-Agent 返回异常状态时**（BLOCKED / NEEDS_CONTEXT / DONE_WITH_CONCERNS），
-  在处理之前先执行一次 Restatement。
-- **Restatement 不修改 System Prompt**，只追加到对话尾部。
-
-这条纪律的目的是对抗长任务中的注意力衰减。如果你发现自己在跳过探针、
-合并步骤、或不检查 Sub-Agent 状态，说明你需要一次 Restatement。
+标准/全量路径的 build 阶段需执行周期性 Restatement Checkpoint，对抗长任务注意力衰减。→ 完整规则（触发条件、N 值配置、摘要格式、异常处理）见 forge-build SKILL.md §3.2。
 
 ### 2.6 输出简洁性
 
@@ -94,53 +85,19 @@
 
 #### 禁止的输出模式
 
-在执行代码编辑操作（文件创建、修改、删除）时，以下 Narration 模式被禁止：
-
-| 模式类型 | 示例 |
-|---------|------|
-| 操作预告 | "现在我要修改 X 文件" / "Now I'll modify X file" |
-| 自我对话 | "让我添加 Y 字段" / "Let me add Y field" |
-| 逐步解说 | "接下来将 Z 传入 W" / "Next, I'll pass Z into W" |
-| 步骤枚举 | "首先...然后...最后..." / "First...then...finally..." |
-| 工具调用预告 | 对即将执行的工具调用的重复描述 |
-
-**Before（冗长）**：
-> 现在我要修改 `src/config.ts` 文件，添加 `logFormat` 字段。让我先找到 `SdkDriverConfig` 接口的定义...好的，找到了。接下来我会在第 15 行添加 `logFormat: string` 字段。然后我需要更新 `createConfig` 函数，将 `logFormat` 参数传入...
-
-**After（简洁）**：
-> *（直接执行编辑，无 Narration）*
+代码编辑时禁止：操作预告、自我对话、逐步解说、步骤枚举、工具调用预告。→ 直接执行编辑，无 Narration。
 
 #### 保留的输出
 
-以下 Forge 结构化输出不受简洁性约束影响，必须完整保留：
-
-- TDD 阶段标记：🔴 RED / 🟢 GREEN / 🔵 REFACTOR 及其测试运行结果
-- Closure-First 探针结果：Probe #1, Probe #2, Verify #1 输出块
-- Restatement 摘要：周期性上下文刷新的 5 区块格式
-- P5 证据链：`[Command] → [Output] → [Claim]` 验证格式
-- 评审报告：含严重度等级（P0/P1/P2/P3）的评审发现
-- 路由分析：档位建议、任务类型、项目阶段输出
-- 前置检查结果：门禁检查通过/失败输出
-- 进度更新：任务完成标记和进度摘要
+以下 Forge 结构化输出不受简洁性约束，必须完整保留：TDD 标记（🔴/🟢/🔵）、Closure-First 探针、Restatement 摘要、P5 证据链、评审报告（P0-P3）、路由分析、前置检查结果、进度更新。
 
 #### Decision_Point 输出许可
 
-在以下决策点，允许简要说明理由：
-
-- **设计选择**：在多个实现方案间做选择时
-- **意外情况**：遇到意外的代码状态、缺失文件或探针失败时
-- **计划调整**：偏离计划或重新排序任务时
-- **方向变更**：失败后切换方案时（如三次换路）
-- **阻塞报告**：报告 BLOCKED 或 NEEDS_CONTEXT 状态时
-
-Decision_Point 输出模板：`[原因] → [选择] → [依据]`
-
-**示例**：
-> 接口签名与 Spec 不一致 → 以 Spec 为准重新定义 → Plan Task 2 明确要求对齐 Spec §3.2
+设计选择、意外情况、计划调整、方向变更、阻塞报告时允许简要说明。模板：`[原因] → [选择] → [依据]`。
 
 #### 优先级
 
-SKILL 定义的输出格式 > 简洁性约束。当 SKILL 要求特定输出（模板、标记、结构化块）时，简洁性规则自动让步。
+SKILL 定义的输出格式 > 简洁性约束。SKILL 要求特定输出时，简洁性规则自动让步。
 
 ---
 
