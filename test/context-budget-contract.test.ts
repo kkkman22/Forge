@@ -23,20 +23,22 @@ describe("Contract: forge-build/SKILL.md context budget section", () => {
     expect(content).toContain("## Context Budget Management");
   });
 
-  it("references Explore_Summarizer", () => {
-    expect(content).toContain("Explore_Summarizer");
+  it("references Explore Agent hard limit (300 tokens)", () => {
+    expect(content).toContain("Explore Agent");
+    expect(content).toContain("300");
   });
 
-  it("references Test_Output_Trimmer", () => {
-    expect(content).toContain("Test_Output_Trimmer");
+  it("references test output hard limits (50/300 tokens)", () => {
+    expect(content).toContain("50");
   });
 
-  it("references Git_Output_Limiter", () => {
-    expect(content).toContain("Git_Output_Limiter");
+  it("references Git diff/status hard limit (200 tokens)", () => {
+    expect(content).toContain(">50 lines");
+    expect(content).toContain("200");
   });
 
-  it("references Subagent_Summary_Protocol", () => {
-    expect(content).toContain("Subagent_Summary_Protocol");
+  it("references mandatory truncation language", () => {
+    expect(content).toContain("MUST truncate");
   });
 
   it("preserves TDD rules (RED/GREEN/REFACTOR)", () => {
