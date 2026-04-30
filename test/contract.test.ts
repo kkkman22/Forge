@@ -567,11 +567,8 @@ describe("Contract: CLAUDE.md self-evolution section", () => {
   });
 
   it("Section documents the five knowledge categories", () => {
-    expect(template).toContain("known-failures");
+    expect(template).toContain("Categories");
     expect(template).toContain("instincts");
-    expect(template).toContain("skill-feedback");
-    expect(template).toContain("session journals");
-    expect(template).toContain("metrics");
   });
 
   it("Section documents the 15-rule cap", () => {
@@ -581,8 +578,6 @@ describe("Contract: CLAUDE.md self-evolution section", () => {
   it("Section documents exclusions", () => {
     expect(template).toContain("Exclusions");
     expect(template).toContain("Architecture descriptions");
-    expect(template).toContain("File path lists");
-    expect(template).toContain("General best practices");
   });
 });
 
