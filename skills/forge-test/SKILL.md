@@ -199,7 +199,7 @@ $ /forge test
 ✅ 验证通过。下一步：/forge ship
 ```
 
-### 示例：Layer 1 未通过
+### Example: Layer 1 Failed
 
 ```
 $ /forge test

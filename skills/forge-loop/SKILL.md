@@ -34,19 +34,19 @@ disable-model-invocation: true
 
 | Option | Description | Values / Type |
 |--------|-------------|---------------|
-| `--tier` | 预设路由档位，跳过路由分析 | `light` / `standard` / `full` |
-| `--type` | 预设任务类型 | `frontend` / `backend` / `fullstack` / `data` / `infra` / `docs` |
-| `--phase` | 预设项目阶段 | `greenfield` / `iteration` / `refactor` / `bugfix` |
-| `--nature` | 预设工作性质 | `feature` / `refactor` / `bugfix` |
-| `--max-iterations <n>` | 最大迭代次数 | 正整数 |
-| `--max-tokens <n>` | 累计 token 上限 | 正整数 |
-| `--max-budget-usd <amount>` | 最大美元预算 | 浮点数 |
-| `--stop-when <condition>` | 自然语言停止条件 | 字符串 |
-| `--worktree` | 在独立 Git worktree 中运行 | 布尔标志 |
-| `--resume <branchName>` | 恢复已有分支上的运行 | 分支名 |
-| `--prevent-sleep <on\|off>` | 控制系统休眠防止 | `on`（默认）/ `off` |
-| `--pua` | 启用 PUA 质量引擎 | 布尔标志 |
-| `--pua-task-type <type>` | PUA 任务类型 | `debug` / `build` / `research` / `architecture` / `performance` / `review` / `deploy` / `general` |
+| `--tier` | Preset routing tier, skip route analysis | `light` / `standard` / `full` |
+| `--type` | Preset task type | `frontend` / `backend` / `fullstack` / `data` / `infra` / `docs` |
+| `--phase` | Preset project phase | `greenfield` / `iteration` / `refactor` / `bugfix` |
+| `--nature` | Preset work nature | `feature` / `refactor` / `bugfix` |
+| `--max-iterations <n>` | Maximum iteration count | positive integer |
+| `--max-tokens <n>` | Cumulative token limit | positive integer |
+| `--max-budget-usd <amount>` | Maximum USD budget | float |
+| `--stop-when <condition>` | Natural language stop condition | string |
+| `--worktree` | Run in isolated Git worktree | boolean flag |
+| `--resume <branchName>` | Resume run on existing branch | branch name |
+| `--prevent-sleep <on\|off>` | Control system sleep prevention | `on` (default) / `off` |
+| `--pua` | Enable PUA quality engine | boolean flag |
+| `--pua-task-type <type>` | PUA task type | `debug` / `build` / `research` / `architecture` / `performance` / `review` / `deploy` / `general` |
 
 **`--tier` 验证**：仅接受 `light`、`standard`、`full`。无效值会输出有效选项列表并拒绝启动。
 
@@ -58,13 +58,13 @@ disable-model-invocation: true
 
 ### Step 1: Pre-flight Checks
 
-1. **Git 仓库检查**：确认当前目录是 Git 仓库。
-2. **工作树清洁检查**：确认工作树无未提交变更（使用 `--worktree` 或 `--resume` 时跳过）。
-3. **`.forge/` 目录检查**：不存在则提示 `forge init`。使用 `--tier`/`--type`/`--phase`/`--nature` 选项时必须存在。
-4. **StatusFile 活跃任务检测**：如果 `.forge/status.md` 中 `phase` 非 `completed`/`aborted`，输出警告。多任务模式下调用 `listActiveTasks` 展示活跃任务列表。
-5. **`--tier` 值验证**：无效值输出有效选项列表并拒绝启动。
-6. **hooks.json 检查**：检查 `hooks/hooks.json` 是否存在且包含 `PreToolUse` 配置。缺失时输出警告但不阻断启动。
-7. **Worktree 源分支检查**：使用 `--worktree` 时，确认当前不在 `forge/` 分支上。
+1. **Git repository check**: Verify current directory is a Git repository.
+2. **Working tree cleanliness check**: Verify no uncommitted changes (skipped when using `--worktree` or `--resume`).
+3. **`.forge/` directory check**: If missing, prompt `forge init`. Must exist when using `--tier`/`--type`/`--phase`/`--nature` options.
+4. **StatusFile active task detection**: If `.forge/status.md` has `phase` other than `completed`/`aborted`, output warning. In multi-task mode, call `listActiveTasks` to display active task list.
+5. **`--tier` value validation**: Invalid values output valid option list and reject startup.
+6. **hooks.json check**: Check if `hooks/hooks.json` exists and contains `PreToolUse` configuration. Output warning on missing but do not block startup.
+7. **Worktree source branch check**: When using `--worktree`, confirm not currently on a `forge/` branch.
 
 ### Step 2: Write Execution Mode
 
@@ -85,17 +85,17 @@ updated: "YYYY-MM-DD HH:mm"
 
 | Field | Description |
 |-------|-------------|
-| `mode` | 设为 `"autonomous"`，告知所有 Skills 跳过人工确认点 |
-| `loop_run_id` | 本次 Loop 运行的唯一标识，用于状态追踪 |
-| `loop_iteration` | 当前迭代编号，从 0 开始 |
-| `skill_sequence` | 根据档位确定的命令序列（逗号分隔） |
+| `mode` | Set to `"autonomous"`, instructs all Skills to skip human confirmation points |
+| `loop_run_id` | Unique identifier for this Loop run, used for state tracking |
+| `loop_iteration` | Current iteration number, starts from 0 |
+| `skill_sequence` | Command sequence determined by tier (comma-separated) |
 
 **残留状态处理**：如果检测到上次异常退出残留的 `loop_run_id`，先清理残留字段，再写入新的 Loop 状态，从当前 `phase` 继续执行。
 
-### Step 3：确定命令序列
+### Step 3: Determine Command Sequence
 
-| 档位 | 命令序列 |
-|------|---------|
+| Tier | Command Sequence |
+|------|-----------------|
 | light | build → review |
 | standard | plan → build → review → test → ship |
 | full | plan → build → review → test → ship → learn |
@@ -104,122 +104,122 @@ updated: "YYYY-MM-DD HH:mm"
 | fix_light | fix-apply → review |
 | fix_standard | fix-analyze → fix-apply → review → test → ship |
 
-### Step 4：进入迭代循环
+### Step 4: Enter Iteration Loop
 
 启动迭代循环，每轮迭代执行一个 SKILL 阶段。
 
 ---
 
-## 4. 迭代控制逻辑
+## 4. Iteration Control Logic
 
-### 4.1 迭代流程
+### 4.1 Iteration Flow
 
 每轮迭代按以下步骤执行：
 
-1. 读取 StatusFile，确定当前 phase
-2. 调用 SkillScheduler 决定下一个 SKILL
-3. 构建 Skill 感知提示
-4. 执行对应 SKILL（Agent 调用）
-5. 评估质量门禁（review/test/ship 阶段）
-6. commit / rollback 决策
-7. 更新 StatusFile（phase + iteration）
-8. 检查是否完成或需要熔断
+1. Read StatusFile, determine current phase
+2. Call SkillScheduler to determine next SKILL
+3. Build SKILL-aware prompt
+4. Execute corresponding SKILL (Agent invocation)
+5. Evaluate quality gates (review/test/ship stages)
+6. Commit / rollback decision
+7. Update StatusFile (phase + iteration)
+8. Check for completion or circuit breaker trigger
 
-### 4.2 SKILL 调度状态机
+### 4.2 SKILL Scheduling State Machine
 
-| 当前 phase | 条件 | 下一个 phase |
-|-----------|------|-------------|
-| 缺失/router | — | router |
+| Current Phase | Condition | Next Phase |
+|--------------|-----------|------------|
+| missing/router | — | router |
 | plan | status ≠ approved | plan |
 | plan | status = approved | build |
-| build | 有未完成任务 | build |
-| build | 所有任务完成 | review |
-| review | result = fail | build（修复循环） |
+| build | has unfinished tasks | build |
+| build | all tasks complete | review |
+| review | result = fail | build (fix loop) |
 | review | result = pass | test |
-| test | 测试通过 | ship |
+| test | tests passed | ship |
 | ship | tier = full | learn |
 | ship | tier ≠ full | completed |
 | refactor-scan | — | refactor-apply |
-| refactor-apply | 所有任务完成 | review |
+| refactor-apply | all tasks complete | review |
 | fix-analyze | — | fix-apply |
-| fix-apply | 所有任务完成 | review |
-| completed / aborted | — | 终态（幂等） |
-| 未知值 | — | router（回退） |
+| fix-apply | all tasks complete | review |
+| completed / aborted | — | terminal (idempotent) |
+| unknown value | — | router (fallback) |
 
-### 4.3 质量门禁评估
+### 4.3 Quality Gate Evaluation
 
 Loop 在 review、test、ship 阶段完成后独立评估质量门禁，不依赖 Agent 自报结果：
 
-| 阶段 | 门禁 | 评估内容 |
-|------|------|---------|
-| review | Review Gate | 解析 review 报告的 `p0_count`/`p1_count`，任一 > 0 则 blocked |
-| test | Test Gate | 解析测试结果的 `failed` 字段或 `result` 字段 |
-| ship | Ship Gate | 三重组合：Review + Test + Progress（任一 blocked 则整体 blocked） |
+| Stage | Gate | Evaluation |
+|-------|------|------------|
+| review | Review Gate | Parse review report `p0_count`/`p1_count`, blocked if either > 0 |
+| test | Test Gate | Parse test result `failed` field or `result` field |
+| ship | Ship Gate | Triple combination: Review + Test + Progress (any blocked → overall blocked) |
 
 门禁结果：`passed`（继续）/ `blocked`（修复循环）/ `skipped`（无法解析，不阻断也不算通过）
 
-### 4.4 自主模式下的确认点预设策略
+### 4.4 Confirmation Point Preset Strategy in Autonomous Mode
 
 所有 Skills 中的人工确认点在 `mode: autonomous` 下自动采用预设策略：
 
-| 确认点 | 预设策略 |
-|--------|---------|
-| Router 档位确认 | `auto-detect` |
-| Plan 任务拆解确认 | `auto-approve` |
-| Build 轻量路径暂停确认 | `continue` |
-| Review P0/P1 处理决策 | `auto-fix` |
-| Ship 交付方式选择 | `keep branch`（自主模式下不应自动执行不可逆操作） |
-| Refactor 扫描选择 / 设计评审 / 应用步骤 | `auto-select-recommended` / `auto-approve` / `continue` |
-| Fix 报告确认 / 分析确认 / 应用验证 | `auto-confirm` / `auto-recommend` / `auto-verify` |
+| Confirmation Point | Preset Strategy |
+|--------------------|-----------------|
+| Router tier confirmation | `auto-detect` |
+| Plan task breakdown confirmation | `auto-approve` |
+| Build light path pause confirmation | `continue` |
+| Review P0/P1 handling decision | `auto-fix` |
+| Ship delivery method selection | `keep branch` (autonomous mode must not auto-execute irreversible operations) |
+| Refactor scan selection / design review / apply steps | `auto-select-recommended` / `auto-approve` / `continue` |
+| Fix report confirmation / analysis confirmation / apply verification | `auto-confirm` / `auto-recommend` / `auto-verify` |
 
 ---
 
-## 5. Commit / Rollback 决策
+## 5. Commit / Rollback Decisions
 
-| SKILL 阶段 | 成功时 | 失败时 | Commit Message 格式 |
-|-----------|--------|--------|-------------------|
-| plan | commit | 不 commit | `forge(plan): <objective> plan approved` |
+| SKILL Stage | On Success | On Failure | Commit Message Format |
+|-------------|-----------|-----------|----------------------|
+| plan | commit | no commit | `forge(plan): <objective> plan approved` |
 | build | commit | rollback | `forge(build): <agent summary>` |
 | fix / fix-apply | commit | rollback | `forge(fix): resolve P0/P1 from review` |
 | refactor-apply | commit | rollback | `forge(refactor): apply refactoring changes` |
-| review / test / ship / router / learn / refactor-scan / fix-analyze | 不 commit | 不 commit | — |
+| review / test / ship / router / learn / refactor-scan / fix-analyze | no commit | no commit | — |
 
 **Commit 失败处理**：如果 Git commit 操作失败，标记为 hard failure 并触发指数退避机制。
 
 ---
 
-## 6. 修复循环与熔断保护
+## 6. Fix Loop and Circuit Breaker Protection
 
-### 6.1 修复循环
+### 6.1 Fix Loop
 
 当 Review Gate 返回 `blocked`（存在 P0/P1 问题）时：
 
-1. 递增 `reviewFixAttempts` 计数器
-2. 将 `phase` 回退到 `build`
-3. 在下一轮迭代中注入 P0/P1 问题详情
-4. 修复完成后重新进入 review
-5. Review Gate 返回 `passed` 时，重置计数器为 0
+1. Increment `reviewFixAttempts` counter
+2. Roll back `phase` to `build`
+3. Inject P0/P1 issue details in next iteration
+4. After fix, re-enter review
+5. When Review Gate returns `passed`, reset counter to 0
 
-### 6.2 熔断条件
+### 6.2 Circuit Breaker Conditions
 
 当 `reviewFixAttempts` 达到最大值（默认 3）且 review 仍为 `fail` 时，Loop 中止执行。
 
-### 6.3 其他中止条件
+### 6.3 Other Abort Conditions
 
-| 条件 | 说明 |
-|------|------|
-| Agent 连续失败达到阈值 | 底层状态机的保护机制 |
-| Commit 操作失败 | 标记为 hard failure，触发退避机制 |
-| 冻结区违规 | 立即终止循环，不触发退避 |
-| 用户手动中止（`/forge abort`） | 用户主动终止 |
-| `--stop-when` 条件满足 | Agent 报告停止条件达成 |
-| `--max-iterations` / `--max-tokens` / `--max-budget-usd` 达到上限 | 资源限制 |
+| Condition | Description |
+|-----------|-------------|
+| Agent consecutive failures reach threshold | Underlying state machine protection |
+| Commit operation failed | Marked as hard failure, triggers backoff mechanism |
+| Guarded zone violation | Immediately terminates loop, no backoff |
+| User manual abort (`/forge abort`) | User-initiated termination |
+| `--stop-when` condition met | Agent reports stop condition satisfied |
+| `--max-iterations` / `--max-tokens` / `--max-budget-usd` limit reached | Resource limit |
 
 ---
 
-## 7. 结束流程
+## 7. Shutdown Sequence
 
-### 7.1 正常完成
+### 7.1 Normal Completion
 
 清除 StatusFile 中所有 Loop 相关字段，恢复为默认 interactive 模式：
 
@@ -233,7 +233,7 @@ Phases:
 Branch: forge/user-api-pagination
 ```
 
-### 7.2 熔断中止
+### 7.2 Circuit Breaker Abort
 
 ```
 ⛔ Loop aborted (circuit breaker)
@@ -243,47 +243,47 @@ Unresolved issues:
 Recovery: /forge resume
 ```
 
-### 7.3 错误中止
+### 7.3 Error Abort
 
 清除 `mode`、`loop_run_id`、`loop_iteration` 字段，**保留** `phase` 和 `skill_sequence`（便于 `/forge resume` 恢复）。
 
 ---
 
-## 8. 复用现有 Skills
+## 8. Reuse Existing Skills
 
 Loop 不重新实现任何 SKILL 逻辑，而是驱动现有 Skills 的完整执行：
 
-| 迭代阶段 | 调用的 SKILL |
-|---------|-------------|
-| 路由分析 | `/forge`（forge-router） |
-| 规划 | `/forge plan`（forge-plan） |
-| 执行 | `/forge build`（forge-build） |
-| 评审 | `/forge review`（forge-review） |
-| 测试 | `/forge test`（forge-test） |
-| 交付 | `/forge ship`（forge-ship） |
-| 学习 | `/forge learn`（forge-learn） |
-| 重构扫描/应用 | `/forge refactor`（forge-refactor） |
-| 修复分析/应用 | `/forge fix`（forge-fix） |
+| Iteration Stage | Invoked SKILL |
+|----------------|---------------|
+| Route analysis | `/forge` (forge-router) |
+| Planning | `/forge plan` (forge-plan) |
+| Build | `/forge build` (forge-build) |
+| Review | `/forge review` (forge-review) |
+| Test | `/forge test` (forge-test) |
+| Ship | `/forge ship` (forge-ship) |
+| Learn | `/forge learn` (forge-learn) |
+| Refactor scan/apply | `/forge refactor` (forge-refactor) |
+| Fix analyze/apply | `/forge fix` (forge-fix) |
 
 **每个 SKILL 在执行时读取 `mode: autonomous`，自动跳过确认点。**
 
 ---
 
-## 9. 分发包环境说明
+## 9. Distribution Package Environment Notes
 
 在分发包环境下（无 Agent SDK），`/forge loop` 以 SKILL 内置的迭代控制逻辑替代 SDK 驱动的循环：
 
-| 能力 | SDK 环境（CLI） | 分发包环境（SKILL） |
-|------|---------------|-------------------|
-| 迭代驱动 | Agent SDK 循环 | SKILL 内置状态机，单次会话中推进 |
-| 状态管理 | SdkDriver + StatusFile | StatusFile（相同格式） |
-| 质量门禁 | `quality-gate.ts` 纯函数 | 相同门禁逻辑，Agent 在迭代中调用 |
-| Git 事务 | `effect-executor.ts`（含冻结区检查） | Agent 直接执行 Git 命令 |
-| 熔断保护 | Orchestrator 状态机 + SkillScheduler | Agent 读取 `reviewFixAttempts` 计数 |
+| Capability | SDK Environment (CLI) | Distribution Package (SKILL) |
+|------------|----------------------|------------------------------|
+| Iteration driver | Agent SDK loop | SKILL built-in state machine, advances within single session |
+| State management | SdkDriver + StatusFile | StatusFile (same format) |
+| Quality gates | `quality-gate.ts` pure functions | Same gate logic, Agent invokes during iteration |
+| Git transactions | `effect-executor.ts` (with guarded zone checks) | Agent directly executes Git commands |
+| Circuit breaker | Orchestrator state machine + SkillScheduler | Agent reads `reviewFixAttempts` counter |
 
 ---
 
-## 10. 状态文件格式
+## 10. Status File Format
 
 Loop 运行期间，`.forge/status.md` 的完整格式：
 
@@ -303,36 +303,36 @@ updated: "2025-01-15 14:30"
 ---
 ```
 
-### Loop 字段生命周期
+### Loop Field Lifecycle
 
-| 字段 | 写入时机 | 清除时机 |
-|------|---------|---------|
-| `mode` | Loop 启动 | Loop 结束（正常/异常） |
-| `loop_run_id` | Loop 启动 | Loop 结束（正常/异常） |
-| `loop_iteration` | Loop 启动 (=0)，每轮迭代完成更新 | Loop 结束（正常/异常） |
-| `skill_sequence` | Loop 启动 | 正常完成时清除；异常退出时保留（供 resume） |
-| `phase` | 路由完成后，每轮迭代完成更新 | 正常完成时设为 `completed`；异常退出时保留 |
-
----
-
-## 11. 边界情况处理
-
-| 条件 | 输出 |
-|------|------|
-| 无 `.forge/` 目录 | ⚠️ 未检测到 .forge/ 目录。请先运行 forge init |
-| 已有进行中的任务 | Warning: StatusFile has an active task in phase "<phase>". Starting may overwrite |
-| Loop 异常退出后重启 | 检测残留 `loop_run_id` → 清理 → 重新写入 → 从当前 `phase` 继续 |
-| 目标描述为空 | CLI 的 `<objective>` 为必需参数，Commander 自动拒绝 |
-| 不支持的 `--tier` 值 | Error: Invalid --tier value "medium". Valid options: light, standard, full |
-| hooks.json 缺失 | hooks protection missing: hooks/hooks.json not found（警告不阻断） |
-| Worktree 源分支无效 | Error: Cannot create a worktree from a forge/ branch |
-| Resume 分支不存在 | Error: Branch "<branchName>" does not exist |
+| Field | Written When | Cleared When |
+|-------|-------------|--------------|
+| `mode` | Loop startup | Loop end (normal/error) |
+| `loop_run_id` | Loop startup | Loop end (normal/error) |
+| `loop_iteration` | Loop startup (=0), updated after each iteration | Loop end (normal/error) |
+| `skill_sequence` | Loop startup | Cleared on normal completion; retained on error exit (for resume) |
+| `phase` | After routing complete, updated after each iteration | Set to `completed` on normal completion; retained on error exit |
 
 ---
 
-## 12. 示例
+## 11. Edge Case Handling
 
-### 示例：标准路径自主执行
+| Condition | Output |
+|-----------|--------|
+| No `.forge/` directory | ⚠️ 未检测到 .forge/ 目录。请先运行 forge init |
+| Existing active task | Warning: StatusFile has an active task in phase "<phase>". Starting may overwrite |
+| Loop restart after error exit | Detect residual `loop_run_id` → cleanup → rewrite → continue from current `phase` |
+| Empty objective description | CLI `<objective>` is a required parameter, Commander auto-rejects |
+| Unsupported `--tier` value | Error: Invalid --tier value "medium". Valid options: light, standard, full |
+| hooks.json missing | hooks protection missing: hooks/hooks.json not found（警告不阻断） |
+| Invalid worktree source branch | Error: Cannot create a worktree from a forge/ branch |
+| Resume branch does not exist | Error: Branch "<branchName>" does not exist |
+
+---
+
+## 12. Examples
+
+### Example: Standard Path Autonomous Execution
 
 ```
 $ /forge loop "为用户 API 添加分页功能"
@@ -367,8 +367,8 @@ $ /forge loop "为用户 API 添加分页功能"
   Iterations: 10
 ```
 
-**其他场景变体**：
-- **修复循环后完成**：Review Gate blocked → 修复 P1 → 重新 review passed → 继续后续阶段
-- **熔断中止**：修复循环 3 次仍失败 → ⛔ Loop aborted (circuit breaker) → Recovery: /forge resume
-- **Worktree 隔离**：`--worktree` 在独立 worktree 中运行，不影响主工作树
-- **恢复中断**：`--resume forge/api-pagination` 从指定分支的中断点继续
+**Other Scenario Variants**:
+- **Completion after fix loop**: Review Gate blocked → fix P1 → re-review passed → continue subsequent stages
+- **Circuit breaker abort**: Fix loop fails 3 times → ⛔ Loop aborted (circuit breaker) → Recovery: /forge resume
+- **Worktree isolation**: `--worktree` runs in isolated worktree, does not affect main working tree
+- **Resume interrupted run**: `--resume forge/api-pagination` continues from interruption point on specified branch
