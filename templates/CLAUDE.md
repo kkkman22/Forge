@@ -59,6 +59,26 @@ build 阶段主 Agent 必须执行周期性 Restatement Checkpoint：每完成 N
 > **原则**：代码编辑时沉默执行，决策点时简要说明。SKILL 定义的结构化输出永远不被压制。
 
 禁止操作预告、自我对话、逐步解说。保留所有 Forge 结构化输出：TDD 标记、Closure-First 探针结果、Restatement 摘要、P5 证据链、评审报告、路由分析、前置检查结果、进度更新。Decision_Point 允许简要说明：`[原因] → [选择] → [依据]`。
+
+#### 词汇压缩
+
+省略冠词（a/an/the）、填充词（just/really/basically/actually/simply）。省略客套话（sure/certainly/of course/happy to）。使用短同义词（big 而非 extensive，fix 而非 implement a solution for）。允许句子片段。模式：`[事物] [动作] [原因]。[下一步]。`
+
+#### 行为规则
+
+- 文件编辑后输出变更摘要（如 `+5 lines in src/config.ts`），不回显文件内容
+- 非 Decision_Point 直接给推荐方案并执行，不列备选
+- 非 Decision_Point 散文输出 ≤200 tokens
+- Decision_Point 格式：`[原因] → [选择] → [依据]`
+- Subagent 返回结构化摘要，不含过程叙述
+
+#### Structured_Output 豁免清单
+
+以下格式完全豁免于散文压缩规则，不得压缩或省略：TDD 标记（🔴 RED / 🟢 GREEN / 🔵 REFACTOR）、P5 证据链、Restatement 摘要、Closure-First 探针结果、评审报告（P0/P1/P2/P3 表格）、代码块、commit 消息、安全警告、不可逆操作确认、路由分析、前置检查结果。
+
+#### 安全阀
+
+散文压缩让步于信息完整性。错误诊断、安全警告优先保留完整细节。
 → 详见 docs/forge-constitution-detail.md §2.6
 
 ---
