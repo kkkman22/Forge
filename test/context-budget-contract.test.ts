@@ -2,9 +2,9 @@
  * Contract tests for context budget sections in SKILL documents.
  *
  * Validates:
- *   - forge-build/SKILL.md contains "上下文预算管理" section with correct trimmer references
- *   - forge-review/SKILL.md contains "上下文预算管理" section with Review_Summarizer
- *   - forge-decide/SKILL.md contains "上下文预算管理" section with Subagent_Summary_Protocol
+ *   - forge-build/SKILL.md contains "Context Budget Management" section with correct trimmer references
+ *   - forge-review/SKILL.md contains "Context Budget Management" section with Review_Summarizer
+ *   - forge-decide/SKILL.md contains "Context Budget Management" section with Subagent_Summary_Protocol
  *   - Existing non-context-budget content is preserved in all SKILL documents
  */
 import { readFileSync } from "node:fs";
@@ -19,8 +19,8 @@ const readSkill = (name: string) =>
 describe("Contract: forge-build/SKILL.md context budget section", () => {
   const content = readSkill("forge-build");
 
-  it("contains 上下文预算管理 heading", () => {
-    expect(content).toContain("## 上下文预算管理");
+  it("contains Context Budget Management heading", () => {
+    expect(content).toContain("## Context Budget Management");
   });
 
   it("references Explore_Summarizer", () => {
@@ -57,8 +57,8 @@ describe("Contract: forge-build/SKILL.md context budget section", () => {
 describe("Contract: forge-review/SKILL.md context budget section", () => {
   const content = readSkill("forge-review");
 
-  it("contains 上下文预算管理 heading", () => {
-    expect(content).toContain("## 上下文预算管理");
+  it("contains Context Budget Management heading", () => {
+    expect(content).toContain("## Context Budget Management");
   });
 
   it("references Review_Summarizer", () => {
@@ -86,8 +86,8 @@ describe("Contract: forge-review/SKILL.md context budget section", () => {
 describe("Contract: forge-decide/SKILL.md context budget section", () => {
   const content = readSkill("forge-decide");
 
-  it("contains 上下文预算管理 heading", () => {
-    expect(content).toContain("## 上下文预算管理");
+  it("contains Context Budget Management heading", () => {
+    expect(content).toContain("## Context Budget Management");
   });
 
   it("references Subagent_Summary_Protocol", () => {
