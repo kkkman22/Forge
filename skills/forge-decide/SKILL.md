@@ -44,6 +44,8 @@ disable-model-invocation: true
 
 **启动方式**：使用 Agent tool 同时启动 3 或 4 个独立 Subagent（含 UI 时加 designer），使用 `Promise.allSettled` 等待所有 Subagent 完成。**每个视角输出限制在 500 tokens 以内**。
 
+**并发控制**：并行 Subagent 数量受 `.forge/config.md` 中 `max_parallel_agents`（默认 6）限制。收到 HTTP 429 时按降级策略减少并发数。详见 CLAUDE.md §6 Session Boundaries。
+
 **Designer 条件触发**：仅当 `involvesUIChanges()` 返回 true 时加入。判定信号：任务描述提及前端/UI/页面/组件/样式、涉及的文件含 UI 扩展名（`.tsx`/`.jsx`/`.vue`/`.svelte`/`.css`）、任务涉及用户交互流程变更。不触发：纯后端 API、数据库变更、CI/CD、纯逻辑重构。
 
 ### Round 2 — Critic Subagent (Serial, launched after Round 1 completes)
