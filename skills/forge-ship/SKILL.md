@@ -105,18 +105,26 @@ disable-model-invocation: true
 
 ## 3. Four Delivery Options
 
-门禁检查全部通过后，提供四种交付选项：
+门禁检查全部通过后，**必须**使用 AskUserQuestion 让用户选择交付方式。**禁止**跳过询问直接执行任何选项。
 
 ```
-请选择交付方式：
-
-  1. Merge to main branch (local merge + delete branch)
-  2. Push and create PR (git push -u + gh pr create)
-  3. Keep branch (process later)
-  4. Discard (requires typing "discard" to confirm)
-
-请输入选项编号（1-4）：
+AskUserQuestion:
+  questions:
+    - question: "门禁已通过，请选择交付方式"
+      header: "Ship"
+      options:
+        - label: "Merge to main"
+          description: "本地合并到 main，删除功能分支"
+        - label: "Create PR"
+          description: "推送分支并创建 Pull Request"
+        - label: "Keep branch"
+          description: "保留当前分支，稍后处理"
+        - label: "Discard"
+          description: "丢弃所有变更（需二次确认）"
+      multiSelect: false
 ```
+
+用户选择 Discard 时，需追加确认 AskUserQuestion（输入理由或确认）。
 
 ### Option 1: Merge to Main Branch
 
@@ -219,8 +227,8 @@ $ /forge ship
 ✅ Test: passed (42/42 tests passed, checklist 7/7)
 ✅ Progress: 5/5 tasks complete
 
-请选择交付方式：
-> 2
+→ AskUserQuestion: 门禁已通过，请选择交付方式
+→ 用户选择: Create PR
 
 📤 Pushing branch...
 📝 Creating PR...
