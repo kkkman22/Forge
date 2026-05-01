@@ -378,6 +378,16 @@ async function main(): Promise<void> {
       // ---------------------------------------------------------------
       // Build LoopConfig and RunLimits
       // ---------------------------------------------------------------
+      // Validate --skills-dir if provided
+      if (opts.skillsDir) {
+        const resolved = path.resolve(opts.skillsDir);
+        if (resolved.includes("..") || !existsSync(resolved)) {
+          throw new CliError(
+            `Error: --skills-dir path is invalid or does not exist: ${opts.skillsDir}`,
+          );
+        }
+      }
+
       const loopConfig: LoopConfig = {
         agent: "claude",
         maxConsecutiveFailures: 3,

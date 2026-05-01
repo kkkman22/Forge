@@ -21,6 +21,25 @@ export type SkillPhase =
   | "refactor"
   | "loop";
 
+const VALID_PHASES: ReadonlySet<string> = new Set<string>([
+  "decide",
+  "spec",
+  "plan",
+  "build",
+  "build-light",
+  "review",
+  "test",
+  "ship",
+  "learn",
+  "debug",
+  "fix",
+  "refactor",
+  "loop",
+]);
+
+/** Maximum manifest file size in bytes (64KB). */
+const MAX_MANIFEST_SIZE = 65_536;
+
 /** Manifest describing a SKILL plugin. */
 export interface SkillManifest {
   /** Unique SKILL name (e.g., "forge-deploy"). */
@@ -44,7 +63,7 @@ export interface SkillManifest {
 
 /**
  * Scan directory entries and load manifests from subdirectories
- * containing a `skill.json` or `SKILL.md` file.
+ * containing a `skill.json` file.
  *
  * @param dirEntries - Array of subdirectory names to scan.
  * @param readFile - Function to read file content (injected for testability).
@@ -57,10 +76,10 @@ export function loadSkillsFromDir(
   const manifests: SkillManifest[] = [];
   for (const entry of dirEntries) {
     const jsonPath = `${entry}/skill.json`;
-    const skillPath = `${entry}/SKILL.md`;
-
-    const content = readFile(jsonPath) ?? readFile(skillPath);
+    const content = readFile(jsonPath);
     if (!content) continue;
+
+    if (content.length > MAX_MANIFEST_SIZE) continue;
 
     try {
       const parsed = JSON.parse(content);
@@ -104,7 +123,7 @@ export function mergeSkillLists(
   return merged;
 }
 
-/** Type guard for SkillManifest. */
+/** Type guard for SkillManifest with strict phase validation. */
 function isSkillManifest(obj: unknown): obj is SkillManifest {
   if (typeof obj !== "object" || obj === null) return false;
   const m = obj as Record<string, unknown>;
@@ -116,6 +135,6 @@ function isSkillManifest(obj: unknown): obj is SkillManifest {
     typeof m.forgeVersion === "string" &&
     Array.isArray(m.phases) &&
     m.phases.length > 0 &&
-    (m.phases as unknown[]).every((p) => typeof p === "string")
+    (m.phases as unknown[]).every((p) => typeof p === "string" && VALID_PHASES.has(p))
   );
 }
