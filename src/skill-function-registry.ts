@@ -109,6 +109,12 @@ export const SKILL_FUNCTION_REGISTRY: readonly SkillFunctionEntry[] = [
     parameterNames: ["review", "test", "progress", "checklist"],
   },
   {
+    module: "ship.ts",
+    functionName: "checkReviewFreshness",
+    skills: ["forge-ship/SKILL.md"],
+    parameterNames: ["reviewedCommit", "currentHead", "changedFiles"],
+  },
+  {
     module: "branch-lifecycle.ts",
     functionName: "recordPendingDelivery",
     skills: ["forge-ship/SKILL.md"],
