@@ -68,6 +68,37 @@ disable-model-invocation: true
 
 **CI 命令一致性检查**：如果 `ci_check_command` 已配置但 test 阶段只运行了单独命令（未运行完整 CI 命令），输出警告。不阻断 ship 但强烈建议重新运行。
 
+**Review Freshness Check**（Review Gate 通过后执行）：
+
+1. 读取 `.forge/reviews/<topic>.md` 的 `reviewed_at_commit` 字段
+2. **安全验证**：如果字段存在，验证其为合法 commit hash 格式（`/^[a-f0-9]{7,40}$/`）。不合法则视为缺失，静默通过
+3. 获取当前 HEAD：`git rev-parse HEAD`
+4. 比较：
+   - 相同 → ✅ 通过
+   - `reviewed_at_commit` 缺失或格式不合法 → ✅ 通过（向后兼容旧报告）
+   - 不同 → 获取 diff 文件列表：通过 `execFileSync` 参数化执行（不拼接命令字符串），传入 `["diff", "--name-only", reviewedCommit, "HEAD"]`
+     - 仅 `.forge/` 文件 → ✅ 通过（状态更新不影响代码质量）
+     - 涉及项目代码 → ⚠️ 警告（不阻断，用户可选择继续或重新 review）
+
+**函数调用**：`checkReviewFreshness(reviewedCommit, currentHead, changedFiles)`
+- 参数：`reviewedCommit` — 从 review 报告 frontmatter 的 `reviewed_at_commit` 字段读取（`string | undefined`）；`currentHead` — `git rev-parse HEAD` 输出；`changedFiles` — `git diff --name-only` 输出
+- 返回：`{ fresh: boolean, reason: string, changedFiles?: string[] }`
+- 用途：检测 review 后是否有项目代码变更，输出警告但不阻断 ship
+
+**警告输出格式**：
+
+```
+⚠️ Review 时效性警告
+  评审时 commit：<reviewed_at_commit>
+  当前 commit：<current HEAD>
+  评审后变更的项目文件：
+    - <file1>
+    - <file2>
+  建议：运行 /forge review 重新评审，或确认继续交付
+```
+
+**此检查不阻断 ship**——仅输出警告，开发者可选择继续交付或重新 review。
+
 **全部通过**后进入交付选项选择。
 
 ---

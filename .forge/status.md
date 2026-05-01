@@ -1,24 +1,25 @@
 ---
-current_task: "routing-assumptions"
+current_task: "ship-gate-commit-verification"
 tier: "standard"
 task_type: "fullstack"
 project_phase: "iteration"
 phase: "completed"
-hints: "backward-compat, regression-suite"
+hints: "backward-compat, pure-function, property-test"
 assumptions:
-  - "ClassificationResult 接口存在于 src/router.ts（基于 spec 引用）"
-  - "forge-router SKILL.md 存在 §2 输出模板和 §5 状态格式（基于 spec 引用）"
-  - "测试框架为 Vitest（基于 .forge/config.md 技术栈）"
+  - "src/review.ts 存在，无 ReviewReportFrontmatter 类型（基于代码库分析）"
+  - "src/ship.ts 存在，需扩展（基于代码库分析）"
+  - "测试框架为 Vitest + fast-check 4.7.0（基于 package.json）"
   - "纯增量改动，不涉及架构变更（基于 design.md 声明）"
 updated: "2026-05-01"
 ---
 
 # 项目状态
 
-无进行中任务。最近完成：routing-assumptions, skill-behavioral-guardrails。
+无进行中任务。最近完成：ship-gate-commit-verification。
 
 ## 已完成工作
 
+- ship-gate-commit-verification: ship 门禁 commit 验证（review freshness check）
 - routing-assumptions: 路由器输出增加假设段落
 - skill-behavioral-guardrails: SKILL 行为护栏
 - Group C: 社区基础设施

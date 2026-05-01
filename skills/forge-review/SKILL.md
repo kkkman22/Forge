@@ -227,6 +227,7 @@ P2: 1 个 | P3: 1 个（不阻塞发布）
 topic: "<主题>"
 date: "YYYY-MM-DD"
 result: "pass" | "fail" | "incomplete"
+reviewed_at_commit: "<git rev-parse HEAD>"
 p0_count: 0
 p1_count: 0
 p2_count: 0
@@ -250,7 +251,7 @@ layers:
 4. **合并管线**（§7）：`filterByConfidence` → `deduplicateFindings` → `applyCrossValidation`
 5. **报告质量门**（§7.3）：6 项自检，不通过则自动修正
 6. **P0/P1 判定**：存在则阻断 ship，不存在则通过
-7. **输出报告**：写入 `.forge/reviews/<topic>.md` 并展示摘要
+7. **输出报告**：写入 `.forge/reviews/<topic>.md` 并展示摘要。写入 frontmatter 时，执行 `git rev-parse HEAD` 获取当前 commit hash，填入 `reviewed_at_commit` 字段
 
 ### Step 0：前置检查
 
