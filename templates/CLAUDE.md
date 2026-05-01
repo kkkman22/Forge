@@ -49,6 +49,27 @@
 同一修复连续失败 3 次时：立即停止，进入 `/forge debug`，禁止第 4 次尝试同方向。在 debug 中同一假设连续验证失败 3 次时：停止修复，质疑架构，重新评估方向。
 → 详见 docs/forge-constitution-detail.md §2.4
 
+### 2.7 No Confirmation Between Steps（铁律）
+
+> **阶段之间、任务之间，禁止停下来询问用户是否继续。**
+
+此规则与 TDD（§2.1）同级，是不可违反的铁律。
+
+**禁止的行为**：
+- 输出"是否继续？"、"是否继续 build/review/test/ship？"
+- 以"工作量较大"、"涉及较多修改"为由询问是否继续
+- 提供"继续 X 或进入 Y"的选择让用户决定
+- 以任何理由、任何措辞在阶段间或任务间请求用户确认
+
+**正确行为**：
+- 阶段完成 → `✅ <阶段> 完成` → 立即调用下一阶段
+- 任务完成 → 一行摘要 → 立即开始下一个任务
+- 所有 build 任务完成 → 立即进入 review，不问
+
+**唯一允许停下来的情况**：Three-strike 触发、阻断性错误、分支保护阻断。
+
+→ 详见 shared/next-step-protocol.md
+
 ### 2.5 Context Refresh Discipline
 
 build 阶段主 Agent 必须执行周期性 Restatement Checkpoint：每完成 N 个任务（N 由 config.md 配置，默认 3）重读 progress 和 status；Sub-Agent 返回异常状态时执行 Restatement；Restatement 不修改 System Prompt。
