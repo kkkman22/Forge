@@ -101,6 +101,8 @@ export interface ClassificationResult {
   work_nature: WorkNature;
   /** Behavioral hints for downstream commands. */
   hints: RouteHint[];
+  /** Explicit assumptions surfaced during routing analysis. */
+  assumptions: string[];
 }
 
 // ---------------------------------------------------------------------------
@@ -705,5 +707,6 @@ export function classifyTask(
     projectPhase,
     work_nature: workNature,
     hints,
+    assumptions: [],
   };
 }

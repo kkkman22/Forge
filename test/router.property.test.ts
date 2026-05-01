@@ -405,3 +405,34 @@ describe("Property 11: Brownfield boost classification", () => {
     );
   });
 });
+
+// ---------------------------------------------------------------------------
+// Property: Routing assumptions field
+// Validates: routing-assumptions spec Requirement 3
+// ---------------------------------------------------------------------------
+
+describe("Property: Routing assumptions field", () => {
+  it("classifyTask always returns an assumptions field that is a string array", () => {
+    fc.assert(
+      fc.property(taskSignalsArb, (signals) => {
+        const result = classifyTask(signals);
+        expect(result).toHaveProperty("assumptions");
+        expect(Array.isArray(result.assumptions)).toBe(true);
+        for (const a of result.assumptions) {
+          expect(typeof a).toBe("string");
+        }
+      }),
+      { numRuns: 500 },
+    );
+  });
+
+  it("classifyTask defaults assumptions to an empty array", () => {
+    fc.assert(
+      fc.property(taskSignalsArb, (signals) => {
+        const result = classifyTask(signals);
+        expect(result.assumptions).toEqual([]);
+      }),
+      { numRuns: 200 },
+    );
+  });
+});
