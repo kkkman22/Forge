@@ -13,7 +13,7 @@ export interface ValidationResult {
   errors: string[];
 }
 
-const SEMVER_REGEX = /^\d+\.\d+\.\d+/;
+const SEMVER_REGEX = /^\d+\.\d+\.\d+$/;
 const REQUIRED_FIELDS: (keyof SkillManifest)[] = [
   "name",
   "version",
@@ -87,7 +87,7 @@ export function checkVersionCompatibility(
 /** Check if a version range string is syntactically valid. */
 function isValidVersionRange(range: string): boolean {
   // Accept: >=X.Y.Z, ^X.Y.Z, ~X.Y.Z, X.Y.Z
-  return /^(>=|[\^~]?)\d+\.\d+\.\d+/.test(range);
+  return /^(>=|[\^~]?)\d+\.\d+\.\d+$/.test(range);
 }
 
 /**
