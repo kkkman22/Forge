@@ -39,7 +39,7 @@ export function buildCaffeinateCommand(pid) {
     return {
         command: "caffeinate",
         args: ["-i", "-w", String(pid)],
-        detached: true,
+        detached: false,
     };
 }
 // ---------------------------------------------------------------------------

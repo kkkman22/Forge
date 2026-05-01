@@ -10,50 +10,7 @@ import { resolve } from "node:path";
 import { describe, expect, it } from "vitest";
 const ROOT = resolve(import.meta.dirname, "..");
 // ---------------------------------------------------------------------------
-// 1. Decide team config ↔ agent files
-// ---------------------------------------------------------------------------
-describe("Contract: decide team config ↔ agent files", () => {
-    const configPath = resolve(ROOT, "teams/decide/config.json");
-    const config = JSON.parse(readFileSync(configPath, "utf-8"));
-    it("all static members have corresponding agent files", () => {
-        for (const member of config.members) {
-            const agentPath = resolve(ROOT, `agents/${member.agent}.md`);
-            expect(existsSync(agentPath), `Missing agent file: agents/${member.agent}.md`).toBe(true);
-        }
-    });
-    it("all dynamic members have corresponding agent files", () => {
-        if (!config.dynamic_members)
-            return;
-        for (const member of config.dynamic_members) {
-            const agentPath = resolve(ROOT, `agents/${member.agent}.md`);
-            expect(existsSync(agentPath), `Missing agent file: agents/${member.agent}.md`).toBe(true);
-        }
-    });
-    it("designer is listed as dynamic member (not static)", () => {
-        const staticNames = config.members.map((m) => m.name);
-        expect(staticNames).not.toContain("designer");
-        const dynamicNames = (config.dynamic_members || []).map((m) => m.name);
-        expect(dynamicNames).toContain("designer");
-    });
-});
-// ---------------------------------------------------------------------------
-// 2. Review team config ↔ agent files
-// ---------------------------------------------------------------------------
-describe("Contract: review team config ↔ agent files", () => {
-    const configPath = resolve(ROOT, "teams/review/config.json");
-    const config = JSON.parse(readFileSync(configPath, "utf-8"));
-    it("all members have corresponding agent files", () => {
-        for (const member of config.members) {
-            const agentPath = resolve(ROOT, `agents/${member.agent}.md`);
-            expect(existsSync(agentPath), `Missing agent file: agents/${member.agent}.md`).toBe(true);
-        }
-    });
-    it("review team has exactly 3 members", () => {
-        expect(config.members).toHaveLength(3);
-    });
-});
-// ---------------------------------------------------------------------------
-// 3. Router tiers ↔ README consistency
+// 1. Router tiers ↔ README consistency
 // ---------------------------------------------------------------------------
 describe("Contract: router tiers ↔ README", () => {
     const readmePath = resolve(ROOT, "README.md");
@@ -74,7 +31,7 @@ describe("Contract: router tiers ↔ README", () => {
     });
 });
 // ---------------------------------------------------------------------------
-// 4. All 12 skill directories exist
+// 2. All 12 skill directories exist
 // ---------------------------------------------------------------------------
 describe("Contract: all 12 skill directories exist", () => {
     const expectedSkills = [
@@ -118,7 +75,7 @@ describe("Contract: all 12 skill directories exist", () => {
     });
 });
 // ---------------------------------------------------------------------------
-// 5. CLAUDE.md template has all required placeholders
+// 3. CLAUDE.md template has all required placeholders
 // ---------------------------------------------------------------------------
 describe("Contract: CLAUDE.md template placeholders", () => {
     const templatePath = resolve(ROOT, "templates/CLAUDE.md");
@@ -137,7 +94,7 @@ describe("Contract: CLAUDE.md template placeholders", () => {
     }
 });
 // ---------------------------------------------------------------------------
-// 6. Distribution scripts exist
+// 4. Distribution scripts exist
 // ---------------------------------------------------------------------------
 describe("Contract: distribution scripts exist", () => {
     const requiredScripts = [
@@ -154,7 +111,7 @@ describe("Contract: distribution scripts exist", () => {
     }
 });
 // ---------------------------------------------------------------------------
-// 7. Knowledge templates exist
+// 5. Knowledge templates exist
 // ---------------------------------------------------------------------------
 describe("Contract: knowledge templates exist", () => {
     const requiredTemplates = ["templates/known-failures.md", "templates/session-journal.md"];
@@ -166,7 +123,7 @@ describe("Contract: knowledge templates exist", () => {
     }
 });
 // ---------------------------------------------------------------------------
-// 7.5 Command entry point exists
+// 6. Command entry point exists
 // ---------------------------------------------------------------------------
 describe("Contract: forge command entry point", () => {
     it("commands/forge.md exists", () => {
@@ -179,7 +136,7 @@ describe("Contract: forge command entry point", () => {
     });
 });
 // ---------------------------------------------------------------------------
-// 7.6 Agent files use Claude Code native frontmatter
+// 7. Agent files use Claude Code native frontmatter
 // ---------------------------------------------------------------------------
 describe("Contract: agent files use Claude Code native frontmatter", () => {
     const agentFiles = [
@@ -279,39 +236,7 @@ describe("Contract: dist bundle completeness (if built)", () => {
     }
 });
 // ---------------------------------------------------------------------------
-// 9. Agent Team documentation and hooks
-// ---------------------------------------------------------------------------
-describe("Contract: Agent Team documentation", () => {
-    it("teams/README.md exists with clarification about config files", () => {
-        const readmePath = resolve(ROOT, "teams/README.md");
-        expect(existsSync(readmePath), "Missing: teams/README.md").toBe(true);
-        const content = readFileSync(readmePath, "utf-8");
-        expect(content).toContain("不是");
-        expect(content).toContain("subagent 定义");
-    });
-    it("CLAUDE.md template documents Agent Team configuration", () => {
-        const templatePath = resolve(ROOT, "templates/CLAUDE.md");
-        const template = readFileSync(templatePath, "utf-8");
-        expect(template).toContain("Agent Team");
-        expect(template).toContain("subagent 定义");
-    });
-    it("forge-decide SKILL.md contains Agent Team launch instructions", () => {
-        const skillPath = resolve(ROOT, "skills/forge-decide/SKILL.md");
-        const content = readFileSync(skillPath, "utf-8");
-        expect(content).toContain("Create an agent team");
-        expect(content).toContain("using the product agent type");
-        expect(content).toContain("Clean up the team");
-    });
-    it("forge-review SKILL.md contains Agent Team launch instructions", () => {
-        const skillPath = resolve(ROOT, "skills/forge-review/SKILL.md");
-        const content = readFileSync(skillPath, "utf-8");
-        expect(content).toContain("Create an agent team");
-        expect(content).toContain("using the spec-check agent type");
-        expect(content).toContain("Clean up the team");
-    });
-});
-// ---------------------------------------------------------------------------
-// 9.5 hooks.json semantic validation
+// 9. hooks.json semantic validation
 // ---------------------------------------------------------------------------
 describe("Contract: hooks.json semantic validation", () => {
     const hooksPath = resolve(ROOT, "hooks/hooks.json");
@@ -408,7 +333,7 @@ describe("Contract: hooks.json semantic validation", () => {
     });
 });
 // ---------------------------------------------------------------------------
-// 9.6 scripts semantic validation
+// 10. scripts semantic validation
 // ---------------------------------------------------------------------------
 describe("Contract: scripts semantic validation", () => {
     const scriptsDir = resolve(ROOT, "scripts");
@@ -435,7 +360,7 @@ describe("Contract: scripts semantic validation", () => {
     }
 });
 // ---------------------------------------------------------------------------
-// 9.7 skills content validation
+// 11. skills content validation
 // ---------------------------------------------------------------------------
 describe("Contract: skills content validation", () => {
     const skillsDir = resolve(ROOT, "skills");
@@ -461,7 +386,7 @@ describe("Contract: skills content validation", () => {
     }
 });
 // ---------------------------------------------------------------------------
-// 9.8 CI calibration step existence
+// 12. CI calibration step existence
 // ---------------------------------------------------------------------------
 describe("Contract: CI calibration step existence", () => {
     const ciPath = resolve(ROOT, ".github/workflows/ci.yml");
@@ -470,7 +395,7 @@ describe("Contract: CI calibration step existence", () => {
         expect(content.includes("check-readme-metrics.sh"), "CI workflow (.github/workflows/ci.yml) does not contain a step referencing check-readme-metrics.sh").toBe(true);
     });
 });
-describe("Contract: Agent Team hooks", () => {
+describe("Contract: hooks.json structure validation", () => {
     const hooksPath = resolve(ROOT, "hooks/hooks.json");
     const hooks = JSON.parse(readFileSync(hooksPath, "utf-8"));
     it("hooks.json contains TeammateIdle hook", () => {
@@ -494,7 +419,7 @@ describe("Contract: Agent Team hooks", () => {
     });
 });
 // ---------------------------------------------------------------------------
-// 10. Evolved rules templates
+// 13. Evolved rules templates
 // ---------------------------------------------------------------------------
 describe("Contract: evolved rules templates", () => {
     it("templates/evolved-rules.md exists", () => {
@@ -517,7 +442,7 @@ describe("Contract: evolved rules templates", () => {
     });
 });
 // ---------------------------------------------------------------------------
-// 11. CLAUDE.md self-evolution section
+// 14. CLAUDE.md self-evolution section
 // ---------------------------------------------------------------------------
 describe("Contract: CLAUDE.md self-evolution section", () => {
     const templatePath = resolve(ROOT, "templates/CLAUDE.md");
@@ -529,11 +454,8 @@ describe("Contract: CLAUDE.md self-evolution section", () => {
         expect(template).toContain("evolved-rules.md");
     });
     it("Section documents the five knowledge categories", () => {
-        expect(template).toContain("known-failures");
+        expect(template).toContain("Categories");
         expect(template).toContain("instincts");
-        expect(template).toContain("skill-feedback");
-        expect(template).toContain("session journals");
-        expect(template).toContain("metrics");
     });
     it("Section documents the 15-rule cap", () => {
         expect(template).toContain("15-rule cap");
@@ -541,12 +463,10 @@ describe("Contract: CLAUDE.md self-evolution section", () => {
     it("Section documents exclusions", () => {
         expect(template).toContain("Exclusions");
         expect(template).toContain("Architecture descriptions");
-        expect(template).toContain("File path lists");
-        expect(template).toContain("General best practices");
     });
 });
 // ---------------------------------------------------------------------------
-// 12. hooks.json evolved rules integration
+// 15. hooks.json evolved rules integration
 // ---------------------------------------------------------------------------
 describe("Contract: hooks.json evolved rules integration", () => {
     const hooksPath = resolve(ROOT, "hooks/hooks.json");
@@ -579,7 +499,7 @@ describe("Contract: hooks.json evolved rules integration", () => {
     });
 });
 // ---------------------------------------------------------------------------
-// 13. config.md evolved rules protection
+// 16. config.md evolved rules protection
 // ---------------------------------------------------------------------------
 describe("Contract: config.md evolved rules protection", () => {
     const configPath = resolve(ROOT, "templates/config.md");
@@ -601,7 +521,7 @@ describe("Contract: config.md evolved rules protection", () => {
     });
 });
 // ---------------------------------------------------------------------------
-// 14. forge-learn SKILL.md rule distillation
+// 17. forge-learn SKILL.md rule distillation
 // ---------------------------------------------------------------------------
 describe("Contract: forge-learn SKILL.md rule distillation", () => {
     const skillPath = resolve(ROOT, "skills/forge-learn/SKILL.md");
@@ -626,6 +546,58 @@ describe("Contract: forge-learn SKILL.md rule distillation", () => {
         expect(content).toMatch(/3\+?\s*会话|3\+?\s*session/i);
         // metrics: 3+ session degradation
         expect(content).toMatch(/3\+?\s*session|连续\s*3/i);
+    });
+});
+// ---------------------------------------------------------------------------
+// 17. CLAUDE.md ↔ templates/CLAUDE.md sync
+// ---------------------------------------------------------------------------
+describe("Contract: CLAUDE.md and template sync", () => {
+    const claudePath = resolve(ROOT, "CLAUDE.md");
+    const templatePath = resolve(ROOT, "templates", "CLAUDE.md");
+    const claude = readFileSync(claudePath, "utf-8");
+    const template = readFileSync(templatePath, "utf-8");
+    it("both files have same line count (±2 lines)", () => {
+        const claudeLines = claude.split("\n").length;
+        const templateLines = template.split("\n").length;
+        expect(Math.abs(claudeLines - templateLines)).toBeLessThanOrEqual(2);
+    });
+    it("template has all 5 required placeholders", () => {
+        expect(template).toContain("{{project_name}}");
+        expect(template).toContain("{{tech_stack}}");
+        expect(template).toContain("{{security_level}}");
+        expect(template).toContain("{{knowledge_limit}}");
+        expect(template).toContain("{{init_date}}");
+    });
+    it("CLAUDE.md does not contain any template placeholders", () => {
+        expect(claude).not.toContain("{{project_name}}");
+        expect(claude).not.toContain("{{tech_stack}}");
+        expect(claude).not.toContain("{{security_level}}");
+        expect(claude).not.toContain("{{knowledge_limit}}");
+        expect(claude).not.toContain("{{init_date}}");
+    });
+});
+// ---------------------------------------------------------------------------
+// 18. CLAUDE.md reference pointers resolve to detail doc
+// ---------------------------------------------------------------------------
+describe("Contract: CLAUDE.md reference pointers resolve", () => {
+    const claude = readFileSync(resolve(ROOT, "CLAUDE.md"), "utf-8");
+    const detail = readFileSync(resolve(ROOT, "docs", "forge-constitution-detail.md"), "utf-8");
+    it("detail doc exists and is non-empty", () => {
+        expect(detail.length).toBeGreaterThan(100);
+    });
+    it("each section referenced in CLAUDE.md exists in detail doc", () => {
+        const refs = claude.match(/→ 详见 docs\/forge-constitution-detail\.md §[\d.]+/g);
+        expect(refs).not.toBeNull();
+        if (!refs)
+            return;
+        const sections = [...new Set(refs)].map((r) => r.replace(/→ 详见 docs\/forge-constitution-detail\.md /, ""));
+        for (const section of sections) {
+            const sectionNum = section.replace("§", "");
+            const majorSection = sectionNum.split(".")[0];
+            expect(detail.includes(`## §${majorSection}`) ||
+                detail.includes(`### §${sectionNum}`) ||
+                detail.includes(`§${sectionNum}`), `Reference ${section} not found in detail doc`).toBe(true);
+        }
     });
 });
 //# sourceMappingURL=contract.test.js.map

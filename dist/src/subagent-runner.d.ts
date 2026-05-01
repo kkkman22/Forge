@@ -4,7 +4,9 @@
  * Provides utilities to build subagent invocations and collect results
  * from parallel execution using Promise.allSettled.
  */
-import type { SubagentInvocation, SubagentResult, ParallelExecutionResult } from "./loop-types.js";
+import type { ParallelExecutionResult, SubagentInvocation, SubagentResult } from "./loop-types.js";
+/** Agent types defined in .claude/agents/ that may be used as subagent_type. */
+export declare const VALID_AGENT_TYPES: readonly ["spec-check", "quality-check", "security-check", "product", "architect", "security", "designer", "critic", "Explore"];
 /**
  * Build SubagentInvocation objects from a list of agent types and a task description.
  *

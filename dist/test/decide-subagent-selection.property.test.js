@@ -9,7 +9,7 @@
  */
 import fc from "fast-check";
 import { describe, expect, it } from "vitest";
-import { buildDecideRound1Subagents, buildDecideCriticInvocation, resolveDecideStatus, involvesUIChanges, } from "../src/decide.js";
+import { buildDecideCriticInvocation, buildDecideRound1Subagents, involvesUIChanges, resolveDecideStatus, } from "../src/decide.js";
 // ---------------------------------------------------------------------------
 // Generators
 // ---------------------------------------------------------------------------

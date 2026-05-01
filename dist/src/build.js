@@ -86,4 +86,38 @@ export function analyzeFixAttempts(sequence) {
 export function shouldEscalateToDebug(sequence) {
     return analyzeFixAttempts(sequence).shouldEscalate;
 }
+/**
+ * Build one SubagentInvocation per research topic.
+ *
+ * Each subagent investigates a single research topic independently.
+ */
+export function buildResearchSubagents(topics) {
+    return topics.map((topic) => ({
+        agentType: "Explore",
+        prompt: `研究以下主题：${topic}`,
+        permissionMode: "default",
+        maxTurns: 10,
+    }));
+}
+/**
+ * Merge successful research subagent outputs into a single findings document.
+ *
+ * All findings from every successful subagent are preserved with no loss.
+ * Failed subagents are noted in the document.
+ */
+export function mergeResearchFindings(results) {
+    const succeeded = results.filter((r) => r.status === "success" && r.output);
+    const failed = results.filter((r) => r.status !== "success");
+    const parts = [];
+    if (failed.length > 0) {
+        parts.push(`部分研究 Subagent 失败（${failed.length}/${results.length}）：`);
+        for (const f of failed) {
+            parts.push(`- ${f.agentType}: ${f.error ?? "unknown error"}`);
+        }
+    }
+    for (const s of succeeded) {
+        parts.push(s.output);
+    }
+    return parts.join("\n\n");
+}
 //# sourceMappingURL=build.js.map

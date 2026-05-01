@@ -22,6 +22,8 @@ export interface TeamMember {
     role: string;
     agent: string;
 }
+/** Renamed alias for the Subagent migration — semantically equivalent to TeamMember. */
+export type SubagentConfig = TeamMember;
 /**
  * Check whether the task description contains any UI-related keywords.
  * Case-insensitive matching.
@@ -68,3 +70,30 @@ export declare function generateDecisionPath(date: string, topic: string): strin
  * - designer is included if and only if the task involves UI changes.
  */
 export declare function getDecideTeamMembers(context: DecideContext): TeamMember[];
+/** Alias for the Subagent migration — returns the same members. */
+export declare function getDecideSubagents(context: DecideContext): SubagentConfig[];
+import type { SubagentInvocation } from "./loop-types.js";
+/**
+ * Build Round 1 SubagentInvocations for the decide phase.
+ *
+ * Maps SubagentConfig[] to SubagentInvocation[] with perspective-specific prompts.
+ * Always includes product, architect, security. Includes designer iff involvesUIChanges.
+ */
+export declare function buildDecideRound1Subagents(context: DecideContext): SubagentInvocation[];
+/**
+ * Build the Round 2 Critic SubagentInvocation.
+ *
+ * The Critic receives all Round 1 perspective outputs for cross-review.
+ */
+export declare function buildDecideCriticInvocation(round1Outputs: string[], _context: DecideContext): SubagentInvocation;
+/** Output from the Critic agent for status resolution. */
+export interface CriticOutput {
+    hasBlockingIssues: boolean;
+    issues: string[];
+}
+/**
+ * Resolve the decide document status based on Critic output.
+ *
+ * Returns "needs_revision" when blocking issues are present, "confirmed" otherwise.
+ */
+export declare function resolveDecideStatus(output: CriticOutput): "needs_revision" | "confirmed";

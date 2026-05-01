@@ -8,11 +8,13 @@
  */
 import fc from "fast-check";
 import { describe, expect, it } from "vitest";
-import { buildResearchSubagents, mergeResearchFindings, } from "../src/build.js";
+import { buildResearchSubagents, mergeResearchFindings } from "../src/build.js";
 // ---------------------------------------------------------------------------
 // Generators
 // ---------------------------------------------------------------------------
-const researchTopicArb = fc.string({ minLength: 1, maxLength: 50 }).filter((s) => s.trim().length > 0);
+const researchTopicArb = fc
+    .string({ minLength: 1, maxLength: 50 })
+    .filter((s) => s.trim().length > 0);
 const researchResultArb = fc.record({
     agentType: fc.string({ minLength: 1, maxLength: 20 }),
     status: fc.constantFrom("success", "failure", "timeout"),
