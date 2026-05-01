@@ -152,7 +152,7 @@ function findNextTask(planTasks: string[], progress: ProgressContext): string | 
 // ---------------------------------------------------------------------------
 
 import { parseStatusFileGraceful, type StatusFields } from "./state.js";
-import { reconstructStateFromGit, type ReconstructedState } from "./status-resolver.js";
+import { type ReconstructedState, reconstructStateFromGit } from "./status-resolver.js";
 
 /** Result of attempting to recover the current phase. */
 export interface PhaseRecoveryResult {
