@@ -24,7 +24,7 @@ const readSkillWithRefs = (name: string, ...refFiles: string[]) => {
       return existsSync(p) ? readFileSync(p, "utf-8") : "";
     })
     .join("\n");
-  return main + "\n" + refs;
+  return `${main}\n${refs}`;
 };
 
 describe("Contract: forge-build/SKILL.md context budget section", () => {

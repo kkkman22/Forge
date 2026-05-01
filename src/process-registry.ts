@@ -47,8 +47,8 @@ export class ProcessRegistry {
     metadata: Omit<ProcessMetadata, "pid" | "pgid" | "startTime">,
   ): void {
     const entry: ProcessMetadata = {
-      pid: child.pid!,
-      pgid: child.pid!,
+      pid: child.pid ?? 0,
+      pgid: child.pid ?? 0,
       startTime: Date.now(),
       ...metadata,
     };
@@ -115,12 +115,12 @@ export class ProcessRegistry {
         } else {
           process.kill(meta.pid, "SIGTERM");
         }
-      } catch (err: any) {
-        if (err.code === "ESRCH") {
+      } catch (err) {
+        if ((err as NodeJS.ErrnoException).code === "ESRCH") {
           result.alreadyExited++;
           pending.delete(meta.pid);
         } else {
-          result.errors.push({ pid: meta.pid, error: err.message });
+          result.errors.push({ pid: meta.pid, error: (err as Error).message });
         }
       }
     }
@@ -137,11 +137,11 @@ export class ProcessRegistry {
                   process.kill(pid, "SIGKILL");
                 }
                 result.forcedKill++;
-              } catch (err: any) {
-                if (err.code === "ESRCH") {
+              } catch (err) {
+                if ((err as NodeJS.ErrnoException).code === "ESRCH") {
                   result.alreadyExited++;
                 } else {
-                  result.errors.push({ pid, error: err.message });
+                  result.errors.push({ pid, error: (err as Error).message });
                 }
               }
             }
@@ -188,24 +188,25 @@ export class ProcessRegistry {
   }
 
   static deserialize(json: string): SerializedRegistry {
-    let parsed: any;
+    let parsed: unknown;
     try {
       parsed = JSON.parse(json);
     } catch {
       throw new Error(`Invalid JSON in ProcessRegistry deserialize: ${json.slice(0, 50)}`);
     }
 
+    const data = parsed as Record<string, unknown>;
     if (
-      typeof parsed.sessionPid !== "number" ||
-      typeof parsed.sessionPgid !== "number" ||
-      typeof parsed.sessionStartTime !== "number" ||
-      !Array.isArray(parsed.processes)
+      typeof data.sessionPid !== "number" ||
+      typeof data.sessionPgid !== "number" ||
+      typeof data.sessionStartTime !== "number" ||
+      !Array.isArray(data.processes)
     ) {
       throw new Error(
         "Missing required fields in ProcessRegistry deserialize (sessionPid, sessionPgid, sessionStartTime, processes)",
       );
     }
 
-    return parsed as SerializedRegistry;
+    return data as unknown as SerializedRegistry;
   }
 }
