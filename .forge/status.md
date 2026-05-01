@@ -3,7 +3,7 @@ current_task: "routing-assumptions"
 tier: "standard"
 task_type: "fullstack"
 project_phase: "iteration"
-phase: "build"
+phase: "completed"
 hints: "backward-compat, regression-suite"
 assumptions:
   - "ClassificationResult 接口存在于 src/router.ts（基于 spec 引用）"
