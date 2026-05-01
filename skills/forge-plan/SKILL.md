@@ -95,6 +95,7 @@ Frontmatter 字段：`topic`, `status` (draft/approved), `date`, `spec_ref`, `fo
 4. **Task Breakdown**: 拆解为原子任务
 5. **Self-Check**: 覆盖率/占位符/类型一致性，自动修正
 6. **User Approval**: 批准/修改/拒绝
+7. **AskUserQuestion**: 批准后询问是否继续 /forge build（→ 详见 shared/next-step-protocol.md）
 
 **Pre-check 详情**：`.forge/` 不存在 → prompt `forge init`。Full path 要求 Spec locked；Standard path 无 Spec 时直接生成 Plan（`spec_ref: "none"`）。
 

@@ -82,7 +82,7 @@ P0/P1 只能 `gated_auto`/`manual`；P2 可 `safe_auto`；P3 默认 `advisory`�
 
 **Step 1.1 状态确认**：主动跟踪每个 Subagent，不假设"启动即完成"。正常完成 → 进入管线；截断 → 重试 1 次；错误 → 重试 1 次；429 → 降级等待后重试；超时(180s) → 标记 `incomplete`。**不得在 Subagent 运行中合并结果**。
 
-**Step 4 提示下一步**：通过 → `/forge test`（标准/全量）或 `/forge ship`（轻量）；未通过 → 修复后重新评审。
+**Step 4 提示下一步**：通过 → AskUserQuestion（→ 详见 shared/next-step-protocol.md）；未通过 → 修复后重新评审。
 
 ## 11. Edge Cases
 
@@ -90,7 +90,7 @@ P0/P1 只能 `gated_auto`/`manual`；P2 可 `safe_auto`；P3 默认 `advisory`�
 
 ## 12. Examples
 
-**通过**：`✅ 通过 | P0:0 | P1:0 | P2:1 | P3:0` + 下一步提示
+**通过**：`✅ 通过 | P0:0 | P1:0 | P2:1 | P3:0` + AskUserQuestion 询问下一步（→ 详见 shared/next-step-protocol.md）
 **失败**：`🚫 未通过 | P0:1 | P1:2 | P2:1 | P3:0` + Ship 阻断
 
 ## 13. Pre-checks
