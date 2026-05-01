@@ -547,7 +547,7 @@ bash scripts/build-dist.sh
 
 **技术栈**：TypeScript 5.9（strict）、Vitest 3.2、fast-check 4.7（属性测试）、Biome 2.4（lint + format）。运行时依赖：`@anthropic-ai/claude-agent-sdk`、`commander`。
 
-**测试策略**：2667 个测试（145 个测试文件，其中 87 个为 fast-check 属性测试文件）验证不变量（invariant），而非特定输入输出。覆盖率 89.35% statements、89.62% branches、95.2% functions。<!--exact: 测试数、文件数、属性测试数; approximate: 覆盖率-->
+**测试策略**：2750 个测试（152 个测试文件，其中 88 个为 fast-check 属性测试文件）验证不变量（invariant），而非特定输入输出。覆盖率 89.35% statements、89.62% branches、95.2% functions。<!--exact: 测试数、文件数、属性测试数; approximate: 覆盖率-->
 
 ---
 

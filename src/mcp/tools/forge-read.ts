@@ -27,7 +27,7 @@ const DEFAULT_TIMEOUT_MS = 30_000;
 // Subprocess execution
 // ---------------------------------------------------------------------------
 
-interface ReadExecResult {
+export interface ReadExecResult {
   stdout: string;
   stderr: string;
   exitCode: number;
