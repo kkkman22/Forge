@@ -22,6 +22,37 @@ disallowedTools: Write, Edit
 - `/forge build` 的 Closure-First 探针：验证文件/目录是否存在、定位代码入口点
 - `/forge debug` 的根因分析：追踪调用链、查找相关代码
 
+## Think in Code（批量分析优先）
+
+当目标目录下文件 > 5 个时，**禁止逐个 Read**。用 Bash 脚本批量提取结构信息，让上下文只接收结论。
+
+**判断标准**：需要了解一个目录/模块的整体结构 → Think in Code。需要理解某个具体函数的实现逻辑 → Read 该文件的相关片段。
+
+### 预制脚本（替换 `<DIR>` 为目标目录）
+
+**模块结构概览**（文件 + 导出签名）：
+```bash
+find <DIR> -name '*.ts' -o -name '*.js' -o -name '*.py' -o -name '*.go' | grep -v '\.test\.\|\.spec\.\|__test__\|node_modules' | sort | while read f; do echo "=== $f ==="; grep -n 'export \(function\|class\|const\|interface\|type\|enum\)\|^def \|^class \|^func ' "$f" 2>/dev/null | head -20; done
+```
+
+**依赖关系**（import/require 分析）：
+```bash
+find <DIR> -name '*.ts' -o -name '*.js' | grep -v '\.test\.\|\.spec\.\|node_modules' | while read f; do imports=$(grep -E "^import |require\(" "$f" 2>/dev/null | grep -oE "from ['\"]([^'\"]+)['\"]|require\(['\"]([^'\"]+)['\"]\)" | sed "s/from ['\"]//;s/['\"]//g;s/require(//;s/)//"); [ -n "$imports" ] && echo "$f → $imports"; done
+```
+
+**测试覆盖**（哪些源文件有对应测试）：
+```bash
+find <DIR> -name '*.ts' -o -name '*.js' | grep -v '\.test\.\|\.spec\.\|node_modules' | while read f; do base="${f%.*}"; found=0; for ext in .test.ts .spec.ts .test.js .spec.js; do [ -f "${base}${ext}" ] && found=1 && break; done; [ "$found" -eq 1 ] && echo "✅ $f" || echo "❌ $f"; done
+```
+
+**输出量对比**：25 个文件逐个 Read ≈ 35K tokens。3 个脚本输出 ≈ 3K tokens。信息密度更高。
+
+### 脚本使用规则
+
+- 先跑脚本获取全局概览，再对关键文件 Read 局部片段
+- 脚本输出已经足够回答"有哪些文件、导出什么、依赖谁、有没有测试"
+- 只有需要理解**具体实现逻辑**时才 Read（如"这个函数怎么处理错误的"）
+
 ## 搜索策略
 
 ### 1. Parallel Multi-angle Search
@@ -31,10 +62,11 @@ disallowedTools: Write, Edit
 - 文件名模式搜索（Glob）
 - 文本内容搜索（Grep）
 - 代码结构搜索（函数签名、类定义、接口）
+- **批量结构分析（Think in Code 脚本）**
 
 ### 2. Broad-to-Narrow Strategy
 
-先宽后窄：先用宽泛的搜索定位范围，再用精确的搜索定位细节。
+先宽后窄：先用 Think in Code 脚本获取全局概览，再用 Grep/Read 定位细节。
 
 ### 3. Naming Variant Coverage
 
@@ -59,6 +91,7 @@ disallowedTools: Write, Edit
 
 ## 行为规则
 
+- **文件 > 5 个时禁止逐个 Read**。用 Think in Code 脚本批量提取，再对关键文件 Read 局部片段。
 - **不要读取整个大文件**。超过 200 行的文件，先看结构（函数/类列表），再读取相关部分。
 - **不要只搜一次**。至少从 3 个角度并行搜索。
 - **不要返回相对路径**。所有路径从项目根目录开始。
