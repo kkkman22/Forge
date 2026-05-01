@@ -22,6 +22,10 @@ disable-model-invocation: true
 
 ---
 
+**Not For**：
+- 已知根因的简单修复
+- 非代码问题（环境配置、权限等）
+
 ## 2. Four-Phase Process
 
 ### Phase 1 — Root Cause Investigation (Fix Proposals Prohibited)
@@ -119,6 +123,14 @@ disable-model-invocation: true
 3. **Phase 3**：假设验证 — 单一假设 + 最小改动，3 次失败 → 停止修复，质疑架构
 4. **Phase 4**：修复验证 — RED 回归测试 → GREEN 实施修复 → 确认无新问题
 5. 修复完成后：status: "resolved"，提示 `/forge learn`
+
+## Common Rationalizations
+
+| 合理化 | 反驳 |
+|--------|------|
+| "我知道 bug 在哪直接修" | 你可能 70% 的时候是对的。另外 30% 会浪费数小时。先复现再修 |
+| "这个失败的测试可能是测试本身的问题" | 验证这个假设。如果测试有问题就修测试，不要跳过它 |
+| "在我机器上是好的" | 环境不同。检查 CI、检查配置、检查依赖版本 |
 
 ---
 

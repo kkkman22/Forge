@@ -20,6 +20,10 @@ disable-model-invocation: true
 
 ---
 
+**Not For**：
+- 轻量路径的简单修复（无值得沉淀的经验）
+- 中止的任务（abort 后无需 learn）
+
 ## 2. Execution Quality Analysis (Closed-loop Feedback)
 
 在知识提取之前，先对本次开发的执行质量进行结构化分析。
@@ -338,6 +342,14 @@ After knowledge is captured, automatically **copy** task artifacts to `.forge/ar
 | `.forge/debug/<topic>.md` | `archive/<date>-<topic>/debug/` |
 
 After archival, update `.forge/status.md` phase to `"completed"`. Do not archive knowledge/ and config.md.
+
+## Common Rationalizations
+
+| 合理化 | 反驳 |
+|--------|------|
+| "这次开发没什么值得记录的" | 每次开发都有值得记录的经验。"没什么特别的"本身就是一个信号——说明你没有深入反思 |
+| "知识沉淀是额外开销" | 不沉淀的经验等于没有发生过。下次遇到同样问题时你会从零开始 |
+| "代码本身就是文档" | 代码记录了"做了什么"，不记录"为什么这样做"和"试过什么不行" |
 
 ---
 
