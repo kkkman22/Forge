@@ -143,7 +143,7 @@ Read `ci_check_command` from config.md → execute as-is. Empty → `verify_comm
 4. Loop: Probes → TDD → status → progress → commit → counter-1
 5. Full: Phase 1 research → Phase 2 modules
 6. Final Validation
-7. Delete interim → `/forge review`
+7. Delete interim → AskUserQuestion（→ 详见 shared/next-step-protocol.md）
 
 3 consecutive same-fix → `/forge debug`
 
