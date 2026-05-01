@@ -220,8 +220,14 @@ export { isFixCandidate, parseGitLog as parseFixRecoveryGitLog } from "./fix-rec
 // Ship gate (extended)
 // ---------------------------------------------------------------------------
 
-export type { ProgressResult, ReviewResult, ShipGateResult, TestResult } from "./ship.js";
-export { checkShipGate, checkShipGateWithChecklist } from "./ship.js";
+export type {
+  ProgressResult,
+  ReviewFreshnessResult,
+  ReviewResult,
+  ShipGateResult,
+  TestResult,
+} from "./ship.js";
+export { checkReviewFreshness, checkShipGate, checkShipGateWithChecklist } from "./ship.js";
 
 // ---------------------------------------------------------------------------
 // Multi-task status tracking
