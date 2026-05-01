@@ -20,6 +20,11 @@ disable-model-invocation: true
 
 ---
 
+**Not For**：
+- 纯文档更新
+- 纯配置变更（无行为影响）
+- 需求尚未明确时（先 spec）
+
 ## 2. Pre-build Checks
 
 在标准路径和全量路径下，build 启动前**必须逐条通过以下前置检查**。任一条件不满足时，不得继续 build。
@@ -518,6 +523,14 @@ $ /forge build
 | 5 | Casually modifying out-of-scope code | Changing "not great" code seen along the way | Only modify Plan-specified scope, record out-of-scope issues to findings |
 | 6 | Narrating code edits step by step | Outputting preview and explanation before each operation | Execute silently, only output brief notes at Decision_Point |
 | 7 | Self-assembling verification commands | Building partial commands instead of using ci_check_command | Execute config.md's ci_check_command as-is, no substitution or omission |
+
+## Common Rationalizations
+
+| 合理化 | 反驳 |
+|--------|------|
+| "改动只有几行不值得写测试" | 几行改动的回归成本远高于写测试的成本。小改动的 bug 最难发现 |
+| "先写实现再补测试更快" | 先写实现的测试只能证明代码做了什么，不能证明需求被满足 |
+| "这个函数太简单了不会出错" | 简单函数的 bug 最难发现，因为没人会去检查它 |
 
 ---
 

@@ -22,6 +22,10 @@ disable-model-invocation: true
 
 ---
 
+**Not For**：
+- 首次开始新任务（用 `/forge`）
+- 上一个任务已完成（用 `/forge` 开始新任务）
+
 ## 2. Data Sources & Five-Question Recovery
 
 ### Prerequisite: Read Status Files
@@ -105,6 +109,14 @@ disable-model-invocation: true
 3. 所有任务已完成 → 提示进入下一阶段（review/test/ship）
 
 定位后等待用户确认：确认 → 从定位的任务继续 `/forge build`；拒绝 → 等待用户指示。
+
+## Common Rationalizations
+
+| 合理化 | 反驳 |
+|--------|------|
+| "我记得上次做到哪了不需要恢复" | 上下文窗口是有限的。写下来的状态比记忆可靠，尤其是跨会话时 |
+| "直接从头开始更快" | 从头开始意味着丢弃已完成的工作和已发现的问题。恢复上下文的成本远低于重做 |
+| "状态文件可能过时了" | 状态文件是 Forge 的单一真理源。如果过时了，resume 会检测到并提示 |
 
 ---
 

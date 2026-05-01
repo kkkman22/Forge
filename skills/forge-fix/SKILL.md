@@ -22,6 +22,10 @@ disable-model-invocation: true
 
 ---
 
+**Not For**：
+- 非 review 产出的问题（用 forge-debug）
+- P0 问题需要架构变更时（用 forge-debug）
+
 ## 2. Three-Phase Workflow
 
 ### 2.1 Analyze Phase (fix-analyze)
@@ -167,3 +171,10 @@ status: "resolved"
 | 修复范围外的代码 | "顺手"重构旁边代码或修改 analyze 未声明的文件 | 只修改 analyze 报告中声明的文件，需改其他文件则回到 analyze 更新 |
 | 跳过验证就声称修复 | 修改代码后不运行验证清单直接声称"bug 已修复" | 逐项执行验证清单，每项有实际命令输出作为证据 |
 | 只修表面症状不修根因 | 加 null check / 加大超时 / 加数据修复脚本 | 追踪到根因（为什么 null？为什么超时？），修复根因而非症状 |
+
+## Common Rationalizations
+
+| 合理化 | 反驳 |
+|--------|------|
+| "P2 问题不重要可以跳过" | P2 问题积累会降低代码健康度。修复成本现在最低，以后只会更高 |
+| "直接改代码比走修复流程快" | 修复流程确保变更被追踪、被验证、被记录。直接改代码绕过了所有质量保障 |

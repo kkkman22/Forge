@@ -20,6 +20,10 @@ disable-model-invocation: true
 
 ---
 
+**Not For**：
+- 任务即将完成（先完成再说）
+- 临时遇到困难（先 debug）
+
 ## 2. Execution Flow
 
 ### Step 1: Confirm Abort
@@ -88,6 +92,14 @@ updated: "YYYY-MM-DD HH:mm"
 
 status.md 已重置。你可以使用 /forge 开始新任务。
 ```
+
+## Common Rationalizations
+
+| 合理化 | 反驳 |
+|--------|------|
+| "再试一次也许就好了" | 如果已经失败了多次，再试一次大概率还是失败。中止不是失败，是明智的止损 |
+| "已经做了这么多不想浪费" | 沉没成本谬误。已产生的工作会归档保留，但继续投入在错误方向上才是真正的浪费 |
+| "手动清理状态文件就行" | 手动清理容易遗漏，导致下次任务的状态污染。abort 确保干净的重置 |
 
 ---
 

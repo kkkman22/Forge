@@ -24,6 +24,10 @@ Forge 路由器从三个维度分析任务：
 
 ---
 
+**Not For**：
+- 已知要执行的子命令（直接 `/forge build`）
+- 非 Forge 管理的任务
+
 ## 1. Routing Flow
 
 当用户输入 `/forge <任务描述>` 时，按以下四步执行：

@@ -22,6 +22,10 @@ disable-model-invocation: true
 
 ---
 
+**Not For**：
+- 需求不明确需要人工讨论的任务
+- 涉及不可逆操作需要人工确认的场景
+
 ## 2. Trigger
 
 ### Basic Usage
@@ -312,6 +316,14 @@ updated: "2025-01-15 14:30"
 | `loop_iteration` | Loop startup (=0), updated after each iteration | Loop end (normal/error) |
 | `skill_sequence` | Loop startup | Cleared on normal completion; retained on error exit (for resume) |
 | `phase` | After routing complete, updated after each iteration | Set to `completed` on normal completion; retained on error exit |
+
+## Common Rationalizations
+
+| 合理化 | 反驳 |
+|--------|------|
+| "手动逐步执行更可控" | 对于明确需求的标准路径，自主模式的质量门禁提供了与手动模式相同的保障，但效率更高 |
+| "自主模式会跳过重要检查" | 自主模式不降低质量标准。所有门禁、TDD 铁律、评审流程照常执行，只是跳过人工确认点 |
+| "出了问题不好排查" | Loop 的每轮迭代都有 commit/rollback 机制，熔断器防止无限循环，状态文件记录完整执行轨迹 |
 
 ---
 

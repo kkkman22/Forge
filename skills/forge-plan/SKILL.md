@@ -20,6 +20,10 @@ disable-model-invocation: true
 
 ---
 
+**Not For**：
+- 轻量路径任务（≤1 文件 ≤20 行）
+- Spec 已包含完整任务拆解的情况
+
 ## 2. Five-Step Planning Process
 
 ### Step 1: Research
@@ -505,3 +509,11 @@ Plan 阶段最常见的 AI 失败模式。如果你发现自己正在做以下�
 | 2 | **Missing dependencies** | Task 3 references Task 1's types but ordering is wrong; implicit dependencies not reflected | Draw dependency graph after Task Breakdown, ensure each reference is defined in a prior task. → §5.3 Type consistency check |
 | 3 | **Placeholders not replaced** | Writing `// TODO: implement logic`, `添加适当的错误处理`, `类似 Task 2` | Each step must contain complete executable code. If you can't write it, you haven't thought it through—go back to Step 1. → §4 Prohibited content list |
 | 4 | **Task breakdown without reading Spec** | Breaking down tasks based on "rough understanding", only reading titles not scenarios | §2 Step 1 Research is mandatory. Go through each requirement and scenario, map against scenario summary table. → §5.1 Spec coverage |
+
+## Common Rationalizations
+
+| 合理化 | 反驳 |
+|--------|------|
+| "边做边想更高效" | 边做边想是产生混乱代码和返工的主要原因。10 分钟规划节省数小时调试 |
+| "任务很明显不需要拆解" | 写下来。显式的任务列表能暴露隐藏的依赖和被遗忘的边界情况 |
+| "规划是额外开销" | 规划就是任务本身。没有计划的实现只是在打字 |
