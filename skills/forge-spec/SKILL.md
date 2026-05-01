@@ -49,43 +49,26 @@ disable-model-invocation: true
 
 ### Conversion Rules
 
-| Extraction Target | Conversion Strategy |
-|---------|---------|
-| **Purpose** | Extract as the "Purpose" section, describing the problem to solve and for whom |
-| **Requirement Items** | Decompose into independent requirement items, each with an ID and title |
-| **Scenarios** | Convert to "When...Then..." format. Existing acceptance criteria are adapted directly; narrative descriptions must be rewritten |
-| **Non-goals** | Direct mapping. When the original text is unclear, infer from requirements and prompt user for confirmation |
-| **Anti-drift Declaration** | Auto-generated during conversion, inferring main goal and non-goal proxy signals from extracted requirements |
-| **Delta** | If the original text describes modifications to existing functionality, extract as a Delta section |
+| Target | Strategy |
+|--------|----------|
+| Purpose | Extract as "Purpose" section |
+| Requirements | Decompose into independent items (ID + title each) |
+| Scenarios | Convert to "When...Then..." format; narratives must be rewritten |
+| Non-goals | Direct mapping; unclear text → infer + user confirmation |
+| Anti-drift | Auto-generated from extracted requirements |
+| Delta | Extract if original describes modifications |
 
-### Conversion Quality Assurance
+### Quality Assurance
 
-1. **No information loss**: All requirement points in the original text must appear in the conversion result. Unmappable content is placed in a "pending confirmation" list
-2. **No information addition**: Do not speculate on requirements not present in the original text. Newly added content (such as anti-drift declarations) must be labeled "auto-generated"
-3. **Scenarios must be testable**: Converted scenarios must conform to the "When...Then..." format. Overly vague scenarios are flagged with a prompt to supplement
-4. **Remove implementation details**: Class names, function names, and technical solutions from the original text are removed during conversion, preserving only behavioral descriptions
+No info loss (unmappable → "pending confirmation" list) · No info addition (auto-generated content labeled) · Scenarios must be testable (vague → flagged) · Remove implementation details (class/function/tech names)
 
-### Frontmatter Format (Import Mode)
+### Frontmatter (Import Mode)
 
-```yaml
----
-feature: "<从文档内容推断的功能名，kebab-case>"
-status: "draft"
-date: "YYYY-MM-DD"
-import_source: "<原始文件的相对路径>"
----
-```
+添加 `import_source: "<原始文件相对路径>"` 字段。原始文件保留原位。
 
-`import_source` 字段记录规格的来源，便于追溯。导入完成后，原始文件保留在原位，不做移动或删除。
+### Integration
 
-### Integration with Existing Flow
-
-导入并锁定后，规格成为标准的 `.forge/specs/<feature>/spec.md`，后续流程无需区分来源：
-
-1. `/forge <任务描述>` → Router 检测到已锁定 Spec → 路由到标准路径
-2. `/forge plan` → 基于锁定的 Spec 生成计划
-3. `/forge build` → Spec 门禁检查通过，按 Spec 实现
-4. `/forge review` → Review 的 Spec 对齐检查正常执行
+导入锁定后成为标准 `.forge/specs/<feature>/spec.md`，后续 plan/build/review 流程无区别。
 
 ---
 
@@ -97,18 +80,18 @@ import_source: "<原始文件的相对路径>"
 
 | Input Source | Description |
 |--------|------|
-| `.forge/decisions/` | 已有的决策文档（如有），提取产品定义、技术方案、安全评估 |
+| `.forge/decisions/` | 决策文档（产品定义、技术方案、安全评估） |
 | `.forge/config.md` | 项目配置（技术栈、安全级别） |
-| `.forge/specs/` | 现有规格文档，避免重复定义、确保一致性 |
-| User Input | 当前任务的需求描述 |
+| `.forge/specs/` | 现有规格，避免重复、确保一致 |
+| User Input | 当前需求描述 |
 
 **生成规则**：
 
-1. **先读代码再写 spec**：在生成草案之前，AI **必须**先读取与需求相关的代码文件，理解当前的模块结构、函数签名和行为。不允许在未读代码的情况下填写"Current State"部分。
-2. 从决策文档中提取已确认的产品定义和技术方向，不重复讨论已决事项。
-3. 从现有 specs 中识别相关功能，确保新规格与已有规格不冲突。
-4. 将需求拆解为独立的需求条目，每个条目附带至少一个可测试场景。
-5. 如果项目为棕地开发（现有代码库上的变更），自动包含 Delta 章节。
+1. **先读代码再写 spec**：AI 必须先读取相关代码文件理解模块结构和行为，不允许未读代码就填写 Current State
+2. 从决策文档提取已确认方向，不重复讨论
+3. 从现有 specs 识别相关功能，确保不冲突
+4. 需求拆解为独立条目，每条至少一个可测试场景
+5. 棕地开发自动包含 Delta 章节
 
 草案生成后，向用户展示完整草案内容，进入 Review 步骤。
 
@@ -116,52 +99,23 @@ import_source: "<原始文件的相对路径>"
 
 对草案执行以下自检，逐项报告结果：
 
-| Check Item | Pass Criteria |
+| Check | Pass Criteria |
 |--------|---------|
-| **Testability** | 所有需求均有"当...则..."格式的场景 |
-| **Boundary Clarity** | 无模糊用语（如"适当的"、"合理的"、"等等"） |
-| **Human Readability** | 不包含类名、函数名、库名等实现细节 |
-| **Brownfield Compatibility** | 棕地项目有完整的新增/修改/不变章节 |
-| **Anti-drift Completeness** | 主目标、非目标代理信号、验证材料角色三项均已填写 |
-| **Two-part Structure** | Current State 有 file:line 引用；Proposed Change 有"要改变的"和"明确不改变的" |
-| **Reversibility** | 回滚清单和挂载点清单均已填写 |
+| Testability | 所有需求均有"当...则..."格式场景 |
+| Boundary Clarity | 无模糊用语（"适当的"、"合理的"、"等等"） |
+| Human Readability | 无类名/函数名/库名等实现细节 |
+| Brownfield Compat | 棕地项目有完整新增/修改/不变章节 |
+| Anti-drift | 主目标、非目标代理信号、验证材料角色三项已填写 |
+| Two-part Structure | Current State 有 file:line 引用；Proposed Change 有变更/不变声明 |
+| Reversibility | 回滚清单和挂载点清单已填写 |
 
-**自检输出格式**：
-
-```
-📋 规格自检
-
-✅ 可测试性：所有 N 个需求均有可测试场景
-✅ 边界清晰度：无模糊用语
-✅ 人类可读性：无实现细节泄露
-✅ 棕地兼容性：Delta 章节完整（或：非棕地项目，跳过）
-✅ 反漂移完整性：主目标、非目标代理信号、验证材料角色均已填写
-✅ 两段式结构：Current State 有 file:line 引用，Proposed Change 有变更/不变声明
-✅ 可卸载性：回滚清单和挂载点清单已填写
-
-自检通过。确认锁定此规格？(y/n)
-```
+自检未通过 → 自动修正并重新自检。全部通过后提示用户确认锁定。
 
 如果任一检查项未通过，列出具体问题并自动修正草案，然后重新自检，直到全部通过。
 
-### Step 3: Lock (Lock)
+### Step 3: Lock
 
-用户确认后执行锁定：
-
-1. 将 YAML frontmatter 中的 `status` 从 `"draft"` 改为 `"locked"`。
-2. 将规格文档写入 `.forge/specs/<feature>/spec.md`。
-3. 输出确认信息：
-
-```
-🔒 规格已锁定：.forge/specs/<feature>/spec.md
-
-此规格现在是 build 和 review 的唯一真理源。
-后续修改需要先解锁（将 status 改回 draft），修改后重新走 Review → Lock 流程。
-
-下一步 → 自动调用 /forge plan（→ 详见 shared/next-step-protocol.md）
-```
-
-**未锁定时的行为**：如果用户不确认（回复 n、否、不等），规格保持 `draft` 状态，可以继续修改。用户可以提出修改意见，Forge 据此更新草案并重新进入 Review。
+用户确认后：frontmatter `status` → `"locked"`，写入 `.forge/specs/<feature>/spec.md`。修改需先解锁（status → draft）重走 Review → Lock。用户不确认则保持 draft 可继续修改。
 
 ---
 
@@ -171,118 +125,25 @@ import_source: "<原始文件的相对路径>"
 
 ```yaml
 ---
-feature: "<功能名>"
+feature: "<功能名>"        # kebab-case
 status: "draft" | "locked"
 date: "YYYY-MM-DD"
-import_source: "<原始文件路径>"  # 可选，仅导入模式
+import_source: "<path>"    # 可选，仅导入模式
 ---
 ```
-
-| Field | Type | Description |
-|------|------|------|
-| `feature` | string | 功能名称，kebab-case 格式，如 `user-notification` |
-| `status` | string | `draft`（草案）或 `locked`（已锁定） |
-| `date` | string | 创建或最后修改日期，YYYY-MM-DD 格式 |
-| `import_source` | string? | 可选。导入模式下记录原始规格文件的相对路径 |
 
 ### Body Structure
 
 ```markdown
----
-feature: "user-notification"
-status: "draft"
-date: "2025-01-15"
----
-
-## 目的
-
-<一段话说明这个功能要解决什么问题，为谁解决>
-
-## 需求
-
-### 需求 1：<需求标题>
-
-<需求描述，描述行为而非实现>
-
-**场景**：
-
-- 当 <前置条件>，则 <预期结果>
-- 当 <前置条件>，则 <预期结果>
-
-### 需求 2：<需求标题>
-
-...
-
-## 场景汇总
-
-| ID | Scenario | Requirement |
-|------|------|---------|
-| S1 | 当 ...，则 ... | 需求 1 |
-| S2 | 当 ...，则 ... | 需求 2 |
-
-## Current State
-
-<**必填**。描述与本次变更相关的代码现状。AI 必须在生成此部分之前实际读取相关代码文件。>
-
-### Related Modules
-
-| Module/Function | Location | Current Behavior |
-|-----------|------|---------|
-| <模块或函数名> | <file:line 或文件路径> | <当前行为的简要描述> |
-
-### Current Structure Overview
-
-<用 1-3 段文字描述相关模块/函数的当前结构和职责划分，引用具体的 file:line 或函数名>
-
-## Proposed Change
-
-<**必填**。明确描述本次要改变什么、不改变什么。>
-
-### To Change
-
-- <变更项 1>：<具体描述变更内容>
-
-### Explicitly Unchanged
-
-- <不变项 1>：<为什么不需要改>
-
-## 不做什么
-
-<明确列出本次不做的事情，划清边界>
-
-## Reversibility
-
-<**必填**。回答：如果要回滚这个 feature，需要撤销哪些改动？>
-
-### Rollback Checklist
-
-- <需要撤销的改动>
-
-### Mount Points
-
-<列出 feature 的所有外部接入点。判据：删了这一项，feature 是否从用户/系统视角消失？>
-
-## 反漂移声明
-
-### 主目标
-
-<用一句话描述本次功能的核心目标。>
-
-### 非目标代理信号
-
-<列出看起来相关但不应被优化的指标。>
-
-### 验证材料角色
-
-声明：本规格中的场景和示例数据仅用于验证行为正确性，不构成产品需求的一部分。
-
-## Delta
-
-<仅棕地开发时包含此章节>
-
-### New / Modified / Unchanged
-
-- <对应条目>
+## 目的 — <解决问题，为谁>
+## 需求 — ### 需求 N：<标题> + 行为描述 + **场景**：当...则...
+## 场景汇总 — | ID | Scenario | Requirement |
+## Current State — **必填**，AI 必须先读代码。Related Modules 表 + Structure Overview
+## Proposed Change — **必填**。To Change + Explicitly Unchanged
+## 不做什么 — 划清边界
+## Reversibility — **必填**。Rollback Checklist + Mount Points
+## 反漂移声明 — 主目标 + 非目标代理信号 + 验证材料角色
+## Delta — 仅棕地开发：New / Modified / Unchanged
 ```
 
 ---
@@ -291,65 +152,31 @@ date: "2025-01-15"
 
 ### 4.1 Testability
 
-每个需求**至少包含一个可测试场景**。可测试场景使用"当...则..."格式：
+每个需求至少一个可测试场景，格式：`当 <前置条件/触发动作>，则 <可观测的预期结果>`。
 
-```
-当 <前置条件/触发动作>，则 <可观测的预期结果>
-```
+合格：当用户提交空表单，则显示"请填写必填字段" · 不合格："系统应该有良好的错误处理"（不可测试）
 
-**合格示例**：
-- 当用户提交空表单，则系统显示"请填写必填字段"错误提示
-- 当 API 返回 404，则页面展示"未找到"提示并提供返回链接
+### 4.2 Behavior, Not Implementation
 
-**不合格示例**：
-- 系统应该有良好的错误处理 ← 不可测试，什么是"良好的"？
-- 页面应该快速加载 ← 不可测试，什么是"快速"？
+**禁止**：类名/函数名/库名/表名/技术方案 · **允许**：用户可见行为、业务规则、性能约束
 
-### 4.2 Behavior Description, Not Implementation Description
+### 4.3 Brownfield Delta
 
-规格**只描述系统的外部行为**，不涉及内部实现。
+棕地开发必须包含 Delta（新增/修改/不变）。"不变"防止 build 误改。信号：已有代码库、修改现有功能、specs 中已有其他规格。
 
-**禁止出现**：类名（如 `UserService`）、函数名（如 `handleSubmit()`）、库名（如 `使用 Redis 缓存`）、数据库表名、具体技术方案（如 `使用 WebSocket 实现实时推送`）
+### 4.4 Two-part Structure
 
-**允许出现**：用户可见的行为（如"系统发送通知"）、业务规则（如"订单金额超过 1000 元时需要审批"）、性能约束（如"响应时间不超过 2 秒"）
-
-### 4.3 Brownfield Development Delta Section
-
-当项目为棕地开发（在现有代码库上进行变更）时，规格**必须包含 Delta 章节**（新增/修改/不变三个子章节）。"不变"子章节防止 build 阶段误改，也帮助 review 确认没有意外副作用。
-
-**判定棕地开发的信号**：项目已有代码库（非空项目）、任务是对现有功能的修改或增强、`.forge/specs/` 中已有其他功能的规格
-
-### 4.4 "Current State → Proposed Change" Two-part Structure
-
-规格文档**必须包含** "Current State" 和 "Proposed Change" 两个部分。
-
-**Current State 要求**：必须引用具体代码位置（`file:line` 格式或函数名）、必须描述当前行为和结构、AI 必须先读代码
-
-**Proposed Change 要求**：必须明确"要改变什么"和"不改变什么"
+必须包含 Current State（file:line 引用 + 当前行为）和 Proposed Change（要改变的 + 明确不改变的）。AI 必须先读代码。
 
 ### 4.5 Reversibility
 
-规格文档**必须包含** "Reversibility" 部分，回答：如果要回滚这个 feature，需要撤销哪些改动？包含回滚清单和挂载点清单。提前思考可卸载性能帮助发现隐藏的耦合和副作用。
+必须包含回滚清单和挂载点清单。提前思考可卸载性帮助发现隐藏耦合。
 
 ---
 
 ## 5. Gate: Spec Not Locked → Block `/forge build`
 
-→ 遵循 CLAUDE.md §2.2 前置检查。在标准路径和全量路径下，`/forge build` 启动前**必须检查** `.forge/specs/` 中是否存在锁定的规格。
-
-如果相关 spec 的 status 不是 `"locked"`，阻断 build：
-
-```
-🚫 Build 阻断：规格未锁定
-
-当前任务的规格状态为 "draft"，需要先锁定规格才能开始 build。
-请运行 /forge spec 完成规格的 Review 和 Lock 流程。
-
-规格路径：.forge/specs/<feature>/spec.md
-当前状态：draft
-```
-
-**轻量路径例外**：轻量路径不要求锁定的 spec，直接执行 build。
+→ 遵循 CLAUDE.md §2.2 前置检查。status 非 `"locked"` → 阻断 build，提示运行 `/forge spec`。轻量路径例外。
 
 ---
 
@@ -368,21 +195,21 @@ date: "2025-01-15"
 
 | Condition | Output |
 |------|------|
-| 无 decisions/ 文档 | ℹ️ 未找到决策文档，将直接基于你的需求描述生成规格草案。如需先进行多视角决策分析，可运行 /forge decide |
-| 已有同名 spec (draft) | 读取现有草案作为基础，在其上修改 |
-| 已有同名 spec (locked) | ⚠️ 该功能的规格已锁定。如需修改，请先将 status 改为 "draft"，然后重新运行 /forge spec |
-| 需求描述过于模糊 | 追问：1. 要解决什么问题？2. 目标用户是谁？3. 有哪些关键的使用场景？ |
-| 自检反复不通过（3次） | 停止自动修正，将问题呈现给用户请其提供更具体的场景描述 |
-| 无 `.forge/` 目录 | ⚠️ 未检测到 .forge/ 目录。请先运行 forge init 初始化项目 |
-| 导入模式：文件不存在 | ⚠️ 指定的文件不存在。请检查文件路径是否正确 |
-| 导入模式：无法提取需求 | ⚠️ 无法从文档中提取有效的需求条目。请确认文档包含具体的功能需求 |
-| 导入模式：原文含实现细节 | ℹ️ 转化过程中移除了实现细节（规格只描述行为）。如需保留作为技术参考，原始文件中不会丢失 |
+| 无 decisions/ | 基于需求描述直接生成；如需决策分析可运行 /forge decide |
+| 同名 spec (draft) | 读取现有草案为基础修改 |
+| 同名 spec (locked) | ⚠️ 先将 status 改为 draft，再重新运行 |
+| 需求模糊 | 追问：问题？目标用户？关键场景？ |
+| 自检反复失败（3次） | 停止自动修正，呈现问题给用户 |
+| 无 `.forge/` | ⚠️ 先运行 forge init |
+| 导入：文件不存在 | ⚠️ 检查路径 |
+| 导入：无法提取需求 | ⚠️ 确认文档含功能需求 |
+| 导入：含实现细节 | ℹ️ 转化时移除实现细节，原始文件不丢失 |
 
 ---
 
 ## 8. Examples
 
-### Example: Greenfield Project (New Project)
+### Canonical Example: Greenfield
 
 任务："为订单系统添加批量导出功能"
 
@@ -392,63 +219,20 @@ feature: "order-batch-export"
 status: "draft"
 date: "2025-01-15"
 ---
-
 ## 目的
-
-为订单管理系统提供批量导出功能，让运营人员能够按条件筛选并导出订单数据，用于对账和报表分析。
-
+为运营人员提供按条件筛选并导出订单数据的功能，用于对账和报表。
 ## 需求
-
 ### 需求 1：按条件筛选导出
-
-运营人员可以按时间范围、订单状态、金额范围筛选订单并导出。
-
-**场景**：
-
-- 当运营人员选择"最近 7 天"并点击导出，则系统生成包含最近 7 天所有订单的文件并开始下载
-- 当筛选结果为空，则系统提示"没有符合条件的订单"且不生成文件
-
+**场景**：当选择"最近7天"并导出，则生成文件开始下载 · 当结果为空，则提示"没有符合条件的订单"
 ### 需求 2：大数据量导出
-
-**场景**：
-
-- 当导出订单数超过 10000 条，则系统提示"导出任务已提交，完成后将通知你"并在后台处理
-- 当后台导出完成，则系统发送通知并提供下载链接
-- 当下载链接超过 24 小时，则链接失效并提示"链接已过期，请重新导出"
-
-## 场景汇总
-
-| ID | Scenario | Requirement |
-|------|------|---------|
-| S1 | 当运营人员选择"最近 7 天"并点击导出，则系统生成文件并开始下载 | 需求 1 |
-| S2 | 当筛选结果为空，则提示"没有符合条件的订单" | 需求 1 |
-| S3 | 当导出超过 10000 条，则提示"导出任务已提交" | 需求 2 |
-| S4 | 当后台导出完成，则发送通知并提供下载链接 | 需求 2 |
-| S5 | 当下载链接超过 24 小时，则链接失效 | 需求 2 |
-
+**场景**：当超过10000条，则提示"导出任务已提交"后台处理 · 当完成，则通知+下载链接 · 当链接超24h，则失效
 ## 不做什么
-
-- 不做导出模板自定义（固定格式）
-- 不做定时自动导出（仅支持手动触发）
-- 不做导出历史记录管理
-
+不做模板自定义、定时导出、历史记录管理
 ## 反漂移声明
-
-### 主目标
-
-让运营人员能够按条件筛选并导出订单数据，大数据量时支持异步处理。
-
-### 非目标代理信号
-
-- 导出速度优化不是目标，功能正确性和数据完整性才是
-- 文件格式丰富度不是目标，固定格式能满足对账和报表需求即可
-
-### 验证材料角色
-
-声明：本规格中的场景和示例数据（如"10000 条"、"24 小时"）仅用于验证行为正确性，不构成产品需求的一部分。
+主目标：按条件筛选导出，大数据量异步处理 · 非目标：导出速度、格式丰富度
 ```
 
-**棕地项目变体**：额外包含 Delta 章节（新增/修改/不变）和 Current State / Proposed Change 两段式结构。详见 §3 Body Structure template.
+**Brownfield 变体**：额外包含 Current State（file:line 引用）+ Proposed Change（变更/不变）+ Delta（新增/修改/不变）。结构见 §3。
 
 ---
 
