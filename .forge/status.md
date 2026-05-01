@@ -1,15 +1,18 @@
 ---
-current_task: "skill-behavioral-guardrails"
+current_task: "none"
 tier: "standard"
-phase: "build"
+phase: "completed"
 updated: "2026-05-01"
 ---
 
 # 项目状态
 
-当前任务：为全部 17 个 SKILL.md 增加行为护栏（反合理化表 + 反触发条件）。
+无进行中任务。最近完成：routing-assumptions, skill-behavioral-guardrails。
 
-## 来源
+## 已完成工作
 
-- Spec: `.kiro/specs/skill-behavioral-guardrails/`
-- 类型：纯 Markdown 内容改动，不涉及 TypeScript
+- routing-assumptions: 路由器输出增加假设段落
+- skill-behavioral-guardrails: SKILL 行为护栏
+- Group C: 社区基础设施
+- Group D: SKILL 插件机制
+- Group E: 示例项目
