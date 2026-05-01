@@ -180,11 +180,12 @@ describe("determineNextSkill: build-light phase transitions", () => {
     expect(result.nextPhase).toBe("review");
   });
 
-  it("transitions to review when hasIncompleteTasks is undefined", () => {
+  it("stays in build-light when hasIncompleteTasks is undefined (conservative)", () => {
     const result = determineNextSkill(
       makeInput({ currentPhase: "build-light", hasIncompleteTasks: undefined }),
     );
-    expect(result.nextPhase).toBe("review");
+    // Conservative: undefined → assume incomplete, don't advance
+    expect(result.nextPhase).toBe("build-light");
   });
 });
 

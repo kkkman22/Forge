@@ -10,7 +10,12 @@
  * **Validates: Requirements 2.1, 2.2, 2.3, 2.4, 2.5, 6.1, 6.2, 6.3, 6.4, 8.4**
  */
 
-import { extractStringField, parseFrontmatter } from "./frontmatter.js";
+import {
+  extractListField,
+  extractNumericField,
+  extractStringField,
+  parseFrontmatter,
+} from "./frontmatter.js";
 import type { LogLevel } from "./logger/types.js";
 
 // ---------------------------------------------------------------------------
@@ -108,6 +113,76 @@ export function writeConfigLang(content: string, lang: string): string {
  */
 export function buildDefaultConfig(lang: string): string {
   return `---\n${LANG_FIELD}: ${lang}\n---\n`;
+}
+
+// ---------------------------------------------------------------------------
+// Config field types and defaults (State Resilience Layer 1)
+// ---------------------------------------------------------------------------
+
+/** Structured config fields with all fields guaranteed present. */
+export interface ConfigFields {
+  project: string;
+  stack: string[];
+  security_level: number;
+  knowledge_limit: number;
+  max_parallel_agents: number;
+}
+
+export const CONFIG_DEFAULTS: ConfigFields = {
+  project: "unknown",
+  stack: ["TypeScript"],
+  security_level: 1,
+  knowledge_limit: 20,
+  max_parallel_agents: 6,
+};
+
+/**
+ * Parse config.md frontmatter with graceful fallback to defaults.
+ *
+ * - undefined/empty content → all defaults + warnings
+ * - missing frontmatter → all defaults + warnings
+ * - partial fields → missing fields use CONFIG_DEFAULTS + warnings
+ * - invalid numeric fields → use defaults + warnings
+ */
+export function parseConfigGraceful(content: string | undefined): {
+  parsed: ConfigFields;
+  warnings: string[];
+} {
+  const warnings: string[] = [];
+
+  if (content === undefined || content.trim() === "") {
+    warnings.push("Config content is empty or undefined, using all defaults");
+    return { parsed: { ...CONFIG_DEFAULTS, stack: [...CONFIG_DEFAULTS.stack] }, warnings };
+  }
+
+  const fm = parseFrontmatter(content);
+  if (fm === null) {
+    warnings.push("Config has no valid YAML frontmatter, using all defaults");
+    return { parsed: { ...CONFIG_DEFAULTS, stack: [...CONFIG_DEFAULTS.stack] }, warnings };
+  }
+
+  const projectStr = extractStringField(fm.raw, "project");
+  const stackList = extractListField(fm.raw, "stack");
+  const securityLevel = extractNumericField(fm.raw, "security_level");
+  const knowledgeLimit = extractNumericField(fm.raw, "knowledge_limit");
+  const maxParallelAgents = extractNumericField(fm.raw, "max_parallel_agents");
+
+  if (projectStr === null) warnings.push("Config missing 'project', defaulting to 'unknown'");
+  if (stackList.length === 0) warnings.push("Config missing 'stack', defaulting to ['TypeScript']");
+  if (securityLevel === null) warnings.push("Config missing 'security_level', defaulting to 1");
+  if (knowledgeLimit === null) warnings.push("Config missing 'knowledge_limit', defaulting to 20");
+  if (maxParallelAgents === null)
+    warnings.push("Config missing 'max_parallel_agents', defaulting to 6");
+
+  const parsed: ConfigFields = {
+    project: projectStr ?? CONFIG_DEFAULTS.project,
+    stack: stackList.length > 0 ? stackList : CONFIG_DEFAULTS.stack,
+    security_level: securityLevel ?? CONFIG_DEFAULTS.security_level,
+    knowledge_limit: knowledgeLimit ?? CONFIG_DEFAULTS.knowledge_limit,
+    max_parallel_agents: maxParallelAgents ?? CONFIG_DEFAULTS.max_parallel_agents,
+  };
+
+  return { parsed, warnings };
 }
 
 // ---------------------------------------------------------------------------
