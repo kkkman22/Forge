@@ -22,6 +22,10 @@ disable-model-invocation: true
 
 ---
 
+**Not For**：
+- review 或 test 未执行
+- 存在未解决的 P0/P1 问题
+
 ## 2. Gate Checks
 
 `/forge ship` 启动前**必须通过三道门禁**，每道门禁的结果必须以 P5 证据链格式呈现（`[Command] → [Output] → [Claim]`）：
@@ -147,6 +151,14 @@ disable-model-invocation: true
 3. Passed → Show four delivery options
 4. Execute chosen delivery method
 5. Cleanup Worktree + prompt `/forge learn`
+
+## Common Rationalizations
+
+| 合理化 | 反驳 |
+|--------|------|
+| "测试都过了直接 merge 就行" | 测试通过 ≠ 需求满足。Review Gate 检查的是 Spec 对齐，Test Gate 检查的是代码正确性，两者缺一不可 |
+| "这是内部工具不需要走完整流程" | 内部工具出问题影响整个团队的生产力。流程存在是因为它能捕获问题 |
+| "回滚很容易所以不用太谨慎" | 回滚容易不代表应该依赖回滚。预防成本远低于修复成本 |
 
 ---
 
