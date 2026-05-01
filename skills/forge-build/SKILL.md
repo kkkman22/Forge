@@ -116,6 +116,8 @@ Read `ci_check_command` from config.md → execute as-is. Empty → `verify_comm
 
 **6.0 Anti-drift**: 6 prohibited behaviors (proxy metrics / absorb verification / relabel fixes / silent degrade / pseudo-success / modify frozen). → 详见 references/anti-drift.md
 
+**6.0.1 No Mid-build Confirmation**: Build 阶段内部，任务之间**禁止**停下来询问用户是否继续。完成一个任务后必须立即开始下一个任务，直到所有任务完成或遇到阻断性错误。禁止输出"是否继续？"、"是否继续清理/验证/实施？"等确认提示。禁止在任务之间列出剩余工作并等待用户确认。唯一允许停下来的情况：Three-strike 触发、阻断性错误、分支保护阻断。
+
 **6.1** Test First → CLAUDE.md §2.1 | **6.2** Atomic Commits (1 per task) | **6.3** Verify First → §2.3, P5 chain | **6.4** Three-strike → §2.4 | **6.5** Conciseness → §2.6 (structured outputs exempt)
 
 ---
