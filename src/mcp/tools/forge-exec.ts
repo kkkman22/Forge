@@ -78,7 +78,7 @@ export function isCommandDenied(command: string, denyPatterns: string[]): string
 // Subprocess execution
 // ---------------------------------------------------------------------------
 
-interface ExecResult {
+export interface ExecResult {
   stdout: string;
   stderr: string;
   exitCode: number;
