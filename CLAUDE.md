@@ -74,7 +74,7 @@ build 阶段主 Agent 必须执行周期性 Restatement Checkpoint：每完成 N
 
 #### Structured_Output 豁免清单
 
-以下格式完全豁免于散文压缩规则，不得压缩或省略：TDD 标记（🔴 RED / 🟢 GREEN / 🔵 REFACTOR）、P5 证据链、Restatement 摘要、Closure-First 探针结果、评审报告（P0/P1/P2/P3 表格）、代码块、commit 消息、安全警告、不可逆操作确认、路由分析、前置检查结果。新增结构化输出格式时必须同步更新此清单。
+以下格式完全豁免于散文压缩规则，不得压缩或省略：TDD 标记（🔴 RED / 🟢 GREEN / 🔵 REFACTOR）、P5 证据链、Restatement 摘要、Closure-First 探针结果、评审报告（P0/P1/P2/P3 表格）、代码块、commit 消息、安全警告、不可逆操作确认、路由分析、前置检查结果、变更摘要（变更/未触碰/关注点三段式）。新增结构化输出格式时必须同步更新此清单。
 
 #### 安全阀
 
