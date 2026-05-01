@@ -81,7 +81,7 @@ disable-model-invocation: true
 
 ### Phase 4 — Fix Verification
 
-**目标**：以 TDD 方式实施修复，确保问题解决且无新问题。
+**目标**：以 TDD 方式实施修复，确保问题解决且无新问题。→ TDD 规则详见 ../forge-build/references/tdd-rules.md
 
 **执行步骤**：
 

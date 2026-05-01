@@ -775,3 +775,78 @@ describe("Contract: CLAUDE.md reference pointers resolve", () => {
     }
   });
 });
+
+// ---------------------------------------------------------------------------
+// 19. SKILL references/ structure
+// ---------------------------------------------------------------------------
+
+describe("Contract: SKILL references/ structure", () => {
+  const skillsWithRefs: Record<string, string[]> = {
+    "forge-build": [
+      "tdd-rules.md",
+      "closure-probes.md",
+      "context-budget.md",
+      "anti-drift.md",
+      "function-contracts.md",
+    ],
+    "forge-review": [
+      "confidence-filtering.md",
+      "dedup-pipeline.md",
+      "quality-gate.md",
+      "function-contracts.md",
+    ],
+    "forge-plan": [
+      "atomic-task-format.md",
+      "lightweight-task-format.md",
+      "prohibited-content.md",
+      "function-contracts.md",
+    ],
+  };
+
+  for (const [skill, expectedFiles] of Object.entries(skillsWithRefs)) {
+    describe(`skills/${skill}/references/`, () => {
+      for (const file of expectedFiles) {
+        it(`${file} exists`, () => {
+          const refPath = resolve(ROOT, "skills", skill, "references", file);
+          expect(existsSync(refPath), `Missing: skills/${skill}/references/${file}`).toBe(true);
+        });
+      }
+    });
+  }
+
+  it("all internal reference pointers in SKILL.md files point to existing files", () => {
+    for (const skill of Object.keys(skillsWithRefs)) {
+      const skillContent = readFileSync(resolve(ROOT, "skills", skill, "SKILL.md"), "utf-8");
+      const refs = skillContent.match(/→ 详见 references\/[\w-]+\.md/g) || [];
+      for (const ref of refs) {
+        const fileName = ref.replace("→ 详见 references/", "");
+        const refPath = resolve(ROOT, "skills", skill, "references", fileName);
+        expect(
+          existsSync(refPath),
+          `Broken pointer in ${skill}/SKILL.md: references/${fileName}`,
+        ).toBe(true);
+      }
+    }
+  });
+
+  it("cross-SKILL reference pointers resolve to existing files", () => {
+    const crossRefPattern = /\.\.\/forge-build\/references\/[\w-]+\.md/g;
+    const skillsDir = resolve(ROOT, "skills");
+
+    for (const dir of readdirSync(skillsDir, { withFileTypes: true })) {
+      if (!dir.isDirectory()) continue;
+      const skillPath = resolve(skillsDir, dir.name, "SKILL.md");
+      if (!existsSync(skillPath)) continue;
+
+      const content = readFileSync(skillPath, "utf-8");
+      const refs = content.match(crossRefPattern) || [];
+      for (const ref of refs) {
+        const resolvedPath = resolve(skillsDir, dir.name, ref);
+        expect(
+          existsSync(resolvedPath),
+          `Broken cross-SKILL ref in ${dir.name}/SKILL.md: ${ref}`,
+        ).toBe(true);
+      }
+    }
+  });
+});
