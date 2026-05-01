@@ -34,73 +34,19 @@ disable-model-invocation: true
 
 **产出**：`.forge/findings/fix-analysis.md`
 
-**分析五步**：
+**分析五步**：1. Locate (Grep/Glob → file:line) → 2. Reproduce (正常 vs 失败路径分叉) → 3. Confirm (根因分类: 逻辑/状态/数据/并发/配置/缺防御) → 4. Assess (影响面) → 5. Propose (2-3 方案+推荐)
 
-| Step | Action | Output |
-|------|--------|--------|
-| 1. Locate | 用 Grep/Glob 搜索相关代码，记录 file:line | 问题代码位置 |
-| 2. Reproduce | 追踪正常路径 vs 失败路径的分叉点 | 失败路径描述 |
-| 3. Confirm | 分类根因（逻辑/状态/数据/并发/配置/缺防御） | 根因分类 |
-| 4. Assess | 评估影响面（哪些模块/功能受影响） | 影响面清单 |
-| 5. Propose | 提出 2-3 种修复方案 + 推荐 | 方案选项 |
-
-**分析报告格式**：
-
-```markdown
----
-topic: "<topic>"
-date: "YYYY-MM-DD"
-status: "analyzed"
----
-
-## Issue Location
-- **Position**: `<file>:<line>`
-- **Failure Path**: <正常 vs 失败的分叉描述>
-
-## Root Cause Analysis
-- **Category**: <逻辑/状态/数据/并发/配置/缺防御>
-- **Root Cause**: <具体描述>
-
-## Impact Assessment
-- <受影响的模块/功能>
-
-## Fix Proposals
-### Proposal A (Recommended)
-- **Description** / **Files to Change** / **Risk**
-### Proposal B
-- **Description** / **Files to Change** / **Risk**
-```
+**报告格式**：`.forge/findings/fix-analysis.md`（frontmatter: topic/date/status）+ Issue Location (file:line) + Root Cause (category: 逻辑/状态/数据/并发/配置/缺防御) + Impact Assessment + Fix Proposals (2-3 方案含推荐)。
 
 **双模式行为**：interactive 展示分析结果等待用户选择方案；autonomous 自动选择推荐方案（`fix_analyze_confirm`，preset: `auto-recommend`）。
 
 ### 2.2 Apply 阶段（fix-apply）
 
-**职责**：按选定方案执行定点修复。
-
-**范围约束规则**：
-
-- **只改 analyze 中声明的文件**——不允许范围外改动
-- 如果发现需要改动 analyze 未声明的文件，回到 analyze 阶段更新分析
-- 每个改动必须有明确的根因关联
-
-**流程**：按方案中的改动文件列表逐文件修复 → 每个文件修改后运行相关测试 → 所有修改完成后运行全量验证。
+按选定方案定点修复。**只改 analyze 声明的文件**，需改其他文件 → 回 analyze 更新。逐文件修复 → 每文件跑测试 → 全量验证。
 
 ### 2.3 Verify 阶段
 
-**职责**：执行验证清单，确认修复有效且无副作用。
-
-**验证清单**：
-
-| # | 验证项 | 方法 | 通过标准 |
-|---|--------|------|---------|
-| 1 | **复现验证** | 按原始复现步骤执行 | 问题不再出现 |
-| 2 | **期望验证** | 验证修复后的期望行为 | 行为符合预期 |
-| 3 | **影响面回归** | 运行影响面相关的测试 | 无回归 |
-| 4 | **全量测试** | 运行项目完整测试套件 | 全部通过 |
-
-**产出**：`.forge/findings/fix-note.md`
-
-**双模式行为**：interactive 展示验证结果等待用户确认；autonomous 自动执行验证（`fix_apply_verify`，preset: `auto-verify`）。
+验证清单：1. 复现验证（问题不再现） 2. 期望验证（行为符合预期） 3. 影响面回归（无回归） 4. 全量测试（全部通过）。产出 fix-note.md。Interactive 等待确认；autonomous 自动验证。
 
 ---
 
@@ -118,17 +64,7 @@ status: "analyzed"
 
 ## 4. fix-note.md 模板
 
-每次修复完成后必须产出 fix-note.md：
-
-```markdown
----
-topic: "<主题>"
-date: "YYYY-MM-DD"
-status: "resolved"
----
-
-## 问题描述 / 根因 / 修复方案 / 改动文件 / 验证结果 / 经验总结
-```
+修复完成后产出 `.forge/findings/fix-note.md`：frontmatter (topic/date/status:resolved) + 问题描述 / 根因 / 修复方案 / 改动文件 / 验证结果 / 经验总结。
 
 ---
 
@@ -163,18 +99,18 @@ status: "resolved"
 
 ---
 
-## 8. 已知 AI 失败模式
+## 8. Known AI Failure Modes
 
-| 失败模式 | 错误行为 | 正确做法 |
-|---------|---------|---------|
-| 不读代码就猜根因 | 根据错误信息直接推测根因，不实际读取代码 | 严格执行分析五步，用 Grep/Glob 定位代码，追踪正常/失败路径分叉点 |
-| 修复范围外的代码 | "顺手"重构旁边代码或修改 analyze 未声明的文件 | 只修改 analyze 报告中声明的文件，需改其他文件则回到 analyze 更新 |
-| 跳过验证就声称修复 | 修改代码后不运行验证清单直接声称"bug 已修复" | 逐项执行验证清单，每项有实际命令输出作为证据 |
-| 只修表面症状不修根因 | 加 null check / 加大超时 / 加数据修复脚本 | 追踪到根因（为什么 null？为什么超时？），修复根因而非症状 |
+| Failure | Wrong | Correct |
+|---------|-------|---------|
+| 不读代码猜根因 | 从错误信息推测 | 执行分析五步，Grep/Glob定位 |
+| 范围外改动 | "顺手"重构 | 只改 analyze 声明的文件 |
+| 跳过验证 | 不跑验证清单 | 逐项执行，每项有输出证据 |
+| 只修症状 | null check/加大超时 | 追踪根因，修复根因非症状 |
 
 ## Common Rationalizations
 
 | 合理化 | 反驳 |
 |--------|------|
-| "P2 问题不重要可以跳过" | P2 问题积累会降低代码健康度。修复成本现在最低，以后只会更高 |
-| "直接改代码比走修复流程快" | 修复流程确保变更被追踪、被验证、被记录。直接改代码绕过了所有质量保障 |
+| "P2不重要可跳过" | 积累降低健康度，现在修复成本最低 |
+| "直接改代码更快" | 流程确保追踪+验证+记录，绕过质量保障 |
