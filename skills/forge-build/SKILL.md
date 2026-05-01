@@ -72,7 +72,9 @@ Read task list → per task: **Closure-First Probes** (→ 详见 references/clo
 | BLOCKED | Context → supplement / large → split / Plan → report |
 | 429_THROTTLED | `git diff --stat` → assess. No Three-strike. Degrade, continue |
 
-**Invocation**: `Agent(prompt, skills=["forge-test"], permissionMode="acceptEdits", maxTurns=20)`. Include: probe results, task desc, file context, knowledge, TDD reqs, verify commands, self-check, prohibitions.
+**Invocation**: `Agent(prompt, skills=["forge-test"], permissionMode="acceptEdits", maxTurns=20)`. Include: probe results, task desc, file context, knowledge, TDD reqs, verify commands, self-check, prohibitions, **framework API verification**.
+
+**Framework API 验证**: 当任务涉及框架特定 API（React hooks、Express middleware、Prisma query 等）时，Subagent 应先验证 API 签名与项目 package.json 中的依赖版本一致，不依赖训练数据记忆。对于非平凡 API 或不确定当前版本签名时，应查阅官方文档确认。纯逻辑和标准库调用可跳过此步骤。
 
 **Self-check**: `📋 ✅/❌ Spec 场景 ✅/❌ 安全快扫 ✅/❌ 范围检查 → DONE`
 
@@ -102,6 +104,24 @@ Read `ci_check_command` from config.md → execute as-is. Empty → `verify_comm
 
 → CLAUDE.md §2.1 (RED → GREEN → REFACTOR). In-Subagent enforced. Code before tests → delete, restart. → 详见 references/tdd-rules.md
 
+### 4.1 Simplicity Check
+
+GREEN 阶段的代码必须是"能让测试通过的最简单实现"。如果在 GREEN 阶段引入了抽象层、工厂模式或配置驱动的设计——停下来，删掉，写更简单的版本。
+
+REFACTOR 阶段才是引入抽象的时机，且仅当同一模式重复出现 **3 次以上**时（Rule of Three）。
+
+三行相似的代码好过一个过早的抽象。先实现朴素的、显然正确的版本。
+
+→ 详细示例和规则详见 references/tdd-rules.md §Simplicity Check
+
+### 4.1.1 Dead Code Hygiene
+
+REFACTOR 完成后，扫描是否产生了孤儿代码：未使用的 import、未调用的函数或方法、未引用的类型定义、未使用的变量。
+
+发现孤儿代码时记录到 `.forge/findings/<topic>.md`，不自行删除——删除需要确认代码确实不再被需要。
+
+→ 详见 references/tdd-rules.md §Dead Code Hygiene
+
 ---
 
 ## 5. Failure Handling
@@ -119,6 +139,33 @@ Read `ci_check_command` from config.md → execute as-is. Empty → `verify_comm
 **6.0.1 No Mid-build Confirmation**: Build 阶段内部，任务之间**禁止**停下来询问用户是否继续。完成一个任务后必须立即开始下一个任务，直到所有任务完成或遇到阻断性错误。禁止输出"是否继续？"、"是否继续清理/验证/实施？"等确认提示。禁止在任务之间列出剩余工作并等待用户确认。唯一允许停下来的情况：Three-strike 触发、阻断性错误、分支保护阻断。
 
 **6.1** Test First → CLAUDE.md §2.1 | **6.2** Atomic Commits (1 per task) | **6.3** Verify First → §2.3, P5 chain | **6.4** Three-strike → §2.4 | **6.5** Conciseness → §2.6 (structured outputs exempt)
+
+### 6.6 Change Summary
+
+每个 Subagent 在原子提交前，必须输出三段式变更摘要：
+
+```
+📝 Task N 变更摘要
+  变更：<文件列表 + 每个文件的变更描述>
+  未触碰（有意）：<注意到但不在范围内的问题>
+  关注点：<需要用户确认的决策>
+```
+
+**"未触碰"部分证明范围纪律**——表明 Agent 注意到了相邻问题但选择不修复。
+**"关注点"部分**在 autonomous 模式下记录到 findings，interactive 模式下等待用户确认。
+
+此摘要属于 Structured_Output，豁免于散文压缩规则（→ CLAUDE.md §2.6）。
+
+### 6.7 Dependency Discipline
+
+添加新依赖前必须确认以下 4 项：
+
+1. **现有技术栈是否已能解决**：优先使用标准库和项目已有工具
+2. **依赖大小**：检查 bundle 影响（`npm pack --dry-run` 或等效命令）
+3. **是否活跃维护**：检查最近 commit 时间、open issues 数量
+4. **许可证兼容性**：必须与项目许可证兼容
+
+**规则**：每个依赖都是负债。不添加依赖是默认选择，添加依赖需要理由。
 
 ---
 
