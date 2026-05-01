@@ -29,7 +29,7 @@ disable-model-invocation: true
 **执行步骤**：
 
 1. Detect project test framework and run command (from `package.json`, `Makefile`, `Cargo.toml` etc.)
-2. Run full test suite.
+2. Run full test suite using `forge_exec` for server-side output trimming. When MCP is unavailable, fall back to direct execution or `scripts/run-with-trim.sh`.
 3. Check test output: all tests pass (zero failures), no warnings (or only known ignorable warnings), no errors.
 
 **通过标准**：
@@ -63,8 +63,8 @@ disable-model-invocation: true
 **CI 检查命令优先级**：
 
 执行 Layer 3 清单前，读取 `.forge/config.md` YAML frontmatter 的 `ci_check_command` 字段：
-- **如果非空**：执行该命令一次，覆盖清单项 1-4。从合并输出中提取各项通过/失败状态。
-- **如果为空或缺失**：为每个清单项分别运行对应命令。
+- **如果非空**：使用 `forge_exec` 执行该命令（server-side trimming）。当 MCP 不可用时，回退到 `scripts/run-with-trim.sh` 或直接执行。覆盖清单项 1-4。从合并输出中提取各项通过/失败状态。
+- **如果为空或缺失**：为每个清单项分别运行对应命令（优先使用 `forge_exec`）。
 
 **7 项清单**：
 

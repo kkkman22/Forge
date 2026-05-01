@@ -9,7 +9,7 @@
  * **Validates: Requirements 3.1, 3.2, 3.3, 3.4, 3.5, 3.6, 3.7, 3.8, 3.9, 3.10, 3.11**
  */
 /** SKILL phase identifiers used by the scheduler state machine. */
-export type SkillPhase = "router" | "plan" | "build" | "review" | "test" | "ship" | "learn" | "refactor-scan" | "refactor-apply" | "fix-analyze" | "fix-apply" | "completed" | "aborted";
+export type SkillPhase = "router" | "plan" | "build" | "build-light" | "review" | "test" | "ship" | "learn" | "refactor-scan" | "refactor-apply" | "fix-analyze" | "fix-apply" | "completed" | "aborted";
 /**
  * Input for the scheduler's `determineNextSkill()` function.
  * All fields are extracted from StatusFile, Plan, Progress, and Review files.

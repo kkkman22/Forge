@@ -20,6 +20,7 @@ const VALID_SKILL_PHASES = [
     "router",
     "plan",
     "build",
+    "build-light",
     "review",
     "test",
     "ship",
@@ -397,7 +398,7 @@ describe("Property 3: New command sequences contain only valid SkillPhase values
      */
     it("existing sequences are unchanged (backward compatibility)", () => {
         const expectedExisting = {
-            light: ["build", "review"],
+            light: ["build-light", "review"],
             standard: ["plan", "build", "review", "test", "ship"],
             full: ["plan", "build", "review", "test", "ship", "learn"],
         };

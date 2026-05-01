@@ -2,9 +2,9 @@
  * Contract tests for context budget sections in SKILL documents.
  *
  * Validates:
- *   - forge-build/SKILL.md contains "上下文预算管理" section with correct trimmer references
- *   - forge-review/SKILL.md contains "上下文预算管理" section with Review_Summarizer
- *   - forge-decide/SKILL.md contains "上下文预算管理" section with Subagent_Summary_Protocol
+ *   - forge-build/SKILL.md contains "Context Budget Management" section with correct trimmer references
+ *   - forge-review/SKILL.md contains "Context Budget Management" section with Review_Summarizer
+ *   - forge-decide/SKILL.md contains "Context Budget Management" section with Subagent_Summary_Protocol
  *   - Existing non-context-budget content is preserved in all SKILL documents
  */
 import { readFileSync } from "node:fs";
@@ -14,20 +14,22 @@ const ROOT = resolve(import.meta.dirname, "..");
 const readSkill = (name) => readFileSync(resolve(ROOT, "skills", name, "SKILL.md"), "utf-8");
 describe("Contract: forge-build/SKILL.md context budget section", () => {
     const content = readSkill("forge-build");
-    it("contains 上下文预算管理 heading", () => {
-        expect(content).toContain("## 上下文预算管理");
+    it("contains Context Budget Management heading", () => {
+        expect(content).toContain("## Context Budget Management");
     });
-    it("references Explore_Summarizer", () => {
-        expect(content).toContain("Explore_Summarizer");
+    it("references Explore Agent hard limit (300 tokens)", () => {
+        expect(content).toContain("Explore Agent");
+        expect(content).toContain("300");
     });
-    it("references Test_Output_Trimmer", () => {
-        expect(content).toContain("Test_Output_Trimmer");
+    it("references test output hard limits (50/300 tokens)", () => {
+        expect(content).toContain("50");
     });
-    it("references Git_Output_Limiter", () => {
-        expect(content).toContain("Git_Output_Limiter");
+    it("references Git diff/status hard limit (200 tokens)", () => {
+        expect(content).toContain(">50 lines");
+        expect(content).toContain("200");
     });
-    it("references Subagent_Summary_Protocol", () => {
-        expect(content).toContain("Subagent_Summary_Protocol");
+    it("references mandatory truncation language", () => {
+        expect(content).toContain("MUST truncate");
     });
     it("preserves TDD rules (RED/GREEN/REFACTOR)", () => {
         expect(content).toContain("RED");
@@ -43,8 +45,8 @@ describe("Contract: forge-build/SKILL.md context budget section", () => {
 });
 describe("Contract: forge-review/SKILL.md context budget section", () => {
     const content = readSkill("forge-review");
-    it("contains 上下文预算管理 heading", () => {
-        expect(content).toContain("## 上下文预算管理");
+    it("contains Context Budget Management heading", () => {
+        expect(content).toContain("## Context Budget Management");
     });
     it("references Review_Summarizer", () => {
         expect(content).toContain("Review_Summarizer");
@@ -66,8 +68,8 @@ describe("Contract: forge-review/SKILL.md context budget section", () => {
 });
 describe("Contract: forge-decide/SKILL.md context budget section", () => {
     const content = readSkill("forge-decide");
-    it("contains 上下文预算管理 heading", () => {
-        expect(content).toContain("## 上下文预算管理");
+    it("contains Context Budget Management heading", () => {
+        expect(content).toContain("## Context Budget Management");
     });
     it("references Subagent_Summary_Protocol", () => {
         expect(content).toContain("Subagent_Summary_Protocol");

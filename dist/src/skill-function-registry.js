@@ -1,0 +1,168 @@
+/**
+ * Registry of TypeScript functions referenced by SKILL.md documents.
+ *
+ * Each entry maps a function name to its source module and the SKILL.md
+ * files that reference it. The contract test (`test/contract.skill-function-sync.test.ts`)
+ * verifies bidirectional consistency:
+ *
+ * 1. Every registered function actually exists and is exported from its module
+ * 2. Every "Function Call" / "call `fn(`" pattern in SKILL.md has a registry entry
+ * 3. Every registry entry's declared SKILL references actually contain the function name
+ *
+ * This registry is the **single source of truth** for SKILL-code sync.
+ * When adding a new function reference to a SKILL.md, add a corresponding
+ * entry here. When renaming or removing a function, update both the registry
+ * and the SKILL.md references.
+ *
+ * **Validates: SKILL-Code Sync Contract**
+ */
+// ---------------------------------------------------------------------------
+// Registry
+// ---------------------------------------------------------------------------
+export const SKILL_FUNCTION_REGISTRY = [
+    // --- forge-build/SKILL.md ---
+    {
+        module: "build.ts",
+        functionName: "checkBuildGate",
+        skills: ["forge-build/SKILL.md"],
+        parameterNames: ["specStatus", "planStatus"],
+    },
+    {
+        module: "build.ts",
+        functionName: "analyzeFixAttempts",
+        skills: ["forge-build/SKILL.md"],
+        parameterNames: ["sequence"],
+    },
+    {
+        module: "build.ts",
+        functionName: "buildResearchSubagents",
+        skills: ["forge-build/SKILL.md"],
+        parameterNames: ["topics"],
+    },
+    {
+        module: "build.ts",
+        functionName: "mergeResearchFindings",
+        skills: ["forge-build/SKILL.md"],
+        parameterNames: ["results"],
+    },
+    {
+        module: "branch-lifecycle.ts",
+        functionName: "checkBranchTopicGate",
+        skills: ["forge-build/SKILL.md"],
+        parameterNames: ["branchName", "taskTopic"],
+    },
+    {
+        module: "branch-lifecycle.ts",
+        functionName: "detectUnshippedBranches",
+        skills: ["forge-build/SKILL.md"],
+        parameterNames: ["pendingDeliveries", "currentTopic"],
+    },
+    {
+        module: "branch-lifecycle.ts",
+        functionName: "detectStaleBranches",
+        skills: ["forge-build/SKILL.md"],
+        parameterNames: ["pendingDeliveries", "currentTopic"],
+    },
+    {
+        module: "branch-lifecycle.ts",
+        functionName: "checkCommitTopicMatch",
+        skills: ["forge-build/SKILL.md"],
+        parameterNames: ["branchName", "commitTopic"],
+    },
+    // --- forge-decide/SKILL.md ---
+    {
+        module: "context-budget.ts",
+        functionName: "serializeSubagentSummary",
+        skills: ["forge-decide/SKILL.md"],
+        parameterNames: ["summary"],
+    },
+    // --- forge-ship/SKILL.md ---
+    {
+        module: "ship.ts",
+        functionName: "checkShipGate",
+        skills: ["forge-ship/SKILL.md"],
+        parameterNames: ["review", "test", "progress"],
+    },
+    {
+        module: "ship.ts",
+        functionName: "checkShipGateWithChecklist",
+        skills: ["forge-ship/SKILL.md"],
+        parameterNames: ["review", "test", "progress", "checklist"],
+    },
+    {
+        module: "branch-lifecycle.ts",
+        functionName: "recordPendingDelivery",
+        skills: ["forge-ship/SKILL.md"],
+        parameterNames: ["branchName", "topic", "timestamp"],
+    },
+    // --- forge-learn/SKILL.md ---
+    {
+        module: "context-budget.ts",
+        functionName: "serializeContextBudgetReport",
+        skills: ["forge-learn/SKILL.md"],
+        parameterNames: ["report"],
+    },
+    {
+        module: "learn.ts",
+        functionName: "analyzeSkillFeedback",
+        skills: ["forge-learn/SKILL.md"],
+        parameterNames: ["entries"],
+    },
+    {
+        module: "learn.ts",
+        functionName: "crossValidateFailures",
+        skills: ["forge-learn/SKILL.md"],
+        parameterNames: ["feedbackReasons", "knownFailureDescriptions"],
+    },
+    {
+        module: "learn.ts",
+        functionName: "generateKnowledgeDocument",
+        skills: ["forge-learn/SKILL.md"],
+        parameterNames: ["title", "tags", "date", "confidence", "body"],
+    },
+    {
+        module: "learn.ts",
+        functionName: "validateKnowledgeFrontmatter",
+        skills: ["forge-learn/SKILL.md"],
+        parameterNames: ["frontmatter"],
+    },
+    {
+        module: "learn.ts",
+        functionName: "maintainKnowledgeBase",
+        skills: ["forge-learn/SKILL.md"],
+        parameterNames: ["state"],
+    },
+    // --- forge-review/SKILL.md ---
+    {
+        module: "context-budget.ts",
+        functionName: "serializeReviewSummary",
+        skills: ["forge-review/SKILL.md"],
+        parameterNames: ["summary"],
+    },
+    // --- forge-router/SKILL.md (multi-task) ---
+    {
+        module: "status-manager.ts",
+        functionName: "writeTaskStatus",
+        skills: ["forge-router/SKILL.md", "forge-loop/SKILL.md"],
+        parameterNames: ["io", "forgeRoot", "taskName", "content"],
+    },
+    // --- forge-abort/SKILL.md (multi-task) ---
+    {
+        module: "status-manager.ts",
+        functionName: "listActiveTasks",
+        skills: [
+            "forge-abort/SKILL.md",
+            "forge-loop/SKILL.md",
+            "forge-resume/SKILL.md",
+            "forge-status/SKILL.md",
+        ],
+        parameterNames: ["io", "forgeRoot"],
+    },
+    {
+        module: "status-manager.ts",
+        functionName: "archiveTaskStatus",
+        skills: ["forge-abort/SKILL.md"],
+        parameterNames: ["io", "forgeRoot", "taskName", "date"],
+    },
+];
+//# sourceMappingURL=skill-function-registry.js.map

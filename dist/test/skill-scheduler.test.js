@@ -13,7 +13,7 @@
  * **Validates: Requirements 3.2, 3.9, 3.10**
  */
 import { describe, expect, it } from "vitest";
-import { determineNextSkill, getCommandSequence, } from "../src/skill-scheduler.js";
+import { determineNextSkill, getCommandSequence, shouldCommitForPhase, } from "../src/skill-scheduler.js";
 // ---------------------------------------------------------------------------
 // Helper: build a SchedulerInput with sensible defaults
 // ---------------------------------------------------------------------------
@@ -100,8 +100,8 @@ describe("determineNextSkill: unknown phase → router fallback", () => {
 // getCommandSequence — per tier
 // ---------------------------------------------------------------------------
 describe("getCommandSequence: returns correct sequence per tier", () => {
-    it("light tier returns [build, review]", () => {
-        expect(getCommandSequence("light")).toEqual(["build", "review"]);
+    it("light tier returns [build-light, review]", () => {
+        expect(getCommandSequence("light")).toEqual(["build-light", "review"]);
     });
     it("standard tier returns [plan, build, review, test, ship]", () => {
         expect(getCommandSequence("standard")).toEqual(["plan", "build", "review", "test", "ship"]);
@@ -128,6 +128,34 @@ describe("getCommandSequence: unknown tier defaults to standard", () => {
     it("returns standard sequence for empty string tier", () => {
         const standard = getCommandSequence("standard");
         expect(getCommandSequence("")).toEqual(standard);
+    });
+});
+// ---------------------------------------------------------------------------
+// determineNextSkill: build-light phase transitions
+// ---------------------------------------------------------------------------
+describe("determineNextSkill: build-light phase transitions", () => {
+    it("stays in build-light when tasks are incomplete", () => {
+        const result = determineNextSkill(makeInput({ currentPhase: "build-light", hasIncompleteTasks: true }));
+        expect(result.nextPhase).toBe("build-light");
+    });
+    it("transitions to review when all tasks are complete", () => {
+        const result = determineNextSkill(makeInput({ currentPhase: "build-light", hasIncompleteTasks: false }));
+        expect(result.nextPhase).toBe("review");
+    });
+    it("transitions to review when hasIncompleteTasks is undefined", () => {
+        const result = determineNextSkill(makeInput({ currentPhase: "build-light", hasIncompleteTasks: undefined }));
+        expect(result.nextPhase).toBe("review");
+    });
+});
+// ---------------------------------------------------------------------------
+// shouldCommitForPhase — build-light
+// ---------------------------------------------------------------------------
+describe("shouldCommitForPhase: build-light commit strategy", () => {
+    it("returns true for build-light with success=true", () => {
+        expect(shouldCommitForPhase("build-light", true)).toBe(true);
+    });
+    it("returns false for build-light with success=false", () => {
+        expect(shouldCommitForPhase("build-light", false)).toBe(false);
     });
 });
 //# sourceMappingURL=skill-scheduler.test.js.map

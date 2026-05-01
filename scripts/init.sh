@@ -8,6 +8,7 @@
 #   3. 复制 7 个 Subagent 角色文件到 .claude/agents/
 #   4. 生成 CLAUDE.md 项目宪法
 #   5. 写入 .forge/config.md
+#   6. 配置 forge-context MCP server（如果可用）
 #
 # 用法：
 #   chmod +x forge/scripts/init.sh
@@ -78,7 +79,7 @@ fi
 # Step 1：交互式收集配置
 # ============================================================================
 echo ""
-info "Step 1/5：收集项目信息"
+info "Step 1/7：收集项目信息"
 echo ""
 
 # --- 项目名称（自动检测） ---
@@ -162,7 +163,7 @@ fi
 # ============================================================================
 # Step 2：创建 .forge/ 目录结构
 # ============================================================================
-info "Step 2/5：创建 .forge/ 目录结构"
+info "Step 2/7：创建 .forge/ 目录结构"
 
 directories=(
   ".forge"
@@ -335,7 +336,7 @@ success ".forge/ 目录结构创建完成"
 # ============================================================================
 # Step 3：复制 7 个 Subagent 角色文件
 # ============================================================================
-info "Step 3/5：复制 Agent 角色文件到 .claude/agents/"
+info "Step 3/7：复制 Agent 角色文件到 .claude/agents/"
 
 mkdir -p "${PROJECT_ROOT}/.claude/agents"
 
@@ -371,7 +372,7 @@ fi
 # ============================================================================
 # Step 4：生成 CLAUDE.md 项目宪法
 # ============================================================================
-info "Step 4/5：生成 CLAUDE.md 项目宪法"
+info "Step 4/7：生成 CLAUDE.md 项目宪法"
 
 if [[ -f "${FORGE_ROOT}/templates/CLAUDE.md" ]]; then
   # Use awk instead of sed to avoid issues with special characters in user input
@@ -398,7 +399,7 @@ fi
 # ============================================================================
 # Step 5：安装 Hooks 到 .claude/settings.json
 # ============================================================================
-info "Step 5：安装 Forge Hooks"
+info "Step 5/7：安装 Forge Hooks"
 
 settings_file="${PROJECT_ROOT}/.claude/settings.json"
 hooks_source="${FORGE_ROOT}/hooks/hooks.json"
@@ -462,9 +463,67 @@ else
 fi
 
 # ============================================================================
-# Step 6：安装可选工具（code-review-graph）
+# Step 6：配置 forge-context MCP Server
 # ============================================================================
-info "Step 6：安装可选工具"
+info "Step 6/7：配置 forge-context MCP Server"
+
+mcp_server_path="${FORGE_ROOT}/dist/src/mcp/server.js"
+
+if [ -f "$mcp_server_path" ]; then
+  if command -v node &>/dev/null; then
+    # Ensure settings.json exists (may not exist if hooks step was skipped)
+    if [ ! -f "${settings_file}" ]; then
+      mkdir -p "${PROJECT_ROOT}/.claude"
+      echo '{}' > "${settings_file}"
+      info "创建了空的 .claude/settings.json"
+    fi
+
+    # Merge forge-context into mcpServers section
+    mcp_result=$(node -e "
+      const fs = require('fs');
+      const settingsPath = '${settings_file}';
+      const serverPath = '${mcp_server_path}';
+      let settings;
+      try {
+        settings = JSON.parse(fs.readFileSync(settingsPath, 'utf-8'));
+      } catch (e) {
+        settings = {};
+      }
+      if (!settings.mcpServers) settings.mcpServers = {};
+      if (settings.mcpServers['forge-context']) {
+        process.stdout.write('SKIP');
+      } else {
+        settings.mcpServers['forge-context'] = {
+          command: 'node',
+          args: [serverPath]
+        };
+        fs.writeFileSync(settingsPath, JSON.stringify(settings, null, 2) + '\n');
+        process.stdout.write('OK');
+      }
+    " 2>&1) || true
+
+    case "${mcp_result}" in
+      SKIP)
+        warn "forge-context MCP 配置已存在，跳过（避免覆盖）"
+        ;;
+      OK)
+        success "forge-context MCP Server 已配置到 .claude/settings.json"
+        ;;
+      *)
+        warn "MCP 配置写入失败：${mcp_result}"
+        ;;
+    esac
+  else
+    warn "未检测到 node 命令，跳过 MCP Server 配置。请手动添加 forge-context 到 .claude/settings.json 的 mcpServers 中。"
+  fi
+else
+  info "未找到 MCP server（${mcp_server_path}），跳过 MCP 配置（运行 npm run build 后重新初始化可启用）"
+fi
+
+# ============================================================================
+# Step 7：安装可选工具（code-review-graph）
+# ============================================================================
+info "Step 7/7：安装可选工具"
 
 if command -v pip &>/dev/null || command -v pip3 &>/dev/null; then
   pip_cmd=""
@@ -499,7 +558,7 @@ echo "  已创建："
 echo "    📁 .forge/          — 统一状态目录（含所有子目录和模板）"
 echo "    📁 .claude/agents/  — 7 个 Subagent 角色文件"
 echo "    📁 .claude/commands/ — Forge Command 入口"
-echo "    📄 .claude/settings.json — Forge Hooks（自动上下文加载）"
+echo "    📄 .claude/settings.json — Forge Hooks + MCP 配置"
 echo "    📄 CLAUDE.md        — 项目宪法"
 echo "    📄 .forge/config.md — 项目配置"
 echo ""

@@ -58,3 +58,17 @@ export declare function analyzeFixAttempts(sequence: FixAttemptSequence): Escala
  * Returns true if 3 or more consecutive failures are found anywhere in the sequence.
  */
 export declare function shouldEscalateToDebug(sequence: FixAttemptSequence): boolean;
+import type { SubagentInvocation, SubagentResult } from "./loop-types.js";
+/**
+ * Build one SubagentInvocation per research topic.
+ *
+ * Each subagent investigates a single research topic independently.
+ */
+export declare function buildResearchSubagents(topics: string[]): SubagentInvocation[];
+/**
+ * Merge successful research subagent outputs into a single findings document.
+ *
+ * All findings from every successful subagent are preserved with no loss.
+ * Failed subagents are noted in the document.
+ */
+export declare function mergeResearchFindings(results: SubagentResult[]): string;
