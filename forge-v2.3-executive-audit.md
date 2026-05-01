@@ -10,7 +10,7 @@
 | Code Quality | 8.5/10 | ✅ Strict TS, zero type escapes |
 | Testing & CI | 6.0/10 | ⚠️ Strong unit, weak integration |
 | Documentation | 7.8/10 | ⚠️ Comprehensive but Chinese-only |
-| Project Management | 7.5/10 | ✅ 27 structured plans, good execution discipline |
+| Project Management | 7.5/10 | ✅ 25 structured plans, good execution discipline |
 | Production Readiness | 7.8/10 | ✅ Defensive hardening needed |
 
 ---
@@ -51,12 +51,12 @@ error-recovery    ████████         23 functions (high module com
 - Centralized logging (31 files use `createLogEntry`)
 
 **Concerns:**
-- 10 files still using `console.*` — incomplete migration
+- 11 files still using `console.*` (32 call sites) — incomplete migration
 - 160 inline anonymous types — should be extracted to named interfaces
 - `error-recovery.ts`: 23 exported functions — module cohesion concerns
 
 **Tech Stack:**
-- 6 runtime dependencies (minimal ✅) + 6 dev dependencies
+- 5 runtime dependencies (minimal ✅) + 7 dev dependencies
 - Node≥20 ESM, Biome for linting, Vitest for testing
 
 ---
@@ -66,7 +66,7 @@ error-recovery    ████████         23 functions (high module com
 **Strengths:**
 - Coverage: **89.4% statements / 89.6% branches / 95.2% functions** — excellent
 - 88 property-based tests via fast-check — state-of-the-art
-- 152 test files, ~40K test LoC (2:1 test-to-source ratio)
+- 152 test files, ~100K test LoC (≈2.5:1 test-to-source ratio)
 - Vitest 3.2 + fast-check 4.7 — modern tooling
 
 **Critical Gaps:**
@@ -107,7 +107,7 @@ Coverage Profile:
 ## 5. Project Management (7.5/10)
 
 **Strengths:**
-- 27 structured plans with clear dependency graphs and risk assessments
+- 25 structured plans with clear dependency graphs and risk assessments
 - Completed plans show strong execution (e.g., agent-team-migration: all 8 tasks done, 2205/2205 tests passing)
 - Clear Spec → Plan pipeline from `.kiro/specs/` to `.forge/plans/`
 - TDD discipline enforced (plans specify RED → GREEN → REFACTOR)
@@ -151,7 +151,7 @@ Coverage Profile:
 | 4 | **Raise branch coverage threshold to 80%** | Quality gate | Small |
 | 5 | **Extract 160 anonymous types** to named interfaces | Maintainability | Medium |
 | 6 | **Create English documentation track** (README, quickstart) | Internationalization | Medium |
-| 7 | **Migrate 10 `console.*` calls** to `createLogEntry` | Consistency | Small |
+| 7 | **Migrate 11 `console.*` files** to `createLogEntry` | Consistency | Small |
 
 ### P2 — Strategic (1-2 months)
 
@@ -169,7 +169,7 @@ Coverage Profile:
 
 | Status | Count | Notable |
 |--------|-------|---------|
-| Approved | 22 | Active development pipeline |
+| Approved | 20 | Active development pipeline |
 | Draft | 1 | agent-skills-learnings (early stage) |
 | Done | 4 | agent-team-migration, skill-document-optimization, etc. |
 
