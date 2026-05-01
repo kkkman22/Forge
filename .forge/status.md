@@ -1,24 +1,25 @@
 ---
-current_task: "ship-gate-commit-verification"
+current_task: "state-resilience"
 tier: "standard"
 task_type: "fullstack"
 project_phase: "iteration"
 phase: "completed"
-hints: "backward-compat, pure-function, property-test"
+hints: "backward-compat, regression-suite"
 assumptions:
-  - "src/review.ts 存在，无 ReviewReportFrontmatter 类型（基于代码库分析）"
-  - "src/ship.ts 存在，需扩展（基于代码库分析）"
-  - "测试框架为 Vitest + fast-check 4.7.0（基于 package.json）"
-  - "纯增量改动，不涉及架构变更（基于 design.md 声明）"
+  - "Spec 已存在于 .kiro/specs/state-resilience/"
+  - "影响 state.ts, review.ts, config-store.ts, skill-scheduler.ts, status-resolver.ts"
+  - "测试框架为 Vitest（基于 .forge/config.md 技术栈）"
+  - "纯增量改动，不改变 SKILL.md 执行逻辑"
 updated: "2026-05-01"
 ---
 
 # 项目状态
 
-无进行中任务。最近完成：ship-gate-commit-verification。
+无进行中任务。最近完成：state-resilience。
 
 ## 已完成工作
 
+- state-resilience: 状态系统三层防御（宽容解析、降级执行、状态自愈）
 - ship-gate-commit-verification: ship 门禁 commit 验证（review freshness check）
 - routing-assumptions: 路由器输出增加假设段落
 - skill-behavioral-guardrails: SKILL 行为护栏
