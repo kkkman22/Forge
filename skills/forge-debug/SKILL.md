@@ -30,89 +30,32 @@ disable-model-invocation: true
 
 ### Phase 1 — Root Cause Investigation (Fix Proposals Prohibited)
 
-**目标**：完整理解问题，建立事实基础。
-
-**执行步骤**：
-
-1. **完整阅读错误信息**：不要只看第一行，完整阅读整个错误栈、日志输出和相关上下文。
-2. **稳定复现问题**：找到可靠的复现步骤，确保问题不是偶发的。
-3. **检查最近变更**：查看最近的 Git 提交、文件变更，定位可能引入问题的变更。
-4. **追踪数据流**：从输入到输出，追踪数据在系统中的流转路径，找到数据异常的节点。
-
-**Phase 1 铁律**：未完成所有调查步骤时不能进入 Phase 2。
-
-**产出**：`.forge/debug/<topic>.md`（status: "investigating"），包含错误信息、复现步骤、最近变更、数据流追踪、初步假设。
+完整理解问题：1. 完整阅读错误栈+日志 2. 稳定复现 3. 检查最近 Git 变更 4. 追踪数据流。**铁律**：Phase 1 未完成不能提出修复。产出：`.forge/debug/<topic>.md` (status: "investigating")。
 
 ### Phase 2 — Pattern Analysis
 
-**目标**：通过对比和历史经验缩小根因范围。
-
-**执行步骤**：
-
-1. **对比正常代码**：查找类似的、正常工作的代码，对比差异。
-2. **搜索已知失败模式**：在 `.forge/knowledge/known-failures.md` 中搜索匹配的已知失败模式。匹配到则直接展示历史解决方案。
-3. **搜索历史踩坑记录**：在 `.forge/knowledge/solutions/` 中搜索相关解决方案。
-4. **模式匹配**：将当前问题与已知问题模式匹配，缩小假设范围。
-
-**产出**：更新 debug 文档，追加已知失败模式匹配、正常代码对比、历史踩坑匹配、缩小后的假设。
+1. 对比正常代码 2. 搜索 `known-failures.md` 3. 搜索 `solutions/` 4. 模式匹配缩小假设。
 
 ### Phase 3 — Hypothesis Verification
 
-**目标**：逐一验证假设，找到真正的根因。
-
-**执行规则**：
-
-1. **每次只验证单一假设**，不要同时修改多个地方。
-2. **每次只做最小改动**，改动越小，越容易判断效果。
-3. **3 次失败停止**：同一假设连续验证失败 3 次 → 停止修复，质疑架构。
-
-```
-🚫 同一假设连续验证失败 3 次
-
-假设："数据库连接超时导致查询失败"
-  尝试 1：增加连接超时时间 → 失败
-  尝试 2：添加连接池预热 → 失败
-  尝试 3：切换连接池实现 → 失败
-
-停止修复。建议与开发者讨论是否需要重新审视架构。
-```
-
-**产出**：更新 debug 文档，追加假设验证结果表（尝试/改动/结果）。
+每次单一假设 + 最小改动。同一假设连续 3 次失败 → 停止修复，质疑架构。
 
 ### Phase 4 — Fix Verification
 
-**目标**：以 TDD 方式实施修复，确保问题解决且无新问题。→ TDD 规则详见 ../forge-build/references/tdd-rules.md
-
-**执行步骤**：
-
-1. **RED**：先写一个能复现问题的测试，运行确认它失败。
-2. **GREEN**：写最少的代码让回归测试通过。
-3. **确认无新问题**：运行完整测试套件，确认修复没有引入新的问题。
-
-**产出**：更新 debug 文档（status: "resolved"），记录回归测试、修复实施、全量测试结果。
-
-**修复完成后**：
-
-```
-💡 要记录这个解决方案吗？（输入 /forge learn 或跳过）
-```
-
-**Mode 判断**：如果 `mode` 为 `autonomous`，跳过此提示。
+RED（复现测试）→ GREEN（最小修复）→ 全量测试确认无新问题。→ TDD 规则详见 ../forge-build/references/tdd-rules.md。完成后 status: "resolved"。Interactive 提示 `/forge learn`；autonomous 跳过。
 
 ---
 
 ## 3. Red Flag Checklist
 
-以下信号表明调试方向可能有误，需要停下来重新评估：
-
-| Red Flag | Suggested Action |
-|---------|---------|
-| 修复一个问题引入两个新问题 | 回到 Phase 1 重新调查 |
+| Red Flag | Action |
+|---------|--------|
+| 修复引入两个新问题 | 回到 Phase 1 |
 | 同一假设连续失败 3 次 | 停止修复，质疑架构 |
-| 修复代码越来越复杂 | 考虑更高层的架构变更 |
-| 无法稳定复现问题 | 增加日志，收集更多数据 |
-| 错误信息与代码逻辑不匹配 | 重新追踪数据流 |
-| 修复后测试通过但行为仍然异常 | 补充更多测试场景 |
+| 修复代码越来越复杂 | 考虑更高层架构变更 |
+| 无法稳定复现 | 增加日志，收集数据 |
+| 错误信息与逻辑不匹配 | 重新追踪数据流 |
+| 测试通过但行为异常 | 补充更多测试场景 |
 
 ---
 
@@ -134,52 +77,19 @@ disable-model-invocation: true
 
 ---
 
-## 5. Edge Case Handling
+## 5. Edge Cases
 
-| Condition | Handling |
-|------|------|
-| 问题无法复现 | ⚠️ 可能是竞态条件或环境问题。建议增加详细日志、检查并发、对比环境差异 |
-| Phase 1 中尝试提出修复 | 🚫 Phase 1 未完成，不能提出修复方案。先完成所有调查步骤 |
-| 所有假设都失败 | ⚠️ 建议回到 Phase 1 重新收集信息、扩大调查范围、引入外部视角 |
-| 无 `.forge/` 目录 | ⚠️ 请先运行 forge init |
+无法复现 → 竞态/环境问题，增日志查并发 · Phase 1 提修复 → 🚫 禁止 · 所有假设失败 → 回 Phase 1 扩大范围 · 无 `.forge/` → forge init
 
 ---
 
 ## 6. Examples
 
-### Example: Complete Four-Phase Debug
-
 ```
 $ /forge debug
-
-━━━ Phase 1 — Root Cause Investigation ━━━
-
-📖 完整阅读错误信息...
-  TypeError: Cannot read properties of undefined (reading 'map')
-  at ExportService.processOrders (src/services/export.ts:42)
-
-🔄 稳定复现... 复现率：100%（status 为 null 时必现）
-📝 检查最近变更... 新增了 status 过滤逻辑，未处理 null 值
-🔍 追踪数据流... db.query({ status: null }) → 返回 undefined（而非空数组）
-
-━━━ Phase 2 — Pattern Analysis ━━━
-
-📚 搜索历史踩坑... 匹配：null-parameter-handling.md (confidence: 0.7)
-假设 A（最可能）：db.query 在 status=null 时返回 undefined 而非空数组
-
-━━━ Phase 3 — Hypothesis Verification ━━━
-
-验证假设 A：在 query 方法中添加 null 参数检查 → ✅ 问题消失
-
-━━━ Phase 4 — Fix Verification ━━━
-
-🔴 RED — test("should return empty array when status is null") → FAIL ✅
-🟢 GREEN — 在 db.query 中添加 null 参数过滤 → PASS ✅
-🧪 全量测试 → 42 tests passed, 0 failed ✅
-
-✅ 问题已解决
-  根因：db.query 未处理 null 参数
-  修复：在查询层统一过滤 null 参数
-
-💡 要记录这个解决方案吗？（输入 /forge learn 或跳过）
+━━━ Phase 1 ━━━  TypeError at export.ts:42 · 复现率100%(status=null) · 新增过滤未处理null · db.query→undefined
+━━━ Phase 2 ━━━  匹配 null-parameter-handling.md (0.7) · 假设A: db.query(null)→undefined
+━━━ Phase 3 ━━━  验证假设A: null检查 → ✅消失
+━━━ Phase 4 ━━━  🔴 RED FAIL ✅ → 🟢 GREEN PASS ✅ → 42/42 ✅
+✅ 根因: db.query未处理null · 修复: 查询层统一过滤null
 ```
