@@ -128,6 +128,7 @@ disable-model-invocation: true
 | 无 Plan 文件 | ℹ️ 未找到计划文件。运行 /forge 开始新任务 |
 | 无 Progress 文件 | 展示全局状态 + Plan Objective，提示"建议从 Task 1 开始执行" |
 | 所有任务已完成 | 提示"Build 阶段已完成。建议运行 /forge review" |
+| StatusFile 缺失或不一致 | 调用 `recoverPhase()` → 从 .forge/ 文件结构推断当前阶段（plans/ → plan, progress/ → build, reviews/ → review），展示推断结果和置信度，等待用户确认。**不自动写入磁盘** |
 
 ---
 
