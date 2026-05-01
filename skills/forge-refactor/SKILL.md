@@ -40,18 +40,7 @@ disable-model-invocation: true
 | 6 | **Scope too large** (files affected > 15) | → Narrow scope, refactor in batches |
 | 7 | **Nothing to change after scan** | → "Zero output is valid", Agent returns `should_fully_stop: true` |
 
-**Rejection output format**:
-
-```
-🚫 重构前置检查未通过
-
-命中检查：<检查条目名称>
-证据：<具体的文件路径、分析结果或状态>
-建议路由：<应该先执行的命令或工作流>
-重入条件：<满足什么条件后可以重新运行重构>
-```
-
-**Autonomous 模式行为**：前置检查不通过时，Agent 返回 JSON：`{ success: false, summary, evidence, suggested_route, reentry_condition }`
+**Rejection**: `🚫 命中检查：<条目> 证据：<路径/分析> 建议：<路由> 重入：<条件>`。Autonomous → JSON: `{ success: false, summary, evidence, suggested_route, reentry_condition }`
 
 ---
 
@@ -70,34 +59,7 @@ disable-model-invocation: true
 3. 为每个候选标注：位置（file:line）、当前问题、建议方法、预估影响、推荐等级（★/☆）
 4. 输出候选清单
 
-**Scan 输出格式**：
-
-```markdown
----
-topic: "<主题>"
-date: "YYYY-MM-DD"
-candidates: <数量>
----
-
-## 扫描结果
-
-### L1 — 行为等价迁移
-
-| # | 位置 | 当前问题 | 建议方法 | 推荐 |
-|---|------|---------|---------|------|
-| 1 | `src/utils.ts:42` | 魔法数字散落多处 | Extract Constant | ★ |
-
-### L2 — Fowler 经典
-
-| # | 位置 | 当前问题 | 建议方法 | 推荐 |
-|---|------|---------|---------|------|
-| 2 | `src/service.ts:80-120` | 方法过长（40 行） | Extract Method | ★ |
-
-## 推荐执行顺序
-
-1. #1 Extract Constant（低风险，立即可做）
-2. #2 Extract Method（中风险，需验证调用方）
-```
+**Scan 输出**：`.forge/findings/refactor-scan.md`，按 L1-L4 分类的候选表（位置 | 当前问题 | 建议方法 | 推荐等级）+ 推荐执行顺序。
 
 **双模式行为**：
 
@@ -108,25 +70,11 @@ candidates: <数量>
 
 ### 3.2 Design 阶段
 
-**职责**：为每个勾选的候选项制定详细执行方案。
-
-**产出**：`.forge/plans/refactor-<topic>.md`
-
-**每个候选项的方案包含**：方法名（从方法库引用）、执行步骤、退出信号、验证方式、回滚策略。
-
-**双模式行为**：interactive 展示方案等待用户 review 和批准；autonomous 自动批准（`refactor_design_review`，preset: `auto-approve`）。
+为每个勾选候选制定执行方案：方法名（引用方法库）、执行步骤、退出信号、验证方式、回滚策略。产出：`.forge/plans/refactor-<topic>.md`。Interactive 等待 review 批准；autonomous 自动批准。
 
 ### 3.3 Apply 阶段（refactor-apply）
 
-**职责**：逐步执行重构方案，每步验证行为等价性。
-
-1. 按方案中的执行步骤逐步操作
-2. 每步完成后运行验证命令（测试/lint/typecheck）
-3. 验证通过 → 继续；失败 → 回滚当前步骤，记录失败原因
-4. 所有步骤完成后，运行全量测试确认无回归
-5. 执行原子提交
-
-**双模式行为**：interactive 每步等待用户放行；autonomous 自动继续（`refactor_apply_step`，preset: `continue`）。
+逐步执行方案，每步验证行为等价性：操作 → 验证命令 → 通过继续/失败回滚 → 全量测试 → 原子提交。Interactive 每步放行；autonomous 自动继续。
 
 ---
 
@@ -136,42 +84,19 @@ candidates: <数量>
 
 ### L1 — 行为等价迁移（最低风险）
 
-| 方法 | 适用场景 |
-|------|---------|
-| Rename | 命名不清晰、不一致 |
-| Move | 职责错位 |
-| Extract Constant | 散落的字面量 |
-| Extract Type | 重复的类型声明 |
-| Inline | 过度抽象（只用一次） |
+Rename | Move | Extract Constant | Extract Type | Inline
 
 ### L2 — Fowler 经典（中等风险）
 
-| 方法 | 适用场景 |
-|------|---------|
-| Extract Method | 方法过长（>30 行） |
-| Extract Class | 类职责过多 |
-| Replace Conditional with Polymorphism | 复杂的 if/switch 链 |
-| Introduce Parameter Object | 参数过多（>3 个） |
-| Replace Temp with Query | 复杂的临时变量计算 |
-| Encapsulate Field | 直接访问内部状态 |
+Extract Method (>30行) | Extract Class | Replace Conditional with Polymorphism | Introduce Parameter Object (>3参数) | Replace Temp with Query | Encapsulate Field
 
 ### L3 — 结构拆分（较高风险）
 
-| 方法 | 适用场景 |
-|------|---------|
-| Split Module | 模块职责过多 |
-| Split Class | 上帝类 |
-| Introduce Facade | 调用方需要了解太多内部细节 |
-| Extract Layer | 层次混乱 |
+Split Module | Split Class | Introduce Facade | Extract Layer
 
 ### L4 — 性能（需要度量验证）
 
-| 方法 | 适用场景 |
-|------|---------|
-| Lazy Loading | 启动时间过长 |
-| Caching | 重复的昂贵计算 |
-| Batch Processing | N+1 查询、逐条 API 调用 |
-| Memoization | 相同输入的重复调用 |
+Lazy Loading | Caching | Batch Processing | Memoization
 
 ---
 
@@ -210,28 +135,24 @@ refactor-scan 不 commit（仅产出分析文档）；refactor-apply commit（�
 
 ---
 
-## 8. 边界情况处理
+## 8. Edge Cases
 
-| 条件 | 处理 |
-|------|------|
-| Scan 无候选 | ℹ️ 未发现需要重构的候选项，当前代码结构良好。Agent 返回 `should_fully_stop: true` |
-| Apply 步骤验证失败 | 回滚当前步骤 → 记录失败原因 → 继续下一个候选项 → 连续 3 步失败则停止 |
-| 无 `.forge/` 目录 | ⚠️ 请先运行 forge init 初始化项目 |
+Scan 无候选 → `should_fully_stop: true` · Apply 验证失败 → 回滚+记录+下一个 → 连续 3 步失败停止 · 无 `.forge/` → forge init
 
 ---
 
-## 9. 已知 AI 失败模式
+## 9. Known AI Failure Modes
 
-| 失败模式 | 错误行为 | 正确做法 |
-|---------|---------|---------|
-| 夹带行为改动 | "顺手"添加新功能、修复 bug 或改变外部行为 | 严格遵守行为等价原则。发现需修改行为的地方记录到 `.forge/findings/`，留给后续流程 |
-| 不跑测试就重构 | 连续多步后才运行测试或根本不跑测试 | 每一步重构操作后都运行验证命令：操作 → 验证 → 通过则继续，失败则回滚 |
-| 一次改太多 | 多个独立重构合并成大步骤 | 每步只做一个重构操作，对应方法库中的一个方法 |
-| 不用方法库命名 | 用模糊描述（"优化一下"）而非具体方法名 | scan 候选必须标注方法名（如 "Extract Method"），design 每步必须引用方法名 |
+| Failure | Wrong | Correct |
+|---------|-------|---------|
+| 夹带行为改动 | "顺手"加功能/修bug | 行为等价原则；需改行为的记入 findings/ |
+| 不跑测试 | 连续多步后才验证 | 每步操作后都运行验证命令 |
+| 一次改太多 | 多重构合并大步骤 | 每步一个方法库方法 |
+| 不用方法库命名 | "优化一下" | 候选和方案必须标注方法名 |
 
 ## Common Rationalizations
 
 | 合理化 | 反驳 |
 |--------|------|
-| "重构的同时顺便加个功能" | 重构和功能是两个独立的变更。混在一起让 review 更难、回滚更危险 |
-| "代码能跑就不需要重构" | 能跑的代码不等于可维护的代码。重构的价值在于降低未来每次变更的成本 |
+| "顺便加个功能" | 重构和功能是独立变更，混合增加 review/rollback 风险 |
+| "能跑就不用重构" | 重构价值在于降低未来变更成本 |
