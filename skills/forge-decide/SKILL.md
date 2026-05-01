@@ -28,6 +28,8 @@ disable-model-invocation: true
 
 ## 2. Two-Round Subagent Execution
 
+**Persona 覆盖**：用户可在 `.claude/agents/` 下定义同名文件（product.md、architect.md、security.md、designer.md）覆盖默认决策标准。用户定义优先于 Forge 默认。
+
 使用 Agent tool 独立启动视角 Subagent，无需创建 Agent Team。
 
 ### Round 1 — Perspective Subagents (Parallel Launch)
