@@ -160,11 +160,11 @@ AskUserQuestion:
 
 ### 4.2 Prompt `/forge learn`
 
-交付完成后（丢弃除外），使用 AskUserQuestion 询问是否执行知识沉淀（→ 详见 shared/next-step-protocol.md）
+交付完成后（丢弃除外），自动调用 /forge learn 执行知识沉淀（→ 详见 shared/next-step-protocol.md）
 
-**Mode 判断**：如果 `mode` 为 `autonomous`，跳过此提示（autonomous 模式下 learn 由 Skill Scheduler 按 tier=full 自动调度）。
+**Mode 判断**：如果 `mode` 为 `autonomous`，learn 由 Skill Scheduler 按 tier=full 自动调度。
 
-> 此提示不阻塞工作流完成——用户说"不用"或不响应时立即跳过。
+> 全量路径下自动调用 learn；标准路径下标记完成，不调用 learn。
 
 ---
 

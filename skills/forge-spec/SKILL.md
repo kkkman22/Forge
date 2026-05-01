@@ -158,7 +158,7 @@ import_source: "<原始文件的相对路径>"
 此规格现在是 build 和 review 的唯一真理源。
 后续修改需要先解锁（将 status 改回 draft），修改后重新走 Review → Lock 流程。
 
-下一步 → AskUserQuestion 询问 /forge plan（→ 详见 shared/next-step-protocol.md）
+下一步 → 自动调用 /forge plan（→ 详见 shared/next-step-protocol.md）
 ```
 
 **未锁定时的行为**：如果用户不确认（回复 n、否、不等），规格保持 `draft` 状态，可以继续修改。用户可以提出修改意见，Forge 据此更新草案并重新进入 Review。

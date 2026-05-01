@@ -1,72 +1,50 @@
 # Next Step Protocol
 
-完成当前阶段后，**必须**使用 AskUserQuestion 询问用户是否继续下一步，而非纯文本输出"下一步 → /forge X"。
+完成当前阶段后，**必须立即自动调用下一阶段**，不得停下来等待用户确认。
 
 ## 规则
 
-1. **禁止**纯文本输出下一步提示（如 "下一步：/forge review" 或 "→ /forge review"）
-2. **必须**使用 AskUserQuestion 工具，提供以下选项：
-   - `继续 /forge <next>` — 执行下一阶段
-   - `跳过` — 不继续，停留在当前状态
-3. 仅当存在明确的下一步命令时触发（见下表）
-4. 失败/阻断时不询问，直接输出问题清单
+1. **禁止**使用 AskUserQuestion 询问是否继续下一步
+2. **禁止**纯文本输出"是否继续？"等确认提示
+3. 成功完成时：输出一行摘要，然后**立即调用** `Skill(skill="forge", args="<next>")` 执行下一阶段
+4. 失败/阻断时：输出问题清单，**停止**，等待用户决定
+5. 用户传入 `--no-advance` 参数时，不自动推进，仅输出摘要
 
 ## 各阶段下一步映射
 
 | 当前阶段 | 成功时下一步 | 失败/阻断时 |
 |---------|-----------|-----------|
-| /forge decide | /forge spec | 直接输出问题 |
-| /forge spec | /forge plan | 直接输出问题 |
-| /forge plan | /forge build | 直接输出问题 |
-| /forge build | /forge review | 直接输出问题 |
-| /forge build-light | /forge review | 直接输出问题 |
-| /forge review (通过) | /forge test（标准/全量）或 /forge ship（轻量） | 输出 P0/P1 清单 |
-| /forge test | /forge ship | 直接输出失败 |
-| /forge ship | /forge learn | 直接输出阻断原因 |
+| /forge decide | 自动调用 /forge spec | 输出问题，停止 |
+| /forge spec | 自动调用 /forge plan | 输出问题，停止 |
+| /forge plan | 自动调用 /forge build | 输出问题，停止 |
+| /forge build | 自动调用 /forge review | 输出问题，停止 |
+| /forge build-light | 自动调用 /forge review | 输出问题，停止 |
+| /forge review (通过) | 自动调用 /forge test（标准/全量）或 /forge ship（轻量） | 输出 P0/P1 清单，停止 |
+| /forge test | 自动调用 /forge ship | 输出失败详情，停止 |
+| /forge ship | 自动调用 /forge learn（全量）或标记完成（标准） | 输出阻断原因，停止 |
 
-## AskUserQuestion 格式
+## 摘要格式
 
-```
-AskUserQuestion:
-  questions:
-    - question: "继续执行 /forge <next>？"
-      header: "Next Step"
-      options:
-        - label: "继续 /forge <next>"
-          description: "<一句话说明该阶段做什么>"
-        - label: "跳过"
-          description: "停留在当前状态，稍后手动执行"
-      multiSelect: false
-```
-
-## 示例
-
-build 完成：
+成功时输出一行摘要后立即调用下一阶段：
 
 ```
-AskUserQuestion:
-  questions:
-    - question: "/forge build 完成，继续执行 /forge review？"
-      header: "Next Step"
-      options:
-        - label: "继续 /forge review"
-          description: "启动三层独立评审（Spec 对齐、代码质量、安全）"
-        - label: "跳过"
-          description: "停留在当前状态，稍后手动 /forge review"
-      multiSelect: false
+✅ <阶段> 完成 → 自动进入 <下一阶段>
 ```
 
-review 通过（轻量路径）：
+示例：
 
 ```
-AskUserQuestion:
-  questions:
-    - question: "/forge review 通过，继续执行 /forge ship？"
-      header: "Next Step"
-      options:
-        - label: "继续 /forge ship"
-          description: "交付变更到目标分支"
-        - label: "跳过"
-          description: "停留在当前状态"
-      multiSelect: false
+✅ build 完成 → 自动进入 review
 ```
+
+```
+✅ review 通过 → 自动进入 test
+```
+
+## 调用方式
+
+```
+Skill(skill="forge", args="<next>")
+```
+
+**不得**使用 `Skill(skill="forge-<next>")`，所有子命令必须通过 forge 统一入口路由。
