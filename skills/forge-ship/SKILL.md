@@ -152,7 +152,7 @@ disable-model-invocation: true
 
 ### 4.2 Prompt `/forge learn`
 
-交付完成后（丢弃除外），提示执行知识沉淀：`💡 本次开发有值得沉淀的经验吗？（输入 /forge learn 或跳过）`
+交付完成后（丢弃除外），使用 AskUserQuestion 询问是否执行知识沉淀（→ 详见 shared/next-step-protocol.md）
 
 **Mode 判断**：如果 `mode` 为 `autonomous`，跳过此提示（autonomous 模式下 learn 由 Skill Scheduler 按 tier=full 自动调度）。
 
