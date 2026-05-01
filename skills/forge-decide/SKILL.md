@@ -141,7 +141,7 @@ disable-model-invocation: true
 3. **Round 1**: Launch 3 or 4 perspective Subagents in parallel, wait with `Promise.allSettled`
 4. **Round 2**: Collect all perspective outputs, launch Critic cross-review. Blocking issues → tag `needs_revision`; passed → generate decision document
 5. **Output decision document**: Write to `.forge/decisions/<date>-<topic>.md`
-6. **AskUserQuestion**: 询问是否继续 /forge spec（→ 详见 shared/next-step-protocol.md）
+6. **自动推进**: 自动调用 /forge spec（→ 详见 shared/next-step-protocol.md）
 
 ---
 

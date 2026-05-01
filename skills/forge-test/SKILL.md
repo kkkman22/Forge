@@ -97,7 +97,7 @@ disable-model-invocation: true
 ✅ 6. 无遗留 TODO/FIXME（扫描 6 个变更文件：0 个遗留项）
 ✅ 7. Progress 已更新（5/5 任务完成）
 
-✅ 验证通过 → AskUserQuestion 询问 /forge ship（→ 详见 shared/next-step-protocol.md）
+✅ 验证通过 → 自动调用 /forge ship（→ 详见 shared/next-step-protocol.md）
 ```
 
 **任一项未通过**时，报告具体未通过项和错误详情，阻断 ship。
@@ -200,7 +200,7 @@ $ /forge test
 ━━━ Layer 3 — 完成前验证清单 ━━━
 ✅ 1-7 全部通过
 
-✅ 验证通过 → AskUserQuestion 询问 /forge ship（→ 详见 shared/next-step-protocol.md）
+✅ 验证通过 → 自动调用 /forge ship（→ 详见 shared/next-step-protocol.md）
 ```
 
 ### Example: Layer 1 Failed
