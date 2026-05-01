@@ -47,6 +47,52 @@ export interface ShipGateResult {
 }
 
 // ---------------------------------------------------------------------------
+// Review freshness check (design Properties 1-4)
+// ---------------------------------------------------------------------------
+
+export interface ReviewFreshnessResult {
+  fresh: boolean;
+  reason: string;
+  /** Non-.forge/ files that changed since review. Only present when fresh=false. */
+  changedFiles?: string[];
+}
+
+/**
+ * Check whether the review report is still fresh relative to the current HEAD.
+ *
+ * 4 cases:
+ *   1. reviewedCommit undefined → fresh (backward compat)
+ *   2. reviewedCommit === currentHead → fresh
+ *   3. all changed files are under .forge/ → fresh
+ *   4. any changed file is outside .forge/ → not fresh
+ */
+export function checkReviewFreshness(
+  reviewedCommit: string | undefined,
+  currentHead: string,
+  changedFiles: string[],
+): ReviewFreshnessResult {
+  if (reviewedCommit === undefined) {
+    return { fresh: true, reason: "no reviewed_at_commit field (backward compatible)" };
+  }
+
+  if (reviewedCommit === currentHead) {
+    return { fresh: true, reason: "review matches current HEAD" };
+  }
+
+  const nonForgeFiles = changedFiles.filter((f) => !f.startsWith(".forge/"));
+
+  if (nonForgeFiles.length === 0) {
+    return { fresh: true, reason: "changes only in .forge/ state files" };
+  }
+
+  return {
+    fresh: false,
+    reason: "project code changed since review",
+    changedFiles: nonForgeFiles,
+  };
+}
+
+// ---------------------------------------------------------------------------
 // Ship gate check (Property 11)
 // ---------------------------------------------------------------------------
 
