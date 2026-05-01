@@ -52,5 +52,6 @@ The following scenarios are **reasoning triggers** — when encountered, pause a
 | Copy-pasting code | Is there a common abstraction behind this? How many places need change if modified? | Show duplicated code, ask whether to extract shared function | Record to findings (location + content + extraction suggestion), continue |
 | Adding 4+ parameters to a function | Can parameters be grouped? Is the function taking on too many responsibilities? | Show signature and new parameter, ask whether to introduce parameter object | Record to findings (signature + purpose + grouping suggestion), continue |
 | Creating a new utility class | Do the functions have cohesion? Should they be distributed to domain modules? | Explain function list, ask whether to distribute by domain | Record to findings (class name + functions + attribution suggestion), continue |
+| Deleting or significantly modifying existing code | Do I understand why this code was written this way? What is the git blame context? | Explain the reason, then confirm the modification | Record to findings (reason + modification rationale), continue execution |
 
 **关键原则**：反射触发器触发**思考**，不触发**行动**。autonomous 模式下不自行拆分——记录观察，继续执行。
