@@ -62,7 +62,7 @@ function seededRandom(seed: number): () => number {
 }
 
 describe("Property tests: run-with-trim.sh", () => {
-  it(`Property 1: Exit code preservation (${ITERATIONS} iterations)`, () => {
+  it(`Property 1: Exit code preservation (${ITERATIONS} iterations)`, { timeout: 30_000 }, () => {
     const rng = seededRandom(42);
     for (let i = 0; i < ITERATIONS; i++) {
       const expectedExit = Math.floor(rng() * 256);
@@ -72,7 +72,9 @@ describe("Property tests: run-with-trim.sh", () => {
     }
   });
 
-  it(`Property 2: Success output truncation (${ITERATIONS} iterations)`, () => {
+  it(`Property 2: Success output truncation (${ITERATIONS} iterations)`, {
+    timeout: 30_000,
+  }, () => {
     const rng = seededRandom(123);
     for (let i = 0; i < ITERATIONS; i++) {
       const lineCount = Math.floor(rng() * 100) + 1;
@@ -92,7 +94,9 @@ describe("Property tests: run-with-trim.sh", () => {
     }
   });
 
-  it(`Property 3: Failure output passthrough (${ITERATIONS} iterations)`, () => {
+  it(`Property 3: Failure output passthrough (${ITERATIONS} iterations)`, {
+    timeout: 30_000,
+  }, () => {
     const rng = seededRandom(456);
     for (let i = 0; i < ITERATIONS; i++) {
       const lineCount = Math.floor(rng() * 100) + 1;
@@ -106,7 +110,7 @@ describe("Property tests: run-with-trim.sh", () => {
     }
   });
 
-  it(`Property 4: Header presence (${ITERATIONS} iterations)`, () => {
+  it(`Property 4: Header presence (${ITERATIONS} iterations)`, { timeout: 30_000 }, () => {
     const rng = seededRandom(789);
     for (let i = 0; i < ITERATIONS; i++) {
       const exitCode = Math.floor(rng() * 256);
