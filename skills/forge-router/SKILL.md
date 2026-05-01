@@ -109,7 +109,7 @@ greenfield（从零开始）· iteration（现有功能迭代，默认）· refa
 
 ## 5. Status Update
 
-路由完成后更新 `.forge/status.md`（单任务）或 `.forge/status/<task-id>.md`（多任务）。字段：`current_task`, `tier`, `task_type`, `project_phase`, `phase`, `hints`（逗号分隔标签）, `assumptions`（可选数组）, `updated`。下游 SKILL 必须读取 `hints` 调整行为。
+路由完成后更新 `.forge/status.md`（单任务）或 `.forge/status/<task-id>.md`（多任务，调用 `writeTaskStatus`）。字段：`current_task`, `tier`, `task_type`, `project_phase`, `phase`, `hints`（逗号分隔标签）, `assumptions`（可选数组）, `updated`。下游 SKILL 必须读取 `hints` 调整行为。
 
 ---
 

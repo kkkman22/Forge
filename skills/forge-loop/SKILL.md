@@ -60,11 +60,11 @@ disable-model-invocation: true
 
 ### Step 1: Pre-flight Checks
 
-1. Git repository check 2. Working tree clean (skip with `--worktree`/`--resume`) 3. `.forge/` exists (must when using preset options) 4. Active task detection in StatusFile 5. `--tier` value validation 6. hooks.json check (warn, don't block) 7. Worktree source branch check
+1. Git repository check 2. Working tree clean (skip with `--worktree`/`--resume`) 3. `.forge/` exists (must when using preset options) 4. Active task detection via `listActiveTasks` 5. `--tier` value validation 6. hooks.json check (warn, don't block) 7. Worktree source branch check
 
 ### Step 2: Write Execution Mode
 
-写入 StatusFile：`mode: "autonomous"`, `loop_run_id: <uuid>`, `loop_iteration: 0`, `skill_sequence: <tier命令序列>`。残留 `loop_run_id` → 清理后从当前 phase 继续。
+调用 `writeTaskStatus` 写入 StatusFile：`mode: "autonomous"`, `loop_run_id: <uuid>`, `loop_iteration: 0`, `skill_sequence: <tier命令序列>`。残留 `loop_run_id` → 清理后从当前 phase 继续。
 
 ### Step 3: Command Sequence
 
