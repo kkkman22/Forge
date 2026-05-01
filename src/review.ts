@@ -53,6 +53,19 @@ export interface QualityGateItem {
   passed: boolean;
 }
 
+/** YAML frontmatter of a review report written to .forge/reviews/<topic>.md */
+export interface ReviewReportFrontmatter {
+  topic: string;
+  date: string;
+  result: "pass" | "fail" | "incomplete";
+  /** Commit hash at the time of review. Optional for backward compatibility. */
+  reviewedAtCommit?: string;
+  p0_count: number;
+  p1_count: number;
+  p2_count: number;
+  p3_count: number;
+}
+
 export interface QualityGateResult {
   passed: boolean;
   items: QualityGateItem[];
