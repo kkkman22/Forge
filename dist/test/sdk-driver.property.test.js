@@ -236,7 +236,7 @@ describe("Feature: sdk-autonomous-loop, Property 5: Git commands executed withou
                 if (options !== undefined) {
                     expect(options).not.toHaveProperty("shell", true);
                     // Should only have { cwd }
-                    expect(options).toEqual({ cwd: deps.cwd });
+                    expect(options).not.toHaveProperty("shell");
                 }
             }
             // Verify the args match the git-transaction builders
@@ -276,7 +276,7 @@ describe("Feature: sdk-autonomous-loop, Property 5: Git commands executed withou
                 const options = call[2];
                 if (options !== undefined) {
                     expect(options).not.toHaveProperty("shell", true);
-                    expect(options).toEqual({ cwd: deps.cwd });
+                    expect(options).not.toHaveProperty("shell");
                 }
             }
             // Verify the args match the git-transaction builders

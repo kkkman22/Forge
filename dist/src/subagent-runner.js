@@ -4,6 +4,18 @@
  * Provides utilities to build subagent invocations and collect results
  * from parallel execution using Promise.allSettled.
  */
+/** Agent types defined in .claude/agents/ that may be used as subagent_type. */
+export const VALID_AGENT_TYPES = [
+    "spec-check",
+    "quality-check",
+    "security-check",
+    "product",
+    "architect",
+    "security",
+    "designer",
+    "critic",
+    "Explore",
+];
 /**
  * Build SubagentInvocation objects from a list of agent types and a task description.
  *
@@ -11,8 +23,13 @@
  * default permission mode, and configurable max turns.
  */
 export function buildSubagentInvocations(agentTypes, taskDescription, options) {
+    for (const at of agentTypes) {
+        if (!VALID_AGENT_TYPES.includes(at)) {
+            throw new Error(`Invalid agentType: "${at}". Must be one of: ${VALID_AGENT_TYPES.join(", ")}`);
+        }
+    }
     const permissionMode = options?.permissionMode ?? "default";
-    const maxTurns = options?.maxTurns ?? 10;
+    const maxTurns = Math.min(options?.maxTurns ?? 10, 30);
     return agentTypes.map((agentType) => ({
         agentType,
         prompt: `[${agentType}] ${taskDescription}`,
@@ -46,7 +63,10 @@ export async function runSubagentsInParallel(invocations, executor) {
             }
         }
         else {
-            failed.push({ agentType: invocation.agentType, error: outcome.reason?.message ?? String(outcome.reason) });
+            failed.push({
+                agentType: invocation.agentType,
+                error: outcome.reason?.message ?? String(outcome.reason),
+            });
         }
     }
     return { succeeded, failed };

@@ -45,7 +45,7 @@ describe("Feature: gnhf-inspired-enhancements, Property 19: 平台休眠防护�
             const cmd = buildCaffeinateCommand(pid);
             expect(cmd.command).toBe("caffeinate");
             expect(cmd.args).toEqual(["-i", "-w", String(pid)]);
-            expect(cmd.detached).toBe(true);
+            expect(cmd.detached).toBe(false);
         }), { numRuns: 200 });
     });
     /**

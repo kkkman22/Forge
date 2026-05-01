@@ -191,3 +191,16 @@ export declare function serializeLockInfo(info: LockInfo): string;
  * Returns null if the content is not a valid lock file.
  */
 export declare function parseLockInfo(content: string): LockInfo | null;
+export interface TaskStatusEntry {
+    taskName: string;
+    tier: string;
+    phase: string;
+    worktree?: string;
+    updated: string;
+}
+export declare function parseStatusEntries(content: string): TaskStatusEntry[];
+export declare function serializeStatusEntries(entries: TaskStatusEntry[]): string;
+export declare function upsertTaskEntry(entries: TaskStatusEntry[], newEntry: TaskStatusEntry): TaskStatusEntry[];
+export declare function removeTaskEntry(entries: TaskStatusEntry[], taskName: string): TaskStatusEntry[];
+/** Check whether a task name already exists in the entries list. */
+export declare function hasTaskName(entries: TaskStatusEntry[], taskName: string): boolean;

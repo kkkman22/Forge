@@ -86,11 +86,11 @@ describe("setupNewRun", () => {
         // Second call: git rev-parse HEAD to record base commit
         expect(mock.mock.calls[1][0]).toBe("git");
         expect(mock.mock.calls[1][1]).toEqual(["rev-parse", "HEAD"]);
-        expect(mock.mock.calls[1][2]).toEqual({ cwd: CWD });
+        expect(mock.mock.calls[1][2]).toEqual(expect.objectContaining({ cwd: CWD }));
         // Third call: git checkout -b forge/<sanitized>
         expect(mock.mock.calls[2][0]).toBe("git");
         expect(mock.mock.calls[2][1]).toEqual(["checkout", "-b", "forge/Addloginform"]);
-        expect(mock.mock.calls[2][2]).toEqual({ cwd: CWD });
+        expect(mock.mock.calls[2][2]).toEqual(expect.objectContaining({ cwd: CWD }));
         // Verify returned setup
         expect(result.runId).toBe(FAKE_UUID);
         expect(result.baseCommit).toBe(FAKE_SHA);

@@ -106,7 +106,7 @@ export function parseShipDefaultMethod(value) {
     }
     const trimmed = value.trim().toLowerCase();
     if (VALID_DELIVERY_METHODS_SET.has(trimmed)) {
-        return { method: VALID_DELIVERY_METHODS.find((m) => m === trimmed) };
+        return { method: trimmed };
     }
     return {
         method: "keep-branch",

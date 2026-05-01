@@ -187,7 +187,7 @@ describe("sleep prevention", () => {
         expect(cmd?.args).toContain("-i");
         expect(cmd?.args).toContain("-w");
         expect(cmd?.args).toContain("42");
-        expect(cmd?.detached).toBe(true);
+        expect(cmd?.detached).toBe(false);
     });
     it("returns systemd-inhibit command for linux", () => {
         const cmd = buildSleepPreventionCommand("linux", 99);

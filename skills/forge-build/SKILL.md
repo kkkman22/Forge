@@ -325,19 +325,23 @@ After all tasks complete, execute full validation:
 
 ### Three-Layer Output Truncation Defense
 
-When invoking `ci_check_command` during TDD GREEN or REFACTOR phases, wrap with `scripts/run-with-trim.sh`:
+When invoking `ci_check_command` during TDD GREEN or REFACTOR phases, prefer `forge_exec` for server-side trimming. When MCP is unavailable, fall back to `scripts/run-with-trim.sh`:
 
 ```bash
+# Primary: forge_exec (MCP server-side trimming)
+forge_exec("npm run check")
+
+# Fallback: run-with-trim.sh (when MCP unavailable)
 scripts/run-with-trim.sh npm run check
 ```
 
 The three layers work together:
 
-1. **RTK (optional, user-installed)**: If user has RTK globally installed, its hooks auto-compress Bash output (framework-aware, 90+ patterns). Forge does NOT install RTK, does NOT hardcode `rtk` prefix in `ci_check_command`.
-2. **run-with-trim.sh**: Success-only truncation — any framework's success output is noise, truncation is safe and framework-agnostic. Failure output passed through unchanged.
+1. **forge-context MCP (primary)**: `forge_exec` runs commands in a subprocess; server-side trimming extracts key lines (pass/fail/error/warn/coverage/test count) + last 5 lines + stats for large successful output. Failure output returned in full (iron rule). `forge_git` returns structured summaries for diff/status/log.
+2. **run-with-trim.sh (fallback)**: When MCP is unavailable, success-only truncation — any framework's success output is noise, truncation is safe and framework-agnostic. Failure output passed through unchanged.
 3. **AI Trimming Iron Law** (§Context Budget Management): Failure output enters context unchanged, AI compresses on subsequent references. Framework-aware via AI semantic understanding.
 
-Failure output compression is handled by Trimming Iron Law, NOT by the wrapper.
+Failure output compression is handled by Trimming Iron Law, NOT by the wrapper or MCP.
 
 ---
 
@@ -531,11 +535,11 @@ The following limits are **mandatory constraints**, enforced at every tool outpu
 |--------|---------|-----------|-----------------|
 | Explore Agent results | Always | 300 | MUST truncate to structured summary: entry points + dependency chain + tests + interfaces |
 | Subagent execution results | Always | 200 | MUST replace full transcript with extract: status / task / changes / test result / commit hash / self-check |
-| Test output (all pass) | All tests pass | 50 | MUST replace with single line: `✅ <pass>/<total> tests passed (<duration>)` |
-| Test output (failures) | Any test fails | 300 | MUST keep only failure names + error messages. MUST discard all passing test details |
-| Git diff | >50 lines | 200 | MUST replace with file-level summary: filename + change type (added/modified/deleted) |
-| Git status | >30 files | 200 | MUST replace with categorized summary |
-| Command output | >100 lines | 200 | MUST keep last 20 lines + error/warning pattern matches |
+| Test output (all pass) | All tests pass | 50 | Use `forge_exec` — server-side trimming extracts key lines + stats. Fallback: MUST replace with single line: `✅ <pass>/<total> tests passed (<duration>)` |
+| Test output (failures) | Any test fails | 300 | Use `forge_exec` — failure output returned in full (iron rule). MUST keep only failure names + error messages. MUST discard all passing test details |
+| Git diff | >50 lines | 200 | Use `forge_git("diff")` — server-side returns file-level summary. Fallback: MUST replace with file-level summary: filename + change type (added/modified/deleted) |
+| Git status | >30 files | 200 | Use `forge_git("status")` — server-side returns categorized counts. Fallback: MUST replace with categorized summary |
+| Command output | >100 lines | 200 | Use `forge_exec` — server-side extracts key lines + last 5 lines. Fallback: MUST keep last 20 lines + error/warning pattern matches |
 
 ### Structured Output Exemption
 

@@ -30,8 +30,10 @@ if [ $exit_code -eq 0 ]; then
     # Success path: truncate if >30 lines
     line_count=$(wc -l < "$tmpfile" | tr -d ' ')
     if [ "$line_count" -gt 30 ]; then
-        echo "Output truncated: ${line_count} lines → last 10 lines shown"
-        tail -10 "$tmpfile"
+        echo "Output truncated: ${line_count} lines → summary:"
+        grep -E '(pass|fail|error|warn|coverage|✓|✗|PASS|FAIL|[0-9]+ tests?)' "$tmpfile" | tail -15
+        echo "--- last 5 lines ---"
+        tail -5 "$tmpfile"
     else
         cat "$tmpfile"
     fi

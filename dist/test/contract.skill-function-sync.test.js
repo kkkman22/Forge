@@ -1,0 +1,143 @@
+/**
+ * Contract tests for SKILL.md ↔ TypeScript function sync.
+ *
+ * Verifies bidirectional consistency between SKILL.md "Function Call"
+ * references and actual TypeScript exports:
+ *
+ * Direction 1: Every registered function exists and is exported from its module
+ * Direction 2: Every function reference in SKILL.md has a matching registry entry
+ * Direction 3: Every registry entry's declared SKILL references contain the function name
+ *
+ * **Validates: SKILL-Code Sync Contract**
+ */
+import { existsSync, readdirSync, readFileSync } from "node:fs";
+import { resolve } from "node:path";
+import { describe, expect, it } from "vitest";
+import { SKILL_FUNCTION_REGISTRY } from "../src/skill-function-registry.js";
+const ROOT = resolve(import.meta.dirname, "..");
+const SKILLS_DIR = resolve(ROOT, "skills");
+const SRC_DIR = resolve(ROOT, "src");
+// ---------------------------------------------------------------------------
+// Helpers
+// ---------------------------------------------------------------------------
+/**
+ * Extract all function names referenced via "Function Call" or "call `fn(`"
+ * patterns in a SKILL.md file.
+ */
+function extractFunctionReferences(content) {
+    const refs = [];
+    const patterns = [
+        // **Function Call**: `functionName(` or **Function call**: `functionName(`
+        /\*\*Function [Cc]all\*\*:\s*`(\w+)\(/g,
+        // **函数调用**：`functionName(` (Chinese variant)
+        /\*\*函数调用\*\*：`(\w+)\(/g,
+        // call `functionName(` or Call `functionName(` (inline references)
+        /[Cc]all `(\w+)\(/g,
+        // 调用 `functionName(` (Chinese inline)
+        /调用 `(\w+)\(/g,
+    ];
+    for (const pattern of patterns) {
+        for (const m of content.matchAll(pattern)) {
+            refs.push(m[1]);
+        }
+    }
+    // Deduplicate
+    return [...new Set(refs)];
+}
+// ---------------------------------------------------------------------------
+// Direction 1: Registry → Source code (every registered function exists)
+// ---------------------------------------------------------------------------
+describe("Direction 1: Registry functions exist in source modules", () => {
+    for (const entry of SKILL_FUNCTION_REGISTRY) {
+        it(`${entry.functionName} is exported from src/${entry.module}`, async () => {
+            const modulePath = resolve(SRC_DIR, entry.module);
+            expect(existsSync(modulePath), `Module not found: src/${entry.module}`).toBe(true);
+            const content = readFileSync(modulePath, "utf-8");
+            // Check that the function is exported
+            const exportPattern = new RegExp(`export\\s+function\\s+${entry.functionName}\\s*\\(`);
+            expect(exportPattern.test(content), `${entry.functionName} not found as exported function in src/${entry.module}`).toBe(true);
+        });
+        it(`${entry.functionName} has expected parameters: [${entry.parameterNames.join(", ")}]`, () => {
+            const modulePath = resolve(SRC_DIR, entry.module);
+            const content = readFileSync(modulePath, "utf-8");
+            // Extract the function signature (from "export function name(" to the closing ")")
+            const sigPattern = new RegExp(`export\\s+function\\s+${entry.functionName}\\s*\\(([^)]*(?:\\([^)]*\\)[^)]*)*)\\)`);
+            const sigMatch = content.match(sigPattern);
+            expect(sigMatch, `Could not extract signature for ${entry.functionName} in src/${entry.module}`).not.toBeNull();
+            if (sigMatch) {
+                const signature = sigMatch[1];
+                for (const param of entry.parameterNames) {
+                    expect(signature, `Parameter "${param}" not found in ${entry.functionName} signature`).toContain(param);
+                }
+            }
+        });
+    }
+});
+// ---------------------------------------------------------------------------
+// Direction 2: SKILL.md → Registry (every SKILL reference has a registry entry)
+// ---------------------------------------------------------------------------
+describe("Direction 2: SKILL.md function references have registry entries", () => {
+    const skillDirs = readdirSync(SKILLS_DIR, { withFileTypes: true })
+        .filter((d) => d.isDirectory())
+        .map((d) => d.name);
+    for (const dir of skillDirs) {
+        const skillPath = resolve(SKILLS_DIR, dir, "SKILL.md");
+        if (!existsSync(skillPath))
+            continue;
+        const content = readFileSync(skillPath, "utf-8");
+        const refs = extractFunctionReferences(content);
+        for (const funcName of refs) {
+            it(`${dir}/SKILL.md → ${funcName} has a registry entry`, () => {
+                const entry = SKILL_FUNCTION_REGISTRY.find((e) => e.functionName === funcName);
+                expect(entry, `"${funcName}" referenced in skills/${dir}/SKILL.md but missing from SKILL_FUNCTION_REGISTRY. ` +
+                    `Add an entry to src/skill-function-registry.ts.`).toBeDefined();
+            });
+        }
+    }
+});
+// ---------------------------------------------------------------------------
+// Direction 3: Registry → SKILL.md (declared SKILL references are accurate)
+// ---------------------------------------------------------------------------
+describe("Direction 3: Registry SKILL references contain the function name", () => {
+    for (const entry of SKILL_FUNCTION_REGISTRY) {
+        for (const skill of entry.skills) {
+            it(`skills/${skill} references ${entry.functionName}`, () => {
+                const skillPath = resolve(SKILLS_DIR, skill);
+                expect(existsSync(skillPath), `SKILL file not found: skills/${skill}`).toBe(true);
+                const content = readFileSync(skillPath, "utf-8");
+                expect(content.includes(entry.functionName), `${entry.functionName} declared in registry for skills/${skill} but not found in file content`).toBe(true);
+            });
+        }
+    }
+});
+// ---------------------------------------------------------------------------
+// Registry integrity checks
+// ---------------------------------------------------------------------------
+describe("Registry integrity", () => {
+    it("has no duplicate function entries", () => {
+        const seen = new Set();
+        for (const entry of SKILL_FUNCTION_REGISTRY) {
+            const key = `${entry.module}::${entry.functionName}`;
+            expect(seen.has(key), `Duplicate registry entry: ${key}`).toBe(false);
+            seen.add(key);
+        }
+    });
+    it("all referenced modules exist", () => {
+        const modules = new Set(SKILL_FUNCTION_REGISTRY.map((e) => e.module));
+        for (const mod of modules) {
+            const modPath = resolve(SRC_DIR, mod);
+            expect(existsSync(modPath), `Module not found: src/${mod}`).toBe(true);
+        }
+    });
+    it("all referenced SKILL files exist", () => {
+        const skills = new Set(SKILL_FUNCTION_REGISTRY.flatMap((e) => e.skills));
+        for (const skill of skills) {
+            const skillPath = resolve(SKILLS_DIR, skill);
+            expect(existsSync(skillPath), `SKILL file not found: skills/${skill}`).toBe(true);
+        }
+    });
+    it("has at least 10 entries (sanity check)", () => {
+        expect(SKILL_FUNCTION_REGISTRY.length).toBeGreaterThanOrEqual(10);
+    });
+});
+//# sourceMappingURL=contract.skill-function-sync.test.js.map

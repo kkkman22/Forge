@@ -11,7 +11,7 @@
  *   4.1–4.6, 5.1–5.4, 8.1–8.4, 9.1–9.3, 10.1–10.5**
  */
 import { type EffectExecutorInterface } from "./effect-executor.js";
-import { type LogSinkConfig, type PerformanceBaseline } from "./logger/index.js";
+import { type LogSinkConfig } from "./logger/index.js";
 import type { AgentInterface, LoopConfig, NotesDocument, OrchestratorState, RunLimits } from "./loop-types.js";
 import type { TaskType } from "./pua-engine.js";
 import { type TranslateFn } from "./run-manager.js";
@@ -61,6 +61,8 @@ export interface SdkDriverConfig {
     readStatusFile?: () => string;
     /** Optional callback to write StatusFile content (for skill-aware mode). */
     writeStatusFile?: (content: string) => void;
+    /** Task name for parallel status tracking. When set, status file routing uses StatusManager. */
+    taskName?: string;
     /** Optional callback to read review report content (for quality gate evaluation). */
     readReviewFile?: () => string;
     /** Optional callback to read test result content (for quality gate evaluation). */
@@ -116,6 +118,8 @@ export declare class SdkDriver {
     private currentAbortController;
     /** Flag indicating requestStop() has been called. */
     private stopRequested;
+    /** Cleanup promise from requestStop(), awaitable by callers. */
+    private stopPromise;
     /** Counter for consecutive review-fix loop iterations (skill-aware mode). */
     private reviewFixAttempts;
     /** Tracks whether the loop completed normally (SkillScheduler returned "completed"). */
@@ -126,14 +130,8 @@ export declare class SdkDriver {
     private readonly statusFileIO;
     /** Structured logger for observability. */
     private readonly logger;
-    /** Iteration timing accumulator for performance baseline. */
-    private readonly iterationTimings;
-    /** Subagent timing accumulator for extended performance baseline. */
-    private readonly subagentTimings;
-    /** Counter for degradation alerts triggered during the run. */
-    private degradationCount;
-    /** Previous SKILL phase name for detecting phase transitions. */
-    private previousPhase;
+    /** Performance tracker for iteration/subagent timing and degradation detection. */
+    private readonly perfTracker;
     constructor(config: SdkDriverConfig, effectExecutor: EffectExecutorInterface, agentAdapter: AgentInterface);
     /**
      * Internal translation helper. Falls back to the key-based default
@@ -157,6 +155,8 @@ export declare class SdkDriver {
      * the resulting effects, and aborts the current agent invocation.
      */
     requestStop(): void;
+    /** Returns the cleanup promise from the last requestStop() call. */
+    getStopPromise(): Promise<void> | null;
     /** Check if the loop should continue running. */
     private isLoopActive;
     /** Check if a specific effect type exists in an effects array. */
@@ -273,45 +273,6 @@ export declare class SdkDriver {
     private applySkillAwareCommitStrategy;
     /** Build the final driver result. */
     private buildResult;
-    /**
-     * Format and output a structured completion or abort summary.
-     *
-     * Called at the end of `run()` before returning the result. Outputs
-     * structured console output matching SKILL.md examples:
-     *
-     * - **Normal completion**: objective, tier, total iterations, per-phase
-     *   pass/fail status, branch name.
-     * - **Circuit breaker abort**: unresolved P0/P1 issues list and recovery
-     *   suggestions.
-     * - **Error abort**: error reason and `/forge resume` suggestion.
-     *
-     * **Validates: Requirements 9.1, 9.2, 9.3, 9.4, 9.5**
-     */
-    formatCompletionSummary(baseline: PerformanceBaseline): string;
-    /**
-     * Build per-phase pass/fail status from the notes document entries.
-     *
-     * Scans iteration entries for `skill_phase_completed` information
-     * embedded in summaries, and aggregates pass/fail per phase.
-     *
-     * @returns Array of formatted phase status strings (e.g., "✅ build", "❌ review").
-     */
-    private buildPhaseStatusSummary;
-    /**
-     * Collect unresolved P0/P1 issues from the last review gate evaluation.
-     *
-     * Reads the review file content (if available) and extracts P0/P1 issues
-     * from the quality gate evaluation.
-     *
-     * @returns Array of formatted issue strings.
-     */
-    private collectUnresolvedIssues;
-    /**
-     * Get the last failure reason from the notes document.
-     *
-     * @returns The summary of the last failed iteration, or null if none.
-     */
-    private getLastFailureReason;
 }
 /**
  * Detect whether Skill-aware mode should be enabled by checking if the
