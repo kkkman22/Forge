@@ -71,16 +71,17 @@ disable-model-invocation: true
 **Review Freshness Check**（Review Gate 通过后执行）：
 
 1. 读取 `.forge/reviews/<topic>.md` 的 `reviewed_at_commit` 字段
-2. 获取当前 HEAD：`git rev-parse HEAD`
-3. 比较：
+2. **安全验证**：如果字段存在，验证其为合法 commit hash 格式（`/^[a-f0-9]{7,40}$/`）。不合法则视为缺失，静默通过
+3. 获取当前 HEAD：`git rev-parse HEAD`
+4. 比较：
    - 相同 → ✅ 通过
-   - `reviewed_at_commit` 缺失 → ✅ 通过（向后兼容旧报告）
-   - 不同 → 获取 diff 文件列表：`git diff --name-only <reviewed_at_commit> HEAD`
+   - `reviewed_at_commit` 缺失或格式不合法 → ✅ 通过（向后兼容旧报告）
+   - 不同 → 获取 diff 文件列表：通过 `execFileSync` 参数化执行（不拼接命令字符串），传入 `["diff", "--name-only", reviewedCommit, "HEAD"]`
      - 仅 `.forge/` 文件 → ✅ 通过（状态更新不影响代码质量）
      - 涉及项目代码 → ⚠️ 警告（不阻断，用户可选择继续或重新 review）
 
-**函数调用**：`checkReviewFreshness(reviewedAtCommit, currentHead, changedFiles)`
-- 参数：`reviewedAtCommit` — 从 review 报告 frontmatter 的 `reviewed_at_commit` 字段读取（`string | undefined`）；`currentHead` — `git rev-parse HEAD` 输出；`changedFiles` — `git diff --name-only <reviewed> HEAD` 输出
+**函数调用**：`checkReviewFreshness(reviewedCommit, currentHead, changedFiles)`
+- 参数：`reviewedCommit` — 从 review 报告 frontmatter 的 `reviewed_at_commit` 字段读取（`string | undefined`）；`currentHead` — `git rev-parse HEAD` 输出；`changedFiles` — `git diff --name-only` 输出
 - 返回：`{ fresh: boolean, reason: string, changedFiles?: string[] }`
 - 用途：检测 review 后是否有项目代码变更，输出警告但不阻断 ship
 

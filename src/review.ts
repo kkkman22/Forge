@@ -59,7 +59,7 @@ export interface ReviewReportFrontmatter {
   date: string;
   result: "pass" | "fail" | "incomplete";
   /** Commit hash at the time of review. Optional for backward compatibility. */
-  reviewedAtCommit?: string;
+  reviewed_at_commit?: string;
   p0_count: number;
   p1_count: number;
   p2_count: number;
