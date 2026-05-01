@@ -127,7 +127,7 @@ describe("Feature: sdk-driver-decomposition, Property 3: Commit effect filtering
 
           // stateAdjustment is present and decrements commitCount
           expect(result.stateAdjustment).toBeDefined();
-          expect(result.stateAdjustment!.commitCount).toBe(Math.max(0, currentCommitCount - 1));
+          expect(result.stateAdjustment?.commitCount).toBe(Math.max(0, currentCommitCount - 1));
         },
       ),
       { numRuns: 100 },

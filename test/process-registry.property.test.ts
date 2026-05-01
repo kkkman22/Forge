@@ -1,3 +1,4 @@
+import type { ChildProcess } from "node:child_process";
 import * as fc from "fast-check";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
@@ -38,7 +39,7 @@ describe("ProcessRegistry", () => {
   describe("register/unregister/getAll/size", () => {
     it("register adds child and getAll returns it", () => {
       const reg = ProcessRegistry.getInstance();
-      const child = { pid: 12345, on: () => {} } as any;
+      const child = { pid: 12345, on: () => {} } as unknown as ChildProcess;
       reg.register(child, { source: "test", detached: false });
 
       expect(reg.size()).toBe(1);
@@ -53,7 +54,7 @@ describe("ProcessRegistry", () => {
 
     it("unregister removes by pid", () => {
       const reg = ProcessRegistry.getInstance();
-      const child = { pid: 999, on: () => {} } as any;
+      const child = { pid: 999, on: () => {} } as unknown as ChildProcess;
       reg.register(child, { source: "test", detached: false });
       expect(reg.size()).toBe(1);
 
@@ -64,14 +65,14 @@ describe("ProcessRegistry", () => {
 
     it("exit event auto-unregisters", () => {
       const reg = ProcessRegistry.getInstance();
-      const listeners: Record<string, Function[]> = {};
+      const listeners: Record<string, ((...args: unknown[]) => void)[]> = {};
       const child = {
         pid: 777,
-        on: (event: string, fn: Function) => {
+        on: (event: string, fn: (...args: unknown[]) => void) => {
           listeners[event] = listeners[event] || [];
           listeners[event].push(fn);
         },
-      } as any;
+      } as unknown as ChildProcess;
 
       reg.register(child, { source: "test", detached: false });
       expect(reg.size()).toBe(1);
@@ -84,7 +85,7 @@ describe("ProcessRegistry", () => {
 
     it("register with description stores it", () => {
       const reg = ProcessRegistry.getInstance();
-      const child = { pid: 555, on: () => {} } as any;
+      const child = { pid: 555, on: () => {} } as unknown as ChildProcess;
       reg.register(child, {
         source: "sleep-prevention",
         detached: false,
@@ -105,7 +106,7 @@ describe("ProcessRegistry", () => {
       const result = reg.spawnTracked("echo", ["hello"], {
         source: "test-spawn",
         detached: false,
-      } as any);
+      } as unknown as Parameters<typeof reg.spawnTracked>[2]);
 
       expect(result).toBe(mockChild);
       expect(reg.size()).toBe(1);
@@ -148,18 +149,26 @@ describe("ProcessRegistry", () => {
   describe("shutdownAll", () => {
     it("sends SIGTERM to all registered processes", async () => {
       const reg = ProcessRegistry.getInstance();
-      const killSpy = vi.spyOn(process, "kill").mockImplementation((_pid: number, signal?: any) => {
-        // kill(pid, 0) check: throw ESRCH to simulate process exited after SIGTERM
-        if (signal === 0) {
-          const err = new Error("ESRCH");
-          (err as any).code = "ESRCH";
-          throw err;
-        }
-        return true;
-      });
+      const killSpy = vi
+        .spyOn(process, "kill")
+        .mockImplementation((_pid: number, signal?: string | number) => {
+          // kill(pid, 0) check: throw ESRCH to simulate process exited after SIGTERM
+          if (signal === 0) {
+            const err = new Error("ESRCH") as NodeJS.ErrnoException;
+            err.code = "ESRCH";
+            throw err;
+          }
+          return true;
+        });
 
-      reg.register({ pid: 100, on: () => {} } as any, { source: "test", detached: false });
-      reg.register({ pid: 200, on: () => {} } as any, { source: "test", detached: false });
+      reg.register({ pid: 100, on: () => {} } as unknown as ChildProcess, {
+        source: "test",
+        detached: false,
+      });
+      reg.register({ pid: 200, on: () => {} } as unknown as ChildProcess, {
+        source: "test",
+        detached: false,
+      });
 
       const result = await reg.shutdownAll();
 
@@ -172,18 +181,23 @@ describe("ProcessRegistry", () => {
     it("SIGKILLs processes that do not exit within timeout", async () => {
       const reg = ProcessRegistry.getInstance();
       let sigkillSent = false;
-      const killSpy = vi.spyOn(process, "kill").mockImplementation((_pid: number, signal?: any) => {
-        if (signal === "SIGKILL") sigkillSent = true;
-        // After SIGKILL, next kill(pid,0) should fail
-        if (signal === 0 && sigkillSent) {
-          const err = new Error("ESRCH");
-          (err as any).code = "ESRCH";
-          throw err;
-        }
-        return true;
-      });
+      const killSpy = vi
+        .spyOn(process, "kill")
+        .mockImplementation((_pid: number, signal?: string | number) => {
+          if (signal === "SIGKILL") sigkillSent = true;
+          // After SIGKILL, next kill(pid,0) should fail
+          if (signal === 0 && sigkillSent) {
+            const err = new Error("ESRCH") as NodeJS.ErrnoException;
+            err.code = "ESRCH";
+            throw err;
+          }
+          return true;
+        });
 
-      reg.register({ pid: 300, on: () => {} } as any, { source: "test", detached: false });
+      reg.register({ pid: 300, on: () => {} } as unknown as ChildProcess, {
+        source: "test",
+        detached: false,
+      });
 
       const result = await reg.shutdownAll(100);
 
@@ -196,12 +210,15 @@ describe("ProcessRegistry", () => {
     it("catches ESRCH for already-exited processes", async () => {
       const reg = ProcessRegistry.getInstance();
       const killSpy = vi.spyOn(process, "kill").mockImplementation(() => {
-        const err = new Error("kill ESRCH");
-        (err as any).code = "ESRCH";
+        const err = new Error("kill ESRCH") as NodeJS.ErrnoException;
+        err.code = "ESRCH";
         throw err;
       });
 
-      reg.register({ pid: 400, on: () => {} } as any, { source: "test", detached: false });
+      reg.register({ pid: 400, on: () => {} } as unknown as ChildProcess, {
+        source: "test",
+        detached: false,
+      });
 
       const result = await reg.shutdownAll();
       expect(result.alreadyExited).toBe(1);
@@ -224,7 +241,7 @@ describe("ProcessRegistry", () => {
           (metadata, pid) => {
             ProcessRegistry.resetInstance();
             const reg = ProcessRegistry.getInstance();
-            const child = { pid, on: () => {} } as any;
+            const child = { pid, on: () => {} } as unknown as ChildProcess;
             reg.register(child, metadata);
 
             const all = reg.getAll();
@@ -262,7 +279,7 @@ describe("ProcessRegistry", () => {
             const reg = ProcessRegistry.getInstance();
 
             for (const e of entries) {
-              reg.register({ pid: e.pid, on: () => {} } as any, {
+              reg.register({ pid: e.pid, on: () => {} } as unknown as ChildProcess, {
                 source: e.source,
                 detached: e.detached,
               });
@@ -319,20 +336,20 @@ describe("Property 3: shutdownAll terminates all registered processes", () => {
           const killSpy = vi.spyOn(process, "kill");
 
           for (const e of entries) {
-            reg.register({ pid: e.pid, on: () => {} } as any, {
+            reg.register({ pid: e.pid, on: () => {} } as unknown as ChildProcess, {
               source: e.source,
               detached: e.detached,
             });
           }
           const sizeBefore = reg.size();
 
-          killSpy.mockImplementation((pid: number, signal?: any) => {
+          killSpy.mockImplementation((pid: number, signal?: string | number) => {
             if (signal === "SIGTERM") return true;
             if (signal === 0) {
               const entry = entries.find((e) => e.pid === pid);
               if (entry?.respondsToSigterm) {
-                const err = new Error("ESRCH");
-                (err as any).code = "ESRCH";
+                const err = new Error("ESRCH") as NodeJS.ErrnoException;
+                err.code = "ESRCH";
                 throw err;
               }
               return true;
@@ -354,7 +371,7 @@ describe("Property 3: shutdownAll terminates all registered processes", () => {
 describe("serialize/deserialize", () => {
   it("serialize returns JSON with session info and processes", () => {
     const reg = ProcessRegistry.getInstance();
-    reg.register({ pid: 100, on: () => {} } as any, {
+    reg.register({ pid: 100, on: () => {} } as unknown as ChildProcess, {
       source: "test",
       detached: false,
       description: "test proc",

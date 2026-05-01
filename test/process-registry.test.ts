@@ -1,3 +1,4 @@
+import type { ChildProcess } from "node:child_process";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { ProcessRegistry } from "../src/process-registry.js";
 
@@ -16,7 +17,10 @@ describe("ProcessRegistry example tests", () => {
 
     it("resetInstance allows fresh start", () => {
       const first = ProcessRegistry.getInstance();
-      first.register({ pid: 1, on: () => {} } as any, { source: "test", detached: false });
+      first.register({ pid: 1, on: () => {} } as unknown as ChildProcess, {
+        source: "test",
+        detached: false,
+      });
       expect(first.size()).toBe(1);
 
       ProcessRegistry.resetInstance();
@@ -28,13 +32,18 @@ describe("ProcessRegistry example tests", () => {
   describe("SIGTERM → 5s wait → SIGKILL sequence", () => {
     it("sends SIGTERM first, then SIGKILL after timeout", async () => {
       const reg = ProcessRegistry.getInstance();
-      const killCalls: Array<{ pid: number; signal: any }> = [];
-      const killSpy = vi.spyOn(process, "kill").mockImplementation((pid, signal) => {
-        killCalls.push({ pid, signal });
-        return true;
-      });
+      const killCalls: Array<{ pid: number; signal: string | number | undefined }> = [];
+      const killSpy = vi
+        .spyOn(process, "kill")
+        .mockImplementation((pid: number, signal?: string | number) => {
+          killCalls.push({ pid, signal });
+          return true;
+        });
 
-      reg.register({ pid: 500, on: () => {} } as any, { source: "test", detached: false });
+      reg.register({ pid: 500, on: () => {} } as unknown as ChildProcess, {
+        source: "test",
+        detached: false,
+      });
 
       await reg.shutdownAll(100);
 
@@ -51,12 +60,15 @@ describe("ProcessRegistry example tests", () => {
     it("stores detached flag and uses kill(-pgid) for cleanup", async () => {
       const reg = ProcessRegistry.getInstance();
       const killSpy = vi.spyOn(process, "kill").mockImplementation(() => {
-        const err = new Error("ESRCH");
-        (err as any).code = "ESRCH";
+        const err = new Error("ESRCH") as NodeJS.ErrnoException;
+        err.code = "ESRCH";
         throw err;
       });
 
-      reg.register({ pid: 600, on: () => {} } as any, { source: "caffeinate", detached: true });
+      reg.register({ pid: 600, on: () => {} } as unknown as ChildProcess, {
+        source: "caffeinate",
+        detached: true,
+      });
 
       const all = reg.getAll();
       expect(all[0].detached).toBe(true);
@@ -80,7 +92,7 @@ describe("ProcessRegistry example tests", () => {
       };
 
       // Manually test register + exit flow
-      reg.register(mockChild as any, { source: "test", detached: false });
+      reg.register(mockChild as unknown as ChildProcess, { source: "test", detached: false });
       expect(reg.size()).toBe(1);
 
       // Simulate exit

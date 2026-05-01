@@ -26,8 +26,8 @@ export function writePidFile(sessionId: string, content: PidFileContent, baseDir
   const filePath = join(dir, `session-${sessionId}.pid`);
   try {
     writeFileSync(filePath, JSON.stringify(content, null, 2), "utf-8");
-  } catch (err: any) {
-    console.warn(`Failed to write PID file: ${err.message}`);
+  } catch (err) {
+    console.warn(`Failed to write PID file: ${(err as Error).message}`);
   }
 }
 
