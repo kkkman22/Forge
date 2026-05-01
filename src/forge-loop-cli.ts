@@ -154,6 +154,7 @@ interface CliOptions {
   logLevel?: string;
   logFile?: string;
   sandbox?: boolean;
+  skillsDir?: string;
 }
 
 // ---------------------------------------------------------------------------
@@ -188,6 +189,7 @@ async function main(): Promise<void> {
     .option("--log-level <debug|info|warn|error>", "Minimum log level", "info")
     .option("--log-file <path>", "Write JSON logs to file (dual-write mode)")
     .option("--sandbox", "Enable sandbox mode with fine-grained access control", false)
+    .option("--skills-dir <path>", "Load external SKILL plugins from directory")
     .action(async (objective: string, opts: CliOptions) => {
       const cwd = process.cwd();
       const preventSleep = opts.preventSleep !== "off";
@@ -382,6 +384,7 @@ async function main(): Promise<void> {
         preventSleep,
         backoffBaseMs: DEFAULT_BACKOFF_BASE_MS,
         maxConcurrentWorktrees: DEFAULT_MAX_CONCURRENT_WORKTREES,
+        skillsDir: opts.skillsDir,
       };
 
       const limits: RunLimits = {

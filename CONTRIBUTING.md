@@ -1,103 +1,162 @@
 # Contributing to Forge
 
-感谢你对 Forge 的关注！以下是参与贡献的指南。
+Thanks for your interest in Forge! This guide covers setup, architecture, coding conventions, and PR requirements.
 
-## 开发环境搭建
+## Development Environment
 
 ```bash
-# 克隆仓库
+# Clone
 git clone https://github.com/anthropics/forge.git
 cd forge
 
-# 安装依赖（需要 Node.js >= 20）
-npm install
+# Install (requires Node.js >= 20)
+npm ci
 
-# 验证环境
+# Verify
 npm run check
 ```
 
-## 代码规范
+**Toolchain**: Node.js >= 20, npm, Biome (lint + format), Vitest + fast-check (testing).
 
-- **语言**：TypeScript，strict 模式
-- **Linter/Formatter**：Biome（不使用 ESLint 或 Prettier）
-- **测试框架**：Vitest + fast-check（属性测试）
-- **代码风格**：2 空格缩进，双引号，100 字符行宽
+## Architecture Overview
 
-运行检查：
+Forge is a **pure-function codebase** — `src/` exports composable functions with no side effects. State lives in `.forge/` files on disk; modules read/write via explicit parameters.
+
+```
+src/               # Pure functions (no global state, no I/O in logic)
+  *.ts             # Domain modules (scheduler, validator, builder, etc.)
+  logger/          # Structured logging (only side-effect module)
+skills/            # 16 SKILL.md files — AI behavior contracts
+agents/            # 10 Agent role definitions (.md)
+commands/          # Forge CLI command entry points
+hooks/             # Claude Code hooks (pre-tool-use, post-prompt)
+templates/         # File templates (CLAUDE.md, config.md, etc.)
+scripts/           # Shell scripts (init, build-dist, install-dist)
+test/              # Property-based tests (*.property.test.ts) + unit tests
+```
+
+### Data Flow
+
+```
+User → /forge <command> → Router → Skill Scheduler → Phase functions → .forge/ files
+```
+
+Each phase (plan, build, review, test, ship) reads from and writes to `.forge/` directory, providing natural session boundaries.
+
+### Key Patterns
+
+- **Pure functions**: All `src/` logic is deterministic. File I/O and network calls are in CLI adapters and effect-executor.
+- **Contract tests**: `test/contract.test.ts` validates SKILL/agent file structure and cross-file consistency.
+- **Property-based testing**: Business logic uses `fast-check` to verify invariants, not specific I/O pairs.
+
+## Code Style
+
+- **Language**: TypeScript, strict mode
+- **Formatter/Linter**: Biome (`npm run lint:fix` to auto-fix)
+- **Style**: 2-space indent, double quotes, 100-char line width
+- **Exports**: Named exports only (no default exports)
+- **Comments**: Minimal — explain WHY, not WHAT
 
 ```bash
-npm run typecheck    # 类型检查
-npm run lint         # Lint 检查
-npm run lint:fix     # 自动修复 lint 问题
-npm run test         # 运行测试
-npm run check        # 以上全部（CI 使用此命令）
+npm run typecheck    # Type check
+npm run lint         # Lint
+npm run lint:fix     # Auto-fix lint issues
+npm run test         # Run tests
+npm run check        # All of the above (CI uses this)
 ```
 
-## 项目结构
+## Commit Convention
+
+Use [Conventional Commits](https://www.conventionalcommits.org/):
 
 ```
-src/          # 核心逻辑（纯函数，无副作用）
-test/         # 属性测试（fast-check PBT）
-skills/       # 13 个 SKILL.md（AI 行为规范）
-agents/       # 10 个 Agent 角色定义
-commands/     # Forge Command 入口
-hooks/        # Claude Code Hooks
-templates/    # 文件模板
-scripts/      # Shell 脚本（init、build-dist、install-dist）
+feat(scope): add new feature
+fix(scope): fix a bug
+docs(scope): documentation change
+refactor(scope): code restructuring
+test(scope): add or update tests
+chore(scope): build, CI, tooling
 ```
 
-## 提交 PR
+**Scopes**: `scheduler`, `review`, `decide`, `build`, `skills`, `agents`, `cli`, `hooks`, `docs`
 
-1. Fork 仓库并创建功能分支：`git checkout -b feature/your-feature`
-2. 确保 `npm run check` 全部通过
-3. 如果修改了 `src/` 中的逻辑，添加对应的属性测试
-4. 如果修改了 agent 配置，确保 `contract.test.ts` 通过
-5. 提交信息使用中文或英文均可，简洁描述变更内容
-6. 提交 PR 到 `main` 分支
+## Pull Request Workflow
 
-## 测试要求
+1. Fork and create a feature branch: `git checkout -b feature/your-feature`
+2. Make changes following TDD (write tests first for `src/` changes)
+3. Ensure `npm run check` passes
+4. If modifying `src/` logic, add property-based tests
+5. If modifying agent/SKILL config, verify `contract.test.ts` passes
+6. Submit PR to `main`
 
-- `src/` 中的所有函数必须有对应的属性测试（`test/*.property.test.ts`）
-- 测试验证的是**不变量**（invariant），不是特定输入输出
-- 配置一致性通过 `test/contract.test.ts` 验证
-- PR 合并前 CI 必须全绿
+### PR Checklist
 
-## 安全模型 (Security Model)
+- [ ] `npm run check` passes
+- [ ] New `src/` functions have property tests
+- [ ] No changes to frozen files (`.forge/specs/*/spec.md`, `.forge/plans/*.md`) without explicit unlock
+- [ ] Commit messages follow Conventional Commits
 
-### SDK 权限绕过策略
+## Testing Requirements
 
-`SDK_Agent_Adapter`（`src/sdk-agent-adapter.ts`）在调用 Claude Agent SDK 时使用了 `bypassPermissions` 和 `allowDangerouslySkipPermissions` 选项。这是因为 SDK 内置的交互式权限提示（interactive permission prompts）专为人机交互场景设计，与 Forge Loop 的无人值守自主执行模式不兼容。在自主循环中，没有人类操作员来响应权限弹窗，因此必须绕过 SDK 层的权限检查。
+| Test Type | When to Use | File Pattern |
+|-----------|------------|--------------|
+| **Property-based** | `src/` pure functions, business logic invariants | `*.property.test.ts` |
+| **Unit** | Edge cases, specific I/O, error paths | `*.test.ts` |
+| **Contract** | SKILL/agent file structure, cross-file consistency | `contract.test.ts` |
 
-### 上层防线 (Upper Layer Defenses)
+### Property-Based Testing
 
-绕过 SDK 权限后，访问控制由以下多层防御机制替代：
+Use `fast-check` to verify invariants:
 
-1. **PreToolUse Hook 拦截** — 通过 `hooks/hooks.json` 中配置的 PreToolUse 钩子，在 Write、Edit、Bash 等工具调用执行前进行拦截，运行冻结区检查以阻止对受保护文件的修改。
-2. **冻结区保护 (Frozen Zone Protection)** — 由 `src/check-frozen.ts` 和 `scripts/check-frozen.sh` 实现，当 `.forge/specs/*`、`.forge/plans/*` 和 `.forge/config.md` 的状态为 "locked" 或 "approved" 时，拒绝对这些文件的写入操作。路径分类和状态解析逻辑统一由 `src/state.ts` 提供，`check-frozen.ts` 作为 CLI 入口委托给 `state.ts`，确保规则来源唯一。
-3. **状态门禁检查 (State Gate Checks)** — `build.ts` 等编排器模块在允许状态转换前，会验证 spec/plan 的当前状态是否满足前置条件。
-4. **内层提交保护 (Inner-Layer Commit Guard)** — `src/effect-executor.ts` 在执行 `git commit` 前，会扫描暂存区中的 `.forge/` 文件，对冻结区文件进行二次校验。即使 Hook 层未能拦截写入，此层也能阻止冻结文件被提交。
+```typescript
+import fc from "fast-check";
+import { test, expect } from "vitest";
 
-### 风险声明
+test("mergeSkillLists always prefers builtin", () => {
+  fc.assert(
+    fc.property(fc.array(manifestArb), fc.array(manifestArb), (builtin, external) => {
+      const result = mergeSkillLists(builtin, external);
+      const builtinNames = new Set(builtin.map((m) => m.name));
+      for (const item of result) {
+        if (builtinNames.has(item.name)) {
+          expect(item).toEqual(builtin.find((b) => b.name === item.name));
+        }
+      }
+    }),
+  );
+});
+```
 
-> **警告**：如果上述防御层中的任何一层被禁用或配置错误，`SDK_Agent_Adapter` 将在没有任何访问控制限制的情况下运行。对钩子配置（`hooks/hooks.json`）或冻结区逻辑（`check-frozen.ts` / `state.ts`）的任何修改都必须经过严格审查。
+### Contract Tests
 
-### 实现参考
+`test/contract.test.ts` validates:
+- All `skills/*/SKILL.md` have valid YAML frontmatter
+- All `agents/*.md` are synced with `.claude/agents/`
+- Cross-references between files are consistent
 
-权限绕过的具体实现位于 `src/sdk-agent-adapter.ts` 第 118–135 行。该段代码包含了 `permissionMode: "bypassPermissions"` 和 `allowDangerouslySkipPermissions: true` 的设置，以及上层防御机制的详细注释说明。
+## Security Model
 
-## 需要帮助？
+### SDK Permission Bypass
 
-如果有任何问题，欢迎提 Issue 讨论。
+`SDK_Agent_Adapter` uses `bypassPermissions` because Claude Agent SDK's interactive prompts are incompatible with Forge Loop's autonomous execution mode. Upper-layer defenses compensate:
 
-## SKILL-纯函数对接检查
+1. **PreToolUse Hooks** — Intercept Write/Edit/Bash before execution
+2. **Frozen Zone Protection** — Block writes to locked specs/plans/config
+3. **State Gate Checks** — Validate phase transitions
+4. **Inner-Layer Commit Guard** — Scan staged `.forge/` files before commit
 
-每次新增或修改 `src/*.ts` 中的 exported 函数时，检查：
+> **Warning**: Disabling any defense layer removes all access control. Changes to `hooks/hooks.json` or `check-frozen.ts`/`state.ts` require strict review.
 
-1. [ ] 该函数是否被某个 SKILL 文档引用？
-2. [ ] 引用是否包含完整调用路径？
-   - 函数名（含模块路径）
-   - 参数来源（从哪个上下文变量/文件/命令输出获取）
-   - 返回值用途（如何影响后续流程：替换 context / 写入文件 / 阻断流程）
-3. [ ] 如果是 Forge Loop 专用函数（由 SdkDriver/EffectExecutor 直接调用），标注为"非 SKILL 调用"
+## Questions?
 
-**例外**：Forge Loop 模块（`orchestrator`、`effect-executor`、`sdk-driver`、`sdk-agent-adapter`、`run-manager`、`failure-handler`、`worktree-manager` 等）的函数由程序直接调用，不需要 SKILL 引用。
+Open an [Issue](https://github.com/anthropics/forge/issues) for discussion.
+
+## SKILL-Function Interface Check
+
+When adding or modifying exported functions in `src/*.ts`:
+
+1. [ ] Is the function referenced by a SKILL document?
+2. [ ] Does the reference include full call path (function name, parameter source, return value usage)?
+3. [ ] If it's a Forge Loop internal function (called by SdkDriver/EffectExecutor), mark as "non-SKILL call"
+
+**Exception**: Forge Loop modules (`orchestrator`, `effect-executor`, `sdk-driver`, `sdk-agent-adapter`, `run-manager`, `failure-handler`, `worktree-manager`, etc.) are called programmatically and don't need SKILL references.

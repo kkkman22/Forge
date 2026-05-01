@@ -125,6 +125,8 @@ export interface LoopConfig {
   backoffBaseMs: number;
   /** Maximum number of concurrent worktrees allowed. Default: 3. */
   maxConcurrentWorktrees: number;
+  /** External SKILL plugin directory. */
+  skillsDir?: string;
 }
 
 // ---------------------------------------------------------------------------
