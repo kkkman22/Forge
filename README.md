@@ -486,7 +486,7 @@ forge/
 │   └── install-dist.sh         #   安装分发包
 ├── dist/                        # 分发包（CI 自动构建）
 │   └── claude-code/bundles/forge/
-├── src/                         # 核心逻辑（67 个 TypeScript 模块，含纯函数模块及有状态/运行时模块：CLI、SDK 适配器、副作用执行器、运行管理器等）<!--exact: 67 个 TypeScript 模块-->
+├── src/                         # 核心逻辑（75 个 TypeScript 模块，含纯函数模块及有状态/运行时模块：CLI、SDK 适配器、副作用执行器、运行管理器等）<!--exact: 75 个 TypeScript 模块-->
 │   ├── forge-loop-cli.ts       #   自主循环 CLI 入口（Commander 参数解析 + 信号处理）
 │   ├── sdk-driver.ts           #   迭代循环驱动器（调度 Agent → 处理结果 → 执行副作用）
 │   ├── orchestrator.ts         #   纯函数状态机（状态转换 + 副作用描述）
@@ -547,7 +547,7 @@ bash scripts/build-dist.sh
 
 **技术栈**：TypeScript 5.9（strict）、Vitest 3.2、fast-check 4.7（属性测试）、Biome 2.4（lint + format）。运行时依赖：`@anthropic-ai/claude-agent-sdk`、`commander`。
 
-**测试策略**：2748 个测试（152 个测试文件，其中 88 个为 fast-check 属性测试文件）验证不变量（invariant），而非特定输入输出。覆盖率 89.35% statements、89.62% branches、95.2% functions。<!--exact: 测试数、文件数、属性测试数; approximate: 覆盖率-->
+**测试策略**：2751 个测试（154 个测试文件，其中 90 个为 fast-check 属性测试文件）验证不变量（invariant），而非特定输入输出。覆盖率 89.35% statements、89.62% branches、95.2% functions。<!--exact: 测试数、文件数、属性测试数; approximate: 覆盖率-->
 
 ---
 
