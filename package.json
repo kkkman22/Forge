@@ -23,7 +23,7 @@
     "lint:fix": "biome check --write src/ test/",
     "format": "biome format --write src/ test/",
     "typecheck": "tsc --noEmit",
-    "check": "tsc --noEmit && biome check src/ test/ && vitest run && bash scripts/check-readme-metrics.sh",
+    "check": "tsc --noEmit && biome check src/ test/ && vitest run && bash scripts/check-readme-metrics.sh && bash scripts/check-skill-function-refs.sh",
     "docs": "typedoc"
   },
   "devDependencies": {

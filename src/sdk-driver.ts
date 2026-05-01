@@ -13,6 +13,7 @@
 
 import { existsSync, mkdirSync, readFileSync, rmSync, writeFileSync } from "node:fs";
 import path, { join } from "node:path";
+import { type CompletionContext, formatCompletionSummary } from "./completion-reporter.js";
 import {
   appendEntry,
   buildIterationPrompt,
@@ -20,19 +21,7 @@ import {
   formatNotesDocument,
 } from "./context-accumulator.js";
 import { type EffectExecutorInterface, FrozenZoneViolation } from "./effect-executor.js";
-import {
-  buildSubagentTiming,
-  computeExtendedBaseline,
-  createIterationTiming,
-  createLogEntry,
-  createLogSink,
-  detectDegradation,
-  formatPerformanceBaseline,
-  type IterationTiming,
-  type LogSinkConfig,
-  type PerformanceBaseline,
-  type SubagentTiming,
-} from "./logger/index.js";
+import { createLogEntry, createLogSink, type LogSinkConfig } from "./logger/index.js";
 import type {
   AgentInterface,
   AgentOutput,
@@ -46,10 +35,10 @@ import type {
   TokenUsage,
 } from "./loop-types.js";
 import { createInitialState, transition } from "./orchestrator.js";
+import { PerformanceTracker } from "./performance-tracker.js";
 import type { PuaContext, TaskType } from "./pua-engine.js";
 import { PuaStateManager } from "./pua-state-manager.js";
 import type { GateResult } from "./quality-gate.js";
-import { evaluateReviewGate } from "./quality-gate.js";
 import { RunManager, type TranslateFn } from "./run-manager.js";
 import { buildDefaultPolicy, type PermissionPolicy, validatePolicy } from "./sandbox-policy.js";
 import { evaluateGateForPhase } from "./sdk-quality-helpers.js";
@@ -252,17 +241,8 @@ export class SdkDriver {
   /** Structured logger for observability. */
   private readonly logger: ReturnType<typeof createLogSink>;
 
-  /** Iteration timing accumulator for performance baseline. */
-  private readonly iterationTimings: IterationTiming[] = [];
-
-  /** Subagent timing accumulator for extended performance baseline. */
-  private readonly subagentTimings: SubagentTiming[] = [];
-
-  /** Counter for degradation alerts triggered during the run. */
-  private degradationCount = 0;
-
-  /** Previous SKILL phase name for detecting phase transitions. */
-  private previousPhase: string | undefined;
+  /** Performance tracker for iteration/subagent timing and degradation detection. */
+  private readonly perfTracker: PerformanceTracker;
 
   constructor(
     config: SdkDriverConfig,
@@ -281,6 +261,9 @@ export class SdkDriver {
 
     // Initialize structured logger.
     this.logger = createLogSink(config.logSinkConfig ?? { format: "text", level: "info" });
+
+    // Initialize performance tracker.
+    this.perfTracker = new PerformanceTracker(this.logger, config.runId);
 
     // Initialize orchestrator state.
     this.orchestratorState = createInitialState();
@@ -456,11 +439,7 @@ export class SdkDriver {
     } finally {
       // Output performance baseline (Req 5.1–5.4, 6.1, 6.2, 6.4, 6.7).
       // Computed once and reused in formatCompletionSummary (Req 5.2).
-      const baseline = computeExtendedBaseline(
-        this.iterationTimings,
-        this.subagentTimings,
-        this.degradationCount,
-      );
+      const baseline = this.perfTracker.computeBaseline();
       this.logger.log(
         createLogEntry(
           "performance_baseline",
@@ -477,7 +456,20 @@ export class SdkDriver {
       // Placed in finally block so it runs on both normal and abnormal exits.
       if (this.config.skillAware) {
         try {
-          const summary = this.formatCompletionSummary(baseline);
+          const completionCtx: CompletionContext = {
+            status: this.orchestratorState.status,
+            currentIteration: this.orchestratorState.currentIteration,
+            notesDocument: this.notesDocument,
+            objective: this.config.objective,
+            branchName: this.config.branchName,
+            presetTier: this.config.presetTier ?? "standard",
+            loopCompletedNormally: this.loopCompletedNormally,
+            reviewFixAttempts: this.reviewFixAttempts,
+            maxConsecutiveFailures: this.config.loopConfig.maxConsecutiveFailures,
+            readReviewFile: this.config.readReviewFile,
+            t: (key: string, params?: Record<string, string>) => this.t(key, params),
+          };
+          const summary = formatCompletionSummary(completionCtx, baseline);
           this.logger.log(
             createLogEntry("completion_summary", "info", summary, { runId: this.config.runId }),
           );
@@ -649,16 +641,11 @@ export class SdkDriver {
       agentEndMs = Date.now();
 
       // Record subagent timing (Req 4.1, 4.2, 4.3).
-      const subTiming = buildSubagentTiming(this.agentAdapter.name, subagentStartMs, agentEndMs);
-      this.subagentTimings.push(subTiming);
-      this.logger.log(
-        createLogEntry(
-          "subagent_timing",
-          "debug",
-          "Subagent completed",
-          { runId: this.config.runId, iteration: iterationNumber },
-          { ...subTiming },
-        ),
+      this.perfTracker.recordSubagentTiming(
+        this.agentAdapter.name,
+        subagentStartMs,
+        agentEndMs,
+        iterationNumber,
       );
 
       const output: AgentOutput = agentResult.output;
@@ -809,19 +796,12 @@ export class SdkDriver {
 
     // Record iteration timing (Req 4.1–4.4).
     const effectEndMs = Date.now();
-    const timing = createIterationTiming(iterStartMs, agentEndMs, effectEndMs);
-    this.iterationTimings.push(timing);
-    this.logger.log(
-      createLogEntry(
-        "iteration_timing",
-        "debug",
-        "Iteration timing",
-        {
-          runId: this.config.runId,
-          iteration: iterationNumber,
-        },
-        { ...timing },
-      ),
+    this.perfTracker.recordIterationTiming(
+      iterStartMs,
+      agentEndMs,
+      effectEndMs,
+      iterationNumber,
+      "generic",
     );
   }
 
@@ -915,16 +895,11 @@ export class SdkDriver {
       agentEndMs = Date.now();
 
       // Record subagent timing (Req 4.1, 4.2, 4.3).
-      const subTiming = buildSubagentTiming(this.agentAdapter.name, subagentStartMs, agentEndMs);
-      this.subagentTimings.push(subTiming);
-      this.logger.log(
-        createLogEntry(
-          "subagent_timing",
-          "debug",
-          "Subagent completed",
-          { runId: this.config.runId, iteration: iterationNumber },
-          { ...subTiming },
-        ),
+      this.perfTracker.recordSubagentTiming(
+        this.agentAdapter.name,
+        subagentStartMs,
+        agentEndMs,
+        iterationNumber,
       );
 
       const output: AgentOutput = agentResult.output;
@@ -1159,57 +1134,13 @@ export class SdkDriver {
 
     // Record iteration timing (Req 4.1–4.4) with phase metadata (Req 3.1, 3.3).
     const effectEndMs = Date.now();
-    const timing = createIterationTiming(iterStartMs, agentEndMs, effectEndMs);
-    this.iterationTimings.push(timing);
-    this.logger.log(
-      createLogEntry(
-        "iteration_timing",
-        "debug",
-        "Iteration timing",
-        {
-          runId: this.config.runId,
-          iteration: iterationNumber,
-          phase: nextPhase,
-        },
-        { ...timing, phase: nextPhase },
-      ),
+    this.perfTracker.recordIterationTiming(
+      iterStartMs,
+      agentEndMs,
+      effectEndMs,
+      iterationNumber,
+      nextPhase,
     );
-
-    // Detect phase transition (Req 3.4, 5.3).
-    if (this.previousPhase !== undefined && nextPhase !== this.previousPhase) {
-      this.logger.log(
-        createLogEntry(
-          "skill_phase_transition",
-          "info",
-          `Phase transition: ${this.previousPhase} → ${nextPhase}`,
-          { runId: this.config.runId, iteration: iterationNumber },
-          { fromPhase: this.previousPhase, toPhase: nextPhase },
-        ),
-      );
-    }
-    this.previousPhase = nextPhase;
-
-    // Degradation detection (Req 5.1, 5.2).
-    const degradation = detectDegradation(
-      timing.totalIterationDurationMs,
-      this.iterationTimings.slice(0, -1), // exclude current iteration
-    );
-    if (degradation.isDegraded) {
-      this.degradationCount++;
-      this.logger.log(
-        createLogEntry(
-          "performance_degradation",
-          "warn",
-          `Iteration ${iterationNumber} duration anomaly detected`,
-          { runId: this.config.runId, iteration: iterationNumber },
-          {
-            currentMs: degradation.currentMs,
-            rollingAvgMs: degradation.rollingAvgMs,
-            deviationFactor: degradation.deviationFactor,
-          },
-        ),
-      );
-    }
   }
 
   // -------------------------------------------------------------------------
@@ -1481,167 +1412,6 @@ export class SdkDriver {
       notesDocument: this.notesDocument,
       commitCount: this.orchestratorState.commitCount,
     };
-  }
-
-  // -------------------------------------------------------------------------
-  // Completion summary output (Req 9.1–9.5)
-  // -------------------------------------------------------------------------
-
-  /**
-   * Format and output a structured completion or abort summary.
-   *
-   * Called at the end of `run()` before returning the result. Outputs
-   * structured console output matching SKILL.md examples:
-   *
-   * - **Normal completion**: objective, tier, total iterations, per-phase
-   *   pass/fail status, branch name.
-   * - **Circuit breaker abort**: unresolved P0/P1 issues list and recovery
-   *   suggestions.
-   * - **Error abort**: error reason and `/forge resume` suggestion.
-   *
-   * **Validates: Requirements 9.1, 9.2, 9.3, 9.4, 9.5**
-   */
-  formatCompletionSummary(baseline: PerformanceBaseline): string {
-    const state = this.orchestratorState;
-    const lines: string[] = [];
-
-    if (this.loopCompletedNormally) {
-      // --- Normal completion (Req 9.1, 9.4, 9.5) ---
-      lines.push(this.t("driver.summary.completedTitle"));
-      lines.push(this.t("driver.summary.objective", { objective: this.config.objective }));
-      lines.push(this.t("driver.summary.tier", { tier: this.config.presetTier ?? "standard" }));
-      lines.push(this.t("driver.summary.iterations", { count: String(state.currentIteration) }));
-
-      // Per-phase pass/fail status from notes entries (Req 9.4).
-      const phaseStatus = this.buildPhaseStatusSummary();
-      if (phaseStatus.length > 0) {
-        lines.push(this.t("driver.summary.phasesHeader"));
-        for (const ps of phaseStatus) {
-          lines.push(`  ${ps}`);
-        }
-      }
-
-      // Branch name (Req 9.5).
-      if (this.config.branchName) {
-        lines.push(this.t("driver.summary.branch", { branch: this.config.branchName }));
-      }
-    } else if (this.reviewFixAttempts >= this.config.loopConfig.maxConsecutiveFailures) {
-      // --- Circuit breaker abort (Req 9.2) ---
-      lines.push(this.t("driver.summary.circuitBreakerTitle"));
-      lines.push(
-        this.t("driver.summary.fixAttemptsExhausted", {
-          attempts: String(this.reviewFixAttempts),
-          max: String(this.config.loopConfig.maxConsecutiveFailures),
-        }),
-      );
-
-      // Collect unresolved P0/P1 issues from the last review gate evaluation.
-      const unresolvedIssues = this.collectUnresolvedIssues();
-      if (unresolvedIssues.length > 0) {
-        lines.push(this.t("driver.summary.unresolvedIssuesHeader"));
-        for (const issue of unresolvedIssues) {
-          lines.push(`  ${issue}`);
-        }
-      }
-
-      lines.push(this.t("driver.summary.recovery"));
-    } else {
-      // --- Error abort (Req 9.3) ---
-      lines.push(this.t("driver.summary.errorTitle"));
-
-      // Extract the last failure reason from notes entries.
-      const lastFailure = this.getLastFailureReason();
-      if (lastFailure) {
-        lines.push(this.t("driver.summary.reason", { reason: lastFailure }));
-      }
-
-      lines.push(this.t("driver.summary.recovery"));
-    }
-
-    // Append performance baseline (Req 5.2).
-    lines.push("");
-    lines.push(formatPerformanceBaseline(baseline));
-
-    return lines.join("\n");
-  }
-
-  /**
-   * Build per-phase pass/fail status from the notes document entries.
-   *
-   * Scans iteration entries for `skill_phase_completed` information
-   * embedded in summaries, and aggregates pass/fail per phase.
-   *
-   * @returns Array of formatted phase status strings (e.g., "✅ build", "❌ review").
-   */
-  private buildPhaseStatusSummary(): string[] {
-    const phaseResults = new Map<string, boolean>();
-
-    for (const entry of this.notesDocument.entries) {
-      // Try to extract phase from the summary pattern "<phase> phase completed/failed"
-      const phaseMatch = entry.summary.match(/^(\S+)\s+phase\s+(completed|failed)/);
-      if (phaseMatch) {
-        const phase = phaseMatch[1];
-        // A phase is considered passed if its last entry was successful
-        phaseResults.set(phase, entry.success);
-      }
-    }
-
-    const result: string[] = [];
-    for (const [phase, passed] of phaseResults) {
-      result.push(
-        passed
-          ? this.t("driver.summary.phasePassed", { phase })
-          : this.t("driver.summary.phaseFailed", { phase }),
-      );
-    }
-    return result;
-  }
-
-  /**
-   * Collect unresolved P0/P1 issues from the last review gate evaluation.
-   *
-   * Reads the review file content (if available) and extracts P0/P1 issues
-   * from the quality gate evaluation.
-   *
-   * @returns Array of formatted issue strings.
-   */
-  private collectUnresolvedIssues(): string[] {
-    try {
-      const reviewContent = this.readReviewFileContent();
-      if (!reviewContent) return [];
-
-      const gateResult = evaluateReviewGate(reviewContent);
-      if (gateResult.issues && gateResult.issues.length > 0) {
-        return gateResult.issues
-          .filter((i) => i.severity === "P0" || i.severity === "P1")
-          .map((i) => `${i.severity}: ${i.description}`);
-      }
-    } catch (err) {
-      this.logger.log(
-        createLogEntry(
-          "collect_issues_failed",
-          "debug",
-          `collectUnresolvedIssues failed: ${err instanceof Error ? err.message : String(err)}`,
-          { runId: this.config.runId },
-        ),
-      );
-    }
-    return [];
-  }
-
-  /**
-   * Get the last failure reason from the notes document.
-   *
-   * @returns The summary of the last failed iteration, or null if none.
-   */
-  private getLastFailureReason(): string | null {
-    for (let i = this.notesDocument.entries.length - 1; i >= 0; i--) {
-      const entry = this.notesDocument.entries[i];
-      if (!entry.success) {
-        return entry.summary;
-      }
-    }
-    return null;
   }
 }
 
