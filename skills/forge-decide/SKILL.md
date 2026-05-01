@@ -22,6 +22,10 @@ disable-model-invocation: true
 
 ---
 
+**Not For**：
+- 轻量路径任务
+- 需求已完全明确且无技术风险的变更
+
 ## 2. Two-Round Subagent Execution
 
 使用 Agent tool 独立启动视角 Subagent，无需创建 Agent Team。
@@ -191,6 +195,14 @@ status: "confirmed"
 - 参数：`summary` — Perspective Subagent original return value (needs to be parsed as `SubagentSummary` type)
 - 返回：摘要字符串（≤200 tokens）
 - 用途：Round 1 视角输出完成后调用此函数生成摘要，Round 2 输入时使用摘要替代原始输出，控制 context 增长
+
+## Common Rationalizations
+
+| 合理化 | 反驳 |
+|--------|------|
+| "这个任务很简单不需要多视角决策" | 简单任务的安全评估可以结论为"无风险"，但过程不能省。安全视角不可跳过是铁律 |
+| "我已经知道技术方案了" | 你知道的是一个方案。决策阶段的价值是评估你没想到的替代方案和风险 |
+| "决策会拖慢进度" | 编码前 20 分钟的决策能避免编码后数天的重构 |
 
 ---
 
