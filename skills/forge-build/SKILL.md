@@ -233,7 +233,7 @@ Restatement is a **mandatory step** in the orchestration loop, not an optional o
 4. **降级并继续**：按降级策略（并发减半 → 降至 2 → 串行）等待后继续执行剩余任务
 5. **所有任务完成后正常推进**：429 恢复后流程正常进入下一阶段，不得因曾经发生 429 而停滞
 
-**Subagent Instruction Construction**: For each Subagent include: (1) Closure-First probe results (2) Task description (3) File context (4) Knowledge retrieval (instincts/known-failures matches) (5) TDD requirements (6) Verification commands (7) Pre-completion self-check (8) Prohibitions (no out-of-scope file changes, no skipping tests) (9) Failure retry Restatement.
+**Subagent Instruction Construction**: For each Subagent include: (1) Closure-First probe results (2) Task description (3) File context (4) Knowledge retrieval (instincts/known-failures matches) (5) TDD requirements (6) Verification commands (7) Pre-completion self-check (8) Prohibitions (no out-of-scope file changes, no skipping tests) (9) Failure retry Restatement (10) Framework API 验证：当任务涉及框架特定 API（React hooks、Express middleware、Prisma query 等）时，Subagent 应先验证 API 签名与项目 package.json 中的依赖版本一致，不依赖训练数据记忆。对于非平凡 API 或不确定当前版本签名时，应查阅官方文档确认。
 
 **Lightweight Format**: When Plan specifies `format: "lightweight"`, additionally inject Design Reference context (read the section pointed to by `designReference`, extract interface definitions and correctness properties). If `propertyRef` exists, property tests must be written.
 
@@ -359,6 +359,20 @@ Failure output compression is handled by Trimming Iron Law, NOT by the wrapper o
 - **In-Subagent TDD**: Each Subagent independently executes the full TDD cycle. Code written before tests → delete code, restart from tests. Do not retain, reference, or read deleted code.
 - **Run at every step**: RED confirms failure, GREEN confirms pass, REFACTOR confirms no regression. Test passing at RED stage = test was written wrong.
 - **Tests accommodating code ≠ code satisfying requirements**. Writing code first then adding tests is the former.
+- **Dead Code Hygiene**: REFACTOR 完成后，扫描是否产生了孤儿代码（未使用的 import、未调用的函数或方法、未引用的类型定义、未使用的变量）。发现孤儿代码时记录到 `.forge/findings/<topic>.md`，不自行删除——删除需要确认代码确实不再被需要。
+
+### 4.1 Simplicity Check
+
+GREEN 阶段的代码必须是"能让测试通过的最简单实现"。如果你在 GREEN 阶段引入了抽象层、工厂模式或配置驱动的设计——停下来，删掉，写更简单的版本。
+
+REFACTOR 阶段才是引入抽象的时机，且仅当同一模式重复出现 3 次以上时。
+
+**简洁性检查**：
+- ✗ 为一个通知场景构建通用 EventBus + 中间件管线 → ✓ 直接函数调用
+- ✗ 为两个相似组件构建抽象工厂 → ✓ 两个直接的组件 + 共享工具函数
+- ✗ 为三个表单构建配置驱动的表单生成器 → ✓ 三个表单组件
+
+三行相似的代码好过一个过早的抽象。先实现朴素的、显然正确的版本。
 
 ---
 
@@ -429,6 +443,33 @@ One commit per task, using Plan-defined commit message. Do not mix multi-task ch
 → Follow CLAUDE.md §2.6 Output Conciseness
 
 All structured outputs defined in this SKILL (TDD markers, probe results, Restatement summaries, P5 evidence chains, progress updates) are not subject to conciseness constraints.
+
+### 6.6 Change Summary
+
+每个 Subagent 在原子提交前，必须输出三段式变更摘要：
+
+```
+📝 Task N 变更摘要
+  变更：<文件列表 + 每个文件的变更描述>
+  未触碰（有意）：<注意到但不在范围内的问题>
+  关注点：<需要用户确认的决策>
+```
+
+"未触碰"部分证明范围纪律——它表明 Agent 注意到了相邻问题但选择不修复。
+"关注点"部分在 autonomous 模式下记录到 findings，interactive 模式下等待用户确认。
+
+此摘要属于 Structured_Output，豁免于散文压缩规则。
+
+### 6.7 Dependency Discipline
+
+添加新依赖前必须确认以下 4 项：
+
+1. **现有技术栈是否已能解决**：优先使用标准库和项目已有工具
+2. **依赖大小**：检查 bundle 影响（`npm pack --dry-run` 或等效命令）
+3. **是否活跃维护**：检查最近 commit 时间、open issues 数量
+4. **许可证兼容性**：必须与项目许可证兼容
+
+规则：每个依赖都是负债。不添加依赖是默认选择，添加依赖需要理由。
 
 ---
 
@@ -594,5 +635,6 @@ The following scenarios are **reasoning triggers** — when encountered, pause a
 | Copy-pasting code | Is there a common abstraction behind this? How many places need change if modified? | Show duplicated code, ask whether to extract shared function | Record to findings (location + content + extraction suggestion), continue |
 | Adding 4+ parameters to a function | Can parameters be grouped? Is the function taking on too many responsibilities? | Show signature and new parameter, ask whether to introduce parameter object | Record to findings (signature + purpose + grouping suggestion), continue |
 | Creating a new utility class | Do the functions have cohesion? Should they be distributed to domain modules? | Explain function list, ask whether to distribute by domain | Record to findings (class name + functions + attribution suggestion), continue |
+| Deleting or significantly modifying existing code | Do I understand why this code was written this way? What is the git blame context? | Explain the reason, then confirm the modification | Record to findings (reason + modification rationale), continue execution |
 
 **关键原则**：反射触发器触发**思考**，不触发**行动**。autonomous 模式下不自行拆分——记录观察，继续执行。
