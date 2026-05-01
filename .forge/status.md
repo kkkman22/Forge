@@ -1,28 +1,28 @@
 ---
-current_task: "state-resilience"
+current_task: "build-discipline-enhancement"
 tier: "standard"
-task_type: "fullstack"
-project_phase: "iteration"
-phase: "completed"
-hints: "backward-compat, regression-suite"
+task_type: "documentation"
+project_phase: "build"
+phase: "in_progress"
+hints: "forge-build, SKILL.md, discipline-rules, markdown-only"
 assumptions:
-  - "Spec 已存在于 .kiro/specs/state-resilience/"
-  - "影响 state.ts, review.ts, config-store.ts, skill-scheduler.ts, status-resolver.ts"
-  - "测试框架为 Vitest（基于 .forge/config.md 技术栈）"
-  - "纯增量改动，不改变 SKILL.md 执行逻辑"
+  - "Spec 已存在于 .kiro/specs/build-discipline-enhancement/"
+  - "Spec 1 (skill-behavioral-guardrails) 已完成"
+  - "纯 Markdown 改动，无 TypeScript 代码变更"
 updated: "2026-05-01"
 ---
 
 # 项目状态
 
-无进行中任务。最近完成：state-resilience。
+## 当前任务
 
-## 已完成工作
+build-discipline-enhancement：为 forge-build SKILL.md 增加 6 项工程纪律规则。
 
-- state-resilience: 状态系统三层防御（宽容解析、降级执行、状态自愈）
-- ship-gate-commit-verification: ship 门禁 commit 验证（review freshness check）
+## 已完成任务
+
+- token-language-optimization P2+P3: 全部 tasks 1-12 完成
+- state-resilience: 状态系统三层防御
+- ship-gate-commit-verification: ship 门禁 commit 验证
 - routing-assumptions: 路由器输出增加假设段落
 - skill-behavioral-guardrails: SKILL 行为护栏
-- Group C: 社区基础设施
-- Group D: SKILL 插件机制
-- Group E: 示例项目
+- Group C/D/E: 社区基础设施
