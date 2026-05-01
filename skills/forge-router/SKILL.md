@@ -59,6 +59,20 @@ Forge 路由器从三个维度分析任务：
 | **refactor** | 重构现有代码，不改变外部行为 |
 | **bugfix** | 修复已知 bug |
 
+**假设生成维度**：
+
+路由分析时，Agent 应从以下维度生成 3-5 条显式假设：
+
+| 维度 | 来源 | 示例假设 |
+|------|------|---------|
+| 技术栈 | package.json, .forge/config.md | "测试框架为 Vitest（基于 package.json devDependencies）" |
+| 影响范围 | 代码扫描, 任务描述 | "分页针对 GET /api/users 端点（基于路由扫描）" |
+| 实现模式 | 现有代码模式匹配 | "使用 offset/limit 分页（基于项目已有的分页模式）" |
+| 数据层 | 数据库 schema, ORM 配置 | "不涉及数据库 schema 变更（基于现有查询层）" |
+| 棕地/绿地 | .forge/specs/, 项目代码量 | "这是对现有功能的修改（基于项目已有代码）" |
+
+假设数量：3-5 条。不足 3 条时不强制凑数，但至少包含技术栈和影响范围两个维度。假设内容必须来自实际项目扫描，不得使用通用模板。
+
 ### Step 2：建议档位 + 维度
 
 | 信号 | 建议档位 |
@@ -84,6 +98,12 @@ Forge 路由器从三个维度分析任务：
   • [build] component-isolation — 优先以组件为单位拆分任务
   • ...
 
+假设：
+  1. <判断>（基于 <来源>）
+  2. <判断>（基于 <来源>）
+  3. <判断>（基于 <来源>）
+→ 如有不符请纠正
+
 确认？或覆盖：light / standard / full，--type=backend，--phase=refactor
 ```
 
@@ -92,6 +112,8 @@ Forge 路由器从三个维度分析任务：
 - **用户确认**（回复确认、是、ok、y 等）：按建议档位启动
 - **用户覆盖档位**（回复 `light`、`standard`、`full`）：以用户指定的为准
 - **用户覆盖维度**（回复 `--type=backend` 等）：覆盖对应维度，重新生成行为提示
+- **用户纠正假设**（回复具体纠正内容）：更新对应假设，继续流程
+- **用户不回应假设**：按已列出的假设继续
 - **用户在初始输入中指定**（如 `/forge --type=frontend --phase=refactor 重构登录组件`）：直接采用
 
 ---
@@ -160,9 +182,14 @@ task_type: "frontend" | "backend" | "fullstack" | "data" | "infra" | "docs"
 project_phase: "greenfield" | "iteration" | "refactor" | "bugfix"
 phase: "<命令序列的第一个命令>"
 hints: "<行为提示标签列表，逗号分隔>"
+assumptions:
+  - "<假设1>"
+  - "<假设2>"
 updated: "YYYY-MM-DD HH:mm"
 ---
 ```
+
+`assumptions` 字段为可选数组。已有 status 文件不含此字段时不受影响。下游 SKILL（如 forge-build Closure-First Probes）可读取此字段检测假设与实际代码状态的偏差。
 
 下游命令启动时**必须读取 `hints` 字段**并据此调整行为（如 `a11y-check` → review 增加可访问性检查；`reproduce-first` → build 先写复现测试）。
 
