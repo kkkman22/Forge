@@ -163,9 +163,9 @@ describe("barrel file does not expose internal modules", () => {
 
   // Verify the total number of value exports is exactly what we expect.
   // This catches any accidental additions to the barrel file.
-  it("has exactly 99 value exports", () => {
+  it("has exactly 100 value exports", () => {
     const valueExports = Object.keys(exports).filter((key) => typeof exports[key] !== "undefined");
-    expect(valueExports).toHaveLength(99);
+    expect(valueExports).toHaveLength(100);
     expect(valueExports.sort()).toEqual([
       "CLASSIFICATION_MAP",
       "CliError",
@@ -187,6 +187,7 @@ describe("barrel file does not expose internal modules", () => {
       "canParseTestOutput",
       "checkBranchTopicGate",
       "checkCommitTopicMatch",
+      "checkReviewFreshness",
       "checkShipGate",
       "checkShipGateWithChecklist",
       "classifyInterruption",
