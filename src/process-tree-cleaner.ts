@@ -54,8 +54,8 @@ export async function killProcessTree(
     try {
       process.kill(p, signal);
       killed.push(p);
-    } catch (err: any) {
-      if (err.code !== "ESRCH") {
+    } catch (err) {
+      if ((err as NodeJS.ErrnoException).code !== "ESRCH") {
         failed.push(p);
       } else {
         killed.push(p); // Already exited

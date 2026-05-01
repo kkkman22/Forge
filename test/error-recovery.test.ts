@@ -103,7 +103,12 @@ describe("error-recovery: edge cases", () => {
 
     const subagent = report.inconsistencies.find((i) => i.category === "subagent-mid-execution");
     expect(subagent).toBeDefined();
-    const opts = report.actions[report.inconsistencies.indexOf(subagent!)];
+    const opts =
+      report.actions[
+        report.inconsistencies.indexOf(
+          subagent as { category: string; evidence: string; recommendedAction: string },
+        )
+      ];
     expect(opts.some((o) => o.description.toLowerCase().includes("preserve"))).toBe(true);
     expect(opts.some((o) => o.description.toLowerCase().includes("discard"))).toBe(true);
   });
@@ -137,7 +142,12 @@ describe("error-recovery: edge cases", () => {
 
     const subagent = report.inconsistencies.find((i) => i.category === "subagent-mid-execution");
     expect(subagent).toBeDefined();
-    const opts = report.actions[report.inconsistencies.indexOf(subagent!)];
+    const opts =
+      report.actions[
+        report.inconsistencies.indexOf(
+          subagent as { category: string; evidence: string; recommendedAction: string },
+        )
+      ];
     expect(opts.some((o) => o.description.toLowerCase().includes("commit"))).toBe(true);
     expect(opts.some((o) => o.description.toLowerCase().includes("continue"))).toBe(true);
   });

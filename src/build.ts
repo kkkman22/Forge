@@ -161,7 +161,7 @@ export function mergeResearchFindings(results: SubagentResult[]): string {
   }
 
   for (const s of succeeded) {
-    parts.push(s.output!);
+    parts.push(s.output ?? "");
   }
 
   return parts.join("\n\n");
