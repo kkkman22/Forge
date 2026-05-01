@@ -187,4 +187,12 @@ export const SKILL_FUNCTION_REGISTRY: readonly SkillFunctionEntry[] = [
     skills: ["forge-abort/SKILL.md"],
     parameterNames: ["io", "forgeRoot", "taskName", "date"],
   },
+
+  // --- forge-resume/SKILL.md (state reconstruction) ---
+  {
+    module: "resume.ts",
+    functionName: "recoverPhase",
+    skills: ["forge-resume/SKILL.md"],
+    parameterNames: ["statusContent", "forgeFiles"],
+  },
 ] as const;
