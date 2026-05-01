@@ -20,6 +20,11 @@ Light execution engine for light-tier tasks (≤1 file, ≤20 lines changed). Sk
 
 ---
 
+**Not For**：
+- 影响多个文件的变更
+- 需要 TDD 的逻辑变更
+- 需求不明确的任务
+
 ## 2. Light Path Execution
 
 1. Read task list from Plan or user description
@@ -51,6 +56,13 @@ Key rules:
 - Verification based on **just-run** command output, not prior results
 - Claims like "should work" or "looks fine" are rejected
 - Each task gets an atomic commit
+
+## Common Rationalizations
+
+| 合理化 | 反驳 |
+|--------|------|
+| "改动太小不需要验证" | 小改动也需要运行验证命令。"应该没问题"不是证据 |
+| "轻量路径不需要提交" | 每个变更都需要原子提交。未提交的变更是丢失的风险 |
 
 ---
 

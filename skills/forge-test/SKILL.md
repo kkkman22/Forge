@@ -20,6 +20,10 @@ disable-model-invocation: true
 
 ---
 
+**Not For**：
+- 纯文档更新
+- 无行为影响的静态内容变更
+
 ## 2. Three-Layer Verification
 
 ### Layer 1 — Unit Tests
