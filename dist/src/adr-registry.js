@@ -205,6 +205,25 @@ export function parseAdrFrontmatter(content) {
     if (supersededBy !== undefined) {
         result.superseded_by = supersededBy;
     }
+    // ADR three-question gate fields (Requirements 2.3, 2.7).
+    // These are optional extensions written by `/forge decide` when
+    // verdict is WRITE_ADR; they never conflict with the governance
+    // spec's ADR fields.
+    const reversibility = optionalString(extractStringField(fm.raw, "reversibility"));
+    if (reversibility === "hard" || reversibility === "soft") {
+        result.reversibility = reversibility;
+    }
+    const surprisingRaw = optionalString(extractStringField(fm.raw, "surprising"));
+    if (surprisingRaw === "true") {
+        result.surprising = true;
+    }
+    else if (surprisingRaw === "false") {
+        result.surprising = false;
+    }
+    const tradeOffAlternatives = extractListOrInline(fm.raw, "trade_off_alternatives");
+    if (tradeOffAlternatives !== null) {
+        result.trade_off_alternatives = tradeOffAlternatives;
+    }
     return result;
 }
 // ---------------------------------------------------------------------------

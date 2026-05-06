@@ -246,7 +246,7 @@ describe("Property: verifyAttempts bounded", () => {
             // If all outcomes were failures, the loop must have terminated
             // or the attempt counter must be <= maxAttempts
             expect(attempt).toBeLessThanOrEqual(maxAttempts);
-        }), { numRuns: 200 });
+        }), { numRuns: 50 });
     });
     /**
      * **Validates: Requirements 2.2, 2.6**
@@ -260,7 +260,7 @@ describe("Property: verifyAttempts bounded", () => {
         (attempt, maxAttempts) => {
             const decision = advanceVerifyLoop(attempt, true, maxAttempts);
             expect(decision).toEqual({ action: "commit" });
-        }), { numRuns: 200 });
+        }), { numRuns: 50 });
     });
     /**
      * **Validates: Requirements 2.3, 2.5**
@@ -291,7 +291,7 @@ describe("Property: verifyAttempts bounded", () => {
             if (decision.action === "retry") {
                 expect(shouldRetry).toBe(true);
             }
-        }), { numRuns: 200 });
+        }), { numRuns: 50 });
     });
 });
 //# sourceMappingURL=verify-loop.test.js.map

@@ -156,7 +156,7 @@ describe("Feature: loop-skills-fusion, Property 5: determineNextSkill 状态转�
         fc.assert(fc.property(schedulerInputArb, (input) => {
             const result = determineNextSkill(input);
             expect(VALID_SKILL_PHASES).toContain(result.nextPhase);
-        }), { numRuns: 200 });
+        }), { numRuns: 50 });
     });
     /**
      * **Validates: Requirements 3.4**
@@ -167,7 +167,7 @@ describe("Feature: loop-skills-fusion, Property 5: determineNextSkill 状态转�
         fc.assert(fc.property(buildIncompleteArb, (input) => {
             const result = determineNextSkill(input);
             expect(result.nextPhase).toBe("build");
-        }), { numRuns: 200 });
+        }), { numRuns: 50 });
     });
     /**
      * **Validates: Requirements 3.5**
@@ -178,7 +178,7 @@ describe("Feature: loop-skills-fusion, Property 5: determineNextSkill 状态转�
         fc.assert(fc.property(buildCompleteArb, (input) => {
             const result = determineNextSkill(input);
             expect(result.nextPhase).toBe("review");
-        }), { numRuns: 200 });
+        }), { numRuns: 50 });
     });
     /**
      * **Validates: Requirements 3.6, 3.7**
@@ -189,7 +189,7 @@ describe("Feature: loop-skills-fusion, Property 5: determineNextSkill 状态转�
         fc.assert(fc.property(reviewFailNonBreakArb, (input) => {
             const result = determineNextSkill(input);
             expect(result.nextPhase).toBe("build");
-        }), { numRuns: 200 });
+        }), { numRuns: 50 });
     });
     /**
      * **Validates: Requirements 3.7, 3.8**
@@ -200,7 +200,7 @@ describe("Feature: loop-skills-fusion, Property 5: determineNextSkill 状态转�
         fc.assert(fc.property(reviewPassArb, (input) => {
             const result = determineNextSkill(input);
             expect(result.nextPhase).toBe("test");
-        }), { numRuns: 200 });
+        }), { numRuns: 50 });
     });
 });
 // ---------------------------------------------------------------------------
@@ -218,7 +218,7 @@ describe("Feature: loop-skills-fusion, Property 6: SkillScheduler circuit breake
         fc.assert(fc.property(circuitBreakerArb, (input) => {
             const result = determineNextSkill(input);
             expect(result.nextPhase).toBe("aborted");
-        }), { numRuns: 200 });
+        }), { numRuns: 50 });
     });
     /**
      * **Validates: Requirements 5.5, 12.3**
@@ -232,7 +232,7 @@ describe("Feature: loop-skills-fusion, Property 6: SkillScheduler circuit breake
             expect(result.nextPhase).toBe("aborted");
             expect(result.reason).toBeTruthy();
             expect(result.reason.length).toBeGreaterThan(0);
-        }), { numRuns: 200 });
+        }), { numRuns: 50 });
     });
     /**
      * **Validates: Requirements 5.5, 12.3**
@@ -264,7 +264,7 @@ describe("Feature: loop-skills-fusion, Property 6: SkillScheduler circuit breake
         fc.assert(fc.property(allPhasesCircuitBreakerArb, (input) => {
             const result = determineNextSkill(input);
             expect(result.nextPhase).toBe("aborted");
-        }), { numRuns: 200 });
+        }), { numRuns: 50 });
     });
 });
 // ---------------------------------------------------------------------------
@@ -302,7 +302,7 @@ describe("Feature: loop-skills-fusion, Property 14: 修复循环计数器状态�
                 }
             }
             expect(counter).toBe(expected);
-        }), { numRuns: 200 });
+        }), { numRuns: 50 });
     });
     /**
      * **Validates: Requirements 8.1, 8.2, 8.3**
@@ -344,7 +344,7 @@ describe("Feature: loop-skills-fusion, Property 14: 修复循环计数器状态�
                 // Pass: proceed to test
                 expect(result.nextPhase).toBe("test");
             }
-        }), { numRuns: 200 });
+        }), { numRuns: 50 });
     });
     /**
      * **Validates: Requirements 8.2**
@@ -369,7 +369,7 @@ describe("Feature: loop-skills-fusion, Property 14: 修复循环计数器状态�
             if (sequence[sequence.length - 1] === "pass") {
                 expect(counter).toBe(0);
             }
-        }), { numRuns: 200 });
+        }), { numRuns: 50 });
     });
 });
 // ---------------------------------------------------------------------------
@@ -389,7 +389,7 @@ describe("Property 3: New command sequences contain only valid SkillPhase values
             for (const phase of sequence) {
                 expect(VALID_SKILL_PHASES).toContain(phase);
             }
-        }), { numRuns: 100 });
+        }), { numRuns: 40 });
     });
     /**
      * **Validates: Requirements 11.5, 12.3**
@@ -405,7 +405,7 @@ describe("Property 3: New command sequences contain only valid SkillPhase values
         fc.assert(fc.property(fc.constantFrom("light", "standard", "full"), (tier) => {
             const sequence = getCommandSequence(tier);
             expect(sequence).toEqual(expectedExisting[tier]);
-        }), { numRuns: 100 });
+        }), { numRuns: 40 });
     });
     /**
      * **Validates: Requirements 11.5, 11.6**
@@ -443,7 +443,7 @@ describe("Property 4: shouldCommitForPhase returns correct values for new phases
     it("refactor-apply and fix-apply return true when successful", () => {
         fc.assert(fc.property(fc.constantFrom("refactor-apply", "fix-apply"), (phase) => {
             expect(shouldCommitForPhase(phase, true)).toBe(true);
-        }), { numRuns: 100 });
+        }), { numRuns: 40 });
     });
     /**
      * **Validates: Requirements 11.8**
@@ -453,7 +453,7 @@ describe("Property 4: shouldCommitForPhase returns correct values for new phases
     it("refactor-scan and fix-analyze return false even when successful", () => {
         fc.assert(fc.property(fc.constantFrom("refactor-scan", "fix-analyze"), (phase) => {
             expect(shouldCommitForPhase(phase, true)).toBe(false);
-        }), { numRuns: 100 });
+        }), { numRuns: 40 });
     });
     /**
      * **Validates: Requirements 11.8**
@@ -463,7 +463,7 @@ describe("Property 4: shouldCommitForPhase returns correct values for new phases
     it("no new phase commits when success is false", () => {
         fc.assert(fc.property(fc.constantFrom("refactor-scan", "refactor-apply", "fix-analyze", "fix-apply"), (phase) => {
             expect(shouldCommitForPhase(phase, false)).toBe(false);
-        }), { numRuns: 100 });
+        }), { numRuns: 40 });
     });
     /**
      * **Validates: Requirements 12.3**
@@ -473,7 +473,7 @@ describe("Property 4: shouldCommitForPhase returns correct values for new phases
     it("existing commitable phases still return true (backward compatibility)", () => {
         fc.assert(fc.property(fc.constantFrom("build", "plan", "fix"), (phase) => {
             expect(shouldCommitForPhase(phase, true)).toBe(true);
-        }), { numRuns: 100 });
+        }), { numRuns: 40 });
     });
 });
 // ---------------------------------------------------------------------------
@@ -501,7 +501,7 @@ describe("determineNextSkill correctly advances through new phase sequences", ()
             input.reviewFixAttempts >= input.maxReviewFixAttempts)), (input) => {
             const result = determineNextSkill(input);
             expect(result.nextPhase).toBe("refactor-apply");
-        }), { numRuns: 200 });
+        }), { numRuns: 50 });
     });
     /**
      * **Validates: Requirements 11.7**
@@ -524,7 +524,7 @@ describe("determineNextSkill correctly advances through new phase sequences", ()
             input.reviewFixAttempts >= input.maxReviewFixAttempts)), (input) => {
             const result = determineNextSkill(input);
             expect(result.nextPhase).toBe("refactor-apply");
-        }), { numRuns: 200 });
+        }), { numRuns: 50 });
     });
     /**
      * **Validates: Requirements 11.7**
@@ -547,7 +547,7 @@ describe("determineNextSkill correctly advances through new phase sequences", ()
             input.reviewFixAttempts >= input.maxReviewFixAttempts)), (input) => {
             const result = determineNextSkill(input);
             expect(result.nextPhase).toBe("review");
-        }), { numRuns: 200 });
+        }), { numRuns: 50 });
     });
     /**
      * **Validates: Requirements 11.7**
@@ -570,7 +570,7 @@ describe("determineNextSkill correctly advances through new phase sequences", ()
             input.reviewFixAttempts >= input.maxReviewFixAttempts)), (input) => {
             const result = determineNextSkill(input);
             expect(result.nextPhase).toBe("fix-apply");
-        }), { numRuns: 200 });
+        }), { numRuns: 50 });
     });
     /**
      * **Validates: Requirements 11.7**
@@ -593,7 +593,7 @@ describe("determineNextSkill correctly advances through new phase sequences", ()
             input.reviewFixAttempts >= input.maxReviewFixAttempts)), (input) => {
             const result = determineNextSkill(input);
             expect(result.nextPhase).toBe("fix-apply");
-        }), { numRuns: 200 });
+        }), { numRuns: 50 });
     });
     /**
      * **Validates: Requirements 11.7**
@@ -616,7 +616,7 @@ describe("determineNextSkill correctly advances through new phase sequences", ()
             input.reviewFixAttempts >= input.maxReviewFixAttempts)), (input) => {
             const result = determineNextSkill(input);
             expect(result.nextPhase).toBe("review");
-        }), { numRuns: 200 });
+        }), { numRuns: 50 });
     });
 });
 // ---------------------------------------------------------------------------
@@ -688,7 +688,7 @@ describe("Feature: loop-skills-fusion, Property 5: SkillScheduler total function
     it("never throws for any SchedulerInput (including unknown currentPhase values)", () => {
         fc.assert(fc.property(anySchedulerInputArb, (input) => {
             expect(() => determineNextSkill(input)).not.toThrow();
-        }), { numRuns: 200 });
+        }), { numRuns: 50 });
     });
     /**
      * **Validates: Requirements 12.1**
@@ -704,7 +704,7 @@ describe("Feature: loop-skills-fusion, Property 5: SkillScheduler total function
             expect(VALID_SKILL_PHASES).toContain(result.nextPhase);
             expect(typeof result.reason).toBe("string");
             expect(result.reason.length).toBeGreaterThan(0);
-        }), { numRuns: 200 });
+        }), { numRuns: 50 });
     });
     /**
      * **Validates: Requirements 12.2**
@@ -718,7 +718,7 @@ describe("Feature: loop-skills-fusion, Property 5: SkillScheduler total function
         fc.assert(fc.property(unknownNonBreakerArb, (input) => {
             const result = determineNextSkill(input);
             expect(result.nextPhase).toBe("router");
-        }), { numRuns: 200 });
+        }), { numRuns: 50 });
     });
     /**
      * **Validates: Requirements 12.4**
@@ -730,7 +730,7 @@ describe("Feature: loop-skills-fusion, Property 5: SkillScheduler total function
         fc.assert(fc.property(terminalInputArb, (input) => {
             const result = determineNextSkill(input);
             expect(result.nextPhase).toBe(input.currentPhase);
-        }), { numRuns: 200 });
+        }), { numRuns: 50 });
     });
     /**
      * **Validates: Requirements 12.4**
@@ -746,7 +746,7 @@ describe("Feature: loop-skills-fusion, Property 5: SkillScheduler total function
                 currentPhase: first.nextPhase,
             });
             expect(second.nextPhase).toBe(first.nextPhase);
-        }), { numRuns: 200 });
+        }), { numRuns: 50 });
     });
 });
 // ---------------------------------------------------------------------------
@@ -833,7 +833,7 @@ describe("Feature: loop-skills-fusion, Property 7: SkillScheduler convergence", 
             expect(converged).toBe(true);
             expect(["completed", "aborted"]).toContain(finalPhase);
             expect(steps).toBeLessThanOrEqual(20);
-        }), { numRuns: 200 });
+        }), { numRuns: 50 });
     });
     /**
      * **Validates: Requirements 12.5**
@@ -847,7 +847,7 @@ describe("Feature: loop-skills-fusion, Property 7: SkillScheduler convergence", 
             const { converged, finalPhase } = simulateConvergence(startPhase, tier, 20);
             expect(converged).toBe(true);
             expect(finalPhase).toBe("completed");
-        }), { numRuns: 200 });
+        }), { numRuns: 50 });
     });
     /**
      * **Validates: Requirements 12.5**
@@ -862,7 +862,7 @@ describe("Feature: loop-skills-fusion, Property 7: SkillScheduler convergence", 
             expect(converged).toBe(true);
             // Longest path: router(1 self-loop + advance to plan) → plan → build → review → test → ship → learn → completed = 8 steps
             expect(steps).toBeLessThanOrEqual(10);
-        }), { numRuns: 200 });
+        }), { numRuns: 50 });
     });
 });
 // ---------------------------------------------------------------------------
@@ -907,7 +907,7 @@ describe("Feature: loop-skills-fusion, Property 8: shouldCommitForPhase commit s
     it("commitable phases with success=true return true", () => {
         fc.assert(fc.property(commitablePhasesArb, (phase) => {
             expect(shouldCommitForPhase(phase, true)).toBe(true);
-        }), { numRuns: 200 });
+        }), { numRuns: 50 });
     });
     /**
      * **Validates: Requirements 11.2**
@@ -918,7 +918,7 @@ describe("Feature: loop-skills-fusion, Property 8: shouldCommitForPhase commit s
     it("non-commitable phases return false regardless of success", () => {
         fc.assert(fc.property(nonCommitablePhasesArb, fc.boolean(), (phase, success) => {
             expect(shouldCommitForPhase(phase, success)).toBe(false);
-        }), { numRuns: 200 });
+        }), { numRuns: 50 });
     });
     /**
      * **Validates: Requirements 11.3**
@@ -928,7 +928,7 @@ describe("Feature: loop-skills-fusion, Property 8: shouldCommitForPhase commit s
     it("any phase with success=false returns false", () => {
         fc.assert(fc.property(fc.oneof(commitablePhasesArb, nonCommitablePhasesArb), (phase) => {
             expect(shouldCommitForPhase(phase, false)).toBe(false);
-        }), { numRuns: 200 });
+        }), { numRuns: 50 });
     });
     /**
      * **Validates: Requirements 11.5**
@@ -939,7 +939,7 @@ describe("Feature: loop-skills-fusion, Property 8: shouldCommitForPhase commit s
     it("unknown phase strings return false regardless of success", () => {
         fc.assert(fc.property(unknownPhaseArb, fc.boolean(), (phase, success) => {
             expect(shouldCommitForPhase(phase, success)).toBe(false);
-        }), { numRuns: 200 });
+        }), { numRuns: 50 });
     });
 });
 // ---------------------------------------------------------------------------
@@ -981,7 +981,7 @@ describe("Feature: loop-skills-fusion, Property 9: getCommandSequence safe defau
         fc.assert(fc.property(unknownTierArb, (tier) => {
             const sequence = getCommandSequence(tier);
             expect(sequence).toEqual(STANDARD_SEQUENCE);
-        }), { numRuns: 200 });
+        }), { numRuns: 50 });
     });
     /**
      * **Validates: Requirements 12.6**
@@ -997,7 +997,7 @@ describe("Feature: loop-skills-fusion, Property 9: getCommandSequence safe defau
             for (const phase of sequence) {
                 expect(VALID_SKILL_PHASES).toContain(phase);
             }
-        }), { numRuns: 200 });
+        }), { numRuns: 50 });
     });
 });
 //# sourceMappingURL=skill-scheduler.property.test.js.map

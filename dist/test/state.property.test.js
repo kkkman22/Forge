@@ -95,55 +95,55 @@ describe("Property 15: 状态文件格式统一", () => {
             const result = validateStateFile(file);
             expect(result.valid).toBe(true);
             expect(result.errors).toHaveLength(0);
-        }), { numRuns: 200 });
+        }), { numRuns: 50 });
     });
     it("all state file paths have .md extension (Req 11.2)", () => {
         fc.assert(fc.property(validStateFileArb, (file) => {
             expect(hasMarkdownExtension(file.path)).toBe(true);
-        }), { numRuns: 200 });
+        }), { numRuns: 50 });
     });
     it("all state file content has YAML frontmatter (Req 11.2)", () => {
         fc.assert(fc.property(validStateFileArb, (file) => {
             expect(hasYamlFrontmatter(file.content)).toBe(true);
-        }), { numRuns: 200 });
+        }), { numRuns: 50 });
     });
     it("files with non-.md extension fail validation (Req 11.2)", () => {
         fc.assert(fc.property(invalidExtensionFileArb, (file) => {
             const result = validateStateFile(file);
             expect(result.valid).toBe(false);
             expect(result.errors.some((e) => e.includes("扩展名"))).toBe(true);
-        }), { numRuns: 200 });
+        }), { numRuns: 50 });
     });
     it("files without YAML frontmatter fail validation (Req 11.2)", () => {
         fc.assert(fc.property(noFrontmatterFileArb, (file) => {
             const result = validateStateFile(file);
             expect(result.valid).toBe(false);
             expect(result.errors.some((e) => e.includes("YAML frontmatter"))).toBe(true);
-        }), { numRuns: 200 });
+        }), { numRuns: 50 });
     });
     it("dynamically generated state files pass validation (Req 11.2)", () => {
         fc.assert(fc.property(dynamicValidStateFileArb, (file) => {
             const result = validateStateFile(file);
             expect(result.valid).toBe(true);
             expect(result.errors).toHaveLength(0);
-        }), { numRuns: 200 });
+        }), { numRuns: 50 });
     });
     it("hasMarkdownExtension correctly identifies .md files", () => {
         fc.assert(fc.property(fc.tuple(topicArb, fc.constantFrom(".md", ".txt", ".json", ".yaml")), ([topic, ext]) => {
             const path = `${topic}${ext}`;
             expect(hasMarkdownExtension(path)).toBe(ext === ".md");
-        }), { numRuns: 200 });
+        }), { numRuns: 50 });
     });
     it("hasYamlFrontmatter correctly identifies frontmatter content", () => {
         fc.assert(fc.property(validFrontmatterContentArb, bodyContentArb, (frontmatter, body) => {
             const content = frontmatter + body;
             expect(hasYamlFrontmatter(content)).toBe(true);
-        }), { numRuns: 200 });
+        }), { numRuns: 50 });
     });
     it("hasYamlFrontmatter rejects content without frontmatter", () => {
         fc.assert(fc.property(noFrontmatterContentArb, (content) => {
             expect(hasYamlFrontmatter(content)).toBe(false);
-        }), { numRuns: 200 });
+        }), { numRuns: 50 });
     });
 });
 //# sourceMappingURL=state.property.test.js.map

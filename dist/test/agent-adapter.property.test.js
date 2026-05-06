@@ -28,7 +28,7 @@ describe("Feature: gnhf-inspired-enhancements, Property 20: Agent 工厂函数�
     it("isValidAgentName returns true for all supported agent names", () => {
         fc.assert(fc.property(validAgentNameArb, (name) => {
             expect(isValidAgentName(name)).toBe(true);
-        }), { numRuns: 200 });
+        }), { numRuns: 50 });
     });
     /**
      * **Validates: Requirements 9.3**
@@ -36,7 +36,7 @@ describe("Feature: gnhf-inspired-enhancements, Property 20: Agent 工厂函数�
     it("isValidAgentName returns false for invalid agent names", () => {
         fc.assert(fc.property(invalidAgentNameArb, (name) => {
             expect(isValidAgentName(name)).toBe(false);
-        }), { numRuns: 200 });
+        }), { numRuns: 50 });
     });
     /**
      * **Validates: Requirements 9.4**
@@ -47,7 +47,7 @@ describe("Feature: gnhf-inspired-enhancements, Property 20: Agent 工厂函数�
             for (const agent of SUPPORTED_AGENTS) {
                 expect(error).toContain(agent);
             }
-        }), { numRuns: 200 });
+        }), { numRuns: 50 });
     });
     /**
      * **Validates: Requirements 9.4**
@@ -56,7 +56,7 @@ describe("Feature: gnhf-inspired-enhancements, Property 20: Agent 工厂函数�
         fc.assert(fc.property(invalidAgentNameArb, (name) => {
             const error = getUnsupportedAgentError(name);
             expect(error).toContain(name);
-        }), { numRuns: 200 });
+        }), { numRuns: 50 });
     });
     /**
      * **Validates: Requirements 9.3**

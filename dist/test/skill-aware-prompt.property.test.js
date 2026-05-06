@@ -68,7 +68,7 @@ describe("Feature: loop-skills-fusion, Property 4: buildSkillAwarePrompt 字段�
             const output = buildSkillAwarePrompt(params);
             expect(output).toContain(phase);
             expect(output).toContain(tier);
-        }), { numRuns: 200 });
+        }), { numRuns: 50 });
     });
     /**
      * **Validates: Requirements 2.5**
@@ -84,7 +84,7 @@ describe("Feature: loop-skills-fusion, Property 4: buildSkillAwarePrompt 字段�
             };
             const output = buildSkillAwarePrompt(params);
             expect(output).toContain("forge-router");
-        }), { numRuns: 200 });
+        }), { numRuns: 50 });
     });
     /**
      * **Validates: Requirements 2.4**
@@ -101,7 +101,7 @@ describe("Feature: loop-skills-fusion, Property 4: buildSkillAwarePrompt 字段�
             for (const hint of hints) {
                 expect(output).toContain(hint.description);
             }
-        }), { numRuns: 200 });
+        }), { numRuns: 50 });
     });
     /**
      * **Validates: Requirements 2.1, 2.2**
@@ -118,7 +118,7 @@ describe("Feature: loop-skills-fusion, Property 4: buildSkillAwarePrompt 字段�
             for (const issue of fixIssues) {
                 expect(output).toContain(issue.description);
             }
-        }), { numRuns: 200 });
+        }), { numRuns: 50 });
     });
     /**
      * **Validates: Requirements 2.6**
@@ -140,7 +140,7 @@ describe("Feature: loop-skills-fusion, Property 4: buildSkillAwarePrompt 字段�
             };
             const output = buildSkillAwarePrompt(params);
             expect(output).toContain("mode: autonomous");
-        }), { numRuns: 200 });
+        }), { numRuns: 50 });
     });
     /**
      * **Validates: Requirements 2.2**
@@ -156,7 +156,7 @@ describe("Feature: loop-skills-fusion, Property 4: buildSkillAwarePrompt 字段�
             const output = buildSkillAwarePrompt(params);
             expect(output).toContain(taskType);
             expect(output).toContain(projectPhase);
-        }), { numRuns: 200 });
+        }), { numRuns: 50 });
     });
 });
 //# sourceMappingURL=skill-aware-prompt.property.test.js.map

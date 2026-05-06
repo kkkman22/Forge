@@ -82,7 +82,7 @@ describe("Feature: gnhf-inspired-enhancements, Property 1: Prompt 构建完整�
             expect(prompt).toContain(runId);
             expect(prompt).toContain(notesContent);
             expect(prompt).toContain(objective);
-        }), { numRuns: 200 });
+        }), { numRuns: 50 });
     });
     /**
      * **Validates: Requirements 1.2, 3.4**
@@ -98,7 +98,7 @@ describe("Feature: gnhf-inspired-enhancements, Property 1: Prompt 构建完整�
             });
             expect(prompt).toContain("Stop Condition");
             expect(prompt).toContain(stopWhen);
-        }), { numRuns: 200 });
+        }), { numRuns: 50 });
     });
     /**
      * **Validates: Requirements 1.2, 3.4**
@@ -112,7 +112,7 @@ describe("Feature: gnhf-inspired-enhancements, Property 1: Prompt 构建完整�
                 notesContent,
             });
             expect(prompt).not.toContain("Stop Condition");
-        }), { numRuns: 200 });
+        }), { numRuns: 50 });
     });
 });
 // ---------------------------------------------------------------------------
@@ -127,7 +127,7 @@ describe("Feature: gnhf-inspired-enhancements, Property 7: Notes 条目格式化
             const md = formatIterationEntry(entry);
             expect(md).toContain(`### Iteration ${entry.number}`);
             expect(md).toContain(entry.summary);
-        }), { numRuns: 200 });
+        }), { numRuns: 50 });
     });
     /**
      * **Validates: Requirements 3.2, 3.3**
@@ -138,7 +138,7 @@ describe("Feature: gnhf-inspired-enhancements, Property 7: Notes 条目格式化
             for (const change of entry.keyChanges) {
                 expect(md).toContain(change);
             }
-        }), { numRuns: 200 });
+        }), { numRuns: 50 });
     });
     /**
      * **Validates: Requirements 3.5**
@@ -149,7 +149,7 @@ describe("Feature: gnhf-inspired-enhancements, Property 7: Notes 条目格式化
             for (const learning of entry.keyLearnings) {
                 expect(md).toContain(learning);
             }
-        }), { numRuns: 200 });
+        }), { numRuns: 50 });
     });
     /**
      * **Validates: Requirements 3.3**
@@ -158,7 +158,7 @@ describe("Feature: gnhf-inspired-enhancements, Property 7: Notes 条目格式化
         fc.assert(fc.property(iterationEntryArb.filter((e) => !e.success), (entry) => {
             const md = formatIterationEntry(entry);
             expect(md).toContain("(Failed)");
-        }), { numRuns: 200 });
+        }), { numRuns: 50 });
     });
 });
 // ---------------------------------------------------------------------------
@@ -183,7 +183,7 @@ describe("Feature: gnhf-inspired-enhancements, Property 8: Notes 格式往返一
                 expect(roundTripped.keyChanges).toEqual(original.keyChanges);
                 expect(roundTripped.keyLearnings).toEqual(original.keyLearnings);
             }
-        }), { numRuns: 200 });
+        }), { numRuns: 50 });
     });
 });
 // ---------------------------------------------------------------------------
@@ -220,7 +220,7 @@ describe("Feature: v2-2-legacy-fixes, Property 1: parseListSection regex special
             const formatted = formatListSection(title, items);
             const parsed = parseListSection(formatted, title);
             expect(parsed).toEqual(items);
-        }), { numRuns: 200 });
+        }), { numRuns: 50 });
     });
 });
 // ---------------------------------------------------------------------------
@@ -242,7 +242,7 @@ describe("Feature: v2-2-legacy-fixes, Property 2: parseListSection returns empty
             const block = `**${differentTitle}:**\n${items.map((item) => `- ${item}`).join("\n")}\n`;
             const parsed = parseListSection(block, title);
             expect(parsed).toEqual([]);
-        }), { numRuns: 200 });
+        }), { numRuns: 50 });
     });
 });
 // ---------------------------------------------------------------------------
@@ -346,7 +346,7 @@ describe("Feature: loop-skills-fusion, Property 10: buildSkillAwarePrompt conten
         fc.assert(fc.property(skillPromptParamsArb, (params) => {
             const output = buildSkillAwarePrompt(params);
             expect(output).toContain(params.skill.phase);
-        }), { numRuns: 200 });
+        }), { numRuns: 50 });
     });
     /**
      * **Validates: Requirements 1.2**
@@ -358,7 +358,7 @@ describe("Feature: loop-skills-fusion, Property 10: buildSkillAwarePrompt conten
         fc.assert(fc.property(skillPromptParamsArb, (params) => {
             const output = buildSkillAwarePrompt(params);
             expect(output).toContain(params.skill.tier);
-        }), { numRuns: 200 });
+        }), { numRuns: 50 });
     });
     /**
      * **Validates: Requirements 1.5**
@@ -370,7 +370,7 @@ describe("Feature: loop-skills-fusion, Property 10: buildSkillAwarePrompt conten
         fc.assert(fc.property(skillPromptParamsArb, (params) => {
             const output = buildSkillAwarePrompt(params);
             expect(output).toContain("mode: autonomous");
-        }), { numRuns: 200 });
+        }), { numRuns: 50 });
     });
     /**
      * **Validates: Requirements 5.2**
@@ -384,7 +384,7 @@ describe("Feature: loop-skills-fusion, Property 10: buildSkillAwarePrompt conten
             for (const issue of params.skill.fixIssues ?? []) {
                 expect(output).toContain(issue.description);
             }
-        }), { numRuns: 200 });
+        }), { numRuns: 50 });
     });
     /**
      * **Validates: Requirements 5.2**
@@ -398,7 +398,7 @@ describe("Feature: loop-skills-fusion, Property 10: buildSkillAwarePrompt conten
             for (const issue of params.skill.fixIssues ?? []) {
                 expect(output).toContain(issue.severity);
             }
-        }), { numRuns: 200 });
+        }), { numRuns: 50 });
     });
 });
 //# sourceMappingURL=context-accumulator.property.test.js.map

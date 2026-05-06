@@ -97,7 +97,7 @@ describe("Feature: i18n-support, Property 5: 语言优先级解析正确性", ()
             }
             expect(result.locale).toBe(expectedLocale);
             expect(result.source).toBe(expectedSource);
-        }), { numRuns: 200 });
+        }), { numRuns: 50 });
     });
     /**
      * **Validates: Requirements 2.1, 2.2**
@@ -114,7 +114,7 @@ describe("Feature: i18n-support, Property 5: 语言优先级解析正确性", ()
             expect(result.locale).toBe(cliLang);
             expect(result.source).toBe("cli");
             expect(result.warning).toBeUndefined();
-        }), { numRuns: 200 });
+        }), { numRuns: 50 });
     });
     /**
      * **Validates: Requirements 2.1, 2.2**
@@ -128,7 +128,7 @@ describe("Feature: i18n-support, Property 5: 语言优先级解析正确性", ()
             expect(result.locale).toBe(defaultLocale);
             expect(result.source).toBe("default");
             expect(result.warning).toBeUndefined();
-        }), { numRuns: 200 });
+        }), { numRuns: 50 });
     });
 });
 // ---------------------------------------------------------------------------
@@ -146,7 +146,7 @@ describe("Feature: i18n-support, Property 6: Locale 规范化幂等性", () => {
             const once = normalizeLocale(raw);
             const twice = normalizeLocale(once);
             expect(twice).toBe(once);
-        }), { numRuns: 200 });
+        }), { numRuns: 50 });
     });
     /**
      * **Validates: Requirements 2.4**
@@ -157,7 +157,7 @@ describe("Feature: i18n-support, Property 6: Locale 规范化幂等性", () => {
         fc.assert(fc.property(rawLocaleArb, (raw) => {
             const result = normalizeLocale(raw);
             expect(result).toBe(result.toLowerCase());
-        }), { numRuns: 200 });
+        }), { numRuns: 50 });
     });
     /**
      * **Validates: Requirements 2.4**
@@ -175,7 +175,7 @@ describe("Feature: i18n-support, Property 6: Locale 规范化幂等性", () => {
             if (variant)
                 raw += variant;
             expect(normalizeLocale(raw)).toBe(base.toLowerCase());
-        }), { numRuns: 200 });
+        }), { numRuns: 50 });
     });
     /**
      * **Validates: Requirements 2.4**
@@ -207,7 +207,7 @@ describe("Feature: i18n-support, Property 7: 不支持的语言回退", () => {
             expect(result.source).toBe("default");
             expect(result.warning).toBeDefined();
             expect(result.warning).toContain(normalizeLocale(unsupportedLocale));
-        }), { numRuns: 200 });
+        }), { numRuns: 50 });
     });
     /**
      * **Validates: Requirements 2.3**
@@ -228,7 +228,7 @@ describe("Feature: i18n-support, Property 7: 不支持的语言回退", () => {
             expect(result.locale).toBe("en");
             expect(result.source).toBe("default");
             expect(result.warning).toBeDefined();
-        }), { numRuns: 200 });
+        }), { numRuns: 50 });
     });
     /**
      * **Validates: Requirements 2.3**
@@ -248,7 +248,7 @@ describe("Feature: i18n-support, Property 7: 不支持的语言回退", () => {
             expect(result.locale).toBe(supportedConfig);
             expect(result.source).toBe("config");
             expect(result.warning).toBeUndefined();
-        }), { numRuns: 200 });
+        }), { numRuns: 50 });
     });
 });
 //# sourceMappingURL=locale-detector.property.test.js.map

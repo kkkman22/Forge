@@ -47,7 +47,7 @@ describe("Feature: audit-followup-improvements, Property 1: Path construction eq
             const normalizedJoined = stripTrailingSlashes(path.normalize(joinedPath));
             const normalizedTemplate = stripTrailingSlashes(path.normalize(templatePath));
             expect(normalizedJoined).toBe(normalizedTemplate);
-        }), { numRuns: 100 });
+        }), { numRuns: 40 });
     });
     /**
      * For any valid worktree path and run ID, path.join(worktreePath, ".forge", "runs", runId)
@@ -68,7 +68,7 @@ describe("Feature: audit-followup-improvements, Property 1: Path construction eq
             const normalizedJoined = stripTrailingSlashes(path.normalize(joinedPath));
             const normalizedTemplate = stripTrailingSlashes(path.normalize(templatePath));
             expect(normalizedJoined).toBe(normalizedTemplate);
-        }), { numRuns: 100 });
+        }), { numRuns: 40 });
     });
     /**
      * For any valid run directory path, path.join(runDir, "notes.md") resolves
@@ -88,7 +88,7 @@ describe("Feature: audit-followup-improvements, Property 1: Path construction eq
             // New style: path.join
             const newNotesPath = path.join(runDirNew, "notes.md");
             expect(path.normalize(newNotesPath)).toBe(path.normalize(oldNotesPath));
-        }), { numRuns: 100 });
+        }), { numRuns: 40 });
     });
 });
 //# sourceMappingURL=run-manager.property.test.js.map

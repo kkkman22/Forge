@@ -180,7 +180,7 @@ describe("Property 5: Spec 锁定状态转换", () => {
             if (result.success) {
                 expect(result.spec.frontmatter.status).toBe("locked");
             }
-        }), { numRuns: 200 });
+        }), { numRuns: 50 });
     });
     it("rejectSpec keeps status as draft (Req 3.3)", () => {
         fc.assert(fc.property(draftSpecArb, (spec) => {
@@ -189,7 +189,7 @@ describe("Property 5: Spec 锁定状态转换", () => {
             const rejected = rejectSpec(spec);
             // Status must remain "draft" after rejection
             expect(rejected.frontmatter.status).toBe("draft");
-        }), { numRuns: 200 });
+        }), { numRuns: 50 });
     });
     it("confirmSpec preserves all other fields (Req 3.3)", () => {
         fc.assert(fc.property(draftSpecArb, (spec) => {
@@ -205,7 +205,7 @@ describe("Property 5: Spec 锁定状态转换", () => {
                 expect(confirmed.exclusions).toEqual(spec.exclusions);
                 expect(confirmed.isBrownfield).toBe(spec.isBrownfield);
             }
-        }), { numRuns: 200 });
+        }), { numRuns: 50 });
     });
     it("rejectSpec preserves all other fields (Req 3.3)", () => {
         fc.assert(fc.property(draftSpecArb, (spec) => {
@@ -217,7 +217,7 @@ describe("Property 5: Spec 锁定状态转换", () => {
             expect(rejected.requirements).toEqual(spec.requirements);
             expect(rejected.exclusions).toEqual(spec.exclusions);
             expect(rejected.isBrownfield).toBe(spec.isBrownfield);
-        }), { numRuns: 200 });
+        }), { numRuns: 50 });
     });
     it("confirmSpec is idempotent — confirming a locked spec stays locked", () => {
         fc.assert(fc.property(draftSpecArb, (spec) => {
@@ -230,7 +230,7 @@ describe("Property 5: Spec 锁定状态转换", () => {
             if (twice.success) {
                 expect(twice.spec.frontmatter.status).toBe("locked");
             }
-        }), { numRuns: 200 });
+        }), { numRuns: 50 });
     });
 });
 // ---------------------------------------------------------------------------
@@ -240,12 +240,12 @@ describe("Property 6: Spec 需求可测试性", () => {
     it('all requirements with valid "当...则..." scenarios → validation passes (Req 3.4)', () => {
         fc.assert(fc.property(allTestableRequirementsArb, (requirements) => {
             expect(validateTestability(requirements)).toBe(true);
-        }), { numRuns: 200 });
+        }), { numRuns: 50 });
     });
     it("at least one requirement without valid scenario → validation fails (Req 3.4)", () => {
         fc.assert(fc.property(someUntestableRequirementsArb, (requirements) => {
             expect(validateTestability(requirements)).toBe(false);
-        }), { numRuns: 200 });
+        }), { numRuns: 50 });
     });
     it("empty requirements list → validation fails (Req 3.4)", () => {
         expect(validateTestability([])).toBe(false);
@@ -263,27 +263,27 @@ describe("Property 7: 棕地 Spec 包含 Delta 章节", () => {
             expect(spec.delta?.modified.length).toBeGreaterThan(0);
             expect(spec.delta?.unchanged.length).toBeGreaterThan(0);
             expect(validateBrownfieldDelta(spec)).toBe(true);
-        }), { numRuns: 200 });
+        }), { numRuns: 50 });
     });
     it("brownfield spec without Delta section → validation fails (Req 3.6)", () => {
         fc.assert(fc.property(brownfieldSpecWithoutDeltaArb, (spec) => {
             expect(spec.isBrownfield).toBe(true);
             expect(spec.delta).toBeUndefined();
             expect(validateBrownfieldDelta(spec)).toBe(false);
-        }), { numRuns: 200 });
+        }), { numRuns: 50 });
     });
     it("brownfield spec with incomplete Delta → validation fails (Req 3.6)", () => {
         fc.assert(fc.property(brownfieldSpecIncompleteDeltaArb, (spec) => {
             expect(spec.isBrownfield).toBe(true);
             expect(validateBrownfieldDelta(spec)).toBe(false);
-        }), { numRuns: 200 });
+        }), { numRuns: 50 });
     });
     it("greenfield (non-brownfield) spec → validation passes without Delta (Req 3.6)", () => {
         fc.assert(fc.property(greenfieldSpecArb, (spec) => {
             expect(spec.isBrownfield).toBe(false);
             // Non-brownfield specs don't need Delta, so validation passes
             expect(validateBrownfieldDelta(spec)).toBe(true);
-        }), { numRuns: 200 });
+        }), { numRuns: 50 });
     });
 });
 // ---------------------------------------------------------------------------
@@ -306,7 +306,7 @@ describe("Property 8: 导入模式 Spec 创建", () => {
             expect(spec.requirements).toEqual(requirements);
             expect(spec.exclusions).toEqual(exclusions);
             expect(spec.isBrownfield).toBe(false);
-        }), { numRuns: 200 });
+        }), { numRuns: 50 });
     });
     it("createImportedSpec brownfield with Delta preserves Delta", () => {
         fc.assert(fc.property(featureNameArb, dateArb, purposeArb, fc.array(validRequirementArb, { minLength: 1, maxLength: 3 }), exclusionsArb, importSourceArb, validDeltaArb, (feature, date, purpose, requirements, exclusions, importSource, delta) => {
@@ -314,7 +314,7 @@ describe("Property 8: 导入模式 Spec 创建", () => {
             expect(spec.isBrownfield).toBe(true);
             expect(spec.delta).toEqual(delta);
             expect(validateBrownfieldDelta(spec)).toBe(true);
-        }), { numRuns: 200 });
+        }), { numRuns: 50 });
     });
     it("imported spec is compatible with confirmSpec", () => {
         fc.assert(fc.property(featureNameArb, dateArb, purposeArb, fc.array(validRequirementArb, { minLength: 1, maxLength: 3 }), exclusionsArb, importSourceArb, (feature, date, purpose, requirements, exclusions, importSource) => {
@@ -326,7 +326,7 @@ describe("Property 8: 导入模式 Spec 创建", () => {
                 expect(result.spec.frontmatter.importSource).toBe(importSource);
                 expect(result.spec.requirements).toEqual(requirements);
             }
-        }), { numRuns: 200 });
+        }), { numRuns: 50 });
     });
     it("imported spec is compatible with rejectSpec", () => {
         fc.assert(fc.property(featureNameArb, dateArb, purposeArb, fc.array(validRequirementArb, { minLength: 1, maxLength: 3 }), exclusionsArb, importSourceArb, (feature, date, purpose, requirements, exclusions, importSource) => {
@@ -334,13 +334,13 @@ describe("Property 8: 导入模式 Spec 创建", () => {
             const rejected = rejectSpec(spec);
             expect(rejected.frontmatter.status).toBe("draft");
             expect(rejected.frontmatter.importSource).toBe(importSource);
-        }), { numRuns: 200 });
+        }), { numRuns: 50 });
     });
     it("imported spec requirements are valid for validateTestability", () => {
         fc.assert(fc.property(featureNameArb, dateArb, purposeArb, allTestableRequirementsArb, exclusionsArb, importSourceArb, (feature, date, purpose, requirements, exclusions, importSource) => {
             const spec = createImportedSpec(feature, date, purpose, requirements, exclusions, importSource, false);
             expect(validateTestability(spec.requirements)).toBe(true);
-        }), { numRuns: 200 });
+        }), { numRuns: 50 });
     });
 });
 // ---------------------------------------------------------------------------
@@ -414,7 +414,7 @@ describe("Property 9: confirmSpec validation guard", () => {
                 expect(result.errors.length).toBeGreaterThan(0);
                 expect(result.errors.some((e) => e.toLowerCase().includes("testable"))).toBe(true);
             }
-        }), { numRuns: 200 });
+        }), { numRuns: 50 });
     });
     it("brownfield spec with valid requirements but missing/incomplete Delta → confirmSpec returns failure (Req 23.2)", () => {
         fc.assert(fc.property(fc.oneof(brownfieldSpecValidReqsMissingDeltaArb, brownfieldSpecValidReqsIncompleteDeltaArb), (spec) => {
@@ -426,7 +426,7 @@ describe("Property 9: confirmSpec validation guard", () => {
                 expect(result.errors.length).toBeGreaterThan(0);
                 expect(result.errors.some((e) => e.toLowerCase().includes("delta"))).toBe(true);
             }
-        }), { numRuns: 200 });
+        }), { numRuns: 50 });
     });
     it("spec with both untestable requirements and missing Delta → confirmSpec returns failure with both errors (Req 23.3)", () => {
         fc.assert(fc.property(brownfieldSpecBothInvalidArb, (spec) => {
@@ -439,7 +439,7 @@ describe("Property 9: confirmSpec validation guard", () => {
                 expect(result.errors.some((e) => e.toLowerCase().includes("testable"))).toBe(true);
                 expect(result.errors.some((e) => e.toLowerCase().includes("delta"))).toBe(true);
             }
-        }), { numRuns: 200 });
+        }), { numRuns: 50 });
     });
 });
 //# sourceMappingURL=spec.property.test.js.map

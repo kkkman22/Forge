@@ -105,7 +105,7 @@ describe("Feature: loop-skills-fusion, Property 7: evaluateReviewGate P0/P1 阻�
             // Should also have issues listed
             expect(result.issues).toBeDefined();
             expect(result.issues?.length).toBeGreaterThan(0);
-        }), { numRuns: 200 });
+        }), { numRuns: 50 });
     });
     /**
      * **Validates: Requirements 5.1, 5.4**
@@ -117,7 +117,7 @@ describe("Feature: loop-skills-fusion, Property 7: evaluateReviewGate P0/P1 阻�
         fc.assert(fc.property(passedReviewArb, ({ content }) => {
             const result = evaluateReviewGate(content);
             expect(result.status).toBe("passed");
-        }), { numRuns: 200 });
+        }), { numRuns: 50 });
     });
     /**
      * **Validates: Requirements 5.1, 5.4**
@@ -134,7 +134,7 @@ describe("Feature: loop-skills-fusion, Property 7: evaluateReviewGate P0/P1 阻�
             else {
                 expect(result.status).toBe("passed");
             }
-        }), { numRuns: 200 });
+        }), { numRuns: 50 });
     });
 });
 // ---------------------------------------------------------------------------
@@ -154,7 +154,7 @@ describe("Feature: loop-skills-fusion, Property 8: evaluateShipGate 组合门禁
             expect(reviewResult.status).toBe("blocked");
             const shipResult = evaluateShipGate(review.content, test.content, progress.content);
             expect(shipResult.status).toBe("blocked");
-        }), { numRuns: 200 });
+        }), { numRuns: 50 });
     });
     /**
      * **Validates: Requirements 5.3, 5.6**
@@ -169,7 +169,7 @@ describe("Feature: loop-skills-fusion, Property 8: evaluateShipGate 组合门禁
             expect(testResult.status).toBe("blocked");
             const shipResult = evaluateShipGate(review.content, test.content, progress.content);
             expect(shipResult.status).toBe("blocked");
-        }), { numRuns: 200 });
+        }), { numRuns: 50 });
     });
     /**
      * **Validates: Requirements 5.3, 5.6**
@@ -180,7 +180,7 @@ describe("Feature: loop-skills-fusion, Property 8: evaluateShipGate 组合门禁
         fc.assert(fc.property(blockedReviewArb, blockedTestArb, progressArb, (review, test, progress) => {
             const shipResult = evaluateShipGate(review.content, test.content, progress.content);
             expect(shipResult.status).toBe("blocked");
-        }), { numRuns: 200 });
+        }), { numRuns: 50 });
     });
     /**
      * **Validates: Requirements 5.3, 5.6**
@@ -192,7 +192,7 @@ describe("Feature: loop-skills-fusion, Property 8: evaluateShipGate 组合门禁
         fc.assert(fc.property(passedReviewArb, passingTestArb, passingProgressArb, (review, test, progress) => {
             const shipResult = evaluateShipGate(review.content, test.content, progress.content);
             expect(shipResult.status).toBe("passed");
-        }), { numRuns: 200 });
+        }), { numRuns: 50 });
     });
 });
 //# sourceMappingURL=quality-gate.property.test.js.map

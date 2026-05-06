@@ -23,8 +23,6 @@
 用户覆盖优先：用户明确指定档位时，以用户为准。宁重勿轻：无法判定时，选择更重的档位。不可跳步：选定档位后，必须按序执行对应的命令序列。
 → 详见 docs/forge-constitution-detail.md §1
 
----
-
 ## 2. Execution Discipline
 
 ### 2.1 TDD Enforcement
@@ -51,23 +49,11 @@
 
 ### 2.7 No Confirmation Between Steps（铁律）
 
-> **阶段之间、任务之间，禁止停下来询问用户是否继续。**
+> **阶段之间、任务之间，禁止停下来询问用户是否继续。** 与 TDD（§2.1）同级。
 
-此规则与 TDD（§2.1）同级，是不可违反的铁律。
-
-**禁止的行为**：
-- 输出"是否继续？"、"是否继续 build/review/test/ship？"
-- 以"工作量较大"、"涉及较多修改"为由询问是否继续
-- 提供"继续 X 或进入 Y"的选择让用户决定
-- 以任何理由、任何措辞在阶段间或任务间请求用户确认
-
-**正确行为**：
-- 阶段完成 → `✅ <阶段> 完成` → 立即调用下一阶段
-- 任务完成 → 一行摘要 → 立即开始下一个任务
-- 所有 build 任务完成 → 立即进入 review，不问
-
-**唯一允许停下来的情况**：Three-strike 触发、阻断性错误、分支保护阻断。
-
+**禁止**：问"是否继续"、以工作量为由停顿、提供选择、任何阶段间确认请求。
+**正确**：阶段完成 → `✅ <阶段> 完成` → 立即下一阶段。任务完成 → 摘要 → 立即下一任务。build 完 → 立即 review。
+**唯一可停**：Three-strike、阻断性错误、分支保护阻断。
 → 详见 shared/next-step-protocol.md
 
 ### 2.5 Context Refresh Discipline
@@ -79,28 +65,7 @@ build 阶段主 Agent 必须执行周期性 Restatement Checkpoint：每完成 N
 
 > **原则**：代码编辑时沉默执行，决策点时简要说明。SKILL 定义的结构化输出永远不被压制。
 
-禁止操作预告、自我对话、逐步解说。保留所有 Forge 结构化输出：TDD 标记、Closure-First 探针结果、Restatement 摘要、P5 证据链、评审报告、路由分析、前置检查结果、进度更新。Decision_Point 允许简要说明：`[原因] → [选择] → [依据]`。
-
-#### 词汇压缩
-
-省略冠词（a/an/the）、填充词（just/really/basically/actually/simply）。省略客套话（sure/certainly/of course/happy to）。使用短同义词（big 而非 extensive，fix 而非 implement a solution for）。允许句子片段。模式：`[事物] [动作] [原因]。[下一步]。`
-
-#### 行为规则
-
-- 文件编辑后输出变更摘要（如 `+5 lines in src/config.ts`），不回显文件内容
-- 非 Decision_Point 直接给推荐方案并执行，不列备选
-- 非 Decision_Point 散文输出 ≤200 tokens
-- Decision_Point 格式：`[原因] → [选择] → [依据]`
-- Subagent 返回结构化摘要，不含过程叙述
-
-#### Structured_Output 豁免清单
-
-以下格式完全豁免于散文压缩规则，不得压缩或省略：TDD 标记（🔴 RED / 🟢 GREEN / 🔵 REFACTOR）、P5 证据链、Restatement 摘要、Closure-First 探针结果、评审报告（P0/P1/P2/P3 表格）、代码块、commit 消息、安全警告、不可逆操作确认、路由分析、前置检查结果、变更摘要（变更/未触碰/关注点三段式）。新增结构化输出格式时必须同步更新此清单。
-
-#### 安全阀
-
-散文压缩让步于信息完整性。错误诊断、安全警告优先保留完整细节。
-→ 详见 docs/forge-constitution-detail.md §2.6
+禁止操作预告、自我对话、逐步解说。保留所有 Forge 结构化输出。Decision_Point 允许 `[原因] → [选择] → [依据]`。非决策点散文 ≤200 tokens。结构化输出豁免清单、禁止模式表、详细示例 → 详见 docs/forge-constitution-detail.md §2.6
 
 ---
 
@@ -122,13 +87,12 @@ build 阶段主 Agent 必须执行周期性 Restatement Checkpoint：每完成 N
 
 | Level | Meaning | Handling |
 |-------|---------|----------|
-| **P0** | 阻塞发布 | 立即修复，**阻断 `/forge ship`** |
-| **P1** | 高影响 | 发布前修复，**阻断 `/forge ship`** |
+| **P0** | 阻塞发布 | 立即修复，**阻断 ship** |
+| **P1** | 高影响 | 发布前修复，**阻断 ship** |
 | P2 | 中影响 | 应该修复，可协商 |
 | P3 | 低影响 | 建议改进，开发者决定 |
 
-**铁律**：存在 P0/P1 问题时，`/forge ship` 被阻断。修复后必须重新评审。
-→ 详见 docs/forge-constitution-detail.md §3
+**铁律**：存在 P0/P1 时 ship 被阻断。修复后须重新评审。→ 详见 docs/forge-constitution-detail.md §3
 
 ---
 
@@ -157,31 +121,26 @@ build 阶段主 Agent 必须执行周期性 Restatement Checkpoint：每完成 N
 
 ### 5.2-5.6
 
-**Categories**：Project-specific traps、Repeated correction patterns、Environment/tool quirks、Cross-session behavior corrections、Rule friction adjustments。**Trigger**：Knowledge entries 满足数值阈值时提出规则。**Protocol**：Propose → Declare → Approve → Log。**Constraints**：15-rule cap、staleness policy (5 sessions)、guarded zone、Sections 1–4 immutable。**Exclusions**：Architecture descriptions、file path lists、general best practices、raw knowledge data、tool-enforced standards。
+**Categories**：Project traps、correction patterns、tool quirks、behavior corrections、friction adjustments。**Trigger**：Knowledge entries 达阈值时提出。**Protocol**：Propose → Declare → Approve → Log。**Constraints**：15-rule cap、staleness (5 sessions)、Sections 1–4 immutable。
 → 详见 docs/forge-constitution-detail.md §5
 
 ---
 
 ## 6. Session Boundaries
 
-每个 `/forge` 命令调用构成一个自然的 Session_Boundary。阶段间上下文交接通过 `.forge/` 目录文件系统进行，而非对话历史。建议在 `/forge` 命令之间开启新的 Claude Code 会话。
+每个 `/forge` 命令调用构成 Session_Boundary。阶段间上下文交接通过 `.forge/` 目录文件系统进行，而非对话历史。建议 `/forge` 命令之间开启新会话。
 
-**Subagent 隔离**：每个 Subagent 有独立上下文，是防止阶段内上下文膨胀的主要机制。**会话恢复**：`/forge resume` 是会话边界后恢复上下文的推荐方法，从 `.forge/progress/` 和 `.forge/knowledge/sessions/` 读取。**并发控制**：通过 `.forge/config.md` 中的 `max_parallel_agents` 配置（默认 6）。HTTP 429 降级：第 1 次等待 30s 并发减半（最小 1）；第 2 次等待 60s 并发降至 2；第 3 次及以上等待 60s 切换串行。降级记录到 `.forge/knowledge/tool-health.md`。新会话重置并发数。**上下文阈值提示**：如果用户在单个会话中继续执行多个 `/forge` 命令，当上下文大小超过 100K tokens 时，Agent 应记录建议开启新会话的提示（不阻断执行）。
+**Subagent 隔离**：每个 Subagent 有独立上下文。**会话恢复**：`/forge resume` 从 `.forge/progress/` 和 `.forge/knowledge/sessions/` 读取。**并发控制**：`max_parallel_agents` 默认 6。HTTP 429 降级：第 1 次并发减半 → 第 2 次降至 2 → 第 3 次串行。降级记录到 `.forge/knowledge/tool-health.md`。新会话重置并发数。上下文超 100K tokens 时记录建议开启新会话提示（不阻断）。
 
 ---
 
 ## 项目信息
 
-- **项目名称**：Forge
-- **技术栈**：TypeScript, JavaScript, Shell
-- **安全级别**：标准（Level 1）
-- **初始化时间**：2026-04-28
+**Forge** | TypeScript/JS/Shell | 安全级别 1 | 2026-04-28
 
 ## Subagent 并行执行配置
 
-`/forge decide` 和 `/forge review` 使用独立 Subagent（通过 Claude Code Agent tool 启动），不使用 Agent Teams。Subagent 类型引用 `.claude/agents/` 下的定义文件。
+`/forge decide` 和 `/forge review` 使用独立 Subagent（Agent tool），不使用 Agent Teams。Subagent 类型引用 `.claude/agents/`。
 
-- **decide**: product、architect、security（默认），designer（UI 任务时动态加入）。两轮执行：Round 1 并行输出各自视角，Round 2 Critic 交叉审视。
-- **review**: spec-check、quality-check、security-check（并行执行）。轻量模式省略 spec-check。
-
-启动团队时，使用 subagent 定义名称生成队友。团队完成后清理资源。
+- **decide**: product、architect、security（+ designer UI 时）。两轮：Round 1 并行输出，Round 2 Critic 交叉审视。
+- **review**: spec-check、quality-check、security-check 并行。轻量模式省略 spec-check。

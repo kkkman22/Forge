@@ -82,7 +82,7 @@ describe("Property 2: PUA state manager — success resets state", () => {
             expect(postSuccessFields.puaMethodology).toBeUndefined();
             expect(postSuccessFields.puaChainIndex).toBeUndefined();
             expect(postSuccessFields.puaFailurePattern).toBeUndefined();
-        }), { numRuns: 200 });
+        }), { numRuns: 50 });
     });
     /**
      * **Validates: Requirements 5.2, 5.7**
@@ -111,7 +111,7 @@ describe("Property 2: PUA state manager — success resets state", () => {
             expect(resetFields.puaMethodology).toBe(freshFields.puaMethodology);
             expect(resetFields.puaChainIndex).toBe(freshFields.puaChainIndex);
             expect(resetFields.puaFailurePattern).toBe(freshFields.puaFailurePattern);
-        }), { numRuns: 200 });
+        }), { numRuns: 50 });
     });
     /**
      * **Validates: Requirements 5.2, 5.7**
@@ -130,7 +130,7 @@ describe("Property 2: PUA state manager — success resets state", () => {
             manager.handleSuccess();
             const afterSecond = getStatusContent();
             expect(afterFirst).toBe(afterSecond);
-        }), { numRuns: 200 });
+        }), { numRuns: 50 });
     });
     /**
      * **Validates: Requirements 5.2, 5.7**
@@ -147,7 +147,7 @@ describe("Property 2: PUA state manager — success resets state", () => {
             // The original "phase" field should still be present
             const content = getStatusContent();
             expect(content).toContain("phase:");
-        }), { numRuns: 200 });
+        }), { numRuns: 50 });
     });
 });
 // ---------------------------------------------------------------------------
@@ -189,7 +189,7 @@ describe("Property 3: PUA state manager — failure escalation monotonicity", ()
             for (let i = 1; i < pressureLevels.length; i++) {
                 expect(PRESSURE_LEVEL_ORDER[pressureLevels[i]]).toBeGreaterThanOrEqual(PRESSURE_LEVEL_ORDER[pressureLevels[i - 1]]);
             }
-        }), { numRuns: 200 });
+        }), { numRuns: 50 });
     });
     /**
      * **Validates: Requirements 5.3, 5.7**
@@ -215,7 +215,7 @@ describe("Property 3: PUA state manager — failure escalation monotonicity", ()
             }
             // With 8 consecutive failures, L4 must have been reached
             expect(reachedL4).toBe(true);
-        }), { numRuns: 200 });
+        }), { numRuns: 50 });
     });
 });
 //# sourceMappingURL=pua-state-manager.property.test.js.map

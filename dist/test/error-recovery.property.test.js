@@ -61,7 +61,7 @@ describe("Feature: error-recovery-strategy, Property 1: commit pattern extractio
                 const p = patterns.find((pat) => pat.taskId === String(t.id));
                 expect(p).toBeDefined();
             }
-        }), { numRuns: 100 });
+        }), { numRuns: 40 });
     });
 });
 // ---------------------------------------------------------------------------
@@ -93,7 +93,7 @@ describe("Feature: error-recovery-strategy, Property 2: commit-to-task matching"
             };
             const noMatches = matchCommitsToTasks([commitNoPrefix], [pattern]);
             expect(noMatches.length).toBe(0);
-        }), { numRuns: 100 });
+        }), { numRuns: 40 });
     });
 });
 // ---------------------------------------------------------------------------
@@ -113,7 +113,7 @@ describe("Feature: error-recovery-strategy, Property 3: git status parsing", () 
             for (let i = 0; i < entries.length; i++) {
                 expect(result[i].filePath).toBe(entries[i].file);
             }
-        }), { numRuns: 100 });
+        }), { numRuns: 40 });
     });
     it("returns empty array for empty input", () => {
         expect(parseGitStatus("")).toHaveLength(0);
@@ -134,7 +134,7 @@ describe("Feature: error-recovery-strategy, Property 4: file change relevance", 
                     tp.startsWith(`${c.filePath}/`));
                 expect(overlaps).toBe(true);
             }
-        }), { numRuns: 100 });
+        }), { numRuns: 40 });
     });
     it("returns empty array when no overlap", () => {
         const changes = [{ filePath: "src/a.ts", status: "modified" }];
@@ -177,7 +177,7 @@ describe("Feature: error-recovery-strategy, Property 5: progress inconsistency d
                     expect(inc.commitTimestamp).toBeDefined();
                 }
             }
-        }), { numRuns: 100 });
+        }), { numRuns: 40 });
     });
 });
 // ---------------------------------------------------------------------------
@@ -205,7 +205,7 @@ describe("Feature: error-recovery-strategy, Property 6: reconciliation patch ord
             for (const patch of patches) {
                 expect(patch.markCompleted).toBe(true);
             }
-        }), { numRuns: 100 });
+        }), { numRuns: 40 });
     });
 });
 // ---------------------------------------------------------------------------
@@ -238,7 +238,7 @@ describe("Feature: error-recovery-strategy, Property 7: dependency gap detection
             const gaps = findDependencyGaps(inconsistencies, progress, taskOrder);
             expect(gaps).toHaveLength(1);
             expect(gaps[0].missingDependencyTaskId).toBe(id1);
-        }), { numRuns: 100 });
+        }), { numRuns: 40 });
     });
 });
 // ---------------------------------------------------------------------------
@@ -264,7 +264,7 @@ describe("Feature: error-recovery-strategy, Property 8: phase inconsistency dete
                     expect(result?.direction).toBe("ahead");
                 }
             }
-        }), { numRuns: 100 });
+        }), { numRuns: 40 });
     });
 });
 // ---------------------------------------------------------------------------

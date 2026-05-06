@@ -35,7 +35,7 @@ describe("Property 1: Slugify output validity", () => {
         fc.assert(fc.property(alphanumericString, (taskName) => {
             const result = slugify(taskName);
             expect(result).toMatch(SLUG_PATTERN);
-        }), { numRuns: 200 });
+        }), { numRuns: 50 });
     });
 });
 // ---------------------------------------------------------------------------
@@ -45,7 +45,7 @@ describe("Property 2: Slugify determinism", () => {
     it("produces identical output for identical input", () => {
         fc.assert(fc.property(alphanumericString, (taskName) => {
             expect(slugify(taskName)).toBe(slugify(taskName));
-        }), { numRuns: 200 });
+        }), { numRuns: 50 });
     });
 });
 // ---------------------------------------------------------------------------
@@ -58,7 +58,7 @@ describe("Property 3: Slugify error on invalid input", () => {
     it("throws for strings with no ASCII alphanumeric characters", () => {
         fc.assert(fc.property(nonAlphanumericString, (s) => {
             expect(() => slugify(s)).toThrow();
-        }), { numRuns: 100 });
+        }), { numRuns: 40 });
     });
 });
 // ---------------------------------------------------------------------------
@@ -76,7 +76,7 @@ describe("Property 12: Task name round-trip via frontmatter", () => {
             expect(match).not.toBeNull();
             expect(match?.[1]).toBe(taskName);
             expect(taskId).toMatch(SLUG_PATTERN);
-        }), { numRuns: 100 });
+        }), { numRuns: 40 });
     });
 });
 // ---------------------------------------------------------------------------

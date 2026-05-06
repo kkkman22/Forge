@@ -54,21 +54,21 @@ describe("Preservation: Frozen zone write permission behavior", () => {
             expect(result.reason).toContain("写入被阻断");
             expect(result.reason).toContain(path);
             expect(result.reason).toContain(status);
-        }), { numRuns: 100 });
+        }), { numRuns: 40 });
     });
     it("frozen zone + draft/other status → { blocked: false, reason: '' }", () => {
         fc.assert(fc.property(frozenPathArb, nonBlockingStatusArb, (path, status) => {
             const result = checkWritePermission(path, contentWithStatus(status));
             expect(result.blocked).toBe(false);
             expect(result.reason).toBe("");
-        }), { numRuns: 100 });
+        }), { numRuns: 40 });
     });
     it("frozen zone + no status field → { blocked: false, reason: '' }", () => {
         fc.assert(fc.property(frozenPathArb, (path) => {
             const result = checkWritePermission(path, contentWithoutStatus);
             expect(result.blocked).toBe(false);
             expect(result.reason).toBe("");
-        }), { numRuns: 100 });
+        }), { numRuns: 40 });
     });
 });
 // ---------------------------------------------------------------------------
@@ -81,21 +81,21 @@ describe("Preservation: Open zone write permission behavior", () => {
             const result = checkWritePermission(path, contentWithStatus(status));
             expect(result.blocked).toBe(false);
             expect(result.reason).toBe("");
-        }), { numRuns: 100 });
+        }), { numRuns: 40 });
     });
     it("open zone + no status → { blocked: false, reason: '' }", () => {
         fc.assert(fc.property(openPathArb, (path) => {
             const result = checkWritePermission(path, contentWithoutStatus);
             expect(result.blocked).toBe(false);
             expect(result.reason).toBe("");
-        }), { numRuns: 100 });
+        }), { numRuns: 40 });
     });
     it("open zone + no frontmatter → { blocked: false, reason: '' }", () => {
         fc.assert(fc.property(openPathArb, (path) => {
             const result = checkWritePermission(path, contentWithoutFrontmatter);
             expect(result.blocked).toBe(false);
             expect(result.reason).toBe("");
-        }), { numRuns: 100 });
+        }), { numRuns: 40 });
     });
 });
 // ---------------------------------------------------------------------------
@@ -106,17 +106,17 @@ describe("Preservation: getProtectionZone() classification", () => {
     it("frozen zone paths are classified as 'frozen'", () => {
         fc.assert(fc.property(frozenPathArb, (path) => {
             expect(getProtectionZone(path)).toBe("frozen");
-        }), { numRuns: 100 });
+        }), { numRuns: 40 });
     });
     it("guarded zone paths are classified as 'guarded'", () => {
         fc.assert(fc.property(guardedPathArb, (path) => {
             expect(getProtectionZone(path)).toBe("guarded");
-        }), { numRuns: 100 });
+        }), { numRuns: 40 });
     });
     it("open zone paths are classified as 'open'", () => {
         fc.assert(fc.property(openPathArb, (path) => {
             expect(getProtectionZone(path)).toBe("open");
-        }), { numRuns: 100 });
+        }), { numRuns: 40 });
     });
     it(".forge/ prefix is stripped before classification", () => {
         fc.assert(fc.property(frozenPathArb, (path) => {

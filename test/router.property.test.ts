@@ -426,11 +426,15 @@ describe("Property: Routing assumptions field", () => {
     );
   });
 
-  it("classifyTask defaults assumptions to an empty array", () => {
+  it("classifyTask returns assumptions as a string array", () => {
     fc.assert(
       fc.property(taskSignalsArb, (signals) => {
         const result = classifyTask(signals);
-        expect(result.assumptions).toEqual([]);
+        expect(Array.isArray(result.assumptions)).toBe(true);
+        for (const a of result.assumptions) {
+          expect(typeof a).toBe("string");
+          expect(a.length).toBeGreaterThan(0);
+        }
       }),
       { numRuns: 50 },
     );

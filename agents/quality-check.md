@@ -69,11 +69,11 @@ memory: project
 ## Output Format
 
 ```markdown
-## Layer 2 — 代码质量
+## Layer 2 — Code Quality
 
-**评审者**：quality-check
+**Reviewer**: quality-check
 
-| # | 严重度 | 文件 | 问题 | 建议 |
+| # | Severity | File | Issue | Suggestion |
 |---|--------|------|------|------|
 | 1 | P1 | `src/routes/export.ts` | 缺少错误处理，异常会导致 500 | 添加 try-catch 和错误响应 |
 | 2 | P2 | `src/services/export.ts` | 重复的日期校验逻辑 | 提取为公共函数 |

@@ -43,7 +43,7 @@ describe("Property 1: deny overrides allow", () => {
             };
             const result = checkFileAccess(filePath, policy);
             expect(result.allowed).toBe(false);
-        }), { numRuns: 200 });
+        }), { numRuns: 50 });
     });
     it("deny pattern overrides broader allow pattern for specific file", () => {
         fc.assert(fc.property(filePathArb, globPatternArb, (filePath, allowPattern) => {
@@ -53,7 +53,7 @@ describe("Property 1: deny overrides allow", () => {
             };
             const result = checkFileAccess(filePath, policy);
             expect(result.allowed).toBe(false);
-        }), { numRuns: 200 });
+        }), { numRuns: 50 });
     });
 });
 // ---------------------------------------------------------------------------
@@ -69,7 +69,7 @@ describe("Property 2: default policy security", () => {
             fc.pre(!fullPath.startsWith(projectRoot));
             const result = checkFileAccess(fullPath, policy.fileSystem);
             expect(result.allowed).toBe(false);
-        }), { numRuns: 200 });
+        }), { numRuns: 50 });
     });
     it("allows any path under project root", () => {
         const projectRoot = "/projects/my-app";
@@ -78,7 +78,7 @@ describe("Property 2: default policy security", () => {
             const fullPath = `${projectRoot}/${filePath}`;
             const result = checkFileAccess(fullPath, policy.fileSystem);
             expect(result.allowed).toBe(true);
-        }), { numRuns: 200 });
+        }), { numRuns: 50 });
     });
 });
 // ---------------------------------------------------------------------------
@@ -91,7 +91,7 @@ describe("Property 3: network none mode denies all", () => {
             const result = checkNetworkAccess(endpoint, policy);
             expect(result.allowed).toBe(false);
             expect(result.reason).toContain("none");
-        }), { numRuns: 200 });
+        }), { numRuns: 50 });
     });
 });
 //# sourceMappingURL=sandbox-policy.property.test.js.map

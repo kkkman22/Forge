@@ -269,6 +269,68 @@ export {
 } from "./process-tree-cleaner.js";
 
 // ---------------------------------------------------------------------------
+// Backlog (P2/P3 findings capture)
+// ---------------------------------------------------------------------------
+
+export type { BacklogEntry } from "./backlog.js";
+export {
+  appendToBacklog,
+  findOverlappingEntries,
+  generateBacklogHeader,
+  parseBacklog,
+  resolveEntry,
+  serializeBacklog,
+} from "./backlog.js";
+
+// ---------------------------------------------------------------------------
+// Episode & pattern confidence lifecycle (Phase 4)
+// ---------------------------------------------------------------------------
+
+export type {
+  Episode,
+  EpisodeOutcome,
+  EpisodeTier,
+} from "./episode.js";
+export {
+  generateEpisodeId,
+  parseEpisode,
+  renderEpisode,
+} from "./episode.js";
+
+export type {
+  Pattern,
+  UpgradeSuggestion,
+} from "./pattern-stats.js";
+export {
+  findStaleOrDecayedPatterns,
+  findUpgradableEpisodes,
+  parseInstinct,
+  renderInstincts,
+  updatePatternStats,
+} from "./pattern-stats.js";
+
+export type {
+  EvolutionBySkill,
+  EvolutionMarker,
+  EvolutionReport,
+  ValidationResult,
+} from "./evolution-marker.js";
+export {
+  aggregateEvolutionMarkers,
+  parseEvolutionMarkers,
+  validateEvolutionTarget,
+} from "./evolution-marker.js";
+
+export type {
+  FailureContext,
+  FailureTrigger,
+} from "./failure-sink.js";
+export {
+  buildFailureEpisode,
+  buildFailureEvolutionMarker,
+} from "./failure-sink.js";
+
+// ---------------------------------------------------------------------------
 // Branch lifecycle enforcement
 // ---------------------------------------------------------------------------
 

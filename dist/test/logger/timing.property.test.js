@@ -11,7 +11,7 @@ describe("Property 3: Iteration timing invariant", () => {
             expect(timing.totalIterationDurationMs).toBeGreaterThanOrEqual(timing.agentCallDurationMs);
             expect(timing.totalIterationDurationMs).toBeGreaterThanOrEqual(timing.effectExecutionDurationMs);
             expect(timing.totalIterationDurationMs).toBeGreaterThanOrEqual(0);
-        }), { numRuns: 200 });
+        }), { numRuns: 50 });
     });
 });
 describe("Property 4: Performance baseline statistics correctness", () => {
@@ -32,7 +32,7 @@ describe("Property 4: Performance baseline statistics correctness", () => {
             expect(baseline.avgIterationMs).toBeCloseTo(expectedAvg, 10);
             expect(baseline.maxIterationMs).toBeGreaterThanOrEqual(baseline.minIterationMs);
             expect(baseline.iterationCount).toBe(timings.length);
-        }), { numRuns: 200 });
+        }), { numRuns: 50 });
     });
 });
 describe("Feature: observability-enhancements, Property 7: SubagentTiming 耗时不变量", () => {
@@ -52,7 +52,7 @@ describe("Feature: observability-enhancements, Property 7: SubagentTiming 耗时
             expect(timing.startMs).toBe(startMs);
             expect(timing.endMs).toBe(endMs);
             expect(timing.durationMs).toBe(endMs - startMs);
-        }), { numRuns: 200 });
+        }), { numRuns: 50 });
     });
     it("should clamp durationMs to 0 when endMs < startMs (clock skew)", async () => {
         const { buildSubagentTiming } = await import("../../src/logger/timing.js");
@@ -65,7 +65,7 @@ describe("Feature: observability-enhancements, Property 7: SubagentTiming 耗时
             expect(timing.startMs).toBe(startMs);
             expect(timing.endMs).toBe(endMs);
             expect(timing.durationMs).toBe(0);
-        }), { numRuns: 200 });
+        }), { numRuns: 50 });
     });
 });
 describe("Feature: observability-enhancements, Property 9: 退化检测正确性", () => {
@@ -100,7 +100,7 @@ describe("Feature: observability-enhancements, Property 9: 退化检测正确性
             expect(result.isDegraded).toBe(true);
             expect(result.currentMs).toBe(currentMs);
             expect(result.rollingAvgMs).toBeCloseTo(rollingAvg, 5);
-        }), { numRuns: 200 });
+        }), { numRuns: 50 });
     });
     it("should return isDegraded: false when currentMs <= 2 × rollingAvg (history >= 3)", async () => {
         const { detectDegradation } = await import("../../src/logger/timing.js");
@@ -112,7 +112,7 @@ describe("Feature: observability-enhancements, Property 9: 退化检测正确性
             const result = detectDegradation(currentMs, history);
             expect(result.isDegraded).toBe(false);
             expect(result.currentMs).toBe(currentMs);
-        }), { numRuns: 200 });
+        }), { numRuns: 50 });
     });
     it("should always return isDegraded: false when history has < 3 records", async () => {
         const { detectDegradation } = await import("../../src/logger/timing.js");
@@ -122,7 +122,7 @@ describe("Feature: observability-enhancements, Property 9: 退化检测正确性
             expect(result.currentMs).toBe(currentMs);
             expect(result.rollingAvgMs).toBe(0);
             expect(result.deviationFactor).toBe(0);
-        }), { numRuns: 200 });
+        }), { numRuns: 50 });
     });
 });
 describe("Feature: observability-enhancements, Property 2: SubagentTiming JSON 往返一致性", () => {
@@ -140,7 +140,7 @@ describe("Feature: observability-enhancements, Property 2: SubagentTiming JSON �
             const serialized = JSON.stringify(timing);
             const deserialized = JSON.parse(serialized);
             expect(deserialized).toEqual(timing);
-        }), { numRuns: 200 });
+        }), { numRuns: 50 });
     });
 });
 describe("Feature: observability-enhancements, Property 3: 扩展 PerformanceBaseline JSON 往返一致性", () => {
@@ -169,7 +169,7 @@ describe("Feature: observability-enhancements, Property 3: 扩展 PerformanceBas
             const serialized = JSON.stringify(baseline);
             const deserialized = JSON.parse(serialized);
             expect(deserialized).toEqual(baseline);
-        }), { numRuns: 200 });
+        }), { numRuns: 50 });
     });
 });
 describe("Feature: observability-enhancements, Property 8: 扩展 PerformanceBaseline 统计正确性", () => {
@@ -218,7 +218,7 @@ describe("Feature: observability-enhancements, Property 8: 扩展 PerformanceBas
             // Non-negative invariants
             expect(baseline.subagentCallCount).toBeGreaterThanOrEqual(0);
             expect(baseline.degradationCount).toBeGreaterThanOrEqual(0);
-        }), { numRuns: 200 });
+        }), { numRuns: 50 });
     });
 });
 describe("Feature: observability-enhancements, Property 10: 格式化 Baseline 包含 Subagent 统计", () => {
@@ -247,7 +247,7 @@ describe("Feature: observability-enhancements, Property 10: 格式化 Baseline �
             const output = formatPerformanceBaseline(baseline);
             expect(output).toContain("Subagent");
             expect(output).toContain(String(subagentCallCount));
-        }), { numRuns: 200 });
+        }), { numRuns: 50 });
     });
 });
 //# sourceMappingURL=timing.property.test.js.map

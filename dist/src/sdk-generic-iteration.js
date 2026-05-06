@@ -13,6 +13,7 @@
  */
 import { buildIterationPrompt } from "./context-accumulator.js";
 import { FrozenZoneViolation } from "./effect-executor.js";
+import { buildEntry } from "./event-log.js";
 import { transition } from "./orchestrator.js";
 import { appendAndPersistNotes, buildIterationEntry } from "./sdk-notes-manager.js";
 // ---------------------------------------------------------------------------
@@ -124,6 +125,10 @@ export async function executeGenericIteration(ctx) {
             keyChanges: [],
             keyLearnings: [],
         };
+        // PUA: escalate pressure on hard failure (Req 17.1)
+        if (ctx.puaEnabled) {
+            ctx.puaStateManager?.handleFailure(errorMessage, orchestratorState.consecutiveFailures);
+        }
     }
     // Dispatch the event to the state machine.
     const result = transition(orchestratorState, event, ctx.limits);
@@ -134,9 +139,15 @@ export async function executeGenericIteration(ctx) {
     const preTransitionState = orchestratorState;
     orchestratorState = result.state;
     let lastEffects = result.effects;
-    // Execute the resulting effects (commit/rollback, schedule_iteration, etc.).
+    // Append a write_event_log effect so the full event stream is persisted
+    // to .forge/runs/<runId>/events.jsonl for audit and replay
+    // (Requirement 3.1, 3.5).
+    const logEntry = buildEntry(ctx.config.runId, preTransitionState.currentIteration, event, preTransitionState, result.state, result.effects);
+    lastEffects = [...lastEffects, { type: "write_event_log", entry: logEntry }];
+    // Execute the resulting effects (commit/rollback, schedule_iteration,
+    // write_event_log, etc.).
     try {
-        await ctx.executeEffects(result.effects);
+        await ctx.executeEffects(lastEffects);
     }
     catch (effectError) {
         const effectMessage = effectError instanceof Error ? effectError.message : String(effectError);
@@ -159,6 +170,10 @@ export async function executeGenericIteration(ctx) {
         // UnexpectedEffectError or any other error: trigger iteration_hard_failure + backoff.
         // Revert to pre-transition state so that commitCount is not incremented.
         orchestratorState = preTransitionState;
+        // PUA: treat effect failure as a failure path (Req 17.1)
+        if (ctx.puaEnabled) {
+            ctx.puaStateManager?.handleFailure(`Effect execution failed: ${effectMessage}`, orchestratorState.consecutiveFailures);
+        }
         // Dispatch iteration_hard_failure from the original state — this triggers
         // rollback and does NOT increment commitCount.
         const zeroUsage = ZERO_TOKEN_USAGE;

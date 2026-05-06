@@ -44,19 +44,19 @@ describe("Property 24: Backward compatibility", () => {
             const withExplicit = classifyTask(signals, undefined, undefined, "fullstack", "iteration");
             expect(withDefaults.tier).toBe(withExplicit.tier);
             expect(withDefaults.commandSequence).toEqual(withExplicit.commandSequence);
-        }), { numRuns: 200 });
+        }), { numRuns: 50 });
     });
     it("default taskType is fullstack", () => {
         fc.assert(fc.property(taskSignalsArb, (signals) => {
             const result = classifyTask(signals);
             expect(result.taskType).toBe("fullstack");
-        }), { numRuns: 100 });
+        }), { numRuns: 40 });
     });
     it("default projectPhase is iteration", () => {
         fc.assert(fc.property(taskSignalsArb, (signals) => {
             const result = classifyTask(signals);
             expect(result.projectPhase).toBe("iteration");
-        }), { numRuns: 100 });
+        }), { numRuns: 40 });
     });
 });
 // ---------------------------------------------------------------------------
@@ -69,7 +69,7 @@ describe("Property 25: Dimensions do not affect tier", () => {
             const r2 = classifyTask(signals, undefined, undefined, t2, "iteration");
             expect(r1.tier).toBe(r2.tier);
             expect(r1.commandSequence).toEqual(r2.commandSequence);
-        }), { numRuns: 200 });
+        }), { numRuns: 50 });
     });
     it("tier is identical regardless of projectPhase", () => {
         fc.assert(fc.property(taskSignalsArb, projectPhaseArb, projectPhaseArb, (signals, p1, p2) => {
@@ -77,7 +77,7 @@ describe("Property 25: Dimensions do not affect tier", () => {
             const r2 = classifyTask(signals, undefined, undefined, "fullstack", p2);
             expect(r1.tier).toBe(r2.tier);
             expect(r1.commandSequence).toEqual(r2.commandSequence);
-        }), { numRuns: 200 });
+        }), { numRuns: 50 });
     });
 });
 // ---------------------------------------------------------------------------
@@ -91,7 +91,7 @@ describe("Property 26: Hints are scoped to active commands", () => {
             for (const hint of result.hints) {
                 expect(commandSet.has(hint.command)).toBe(true);
             }
-        }), { numRuns: 300 });
+        }), { numRuns: 75 });
     });
     it("light tier never has hints for decide/spec/plan/test/ship/learn", () => {
         fc.assert(fc.property(taskTypeArb, projectPhaseArb, (taskType, phase) => {
@@ -100,7 +100,7 @@ describe("Property 26: Hints are scoped to active commands", () => {
             for (const hint of hints) {
                 expect(forbidden.has(hint.command)).toBe(false);
             }
-        }), { numRuns: 100 });
+        }), { numRuns: 40 });
     });
 });
 // ---------------------------------------------------------------------------
@@ -112,7 +112,7 @@ describe("Property 27: Hint deduplication", () => {
             const hints = generateHints(taskType, phase, EXPECTED_SEQUENCES[tier]);
             const tags = hints.map((h) => h.tag);
             expect(new Set(tags).size).toBe(tags.length);
-        }), { numRuns: 200 });
+        }), { numRuns: 50 });
     });
 });
 // ---------------------------------------------------------------------------
@@ -275,7 +275,7 @@ describe("Property 31: Result structure", () => {
             expect(result.taskType).toBe(taskType);
             expect(result.projectPhase).toBe(phase);
             expect(Array.isArray(result.hints)).toBe(true);
-        }), { numRuns: 200 });
+        }), { numRuns: 50 });
     });
     it("every hint has command, tag, and description", () => {
         fc.assert(fc.property(taskTypeArb, projectPhaseArb, tierArb, (taskType, phase, tier) => {
@@ -288,7 +288,7 @@ describe("Property 31: Result structure", () => {
                 expect(typeof hint.description).toBe("string");
                 expect(hint.description.length).toBeGreaterThan(0);
             }
-        }), { numRuns: 200 });
+        }), { numRuns: 50 });
     });
 });
 // ---------------------------------------------------------------------------

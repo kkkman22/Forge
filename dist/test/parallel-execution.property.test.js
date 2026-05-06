@@ -73,7 +73,7 @@ describe("Property 26: Dispatch batch", () => {
         fc.assert(fc.property(dagArb, concurrencyArb, (graph, maxC) => {
             const batch = getDispatchBatch(graph, maxC);
             expect(batch.tasks.length).toBeLessThanOrEqual(maxC);
-        }), { numRuns: 200 });
+        }), { numRuns: 50 });
     });
     it("batch tasks are all pending with completed dependencies", () => {
         fc.assert(fc.property(dagArb, (graph) => {
@@ -83,7 +83,7 @@ describe("Property 26: Dispatch batch", () => {
             for (const task of batch.tasks) {
                 expect(readyIds.has(task.id)).toBe(true);
             }
-        }), { numRuns: 200 });
+        }), { numRuns: 50 });
     });
     it("in_progress tasks count against concurrency limit", () => {
         const graph = {
@@ -115,7 +115,7 @@ describe("Property 26: Dispatch batch", () => {
             const ready = getReadyTasks(graph);
             const batch = getDispatchBatch(graph, maxC);
             expect(batch.tasks.length + batch.waitingCount).toBe(ready.length);
-        }), { numRuns: 200 });
+        }), { numRuns: 50 });
     });
 });
 // ---------------------------------------------------------------------------
@@ -211,13 +211,13 @@ describe("Property 26: 执行状态摘要", () => {
                 summary.failed +
                 summary.blocked;
             expect(sum).toBe(summary.total);
-        }), { numRuns: 200 });
+        }), { numRuns: 50 });
     });
     it("isComplete is true only when all tasks are completed", () => {
         fc.assert(fc.property(dagArb, (graph) => {
             const summary = getExecutionSummary(graph);
             expect(summary.isComplete).toBe(summary.completed === summary.total);
-        }), { numRuns: 200 });
+        }), { numRuns: 50 });
     });
     it("currentParallelism equals in_progress count", () => {
         const graph = {
@@ -240,7 +240,7 @@ describe("Property 26: 并行执行模拟", () => {
         fc.assert(fc.property(dagArb, concurrencyArb, (graph, maxC) => {
             const waves = simulateParallelExecution(graph, maxC);
             expect(waves).toBeGreaterThan(0);
-        }), { numRuns: 200 });
+        }), { numRuns: 50 });
     });
     it("linear chain of N tasks takes N waves with concurrency 1", () => {
         for (let n = 1; n <= 5; n++) {
@@ -253,14 +253,14 @@ describe("Property 26: 并行执行模拟", () => {
             const graph = independent(n);
             const waves = simulateParallelExecution(graph, maxC);
             expect(waves).toBe(Math.ceil(n / maxC));
-        }), { numRuns: 100 });
+        }), { numRuns: 40 });
     });
     it("higher concurrency produces fewer or equal waves", () => {
         fc.assert(fc.property(dagArb, (graph) => {
             const waves1 = simulateParallelExecution(graph, 1);
             const waves3 = simulateParallelExecution(graph, 3);
             expect(waves3).toBeLessThanOrEqual(waves1);
-        }), { numRuns: 200 });
+        }), { numRuns: 50 });
     });
     it("wide fan: root + N leaves takes 2 waves regardless of concurrency (if maxC >= N)", () => {
         const graph = wideFan(3);

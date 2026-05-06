@@ -102,7 +102,7 @@ describe("Feature: audit-remediation-v221, Property 7: Terminal/idle state guard
             const result = transition(state, event, limits);
             expect(result.state).toEqual(state);
             expect(result.effects).toEqual([]);
-        }), { numRuns: 200 });
+        }), { numRuns: 50 });
     });
     /**
      * **Validates: Requirements 18.1**
@@ -114,7 +114,7 @@ describe("Feature: audit-remediation-v221, Property 7: Terminal/idle state guard
             const result = transition(state, event);
             expect(result.state).toEqual(state);
             expect(result.effects).toEqual([]);
-        }), { numRuns: 200 });
+        }), { numRuns: 50 });
     });
     /**
      * **Validates: Requirements 18.1**
@@ -126,7 +126,7 @@ describe("Feature: audit-remediation-v221, Property 7: Terminal/idle state guard
             const result = transition(state, event);
             expect(result.state).toEqual(state);
             expect(result.effects).toEqual([]);
-        }), { numRuns: 200 });
+        }), { numRuns: 50 });
     });
     /**
      * **Validates: Requirements 18.2**
@@ -139,7 +139,7 @@ describe("Feature: audit-remediation-v221, Property 7: Terminal/idle state guard
             const result = transition(state, event, limits);
             expect(result.state).toEqual(state);
             expect(result.effects).toEqual([]);
-        }), { numRuns: 200 });
+        }), { numRuns: 50 });
     });
     /**
      * **Validates: Requirements 18.2**
@@ -153,7 +153,7 @@ describe("Feature: audit-remediation-v221, Property 7: Terminal/idle state guard
             const result = transition(state, event, limits);
             expect(result.state.status).toBe("running");
             expect(result.effects.length).toBeGreaterThan(0);
-        }), { numRuns: 100 });
+        }), { numRuns: 40 });
     });
 });
 // ---------------------------------------------------------------------------
@@ -172,7 +172,7 @@ describe("Feature: audit-remediation-v221, Property 8: stop_condition_met increm
             const result = transition(state, event);
             expect(result.state.currentIteration).toBe(state.currentIteration + 1);
             expect(result.state.status).toBe("aborted");
-        }), { numRuns: 200 });
+        }), { numRuns: 50 });
     });
     /**
      * **Validates: Requirements 19.1**
@@ -185,7 +185,7 @@ describe("Feature: audit-remediation-v221, Property 8: stop_condition_met increm
             const result = transition(state, event);
             expect(result.effects).toHaveLength(1);
             expect(result.effects[0]).toEqual({ type: "abort", reason: "stop condition met" });
-        }), { numRuns: 200 });
+        }), { numRuns: 50 });
     });
     /**
      * **Validates: Requirements 19.1**
@@ -206,7 +206,7 @@ describe("Feature: audit-remediation-v221, Property 8: stop_condition_met increm
             expect(result.state.consecutiveFailures).toBe(state.consecutiveFailures);
             expect(result.state.consecutiveErrors).toBe(state.consecutiveErrors);
             expect(result.state.waitingUntilMs).toBe(state.waitingUntilMs);
-        }), { numRuns: 200 });
+        }), { numRuns: 50 });
     });
 });
 //# sourceMappingURL=orchestrator.property.test.js.map

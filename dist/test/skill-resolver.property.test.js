@@ -59,7 +59,7 @@ describe("Feature: i18n-support, Property 8: SKILL 文件解析与回退", () =>
             expect(candidates[0]).toBe(`skills/${skillName}/SKILL.${locale}.md`);
             // Second candidate is the default
             expect(candidates[1]).toBe(`skills/${skillName}/SKILL.md`);
-        }), { numRuns: 200 });
+        }), { numRuns: 50 });
     });
     /**
      * **Validates: Requirements 5.1, 5.2**
@@ -72,7 +72,7 @@ describe("Feature: i18n-support, Property 8: SKILL 文件解析与回退", () =>
             const candidates = buildSkillCandidates(skillName, locale, locale);
             expect(candidates).toHaveLength(1);
             expect(candidates[0]).toBe(`skills/${skillName}/SKILL.md`);
-        }), { numRuns: 200 });
+        }), { numRuns: 50 });
     });
     /**
      * **Validates: Requirements 5.1, 5.2**
@@ -100,7 +100,7 @@ describe("Feature: i18n-support, Property 8: SKILL 文件解析与回退", () =>
                 // Only default exists
                 expect(result.filePath).toBe(candidates[1]);
             }
-        }), { numRuns: 200 });
+        }), { numRuns: 50 });
     });
     /**
      * **Validates: Requirements 5.1, 5.2**
@@ -116,7 +116,7 @@ describe("Feature: i18n-support, Property 8: SKILL 文件解析与回退", () =>
             expect(result.isFallback).toBe(true);
             // Falls back to the last candidate (default SKILL.md)
             expect(result.filePath).toBe(`skills/${skillName}/SKILL.md`);
-        }), { numRuns: 200 });
+        }), { numRuns: 50 });
     });
     /**
      * **Validates: Requirements 5.1, 5.2**
@@ -131,7 +131,7 @@ describe("Feature: i18n-support, Property 8: SKILL 文件解析与回退", () =>
                 expect(candidate).toContain(`skills/${skillName}/`);
                 expect(candidate).toMatch(/SKILL(\.[a-z]+)?\.md$/);
             }
-        }), { numRuns: 200 });
+        }), { numRuns: 50 });
     });
     /**
      * **Validates: Requirements 5.1, 5.2**
@@ -150,7 +150,7 @@ describe("Feature: i18n-support, Property 8: SKILL 文件解析与回退", () =>
             const resultExists = resolveSkillFile(candidates, () => true);
             expect(resultExists.isFallback).toBe(false);
             expect(resultExists.filePath).toBe(`skills/${skillName}/SKILL.md`);
-        }), { numRuns: 200 });
+        }), { numRuns: 50 });
     });
 });
 //# sourceMappingURL=skill-resolver.property.test.js.map

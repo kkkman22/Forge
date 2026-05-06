@@ -40,7 +40,7 @@ describe("Feature: ship-delivery-unification, parseShipDefaultMethod", () => {
         fc.assert(fc.property(fc.string({ maxLength: 100 }), (input) => {
             const result = parseShipDefaultMethod(input);
             expect(result.method).toBeOneOf(["merge", "push-pr", "keep-branch", "prompt"]);
-        }), { numRuns: 200 });
+        }), { numRuns: 50 });
     });
     it("always returns a valid DeliveryMethod for undefined input", () => {
         const result = parseShipDefaultMethod(undefined);

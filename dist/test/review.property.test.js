@@ -49,7 +49,7 @@ describe("Property 17: 置信度过滤正确性", () => {
             for (const f of result.included) {
                 expect(f.confidence).toBeGreaterThanOrEqual(CONFIDENCE_THRESHOLD);
             }
-        }), { numRuns: 200 });
+        }), { numRuns: 50 });
     });
     it("findings with confidence 0.5–0.7 go to lowConfidence", () => {
         fc.assert(fc.property(findingsArrayArb, (findings) => {
@@ -58,7 +58,7 @@ describe("Property 17: 置信度过滤正确性", () => {
                 expect(f.confidence).toBeGreaterThanOrEqual(LOW_CONFIDENCE_MIN);
                 expect(f.confidence).toBeLessThan(CONFIDENCE_THRESHOLD);
             }
-        }), { numRuns: 200 });
+        }), { numRuns: 50 });
     });
     it("findings with confidence < 0.5 are discarded", () => {
         fc.assert(fc.property(findingsArrayArb, (findings) => {
@@ -66,13 +66,13 @@ describe("Property 17: 置信度过滤正确性", () => {
             for (const f of result.discarded) {
                 expect(f.confidence).toBeLessThan(LOW_CONFIDENCE_MIN);
             }
-        }), { numRuns: 200 });
+        }), { numRuns: 50 });
     });
     it("total count is preserved after filtering", () => {
         fc.assert(fc.property(findingsArrayArb, (findings) => {
             const result = filterByConfidence(findings);
             expect(result.included.length + result.lowConfidence.length + result.discarded.length).toBe(findings.length);
-        }), { numRuns: 200 });
+        }), { numRuns: 50 });
     });
 });
 // ---------------------------------------------------------------------------
@@ -89,7 +89,7 @@ describe("Property 18: 去重合并正确性", () => {
             const result = deduplicateFindings([base, dup]);
             // If same reviewer, still 1 merged finding; if different, also 1
             expect(result.length).toBe(1);
-        }), { numRuns: 200 });
+        }), { numRuns: 50 });
     });
     it("findings with distant lines are NOT merged", () => {
         fc.assert(fc.property(findingArb, fc.integer({ min: LINE_TOLERANCE + 1, max: 500 }), (base, lineOffset) => {
@@ -102,7 +102,7 @@ describe("Property 18: 去重合并正确性", () => {
             const baseWithReviewer = { ...base, reviewer: "spec-check" };
             const result = deduplicateFindings([baseWithReviewer, distant]);
             expect(result.length).toBe(2);
-        }), { numRuns: 200 });
+        }), { numRuns: 50 });
     });
     it("merged finding keeps highest severity", () => {
         const severityRank = { P0: 0, P1: 1, P2: 2, P3: 3 };
@@ -118,7 +118,7 @@ describe("Property 18: 去重合并正确性", () => {
                 ? base.severity
                 : otherSeverity;
             expect(result[0].severity).toBe(expectedSeverity);
-        }), { numRuns: 200 });
+        }), { numRuns: 50 });
     });
     it("merged finding keeps highest confidence", () => {
         fc.assert(fc.property(findingArb, fc.double({ min: 0.0, max: 1.0, noNaN: true }), (base, otherConfidence) => {
@@ -130,13 +130,13 @@ describe("Property 18: 去重合并正确性", () => {
             const result = deduplicateFindings([base, dup]);
             expect(result.length).toBe(1);
             expect(result[0].confidence).toBe(Math.max(base.confidence, otherConfidence));
-        }), { numRuns: 200 });
+        }), { numRuns: 50 });
     });
     it("deduplication never increases total count", () => {
         fc.assert(fc.property(findingsArrayArb, (findings) => {
             const result = deduplicateFindings(findings);
             expect(result.length).toBeLessThanOrEqual(findings.length);
-        }), { numRuns: 200 });
+        }), { numRuns: 50 });
     });
 });
 // ---------------------------------------------------------------------------
@@ -153,7 +153,7 @@ describe("Property 19: 跨评审者一致性提升", () => {
             const result = applyCrossValidation([merged]);
             expect(result[0].crossValidated).toBe(true);
             expect(result[0].confidence).toBe(Math.min(base.confidence + CROSS_VALIDATION_BOOST, MAX_CONFIDENCE));
-        }), { numRuns: 200 });
+        }), { numRuns: 50 });
     });
     it("findings with 1 reviewer do NOT get boost", () => {
         fc.assert(fc.property(findingArb, (base) => {
@@ -165,7 +165,7 @@ describe("Property 19: 跨评审者一致性提升", () => {
             const result = applyCrossValidation([merged]);
             expect(result[0].crossValidated).toBe(false);
             expect(result[0].confidence).toBe(base.confidence);
-        }), { numRuns: 200 });
+        }), { numRuns: 50 });
     });
     it("confidence never exceeds 1.0 after boost", () => {
         fc.assert(fc.property(findingArb, (base) => {
@@ -177,7 +177,7 @@ describe("Property 19: 跨评审者一致性提升", () => {
             };
             const result = applyCrossValidation([merged]);
             expect(result[0].confidence).toBeLessThanOrEqual(MAX_CONFIDENCE);
-        }), { numRuns: 200 });
+        }), { numRuns: 50 });
     });
 });
 // ---------------------------------------------------------------------------

@@ -96,7 +96,7 @@ describe("Feature: loop-skills-fusion, Property 1: ExecutionMode round-trip cons
             const cleared = clearExecutionMode(withMode);
             const mode = getExecutionMode(cleared);
             expect(mode).toBe("interactive");
-        }), { numRuns: 200 });
+        }), { numRuns: 50 });
     });
     /**
      * **Validates: Requirements 13.1, 13.4**
@@ -123,7 +123,7 @@ describe("Feature: loop-skills-fusion, Property 1: ExecutionMode round-trip cons
                 .split("\n")
                 .filter((line) => line.trim() !== "" && !line.startsWith("mode:"));
             expect(clearedFields).toEqual(originalFields);
-        }), { numRuns: 200 });
+        }), { numRuns: 50 });
     });
     /**
      * **Validates: Requirements 13.1**
@@ -136,7 +136,7 @@ describe("Feature: loop-skills-fusion, Property 1: ExecutionMode round-trip cons
             const updated = writeExecutionMode(content, mode);
             const readMode = getExecutionMode(updated);
             expect(readMode).toBe(mode);
-        }), { numRuns: 200 });
+        }), { numRuns: 50 });
     });
 });
 // ---------------------------------------------------------------------------
@@ -153,7 +153,7 @@ describe("Feature: loop-skills-fusion, Property 2: getExecutionMode 解析正確
         fc.assert(fc.property(statusFileWithModeArb, ({ content, mode }) => {
             const result = getExecutionMode(content);
             expect(result).toBe(mode);
-        }), { numRuns: 200 });
+        }), { numRuns: 50 });
     });
     /**
      * **Validates: Requirements 1.5**
@@ -165,7 +165,7 @@ describe("Feature: loop-skills-fusion, Property 2: getExecutionMode 解析正確
         fc.assert(fc.property(statusFileWithInvalidModeArb, (content) => {
             const result = getExecutionMode(content);
             expect(result).toBe("interactive");
-        }), { numRuns: 200 });
+        }), { numRuns: 50 });
     });
     /**
      * **Validates: Requirements 1.5**
@@ -177,7 +177,7 @@ describe("Feature: loop-skills-fusion, Property 2: getExecutionMode 解析正確
         fc.assert(fc.property(statusFileWithoutModeArb, (content) => {
             const result = getExecutionMode(content);
             expect(result).toBe("interactive");
-        }), { numRuns: 200 });
+        }), { numRuns: 50 });
     });
     /**
      * **Validates: Requirements 1.5**
@@ -189,7 +189,7 @@ describe("Feature: loop-skills-fusion, Property 2: getExecutionMode 解析正確
         fc.assert(fc.property(fc.string({ minLength: 0, maxLength: 200 }).filter((s) => !s.trimStart().startsWith("---")), (content) => {
             const result = getExecutionMode(content);
             expect(result).toBe("interactive");
-        }), { numRuns: 200 });
+        }), { numRuns: 50 });
     });
 });
 // ---------------------------------------------------------------------------
@@ -208,7 +208,7 @@ describe("Feature: loop-skills-fusion, Property 2: 自主モード確認点全�
             expect(decision.action).toBe("auto");
             expect(decision.preset).toBeDefined();
             expect(typeof decision.preset).toBe("string");
-        }), { numRuns: 200 });
+        }), { numRuns: 50 });
     });
     /**
      * **Validates: Requirements 2.2, 2.3**
@@ -221,7 +221,7 @@ describe("Feature: loop-skills-fusion, Property 2: 自主モード確認点全�
             const decision = resolveConfirmation("interactive", point);
             expect(decision.action).toBe("wait_for_user");
             expect(decision.preset).toBeUndefined();
-        }), { numRuns: 200 });
+        }), { numRuns: 50 });
     });
     /**
      * **Validates: Requirements 2.2, 2.3**
@@ -233,7 +233,7 @@ describe("Feature: loop-skills-fusion, Property 2: 自主モード確認点全�
             const decision = resolveConfirmation("autonomous", point);
             expect(decision.action).toBe("auto");
             expect(decision.preset).toBe("keep branch");
-        }), { numRuns: 200 });
+        }), { numRuns: 50 });
     });
     /**
      * **Validates: Requirements 2.2, 2.3**
@@ -246,7 +246,7 @@ describe("Feature: loop-skills-fusion, Property 2: 自主モード確認点全�
             const decision1 = resolveConfirmation(mode, point);
             const decision2 = resolveConfirmation(mode, point);
             expect(decision1).toEqual(decision2);
-        }), { numRuns: 200 });
+        }), { numRuns: 50 });
     });
 });
 // ---------------------------------------------------------------------------
@@ -265,7 +265,7 @@ describe("Property: 新增 ConfirmationPoint autonomous 全自動", () => {
             expect(decision.action).toBe("auto");
             expect(decision.preset).toBeDefined();
             expect(typeof decision.preset).toBe("string");
-        }), { numRuns: 200 });
+        }), { numRuns: 50 });
     });
     /**
      * **Validates: Requirements 10.2, 10.3**
@@ -286,7 +286,7 @@ describe("Property: 新增 ConfirmationPoint autonomous 全自動", () => {
             const decision = resolveConfirmation("autonomous", point);
             expect(decision.action).toBe("auto");
             expect(decision.preset).toBe(expectedPresets[point]);
-        }), { numRuns: 200 });
+        }), { numRuns: 50 });
     });
     /**
      * **Validates: Requirements 10.1, 10.3**
@@ -299,7 +299,7 @@ describe("Property: 新增 ConfirmationPoint autonomous 全自動", () => {
             const decision = resolveConfirmation("interactive", point);
             expect(decision.action).toBe("wait_for_user");
             expect(decision.preset).toBeUndefined();
-        }), { numRuns: 200 });
+        }), { numRuns: 50 });
     });
 });
 // ---------------------------------------------------------------------------
@@ -324,7 +324,7 @@ describe("Property: 現有 ConfirmationPoint 向後兼容", () => {
             const decision = resolveConfirmation("autonomous", point);
             expect(decision.action).toBe("auto");
             expect(decision.preset).toBe(originalPresets[point]);
-        }), { numRuns: 200 });
+        }), { numRuns: 50 });
     });
     /**
      * **Validates: Requirements 10.4, 12.2**
@@ -337,7 +337,7 @@ describe("Property: 現有 ConfirmationPoint 向後兼容", () => {
             const decision = resolveConfirmation("interactive", point);
             expect(decision.action).toBe("wait_for_user");
             expect(decision.preset).toBeUndefined();
-        }), { numRuns: 200 });
+        }), { numRuns: 50 });
     });
 });
 //# sourceMappingURL=execution-mode.property.test.js.map

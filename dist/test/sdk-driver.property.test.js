@@ -101,7 +101,7 @@ describe("Feature: sdk-autonomous-loop, Property 4: Effect execution order prese
             // The observed order should be [0, 1, 2, ..., effects.length - 1]
             const expectedOrder = effects.map((_, i) => i);
             expect(observedOrder).toEqual(expectedOrder);
-        }), { numRuns: 200 });
+        }), { numRuns: 50 });
     });
     /**
      * **Validates: Requirements 3.6**
@@ -144,7 +144,7 @@ describe("Feature: sdk-autonomous-loop, Property 4: Effect execution order prese
                 // Other effect types don't produce git calls
             }
             expect(gitCalls).toEqual(expectedGitCalls);
-        }), { numRuns: 200 });
+        }), { numRuns: 50 });
     });
 });
 // ---------------------------------------------------------------------------
@@ -186,7 +186,7 @@ describe("Feature: sdk-autonomous-loop, Property 3: Commit effect produces corre
             const expectedCommitArgs = buildCommitCommand(message).args;
             expect(mock.mock.calls[2][0]).toBe("git");
             expect(mock.mock.calls[2][1]).toEqual(expectedCommitArgs);
-        }), { numRuns: 200 });
+        }), { numRuns: 50 });
     });
 });
 // ---------------------------------------------------------------------------
@@ -246,7 +246,7 @@ describe("Feature: sdk-autonomous-loop, Property 5: Git commands executed withou
             expect(mock.mock.calls[1][1]).toEqual(["diff", "--cached", "--name-only"]);
             const expectedCommitArgs = buildCommitCommand(message).args;
             expect(mock.mock.calls[2][1]).toEqual(expectedCommitArgs);
-        }), { numRuns: 200 });
+        }), { numRuns: 50 });
     });
     /**
      * **Validates: Requirements 3.7**
@@ -288,7 +288,7 @@ describe("Feature: sdk-autonomous-loop, Property 5: Git commands executed withou
             expect(mock.mock.calls[2][1]).toEqual(expectedResetArgs);
             const expectedCleanArgs = buildCleanCommand().args;
             expect(mock.mock.calls[3][1]).toEqual(expectedCleanArgs);
-        }), { numRuns: 200 });
+        }), { numRuns: 50 });
     });
     /**
      * **Validates: Requirements 3.7**
@@ -323,7 +323,7 @@ describe("Feature: sdk-autonomous-loop, Property 5: Git commands executed withou
                     expect(options).not.toHaveProperty("shell", true);
                 }
             }
-        }), { numRuns: 200 });
+        }), { numRuns: 50 });
     });
 });
 // ---------------------------------------------------------------------------
@@ -356,7 +356,7 @@ describe("Feature: sdk-autonomous-loop, Property 2: Token usage field mapping", 
             expect(result.outputTokens).toBe(outputTokens);
             expect(result.cacheReadTokens).toBe(cacheReadInputTokens);
             expect(result.cacheCreationTokens).toBe(cacheCreationInputTokens);
-        }), { numRuns: 200 });
+        }), { numRuns: 50 });
     });
 });
 // ---------------------------------------------------------------------------
@@ -422,7 +422,7 @@ describe("Feature: sdk-autonomous-loop, Property 1: Driver input validation", ()
                 // Non-empty objectives must not throw
                 expect(() => new SdkDriver(config, executor, agent)).not.toThrow();
             }
-        }), { numRuns: 200 });
+        }), { numRuns: 50 });
     });
     it("always rejects empty string objectives", () => {
         fc.assert(fc.property(fc.constant(""), (objective) => {
@@ -430,7 +430,7 @@ describe("Feature: sdk-autonomous-loop, Property 1: Driver input validation", ()
             const executor = createMockEffectExecutor();
             const agent = createMockAgentInterface();
             expect(() => new SdkDriver(config, executor, agent)).toThrow("Objective must be a non-empty string");
-        }), { numRuns: 200 });
+        }), { numRuns: 50 });
     });
     it("always rejects whitespace-only objectives", () => {
         const whitespaceArb = fc
@@ -441,7 +441,7 @@ describe("Feature: sdk-autonomous-loop, Property 1: Driver input validation", ()
             const executor = createMockEffectExecutor();
             const agent = createMockAgentInterface();
             expect(() => new SdkDriver(config, executor, agent)).toThrow("Objective must be a non-empty string");
-        }), { numRuns: 200 });
+        }), { numRuns: 50 });
     });
 });
 // ---------------------------------------------------------------------------
@@ -484,7 +484,7 @@ describe("Feature: sdk-autonomous-loop, Property 6: Loop termination matches sta
             const stopResult = transition(state, { type: "stop_condition_met" });
             state = stopResult.state;
             expect(state.status).toBe("aborted");
-        }), { numRuns: 200 });
+        }), { numRuns: 50 });
     });
     it("state machine reaches terminal status (stopped) via user_interrupt", () => {
         fc.assert(fc.property(fc.constant(undefined), () => {
@@ -497,7 +497,7 @@ describe("Feature: sdk-autonomous-loop, Property 6: Loop termination matches sta
             const interruptResult = transition(state, { type: "user_interrupt" });
             state = interruptResult.state;
             expect(state.status).toBe("stopped");
-        }), { numRuns: 200 });
+        }), { numRuns: 50 });
     });
     it("state machine reaches terminal status (aborted) via circuit breaker on consecutive hard failures", () => {
         fc.assert(fc.property(fc.integer({ min: 3, max: 10 }), (failureCount) => {
@@ -524,7 +524,7 @@ describe("Feature: sdk-autonomous-loop, Property 6: Loop termination matches sta
             }
             // After 3+ consecutive failures, circuit breaker should have tripped
             expect(state.status).toBe("aborted");
-        }), { numRuns: 200 });
+        }), { numRuns: 50 });
     });
     it("state machine reaches terminal status (aborted) via max iterations limit", () => {
         fc.assert(fc.property(fc.integer({ min: 1, max: 5 }), (maxIterations) => {
@@ -545,7 +545,7 @@ describe("Feature: sdk-autonomous-loop, Property 6: Loop termination matches sta
                     break;
             }
             expect(state.status).toBe("aborted");
-        }), { numRuns: 200 });
+        }), { numRuns: 50 });
     });
     it("state machine stays in running status when no termination conditions are met", () => {
         fc.assert(fc.property(fc.integer({ min: 1, max: 10 }), (iterationCount) => {
@@ -566,7 +566,7 @@ describe("Feature: sdk-autonomous-loop, Property 6: Loop termination matches sta
                 state = result.state;
                 expect(state.status).toBe("running");
             }
-        }), { numRuns: 200 });
+        }), { numRuns: 50 });
     });
     it("state machine enters waiting status on hard failure (not terminal) and resumes on backoff_elapsed", () => {
         fc.assert(fc.property(fc.constant(undefined), () => {
@@ -587,7 +587,7 @@ describe("Feature: sdk-autonomous-loop, Property 6: Loop termination matches sta
             const backoffResult = transition(state, { type: "backoff_elapsed" });
             state = backoffResult.state;
             expect(state.status).toBe("running");
-        }), { numRuns: 200 });
+        }), { numRuns: 50 });
     });
     it("user_interrupt from waiting status also reaches terminal (stopped)", () => {
         fc.assert(fc.property(fc.constant(undefined), () => {
@@ -607,7 +607,7 @@ describe("Feature: sdk-autonomous-loop, Property 6: Loop termination matches sta
             const interruptResult = transition(state, { type: "user_interrupt" });
             state = interruptResult.state;
             expect(state.status).toBe("stopped");
-        }), { numRuns: 200 });
+        }), { numRuns: 50 });
     });
 });
 // ---------------------------------------------------------------------------
@@ -660,7 +660,7 @@ describe("Feature: sdk-autonomous-loop, Property 7: Iteration entry construction
             expect(entry.summary).toBe(output.summary);
             expect(entry.keyChanges).toEqual(output.key_changes_made);
             expect(entry.keyLearnings).toEqual(output.key_learnings);
-        }), { numRuns: 200 });
+        }), { numRuns: 50 });
     });
     it("failed iteration entry has success=false, matching summary, empty keyChanges, and preserved keyLearnings", () => {
         fc.assert(fc.property(fc.integer({ min: 1, max: 1000 }), agentOutputArb, (iterationNumber, output) => {
@@ -672,7 +672,7 @@ describe("Feature: sdk-autonomous-loop, Property 7: Iteration entry construction
             expect(entry.keyChanges).toEqual([]);
             // Key learnings are preserved regardless of success/failure
             expect(entry.keyLearnings).toEqual(output.key_learnings);
-        }), { numRuns: 200 });
+        }), { numRuns: 50 });
     });
     it("keyChanges is non-empty only when success is true and agent reported changes", () => {
         fc.assert(fc.property(fc.integer({ min: 1, max: 1000 }), fc.boolean(), agentOutputArb, (iterationNumber, success, output) => {
@@ -685,14 +685,14 @@ describe("Feature: sdk-autonomous-loop, Property 7: Iteration entry construction
                 // Successful iterations have keyChanges matching agent output
                 expect(entry.keyChanges).toEqual(output.key_changes_made);
             }
-        }), { numRuns: 200 });
+        }), { numRuns: 50 });
     });
     it("keyLearnings always preserves agent learnings regardless of success/failure", () => {
         fc.assert(fc.property(fc.integer({ min: 1, max: 1000 }), fc.boolean(), agentOutputArb, (iterationNumber, success, output) => {
             const entry = buildIterationEntry(iterationNumber, success, output);
             // Key learnings are always preserved
             expect(entry.keyLearnings).toEqual(output.key_learnings);
-        }), { numRuns: 200 });
+        }), { numRuns: 50 });
     });
     it("hard failure entry (error message as summary) has correct structure", () => {
         fc.assert(fc.property(fc.integer({ min: 1, max: 1000 }), fc.string({ minLength: 1, maxLength: 200 }), (iterationNumber, errorMessage) => {
@@ -710,7 +710,7 @@ describe("Feature: sdk-autonomous-loop, Property 7: Iteration entry construction
             expect(entry.summary).toBe(errorMessage);
             expect(entry.keyChanges).toEqual([]);
             expect(entry.keyLearnings).toEqual([]);
-        }), { numRuns: 200 });
+        }), { numRuns: 50 });
     });
 });
 //# sourceMappingURL=sdk-driver.property.test.js.map

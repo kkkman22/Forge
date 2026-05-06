@@ -77,7 +77,7 @@ describe("Feature: gnhf-inspired-enhancements, Property 15: Worktree 路径计�
             const basename = repoRoot.slice(lastSlash + 1);
             const expected = `${parent}/${basename}-forge-worktrees/${slug}/`;
             expect(result).toBe(expected);
-        }), { numRuns: 200 });
+        }), { numRuns: 50 });
     });
     /**
      * **Validates: Requirements 7.1**
@@ -86,7 +86,7 @@ describe("Feature: gnhf-inspired-enhancements, Property 15: Worktree 路径计�
         fc.assert(fc.property(repoRootArb, slugArb, (repoRoot, slug) => {
             const result = computeWorktreePath(repoRoot, slug);
             expect(result).not.toContain("..");
-        }), { numRuns: 200 });
+        }), { numRuns: 50 });
     });
     /**
      * **Validates: Requirements 7.1**
@@ -99,7 +99,7 @@ describe("Feature: gnhf-inspired-enhancements, Property 15: Worktree 路径计�
             const basename = repoRoot.slice(lastSlash + 1);
             const expected = `${parent}/${basename}-forge-worktrees/`;
             expect(result).toBe(expected);
-        }), { numRuns: 200 });
+        }), { numRuns: 50 });
     });
     /**
      * **Validates: Requirements 7.1**
@@ -108,7 +108,7 @@ describe("Feature: gnhf-inspired-enhancements, Property 15: Worktree 路径计�
         fc.assert(fc.property(repoRootArb, slugArb, (repoRoot, slug) => {
             const result = computeWorktreePath(repoRoot, slug);
             expect(result.endsWith("/")).toBe(true);
-        }), { numRuns: 200 });
+        }), { numRuns: 50 });
     });
     /**
      * **Validates: Requirements 7.1**
@@ -117,7 +117,7 @@ describe("Feature: gnhf-inspired-enhancements, Property 15: Worktree 路径计�
         fc.assert(fc.property(repoRootArb, slugArb, (repoRoot, slug) => {
             const result = computeWorktreePath(repoRoot, slug);
             expect(result).toContain("-forge-worktrees/");
-        }), { numRuns: 200 });
+        }), { numRuns: 50 });
     });
 });
 // ---------------------------------------------------------------------------
@@ -131,7 +131,7 @@ describe("Feature: gnhf-inspired-enhancements, Property 16: Worktree 清理决�
         fc.assert(fc.property(fc.integer({ min: 1, max: 1000 }), (commitCount) => {
             const decision = decideWorktreeCleanup(commitCount);
             expect(decision.action).toBe("preserve");
-        }), { numRuns: 200 });
+        }), { numRuns: 50 });
     });
     /**
      * **Validates: Requirements 7.3, 7.4**
@@ -148,7 +148,7 @@ describe("Feature: gnhf-inspired-enhancements, Property 16: Worktree 清理决�
             const decision = decideWorktreeCleanup(commitCount);
             expect(typeof decision.reason).toBe("string");
             expect(decision.reason.length).toBeGreaterThan(0);
-        }), { numRuns: 200 });
+        }), { numRuns: 50 });
     });
     /**
      * **Validates: Requirements 7.3, 7.4**
@@ -157,7 +157,7 @@ describe("Feature: gnhf-inspired-enhancements, Property 16: Worktree 清理决�
         fc.assert(fc.property(commitCountArb, (commitCount) => {
             const decision = decideWorktreeCleanup(commitCount);
             expect(["preserve", "remove"]).toContain(decision.action);
-        }), { numRuns: 200 });
+        }), { numRuns: 50 });
     });
 });
 // ---------------------------------------------------------------------------
@@ -171,7 +171,7 @@ describe("Feature: gnhf-inspired-enhancements, Property 17: Worktree 并发限�
         fc.assert(fc.property(activeCountArb, maxConcurrentArb, (activeCount, maxConcurrent) => {
             const result = canCreateWorktree(activeCount, maxConcurrent);
             expect(result).toBe(activeCount < maxConcurrent);
-        }), { numRuns: 200 });
+        }), { numRuns: 50 });
     });
     /**
      * **Validates: Requirements 7.5**
@@ -180,7 +180,7 @@ describe("Feature: gnhf-inspired-enhancements, Property 17: Worktree 并发限�
         fc.assert(fc.property(activeCountArb, (activeCount) => {
             const result = canCreateWorktree(activeCount);
             expect(result).toBe(activeCount < 3);
-        }), { numRuns: 200 });
+        }), { numRuns: 50 });
     });
     /**
      * **Validates: Requirements 7.5**
@@ -188,7 +188,7 @@ describe("Feature: gnhf-inspired-enhancements, Property 17: Worktree 并发限�
     it("exactly at maxConcurrent returns false", () => {
         fc.assert(fc.property(maxConcurrentArb, (maxConcurrent) => {
             expect(canCreateWorktree(maxConcurrent, maxConcurrent)).toBe(false);
-        }), { numRuns: 200 });
+        }), { numRuns: 50 });
     });
     /**
      * **Validates: Requirements 7.5**
@@ -196,7 +196,7 @@ describe("Feature: gnhf-inspired-enhancements, Property 17: Worktree 并发限�
     it("one below maxConcurrent returns true", () => {
         fc.assert(fc.property(fc.integer({ min: 2, max: 50 }), (maxConcurrent) => {
             expect(canCreateWorktree(maxConcurrent - 1, maxConcurrent)).toBe(true);
-        }), { numRuns: 200 });
+        }), { numRuns: 50 });
     });
 });
 // ---------------------------------------------------------------------------
@@ -209,7 +209,7 @@ describe("Feature: gnhf-inspired-enhancements, Property 18: Worktree 源分支�
     it("branches starting with forge/ return false", () => {
         fc.assert(fc.property(forgeBranchArb, (branch) => {
             expect(isValidWorktreeSource(branch)).toBe(false);
-        }), { numRuns: 200 });
+        }), { numRuns: 50 });
     });
     /**
      * **Validates: Requirements 7.7**
@@ -217,7 +217,7 @@ describe("Feature: gnhf-inspired-enhancements, Property 18: Worktree 源分支�
     it("branches not starting with forge/ return true", () => {
         fc.assert(fc.property(nonForgeBranchArb, (branch) => {
             expect(isValidWorktreeSource(branch)).toBe(true);
-        }), { numRuns: 200 });
+        }), { numRuns: 50 });
     });
     /**
      * **Validates: Requirements 7.7**

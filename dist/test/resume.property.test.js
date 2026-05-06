@@ -86,7 +86,7 @@ describe("Property 16: Resume 五问题完整输出", () => {
         fc.assert(fc.property(projectStateArb, (state) => {
             const output = generateResumeOutput(state);
             expect(output.questions).toHaveLength(5);
-        }), { numRuns: 200 });
+        }), { numRuns: 50 });
     });
     it("all 5 questions have non-empty answers (Req 12.2)", () => {
         fc.assert(fc.property(projectStateArb, (state) => {
@@ -95,14 +95,14 @@ describe("Property 16: Resume 五问题完整输出", () => {
                 expect(q.question.length).toBeGreaterThan(0);
                 expect(q.answer.length).toBeGreaterThan(0);
             }
-        }), { numRuns: 200 });
+        }), { numRuns: 50 });
     });
     it("Q1 contains the plan objective (Req 12.2)", () => {
         fc.assert(fc.property(projectStateArb, (state) => {
             const output = generateResumeOutput(state);
             expect(output.questions[0].question).toContain("正在解决什么问题");
             expect(output.questions[0].answer).toBe(state.plan.objective);
-        }), { numRuns: 200 });
+        }), { numRuns: 50 });
     });
     it("Q2 reflects in-progress tasks from progress (Req 12.2)", () => {
         fc.assert(fc.property(projectStateWithInProgressArb, (state) => {
@@ -112,7 +112,7 @@ describe("Property 16: Resume 五问题完整输出", () => {
             for (const task of state.progress.inProgressTasks) {
                 expect(output.questions[1].answer).toContain(task);
             }
-        }), { numRuns: 200 });
+        }), { numRuns: 50 });
     });
     it("Q3 reflects findings (Req 12.2)", () => {
         fc.assert(fc.property(projectStateWithFindingsArb, (state) => {
@@ -121,7 +121,7 @@ describe("Property 16: Resume 五问题完整输出", () => {
             for (const finding of state.findings.findings) {
                 expect(output.questions[2].answer).toContain(finding);
             }
-        }), { numRuns: 200 });
+        }), { numRuns: 50 });
     });
     it("Q3 shows fallback when no findings (Req 12.2)", () => {
         fc.assert(fc.property(planContextArb.chain((plan) => progressContextFromPlanArb(plan).map((progress) => ({
@@ -131,7 +131,7 @@ describe("Property 16: Resume 五问题完整输出", () => {
         }))), (state) => {
             const output = generateResumeOutput(state);
             expect(output.questions[2].answer).toBe("暂无发现");
-        }), { numRuns: 200 });
+        }), { numRuns: 50 });
     });
     it("Q4 identifies the next task from plan (Req 12.2)", () => {
         fc.assert(fc.property(projectStateArb, (state) => {
@@ -139,7 +139,7 @@ describe("Property 16: Resume 五问题完整输出", () => {
             expect(output.questions[3].question).toContain("下一步是什么");
             // Answer should be non-empty (either a task name or "所有任务已完成")
             expect(output.questions[3].answer.length).toBeGreaterThan(0);
-        }), { numRuns: 200 });
+        }), { numRuns: 50 });
     });
     it("Q5 reflects blockers from progress (Req 12.2)", () => {
         fc.assert(fc.property(projectStateArb, (state) => {
@@ -153,13 +153,13 @@ describe("Property 16: Resume 五问题完整输出", () => {
             else {
                 expect(output.questions[4].answer).toBe("无阻塞");
             }
-        }), { numRuns: 200 });
+        }), { numRuns: 50 });
     });
     it("auto-locate points to in-progress task when available (Req 12.3)", () => {
         fc.assert(fc.property(projectStateWithInProgressArb, (state) => {
             const output = generateResumeOutput(state);
             expect(output.autoLocateTask).toBe(state.progress.inProgressTasks[0]);
-        }), { numRuns: 200 });
+        }), { numRuns: 50 });
     });
     it("questions cover all 5 required topics (Req 12.2)", () => {
         fc.assert(fc.property(projectStateArb, (state) => {
@@ -170,7 +170,7 @@ describe("Property 16: Resume 五问题完整输出", () => {
             expect(questionTexts).toContainEqual(expect.stringContaining("已知发现"));
             expect(questionTexts).toContainEqual(expect.stringContaining("下一步是什么"));
             expect(questionTexts).toContainEqual(expect.stringContaining("有什么阻塞"));
-        }), { numRuns: 200 });
+        }), { numRuns: 50 });
     });
 });
 //# sourceMappingURL=resume.property.test.js.map

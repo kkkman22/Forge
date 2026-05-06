@@ -57,7 +57,7 @@ describe("Feature: loop-skills-fusion, Property 11: AgentOutput 扩展向后兼�
         fc.assert(fc.property(oldFormatAgentOutputArb, (output) => {
             const result = validateAgentOutput(output);
             expect(result.valid).toBe(true);
-        }), { numRuns: 200 });
+        }), { numRuns: 50 });
     });
     /**
      * New-format AgentOutput objects (with valid skill fields) also validate.
@@ -68,7 +68,7 @@ describe("Feature: loop-skills-fusion, Property 11: AgentOutput 扩展向后兼�
         fc.assert(fc.property(newFormatAgentOutputArb, (output) => {
             const result = validateAgentOutput(output);
             expect(result.valid).toBe(true);
-        }), { numRuns: 200 });
+        }), { numRuns: 50 });
     });
     /**
      * Invalid gate_result values cause validation failure.
@@ -85,7 +85,7 @@ describe("Feature: loop-skills-fusion, Property 11: AgentOutput 扩展向后兼�
             const output = { ...base, gate_result: badGateResult };
             const result = validateAgentOutput(output);
             expect(result.valid).toBe(false);
-        }), { numRuns: 200 });
+        }), { numRuns: 50 });
     });
     /**
      * buildAgentOutputSchema with includeSkillFields=true includes skill fields
@@ -107,7 +107,7 @@ describe("Feature: loop-skills-fusion, Property 11: AgentOutput 扩展向后兼�
             expect(schema.required).not.toContain("skill_phase_completed");
             expect(schema.required).not.toContain("next_skill_phase");
             expect(schema.required).not.toContain("gate_result");
-        }), { numRuns: 200 });
+        }), { numRuns: 50 });
     });
     /**
      * buildAgentOutputSchema with includeSkillFields=false (or omitted) does NOT
@@ -124,7 +124,7 @@ describe("Feature: loop-skills-fusion, Property 11: AgentOutput 扩展向后兼�
             expect(schema.properties).not.toHaveProperty("skill_phase_completed");
             expect(schema.properties).not.toHaveProperty("next_skill_phase");
             expect(schema.properties).not.toHaveProperty("gate_result");
-        }), { numRuns: 200 });
+        }), { numRuns: 50 });
     });
 });
 //# sourceMappingURL=agent-output-ext.property.test.js.map

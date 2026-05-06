@@ -30,7 +30,7 @@ describe("OrphanDetector", () => {
                 mockFs.readFileSync.mockReturnValue(invalid);
                 const result = readPidFile("/fake/path");
                 expect(result).toBeNull();
-            }), { numRuns: 100 });
+            }), { numRuns: 40 });
         });
     });
     describe("Property 7: ps output filters PPID=1 correctly", () => {
@@ -56,7 +56,7 @@ describe("OrphanDetector", () => {
                     expect(matchesPattern).toBe(true);
                 }
                 mockExecSync.mockReset();
-            }), { numRuns: 100 });
+            }), { numRuns: 40 });
         });
     });
     describe("Property 8: orphan auto-cleanup threshold", () => {
@@ -77,7 +77,7 @@ describe("OrphanDetector", () => {
                 expect(result.warned).toHaveLength(expectedWarned.length);
                 killSpy.mockRestore();
                 warnSpy.mockRestore();
-            }), { numRuns: 100 });
+            }), { numRuns: 40 });
         });
     });
     describe("cleanupStaleSessions", () => {

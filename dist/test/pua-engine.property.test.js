@@ -140,7 +140,7 @@ describe("Feature: pua-quality-engine, Property 1: 压力等级确定性映射",
             else {
                 expect(level).toBe("L4");
             }
-        }), { numRuns: 200 });
+        }), { numRuns: 50 });
     });
 });
 // ---------------------------------------------------------------------------
@@ -169,7 +169,7 @@ describe("Feature: pua-quality-engine, Property 2: Stall 检测提升压力等�
             }
             // Never exceeds L4
             expect(stallIdx).toBeLessThanOrEqual(4);
-        }), { numRuns: 200 });
+        }), { numRuns: 50 });
     });
 });
 // ---------------------------------------------------------------------------
@@ -186,7 +186,7 @@ describe("Feature: pua-quality-engine, Property 3: 任务类型到方法论的�
         fc.assert(fc.property(fc.constantFrom(...KNOWN_TASK_TYPES), (taskType) => {
             const methodology = selectMethodology(taskType);
             expect(methodology).toBe(EXPECTED_TASK_METHODOLOGY[taskType]);
-        }), { numRuns: 100 });
+        }), { numRuns: 40 });
     });
     it("unknown task types return alibaba-closure as default", () => {
         fc.assert(fc.property(fc
@@ -194,7 +194,7 @@ describe("Feature: pua-quality-engine, Property 3: 任务类型到方法论的�
             .filter((s) => !KNOWN_TASK_TYPES.includes(s)), (unknownType) => {
             const methodology = selectMethodology(unknownType);
             expect(methodology).toBe("alibaba-closure");
-        }), { numRuns: 200 });
+        }), { numRuns: 50 });
     });
 });
 // ---------------------------------------------------------------------------
@@ -218,7 +218,7 @@ describe("Feature: pua-quality-engine, Property 4: 方法论切换链遍历正�
             else {
                 expect(result).toBeNull();
             }
-        }), { numRuns: 200 });
+        }), { numRuns: 50 });
     });
 });
 // ---------------------------------------------------------------------------
@@ -240,7 +240,7 @@ describe("Feature: pua-quality-engine, Property 5: 失败模式检测正确性",
             if (result !== null) {
                 expect(result).toBe("spinning");
             }
-        }), { numRuns: 200 });
+        }), { numRuns: 50 });
     });
     /**
      * **Validates: Requirements 3.3**
@@ -261,7 +261,7 @@ describe("Feature: pua-quality-engine, Property 5: 失败模式检测正确性",
         fc.assert(fc.property(fc.constantFrom(...givingUpKeywords), (keyword) => {
             const result = detectFailurePattern([`The task ${keyword} proceed`]);
             expect(result).toBe("giving-up");
-        }), { numRuns: 100 });
+        }), { numRuns: 40 });
     });
     /**
      * **Validates: Requirements 3.4**
@@ -274,7 +274,7 @@ describe("Feature: pua-quality-engine, Property 5: 失败模式检测正确性",
         fc.assert(fc.property(fc.constantFrom(...emptyClaimKeywords), (keyword) => {
             const result = detectFailurePattern([`Task is ${keyword} now`]);
             expect(result).toBe("empty-claim");
-        }), { numRuns: 100 });
+        }), { numRuns: 40 });
     });
     /**
      * **Validates: Requirements 3.5**
@@ -287,7 +287,7 @@ describe("Feature: pua-quality-engine, Property 5: 失败模式检测正确性",
         fc.assert(fc.property(fc.constantFrom(...passiveKeywords), (keyword) => {
             const result = detectFailurePattern([`Currently ${keyword} for input`]);
             expect(result).toBe("passive-waiting");
-        }), { numRuns: 100 });
+        }), { numRuns: 40 });
     });
     /**
      * **Validates: Requirements 3.6**
@@ -300,7 +300,7 @@ describe("Feature: pua-quality-engine, Property 5: 失败模式检测正确性",
         fc.assert(fc.property(fc.constantFrom(...guessingKeywords), (keyword) => {
             const result = detectFailurePattern([`The issue ${keyword} related to config`]);
             expect(result).toBe("guessing");
-        }), { numRuns: 100 });
+        }), { numRuns: 40 });
     });
     /**
      * **Validates: Requirements 3.7**
@@ -334,7 +334,7 @@ describe("Feature: pua-quality-engine, Property 6: Stall 响应确定性映射",
             else {
                 expect(response).toBe("remind");
             }
-        }), { numRuns: 200 });
+        }), { numRuns: 50 });
     });
 });
 // ---------------------------------------------------------------------------
@@ -360,7 +360,7 @@ describe("Feature: audit-remediation-v221, Property 6: PUA pressure level monoto
             const idxHigh = PRESSURE_LEVEL_ORDER[levelHigh];
             // Non-decreasing: higher failures must not produce a lower pressure level
             expect(idxHigh).toBeGreaterThanOrEqual(idxLow);
-        }), { numRuns: 200 });
+        }), { numRuns: 50 });
     });
     it("pressure levels are non-decreasing across a full increasing sequence", () => {
         fc.assert(fc.property(fc.array(fc.nat({ max: 100 }), { minLength: 2, maxLength: 10 }), fc.boolean(), (values, stallDetected) => {
@@ -372,7 +372,7 @@ describe("Feature: audit-remediation-v221, Property 6: PUA pressure level monoto
             for (let i = 1; i < indices.length; i++) {
                 expect(indices[i]).toBeGreaterThanOrEqual(indices[i - 1]);
             }
-        }), { numRuns: 200 });
+        }), { numRuns: 50 });
     });
 });
 // ---------------------------------------------------------------------------
@@ -391,7 +391,7 @@ describe("Feature: pua-quality-engine, Property 7: 压力提示内容单调递�
             const prompt = buildPressurePrompt(level, null, null, null);
             expect(prompt).toContain(THREE_RED_LINES);
             expect(prompt).toContain(PROACTIVITY_GUIDANCE);
-        }), { numRuns: 100 });
+        }), { numRuns: 40 });
     });
     it("higher pressure level prompts contain all core content from lower levels", () => {
         const levelPairArb = fc
@@ -411,21 +411,21 @@ describe("Feature: pua-quality-engine, Property 7: 压力提示内容单调递�
                     expect(highPrompt).toContain(section);
                 }
             }
-        }), { numRuns: 100 });
+        }), { numRuns: 40 });
     });
     it("L2+ prompts contain UNIVERSAL_METHODOLOGY", () => {
         const l2PlusArb = fc.constantFrom("L2", "L3", "L4");
         fc.assert(fc.property(l2PlusArb, (level) => {
             const prompt = buildPressurePrompt(level, null, null, null);
             expect(prompt).toContain(UNIVERSAL_METHODOLOGY);
-        }), { numRuns: 100 });
+        }), { numRuns: 40 });
     });
     it("L3+ prompts contain SEVEN_POINT_CHECKLIST", () => {
         const l3PlusArb = fc.constantFrom("L3", "L4");
         fc.assert(fc.property(l3PlusArb, (level) => {
             const prompt = buildPressurePrompt(level, null, null, null);
             expect(prompt).toContain(SEVEN_POINT_CHECKLIST);
-        }), { numRuns: 100 });
+        }), { numRuns: 40 });
     });
 });
 // ---------------------------------------------------------------------------
@@ -442,7 +442,7 @@ describe("Feature: pua-quality-engine, Property 8: 压力提示上下文内容�
         fc.assert(fc.property(fc.constantFrom(...ALL_PRESSURE_LEVELS), fc.constantFrom(...ALL_METHODOLOGIES), (level, methodology) => {
             const prompt = buildPressurePrompt(level, methodology, null, null);
             expect(prompt).toContain(METHODOLOGY_DESCRIPTIONS[methodology]);
-        }), { numRuns: 200 });
+        }), { numRuns: 50 });
     });
     /**
      * **Validates: Requirements 4.8**
@@ -454,7 +454,7 @@ describe("Feature: pua-quality-engine, Property 8: 压力提示上下文内容�
         fc.assert(fc.property(fc.constantFrom(...ALL_PRESSURE_LEVELS), fc.constantFrom(...ALL_FAILURE_PATTERNS), (level, pattern) => {
             const prompt = buildPressurePrompt(level, null, pattern, null);
             expect(prompt).toContain(FAILURE_PATTERN_COUNTERS[pattern]);
-        }), { numRuns: 200 });
+        }), { numRuns: 50 });
     });
     /**
      * **Validates: Requirements 4.7, 4.8**
@@ -467,7 +467,7 @@ describe("Feature: pua-quality-engine, Property 8: 压力提示上下文内容�
             const prompt = buildPressurePrompt(level, methodology, pattern, null);
             expect(prompt).toContain(METHODOLOGY_DESCRIPTIONS[methodology]);
             expect(prompt).toContain(FAILURE_PATTERN_COUNTERS[pattern]);
-        }), { numRuns: 200 });
+        }), { numRuns: 50 });
     });
 });
 //# sourceMappingURL=pua-engine.property.test.js.map

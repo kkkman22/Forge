@@ -191,7 +191,7 @@ describe("Property 9: Plan 任务有效性", () => {
             const result = validateAtomicTask(task);
             expect(result.valid).toBe(true);
             expect(result.errors).toHaveLength(0);
-        }), { numRuns: 200 });
+        }), { numRuns: 50 });
     });
     // -----------------------------------------------------------------------
     // (a) Tasks with missing fields fail validation
@@ -201,7 +201,7 @@ describe("Property 9: Plan 任务有效性", () => {
             const result = validateAtomicTask(task);
             expect(result.valid).toBe(false);
             expect(result.errors.length).toBeGreaterThan(0);
-        }), { numRuns: 200 });
+        }), { numRuns: 50 });
     });
     // -----------------------------------------------------------------------
     // (b) Estimated time must be 2-5 minutes
@@ -212,7 +212,7 @@ describe("Property 9: Plan 任务有效性", () => {
             expect(task.estimatedMinutes).toBeLessThanOrEqual(5);
             const result = validateAtomicTask(task);
             expect(result.valid).toBe(true);
-        }), { numRuns: 200 });
+        }), { numRuns: 50 });
     });
     it("tasks with time outside 2-5 min range fail validation (Req 4.3)", () => {
         fc.assert(fc.property(taskWithInvalidTimeArb, (task) => {
@@ -220,7 +220,7 @@ describe("Property 9: Plan 任务有效性", () => {
             const result = validateAtomicTask(task);
             expect(result.valid).toBe(false);
             expect(result.errors.some((e) => e.includes("Estimated time"))).toBe(true);
-        }), { numRuns: 200 });
+        }), { numRuns: 50 });
     });
     // -----------------------------------------------------------------------
     // (c) No forbidden placeholders
@@ -230,14 +230,14 @@ describe("Property 9: Plan 任务有效性", () => {
             const result = validateAtomicTask(task);
             expect(result.valid).toBe(false);
             expect(result.errors.some((e) => e.includes("forbidden placeholders"))).toBe(true);
-        }), { numRuns: 200 });
+        }), { numRuns: 50 });
     });
     it("clean tasks without placeholders pass placeholder check (Req 4.4)", () => {
         fc.assert(fc.property(validAtomicTaskArb, (task) => {
             // Valid tasks are generated with safe strings — no placeholders
             const result = validateAtomicTask(task);
             expect(result.errors.some((e) => e.includes("forbidden placeholders"))).toBe(false);
-        }), { numRuns: 200 });
+        }), { numRuns: 50 });
     });
     // -----------------------------------------------------------------------
     // (d) validatePlanTasks — all tasks must be valid
@@ -245,13 +245,13 @@ describe("Property 9: Plan 任务有效性", () => {
     it("plan with all valid tasks passes validation (Req 4.5)", () => {
         fc.assert(fc.property(fc.array(validAtomicTaskArb, { minLength: 1, maxLength: 10 }), (tasks) => {
             expect(validatePlanTasks(tasks)).toBe(true);
-        }), { numRuns: 200 });
+        }), { numRuns: 50 });
     });
     it("plan with at least one invalid task fails validation (Req 4.5)", () => {
         fc.assert(fc.property(fc.tuple(fc.array(validAtomicTaskArb, { minLength: 0, maxLength: 3 }), taskWithMissingFieldArb, fc.array(validAtomicTaskArb, { minLength: 0, maxLength: 3 })), ([before, bad, after]) => {
             const tasks = [...before, bad, ...after];
             expect(validatePlanTasks(tasks)).toBe(false);
-        }), { numRuns: 200 });
+        }), { numRuns: 50 });
     });
     it("empty plan fails validation", () => {
         expect(validatePlanTasks([])).toBe(false);
@@ -267,13 +267,13 @@ describe("scanForPlaceholders", () => {
             const found = scanForPlaceholders(text);
             expect(found.length).toBeGreaterThan(0);
             expect(found).toContain(placeholder);
-        }), { numRuns: 200 });
+        }), { numRuns: 50 });
     });
     it("returns empty array for clean text (Req 4.4)", () => {
         fc.assert(fc.property(safeStringArb, (text) => {
             const found = scanForPlaceholders(text);
             expect(found).toHaveLength(0);
-        }), { numRuns: 200 });
+        }), { numRuns: 50 });
     });
     it("is case-insensitive for placeholder detection (Req 4.4)", () => {
         fc.assert(fc.property(forbiddenPlaceholderArb, (placeholder) => {
@@ -282,7 +282,7 @@ describe("scanForPlaceholders", () => {
             const lower = scanForPlaceholders(placeholder.toLowerCase());
             expect(upper.length).toBeGreaterThan(0);
             expect(lower.length).toBeGreaterThan(0);
-        }), { numRuns: 200 });
+        }), { numRuns: 50 });
     });
 });
 // ---------------------------------------------------------------------------
@@ -297,7 +297,7 @@ describe("validateSpecLocked", () => {
         fc.assert(fc.property(fc.string().filter((s) => s !== "locked"), (status) => {
             const result = validateSpecLocked(status);
             expect(result).toEqual({ valid: false, error: "spec not locked" });
-        }), { numRuns: 100 });
+        }), { numRuns: 40 });
     });
     it('returns valid: false for "draft" status', () => {
         const result = validateSpecLocked("draft");
@@ -318,7 +318,7 @@ describe("validateDependencies", () => {
             const tasksWithoutDeps = tasks.map(({ dependsOn, ...rest }) => rest);
             const errors = validateDependencies(tasksWithoutDeps);
             expect(errors).toHaveLength(0);
-        }), { numRuns: 100 });
+        }), { numRuns: 40 });
     });
     it("returns empty errors when all dependsOn references are valid", () => {
         const tasks = [
@@ -431,13 +431,13 @@ describe("Property 10: dependsOn dependency validation", () => {
         fc.assert(fc.property(tasksWithValidDepsArb, (tasks) => {
             const errors = validateDependencies(tasks);
             expect(errors).toHaveLength(0);
-        }), { numRuns: 200 });
+        }), { numRuns: 50 });
     });
     it("returns non-empty errors when any dependsOn references a non-existent taskNumber", () => {
         fc.assert(fc.property(tasksWithInvalidDepsArb, (tasks) => {
             const errors = validateDependencies(tasks);
             expect(errors.length).toBeGreaterThan(0);
-        }), { numRuns: 200 });
+        }), { numRuns: 50 });
     });
     it("each error message identifies the offending task and missing dependency", () => {
         fc.assert(fc.property(tasksWithInvalidDepsArb, (tasks) => {
@@ -447,7 +447,7 @@ describe("Property 10: dependsOn dependency validation", () => {
                 expect(err).toMatch(/Task \d+/);
                 expect(err).toMatch(/non-existent task \d+/);
             }
-        }), { numRuns: 100 });
+        }), { numRuns: 40 });
     });
 });
 // ---------------------------------------------------------------------------

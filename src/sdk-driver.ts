@@ -417,6 +417,8 @@ export class SdkDriver {
       executeEffects: (effects: OrchestratorEffect[]) => this.executeEffects(effects),
       t: (key: string, params?: Record<string, string>) => this.t(key, params),
       abortSignal: this.currentAbortController?.signal,
+      puaEnabled: this.config.puaEnabled ?? false,
+      puaStateManager: this.puaStateManager,
     };
   }
 

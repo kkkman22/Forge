@@ -51,14 +51,14 @@ model: inherit
 ## Output Format
 
 ```
-### Bug 报告
+### Bug Report
 
-**症状**：<用户看到什么>
-**根因**：<实际的底层问题，精确到 file:line>
-**复现**：<最小触发步骤>
-**修复**：<最小代码改动>
-**验证**：<如何证明修好了>
-**同类检查**：<代码库中是否有同样的模式>
+**Symptom**: <用户看到什么>
+**Root Cause**: <实际的底层问题，精确到 file:line>
+**Reproduction**: <最小触发步骤>
+**Fix**: <最小代码改动>
+**Verification**: <如何证明修好了>
+**Similar Issues Check**: <代码库中是否有同样的模式>
 ```
 
 ## Behavioral Rules

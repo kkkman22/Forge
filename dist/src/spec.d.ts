@@ -6,11 +6,13 @@
  *   - rejectSpec:   Keeps a Spec in "draft" status (no-op on status)
  *   - validateTestability: Ensures every requirement has ≥1 testable scenario
  *   - validateBrownfieldDelta: Ensures brownfield Specs contain a complete Delta section
+ *   - detectGlossaryMiss: Surfaces spec terms that are not yet defined in the glossary
  *
  * Spec document format (from SKILL.md §3):
  *   YAML frontmatter: feature, status ("draft" | "locked"), date
  *   Body: 目的, 需求 (with 当...则... scenarios), 不做什么, Delta (brownfield only)
  */
+import { type TermCandidate } from "./glossary-extractor.js";
 export interface SpecFrontmatter {
     feature: string;
     status: "draft" | "locked";
@@ -88,3 +90,44 @@ export declare function validateTestability(requirements: Requirement[]): boolea
  * or if the spec is NOT brownfield (non-brownfield specs don't need Delta).
  */
 export declare function validateBrownfieldDelta(spec: SpecDocument): boolean;
+/**
+ * Serialize a SpecDocument's body text fields into a single string suitable
+ * for term extraction. Includes the purpose, each requirement's title /
+ * description / scenarios, the exclusions list, and (when present) every
+ * Delta subsection entry.
+ *
+ * The serialization is intentionally simple — lines are joined with `\n`
+ * and no additional markup is emitted. Callers that need a different
+ * shape should build their own string; this helper exists so the common
+ * case does not have to re-implement the traversal.
+ *
+ * This function is pure.
+ */
+export declare function specTextFromDocument(spec: SpecDocument): string;
+/**
+ * Identify candidate terms from a spec text that are not yet defined in
+ * the glossary.
+ *
+ * Pipeline:
+ *   1. {@link extractCandidates} surfaces TitleCase phrases, PascalCase
+ *      identifiers, and Chinese multi-character sequences that do not
+ *      appear in `glossaryTerms`.
+ *   2. {@link filterCandidates} applies the default extraction rules so
+ *      noise (camelCase locals, rare one-off terms) is removed and the
+ *      result is capped at `DEFAULT_EXTRACTION_RULES.maxCandidatesPerSession`.
+ *
+ * `glossaryTerms` should include every term name AND every alias already
+ * present in the glossary so aliased concepts are not reported as misses.
+ *
+ * Returns the filtered shortlist in the order produced by `filterCandidates`
+ * (frequency desc, term asc). This function is pure and performs no IO.
+ */
+export declare function detectGlossaryMiss(specText: string, glossaryTerms: string[]): TermCandidate[];
+/**
+ * Render the `[glossary-miss]` notice line displayed at the end of spec
+ * output when the glossary does not yet define every surfaced term.
+ *
+ * Returns the empty string when `missed` is empty so callers can unconditionally
+ * concatenate the notice without inserting a stray blank line.
+ */
+export declare function renderGlossaryMissNotice(missed: TermCandidate[]): string;
