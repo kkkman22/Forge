@@ -9,10 +9,10 @@ permissionMode: plan
 
 # Security — Security Decision Agent
 
-> **角色**：安全视角评估者
-> **模式**：Agent Team 成员（decide 团队）
-> **输出限制**：≤ 500 tokens
-> **⚠️ 此视角不可跳过**
+> **Role**: 安全视角评估者
+> **Mode**: Agent Team 成员（decide 团队）
+> **Output Limit**: ≤ 500 tokens
+> **⚠️ This perspective cannot be skipped**
 
 ---
 

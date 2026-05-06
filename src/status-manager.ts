@@ -18,7 +18,7 @@ import { isMultiTaskMode, slugify } from "./status-resolver.js";
 // Types
 // ---------------------------------------------------------------------------
 
-export interface TaskStatusEntry {
+export interface ManagedTaskEntry {
   taskId: string;
   taskName: string;
   phase: string;
@@ -130,8 +130,8 @@ export function writeTaskStatus(
  *
  * Scans both .forge/status.md and .forge/status/*.md.
  */
-export function listActiveTasks(io: StatusManagerIO, forgeRoot: string): TaskStatusEntry[] {
-  const entries: TaskStatusEntry[] = [];
+export function listActiveTasks(io: StatusManagerIO, forgeRoot: string): ManagedTaskEntry[] {
+  const entries: ManagedTaskEntry[] = [];
 
   // Scan legacy status.md
   const legacyPath = `${forgeRoot}/status.md`;
@@ -172,7 +172,7 @@ export function listActiveTasks(io: StatusManagerIO, forgeRoot: string): TaskSta
 export function getMostRecentActiveTask(
   io: StatusManagerIO,
   forgeRoot: string,
-): TaskStatusEntry | null {
+): ManagedTaskEntry | null {
   const active = listActiveTasks(io, forgeRoot);
   if (active.length === 0) return null;
 
@@ -251,7 +251,7 @@ export function archiveTaskStatus(
 // Internal helpers
 // ---------------------------------------------------------------------------
 
-function parseTaskEntry(content: string, filePath: string): TaskStatusEntry | null {
+function parseTaskEntry(content: string, filePath: string): ManagedTaskEntry | null {
   const parsed = parseFrontmatter(content);
   if (!parsed) return null;
 

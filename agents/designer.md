@@ -9,10 +9,10 @@ permissionMode: plan
 
 # Designer — Design Decision Agent
 
-> **角色**：设计视角评估者（条件触发）
-> **模式**：Agent Team 动态成员（decide 团队）
-> **输出限制**：≤ 500 tokens
-> **触发条件**：仅当任务涉及 UI 变更时加入
+> **Role**: 设计视角评估者（条件触发）
+> **Mode**: Agent Team 动态成员（decide 团队）
+> **Output Limit**: ≤ 500 tokens
+> **Trigger Condition**: 仅当任务涉及 UI 变更时加入
 
 ---
 

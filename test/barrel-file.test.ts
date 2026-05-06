@@ -163,9 +163,9 @@ describe("barrel file does not expose internal modules", () => {
 
   // Verify the total number of value exports is exactly what we expect.
   // This catches any accidental additions to the barrel file.
-  it("has exactly 119 value exports", () => {
+  it("has exactly 135 value exports", () => {
     const valueExports = Object.keys(exports).filter((key) => typeof exports[key] !== "undefined");
-    expect(valueExports).toHaveLength(119);
+    expect(valueExports).toHaveLength(135);
     expect(valueExports.sort()).toEqual([
       "CLASSIFICATION_MAP",
       "CliError",
@@ -181,6 +181,7 @@ describe("barrel file does not expose internal modules", () => {
       "aggregateEvolutionMarkers",
       "allEntriesVerified",
       "appendToBacklog",
+      "archiveTaskStatus",
       "buildFailureEpisode",
       "buildFailureEvolutionMarker",
       "buildReconciliationPatch",
@@ -194,6 +195,8 @@ describe("barrel file does not expose internal modules", () => {
       "checkReviewFreshness",
       "checkShipGate",
       "checkShipGateWithChecklist",
+      "checkShipGateWithFreshness",
+      "checkVersionCompatibility",
       "classifyInterruption",
       "classifySource",
       "cleanupOrphans",
@@ -231,17 +234,24 @@ describe("barrel file does not expose internal modules", () => {
       "generateBacklogHeader",
       "generateEpisodeId",
       "getDescendants",
+      "getMostRecentActiveTask",
       "getNextPhase",
       "getPhaseSequence",
       "hasTaskName",
       "inferTDDPhase",
+      "installSkill",
       "isFixCandidate",
+      "isMultiTaskMode",
       "isTestFile",
       "isValidTransition",
       "killProcessGroup",
       "killProcessTree",
+      "listActiveTasks",
+      "loadSkillsFromDir",
       "matchChangesToTask",
       "matchCommitsToTasks",
+      "mergeSkillLists",
+      "migrateToMultiTask",
       "parseBacklog",
       "parseChecklist",
       "parseEpisode",
@@ -252,11 +262,14 @@ describe("barrel file does not expose internal modules", () => {
       "parseInstinct",
       "parseStatusEntries",
       "readPidFile",
+      "readTaskStatus",
+      "reconstructStateFromGit",
       "recordPendingDelivery",
       "removeTaskEntry",
       "renderEpisode",
       "renderInstincts",
       "resolveEntry",
+      "resolveStatusPath",
       "runSubagentsInParallel",
       "scanForPlaceholders",
       "serializeBacklog",
@@ -273,6 +286,7 @@ describe("barrel file does not expose internal modules", () => {
       "serializeStatusEntries",
       "serializeSubagentSummary",
       "serializeTestOutput",
+      "slugify",
       "updateEntryStatus",
       "updatePatternStats",
       "upsertTaskEntry",
@@ -282,10 +296,12 @@ describe("barrel file does not expose internal modules", () => {
       "validateEvolutionTarget",
       "validateLightweightPlan",
       "validateLightweightTask",
+      "validateManifest",
       "validatePlan",
       "validatePlanTasks",
       "validateSpecLocked",
       "writePidFile",
+      "writeTaskStatus",
     ]);
   });
 });

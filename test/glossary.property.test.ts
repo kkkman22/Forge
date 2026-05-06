@@ -201,9 +201,16 @@ describe("glossary — findTerm", () => {
     fc.assert(
       fc.property(glossaryArb, (g) => {
         for (const term of g.terms) {
-          // Canonical lookup resolves to the term itself (names are unique).
-          expect(findTerm(g, term.term)).toEqual(term);
-          expect(findTerm(g, term.term.toUpperCase())).toEqual(term);
+          // Canonical lookup resolves to *some* term that matches the query.
+          // When an earlier term carries this term's canonical name as an
+          // alias, findTerm returns the earlier term — that is still valid.
+          const canonicalHit = findTerm(g, term.term);
+          expect(canonicalHit).not.toBeNull();
+          if (canonicalHit !== null) expect(matchesQuery(canonicalHit, term.term)).toBe(true);
+
+          const upperHit = findTerm(g, term.term.toUpperCase());
+          expect(upperHit).not.toBeNull();
+          if (upperHit !== null) expect(matchesQuery(upperHit, term.term.toUpperCase())).toBe(true);
           // Alias lookup resolves to some term that actually carries that
           // alias; when multiple terms share an alias, the first wins.
           if (term.aliases !== undefined) {

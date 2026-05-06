@@ -9,9 +9,9 @@ permissionMode: plan
 
 # Product — Product Decision Agent
 
-> **角色**：产品视角评估者
-> **模式**：Agent Team 成员（decide 团队）
-> **输出限制**：≤ 500 tokens
+> **Role**: 产品视角评估者
+> **Mode**: Agent Team 成员（decide 团队）
+> **Output Limit**: ≤ 500 tokens
 
 ---
 

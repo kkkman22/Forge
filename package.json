@@ -43,5 +43,8 @@
     "commander": "14.0.3",
     "minimatch": "10.2.5",
     "zod": "4.4.1"
+  },
+  "overrides": {
+    "glob": "^11.0.0"
   }
 }

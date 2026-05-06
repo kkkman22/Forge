@@ -56,6 +56,8 @@ export interface StatusFields {
 /** Structured review report fields with all fields guaranteed present. */
 export interface ReviewReportFields {
   result: string;
+  /** Commit hash at the time of review. Optional for backward compatibility. */
+  reviewed_at_commit?: string;
   p0_count: number;
   p1_count: number;
   p2_count: number;
@@ -80,6 +82,7 @@ export const STATUS_DEFAULTS: StatusFields = {
 
 export const REVIEW_REPORT_DEFAULTS: ReviewReportFields = {
   result: "incomplete",
+  reviewed_at_commit: undefined,
   p0_count: 0,
   p1_count: 0,
   p2_count: 0,
@@ -294,6 +297,8 @@ function parseReviewReportViaSchema(content: string | undefined): {
   const rawFields: Record<string, unknown> = {};
   const resultStr = extractStringField(fm.raw, "result");
   if (resultStr !== null) rawFields.result = resultStr;
+  const reviewedCommit = extractStringField(fm.raw, "reviewed_at_commit");
+  if (reviewedCommit !== null) rawFields.reviewed_at_commit = reviewedCommit;
   const p0 = extractNumericField(fm.raw, "p0_count");
   if (p0 !== null) rawFields.p0_count = p0;
   const p1 = extractNumericField(fm.raw, "p1_count");
@@ -307,6 +312,8 @@ function parseReviewReportViaSchema(content: string | undefined): {
 
   const parsed: ReviewReportFields = {
     result: (value.result as string | undefined) ?? REVIEW_REPORT_DEFAULTS.result,
+    reviewed_at_commit:
+      (value.reviewed_at_commit as string | undefined) ?? REVIEW_REPORT_DEFAULTS.reviewed_at_commit,
     p0_count: (value.p0_count as number | undefined) ?? REVIEW_REPORT_DEFAULTS.p0_count,
     p1_count: (value.p1_count as number | undefined) ?? REVIEW_REPORT_DEFAULTS.p1_count,
     p2_count: (value.p2_count as number | undefined) ?? REVIEW_REPORT_DEFAULTS.p2_count,
@@ -344,6 +351,7 @@ function parseReviewReportLegacy(content: string | undefined): {
   }
 
   const resultStr = extractStringField(fm.raw, "result");
+  const reviewedCommit = extractStringField(fm.raw, "reviewed_at_commit");
   const p0 = extractNumericField(fm.raw, "p0_count");
   const p1 = extractNumericField(fm.raw, "p1_count");
   const p2 = extractNumericField(fm.raw, "p2_count");
@@ -351,6 +359,7 @@ function parseReviewReportLegacy(content: string | undefined): {
 
   const parsed: ReviewReportFields = {
     result: resultStr ?? REVIEW_REPORT_DEFAULTS.result,
+    reviewed_at_commit: reviewedCommit ?? REVIEW_REPORT_DEFAULTS.reviewed_at_commit,
     p0_count: p0 ?? REVIEW_REPORT_DEFAULTS.p0_count,
     p1_count: p1 ?? REVIEW_REPORT_DEFAULTS.p1_count,
     p2_count: p2 ?? REVIEW_REPORT_DEFAULTS.p2_count,

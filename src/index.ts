@@ -227,7 +227,12 @@ export type {
   ShipGateResult,
   TestResult,
 } from "./ship.js";
-export { checkReviewFreshness, checkShipGate, checkShipGateWithChecklist } from "./ship.js";
+export {
+  checkReviewFreshness,
+  checkShipGate,
+  checkShipGateWithChecklist,
+  checkShipGateWithFreshness,
+} from "./ship.js";
 
 // ---------------------------------------------------------------------------
 // Multi-task status tracking
@@ -241,6 +246,34 @@ export {
   serializeStatusEntries,
   upsertTaskEntry,
 } from "./state.js";
+
+// ---------------------------------------------------------------------------
+// Parallel status tracking (file-based multi-task)
+// ---------------------------------------------------------------------------
+
+export type {
+  ManagedTaskEntry,
+  StatusManagerIO,
+} from "./status-manager.js";
+export {
+  archiveTaskStatus,
+  getMostRecentActiveTask,
+  listActiveTasks,
+  migrateToMultiTask,
+  readTaskStatus,
+  writeTaskStatus,
+} from "./status-manager.js";
+export type {
+  ReconstructedState,
+  ResolvedStatus,
+  ResolverContext,
+} from "./status-resolver.js";
+export {
+  isMultiTaskMode,
+  reconstructStateFromGit,
+  resolveStatusPath,
+  slugify,
+} from "./status-resolver.js";
 
 // ---------------------------------------------------------------------------
 // Process lifecycle management
@@ -296,19 +329,6 @@ export {
   parseEpisode,
   renderEpisode,
 } from "./episode.js";
-
-export type {
-  Pattern,
-  UpgradeSuggestion,
-} from "./pattern-stats.js";
-export {
-  findStaleOrDecayedPatterns,
-  findUpgradableEpisodes,
-  parseInstinct,
-  renderInstincts,
-  updatePatternStats,
-} from "./pattern-stats.js";
-
 export type {
   EvolutionBySkill,
   EvolutionMarker,
@@ -320,7 +340,6 @@ export {
   parseEvolutionMarkers,
   validateEvolutionTarget,
 } from "./evolution-marker.js";
-
 export type {
   FailureContext,
   FailureTrigger,
@@ -329,6 +348,17 @@ export {
   buildFailureEpisode,
   buildFailureEvolutionMarker,
 } from "./failure-sink.js";
+export type {
+  Pattern,
+  UpgradeSuggestion,
+} from "./pattern-stats.js";
+export {
+  findStaleOrDecayedPatterns,
+  findUpgradableEpisodes,
+  parseInstinct,
+  renderInstincts,
+  updatePatternStats,
+} from "./pattern-stats.js";
 
 // ---------------------------------------------------------------------------
 // Branch lifecycle enforcement
@@ -342,9 +372,25 @@ export {
   extractBranchTopic,
   recordPendingDelivery,
 } from "./branch-lifecycle.js";
+
+// ---------------------------------------------------------------------------
+// SKILL plugin mechanism
+// ---------------------------------------------------------------------------
+
 export type {
   BranchTopicGateResult,
   CommitTopicCheckResult,
   PendingDeliveryRecord,
   UnshippedBranchWarning,
 } from "./loop-types.js";
+export type { SkillManifest, SkillPhase } from "./skill-loader.js";
+export {
+  installSkill,
+  loadSkillsFromDir,
+  mergeSkillLists,
+} from "./skill-loader.js";
+export type { ValidationResult as SkillValidationResult } from "./skill-validator.js";
+export {
+  checkVersionCompatibility,
+  validateManifest,
+} from "./skill-validator.js";
