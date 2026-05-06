@@ -23,7 +23,7 @@ jobs:
       - run: npm ci
 
       - name: Run benchmarks
-        run: npx vitest bench --run --reporter=json > bench-result.json
+        run: npx vitest bench --run --outputJson=bench-result.json
 
       - name: Append baseline to metrics.md
         run: node scripts/append-baseline.mjs bench-result.json --keep=30
