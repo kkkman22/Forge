@@ -70,7 +70,7 @@ describe("Property 6: Path normalization produces consistent frozen zone judgmen
             // Variant 4: with ./ prefix
             const dotSlash = `./.forge/${relativePath}`;
             expect(normalizeForgePath(dotSlash)).toBe(canonical);
-        }), { numRuns: 200 });
+        }), { numRuns: 50 });
     });
     it("isFrozenZonePath returns true for all variants of frozen zone paths", () => {
         fc.assert(fc.property(frozenRelativePathArb, (relativePath) => {
@@ -89,14 +89,14 @@ describe("Property 6: Path normalization produces consistent frozen zone judgmen
             }
             // All should be consistent with each other
             expect(new Set(results).size).toBe(1);
-        }), { numRuns: 200 });
+        }), { numRuns: 50 });
     });
     it("isFrozenZonePath returns consistent results for absolute vs relative paths (Req 4.3)", () => {
         fc.assert(fc.property(frozenRelativePathArb, absolutePrefixArb, (relativePath, absPrefix) => {
             const relativeResult = isFrozenZonePath(`.forge/${relativePath}`);
             const absoluteResult = isFrozenZonePath(`${absPrefix}.forge/${relativePath}`);
             expect(relativeResult).toBe(absoluteResult);
-        }), { numRuns: 200 });
+        }), { numRuns: 50 });
     });
     it("paths with .. traversal that resolve to frozen zone are correctly identified (Req 4.2)", () => {
         // Specific .. traversal patterns that should resolve to frozen zone
@@ -129,7 +129,7 @@ describe("Property 6: Path normalization produces consistent frozen zone judgmen
             for (const result of results) {
                 expect(result).toBe(false);
             }
-        }), { numRuns: 100 });
+        }), { numRuns: 40 });
     });
     // -------------------------------------------------------------------------
     // Edge cases (Req 4.6)

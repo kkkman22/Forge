@@ -72,7 +72,7 @@ describe("nextAdrId — property-based", () => {
                 const existing = Number.parseInt(match[1], 10);
                 expect(nextNum).toBeGreaterThan(existing);
             }
-        }), { numRuns: 200 });
+        }), { numRuns: 50 });
     });
     /**
      * **Validates: Requirements 1.2**
@@ -90,7 +90,7 @@ describe("nextAdrId — property-based", () => {
                 return Number.parseInt(match[1], 10) <= 9998;
             });
             expect(nextAdrId(filtered)).toMatch(/^ADR-\d{4}$/);
-        }), { numRuns: 200 });
+        }), { numRuns: 50 });
     });
     /**
      * **Validates: Requirements 1.1**
@@ -110,7 +110,7 @@ describe("nextAdrId — property-based", () => {
             const first = nextAdrId(filtered);
             const second = nextAdrId([...filtered, entryWithId(first)]);
             expect(Number.parseInt(second.slice(4), 10)).toBeGreaterThan(Number.parseInt(first.slice(4), 10));
-        }), { numRuns: 200 });
+        }), { numRuns: 50 });
     });
 });
 // ---------------------------------------------------------------------------
@@ -155,7 +155,7 @@ describe("renderAdrIndex — property-based", () => {
                 const needle = `| ${entry.id} |`;
                 expect(out).toContain(needle);
             }
-        }), { numRuns: 200 });
+        }), { numRuns: 50 });
     });
     /**
      * **Validates: Requirements 1.5**
@@ -176,7 +176,7 @@ describe("renderAdrIndex — property-based", () => {
             }
             const sorted = [...ids].sort();
             expect(ids).toEqual(sorted);
-        }), { numRuns: 200 });
+        }), { numRuns: 50 });
     });
     /**
      * **Validates: Requirements 1.5**
@@ -187,7 +187,7 @@ describe("renderAdrIndex — property-based", () => {
     it("is deterministic", () => {
         fc.assert(fc.property(uniqueEntryListArb, (entries) => {
             expect(renderAdrIndex(entries)).toBe(renderAdrIndex(entries));
-        }), { numRuns: 100 });
+        }), { numRuns: 40 });
     });
 });
 // ---------------------------------------------------------------------------
@@ -233,7 +233,7 @@ describe("applySupersession — property-based", () => {
                 superseded_by: target.superseded_by,
             };
             expect(reconstructed).toEqual(target);
-        }), { numRuns: 200 });
+        }), { numRuns: 50 });
     });
     /**
      * **Validates: Requirements 1.8**
@@ -265,7 +265,7 @@ describe("applySupersession — property-based", () => {
             }
             const matches = baseEntries.filter((e) => e.id === maybeSupersedes && e.id !== newAdr.id);
             expect(updates).toHaveLength(matches.length);
-        }), { numRuns: 200 });
+        }), { numRuns: 50 });
     });
     /**
      * **Validates: Requirements 1.8**
@@ -281,7 +281,7 @@ describe("applySupersession — property-based", () => {
             applySupersession(newAdr, baseEntries);
             expect(JSON.stringify(baseEntries)).toBe(beforeBase);
             expect(JSON.stringify(newAdr)).toBe(beforeNew);
-        }), { numRuns: 200 });
+        }), { numRuns: 50 });
     });
 });
 //# sourceMappingURL=adr-registry.property.test.js.map

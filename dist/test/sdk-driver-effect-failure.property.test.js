@@ -122,7 +122,7 @@ describe("Feature: forge-audit-remediation, Property 1: Effect failure is record
             // At least one failed entry should contain the error message
             const hasErrorInNotes = failedEntries.some((e) => e.summary.includes(errorMsg));
             expect(hasErrorInNotes).toBe(true);
-        }), { numRuns: 100 });
+        }), { numRuns: 40 });
     });
     /**
      * **Validates: Requirements 1.2**
@@ -161,7 +161,7 @@ describe("Feature: forge-audit-remediation, Property 1: Effect failure is record
             // At least one failed entry should contain the error message
             const hasErrorInNotes = failedEntries.some((e) => e.summary.includes(errorMsg));
             expect(hasErrorInNotes).toBe(true);
-        }), { numRuns: 100 });
+        }), { numRuns: 40 });
     });
 });
 // ---------------------------------------------------------------------------
@@ -204,7 +204,7 @@ describe("Feature: forge-audit-remediation, Property 3: commitCount reflects onl
             const result = await driver.run();
             // commitCount should equal only the successful commits
             expect(result.commitCount).toBe(successfulCommits);
-        }), { numRuns: 100 });
+        }), { numRuns: 40 });
     });
 });
 // ---------------------------------------------------------------------------

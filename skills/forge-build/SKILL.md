@@ -79,6 +79,18 @@ GREEN 阶段的代码必须是"能让测试通过的最简单实现"。REFACTOR 
 
 → 详见 references/tdd-rules.md（Simplicity Check 示例、Rule of Three、Dead Code Hygiene 细节）
 
+### 4.1 Simplicity Check
+
+GREEN 阶段的代码必须是"能让测试通过的最简单实现"。引入抽象层、工厂模式或配置驱动设计 → 停止，删除，重写更简单的版本。
+
+**Rule of Three**：抽象仅在 REFACTOR 阶段引入，且同一模式重复出现 3 次以上时。
+
+| ✗ Over-engineered | ✓ Simple |
+|---|---|
+| 为一个通知场景构建通用 EventBus + 中间件管线 | 直接函数调用 |
+| 为两个相似组件构建抽象工厂 | 两个直接组件 + 共享工具函数 |
+| 为三个表单构建配置驱动的表单生成器 | 三个独立表单组件 |
+
 ---
 
 ## 5. Failure Handling
@@ -168,6 +180,14 @@ $ /forge build
 | 6 | Narrating edits | Silent, brief at Decision_Point |
 | 7 | Self-assemble commands | ci_check_command as-is |
 | 8 | 任务间停下来问"是否继续"或"工作量大，是否暂停" | 完成任务 → 一行摘要 → 立即下一个任务。Plan 已批准，build 只管执行 |
+
+## Reflection Triggers
+
+以下场景触发**思考暂停**——遇到时先自问，再决定下一步。不机械执行阈值判断，结合上下文综合判断。
+
+| 触发条件 | 自问 | 交互处理 | 自主处理 |
+|----------|------|----------|----------|
+| **Chesterton's Fence**：删除或大幅修改现有代码 | 我理解这段代码为什么被写成这样吗？git blame 的上下文是什么？ | 解释原因 → 确认修改 | 记录到 `.forge/findings/`（原因 + 修改理由）→ 继续执行 |
 
 ## Common Rationalizations
 

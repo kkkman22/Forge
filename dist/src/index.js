@@ -34,6 +34,7 @@ export { hasTaskName, parseStatusEntries, removeTaskEntry, serializeStatusEntrie
 export { cleanupOrphans, cleanupStaleSessions, deletePidFile, detectPpidOrphans, readPidFile, writePidFile, } from "./orphan-detector.js";
 export { ProcessRegistry } from "./process-registry.js";
 export { getDescendants, killProcessGroup, killProcessTree, } from "./process-tree-cleaner.js";
+export { captureFindings, findOverlappingEntries, markResolved, readBacklog, serializeBacklog, writeBacklog, } from "./backlog.js";
 // ---------------------------------------------------------------------------
 // Branch lifecycle enforcement
 // ---------------------------------------------------------------------------

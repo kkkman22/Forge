@@ -255,6 +255,46 @@ export function runReportQualityGate(findings, options) {
         items,
     };
 }
+import { buildFailureEpisode, buildFailureEvolutionMarker, } from "./failure-sink.js";
+/**
+ * Pure helper that turns a review's evolution signals into write-ready
+ * artefacts.
+ *
+ * Behaviour (Requirement 8.5):
+ *   - When `newPatternSituation` is a non-empty string, construct a
+ *     `FailureContext` with `skill=forge-review` and
+ *     `trigger=new_review_pattern`, then delegate to
+ *     {@link buildFailureEpisode} and {@link buildFailureEvolutionMarker}.
+ *     The resulting episode has `outcome: "failure"` and an id of the
+ *     form `ep-YYYY-MM-DD-NNN`; the marker line targets
+ *     `forge-review#new_review_pattern`.
+ *   - When `matchedFailurePattern` is non-empty, the pattern name is
+ *     echoed on `patternUpdate` so the driver can increment the
+ *     pattern's success counter. The helper itself performs no updates.
+ *   - When neither field is set, an empty object is returned.
+ *
+ * The function is deterministic: same `(input, now, sequenceInDay)` → same output.
+ */
+export function buildReviewEvolutionArtifacts(input, now, sequenceInDay) {
+    const out = {};
+    if (input.newPatternSituation !== undefined && input.newPatternSituation.length > 0) {
+        const ctx = {
+            skill: "forge-review",
+            topic: input.topic,
+            tier: input.tier,
+            trigger: "new_review_pattern",
+            situation: input.newPatternSituation,
+        };
+        const episode = buildFailureEpisode(ctx, now, sequenceInDay);
+        const markerText = buildFailureEvolutionMarker(ctx, episode.id, now);
+        out.episode = episode;
+        out.markerText = markerText;
+    }
+    if (input.matchedFailurePattern !== undefined && input.matchedFailurePattern.length > 0) {
+        out.patternUpdate = input.matchedFailurePattern;
+    }
+    return out;
+}
 /**
  * Build the list of SubagentInvocations for a review.
  *

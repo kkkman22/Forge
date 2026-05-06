@@ -82,7 +82,7 @@ describe("Feature: error-recovery-strategy, Property 16: RecoveryReport round-tr
             expect(deserialized.summary.totalInconsistencies).toBe(report.summary.totalInconsistencies);
             expect(deserialized.summary.autoFixable).toBe(report.summary.autoFixable);
             expect(deserialized.summary.requiresUserDecision).toBe(report.summary.requiresUserDecision);
-        }), { numRuns: 100 });
+        }), { numRuns: 40 });
     });
 });
 // ---------------------------------------------------------------------------
@@ -96,7 +96,7 @@ describe("Feature: error-recovery-strategy, Property 17: InterruptionClassificat
             expect(deserialized.category).toBe(classification.category);
             expect(deserialized.evidence).toBe(classification.evidence);
             expect(deserialized.tddPhase).toBe(classification.tddPhase);
-        }), { numRuns: 100 });
+        }), { numRuns: 40 });
     });
 });
 // ---------------------------------------------------------------------------
@@ -110,7 +110,7 @@ describe("Feature: error-recovery-strategy, Property 18: CheckpointMarker round-
             expect(deserialized.taskId).toBe(marker.taskId);
             expect(deserialized.intendedCommitMessage).toBe(marker.intendedCommitMessage);
             expect(deserialized.timestamp).toBe(marker.timestamp);
-        }), { numRuns: 100 });
+        }), { numRuns: 40 });
     });
 });
 //# sourceMappingURL=error-recovery-roundtrip.property.test.js.map

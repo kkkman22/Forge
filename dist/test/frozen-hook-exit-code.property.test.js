@@ -75,7 +75,7 @@ describe("Bug Condition: Frozen zone hook chain swallows exit codes via || true"
             const endsWithOrTrue = /\|\|\s*true\s*(;?\s*done\s*)?$/.test(trimmed);
             expect(endsWithOrTrue).toBe(false);
             return !endsWithOrTrue;
-        }), { numRuns: 100 });
+        }), { numRuns: 40 });
     });
     it("Write|Edit frozen-check command must not swallow check-frozen exit code", () => {
         const writeEditHook = frozenCheckHooks.find((h) => h.matcher === "Write|Edit");

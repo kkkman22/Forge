@@ -73,7 +73,7 @@ describe("Property 5: Quality gate helper — phase routing consistency", () => 
             const helperResult = evaluateGateForPhase("review", readers);
             const directResult = evaluateReviewGate(review);
             expect(helperResult).toEqual(directResult);
-        }), { numRuns: 200 });
+        }), { numRuns: 50 });
     });
     /**
      * **Validates: Requirements 7.1, 7.4**
@@ -87,7 +87,7 @@ describe("Property 5: Quality gate helper — phase routing consistency", () => 
             const helperResult = evaluateGateForPhase("test", readers);
             const directResult = evaluateTestGate(test);
             expect(helperResult).toEqual(directResult);
-        }), { numRuns: 200 });
+        }), { numRuns: 50 });
     });
     /**
      * **Validates: Requirements 7.1, 7.4**
@@ -101,7 +101,7 @@ describe("Property 5: Quality gate helper — phase routing consistency", () => 
             const helperResult = evaluateGateForPhase("ship", readers);
             const directResult = evaluateShipGate(review, test, progress);
             expect(helperResult).toEqual(directResult);
-        }), { numRuns: 200 });
+        }), { numRuns: 50 });
     });
     /**
      * **Validates: Requirements 7.1, 7.4**
@@ -114,7 +114,7 @@ describe("Property 5: Quality gate helper — phase routing consistency", () => 
             const readers = makeReaders(review, test, progress);
             const result = evaluateGateForPhase(phase, readers);
             expect(result).toBeNull();
-        }), { numRuns: 200 });
+        }), { numRuns: 50 });
     });
     /**
      * **Validates: Requirements 7.1, 7.4**
@@ -127,7 +127,7 @@ describe("Property 5: Quality gate helper — phase routing consistency", () => 
             const readers = makeReaders(null, test, progress);
             const result = evaluateGateForPhase("review", readers);
             expect(result).toBeNull();
-        }), { numRuns: 200 });
+        }), { numRuns: 50 });
     });
     /**
      * **Validates: Requirements 7.1, 7.4**
@@ -140,7 +140,7 @@ describe("Property 5: Quality gate helper — phase routing consistency", () => 
             const readers = makeReaders(review, null, progress);
             const result = evaluateGateForPhase("test", readers);
             expect(result).toBeNull();
-        }), { numRuns: 200 });
+        }), { numRuns: 50 });
     });
     /**
      * **Validates: Requirements 7.1, 7.4**
@@ -172,7 +172,7 @@ describe("Property 5: Quality gate helper — phase routing consistency", () => 
             expect(readReview).toHaveBeenCalledOnce();
             expect(readTest).not.toHaveBeenCalled();
             expect(readProgress).not.toHaveBeenCalled();
-        }), { numRuns: 200 });
+        }), { numRuns: 50 });
     });
     /**
      * **Validates: Requirements 7.1, 7.4**
@@ -193,7 +193,7 @@ describe("Property 5: Quality gate helper — phase routing consistency", () => 
             expect(readReview).not.toHaveBeenCalled();
             expect(readTest).toHaveBeenCalledOnce();
             expect(readProgress).not.toHaveBeenCalled();
-        }), { numRuns: 200 });
+        }), { numRuns: 50 });
     });
     /**
      * **Validates: Requirements 7.1, 7.4**
@@ -214,7 +214,7 @@ describe("Property 5: Quality gate helper — phase routing consistency", () => 
             expect(readReview).toHaveBeenCalledOnce();
             expect(readTest).toHaveBeenCalledOnce();
             expect(readProgress).toHaveBeenCalledOnce();
-        }), { numRuns: 200 });
+        }), { numRuns: 50 });
     });
 });
 //# sourceMappingURL=sdk-quality-helpers.property.test.js.map

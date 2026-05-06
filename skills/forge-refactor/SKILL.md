@@ -18,7 +18,7 @@ disable-model-invocation: true
 
 **核心原则**：重构 = 改变结构，不改变行为。每一步都必须通过测试验证行为等价性。如果测试不存在，先补测试再重构。
 
-**触发方式**：由路由器 WorkNature=refactor 自动分流。路由器通过关键词匹配（优化、重构、重写、拆分、性能改进、代码整理、refactor、optimize、restructure、simplify）识别重构任务。用户也可通过 `--nature=refactor` 显式覆盖。
+**触发方式**：由路由器 WorkNature=refactor 自动分流。关键词（优化、重构、重写、拆分、refactor 等）识别。用户可 `--nature=refactor` 覆盖。
 
 ---
 
@@ -59,7 +59,7 @@ disable-model-invocation: true
 3. 为每个候选标注：位置（file:line）、当前问题、建议方法、预估影响、推荐等级（★/☆）
 4. 输出候选清单
 
-**Scan 输出**：`.forge/findings/refactor-scan.md`，按 L1-L4 分类的候选表（位置 | 当前问题 | 建议方法 | 推荐等级）+ 推荐执行顺序。
+**Scan 输出**：`.forge/findings/refactor-scan.md`，L1-L4 分类候选表 + 推荐顺序。
 
 **双模式行为**：
 
@@ -70,11 +70,11 @@ disable-model-invocation: true
 
 ### 3.2 Design 阶段
 
-为每个勾选候选制定执行方案：方法名（引用方法库）、执行步骤、退出信号、验证方式、回滚策略。产出：`.forge/plans/refactor-<topic>.md`。Interactive 等待 review 批准；autonomous 自动批准。
+为每个候选制定方案（方法名、步骤、验证、回滚），产出 refactor plan。Interactive 等批准；autonomous 自动批准。
 
 ### 3.3 Apply 阶段（refactor-apply）
 
-逐步执行方案，每步验证行为等价性：操作 → 验证命令 → 通过继续/失败回滚 → 全量测试 → 原子提交。Interactive 每步放行；autonomous 自动继续。
+逐步执行，每步验证行为等价：操作 → 验证 → 通过继续/失败回滚 → 全量测试 → 提交。Interactive 每步确认；autonomous 自动继续。
 
 ---
 

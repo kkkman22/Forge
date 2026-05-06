@@ -74,12 +74,12 @@ permissionMode: plan
 ## Output Format
 
 ```markdown
-### 设计评估
+### Design Assessment
 
-**可用性**：<评估结论>
-**可访问性**：<WCAG 相关建议>
-**一致性**：<与现有设计系统的一致性评估>
-**建议**：
+**Usability**: <评估结论>
+**Accessibility**: <WCAG 相关建议>
+**Consistency**: <与现有设计系统的一致性评估>
+**Suggestions**:
 - <建议 1>
 - <建议 2>
 ```

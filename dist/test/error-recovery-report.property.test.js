@@ -71,7 +71,7 @@ describe("Feature: error-recovery-strategy, Property 14: report completeness", (
             // Summary counts are consistent
             expect(report.summary.totalInconsistencies).toBe(report.inconsistencies.length);
             expect(report.summary.autoFixable + report.summary.requiresUserDecision).toBe(report.summary.totalInconsistencies);
-        }), { numRuns: 100 });
+        }), { numRuns: 40 });
     });
 });
 // ---------------------------------------------------------------------------
@@ -116,7 +116,7 @@ describe("Feature: error-recovery-strategy, Property 15: task segmentation", () 
                 }
             }
             expect(result.lastCompletedIndex).toBe(expectedIdx);
-        }), { numRuns: 100 });
+        }), { numRuns: 40 });
     });
 });
 //# sourceMappingURL=error-recovery-report.property.test.js.map

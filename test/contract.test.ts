@@ -757,6 +757,18 @@ describe("Contract: CLAUDE.md and template sync", () => {
     expect(claude).not.toContain("{{knowledge_limit}}");
     expect(claude).not.toContain("{{init_date}}");
   });
+
+  it("CLAUDE.md line count is within the 100–150 target range", () => {
+    const claudeLines = claude.split("\n").length;
+    expect(claudeLines).toBeGreaterThanOrEqual(100);
+    expect(claudeLines).toBeLessThanOrEqual(150);
+  });
+
+  it("templates/CLAUDE.md line count is within the 100–150 target range", () => {
+    const templateLines = template.split("\n").length;
+    expect(templateLines).toBeGreaterThanOrEqual(100);
+    expect(templateLines).toBeLessThanOrEqual(150);
+  });
 });
 
 // ---------------------------------------------------------------------------

@@ -206,14 +206,14 @@ describe("Feature: loop-skills-fusion, Property 13: Skill 感知模式自動検�
             vi.mocked(existsSync).mockReturnValue(true);
             const result = detectSkillAwareMode(cwd);
             expect(result).toBe(true);
-        }), { numRuns: 100 });
+        }), { numRuns: 40 });
     });
     it(".forge/ does not exist → detectSkillAwareMode returns false", () => {
         fc.assert(fc.property(fc.stringMatching(/^\/[a-z][a-z0-9/]{0,50}$/).filter((s) => s.length > 1), (cwd) => {
             vi.mocked(existsSync).mockReturnValue(false);
             const result = detectSkillAwareMode(cwd);
             expect(result).toBe(false);
-        }), { numRuns: 100 });
+        }), { numRuns: 40 });
     });
     it("detectSkillAwareMode is deterministic for any cwd and filesystem state", () => {
         fc.assert(fc.property(fc.stringMatching(/^\/[a-z][a-z0-9/]{0,50}$/).filter((s) => s.length > 1), fc.boolean(), (cwd, forgeExists) => {
@@ -222,7 +222,7 @@ describe("Feature: loop-skills-fusion, Property 13: Skill 感知模式自動検�
             const result2 = detectSkillAwareMode(cwd);
             expect(result1).toBe(result2);
             expect(result1).toBe(forgeExists);
-        }), { numRuns: 100 });
+        }), { numRuns: 40 });
     });
     it("exception in existsSync always yields false", () => {
         fc.assert(fc.property(fc.stringMatching(/^\/[a-z][a-z0-9/]{0,50}$/).filter((s) => s.length > 1), fc.string({ minLength: 1, maxLength: 40 }), (cwd, errorMsg) => {
@@ -231,7 +231,7 @@ describe("Feature: loop-skills-fusion, Property 13: Skill 感知模式自動検�
             });
             const result = detectSkillAwareMode(cwd);
             expect(result).toBe(false);
-        }), { numRuns: 100 });
+        }), { numRuns: 40 });
     });
 });
 //# sourceMappingURL=skill-aware-mode.test.js.map

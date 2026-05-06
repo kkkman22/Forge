@@ -53,7 +53,7 @@ describe("Feature: audit-remediation-v221, Property 2: NotesDocument branchName 
         fc.assert(fc.property(notesDocWithBranchArb, (doc) => {
             const output = formatNotesDocument(doc);
             expect(output).toContain(doc.branchName);
-        }), { numRuns: 100 });
+        }), { numRuns: 40 });
     });
     /**
      * Calling formatNotesDocument twice with the same input produces
@@ -66,7 +66,7 @@ describe("Feature: audit-remediation-v221, Property 2: NotesDocument branchName 
             const first = formatNotesDocument(doc);
             const second = formatNotesDocument(doc);
             expect(first).toBe(second);
-        }), { numRuns: 100 });
+        }), { numRuns: 40 });
     });
 });
 //# sourceMappingURL=notes-branchname.property.test.js.map

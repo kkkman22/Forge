@@ -158,6 +158,11 @@ export async function executeGenericIteration(ctx: IterationContext): Promise<It
       keyChanges: [],
       keyLearnings: [],
     };
+
+    // PUA: escalate pressure on hard failure (Req 17.1)
+    if (ctx.puaEnabled) {
+      ctx.puaStateManager?.handleFailure(errorMessage, orchestratorState.consecutiveFailures);
+    }
   }
 
   // Dispatch the event to the state machine.
@@ -220,6 +225,14 @@ export async function executeGenericIteration(ctx: IterationContext): Promise<It
     // UnexpectedEffectError or any other error: trigger iteration_hard_failure + backoff.
     // Revert to pre-transition state so that commitCount is not incremented.
     orchestratorState = preTransitionState;
+
+    // PUA: treat effect failure as a failure path (Req 17.1)
+    if (ctx.puaEnabled) {
+      ctx.puaStateManager?.handleFailure(
+        `Effect execution failed: ${effectMessage}`,
+        orchestratorState.consecutiveFailures,
+      );
+    }
 
     // Dispatch iteration_hard_failure from the original state — this triggers
     // rollback and does NOT increment commitCount.

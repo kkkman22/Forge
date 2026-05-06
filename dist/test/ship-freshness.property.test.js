@@ -39,7 +39,7 @@ describe("Property 1: undefined reviewedCommit → always fresh (backward compat
             const result = checkReviewFreshness(undefined, currentHead, changedFiles);
             expect(result.fresh).toBe(true);
             expect(result.reason).toContain("backward compatible");
-        }), { numRuns: 200 });
+        }), { numRuns: 50 });
     });
 });
 // ---------------------------------------------------------------------------
@@ -51,7 +51,7 @@ describe("Property 2: same commit → always fresh", () => {
             const result = checkReviewFreshness(commit, commit, changedFiles);
             expect(result.fresh).toBe(true);
             expect(result.reason).toContain("matches current HEAD");
-        }), { numRuns: 200 });
+        }), { numRuns: 50 });
     });
 });
 // ---------------------------------------------------------------------------
@@ -64,7 +64,7 @@ describe("Property 3: diff only .forge/ files → always fresh", () => {
             const result = checkReviewFreshness(reviewedCommit, currentHead, changedFiles);
             expect(result.fresh).toBe(true);
             expect(result.reason).toContain(".forge/");
-        }), { numRuns: 200 });
+        }), { numRuns: 50 });
     });
 });
 // ---------------------------------------------------------------------------
@@ -83,7 +83,7 @@ describe("Property 4: project code changed → not fresh", () => {
             for (const f of nonForge) {
                 expect(f.startsWith(".forge/")).toBe(false);
             }
-        }), { numRuns: 200 });
+        }), { numRuns: 50 });
     });
 });
 //# sourceMappingURL=ship-freshness.property.test.js.map

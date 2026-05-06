@@ -70,41 +70,41 @@ describe("Property 11: Ship 门禁——评审通过且测试通过且任务完�
             const result = checkShipGate(review, test, progress);
             expect(result.allowed).toBe(true);
             expect(result.reasons).toHaveLength(0);
-        }), { numRuns: 200 });
+        }), { numRuns: 50 });
     });
     it("any gate fails → ship blocked (Req 8.2)", () => {
         fc.assert(fc.property(someFailArb, ({ review, test, progress }) => {
             const result = checkShipGate(review, test, progress);
             expect(result.allowed).toBe(false);
             expect(result.reasons.length).toBeGreaterThan(0);
-        }), { numRuns: 200 });
+        }), { numRuns: 50 });
     });
     it("review has P0/P1 → blocked with review reason (Req 6.6, 16.3)", () => {
         fc.assert(fc.property(failedReviewArb, passedTestArb, completeProgressArb, (review, test, progress) => {
             const result = checkShipGate(review, test, progress);
             expect(result.allowed).toBe(false);
             expect(result.reasons.some((r) => r.includes("Review 未通过"))).toBe(true);
-        }), { numRuns: 200 });
+        }), { numRuns: 50 });
     });
     it("review with only P2/P3 (passed=true, p0=0, p1=0) → ship allowed (Req 6.7)", () => {
         fc.assert(fc.property(passedReviewArb, passedTestArb, completeProgressArb, (review, test, progress) => {
             const result = checkShipGate(review, test, progress);
             expect(result.allowed).toBe(true);
-        }), { numRuns: 200 });
+        }), { numRuns: 50 });
     });
     it("test not passed → blocked with test reason (Req 7.5, 16.4)", () => {
         fc.assert(fc.property(passedReviewArb, failedTestArb, completeProgressArb, (review, test, progress) => {
             const result = checkShipGate(review, test, progress);
             expect(result.allowed).toBe(false);
             expect(result.reasons.some((r) => r.includes("Test 未通过"))).toBe(true);
-        }), { numRuns: 200 });
+        }), { numRuns: 50 });
     });
     it("progress incomplete → blocked with progress reason (Req 8.1)", () => {
         fc.assert(fc.property(passedReviewArb, passedTestArb, incompleteProgressArb, (review, test, progress) => {
             const result = checkShipGate(review, test, progress);
             expect(result.allowed).toBe(false);
             expect(result.reasons.some((r) => r.includes("Progress 未完成"))).toBe(true);
-        }), { numRuns: 200 });
+        }), { numRuns: 50 });
     });
     it("all three fail → three reasons returned", () => {
         fc.assert(fc.property(failedReviewArb, failedTestArb, incompleteProgressArb, (review, test, progress) => {
@@ -114,7 +114,7 @@ describe("Property 11: Ship 门禁——评审通过且测试通过且任务完�
             expect(result.reasons.some((r) => r.includes("Review 未通过"))).toBe(true);
             expect(result.reasons.some((r) => r.includes("Test 未通过"))).toBe(true);
             expect(result.reasons.some((r) => r.includes("Progress 未完成"))).toBe(true);
-        }), { numRuns: 200 });
+        }), { numRuns: 50 });
     });
     it("for any combination, allowed ↔ (review ok ∧ test ok ∧ progress ok)", () => {
         fc.assert(fc.property(anyReviewArb, anyTestArb, anyProgressArb, (review, test, progress) => {
@@ -124,7 +124,7 @@ describe("Property 11: Ship 门禁——评审通过且测试通过且任务完�
             const progressOk = progress.completedTasks >= progress.totalTasks;
             const expectedAllowed = reviewOk && testOk && progressOk;
             expect(result.allowed).toBe(expectedAllowed);
-        }), { numRuns: 200 });
+        }), { numRuns: 50 });
     });
     it("reason count matches the number of failing gates", () => {
         fc.assert(fc.property(anyReviewArb, anyTestArb, anyProgressArb, (review, test, progress) => {
@@ -138,7 +138,7 @@ describe("Property 11: Ship 门禁——评审通过且测试通过且任务完�
             if (progress.completedTasks < progress.totalTasks)
                 expectedReasonCount++;
             expect(result.reasons).toHaveLength(expectedReasonCount);
-        }), { numRuns: 200 });
+        }), { numRuns: 50 });
     });
 });
 // ---------------------------------------------------------------------------

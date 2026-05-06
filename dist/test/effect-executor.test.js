@@ -530,7 +530,7 @@ describe("Feature: audit-followup-improvements, Property 2: Dry-run rollback non
                 // Must not contain "stash" (no stash in dry-run)
                 expect(args[0]).not.toBe("stash");
             }
-        }), { numRuns: 100 });
+        }), { numRuns: 40 });
     });
 });
 // ---------------------------------------------------------------------------

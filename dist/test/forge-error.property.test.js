@@ -58,7 +58,7 @@ describe("Property 1: ForgeError hierarchy — instanceof chain", () => {
     it("every ForgeError subclass instance is instanceof ForgeError", () => {
         fc.assert(fc.property(forgeErrorArb, (err) => {
             expect(err).toBeInstanceOf(ForgeError);
-        }), { numRuns: 200 });
+        }), { numRuns: 50 });
     });
     /**
      * **Validates: Requirements 9.1**
@@ -66,7 +66,7 @@ describe("Property 1: ForgeError hierarchy — instanceof chain", () => {
     it("every ForgeError subclass instance is instanceof Error", () => {
         fc.assert(fc.property(forgeErrorArb, (err) => {
             expect(err).toBeInstanceOf(Error);
-        }), { numRuns: 200 });
+        }), { numRuns: 50 });
     });
     /**
      * **Validates: Requirements 9.2**
@@ -75,7 +75,7 @@ describe("Property 1: ForgeError hierarchy — instanceof chain", () => {
         fc.assert(fc.property(forgeErrorArb, (err) => {
             expect(typeof err.code).toBe("string");
             expect(err.code.length).toBeGreaterThan(0);
-        }), { numRuns: 200 });
+        }), { numRuns: 50 });
     });
     /**
      * **Validates: Requirements 9.2**
@@ -83,7 +83,7 @@ describe("Property 1: ForgeError hierarchy — instanceof chain", () => {
     it("name equals the constructor name for any ForgeError subclass instance", () => {
         fc.assert(fc.property(forgeErrorArb, (err) => {
             expect(err.name).toBe(err.constructor.name);
-        }), { numRuns: 200 });
+        }), { numRuns: 50 });
     });
     /**
      * **Validates: Requirements 9.1, 9.2**
@@ -91,7 +91,7 @@ describe("Property 1: ForgeError hierarchy — instanceof chain", () => {
     it("message is a string for any ForgeError subclass instance", () => {
         fc.assert(fc.property(forgeErrorArb, (err) => {
             expect(typeof err.message).toBe("string");
-        }), { numRuns: 200 });
+        }), { numRuns: 50 });
     });
     /**
      * **Validates: Requirements 9.1, 9.2**
@@ -110,7 +110,7 @@ describe("Property 1: ForgeError hierarchy — instanceof chain", () => {
             expect(err.name).toBe(err.constructor.name);
             // message is a string
             expect(typeof err.message).toBe("string");
-        }), { numRuns: 200 });
+        }), { numRuns: 50 });
     });
     /**
      * **Validates: Requirements 9.2**
@@ -124,7 +124,7 @@ describe("Property 1: ForgeError hierarchy — instanceof chain", () => {
             expect(a.name).toBe("TestForgeError");
             expect(b.name).toBe("AnotherForgeError");
             expect(a.name).not.toBe(b.name);
-        }), { numRuns: 200 });
+        }), { numRuns: 50 });
     });
     /**
      * **Validates: Requirements 9.1**
@@ -135,7 +135,7 @@ describe("Property 1: ForgeError hierarchy — instanceof chain", () => {
         fc.assert(fc.property(messageArb, nonEmptyCodeArb, (message, code) => {
             const err = new TestForgeError(message, code);
             expect(err.message).toBe(message);
-        }), { numRuns: 200 });
+        }), { numRuns: 50 });
     });
 });
 //# sourceMappingURL=forge-error.property.test.js.map

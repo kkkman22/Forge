@@ -39,5 +39,7 @@ export type { ProcessMetadata, SerializedRegistry, ShutdownResult, } from "./pro
 export { ProcessRegistry } from "./process-registry.js";
 export type { ProcessTreeNode } from "./process-tree-cleaner.js";
 export { getDescendants, killProcessGroup, killProcessTree, } from "./process-tree-cleaner.js";
+export type { BacklogEntry, BacklogFile } from "./backlog.js";
+export { captureFindings, findOverlappingEntries, markResolved, readBacklog, serializeBacklog, writeBacklog, } from "./backlog.js";
 export { checkBranchTopicGate, checkCommitTopicMatch, detectStaleBranches, detectUnshippedBranches, extractBranchTopic, recordPendingDelivery, } from "./branch-lifecycle.js";
 export type { BranchTopicGateResult, CommitTopicCheckResult, PendingDeliveryRecord, UnshippedBranchWarning, } from "./loop-types.js";

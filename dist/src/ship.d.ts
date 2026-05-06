@@ -70,3 +70,46 @@ export declare function checkShipGate(review: ReviewResult, test: TestResult, pr
  * When checklist is not provided or empty, behaves like checkShipGate.
  */
 export declare function checkShipGateWithChecklist(review: ReviewResult, test: TestResult, progress: ProgressResult, checklist?: ChecklistEntry[]): ShipGateResult;
+import type { Episode, EpisodeTier } from "./episode.js";
+/**
+ * Why the ship gate blocked the delivery. Drives the episode outcome:
+ *
+ *   - `uncommitted`       → `outcome: "partial"`. The work is not lost;
+ *                           the gate simply stopped the user from
+ *                           shipping before committing their edits.
+ *   - `checklist_failed`  → `outcome: "failure"`. The P1 Fix Checklist
+ *                           has unverified entries, meaning a review
+ *                           finding has not been addressed.
+ */
+export type ShipGateBlockReason = "uncommitted" | "checklist_failed";
+/** Output of {@link buildShipGateBlockArtifacts}. */
+export interface ShipGateBlockArtifacts {
+    episode: Episode;
+    markerText: string;
+}
+/**
+ * Pure helper that constructs the failure artefacts triggered by the
+ * ship gate rejecting a delivery.
+ *
+ * Behaviour (Requirement 8.7):
+ *   - Builds a {@link FailureContext} with `skill = "forge-ship"` and
+ *     `trigger = "ship_gate_blocked"`, carrying `topic`, `tier`, and
+ *     `situation` from the call site.
+ *   - Delegates to {@link buildFailureEpisode} for a v2 Episode, then
+ *     overrides `outcome` based on `reason`:
+ *       - `uncommitted`       → `"partial"`
+ *       - `checklist_failed`  → `"failure"` (no override needed — the
+ *         failure-sink default already returns `"failure"`).
+ *   - Calls {@link buildFailureEvolutionMarker} with the episode id so
+ *     the Evolution marker target is `forge-ship#ship_gate_blocked`.
+ *
+ * Drivers are expected to append the episode to
+ * `.forge/knowledge/sessions/<date>-<topic>.md` (Guarded zone) and the
+ * marker to the topic's progress file (Open zone). Write failures
+ * degrade to a warning per Requirement 8.12 — callers keep the
+ * delivery-blocked message front and centre.
+ *
+ * Pure: identical `(topic, tier, reason, situation, now, sequenceInDay)`
+ * always yields identical artefacts.
+ */
+export declare function buildShipGateBlockArtifacts(topic: string, tier: EpisodeTier, reason: ShipGateBlockReason, situation: string, now: Date, sequenceInDay: number): ShipGateBlockArtifacts;

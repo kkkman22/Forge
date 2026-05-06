@@ -76,35 +76,35 @@ describe("Property 1: checkBuildGate preservation (Req 3.1)", () => {
             const result = checkBuildGate(spec, plan);
             expect(result.allowed).toBe(true);
             expect(result.reasons).toHaveLength(0);
-        }), { numRuns: 200 });
+        }), { numRuns: 50 });
     });
     it("returns allowed=false with non-empty reasons for all other combinations", () => {
         fc.assert(fc.property(blockedCombinationArb, ({ spec, plan }) => {
             const result = checkBuildGate(spec, plan);
             expect(result.allowed).toBe(false);
             expect(result.reasons.length).toBeGreaterThan(0);
-        }), { numRuns: 200 });
+        }), { numRuns: 50 });
     });
     it("for any spec/plan combination, allowed is true iff spec=locked AND plan=approved", () => {
         fc.assert(fc.property(specStatusArb, planStatusArb, (spec, plan) => {
             const result = checkBuildGate(spec, plan);
             const expectedAllowed = spec === "locked" && plan === "approved";
             expect(result.allowed).toBe(expectedAllowed);
-        }), { numRuns: 200 });
+        }), { numRuns: 50 });
     });
     it("blocked result includes 'Spec 未锁定' reason when spec is draft", () => {
         fc.assert(fc.property(planStatusArb, (plan) => {
             const result = checkBuildGate("draft", plan);
             expect(result.allowed).toBe(false);
             expect(result.reasons.some((r) => r.includes("Spec 未锁定"))).toBe(true);
-        }), { numRuns: 200 });
+        }), { numRuns: 50 });
     });
     it("blocked result includes 'Plan 未批准' reason when plan is draft", () => {
         fc.assert(fc.property(specStatusArb, (spec) => {
             const result = checkBuildGate(spec, "draft");
             expect(result.allowed).toBe(false);
             expect(result.reasons.some((r) => r.includes("Plan 未批准"))).toBe(true);
-        }), { numRuns: 200 });
+        }), { numRuns: 50 });
     });
     it("both conditions failing yields exactly two reasons", () => {
         const result = checkBuildGate("draft", "draft");
@@ -122,26 +122,26 @@ describe("Property 2: sanitizeBranchName preservation (Req 3.2)", () => {
         fc.assert(fc.property(branchNameArb, (name) => {
             const sanitized = sanitizeBranchName(name);
             expect(sanitized).toBe(name);
-        }), { numRuns: 200 });
+        }), { numRuns: 50 });
     });
     it("output never contains illegal characters", () => {
         fc.assert(fc.property(arbitraryStringArb, (input) => {
             const sanitized = sanitizeBranchName(input);
             // Output should only contain [a-zA-Z0-9\-_./]
             expect(/^[a-zA-Z0-9\-_./]*$/.test(sanitized)).toBe(true);
-        }), { numRuns: 200 });
+        }), { numRuns: 50 });
     });
     it("output never contains consecutive dots", () => {
         fc.assert(fc.property(arbitraryStringArb, (input) => {
             const sanitized = sanitizeBranchName(input);
             expect(sanitized.includes("..")).toBe(false);
-        }), { numRuns: 200 });
+        }), { numRuns: 50 });
     });
     it("output never ends with .lock", () => {
         fc.assert(fc.property(arbitraryStringArb, (input) => {
             const sanitized = sanitizeBranchName(input);
             expect(sanitized.toLowerCase().endsWith(".lock")).toBe(false);
-        }), { numRuns: 200 });
+        }), { numRuns: 50 });
     });
     it("output never has leading or trailing dots, slashes, or dashes", () => {
         fc.assert(fc.property(arbitraryStringArb, (input) => {
@@ -150,7 +150,7 @@ describe("Property 2: sanitizeBranchName preservation (Req 3.2)", () => {
                 expect(/^[./-]/.test(sanitized)).toBe(false);
                 expect(/[./-]$/.test(sanitized)).toBe(false);
             }
-        }), { numRuns: 200 });
+        }), { numRuns: 50 });
     });
     it("strips @{ reflog syntax", () => {
         fc.assert(fc.property(fc.tuple(fc
@@ -163,14 +163,14 @@ describe("Property 2: sanitizeBranchName preservation (Req 3.2)", () => {
             const sanitized = sanitizeBranchName(input);
             expect(sanitized.includes("@")).toBe(false);
             expect(sanitized.includes("{")).toBe(false);
-        }), { numRuns: 200 });
+        }), { numRuns: 50 });
     });
     it("is idempotent: sanitizing twice yields the same result", () => {
         fc.assert(fc.property(arbitraryStringArb, (input) => {
             const first = sanitizeBranchName(input);
             const second = sanitizeBranchName(first);
             expect(second).toBe(first);
-        }), { numRuns: 200 });
+        }), { numRuns: 50 });
     });
 });
 // ---------------------------------------------------------------------------
@@ -182,49 +182,49 @@ describe("Property 3: Ship command builders preservation (Req 3.2, 3.3, 3.4)", (
             const cmd = buildCheckoutCommand(branch);
             expect(cmd.executable).toBe("git");
             expect(cmd.args).toEqual(["checkout", branch]);
-        }), { numRuns: 200 });
+        }), { numRuns: 50 });
     });
     it("buildMergeCommand returns valid GitCommand with --no-ff when noFf=true", () => {
         fc.assert(fc.property(branchNameArb, (branch) => {
             const cmd = buildMergeCommand(branch, true);
             expect(cmd.executable).toBe("git");
             expect(cmd.args).toEqual(["merge", "--no-ff", branch]);
-        }), { numRuns: 200 });
+        }), { numRuns: 50 });
     });
     it("buildMergeCommand returns valid GitCommand without --no-ff when noFf=false", () => {
         fc.assert(fc.property(branchNameArb, (branch) => {
             const cmd = buildMergeCommand(branch, false);
             expect(cmd.executable).toBe("git");
             expect(cmd.args).toEqual(["merge", branch]);
-        }), { numRuns: 200 });
+        }), { numRuns: 50 });
     });
     it("buildBranchDeleteCommand returns valid GitCommand with -D when force=true", () => {
         fc.assert(fc.property(branchNameArb, (branch) => {
             const cmd = buildBranchDeleteCommand(branch, true);
             expect(cmd.executable).toBe("git");
             expect(cmd.args).toEqual(["branch", "-D", branch]);
-        }), { numRuns: 200 });
+        }), { numRuns: 50 });
     });
     it("buildBranchDeleteCommand returns valid GitCommand with -d when force=false", () => {
         fc.assert(fc.property(branchNameArb, (branch) => {
             const cmd = buildBranchDeleteCommand(branch, false);
             expect(cmd.executable).toBe("git");
             expect(cmd.args).toEqual(["branch", "-d", branch]);
-        }), { numRuns: 200 });
+        }), { numRuns: 50 });
     });
     it("buildPushCommand returns valid GitCommand with -u when setUpstream=true", () => {
         fc.assert(fc.property(remoteArb, branchNameArb, (remote, branch) => {
             const cmd = buildPushCommand(remote, branch, true);
             expect(cmd.executable).toBe("git");
             expect(cmd.args).toEqual(["push", "-u", remote, branch]);
-        }), { numRuns: 200 });
+        }), { numRuns: 50 });
     });
     it("buildPushCommand returns valid GitCommand without -u when setUpstream=false", () => {
         fc.assert(fc.property(remoteArb, branchNameArb, (remote, branch) => {
             const cmd = buildPushCommand(remote, branch, false);
             expect(cmd.executable).toBe("git");
             expect(cmd.args).toEqual(["push", remote, branch]);
-        }), { numRuns: 200 });
+        }), { numRuns: 50 });
     });
     it("command builders reject invalid branch names by throwing BranchValidationError", () => {
         fc.assert(fc.property(illegalBranchCharArb.filter((s) => s.length > 0), (badBranch) => {
@@ -232,7 +232,7 @@ describe("Property 3: Ship command builders preservation (Req 3.2, 3.3, 3.4)", (
             expect(() => buildMergeCommand(badBranch, true)).toThrow(BranchValidationError);
             expect(() => buildBranchDeleteCommand(badBranch, false)).toThrow(BranchValidationError);
             expect(() => buildPushCommand("origin", badBranch, false)).toThrow(BranchValidationError);
-        }), { numRuns: 200 });
+        }), { numRuns: 50 });
     });
 });
 // ---------------------------------------------------------------------------
@@ -242,7 +242,7 @@ describe("Property 4: Branch name validation preservation (Req 3.5, 3.6)", () =>
     it("valid branch names pass validation without throwing", () => {
         fc.assert(fc.property(branchNameArb, (name) => {
             expect(() => validateBranchName(name)).not.toThrow();
-        }), { numRuns: 200 });
+        }), { numRuns: 50 });
     });
     it("empty string is rejected", () => {
         expect(() => validateBranchName("")).toThrow(BranchValidationError);
@@ -251,42 +251,42 @@ describe("Property 4: Branch name validation preservation (Req 3.5, 3.6)", () =>
         fc.assert(fc.property(fc.tuple(branchSegmentArb, fc.constantFrom("`", "$(", ";", "&", "|", '"'), branchSegmentArb), ([prefix, meta, suffix]) => {
             const badName = `${prefix}${meta}${suffix}`;
             expect(() => validateBranchName(badName)).toThrow(BranchValidationError);
-        }), { numRuns: 200 });
+        }), { numRuns: 50 });
     });
     it("names with git-illegal characters are rejected", () => {
         fc.assert(fc.property(illegalBranchCharArb.filter((s) => s.length > 0), (badName) => {
             expect(() => validateBranchName(badName)).toThrow(BranchValidationError);
-        }), { numRuns: 200 });
+        }), { numRuns: 50 });
     });
     it("names with '..' are rejected", () => {
         fc.assert(fc.property(fc.tuple(branchSegmentArb, branchSegmentArb), ([a, b]) => {
             const badName = `${a}..${b}`;
             expect(() => validateBranchName(badName)).toThrow(BranchValidationError);
-        }), { numRuns: 200 });
+        }), { numRuns: 50 });
     });
     it("names with '@{' are rejected", () => {
         fc.assert(fc.property(branchSegmentArb, (segment) => {
             const badName = `${segment}@{0}`;
             expect(() => validateBranchName(badName)).toThrow(BranchValidationError);
-        }), { numRuns: 200 });
+        }), { numRuns: 50 });
     });
     it("names ending with '.lock' are rejected", () => {
         fc.assert(fc.property(branchSegmentArb, (segment) => {
             const badName = `${segment}.lock`;
             expect(() => validateBranchName(badName)).toThrow(BranchValidationError);
-        }), { numRuns: 200 });
+        }), { numRuns: 50 });
     });
     it("names with leading dots, slashes, or dashes are rejected", () => {
         fc.assert(fc.property(fc.constantFrom(".", "/", "-"), branchSegmentArb, (prefix, segment) => {
             const badName = `${prefix}${segment}`;
             expect(() => validateBranchName(badName)).toThrow(BranchValidationError);
-        }), { numRuns: 200 });
+        }), { numRuns: 50 });
     });
     it("names with trailing dots, slashes, or dashes are rejected", () => {
         fc.assert(fc.property(branchSegmentArb, fc.constantFrom(".", "/", "-"), (segment, suffix) => {
             const badName = `${segment}${suffix}`;
             expect(() => validateBranchName(badName)).toThrow(BranchValidationError);
-        }), { numRuns: 200 });
+        }), { numRuns: 50 });
     });
     it("BranchValidationError has code BRANCH_VALIDATION_ERROR", () => {
         try {

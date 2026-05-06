@@ -10,6 +10,7 @@
  * **Validates: Requirements 2.1, 2.2, 2.3, 2.4, 2.5, 6.1, 6.2, 6.3, 6.4, 8.4**
  */
 import { extractListField, extractNumericField, extractStringField, parseFrontmatter, } from "./frontmatter.js";
+import { safeParseConfigFile } from "./schemas/config-file.js";
 // ---------------------------------------------------------------------------
 // Constants
 // ---------------------------------------------------------------------------
@@ -111,6 +112,69 @@ export const CONFIG_DEFAULTS = {
  * - invalid numeric fields → use defaults + warnings
  */
 export function parseConfigGraceful(content) {
+    if (process.env.FORGE_USE_ZOD_PARSER === "1") {
+        return parseConfigViaSchema(content);
+    }
+    return parseConfigLegacy(content);
+}
+/**
+ * Shadow-migration path for `parseConfigGraceful` that delegates to
+ * `safeParseConfigFile` from `src/schemas/config-file.ts`. Opt-in via
+ * `FORGE_USE_ZOD_PARSER=1`. Output shape and defaults match the legacy
+ * path so callers are unaffected.
+ */
+function parseConfigViaSchema(content) {
+    const warnings = [];
+    if (content === undefined || content.trim() === "") {
+        warnings.push("Config content is empty or undefined, using all defaults");
+        return { parsed: { ...CONFIG_DEFAULTS, stack: [...CONFIG_DEFAULTS.stack] }, warnings };
+    }
+    const fm = parseFrontmatter(content);
+    if (fm === null) {
+        warnings.push("Config has no valid YAML frontmatter, using all defaults");
+        return { parsed: { ...CONFIG_DEFAULTS, stack: [...CONFIG_DEFAULTS.stack] }, warnings };
+    }
+    const rawFields = {};
+    const projectStr = extractStringField(fm.raw, "project");
+    if (projectStr !== null)
+        rawFields.project = projectStr;
+    const stackList = extractListField(fm.raw, "stack");
+    if (stackList.length > 0)
+        rawFields.stack = stackList;
+    const securityLevel = extractNumericField(fm.raw, "security_level");
+    if (securityLevel !== null)
+        rawFields.security_level = securityLevel;
+    const knowledgeLimit = extractNumericField(fm.raw, "knowledge_limit");
+    if (knowledgeLimit !== null)
+        rawFields.knowledge_limit = knowledgeLimit;
+    const maxParallelAgents = extractNumericField(fm.raw, "max_parallel_agents");
+    if (maxParallelAgents !== null)
+        rawFields.max_parallel_agents = maxParallelAgents;
+    const { value, errors } = safeParseConfigFile(rawFields);
+    if (projectStr === null)
+        warnings.push("Config missing 'project', defaulting to 'unknown'");
+    if (stackList.length === 0)
+        warnings.push("Config missing 'stack', defaulting to ['TypeScript']");
+    if (securityLevel === null)
+        warnings.push("Config missing 'security_level', defaulting to 1");
+    if (knowledgeLimit === null)
+        warnings.push("Config missing 'knowledge_limit', defaulting to 20");
+    if (maxParallelAgents === null)
+        warnings.push("Config missing 'max_parallel_agents', defaulting to 6");
+    const parsed = {
+        project: value.project ?? CONFIG_DEFAULTS.project,
+        stack: value.stack ?? [...CONFIG_DEFAULTS.stack],
+        security_level: value.security_level ?? CONFIG_DEFAULTS.security_level,
+        knowledge_limit: value.knowledge_limit ?? CONFIG_DEFAULTS.knowledge_limit,
+        max_parallel_agents: value.max_parallel_agents ?? CONFIG_DEFAULTS.max_parallel_agents,
+    };
+    if (errors.length > 0) {
+        warnings.push(`Config schema issues: ${errors.join("; ")}`);
+    }
+    return { parsed, warnings };
+}
+/** Legacy extraction path — preserved unchanged for default callers. */
+function parseConfigLegacy(content) {
     const warnings = [];
     if (content === undefined || content.trim() === "") {
         warnings.push("Config content is empty or undefined, using all defaults");

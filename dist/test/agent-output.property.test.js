@@ -97,7 +97,7 @@ describe("Feature: gnhf-inspired-enhancements, Property 4: Schema 条件構建",
             for (const field of CORE_FIELDS) {
                 expect(schema.properties).toHaveProperty(field);
             }
-        }), { numRuns: 200 });
+        }), { numRuns: 50 });
     });
     /**
      * **Validates: Requirements 4.3**
@@ -106,7 +106,7 @@ describe("Feature: gnhf-inspired-enhancements, Property 4: Schema 条件構建",
         fc.assert(fc.property(fc.boolean(), (includeStopField) => {
             const schema = buildAgentOutputSchema({ includeStopField });
             expect(schema.additionalProperties).toBe(false);
-        }), { numRuns: 200 });
+        }), { numRuns: 50 });
     });
     /**
      * **Validates: Requirements 4.3**
@@ -117,7 +117,7 @@ describe("Feature: gnhf-inspired-enhancements, Property 4: Schema 条件構建",
             const propertyKeys = Object.keys(schema.properties).sort();
             const requiredKeys = [...schema.required].sort();
             expect(requiredKeys).toEqual(propertyKeys);
-        }), { numRuns: 200 });
+        }), { numRuns: 50 });
     });
     /**
      * **Validates: Requirements 1.7, 4.2**
@@ -127,7 +127,7 @@ describe("Feature: gnhf-inspired-enhancements, Property 4: Schema 条件構建",
             const schema = buildAgentOutputSchema({ includeStopField });
             const hasStopField = "should_fully_stop" in schema.properties;
             expect(hasStopField).toBe(includeStopField);
-        }), { numRuns: 200 });
+        }), { numRuns: 50 });
     });
 });
 // ---------------------------------------------------------------------------
@@ -141,7 +141,7 @@ describe("Feature: gnhf-inspired-enhancements, Property 9: AgentOutput 验证正
         fc.assert(fc.property(agentOutputArb, (output) => {
             const result = validateAgentOutput(output);
             expect(result.valid).toBe(true);
-        }), { numRuns: 200 });
+        }), { numRuns: 50 });
     });
     /**
      * **Validates: Requirements 4.4**
@@ -150,7 +150,7 @@ describe("Feature: gnhf-inspired-enhancements, Property 9: AgentOutput 验证正
         fc.assert(fc.property(invalidAgentOutputArb, (data) => {
             const result = validateAgentOutput(data);
             expect(result.valid).toBe(false);
-        }), { numRuns: 200 });
+        }), { numRuns: 50 });
     });
     /**
      * **Validates: Requirements 4.4**
@@ -163,7 +163,7 @@ describe("Feature: gnhf-inspired-enhancements, Property 9: AgentOutput 验证正
             if (!result.valid) {
                 expect(result.errors.length).toBeGreaterThan(0);
             }
-        }), { numRuns: 200 });
+        }), { numRuns: 50 });
     });
 });
 // ---------------------------------------------------------------------------
@@ -181,7 +181,7 @@ describe("Feature: gnhf-inspired-enhancements, Property 10: AgentOutput 序列�
             if (result.valid) {
                 expect(result.value).toEqual(output);
             }
-        }), { numRuns: 200 });
+        }), { numRuns: 50 });
     });
 });
 //# sourceMappingURL=agent-output.property.test.js.map

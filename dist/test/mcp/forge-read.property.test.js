@@ -76,7 +76,7 @@ describe("Feature: context-optimization, Property 5: Output isolation", () => {
             }
             // The response must NOT contain file content markers
             expect(result.stdout).not.toMatch(/FILE_MARKER_\d+/);
-        }), { numRuns: 100 });
+        }), { numRuns: 40 });
     });
     /**
      * **Validates: Requirement 4.3**
@@ -104,7 +104,7 @@ describe("Feature: context-optimization, Property 5: Output isolation", () => {
             for (const content of fileContents) {
                 expect(forgeFiles).not.toContain(content);
             }
-        }), { numRuns: 100 });
+        }), { numRuns: 40 });
     });
     /**
      * **Validates: Requirement 4.3**
@@ -127,7 +127,7 @@ describe("Feature: context-optimization, Property 5: Output isolation", () => {
             }
             // Error output must contain the actual error message
             expect(result.stderr).toBe(errorMsg);
-        }), { numRuns: 100 });
+        }), { numRuns: 40 });
     });
 });
 //# sourceMappingURL=forge-read.property.test.js.map

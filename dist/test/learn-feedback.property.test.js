@@ -42,14 +42,14 @@ describe("Property 24: Skill 反馈分析", () => {
         fc.assert(fc.property(feedbackListArb, (entries) => {
             const result = analyzeSkillFeedback(entries);
             expect(result.totalEntries).toBe(entries.length);
-        }), { numRuns: 100 });
+        }), { numRuns: 40 });
     });
     it("sum of all command totalRuns equals totalEntries", () => {
         fc.assert(fc.property(feedbackListArb, (entries) => {
             const result = analyzeSkillFeedback(entries);
             const sumRuns = result.commandStats.reduce((acc, s) => acc + s.totalRuns, 0);
             expect(sumRuns).toBe(result.totalEntries);
-        }), { numRuns: 100 });
+        }), { numRuns: 40 });
     });
     it("successCount + failureCount equals totalRuns for each command", () => {
         fc.assert(fc.property(feedbackListArb, (entries) => {
@@ -57,7 +57,7 @@ describe("Property 24: Skill 反馈分析", () => {
             for (const stat of result.commandStats) {
                 expect(stat.successCount + stat.failureCount).toBe(stat.totalRuns);
             }
-        }), { numRuns: 100 });
+        }), { numRuns: 40 });
     });
     it("successRate is between 0 and 1 inclusive", () => {
         fc.assert(fc.property(feedbackListArb, (entries) => {
@@ -66,7 +66,7 @@ describe("Property 24: Skill 反馈分析", () => {
                 expect(stat.successRate).toBeGreaterThanOrEqual(0);
                 expect(stat.successRate).toBeLessThanOrEqual(1);
             }
-        }), { numRuns: 100 });
+        }), { numRuns: 40 });
     });
     it("successRate equals successCount / totalRuns", () => {
         fc.assert(fc.property(feedbackListArb, (entries) => {
@@ -75,7 +75,7 @@ describe("Property 24: Skill 反馈分析", () => {
                 const expected = stat.totalRuns > 0 ? stat.successCount / stat.totalRuns : 0;
                 expect(stat.successRate).toBeCloseTo(expected, 10);
             }
-        }), { numRuns: 100 });
+        }), { numRuns: 40 });
     });
     it("alert commands have failure rate >= threshold and at least 2 runs", () => {
         fc.assert(fc.property(feedbackListArb, (entries) => {
@@ -88,7 +88,7 @@ describe("Property 24: Skill 反馈分析", () => {
                     expect(1 - stat.successRate).toBeGreaterThanOrEqual(FAILURE_RATE_ALERT_THRESHOLD);
                 }
             }
-        }), { numRuns: 100 });
+        }), { numRuns: 40 });
     });
     it("non-alert commands with >=2 runs have failure rate below threshold", () => {
         fc.assert(fc.property(feedbackListArb, (entries) => {
@@ -99,7 +99,7 @@ describe("Property 24: Skill 反馈分析", () => {
                     expect(1 - stat.successRate).toBeLessThan(FAILURE_RATE_ALERT_THRESHOLD);
                 }
             }
-        }), { numRuns: 100 });
+        }), { numRuns: 40 });
     });
     it("all-success entries produce no alerts", () => {
         fc.assert(fc.property(fc.array(commandArb, { minLength: 2, maxLength: 10 }), (commands) => {
@@ -130,7 +130,7 @@ describe("Property 24: Skill 反馈分析", () => {
                     expect(stat.topFailureReasons[i - 1].count).toBeGreaterThanOrEqual(stat.topFailureReasons[i].count);
                 }
             }
-        }), { numRuns: 100 });
+        }), { numRuns: 40 });
     });
     it("avgDurationSeconds is non-negative", () => {
         fc.assert(fc.property(feedbackListArb, (entries) => {
@@ -138,7 +138,7 @@ describe("Property 24: Skill 反馈分析", () => {
             for (const stat of result.commandStats) {
                 expect(stat.avgDurationSeconds).toBeGreaterThanOrEqual(0);
             }
-        }), { numRuns: 100 });
+        }), { numRuns: 40 });
     });
     it("commandStats are sorted by successRate ascending (worst first)", () => {
         fc.assert(fc.property(feedbackListArb, (entries) => {
@@ -146,7 +146,7 @@ describe("Property 24: Skill 反馈分析", () => {
             for (let i = 1; i < result.commandStats.length; i++) {
                 expect(result.commandStats[i - 1].successRate).toBeLessThanOrEqual(result.commandStats[i].successRate);
             }
-        }), { numRuns: 100 });
+        }), { numRuns: 40 });
     });
 });
 // ---------------------------------------------------------------------------

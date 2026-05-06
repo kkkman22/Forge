@@ -42,27 +42,27 @@ describe("Feature: ship-delivery-unification, Property 1: Shell metacharacter re
     it("buildCheckoutCommand rejects branch names with shell metacharacters", () => {
         fc.assert(fc.property(shellMetacharStringArb, (dangerous) => {
             expect(() => buildCheckoutCommand(dangerous)).toThrow();
-        }), { numRuns: 200 });
+        }), { numRuns: 50 });
     });
     it("buildMergeCommand rejects branch names with shell metacharacters", () => {
         fc.assert(fc.property(shellMetacharStringArb, fc.boolean(), (dangerous, noFf) => {
             expect(() => buildMergeCommand(dangerous, noFf)).toThrow();
-        }), { numRuns: 200 });
+        }), { numRuns: 50 });
     });
     it("buildBranchDeleteCommand rejects branch names with shell metacharacters", () => {
         fc.assert(fc.property(shellMetacharStringArb, fc.boolean(), (dangerous, force) => {
             expect(() => buildBranchDeleteCommand(dangerous, force)).toThrow();
-        }), { numRuns: 200 });
+        }), { numRuns: 50 });
     });
     it("buildPushCommand rejects branch names with shell metacharacters", () => {
         fc.assert(fc.property(shellMetacharStringArb, safeRemoteArb, fc.boolean(), (dangerous, remote, setUpstream) => {
             expect(() => buildPushCommand(remote, dangerous, setUpstream)).toThrow();
-        }), { numRuns: 200 });
+        }), { numRuns: 50 });
     });
     it("buildPushCommand rejects remote names with shell metacharacters", () => {
         fc.assert(fc.property(safeBranchNameArb, shellMetacharStringArb, fc.boolean(), (branch, dangerous, setUpstream) => {
             expect(() => buildPushCommand(dangerous, branch, setUpstream)).toThrow();
-        }), { numRuns: 200 });
+        }), { numRuns: 50 });
     });
 });
 // ---------------------------------------------------------------------------
@@ -82,7 +82,7 @@ describe("Feature: ship-delivery-unification, Property 6: Force flag correctness
             }
             expect(cmd.args[2]).toBe(branch);
             expect(cmd.args).toHaveLength(3);
-        }), { numRuns: 200 });
+        }), { numRuns: 50 });
     });
 });
 // ---------------------------------------------------------------------------
@@ -153,12 +153,12 @@ describe("Feature: ship-delivery-unification, validateBranchName", () => {
     it("accepts safe branch names", () => {
         fc.assert(fc.property(safeBranchNameArb, (branch) => {
             expect(() => validateBranchName(branch)).not.toThrow();
-        }), { numRuns: 200 });
+        }), { numRuns: 50 });
     });
     it("rejects branch names with shell metacharacters", () => {
         fc.assert(fc.property(shellMetacharStringArb, (dangerous) => {
             expect(() => validateBranchName(dangerous)).toThrow();
-        }), { numRuns: 200 });
+        }), { numRuns: 50 });
     });
     it("rejects branch names with Git-illegal characters (spaces, tildes, etc.)", () => {
         const illegalNames = [

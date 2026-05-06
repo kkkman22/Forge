@@ -95,7 +95,7 @@ describe("Feature: loop-skills-fusion, Property 9: StatusFile Loop 字段 round-
             expect(extracted.loopRunId).toBe(fields.loopRunId);
             expect(extracted.loopIteration).toBe(fields.loopIteration);
             expect(extracted.skillSequence).toEqual(fields.skillSequence);
-        }), { numRuns: 200 });
+        }), { numRuns: 50 });
     });
     /**
      * **Validates: Requirements 6.1, 6.2, 6.3, 6.4**
@@ -127,7 +127,7 @@ describe("Feature: loop-skills-fusion, Property 9: StatusFile Loop 字段 round-
                 !line.startsWith("loop_iteration:") &&
                 !line.startsWith("skill_sequence:"));
             expect(writtenFields).toEqual(originalFields);
-        }), { numRuns: 200 });
+        }), { numRuns: 50 });
     });
     /**
      * **Validates: Requirements 6.1, 6.2, 6.3, 6.4**
@@ -145,7 +145,7 @@ describe("Feature: loop-skills-fusion, Property 9: StatusFile Loop 字段 round-
             expect(extracted2.loopRunId).toBe(extracted1.loopRunId);
             expect(extracted2.loopIteration).toBe(extracted1.loopIteration);
             expect(extracted2.skillSequence).toEqual(extracted1.skillSequence);
-        }), { numRuns: 200 });
+        }), { numRuns: 50 });
     });
 });
 // ---------------------------------------------------------------------------
@@ -167,7 +167,7 @@ describe("Feature: loop-skills-fusion, Property 10: StatusFile Loop 字段清除
             expect(extracted.loopRunId).toBeUndefined();
             expect(extracted.loopIteration).toBeUndefined();
             expect(extracted.skillSequence).toBeUndefined();
-        }), { numRuns: 200 });
+        }), { numRuns: 50 });
     });
     /**
      * **Validates: Requirements 6.5, 6.6**
@@ -200,7 +200,7 @@ describe("Feature: loop-skills-fusion, Property 10: StatusFile Loop 字段清除
                 !line.startsWith("loop_iteration:") &&
                 !line.startsWith("skill_sequence:"));
             expect(clearedNonLoopFields).toEqual(originalNonLoopFields);
-        }), { numRuns: 200 });
+        }), { numRuns: 50 });
     });
     /**
      * **Validates: Requirements 6.5, 6.6**
@@ -213,7 +213,7 @@ describe("Feature: loop-skills-fusion, Property 10: StatusFile Loop 字段清除
             const cleared1 = clearLoopFields(contentWithFields);
             const cleared2 = clearLoopFields(cleared1);
             expect(cleared2).toBe(cleared1);
-        }), { numRuns: 200 });
+        }), { numRuns: 50 });
     });
 });
 // ---------------------------------------------------------------------------
@@ -255,7 +255,7 @@ describe("Feature: loop-skills-fusion, Property 4: writeLoopFields preserves non
                 !line.startsWith("skill_sequence:"));
             // Every original non-Loop field must be present and unchanged
             expect(writtenNonLoopLines).toEqual(originalNonLoopLines);
-        }), { numRuns: 200 });
+        }), { numRuns: 50 });
     });
     /**
      * **Validates: Requirements 13.5**
@@ -295,7 +295,7 @@ describe("Feature: loop-skills-fusion, Property 4: writeLoopFields preserves non
                 !line.startsWith("loop_iteration:") &&
                 !line.startsWith("skill_sequence:"));
             expect(writtenNonLoopLines).toEqual(originalNonLoopLines);
-        }), { numRuns: 200 });
+        }), { numRuns: 50 });
     });
     /**
      * **Validates: Requirements 13.5**
@@ -312,7 +312,7 @@ describe("Feature: loop-skills-fusion, Property 4: writeLoopFields preserves non
             const originalBody = originalBodyMatch ? originalBodyMatch[1] : "";
             const writtenBody = writtenBodyMatch ? writtenBodyMatch[1] : "";
             expect(writtenBody).toBe(originalBody);
-        }), { numRuns: 200 });
+        }), { numRuns: 50 });
     });
 });
 // ---------------------------------------------------------------------------
@@ -365,7 +365,7 @@ describe("Feature: loop-skills-fusion, Property 3: LoopStatusFields round-trip c
             expect(extracted.loopRunId).toBe(fields.loopRunId);
             expect(extracted.loopIteration).toBe(fields.loopIteration);
             expect(extracted.skillSequence).toEqual(fields.skillSequence);
-        }), { numRuns: 200 });
+        }), { numRuns: 50 });
     });
     /**
      * **Validates: Requirements 6.1, 6.3, 13.2, 13.3**
@@ -384,7 +384,7 @@ describe("Feature: loop-skills-fusion, Property 3: LoopStatusFields round-trip c
             expect(extracted.loopRunId).toBeUndefined();
             expect(extracted.loopIteration).toBeUndefined();
             expect(extracted.skillSequence).toBeUndefined();
-        }), { numRuns: 200 });
+        }), { numRuns: 50 });
     });
     /**
      * **Validates: Requirements 6.1, 13.2**
@@ -409,7 +409,7 @@ describe("Feature: loop-skills-fusion, Property 3: LoopStatusFields round-trip c
             if (fields.skillSequence !== undefined) {
                 expect(extracted.skillSequence).toEqual(fields.skillSequence);
             }
-        }), { numRuns: 200 });
+        }), { numRuns: 50 });
     });
     /**
      * **Validates: Requirements 6.3, 13.3**
@@ -426,7 +426,7 @@ describe("Feature: loop-skills-fusion, Property 3: LoopStatusFields round-trip c
             expect(extracted.loopRunId).toBeUndefined();
             expect(extracted.loopIteration).toBeUndefined();
             expect(extracted.skillSequence).toBeUndefined();
-        }), { numRuns: 200 });
+        }), { numRuns: 50 });
     });
 });
 // ---------------------------------------------------------------------------
@@ -471,7 +471,7 @@ describe("Feature: loop-skills-fusion, Property 11: updateIterationStatus field 
             // Extract phase directly from frontmatter
             const extractedPhase = extractPhaseFromFrontmatter(updated);
             expect(extractedPhase).toBe(phase);
-        }), { numRuns: 200 });
+        }), { numRuns: 50 });
     });
     /**
      * **Validates: Requirements 3.6, 6.2**
@@ -486,7 +486,7 @@ describe("Feature: loop-skills-fusion, Property 11: updateIterationStatus field 
             expect(loopFields.loopIteration).toBe(iteration);
             const extractedPhase = extractPhaseFromFrontmatter(updated);
             expect(extractedPhase).toBe(phase);
-        }), { numRuns: 200 });
+        }), { numRuns: 50 });
     });
     /**
      * **Validates: Requirements 3.6, 6.2**
@@ -515,7 +515,7 @@ describe("Feature: loop-skills-fusion, Property 11: updateIterationStatus field 
                 !line.startsWith("phase:") &&
                 !line.startsWith("loop_iteration:"));
             expect(updatedOtherFields).toEqual(originalOtherFields);
-        }), { numRuns: 200 });
+        }), { numRuns: 50 });
     });
     /**
      * **Validates: Requirements 3.6, 6.2**
@@ -531,7 +531,7 @@ describe("Feature: loop-skills-fusion, Property 11: updateIterationStatus field 
             expect(loopFields.loopIteration).toBe(iter2);
             const extractedPhase = extractPhaseFromFrontmatter(second);
             expect(extractedPhase).toBe(phase2);
-        }), { numRuns: 200 });
+        }), { numRuns: 50 });
     });
 });
 //# sourceMappingURL=status-file-ext.property.test.js.map

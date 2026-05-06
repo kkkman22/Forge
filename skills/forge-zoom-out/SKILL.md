@@ -85,3 +85,11 @@ zoom-out **仅**改 `.forge/status.md` 的 `phase` / `original_phase` 作为暂�
 | "我知道结构不用 zoom out" | 记忆与实际代码常漂移；5 行摘要成本极低 |
 | "直接看代码就行" | 价值是**聚合**——把散落多文件的职责归纳成三段 |
 | "和 status 重叠" | status 讲**任务进度**，zoom-out 讲**架构位置** |
+
+## Common Rationalizations
+
+| 合理化 | 反驳 |
+|---|---|
+| "我知道结构不用 zoom out" | 记忆与实际代码常漂移；5 行摘要成本极低 |
+| "直接看代码就行" | 价值是**聚合**——把散落多文件的职责归纳成三段 |
+| "和 status 重叠" | status 讲**任务进度**，zoom-out 讲**架构位置** |

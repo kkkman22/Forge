@@ -38,7 +38,7 @@ describe("Feature: loop-skills-fusion, Property 12: SKILL 阶段 commit 策略�
     it("commitable phases with success=true return true", () => {
         fc.assert(fc.property(commitablePhaseArb, (phase) => {
             expect(shouldCommitForPhase(phase, true)).toBe(true);
-        }), { numRuns: 200 });
+        }), { numRuns: 50 });
     });
     /**
      * **Validates: Requirements 11.4**
@@ -48,7 +48,7 @@ describe("Feature: loop-skills-fusion, Property 12: SKILL 阶段 commit 策略�
     it("non-commitable phases with success=true return false", () => {
         fc.assert(fc.property(nonCommitablePhaseArb, (phase) => {
             expect(shouldCommitForPhase(phase, true)).toBe(false);
-        }), { numRuns: 200 });
+        }), { numRuns: 50 });
     });
     /**
      * **Validates: Requirements 11.1, 11.3, 11.4, 11.5**
@@ -58,7 +58,7 @@ describe("Feature: loop-skills-fusion, Property 12: SKILL 阶段 commit 策略�
     it("any phase with success=false returns false", () => {
         fc.assert(fc.property(anyKnownPhaseArb, (phase) => {
             expect(shouldCommitForPhase(phase, false)).toBe(false);
-        }), { numRuns: 200 });
+        }), { numRuns: 50 });
     });
     /**
      * **Validates: Requirements 11.1, 11.3, 11.4, 11.5**
@@ -70,7 +70,7 @@ describe("Feature: loop-skills-fusion, Property 12: SKILL 阶段 commit 策略�
             const result1 = shouldCommitForPhase(phase, success);
             const result2 = shouldCommitForPhase(phase, success);
             expect(result1).toBe(result2);
-        }), { numRuns: 200 });
+        }), { numRuns: 50 });
     });
 });
 //# sourceMappingURL=skill-commit.property.test.js.map

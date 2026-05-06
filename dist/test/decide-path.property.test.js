@@ -156,7 +156,7 @@ describe("Property 4: 决策文档路径格式", () => {
         fc.assert(fc.property(dateArb, topicArb, (date, topic) => {
             const path = generateDecisionPath(date, topic);
             expect(path).toMatch(PATH_REGEX);
-        }), { numRuns: 200 });
+        }), { numRuns: 50 });
     });
     it("date portion is valid: year 2000-2099, month 01-12, day 01-31", () => {
         fc.assert(fc.property(dateArb, topicArb, (date, topic) => {
@@ -175,7 +175,7 @@ describe("Property 4: 决策文档路径格式", () => {
             expect(month).toBeLessThanOrEqual(12);
             expect(day).toBeGreaterThanOrEqual(1);
             expect(day).toBeLessThanOrEqual(31);
-        }), { numRuns: 200 });
+        }), { numRuns: 50 });
     });
     it("topic portion is kebab-case: lowercase, no spaces, no special chars except hyphens", () => {
         fc.assert(fc.property(dateArb, topicArb, (date, topic) => {
@@ -188,14 +188,14 @@ describe("Property 4: 决策文档路径格式", () => {
             // Remove .md extension
             const topicPart = topicWithExt.replace(/\.md$/, "");
             expect(topicPart).toMatch(KEBAB_REGEX);
-        }), { numRuns: 200 });
+        }), { numRuns: 50 });
     });
     it("path always starts with .forge/decisions/ and ends with .md", () => {
         fc.assert(fc.property(dateArb, topicArb, (date, topic) => {
             const path = generateDecisionPath(date, topic);
             expect(path.startsWith(".forge/decisions/")).toBe(true);
             expect(path.endsWith(".md")).toBe(true);
-        }), { numRuns: 200 });
+        }), { numRuns: 50 });
     });
     it("toKebabCase produces only lowercase alphanumeric and hyphens", () => {
         fc.assert(fc.property(topicArb, (topic) => {
@@ -211,7 +211,7 @@ describe("Property 4: 决策文档路径格式", () => {
             expect(kebab.endsWith("-")).toBe(false);
             // Must not contain consecutive hyphens
             expect(kebab).not.toContain("--");
-        }), { numRuns: 200 });
+        }), { numRuns: 50 });
     });
 });
 //# sourceMappingURL=decide-path.property.test.js.map

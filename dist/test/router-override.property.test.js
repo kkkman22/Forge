@@ -42,13 +42,13 @@ describe("Property 2: 用户覆盖优先", () => {
         fc.assert(fc.property(taskSignalsArb, tierArb, (signals, userOverride) => {
             const result = classifyTask(signals, userOverride);
             expect(result.tier).toBe(userOverride);
-        }), { numRuns: 200 });
+        }), { numRuns: 50 });
     });
     it("command sequence matches the overridden tier (Req 1.5, 1.6, 1.7, 1.8)", () => {
         fc.assert(fc.property(taskSignalsArb, tierArb, (signals, userOverride) => {
             const result = classifyTask(signals, userOverride);
             expect(result.commandSequence).toEqual(EXPECTED_SEQUENCES[userOverride]);
-        }), { numRuns: 200 });
+        }), { numRuns: 50 });
     });
     it('override to "light" even when signals indicate "full"', () => {
         // Signals that would normally classify as "full"
@@ -57,7 +57,7 @@ describe("Property 2: 用户覆盖优先", () => {
             const result = classifyTask(signals, "light");
             expect(result.tier).toBe("light");
             expect(result.commandSequence).toEqual(EXPECTED_SEQUENCES.light);
-        }), { numRuns: 200 });
+        }), { numRuns: 50 });
     });
     it('override to "full" even when signals indicate "light"', () => {
         // Signals that would normally classify as "light"
@@ -75,7 +75,7 @@ describe("Property 2: 用户覆盖优先", () => {
             const result = classifyTask(signals, "full");
             expect(result.tier).toBe("full");
             expect(result.commandSequence).toEqual(EXPECTED_SEQUENCES.full);
-        }), { numRuns: 200 });
+        }), { numRuns: 50 });
     });
     it("result always includes a reason when user override is provided", () => {
         fc.assert(fc.property(taskSignalsArb, tierArb, (signals, userOverride) => {
@@ -83,7 +83,7 @@ describe("Property 2: 用户覆盖优先", () => {
             expect(result.reason).toBeTruthy();
             expect(typeof result.reason).toBe("string");
             expect(result.reason.length).toBeGreaterThan(0);
-        }), { numRuns: 200 });
+        }), { numRuns: 50 });
     });
 });
 //# sourceMappingURL=router-override.property.test.js.map

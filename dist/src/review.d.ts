@@ -138,6 +138,57 @@ export interface QualityGateOptions {
  * Keyword lists are configurable via the options parameter.
  */
 export declare function runReportQualityGate(findings: MergedFinding[], options?: QualityGateOptions): QualityGateResult;
+import type { Episode, EpisodeTier } from "./episode.js";
+/**
+ * Input for {@link buildReviewEvolutionArtifacts}.
+ *
+ * Drivers classify findings into two buckets after a review run:
+ *
+ *   - `newPatternSituation` — a one-line summary of a pattern the
+ *     reviewers flagged that is **not** present in any
+ *     `knowledge/solutions/*.md`. Setting this asks the helper to
+ *     produce both a failure episode and an Evolution marker targeting
+ *     `forge-review#new_review_pattern`.
+ *   - `matchedFailurePattern` — the name of an entry in
+ *     `knowledge/known-failures.md` that this review successfully
+ *     re-identified. Setting this asks the helper to echo the pattern
+ *     name via `patternUpdate` so the driver can call
+ *     `updatePatternStats(pattern, "success")` against `instincts.md`.
+ *
+ * Either, both, or neither field may be set. The helper does no IO.
+ */
+export interface ReviewEvolutionInput {
+    topic: string;
+    tier: EpisodeTier;
+    newPatternSituation?: string;
+    matchedFailurePattern?: string;
+}
+/** Output of {@link buildReviewEvolutionArtifacts}. Fields are omitted when not applicable. */
+export interface ReviewEvolutionArtifacts {
+    episode?: Episode;
+    markerText?: string;
+    patternUpdate?: string;
+}
+/**
+ * Pure helper that turns a review's evolution signals into write-ready
+ * artefacts.
+ *
+ * Behaviour (Requirement 8.5):
+ *   - When `newPatternSituation` is a non-empty string, construct a
+ *     `FailureContext` with `skill=forge-review` and
+ *     `trigger=new_review_pattern`, then delegate to
+ *     {@link buildFailureEpisode} and {@link buildFailureEvolutionMarker}.
+ *     The resulting episode has `outcome: "failure"` and an id of the
+ *     form `ep-YYYY-MM-DD-NNN`; the marker line targets
+ *     `forge-review#new_review_pattern`.
+ *   - When `matchedFailurePattern` is non-empty, the pattern name is
+ *     echoed on `patternUpdate` so the driver can increment the
+ *     pattern's success counter. The helper itself performs no updates.
+ *   - When neither field is set, an empty object is returned.
+ *
+ * The function is deterministic: same `(input, now, sequenceInDay)` → same output.
+ */
+export declare function buildReviewEvolutionArtifacts(input: ReviewEvolutionInput, now: Date, sequenceInDay: number): ReviewEvolutionArtifacts;
 import type { SubagentInvocation, SubagentResult } from "./loop-types.js";
 /** Context for building review subagent invocations. */
 export interface ReviewSubagentContext {

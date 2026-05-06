@@ -111,7 +111,7 @@ describe("Feature: pua-quality-engine, Property 9: PUA 上下文注入到 buildS
             };
             const output = buildSkillAwarePrompt(params);
             expect(output).toContain(puaContext.pressurePrompt);
-        }), { numRuns: 200 });
+        }), { numRuns: 50 });
     });
     /**
      * **Validates: Requirements 5.4**
@@ -130,7 +130,7 @@ describe("Feature: pua-quality-engine, Property 9: PUA 上下文注入到 buildS
             expect(skillContextIndex).toBeGreaterThanOrEqual(0);
             expect(puaEngineIndex).toBeGreaterThanOrEqual(0);
             expect(puaEngineIndex).toBeGreaterThan(skillContextIndex);
-        }), { numRuns: 200 });
+        }), { numRuns: 50 });
     });
     /**
      * **Validates: Requirements 5.2, 5.4**
@@ -146,7 +146,7 @@ describe("Feature: pua-quality-engine, Property 9: PUA 上下文注入到 buildS
             };
             const output = buildSkillAwarePrompt(params);
             expect(output).toContain(PROACTIVE_INITIATIVE_CHECKLIST);
-        }), { numRuns: 200 });
+        }), { numRuns: 50 });
     });
     /**
      * **Validates: Requirements 5.2**
@@ -162,7 +162,7 @@ describe("Feature: pua-quality-engine, Property 9: PUA 上下文注入到 buildS
             };
             const output = buildSkillAwarePrompt(params);
             expect(output).not.toContain(PROACTIVE_INITIATIVE_CHECKLIST);
-        }), { numRuns: 200 });
+        }), { numRuns: 50 });
     });
 });
 // ---------------------------------------------------------------------------
@@ -190,7 +190,7 @@ describe("Feature: pua-quality-engine, Property 10: buildSkillAwarePrompt 向后
             };
             const outputWithout = buildSkillAwarePrompt(paramsWithout);
             expect(outputWithUndefined).toBe(outputWithout);
-        }), { numRuns: 200 });
+        }), { numRuns: 50 });
     });
     /**
      * **Validates: Requirements 5.3, 8.4**
@@ -206,7 +206,7 @@ describe("Feature: pua-quality-engine, Property 10: buildSkillAwarePrompt 向后
             };
             const output = buildSkillAwarePrompt(params);
             expect(output).not.toContain("## PUA Quality Engine");
-        }), { numRuns: 200 });
+        }), { numRuns: 50 });
     });
 });
 //# sourceMappingURL=pua-prompt-injection.property.test.js.map

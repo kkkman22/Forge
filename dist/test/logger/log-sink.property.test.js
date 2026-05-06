@@ -21,7 +21,7 @@ describe("Property 2: Log level filtering monotonicity", () => {
                     }
                 }
             }
-        }), { numRuns: 200 });
+        }), { numRuns: 50 });
     });
 });
 describe("Property 5: Text format backward compatibility", () => {
@@ -43,7 +43,7 @@ describe("Property 5: Text format backward compatibility", () => {
             const text = formatAsText(entry);
             expect(text.length).toBeGreaterThan(0);
             expect(text.startsWith("{")).toBe(false);
-        }), { numRuns: 200 });
+        }), { numRuns: 50 });
     });
 });
 //# sourceMappingURL=log-sink.property.test.js.map

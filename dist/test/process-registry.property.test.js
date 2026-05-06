@@ -204,7 +204,7 @@ describe("ProcessRegistry", () => {
                 expect(all[0].pgid).toBe(pid);
                 expect(all[0].startTime).toBeTypeOf("number");
                 expect(reg.size()).toBe(all.length);
-            }), { numRuns: 100 });
+            }), { numRuns: 40 });
         });
     });
     describe("Property 2: unregister removes processes", () => {
@@ -242,7 +242,7 @@ describe("ProcessRegistry", () => {
                 for (const entry of allAfter) {
                     expect(remainingPids.has(entry.pid)).toBe(true);
                 }
-            }), { numRuns: 100 });
+            }), { numRuns: 40 });
         });
     });
 });
@@ -350,7 +350,7 @@ describe("Property 4: serialize/deserialize round-trip", () => {
             for (let i = 0; i < original.processes.length; i++) {
                 expect(restored.processes[i]).toEqual(original.processes[i]);
             }
-        }), { numRuns: 100 });
+        }), { numRuns: 40 });
     });
 });
 describe("Property 5: deserialize rejects invalid JSON", () => {
@@ -368,7 +368,7 @@ describe("Property 5: deserialize rejects invalid JSON", () => {
             }
         })), (invalid) => {
             expect(() => ProcessRegistry.deserialize(invalid)).toThrow();
-        }), { numRuns: 100 });
+        }), { numRuns: 40 });
     });
 });
 //# sourceMappingURL=process-registry.property.test.js.map

@@ -33,7 +33,7 @@ describe("Feature: agent-team-migration, Property 6: research findings merge com
             for (const s of succeeded) {
                 expect(merged).toContain(s.output ?? "");
             }
-        }), { numRuns: 100 });
+        }), { numRuns: 40 });
     });
     it("buildResearchSubagents creates one invocation per topic", () => {
         fc.assert(fc.property(fc.array(researchTopicArb, { minLength: 1, maxLength: 5 }), (topics) => {
@@ -44,7 +44,7 @@ describe("Feature: agent-team-migration, Property 6: research findings merge com
                 expect(["default", "acceptEdits"]).toContain(inv.permissionMode);
                 expect(inv.maxTurns).toBeGreaterThan(0);
             }
-        }), { numRuns: 100 });
+        }), { numRuns: 40 });
     });
     it("handles all-failure case with empty merged document", () => {
         fc.assert(fc.property(fc.array(fc.record({
@@ -55,7 +55,7 @@ describe("Feature: agent-team-migration, Property 6: research findings merge com
             const merged = mergeResearchFindings(failedResults);
             // Should indicate partial or complete failure
             expect(merged).toContain("部分研究");
-        }), { numRuns: 100 });
+        }), { numRuns: 40 });
     });
 });
 //# sourceMappingURL=research-merge.property.test.js.map

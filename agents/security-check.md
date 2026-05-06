@@ -64,11 +64,11 @@ memory: project
 ## Output Format
 
 ```markdown
-## Layer 3 — 安全与风险
+## Layer 3 — Security & Risk
 
-**评审者**：security-check
+**Reviewer**: security-check
 
-| # | 严重度 | 文件 | 问题 | 建议 |
+| # | Severity | File | Issue | Suggestion |
 |---|--------|------|------|------|
 | 1 | P0 | `src/config/db.ts:12` | 硬编码数据库密码 | 使用环境变量替代 |
 | 2 | P1 | `src/routes/user.ts:45` | 缺失鉴权检查 | 添加 auth middleware |

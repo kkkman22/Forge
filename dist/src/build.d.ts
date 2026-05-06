@@ -58,6 +58,35 @@ export declare function analyzeFixAttempts(sequence: FixAttemptSequence): Escala
  * Returns true if 3 or more consecutive failures are found anywhere in the sequence.
  */
 export declare function shouldEscalateToDebug(sequence: FixAttemptSequence): boolean;
+import type { Episode, EpisodeTier } from "./episode.js";
+/** Output of {@link buildThreeStrikeFailureArtifacts}. */
+export interface ThreeStrikeFailureArtifacts {
+    episode: Episode;
+    markerText: string;
+}
+/**
+ * Pure helper that constructs the failure artefacts triggered by the
+ * three-strike escalation path in `/forge build`.
+ *
+ * Behaviour (Requirement 8.6):
+ *   - Builds a {@link FailureContext} with `skill = "forge-build"` and
+ *     `trigger = "three_strike"`, carrying `topic`, `tier`, `situation`,
+ *     and (optional) `rootCause` from the call site.
+ *   - Delegates to {@link buildFailureEpisode} to produce a v2 Episode
+ *     with `outcome: "failure"`, a deterministic id of the form
+ *     `ep-YYYY-MM-DD-NNN`, and a body that embeds the trigger metadata.
+ *   - Calls {@link buildFailureEvolutionMarker} with the episode id so
+ *     the Evolution marker target is `forge-build#three_strike`.
+ *
+ * The helper does no IO; drivers persist the episode to
+ * `.forge/knowledge/sessions/<date>-<topic>.md` and append the marker
+ * to the topic's progress file. Both writes are advisory — failure to
+ * persist should degrade to a warning per Requirement 8.12.
+ *
+ * Pure: identical `(topic, tier, situation, rootCause, now, sequenceInDay)`
+ * always yields identical artefacts.
+ */
+export declare function buildThreeStrikeFailureArtifacts(topic: string, tier: EpisodeTier, situation: string, rootCause: string | undefined, now: Date, sequenceInDay: number): ThreeStrikeFailureArtifacts;
 import type { SubagentInvocation, SubagentResult } from "./loop-types.js";
 /**
  * Build one SubagentInvocation per research topic.

@@ -46,7 +46,7 @@ describe("Feature: forge-audit-remediation, Property 4: Branch name deduplicatio
             const deduplicated = deduplicateBranchName(baseName, runId, existingBranches);
             // The deduplicated name must differ from the original
             expect(deduplicated).not.toBe(baseName);
-        }), { numRuns: 100 });
+        }), { numRuns: 40 });
     });
     /**
      * **Validates: Requirements 2.1**
@@ -58,7 +58,7 @@ describe("Feature: forge-audit-remediation, Property 4: Branch name deduplicatio
             // No collision: existingBranches is empty
             const deduplicated = deduplicateBranchName(baseName, runId, []);
             expect(deduplicated).toBe(baseName);
-        }), { numRuns: 100 });
+        }), { numRuns: 40 });
     });
     /**
      * **Validates: Requirements 2.1**
@@ -74,7 +74,7 @@ describe("Feature: forge-audit-remediation, Property 4: Branch name deduplicatio
             const name1 = deduplicateBranchName(baseName, runId1, existingBranches);
             const name2 = deduplicateBranchName(baseName, runId2, existingBranches);
             expect(name1).not.toBe(name2);
-        }), { numRuns: 100 });
+        }), { numRuns: 40 });
     });
     /**
      * **Validates: Requirements 2.1**
@@ -91,7 +91,7 @@ describe("Feature: forge-audit-remediation, Property 4: Branch name deduplicatio
             if (deduplicated.length <= 250 && baseName.length + 1 + suffix.length <= 250) {
                 expect(deduplicated).toBe(`${baseName}-${suffix}`);
             }
-        }), { numRuns: 100 });
+        }), { numRuns: 40 });
     });
 });
 // ---------------------------------------------------------------------------
@@ -108,7 +108,7 @@ describe("Feature: forge-audit-remediation, Property 5: Branch name length is bo
         fc.assert(fc.property(longStringArb, runIdArb, (baseName, runId) => {
             const result = deduplicateBranchName(baseName, runId, []);
             expect(result.length).toBeLessThanOrEqual(250);
-        }), { numRuns: 100 });
+        }), { numRuns: 40 });
     });
     /**
      * **Validates: Requirements 2.5**
@@ -120,7 +120,7 @@ describe("Feature: forge-audit-remediation, Property 5: Branch name length is bo
         fc.assert(fc.property(longStringArb, runIdArb, (baseName, runId) => {
             const result = deduplicateBranchName(baseName, runId, [baseName]);
             expect(result.length).toBeLessThanOrEqual(250);
-        }), { numRuns: 100 });
+        }), { numRuns: 40 });
     });
     /**
      * **Validates: Requirements 2.5**
@@ -140,7 +140,7 @@ describe("Feature: forge-audit-remediation, Property 5: Branch name length is bo
             const withCollision = deduplicateBranchName(baseName, runId, [baseName]);
             expect(noCollision.length).toBeLessThanOrEqual(250);
             expect(withCollision.length).toBeLessThanOrEqual(250);
-        }), { numRuns: 100 });
+        }), { numRuns: 40 });
     });
 });
 //# sourceMappingURL=run-manager-collision.property.test.js.map

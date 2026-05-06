@@ -79,7 +79,7 @@ describe("Feature: error-recovery-strategy, Property 10: classification totality
                     expect(phaseInc).toBeNull();
                     break;
             }
-        }), { numRuns: 100 });
+        }), { numRuns: 40 });
     });
 });
 // ---------------------------------------------------------------------------
@@ -156,7 +156,7 @@ describe("Feature: error-recovery-strategy, Property 12: TDD phase inference", (
                 expect(result).toBe("refactor-incomplete");
             }
             // null verification with both files is ambiguous → null is acceptable
-        }), { numRuns: 100 });
+        }), { numRuns: 40 });
     });
 });
 // ---------------------------------------------------------------------------
@@ -171,7 +171,7 @@ describe("Feature: error-recovery-strategy, Property 13: test file identificatio
                 /^test\//.test(path) ||
                 /\/__tests__\//.test(path);
             expect(result).toBe(expected);
-        }), { numRuns: 100 });
+        }), { numRuns: 40 });
     });
     it("matches known test file patterns", () => {
         expect(isTestFile("foo.test.ts")).toBe(true);

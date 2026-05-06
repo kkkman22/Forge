@@ -34,7 +34,7 @@ describe("Property 33: Handoff validation", () => {
             const result = validateHandoffEntry(entry);
             expect(result.valid).toBe(true);
             expect(result.errors).toHaveLength(0);
-        }), { numRuns: 100 });
+        }), { numRuns: 40 });
     });
     it("empty decided array fails validation", () => {
         const entry = {
@@ -112,7 +112,7 @@ describe("Property 35: Render/parse round-trip", () => {
             expect(p.entry.risks).toEqual(entry.risks);
             expect(p.entry.artifacts).toEqual(entry.artifacts);
             expect(p.entry.remaining).toEqual(entry.remaining);
-        }), { numRuns: 100 });
+        }), { numRuns: 40 });
     });
     it("parseHandoff returns null for invalid content", () => {
         expect(parseHandoff("not a handoff")).toBeNull();

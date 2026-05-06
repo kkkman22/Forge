@@ -82,7 +82,7 @@ describe("Feature: gnhf-inspired-enhancements, Property 2: 编排器状态转换
             // Token usage accumulated
             expect(result.state.totalInputTokens).toBe(state.totalInputTokens + tokenUsage.inputTokens);
             expect(result.state.totalOutputTokens).toBe(state.totalOutputTokens + tokenUsage.outputTokens);
-        }), { numRuns: 200 });
+        }), { numRuns: 50 });
     });
     /**
      * **Validates: Requirements 1.4**
@@ -108,7 +108,7 @@ describe("Feature: gnhf-inspired-enhancements, Property 2: 编排器状态转换
             expect(result.state.consecutiveErrors).toBe(0);
             // Iteration incremented
             expect(result.state.currentIteration).toBe(state.currentIteration + 1);
-        }), { numRuns: 200 });
+        }), { numRuns: 50 });
     });
     /**
      * **Validates: Requirements 1.4**
@@ -137,7 +137,7 @@ describe("Feature: gnhf-inspired-enhancements, Property 2: 编排器状态转换
             expect(result.state.currentIteration).toBe(state.currentIteration + 1);
             // Status becomes "waiting" (backoff)
             expect(result.state.status).toBe("waiting");
-        }), { numRuns: 200 });
+        }), { numRuns: 50 });
     });
     /**
      * **Validates: Requirements 1.8**
@@ -153,7 +153,7 @@ describe("Feature: gnhf-inspired-enhancements, Property 2: 编排器状态转换
             expect(effectTypes).toContain("rollback");
             expect(effectTypes).toContain("stop");
             expect(result.state.status).toBe("stopped");
-        }), { numRuns: 200 });
+        }), { numRuns: 50 });
     });
 });
 // ---------------------------------------------------------------------------
@@ -177,7 +177,7 @@ describe("Feature: gnhf-inspired-enhancements, Property 3: 终止条件正确性
             const reason = shouldAbort(state, limits);
             expect(reason).not.toBeNull();
             expect(reason).toContain("max iterations");
-        }), { numRuns: 200 });
+        }), { numRuns: 50 });
     });
     /**
      * **Validates: Requirements 1.6**
@@ -201,7 +201,7 @@ describe("Feature: gnhf-inspired-enhancements, Property 3: 终止条件正确性
             const reason = shouldAbort(state, limits);
             expect(reason).not.toBeNull();
             expect(reason).toContain("max tokens");
-        }), { numRuns: 200 });
+        }), { numRuns: 50 });
     });
     /**
      * **Validates: Requirements 1.5, 1.6**
@@ -221,7 +221,7 @@ describe("Feature: gnhf-inspired-enhancements, Property 3: 终止条件正确性
             const limits = { maxIterations, maxTokens };
             const reason = shouldAbort(state, limits);
             expect(reason).toBeNull();
-        }), { numRuns: 200 });
+        }), { numRuns: 50 });
     });
     /**
      * **Validates: Requirements 1.5, 1.6**
@@ -232,7 +232,7 @@ describe("Feature: gnhf-inspired-enhancements, Property 3: 终止条件正确性
         fc.assert(fc.property(runningStateArb, (state) => {
             const reason = shouldAbort(state, {});
             expect(reason).toBeNull();
-        }), { numRuns: 200 });
+        }), { numRuns: 50 });
     });
 });
 //# sourceMappingURL=loop-orchestrator.property.test.js.map

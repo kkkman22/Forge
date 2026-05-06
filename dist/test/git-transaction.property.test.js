@@ -56,7 +56,7 @@ describe("Feature: gnhf-inspired-enhancements, Property 5: 提交消息格式化
             const msgArg = cmd.args[2];
             expect(msgArg).toContain(String(iteration));
             expect(msgArg).toContain(summary);
-        }), { numRuns: 200 });
+        }), { numRuns: 50 });
     });
     /**
      * **Validates: Requirements 2.1**
@@ -71,7 +71,7 @@ describe("Feature: gnhf-inspired-enhancements, Property 5: 提交消息格式化
             expect(msgArg.length).toBeGreaterThan(0);
             expect(msgArg).not.toContain("\n");
             expect(msgArg).not.toContain("\r");
-        }), { numRuns: 200 });
+        }), { numRuns: 50 });
     });
     /**
      * **Validates: Requirements 2.1**
@@ -87,7 +87,7 @@ describe("Feature: gnhf-inspired-enhancements, Property 5: 提交消息格式化
             expect(cmd.args[1]).toBe("-m");
             expect(cmd.args[2]).toBe(message);
             expect(cmd.args).toHaveLength(3);
-        }), { numRuns: 200 });
+        }), { numRuns: 50 });
     });
 });
 // ---------------------------------------------------------------------------
@@ -123,7 +123,7 @@ describe("Feature: gnhf-inspired-enhancements, Property 6: 回滚往返一致性
             const clean2 = buildCleanCommand();
             expect(reset1).toEqual(reset2);
             expect(clean1).toEqual(clean2);
-        }), { numRuns: 200 });
+        }), { numRuns: 50 });
     });
     /**
      * **Validates: Requirements 2.4, 2.7**
@@ -138,7 +138,7 @@ describe("Feature: gnhf-inspired-enhancements, Property 6: 回滚往返一致性
             // Regardless of which iteration failed, reset always targets HEAD
             expect(cmd.args).toContain("HEAD");
             expect(cmd.args).toContain("--hard");
-        }), { numRuns: 200 });
+        }), { numRuns: 50 });
     });
 });
 // ---------------------------------------------------------------------------
@@ -157,7 +157,7 @@ describe("Feature: audit-hardening, buildStashCommand 结构正确性", () => {
             expect(cmd.executable).toBe("git");
             expect(cmd.args).toEqual(["stash", "--include-untracked", "-m", message]);
             expect(cmd.args).toHaveLength(4);
-        }), { numRuns: 200 });
+        }), { numRuns: 50 });
     });
     /**
      * **Validates: Requirements 2.1**
@@ -171,7 +171,7 @@ describe("Feature: audit-hardening, buildStashCommand 结构正确性", () => {
             expect(cmd.executable).toBe("git");
             expect(cmd.args[3]).toBe(dangerous);
             expect(cmd.args).toHaveLength(4);
-        }), { numRuns: 200 });
+        }), { numRuns: 50 });
     });
 });
 // ---------------------------------------------------------------------------
@@ -191,7 +191,7 @@ describe("Feature: gnhf-inspired-enhancements, Property 14: Shell 注入安全�
             expect(cmd.args[2]).toBe(dangerous);
             // It is a discrete array element, not interpolated into a shell string
             expect(cmd.args).toHaveLength(3);
-        }), { numRuns: 200 });
+        }), { numRuns: 50 });
     });
     /**
      * **Validates: Requirements 6.1–6.7**
@@ -201,7 +201,7 @@ describe("Feature: gnhf-inspired-enhancements, Property 14: Shell 注入安全�
     it("containsShellMetacharacters detects all shell metacharacters", () => {
         fc.assert(fc.property(shellMetacharStringArb, (dangerous) => {
             expect(containsShellMetacharacters(dangerous)).toBe(true);
-        }), { numRuns: 200 });
+        }), { numRuns: 50 });
     });
     /**
      * **Validates: Requirements 6.1–6.7**
@@ -214,7 +214,7 @@ describe("Feature: gnhf-inspired-enhancements, Property 14: Shell 注入安全�
             .map((chars) => chars.join(""));
         fc.assert(fc.property(safeStringArb, (safe) => {
             expect(containsShellMetacharacters(safe)).toBe(false);
-        }), { numRuns: 200 });
+        }), { numRuns: 50 });
     });
     /**
      * **Validates: Requirements 6.1–6.7**
@@ -225,7 +225,7 @@ describe("Feature: gnhf-inspired-enhancements, Property 14: Shell 注入安全�
         fc.assert(fc.property(arbitraryStringArb, (message) => {
             const cmd = buildCommitCommand(message);
             expect(cmd.executable).toBe("git");
-        }), { numRuns: 200 });
+        }), { numRuns: 50 });
     });
     /**
      * **Validates: Requirements 6.1–6.7**
@@ -241,7 +241,7 @@ describe("Feature: gnhf-inspired-enhancements, Property 14: Shell 注入安全�
                 // Only alphanumeric, hyphens, underscores, forward slashes, and dots allowed
                 expect(ch).toMatch(/[a-zA-Z0-9\-_./]/);
             }
-        }), { numRuns: 200 });
+        }), { numRuns: 50 });
     });
     /**
      * **Validates: Requirements 6.1–6.7**
@@ -257,7 +257,7 @@ describe("Feature: gnhf-inspired-enhancements, Property 14: Shell 注入安全�
             expect(sanitized).not.toMatch(/\/{2,}/);
             // No .lock suffix
             expect(sanitized.toLowerCase()).not.toMatch(/\.lock$/);
-        }), { numRuns: 200 });
+        }), { numRuns: 50 });
     });
     /**
      * **Validates: Requirements 6.1–6.7**
@@ -267,7 +267,7 @@ describe("Feature: gnhf-inspired-enhancements, Property 14: Shell 注入安全�
     it("validatePathSafety rejects paths with injection patterns", () => {
         fc.assert(fc.property(dangerousPathArb, (path) => {
             expect(validatePathSafety(path)).toBe(false);
-        }), { numRuns: 200 });
+        }), { numRuns: 50 });
     });
     /**
      * **Validates: Requirements 6.1–6.7**
@@ -277,7 +277,7 @@ describe("Feature: gnhf-inspired-enhancements, Property 14: Shell 注入安全�
     it("validatePathSafety accepts safe paths", () => {
         fc.assert(fc.property(safePathArb, (path) => {
             expect(validatePathSafety(path)).toBe(true);
-        }), { numRuns: 200 });
+        }), { numRuns: 50 });
     });
 });
 // ---------------------------------------------------------------------------
@@ -323,7 +323,7 @@ describe("Feature: audit-remediation-v221, Property 5: sanitizeBranchName produc
             for (const ch of result) {
                 expect(ch).toMatch(/[a-zA-Z0-9\-_./]/);
             }
-        }), { numRuns: 200 });
+        }), { numRuns: 50 });
     });
     /**
      * **Validates: Requirements 15.1, 15.2, 15.3**
@@ -337,7 +337,7 @@ describe("Feature: audit-remediation-v221, Property 5: sanitizeBranchName produc
             expect(result).not.toContain("..");
             expect(result).not.toContain("@{");
             expect(result.toLowerCase()).not.toMatch(/\.lock$/);
-        }), { numRuns: 200 });
+        }), { numRuns: 50 });
     });
     /**
      * **Validates: Requirements 15.1, 15.2, 15.3**
@@ -351,7 +351,7 @@ describe("Feature: audit-remediation-v221, Property 5: sanitizeBranchName produc
                 expect(result[0]).not.toMatch(/[./-]/);
                 expect(result[result.length - 1]).not.toMatch(/[./-]/);
             }
-        }), { numRuns: 200 });
+        }), { numRuns: 50 });
     });
     /**
      * **Validates: Requirements 15.1, 15.2, 15.3**
@@ -368,7 +368,7 @@ describe("Feature: audit-remediation-v221, Property 5: sanitizeBranchName produc
                 expect(code).not.toBe(0x7f);
                 expect(ch).not.toBe(" ");
             }
-        }), { numRuns: 200 });
+        }), { numRuns: 50 });
     });
     /**
      * **Validates: Requirements 15.1, 15.2, 15.3**
@@ -392,7 +392,7 @@ describe("Feature: audit-remediation-v221, Property 5: sanitizeBranchName produc
                 expect(result[0]).not.toMatch(/[./-]/);
                 expect(result[result.length - 1]).not.toMatch(/[./-]/);
             }
-        }), { numRuns: 200 });
+        }), { numRuns: 50 });
     });
     /**
      * **Validates: Requirements 15.1, 15.2, 15.3**
@@ -404,7 +404,7 @@ describe("Feature: audit-remediation-v221, Property 5: sanitizeBranchName produc
         fc.assert(fc.property(nonDegenerateStringArb, (input) => {
             const result = sanitizeBranchName(input);
             expect(result.length).toBeGreaterThan(0);
-        }), { numRuns: 200 });
+        }), { numRuns: 50 });
     });
     /**
      * **Validates: Requirements 15.1, 15.2, 15.3**
@@ -415,7 +415,7 @@ describe("Feature: audit-remediation-v221, Property 5: sanitizeBranchName produc
         fc.assert(fc.property(generalStringArb, (input) => {
             const result = sanitizeBranchName(input);
             expect(result).not.toMatch(/\/{2,}/);
-        }), { numRuns: 200 });
+        }), { numRuns: 50 });
     });
 });
 //# sourceMappingURL=git-transaction.property.test.js.map

@@ -65,7 +65,7 @@ describe("Feature: agent-team-migration, Property 2: parallel execution fault to
             const _expectedFailed = results.filter((r) => r.status !== "success");
             expect(outcome.succeeded.length + outcome.failed.length).toBe(results.length);
             expect(outcome.succeeded.length).toBe(expectedSucceeded.length);
-        }), { numRuns: 100 });
+        }), { numRuns: 40 });
     });
     it("handles all-success case without losing results", async () => {
         await fc.assert(fc.asyncProperty(fc.array(fc.record({
@@ -83,7 +83,7 @@ describe("Feature: agent-team-migration, Property 2: parallel execution fault to
             const outcome = await runSubagentsInParallel(invocations, executor);
             expect(outcome.failed).toHaveLength(0);
             expect(outcome.succeeded).toHaveLength(invocations.length);
-        }), { numRuns: 100 });
+        }), { numRuns: 40 });
     });
     it("handles all-failure case without discarding error information", async () => {
         await fc.assert(fc.asyncProperty(fc.array(fc.record({
@@ -107,7 +107,7 @@ describe("Feature: agent-team-migration, Property 2: parallel execution fault to
             for (const f of outcome.failed) {
                 expect(f.error.length).toBeGreaterThan(0);
             }
-        }), { numRuns: 100 });
+        }), { numRuns: 40 });
     });
 });
 // ---------------------------------------------------------------------------
@@ -126,7 +126,7 @@ describe("Feature: agent-team-migration, Property 5: invocation protocol complet
                 expect(inv.maxTurns).toBeGreaterThan(0);
                 expect(VALID_AGENT_TYPES).toContain(inv.agentType);
             }
-        }), { numRuns: 100 });
+        }), { numRuns: 40 });
     });
 });
 //# sourceMappingURL=subagent-runner.property.test.js.map

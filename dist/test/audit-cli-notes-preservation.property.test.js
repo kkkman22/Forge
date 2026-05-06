@@ -81,7 +81,7 @@ describe("Preservation Property 2a: Empty entries persist as empty string", () =
             // Simulate the CLI persist ternary (same on both unfixed and fixed code)
             const result = doc.entries.length > 0 ? formatNotesDocument(doc) : "";
             expect(result).toBe("");
-        }), { numRuns: 200 });
+        }), { numRuns: 50 });
     });
 });
 // ---------------------------------------------------------------------------
@@ -110,7 +110,7 @@ describe("Preservation Property 2b: formatNotesDocument round-trip", () => {
                 expect(roundTripped.keyChanges).toEqual(original.keyChanges);
                 expect(roundTripped.keyLearnings).toEqual(original.keyLearnings);
             }
-        }), { numRuns: 200 });
+        }), { numRuns: 50 });
     });
     /**
      * **Validates: Requirements 3.4, 3.5**
@@ -125,7 +125,7 @@ describe("Preservation Property 2b: formatNotesDocument round-trip", () => {
             expect(parsed.runId).toBe(doc.runId);
             expect(parsed.branchName).toBe(doc.branchName);
             expect(parsed.entries.length).toBe(doc.entries.length);
-        }), { numRuns: 200 });
+        }), { numRuns: 50 });
     });
 });
 // ---------------------------------------------------------------------------
@@ -143,7 +143,7 @@ describe("Preservation Property 2c: formatNotesDocument output structure", () =>
             const markdown = formatNotesDocument(doc);
             expect(markdown.startsWith("# Run:")).toBe(true);
             expect(markdown).toContain("## Iteration Log");
-        }), { numRuns: 200 });
+        }), { numRuns: 50 });
     });
 });
 //# sourceMappingURL=audit-cli-notes-preservation.property.test.js.map

@@ -62,14 +62,14 @@ permissionMode: plan
 ## Output Format
 
 ```markdown
-### 技术方案
+### Technical Solution
 
-**选型**：<技术选型及理由>
-**风险**：
+**Selection**: <技术选型及理由>
+**Risks**:
 - <风险 1>：<影响> / <缓解措施>
 - <风险 2>：<影响> / <缓解措施>
-**扩展性**：<扩展性评估>
-**兼容性**：<与现有系统的兼容性评估>
+**Scalability**: <扩展性评估>
+**Compatibility**: <与现有系统的兼容性评估>
 ```
 
 ---
