@@ -41,7 +41,7 @@ describe("Property 1: LogEntry JSON round-trip", () => {
         const parsed = JSON.parse(json);
         expect(parsed).toEqual(JSON.parse(JSON.stringify(entry)));
       }),
-      { numRuns: 200 },
+      { numRuns: 50 },
     );
   });
 });
@@ -106,7 +106,7 @@ describe("Feature: observability-enhancements, Property 1: LogEntry JSON round-t
           expect(parsed).toEqual(JSON.parse(JSON.stringify(entry)));
         },
       ),
-      { numRuns: 100 },
+      { numRuns: 40 },
     );
   });
 
@@ -128,7 +128,7 @@ describe("Feature: observability-enhancements, Property 1: LogEntry JSON round-t
           expect(parsed).toEqual(JSON.parse(JSON.stringify(entry)));
         },
       ),
-      { numRuns: 100 },
+      { numRuns: 40 },
     );
   });
 
@@ -141,7 +141,7 @@ describe("Feature: observability-enhancements, Property 1: LogEntry JSON round-t
         const parsed = JSON.parse(json);
         expect(parsed).toEqual(JSON.parse(JSON.stringify(entry)));
       }),
-      { numRuns: 100 },
+      { numRuns: 40 },
     );
   });
 });

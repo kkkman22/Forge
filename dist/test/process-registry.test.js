@@ -13,7 +13,10 @@ describe("ProcessRegistry example tests", () => {
         });
         it("resetInstance allows fresh start", () => {
             const first = ProcessRegistry.getInstance();
-            first.register({ pid: 1, on: () => { } }, { source: "test", detached: false });
+            first.register({ pid: 1, on: () => { } }, {
+                source: "test",
+                detached: false,
+            });
             expect(first.size()).toBe(1);
             ProcessRegistry.resetInstance();
             const second = ProcessRegistry.getInstance();
@@ -24,11 +27,16 @@ describe("ProcessRegistry example tests", () => {
         it("sends SIGTERM first, then SIGKILL after timeout", async () => {
             const reg = ProcessRegistry.getInstance();
             const killCalls = [];
-            const killSpy = vi.spyOn(process, "kill").mockImplementation((pid, signal) => {
+            const killSpy = vi
+                .spyOn(process, "kill")
+                .mockImplementation((pid, signal) => {
                 killCalls.push({ pid, signal });
                 return true;
             });
-            reg.register({ pid: 500, on: () => { } }, { source: "test", detached: false });
+            reg.register({ pid: 500, on: () => { } }, {
+                source: "test",
+                detached: false,
+            });
             await reg.shutdownAll(100);
             // SIGTERM should come before SIGKILL
             const sigtermIdx = killCalls.findIndex((c) => c.signal === "SIGTERM");
@@ -46,7 +54,10 @@ describe("ProcessRegistry example tests", () => {
                 err.code = "ESRCH";
                 throw err;
             });
-            reg.register({ pid: 600, on: () => { } }, { source: "caffeinate", detached: true });
+            reg.register({ pid: 600, on: () => { } }, {
+                source: "caffeinate",
+                detached: true,
+            });
             const all = reg.getAll();
             expect(all[0].detached).toBe(true);
             await reg.shutdownAll();

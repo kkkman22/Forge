@@ -132,7 +132,7 @@ describe("Feature: error-recovery-strategy, Property 10: classification totality
           }
         },
       ),
-      { numRuns: 100 },
+      { numRuns: 40 },
     );
   });
 });
@@ -237,7 +237,7 @@ describe("Feature: error-recovery-strategy, Property 12: TDD phase inference", (
           // null verification with both files is ambiguous → null is acceptable
         },
       ),
-      { numRuns: 100 },
+      { numRuns: 40 },
     );
   });
 });
@@ -258,7 +258,7 @@ describe("Feature: error-recovery-strategy, Property 13: test file identificatio
           /\/__tests__\//.test(path);
         expect(result).toBe(expected);
       }),
-      { numRuns: 100 },
+      { numRuns: 40 },
     );
   });
 

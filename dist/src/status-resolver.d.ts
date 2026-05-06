@@ -55,3 +55,20 @@ export declare function resolveStatusPath(ctx: ResolverContext, dirExists: (path
  * @param dirExists - DI function to check directory existence
  */
 export declare function isMultiTaskMode(forgeRoot: string, dirExists: (path: string) => boolean): boolean;
+/** Result of reconstructing state from git history and file presence. */
+export interface ReconstructedState {
+    inferredPhase: string;
+    confidence: "high" | "medium" | "low";
+    evidence: string[];
+}
+/**
+ * Infer current workflow phase from .forge/ file presence.
+ *
+ * Pure function — no side effects, no file writes.
+ * Inference priority: reviews/ > progress/ > plans/ > router.
+ *
+ * Called by forge-resume when StatusFile is missing or inconsistent.
+ * Reconstructed state is presented to the user for confirmation,
+ * NOT automatically written to disk.
+ */
+export declare function reconstructStateFromGit(forgeFiles: string[]): ReconstructedState;

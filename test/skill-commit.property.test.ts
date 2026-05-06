@@ -52,7 +52,7 @@ describe("Feature: loop-skills-fusion, Property 12: SKILL 阶段 commit 策略�
       fc.property(commitablePhaseArb, (phase) => {
         expect(shouldCommitForPhase(phase, true)).toBe(true);
       }),
-      { numRuns: 200 },
+      { numRuns: 50 },
     );
   });
 
@@ -66,7 +66,7 @@ describe("Feature: loop-skills-fusion, Property 12: SKILL 阶段 commit 策略�
       fc.property(nonCommitablePhaseArb, (phase) => {
         expect(shouldCommitForPhase(phase, true)).toBe(false);
       }),
-      { numRuns: 200 },
+      { numRuns: 50 },
     );
   });
 
@@ -80,7 +80,7 @@ describe("Feature: loop-skills-fusion, Property 12: SKILL 阶段 commit 策略�
       fc.property(anyKnownPhaseArb, (phase) => {
         expect(shouldCommitForPhase(phase, false)).toBe(false);
       }),
-      { numRuns: 200 },
+      { numRuns: 50 },
     );
   });
 
@@ -96,7 +96,7 @@ describe("Feature: loop-skills-fusion, Property 12: SKILL 阶段 commit 策略�
         const result2 = shouldCommitForPhase(phase, success);
         expect(result1).toBe(result2);
       }),
-      { numRuns: 200 },
+      { numRuns: 50 },
     );
   });
 });

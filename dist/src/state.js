@@ -14,7 +14,126 @@
  *   **Validates: Requirements 11.2**
  */
 import * as pathPosix from "node:path/posix";
-import { extractStringField, parseFrontmatter } from "./frontmatter.js";
+import { extractListField, extractNumericField, extractStringField, parseFrontmatter, } from "./frontmatter.js";
+// ---------------------------------------------------------------------------
+// Default value tables (State Resilience Layer 1)
+// ---------------------------------------------------------------------------
+export const STATUS_DEFAULTS = {
+    current_task: "",
+    tier: "standard",
+    phase: "router",
+    task_type: "fullstack",
+    project_phase: "iteration",
+    hints: "",
+    assumptions: [],
+    mode: "interactive",
+    updated: "",
+};
+export const REVIEW_REPORT_DEFAULTS = {
+    result: "incomplete",
+    p0_count: 0,
+    p1_count: 0,
+    p2_count: 0,
+    p3_count: 0,
+};
+// ---------------------------------------------------------------------------
+// Graceful parsing (State Resilience Layer 1)
+// ---------------------------------------------------------------------------
+/**
+ * Parse StatusFile frontmatter with graceful fallback to defaults.
+ *
+ * - undefined/empty content → all defaults + warnings
+ * - missing frontmatter → all defaults + warnings
+ * - partial fields → missing fields use STATUS_DEFAULTS + warnings
+ * - complete input → normal parse, no warnings
+ */
+export function parseStatusFileGraceful(content) {
+    const warnings = [];
+    if (content === undefined || content.trim() === "") {
+        warnings.push("StatusFile content is empty or undefined, using all defaults");
+        return { parsed: { ...STATUS_DEFAULTS }, warnings };
+    }
+    const fm = parseFrontmatter(content);
+    if (fm === null) {
+        warnings.push("StatusFile has no valid YAML frontmatter, using all defaults");
+        return { parsed: { ...STATUS_DEFAULTS }, warnings };
+    }
+    const parsed = {
+        current_task: extractStringField(fm.raw, "current_task") ?? STATUS_DEFAULTS.current_task,
+        tier: extractStringField(fm.raw, "tier") ?? STATUS_DEFAULTS.tier,
+        phase: extractStringField(fm.raw, "phase") ?? STATUS_DEFAULTS.phase,
+        task_type: extractStringField(fm.raw, "task_type") ?? STATUS_DEFAULTS.task_type,
+        project_phase: extractStringField(fm.raw, "project_phase") ?? STATUS_DEFAULTS.project_phase,
+        hints: extractStringField(fm.raw, "hints") ?? STATUS_DEFAULTS.hints,
+        assumptions: extractListField(fm.raw, "assumptions") ?? STATUS_DEFAULTS.assumptions,
+        mode: extractStringField(fm.raw, "mode") ?? STATUS_DEFAULTS.mode,
+        updated: extractStringField(fm.raw, "updated") ?? STATUS_DEFAULTS.updated,
+    };
+    // Track which fields used defaults
+    const provided = new Set();
+    for (const line of fm.raw.split("\n")) {
+        const match = line.match(/^(\w+):/);
+        if (match)
+            provided.add(match[1]);
+    }
+    const missingFields = [
+        "current_task",
+        "tier",
+        "phase",
+        "task_type",
+        "project_phase",
+        "hints",
+        "assumptions",
+        "mode",
+        "updated",
+    ].filter((f) => !provided.has(f));
+    if (missingFields.length > 0) {
+        warnings.push(`StatusFile missing fields [${missingFields.join(", ")}], using defaults`);
+    }
+    return { parsed, warnings };
+}
+/**
+ * Parse review report frontmatter with graceful fallback to defaults.
+ *
+ * - undefined/empty content → all defaults + warnings
+ * - missing fields → REVIEW_REPORT_DEFAULTS + warnings
+ * - result defaults to "incomplete" (safe — blocks ship)
+ */
+export function parseReviewReportGraceful(content) {
+    const warnings = [];
+    if (content === undefined || content.trim() === "") {
+        warnings.push("Review report content is empty or undefined, using all defaults");
+        return { parsed: { ...REVIEW_REPORT_DEFAULTS }, warnings };
+    }
+    const fm = parseFrontmatter(content);
+    if (fm === null) {
+        warnings.push("Review report has no valid YAML frontmatter, using all defaults");
+        return { parsed: { ...REVIEW_REPORT_DEFAULTS }, warnings };
+    }
+    const resultStr = extractStringField(fm.raw, "result");
+    const p0 = extractNumericField(fm.raw, "p0_count");
+    const p1 = extractNumericField(fm.raw, "p1_count");
+    const p2 = extractNumericField(fm.raw, "p2_count");
+    const p3 = extractNumericField(fm.raw, "p3_count");
+    const parsed = {
+        result: resultStr ?? REVIEW_REPORT_DEFAULTS.result,
+        p0_count: p0 ?? REVIEW_REPORT_DEFAULTS.p0_count,
+        p1_count: p1 ?? REVIEW_REPORT_DEFAULTS.p1_count,
+        p2_count: p2 ?? REVIEW_REPORT_DEFAULTS.p2_count,
+        p3_count: p3 ?? REVIEW_REPORT_DEFAULTS.p3_count,
+    };
+    if (resultStr === null)
+        warnings.push("Review report missing 'result', defaulting to 'incomplete'");
+    if (p0 === null)
+        warnings.push("Review report missing 'p0_count', defaulting to 0");
+    if (p1 === null)
+        warnings.push("Review report missing 'p1_count', defaulting to 0");
+    if (p2 === null)
+        warnings.push("Review report missing 'p2_count', defaulting to 0");
+    if (p3 === null)
+        warnings.push("Review report missing 'p3_count', defaulting to 0");
+    return { parsed, warnings };
+}
 // ---------------------------------------------------------------------------
 // Constants
 // ---------------------------------------------------------------------------

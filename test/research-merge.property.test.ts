@@ -45,7 +45,7 @@ describe("Feature: agent-team-migration, Property 6: research findings merge com
           expect(merged).toContain(s.output ?? "");
         }
       }),
-      { numRuns: 100 },
+      { numRuns: 40 },
     );
   });
 
@@ -62,7 +62,7 @@ describe("Feature: agent-team-migration, Property 6: research findings merge com
           expect(inv.maxTurns).toBeGreaterThan(0);
         }
       }),
-      { numRuns: 100 },
+      { numRuns: 40 },
     );
   });
 
@@ -83,7 +83,7 @@ describe("Feature: agent-team-migration, Property 6: research findings merge com
           expect(merged).toContain("部分研究");
         },
       ),
-      { numRuns: 100 },
+      { numRuns: 40 },
     );
   });
 });

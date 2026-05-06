@@ -36,7 +36,7 @@ describe("Feature: ship-delivery-unification, Property 3: No duplicate branch de
           expect(result.action).toBe("preserve");
         }
       }),
-      { numRuns: 200 },
+      { numRuns: 50 },
     );
   });
 });

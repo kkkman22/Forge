@@ -12,7 +12,7 @@
  * **Validates: Requirement 4**
  */
 import type { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
-interface ReadExecResult {
+export interface ReadExecResult {
     stdout: string;
     stderr: string;
     exitCode: number;
@@ -31,4 +31,3 @@ export declare function execReadScript(script: string, language: "javascript" | 
  * Register the `forge_read` tool on the given MCP server.
  */
 export declare function registerForgeRead(server: McpServer): void;
-export {};

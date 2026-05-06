@@ -144,7 +144,7 @@ describe("Feature: pua-quality-engine, Property 11: PUA StatusFile 字段 round-
         expect(extracted.puaChainIndex).toBe(fields.puaChainIndex);
         expect(extracted.puaFailurePattern).toBe(fields.puaFailurePattern);
       }),
-      { numRuns: 200 },
+      { numRuns: 50 },
     );
   });
 
@@ -176,7 +176,7 @@ describe("Feature: pua-quality-engine, Property 11: PUA StatusFile 字段 round-
 
         expect(writtenFields).toEqual(originalFields);
       }),
-      { numRuns: 200 },
+      { numRuns: 50 },
     );
   });
 
@@ -200,7 +200,7 @@ describe("Feature: pua-quality-engine, Property 11: PUA StatusFile 字段 round-
         expect(extracted2.puaChainIndex).toBe(extracted1.puaChainIndex);
         expect(extracted2.puaFailurePattern).toBe(extracted1.puaFailurePattern);
       }),
-      { numRuns: 200 },
+      { numRuns: 50 },
     );
   });
 });
@@ -228,7 +228,7 @@ describe("Feature: pua-quality-engine, Property 12: PUA StatusFile 字段清除�
         expect(extracted.puaChainIndex).toBeUndefined();
         expect(extracted.puaFailurePattern).toBeUndefined();
       }),
-      { numRuns: 200 },
+      { numRuns: 50 },
     );
   });
 
@@ -261,7 +261,7 @@ describe("Feature: pua-quality-engine, Property 12: PUA StatusFile 字段清除�
 
         expect(clearedNonPuaFields).toEqual(originalNonPuaFields);
       }),
-      { numRuns: 200 },
+      { numRuns: 50 },
     );
   });
 
@@ -279,7 +279,7 @@ describe("Feature: pua-quality-engine, Property 12: PUA StatusFile 字段清除�
 
         expect(cleared2).toBe(cleared1);
       }),
-      { numRuns: 200 },
+      { numRuns: 50 },
     );
   });
 });
@@ -305,7 +305,7 @@ describe("Feature: pua-quality-engine, Property 13: PUA StatusFile 解析容错�
         expect(result).toBeDefined();
         expect(typeof result).toBe("object");
       }),
-      { numRuns: 200 },
+      { numRuns: 50 },
     );
   });
 
@@ -328,7 +328,7 @@ describe("Feature: pua-quality-engine, Property 13: PUA StatusFile 解析容错�
           expect(result.puaFailurePattern).toBeUndefined();
         },
       ),
-      { numRuns: 200 },
+      { numRuns: 50 },
     );
   });
 

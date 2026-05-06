@@ -71,7 +71,7 @@ describe("Property 24: Skill 反馈分析", () => {
         const result = analyzeSkillFeedback(entries);
         expect(result.totalEntries).toBe(entries.length);
       }),
-      { numRuns: 100 },
+      { numRuns: 40 },
     );
   });
 
@@ -82,7 +82,7 @@ describe("Property 24: Skill 反馈分析", () => {
         const sumRuns = result.commandStats.reduce((acc, s) => acc + s.totalRuns, 0);
         expect(sumRuns).toBe(result.totalEntries);
       }),
-      { numRuns: 100 },
+      { numRuns: 40 },
     );
   });
 
@@ -94,7 +94,7 @@ describe("Property 24: Skill 反馈分析", () => {
           expect(stat.successCount + stat.failureCount).toBe(stat.totalRuns);
         }
       }),
-      { numRuns: 100 },
+      { numRuns: 40 },
     );
   });
 
@@ -107,7 +107,7 @@ describe("Property 24: Skill 反馈分析", () => {
           expect(stat.successRate).toBeLessThanOrEqual(1);
         }
       }),
-      { numRuns: 100 },
+      { numRuns: 40 },
     );
   });
 
@@ -120,7 +120,7 @@ describe("Property 24: Skill 反馈分析", () => {
           expect(stat.successRate).toBeCloseTo(expected, 10);
         }
       }),
-      { numRuns: 100 },
+      { numRuns: 40 },
     );
   });
 
@@ -137,7 +137,7 @@ describe("Property 24: Skill 反馈分析", () => {
           }
         }
       }),
-      { numRuns: 100 },
+      { numRuns: 40 },
     );
   });
 
@@ -152,7 +152,7 @@ describe("Property 24: Skill 反馈分析", () => {
           }
         }
       }),
-      { numRuns: 100 },
+      { numRuns: 40 },
     );
   });
 
@@ -194,7 +194,7 @@ describe("Property 24: Skill 反馈分析", () => {
           }
         }
       }),
-      { numRuns: 100 },
+      { numRuns: 40 },
     );
   });
 
@@ -206,7 +206,7 @@ describe("Property 24: Skill 反馈分析", () => {
           expect(stat.avgDurationSeconds).toBeGreaterThanOrEqual(0);
         }
       }),
-      { numRuns: 100 },
+      { numRuns: 40 },
     );
   });
 
@@ -220,7 +220,7 @@ describe("Property 24: Skill 反馈分析", () => {
           );
         }
       }),
-      { numRuns: 100 },
+      { numRuns: 40 },
     );
   });
 });

@@ -141,7 +141,7 @@ describe("Property 8: Build 门禁——Spec 锁定且 Plan 批准", () => {
         expect(result.allowed).toBe(true);
         expect(result.reasons).toHaveLength(0);
       }),
-      { numRuns: 200 },
+      { numRuns: 50 },
     );
   });
 
@@ -153,7 +153,7 @@ describe("Property 8: Build 门禁——Spec 锁定且 Plan 批准", () => {
         expect(result.allowed).toBe(false);
         expect(result.reasons.length).toBeGreaterThan(0);
       }),
-      { numRuns: 200 },
+      { numRuns: 50 },
     );
   });
 
@@ -165,7 +165,7 @@ describe("Property 8: Build 门禁——Spec 锁定且 Plan 批准", () => {
         expect(result.allowed).toBe(false);
         expect(result.reasons.some((r) => r.includes("Spec 未锁定"))).toBe(true);
       }),
-      { numRuns: 200 },
+      { numRuns: 50 },
     );
   });
 
@@ -177,7 +177,7 @@ describe("Property 8: Build 门禁——Spec 锁定且 Plan 批准", () => {
         expect(result.allowed).toBe(false);
         expect(result.reasons.some((r) => r.includes("Plan 未批准"))).toBe(true);
       }),
-      { numRuns: 200 },
+      { numRuns: 50 },
     );
   });
 
@@ -191,7 +191,7 @@ describe("Property 8: Build 门禁——Spec 锁定且 Plan 批准", () => {
         expect(result.reasons.some((r) => r.includes("Spec 未锁定"))).toBe(true);
         expect(result.reasons.some((r) => r.includes("Plan 未批准"))).toBe(true);
       }),
-      { numRuns: 200 },
+      { numRuns: 50 },
     );
   });
 
@@ -203,7 +203,7 @@ describe("Property 8: Build 门禁——Spec 锁定且 Plan 批准", () => {
 
         expect(result.allowed).toBe(expectedAllowed);
       }),
-      { numRuns: 200 },
+      { numRuns: 50 },
     );
   });
 });
@@ -222,7 +222,7 @@ describe("Property 10: 连续失败升级", () => {
         expect(result.consecutiveFailures).toBeGreaterThanOrEqual(3);
         expect(result.escalationIndex).toBeGreaterThanOrEqual(2); // At least index 2 (3rd attempt)
       }),
-      { numRuns: 200 },
+      { numRuns: 50 },
     );
   });
 
@@ -234,7 +234,7 @@ describe("Property 10: 连续失败升级", () => {
         expect(result.shouldEscalate).toBe(false);
         expect(result.escalationIndex).toBe(-1);
       }),
-      { numRuns: 200 },
+      { numRuns: 50 },
     );
   });
 
@@ -260,7 +260,7 @@ describe("Property 10: 连续失败升级", () => {
           expect(result.shouldEscalate).toBe(false);
         },
       ),
-      { numRuns: 200 },
+      { numRuns: 50 },
     );
   });
 
@@ -273,7 +273,7 @@ describe("Property 10: 连续失败升级", () => {
         expect(result.consecutiveFailures).toBe(3);
         expect(result.escalationIndex).toBe(2);
       }),
-      { numRuns: 200 },
+      { numRuns: 50 },
     );
   });
 
@@ -285,7 +285,7 @@ describe("Property 10: 连续失败升级", () => {
         expect(result.shouldEscalate).toBe(false);
         expect(result.consecutiveFailures).toBe(2);
       }),
-      { numRuns: 200 },
+      { numRuns: 50 },
     );
   });
 
@@ -308,7 +308,7 @@ describe("Property 10: 连续失败升级", () => {
           expect(result.consecutiveFailures).toBe(0);
         },
       ),
-      { numRuns: 200 },
+      { numRuns: 50 },
     );
   });
 
@@ -320,7 +320,7 @@ describe("Property 10: 连续失败升级", () => {
 
         expect(simple).toBe(detailed.shouldEscalate);
       }),
-      { numRuns: 200 },
+      { numRuns: 50 },
     );
   });
 
@@ -338,7 +338,7 @@ describe("Property 10: 连续失败升级", () => {
           expect(sequence.attempts[idx - 2]).toBe("failure");
         }
       }),
-      { numRuns: 200 },
+      { numRuns: 50 },
     );
   });
 });

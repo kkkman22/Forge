@@ -27,7 +27,7 @@ export declare function readDenyPatterns(settingsPath?: string): Promise<string[
  * A simple wildcard match is used (supports `*` as any-chars wildcard).
  */
 export declare function isCommandDenied(command: string, denyPatterns: string[]): string | null;
-interface ExecResult {
+export interface ExecResult {
     stdout: string;
     stderr: string;
     exitCode: number;
@@ -41,4 +41,3 @@ export declare function execCommand(command: string, timeoutMs: number): Promise
  * Register the `forge_exec` tool on the given MCP server.
  */
 export declare function registerForgeExec(server: McpServer): void;
-export {};

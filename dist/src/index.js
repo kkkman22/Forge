@@ -29,7 +29,7 @@ export { buildReconciliationPatch, buildRecoveryReport, calculateSegmentation, c
 export { allEntriesVerified, createChecklist, isValidTransition, parseChecklist, serializeChecklist, updateEntryStatus, VALID_TRANSITIONS, } from "./fix-checklist.js";
 export { buildVerificationCriteria, determineVerificationStrategy, INCREMENTAL_THRESHOLD, } from "./incremental-verifier.js";
 export { isFixCandidate, parseGitLog as parseFixRecoveryGitLog } from "./fix-recovery.js";
-export { checkShipGate, checkShipGateWithChecklist } from "./ship.js";
+export { checkReviewFreshness, checkShipGate, checkShipGateWithChecklist } from "./ship.js";
 export { hasTaskName, parseStatusEntries, removeTaskEntry, serializeStatusEntries, upsertTaskEntry, } from "./state.js";
 export { cleanupOrphans, cleanupStaleSessions, deletePidFile, detectPpidOrphans, readPidFile, writePidFile, } from "./orphan-detector.js";
 export { ProcessRegistry } from "./process-registry.js";

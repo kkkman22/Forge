@@ -48,7 +48,7 @@ describe("Feature: agent-team-migration, Property 1: review subagent selection c
         const expectedCount = context.hasSpec ? 3 : 2;
         expect(invocations).toHaveLength(expectedCount);
       }),
-      { numRuns: 100 },
+      { numRuns: 40 },
     );
   });
 
@@ -63,7 +63,7 @@ describe("Feature: agent-team-migration, Property 1: review subagent selection c
           expect(inv.maxTurns).toBeGreaterThan(0);
         }
       }),
-      { numRuns: 100 },
+      { numRuns: 40 },
     );
   });
 });

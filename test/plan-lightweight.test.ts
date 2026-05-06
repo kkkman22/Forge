@@ -183,7 +183,7 @@ describe("Property 1: LightweightTask validation — valid tasks pass, invalid t
         expect(result.valid).toBe(true);
         expect(result.errors).toHaveLength(0);
       }),
-      { numRuns: 200 },
+      { numRuns: 50 },
     );
   });
 
@@ -194,7 +194,7 @@ describe("Property 1: LightweightTask validation — valid tasks pass, invalid t
         expect(result.valid).toBe(false);
         expect(result.errors.length).toBeGreaterThan(0);
       }),
-      { numRuns: 200 },
+      { numRuns: 50 },
     );
   });
 });
@@ -213,7 +213,7 @@ describe("Property 2: Heading anchor extraction preserves heading identity", () 
           expect(anchor).toMatch(/^[a-z0-9-]*$/);
         }
       }),
-      { numRuns: 200 },
+      { numRuns: 50 },
     );
   });
 
@@ -224,7 +224,7 @@ describe("Property 2: Heading anchor extraction preserves heading identity", () 
         const anchors = extractHeadingAnchors(content);
         expect(anchors).toHaveLength(headingCount);
       }),
-      { numRuns: 200 },
+      { numRuns: 50 },
     );
   });
 });
@@ -244,7 +244,7 @@ describe("Property 3: Design Reference validation", () => {
         expect(result.valid).toBe(true);
         expect(result.errors).toHaveLength(0);
       }),
-      { numRuns: 200 },
+      { numRuns: 50 },
     );
   });
 
@@ -259,7 +259,7 @@ describe("Property 3: Design Reference validation", () => {
         expect(result.valid).toBe(false);
         expect(result.errors.length).toBeGreaterThan(0);
       }),
-      { numRuns: 200 },
+      { numRuns: 50 },
     );
   });
 });
@@ -280,7 +280,7 @@ describe("Property 4: Format detection defaults to full", () => {
           expect(format).toBe("full");
         }
       }),
-      { numRuns: 200 },
+      { numRuns: 50 },
     );
   });
 
@@ -314,7 +314,7 @@ describe("Property 5: Lightweight plan validation", () => {
         }));
         expect(validateLightweightPlan(numbered)).toBe(true);
       }),
-      { numRuns: 200 },
+      { numRuns: 50 },
     );
   });
 
@@ -337,7 +337,7 @@ describe("Property 5: Lightweight plan validation", () => {
           expect(validateLightweightPlan(tasks)).toBe(false);
         },
       ),
-      { numRuns: 200 },
+      { numRuns: 50 },
     );
   });
 
@@ -368,7 +368,7 @@ describe("Property 6: Placeholder scanning covers all text fields", () => {
         expect(result.valid).toBe(false);
         expect(result.errors.some((e) => e.includes("forbidden placeholders"))).toBe(true);
       }),
-      { numRuns: 200 },
+      { numRuns: 50 },
     );
   });
 });

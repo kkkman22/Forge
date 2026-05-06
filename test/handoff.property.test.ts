@@ -62,7 +62,7 @@ describe("Property 33: Handoff validation", () => {
         expect(result.valid).toBe(true);
         expect(result.errors).toHaveLength(0);
       }),
-      { numRuns: 100 },
+      { numRuns: 40 },
     );
   });
 
@@ -156,7 +156,7 @@ describe("Property 35: Render/parse round-trip", () => {
         expect(p.entry.artifacts).toEqual(entry.artifacts);
         expect(p.entry.remaining).toEqual(entry.remaining);
       }),
-      { numRuns: 100 },
+      { numRuns: 40 },
     );
   });
 

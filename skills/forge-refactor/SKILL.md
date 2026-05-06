@@ -1,6 +1,6 @@
 ---
 name: forge-refactor
-description: "重构引擎。通过三阶段流程（scan → design → apply）执行结构化重构，确保行为等价。"
+description: "Behavior-preserving refactor engine that restructures code without changing external behavior. Use when user runs `/forge refactor` / tests are green and code needs structural cleanup / extract function / rename symbols across the codebase."
 disable-model-invocation: true
 ---
 

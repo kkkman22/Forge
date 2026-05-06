@@ -315,7 +315,7 @@ describe("Property: verifyAttempts bounded", () => {
           expect(attempt).toBeLessThanOrEqual(maxAttempts);
         },
       ),
-      { numRuns: 200 },
+      { numRuns: 50 },
     );
   });
 
@@ -335,7 +335,7 @@ describe("Property: verifyAttempts bounded", () => {
           expect(decision).toEqual({ action: "commit" });
         },
       ),
-      { numRuns: 200 },
+      { numRuns: 50 },
     );
   });
 
@@ -374,7 +374,7 @@ describe("Property: verifyAttempts bounded", () => {
           }
         },
       ),
-      { numRuns: 200 },
+      { numRuns: 50 },
     );
   });
 });

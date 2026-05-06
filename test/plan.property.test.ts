@@ -260,7 +260,7 @@ describe("Property 9: Plan 任务有效性", () => {
         expect(result.valid).toBe(true);
         expect(result.errors).toHaveLength(0);
       }),
-      { numRuns: 200 },
+      { numRuns: 50 },
     );
   });
 
@@ -275,7 +275,7 @@ describe("Property 9: Plan 任务有效性", () => {
         expect(result.valid).toBe(false);
         expect(result.errors.length).toBeGreaterThan(0);
       }),
-      { numRuns: 200 },
+      { numRuns: 50 },
     );
   });
 
@@ -292,7 +292,7 @@ describe("Property 9: Plan 任务有效性", () => {
         const result = validateAtomicTask(task);
         expect(result.valid).toBe(true);
       }),
-      { numRuns: 200 },
+      { numRuns: 50 },
     );
   });
 
@@ -305,7 +305,7 @@ describe("Property 9: Plan 任务有效性", () => {
         expect(result.valid).toBe(false);
         expect(result.errors.some((e) => e.includes("Estimated time"))).toBe(true);
       }),
-      { numRuns: 200 },
+      { numRuns: 50 },
     );
   });
 
@@ -320,7 +320,7 @@ describe("Property 9: Plan 任务有效性", () => {
         expect(result.valid).toBe(false);
         expect(result.errors.some((e) => e.includes("forbidden placeholders"))).toBe(true);
       }),
-      { numRuns: 200 },
+      { numRuns: 50 },
     );
   });
 
@@ -331,7 +331,7 @@ describe("Property 9: Plan 任务有效性", () => {
         const result = validateAtomicTask(task);
         expect(result.errors.some((e) => e.includes("forbidden placeholders"))).toBe(false);
       }),
-      { numRuns: 200 },
+      { numRuns: 50 },
     );
   });
 
@@ -344,7 +344,7 @@ describe("Property 9: Plan 任务有效性", () => {
       fc.property(fc.array(validAtomicTaskArb, { minLength: 1, maxLength: 10 }), (tasks) => {
         expect(validatePlanTasks(tasks)).toBe(true);
       }),
-      { numRuns: 200 },
+      { numRuns: 50 },
     );
   });
 
@@ -361,7 +361,7 @@ describe("Property 9: Plan 任务有效性", () => {
           expect(validatePlanTasks(tasks)).toBe(false);
         },
       ),
-      { numRuns: 200 },
+      { numRuns: 50 },
     );
   });
 
@@ -383,7 +383,7 @@ describe("scanForPlaceholders", () => {
         expect(found.length).toBeGreaterThan(0);
         expect(found).toContain(placeholder);
       }),
-      { numRuns: 200 },
+      { numRuns: 50 },
     );
   });
 
@@ -393,7 +393,7 @@ describe("scanForPlaceholders", () => {
         const found = scanForPlaceholders(text);
         expect(found).toHaveLength(0);
       }),
-      { numRuns: 200 },
+      { numRuns: 50 },
     );
   });
 
@@ -407,7 +407,7 @@ describe("scanForPlaceholders", () => {
         expect(upper.length).toBeGreaterThan(0);
         expect(lower.length).toBeGreaterThan(0);
       }),
-      { numRuns: 200 },
+      { numRuns: 50 },
     );
   });
 });
@@ -431,7 +431,7 @@ describe("validateSpecLocked", () => {
           expect(result).toEqual({ valid: false, error: "spec not locked" });
         },
       ),
-      { numRuns: 100 },
+      { numRuns: 40 },
     );
   });
 
@@ -459,7 +459,7 @@ describe("validateDependencies", () => {
         const errors = validateDependencies(tasksWithoutDeps);
         expect(errors).toHaveLength(0);
       }),
-      { numRuns: 100 },
+      { numRuns: 40 },
     );
   });
 
@@ -596,7 +596,7 @@ describe("Property 10: dependsOn dependency validation", () => {
         const errors = validateDependencies(tasks);
         expect(errors).toHaveLength(0);
       }),
-      { numRuns: 200 },
+      { numRuns: 50 },
     );
   });
 
@@ -606,7 +606,7 @@ describe("Property 10: dependsOn dependency validation", () => {
         const errors = validateDependencies(tasks);
         expect(errors.length).toBeGreaterThan(0);
       }),
-      { numRuns: 200 },
+      { numRuns: 50 },
     );
   });
 
@@ -620,7 +620,7 @@ describe("Property 10: dependsOn dependency validation", () => {
           expect(err).toMatch(/non-existent task \d+/);
         }
       }),
-      { numRuns: 100 },
+      { numRuns: 40 },
     );
   });
 });

@@ -198,6 +198,11 @@ export class EffectExecutor implements EffectExecutorInterface {
         this.executeShipDiscard(effect.branch);
         return;
       }
+
+      case "write_event_log": {
+        await this.executeWriteEventLog(effect.entry);
+        return;
+      }
     }
   }
 
@@ -571,5 +576,40 @@ export class EffectExecutor implements EffectExecutorInterface {
       timeout: 30_000,
       killSignal: "SIGTERM",
     });
+  }
+
+  /**
+   * Execute a `write_event_log` effect by appending a JSONL line to the
+   * run's `events.jsonl` file.
+   *
+   * Behaviour:
+   *   - Ensures `.forge/runs/<runId>/` exists before writing.
+   *   - Appends `JSON.stringify(entry) + "\n"` to `events.jsonl`.
+   *   - Failures are logged via `onLog` and swallowed — the event log is
+   *     an audit artefact, and a write failure must NOT cause the
+   *     surrounding iteration to rollback or abort (Requirement 3.6).
+   *
+   * **Validates: Requirements 3.1, 3.6**
+   */
+  private async executeWriteEventLog(entry: {
+    runId: string;
+    timestamp: string;
+    iteration: number;
+    event: unknown;
+    stateHashBefore: string;
+    stateHashAfter: string;
+    effects: unknown[];
+  }): Promise<void> {
+    try {
+      const { mkdir, appendFile } = await import("node:fs/promises");
+      const { join } = await import("node:path");
+      const runDir = join(this.deps.cwd, ".forge", "runs", entry.runId);
+      await mkdir(runDir, { recursive: true });
+      const target = join(runDir, "events.jsonl");
+      await appendFile(target, `${JSON.stringify(entry)}\n`, "utf-8");
+    } catch (err) {
+      const msg = err instanceof Error ? err.message : String(err);
+      this.deps.onLog(`write_event_log failed (non-fatal): ${msg}`);
+    }
   }
 }

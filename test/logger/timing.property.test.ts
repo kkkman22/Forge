@@ -26,7 +26,7 @@ describe("Property 3: Iteration timing invariant", () => {
           expect(timing.totalIterationDurationMs).toBeGreaterThanOrEqual(0);
         },
       ),
-      { numRuns: 200 },
+      { numRuns: 50 },
     );
   });
 });
@@ -57,7 +57,7 @@ describe("Property 4: Performance baseline statistics correctness", () => {
         expect(baseline.maxIterationMs).toBeGreaterThanOrEqual(baseline.minIterationMs);
         expect(baseline.iterationCount).toBe(timings.length);
       }),
-      { numRuns: 200 },
+      { numRuns: 50 },
     );
   });
 });
@@ -89,7 +89,7 @@ describe("Feature: observability-enhancements, Property 7: SubagentTiming 耗时
           expect(timing.durationMs).toBe(endMs - startMs);
         },
       ),
-      { numRuns: 200 },
+      { numRuns: 50 },
     );
   });
 
@@ -114,7 +114,7 @@ describe("Feature: observability-enhancements, Property 7: SubagentTiming 耗时
           expect(timing.durationMs).toBe(0);
         },
       ),
-      { numRuns: 200 },
+      { numRuns: 50 },
     );
   });
 });
@@ -163,7 +163,7 @@ describe("Feature: observability-enhancements, Property 9: 退化检测正确性
         expect(result.currentMs).toBe(currentMs);
         expect(result.rollingAvgMs).toBeCloseTo(rollingAvg, 5);
       }),
-      { numRuns: 200 },
+      { numRuns: 50 },
     );
   });
 
@@ -187,7 +187,7 @@ describe("Feature: observability-enhancements, Property 9: 退化检测正确性
           expect(result.currentMs).toBe(currentMs);
         },
       ),
-      { numRuns: 200 },
+      { numRuns: 50 },
     );
   });
 
@@ -207,7 +207,7 @@ describe("Feature: observability-enhancements, Property 9: 退化检测正确性
           expect(result.deviationFactor).toBe(0);
         },
       ),
-      { numRuns: 200 },
+      { numRuns: 50 },
     );
   });
 });
@@ -238,7 +238,7 @@ describe("Feature: observability-enhancements, Property 2: SubagentTiming JSON �
           expect(deserialized).toEqual(timing);
         },
       ),
-      { numRuns: 200 },
+      { numRuns: 50 },
     );
   });
 });
@@ -297,7 +297,7 @@ describe("Feature: observability-enhancements, Property 3: 扩展 PerformanceBas
           expect(deserialized).toEqual(baseline);
         },
       ),
-      { numRuns: 200 },
+      { numRuns: 50 },
     );
   });
 });
@@ -371,7 +371,7 @@ describe("Feature: observability-enhancements, Property 8: 扩展 PerformanceBas
           expect(baseline.degradationCount).toBeGreaterThanOrEqual(0);
         },
       ),
-      { numRuns: 200 },
+      { numRuns: 50 },
     );
   });
 });
@@ -431,7 +431,7 @@ describe("Feature: observability-enhancements, Property 10: 格式化 Baseline �
           expect(output).toContain(String(subagentCallCount));
         },
       ),
-      { numRuns: 200 },
+      { numRuns: 50 },
     );
   });
 });

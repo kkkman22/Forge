@@ -213,6 +213,22 @@ if [[ -f "${FORGE_ROOT}/templates/rule-changelog.md" ]]; then
     "${FORGE_ROOT}/templates/rule-changelog.md" > "${PROJECT_ROOT}/.forge/knowledge/rule-changelog.md"
 fi
 
+# --- Copy ADR template (idempotent: don't overwrite existing) ---
+if [[ -f "${FORGE_ROOT}/templates/ADR-TEMPLATE.md" ]]; then
+  if [[ ! -f "${PROJECT_ROOT}/.forge/decisions/ADR-TEMPLATE.md" ]]; then
+    cp "${FORGE_ROOT}/templates/ADR-TEMPLATE.md" \
+      "${PROJECT_ROOT}/.forge/decisions/ADR-TEMPLATE.md"
+  fi
+fi
+
+# --- Copy initial adr-index.md (idempotent: don't overwrite existing) ---
+if [[ -f "${FORGE_ROOT}/templates/adr-index.md" ]]; then
+  if [[ ! -f "${PROJECT_ROOT}/.forge/knowledge/adr-index.md" ]]; then
+    cp "${FORGE_ROOT}/templates/adr-index.md" \
+      "${PROJECT_ROOT}/.forge/knowledge/adr-index.md"
+  fi
+fi
+
 # 将技术栈转为 YAML 数组格式
 IFS=',' read -ra stack_array <<< "${tech_stack}"
 stack_yaml=""

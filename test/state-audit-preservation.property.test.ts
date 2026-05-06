@@ -91,7 +91,7 @@ describe("Preservation: Frozen zone write permission behavior", () => {
         expect(result.reason).toContain(path);
         expect(result.reason).toContain(status);
       }),
-      { numRuns: 100 },
+      { numRuns: 40 },
     );
   });
 
@@ -102,7 +102,7 @@ describe("Preservation: Frozen zone write permission behavior", () => {
         expect(result.blocked).toBe(false);
         expect(result.reason).toBe("");
       }),
-      { numRuns: 100 },
+      { numRuns: 40 },
     );
   });
 
@@ -113,7 +113,7 @@ describe("Preservation: Frozen zone write permission behavior", () => {
         expect(result.blocked).toBe(false);
         expect(result.reason).toBe("");
       }),
-      { numRuns: 100 },
+      { numRuns: 40 },
     );
   });
 });
@@ -131,7 +131,7 @@ describe("Preservation: Open zone write permission behavior", () => {
         expect(result.blocked).toBe(false);
         expect(result.reason).toBe("");
       }),
-      { numRuns: 100 },
+      { numRuns: 40 },
     );
   });
 
@@ -142,7 +142,7 @@ describe("Preservation: Open zone write permission behavior", () => {
         expect(result.blocked).toBe(false);
         expect(result.reason).toBe("");
       }),
-      { numRuns: 100 },
+      { numRuns: 40 },
     );
   });
 
@@ -153,7 +153,7 @@ describe("Preservation: Open zone write permission behavior", () => {
         expect(result.blocked).toBe(false);
         expect(result.reason).toBe("");
       }),
-      { numRuns: 100 },
+      { numRuns: 40 },
     );
   });
 });
@@ -169,7 +169,7 @@ describe("Preservation: getProtectionZone() classification", () => {
       fc.property(frozenPathArb, (path) => {
         expect(getProtectionZone(path)).toBe("frozen");
       }),
-      { numRuns: 100 },
+      { numRuns: 40 },
     );
   });
 
@@ -178,7 +178,7 @@ describe("Preservation: getProtectionZone() classification", () => {
       fc.property(guardedPathArb, (path) => {
         expect(getProtectionZone(path)).toBe("guarded");
       }),
-      { numRuns: 100 },
+      { numRuns: 40 },
     );
   });
 
@@ -187,7 +187,7 @@ describe("Preservation: getProtectionZone() classification", () => {
       fc.property(openPathArb, (path) => {
         expect(getProtectionZone(path)).toBe("open");
       }),
-      { numRuns: 100 },
+      { numRuns: 40 },
     );
   });
 

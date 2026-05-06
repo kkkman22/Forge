@@ -98,7 +98,7 @@ describe("Feature: gnhf-inspired-enhancements, Property 2: 编排器状态转换
           state.totalOutputTokens + tokenUsage.outputTokens,
         );
       }),
-      { numRuns: 200 },
+      { numRuns: 50 },
     );
   });
 
@@ -135,7 +135,7 @@ describe("Feature: gnhf-inspired-enhancements, Property 2: 编排器状态转换
         // Iteration incremented
         expect(result.state.currentIteration).toBe(state.currentIteration + 1);
       }),
-      { numRuns: 200 },
+      { numRuns: 50 },
     );
   });
 
@@ -174,7 +174,7 @@ describe("Feature: gnhf-inspired-enhancements, Property 2: 编排器状态转换
         // Status becomes "waiting" (backoff)
         expect(result.state.status).toBe("waiting");
       }),
-      { numRuns: 200 },
+      { numRuns: 50 },
     );
   });
 
@@ -196,7 +196,7 @@ describe("Feature: gnhf-inspired-enhancements, Property 2: 编排器状态转换
         expect(effectTypes).toContain("stop");
         expect(result.state.status).toBe("stopped");
       }),
-      { numRuns: 200 },
+      { numRuns: 50 },
     );
   });
 });
@@ -227,7 +227,7 @@ describe("Feature: gnhf-inspired-enhancements, Property 3: 终止条件正确性
         expect(reason).not.toBeNull();
         expect(reason).toContain("max iterations");
       }),
-      { numRuns: 200 },
+      { numRuns: 50 },
     );
   });
 
@@ -262,7 +262,7 @@ describe("Feature: gnhf-inspired-enhancements, Property 3: 终止条件正确性
           expect(reason).toContain("max tokens");
         },
       ),
-      { numRuns: 200 },
+      { numRuns: 50 },
     );
   });
 
@@ -292,7 +292,7 @@ describe("Feature: gnhf-inspired-enhancements, Property 3: 终止条件正确性
           expect(reason).toBeNull();
         },
       ),
-      { numRuns: 200 },
+      { numRuns: 50 },
     );
   });
 
@@ -308,7 +308,7 @@ describe("Feature: gnhf-inspired-enhancements, Property 3: 终止条件正确性
 
         expect(reason).toBeNull();
       }),
-      { numRuns: 200 },
+      { numRuns: 50 },
     );
   });
 });

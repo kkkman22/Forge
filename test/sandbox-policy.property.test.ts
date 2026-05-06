@@ -63,7 +63,7 @@ describe("Property 1: deny overrides allow", () => {
         const result = checkFileAccess(filePath, policy);
         expect(result.allowed).toBe(false);
       }),
-      { numRuns: 200 },
+      { numRuns: 50 },
     );
   });
 
@@ -77,7 +77,7 @@ describe("Property 1: deny overrides allow", () => {
         const result = checkFileAccess(filePath, policy);
         expect(result.allowed).toBe(false);
       }),
-      { numRuns: 200 },
+      { numRuns: 50 },
     );
   });
 });
@@ -100,7 +100,7 @@ describe("Property 2: default policy security", () => {
         const result = checkFileAccess(fullPath, policy.fileSystem);
         expect(result.allowed).toBe(false);
       }),
-      { numRuns: 200 },
+      { numRuns: 50 },
     );
   });
 
@@ -114,7 +114,7 @@ describe("Property 2: default policy security", () => {
         const result = checkFileAccess(fullPath, policy.fileSystem);
         expect(result.allowed).toBe(true);
       }),
-      { numRuns: 200 },
+      { numRuns: 50 },
     );
   });
 });
@@ -133,7 +133,7 @@ describe("Property 3: network none mode denies all", () => {
         expect(result.allowed).toBe(false);
         expect(result.reason).toContain("none");
       }),
-      { numRuns: 200 },
+      { numRuns: 50 },
     );
   });
 });

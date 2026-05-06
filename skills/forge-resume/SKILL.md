@@ -1,6 +1,6 @@
 ---
 name: forge-resume
-description: "会话恢复。通过五个问题快速重建工作上下文。"
+description: "Session recovery engine that reconstructs task state from status file and knowledge sessions. Use when user runs `/forge resume` / new session begins and prior task is incomplete / picking up interrupted work."
 disable-model-invocation: true
 ---
 

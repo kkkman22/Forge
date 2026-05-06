@@ -19,11 +19,13 @@
     "test": "vitest run",
     "test:coverage": "vitest run --coverage",
     "test:watch": "vitest",
+    "bench": "vitest bench --run",
+    "bench:ci": "vitest bench --run --reporter=verbose",
     "lint": "biome check src/ test/",
     "lint:fix": "biome check --write src/ test/",
     "format": "biome format --write src/ test/",
     "typecheck": "tsc --noEmit",
-    "check": "tsc --noEmit && biome check src/ test/ && vitest run && bash scripts/check-readme-metrics.sh && bash scripts/check-skill-function-refs.sh",
+    "check": "tsc --noEmit && biome check src/ test/ && vitest run && bash scripts/check-readme-metrics.sh && bash scripts/check-skill-function-refs.sh && bash scripts/validate-skill-descriptions.sh && bash scripts/validate-skill-length.sh && bash scripts/check-evolution-marker-zones.sh",
     "docs": "typedoc"
   },
   "devDependencies": {
@@ -39,7 +41,7 @@
     "@anthropic-ai/claude-agent-sdk": "0.2.119",
     "@modelcontextprotocol/sdk": "1.29.0",
     "commander": "14.0.3",
-    "minimatch": "^10.2.5",
+    "minimatch": "10.2.5",
     "zod": "4.4.1"
   }
 }

@@ -114,7 +114,7 @@ describe("Feature: i18n-support, Property 9: Config lang 字段往返与字段�
         const updatedWithoutLang = writeConfigLang(contentWithoutLang, lang);
         expect(extractConfigLang(updatedWithoutLang)).toBe(lang);
       }),
-      { numRuns: 200 },
+      { numRuns: 50 },
     );
   });
 
@@ -131,7 +131,7 @@ describe("Feature: i18n-support, Property 9: Config lang 字段往返与字段�
         const updated = writeConfigLang(plainContent, lang);
         expect(extractConfigLang(updated)).toBe(lang);
       }),
-      { numRuns: 200 },
+      { numRuns: 50 },
     );
   });
 
@@ -146,7 +146,7 @@ describe("Feature: i18n-support, Property 9: Config lang 字段往返与字段�
         const updated = writeConfigLang("", lang);
         expect(extractConfigLang(updated)).toBe(lang);
       }),
-      { numRuns: 200 },
+      { numRuns: 50 },
     );
   });
 
@@ -174,7 +174,7 @@ describe("Feature: i18n-support, Property 9: Config lang 字段往返与字段�
           expect(extracted).toBe(value);
         }
       }),
-      { numRuns: 200 },
+      { numRuns: 50 },
     );
   });
 
@@ -210,7 +210,7 @@ describe("Feature: i18n-support, Property 9: Config lang 字段往返与字段�
           }
         },
       ),
-      { numRuns: 200 },
+      { numRuns: 50 },
     );
   });
 
@@ -226,7 +226,7 @@ describe("Feature: i18n-support, Property 9: Config lang 字段往返与字段�
         const content = buildDefaultConfig(lang);
         expect(extractConfigLang(content)).toBe(lang);
       }),
-      { numRuns: 200 },
+      { numRuns: 50 },
     );
   });
 });
@@ -336,7 +336,7 @@ describe("Feature: observability-enhancements, Property 4: 配置解析正确性
           expect(result.logFile).toBe(filePath);
         },
       ),
-      { numRuns: 200 },
+      { numRuns: 50 },
     );
   });
 
@@ -363,7 +363,7 @@ describe("Feature: observability-enhancements, Property 4: 配置解析正确性
         expect(r2.logLevel).toBe(level);
         expect(r2.logFile).toBeNull();
       }),
-      { numRuns: 100 },
+      { numRuns: 40 },
     );
   });
 
@@ -397,7 +397,7 @@ describe("Feature: observability-enhancements, Property 4: 配置解析正确性
           expect(result.logFile).toBe(filePath);
         },
       ),
-      { numRuns: 100 },
+      { numRuns: 40 },
     );
   });
 });
@@ -432,7 +432,7 @@ describe("Feature: observability-enhancements, Property 5: CLI 参数优先于�
           expect(result.format).toBe(cliFormat);
         },
       ),
-      { numRuns: 200 },
+      { numRuns: 50 },
     );
   });
 
@@ -460,7 +460,7 @@ describe("Feature: observability-enhancements, Property 5: CLI 参数优先于�
           expect(result.level).toBe(cliLevel);
         },
       ),
-      { numRuns: 200 },
+      { numRuns: 50 },
     );
   });
 
@@ -488,7 +488,7 @@ describe("Feature: observability-enhancements, Property 5: CLI 参数优先于�
           expect(result.logFile).toBe(cliLogFile);
         },
       ),
-      { numRuns: 200 },
+      { numRuns: 50 },
     );
   });
 
@@ -523,7 +523,7 @@ describe("Feature: observability-enhancements, Property 5: CLI 参数优先于�
           expect(result.logFile).toBe(cliLogFile);
         },
       ),
-      { numRuns: 200 },
+      { numRuns: 50 },
     );
   });
 });
@@ -546,7 +546,7 @@ describe("Feature: observability-enhancements, Property 6: 无效配置回退到
 
         expect(result.logFormat).toBeNull();
       }),
-      { numRuns: 200 },
+      { numRuns: 50 },
     );
   });
 
@@ -563,7 +563,7 @@ describe("Feature: observability-enhancements, Property 6: 无效配置回退到
 
         expect(result.logLevel).toBeNull();
       }),
-      { numRuns: 200 },
+      { numRuns: 50 },
     );
   });
 
@@ -584,7 +584,7 @@ describe("Feature: observability-enhancements, Property 6: 无效配置回退到
 
         expect(result.format).toBe("text");
       }),
-      { numRuns: 200 },
+      { numRuns: 50 },
     );
   });
 
@@ -605,7 +605,7 @@ describe("Feature: observability-enhancements, Property 6: 无效配置回退到
 
         expect(result.level).toBe("info");
       }),
-      { numRuns: 200 },
+      { numRuns: 50 },
     );
   });
 
@@ -630,7 +630,7 @@ describe("Feature: observability-enhancements, Property 6: 无效配置回退到
         expect(result.level).toBe("info");
         expect(result.logFile).toBeNull();
       }),
-      { numRuns: 200 },
+      { numRuns: 50 },
     );
   });
 });

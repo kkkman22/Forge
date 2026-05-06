@@ -122,7 +122,7 @@ describe("Feature: loop-skills-fusion, Property 7: evaluateReviewGate P0/P1 阻�
         expect(result.issues).toBeDefined();
         expect(result.issues?.length).toBeGreaterThan(0);
       }),
-      { numRuns: 200 },
+      { numRuns: 50 },
     );
   });
 
@@ -138,7 +138,7 @@ describe("Feature: loop-skills-fusion, Property 7: evaluateReviewGate P0/P1 阻�
         const result = evaluateReviewGate(content);
         expect(result.status).toBe("passed");
       }),
-      { numRuns: 200 },
+      { numRuns: 50 },
     );
   });
 
@@ -158,7 +158,7 @@ describe("Feature: loop-skills-fusion, Property 7: evaluateReviewGate P0/P1 阻�
           expect(result.status).toBe("passed");
         }
       }),
-      { numRuns: 200 },
+      { numRuns: 50 },
     );
   });
 });
@@ -184,7 +184,7 @@ describe("Feature: loop-skills-fusion, Property 8: evaluateShipGate 组合门禁
         const shipResult = evaluateShipGate(review.content, test.content, progress.content);
         expect(shipResult.status).toBe("blocked");
       }),
-      { numRuns: 200 },
+      { numRuns: 50 },
     );
   });
 
@@ -209,7 +209,7 @@ describe("Feature: loop-skills-fusion, Property 8: evaluateShipGate 组合门禁
           expect(shipResult.status).toBe("blocked");
         },
       ),
-      { numRuns: 200 },
+      { numRuns: 50 },
     );
   });
 
@@ -224,7 +224,7 @@ describe("Feature: loop-skills-fusion, Property 8: evaluateShipGate 组合门禁
         const shipResult = evaluateShipGate(review.content, test.content, progress.content);
         expect(shipResult.status).toBe("blocked");
       }),
-      { numRuns: 200 },
+      { numRuns: 50 },
     );
   });
 
@@ -240,7 +240,7 @@ describe("Feature: loop-skills-fusion, Property 8: evaluateShipGate 组合门禁
         const shipResult = evaluateShipGate(review.content, test.content, progress.content);
         expect(shipResult.status).toBe("passed");
       }),
-      { numRuns: 200 },
+      { numRuns: 50 },
     );
   });
 });

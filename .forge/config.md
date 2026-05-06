@@ -48,13 +48,22 @@ bash scripts/build-dist.sh  # 分发包同步校验
 - `.forge/knowledge/instincts.md`（只能追加或更新置信度，不能删除已有模式，除非维护清理）
 - `.forge/knowledge/known-failures.md`（只能追加或更新，不能删除已有失败模式，除非维护清理）
 - `.forge/knowledge/solutions/*.md`（只能追加或合并，不能随意删除，除非维护清理）
+- `.forge/decisions/ADR-*.md`（已发布 ADR，只能追加新文件或通过 supersession 再渲染 frontmatter）
+
+**ADR 专项规则**（`.forge/decisions/ADR-NNNN-*.md`）：仅允许以下两类操作——
+
+1. **追加新 ADR 文件**：由 `/forge decide` 自动生成，新文件编号经 `nextAdrId` 分配。
+2. **supersession 更新**：通过 `finalizeAdr` 对旧 ADR 再渲染 frontmatter（`status=superseded`、`superseded_by=新ID`），body 保持不变。
+
+禁止：直接编辑已发布 ADR 的 Context/Decision/Consequences 正文；删除 ADR 文件；修改已分配的 `id`/`date`/`deciders` 字段。模板文件 `.forge/decisions/ADR-TEMPLATE.md` 不属于 ADR，可以自由修改。
 
 ### 开放区（Open）— AI 可自由修改
 
 以下文件 AI 可以自由创建和修改：
 
 - `.forge/status.md`（状态更新）
-- `.forge/decisions/*.md`（决策文档）
+- `.forge/decisions/[0-9]*.md`（非 ADR 决策转录文档，例如 `<YYYY-MM-DD>-<topic>.md` 视角对话全文；注意 `ADR-*.md` 属于受保护区）
+- `.forge/runs/*/`（forge-loop 事件流；retention 由 `event_log_retention_days` 控制，默认 30 天；保留策略由 `scripts/prune-event-logs.sh` 执行）
 - `.forge/findings/*.md`（研究发现）
 - `.forge/debug/*.md`（调试记录）
 - `.forge/knowledge/sessions/*.md`（会话上下文）

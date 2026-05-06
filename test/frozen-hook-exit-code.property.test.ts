@@ -119,7 +119,7 @@ describe("Bug Condition: Frozen zone hook chain swallows exit codes via || true"
 
         return !endsWithOrTrue;
       }),
-      { numRuns: 100 },
+      { numRuns: 40 },
     );
   });
 

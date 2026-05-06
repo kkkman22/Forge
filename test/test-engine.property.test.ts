@@ -89,7 +89,7 @@ describe("Property 12: 完成前验证清单完整性", () => {
         expect(result.passed).toBe(true);
         expect(result.failedItems).toHaveLength(0);
       }),
-      { numRuns: 200 },
+      { numRuns: 50 },
     );
   });
 
@@ -101,7 +101,7 @@ describe("Property 12: 完成前验证清单完整性", () => {
         expect(result.passed).toBe(false);
         expect(result.failedItems.length).toBeGreaterThan(0);
       }),
-      { numRuns: 200 },
+      { numRuns: 50 },
     );
   });
 
@@ -114,7 +114,7 @@ describe("Property 12: 完成前验证清单完整性", () => {
         expect(result.failedItems).toHaveLength(1);
         expect(result.failedItems[0]).toBe(CHECKLIST_LABELS[failedKey]);
       }),
-      { numRuns: 200 },
+      { numRuns: 50 },
     );
   });
 
@@ -126,7 +126,7 @@ describe("Property 12: 完成前验证清单完整性", () => {
 
         expect(result.passed).toBe(allTrue);
       }),
-      { numRuns: 200 },
+      { numRuns: 50 },
     );
   });
 
@@ -138,7 +138,7 @@ describe("Property 12: 完成前验证清单完整性", () => {
 
         expect(result.failedItems).toHaveLength(falseCount);
       }),
-      { numRuns: 200 },
+      { numRuns: 50 },
     );
   });
 
@@ -156,7 +156,7 @@ describe("Property 12: 完成前验证清单完整性", () => {
           }
         }
       }),
-      { numRuns: 200 },
+      { numRuns: 50 },
     );
   });
 

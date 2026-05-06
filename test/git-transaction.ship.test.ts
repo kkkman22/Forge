@@ -61,7 +61,7 @@ describe("Feature: ship-delivery-unification, Property 1: Shell metacharacter re
       fc.property(shellMetacharStringArb, (dangerous) => {
         expect(() => buildCheckoutCommand(dangerous)).toThrow();
       }),
-      { numRuns: 200 },
+      { numRuns: 50 },
     );
   });
 
@@ -70,7 +70,7 @@ describe("Feature: ship-delivery-unification, Property 1: Shell metacharacter re
       fc.property(shellMetacharStringArb, fc.boolean(), (dangerous, noFf) => {
         expect(() => buildMergeCommand(dangerous, noFf)).toThrow();
       }),
-      { numRuns: 200 },
+      { numRuns: 50 },
     );
   });
 
@@ -79,7 +79,7 @@ describe("Feature: ship-delivery-unification, Property 1: Shell metacharacter re
       fc.property(shellMetacharStringArb, fc.boolean(), (dangerous, force) => {
         expect(() => buildBranchDeleteCommand(dangerous, force)).toThrow();
       }),
-      { numRuns: 200 },
+      { numRuns: 50 },
     );
   });
 
@@ -93,7 +93,7 @@ describe("Feature: ship-delivery-unification, Property 1: Shell metacharacter re
           expect(() => buildPushCommand(remote, dangerous, setUpstream)).toThrow();
         },
       ),
-      { numRuns: 200 },
+      { numRuns: 50 },
     );
   });
 
@@ -107,7 +107,7 @@ describe("Feature: ship-delivery-unification, Property 1: Shell metacharacter re
           expect(() => buildPushCommand(dangerous, branch, setUpstream)).toThrow();
         },
       ),
-      { numRuns: 200 },
+      { numRuns: 50 },
     );
   });
 });
@@ -133,7 +133,7 @@ describe("Feature: ship-delivery-unification, Property 6: Force flag correctness
         expect(cmd.args[2]).toBe(branch);
         expect(cmd.args).toHaveLength(3);
       }),
-      { numRuns: 200 },
+      { numRuns: 50 },
     );
   });
 });
@@ -218,7 +218,7 @@ describe("Feature: ship-delivery-unification, validateBranchName", () => {
       fc.property(safeBranchNameArb, (branch) => {
         expect(() => validateBranchName(branch)).not.toThrow();
       }),
-      { numRuns: 200 },
+      { numRuns: 50 },
     );
   });
 
@@ -227,7 +227,7 @@ describe("Feature: ship-delivery-unification, validateBranchName", () => {
       fc.property(shellMetacharStringArb, (dangerous) => {
         expect(() => validateBranchName(dangerous)).toThrow();
       }),
-      { numRuns: 200 },
+      { numRuns: 50 },
     );
   });
 

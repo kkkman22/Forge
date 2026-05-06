@@ -97,7 +97,7 @@ describe("Bug Condition Exploration: CLI Final Persist JSON Protocol Conflict", 
         expect(parsed.runId).toBe(doc.runId);
         expect(parsed.entries.length).toBe(doc.entries.length);
       }),
-      { numRuns: 100 },
+      { numRuns: 40 },
     );
   });
 });

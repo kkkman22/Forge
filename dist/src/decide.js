@@ -12,7 +12,18 @@
  *
  * NOT triggered for: pure backend API, database changes, CI/CD config,
  * pure logic refactoring.
+ *
+ * In addition to team selection, this module hosts pure helpers for
+ * finalizing an ADR at the end of `/forge decide` (see `finalizeAdr` and
+ * `renderAdrFileContent`). These functions orchestrate ADR id allocation,
+ * file content rendering and index regeneration without performing any IO —
+ * the caller injects a `readExistingFile` callback and is responsible for
+ * writing the returned artifacts to disk.
+ *
+ * **Validates: Requirements 1.1, 1.5, 1.6, 1.7**
  */
+import { applySupersession, nextAdrId, renderAdrIndex, } from "./adr-registry.js";
+import { parseFrontmatter } from "./frontmatter.js";
 // ---------------------------------------------------------------------------
 // Constants
 // ---------------------------------------------------------------------------
@@ -269,5 +280,182 @@ export function buildDecideCriticInvocation(round1Outputs, _context) {
  */
 export function resolveDecideStatus(output) {
     return output.hasBlockingIssues ? "needs_revision" : "confirmed";
+}
+/** Canonical path of the ADR index file. */
+const ADR_INDEX_PATH = ".forge/knowledge/adr-index.md";
+/**
+ * Escape a string for emission inside a double-quoted YAML scalar. The ADR
+ * frontmatter layer keeps values simple, so we only need to protect the two
+ * characters that can break a double-quoted YAML scalar: the backslash and
+ * the double quote.
+ */
+function escapeYamlString(value) {
+    return value.replace(/\\/g, "\\\\").replace(/"/g, '\\"');
+}
+/**
+ * Render the indented-list form of a string array as YAML lines. Each item
+ * is quoted for safety. Returns an empty array (no lines) when `items` is
+ * empty — the caller decides whether to emit the header.
+ */
+function renderYamlList(items) {
+    return items.map((item) => `  - "${escapeYamlString(item)}"`);
+}
+/**
+ * Render the full ADR markdown document for an `AdrEntry` and its body.
+ *
+ * The frontmatter is emitted in a fixed, stable order:
+ *   1. `id`
+ *   2. `title`
+ *   3. `status`
+ *   4. `date`
+ *   5. `deciders`
+ *   6. `related_adrs` (only when present and non-empty)
+ *   7. `supersedes`   (only when present)
+ *   8. `superseded_by` (only when present)
+ *
+ * String scalars are emitted as double-quoted YAML; list fields use the
+ * indented-list form (`- "value"`). Optional fields that are undefined or
+ * empty are omitted entirely so the output stays minimal.
+ *
+ * The body markdown is appended verbatim after the closing `---` with one
+ * blank line in between, producing the standard
+ * `frontmatter + blank line + body` shape that `parseAdrFrontmatter`
+ * recovers losslessly.
+ *
+ * This function is pure and has no IO.
+ */
+export function renderAdrFileContent(entry, bodyMarkdown) {
+    const lines = [];
+    lines.push("---");
+    lines.push(`id: "${escapeYamlString(entry.id)}"`);
+    lines.push(`title: "${escapeYamlString(entry.title)}"`);
+    lines.push(`status: ${entry.status}`);
+    lines.push(`date: "${escapeYamlString(entry.date)}"`);
+    lines.push("deciders:");
+    lines.push(...renderYamlList(entry.deciders));
+    if (entry.related_adrs !== undefined && entry.related_adrs.length > 0) {
+        lines.push("related_adrs:");
+        lines.push(...renderYamlList(entry.related_adrs));
+    }
+    if (entry.supersedes !== undefined && entry.supersedes !== "") {
+        lines.push(`supersedes: "${escapeYamlString(entry.supersedes)}"`);
+    }
+    if (entry.superseded_by !== undefined && entry.superseded_by !== "") {
+        lines.push(`superseded_by: "${escapeYamlString(entry.superseded_by)}"`);
+    }
+    lines.push("---");
+    lines.push("");
+    // `bodyMarkdown` is emitted verbatim. Callers are expected to pass the
+    // body content without leading/trailing delimiters.
+    return `${lines.join("\n")}\n${bodyMarkdown}`;
+}
+/**
+ * Extract the body (everything after the closing `---`) from an existing
+ * ADR file. When the file has no frontmatter, the whole content is returned
+ * as the body so callers can still re-render the file without losing user
+ * prose. This keeps supersession resilient to slightly malformed files.
+ */
+function extractBody(existingContent) {
+    const parsed = parseFrontmatter(existingContent);
+    if (parsed === null) {
+        return existingContent;
+    }
+    return parsed.body;
+}
+/**
+ * Merge the new ADR entry and any supersession updates into the existing
+ * list, producing a list in which every id appears exactly once. The new
+ * entry always wins against any existing entry with the same id; the
+ * superseded updates replace their respective originals.
+ */
+function mergeEntriesForIndex(existingAdrs, newEntry, updates) {
+    const updatedById = new Map();
+    for (const update of updates) {
+        updatedById.set(update.id, update);
+    }
+    const merged = [];
+    const seen = new Set();
+    for (const entry of existingAdrs) {
+        if (entry.id === newEntry.id) {
+            // Replaced by the new entry below.
+            continue;
+        }
+        const effective = updatedById.get(entry.id) ?? entry;
+        if (seen.has(effective.id)) {
+            continue;
+        }
+        merged.push(effective);
+        seen.add(effective.id);
+    }
+    if (!seen.has(newEntry.id)) {
+        merged.push(newEntry);
+    }
+    return merged;
+}
+/**
+ * Finalize an ADR at the end of `/forge decide`.
+ *
+ * Pipeline:
+ *   1. Allocate the next canonical id via `nextAdrId`.
+ *   2. Build the new `AdrEntry` (with `filePath` of the form
+ *      `.forge/decisions/<id>-<kebab-topic>.md`).
+ *   3. Compute supersession updates via `applySupersession`.
+ *   4. For each superseded entry, re-read the original file via
+ *      `readExistingFile`, extract its body, and re-render the file with
+ *      the updated frontmatter.
+ *   5. Merge the new entry + supersession updates with the existing ADRs
+ *      so that every id appears exactly once, then render the index.
+ *
+ * The function is pure: all IO is injected through the `readExistingFile`
+ * callback. The caller writes the returned artifacts to disk.
+ *
+ * Optional input fields are normalized:
+ *   - `relatedAdrs` defaults to an empty array and is omitted from the new
+ *     entry when empty so the rendered frontmatter stays minimal.
+ *   - `supersedes` is copied onto `newEntry` only when non-empty.
+ */
+export function finalizeAdr(input, readExistingFile) {
+    const id = nextAdrId(input.existingAdrs);
+    const slug = toKebabCase(input.topic);
+    const adrFilePath = `.forge/decisions/${id}-${slug}.md`;
+    const newEntry = {
+        id,
+        title: input.title,
+        status: input.status,
+        date: input.date,
+        deciders: [...input.deciders],
+        filePath: adrFilePath,
+    };
+    if (input.relatedAdrs !== undefined && input.relatedAdrs.length > 0) {
+        newEntry.related_adrs = [...input.relatedAdrs];
+    }
+    if (input.supersedes !== undefined && input.supersedes !== "") {
+        newEntry.supersedes = input.supersedes;
+    }
+    // Compute supersession updates.
+    const supersededEntries = applySupersession(newEntry, input.existingAdrs);
+    // Rewrite each superseded ADR file with the updated frontmatter while
+    // preserving its original body.
+    const supersessionUpdates = [];
+    for (const updated of supersededEntries) {
+        const originalContent = readExistingFile(updated.filePath);
+        const body = originalContent === undefined ? "" : extractBody(originalContent);
+        supersessionUpdates.push({
+            filePath: updated.filePath,
+            updatedContent: renderAdrFileContent(updated, body),
+        });
+    }
+    const adrFileContent = renderAdrFileContent(newEntry, input.bodyMarkdown);
+    // Merge for the index: new entry + superseded updates override originals.
+    const mergedForIndex = mergeEntriesForIndex(input.existingAdrs, newEntry, supersededEntries);
+    const indexContent = renderAdrIndex(mergedForIndex);
+    return {
+        newEntry,
+        adrFilePath,
+        adrFileContent,
+        indexFilePath: ADR_INDEX_PATH,
+        indexContent,
+        supersessionUpdates,
+    };
 }
 //# sourceMappingURL=decide.js.map

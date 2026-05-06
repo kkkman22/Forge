@@ -77,4 +77,34 @@ export function resolveStatusPath(ctx, dirExists) {
 export function isMultiTaskMode(forgeRoot, dirExists) {
     return dirExists(`${forgeRoot}/status`);
 }
+/**
+ * Infer current workflow phase from .forge/ file presence.
+ *
+ * Pure function — no side effects, no file writes.
+ * Inference priority: reviews/ > progress/ > plans/ > router.
+ *
+ * Called by forge-resume when StatusFile is missing or inconsistent.
+ * Reconstructed state is presented to the user for confirmation,
+ * NOT automatically written to disk.
+ */
+export function reconstructStateFromGit(forgeFiles) {
+    const hasPlans = forgeFiles.some((f) => f.startsWith("plans/"));
+    const hasProgress = forgeFiles.some((f) => f.startsWith("progress/"));
+    const hasReviews = forgeFiles.some((f) => f.startsWith("reviews/"));
+    const evidence = [];
+    if (hasReviews) {
+        evidence.push("found reviews/ files → at least review phase");
+        return { inferredPhase: "review", confidence: "high", evidence };
+    }
+    if (hasProgress) {
+        evidence.push("found progress/ files → at least build phase");
+        return { inferredPhase: "build", confidence: "high", evidence };
+    }
+    if (hasPlans) {
+        evidence.push("found plans/ files → at least plan phase");
+        return { inferredPhase: "plan", confidence: "medium", evidence };
+    }
+    evidence.push("no state files found → starting from router");
+    return { inferredPhase: "router", confidence: "low", evidence };
+}
 //# sourceMappingURL=status-resolver.js.map

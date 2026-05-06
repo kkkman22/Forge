@@ -21,6 +21,38 @@ import { extractFrontmatterStatus, getProtectionZone, normalizeForgePath } from 
 /** Statuses that indicate a file is frozen and must not be modified. */
 const FROZEN_STATUSES = ["locked", "approved"];
 
+/**
+ * Source-tree files that are hard-frozen regardless of frontmatter.
+ *
+ * Unlike `.forge/` state files (whose freeze is controlled by the `status`
+ * field in their frontmatter), these files are policy-locked at the
+ * repository level: any modification requires an ADR produced by
+ * `/forge decide`.
+ *
+ * Paths are matched against both the raw argv path and the
+ * `.forge/`-stripped form, so callers may pass either.
+ *
+ * **Validates: Requirement 5.10** — prompt-defense pattern library.
+ */
+const HARD_FROZEN_SOURCE_FILES: ReadonlyArray<string> = ["src/prompt-defense-patterns.ts"];
+
+/**
+ * Check whether the given path is in the source-tree hard-frozen list.
+ *
+ * Performs a suffix match against `HARD_FROZEN_SOURCE_FILES` so both
+ * repository-relative and absolute paths work. The path is first
+ * normalised to use forward slashes.
+ */
+export function isHardFrozenSourceFile(filePath: string): boolean {
+  const normalized = filePath.replace(/\\/g, "/");
+  for (const protected_ of HARD_FROZEN_SOURCE_FILES) {
+    if (normalized === protected_ || normalized.endsWith(`/${protected_}`)) {
+      return true;
+    }
+  }
+  return false;
+}
+
 // ---------------------------------------------------------------------------
 // Pure helpers (exported for testability)
 // ---------------------------------------------------------------------------
@@ -70,6 +102,16 @@ function main(): void {
   // No file argument — nothing to check
   if (!targetFile) process.exit(0);
 
+  // Source-tree hard-frozen files (e.g., src/prompt-defense-patterns.ts)
+  // Block regardless of frontmatter — require ADR per Requirement 5.10.
+  if (isHardFrozenSourceFile(targetFile)) {
+    console.log(`🔒 写入被阻断：${targetFile} 属于源代码硬冻结区（prompt defense 模式库等）。`);
+    console.log(
+      "修改此类文件必须通过 /forge decide 产生 ADR。请参考 CONTRIBUTING.md §需要 ADR 的高敏感文件。",
+    );
+    process.exit(1);
+  }
+
   // Not in a frozen zone — allow
   if (!isFrozenZonePath(targetFile)) process.exit(0);
 
@@ -88,4 +130,9 @@ function main(): void {
   process.exit(0);
 }
 
-main();
+// Only run the CLI side-effects when this module is the entry point.
+// When imported (e.g. by unit tests), skip `main()` to avoid calling
+// `process.exit()` on import.
+if (import.meta.url === `file://${process.argv[1]}`) {
+  main();
+}

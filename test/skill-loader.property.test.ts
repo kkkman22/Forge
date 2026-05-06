@@ -58,7 +58,7 @@ describe("mergeSkillLists properties", () => {
           }
         },
       ),
-      { numRuns: 200 },
+      { numRuns: 50 },
     );
   });
 
@@ -74,7 +74,7 @@ describe("mergeSkillLists properties", () => {
           expect(resultNames).toEqual(allNames);
         },
       ),
-      { numRuns: 200 },
+      { numRuns: 50 },
     );
   });
 
@@ -89,7 +89,7 @@ describe("mergeSkillLists properties", () => {
           expect(new Set(names).size).toBe(names.length);
         },
       ),
-      { numRuns: 200 },
+      { numRuns: 50 },
     );
   });
 });

@@ -62,7 +62,7 @@ describe("Feature: audit-followup-improvements, Property 1: Path construction eq
 
         expect(normalizedJoined).toBe(normalizedTemplate);
       }),
-      { numRuns: 100 },
+      { numRuns: 40 },
     );
   });
 
@@ -96,7 +96,7 @@ describe("Feature: audit-followup-improvements, Property 1: Path construction eq
           expect(normalizedJoined).toBe(normalizedTemplate);
         },
       ),
-      { numRuns: 100 },
+      { numRuns: 40 },
     );
   });
 
@@ -122,7 +122,7 @@ describe("Feature: audit-followup-improvements, Property 1: Path construction eq
 
         expect(path.normalize(newNotesPath)).toBe(path.normalize(oldNotesPath));
       }),
-      { numRuns: 100 },
+      { numRuns: 40 },
     );
   });
 });

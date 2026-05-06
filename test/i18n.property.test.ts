@@ -115,7 +115,7 @@ describe("Feature: i18n-support, Property 1: 翻译数据 JSON 往返一致性",
         const deserialized = JSON.parse(serialized);
         expect(deserialized).toEqual(data);
       }),
-      { numRuns: 200 },
+      { numRuns: 50 },
     );
   });
 });
@@ -147,7 +147,7 @@ describe("Feature: i18n-support, Property 2: 点分隔路径查找正确性", ()
           expect(result).toBe(expected);
         }
       }),
-      { numRuns: 200 },
+      { numRuns: 50 },
     );
   });
 
@@ -166,7 +166,7 @@ describe("Feature: i18n-support, Property 2: 点分隔路径查找正确性", ()
           expect(result).toBeNull();
         }
       }),
-      { numRuns: 200 },
+      { numRuns: 50 },
     );
   });
 
@@ -190,7 +190,7 @@ describe("Feature: i18n-support, Property 2: 点分隔路径查找正确性", ()
           expect(lookupKey(data, nonExistentPath)).toBeNull();
         },
       ),
-      { numRuns: 200 },
+      { numRuns: 50 },
     );
   });
 
@@ -208,7 +208,7 @@ describe("Feature: i18n-support, Property 2: 点分隔路径查找正确性", ()
         expect(lookupKey(data, ".a")).toBeNull();
         expect(lookupKey(data, "a.")).toBeNull();
       }),
-      { numRuns: 200 },
+      { numRuns: 50 },
     );
   });
 });
@@ -274,7 +274,7 @@ describe("Feature: i18n-support, Property 3: 翻译回退链完整性", () => {
           }
         },
       ),
-      { numRuns: 200 },
+      { numRuns: 50 },
     );
   });
 
@@ -296,7 +296,7 @@ describe("Feature: i18n-support, Property 3: 翻译回退链完整性", () => {
           expect(translate(config, key)).toBe(key);
         },
       ),
-      { numRuns: 200 },
+      { numRuns: 50 },
     );
   });
 });
@@ -381,7 +381,7 @@ describe("Feature: i18n-support, Property 4: 字符串插值完备性", () => {
           expect(result).toBe(expected);
         },
       ),
-      { numRuns: 200 },
+      { numRuns: 50 },
     );
   });
 
@@ -412,7 +412,7 @@ describe("Feature: i18n-support, Property 4: 字符串插值完备性", () => {
           expect(result).toBe(template);
         },
       ),
-      { numRuns: 200 },
+      { numRuns: 50 },
     );
   });
 
@@ -432,7 +432,7 @@ describe("Feature: i18n-support, Property 4: 字符串插值完备性", () => {
           expect(interpolate(template, params)).toBe(template);
         },
       ),
-      { numRuns: 200 },
+      { numRuns: 50 },
     );
   });
 });

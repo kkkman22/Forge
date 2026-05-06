@@ -89,7 +89,7 @@ describe("Property 2: Build-light transitions mirror build transitions", () => {
             expect(result.nextPhase).toBe("build-light");
         }));
     });
-    it("returns review when hasIncompleteTasks=false or undefined", () => {
+    it("returns review when hasIncompleteTasks=false, stays on undefined", () => {
         fc.assert(fc.property(fc.record({
             reviewFixAttempts: fc.integer({ min: 0, max: 10 }),
             maxReviewFixAttempts: fc.integer({ min: 1, max: 20 }),
@@ -100,7 +100,13 @@ describe("Property 2: Build-light transitions mirror build transitions", () => {
                 currentPhase: "build-light",
             });
             const result = determineNextSkill(input);
-            expect(result.nextPhase).toBe("review");
+            // Conservative: undefined → stay in build-light; false → advance to review
+            if (extra.hasIncompleteTasks === undefined) {
+                expect(result.nextPhase).toBe("build-light");
+            }
+            else {
+                expect(result.nextPhase).toBe("review");
+            }
         }));
     });
 });

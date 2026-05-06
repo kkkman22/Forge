@@ -115,7 +115,9 @@ describe("ProcessRegistry", () => {
     describe("shutdownAll", () => {
         it("sends SIGTERM to all registered processes", async () => {
             const reg = ProcessRegistry.getInstance();
-            const killSpy = vi.spyOn(process, "kill").mockImplementation((_pid, signal) => {
+            const killSpy = vi
+                .spyOn(process, "kill")
+                .mockImplementation((_pid, signal) => {
                 // kill(pid, 0) check: throw ESRCH to simulate process exited after SIGTERM
                 if (signal === 0) {
                     const err = new Error("ESRCH");
@@ -124,8 +126,14 @@ describe("ProcessRegistry", () => {
                 }
                 return true;
             });
-            reg.register({ pid: 100, on: () => { } }, { source: "test", detached: false });
-            reg.register({ pid: 200, on: () => { } }, { source: "test", detached: false });
+            reg.register({ pid: 100, on: () => { } }, {
+                source: "test",
+                detached: false,
+            });
+            reg.register({ pid: 200, on: () => { } }, {
+                source: "test",
+                detached: false,
+            });
             const result = await reg.shutdownAll();
             expect(killSpy).toHaveBeenCalledWith(100, "SIGTERM");
             expect(killSpy).toHaveBeenCalledWith(200, "SIGTERM");
@@ -135,7 +143,9 @@ describe("ProcessRegistry", () => {
         it("SIGKILLs processes that do not exit within timeout", async () => {
             const reg = ProcessRegistry.getInstance();
             let sigkillSent = false;
-            const killSpy = vi.spyOn(process, "kill").mockImplementation((_pid, signal) => {
+            const killSpy = vi
+                .spyOn(process, "kill")
+                .mockImplementation((_pid, signal) => {
                 if (signal === "SIGKILL")
                     sigkillSent = true;
                 // After SIGKILL, next kill(pid,0) should fail
@@ -146,7 +156,10 @@ describe("ProcessRegistry", () => {
                 }
                 return true;
             });
-            reg.register({ pid: 300, on: () => { } }, { source: "test", detached: false });
+            reg.register({ pid: 300, on: () => { } }, {
+                source: "test",
+                detached: false,
+            });
             const result = await reg.shutdownAll(100);
             expect(killSpy).toHaveBeenCalledWith(300, "SIGTERM");
             expect(killSpy).toHaveBeenCalledWith(300, "SIGKILL");
@@ -160,7 +173,10 @@ describe("ProcessRegistry", () => {
                 err.code = "ESRCH";
                 throw err;
             });
-            reg.register({ pid: 400, on: () => { } }, { source: "test", detached: false });
+            reg.register({ pid: 400, on: () => { } }, {
+                source: "test",
+                detached: false,
+            });
             const result = await reg.shutdownAll();
             expect(result.alreadyExited).toBe(1);
             killSpy.mockRestore();

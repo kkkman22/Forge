@@ -1,6 +1,6 @@
 ---
 name: forge-plan
-description: "规划引擎。将锁定的 Spec 拆解为包含 TDD 步骤的原子任务。"
+description: "Planning engine that decomposes a locked Spec into atomic TDD-ready tasks. Use when user runs `/forge plan` / has a locked spec / needs actionable task breakdown before build."
 disable-model-invocation: true
 ---
 
@@ -37,6 +37,8 @@ disable-model-invocation: true
 2. **无 design.md** → Atomic Task（含完整 RED/GREEN/REFACTOR 代码）→ 详见 references/atomic-task-format.md
 
 拆解规则：Granularity（2-5 min）、Independence（独立可验证）、Ordering（按依赖排序）、Completeness（不留空白）。
+
+任务命名优先使用 `.forge/glossary.md` 定义的规范术语；如发现同义词/别名，自动替换为 canonical term，保持跨 skill 命名一致。
 
 ### Step 4: Self-Check
 

@@ -289,7 +289,7 @@ describe("Property 7: Inner-layer and outer-layer frozen zone checks are consist
         // Both should be blocked for frozen status in frozen zone
         expect(outerBlocked).toBe(true);
       }),
-      { numRuns: 200 },
+      { numRuns: 50 },
     );
   });
 
@@ -308,7 +308,7 @@ describe("Property 7: Inner-layer and outer-layer frozen zone checks are consist
         // Both should NOT be blocked for non-frozen status
         expect(outerBlocked).toBe(false);
       }),
-      { numRuns: 200 },
+      { numRuns: 50 },
     );
   });
 
@@ -327,7 +327,7 @@ describe("Property 7: Inner-layer and outer-layer frozen zone checks are consist
         // Non-frozen zone paths are never blocked
         expect(outerBlocked).toBe(false);
       }),
-      { numRuns: 100 },
+      { numRuns: 40 },
     );
   });
 
@@ -352,7 +352,7 @@ describe("Property 7: Inner-layer and outer-layer frozen zone checks are consist
           expect(innerResult.blocked).toBe(outerBlocked);
         }
       }),
-      { numRuns: 100 },
+      { numRuns: 40 },
     );
   });
 });

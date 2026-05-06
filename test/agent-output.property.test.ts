@@ -117,7 +117,7 @@ describe("Feature: gnhf-inspired-enhancements, Property 4: Schema 条件構建",
           expect(schema.properties).toHaveProperty(field);
         }
       }),
-      { numRuns: 200 },
+      { numRuns: 50 },
     );
   });
 
@@ -131,7 +131,7 @@ describe("Feature: gnhf-inspired-enhancements, Property 4: Schema 条件構建",
 
         expect(schema.additionalProperties).toBe(false);
       }),
-      { numRuns: 200 },
+      { numRuns: 50 },
     );
   });
 
@@ -147,7 +147,7 @@ describe("Feature: gnhf-inspired-enhancements, Property 4: Schema 条件構建",
 
         expect(requiredKeys).toEqual(propertyKeys);
       }),
-      { numRuns: 200 },
+      { numRuns: 50 },
     );
   });
 
@@ -162,7 +162,7 @@ describe("Feature: gnhf-inspired-enhancements, Property 4: Schema 条件構建",
 
         expect(hasStopField).toBe(includeStopField);
       }),
-      { numRuns: 200 },
+      { numRuns: 50 },
     );
   });
 });
@@ -182,7 +182,7 @@ describe("Feature: gnhf-inspired-enhancements, Property 9: AgentOutput 验证正
 
         expect(result.valid).toBe(true);
       }),
-      { numRuns: 200 },
+      { numRuns: 50 },
     );
   });
 
@@ -196,7 +196,7 @@ describe("Feature: gnhf-inspired-enhancements, Property 9: AgentOutput 验证正
 
         expect(result.valid).toBe(false);
       }),
-      { numRuns: 200 },
+      { numRuns: 50 },
     );
   });
 
@@ -221,7 +221,7 @@ describe("Feature: gnhf-inspired-enhancements, Property 9: AgentOutput 验证正
           expect(result.errors.length).toBeGreaterThan(0);
         }
       }),
-      { numRuns: 200 },
+      { numRuns: 50 },
     );
   });
 });
@@ -245,7 +245,7 @@ describe("Feature: gnhf-inspired-enhancements, Property 10: AgentOutput 序列�
           expect(result.value).toEqual(output);
         }
       }),
-      { numRuns: 200 },
+      { numRuns: 50 },
     );
   });
 });

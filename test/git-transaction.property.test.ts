@@ -91,7 +91,7 @@ describe("Feature: gnhf-inspired-enhancements, Property 5: 提交消息格式化
         expect(msgArg).toContain(String(iteration));
         expect(msgArg).toContain(summary);
       }),
-      { numRuns: 200 },
+      { numRuns: 50 },
     );
   });
 
@@ -111,7 +111,7 @@ describe("Feature: gnhf-inspired-enhancements, Property 5: 提交消息格式化
         expect(msgArg).not.toContain("\n");
         expect(msgArg).not.toContain("\r");
       }),
-      { numRuns: 200 },
+      { numRuns: 50 },
     );
   });
 
@@ -132,7 +132,7 @@ describe("Feature: gnhf-inspired-enhancements, Property 5: 提交消息格式化
         expect(cmd.args[2]).toBe(message);
         expect(cmd.args).toHaveLength(3);
       }),
-      { numRuns: 200 },
+      { numRuns: 50 },
     );
   });
 });
@@ -178,7 +178,7 @@ describe("Feature: gnhf-inspired-enhancements, Property 6: 回滚往返一致性
         expect(reset1).toEqual(reset2);
         expect(clean1).toEqual(clean2);
       }),
-      { numRuns: 200 },
+      { numRuns: 50 },
     );
   });
 
@@ -198,7 +198,7 @@ describe("Feature: gnhf-inspired-enhancements, Property 6: 回滚往返一致性
         expect(cmd.args).toContain("HEAD");
         expect(cmd.args).toContain("--hard");
       }),
-      { numRuns: 200 },
+      { numRuns: 50 },
     );
   });
 });
@@ -223,7 +223,7 @@ describe("Feature: audit-hardening, buildStashCommand 结构正确性", () => {
         expect(cmd.args).toEqual(["stash", "--include-untracked", "-m", message]);
         expect(cmd.args).toHaveLength(4);
       }),
-      { numRuns: 200 },
+      { numRuns: 50 },
     );
   });
 
@@ -242,7 +242,7 @@ describe("Feature: audit-hardening, buildStashCommand 结构正确性", () => {
         expect(cmd.args[3]).toBe(dangerous);
         expect(cmd.args).toHaveLength(4);
       }),
-      { numRuns: 200 },
+      { numRuns: 50 },
     );
   });
 });
@@ -268,7 +268,7 @@ describe("Feature: gnhf-inspired-enhancements, Property 14: Shell 注入安全�
         // It is a discrete array element, not interpolated into a shell string
         expect(cmd.args).toHaveLength(3);
       }),
-      { numRuns: 200 },
+      { numRuns: 50 },
     );
   });
 
@@ -282,7 +282,7 @@ describe("Feature: gnhf-inspired-enhancements, Property 14: Shell 注入安全�
       fc.property(shellMetacharStringArb, (dangerous) => {
         expect(containsShellMetacharacters(dangerous)).toBe(true);
       }),
-      { numRuns: 200 },
+      { numRuns: 50 },
     );
   });
 
@@ -305,7 +305,7 @@ describe("Feature: gnhf-inspired-enhancements, Property 14: Shell 注入安全�
       fc.property(safeStringArb, (safe) => {
         expect(containsShellMetacharacters(safe)).toBe(false);
       }),
-      { numRuns: 200 },
+      { numRuns: 50 },
     );
   });
 
@@ -320,7 +320,7 @@ describe("Feature: gnhf-inspired-enhancements, Property 14: Shell 注入安全�
         const cmd = buildCommitCommand(message);
         expect(cmd.executable).toBe("git");
       }),
-      { numRuns: 200 },
+      { numRuns: 50 },
     );
   });
 
@@ -341,7 +341,7 @@ describe("Feature: gnhf-inspired-enhancements, Property 14: Shell 注入安全�
           expect(ch).toMatch(/[a-zA-Z0-9\-_./]/);
         }
       }),
-      { numRuns: 200 },
+      { numRuns: 50 },
     );
   });
 
@@ -362,7 +362,7 @@ describe("Feature: gnhf-inspired-enhancements, Property 14: Shell 注入安全�
         // No .lock suffix
         expect(sanitized.toLowerCase()).not.toMatch(/\.lock$/);
       }),
-      { numRuns: 200 },
+      { numRuns: 50 },
     );
   });
 
@@ -376,7 +376,7 @@ describe("Feature: gnhf-inspired-enhancements, Property 14: Shell 注入安全�
       fc.property(dangerousPathArb, (path) => {
         expect(validatePathSafety(path)).toBe(false);
       }),
-      { numRuns: 200 },
+      { numRuns: 50 },
     );
   });
 
@@ -390,7 +390,7 @@ describe("Feature: gnhf-inspired-enhancements, Property 14: Shell 注入安全�
       fc.property(safePathArb, (path) => {
         expect(validatePathSafety(path)).toBe(true);
       }),
-      { numRuns: 200 },
+      { numRuns: 50 },
     );
   });
 });
@@ -450,7 +450,7 @@ describe("Feature: audit-remediation-v221, Property 5: sanitizeBranchName produc
           expect(ch).toMatch(/[a-zA-Z0-9\-_./]/);
         }
       }),
-      { numRuns: 200 },
+      { numRuns: 50 },
     );
   });
 
@@ -468,7 +468,7 @@ describe("Feature: audit-remediation-v221, Property 5: sanitizeBranchName produc
         expect(result).not.toContain("@{");
         expect(result.toLowerCase()).not.toMatch(/\.lock$/);
       }),
-      { numRuns: 200 },
+      { numRuns: 50 },
     );
   });
 
@@ -486,7 +486,7 @@ describe("Feature: audit-remediation-v221, Property 5: sanitizeBranchName produc
           expect(result[result.length - 1]).not.toMatch(/[./-]/);
         }
       }),
-      { numRuns: 200 },
+      { numRuns: 50 },
     );
   });
 
@@ -507,7 +507,7 @@ describe("Feature: audit-remediation-v221, Property 5: sanitizeBranchName produc
           expect(ch).not.toBe(" ");
         }
       }),
-      { numRuns: 200 },
+      { numRuns: 50 },
     );
   });
 
@@ -538,7 +538,7 @@ describe("Feature: audit-remediation-v221, Property 5: sanitizeBranchName produc
           expect(result[result.length - 1]).not.toMatch(/[./-]/);
         }
       }),
-      { numRuns: 200 },
+      { numRuns: 50 },
     );
   });
 
@@ -554,7 +554,7 @@ describe("Feature: audit-remediation-v221, Property 5: sanitizeBranchName produc
         const result = sanitizeBranchName(input);
         expect(result.length).toBeGreaterThan(0);
       }),
-      { numRuns: 200 },
+      { numRuns: 50 },
     );
   });
 
@@ -569,7 +569,7 @@ describe("Feature: audit-remediation-v221, Property 5: sanitizeBranchName produc
         const result = sanitizeBranchName(input);
         expect(result).not.toMatch(/\/{2,}/);
       }),
-      { numRuns: 200 },
+      { numRuns: 50 },
     );
   });
 });

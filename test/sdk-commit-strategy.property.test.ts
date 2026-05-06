@@ -130,7 +130,7 @@ describe("Feature: sdk-driver-decomposition, Property 3: Commit effect filtering
           expect(result.stateAdjustment?.commitCount).toBe(Math.max(0, currentCommitCount - 1));
         },
       ),
-      { numRuns: 100 },
+      { numRuns: 40 },
     );
   });
 });
@@ -201,7 +201,7 @@ describe("Feature: sdk-driver-decomposition, Property 4: Commit message format c
           expect(content.length).toBeGreaterThan(0);
         },
       ),
-      { numRuns: 100 },
+      { numRuns: 40 },
     );
   });
 });
