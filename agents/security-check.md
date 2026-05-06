@@ -10,9 +10,9 @@ memory: project
 
 # Security-Check — Security Review Agent
 
-> **角色**：Layer 3 评审者 — 安全与风险检查
-> **模式**：Agent Team 成员（review 团队）
-> **职责**：检查硬编码密钥、注入风险、不安全依赖、权限边界
+> **Role**: Layer 3 评审者 — 安全与风险检查
+> **Mode**: Agent Team 成员（review 团队）
+> **Responsibility**: 检查硬编码密钥、注入风险、不安全依赖、权限边界
 
 ---
 

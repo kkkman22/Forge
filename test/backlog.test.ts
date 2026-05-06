@@ -112,10 +112,7 @@ describe("partial entry handling", () => {
 
 describe("appendToBacklog", () => {
   it("adds only new entries", () => {
-    const existing = [
-      makeEntry("BL-001", "src/a.ts"),
-      makeEntry("BL-002", "src/b.ts"),
-    ];
+    const existing = [makeEntry("BL-001", "src/a.ts"), makeEntry("BL-002", "src/b.ts")];
     const newFindings = [
       makeEntry("BL-002", "src/b.ts"), // duplicate
       makeEntry("BL-003", "src/c.ts"), // new
@@ -188,9 +185,10 @@ describe("resolveEntry", () => {
     const entries = [makeEntry("BL-001", "src/a.ts")];
     const result = resolveEntry(entries, "BL-001", "fix-task", "2026-05-06");
     expect(result).not.toBeNull();
-    expect(result!.resolved).toBe(true);
-    expect(result!.resolvedBy).toBe("fix-task");
-    expect(result!.resolvedDate).toBe("2026-05-06");
+    if (!result) throw new Error("Expected result to not be null");
+    expect(result.resolved).toBe(true);
+    expect(result.resolvedBy).toBe("fix-task");
+    expect(result.resolvedDate).toBe("2026-05-06");
   });
 
   it("returns null for non-existent ID", () => {

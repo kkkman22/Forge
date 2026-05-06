@@ -146,6 +146,12 @@ export const SKILL_FUNCTION_REGISTRY: readonly SkillFunctionEntry[] = [
   },
   {
     module: "ship.ts",
+    functionName: "checkShipGateWithFreshness",
+    skills: ["forge-ship/SKILL.md"],
+    parameterNames: ["review", "test", "progress", "currentHead", "changedFiles", "checklist"],
+  },
+  {
+    module: "ship.ts",
     functionName: "buildShipGateBlockArtifacts",
     skills: ["forge-ship/SKILL.md"],
     parameterNames: ["topic", "tier", "reason", "situation", "now", "sequenceInDay"],
