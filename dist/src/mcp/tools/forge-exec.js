@@ -45,7 +45,7 @@ export async function readDenyPatterns(settingsPath = ".claude/settings.json") {
  * Escape a character for use in a regex pattern.
  */
 function escapeRegexChar(ch) {
-    return "\\" + ch;
+    return `\\${ch}`;
 }
 /**
  * Check whether a command is blocked by any deny pattern.
@@ -62,10 +62,8 @@ export function isCommandDenied(command, denyPatterns) {
             continue;
         const glob = match[1];
         // Convert simple glob to regex: escape special chars, replace * with .*
-        const escaped = glob
-            .replace(/[.+^${}()|[\]\\]/g, escapeRegexChar)
-            .replace(/\*/g, ".*");
-        const re = new RegExp("^" + escaped + "$");
+        const escaped = glob.replace(/[.+^${}()|[\]\\]/g, escapeRegexChar).replace(/\*/g, ".*");
+        const re = new RegExp(`^${escaped}$`);
         if (re.test(command)) {
             return `Command denied by pattern: ${pattern}`;
         }

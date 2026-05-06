@@ -21,6 +21,8 @@ import {
   extractStringField,
   parseFrontmatter,
 } from "./frontmatter.js";
+import { safeParseReviewReport } from "./schemas/review-report.js";
+import { safeParseStatusFile } from "./schemas/status-file.js";
 
 // ---------------------------------------------------------------------------
 // Types
@@ -100,6 +102,100 @@ export function parseStatusFileGraceful(content: string | undefined): {
   parsed: StatusFields;
   warnings: string[];
 } {
+  if (process.env.FORGE_USE_ZOD_PARSER === "1") {
+    return parseStatusFileViaSchema(content);
+  }
+  return parseStatusFileLegacy(content);
+}
+
+/**
+ * Alternate schema-driven implementation of `parseStatusFileGraceful`,
+ * opt-in behind the `FORGE_USE_ZOD_PARSER=1` env var.
+ *
+ * Shape is identical to the legacy path so callers are unaffected. The
+ * schema path is the long-term replacement (Requirement 2.8); keeping
+ * both behind a flag allows us to run them side-by-side in tests and
+ * compare outputs before flipping the default.
+ */
+function parseStatusFileViaSchema(content: string | undefined): {
+  parsed: StatusFields;
+  warnings: string[];
+} {
+  const warnings: string[] = [];
+  if (content === undefined || content.trim() === "") {
+    warnings.push("StatusFile content is empty or undefined, using all defaults");
+    return { parsed: { ...STATUS_DEFAULTS }, warnings };
+  }
+  const fm = parseFrontmatter(content);
+  if (fm === null) {
+    warnings.push("StatusFile has no valid YAML frontmatter, using all defaults");
+    return { parsed: { ...STATUS_DEFAULTS }, warnings };
+  }
+
+  // Build an object shape from the flat frontmatter text via the existing
+  // extractors, then feed it to safeParseStatusFile. Using the same
+  // extractors keeps YAML-literal handling identical to the legacy path.
+  const rawFields: Record<string, unknown> = {};
+  const keys = [
+    "current_task",
+    "tier",
+    "phase",
+    "task_type",
+    "project_phase",
+    "hints",
+    "mode",
+    "updated",
+  ] as const;
+  for (const key of keys) {
+    const v = extractStringField(fm.raw, key);
+    if (v !== null) rawFields[key] = v;
+  }
+  const assumptions = extractListField(fm.raw, "assumptions");
+  if (assumptions !== null) rawFields.assumptions = assumptions;
+
+  const { value: schemaValue, errors } = safeParseStatusFile(rawFields);
+
+  const parsed: StatusFields = {
+    current_task: (schemaValue.current_task as string | undefined) ?? STATUS_DEFAULTS.current_task,
+    tier: (schemaValue.tier as string | undefined) ?? STATUS_DEFAULTS.tier,
+    phase: (schemaValue.phase as string | undefined) ?? STATUS_DEFAULTS.phase,
+    task_type: (schemaValue.task_type as string | undefined) ?? STATUS_DEFAULTS.task_type,
+    project_phase:
+      (schemaValue.project_phase as string | undefined) ?? STATUS_DEFAULTS.project_phase,
+    hints: (schemaValue.hints as string | undefined) ?? STATUS_DEFAULTS.hints,
+    assumptions: (schemaValue.assumptions as string[] | undefined) ?? STATUS_DEFAULTS.assumptions,
+    mode: (schemaValue.mode as string | undefined) ?? STATUS_DEFAULTS.mode,
+    updated: (schemaValue.updated as string | undefined) ?? STATUS_DEFAULTS.updated,
+  };
+
+  const provided = new Set<string>(Object.keys(rawFields));
+  const missingFields = (
+    [
+      "current_task",
+      "tier",
+      "phase",
+      "task_type",
+      "project_phase",
+      "hints",
+      "assumptions",
+      "mode",
+      "updated",
+    ] as const
+  ).filter((f) => !provided.has(f));
+  if (missingFields.length > 0) {
+    warnings.push(`StatusFile missing fields [${missingFields.join(", ")}], using defaults`);
+  }
+  if (errors.length > 0) {
+    warnings.push(`StatusFile schema issues: ${errors.join("; ")}`);
+  }
+  return { parsed, warnings };
+}
+
+/** Legacy extraction path — preserved unchanged for default callers. */
+function parseStatusFileLegacy(content: string | undefined): {
+  parsed: StatusFields;
+  warnings: string[];
+} {
   const warnings: string[] = [];
 
   if (content === undefined || content.trim() === "") {
@@ -161,6 +257,76 @@ export function parseStatusFileGraceful(content: string | undefined): {
  * - result defaults to "incomplete" (safe — blocks ship)
  */
 export function parseReviewReportGraceful(content: string | undefined): {
+  parsed: ReviewReportFields;
+  warnings: string[];
+} {
+  if (process.env.FORGE_USE_ZOD_PARSER === "1") {
+    return parseReviewReportViaSchema(content);
+  }
+  return parseReviewReportLegacy(content);
+}
+
+/**
+ * Shadow-migration path for `parseReviewReportGraceful` that delegates
+ * to `safeParseReviewReport` from `src/schemas/review-report.ts`. Opt-in
+ * via `FORGE_USE_ZOD_PARSER=1`. Shape and defaults match the legacy path
+ * so callers are unaffected.
+ *
+ * **Validates: Requirement 2.8**
+ */
+function parseReviewReportViaSchema(content: string | undefined): {
+  parsed: ReviewReportFields;
+  warnings: string[];
+} {
+  const warnings: string[] = [];
+
+  if (content === undefined || content.trim() === "") {
+    warnings.push("Review report content is empty or undefined, using all defaults");
+    return { parsed: { ...REVIEW_REPORT_DEFAULTS }, warnings };
+  }
+
+  const fm = parseFrontmatter(content);
+  if (fm === null) {
+    warnings.push("Review report has no valid YAML frontmatter, using all defaults");
+    return { parsed: { ...REVIEW_REPORT_DEFAULTS }, warnings };
+  }
+
+  const rawFields: Record<string, unknown> = {};
+  const resultStr = extractStringField(fm.raw, "result");
+  if (resultStr !== null) rawFields.result = resultStr;
+  const p0 = extractNumericField(fm.raw, "p0_count");
+  if (p0 !== null) rawFields.p0_count = p0;
+  const p1 = extractNumericField(fm.raw, "p1_count");
+  if (p1 !== null) rawFields.p1_count = p1;
+  const p2 = extractNumericField(fm.raw, "p2_count");
+  if (p2 !== null) rawFields.p2_count = p2;
+  const p3 = extractNumericField(fm.raw, "p3_count");
+  if (p3 !== null) rawFields.p3_count = p3;
+
+  const { value, errors } = safeParseReviewReport(rawFields);
+
+  const parsed: ReviewReportFields = {
+    result: (value.result as string | undefined) ?? REVIEW_REPORT_DEFAULTS.result,
+    p0_count: (value.p0_count as number | undefined) ?? REVIEW_REPORT_DEFAULTS.p0_count,
+    p1_count: (value.p1_count as number | undefined) ?? REVIEW_REPORT_DEFAULTS.p1_count,
+    p2_count: (value.p2_count as number | undefined) ?? REVIEW_REPORT_DEFAULTS.p2_count,
+    p3_count: (value.p3_count as number | undefined) ?? REVIEW_REPORT_DEFAULTS.p3_count,
+  };
+
+  if (resultStr === null)
+    warnings.push("Review report missing 'result', defaulting to 'incomplete'");
+  if (p0 === null) warnings.push("Review report missing 'p0_count', defaulting to 0");
+  if (p1 === null) warnings.push("Review report missing 'p1_count', defaulting to 0");
+  if (p2 === null) warnings.push("Review report missing 'p2_count', defaulting to 0");
+  if (p3 === null) warnings.push("Review report missing 'p3_count', defaulting to 0");
+  if (errors.length > 0) {
+    warnings.push(`Review report schema issues: ${errors.join("; ")}`);
+  }
+  return { parsed, warnings };
+}
+
+/** Legacy extraction path — preserved unchanged for default callers. */
+function parseReviewReportLegacy(content: string | undefined): {
   parsed: ReviewReportFields;
   warnings: string[];
 } {

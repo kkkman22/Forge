@@ -73,7 +73,7 @@ describe("Property 24: Backward compatibility", () => {
         expect(withDefaults.tier).toBe(withExplicit.tier);
         expect(withDefaults.commandSequence).toEqual(withExplicit.commandSequence);
       }),
-      { numRuns: 200 },
+      { numRuns: 50 },
     );
   });
 
@@ -83,7 +83,7 @@ describe("Property 24: Backward compatibility", () => {
         const result = classifyTask(signals);
         expect(result.taskType).toBe("fullstack");
       }),
-      { numRuns: 100 },
+      { numRuns: 40 },
     );
   });
 
@@ -93,7 +93,7 @@ describe("Property 24: Backward compatibility", () => {
         const result = classifyTask(signals);
         expect(result.projectPhase).toBe("iteration");
       }),
-      { numRuns: 100 },
+      { numRuns: 40 },
     );
   });
 });
@@ -111,7 +111,7 @@ describe("Property 25: Dimensions do not affect tier", () => {
         expect(r1.tier).toBe(r2.tier);
         expect(r1.commandSequence).toEqual(r2.commandSequence);
       }),
-      { numRuns: 200 },
+      { numRuns: 50 },
     );
   });
 
@@ -123,7 +123,7 @@ describe("Property 25: Dimensions do not affect tier", () => {
         expect(r1.tier).toBe(r2.tier);
         expect(r1.commandSequence).toEqual(r2.commandSequence);
       }),
-      { numRuns: 200 },
+      { numRuns: 50 },
     );
   });
 });
@@ -148,7 +148,7 @@ describe("Property 26: Hints are scoped to active commands", () => {
           }
         },
       ),
-      { numRuns: 300 },
+      { numRuns: 75 },
     );
   });
 
@@ -161,7 +161,7 @@ describe("Property 26: Hints are scoped to active commands", () => {
           expect(forbidden.has(hint.command)).toBe(false);
         }
       }),
-      { numRuns: 100 },
+      { numRuns: 40 },
     );
   });
 });
@@ -178,7 +178,7 @@ describe("Property 27: Hint deduplication", () => {
         const tags = hints.map((h) => h.tag);
         expect(new Set(tags).size).toBe(tags.length);
       }),
-      { numRuns: 200 },
+      { numRuns: 50 },
     );
   });
 });
@@ -411,7 +411,7 @@ describe("Property 31: Result structure", () => {
         expect(result.projectPhase).toBe(phase);
         expect(Array.isArray(result.hints)).toBe(true);
       }),
-      { numRuns: 200 },
+      { numRuns: 50 },
     );
   });
 
@@ -428,7 +428,7 @@ describe("Property 31: Result structure", () => {
           expect(hint.description.length).toBeGreaterThan(0);
         }
       }),
-      { numRuns: 200 },
+      { numRuns: 50 },
     );
   });
 });

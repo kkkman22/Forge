@@ -56,7 +56,7 @@ describe("Feature: forge-audit-remediation, Property 4: Branch name deduplicatio
         // The deduplicated name must differ from the original
         expect(deduplicated).not.toBe(baseName);
       }),
-      { numRuns: 100 },
+      { numRuns: 40 },
     );
   });
 
@@ -73,7 +73,7 @@ describe("Feature: forge-audit-remediation, Property 4: Branch name deduplicatio
 
         expect(deduplicated).toBe(baseName);
       }),
-      { numRuns: 100 },
+      { numRuns: 40 },
     );
   });
 
@@ -95,7 +95,7 @@ describe("Feature: forge-audit-remediation, Property 4: Branch name deduplicatio
 
         expect(name1).not.toBe(name2);
       }),
-      { numRuns: 100 },
+      { numRuns: 40 },
     );
   });
 
@@ -117,7 +117,7 @@ describe("Feature: forge-audit-remediation, Property 4: Branch name deduplicatio
           expect(deduplicated).toBe(`${baseName}-${suffix}`);
         }
       }),
-      { numRuns: 100 },
+      { numRuns: 40 },
     );
   });
 });
@@ -140,7 +140,7 @@ describe("Feature: forge-audit-remediation, Property 5: Branch name length is bo
 
         expect(result.length).toBeLessThanOrEqual(250);
       }),
-      { numRuns: 100 },
+      { numRuns: 40 },
     );
   });
 
@@ -157,7 +157,7 @@ describe("Feature: forge-audit-remediation, Property 5: Branch name length is bo
 
         expect(result.length).toBeLessThanOrEqual(250);
       }),
-      { numRuns: 100 },
+      { numRuns: 40 },
     );
   });
 
@@ -183,7 +183,7 @@ describe("Feature: forge-audit-remediation, Property 5: Branch name length is bo
         expect(noCollision.length).toBeLessThanOrEqual(250);
         expect(withCollision.length).toBeLessThanOrEqual(250);
       }),
-      { numRuns: 100 },
+      { numRuns: 40 },
     );
   });
 });

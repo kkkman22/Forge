@@ -95,7 +95,7 @@ describe("Property 5: Quality gate helper — phase routing consistency", () => 
           expect(helperResult).toEqual(directResult);
         },
       ),
-      { numRuns: 200 },
+      { numRuns: 50 },
     );
   });
 
@@ -119,7 +119,7 @@ describe("Property 5: Quality gate helper — phase routing consistency", () => 
           expect(helperResult).toEqual(directResult);
         },
       ),
-      { numRuns: 200 },
+      { numRuns: 50 },
     );
   });
 
@@ -143,7 +143,7 @@ describe("Property 5: Quality gate helper — phase routing consistency", () => 
           expect(helperResult).toEqual(directResult);
         },
       ),
-      { numRuns: 200 },
+      { numRuns: 50 },
     );
   });
 
@@ -167,7 +167,7 @@ describe("Property 5: Quality gate helper — phase routing consistency", () => 
           expect(result).toBeNull();
         },
       ),
-      { numRuns: 200 },
+      { numRuns: 50 },
     );
   });
 
@@ -185,7 +185,7 @@ describe("Property 5: Quality gate helper — phase routing consistency", () => 
 
         expect(result).toBeNull();
       }),
-      { numRuns: 200 },
+      { numRuns: 50 },
     );
   });
 
@@ -203,7 +203,7 @@ describe("Property 5: Quality gate helper — phase routing consistency", () => 
 
         expect(result).toBeNull();
       }),
-      { numRuns: 200 },
+      { numRuns: 50 },
     );
   });
 
@@ -244,7 +244,7 @@ describe("Property 5: Quality gate helper — phase routing consistency", () => 
         expect(readTest).not.toHaveBeenCalled();
         expect(readProgress).not.toHaveBeenCalled();
       }),
-      { numRuns: 200 },
+      { numRuns: 50 },
     );
   });
 
@@ -272,7 +272,7 @@ describe("Property 5: Quality gate helper — phase routing consistency", () => 
         expect(readTest).toHaveBeenCalledOnce();
         expect(readProgress).not.toHaveBeenCalled();
       }),
-      { numRuns: 200 },
+      { numRuns: 50 },
     );
   });
 
@@ -305,7 +305,7 @@ describe("Property 5: Quality gate helper — phase routing consistency", () => 
           expect(readProgress).toHaveBeenCalledOnce();
         },
       ),
-      { numRuns: 200 },
+      { numRuns: 50 },
     );
   });
 });

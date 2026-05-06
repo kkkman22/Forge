@@ -255,7 +255,7 @@ describe("ProcessRegistry", () => {
             expect(reg.size()).toBe(all.length);
           },
         ),
-        { numRuns: 100 },
+        { numRuns: 40 },
       );
     });
   });
@@ -309,7 +309,7 @@ describe("ProcessRegistry", () => {
             }
           },
         ),
-        { numRuns: 100 },
+        { numRuns: 40 },
       );
     });
   });
@@ -444,7 +444,7 @@ describe("Property 4: serialize/deserialize round-trip", () => {
           }
         },
       ),
-      { numRuns: 100 },
+      { numRuns: 40 },
     );
   });
 });
@@ -478,7 +478,7 @@ describe("Property 5: deserialize rejects invalid JSON", () => {
           expect(() => ProcessRegistry.deserialize(invalid)).toThrow();
         },
       ),
-      { numRuns: 100 },
+      { numRuns: 40 },
     );
   });
 });

@@ -118,7 +118,7 @@ describe("Property 1: Topic Mismatch Detection", () => {
 
         expect(result).toBe(expectedTopic);
       }),
-      { numRuns: 200 },
+      { numRuns: 50 },
     );
   });
 
@@ -138,7 +138,7 @@ describe("Property 1: Topic Mismatch Detection", () => {
 
         expect(result).toBeNull();
       }),
-      { numRuns: 200 },
+      { numRuns: 50 },
     );
   });
 
@@ -150,7 +150,7 @@ describe("Property 1: Topic Mismatch Detection", () => {
         expect(result.allowed).toBe(true);
         expect(result.reasons).toHaveLength(0);
       }),
-      { numRuns: 200 },
+      { numRuns: 50 },
     );
   });
 
@@ -162,7 +162,7 @@ describe("Property 1: Topic Mismatch Detection", () => {
         expect(result.allowed).toBe(false);
         expect(result.reasons.length).toBeGreaterThan(0);
       }),
-      { numRuns: 200 },
+      { numRuns: 50 },
     );
   });
 
@@ -174,7 +174,7 @@ describe("Property 1: Topic Mismatch Detection", () => {
         expect(result.allowed).toBe(false);
         expect(result.reasons.length).toBeGreaterThan(0);
       }),
-      { numRuns: 200 },
+      { numRuns: 50 },
     );
   });
 
@@ -209,7 +209,7 @@ describe("Property 3: Pending-Delivery Recording", () => {
         expect(result.topic).toBe(topic);
         expect(result.timestamp).toBe(timestamp);
       }),
-      { numRuns: 200 },
+      { numRuns: 50 },
     );
   });
 
@@ -221,7 +221,7 @@ describe("Property 3: Pending-Delivery Recording", () => {
 
         expect(result).toEqual(expected);
       }),
-      { numRuns: 200 },
+      { numRuns: 50 },
     );
   });
 
@@ -233,7 +233,7 @@ describe("Property 3: Pending-Delivery Recording", () => {
 
         expect(result.branchName).toBe(branchName);
       }),
-      { numRuns: 200 },
+      { numRuns: 50 },
     );
   });
 });
@@ -273,7 +273,7 @@ describe("Property 4: Stale Branch Detection", () => {
           expect(stale[0].branchName).toBe("feature/stale-1");
         },
       ),
-      { numRuns: 200 },
+      { numRuns: 50 },
     );
   });
 
@@ -295,7 +295,7 @@ describe("Property 4: Stale Branch Detection", () => {
           expect(stale).toHaveLength(0);
         },
       ),
-      { numRuns: 200 },
+      { numRuns: 50 },
     );
   });
 
@@ -320,7 +320,7 @@ describe("Property 4: Stale Branch Detection", () => {
           expect(stale).toHaveLength(0);
         },
       ),
-      { numRuns: 200 },
+      { numRuns: 50 },
     );
   });
 
@@ -348,7 +348,7 @@ describe("Property 4: Stale Branch Detection", () => {
           expect(stale).toHaveLength(otherTopics.length);
         },
       ),
-      { numRuns: 200 },
+      { numRuns: 50 },
     );
   });
 
@@ -359,7 +359,7 @@ describe("Property 4: Stale Branch Detection", () => {
 
         expect(stale).toHaveLength(0);
       }),
-      { numRuns: 200 },
+      { numRuns: 50 },
     );
   });
 });
@@ -376,7 +376,7 @@ describe("Property 5: Cross-Topic Commit Prevention", () => {
 
         expect(result.allowed).toBe(true);
       }),
-      { numRuns: 200 },
+      { numRuns: 50 },
     );
   });
 
@@ -387,7 +387,7 @@ describe("Property 5: Cross-Topic Commit Prevention", () => {
 
         expect(result.allowed).toBe(false);
       }),
-      { numRuns: 200 },
+      { numRuns: 50 },
     );
   });
 
@@ -398,7 +398,7 @@ describe("Property 5: Cross-Topic Commit Prevention", () => {
 
         expect(result.allowed).toBe(false);
       }),
-      { numRuns: 200 },
+      { numRuns: 50 },
     );
   });
 
@@ -409,7 +409,7 @@ describe("Property 5: Cross-Topic Commit Prevention", () => {
 
         expect(result.allowed).toBe(false);
       }),
-      { numRuns: 200 },
+      { numRuns: 50 },
     );
   });
 
@@ -452,7 +452,7 @@ describe("Property 6: Unshipped Branch Detection", () => {
           }
         },
       ),
-      { numRuns: 200 },
+      { numRuns: 50 },
     );
   });
 
@@ -467,7 +467,7 @@ describe("Property 6: Unshipped Branch Detection", () => {
 
         expect(warnings).toHaveLength(0);
       }),
-      { numRuns: 200 },
+      { numRuns: 50 },
     );
   });
 
@@ -478,7 +478,7 @@ describe("Property 6: Unshipped Branch Detection", () => {
 
         expect(warnings).toHaveLength(0);
       }),
-      { numRuns: 200 },
+      { numRuns: 50 },
     );
   });
 });

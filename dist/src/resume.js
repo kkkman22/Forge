@@ -86,4 +86,40 @@ function findNextTask(planTasks, progress) {
     }
     return null;
 }
+// ---------------------------------------------------------------------------
+// State reconstruction integration (State Resilience Layer 3)
+// ---------------------------------------------------------------------------
+import { parseStatusFileGraceful } from "./state.js";
+import { reconstructStateFromGit } from "./status-resolver.js";
+/**
+ * Attempt to recover the current workflow phase when StatusFile may be
+ * missing or inconsistent.
+ *
+ * Priority:
+ *   1. Parse StatusFile with graceful fallback → use phase if non-default
+ *   2. Reconstruct from .forge/ file presence → suggest phase
+ *
+ * Reconstructed state is NOT written to disk — caller must present to user
+ * for confirmation.
+ */
+export function recoverPhase(statusContent, forgeFiles) {
+    const { parsed } = parseStatusFileGraceful(statusContent);
+    // If status file has a non-default phase, trust it
+    if (parsed.phase !== "router" && statusContent !== undefined && statusContent.trim() !== "") {
+        return {
+            phase: parsed.phase,
+            reconstructed: false,
+            statusFields: parsed,
+            reconstruction: null,
+        };
+    }
+    // Status file is missing/default — try reconstruction
+    const reconstruction = reconstructStateFromGit(forgeFiles);
+    return {
+        phase: reconstruction.inferredPhase,
+        reconstructed: true,
+        statusFields: parsed,
+        reconstruction,
+    };
+}
 //# sourceMappingURL=resume.js.map

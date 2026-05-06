@@ -23,6 +23,51 @@ export interface StateFileValidation {
     valid: boolean;
     errors: string[];
 }
+/** Structured StatusFile fields with all fields guaranteed present. */
+export interface StatusFields {
+    current_task: string;
+    tier: string;
+    phase: string;
+    task_type: string;
+    project_phase: string;
+    hints: string;
+    assumptions: string[];
+    mode: string;
+    updated: string;
+}
+/** Structured review report fields with all fields guaranteed present. */
+export interface ReviewReportFields {
+    result: string;
+    p0_count: number;
+    p1_count: number;
+    p2_count: number;
+    p3_count: number;
+}
+export declare const STATUS_DEFAULTS: StatusFields;
+export declare const REVIEW_REPORT_DEFAULTS: ReviewReportFields;
+/**
+ * Parse StatusFile frontmatter with graceful fallback to defaults.
+ *
+ * - undefined/empty content → all defaults + warnings
+ * - missing frontmatter → all defaults + warnings
+ * - partial fields → missing fields use STATUS_DEFAULTS + warnings
+ * - complete input → normal parse, no warnings
+ */
+export declare function parseStatusFileGraceful(content: string | undefined): {
+    parsed: StatusFields;
+    warnings: string[];
+};
+/**
+ * Parse review report frontmatter with graceful fallback to defaults.
+ *
+ * - undefined/empty content → all defaults + warnings
+ * - missing fields → REVIEW_REPORT_DEFAULTS + warnings
+ * - result defaults to "incomplete" (safe — blocks ship)
+ */
+export declare function parseReviewReportGraceful(content: string | undefined): {
+    parsed: ReviewReportFields;
+    warnings: string[];
+};
 /**
  * Validate that a .forge/ state file meets the unified format requirements:
  *

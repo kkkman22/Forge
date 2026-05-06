@@ -35,6 +35,22 @@ export interface ShipGateResult {
     allowed: boolean;
     reasons: string[];
 }
+export interface ReviewFreshnessResult {
+    fresh: boolean;
+    reason: string;
+    /** Non-.forge/ files that changed since review. Only present when fresh=false. */
+    changedFiles?: string[];
+}
+/**
+ * Check whether the review report is still fresh relative to the current HEAD.
+ *
+ * 4 cases:
+ *   1. reviewedCommit undefined → fresh (backward compat)
+ *   2. reviewedCommit === currentHead → fresh
+ *   3. all changed files are under .forge/ → fresh
+ *   4. any changed file is outside .forge/ → not fresh
+ */
+export declare function checkReviewFreshness(reviewedCommit: string | undefined, currentHead: string, changedFiles: string[]): ReviewFreshnessResult;
 /**
  * Check whether `/forge ship` is allowed to proceed.
  *

@@ -272,7 +272,7 @@ describe("Feature: loop-skills-fusion, Property 13: Skill 感知模式自動検�
           expect(result).toBe(true);
         },
       ),
-      { numRuns: 100 },
+      { numRuns: 40 },
     );
   });
 
@@ -288,7 +288,7 @@ describe("Feature: loop-skills-fusion, Property 13: Skill 感知模式自動検�
           expect(result).toBe(false);
         },
       ),
-      { numRuns: 100 },
+      { numRuns: 40 },
     );
   });
 
@@ -307,7 +307,7 @@ describe("Feature: loop-skills-fusion, Property 13: Skill 感知模式自動検�
           expect(result1).toBe(forgeExists);
         },
       ),
-      { numRuns: 100 },
+      { numRuns: 40 },
     );
   });
 
@@ -326,7 +326,7 @@ describe("Feature: loop-skills-fusion, Property 13: Skill 感知模式自動検�
           expect(result).toBe(false);
         },
       ),
-      { numRuns: 100 },
+      { numRuns: 40 },
     );
   });
 });

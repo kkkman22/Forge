@@ -1,6 +1,6 @@
 ---
 name: forge-build
-description: "执行引擎。按计划以 TDD 方式逐任务实现代码，通过 Subagent 隔离和原子提交保证质量。"
+description: "Execution engine that drives the approved plan through TDD with three-strike safety. Use when user runs `/forge build` / has an approved plan / begins the implementation phase of a standard or full tier task."
 disable-model-invocation: true
 ---
 
@@ -31,22 +31,11 @@ disable-model-invocation: true
 | 1 | **Spec Gate** — scan `.forge/specs/` status | Not `"locked"` (no-Spec Plan exempt) | → `/forge spec` |
 | 2 | **Plan Gate** — scan `.forge/plans/` status | Not `"approved"` | → `/forge plan` |
 | 3 | **Dir Integrity** — `.forge/` subdirs exist | Missing | → `forge init` |
-| 4 | **Branch Gate** — current vs expected branch | Not on `feature/<topic>` or `forge/<topic>` | → Auto-switch (§2.1) |
+| 4 | **Branch Gate** — current vs expected branch | Not on `feature/<topic>` or `forge/<topic>` | → Auto-switch |
 
 **Rejection Output**: `🚫 Build 前置检查未通过 — 命名：<检查> 证据：<文件状态> 建议：<路由> 重入：<条件>`. Multiple failures → list all. Autonomous → JSON.
 
-### §2.1 Branch Gate
-
-`git branch --show-current` → read `current_task` from `.forge/status.md` → `checkBranchTopicGate`. Auto-switch requires clean working tree.
-
-| Branch State | Action |
-|---|---|
-| On matching `feature/<topic>` | ✅ Pass |
-| Other, branch exists | `git checkout` |
-| Other, branch missing | `git checkout -b` |
-| `feature/<topic>` mismatch | 🚫 Block |
-
-**Unshipped Branch Warning**: `detectUnshippedBranches` + `detectStaleBranches`. Non-empty → warn (ship now / continue / switch). **Pre-commit**: `checkCommitTopicMatch` per commit. **Lightweight**: skip #1–#2, require #3–#4.
+→ Branch Gate auto-switch / unshipped-branch warning / lightweight exception 详见 references/branch-gate.md
 
 ---
 
@@ -58,33 +47,15 @@ Direct edit, no Subagent. Pause every 2 steps for confirmation. Verify, commit. 
 
 ### 3.2 Standard (clear requirements / has Spec)
 
-Read task list → per task: **Closure-First Probes** (→ 详见 references/closure-probes.md) → **Subagent TDD** → progress update → atomic commit → **Final Validation** (§3.5).
+Read task list → per task: **Closure-First Probes** (→ references/closure-probes.md) → **Subagent TDD** → progress update → atomic commit → **Final Validation** (§3.5).
 
-**Restatement Checkpoint** (mandatory): Counter init N (default 3), decrement per task, at zero → Checkpoint (re-read progress/status/instincts → 3-block summary → interim log → reset). Exception-triggered on BLOCKED/NEEDS_CONTEXT/DONE_WITH_CONCERNS (no counter reset). ≤800 tokens.
-
-**Subagent Status**:
-
-| Status | Action |
-|---|---|
-| DONE | Review, complete |
-| DONE_WITH_CONCERNS | Correctness → resolve. Observability → record, continue |
-| NEEDS_CONTEXT | Supplement, re-dispatch |
-| BLOCKED | Context → supplement / large → split / Plan → report |
-| 429_THROTTLED | `git diff --stat` → assess. No Three-strike. Degrade, continue |
-
-**Invocation**: `Agent(prompt, skills=["forge-test"], permissionMode="acceptEdits", maxTurns=20)`. Include: probe results, task desc, file context, knowledge, TDD reqs, verify commands, self-check, prohibitions, **framework API verification**.
-
-**Framework API 验证**: 当任务涉及框架特定 API（React hooks、Express middleware、Prisma query 等）时，Subagent 应先验证 API 签名与项目 package.json 中的依赖版本一致，不依赖训练数据记忆。对于非平凡 API 或不确定当前版本签名时，应查阅官方文档确认。纯逻辑和标准库调用可跳过此步骤。
-
-**Self-check**: `📋 ✅/❌ Spec 场景 ✅/❌ 安全快扫 ✅/❌ 范围检查 → DONE`
+Mandatory Restatement Checkpoint (counter init 3) + Subagent Status handling + Invocation contract + Framework API verification + Self-check。→ 详见 references/subagent-orchestration.md
 
 ### 3.3 Full (new service/db/auth/ambiguous)
 
-**Phase 1**: Parallel research Subagents → 函数签名详见 references/function-contracts.md. `Promise.allSettled`, `max_parallel_agents` default 6.
+**Phase 1**: Parallel research Subagents（`Promise.allSettled`，`max_parallel_agents` default 6）。→ 函数签名详见 references/function-contracts.md
 
-**Phase 2**: Module-by-module Subagent TDD. Optional Git Worktree for file overlap. Same Restatement as §3.2, init at Phase 2 start. → Final Validation.
-
----
+**Phase 2**: Module-by-module Subagent TDD。Optional Git Worktree for file overlap。Restatement counter init at Phase 2 start。→ Final Validation。→ 详见 references/subagent-orchestration.md
 
 ## 3.4 Closure-First Probes
 
@@ -94,7 +65,7 @@ Read task list → per task: **Closure-First Probes** (→ 详见 references/clo
 
 ## 3.5 Final Validation
 
-Read `ci_check_command` from config.md → execute as-is. Empty → `verify_commands` → AI auto-detect. Report: `[Command] → [Output] → [Claim]`.
+Read `ci_check_command` from `config.md` → execute as-is. Empty → `verify_commands` → AI auto-detect. Report: `[Command] → [Output] → [Claim]`.
 
 **Three-Layer Truncation**: (1) `forge_exec` MCP (2) `run-with-trim.sh` fallback (3) AI Iron Law — failure output unchanged.
 
@@ -102,31 +73,19 @@ Read `ci_check_command` from config.md → execute as-is. Empty → `verify_comm
 
 ## 4. TDD Iron Rules
 
-→ CLAUDE.md §2.1 (RED → GREEN → REFACTOR). In-Subagent enforced. Code before tests → delete, restart. → 详见 references/tdd-rules.md
+→ CLAUDE.md §2.1 (RED → GREEN → REFACTOR). In-Subagent enforced. Code before tests → delete, restart.
 
-### 4.1 Simplicity Check
+GREEN 阶段的代码必须是"能让测试通过的最简单实现"。REFACTOR 完成后扫描孤儿代码（未使用的 import / 未调用的函数 / 未引用的类型 / 未使用的变量），记录到 `.forge/findings/<topic>.md`，不自行删除。
 
-GREEN 阶段的代码必须是"能让测试通过的最简单实现"。如果在 GREEN 阶段引入了抽象层、工厂模式或配置驱动的设计——停下来，删掉，写更简单的版本。
-
-REFACTOR 阶段才是引入抽象的时机，且仅当同一模式重复出现 **3 次以上**时（Rule of Three）。
-
-三行相似的代码好过一个过早的抽象。先实现朴素的、显然正确的版本。
-
-→ 详细示例和规则详见 references/tdd-rules.md §Simplicity Check
-
-### 4.1.1 Dead Code Hygiene
-
-REFACTOR 完成后，扫描是否产生了孤儿代码：未使用的 import、未调用的函数或方法、未引用的类型定义、未使用的变量。
-
-发现孤儿代码时记录到 `.forge/findings/<topic>.md`，不自行删除——删除需要确认代码确实不再被需要。
-
-→ 详见 references/tdd-rules.md §Dead Code Hygiene
+→ 详见 references/tdd-rules.md（Simplicity Check 示例、Rule of Three、Dead Code Hygiene 细节）
 
 ---
 
 ## 5. Failure Handling
 
 **5.1 Three-strike**: 3 consecutive fails → `debugger` agent (maxTurns=15): read errors → one hypothesis → minimal fix → report if 3 more. `🚫 连续失败 3 次 → debugger. 尝试 1/2/3：<原因>` → 函数签名详见 references/function-contracts.md
+
+**5.1a Failure 自动沉淀**: Three-strike 触发时同步调用 `buildThreeStrikeFailureArtifacts(topic, tier, situation, rootCause, now, seq)`（`src/build.ts`）→ 写 failure episode 到 `.forge/knowledge/sessions/<date>-<topic>.md` 并在 `.forge/progress/<topic>.md` 末尾追加 Evolution 标记 `target=forge-build#three_strike`。写入失败降级为 `console.warn`，不阻断重路由流程。
 
 **5.2 Test Failure**: GREEN failing → test bugs? impl misses conditions? → fix + rerun.
 
@@ -136,50 +95,17 @@ REFACTOR 完成后，扫描是否产生了孤儿代码：未使用的 import、�
 
 **6.0 Anti-drift**: 6 prohibited behaviors (proxy metrics / absorb verification / relabel fixes / silent degrade / pseudo-success / modify frozen). → 详见 references/anti-drift.md
 
-**6.0.1 No Mid-build Confirmation（铁律）**: Build 阶段内部，任务之间**绝对禁止**停下来询问用户。这是与 TDD 同级的铁律，没有例外。
-
-**禁止的行为**（无论措辞如何变化，以下行为全部禁止）：
-- 输出"是否继续？"、"是否继续清理/验证/实施？"
-- 以"工作量较大"、"涉及较多修改"、"比较复杂"为由询问是否继续
-- 以"是否先暂停进入 review"为由中断 build
-- 在任务之间列出剩余工作并等待用户确认
-- 以任何理由、任何措辞请求用户确认后再继续下一个任务
-
-**正确行为**：完成一个任务 → 输出一行完成摘要 → 立即开始下一个任务。工作量大不是停下来的理由，复杂度高不是停下来的理由。Plan 已经批准了所有任务，build 的职责是执行，不是重新评估。
-
-**唯一允许停下来的 3 种情况**：
-1. Three-strike 触发（同一修复连续失败 3 次）
-2. 阻断性错误（编译失败且无法自动修复、外部依赖不可用）
-3. 分支保护阻断
+**6.0.1 No Mid-build Confirmation（铁律）**: Build 阶段内部，任务之间**绝对禁止**停下来询问用户。完成一个任务 → 一行摘要 → 立即下一个任务。唯一允许停下来的 3 种情况：Three-strike / 阻断性错误 / 分支保护。→ 详见 references/no-mid-build-confirmation.md
 
 **6.1** Test First → CLAUDE.md §2.1 | **6.2** Atomic Commits (1 per task) | **6.3** Verify First → §2.3, P5 chain | **6.4** Three-strike → §2.4 | **6.5** Conciseness → §2.6 (structured outputs exempt)
 
 ### 6.6 Change Summary
 
-每个 Subagent 在原子提交前，必须输出三段式变更摘要：
-
-```
-📝 Task N 变更摘要
-  变更：<文件列表 + 每个文件的变更描述>
-  未触碰（有意）：<注意到但不在范围内的问题>
-  关注点：<需要用户确认的决策>
-```
-
-**"未触碰"部分证明范围纪律**——表明 Agent 注意到了相邻问题但选择不修复。
-**"关注点"部分**在 autonomous 模式下记录到 findings，interactive 模式下等待用户确认。
-
-此摘要属于 Structured_Output，豁免于散文压缩规则（→ CLAUDE.md §2.6）。
+每个 Subagent 在原子提交前输出三段式摘要（变更 / 未触碰 / 关注点）。属于 Structured_Output，豁免散文压缩。→ 详见 references/change-summary.md
 
 ### 6.7 Dependency Discipline
 
-添加新依赖前必须确认以下 4 项：
-
-1. **现有技术栈是否已能解决**：优先使用标准库和项目已有工具
-2. **依赖大小**：检查 bundle 影响（`npm pack --dry-run` 或等效命令）
-3. **是否活跃维护**：检查最近 commit 时间、open issues 数量
-4. **许可证兼容性**：必须与项目许可证兼容
-
-**规则**：每个依赖都是负债。不添加依赖是默认选择，添加依赖需要理由。
+添加新依赖前 4 项确认（现有技术栈 / 大小 / 维护活跃 / 许可证）。每个依赖都是负债，不添加是默认。→ 详见 references/dependency-discipline.md
 
 ---
 

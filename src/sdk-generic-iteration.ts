@@ -14,6 +14,7 @@
 
 import { buildIterationPrompt } from "./context-accumulator.js";
 import { FrozenZoneViolation } from "./effect-executor.js";
+import { buildEntry } from "./event-log.js";
 import type { AgentOutput, IterationEntry, OrchestratorEvent, TokenUsage } from "./loop-types.js";
 import { transition } from "./orchestrator.js";
 import type { IterationContext, IterationResult } from "./sdk-driver-types.js";
@@ -171,9 +172,23 @@ export async function executeGenericIteration(ctx: IterationContext): Promise<It
   orchestratorState = result.state;
   let lastEffects = result.effects;
 
-  // Execute the resulting effects (commit/rollback, schedule_iteration, etc.).
+  // Append a write_event_log effect so the full event stream is persisted
+  // to .forge/runs/<runId>/events.jsonl for audit and replay
+  // (Requirement 3.1, 3.5).
+  const logEntry = buildEntry(
+    ctx.config.runId,
+    preTransitionState.currentIteration,
+    event,
+    preTransitionState,
+    result.state,
+    result.effects,
+  );
+  lastEffects = [...lastEffects, { type: "write_event_log", entry: logEntry }];
+
+  // Execute the resulting effects (commit/rollback, schedule_iteration,
+  // write_event_log, etc.).
   try {
-    await ctx.executeEffects(result.effects);
+    await ctx.executeEffects(lastEffects);
   } catch (effectError) {
     const effectMessage = effectError instanceof Error ? effectError.message : String(effectError);
 

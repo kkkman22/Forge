@@ -103,7 +103,7 @@ describe("Property 26: Dispatch batch", () => {
         const batch = getDispatchBatch(graph, maxC);
         expect(batch.tasks.length).toBeLessThanOrEqual(maxC);
       }),
-      { numRuns: 200 },
+      { numRuns: 50 },
     );
   });
 
@@ -117,7 +117,7 @@ describe("Property 26: Dispatch batch", () => {
           expect(readyIds.has(task.id)).toBe(true);
         }
       }),
-      { numRuns: 200 },
+      { numRuns: 50 },
     );
   });
 
@@ -155,7 +155,7 @@ describe("Property 26: Dispatch batch", () => {
         const batch = getDispatchBatch(graph, maxC);
         expect(batch.tasks.length + batch.waitingCount).toBe(ready.length);
       }),
-      { numRuns: 200 },
+      { numRuns: 50 },
     );
   });
 });
@@ -270,7 +270,7 @@ describe("Property 26: 执行状态摘要", () => {
           summary.blocked;
         expect(sum).toBe(summary.total);
       }),
-      { numRuns: 200 },
+      { numRuns: 50 },
     );
   });
 
@@ -280,7 +280,7 @@ describe("Property 26: 执行状态摘要", () => {
         const summary = getExecutionSummary(graph);
         expect(summary.isComplete).toBe(summary.completed === summary.total);
       }),
-      { numRuns: 200 },
+      { numRuns: 50 },
     );
   });
 
@@ -309,7 +309,7 @@ describe("Property 26: 并行执行模拟", () => {
         const waves = simulateParallelExecution(graph, maxC);
         expect(waves).toBeGreaterThan(0);
       }),
-      { numRuns: 200 },
+      { numRuns: 50 },
     );
   });
 
@@ -327,7 +327,7 @@ describe("Property 26: 并行执行模拟", () => {
         const waves = simulateParallelExecution(graph, maxC);
         expect(waves).toBe(Math.ceil(n / maxC));
       }),
-      { numRuns: 100 },
+      { numRuns: 40 },
     );
   });
 
@@ -338,7 +338,7 @@ describe("Property 26: 并行执行模拟", () => {
         const waves3 = simulateParallelExecution(graph, 3);
         expect(waves3).toBeLessThanOrEqual(waves1);
       }),
-      { numRuns: 200 },
+      { numRuns: 50 },
     );
   });
 

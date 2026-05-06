@@ -7,13 +7,23 @@
  *   - forge-decide/SKILL.md contains "Context Budget Management" section with Subagent_Summary_Protocol
  *   - Existing non-context-budget content is preserved in all SKILL documents
  */
-import { readFileSync } from "node:fs";
+import { existsSync, readFileSync } from "node:fs";
 import { resolve } from "node:path";
 import { describe, expect, it } from "vitest";
 const ROOT = resolve(import.meta.dirname, "..");
 const readSkill = (name) => readFileSync(resolve(ROOT, "skills", name, "SKILL.md"), "utf-8");
+const readSkillWithRefs = (name, ...refFiles) => {
+    const main = readSkill(name);
+    const refs = refFiles
+        .map((f) => {
+        const p = resolve(ROOT, "skills", name, "references", f);
+        return existsSync(p) ? readFileSync(p, "utf-8") : "";
+    })
+        .join("\n");
+    return `${main}\n${refs}`;
+};
 describe("Contract: forge-build/SKILL.md context budget section", () => {
-    const content = readSkill("forge-build");
+    const content = readSkillWithRefs("forge-build", "context-budget.md");
     it("contains Context Budget Management heading", () => {
         expect(content).toContain("## Context Budget Management");
     });

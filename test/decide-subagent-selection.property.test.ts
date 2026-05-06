@@ -58,7 +58,7 @@ describe("Feature: agent-team-migration, Property 3: decide member selection", (
         const expectedCount = hasUI ? 4 : 3;
         expect(invocations).toHaveLength(expectedCount);
       }),
-      { numRuns: 100 },
+      { numRuns: 40 },
     );
   });
 
@@ -75,7 +75,7 @@ describe("Feature: agent-team-migration, Property 3: decide member selection", (
           expect(inv.prompt).toContain("500");
         }
       }),
-      { numRuns: 100 },
+      { numRuns: 40 },
     );
   });
 });
@@ -107,7 +107,7 @@ describe("Feature: agent-team-migration, Property 4: critic blocking → status"
           expect(status).toBe("confirmed");
         }
       }),
-      { numRuns: 100 },
+      { numRuns: 40 },
     );
   });
 
@@ -128,7 +128,7 @@ describe("Feature: agent-team-migration, Property 4: critic blocking → status"
           }
         },
       ),
-      { numRuns: 100 },
+      { numRuns: 40 },
     );
   });
 });

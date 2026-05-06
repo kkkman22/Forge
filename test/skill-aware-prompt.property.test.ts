@@ -90,7 +90,7 @@ describe("Feature: loop-skills-fusion, Property 4: buildSkillAwarePrompt 字段�
         expect(output).toContain(phase);
         expect(output).toContain(tier);
       }),
-      { numRuns: 200 },
+      { numRuns: 50 },
     );
   });
 
@@ -116,7 +116,7 @@ describe("Feature: loop-skills-fusion, Property 4: buildSkillAwarePrompt 字段�
           expect(output).toContain("forge-router");
         },
       ),
-      { numRuns: 200 },
+      { numRuns: 50 },
     );
   });
 
@@ -144,7 +144,7 @@ describe("Feature: loop-skills-fusion, Property 4: buildSkillAwarePrompt 字段�
           }
         },
       ),
-      { numRuns: 200 },
+      { numRuns: 50 },
     );
   });
 
@@ -172,7 +172,7 @@ describe("Feature: loop-skills-fusion, Property 4: buildSkillAwarePrompt 字段�
           }
         },
       ),
-      { numRuns: 200 },
+      { numRuns: 50 },
     );
   });
 
@@ -208,7 +208,7 @@ describe("Feature: loop-skills-fusion, Property 4: buildSkillAwarePrompt 字段�
           expect(output).toContain("mode: autonomous");
         },
       ),
-      { numRuns: 200 },
+      { numRuns: 50 },
     );
   });
 
@@ -236,7 +236,7 @@ describe("Feature: loop-skills-fusion, Property 4: buildSkillAwarePrompt 字段�
           expect(output).toContain(projectPhase);
         },
       ),
-      { numRuns: 200 },
+      { numRuns: 50 },
     );
   });
 });

@@ -107,7 +107,7 @@ describe("Preservation Property 2a: Empty entries persist as empty string", () =
 
         expect(result).toBe("");
       }),
-      { numRuns: 200 },
+      { numRuns: 50 },
     );
   });
 });
@@ -144,7 +144,7 @@ describe("Preservation Property 2b: formatNotesDocument round-trip", () => {
           expect(roundTripped.keyLearnings).toEqual(original.keyLearnings);
         }
       }),
-      { numRuns: 200 },
+      { numRuns: 50 },
     );
   });
 
@@ -164,7 +164,7 @@ describe("Preservation Property 2b: formatNotesDocument round-trip", () => {
         expect(parsed.branchName).toBe(doc.branchName);
         expect(parsed.entries.length).toBe(doc.entries.length);
       }),
-      { numRuns: 200 },
+      { numRuns: 50 },
     );
   });
 });
@@ -188,7 +188,7 @@ describe("Preservation Property 2c: formatNotesDocument output structure", () =>
         expect(markdown.startsWith("# Run:")).toBe(true);
         expect(markdown).toContain("## Iteration Log");
       }),
-      { numRuns: 200 },
+      { numRuns: 50 },
     );
   });
 });

@@ -90,6 +90,12 @@ export const SKILL_FUNCTION_REGISTRY = [
         parameterNames: ["review", "test", "progress", "checklist"],
     },
     {
+        module: "ship.ts",
+        functionName: "checkReviewFreshness",
+        skills: ["forge-ship/SKILL.md"],
+        parameterNames: ["reviewedCommit", "currentHead", "changedFiles"],
+    },
+    {
         module: "branch-lifecycle.ts",
         functionName: "recordPendingDelivery",
         skills: ["forge-ship/SKILL.md"],
@@ -163,6 +169,13 @@ export const SKILL_FUNCTION_REGISTRY = [
         functionName: "archiveTaskStatus",
         skills: ["forge-abort/SKILL.md"],
         parameterNames: ["io", "forgeRoot", "taskName", "date"],
+    },
+    // --- forge-resume/SKILL.md (state reconstruction) ---
+    {
+        module: "resume.ts",
+        functionName: "recoverPhase",
+        skills: ["forge-resume/SKILL.md"],
+        parameterNames: ["statusContent", "forgeFiles"],
     },
 ];
 //# sourceMappingURL=skill-function-registry.js.map

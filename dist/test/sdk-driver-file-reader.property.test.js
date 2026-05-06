@@ -1,5 +1,5 @@
 /**
- * Property-based tests for the generic file reader in SdkDriver.
+ * Property-based tests for the generic file reader used by skill-aware iteration.
  *
  * **Property 4: Generic file reader — null safety**
  * **Validates: Requirements 4.1, 4.5, 4.6**
@@ -9,69 +9,14 @@
  * - If reader throws any `Error`, result is `null`
  * - If reader returns a string, result equals that string
  *
- * Tests the `readFileContent` private method indirectly by constructing
- * SdkDriver instances and accessing the method via the test harness.
+ * Tests the `readFileContent` function exported from `sdk-skill-iteration.ts`.
+ * Previously this tested a private method on SdkDriver; after the
+ * sdk-driver-decomposition extraction, the function lives in the
+ * skill-aware iteration module.
  */
 import * as fc from "fast-check";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
-// Mock RunManager.persistNotes before importing SdkDriver
-vi.mock("../src/run-manager.js", () => ({
-    RunManager: { persistNotes: vi.fn() },
-}));
-import { SdkDriver } from "../src/sdk-driver.js";
-// ---------------------------------------------------------------------------
-// Helpers
-// ---------------------------------------------------------------------------
-/** Build a minimal SdkDriverConfig with optional readReviewFile callback. */
-function buildConfig(readReviewFile) {
-    return {
-        objective: "test objective",
-        loopConfig: {
-            agent: "claude",
-            maxConsecutiveFailures: 3,
-            preventSleep: false,
-            backoffBaseMs: 60000,
-            maxConcurrentWorktrees: 3,
-        },
-        limits: {},
-        cwd: "/test/repo",
-        runId: "test-run-id",
-        runDir: "/test/runs/test-run-id",
-        warmQuery: {},
-        baseCommit: "abc123",
-        notesPath: "/test/runs/test-run-id/notes.md",
-        branchName: "forge/test-branch",
-        skillAware: false,
-        readReviewFile,
-        readTestFile: undefined,
-        readProgressFile: undefined,
-    };
-}
-/** Minimal mock EffectExecutor. */
-function createMockEffectExecutor() {
-    return {
-        aborted: false,
-        stopped: false,
-        executeEffect: vi.fn().mockResolvedValue(undefined),
-        executeEffects: vi.fn().mockResolvedValue(undefined),
-    };
-}
-/** Minimal mock AgentInterface. */
-function createMockAgentInterface() {
-    return {
-        name: "test",
-        run: vi.fn(),
-        close: vi.fn(),
-    };
-}
-/**
- * Access the private `readFileContent` method on a SdkDriver instance.
- * Uses the test harness pattern to invoke the private method directly.
- */
-function callReadFileContent(driver, reader) {
-    // biome-ignore lint/suspicious/noExplicitAny: accessing private method for testing
-    return driver.readFileContent(reader);
-}
+import { readFileContent } from "../src/sdk-skill-iteration.js";
 // ---------------------------------------------------------------------------
 // Setup / Teardown
 // ---------------------------------------------------------------------------
@@ -97,40 +42,32 @@ describe("Property 4: Generic file reader — null safety", () => {
      */
     it("returns null when reader is undefined", () => {
         fc.assert(fc.property(fc.constant(undefined), (_reader) => {
-            const config = buildConfig(undefined);
-            const driver = new SdkDriver(config, createMockEffectExecutor(), createMockAgentInterface());
-            const result = callReadFileContent(driver, undefined);
+            const result = readFileContent(undefined);
             expect(result).toBeNull();
         }));
     });
     it("returns null when reader throws any Error", () => {
         fc.assert(fc.property(fc.string({ minLength: 0, maxLength: 200 }), (errorMessage) => {
-            const config = buildConfig(undefined);
-            const driver = new SdkDriver(config, createMockEffectExecutor(), createMockAgentInterface());
             const throwingReader = () => {
                 throw new Error(errorMessage);
             };
-            const result = callReadFileContent(driver, throwingReader);
+            const result = readFileContent(throwingReader);
             expect(result).toBeNull();
         }));
     });
     it("returns null when reader throws a non-Error value", () => {
         fc.assert(fc.property(fc.oneof(fc.string(), fc.integer(), fc.boolean(), fc.constant(null), fc.constant(undefined)), (thrownValue) => {
-            const config = buildConfig(undefined);
-            const driver = new SdkDriver(config, createMockEffectExecutor(), createMockAgentInterface());
             const throwingReader = () => {
                 throw thrownValue;
             };
-            const result = callReadFileContent(driver, throwingReader);
+            const result = readFileContent(throwingReader);
             expect(result).toBeNull();
         }));
     });
     it("returns the string when reader returns a string", () => {
         fc.assert(fc.property(fc.string(), (content) => {
-            const config = buildConfig(undefined);
-            const driver = new SdkDriver(config, createMockEffectExecutor(), createMockAgentInterface());
             const stringReader = () => content;
-            const result = callReadFileContent(driver, stringReader);
+            const result = readFileContent(stringReader);
             expect(result).toBe(content);
         }));
     });
@@ -155,9 +92,7 @@ describe("Property 4: Generic file reader — null safety", () => {
             expected: content,
         })));
         fc.assert(fc.property(readerArb, ({ reader, expected }) => {
-            const config = buildConfig(undefined);
-            const driver = new SdkDriver(config, createMockEffectExecutor(), createMockAgentInterface());
-            const result = callReadFileContent(driver, reader);
+            const result = readFileContent(reader);
             expect(result).toBe(expected);
         }));
     });

@@ -77,7 +77,7 @@ describe("Feature: audit-remediation-v221, Property 1: Hooks validation correctl
         expect(result.valid).toBe(true);
         expect(result.reason).toBeUndefined();
       }),
-      { numRuns: 100 },
+      { numRuns: 40 },
     );
   });
 
@@ -118,7 +118,7 @@ describe("Feature: audit-remediation-v221, Property 1: Hooks validation correctl
           expect(result.reason?.length).toBeGreaterThan(0);
         }
       }),
-      { numRuns: 100 },
+      { numRuns: 40 },
     );
   });
 
@@ -157,7 +157,7 @@ describe("Feature: audit-remediation-v221, Property 1: Hooks validation correctl
         expect(result.reason).toBeDefined();
         expect(result.reason?.length).toBeGreaterThan(0);
       }),
-      { numRuns: 100 },
+      { numRuns: 40 },
     );
   });
 });

@@ -2,6 +2,30 @@
 
 All notable changes to Forge will be documented in this file.
 
+## Format Conventions
+
+Entries follow [Keep a Changelog](https://keepachangelog.com/) with Forge-specific additions:
+
+- **`[SECURITY]` prefix**: security fixes (including CVE / GHSA remediations) are tagged `[SECURITY]` in the `Fixed` section. Each `[SECURITY]` entry **must link at least one ADR** (`ADR-NNNN`) describing the root-cause analysis and remediation decision. See [SECURITY.md](SECURITY.md) for the record format.
+- **ADR references**: architectural changes reference the driving ADR when one exists (`ADR-NNNN: <title>`).
+
+## [Unreleased]
+
+### Added
+
+- **ADR Registry** (Requirement 1): canonical `.forge/decisions/ADR-NNNN-*.md` records with `/forge decide` auto-numbering via `nextAdrId`, auto-updated `.forge/knowledge/adr-index.md`, supersession tracking, and related-ADR matching via Jaccard similarity. Template at `.forge/decisions/ADR-TEMPLATE.md`.
+- **Security posture documentation** (Requirement 6):
+  - README "🛡️ 安全与信任" section listing the 5-layer defense model.
+  - `SECURITY.md` with private disclosure channels, SLA (≤3 days acknowledgement / ≤14 days critical fix), supported versions and `[SECURITY]` entry format.
+  - CI `security-audit` job running `npm audit --audit-level=high` and `scripts/check-deps.mjs` on every PR, plus a nightly cron on `main`.
+  - `scripts/check-deps.mjs` scanner: typosquatting allowlist, exact-version pin enforcement for runtime deps, license compatibility check.
+  - `CONTRIBUTING.md` "安全贡献指南" section covering secret/PII handling, shell command construction, dependency review checklist, and ADR-required files.
+
+### Changed
+
+- **Runtime dependency pinning**: `minimatch` pinned to exact version (`10.2.5`) per supply-chain policy. Open ranges no longer allowed for any entry under `dependencies`.
+- **Protected zone rules** (`.forge/config.md`): `.forge/decisions/ADR-*.md` moved to Guarded zone (append-only; supersession re-renders frontmatter). Non-ADR decision transcripts (`.forge/decisions/[0-9]*.md`) remain Open zone.
+
 ## [2.3.0] - 2026-04-28
 
 ### Added

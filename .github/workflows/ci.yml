@@ -6,6 +6,9 @@ on:
     tags: ['v*']
   pull_request:
     branches: [main]
+  schedule:
+    # Daily at 04:00 UTC — re-scan main for new npm audit advisories
+    - cron: "0 4 * * *"
 
 jobs:
   check:
@@ -53,6 +56,75 @@ jobs:
               exit 1
             fi
           done
+
+  security-audit:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-node@v6
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - name: npm audit (high / critical)
+        run: npm audit --audit-level=high
+      - name: Check dependency hygiene
+        run: node scripts/check-deps.mjs
+
+  security-audit-nightly:
+    if: github.event_name == 'schedule'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+        with:
+          ref: main
+      - uses: actions/setup-node@v6
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - name: npm audit (nightly scan of main)
+        run: npm audit --audit-level=high
+      - name: Check dependency hygiene
+        run: node scripts/check-deps.mjs
+
+  bench:
+    if: github.event_name == 'pull_request'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-node@v6
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - name: Run PR benchmarks
+        run: npx vitest bench --run --reporter=json > /tmp/pr-bench.json
+      - name: Checkout main for baseline
+        run: |
+          git stash --include-untracked || true
+          git checkout origin/main -- .
+      - name: Run main baseline benchmarks
+        run: npx vitest bench --run --reporter=json > /tmp/main-bench.json
+      - name: Restore PR branch
+        run: |
+          git reset --hard
+          git stash pop || true
+      - name: Compare benchmarks
+        id: compare
+        run: |
+          node scripts/extract-bench-json.mjs /tmp/main-bench.json /tmp/pr-bench.json \
+            --threshold=1.20 > /tmp/bench-comparison.json
+      - name: Post bench comparison as PR comment
+        if: always()
+        run: |
+          if [[ -f /tmp/bench-comparison.json ]]; then
+            node scripts/render-bench-markdown.mjs /tmp/bench-comparison.json \
+              > /tmp/bench-comment.md || true
+            cat /tmp/bench-comment.md || true
+          fi
 
   verify-dist:
     needs: check

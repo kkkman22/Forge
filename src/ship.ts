@@ -171,3 +171,98 @@ export function checkShipGateWithChecklist(
 
   return result;
 }
+
+// ---------------------------------------------------------------------------
+// Evolution artefact helpers (skills-cross-pollination — Requirement 8.7)
+// ---------------------------------------------------------------------------
+
+import type { Episode, EpisodeOutcome, EpisodeTier } from "./episode.js";
+import {
+  buildFailureEpisode,
+  buildFailureEvolutionMarker,
+  type FailureContext,
+} from "./failure-sink.js";
+
+/**
+ * Why the ship gate blocked the delivery. Drives the episode outcome:
+ *
+ *   - `uncommitted`       → `outcome: "partial"`. The work is not lost;
+ *                           the gate simply stopped the user from
+ *                           shipping before committing their edits.
+ *   - `checklist_failed`  → `outcome: "failure"`. The P1 Fix Checklist
+ *                           has unverified entries, meaning a review
+ *                           finding has not been addressed.
+ */
+export type ShipGateBlockReason = "uncommitted" | "checklist_failed";
+
+/** Output of {@link buildShipGateBlockArtifacts}. */
+export interface ShipGateBlockArtifacts {
+  episode: Episode;
+  markerText: string;
+}
+
+/**
+ * Map a {@link ShipGateBlockReason} onto the corresponding episode
+ * outcome. Isolated so tests can pin the mapping without constructing
+ * a full `FailureContext`.
+ */
+function outcomeForReason(reason: ShipGateBlockReason): EpisodeOutcome {
+  switch (reason) {
+    case "uncommitted":
+      return "partial";
+    case "checklist_failed":
+      return "failure";
+  }
+}
+
+/**
+ * Pure helper that constructs the failure artefacts triggered by the
+ * ship gate rejecting a delivery.
+ *
+ * Behaviour (Requirement 8.7):
+ *   - Builds a {@link FailureContext} with `skill = "forge-ship"` and
+ *     `trigger = "ship_gate_blocked"`, carrying `topic`, `tier`, and
+ *     `situation` from the call site.
+ *   - Delegates to {@link buildFailureEpisode} for a v2 Episode, then
+ *     overrides `outcome` based on `reason`:
+ *       - `uncommitted`       → `"partial"`
+ *       - `checklist_failed`  → `"failure"` (no override needed — the
+ *         failure-sink default already returns `"failure"`).
+ *   - Calls {@link buildFailureEvolutionMarker} with the episode id so
+ *     the Evolution marker target is `forge-ship#ship_gate_blocked`.
+ *
+ * Drivers are expected to append the episode to
+ * `.forge/knowledge/sessions/<date>-<topic>.md` (Guarded zone) and the
+ * marker to the topic's progress file (Open zone). Write failures
+ * degrade to a warning per Requirement 8.12 — callers keep the
+ * delivery-blocked message front and centre.
+ *
+ * Pure: identical `(topic, tier, reason, situation, now, sequenceInDay)`
+ * always yields identical artefacts.
+ */
+export function buildShipGateBlockArtifacts(
+  topic: string,
+  tier: EpisodeTier,
+  reason: ShipGateBlockReason,
+  situation: string,
+  now: Date,
+  sequenceInDay: number,
+): ShipGateBlockArtifacts {
+  const ctx: FailureContext = {
+    skill: "forge-ship",
+    topic,
+    tier,
+    trigger: "ship_gate_blocked",
+    situation,
+  };
+
+  const baseEpisode = buildFailureEpisode(ctx, now, sequenceInDay);
+  const desiredOutcome = outcomeForReason(reason);
+  const episode: Episode =
+    baseEpisode.outcome === desiredOutcome
+      ? baseEpisode
+      : { ...baseEpisode, outcome: desiredOutcome };
+
+  const markerText = buildFailureEvolutionMarker(ctx, episode.id, now);
+  return { episode, markerText };
+}

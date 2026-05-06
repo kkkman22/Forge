@@ -68,6 +68,8 @@ export interface ClassificationResult {
     work_nature: WorkNature;
     /** Behavioral hints for downstream commands. */
     hints: RouteHint[];
+    /** Explicit assumptions surfaced during routing analysis. */
+    assumptions: string[];
 }
 /**
  * Detect the work nature from a task description using keyword matching.
@@ -114,5 +116,10 @@ export declare function generateHints(taskType: TaskType, projectPhase: ProjectP
  *
  * Backward compatible: taskType defaults to "fullstack", projectPhase defaults
  * to "iteration", workNature defaults to "feature" when not provided.
+ *
+ * Prompt defense (Requirement 5.5–5.7): when `rawDescription` is provided,
+ * the router runs `scanInput` on it. Critical threats raise
+ * `PromptDefenseError`; high / medium threats add a
+ * `tag: "prompt-defense-warning"` RouteHint on `command: "*"`.
  */
-export declare function classifyTask(signals: TaskSignals, userOverride?: Tier, projectContext?: ProjectContext, taskType?: TaskType, projectPhase?: ProjectPhase, workNature?: WorkNature): ClassificationResult;
+export declare function classifyTask(signals: TaskSignals, userOverride?: Tier, projectContext?: ProjectContext, taskType?: TaskType, projectPhase?: ProjectPhase, workNature?: WorkNature, rawDescription?: string): ClassificationResult;

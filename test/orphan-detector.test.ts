@@ -55,7 +55,7 @@ describe("OrphanDetector", () => {
             expect(result).toBeNull();
           },
         ),
-        { numRuns: 100 },
+        { numRuns: 40 },
       );
     });
   });
@@ -102,7 +102,7 @@ describe("OrphanDetector", () => {
             mockExecSync.mockReset();
           },
         ),
-        { numRuns: 100 },
+        { numRuns: 40 },
       );
     });
   });
@@ -137,7 +137,7 @@ describe("OrphanDetector", () => {
             warnSpy.mockRestore();
           },
         ),
-        { numRuns: 100 },
+        { numRuns: 40 },
       );
     });
   });

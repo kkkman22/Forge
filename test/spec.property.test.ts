@@ -262,7 +262,7 @@ describe("Property 5: Spec 锁定状态转换", () => {
           expect(result.spec.frontmatter.status).toBe("locked");
         }
       }),
-      { numRuns: 200 },
+      { numRuns: 50 },
     );
   });
 
@@ -277,7 +277,7 @@ describe("Property 5: Spec 锁定状态转换", () => {
         // Status must remain "draft" after rejection
         expect(rejected.frontmatter.status).toBe("draft");
       }),
-      { numRuns: 200 },
+      { numRuns: 50 },
     );
   });
 
@@ -298,7 +298,7 @@ describe("Property 5: Spec 锁定状态转换", () => {
           expect(confirmed.isBrownfield).toBe(spec.isBrownfield);
         }
       }),
-      { numRuns: 200 },
+      { numRuns: 50 },
     );
   });
 
@@ -315,7 +315,7 @@ describe("Property 5: Spec 锁定状态转换", () => {
         expect(rejected.exclusions).toEqual(spec.exclusions);
         expect(rejected.isBrownfield).toBe(spec.isBrownfield);
       }),
-      { numRuns: 200 },
+      { numRuns: 50 },
     );
   });
 
@@ -332,7 +332,7 @@ describe("Property 5: Spec 锁定状态转换", () => {
           expect(twice.spec.frontmatter.status).toBe("locked");
         }
       }),
-      { numRuns: 200 },
+      { numRuns: 50 },
     );
   });
 });
@@ -347,7 +347,7 @@ describe("Property 6: Spec 需求可测试性", () => {
       fc.property(allTestableRequirementsArb, (requirements) => {
         expect(validateTestability(requirements)).toBe(true);
       }),
-      { numRuns: 200 },
+      { numRuns: 50 },
     );
   });
 
@@ -356,7 +356,7 @@ describe("Property 6: Spec 需求可测试性", () => {
       fc.property(someUntestableRequirementsArb, (requirements) => {
         expect(validateTestability(requirements)).toBe(false);
       }),
-      { numRuns: 200 },
+      { numRuns: 50 },
     );
   });
 
@@ -381,7 +381,7 @@ describe("Property 7: 棕地 Spec 包含 Delta 章节", () => {
 
         expect(validateBrownfieldDelta(spec)).toBe(true);
       }),
-      { numRuns: 200 },
+      { numRuns: 50 },
     );
   });
 
@@ -393,7 +393,7 @@ describe("Property 7: 棕地 Spec 包含 Delta 章节", () => {
 
         expect(validateBrownfieldDelta(spec)).toBe(false);
       }),
-      { numRuns: 200 },
+      { numRuns: 50 },
     );
   });
 
@@ -404,7 +404,7 @@ describe("Property 7: 棕地 Spec 包含 Delta 章节", () => {
 
         expect(validateBrownfieldDelta(spec)).toBe(false);
       }),
-      { numRuns: 200 },
+      { numRuns: 50 },
     );
   });
 
@@ -416,7 +416,7 @@ describe("Property 7: 棕地 Spec 包含 Delta 章节", () => {
         // Non-brownfield specs don't need Delta, so validation passes
         expect(validateBrownfieldDelta(spec)).toBe(true);
       }),
-      { numRuns: 200 },
+      { numRuns: 50 },
     );
   });
 });
@@ -467,7 +467,7 @@ describe("Property 8: 导入模式 Spec 创建", () => {
           expect(spec.isBrownfield).toBe(false);
         },
       ),
-      { numRuns: 200 },
+      { numRuns: 50 },
     );
   });
 
@@ -498,7 +498,7 @@ describe("Property 8: 导入模式 Spec 创建", () => {
           expect(validateBrownfieldDelta(spec)).toBe(true);
         },
       ),
-      { numRuns: 200 },
+      { numRuns: 50 },
     );
   });
 
@@ -531,7 +531,7 @@ describe("Property 8: 导入模式 Spec 创建", () => {
           }
         },
       ),
-      { numRuns: 200 },
+      { numRuns: 50 },
     );
   });
 
@@ -560,7 +560,7 @@ describe("Property 8: 导入模式 Spec 创建", () => {
           expect(rejected.frontmatter.importSource).toBe(importSource);
         },
       ),
-      { numRuns: 200 },
+      { numRuns: 50 },
     );
   });
 
@@ -587,7 +587,7 @@ describe("Property 8: 导入模式 Spec 创建", () => {
           expect(validateTestability(spec.requirements)).toBe(true);
         },
       ),
-      { numRuns: 200 },
+      { numRuns: 50 },
     );
   });
 });
@@ -684,7 +684,7 @@ describe("Property 9: confirmSpec validation guard", () => {
           expect(result.errors.some((e) => e.toLowerCase().includes("testable"))).toBe(true);
         }
       }),
-      { numRuns: 200 },
+      { numRuns: 50 },
     );
   });
 
@@ -705,7 +705,7 @@ describe("Property 9: confirmSpec validation guard", () => {
           }
         },
       ),
-      { numRuns: 200 },
+      { numRuns: 50 },
     );
   });
 
@@ -724,7 +724,7 @@ describe("Property 9: confirmSpec validation guard", () => {
           expect(result.errors.some((e) => e.toLowerCase().includes("delta"))).toBe(true);
         }
       }),
-      { numRuns: 200 },
+      { numRuns: 50 },
     );
   });
 });

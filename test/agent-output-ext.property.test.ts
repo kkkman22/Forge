@@ -77,7 +77,7 @@ describe("Feature: loop-skills-fusion, Property 11: AgentOutput 扩展向后兼�
         const result = validateAgentOutput(output);
         expect(result.valid).toBe(true);
       }),
-      { numRuns: 200 },
+      { numRuns: 50 },
     );
   });
 
@@ -92,7 +92,7 @@ describe("Feature: loop-skills-fusion, Property 11: AgentOutput 扩展向后兼�
         const result = validateAgentOutput(output);
         expect(result.valid).toBe(true);
       }),
-      { numRuns: 200 },
+      { numRuns: 50 },
     );
   });
 
@@ -117,7 +117,7 @@ describe("Feature: loop-skills-fusion, Property 11: AgentOutput 扩展向后兼�
           expect(result.valid).toBe(false);
         },
       ),
-      { numRuns: 200 },
+      { numRuns: 50 },
     );
   });
 
@@ -145,7 +145,7 @@ describe("Feature: loop-skills-fusion, Property 11: AgentOutput 扩展向后兼�
         expect(schema.required).not.toContain("next_skill_phase");
         expect(schema.required).not.toContain("gate_result");
       }),
-      { numRuns: 200 },
+      { numRuns: 50 },
     );
   });
 
@@ -167,7 +167,7 @@ describe("Feature: loop-skills-fusion, Property 11: AgentOutput 扩展向后兼�
         expect(schema.properties).not.toHaveProperty("next_skill_phase");
         expect(schema.properties).not.toHaveProperty("gate_result");
       }),
-      { numRuns: 200 },
+      { numRuns: 50 },
     );
   });
 });

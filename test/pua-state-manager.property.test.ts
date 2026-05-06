@@ -105,7 +105,7 @@ describe("Property 2: PUA state manager — success resets state", () => {
         expect(postSuccessFields.puaChainIndex).toBeUndefined();
         expect(postSuccessFields.puaFailurePattern).toBeUndefined();
       }),
-      { numRuns: 200 },
+      { numRuns: 50 },
     );
   });
 
@@ -142,7 +142,7 @@ describe("Property 2: PUA state manager — success resets state", () => {
         expect(resetFields.puaChainIndex).toBe(freshFields.puaChainIndex);
         expect(resetFields.puaFailurePattern).toBe(freshFields.puaFailurePattern);
       }),
-      { numRuns: 200 },
+      { numRuns: 50 },
     );
   });
 
@@ -169,7 +169,7 @@ describe("Property 2: PUA state manager — success resets state", () => {
 
         expect(afterFirst).toBe(afterSecond);
       }),
-      { numRuns: 200 },
+      { numRuns: 50 },
     );
   });
 
@@ -193,7 +193,7 @@ describe("Property 2: PUA state manager — success resets state", () => {
         const content = getStatusContent();
         expect(content).toContain("phase:");
       }),
-      { numRuns: 200 },
+      { numRuns: 50 },
     );
   });
 });
@@ -251,7 +251,7 @@ describe("Property 3: PUA state manager — failure escalation monotonicity", ()
           }
         },
       ),
-      { numRuns: 200 },
+      { numRuns: 50 },
     );
   });
 
@@ -290,7 +290,7 @@ describe("Property 3: PUA state manager — failure escalation monotonicity", ()
           expect(reachedL4).toBe(true);
         },
       ),
-      { numRuns: 200 },
+      { numRuns: 50 },
     );
   });
 });

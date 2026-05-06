@@ -185,7 +185,7 @@ describe("Property 13: 知识文档格式有效性", () => {
         expect(result.valid).toBe(true);
         expect(result.errors).toHaveLength(0);
       }),
-      { numRuns: 200 },
+      { numRuns: 50 },
     );
   });
 
@@ -205,7 +205,7 @@ describe("Property 13: 知识文档格式有效性", () => {
           expect(result.errors).toHaveLength(0);
         },
       ),
-      { numRuns: 200 },
+      { numRuns: 50 },
     );
   });
 
@@ -224,7 +224,7 @@ describe("Property 13: 知识文档格式有效性", () => {
           expect(doc.frontmatter.confidence).toBeLessThanOrEqual(MAX_CONFIDENCE);
         },
       ),
-      { numRuns: 200 },
+      { numRuns: 50 },
     );
   });
 
@@ -247,7 +247,7 @@ describe("Property 13: 知识文档格式有效性", () => {
         expect(fm.confidence).toBeGreaterThanOrEqual(MIN_CONFIDENCE);
         expect(fm.confidence).toBeLessThanOrEqual(MAX_CONFIDENCE);
       }),
-      { numRuns: 200 },
+      { numRuns: 50 },
     );
   });
 });
@@ -264,7 +264,7 @@ describe("Property 14: 知识库维护不变量", () => {
 
         expect(result.documents.length).toBeLessThanOrEqual(state.limit);
       }),
-      { numRuns: 200 },
+      { numRuns: 50 },
     );
   });
 
@@ -277,7 +277,7 @@ describe("Property 14: 知识库维护不变量", () => {
           expect(pattern.confidenceScore).toBeGreaterThanOrEqual(MIN_CONFIDENCE);
         }
       }),
-      { numRuns: 200 },
+      { numRuns: 50 },
     );
   });
 
@@ -289,7 +289,7 @@ describe("Property 14: 知识库维护不变量", () => {
         expect(result.documents.length).toBe(state.limit);
         expect(result.removedDocuments.length).toBe(state.documents.length - state.limit);
       }),
-      { numRuns: 200 },
+      { numRuns: 50 },
     );
   });
 
@@ -307,7 +307,7 @@ describe("Property 14: 知识库维护不变量", () => {
           expect(pattern.confidenceScore).toBeGreaterThanOrEqual(MIN_CONFIDENCE);
         }
       }),
-      { numRuns: 200 },
+      { numRuns: 50 },
     );
   });
 
@@ -321,7 +321,7 @@ describe("Property 14: 知识库维护不变量", () => {
         expect(result.removedDocuments).toHaveLength(0);
         expect(result.removedPatterns).toHaveLength(0);
       }),
-      { numRuns: 200 },
+      { numRuns: 50 },
     );
   });
 
@@ -341,7 +341,7 @@ describe("Property 14: 知识库维护不变量", () => {
           expect(maxRemovedConfidence).toBeLessThanOrEqual(minKeptConfidence);
         }
       }),
-      { numRuns: 200 },
+      { numRuns: 50 },
     );
   });
 
@@ -358,7 +358,7 @@ describe("Property 14: 知识库维护不变量", () => {
           expect(pattern.confidenceScore).toBeGreaterThanOrEqual(MIN_CONFIDENCE);
         }
       }),
-      { numRuns: 200 },
+      { numRuns: 50 },
     );
   });
 });

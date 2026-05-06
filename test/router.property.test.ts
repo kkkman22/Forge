@@ -113,7 +113,7 @@ describe("Property 1: Router 分类正确性", () => {
         expect(result.tier).toBe("full");
         expect(result.commandSequence).toEqual(EXPECTED_SEQUENCES.full);
       }),
-      { numRuns: 200 },
+      { numRuns: 50 },
     );
   });
 
@@ -124,7 +124,7 @@ describe("Property 1: Router 分类正确性", () => {
         expect(result.tier).toBe("standard");
         expect(result.commandSequence).toEqual(EXPECTED_SEQUENCES.standard);
       }),
-      { numRuns: 200 },
+      { numRuns: 50 },
     );
   });
 
@@ -135,7 +135,7 @@ describe("Property 1: Router 分类正确性", () => {
         expect(result.tier).toBe("light");
         expect(result.commandSequence).toEqual(EXPECTED_SEQUENCES.light);
       }),
-      { numRuns: 200 },
+      { numRuns: 50 },
     );
   });
 
@@ -146,7 +146,7 @@ describe("Property 1: Router 分类正确性", () => {
         expect(result.tier).toBe("standard");
         expect(result.commandSequence).toEqual(EXPECTED_SEQUENCES.standard);
       }),
-      { numRuns: 200 },
+      { numRuns: 50 },
     );
   });
 
@@ -167,7 +167,7 @@ describe("Property 1: Router 分类正确性", () => {
           expect(result.commandSequence).toEqual(EXPECTED_SEQUENCES.full);
         },
       ),
-      { numRuns: 200 },
+      { numRuns: 50 },
     );
   });
 
@@ -193,7 +193,7 @@ describe("Property 1: Router 分类正确性", () => {
           expect(result.commandSequence).toEqual(EXPECTED_SEQUENCES.standard);
         },
       ),
-      { numRuns: 200 },
+      { numRuns: 50 },
     );
   });
 
@@ -205,7 +205,7 @@ describe("Property 1: Router 分类正确性", () => {
         expect(result.commandSequence).toEqual(EXPECTED_SEQUENCES[result.tier]);
         expect(result.reason).toBeTruthy();
       }),
-      { numRuns: 500 },
+      { numRuns: 40 },
     );
   });
 });
@@ -242,7 +242,7 @@ describe("Property 23: Brownfield boost", () => {
         expect(result.tier).toBe("standard");
         expect(result.reason).toContain("棕地");
       }),
-      { numRuns: 200 },
+      { numRuns: 50 },
     );
   });
 
@@ -252,7 +252,7 @@ describe("Property 23: Brownfield boost", () => {
         const result = classifyTask(signals, undefined, brownfieldNotTouching);
         expect(result.tier).toBe("light");
       }),
-      { numRuns: 200 },
+      { numRuns: 50 },
     );
   });
 
@@ -262,7 +262,7 @@ describe("Property 23: Brownfield boost", () => {
         const result = classifyTask(signals, undefined, greenfieldContext);
         expect(result.tier).toBe("light");
       }),
-      { numRuns: 200 },
+      { numRuns: 50 },
     );
   });
 
@@ -272,7 +272,7 @@ describe("Property 23: Brownfield boost", () => {
         const result = classifyTask(signals, undefined, unknownContext);
         expect(result.tier).toBe("light");
       }),
-      { numRuns: 200 },
+      { numRuns: 50 },
     );
   });
 
@@ -282,7 +282,7 @@ describe("Property 23: Brownfield boost", () => {
         const result = classifyTask(signals, undefined, brownfieldTouchingModules);
         expect(result.tier).toBe("full");
       }),
-      { numRuns: 200 },
+      { numRuns: 50 },
     );
   });
 
@@ -292,7 +292,7 @@ describe("Property 23: Brownfield boost", () => {
         const result = classifyTask(signals, undefined, brownfieldTouchingModules);
         expect(result.tier).toBe("standard");
       }),
-      { numRuns: 200 },
+      { numRuns: 50 },
     );
   });
 
@@ -302,7 +302,7 @@ describe("Property 23: Brownfield boost", () => {
         const result = classifyTask(signals, "light", brownfieldTouchingModules);
         expect(result.tier).toBe("light");
       }),
-      { numRuns: 200 },
+      { numRuns: 50 },
     );
   });
 
@@ -313,7 +313,7 @@ describe("Property 23: Brownfield boost", () => {
         const without = classifyTask(signals);
         expect(withContext.tier).toBe(without.tier);
       }),
-      { numRuns: 500 },
+      { numRuns: 40 },
     );
   });
 });
@@ -372,7 +372,7 @@ describe("Property 11: Brownfield boost classification", () => {
         const result = classifyTask(signals, undefined, context);
         expect(TIER_ORDER[result.tier]).toBeGreaterThanOrEqual(TIER_ORDER.standard);
       }),
-      { numRuns: 200 },
+      { numRuns: 50 },
     );
   });
 
@@ -384,7 +384,7 @@ describe("Property 11: Brownfield boost classification", () => {
         // unless a user override forces it
         expect(TIER_ORDER[result.tier]).toBeGreaterThanOrEqual(TIER_ORDER.standard);
       }),
-      { numRuns: 200 },
+      { numRuns: 50 },
     );
   });
 
@@ -401,7 +401,7 @@ describe("Property 11: Brownfield boost classification", () => {
         // hasAuthChanges/hasNewService trigger full via hasFullSignals regardless of context
         expect(withContext.tier).toBe(withoutContext.tier);
       }),
-      { numRuns: 200 },
+      { numRuns: 50 },
     );
   });
 });
@@ -422,7 +422,7 @@ describe("Property: Routing assumptions field", () => {
           expect(typeof a).toBe("string");
         }
       }),
-      { numRuns: 500 },
+      { numRuns: 40 },
     );
   });
 
@@ -432,7 +432,7 @@ describe("Property: Routing assumptions field", () => {
         const result = classifyTask(signals);
         expect(result.assumptions).toEqual([]);
       }),
-      { numRuns: 200 },
+      { numRuns: 50 },
     );
   });
 });

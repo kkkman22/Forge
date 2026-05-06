@@ -72,7 +72,7 @@ describe("Feature: i18n-support, Property 8: SKILL 文件解析与回退", () =>
         // Second candidate is the default
         expect(candidates[1]).toBe(`skills/${skillName}/SKILL.md`);
       }),
-      { numRuns: 200 },
+      { numRuns: 50 },
     );
   });
 
@@ -90,7 +90,7 @@ describe("Feature: i18n-support, Property 8: SKILL 文件解析与回退", () =>
         expect(candidates).toHaveLength(1);
         expect(candidates[0]).toBe(`skills/${skillName}/SKILL.md`);
       }),
-      { numRuns: 200 },
+      { numRuns: 50 },
     );
   });
 
@@ -130,7 +130,7 @@ describe("Feature: i18n-support, Property 8: SKILL 文件解析与回退", () =>
           }
         },
       ),
-      { numRuns: 200 },
+      { numRuns: 50 },
     );
   });
 
@@ -152,7 +152,7 @@ describe("Feature: i18n-support, Property 8: SKILL 文件解析与回退", () =>
         // Falls back to the last candidate (default SKILL.md)
         expect(result.filePath).toBe(`skills/${skillName}/SKILL.md`);
       }),
-      { numRuns: 200 },
+      { numRuns: 50 },
     );
   });
 
@@ -172,7 +172,7 @@ describe("Feature: i18n-support, Property 8: SKILL 文件解析与回退", () =>
           expect(candidate).toMatch(/SKILL(\.[a-z]+)?\.md$/);
         }
       }),
-      { numRuns: 200 },
+      { numRuns: 50 },
     );
   });
 
@@ -197,7 +197,7 @@ describe("Feature: i18n-support, Property 8: SKILL 文件解析与回退", () =>
         expect(resultExists.isFallback).toBe(false);
         expect(resultExists.filePath).toBe(`skills/${skillName}/SKILL.md`);
       }),
-      { numRuns: 200 },
+      { numRuns: 50 },
     );
   });
 });

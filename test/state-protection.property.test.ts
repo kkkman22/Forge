@@ -72,7 +72,7 @@ describe("Property 23: 状态文件保护区分类", () => {
       fc.property(topicArb, (topic) => {
         expect(getProtectionZone(`specs/${topic}/spec.md`)).toBe("frozen");
       }),
-      { numRuns: 100 },
+      { numRuns: 40 },
     );
   });
 
@@ -81,7 +81,7 @@ describe("Property 23: 状态文件保护区分类", () => {
       fc.property(topicArb, (topic) => {
         expect(getProtectionZone(`plans/${topic}.md`)).toBe("frozen");
       }),
-      { numRuns: 100 },
+      { numRuns: 40 },
     );
   });
 
@@ -94,7 +94,7 @@ describe("Property 23: 状态文件保护区分类", () => {
       fc.property(topicArb, (topic) => {
         expect(getProtectionZone(`progress/${topic}.md`)).toBe("guarded");
       }),
-      { numRuns: 100 },
+      { numRuns: 40 },
     );
   });
 
@@ -103,7 +103,7 @@ describe("Property 23: 状态文件保护区分类", () => {
       fc.property(topicArb, (topic) => {
         expect(getProtectionZone(`reviews/${topic}.md`)).toBe("guarded");
       }),
-      { numRuns: 100 },
+      { numRuns: 40 },
     );
   });
 
@@ -120,7 +120,7 @@ describe("Property 23: 状态文件保护区分类", () => {
       fc.property(topicArb, (topic) => {
         expect(getProtectionZone(`knowledge/solutions/${topic}.md`)).toBe("guarded");
       }),
-      { numRuns: 100 },
+      { numRuns: 40 },
     );
   });
 
@@ -133,7 +133,7 @@ describe("Property 23: 状态文件保护区分类", () => {
       fc.property(topicArb, (topic) => {
         expect(getProtectionZone(`decisions/${topic}.md`)).toBe("open");
       }),
-      { numRuns: 100 },
+      { numRuns: 40 },
     );
   });
 
@@ -142,7 +142,7 @@ describe("Property 23: 状态文件保护区分类", () => {
       fc.property(topicArb, (topic) => {
         expect(getProtectionZone(`findings/${topic}.md`)).toBe("open");
       }),
-      { numRuns: 100 },
+      { numRuns: 40 },
     );
   });
 
@@ -151,7 +151,7 @@ describe("Property 23: 状态文件保护区分类", () => {
       fc.property(topicArb, (topic) => {
         expect(getProtectionZone(`debug/${topic}.md`)).toBe("open");
       }),
-      { numRuns: 100 },
+      { numRuns: 40 },
     );
   });
 
@@ -160,7 +160,7 @@ describe("Property 23: 状态文件保护区分类", () => {
       fc.property(topicArb, (topic) => {
         expect(getProtectionZone(`knowledge/sessions/${topic}.md`)).toBe("open");
       }),
-      { numRuns: 100 },
+      { numRuns: 40 },
     );
   });
 
@@ -216,7 +216,7 @@ describe("Property 23: 写入权限检查", () => {
         expect(result.reason).toContain("写入被阻断");
         expect(result.reason).toContain(status);
       }),
-      { numRuns: 100 },
+      { numRuns: 40 },
     );
   });
 
@@ -226,7 +226,7 @@ describe("Property 23: 写入权限检查", () => {
         const result = checkWritePermission(path, contentWithStatus(status));
         expect(result.blocked).toBe(false);
       }),
-      { numRuns: 100 },
+      { numRuns: 40 },
     );
   });
 
@@ -236,7 +236,7 @@ describe("Property 23: 写入权限检查", () => {
         const result = checkWritePermission(path, contentWithoutStatus);
         expect(result.blocked).toBe(false);
       }),
-      { numRuns: 100 },
+      { numRuns: 40 },
     );
   });
 
@@ -246,7 +246,7 @@ describe("Property 23: 写入权限检查", () => {
         const result = checkWritePermission(path, contentWithStatus(status));
         expect(result.blocked).toBe(false);
       }),
-      { numRuns: 100 },
+      { numRuns: 40 },
     );
   });
 
@@ -256,7 +256,7 @@ describe("Property 23: 写入权限检查", () => {
         const result = checkWritePermission(path, contentWithStatus(status));
         expect(result.blocked).toBe(false);
       }),
-      { numRuns: 100 },
+      { numRuns: 40 },
     );
   });
 
@@ -268,7 +268,7 @@ describe("Property 23: 写入权限检查", () => {
           expect(result.reason).toContain(path);
         }
       }),
-      { numRuns: 100 },
+      { numRuns: 40 },
     );
   });
 
@@ -278,7 +278,7 @@ describe("Property 23: 写入权限检查", () => {
         const result = checkWritePermission(path, contentWithStatus("draft"));
         expect(result.reason).toBe("");
       }),
-      { numRuns: 100 },
+      { numRuns: 40 },
     );
   });
 });

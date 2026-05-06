@@ -1,13 +1,13 @@
 ---
 name: forge-spec
-description: "规格引擎。将需求固化为可审阅、可测试、可锁定的规格文档。"
+description: "Requirement specification engine that produces reviewable, testable, lockable spec documents. Use when user runs `/forge spec` / imports external PM spec / building a new feature and lacks a locked spec before plan."
 disable-model-invocation: true
 ---
 
 # /forge spec — 规格引擎
 
-> **触发方式**：全量路径的第二步，用户直接输入 `/forge spec`，或 `/forge spec <file-path>` 导入外部规格
-> **职责**：将需求固化为可审阅、可测试、可锁定的规格文档，锁定后成为 build 和 review 的唯一真理源。支持从外部规格文档导入并转化为 Forge 格式。
+> **触发方式**：全量路径第二步 / 用户输入 `/forge spec` / `/forge spec <file-path>` 导入外部规格
+> **职责**：将需求固化为可审阅、可测试、可锁定的规格文档，锁定后成为 build 和 review 的唯一真理源
 > **输出路径**：`.forge/specs/<feature>/spec.md`
 
 ---
@@ -18,57 +18,19 @@ disable-model-invocation: true
 
 **核心原则**：规格描述行为，不描述实现。写"当用户提交表单时，系统返回成功提示"，不写"调用 FormService.submit() 方法"。
 
----
-
-**Not For**：
-- 单行修复、typo 纠正
-- 需求已明确且自包含的变更
-- 已有外部 PM 交付的完整 spec（用导入模式）
+**Not For**：单行修复 / typo 纠正 / 需求已明确且自包含的变更 / 已有外部 PM 交付完整 spec（用导入模式）
 
 ## 1.5. Import Mode
 
-当开发者从产品经理处收到外部规格文档时，使用导入模式将其转化为 Forge 格式：
+当开发者从产品经理处收到外部规格文档时，使用导入模式：
 
 ```
 /forge spec path/to/external-spec.md
 ```
 
-### Applicable Scenarios
+自动读取外部文档，提取需求/场景，转化为 Forge SpecDocument 格式，复用五项自检（可测试性/边界清晰度/人类可读性/棕地兼容性/反漂移完整性），写入 `.forge/specs/<feature>/spec.md` 并在 frontmatter 标注 `import_source`。
 
-- 产品经理交付了独立的 spec 文档（Markdown、纯文本等格式）
-- 开发者需要将外部 spec 纳入 Forge 工作流，享受 spec 门禁、review 对齐等保障
-- 替代手动编写 Forge 格式 spec 的重复劳动
-
-### Import Flow
-
-1. 读取指定路径的规格文档
-2. 提取需求/场景，转化为 Forge SpecDocument 格式
-3. 复用现有五项自检（可测试性/边界清晰度/人类可读性/棕地兼容性/反漂移完整性），未通过则自动修正
-4. 展示转化结果，用户确认或修改
-5. 写入 `.forge/specs/<feature>/spec.md`，status: "locked"，frontmatter 中标注 import_source 原始文件路径
-
-### Conversion Rules
-
-| Target | Strategy |
-|--------|----------|
-| Purpose | Extract as "Purpose" section |
-| Requirements | Decompose into independent items (ID + title each) |
-| Scenarios | Convert to "When...Then..." format; narratives must be rewritten |
-| Non-goals | Direct mapping; unclear text → infer + user confirmation |
-| Anti-drift | Auto-generated from extracted requirements |
-| Delta | Extract if original describes modifications |
-
-### Quality Assurance
-
-No info loss (unmappable → "pending confirmation" list) · No info addition (auto-generated content labeled) · Scenarios must be testable (vague → flagged) · Remove implementation details (class/function/tech names)
-
-### Frontmatter (Import Mode)
-
-添加 `import_source: "<原始文件相对路径>"` 字段。原始文件保留原位。
-
-### Integration
-
-导入锁定后成为标准 `.forge/specs/<feature>/spec.md`，后续 plan/build/review 流程无区别。
+→ 详见 references/import-mode.md（适用场景、转化规则、质量保证、边界情况）
 
 ---
 
@@ -109,9 +71,9 @@ No info loss (unmappable → "pending confirmation" list) · No info addition (a
 | Two-part Structure | Current State 有 file:line 引用；Proposed Change 有变更/不变声明 |
 | Reversibility | 回滚清单和挂载点清单已填写 |
 
-自检未通过 → 自动修正并重新自检。全部通过后提示用户确认锁定。
+自检未通过 → 自动修正并重新自检，直到全部通过。全部通过后提示用户确认锁定。
 
-如果任一检查项未通过，列出具体问题并自动修正草案，然后重新自检，直到全部通过。
+→ 每项检查的合格标准与反例详见 references/quality-standards.md
 
 ### Step 3: Lock
 
@@ -150,27 +112,9 @@ import_source: "<path>"    # 可选，仅导入模式
 
 ## 4. Quality Standards
 
-### 4.1 Testability
+Testability / Behavior-not-Implementation / Brownfield Delta / Two-part Structure / Reversibility / Anti-drift 六项自检标准的合格判定、反例、棕地信号识别：
 
-每个需求至少一个可测试场景，格式：`当 <前置条件/触发动作>，则 <可观测的预期结果>`。
-
-合格：当用户提交空表单，则显示"请填写必填字段" · 不合格："系统应该有良好的错误处理"（不可测试）
-
-### 4.2 Behavior, Not Implementation
-
-**禁止**：类名/函数名/库名/表名/技术方案 · **允许**：用户可见行为、业务规则、性能约束
-
-### 4.3 Brownfield Delta
-
-棕地开发必须包含 Delta（新增/修改/不变）。"不变"防止 build 误改。信号：已有代码库、修改现有功能、specs 中已有其他规格。
-
-### 4.4 Two-part Structure
-
-必须包含 Current State（file:line 引用 + 当前行为）和 Proposed Change（要改变的 + 明确不改变的）。AI 必须先读代码。
-
-### 4.5 Reversibility
-
-必须包含回滚清单和挂载点清单。提前思考可卸载性帮助发现隐藏耦合。
+→ 详见 references/quality-standards.md
 
 ---
 
@@ -188,6 +132,7 @@ import_source: "<path>"    # 可选，仅导入模式
 4. **Review**：执行自检（详见 §2 Step 2），未通过则自动修正并重新自检
 5. **用户确认或修改**：确认 → 进入 Lock；修改意见 → 更新草案回到 Review；拒绝 → 保持 draft
 6. **Lock**：锁定规格（详见 §2 Step 3）
+7. **Glossary-miss 扫描**：读取 `.forge/glossary.md` 的术语表，对生成/导入的 spec 文本调用 `detectGlossaryMiss`。如发现未定义术语，输出 `[glossary-miss] 未定义术语：[...]` 提示用户在 learn 阶段回写。不阻断 lock 流程。
 
 ---
 
@@ -201,38 +146,16 @@ import_source: "<path>"    # 可选，仅导入模式
 | 需求模糊 | 追问：问题？目标用户？关键场景？ |
 | 自检反复失败（3次） | 停止自动修正，呈现问题给用户 |
 | 无 `.forge/` | ⚠️ 先运行 forge init |
-| 导入：文件不存在 | ⚠️ 检查路径 |
-| 导入：无法提取需求 | ⚠️ 确认文档含功能需求 |
-| 导入：含实现细节 | ℹ️ 转化时移除实现细节，原始文件不丢失 |
+
+→ 导入模式边界情况详见 references/import-mode.md
 
 ---
 
 ## 8. Examples
 
-### Canonical Example: Greenfield
+Greenfield Canonical Example（`order-batch-export`）与 Brownfield Variant（含 Current State / Proposed Change / Delta）：
 
-任务："为订单系统添加批量导出功能"
-
-```markdown
----
-feature: "order-batch-export"
-status: "draft"
-date: "2025-01-15"
----
-## 目的
-为运营人员提供按条件筛选并导出订单数据的功能，用于对账和报表。
-## 需求
-### 需求 1：按条件筛选导出
-**场景**：当选择"最近7天"并导出，则生成文件开始下载 · 当结果为空，则提示"没有符合条件的订单"
-### 需求 2：大数据量导出
-**场景**：当超过10000条，则提示"导出任务已提交"后台处理 · 当完成，则通知+下载链接 · 当链接超24h，则失效
-## 不做什么
-不做模板自定义、定时导出、历史记录管理
-## 反漂移声明
-主目标：按条件筛选导出，大数据量异步处理 · 非目标：导出速度、格式丰富度
-```
-
-**Brownfield 变体**：额外包含 Current State（file:line 引用）+ Proposed Change（变更/不变）+ Delta（新增/修改/不变）。结构见 §3。
+→ 详见 references/examples.md
 
 ---
 

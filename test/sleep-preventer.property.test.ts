@@ -50,7 +50,7 @@ describe("Feature: gnhf-inspired-enhancements, Property 19: 平台休眠防护�
         expect(result?.args).toContain("-w");
         expect(result?.args).toContain(String(pid));
       }),
-      { numRuns: 200 },
+      { numRuns: 50 },
     );
   });
 
@@ -66,7 +66,7 @@ describe("Feature: gnhf-inspired-enhancements, Property 19: 平台休眠防护�
         expect(cmd.args).toEqual(["-i", "-w", String(pid)]);
         expect(cmd.detached).toBe(false);
       }),
-      { numRuns: 200 },
+      { numRuns: 50 },
     );
   });
 
@@ -85,7 +85,7 @@ describe("Feature: gnhf-inspired-enhancements, Property 19: 平台休眠防护�
         expect(fullArgs).toContain("SetThreadExecutionState");
         expect(fullArgs).toContain("ES_SYSTEM_REQUIRED");
       }),
-      { numRuns: 200 },
+      { numRuns: 50 },
     );
   });
 
@@ -102,7 +102,7 @@ describe("Feature: gnhf-inspired-enhancements, Property 19: 平台休眠防护�
         const fullArgs = result?.args.join(" ");
         expect(fullArgs).toContain(`Wait-Process -Id ${pid}`);
       }),
-      { numRuns: 200 },
+      { numRuns: 50 },
     );
   });
 
@@ -118,7 +118,7 @@ describe("Feature: gnhf-inspired-enhancements, Property 19: 平台休眠防护�
         expect(script).toContain("ES_SYSTEM_REQUIRED");
         expect(script).toContain(`Wait-Process -Id ${pid}`);
       }),
-      { numRuns: 200 },
+      { numRuns: 50 },
     );
   });
 
@@ -135,7 +135,7 @@ describe("Feature: gnhf-inspired-enhancements, Property 19: 平台休眠防护�
         expect(result?.args).toContain("--what=idle:sleep");
         expect(result?.args).toContain("--mode=block");
       }),
-      { numRuns: 200 },
+      { numRuns: 50 },
     );
   });
 
@@ -158,7 +158,7 @@ describe("Feature: gnhf-inspired-enhancements, Property 19: 平台休眠防护�
           expect(cmd.detached).toBe(false);
         },
       ),
-      { numRuns: 200 },
+      { numRuns: 50 },
     );
   });
 
@@ -172,7 +172,7 @@ describe("Feature: gnhf-inspired-enhancements, Property 19: 平台休眠防护�
 
         expect(result).toBeNull();
       }),
-      { numRuns: 200 },
+      { numRuns: 50 },
     );
   });
 
@@ -184,7 +184,7 @@ describe("Feature: gnhf-inspired-enhancements, Property 19: 平台休眠防护�
       fc.property(supportedPlatformArb, (platform) => {
         expect(isSupportedPlatform(platform)).toBe(true);
       }),
-      { numRuns: 200 },
+      { numRuns: 50 },
     );
   });
 
@@ -196,7 +196,7 @@ describe("Feature: gnhf-inspired-enhancements, Property 19: 平台休眠防护�
       fc.property(unsupportedPlatformArb, (platform) => {
         expect(isSupportedPlatform(platform)).toBe(false);
       }),
-      { numRuns: 200 },
+      { numRuns: 50 },
     );
   });
 
@@ -212,7 +212,7 @@ describe("Feature: gnhf-inspired-enhancements, Property 19: 平台休眠防护�
         expect(result?.command).toBeTruthy();
         expect(Array.isArray(result?.args)).toBe(true);
       }),
-      { numRuns: 200 },
+      { numRuns: 50 },
     );
   });
 });

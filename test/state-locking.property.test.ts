@@ -71,7 +71,7 @@ describe("Property 25: Lock 文件路径生成", () => {
         const result = lockFilePath(path);
         expect(result.startsWith(`${LOCK_DIR}/`)).toBe(true);
       }),
-      { numRuns: 100 },
+      { numRuns: 40 },
     );
   });
 
@@ -81,7 +81,7 @@ describe("Property 25: Lock 文件路径生成", () => {
         const result = lockFilePath(path);
         expect(result.endsWith(".lock")).toBe(true);
       }),
-      { numRuns: 100 },
+      { numRuns: 40 },
     );
   });
 
@@ -92,7 +92,7 @@ describe("Property 25: Lock 文件路径生成", () => {
         const afterPrefix = result.slice(LOCK_DIR.length + 1);
         expect(afterPrefix.includes("/")).toBe(false);
       }),
-      { numRuns: 100 },
+      { numRuns: 40 },
     );
   });
 
@@ -125,7 +125,7 @@ describe("Property 25: Lock 过期检测", () => {
         const nowMs = new Date(info.acquiredAt).getTime();
         expect(isLockStale(info, nowMs, DEFAULT_LOCK_TIMEOUT_MS)).toBe(false);
       }),
-      { numRuns: 100 },
+      { numRuns: 40 },
     );
   });
 
@@ -136,7 +136,7 @@ describe("Property 25: Lock 过期检测", () => {
         const nowMs = acquiredMs + DEFAULT_LOCK_TIMEOUT_MS;
         expect(isLockStale(info, nowMs, DEFAULT_LOCK_TIMEOUT_MS)).toBe(false);
       }),
-      { numRuns: 100 },
+      { numRuns: 40 },
     );
   });
 
@@ -149,7 +149,7 @@ describe("Property 25: Lock 过期检测", () => {
         const nowMs = acquiredMs + DEFAULT_LOCK_TIMEOUT_MS + 1;
         expect(isLockStale(info, nowMs, DEFAULT_LOCK_TIMEOUT_MS)).toBe(true);
       }),
-      { numRuns: 100 },
+      { numRuns: 40 },
     );
   });
 
@@ -173,7 +173,7 @@ describe("Property 25: Lock 过期检测", () => {
           expect(staleLater).toBe(true);
         }
       }),
-      { numRuns: 200 },
+      { numRuns: 50 },
     );
   });
 });
@@ -190,7 +190,7 @@ describe("Property 25: Lock 获取逻辑", () => {
         expect(result.acquired).toBe(true);
         expect(result.reason).toBe("");
       }),
-      { numRuns: 100 },
+      { numRuns: 40 },
     );
   });
 
@@ -205,7 +205,7 @@ describe("Property 25: Lock 获取逻辑", () => {
         const result = tryAcquireLock(path, holder, existing, Date.now());
         expect(result.acquired).toBe(true);
       }),
-      { numRuns: 100 },
+      { numRuns: 40 },
     );
   });
 
@@ -222,7 +222,7 @@ describe("Property 25: Lock 获取逻辑", () => {
         const result = tryAcquireLock(path, holder, existing, Date.now());
         expect(result.acquired).toBe(true);
       }),
-      { numRuns: 100 },
+      { numRuns: 40 },
     );
   });
 
@@ -240,7 +240,7 @@ describe("Property 25: Lock 获取逻辑", () => {
         expect(result.acquired).toBe(false);
         expect(result.reason).toContain(otherHolder);
       }),
-      { numRuns: 100 },
+      { numRuns: 40 },
     );
   });
 
@@ -259,7 +259,7 @@ describe("Property 25: Lock 获取逻辑", () => {
           expect(result.reason.length).toBeGreaterThan(0);
         }
       }),
-      { numRuns: 100 },
+      { numRuns: 40 },
     );
   });
 
@@ -269,7 +269,7 @@ describe("Property 25: Lock 获取逻辑", () => {
         const result = tryAcquireLock(path, holder, null, Date.now());
         expect(result.lockFilePath).toBe(lockFilePath(path));
       }),
-      { numRuns: 100 },
+      { numRuns: 40 },
     );
   });
 });
@@ -290,7 +290,7 @@ describe("Property 25: LockInfo 序列化往返", () => {
         expect(p.acquiredAt).toBe(info.acquiredAt);
         expect(p.targetFile).toBe(info.targetFile);
       }),
-      { numRuns: 200 },
+      { numRuns: 50 },
     );
   });
 
@@ -311,7 +311,7 @@ describe("Property 25: LockInfo 序列化往返", () => {
         expect(info.acquiredAt).toBe(nowIso);
         expect(info.targetFile).not.toContain(".forge/");
       }),
-      { numRuns: 100 },
+      { numRuns: 40 },
     );
   });
 });

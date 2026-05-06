@@ -11,6 +11,14 @@
  * **Validates: Requirements REQ-4**
  */
 /**
+ * Check whether the given path is in the source-tree hard-frozen list.
+ *
+ * Performs a suffix match against `HARD_FROZEN_SOURCE_FILES` so both
+ * repository-relative and absolute paths work. The path is first
+ * normalised to use forward slashes.
+ */
+export declare function isHardFrozenSourceFile(filePath: string): boolean;
+/**
  * Determine whether a file path falls within a frozen zone.
  *
  * Uses `normalizeForgePath()` from `state.ts` to resolve `..` sequences,

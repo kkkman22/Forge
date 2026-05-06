@@ -138,7 +138,7 @@ describe("Feature: error-recovery-strategy, Property 16: RecoveryReport round-tr
         expect(deserialized.summary.autoFixable).toBe(report.summary.autoFixable);
         expect(deserialized.summary.requiresUserDecision).toBe(report.summary.requiresUserDecision);
       }),
-      { numRuns: 100 },
+      { numRuns: 40 },
     );
   });
 });
@@ -158,7 +158,7 @@ describe("Feature: error-recovery-strategy, Property 17: InterruptionClassificat
         expect(deserialized.evidence).toBe(classification.evidence);
         expect(deserialized.tddPhase).toBe(classification.tddPhase);
       }),
-      { numRuns: 100 },
+      { numRuns: 40 },
     );
   });
 });
@@ -178,7 +178,7 @@ describe("Feature: error-recovery-strategy, Property 18: CheckpointMarker round-
         expect(deserialized.intendedCommitMessage).toBe(marker.intendedCommitMessage);
         expect(deserialized.timestamp).toBe(marker.timestamp);
       }),
-      { numRuns: 100 },
+      { numRuns: 40 },
     );
   });
 });

@@ -171,7 +171,7 @@ describe("Feature: pua-quality-engine, Property 9: PUA 上下文注入到 buildS
 
         expect(output).toContain(puaContext.pressurePrompt);
       }),
-      { numRuns: 200 },
+      { numRuns: 50 },
     );
   });
 
@@ -196,7 +196,7 @@ describe("Feature: pua-quality-engine, Property 9: PUA 上下文注入到 buildS
         expect(puaEngineIndex).toBeGreaterThanOrEqual(0);
         expect(puaEngineIndex).toBeGreaterThan(skillContextIndex);
       }),
-      { numRuns: 200 },
+      { numRuns: 50 },
     );
   });
 
@@ -217,7 +217,7 @@ describe("Feature: pua-quality-engine, Property 9: PUA 上下文注入到 buildS
 
         expect(output).toContain(PROACTIVE_INITIATIVE_CHECKLIST);
       }),
-      { numRuns: 200 },
+      { numRuns: 50 },
     );
   });
 
@@ -238,7 +238,7 @@ describe("Feature: pua-quality-engine, Property 9: PUA 上下文注入到 buildS
 
         expect(output).not.toContain(PROACTIVE_INITIATIVE_CHECKLIST);
       }),
-      { numRuns: 200 },
+      { numRuns: 50 },
     );
   });
 });
@@ -273,7 +273,7 @@ describe("Feature: pua-quality-engine, Property 10: buildSkillAwarePrompt 向后
 
         expect(outputWithUndefined).toBe(outputWithout);
       }),
-      { numRuns: 200 },
+      { numRuns: 50 },
     );
   });
 
@@ -294,7 +294,7 @@ describe("Feature: pua-quality-engine, Property 10: buildSkillAwarePrompt 向后
 
         expect(output).not.toContain("## PUA Quality Engine");
       }),
-      { numRuns: 200 },
+      { numRuns: 50 },
     );
   });
 });

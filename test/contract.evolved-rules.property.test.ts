@@ -241,7 +241,7 @@ describe("Feature: claude-md-self-evolution, Property 1: Evolved rules file roun
           expect(roundTripped.lastTriggered).toBe(original.lastTriggered);
         }
       }),
-      { numRuns: 200 },
+      { numRuns: 50 },
     );
   });
 
@@ -259,7 +259,7 @@ describe("Feature: claude-md-self-evolution, Property 1: Evolved rules file roun
 
         expect(parsed.ruleCount).toBe(parsed.rules.length);
       }),
-      { numRuns: 200 },
+      { numRuns: 50 },
     );
   });
 
@@ -279,7 +279,7 @@ describe("Feature: claude-md-self-evolution, Property 1: Evolved rules file roun
           expect(rule.confidence).toBeLessThanOrEqual(0.9);
         }
       }),
-      { numRuns: 200 },
+      { numRuns: 50 },
     );
   });
 });

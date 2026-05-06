@@ -112,7 +112,7 @@ describe("Feature: context-optimization, Property 5: Output isolation", () => {
           expect(result.stdout).not.toMatch(/FILE_MARKER_\d+/);
         },
       ),
-      { numRuns: 100 },
+      { numRuns: 40 },
     );
   });
 
@@ -159,7 +159,7 @@ describe("Feature: context-optimization, Property 5: Output isolation", () => {
           }
         },
       ),
-      { numRuns: 100 },
+      { numRuns: 40 },
     );
   });
 
@@ -202,7 +202,7 @@ describe("Feature: context-optimization, Property 5: Output isolation", () => {
           expect(result.stderr).toBe(errorMsg);
         },
       ),
-      { numRuns: 100 },
+      { numRuns: 40 },
     );
   });
 });

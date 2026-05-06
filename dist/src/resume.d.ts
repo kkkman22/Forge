@@ -59,3 +59,28 @@ export interface ResumeOutput {
  * The output always contains exactly 5 questions with non-empty answers.
  */
 export declare function generateResumeOutput(state: ProjectState): ResumeOutput;
+import { type StatusFields } from "./state.js";
+import { type ReconstructedState } from "./status-resolver.js";
+/** Result of attempting to recover the current phase. */
+export interface PhaseRecoveryResult {
+    /** The recovered phase (from StatusFile or reconstructed). */
+    phase: string;
+    /** Whether the phase was reconstructed (not from StatusFile). */
+    reconstructed: boolean;
+    /** The full StatusFile fields if available. */
+    statusFields: StatusFields | null;
+    /** The reconstruction details if reconstructed. */
+    reconstruction: ReconstructedState | null;
+}
+/**
+ * Attempt to recover the current workflow phase when StatusFile may be
+ * missing or inconsistent.
+ *
+ * Priority:
+ *   1. Parse StatusFile with graceful fallback → use phase if non-default
+ *   2. Reconstruct from .forge/ file presence → suggest phase
+ *
+ * Reconstructed state is NOT written to disk — caller must present to user
+ * for confirmation.
+ */
+export declare function recoverPhase(statusContent: string | undefined, forgeFiles: string[]): PhaseRecoveryResult;

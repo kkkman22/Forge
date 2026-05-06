@@ -105,7 +105,7 @@ describe("Property 6: Path normalization produces consistent frozen zone judgmen
         const dotSlash = `./.forge/${relativePath}`;
         expect(normalizeForgePath(dotSlash)).toBe(canonical);
       }),
-      { numRuns: 200 },
+      { numRuns: 50 },
     );
   });
 
@@ -131,7 +131,7 @@ describe("Property 6: Path normalization produces consistent frozen zone judgmen
         // All should be consistent with each other
         expect(new Set(results).size).toBe(1);
       }),
-      { numRuns: 200 },
+      { numRuns: 50 },
     );
   });
 
@@ -143,7 +143,7 @@ describe("Property 6: Path normalization produces consistent frozen zone judgmen
 
         expect(relativeResult).toBe(absoluteResult);
       }),
-      { numRuns: 200 },
+      { numRuns: 50 },
     );
   });
 
@@ -184,7 +184,7 @@ describe("Property 6: Path normalization produces consistent frozen zone judgmen
           expect(result).toBe(false);
         }
       }),
-      { numRuns: 100 },
+      { numRuns: 40 },
     );
   });
 

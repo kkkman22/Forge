@@ -1,6 +1,6 @@
 ---
 name: forge-loop
-description: "自主执行引擎。以 Loop 模式驱动 Skills 完整命令序列，自动完成 router → plan → build → review → test → ship 全流程。"
+description: "Autonomous multi-task execution engine that runs a whole plan end-to-end without interactive prompts. Use when user runs `/forge loop` / wants unattended execution of an approved plan / needs background completion of queued tasks."
 disable-model-invocation: true
 ---
 

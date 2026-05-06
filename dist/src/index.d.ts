@@ -29,8 +29,8 @@ export type { VerificationDecision, VerificationResult } from "./incremental-ver
 export { buildVerificationCriteria, determineVerificationStrategy, INCREMENTAL_THRESHOLD, } from "./incremental-verifier.js";
 export type { RecoveryCandidate, RecoveryResult } from "./fix-recovery.js";
 export { isFixCandidate, parseGitLog as parseFixRecoveryGitLog } from "./fix-recovery.js";
-export type { ProgressResult, ReviewResult, ShipGateResult, TestResult } from "./ship.js";
-export { checkShipGate, checkShipGateWithChecklist } from "./ship.js";
+export type { ProgressResult, ReviewFreshnessResult, ReviewResult, ShipGateResult, TestResult, } from "./ship.js";
+export { checkReviewFreshness, checkShipGate, checkShipGateWithChecklist } from "./ship.js";
 export type { TaskStatusEntry } from "./state.js";
 export { hasTaskName, parseStatusEntries, removeTaskEntry, serializeStatusEntries, upsertTaskEntry, } from "./state.js";
 export type { OrphanProcess, PidFileContent } from "./orphan-detector.js";

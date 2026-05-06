@@ -1,6 +1,6 @@
 ---
 name: forge-debug
-description: "调试引擎。四阶段结构化根因分析（调查→分析→验证→修复）。"
+description: "Disciplined four-phase root-cause analysis with hypothesis verification. Use when user says `debug this` / reports a regression / after three consecutive build failures trigger the three-strike reroute."
 disable-model-invocation: true
 ---
 

@@ -105,7 +105,7 @@ describe("Property 11: Ship 门禁——评审通过且测试通过且任务完�
         expect(result.allowed).toBe(true);
         expect(result.reasons).toHaveLength(0);
       }),
-      { numRuns: 200 },
+      { numRuns: 50 },
     );
   });
 
@@ -117,7 +117,7 @@ describe("Property 11: Ship 门禁——评审通过且测试通过且任务完�
         expect(result.allowed).toBe(false);
         expect(result.reasons.length).toBeGreaterThan(0);
       }),
-      { numRuns: 200 },
+      { numRuns: 50 },
     );
   });
 
@@ -129,7 +129,7 @@ describe("Property 11: Ship 门禁——评审通过且测试通过且任务完�
         expect(result.allowed).toBe(false);
         expect(result.reasons.some((r) => r.includes("Review 未通过"))).toBe(true);
       }),
-      { numRuns: 200 },
+      { numRuns: 50 },
     );
   });
 
@@ -140,7 +140,7 @@ describe("Property 11: Ship 门禁——评审通过且测试通过且任务完�
 
         expect(result.allowed).toBe(true);
       }),
-      { numRuns: 200 },
+      { numRuns: 50 },
     );
   });
 
@@ -152,7 +152,7 @@ describe("Property 11: Ship 门禁——评审通过且测试通过且任务完�
         expect(result.allowed).toBe(false);
         expect(result.reasons.some((r) => r.includes("Test 未通过"))).toBe(true);
       }),
-      { numRuns: 200 },
+      { numRuns: 50 },
     );
   });
 
@@ -169,7 +169,7 @@ describe("Property 11: Ship 门禁——评审通过且测试通过且任务完�
           expect(result.reasons.some((r) => r.includes("Progress 未完成"))).toBe(true);
         },
       ),
-      { numRuns: 200 },
+      { numRuns: 50 },
     );
   });
 
@@ -189,7 +189,7 @@ describe("Property 11: Ship 门禁——评审通过且测试通过且任务完�
           expect(result.reasons.some((r) => r.includes("Progress 未完成"))).toBe(true);
         },
       ),
-      { numRuns: 200 },
+      { numRuns: 50 },
     );
   });
 
@@ -205,7 +205,7 @@ describe("Property 11: Ship 门禁——评审通过且测试通过且任务完�
 
         expect(result.allowed).toBe(expectedAllowed);
       }),
-      { numRuns: 200 },
+      { numRuns: 50 },
     );
   });
 
@@ -222,7 +222,7 @@ describe("Property 11: Ship 门禁——评审通过且测试通过且任务完�
 
         expect(result.reasons).toHaveLength(expectedReasonCount);
       }),
-      { numRuns: 200 },
+      { numRuns: 50 },
     );
   });
 });

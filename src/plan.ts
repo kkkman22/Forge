@@ -21,6 +21,7 @@
  */
 
 import { extractStringField } from "./frontmatter.js";
+import type { Glossary, GlossaryTerm } from "./glossary.js";
 
 // ---------------------------------------------------------------------------
 // Types — Full format (Atomic Task)
@@ -533,3 +534,154 @@ export function validatePlan(
   errors.push(...validateDependencies(fullTasks));
   return { valid: false, errors, format };
 }
+
+// ---------------------------------------------------------------------------
+// Glossary term normalization (Requirement 1.5)
+// ---------------------------------------------------------------------------
+
+/**
+ * Regex special characters that must be escaped when embedding a glossary
+ * term or alias into a dynamically built `RegExp`.
+ */
+const REGEX_META_CHARS_REGEX = /[.*+?^${}()|[\]\\]/g;
+
+/**
+ * Characters that are considered "word" characters for the purposes of the
+ * whole-word match. We include ASCII alphanumerics plus the CJK ranges so
+ * that Chinese phrases like "复杂度档位" only match when they are not a
+ * substring of a larger CJK run (e.g. they should not match inside
+ * "复杂度档位选择器" as the tail "选择器" is still a word character).
+ */
+const WORD_CHAR_CLASS = "[\\p{L}\\p{N}_]";
+
+/**
+ * Escape a literal string so it can be safely embedded into a RegExp.
+ */
+function escapeForRegExp(value: string): string {
+  return value.replace(REGEX_META_CHARS_REGEX, "\\$&");
+}
+
+/**
+ * Build the ordered list of "surface form → canonical term" replacements
+ * for a glossary. Each glossary entry contributes one entry for its
+ * canonical `term` and one entry per alias. Entries are sorted by surface
+ * length descending so that greedy longest-match replacement wins when two
+ * surface forms overlap (e.g. "复杂度档位" must win over "档位").
+ */
+function buildReplacementTable(glossary: Glossary): Array<{ surface: string; canonical: string }> {
+  const table: Array<{ surface: string; canonical: string }> = [];
+  for (const entry of glossary.terms) {
+    const canonical = entry.term.trim();
+    if (canonical.length === 0) continue;
+    table.push({ surface: canonical, canonical });
+    if (entry.aliases !== undefined) {
+      for (const alias of entry.aliases) {
+        const trimmed = alias.trim();
+        if (trimmed.length === 0) continue;
+        // Skip aliases that are identical to the canonical term (nothing
+        // to normalize) — comparison is case-insensitive.
+        if (trimmed.toLowerCase() === canonical.toLowerCase()) continue;
+        table.push({ surface: trimmed, canonical });
+      }
+    }
+  }
+  // Longest surface first for greedy matching. Ties broken by surface
+  // string order to keep the algorithm deterministic.
+  table.sort((a, b) => {
+    if (b.surface.length !== a.surface.length) {
+      return b.surface.length - a.surface.length;
+    }
+    return a.surface.localeCompare(b.surface);
+  });
+  return table;
+}
+
+/**
+ * Replace the first remaining occurrence (at or after `startIndex`) of
+ * `surface` in `text` with `canonical`, but only when the match sits on a
+ * word boundary. Returns `null` when no whole-word match exists, or the
+ * updated text along with the index immediately after the replacement so
+ * the caller can continue scanning.
+ */
+function replaceWholeWord(
+  text: string,
+  surface: string,
+  canonical: string,
+): { text: string; changed: boolean } {
+  const escaped = escapeForRegExp(surface);
+  // Whole-word = the character immediately before the match (if any) is
+  // not a word character, and the character immediately after is not a
+  // word character either. We use lookbehind/lookahead with the Unicode
+  // `u` flag so CJK characters are treated as word characters.
+  const pattern = new RegExp(`(?<!${WORD_CHAR_CLASS})${escaped}(?!${WORD_CHAR_CLASS})`, "giu");
+
+  let changed = false;
+  const next = text.replace(pattern, () => {
+    changed = true;
+    return canonical;
+  });
+  return { text: next, changed };
+}
+
+/**
+ * Normalize domain terminology inside a task title string.
+ *
+ * For each alias (and canonical term) defined in the glossary, this
+ * function finds case-insensitive whole-word matches inside `title` and
+ * replaces them with the canonical `term` form. When multiple surface
+ * forms could match the same region, the longest surface wins (greedy).
+ *
+ * Guarantees:
+ *   - Matches are case-insensitive but the canonical form is written
+ *     verbatim (preserving the glossary's chosen casing).
+ *   - Surrounding text is unchanged; only the matched spans are rewritten.
+ *   - Partial matches inside a larger word are never replaced (e.g. an
+ *     alias "档位" will not touch "档位选择器").
+ *   - The function is pure: same inputs yield the same output.
+ *   - The operation is idempotent: applying it twice gives the same result
+ *     as applying it once, because canonical terms already normalize to
+ *     themselves.
+ *
+ * **Validates: Requirements 1.5**
+ */
+export function normalizeTaskTerms(title: string, glossary: Glossary): string {
+  if (title.length === 0) return title;
+  if (glossary.terms.length === 0) return title;
+
+  const table = buildReplacementTable(glossary);
+  let current = title;
+  for (const { surface, canonical } of table) {
+    const result = replaceWholeWord(current, surface, canonical);
+    if (result.changed) {
+      current = result.text;
+    }
+  }
+  return current;
+}
+
+/**
+ * Return a copy of `task` whose `title` field has been normalized against
+ * the glossary. All other fields are passed through unchanged.
+ */
+export function normalizeLightweightTask(
+  task: LightweightTask,
+  glossary: Glossary,
+): LightweightTask {
+  const normalizedTitle = normalizeTaskTerms(task.title, glossary);
+  if (normalizedTitle === task.title) return task;
+  return { ...task, title: normalizedTitle };
+}
+
+/**
+ * Return a copy of `task` whose `title` field has been normalized against
+ * the glossary. All other fields are passed through unchanged.
+ */
+export function normalizeAtomicTask(task: AtomicTask, glossary: Glossary): AtomicTask {
+  const normalizedTitle = normalizeTaskTerms(task.title, glossary);
+  if (normalizedTitle === task.title) return task;
+  return { ...task, title: normalizedTitle };
+}
+
+// Re-export the glossary types that callers need when working with the
+// normalization helpers, so they don't have to import from two modules.
+export type { Glossary, GlossaryTerm };
