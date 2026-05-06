@@ -10,9 +10,9 @@ import { resolve } from "node:path";
 import { describe, expect, it } from "vitest";
 const ROOT = resolve(import.meta.dirname, "..");
 const skillsDir = resolve(ROOT, "skills");
-// Discover all skill directories
+// Discover all skill directories (excluding shared/ which contains cross-cutting references)
 const skillDirs = readdirSync(skillsDir, { withFileTypes: true })
-    .filter((d) => d.isDirectory())
+    .filter((d) => d.isDirectory() && d.name !== "shared")
     .map((d) => d.name);
 // Collect all SKILL.md files that exist
 const skillMdFiles = skillDirs

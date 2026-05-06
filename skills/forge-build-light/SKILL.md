@@ -1,6 +1,6 @@
 ---
 name: forge-build-light
-description: "轻量执行引擎。轻量路径专用，跳过前置检查直接执行任务。"
+description: "Lightweight execution engine for tiny single-file changes that skip the full plan and TDD ceremony. Use when user runs `/forge build` on a light-tier task / change touches <=1 file and <=20 lines / has no spec or plan document."
 disable-model-invocation: true
 ---
 

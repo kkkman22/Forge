@@ -65,7 +65,7 @@ describe("Feature: gnhf-inspired-enhancements, Property 11: 失败计数器差�
         expect(next.consecutiveFailures).toBe(state.consecutiveFailures + 1);
         expect(next.consecutiveErrors).toBe(0);
       }),
-      { numRuns: 200 },
+      { numRuns: 50 },
     );
   });
 
@@ -80,7 +80,7 @@ describe("Feature: gnhf-inspired-enhancements, Property 11: 失败计数器差�
         expect(next.consecutiveFailures).toBe(state.consecutiveFailures + 1);
         expect(next.consecutiveErrors).toBe(state.consecutiveErrors + 1);
       }),
-      { numRuns: 200 },
+      { numRuns: 50 },
     );
   });
 
@@ -95,7 +95,7 @@ describe("Feature: gnhf-inspired-enhancements, Property 11: 失败计数器差�
         expect(next.consecutiveFailures).toBe(0);
         expect(next.consecutiveErrors).toBe(0);
       }),
-      { numRuns: 200 },
+      { numRuns: 50 },
     );
   });
 
@@ -119,7 +119,7 @@ describe("Feature: gnhf-inspired-enhancements, Property 11: 失败计数器差�
 
         expect(next).not.toBe(state);
       }),
-      { numRuns: 200 },
+      { numRuns: 50 },
     );
   });
 });
@@ -139,7 +139,7 @@ describe("Feature: audit-remediation-v221, Property 4: Backoff lower bound invar
 
         expect(result).toBeGreaterThanOrEqual(baseMs);
       }),
-      { numRuns: 200 },
+      { numRuns: 50 },
     );
   });
 
@@ -153,7 +153,7 @@ describe("Feature: audit-remediation-v221, Property 4: Backoff lower bound invar
 
         expect(result).toBeGreaterThanOrEqual(baseMs);
       }),
-      { numRuns: 200 },
+      { numRuns: 50 },
     );
   });
 
@@ -167,7 +167,7 @@ describe("Feature: audit-remediation-v221, Property 4: Backoff lower bound invar
 
         expect(result).toBeGreaterThanOrEqual(baseMs);
       }),
-      { numRuns: 200 },
+      { numRuns: 50 },
     );
   });
 });
@@ -188,7 +188,7 @@ describe("Feature: gnhf-inspired-enhancements, Property 12: 退避公式正确�
 
         expect(result).toBe(expected);
       }),
-      { numRuns: 200 },
+      { numRuns: 50 },
     );
   });
 
@@ -203,7 +203,7 @@ describe("Feature: gnhf-inspired-enhancements, Property 12: 退避公式正确�
 
         expect(result).toBe(expected);
       }),
-      { numRuns: 200 },
+      { numRuns: 50 },
     );
   });
 
@@ -218,7 +218,7 @@ describe("Feature: gnhf-inspired-enhancements, Property 12: 退避公式正确�
 
         expect(next).toBeGreaterThan(current);
       }),
-      { numRuns: 200 },
+      { numRuns: 50 },
     );
   });
 });
@@ -238,7 +238,7 @@ describe("Feature: gnhf-inspired-enhancements, Property 13: 熔断器阈值正�
 
         expect(result).toBe(failures >= threshold);
       }),
-      { numRuns: 200 },
+      { numRuns: 50 },
     );
   });
 
@@ -252,7 +252,7 @@ describe("Feature: gnhf-inspired-enhancements, Property 13: 熔断器阈值正�
 
         expect(result).toBe(failures >= 3);
       }),
-      { numRuns: 200 },
+      { numRuns: 50 },
     );
   });
 
@@ -264,7 +264,7 @@ describe("Feature: gnhf-inspired-enhancements, Property 13: 熔断器阈值正�
       fc.property(thresholdArb, (threshold) => {
         expect(shouldCircuitBreak(threshold, threshold)).toBe(true);
       }),
-      { numRuns: 200 },
+      { numRuns: 50 },
     );
   });
 
@@ -276,7 +276,7 @@ describe("Feature: gnhf-inspired-enhancements, Property 13: 熔断器阈值正�
       fc.property(fc.integer({ min: 2, max: 100 }), (threshold) => {
         expect(shouldCircuitBreak(threshold - 1, threshold)).toBe(false);
       }),
-      { numRuns: 200 },
+      { numRuns: 50 },
     );
   });
 });

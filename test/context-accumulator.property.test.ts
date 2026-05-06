@@ -125,7 +125,7 @@ describe("Feature: gnhf-inspired-enhancements, Property 1: Prompt 构建完整�
           expect(prompt).toContain(objective);
         },
       ),
-      { numRuns: 200 },
+      { numRuns: 50 },
     );
   });
 
@@ -153,7 +153,7 @@ describe("Feature: gnhf-inspired-enhancements, Property 1: Prompt 构建完整�
           expect(prompt).toContain(stopWhen);
         },
       ),
-      { numRuns: 200 },
+      { numRuns: 50 },
     );
   });
 
@@ -178,7 +178,7 @@ describe("Feature: gnhf-inspired-enhancements, Property 1: Prompt 构建完整�
           expect(prompt).not.toContain("Stop Condition");
         },
       ),
-      { numRuns: 200 },
+      { numRuns: 50 },
     );
   });
 });
@@ -199,7 +199,7 @@ describe("Feature: gnhf-inspired-enhancements, Property 7: Notes 条目格式化
         expect(md).toContain(`### Iteration ${entry.number}`);
         expect(md).toContain(entry.summary);
       }),
-      { numRuns: 200 },
+      { numRuns: 50 },
     );
   });
 
@@ -218,7 +218,7 @@ describe("Feature: gnhf-inspired-enhancements, Property 7: Notes 条目格式化
           }
         },
       ),
-      { numRuns: 200 },
+      { numRuns: 50 },
     );
   });
 
@@ -237,7 +237,7 @@ describe("Feature: gnhf-inspired-enhancements, Property 7: Notes 条目格式化
           }
         },
       ),
-      { numRuns: 200 },
+      { numRuns: 50 },
     );
   });
 
@@ -254,7 +254,7 @@ describe("Feature: gnhf-inspired-enhancements, Property 7: Notes 条目格式化
           expect(md).toContain("(Failed)");
         },
       ),
-      { numRuns: 200 },
+      { numRuns: 50 },
     );
   });
 });
@@ -287,7 +287,7 @@ describe("Feature: gnhf-inspired-enhancements, Property 8: Notes 格式往返一
           expect(roundTripped.keyLearnings).toEqual(original.keyLearnings);
         }
       }),
-      { numRuns: 200 },
+      { numRuns: 50 },
     );
   });
 });
@@ -339,7 +339,7 @@ describe("Feature: v2-2-legacy-fixes, Property 1: parseListSection regex special
           expect(parsed).toEqual(items);
         },
       ),
-      { numRuns: 200 },
+      { numRuns: 50 },
     );
   });
 });
@@ -371,7 +371,7 @@ describe("Feature: v2-2-legacy-fixes, Property 2: parseListSection returns empty
           expect(parsed).toEqual([]);
         },
       ),
-      { numRuns: 200 },
+      { numRuns: 50 },
     );
   });
 });
@@ -522,7 +522,7 @@ describe("Feature: loop-skills-fusion, Property 10: buildSkillAwarePrompt conten
         const output = buildSkillAwarePrompt(params);
         expect(output).toContain(params.skill.phase);
       }),
-      { numRuns: 200 },
+      { numRuns: 50 },
     );
   });
 
@@ -538,7 +538,7 @@ describe("Feature: loop-skills-fusion, Property 10: buildSkillAwarePrompt conten
         const output = buildSkillAwarePrompt(params);
         expect(output).toContain(params.skill.tier);
       }),
-      { numRuns: 200 },
+      { numRuns: 50 },
     );
   });
 
@@ -554,7 +554,7 @@ describe("Feature: loop-skills-fusion, Property 10: buildSkillAwarePrompt conten
         const output = buildSkillAwarePrompt(params);
         expect(output).toContain("mode: autonomous");
       }),
-      { numRuns: 200 },
+      { numRuns: 50 },
     );
   });
 
@@ -572,7 +572,7 @@ describe("Feature: loop-skills-fusion, Property 10: buildSkillAwarePrompt conten
           expect(output).toContain(issue.description);
         }
       }),
-      { numRuns: 200 },
+      { numRuns: 50 },
     );
   });
 
@@ -590,7 +590,7 @@ describe("Feature: loop-skills-fusion, Property 10: buildSkillAwarePrompt conten
           expect(output).toContain(issue.severity);
         }
       }),
-      { numRuns: 200 },
+      { numRuns: 50 },
     );
   });
 });

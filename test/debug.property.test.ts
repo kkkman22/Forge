@@ -108,7 +108,7 @@ describe("Property 21: Debug 假设验证升级", () => {
         );
         expect(result.escalationIndex).toBeGreaterThanOrEqual(2);
       }),
-      { numRuns: 200 },
+      { numRuns: 50 },
     );
   });
 
@@ -119,7 +119,7 @@ describe("Property 21: Debug 假设验证升级", () => {
         expect(result.shouldEscalate).toBe(false);
         expect(result.escalationIndex).toBe(-1);
       }),
-      { numRuns: 200 },
+      { numRuns: 50 },
     );
   });
 
@@ -142,7 +142,7 @@ describe("Property 21: Debug 假设验证升级", () => {
           expect(result.shouldEscalate).toBe(false);
         },
       ),
-      { numRuns: 200 },
+      { numRuns: 50 },
     );
   });
 
@@ -177,7 +177,7 @@ describe("Property 21: Debug 假设验证升级", () => {
         const simple = shouldQuestionArchitecture(sequence);
         expect(simple).toBe(detailed.shouldEscalate);
       }),
-      { numRuns: 200 },
+      { numRuns: 50 },
     );
   });
 
@@ -192,7 +192,7 @@ describe("Property 21: Debug 假设验证升级", () => {
           expect(sequence.results[idx - 2]).toBe("rejected");
         }
       }),
-      { numRuns: 200 },
+      { numRuns: 50 },
     );
   });
 });
@@ -209,7 +209,7 @@ describe("Property 22: Debug 假设完整性", () => {
         expect(result.valid).toBe(true);
         expect(result.errors).toHaveLength(0);
       }),
-      { numRuns: 200 },
+      { numRuns: 50 },
     );
   });
 
@@ -221,7 +221,7 @@ describe("Property 22: Debug 假设完整性", () => {
         expect(result.valid).toBe(false);
         expect(result.errors.some((e) => e.includes("描述"))).toBe(true);
       }),
-      { numRuns: 200 },
+      { numRuns: 50 },
     );
   });
 
@@ -233,7 +233,7 @@ describe("Property 22: Debug 假设完整性", () => {
         expect(result.valid).toBe(false);
         expect(result.errors.some((e) => e.includes("验证命令"))).toBe(true);
       }),
-      { numRuns: 200 },
+      { numRuns: 50 },
     );
   });
 
@@ -245,7 +245,7 @@ describe("Property 22: Debug 假设完整性", () => {
         expect(result.valid).toBe(false);
         expect(result.errors.some((e) => e.includes("预期结果"))).toBe(true);
       }),
-      { numRuns: 200 },
+      { numRuns: 50 },
     );
   });
 

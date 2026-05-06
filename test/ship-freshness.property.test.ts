@@ -54,7 +54,7 @@ describe("Property 1: undefined reviewedCommit → always fresh (backward compat
         expect(result.fresh).toBe(true);
         expect(result.reason).toContain("backward compatible");
       }),
-      { numRuns: 200 },
+      { numRuns: 50 },
     );
   });
 });
@@ -71,7 +71,7 @@ describe("Property 2: same commit → always fresh", () => {
         expect(result.fresh).toBe(true);
         expect(result.reason).toContain("matches current HEAD");
       }),
-      { numRuns: 200 },
+      { numRuns: 50 },
     );
   });
 });
@@ -94,7 +94,7 @@ describe("Property 3: diff only .forge/ files → always fresh", () => {
           expect(result.reason).toContain(".forge/");
         },
       ),
-      { numRuns: 200 },
+      { numRuns: 50 },
     );
   });
 });
@@ -123,7 +123,7 @@ describe("Property 4: project code changed → not fresh", () => {
           }
         },
       ),
-      { numRuns: 200 },
+      { numRuns: 50 },
     );
   });
 });

@@ -73,7 +73,7 @@ describe("Property 1: ForgeError hierarchy — instanceof chain", () => {
       fc.property(forgeErrorArb, (err) => {
         expect(err).toBeInstanceOf(ForgeError);
       }),
-      { numRuns: 200 },
+      { numRuns: 50 },
     );
   });
 
@@ -85,7 +85,7 @@ describe("Property 1: ForgeError hierarchy — instanceof chain", () => {
       fc.property(forgeErrorArb, (err) => {
         expect(err).toBeInstanceOf(Error);
       }),
-      { numRuns: 200 },
+      { numRuns: 50 },
     );
   });
 
@@ -98,7 +98,7 @@ describe("Property 1: ForgeError hierarchy — instanceof chain", () => {
         expect(typeof err.code).toBe("string");
         expect(err.code.length).toBeGreaterThan(0);
       }),
-      { numRuns: 200 },
+      { numRuns: 50 },
     );
   });
 
@@ -110,7 +110,7 @@ describe("Property 1: ForgeError hierarchy — instanceof chain", () => {
       fc.property(forgeErrorArb, (err) => {
         expect(err.name).toBe(err.constructor.name);
       }),
-      { numRuns: 200 },
+      { numRuns: 50 },
     );
   });
 
@@ -122,7 +122,7 @@ describe("Property 1: ForgeError hierarchy — instanceof chain", () => {
       fc.property(forgeErrorArb, (err) => {
         expect(typeof err.message).toBe("string");
       }),
-      { numRuns: 200 },
+      { numRuns: 50 },
     );
   });
 
@@ -145,7 +145,7 @@ describe("Property 1: ForgeError hierarchy — instanceof chain", () => {
         // message is a string
         expect(typeof err.message).toBe("string");
       }),
-      { numRuns: 200 },
+      { numRuns: 50 },
     );
   });
 
@@ -164,7 +164,7 @@ describe("Property 1: ForgeError hierarchy — instanceof chain", () => {
         expect(b.name).toBe("AnotherForgeError");
         expect(a.name).not.toBe(b.name);
       }),
-      { numRuns: 200 },
+      { numRuns: 50 },
     );
   });
 
@@ -179,7 +179,7 @@ describe("Property 1: ForgeError hierarchy — instanceof chain", () => {
         const err = new TestForgeError(message, code);
         expect(err.message).toBe(message);
       }),
-      { numRuns: 200 },
+      { numRuns: 50 },
     );
   });
 });

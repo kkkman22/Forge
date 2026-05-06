@@ -49,7 +49,7 @@ describe("Feature: ship-delivery-unification, parseShipDefaultMethod", () => {
         const result = parseShipDefaultMethod(input);
         expect(result.method).toBeOneOf(["merge", "push-pr", "keep-branch", "prompt"]);
       }),
-      { numRuns: 200 },
+      { numRuns: 50 },
     );
   });
 

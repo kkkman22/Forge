@@ -1,6 +1,6 @@
 ---
 name: forge-status
-description: "状态查询。读取 .forge/ 状态文件展示当前项目工作状态。"
+description: "Status query engine showing active Forge tasks, current phase, and pending gates. Use when user runs `/forge status` / wants to see what tasks are in flight / needs to know which phase a task currently sits in."
 disable-model-invocation: true
 ---
 

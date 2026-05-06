@@ -1,6 +1,6 @@
 ---
 name: forge-review
-description: "评审引擎。以 Subagent 并行模式运行三层独立评审（Spec 对齐、代码质量、安全与风险）。"
+description: "Parallel Subagent review engine covering structure, security, performance, and accessibility. Use when user runs `/forge review` / build completes / needs multi-perspective code quality gate before ship."
 disable-model-invocation: true
 ---
 
@@ -67,6 +67,10 @@ P0/P1 只能 `gated_auto`/`manual`；P2 可 `safe_auto`；P3 默认 `advisory`�
 ## 7. Deduplication & Quality Gate
 
 去重 + 跨评审者一致性验证 + 6 项报告质量自检。→ 详见 references/dedup-pipeline.md、references/quality-gate.md
+
+## 7b. Evolution 沉淀（新模式 / 已知失败命中）
+
+评审收尾时调用 `buildReviewEvolutionArtifacts(input, now, seq)`（`src/review.ts`）产出两类产物：`newPatternSituation` 非空 → 写 failure episode 到 `sessions/` 并在 review 报告末尾追加 Evolution 标记（target=`forge-review#new_review_pattern`）；`matchedFailurePattern` 非空 → 驱动层按返回的 `patternUpdate` 调 `updatePatternStats(pattern, "success")`。所有写入失败降级为 `console.warn`，不阻断 ship 判定。
 
 ## 8. Gate: P0/P1 → Block `/forge ship`
 

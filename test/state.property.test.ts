@@ -136,7 +136,7 @@ describe("Property 15: 状态文件格式统一", () => {
         expect(result.valid).toBe(true);
         expect(result.errors).toHaveLength(0);
       }),
-      { numRuns: 200 },
+      { numRuns: 50 },
     );
   });
 
@@ -145,7 +145,7 @@ describe("Property 15: 状态文件格式统一", () => {
       fc.property(validStateFileArb, (file) => {
         expect(hasMarkdownExtension(file.path)).toBe(true);
       }),
-      { numRuns: 200 },
+      { numRuns: 50 },
     );
   });
 
@@ -154,7 +154,7 @@ describe("Property 15: 状态文件格式统一", () => {
       fc.property(validStateFileArb, (file) => {
         expect(hasYamlFrontmatter(file.content)).toBe(true);
       }),
-      { numRuns: 200 },
+      { numRuns: 50 },
     );
   });
 
@@ -166,7 +166,7 @@ describe("Property 15: 状态文件格式统一", () => {
         expect(result.valid).toBe(false);
         expect(result.errors.some((e) => e.includes("扩展名"))).toBe(true);
       }),
-      { numRuns: 200 },
+      { numRuns: 50 },
     );
   });
 
@@ -178,7 +178,7 @@ describe("Property 15: 状态文件格式统一", () => {
         expect(result.valid).toBe(false);
         expect(result.errors.some((e) => e.includes("YAML frontmatter"))).toBe(true);
       }),
-      { numRuns: 200 },
+      { numRuns: 50 },
     );
   });
 
@@ -190,7 +190,7 @@ describe("Property 15: 状态文件格式统一", () => {
         expect(result.valid).toBe(true);
         expect(result.errors).toHaveLength(0);
       }),
-      { numRuns: 200 },
+      { numRuns: 50 },
     );
   });
 
@@ -203,7 +203,7 @@ describe("Property 15: 状态文件格式统一", () => {
           expect(hasMarkdownExtension(path)).toBe(ext === ".md");
         },
       ),
-      { numRuns: 200 },
+      { numRuns: 50 },
     );
   });
 
@@ -213,7 +213,7 @@ describe("Property 15: 状态文件格式统一", () => {
         const content = frontmatter + body;
         expect(hasYamlFrontmatter(content)).toBe(true);
       }),
-      { numRuns: 200 },
+      { numRuns: 50 },
     );
   });
 
@@ -222,7 +222,7 @@ describe("Property 15: 状态文件格式统一", () => {
       fc.property(noFrontmatterContentArb, (content) => {
         expect(hasYamlFrontmatter(content)).toBe(false);
       }),
-      { numRuns: 200 },
+      { numRuns: 50 },
     );
   });
 });

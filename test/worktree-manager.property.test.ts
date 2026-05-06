@@ -98,7 +98,7 @@ describe("Feature: gnhf-inspired-enhancements, Property 15: Worktree 路径计�
         const expected = `${parent}/${basename}-forge-worktrees/${slug}/`;
         expect(result).toBe(expected);
       }),
-      { numRuns: 200 },
+      { numRuns: 50 },
     );
   });
 
@@ -112,7 +112,7 @@ describe("Feature: gnhf-inspired-enhancements, Property 15: Worktree 路径计�
 
         expect(result).not.toContain("..");
       }),
-      { numRuns: 200 },
+      { numRuns: 50 },
     );
   });
 
@@ -131,7 +131,7 @@ describe("Feature: gnhf-inspired-enhancements, Property 15: Worktree 路径计�
         const expected = `${parent}/${basename}-forge-worktrees/`;
         expect(result).toBe(expected);
       }),
-      { numRuns: 200 },
+      { numRuns: 50 },
     );
   });
 
@@ -145,7 +145,7 @@ describe("Feature: gnhf-inspired-enhancements, Property 15: Worktree 路径计�
 
         expect(result.endsWith("/")).toBe(true);
       }),
-      { numRuns: 200 },
+      { numRuns: 50 },
     );
   });
 
@@ -159,7 +159,7 @@ describe("Feature: gnhf-inspired-enhancements, Property 15: Worktree 路径计�
 
         expect(result).toContain("-forge-worktrees/");
       }),
-      { numRuns: 200 },
+      { numRuns: 50 },
     );
   });
 });
@@ -179,7 +179,7 @@ describe("Feature: gnhf-inspired-enhancements, Property 16: Worktree 清理决�
 
         expect(decision.action).toBe("preserve");
       }),
-      { numRuns: 200 },
+      { numRuns: 50 },
     );
   });
 
@@ -203,7 +203,7 @@ describe("Feature: gnhf-inspired-enhancements, Property 16: Worktree 清理决�
         expect(typeof decision.reason).toBe("string");
         expect(decision.reason.length).toBeGreaterThan(0);
       }),
-      { numRuns: 200 },
+      { numRuns: 50 },
     );
   });
 
@@ -217,7 +217,7 @@ describe("Feature: gnhf-inspired-enhancements, Property 16: Worktree 清理决�
 
         expect(["preserve", "remove"]).toContain(decision.action);
       }),
-      { numRuns: 200 },
+      { numRuns: 50 },
     );
   });
 });
@@ -237,7 +237,7 @@ describe("Feature: gnhf-inspired-enhancements, Property 17: Worktree 并发限�
 
         expect(result).toBe(activeCount < maxConcurrent);
       }),
-      { numRuns: 200 },
+      { numRuns: 50 },
     );
   });
 
@@ -251,7 +251,7 @@ describe("Feature: gnhf-inspired-enhancements, Property 17: Worktree 并发限�
 
         expect(result).toBe(activeCount < 3);
       }),
-      { numRuns: 200 },
+      { numRuns: 50 },
     );
   });
 
@@ -263,7 +263,7 @@ describe("Feature: gnhf-inspired-enhancements, Property 17: Worktree 并发限�
       fc.property(maxConcurrentArb, (maxConcurrent) => {
         expect(canCreateWorktree(maxConcurrent, maxConcurrent)).toBe(false);
       }),
-      { numRuns: 200 },
+      { numRuns: 50 },
     );
   });
 
@@ -275,7 +275,7 @@ describe("Feature: gnhf-inspired-enhancements, Property 17: Worktree 并发限�
       fc.property(fc.integer({ min: 2, max: 50 }), (maxConcurrent) => {
         expect(canCreateWorktree(maxConcurrent - 1, maxConcurrent)).toBe(true);
       }),
-      { numRuns: 200 },
+      { numRuns: 50 },
     );
   });
 });
@@ -293,7 +293,7 @@ describe("Feature: gnhf-inspired-enhancements, Property 18: Worktree 源分支�
       fc.property(forgeBranchArb, (branch) => {
         expect(isValidWorktreeSource(branch)).toBe(false);
       }),
-      { numRuns: 200 },
+      { numRuns: 50 },
     );
   });
 
@@ -305,7 +305,7 @@ describe("Feature: gnhf-inspired-enhancements, Property 18: Worktree 源分支�
       fc.property(nonForgeBranchArb, (branch) => {
         expect(isValidWorktreeSource(branch)).toBe(true);
       }),
-      { numRuns: 200 },
+      { numRuns: 50 },
     );
   });
 

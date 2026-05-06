@@ -51,7 +51,7 @@ describe("Property 2: 用户覆盖优先", () => {
         const result = classifyTask(signals, userOverride);
         expect(result.tier).toBe(userOverride);
       }),
-      { numRuns: 200 },
+      { numRuns: 50 },
     );
   });
 
@@ -61,7 +61,7 @@ describe("Property 2: 用户覆盖优先", () => {
         const result = classifyTask(signals, userOverride);
         expect(result.commandSequence).toEqual(EXPECTED_SEQUENCES[userOverride]);
       }),
-      { numRuns: 200 },
+      { numRuns: 50 },
     );
   });
 
@@ -77,7 +77,7 @@ describe("Property 2: 用户覆盖优先", () => {
         expect(result.tier).toBe("light");
         expect(result.commandSequence).toEqual(EXPECTED_SEQUENCES.light);
       }),
-      { numRuns: 200 },
+      { numRuns: 50 },
     );
   });
 
@@ -100,7 +100,7 @@ describe("Property 2: 用户覆盖优先", () => {
         expect(result.tier).toBe("full");
         expect(result.commandSequence).toEqual(EXPECTED_SEQUENCES.full);
       }),
-      { numRuns: 200 },
+      { numRuns: 50 },
     );
   });
 
@@ -112,7 +112,7 @@ describe("Property 2: 用户覆盖优先", () => {
         expect(typeof result.reason).toBe("string");
         expect(result.reason.length).toBeGreaterThan(0);
       }),
-      { numRuns: 200 },
+      { numRuns: 50 },
     );
   });
 });

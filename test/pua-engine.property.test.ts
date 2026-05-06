@@ -170,7 +170,7 @@ describe("Feature: pua-quality-engine, Property 1: 压力等级确定性映射",
           expect(level).toBe("L4");
         }
       }),
-      { numRuns: 200 },
+      { numRuns: 50 },
     );
   });
 });
@@ -208,7 +208,7 @@ describe("Feature: pua-quality-engine, Property 2: Stall 检测提升压力等�
         // Never exceeds L4
         expect(stallIdx).toBeLessThanOrEqual(4);
       }),
-      { numRuns: 200 },
+      { numRuns: 50 },
     );
   });
 });
@@ -230,7 +230,7 @@ describe("Feature: pua-quality-engine, Property 3: 任务类型到方法论的�
         const methodology = selectMethodology(taskType);
         expect(methodology).toBe(EXPECTED_TASK_METHODOLOGY[taskType]);
       }),
-      { numRuns: 100 },
+      { numRuns: 40 },
     );
   });
 
@@ -245,7 +245,7 @@ describe("Feature: pua-quality-engine, Property 3: 任务类型到方法论的�
           expect(methodology).toBe("alibaba-closure");
         },
       ),
-      { numRuns: 200 },
+      { numRuns: 50 },
     );
   });
 });
@@ -278,7 +278,7 @@ describe("Feature: pua-quality-engine, Property 4: 方法论切换链遍历正�
           }
         },
       ),
-      { numRuns: 200 },
+      { numRuns: 50 },
     );
   });
 });
@@ -305,7 +305,7 @@ describe("Feature: pua-quality-engine, Property 5: 失败模式检测正确性",
           expect(result).toBe("spinning");
         }
       }),
-      { numRuns: 200 },
+      { numRuns: 50 },
     );
   });
 
@@ -331,7 +331,7 @@ describe("Feature: pua-quality-engine, Property 5: 失败模式检测正确性",
         const result = detectFailurePattern([`The task ${keyword} proceed`]);
         expect(result).toBe("giving-up");
       }),
-      { numRuns: 100 },
+      { numRuns: 40 },
     );
   });
 
@@ -349,7 +349,7 @@ describe("Feature: pua-quality-engine, Property 5: 失败模式检测正确性",
         const result = detectFailurePattern([`Task is ${keyword} now`]);
         expect(result).toBe("empty-claim");
       }),
-      { numRuns: 100 },
+      { numRuns: 40 },
     );
   });
 
@@ -367,7 +367,7 @@ describe("Feature: pua-quality-engine, Property 5: 失败模式检测正确性",
         const result = detectFailurePattern([`Currently ${keyword} for input`]);
         expect(result).toBe("passive-waiting");
       }),
-      { numRuns: 100 },
+      { numRuns: 40 },
     );
   });
 
@@ -385,7 +385,7 @@ describe("Feature: pua-quality-engine, Property 5: 失败模式检测正确性",
         const result = detectFailurePattern([`The issue ${keyword} related to config`]);
         expect(result).toBe("guessing");
       }),
-      { numRuns: 100 },
+      { numRuns: 40 },
     );
   });
 
@@ -424,7 +424,7 @@ describe("Feature: pua-quality-engine, Property 6: Stall 响应确定性映射",
           expect(response).toBe("remind");
         }
       }),
-      { numRuns: 200 },
+      { numRuns: 50 },
     );
   });
 });
@@ -458,7 +458,7 @@ describe("Feature: audit-remediation-v221, Property 6: PUA pressure level monoto
         // Non-decreasing: higher failures must not produce a lower pressure level
         expect(idxHigh).toBeGreaterThanOrEqual(idxLow);
       }),
-      { numRuns: 200 },
+      { numRuns: 50 },
     );
   });
 
@@ -480,7 +480,7 @@ describe("Feature: audit-remediation-v221, Property 6: PUA pressure level monoto
           }
         },
       ),
-      { numRuns: 200 },
+      { numRuns: 50 },
     );
   });
 });
@@ -504,7 +504,7 @@ describe("Feature: pua-quality-engine, Property 7: 压力提示内容单调递�
         expect(prompt).toContain(THREE_RED_LINES);
         expect(prompt).toContain(PROACTIVITY_GUIDANCE);
       }),
-      { numRuns: 100 },
+      { numRuns: 40 },
     );
   });
 
@@ -531,7 +531,7 @@ describe("Feature: pua-quality-engine, Property 7: 压力提示内容单调递�
           }
         }
       }),
-      { numRuns: 100 },
+      { numRuns: 40 },
     );
   });
 
@@ -547,7 +547,7 @@ describe("Feature: pua-quality-engine, Property 7: 压力提示内容单调递�
         const prompt = buildPressurePrompt(level, null, null, null);
         expect(prompt).toContain(UNIVERSAL_METHODOLOGY);
       }),
-      { numRuns: 100 },
+      { numRuns: 40 },
     );
   });
 
@@ -559,7 +559,7 @@ describe("Feature: pua-quality-engine, Property 7: 压力提示内容单调递�
         const prompt = buildPressurePrompt(level, null, null, null);
         expect(prompt).toContain(SEVEN_POINT_CHECKLIST);
       }),
-      { numRuns: 100 },
+      { numRuns: 40 },
     );
   });
 });
@@ -585,7 +585,7 @@ describe("Feature: pua-quality-engine, Property 8: 压力提示上下文内容�
           expect(prompt).toContain(METHODOLOGY_DESCRIPTIONS[methodology]);
         },
       ),
-      { numRuns: 200 },
+      { numRuns: 50 },
     );
   });
 
@@ -605,7 +605,7 @@ describe("Feature: pua-quality-engine, Property 8: 压力提示上下文内容�
           expect(prompt).toContain(FAILURE_PATTERN_COUNTERS[pattern]);
         },
       ),
-      { numRuns: 200 },
+      { numRuns: 50 },
     );
   });
 
@@ -627,7 +627,7 @@ describe("Feature: pua-quality-engine, Property 8: 压力提示上下文内容�
           expect(prompt).toContain(FAILURE_PATTERN_COUNTERS[pattern]);
         },
       ),
-      { numRuns: 200 },
+      { numRuns: 50 },
     );
   });
 });

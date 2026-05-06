@@ -1,12 +1,12 @@
 ---
 name: forge-ship
-description: "交付引擎。门禁检查（Review + Test + Progress）后提供四选项交付。"
+description: "Delivery engine enforcing the commit gate and freshness check before publishing changes. Use when user runs `/forge ship` / all review and test gates passed / ready to push branch or create pull request."
 disable-model-invocation: true
 ---
 
 # /forge ship — 交付引擎
 
-> **触发方式**：标准路径的第五步，全量路径的第七步，或用户直接输入 `/forge ship`
+> **触发方式**：标准路径第五步 / 全量路径第七步 / 用户输入 `/forge ship`
 > **职责**：有门禁检查的交付流程，确保只有通过评审和测试的代码才能交付
 > **输出路径**：交付产物（merge/PR/branch）+ 提示 `/forge learn`
 
@@ -20,21 +20,13 @@ disable-model-invocation: true
 
 **伪成功禁令**：Ship 阶段绝不允许：门禁失败时吞掉错误继续交付、用模板化"通过"替代实际检查、测试未运行时声称"测试通过"、Review 报告不存在时声称"评审通过"。
 
----
-
-**Not For**：
-- review 或 test 未执行
-- 存在未解决的 P0/P1 问题
+**Not For**：review 或 test 未执行 / 存在未解决的 P0/P1 问题
 
 ## 2. Gate Checks
 
-`/forge ship` 启动前**必须通过三道门禁**，每道门禁的结果必须以 P5 证据链格式呈现（`[Command] → [Output] → [Claim]`）：
+`/forge ship` 启动前**必须通过三道门禁**（Review / Test / Progress），每道门禁的结果必须以 P5 证据链格式呈现（`[Command] → [Output] → [Claim]`）。
 
-| Gate | Check | Data Source | Block Condition |
-|------|-------|-------------|-----------------|
-| **Review Gate** | 评审是否通过（无 P0/P1 且无 incomplete Layer） | `.forge/reviews/<topic>.md` | `result` 不是 `"pass"` 或 `p0_count > 0` 或 `p1_count > 0` 或任一 Layer 为 `incomplete` |
-| **Test Gate** | 测试是否通过 | Layer 1 + Layer 3 验证结果；若 `ci_check_command` 已配置，验证 CI 命令已执行并通过 | 测试未运行或有失败项 |
-| **Progress Gate** | 所有任务是否完成 | `.forge/progress/<topic>.md` | 存在未标记完成的任务 |
+→ 详见 references/gate-checks.md（门禁表、证据格式、Review Freshness Check 完整流程）
 
 **函数调用**：`checkShipGate(review, test, progress)`
 - 参数：`review` — 从 `.forge/reviews/<topic>.md` frontmatter 解析的 `ReviewResult`（含 `result`、`p0_count`、`p1_count`）；`test` — 从 Layer 1 + Layer 3 验证结果构造的 `TestResult`（含 `passed`、`failedCount`）；`progress` — 从 `.forge/progress/<topic>.md` 解析的 `ProgressResult`（含 `totalTasks`、`completedTasks`）
@@ -48,56 +40,12 @@ disable-model-invocation: true
 
 **三道门禁必须同时通过**。任一不通过，阻断 ship。
 
-**门禁证据格式**：
-
-```
-🔍 Gate Checks (P5 Evidence Chain)
-
-[Check]  Review Gate — read .forge/reviews/order-batch-export.md
-[Evidence] result: "pass", p0_count: 0, p1_count: 0
-[Claim]  ✅ Review passed (0 P0, 0 P1, 1 P2, 0 P3)
-
-[Check]  Test Gate — run npx vitest run
-[Evidence] Test Files: 8 passed, Tests: 42 passed
-[Claim]  ✅ Test passed (42/42 tests passed)
-
-[Check]  Progress Gate — read .forge/progress/order-batch-export.md
-[Evidence] 5/5 tasks marked [x]
-[Claim]  ✅ Progress complete (5/5 tasks complete)
-```
-
-**CI 命令一致性检查**：如果 `ci_check_command` 已配置但 test 阶段只运行了单独命令（未运行完整 CI 命令），输出警告。不阻断 ship 但强烈建议重新运行。
-
-**Review Freshness Check**（Review Gate 通过后执行）：
-
-1. 读取 `.forge/reviews/<topic>.md` 的 `reviewed_at_commit` 字段
-2. **安全验证**：如果字段存在，验证其为合法 commit hash 格式（`/^[a-f0-9]{7,40}$/`）。不合法则视为缺失，静默通过
-3. 获取当前 HEAD：`git rev-parse HEAD`
-4. 比较：
-   - 相同 → ✅ 通过
-   - `reviewed_at_commit` 缺失或格式不合法 → ✅ 通过（向后兼容旧报告）
-   - 不同 → 获取 diff 文件列表：通过 `execFileSync` 参数化执行（不拼接命令字符串），传入 `["diff", "--name-only", reviewedCommit, "HEAD"]`
-     - 仅 `.forge/` 文件 → ✅ 通过（状态更新不影响代码质量）
-     - 涉及项目代码 → ⚠️ 警告（不阻断，用户可选择继续或重新 review）
+**Gate 拦截自动沉淀**：门禁拦截时调用 `buildShipGateBlockArtifacts(topic, tier, reason, situation, now, seq)`（`src/ship.ts`）生成 episode + Evolution 标记（target=`forge-ship#ship_gate_blocked`）。`reason` 推导：未提交工作树 → `uncommitted` → outcome=`partial`；checklist 未验证 → `checklist_failed` → outcome=`failure`。写入失败降级为 `console.warn`。
 
 **函数调用**：`checkReviewFreshness(reviewedCommit, currentHead, changedFiles)`
 - 参数：`reviewedCommit` — 从 review 报告 frontmatter 的 `reviewed_at_commit` 字段读取（`string | undefined`）；`currentHead` — `git rev-parse HEAD` 输出；`changedFiles` — `git diff --name-only` 输出
 - 返回：`{ fresh: boolean, reason: string, changedFiles?: string[] }`
 - 用途：检测 review 后是否有项目代码变更，输出警告但不阻断 ship
-
-**警告输出格式**：
-
-```
-⚠️ Review 时效性警告
-  评审时 commit：<reviewed_at_commit>
-  当前 commit：<current HEAD>
-  评审后变更的项目文件：
-    - <file1>
-    - <file2>
-  建议：运行 /forge review 重新评审，或确认继续交付
-```
-
-**此检查不阻断 ship**——仅输出警告，开发者可选择继续交付或重新 review。
 
 **全部通过**后进入交付选项选择。
 
@@ -105,50 +53,9 @@ disable-model-invocation: true
 
 ## 3. Four Delivery Options
 
-门禁检查全部通过后，**必须**使用 AskUserQuestion 让用户选择交付方式。**禁止**跳过询问直接执行任何选项。
+门禁检查全部通过后，使用 AskUserQuestion 询问用户选择：**Merge to main** / **Create PR** / **Keep branch** / **Discard**（需二次确认）。
 
-```
-AskUserQuestion:
-  questions:
-    - question: "门禁已通过，请选择交付方式"
-      header: "Ship"
-      options:
-        - label: "Merge to main"
-          description: "本地合并到 main，删除功能分支"
-        - label: "Create PR"
-          description: "推送分支并创建 Pull Request"
-        - label: "Keep branch"
-          description: "保留当前分支，稍后处理"
-        - label: "Discard"
-          description: "丢弃所有变更（需二次确认）"
-      multiSelect: false
-```
-
-用户选择 Discard 时，需追加确认 AskUserQuestion（输入理由或确认）。
-
-### Option 1: Merge to Main Branch
-
-通过 `ship_merge` 效果执行：checkout main → merge branch → delete branch。Merge 失败时自动执行 `merge --abort` 恢复。适用场景：个人项目、小团队直接合并。
-
-### Option 2: Push and Create PR
-
-通过 `ship_push_pr` 效果执行：push origin → gh pr create。Push 失败时不创建 PR。适用场景：团队协作。PR 描述自动从 plan Objective 提取。
-
-### Option 3: Keep Branch
-
-不做任何 Git 操作，保留当前分支状态。适用场景：稍后处理、等待依赖。可随时重新运行 `/forge ship` 选择其他方式。
-
-**Pending-Delivery 记录**：选择保留分支时，必须调用 `recordPendingDelivery(branchName, topic, timestamp)` 记录交付状态：
-
-- `branchName` 来源：`git branch --show-current` 输出
-- `topic` 来源：`.forge/status.md` 的 `current_task` 字段
-- `timestamp` 来源：`Date.now()`
-
-返回的 `PendingDeliveryRecord` 追加到 `.forge/status.md` 或配置指定的持久化位置。下次 `/forge build` 启动时，`detectUnshippedBranches` 和 `detectStaleBranches` 将读取这些记录并展示警告。
-
-### Option 4: Discard
-
-丢弃当前分支的所有变更。**需要二次确认**：用户输入 `discard` 才执行，输入其他内容则取消。通过 `ship_discard` 效果执行：checkout main → delete branch。
+→ 详见 references/delivery-options.md（AskUserQuestion 格式、四选项执行细节、Pending-Delivery 记录、Autonomous Mode 配置）
 
 ---
 
@@ -170,16 +77,9 @@ AskUserQuestion:
 
 ## 5. Autonomous Mode Configuration
 
-在 `.forge/config.md` frontmatter 中可配置 `ship_default_method` 控制自主模式的交付行为：
+Autonomous 模式通过 `.forge/config.md` 的 `ship_default_method` 字段控制交付行为（`merge` / `push-pr` / `keep-branch` / `prompt`）。无效值安全回退到 `keep-branch` 并输出警告。
 
-| Value | Behavior |
-|-------|----------|
-| `merge` | 自动合并到主分支 |
-| `push-pr` | 自动推送并创建 PR |
-| `keep-branch` | 保留分支（默认值） |
-| `prompt` | 覆盖 autonomous 行为，强制等待用户选择 |
-
-无效值安全回退到 `keep-branch` 并输出警告。
+→ 详见 references/delivery-options.md §Autonomous Mode Configuration
 
 ---
 

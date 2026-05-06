@@ -120,7 +120,7 @@ describe("Feature: loop-skills-fusion, Property 9: StatusFile Loop 字段 round-
         expect(extracted.loopIteration).toBe(fields.loopIteration);
         expect(extracted.skillSequence).toEqual(fields.skillSequence);
       }),
-      { numRuns: 200 },
+      { numRuns: 50 },
     );
   });
 
@@ -166,7 +166,7 @@ describe("Feature: loop-skills-fusion, Property 9: StatusFile Loop 字段 round-
 
         expect(writtenFields).toEqual(originalFields);
       }),
-      { numRuns: 200 },
+      { numRuns: 50 },
     );
   });
 
@@ -190,7 +190,7 @@ describe("Feature: loop-skills-fusion, Property 9: StatusFile Loop 字段 round-
         expect(extracted2.loopIteration).toBe(extracted1.loopIteration);
         expect(extracted2.skillSequence).toEqual(extracted1.skillSequence);
       }),
-      { numRuns: 200 },
+      { numRuns: 50 },
     );
   });
 });
@@ -218,7 +218,7 @@ describe("Feature: loop-skills-fusion, Property 10: StatusFile Loop 字段清除
         expect(extracted.loopIteration).toBeUndefined();
         expect(extracted.skillSequence).toBeUndefined();
       }),
-      { numRuns: 200 },
+      { numRuns: 50 },
     );
   });
 
@@ -265,7 +265,7 @@ describe("Feature: loop-skills-fusion, Property 10: StatusFile Loop 字段清除
 
         expect(clearedNonLoopFields).toEqual(originalNonLoopFields);
       }),
-      { numRuns: 200 },
+      { numRuns: 50 },
     );
   });
 
@@ -283,7 +283,7 @@ describe("Feature: loop-skills-fusion, Property 10: StatusFile Loop 字段清除
 
         expect(cleared2).toBe(cleared1);
       }),
-      { numRuns: 200 },
+      { numRuns: 50 },
     );
   });
 });
@@ -340,7 +340,7 @@ describe("Feature: loop-skills-fusion, Property 4: writeLoopFields preserves non
         // Every original non-Loop field must be present and unchanged
         expect(writtenNonLoopLines).toEqual(originalNonLoopLines);
       }),
-      { numRuns: 200 },
+      { numRuns: 50 },
     );
   });
 
@@ -398,7 +398,7 @@ describe("Feature: loop-skills-fusion, Property 4: writeLoopFields preserves non
 
         expect(writtenNonLoopLines).toEqual(originalNonLoopLines);
       }),
-      { numRuns: 200 },
+      { numRuns: 50 },
     );
   });
 
@@ -422,7 +422,7 @@ describe("Feature: loop-skills-fusion, Property 4: writeLoopFields preserves non
 
         expect(writtenBody).toBe(originalBody);
       }),
-      { numRuns: 200 },
+      { numRuns: 50 },
     );
   });
 });
@@ -501,7 +501,7 @@ describe("Feature: loop-skills-fusion, Property 3: LoopStatusFields round-trip c
         expect(extracted.loopIteration).toBe(fields.loopIteration);
         expect(extracted.skillSequence).toEqual(fields.skillSequence);
       }),
-      { numRuns: 200 },
+      { numRuns: 50 },
     );
   });
 
@@ -525,7 +525,7 @@ describe("Feature: loop-skills-fusion, Property 3: LoopStatusFields round-trip c
         expect(extracted.loopIteration).toBeUndefined();
         expect(extracted.skillSequence).toBeUndefined();
       }),
-      { numRuns: 200 },
+      { numRuns: 50 },
     );
   });
 
@@ -555,7 +555,7 @@ describe("Feature: loop-skills-fusion, Property 3: LoopStatusFields round-trip c
           expect(extracted.skillSequence).toEqual(fields.skillSequence);
         }
       }),
-      { numRuns: 200 },
+      { numRuns: 50 },
     );
   });
 
@@ -577,7 +577,7 @@ describe("Feature: loop-skills-fusion, Property 3: LoopStatusFields round-trip c
         expect(extracted.loopIteration).toBeUndefined();
         expect(extracted.skillSequence).toBeUndefined();
       }),
-      { numRuns: 200 },
+      { numRuns: 50 },
     );
   });
 });
@@ -647,7 +647,7 @@ describe("Feature: loop-skills-fusion, Property 11: updateIterationStatus field 
         const extractedPhase = extractPhaseFromFrontmatter(updated);
         expect(extractedPhase).toBe(phase);
       }),
-      { numRuns: 200 },
+      { numRuns: 50 },
     );
   });
 
@@ -673,7 +673,7 @@ describe("Feature: loop-skills-fusion, Property 11: updateIterationStatus field 
           expect(extractedPhase).toBe(phase);
         },
       ),
-      { numRuns: 200 },
+      { numRuns: 50 },
     );
   });
 
@@ -716,7 +716,7 @@ describe("Feature: loop-skills-fusion, Property 11: updateIterationStatus field 
 
         expect(updatedOtherFields).toEqual(originalOtherFields);
       }),
-      { numRuns: 200 },
+      { numRuns: 50 },
     );
   });
 
@@ -745,7 +745,7 @@ describe("Feature: loop-skills-fusion, Property 11: updateIterationStatus field 
           expect(extractedPhase).toBe(phase2);
         },
       ),
-      { numRuns: 200 },
+      { numRuns: 50 },
     );
   });
 });

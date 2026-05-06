@@ -1,6 +1,6 @@
 ---
 name: forge-test
-description: "测试引擎。三层验证（单元测试、浏览器 QA、7 项完成前验证清单）。"
+description: "Three-layer verification engine running property tests, unit tests, and integration smoke tests. Use when user runs `/forge test` / after build completes / needs verification that behavior matches the locked spec."
 disable-model-invocation: true
 ---
 

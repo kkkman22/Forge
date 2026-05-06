@@ -22,6 +22,7 @@ describe("mergeSkillLists properties", () => {
             for (const item of result) {
                 if (builtinNames.has(item.name)) {
                     const builtinVersion = builtin.find((b) => b.name === item.name);
+                    expect(builtinVersion).toBeDefined();
                     expect(item.version).toBe(builtinVersion.version);
                 }
             }

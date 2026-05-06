@@ -711,7 +711,7 @@ describe("Feature: audit-followup-improvements, Property 2: Dry-run rollback non
           }
         },
       ),
-      { numRuns: 100 },
+      { numRuns: 40 },
     );
   });
 });

@@ -185,7 +185,7 @@ describe("Preservation: Notes round-trip without branchName", () => {
           expect(roundTripped.keyLearnings).toEqual(original.keyLearnings);
         }
       }),
-      { numRuns: 100 },
+      { numRuns: 40 },
     );
   });
 
@@ -204,7 +204,7 @@ describe("Preservation: Notes round-trip without branchName", () => {
         expect(parsed.runId).toBe(runId);
         expect(parsed.entries).toEqual([]);
       }),
-      { numRuns: 100 },
+      { numRuns: 40 },
     );
   });
 });

@@ -78,10 +78,7 @@ describe("trimCommandOutput", () => {
             expect(passCount).toBeLessThanOrEqual(15);
         });
         it("includes last 5 lines even when they are not key lines", () => {
-            const lines = [
-                ...Array.from({ length: 30 }, (_, i) => `build step ${i}`),
-                "done.",
-            ];
+            const lines = [...Array.from({ length: 30 }, (_, i) => `build step ${i}`), "done."];
             const stdout = lines.join("\n");
             const result = trimCommandOutput(stdout, "", 0);
             expect(result).toContain("done.");

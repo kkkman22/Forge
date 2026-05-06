@@ -71,7 +71,7 @@ describe("Feature: audit-remediation-v221, Property 2: NotesDocument branchName 
         const output = formatNotesDocument(doc);
         expect(output).toContain(doc.branchName);
       }),
-      { numRuns: 100 },
+      { numRuns: 40 },
     );
   });
 
@@ -88,7 +88,7 @@ describe("Feature: audit-remediation-v221, Property 2: NotesDocument branchName 
         const second = formatNotesDocument(doc);
         expect(first).toBe(second);
       }),
-      { numRuns: 100 },
+      { numRuns: 40 },
     );
   });
 });

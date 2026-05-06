@@ -42,6 +42,27 @@ export declare function writeConfigLang(content: string, lang: string): string;
  * @returns A complete config.md content string
  */
 export declare function buildDefaultConfig(lang: string): string;
+/** Structured config fields with all fields guaranteed present. */
+export interface ConfigFields {
+    project: string;
+    stack: string[];
+    security_level: number;
+    knowledge_limit: number;
+    max_parallel_agents: number;
+}
+export declare const CONFIG_DEFAULTS: ConfigFields;
+/**
+ * Parse config.md frontmatter with graceful fallback to defaults.
+ *
+ * - undefined/empty content → all defaults + warnings
+ * - missing frontmatter → all defaults + warnings
+ * - partial fields → missing fields use CONFIG_DEFAULTS + warnings
+ * - invalid numeric fields → use defaults + warnings
+ */
+export declare function parseConfigGraceful(content: string | undefined): {
+    parsed: ConfigFields;
+    warnings: string[];
+};
 /**
  * Log configuration parsed from `.forge/config.md` frontmatter.
  * All fields are nullable — `null` indicates the field was not present

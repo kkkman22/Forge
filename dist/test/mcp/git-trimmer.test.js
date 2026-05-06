@@ -31,20 +31,14 @@ describe("parseDiffStat", () => {
         expect(result.files[1].removed).toBe(0);
     });
     it("parses insertions-only summary", () => {
-        const output = [
-            " new-file.ts | 10 ++++++++++",
-            " 1 file changed, 10 insertions(+)",
-        ].join("\n");
+        const output = [" new-file.ts | 10 ++++++++++", " 1 file changed, 10 insertions(+)"].join("\n");
         const result = parseDiffStat(output);
         expect(result.fileCount).toBe(1);
         expect(result.totalAdded).toBe(10);
         expect(result.totalRemoved).toBe(0);
     });
     it("parses deletions-only summary", () => {
-        const output = [
-            " old-file.ts | 5 -----",
-            " 1 file changed, 5 deletions(-)",
-        ].join("\n");
+        const output = [" old-file.ts | 5 -----", " 1 file changed, 5 deletions(-)"].join("\n");
         const result = parseDiffStat(output);
         expect(result.fileCount).toBe(1);
         expect(result.totalAdded).toBe(0);
@@ -75,20 +69,14 @@ describe("parseDiffStat", () => {
         expect(result.files).toHaveLength(0);
     });
     it("derives fileCount from parsed files when no summary line", () => {
-        const output = [
-            " src/a.ts | 5 +++++",
-            " src/b.ts | 3 +++",
-        ].join("\n");
+        const output = [" src/a.ts | 5 +++++", " src/b.ts | 3 +++"].join("\n");
         const result = parseDiffStat(output);
         expect(result.fileCount).toBe(2);
     });
 });
 describe("parseStatusPorcelain", () => {
     it("parses staged files (A, M in index position)", () => {
-        const output = [
-            "A  src/new-file.ts",
-            "M  src/modified-staged.ts",
-        ].join("\n");
+        const output = ["A  src/new-file.ts", "M  src/modified-staged.ts"].join("\n");
         const result = parseStatusPorcelain(output);
         expect(result.staged.count).toBe(2);
         expect(result.staged.files).toContain("src/new-file.ts");
@@ -104,10 +92,7 @@ describe("parseStatusPorcelain", () => {
         expect(result.staged.count).toBe(0);
     });
     it("parses untracked files", () => {
-        const output = [
-            "?? new-file.ts",
-            "?? another-new.ts",
-        ].join("\n");
+        const output = ["?? new-file.ts", "?? another-new.ts"].join("\n");
         const result = parseStatusPorcelain(output);
         expect(result.untracked.count).toBe(2);
         expect(result.untracked.files).toContain("new-file.ts");

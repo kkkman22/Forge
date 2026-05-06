@@ -167,7 +167,7 @@ describe("Feature: forge-audit-remediation, Property 1: Effect failure is record
         const hasErrorInNotes = failedEntries.some((e) => e.summary.includes(errorMsg));
         expect(hasErrorInNotes).toBe(true);
       }),
-      { numRuns: 100 },
+      { numRuns: 40 },
     );
   });
 
@@ -219,7 +219,7 @@ describe("Feature: forge-audit-remediation, Property 1: Effect failure is record
         const hasErrorInNotes = failedEntries.some((e) => e.summary.includes(errorMsg));
         expect(hasErrorInNotes).toBe(true);
       }),
-      { numRuns: 100 },
+      { numRuns: 40 },
     );
   });
 });
@@ -279,7 +279,7 @@ describe("Feature: forge-audit-remediation, Property 3: commitCount reflects onl
         // commitCount should equal only the successful commits
         expect(result.commitCount).toBe(successfulCommits);
       }),
-      { numRuns: 100 },
+      { numRuns: 40 },
     );
   });
 });

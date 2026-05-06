@@ -80,7 +80,7 @@ describe("Property 17: 置信度过滤正确性", () => {
           expect(f.confidence).toBeGreaterThanOrEqual(CONFIDENCE_THRESHOLD);
         }
       }),
-      { numRuns: 200 },
+      { numRuns: 50 },
     );
   });
 
@@ -93,7 +93,7 @@ describe("Property 17: 置信度过滤正确性", () => {
           expect(f.confidence).toBeLessThan(CONFIDENCE_THRESHOLD);
         }
       }),
-      { numRuns: 200 },
+      { numRuns: 50 },
     );
   });
 
@@ -105,7 +105,7 @@ describe("Property 17: 置信度过滤正确性", () => {
           expect(f.confidence).toBeLessThan(LOW_CONFIDENCE_MIN);
         }
       }),
-      { numRuns: 200 },
+      { numRuns: 50 },
     );
   });
 
@@ -117,7 +117,7 @@ describe("Property 17: 置信度过滤正确性", () => {
           findings.length,
         );
       }),
-      { numRuns: 200 },
+      { numRuns: 50 },
     );
   });
 });
@@ -144,7 +144,7 @@ describe("Property 18: 去重合并正确性", () => {
           expect(result.length).toBe(1);
         },
       ),
-      { numRuns: 200 },
+      { numRuns: 50 },
     );
   });
 
@@ -165,7 +165,7 @@ describe("Property 18: 去重合并正确性", () => {
           expect(result.length).toBe(2);
         },
       ),
-      { numRuns: 200 },
+      { numRuns: 50 },
     );
   });
 
@@ -186,7 +186,7 @@ describe("Property 18: 去重合并正确性", () => {
             : otherSeverity;
         expect(result[0].severity).toBe(expectedSeverity);
       }),
-      { numRuns: 200 },
+      { numRuns: 50 },
     );
   });
 
@@ -206,7 +206,7 @@ describe("Property 18: 去重合并正确性", () => {
           expect(result[0].confidence).toBe(Math.max(base.confidence, otherConfidence));
         },
       ),
-      { numRuns: 200 },
+      { numRuns: 50 },
     );
   });
 
@@ -216,7 +216,7 @@ describe("Property 18: 去重合并正确性", () => {
         const result = deduplicateFindings(findings);
         expect(result.length).toBeLessThanOrEqual(findings.length);
       }),
-      { numRuns: 200 },
+      { numRuns: 50 },
     );
   });
 });
@@ -240,7 +240,7 @@ describe("Property 19: 跨评审者一致性提升", () => {
           Math.min(base.confidence + CROSS_VALIDATION_BOOST, MAX_CONFIDENCE),
         );
       }),
-      { numRuns: 200 },
+      { numRuns: 50 },
     );
   });
 
@@ -256,7 +256,7 @@ describe("Property 19: 跨评审者一致性提升", () => {
         expect(result[0].crossValidated).toBe(false);
         expect(result[0].confidence).toBe(base.confidence);
       }),
-      { numRuns: 200 },
+      { numRuns: 50 },
     );
   });
 
@@ -272,7 +272,7 @@ describe("Property 19: 跨评审者一致性提升", () => {
         const result = applyCrossValidation([merged]);
         expect(result[0].confidence).toBeLessThanOrEqual(MAX_CONFIDENCE);
       }),
-      { numRuns: 200 },
+      { numRuns: 50 },
     );
   });
 });

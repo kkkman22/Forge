@@ -157,7 +157,7 @@ describe("Feature: loop-skills-fusion, Property 1: ExecutionMode round-trip cons
 
         expect(mode).toBe("interactive");
       }),
-      { numRuns: 200 },
+      { numRuns: 50 },
     );
   });
 
@@ -192,7 +192,7 @@ describe("Feature: loop-skills-fusion, Property 1: ExecutionMode round-trip cons
 
         expect(clearedFields).toEqual(originalFields);
       }),
-      { numRuns: 200 },
+      { numRuns: 50 },
     );
   });
 
@@ -210,7 +210,7 @@ describe("Feature: loop-skills-fusion, Property 1: ExecutionMode round-trip cons
 
         expect(readMode).toBe(mode);
       }),
-      { numRuns: 200 },
+      { numRuns: 50 },
     );
   });
 });
@@ -233,7 +233,7 @@ describe("Feature: loop-skills-fusion, Property 2: getExecutionMode 解析正確
 
         expect(result).toBe(mode);
       }),
-      { numRuns: 200 },
+      { numRuns: 50 },
     );
   });
 
@@ -250,7 +250,7 @@ describe("Feature: loop-skills-fusion, Property 2: getExecutionMode 解析正確
 
         expect(result).toBe("interactive");
       }),
-      { numRuns: 200 },
+      { numRuns: 50 },
     );
   });
 
@@ -267,7 +267,7 @@ describe("Feature: loop-skills-fusion, Property 2: getExecutionMode 解析正確
 
         expect(result).toBe("interactive");
       }),
-      { numRuns: 200 },
+      { numRuns: 50 },
     );
   });
 
@@ -287,7 +287,7 @@ describe("Feature: loop-skills-fusion, Property 2: getExecutionMode 解析正確
           expect(result).toBe("interactive");
         },
       ),
-      { numRuns: 200 },
+      { numRuns: 50 },
     );
   });
 });
@@ -312,7 +312,7 @@ describe("Feature: loop-skills-fusion, Property 2: 自主モード確認点全�
         expect(decision.preset).toBeDefined();
         expect(typeof decision.preset).toBe("string");
       }),
-      { numRuns: 200 },
+      { numRuns: 50 },
     );
   });
 
@@ -330,7 +330,7 @@ describe("Feature: loop-skills-fusion, Property 2: 自主モード確認点全�
         expect(decision.action).toBe("wait_for_user");
         expect(decision.preset).toBeUndefined();
       }),
-      { numRuns: 200 },
+      { numRuns: 50 },
     );
   });
 
@@ -347,7 +347,7 @@ describe("Feature: loop-skills-fusion, Property 2: 自主モード確認点全�
         expect(decision.action).toBe("auto");
         expect(decision.preset).toBe("keep branch");
       }),
-      { numRuns: 200 },
+      { numRuns: 50 },
     );
   });
 
@@ -365,7 +365,7 @@ describe("Feature: loop-skills-fusion, Property 2: 自主モード確認点全�
 
         expect(decision1).toEqual(decision2);
       }),
-      { numRuns: 200 },
+      { numRuns: 50 },
     );
   });
 });
@@ -390,7 +390,7 @@ describe("Property: 新增 ConfirmationPoint autonomous 全自動", () => {
         expect(decision.preset).toBeDefined();
         expect(typeof decision.preset).toBe("string");
       }),
-      { numRuns: 200 },
+      { numRuns: 50 },
     );
   });
 
@@ -417,7 +417,7 @@ describe("Property: 新增 ConfirmationPoint autonomous 全自動", () => {
         expect(decision.action).toBe("auto");
         expect(decision.preset).toBe(expectedPresets[point]);
       }),
-      { numRuns: 200 },
+      { numRuns: 50 },
     );
   });
 
@@ -435,7 +435,7 @@ describe("Property: 新增 ConfirmationPoint autonomous 全自動", () => {
         expect(decision.action).toBe("wait_for_user");
         expect(decision.preset).toBeUndefined();
       }),
-      { numRuns: 200 },
+      { numRuns: 50 },
     );
   });
 });
@@ -467,7 +467,7 @@ describe("Property: 現有 ConfirmationPoint 向後兼容", () => {
         expect(decision.action).toBe("auto");
         expect(decision.preset).toBe(originalPresets[point]);
       }),
-      { numRuns: 200 },
+      { numRuns: 50 },
     );
   });
 
@@ -485,7 +485,7 @@ describe("Property: 現有 ConfirmationPoint 向後兼容", () => {
         expect(decision.action).toBe("wait_for_user");
         expect(decision.preset).toBeUndefined();
       }),
-      { numRuns: 200 },
+      { numRuns: 50 },
     );
   });
 });

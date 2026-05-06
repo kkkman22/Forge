@@ -142,7 +142,7 @@ describe("Skill-Aware iteration timing includes phase field", () => {
         const timingLog = logs.find((l) => l.includes("iteration_timing"));
         expect(timingLog).toBeDefined();
         // Parse the JSON log entry and verify phase is present
-        const parsed = JSON.parse(timingLog);
+        const parsed = JSON.parse(timingLog ?? "{}");
         expect(parsed.event).toBe("iteration_timing");
         expect(parsed.metadata).toBeDefined();
         expect(parsed.metadata.phase).toBe("build");
@@ -169,7 +169,7 @@ describe("Phase switch outputs skill_phase_transition log", () => {
         const logs = collectLogOutput(logSpy);
         const transitionLog = logs.find((l) => l.includes("skill_phase_transition"));
         expect(transitionLog).toBeDefined();
-        const parsed = JSON.parse(transitionLog);
+        const parsed = JSON.parse(transitionLog ?? "{}");
         expect(parsed.event).toBe("skill_phase_transition");
         expect(parsed.metadata.fromPhase).toBe("plan");
         expect(parsed.metadata.toPhase).toBe("build");
@@ -229,7 +229,7 @@ describe("Degradation detection triggers performance_degradation warning", () =>
         const logs = collectLogOutput(logSpy);
         const degradationLog = logs.find((l) => l.includes("performance_degradation"));
         expect(degradationLog).toBeDefined();
-        const parsed = JSON.parse(degradationLog);
+        const parsed = JSON.parse(degradationLog ?? "{}");
         expect(parsed.event).toBe("performance_degradation");
         expect(parsed.level).toBe("warn");
         expect(parsed.metadata.currentMs).toBeDefined();
@@ -257,7 +257,7 @@ describe("Run end PerformanceBaseline includes extended fields", () => {
         const logs = collectLogOutput(logSpy);
         const baselineLog = logs.find((l) => l.includes("performance_baseline"));
         expect(baselineLog).toBeDefined();
-        const parsed = JSON.parse(baselineLog);
+        const parsed = JSON.parse(baselineLog ?? "{}");
         expect(parsed.event).toBe("performance_baseline");
         // Extended fields should be present in metadata
         expect(parsed.metadata).toBeDefined();
@@ -281,7 +281,7 @@ describe("Run end PerformanceBaseline includes extended fields", () => {
         const logs = collectLogOutput(logSpy);
         const baselineLog = logs.find((l) => l.includes("performance_baseline"));
         expect(baselineLog).toBeDefined();
-        const parsed = JSON.parse(baselineLog);
+        const parsed = JSON.parse(baselineLog ?? "{}");
         expect(parsed.metadata.subagentCallCount).toBe(2);
         expect(typeof parsed.metadata.avgSubagentMs).toBe("number");
         expect(typeof parsed.metadata.maxSubagentMs).toBe("number");
@@ -308,7 +308,7 @@ describe("Subagent timing log is emitted", () => {
         const logs = collectLogOutput(logSpy);
         const subagentLog = logs.find((l) => l.includes("subagent_timing"));
         expect(subagentLog).toBeDefined();
-        const parsed = JSON.parse(subagentLog);
+        const parsed = JSON.parse(subagentLog ?? "{}");
         expect(parsed.event).toBe("subagent_timing");
         expect(parsed.level).toBe("debug");
         expect(parsed.metadata.subagentId).toBe("test-agent");

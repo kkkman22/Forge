@@ -15,8 +15,8 @@ export class ProcessRegistry {
     }
     register(child, metadata) {
         const entry = {
-            pid: child.pid,
-            pgid: child.pid,
+            pid: child.pid ?? 0,
+            pgid: child.pid ?? 0,
             startTime: Date.now(),
             ...metadata,
         };
@@ -146,13 +146,14 @@ export class ProcessRegistry {
         catch {
             throw new Error(`Invalid JSON in ProcessRegistry deserialize: ${json.slice(0, 50)}`);
         }
-        if (typeof parsed.sessionPid !== "number" ||
-            typeof parsed.sessionPgid !== "number" ||
-            typeof parsed.sessionStartTime !== "number" ||
-            !Array.isArray(parsed.processes)) {
+        const data = parsed;
+        if (typeof data.sessionPid !== "number" ||
+            typeof data.sessionPgid !== "number" ||
+            typeof data.sessionStartTime !== "number" ||
+            !Array.isArray(data.processes)) {
             throw new Error("Missing required fields in ProcessRegistry deserialize (sessionPid, sessionPgid, sessionStartTime, processes)");
         }
-        return parsed;
+        return data;
     }
 }
 //# sourceMappingURL=process-registry.js.map

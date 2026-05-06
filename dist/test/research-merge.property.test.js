@@ -31,7 +31,7 @@ describe("Feature: agent-team-migration, Property 6: research findings merge com
             const succeeded = results.filter((r) => r.status === "success" && r.output);
             // All successful outputs should appear in the merged document
             for (const s of succeeded) {
-                expect(merged).toContain(s.output);
+                expect(merged).toContain(s.output ?? "");
             }
         }), { numRuns: 100 });
     });

@@ -1,6 +1,6 @@
 ---
 name: forge-fix
-description: "修复引擎。通过三阶段流程（analyze → apply → verify）执行结构化 Bug 修复。"
+description: "Focused repair engine that applies the minimal change to resolve a single identified defect. Use when user runs `/forge fix` / debug phase has produced a confirmed root cause / small targeted correction is needed without rerunning full build."
 disable-model-invocation: true
 ---
 

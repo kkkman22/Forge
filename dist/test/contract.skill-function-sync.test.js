@@ -104,8 +104,13 @@ describe("Direction 3: Registry SKILL references contain the function name", () 
             it(`skills/${skill} references ${entry.functionName}`, () => {
                 const skillPath = resolve(SKILLS_DIR, skill);
                 expect(existsSync(skillPath), `SKILL file not found: skills/${skill}`).toBe(true);
-                const content = readFileSync(skillPath, "utf-8");
-                expect(content.includes(entry.functionName), `${entry.functionName} declared in registry for skills/${skill} but not found in file content`).toBe(true);
+                // Check both main SKILL.md and references/function-contracts.md
+                const skillContent = readFileSync(skillPath, "utf-8");
+                const skillDir = skill.replace(/\/SKILL\.md$/, "");
+                const refPath = resolve(SKILLS_DIR, skillDir, "references", "function-contracts.md");
+                const refContent = existsSync(refPath) ? readFileSync(refPath, "utf-8") : "";
+                const allContent = skillContent + refContent;
+                expect(allContent.includes(entry.functionName), `${entry.functionName} declared in registry for skills/${skill} but not found in SKILL.md or references/function-contracts.md`).toBe(true);
             });
         }
     }

@@ -90,15 +90,17 @@ export function determineNextSkill(input) {
         return { nextPhase: "plan", reason: "Plan not yet approved, continuing planning" };
     }
     // Build phase
+    // Conservative: undefined hasIncompleteTasks → assume incomplete (stay in build)
     if (currentPhase === "build") {
-        if (hasIncompleteTasks) {
+        if (hasIncompleteTasks !== false) {
             return { nextPhase: "build", reason: "Incomplete tasks remain, continuing build" };
         }
         return { nextPhase: "review", reason: "All tasks complete, proceeding to review" };
     }
     // Build-light phase (same transitions as build)
+    // Conservative: undefined hasIncompleteTasks → assume incomplete
     if (currentPhase === "build-light") {
-        if (hasIncompleteTasks) {
+        if (hasIncompleteTasks !== false) {
             return {
                 nextPhase: "build-light",
                 reason: "Incomplete tasks remain, continuing build-light",
@@ -140,8 +142,9 @@ export function determineNextSkill(input) {
         return { nextPhase: "refactor-apply", reason: "Refactor scan complete, proceeding to apply" };
     }
     // Refactor-apply phase
+    // Conservative: undefined hasIncompleteTasks → assume incomplete
     if (currentPhase === "refactor-apply") {
-        if (hasIncompleteTasks) {
+        if (hasIncompleteTasks !== false) {
             return {
                 nextPhase: "refactor-apply",
                 reason: "Incomplete refactor tasks remain, continuing apply",
@@ -154,8 +157,9 @@ export function determineNextSkill(input) {
         return { nextPhase: "fix-apply", reason: "Fix analysis complete, proceeding to apply" };
     }
     // Fix-apply phase
+    // Conservative: undefined hasIncompleteTasks → assume incomplete
     if (currentPhase === "fix-apply") {
-        if (hasIncompleteTasks) {
+        if (hasIncompleteTasks !== false) {
             return { nextPhase: "fix-apply", reason: "Incomplete fix tasks remain, continuing apply" };
         }
         return { nextPhase: "review", reason: "All fix tasks complete, proceeding to review" };

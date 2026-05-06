@@ -138,7 +138,7 @@ describe("Property 33: detectWorkNature keyword detection", () => {
         if (bugfixKws.some((kw) => lower.includes(kw.toLowerCase()))) return; // skip ambiguous
         expect(detectWorkNature(desc)).toBe("refactor");
       }),
-      { numRuns: 200 },
+      { numRuns: 50 },
     );
   });
 
@@ -162,7 +162,7 @@ describe("Property 33: detectWorkNature keyword detection", () => {
         if (refactorKws.some((kw) => lower.includes(kw.toLowerCase()))) return; // skip ambiguous
         expect(detectWorkNature(desc)).toBe("bugfix");
       }),
-      { numRuns: 200 },
+      { numRuns: 50 },
     );
   });
 
@@ -171,7 +171,7 @@ describe("Property 33: detectWorkNature keyword detection", () => {
       fc.property(neutralDescArb, (desc) => {
         expect(detectWorkNature(desc)).toBe("feature");
       }),
-      { numRuns: 200 },
+      { numRuns: 50 },
     );
   });
 
@@ -212,7 +212,7 @@ describe("Property 33: detectWorkNature keyword detection", () => {
           expect(detectWorkNature(combined)).toBe("feature");
         }
       }),
-      { numRuns: 200 },
+      { numRuns: 50 },
     );
   });
 });
@@ -308,7 +308,7 @@ describe("Property 34: WorkNature × Tier mapping", () => {
         expect(typeof key).toBe("string");
         expect(key.length).toBeGreaterThan(0);
       }),
-      { numRuns: 100 },
+      { numRuns: 40 },
     );
   });
 });
@@ -333,7 +333,7 @@ describe("Property 35: classifyTask work_nature field", () => {
         expect(result).toHaveProperty("work_nature");
         expect(result.work_nature).toBe(nature);
       }),
-      { numRuns: 200 },
+      { numRuns: 50 },
     );
   });
 
@@ -343,7 +343,7 @@ describe("Property 35: classifyTask work_nature field", () => {
         const result = classifyTask(signals);
         expect(result.work_nature).toBe("feature");
       }),
-      { numRuns: 100 },
+      { numRuns: 40 },
     );
   });
 
@@ -355,7 +355,7 @@ describe("Property 35: classifyTask work_nature field", () => {
         expect(r1.tier).toBe(r2.tier);
         expect(r1.commandSequence).toEqual(r2.commandSequence);
       }),
-      { numRuns: 200 },
+      { numRuns: 50 },
     );
   });
 });

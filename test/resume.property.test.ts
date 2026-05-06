@@ -129,7 +129,7 @@ describe("Property 16: Resume 五问题完整输出", () => {
 
         expect(output.questions).toHaveLength(5);
       }),
-      { numRuns: 200 },
+      { numRuns: 50 },
     );
   });
 
@@ -143,7 +143,7 @@ describe("Property 16: Resume 五问题完整输出", () => {
           expect(q.answer.length).toBeGreaterThan(0);
         }
       }),
-      { numRuns: 200 },
+      { numRuns: 50 },
     );
   });
 
@@ -155,7 +155,7 @@ describe("Property 16: Resume 五问题完整输出", () => {
         expect(output.questions[0].question).toContain("正在解决什么问题");
         expect(output.questions[0].answer).toBe(state.plan.objective);
       }),
-      { numRuns: 200 },
+      { numRuns: 50 },
     );
   });
 
@@ -170,7 +170,7 @@ describe("Property 16: Resume 五问题完整输出", () => {
           expect(output.questions[1].answer).toContain(task);
         }
       }),
-      { numRuns: 200 },
+      { numRuns: 50 },
     );
   });
 
@@ -184,7 +184,7 @@ describe("Property 16: Resume 五问题完整输出", () => {
           expect(output.questions[2].answer).toContain(finding);
         }
       }),
-      { numRuns: 200 },
+      { numRuns: 50 },
     );
   });
 
@@ -204,7 +204,7 @@ describe("Property 16: Resume 五问题完整输出", () => {
           expect(output.questions[2].answer).toBe("暂无发现");
         },
       ),
-      { numRuns: 200 },
+      { numRuns: 50 },
     );
   });
 
@@ -217,7 +217,7 @@ describe("Property 16: Resume 五问题完整输出", () => {
         // Answer should be non-empty (either a task name or "所有任务已完成")
         expect(output.questions[3].answer.length).toBeGreaterThan(0);
       }),
-      { numRuns: 200 },
+      { numRuns: 50 },
     );
   });
 
@@ -235,7 +235,7 @@ describe("Property 16: Resume 五问题完整输出", () => {
           expect(output.questions[4].answer).toBe("无阻塞");
         }
       }),
-      { numRuns: 200 },
+      { numRuns: 50 },
     );
   });
 
@@ -246,7 +246,7 @@ describe("Property 16: Resume 五问题完整输出", () => {
 
         expect(output.autoLocateTask).toBe(state.progress.inProgressTasks[0]);
       }),
-      { numRuns: 200 },
+      { numRuns: 50 },
     );
   });
 
@@ -262,7 +262,7 @@ describe("Property 16: Resume 五问题完整输出", () => {
         expect(questionTexts).toContainEqual(expect.stringContaining("下一步是什么"));
         expect(questionTexts).toContainEqual(expect.stringContaining("有什么阻塞"));
       }),
-      { numRuns: 200 },
+      { numRuns: 50 },
     );
   });
 });

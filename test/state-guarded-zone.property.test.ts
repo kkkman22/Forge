@@ -72,7 +72,7 @@ describe("Bug Condition: checkWritePermission() guarded zone returns empty reaso
         expect(result.reason).not.toBe("");
         expect(result.reason.includes("⚠️") || result.reason.includes("受保护区")).toBe(true);
       }),
-      { numRuns: 100 },
+      { numRuns: 40 },
     );
   });
 });

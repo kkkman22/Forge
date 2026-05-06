@@ -24,6 +24,9 @@
  *   - Brownfield projects boost light → standard when touching existing modules
  */
 
+import { PromptDefenseError } from "./forge-error.js";
+import { scanInput } from "./prompt-defense.js";
+
 // ---------------------------------------------------------------------------
 // Tier (complexity dimension) — determines WHICH commands to run
 // ---------------------------------------------------------------------------
@@ -686,6 +689,11 @@ export function generateHints(
  *
  * Backward compatible: taskType defaults to "fullstack", projectPhase defaults
  * to "iteration", workNature defaults to "feature" when not provided.
+ *
+ * Prompt defense (Requirement 5.5–5.7): when `rawDescription` is provided,
+ * the router runs `scanInput` on it. Critical threats raise
+ * `PromptDefenseError`; high / medium threats add a
+ * `tag: "prompt-defense-warning"` RouteHint on `command: "*"`.
  */
 export function classifyTask(
   signals: TaskSignals,
@@ -694,10 +702,34 @@ export function classifyTask(
   taskType: TaskType = "fullstack",
   projectPhase: ProjectPhase = "iteration",
   workNature: WorkNature = "feature",
+  rawDescription?: string,
 ): ClassificationResult {
   const { tier, reason } = classifyTier(signals, userOverride, projectContext);
   const commandSequence = COMMAND_SEQUENCES[tier];
   const hints = generateHints(taskType, projectPhase, commandSequence);
+
+  // Prompt defense: scan raw description when provided. Critical threats
+  // throw immediately so the task never reaches downstream skills; high /
+  // medium threats surface as RouteHints so skills can decide how to react.
+  if (rawDescription !== undefined && rawDescription !== "") {
+    const scan = scanInput(rawDescription);
+    const critical = scan.threats.filter((t) => t.severity === "critical");
+    if (critical.length > 0) {
+      throw new PromptDefenseError(
+        `Input rejected by prompt-defense: ${critical.length} critical threat(s) detected`,
+        critical,
+      );
+    }
+    for (const threat of scan.threats) {
+      if (threat.severity === "high" || threat.severity === "medium") {
+        hints.push({
+          command: "*",
+          tag: "prompt-defense-warning",
+          description: `${threat.type} detected (${threat.severity}); pattern ${threat.pattern}`,
+        });
+      }
+    }
+  }
 
   return {
     tier,

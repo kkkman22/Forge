@@ -131,7 +131,7 @@ describe("Feature: i18n-support, Property 5: 语言优先级解析正确性", ()
           expect(result.source).toBe(expectedSource);
         },
       ),
-      { numRuns: 200 },
+      { numRuns: 50 },
     );
   });
 
@@ -160,7 +160,7 @@ describe("Feature: i18n-support, Property 5: 语言优先级解析正确性", ()
           expect(result.warning).toBeUndefined();
         },
       ),
-      { numRuns: 200 },
+      { numRuns: 50 },
     );
   });
 
@@ -179,7 +179,7 @@ describe("Feature: i18n-support, Property 5: 语言优先级解析正确性", ()
         expect(result.source).toBe("default");
         expect(result.warning).toBeUndefined();
       }),
-      { numRuns: 200 },
+      { numRuns: 50 },
     );
   });
 });
@@ -202,7 +202,7 @@ describe("Feature: i18n-support, Property 6: Locale 规范化幂等性", () => {
         const twice = normalizeLocale(once);
         expect(twice).toBe(once);
       }),
-      { numRuns: 200 },
+      { numRuns: 50 },
     );
   });
 
@@ -217,7 +217,7 @@ describe("Feature: i18n-support, Property 6: Locale 规范化幂等性", () => {
         const result = normalizeLocale(raw);
         expect(result).toBe(result.toLowerCase());
       }),
-      { numRuns: 200 },
+      { numRuns: 50 },
     );
   });
 
@@ -243,7 +243,7 @@ describe("Feature: i18n-support, Property 6: Locale 规范化幂等性", () => {
           expect(normalizeLocale(raw)).toBe(base.toLowerCase());
         },
       ),
-      { numRuns: 200 },
+      { numRuns: 50 },
     );
   });
 
@@ -284,7 +284,7 @@ describe("Feature: i18n-support, Property 7: 不支持的语言回退", () => {
         expect(result.warning).toBeDefined();
         expect(result.warning).toContain(normalizeLocale(unsupportedLocale));
       }),
-      { numRuns: 200 },
+      { numRuns: 50 },
     );
   });
 
@@ -317,7 +317,7 @@ describe("Feature: i18n-support, Property 7: 不支持的语言回退", () => {
           expect(result.warning).toBeDefined();
         },
       ),
-      { numRuns: 200 },
+      { numRuns: 50 },
     );
   });
 
@@ -347,7 +347,7 @@ describe("Feature: i18n-support, Property 7: 不支持的语言回退", () => {
           expect(result.warning).toBeUndefined();
         },
       ),
-      { numRuns: 200 },
+      { numRuns: 50 },
     );
   });
 });

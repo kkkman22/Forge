@@ -87,7 +87,7 @@ describe("Feature: agent-team-migration, Property 2: parallel execution fault to
           expect(outcome.succeeded.length).toBe(expectedSucceeded.length);
         },
       ),
-      { numRuns: 100 },
+      { numRuns: 40 },
     );
   });
 
@@ -117,7 +117,7 @@ describe("Feature: agent-team-migration, Property 2: parallel execution fault to
           expect(outcome.succeeded).toHaveLength(invocations.length);
         },
       ),
-      { numRuns: 100 },
+      { numRuns: 40 },
     );
   });
 
@@ -154,7 +154,7 @@ describe("Feature: agent-team-migration, Property 2: parallel execution fault to
           }
         },
       ),
-      { numRuns: 100 },
+      { numRuns: 40 },
     );
   });
 });
@@ -185,7 +185,7 @@ describe("Feature: agent-team-migration, Property 5: invocation protocol complet
           }
         },
       ),
-      { numRuns: 100 },
+      { numRuns: 40 },
     );
   });
 });

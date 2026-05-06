@@ -1,5 +1,9 @@
 # 🔥 Forge — 统一 AI 编码工作流框架
 
+[![CI](https://github.com/kkkman22/Forge/actions/workflows/ci.yml/badge.svg?branch=main)](https://github.com/kkkman22/Forge/actions/workflows/ci.yml)
+[![Security Audit](https://img.shields.io/badge/security--audit-npm%20audit%20%2B%20deps-blue)](./.github/workflows/ci.yml)
+[![License: MIT](https://img.shields.io/badge/License-MIT-green.svg)](./LICENSE)
+
 > **12 个命令**覆盖完整开发生命周期，三维路由自动匹配任务复杂度，统一的 `.forge/` 状态系统实现跨命令状态感知，按需加载将每次会话的 token 开销控制在 **约 10K**。
 
 ---
@@ -16,6 +20,28 @@ Forge 的核心能力：
 - **按需加载**，单次会话约 10K tokens
 - **流程门禁**，关键流程节点强制检查，冻结文件通过 PreToolUse Hook 保护
 - **并行执行**，DAG 任务图支持多 Subagent 并行调度
+
+---
+
+## 🛡️ 安全与信任
+
+Forge 从第一天起把安全视为工程纪律。防御分层落在代码、工具调用、输入解析、依赖管理四个面：
+
+| 层级 | 机制 | 实现位置 |
+|---|---|---|
+| 1. 工具调用层 | PreToolUse Hook 冻结区硬阻断 | `hooks/hooks.json` + `scripts/check-frozen.sh` |
+| 2. Shell 注入预防 | Git transaction 白名单构造器 | `src/git-transaction.ts` |
+| 3. 输入威胁检测 | Prompt injection `scanInput` | `src/prompt-defense.ts` |
+| 4. 依赖供应链 | 精确版本锁定 + npm audit CI | `package.json` + `.github/workflows/` |
+| 5. 不变量验证 | 95 property-based test 文件 | `test/*.property.test.ts` |
+
+**安全审计与 CVE 追溯**：
+
+- [SECURITY.md](SECURITY.md) — 漏洞报告渠道、SLA、支持版本列表
+- [CHANGELOG.md](CHANGELOG.md) — 所有安全修复以 `[SECURITY]` 前缀标注，每条关联至少一个 ADR
+- `.forge/decisions/ADR-*.md` + `.forge/knowledge/adr-index.md` — 架构决策（含安全决策）可检索追溯
+
+**最小权限默认**：`/forge` 使用 Claude Code `acceptEdits` 权限模式，命令执行可被 Hook 拦截，敏感区域（specs/plans/ADR）按"冻结"或"受保护"分级保护，详见 `.forge/config.md`。
 
 ---
 
@@ -486,7 +512,7 @@ forge/
 │   └── install-dist.sh         #   安装分发包
 ├── dist/                        # 分发包（CI 自动构建）
 │   └── claude-code/bundles/forge/
-├── src/                         # 核心逻辑（75 个 TypeScript 模块，含纯函数模块及有状态/运行时模块：CLI、SDK 适配器、副作用执行器、运行管理器等）<!--exact: 75 个 TypeScript 模块-->
+├── src/                         # 核心逻辑（79 个 TypeScript 模块，含纯函数模块及有状态/运行时模块：CLI、SDK 适配器、副作用执行器、运行管理器等）<!--exact: 79 个 TypeScript 模块-->
 │   ├── forge-loop-cli.ts       #   自主循环 CLI 入口（Commander 参数解析 + 信号处理）
 │   ├── sdk-driver.ts           #   迭代循环驱动器（调度 Agent → 处理结果 → 执行副作用）
 │   ├── orchestrator.ts         #   纯函数状态机（状态转换 + 副作用描述）
@@ -547,7 +573,7 @@ bash scripts/build-dist.sh
 
 **技术栈**：TypeScript 5.9（strict）、Vitest 3.2、fast-check 4.7（属性测试）、Biome 2.4（lint + format）。运行时依赖：`@anthropic-ai/claude-agent-sdk`、`commander`。
 
-**测试策略**：2751 个测试（154 个测试文件，其中 90 个为 fast-check 属性测试文件）验证不变量（invariant），而非特定输入输出。覆盖率 89.35% statements、89.62% branches、95.2% functions。<!--exact: 测试数、文件数、属性测试数; approximate: 覆盖率-->
+**测试策略**：2979 个测试（173 个测试文件，其中 95 个为 fast-check 属性测试文件）验证不变量（invariant），而非特定输入输出。覆盖率 89.35% statements、89.62% branches、95.2% functions。<!--exact: 测试数、文件数、属性测试数; approximate: 覆盖率-->
 
 ---
 

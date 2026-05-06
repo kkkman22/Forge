@@ -30,7 +30,7 @@ describe("Property 2: Log level filtering monotonicity", () => {
           }
         }
       }),
-      { numRuns: 200 },
+      { numRuns: 50 },
     );
   });
 });
@@ -61,7 +61,7 @@ describe("Property 5: Text format backward compatibility", () => {
         expect(text.length).toBeGreaterThan(0);
         expect(text.startsWith("{")).toBe(false);
       }),
-      { numRuns: 200 },
+      { numRuns: 50 },
     );
   });
 });

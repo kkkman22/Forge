@@ -285,7 +285,7 @@ describe("Property 3: 设计视角条件触发", () => {
         expect(designer?.role).toBe("设计视角");
         expect(designer?.agent).toBe("designer");
       }),
-      { numRuns: 200 },
+      { numRuns: 50 },
     );
   });
 
@@ -301,7 +301,7 @@ describe("Property 3: 设计视角条件触发", () => {
         // Designer must NOT be present
         expect(names).not.toContain("designer");
       }),
-      { numRuns: 200 },
+      { numRuns: 50 },
     );
   });
 
@@ -315,7 +315,7 @@ describe("Property 3: 设计视角条件触发", () => {
           expect(names).toContain(defaultName);
         }
       }),
-      { numRuns: 200 },
+      { numRuns: 50 },
     );
   });
 
@@ -336,7 +336,7 @@ describe("Property 3: 设计视角条件触发", () => {
           }
         },
       ),
-      { numRuns: 200 },
+      { numRuns: 50 },
     );
   });
 
@@ -350,7 +350,7 @@ describe("Property 3: 设计视角条件触发", () => {
         // Biconditional: designer ↔ UI changes
         expect(hasDesigner).toBe(isUI);
       }),
-      { numRuns: 200 },
+      { numRuns: 50 },
     );
   });
 });

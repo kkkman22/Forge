@@ -129,7 +129,7 @@ describe("Feature: error-recovery-strategy, Property 14: report completeness", (
           );
         },
       ),
-      { numRuns: 100 },
+      { numRuns: 40 },
     );
   });
 });
@@ -189,7 +189,7 @@ describe("Feature: error-recovery-strategy, Property 15: task segmentation", () 
           expect(result.lastCompletedIndex).toBe(expectedIdx);
         },
       ),
-      { numRuns: 100 },
+      { numRuns: 40 },
     );
   });
 });

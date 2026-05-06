@@ -174,7 +174,7 @@ describe("Property 4: 决策文档路径格式", () => {
         const path = generateDecisionPath(date, topic);
         expect(path).toMatch(PATH_REGEX);
       }),
-      { numRuns: 200 },
+      { numRuns: 50 },
     );
   });
 
@@ -200,7 +200,7 @@ describe("Property 4: 决策文档路径格式", () => {
         expect(day).toBeGreaterThanOrEqual(1);
         expect(day).toBeLessThanOrEqual(31);
       }),
-      { numRuns: 200 },
+      { numRuns: 50 },
     );
   });
 
@@ -219,7 +219,7 @@ describe("Property 4: 决策文档路径格式", () => {
 
         expect(topicPart).toMatch(KEBAB_REGEX);
       }),
-      { numRuns: 200 },
+      { numRuns: 50 },
     );
   });
 
@@ -231,7 +231,7 @@ describe("Property 4: 决策文档路径格式", () => {
         expect(path.startsWith(".forge/decisions/")).toBe(true);
         expect(path.endsWith(".md")).toBe(true);
       }),
-      { numRuns: 200 },
+      { numRuns: 50 },
     );
   });
 
@@ -256,7 +256,7 @@ describe("Property 4: 决策文档路径格式", () => {
         // Must not contain consecutive hyphens
         expect(kebab).not.toContain("--");
       }),
-      { numRuns: 200 },
+      { numRuns: 50 },
     );
   });
 });

@@ -13,6 +13,32 @@
  *   - Requirements 16.3, 16.4: Hard constraints on review and test gates
  */
 import { allEntriesVerified } from "./fix-checklist.js";
+/**
+ * Check whether the review report is still fresh relative to the current HEAD.
+ *
+ * 4 cases:
+ *   1. reviewedCommit undefined → fresh (backward compat)
+ *   2. reviewedCommit === currentHead → fresh
+ *   3. all changed files are under .forge/ → fresh
+ *   4. any changed file is outside .forge/ → not fresh
+ */
+export function checkReviewFreshness(reviewedCommit, currentHead, changedFiles) {
+    if (reviewedCommit === undefined) {
+        return { fresh: true, reason: "no reviewed_at_commit field (backward compatible)" };
+    }
+    if (reviewedCommit === currentHead) {
+        return { fresh: true, reason: "review matches current HEAD" };
+    }
+    const nonForgeFiles = changedFiles.filter((f) => !f.startsWith(".forge/"));
+    if (nonForgeFiles.length === 0) {
+        return { fresh: true, reason: "changes only in .forge/ state files" };
+    }
+    return {
+        fresh: false,
+        reason: "project code changed since review",
+        changedFiles: nonForgeFiles,
+    };
+}
 // ---------------------------------------------------------------------------
 // Ship gate check (Property 11)
 // ---------------------------------------------------------------------------

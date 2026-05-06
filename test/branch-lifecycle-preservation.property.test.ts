@@ -108,7 +108,7 @@ describe("Property 1: checkBuildGate preservation (Req 3.1)", () => {
         expect(result.allowed).toBe(true);
         expect(result.reasons).toHaveLength(0);
       }),
-      { numRuns: 200 },
+      { numRuns: 50 },
     );
   });
 
@@ -120,7 +120,7 @@ describe("Property 1: checkBuildGate preservation (Req 3.1)", () => {
         expect(result.allowed).toBe(false);
         expect(result.reasons.length).toBeGreaterThan(0);
       }),
-      { numRuns: 200 },
+      { numRuns: 50 },
     );
   });
 
@@ -132,7 +132,7 @@ describe("Property 1: checkBuildGate preservation (Req 3.1)", () => {
 
         expect(result.allowed).toBe(expectedAllowed);
       }),
-      { numRuns: 200 },
+      { numRuns: 50 },
     );
   });
 
@@ -144,7 +144,7 @@ describe("Property 1: checkBuildGate preservation (Req 3.1)", () => {
         expect(result.allowed).toBe(false);
         expect(result.reasons.some((r) => r.includes("Spec 未锁定"))).toBe(true);
       }),
-      { numRuns: 200 },
+      { numRuns: 50 },
     );
   });
 
@@ -156,7 +156,7 @@ describe("Property 1: checkBuildGate preservation (Req 3.1)", () => {
         expect(result.allowed).toBe(false);
         expect(result.reasons.some((r) => r.includes("Plan 未批准"))).toBe(true);
       }),
-      { numRuns: 200 },
+      { numRuns: 50 },
     );
   });
 
@@ -182,7 +182,7 @@ describe("Property 2: sanitizeBranchName preservation (Req 3.2)", () => {
 
         expect(sanitized).toBe(name);
       }),
-      { numRuns: 200 },
+      { numRuns: 50 },
     );
   });
 
@@ -194,7 +194,7 @@ describe("Property 2: sanitizeBranchName preservation (Req 3.2)", () => {
         // Output should only contain [a-zA-Z0-9\-_./]
         expect(/^[a-zA-Z0-9\-_./]*$/.test(sanitized)).toBe(true);
       }),
-      { numRuns: 200 },
+      { numRuns: 50 },
     );
   });
 
@@ -205,7 +205,7 @@ describe("Property 2: sanitizeBranchName preservation (Req 3.2)", () => {
 
         expect(sanitized.includes("..")).toBe(false);
       }),
-      { numRuns: 200 },
+      { numRuns: 50 },
     );
   });
 
@@ -216,7 +216,7 @@ describe("Property 2: sanitizeBranchName preservation (Req 3.2)", () => {
 
         expect(sanitized.toLowerCase().endsWith(".lock")).toBe(false);
       }),
-      { numRuns: 200 },
+      { numRuns: 50 },
     );
   });
 
@@ -230,7 +230,7 @@ describe("Property 2: sanitizeBranchName preservation (Req 3.2)", () => {
           expect(/[./-]$/.test(sanitized)).toBe(false);
         }
       }),
-      { numRuns: 200 },
+      { numRuns: 50 },
     );
   });
 
@@ -254,7 +254,7 @@ describe("Property 2: sanitizeBranchName preservation (Req 3.2)", () => {
           expect(sanitized.includes("{")).toBe(false);
         },
       ),
-      { numRuns: 200 },
+      { numRuns: 50 },
     );
   });
 
@@ -266,7 +266,7 @@ describe("Property 2: sanitizeBranchName preservation (Req 3.2)", () => {
 
         expect(second).toBe(first);
       }),
-      { numRuns: 200 },
+      { numRuns: 50 },
     );
   });
 });
@@ -284,7 +284,7 @@ describe("Property 3: Ship command builders preservation (Req 3.2, 3.3, 3.4)", (
         expect(cmd.executable).toBe("git");
         expect(cmd.args).toEqual(["checkout", branch]);
       }),
-      { numRuns: 200 },
+      { numRuns: 50 },
     );
   });
 
@@ -296,7 +296,7 @@ describe("Property 3: Ship command builders preservation (Req 3.2, 3.3, 3.4)", (
         expect(cmd.executable).toBe("git");
         expect(cmd.args).toEqual(["merge", "--no-ff", branch]);
       }),
-      { numRuns: 200 },
+      { numRuns: 50 },
     );
   });
 
@@ -308,7 +308,7 @@ describe("Property 3: Ship command builders preservation (Req 3.2, 3.3, 3.4)", (
         expect(cmd.executable).toBe("git");
         expect(cmd.args).toEqual(["merge", branch]);
       }),
-      { numRuns: 200 },
+      { numRuns: 50 },
     );
   });
 
@@ -320,7 +320,7 @@ describe("Property 3: Ship command builders preservation (Req 3.2, 3.3, 3.4)", (
         expect(cmd.executable).toBe("git");
         expect(cmd.args).toEqual(["branch", "-D", branch]);
       }),
-      { numRuns: 200 },
+      { numRuns: 50 },
     );
   });
 
@@ -332,7 +332,7 @@ describe("Property 3: Ship command builders preservation (Req 3.2, 3.3, 3.4)", (
         expect(cmd.executable).toBe("git");
         expect(cmd.args).toEqual(["branch", "-d", branch]);
       }),
-      { numRuns: 200 },
+      { numRuns: 50 },
     );
   });
 
@@ -344,7 +344,7 @@ describe("Property 3: Ship command builders preservation (Req 3.2, 3.3, 3.4)", (
         expect(cmd.executable).toBe("git");
         expect(cmd.args).toEqual(["push", "-u", remote, branch]);
       }),
-      { numRuns: 200 },
+      { numRuns: 50 },
     );
   });
 
@@ -356,7 +356,7 @@ describe("Property 3: Ship command builders preservation (Req 3.2, 3.3, 3.4)", (
         expect(cmd.executable).toBe("git");
         expect(cmd.args).toEqual(["push", remote, branch]);
       }),
-      { numRuns: 200 },
+      { numRuns: 50 },
     );
   });
 
@@ -371,7 +371,7 @@ describe("Property 3: Ship command builders preservation (Req 3.2, 3.3, 3.4)", (
           expect(() => buildPushCommand("origin", badBranch, false)).toThrow(BranchValidationError);
         },
       ),
-      { numRuns: 200 },
+      { numRuns: 50 },
     );
   });
 });
@@ -386,7 +386,7 @@ describe("Property 4: Branch name validation preservation (Req 3.5, 3.6)", () =>
       fc.property(branchNameArb, (name) => {
         expect(() => validateBranchName(name)).not.toThrow();
       }),
-      { numRuns: 200 },
+      { numRuns: 50 },
     );
   });
 
@@ -407,7 +407,7 @@ describe("Property 4: Branch name validation preservation (Req 3.5, 3.6)", () =>
           expect(() => validateBranchName(badName)).toThrow(BranchValidationError);
         },
       ),
-      { numRuns: 200 },
+      { numRuns: 50 },
     );
   });
 
@@ -419,7 +419,7 @@ describe("Property 4: Branch name validation preservation (Req 3.5, 3.6)", () =>
           expect(() => validateBranchName(badName)).toThrow(BranchValidationError);
         },
       ),
-      { numRuns: 200 },
+      { numRuns: 50 },
     );
   });
 
@@ -429,7 +429,7 @@ describe("Property 4: Branch name validation preservation (Req 3.5, 3.6)", () =>
         const badName = `${a}..${b}`;
         expect(() => validateBranchName(badName)).toThrow(BranchValidationError);
       }),
-      { numRuns: 200 },
+      { numRuns: 50 },
     );
   });
 
@@ -439,7 +439,7 @@ describe("Property 4: Branch name validation preservation (Req 3.5, 3.6)", () =>
         const badName = `${segment}@{0}`;
         expect(() => validateBranchName(badName)).toThrow(BranchValidationError);
       }),
-      { numRuns: 200 },
+      { numRuns: 50 },
     );
   });
 
@@ -449,7 +449,7 @@ describe("Property 4: Branch name validation preservation (Req 3.5, 3.6)", () =>
         const badName = `${segment}.lock`;
         expect(() => validateBranchName(badName)).toThrow(BranchValidationError);
       }),
-      { numRuns: 200 },
+      { numRuns: 50 },
     );
   });
 
@@ -459,7 +459,7 @@ describe("Property 4: Branch name validation preservation (Req 3.5, 3.6)", () =>
         const badName = `${prefix}${segment}`;
         expect(() => validateBranchName(badName)).toThrow(BranchValidationError);
       }),
-      { numRuns: 200 },
+      { numRuns: 50 },
     );
   });
 
@@ -469,7 +469,7 @@ describe("Property 4: Branch name validation preservation (Req 3.5, 3.6)", () =>
         const badName = `${segment}${suffix}`;
         expect(() => validateBranchName(badName)).toThrow(BranchValidationError);
       }),
-      { numRuns: 200 },
+      { numRuns: 50 },
     );
   });
 

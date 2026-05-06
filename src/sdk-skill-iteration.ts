@@ -14,6 +14,7 @@
 
 import { buildSkillAwarePrompt } from "./context-accumulator.js";
 import { FrozenZoneViolation } from "./effect-executor.js";
+import { buildEntry } from "./event-log.js";
 import type { AgentOutput, IterationEntry, OrchestratorEvent, TokenUsage } from "./loop-types.js";
 import { transition } from "./orchestrator.js";
 import type { PuaContext } from "./pua-engine.js";
@@ -346,13 +347,28 @@ export async function executeSkillAwareIteration(
       commitCount: commitResult.stateAdjustment.commitCount,
     };
   }
-  let lastEffects = adjustedEffects;
+
+  // Append a write_event_log effect so the skill-aware iteration's
+  // event stream is also persisted for replay (Requirement 3.1, 3.5).
+  const logEntry = buildEntry(
+    ctx.config.runId,
+    preTransitionState.currentIteration,
+    event,
+    preTransitionState,
+    result.state,
+    adjustedEffects,
+  );
+  const effectsWithLog = [
+    ...adjustedEffects,
+    { type: "write_event_log" as const, entry: logEntry },
+  ];
+  let lastEffects = effectsWithLog;
 
   // Execute the resulting effects (commit/rollback, schedule_iteration, etc.).
   // If effect execution fails (e.g., commit throws), revert to pre-transition
   // state and dispatch iteration_hard_failure instead.
   try {
-    await ctx.executeEffects(adjustedEffects);
+    await ctx.executeEffects(effectsWithLog);
   } catch (effectError) {
     const effectMessage = effectError instanceof Error ? effectError.message : String(effectError);
 

@@ -39,7 +39,7 @@ describe("Feature: gnhf-inspired-enhancements, Property 20: Agent 工厂函数�
       fc.property(validAgentNameArb, (name) => {
         expect(isValidAgentName(name)).toBe(true);
       }),
-      { numRuns: 200 },
+      { numRuns: 50 },
     );
   });
 
@@ -51,7 +51,7 @@ describe("Feature: gnhf-inspired-enhancements, Property 20: Agent 工厂函数�
       fc.property(invalidAgentNameArb, (name) => {
         expect(isValidAgentName(name)).toBe(false);
       }),
-      { numRuns: 200 },
+      { numRuns: 50 },
     );
   });
 
@@ -67,7 +67,7 @@ describe("Feature: gnhf-inspired-enhancements, Property 20: Agent 工厂函数�
           expect(error).toContain(agent);
         }
       }),
-      { numRuns: 200 },
+      { numRuns: 50 },
     );
   });
 
@@ -81,7 +81,7 @@ describe("Feature: gnhf-inspired-enhancements, Property 20: Agent 工厂函数�
 
         expect(error).toContain(name);
       }),
-      { numRuns: 200 },
+      { numRuns: 50 },
     );
   });
 

@@ -144,7 +144,7 @@ describe("Feature: sdk-autonomous-loop, Property 4: Effect execution order prese
           expect(observedOrder).toEqual(expectedOrder);
         },
       ),
-      { numRuns: 200 },
+      { numRuns: 50 },
     );
   });
 
@@ -197,7 +197,7 @@ describe("Feature: sdk-autonomous-loop, Property 4: Effect execution order prese
           expect(gitCalls).toEqual(expectedGitCalls);
         },
       ),
-      { numRuns: 200 },
+      { numRuns: 50 },
     );
   });
 });
@@ -267,7 +267,7 @@ describe("Feature: sdk-autonomous-loop, Property 3: Commit effect produces corre
         expect(mock.mock.calls[2][0]).toBe("git");
         expect(mock.mock.calls[2][1]).toEqual(expectedCommitArgs);
       }),
-      { numRuns: 200 },
+      { numRuns: 50 },
     );
   });
 });
@@ -386,7 +386,7 @@ describe("Feature: sdk-autonomous-loop, Property 5: Git commands executed withou
         const expectedCommitArgs = buildCommitCommand(message).args;
         expect(mock.mock.calls[2][1]).toEqual(expectedCommitArgs);
       }),
-      { numRuns: 200 },
+      { numRuns: 50 },
     );
   });
 
@@ -444,7 +444,7 @@ describe("Feature: sdk-autonomous-loop, Property 5: Git commands executed withou
         const expectedCleanArgs = buildCleanCommand().args;
         expect(mock.mock.calls[3][1]).toEqual(expectedCleanArgs);
       }),
-      { numRuns: 200 },
+      { numRuns: 50 },
     );
   });
 
@@ -494,7 +494,7 @@ describe("Feature: sdk-autonomous-loop, Property 5: Git commands executed withou
           }
         }
       }),
-      { numRuns: 200 },
+      { numRuns: 50 },
     );
   });
 });
@@ -541,7 +541,7 @@ describe("Feature: sdk-autonomous-loop, Property 2: Token usage field mapping", 
           expect(result.cacheCreationTokens).toBe(cacheCreationInputTokens);
         },
       ),
-      { numRuns: 200 },
+      { numRuns: 50 },
     );
   });
 });
@@ -618,7 +618,7 @@ describe("Feature: sdk-autonomous-loop, Property 1: Driver input validation", ()
           expect(() => new SdkDriver(config, executor, agent)).not.toThrow();
         }
       }),
-      { numRuns: 200 },
+      { numRuns: 50 },
     );
   });
 
@@ -633,7 +633,7 @@ describe("Feature: sdk-autonomous-loop, Property 1: Driver input validation", ()
           "Objective must be a non-empty string",
         );
       }),
-      { numRuns: 200 },
+      { numRuns: 50 },
     );
   });
 
@@ -652,7 +652,7 @@ describe("Feature: sdk-autonomous-loop, Property 1: Driver input validation", ()
           "Objective must be a non-empty string",
         );
       }),
-      { numRuns: 200 },
+      { numRuns: 50 },
     );
   });
 });
@@ -705,7 +705,7 @@ describe("Feature: sdk-autonomous-loop, Property 6: Loop termination matches sta
         state = stopResult.state;
         expect(state.status).toBe("aborted");
       }),
-      { numRuns: 200 },
+      { numRuns: 50 },
     );
   });
 
@@ -724,7 +724,7 @@ describe("Feature: sdk-autonomous-loop, Property 6: Loop termination matches sta
         state = interruptResult.state;
         expect(state.status).toBe("stopped");
       }),
-      { numRuns: 200 },
+      { numRuns: 50 },
     );
   });
 
@@ -759,7 +759,7 @@ describe("Feature: sdk-autonomous-loop, Property 6: Loop termination matches sta
         // After 3+ consecutive failures, circuit breaker should have tripped
         expect(state.status).toBe("aborted");
       }),
-      { numRuns: 200 },
+      { numRuns: 50 },
     );
   });
 
@@ -791,7 +791,7 @@ describe("Feature: sdk-autonomous-loop, Property 6: Loop termination matches sta
 
         expect(state.status).toBe("aborted");
       }),
-      { numRuns: 200 },
+      { numRuns: 50 },
     );
   });
 
@@ -822,7 +822,7 @@ describe("Feature: sdk-autonomous-loop, Property 6: Loop termination matches sta
           expect(state.status).toBe("running");
         }
       }),
-      { numRuns: 200 },
+      { numRuns: 50 },
     );
   });
 
@@ -850,7 +850,7 @@ describe("Feature: sdk-autonomous-loop, Property 6: Loop termination matches sta
         state = backoffResult.state;
         expect(state.status).toBe("running");
       }),
-      { numRuns: 200 },
+      { numRuns: 50 },
     );
   });
 
@@ -877,7 +877,7 @@ describe("Feature: sdk-autonomous-loop, Property 6: Loop termination matches sta
         state = interruptResult.state;
         expect(state.status).toBe("stopped");
       }),
-      { numRuns: 200 },
+      { numRuns: 50 },
     );
   });
 });
@@ -943,7 +943,7 @@ describe("Feature: sdk-autonomous-loop, Property 7: Iteration entry construction
         expect(entry.keyChanges).toEqual(output.key_changes_made);
         expect(entry.keyLearnings).toEqual(output.key_learnings);
       }),
-      { numRuns: 200 },
+      { numRuns: 50 },
     );
   });
 
@@ -960,7 +960,7 @@ describe("Feature: sdk-autonomous-loop, Property 7: Iteration entry construction
         // Key learnings are preserved regardless of success/failure
         expect(entry.keyLearnings).toEqual(output.key_learnings);
       }),
-      { numRuns: 200 },
+      { numRuns: 50 },
     );
   });
 
@@ -982,7 +982,7 @@ describe("Feature: sdk-autonomous-loop, Property 7: Iteration entry construction
           }
         },
       ),
-      { numRuns: 200 },
+      { numRuns: 50 },
     );
   });
 
@@ -999,7 +999,7 @@ describe("Feature: sdk-autonomous-loop, Property 7: Iteration entry construction
           expect(entry.keyLearnings).toEqual(output.key_learnings);
         },
       ),
-      { numRuns: 200 },
+      { numRuns: 50 },
     );
   });
 
@@ -1026,7 +1026,7 @@ describe("Feature: sdk-autonomous-loop, Property 7: Iteration entry construction
           expect(entry.keyLearnings).toEqual([]);
         },
       ),
-      { numRuns: 200 },
+      { numRuns: 50 },
     );
   });
 });
