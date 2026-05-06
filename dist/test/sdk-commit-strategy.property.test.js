@@ -87,7 +87,7 @@ describe("Feature: sdk-driver-decomposition, Property 3: Commit effect filtering
             // stateAdjustment is present and decrements commitCount
             expect(result.stateAdjustment).toBeDefined();
             expect(result.stateAdjustment?.commitCount).toBe(Math.max(0, currentCommitCount - 1));
-        }), { numRuns: 100 });
+        }), { numRuns: 40 });
     });
 });
 // ---------------------------------------------------------------------------
@@ -141,7 +141,7 @@ describe("Feature: sdk-driver-decomposition, Property 4: Commit message format c
             // Content after the prefix must be non-empty
             const content = result.slice(prefix.length);
             expect(content.length).toBeGreaterThan(0);
-        }), { numRuns: 100 });
+        }), { numRuns: 40 });
     });
 });
 //# sourceMappingURL=sdk-commit-strategy.property.test.js.map

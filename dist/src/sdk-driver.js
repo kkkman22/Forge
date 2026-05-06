@@ -273,6 +273,8 @@ export class SdkDriver {
             executeEffects: (effects) => this.executeEffects(effects),
             t: (key, params) => this.t(key, params),
             abortSignal: this.currentAbortController?.signal,
+            puaEnabled: this.config.puaEnabled ?? false,
+            puaStateManager: this.puaStateManager,
         };
     }
     /** Apply state mutations from an extracted iteration function. */

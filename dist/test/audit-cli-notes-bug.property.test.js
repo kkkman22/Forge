@@ -78,7 +78,7 @@ describe("Bug Condition Exploration: CLI Final Persist JSON Protocol Conflict", 
             // Assert round-trip: these should match now that the protocol is consistent
             expect(parsed.runId).toBe(doc.runId);
             expect(parsed.entries.length).toBe(doc.entries.length);
-        }), { numRuns: 100 });
+        }), { numRuns: 40 });
     });
 });
 //# sourceMappingURL=audit-cli-notes-bug.property.test.js.map

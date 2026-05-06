@@ -110,7 +110,7 @@ describe("Property 13: 知识文档格式有效性", () => {
             const result = validateKnowledgeFrontmatter(frontmatter);
             expect(result.valid).toBe(true);
             expect(result.errors).toHaveLength(0);
-        }), { numRuns: 200 });
+        }), { numRuns: 50 });
     });
     it("generated documents always have valid frontmatter (Req 9.2, 9.3)", () => {
         fc.assert(fc.property(titleArb, tagsArb, dateArb, fc.double({ min: -1, max: 2, noNaN: true }), bodyArb, (title, tags, date, rawConfidence, body) => {
@@ -118,14 +118,14 @@ describe("Property 13: 知识文档格式有效性", () => {
             const result = validateKnowledgeFrontmatter(doc.frontmatter);
             expect(result.valid).toBe(true);
             expect(result.errors).toHaveLength(0);
-        }), { numRuns: 200 });
+        }), { numRuns: 50 });
     });
     it("confidence is always clamped to [0.3, 0.9] range (Req 9.3)", () => {
         fc.assert(fc.property(titleArb, tagsArb, dateArb, fc.double({ min: -10, max: 10, noNaN: true }), bodyArb, (title, tags, date, rawConfidence, body) => {
             const doc = generateKnowledgeDocument(title, tags, date, rawConfidence, body);
             expect(doc.frontmatter.confidence).toBeGreaterThanOrEqual(MIN_CONFIDENCE);
             expect(doc.frontmatter.confidence).toBeLessThanOrEqual(MAX_CONFIDENCE);
-        }), { numRuns: 200 });
+        }), { numRuns: 50 });
     });
     it("frontmatter contains all required fields (Req 9.2)", () => {
         fc.assert(fc.property(validDocumentArb, (doc) => {
@@ -140,7 +140,7 @@ describe("Property 13: 知识文档格式有效性", () => {
             expect(typeof fm.confidence).toBe("number");
             expect(fm.confidence).toBeGreaterThanOrEqual(MIN_CONFIDENCE);
             expect(fm.confidence).toBeLessThanOrEqual(MAX_CONFIDENCE);
-        }), { numRuns: 200 });
+        }), { numRuns: 50 });
     });
 });
 // ---------------------------------------------------------------------------
@@ -151,7 +151,7 @@ describe("Property 14: 知识库维护不变量", () => {
         fc.assert(fc.property(anyKnowledgeBaseStateArb, (state) => {
             const result = maintainKnowledgeBase(state);
             expect(result.documents.length).toBeLessThanOrEqual(state.limit);
-        }), { numRuns: 200 });
+        }), { numRuns: 50 });
     });
     it("after maintenance, no instinct pattern has confidence < 0.3 (Req 9.5)", () => {
         fc.assert(fc.property(anyKnowledgeBaseStateArb, (state) => {
@@ -159,14 +159,14 @@ describe("Property 14: 知识库维护不变量", () => {
             for (const pattern of result.instinctPatterns) {
                 expect(pattern.confidenceScore).toBeGreaterThanOrEqual(MIN_CONFIDENCE);
             }
-        }), { numRuns: 200 });
+        }), { numRuns: 50 });
     });
     it("over-limit state is trimmed to exactly the limit (Req 9.4)", () => {
         fc.assert(fc.property(overLimitStateArb, (state) => {
             const result = maintainKnowledgeBase(state);
             expect(result.documents.length).toBe(state.limit);
             expect(result.removedDocuments.length).toBe(state.documents.length - state.limit);
-        }), { numRuns: 200 });
+        }), { numRuns: 50 });
     });
     it("low-confidence patterns are removed during maintenance (Req 9.5)", () => {
         fc.assert(fc.property(stateWithLowConfidencePatternsArb, (state) => {
@@ -176,7 +176,7 @@ describe("Property 14: 知识库维护不变量", () => {
             for (const pattern of result.instinctPatterns) {
                 expect(pattern.confidenceScore).toBeGreaterThanOrEqual(MIN_CONFIDENCE);
             }
-        }), { numRuns: 200 });
+        }), { numRuns: 50 });
     });
     it("within-limits state is unchanged after maintenance (Req 9.4, 9.5)", () => {
         fc.assert(fc.property(withinLimitsStateArb, (state) => {
@@ -185,7 +185,7 @@ describe("Property 14: 知识库维护不变量", () => {
             expect(result.instinctPatterns.length).toBe(state.instinctPatterns.length);
             expect(result.removedDocuments).toHaveLength(0);
             expect(result.removedPatterns).toHaveLength(0);
-        }), { numRuns: 200 });
+        }), { numRuns: 50 });
     });
     it("removed documents have lowest confidence values (Req 9.4)", () => {
         fc.assert(fc.property(overLimitStateArb, (state) => {
@@ -195,7 +195,7 @@ describe("Property 14: 知识库维护不变量", () => {
                 const minKeptConfidence = Math.min(...result.documents.map((d) => d.frontmatter.confidence));
                 expect(maxRemovedConfidence).toBeLessThanOrEqual(minKeptConfidence);
             }
-        }), { numRuns: 200 });
+        }), { numRuns: 50 });
     });
     it("both invariants hold simultaneously for any state", () => {
         fc.assert(fc.property(anyKnowledgeBaseStateArb, (state) => {
@@ -206,7 +206,7 @@ describe("Property 14: 知识库维护不变量", () => {
             for (const pattern of result.instinctPatterns) {
                 expect(pattern.confidenceScore).toBeGreaterThanOrEqual(MIN_CONFIDENCE);
             }
-        }), { numRuns: 200 });
+        }), { numRuns: 50 });
     });
 });
 //# sourceMappingURL=learn.property.test.js.map

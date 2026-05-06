@@ -50,25 +50,25 @@ permissionMode: plan
 ## Output Format
 
 ```
-### Critic 审查结果
+### Critic Review Result
 
-**审查对象**：<文档名称>
+**Review Target**: <文档名称>
 
-#### 发现的问题
+#### Issues Found
 
-1. **[遗漏]** <问题描述>
-   - 影响：<如果不解决会怎样>
-   - 建议：<如何修复>
+1. **[Omission]** <问题描述>
+   - Impact: <如果不解决会怎样>
+   - Suggestion: <如何修复>
 
-2. **[过度设计]** <问题描述>
-   - 影响：<增加了什么不必要的成本>
-   - 建议：<更简单的替代方案>
+2. **[Over-engineering]** <问题描述>
+   - Impact: <增加了什么不必要的成本>
+   - Suggestion: <更简单的替代方案>
 
-3. **[风险盲点]** <问题描述>
-   - 影响：<最坏情况>
-   - 建议：<缓解措施>
+3. **[Risk Blind Spot]** <问题描述>
+   - Impact: <最坏情况>
+   - Suggestion: <缓解措施>
 
-#### 结论
+#### Conclusion
 
 - [ ] 有阻塞性问题，必须修复后才能继续
 - [ ] 有改进建议，但不阻塞

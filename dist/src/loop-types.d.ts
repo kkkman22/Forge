@@ -191,7 +191,28 @@ export type OrchestratorEffect = {
 } | {
     type: "ship_discard";
     branch: string;
+} | {
+    type: "write_event_log";
+    entry: EventLogEntryRef;
 };
+/**
+ * Opaque reference to the event log entry carried by the
+ * `write_event_log` effect. The concrete `EventLogEntry` type lives in
+ * `src/event-log.ts`; we keep the field here as a structural subset to
+ * avoid a circular import between `loop-types.ts` and `event-log.ts`.
+ *
+ * The structural shape mirrors `EventLogEntry` exactly — see
+ * `src/event-log.ts` for the canonical definition.
+ */
+export interface EventLogEntryRef {
+    timestamp: string;
+    runId: string;
+    iteration: number;
+    event: OrchestratorEvent;
+    stateHashBefore: string;
+    stateHashAfter: string;
+    effects: OrchestratorEffect[];
+}
 /** Classification of iteration failures. */
 export type FailureKind = "soft" | "hard";
 /** Mutable failure counters tracked by the orchestrator. */

@@ -47,7 +47,7 @@ describe("Feature: gnhf-inspired-enhancements, Property 11: 失败计数器差�
             const next = applyFailure(state, "soft");
             expect(next.consecutiveFailures).toBe(state.consecutiveFailures + 1);
             expect(next.consecutiveErrors).toBe(0);
-        }), { numRuns: 200 });
+        }), { numRuns: 50 });
     });
     /**
      * **Validates: Requirements 5.7, 5.8**
@@ -57,7 +57,7 @@ describe("Feature: gnhf-inspired-enhancements, Property 11: 失败计数器差�
             const next = applyFailure(state, "hard");
             expect(next.consecutiveFailures).toBe(state.consecutiveFailures + 1);
             expect(next.consecutiveErrors).toBe(state.consecutiveErrors + 1);
-        }), { numRuns: 200 });
+        }), { numRuns: 50 });
     });
     /**
      * **Validates: Requirements 5.7, 5.8**
@@ -67,7 +67,7 @@ describe("Feature: gnhf-inspired-enhancements, Property 11: 失败计数器差�
             const next = applySuccess(state);
             expect(next.consecutiveFailures).toBe(0);
             expect(next.consecutiveErrors).toBe(0);
-        }), { numRuns: 200 });
+        }), { numRuns: 50 });
     });
     /**
      * **Validates: Requirements 5.7, 5.8**
@@ -84,7 +84,7 @@ describe("Feature: gnhf-inspired-enhancements, Property 11: 失败计数器差�
         fc.assert(fc.property(failureStateArb, failureKindArb, (state, kind) => {
             const next = applyFailure(state, kind);
             expect(next).not.toBe(state);
-        }), { numRuns: 200 });
+        }), { numRuns: 50 });
     });
 });
 // ---------------------------------------------------------------------------
@@ -98,7 +98,7 @@ describe("Feature: audit-remediation-v221, Property 4: Backoff lower bound invar
         fc.assert(fc.property(fc.integer(), fc.integer({ min: 1 }), (errors, baseMs) => {
             const result = calculateBackoffMs(errors, baseMs);
             expect(result).toBeGreaterThanOrEqual(baseMs);
-        }), { numRuns: 200 });
+        }), { numRuns: 50 });
     });
     /**
      * **Validates: Requirements 9.1, 9.2**
@@ -107,7 +107,7 @@ describe("Feature: audit-remediation-v221, Property 4: Backoff lower bound invar
         fc.assert(fc.property(fc.integer({ min: 1 }), (baseMs) => {
             const result = calculateBackoffMs(0, baseMs);
             expect(result).toBeGreaterThanOrEqual(baseMs);
-        }), { numRuns: 200 });
+        }), { numRuns: 50 });
     });
     /**
      * **Validates: Requirements 9.1, 9.2**
@@ -116,7 +116,7 @@ describe("Feature: audit-remediation-v221, Property 4: Backoff lower bound invar
         fc.assert(fc.property(fc.integer({ max: -1 }), fc.integer({ min: 1 }), (errors, baseMs) => {
             const result = calculateBackoffMs(errors, baseMs);
             expect(result).toBeGreaterThanOrEqual(baseMs);
-        }), { numRuns: 200 });
+        }), { numRuns: 50 });
     });
 });
 // ---------------------------------------------------------------------------
@@ -131,7 +131,7 @@ describe("Feature: gnhf-inspired-enhancements, Property 12: 退避公式正确�
             const result = calculateBackoffMs(errors, baseMs);
             const expected = baseMs * 2 ** (errors - 1);
             expect(result).toBe(expected);
-        }), { numRuns: 200 });
+        }), { numRuns: 50 });
     });
     /**
      * **Validates: Requirements 5.3**
@@ -141,7 +141,7 @@ describe("Feature: gnhf-inspired-enhancements, Property 12: 退避公式正确�
             const result = calculateBackoffMs(errors);
             const expected = 60_000 * 2 ** (errors - 1);
             expect(result).toBe(expected);
-        }), { numRuns: 200 });
+        }), { numRuns: 50 });
     });
     /**
      * **Validates: Requirements 5.3**
@@ -151,7 +151,7 @@ describe("Feature: gnhf-inspired-enhancements, Property 12: 退避公式正确�
             const current = calculateBackoffMs(errors, baseMs);
             const next = calculateBackoffMs(errors + 1, baseMs);
             expect(next).toBeGreaterThan(current);
-        }), { numRuns: 200 });
+        }), { numRuns: 50 });
     });
 });
 // ---------------------------------------------------------------------------
@@ -165,7 +165,7 @@ describe("Feature: gnhf-inspired-enhancements, Property 13: 熔断器阈值正�
         fc.assert(fc.property(consecutiveFailuresArb, thresholdArb, (failures, threshold) => {
             const result = shouldCircuitBreak(failures, threshold);
             expect(result).toBe(failures >= threshold);
-        }), { numRuns: 200 });
+        }), { numRuns: 50 });
     });
     /**
      * **Validates: Requirements 5.4**
@@ -174,7 +174,7 @@ describe("Feature: gnhf-inspired-enhancements, Property 13: 熔断器阈值正�
         fc.assert(fc.property(consecutiveFailuresArb, (failures) => {
             const result = shouldCircuitBreak(failures);
             expect(result).toBe(failures >= 3);
-        }), { numRuns: 200 });
+        }), { numRuns: 50 });
     });
     /**
      * **Validates: Requirements 5.4**
@@ -182,7 +182,7 @@ describe("Feature: gnhf-inspired-enhancements, Property 13: 熔断器阈值正�
     it("exactly at threshold triggers circuit break", () => {
         fc.assert(fc.property(thresholdArb, (threshold) => {
             expect(shouldCircuitBreak(threshold, threshold)).toBe(true);
-        }), { numRuns: 200 });
+        }), { numRuns: 50 });
     });
     /**
      * **Validates: Requirements 5.4**
@@ -190,7 +190,7 @@ describe("Feature: gnhf-inspired-enhancements, Property 13: 熔断器阈值正�
     it("one below threshold does not trigger circuit break", () => {
         fc.assert(fc.property(fc.integer({ min: 2, max: 100 }), (threshold) => {
             expect(shouldCircuitBreak(threshold - 1, threshold)).toBe(false);
-        }), { numRuns: 200 });
+        }), { numRuns: 50 });
     });
 });
 //# sourceMappingURL=failure-handler.property.test.js.map

@@ -61,23 +61,23 @@ memory: project
 ## Output Format
 
 ```markdown
-## Layer 1 — Spec 对齐
+## Layer 1 — Spec Alignment
 
-**评审者**：spec-check
+**Reviewer**: spec-check
 
-| 需求/场景 | 状态 | 说明 |
+| Requirement/Scenario | Status | Note |
 |-----------|------|------|
 | 需求 1 场景 S1 | ✅ 已实现 | — |
 | 需求 1 场景 S2 | ❌ 未实现 | 缺少异步处理逻辑 |
 | 需求 2 场景 S3 | ⚠️ 部分实现 | 缺少边界条件处理 |
 
-**Scope Creep**：
+**Scope Creep**:
 - <超出 Spec 的实现 1>：<影响评估>
 - 无
 
-**问题列表**：
+**Issue List**:
 
-| # | 严重度 | 问题 | 修复建议 |
+| # | Severity | Issue | Fix Suggestion |
 |---|--------|------|---------|
 | 1 | P1 | 需求 2 场景 S3 未实现 | 补充异步导出逻辑 |
 | 2 | P2 | 超出 Spec：添加了未要求的缓存层 | 移除或补充到 Spec |

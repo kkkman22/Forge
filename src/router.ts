@@ -731,6 +731,8 @@ export function classifyTask(
     }
   }
 
+  const assumptions = generateAssumptions(signals, projectContext);
+
   return {
     tier,
     reason,
@@ -739,6 +741,79 @@ export function classifyTask(
     projectPhase,
     work_nature: workNature,
     hints,
-    assumptions: [],
+    assumptions,
   };
+}
+
+// ---------------------------------------------------------------------------
+// Assumption generation (Requirement 3.1–3.5)
+// ---------------------------------------------------------------------------
+
+/**
+ * Generate explicit assumptions from task signals and project context.
+ * Each assumption is derived from actual signals, NOT generic templates.
+ *
+ * @param signals — task complexity signals
+ * @param projectContext — optional project context
+ * @returns 3–5 assumptions with cited sources
+ */
+function generateAssumptions(signals: TaskSignals, projectContext?: ProjectContext): string[] {
+  const assumptions: string[] = [];
+
+  // 1. Project type / tech stack assumption
+  if (projectContext?.projectType === "brownfield") {
+    assumptions.push("项目为棕地（brownfield）类型，修改需兼容现有模块（基于 projectType 扫描）");
+  } else if (projectContext?.projectType === "greenfield") {
+    assumptions.push("项目为绿地（greenfield）类型，可自由引入新技术栈（基于 projectType 扫描）");
+  }
+
+  // 2. Impact scope assumption
+  if (signals.filesAffected <= 1 && signals.linesChanged <= 20) {
+    assumptions.push(
+      `影响范围极小（${signals.filesAffected} 文件 / ${signals.linesChanged} 行），适合轻量路径（基于 filesAffected × linesChanged 信号）`,
+    );
+  } else if (signals.filesAffected > 5 || signals.linesChanged > 200) {
+    assumptions.push(
+      `影响范围较大（${signals.filesAffected} 文件 / ${signals.linesChanged} 行），可能涉及多模块协调（基于 filesAffected × linesChanged 信号）`,
+    );
+  }
+
+  // 3. Requirement clarity assumption
+  if (signals.isVagueRequirement) {
+    assumptions.push(
+      "需求描述存在模糊信号，需在全量路径中通过 decide/spec 阶段澄清（基于需求清晰度信号）",
+    );
+  } else if (signals.hasClearRequirements) {
+    assumptions.push("需求信号明确，可直接进入标准路径执行（基于需求清晰度信号）");
+  }
+
+  // 4. Spec availability assumption
+  if (signals.hasExistingSpec) {
+    assumptions.push("存在已锁定 Spec，build 阶段可直接对照（基于 hasExistingSpec 信号）");
+  } else {
+    assumptions.push(
+      "无现成 Spec，标准路径下 build 需自行推断需求边界（基于 hasExistingSpec 信号）",
+    );
+  }
+
+  // 5. Architecture change assumption
+  if (signals.hasNewService || signals.hasNewDatabase || signals.hasAuthChanges) {
+    const changes: string[] = [];
+    if (signals.hasNewService) changes.push("新服务");
+    if (signals.hasNewDatabase) changes.push("新数据库");
+    if (signals.hasAuthChanges) changes.push("认证变更");
+    assumptions.push(
+      `涉及架构级变更（${changes.join("、")}），需额外关注兼容性审查（基于架构变更信号）`,
+    );
+  }
+
+  // Return 3–5 assumptions; if fewer than 3, supplement with a generic
+  // project-type fallback so the array is never empty in practice.
+  if (assumptions.length < 3 && projectContext === undefined) {
+    assumptions.push(
+      "项目上下文未提供，技术栈和影响范围假设基于信号推断（基于 TaskSignals 默认值）",
+    );
+  }
+
+  return assumptions.slice(0, 5);
 }

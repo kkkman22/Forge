@@ -128,9 +128,9 @@ describe("barrel file does not expose internal modules", () => {
     });
     // Verify the total number of value exports is exactly what we expect.
     // This catches any accidental additions to the barrel file.
-    it("has exactly 100 value exports", () => {
+    it("has exactly 106 value exports", () => {
         const valueExports = Object.keys(exports).filter((key) => typeof exports[key] !== "undefined");
-        expect(valueExports).toHaveLength(100);
+        expect(valueExports).toHaveLength(106);
         expect(valueExports.sort()).toEqual([
             "CLASSIFICATION_MAP",
             "CliError",
@@ -150,6 +150,7 @@ describe("barrel file does not expose internal modules", () => {
             "buildVerificationCriteria",
             "calculateSegmentation",
             "canParseTestOutput",
+            "captureFindings",
             "checkBranchTopicGate",
             "checkCommitTopicMatch",
             "checkReviewFreshness",
@@ -184,6 +185,7 @@ describe("barrel file does not expose internal modules", () => {
             "extractHeadingAnchors",
             "filterCommitsSince",
             "findDependencyGaps",
+            "findOverlappingEntries",
             "findPhaseInconsistencies",
             "findProgressInconsistencies",
             "getDescendants",
@@ -196,6 +198,7 @@ describe("barrel file does not expose internal modules", () => {
             "isValidTransition",
             "killProcessGroup",
             "killProcessTree",
+            "markResolved",
             "matchChangesToTask",
             "matchCommitsToTasks",
             "parseChecklist",
@@ -203,11 +206,13 @@ describe("barrel file does not expose internal modules", () => {
             "parseGitLog",
             "parseGitStatus",
             "parseStatusEntries",
+            "readBacklog",
             "readPidFile",
             "recordPendingDelivery",
             "removeTaskEntry",
             "runSubagentsInParallel",
             "scanForPlaceholders",
+            "serializeBacklog",
             "serializeChecklist",
             "serializeCheckpointMarker",
             "serializeClassification",
@@ -231,6 +236,7 @@ describe("barrel file does not expose internal modules", () => {
             "validatePlan",
             "validatePlanTasks",
             "validateSpecLocked",
+            "writeBacklog",
             "writePidFile",
         ]);
     });

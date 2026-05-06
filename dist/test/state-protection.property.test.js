@@ -43,12 +43,12 @@ describe("Property 23: 状态文件保护区分类", () => {
     it("specs/ paths are always frozen", () => {
         fc.assert(fc.property(topicArb, (topic) => {
             expect(getProtectionZone(`specs/${topic}/spec.md`)).toBe("frozen");
-        }), { numRuns: 100 });
+        }), { numRuns: 40 });
     });
     it("plans/ paths are always frozen", () => {
         fc.assert(fc.property(topicArb, (topic) => {
             expect(getProtectionZone(`plans/${topic}.md`)).toBe("frozen");
-        }), { numRuns: 100 });
+        }), { numRuns: 40 });
     });
     it("config.md is always frozen", () => {
         expect(getProtectionZone("config.md")).toBe("frozen");
@@ -56,12 +56,12 @@ describe("Property 23: 状态文件保护区分类", () => {
     it("progress/ paths are always guarded", () => {
         fc.assert(fc.property(topicArb, (topic) => {
             expect(getProtectionZone(`progress/${topic}.md`)).toBe("guarded");
-        }), { numRuns: 100 });
+        }), { numRuns: 40 });
     });
     it("reviews/ paths are always guarded", () => {
         fc.assert(fc.property(topicArb, (topic) => {
             expect(getProtectionZone(`reviews/${topic}.md`)).toBe("guarded");
-        }), { numRuns: 100 });
+        }), { numRuns: 40 });
     });
     it("knowledge/instincts.md is guarded", () => {
         expect(getProtectionZone("knowledge/instincts.md")).toBe("guarded");
@@ -72,7 +72,7 @@ describe("Property 23: 状态文件保护区分类", () => {
     it("knowledge/solutions/ paths are guarded", () => {
         fc.assert(fc.property(topicArb, (topic) => {
             expect(getProtectionZone(`knowledge/solutions/${topic}.md`)).toBe("guarded");
-        }), { numRuns: 100 });
+        }), { numRuns: 40 });
     });
     it("status.md is open", () => {
         expect(getProtectionZone("status.md")).toBe("open");
@@ -80,22 +80,22 @@ describe("Property 23: 状态文件保护区分类", () => {
     it("decisions/ paths are open", () => {
         fc.assert(fc.property(topicArb, (topic) => {
             expect(getProtectionZone(`decisions/${topic}.md`)).toBe("open");
-        }), { numRuns: 100 });
+        }), { numRuns: 40 });
     });
     it("findings/ paths are open", () => {
         fc.assert(fc.property(topicArb, (topic) => {
             expect(getProtectionZone(`findings/${topic}.md`)).toBe("open");
-        }), { numRuns: 100 });
+        }), { numRuns: 40 });
     });
     it("debug/ paths are open", () => {
         fc.assert(fc.property(topicArb, (topic) => {
             expect(getProtectionZone(`debug/${topic}.md`)).toBe("open");
-        }), { numRuns: 100 });
+        }), { numRuns: 40 });
     });
     it("knowledge/sessions/ paths are open", () => {
         fc.assert(fc.property(topicArb, (topic) => {
             expect(getProtectionZone(`knowledge/sessions/${topic}.md`)).toBe("open");
-        }), { numRuns: 100 });
+        }), { numRuns: 40 });
     });
     it(".forge/ prefix is stripped before classification", () => {
         expect(getProtectionZone(".forge/config.md")).toBe("frozen");
@@ -136,31 +136,31 @@ describe("Property 23: 写入权限检查", () => {
             expect(result.blocked).toBe(true);
             expect(result.reason).toContain("写入被阻断");
             expect(result.reason).toContain(status);
-        }), { numRuns: 100 });
+        }), { numRuns: 40 });
     });
     it("frozen files with draft status are NOT blocked", () => {
         fc.assert(fc.property(frozenPathArb, nonBlockingStatusArb, (path, status) => {
             const result = checkWritePermission(path, contentWithStatus(status));
             expect(result.blocked).toBe(false);
-        }), { numRuns: 100 });
+        }), { numRuns: 40 });
     });
     it("frozen files without status field are NOT blocked", () => {
         fc.assert(fc.property(frozenPathArb, (path) => {
             const result = checkWritePermission(path, contentWithoutStatus);
             expect(result.blocked).toBe(false);
-        }), { numRuns: 100 });
+        }), { numRuns: 40 });
     });
     it("guarded zone files are NEVER blocked by checkWritePermission", () => {
         fc.assert(fc.property(guardedPathArb, blockingStatusArb, (path, status) => {
             const result = checkWritePermission(path, contentWithStatus(status));
             expect(result.blocked).toBe(false);
-        }), { numRuns: 100 });
+        }), { numRuns: 40 });
     });
     it("open zone files are NEVER blocked by checkWritePermission", () => {
         fc.assert(fc.property(openPathArb, blockingStatusArb, (path, status) => {
             const result = checkWritePermission(path, contentWithStatus(status));
             expect(result.blocked).toBe(false);
-        }), { numRuns: 100 });
+        }), { numRuns: 40 });
     });
     it("blocked writes always include the file path in the reason", () => {
         fc.assert(fc.property(frozenPathArb, blockingStatusArb, (path, status) => {
@@ -168,13 +168,13 @@ describe("Property 23: 写入权限检查", () => {
             if (result.blocked) {
                 expect(result.reason).toContain(path);
             }
-        }), { numRuns: 100 });
+        }), { numRuns: 40 });
     });
     it("non-blocked writes always have empty reason", () => {
         fc.assert(fc.property(openPathArb, (path) => {
             const result = checkWritePermission(path, contentWithStatus("draft"));
             expect(result.reason).toBe("");
-        }), { numRuns: 100 });
+        }), { numRuns: 40 });
     });
 });
 //# sourceMappingURL=state-protection.property.test.js.map

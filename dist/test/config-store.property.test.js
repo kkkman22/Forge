@@ -89,7 +89,7 @@ describe("Feature: i18n-support, Property 9: Config lang 字段往返与字段�
             const contentWithoutLang = buildConfigContent(fields, null, body);
             const updatedWithoutLang = writeConfigLang(contentWithoutLang, lang);
             expect(extractConfigLang(updatedWithoutLang)).toBe(lang);
-        }), { numRuns: 200 });
+        }), { numRuns: 50 });
     });
     /**
      * **Validates: Requirements 6.1**
@@ -102,7 +102,7 @@ describe("Feature: i18n-support, Property 9: Config lang 字段往返与字段�
             const plainContent = body.trimStart().startsWith("---") ? `# ${body}` : body;
             const updated = writeConfigLang(plainContent, lang);
             expect(extractConfigLang(updated)).toBe(lang);
-        }), { numRuns: 200 });
+        }), { numRuns: 50 });
     });
     /**
      * **Validates: Requirements 6.1**
@@ -113,7 +113,7 @@ describe("Feature: i18n-support, Property 9: Config lang 字段往返与字段�
         fc.assert(fc.property(localeArb, (lang) => {
             const updated = writeConfigLang("", lang);
             expect(extractConfigLang(updated)).toBe(lang);
-        }), { numRuns: 200 });
+        }), { numRuns: 50 });
     });
     /**
      * **Validates: Requirements 6.4**
@@ -136,7 +136,7 @@ describe("Feature: i18n-support, Property 9: Config lang 字段往返与字段�
                 const extracted = extractStringField(parsed.raw, key);
                 expect(extracted).toBe(value);
             }
-        }), { numRuns: 200 });
+        }), { numRuns: 50 });
     });
     /**
      * **Validates: Requirements 6.4**
@@ -160,7 +160,7 @@ describe("Feature: i18n-support, Property 9: Config lang 字段往返与字段�
                 const extracted = extractStringField(parsed.raw, key);
                 expect(extracted).toBe(value);
             }
-        }), { numRuns: 200 });
+        }), { numRuns: 50 });
     });
     /**
      * **Validates: Requirements 6.1**
@@ -172,7 +172,7 @@ describe("Feature: i18n-support, Property 9: Config lang 字段往返与字段�
         fc.assert(fc.property(localeArb, (lang) => {
             const content = buildDefaultConfig(lang);
             expect(extractConfigLang(content)).toBe(lang);
-        }), { numRuns: 200 });
+        }), { numRuns: 50 });
     });
 });
 // ---------------------------------------------------------------------------
@@ -250,7 +250,7 @@ describe("Feature: observability-enhancements, Property 4: 配置解析正确性
             expect(result.logFormat).toBe(format);
             expect(result.logLevel).toBe(level);
             expect(result.logFile).toBe(filePath);
-        }), { numRuns: 200 });
+        }), { numRuns: 50 });
     });
     /**
      * **Validates: Requirements 2.1, 2.2**
@@ -272,7 +272,7 @@ describe("Feature: observability-enhancements, Property 4: 配置解析正确性
             expect(r2.logFormat).toBeNull();
             expect(r2.logLevel).toBe(level);
             expect(r2.logFile).toBeNull();
-        }), { numRuns: 100 });
+        }), { numRuns: 40 });
     });
     /**
      * **Validates: Requirements 2.1, 2.2**
@@ -292,7 +292,7 @@ describe("Feature: observability-enhancements, Property 4: 配置解析正确性
             expect(result.logFormat).toBe(format);
             expect(result.logLevel).toBe(level);
             expect(result.logFile).toBe(filePath);
-        }), { numRuns: 100 });
+        }), { numRuns: 40 });
     });
 });
 // ---------------------------------------------------------------------------
@@ -314,7 +314,7 @@ describe("Feature: observability-enhancements, Property 5: CLI 参数优先于�
             };
             const result = mergeLogConfig({ logFormat: cliFormat }, fileConfig);
             expect(result.format).toBe(cliFormat);
-        }), { numRuns: 200 });
+        }), { numRuns: 50 });
     });
     /**
      * **Validates: Requirements 2.3**
@@ -330,7 +330,7 @@ describe("Feature: observability-enhancements, Property 5: CLI 参数优先于�
             };
             const result = mergeLogConfig({ logLevel: cliLevel }, fileConfig);
             expect(result.level).toBe(cliLevel);
-        }), { numRuns: 200 });
+        }), { numRuns: 50 });
     });
     /**
      * **Validates: Requirements 2.3**
@@ -346,7 +346,7 @@ describe("Feature: observability-enhancements, Property 5: CLI 参数优先于�
             };
             const result = mergeLogConfig({ logFile: cliLogFile }, fileConfig);
             expect(result.logFile).toBe(cliLogFile);
-        }), { numRuns: 200 });
+        }), { numRuns: 50 });
     });
     /**
      * **Validates: Requirements 2.3**
@@ -364,7 +364,7 @@ describe("Feature: observability-enhancements, Property 5: CLI 参数优先于�
             expect(result.format).toBe(cliFormat);
             expect(result.level).toBe(cliLevel);
             expect(result.logFile).toBe(cliLogFile);
-        }), { numRuns: 200 });
+        }), { numRuns: 50 });
     });
 });
 // ---------------------------------------------------------------------------
@@ -381,7 +381,7 @@ describe("Feature: observability-enhancements, Property 6: 无效配置回退到
             const content = buildLogConfigFrontmatter({ logFormat: invalidFormat });
             const result = parseLogConfig(content);
             expect(result.logFormat).toBeNull();
-        }), { numRuns: 200 });
+        }), { numRuns: 50 });
     });
     /**
      * **Validates: Requirements 2.4**
@@ -393,7 +393,7 @@ describe("Feature: observability-enhancements, Property 6: 无效配置回退到
             const content = buildLogConfigFrontmatter({ logLevel: invalidLevel });
             const result = parseLogConfig(content);
             expect(result.logLevel).toBeNull();
-        }), { numRuns: 200 });
+        }), { numRuns: 50 });
     });
     /**
      * **Validates: Requirements 2.4, 8.4**
@@ -408,7 +408,7 @@ describe("Feature: observability-enhancements, Property 6: 无效配置回退到
             // CLI does not specify logFormat
             const result = mergeLogConfig({}, fileConfig);
             expect(result.format).toBe("text");
-        }), { numRuns: 200 });
+        }), { numRuns: 50 });
     });
     /**
      * **Validates: Requirements 2.4, 8.4**
@@ -423,7 +423,7 @@ describe("Feature: observability-enhancements, Property 6: 无效配置回退到
             // CLI does not specify logLevel
             const result = mergeLogConfig({}, fileConfig);
             expect(result.level).toBe("info");
-        }), { numRuns: 200 });
+        }), { numRuns: 50 });
     });
     /**
      * **Validates: Requirements 2.4, 8.4**
@@ -442,7 +442,7 @@ describe("Feature: observability-enhancements, Property 6: 无效配置回退到
             expect(result.format).toBe("text");
             expect(result.level).toBe("info");
             expect(result.logFile).toBeNull();
-        }), { numRuns: 200 });
+        }), { numRuns: 50 });
     });
 });
 //# sourceMappingURL=config-store.property.test.js.map

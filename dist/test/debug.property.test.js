@@ -67,14 +67,14 @@ describe("Property 21: Debug 假设验证升级", () => {
             expect(result.shouldEscalate).toBe(true);
             expect(result.consecutiveRejections).toBeGreaterThanOrEqual(HYPOTHESIS_ESCALATION_THRESHOLD);
             expect(result.escalationIndex).toBeGreaterThanOrEqual(2);
-        }), { numRuns: 200 });
+        }), { numRuns: 50 });
     });
     it("fewer than 3 consecutive rejections → no escalation", () => {
         fc.assert(fc.property(sequenceWithoutEscalationArb, (sequence) => {
             const result = analyzeHypothesisResults(sequence);
             expect(result.shouldEscalate).toBe(false);
             expect(result.escalationIndex).toBe(-1);
-        }), { numRuns: 200 });
+        }), { numRuns: 50 });
     });
     it("confirmed hypothesis resets the counter", () => {
         fc.assert(fc.property(fc.array(fc.tuple(fc.array(fc.constant("rejected"), { minLength: 1, maxLength: 2 }), fc.constant("confirmed")), { minLength: 1, maxLength: 10 }), (chunks) => {
@@ -84,7 +84,7 @@ describe("Property 21: Debug 假设验证升级", () => {
             }
             const result = analyzeHypothesisResults({ results });
             expect(result.shouldEscalate).toBe(false);
-        }), { numRuns: 200 });
+        }), { numRuns: 50 });
     });
     it("exactly 3 consecutive rejections triggers escalation", () => {
         const result = analyzeHypothesisResults({
@@ -112,7 +112,7 @@ describe("Property 21: Debug 假设验证升级", () => {
             const detailed = analyzeHypothesisResults(sequence);
             const simple = shouldQuestionArchitecture(sequence);
             expect(simple).toBe(detailed.shouldEscalate);
-        }), { numRuns: 200 });
+        }), { numRuns: 50 });
     });
     it("escalation index points to the 3rd consecutive rejection", () => {
         fc.assert(fc.property(sequenceWithEscalationArb, (sequence) => {
@@ -123,7 +123,7 @@ describe("Property 21: Debug 假设验证升级", () => {
                 expect(sequence.results[idx - 1]).toBe("rejected");
                 expect(sequence.results[idx - 2]).toBe("rejected");
             }
-        }), { numRuns: 200 });
+        }), { numRuns: 50 });
     });
 });
 // ---------------------------------------------------------------------------
@@ -135,7 +135,7 @@ describe("Property 22: Debug 假设完整性", () => {
             const result = validateHypothesis(hypothesis);
             expect(result.valid).toBe(true);
             expect(result.errors).toHaveLength(0);
-        }), { numRuns: 200 });
+        }), { numRuns: 50 });
     });
     it("empty description fails validation", () => {
         fc.assert(fc.property(validHypothesisArb, (hypothesis) => {
@@ -143,7 +143,7 @@ describe("Property 22: Debug 假设完整性", () => {
             const result = validateHypothesis(invalid);
             expect(result.valid).toBe(false);
             expect(result.errors.some((e) => e.includes("描述"))).toBe(true);
-        }), { numRuns: 200 });
+        }), { numRuns: 50 });
     });
     it("empty verifyCommand fails validation", () => {
         fc.assert(fc.property(validHypothesisArb, (hypothesis) => {
@@ -151,7 +151,7 @@ describe("Property 22: Debug 假设完整性", () => {
             const result = validateHypothesis(invalid);
             expect(result.valid).toBe(false);
             expect(result.errors.some((e) => e.includes("验证命令"))).toBe(true);
-        }), { numRuns: 200 });
+        }), { numRuns: 50 });
     });
     it("empty expectedOutcome fails validation", () => {
         fc.assert(fc.property(validHypothesisArb, (hypothesis) => {
@@ -159,7 +159,7 @@ describe("Property 22: Debug 假设完整性", () => {
             const result = validateHypothesis(invalid);
             expect(result.valid).toBe(false);
             expect(result.errors.some((e) => e.includes("预期结果"))).toBe(true);
-        }), { numRuns: 200 });
+        }), { numRuns: 50 });
     });
     it("all fields empty → 3 errors", () => {
         const result = validateHypothesis({

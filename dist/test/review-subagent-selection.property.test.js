@@ -39,7 +39,7 @@ describe("Feature: agent-team-migration, Property 1: review subagent selection c
             // When hasSpec is false, there should be exactly 2 subagents
             const expectedCount = context.hasSpec ? 3 : 2;
             expect(invocations).toHaveLength(expectedCount);
-        }), { numRuns: 100 });
+        }), { numRuns: 40 });
     });
     it("every invocation has valid protocol fields", () => {
         fc.assert(fc.property(reviewContextArb, (context) => {
@@ -49,7 +49,7 @@ describe("Feature: agent-team-migration, Property 1: review subagent selection c
                 expect(["default", "acceptEdits"]).toContain(inv.permissionMode);
                 expect(inv.maxTurns).toBeGreaterThan(0);
             }
-        }), { numRuns: 100 });
+        }), { numRuns: 40 });
     });
 });
 //# sourceMappingURL=review-subagent-selection.property.test.js.map

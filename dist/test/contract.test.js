@@ -522,30 +522,44 @@ describe("Contract: config.md evolved rules protection", () => {
 });
 // ---------------------------------------------------------------------------
 // 17. forge-learn SKILL.md rule distillation
+//
+// Progressive Disclosure (skills-cross-pollination R5) moved the detailed
+// threshold table out of the 150-line SKILL.md body into
+// `references/rule-distillation.md`. The contract therefore reads the
+// main SKILL body plus all reference files as a single logical surface.
 // ---------------------------------------------------------------------------
 describe("Contract: forge-learn SKILL.md rule distillation", () => {
-    const skillPath = resolve(ROOT, "skills/forge-learn/SKILL.md");
+    const skillDir = resolve(ROOT, "skills/forge-learn");
+    const skillPath = resolve(skillDir, "SKILL.md");
     const content = readFileSync(skillPath, "utf-8");
+    const referencesDir = resolve(skillDir, "references");
+    const referenceContent = existsSync(referencesDir)
+        ? readdirSync(referencesDir)
+            .filter((f) => f.endsWith(".md"))
+            .map((f) => readFileSync(resolve(referencesDir, f), "utf-8"))
+            .join("\n")
+        : "";
+    const combined = `${content}\n${referenceContent}`;
     it("SKILL.md contains a Rule Distillation or equivalent heading", () => {
         expect(content.match(/Rule Distillation|规则蒸馏/), "SKILL.md missing Rule Distillation heading").not.toBeNull();
     });
     it("SKILL.md references all four data sources", () => {
-        expect(content).toContain("known-failures");
-        expect(content).toContain("instincts");
-        expect(content).toContain("skill-feedback");
-        expect(content).toContain("metrics");
+        expect(combined).toContain("known-failures");
+        expect(combined).toContain("instincts");
+        expect(combined).toContain("skill-feedback");
+        expect(combined).toContain("metrics");
     });
     it("SKILL.md documents all five threshold conditions", () => {
         // known-failures: occurrence >= 3
-        expect(content).toMatch(/occurrence\s*>=\s*3/);
+        expect(combined).toMatch(/occurrence\s*>=\s*3/);
         // instincts: confidence >= 0.8
-        expect(content).toMatch(/confidence\s*>=\s*0\.8/);
+        expect(combined).toMatch(/confidence\s*>=\s*0\.8/);
         // skill-feedback: frequency >= 3
-        expect(content).toMatch(/frequency\s*>=\s*3/);
+        expect(combined).toMatch(/frequency\s*>=\s*3/);
         // session journals: 3+ sessions
-        expect(content).toMatch(/3\+?\s*会话|3\+?\s*session/i);
+        expect(combined).toMatch(/3\+?\s*会话|3\+?\s*session/i);
         // metrics: 3+ session degradation
-        expect(content).toMatch(/3\+?\s*session|连续\s*3/i);
+        expect(combined).toMatch(/3\+?\s*session|连续\s*3/i);
     });
 });
 // ---------------------------------------------------------------------------
@@ -574,6 +588,16 @@ describe("Contract: CLAUDE.md and template sync", () => {
         expect(claude).not.toContain("{{security_level}}");
         expect(claude).not.toContain("{{knowledge_limit}}");
         expect(claude).not.toContain("{{init_date}}");
+    });
+    it("CLAUDE.md line count is within the 100–150 target range", () => {
+        const claudeLines = claude.split("\n").length;
+        expect(claudeLines).toBeGreaterThanOrEqual(100);
+        expect(claudeLines).toBeLessThanOrEqual(150);
+    });
+    it("templates/CLAUDE.md line count is within the 100–150 target range", () => {
+        const templateLines = template.split("\n").length;
+        expect(templateLines).toBeGreaterThanOrEqual(100);
+        expect(templateLines).toBeLessThanOrEqual(150);
     });
 });
 // ---------------------------------------------------------------------------

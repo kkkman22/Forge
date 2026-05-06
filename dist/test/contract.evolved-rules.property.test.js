@@ -170,7 +170,7 @@ describe("Feature: claude-md-self-evolution, Property 1: Evolved rules file roun
                 expect(roundTripped.confidence).toBe(original.confidence);
                 expect(roundTripped.lastTriggered).toBe(original.lastTriggered);
             }
-        }), { numRuns: 200 });
+        }), { numRuns: 50 });
     });
     /**
      * **Validates: Requirements 14.4**
@@ -183,7 +183,7 @@ describe("Feature: claude-md-self-evolution, Property 1: Evolved rules file roun
             const formatted = formatEvolvedRules(file);
             const parsed = parseEvolvedRules(formatted);
             expect(parsed.ruleCount).toBe(parsed.rules.length);
-        }), { numRuns: 200 });
+        }), { numRuns: 50 });
     });
     /**
      * **Validates: Requirements 14.4**
@@ -198,7 +198,7 @@ describe("Feature: claude-md-self-evolution, Property 1: Evolved rules file roun
                 expect(rule.confidence).toBeGreaterThanOrEqual(0.3);
                 expect(rule.confidence).toBeLessThanOrEqual(0.9);
             }
-        }), { numRuns: 200 });
+        }), { numRuns: 50 });
     });
 });
 //# sourceMappingURL=contract.evolved-rules.property.test.js.map

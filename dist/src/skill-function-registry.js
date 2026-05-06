@@ -46,6 +46,12 @@ export const SKILL_FUNCTION_REGISTRY = [
         parameterNames: ["results"],
     },
     {
+        module: "build.ts",
+        functionName: "buildThreeStrikeFailureArtifacts",
+        skills: ["forge-build/SKILL.md"],
+        parameterNames: ["topic", "tier", "situation", "rootCause", "now", "sequenceInDay"],
+    },
+    {
         module: "branch-lifecycle.ts",
         functionName: "checkBranchTopicGate",
         skills: ["forge-build/SKILL.md"],
@@ -76,6 +82,30 @@ export const SKILL_FUNCTION_REGISTRY = [
         skills: ["forge-decide/SKILL.md"],
         parameterNames: ["summary"],
     },
+    {
+        module: "adr-registry.ts",
+        functionName: "loadAllAdrs",
+        skills: ["forge-decide/SKILL.md"],
+        parameterNames: ["entries", "readFile"],
+    },
+    {
+        module: "adr-registry.ts",
+        functionName: "findRelatedAdrs",
+        skills: ["forge-decide/SKILL.md"],
+        parameterNames: ["taskDescription", "adrs", "limit"],
+    },
+    {
+        module: "decide.ts",
+        functionName: "finalizeAdr",
+        skills: ["forge-decide/SKILL.md"],
+        parameterNames: ["input", "readExistingFile"],
+    },
+    {
+        module: "decide.ts",
+        functionName: "checkDecideGlossaryConflicts",
+        skills: ["forge-decide/SKILL.md"],
+        parameterNames: ["candidateTerms", "glossary"],
+    },
     // --- forge-ship/SKILL.md ---
     {
         module: "ship.ts",
@@ -94,6 +124,12 @@ export const SKILL_FUNCTION_REGISTRY = [
         functionName: "checkReviewFreshness",
         skills: ["forge-ship/SKILL.md"],
         parameterNames: ["reviewedCommit", "currentHead", "changedFiles"],
+    },
+    {
+        module: "ship.ts",
+        functionName: "buildShipGateBlockArtifacts",
+        skills: ["forge-ship/SKILL.md"],
+        parameterNames: ["topic", "tier", "reason", "situation", "now", "sequenceInDay"],
     },
     {
         module: "branch-lifecycle.ts",
@@ -138,12 +174,84 @@ export const SKILL_FUNCTION_REGISTRY = [
         skills: ["forge-learn/SKILL.md"],
         parameterNames: ["state"],
     },
+    {
+        module: "learn.ts",
+        functionName: "extractSessionTermCandidates",
+        skills: ["forge-learn/SKILL.md"],
+        parameterNames: ["sessionData", "glossary"],
+    },
+    {
+        module: "learn.ts",
+        functionName: "proposeStaleTerms",
+        skills: ["forge-learn/SKILL.md"],
+        parameterNames: ["glossary", "now", "maxAgeDays"],
+    },
+    {
+        module: "learn.ts",
+        functionName: "buildEpisodeFromSession",
+        skills: ["forge-learn/SKILL.md"],
+        parameterNames: ["meta", "phaseHistory", "situation", "lesson", "sequenceInDay"],
+    },
+    {
+        module: "learn.ts",
+        functionName: "archivePatternByName",
+        skills: ["forge-learn/SKILL.md"],
+        parameterNames: ["patterns", "name"],
+    },
+    {
+        module: "learn.ts",
+        functionName: "buildPatternUpgradeDrafts",
+        skills: ["forge-learn/SKILL.md"],
+        parameterNames: ["episodes", "patterns", "now"],
+    },
+    {
+        module: "learn.ts",
+        functionName: "getLearnPromptConfig",
+        skills: ["forge-learn/SKILL.md"],
+        parameterNames: ["outcome"],
+    },
+    {
+        module: "learn.ts",
+        functionName: "generateEvolutionReport",
+        skills: ["forge-learn/SKILL.md"],
+        parameterNames: ["fs", "forgeRoot", "skillsRegistry", "now"],
+    },
+    {
+        module: "learn.ts",
+        functionName: "renderEvolutionReport",
+        skills: ["forge-learn/SKILL.md"],
+        parameterNames: ["report"],
+    },
+    {
+        module: "pattern-stats.ts",
+        functionName: "findStaleOrDecayedPatterns",
+        skills: ["forge-learn/SKILL.md"],
+        parameterNames: ["patterns", "now", "maxAgeDays"],
+    },
+    {
+        module: "glossary.ts",
+        functionName: "mergeTerm",
+        skills: ["forge-learn/SKILL.md"],
+        parameterNames: ["glossary", "candidate", "strategy"],
+    },
+    {
+        module: "glossary.ts",
+        functionName: "archiveTerm",
+        skills: ["forge-learn/SKILL.md"],
+        parameterNames: ["glossary", "termName"],
+    },
     // --- forge-review/SKILL.md ---
     {
         module: "context-budget.ts",
         functionName: "serializeReviewSummary",
         skills: ["forge-review/SKILL.md"],
         parameterNames: ["summary"],
+    },
+    {
+        module: "review.ts",
+        functionName: "buildReviewEvolutionArtifacts",
+        skills: ["forge-review/SKILL.md"],
+        parameterNames: ["input", "now", "sequenceInDay"],
     },
     // --- forge-router/SKILL.md (multi-task) ---
     {
@@ -176,6 +284,19 @@ export const SKILL_FUNCTION_REGISTRY = [
         functionName: "recoverPhase",
         skills: ["forge-resume/SKILL.md"],
         parameterNames: ["statusContent", "forgeFiles"],
+    },
+    // --- forge-grill/SKILL.md (Socratic grilling loop) ---
+    {
+        module: "grill.ts",
+        functionName: "selectNextQuestion",
+        skills: ["forge-grill/SKILL.md"],
+        parameterNames: ["tree"],
+    },
+    {
+        module: "grill.ts",
+        functionName: "checkGrillGlossaryConflicts",
+        skills: ["forge-grill/SKILL.md"],
+        parameterNames: ["tree", "glossary"],
     },
 ];
 //# sourceMappingURL=skill-function-registry.js.map

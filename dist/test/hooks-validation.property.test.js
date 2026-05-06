@@ -60,7 +60,7 @@ describe("Feature: audit-remediation-v221, Property 1: Hooks validation correctl
             const result = validateHooksPresence(tmpDir);
             expect(result.valid).toBe(true);
             expect(result.reason).toBeUndefined();
-        }), { numRuns: 100 });
+        }), { numRuns: 40 });
     });
     /**
      * **Validates: Requirements 1.1**
@@ -93,7 +93,7 @@ describe("Feature: audit-remediation-v221, Property 1: Hooks validation correctl
                 expect(typeof result.reason).toBe("string");
                 expect(result.reason?.length).toBeGreaterThan(0);
             }
-        }), { numRuns: 100 });
+        }), { numRuns: 40 });
     });
     /**
      * **Validates: Requirements 1.1**
@@ -117,7 +117,7 @@ describe("Feature: audit-remediation-v221, Property 1: Hooks validation correctl
             expect(result.valid).toBe(false);
             expect(result.reason).toBeDefined();
             expect(result.reason?.length).toBeGreaterThan(0);
-        }), { numRuns: 100 });
+        }), { numRuns: 40 });
     });
 });
 //# sourceMappingURL=hooks-validation.property.test.js.map

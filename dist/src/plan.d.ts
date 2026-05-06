@@ -19,6 +19,7 @@
  * Per SKILL.md §4, forbidden placeholders:
  *   TBD, TODO, 待定, 后续补充, 类似 Task, 添加适当的错误处理
  */
+import type { Glossary, GlossaryTerm } from "./glossary.js";
 export interface TDDSteps {
     red: {
         testFile: string;
@@ -130,3 +131,36 @@ export declare function validatePlan(frontmatter: string, tasks: AtomicTask[] | 
     errors: string[];
     format: PlanFormat;
 };
+/**
+ * Normalize domain terminology inside a task title string.
+ *
+ * For each alias (and canonical term) defined in the glossary, this
+ * function finds case-insensitive whole-word matches inside `title` and
+ * replaces them with the canonical `term` form. When multiple surface
+ * forms could match the same region, the longest surface wins (greedy).
+ *
+ * Guarantees:
+ *   - Matches are case-insensitive but the canonical form is written
+ *     verbatim (preserving the glossary's chosen casing).
+ *   - Surrounding text is unchanged; only the matched spans are rewritten.
+ *   - Partial matches inside a larger word are never replaced (e.g. an
+ *     alias "档位" will not touch "档位选择器").
+ *   - The function is pure: same inputs yield the same output.
+ *   - The operation is idempotent: applying it twice gives the same result
+ *     as applying it once, because canonical terms already normalize to
+ *     themselves.
+ *
+ * **Validates: Requirements 1.5**
+ */
+export declare function normalizeTaskTerms(title: string, glossary: Glossary): string;
+/**
+ * Return a copy of `task` whose `title` field has been normalized against
+ * the glossary. All other fields are passed through unchanged.
+ */
+export declare function normalizeLightweightTask(task: LightweightTask, glossary: Glossary): LightweightTask;
+/**
+ * Return a copy of `task` whose `title` field has been normalized against
+ * the glossary. All other fields are passed through unchanged.
+ */
+export declare function normalizeAtomicTask(task: AtomicTask, glossary: Glossary): AtomicTask;
+export type { Glossary, GlossaryTerm };

@@ -142,6 +142,10 @@ export interface IterationContext {
 
   // --- Optional abort signal (provided by SdkDriver for requestStop support) ---
   readonly abortSignal?: AbortSignal;
+
+  // --- Optional PUA integration (generic iteration shares PUA state with skill-aware) ---
+  readonly puaEnabled?: boolean;
+  readonly puaStateManager?: PuaStateManager | null;
 }
 
 /**

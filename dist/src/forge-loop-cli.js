@@ -31,7 +31,10 @@ import { branchExists, RunManager } from "./run-manager.js";
 import { SdkAgentAdapter } from "./sdk-agent-adapter.js";
 import { detectSkillAwareMode, SdkDriver } from "./sdk-driver.js";
 import { buildSleepPreventionCommand } from "./sleep-preventer.js";
+import { installSkill } from "./skill-loader.js";
 import { decideWorktreeCleanup, isValidWorktreeSource } from "./worktree-manager.js";
+// Read package version for skill compatibility checks
+const PACKAGE_VERSION = JSON.parse(readFileSync(path.join(path.dirname(new URL(import.meta.url).pathname), "..", "package.json"), "utf-8")).version;
 // ---------------------------------------------------------------------------
 // Default constants
 // ---------------------------------------------------------------------------
@@ -107,6 +110,30 @@ export function backupWorktreeNotes(worktreeNotesPath, mainRepoRunDir) {
 // ---------------------------------------------------------------------------
 async function main() {
     const program = new Command();
+    // SKILL plugin management subcommand
+    const skillCmd = new Command("skill").description("SKILL plugin management");
+    skillCmd
+        .command("install <path>")
+        .description("Install a SKILL plugin from a local directory")
+        .action(async (skillPath) => {
+        const cwd = process.cwd();
+        const resolvedSource = path.resolve(skillPath);
+        const targetRoot = path.join(cwd, "skills");
+        if (!existsSync(resolvedSource)) {
+            console.error(`Error: Source path does not exist: ${skillPath}`);
+            process.exit(1);
+        }
+        const result = installSkill(resolvedSource, targetRoot, PACKAGE_VERSION);
+        if (result.success) {
+            console.log(`✅ ${result.message}`);
+            process.exit(0);
+        }
+        else {
+            console.error(`❌ ${result.message}`);
+            process.exit(1);
+        }
+    });
+    program.addCommand(skillCmd);
     program
         .name("forge-loop")
         .description("Run an autonomous loop with Claude Code Agent SDK")

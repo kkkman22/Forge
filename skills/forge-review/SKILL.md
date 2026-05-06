@@ -78,11 +78,31 @@ P0/P1 只能 `gated_auto`/`manual`；P2 可 `safe_auto`；P3 默认 `advisory`�
 
 ## 9. Review Report Format
 
-`.forge/reviews/<topic>.md`。YAML frontmatter 含 topic/date/result/p0-p3_count/layers 状态。正文：三层 Layer 章节 + 总结。`result`：`pass`（无 P0/P1 且全部完成）/ `fail`（有 P0/P1）/ `incomplete`（有 Layer 未完成，**不允许 ship**）。
+`.forge/reviews/<topic>.md`。YAML frontmatter + 正文。`result`：`pass`（无 P0/P1 且全部完成）/ `fail`（有 P0/P1）/ `incomplete`（有 Layer 未完成，**不允许 ship**）。
+
+**Frontmatter 模板**：
+```yaml
+---
+topic: "<主题>"
+date: "YYYY-MM-DD"
+result: "pass" | "fail" | "incomplete"
+reviewed_at_commit: "<git rev-parse HEAD>"  # 评审时的 commit SHA
+p0_count: 0
+p1_count: 0
+p2_count: 0
+p3_count: 0
+layers:
+  spec_check: "pass"
+  quality_check: "pass"
+  security_check: "pass"
+---
+```
+
+`reviewed_at_commit` 供 ship 阶段 freshness 验证使用。
 
 ## 10. Execution Flow
 
-1. **前置检查**（§13）→ 2. **并行启动 Subagent** → 3. **状态确认** → 4. **合并管线** → 5. **质量门** → 6. **P0/P1 判定** → 7. **输出报告**
+1. **前置检查**（§13）→ 2. **并行启动 Subagent** → 3. **状态确认** → 4. **合并管线** → 5. **质量门** → 6. **P0/P1 判定** → 7. **输出报告**（写入 frontmatter 时执行 `git rev-parse HEAD` 记录 `reviewed_at_commit`）
 
 **Step 1.1 状态确认**：主动跟踪每个 Subagent，不假设"启动即完成"。正常完成 → 进入管线；截断 → 重试 1 次；错误 → 重试 1 次；429 → 降级等待后重试；超时(180s) → 标记 `incomplete`。**不得在 Subagent 运行中合并结果**。
 
@@ -123,6 +143,8 @@ P0/P1 只能 `gated_auto`/`manual`；P2 可 `safe_auto`；P3 默认 `advisory`�
 
 ## Common Rationalizations
 
-- "测试都过了没问题" → 测试不查架构/安全/可读性
-- "我自己写的没问题" → 作者对自身假设盲目
-- "AI 代码应该没问题" → AI 代码需更多审查，自信且看似合理即使是错的
+| 合理化 | 反驳 |
+|---|---|
+| "测试都过了没问题" | 测试不查架构/安全/可读性 |
+| "我自己写的没问题" | 作者对自身假设盲目 |
+| "AI 代码应该没问题" | AI 代码需更多审查，自信且看似合理即使是错的 |

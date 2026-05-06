@@ -40,4 +40,62 @@ export class PromptDefenseError extends ForgeError {
         });
     }
 }
+/**
+ * Raised when a state file / config frontmatter fails schema validation.
+ *
+ * Wraps zod's `ZodIssue[]` (or equivalent pre-normalised issue records)
+ * into a stable shape so that upstream loggers and CLI messages can
+ * describe failures by field path without importing zod directly.
+ *
+ * The `message` is built from the combined issues as `"<path>: <msg>; …"`,
+ * making it suitable for single-line log output.
+ *
+ * **Validates: Requirement 2.6**
+ */
+export class SchemaValidationError extends ForgeError {
+    code = "SCHEMA_VALIDATION_FAILED";
+    /** Normalised list of validation issues. */
+    issues;
+    constructor(rawIssues) {
+        const issues = rawIssues.map((issue) => {
+            if ("path" in issue && typeof issue.path === "string" && "message" in issue) {
+                return { path: issue.path, message: issue.message };
+            }
+            const z = issue;
+            return {
+                path: z.path.join("."),
+                message: z.message,
+            };
+        });
+        const message = issues.map((i) => `${i.path}: ${i.message}`).join("; ");
+        super(message);
+        this.issues = issues;
+    }
+}
+// ---------------------------------------------------------------------------
+// Event Log Replay
+// ---------------------------------------------------------------------------
+/**
+ * Raised when replaying `events.jsonl` yields a state whose hash does
+ * not match the persisted `state-final.json` snapshot.
+ *
+ * This indicates that either the event log or the final-state file has
+ * been tampered with, or that the orchestrator's transition function
+ * has changed in a backward-incompatible way since the run was
+ * recorded.
+ *
+ * **Validates: Requirement 3.7**
+ */
+export class EventLogReplayError extends ForgeError {
+    code = "EVENT_LOG_REPLAY_MISMATCH";
+    expectedHash;
+    actualHash;
+    constructor(expectedHash, actualHash) {
+        super(`Event log replay produced hash ${actualHash}, expected ${expectedHash}. ` +
+            "The run may be corrupted or the orchestrator behaviour has changed. " +
+            "Use --force-resume to override.");
+        this.expectedHash = expectedHash;
+        this.actualHash = actualHash;
+    }
+}
 //# sourceMappingURL=forge-error.js.map

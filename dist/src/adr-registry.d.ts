@@ -38,6 +38,16 @@ export type AdrStatus = "proposed" | "accepted" | "superseded" | "deprecated";
  *   - related_adrs: other ADR ids referenced by this decision
  *   - supersedes:   id of an ADR that this one replaces
  *   - superseded_by: id of an ADR that replaces this one
+ *
+ * ADR three-question gate fields (Requirements 2.3, 2.7 — optional
+ * extensions populated by `/forge decide` when verdict is
+ * `WRITE_ADR`). These fields are additive and never conflict with the
+ * `engineering-governance-hardening` spec's ADR frontmatter schema —
+ * they occupy their own key space:
+ *   - reversibility:           "hard" when reversal cost is meaningful
+ *   - surprising:              true when a future reader would ask "why?"
+ *   - trade_off_alternatives:  the alternatives weighed against the
+ *                              chosen decision
  */
 export interface AdrFrontmatter {
     id: string;
@@ -48,6 +58,9 @@ export interface AdrFrontmatter {
     related_adrs?: string[];
     supersedes?: string;
     superseded_by?: string;
+    reversibility?: "hard" | "soft";
+    surprising?: boolean;
+    trade_off_alternatives?: string[];
 }
 /** Loaded ADR record with the source file path attached. */
 export interface AdrEntry extends AdrFrontmatter {

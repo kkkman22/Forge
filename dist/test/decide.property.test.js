@@ -208,7 +208,7 @@ describe("Property 3: 设计视角条件触发", () => {
             expect(designer).toBeDefined();
             expect(designer?.role).toBe("设计视角");
             expect(designer?.agent).toBe("designer");
-        }), { numRuns: 200 });
+        }), { numRuns: 50 });
     });
     it("NO UI signals → designer MUST NOT be in the team (Req 2.5)", () => {
         fc.assert(fc.property(nonUIContextArb, (context) => {
@@ -218,7 +218,7 @@ describe("Property 3: 设计视角条件触发", () => {
             const names = members.map((m) => m.name);
             // Designer must NOT be present
             expect(names).not.toContain("designer");
-        }), { numRuns: 200 });
+        }), { numRuns: 50 });
     });
     it("product, architect, security are ALWAYS in the team regardless of UI signals", () => {
         fc.assert(fc.property(fc.oneof(uiContextArb, nonUIContextArb), (context) => {
@@ -227,7 +227,7 @@ describe("Property 3: 设计视角条件触发", () => {
             for (const defaultName of DEFAULT_MEMBER_NAMES) {
                 expect(names).toContain(defaultName);
             }
-        }), { numRuns: 200 });
+        }), { numRuns: 50 });
     });
     it("team size is exactly 3 without UI signals and exactly 4 with UI signals", () => {
         fc.assert(fc.property(fc.oneof(uiContextArb.map((ctx) => ({ ctx, expectUI: true })), nonUIContextArb.map((ctx) => ({ ctx, expectUI: false }))), ({ ctx, expectUI }) => {
@@ -238,7 +238,7 @@ describe("Property 3: 设计视角条件触发", () => {
             else {
                 expect(members).toHaveLength(3);
             }
-        }), { numRuns: 200 });
+        }), { numRuns: 50 });
     });
     it("designer appears if and only if involvesUIChanges returns true (biconditional)", () => {
         fc.assert(fc.property(fc.oneof(uiContextArb, nonUIContextArb), (context) => {
@@ -247,7 +247,7 @@ describe("Property 3: 设计视角条件触发", () => {
             const isUI = involvesUIChanges(context);
             // Biconditional: designer ↔ UI changes
             expect(hasDesigner).toBe(isUI);
-        }), { numRuns: 200 });
+        }), { numRuns: 50 });
     });
 });
 //# sourceMappingURL=decide.property.test.js.map

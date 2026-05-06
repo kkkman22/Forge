@@ -96,4 +96,59 @@ export function checkShipGateWithChecklist(review, test, progress, checklist) {
     }
     return result;
 }
+import { buildFailureEpisode, buildFailureEvolutionMarker, } from "./failure-sink.js";
+/**
+ * Map a {@link ShipGateBlockReason} onto the corresponding episode
+ * outcome. Isolated so tests can pin the mapping without constructing
+ * a full `FailureContext`.
+ */
+function outcomeForReason(reason) {
+    switch (reason) {
+        case "uncommitted":
+            return "partial";
+        case "checklist_failed":
+            return "failure";
+    }
+}
+/**
+ * Pure helper that constructs the failure artefacts triggered by the
+ * ship gate rejecting a delivery.
+ *
+ * Behaviour (Requirement 8.7):
+ *   - Builds a {@link FailureContext} with `skill = "forge-ship"` and
+ *     `trigger = "ship_gate_blocked"`, carrying `topic`, `tier`, and
+ *     `situation` from the call site.
+ *   - Delegates to {@link buildFailureEpisode} for a v2 Episode, then
+ *     overrides `outcome` based on `reason`:
+ *       - `uncommitted`       → `"partial"`
+ *       - `checklist_failed`  → `"failure"` (no override needed — the
+ *         failure-sink default already returns `"failure"`).
+ *   - Calls {@link buildFailureEvolutionMarker} with the episode id so
+ *     the Evolution marker target is `forge-ship#ship_gate_blocked`.
+ *
+ * Drivers are expected to append the episode to
+ * `.forge/knowledge/sessions/<date>-<topic>.md` (Guarded zone) and the
+ * marker to the topic's progress file (Open zone). Write failures
+ * degrade to a warning per Requirement 8.12 — callers keep the
+ * delivery-blocked message front and centre.
+ *
+ * Pure: identical `(topic, tier, reason, situation, now, sequenceInDay)`
+ * always yields identical artefacts.
+ */
+export function buildShipGateBlockArtifacts(topic, tier, reason, situation, now, sequenceInDay) {
+    const ctx = {
+        skill: "forge-ship",
+        topic,
+        tier,
+        trigger: "ship_gate_blocked",
+        situation,
+    };
+    const baseEpisode = buildFailureEpisode(ctx, now, sequenceInDay);
+    const desiredOutcome = outcomeForReason(reason);
+    const episode = baseEpisode.outcome === desiredOutcome
+        ? baseEpisode
+        : { ...baseEpisode, outcome: desiredOutcome };
+    const markerText = buildFailureEvolutionMarker(ctx, episode.id, now);
+    return { episode, markerText };
+}
 //# sourceMappingURL=ship.js.map

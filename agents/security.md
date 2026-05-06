@@ -69,18 +69,18 @@ permissionMode: plan
 ## Output Format
 
 ```markdown
-### 安全评估
+### Security Assessment
 
-**OWASP 检查**：
+**OWASP Check**:
 - <相关项 1>：<风险等级> — <说明>
 - <相关项 2>：<风险等级> — <说明>
 - 其余项：无显著风险
 
-**STRIDE 分析**：
+**STRIDE Analysis**:
 - <相关威胁 1>：<说明> / <建议措施>
 - <相关威胁 2>：<说明> / <建议措施>
 
-**结论**：<整体安全评估结论>
+**Conclusion**: <整体安全评估结论>
 ```
 
 ---

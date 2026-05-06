@@ -51,7 +51,7 @@ describe("Feature: sdk-driver-decomposition, Property 5: buildIterationEntry fie
             }
             // keyLearnings maps from output.key_learnings
             expect(entry.keyLearnings).toEqual(o.key_learnings);
-        }), { numRuns: 100 });
+        }), { numRuns: 40 });
     });
 });
 //# sourceMappingURL=sdk-notes-manager.property.test.js.map

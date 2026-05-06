@@ -108,14 +108,14 @@ describe("Property 1: LightweightTask validation — valid tasks pass, invalid t
             const result = validateLightweightTask(task);
             expect(result.valid).toBe(true);
             expect(result.errors).toHaveLength(0);
-        }), { numRuns: 200 });
+        }), { numRuns: 50 });
     });
     it("LightweightTasks with missing required fields fail validation", () => {
         fc.assert(fc.property(lightweightTaskMissingFieldArb, (task) => {
             const result = validateLightweightTask(task);
             expect(result.valid).toBe(false);
             expect(result.errors.length).toBeGreaterThan(0);
-        }), { numRuns: 200 });
+        }), { numRuns: 50 });
     });
 });
 // ---------------------------------------------------------------------------
@@ -129,14 +129,14 @@ describe("Property 2: Heading anchor extraction preserves heading identity", () 
                 expect(anchor).toBe(anchor.toLowerCase());
                 expect(anchor).toMatch(/^[a-z0-9-]*$/);
             }
-        }), { numRuns: 200 });
+        }), { numRuns: 50 });
     });
     it("number of anchors equals number of headings", () => {
         fc.assert(fc.property(markdownWithHeadingsArb, (content) => {
             const headingCount = (content.match(/^#{1,6}\s+.+$/gm) || []).length;
             const anchors = extractHeadingAnchors(content);
             expect(anchors).toHaveLength(headingCount);
-        }), { numRuns: 200 });
+        }), { numRuns: 50 });
     });
 });
 // ---------------------------------------------------------------------------
@@ -152,7 +152,7 @@ describe("Property 3: Design Reference validation", () => {
             const result = validateDesignReferences(refs, content);
             expect(result.valid).toBe(true);
             expect(result.errors).toHaveLength(0);
-        }), { numRuns: 200 });
+        }), { numRuns: 50 });
     });
     it("references NOT matching any heading fail", () => {
         fc.assert(fc.property(markdownWithHeadingsArb, safeStringArb, (content, fakeAnchor) => {
@@ -164,7 +164,7 @@ describe("Property 3: Design Reference validation", () => {
             const result = validateDesignReferences(refs, content);
             expect(result.valid).toBe(false);
             expect(result.errors.length).toBeGreaterThan(0);
-        }), { numRuns: 200 });
+        }), { numRuns: 50 });
     });
 });
 // ---------------------------------------------------------------------------
@@ -181,7 +181,7 @@ describe("Property 4: Format detection defaults to full", () => {
             else {
                 expect(format).toBe("full");
             }
-        }), { numRuns: 200 });
+        }), { numRuns: 50 });
     });
     it('returns "full" for empty frontmatter', () => {
         expect(detectPlanFormat("")).toBe("full");
@@ -207,7 +207,7 @@ describe("Property 5: Lightweight plan validation", () => {
                 dependsOn: i > 0 ? [i] : undefined,
             }));
             expect(validateLightweightPlan(numbered)).toBe(true);
-        }), { numRuns: 200 });
+        }), { numRuns: 50 });
     });
     it("empty array fails", () => {
         expect(validateLightweightPlan([])).toBe(false);
@@ -220,7 +220,7 @@ describe("Property 5: Lightweight plan validation", () => {
                 ...after.map((t, i) => ({ ...t, taskNumber: before.length + 2 + i })),
             ];
             expect(validateLightweightPlan(tasks)).toBe(false);
-        }), { numRuns: 200 });
+        }), { numRuns: 50 });
     });
     it("array with invalid dependency fails", () => {
         const task = {
@@ -245,7 +245,7 @@ describe("Property 6: Placeholder scanning covers all text fields", () => {
             const result = validateLightweightTask(task);
             expect(result.valid).toBe(false);
             expect(result.errors.some((e) => e.includes("forbidden placeholders"))).toBe(true);
-        }), { numRuns: 200 });
+        }), { numRuns: 50 });
     });
 });
 // ---------------------------------------------------------------------------

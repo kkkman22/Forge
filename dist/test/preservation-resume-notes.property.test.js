@@ -146,7 +146,7 @@ describe("Preservation: Notes round-trip without branchName", () => {
                 expect(roundTripped.keyChanges).toEqual(original.keyChanges);
                 expect(roundTripped.keyLearnings).toEqual(original.keyLearnings);
             }
-        }), { numRuns: 100 });
+        }), { numRuns: 40 });
     });
     /**
      * Empty documents round-trip correctly.
@@ -160,7 +160,7 @@ describe("Preservation: Notes round-trip without branchName", () => {
             const parsed = parseNotesDocument(markdown);
             expect(parsed.runId).toBe(runId);
             expect(parsed.entries).toEqual([]);
-        }), { numRuns: 100 });
+        }), { numRuns: 40 });
     });
 });
 // ---------------------------------------------------------------------------

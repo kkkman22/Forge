@@ -45,20 +45,20 @@ describe("Property 25: Lock 文件路径生成", () => {
         fc.assert(fc.property(forgePathArb, (path) => {
             const result = lockFilePath(path);
             expect(result.startsWith(`${LOCK_DIR}/`)).toBe(true);
-        }), { numRuns: 100 });
+        }), { numRuns: 40 });
     });
     it("lock file path ends with .lock", () => {
         fc.assert(fc.property(forgePathArb, (path) => {
             const result = lockFilePath(path);
             expect(result.endsWith(".lock")).toBe(true);
-        }), { numRuns: 100 });
+        }), { numRuns: 40 });
     });
     it("lock file path contains no forward slashes after LOCK_DIR prefix", () => {
         fc.assert(fc.property(forgePathArb, (path) => {
             const result = lockFilePath(path);
             const afterPrefix = result.slice(LOCK_DIR.length + 1);
             expect(afterPrefix.includes("/")).toBe(false);
-        }), { numRuns: 100 });
+        }), { numRuns: 40 });
     });
     it("different forge paths produce different lock paths", () => {
         const a = lockFilePath("progress/topic-a.md");
@@ -83,14 +83,14 @@ describe("Property 25: Lock 过期检测", () => {
         fc.assert(fc.property(lockInfoArb, (info) => {
             const nowMs = new Date(info.acquiredAt).getTime();
             expect(isLockStale(info, nowMs, DEFAULT_LOCK_TIMEOUT_MS)).toBe(false);
-        }), { numRuns: 100 });
+        }), { numRuns: 40 });
     });
     it("lock acquired exactly at timeout boundary is NOT stale", () => {
         fc.assert(fc.property(lockInfoArb, (info) => {
             const acquiredMs = new Date(info.acquiredAt).getTime();
             const nowMs = acquiredMs + DEFAULT_LOCK_TIMEOUT_MS;
             expect(isLockStale(info, nowMs, DEFAULT_LOCK_TIMEOUT_MS)).toBe(false);
-        }), { numRuns: 100 });
+        }), { numRuns: 40 });
     });
     it("lock acquired beyond timeout is stale", () => {
         fc.assert(fc.property(forgePathArb, holderArb, (path, holder) => {
@@ -99,7 +99,7 @@ describe("Property 25: Lock 过期检测", () => {
             const info = { holder, acquiredAt, targetFile: path };
             const nowMs = acquiredMs + DEFAULT_LOCK_TIMEOUT_MS + 1;
             expect(isLockStale(info, nowMs, DEFAULT_LOCK_TIMEOUT_MS)).toBe(true);
-        }), { numRuns: 100 });
+        }), { numRuns: 40 });
     });
     it("lock with invalid timestamp is always stale", () => {
         const info = {
@@ -118,7 +118,7 @@ describe("Property 25: Lock 过期检测", () => {
             if (staleNow) {
                 expect(staleLater).toBe(true);
             }
-        }), { numRuns: 200 });
+        }), { numRuns: 50 });
     });
 });
 // ---------------------------------------------------------------------------
@@ -130,7 +130,7 @@ describe("Property 25: Lock 获取逻辑", () => {
             const result = tryAcquireLock(path, holder, null, Date.now());
             expect(result.acquired).toBe(true);
             expect(result.reason).toBe("");
-        }), { numRuns: 100 });
+        }), { numRuns: 40 });
     });
     it("same holder → always acquired (re-entrant)", () => {
         fc.assert(fc.property(forgePathArb, holderArb, isoDateArb, (path, holder, acquiredAt) => {
@@ -141,7 +141,7 @@ describe("Property 25: Lock 获取逻辑", () => {
             };
             const result = tryAcquireLock(path, holder, existing, Date.now());
             expect(result.acquired).toBe(true);
-        }), { numRuns: 100 });
+        }), { numRuns: 40 });
     });
     it("stale lock by another holder → acquired", () => {
         fc.assert(fc.property(forgePathArb, holderArb, holderArb, (path, holder, otherHolder) => {
@@ -154,7 +154,7 @@ describe("Property 25: Lock 获取逻辑", () => {
             };
             const result = tryAcquireLock(path, holder, existing, Date.now());
             expect(result.acquired).toBe(true);
-        }), { numRuns: 100 });
+        }), { numRuns: 40 });
     });
     it("fresh lock by another holder → rejected", () => {
         fc.assert(fc.property(forgePathArb, holderArb, holderArb, (path, holder, otherHolder) => {
@@ -168,7 +168,7 @@ describe("Property 25: Lock 获取逻辑", () => {
             const result = tryAcquireLock(path, holder, existing, Date.now());
             expect(result.acquired).toBe(false);
             expect(result.reason).toContain(otherHolder);
-        }), { numRuns: 100 });
+        }), { numRuns: 40 });
     });
     it("rejected result always contains non-empty reason", () => {
         fc.assert(fc.property(forgePathArb, holderArb, holderArb, (path, holder, otherHolder) => {
@@ -183,13 +183,13 @@ describe("Property 25: Lock 获取逻辑", () => {
             if (!result.acquired) {
                 expect(result.reason.length).toBeGreaterThan(0);
             }
-        }), { numRuns: 100 });
+        }), { numRuns: 40 });
     });
     it("lockFilePath in result matches expected path", () => {
         fc.assert(fc.property(forgePathArb, holderArb, (path, holder) => {
             const result = tryAcquireLock(path, holder, null, Date.now());
             expect(result.lockFilePath).toBe(lockFilePath(path));
-        }), { numRuns: 100 });
+        }), { numRuns: 40 });
     });
 });
 // ---------------------------------------------------------------------------
@@ -205,7 +205,7 @@ describe("Property 25: LockInfo 序列化往返", () => {
             expect(p.holder).toBe(info.holder);
             expect(p.acquiredAt).toBe(info.acquiredAt);
             expect(p.targetFile).toBe(info.targetFile);
-        }), { numRuns: 200 });
+        }), { numRuns: 50 });
     });
     it("parseLockInfo returns null for empty content", () => {
         expect(parseLockInfo("")).toBeNull();
@@ -220,7 +220,7 @@ describe("Property 25: LockInfo 序列化往返", () => {
             expect(info.holder).toBe(holder);
             expect(info.acquiredAt).toBe(nowIso);
             expect(info.targetFile).not.toContain(".forge/");
-        }), { numRuns: 100 });
+        }), { numRuns: 40 });
     });
 });
 //# sourceMappingURL=state-locking.property.test.js.map

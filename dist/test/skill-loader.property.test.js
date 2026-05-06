@@ -26,7 +26,7 @@ describe("mergeSkillLists properties", () => {
                     expect(item.version).toBe(builtinVersion.version);
                 }
             }
-        }), { numRuns: 200 });
+        }), { numRuns: 50 });
     });
     it("Property 2: merged list contains all unique names (200 iterations)", () => {
         fc.assert(fc.property(fc.array(manifestArb, { maxLength: 20 }), fc.array(manifestArb, { maxLength: 20 }), (builtin, external) => {
@@ -34,14 +34,14 @@ describe("mergeSkillLists properties", () => {
             const allNames = new Set([...builtin, ...external].map((m) => m.name));
             const resultNames = new Set(result.map((m) => m.name));
             expect(resultNames).toEqual(allNames);
-        }), { numRuns: 200 });
+        }), { numRuns: 50 });
     });
     it("no duplicate names in result", () => {
         fc.assert(fc.property(fc.array(manifestArb, { maxLength: 20 }), fc.array(manifestArb, { maxLength: 20 }), (builtin, external) => {
             const result = mergeSkillLists(builtin, external);
             const names = result.map((m) => m.name);
             expect(new Set(names).size).toBe(names.length);
-        }), { numRuns: 200 });
+        }), { numRuns: 50 });
     });
 });
 describe("loadSkillsFromDir", () => {

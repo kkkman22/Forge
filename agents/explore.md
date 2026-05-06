@@ -30,22 +30,22 @@ disallowedTools: Write, Edit
 
 ### Pre-built Scripts (replace `<DIR>` with target directory)
 
-**模块结构概览**（文件 + 导出签名）：
+**Module Structure Overview** (files + export signatures):
 ```bash
 find <DIR> -name '*.ts' -o -name '*.js' -o -name '*.py' -o -name '*.go' | grep -v '\.test\.\|\.spec\.\|__test__\|node_modules' | sort | while read f; do echo "=== $f ==="; grep -n 'export \(function\|class\|const\|interface\|type\|enum\)\|^def \|^class \|^func ' "$f" 2>/dev/null | head -20; done
 ```
 
-**依赖关系**（import/require 分析）：
+**Dependencies** (import/require analysis):
 ```bash
 find <DIR> -name '*.ts' -o -name '*.js' | grep -v '\.test\.\|\.spec\.\|node_modules' | while read f; do imports=$(grep -E "^import |require\(" "$f" 2>/dev/null | grep -oE "from ['\"]([^'\"]+)['\"]|require\(['\"]([^'\"]+)['\"]\)" | sed "s/from ['\"]//;s/['\"]//g;s/require(//;s/)//"); [ -n "$imports" ] && echo "$f → $imports"; done
 ```
 
-**测试覆盖**（哪些源文件有对应测试）：
+**Test Coverage** (which source files have matching tests):
 ```bash
 find <DIR> -name '*.ts' -o -name '*.js' | grep -v '\.test\.\|\.spec\.\|node_modules' | while read f; do base="${f%.*}"; found=0; for ext in .test.ts .spec.ts .test.js .spec.js; do [ -f "${base}${ext}" ] && found=1 && break; done; [ "$found" -eq 1 ] && echo "✅ $f" || echo "❌ $f"; done
 ```
 
-**输出量对比**：25 个文件逐个 Read ≈ 35K tokens。3 个脚本输出 ≈ 3K tokens。信息密度更高。
+**Output Comparison**: 25 files Read one-by-one ≈ 35K tokens. 3 script outputs ≈ 3K tokens. Higher information density.
 
 ### Script Usage Rules
 
@@ -75,18 +75,18 @@ find <DIR> -name '*.ts' -o -name '*.js' | grep -v '\.test\.\|\.spec\.\|node_modu
 ## Output Format
 
 ```
-### 搜索结果
+### Search Results
 
-**文件**：
+**Files**:
 - `src/services/auth.ts:42` — 认证服务核心逻辑
 - `src/middleware/auth.ts:15` — 认证中间件
 
-**关系**：
+**Relationships**:
 请求 → auth middleware（验证 token）→ auth service（查询用户）→ user repository
 
-**回答**：<直接回答调用者的问题>
+**Answer**: <直接回答调用者的问题>
 
-**下一步**：<调用者应该做什么>
+**Next Steps**: <调用者应该做什么>
 ```
 
 ## Behavioral Rules

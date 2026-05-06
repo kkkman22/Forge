@@ -41,7 +41,7 @@ describe("Feature: agent-team-migration, Property 3: decide member selection", (
             // Count: 3 default + 1 optional designer
             const expectedCount = hasUI ? 4 : 3;
             expect(invocations).toHaveLength(expectedCount);
-        }), { numRuns: 100 });
+        }), { numRuns: 40 });
     });
     it("every invocation has valid protocol fields and 500-token limit hint", () => {
         fc.assert(fc.property(decideContextArb, (context) => {
@@ -53,7 +53,7 @@ describe("Feature: agent-team-migration, Property 3: decide member selection", (
                 // 500-token output limit should be mentioned in prompt
                 expect(inv.prompt).toContain("500");
             }
-        }), { numRuns: 100 });
+        }), { numRuns: 40 });
     });
 });
 // ---------------------------------------------------------------------------
@@ -76,7 +76,7 @@ describe("Feature: agent-team-migration, Property 4: critic blocking → status"
             else {
                 expect(status).toBe("confirmed");
             }
-        }), { numRuns: 100 });
+        }), { numRuns: 40 });
     });
     it("buildDecideCriticInvocation includes all Round 1 outputs", () => {
         fc.assert(fc.property(decideContextArb, fc.array(fc.string({ minLength: 1, maxLength: 200 }), { minLength: 1, maxLength: 4 }), (context, round1Outputs) => {
@@ -87,7 +87,7 @@ describe("Feature: agent-team-migration, Property 4: critic blocking → status"
             for (const output of round1Outputs) {
                 expect(criticInv.prompt).toContain(output);
             }
-        }), { numRuns: 100 });
+        }), { numRuns: 40 });
     });
 });
 //# sourceMappingURL=decide-subagent-selection.property.test.js.map

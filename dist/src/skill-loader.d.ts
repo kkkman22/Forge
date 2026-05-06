@@ -44,3 +44,18 @@ export declare function loadSkillsFromDir(dirEntries: string[], readFile: (path:
  * @returns Merged list with unique names, builtin preferred.
  */
 export declare function mergeSkillLists(builtin: SkillManifest[], external: SkillManifest[]): SkillManifest[];
+/** Result of skill installation. */
+export interface InstallResult {
+    success: boolean;
+    skillName?: string;
+    message: string;
+}
+/**
+ * Install a SKILL plugin from a local directory into the project.
+ *
+ * @param sourcePath - Absolute path to the skill directory containing skill.json and SKILL.md.
+ * @param targetRoot - Absolute path to the project's skills root directory.
+ * @param currentVersion - Current Forge version for compatibility checking.
+ * @returns InstallResult indicating success or failure with details.
+ */
+export declare function installSkill(sourcePath: string, targetRoot: string, currentVersion: string): InstallResult;

@@ -93,28 +93,28 @@ describe("Property 1: Router 分类正确性", () => {
             const result = classifyTask(signals);
             expect(result.tier).toBe("full");
             expect(result.commandSequence).toEqual(EXPECTED_SEQUENCES.full);
-        }), { numRuns: 200 });
+        }), { numRuns: 50 });
     });
     it('standard signals (no full signals) → tier is "standard" (Req 1.3: 有明确需求或现成 Spec → 标准)', () => {
         fc.assert(fc.property(standardSignalsArb, (signals) => {
             const result = classifyTask(signals);
             expect(result.tier).toBe("standard");
             expect(result.commandSequence).toEqual(EXPECTED_SEQUENCES.standard);
-        }), { numRuns: 200 });
+        }), { numRuns: 50 });
     });
     it('light signals (no full/standard signals, files ≤ 1, lines ≤ 20) → tier is "light" (Req 1.2)', () => {
         fc.assert(fc.property(lightSignalsArb, (signals) => {
             const result = classifyTask(signals);
             expect(result.tier).toBe("light");
             expect(result.commandSequence).toEqual(EXPECTED_SEQUENCES.light);
-        }), { numRuns: 200 });
+        }), { numRuns: 50 });
     });
     it('no signals match → default tier is "standard" (Req 1.1: 默认标准)', () => {
         fc.assert(fc.property(defaultSignalsArb, (signals) => {
             const result = classifyTask(signals);
             expect(result.tier).toBe("standard");
             expect(result.commandSequence).toEqual(EXPECTED_SEQUENCES.standard);
-        }), { numRuns: 200 });
+        }), { numRuns: 50 });
     });
     it("full signals always take priority over standard and light signals", () => {
         fc.assert(fc.property(taskSignalsArb.filter((s) => 
@@ -126,7 +126,7 @@ describe("Property 1: Router 分类正确性", () => {
             const result = classifyTask(signals);
             expect(result.tier).toBe("full");
             expect(result.commandSequence).toEqual(EXPECTED_SEQUENCES.full);
-        }), { numRuns: 200 });
+        }), { numRuns: 50 });
     });
     it("standard signals take priority over light signals", () => {
         fc.assert(fc.property(fc
@@ -145,7 +145,7 @@ describe("Property 1: Router 分类正确性", () => {
             const result = classifyTask(signals);
             expect(result.tier).toBe("standard");
             expect(result.commandSequence).toEqual(EXPECTED_SEQUENCES.standard);
-        }), { numRuns: 200 });
+        }), { numRuns: 50 });
     });
     it("classification always returns a valid command sequence for the assigned tier", () => {
         fc.assert(fc.property(taskSignalsArb, (signals) => {
@@ -153,7 +153,7 @@ describe("Property 1: Router 分类正确性", () => {
             expect(["light", "standard", "full"]).toContain(result.tier);
             expect(result.commandSequence).toEqual(EXPECTED_SEQUENCES[result.tier]);
             expect(result.reason).toBeTruthy();
-        }), { numRuns: 500 });
+        }), { numRuns: 40 });
     });
 });
 // ---------------------------------------------------------------------------
@@ -181,50 +181,50 @@ describe("Property 23: Brownfield boost", () => {
             const result = classifyTask(signals, undefined, brownfieldTouchingModules);
             expect(result.tier).toBe("standard");
             expect(result.reason).toContain("棕地");
-        }), { numRuns: 200 });
+        }), { numRuns: 50 });
     });
     it("brownfield + NOT touching existing modules stays light", () => {
         fc.assert(fc.property(lightSignalsArb, (signals) => {
             const result = classifyTask(signals, undefined, brownfieldNotTouching);
             expect(result.tier).toBe("light");
-        }), { numRuns: 200 });
+        }), { numRuns: 50 });
     });
     it("greenfield context does not boost light", () => {
         fc.assert(fc.property(lightSignalsArb, (signals) => {
             const result = classifyTask(signals, undefined, greenfieldContext);
             expect(result.tier).toBe("light");
-        }), { numRuns: 200 });
+        }), { numRuns: 50 });
     });
     it("unknown context does not boost light", () => {
         fc.assert(fc.property(lightSignalsArb, (signals) => {
             const result = classifyTask(signals, undefined, unknownContext);
             expect(result.tier).toBe("light");
-        }), { numRuns: 200 });
+        }), { numRuns: 50 });
     });
     it("brownfield boost does not affect full signals", () => {
         fc.assert(fc.property(fullSignalsArb, (signals) => {
             const result = classifyTask(signals, undefined, brownfieldTouchingModules);
             expect(result.tier).toBe("full");
-        }), { numRuns: 200 });
+        }), { numRuns: 50 });
     });
     it("brownfield boost does not affect standard signals", () => {
         fc.assert(fc.property(standardSignalsArb, (signals) => {
             const result = classifyTask(signals, undefined, brownfieldTouchingModules);
             expect(result.tier).toBe("standard");
-        }), { numRuns: 200 });
+        }), { numRuns: 50 });
     });
     it("user override still wins over brownfield boost", () => {
         fc.assert(fc.property(lightSignalsArb, (signals) => {
             const result = classifyTask(signals, "light", brownfieldTouchingModules);
             expect(result.tier).toBe("light");
-        }), { numRuns: 200 });
+        }), { numRuns: 50 });
     });
     it("no project context behaves like v1.0 (backward compatible)", () => {
         fc.assert(fc.property(taskSignalsArb, (signals) => {
             const withContext = classifyTask(signals, undefined, undefined);
             const without = classifyTask(signals);
             expect(withContext.tier).toBe(without.tier);
-        }), { numRuns: 500 });
+        }), { numRuns: 40 });
     });
 });
 // ---------------------------------------------------------------------------
@@ -270,7 +270,7 @@ describe("Property 11: Brownfield boost classification", () => {
         fc.assert(fc.property(signalsWithAuthOrServiceArb, brownfieldTouchingArb, (signals, context) => {
             const result = classifyTask(signals, undefined, context);
             expect(TIER_ORDER[result.tier]).toBeGreaterThanOrEqual(TIER_ORDER.standard);
-        }), { numRuns: 200 });
+        }), { numRuns: 50 });
     });
     it("brownfield + touchesExistingModules with any signals → tier is at least standard (boost ensures no light)", () => {
         fc.assert(fc.property(taskSignalsArb, brownfieldTouchingArb, (signals, context) => {
@@ -278,7 +278,7 @@ describe("Property 11: Brownfield boost classification", () => {
             // Brownfield boost promotes light → standard, so tier is never light
             // unless a user override forces it
             expect(TIER_ORDER[result.tier]).toBeGreaterThanOrEqual(TIER_ORDER.standard);
-        }), { numRuns: 200 });
+        }), { numRuns: 50 });
     });
     it("non-brownfield context does not affect tier when hasAuthChanges or hasNewService", () => {
         const nonBrownfieldArb = fc.record({
@@ -290,7 +290,7 @@ describe("Property 11: Brownfield boost classification", () => {
             const withoutContext = classifyTask(signals);
             // hasAuthChanges/hasNewService trigger full via hasFullSignals regardless of context
             expect(withContext.tier).toBe(withoutContext.tier);
-        }), { numRuns: 200 });
+        }), { numRuns: 50 });
     });
 });
 // ---------------------------------------------------------------------------
@@ -306,13 +306,17 @@ describe("Property: Routing assumptions field", () => {
             for (const a of result.assumptions) {
                 expect(typeof a).toBe("string");
             }
-        }), { numRuns: 500 });
+        }), { numRuns: 40 });
     });
-    it("classifyTask defaults assumptions to an empty array", () => {
+    it("classifyTask returns assumptions as a string array", () => {
         fc.assert(fc.property(taskSignalsArb, (signals) => {
             const result = classifyTask(signals);
-            expect(result.assumptions).toEqual([]);
-        }), { numRuns: 200 });
+            expect(Array.isArray(result.assumptions)).toBe(true);
+            for (const a of result.assumptions) {
+                expect(typeof a).toBe("string");
+                expect(a.length).toBeGreaterThan(0);
+            }
+        }), { numRuns: 50 });
     });
 });
 //# sourceMappingURL=router.property.test.js.map

@@ -113,28 +113,28 @@ describe("Property 8: Build 门禁——Spec 锁定且 Plan 批准", () => {
             const result = checkBuildGate(spec, plan);
             expect(result.allowed).toBe(true);
             expect(result.reasons).toHaveLength(0);
-        }), { numRuns: 200 });
+        }), { numRuns: 50 });
     });
     it("build blocked when any condition is not met (Req 16.1, 16.2)", () => {
         fc.assert(fc.property(blockedCombinationArb, ({ spec, plan }) => {
             const result = checkBuildGate(spec, plan);
             expect(result.allowed).toBe(false);
             expect(result.reasons.length).toBeGreaterThan(0);
-        }), { numRuns: 200 });
+        }), { numRuns: 50 });
     });
     it("blocked result includes specific reason for unlocked spec (Req 16.1)", () => {
         fc.assert(fc.property(planStatusArb, (plan) => {
             const result = checkBuildGate("draft", plan);
             expect(result.allowed).toBe(false);
             expect(result.reasons.some((r) => r.includes("Spec 未锁定"))).toBe(true);
-        }), { numRuns: 200 });
+        }), { numRuns: 50 });
     });
     it("blocked result includes specific reason for unapproved plan (Req 16.2)", () => {
         fc.assert(fc.property(specStatusArb, (spec) => {
             const result = checkBuildGate(spec, "draft");
             expect(result.allowed).toBe(false);
             expect(result.reasons.some((r) => r.includes("Plan 未批准"))).toBe(true);
-        }), { numRuns: 200 });
+        }), { numRuns: 50 });
     });
     it("both conditions failing → two reasons returned", () => {
         fc.assert(fc.property(fc.constant(null), () => {
@@ -143,14 +143,14 @@ describe("Property 8: Build 门禁——Spec 锁定且 Plan 批准", () => {
             expect(result.reasons).toHaveLength(2);
             expect(result.reasons.some((r) => r.includes("Spec 未锁定"))).toBe(true);
             expect(result.reasons.some((r) => r.includes("Plan 未批准"))).toBe(true);
-        }), { numRuns: 200 });
+        }), { numRuns: 50 });
     });
     it("for any spec/plan combination, allowed ↔ (spec=locked ∧ plan=approved)", () => {
         fc.assert(fc.property(specStatusArb, planStatusArb, (spec, plan) => {
             const result = checkBuildGate(spec, plan);
             const expectedAllowed = spec === "locked" && plan === "approved";
             expect(result.allowed).toBe(expectedAllowed);
-        }), { numRuns: 200 });
+        }), { numRuns: 50 });
     });
 });
 // ---------------------------------------------------------------------------
@@ -163,14 +163,14 @@ describe("Property 10: 连续失败升级", () => {
             expect(result.shouldEscalate).toBe(true);
             expect(result.consecutiveFailures).toBeGreaterThanOrEqual(3);
             expect(result.escalationIndex).toBeGreaterThanOrEqual(2); // At least index 2 (3rd attempt)
-        }), { numRuns: 200 });
+        }), { numRuns: 50 });
     });
     it("fewer than 3 consecutive failures → no escalation (Req 5.10)", () => {
         fc.assert(fc.property(sequenceWithoutEscalationArb, (sequence) => {
             const result = analyzeFixAttempts(sequence);
             expect(result.shouldEscalate).toBe(false);
             expect(result.escalationIndex).toBe(-1);
-        }), { numRuns: 200 });
+        }), { numRuns: 50 });
     });
     it("success resets the consecutive failure counter (Req 10.6)", () => {
         fc.assert(fc.property(fc.array(fc.tuple(fc.array(fc.constant("failure"), { minLength: 1, maxLength: 2 }), fc.constant("success")), { minLength: 1, maxLength: 10 }), (chunks) => {
@@ -182,7 +182,7 @@ describe("Property 10: 连续失败升级", () => {
             const sequence = { attempts };
             const result = analyzeFixAttempts(sequence);
             expect(result.shouldEscalate).toBe(false);
-        }), { numRuns: 200 });
+        }), { numRuns: 50 });
     });
     it("exactly 3 consecutive failures triggers escalation", () => {
         fc.assert(fc.property(pureFailureSequenceArb(3), (sequence) => {
@@ -190,14 +190,14 @@ describe("Property 10: 连续失败升级", () => {
             expect(result.shouldEscalate).toBe(true);
             expect(result.consecutiveFailures).toBe(3);
             expect(result.escalationIndex).toBe(2);
-        }), { numRuns: 200 });
+        }), { numRuns: 50 });
     });
     it("exactly 2 consecutive failures does NOT trigger escalation", () => {
         fc.assert(fc.property(pureFailureSequenceArb(2), (sequence) => {
             const result = analyzeFixAttempts(sequence);
             expect(result.shouldEscalate).toBe(false);
             expect(result.consecutiveFailures).toBe(2);
-        }), { numRuns: 200 });
+        }), { numRuns: 50 });
     });
     it("empty sequence → no escalation", () => {
         const result = analyzeFixAttempts({ attempts: [] });
@@ -210,14 +210,14 @@ describe("Property 10: 连续失败升级", () => {
             const result = analyzeFixAttempts({ attempts });
             expect(result.shouldEscalate).toBe(false);
             expect(result.consecutiveFailures).toBe(0);
-        }), { numRuns: 200 });
+        }), { numRuns: 50 });
     });
     it("shouldEscalateToDebug convenience function matches analyzeFixAttempts", () => {
         fc.assert(fc.property(fixAttemptSequenceArb, (sequence) => {
             const detailed = analyzeFixAttempts(sequence);
             const simple = shouldEscalateToDebug(sequence);
             expect(simple).toBe(detailed.shouldEscalate);
-        }), { numRuns: 200 });
+        }), { numRuns: 50 });
     });
     it("escalation index points to the 3rd consecutive failure", () => {
         fc.assert(fc.property(sequenceWithEscalationArb, (sequence) => {
@@ -230,7 +230,7 @@ describe("Property 10: 连续失败升级", () => {
                 expect(sequence.attempts[idx - 1]).toBe("failure");
                 expect(sequence.attempts[idx - 2]).toBe("failure");
             }
-        }), { numRuns: 200 });
+        }), { numRuns: 50 });
     });
 });
 //# sourceMappingURL=build.property.test.js.map

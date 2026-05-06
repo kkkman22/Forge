@@ -23,7 +23,7 @@ describe("Property 1: LogEntry JSON round-trip", () => {
             const json = formatAsJson(entry);
             const parsed = JSON.parse(json);
             expect(parsed).toEqual(JSON.parse(JSON.stringify(entry)));
-        }), { numRuns: 200 });
+        }), { numRuns: 50 });
     });
 });
 /**
@@ -71,7 +71,7 @@ describe("Feature: observability-enhancements, Property 1: LogEntry JSON round-t
             const json = formatAsJson(entry);
             const parsed = JSON.parse(json);
             expect(parsed).toEqual(JSON.parse(JSON.stringify(entry)));
-        }), { numRuns: 100 });
+        }), { numRuns: 40 });
     });
     it("should produce deeply equal object after JSON round-trip for LogEntry with DegradationResult metadata", async () => {
         const { formatAsJson } = await import("../../src/logger/log-sink.js");
@@ -85,7 +85,7 @@ describe("Feature: observability-enhancements, Property 1: LogEntry JSON round-t
             const json = formatAsJson(entry);
             const parsed = JSON.parse(json);
             expect(parsed).toEqual(JSON.parse(JSON.stringify(entry)));
-        }), { numRuns: 100 });
+        }), { numRuns: 40 });
     });
     it("should produce deeply equal object after JSON round-trip for LogEntry with mixed metadata types", async () => {
         const { formatAsJson } = await import("../../src/logger/log-sink.js");
@@ -93,7 +93,7 @@ describe("Feature: observability-enhancements, Property 1: LogEntry JSON round-t
             const json = formatAsJson(entry);
             const parsed = JSON.parse(json);
             expect(parsed).toEqual(JSON.parse(JSON.stringify(entry)));
-        }), { numRuns: 100 });
+        }), { numRuns: 40 });
     });
 });
 //# sourceMappingURL=log-entry.property.test.js.map

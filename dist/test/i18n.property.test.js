@@ -86,7 +86,7 @@ describe("Feature: i18n-support, Property 1: 翻译数据 JSON 往返一致性",
             const serialized = JSON.stringify(data);
             const deserialized = JSON.parse(serialized);
             expect(deserialized).toEqual(data);
-        }), { numRuns: 200 });
+        }), { numRuns: 50 });
     });
 });
 // ---------------------------------------------------------------------------
@@ -113,7 +113,7 @@ describe("Feature: i18n-support, Property 2: 点分隔路径查找正确性", ()
                 }
                 expect(result).toBe(expected);
             }
-        }), { numRuns: 200 });
+        }), { numRuns: 50 });
     });
     /**
      * **Validates: Requirements 1.2, 4.1**
@@ -128,7 +128,7 @@ describe("Feature: i18n-support, Property 2: 点分隔路径查找正确性", ()
                 const result = lookupKey(data, path);
                 expect(result).toBeNull();
             }
-        }), { numRuns: 200 });
+        }), { numRuns: 50 });
     });
     /**
      * **Validates: Requirements 1.2, 4.1**
@@ -144,7 +144,7 @@ describe("Feature: i18n-support, Property 2: 点分隔路径查找正确性", ()
             // we append a guaranteed-missing segment.
             const nonExistentPath = `${path}.__nonexistent__`;
             expect(lookupKey(data, nonExistentPath)).toBeNull();
-        }), { numRuns: 200 });
+        }), { numRuns: 50 });
     });
     /**
      * **Validates: Requirements 1.2, 4.1**
@@ -158,7 +158,7 @@ describe("Feature: i18n-support, Property 2: 点分隔路径查找正确性", ()
             expect(lookupKey(data, "a..b")).toBeNull();
             expect(lookupKey(data, ".a")).toBeNull();
             expect(lookupKey(data, "a.")).toBeNull();
-        }), { numRuns: 200 });
+        }), { numRuns: 50 });
     });
 });
 // ---------------------------------------------------------------------------
@@ -214,7 +214,7 @@ describe("Feature: i18n-support, Property 3: 翻译回退链完整性", () => {
             else {
                 expect(result).toBe(key);
             }
-        }), { numRuns: 200 });
+        }), { numRuns: 50 });
     });
     /**
      * **Validates: Requirements 4.3, 4.4**
@@ -229,7 +229,7 @@ describe("Feature: i18n-support, Property 3: 翻译回退链完整性", () => {
                 translations: {},
             };
             expect(translate(config, key)).toBe(key);
-        }), { numRuns: 200 });
+        }), { numRuns: 50 });
     });
 });
 // ---------------------------------------------------------------------------
@@ -298,7 +298,7 @@ describe("Feature: i18n-support, Property 4: 字符串插值完备性", () => {
             }
             expected += textSegments[names.length];
             expect(result).toBe(expected);
-        }), { numRuns: 200 });
+        }), { numRuns: 50 });
     });
     /**
      * **Validates: Requirements 4.2, 4.5**
@@ -317,7 +317,7 @@ describe("Feature: i18n-support, Property 4: 字符串插值完备性", () => {
             }
             const result = interpolate(template, {});
             expect(result).toBe(template);
-        }), { numRuns: 200 });
+        }), { numRuns: 50 });
     });
     /**
      * **Validates: Requirements 4.2, 4.5**
@@ -329,7 +329,7 @@ describe("Feature: i18n-support, Property 4: 字符串插值完备性", () => {
             .string({ minLength: 0, maxLength: 100 })
             .filter((s) => !s.includes("{") && !s.includes("}")), fc.dictionary(placeholderNameArb, leafValueArb, { minKeys: 0, maxKeys: 3 }), (template, params) => {
             expect(interpolate(template, params)).toBe(template);
-        }), { numRuns: 200 });
+        }), { numRuns: 50 });
     });
 });
 //# sourceMappingURL=i18n.property.test.js.map

@@ -109,6 +109,8 @@ export interface IterationContext {
     readonly executeEffects: (effects: OrchestratorEffect[]) => Promise<void>;
     readonly t: (key: string, params?: Record<string, string>) => string;
     readonly abortSignal?: AbortSignal;
+    readonly puaEnabled?: boolean;
+    readonly puaStateManager?: PuaStateManager | null;
 }
 /**
  * Extended context for skill-aware iteration.

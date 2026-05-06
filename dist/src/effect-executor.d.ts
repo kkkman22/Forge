@@ -179,4 +179,18 @@ export declare class EffectExecutor implements EffectExecutorInterface {
      * Execute a Ship discard: checkout main → force delete feature branch.
      */
     private executeShipDiscard;
+    /**
+     * Execute a `write_event_log` effect by appending a JSONL line to the
+     * run's `events.jsonl` file.
+     *
+     * Behaviour:
+     *   - Ensures `.forge/runs/<runId>/` exists before writing.
+     *   - Appends `JSON.stringify(entry) + "\n"` to `events.jsonl`.
+     *   - Failures are logged via `onLog` and swallowed — the event log is
+     *     an audit artefact, and a write failure must NOT cause the
+     *     surrounding iteration to rollback or abort (Requirement 3.6).
+     *
+     * **Validates: Requirements 3.1, 3.6**
+     */
+    private executeWriteEventLog;
 }

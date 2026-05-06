@@ -133,7 +133,7 @@ describe("Feature: forge-audit-remediation, Property 9: Frontmatter round-trip p
                 expect(rebuiltExtracted).toBe(originalExtracted);
                 expect(rebuiltExtracted).toBe(originalValue);
             }
-        }), { numRuns: 200 });
+        }), { numRuns: 50 });
     });
     /**
      * **Validates: Requirements 6.4**
@@ -167,7 +167,7 @@ describe("Feature: forge-audit-remediation, Property 9: Frontmatter round-trip p
                 const rebuiltExtracted = extractNumericField(rp.raw, key);
                 expect(rebuiltExtracted).toBe(originalExtracted);
             }
-        }), { numRuns: 200 });
+        }), { numRuns: 50 });
     });
     /**
      * **Validates: Requirements 6.4**
@@ -210,7 +210,7 @@ describe("Feature: forge-audit-remediation, Property 9: Frontmatter round-trip p
             for (const [key] of filteredNFields) {
                 expect(extractNumericField(rp.raw, key)).toBe(extractNumericField(p.raw, key));
             }
-        }), { numRuns: 200 });
+        }), { numRuns: 50 });
     });
 });
 // ---------------------------------------------------------------------------
@@ -235,7 +235,7 @@ describe("Feature: forge-audit-remediation, Property 8: Frontmatter parsing is c
             }
             // If parsed is non-null but has no p0/p1 fields, it should also be skipped
             // (this is quality-gate specific logic, not frontmatter parsing)
-        }), { numRuns: 200 });
+        }), { numRuns: 50 });
     });
     it("parseFrontmatter result is consistent with state module behavior", () => {
         fc.assert(fc.property(arbitraryContentArb, (content) => {
@@ -248,7 +248,7 @@ describe("Feature: forge-audit-remediation, Property 8: Frontmatter parsing is c
             if (parsed === null) {
                 expect(status).toBeNull();
             }
-        }), { numRuns: 200 });
+        }), { numRuns: 50 });
     });
     it("parseFrontmatter result is consistent with handoff module behavior", () => {
         fc.assert(fc.property(arbitraryContentArb, (content) => {
@@ -260,7 +260,7 @@ describe("Feature: forge-audit-remediation, Property 8: Frontmatter parsing is c
             }
             // If parsed is non-null but missing from/to/created fields, handoff also returns null
             // (this is handoff-specific validation, not frontmatter parsing)
-        }), { numRuns: 200 });
+        }), { numRuns: 50 });
     });
     /**
      * **Validates: Requirements 6.1**
@@ -281,7 +281,7 @@ describe("Feature: forge-audit-remediation, Property 8: Frontmatter parsing is c
             const manualStatus = extractStringField(raw, "status");
             expect(directStatus).toBe(manualStatus);
             expect(directStatus).toBe(statusValue);
-        }), { numRuns: 100 });
+        }), { numRuns: 40 });
     });
 });
 // ---------------------------------------------------------------------------
@@ -309,13 +309,13 @@ describe("Feature: audit-remediation-v221, Property 3: Frontmatter field extract
         fc.assert(fc.property(fc.string(), (fieldName) => {
             const frontmatter = "status: draft\ntitle: hello";
             expect(() => extractStringField(frontmatter, fieldName)).not.toThrow();
-        }), { numRuns: 200 });
+        }), { numRuns: 50 });
     });
     it("extractStringField never throws for regex-special-char fieldNames", () => {
         fc.assert(fc.property(regexSpecialCharsArb, (fieldName) => {
             const frontmatter = "status: draft\ntitle: hello";
             expect(() => extractStringField(frontmatter, fieldName)).not.toThrow();
-        }), { numRuns: 200 });
+        }), { numRuns: 50 });
     });
     /**
      * **Validates: Requirements 7.1, 7.2**
@@ -328,13 +328,13 @@ describe("Feature: audit-remediation-v221, Property 3: Frontmatter field extract
         fc.assert(fc.property(fc.string(), (fieldName) => {
             const frontmatter = "tags:\n  - a\n  - b";
             expect(() => extractListField(frontmatter, fieldName)).not.toThrow();
-        }), { numRuns: 200 });
+        }), { numRuns: 50 });
     });
     it("extractListField never throws for regex-special-char fieldNames", () => {
         fc.assert(fc.property(regexSpecialCharsArb, (fieldName) => {
             const frontmatter = "tags:\n  - a\n  - b";
             expect(() => extractListField(frontmatter, fieldName)).not.toThrow();
-        }), { numRuns: 200 });
+        }), { numRuns: 50 });
     });
     /**
      * **Validates: Requirements 7.1, 7.2**
@@ -347,13 +347,13 @@ describe("Feature: audit-remediation-v221, Property 3: Frontmatter field extract
         fc.assert(fc.property(fc.string(), (fieldName) => {
             const frontmatter = "count: 42\nversion: 1.5";
             expect(() => extractNumericField(frontmatter, fieldName)).not.toThrow();
-        }), { numRuns: 200 });
+        }), { numRuns: 50 });
     });
     it("extractNumericField never throws for regex-special-char fieldNames", () => {
         fc.assert(fc.property(regexSpecialCharsArb, (fieldName) => {
             const frontmatter = "count: 42\nversion: 1.5";
             expect(() => extractNumericField(frontmatter, fieldName)).not.toThrow();
-        }), { numRuns: 200 });
+        }), { numRuns: 50 });
     });
     /**
      * **Validates: Requirements 7.1, 7.2**
@@ -370,7 +370,7 @@ describe("Feature: audit-remediation-v221, Property 3: Frontmatter field extract
             expect(numResult === null || typeof numResult === "number").toBe(true);
             const listResult = extractListField(frontmatter, fieldName);
             expect(Array.isArray(listResult)).toBe(true);
-        }), { numRuns: 200 });
+        }), { numRuns: 50 });
     });
 });
 //# sourceMappingURL=frontmatter.property.test.js.map

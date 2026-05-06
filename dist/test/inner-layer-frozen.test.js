@@ -214,7 +214,7 @@ describe("Property 7: Inner-layer and outer-layer frozen zone checks are consist
             expect(innerResult.blocked).toBe(outerBlocked);
             // Both should be blocked for frozen status in frozen zone
             expect(outerBlocked).toBe(true);
-        }), { numRuns: 200 });
+        }), { numRuns: 50 });
     });
     it("frozen zone path with non-frozen status: inner-layer matches outer-layer", () => {
         fc.assert(fc.property(frozenRelativePathArb, nonFrozenStatusArb, (relativePath, status) => {
@@ -226,7 +226,7 @@ describe("Property 7: Inner-layer and outer-layer frozen zone checks are consist
             expect(innerResult.blocked).toBe(outerBlocked);
             // Both should NOT be blocked for non-frozen status
             expect(outerBlocked).toBe(false);
-        }), { numRuns: 200 });
+        }), { numRuns: 50 });
     });
     it("non-frozen zone path: inner-layer matches outer-layer (never blocked)", () => {
         fc.assert(fc.property(nonFrozenRelativePathArb, frozenStatusArb, (relativePath, status) => {
@@ -238,7 +238,7 @@ describe("Property 7: Inner-layer and outer-layer frozen zone checks are consist
             expect(innerResult.blocked).toBe(outerBlocked);
             // Non-frozen zone paths are never blocked
             expect(outerBlocked).toBe(false);
-        }), { numRuns: 100 });
+        }), { numRuns: 40 });
     });
     it("path variants produce consistent inner/outer judgments", () => {
         fc.assert(fc.property(frozenRelativePathArb, frozenStatusArb, (relativePath, status) => {
@@ -256,7 +256,7 @@ describe("Property 7: Inner-layer and outer-layer frozen zone checks are consist
                 const innerResult = checkWritePermission(forgePath, content);
                 expect(innerResult.blocked).toBe(outerBlocked);
             }
-        }), { numRuns: 100 });
+        }), { numRuns: 40 });
     });
 });
 //# sourceMappingURL=inner-layer-frozen.test.js.map

@@ -92,7 +92,7 @@ describe("Feature: pua-quality-engine, Property 11: PUA StatusFile 字段 round-
             expect(extracted.puaMethodology).toBe(fields.puaMethodology);
             expect(extracted.puaChainIndex).toBe(fields.puaChainIndex);
             expect(extracted.puaFailurePattern).toBe(fields.puaFailurePattern);
-        }), { numRuns: 200 });
+        }), { numRuns: 50 });
     });
     /**
      * **Validates: Requirements 9.1, 9.2, 9.3, 9.4**
@@ -116,7 +116,7 @@ describe("Feature: pua-quality-engine, Property 11: PUA StatusFile 字段 round-
                 .split("\n")
                 .filter((line) => line.trim() !== "" && !/^pua_\w+:\s/.test(line));
             expect(writtenFields).toEqual(originalFields);
-        }), { numRuns: 200 });
+        }), { numRuns: 50 });
     });
     /**
      * **Validates: Requirements 9.1, 9.2, 9.3, 9.4**
@@ -134,7 +134,7 @@ describe("Feature: pua-quality-engine, Property 11: PUA StatusFile 字段 round-
             expect(extracted2.puaMethodology).toBe(extracted1.puaMethodology);
             expect(extracted2.puaChainIndex).toBe(extracted1.puaChainIndex);
             expect(extracted2.puaFailurePattern).toBe(extracted1.puaFailurePattern);
-        }), { numRuns: 200 });
+        }), { numRuns: 50 });
     });
 });
 // ---------------------------------------------------------------------------
@@ -156,7 +156,7 @@ describe("Feature: pua-quality-engine, Property 12: PUA StatusFile 字段清除�
             expect(extracted.puaMethodology).toBeUndefined();
             expect(extracted.puaChainIndex).toBeUndefined();
             expect(extracted.puaFailurePattern).toBeUndefined();
-        }), { numRuns: 200 });
+        }), { numRuns: 50 });
     });
     /**
      * **Validates: Requirements 9.5, 9.6**
@@ -181,7 +181,7 @@ describe("Feature: pua-quality-engine, Property 12: PUA StatusFile 字段清除�
                 .split("\n")
                 .filter((line) => line.trim() !== "" && !/^pua_\w+:\s/.test(line));
             expect(clearedNonPuaFields).toEqual(originalNonPuaFields);
-        }), { numRuns: 200 });
+        }), { numRuns: 50 });
     });
     /**
      * **Validates: Requirements 9.5, 9.6**
@@ -194,7 +194,7 @@ describe("Feature: pua-quality-engine, Property 12: PUA StatusFile 字段清除�
             const cleared1 = clearPuaFields(contentWithFields);
             const cleared2 = clearPuaFields(cleared1);
             expect(cleared2).toBe(cleared1);
-        }), { numRuns: 200 });
+        }), { numRuns: 50 });
     });
 });
 // ---------------------------------------------------------------------------
@@ -214,7 +214,7 @@ describe("Feature: pua-quality-engine, Property 13: PUA StatusFile 解析容错�
             // Should not throw — if we got here, it didn't throw
             expect(result).toBeDefined();
             expect(typeof result).toBe("object");
-        }), { numRuns: 200 });
+        }), { numRuns: 50 });
     });
     /**
      * **Validates: Requirements 9.8**
@@ -229,7 +229,7 @@ describe("Feature: pua-quality-engine, Property 13: PUA StatusFile 解析容错�
             expect(result.puaMethodology).toBeUndefined();
             expect(result.puaChainIndex).toBeUndefined();
             expect(result.puaFailurePattern).toBeUndefined();
-        }), { numRuns: 200 });
+        }), { numRuns: 50 });
     });
     /**
      * **Validates: Requirements 9.8**

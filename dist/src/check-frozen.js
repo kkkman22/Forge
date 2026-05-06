@@ -30,9 +30,7 @@ const FROZEN_STATUSES = ["locked", "approved"];
  *
  * **Validates: Requirement 5.10** — prompt-defense pattern library.
  */
-const HARD_FROZEN_SOURCE_FILES = [
-    "src/prompt-defense-patterns.ts",
-];
+const HARD_FROZEN_SOURCE_FILES = ["src/prompt-defense-patterns.ts"];
 /**
  * Check whether the given path is in the source-tree hard-frozen list.
  *

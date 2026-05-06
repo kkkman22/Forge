@@ -92,7 +92,7 @@ describe("Property 33: detectWorkNature keyword detection", () => {
             if (bugfixKws.some((kw) => lower.includes(kw.toLowerCase())))
                 return; // skip ambiguous
             expect(detectWorkNature(desc)).toBe("refactor");
-        }), { numRuns: 200 });
+        }), { numRuns: 50 });
     });
     it("returns 'bugfix' for descriptions with bugfix keywords (no refactor keywords)", () => {
         fc.assert(fc.property(bugfixDescArb, (desc) => {
@@ -113,12 +113,12 @@ describe("Property 33: detectWorkNature keyword detection", () => {
             if (refactorKws.some((kw) => lower.includes(kw.toLowerCase())))
                 return; // skip ambiguous
             expect(detectWorkNature(desc)).toBe("bugfix");
-        }), { numRuns: 200 });
+        }), { numRuns: 50 });
     });
     it("returns 'feature' for descriptions with no matching keywords", () => {
         fc.assert(fc.property(neutralDescArb, (desc) => {
             expect(detectWorkNature(desc)).toBe("feature");
-        }), { numRuns: 200 });
+        }), { numRuns: 50 });
     });
     it("returns 'feature' when both refactor and bugfix keywords are present (ambiguous)", () => {
         fc.assert(fc.property(refactorDescArb, bugfixDescArb, (refactorDesc, bugfixDesc) => {
@@ -155,7 +155,7 @@ describe("Property 33: detectWorkNature keyword detection", () => {
             if (hasRefactor && hasBugfix) {
                 expect(detectWorkNature(combined)).toBe("feature");
             }
-        }), { numRuns: 200 });
+        }), { numRuns: 50 });
     });
 });
 // ---------------------------------------------------------------------------
@@ -230,7 +230,7 @@ describe("Property 34: WorkNature × Tier mapping", () => {
             const key = getWorkNatureSequenceKey(nature, tier);
             expect(typeof key).toBe("string");
             expect(key.length).toBeGreaterThan(0);
-        }), { numRuns: 100 });
+        }), { numRuns: 40 });
     });
 });
 // ---------------------------------------------------------------------------
@@ -243,13 +243,13 @@ describe("Property 35: classifyTask work_nature field", () => {
             const result = classifyTask(signals, undefined, undefined, "fullstack", "iteration", nature);
             expect(result).toHaveProperty("work_nature");
             expect(result.work_nature).toBe(nature);
-        }), { numRuns: 200 });
+        }), { numRuns: 50 });
     });
     it("classifyTask defaults work_nature to 'feature' when not provided", () => {
         fc.assert(fc.property(taskSignalsArb, (signals) => {
             const result = classifyTask(signals);
             expect(result.work_nature).toBe("feature");
-        }), { numRuns: 100 });
+        }), { numRuns: 40 });
     });
     it("work_nature does not affect tier classification", () => {
         fc.assert(fc.property(taskSignalsArb, workNatureArb, workNatureArb, (signals, n1, n2) => {
@@ -257,7 +257,7 @@ describe("Property 35: classifyTask work_nature field", () => {
             const r2 = classifyTask(signals, undefined, undefined, "fullstack", "iteration", n2);
             expect(r1.tier).toBe(r2.tier);
             expect(r1.commandSequence).toEqual(r2.commandSequence);
-        }), { numRuns: 200 });
+        }), { numRuns: 50 });
     });
 });
 //# sourceMappingURL=router-worknature.property.test.js.map

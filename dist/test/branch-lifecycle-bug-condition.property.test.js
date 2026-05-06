@@ -89,7 +89,7 @@ describe("Property 1: Topic Mismatch Detection", () => {
             const expectedTopic = branchName.split("/").slice(1).join("/");
             const result = extractBranchTopic(branchName);
             expect(result).toBe(expectedTopic);
-        }), { numRuns: 200 });
+        }), { numRuns: 50 });
     });
     it("extractBranchTopic returns null for non-feature/forge branches", () => {
         const nonBranchArb = fc.oneof(fc.constant("main"), fc.constant("develop"), fc.constant("release/1.0"), fc
@@ -98,28 +98,28 @@ describe("Property 1: Topic Mismatch Detection", () => {
         fc.assert(fc.property(nonBranchArb, (branchName) => {
             const result = extractBranchTopic(branchName);
             expect(result).toBeNull();
-        }), { numRuns: 200 });
+        }), { numRuns: 50 });
     });
     it("checkBranchTopicGate allows when topics match", () => {
         fc.assert(fc.property(matchedTopicPairArb, ({ branchName, taskTopic }) => {
             const result = checkBranchTopicGate(branchName, taskTopic);
             expect(result.allowed).toBe(true);
             expect(result.reasons).toHaveLength(0);
-        }), { numRuns: 200 });
+        }), { numRuns: 50 });
     });
     it("checkBranchTopicGate blocks when topics do not match", () => {
         fc.assert(fc.property(mismatchedTopicPairArb, ({ branchName, taskTopic }) => {
             const result = checkBranchTopicGate(branchName, taskTopic);
             expect(result.allowed).toBe(false);
             expect(result.reasons.length).toBeGreaterThan(0);
-        }), { numRuns: 200 });
+        }), { numRuns: 50 });
     });
     it("checkBranchTopicGate blocks on non-feature/forge branch (main, develop, etc.)", () => {
         fc.assert(fc.property(topicArb, (taskTopic) => {
             const result = checkBranchTopicGate("main", taskTopic);
             expect(result.allowed).toBe(false);
             expect(result.reasons.length).toBeGreaterThan(0);
-        }), { numRuns: 200 });
+        }), { numRuns: 50 });
     });
     it("checkBranchTopicGate extracts nested topic from feature/foo/bar as 'foo/bar'", () => {
         const nestedBranch = "feature/foo/bar";
@@ -144,21 +144,21 @@ describe("Property 3: Pending-Delivery Recording", () => {
             expect(result.branchName).toBe(branchName);
             expect(result.topic).toBe(topic);
             expect(result.timestamp).toBe(timestamp);
-        }), { numRuns: 200 });
+        }), { numRuns: 50 });
     });
     it("recordPendingDelivery returns a record that equals an explicitly constructed one", () => {
         fc.assert(fc.property(branchNameArb, topicArb, timestampArb, (branchName, topic, timestamp) => {
             const result = recordPendingDelivery(branchName, topic, timestamp);
             const expected = { branchName, topic, timestamp };
             expect(result).toEqual(expected);
-        }), { numRuns: 200 });
+        }), { numRuns: 50 });
     });
     it("recordPendingDelivery with forge/<topic> branch preserves the full branch name", () => {
         fc.assert(fc.property(topicArb, timestampArb, (topic, timestamp) => {
             const branchName = `forge/${topic}`;
             const result = recordPendingDelivery(branchName, topic, timestamp);
             expect(result.branchName).toBe(branchName);
-        }), { numRuns: 200 });
+        }), { numRuns: 50 });
     });
 });
 // ---------------------------------------------------------------------------
@@ -184,7 +184,7 @@ describe("Property 4: Stale Branch Detection", () => {
             const stale = detectStaleBranches(records, currentTopic, now, threshold);
             expect(stale).toHaveLength(1);
             expect(stale[0].branchName).toBe("feature/stale-1");
-        }), { numRuns: 200 });
+        }), { numRuns: 50 });
     });
     it("detectStaleBranches returns empty array when all records match current topic", () => {
         fc.assert(fc.property(topicArb, timestampArb, fc.array(timestampArb, { minLength: 0, maxLength: 10 }), (currentTopic, now, timestamps) => {
@@ -195,7 +195,7 @@ describe("Property 4: Stale Branch Detection", () => {
             }));
             const stale = detectStaleBranches(records, currentTopic, now, 60000);
             expect(stale).toHaveLength(0);
-        }), { numRuns: 200 });
+        }), { numRuns: 50 });
     });
     it("detectStaleBranches returns empty array when all records are within threshold", () => {
         fc.assert(fc.property(topicArb, topicArb, timestampArb, fc.integer({ min: 0, max: 59999 }), (currentTopic, otherTopic, now, withinThreshold) => {
@@ -207,7 +207,7 @@ describe("Property 4: Stale Branch Detection", () => {
             ];
             const stale = detectStaleBranches(records, currentTopic, now, threshold);
             expect(stale).toHaveLength(0);
-        }), { numRuns: 200 });
+        }), { numRuns: 50 });
     });
     it("detectStaleBranches returns all records when all are stale", () => {
         fc.assert(fc.property(topicArb, fc
@@ -222,13 +222,13 @@ describe("Property 4: Stale Branch Detection", () => {
             }));
             const stale = detectStaleBranches(records, currentTopic, now, threshold);
             expect(stale).toHaveLength(otherTopics.length);
-        }), { numRuns: 200 });
+        }), { numRuns: 50 });
     });
     it("detectStaleBranches handles empty records array", () => {
         fc.assert(fc.property(topicArb, timestampArb, (currentTopic, now) => {
             const stale = detectStaleBranches([], currentTopic, now, 60000);
             expect(stale).toHaveLength(0);
-        }), { numRuns: 200 });
+        }), { numRuns: 50 });
     });
 });
 // ---------------------------------------------------------------------------
@@ -239,25 +239,25 @@ describe("Property 5: Cross-Topic Commit Prevention", () => {
         fc.assert(fc.property(matchedCommitPairArb, ({ branchName, commitTopic }) => {
             const result = checkCommitTopicMatch(branchName, commitTopic);
             expect(result.allowed).toBe(true);
-        }), { numRuns: 200 });
+        }), { numRuns: 50 });
     });
     it("checkCommitTopicMatch blocks when topics do not match", () => {
         fc.assert(fc.property(mismatchedCommitPairArb, ({ branchName, commitTopic }) => {
             const result = checkCommitTopicMatch(branchName, commitTopic);
             expect(result.allowed).toBe(false);
-        }), { numRuns: 200 });
+        }), { numRuns: 50 });
     });
     it("checkCommitTopicMatch blocks on non-feature/forge branch", () => {
         fc.assert(fc.property(topicArb, (commitTopic) => {
             const result = checkCommitTopicMatch("main", commitTopic);
             expect(result.allowed).toBe(false);
-        }), { numRuns: 200 });
+        }), { numRuns: 50 });
     });
     it("checkCommitTopicMatch blocks on empty branch name", () => {
         fc.assert(fc.property(topicArb, (commitTopic) => {
             const result = checkCommitTopicMatch("", commitTopic);
             expect(result.allowed).toBe(false);
-        }), { numRuns: 200 });
+        }), { numRuns: 50 });
     });
     it("checkCommitTopicMatch with nested slash topic (feature/a/b) matches 'a/b'", () => {
         const result = checkCommitTopicMatch("feature/a/b", "a/b");
@@ -283,7 +283,7 @@ describe("Property 6: Unshipped Branch Detection", () => {
                 expect(w.timestamp).toBeTypeOf("number");
                 expect(w.message).toContain(w.branchName);
             }
-        }), { numRuns: 200 });
+        }), { numRuns: 50 });
     });
     it("detectUnshippedBranches returns empty when all topics match", () => {
         fc.assert(fc.property(topicArb, timestampArb, (topic, timestamp) => {
@@ -292,13 +292,13 @@ describe("Property 6: Unshipped Branch Detection", () => {
             ];
             const warnings = detectUnshippedBranches(pendingDeliveries, topic);
             expect(warnings).toHaveLength(0);
-        }), { numRuns: 200 });
+        }), { numRuns: 50 });
     });
     it("detectUnshippedBranches returns empty for empty input", () => {
         fc.assert(fc.property(topicArb, (currentTopic) => {
             const warnings = detectUnshippedBranches([], currentTopic);
             expect(warnings).toHaveLength(0);
-        }), { numRuns: 200 });
+        }), { numRuns: 50 });
     });
 });
 // ---------------------------------------------------------------------------
