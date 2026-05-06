@@ -27,6 +27,8 @@ export interface ReviewResult {
   p0Count: number;
   /** Number of P1 (high-impact) issues. */
   p1Count: number;
+  /** Commit hash at the time of review. Optional for backward compatibility. */
+  reviewedAtCommit?: string;
 }
 
 export interface TestResult {
@@ -167,6 +169,34 @@ export function checkShipGateWithChecklist(
       `Checklist 未完成：${unverified.length} 个 P0/P1 条目未验证（${unverified.map((e) => e.findingId).join(", ")}）`,
     );
     result.allowed = false;
+  }
+
+  return result;
+}
+
+/**
+ * Extended ship gate with Review Freshness check.
+ *
+ * Adds a non-blocking freshness warning: if the review was performed at a
+ * different commit and project code has changed since, a warning is appended
+ * to the reasons. This does NOT block ship — it is advisory only.
+ */
+export function checkShipGateWithFreshness(
+  review: ReviewResult,
+  test: TestResult,
+  progress: ProgressResult,
+  currentHead: string,
+  changedFiles: string[],
+  checklist?: ChecklistEntry[],
+): ShipGateResult {
+  const result = checklist
+    ? checkShipGateWithChecklist(review, test, progress, checklist)
+    : checkShipGate(review, test, progress);
+
+  const freshness = checkReviewFreshness(review.reviewedAtCommit, currentHead, changedFiles);
+  if (!freshness.fresh) {
+    const fileList = freshness.changedFiles ? ` [${freshness.changedFiles.join(", ")}]` : "";
+    result.reasons.push(`⚠️ Review freshness: ${freshness.reason}${fileList}`);
   }
 
   return result;

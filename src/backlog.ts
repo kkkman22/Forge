@@ -63,7 +63,7 @@ function serializeEntry(entry: BacklogEntry): string {
     lines.push(`- **Resolved By:** ${entry.resolvedBy ?? ""}`);
     lines.push(`- **Resolved Date:** ${entry.resolvedDate ?? ""}`);
   }
-  return lines.join("\n") + "\n";
+  return `${lines.join("\n")}\n`;
 }
 
 /** Serialize backlog entries to `.forge/backlog.md` format. */
@@ -201,9 +201,7 @@ export function findOverlappingEntries(
 
   return entries.filter((entry) => {
     const entryPath = entry.filePath.replace(/\\/g, "/").toLowerCase().trim();
-    return normalized.some(
-      (af) => entryPath === af || entryPath.startsWith(af + "/"),
-    );
+    return normalized.some((af) => entryPath === af || entryPath.startsWith(`${af}/`));
   });
 }
 

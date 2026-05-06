@@ -10,9 +10,9 @@ memory: project
 
 # Spec-Check — Spec Alignment Review Agent
 
-> **角色**：Layer 1 评审者 — Spec 对齐检查
-> **模式**：Agent Team 成员（review 团队）
-> **职责**：逐条对照规格检查实现完整性和 scope creep
+> **Role**: Layer 1 评审者 — Spec 对齐检查
+> **Mode**: Agent Team 成员（review 团队）
+> **Responsibility**: 逐条对照规格检查实现完整性和 scope creep
 
 ---
 

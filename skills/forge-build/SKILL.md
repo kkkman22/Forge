@@ -35,6 +35,8 @@ disable-model-invocation: true
 
 **Rejection Output**: `🚫 Build 前置检查未通过 — 命名：<检查> 证据：<文件状态> 建议：<路由> 重入：<条件>`. Multiple failures → list all. Autonomous → JSON.
 
+**函数调用**: `checkBuildGate(specStatus, planStatus)` — 参数：从 `.forge/specs/<topic>/spec.md` 和 `.forge/plans/<topic>.md` frontmatter 读取 status 字段；返回 `{ allowed, reasons }`；`allowed: false` 时以本段 rejection 格式输出所有未通过项
+
 → Branch Gate auto-switch / unshipped-branch warning / lightweight exception 详见 references/branch-gate.md
 
 ---
@@ -53,7 +55,10 @@ Mandatory Restatement Checkpoint (counter init 3) + Subagent Status handling + I
 
 ### 3.3 Full (new service/db/auth/ambiguous)
 
-**Phase 1**: Parallel research Subagents（`Promise.allSettled`，`max_parallel_agents` default 6）。→ 函数签名详见 references/function-contracts.md
+**Phase 1**: Parallel research Subagents（`Promise.allSettled`，`max_parallel_agents` default 6）。
+- **函数调用**: `buildResearchSubagents(topics)` — 参数：从 Plan 研究问题提取的 `string[]`；返回 `SubagentInvocation[]`；用于构造并行研究 Subagent 配置
+- **函数调用**: `mergeResearchFindings(results)` — 参数：Phase 1 所有 Subagent 返回的 `SubagentResult[]`；返回合并后的研究发现字符串；写入 `.forge/findings/<topic>.md`
+→ 函数签名详见 references/function-contracts.md
 
 **Phase 2**: Module-by-module Subagent TDD。Optional Git Worktree for file overlap。Restatement counter init at Phase 2 start。→ Final Validation。→ 详见 references/subagent-orchestration.md
 
@@ -95,7 +100,9 @@ GREEN 阶段的代码必须是"能让测试通过的最简单实现"。引入抽
 
 ## 5. Failure Handling
 
-**5.1 Three-strike**: 3 consecutive fails → `debugger` agent (maxTurns=15): read errors → one hypothesis → minimal fix → report if 3 more. `🚫 连续失败 3 次 → debugger. 尝试 1/2/3：<原因>` → 函数签名详见 references/function-contracts.md
+**5.1 Three-strike**: 3 consecutive fails → `debugger` agent (maxTurns=15): read errors → one hypothesis → minimal fix → report if 3 more. `🚫 连续失败 3 次 → debugger. 尝试 1/2/3：<原因>`
+- **函数调用**: `analyzeFixAttempts(sequence)` — 参数：当前任务的修复尝试序列 `FixAttemptSequence`；返回 `{ shouldEscalate, consecutiveFailures, escalationIndex }`；`shouldEscalate: true` 时触发 three-strike 重路由到 `/forge debug`
+→ 函数签名详见 references/function-contracts.md
 
 **5.1a Failure 自动沉淀**: Three-strike 触发时同步调用 `buildThreeStrikeFailureArtifacts(topic, tier, situation, rootCause, now, seq)`（`src/build.ts`）→ 写 failure episode 到 `.forge/knowledge/sessions/<date>-<topic>.md` 并在 `.forge/progress/<topic>.md` 末尾追加 Evolution 标记 `target=forge-build#three_strike`。写入失败降级为 `console.warn`，不阻断重路由流程。
 
@@ -204,3 +211,12 @@ $ /forge build
 ## Context Budget Management
 
 Mandatory token limits, structured outputs exempt. → 详见 references/context-budget.md
+
+**Trimmer 函数映射**（概念名 → 实际函数调用）：
+
+| 概念名 | 函数调用 | 参数来源 | 返回值用途 |
+|--------|---------|---------|-----------|
+| Explore_Summarizer | `serializeExploreResult(exploreOutput)` | Explore Agent 原始返回值 | 替换 context 中的原始 Explore 输出为结构化摘要（≤300 tokens） |
+| Subagent_Summary_Protocol | `serializeSubagentSummary(subagentOutput)` | Subagent 原始返回值 | 替换 context 中的执行日志为提取摘要（≤200 tokens） |
+| Test_Output_Trimmer | `serializeTestOutput(testOutput)` | 测试运行原始输出（先解析为 `TestOutputSummary`） | all-pass 时替换为单行；failures 时保留仅失败项（≤300 tokens） |
+| Git_Output_Limiter | `serializeGitDiff(diffSummary, lineCount)` / `serializeGitStatus(statusSummary, fileCount)` | git 命令输出（先解析为 `GitDiffSummary` / `GitStatusSummary`） | diff >50 行或 status >30 文件时替换为文件级摘要（≤200 tokens） |

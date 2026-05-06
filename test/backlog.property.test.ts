@@ -48,8 +48,8 @@ const backlogEntryArb: fc.Arbitrary<BacklogEntry> = fc
   })
   .map((entry) => ({
     ...entry,
-    resolvedBy: entry.resolved ? entry.resolvedBy ?? entry.originTask : undefined,
-    resolvedDate: entry.resolved ? entry.resolvedDate ?? entry.capturedDate : undefined,
+    resolvedBy: entry.resolved ? (entry.resolvedBy ?? entry.originTask) : undefined,
+    resolvedDate: entry.resolved ? (entry.resolvedDate ?? entry.capturedDate) : undefined,
   }));
 
 // ---------------------------------------------------------------------------
@@ -122,7 +122,9 @@ describe("Feature: forge-review-fix-optimization, Property 13: Backlog overlap d
             const normalizedEntry = r.filePath.replace(/\\/g, "/").toLowerCase().trim();
             const matches = affectedFiles.some((af) => {
               const normalizedAf = af.replace(/\\/g, "/").toLowerCase().trim();
-              return normalizedEntry === normalizedAf || normalizedEntry.startsWith(normalizedAf + "/");
+              return (
+                normalizedEntry === normalizedAf || normalizedEntry.startsWith(`${normalizedAf}/`)
+              );
             });
             expect(matches).toBe(true);
           }
@@ -131,7 +133,9 @@ describe("Feature: forge-review-fix-optimization, Property 13: Backlog overlap d
             const normalizedEntry = e.filePath.replace(/\\/g, "/").toLowerCase().trim();
             const matches = affectedFiles.some((af) => {
               const normalizedAf = af.replace(/\\/g, "/").toLowerCase().trim();
-              return normalizedEntry === normalizedAf || normalizedEntry.startsWith(normalizedAf + "/");
+              return (
+                normalizedEntry === normalizedAf || normalizedEntry.startsWith(`${normalizedAf}/`)
+              );
             });
             const inResult = result.some((r) => r.id === e.id);
             expect(inResult).toBe(matches);
@@ -153,27 +157,29 @@ describe("Feature: forge-review-fix-optimization, Property 14: Backlog resolve m
       fc.property(
         fc.array(backlogEntryArb, { minLength: 1, maxLength: 20 }),
         fc.string({ minLength: 1, maxLength: 20 }),
-        fc.date().map((d) => d.toISOString().slice(0, 10)),
+        safeDateStr(),
         (entries, resolvedBy, resolvedDate) => {
           const targetId = entries[0].id;
           const before = structuredClone(entries);
           const result = resolveEntry(entries, targetId, resolvedBy, resolvedDate);
 
           expect(result).not.toBeNull();
-          expect(result!.resolved).toBe(true);
-          expect(result!.resolvedBy).toBe(resolvedBy);
-          expect(result!.resolvedDate).toBe(resolvedDate);
+          if (!result) throw new Error("Expected result to not be null");
+          expect(result.resolved).toBe(true);
+          expect(result.resolvedBy).toBe(resolvedBy);
+          expect(result.resolvedDate).toBe(resolvedDate);
 
           // Other fields unchanged
-          const original = before.find((e) => e.id === targetId)!;
-          expect(result!.id).toBe(original.id);
-          expect(result!.severity).toBe(original.severity);
-          expect(result!.filePath).toBe(original.filePath);
-          expect(result!.lineNumber).toBe(original.lineNumber);
-          expect(result!.description).toBe(original.description);
-          expect(result!.sourceReview).toBe(original.sourceReview);
-          expect(result!.originTask).toBe(original.originTask);
-          expect(result!.capturedDate).toBe(original.capturedDate);
+          const original = before.find((e) => e.id === targetId);
+          if (!original) throw new Error("Expected to find entry in before array");
+          expect(result.id).toBe(original.id);
+          expect(result.severity).toBe(original.severity);
+          expect(result.filePath).toBe(original.filePath);
+          expect(result.lineNumber).toBe(original.lineNumber);
+          expect(result.description).toBe(original.description);
+          expect(result.sourceReview).toBe(original.sourceReview);
+          expect(result.originTask).toBe(original.originTask);
+          expect(result.capturedDate).toBe(original.capturedDate);
         },
       ),
       { numRuns: 100 },
@@ -185,7 +191,7 @@ describe("Feature: forge-review-fix-optimization, Property 14: Backlog resolve m
       fc.property(
         fc.array(backlogEntryArb, { maxLength: 10 }),
         fc.string({ minLength: 1, maxLength: 20 }),
-        fc.date().map((d) => d.toISOString().slice(0, 10)),
+        safeDateStr(),
         (entries, resolvedBy, resolvedDate) => {
           const result = resolveEntry(entries, "non-existent-id", resolvedBy, resolvedDate);
           expect(result).toBeNull();

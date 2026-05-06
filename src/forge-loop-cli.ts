@@ -17,16 +17,26 @@
  */
 
 import { type ChildProcess, execFileSync, spawn } from "node:child_process";
-import { copyFileSync, existsSync, mkdirSync, readFileSync } from "node:fs";
+import {
+  copyFileSync,
+  existsSync,
+  mkdirSync,
+  readdirSync,
+  readFileSync,
+  renameSync,
+  writeFileSync,
+} from "node:fs";
 import path from "node:path";
 import { startup } from "@anthropic-ai/claude-agent-sdk";
 import { Command } from "commander";
 
 import { buildAgentOutputSchema } from "./agent-output.js";
+import { createAgentRegistry, registerBuiltinAgents } from "./agent-registry.js";
 import { CliError } from "./cli-error.js";
 import { extractConfigLang, mergeLogConfig, parseLogConfig } from "./config-store.js";
 import { formatNotesDocument } from "./context-accumulator.js";
 import { EffectExecutor } from "./effect-executor.js";
+import { ensureGlossaryExists, type GlossaryFs } from "./glossary-driver.js";
 import { type I18nConfig, parseTranslationFile, translate } from "./i18n.js";
 import { detectLocale } from "./locale-detector.js";
 import {
@@ -38,17 +48,34 @@ import {
   validateFileWritable,
 } from "./logger/index.js";
 import type { LoopConfig, RunLimits } from "./loop-types.js";
+import {
+  cleanupOrphans,
+  cleanupStaleSessions,
+  deletePidFile,
+  detectPpidOrphans,
+  type PidFileContent,
+  writePidFile,
+} from "./orphan-detector.js";
+import { ProcessRegistry } from "./process-registry.js";
 import type { TaskType } from "./pua-engine.js";
 import { branchExists, RunManager } from "./run-manager.js";
-import { SdkAgentAdapter } from "./sdk-agent-adapter.js";
 import { detectSkillAwareMode, SdkDriver } from "./sdk-driver.js";
-import { buildSleepPreventionCommand } from "./sleep-preventer.js";
 import { installSkill } from "./skill-loader.js";
+import { buildSleepPreventionCommand } from "./sleep-preventer.js";
+import {
+  listActiveTasks,
+  readTaskStatus,
+  type StatusManagerIO,
+  writeTaskStatus,
+} from "./status-manager.js";
 import { decideWorktreeCleanup, isValidWorktreeSource } from "./worktree-manager.js";
 
 // Read package version for skill compatibility checks
 const PACKAGE_VERSION = JSON.parse(
-  readFileSync(path.join(path.dirname(new URL(import.meta.url).pathname), "..", "package.json"), "utf-8"),
+  readFileSync(
+    path.join(path.dirname(new URL(import.meta.url).pathname), "..", "package.json"),
+    "utf-8",
+  ),
 ).version as string;
 
 // ---------------------------------------------------------------------------
@@ -161,6 +188,7 @@ interface CliOptions {
   logFile?: string;
   sandbox?: boolean;
   skillsDir?: string;
+  agent?: string;
 }
 
 // ---------------------------------------------------------------------------
@@ -224,6 +252,7 @@ async function main(): Promise<void> {
     .option("--log-file <path>", "Write JSON logs to file (dual-write mode)")
     .option("--sandbox", "Enable sandbox mode with fine-grained access control", false)
     .option("--skills-dir <path>", "Load external SKILL plugins from directory")
+    .option("--agent <name>", "Agent to use for iterations (claude|mock)", "claude")
     .action(async (objective: string, opts: CliOptions) => {
       const cwd = process.cwd();
       const preventSleep = opts.preventSleep !== "off";
@@ -281,6 +310,21 @@ async function main(): Promise<void> {
         throw new CliError(
           "Error: --tier, --type, --phase, and --nature require a .forge/ directory. Run `forge init` first.",
         );
+      }
+
+      // ---------------------------------------------------------------
+      // Ensure glossary exists (skills-cross-pollination Requirement 1)
+      // ---------------------------------------------------------------
+      if (hasForgeDir) {
+        const glossaryFs: GlossaryFs = {
+          exists: (p) => existsSync(p),
+          readFile: (p) => readFileSync(p, "utf-8"),
+          writeFile: (p, c) => {
+            mkdirSync(path.dirname(p), { recursive: true });
+            writeFileSync(p, c, "utf-8");
+          },
+        };
+        ensureGlossaryExists(glossaryFs, { path: path.join(cwd, ".forge", "glossary.md") });
       }
 
       // ---------------------------------------------------------------
@@ -386,19 +430,33 @@ async function main(): Promise<void> {
         translate(i18nConfig, key, params);
 
       // ---------------------------------------------------------------
-      // Detect active task in StatusFile (Req 10.2)
+      // Detect active tasks in StatusFile(s) (Req 10.2)
       // ---------------------------------------------------------------
       if (hasForgeDir) {
         try {
-          const statusFilePath = path.join(cwd, ".forge", "status.md");
-          if (existsSync(statusFilePath)) {
-            const statusContent = readFileSync(statusFilePath, "utf-8");
-            const phaseMatch = statusContent.match(/^phase:\s*"?([^"\n]*)"?\s*$/m);
-            if (phaseMatch) {
-              const phase = phaseMatch[1].trim();
-              if (phase && phase !== "completed" && phase !== "aborted") {
-                console.warn(_t("cli.warning.activeTask", { phase }));
-              }
+          const managerIO: StatusManagerIO = {
+            exists: (p) => existsSync(p),
+            dirExists: (p) => existsSync(p),
+            read: (p) => readFileSync(p, "utf-8"),
+            write: (p, content) => {
+              mkdirSync(path.dirname(p), { recursive: true });
+              writeFileSync(p, content, "utf-8");
+            },
+            listDir: (p) => readdirSync(p),
+            move: (src, dest) => {
+              mkdirSync(path.dirname(dest), { recursive: true });
+              renameSync(src, dest);
+            },
+            mkdirp: (p) => mkdirSync(p, { recursive: true }),
+          };
+          const forgeRoot = path.join(cwd, ".forge");
+          const activeTasks = listActiveTasks(managerIO, forgeRoot);
+          if (activeTasks.length === 1) {
+            console.warn(_t("cli.warning.activeTask", { phase: activeTasks[0].phase }));
+          } else if (activeTasks.length > 1) {
+            console.warn(_t("cli.warning.activeTasks", { count: String(activeTasks.length) }));
+            for (const task of activeTasks) {
+              console.warn(`  • ${task.taskName} (${task.phase})`);
             }
           }
         } catch (err) {
@@ -422,21 +480,6 @@ async function main(): Promise<void> {
         }
       }
 
-      const loopConfig: LoopConfig = {
-        agent: "claude",
-        maxConsecutiveFailures: 3,
-        preventSleep,
-        backoffBaseMs: DEFAULT_BACKOFF_BASE_MS,
-        maxConcurrentWorktrees: DEFAULT_MAX_CONCURRENT_WORKTREES,
-        skillsDir: opts.skillsDir,
-      };
-
-      const limits: RunLimits = {
-        maxIterations: opts.maxIterations,
-        maxTokens: opts.maxTokens,
-        stopWhen: opts.stopWhen,
-      };
-
       // ---------------------------------------------------------------
       // Pre-warm Agent SDK
       // ---------------------------------------------------------------
@@ -450,13 +493,38 @@ async function main(): Promise<void> {
       });
 
       // ---------------------------------------------------------------
-      // Create SdkAgentAdapter
+      // Create AgentRegistry, register builtins, and resolve agent
       // ---------------------------------------------------------------
-      const agentAdapter = new SdkAgentAdapter({
-        warmQuery,
-        outputSchema,
-        maxBudgetUsd: opts.maxBudgetUsd,
+      const agentRegistry = createAgentRegistry();
+      registerBuiltinAgents(agentRegistry, { warmQuery, outputSchema });
+
+      const agentName = opts.agent ?? "claude";
+
+      if (!agentRegistry.has(agentName)) {
+        throw new CliError(
+          `Error: Invalid --agent value "${agentName}". Available agents: ${agentRegistry.listAgents().join(", ")}`,
+        );
+      }
+
+      const agentAdapter = agentRegistry.resolve(agentName, {
+        cwd,
+        budgetUsd: opts.maxBudgetUsd,
       });
+
+      const loopConfig: LoopConfig = {
+        agent: agentName as LoopConfig["agent"],
+        maxConsecutiveFailures: 3,
+        preventSleep,
+        backoffBaseMs: DEFAULT_BACKOFF_BASE_MS,
+        maxConcurrentWorktrees: DEFAULT_MAX_CONCURRENT_WORKTREES,
+        skillsDir: opts.skillsDir,
+      };
+
+      const limits: RunLimits = {
+        maxIterations: opts.maxIterations,
+        maxTokens: opts.maxTokens,
+        stopWhen: opts.stopWhen,
+      };
 
       // ---------------------------------------------------------------
       // Set up run (new run, worktree, or resume)
@@ -588,6 +656,55 @@ async function main(): Promise<void> {
       }
 
       // ---------------------------------------------------------------
+      // Process lifecycle: startup cleanup and PID file management
+      // ---------------------------------------------------------------
+      const sessionId = runSetup.runId;
+      const pidsBaseDir = path.join(cwd, ".forge");
+      if (hasForgeDir) {
+        try {
+          const staleOrphans = await cleanupStaleSessions(pidsBaseDir);
+          if (staleOrphans.length > 0) {
+            console.warn(
+              `[debug] Cleaned ${staleOrphans.length} stale orphan process(es) from previous runs`,
+            );
+          }
+        } catch {
+          // Non-blocking: stale session cleanup failure should not block startup
+        }
+
+        try {
+          const ppidOrphans = await detectPpidOrphans(["forge", "vitest", "caffeinate"], 3600);
+          if (ppidOrphans.length > 0) {
+            const autoKillResult = cleanupOrphans(ppidOrphans, 3600);
+            if (autoKillResult.killed.length > 0) {
+              console.warn(
+                `[debug] Auto-terminated ${autoKillResult.killed.length} orphan process(es)`,
+              );
+            }
+            if (autoKillResult.warned.length > 0) {
+              for (const pid of autoKillResult.warned) {
+                const orphan = ppidOrphans.find((o) => o.pid === pid);
+                if (orphan) {
+                  console.warn(`[debug] Detected orphan process: PID ${pid} (${orphan.command})`);
+                }
+              }
+            }
+          }
+        } catch {
+          // Non-blocking: orphan detection failure should not block startup
+        }
+
+        try {
+          ProcessRegistry.resetInstance();
+          const registry = ProcessRegistry.getInstance();
+          const serialized = JSON.parse(registry.serialize()) as PidFileContent;
+          writePidFile(sessionId, serialized, pidsBaseDir);
+        } catch {
+          // Non-blocking: PID file write failure should not block startup
+        }
+      }
+
+      // ---------------------------------------------------------------
       // Create EffectExecutor and SdkDriver
       // ---------------------------------------------------------------
       const effectExecutor = new EffectExecutor({
@@ -599,6 +716,26 @@ async function main(): Promise<void> {
           logSink.log(createLogEntry("effect_log", "info", message, { runId: runSetup.runId }));
         },
       });
+
+      // -------------------------------------------------------------
+      // Build StatusManager I/O for parallel status tracking
+      // -------------------------------------------------------------
+      const forgeRoot = path.join(effectiveCwd, ".forge");
+      const managerIO: StatusManagerIO = {
+        exists: (p) => existsSync(p),
+        dirExists: (p) => existsSync(p),
+        read: (p) => readFileSync(p, "utf-8"),
+        write: (p, content) => {
+          mkdirSync(path.dirname(p), { recursive: true });
+          writeFileSync(p, content, "utf-8");
+        },
+        listDir: (p) => readdirSync(p),
+        move: (src, dest) => {
+          mkdirSync(path.dirname(dest), { recursive: true });
+          renameSync(src, dest);
+        },
+        mkdirp: (p) => mkdirSync(p, { recursive: true }),
+      };
 
       const driver = new SdkDriver(
         {
@@ -624,6 +761,9 @@ async function main(): Promise<void> {
               : opts.pua
                 ? ("general" as TaskType)
                 : undefined,
+          taskName: objective,
+          readStatusFile: () => readTaskStatus(managerIO, forgeRoot, objective),
+          writeStatusFile: (content) => writeTaskStatus(managerIO, forgeRoot, objective, content),
           t: _t,
           logSinkConfig,
           sandboxEnabled: opts.sandbox === true,
@@ -635,12 +775,38 @@ async function main(): Promise<void> {
       // ---------------------------------------------------------------
       // Wire signal handlers
       // ---------------------------------------------------------------
-      const handleSignal = () => {
+      const handleSignal = async () => {
         driver.requestStop();
+        const stopPromise = driver.getStopPromise();
+        if (stopPromise) {
+          try {
+            await stopPromise;
+          } catch {
+            // Ignore cleanup errors
+          }
+        }
+        const registry = ProcessRegistry.getInstance();
+        try {
+          await registry.shutdownAll();
+        } catch {
+          // Ignore shutdown errors
+        }
+        deletePidFile(sessionId, pidsBaseDir);
+        process.exit(0);
       };
 
       process.on("SIGINT", handleSignal);
       process.on("SIGTERM", handleSignal);
+      process.on("SIGHUP", handleSignal);
+
+      // Process group cleanup on exit (synchronous — catches abnormal exits)
+      process.on("exit", () => {
+        try {
+          process.kill(-process.pid, "SIGTERM");
+        } catch {
+          // Ignore errors during exit cleanup
+        }
+      });
 
       // ---------------------------------------------------------------
       // Run the driver loop
@@ -690,6 +856,19 @@ async function main(): Promise<void> {
         // Clean up signal handlers.
         process.removeListener("SIGINT", handleSignal);
         process.removeListener("SIGTERM", handleSignal);
+        process.removeListener("SIGHUP", handleSignal);
+
+        // Shutdown ProcessRegistry and delete PID file.
+        try {
+          await ProcessRegistry.getInstance().shutdownAll();
+        } catch {
+          // Ignore shutdown errors during cleanup
+        }
+        try {
+          deletePidFile(sessionId, pidsBaseDir);
+        } catch {
+          // Ignore PID file deletion errors
+        }
 
         // Kill sleep prevention process.
         if (sleepProcess) {
@@ -703,9 +882,9 @@ async function main(): Promise<void> {
           }
         }
 
-        // Close SDK client.
+        // Close agent adapter.
         try {
-          await agentAdapter.close();
+          await agentAdapter.close?.();
         } catch (cleanupError) {
           console.error(
             "Failed to close SDK agent adapter:",

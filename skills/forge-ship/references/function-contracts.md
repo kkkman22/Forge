@@ -37,6 +37,20 @@
 
 ---
 
+## checkShipGateWithFreshness
+
+**Signature**: `checkShipGateWithFreshness(review, test, progress, currentHead, changedFiles, checklist?)`
+
+- **Parameters**:
+  - Same three arguments as `checkShipGate`
+  - `currentHead` — Output of `git rev-parse HEAD`
+  - `changedFiles` — Output of `git diff --name-only <reviewedCommit>..HEAD`
+  - `checklist` — Optional `ChecklistEntry[]` for P1 Fix Checklist
+- **Returns**: `{ allowed: boolean, reasons: string[] }`；allowed 由 checkShipGate/checkShipGateWithChecklist 决定， freshness 警告以 `⚠️ Review freshness:` 前缀附加到 reasons（不阻断 ship）
+- **Purpose**: One-shot gate that combines all ship checks plus the non-blocking review freshness warning
+
+---
+
 ## recordPendingDelivery
 
 **Signature**: `recordPendingDelivery(branchName, topic, timestamp)` (from `src/branch-lifecycle.ts`)

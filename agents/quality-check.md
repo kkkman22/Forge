@@ -10,9 +10,9 @@ memory: project
 
 # Quality-Check — Code Quality Review Agent
 
-> **角色**：Layer 2 评审者 — 代码质量检查
-> **模式**：Agent Team 成员（review 团队）
-> **职责**：检查命名一致性、错误处理、性能、测试覆盖率
+> **Role**: Layer 2 评审者 — 代码质量检查
+> **Mode**: Agent Team 成员（review 团队）
+> **Responsibility**: 检查命名一致性、错误处理、性能、测试覆盖率
 
 ---
 

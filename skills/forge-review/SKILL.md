@@ -76,7 +76,19 @@ P0/P1 只能 `gated_auto`/`manual`；P2 可 `safe_auto`；P3 默认 `advisory`�
 
 有 P0/P1 → 阻断 ship，输出问题清单，提示修复后重新评审。仅 P2/P3 → 放行。
 
-## 9. Review Report Format
+## 9. P1 Fix Checklist
+
+评审完成后，若存在 P0/P1 finding，则创建 `.forge/reviews/<topic>-checklist.md` 追踪修复状态。
+
+**函数调用**: `createChecklist(findings)` — 参数：评审报告中所有 P0/P1 finding 数组；返回：`ChecklistEntry[]`（每项含 findingId、severity、filePath、lineNumber、description、status="unfixed"）；用途：生成实时追踪清单写入 `.forge/reviews/<topic>-checklist.md`
+
+**函数调用**: `serializeChecklist(entries)` — 参数：`ChecklistEntry[]`；返回：Markdown 表格字符串；用途：持久化 checklist 到文件
+
+**状态流转**: unfixed → in-progress → fixed → verified。`updateEntryStatus(entries, findingId, nextStatus)` 验证流转合法性（`VALID_TRANSITIONS`）。
+
+**ship 门禁**: `allEntriesVerified(entries)` 为 false 时阻断 ship。
+
+## 10. Review Report Format
 
 `.forge/reviews/<topic>.md`。YAML frontmatter + 正文。`result`：`pass`（无 P0/P1 且全部完成）/ `fail`（有 P0/P1）/ `incomplete`（有 Layer 未完成，**不允许 ship**）。
 
@@ -102,7 +114,7 @@ layers:
 
 ## 10. Execution Flow
 
-1. **前置检查**（§13）→ 2. **并行启动 Subagent** → 3. **状态确认** → 4. **合并管线** → 5. **质量门** → 6. **P0/P1 判定** → 7. **输出报告**（写入 frontmatter 时执行 `git rev-parse HEAD` 记录 `reviewed_at_commit`）
+1. **前置检查**（§13）→ 2. **并行启动 Subagent** → 3. **状态确认** → 4. **合并管线** → 5. **质量门** → 6. **P0/P1 判定** → 7. **输出报告**（写入 frontmatter 时执行 `git rev-parse HEAD` 记录 `reviewed_at_commit`）→ 8. **生成 P1 Fix Checklist**（§9，存在 P0/P1 时）
 
 **Step 1.1 状态确认**：主动跟踪每个 Subagent，不假设"启动即完成"。正常完成 → 进入管线；截断 → 重试 1 次；错误 → 重试 1 次；429 → 降级等待后重试；超时(180s) → 标记 `incomplete`。**不得在 Subagent 运行中合并结果**。
 
@@ -129,6 +141,8 @@ layers:
 ## Context Budget Management
 
 评审者完整输出 → Write-and-discard（写入文件，context 只保留摘要）。摘要使用 Review_Summarizer 协议：severity 分布 + findings 列表 + 文件路径引用，≤400 tokens。
+
+**函数调用**: `serializeReviewSummary(reviewOutput)` — 参数：评审者输出（先解析为 `ReviewSummary`）；返回：摘要字符串；用途：替换 context 中的评审完整输出
 
 → 函数签名详见 references/function-contracts.md
 
