@@ -101,13 +101,13 @@ jobs:
           cache: npm
       - run: npm ci
       - name: Run PR benchmarks
-        run: npx vitest bench --run --reporter=json > /tmp/pr-bench.json
+        run: npx vitest bench --run --outputJson=/tmp/pr-bench.json
       - name: Checkout main for baseline
         run: |
           git stash --include-untracked || true
           git checkout origin/main -- .
       - name: Run main baseline benchmarks
-        run: npx vitest bench --run --reporter=json > /tmp/main-bench.json
+        run: npx vitest bench --run --outputJson=/tmp/main-bench.json
       - name: Restore PR branch
         run: |
           git reset --hard

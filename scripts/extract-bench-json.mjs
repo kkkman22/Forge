@@ -17,9 +17,9 @@
  *   - Exit 0 otherwise
  *
  * Example:
- *   npx vitest bench --run --reporter=json > /tmp/pr.json
+ *   npx vitest bench --run --outputJson=/tmp/pr.json
  *   git stash && git checkout main
- *   npx vitest bench --run --reporter=json > /tmp/main.json
+ *   npx vitest bench --run --outputJson=/tmp/main.json
  *   git checkout - && git stash pop
  *   node scripts/extract-bench-json.mjs /tmp/main.json /tmp/pr.json --threshold=1.20
  */
