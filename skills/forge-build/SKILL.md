@@ -84,18 +84,6 @@ GREEN 阶段的代码必须是"能让测试通过的最简单实现"。REFACTOR 
 
 → 详见 references/tdd-rules.md（Simplicity Check 示例、Rule of Three、Dead Code Hygiene 细节）
 
-### 4.1 Simplicity Check
-
-GREEN 阶段的代码必须是"能让测试通过的最简单实现"。引入抽象层、工厂模式或配置驱动设计 → 停止，删除，重写更简单的版本。
-
-**Rule of Three**：抽象仅在 REFACTOR 阶段引入，且同一模式重复出现 3 次以上时。
-
-| ✗ Over-engineered | ✓ Simple |
-|---|---|
-| 为一个通知场景构建通用 EventBus + 中间件管线 | 直接函数调用 |
-| 为两个相似组件构建抽象工厂 | 两个直接组件 + 共享工具函数 |
-| 为三个表单构建配置驱动的表单生成器 | 三个独立表单组件 |
-
 ---
 
 ## 5. Failure Handling
@@ -130,93 +118,24 @@ GREEN 阶段的代码必须是"能让测试通过的最简单实现"。引入抽
 
 ## 7. Status Updates
 
-**7.1** Progress → `.forge/progress/<topic>.md` per task. **7.2** Interim → `.forge/knowledge/sessions/<date>-<topic>-interim.md` (≤15 lines, overwrite, delete after learn/done, resume reads first). **7.3** Phase → `.forge/status.md`. **7.4** Health → `.forge/knowledge/tool-health.md`: ≥80% 🟢 / 50-79% 🟡 / <50% 🔴.
+进度/临时/阶段/健康四类状态更新 + 阶段流转表 + 执行流程 + 示例：
 
-| Done | phase → |
-|---|---|
-| plan | build |
-| build | review |
-| review | test / completed (light) |
-| test | ship |
-| ship | learn / completed |
-| learn | completed |
+→ 详见 references/status-updates.md
 
----
+## 8-10. Execution Flow · Edge Cases · Example
 
-## 8. Execution Flow
-
-1. Path: Light / Standard / Full
-2. Gates (standard/full): Spec + Plan + Dir + Branch
-3. Init Counter N=3
-4. Loop: Probes → TDD → status → progress → commit → counter-1
-5. Full: Phase 1 research → Phase 2 modules
-6. Final Validation
-7. Delete interim → 自动调用 /forge review（→ 详见 shared/next-step-protocol.md）
-
-3 consecutive same-fix → `/forge debug`
-
----
-
-## 9. Edge Cases
+→ 详见 references/status-updates.md §8-§10
 
 Spec/Plan not ready → §2 rejection. Subagent timeout → block → `/forge resume`. Worktree conflict → pause → manual resolve. No `.forge/` → `forge init`.
 
 ---
 
-## 10. Example
+## Known AI Failure Patterns · Reflection Triggers · Common Rationalizations
 
-```
-$ /forge build
-🔍 前置检查... ✅ Spec 已锁定 / Plan 已批准
-📋 执行计划（5 任务）
-🔴 RED → FAIL ✓  🟢 GREEN → PASS ✓  🔵 REFACTOR → PASS ✓
-✅ Task 1 → 提交 → 1/5
-```
-
----
-
-## Known AI Failure Patterns
-
-| # | Wrong | Correct |
-|---|-------|---------|
-| 1 | Impl during RED | Tests only; delete impl, restart |
-| 2 | Skip tests, mark done | Verify gate + P5 chain |
-| 3 | Multi-task commit | 1 task 1 commit |
-| 4 | Code without plan | Read Plan fully first |
-| 5 | Out-of-scope edits | Plan scope only, record issues |
-| 6 | Narrating edits | Silent, brief at Decision_Point |
-| 7 | Self-assemble commands | ci_check_command as-is |
-| 8 | 任务间停下来问"是否继续"或"工作量大，是否暂停" | 完成任务 → 一行摘要 → 立即下一个任务。Plan 已批准，build 只管执行 |
-
-## Reflection Triggers
-
-以下场景触发**思考暂停**——遇到时先自问，再决定下一步。不机械执行阈值判断，结合上下文综合判断。
-
-| 触发条件 | 自问 | 交互处理 | 自主处理 |
-|----------|------|----------|----------|
-| **Chesterton's Fence**：删除或大幅修改现有代码 | 我理解这段代码为什么被写成这样吗？git blame 的上下文是什么？ | 解释原因 → 确认修改 | 记录到 `.forge/findings/`（原因 + 修改理由）→ 继续执行 |
-
-## Common Rationalizations
-
-| 合理化 | 反驳 |
-|---|---|
-| "几行不值得写测试" | 小 bug 最难发现 |
-| "先实现再补测试" | 只证明代码做了什么，不证明需求满足 |
-| "太简单不会出错" | 简单函数没人检查 |
-| "这个任务工作量较大，先确认一下" | Plan 已批准所有任务。build 的职责是执行，不是重新评估工作量。直接开始 |
-| "涉及渲染层/核心模块修改，是否先暂停进入 review" | review 在所有 build 任务完成后自动触发。中途暂停违反执行纪律 |
+→ 详见 references/failure-patterns.md
 
 ---
 
 ## Context Budget Management
 
-Mandatory token limits, structured outputs exempt. → 详见 references/context-budget.md
-
-**Trimmer 函数映射**（概念名 → 实际函数调用）：
-
-| 概念名 | 函数调用 | 参数来源 | 返回值用途 |
-|--------|---------|---------|-----------|
-| Explore_Summarizer | `serializeExploreResult(exploreOutput)` | Explore Agent 原始返回值 | 替换 context 中的原始 Explore 输出为结构化摘要（≤300 tokens） |
-| Subagent_Summary_Protocol | `serializeSubagentSummary(subagentOutput)` | Subagent 原始返回值 | 替换 context 中的执行日志为提取摘要（≤200 tokens） |
-| Test_Output_Trimmer | `serializeTestOutput(testOutput)` | 测试运行原始输出（先解析为 `TestOutputSummary`） | all-pass 时替换为单行；failures 时保留仅失败项（≤300 tokens） |
-| Git_Output_Limiter | `serializeGitDiff(diffSummary, lineCount)` / `serializeGitStatus(statusSummary, fileCount)` | git 命令输出（先解析为 `GitDiffSummary` / `GitStatusSummary`） | diff >50 行或 status >30 文件时替换为文件级摘要（≤200 tokens） |
+Mandatory token limits, structured outputs exempt. Trimmer 函数映射详见 references/status-updates.md。→ 详见 references/context-budget.md
