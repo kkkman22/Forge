@@ -3,14 +3,14 @@
  *
  * All `src/` code should route log output through `ConsoleSink` instead of
  * calling `console.*` directly. This module contains the only allowed
- * `console.log` / `console.error` calls in the `src/` tree (guarded by
- * biome-ignore).
+ * `console.log` / `console.error` calls in the `src/` tree (each guarded by
+ * a Biome suppression comment).
  *
  * **Validates: v2.4 Requirement 6.3, 6.4**
  */
 
-import type { LogEntry, LogLevel } from "./types.js";
 import { formatAsJson, formatAsText, shouldLog } from "./log-sink.js";
+import type { LogEntry, LogLevel } from "./types.js";
 
 export interface ConsoleSinkOptions {
   /** Output format: human-readable text or structured JSON. */

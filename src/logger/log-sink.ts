@@ -1,5 +1,5 @@
-import type { LogEntry, LogLevel, LogSinkConfig } from "./types.js";
 import { createConsoleSink } from "./console-sink.js";
+import type { LogEntry, LogLevel, LogSinkConfig } from "./types.js";
 
 const LEVEL_ORDER: Record<LogLevel, number> = {
   debug: 0,
@@ -47,7 +47,7 @@ export function createLogSink(config: LogSinkConfig, output?: (line: string) => 
       if (output) {
         output(formatEntry(entry, config));
       } else {
-        consoleSink!.write(entry);
+        consoleSink?.write(entry);
       }
     },
     getConfig(): LogSinkConfig {
