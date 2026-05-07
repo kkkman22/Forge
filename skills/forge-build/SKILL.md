@@ -138,4 +138,15 @@ Spec/Plan not ready → §2 rejection. Subagent timeout → block → `/forge re
 
 ## Context Budget Management
 
-Mandatory token limits, structured outputs exempt. Trimmer 函数映射详见 references/status-updates.md。→ 详见 references/context-budget.md
+Mandatory token limits, structured outputs exempt. → 详见 references/context-budget.md
+
+**Trimmer 函数映射**（概念名 → 实际函数调用）：
+
+| 概念名 | 函数调用 | 参数来源 | 返回值用途 |
+|--------|---------|---------|-----------|
+| Explore_Summarizer | `serializeExploreResult(exploreOutput)` | Explore Agent 原始返回值 | 替换 context 中的原始 Explore 输出为结构化摘要（≤300 tokens） |
+| Subagent_Summary_Protocol | `serializeSubagentSummary(subagentOutput)` | Subagent 原始返回值 | 替换 context 中的执行日志为提取摘要（≤200 tokens） |
+| Test_Output_Trimmer | `serializeTestOutput(testOutput)` | 测试运行原始输出（先解析为 `TestOutputSummary`） | all-pass 时替换为单行；failures 时保留仅失败项（≤300 tokens） |
+| Git_Output_Limiter | `serializeGitDiff(diffSummary, lineCount)` / `serializeGitStatus(statusSummary, fileCount)` | git 命令输出（先解析为 `GitDiffSummary` / `GitStatusSummary`） | diff >50 行或 status >30 文件时替换为文件级摘要（≤200 tokens） |
+
+Trimmer 函数签名详见 references/function-contracts.md
