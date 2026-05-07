@@ -35,5 +35,5 @@
     "@property",
     "@visibleForTesting"
   ],
-  "ignoredHighlightLanguages": ["gitignore"]
+  "ignoredHighlightLanguages": ["gitignore", "markdown"]
 }
