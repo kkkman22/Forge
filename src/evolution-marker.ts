@@ -130,7 +130,7 @@ const SUGGEST_ADR_THRESHOLD = 3;
  * order.
  *
  * The parser is tolerant: any line that fails to match
- * {@link MARKER_REGEX} is ignored, so feeding arbitrary markdown or
+ * `MARKER_REGEX` is ignored, so feeding arbitrary markdown or
  * even binary-ish text never throws. The description block is
  * collected from the lines following the comment until the next
  * `<!--` or EOF; leading / trailing whitespace is trimmed.
