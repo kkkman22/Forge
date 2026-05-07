@@ -136,3 +136,19 @@ Backend-only (3 perspectives) 与 UI-involved (4 perspectives) 两种典型场�
 决策确认后，Skill 同时生成 `.forge/decisions/<date>-<topic>.md`（视角对话全文）与 `.forge/decisions/ADR-NNNN-<topic>.md`（可检索的架构决策记录），并更新 `.forge/knowledge/adr-index.md`。
 
 → 详见 references/adr-output.md（完整流程、FinalizeAdrInput 构造、supersession 更新）
+
+---
+
+## Context Budget Management
+
+Mandatory token limits per perspective output (≤500 tokens). Structured outputs exempt.
+
+**Trimmer 函数映射**：
+
+| 概念名 | 函数调用 | 返回值用途 |
+|--------|---------|-----------|
+| Subagent_Summary_Protocol | `serializeSubagentSummary(subagentOutput)` | 替换 Subagent 原始返回为提取摘要（≤200 tokens） |
+
+**Retention modes**: `Write-and-discard`（写入文件后丢弃 context 中的原始输出）; `Keep-in-context`（仅限 ≤200 tokens 的结构化输出保留）。
+
+→ 详见 references/decision-format.md（完整 Context Budget 规则、Trimmer 签名）
