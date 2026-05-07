@@ -192,6 +192,7 @@ describe("SdkDriver PUA state restoration debug logging", () => {
       branchName: "forge/test",
       skillAware: true,
       puaEnabled: true,
+      forceNoHooks: true,
       readStatusFile: () => "",
       writeStatusFile: vi.fn(),
       ...overrides,

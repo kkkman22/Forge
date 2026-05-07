@@ -25,6 +25,7 @@ vi.mock("../src/run-manager.js", () => ({
 }));
 
 import type { EffectExecutorInterface } from "../src/effect-executor.js";
+import { HooksProtectionMissingError } from "../src/forge-error.js";
 import { RunManager } from "../src/run-manager.js";
 import { SdkDriver, type SdkDriverConfig } from "../src/sdk-driver.js";
 
@@ -127,6 +128,9 @@ function createConfig(overrides?: Partial<SdkDriverConfig>): SdkDriverConfig {
     notesPath: "/test/repo/.forge/runs/test-run-id/notes.md",
     branchName: "forge/build-a-login-form",
     skillAware: false,
+    // Tests use /test/repo which has no hooks — bypass enforcement for unit tests.
+    // Fail-closed enforcement is tested in sdk-driver.hooks-enforcement.property.test.ts
+    forceNoHooks: true,
     ...overrides,
   };
 }
@@ -713,70 +717,74 @@ describe("empty objective validation", () => {
 // ---------------------------------------------------------------------------
 // validateHooksPresence — tested in test/hooks-validation.property.test.ts
 // (separate file to avoid vi.mock interference with node:fs)
+// v2.4: fail-closed enforcement tested in sdk-driver.hooks-enforcement.property.test.ts
 // ---------------------------------------------------------------------------
 
 // ---------------------------------------------------------------------------
-// Hooks validation during run() (Requirements 1.2, 1.3, 1.4)
+// Hooks validation during run() — fail-closed (v2.4 Requirement 1)
 // ---------------------------------------------------------------------------
 
 describe("hooks validation during run()", () => {
-  it("emits warning with 'hooks protection missing' when hooks are absent", async () => {
-    const logSpy = vi.spyOn(console, "log").mockImplementation(() => {});
-    const executor = createMockEffectExecutor();
-    executor.executeEffects.mockImplementation(async () => {
-      executor.aborted = true;
-    });
-    const agent = createMockAgent();
-    // Use a cwd that won't have hooks/hooks.json
-    const driver = new SdkDriver(createConfig({ cwd: "/nonexistent/path" }), executor, agent);
-
-    await driver.run();
-
-    const logMessages = logSpy.mock.calls.map((call) => call[0]);
-    const hasHooksWarning = logMessages.some((msg: string) =>
-      msg.includes("driver.warning.hooksProtectionMissing"),
-    );
-    expect(hasHooksWarning).toBe(true);
-  });
-
-  it("does not block startup when hooks validation fails", async () => {
+  it("throws HooksProtectionMissingError when hooks are absent", async () => {
     vi.spyOn(console, "log").mockImplementation(() => {});
     const executor = createMockEffectExecutor();
     const agent = createMockAgent();
     const driver = new SdkDriver(
-      createConfig({ cwd: "/nonexistent/path", limits: { maxIterations: 1 } }),
+      createConfig({ cwd: "/nonexistent/path", forceNoHooks: false }),
+      executor,
+      agent,
+    );
+
+    await expect(driver.run()).rejects.toThrow(HooksProtectionMissingError);
+    // Agent was never invoked
+    expect(agent.run).not.toHaveBeenCalled();
+  });
+
+  it("allows startup with forceNoHooks=true when hooks are absent", async () => {
+    vi.spyOn(console, "log").mockImplementation(() => {});
+    const executor = createMockEffectExecutor();
+    const agent = createMockAgent();
+    const driver = new SdkDriver(
+      createConfig({
+        cwd: "/nonexistent/path",
+        limits: { maxIterations: 1 },
+        forceNoHooks: true,
+      }),
       executor,
       agent,
     );
 
     const result = await driver.run();
 
-    // The driver should still complete its run despite hooks validation failure
+    // The driver should still complete its run with hooks bypass
     expect(result.finalState.status).toBe("aborted");
     expect(agent.run).toHaveBeenCalledTimes(1);
   });
 
-  it("handles unexpected errors in hooks validation gracefully", async () => {
+  it("logs warning when hooks are bypassed with forceNoHooks", async () => {
     const logSpy = vi.spyOn(console, "log").mockImplementation(() => {});
+    const errSpy = vi.spyOn(console, "error").mockImplementation(() => {});
     const executor = createMockEffectExecutor();
     executor.executeEffects.mockImplementation(async () => {
       executor.aborted = true;
     });
     const agent = createMockAgent();
-    // Use a cwd that won't have hooks — the validation will fail but not block
-    const driver = new SdkDriver(createConfig({ cwd: "/nonexistent/path" }), executor, agent);
+    const driver = new SdkDriver(
+      createConfig({ cwd: "/nonexistent/path", forceNoHooks: true }),
+      executor,
+      agent,
+    );
 
-    // Should not throw even when hooks validation encounters issues
-    const result = await driver.run();
+    await driver.run();
 
-    // Warning was logged with hooks protection missing (i18n key)
-    const logMessages = logSpy.mock.calls.map((call) => call[0]);
-    const hasHooksWarning = logMessages.some((msg: string) =>
-      msg.includes("driver.warning.hooksProtectionMissing"),
+    const allMessages = [
+      ...logSpy.mock.calls.map((call) => call[0]),
+      ...errSpy.mock.calls.map((call) => call[0]),
+    ];
+    const hasHooksWarning = allMessages.some((msg: string) =>
+      msg.includes("hooks_protection_bypassed"),
     );
     expect(hasHooksWarning).toBe(true);
-    // Driver still produced a result (startup was not blocked)
-    expect(result).toBeDefined();
-    expect(result.notesDocument).toBeDefined();
+    errSpy.mockRestore();
   });
 });
