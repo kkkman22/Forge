@@ -100,6 +100,8 @@ export interface SdkDriverConfig {
   logSinkConfig?: LogSinkConfig;
   /** Whether to enable sandbox mode with fine-grained access control. */
   sandboxEnabled?: boolean;
+  /** Skip hooks protection validation and run without PreToolUse guards. */
+  forceNoHooks?: boolean;
 }
 
 /** Result returned when the driver loop exits. */

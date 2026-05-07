@@ -187,6 +187,7 @@ interface CliOptions {
   logLevel?: string;
   logFile?: string;
   sandbox?: boolean;
+  forceNoHooks?: boolean;
   skillsDir?: string;
   agent?: string;
 }
@@ -251,6 +252,7 @@ async function main(): Promise<void> {
     .option("--log-level <debug|info|warn|error>", "Minimum log level", "info")
     .option("--log-file <path>", "Write JSON logs to file (dual-write mode)")
     .option("--sandbox", "Enable sandbox mode with fine-grained access control", false)
+    .option("--force-no-hooks", "Skip hooks protection validation (use at your own risk)", false)
     .option("--skills-dir <path>", "Load external SKILL plugins from directory")
     .option("--agent <name>", "Agent to use for iterations (claude|mock)", "claude")
     .action(async (objective: string, opts: CliOptions) => {
@@ -767,6 +769,7 @@ async function main(): Promise<void> {
           t: _t,
           logSinkConfig,
           sandboxEnabled: opts.sandbox === true,
+          forceNoHooks: opts.forceNoHooks === true,
         },
         effectExecutor,
         agentAdapter,
