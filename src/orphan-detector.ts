@@ -27,6 +27,7 @@ export function writePidFile(sessionId: string, content: PidFileContent, baseDir
   try {
     writeFileSync(filePath, JSON.stringify(content, null, 2), "utf-8");
   } catch (err) {
+    // biome-ignore lint/suspicious/noConsole: standalone utility without logger access
     console.warn(`Failed to write PID file: ${(err as Error).message}`);
   }
 }
@@ -125,7 +126,10 @@ export async function detectPpidOrphans(
   const orphans: OrphanProcess[] = [];
   let output: string;
   try {
-    output = execFileSync("ps", ["-eo", "pid,ppid,etime,command"], { encoding: "utf-8", timeout: 5000 });
+    output = execFileSync("ps", ["-eo", "pid,ppid,etime,command"], {
+      encoding: "utf-8",
+      timeout: 5000,
+    });
   } catch {
     return orphans;
   }
@@ -169,6 +173,7 @@ export function cleanupOrphans(
         // Already exited
       }
     } else {
+      // biome-ignore lint/suspicious/noConsole: standalone utility without logger access
       console.warn(
         `Orphan process detected (PID ${orphan.pid}, running ${orphan.elapsedSeconds}s): ${orphan.command}`,
       );

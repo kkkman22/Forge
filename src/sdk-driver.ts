@@ -136,10 +136,7 @@ export class SdkDriver {
     const hooksResult = validateHooksPresence(this.config.cwd);
     if (!hooksResult.valid) {
       if (!this.config.forceNoHooks) {
-        throw new HooksProtectionMissingError(
-          hooksResult.reason ?? "unknown",
-          this.config.cwd,
-        );
+        throw new HooksProtectionMissingError(hooksResult.reason ?? "unknown", this.config.cwd);
       }
       // Explicit bypass: warn + write audit flag
       this.logger.log(
