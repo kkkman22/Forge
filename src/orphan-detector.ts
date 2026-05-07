@@ -1,4 +1,4 @@
-import { execSync } from "node:child_process";
+import { execFileSync } from "node:child_process";
 import { mkdirSync, readdirSync, readFileSync, unlinkSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
 
@@ -125,7 +125,7 @@ export async function detectPpidOrphans(
   const orphans: OrphanProcess[] = [];
   let output: string;
   try {
-    output = execSync("ps -eo pid,ppid,etime,command", { encoding: "utf-8", timeout: 5000 });
+    output = execFileSync("ps", ["-eo", "pid,ppid,etime,command"], { encoding: "utf-8", timeout: 5000 });
   } catch {
     return orphans;
   }
