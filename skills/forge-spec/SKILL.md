@@ -83,30 +83,9 @@ disable-model-invocation: true
 
 ## 3. Spec Document Format
 
-### YAML Frontmatter
+YAML frontmatter（feature/status/date/import_source）+ Body 八章节（目的/需求/场景汇总/Current State/Proposed Change/不做什么/Reversibility/反漂移声明/Delta）。
 
-```yaml
----
-feature: "<功能名>"        # kebab-case
-status: "draft" | "locked"
-date: "YYYY-MM-DD"
-import_source: "<path>"    # 可选，仅导入模式
----
-```
-
-### Body Structure
-
-```markdown
-## 目的 — <解决问题，为谁>
-## 需求 — ### 需求 N：<标题> + 行为描述 + **场景**：当...则...
-## 场景汇总 — | ID | Scenario | Requirement |
-## Current State — **必填**，AI 必须先读代码。Related Modules 表 + Structure Overview
-## Proposed Change — **必填**。To Change + Explicitly Unchanged
-## 不做什么 — 划清边界
-## Reversibility — **必填**。Rollback Checklist + Mount Points
-## 反漂移声明 — 主目标 + 非目标代理信号 + 验证材料角色
-## Delta — 仅棕地开发：New / Modified / Unchanged
-```
+→ 详见 references/spec-format.md（完整模板）
 
 ---
 
@@ -138,16 +117,7 @@ Testability / Behavior-not-Implementation / Brownfield Delta / Two-part Structur
 
 ## 7. Edge Case Handling
 
-| Condition | Output |
-|------|------|
-| 无 decisions/ | 基于需求描述直接生成；如需决策分析可运行 /forge decide |
-| 同名 spec (draft) | 读取现有草案为基础修改 |
-| 同名 spec (locked) | ⚠️ 先将 status 改为 draft，再重新运行 |
-| 需求模糊 | 追问：问题？目标用户？关键场景？ |
-| 自检反复失败（3次） | 停止自动修正，呈现问题给用户 |
-| 无 `.forge/` | ⚠️ 先运行 forge init |
-
-→ 导入模式边界情况详见 references/import-mode.md
+→ 详见 references/edge-cases.md
 
 ---
 
