@@ -36,7 +36,7 @@ import { extractStringField, parseFrontmatter } from "./frontmatter.js";
  *   - filePath:             source path passed by the caller, echoed back
  *   - description:          the description string as found (may be empty)
  *   - length:               character count of the description
- *   - hasUseWhen:           true when {@link USE_WHEN_PATTERN} matches
+ *   - hasUseWhen:           true when `USE_WHEN_PATTERN` matches
  *   - hasForbiddenPatterns: list of human-readable reasons for each
  *                           forbidden pattern that matched
  *   - valid:                true only when every rule passes
@@ -138,9 +138,9 @@ export function parseSkillFrontmatter(content: string): SkillFrontmatter | null 
  *
  * Rules applied (in the order they appear in the returned `errors`):
  *   1. Frontmatter must exist and contain a non-empty `description`.
- *   2. Length must be ≤ {@link MAX_LENGTH}.
+ *   2. Length must be ≤ `MAX_LENGTH`.
  *   3. Description must contain "Use when" (case-insensitive).
- *   4. Description must not match any {@link FORBIDDEN_PATTERNS} entry.
+ *   4. Description must not match any `FORBIDDEN_PATTERNS` entry.
  *
  * The `valid` flag is `true` if and only if `errors` is empty. The
  * `hasForbiddenPatterns` array lists the `reason` string of each rule
