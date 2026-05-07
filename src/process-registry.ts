@@ -172,6 +172,7 @@ export class ProcessRegistry {
     }
 
     this.processes.clear();
+    // biome-ignore lint/suspicious/noConsole: shutdown diagnostic in standalone utility
     console.info(
       `ProcessRegistry shutdown: terminated=${result.terminated} forcedKill=${result.forcedKill} alreadyExited=${result.alreadyExited} errors=${result.errors.length}`,
     );

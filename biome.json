@@ -2,7 +2,13 @@
   "linter": {
     "enabled": true,
     "rules": {
-      "recommended": true
+      "recommended": true,
+      "suspicious": {
+        "noConsole": {
+          "level": "error",
+          "options": { "allow": [] }
+        }
+      }
     }
   },
   "formatter": {
@@ -16,6 +22,18 @@
       "quoteStyle": "double"
     }
   },
+  "overrides": [
+    {
+      "includes": ["test/**"],
+      "linter": {
+        "rules": {
+          "suspicious": {
+            "noConsole": "off"
+          }
+        }
+      }
+    }
+  ],
   "assist": {
     "actions": {
       "source": {

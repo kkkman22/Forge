@@ -211,15 +211,18 @@ async function main(): Promise<void> {
       const targetRoot = path.join(cwd, "skills");
 
       if (!existsSync(resolvedSource)) {
+        // biome-ignore lint/suspicious/noConsole: skill install runs before logSink is configured
         console.error(`Error: Source path does not exist: ${skillPath}`);
         process.exit(1);
       }
 
       const result = installSkill(resolvedSource, targetRoot, PACKAGE_VERSION);
       if (result.success) {
+        // biome-ignore lint/suspicious/noConsole: skill install runs before logSink is configured
         console.log(`✅ ${result.message}`);
         process.exit(0);
       } else {
+        // biome-ignore lint/suspicious/noConsole: skill install runs before logSink is configured
         console.error(`❌ ${result.message}`);
         process.exit(1);
       }
@@ -403,6 +406,7 @@ async function main(): Promise<void> {
       );
 
       if (localeResult.warning) {
+        // biome-ignore lint/suspicious/noConsole: locale warning runs before logSink is configured
         console.warn(`Warning: ${localeResult.warning}`);
       }
 
@@ -454,15 +458,19 @@ async function main(): Promise<void> {
           const forgeRoot = path.join(cwd, ".forge");
           const activeTasks = listActiveTasks(managerIO, forgeRoot);
           if (activeTasks.length === 1) {
+            // biome-ignore lint/suspicious/noConsole: active task warning runs before logSink
             console.warn(_t("cli.warning.activeTask", { phase: activeTasks[0].phase }));
           } else if (activeTasks.length > 1) {
+            // biome-ignore lint/suspicious/noConsole: active task warning runs before logSink
             console.warn(_t("cli.warning.activeTasks", { count: String(activeTasks.length) }));
             for (const task of activeTasks) {
+              // biome-ignore lint/suspicious/noConsole: active task warning runs before logSink
               console.warn(`  • ${task.taskName} (${task.phase})`);
             }
           }
         } catch (err) {
           // StatusFile read failure is non-blocking — continue startup.
+          // biome-ignore lint/suspicious/noConsole: status check runs before logSink
           console.warn(
             `[debug] StatusFile read failed during startup: ${err instanceof Error ? err.message : String(err)}`,
           );
@@ -565,6 +573,7 @@ async function main(): Promise<void> {
         }
 
         runSetup = resumed;
+        // biome-ignore lint/suspicious/noConsole: resume message runs before logSink
         console.log(
           _t("cli.loop.resuming", {
             runId: resumed.runId,
@@ -666,8 +675,13 @@ async function main(): Promise<void> {
         try {
           const staleOrphans = await cleanupStaleSessions(pidsBaseDir);
           if (staleOrphans.length > 0) {
-            console.warn(
-              `[debug] Cleaned ${staleOrphans.length} stale orphan process(es) from previous runs`,
+            logSink.log(
+              createLogEntry(
+                "orphan_cleanup",
+                "warn",
+                `Cleaned ${staleOrphans.length} stale orphan process(es) from previous runs`,
+                { runId: sessionId },
+              ),
             );
           }
         } catch {
@@ -679,15 +693,27 @@ async function main(): Promise<void> {
           if (ppidOrphans.length > 0) {
             const autoKillResult = cleanupOrphans(ppidOrphans, 3600);
             if (autoKillResult.killed.length > 0) {
-              console.warn(
-                `[debug] Auto-terminated ${autoKillResult.killed.length} orphan process(es)`,
+              logSink.log(
+                createLogEntry(
+                  "orphan_terminated",
+                  "warn",
+                  `Auto-terminated ${autoKillResult.killed.length} orphan process(es)`,
+                  { runId: sessionId },
+                ),
               );
             }
             if (autoKillResult.warned.length > 0) {
               for (const pid of autoKillResult.warned) {
                 const orphan = ppidOrphans.find((o) => o.pid === pid);
                 if (orphan) {
-                  console.warn(`[debug] Detected orphan process: PID ${pid} (${orphan.command})`);
+                  logSink.log(
+                    createLogEntry(
+                      "orphan_detected",
+                      "warn",
+                      `Detected orphan process: PID ${pid} (${orphan.command})`,
+                      { runId: sessionId },
+                    ),
+                  );
                 }
               }
             }
@@ -832,10 +858,15 @@ async function main(): Promise<void> {
             const worktreeNotesPath = runSetup.notesPath;
             const backupResult = backupWorktreeNotes(worktreeNotesPath, mainRepoRunDir);
             if (!backupResult.success) {
-              console.warn(
-                _t("cli.warning.worktreeNotesBackupFailed", {
-                  error: backupResult.error ?? "unknown",
-                }),
+              logSink.log(
+                createLogEntry(
+                  "worktree_notes_backup_failed",
+                  "warn",
+                  _t("cli.warning.worktreeNotesBackupFailed", {
+                    error: backupResult.error ?? "unknown",
+                  }),
+                  { runId: runSetup.runId },
+                ),
               );
             }
 
@@ -844,15 +875,33 @@ async function main(): Promise<void> {
                 cwd,
                 stdio: "pipe",
               });
-              console.log(_t("cli.loop.worktreeRemoved", { reason: decision.reason }));
+              logSink.log(
+                createLogEntry(
+                  "worktree_removed",
+                  "info",
+                  _t("cli.loop.worktreeRemoved", { reason: decision.reason }),
+                  { runId: runSetup.runId },
+                ),
+              );
             } catch (cleanupError) {
-              console.error(
-                `Failed to remove worktree at ${worktreePath}:`,
-                cleanupError instanceof Error ? cleanupError.message : cleanupError,
+              logSink.log(
+                createLogEntry(
+                  "worktree_remove_failed",
+                  "error",
+                  `Failed to remove worktree at ${worktreePath}: ${cleanupError instanceof Error ? cleanupError.message : cleanupError}`,
+                  { runId: runSetup.runId },
+                ),
               );
             }
           } else {
-            console.log(_t("cli.loop.worktreePreserved", { reason: decision.reason }));
+            logSink.log(
+              createLogEntry(
+                "worktree_preserved",
+                "info",
+                _t("cli.loop.worktreePreserved", { reason: decision.reason }),
+                { runId: runSetup.runId },
+              ),
+            );
           }
         }
       } finally {
@@ -878,9 +927,13 @@ async function main(): Promise<void> {
           try {
             sleepProcess.kill();
           } catch (cleanupError) {
-            console.error(
-              "Failed to kill sleep prevention process:",
-              cleanupError instanceof Error ? cleanupError.message : cleanupError,
+            logSink.log(
+              createLogEntry(
+                "sleep_kill_failed",
+                "error",
+                `Failed to kill sleep prevention process: ${cleanupError instanceof Error ? cleanupError.message : String(cleanupError)}`,
+                { runId: sessionId },
+              ),
             );
           }
         }
@@ -889,9 +942,13 @@ async function main(): Promise<void> {
         try {
           await agentAdapter.close?.();
         } catch (cleanupError) {
-          console.error(
-            "Failed to close SDK agent adapter:",
-            cleanupError instanceof Error ? cleanupError.message : cleanupError,
+          logSink.log(
+            createLogEntry(
+              "agent_close_failed",
+              "error",
+              `Failed to close SDK agent adapter: ${cleanupError instanceof Error ? cleanupError.message : String(cleanupError)}`,
+              { runId: sessionId },
+            ),
           );
         }
       }
@@ -902,10 +959,12 @@ async function main(): Promise<void> {
 
 main().catch((err: unknown) => {
   if (err instanceof CliError) {
+    // biome-ignore lint/suspicious/noConsole: top-level error handler has no logSink
     console.error(err.message);
     process.exit(err.exitCode);
   }
   const message = err instanceof Error ? err.message : String(err);
+  // biome-ignore lint/suspicious/noConsole: top-level error handler has no logSink
   console.error(message);
   process.exit(1);
 });
