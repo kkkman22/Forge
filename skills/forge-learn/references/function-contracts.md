@@ -63,3 +63,108 @@
   - `report` — `generateEvolutionReport` 的输出
 - **返回**：格式化终端输出字符串
 - **用途**：将演化报告渲染为终端展示格式
+
+---
+
+## `extractSessionTermCandidates(sessionData, glossary)`
+
+- **参数**：
+  - `sessionData` — 会话数据
+  - `glossary` — 当前术语表
+- **返回**：候选术语列表
+- **用途**：从会话数据中提取潜在的术语候选项
+
+---
+
+## `proposeStaleTerms(glossary, now, maxAgeDays)`
+
+- **参数**：
+  - `glossary` — 当前术语表
+  - `now` — 当前时间戳
+  - `maxAgeDays` — 最大存活天数
+- **返回**：过期术语提议列表
+- **用途**：识别术语表中陈旧或过期的术语
+
+---
+
+## `buildEpisodeFromSession(meta, phaseHistory, situation, lesson, sequenceInDay)`
+
+- **参数**：
+  - `meta` — 会话元数据
+  - `phaseHistory` — 阶段历史记录
+  - `situation` — 场景描述
+  - `lesson` — 经验教训
+  - `sequenceInDay` — 当日序号
+- **返回**：结构化 Episode 对象
+- **用途**：从会话数据构建知识 Episode
+
+---
+
+## `archivePatternByName(patterns, name)`
+
+- **参数**：
+  - `patterns` — 模式列表
+  - `name` — 模式名称
+- **返回**：归档结果
+- **用途**：按名称归档指定模式
+
+---
+
+## `buildPatternUpgradeDrafts(episodes, patterns, now)`
+
+- **参数**：
+  - `episodes` — Episode 列表
+  - `patterns` — 现有模式列表
+  - `now` — 当前时间戳
+- **返回**：模式升级草稿列表
+- **用途**：基于 Episodes 构建模式升级建议
+
+---
+
+## `getLearnPromptConfig(outcome)`
+
+- **参数**：
+  - `outcome` — Episode 结果类型
+- **返回**：Learn 提示配置
+- **用途**：根据结果类型获取对应的提示配置
+
+---
+
+## `findStaleOrDecayedPatterns(patterns, now, maxAgeDays)`
+
+- **参数**：
+  - `patterns` — 模式列表
+  - `now` — 当前时间戳
+  - `maxAgeDays` — 最大存活天数
+- **返回**：陈旧/衰减模式列表
+- **用途**：识别知识库中陈旧或置信度衰减的模式
+
+---
+
+## `mergeTerm(glossary, candidate, strategy)`
+
+- **参数**：
+  - `glossary` — 当前术语表
+  - `candidate` — 候选术语
+  - `strategy` — 合并策略
+- **返回**：更新后的术语表
+- **用途**：将候选术语按策略合并到术语表
+
+---
+
+## `archiveTerm(glossary, termName)`
+
+- **参数**：
+  - `glossary` — 当前术语表
+  - `termName` — 术语名称
+- **返回**：更新后的术语表
+- **用途**：从术语表中归档指定术语
+
+---
+
+## `serializeContextBudgetReport(report)`
+
+- **参数**：
+  - `report` — `ContextBudgetReport` 对象
+- **返回**：序列化字符串
+- **用途**：将上下文预算报告序列化为可存储/传输的格式
