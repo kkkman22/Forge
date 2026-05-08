@@ -26,7 +26,7 @@ function notifyFrozen(targetFile: string): void {
     const child = spawn("bash", [hookPath], {
       detached: true,
       stdio: "ignore",
-      env: { ...process.env, FORGE_TASK: targetFile },
+      env: { PATH: process.env.PATH ?? "", FORGE_TASK: targetFile },
     });
     child.unref();
   } catch {

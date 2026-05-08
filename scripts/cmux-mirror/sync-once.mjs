@@ -127,8 +127,8 @@ export async function syncOnceWithRespawn(opts = {}) {
     return result;
   }
 
-  // If no commands emitted and state exists, mirror may be down — try respawn
-  if (result.synced && result.commandsEmitted === 0 && !cmuxAvailable()) {
+  // If synced but no commands emitted (state unchanged), mirror may be down
+  if (result.synced && result.commandsEmitted === 0) {
     if (tryConsumeRespawn(respawnFile, MAX_RESPAWNS)) {
       // Signal that respawn is recommended
       return { ...result, respawnRecommended: true };
@@ -142,6 +142,11 @@ export async function syncOnceWithRespawn(opts = {}) {
 const args = process.argv.slice(2);
 if (args.length > 0 && args[0] !== "--test") {
   const forgeDir = args[0] || ".forge";
+
+  // Validate: reject path traversal
+  if (forgeDir.includes("..")) {
+    process.exit(0);
+  }
 
   syncOnce({ forgeDir })
     .then((result) => {
