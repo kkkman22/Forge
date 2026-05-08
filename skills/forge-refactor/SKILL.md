@@ -1,6 +1,6 @@
 ---
 name: forge-refactor
-description: "Behavior-preserving refactor engine that restructures code without changing external behavior. Use when user runs `/forge refactor` / tests are green and code needs structural cleanup / extract function / rename symbols across the codebase."
+description: "Refactor code without changing external behavior while tests remain green. Use when user runs `/forge refactor`, tests are green and code needs structural cleanup, or extracting functions and renaming symbols across the codebase."
 disable-model-invocation: true
 ---
 

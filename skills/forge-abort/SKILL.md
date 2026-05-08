@@ -1,6 +1,6 @@
 ---
 name: forge-abort
-description: "Task termination engine that archives the status file and frees the active task slot. Use when user runs `/forge abort` / decides to abandon the current task / needs to clear an active task slot before starting a new one."
+description: "Abort the active task by archiving its status file and freeing the task slot. Use when user runs `/forge abort`, decides to abandon the current task, or needs to clear an active task slot before starting a new one."
 disable-model-invocation: true
 ---
 

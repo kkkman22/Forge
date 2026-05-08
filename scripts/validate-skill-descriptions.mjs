@@ -48,9 +48,10 @@ const FORBIDDEN_PATTERNS = [
 
 // 祈使动词白名单（镜像 src/skill-description-imperatives.ts）
 const IMPERATIVE_WHITELIST = [
-  "Build", "Audit", "Diagnose", "Execute", "Plan", "Review", "Ship",
-  "Test", "Resume", "Orchestrate", "Capture", "Refactor", "Grill",
-  "Decompose", "Decide", "Restart", "Fix", "Verify", "Accept",
+  "Abort", "Audit", "Build", "Capture", "Decide", "Decompose",
+  "Diagnose", "Execute", "Fix", "Grill", "Orchestrate", "Plan",
+  "Refactor", "Restart", "Resume", "Review", "Ship", "Specify",
+  "Test", "Verify",
 ];
 
 // ---------------------------------------------------------------------------
