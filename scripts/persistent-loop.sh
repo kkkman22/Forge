@@ -4,12 +4,13 @@
 #
 # Prevents Claude from stopping when there are unresolved P0/P1 issues
 # after review, automatically triggering a build→review→fix cycle.
+# Also detects build-phase context exhaustion and injects resume commands.
 #
 # Mechanism:
 #   1. Registered on the "Stop" event in hooks.json
 #   2. Reads .forge/status.md for current phase and loop state
 #   3. If review found P0/P1 and auto-fix loop is active, blocks the stop
-#   4. Injects a reminder to fix issues and re-review
+#   4. If build has incomplete tasks + exhaustion signal, injects resume
 #
 # Safety:
 #   - Max 3 fix iterations (prevents infinite loops)
@@ -27,43 +28,22 @@ MAX_FIX_ITERATIONS=3
 STALE_THRESHOLD_MINUTES=120
 
 # ---------------------------------------------------------------------------
-# Helpers
+# Shared helpers
 # ---------------------------------------------------------------------------
 
-# Read a YAML frontmatter field from a .md file
-read_field() {
-  local file="$1"
-  local field="$2"
-  if [ ! -f "$file" ]; then
-    echo ""
-    return
-  fi
-  grep "^${field}:" "$file" 2>/dev/null | head -1 | sed "s/^${field}: *\"\\{0,1\\}//;s/\"\\{0,1\\} *$//" || echo ""
-}
+SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
+# shellcheck source=lib/forge-helpers.sh
+source "$SCRIPT_DIR/lib/forge-helpers.sh"
 
-# Check if a file was modified within the last N minutes
-is_fresh() {
-  local file="$1"
-  local max_age_minutes="$2"
-  if [ ! -f "$file" ]; then
-    return 1
-  fi
-  # macOS and Linux compatible: use find
-  local count
-  count=$(find "$file" -mmin "-${max_age_minutes}" 2>/dev/null | wc -l | tr -d ' ')
-  [ "$count" -gt 0 ]
-}
+# ---------------------------------------------------------------------------
+# Script-local helpers
+# ---------------------------------------------------------------------------
 
 # Count P0+P1 issues in the most recent review file
 count_blocking_issues() {
   local review_dir="$FORGE_DIR/reviews"
-  if [ ! -d "$review_dir" ]; then
-    echo "0"
-    return
-  fi
-  # Find the most recent review file
   local latest
-  latest=$(find "$review_dir" -maxdepth 1 -name '*.md' -print0 2>/dev/null | xargs -0 ls -t 2>/dev/null | head -1)
+  latest=$(find_latest "$review_dir" '*.md')
   if [ -z "$latest" ]; then
     echo "0"
     return
@@ -74,6 +54,19 @@ count_blocking_issues() {
   p0=${p0:-0}
   p1=${p1:-0}
   echo $(( p0 + p1 ))
+}
+
+# Remove a YAML frontmatter field from a file. Returns 0 on success.
+remove_field() {
+  local file="$1"
+  local field="$2"
+  local backup="${file}.bak"
+  if ! sed -i.bak "/^${field}:/d" "$file" 2>/dev/null; then
+    rm -f "$backup" 2>/dev/null
+    return 1
+  fi
+  rm -f "$backup" 2>/dev/null
+  return 0
 }
 
 # ---------------------------------------------------------------------------
@@ -110,7 +103,7 @@ fi
 # Case 1: Review just completed with P0/P1 issues → activate auto-fix loop
 if [ "$current_phase" = "review" ] || [ "$current_phase" = "test" ]; then
   blocking_count=$(count_blocking_issues)
-  
+
   if [ "$blocking_count" -gt 0 ]; then
     # Check if we've exceeded max iterations
     if [ "$fix_iteration" -ge "$MAX_FIX_ITERATIONS" ]; then
@@ -121,7 +114,7 @@ if [ "$current_phase" = "review" ] || [ "$current_phase" = "test" ]; then
       rm -f "$LOOP_STATE_FILE" 2>/dev/null
       exit 0
     fi
-    
+
     # Activate or continue the fix loop
     new_iteration=$((fix_iteration + 1))
     cat > "$LOOP_STATE_FILE" << EOF
@@ -158,6 +151,60 @@ if [ "$auto_fix_active" = "true" ]; then
     echo "✅ 自动修复循环完成。所有 P0/P1 问题已解决。"
     exit 0
   fi
+fi
+
+# Case 3: Build phase incomplete — inject resume command
+if [ "$current_phase" = "build" ]; then
+  progress_count=$(find "$FORGE_DIR/progress" -maxdepth 1 -name '*.md' 2>/dev/null | wc -l | tr -d ' ')
+  if [ "$progress_count" -gt 0 ]; then
+    pending=$(find "$FORGE_DIR/progress" -maxdepth 1 -name '*.md' -exec grep -c '\- \[ \]' {} + 2>/dev/null | awk '{s+=$1}END{print s}' || echo 0)
+    pending=${pending:-0}
+    if [ "$pending" -gt 0 ]; then
+      exhaustion_flag=$(read_field "$STATUS_FILE" "exhaustion_pending")
+
+      if [ "$exhaustion_flag" = "true" ]; then
+        # Context exhaustion was detected — clear flag and inject resume
+        if ! remove_field "$STATUS_FILE" "exhaustion_pending"; then
+          echo "⚠️ 无法清除 exhaustion_pending 标记。请手动编辑 $STATUS_FILE。"
+          exit 0
+        fi
+
+        echo "🔄 [BUILD 会话延续] 检测到上下文耗尽恢复点。"
+        echo ""
+        echo "请执行以下操作："
+        echo "1. 读取 .forge/knowledge/sessions/ 中最新的 interim 文件"
+        echo "2. 读取 .forge/progress/ 中的任务进度"
+        echo "3. 从下一个未完成任务继续执行"
+        echo ""
+        echo "请立即运行 /forge resume 恢复上下文并继续构建。"
+        echo "如需中止，运行 /forge abort。"
+        exit 0
+      fi
+
+      # No exhaustion flag — check for recent interim file as fallback evidence
+      # DoS guard: skip if multiple interim files exist in short window
+      interim_count=$(find "$FORGE_DIR/knowledge/sessions" -maxdepth 1 -name '*-interim.md' -mmin "-${STALE_THRESHOLD_MINUTES}" 2>/dev/null | wc -l | tr -d ' ')
+      if [ "${interim_count:-0}" -gt 3 ]; then
+        exit 0
+      fi
+
+      latest_interim=$(find_latest "$FORGE_DIR/knowledge/sessions" '*-interim.md')
+
+      if [ -n "$latest_interim" ] && is_fresh "$latest_interim" "$STALE_THRESHOLD_MINUTES"; then
+        echo "🔄 [BUILD 会话延续] 检测到 interim 快照文件。"
+        echo ""
+        echo "请立即运行 /forge resume 恢复上下文并继续构建。"
+        echo "如需中止，运行 /forge abort。"
+        exit 0
+      fi
+    fi
+  fi
+fi
+
+# Case 4: Stale exhaustion flag from a previous session — clean up
+exhaustion_flag=$(read_field "$STATUS_FILE" "exhaustion_pending")
+if [ "$exhaustion_flag" = "true" ]; then
+  remove_field "$STATUS_FILE" "exhaustion_pending" 2>/dev/null || true
 fi
 
 exit 0
