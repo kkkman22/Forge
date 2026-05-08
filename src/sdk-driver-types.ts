@@ -33,6 +33,7 @@ import type { StatusFileIO } from "./sdk-status-helpers.js";
 /**
  * Structured logger type — the return type of `createLogSink`.
  * Defined here to avoid coupling extracted modules to the concrete factory.
+ * @public
  */
 export type LogSink = ReturnType<typeof createLogSink>;
 
@@ -46,6 +47,7 @@ export type LogSink = ReturnType<typeof createLogSink>;
  * The `warmQuery` field is typed as `unknown` to avoid importing Agent SDK
  * types directly — the driver never touches it; it's passed through to the
  * agent adapter.
+ * @public
  */
 export interface SdkDriverConfig {
   /** The user-provided objective for the autonomous loop. */
@@ -104,7 +106,10 @@ export interface SdkDriverConfig {
   forceNoHooks?: boolean;
 }
 
-/** Result returned when the driver loop exits. */
+/**
+ * Result returned when the driver loop exits.
+ * @public
+ */
 export interface SdkDriverResult {
   /** The final orchestrator state at loop exit. */
   finalState: OrchestratorState;
@@ -121,6 +126,7 @@ export interface SdkDriverResult {
 /**
  * Bundles all dependencies needed by extracted iteration functions.
  * Constructed by SdkDriver before each iteration call.
+ * @public
  */
 export interface IterationContext {
   // --- Configuration (read-only) ---
@@ -153,6 +159,7 @@ export interface IterationContext {
 /**
  * Extended context for skill-aware iteration.
  * Adds PUA integration, status file I/O, and review-fix tracking.
+ * @public
  */
 export interface SkillIterationContext extends IterationContext {
   readonly statusFileIO: StatusFileIO | undefined;
@@ -164,6 +171,7 @@ export interface SkillIterationContext extends IterationContext {
 /**
  * Describes state changes that the caller (SdkDriver) should apply
  * after an extracted iteration function completes.
+ * @public
  */
 export interface IterationResult {
   /** Updated orchestrator state after all transitions. */

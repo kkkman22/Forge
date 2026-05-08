@@ -22,6 +22,7 @@ import type {
 /**
  * Extract the topic segment from a `feature/<topic>` or `forge/<topic>` branch.
  * Returns `null` for branches that don't match the expected format.
+ * @internal
  */
 export function extractBranchTopic(branchName: string): string | null {
   const match = branchName.match(/^(?:feature|forge)\/(.+)$/);
@@ -35,6 +36,7 @@ export function extractBranchTopic(branchName: string): string | null {
 /**
  * Check whether the branch topic matches the task topic.
  * Returns `{ allowed, reasons }` similar to `checkBuildGate`.
+ * @internal
  */
 export function checkBranchTopicGate(branchName: string, taskTopic: string): BranchTopicGateResult {
   const branchTopic = extractBranchTopic(branchName);
@@ -62,6 +64,7 @@ export function checkBranchTopicGate(branchName: string, taskTopic: string): Bra
 
 /**
  * Create a pending-delivery record when "keep branch" is selected in ship.
+ * @internal
  */
 export function recordPendingDelivery(
   branchName: string,
@@ -80,6 +83,7 @@ export function recordPendingDelivery(
  * A branch is stale when its topic differs from the current task topic
  * and its timestamp is older than the staleness threshold.
  * Default threshold: 0 (any pending delivery for a different topic is flagged).
+ * @internal
  */
 export function detectStaleBranches(
   pendingDeliveries: PendingDeliveryRecord[],
@@ -99,6 +103,7 @@ export function detectStaleBranches(
 /**
  * Verify a commit's topic matches the branch's topic.
  * Returns `{ allowed: false, reason }` on mismatch.
+ * @internal
  */
 export function checkCommitTopicMatch(
   branchName: string,
@@ -130,6 +135,7 @@ export function checkCommitTopicMatch(
 /**
  * Identify branches with pending deliveries that should be surfaced as
  * warnings at build start.
+ * @internal
  */
 export function detectUnshippedBranches(
   pendingDeliveries: PendingDeliveryRecord[],

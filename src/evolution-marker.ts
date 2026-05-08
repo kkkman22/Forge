@@ -50,6 +50,8 @@
  *   - `filePath`:    file the marker was found in. Defaults to `""`
  *                    when the caller does not supply a path.
  *   - `lineNumber`:  1-indexed line number of the comment line.
+ *
+ * @internal
  */
 export interface EvolutionMarker {
   date: string;
@@ -70,6 +72,8 @@ export interface EvolutionMarker {
  *               (either empty target or unknown skill).
  *   - `reason`: human-readable explanation for a non-valid result.
  *               Absent on valid targets.
+ *
+ * @internal
  */
 export interface ValidationResult {
   valid: boolean;
@@ -77,7 +81,7 @@ export interface ValidationResult {
   reason?: string;
 }
 
-/** Per-target-skill rollup inside an {@link EvolutionReport}. */
+/** @internal Per-target-skill rollup inside an {@link EvolutionReport}. */
 export interface EvolutionBySkill {
   targetSkill: string;
   markerCount: number;
@@ -94,6 +98,8 @@ export interface EvolutionBySkill {
  *                     orphans.
  *   - `bySkill`:      per-skill rollups, sorted by `targetSkill`.
  *   - `orphans`:      markers whose target skill is unknown.
+ *
+ * @internal
  */
 export interface EvolutionReport {
   generatedAt: string;
@@ -138,6 +144,8 @@ const SUGGEST_ADR_THRESHOLD = 3;
  * `filePath` is echoed onto each marker for downstream aggregation /
  * error reporting. When the caller does not supply a path (e.g. unit
  * tests), an empty string is used.
+ *
+ * @internal
  */
 export function parseEvolutionMarkers(content: string, filePath = ""): EvolutionMarker[] {
   const markers: EvolutionMarker[] = [];
@@ -182,6 +190,8 @@ export function parseEvolutionMarkers(content: string, filePath = ""): Evolution
  * Returns `{ valid, orphan, reason? }`:
  *   - `{ valid: true, orphan: false }` when the base name is in the registry.
  *   - `{ valid: false, orphan: true, reason: ... }` otherwise.
+ *
+ * @internal
  */
 export function validateEvolutionTarget(
   target: string,
@@ -222,6 +232,8 @@ export function validateEvolutionTarget(
  * `now` defaults to `new Date()`; callers who need stable snapshots
  * (e.g. tests, deterministic learn output) should supply a fixed
  * clock.
+ *
+ * @internal
  */
 export function aggregateEvolutionMarkers(
   markersByFile: Map<string, EvolutionMarker[]>,

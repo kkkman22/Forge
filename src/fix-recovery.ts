@@ -4,6 +4,7 @@
  * **Validates: Requirements 11.1, 11.3**
  */
 
+/** @public */
 export interface RecoveryCandidate {
   commitHash: string;
   commitMessage: string;
@@ -12,12 +13,14 @@ export interface RecoveryCandidate {
   matchesLineRange: boolean;
 }
 
+/** @public */
 export interface RecoveryResult {
   findingId: string;
   candidates: RecoveryCandidate[];
   hasCandidate: boolean;
 }
 
+/** @public */
 export function isFixCandidate(
   commitFiles: string[],
   commitLineRanges: Map<string, [number, number][]>,
@@ -39,6 +42,7 @@ export function isFixCandidate(
   return false;
 }
 
+/** @public */
 export function parseGitLog(
   gitLogOutput: string,
 ): Array<{ hash: string; message: string; date: string; files: string[] }> {

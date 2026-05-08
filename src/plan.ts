@@ -27,12 +27,14 @@ import type { Glossary, GlossaryTerm } from "./glossary.js";
 // Types — Full format (Atomic Task)
 // ---------------------------------------------------------------------------
 
+/** @public */
 export interface TDDSteps {
   red: { testFile: string; testCode: string; runCommand: string };
   green: { sourceFile: string; sourceCode: string; runCommand: string };
   refactor: string;
 }
 
+/** @public */
 export interface AtomicTask {
   taskNumber: number;
   title: string;
@@ -48,8 +50,10 @@ export interface AtomicTask {
 // Types — Lightweight format
 // ---------------------------------------------------------------------------
 
+/** @public */
 export type PlanFormat = "lightweight" | "full";
 
+/** @public */
 export interface LightweightTask {
   taskNumber: number;
   title: string;
@@ -62,11 +66,13 @@ export interface LightweightTask {
   dependsOn?: number[];
 }
 
+/** @public */
 export interface DesignReferenceEntry {
   anchor: string;
   summary: string;
 }
 
+/** @public */
 export interface DesignReferenceValidation {
   valid: boolean;
   errors: string[];
@@ -76,6 +82,7 @@ export interface DesignReferenceValidation {
 // Constants
 // ---------------------------------------------------------------------------
 
+/** @public */
 export const FORBIDDEN_PLACEHOLDERS = [
   "TBD",
   "TODO",
@@ -101,6 +108,7 @@ const MAX_ESTIMATED_MINUTES = 5;
  * and common variants (e.g., `tbd`, `Todo`, `TODO:`, `// TODO`).
  *
  * Returns an array of found placeholder strings. Empty array means clean.
+ * @public
  */
 export function scanForPlaceholders(text: string): string[] {
   const found: string[] = [];
@@ -125,6 +133,7 @@ export function scanForPlaceholders(text: string): string[] {
  *   (d) Referenced types/functions consistency (checked at plan level)
  *
  * Returns { valid, errors } where errors lists all validation failures.
+ * @public
  */
 export function validateAtomicTask(task: AtomicTask): { valid: boolean; errors: string[] } {
   const errors: string[] = [];
@@ -217,6 +226,7 @@ export function validateAtomicTask(task: AtomicTask): { valid: boolean; errors: 
  *
  * Per R24: Plan execution requires a locked spec to ensure the plan is based
  * on a confirmed specification.
+ * @public
  */
 export function validateSpecLocked(
   specStatus: string,
@@ -233,6 +243,7 @@ export function validateSpecLocked(
  *
  * Per R25: Each task's `dependsOn` array (if present) must only reference
  * task numbers that exist in the plan.
+ * @public
  */
 export function validateDependencies(
   tasks: Array<{ taskNumber: number; dependsOn?: number[] }>,
@@ -337,6 +348,7 @@ function validateTopologicalOrder(
  *
  * Returns true only if every task passes validateAtomicTask and all
  * `dependsOn` references are valid.
+ * @public
  */
 export function validatePlanTasks(tasks: AtomicTask[]): boolean {
   if (tasks.length === 0) {
@@ -356,6 +368,7 @@ export function validatePlanTasks(tasks: AtomicTask[]): boolean {
 // Lightweight format — format detection
 // ---------------------------------------------------------------------------
 
+/** @public */
 export function detectPlanFormat(frontmatter: string): PlanFormat {
   const value = extractStringField(frontmatter, "format");
   if (value === "lightweight") return "lightweight";
@@ -366,6 +379,7 @@ export function detectPlanFormat(frontmatter: string): PlanFormat {
 // Lightweight format — heading anchor extraction
 // ---------------------------------------------------------------------------
 
+/** @public */
 export function extractHeadingAnchors(markdownContent: string): string[] {
   const anchors: string[] = [];
   const lines = markdownContent.split("\n");
@@ -392,6 +406,7 @@ export function extractHeadingAnchors(markdownContent: string): string[] {
 
 const DESIGN_REF_PATTERN = /^design\.md#[a-z0-9\-_]+$/;
 
+/** @public */
 export function validateLightweightTask(task: LightweightTask): {
   valid: boolean;
   errors: string[];
@@ -438,6 +453,7 @@ export function validateLightweightTask(task: LightweightTask): {
   return { valid: errors.length === 0, errors };
 }
 
+/** @public */
 export function validateLightweightPlan(tasks: LightweightTask[]): boolean {
   if (tasks.length === 0) return false;
 
@@ -457,6 +473,7 @@ export function validateLightweightPlan(tasks: LightweightTask[]): boolean {
 // Lightweight format — Design Reference validation
 // ---------------------------------------------------------------------------
 
+/** @public */
 export function validateDesignReferences(
   references: string[],
   designContent: string,
@@ -482,6 +499,7 @@ export function validateDesignReferences(
 // Unified plan validation dispatcher
 // ---------------------------------------------------------------------------
 
+/** @public */
 export function validatePlan(
   frontmatter: string,
   tasks: AtomicTask[] | LightweightTask[],
@@ -643,6 +661,8 @@ function replaceWholeWord(
  *     themselves.
  *
  * **Validates: Requirements 1.5**
+ *
+ * @public
  */
 export function normalizeTaskTerms(title: string, glossary: Glossary): string {
   if (title.length === 0) return title;
@@ -662,6 +682,7 @@ export function normalizeTaskTerms(title: string, glossary: Glossary): string {
 /**
  * Return a copy of `task` whose `title` field has been normalized against
  * the glossary. All other fields are passed through unchanged.
+ * @public
  */
 export function normalizeLightweightTask(
   task: LightweightTask,
@@ -675,6 +696,7 @@ export function normalizeLightweightTask(
 /**
  * Return a copy of `task` whose `title` field has been normalized against
  * the glossary. All other fields are passed through unchanged.
+ * @public
  */
 export function normalizeAtomicTask(task: AtomicTask, glossary: Glossary): AtomicTask {
   const normalizedTitle = normalizeTaskTerms(task.title, glossary);

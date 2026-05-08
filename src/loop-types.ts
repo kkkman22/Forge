@@ -15,7 +15,10 @@
 // Token usage (Requirements 9.1, 9.6)
 // ---------------------------------------------------------------------------
 
-/** Cumulative token counts for a single agent invocation. */
+/**
+ * Cumulative token counts for a single agent invocation.
+ * @public
+ */
 export interface TokenUsage {
   /** Number of input (prompt) tokens consumed. */
   inputTokens: number;
@@ -31,7 +34,10 @@ export interface TokenUsage {
 // Agent output (Requirements 4.1–4.7)
 // ---------------------------------------------------------------------------
 
-/** Structured JSON result returned by a subagent after each iteration. */
+/**
+ * Structured JSON result returned by a subagent after each iteration.
+ * @public
+ */
 export interface AgentOutput {
   /** Whether the iteration completed successfully. */
   success: boolean;
@@ -51,7 +57,10 @@ export interface AgentOutput {
   gate_result?: "passed" | "blocked" | "skipped";
 }
 
-/** JSON Schema property descriptor for agent output schema construction. */
+/**
+ * JSON Schema property descriptor for agent output schema construction.
+ * @public
+ */
 export interface SchemaProperty {
   /** JSON Schema type (e.g. "boolean", "string", "array"). */
   type: string;
@@ -59,7 +68,10 @@ export interface SchemaProperty {
   items?: { type: string };
 }
 
-/** JSON Schema object describing the expected agent output structure. */
+/**
+ * JSON Schema object describing the expected agent output structure.
+ * @public
+ */
 export interface AgentOutputSchema {
   /** Always "object". */
   type: "object";
@@ -75,7 +87,10 @@ export interface AgentOutputSchema {
 // Context accumulator (Requirements 3.1–3.7)
 // ---------------------------------------------------------------------------
 
-/** A single iteration's record in the cumulative notes document. */
+/**
+ * A single iteration's record in the cumulative notes document.
+ * @public
+ */
 export interface IterationEntry {
   /** 1-based iteration number. */
   number: number;
@@ -89,7 +104,10 @@ export interface IterationEntry {
   keyLearnings: string[];
 }
 
-/** The full cumulative notes document maintained across iterations. */
+/**
+ * The full cumulative notes document maintained across iterations.
+ * @public
+ */
 export interface NotesDocument {
   /** Unique identifier for this run. */
   runId: string;
@@ -103,7 +121,10 @@ export interface NotesDocument {
 // Run limits and loop config (Requirements 1.5–1.7, 5.4–5.5, 8.7)
 // ---------------------------------------------------------------------------
 
-/** User-specified limits that control when the autonomous loop stops. */
+/**
+ * User-specified limits that control when the autonomous loop stops.
+ * @public
+ */
 export interface RunLimits {
   /** Maximum number of iterations before aborting. */
   maxIterations?: number;
@@ -113,7 +134,10 @@ export interface RunLimits {
   stopWhen?: string;
 }
 
-/** Configuration for the autonomous loop execution mode. */
+/**
+ * Configuration for the autonomous loop execution mode.
+ * @public
+ */
 export interface LoopConfig {
   /** Which agent to use for iterations. */
   agent: AgentName;
@@ -133,7 +157,10 @@ export interface LoopConfig {
 // Orchestrator state machine (Requirements 1.1–1.8)
 // ---------------------------------------------------------------------------
 
-/** The orchestrator's current state, updated after each event. */
+/**
+ * The orchestrator's current state, updated after each event.
+ * @public
+ */
 export interface OrchestratorState {
   /** Current lifecycle phase of the orchestrator. */
   status: "idle" | "running" | "waiting" | "aborted" | "stopped";
@@ -162,6 +189,7 @@ export interface OrchestratorState {
  *
  * Each event represents something that happened (past tense) and triggers
  * a deterministic state transition via the `transition` function.
+ * @public
  */
 export type OrchestratorEvent =
   | { type: "start"; limits: RunLimits }
@@ -176,6 +204,7 @@ export type OrchestratorEvent =
  * Side-effect descriptions produced by state transitions.
  *
  * Effects are pure data — the SKILL layer is responsible for executing them.
+ * @public
  */
 export type OrchestratorEffect =
   | { type: "schedule_iteration"; iterationNumber: number }
@@ -197,6 +226,7 @@ export type OrchestratorEffect =
  *
  * The structural shape mirrors `EventLogEntry` exactly — see
  * `src/event-log.ts` for the canonical definition.
+ * @public
  */
 export interface EventLogEntryRef {
   timestamp: string;
@@ -212,10 +242,16 @@ export interface EventLogEntryRef {
 // Failure handling (Requirements 5.1–5.8)
 // ---------------------------------------------------------------------------
 
-/** Classification of iteration failures. */
+/**
+ * Classification of iteration failures.
+ * @public
+ */
 export type FailureKind = "soft" | "hard";
 
-/** Mutable failure counters tracked by the orchestrator. */
+/**
+ * Mutable failure counters tracked by the orchestrator.
+ * @public
+ */
 export interface FailureState {
   /** Count of consecutive failures (soft + hard combined). */
   consecutiveFailures: number;
@@ -232,6 +268,7 @@ export interface FailureState {
  *
  * Commands are represented as argv arrays to prevent shell injection.
  * The executable is always "git" — user input appears only in `args`.
+ * @public
  */
 export interface GitCommand {
   /** Always "git". */
@@ -244,7 +281,10 @@ export interface GitCommand {
 // Sleep prevention (Requirements 8.1–8.7)
 // ---------------------------------------------------------------------------
 
-/** Platform-specific command to prevent the OS from sleeping. */
+/**
+ * Platform-specific command to prevent the OS from sleeping.
+ * @public
+ */
 export interface SleepPreventionCommand {
   /** The executable to spawn (e.g. "caffeinate", "powershell.exe"). */
   command: string;
@@ -258,7 +298,10 @@ export interface SleepPreventionCommand {
 // Worktree management (Requirements 7.1–7.7)
 // ---------------------------------------------------------------------------
 
-/** Decision about what to do with a worktree after a run completes. */
+/**
+ * Decision about what to do with a worktree after a run completes.
+ * @public
+ */
 export interface WorktreeDecision {
   /** Whether to keep or remove the worktree. */
   action: "preserve" | "remove";
@@ -270,10 +313,16 @@ export interface WorktreeDecision {
 // Agent abstraction (Requirements 9.1–9.6)
 // ---------------------------------------------------------------------------
 
-/** Supported agent identifiers. */
+/**
+ * Supported agent identifiers.
+ * @public
+ */
 export type AgentName = "claude" | "codex" | "opencode" | "rovodev";
 
-/** Options passed to an agent's `run` method. */
+/**
+ * Options passed to an agent's `run` method.
+ * @public
+ */
 export interface AgentRunOptions {
   /** Callback for incremental token usage reporting. */
   onUsage?: (usage: TokenUsage) => void;
@@ -285,7 +334,10 @@ export interface AgentRunOptions {
   logPath?: string;
 }
 
-/** Result of a single agent run (one iteration). */
+/**
+ * Result of a single agent run (one iteration).
+ * @public
+ */
 export interface AgentResult {
   /** The structured output from the agent. */
   output: AgentOutput;
@@ -293,7 +345,10 @@ export interface AgentResult {
   usage: TokenUsage;
 }
 
-/** Unified interface that all agent adapters must implement. */
+/**
+ * Unified interface that all agent adapters must implement.
+ * @public
+ */
 export interface AgentInterface {
   /** Human-readable agent name (e.g. "claude", "codex"). */
   name: string;
@@ -307,7 +362,10 @@ export interface AgentInterface {
 // Subagent invocation protocol (Agent Team Migration)
 // ---------------------------------------------------------------------------
 
-/** Describes a single Subagent invocation's complete parameters. */
+/**
+ * Describes a single Subagent invocation's complete parameters.
+ * @public
+ */
 export interface SubagentInvocation {
   /** Subagent role identifier, corresponding to .claude/agents/ definitions. */
   agentType: string;
@@ -319,7 +377,10 @@ export interface SubagentInvocation {
   maxTurns: number;
 }
 
-/** Subagent execution result. */
+/**
+ * Subagent execution result.
+ * @public
+ */
 export interface SubagentResult {
   /** Subagent role identifier. */
   agentType: string;
@@ -331,7 +392,10 @@ export interface SubagentResult {
   error?: string;
 }
 
-/** Parallel execution aggregate result. */
+/**
+ * Parallel execution aggregate result.
+ * @public
+ */
 export interface ParallelExecutionResult<T = string> {
   /** Successfully completed subagent results. */
   succeeded: Array<{ agentType: string; result: T }>;
@@ -343,7 +407,10 @@ export interface ParallelExecutionResult<T = string> {
 // Branch lifecycle enforcement (Branch Lifecycle Enforcement)
 // ---------------------------------------------------------------------------
 
-/** Result of checking whether a branch topic matches the task topic. */
+/**
+ * Result of checking whether a branch topic matches the task topic.
+ * @public
+ */
 export interface BranchTopicGateResult {
   /** Whether the build gate allows proceeding. */
   allowed: boolean;
@@ -351,7 +418,10 @@ export interface BranchTopicGateResult {
   reasons: string[];
 }
 
-/** A pending-delivery record for "keep branch" ship selections. */
+/**
+ * A pending-delivery record for "keep branch" ship selections.
+ * @public
+ */
 export interface PendingDeliveryRecord {
   /** The branch name (e.g. "feature/my-topic"). */
   branchName: string;
@@ -361,7 +431,10 @@ export interface PendingDeliveryRecord {
   timestamp: number;
 }
 
-/** Result of checking whether a commit's topic matches the branch topic. */
+/**
+ * Result of checking whether a commit's topic matches the branch topic.
+ * @public
+ */
 export interface CommitTopicCheckResult {
   /** Whether the commit is allowed. */
   allowed: boolean;
@@ -369,7 +442,10 @@ export interface CommitTopicCheckResult {
   reason?: string;
 }
 
-/** Warning about an unshipped branch with pending delivery. */
+/**
+ * Warning about an unshipped branch with pending delivery.
+ * @public
+ */
 export interface UnshippedBranchWarning {
   /** The branch name. */
   branchName: string;
