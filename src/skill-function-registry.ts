@@ -92,12 +92,36 @@ export const SKILL_FUNCTION_REGISTRY: readonly SkillFunctionEntry[] = [
     skills: ["forge-build/SKILL.md"],
     parameterNames: ["branchName", "commitTopic"],
   },
+  {
+    module: "context-budget.ts",
+    functionName: "serializeExploreResult",
+    skills: ["forge-build/SKILL.md"],
+    parameterNames: ["input"],
+  },
+  {
+    module: "context-budget.ts",
+    functionName: "serializeTestOutput",
+    skills: ["forge-build/SKILL.md"],
+    parameterNames: ["summary"],
+  },
+  {
+    module: "context-budget.ts",
+    functionName: "serializeGitDiff",
+    skills: ["forge-build/SKILL.md"],
+    parameterNames: ["summary", "lineCount"],
+  },
+  {
+    module: "context-budget.ts",
+    functionName: "serializeGitStatus",
+    skills: ["forge-build/SKILL.md"],
+    parameterNames: ["summary", "fileCount"],
+  },
 
-  // --- forge-decide/SKILL.md ---
+  // --- forge-decide/SKILL.md + forge-build/SKILL.md ---
   {
     module: "context-budget.ts",
     functionName: "serializeSubagentSummary",
-    skills: ["forge-decide/SKILL.md"],
+    skills: ["forge-build/SKILL.md", "forge-decide/SKILL.md"],
     parameterNames: ["summary"],
   },
   {
