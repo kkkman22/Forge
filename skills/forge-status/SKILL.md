@@ -1,6 +1,7 @@
 ---
 name: forge-status
-description: "Status query engine showing active Forge tasks, current phase, and pending gates. Use when user runs `/forge status` / wants to see what tasks are in flight / needs to know which phase a task currently sits in."
+description: "Verify active Forge tasks, current phase, and pending gates at a glance. Use when user runs `/forge status`, wants to see what tasks are in flight, or needs to know which phase a task currently sits in."
+skeleton_exempt_legacy: true
 disable-model-invocation: true
 ---
 

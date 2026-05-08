@@ -1,4 +1,5 @@
 #!/usr/bin/env bash
+# category: user-facing
 # ============================================================================
 # forge init — Forge 项目初始化脚本
 #
@@ -16,6 +17,16 @@
 # ============================================================================
 
 set -euo pipefail
+
+# ---------- --help ----------
+if [[ "${1:-}" == "--help" || "${1:-}" == "-h" ]]; then
+  echo "Usage: scripts/init.sh"
+  echo ""
+  echo "Initialize a Forge project in the current directory."
+  echo "Creates .forge/ structure, .claude/ agents, CLAUDE.md, config, and hooks."
+  echo "Interactive: prompts for project name, tech stack, and security level."
+  exit 0
+fi
 
 # ---------- 颜色定义 ----------
 RED='\033[0;31m'

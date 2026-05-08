@@ -27,7 +27,7 @@
     "lint:fix": "biome check --write src/ test/",
     "format": "biome format --write src/ test/",
     "typecheck": "tsc --noEmit",
-    "check": "tsc --noEmit && biome check src/ test/ && vitest run && node scripts/check-public-api.mjs && bash scripts/check-readme-metrics.sh && bash scripts/check-skill-function-refs.sh && bash scripts/validate-skill-descriptions.sh && bash scripts/validate-skill-length.sh && bash scripts/check-evolution-marker-zones.sh",
+    "check": "tsc --noEmit && biome check src/ test/ && vitest run && node scripts/check-public-api.mjs && bash scripts/check-readme-metrics.sh && bash scripts/check-skill-function-refs.sh && bash scripts/validate-skill-descriptions.sh && bash scripts/validate-skill-length.sh && bash scripts/validate-skill-skeleton.sh && bash scripts/check-evolution-marker-zones.sh && node scripts/validate-scripts-help.mjs",
     "docs": "typedoc"
   },
   "devDependencies": {

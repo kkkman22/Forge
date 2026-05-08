@@ -200,6 +200,13 @@ PR 描述中必须引用对应 ADR 的编号（`ADR-NNNN`），否则 review 会
 
 Open an [Issue](https://github.com/anthropics/forge/issues) for discussion.
 
+## Creating a New Skill
+
+1. Copy `templates/SKILL-TEMPLATE.md` to `skills/forge-<name>/SKILL.md`
+2. Follow the [SKILL.md Style Guide](/.forge/knowledge/skill-style-guide.md) for frontmatter, section structure, and description format
+3. Use the quick checklist at the end of the style guide as your PR self-check
+4. Run `node scripts/validate-skill-descriptions.mjs --strict` and `node scripts/validate-skill-skeleton.mjs` to verify compliance
+
 ## SKILL-Function Interface Check
 
 When adding or modifying exported functions in `src/*.ts`:

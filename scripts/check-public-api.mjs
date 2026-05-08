@@ -1,4 +1,5 @@
 #!/usr/bin/env node
+// category: internal-only
 /**
  * check-public-api.mjs — Validate barrel file against @public/@internal annotations.
  *

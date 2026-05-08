@@ -1,6 +1,7 @@
 ---
 name: forge-build-light
-description: "Lightweight execution engine for tiny single-file changes that skip the full plan and TDD ceremony. Use when user runs `/forge build` on a light-tier task / change touches <=1 file and <=20 lines / has no spec or plan document."
+description: "Build tiny single-file changes that skip the full plan and TDD ceremony. Use when user runs `/forge build` on a light-tier task, change touches 1 file and 20 lines or less, or has no spec or plan document."
+skeleton_exempt_legacy: true
 disable-model-invocation: true
 ---
 
