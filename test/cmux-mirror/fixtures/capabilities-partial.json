@@ -1,0 +1,11 @@
+{
+  "methods": [
+    "system.ping",
+    "system.capabilities",
+    "surface.send_text",
+    "notification.create",
+    "set_status",
+    "log",
+    "sidebar_state"
+  ]
+}
