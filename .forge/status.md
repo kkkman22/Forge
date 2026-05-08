@@ -2,12 +2,12 @@
 current_task: "cmux-integration"
 tier: "standard"
 task_type: "multi-phase-engineering"
-project_phase: "shipped-sprint3"
+project_phase: "shipped-sprint4"
 phase: "approved"
-hints: "Sprint 3 shipped, Sprint 4-6 pending"
+hints: "Sprint 4 shipped, Sprint 5-6 pending"
 assumptions:
-  - "Sprint 1-3 complete and shipped"
-  - "Sprint 4-6 remain in plan"
+  - "Sprint 1-4 complete and shipped"
+  - "Sprint 5-6 remain in plan"
 updated: "2026-05-08"
 ---
 

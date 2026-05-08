@@ -45,10 +45,10 @@ updated: "2026-05-08"
 
 | Task | Status | Commit |
 |------|--------|--------|
-| 20. sync-once.mjs | pending | — |
-| 21. hook-notify.sh | pending | — |
-| 22. src/check-frozen.ts | pending | — |
-| 23. hooks/hooks.json | pending | — |
+| 20. sync-once.mjs | done | 723fe09 |
+| 21. hook-notify.sh | done | bb5c3ee |
+| 22. src/check-frozen.ts | done | e9b4172 |
+| 23. hooks/hooks.json | done | 013deb4 |
 
 ## Sprint 5 — 模板 / 可选包 / Browser QA
 
