@@ -20,6 +20,7 @@ import { allEntriesVerified } from "./fix-checklist.js";
 // Types
 // ---------------------------------------------------------------------------
 
+/** @public */
 export interface ReviewResult {
   /** Whether the review passed (no P0/P1 issues). */
   passed: boolean;
@@ -31,11 +32,13 @@ export interface ReviewResult {
   reviewedAtCommit?: string;
 }
 
+/** @public */
 export interface TestResult {
   /** Whether all tests passed and the pre-completion checklist is satisfied. */
   passed: boolean;
 }
 
+/** @public */
 export interface ProgressResult {
   /** Total number of tasks in the plan. */
   totalTasks: number;
@@ -43,6 +46,7 @@ export interface ProgressResult {
   completedTasks: number;
 }
 
+/** @public */
 export interface ShipGateResult {
   allowed: boolean;
   reasons: string[];
@@ -52,6 +56,7 @@ export interface ShipGateResult {
 // Review freshness check (design Properties 1-4)
 // ---------------------------------------------------------------------------
 
+/** @public */
 export interface ReviewFreshnessResult {
   fresh: boolean;
   reason: string;
@@ -67,6 +72,7 @@ export interface ReviewFreshnessResult {
  *   2. reviewedCommit === currentHead → fresh
  *   3. all changed files are under .forge/ → fresh
  *   4. any changed file is outside .forge/ → not fresh
+ * @public
  */
 export function checkReviewFreshness(
   reviewedCommit: string | undefined,
@@ -108,6 +114,7 @@ export function checkReviewFreshness(
  *   - All three conditions must be true simultaneously
  *
  * Returns { allowed, reasons } where reasons lists all unmet conditions.
+ * @public
  */
 export function checkShipGate(
   review: ReviewResult,
@@ -154,6 +161,7 @@ export function checkShipGate(
  *
  * Adds a fourth gate: all checklist entries must have status "verified".
  * When checklist is not provided or empty, behaves like checkShipGate.
+ * @public
  */
 export function checkShipGateWithChecklist(
   review: ReviewResult,
@@ -180,6 +188,7 @@ export function checkShipGateWithChecklist(
  * Adds a non-blocking freshness warning: if the review was performed at a
  * different commit and project code has changed since, a warning is appended
  * to the reasons. This does NOT block ship — it is advisory only.
+ * @public
  */
 export function checkShipGateWithFreshness(
   review: ReviewResult,
@@ -222,10 +231,14 @@ import {
  *   - `checklist_failed`  → `outcome: "failure"`. The P1 Fix Checklist
  *                           has unverified entries, meaning a review
  *                           finding has not been addressed.
+ * @public
  */
 export type ShipGateBlockReason = "uncommitted" | "checklist_failed";
 
-/** Output of {@link buildShipGateBlockArtifacts}. */
+/**
+ * Output of {@link buildShipGateBlockArtifacts}.
+ * @public
+ */
 export interface ShipGateBlockArtifacts {
   episode: Episode;
   markerText: string;
@@ -269,6 +282,8 @@ function outcomeForReason(reason: ShipGateBlockReason): EpisodeOutcome {
  *
  * Pure: identical `(topic, tier, reason, situation, now, sequenceInDay)`
  * always yields identical artefacts.
+ *
+ * @public
  */
 export function buildShipGateBlockArtifacts(
   topic: string,

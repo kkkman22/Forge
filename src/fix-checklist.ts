@@ -4,8 +4,10 @@
  * **Validates: Requirements 10.1–10.5**
  */
 
+/** @public */
 export type ChecklistStatus = "unfixed" | "in-progress" | "fixed" | "verified";
 
+/** @public */
 export interface ChecklistEntry {
   findingId: string;
   severity: "P0" | "P1";
@@ -16,6 +18,7 @@ export interface ChecklistEntry {
   fixCommit?: string;
 }
 
+/** @public */
 export const VALID_TRANSITIONS: Record<ChecklistStatus, ChecklistStatus[]> = {
   unfixed: ["in-progress"],
   "in-progress": ["fixed", "unfixed"],
@@ -23,6 +26,7 @@ export const VALID_TRANSITIONS: Record<ChecklistStatus, ChecklistStatus[]> = {
   verified: ["unfixed"],
 };
 
+/** @public */
 export function isValidTransition(current: ChecklistStatus, next: ChecklistStatus): boolean {
   return VALID_TRANSITIONS[current].includes(next);
 }
@@ -32,6 +36,7 @@ function assertP0P1(s: string): "P0" | "P1" {
   return s;
 }
 
+/** @public */
 export function createChecklist(
   findings: Array<{
     severity: string;
@@ -52,6 +57,7 @@ export function createChecklist(
     }));
 }
 
+/** @public */
 export function updateEntryStatus(
   entry: ChecklistEntry,
   newStatus: ChecklistStatus,
@@ -75,10 +81,12 @@ export function updateEntryStatus(
   };
 }
 
+/** @public */
 export function allEntriesVerified(entries: ChecklistEntry[]): boolean {
   return entries.length > 0 && entries.every((e) => e.status === "verified");
 }
 
+/** @public */
 export function serializeChecklist(
   entries: ChecklistEntry[],
   topic: string,
@@ -113,6 +121,7 @@ export function serializeChecklist(
   return lines.join("\n");
 }
 
+/** @public */
 export function parseChecklist(content: string): ChecklistEntry[] {
   const entries: ChecklistEntry[] = [];
   const lines = content.split("\n");

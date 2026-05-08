@@ -18,6 +18,7 @@ import { isMultiTaskMode, slugify } from "./status-resolver.js";
 // Types
 // ---------------------------------------------------------------------------
 
+/** @public */
 export interface ManagedTaskEntry {
   taskId: string;
   taskName: string;
@@ -27,6 +28,7 @@ export interface ManagedTaskEntry {
   filePath: string;
 }
 
+/** @public */
 export interface StatusManagerIO {
   exists: (path: string) => boolean;
   dirExists: (path: string) => boolean;
@@ -47,6 +49,7 @@ const TERMINAL_PHASES = new Set(["completed", "aborted"]);
  * Read status for a specific task.
  *
  * Priority: .forge/status/<task-id>.md → .forge/status.md → empty string
+ * @public
  */
 export function readTaskStatus(io: StatusManagerIO, forgeRoot: string, taskName: string): string {
   const taskId = slugify(taskName);
@@ -78,6 +81,7 @@ export function readTaskStatus(io: StatusManagerIO, forgeRoot: string, taskName:
  * In multi-task mode, writes to .forge/status/<task-id>.md.
  * In single-task mode, writes to .forge/status.md.
  * Write failures are logged and do not crash.
+ * @public
  */
 export function writeTaskStatus(
   io: StatusManagerIO,
@@ -129,6 +133,7 @@ export function writeTaskStatus(
  * List all active tasks (phase is not "completed" or "aborted").
  *
  * Scans both .forge/status.md and .forge/status/*.md.
+ * @public
  */
 export function listActiveTasks(io: StatusManagerIO, forgeRoot: string): ManagedTaskEntry[] {
   const entries: ManagedTaskEntry[] = [];
@@ -168,6 +173,7 @@ export function listActiveTasks(io: StatusManagerIO, forgeRoot: string): Managed
  * Get the most recently updated active task.
  *
  * Used by Context_Hook to select which task's context to inject.
+ * @public
  */
 export function getMostRecentActiveTask(
   io: StatusManagerIO,
@@ -196,6 +202,7 @@ export function getMostRecentActiveTask(
  *   3. Create .forge/status/ directory
  *   4. Copy legacy content to .forge/status/<task-id>.md
  *   5. Clear legacy status.md (preserve empty frontmatter)
+ * @public
  */
 export function migrateToMultiTask(io: StatusManagerIO, forgeRoot: string): void {
   const legacyPath = `${forgeRoot}/status.md`;
@@ -223,6 +230,7 @@ export function migrateToMultiTask(io: StatusManagerIO, forgeRoot: string): void
 
 /**
  * Archive a task's status file to .forge/archive/<date>-<task-id>/status.md.
+ * @public
  */
 export function archiveTaskStatus(
   io: StatusManagerIO,

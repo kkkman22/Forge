@@ -41,7 +41,10 @@ import { executeGenericIteration as executeGenericIterationFn } from "./sdk-gene
 import { validateHooksPresence } from "./sdk-hooks-validation.js";
 import { loadSandboxPolicy } from "./sdk-sandbox-policy.js";
 
-/** Core autonomous loop driver — bridges the state machine with real I/O. */
+/**
+ * Core autonomous loop driver — bridges the state machine with real I/O.
+ * @public
+ */
 export class SdkDriver {
   private readonly config: SdkDriverConfig;
   private readonly effectExecutor: EffectExecutorInterface;

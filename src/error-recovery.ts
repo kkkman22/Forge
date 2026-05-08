@@ -14,7 +14,10 @@
 // 1. Git_State_Scanner types
 // ---------------------------------------------------------------------------
 
-/** A single commit parsed from `git log --format` output. */
+/**
+ * @internal
+ * A single commit parsed from `git log --format` output.
+ */
 export interface GitCommitEntry {
   hash: string;
   message: string;
@@ -22,7 +25,10 @@ export interface GitCommitEntry {
   timestamp: string;
 }
 
-/** Expected commit-message pattern for a Plan task. */
+/**
+ * @internal
+ * Expected commit-message pattern for a Plan task.
+ */
 export interface TaskCommitPattern {
   taskId: string;
   taskTitle: string;
@@ -32,7 +38,10 @@ export interface TaskCommitPattern {
   keywords: string[];
 }
 
-/** Result of matching a commit to a Plan task. */
+/**
+ * @internal
+ * Result of matching a commit to a Plan task.
+ */
 export interface CommitTaskMatch {
   commit: GitCommitEntry;
   taskId: string;
@@ -41,7 +50,10 @@ export interface CommitTaskMatch {
   confidence: "exact" | "fuzzy";
 }
 
-/** Overall git-state scan result. */
+/**
+ * @internal
+ * Overall git-state scan result.
+ */
 export interface GitScanResult {
   commits: GitCommitEntry[];
   matches: CommitTaskMatch[];
@@ -53,13 +65,19 @@ export interface GitScanResult {
 // 2. Uncommitted_Change_Detector types
 // ---------------------------------------------------------------------------
 
-/** A single file change parsed from `git status --porcelain` output. */
+/**
+ * @internal
+ * A single file change parsed from `git status --porcelain` output.
+ */
 export interface FileChange {
   filePath: string;
   status: "modified" | "added" | "deleted" | "untracked";
 }
 
-/** Result of uncommitted-change detection. */
+/**
+ * @internal
+ * Result of uncommitted-change detection.
+ */
 export interface UncommittedChangeResult {
   changes: FileChange[];
   /** Changes whose paths overlap with the current task's expected file paths. */
@@ -72,7 +90,10 @@ export interface UncommittedChangeResult {
 // 3. Progress_Reconciler types
 // ---------------------------------------------------------------------------
 
-/** A task entry from the Progress_Document. */
+/**
+ * @internal
+ * A task entry from the Progress_Document.
+ */
 export interface ProgressTaskEntry {
   taskId: string;
   taskTitle: string;
@@ -80,7 +101,10 @@ export interface ProgressTaskEntry {
   completionTime: string | null;
 }
 
-/** A task that was committed but not marked as completed in progress. */
+/**
+ * @internal
+ * A task that was committed but not marked as completed in progress.
+ */
 export interface ProgressInconsistency {
   taskId: string;
   taskTitle: string;
@@ -90,7 +114,10 @@ export interface ProgressInconsistency {
   type: "committed-but-not-marked";
 }
 
-/** A patch to reconcile progress with git log. */
+/**
+ * @internal
+ * A patch to reconcile progress with git log.
+ */
 export interface ProgressReconciliationPatch {
   taskId: string;
   markCompleted: true;
@@ -98,7 +125,10 @@ export interface ProgressReconciliationPatch {
   sourceCommitHash: string;
 }
 
-/** A missing dependency detected during reconciliation. */
+/**
+ * @internal
+ * A missing dependency detected during reconciliation.
+ */
 export interface DependencyGap {
   taskId: string;
   taskTitle: string;
@@ -110,7 +140,7 @@ export interface DependencyGap {
 // 4. Phase_Reconciler types
 // ---------------------------------------------------------------------------
 
-/** Forge workflow phases. */
+/** @internal Forge workflow phases. */
 export type ForgePhase =
   | "decide"
   | "spec"
@@ -121,10 +151,13 @@ export type ForgePhase =
   | "ship"
   | "learn";
 
-/** Forge workflow tiers. */
+/** @internal Forge workflow tiers. */
 export type ForgeTier = "lightweight" | "standard" | "full";
 
-/** A detected phase inconsistency. */
+/**
+ * @internal
+ * A detected phase inconsistency.
+ */
 export interface PhaseInconsistency {
   currentPhase: ForgePhase;
   expectedPhase: ForgePhase;
@@ -137,7 +170,7 @@ export interface PhaseInconsistency {
 // 5. Interruption_Classifier types
 // ---------------------------------------------------------------------------
 
-/** Interruption classification categories. */
+/** @internal Interruption classification categories. */
 export type InterruptionCategory =
   | "task-completed-not-committed"
   | "committed-not-progress-updated"
@@ -145,10 +178,13 @@ export type InterruptionCategory =
   | "subagent-mid-execution"
   | "clean-state";
 
-/** TDD interruption phases. */
+/** @internal TDD interruption phases. */
 export type TDDInterruptionPhase = "red" | "green-incomplete" | "refactor-incomplete";
 
-/** Detailed interruption classification result. */
+/**
+ * @internal
+ * Detailed interruption classification result.
+ */
 export interface InterruptionClassification {
   category: InterruptionCategory;
   evidence: string;
@@ -160,21 +196,30 @@ export interface InterruptionClassification {
 // 6. Recovery_Engine types
 // ---------------------------------------------------------------------------
 
-/** A single inconsistency item in the recovery report. */
+/**
+ * @internal
+ * A single inconsistency item in the recovery report.
+ */
 export interface RecoveryInconsistencyItem {
   category: string;
   evidence: string;
   recommendedAction: string;
 }
 
-/** A user-action option in the recovery report. */
+/**
+ * @internal
+ * A user-action option in the recovery report.
+ */
 export interface RecoveryActionOption {
   index: number;
   description: string;
   isDefault: boolean;
 }
 
-/** The full recovery report. */
+/**
+ * @internal
+ * The full recovery report.
+ */
 export interface RecoveryReport {
   header: {
     taskName: string;
@@ -193,14 +238,20 @@ export interface RecoveryReport {
   };
 }
 
-/** A checkpoint marker written to the Interim_Log. */
+/**
+ * @internal
+ * A checkpoint marker written to the Interim_Log.
+ */
 export interface CheckpointMarker {
   taskId: string;
   intendedCommitMessage: string;
   timestamp: string;
 }
 
-/** Task segmentation info for cross-session resume. */
+/**
+ * @internal
+ * Task segmentation info for cross-session resume.
+ */
 export interface TaskSegmentationInfo {
   completedTasks: Array<{ taskId: string; commitHash: string }>;
   currentTask: { taskId: string; interruptionState: string } | null;
@@ -212,14 +263,14 @@ export interface TaskSegmentationInfo {
 // Constants
 // ---------------------------------------------------------------------------
 
-/** Phase sequences for each tier. */
+/** @internal Phase sequences for each tier. */
 export const PHASE_SEQUENCES: Record<ForgeTier, ForgePhase[]> = {
   lightweight: ["build", "review"],
   standard: ["plan", "build", "review", "test", "ship"],
   full: ["decide", "spec", "plan", "build", "review", "test", "ship", "learn"],
 };
 
-/** Test file path patterns. */
+/** @internal Test file path patterns. */
 export const TEST_FILE_PATTERNS: RegExp[] = [
   /\.test\.[tj]sx?$/,
   /\.spec\.[tj]sx?$/,
@@ -241,6 +292,8 @@ const GIT_LOG_ENTRY_SEPARATOR = "\x00";
  * separated by newlines between entries.
  *
  * Returns an empty array for empty or unparseable input.
+ *
+ * @internal
  */
 export function parseGitLog(rawOutput: string): GitCommitEntry[] {
   if (!rawOutput?.trim()) return [];
@@ -267,6 +320,8 @@ export function parseGitLog(rawOutput: string): GitCommitEntry[] {
  * Looks for task entries with commit message prefixes. Each task heading
  * (`## Task N: Title`) is parsed for its ID and title, and any commit
  * message convention (e.g. `feat(topic): ...`) is captured as the prefix.
+ *
+ * @internal
  */
 export function extractCommitPatterns(planContent: string): TaskCommitPattern[] {
   const patterns: TaskCommitPattern[] = [];
@@ -307,6 +362,7 @@ export function extractCommitPatterns(planContent: string): TaskCommitPattern[] 
 
 /**
  * Filter commits to only those after the given ISO 8601 timestamp.
+ * @internal
  */
 export function filterCommitsSince(
   commits: GitCommitEntry[],
@@ -325,6 +381,8 @@ export function filterCommitsSince(
  * - The commit message contains at least one of the task's keywords
  *
  * Confidence is "exact" when prefix and all keywords match, "fuzzy" otherwise.
+ *
+ * @internal
  */
 export function matchCommitsToTasks(
   commits: GitCommitEntry[],
@@ -368,6 +426,8 @@ export function matchCommitsToTasks(
  *
  * Porcelain format: `XY filename` where XY are status codes.
  * Returns an empty array for empty input.
+ *
+ * @internal
  */
 export function parseGitStatus(rawOutput: string): FileChange[] {
   if (!rawOutput?.trim()) return [];
@@ -398,6 +458,7 @@ export function parseGitStatus(rawOutput: string): FileChange[] {
 
 /**
  * Filter changes to only those whose paths overlap with the task's expected paths.
+ * @internal
  */
 export function matchChangesToTask(changes: FileChange[], taskFilePaths: string[]): FileChange[] {
   const taskPathSet = new Set(taskFilePaths);
@@ -419,6 +480,7 @@ export function matchChangesToTask(changes: FileChange[], taskFilePaths: string[
 
 /**
  * Find tasks that have matching commits but are not marked as completed.
+ * @internal
  */
 export function findProgressInconsistencies(
   matches: CommitTaskMatch[],
@@ -444,6 +506,7 @@ export function findProgressInconsistencies(
 /**
  * Detect dependency gaps: a committed task whose preceding task is neither
  * completed nor has a matching commit.
+ * @internal
  */
 export function findDependencyGaps(
   inconsistencies: ProgressInconsistency[],
@@ -477,6 +540,7 @@ export function findDependencyGaps(
 
 /**
  * Build reconciliation patches ordered by Plan task order.
+ * @internal
  */
 export function buildReconciliationPatch(
   inconsistencies: ProgressInconsistency[],
@@ -504,6 +568,7 @@ export function buildReconciliationPatch(
 
 /**
  * Get the ordered phase array for a given tier.
+ * @internal
  */
 export function getPhaseSequence(tier: ForgeTier): ForgePhase[] {
   return PHASE_SEQUENCES[tier];
@@ -512,6 +577,7 @@ export function getPhaseSequence(tier: ForgeTier): ForgePhase[] {
 /**
  * Get the next phase after the current one in the tier's sequence.
  * Returns null if the current phase is the last.
+ * @internal
  */
 export function getNextPhase(currentPhase: ForgePhase, tier: ForgeTier): ForgePhase | null {
   const seq = PHASE_SEQUENCES[tier];
@@ -526,6 +592,8 @@ export function getNextPhase(currentPhase: ForgePhase, tier: ForgeTier): ForgePh
  * Returns "behind" when all tasks are completed but phase hasn't advanced,
  * "ahead" when tasks are incomplete but phase is beyond expected position,
  * or null when consistent.
+ *
+ * @internal
  */
 export function findPhaseInconsistencies(
   allTasksCompleted: boolean,
@@ -567,6 +635,7 @@ export function findPhaseInconsistencies(
 
 /**
  * Check if a file path matches test file naming conventions.
+ * @internal
  */
 export function isTestFile(filePath: string): boolean {
   return TEST_FILE_PATTERNS.some((re) => re.test(filePath));
@@ -574,6 +643,7 @@ export function isTestFile(filePath: string): boolean {
 
 /**
  * Infer the TDD phase from uncommitted file changes and verification status.
+ * @internal
  */
 export function inferTDDPhase(
   changes: FileChange[],
@@ -598,6 +668,8 @@ export function inferTDDPhase(
  *
  * Priority order: (a) task-completed-not-committed → (b) committed-not-progress-updated
  * → (c) progress-updated-not-phase-advanced → (d) subagent-mid-execution → (e) clean-state
+ *
+ * @internal
  */
 export function classifyInterruption(
   uncommittedResult: UncommittedChangeResult,
@@ -657,6 +729,7 @@ export function classifyInterruption(
 
 /**
  * Build the recovery report from all detection results.
+ * @internal
  */
 export function buildRecoveryReport(
   header: RecoveryReport["header"],
@@ -809,6 +882,7 @@ export function buildRecoveryReport(
 
 /**
  * Calculate task segmentation for cross-session resume.
+ * @internal
  */
 export function calculateSegmentation(
   planTaskIds: string[],
@@ -853,6 +927,7 @@ export function calculateSegmentation(
 
 /**
  * Serialize a RecoveryReport to structured Markdown.
+ * @internal
  */
 export function serializeRecoveryReport(report: RecoveryReport): string {
   const lines: string[] = [];
@@ -899,6 +974,7 @@ export function serializeRecoveryReport(report: RecoveryReport): string {
 
 /**
  * Deserialize structured Markdown back into a RecoveryReport.
+ * @internal
  */
 export function deserializeRecoveryReport(markdown: string): RecoveryReport {
   const headerMatch = markdown.match(/^---\n([\s\S]*?)\n---/);
@@ -981,6 +1057,7 @@ export function deserializeRecoveryReport(markdown: string): RecoveryReport {
 
 /**
  * Serialize an InterruptionClassification to structured text.
+ * @internal
  */
 export function serializeClassification(classification: InterruptionClassification): string {
   const lines = [
@@ -993,6 +1070,7 @@ export function serializeClassification(classification: InterruptionClassificati
 
 /**
  * Deserialize structured text into an InterruptionClassification.
+ * @internal
  */
 export function deserializeClassification(text: string): InterruptionClassification {
   const field = (name: string): string => {
@@ -1020,6 +1098,7 @@ export function deserializeClassification(text: string): InterruptionClassificat
 
 /**
  * Serialize a CheckpointMarker to structured text.
+ * @internal
  */
 export function serializeCheckpointMarker(marker: CheckpointMarker): string {
   const lines = [
@@ -1032,6 +1111,7 @@ export function serializeCheckpointMarker(marker: CheckpointMarker): string {
 
 /**
  * Deserialize structured text into a CheckpointMarker.
+ * @internal
  */
 export function deserializeCheckpointMarker(text: string): CheckpointMarker {
   const field = (name: string): string => {

@@ -6,6 +6,7 @@
  * a unique `code` string for programmatic discrimination.
  *
  * **Validates: Requirements 9.1, 9.2**
+ * @public
  */
 
 import type { z } from "zod";
