@@ -25,7 +25,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "if [ -d .forge/status ]; then latest=$(ls -t .forge/status/*.md 2>/dev/null | head -1); if [ -n \"$latest\" ]; then echo '=== Forge Context ==='; head -50 .forge/plans/*.md 2>/dev/null; echo '=== Recent Progress ==='; tail -20 .forge/progress/*.md 2>/dev/null; fi; elif [ -f .forge/status.md ]; then echo '=== Forge Context ==='; head -50 .forge/plans/*.md 2>/dev/null; echo '=== Recent Progress ==='; tail -20 .forge/progress/*.md 2>/dev/null; fi"
+            "command": "node forge/scripts/inject-plan-context.mjs 2>/dev/null || node ~/.claude/skills/forge/scripts/inject-plan-context.mjs 2>/dev/null || true"
           }
         ]
       }
