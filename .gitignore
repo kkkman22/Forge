@@ -11,6 +11,9 @@ coverage/
 # Forge frontend-check login state cache
 .forge/cache/
 
+# Forge Stop hook dedupe markers
+.forge/.stop-hook-dedupe/
+
 
 # dist manifest is tracked (used by CI to verify dist sync)
 !dist/claude-code/bundles/.manifest.sha256
