@@ -46,11 +46,11 @@ const METHOD_RESPONSES: Record<string, () => Record<string, unknown>> = {
 };
 
 function jsonResponse(id: number | undefined, result: unknown): string {
-  return JSON.stringify({ jsonrpc: "2.0", id, result }) + "\n";
+  return `${JSON.stringify({ jsonrpc: "2.0", id, result })}\n`;
 }
 
 function errorResponse(id: number | undefined, code: number, message: string): string {
-  return JSON.stringify({ jsonrpc: "2.0", id, error: { code, message } }) + "\n";
+  return `${JSON.stringify({ jsonrpc: "2.0", id, error: { code, message } })}\n`;
 }
 
 /**
