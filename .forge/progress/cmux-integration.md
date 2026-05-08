@@ -1,7 +1,7 @@
 ---
 topic: "cmux-integration"
 plan_ref: ".forge/plans/cmux-integration.md"
-sprint: 1
+sprint: 2
 updated: "2026-05-08"
 ---
 
@@ -26,10 +26,10 @@ updated: "2026-05-08"
 
 | Task | Status | Commit |
 |------|--------|--------|
-| 11. lib/events.mjs | pending | — |
-| 12. src/sdk-driver.ts Events_NDJSON | pending | — |
-| 13. lib/reviews.mjs | pending | — |
-| 14. src/review.ts frontmatter | pending | — |
+| 11. lib/events.mjs | done | a7af511 |
+| 12. src/sdk-driver.ts Events_NDJSON | done | 7f41387 |
+| 13. lib/reviews.mjs | done | a7af511 |
+| 14. src/review.ts frontmatter | done | 7f41387 |
 
 ## Sprint 3 — Mirror_Daemon 核心 + Push 通道
 
