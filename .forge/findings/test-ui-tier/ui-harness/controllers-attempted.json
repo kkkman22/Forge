@@ -1,0 +1,18 @@
+[
+  {
+    "tier": "project",
+    "reason": "No project UI harness found"
+  },
+  {
+    "tier": "cmux-browser",
+    "reason": "cmux browser CLI not available (requires cmux runtime)"
+  },
+  {
+    "tier": "playwright",
+    "reason": "Playwright not installed in user project"
+  },
+  {
+    "tier": "cdp",
+    "reason": "CDP connection failed: fetch failed"
+  }
+]

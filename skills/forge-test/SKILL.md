@@ -99,7 +99,21 @@ disable-model-invocation: true
 
 ---
 
-## 6. Edge Cases
+## 6. CLI Harness (`--cli`) [R5.1]
+
+**Flag**: `/forge test --cli`
+
+Triggers CLI/TUI external verification harness. Automatically triggered when:
+
+- `package.json` has non-empty `bin` field, OR
+- `--cli` flag is explicitly passed, OR
+- `.forge/config.md` has `cli_harness: true`
+
+Execution: delegates to `skills/forge-control-cli/` which selects the best available tier (project > cmux > tmux > node-pty). Output written to `.forge/findings/<topic>/cli-harness/`.
+
+**UI variant**: `/forge test --ui` delegates to `skills/forge-control-ui/` for web/Electron testing.
+
+## 7. Edge Cases
 
 | Condition | Handling |
 |-----------|----------|
@@ -110,7 +124,7 @@ disable-model-invocation: true
 
 ---
 
-## 7. Examples
+## 8. Examples
 
 ```
 $ /forge test

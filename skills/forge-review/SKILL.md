@@ -100,24 +100,34 @@ P0/P1 只能 `gated_auto`/`manual`；P2 可 `safe_auto`；P3 默认 `advisory`�
 
 → 详见 references/review-report-format.md（完整 Frontmatter 模板）
 
-## 10. Execution Flow
+## 11. Execution Flow
 
-1. **前置检查**（§13）→ 2. **并行启动 Subagent** → 3. **状态确认** → 4. **合并管线** → 5. **质量门** → 6. **P0/P1 判定** → 7. **输出报告**（写入 frontmatter 时执行 `git rev-parse HEAD` 记录 `reviewed_at_commit`）→ 8. **生成 P1 Fix Checklist**（§9，存在 P0/P1 时）
+1. **前置检查**（§15）→ 2. **并行启动 Subagent** → 3. **状态确认** → 4. **合并管线** → 5. **质量门** → 6. **P0/P1 判定** → 7. **输出报告**（写入 frontmatter 时执行 `git rev-parse HEAD` 记录 `reviewed_at_commit`）→ 8. **生成 P1 Fix Checklist**（§9，存在 P0/P1 时）
 
 **Step 1.1 状态确认**：主动跟踪每个 Subagent，不假设"启动即完成"。正常完成 → 进入管线；截断 → 重试 1 次；错误 → 重试 1 次；429 → 降级等待后重试；超时(180s) → 标记 `incomplete`。**不得在 Subagent 运行中合并结果**。
 
 **Step 4 自动推进**：通过 → 自动调用下一阶段（→ 详见 shared/next-step-protocol.md）；未通过 → 输出问题清单，停止等待用户修复后重新评审。
-
-## 11. Edge Cases
-
-无 Spec → 不启动 spec-check，Layer 1 标注"已跳过"。无代码变更 → 提示先 build。无 `.forge/` → 提示 `forge init`。输出过长 → 截断提示见文件。
 
 ## 12. Examples
 
 **通过**：`✅ 通过 | P0:0 | P1:0 | P2:1 | P3:0` + 自动调用下一阶段（→ 详见 shared/next-step-protocol.md）
 **失败**：`🚫 未通过 | P0:1 | P1:2 | P2:1 | P3:0` + Ship 阻断
 
-## 13. Pre-checks
+## 13. Edge Cases
+
+无 Spec → 不启动 spec-check，Layer 1 标注"已跳过"。无代码变更 → 提示先 build。无 `.forge/` → 提示 `forge init`。输出过长 → 截断提示见文件。
+
+## 14. Canvas Output (`--canvas`)
+
+**Flag**: `/forge review --canvas <topic>`
+
+生成可视化评审 Canvas — 单页深色 HTML 三栏布局（Spec / Quality / Security），嵌入 findings 数据为安全 JSON island。可选 Bitbucket MCP 富化（失败时优雅降级）。→ 详见 references/canvas.md
+
+**触发条件**：review 通过后自动生成，或用户显式指定 `--canvas`。
+
+**输出**：`.forge/reviews/<topic>.canvas.html`
+
+## 15. Pre-checks
 
 | # | Check | Failure Route |
 |---|-------|-----------|
@@ -126,7 +136,7 @@ P0/P1 只能 `gated_auto`/`manual`；P2 可 `safe_auto`；P3 默认 `advisory`�
 
 不通过 → 拒绝输出（命中检查 + 证据 + 建议路由 + 重入条件）。Autonomous 模式返回 JSON 触发 `soft_failure`。
 
-## Context Budget Management
+## 16. Context Budget Management
 
 评审者完整输出 → Write-and-discard（写入文件，context 只保留摘要）。摘要使用 Review_Summarizer 协议：severity 分布 + findings 列表 + 文件路径引用，≤400 tokens。
 
@@ -134,7 +144,7 @@ P0/P1 只能 `gated_auto`/`manual`；P2 可 `safe_auto`；P3 默认 `advisory`�
 
 → 函数签名详见 references/function-contracts.md
 
-## 14. Known AI Failure Modes
+## 17. Known AI Failure Modes
 
 | # | Failure Mode | Correct Approach |
 |---|---------|---------|
@@ -150,3 +160,12 @@ P0/P1 只能 `gated_auto`/`manual`；P2 可 `safe_auto`；P3 默认 `advisory`�
 | "测试都过了没问题" | 测试不查架构/安全/可读性 |
 | "我自己写的没问题" | 作者对自身假设盲目 |
 | "AI 代码应该没问题" | AI 代码需更多审查，自信且看似合理即使是错的 |
+
+## 18. Background Subagent Notes [R11.4, R11.5, R11.7]
+
+quality-check and security-check run as `background: true` agents [R11.1]. spec-check runs foreground.
+
+- **Permission pre-approval**: background agents receive pre-approved tool list
+- **Ctrl+B fallback**: if background mode unavailable, agents fall back to foreground
+- **Legacy compat**: older Claude Code versions ignore `background` field gracefully
+- **Failure handling**: background agent failure marked as `failed`, not abort. Markdown output schema unchanged [R11.6]

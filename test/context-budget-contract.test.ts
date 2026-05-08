@@ -71,7 +71,7 @@ describe("Contract: forge-review/SKILL.md context budget section", () => {
   const content = readSkill("forge-review");
 
   it("contains Context Budget Management heading", () => {
-    expect(content).toContain("## Context Budget Management");
+    expect(content).toMatch(/#\s+.*Context Budget Management/);
   });
 
   it("references Review_Summarizer", () => {

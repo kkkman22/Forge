@@ -93,6 +93,16 @@ Autonomous 模式通过 `.forge/config.md` 的 `ship_default_method` 字段控�
 3. Passed → Show four delivery options
 4. Execute chosen delivery method
 5. Cleanup Worktree + prompt `/forge learn`
+6. Post-Push Verify (see §9)
+
+## 9. Post_Push_Verify [R8.1-R8.6]
+
+After push/PR: run `npm run check` (fallback: `ci_check_command` from config) with 600s timeout.
+
+- **Passed**: single stdout line, no artifact [R8.5]
+- **Failed**: write `.forge/ship/<topic>-post-push-verify.md` [R8.2]
+- **Bitbucket MCP + PR created**: add comment via `postPRComment` [R8.3]
+- Function body <= 50 lines [R8.6]
 
 ## Common Rationalizations
 

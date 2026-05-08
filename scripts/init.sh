@@ -387,6 +387,34 @@ done
 
 success "7 个 Agent 角色文件已复制"
 
+# --- Install atomic rules (idempotent: don't overwrite existing) ---
+if echo "${tech_stack}" | grep -qi "typescript\|javascript"; then
+  rules_dir="${PROJECT_ROOT}/rules"
+  mkdir -p "${rules_dir}"
+
+  rule_files=(
+    "typescript-exhaustive-switch.md"
+    "no-inline-imports.md"
+    "no-any-cast.md"
+  )
+
+  installed=0
+  for rule_file in "${rule_files[@]}"; do
+    if [[ -f "${FORGE_ROOT}/rules/${rule_file}" ]]; then
+      if [[ ! -f "${rules_dir}/${rule_file}" ]]; then
+        cp "${FORGE_ROOT}/rules/${rule_file}" "${rules_dir}/${rule_file}"
+        installed=$((installed + 1))
+      fi
+    fi
+  done
+
+  if [[ ${installed} -gt 0 ]]; then
+    success "${installed} 条原子规则已安装到 rules/"
+  else
+    info "rules/ 目录中已存在所有规则，跳过"
+  fi
+fi
+
 # --- 复制 Command 文件 ---
 mkdir -p "${PROJECT_ROOT}/.claude/commands"
 if [[ -f "${FORGE_ROOT}/commands/forge.md" ]]; then
