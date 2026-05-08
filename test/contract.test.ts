@@ -278,6 +278,33 @@ describe("Contract: dist bundle completeness (if built)", () => {
 });
 
 // ---------------------------------------------------------------------------
+// 9. quality-check deslop dimension [R2.4]
+// ---------------------------------------------------------------------------
+
+describe("Contract: quality-check deslop dimension", () => {
+  const qualityCheckPath = resolve(ROOT, "agents/quality-check.md");
+
+  it("quality-check contains Deslop dimension (dimension 7)", () => {
+    const content = readFileSync(qualityCheckPath, "utf-8");
+    expect(content).toContain("Deslop");
+    expect(content).toContain("deslop: skipped");
+  });
+
+  it("quality-check output schema is unchanged (Severity/File/Issue/Suggestion)", () => {
+    const content = readFileSync(qualityCheckPath, "utf-8");
+    // The four-column schema must still be the only output format [R2.4]
+    expect(content).toContain("| # | Severity | File | Issue | Suggestion |");
+    // Verify the Output Format section still shows the standard 4 columns
+    const outputFormatMatch = content.match(/## Output Format[\s\S]*?```markdown[\s\S]*?```/);
+    expect(outputFormatMatch).toBeTruthy();
+    expect(outputFormatMatch?.[0]).toContain("Severity");
+    expect(outputFormatMatch?.[0]).toContain("File");
+    expect(outputFormatMatch?.[0]).toContain("Issue");
+    expect(outputFormatMatch?.[0]).toContain("Suggestion");
+  });
+});
+
+// ---------------------------------------------------------------------------
 // 9. hooks.json semantic validation
 // ---------------------------------------------------------------------------
 
