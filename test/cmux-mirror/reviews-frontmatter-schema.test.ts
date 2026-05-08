@@ -36,7 +36,7 @@ describe("review frontmatter atomic rewrite (R15.1–R15.6)", () => {
     expect(fmMatch).not.toBeNull();
 
     // Parse the YAML frontmatter
-    const fm = JSON.parse(JSON.stringify(parseYaml(fmMatch?.[1])));
+    const fm = JSON.parse(JSON.stringify(parseYaml(fmMatch?.[1] ?? "")));
     expect(fm.topic).toBe("user-pagination");
     expect(fm.reviewers).toEqual(["spec-check", "quality-check", "security-check"]);
     expect(fm.layers_status).toEqual({
@@ -54,7 +54,7 @@ describe("review frontmatter atomic rewrite (R15.1–R15.6)", () => {
 
     const content = readFileSync(file, "utf-8");
     const fmMatch = content.match(/^---\n([\s\S]*?)\n---/);
-    const fm = parseYaml(fmMatch?.[1]);
+    const fm = parseYaml(fmMatch?.[1] ?? "");
     expect(fm.layers_status.spec_check).toBe("done");
     expect(fm.layers_status.quality_check).toBe("pending");
   });
@@ -66,7 +66,7 @@ describe("review frontmatter atomic rewrite (R15.1–R15.6)", () => {
 
     const content = readFileSync(file, "utf-8");
     const fmMatch = content.match(/^---\n([\s\S]*?)\n---/);
-    const fm = parseYaml(fmMatch?.[1]);
+    const fm = parseYaml(fmMatch?.[1] ?? "");
     expect(fm.completed_at).not.toBeNull();
   });
 

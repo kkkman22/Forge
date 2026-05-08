@@ -122,13 +122,14 @@ describe("session: budget integration (R7.3, R7.6)", () => {
     tracker.onEvent("ws:1", "status_change");
     const budget = tracker.getSessionBudget("ws:1");
     expect(budget).not.toBeNull();
-    expect(budget!.available()).toBe(5);
+    expect(budget?.available()).toBe(5);
   });
 
   it("budget resets on re-activation (R7.6)", () => {
     const tracker = createSessionTracker({ defaultBudget: 3 });
     tracker.onEvent("ws:1", "status_change");
-    const budget = tracker.getSessionBudget("ws:1")!;
+    const budget = tracker.getSessionBudget("ws:1");
+    if (!budget) throw new Error("budget should exist");
     budget.consume();
     budget.consume();
     expect(budget.available()).toBe(1);
@@ -147,10 +148,7 @@ describe("session: property — any event sequence yields valid state", () => {
     fc.assert(
       fc.property(
         fc.array(
-          fc.oneof(
-            fc.constant({ type: "event" as const }),
-            fc.constant({ type: "idle" as const }),
-          ),
+          fc.oneof(fc.constant({ type: "event" as const }), fc.constant({ type: "idle" as const })),
           { maxLength: 50 },
         ),
         (actions) => {
