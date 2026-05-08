@@ -2,10 +2,7 @@ import { mkdtempSync, rmSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
-import {
-  resetRespawnCount,
-  tryConsumeRespawn,
-} from "../../scripts/cmux-mirror/lib/respawn.mjs";
+import { resetRespawnCount, tryConsumeRespawn } from "../../scripts/cmux-mirror/lib/respawn.mjs";
 
 describe("respawn: budget counter (R13.12–R13.14)", () => {
   let dir: string;

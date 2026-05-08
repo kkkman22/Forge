@@ -43,8 +43,8 @@ describe("push-server: Unix socket server (R17.1–R17.4)", () => {
     const client = createConnection(socketPath);
     await new Promise<void>((resolve) => client.on("connect", resolve));
 
-    client.write(JSON.stringify({ type: "test", data: 1 }) + "\n");
-    client.write(JSON.stringify({ type: "test", data: 2 }) + "\n");
+    client.write(`${JSON.stringify({ type: "test", data: 1 })}\n`);
+    client.write(`${JSON.stringify({ type: "test", data: 2 })}\n`);
 
     await new Promise<void>((resolve) => setTimeout(resolve, 100));
     client.destroy();
@@ -66,7 +66,7 @@ describe("push-server: Unix socket server (R17.1–R17.4)", () => {
     await new Promise<void>((resolve) => client.on("connect", resolve));
 
     for (let i = 0; i < 10; i++) {
-      client.write(JSON.stringify({ type: "test", i }) + "\n");
+      client.write(`${JSON.stringify({ type: "test", i })}\n`);
     }
 
     await new Promise<void>((resolve) => setTimeout(resolve, 200));
@@ -87,7 +87,7 @@ describe("push-server: Unix socket server (R17.1–R17.4)", () => {
     await new Promise<void>((resolve) => client.on("connect", resolve));
 
     client.write("not json\n");
-    client.write(JSON.stringify({ type: "valid" }) + "\n");
+    client.write(`${JSON.stringify({ type: "valid" })}\n`);
     client.write("{broken\n");
 
     await new Promise<void>((resolve) => setTimeout(resolve, 100));

@@ -17,7 +17,7 @@ afterEach(() => {
   rmSync(tmpDir, { recursive: true, force: true });
 });
 
-function readEvents(): object[] {
+function readEvents(): any[] {
   const content = readFileSync(eventsPath, "utf-8");
   return content
     .trim()

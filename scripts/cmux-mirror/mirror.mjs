@@ -64,10 +64,11 @@ async function dispatchCommands(commands) {
 /**
  * Create and start Mirror_Daemon (R1.5–R1.10).
  * Returns { started: true, shutdown } or { started: false, reason }.
+ * @param {{ forgeDir?: string, socketDir?: string, cmuxAvailable?: boolean, forcePolling?: boolean, pollIntervalMs?: number }} opts
  */
 export async function createMirrorDaemon({
-  forgeDir,
-  socketDir,
+  forgeDir = ".forge",
+  socketDir = "/tmp",
   cmuxAvailable: isAvailable = cmuxAvailable(),
   forcePolling = false,
   pollIntervalMs = DEFAULT_POLL_MS,
