@@ -707,3 +707,59 @@ export function normalizeAtomicTask(task: AtomicTask, glossary: Glossary): Atomi
 // Re-export the glossary types that callers need when working with the
 // normalization helpers, so they don't have to import from two modules.
 export type { Glossary, GlossaryTerm };
+
+// ---------------------------------------------------------------------------
+// Plan Structure Check — split trigger detection
+// ---------------------------------------------------------------------------
+
+/** @public */
+export interface SplitTriggerResult {
+  triggered: boolean;
+  reasons: string[];
+}
+
+const SPRINT_HEADING_PATTERN = /^###\s+(Sprint|Milestone|Phase|阶段)\s+\S/;
+const DELIVERY_TASK_PATTERN = /(regression|回归|独立\s*ship|交付|release|merge.*main)/i;
+const CHAINED_DEP_PATTERN = /Sprint\s+\d+\s+依赖\s+Sprint\s+\d+/;
+
+/**
+ * Evaluate whether a plan's structure triggers split recommendations.
+ *
+ * Four trigger conditions (any one suffices):
+ *   (a) task count > 15
+ *   (b) ≥2 Sprint/Milestone/Phase headings
+ *   (c) task names containing delivery keywords
+ *   (d) chained Sprint dependencies in execution strategy
+ *
+ * @public
+ */
+export function checkPlanStructure(
+  tasks: Array<{ id: string; name: string }>,
+  headings: string[],
+  executionStrategy: string,
+): SplitTriggerResult {
+  const reasons: string[] = [];
+
+  // (a) task count > 15
+  if (tasks.length > 15) {
+    reasons.push("任务数 > 15");
+  }
+
+  // (b) ≥2 Sprint/Milestone/Phase headings
+  const sprintHeadings = headings.filter((h) => SPRINT_HEADING_PATTERN.test(h));
+  if (sprintHeadings.length >= 2) {
+    reasons.push("多 Sprint 分组");
+  }
+
+  // (c) delivery task names
+  if (tasks.some((t) => DELIVERY_TASK_PATTERN.test(t.name))) {
+    reasons.push("含交付类任务");
+  }
+
+  // (d) chained Sprint dependencies
+  if (CHAINED_DEP_PATTERN.test(executionStrategy)) {
+    reasons.push("链式 Sprint 依赖");
+  }
+
+  return { triggered: reasons.length > 0, reasons };
+}
