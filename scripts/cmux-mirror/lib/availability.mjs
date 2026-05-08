@@ -1,5 +1,8 @@
 import { statSync } from "node:fs";
 
+const ALLOWED_SOCKET_PREFIXES = ["/tmp/", "/var/tmp/"];
+const ALLOWED_INTEGRATION_VALUES = new Set(["off", "on", ""]);
+
 let stickyUnavailable = false;
 
 /**
@@ -8,10 +11,17 @@ let stickyUnavailable = false;
  */
 export function cmuxAvailable() {
   if (stickyUnavailable) return false;
-  if (process.env.CMUX_INTEGRATION === "off") return false;
+
+  const integration = process.env.CMUX_INTEGRATION ?? "";
+  if (!ALLOWED_INTEGRATION_VALUES.has(integration)) return false;
+  if (integration === "off") return false;
   if (process.env.CMUX_WORKSPACE_ID) return true;
 
   const socketPath = process.env.CMUX_SOCKET_PATH ?? "/tmp/cmux.sock";
+  if (socketPath.includes("..")) return false;
+  if (process.env.CMUX_SOCKET_PATH && !ALLOWED_SOCKET_PREFIXES.some((p) => socketPath.startsWith(p))) {
+    return false;
+  }
   try {
     const t0 = Date.now();
     const st = statSync(socketPath);

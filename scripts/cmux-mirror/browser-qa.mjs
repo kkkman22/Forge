@@ -103,6 +103,9 @@ export async function runBrowserQa({
 const args = process.argv.slice(2);
 if (args.length > 0 && args[0] !== "--test") {
   const forgeDir = args[0] || ".forge";
+  if (forgeDir.includes("..")) {
+    process.exit(1);
+  }
   runBrowserQa({ forgeDir, writeArtifact: true })
     .then((result) => {
       console.log(JSON.stringify(result));
