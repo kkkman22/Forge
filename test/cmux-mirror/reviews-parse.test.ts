@@ -2,7 +2,10 @@ import { mkdirSync, rmSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
-import { isReviewComplete, parseReviewFrontmatter } from "../../scripts/cmux-mirror/lib/reviews.mjs";
+import {
+  isReviewComplete,
+  parseReviewFrontmatter,
+} from "../../scripts/cmux-mirror/lib/reviews.mjs";
 
 const FIXTURE = join(__dirname, "fixtures", "review-in-progress.md");
 
@@ -60,14 +63,7 @@ describe("reviews: frontmatter parsing (R15.7)", () => {
     const file = join(tmpDir, "old-format.md");
     writeFileSync(
       file,
-      [
-        "---",
-        "topic: legacy",
-        "reviewers: [spec-check]",
-        "---",
-        "",
-        "# Old Review",
-      ].join("\n"),
+      ["---", "topic: legacy", "reviewers: [spec-check]", "---", "", "# Old Review"].join("\n"),
     );
 
     const fm = await parseReviewFrontmatter(file);
