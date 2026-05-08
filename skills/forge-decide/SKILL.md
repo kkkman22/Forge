@@ -1,6 +1,6 @@
 ---
 name: forge-decide
-description: "Four-perspective (product, architect, security, designer) two-round Subagent decision engine for pre-coding alignment. Use when starting a full-tier task / facing irreversible technical choices / needing threat modeling before implementation."
+description: "Decide through four-perspective Subagent deliberation covering product, architect, security, and designer viewpoints. Use when starting a full-tier task, facing irreversible technical choices, or needing threat modeling before implementation."
 disable-model-invocation: true
 ---
 

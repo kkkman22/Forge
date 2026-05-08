@@ -1,6 +1,6 @@
 ---
 name: forge-router
-description: "Three-dimension routing entry point that selects the right skill based on tier, task type, and project phase. Use when user runs `/forge <task>` / starts a new task / needs skill orchestration across the light / standard / full workflow tiers."
+description: "Orchestrate three-tier routing that selects the right skill based on task complexity and project phase. Use when user runs `/forge <task>`, starts a new task, or needs skill dispatch across light, standard, or full workflow tiers."
 ---
 
 # /forge — 入口路由器

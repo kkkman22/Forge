@@ -1,6 +1,6 @@
 ---
 name: forge-zoom-out
-description: "High-level architecture overview engine that emits a three-section summary (整体位置 / 当前职责 / 与邻居的边界) of the current focus. Use when user says 'zoom out' / '放大视角' / '讲整体' / runs `/forge zoom-out` / gets lost in details during any skill execution."
+description: "Audit the current focus with a three-section architecture overview covering position, responsibilities, and boundaries. Use when user says zoom out, gets lost in details during skill execution, or runs `/forge zoom-out`."
 disable-model-invocation: true
 ---
 
