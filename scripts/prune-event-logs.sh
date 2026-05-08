@@ -71,7 +71,6 @@ STALE_DIRS=$(find "${RUNS_DIR}" -mindepth 1 -maxdepth 1 -type d \
 
 if [[ -z "${STALE_DIRS}" ]]; then
   echo "No expired run directories."
-  exit 0
 fi
 
 while IFS= read -r dir; do
@@ -126,6 +125,25 @@ if [[ -d "${ACCEPTANCE_DIR}" ]]; then
         echo "archived acceptance: ${dir}"
       fi
     done <<< "${STALE_ACCEPTANCE}"
+  fi
+fi
+
+# ---------------------------------------------------------------------------
+# Clean up stale cmux dedupe files (R6.4)
+# ---------------------------------------------------------------------------
+
+DEDUPE_DIR=".forge/.cmux-dedupe"
+if [[ -d "${DEDUPE_DIR}" ]]; then
+  STALE_DEDUPE=$(find "${DEDUPE_DIR}" -type f -mmin +60 2>/dev/null)
+  if [[ -n "${STALE_DEDUPE}" ]]; then
+    while IFS= read -r file; do
+      if [[ -z "${file}" ]]; then continue; fi
+      if [[ "${DRY_RUN}" == "yes" ]]; then
+        echo "would prune cmux-dedupe: ${file}"
+      else
+        rm -f -- "${file}"
+      fi
+    done <<< "${STALE_DEDUPE}"
   fi
 fi
 
