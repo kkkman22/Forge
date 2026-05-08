@@ -7,11 +7,7 @@ const SCRIPT = join(process.cwd(), "cmux-skills", "install.sh");
 const SKILLS_DIR = join(process.cwd(), "cmux-skills");
 const TMP_DIR = join(process.cwd(), "test", ".cmux-skills-tmp");
 
-const SKILL_DIRS = [
-  "forge-sidebar-sync",
-  "forge-browser-qa",
-  "forge-loop-signals",
-];
+const SKILL_DIRS = ["forge-sidebar-sync", "forge-browser-qa", "forge-loop-signals"];
 
 describe("cmux-skills/ install.sh (R10.1–R10.10)", () => {
   afterEach(() => {

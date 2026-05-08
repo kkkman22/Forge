@@ -70,7 +70,9 @@ describe("templates/cmux.json (R9.1–R9.4, R9.7, R12.9)", () => {
   it("each layout has ui button list (R9.4)", () => {
     const config = parseConfig();
     for (const layout of Object.values(config.layouts)) {
-      const paneWithButtons = layout.panes.find((p) => Array.isArray(p.buttons) && p.buttons.length > 0);
+      const paneWithButtons = layout.panes.find(
+        (p) => Array.isArray(p.buttons) && p.buttons.length > 0,
+      );
       expect(paneWithButtons).toBeDefined();
       for (const btn of paneWithButtons!.buttons!) {
         expect(typeof btn.label).toBe("string");
@@ -99,9 +101,7 @@ describe("templates/cmux.json (R9.1–R9.4, R9.7, R12.9)", () => {
   it("loop-monitor layout has a loop-state pane", () => {
     const config = parseConfig();
     const lm = config.layouts["loop-monitor"];
-    const hasLoopPane = lm.panes.some(
-      (p) => p.type === "Mirror_Pane" || p.type === "Loop_State",
-    );
+    const hasLoopPane = lm.panes.some((p) => p.type === "Mirror_Pane" || p.type === "Loop_State");
     expect(hasLoopPane).toBe(true);
   });
 

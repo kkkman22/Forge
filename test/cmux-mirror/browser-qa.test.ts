@@ -11,8 +11,8 @@ vi.mock("../../scripts/cmux-mirror/lib/availability.mjs", () => ({
 }));
 
 import { runBrowserQa } from "../../scripts/cmux-mirror/browser-qa.mjs";
-import { runCli } from "../../scripts/cmux-mirror/lib/cli.mjs";
 import { cmuxAvailable } from "../../scripts/cmux-mirror/lib/availability.mjs";
+import { runCli } from "../../scripts/cmux-mirror/lib/cli.mjs";
 
 const mockedRunCli = vi.mocked(runCli);
 const mockedAvailable = vi.mocked(cmuxAvailable);
