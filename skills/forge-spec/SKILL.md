@@ -1,6 +1,6 @@
 ---
 name: forge-spec
-description: "Requirement specification engine that produces reviewable, testable, lockable spec documents. Use when user runs `/forge spec` / imports external PM spec / building a new feature and lacks a locked spec before plan."
+description: "Specify requirements as reviewable, testable, lockable spec documents before planning. Use when user runs `/forge spec`, imports external PM spec, or building a new feature and lacks a locked spec."
 disable-model-invocation: true
 ---
 
