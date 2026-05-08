@@ -293,7 +293,7 @@ export function secondSentenceStartsWithUseWhen(
 // Extended validation (Requirement 1.6)
 // ---------------------------------------------------------------------------
 
-const ENFORCEMENT_MODE: "warning" | "error" = "warning";
+const ENFORCEMENT_MODE: "warning" | "error" = "error";
 
 export function validateDescriptionExtended(
   content: string,
