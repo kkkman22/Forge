@@ -15,14 +15,14 @@ scope: "skill-function-integration-audit"
 
 | 函数名 | SKILL 概念名 | 状态 | 涉及 SKILL |
 |--------|-------------|------|-----------|
-| `serializeExploreResult()` | Explore_Summarizer | ⚠️ 概念引用，无函数名 | forge-build |
+| `serializeExploreResult()` | Explore_Summarizer | ✅ 已对接 | forge-build |
 | `serializeReviewSummary()` | Review_Summarizer | ⚠️ 概念引用，无函数名 | forge-review |
-| `serializeTestOutput()` | Test_Output_Trimmer | ⚠️ 概念引用，无函数名 | forge-build |
-| `serializeGitDiff()` | Git_Output_Limiter | ⚠️ 概念引用，无函数名 | forge-build |
-| `serializeGitStatus()` | Git_Output_Limiter | ⚠️ 概念引用，无函数名 | forge-build |
-| `serializeSubagentSummary()` | Subagent_Summary_Protocol | ⚠️ 概念引用，无函数名 | forge-build, forge-decide |
-| `serializeContextBudgetReport()` | （无） | ❌ 完全未引用 | 应在 forge-learn |
-| `deserializeContextBudgetReport()` | （无） | ❌ 完全未引用 | 应在 forge-learn |
+| `serializeTestOutput()` | Test_Output_Trimmer | ✅ 已对接 | forge-build |
+| `serializeGitDiff()` | Git_Output_Limiter | ✅ 已对接 | forge-build |
+| `serializeGitStatus()` | Git_Output_Limiter | ✅ 已对接 | forge-build |
+| `serializeSubagentSummary()` | Subagent_Summary_Protocol | ✅ 已对接 | forge-build, forge-decide |
+| `serializeContextBudgetReport()` | （无） | ⚠️ 概念引用，无函数名 | forge-learn |
+| `deserializeContextBudgetReport()` | （无） | B: 内部辅助函数，非 SKILL 面向 | forge-learn |
 
 ### `src/learn.ts` — 知识引擎函数
 
@@ -54,9 +54,10 @@ scope: "skill-function-integration-audit"
 
 | 状态 | 数量 | 说明 |
 |------|------|------|
-| ✅ 已对接 | 0 | 无任何函数在 SKILL 中有显式调用路径 |
-| ⚠️ 概念引用 | 16 | SKILL 中有概念描述或概念名，但无函数名映射 |
-| ❌ 未对接 | 2 | serializeContextBudgetReport、deserializeContextBudgetReport |
+| ✅ 已对接 | 5 | serializeExploreResult、serializeTestOutput、serializeGitDiff、serializeGitStatus、serializeSubagentSummary |
+| ⚠️ 概念引用 | 17 | SKILL 中有概念描述或概念名，但无函数名映射（含 serializeContextBudgetReport） |
+| ❌ 未对接 | 0 | 所有函数已有概念或显式引用 |
+| B | 1 | deserializeContextBudgetReport — 内部辅助函数，非 SKILL 面向 |
 
 ## 不在审计范围内的函数
 

@@ -67,3 +67,57 @@ if [[ $errors -gt 0 ]]; then
 fi
 
 echo "All SKILL function references have matching exports ✓"
+
+# ---------------------------------------------------------------------------
+# --strict mode: verify registry entries have matching SKILL.md references
+# Uses node to parse the TypeScript registry reliably.
+# ---------------------------------------------------------------------------
+if [[ "${1:-}" == "--strict" ]]; then
+  echo ""
+  echo "Strict mode: verifying registry ↔ SKILL.md bidirectional sync..."
+
+  node -e "
+    const { readFileSync, existsSync } = require('fs');
+    const { resolve } = require('path');
+    const ROOT = '${ROOT_DIR}';
+    const SKILLS = resolve(ROOT, 'skills');
+
+    // Extract entries from registry TS source using regex
+    const src = readFileSync(resolve(ROOT, 'src/skill-function-registry.ts'), 'utf8');
+    const entries = [];
+    let currentFunc = '';
+    for (const line of src.split('\n')) {
+      const fm = line.match(/functionName:\s*\"([^\"]+)\"/);
+      if (fm) currentFunc = fm[1];
+      const sm = line.match(/skills:\s*\[([^\]]+)\]/);
+      if (sm && currentFunc) {
+        const skills = [...sm[1].matchAll(/\"([^\"]+)\"/g)].map(m => m[1]);
+        entries.push({ func: currentFunc, skills });
+        currentFunc = '';
+      }
+    }
+
+    let errors = 0;
+    for (const { func, skills } of entries) {
+      for (const skill of skills) {
+        const path = resolve(SKILLS, skill);
+        if (!existsSync(path)) {
+          console.error('❌ Registry references ' + skill + ' but file not found (for ' + func + ')');
+          errors++;
+          continue;
+        }
+        const content = readFileSync(path, 'utf8');
+        if (!content.includes(func)) {
+          console.error('❌ ' + func + ' registered for ' + skill + ' but function name not found in SKILL.md');
+          errors++;
+        }
+      }
+    }
+
+    if (errors > 0) {
+      console.log('Found ' + errors + ' strict sync error(s).');
+      process.exit(1);
+    }
+    console.log('All registry entries have matching SKILL.md references ✓');
+  "
+fi
