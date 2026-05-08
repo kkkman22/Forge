@@ -1,5 +1,5 @@
-import { describe, it, expect, afterEach } from "vitest";
-import { createConnection, Socket } from "node:net";
+import { createConnection, type Socket } from "node:net";
+import { afterEach, describe, expect, it } from "vitest";
 import { createMockSocket, type MockSocketResult } from "./mock-socket";
 
 let mock: MockSocketResult | null = null;
@@ -35,7 +35,12 @@ describe("mock-socket", () => {
     sock.on("data", (d) => received.push(d.toString()));
 
     sendJsonRpc(sock, { jsonrpc: "2.0", id: 1, method: "system.ping" });
-    sendJsonRpc(sock, { jsonrpc: "2.0", id: 2, method: "set_status", params: { key: "forge.phase", value: "build" } });
+    sendJsonRpc(sock, {
+      jsonrpc: "2.0",
+      id: 2,
+      method: "set_status",
+      params: { key: "forge.phase", value: "build" },
+    });
 
     await new Promise<void>((resolve) => setTimeout(resolve, 100));
 

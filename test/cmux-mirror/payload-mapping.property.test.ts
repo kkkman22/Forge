@@ -1,17 +1,25 @@
-import { describe, it, expect } from "vitest";
 import fc from "fast-check";
+import { describe, expect, it } from "vitest";
 import {
-  PHASE_TO_ICON,
   DEFAULT_ICON,
-  TIER_TO_COLOR,
   LOOP_STATE_TO_ICON,
+  PHASE_TO_ICON,
   phaseToIcon,
+  TIER_TO_COLOR,
   tierToColor,
 } from "../../scripts/cmux-mirror/lib/payload.mjs";
 
 const VALID_PHASES = [
-  "decide", "spec", "plan", "build", "review",
-  "test", "ship", "learn", "debug", "idle",
+  "decide",
+  "spec",
+  "plan",
+  "build",
+  "review",
+  "test",
+  "ship",
+  "learn",
+  "debug",
+  "idle",
 ];
 
 const VALID_TIERS = ["light", "standard", "full"];
@@ -43,7 +51,7 @@ describe("payload: color mapping totality (R12.4)", () => {
     for (const tier of VALID_TIERS) {
       const color = tierToColor(tier);
       expect(color).toBeTruthy();
-      expect(color).toBe(TIER_TO_COLOR[tier]);
+      expect(color).toBe(TIER_TO_COLOR[tier as keyof typeof TIER_TO_COLOR]);
     }
   });
 
@@ -62,7 +70,7 @@ describe("payload: color mapping totality (R12.4)", () => {
 describe("payload: loop state mapping", () => {
   it("maps known loop states to icon/color objects", () => {
     for (const state of ["running", "interrupted", "terminated"]) {
-      const entry = LOOP_STATE_TO_ICON[state];
+      const entry = LOOP_STATE_TO_ICON[state as keyof typeof LOOP_STATE_TO_ICON];
       expect(entry).toBeDefined();
       expect(entry.icon).toBeTruthy();
       expect(entry.color).toBeTruthy();
