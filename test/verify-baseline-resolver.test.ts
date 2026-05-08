@@ -84,6 +84,8 @@ describe("resolveBaseline [R1.10]", () => {
     // Clone it
     const dir = makeTmp("mergebase");
     execSync(`git clone ${remoteDir} .`, { cwd: dir });
+    execSync('git config user.email "test@test.com"', { cwd: dir });
+    execSync('git config user.name "Test"', { cwd: dir });
 
     // Make a commit on top
     writeFileSync(join(dir, "b.txt"), "local change");
