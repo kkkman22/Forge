@@ -1,4 +1,5 @@
 #!/bin/bash
+# category: internal-only
 # check-no-bare-console.sh — CI gate that ensures no bare console.* calls
 # remain in src/ (outside of test/). Only biome-ignore-guarded calls are allowed.
 #

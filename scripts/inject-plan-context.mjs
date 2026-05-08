@@ -1,4 +1,5 @@
 #!/usr/bin/env node
+// category: internal-only
 /**
  * inject-plan-context.mjs — Plan context injection for Claude Code hooks.
  *

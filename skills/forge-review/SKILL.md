@@ -14,6 +14,8 @@ disable-model-invocation: true
 
 三层评审（Spec 对齐 → 代码质量 → 安全与风险）独立验证 build 产出。**核心原则**：执行与评估分离，写代码的人不评审自己的代码。
 
+**Layer 4 — Frontend Check**（条件）：当项目包含 Vue/.vue 文件时，自动启动 frontend-check agent 进行 Tier A/B/C 审计。
+
 **Not For**：无代码变更（纯文档/配置）、build 未完成。
 
 ## 2. Subagent Parallel Execution
@@ -27,8 +29,9 @@ disable-model-invocation: true
 | spec-check | `.claude/agents/spec-check.md` | 1 — Spec Alignment |
 | quality-check | `.claude/agents/quality-check.md` | 2 — Code Quality |
 | security-check | `.claude/agents/security-check.md` | 3 — Security & Risk |
+| frontend-check | `.claude/agents/frontend-check.md` | 4 — Frontend (conditional) |
 
-**启动**：标准/全量路径并行启动 3 个（`Promise.allSettled`）；轻量/无 Spec 模式仅 quality-check + security-check。
+**启动**：标准/全量路径并行启动 3 个（`Promise.allSettled`）；轻量/无 Spec 模式仅 quality-check + security-check。**Layer 4**：检测到 `src/**/*.vue` 或 `package.json` 含 `vue` 时并行启动 frontend-check agent。
 
 **容错**：`Promise.allSettled` 等待。单个失败不阻断；全部失败则终止。失败 Layer 标注"评审失败"。
 
@@ -45,6 +48,8 @@ disable-model-invocation: true
 **Layer 2 — 代码质量**：命名一致性、错误处理、性能热点（N+1/未分页/同步阻塞）、测试覆盖率、代码重复、可维护性（>50行/嵌套>3层）。
 
 **Layer 3 — 安全与风险**：硬编码密钥、注入风险（SQL/XSS/命令/路径遍历）、不安全依赖、权限边界、敏感数据泄露。
+
+**Layer 4 — Frontend Check**（条件触发）：Vue3 WCAG 无障碍、Core Web Vitals、路由稳定性、Console 告警。三档降级策略：Tier A 静态 grep（必跑）→ Tier B cmux browser + axe-core（条件跑）→ Tier C chrome-devtools MCP（条件跑）。→ 详见 agents/frontend-check.md
 
 ## 4. Severity Classification
 

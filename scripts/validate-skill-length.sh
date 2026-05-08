@@ -1,4 +1,5 @@
 #!/bin/bash
+# category: internal-only
 # ============================================================================
 # validate-skill-length.sh — SKILL.md 行数预算校验（Progressive Disclosure）
 #

@@ -1,4 +1,5 @@
 #!/usr/bin/env node
+// category: internal-only
 /**
  * append-baseline.mjs — Append the latest benchmark run to
  * `.forge/knowledge/metrics.md`.

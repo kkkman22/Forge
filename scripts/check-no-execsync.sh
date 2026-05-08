@@ -1,4 +1,5 @@
 #!/bin/bash
+# category: internal-only
 # check-no-execsync.sh — Prevent execSync usage in src/
 # All shell command execution must use execFileSync for argument safety.
 set -euo pipefail

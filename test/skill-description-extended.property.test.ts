@@ -180,8 +180,6 @@ describe("validateDescriptionExtended — new two-sentence rules", () => {
   });
 
   it("rejects single-sentence description in error mode", () => {
-    const doc = buildSkillDoc("Plans things. Use when you need planning.");
-    // This has 2 sentences but let's test single-sentence
     const singleDoc = buildSkillDoc("Use when user wants to plan things.");
     const result = validateDescriptionExtended(singleDoc, { mode: "error" });
     expect(result.valid).toBe(false);

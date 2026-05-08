@@ -1,4 +1,5 @@
 #!/usr/bin/env node
+// category: user-facing
 // ============================================================================
 // validate-skill-length.mjs — SKILL.md 行数校验器（Progressive Disclosure）
 //
@@ -19,6 +20,14 @@
 import { readdirSync, readFileSync, statSync } from "node:fs";
 import { dirname, join, resolve, sep } from "node:path";
 import { fileURLToPath } from "node:url";
+
+if (process.argv.includes("--help") || process.argv.includes("-h")) {
+  console.log(`Usage: scripts/validate-skill-length.mjs
+
+Validate SKILL.md effective line count (non-blank lines) against 150-line budget.
+Scans skills/forge-*/SKILL.md. skills/shared/ files are exempt.`);
+  process.exit(0);
+}
 
 // ---------------------------------------------------------------------------
 // 常量（镜像 src/skill-length.ts）

@@ -1,4 +1,5 @@
 #!/bin/bash
+# category: internal-only
 # ============================================================================
 # check-readme-metrics.sh — README 指标校准检查
 #
