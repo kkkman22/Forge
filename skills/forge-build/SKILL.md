@@ -21,6 +21,8 @@ disable-model-invocation: true
 
 **Not For**：纯文档更新 / 纯配置变更（无行为影响）/ 需求不明时（先 spec）
 
+**Plan 即合同铁律**：Plan 批准后，所有任务必须全部完成。Plan 中任务的 priority（P0/P1/P2/P3）仅决定执行顺序，不表示"可跳过"或"留到后续"。禁止输出"建议后续再做"、"P2 可以推迟"等跳过话术。如果任务不该做，它就不应出现在 Plan 中。
+
 → 函数签名详见 references/function-contracts.md
 
 ## 2. Pre-build Checks
