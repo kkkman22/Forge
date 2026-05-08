@@ -1,24 +1,24 @@
 ---
-current_task: "cmux-integration"
-tier: "standard"
-task_type: "multi-phase-engineering"
-project_phase: "shipped-sprint4"
-phase: "approved"
-hints: "Sprint 4 shipped, Sprint 5-6 pending"
-assumptions:
-  - "Sprint 1-4 complete and shipped"
-  - "Sprint 5-6 remain in plan"
-updated: "2026-05-08"
+current_task: ""
+tier: ""
+task_type: ""
+project_phase: ""
+phase: ""
+updated: "2026-05-09"
 ---
 
 # 项目状态
 
 ## 当前任务
 
-oz-skills-inspiration：借鉴 warpdotdev/oz-skills 的 6 项能力吸收，覆盖 description 强化、章节骨架、风格指南、Scripts as Blackbox、frontend-check agent、Acceptance Scenario Eval。
+（无）
 
 ## 已完成任务
 
+- cmux-integration: Sprint 1-6 全部完成（33 tasks，25 test files，158 tests）
+- resume-phase-coverage: compaction 恢复后 SKILL.md 步骤遗漏修复
+- phase-advance-hardening: SKILL 驱动模式阶段推进断点修复
+- oz-skills-inspiration
 - v2.4-review-followups（暂停）
 - build-discipline-enhancement: SKILL 工程纪律规则
 - token-language-optimization P2+P3: 全部 tasks 1-12 完成

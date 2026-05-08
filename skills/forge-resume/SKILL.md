@@ -54,6 +54,15 @@ disable-model-invocation: true
 
 **恢复后的首次 Restatement**：恢复上下文后，如果用户确认继续 build，在派发第一个 Subagent 之前**立即执行一次 Restatement Checkpoint**。
 
+**SKILL Reload（恢复后必读步骤）**：
+
+恢复上下文后，在执行任何阶段操作之前，必须：
+1. 从 status.md 读取当前 phase 字段
+2. 读取 skills/forge-{phase}/SKILL.md 完整内容
+3. 按 SKILL.md 定义的步骤顺序执行，不得跳步
+
+此步骤适用于所有阶段（build / review / test / ship / learn），不仅限于 build。Restatement 仅限 build 阶段；SKILL Reload 适用于全部阶段。
+
 ### Five-Question Mapping
 
 | Question | Data Source |
@@ -82,7 +91,7 @@ disable-model-invocation: true
 2. 无进行中任务 → 找到第一个未完成的任务
 3. 所有任务已完成 → 提示进入下一阶段（review/test/ship）
 
-定位后等待用户确认：确认 → 从定位的任务继续 `/forge build`；拒绝 → 等待用户指示。
+定位后：读取定位阶段对应的 SKILL.md，确认当前应执行的步骤编号/名称，从该步骤继续。等待用户确认：确认 → 从定位的任务继续 `/forge build`；拒绝 → 等待用户指示。
 
 ### 4.1 Auto-triggered Resume
 
@@ -91,9 +100,10 @@ disable-model-invocation: true
 1. **跳过确认** — 不询问"继续执行？"。耗尽协议已经决定继续。
 2. **先读 interim 文件** — 在读取 status.md 或 plan 文件之前，先读 `.forge/knowledge/sessions/` 中的 `-interim.md` 文件。它包含上一会话最准确的状态。
 3. **立即执行 Restatement** — 按 §2"恢复后的首次 Restatement"，在派发第一个 Subagent 之前执行 Restatement Checkpoint。
-4. **从 next_task_number 恢复** — interim 文件包含 `next_task_number` 字段。使用该字段定位 plan 中的正确任务。如果 plan 使用非数字任务 ID 或字段无效，回退到扫描 progress 寻找"进行中"任务。
+4. **读取当前阶段 SKILL.md** — 按 §2 "SKILL Reload" 步骤，读取当前阶段对应的 SKILL.md 完整内容，确认从中断步骤继续。
+5. **从 next_task_number 恢复** — interim 文件包含 `next_task_number` 字段。使用该字段定位 plan 中的正确任务。如果 plan 使用非数字任务 ID 或字段无效，回退到扫描 progress 寻找"进行中"任务。
 
-**检测方式**：interim 文件的 frontmatter 包含 `phase: "build-exhaustion"`。
+**检测方式**：interim 文件的 frontmatter 包含 `phase: "build-exhaustion"`，或 conversation summary 中包含 compaction 恢复信号（如 "This session is being continued from a previous conversation"）。
 
 **输出格式**：
 
@@ -112,6 +122,7 @@ disable-model-invocation: true
 | "我记得上次做到哪了不需要恢复" | 上下文窗口是有限的。写下来的状态比记忆可靠，尤其是跨会话时 |
 | "直接从头开始更快" | 从头开始意味着丢弃已完成的工作和已发现的问题。恢复上下文的成本远低于重做 |
 | "状态文件可能过时了" | 状态文件是 Forge 的单一真理源。如果过时了，resume 会检测到并提示 |
+| "我记得上次的步骤不需要重读" | compaction 后 conversation summary 是高维压缩，丢失步骤细节。重读 SKILL.md 成本极低，跳过成本极高 |
 
 ---
 
@@ -119,6 +130,7 @@ disable-model-invocation: true
 
 | 条件 | 处理 |
 |------|------|
+| Context compaction 恢复 | 读取当前阶段 SKILL.md 完整内容后继续。不执行 Restatement（Restatement 仅限 build 阶段）。 |
 | 无 `.forge/` 目录 | ⚠️ 没有可恢复的工作上下文。请运行 forge init 或 /forge 开始新任务 |
 | 无 Plan 文件 | ℹ️ 未找到计划文件。运行 /forge 开始新任务 |
 | 无 Progress 文件 | 展示全局状态 + Plan Objective，提示"建议从 Task 1 开始执行" |
