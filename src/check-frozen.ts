@@ -12,7 +12,27 @@
  */
 
 import { existsSync, readFileSync } from "node:fs";
+import { spawn } from "node:child_process";
+import { dirname, join } from "node:path";
+import { fileURLToPath } from "node:url";
 import { extractFrontmatterStatus, getProtectionZone, normalizeForgePath } from "./state.js";
+
+const __dirname = dirname(fileURLToPath(import.meta.url));
+
+/** Fire-and-forget notification to cmux on frozen interception (R6.1). */
+function notifyFrozen(targetFile: string): void {
+  try {
+    const hookPath = join(__dirname, "..", "scripts", "cmux-mirror", "hook-notify.sh");
+    const child = spawn("bash", [hookPath], {
+      detached: true,
+      stdio: "ignore",
+      env: { ...process.env, FORGE_TASK: targetFile },
+    });
+    child.unref();
+  } catch {
+    // Best-effort — never affect exit code (R6.1)
+  }
+}
 
 // ---------------------------------------------------------------------------
 // Constants
@@ -111,6 +131,7 @@ function main(): void {
     console.log(
       "修改此类文件必须通过 /forge decide 产生 ADR。请参考 CONTRIBUTING.md §需要 ADR 的高敏感文件。",
     );
+    notifyFrozen(targetFile);
     process.exit(1);
   }
 
@@ -128,6 +149,7 @@ function main(): void {
     console.log(`🔒 写入被阻断：${targetFile} 状态为 "${status}"，属于冻结区。`);
     // biome-ignore lint/suspicious/noConsole: check-frozen runs in hook context without logger
     console.log("需要用户明确解锁后才能修改。请勿重试此写入操作。");
+    notifyFrozen(targetFile);
     process.exit(1);
   }
 
