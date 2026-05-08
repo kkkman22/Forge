@@ -575,6 +575,11 @@ else
   info "未找到 MCP server（${mcp_server_path}），跳过 MCP 配置（运行 npm run build 后重新初始化可启用）"
 fi
 
+# --- Install cmux workspace layout (idempotent) ---
+if [[ -f "${FORGE_ROOT}/scripts/cmux-mirror/install-template.sh" ]]; then
+  bash "${FORGE_ROOT}/scripts/cmux-mirror/install-template.sh" "${PROJECT_ROOT}" 2>/dev/null || true
+fi
+
 # ============================================================================
 # Step 7：安装可选工具（code-review-graph）
 # ============================================================================
