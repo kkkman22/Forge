@@ -1,6 +1,7 @@
 ---
 name: forge-zoom-out
 description: "Audit the current focus with a three-section architecture overview covering position, responsibilities, and boundaries. Use when user says zoom out, gets lost in details during skill execution, or runs `/forge zoom-out`."
+skeleton_exempt_legacy: true
 disable-model-invocation: true
 ---
 
