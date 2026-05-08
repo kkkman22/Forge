@@ -49,12 +49,35 @@ disable-model-invocation: true
 | Placeholder Scan | 零占位符 → 详见 references/prohibited-content.md |
 | Type Consistency | 所有引用有定义（full）/ Design Reference 有效（lightweight） |
 | Dependencies | 无循环依赖，拓扑排序正确 |
+| Plan Structure | Split_Trigger 任一命中 → 警告 + 等待用户选择 → 详见 references/plan-split-wizard.md |
 
 未通过则自动修正并重新自检。
+
+### Step 4a: Plan Structure Check
+
+IF Plan_Structure_Check 触发（`checkPlanStructure` 返回 `triggered: true`）且 plan frontmatter 不含 `monolith_acknowledged: true`：
+
+输出结构化警告：
+
+```
+⚠️ Plan Structure Warning
+本 plan 触发以下拆分建议条件：
+- [已命中的条件列表]
+
+建议将 plan 按 Sprint 拆成 N 个独立 plan，每个 plan 对应一次完整的 build → review → test → ship 周期。
+
+继续使用当前 plan 请输入 "acknowledge-monolith"；拆分请输入 "split"。
+```
+
+- `acknowledge-monolith`（或任何非 `split` 输入）→ plan frontmatter 追加 `monolith_acknowledged: true`，继续到 Step 5
+- `split` → 进入拆分向导（→ 详见 references/plan-split-wizard.md）
+- plan 已含 `monolith_acknowledged: true` → 跳过此检查
 
 ### Step 5: User Approval
 
 批准 → `status: approved`；修改意见 → 回到 Self-Check；拒绝 → 保持 `draft`。
+
+Plan frontmatter 可含 `monolith_acknowledged: true`（用户明确知悉未拆分风险），此字段由 Step 4a 自动追加。
 
 ---
 
@@ -112,7 +135,6 @@ Frontmatter 字段：`topic`, `status` (draft/approved), `date`, `spec_ref`, `fo
 | No Spec (standard path) | 直接生成 Plan，跳过 Spec 对齐检查 |
 | Existing plan (draft) | 以已有 plan 为基础修改 |
 | Existing plan (approved) | 提示先改 status 为 draft |
-| Task count > 20 | 提醒拆分 Spec 或分批执行 |
 | Self-check fails 3 times | 停止自动修正，呈现给用户 |
 | No knowledge/ history | 跳过，输出提示 |
 | No `.forge/` directory | Prompt `forge init` |

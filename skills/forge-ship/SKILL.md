@@ -62,6 +62,18 @@ disable-model-invocation: true
 
 ---
 
+### 3.5 Compaction Recovery Check
+
+IF 本次执行是从 conversation summary 恢复（上下文压缩后继续），THEN：
+1. 重新读取本 SKILL.md 完整内容（你正在读的就是）
+2. 确认三道门禁的检查结果在 summary 中有 P5 证据链记录
+3. 确认未跳过 §3 Four Delivery Options 中的任何步骤（特别是 AskUserQuestion 合并选项）
+4. 从中断点继续执行
+
+正常流程（无 compaction）忽略此段落。
+
+---
+
 ## 4. Cleanup
 
 ### 4.1 Worktree Cleanup

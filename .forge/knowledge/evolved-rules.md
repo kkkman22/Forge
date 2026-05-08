@@ -1,6 +1,6 @@
 ---
 updated: "2026-05-08"
-rule_count: 2
+rule_count: 4
 max_rules: 15
 ---
 
@@ -37,3 +37,21 @@ Each rule prevents a specific, documented error pattern.
 **Added**: 2026-05-08
 **Confidence**: 0.9
 **Last_triggered**: 2026-05-08
+
+### R3: Sprint Is Not Phase Boundary
+
+**Content**: Plan 文件里的 Sprint / Milestone / Phase 分组是 build 阶段内部执行分组，不是阶段边界。Plan 批准后 build 必须连续执行到最后一个任务完成才 exit 到 review；Sprint 完成 ≠ 阶段完成，不得在 Sprint 间输出总结并停下。进入 build 前若发现 plan 含 ≥2 个 Sprint 或 ≥1 个独立 ship 点，应先停下来提议拆 plan，拆分后每个 plan 对应一次完整 build → review → test → ship 周期。
+**Prevents**: 模型把 Sprint 边界当作里程碑停下输出总结，造成 build 阶段中途退出
+**Source**: `.forge/knowledge/glm-summary-ending.md` + phase-advance-hardening spec
+**Added**: 2026-05-08
+**Confidence**: 0.85
+**Last_triggered**: 2026-05-08
+
+### R4: SKILL Reload After Context Recovery
+
+**Content**: 上下文压缩（compaction）恢复后，或新会话通过 /forge resume 恢复后，必须先读取当前阶段对应的 SKILL.md 完整内容，再执行任何操作。禁止凭 conversation summary 摘要跳步执行。Conversation summary 是高维压缩，会丢失 SKILL.md 中的具体步骤编号、AskUserQuestion 调用、门禁检查等关键细节。
+**Prevents**: 模型在 compaction 恢复后凭摘要执行，遗漏 SKILL.md 中定义的关键步骤（如 ship 阶段的合并选项提示、review 阶段的三层评审配置）
+**Source**: 用户反馈 — ship 阶段 compaction 恢复后跳过 AskUserQuestion 合并选项提示
+**Added**: 2026-05-09
+**Confidence**: 0.9
+**Last_triggered**: 2026-05-09

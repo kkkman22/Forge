@@ -81,6 +81,18 @@ disable-model-invocation: true
 
 ---
 
+### 3.5 Compaction Recovery Check
+
+IF 本次执行是从 conversation summary 恢复（上下文压缩后继续），THEN：
+1. 重新读取本 SKILL.md 完整内容
+2. 确认 §2 Three-Layer Verification 的测试执行命令与 SKILL 定义一致
+3. 确认 §3 Verification Iron Rule 检查已执行
+4. 从中断点继续执行
+
+正常流程（无 compaction）忽略此段落。
+
+---
+
 ## 4. Gate: Tests Not Passed → Block `/forge ship`
 
 **阻断条件**：Layer 1 未通过 或 Layer 3 任一项未通过。
