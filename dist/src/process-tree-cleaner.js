@@ -1,4 +1,5 @@
 import { execFileSync } from "node:child_process";
+/** @internal */
 export async function getDescendants(pid) {
     try {
         const output = execFileSync("pgrep", ["-P", String(pid)], {
@@ -31,6 +32,7 @@ export async function getDescendants(pid) {
         return [];
     }
 }
+/** @internal */
 export async function killProcessTree(pid, signal = "SIGTERM", timeoutMs = 3000) {
     const killed = [];
     const failed = [];
@@ -79,6 +81,7 @@ async function collectPidsLeafToRoot(pid) {
     result.push(pid); // Root last
     return result;
 }
+/** @internal */
 export function killProcessGroup(pgid, signal = "SIGTERM") {
     try {
         process.kill(-pgid, signal);

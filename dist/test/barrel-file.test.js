@@ -6,10 +6,11 @@
  * - Value exports are the correct type (class/function)
  * - Internal modules are NOT re-exported through the barrel file
  *
- * **Validates: Requirements 10.1, 10.2, 10.3, 10.4**
+ * **Validates: Requirements 3.1–3.11, 10.1–10.4**
  */
 import { describe, expect, it } from "vitest";
 import * as barrel from "../src/index.js";
+import * as deprecated from "../src/deprecated.js";
 // ---------------------------------------------------------------------------
 // 1. Expected public value exports exist (Requirement 10.1, 10.2)
 // ---------------------------------------------------------------------------
@@ -64,10 +65,9 @@ describe("barrel file exports maintain class identity", () => {
     });
 });
 // ---------------------------------------------------------------------------
-// 3. Internal modules are NOT re-exported (Requirement 10.3)
+// 3. Internal modules are NOT re-exported (Requirement 10.3, 3.2)
 // ---------------------------------------------------------------------------
 describe("barrel file does not expose internal modules", () => {
-    // Cast to Record<string, unknown> to check for unexpected keys at runtime.
     const exports = barrel;
     // Internal value exports from pua-engine.ts
     it("does not export determinePressureLevel (pua-engine internal)", () => {
@@ -126,106 +126,96 @@ describe("barrel file does not expose internal modules", () => {
     it("does not export buildSkillAwarePrompt (context-accumulator internal)", () => {
         expect(exports.buildSkillAwarePrompt).toBeUndefined();
     });
-    // Verify the total number of value exports is exactly what we expect.
-    // This catches any accidental additions to the barrel file.
-    it("has exactly 106 value exports", () => {
+    // Removed internal modules (error-recovery, process, backlog, episode, branch)
+    it("does not export parseGitLog (error-recovery internal)", () => {
+        expect(exports.parseGitLog).toBeUndefined();
+    });
+    it("does not export classifyInterruption (error-recovery internal)", () => {
+        expect(exports.classifyInterruption).toBeUndefined();
+    });
+    it("does not export ProcessRegistry (process-registry internal)", () => {
+        expect(exports.ProcessRegistry).toBeUndefined();
+    });
+    it("does not export cleanupOrphans (orphan-detector internal)", () => {
+        expect(exports.cleanupOrphans).toBeUndefined();
+    });
+    it("does not export parseBacklog (backlog internal)", () => {
+        expect(exports.parseBacklog).toBeUndefined();
+    });
+    it("does not export renderEpisode (episode internal)", () => {
+        expect(exports.renderEpisode).toBeUndefined();
+    });
+    it("does not export checkBranchTopicGate (branch-lifecycle internal)", () => {
+        expect(exports.checkBranchTopicGate).toBeUndefined();
+    });
+    // Verify the total number of value exports
+    it("has exactly 88 value exports", () => {
         const valueExports = Object.keys(exports).filter((key) => typeof exports[key] !== "undefined");
-        expect(valueExports).toHaveLength(106);
+        expect(valueExports).toHaveLength(88);
         expect(valueExports.sort()).toEqual([
             "CLASSIFICATION_MAP",
             "CliError",
             "FORBIDDEN_PLACEHOLDERS",
             "ForgeError",
             "INCREMENTAL_THRESHOLD",
-            "PHASE_SEQUENCES",
-            "ProcessRegistry",
             "SdkAgentAdapter",
             "SdkDriver",
-            "TEST_FILE_PATTERNS",
             "VALID_TRANSITIONS",
             "allEntriesVerified",
-            "buildReconciliationPatch",
-            "buildRecoveryReport",
+            "archiveTaskStatus",
             "buildSubagentInvocations",
             "buildVerificationCriteria",
-            "calculateSegmentation",
             "canParseTestOutput",
-            "captureFindings",
-            "checkBranchTopicGate",
-            "checkCommitTopicMatch",
             "checkReviewFreshness",
             "checkShipGate",
             "checkShipGateWithChecklist",
-            "classifyInterruption",
+            "checkShipGateWithFreshness",
+            "checkVersionCompatibility",
             "classifySource",
-            "cleanupOrphans",
-            "cleanupStaleSessions",
             "createChecklist",
-            "deletePidFile",
-            "deserializeCheckpointMarker",
-            "deserializeClassification",
             "deserializeContextBudgetReport",
             "deserializeExploreSummary",
             "deserializeGitDiff",
             "deserializeGitStatus",
-            "deserializeRecoveryReport",
             "deserializeReviewSummary",
             "deserializeSubagentSummary",
             "deserializeTestOutput",
             "detectPlanFormat",
-            "detectPpidOrphans",
-            "detectStaleBranches",
-            "detectUnshippedBranches",
             "determineVerificationStrategy",
             "evaluateReviewGate",
             "evaluateShipGate",
             "evaluateTestGate",
-            "extractBranchTopic",
-            "extractCommitPatterns",
             "extractHeadingAnchors",
-            "filterCommitsSince",
-            "findDependencyGaps",
-            "findOverlappingEntries",
-            "findPhaseInconsistencies",
-            "findProgressInconsistencies",
-            "getDescendants",
-            "getNextPhase",
-            "getPhaseSequence",
+            "getMostRecentActiveTask",
             "hasTaskName",
-            "inferTDDPhase",
+            "installSkill",
             "isFixCandidate",
-            "isTestFile",
+            "isMultiTaskMode",
             "isValidTransition",
-            "killProcessGroup",
-            "killProcessTree",
-            "markResolved",
-            "matchChangesToTask",
-            "matchCommitsToTasks",
+            "listActiveTasks",
+            "loadSkillsFromDir",
+            "mergeSkillLists",
+            "migrateToMultiTask",
             "parseChecklist",
             "parseFixRecoveryGitLog",
-            "parseGitLog",
-            "parseGitStatus",
             "parseStatusEntries",
-            "readBacklog",
-            "readPidFile",
-            "recordPendingDelivery",
+            "readTaskStatus",
+            "reconstructStateFromGit",
             "removeTaskEntry",
+            "resolveStatusPath",
             "runSubagentsInParallel",
             "scanForPlaceholders",
-            "serializeBacklog",
             "serializeChecklist",
-            "serializeCheckpointMarker",
-            "serializeClassification",
             "serializeContextBudgetReport",
             "serializeExploreResult",
             "serializeExploreSummary",
             "serializeGitDiff",
             "serializeGitStatus",
-            "serializeRecoveryReport",
             "serializeReviewSummary",
             "serializeStatusEntries",
             "serializeSubagentSummary",
             "serializeTestOutput",
+            "slugify",
             "updateEntryStatus",
             "upsertTaskEntry",
             "validateAtomicTask",
@@ -233,12 +223,42 @@ describe("barrel file does not expose internal modules", () => {
             "validateDesignReferences",
             "validateLightweightPlan",
             "validateLightweightTask",
+            "validateManifest",
             "validatePlan",
             "validatePlanTasks",
             "validateSpecLocked",
-            "writeBacklog",
-            "writePidFile",
+            "writeTaskStatus",
         ]);
+    });
+});
+// ---------------------------------------------------------------------------
+// 4. Deprecated re-exports still accessible (backward compatibility)
+// ---------------------------------------------------------------------------
+describe("deprecated re-exports provide backward compatibility", () => {
+    const dep = deprecated;
+    it("re-exports parseGitLog from error-recovery", () => {
+        expect(dep.parseGitLog).toBeDefined();
+        expect(typeof dep.parseGitLog).toBe("function");
+    });
+    it("re-exports ProcessRegistry from process-registry", () => {
+        expect(dep.ProcessRegistry).toBeDefined();
+        expect(typeof dep.ProcessRegistry).toBe("function");
+    });
+    it("re-exports cleanupOrphans from orphan-detector", () => {
+        expect(dep.cleanupOrphans).toBeDefined();
+        expect(typeof dep.cleanupOrphans).toBe("function");
+    });
+    it("re-exports parseBacklog from backlog", () => {
+        expect(dep.parseBacklog).toBeDefined();
+        expect(typeof dep.parseBacklog).toBe("function");
+    });
+    it("re-exports renderEpisode from episode", () => {
+        expect(dep.renderEpisode).toBeDefined();
+        expect(typeof dep.renderEpisode).toBe("function");
+    });
+    it("re-exports checkBranchTopicGate from branch-lifecycle", () => {
+        expect(dep.checkBranchTopicGate).toBeDefined();
+        expect(typeof dep.checkBranchTopicGate).toBe("function");
     });
 });
 //# sourceMappingURL=barrel-file.test.js.map

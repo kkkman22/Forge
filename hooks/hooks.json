@@ -25,7 +25,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "if [ -d .forge/status ]; then latest=$(ls -t .forge/status/*.md 2>/dev/null | head -1); if [ -n \"$latest\" ]; then echo '=== Forge Context ==='; head -50 .forge/plans/*.md 2>/dev/null; echo '=== Recent Progress ==='; tail -20 .forge/progress/*.md 2>/dev/null; fi; elif [ -f .forge/status.md ]; then echo '=== Forge Context ==='; head -50 .forge/plans/*.md 2>/dev/null; echo '=== Recent Progress ==='; tail -20 .forge/progress/*.md 2>/dev/null; fi"
+            "command": "node forge/scripts/inject-plan-context.mjs 2>/dev/null || node ~/.claude/skills/forge/scripts/inject-plan-context.mjs 2>/dev/null || true"
           }
         ]
       }
@@ -45,7 +45,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "node forge/dist/src/check-frozen.js \"$TOOL_INPUT_FILE\" 2>/dev/null || node ~/.claude/skills/forge/dist/src/check-frozen.js \"$TOOL_INPUT_FILE\" 2>/dev/null",
+            "command": "bash forge/scripts/hook-check-frozen.sh \"$TOOL_INPUT_FILE\" 2>/dev/null || bash ~/.claude/skills/forge/scripts/hook-check-frozen.sh \"$TOOL_INPUT_FILE\" 2>/dev/null",
             "timeout": 5
           }
         ]
@@ -55,7 +55,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "echo \"$TOOL_INPUT\" | grep -oE '\\.forge/(specs|plans)/[a-zA-Z0-9_.-]+|\\.forge/config\\.md' | sort -u | while read -r f; do node forge/dist/src/check-frozen.js \"$f\" 2>/dev/null || node ~/.claude/skills/forge/dist/src/check-frozen.js \"$f\" 2>/dev/null; done",
+            "command": "echo \"$TOOL_INPUT\" | grep -oE '\\.forge/(specs|plans)/[a-zA-Z0-9_.-]+|\\.forge/config\\.md' | sort -u | while read -r f; do bash forge/scripts/hook-check-frozen.sh \"$f\" 2>/dev/null || bash ~/.claude/skills/forge/scripts/hook-check-frozen.sh \"$f\" 2>/dev/null; done",
             "timeout": 5
           }
         ]

@@ -94,6 +94,7 @@ function createConfig(overrides?: Partial<SdkDriverConfig>): SdkDriverConfig {
     },
     limits: { maxIterations: 1 },
     cwd: "/test/repo",
+    forceNoHooks: true,
     runId: "test-run-id",
     runDir: "/test/repo/.forge/runs/test-run-id/",
     warmQuery: {},
@@ -297,7 +298,8 @@ describe("Feature: forge-audit-remediation, Property 2: Effect exceptions propag
   it("executeEffects re-throws exceptions from the effect executor", async () => {
     const executor = createMockEffectExecutor();
     const agent = createMockAgent();
-    const consoleSpy = vi.spyOn(console, "log").mockImplementation(() => {});
+    const logSpy = vi.spyOn(console, "log").mockImplementation(() => {});
+    const errSpy = vi.spyOn(console, "error").mockImplementation(() => {});
 
     const errorMsg = "git commit failed: permission denied";
 
@@ -314,9 +316,9 @@ describe("Feature: forge-audit-remediation, Property 2: Effect exceptions propag
     const result = await driver.run();
 
     // The error should have been logged by the executeEffects wrapper (i18n key fallback)
-    expect(consoleSpy).toHaveBeenCalledWith(
-      expect.stringContaining("driver.loop.effectExecutionFailed"),
-    );
+    const allCalls = [...logSpy.mock.calls, ...errSpy.mock.calls].map((c) => c[0]);
+    expect(allCalls.some((msg) => msg.includes("driver.loop.effectExecutionFailed"))).toBe(true);
+    errSpy.mockRestore();
 
     // The iteration should be recorded as failed (not silently swallowed)
     const failedEntries = result.notesDocument.entries.filter((e) => !e.success);

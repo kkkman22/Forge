@@ -94,7 +94,9 @@ function main() {
     // Source-tree hard-frozen files (e.g., src/prompt-defense-patterns.ts)
     // Block regardless of frontmatter — require ADR per Requirement 5.10.
     if (isHardFrozenSourceFile(targetFile)) {
+        // biome-ignore lint/suspicious/noConsole: check-frozen runs in hook context without logger
         console.log(`🔒 写入被阻断：${targetFile} 属于源代码硬冻结区（prompt defense 模式库等）。`);
+        // biome-ignore lint/suspicious/noConsole: check-frozen runs in hook context without logger
         console.log("修改此类文件必须通过 /forge decide 产生 ADR。请参考 CONTRIBUTING.md §需要 ADR 的高敏感文件。");
         process.exit(1);
     }
@@ -107,7 +109,9 @@ function main() {
     const content = readFileSync(targetFile, "utf-8");
     const status = extractStatus(content);
     if (status && FROZEN_STATUSES.includes(status)) {
+        // biome-ignore lint/suspicious/noConsole: check-frozen runs in hook context without logger
         console.log(`🔒 写入被阻断：${targetFile} 状态为 "${status}"，属于冻结区。`);
+        // biome-ignore lint/suspicious/noConsole: check-frozen runs in hook context without logger
         console.log("需要用户明确解锁后才能修改。请勿重试此写入操作。");
         process.exit(1);
     }

@@ -125,6 +125,7 @@ function createPuaConfig(overrides?: Partial<SdkDriverConfig>): {
     },
     limits: { maxIterations: 10 },
     cwd: "/test/repo",
+    forceNoHooks: true,
     runId: "pua-test-run",
     runDir: "/test/repo/.forge/runs/pua-test-run/",
     warmQuery: {},

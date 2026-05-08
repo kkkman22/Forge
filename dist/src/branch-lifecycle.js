@@ -13,6 +13,7 @@
 /**
  * Extract the topic segment from a `feature/<topic>` or `forge/<topic>` branch.
  * Returns `null` for branches that don't match the expected format.
+ * @internal
  */
 export function extractBranchTopic(branchName) {
     const match = branchName.match(/^(?:feature|forge)\/(.+)$/);
@@ -24,6 +25,7 @@ export function extractBranchTopic(branchName) {
 /**
  * Check whether the branch topic matches the task topic.
  * Returns `{ allowed, reasons }` similar to `checkBuildGate`.
+ * @internal
  */
 export function checkBranchTopicGate(branchName, taskTopic) {
     const branchTopic = extractBranchTopic(branchName);
@@ -46,6 +48,7 @@ export function checkBranchTopicGate(branchName, taskTopic) {
 // ---------------------------------------------------------------------------
 /**
  * Create a pending-delivery record when "keep branch" is selected in ship.
+ * @internal
  */
 export function recordPendingDelivery(branchName, topic, timestamp) {
     return { branchName, topic, timestamp };
@@ -58,6 +61,7 @@ export function recordPendingDelivery(branchName, topic, timestamp) {
  * A branch is stale when its topic differs from the current task topic
  * and its timestamp is older than the staleness threshold.
  * Default threshold: 0 (any pending delivery for a different topic is flagged).
+ * @internal
  */
 export function detectStaleBranches(pendingDeliveries, currentTopic, currentTime, thresholdMs = 0) {
     return pendingDeliveries.filter((d) => d.topic !== currentTopic && currentTime - d.timestamp >= thresholdMs);
@@ -68,6 +72,7 @@ export function detectStaleBranches(pendingDeliveries, currentTopic, currentTime
 /**
  * Verify a commit's topic matches the branch's topic.
  * Returns `{ allowed: false, reason }` on mismatch.
+ * @internal
  */
 export function checkCommitTopicMatch(branchName, commitTopic) {
     const branchTopic = extractBranchTopic(branchName);
@@ -91,6 +96,7 @@ export function checkCommitTopicMatch(branchName, commitTopic) {
 /**
  * Identify branches with pending deliveries that should be surfaced as
  * warnings at build start.
+ * @internal
  */
 export function detectUnshippedBranches(pendingDeliveries, currentTopic) {
     return pendingDeliveries

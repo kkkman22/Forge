@@ -30,6 +30,8 @@ import { type Episode, type EpisodeTier, generateEpisodeId } from "./episode.js"
  *   - `new_review_pattern`  — review found a pattern not yet in the
  *                             knowledge base.
  *   - `ship_gate_blocked`   — ship gate rejected the delivery.
+ *
+ * @internal
  */
 export type FailureTrigger = "three_strike" | "new_review_pattern" | "ship_gate_blocked";
 
@@ -38,6 +40,8 @@ export type FailureTrigger = "three_strike" | "new_review_pattern" | "ship_gate_
  * from `status.md`, the router decision, and the specific failure
  * signal; the sink functions consume it without touching any external
  * state.
+ *
+ * @internal
  */
 export interface FailureContext {
   /** Skill that hit the failure, e.g. `forge-build`. */
@@ -109,6 +113,8 @@ function lessonFor(trigger: FailureTrigger): string {
  *
  * Pure function: same `(ctx, now, sequenceInDay)` always produces the
  * same Episode.
+ *
+ * @internal
  */
 export function buildFailureEpisode(
   ctx: FailureContext,
@@ -168,6 +174,8 @@ export function buildFailureEpisode(
  * The returned string ends with a trailing newline so callers can
  * concatenate it directly onto an existing file without tracking
  * separators.
+ *
+ * @internal
  */
 export function buildFailureEvolutionMarker(
   ctx: FailureContext,

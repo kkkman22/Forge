@@ -58,6 +58,8 @@ import type { Episode } from "./episode.js";
  *                         Default 0.5.
  *   - `tags`:             optional tags for searching / filtering.
  *   - `body`:             prose description.
+ *
+ * @internal
  */
 export interface Pattern {
   pattern_id: string;
@@ -72,7 +74,7 @@ export interface Pattern {
   body: string;
 }
 
-/** Suggestion returned by {@link findUpgradableEpisodes}. */
+/** @internal Suggestion returned by {@link findUpgradableEpisodes}. */
 export interface UpgradeSuggestion {
   clusterKey: string;
   episodes: Episode[];
@@ -116,6 +118,8 @@ const ARCHIVED_SENTINEL = "## Archived";
  * The parser is line-based and tolerates the H1 banner, the optional
  * frontmatter block, and an optional `## ` subsection prior to the H3
  * pattern headings.
+ *
+ * @internal
  */
 export function parseInstinct(content: string): Pattern[] {
   const { body } = stripFrontmatter(content);
@@ -137,6 +141,8 @@ export function parseInstinct(content: string): Pattern[] {
  * The top-level `schema_version` / `updated` frontmatter is emitted so
  * future migrations have a hook. Patterns are printed under a single
  * `## Patterns` section; future archived entries live after `## Archived`.
+ *
+ * @internal
  */
 export function renderInstincts(patterns: Pattern[]): string {
   const lines: string[] = [];
@@ -170,6 +176,8 @@ export function renderInstincts(patterns: Pattern[]): string {
  * to 0 or 1. The function is pure and returns a new pattern.
  *
  * **Validates: Requirements 7.6, 7.7, 7.13**
+ *
+ * @internal
  */
 export function updatePatternStats(
   pattern: Pattern,
@@ -202,6 +210,8 @@ export function updatePatternStats(
  * is the invariant the property test exercises. Pure function.
  *
  * **Validates: Requirements 7.8, 7.13**
+ *
+ * @internal
  */
 export function findStaleOrDecayedPatterns(
   patterns: Pattern[],
@@ -241,6 +251,8 @@ export function findStaleOrDecayedPatterns(
  * occurrence count so the caller surfaces the strongest signals first.
  *
  * **Validates: Requirements 7.11**
+ *
+ * @internal
  */
 export function findUpgradableEpisodes(
   episodes: Episode[],

@@ -23,6 +23,7 @@ import { extractStringField } from "./frontmatter.js";
 // ---------------------------------------------------------------------------
 // Constants
 // ---------------------------------------------------------------------------
+/** @public */
 export const FORBIDDEN_PLACEHOLDERS = [
     "TBD",
     "TODO",
@@ -44,6 +45,7 @@ const MAX_ESTIMATED_MINUTES = 5;
  * and common variants (e.g., `tbd`, `Todo`, `TODO:`, `// TODO`).
  *
  * Returns an array of found placeholder strings. Empty array means clean.
+ * @public
  */
 export function scanForPlaceholders(text) {
     const found = [];
@@ -65,6 +67,7 @@ export function scanForPlaceholders(text) {
  *   (d) Referenced types/functions consistency (checked at plan level)
  *
  * Returns { valid, errors } where errors lists all validation failures.
+ * @public
  */
 export function validateAtomicTask(task) {
     const errors = [];
@@ -141,6 +144,7 @@ export function validateAtomicTask(task) {
  *
  * Per R24: Plan execution requires a locked spec to ensure the plan is based
  * on a confirmed specification.
+ * @public
  */
 export function validateSpecLocked(specStatus) {
     if (specStatus !== "locked") {
@@ -154,6 +158,7 @@ export function validateSpecLocked(specStatus) {
  *
  * Per R25: Each task's `dependsOn` array (if present) must only reference
  * task numbers that exist in the plan.
+ * @public
  */
 export function validateDependencies(tasks) {
     const errors = [];
@@ -241,6 +246,7 @@ function validateTopologicalOrder(tasks) {
  *
  * Returns true only if every task passes validateAtomicTask and all
  * `dependsOn` references are valid.
+ * @public
  */
 export function validatePlanTasks(tasks) {
     if (tasks.length === 0) {
@@ -256,6 +262,7 @@ export function validatePlanTasks(tasks) {
 // ---------------------------------------------------------------------------
 // Lightweight format — format detection
 // ---------------------------------------------------------------------------
+/** @public */
 export function detectPlanFormat(frontmatter) {
     const value = extractStringField(frontmatter, "format");
     if (value === "lightweight")
@@ -265,6 +272,7 @@ export function detectPlanFormat(frontmatter) {
 // ---------------------------------------------------------------------------
 // Lightweight format — heading anchor extraction
 // ---------------------------------------------------------------------------
+/** @public */
 export function extractHeadingAnchors(markdownContent) {
     const anchors = [];
     const lines = markdownContent.split("\n");
@@ -286,6 +294,7 @@ export function extractHeadingAnchors(markdownContent) {
 // Lightweight format — task validation
 // ---------------------------------------------------------------------------
 const DESIGN_REF_PATTERN = /^design\.md#[a-z0-9\-_]+$/;
+/** @public */
 export function validateLightweightTask(task) {
     const errors = [];
     if (!task.title || task.title.trim() === "")
@@ -325,6 +334,7 @@ export function validateLightweightTask(task) {
     }
     return { valid: errors.length === 0, errors };
 }
+/** @public */
 export function validateLightweightPlan(tasks) {
     if (tasks.length === 0)
         return false;
@@ -342,6 +352,7 @@ export function validateLightweightPlan(tasks) {
 // ---------------------------------------------------------------------------
 // Lightweight format — Design Reference validation
 // ---------------------------------------------------------------------------
+/** @public */
 export function validateDesignReferences(references, designContent) {
     const errors = [];
     const anchorSet = new Set(extractHeadingAnchors(designContent));
@@ -360,6 +371,7 @@ export function validateDesignReferences(references, designContent) {
 // ---------------------------------------------------------------------------
 // Unified plan validation dispatcher
 // ---------------------------------------------------------------------------
+/** @public */
 export function validatePlan(frontmatter, tasks, designContent) {
     const format = detectPlanFormat(frontmatter);
     if (format === "lightweight") {
@@ -502,6 +514,8 @@ function replaceWholeWord(text, surface, canonical) {
  *     themselves.
  *
  * **Validates: Requirements 1.5**
+ *
+ * @public
  */
 export function normalizeTaskTerms(title, glossary) {
     if (title.length === 0)
@@ -521,6 +535,7 @@ export function normalizeTaskTerms(title, glossary) {
 /**
  * Return a copy of `task` whose `title` field has been normalized against
  * the glossary. All other fields are passed through unchanged.
+ * @public
  */
 export function normalizeLightweightTask(task, glossary) {
     const normalizedTitle = normalizeTaskTerms(task.title, glossary);
@@ -531,6 +546,7 @@ export function normalizeLightweightTask(task, glossary) {
 /**
  * Return a copy of `task` whose `title` field has been normalized against
  * the glossary. All other fields are passed through unchanged.
+ * @public
  */
 export function normalizeAtomicTask(task, glossary) {
     const normalizedTitle = normalizeTaskTerms(task.title, glossary);

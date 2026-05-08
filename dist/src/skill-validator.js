@@ -18,6 +18,7 @@ const REQUIRED_FIELDS = [
  *
  * @param json - Unknown input to validate.
  * @returns Validation result with errors if invalid.
+ * @public
  */
 export function validateManifest(json) {
     const errors = [];
@@ -61,6 +62,7 @@ export function validateManifest(json) {
  * @param manifest - SKILL manifest with forgeVersion requirement.
  * @param currentVersion - Current Forge version (exact semver).
  * @returns true if compatible.
+ * @public
  */
 export function checkVersionCompatibility(manifest, currentVersion) {
     return satisfiesRange(currentVersion, manifest.forgeVersion);

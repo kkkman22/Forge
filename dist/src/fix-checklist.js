@@ -3,12 +3,14 @@
  *
  * **Validates: Requirements 10.1–10.5**
  */
+/** @public */
 export const VALID_TRANSITIONS = {
     unfixed: ["in-progress"],
     "in-progress": ["fixed", "unfixed"],
     fixed: ["verified", "unfixed"],
     verified: ["unfixed"],
 };
+/** @public */
 export function isValidTransition(current, next) {
     return VALID_TRANSITIONS[current].includes(next);
 }
@@ -17,6 +19,7 @@ function assertP0P1(s) {
         throw new Error(`Invalid severity: ${s}`);
     return s;
 }
+/** @public */
 export function createChecklist(findings) {
     return findings
         .filter((f) => f.severity === "P0" || f.severity === "P1")
@@ -29,6 +32,7 @@ export function createChecklist(findings) {
         status: "unfixed",
     }));
 }
+/** @public */
 export function updateEntryStatus(entry, newStatus, fixCommit) {
     if (!isValidTransition(entry.status, newStatus)) {
         return {
@@ -46,9 +50,11 @@ export function updateEntryStatus(entry, newStatus, fixCommit) {
         },
     };
 }
+/** @public */
 export function allEntriesVerified(entries) {
     return entries.length > 0 && entries.every((e) => e.status === "verified");
 }
+/** @public */
 export function serializeChecklist(entries, topic, createdAt) {
     const p0Count = entries.filter((e) => e.severity === "P0").length;
     const p1Count = entries.filter((e) => e.severity === "P1").length;
@@ -73,6 +79,7 @@ export function serializeChecklist(entries, topic, createdAt) {
     }
     return lines.join("\n");
 }
+/** @public */
 export function parseChecklist(content) {
     const entries = [];
     const lines = content.split("\n");

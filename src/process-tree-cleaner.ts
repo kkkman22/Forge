@@ -1,11 +1,13 @@
 import { execFileSync } from "node:child_process";
 
+/** @internal */
 export interface ProcessTreeNode {
   pid: number;
   command: string;
   children: ProcessTreeNode[];
 }
 
+/** @internal */
 export async function getDescendants(pid: number): Promise<ProcessTreeNode[]> {
   try {
     const output = execFileSync("pgrep", ["-P", String(pid)], {
@@ -38,6 +40,7 @@ export async function getDescendants(pid: number): Promise<ProcessTreeNode[]> {
   }
 }
 
+/** @internal */
 export async function killProcessTree(
   pid: number,
   signal: NodeJS.Signals = "SIGTERM",
@@ -96,6 +99,7 @@ async function collectPidsLeafToRoot(pid: number): Promise<number[]> {
   return result;
 }
 
+/** @internal */
 export function killProcessGroup(pgid: number, signal: NodeJS.Signals = "SIGTERM"): boolean {
   try {
     process.kill(-pgid, signal);

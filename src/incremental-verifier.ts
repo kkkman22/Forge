@@ -6,14 +6,17 @@
 
 import type { ChecklistEntry } from "./fix-checklist.js";
 
+/** @public */
 export type VerificationStrategy = "incremental" | "targeted-review";
 
+/** @public */
 export interface VerificationDecision {
   strategy: VerificationStrategy;
   linesChanged: number;
   threshold: number;
 }
 
+/** @public */
 export interface VerificationResult {
   verified: boolean;
   findingId: string;
@@ -21,8 +24,10 @@ export interface VerificationResult {
   originalLayer?: string;
 }
 
+/** @public */
 export const INCREMENTAL_THRESHOLD = 50;
 
+/** @public */
 export function determineVerificationStrategy(
   linesChanged: number,
   threshold = INCREMENTAL_THRESHOLD,
@@ -37,6 +42,7 @@ export function determineVerificationStrategy(
   };
 }
 
+/** @public */
 export function buildVerificationCriteria(finding: ChecklistEntry): {
   filePath: string;
   lineRange: [number, number];

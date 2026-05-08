@@ -7,7 +7,7 @@
 
 import type { ParallelExecutionResult, SubagentInvocation, SubagentResult } from "./loop-types.js";
 
-/** Agent types defined in .claude/agents/ that may be used as subagent_type. */
+/** Agent types defined in .claude/agents/ that may be used as subagent_type. @public */
 export const VALID_AGENT_TYPES = [
   "spec-check",
   "quality-check",
@@ -25,6 +25,7 @@ export const VALID_AGENT_TYPES = [
  *
  * Each agent type maps to a SubagentInvocation with a descriptive prompt,
  * default permission mode, and configurable max turns.
+ * @public
  */
 export function buildSubagentInvocations(
   agentTypes: string[],
@@ -58,6 +59,7 @@ export function buildSubagentInvocations(
  *
  * In the actual runtime, this delegates to Claude Code's Agent tool.
  * This function provides the pure coordination logic for result collection.
+ * @public
  */
 export async function runSubagentsInParallel(
   invocations: SubagentInvocation[],

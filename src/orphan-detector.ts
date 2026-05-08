@@ -1,7 +1,8 @@
-import { execSync } from "node:child_process";
+import { execFileSync } from "node:child_process";
 import { mkdirSync, readdirSync, readFileSync, unlinkSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
 
+/** @internal */
 export interface PidFileContent {
   sessionPid: number;
   sessionPgid: number;
@@ -9,6 +10,7 @@ export interface PidFileContent {
   processes: Array<{ pid: number; source: string }>;
 }
 
+/** @internal */
 export interface OrphanProcess {
   pid: number;
   command: string;
@@ -16,6 +18,7 @@ export interface OrphanProcess {
   source: "pid-file" | "ppid-detection";
 }
 
+/** @internal */
 export function writePidFile(sessionId: string, content: PidFileContent, baseDir: string): void {
   const dir = join(baseDir, ".pids");
   try {
@@ -27,10 +30,12 @@ export function writePidFile(sessionId: string, content: PidFileContent, baseDir
   try {
     writeFileSync(filePath, JSON.stringify(content, null, 2), "utf-8");
   } catch (err) {
+    // biome-ignore lint/suspicious/noConsole: standalone utility without logger access
     console.warn(`Failed to write PID file: ${(err as Error).message}`);
   }
 }
 
+/** @internal */
 export function readPidFile(filePath: string): PidFileContent | null {
   try {
     const content = readFileSync(filePath, "utf-8");
@@ -49,6 +54,7 @@ export function readPidFile(filePath: string): PidFileContent | null {
   }
 }
 
+/** @internal */
 export function deletePidFile(sessionId: string, baseDir: string): void {
   const filePath = join(baseDir, ".pids", `session-${sessionId}.pid`);
   try {
@@ -58,6 +64,7 @@ export function deletePidFile(sessionId: string, baseDir: string): void {
   }
 }
 
+/** @internal */
 export async function cleanupStaleSessions(baseDir: string): Promise<OrphanProcess[]> {
   const orphans: OrphanProcess[] = [];
   const dir = join(baseDir, ".pids");
@@ -114,6 +121,7 @@ export async function cleanupStaleSessions(baseDir: string): Promise<OrphanProce
   return orphans;
 }
 
+/** @internal */
 export async function detectPpidOrphans(
   patterns: string[],
   maxAgeSeconds: number,
@@ -125,7 +133,10 @@ export async function detectPpidOrphans(
   const orphans: OrphanProcess[] = [];
   let output: string;
   try {
-    output = execSync("ps -eo pid,ppid,etime,command", { encoding: "utf-8", timeout: 5000 });
+    output = execFileSync("ps", ["-eo", "pid,ppid,etime,command"], {
+      encoding: "utf-8",
+      timeout: 5000,
+    });
   } catch {
     return orphans;
   }
@@ -153,6 +164,7 @@ export async function detectPpidOrphans(
   return orphans;
 }
 
+/** @internal */
 export function cleanupOrphans(
   orphans: OrphanProcess[],
   autoKillThresholdSeconds: number,
@@ -169,6 +181,7 @@ export function cleanupOrphans(
         // Already exited
       }
     } else {
+      // biome-ignore lint/suspicious/noConsole: standalone utility without logger access
       console.warn(
         `Orphan process detected (PID ${orphan.pid}, running ${orphan.elapsedSeconds}s): ${orphan.command}`,
       );

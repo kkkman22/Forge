@@ -27,6 +27,7 @@ const DEFAULT_GLOBAL_TIMEOUT_MS = 1_800_000;
  * zero-latency startup. Subsequent calls use the standalone `query()`
  * function with full options. Tracks warm query consumption via an
  * internal flag.
+ * @public
  */
 export class SdkAgentAdapter {
     name = "claude-sdk";
