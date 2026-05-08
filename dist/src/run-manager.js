@@ -100,12 +100,14 @@ export function releaseFileLock(lockPath, fd) {
         closeSync(fd);
     }
     catch (err) {
+        // biome-ignore lint/suspicious/noConsole: utility function has no logger access
         console.warn(`[debug] closeSync failed for lock fd=${fd}: ${err instanceof Error ? err.message : String(err)}`);
     }
     try {
         unlinkSync(lockPath);
     }
     catch (err) {
+        // biome-ignore lint/suspicious/noConsole: utility function has no logger access
         console.warn(`[debug] unlinkSync failed for lock path=${lockPath}: ${err instanceof Error ? err.message : String(err)}`);
     }
 }
@@ -175,6 +177,7 @@ export class RunManager {
                 }
             }
             catch (err) {
+                // biome-ignore lint/suspicious/noConsole: utility function has no logger access
                 console.warn(`[debug] run directory cleanup failed for ${runDir}: ${err instanceof Error ? err.message : String(err)}`);
             }
             throw error;
@@ -296,6 +299,7 @@ export class RunManager {
             const warningMsg = t
                 ? t("runManager.warning.fileLockFailed", { error: lockErrMsg })
                 : `Warning: file-lock mechanism failed, falling back to lockless mode: ${lockErrMsg}`;
+            // biome-ignore lint/suspicious/noConsole: utility function has no logger access
             console.warn(warningMsg);
         }
         try {
@@ -364,6 +368,7 @@ export class RunManager {
                     });
                 }
                 catch (err) {
+                    // biome-ignore lint/suspicious/noConsole: utility function has no logger access
                     console.warn(`[debug] worktree removal failed for ${worktreePath}: ${err instanceof Error ? err.message : String(err)}`);
                 }
                 // Clean up the orphan branch created with the worktree (R11)

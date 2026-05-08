@@ -1,4 +1,5 @@
 import { execFileSync, spawn } from "node:child_process";
+/** @internal */
 export class ProcessRegistry {
     static instance = null;
     processes = new Map();
@@ -127,6 +128,7 @@ export class ProcessRegistry {
             });
         }
         this.processes.clear();
+        // biome-ignore lint/suspicious/noConsole: shutdown diagnostic in standalone utility
         console.info(`ProcessRegistry shutdown: terminated=${result.terminated} forcedKill=${result.forcedKill} alreadyExited=${result.alreadyExited} errors=${result.errors.length}`);
         return result;
     }

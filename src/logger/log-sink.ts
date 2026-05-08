@@ -1,3 +1,4 @@
+import { createConsoleSink } from "./console-sink.js";
 import type { LogEntry, LogLevel, LogSinkConfig } from "./types.js";
 
 const LEVEL_ORDER: Record<LogLevel, number> = {
@@ -36,11 +37,18 @@ export function formatEntry(entry: LogEntry, config: LogSinkConfig): string {
   return formatAsText(entry);
 }
 
-export function createLogSink(config: LogSinkConfig, output: (line: string) => void = console.log) {
+export function createLogSink(config: LogSinkConfig, output?: (line: string) => void) {
+  const consoleSink = output
+    ? undefined
+    : createConsoleSink({ format: config.format, minLevel: config.level });
   return {
     log(entry: LogEntry): void {
       if (!shouldLog(entry.level, config.level)) return;
-      output(formatEntry(entry, config));
+      if (output) {
+        output(formatEntry(entry, config));
+      } else {
+        consoleSink?.write(entry);
+      }
     },
     getConfig(): LogSinkConfig {
       return config;
@@ -59,6 +67,7 @@ export function createDualSink(
   primary: ReturnType<typeof createLogSink>,
   secondary: ReturnType<typeof createLogSink>,
 ): ReturnType<typeof createLogSink> {
+  const errorSink = createConsoleSink({ format: "text", minLevel: "warn" });
   return {
     log(entry: LogEntry): void {
       primary.log(entry);
@@ -66,7 +75,12 @@ export function createDualSink(
         secondary.log(entry);
       } catch (err) {
         const message = err instanceof Error ? err.message : String(err);
-        console.error(`[WARN] Secondary log sink failed: ${message}`);
+        errorSink.write({
+          timestamp: new Date().toISOString(),
+          level: "warn",
+          event: "secondary_sink_failed",
+          message: `Secondary log sink failed: ${message}`,
+        });
       }
     },
     getConfig(): LogSinkConfig {

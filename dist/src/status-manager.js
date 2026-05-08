@@ -19,6 +19,7 @@ const TERMINAL_PHASES = new Set(["completed", "aborted"]);
  * Read status for a specific task.
  *
  * Priority: .forge/status/<task-id>.md → .forge/status.md → empty string
+ * @public
  */
 export function readTaskStatus(io, forgeRoot, taskName) {
     const taskId = slugify(taskName);
@@ -46,6 +47,7 @@ export function readTaskStatus(io, forgeRoot, taskName) {
  * In multi-task mode, writes to .forge/status/<task-id>.md.
  * In single-task mode, writes to .forge/status.md.
  * Write failures are logged and do not crash.
+ * @public
  */
 export function writeTaskStatus(io, forgeRoot, taskName, content) {
     try {
@@ -88,6 +90,7 @@ export function writeTaskStatus(io, forgeRoot, taskName, content) {
  * List all active tasks (phase is not "completed" or "aborted").
  *
  * Scans both .forge/status.md and .forge/status/*.md.
+ * @public
  */
 export function listActiveTasks(io, forgeRoot) {
     const entries = [];
@@ -123,6 +126,7 @@ export function listActiveTasks(io, forgeRoot) {
  * Get the most recently updated active task.
  *
  * Used by Context_Hook to select which task's context to inject.
+ * @public
  */
 export function getMostRecentActiveTask(io, forgeRoot) {
     const active = listActiveTasks(io, forgeRoot);
@@ -146,6 +150,7 @@ export function getMostRecentActiveTask(io, forgeRoot) {
  *   3. Create .forge/status/ directory
  *   4. Copy legacy content to .forge/status/<task-id>.md
  *   5. Clear legacy status.md (preserve empty frontmatter)
+ * @public
  */
 export function migrateToMultiTask(io, forgeRoot) {
     const legacyPath = `${forgeRoot}/status.md`;
@@ -170,6 +175,7 @@ export function migrateToMultiTask(io, forgeRoot) {
 // ---------------------------------------------------------------------------
 /**
  * Archive a task's status file to .forge/archive/<date>-<task-id>/status.md.
+ * @public
  */
 export function archiveTaskStatus(io, forgeRoot, taskName, date) {
     try {

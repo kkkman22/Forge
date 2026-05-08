@@ -1,8 +1,8 @@
 import * as fc from "fast-check";
 import { describe, expect, it, vi } from "vitest";
 
-const { mockExecSync } = vi.hoisted(() => ({
-  mockExecSync: vi.fn(),
+const { mockExecFileSync } = vi.hoisted(() => ({
+  mockExecFileSync: vi.fn(),
 }));
 
 const mockFs = vi.hoisted(() => ({
@@ -14,7 +14,7 @@ const mockFs = vi.hoisted(() => ({
 }));
 
 vi.mock("node:child_process", () => ({
-  execSync: mockExecSync,
+  execFileSync: mockExecFileSync,
 }));
 
 vi.mock("node:fs", () => ({
@@ -84,7 +84,7 @@ describe("OrphanDetector", () => {
             const lines = entries
               .map((e) => `  ${e.pid}  ${e.ppid}  ${e.etime} ${e.command}`)
               .join("\n");
-            mockExecSync.mockReturnValue(header + lines);
+            mockExecFileSync.mockReturnValue(header + lines);
 
             const result = await detectPpidOrphans(["forge", "vitest", "caffeinate"], 3600);
 
@@ -99,7 +99,7 @@ describe("OrphanDetector", () => {
               expect(matchesPattern).toBe(true);
             }
 
-            mockExecSync.mockReset();
+            mockExecFileSync.mockReset();
           },
         ),
         { numRuns: 40 },
@@ -179,7 +179,7 @@ describe("OrphanDetector", () => {
 
   describe("ps command failure tolerance", () => {
     it("returns empty when ps command fails", async () => {
-      mockExecSync.mockImplementation(() => {
+      mockExecFileSync.mockImplementation(() => {
         throw new Error("ps failed");
       });
 

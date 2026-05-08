@@ -6,6 +6,6 @@
  * - Value exports are the correct type (class/function)
  * - Internal modules are NOT re-exported through the barrel file
  *
- * **Validates: Requirements 10.1, 10.2, 10.3, 10.4**
+ * **Validates: Requirements 3.1–3.11, 10.1–10.4**
  */
 export {};

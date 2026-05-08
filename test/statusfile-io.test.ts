@@ -142,6 +142,7 @@ function createConfig(overrides?: Partial<SdkDriverConfig>): SdkDriverConfig {
     },
     limits: { maxIterations: 1 },
     cwd: "/test/repo",
+    forceNoHooks: true,
     runId: "test-run-id",
     runDir: "/test/repo/.forge/runs/test-run-id/",
     warmQuery: {},
@@ -207,6 +208,7 @@ describe("StatusFile write failure degradation (Requirement 6.7)", () => {
 
   it("logs a warning but does NOT abort when writeStatusFile throws during cleanup", async () => {
     const logSpy = vi.spyOn(console, "log").mockImplementation(() => {});
+    const errSpy = vi.spyOn(console, "error").mockImplementation(() => {});
     vi.spyOn(console, "warn").mockImplementation(() => {});
 
     // Make clearLoopFields throw to simulate write failure during cleanup
@@ -235,15 +237,18 @@ describe("StatusFile write failure degradation (Requirement 6.7)", () => {
     expect(result.notesDocument.entries).toHaveLength(1);
 
     // Warning should be logged about the cleanup failure
-    expect(logSpy).toHaveBeenCalled();
-    const logMessages = logSpy.mock.calls.map((call) => call[0]);
-    const hasCleanupWarning = logMessages.some(
+    const allMessages = [
+      ...logSpy.mock.calls.map((call) => call[0]),
+      ...errSpy.mock.calls.map((call) => call[0]),
+    ];
+    const hasCleanupWarning = allMessages.some(
       (msg: string) =>
         msg.includes("status_field_clear_failed") ||
         msg.includes("clear") ||
         msg.includes("StatusFile"),
     );
     expect(hasCleanupWarning).toBe(true);
+    errSpy.mockRestore();
   });
 
   it("continues execution across multiple iterations despite write failures", async () => {

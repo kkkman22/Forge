@@ -5,6 +5,7 @@
  * **Validates: Requirements 1.1–1.6, 2.1–2.5, 3.1–3.5, 4.1–4.5,
  * 5.1–5.5, 6.1–6.6, 8.1–8.4, 9.1–9.3, 10.1–10.5**
  */
+/** @public */
 export const CLASSIFICATION_MAP = [
     { source: "plan-task-list", lifecycle: "persistent", trimmer: null },
     { source: "current-task", lifecycle: "persistent", trimmer: null },
@@ -20,9 +21,11 @@ export const CLASSIFICATION_MAP = [
     { source: "tdd-test-output", lifecycle: "phase-scoped", trimmer: null },
     { source: "closure-first-probes", lifecycle: "phase-scoped", trimmer: null },
 ];
+/** @public */
 export function classifySource(source) {
     return CLASSIFICATION_MAP.find((e) => e.source === source)?.lifecycle;
 }
+/** @public */
 export function serializeExploreResult(input) {
     if (input === null || input === undefined) {
         return "Explore Agent 返回空结果";
@@ -39,6 +42,7 @@ export function serializeExploreResult(input) {
     }
     return serializeExploreSummary(input);
 }
+/** @public */
 export function serializeExploreSummary(summary) {
     const lines = [
         "\u{1F4CD} \u{4EE3}\u{7801}\u{5E93}\u{63A2}\u{7D22}\u{7ED3}\u{679C}\u{FF08}\u{6458}\u{8981}\u{FF09}",
@@ -61,6 +65,7 @@ export function serializeExploreSummary(summary) {
     }
     return lines.join("\n");
 }
+/** @public */
 export function deserializeExploreSummary(text) {
     const result = {
         entryPoints: [],
@@ -119,6 +124,7 @@ export function deserializeExploreSummary(text) {
     }
     return result;
 }
+/** @public */
 export function serializeReviewSummary(summary) {
     const { severityCounts, findings, filePath } = summary;
     const total = severityCounts.p0 + severityCounts.p1 + severityCounts.p2 + severityCounts.p3;
@@ -134,6 +140,7 @@ export function serializeReviewSummary(summary) {
     }
     return lines.join("\n");
 }
+/** @public */
 export function deserializeReviewSummary(text) {
     const result = {
         filePath: "",
@@ -172,6 +179,7 @@ export function deserializeReviewSummary(text) {
     }
     return result;
 }
+/** @public */
 export function serializeTestOutput(summary) {
     if (summary.failed === 0) {
         return `\u2713 ${summary.passed}/${summary.total} tests passed (0 failed, ${summary.skipped} skipped) in ${(summary.duration / 1000).toFixed(1)}s`;
@@ -185,11 +193,13 @@ export function serializeTestOutput(summary) {
     }
     return lines.join("\n");
 }
+/** @public */
 export function canParseTestOutput(text) {
     const firstLine = text.split("\n")[0].trim();
     return (!!firstLine.match(/^✓ (\d+)\/(\d+) tests passed \(0 failed, (\d+) skipped\) in ([\d.]+)s$/) ||
         !!firstLine.match(/^✗ (\d+) failed, (\d+) passed, (\d+) skipped in ([\d.]+)s$/));
 }
+/** @public */
 export function deserializeTestOutput(text) {
     const result = {
         total: 0,
@@ -243,6 +253,7 @@ export function deserializeTestOutput(text) {
     }
     return result;
 }
+/** @public */
 export function serializeGitDiff(summary, lineCount) {
     if (lineCount <= 50) {
         // Pass through - caller handles this
@@ -258,6 +269,7 @@ export function serializeGitDiff(summary, lineCount) {
     lines.push(`  总计：+${summary.totalAdded} -${summary.totalRemoved}`);
     return lines.join("\n");
 }
+/** @public */
 export function deserializeGitDiff(text) {
     const result = {
         fileCount: 0,
@@ -295,6 +307,7 @@ export function deserializeGitDiff(text) {
     }
     return result;
 }
+/** @public */
 export function serializeGitStatus(summary, fileCount) {
     if (fileCount <= 30) {
         return `📊 Git Status 摘要\n  Staged: ${summary.staged.count} | Modified: ${summary.modified.count} | Untracked: ${summary.untracked.count}`;
@@ -312,6 +325,7 @@ export function serializeGitStatus(summary, fileCount) {
     formatCategory("Untracked", summary.untracked);
     return lines.join("\n");
 }
+/** @public */
 export function deserializeGitStatus(text) {
     const result = {
         staged: { count: 0, files: [] },
@@ -344,6 +358,7 @@ export function deserializeGitStatus(text) {
     }
     return result;
 }
+/** @public */
 export function serializeSubagentSummary(summary) {
     const lines = [`状态：${summary.status}`, `任务：${summary.taskDescription}`];
     if (summary.changedFiles.length > 0) {
@@ -364,6 +379,7 @@ export function serializeSubagentSummary(summary) {
     }
     return lines.join("\n");
 }
+/** @public */
 export function deserializeSubagentSummary(text) {
     const result = {
         status: "DONE",
@@ -425,6 +441,7 @@ export function deserializeSubagentSummary(text) {
     }
     return result;
 }
+/** @public */
 export function serializeContextBudgetReport(report) {
     const lines = [
         "# 📊 上下文预算报告",
@@ -450,6 +467,7 @@ export function serializeContextBudgetReport(report) {
     }
     return lines.join("\n");
 }
+/** @public */
 export function deserializeContextBudgetReport(text) {
     const result = {
         date: "",

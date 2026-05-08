@@ -5,14 +5,19 @@
  * **Validates: Requirements 1.1–1.6, 2.1–2.5, 3.1–3.5, 4.1–4.5,
  * 5.1–5.5, 6.1–6.6, 8.1–8.4, 9.1–9.3, 10.1–10.5**
  */
+/** @public */
 export type InformationLifecycle = "persistent" | "phase-scoped" | "ephemeral" | "write-and-discard";
+/** @public */
 export interface ClassificationEntry {
     source: string;
     lifecycle: InformationLifecycle;
     trimmer: string | null;
 }
+/** @public */
 export declare const CLASSIFICATION_MAP: ClassificationEntry[];
+/** @public */
 export declare function classifySource(source: string): InformationLifecycle | undefined;
+/** @public */
 export interface ExploreSummary {
     entryPoints: Array<{
         filePath: string;
@@ -34,9 +39,13 @@ export interface ExploreSummary {
         fileCount: number;
     }>;
 }
+/** @public */
 export declare function serializeExploreResult(input: ExploreSummary | string | null | undefined): string;
+/** @public */
 export declare function serializeExploreSummary(summary: ExploreSummary): string;
+/** @public */
 export declare function deserializeExploreSummary(text: string): ExploreSummary;
+/** @public */
 export interface ReviewSummary {
     filePath: string;
     severityCounts: {
@@ -52,8 +61,11 @@ export interface ReviewSummary {
         description: string;
     }>;
 }
+/** @public */
 export declare function serializeReviewSummary(summary: ReviewSummary): string;
+/** @public */
 export declare function deserializeReviewSummary(text: string): ReviewSummary;
+/** @public */
 export interface TestOutputSummary {
     total: number;
     passed: number;
@@ -68,9 +80,13 @@ export interface TestOutputSummary {
     }>;
     parseFailed?: boolean;
 }
+/** @public */
 export declare function serializeTestOutput(summary: TestOutputSummary): string;
+/** @public */
 export declare function canParseTestOutput(text: string): boolean;
+/** @public */
 export declare function deserializeTestOutput(text: string): TestOutputSummary;
+/** @public */
 export interface GitDiffSummary {
     fileCount: number;
     files: Array<{
@@ -82,6 +98,7 @@ export interface GitDiffSummary {
     totalRemoved: number;
     fullDiffPath: string | null;
 }
+/** @public */
 export interface GitStatusSummary {
     staged: {
         count: number;
@@ -96,10 +113,15 @@ export interface GitStatusSummary {
         files: string[];
     };
 }
+/** @public */
 export declare function serializeGitDiff(summary: GitDiffSummary, lineCount: number): string;
+/** @public */
 export declare function deserializeGitDiff(text: string): GitDiffSummary;
+/** @public */
 export declare function serializeGitStatus(summary: GitStatusSummary, fileCount: number): string;
+/** @public */
 export declare function deserializeGitStatus(text: string): GitStatusSummary;
+/** @public */
 export interface SubagentSummary {
     status: "DONE" | "DONE_WITH_CONCERNS" | "NEEDS_CONTEXT" | "BLOCKED";
     taskDescription: string;
@@ -113,8 +135,11 @@ export interface SubagentSummary {
     blockingReason?: string;
     concerns?: string[];
 }
+/** @public */
 export declare function serializeSubagentSummary(summary: SubagentSummary): string;
+/** @public */
 export declare function deserializeSubagentSummary(text: string): SubagentSummary;
+/** @public */
 export interface ContextBudgetReport {
     date: string;
     topic: string;
@@ -144,5 +169,7 @@ export interface ContextBudgetReport {
         };
     };
 }
+/** @public */
 export declare function serializeContextBudgetReport(report: ContextBudgetReport): string;
+/** @public */
 export declare function deserializeContextBudgetReport(text: string): ContextBudgetReport;

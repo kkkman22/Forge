@@ -45,6 +45,8 @@
  *   - `filePath`:    file the marker was found in. Defaults to `""`
  *                    when the caller does not supply a path.
  *   - `lineNumber`:  1-indexed line number of the comment line.
+ *
+ * @internal
  */
 export interface EvolutionMarker {
     date: string;
@@ -64,13 +66,15 @@ export interface EvolutionMarker {
  *               (either empty target or unknown skill).
  *   - `reason`: human-readable explanation for a non-valid result.
  *               Absent on valid targets.
+ *
+ * @internal
  */
 export interface ValidationResult {
     valid: boolean;
     orphan: boolean;
     reason?: string;
 }
-/** Per-target-skill rollup inside an {@link EvolutionReport}. */
+/** @internal Per-target-skill rollup inside an {@link EvolutionReport}. */
 export interface EvolutionBySkill {
     targetSkill: string;
     markerCount: number;
@@ -86,6 +90,8 @@ export interface EvolutionBySkill {
  *                     orphans.
  *   - `bySkill`:      per-skill rollups, sorted by `targetSkill`.
  *   - `orphans`:      markers whose target skill is unknown.
+ *
+ * @internal
  */
 export interface EvolutionReport {
     generatedAt: string;
@@ -98,7 +104,7 @@ export interface EvolutionReport {
  * order.
  *
  * The parser is tolerant: any line that fails to match
- * {@link MARKER_REGEX} is ignored, so feeding arbitrary markdown or
+ * `MARKER_REGEX` is ignored, so feeding arbitrary markdown or
  * even binary-ish text never throws. The description block is
  * collected from the lines following the comment until the next
  * `<!--` or EOF; leading / trailing whitespace is trimmed.
@@ -106,6 +112,8 @@ export interface EvolutionReport {
  * `filePath` is echoed onto each marker for downstream aggregation /
  * error reporting. When the caller does not supply a path (e.g. unit
  * tests), an empty string is used.
+ *
+ * @internal
  */
 export declare function parseEvolutionMarkers(content: string, filePath?: string): EvolutionMarker[];
 /**
@@ -119,6 +127,8 @@ export declare function parseEvolutionMarkers(content: string, filePath?: string
  * Returns `{ valid, orphan, reason? }`:
  *   - `{ valid: true, orphan: false }` when the base name is in the registry.
  *   - `{ valid: false, orphan: true, reason: ... }` otherwise.
+ *
+ * @internal
  */
 export declare function validateEvolutionTarget(target: string, skillsRegistry: string[]): ValidationResult;
 /**
@@ -142,5 +152,7 @@ export declare function validateEvolutionTarget(target: string, skillsRegistry: 
  * `now` defaults to `new Date()`; callers who need stable snapshots
  * (e.g. tests, deterministic learn output) should supply a fixed
  * clock.
+ *
+ * @internal
  */
 export declare function aggregateEvolutionMarkers(markersByFile: Map<string, EvolutionMarker[]>, skillsRegistry: string[], now?: Date): EvolutionReport;

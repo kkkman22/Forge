@@ -20,6 +20,7 @@
  *   TBD, TODO, 待定, 后续补充, 类似 Task, 添加适当的错误处理
  */
 import type { Glossary, GlossaryTerm } from "./glossary.js";
+/** @public */
 export interface TDDSteps {
     red: {
         testFile: string;
@@ -33,6 +34,7 @@ export interface TDDSteps {
     };
     refactor: string;
 }
+/** @public */
 export interface AtomicTask {
     taskNumber: number;
     title: string;
@@ -43,7 +45,9 @@ export interface AtomicTask {
     commitMessage: string;
     dependsOn?: number[];
 }
+/** @public */
 export type PlanFormat = "lightweight" | "full";
+/** @public */
 export interface LightweightTask {
     taskNumber: number;
     title: string;
@@ -55,14 +59,17 @@ export interface LightweightTask {
     commitMessage: string;
     dependsOn?: number[];
 }
+/** @public */
 export interface DesignReferenceEntry {
     anchor: string;
     summary: string;
 }
+/** @public */
 export interface DesignReferenceValidation {
     valid: boolean;
     errors: string[];
 }
+/** @public */
 export declare const FORBIDDEN_PLACEHOLDERS: string[];
 /**
  * Scan a text string for forbidden placeholder content.
@@ -71,6 +78,7 @@ export declare const FORBIDDEN_PLACEHOLDERS: string[];
  * and common variants (e.g., `tbd`, `Todo`, `TODO:`, `// TODO`).
  *
  * Returns an array of found placeholder strings. Empty array means clean.
+ * @public
  */
 export declare function scanForPlaceholders(text: string): string[];
 /**
@@ -83,6 +91,7 @@ export declare function scanForPlaceholders(text: string): string[];
  *   (d) Referenced types/functions consistency (checked at plan level)
  *
  * Returns { valid, errors } where errors lists all validation failures.
+ * @public
  */
 export declare function validateAtomicTask(task: AtomicTask): {
     valid: boolean;
@@ -93,6 +102,7 @@ export declare function validateAtomicTask(task: AtomicTask): {
  *
  * Per R24: Plan execution requires a locked spec to ensure the plan is based
  * on a confirmed specification.
+ * @public
  */
 export declare function validateSpecLocked(specStatus: string): {
     valid: true;
@@ -106,6 +116,7 @@ export declare function validateSpecLocked(specStatus: string): {
  *
  * Per R25: Each task's `dependsOn` array (if present) must only reference
  * task numbers that exist in the plan.
+ * @public
  */
 export declare function validateDependencies(tasks: Array<{
     taskNumber: number;
@@ -116,16 +127,23 @@ export declare function validateDependencies(tasks: Array<{
  *
  * Returns true only if every task passes validateAtomicTask and all
  * `dependsOn` references are valid.
+ * @public
  */
 export declare function validatePlanTasks(tasks: AtomicTask[]): boolean;
+/** @public */
 export declare function detectPlanFormat(frontmatter: string): PlanFormat;
+/** @public */
 export declare function extractHeadingAnchors(markdownContent: string): string[];
+/** @public */
 export declare function validateLightweightTask(task: LightweightTask): {
     valid: boolean;
     errors: string[];
 };
+/** @public */
 export declare function validateLightweightPlan(tasks: LightweightTask[]): boolean;
+/** @public */
 export declare function validateDesignReferences(references: string[], designContent: string): DesignReferenceValidation;
+/** @public */
 export declare function validatePlan(frontmatter: string, tasks: AtomicTask[] | LightweightTask[], designContent?: string): {
     valid: boolean;
     errors: string[];
@@ -151,16 +169,20 @@ export declare function validatePlan(frontmatter: string, tasks: AtomicTask[] | 
  *     themselves.
  *
  * **Validates: Requirements 1.5**
+ *
+ * @public
  */
 export declare function normalizeTaskTerms(title: string, glossary: Glossary): string;
 /**
  * Return a copy of `task` whose `title` field has been normalized against
  * the glossary. All other fields are passed through unchanged.
+ * @public
  */
 export declare function normalizeLightweightTask(task: LightweightTask, glossary: Glossary): LightweightTask;
 /**
  * Return a copy of `task` whose `title` field has been normalized against
  * the glossary. All other fields are passed through unchanged.
+ * @public
  */
 export declare function normalizeAtomicTask(task: AtomicTask, glossary: Glossary): AtomicTask;
 export type { Glossary, GlossaryTerm };

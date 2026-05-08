@@ -15,23 +15,27 @@
  * **Validates: Requirements 1.4, 1.6, 6.1–6.10, 4.5, 4.6, 4.7**
  */
 import { execFileSync, spawn } from "node:child_process";
-import { copyFileSync, existsSync, mkdirSync, readFileSync } from "node:fs";
+import { copyFileSync, existsSync, mkdirSync, readdirSync, readFileSync, renameSync, writeFileSync, } from "node:fs";
 import path from "node:path";
 import { startup } from "@anthropic-ai/claude-agent-sdk";
 import { Command } from "commander";
 import { buildAgentOutputSchema } from "./agent-output.js";
+import { createAgentRegistry, registerBuiltinAgents } from "./agent-registry.js";
 import { CliError } from "./cli-error.js";
 import { extractConfigLang, mergeLogConfig, parseLogConfig } from "./config-store.js";
 import { formatNotesDocument } from "./context-accumulator.js";
 import { EffectExecutor } from "./effect-executor.js";
+import { ensureGlossaryExists } from "./glossary-driver.js";
 import { parseTranslationFile, translate } from "./i18n.js";
 import { detectLocale } from "./locale-detector.js";
 import { createDualSink, createFileWriter, createLogEntry, createLogSink, validateFileWritable, } from "./logger/index.js";
+import { cleanupOrphans, cleanupStaleSessions, deletePidFile, detectPpidOrphans, writePidFile, } from "./orphan-detector.js";
+import { ProcessRegistry } from "./process-registry.js";
 import { branchExists, RunManager } from "./run-manager.js";
-import { SdkAgentAdapter } from "./sdk-agent-adapter.js";
 import { detectSkillAwareMode, SdkDriver } from "./sdk-driver.js";
-import { buildSleepPreventionCommand } from "./sleep-preventer.js";
 import { installSkill } from "./skill-loader.js";
+import { buildSleepPreventionCommand } from "./sleep-preventer.js";
+import { listActiveTasks, readTaskStatus, writeTaskStatus, } from "./status-manager.js";
 import { decideWorktreeCleanup, isValidWorktreeSource } from "./worktree-manager.js";
 // Read package version for skill compatibility checks
 const PACKAGE_VERSION = JSON.parse(readFileSync(path.join(path.dirname(new URL(import.meta.url).pathname), "..", "package.json"), "utf-8")).version;
@@ -120,15 +124,18 @@ async function main() {
         const resolvedSource = path.resolve(skillPath);
         const targetRoot = path.join(cwd, "skills");
         if (!existsSync(resolvedSource)) {
+            // biome-ignore lint/suspicious/noConsole: skill install runs before logSink is configured
             console.error(`Error: Source path does not exist: ${skillPath}`);
             process.exit(1);
         }
         const result = installSkill(resolvedSource, targetRoot, PACKAGE_VERSION);
         if (result.success) {
+            // biome-ignore lint/suspicious/noConsole: skill install runs before logSink is configured
             console.log(`✅ ${result.message}`);
             process.exit(0);
         }
         else {
+            // biome-ignore lint/suspicious/noConsole: skill install runs before logSink is configured
             console.error(`❌ ${result.message}`);
             process.exit(1);
         }
@@ -156,7 +163,9 @@ async function main() {
         .option("--log-level <debug|info|warn|error>", "Minimum log level", "info")
         .option("--log-file <path>", "Write JSON logs to file (dual-write mode)")
         .option("--sandbox", "Enable sandbox mode with fine-grained access control", false)
+        .option("--force-no-hooks", "Skip hooks protection validation (use at your own risk)", false)
         .option("--skills-dir <path>", "Load external SKILL plugins from directory")
+        .option("--agent <name>", "Agent to use for iterations (claude|mock)", "claude")
         .action(async (objective, opts) => {
         const cwd = process.cwd();
         const preventSleep = opts.preventSleep !== "off";
@@ -202,6 +211,20 @@ async function main() {
         const skillAware = hasForgeDir || hasSkillOptions;
         if (!hasForgeDir && hasSkillOptions) {
             throw new CliError("Error: --tier, --type, --phase, and --nature require a .forge/ directory. Run `forge init` first.");
+        }
+        // ---------------------------------------------------------------
+        // Ensure glossary exists (skills-cross-pollination Requirement 1)
+        // ---------------------------------------------------------------
+        if (hasForgeDir) {
+            const glossaryFs = {
+                exists: (p) => existsSync(p),
+                readFile: (p) => readFileSync(p, "utf-8"),
+                writeFile: (p, c) => {
+                    mkdirSync(path.dirname(p), { recursive: true });
+                    writeFileSync(p, c, "utf-8");
+                },
+            };
+            ensureGlossaryExists(glossaryFs, { path: path.join(cwd, ".forge", "glossary.md") });
         }
         // ---------------------------------------------------------------
         // Validate --tier value against known set (Req 10.4)
@@ -261,6 +284,7 @@ async function main() {
             systemLocale: process.env.LANG || process.env.LC_ALL,
         }, SUPPORTED_LOCALES);
         if (localeResult.warning) {
+            // biome-ignore lint/suspicious/noConsole: locale warning runs before logSink is configured
             console.warn(`Warning: ${localeResult.warning}`);
         }
         // Load translation files and create I18nConfig
@@ -275,24 +299,43 @@ async function main() {
         /** Convenience translation function. */
         const _t = (key, params) => translate(i18nConfig, key, params);
         // ---------------------------------------------------------------
-        // Detect active task in StatusFile (Req 10.2)
+        // Detect active tasks in StatusFile(s) (Req 10.2)
         // ---------------------------------------------------------------
         if (hasForgeDir) {
             try {
-                const statusFilePath = path.join(cwd, ".forge", "status.md");
-                if (existsSync(statusFilePath)) {
-                    const statusContent = readFileSync(statusFilePath, "utf-8");
-                    const phaseMatch = statusContent.match(/^phase:\s*"?([^"\n]*)"?\s*$/m);
-                    if (phaseMatch) {
-                        const phase = phaseMatch[1].trim();
-                        if (phase && phase !== "completed" && phase !== "aborted") {
-                            console.warn(_t("cli.warning.activeTask", { phase }));
-                        }
+                const managerIO = {
+                    exists: (p) => existsSync(p),
+                    dirExists: (p) => existsSync(p),
+                    read: (p) => readFileSync(p, "utf-8"),
+                    write: (p, content) => {
+                        mkdirSync(path.dirname(p), { recursive: true });
+                        writeFileSync(p, content, "utf-8");
+                    },
+                    listDir: (p) => readdirSync(p),
+                    move: (src, dest) => {
+                        mkdirSync(path.dirname(dest), { recursive: true });
+                        renameSync(src, dest);
+                    },
+                    mkdirp: (p) => mkdirSync(p, { recursive: true }),
+                };
+                const forgeRoot = path.join(cwd, ".forge");
+                const activeTasks = listActiveTasks(managerIO, forgeRoot);
+                if (activeTasks.length === 1) {
+                    // biome-ignore lint/suspicious/noConsole: active task warning runs before logSink
+                    console.warn(_t("cli.warning.activeTask", { phase: activeTasks[0].phase }));
+                }
+                else if (activeTasks.length > 1) {
+                    // biome-ignore lint/suspicious/noConsole: active task warning runs before logSink
+                    console.warn(_t("cli.warning.activeTasks", { count: String(activeTasks.length) }));
+                    for (const task of activeTasks) {
+                        // biome-ignore lint/suspicious/noConsole: active task warning runs before logSink
+                        console.warn(`  • ${task.taskName} (${task.phase})`);
                     }
                 }
             }
             catch (err) {
                 // StatusFile read failure is non-blocking — continue startup.
+                // biome-ignore lint/suspicious/noConsole: status check runs before logSink
                 console.warn(`[debug] StatusFile read failed during startup: ${err instanceof Error ? err.message : String(err)}`);
             }
         }
@@ -306,19 +349,6 @@ async function main() {
                 throw new CliError(`Error: --skills-dir path is invalid or does not exist: ${opts.skillsDir}`);
             }
         }
-        const loopConfig = {
-            agent: "claude",
-            maxConsecutiveFailures: 3,
-            preventSleep,
-            backoffBaseMs: DEFAULT_BACKOFF_BASE_MS,
-            maxConcurrentWorktrees: DEFAULT_MAX_CONCURRENT_WORKTREES,
-            skillsDir: opts.skillsDir,
-        };
-        const limits = {
-            maxIterations: opts.maxIterations,
-            maxTokens: opts.maxTokens,
-            stopWhen: opts.stopWhen,
-        };
         // ---------------------------------------------------------------
         // Pre-warm Agent SDK
         // ---------------------------------------------------------------
@@ -330,13 +360,31 @@ async function main() {
             includeStopField: !!opts.stopWhen,
         });
         // ---------------------------------------------------------------
-        // Create SdkAgentAdapter
+        // Create AgentRegistry, register builtins, and resolve agent
         // ---------------------------------------------------------------
-        const agentAdapter = new SdkAgentAdapter({
-            warmQuery,
-            outputSchema,
-            maxBudgetUsd: opts.maxBudgetUsd,
+        const agentRegistry = createAgentRegistry();
+        registerBuiltinAgents(agentRegistry, { warmQuery, outputSchema });
+        const agentName = opts.agent ?? "claude";
+        if (!agentRegistry.has(agentName)) {
+            throw new CliError(`Error: Invalid --agent value "${agentName}". Available agents: ${agentRegistry.listAgents().join(", ")}`);
+        }
+        const agentAdapter = agentRegistry.resolve(agentName, {
+            cwd,
+            budgetUsd: opts.maxBudgetUsd,
         });
+        const loopConfig = {
+            agent: agentName,
+            maxConsecutiveFailures: 3,
+            preventSleep,
+            backoffBaseMs: DEFAULT_BACKOFF_BASE_MS,
+            maxConcurrentWorktrees: DEFAULT_MAX_CONCURRENT_WORKTREES,
+            skillsDir: opts.skillsDir,
+        };
+        const limits = {
+            maxIterations: opts.maxIterations,
+            maxTokens: opts.maxTokens,
+            stopWhen: opts.stopWhen,
+        };
         // ---------------------------------------------------------------
         // Set up run (new run, worktree, or resume)
         // ---------------------------------------------------------------
@@ -368,6 +416,7 @@ async function main() {
                 }
             }
             runSetup = resumed;
+            // biome-ignore lint/suspicious/noConsole: resume message runs before logSink
             console.log(_t("cli.loop.resuming", {
                 runId: resumed.runId,
                 branch: resumeBranch,
@@ -447,6 +496,51 @@ async function main() {
             logSink = createLogSink(logSinkConfig);
         }
         // ---------------------------------------------------------------
+        // Process lifecycle: startup cleanup and PID file management
+        // ---------------------------------------------------------------
+        const sessionId = runSetup.runId;
+        const pidsBaseDir = path.join(cwd, ".forge");
+        if (hasForgeDir) {
+            try {
+                const staleOrphans = await cleanupStaleSessions(pidsBaseDir);
+                if (staleOrphans.length > 0) {
+                    logSink.log(createLogEntry("orphan_cleanup", "warn", `Cleaned ${staleOrphans.length} stale orphan process(es) from previous runs`, { runId: sessionId }));
+                }
+            }
+            catch {
+                // Non-blocking: stale session cleanup failure should not block startup
+            }
+            try {
+                const ppidOrphans = await detectPpidOrphans(["forge", "vitest", "caffeinate"], 3600);
+                if (ppidOrphans.length > 0) {
+                    const autoKillResult = cleanupOrphans(ppidOrphans, 3600);
+                    if (autoKillResult.killed.length > 0) {
+                        logSink.log(createLogEntry("orphan_terminated", "warn", `Auto-terminated ${autoKillResult.killed.length} orphan process(es)`, { runId: sessionId }));
+                    }
+                    if (autoKillResult.warned.length > 0) {
+                        for (const pid of autoKillResult.warned) {
+                            const orphan = ppidOrphans.find((o) => o.pid === pid);
+                            if (orphan) {
+                                logSink.log(createLogEntry("orphan_detected", "warn", `Detected orphan process: PID ${pid} (${orphan.command})`, { runId: sessionId }));
+                            }
+                        }
+                    }
+                }
+            }
+            catch {
+                // Non-blocking: orphan detection failure should not block startup
+            }
+            try {
+                ProcessRegistry.resetInstance();
+                const registry = ProcessRegistry.getInstance();
+                const serialized = JSON.parse(registry.serialize());
+                writePidFile(sessionId, serialized, pidsBaseDir);
+            }
+            catch {
+                // Non-blocking: PID file write failure should not block startup
+            }
+        }
+        // ---------------------------------------------------------------
         // Create EffectExecutor and SdkDriver
         // ---------------------------------------------------------------
         const effectExecutor = new EffectExecutor({
@@ -458,6 +552,25 @@ async function main() {
                 logSink.log(createLogEntry("effect_log", "info", message, { runId: runSetup.runId }));
             },
         });
+        // -------------------------------------------------------------
+        // Build StatusManager I/O for parallel status tracking
+        // -------------------------------------------------------------
+        const forgeRoot = path.join(effectiveCwd, ".forge");
+        const managerIO = {
+            exists: (p) => existsSync(p),
+            dirExists: (p) => existsSync(p),
+            read: (p) => readFileSync(p, "utf-8"),
+            write: (p, content) => {
+                mkdirSync(path.dirname(p), { recursive: true });
+                writeFileSync(p, content, "utf-8");
+            },
+            listDir: (p) => readdirSync(p),
+            move: (src, dest) => {
+                mkdirSync(path.dirname(dest), { recursive: true });
+                renameSync(src, dest);
+            },
+            mkdirp: (p) => mkdirSync(p, { recursive: true }),
+        };
         const driver = new SdkDriver({
             objective,
             loopConfig,
@@ -480,18 +593,50 @@ async function main() {
                 : opts.pua
                     ? "general"
                     : undefined,
+            taskName: objective,
+            readStatusFile: () => readTaskStatus(managerIO, forgeRoot, objective),
+            writeStatusFile: (content) => writeTaskStatus(managerIO, forgeRoot, objective, content),
             t: _t,
             logSinkConfig,
             sandboxEnabled: opts.sandbox === true,
+            forceNoHooks: opts.forceNoHooks === true,
         }, effectExecutor, agentAdapter);
         // ---------------------------------------------------------------
         // Wire signal handlers
         // ---------------------------------------------------------------
-        const handleSignal = () => {
+        const handleSignal = async () => {
             driver.requestStop();
+            const stopPromise = driver.getStopPromise();
+            if (stopPromise) {
+                try {
+                    await stopPromise;
+                }
+                catch {
+                    // Ignore cleanup errors
+                }
+            }
+            const registry = ProcessRegistry.getInstance();
+            try {
+                await registry.shutdownAll();
+            }
+            catch {
+                // Ignore shutdown errors
+            }
+            deletePidFile(sessionId, pidsBaseDir);
+            process.exit(0);
         };
         process.on("SIGINT", handleSignal);
         process.on("SIGTERM", handleSignal);
+        process.on("SIGHUP", handleSignal);
+        // Process group cleanup on exit (synchronous — catches abnormal exits)
+        process.on("exit", () => {
+            try {
+                process.kill(-process.pid, "SIGTERM");
+            }
+            catch {
+                // Ignore errors during exit cleanup
+            }
+        });
         // ---------------------------------------------------------------
         // Run the driver loop
         // ---------------------------------------------------------------
@@ -508,23 +653,23 @@ async function main() {
                     const worktreeNotesPath = runSetup.notesPath;
                     const backupResult = backupWorktreeNotes(worktreeNotesPath, mainRepoRunDir);
                     if (!backupResult.success) {
-                        console.warn(_t("cli.warning.worktreeNotesBackupFailed", {
+                        logSink.log(createLogEntry("worktree_notes_backup_failed", "warn", _t("cli.warning.worktreeNotesBackupFailed", {
                             error: backupResult.error ?? "unknown",
-                        }));
+                        }), { runId: runSetup.runId }));
                     }
                     try {
                         execFileSync("git", ["worktree", "remove", worktreePath], {
                             cwd,
                             stdio: "pipe",
                         });
-                        console.log(_t("cli.loop.worktreeRemoved", { reason: decision.reason }));
+                        logSink.log(createLogEntry("worktree_removed", "info", _t("cli.loop.worktreeRemoved", { reason: decision.reason }), { runId: runSetup.runId }));
                     }
                     catch (cleanupError) {
-                        console.error(`Failed to remove worktree at ${worktreePath}:`, cleanupError instanceof Error ? cleanupError.message : cleanupError);
+                        logSink.log(createLogEntry("worktree_remove_failed", "error", `Failed to remove worktree at ${worktreePath}: ${cleanupError instanceof Error ? cleanupError.message : cleanupError}`, { runId: runSetup.runId }));
                     }
                 }
                 else {
-                    console.log(_t("cli.loop.worktreePreserved", { reason: decision.reason }));
+                    logSink.log(createLogEntry("worktree_preserved", "info", _t("cli.loop.worktreePreserved", { reason: decision.reason }), { runId: runSetup.runId }));
                 }
             }
         }
@@ -532,21 +677,35 @@ async function main() {
             // Clean up signal handlers.
             process.removeListener("SIGINT", handleSignal);
             process.removeListener("SIGTERM", handleSignal);
+            process.removeListener("SIGHUP", handleSignal);
+            // Shutdown ProcessRegistry and delete PID file.
+            try {
+                await ProcessRegistry.getInstance().shutdownAll();
+            }
+            catch {
+                // Ignore shutdown errors during cleanup
+            }
+            try {
+                deletePidFile(sessionId, pidsBaseDir);
+            }
+            catch {
+                // Ignore PID file deletion errors
+            }
             // Kill sleep prevention process.
             if (sleepProcess) {
                 try {
                     sleepProcess.kill();
                 }
                 catch (cleanupError) {
-                    console.error("Failed to kill sleep prevention process:", cleanupError instanceof Error ? cleanupError.message : cleanupError);
+                    logSink.log(createLogEntry("sleep_kill_failed", "error", `Failed to kill sleep prevention process: ${cleanupError instanceof Error ? cleanupError.message : String(cleanupError)}`, { runId: sessionId }));
                 }
             }
-            // Close SDK client.
+            // Close agent adapter.
             try {
-                await agentAdapter.close();
+                await agentAdapter.close?.();
             }
             catch (cleanupError) {
-                console.error("Failed to close SDK agent adapter:", cleanupError instanceof Error ? cleanupError.message : cleanupError);
+                logSink.log(createLogEntry("agent_close_failed", "error", `Failed to close SDK agent adapter: ${cleanupError instanceof Error ? cleanupError.message : String(cleanupError)}`, { runId: sessionId }));
             }
         }
     });
@@ -554,10 +713,12 @@ async function main() {
 }
 main().catch((err) => {
     if (err instanceof CliError) {
+        // biome-ignore lint/suspicious/noConsole: top-level error handler has no logSink
         console.error(err.message);
         process.exit(err.exitCode);
     }
     const message = err instanceof Error ? err.message : String(err);
+    // biome-ignore lint/suspicious/noConsole: top-level error handler has no logSink
     console.error(message);
     process.exit(1);
 });

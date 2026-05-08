@@ -1,3 +1,4 @@
+import { createConsoleSink } from "./console-sink.js";
 const LEVEL_ORDER = {
     debug: 0,
     info: 1,
@@ -27,12 +28,20 @@ export function formatEntry(entry, config) {
     }
     return formatAsText(entry);
 }
-export function createLogSink(config, output = console.log) {
+export function createLogSink(config, output) {
+    const consoleSink = output
+        ? undefined
+        : createConsoleSink({ format: config.format, minLevel: config.level });
     return {
         log(entry) {
             if (!shouldLog(entry.level, config.level))
                 return;
-            output(formatEntry(entry, config));
+            if (output) {
+                output(formatEntry(entry, config));
+            }
+            else {
+                consoleSink?.write(entry);
+            }
         },
         getConfig() {
             return config;
@@ -47,6 +56,7 @@ export function createLogSink(config, output = console.log) {
  * secondary 异常降级为 stderr 警告。
  */
 export function createDualSink(primary, secondary) {
+    const errorSink = createConsoleSink({ format: "text", minLevel: "warn" });
     return {
         log(entry) {
             primary.log(entry);
@@ -55,7 +65,12 @@ export function createDualSink(primary, secondary) {
             }
             catch (err) {
                 const message = err instanceof Error ? err.message : String(err);
-                console.error(`[WARN] Secondary log sink failed: ${message}`);
+                errorSink.write({
+                    timestamp: new Date().toISOString(),
+                    level: "warn",
+                    event: "secondary_sink_failed",
+                    message: `Secondary log sink failed: ${message}`,
+                });
             }
         },
         getConfig() {

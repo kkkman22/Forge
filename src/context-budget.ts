@@ -10,6 +10,7 @@
 // Information Lifecycle type
 // ---------------------------------------------------------------------------
 
+/** @public */
 export type InformationLifecycle =
   | "persistent"
   | "phase-scoped"
@@ -20,12 +21,14 @@ export type InformationLifecycle =
 // Classification mapping
 // ---------------------------------------------------------------------------
 
+/** @public */
 export interface ClassificationEntry {
   source: string;
   lifecycle: InformationLifecycle;
   trimmer: string | null;
 }
 
+/** @public */
 export const CLASSIFICATION_MAP: ClassificationEntry[] = [
   { source: "plan-task-list", lifecycle: "persistent", trimmer: null },
   { source: "current-task", lifecycle: "persistent", trimmer: null },
@@ -42,6 +45,7 @@ export const CLASSIFICATION_MAP: ClassificationEntry[] = [
   { source: "closure-first-probes", lifecycle: "phase-scoped", trimmer: null },
 ];
 
+/** @public */
 export function classifySource(source: string): InformationLifecycle | undefined {
   return CLASSIFICATION_MAP.find((e) => e.source === source)?.lifecycle;
 }
@@ -50,6 +54,7 @@ export function classifySource(source: string): InformationLifecycle | undefined
 // Explore_Summarizer
 // ---------------------------------------------------------------------------
 
+/** @public */
 export interface ExploreSummary {
   entryPoints: Array<{ filePath: string; line: number; functionName: string }>;
   dependencyChain: string[];
@@ -58,6 +63,7 @@ export interface ExploreSummary {
   fileGroups: Array<{ moduleName: string; fileCount: number }>;
 }
 
+/** @public */
 export function serializeExploreResult(input: ExploreSummary | string | null | undefined): string {
   if (input === null || input === undefined) {
     return "Explore Agent 返回空结果";
@@ -77,6 +83,7 @@ export function serializeExploreResult(input: ExploreSummary | string | null | u
   return serializeExploreSummary(input);
 }
 
+/** @public */
 export function serializeExploreSummary(summary: ExploreSummary): string {
   const lines: string[] = [
     "\u{1F4CD} \u{4EE3}\u{7801}\u{5E93}\u{63A2}\u{7D22}\u{7ED3}\u{679C}\u{FF08}\u{6458}\u{8981}\u{FF09}",
@@ -112,6 +119,7 @@ export function serializeExploreSummary(summary: ExploreSummary): string {
   return lines.join("\n");
 }
 
+/** @public */
 export function deserializeExploreSummary(text: string): ExploreSummary {
   const result: ExploreSummary = {
     entryPoints: [],
@@ -182,6 +190,7 @@ export function deserializeExploreSummary(text: string): ExploreSummary {
 // Review_Summarizer
 // ---------------------------------------------------------------------------
 
+/** @public */
 export interface ReviewSummary {
   filePath: string;
   severityCounts: { p0: number; p1: number; p2: number; p3: number };
@@ -193,6 +202,7 @@ export interface ReviewSummary {
   }>;
 }
 
+/** @public */
 export function serializeReviewSummary(summary: ReviewSummary): string {
   const { severityCounts, findings, filePath } = summary;
   const total = severityCounts.p0 + severityCounts.p1 + severityCounts.p2 + severityCounts.p3;
@@ -213,6 +223,7 @@ export function serializeReviewSummary(summary: ReviewSummary): string {
   return lines.join("\n");
 }
 
+/** @public */
 export function deserializeReviewSummary(text: string): ReviewSummary {
   const result: ReviewSummary = {
     filePath: "",
@@ -261,6 +272,7 @@ export function deserializeReviewSummary(text: string): ReviewSummary {
 // Test_Output_Trimmer
 // ---------------------------------------------------------------------------
 
+/** @public */
 export interface TestOutputSummary {
   total: number;
   passed: number;
@@ -276,6 +288,7 @@ export interface TestOutputSummary {
   parseFailed?: boolean;
 }
 
+/** @public */
 export function serializeTestOutput(summary: TestOutputSummary): string {
   if (summary.failed === 0) {
     return `\u2713 ${summary.passed}/${summary.total} tests passed (0 failed, ${summary.skipped} skipped) in ${(summary.duration / 1000).toFixed(1)}s`;
@@ -293,6 +306,7 @@ export function serializeTestOutput(summary: TestOutputSummary): string {
   return lines.join("\n");
 }
 
+/** @public */
 export function canParseTestOutput(text: string): boolean {
   const firstLine = text.split("\n")[0].trim();
   return (
@@ -301,6 +315,7 @@ export function canParseTestOutput(text: string): boolean {
   );
 }
 
+/** @public */
 export function deserializeTestOutput(text: string): TestOutputSummary {
   const result: TestOutputSummary = {
     total: 0,
@@ -365,6 +380,7 @@ export function deserializeTestOutput(text: string): TestOutputSummary {
 // Git_Output_Limiter
 // ---------------------------------------------------------------------------
 
+/** @public */
 export interface GitDiffSummary {
   fileCount: number;
   files: Array<{ filePath: string; added: number; removed: number }>;
@@ -373,12 +389,14 @@ export interface GitDiffSummary {
   fullDiffPath: string | null;
 }
 
+/** @public */
 export interface GitStatusSummary {
   staged: { count: number; files: string[] };
   modified: { count: number; files: string[] };
   untracked: { count: number; files: string[] };
 }
 
+/** @public */
 export function serializeGitDiff(summary: GitDiffSummary, lineCount: number): string {
   if (lineCount <= 50) {
     // Pass through - caller handles this
@@ -398,6 +416,7 @@ export function serializeGitDiff(summary: GitDiffSummary, lineCount: number): st
   return lines.join("\n");
 }
 
+/** @public */
 export function deserializeGitDiff(text: string): GitDiffSummary {
   const result: GitDiffSummary = {
     fileCount: 0,
@@ -442,6 +461,7 @@ export function deserializeGitDiff(text: string): GitDiffSummary {
   return result;
 }
 
+/** @public */
 export function serializeGitStatus(summary: GitStatusSummary, fileCount: number): string {
   if (fileCount <= 30) {
     return `📊 Git Status 摘要\n  Staged: ${summary.staged.count} | Modified: ${summary.modified.count} | Untracked: ${summary.untracked.count}`;
@@ -464,6 +484,7 @@ export function serializeGitStatus(summary: GitStatusSummary, fileCount: number)
   return lines.join("\n");
 }
 
+/** @public */
 export function deserializeGitStatus(text: string): GitStatusSummary {
   const result: GitStatusSummary = {
     staged: { count: 0, files: [] },
@@ -504,6 +525,7 @@ export function deserializeGitStatus(text: string): GitStatusSummary {
 // Subagent_Summary_Protocol
 // ---------------------------------------------------------------------------
 
+/** @public */
 export interface SubagentSummary {
   status: "DONE" | "DONE_WITH_CONCERNS" | "NEEDS_CONTEXT" | "BLOCKED";
   taskDescription: string;
@@ -515,6 +537,7 @@ export interface SubagentSummary {
   concerns?: string[];
 }
 
+/** @public */
 export function serializeSubagentSummary(summary: SubagentSummary): string {
   const lines: string[] = [`状态：${summary.status}`, `任务：${summary.taskDescription}`];
 
@@ -544,6 +567,7 @@ export function serializeSubagentSummary(summary: SubagentSummary): string {
   return lines.join("\n");
 }
 
+/** @public */
 export function deserializeSubagentSummary(text: string): SubagentSummary {
   const result: SubagentSummary = {
     status: "DONE",
@@ -613,6 +637,7 @@ export function deserializeSubagentSummary(text: string): SubagentSummary {
 // ContextBudgetReport
 // ---------------------------------------------------------------------------
 
+/** @public */
 export interface ContextBudgetReport {
   date: string;
   topic: string;
@@ -628,6 +653,7 @@ export interface ContextBudgetReport {
   };
 }
 
+/** @public */
 export function serializeContextBudgetReport(report: ContextBudgetReport): string {
   const lines: string[] = [
     "# 📊 上下文预算报告",
@@ -656,6 +682,7 @@ export function serializeContextBudgetReport(report: ContextBudgetReport): strin
   return lines.join("\n");
 }
 
+/** @public */
 export function deserializeContextBudgetReport(text: string): ContextBudgetReport {
   const result: ContextBudgetReport = {
     date: "",

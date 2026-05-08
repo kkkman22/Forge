@@ -17,14 +17,17 @@
  *   5. Trim leading/trailing hyphens
  *
  * @throws Error if input is empty or contains no ASCII alphanumeric characters
+ * @public
  */
 export declare function slugify(taskName: string): string;
+/** @public */
 export interface ResolverContext {
     /** Current task name (human-readable). */
     taskName: string;
     /** .forge root directory path. */
     forgeRoot: string;
 }
+/** @public */
 export interface ResolvedStatus {
     /** Full path to the status file. */
     filePath: string;
@@ -46,6 +49,7 @@ export interface ResolvedStatus {
  *
  * @param ctx - Resolver context with task name and forge root
  * @param dirExists - DI function to check if .forge/status/ directory exists
+ * @public
  */
 export declare function resolveStatusPath(ctx: ResolverContext, dirExists: (path: string) => boolean): ResolvedStatus;
 /**
@@ -53,9 +57,13 @@ export declare function resolveStatusPath(ctx: ResolverContext, dirExists: (path
  *
  * @param forgeRoot - Path to the .forge directory
  * @param dirExists - DI function to check directory existence
+ * @public
  */
 export declare function isMultiTaskMode(forgeRoot: string, dirExists: (path: string) => boolean): boolean;
-/** Result of reconstructing state from git history and file presence. */
+/**
+ * Result of reconstructing state from git history and file presence.
+ * @public
+ */
 export interface ReconstructedState {
     inferredPhase: string;
     confidence: "high" | "medium" | "low";
@@ -70,5 +78,6 @@ export interface ReconstructedState {
  * Called by forge-resume when StatusFile is missing or inconsistent.
  * Reconstructed state is presented to the user for confirmation,
  * NOT automatically written to disk.
+ * @public
  */
 export declare function reconstructStateFromGit(forgeFiles: string[]): ReconstructedState;

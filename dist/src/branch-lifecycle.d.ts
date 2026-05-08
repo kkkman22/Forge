@@ -11,15 +11,18 @@ import type { BranchTopicGateResult, CommitTopicCheckResult, PendingDeliveryReco
 /**
  * Extract the topic segment from a `feature/<topic>` or `forge/<topic>` branch.
  * Returns `null` for branches that don't match the expected format.
+ * @internal
  */
 export declare function extractBranchTopic(branchName: string): string | null;
 /**
  * Check whether the branch topic matches the task topic.
  * Returns `{ allowed, reasons }` similar to `checkBuildGate`.
+ * @internal
  */
 export declare function checkBranchTopicGate(branchName: string, taskTopic: string): BranchTopicGateResult;
 /**
  * Create a pending-delivery record when "keep branch" is selected in ship.
+ * @internal
  */
 export declare function recordPendingDelivery(branchName: string, topic: string, timestamp: number): PendingDeliveryRecord;
 /**
@@ -27,15 +30,18 @@ export declare function recordPendingDelivery(branchName: string, topic: string,
  * A branch is stale when its topic differs from the current task topic
  * and its timestamp is older than the staleness threshold.
  * Default threshold: 0 (any pending delivery for a different topic is flagged).
+ * @internal
  */
 export declare function detectStaleBranches(pendingDeliveries: PendingDeliveryRecord[], currentTopic: string, currentTime: number, thresholdMs?: number): PendingDeliveryRecord[];
 /**
  * Verify a commit's topic matches the branch's topic.
  * Returns `{ allowed: false, reason }` on mismatch.
+ * @internal
  */
 export declare function checkCommitTopicMatch(branchName: string, commitTopic: string): CommitTopicCheckResult;
 /**
  * Identify branches with pending deliveries that should be surfaced as
  * warnings at build start.
+ * @internal
  */
 export declare function detectUnshippedBranches(pendingDeliveries: PendingDeliveryRecord[], currentTopic: string): UnshippedBranchWarning[];

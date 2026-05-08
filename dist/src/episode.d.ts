@@ -31,9 +31,9 @@
  *
  * **Validates: Requirements 7.1, 7.2, 7.3, 7.4, 7.12**
  */
-/** Episode outcome classification. */
+/** @internal Episode outcome classification. */
 export type EpisodeOutcome = "success" | "partial" | "failure";
-/** Episode tier — mirrors the router complexity dimension. */
+/** @internal Episode tier — mirrors the router complexity dimension. */
 export type EpisodeTier = "light" | "standard" | "full";
 /**
  * A single session episode. See the module header for field semantics.
@@ -41,6 +41,8 @@ export type EpisodeTier = "light" | "standard" | "full";
  * Optional fields are omitted from the serialized frontmatter when they
  * are undefined or empty so that round-trips through an empty-optional
  * path do not re-introduce spurious keys.
+ *
+ * @internal
  */
 export interface Episode {
     schema_version: 1 | 2;
@@ -76,6 +78,8 @@ export interface Episode {
  * without forcing a backfill.
  *
  * The function is pure: same input always yields the same output.
+ *
+ * @internal
  */
 export declare function parseEpisode(content: string): Episode | null;
 /**
@@ -93,6 +97,8 @@ export declare function parseEpisode(content: string): Episode | null;
  *   - The body is preserved verbatim after a blank line following the
  *     closing frontmatter delimiter, so v1 narrative content survives
  *     unchanged.
+ *
+ * @internal
  */
 export declare function renderEpisode(episode: Episode): string;
 /**
@@ -103,5 +109,7 @@ export declare function renderEpisode(episode: Episode): string;
  * non-negative integers and zero-padded to three digits. Callers are
  * expected to supply an ISO date string; this function does not
  * validate the date format, leaving that to the caller / scheduler.
+ *
+ * @internal
  */
 export declare function generateEpisodeId(date: string, sequenceInDay: number): string;

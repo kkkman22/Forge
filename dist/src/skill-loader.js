@@ -25,6 +25,7 @@ const MAX_MANIFEST_SIZE = 65_536;
  * @param dirEntries - Array of subdirectory names to scan.
  * @param readFile - Function to read file content (injected for testability).
  * @returns Array of parsed SkillManifest objects.
+ * @public
  */
 export function loadSkillsFromDir(dirEntries, readFile) {
     const manifests = [];
@@ -54,6 +55,7 @@ export function loadSkillsFromDir(dirEntries, readFile) {
  * @param builtin - Built-in SKILL manifests (higher priority).
  * @param external - External/plugin SKILL manifests.
  * @returns Merged list with unique names, builtin preferred.
+ * @public
  */
 export function mergeSkillLists(builtin, external) {
     const seen = new Set();
@@ -79,6 +81,7 @@ export function mergeSkillLists(builtin, external) {
  * @param targetRoot - Absolute path to the project's skills root directory.
  * @param currentVersion - Current Forge version for compatibility checking.
  * @returns InstallResult indicating success or failure with details.
+ * @public
  */
 export function installSkill(sourcePath, targetRoot, currentVersion) {
     const manifestPath = path.join(sourcePath, "skill.json");
