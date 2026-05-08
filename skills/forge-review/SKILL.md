@@ -78,6 +78,16 @@ P0/P1 只能 `gated_auto`/`manual`；P2 可 `safe_auto`；P3 默认 `advisory`�
 
 评审收尾时调用 `buildReviewEvolutionArtifacts(input, now, seq)`（`src/review.ts`）产出两类产物：`newPatternSituation` 非空 → 写 failure episode 到 `sessions/` 并在 review 报告末尾追加 Evolution 标记（target=`forge-review#new_review_pattern`）；`matchedFailurePattern` 非空 → 驱动层按返回的 `patternUpdate` 调 `updatePatternStats(pattern, "success")`。所有写入失败降级为 `console.warn`，不阻断 ship 判定。
 
+## 7c. Compaction Recovery Check
+
+IF 本次执行是从 conversation summary 恢复（上下文压缩后继续），THEN：
+1. 重新读取本 SKILL.md 完整内容
+2. 确认 §2 Subagent Parallel Execution 的三层评审配置完整（spec-check + quality-check + security-check）
+3. 确认 §7 Quality Gate 评估已执行
+4. 从中断点继续执行
+
+正常流程（无 compaction）忽略此段落。
+
 ## 8. Gate: P0/P1 → Block `/forge ship`
 
 有 P0/P1 → 阻断 ship，输出问题清单，提示修复后重新评审。仅 P2/P3 → 放行。

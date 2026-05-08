@@ -97,6 +97,16 @@ YAML frontmatter（title/tags/date/confidence）+ Body 五章节。confidence �
 
 ---
 
+### 8.5 Compaction Recovery Check
+
+IF 本次执行是从 conversation summary 恢复（上下文压缩后继续），THEN：
+1. 重新读取本 SKILL.md 完整内容
+2. 确认 §3 Five-Dimension Knowledge Extraction 的五维度提取覆盖全部维度
+3. 确认 §5 Knowledge Document Format 格式正确
+4. 从中断点继续执行
+
+正常流程（无 compaction）忽略此段落。
+
 ## 9. Execution Flow
 
 21 步执行流程（维护 → 回流 → 质量分析 → 五维度提取 → 文档生成 → 模式识别 → Glossary → 规则蒸馏 → Episode → Evolution → 归档）+ Task Archival：
