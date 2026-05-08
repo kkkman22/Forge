@@ -12,8 +12,8 @@ describe("budget: monotonic non-increasing property (R12.2, R7.3)", () => {
           const budget = createBudget(initial);
           let prevAvailable = initial;
 
-          for (const shouldConsume of consumeSequence) {
-            const result = shouldConsume ? budget.consume() : budget.consume();
+          for (const _consume of consumeSequence) {
+            budget.consume();
             const currentAvailable = budget.available();
             expect(currentAvailable).toBeLessThanOrEqual(prevAvailable);
             prevAvailable = currentAvailable;

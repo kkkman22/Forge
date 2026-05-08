@@ -12,7 +12,7 @@ afterEach(async () => {
 });
 
 function sendJsonRpc(sock: Socket, msg: Record<string, unknown>): void {
-  sock.write(JSON.stringify(msg) + "\n");
+  sock.write(`${JSON.stringify(msg)}\n`);
 }
 
 describe("mock-socket", () => {
