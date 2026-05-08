@@ -93,6 +93,7 @@ export type {
 // Plan engine
 export {
   type AtomicTask,
+  checkPlanStructure,
   type DesignReferenceEntry,
   type DesignReferenceValidation,
   detectPlanFormat,
@@ -100,6 +101,7 @@ export {
   FORBIDDEN_PLACEHOLDERS,
   type LightweightTask,
   type PlanFormat,
+  type SplitTriggerResult,
   scanForPlaceholders,
   type TDDSteps,
   validateAtomicTask,
@@ -111,6 +113,7 @@ export {
   validatePlanTasks,
   validateSpecLocked,
 } from "./plan.js";
+// Quality gate
 // Quality gate
 export {
   evaluateReviewGate,
