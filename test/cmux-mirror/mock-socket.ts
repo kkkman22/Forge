@@ -1,7 +1,7 @@
-import { createServer, Socket } from "node:net";
 import { mkdtempSync, unlinkSync } from "node:fs";
-import { join } from "node:path";
+import { createServer, type Socket } from "node:net";
 import { tmpdir } from "node:os";
+import { join } from "node:path";
 
 interface JsonRpcRequest {
   jsonrpc: "2.0";
@@ -38,7 +38,7 @@ const METHOD_RESPONSES: Record<string, () => Record<string, unknown>> = {
   "system.capabilities": () => ({
     methods: Array.from(SUPPORTED_METHODS),
   }),
-  "sidebar_state": () => ({ items: [] }),
+  sidebar_state: () => ({ items: [] }),
   "browser.identify": () => ({
     workspace_ref: "workspace:1",
     surface_id: "surface:1",
@@ -49,11 +49,7 @@ function jsonResponse(id: number | undefined, result: unknown): string {
   return JSON.stringify({ jsonrpc: "2.0", id, result }) + "\n";
 }
 
-function errorResponse(
-  id: number | undefined,
-  code: number,
-  message: string,
-): string {
+function errorResponse(id: number | undefined, code: number, message: string): string {
   return JSON.stringify({ jsonrpc: "2.0", id, error: { code, message } }) + "\n";
 }
 
@@ -61,12 +57,9 @@ function errorResponse(
  * Creates a mock cmux Unix socket server that records JSON-RPC requests.
  * Responds to supported methods with canned responses.
  */
-export async function createMockSocket(
-  opts: MockSocketOptions = {},
-): Promise<MockSocketResult> {
+export async function createMockSocket(opts: MockSocketOptions = {}): Promise<MockSocketResult> {
   const socketPath =
-    opts.socketPath ??
-    join(mkdtempSync(join(tmpdir(), "cmux-mock-")), "cmux.sock");
+    opts.socketPath ?? join(mkdtempSync(join(tmpdir(), "cmux-mock-")), "cmux.sock");
 
   const requests: JsonRpcRequest[] = [];
   const clients = new Set<Socket>();
@@ -92,9 +85,7 @@ export async function createMockSocket(
             const result = factory ? factory() : {};
             client.write(jsonResponse(req.id, result));
           } else {
-            client.write(
-              errorResponse(req.id, -32601, `Method not found: ${req.method}`),
-            );
+            client.write(errorResponse(req.id, -32601, `Method not found: ${req.method}`));
           }
         } catch {
           client.write(errorResponse(undefined, -32700, "Parse error"));
