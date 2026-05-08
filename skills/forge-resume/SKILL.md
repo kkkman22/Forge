@@ -83,6 +83,27 @@ disable-model-invocation: true
 
 定位后等待用户确认：确认 → 从定位的任务继续 `/forge build`；拒绝 → 等待用户指示。
 
+### 4.1 Auto-triggered Resume
+
+当 `/forge resume` 由 Context Exhaustion Protocol 触发时（即 Stop hook 检测到 `exhaustion_pending: true` 或存在新鲜 interim 文件），行为与用户手动触发不同：
+
+1. **跳过确认** — 不询问"继续执行？"。耗尽协议已经决定继续。
+2. **先读 interim 文件** — 在读取 status.md 或 plan 文件之前，先读 `.forge/knowledge/sessions/` 中的 `-interim.md` 文件。它包含上一会话最准确的状态。
+3. **立即执行 Restatement** — 按 §2"恢复后的首次 Restatement"，在派发第一个 Subagent 之前执行 Restatement Checkpoint。
+4. **从 next_task_number 恢复** — interim 文件包含 `next_task_number` 字段。使用该字段定位 plan 中的正确任务。如果 plan 使用非数字任务 ID 或字段无效，回退到扫描 progress 寻找"进行中"任务。
+
+**检测方式**：interim 文件的 frontmatter 包含 `phase: "build-exhaustion"`。
+
+**输出格式**：
+
+```
+🔄 自动恢复（上下文耗尽恢复点）
+上次会话完成到 Task <K>/<M>
+从 Task <next_task_number> 继续构建...
+```
+
+然后立即开始下一个任务的 TDD 循环——无摘要、无确认、无阶段概览。
+
 ## Common Rationalizations
 
 | 合理化 | 反驳 |

@@ -11,6 +11,14 @@ FORGE_DIR=".forge"
 STATUS_FILE="$FORGE_DIR/status.md"
 STALE_THRESHOLD_MINUTES=120
 
+# ---------------------------------------------------------------------------
+# Shared helpers
+# ---------------------------------------------------------------------------
+
+SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
+# shellcheck source=lib/forge-helpers.sh
+source "$SCRIPT_DIR/lib/forge-helpers.sh"
+
 # Exit silently if no .forge directory
 if [ ! -d "$FORGE_DIR" ]; then
   exit 0
@@ -22,17 +30,9 @@ if [ ! -f "$STATUS_FILE" ]; then
 fi
 
 # Check if status file is stale (>2 hours old)
-stale_count=$(find "$STATUS_FILE" -mmin "+${STALE_THRESHOLD_MINUTES}" 2>/dev/null | wc -l | tr -d ' ')
-if [ "$stale_count" -gt 0 ]; then
+if ! is_fresh "$STATUS_FILE" "$STALE_THRESHOLD_MINUTES"; then
   exit 0
 fi
-
-# Read fields from status.md
-read_field() {
-  local file="$1"
-  local field="$2"
-  grep "^${field}:" "$file" 2>/dev/null | head -1 | sed "s/^${field}: *\"\\{0,1\\}//;s/\"\\{0,1\\} *$//" || echo ""
-}
 
 current_task=$(read_field "$STATUS_FILE" "current_task")
 tier=$(read_field "$STATUS_FILE" "tier")
@@ -57,16 +57,16 @@ echo "  阶段：$phase"
 echo ""
 
 # Show progress if available
-progress_files=$(ls "$FORGE_DIR"/progress/*.md 2>/dev/null || true)
-if [ -n "$progress_files" ]; then
-  completed=$(grep -c '\- \[x\]' $FORGE_DIR/progress/*.md 2>/dev/null || echo 0)
-  pending=$(grep -c '\- \[ \]' $FORGE_DIR/progress/*.md 2>/dev/null || echo 0)
+progress_count=$(find "$FORGE_DIR/progress" -maxdepth 1 -name '*.md' 2>/dev/null | wc -l | tr -d ' ')
+if [ "$progress_count" -gt 0 ]; then
+  completed=$(find "$FORGE_DIR/progress" -maxdepth 1 -name '*.md' -exec grep -c '\- \[x\]' {} + 2>/dev/null | awk '{s+=$1}END{print s}' || echo 0)
+  pending=$(find "$FORGE_DIR/progress" -maxdepth 1 -name '*.md' -exec grep -c '\- \[ \]' {} + 2>/dev/null | awk '{s+=$1}END{print s}' || echo 0)
   echo "  进度：已完成 $completed / 待完成 $pending"
   echo ""
 fi
 
 # Show latest handoff if available
-latest_handoff=$(find "$FORGE_DIR/handoffs" -maxdepth 1 -name '*.md' -print0 2>/dev/null | xargs -0 ls -t 2>/dev/null | head -1)
+latest_handoff=$(find_latest "$FORGE_DIR/handoffs" '*.md')
 if [ -n "$latest_handoff" ]; then
   echo "━━━ 最近的 Handoff ━━━"
   # Show only the Decided section (most important for context recovery)
@@ -76,7 +76,7 @@ fi
 
 # Show review status if in review/test/ship phase
 if [ "$phase" = "review" ] || [ "$phase" = "test" ] || [ "$phase" = "ship" ]; then
-  latest_review=$(find "$FORGE_DIR/reviews" -maxdepth 1 -name '*.md' -print0 2>/dev/null | xargs -0 ls -t 2>/dev/null | head -1)
+  latest_review=$(find_latest "$FORGE_DIR/reviews" '*.md')
   if [ -n "$latest_review" ]; then
     result=$(read_field "$latest_review" "result")
     p0=$(read_field "$latest_review" "p0_count")
