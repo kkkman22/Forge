@@ -1,6 +1,7 @@
 import type { ChildProcess, ExecFileSyncOptions, SpawnOptions } from "node:child_process";
 import { execFileSync, spawn } from "node:child_process";
 
+/** @internal */
 export interface ProcessMetadata {
   pid: number;
   pgid: number;
@@ -10,6 +11,7 @@ export interface ProcessMetadata {
   description?: string;
 }
 
+/** @internal */
 export interface SerializedRegistry {
   sessionPid: number;
   sessionPgid: number;
@@ -17,6 +19,7 @@ export interface SerializedRegistry {
   processes: ProcessMetadata[];
 }
 
+/** @internal */
 export interface ShutdownResult {
   terminated: number;
   forcedKill: number;
@@ -24,6 +27,7 @@ export interface ShutdownResult {
   errors: Array<{ pid: number; error: string }>;
 }
 
+/** @internal */
 export class ProcessRegistry {
   private static instance: ProcessRegistry | null = null;
   private processes = new Map<number, ProcessMetadata>();

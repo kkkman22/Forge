@@ -37,6 +37,7 @@ import type {
  *
  * Accepts a pre-warmed query handle from `startup()`, the JSON schema for
  * structured output, and an optional budget limit.
+ * @public
  */
 export interface SdkAgentAdapterConfig {
   /** Pre-warmed query handle from `startup()`. */
@@ -72,6 +73,7 @@ const DEFAULT_GLOBAL_TIMEOUT_MS = 1_800_000;
  * zero-latency startup. Subsequent calls use the standalone `query()`
  * function with full options. Tracks warm query consumption via an
  * internal flag.
+ * @public
  */
 export class SdkAgentAdapter implements AgentInterface {
   readonly name = "claude-sdk";

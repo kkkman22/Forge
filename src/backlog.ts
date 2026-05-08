@@ -8,7 +8,10 @@
 // Types
 // ---------------------------------------------------------------------------
 
-/** A single backlog entry representing an unfixed P2/P3 finding. */
+/**
+ * @internal
+ * A single backlog entry representing an unfixed P2/P3 finding.
+ */
 export interface BacklogEntry {
   /** Unique ID derived from the finding fingerprint. */
   id: string;
@@ -34,7 +37,7 @@ export interface BacklogEntry {
 // File format
 // ---------------------------------------------------------------------------
 
-/** Generate the standard header for a new backlog file. */
+/** @internal Generate the standard header for a new backlog file. */
 export function generateBacklogHeader(): string {
   return `---
 title: "Forge Backlog"
@@ -66,7 +69,7 @@ function serializeEntry(entry: BacklogEntry): string {
   return `${lines.join("\n")}\n`;
 }
 
-/** Serialize backlog entries to `.forge/backlog.md` format. */
+/** @internal Serialize backlog entries to `.forge/backlog.md` format. */
 export function serializeBacklog(entries: BacklogEntry[]): string {
   const unresolved = entries.filter((e) => !e.resolved);
   const resolved = entries.filter((e) => e.resolved);
@@ -98,7 +101,7 @@ export function serializeBacklog(entries: BacklogEntry[]): string {
   return lines.join("\n");
 }
 
-/** Parse `.forge/backlog.md` content into structured entries. */
+/** @internal Parse `.forge/backlog.md` content into structured entries. */
 export function parseBacklog(content: string): BacklogEntry[] {
   const entries: BacklogEntry[] = [];
   const lines = content.split("\n");
@@ -169,6 +172,7 @@ function isCompleteEntry(e: Record<string, unknown>): boolean {
 /**
  * Append new findings to the backlog, deduplicating by ID.
  * Returns the merged list and the count of newly added entries.
+ * @internal
  */
 export function appendToBacklog(
   existing: BacklogEntry[],
@@ -192,6 +196,7 @@ export function appendToBacklog(
 /**
  * Find backlog entries whose filePath overlaps with a set of affected files.
  * Used by `/forge plan` to surface relevant backlog items.
+ * @internal
  */
 export function findOverlappingEntries(
   entries: BacklogEntry[],
@@ -208,6 +213,7 @@ export function findOverlappingEntries(
 /**
  * Mark a backlog entry as resolved.
  * Returns the updated entry, or null if the ID was not found.
+ * @internal
  */
 export function resolveEntry(
   entries: BacklogEntry[],

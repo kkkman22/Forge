@@ -43,10 +43,10 @@ import {
 // Types
 // ---------------------------------------------------------------------------
 
-/** Episode outcome classification. */
+/** @internal Episode outcome classification. */
 export type EpisodeOutcome = "success" | "partial" | "failure";
 
-/** Episode tier — mirrors the router complexity dimension. */
+/** @internal Episode tier — mirrors the router complexity dimension. */
 export type EpisodeTier = "light" | "standard" | "full";
 
 /**
@@ -55,6 +55,8 @@ export type EpisodeTier = "light" | "standard" | "full";
  * Optional fields are omitted from the serialized frontmatter when they
  * are undefined or empty so that round-trips through an empty-optional
  * path do not re-introduce spurious keys.
+ *
+ * @internal
  */
 export interface Episode {
   schema_version: 1 | 2;
@@ -105,6 +107,8 @@ const VALID_OUTCOMES: ReadonlySet<EpisodeOutcome> = new Set(["success", "partial
  * without forcing a backfill.
  *
  * The function is pure: same input always yields the same output.
+ *
+ * @internal
  */
 export function parseEpisode(content: string): Episode | null {
   const fm = parseFrontmatter(content);
@@ -202,6 +206,8 @@ export function parseEpisode(content: string): Episode | null {
  *   - The body is preserved verbatim after a blank line following the
  *     closing frontmatter delimiter, so v1 narrative content survives
  *     unchanged.
+ *
+ * @internal
  */
 export function renderEpisode(episode: Episode): string {
   const lines: string[] = [];
@@ -250,6 +256,8 @@ export function renderEpisode(episode: Episode): string {
  * non-negative integers and zero-padded to three digits. Callers are
  * expected to supply an ISO date string; this function does not
  * validate the date format, leaving that to the caller / scheduler.
+ *
+ * @internal
  */
 export function generateEpisodeId(date: string, sequenceInDay: number): string {
   const seq = Math.max(0, Math.trunc(sequenceInDay));
