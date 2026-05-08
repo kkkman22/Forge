@@ -4,7 +4,7 @@
 [![Security Audit](https://img.shields.io/badge/security--audit-npm%20audit%20%2B%20deps-blue)](./.github/workflows/ci.yml)
 [![License: MIT](https://img.shields.io/badge/License-MIT-green.svg)](./LICENSE)
 
-> **12 个命令**覆盖完整开发生命周期，三维路由自动匹配任务复杂度，统一的 `.forge/` 状态系统实现跨命令状态感知，按需加载将每次会话的 token 开销控制在 **约 10K**。
+> **18 个命令**覆盖完整开发生命周期，三维路由自动匹配任务复杂度，统一的 `.forge/` 状态系统实现跨命令状态感知，按需加载将每次会话的 token 开销控制在 **约 10K**。
 
 ---
 
@@ -14,7 +14,7 @@ AI 辅助开发需要一套结构化的工作流：从需求分析到代码交�
 
 Forge 的核心能力：
 
-- **12 个命令**覆盖完整开发生命周期
+- **18 个命令**覆盖完整开发生命周期
 - **三维路由**（复杂度 × 任务类型 × 项目阶段）自动匹配执行路径
 - **统一状态**目录 `.forge/`，跨命令状态感知和会话恢复
 - **按需加载**，单次会话约 10K tokens
@@ -190,7 +190,7 @@ rm -rf /tmp/forge
 
 ---
 
-## 12+1 个命令速查表
+## 18 个命令速查表
 
 | 命令 | 阶段 | 说明 | 适用路径 |
 |------|------|------|---------|
@@ -199,13 +199,18 @@ rm -rf /tmp/forge
 | `/forge spec` | 规格 | 将需求固化为可锁定的规格文档，支持从外部文件导入 | 全量 |
 | `/forge plan` | 规划 | 将 Spec 拆解为含 TDD 步骤的原子任务 | 标准、全量 |
 | `/forge build` | 执行 | 按计划以 TDD 方式逐任务实现 | 所有 |
-| `/forge review` | 评审 | 三层独立评审（Spec 对齐/质量/安全） | 所有 |
-| `/forge test` | 测试 | 三层验证（单元测试/浏览器 QA/清单） | 标准、全量 |
+| `/forge review` | 评审 | 三层独立评审（Spec 对齐/质量/安全），支持 `--canvas` 可视化模式 | 所有 |
+| `/forge test` | 测试 | 三层验证（单元测试/浏览器 QA/清单），支持 `--cli`/`--ui` 模式 | 标准、全量 |
 | `/forge ship` | 交付 | 门禁检查 + 四选项交付 | 标准、全量 |
-| `/forge learn` | 知识 | 五维度经验提取和沉淀 | 全量 |
+| `/forge learn` | 知识 | 五维度经验提取和沉淀，支持 `--from-chats` 从历史对话提取 | 全量 |
 | `/forge status` | 辅助 | 查看当前任务状态 | 所有 |
 | `/forge resume` | 辅助 | 五问题恢复上次会话上下文 | 所有 |
 | `/forge debug` | 辅助 | 四阶段结构化根因分析 | 所有 |
+| `/forge verify` | 验证 | 证据化三态验证（VERIFIED/NOT_VERIFIED/INCONCLUSIVE） | 所有 |
+| `/forge control-cli` | 辅助 | CLI 控制面板交互 | 所有 |
+| `/forge control-ui` | 辅助 | Web UI 控制面板交互 | 所有 |
+| `/forge fix-conflicts` | 辅助 | 结构化冲突修复 | 所有 |
+| `/forge recap` | 辅助 | 会话摘要与上下文回顾 | 所有 |
 | `/forge abort` | 辅助 | 安全中止当前任务，归档状态并重置 | 所有 |
 
 ---
@@ -436,10 +441,10 @@ npm link && forge-loop "你的目标"            # 全局链接后直接使用
 
 | 方案 | Token 开销 | 说明 |
 |------|-----------|------|
-| Forge 全部 SKILL.md | **~24K** <!--approximate--> | 13 个 SKILL 文件总量 |
+| Forge 全部 SKILL.md | **~42K** <!--approximate--> | 25 个 SKILL 文件总量（含 forge-verify、forge-control-cli、forge-control-ui、forge-fix-conflicts、forge-recap、forge-learn --from-chats） |
 | Forge 单次会话（按需加载） | **~10K** <!--approximate--> | 只加载当前命令需要的 SKILL |
 
-按需加载意味着轻量路径只加载 `build` + `review` 两个 SKILL，标准路径加载 5 个，全量路径加载 8 个。辅助命令（status/resume/debug）按需单独加载。
+按需加载意味着轻量路径只加载 `build` + `review` 两个 SKILL，标准路径加载 5 个，全量路径加载 8 个。辅助命令（status/resume/debug/verify/control-cli/control-ui/fix-conflicts/recap）按需单独加载。
 
 **进一步节省**：启用 [opusplan 模式](docs/opusplan-guide.md)（plan 用 opus，执行用 sonnet）可额外节省 20-40% token，与 Agent 级模型路由互补。
 
@@ -474,7 +479,8 @@ npm link && forge-loop "你的目标"            # 全局链接后直接使用
 
 ```
 forge/
-├── skills/                      # 13 个 SKILL.md
+├── skills/                      # 14 个 SKILL.md
+├── rules/                       # 原子规则目录（TypeScript starter rules）
 │   ├── forge-router/SKILL.md   #   入口路由（三维分析）
 │   ├── forge-decide/SKILL.md   #   决策引擎（两轮 Subagent）
 │   ├── forge-spec/SKILL.md     #   规格引擎（锁定机制）
@@ -512,7 +518,7 @@ forge/
 │   └── install-dist.sh         #   安装分发包
 ├── dist/                        # 分发包（CI 自动构建）
 │   └── claude-code/bundles/forge/
-├── src/                         # 核心逻辑（95 个 TypeScript 模块，含纯函数模块及有状态/运行时模块：CLI、SDK 适配器、副作用执行器、运行管理器等）<!--exact: 95 个 TypeScript 模块-->
+├── src/                         # 核心逻辑（116 个 TypeScript 模块，含纯函数模块及有状态/运行时模块：CLI、SDK 适配器、副作用执行器、运行管理器等）<!--exact: 116 个 TypeScript 模块-->
 │   ├── forge-loop-cli.ts       #   自主循环 CLI 入口（Commander 参数解析 + 信号处理）
 │   ├── sdk-driver.ts           #   迭代循环驱动器（调度 Agent → 处理结果 → 执行副作用）
 │   ├── orchestrator.ts         #   纯函数状态机（状态转换 + 副作用描述）
@@ -573,7 +579,7 @@ bash scripts/build-dist.sh
 
 **技术栈**：TypeScript 5.9（strict）、Vitest 3.2、fast-check 4.7（属性测试）、Biome 2.4（lint + format）。运行时依赖：`@anthropic-ai/claude-agent-sdk`、`commander`。
 
-**测试策略**：3526 个测试（212 个测试文件，其中 109 个为 fast-check 属性测试文件）验证不变量（invariant），而非特定输入输出。覆盖率 89.35% statements、89.62% branches、95.2% functions。<!--exact: 测试数、文件数、属性测试数; approximate: 覆盖率-->
+**测试策略**：3821 个测试（239 个测试文件，其中 117 个为 fast-check 属性测试文件）验证不变量（invariant），而非特定输入输出。覆盖率 ~89% statements。<!--exact: 测试数、文件数、属性测试数; approximate: 覆盖率-->
 
 ---
 

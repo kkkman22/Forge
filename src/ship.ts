@@ -311,3 +311,63 @@ export function buildShipGateBlockArtifacts(
   const markerText = buildFailureEvolutionMarker(ctx, episode.id, now);
   return { episode, markerText };
 }
+
+// ---------------------------------------------------------------------------
+// Post-Push Verify [R8.1-R8.6]
+// ---------------------------------------------------------------------------
+
+export interface PostPushVerifyResult {
+  passed: boolean;
+  command: string;
+  output: string;
+  exitCode: number | null;
+  durationMs: number;
+}
+
+export async function executePostPushVerify(
+  topic: string,
+  _prCreated: boolean,
+  options?: { forgeDir?: string; ciCheckCommand?: string },
+): Promise<PostPushVerifyResult> {
+  const command = options?.ciCheckCommand ?? "npm run check";
+  const start = Date.now();
+
+  try {
+    const { execSync } = await import("node:child_process");
+    const output = execSync(command, { encoding: "utf-8", timeout: 600_000, stdio: "pipe" });
+    return { passed: true, command, output, exitCode: 0, durationMs: Date.now() - start };
+  } catch (error: unknown) {
+    const execError = error as { stdout?: string; status?: number };
+    const output = execError.stdout ?? "";
+    const exitCode = execError.status ?? 1;
+
+    if (options?.forgeDir) {
+      try {
+        const { writeFileSync, mkdirSync } = await import("node:fs");
+        const { join } = await import("node:path");
+        const dir = join(options.forgeDir, "ship");
+        mkdirSync(dir, { recursive: true });
+        writeFileSync(
+          join(dir, `${topic}-post-push-verify.md`),
+          [
+            `---\ntopic: ${topic}\nstatus: failed\nexit_code: ${exitCode}\nduration_ms: ${Date.now() - start}\n---`,
+            "",
+            `## Post-Push Verify Failed`,
+            "",
+            `Command: \`${command}\``,
+            `Exit code: ${exitCode}`,
+            "",
+            "### Output",
+            "```",
+            output.slice(0, 5000),
+            "```",
+          ].join("\n"),
+        );
+      } catch {
+        /* non-fatal */
+      }
+    }
+
+    return { passed: false, command, output, exitCode, durationMs: Date.now() - start };
+  }
+}
