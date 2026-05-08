@@ -1,0 +1,21 @@
+{
+  "methods": [
+    "system.ping",
+    "system.capabilities",
+    "surface.send_text",
+    "notification.create",
+    "set_status",
+    "set_progress",
+    "log",
+    "sidebar_state",
+    "browser.identify",
+    "browser.open",
+    "browser.snapshot",
+    "browser.click",
+    "browser.fill",
+    "browser.wait",
+    "browser.screenshot",
+    "browser.console.list",
+    "browser.errors.list"
+  ]
+}
