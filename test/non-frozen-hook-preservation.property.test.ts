@@ -375,7 +375,7 @@ describe("Preservation: Hook structure for non-frozen hooks (property-based)", (
       "evolved-rules.md": 5,
       "inject-plan-context": 5,
       "persistent-loop.sh": 5,
-      "PENDING": 5,
+      PENDING: 5,
       "sync-once.mjs": 2,
     };
 
