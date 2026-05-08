@@ -132,10 +132,15 @@ describe("Feature: error-recovery-strategy, Property 2: commit-to-task matching"
   it("matches when prefix is present, does not match when absent", () => {
     fc.assert(
       fc.property(
-        fc.record({
-          prefix: fc.string({ minLength: 3, maxLength: 15 }),
-          keyword: fc.string({ minLength: 3, maxLength: 10 }),
-        }),
+        fc
+          .record({
+            prefix: fc.string({ minLength: 3, maxLength: 15 }),
+            keyword: fc.string({ minLength: 3, maxLength: 10 }),
+          })
+          .filter(({ prefix, keyword }) => {
+            const noPrefixMsg = `other ${keyword}`.toLowerCase();
+            return !noPrefixMsg.includes(prefix.toLowerCase());
+          }),
         gitCommitEntry(),
         ({ prefix, keyword }, commit) => {
           const pattern: TaskCommitPattern = {
