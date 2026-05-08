@@ -35,5 +35,18 @@
     "@property",
     "@visibleForTesting"
   ],
-  "ignoredHighlightLanguages": ["gitignore", "markdown"]
+  "ignoredHighlightLanguages": ["gitignore", "markdown"],
+  "externalSymbolLinkMappings": {
+    "forge-loop": {
+      "FailureContext": "#",
+      "buildFailureEpisode": "#",
+      "buildFailureEvolutionMarker": "#",
+      "Episode": "#",
+      "Pattern": "#",
+      "findUpgradableEpisodes": "#",
+      "EvolutionReport": "#",
+      "parseEvolutionMarkers": "#",
+      "aggregateEvolutionMarkers": "#"
+    }
+  }
 }
