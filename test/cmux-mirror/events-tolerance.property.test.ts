@@ -1,7 +1,7 @@
-import fc from "fast-check";
 import { mkdirSync, rmSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
+import fc from "fast-check";
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
 import { readEventsSince } from "../../scripts/cmux-mirror/lib/events.mjs";
 
@@ -35,12 +35,12 @@ describe("events: tolerance and cursor property tests (R12.11, R14.6, R14.9)", (
     const file = join(tmpDir, "mixed.ndjson");
     writeFileSync(
       file,
-      [
+      `${[
         `{"schema_version":1,"ts":"2026-01-01T00:00:00Z","type":"session_started"}`,
         `BROKEN LINE`,
         ``,
         `{"schema_version":1,"ts":"2026-01-01T00:01:00Z","type":"iter_started"}`,
-      ].join("\n") + "\n",
+      ].join("\n")}\n`,
     );
 
     const { events } = await readEventsSince(file, 0);
@@ -53,11 +53,11 @@ describe("events: tolerance and cursor property tests (R12.11, R14.6, R14.9)", (
     const file = join(tmpDir, "multi-schema.ndjson");
     writeFileSync(
       file,
-      [
+      `${[
         `{"schema_version":1,"ts":"2026-01-01T00:00:00Z","type":"session_started"}`,
         `{"schema_version":2,"ts":"2026-01-01T00:01:00Z","type":"future_event"}`,
         `{"schema_version":1,"ts":"2026-01-01T00:02:00Z","type":"iter_started"}`,
-      ].join("\n") + "\n",
+      ].join("\n")}\n`,
     );
 
     const { events } = await readEventsSince(file, 0, { schemaVersion: 1 });
@@ -82,7 +82,7 @@ describe("events: tolerance and cursor property tests (R12.11, R14.6, R14.9)", (
     await fc.assert(
       fc.asyncProperty(fc.array(lineArb, { maxLength: 20 }), async (lines) => {
         const file = join(tmpDir, "prop.ndjson");
-        writeFileSync(file, lines.join("\n") + "\n");
+        writeFileSync(file, `${lines.join("\n")}\n`);
 
         const { cursor, events } = await readEventsSince(file, 0);
         expect(typeof cursor).toBe("number");
