@@ -54,5 +54,49 @@
       "reason": "Reason: {reason}",
       "recovery": "Recovery: /forge resume"
     }
+  },
+  "cmux": {
+    "notify": {
+      "loopCircuitBreakerTitle": "Forge Loop Circuit Breaker",
+      "loopCompletedTitle": "Forge Loop Completed",
+      "loopInterruptedBody": "Loop interrupted",
+      "frozenInterceptionTitle": "Forge Frozen Interception",
+      "reviewCompletedTitle": "/forge review Completed",
+      "reviewLayerFailed": "failed",
+      "respawnBudgetExhausted": "Respawn budget exhausted; manual restart required"
+    },
+    "log": {
+      "phaseChange": "{phase}: {topic}",
+      "taskFailed": "Task {taskId} failed: {reason}",
+      "iterCommitted": "Iter {n} committed: {subject}",
+      "iterRolledBack": "Iter {n} rolled back: {reason}",
+      "frozenInterception": "Frozen interception: {file} (status={status})",
+      "reviewLayerComplete": "{layer}: {summary}",
+      "reviewCanvasReady": "Canvas ready: {path}",
+      "browserQaVerdict": "Browser QA: {verdict}",
+      "notificationSuppressed": "Notification suppressed: {title}",
+      "mirrorPollingMode": "Polling mode (fs-type: {fsType})",
+      "mirrorRespawning": "Respawning after crash ({count}/{budget})",
+      "mirrorRespawnExhausted": "Respawn budget exhausted ({count}/{budget}); manual restart required",
+      "cmuxNotDetected": "cmux: not detected, mirror will not start"
+    },
+    "progress": {
+      "starting": "Starting · 0/{total}",
+      "waveProgress": "Wave {current}/{total} · {done}/{total}",
+      "done": "Done · {done}/{total}",
+      "loopIteration": "Iter {n}/{limit} · {subject}",
+      "loopIndeterminate": "Iter {n}/∞ · {subject}",
+      "loopObjective": "Iteration 0 · {objective}"
+    },
+    "layout": {
+      "forgeWorkflow": "Forge Workflow",
+      "forgeLoopMonitor": "Forge Loop Monitor",
+      "forgeDev": "Forge Dev",
+      "forgeWorkflowDesc": "Claude Code + status tail + DAG progress + mirror daemon",
+      "forgeLoopMonitorDesc": "Loop launcher + session logs + git log + mirror daemon",
+      "forgeDevDesc": "Claude Code + test watcher + typecheck watcher + mirror daemon",
+      "newClaudeCode": "New Claude Code",
+      "newClaudeCodeDesc": "Launch Claude Code in a new tab"
+    }
   }
 }
