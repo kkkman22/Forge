@@ -13,6 +13,12 @@ Entries follow [Keep a Changelog](https://keepachangelog.com/) with Forge-specif
 
 ### Added
 
+- R4 rule in `evolved-rules.md`: "SKILL Reload After Context Recovery" — requires
+  re-reading the current phase SKILL.md after context compaction or session resume.
+- `forge-resume` SKILL Reload Step: mandatory SKILL.md re-read after recovery for
+  all phases (not just build).
+- Compaction Recovery Check paragraphs in forge-ship, forge-review, forge-test,
+  forge-learn SKILLs: self-check points for post-compaction execution.
 - Stop hook (`persistent-loop.sh`) now covers 6 auto-advance scenarios:
   plan→build (Case 5), build→review (Case 6), review→test (Case 7),
   test→ship (Case 8), ship→learn (Case 9), and loop iteration handoff (Case 10).
