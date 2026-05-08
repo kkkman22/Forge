@@ -38,6 +38,12 @@ done
 
 target="${target:-.claude/skills}"
 
+# Validate target path — reject traversal
+if [[ "$target" =~ \.\. ]]; then
+  echo "install.sh: invalid target path" >&2
+  exit 1
+fi
+
 case "${mode}" in
   dry-run)
     for skill in "${SKILLS[@]}"; do
