@@ -1,7 +1,7 @@
 ---
 topic: "cmux-integration"
 plan_ref: ".forge/plans/cmux-integration.md"
-sprint: 2
+sprint: 3
 updated: "2026-05-08"
 ---
 
@@ -35,11 +35,11 @@ updated: "2026-05-08"
 
 | Task | Status | Commit |
 |------|--------|--------|
-| 15. lib/session.mjs | pending | — |
-| 16. lib/respawn.mjs | pending | — |
-| 17. lib/reader.mjs + lib/emitter.mjs | pending | — |
-| 18. lib/push-server.mjs + push.sh | pending | — |
-| 19. mirror.mjs 主程序 | pending | — |
+| 15. lib/session.mjs | done | d351412 |
+| 16. lib/respawn.mjs | done | 16611fe |
+| 17. lib/reader.mjs + lib/emitter.mjs | done | fe06126 |
+| 18. lib/push-server.mjs + push.sh | done | 639eca3 |
+| 19. mirror.mjs 主程序 | done | 60560f0 |
 
 ## Sprint 4 — Sync_Once / Hook 接入
 
