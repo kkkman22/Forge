@@ -26,7 +26,7 @@ export const LOOP_STATE_TO_ICON = Object.freeze({
 });
 
 export function phaseToIcon(phase) {
-  return PHASE_TO_ICON[phase] ?? DEFAULT_ICON;
+  return Object.hasOwn(PHASE_TO_ICON, phase) ? PHASE_TO_ICON[phase] : DEFAULT_ICON;
 }
 
 export function tierToColor(tier) {

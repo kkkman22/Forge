@@ -1,10 +1,10 @@
-import { describe, it, expect, beforeEach, afterEach } from "vitest";
 import fc from "fast-check";
+import { afterEach, beforeEach, describe, expect, it } from "vitest";
 import {
-  cmuxAvailable,
-  markUnavailable,
-  isStickyUnavailable,
   __resetForTest,
+  cmuxAvailable,
+  isStickyUnavailable,
+  markUnavailable,
 } from "../../scripts/cmux-mirror/lib/availability.mjs";
 
 beforeEach(() => __resetForTest());
@@ -16,10 +16,7 @@ describe("availability: idempotence property (R12.1)", () => {
       fc.property(
         fc.record({
           CMUX_WORKSPACE_ID: fc.oneof(fc.constant(undefined), fc.string()),
-          CMUX_SOCKET_PATH: fc.oneof(
-            fc.constant(undefined),
-            fc.string({ minLength: 0 }),
-          ),
+          CMUX_SOCKET_PATH: fc.oneof(fc.constant(undefined), fc.string({ minLength: 0 })),
           CMUX_INTEGRATION: fc.oneof(
             fc.constant(undefined),
             fc.constant("off"),
@@ -50,10 +47,7 @@ describe("availability: exception safety (R1.2)", () => {
       fc.property(
         fc.record({
           CMUX_WORKSPACE_ID: fc.oneof(fc.constant(undefined), fc.string()),
-          CMUX_SOCKET_PATH: fc.oneof(
-            fc.constant(undefined),
-            fc.string(),
-          ),
+          CMUX_SOCKET_PATH: fc.oneof(fc.constant(undefined), fc.string()),
         }),
         (env) => {
           __resetForTest();

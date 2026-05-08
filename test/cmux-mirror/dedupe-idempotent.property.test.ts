@@ -1,11 +1,11 @@
-import { describe, it, expect, beforeEach, afterEach } from "vitest";
-import fc from "fast-check";
 import { mkdtempSync, rmSync } from "node:fs";
-import { join } from "node:path";
 import { tmpdir } from "node:os";
+import { join } from "node:path";
+import fc from "fast-check";
+import { afterEach, beforeEach, describe, expect, it } from "vitest";
 import { checkAndRecord } from "../../scripts/cmux-mirror/lib/dedupe.mjs";
 
-let dedupeDir;
+let dedupeDir: string;
 
 beforeEach(() => {
   dedupeDir = mkdtempSync(join(tmpdir(), "cmux-dedupe-test-"));
@@ -14,7 +14,9 @@ beforeEach(() => {
 afterEach(() => {
   try {
     rmSync(dedupeDir, { recursive: true, force: true });
-  } catch { /* ignore */ }
+  } catch {
+    /* ignore */
+  }
 });
 
 describe("dedupe: idempotent within window (R12.8)", () => {
@@ -45,7 +47,11 @@ describe("dedupe: idempotent within window (R12.8)", () => {
             expect(first.notify).toBe(true);
             expect(second.notify).toBe(false);
           } finally {
-            try { rmSync(dir, { recursive: true, force: true }); } catch { /* ignore */ }
+            try {
+              rmSync(dir, { recursive: true, force: true });
+            } catch {
+              /* ignore */
+            }
           }
         },
       ),

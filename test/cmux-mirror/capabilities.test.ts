@@ -1,10 +1,10 @@
-import { describe, it, expect, beforeEach, afterEach } from "vitest";
-import { createMockSocket, type MockSocketResult } from "./mock-socket";
+import { afterEach, beforeEach, describe, expect, it } from "vitest";
 import {
-  loadCapabilities,
-  hasCapability,
   __resetForTest,
+  hasCapability,
+  loadCapabilities,
 } from "../../scripts/cmux-mirror/lib/capabilities.mjs";
+import { createMockSocket, type MockSocketResult } from "./mock-socket";
 
 let mock: MockSocketResult | null = null;
 

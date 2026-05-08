@@ -1,5 +1,5 @@
-import { describe, it, expect } from "vitest";
 import fc from "fast-check";
+import { describe, expect, it } from "vitest";
 import { createBudget } from "../../scripts/cmux-mirror/lib/budget.mjs";
 
 describe("budget: monotonic non-increasing property (R12.2, R7.3)", () => {
@@ -13,9 +13,7 @@ describe("budget: monotonic non-increasing property (R12.2, R7.3)", () => {
           let prevAvailable = initial;
 
           for (const shouldConsume of consumeSequence) {
-            const result = shouldConsume
-              ? budget.consume()
-              : budget.consume();
+            const result = shouldConsume ? budget.consume() : budget.consume();
             const currentAvailable = budget.available();
             expect(currentAvailable).toBeLessThanOrEqual(prevAvailable);
             prevAvailable = currentAvailable;

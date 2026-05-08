@@ -1,9 +1,9 @@
-import { describe, it, expect, beforeEach, afterEach } from "vitest";
+import { afterEach, beforeEach, describe, expect, it } from "vitest";
 import {
-  cmuxAvailable,
-  markUnavailable,
-  isStickyUnavailable,
   __resetForTest,
+  cmuxAvailable,
+  isStickyUnavailable,
+  markUnavailable,
 } from "../../scripts/cmux-mirror/lib/availability.mjs";
 
 beforeEach(() => __resetForTest());
