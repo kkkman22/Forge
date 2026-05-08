@@ -1,4 +1,5 @@
 #!/bin/bash
+# category: internal-only
 # ============================================================================
 # validate-skill-skeleton.sh — SKILL.md section skeleton validator
 #

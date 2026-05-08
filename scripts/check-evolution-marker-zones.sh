@@ -1,4 +1,5 @@
 #!/bin/bash
+# category: internal-only
 # ============================================================================
 # check-evolution-marker-zones.sh — Evolution 标记位置校验
 #

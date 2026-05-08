@@ -1,6 +1,6 @@
 import * as fc from "fast-check";
 import { describe, expect, it } from "vitest";
-import { parseSkeleton, type SkeletonCheck } from "../src/skill-skeleton.js";
+import { parseSkeleton } from "../src/skill-skeleton.js";
 
 // ---------------------------------------------------------------------------
 // Helpers

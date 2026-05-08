@@ -1,4 +1,5 @@
 #!/usr/bin/env bash
+# category: user-facing
 # ============================================================================
 # forge validate-knowledge — 知识库健康检查
 #
@@ -31,6 +32,14 @@ FORGE_ROOT=".forge"
 
 while [[ $# -gt 0 ]]; do
   case "$1" in
+    --help|-h)
+      echo "Usage: scripts/validate-knowledge.sh [--forge-root <path>]"
+      echo ""
+      echo "Validate Forge knowledge base health."
+      echo "Checks: document limits, confidence thresholds, frontmatter completeness."
+      echo "  --forge-root <path>  Path to .forge/ directory (default: .forge)"
+      exit 0
+      ;;
     --forge-root) FORGE_ROOT="$2"; shift 2 ;;
     *) echo "Unknown arg: $1"; exit 1 ;;
   esac

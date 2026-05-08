@@ -1,4 +1,5 @@
 #!/usr/bin/env node
+// category: internal-only
 // ============================================================================
 // check-evolution-marker-zones.mjs — Evolution 标记位置合法性校验
 //

@@ -1,4 +1,5 @@
 #!/usr/bin/env bash
+# category: user-facing
 # ============================================================================
 # forge build-dist — 构建 Claude Code 分发包
 #
@@ -10,6 +11,15 @@
 # ============================================================================
 
 set -euo pipefail
+
+# ---------- --help ----------
+if [[ "${1:-}" == "--help" || "${1:-}" == "-h" ]]; then
+  echo "Usage: scripts/build-dist.sh"
+  echo ""
+  echo "Build the Forge distribution package from source definitions."
+  echo "Compiles TypeScript to dist/ and bundles skills, agents, hooks, templates, and scripts."
+  exit 0
+fi
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 FORGE_ROOT="$(cd "${SCRIPT_DIR}/.." && pwd)"

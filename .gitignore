@@ -8,6 +8,9 @@ coverage/
 .forge/debug/
 .forge/archive/
 
+# Forge frontend-check login state cache
+.forge/cache/
+
 
 # dist manifest is tracked (used by CI to verify dist sync)
 !dist/claude-code/bundles/.manifest.sha256

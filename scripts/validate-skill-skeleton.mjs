@@ -1,4 +1,5 @@
 #!/usr/bin/env node
+// category: user-facing
 // ============================================================================
 // validate-skill-skeleton.mjs — SKILL.md section skeleton validator
 //
@@ -23,6 +24,15 @@
 import { readdirSync, readFileSync, statSync } from "node:fs";
 import { dirname, join, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
+
+if (process.argv.includes("--help") || process.argv.includes("-h")) {
+  console.log(`Usage: scripts/validate-skill-skeleton.mjs
+
+Validate SKILL.md section skeleton (Prerequisites + Deliverable).
+Legacy skills with skeleton_exempt_legacy are warned but not blocked.
+deliverable_exempt skills skip the Deliverable check.`);
+  process.exit(0);
+}
 
 // ---------------------------------------------------------------------------
 // Frontmatter parsing (mirrors src/frontmatter.ts)
