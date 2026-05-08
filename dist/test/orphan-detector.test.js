@@ -1,7 +1,7 @@
 import * as fc from "fast-check";
 import { describe, expect, it, vi } from "vitest";
-const { mockExecSync } = vi.hoisted(() => ({
-    mockExecSync: vi.fn(),
+const { mockExecFileSync } = vi.hoisted(() => ({
+    mockExecFileSync: vi.fn(),
 }));
 const mockFs = vi.hoisted(() => ({
     readFileSync: vi.fn(),
@@ -11,7 +11,7 @@ const mockFs = vi.hoisted(() => ({
     unlinkSync: vi.fn(),
 }));
 vi.mock("node:child_process", () => ({
-    execSync: mockExecSync,
+    execFileSync: mockExecFileSync,
 }));
 vi.mock("node:fs", () => ({
     readFileSync: mockFs.readFileSync,
@@ -45,7 +45,7 @@ describe("OrphanDetector", () => {
                 const lines = entries
                     .map((e) => `  ${e.pid}  ${e.ppid}  ${e.etime} ${e.command}`)
                     .join("\n");
-                mockExecSync.mockReturnValue(header + lines);
+                mockExecFileSync.mockReturnValue(header + lines);
                 const result = await detectPpidOrphans(["forge", "vitest", "caffeinate"], 3600);
                 // Only PPID=1 processes matching patterns should be returned
                 for (const orphan of result) {
@@ -55,7 +55,7 @@ describe("OrphanDetector", () => {
                     const matchesPattern = ["forge", "vitest", "caffeinate"].some((p) => entry?.command.includes(p));
                     expect(matchesPattern).toBe(true);
                 }
-                mockExecSync.mockReset();
+                mockExecFileSync.mockReset();
             }), { numRuns: 40 });
         });
     });
@@ -111,7 +111,7 @@ describe("OrphanDetector", () => {
     });
     describe("ps command failure tolerance", () => {
         it("returns empty when ps command fails", async () => {
-            mockExecSync.mockImplementation(() => {
+            mockExecFileSync.mockImplementation(() => {
                 throw new Error("ps failed");
             });
             const result = await detectPpidOrphans(["forge"], 3600);

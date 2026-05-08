@@ -33,6 +33,7 @@ export function safeReadStatusFile(io) {
         return io.read();
     }
     catch (err) {
+        // biome-ignore lint/suspicious/noConsole: standalone utility without logger access
         console.warn(`[debug] safeReadStatusFile failed: ${err instanceof Error ? err.message : String(err)}`);
         return "";
     }
@@ -94,6 +95,7 @@ export function safeUpdateIterationStatus(io, phase, iteration) {
         safeWriteStatusFile(io, updatedContent);
     }
     catch (err) {
+        // biome-ignore lint/suspicious/noConsole: standalone utility without logger access
         console.warn(`Warning: failed to update StatusFile iteration status: ${err instanceof Error ? err.message : String(err)}`);
     }
 }

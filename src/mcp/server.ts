@@ -19,10 +19,12 @@ import { registerForgeRead } from "./tools/forge-read.js";
 // ---------------------------------------------------------------------------
 
 process.on("unhandledRejection", (reason: unknown) => {
+  // biome-ignore lint/suspicious/noConsole: top-level process error handler
   console.error("[forge-context] Unhandled rejection:", reason);
 });
 
 process.on("uncaughtException", (error: Error) => {
+  // biome-ignore lint/suspicious/noConsole: top-level process error handler
   console.error("[forge-context] Uncaught exception:", error);
 });
 

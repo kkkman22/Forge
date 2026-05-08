@@ -12,13 +12,13 @@
 // ---------------------------------------------------------------------------
 // Constants
 // ---------------------------------------------------------------------------
-/** Phase sequences for each tier. */
+/** @internal Phase sequences for each tier. */
 export const PHASE_SEQUENCES = {
     lightweight: ["build", "review"],
     standard: ["plan", "build", "review", "test", "ship"],
     full: ["decide", "spec", "plan", "build", "review", "test", "ship", "learn"],
 };
-/** Test file path patterns. */
+/** @internal Test file path patterns. */
 export const TEST_FILE_PATTERNS = [
     /\.test\.[tj]sx?$/,
     /\.spec\.[tj]sx?$/,
@@ -37,6 +37,8 @@ const GIT_LOG_ENTRY_SEPARATOR = "\x00";
  * separated by newlines between entries.
  *
  * Returns an empty array for empty or unparseable input.
+ *
+ * @internal
  */
 export function parseGitLog(rawOutput) {
     if (!rawOutput?.trim())
@@ -60,6 +62,8 @@ export function parseGitLog(rawOutput) {
  * Looks for task entries with commit message prefixes. Each task heading
  * (`## Task N: Title`) is parsed for its ID and title, and any commit
  * message convention (e.g. `feat(topic): ...`) is captured as the prefix.
+ *
+ * @internal
  */
 export function extractCommitPatterns(planContent) {
     const patterns = [];
@@ -91,6 +95,7 @@ export function extractCommitPatterns(planContent) {
 }
 /**
  * Filter commits to only those after the given ISO 8601 timestamp.
+ * @internal
  */
 export function filterCommitsSince(commits, sinceTimestamp) {
     const since = new Date(sinceTimestamp).getTime();
@@ -106,6 +111,8 @@ export function filterCommitsSince(commits, sinceTimestamp) {
  * - The commit message contains at least one of the task's keywords
  *
  * Confidence is "exact" when prefix and all keywords match, "fuzzy" otherwise.
+ *
+ * @internal
  */
 export function matchCommitsToTasks(commits, patterns) {
     const results = [];
@@ -138,6 +145,8 @@ export function matchCommitsToTasks(commits, patterns) {
  *
  * Porcelain format: `XY filename` where XY are status codes.
  * Returns an empty array for empty input.
+ *
+ * @internal
  */
 export function parseGitStatus(rawOutput) {
     if (!rawOutput?.trim())
@@ -167,6 +176,7 @@ export function parseGitStatus(rawOutput) {
 }
 /**
  * Filter changes to only those whose paths overlap with the task's expected paths.
+ * @internal
  */
 export function matchChangesToTask(changes, taskFilePaths) {
     const taskPathSet = new Set(taskFilePaths);
@@ -187,6 +197,7 @@ export function matchChangesToTask(changes, taskFilePaths) {
 // ---------------------------------------------------------------------------
 /**
  * Find tasks that have matching commits but are not marked as completed.
+ * @internal
  */
 export function findProgressInconsistencies(matches, progressEntries) {
     const progressMap = new Map(progressEntries.map((e) => [e.taskId, e]));
@@ -207,6 +218,7 @@ export function findProgressInconsistencies(matches, progressEntries) {
 /**
  * Detect dependency gaps: a committed task whose preceding task is neither
  * completed nor has a matching commit.
+ * @internal
  */
 export function findDependencyGaps(inconsistencies, progressEntries, taskOrder) {
     const progressMap = new Map(progressEntries.map((e) => [e.taskId, e]));
@@ -232,6 +244,7 @@ export function findDependencyGaps(inconsistencies, progressEntries, taskOrder) 
 }
 /**
  * Build reconciliation patches ordered by Plan task order.
+ * @internal
  */
 export function buildReconciliationPatch(inconsistencies, taskOrder) {
     const byTask = new Map(inconsistencies.map((i) => [i.taskId, i]));
@@ -253,6 +266,7 @@ export function buildReconciliationPatch(inconsistencies, taskOrder) {
 // ---------------------------------------------------------------------------
 /**
  * Get the ordered phase array for a given tier.
+ * @internal
  */
 export function getPhaseSequence(tier) {
     return PHASE_SEQUENCES[tier];
@@ -260,6 +274,7 @@ export function getPhaseSequence(tier) {
 /**
  * Get the next phase after the current one in the tier's sequence.
  * Returns null if the current phase is the last.
+ * @internal
  */
 export function getNextPhase(currentPhase, tier) {
     const seq = PHASE_SEQUENCES[tier];
@@ -274,6 +289,8 @@ export function getNextPhase(currentPhase, tier) {
  * Returns "behind" when all tasks are completed but phase hasn't advanced,
  * "ahead" when tasks are incomplete but phase is beyond expected position,
  * or null when consistent.
+ *
+ * @internal
  */
 export function findPhaseInconsistencies(allTasksCompleted, currentPhase, tier) {
     const seq = PHASE_SEQUENCES[tier];
@@ -309,12 +326,14 @@ export function findPhaseInconsistencies(allTasksCompleted, currentPhase, tier) 
 // ---------------------------------------------------------------------------
 /**
  * Check if a file path matches test file naming conventions.
+ * @internal
  */
 export function isTestFile(filePath) {
     return TEST_FILE_PATTERNS.some((re) => re.test(filePath));
 }
 /**
  * Infer the TDD phase from uncommitted file changes and verification status.
+ * @internal
  */
 export function inferTDDPhase(changes, verificationPassed) {
     const hasTestFiles = changes.some((c) => isTestFile(c.filePath));
@@ -334,6 +353,8 @@ export function inferTDDPhase(changes, verificationPassed) {
  *
  * Priority order: (a) task-completed-not-committed → (b) committed-not-progress-updated
  * → (c) progress-updated-not-phase-advanced → (d) subagent-mid-execution → (e) clean-state
+ *
+ * @internal
  */
 export function classifyInterruption(uncommittedResult, _gitScanResult, progressInconsistencies, phaseInconsistency, verificationPassed) {
     // (a) Task completed but not committed
@@ -381,6 +402,7 @@ export function classifyInterruption(uncommittedResult, _gitScanResult, progress
 // ---------------------------------------------------------------------------
 /**
  * Build the recovery report from all detection results.
+ * @internal
  */
 export function buildRecoveryReport(header, progressInconsistencies, phaseInconsistency, classification, uncommittedResult, dependencyGaps) {
     const inconsistencies = [];
@@ -521,6 +543,7 @@ export function buildRecoveryReport(header, progressInconsistencies, phaseIncons
 }
 /**
  * Calculate task segmentation for cross-session resume.
+ * @internal
  */
 export function calculateSegmentation(planTaskIds, completedTaskIds, commitMatches, currentInterruption) {
     const completedSet = new Set(completedTaskIds);
@@ -557,6 +580,7 @@ export function calculateSegmentation(planTaskIds, completedTaskIds, commitMatch
 // ---------------------------------------------------------------------------
 /**
  * Serialize a RecoveryReport to structured Markdown.
+ * @internal
  */
 export function serializeRecoveryReport(report) {
     const lines = [];
@@ -597,6 +621,7 @@ export function serializeRecoveryReport(report) {
 }
 /**
  * Deserialize structured Markdown back into a RecoveryReport.
+ * @internal
  */
 export function deserializeRecoveryReport(markdown) {
     const headerMatch = markdown.match(/^---\n([\s\S]*?)\n---/);
@@ -667,6 +692,7 @@ export function deserializeRecoveryReport(markdown) {
 // ---------------------------------------------------------------------------
 /**
  * Serialize an InterruptionClassification to structured text.
+ * @internal
  */
 export function serializeClassification(classification) {
     const lines = [
@@ -678,6 +704,7 @@ export function serializeClassification(classification) {
 }
 /**
  * Deserialize structured text into an InterruptionClassification.
+ * @internal
  */
 export function deserializeClassification(text) {
     const field = (name) => {
@@ -701,6 +728,7 @@ export function deserializeClassification(text) {
 // ---------------------------------------------------------------------------
 /**
  * Serialize a CheckpointMarker to structured text.
+ * @internal
  */
 export function serializeCheckpointMarker(marker) {
     const lines = [
@@ -712,6 +740,7 @@ export function serializeCheckpointMarker(marker) {
 }
 /**
  * Deserialize structured text into a CheckpointMarker.
+ * @internal
  */
 export function deserializeCheckpointMarker(text) {
     const field = (name) => {

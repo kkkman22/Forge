@@ -15,7 +15,7 @@ import { extractNumericField, extractStringField, parseFrontmatter } from "./fro
 // Types
 // ---------------------------------------------------------------------------
 
-/** Quality gate evaluation result. */
+/** Quality gate evaluation result. @public */
 export interface GateResult {
   /** Whether the gate passed, is blocked, or was skipped due to parse failure. */
   status: "passed" | "blocked" | "skipped";
@@ -70,6 +70,7 @@ function parseIssuesFromBody(body: string): Array<{ severity: string; descriptio
  *
  * @param reviewContent - Raw review report content string.
  * @returns Gate evaluation result.
+ * @public
  */
 export function evaluateReviewGate(reviewContent: string): GateResult {
   const parsed = parseFrontmatter(reviewContent);
@@ -129,6 +130,7 @@ export function evaluateReviewGate(reviewContent: string): GateResult {
  *
  * @param testResultContent - Raw test result content string.
  * @returns Gate evaluation result.
+ * @public
  */
 export function evaluateTestGate(testResultContent: string): GateResult {
   const parsed = parseFrontmatter(testResultContent);
@@ -230,6 +232,7 @@ function evaluateProgressGate(progressContent: string): GateResult {
  * @param testResultContent - Raw test result content string.
  * @param progressContent - Raw progress content string.
  * @returns Gate evaluation result.
+ * @public
  */
 export function evaluateShipGate(
   reviewContent: string,

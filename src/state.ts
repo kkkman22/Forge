@@ -768,6 +768,7 @@ export function parseLockInfo(content: string): LockInfo | null {
 // Multi-task status tracking (R8)
 // ---------------------------------------------------------------------------
 
+/** @public */
 export interface TaskStatusEntry {
   taskName: string;
   tier: string;
@@ -776,6 +777,7 @@ export interface TaskStatusEntry {
   updated: string;
 }
 
+/** @public */
 export function parseStatusEntries(content: string): TaskStatusEntry[] {
   const fm = parseFrontmatter(content);
   if (!fm) return [];
@@ -879,6 +881,7 @@ function isCompleteEntry(entry: Partial<TaskStatusEntry>): entry is TaskStatusEn
   );
 }
 
+/** @public */
 export function serializeStatusEntries(entries: TaskStatusEntry[]): string {
   const lines: string[] = ["---", "tasks:"];
 
@@ -899,6 +902,7 @@ export function serializeStatusEntries(entries: TaskStatusEntry[]): string {
   return lines.join("\n");
 }
 
+/** @public */
 export function upsertTaskEntry(
   entries: TaskStatusEntry[],
   newEntry: TaskStatusEntry,
@@ -912,11 +916,12 @@ export function upsertTaskEntry(
   return [...entries, newEntry];
 }
 
+/** @public */
 export function removeTaskEntry(entries: TaskStatusEntry[], taskName: string): TaskStatusEntry[] {
   return entries.filter((e) => e.taskName !== taskName);
 }
 
-/** Check whether a task name already exists in the entries list. */
+/** Check whether a task name already exists in the entries list. @public */
 export function hasTaskName(entries: TaskStatusEntry[], taskName: string): boolean {
   return entries.some((e) => e.taskName === taskName);
 }

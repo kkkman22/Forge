@@ -5,6 +5,7 @@ import path from "node:path";
 import { type CompletionContext, formatCompletionSummary } from "./completion-reporter.js";
 import { formatNotesDocument } from "./context-accumulator.js";
 import type { EffectExecutorInterface } from "./effect-executor.js";
+import { HooksProtectionMissingError } from "./forge-error.js";
 import { createLogEntry, createLogSink } from "./logger/index.js";
 import type {
   AgentInterface,
@@ -40,7 +41,10 @@ import { executeGenericIteration as executeGenericIterationFn } from "./sdk-gene
 import { validateHooksPresence } from "./sdk-hooks-validation.js";
 import { loadSandboxPolicy } from "./sdk-sandbox-policy.js";
 
-/** Core autonomous loop driver — bridges the state machine with real I/O. */
+/**
+ * Core autonomous loop driver — bridges the state machine with real I/O.
+ * @public
+ */
 export class SdkDriver {
   private readonly config: SdkDriverConfig;
   private readonly effectExecutor: EffectExecutorInterface;
@@ -130,32 +134,25 @@ export class SdkDriver {
 
   /** Run the autonomous loop until a termination condition is met. */
   async run(): Promise<SdkDriverResult> {
-    // Hooks validation (non-blocking).
-    try {
-      const hooksResult = validateHooksPresence(this.config.cwd);
-      if (!hooksResult.valid) {
-        this.logger.log(
-          createLogEntry(
-            "hooks_missing",
-            "warn",
-            this.t("driver.warning.hooksProtectionMissing", {
-              reason: hooksResult.reason ?? "unknown",
-            }),
-            { runId: this.config.runId },
-          ),
-        );
+    // Hooks validation — fail-closed: throw when protection is missing
+    // unless explicitly overridden with forceNoHooks.
+    const hooksResult = validateHooksPresence(this.config.cwd);
+    if (!hooksResult.valid) {
+      if (!this.config.forceNoHooks) {
+        throw new HooksProtectionMissingError(hooksResult.reason ?? "unknown", this.config.cwd);
       }
-    } catch (err) {
+      // Explicit bypass: warn + write audit flag
       this.logger.log(
         createLogEntry(
-          "hooks_validation_failed",
+          "hooks_protection_bypassed",
           "warn",
-          this.t("driver.warning.hooksProtectionMissing", {
-            reason: `unexpected error during hooks validation — ${err instanceof Error ? err.message : String(err)}`,
+          this.t("driver.warning.hooksProtectionBypassed", {
+            reason: hooksResult.reason ?? "unknown",
           }),
           { runId: this.config.runId },
         ),
       );
+      this.writeForceNoHooksFlag(hooksResult.reason ?? "unknown");
     }
 
     // Skill-aware startup: write Loop fields to StatusFile.
@@ -476,6 +473,36 @@ export class SdkDriver {
         ),
       );
       throw error;
+    }
+  }
+
+  /** Write an audit flag file when --force-no-hooks is used. */
+  private writeForceNoHooksFlag(reason: string): void {
+    try {
+      const flagPath = path.join(this.config.runDir, "force-no-hooks.flag");
+      mkdirSync(path.dirname(flagPath), { recursive: true });
+      writeFileSync(
+        flagPath,
+        JSON.stringify(
+          {
+            timestamp: new Date().toISOString(),
+            reason,
+            runId: this.config.runId,
+          },
+          null,
+          2,
+        ),
+        "utf-8",
+      );
+    } catch (err) {
+      this.logger.log(
+        createLogEntry(
+          "force_no_hooks_flag_failed",
+          "warn",
+          `Failed to write force-no-hooks audit flag: ${err instanceof Error ? err.message : String(err)}`,
+          { runId: this.config.runId },
+        ),
+      );
     }
   }
 

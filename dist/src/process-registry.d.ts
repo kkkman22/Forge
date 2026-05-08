@@ -1,4 +1,5 @@
 import type { ChildProcess, ExecFileSyncOptions, SpawnOptions } from "node:child_process";
+/** @internal */
 export interface ProcessMetadata {
     pid: number;
     pgid: number;
@@ -7,12 +8,14 @@ export interface ProcessMetadata {
     detached: boolean;
     description?: string;
 }
+/** @internal */
 export interface SerializedRegistry {
     sessionPid: number;
     sessionPgid: number;
     sessionStartTime: number;
     processes: ProcessMetadata[];
 }
+/** @internal */
 export interface ShutdownResult {
     terminated: number;
     forcedKill: number;
@@ -22,6 +25,7 @@ export interface ShutdownResult {
         error: string;
     }>;
 }
+/** @internal */
 export declare class ProcessRegistry {
     private static instance;
     private processes;

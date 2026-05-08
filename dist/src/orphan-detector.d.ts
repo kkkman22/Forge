@@ -1,3 +1,4 @@
+/** @internal */
 export interface PidFileContent {
     sessionPid: number;
     sessionPgid: number;
@@ -7,17 +8,24 @@ export interface PidFileContent {
         source: string;
     }>;
 }
+/** @internal */
 export interface OrphanProcess {
     pid: number;
     command: string;
     elapsedSeconds: number;
     source: "pid-file" | "ppid-detection";
 }
+/** @internal */
 export declare function writePidFile(sessionId: string, content: PidFileContent, baseDir: string): void;
+/** @internal */
 export declare function readPidFile(filePath: string): PidFileContent | null;
+/** @internal */
 export declare function deletePidFile(sessionId: string, baseDir: string): void;
+/** @internal */
 export declare function cleanupStaleSessions(baseDir: string): Promise<OrphanProcess[]>;
+/** @internal */
 export declare function detectPpidOrphans(patterns: string[], maxAgeSeconds: number): Promise<OrphanProcess[]>;
+/** @internal */
 export declare function cleanupOrphans(orphans: OrphanProcess[], autoKillThresholdSeconds: number): {
     killed: number[];
     warned: number[];

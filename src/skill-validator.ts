@@ -7,7 +7,7 @@
 
 import type { SkillManifest } from "./skill-loader.js";
 
-/** Result of manifest validation. */
+/** Result of manifest validation. @public */
 export interface ValidationResult {
   valid: boolean;
   errors: string[];
@@ -28,6 +28,7 @@ const REQUIRED_FIELDS: (keyof SkillManifest)[] = [
  *
  * @param json - Unknown input to validate.
  * @returns Validation result with errors if invalid.
+ * @public
  */
 export function validateManifest(json: unknown): ValidationResult {
   const errors: string[] = [];
@@ -76,6 +77,7 @@ export function validateManifest(json: unknown): ValidationResult {
  * @param manifest - SKILL manifest with forgeVersion requirement.
  * @param currentVersion - Current Forge version (exact semver).
  * @returns true if compatible.
+ * @public
  */
 export function checkVersionCompatibility(
   manifest: SkillManifest,

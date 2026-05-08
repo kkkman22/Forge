@@ -49,6 +49,7 @@ function parseIssuesFromBody(body) {
  *
  * @param reviewContent - Raw review report content string.
  * @returns Gate evaluation result.
+ * @public
  */
 export function evaluateReviewGate(reviewContent) {
     const parsed = parseFrontmatter(reviewContent);
@@ -100,6 +101,7 @@ export function evaluateReviewGate(reviewContent) {
  *
  * @param testResultContent - Raw test result content string.
  * @returns Gate evaluation result.
+ * @public
  */
 export function evaluateTestGate(testResultContent) {
     const parsed = parseFrontmatter(testResultContent);
@@ -189,6 +191,7 @@ function evaluateProgressGate(progressContent) {
  * @param testResultContent - Raw test result content string.
  * @param progressContent - Raw progress content string.
  * @returns Gate evaluation result.
+ * @public
  */
 export function evaluateShipGate(reviewContent, testResultContent, progressContent) {
     const reviewGate = evaluateReviewGate(reviewContent);

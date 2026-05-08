@@ -67,6 +67,8 @@ function lessonFor(trigger) {
  *
  * Pure function: same `(ctx, now, sequenceInDay)` always produces the
  * same Episode.
+ *
+ * @internal
  */
 export function buildFailureEpisode(ctx, now, sequenceInDay) {
     const date = isoDate(now);
@@ -117,6 +119,8 @@ export function buildFailureEpisode(ctx, now, sequenceInDay) {
  * The returned string ends with a trailing newline so callers can
  * concatenate it directly onto an existing file without tracking
  * separators.
+ *
+ * @internal
  */
 export function buildFailureEvolutionMarker(ctx, episodeId, now) {
     const date = isoDate(now);

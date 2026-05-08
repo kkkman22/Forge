@@ -6,6 +6,7 @@
  * a unique `code` string for programmatic discrimination.
  *
  * **Validates: Requirements 9.1, 9.2**
+ * @public
  */
 
 import type { z } from "zod";
@@ -132,6 +133,43 @@ export class SchemaValidationError extends ForgeError {
  *
  * **Validates: Requirement 3.7**
  */
+/**
+ * Specific reason codes for hooks protection failures.
+ * Used by HooksProtectionMissingError to provide actionable diagnostics.
+ */
+export type HooksProtectionReason =
+  | "hooks/hooks.json not found"
+  | "PreToolUse section missing in hooks.json"
+  | "hooks.json parse failed";
+
+/**
+ * Raised when the hooks protection chain is missing at startup.
+ *
+ * forge-loop runs with `bypassPermissions` enabled, relying on PreToolUse
+ * hooks to enforce frozen-zone protection. When hooks are absent, the loop
+ * must **fail closed** — aborting before any agent invocation — to prevent
+ * silent protection bypass.
+ *
+ * The error message includes the specific reason and suggested remediation.
+ * Users may override with `--force-no-hooks` at their own risk.
+ *
+ * **Validates: v2.4 Requirement 1.1, 1.2**
+ */
+export class HooksProtectionMissingError extends ForgeError {
+  readonly code = "HOOKS_PROTECTION_MISSING" as const;
+  readonly reason: HooksProtectionReason;
+  readonly cwd: string;
+
+  constructor(reason: string, cwd: string) {
+    super(
+      `Hooks protection is missing (${reason}). ` +
+        `Either run scripts/init.sh to restore hooks, or pass --force-no-hooks to explicitly bypass. cwd: ${cwd}`,
+    );
+    this.reason = reason as HooksProtectionReason;
+    this.cwd = cwd;
+  }
+}
+
 export class EventLogReplayError extends ForgeError {
   readonly code = "EVENT_LOG_REPLAY_MISMATCH" as const;
   readonly expectedHash: string;

@@ -60,6 +60,8 @@ const VALID_OUTCOMES = new Set(["success", "partial", "failure"]);
  * without forcing a backfill.
  *
  * The function is pure: same input always yields the same output.
+ *
+ * @internal
  */
 export function parseEpisode(content) {
     const fm = parseFrontmatter(content);
@@ -150,6 +152,8 @@ export function parseEpisode(content) {
  *   - The body is preserved verbatim after a blank line following the
  *     closing frontmatter delimiter, so v1 narrative content survives
  *     unchanged.
+ *
+ * @internal
  */
 export function renderEpisode(episode) {
     const lines = [];
@@ -192,6 +196,8 @@ export function renderEpisode(episode) {
  * non-negative integers and zero-padded to three digits. Callers are
  * expected to supply an ISO date string; this function does not
  * validate the date format, leaving that to the caller / scheduler.
+ *
+ * @internal
  */
 export function generateEpisodeId(date, sequenceInDay) {
     const seq = Math.max(0, Math.trunc(sequenceInDay));

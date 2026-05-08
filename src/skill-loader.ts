@@ -10,7 +10,7 @@ import { checkVersionCompatibility, validateManifest } from "./skill-validator.j
  * **Validates: Requirements R4.1, R4.3**
  */
 
-/** Phase names that a SKILL can participate in. */
+/** Phase names that a SKILL can participate in. @public */
 export type SkillPhase =
   | "decide"
   | "spec"
@@ -45,7 +45,7 @@ const VALID_PHASES: ReadonlySet<string> = new Set<string>([
 /** Maximum manifest file size in bytes (64KB). */
 const MAX_MANIFEST_SIZE = 65_536;
 
-/** Manifest describing a SKILL plugin. */
+/** Manifest describing a SKILL plugin. @public */
 export interface SkillManifest {
   /** Unique SKILL name (e.g., "forge-deploy"). */
   name: string;
@@ -73,6 +73,7 @@ export interface SkillManifest {
  * @param dirEntries - Array of subdirectory names to scan.
  * @param readFile - Function to read file content (injected for testability).
  * @returns Array of parsed SkillManifest objects.
+ * @public
  */
 export function loadSkillsFromDir(
   dirEntries: string[],
@@ -105,6 +106,7 @@ export function loadSkillsFromDir(
  * @param builtin - Built-in SKILL manifests (higher priority).
  * @param external - External/plugin SKILL manifests.
  * @returns Merged list with unique names, builtin preferred.
+ * @public
  */
 export function mergeSkillLists(
   builtin: SkillManifest[],
@@ -142,6 +144,7 @@ export interface InstallResult {
  * @param targetRoot - Absolute path to the project's skills root directory.
  * @param currentVersion - Current Forge version for compatibility checking.
  * @returns InstallResult indicating success or failure with details.
+ * @public
  */
 export function installSkill(
   sourcePath: string,
