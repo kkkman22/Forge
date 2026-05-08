@@ -1,4 +1,5 @@
 #!/bin/bash
+# category: internal-only
 # hook-check-frozen.sh — Wrapper for check-frozen.js that provides clear
 # error diagnostics when the Node runtime or compiled script is missing.
 #

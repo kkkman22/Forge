@@ -1,4 +1,5 @@
 #!/usr/bin/env bash
+# category: internal-only
 # run-with-trim.sh — Verification command wrapper
 # Wraps verification commands: success → truncate long output; failure → pass through unchanged
 # Uses standard utilities: tail, head, wc, cat, mktemp

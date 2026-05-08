@@ -1,4 +1,5 @@
 #!/usr/bin/env node
+// category: user-facing
 // ============================================================================
 // validate-skill-descriptions.mjs — SKILL.md description 校验器
 //
@@ -32,6 +33,16 @@ import { fileURLToPath } from "node:url";
 // ---------------------------------------------------------------------------
 
 const args = process.argv.slice(2);
+
+if (args.includes("--help") || args.includes("-h")) {
+  console.log(`Usage: scripts/validate-skill-descriptions.mjs [--strict]
+
+Validate SKILL.md frontmatter descriptions against two-sentence format rules.
+Checks: sentence count, imperative verb, "Use when" trigger, forbidden patterns.
+  --strict  Treat warnings as errors (exit 1 on any issue)`);
+  process.exit(0);
+}
+
 const strict = args.includes("--strict");
 
 // ---------------------------------------------------------------------------

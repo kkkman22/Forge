@@ -1,4 +1,5 @@
 #!/usr/bin/env node
+// category: internal-only
 /**
  * check-deps.mjs — Dependency safety scanner.
  *

@@ -111,6 +111,22 @@ Skills should treat `scripts/` as black-box CLIs (see CLAUDE.md §2.8):
 - User-facing scripts must have `--help` support
 - Internal-only scripts are listed in `scripts/.help-exempt`
 
+### Script Categories
+
+Every script must declare its category in a header comment:
+
+```bash
+# category: user-facing     # or internal-only | one-off
+```
+
+| Category | Criteria | --help Required |
+|----------|----------|----------------|
+| `user-facing` | Referenced in package.json, CLAUDE.md, SKILL.md, or /forge commands | Yes |
+| `internal-only` | Only sourced by other scripts, hooks, or CI | No |
+| `one-off` | Temporary migration/tool | No |
+
+**Validated by**: `node scripts/validate-scripts-help.mjs`
+
 ## 8. Anti-Patterns
 
 | # | Anti-Pattern | Why | Correct Approach |

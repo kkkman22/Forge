@@ -1,4 +1,5 @@
 #!/usr/bin/env bash
+# category: internal-only
 #
 # Forge Persistent Loop — Stop Hook
 #

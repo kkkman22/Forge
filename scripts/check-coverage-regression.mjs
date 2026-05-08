@@ -1,4 +1,5 @@
 #!/usr/bin/env node
+// category: internal-only
 /**
  * check-coverage-regression.mjs — Detect coverage regressions between PR and main.
  *
