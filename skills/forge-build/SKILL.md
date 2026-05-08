@@ -1,6 +1,7 @@
 ---
 name: forge-build
-description: "Execution engine that drives the approved plan through TDD with three-strike safety. Use when user runs `/forge build` / has an approved plan / begins the implementation phase of a standard or full tier task."
+description: "Execute an approved plan through TDD with subagent isolation, atomic commits, and three-strike failure safety. Use when running `/forge build`, an approved plan exists, or the implementation phase of a standard or full tier task begins."
+skeleton_exempt_legacy: true
 disable-model-invocation: true
 ---
 

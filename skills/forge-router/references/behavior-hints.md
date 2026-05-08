@@ -4,9 +4,9 @@ Hints 是叠加的（只增加检查项，不移除命令）。按 Scope 触发�
 
 | Hint | Scope | Target Command |
 |------|-------|---------------|
-| `a11y-check` | frontend | review |
-| `responsive-check` | frontend | review |
-| `visual-regression` | frontend | test |
+| `a11y-check` | frontend | review → frontend-check Tier B axe.run() |
+| `responsive-check` | frontend | review → frontend-check Tier B viewport + snapshot |
+| `visual-regression` | frontend | test → frontend-check Tier B screenshot diff (placeholder) |
 | `component-isolation` | frontend | build |
 | `api-contract-check` | backend | review |
 | `n-plus-one-check` | backend | review |

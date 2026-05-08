@@ -31,12 +31,16 @@ allowed-tools: Read, Glob, Grep, Skill
 | `abort` | `forge-abort` | 任务中止 |
 | `refactor` | `forge-refactor` | 重构引擎 |
 | `fix` | `forge-fix` | 修复引擎 |
+| `accept` | `forge-accept` | 验收场景执行 |
 
 **示例**：
 - `/forge learn` → 直接调用 `Skill(forge-learn)`
 - `/forge build` → 直接调用 `Skill(forge-build)`
 - `/forge ship` → 直接调用 `Skill(forge-ship)`
 - `/forge spec api-spec.yaml` → 调用 `Skill(forge-spec)`，传入 `api-spec.yaml` 作为参数
+- `/forge accept` → 调用 `Skill(forge-accept)`，执行验收场景
+- `/forge ship --with-acceptance` → 调用 `Skill(forge-ship)`，附带验收场景评估
+- `/forge ship --promote-derived` → 调用 `Skill(forge-ship)`，derived scenario 参与阻断判定
 
 **子命令后的剩余参数**作为该 Skill 的输入传递。
 

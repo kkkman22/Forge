@@ -1,4 +1,5 @@
 #!/bin/bash
+# category: internal-only
 # ============================================================================
 # validate-skill-descriptions.sh — SKILL.md description "Use when" 规范校验
 #

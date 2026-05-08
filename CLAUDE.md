@@ -67,6 +67,9 @@ build 阶段主 Agent 必须执行周期性 Restatement Checkpoint：每完成 N
 
 禁止操作预告、自我对话、逐步解说。保留所有 Forge 结构化输出。Decision_Point 允许 `[原因] → [选择] → [依据]`。非决策点散文 ≤200 tokens。结构化输出豁免清单、禁止模式表、详细示例 → 详见 docs/forge-constitution-detail.md §2.6
 
+### 2.8 Scripts as Black Box（铁律）
+> **原则**：scripts/ 中 user-facing 脚本必须先 `--help` 再调用。未尝试 `--help` 前不得 cat 源码。internal-only / one-off（记录在 `scripts/.help-exempt`）无此约束。需修改时允许读源码。→ 详见 docs/forge-constitution-detail.md §2.8
+
 ---
 
 ## 3. Review Discipline

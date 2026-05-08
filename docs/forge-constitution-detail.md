@@ -150,6 +150,19 @@ class Calculator {
 
 SKILL 定义的输出格式 > 简洁性约束。当 SKILL 要求特定输出（模板、标记、结构化块）时，简洁性规则自动让步。
 
+### §2.8 Scripts as Black Box
+
+**判定流程**：
+
+1. agent 需要调用 scripts/<name> 时 → 先 `bash scripts/<name> --help`
+2. --help 输出能决定用法 → 直接调用
+3. --help 不足以决定用法 → 明确声明"需要查看源码"并标注原因
+4. 脚本本身需要修改或扩展 → 允许读源码
+
+**例外**：internal-only / one-off 类脚本（记录在 `scripts/.help-exempt`）无此约束。
+
+**脚本分类**：每个脚本文件头声明 `# category: user-facing` / `internal-only` / `one-off`。由 `scripts/validate-scripts-help.mjs` 校验。
+
 ---
 
 ## §3 Review Discipline

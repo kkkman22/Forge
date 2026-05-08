@@ -1,4 +1,5 @@
 #!/usr/bin/env bash
+# category: user-facing
 # ============================================================================
 # forge install-dist — 从分发包安装 Forge 到 Claude Code
 #
@@ -31,6 +32,15 @@ BACKUP="false"
 
 while [[ $# -gt 0 ]]; do
   case "$1" in
+    --help|-h)
+      echo "Usage: scripts/install-dist.sh [--target <path>] [--dry-run] [--backup]"
+      echo ""
+      echo "Install Forge distribution to Claude Code."
+      echo "  --target <path>  Install to custom path (default: ~/.claude/skills/forge)"
+      echo "  --dry-run        Show what would be installed without writing files"
+      echo "  --backup         Backup existing installation before overwriting"
+      exit 0
+      ;;
     --platform)
       # Accept --platform claude-code for backward compatibility, ignore other values
       if [[ "$2" != "claude-code" ]]; then

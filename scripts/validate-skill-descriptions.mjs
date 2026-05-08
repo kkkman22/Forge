@@ -1,4 +1,5 @@
 #!/usr/bin/env node
+// category: user-facing
 // ============================================================================
 // validate-skill-descriptions.mjs — SKILL.md description 校验器
 //
@@ -7,20 +8,42 @@
 //   2. ≤ 1024 字符
 //   3. 包含 "Use when"（大小写不敏感，允许任意空白）
 //   4. 不含禁用模式：营销语言 / 版本号 / 具体日期
+//   5. [NEW] 恰好两句话（两句式格式）
+//   6. [NEW] 首句以祈使动词开头
+//   7. [NEW] 第二句以 "Use when" 开头
+//
+// 规则 5-7 默认 warning 模式，加 --strict 切换 error 模式。
 //
 // 规则镜像自 src/skill-description.ts，内联实现以避免依赖 dist/ 构建。
 //
 // 用法：
-//   node scripts/validate-skill-descriptions.mjs
+//   node scripts/validate-skill-descriptions.mjs [--strict]
 //
 // 退出码：
 //   0  所有 skill description 合规
-//   1  至少一个 skill 违规
+//   1  至少一个 skill 违规（含 --strict 下的规则 5-7 违规）
 // ============================================================================
 
 import { readdirSync, readFileSync, statSync } from "node:fs";
 import { dirname, join, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
+
+// ---------------------------------------------------------------------------
+// CLI flags
+// ---------------------------------------------------------------------------
+
+const args = process.argv.slice(2);
+
+if (args.includes("--help") || args.includes("-h")) {
+  console.log(`Usage: scripts/validate-skill-descriptions.mjs [--strict]
+
+Validate SKILL.md frontmatter descriptions against two-sentence format rules.
+Checks: sentence count, imperative verb, "Use when" trigger, forbidden patterns.
+  --strict  Treat warnings as errors (exit 1 on any issue)`);
+  process.exit(0);
+}
+
+const strict = args.includes("--strict");
 
 // ---------------------------------------------------------------------------
 // 规则定义（镜像 src/skill-description.ts）
@@ -34,8 +57,16 @@ const FORBIDDEN_PATTERNS = [
   { pattern: /\b202\d-\d{2}-\d{2}\b/, reason: "具体日期" },
 ];
 
+// 祈使动词白名单（镜像 src/skill-description-imperatives.ts）
+const IMPERATIVE_WHITELIST = [
+  "Abort", "Audit", "Build", "Capture", "Decide", "Decompose",
+  "Diagnose", "Execute", "Fix", "Grill", "Orchestrate", "Plan",
+  "Refactor", "Restart", "Resume", "Review", "Ship", "Specify",
+  "Test", "Verify",
+];
+
 // ---------------------------------------------------------------------------
-// Frontmatter 解析（镜像 src/frontmatter.ts 的 parseFrontmatter + extractStringField）
+// Frontmatter 解析（镜像 src/frontmatter.ts）
 // ---------------------------------------------------------------------------
 
 const DELIM = "---";
@@ -57,7 +88,39 @@ function extractStringField(raw, field) {
 }
 
 // ---------------------------------------------------------------------------
-// 核心校验（镜像 src/skill-description.ts 的 validateDescription）
+// Two-sentence helpers（镜像 src/skill-description.ts 扩展）
+// ---------------------------------------------------------------------------
+
+function splitSentences(text) {
+  if (text === "") return [""];
+  return text.split(/[。.]/);
+}
+
+function countSentences(text) {
+  if (text.trim() === "") return 0;
+  const parts = splitSentences(text);
+  const nonEmpty = parts.filter((s) => s.trim() !== "");
+  return nonEmpty.length === 0 ? 1 : nonEmpty.length;
+}
+
+function startsWithImperative(sentence, whitelist) {
+  if (sentence === "") return false;
+  const trimmed = sentence.trimStart();
+  if (trimmed === "") return false;
+  const firstWord = trimmed.split(/\s+/)[0] ?? "";
+  return whitelist.includes(firstWord);
+}
+
+function secondSentenceStartsWithUseWhen(sentences) {
+  if (sentences.length < 2) return false;
+  const nonEmpty = sentences.filter((s) => s.trim() !== "");
+  if (nonEmpty.length < 2) return false;
+  const second = nonEmpty[1].trimStart();
+  return /^use\s+when/i.test(second);
+}
+
+// ---------------------------------------------------------------------------
+// 核心校验
 // ---------------------------------------------------------------------------
 
 function validateDescription(filePath, content) {
@@ -65,6 +128,9 @@ function validateDescription(filePath, content) {
   const description = fm === null ? "" : (extractStringField(fm.raw, "description") ?? "");
   const length = description.length;
   const errors = [];
+  const warnings = [];
+
+  // --- 原有规则（始终 enforced） ---
 
   if (fm === null) {
     errors.push("缺少 frontmatter");
@@ -89,13 +155,43 @@ function validateDescription(filePath, content) {
     }
   }
 
+  // --- 新增规则（两句话格式） ---
+
+  let sentenceCount = 0;
+  let firstSentenceStartsWithImperative = false;
+  let secondStart = false;
+
+  if (description !== "") {
+    const sentences = splitSentences(description);
+    sentenceCount = countSentences(description);
+    firstSentenceStartsWithImperative = startsWithImperative(sentences[0] ?? "", IMPERATIVE_WHITELIST);
+    secondStart = secondSentenceStartsWithUseWhen(sentences);
+
+    if (sentenceCount !== 2) {
+      const msg = `description 需要 2 句话，当前 ${sentenceCount} 句`;
+      if (strict) errors.push(msg); else warnings.push(msg);
+    }
+    if (!firstSentenceStartsWithImperative) {
+      const msg = "description 首句未以祈使动词开头";
+      if (strict) errors.push(msg); else warnings.push(msg);
+    }
+    if (!secondStart) {
+      const msg = 'description 第二句未以 "Use when" 开头';
+      if (strict) errors.push(msg); else warnings.push(msg);
+    }
+  }
+
   return {
     filePath,
     description,
     length,
     hasUseWhen,
     hasForbiddenPatterns: hitReasons,
+    sentenceCount,
+    firstSentenceStartsWithImperative,
+    secondSentenceStartsWithUseWhen: secondStart,
     valid: errors.length === 0,
+    warnings,
     errors,
   };
 }
@@ -140,30 +236,44 @@ function main() {
   const paths = listSkillFiles(skillsDir);
   const results = paths.map((p) => validateDescription(p, readFileSync(p, "utf8")));
 
-  console.log("SKILL Description Check");
-  console.log("=======================");
+  console.log("SKILL Description Check" + (strict ? " [STRICT]" : ""));
+  console.log("==========================" + (strict ? "========" : ""));
 
   let failed = 0;
+  let warned = 0;
   for (const r of results) {
     const rel = r.filePath.slice(rootDir.length + 1);
-    if (r.valid) {
-      console.log(`✓ ${rel}  (len=${r.length})`);
+    if (r.valid && r.warnings.length === 0) {
+      console.log(`✓ ${rel}  (len=${r.length}, sentences=${r.sentenceCount})`);
+    } else if (r.valid && r.warnings.length > 0) {
+      warned++;
+      console.log(`⚠ ${rel}  (len=${r.length}, sentences=${r.sentenceCount})`);
+      for (const w of r.warnings) {
+        console.log(`    [warning] ${w}`);
+      }
     } else {
       failed++;
-      console.log(`✗ ${rel}  (len=${r.length})`);
+      console.log(`✗ ${rel}  (len=${r.length}, sentences=${r.sentenceCount})`);
       for (const err of r.errors) {
         console.log(`    - ${err}`);
+      }
+      for (const w of r.warnings) {
+        console.log(`    [warning] ${w}`);
       }
     }
   }
 
   console.log("");
-  console.log(`Summary: ${results.length - failed}/${results.length} passed, ${failed} failed`);
+  console.log(`Summary: ${results.length - failed - warned}/${results.length} passed, ${warned} warnings, ${failed} failed`);
 
   if (failed > 0) {
     console.log("");
-    console.log(`FAIL: ${failed} skill description(s) violate the "Use when" spec.`);
+    console.log(`FAIL: ${failed} skill description(s) violate the spec.`);
     process.exit(1);
+  }
+  if (warned > 0 && !strict) {
+    console.log("");
+    console.log(`NOTE: ${warned} skill(s) have two-sentence format warnings. Run with --strict to enforce.`);
   }
   console.log("All skill descriptions valid ✓");
   process.exit(0);

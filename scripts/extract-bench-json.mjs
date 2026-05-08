@@ -1,4 +1,5 @@
 #!/usr/bin/env node
+// category: internal-only
 /**
  * extract-bench-json.mjs — Parse vitest bench JSON and compare against a baseline.
  *

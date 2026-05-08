@@ -1,4 +1,5 @@
 #!/usr/bin/env bash
+# category: user-facing
 # ============================================================================
 # prune-event-logs.sh — Remove expired forge-loop run directories.
 #
@@ -18,12 +19,22 @@
 set -euo pipefail
 
 DRY_RUN="no"
-if [[ "${1:-}" == "--dry-run" ]]; then
+if [[ "${1:-}" == "--help" || "${1:-}" == "-h" ]]; then
+  echo "Usage: scripts/prune-event-logs.sh [--dry-run]"
+  echo ""
+  echo "Remove expired .forge/runs/ directories based on retention config."
+  echo "  --dry-run  Report what would be deleted without actually deleting"
+  exit 0
+elif [[ "${1:-}" == "--dry-run" ]]; then
   DRY_RUN="yes"
 fi
 
 CONFIG_FILE=".forge/config.md"
 RUNS_DIR=".forge/runs"
+ASSETS_DIR=".forge/reviews/assets"
+ARCHIVE_DIR=".forge/archive/reviews"
+ACCEPTANCE_DIR=".forge/acceptance"
+ACCEPTANCE_ARCHIVE=".forge/archive/acceptance"
 
 # Default retention period, overridden by the config when present.
 RETENTION_DAYS=30
@@ -72,5 +83,50 @@ while IFS= read -r dir; do
     rm -rf -- "${dir}"
   fi
 done <<< "${STALE_DIRS}"
+
+# ---------------------------------------------------------------------------
+# Archive stale review assets (.forge/reviews/assets/*)
+# ---------------------------------------------------------------------------
+
+if [[ -d "${ASSETS_DIR}" ]]; then
+  STALE_ASSETS=$(find "${ASSETS_DIR}" -type f -mtime "+${RETENTION_DAYS}" 2>/dev/null)
+  if [[ -n "${STALE_ASSETS}" ]]; then
+    if [[ "${DRY_RUN}" != "yes" ]]; then
+      mkdir -p "${ARCHIVE_DIR}"
+    fi
+    while IFS= read -r file; do
+      if [[ -z "${file}" ]]; then continue; fi
+      if [[ "${DRY_RUN}" == "yes" ]]; then
+        echo "would archive: ${file}"
+      else
+        mv -- "${file}" "${ARCHIVE_DIR}/"
+        echo "archived: ${file}"
+      fi
+    done <<< "${STALE_ASSETS}"
+  fi
+fi
+
+# ---------------------------------------------------------------------------
+# Archive stale acceptance results (.forge/acceptance/*)
+# ---------------------------------------------------------------------------
+
+if [[ -d "${ACCEPTANCE_DIR}" ]]; then
+  STALE_ACCEPTANCE=$(find "${ACCEPTANCE_DIR}" -mindepth 1 -maxdepth 1 -type d \
+    -mtime "+${RETENTION_DAYS}" 2>/dev/null)
+  if [[ -n "${STALE_ACCEPTANCE}" ]]; then
+    if [[ "${DRY_RUN}" != "yes" ]]; then
+      mkdir -p "${ACCEPTANCE_ARCHIVE}"
+    fi
+    while IFS= read -r dir; do
+      if [[ -z "${dir}" ]]; then continue; fi
+      if [[ "${DRY_RUN}" == "yes" ]]; then
+        echo "would archive acceptance: ${dir}"
+      else
+        mv -- "${dir}" "${ACCEPTANCE_ARCHIVE}/"
+        echo "archived acceptance: ${dir}"
+      fi
+    done <<< "${STALE_ACCEPTANCE}"
+  fi
+fi
 
 exit 0

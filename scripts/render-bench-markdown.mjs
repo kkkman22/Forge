@@ -1,4 +1,5 @@
 #!/usr/bin/env node
+// category: internal-only
 /**
  * render-bench-markdown.mjs — Render a benchmark comparison report as Markdown.
  *
