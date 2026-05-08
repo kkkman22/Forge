@@ -33,6 +33,7 @@ export const STATUS_DEFAULTS = {
 };
 export const REVIEW_REPORT_DEFAULTS = {
     result: "incomplete",
+    reviewed_at_commit: undefined,
     p0_count: 0,
     p1_count: 0,
     p2_count: 0,
@@ -211,6 +212,9 @@ function parseReviewReportViaSchema(content) {
     const resultStr = extractStringField(fm.raw, "result");
     if (resultStr !== null)
         rawFields.result = resultStr;
+    const reviewedCommit = extractStringField(fm.raw, "reviewed_at_commit");
+    if (reviewedCommit !== null)
+        rawFields.reviewed_at_commit = reviewedCommit;
     const p0 = extractNumericField(fm.raw, "p0_count");
     if (p0 !== null)
         rawFields.p0_count = p0;
@@ -226,6 +230,7 @@ function parseReviewReportViaSchema(content) {
     const { value, errors } = safeParseReviewReport(rawFields);
     const parsed = {
         result: value.result ?? REVIEW_REPORT_DEFAULTS.result,
+        reviewed_at_commit: value.reviewed_at_commit ?? REVIEW_REPORT_DEFAULTS.reviewed_at_commit,
         p0_count: value.p0_count ?? REVIEW_REPORT_DEFAULTS.p0_count,
         p1_count: value.p1_count ?? REVIEW_REPORT_DEFAULTS.p1_count,
         p2_count: value.p2_count ?? REVIEW_REPORT_DEFAULTS.p2_count,
@@ -259,12 +264,14 @@ function parseReviewReportLegacy(content) {
         return { parsed: { ...REVIEW_REPORT_DEFAULTS }, warnings };
     }
     const resultStr = extractStringField(fm.raw, "result");
+    const reviewedCommit = extractStringField(fm.raw, "reviewed_at_commit");
     const p0 = extractNumericField(fm.raw, "p0_count");
     const p1 = extractNumericField(fm.raw, "p1_count");
     const p2 = extractNumericField(fm.raw, "p2_count");
     const p3 = extractNumericField(fm.raw, "p3_count");
     const parsed = {
         result: resultStr ?? REVIEW_REPORT_DEFAULTS.result,
+        reviewed_at_commit: reviewedCommit ?? REVIEW_REPORT_DEFAULTS.reviewed_at_commit,
         p0_count: p0 ?? REVIEW_REPORT_DEFAULTS.p0_count,
         p1_count: p1 ?? REVIEW_REPORT_DEFAULTS.p1_count,
         p2_count: p2 ?? REVIEW_REPORT_DEFAULTS.p2_count,
@@ -581,6 +588,7 @@ export function parseLockInfo(content) {
         targetFile: targetMatch[1],
     };
 }
+/** @public */
 export function parseStatusEntries(content) {
     const fm = parseFrontmatter(content);
     if (!fm)
@@ -675,6 +683,7 @@ function isCompleteEntry(entry) {
         typeof entry.phase === "string" &&
         typeof entry.updated === "string");
 }
+/** @public */
 export function serializeStatusEntries(entries) {
     const lines = ["---", "tasks:"];
     for (const entry of entries) {
@@ -691,6 +700,7 @@ export function serializeStatusEntries(entries) {
     lines.push(`${entries.length} active task${entries.length !== 1 ? "s" : ""}.`);
     return lines.join("\n");
 }
+/** @public */
 export function upsertTaskEntry(entries, newEntry) {
     const idx = entries.findIndex((e) => e.taskName === newEntry.taskName);
     if (idx >= 0) {
@@ -700,10 +710,11 @@ export function upsertTaskEntry(entries, newEntry) {
     }
     return [...entries, newEntry];
 }
+/** @public */
 export function removeTaskEntry(entries, taskName) {
     return entries.filter((e) => e.taskName !== taskName);
 }
-/** Check whether a task name already exists in the entries list. */
+/** Check whether a task name already exists in the entries list. @public */
 export function hasTaskName(entries, taskName) {
     return entries.some((e) => e.taskName === taskName);
 }

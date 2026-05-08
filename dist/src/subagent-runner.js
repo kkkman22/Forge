@@ -4,7 +4,7 @@
  * Provides utilities to build subagent invocations and collect results
  * from parallel execution using Promise.allSettled.
  */
-/** Agent types defined in .claude/agents/ that may be used as subagent_type. */
+/** Agent types defined in .claude/agents/ that may be used as subagent_type. @public */
 export const VALID_AGENT_TYPES = [
     "spec-check",
     "quality-check",
@@ -21,6 +21,7 @@ export const VALID_AGENT_TYPES = [
  *
  * Each agent type maps to a SubagentInvocation with a descriptive prompt,
  * default permission mode, and configurable max turns.
+ * @public
  */
 export function buildSubagentInvocations(agentTypes, taskDescription, options) {
     for (const at of agentTypes) {
@@ -45,6 +46,7 @@ export function buildSubagentInvocations(agentTypes, taskDescription, options) {
  *
  * In the actual runtime, this delegates to Claude Code's Agent tool.
  * This function provides the pure coordination logic for result collection.
+ * @public
  */
 export async function runSubagentsInParallel(invocations, executor) {
     const outcomes = await Promise.allSettled(invocations.map((inv) => executor(inv)));

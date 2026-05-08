@@ -38,6 +38,8 @@ export interface StatusFields {
 /** Structured review report fields with all fields guaranteed present. */
 export interface ReviewReportFields {
     result: string;
+    /** Commit hash at the time of review. Optional for backward compatibility. */
+    reviewed_at_commit?: string;
     p0_count: number;
     p1_count: number;
     p2_count: number;
@@ -236,6 +238,7 @@ export declare function serializeLockInfo(info: LockInfo): string;
  * Returns null if the content is not a valid lock file.
  */
 export declare function parseLockInfo(content: string): LockInfo | null;
+/** @public */
 export interface TaskStatusEntry {
     taskName: string;
     tier: string;
@@ -243,9 +246,13 @@ export interface TaskStatusEntry {
     worktree?: string;
     updated: string;
 }
+/** @public */
 export declare function parseStatusEntries(content: string): TaskStatusEntry[];
+/** @public */
 export declare function serializeStatusEntries(entries: TaskStatusEntry[]): string;
+/** @public */
 export declare function upsertTaskEntry(entries: TaskStatusEntry[], newEntry: TaskStatusEntry): TaskStatusEntry[];
+/** @public */
 export declare function removeTaskEntry(entries: TaskStatusEntry[], taskName: string): TaskStatusEntry[];
-/** Check whether a task name already exists in the entries list. */
+/** Check whether a task name already exists in the entries list. @public */
 export declare function hasTaskName(entries: TaskStatusEntry[], taskName: string): boolean;

@@ -8,7 +8,7 @@
  * Design reference: loop-skills-fusion § quality-gate.ts
  * **Validates: Requirements 5.1, 5.2, 5.3, 5.4, 5.5, 5.6**
  */
-/** Quality gate evaluation result. */
+/** Quality gate evaluation result. @public */
 export interface GateResult {
     /** Whether the gate passed, is blocked, or was skipped due to parse failure. */
     status: "passed" | "blocked" | "skipped";
@@ -30,6 +30,7 @@ export interface GateResult {
  *
  * @param reviewContent - Raw review report content string.
  * @returns Gate evaluation result.
+ * @public
  */
 export declare function evaluateReviewGate(reviewContent: string): GateResult;
 /**
@@ -42,6 +43,7 @@ export declare function evaluateReviewGate(reviewContent: string): GateResult;
  *
  * @param testResultContent - Raw test result content string.
  * @returns Gate evaluation result.
+ * @public
  */
 export declare function evaluateTestGate(testResultContent: string): GateResult;
 /**
@@ -56,5 +58,6 @@ export declare function evaluateTestGate(testResultContent: string): GateResult;
  * @param testResultContent - Raw test result content string.
  * @param progressContent - Raw progress content string.
  * @returns Gate evaluation result.
+ * @public
  */
 export declare function evaluateShipGate(reviewContent: string, testResultContent: string, progressContent: string): GateResult;

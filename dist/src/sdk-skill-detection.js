@@ -25,6 +25,7 @@ export function detectSkillAwareMode(cwd) {
         return existsSync(join(cwd, ".forge"));
     }
     catch (err) {
+        // biome-ignore lint/suspicious/noConsole: standalone utility without logger access
         console.error(`[debug] detectSkillAwareMode failed for "${cwd}": ${err instanceof Error ? err.message : String(err)}`);
         return false;
     }

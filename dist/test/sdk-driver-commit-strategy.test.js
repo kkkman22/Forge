@@ -72,6 +72,7 @@ function createConfig(overrides) {
         },
         limits: { maxIterations: 1 },
         cwd: "/test/repo",
+        forceNoHooks: true,
         runId: "test-run-id",
         runDir: "/test/repo/.forge/runs/test-run-id/",
         warmQuery: {},
