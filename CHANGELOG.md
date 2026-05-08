@@ -13,6 +13,23 @@ Entries follow [Keep a Changelog](https://keepachangelog.com/) with Forge-specif
 
 ### Added
 
+- Stop hook (`persistent-loop.sh`) now covers 6 auto-advance scenarios:
+  plan→build (Case 5), build→review (Case 6), review→test (Case 7),
+  test→ship (Case 8), ship→learn (Case 9), and loop iteration handoff (Case 10).
+  These detect phase completion via `.forge/` state and inject command-style
+  instructions to resume the pipeline.
+- `checkPlanStructure()` in `src/plan.ts`: evaluates plan structure for split
+  trigger conditions (task count > 15, multiple Sprint headings, delivery task
+  names, chained Sprint dependencies).
+- Plan Structure Check integrated into `forge-plan` Self-Check (Step 4a) with
+  acknowledge/split user interaction.
+- R3 rule in `evolved-rules.md`: "Sprint Is Not Phase Boundary" — injected at
+  every session start via SessionStart hook.
+- Stop hook dedupe mechanism: 60s TTL prevents repeated injection on same
+  phase state; stale markers (>24h) auto-cleaned.
+- `scripts/lint-evolved-rules.mjs`: validates `rule_count` frontmatter matches
+  actual rule heading count.
+
 - **ADR Registry** (Requirement 1): canonical `.forge/decisions/ADR-NNNN-*.md` records with `/forge decide` auto-numbering via `nextAdrId`, auto-updated `.forge/knowledge/adr-index.md`, supersession tracking, and related-ADR matching via Jaccard similarity. Template at `.forge/decisions/ADR-TEMPLATE.md`.
 - **Security posture documentation** (Requirement 6):
   - README "🛡️ 安全与信任" section listing the 5-layer defense model.
