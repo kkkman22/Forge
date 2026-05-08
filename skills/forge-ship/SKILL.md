@@ -1,6 +1,6 @@
 ---
 name: forge-ship
-description: "Delivery engine enforcing the commit gate and freshness check before publishing changes. Use when user runs `/forge ship` / all review and test gates passed / ready to push branch or create pull request."
+description: "Ship changes after enforcing the review gate, test gate, progress gate, and review freshness check. Use when running `/forge ship`, all review and test gates have passed, or a branch or pull request is ready to push."
 disable-model-invocation: true
 ---
 
