@@ -70,7 +70,7 @@ disable-model-invocation: true
 
 ### 4.2 Prompt `/forge learn`
 
-交付完成后（丢弃除外），自动调用 /forge learn 执行知识沉淀（→ 详见 shared/next-step-protocol.md）
+交付完成后（丢弃除外），**立即调用** `Skill(skill="forge", args="learn")`，不输出确认提示（→ 详见 shared/next-step-protocol.md）
 
 **Mode 判断**：如果 `mode` 为 `autonomous`，learn 由 Skill Scheduler 按 tier=full 自动调度。
 

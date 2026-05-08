@@ -98,7 +98,7 @@ Frontmatter 字段：`topic`, `status` (draft/approved), `date`, `spec_ref`, `fo
 4. **Task Breakdown**: 拆解为原子任务
 5. **Self-Check**: 覆盖率/占位符/类型一致性，自动修正
 6. **User Approval**: 批准/修改/拒绝
-7. **自动推进**: 批准后自动调用 /forge build（→ 详见 shared/next-step-protocol.md）
+7. **自动推进（铁律）**: 批准后**立即调用** `Skill(skill="forge", args="build")`。不输出"是否继续？""开始build？"等确认文本。仅输出 `✅ plan 完成 → 自动进入 build`，然后直接调用 Skill。（→ 详见 shared/next-step-protocol.md）
 
 **Pre-check 详情**：`.forge/` 不存在 → prompt `forge init`。Full path 要求 Spec locked；Standard path 无 Spec 时直接生成 Plan（`spec_ref: "none"`）。
 

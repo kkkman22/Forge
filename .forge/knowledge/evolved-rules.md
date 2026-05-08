@@ -1,6 +1,6 @@
 ---
-updated: "2026-04-28"
-rule_count: 0
+updated: "2026-05-08"
+rule_count: 1
 max_rules: 15
 ---
 
@@ -19,3 +19,12 @@ Each rule prevents a specific, documented error pattern.
 **Confidence**: {0.3-0.9}
 **Last_triggered**: {YYYY-MM-DD}
 -->
+
+### R1: Forge Phase Auto-Advance
+
+**Content**: Plan 批准后的阶段（build → review → test → ship → learn）成功完成后，必须**立即调用** `Skill(skill="forge", args="<next>")` 进入下一阶段。禁止输出任何确认提示（"是否继续？"、"继续build吗？"、"Ready to proceed?"等）。唯一输出格式：`✅ <阶段> 完成 → 自动进入 <下一阶段>`，然后立即调用 Skill。**例外**：decide 和 spec 阶段需要人工确认（决策方向确认、规格审阅锁定），不属于自动推进范围。失败/阻断时才停下来等用户。
+**Prevents**: 模型在阶段间添加额外确认步骤，违反 CLAUDE.md §2.7 铁律
+**Source**: 用户反馈 — glm-5.1 模型在 plan 批准后仍询问"是否 build"
+**Added**: 2026-05-08
+**Confidence**: 0.9
+**Last_triggered**: 2026-05-08

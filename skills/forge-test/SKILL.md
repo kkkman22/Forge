@@ -96,6 +96,7 @@ disable-model-invocation: true
 3. **Layer 2**：Web 项目执行浏览器级 QA，否则跳过
 4. **Layer 3**：逐项检查 7 项清单
 5. **输出结果**：汇总三层验证结果，更新 Progress
+6. **自动推进（铁律）**：通过后**立即调用** `Skill(skill="forge", args="ship")`，不输出确认提示。仅输出 `✅ test 完成 → 自动进入 ship`，然后直接调用 Skill（→ 详见 shared/next-step-protocol.md）。未通过 → 停止，输出失败详情。
 
 ---
 
