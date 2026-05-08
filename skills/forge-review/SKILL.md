@@ -1,6 +1,6 @@
 ---
 name: forge-review
-description: "Parallel Subagent review engine covering structure, security, performance, and accessibility. Use when user runs `/forge review` / build completes / needs multi-perspective code quality gate before ship."
+description: "Review build output through parallel subagents covering spec alignment, code quality, and security with P0/P1 ship-blocking severity classification. Use when running `/forge review`, build completes, or a multi-perspective code quality gate is needed before ship."
 disable-model-invocation: true
 ---
 
