@@ -400,6 +400,7 @@ describe("Feature: sdk-autonomous-loop, Property 1: Driver input validation", ()
             },
             limits: {},
             cwd: "/test/repo",
+            forceNoHooks: true,
             runId: "test-run-id",
             runDir: "/test/runs/test-run-id",
             warmQuery: {},

@@ -7,11 +7,10 @@
  * **Validates: Requirement 8 (Plan injection)**
  */
 import { execFileSync } from "node:child_process";
-import { mkdirSync, rmSync, writeFileSync } from "node:fs";
-import { join } from "node:path";
-import { mkdtempSync } from "node:fs";
+import { mkdirSync, mkdtempSync, rmSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
-import { describe, afterEach, it, expect } from "vitest";
+import { join } from "node:path";
+import { afterEach, describe, expect, it } from "vitest";
 
 const SCRIPT_PATH = join(process.cwd(), "scripts", "inject-plan-context.mjs");
 
@@ -22,10 +21,7 @@ function createTempPlansDir(): string {
 }
 
 function writePlan(plansDir: string, name: string, frontmatter: string, body: string): void {
-  writeFileSync(
-    join(plansDir, ".forge", "plans", name),
-    `---\n${frontmatter}\n---\n\n${body}`,
-  );
+  writeFileSync(join(plansDir, ".forge", "plans", name), `---\n${frontmatter}\n---\n\n${body}`);
 }
 
 function runScript(cwd: string): string {
@@ -75,35 +71,20 @@ describe("inject-plan-context.mjs", () => {
 
     // Create 5 plans with different content
     for (let i = 1; i <= 5; i++) {
-      writePlan(
-        tempDir,
-        `plan-${i}.md`,
-        "status: approved",
-        `Plan ${i} content`,
-      );
+      writePlan(tempDir, `plan-${i}.md`, "status: approved", `Plan ${i} content`);
     }
 
     const output = runScript(tempDir);
     // Should contain at most 3 plan headers
     const planHeaders = output.match(/--- .+plan-\d+\.md ---/g);
     expect(planHeaders).not.toBeNull();
-    expect(planHeaders!.length).toBeLessThanOrEqual(3);
+    expect(planHeaders?.length).toBeLessThanOrEqual(3);
   });
 
   it("skips plans without active/approved status", () => {
     tempDir = createTempPlansDir();
-    writePlan(
-      tempDir,
-      "completed.md",
-      "status: completed",
-      "This plan is done",
-    );
-    writePlan(
-      tempDir,
-      "no-frontmatter.md",
-      "",
-      "No status field",
-    );
+    writePlan(tempDir, "completed.md", "status: completed", "This plan is done");
+    writePlan(tempDir, "no-frontmatter.md", "", "No status field");
 
     const output = runScript(tempDir);
     expect(output).toBe("");
@@ -123,12 +104,7 @@ describe("inject-plan-context.mjs", () => {
 
     // Create 3 plans with very large bodies
     for (let i = 1; i <= 3; i++) {
-      writePlan(
-        tempDir,
-        `big-${i}.md`,
-        "status: approved",
-        "y".repeat(4000),
-      );
+      writePlan(tempDir, `big-${i}.md`, "status: approved", "y".repeat(4000));
     }
 
     const output = runScript(tempDir);

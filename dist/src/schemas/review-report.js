@@ -25,6 +25,7 @@ export const SeverityCountSchema = z.number().int().min(0);
 export const ReviewReportSchema = z
     .object({
     result: ReviewResultSchema.optional(),
+    reviewed_at_commit: z.string().min(1).optional(),
     p0_count: SeverityCountSchema.optional(),
     p1_count: SeverityCountSchema.optional(),
     p2_count: SeverityCountSchema.optional(),
@@ -64,6 +65,7 @@ export function safeParseReviewReport(raw) {
 }
 const FIELD_SCHEMAS = {
     result: ReviewResultSchema,
+    reviewed_at_commit: z.string().min(1),
     p0_count: SeverityCountSchema,
     p1_count: SeverityCountSchema,
     p2_count: SeverityCountSchema,

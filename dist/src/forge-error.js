@@ -6,6 +6,7 @@
  * a unique `code` string for programmatic discrimination.
  *
  * **Validates: Requirements 9.1, 9.2**
+ * @public
  */
 export class ForgeError extends Error {
     constructor(message) {
@@ -72,20 +73,30 @@ export class SchemaValidationError extends ForgeError {
         this.issues = issues;
     }
 }
-// ---------------------------------------------------------------------------
-// Event Log Replay
-// ---------------------------------------------------------------------------
 /**
- * Raised when replaying `events.jsonl` yields a state whose hash does
- * not match the persisted `state-final.json` snapshot.
+ * Raised when the hooks protection chain is missing at startup.
  *
- * This indicates that either the event log or the final-state file has
- * been tampered with, or that the orchestrator's transition function
- * has changed in a backward-incompatible way since the run was
- * recorded.
+ * forge-loop runs with `bypassPermissions` enabled, relying on PreToolUse
+ * hooks to enforce frozen-zone protection. When hooks are absent, the loop
+ * must **fail closed** — aborting before any agent invocation — to prevent
+ * silent protection bypass.
  *
- * **Validates: Requirement 3.7**
+ * The error message includes the specific reason and suggested remediation.
+ * Users may override with `--force-no-hooks` at their own risk.
+ *
+ * **Validates: v2.4 Requirement 1.1, 1.2**
  */
+export class HooksProtectionMissingError extends ForgeError {
+    code = "HOOKS_PROTECTION_MISSING";
+    reason;
+    cwd;
+    constructor(reason, cwd) {
+        super(`Hooks protection is missing (${reason}). ` +
+            `Either run scripts/init.sh to restore hooks, or pass --force-no-hooks to explicitly bypass. cwd: ${cwd}`);
+        this.reason = reason;
+        this.cwd = cwd;
+    }
+}
 export class EventLogReplayError extends ForgeError {
     code = "EVENT_LOG_REPLAY_MISMATCH";
     expectedHash;

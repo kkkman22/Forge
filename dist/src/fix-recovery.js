@@ -3,6 +3,7 @@
  *
  * **Validates: Requirements 11.1, 11.3**
  */
+/** @public */
 export function isFixCandidate(commitFiles, commitLineRanges, findingFilePath, findingLineNumber, lineTolerance = 10) {
     if (!commitFiles.includes(findingFilePath))
         return false;
@@ -17,6 +18,7 @@ export function isFixCandidate(commitFiles, commitLineRanges, findingFilePath, f
     }
     return false;
 }
+/** @public */
 export function parseGitLog(gitLogOutput) {
     if (!gitLogOutput.trim())
         return [];

@@ -93,6 +93,7 @@ function createConfig(overrides) {
         },
         limits: { maxIterations: 1 },
         cwd: "/test/repo",
+        forceNoHooks: true,
         runId: "test-run-id",
         runDir: "/test/repo/.forge/runs/test-run-id/",
         warmQuery: {},
@@ -199,6 +200,7 @@ describe("Phase switch outputs skill_phase_transition log", () => {
 describe("Degradation detection triggers performance_degradation warning", () => {
     it("outputs performance_degradation when iteration is anomalously slow", async () => {
         const logSpy = vi.spyOn(console, "log").mockImplementation(() => { });
+        const errSpy = vi.spyOn(console, "error").mockImplementation(() => { });
         phaseSequence = ["build", "build", "build", "build"];
         const executor = createMockEffectExecutor();
         // Use Date.now mock to control iteration durations precisely.
@@ -226,7 +228,7 @@ describe("Degradation detection triggers performance_degradation warning", () =>
         const driver = new SdkDriver(config, executor, agent);
         await driver.run();
         dateNowMock.mockRestore();
-        const logs = collectLogOutput(logSpy);
+        const logs = [...collectLogOutput(logSpy), ...collectLogOutput(errSpy)];
         const degradationLog = logs.find((l) => l.includes("performance_degradation"));
         expect(degradationLog).toBeDefined();
         const parsed = JSON.parse(degradationLog ?? "{}");
