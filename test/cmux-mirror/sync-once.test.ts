@@ -1,5 +1,4 @@
-import { existsSync, mkdirSync, readFileSync, rmSync, writeFileSync } from "node:fs";
-import { mkdtempSync } from "node:fs";
+import { existsSync, mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
@@ -15,9 +14,9 @@ vi.mock("../../scripts/cmux-mirror/lib/cli.mjs", () => ({
   runCli: vi.fn(() => Promise.resolve({ exitCode: 0, stdout: "", stderr: "" })),
 }));
 
-import { syncOnce } from "../../scripts/cmux-mirror/sync-once.mjs";
 import { cmuxAvailable } from "../../scripts/cmux-mirror/lib/availability.mjs";
 import { runCli } from "../../scripts/cmux-mirror/lib/cli.mjs";
+import { syncOnce } from "../../scripts/cmux-mirror/sync-once.mjs";
 
 const mockedAvailable = vi.mocked(cmuxAvailable);
 const mockedRunCli = vi.mocked(runCli);
