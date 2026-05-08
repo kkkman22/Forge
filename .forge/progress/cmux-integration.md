@@ -11,16 +11,16 @@ updated: "2026-05-08"
 
 | Task | Status | Commit |
 |------|--------|--------|
-| 1. mock-socket 测试基础设施 | pending | — |
-| 2. 添加 yaml npm 依赖 | pending | — |
-| 3. lib/availability.mjs | pending | — |
-| 4. lib/capabilities.mjs | pending | — |
-| 5. lib/payload.mjs | pending | — |
-| 6. lib/budget.mjs | pending | — |
-| 7. lib/dedupe.mjs | pending | — |
-| 8. lib/cli.mjs | pending | — |
-| 9. config + i18n | pending | — |
-| 10. Sprint 1 回归 | pending | — |
+| 1. mock-socket 测试基础设施 | done | — |
+| 2. 添加 yaml npm 依赖 | done | — |
+| 3. lib/availability.mjs | done | — |
+| 4. lib/capabilities.mjs | done | — |
+| 5. lib/payload.mjs | done | — |
+| 6. lib/budget.mjs | done | ca32dd2 |
+| 7. lib/dedupe.mjs | done | b2fd692 |
+| 8. lib/cli.mjs | done | 28a2311 |
+| 9. config + i18n | done | 9905d85 |
+| 10. Sprint 1 回归 | done | f61fff9 |
 
 ## Sprint 2 — Events_NDJSON 与 Reviews Frontmatter
 
