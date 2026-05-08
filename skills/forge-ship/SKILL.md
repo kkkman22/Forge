@@ -1,6 +1,7 @@
 ---
 name: forge-ship
-description: "Delivery engine enforcing the commit gate and freshness check before publishing changes. Use when user runs `/forge ship` / all review and test gates passed / ready to push branch or create pull request."
+description: "Ship changes after enforcing the review gate, test gate, progress gate, and review freshness check. Use when running `/forge ship`, all review and test gates have passed, or a branch or pull request is ready to push."
+skeleton_exempt_legacy: true
 disable-model-invocation: true
 ---
 
@@ -14,7 +15,7 @@ disable-model-invocation: true
 
 ## 1. Overview
 
-`/forge ship` 是 Forge 工作流的最后一道关卡——在代码离开开发环境之前，确认所有质量门禁都已通过。它检查三个前置条件（评审通过、测试通过、任务完成），然后提供四种交付选项供开发者选择。
+`/forge ship` 是 Forge 工作流的最后一道关卡——在代码离开开发环境之前，确认所有质量门禁都已通过。它检查三个前置条件（评审通过、测试通过、任务完成），加上可选的第四道门禁（Acceptance Scenario Eval），然后提供四种交付选项供开发者选择。
 
 **核心原则**：交付是一个有意识的决定，不是流程的自动终点。每一次 ship 都需要开发者明确选择交付方式，丢弃操作需要二次确认。
 
@@ -25,6 +26,8 @@ disable-model-invocation: true
 ## 2. Gate Checks
 
 `/forge ship` 启动前**必须通过三道门禁**（Review / Test / Progress），每道门禁的结果必须以 P5 证据链格式呈现（`[Command] → [Output] → [Claim]`）。
+
+**Optional Gate 4 — Acceptance Scenario Eval**：当 spec frontmatter 含 `acceptance_eval: true` 或 CLI 带 `--with-acceptance` 参数时，在三道门禁后执行 `/forge accept`。`acceptance_blocks_ship: true` 时 FAIL 场景阻断 ship；默认为警告级。`--promote-derived` 允许 derived scenario 参与阻断判定。
 
 → 详见 references/gate-checks.md（门禁表、证据格式、Review Freshness Check 完整流程）
 

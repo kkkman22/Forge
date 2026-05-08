@@ -1,6 +1,7 @@
 ---
 name: forge-resume
-description: "Session recovery engine that reconstructs task state from status file and knowledge sessions. Use when user runs `/forge resume` / new session begins and prior task is incomplete / picking up interrupted work."
+description: "Resume an interrupted task by reconstructing state from status file and knowledge sessions. Use when user runs `/forge resume`, new session begins with prior task incomplete, or picking up interrupted work."
+skeleton_exempt_legacy: true
 disable-model-invocation: true
 ---
 

@@ -1,15 +1,14 @@
 ---
-current_task: "v2.4-review-followups"
+current_task: "oz-skills-inspiration"
 tier: "standard"
 task_type: "multi-phase-engineering"
-project_phase: "plan"
+project_phase: "build"
 phase: "approved"
-hints: "forge-plan, forge-build, Phase 1 parallel, hook-enforcement + console-migration + execFileSync"
+hints: "forge-plan, spec三件套已就绪, 65子任务, 4Phase"
 assumptions:
-  - "Spec 已存在于 .kiro/specs/v2.4-review-followups/"
-  - "Plan 已批准于 .forge/plans/v2.4-review-followups.md"
-  - "38 tasks across 3 phases"
-  - "Breaking changes: API surface convergence, hooks fail-closed"
+  - "Spec 已存在于 .kiro/specs/oz-skills-inspiration/"
+  - "Requirements/Design/Tasks 三件套完整"
+  - "无需 decide/spec 阶段"
 updated: "2026-05-08"
 ---
 
@@ -17,10 +16,11 @@ updated: "2026-05-08"
 
 ## 当前任务
 
-v2.4-review-followups：基于 v2.3 技术评审落地 8 项工程修复（Hook 阻断、E2E、API 收敛、覆盖率、SKILL 映射、Console 迁移、execFileSync、Plan 注入）。
+oz-skills-inspiration：借鉴 warpdotdev/oz-skills 的 6 项能力吸收，覆盖 description 强化、章节骨架、风格指南、Scripts as Blackbox、frontend-check agent、Acceptance Scenario Eval。
 
 ## 已完成任务
 
+- v2.4-review-followups（暂停）
 - build-discipline-enhancement: SKILL 工程纪律规则
 - token-language-optimization P2+P3: 全部 tasks 1-12 完成
 - state-resilience: 状态系统三层防御

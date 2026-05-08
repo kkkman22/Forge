@@ -1,6 +1,7 @@
 ---
 name: forge-loop
-description: "Autonomous multi-task execution engine that runs a whole plan end-to-end without interactive prompts. Use when user runs `/forge loop` / wants unattended execution of an approved plan / needs background completion of queued tasks."
+description: "Orchestrate an approved plan end-to-end without interactive prompts across all queued tasks. Use when user runs `/forge loop`, wants unattended execution of an approved plan, or needs background completion of queued tasks."
+skeleton_exempt_legacy: true
 disable-model-invocation: true
 ---
 

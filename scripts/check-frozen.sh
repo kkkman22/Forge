@@ -1,4 +1,5 @@
 #!/usr/bin/env bash
+# category: internal-only
 # ============================================================================
 # check-frozen.sh — PreToolUse hook for frozen file protection
 #
