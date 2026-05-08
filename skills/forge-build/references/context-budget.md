@@ -55,3 +55,38 @@ The following scenarios are **reasoning triggers** — when encountered, pause a
 | Deleting or significantly modifying existing code | Do I understand why this code was written this way? What is the git blame context? | Explain the reason, then confirm the modification | Record to findings (reason + modification rationale), continue execution |
 
 **关键原则**：反射触发器触发**思考**，不触发**行动**。autonomous 模式下不自行拆分——记录观察，继续执行。
+
+## Context Exhaustion Detection Rules
+
+### When Trimmers Are Not Enough
+
+Trimmer 函数处理正常的 token 管理。但长时间 build 会话（8+ 任务，或涉及大文件生成的任务）可能在积极 trim 后仍然耗尽上下文。本节定义检测该边界的规则。
+
+### Heuristic Detection
+
+**必须在每个 Restatement Checkpoint 执行上下文耗尽自检**。检查方式：
+
+1. 完成 Restatement 3-block 摘要后，自问："能否不重读 progress 文件回忆最近 3 个完成的任务？"
+2. 如果答案是 **NO** → 触发 Context Exhaustion Protocol（forge-build SKILL.md §11）
+3. 如果答案是 **YES** → 正常继续
+
+### Quantitative Signal
+
+如果模型提供任何形式的上下文利用率指标超过 **80%**，主动触发协议——不要等待质量退化。如果模型不暴露利用率指标（如 GLM 5.1），仅依赖 Heuristic Detection 即可。
+
+### Anti-pattern: Manual Handoff
+
+以下输出模式在上下文耗尽时**严格禁止**：
+
+```
+# FORBIDDEN — 手动交接
+下一个会话剩余任务：
+1. Task 5: ...
+2. Task 6: ...
+要继续构建，请在新会话中运行 /forge build
+
+# FORBIDDEN — 要求用户操作
+Context is full. Please start a new session and run /forge resume
+```
+
+正确做法：写入 interim 文件并自动调用 `/forge resume`，详见 SKILL.md §11。
