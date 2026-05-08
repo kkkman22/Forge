@@ -12,7 +12,6 @@
 
 import * as fc from "fast-check";
 import { describe, expect, it } from "vitest";
-import { IMPERATIVE_WHITELIST } from "../src/skill-description-imperatives.js";
 import {
   countSentences,
   secondSentenceStartsWithUseWhen,
@@ -21,6 +20,7 @@ import {
   validateDescription,
   validateDescriptionExtended,
 } from "../src/skill-description.js";
+import { IMPERATIVE_WHITELIST } from "../src/skill-description-imperatives.js";
 
 // ---------------------------------------------------------------------------
 // Helpers
@@ -28,7 +28,9 @@ import {
 
 function buildSkillDoc(description: string, name = "forge-test"): string {
   const sanitised = description.replace(/"/g, "");
-  return ["---", `name: ${name}`, `description: "${sanitised}"`, "---", "", "# Body", ""].join("\n");
+  return ["---", `name: ${name}`, `description: "${sanitised}"`, "---", "", "# Body", ""].join(
+    "\n",
+  );
 }
 
 // ---------------------------------------------------------------------------
@@ -117,21 +119,19 @@ describe("startsWithImperative", () => {
 
 describe("secondSentenceStartsWithUseWhen", () => {
   it("returns true when second sentence starts with 'Use when'", () => {
-    expect(
-      secondSentenceStartsWithUseWhen(["Build things.", "Use when you need to build."]),
-    ).toBe(true);
+    expect(secondSentenceStartsWithUseWhen(["Build things.", "Use when you need to build."])).toBe(
+      true,
+    );
   });
 
   it("returns true with case-insensitive 'use When'", () => {
-    expect(
-      secondSentenceStartsWithUseWhen(["Build things.", "use When needed."]),
-    ).toBe(true);
+    expect(secondSentenceStartsWithUseWhen(["Build things.", "use When needed."])).toBe(true);
   });
 
   it("returns false when second sentence does not start with 'Use when'", () => {
-    expect(
-      secondSentenceStartsWithUseWhen(["Build things.", "Also does other stuff."]),
-    ).toBe(false);
+    expect(secondSentenceStartsWithUseWhen(["Build things.", "Also does other stuff."])).toBe(
+      false,
+    );
   });
 
   it("returns false when only one sentence", () => {
@@ -150,11 +150,11 @@ describe("secondSentenceStartsWithUseWhen", () => {
 describe("validateDescriptionExtended — backward compatibility", () => {
   it("rejects all inputs that original validateDescription rejects", () => {
     const badInputs = [
-      "",                                    // empty
-      "No use when trigger at all here",     // missing trigger
-      "Best-ever tool. Use when needed.",    // marketing
-      "Supports v1.0. Use when deploying.",  // version
-      "Since 2026-01-01. Use when ready.",   // date
+      "", // empty
+      "No use when trigger at all here", // missing trigger
+      "Best-ever tool. Use when needed.", // marketing
+      "Supports v1.0. Use when deploying.", // version
+      "Since 2026-01-01. Use when ready.", // date
     ];
     for (const desc of badInputs) {
       const doc = buildSkillDoc(desc);
@@ -169,7 +169,9 @@ describe("validateDescriptionExtended — backward compatibility", () => {
 
 describe("validateDescriptionExtended — new two-sentence rules", () => {
   it("accepts well-formed two-sentence description", () => {
-    const doc = buildSkillDoc("Plan the implementation from a locked spec. Use when user runs /forge plan.");
+    const doc = buildSkillDoc(
+      "Plan the implementation from a locked spec. Use when user runs /forge plan.",
+    );
     const result = validateDescriptionExtended(doc, { mode: "error" });
     expect(result.valid).toBe(true);
     expect(result.sentenceCount).toBe(2);
@@ -209,7 +211,9 @@ describe("validateDescriptionExtended — new two-sentence rules", () => {
 
   it("warning mode reports errors but does not block existing valid descriptions", () => {
     // A description valid under old rules but not new two-sentence rules
-    const doc = buildSkillDoc("The planning engine handles spec decomposition. Use when user runs /forge plan.");
+    const doc = buildSkillDoc(
+      "The planning engine handles spec decomposition. Use when user runs /forge plan.",
+    );
     const result = validateDescriptionExtended(doc, { mode: "warning" });
     // Should still report the new-rule violations as warnings
     expect(result.firstSentenceStartsWithImperative).toBe(false);
