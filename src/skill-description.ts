@@ -267,10 +267,7 @@ export function countSentences(text: string): number {
   return nonEmpty.length === 0 ? 1 : nonEmpty.length;
 }
 
-export function startsWithImperative(
-  sentence: string,
-  whitelist: readonly string[],
-): boolean {
+export function startsWithImperative(sentence: string, whitelist: readonly string[]): boolean {
   if (sentence === "") return false;
   const trimmed = sentence.trimStart();
   if (trimmed === "") return false;
@@ -278,9 +275,7 @@ export function startsWithImperative(
   return whitelist.includes(firstWord);
 }
 
-export function secondSentenceStartsWithUseWhen(
-  sentences: string[],
-): boolean {
+export function secondSentenceStartsWithUseWhen(sentences: string[]): boolean {
   if (sentences.length < 2) return false;
   // Find the second non-empty sentence
   const nonEmpty = sentences.filter((s) => s.trim() !== "");
@@ -313,9 +308,7 @@ export function validateDescriptionExtended(
 
   if (description !== "") {
     if (sentenceCount !== 2) {
-      errors.push(
-        `description 需要 2 句话，当前 ${sentenceCount} 句`,
-      );
+      errors.push(`description 需要 2 句话，当前 ${sentenceCount} 句`);
     }
     if (!firstSentenceStartsWithImperative) {
       errors.push("description 首句未以祈使动词开头");
