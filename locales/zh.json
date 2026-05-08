@@ -54,5 +54,49 @@
       "reason": "原因：{reason}",
       "recovery": "恢复方法：/forge resume"
     }
+  },
+  "cmux": {
+    "notify": {
+      "loopCircuitBreakerTitle": "Forge Loop 熔断",
+      "loopCompletedTitle": "Forge Loop 完成",
+      "loopInterruptedBody": "循环被中断",
+      "frozenInterceptionTitle": "Forge 冻结拦截",
+      "reviewCompletedTitle": "/forge review 完成",
+      "reviewLayerFailed": "失败",
+      "respawnBudgetExhausted": "自动重启预算耗尽，需手动介入"
+    },
+    "log": {
+      "phaseChange": "{phase}: {topic}",
+      "taskFailed": "任务 {taskId} 失败: {reason}",
+      "iterCommitted": "迭代 {n} 已提交: {subject}",
+      "iterRolledBack": "迭代 {n} 已回滚: {reason}",
+      "frozenInterception": "冻结拦截: {file} (status={status})",
+      "reviewLayerComplete": "{layer}: {summary}",
+      "reviewCanvasReady": "Canvas 就绪: {path}",
+      "browserQaVerdict": "浏览器 QA: {verdict}",
+      "notificationSuppressed": "通知已抑制: {title}",
+      "mirrorPollingMode": "轮询模式 (文件系统: {fsType})",
+      "mirrorRespawning": "崩溃后重启 ({count}/{budget})",
+      "mirrorRespawnExhausted": "重启预算耗尽 ({count}/{budget}); 需手动重启",
+      "cmuxNotDetected": "cmux: 未检测到，镜像将不启动"
+    },
+    "progress": {
+      "starting": "开始 · 0/{total}",
+      "waveProgress": "波次 {current}/{total} · {done}/{total}",
+      "done": "完成 · {done}/{total}",
+      "loopIteration": "迭代 {n}/{limit} · {subject}",
+      "loopIndeterminate": "迭代 {n}/∞ · {subject}",
+      "loopObjective": "迭代 0 · {objective}"
+    },
+    "layout": {
+      "forgeWorkflow": "Forge 工作流",
+      "forgeLoopMonitor": "Forge 循环监控",
+      "forgeDev": "Forge 开发",
+      "forgeWorkflowDesc": "Claude Code + 状态追踪 + DAG 进度 + 镜像守护",
+      "forgeLoopMonitorDesc": "循环启动器 + 会话日志 + Git 日志 + 镜像守护",
+      "forgeDevDesc": "Claude Code + 测试监控 + 类型检查 + 镜像守护",
+      "newClaudeCode": "新建 Claude Code",
+      "newClaudeCodeDesc": "在新标签页中启动 Claude Code"
+    }
   }
 }

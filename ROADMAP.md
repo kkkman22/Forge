@@ -148,6 +148,16 @@
   - 结构化 JSON 日志输出（可选格式，便于日志聚合工具消费）
   - 命令执行耗时统计和性能基线（每轮迭代 wall-clock 时间、Agent 调用延迟）
 
+- **Events_NDJSON 多消费者复用**（优先级：中）
+  - `.forge/events.ndjson` 事件流已由 cmux Mirror_Daemon 消费，未来可扩展更多消费者
+  - 潜在消费者：IDE 插件（VS Code 状态栏）、Web Dashboard、CI 集成报告器
+  - 字节游标协议允许并发读取，无需锁定
+
+- **cmux claude-teams 模式**（优先级：低）
+  - 利用 cmux 多窗格能力，为 `/forge decide` 和 `/forge review` 的多 Subagent 提供可视化面板
+  - 每个 Subagent 在独立 cmux pane 中运行，主 Agent 在中央 pane 协调
+  - 依赖 Agent Teams 可靠性问题解决（参见长期规划中的阻塞条件）
+
 ---
 
 ## 长期 — v3.0（社区与生态）

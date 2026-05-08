@@ -1,14 +1,9 @@
 ---
-current_task: "resume-phase-coverage"
-tier: "standard"
-task_type: "multi-phase-engineering"
+current_task: ""
+tier: ""
+task_type: ""
 project_phase: ""
-phase: "approved"
-hints: "spec三件套已就绪, 10 tasks, 5 requirements"
-assumptions:
-  - "Spec 已存在于 .forge/specs/resume-phase-coverage/"
-  - "Requirements/Design/Tasks 三件套完整"
-  - "无需 decide/spec 阶段"
+phase: ""
 updated: "2026-05-09"
 ---
 
@@ -16,10 +11,12 @@ updated: "2026-05-09"
 
 ## 当前任务
 
-phase-advance-hardening：修复 SKILL 驱动模式下的阶段推进断点。三层防御：Plan 结构预防 + R3 规则注入 + Stop hook 兜底。
+（无）
 
 ## 已完成任务
 
+- cmux-integration: Sprint 1-6 全部完成（33 tasks，25 test files，158 tests）
+- resume-phase-coverage: compaction 恢复后 SKILL.md 步骤遗漏修复
 - phase-advance-hardening: SKILL 驱动模式阶段推进断点修复
 - oz-skills-inspiration
 - v2.4-review-followups（暂停）
