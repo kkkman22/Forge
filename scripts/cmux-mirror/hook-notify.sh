@@ -5,6 +5,12 @@
 set -uo pipefail
 
 forge_dir="${1:-.forge}"
+
+# Validate path: reject traversal and shell metacharacters
+if [[ "$forge_dir" =~ \.\. || "$forge_dir" =~ [\;\|\`\$\(] ]]; then
+  exit 0
+fi
+
 dedupe_dir="${forge_dir}/.cmux-dedupe"
 dedupe_window_ms="${HOOK_NOTIFY_DEDUPE_WINDOW_MS:-30000}"
 
