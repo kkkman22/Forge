@@ -1,4 +1,4 @@
-import { mkdtempSync, rmSync, writeFileSync, mkdirSync } from "node:fs";
+import { mkdirSync, mkdtempSync, rmSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
@@ -20,11 +20,11 @@ describe("mirror: startup and availability checks (R1.5–R1.10)", () => {
 
   it("R1.5: startup exits early when cmux not available", async () => {
     const { createMirrorDaemon } = await import("../../scripts/cmux-mirror/mirror.mjs");
-    const result = await createMirrorDaemon({
+    const result = (await createMirrorDaemon({
       forgeDir: dir,
       socketDir: dir,
       cmuxAvailable: false,
-    });
+    })) as any;
     expect(result.started).toBe(false);
     expect(result.reason).toBe("cmux_unavailable");
   });
@@ -32,11 +32,11 @@ describe("mirror: startup and availability checks (R1.5–R1.10)", () => {
   it("R1.6: startup exits early when forgeDir missing", async () => {
     const { createMirrorDaemon } = await import("../../scripts/cmux-mirror/mirror.mjs");
     const missingDir = join(dir, "nonexistent");
-    const result = await createMirrorDaemon({
+    const result = (await createMirrorDaemon({
       forgeDir: missingDir,
       socketDir: dir,
       cmuxAvailable: true,
-    });
+    })) as any;
     expect(result.started).toBe(false);
     expect(result.reason).toBe("forge_dir_missing");
   });
@@ -51,11 +51,11 @@ describe("mirror: startup and availability checks (R1.5–R1.10)", () => {
     );
 
     const { createMirrorDaemon } = await import("../../scripts/cmux-mirror/mirror.mjs");
-    const result = await createMirrorDaemon({
+    const result = (await createMirrorDaemon({
       forgeDir,
       socketDir: dir,
       cmuxAvailable: true,
-    });
+    })) as any;
     expect(result.started).toBe(true);
     if (result.started) {
       await result.shutdown();
@@ -67,7 +67,7 @@ describe("mirror: debounce behavior (R1.8)", () => {
   it("rapid file changes only trigger one dispatch", async () => {
     const { createDebouncer } = await import("../../scripts/cmux-mirror/mirror.mjs");
     const dispatched: string[] = [];
-    const debounce = createDebouncer(50, (path) => dispatched.push(path));
+    const debounce = createDebouncer(50, (path: string) => dispatched.push(path));
 
     debounce.notify("status.md");
     debounce.notify("status.md");
@@ -84,16 +84,13 @@ describe("mirror: signal handling (R1.9)", () => {
     const forgeDir = join(mkdtempSync(join(tmpdir(), "cmux-sig-test-")), "forge");
     mkdirSync(forgeDir, { recursive: true });
     mkdirSync(join(forgeDir, "progress"), { recursive: true });
-    writeFileSync(
-      join(forgeDir, "status.md"),
-      ["---", 'project_phase: "idle"', "---"].join("\n"),
-    );
+    writeFileSync(join(forgeDir, "status.md"), ["---", 'project_phase: "idle"', "---"].join("\n"));
 
-    const result = await createMirrorDaemon({
+    const result = (await createMirrorDaemon({
       forgeDir,
       socketDir: join(forgeDir, ".."),
       cmuxAvailable: true,
-    });
+    })) as any;
 
     if (result.started) {
       await result.shutdown();
@@ -115,18 +112,15 @@ describe("mirror: polling fallback (R1.10)", () => {
     const forgeDir = join(mkdtempSync(join(tmpdir(), "cmux-poll-test-")), "forge");
     mkdirSync(forgeDir, { recursive: true });
     mkdirSync(join(forgeDir, "progress"), { recursive: true });
-    writeFileSync(
-      join(forgeDir, "status.md"),
-      ["---", 'project_phase: "build"', "---"].join("\n"),
-    );
+    writeFileSync(join(forgeDir, "status.md"), ["---", 'project_phase: "build"', "---"].join("\n"));
 
-    const result = await createMirrorDaemon({
+    const result = (await createMirrorDaemon({
       forgeDir,
       socketDir: join(forgeDir, ".."),
       cmuxAvailable: true,
       forcePolling: true,
       pollIntervalMs: 50,
-    });
+    })) as any;
 
     expect(result.started).toBe(true);
     if (result.started) {

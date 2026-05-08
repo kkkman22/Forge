@@ -1,4 +1,4 @@
-import { mkdtempSync, rmSync, writeFileSync, mkdirSync } from "node:fs";
+import { mkdirSync, mkdtempSync, rmSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
@@ -119,8 +119,8 @@ describe("reader: reads .forge/ state (R2.1, R2.2)", () => {
 
     const state = readForgeState(forgeDir);
     expect(state.review).toBeDefined();
-    expect(state.review.completed).toBe(false);
-    expect(state.review.layers).toEqual({
+    expect(state.review?.completed).toBe(false);
+    expect(state.review?.layers).toEqual({
       spec_check: "done",
       quality_check: "pending",
       security_check: "done",
@@ -144,7 +144,7 @@ describe("emitter: generates cmux CLI commands (R2.1, R12.10)", () => {
     const cmds = emitCommands(prev, next);
     const setStatus = cmds.find((c) => c.method === "set_status");
     expect(setStatus).toBeDefined();
-    expect(setStatus!.params).toHaveProperty("text");
+    expect(setStatus?.params).toHaveProperty("text");
   });
 
   it("emits set_progress for progress change", () => {
@@ -165,7 +165,7 @@ describe("emitter: generates cmux CLI commands (R2.1, R12.10)", () => {
     const cmds = emitCommands(prev, next);
     const setProgress = cmds.find((c) => c.method === "set_progress");
     expect(setProgress).toBeDefined();
-    expect(setProgress!.params).toHaveProperty("percent");
+    expect(setProgress?.params).toHaveProperty("percent");
   });
 
   it("emits notification for review completion", () => {
@@ -206,7 +206,7 @@ describe("emitter: generates cmux CLI commands (R2.1, R12.10)", () => {
     const cmds = emitCommands(prev, next);
     const sidebar = cmds.find((c) => c.method === "sidebar_state");
     expect(sidebar).toBeDefined();
-    expect(sidebar!.params).toHaveProperty("items");
+    expect(sidebar?.params).toHaveProperty("items");
   });
 
   it("no commands emitted when state unchanged", () => {
