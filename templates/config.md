@@ -11,6 +11,12 @@ verify_commands:            # Ralph Loop: Build 完成后自动运行的验证�
 verify_timeout: 120         # 每条验证命令的超时时间（秒），默认 120
 verify_max_attempts: 3      # 验证失败后最大重试次数，默认 3，超过则触发 soft_failure + rollback
 ci_check_command: ""        # 项目的完整 CI 检查命令（如 "npm run check"），build 全量测试、test 验证清单和 ship Test 门禁必须使用此命令
+# cmux 可选集成（全部 optional，不影响 Forge 核心行为）
+# cmux_integration: auto    # auto | on | off; auto=检测到 cmux 则启用，默认 auto
+# cmux_notification_budget: 5  # 每个会话的桌面通知上限，正整数或 0，默认 5
+# cmux_review_notify: on    # on | off; 是否发送评审聚合通知，默认 on
+# cmux_session_idle_minutes: 15  # 会话空闲超时（分钟），正整数，默认 15
+# cmux_respawn_budget: 3    # Mirror_Daemon 崩溃后自动重启上限，正整数或 0，默认 3
 ---
 
 ## CI 检查命令
