@@ -28,6 +28,15 @@
             "command": "node forge/scripts/inject-plan-context.mjs 2>/dev/null || node ~/.claude/skills/forge/scripts/inject-plan-context.mjs 2>/dev/null || true"
           }
         ]
+      },
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "node scripts/cmux-mirror/sync-once.mjs .forge 2>/dev/null || true",
+            "timeout": 2
+          }
+        ]
       }
     ],
     "PreToolUse": [
@@ -90,6 +99,16 @@
             "command": "if [ -d .forge/status ] || [ -f .forge/status.md ]; then echo '📝 代码已修改。请记得更新 .forge/progress/ 中的任务状态。'; fi"
           }
         ]
+      },
+      {
+        "matcher": "Write|Edit",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "node scripts/cmux-mirror/sync-once.mjs .forge 2>/dev/null || true",
+            "timeout": 2
+          }
+        ]
       }
     ],
     "Stop": [
@@ -112,6 +131,15 @@
             "type": "command",
             "command": "if [ -f .forge/knowledge/evolved-rules.md ] && grep -q 'PENDING' .forge/knowledge/evolved-rules.md 2>/dev/null; then count=$(grep -c 'PENDING' .forge/knowledge/evolved-rules.md 2>/dev/null || echo 0); echo \"⚠️ 有 $count 条待审核的规则提案。运行 /forge learn 查看并审批。\"; fi",
             "timeout": 5
+          }
+        ]
+      },
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "node scripts/cmux-mirror/sync-once.mjs .forge 2>/dev/null || true",
+            "timeout": 2
           }
         ]
       }

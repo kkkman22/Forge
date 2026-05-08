@@ -437,6 +437,57 @@ npm link && forge-loop "你的目标"            # 全局链接后直接使用
 
 ---
 
+## cmux 集成（可选）
+
+> **Zero-Impact 不变量**：未安装 cmux 时，Forge 行为零变化。所有 cmux 集成代码在 `cmuxAvailable()` 返回 false 时立即短路退出。
+
+[cmux](https://github.com/nickgnd/tmux-mcp) 是一个终端复用器，Forge 可选地将生命周期状态投射到 cmux 侧边栏和通知。
+
+### 功能
+
+| 功能 | 说明 |
+|------|------|
+| **Mirror_Daemon** | 守护进程，实时观察 `.forge/` 状态变化并投射到 cmux 侧边栏 |
+| **sync-once** | Hook 触发的一次性状态同步（轻量级替代守护进程） |
+| **Events_NDJSON** | 结构化事件流，服务多个消费者 |
+| **Reviews Frontmatter** | 评审结果结构化存储（原子重写） |
+| **Browser QA** | cmux browser 命令驱动的端到端 QA |
+| **工作区布局** | 3 种 Forge 专属 cmux 布局模板 |
+
+### 使用
+
+```bash
+# 安装 cmux 后，Forge 自动检测并启用集成
+# 无需任何配置
+
+# 安装 Forge 专属布局模板（可选）
+bash scripts/cmux-mirror/install-template.sh .
+
+# 安装 cmux 可选技能包（可选）
+bash cmux-skills/install.sh --apply .claude/skills
+```
+
+### 卸载
+
+```bash
+# 移除布局模板
+rm cmux.json
+
+# 移除技能包
+bash cmux-skills/install.sh --uninstall .claude/skills
+
+# cmux 集成代码随 Forge 一起存在，但不产生任何运行时开销
+```
+
+### 新增文件
+
+- `scripts/cmux-mirror/` — 4 个主脚本 + 14 个库模块
+- `templates/cmux.json` — 工作区布局模板
+- `cmux-skills/` — 3 个可选 SKILL.md + 安装器
+- `test/cmux-mirror/` — 25 tests (including 10 property tests)
+
+---
+
 ## Token 效率
 
 | 方案 | Token 开销 | 说明 |
@@ -518,7 +569,7 @@ forge/
 │   └── install-dist.sh         #   安装分发包
 ├── dist/                        # 分发包（CI 自动构建）
 │   └── claude-code/bundles/forge/
-├── src/                         # 核心逻辑（125 个 TypeScript 模块，含纯函数模块及有状态/运行时模块：CLI、SDK 适配器、副作用执行器、运行管理器等）<!--exact: 125 个 TypeScript 模块-->
+├── src/                         # 核心逻辑（126 个 TypeScript 模块，含纯函数模块及有状态/运行时模块：CLI、SDK 适配器、副作用执行器、运行管理器等）<!--exact: 126 个 TypeScript 模块-->
 │   ├── forge-loop-cli.ts       #   自主循环 CLI 入口（Commander 参数解析 + 信号处理）
 │   ├── sdk-driver.ts           #   迭代循环驱动器（调度 Agent → 处理结果 → 执行副作用）
 │   ├── orchestrator.ts         #   纯函数状态机（状态转换 + 副作用描述）
@@ -579,7 +630,7 @@ bash scripts/build-dist.sh
 
 **技术栈**：TypeScript 5.9（strict）、Vitest 3.2、fast-check 4.7（属性测试）、Biome 2.4（lint + format）。运行时依赖：`@anthropic-ai/claude-agent-sdk`、`commander`。
 
-**测试策略**：3967 个测试（252 个测试文件，其中 129 个为 fast-check 属性测试文件）验证不变量（invariant），而非特定输入输出。覆盖率 ~89% statements。<!--exact: 测试数、文件数、属性测试数; approximate: 覆盖率-->
+**测试策略**：4135 个测试（252 个测试文件，其中 129 个为 fast-check 属性测试文件）验证不变量（invariant），而非特定输入输出。覆盖率 ~89% statements。<!--exact: 测试数、文件数、属性测试数; approximate: 覆盖率-->
 
 ---
 

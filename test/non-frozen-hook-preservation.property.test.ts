@@ -85,6 +85,15 @@ const EXPECTED_USER_PROMPT_SUBMIT_HOOKS: HookMatcher[] = [
       },
     ],
   },
+  {
+    hooks: [
+      {
+        type: "command",
+        command: "node scripts/cmux-mirror/sync-once.mjs .forge 2>/dev/null || true",
+        timeout: 2,
+      },
+    ],
+  },
 ];
 
 const EXPECTED_POST_TOOL_USE_HOOKS: HookMatcher[] = [
@@ -95,6 +104,16 @@ const EXPECTED_POST_TOOL_USE_HOOKS: HookMatcher[] = [
         type: "command",
         command:
           "if [ -d .forge/status ] || [ -f .forge/status.md ]; then echo '📝 代码已修改。请记得更新 .forge/progress/ 中的任务状态。'; fi",
+      },
+    ],
+  },
+  {
+    matcher: "Write|Edit",
+    hooks: [
+      {
+        type: "command",
+        command: "node scripts/cmux-mirror/sync-once.mjs .forge 2>/dev/null || true",
+        timeout: 2,
       },
     ],
   },
@@ -123,6 +142,15 @@ const EXPECTED_STOP_HOOKS: HookMatcher[] = [
         command:
           "if [ -f .forge/knowledge/evolved-rules.md ] && grep -q 'PENDING' .forge/knowledge/evolved-rules.md 2>/dev/null; then count=$(grep -c 'PENDING' .forge/knowledge/evolved-rules.md 2>/dev/null || echo 0); echo \"⚠️ 有 $count 条待审核的规则提案。运行 /forge learn 查看并审批。\"; fi",
         timeout: 5,
+      },
+    ],
+  },
+  {
+    hooks: [
+      {
+        type: "command",
+        command: "node scripts/cmux-mirror/sync-once.mjs .forge 2>/dev/null || true",
+        timeout: 2,
       },
     ],
   },
@@ -341,17 +369,23 @@ describe("Preservation: Hook structure for non-frozen hooks (property-based)", (
 
     const timedArb = fc.constantFrom(...timedEntries);
 
-    // Expected timeouts from observed baseline
+    // Expected timeouts keyed by command pattern
     const expectedTimeouts: Record<string, number> = {
-      SessionStart: 5,
-      Stop: 5,
+      "auto-resume.sh": 5,
+      "evolved-rules.md": 5,
+      "inject-plan-context": 5,
+      "persistent-loop.sh": 5,
+      PENDING: 5,
+      "sync-once.mjs": 2,
     };
 
     fc.assert(
       fc.property(timedArb, (entry) => {
-        if (expectedTimeouts[entry.eventType] !== undefined) {
-          expect(entry.hook.timeout).toBe(expectedTimeouts[entry.eventType]);
-          return entry.hook.timeout === expectedTimeouts[entry.eventType];
+        for (const [pattern, timeout] of Object.entries(expectedTimeouts)) {
+          if (entry.hook.command.includes(pattern)) {
+            expect(entry.hook.timeout).toBe(timeout);
+            return entry.hook.timeout === timeout;
+          }
         }
         return true;
       }),

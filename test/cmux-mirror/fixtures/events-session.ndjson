@@ -1,0 +1,8 @@
+{"schema_version":1,"ts":"2026-05-08T10:00:00.000Z","type":"session_started","run_id":"r-test","objective":"Add user pagination","max_iterations":5,"max_tokens":500000,"max_budget_usd":5.00,"stop_when":null,"worktree_mode":false}
+{"schema_version":1,"ts":"2026-05-08T10:00:12.345Z","type":"iter_started","run_id":"r-test","iteration":1}
+{"schema_version":1,"ts":"2026-05-08T10:03:42.123Z","type":"iter_committed","run_id":"r-test","iteration":1,"commit_sha":"abc123d","subject":"Add pagination params"}
+{"schema_version":1,"ts":"2026-05-08T10:04:00.000Z","type":"iter_started","run_id":"r-test","iteration":2}
+{"schema_version":1,"ts":"2026-05-08T10:07:00.456Z","type":"iter_rolled_back","run_id":"r-test","iteration":2,"reason":"typecheck failed"}
+{"schema_version":1,"ts":"2026-05-08T10:08:00.000Z","type":"iter_started","run_id":"r-test","iteration":3}
+{"schema_version":1,"ts":"2026-05-08T10:12:00.789Z","type":"iter_committed","run_id":"r-test","iteration":3,"commit_sha":"def456g","subject":"Fix typecheck and add tests"}
+{"schema_version":1,"ts":"2026-05-08T10:15:00.012Z","type":"loop_terminated","run_id":"r-test","reason":"natural","total_iterations":3,"total_commits":2}

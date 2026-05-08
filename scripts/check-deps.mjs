@@ -45,6 +45,7 @@ const NAME_ALLOWLIST = new Set([
   "@modelcontextprotocol/sdk",
   "commander",
   "minimatch",
+  "yaml",
   "zod",
   // Dev deps
   "@biomejs/biome",

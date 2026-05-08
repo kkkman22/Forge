@@ -29,6 +29,7 @@ export type { SdkDriverConfig, SdkDriverResult } from "./sdk-driver-types.js";
 export { validateHooksPresence } from "./sdk-hooks-validation.js";
 export { detectSkillAwareMode } from "./sdk-skill-detection.js";
 
+import { writeEvent } from "./event-writer.js";
 import type {
   IterationContext,
   IterationResult,
@@ -36,7 +37,6 @@ import type {
   SdkDriverResult,
   SkillIterationContext,
 } from "./sdk-driver-types.js";
-
 import { executeGenericIteration as executeGenericIterationFn } from "./sdk-generic-iteration.js";
 import { validateHooksPresence } from "./sdk-hooks-validation.js";
 import { loadSandboxPolicy } from "./sdk-sandbox-policy.js";
@@ -84,6 +84,9 @@ export class SdkDriver {
   /** Performance tracker for iteration/subagent timing and degradation detection. */
   private readonly perfTracker: PerformanceTracker;
 
+  /** Events_NDJSON log path (cmux integration). */
+  private readonly eventsPath: string;
+
   constructor(
     config: SdkDriverConfig,
     effectExecutor: EffectExecutorInterface,
@@ -99,6 +102,7 @@ export class SdkDriver {
     this.agentAdapter = agentAdapter;
     this.logger = createLogSink(config.logSinkConfig ?? { format: "text", level: "info" });
     this.perfTracker = new PerformanceTracker(this.logger, config.runId);
+    this.eventsPath = path.join(config.runDir ?? config.cwd, ".forge", "events.ndjson");
     this.orchestratorState = createInitialState();
     this.notesDocument = { runId: config.runId, branchName: config.branchName, entries: [] };
     this.notesContent = formatNotesDocument(this.notesDocument);
@@ -130,6 +134,11 @@ export class SdkDriver {
   /** Translation helper — falls back to key when no t() is configured. */
   private t(key: string, params?: Record<string, string>): string {
     return this.config.t ? this.config.t(key, params) : key;
+  }
+
+  /** Append an event to the NDJSON log (cmux integration). */
+  private emitEvent(type: string, payload: Record<string, unknown> = {}): void {
+    writeEvent(this.eventsPath, type, { run_id: this.config.runId, ...payload });
   }
 
   /** Run the autonomous loop until a termination condition is met. */
@@ -210,6 +219,13 @@ export class SdkDriver {
       );
       this.orchestratorState = startResult.state;
       this.lastEffects = startResult.effects;
+      this.emitEvent("session_started", {
+        objective: this.config.objective,
+        max_iterations: this.config.limits.maxIterations,
+        max_tokens: this.config.limits.maxTokens,
+        stop_when: this.config.limits.stopWhen ?? null,
+        worktree_mode: !!this.config.runDir,
+      });
       await this.executeEffects(startResult.effects);
 
       // Main loop.
@@ -350,6 +366,7 @@ export class SdkDriver {
 
   /** Signal the driver to stop gracefully. */
   requestStop(): void {
+    this.emitEvent("loop_interrupted", { reason: "user_interrupt" });
     this.stopRequested = true;
     if (this.currentAbortController) {
       this.currentAbortController.abort("user interrupt");
@@ -392,8 +409,10 @@ export class SdkDriver {
     this.currentAbortController = new AbortController();
     try {
       const ctx = this.buildIterationContext();
+      this.emitEvent("iter_started", { iteration: this.orchestratorState.currentIteration });
       const result = await executeGenericIterationFn(ctx);
       this.applyIterationResult(result);
+      this.emitIterResultEvent(result);
     } finally {
       this.currentAbortController = null;
     }
@@ -433,13 +452,25 @@ export class SdkDriver {
     }
   }
 
+  /** Emit commit or rollback event based on iteration result. */
+  private emitIterResultEvent(result: IterationResult): void {
+    const iter = this.orchestratorState.currentIteration;
+    if (result.lastEffects.some((e) => e.type === "commit")) {
+      this.emitEvent("iter_committed", { iteration: iter });
+    } else if (result.lastEffects.some((e) => e.type === "rollback")) {
+      this.emitEvent("iter_rolled_back", { iteration: iter });
+    }
+  }
+
   /** Skill-aware iteration — delegates to extracted function. */
   private async executeSkillAwareIteration(): Promise<void> {
     this.currentAbortController = new AbortController();
     try {
       const ctx = this.buildSkillIterationContext();
+      this.emitEvent("iter_started", { iteration: this.orchestratorState.currentIteration });
       const result = await executeSkillAwareIterationFn(ctx);
       this.applyIterationResult(result);
+      this.emitIterResultEvent(result);
     } finally {
       this.currentAbortController = null;
     }
@@ -462,6 +493,7 @@ export class SdkDriver {
       await this.effectExecutor.executeEffects(effects, signal);
     } catch (error) {
       const message = error instanceof Error ? error.message : String(error);
+      this.emitEvent("error", { message });
       this.logger.log(
         createLogEntry(
           "effect_execution_failed",
@@ -507,6 +539,11 @@ export class SdkDriver {
   }
 
   private buildResult(): SdkDriverResult {
+    this.emitEvent("loop_terminated", {
+      reason: this.loopCompletedNormally ? "natural" : "interrupted",
+      total_iterations: this.orchestratorState.currentIteration,
+      total_commits: this.orchestratorState.commitCount,
+    });
     return {
       finalState: this.orchestratorState,
       notesDocument: this.notesDocument,
