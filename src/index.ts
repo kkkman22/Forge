@@ -3,96 +3,23 @@
  *
  * Exports only the types and functions intended for external consumption.
  * Internal modules (pua-engine, status-file-ext, context-accumulator,
- * context-injection, frontmatter, state, skill-scheduler, sleep-preventer)
- * are intentionally excluded.
+ * context-injection, frontmatter, state, skill-scheduler, sleep-preventer,
+ * error-recovery, orphan-detector, process-registry, backlog, episode,
+ * pattern-stats, branch-lifecycle) are intentionally excluded.
  *
- * **Validates: Requirements 10.1, 10.2, 10.3**
+ * For deprecated symbols, import from `forge-loop/deprecated` or directly
+ * from the source module.
+ *
+ * **Validates: Requirements 3.1–3.11, 10.1–10.4**
  */
 
-// ---------------------------------------------------------------------------
-// Core types
-// ---------------------------------------------------------------------------
-
-export type {
-  AgentInterface,
-  AgentOutput,
-  AgentResult,
-  AgentRunOptions,
-  LoopConfig,
-  RunLimits,
-  TokenUsage,
-} from "./loop-types.js";
-
-// ---------------------------------------------------------------------------
 // Error hierarchy
-// ---------------------------------------------------------------------------
-
 export { CliError } from "./cli-error.js";
-export { ForgeError } from "./forge-error.js";
-
-// ---------------------------------------------------------------------------
-// Driver
-// ---------------------------------------------------------------------------
-
-export { SdkDriver, type SdkDriverConfig, type SdkDriverResult } from "./sdk-driver.js";
-
-// ---------------------------------------------------------------------------
-// Agent adapter
-// ---------------------------------------------------------------------------
-
-export { SdkAgentAdapter, type SdkAgentAdapterConfig } from "./sdk-agent-adapter.js";
-
-// ---------------------------------------------------------------------------
-// Quality gate (public evaluation functions)
-// ---------------------------------------------------------------------------
-
-export type { GateResult } from "./quality-gate.js";
-export { evaluateReviewGate, evaluateShipGate, evaluateTestGate } from "./quality-gate.js";
-
-// ---------------------------------------------------------------------------
-// Plan engine
-// ---------------------------------------------------------------------------
-
-export type {
-  AtomicTask,
-  DesignReferenceEntry,
-  DesignReferenceValidation,
-  LightweightTask,
-  PlanFormat,
-  TDDSteps,
-} from "./plan.js";
-export {
-  detectPlanFormat,
-  extractHeadingAnchors,
-  FORBIDDEN_PLACEHOLDERS,
-  scanForPlaceholders,
-  validateAtomicTask,
-  validateDependencies,
-  validateDesignReferences,
-  validateLightweightPlan,
-  validateLightweightTask,
-  validatePlan,
-  validatePlanTasks,
-  validateSpecLocked,
-} from "./plan.js";
-
-// ---------------------------------------------------------------------------
 // Context budget management
-// ---------------------------------------------------------------------------
-
-export type {
-  ClassificationEntry,
-  ContextBudgetReport,
-  ExploreSummary,
-  GitDiffSummary,
-  GitStatusSummary,
-  InformationLifecycle,
-  ReviewSummary,
-  SubagentSummary,
-  TestOutputSummary,
-} from "./context-budget.js";
 export {
   CLASSIFICATION_MAP,
+  type ClassificationEntry,
+  type ContextBudgetReport,
   canParseTestOutput,
   classifySource,
   deserializeContextBudgetReport,
@@ -102,6 +29,12 @@ export {
   deserializeReviewSummary,
   deserializeSubagentSummary,
   deserializeTestOutput,
+  type ExploreSummary,
+  type GitDiffSummary,
+  type GitStatusSummary,
+  type InformationLifecycle,
+  type ReviewSummary,
+  type SubagentSummary,
   serializeContextBudgetReport,
   serializeExploreResult,
   serializeExploreSummary,
@@ -110,86 +43,13 @@ export {
   serializeReviewSummary,
   serializeSubagentSummary,
   serializeTestOutput,
+  type TestOutputSummary,
 } from "./context-budget.js";
-
-// ---------------------------------------------------------------------------
-// Subagent runner
-// ---------------------------------------------------------------------------
-
-export type {
-  ParallelExecutionResult,
-  SubagentInvocation,
-  SubagentResult,
-} from "./loop-types.js";
-
-export {
-  buildSubagentInvocations,
-  runSubagentsInParallel,
-} from "./subagent-runner.js";
-
-// ---------------------------------------------------------------------------
-// Error recovery strategy
-// ---------------------------------------------------------------------------
-
-export type {
-  CheckpointMarker,
-  CommitTaskMatch,
-  DependencyGap,
-  FileChange,
-  ForgePhase,
-  ForgeTier,
-  GitCommitEntry,
-  GitScanResult,
-  InterruptionCategory,
-  InterruptionClassification,
-  PhaseInconsistency,
-  ProgressInconsistency,
-  ProgressReconciliationPatch,
-  ProgressTaskEntry,
-  RecoveryActionOption,
-  RecoveryInconsistencyItem,
-  RecoveryReport,
-  TaskCommitPattern,
-  TaskSegmentationInfo,
-  TDDInterruptionPhase,
-  UncommittedChangeResult,
-} from "./error-recovery.js";
-
-export {
-  buildReconciliationPatch,
-  buildRecoveryReport,
-  calculateSegmentation,
-  classifyInterruption,
-  deserializeCheckpointMarker,
-  deserializeClassification,
-  deserializeRecoveryReport,
-  extractCommitPatterns,
-  filterCommitsSince,
-  findDependencyGaps,
-  findPhaseInconsistencies,
-  findProgressInconsistencies,
-  getNextPhase,
-  getPhaseSequence,
-  inferTDDPhase,
-  isTestFile,
-  matchChangesToTask,
-  matchCommitsToTasks,
-  PHASE_SEQUENCES,
-  parseGitLog,
-  parseGitStatus,
-  serializeCheckpointMarker,
-  serializeClassification,
-  serializeRecoveryReport,
-  TEST_FILE_PATTERNS,
-} from "./error-recovery.js";
-
-// ---------------------------------------------------------------------------
-// Fix checklist (P0/P1 tracking state machine)
-// ---------------------------------------------------------------------------
-
-export type { ChecklistEntry, ChecklistStatus } from "./fix-checklist.js";
+// Fix checklist
 export {
   allEntriesVerified,
+  type ChecklistEntry,
+  type ChecklistStatus,
   createChecklist,
   isValidTransition,
   parseChecklist,
@@ -197,200 +57,125 @@ export {
   updateEntryStatus,
   VALID_TRANSITIONS,
 } from "./fix-checklist.js";
-
-// ---------------------------------------------------------------------------
+// Fix recovery
+export {
+  isFixCandidate,
+  parseGitLog as parseFixRecoveryGitLog,
+  type RecoveryCandidate,
+  type RecoveryResult,
+} from "./fix-recovery.js";
+export { ForgeError } from "./forge-error.js";
 // Incremental verifier
-// ---------------------------------------------------------------------------
-
-export type { VerificationDecision, VerificationResult } from "./incremental-verifier.js";
 export {
   buildVerificationCriteria,
   determineVerificationStrategy,
   INCREMENTAL_THRESHOLD,
+  type VerificationDecision,
+  type VerificationResult,
 } from "./incremental-verifier.js";
-
-// ---------------------------------------------------------------------------
-// Fix recovery (git history)
-// ---------------------------------------------------------------------------
-
-export type { RecoveryCandidate, RecoveryResult } from "./fix-recovery.js";
-export { isFixCandidate, parseGitLog as parseFixRecoveryGitLog } from "./fix-recovery.js";
-
-// ---------------------------------------------------------------------------
-// Ship gate (extended)
-// ---------------------------------------------------------------------------
-
+// Core types (from loop-types.js)
 export type {
-  ProgressResult,
-  ReviewFreshnessResult,
-  ReviewResult,
-  ShipGateResult,
-  TestResult,
-} from "./ship.js";
+  AgentInterface,
+  AgentOutput,
+  AgentResult,
+  AgentRunOptions,
+  BranchTopicGateResult,
+  CommitTopicCheckResult,
+  LoopConfig,
+  ParallelExecutionResult,
+  PendingDeliveryRecord,
+  RunLimits,
+  SubagentInvocation,
+  SubagentResult,
+  TokenUsage,
+  UnshippedBranchWarning,
+} from "./loop-types.js";
+// Plan engine
+export {
+  type AtomicTask,
+  type DesignReferenceEntry,
+  type DesignReferenceValidation,
+  detectPlanFormat,
+  extractHeadingAnchors,
+  FORBIDDEN_PLACEHOLDERS,
+  type LightweightTask,
+  type PlanFormat,
+  scanForPlaceholders,
+  type TDDSteps,
+  validateAtomicTask,
+  validateDependencies,
+  validateDesignReferences,
+  validateLightweightPlan,
+  validateLightweightTask,
+  validatePlan,
+  validatePlanTasks,
+  validateSpecLocked,
+} from "./plan.js";
+// Quality gate
+export {
+  evaluateReviewGate,
+  evaluateShipGate,
+  evaluateTestGate,
+  type GateResult,
+} from "./quality-gate.js";
+// Agent adapter
+export { SdkAgentAdapter, type SdkAgentAdapterConfig } from "./sdk-agent-adapter.js";
+// Driver
+export { SdkDriver, type SdkDriverConfig, type SdkDriverResult } from "./sdk-driver.js";
+// Ship gate
 export {
   checkReviewFreshness,
   checkShipGate,
   checkShipGateWithChecklist,
   checkShipGateWithFreshness,
+  type ProgressResult,
+  type ReviewFreshnessResult,
+  type ReviewResult,
+  type ShipGateResult,
+  type TestResult,
 } from "./ship.js";
-
-// ---------------------------------------------------------------------------
+// SKILL plugin mechanism
+export {
+  installSkill,
+  loadSkillsFromDir,
+  mergeSkillLists,
+  type SkillManifest,
+  type SkillPhase,
+} from "./skill-loader.js";
+export {
+  checkVersionCompatibility,
+  type ValidationResult as SkillValidationResult,
+  validateManifest,
+} from "./skill-validator.js";
 // Multi-task status tracking
-// ---------------------------------------------------------------------------
-
-export type { TaskStatusEntry } from "./state.js";
 export {
   hasTaskName,
   parseStatusEntries,
   removeTaskEntry,
   serializeStatusEntries,
+  type TaskStatusEntry,
   upsertTaskEntry,
 } from "./state.js";
-
-// ---------------------------------------------------------------------------
-// Parallel status tracking (file-based multi-task)
-// ---------------------------------------------------------------------------
-
-export type {
-  ManagedTaskEntry,
-  StatusManagerIO,
-} from "./status-manager.js";
+// Status manager
 export {
   archiveTaskStatus,
   getMostRecentActiveTask,
   listActiveTasks,
+  type ManagedTaskEntry,
   migrateToMultiTask,
   readTaskStatus,
+  type StatusManagerIO,
   writeTaskStatus,
 } from "./status-manager.js";
-export type {
-  ReconstructedState,
-  ResolvedStatus,
-  ResolverContext,
-} from "./status-resolver.js";
+// Status resolver
 export {
   isMultiTaskMode,
+  type ReconstructedState,
+  type ResolvedStatus,
+  type ResolverContext,
   reconstructStateFromGit,
   resolveStatusPath,
   slugify,
 } from "./status-resolver.js";
-
-// ---------------------------------------------------------------------------
-// Process lifecycle management
-// ---------------------------------------------------------------------------
-
-export type { OrphanProcess, PidFileContent } from "./orphan-detector.js";
-export {
-  cleanupOrphans,
-  cleanupStaleSessions,
-  deletePidFile,
-  detectPpidOrphans,
-  readPidFile,
-  writePidFile,
-} from "./orphan-detector.js";
-export type {
-  ProcessMetadata,
-  SerializedRegistry,
-  ShutdownResult,
-} from "./process-registry.js";
-export { ProcessRegistry } from "./process-registry.js";
-export type { ProcessTreeNode } from "./process-tree-cleaner.js";
-export {
-  getDescendants,
-  killProcessGroup,
-  killProcessTree,
-} from "./process-tree-cleaner.js";
-
-// ---------------------------------------------------------------------------
-// Backlog (P2/P3 findings capture)
-// ---------------------------------------------------------------------------
-
-export type { BacklogEntry } from "./backlog.js";
-export {
-  appendToBacklog,
-  findOverlappingEntries,
-  generateBacklogHeader,
-  parseBacklog,
-  resolveEntry,
-  serializeBacklog,
-} from "./backlog.js";
-
-// ---------------------------------------------------------------------------
-// Episode & pattern confidence lifecycle (Phase 4)
-// ---------------------------------------------------------------------------
-
-export type {
-  Episode,
-  EpisodeOutcome,
-  EpisodeTier,
-} from "./episode.js";
-export {
-  generateEpisodeId,
-  parseEpisode,
-  renderEpisode,
-} from "./episode.js";
-export type {
-  EvolutionBySkill,
-  EvolutionMarker,
-  EvolutionReport,
-  ValidationResult,
-} from "./evolution-marker.js";
-export {
-  aggregateEvolutionMarkers,
-  parseEvolutionMarkers,
-  validateEvolutionTarget,
-} from "./evolution-marker.js";
-export type {
-  FailureContext,
-  FailureTrigger,
-} from "./failure-sink.js";
-export {
-  buildFailureEpisode,
-  buildFailureEvolutionMarker,
-} from "./failure-sink.js";
-export type {
-  Pattern,
-  UpgradeSuggestion,
-} from "./pattern-stats.js";
-export {
-  findStaleOrDecayedPatterns,
-  findUpgradableEpisodes,
-  parseInstinct,
-  renderInstincts,
-  updatePatternStats,
-} from "./pattern-stats.js";
-
-// ---------------------------------------------------------------------------
-// Branch lifecycle enforcement
-// ---------------------------------------------------------------------------
-
-export {
-  checkBranchTopicGate,
-  checkCommitTopicMatch,
-  detectStaleBranches,
-  detectUnshippedBranches,
-  extractBranchTopic,
-  recordPendingDelivery,
-} from "./branch-lifecycle.js";
-
-// ---------------------------------------------------------------------------
-// SKILL plugin mechanism
-// ---------------------------------------------------------------------------
-
-export type {
-  BranchTopicGateResult,
-  CommitTopicCheckResult,
-  PendingDeliveryRecord,
-  UnshippedBranchWarning,
-} from "./loop-types.js";
-export type { SkillManifest, SkillPhase } from "./skill-loader.js";
-export {
-  installSkill,
-  loadSkillsFromDir,
-  mergeSkillLists,
-} from "./skill-loader.js";
-export type { ValidationResult as SkillValidationResult } from "./skill-validator.js";
-export {
-  checkVersionCompatibility,
-  validateManifest,
-} from "./skill-validator.js";
+// Subagent runner
+export { buildSubagentInvocations, runSubagentsInParallel } from "./subagent-runner.js";
