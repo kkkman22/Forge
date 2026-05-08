@@ -1,14 +1,13 @@
 ---
-current_task: "oz-skills-inspiration"
+current_task: "cmux-integration"
 tier: "standard"
 task_type: "multi-phase-engineering"
-project_phase: "build"
+project_phase: "shipped-sprint1"
 phase: "approved"
-hints: "forge-plan, spec三件套已就绪, 65子任务, 4Phase"
+hints: "Sprint 1 shipped, Sprint 2-6 pending"
 assumptions:
-  - "Spec 已存在于 .kiro/specs/oz-skills-inspiration/"
-  - "Requirements/Design/Tasks 三件套完整"
-  - "无需 decide/spec 阶段"
+  - "Sprint 1 (Tasks 1-10) complete and shipped"
+  - "Sprint 2-6 remain in plan"
 updated: "2026-05-08"
 ---
 
