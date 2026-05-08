@@ -3,7 +3,9 @@
  *
  * **Validates: Requirements 9.1, 9.2, 9.4**
  */
+/** @public */
 export const INCREMENTAL_THRESHOLD = 50;
+/** @public */
 export function determineVerificationStrategy(linesChanged, threshold = INCREMENTAL_THRESHOLD) {
     if (linesChanged < 0) {
         throw new Error(`linesChanged must be non-negative, got ${linesChanged}`);
@@ -14,6 +16,7 @@ export function determineVerificationStrategy(linesChanged, threshold = INCREMEN
         threshold,
     };
 }
+/** @public */
 export function buildVerificationCriteria(finding) {
     return {
         filePath: finding.filePath,

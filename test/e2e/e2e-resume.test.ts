@@ -114,7 +114,7 @@ describe("E2E resume path", () => {
     vi.spyOn(console, "warn").mockImplementation(() => {});
     vi.spyOn(console, "error").mockImplementation(() => {});
 
-    const readStatusFile = vi.fn().mockReturnValue('---\nloop_iteration: 2\n---\n');
+    const readStatusFile = vi.fn().mockReturnValue("---\nloop_iteration: 2\n---\n");
     const writeStatusFile = vi.fn();
 
     const agent = new ScriptedAgent([

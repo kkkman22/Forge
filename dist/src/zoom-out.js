@@ -131,7 +131,7 @@ export function renderZoomOut(output) {
  * A "non-empty line" is any line that, after trimming whitespace,
  * contains at least one character. Empty / whitespace-only lines are
  * free separators and do not count toward the budget. This mirrors
- * the counting rule used by {@link countEffectiveLines} in
+ * the counting rule used by `countEffectiveLines` in
  * `skill-length.ts` and is consistent with how humans perceive a
  * "5-line" section.
  *

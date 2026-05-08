@@ -59,6 +59,7 @@ export function evaluateGateForPhase(phase, readers) {
         }
     }
     catch (err) {
+        // biome-ignore lint/suspicious/noConsole: standalone utility without logger access
         console.warn(`Warning: quality gate evaluation failed for phase "${phase}": ${err instanceof Error ? err.message : String(err)}`);
         return null;
     }

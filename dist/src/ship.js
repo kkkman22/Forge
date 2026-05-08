@@ -21,6 +21,7 @@ import { allEntriesVerified } from "./fix-checklist.js";
  *   2. reviewedCommit === currentHead → fresh
  *   3. all changed files are under .forge/ → fresh
  *   4. any changed file is outside .forge/ → not fresh
+ * @public
  */
 export function checkReviewFreshness(reviewedCommit, currentHead, changedFiles) {
     if (reviewedCommit === undefined) {
@@ -52,6 +53,7 @@ export function checkReviewFreshness(reviewedCommit, currentHead, changedFiles) 
  *   - All three conditions must be true simultaneously
  *
  * Returns { allowed, reasons } where reasons lists all unmet conditions.
+ * @public
  */
 export function checkShipGate(review, test, progress) {
     const reasons = [];
@@ -86,6 +88,7 @@ export function checkShipGate(review, test, progress) {
  *
  * Adds a fourth gate: all checklist entries must have status "verified".
  * When checklist is not provided or empty, behaves like checkShipGate.
+ * @public
  */
 export function checkShipGateWithChecklist(review, test, progress, checklist) {
     const result = checkShipGate(review, test, progress);
@@ -93,6 +96,25 @@ export function checkShipGateWithChecklist(review, test, progress, checklist) {
         const unverified = checklist.filter((e) => e.status !== "verified");
         result.reasons.push(`Checklist 未完成：${unverified.length} 个 P0/P1 条目未验证（${unverified.map((e) => e.findingId).join(", ")}）`);
         result.allowed = false;
+    }
+    return result;
+}
+/**
+ * Extended ship gate with Review Freshness check.
+ *
+ * Adds a non-blocking freshness warning: if the review was performed at a
+ * different commit and project code has changed since, a warning is appended
+ * to the reasons. This does NOT block ship — it is advisory only.
+ * @public
+ */
+export function checkShipGateWithFreshness(review, test, progress, currentHead, changedFiles, checklist) {
+    const result = checklist
+        ? checkShipGateWithChecklist(review, test, progress, checklist)
+        : checkShipGate(review, test, progress);
+    const freshness = checkReviewFreshness(review.reviewedAtCommit, currentHead, changedFiles);
+    if (!freshness.fresh) {
+        const fileList = freshness.changedFiles ? ` [${freshness.changedFiles.join(", ")}]` : "";
+        result.reasons.push(`⚠️ Review freshness: ${freshness.reason}${fileList}`);
     }
     return result;
 }
@@ -134,6 +156,8 @@ function outcomeForReason(reason) {
  *
  * Pure: identical `(topic, tier, reason, situation, now, sequenceInDay)`
  * always yields identical artefacts.
+ *
+ * @public
  */
 export function buildShipGateBlockArtifacts(topic, tier, reason, situation, now, sequenceInDay) {
     const ctx = {

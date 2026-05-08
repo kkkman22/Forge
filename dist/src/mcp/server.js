@@ -16,9 +16,11 @@ import { registerForgeRead } from "./tools/forge-read.js";
 // Error handling — log to stderr (stdout is reserved for MCP protocol)
 // ---------------------------------------------------------------------------
 process.on("unhandledRejection", (reason) => {
+    // biome-ignore lint/suspicious/noConsole: top-level process error handler
     console.error("[forge-context] Unhandled rejection:", reason);
 });
 process.on("uncaughtException", (error) => {
+    // biome-ignore lint/suspicious/noConsole: top-level process error handler
     console.error("[forge-context] Uncaught exception:", error);
 });
 // ---------------------------------------------------------------------------

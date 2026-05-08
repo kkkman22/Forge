@@ -52,7 +52,7 @@ const SUGGEST_ADR_THRESHOLD = 3;
  * order.
  *
  * The parser is tolerant: any line that fails to match
- * {@link MARKER_REGEX} is ignored, so feeding arbitrary markdown or
+ * `MARKER_REGEX` is ignored, so feeding arbitrary markdown or
  * even binary-ish text never throws. The description block is
  * collected from the lines following the comment until the next
  * `<!--` or EOF; leading / trailing whitespace is trimmed.
@@ -60,6 +60,8 @@ const SUGGEST_ADR_THRESHOLD = 3;
  * `filePath` is echoed onto each marker for downstream aggregation /
  * error reporting. When the caller does not supply a path (e.g. unit
  * tests), an empty string is used.
+ *
+ * @internal
  */
 export function parseEvolutionMarkers(content, filePath = "") {
     const markers = [];
@@ -100,6 +102,8 @@ export function parseEvolutionMarkers(content, filePath = "") {
  * Returns `{ valid, orphan, reason? }`:
  *   - `{ valid: true, orphan: false }` when the base name is in the registry.
  *   - `{ valid: false, orphan: true, reason: ... }` otherwise.
+ *
+ * @internal
  */
 export function validateEvolutionTarget(target, skillsRegistry) {
     const baseName = target.split("#")[0].trim();
@@ -136,6 +140,8 @@ export function validateEvolutionTarget(target, skillsRegistry) {
  * `now` defaults to `new Date()`; callers who need stable snapshots
  * (e.g. tests, deterministic learn output) should supply a fixed
  * clock.
+ *
+ * @internal
  */
 export function aggregateEvolutionMarkers(markersByFile, skillsRegistry, now = new Date()) {
     // Flatten in deterministic (sorted path) order.

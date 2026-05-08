@@ -5,7 +5,10 @@ export type { SdkDriverConfig, SdkDriverResult } from "./sdk-driver-types.js";
 export { validateHooksPresence } from "./sdk-hooks-validation.js";
 export { detectSkillAwareMode } from "./sdk-skill-detection.js";
 import type { SdkDriverConfig, SdkDriverResult } from "./sdk-driver-types.js";
-/** Core autonomous loop driver — bridges the state machine with real I/O. */
+/**
+ * Core autonomous loop driver — bridges the state machine with real I/O.
+ * @public
+ */
 export declare class SdkDriver {
     private readonly config;
     private readonly effectExecutor;
@@ -58,5 +61,7 @@ export declare class SdkDriver {
     /** Build a SkillIterationContext extending the base context. */
     private buildSkillIterationContext;
     private executeEffects;
+    /** Write an audit flag file when --force-no-hooks is used. */
+    private writeForceNoHooksFlag;
     private buildResult;
 }

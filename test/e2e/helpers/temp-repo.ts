@@ -4,10 +4,9 @@
  * Provides an isolated git repo with forge skeleton, cleaned up after each test.
  */
 import { execFileSync } from "node:child_process";
-import { mkdirSync, writeFileSync } from "node:fs";
-import { mkdtempSync, rmSync } from "node:fs";
-import { join } from "node:path";
+import { mkdirSync, mkdtempSync, rmSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
+import { join } from "node:path";
 
 export interface TempRepo {
   cwd: string;
@@ -78,7 +77,11 @@ export function createTempRepo(seed?: string): TempRepo {
  * Get the current HEAD commit SHA from a git repo.
  */
 export function getHeadSha(cwd: string): string {
-  return execFileSync("git", ["rev-parse", "HEAD"], { cwd, encoding: "utf-8", timeout: 5000 }).trim();
+  return execFileSync("git", ["rev-parse", "HEAD"], {
+    cwd,
+    encoding: "utf-8",
+    timeout: 5000,
+  }).trim();
 }
 
 /**

@@ -10,7 +10,10 @@
  * **Validates: Requirements 1.1–1.8, 2.1–2.7, 3.1–3.7, 4.1–4.7,
  *   5.1–5.8, 6.1–6.7, 7.1–7.7, 8.1–8.7, 9.1–9.6**
  */
-/** Cumulative token counts for a single agent invocation. */
+/**
+ * Cumulative token counts for a single agent invocation.
+ * @public
+ */
 export interface TokenUsage {
     /** Number of input (prompt) tokens consumed. */
     inputTokens: number;
@@ -21,7 +24,10 @@ export interface TokenUsage {
     /** Number of tokens written to cache. */
     cacheCreationTokens: number;
 }
-/** Structured JSON result returned by a subagent after each iteration. */
+/**
+ * Structured JSON result returned by a subagent after each iteration.
+ * @public
+ */
 export interface AgentOutput {
     /** Whether the iteration completed successfully. */
     success: boolean;
@@ -40,7 +46,10 @@ export interface AgentOutput {
     /** ★ 新增：质量门禁结果 */
     gate_result?: "passed" | "blocked" | "skipped";
 }
-/** JSON Schema property descriptor for agent output schema construction. */
+/**
+ * JSON Schema property descriptor for agent output schema construction.
+ * @public
+ */
 export interface SchemaProperty {
     /** JSON Schema type (e.g. "boolean", "string", "array"). */
     type: string;
@@ -49,7 +58,10 @@ export interface SchemaProperty {
         type: string;
     };
 }
-/** JSON Schema object describing the expected agent output structure. */
+/**
+ * JSON Schema object describing the expected agent output structure.
+ * @public
+ */
 export interface AgentOutputSchema {
     /** Always "object". */
     type: "object";
@@ -60,7 +72,10 @@ export interface AgentOutputSchema {
     /** All property names that must be present. */
     required: string[];
 }
-/** A single iteration's record in the cumulative notes document. */
+/**
+ * A single iteration's record in the cumulative notes document.
+ * @public
+ */
 export interface IterationEntry {
     /** 1-based iteration number. */
     number: number;
@@ -73,7 +88,10 @@ export interface IterationEntry {
     /** List of key learnings from this iteration. */
     keyLearnings: string[];
 }
-/** The full cumulative notes document maintained across iterations. */
+/**
+ * The full cumulative notes document maintained across iterations.
+ * @public
+ */
 export interface NotesDocument {
     /** Unique identifier for this run. */
     runId: string;
@@ -82,7 +100,10 @@ export interface NotesDocument {
     /** Ordered list of iteration entries. */
     entries: IterationEntry[];
 }
-/** User-specified limits that control when the autonomous loop stops. */
+/**
+ * User-specified limits that control when the autonomous loop stops.
+ * @public
+ */
 export interface RunLimits {
     /** Maximum number of iterations before aborting. */
     maxIterations?: number;
@@ -91,7 +112,10 @@ export interface RunLimits {
     /** Natural-language condition; agent sets should_fully_stop when met. */
     stopWhen?: string;
 }
-/** Configuration for the autonomous loop execution mode. */
+/**
+ * Configuration for the autonomous loop execution mode.
+ * @public
+ */
 export interface LoopConfig {
     /** Which agent to use for iterations. */
     agent: AgentName;
@@ -106,7 +130,10 @@ export interface LoopConfig {
     /** External SKILL plugin directory. */
     skillsDir?: string;
 }
-/** The orchestrator's current state, updated after each event. */
+/**
+ * The orchestrator's current state, updated after each event.
+ * @public
+ */
 export interface OrchestratorState {
     /** Current lifecycle phase of the orchestrator. */
     status: "idle" | "running" | "waiting" | "aborted" | "stopped";
@@ -134,6 +161,7 @@ export interface OrchestratorState {
  *
  * Each event represents something that happened (past tense) and triggers
  * a deterministic state transition via the `transition` function.
+ * @public
  */
 export type OrchestratorEvent = {
     type: "start";
@@ -161,6 +189,7 @@ export type OrchestratorEvent = {
  * Side-effect descriptions produced by state transitions.
  *
  * Effects are pure data — the SKILL layer is responsible for executing them.
+ * @public
  */
 export type OrchestratorEffect = {
     type: "schedule_iteration";
@@ -203,6 +232,7 @@ export type OrchestratorEffect = {
  *
  * The structural shape mirrors `EventLogEntry` exactly — see
  * `src/event-log.ts` for the canonical definition.
+ * @public
  */
 export interface EventLogEntryRef {
     timestamp: string;
@@ -213,9 +243,15 @@ export interface EventLogEntryRef {
     stateHashAfter: string;
     effects: OrchestratorEffect[];
 }
-/** Classification of iteration failures. */
+/**
+ * Classification of iteration failures.
+ * @public
+ */
 export type FailureKind = "soft" | "hard";
-/** Mutable failure counters tracked by the orchestrator. */
+/**
+ * Mutable failure counters tracked by the orchestrator.
+ * @public
+ */
 export interface FailureState {
     /** Count of consecutive failures (soft + hard combined). */
     consecutiveFailures: number;
@@ -227,6 +263,7 @@ export interface FailureState {
  *
  * Commands are represented as argv arrays to prevent shell injection.
  * The executable is always "git" — user input appears only in `args`.
+ * @public
  */
 export interface GitCommand {
     /** Always "git". */
@@ -234,7 +271,10 @@ export interface GitCommand {
     /** Argument array passed directly to execFileSync (no shell). */
     args: string[];
 }
-/** Platform-specific command to prevent the OS from sleeping. */
+/**
+ * Platform-specific command to prevent the OS from sleeping.
+ * @public
+ */
 export interface SleepPreventionCommand {
     /** The executable to spawn (e.g. "caffeinate", "powershell.exe"). */
     command: string;
@@ -243,16 +283,25 @@ export interface SleepPreventionCommand {
     /** Whether the child process should be detached from the parent. */
     detached: boolean;
 }
-/** Decision about what to do with a worktree after a run completes. */
+/**
+ * Decision about what to do with a worktree after a run completes.
+ * @public
+ */
 export interface WorktreeDecision {
     /** Whether to keep or remove the worktree. */
     action: "preserve" | "remove";
     /** Human-readable explanation for the decision. */
     reason: string;
 }
-/** Supported agent identifiers. */
+/**
+ * Supported agent identifiers.
+ * @public
+ */
 export type AgentName = "claude" | "codex" | "opencode" | "rovodev";
-/** Options passed to an agent's `run` method. */
+/**
+ * Options passed to an agent's `run` method.
+ * @public
+ */
 export interface AgentRunOptions {
     /** Callback for incremental token usage reporting. */
     onUsage?: (usage: TokenUsage) => void;
@@ -263,14 +312,20 @@ export interface AgentRunOptions {
     /** Path to write iteration-level debug logs. */
     logPath?: string;
 }
-/** Result of a single agent run (one iteration). */
+/**
+ * Result of a single agent run (one iteration).
+ * @public
+ */
 export interface AgentResult {
     /** The structured output from the agent. */
     output: AgentOutput;
     /** Token usage for this run. */
     usage: TokenUsage;
 }
-/** Unified interface that all agent adapters must implement. */
+/**
+ * Unified interface that all agent adapters must implement.
+ * @public
+ */
 export interface AgentInterface {
     /** Human-readable agent name (e.g. "claude", "codex"). */
     name: string;
@@ -279,7 +334,10 @@ export interface AgentInterface {
     /** Execute a single iteration with the given prompt. */
     run(prompt: string, cwd: string, options?: AgentRunOptions): Promise<AgentResult>;
 }
-/** Describes a single Subagent invocation's complete parameters. */
+/**
+ * Describes a single Subagent invocation's complete parameters.
+ * @public
+ */
 export interface SubagentInvocation {
     /** Subagent role identifier, corresponding to .claude/agents/ definitions. */
     agentType: string;
@@ -290,7 +348,10 @@ export interface SubagentInvocation {
     /** Maximum number of turns. */
     maxTurns: number;
 }
-/** Subagent execution result. */
+/**
+ * Subagent execution result.
+ * @public
+ */
 export interface SubagentResult {
     /** Subagent role identifier. */
     agentType: string;
@@ -301,7 +362,10 @@ export interface SubagentResult {
     /** Error message (on failure/timeout). */
     error?: string;
 }
-/** Parallel execution aggregate result. */
+/**
+ * Parallel execution aggregate result.
+ * @public
+ */
 export interface ParallelExecutionResult<T = string> {
     /** Successfully completed subagent results. */
     succeeded: Array<{
@@ -314,14 +378,20 @@ export interface ParallelExecutionResult<T = string> {
         error: string;
     }>;
 }
-/** Result of checking whether a branch topic matches the task topic. */
+/**
+ * Result of checking whether a branch topic matches the task topic.
+ * @public
+ */
 export interface BranchTopicGateResult {
     /** Whether the build gate allows proceeding. */
     allowed: boolean;
     /** Human-readable reasons when not allowed. */
     reasons: string[];
 }
-/** A pending-delivery record for "keep branch" ship selections. */
+/**
+ * A pending-delivery record for "keep branch" ship selections.
+ * @public
+ */
 export interface PendingDeliveryRecord {
     /** The branch name (e.g. "feature/my-topic"). */
     branchName: string;
@@ -330,14 +400,20 @@ export interface PendingDeliveryRecord {
     /** Unix timestamp (ms) when the record was created. */
     timestamp: number;
 }
-/** Result of checking whether a commit's topic matches the branch topic. */
+/**
+ * Result of checking whether a commit's topic matches the branch topic.
+ * @public
+ */
 export interface CommitTopicCheckResult {
     /** Whether the commit is allowed. */
     allowed: boolean;
     /** Reason when not allowed. */
     reason?: string;
 }
-/** Warning about an unshipped branch with pending delivery. */
+/**
+ * Warning about an unshipped branch with pending delivery.
+ * @public
+ */
 export interface UnshippedBranchWarning {
     /** The branch name. */
     branchName: string;

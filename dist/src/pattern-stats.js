@@ -65,6 +65,8 @@ const ARCHIVED_SENTINEL = "## Archived";
  * The parser is line-based and tolerates the H1 banner, the optional
  * frontmatter block, and an optional `## ` subsection prior to the H3
  * pattern headings.
+ *
+ * @internal
  */
 export function parseInstinct(content) {
     const { body } = stripFrontmatter(content);
@@ -84,6 +86,8 @@ export function parseInstinct(content) {
  * The top-level `schema_version` / `updated` frontmatter is emitted so
  * future migrations have a hook. Patterns are printed under a single
  * `## Patterns` section; future archived entries live after `## Archived`.
+ *
+ * @internal
  */
 export function renderInstincts(patterns) {
     const lines = [];
@@ -115,6 +119,8 @@ export function renderInstincts(patterns) {
  * to 0 or 1. The function is pure and returns a new pattern.
  *
  * **Validates: Requirements 7.6, 7.7, 7.13**
+ *
+ * @internal
  */
 export function updatePatternStats(pattern, outcome, now) {
     const applications = pattern.applications + 1;
@@ -142,6 +148,8 @@ export function updatePatternStats(pattern, outcome, now) {
  * is the invariant the property test exercises. Pure function.
  *
  * **Validates: Requirements 7.8, 7.13**
+ *
+ * @internal
  */
 export function findStaleOrDecayedPatterns(patterns, now, maxAgeDays = DEFAULT_MAX_AGE_DAYS) {
     const nowMs = now.getTime();
@@ -176,6 +184,8 @@ export function findStaleOrDecayedPatterns(patterns, now, maxAgeDays = DEFAULT_M
  * occurrence count so the caller surfaces the strongest signals first.
  *
  * **Validates: Requirements 7.11**
+ *
+ * @internal
  */
 export function findUpgradableEpisodes(episodes, patterns, now, windowDays = DEFAULT_WINDOW_DAYS, minOccurrences = DEFAULT_MIN_OCCURRENCES) {
     const nowMs = now.getTime();

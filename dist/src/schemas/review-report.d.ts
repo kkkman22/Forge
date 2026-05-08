@@ -18,6 +18,7 @@ export declare const ReviewResultSchema: z.ZodString;
 export declare const SeverityCountSchema: z.ZodNumber;
 export declare const ReviewReportSchema: z.ZodObject<{
     result: z.ZodOptional<z.ZodString>;
+    reviewed_at_commit: z.ZodOptional<z.ZodString>;
     p0_count: z.ZodOptional<z.ZodNumber>;
     p1_count: z.ZodOptional<z.ZodNumber>;
     p2_count: z.ZodOptional<z.ZodNumber>;

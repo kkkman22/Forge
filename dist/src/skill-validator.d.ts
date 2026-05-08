@@ -5,7 +5,7 @@
  * **Validates: Requirements R4.2**
  */
 import type { SkillManifest } from "./skill-loader.js";
-/** Result of manifest validation. */
+/** Result of manifest validation. @public */
 export interface ValidationResult {
     valid: boolean;
     errors: string[];
@@ -15,6 +15,7 @@ export interface ValidationResult {
  *
  * @param json - Unknown input to validate.
  * @returns Validation result with errors if invalid.
+ * @public
  */
 export declare function validateManifest(json: unknown): ValidationResult;
 /**
@@ -23,5 +24,6 @@ export declare function validateManifest(json: unknown): ValidationResult;
  * @param manifest - SKILL manifest with forgeVersion requirement.
  * @param currentVersion - Current Forge version (exact semver).
  * @returns true if compatible.
+ * @public
  */
 export declare function checkVersionCompatibility(manifest: SkillManifest, currentVersion: string): boolean;

@@ -3,7 +3,12 @@
  *
  * Supports success / failure / stop responses with configurable sequences.
  */
-import type { AgentInterface, AgentResult, AgentRunOptions, TokenUsage } from "../../../src/loop-types.js";
+import type {
+  AgentInterface,
+  AgentResult,
+  AgentRunOptions,
+  TokenUsage,
+} from "../../../src/loop-types.js";
 
 export interface ScriptedResponse {
   kind: "success" | "failure" | "stop";
@@ -35,7 +40,7 @@ export class ScriptedAgent implements AgentInterface {
   constructor(private script: ScriptedResponse[]) {}
 
   async run(_prompt: string, _cwd: string, _options?: AgentRunOptions): Promise<AgentResult> {
-    const response = this.script[this.callCount] ?? this.script.at(-1)!;
+    const response = this.script[this.callCount] ?? this.script.at(-1) ?? { kind: "stop" as const };
     this.callCount++;
 
     switch (response.kind) {

@@ -20,6 +20,7 @@
  *   5. Trim leading/trailing hyphens
  *
  * @throws Error if input is empty or contains no ASCII alphanumeric characters
+ * @public
  */
 export function slugify(taskName) {
     const lower = taskName.toLowerCase();
@@ -48,6 +49,7 @@ export function slugify(taskName) {
  *
  * @param ctx - Resolver context with task name and forge root
  * @param dirExists - DI function to check if .forge/status/ directory exists
+ * @public
  */
 export function resolveStatusPath(ctx, dirExists) {
     const taskId = slugify(ctx.taskName);
@@ -73,6 +75,7 @@ export function resolveStatusPath(ctx, dirExists) {
  *
  * @param forgeRoot - Path to the .forge directory
  * @param dirExists - DI function to check directory existence
+ * @public
  */
 export function isMultiTaskMode(forgeRoot, dirExists) {
     return dirExists(`${forgeRoot}/status`);
@@ -86,6 +89,7 @@ export function isMultiTaskMode(forgeRoot, dirExists) {
  * Called by forge-resume when StatusFile is missing or inconsistent.
  * Reconstructed state is presented to the user for confirmation,
  * NOT automatically written to disk.
+ * @public
  */
 export function reconstructStateFromGit(forgeFiles) {
     const hasPlans = forgeFiles.some((f) => f.startsWith("plans/"));

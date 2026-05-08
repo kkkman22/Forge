@@ -8,7 +8,8 @@
  * In single-task mode, all operations target .forge/status.md.
  * In multi-task mode, each task gets its own file under .forge/status/.
  */
-export interface TaskStatusEntry {
+/** @public */
+export interface ManagedTaskEntry {
     taskId: string;
     taskName: string;
     phase: string;
@@ -16,6 +17,7 @@ export interface TaskStatusEntry {
     updated?: string;
     filePath: string;
 }
+/** @public */
 export interface StatusManagerIO {
     exists: (path: string) => boolean;
     dirExists: (path: string) => boolean;
@@ -29,6 +31,7 @@ export interface StatusManagerIO {
  * Read status for a specific task.
  *
  * Priority: .forge/status/<task-id>.md → .forge/status.md → empty string
+ * @public
  */
 export declare function readTaskStatus(io: StatusManagerIO, forgeRoot: string, taskName: string): string;
 /**
@@ -37,20 +40,23 @@ export declare function readTaskStatus(io: StatusManagerIO, forgeRoot: string, t
  * In multi-task mode, writes to .forge/status/<task-id>.md.
  * In single-task mode, writes to .forge/status.md.
  * Write failures are logged and do not crash.
+ * @public
  */
 export declare function writeTaskStatus(io: StatusManagerIO, forgeRoot: string, taskName: string, content: string): void;
 /**
  * List all active tasks (phase is not "completed" or "aborted").
  *
  * Scans both .forge/status.md and .forge/status/*.md.
+ * @public
  */
-export declare function listActiveTasks(io: StatusManagerIO, forgeRoot: string): TaskStatusEntry[];
+export declare function listActiveTasks(io: StatusManagerIO, forgeRoot: string): ManagedTaskEntry[];
 /**
  * Get the most recently updated active task.
  *
  * Used by Context_Hook to select which task's context to inject.
+ * @public
  */
-export declare function getMostRecentActiveTask(io: StatusManagerIO, forgeRoot: string): TaskStatusEntry | null;
+export declare function getMostRecentActiveTask(io: StatusManagerIO, forgeRoot: string): ManagedTaskEntry | null;
 /**
  * Migrate from single-task (status.md) to multi-task (status/*.md) mode.
  *
@@ -60,9 +66,11 @@ export declare function getMostRecentActiveTask(io: StatusManagerIO, forgeRoot: 
  *   3. Create .forge/status/ directory
  *   4. Copy legacy content to .forge/status/<task-id>.md
  *   5. Clear legacy status.md (preserve empty frontmatter)
+ * @public
  */
 export declare function migrateToMultiTask(io: StatusManagerIO, forgeRoot: string): void;
 /**
  * Archive a task's status file to .forge/archive/<date>-<task-id>/status.md.
+ * @public
  */
 export declare function archiveTaskStatus(io: StatusManagerIO, forgeRoot: string, taskName: string, date: string): void;
