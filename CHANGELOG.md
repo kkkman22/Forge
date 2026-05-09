@@ -13,6 +13,22 @@ Entries follow [Keep a Changelog](https://keepachangelog.com/) with Forge-specif
 
 ### Added
 
+- **PMS Domain Pack v1.0** — Hotel PMS domain knowledge pack
+  - 8 Bounded Contexts with context map (10 edges)
+  - Context-specific glossary (9 files, 12+ terms each, Chinese aliases)
+  - 4 state machine YAML definitions (reservation, folio, room-status, housekeeping-task)
+  - 20 Gherkin scenarios across 5 categories (check-in, check-out, night-audit, reservation, folio)
+  - Banned patterns for PMS (4 categories: code/infrastructure/framework/technical)
+  - BusinessDayClock utility with DST support (32 tests, 3 timezones)
+- **State Machine Engine** (`src/state-machine/`) — YAML loader, ST001-ST005 validator, property test derivation
+- **Forced Acceptance Gate** (`src/accept-gate.ts`) — Pack-driven ship blocking for critical contexts
+- **Mutation Testing Engine** (`src/mutate.ts`) — Stryker.js integration with pack-driven module targeting
+- **Micro-Review Engine** (`src/build-micro-review.ts`) — Task-level spec alignment check after each atomic task
+- **IRON-LAW / HARD-GATE XML tags** — Semantic markers for AI agent compliance
+- **`scripts/check-iron-laws.sh`** — Uniqueness validation for iron law and hard gate names
+- **Rationalization Catalog expansion** — 15+ entries in 5 categories in `tdd-rules.md`
+- **`scripts/init.sh --pack`** flag — Enable domain packs during project initialization
+- Sprint 2 zero-pack regression tests and PMS integration tests (24 new tests)
 - R4 rule in `evolved-rules.md`: "SKILL Reload After Context Recovery" — requires
   re-reading the current phase SKILL.md after context compaction or session resume.
 - `forge-resume` SKILL Reload Step: mandatory SKILL.md re-read after recovery for
