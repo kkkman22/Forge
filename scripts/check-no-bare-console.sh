@@ -41,7 +41,7 @@ if [ -n "$console_calls" ]; then
 
     # Check if this is just a text reference to console.* (in comments/docs)
     # Match patterns like: " * text" or " // text" or "/* text"
-    content=$(echo "$line" | sed 's/^[^:]*:[0-9]*://')
+    content="${line#*:*:}"
     if echo "$content" | grep -qE '^\s*(//|\*|/\*|\*\*)' ; then
       continue
     fi
