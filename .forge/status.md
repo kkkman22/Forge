@@ -1,9 +1,9 @@
 ---
-current_task: "specs-unchecked-tasks-remediation"
-tier: "full"
-task_type: "remediation"
-project_phase: "ship"
-phase: "ship"
+current_task: ""
+tier: ""
+task_type: ""
+project_phase: ""
+phase: ""
 updated: "2026-05-09"
 ---
 
@@ -11,7 +11,7 @@ updated: "2026-05-09"
 
 ## 当前任务
 
-**specs-unchecked-tasks-remediation** — 补齐 .kiro/specs/ 下 4 个 spec 的未完成任务（偏差 1.1, 2.1–2.4, 3.1–3.4, 4.1–4.8）
+（无）
 
 ## 已完成任务
 
@@ -27,3 +27,4 @@ updated: "2026-05-09"
 - routing-assumptions: 路由器输出增加假设段落
 - skill-behavioral-guardrails: SKILL 行为护栏
 - Group C/D/E: 社区基础设施
+- specs-unchecked-tasks-remediation: 4 spec 偏差补齐（20 tasks，200 tests）
