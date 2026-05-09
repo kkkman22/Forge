@@ -763,3 +763,71 @@ export function checkPlanStructure(
 
   return { triggered: reasons.length > 0, reasons };
 }
+
+// ---------------------------------------------------------------------------
+// Expected Output Completeness check (Pack System — R10)
+// ---------------------------------------------------------------------------
+
+/** Result of Expected Output completeness check. */
+export interface ExpectedOutputResult {
+  errors: string[];
+  warnings: string[];
+}
+
+/** Pattern for Run step lines. */
+const RUN_LINE_RE = /^Run:\s*`/;
+/** Pattern for Expected output lines. */
+const EXPECTED_RE = /^Expected:\s*(exit\s+\d|output\s+contains\s+"|FAIL\s+--\s+")/;
+/** Pattern for task heading. */
+const TASK_HEADING_RE = /^###\s+Task\s+(\d+)/;
+
+/**
+ * Check plan content for Expected Output completeness.
+ *
+ * Per R10: Every Run step must have an Expected line following it.
+ * Legacy plans (isLegacy=true) emit warnings instead of errors.
+ *
+ * @param planContent - Full plan markdown content
+ * @param isLegacy - Whether this is a pre-Sprint-1 plan (warnings only)
+ */
+export function checkExpectedOutput(planContent: string, isLegacy: boolean): ExpectedOutputResult {
+  const errors: string[] = [];
+  const warnings: string[] = [];
+  const lines = planContent.split("\n");
+
+  let currentTask = "";
+
+  for (let i = 0; i < lines.length; i++) {
+    const line = lines[i];
+
+    const taskMatch = TASK_HEADING_RE.exec(line);
+    if (taskMatch) {
+      currentTask = `Task ${taskMatch[1]}`;
+      continue;
+    }
+
+    if (RUN_LINE_RE.test(line)) {
+      // Check if next non-empty line is Expected
+      let foundExpected = false;
+      for (let j = i + 1; j < Math.min(i + 3, lines.length); j++) {
+        if (lines[j].trim() === "") continue;
+        if (EXPECTED_RE.test(lines[j])) {
+          foundExpected = true;
+          break;
+        }
+        break;
+      }
+
+      if (!foundExpected) {
+        const msg = `${currentTask || "Unknown task"}: Run step missing Expected output at line ${i + 1}`;
+        if (isLegacy) {
+          warnings.push(`[legacy] ${msg}`);
+        } else {
+          errors.push(msg);
+        }
+      }
+    }
+  }
+
+  return { errors, warnings };
+}
