@@ -35,11 +35,15 @@ bash scripts/build-dist.sh  # 分发包同步校验
 
 ### 冻结区（Frozen）— AI 不可修改
 
+<HARD-GATE name="frozen-zone-protection">
+
 以下文件一旦进入锁定/批准状态，AI 在 build 阶段**不得修改**，除非用户明确解锁：
 
 - `.forge/specs/*/spec.md`（status: locked）
 - `.forge/plans/*.md`（status: approved）
 - `.forge/config.md`
+
+</HARD-GATE>
 
 ### 受保护区（Guarded）— AI 可追加，不可删除或覆盖
 

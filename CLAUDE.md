@@ -27,7 +27,7 @@
 
 ### 2.1 TDD Enforcement
 
-所有实现任务必须遵循 **RED → GREEN → REFACTOR** 循环。**铁律**：如果发现代码先于测试编写——删除代码，从测试开始。
+<IRON-LAW name="tdd-delete-and-restart">所有实现任务必须遵循 **RED → GREEN → REFACTOR** 循环。**铁律**：如果发现代码先于测试编写——删除代码，从测试开始。</IRON-LAW>
 → 详见 docs/forge-constitution-detail.md §2.1
 
 ### 2.2 Pre-build Checks
@@ -37,23 +37,17 @@
 
 ### 2.3 Verification Iron Law
 
-> **没有运行验证命令 = 不能声明通过。**
-
-每个任务完成后必须运行验证命令；验证必须基于刚刚运行的命令输出；禁止"应该可以了"等声明；每个完成的任务必须执行原子提交。
+<IRON-LAW name="verification-run-command">> **没有运行验证命令 = 不能声明通过。** 每个任务完成后必须运行验证命令；验证必须基于刚刚运行的命令输出；禁止"应该可以了"等声明；每个完成的任务必须执行原子提交。</IRON-LAW>
 → 详见 docs/forge-constitution-detail.md §2.3
 
 ### 2.4 Three-Strike Reroute
 
-同一修复连续失败 3 次时：立即停止，进入 `/forge debug`，禁止第 4 次尝试同方向。在 debug 中同一假设连续验证失败 3 次时：停止修复，质疑架构，重新评估方向。
+<IRON-LAW name="three-strike-reroute">同一修复连续失败 3 次时：立即停止，进入 `/forge debug`，禁止第 4 次尝试同方向。在 debug 中同一假设连续验证失败 3 次时：停止修复，质疑架构，重新评估方向。</IRON-LAW>
 → 详见 docs/forge-constitution-detail.md §2.4
 
 ### 2.7 No Confirmation Between Steps（铁律）
 
-> **阶段之间、任务之间，禁止停下来询问用户是否继续。** 与 TDD（§2.1）同级。
-
-**禁止**：问"是否继续"、以工作量为由停顿、提供选择、任何阶段间确认请求。
-**正确**：阶段完成 → `✅ <阶段> 完成` → 立即下一阶段。任务完成 → 摘要 → 立即下一任务。build 完 → 立即 review。
-**唯一可停**：Three-strike、阻断性错误、分支保护阻断。
+<IRON-LAW name="no-mid-step-confirmation">> **阶段之间、任务之间，禁止停下来询问用户是否继续。** 与 TDD（§2.1）同级。**禁止**：问"是否继续"、以工作量为由停顿、提供选择、任何阶段间确认请求。**正确**：阶段完成 → `✅ <阶段> 完成` → 立即下一阶段。**唯一可停**：Three-strike、阻断性错误、分支保护阻断。</IRON-LAW>
 → 详见 shared/next-step-protocol.md
 
 ### 2.5 Context Refresh Discipline

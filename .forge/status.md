@@ -1,9 +1,21 @@
 ---
-current_task: ""
-tier: ""
-task_type: ""
-project_phase: ""
-phase: ""
+current_task: "pms-pack-v1-core"
+tier: "standard"
+task_type: "feature"
+project_phase: "build"
+phase: "build"
+active_plan: "pms-pack-v1-core"
+parent_task: "pms-pack-v1"
+sub_plans:
+  - name: "pms-pack-v1-core"
+    status: "approved"
+    order: 1
+  - name: "pms-pack-v1-pack"
+    status: "approved"
+    order: 2
+  - name: "pms-pack-v1-scenarios"
+    status: "approved"
+    order: 3
 updated: "2026-05-09"
 ---
 
@@ -11,7 +23,11 @@ updated: "2026-05-09"
 
 ## 当前任务
 
-（无）
+**pms-pack-v1-core** — PMS Pack v1 Core 引擎（Phase 1-5）
+- 档位：Standard (build → review → test → ship)
+- Plan：`.forge/plans/pms-pack-v1-core.md`
+- 阶段：build
+- 子 plan 序列：core(1/3) → pack(2/3) → scenarios(3/3)
 
 ## 已完成任务
 
