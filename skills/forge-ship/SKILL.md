@@ -25,6 +25,8 @@ disable-model-invocation: true
 
 ## 2. Gate Checks
 
+<HARD-GATE name="ship-gate-sequence">
+
 `/forge ship` 启动前**必须通过三道门禁**（Review / Test / Progress），每道门禁的结果必须以 P5 证据链格式呈现（`[Command] → [Output] → [Claim]`）。
 
 **Optional Gate 4 — Acceptance Scenario Eval**：当 spec frontmatter 含 `acceptance_eval: true` 或 CLI 带 `--with-acceptance` 参数时，在三道门禁后执行 `/forge accept`。`acceptance_blocks_ship: true` 时 FAIL 场景阻断 ship；默认为警告级。`--promote-derived` 允许 derived scenario 参与阻断判定。
@@ -51,6 +53,8 @@ disable-model-invocation: true
 - 用途：检测 review 后是否有项目代码变更，输出警告但不阻断 ship
 
 **全部通过**后进入交付选项选择。
+
+</HARD-GATE>
 
 ---
 

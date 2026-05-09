@@ -90,7 +90,11 @@ IF 本次执行是从 conversation summary 恢复（上下文压缩后继续）�
 
 ## 8. Gate: P0/P1 → Block `/forge ship`
 
+<HARD-GATE name="p0-p1-block-ship">
+
 有 P0/P1 → 阻断 ship，输出问题清单，提示修复后重新评审。仅 P2/P3 → 放行。
+
+</HARD-GATE>
 
 ## 9. P1 Fix Checklist
 
