@@ -1,0 +1,10 @@
+id: time/prefer-business-day-clock
+severity: warn
+description: "已导入 BusinessDayClock 但未使用时警告"
+target_globs:
+  - "src/domain/**/*.ts"
+patterns:
+  - type: regex
+    expression: "import.*BusinessDayClock.*\n[\s\S]*\b(?:\.toISOString|\.getTime|\.getFullYear|\.getMonth|\.getDate)\(\)"
+    message: "已导入 BusinessDayClock 但仍在使用原生 Date 方法，建议统一通过 Clock"
+    fix_suggestion: "将 Date 方法调用替换为 this.clock 对应方法"

@@ -88,6 +88,16 @@
             "timeout": 5
           }
         ]
+      },
+      {
+        "matcher": "Write|Edit",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "node forge/scripts/check-context-boundary.mjs \"$TOOL_NAME\" \"$TOOL_INPUT_FILE\" 2>/dev/null || node scripts/check-context-boundary.mjs \"$TOOL_NAME\" \"$TOOL_INPUT_FILE\" 2>/dev/null || true",
+            "timeout": 5
+          }
+        ]
       }
     ],
     "PostToolUse": [

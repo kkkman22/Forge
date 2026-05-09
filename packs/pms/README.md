@@ -24,9 +24,104 @@
 | Room Status | Available / Occupied / Dirty / Clean / Inspected / OutOfService / OutOfOrder | `state-machines/room-status.yaml` |
 | Housekeeping Task | Pending → InProgress → Completed / Skipped | `state-machines/housekeeping-task.yaml` |
 
-## 20 Scenarios
+## Scenario Library
 
-预设 20+ Gherkin 场景覆盖核心业务流程：入住/退房、夜审、预订管理、账单处理。存放于 `scenarios/` 目录。
+**Total: 45 files / 93 scenarios**
+
+### check-in/ (Sprint 2 — 5 files, 9 scenarios)
+
+| File | Feature |
+|------|---------|
+| `early-arrival-check-in.feature` | Early arrival check-in |
+| `group-check-in.feature` | Group check-in |
+| `late-arrival-check-in.feature` | Late arrival check-in |
+| `payment-failure-check-in.feature` | Payment failure during check-in |
+| `walk-in-check-in.feature` | Walk-in check-in |
+
+### check-out/ (Sprint 2 — 3 files, 6 scenarios)
+
+| File | Feature |
+|------|---------|
+| `dispute-check-out.feature` | Disputed charges at check-out |
+| `express-check-out.feature` | Express check-out |
+| `late-check-out-with-fee.feature` | Late check-out with fee |
+
+### reservation/ (Sprint 2 — 4 files, 8 scenarios)
+
+| File | Feature |
+|------|---------|
+| `cancellation-within-policy.feature` | Cancellation within policy |
+| `group-reservation.feature` | Group reservation |
+| `individual-reservation.feature` | Individual reservation |
+| `modified-reservation.feature` | Modified reservation |
+
+### folio/ (Sprint 2 — 4 files, 8 scenarios)
+
+| File | Feature |
+|------|---------|
+| `charge-posting.feature` | Charge posting |
+| `deposit-refund.feature` | Deposit refund on cancellation |
+| `split-folio.feature` | Split folio |
+| `tax-adjustment.feature` | Tax adjustment |
+
+### night-audit/ (Sprint 2 — 4 files, 7 scenarios)
+
+| File | Feature |
+|------|---------|
+| `interrupted-resumed-night-audit.feature` | Interrupted and resumed night audit |
+| `no-show-processing.feature` | NoShow processing during night audit |
+| `normal-night-audit.feature` | Normal night audit run |
+| `room-move-reconciliation.feature` | Room move reconciliation during night audit |
+
+### overbooking/ (Sprint 3 — 5 files, 11 scenarios)
+
+| File | Feature |
+|------|---------|
+| `compensation-policy.feature` | Compensation policy for overbooking |
+| `declined-at-check-in.feature` | Declined at check-in due to overbooking |
+| `overbook-within-policy.feature` | Overbook within policy |
+| `upgrade-to-resolve.feature` | Upgrade to resolve overbooking |
+| `walk-the-guest.feature` | Walk the guest to partner hotel |
+
+### corporate/ (Sprint 3 — 5 files, 12 scenarios)
+
+| File | Feature |
+|------|---------|
+| `company-rate.feature` | Company rate booking |
+| `contract-expiry.feature` | Contract expiry |
+| `credit-limit-exceeded.feature` | Credit limit exceeded |
+| `direct-bill-setup.feature` | Direct bill setup |
+| `monthly-invoice.feature` | Monthly invoice for corporate account |
+
+### pos-integration/ (Sprint 3 — 5 files, 11 scenarios)
+
+| File | Feature |
+|------|---------|
+| `charge-to-room-from-restaurant.feature` | Charge to room from restaurant |
+| `chargeback.feature` | Chargeback for POS charge |
+| `item-void-sync.feature` | Item void synchronization |
+| `pos-offline-queue.feature` | POS offline queue |
+| `split-bill.feature` | Split bill between room charge and cash |
+
+### invoice-tax/ (Sprint 3 — 5 files, 10 scenarios)
+
+| File | Feature |
+|------|---------|
+| `refund-with-tax-adjustment.feature` | Refund with tax adjustment |
+| `split-tax-multi-jurisdiction.feature` | Split tax across multiple jurisdictions |
+| `us-sales-tax.feature` | US sales tax on room charges |
+| `vat-invoice.feature` | VAT invoice generation |
+| `void-invoice.feature` | Void invoice |
+
+### loyalty/ (Sprint 3 — 5 files, 11 scenarios)
+
+| File | Feature |
+|------|---------|
+| `earn-points-on-stay.feature` | Earn points on stay |
+| `loyalty-rate.feature` | Loyalty rate booking |
+| `partner-airline-miles.feature` | Partner airline miles earning |
+| `redeem-points.feature` | Redeem points for free night |
+| `tier-upgrade.feature` | Tier upgrade |
 
 ## Setup
 

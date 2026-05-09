@@ -1,14 +1,14 @@
-import { describe, it, expect } from "vitest";
+import { describe, expect, it } from "vitest";
 import {
-  commandList,
-  commandEnable,
   commandDisable,
+  commandEnable,
   commandInspect,
+  commandList,
+  commandNew,
   commandOverride,
   commandValidate,
-  commandNew,
 } from "../../src/pack/commands.js";
-import type { PackRegistry, PackEntry, EnabledPacks } from "../../src/pack/types.js";
+import type { EnabledPacks, PackEntry, PackRegistry } from "../../src/pack/types.js";
 
 function makeEntry(name: string, categories: Record<string, string> = {}): PackEntry {
   return {

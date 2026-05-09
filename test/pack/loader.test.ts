@@ -1,7 +1,7 @@
-import { describe, it, expect, vi, beforeEach } from "vitest";
+import path from "node:path";
+import { beforeEach, describe, expect, it, vi } from "vitest";
 import { loadPackRegistry, validateManifest } from "../../src/pack/loader.js";
 import type { FileSystem } from "../../src/pack/types.js";
-import path from "node:path";
 
 function createMockFs(files: Record<string, string | null>): FileSystem {
   return {
@@ -93,13 +93,14 @@ describe("loadPackRegistry", () => {
   });
 
   it("dedupes packs with same name, keeps first alphabetically", async () => {
-    const makeYaml = (name: string) => [
-      `name: shared-name`,
-      `display_name: ${name}`,
-      `description: ${name}`,
-      `forge_min_version: '2.4.0'`,
-      `extends: {}`,
-    ].join("\n");
+    const makeYaml = (name: string) =>
+      [
+        `name: shared-name`,
+        `display_name: ${name}`,
+        `description: ${name}`,
+        `forge_min_version: '2.4.0'`,
+        `extends: {}`,
+      ].join("\n");
     const fs = createMockFs({
       [path.join(PACKS_DIR, "beta", "pack.yaml")]: makeYaml("Beta"),
       [path.join(PACKS_DIR, "alpha", "pack.yaml")]: makeYaml("Alpha"),
@@ -128,12 +129,22 @@ describe("loadPackRegistry", () => {
 
 describe("validateManifest", () => {
   it("returns errors for missing name", () => {
-    const errors = validateManifest({ display_name: "X", description: "X", forge_min_version: "1.0.0", extends: {} });
+    const errors = validateManifest({
+      display_name: "X",
+      description: "X",
+      forge_min_version: "1.0.0",
+      extends: {},
+    });
     expect(errors).toContainEqual(expect.stringContaining("name"));
   });
 
   it("returns errors for missing forge_min_version", () => {
-    const errors = validateManifest({ name: "test", display_name: "X", description: "X", extends: {} });
+    const errors = validateManifest({
+      name: "test",
+      display_name: "X",
+      description: "X",
+      extends: {},
+    });
     expect(errors.length).toBeGreaterThan(0);
   });
 

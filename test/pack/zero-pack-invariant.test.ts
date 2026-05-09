@@ -8,22 +8,24 @@
  */
 
 import { describe, expect, it } from "vitest";
-import { loadPackRegistry } from "../../src/pack/loader.js";
-import { parseEnabledPacks } from "../../src/pack/config.js";
-import { resolvePath, resolveAllPaths } from "../../src/pack/resolver.js";
-import { loadContexts } from "../../src/context/registry.js";
-import { loadContextMap } from "../../src/context/map.js";
-import { loadGlossary } from "../../src/glossary/registry.js";
-import { loadBannedPatterns } from "../../src/spec-leak-detector.js";
 import { shouldBlockShip } from "../../src/accept-gate.js";
-import { collectTargetGlobs } from "../../src/mutate.js";
 import { runMicroReview } from "../../src/build-micro-review.js";
-import { loadStateMachineDefinition, validateDefinition } from "../../src/state-machine/index.js";
+import { loadContextMap } from "../../src/context/map.js";
+import { loadContexts } from "../../src/context/registry.js";
+import { loadGlossary } from "../../src/glossary/registry.js";
+import { collectTargetGlobs } from "../../src/mutate.js";
+import { parseEnabledPacks } from "../../src/pack/config.js";
+import { loadPackRegistry } from "../../src/pack/loader.js";
+import { resolveAllPaths, resolvePath } from "../../src/pack/resolver.js";
 import type { EnabledPacks, FileSystem } from "../../src/pack/types.js";
+import { loadBannedPatterns } from "../../src/spec-leak-detector.js";
+import { loadStateMachineDefinition, validateDefinition } from "../../src/state-machine/index.js";
 
 const emptyFs: FileSystem = {
   readdir: async () => [],
-  readFile: async () => { throw new Error("no files"); },
+  readFile: async () => {
+    throw new Error("no files");
+  },
   writeFile: async () => {},
   exists: async () => false,
   stat: async () => ({ isFile: () => false, isDirectory: () => false }),

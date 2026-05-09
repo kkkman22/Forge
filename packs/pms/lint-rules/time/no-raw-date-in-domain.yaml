@@ -1,0 +1,14 @@
+id: time/no-raw-date-in-domain
+severity: error
+description: "禁止业务代码中出现裸 new Date() / Date.now()"
+target_globs:
+  - "src/domain/**/*.ts"
+patterns:
+  - type: regex
+    expression: "\bnew\s+Date\(\)"
+    message: "业务代码禁止使用裸 new Date()，应通过注入的 Clock（BusinessDayClock）获取时间"
+    fix_suggestion: "使用 this.clock.now() 替代 new Date()"
+  - type: regex
+    expression: "\bDate\.now\(\)"
+    message: "业务代码禁止使用 Date.now()，应通过注入的 Clock 获取时间"
+    fix_suggestion: "使用 this.clock.now() 替代 Date.now()"

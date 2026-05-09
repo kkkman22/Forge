@@ -1,7 +1,7 @@
-import { describe, it, expect } from "vitest";
-import { checkShipGateWithAcceptance } from "../../src/ship.js";
-import type { ReviewResult, TestResult, ProgressResult } from "../../src/ship.js";
+import { describe, expect, it } from "vitest";
 import type { AcceptGateDecision } from "../../src/accept-gate.js";
+import type { ProgressResult, ReviewResult, TestResult } from "../../src/ship.js";
+import { checkShipGateWithAcceptance } from "../../src/ship.js";
 
 const passReview: ReviewResult = { passed: true, p0Count: 0, p1Count: 0 };
 const passTest: TestResult = { passed: true };

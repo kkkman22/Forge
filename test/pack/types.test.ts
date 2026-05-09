@@ -1,20 +1,20 @@
-import { describe, it, expect } from "vitest";
+import { describe, expect, it } from "vitest";
 import type {
-  PackManifest,
-  PackEntry,
-  PackRegistry,
-  EnabledPacks,
   BannedPatternRegistry,
   ContextEntry,
+  ContextMapType,
   ContextRegistry,
+  EnabledPacks,
+  FileSystem,
   GlossaryEntry,
   GlossaryRegistry,
+  LeakCategory,
   LeakFinding,
   LintFinding,
-  FileSystem,
+  PackEntry,
   PackExtendsCategory,
-  ContextMapType,
-  LeakCategory,
+  PackManifest,
+  PackRegistry,
 } from "../../src/pack/types.js";
 
 describe("pack types", () => {
@@ -131,14 +131,26 @@ describe("pack types", () => {
     expect(categories).toHaveLength(4);
 
     const mapTypes: ContextMapType[] = [
-      "partnership", "customer-supplier", "conformist",
-      "acl", "open-host", "published-language", "shared-kernel",
+      "partnership",
+      "customer-supplier",
+      "conformist",
+      "acl",
+      "open-host",
+      "published-language",
+      "shared-kernel",
     ];
     expect(mapTypes).toHaveLength(7);
 
     const extCategories: PackExtendsCategory[] = [
-      "contexts", "glossary", "scenarios", "state_machines",
-      "banned_patterns", "lint_rules", "templates", "agents", "utils",
+      "contexts",
+      "glossary",
+      "scenarios",
+      "state_machines",
+      "banned_patterns",
+      "lint_rules",
+      "templates",
+      "agents",
+      "utils",
     ];
     expect(extCategories).toHaveLength(9);
   });

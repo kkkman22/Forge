@@ -8,12 +8,8 @@
 
 import * as fc from "fast-check";
 import { describe, expect, it } from "vitest";
+import type { BannedPatternRegistry, GlossaryEntry, GlossaryRegistry } from "../src/pack/types.js";
 import { detectSpecLeak } from "../src/spec-leak-detector.js";
-import type {
-  BannedPatternRegistry,
-  GlossaryEntry,
-  GlossaryRegistry,
-} from "../src/pack/types.js";
 
 // ---------------------------------------------------------------------------
 // Helpers
@@ -65,13 +61,7 @@ describe("detectSpecLeak property: empty banned → empty results", () => {
     fc.assert(
       fc.property(textArb, (specText) => {
         const banned: BannedPatternRegistry = { categories: new Map() };
-        const findings = detectSpecLeak(
-          specText,
-          "spec.md",
-          banned,
-          emptyGlossary(),
-          "booking",
-        );
+        const findings = detectSpecLeak(specText, "spec.md", banned, emptyGlossary(), "booking");
         expect(findings).toEqual([]);
       }),
       { numRuns: 200 },

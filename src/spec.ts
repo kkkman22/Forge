@@ -286,3 +286,47 @@ export function renderGlossaryMissNotice(missed: TermCandidate[]): string {
   const terms = missed.map((c) => c.term).join(", ");
   return `[glossary-miss] 未定义术语：[${terms}]`;
 }
+
+// ---------------------------------------------------------------------------
+// Business-analyst parallel triggering
+// ---------------------------------------------------------------------------
+
+/**
+ * Collect the union of `core_subdomains` declared across all enabled packs.
+ *
+ * Each pack's `featureFlags.core_subdomains` is expected to be a `string[]`
+ * when present. Packs that omit the flag (or set it to a non-array value) are
+ * treated as contributing an empty set. The result is deduplicated.
+ *
+ * This function is pure.
+ */
+export function getCoreSubdomains(
+  enabledPacks: Array<{ featureFlags: Record<string, unknown> }>,
+): string[] {
+  const result: string[] = [];
+  for (const pack of enabledPacks) {
+    const subdomains = pack.featureFlags?.core_subdomains;
+    if (Array.isArray(subdomains)) {
+      result.push(...subdomains);
+    }
+  }
+  return [...new Set(result)];
+}
+
+/**
+ * Determine whether the business-analyst subagent should be triggered in
+ * parallel during the spec phase.
+ *
+ * Returns `true` when `currentContext` is defined and appears in the union
+ * of core subdomains collected from the enabled packs.
+ *
+ * This function is pure.
+ */
+export function shouldTriggerBusinessAnalyst(
+  currentContext: string | undefined,
+  enabledPacks: Array<{ featureFlags: Record<string, unknown> }>,
+): boolean {
+  if (!currentContext) return false;
+  const coreSubdomains = getCoreSubdomains(enabledPacks);
+  return coreSubdomains.includes(currentContext);
+}

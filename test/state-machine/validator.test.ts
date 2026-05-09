@@ -1,6 +1,6 @@
-import { describe, it, expect } from "vitest";
-import { validateDefinition } from "../../src/state-machine/validator.js";
+import { describe, expect, it } from "vitest";
 import type { StateMachineDefinition } from "../../src/state-machine/types.js";
+import { validateDefinition } from "../../src/state-machine/validator.js";
 
 /** Helper to build a minimal valid definition. */
 function validDef(overrides?: Partial<StateMachineDefinition>): StateMachineDefinition {
@@ -12,9 +12,7 @@ function validDef(overrides?: Partial<StateMachineDefinition>): StateMachineDefi
       { name: "B", description: "state B", terminal: true },
     ],
     initial: "A",
-    transitions: [
-      { from: "A", to: "B", event: "Go" },
-    ],
+    transitions: [{ from: "A", to: "B", event: "Go" }],
     invariants: [],
     ...overrides,
   };
@@ -132,9 +130,7 @@ describe("validateDefinition", () => {
     const report = validateDefinition(
       validDef({
         initial: "Missing",
-        transitions: [
-          { from: "X", to: "Y", event: "Bad" },
-        ],
+        transitions: [{ from: "X", to: "Y", event: "Bad" }],
       }),
     );
     expect(report.errors.length).toBeGreaterThanOrEqual(2);

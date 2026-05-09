@@ -1,5 +1,5 @@
-import { describe, it, expect } from "vitest";
 import path from "node:path";
+import { describe, expect, it } from "vitest";
 import { loadContextMap } from "../../src/context/map.js";
 import type { EnabledPacks, FileSystem, PackEntry } from "../../src/pack/types.js";
 
@@ -24,10 +24,7 @@ function makePackEntry(overrides: Partial<PackEntry> = {}): PackEntry {
   };
 }
 
-function makeEnabled(
-  entries: PackEntry[] = [],
-  customRoot: string = CUSTOM_ROOT,
-): EnabledPacks {
+function makeEnabled(entries: PackEntry[] = [], customRoot: string = CUSTOM_ROOT): EnabledPacks {
   return {
     order: entries.map((e) => e.name),
     entries,
@@ -100,11 +97,7 @@ describe("loadContextMap", () => {
     target: reservations
     type: partnership
 `;
-    const fs = makeMockFs(
-      new Map([
-        ["/packs/hotel-ops/contexts/_map.yaml", mapYaml],
-      ]),
-    );
+    const fs = makeMockFs(new Map([["/packs/hotel-ops/contexts/_map.yaml", mapYaml]]));
 
     const edges = await loadContextMap(enabled, fs);
     expect(edges).toHaveLength(2);
@@ -216,11 +209,7 @@ describe("loadContextMap", () => {
   it("handles malformed _map.yaml gracefully", async () => {
     const pack = makePackEntry();
     const enabled = makeEnabled([pack]);
-    const fs = makeMockFs(
-      new Map([
-        ["/packs/hotel-ops/contexts/_map.yaml", "{{invalid yaml"],
-      ]),
-    );
+    const fs = makeMockFs(new Map([["/packs/hotel-ops/contexts/_map.yaml", "{{invalid yaml"]]));
 
     const edges = await loadContextMap(enabled, fs);
     expect(edges).toEqual([]);
