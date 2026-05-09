@@ -1,0 +1,306 @@
+/**
+ * Reservation Aggregate Root — PMS Specialization
+ * Hotel reservation lifecycle governed by the reservation state machine.
+ *
+ * Placeholders:
+ *   {{ReservationId}}, {{GuestName}}, {{RoomType}},
+ *   {{CheckInDate}}, {{CheckOutDate}}
+ *
+ * State machine: packs/pms/state-machines/reservation.yaml
+ */
+
+import type { ReservationStateMachine } from "../../state-machines/reservation.js";
+import {
+  ReservationBooked,
+  ReservationConfirmed,
+  ReservationCancelled,
+  GuestCheckedIn,
+  GuestCheckedOut,
+} from "./reservation-events.js";
+
+// Invariants (from state machine invariants):
+// - terminal_state_has_no_outgoing_transitions: CheckedOut/NoShow/Cancelled have no outgoing transitions
+// - cancelled_before_check_in_only: Cancelled only reachable from Booked or Confirmed
+// - no_show_requires_arrival_cutoff_passed: NoShow needs arrival cutoff condition
+// - checked_out_requires_folio_settled: CheckedOut requires folio settled
+
+type ReservationState =
+  | "Booked"
+  | "Confirmed"
+  | "CheckedIn"
+  | "CheckedOut"
+  | "NoShow"
+  | "Cancelled";
+
+interface ReservationDomainEvent {
+  readonly type: string;
+  readonly reservationId: string;
+  readonly occurredAt: Date;
+}
+
+export class Reservation {
+  private _state: ReservationState = "Booked";
+  private _version: number = 0;
+  private readonly _domainEvents: ReservationDomainEvent[] = [];
+
+  private constructor(
+    private readonly _reservationId: string,  // {{ReservationId}}
+    private _guestName: string,               // {{GuestName}}
+    private _roomType: string,                // {{RoomType}}
+    private readonly _checkInDate: Date,       // {{CheckInDate}}
+    private readonly _checkOutDate: Date,      // {{CheckOutDate}}
+  ) {}
+
+  // ---------------------------------------------------------------------------
+  // Factory
+  // ---------------------------------------------------------------------------
+
+  static BookReservation(
+    reservationId: string,   // {{ReservationId}}
+    guestName: string,       // {{GuestName}}
+    roomType: string,        // {{RoomType}}
+    checkInDate: Date,       // {{CheckInDate}}
+    checkOutDate: Date,      // {{CheckOutDate}}
+  ): Reservation {
+    if (!reservationId) {
+      throw new Error("Reservation ID is required");
+    }
+    if (!guestName || guestName.trim().length === 0) {
+      throw new Error("Guest name is required");
+    }
+    if (!roomType) {
+      throw new Error("Room type is required");
+    }
+    if (checkInDate >= checkOutDate) {
+      throw new Error("Check-in date must be before check-out date");
+    }
+
+    const reservation = new Reservation(
+      reservationId,
+      guestName,
+      roomType,
+      checkInDate,
+      checkOutDate,
+    );
+
+    reservation.addDomainEvent({
+      type: "ReservationBooked",
+      reservationId,
+      occurredAt: new Date(),
+    });
+
+    return reservation;
+  }
+
+  // ---------------------------------------------------------------------------
+  // State transitions — guards from reservation.yaml
+  // ---------------------------------------------------------------------------
+
+  /**
+   * Booked → Confirmed
+   * Guards: payment_captured
+   * Events: AutoConfirm also possible (guards: deposit_received, within_confirmation_window)
+   */
+  ConfirmReservation(): void {
+    // Pre-condition: must be in Booked state
+    if (this._state !== "Booked") {
+      throw new Error(
+        `Cannot confirm reservation in state '${this._state}'; expected 'Booked'`,
+      );
+    }
+    // Guard: payment_captured
+    if (!this.isPaymentCaptured()) {
+      throw new Error("Cannot confirm: payment has not been captured");
+    }
+
+    this._state = "Confirmed";
+    this._version++;
+
+    this.addDomainEvent({
+      type: "ReservationConfirmed",
+      reservationId: this._reservationId,
+      occurredAt: new Date(),
+    });
+  }
+
+  /**
+   * Booked → Cancelled  OR  Confirmed → Cancelled
+   * Guards (from Booked): within_cancellation_window
+   * Guards (from Confirmed): within_cancellation_policy
+   */
+  CancelReservation(): void {
+    if (this._state === "Booked") {
+      // Guard: within_cancellation_window
+      if (!this.isWithinCancellationWindow()) {
+        throw new Error("Cannot cancel: outside cancellation window");
+      }
+    } else if (this._state === "Confirmed") {
+      // Guard: within_cancellation_policy
+      if (!this.isWithinCancellationPolicy()) {
+        throw new Error("Cannot cancel: outside cancellation policy");
+      }
+    } else {
+      throw new Error(
+        `Cannot cancel reservation in state '${this._state}'; ` +
+        `cancellation only allowed from 'Booked' or 'Confirmed'`,
+      );
+    }
+
+    this._state = "Cancelled";
+    this._version++;
+
+    this.addDomainEvent({
+      type: "ReservationCancelled",
+      reservationId: this._reservationId,
+      occurredAt: new Date(),
+    });
+  }
+
+  /**
+   * Confirmed → CheckedIn  (also Booked → CheckedIn via EarlyCheckIn)
+   * Guards (from Confirmed): arrival_date_reached, room_assigned
+   * Guards (from Booked / EarlyCheckIn): room_available, early_checkin_approved
+   */
+  CheckIn(): void {
+    if (this._state === "Confirmed") {
+      // Guards: arrival_date_reached, room_assigned
+      if (!this.isArrivalDateReached()) {
+        throw new Error("Cannot check in: arrival date not reached");
+      }
+      if (!this.isRoomAssigned()) {
+        throw new Error("Cannot check in: no room assigned");
+      }
+    } else if (this._state === "Booked") {
+      // EarlyCheckIn path
+      if (!this.isRoomAvailable()) {
+        throw new Error("Cannot check in early: no room available");
+      }
+      if (!this.isEarlyCheckInApproved()) {
+        throw new Error("Cannot check in early: not approved");
+      }
+    } else {
+      throw new Error(
+        `Cannot check in from state '${this._state}'; ` +
+        `expected 'Confirmed' or 'Booked'`,
+      );
+    }
+
+    this._state = "CheckedIn";
+    this._version++;
+
+    this.addDomainEvent({
+      type: "GuestCheckedIn",
+      reservationId: this._reservationId,
+      occurredAt: new Date(),
+    });
+  }
+
+  /**
+   * CheckedIn → CheckedOut
+   * Guards: folio_settled
+   */
+  CheckOut(): void {
+    if (this._state !== "CheckedIn") {
+      throw new Error(
+        `Cannot check out from state '${this._state}'; expected 'CheckedIn'`,
+      );
+    }
+    // Guard: folio_settled
+    if (!this.isFolioSettled()) {
+      throw new Error("Cannot check out: folio has not been settled");
+    }
+
+    this._state = "CheckedOut";
+    this._version++;
+
+    this.addDomainEvent({
+      type: "GuestCheckedOut",
+      reservationId: this._reservationId,
+      occurredAt: new Date(),
+    });
+  }
+
+  // ---------------------------------------------------------------------------
+  // Guard helpers — implement these in the infrastructure layer or override
+  // ---------------------------------------------------------------------------
+
+  private isPaymentCaptured(): boolean {
+    // {{PaymentCheckLogic}}
+    return false;
+  }
+
+  private isWithinCancellationWindow(): boolean {
+    // {{CancellationWindowLogic}}
+    return false;
+  }
+
+  private isWithinCancellationPolicy(): boolean {
+    // {{CancellationPolicyLogic}}
+    return false;
+  }
+
+  private isArrivalDateReached(): boolean {
+    // {{ArrivalDateLogic}}
+    return new Date() >= this._checkInDate;
+  }
+
+  private isRoomAssigned(): boolean {
+    // {{RoomAssignedLogic}}
+    return false;
+  }
+
+  private isRoomAvailable(): boolean {
+    // {{RoomAvailableLogic}}
+    return false;
+  }
+
+  private isEarlyCheckInApproved(): boolean {
+    // {{EarlyCheckInApprovalLogic}}
+    return false;
+  }
+
+  private isFolioSettled(): boolean {
+    // {{FolioSettledLogic}}
+    return false;
+  }
+
+  // ---------------------------------------------------------------------------
+  // Domain events
+  // ---------------------------------------------------------------------------
+
+  private addDomainEvent(event: ReservationDomainEvent): void {
+    this._domainEvents.push(event);
+  }
+
+  get domainEvents(): ReadonlyArray<ReservationDomainEvent> {
+    return Object.freeze([...this._domainEvents]);
+  }
+
+  clearDomainEvents(): void {
+    this._domainEvents.length = 0;
+  }
+
+  // ---------------------------------------------------------------------------
+  // Accessors & serialization
+  // ---------------------------------------------------------------------------
+
+  get reservationId(): string { return this._reservationId; }  // {{ReservationId}}
+  get guestName(): string { return this._guestName; }           // {{GuestName}}
+  get roomType(): string { return this._roomType; }             // {{RoomType}}
+  get checkInDate(): Date { return this._checkInDate; }         // {{CheckInDate}}
+  get checkOutDate(): Date { return this._checkOutDate; }       // {{CheckOutDate}}
+  get state(): ReservationState { return this._state; }
+  get version(): number { return this._version; }
+
+  toJSON(): Record<string, unknown> {
+    return {
+      reservationId: this._reservationId,
+      guestName: this._guestName,
+      roomType: this._roomType,
+      checkInDate: this._checkInDate.toISOString(),
+      checkOutDate: this._checkOutDate.toISOString(),
+      state: this._state,
+      version: this._version,
+    };
+  }
+}

@@ -102,9 +102,10 @@ function parseGlossaryFile(
   // Find positions of all ## headings that are NOT "定义"
   const headingPattern = /^##\s+(?!定义)(.+?)\s*$/gm;
   const termPositions: { name: string; start: number }[] = [];
-  let hMatch: RegExpExecArray | null;
-  while ((hMatch = headingPattern.exec(content)) !== null) {
+  let hMatch: RegExpExecArray | null = headingPattern.exec(content);
+  while (hMatch !== null) {
     termPositions.push({ name: hMatch[1].trim(), start: hMatch.index });
+    hMatch = headingPattern.exec(content);
   }
 
   for (let i = 0; i < termPositions.length; i++) {

@@ -1,5 +1,5 @@
-import { describe, it, expect } from "vitest";
-import { validateRedGate, type RedGateEvidence } from "../../src/build.js";
+import { describe, expect, it } from "vitest";
+import { type RedGateEvidence, validateRedGate } from "../../src/build.js";
 
 describe("validateRedGate", () => {
   it("rejects missing command field", () => {

@@ -1,0 +1,10 @@
+id: money/no-number-for-money
+severity: warn
+description: "禁止 number 类型承载金额"
+target_globs:
+  - "src/**/*.ts"
+patterns:
+  - type: regex
+    expression: "(?:const|let|var)\s+(?:amount|price|cost|fee|charge|total|balance|subtotal|tax)\s*:\s*number\b"
+    message: "金额类变量应使用 Money 值对象，不应直接用 number 类型"
+    fix_suggestion: "改用 Money: const amount: Money = Money.of(100, 'CNY')"

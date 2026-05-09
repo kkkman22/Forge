@@ -1,0 +1,13 @@
+name: pms-marriott-sample
+display_name: "Marriott PMS Extension Sample"
+description: "示例 Pack — 演示三层覆盖（新 Context、追加 glossary、覆盖 state machine、新场景）。This is a sample, not a production pack."
+forge_min_version: "2.4.0"
+depends_on:
+  - pms
+experimental: true
+
+extends:
+  contexts: ./contexts
+  glossary: ./glossary
+  state_machines: ./state-machines
+  scenarios: ./scenarios

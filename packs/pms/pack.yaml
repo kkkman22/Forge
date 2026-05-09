@@ -15,6 +15,11 @@ extends:
   agents: ./agents
 
 feature_flags:
+  core_subdomains:
+    - reservations
+    - folio-billing
+    - night-audit
+
   forced_acceptance_contexts:
     - reservations
     - folio-billing

@@ -1,8 +1,8 @@
-import { describe, it, expect } from "vitest";
+import { describe, expect, it } from "vitest";
 import {
-  runMicroReview,
   type MicroReviewInput,
   type MicroReviewResult,
+  runMicroReview,
 } from "../../src/build-micro-review.js";
 
 describe("runMicroReview", () => {
@@ -14,20 +14,17 @@ describe("runMicroReview", () => {
       task: {
         title: "Add hello function",
         files: ["src/hello.ts"],
-        acceptance_criteria: [
-          "exports a hello() function",
-          "hello() returns 'world'",
-        ],
+        acceptance_criteria: ["exports a hello() function", "hello() returns 'world'"],
         expected_output: "exit 0",
       },
       gitDiff:
-        'diff --git a/src/hello.ts b/src/hello.ts\n' +
-        '--- /dev/null\n' +
-        '+++ b/src/hello.ts\n' +
-        '@@ -0,0 +1,5 @@\n' +
-        '+export function hello(): string {\n' +
+        "diff --git a/src/hello.ts b/src/hello.ts\n" +
+        "--- /dev/null\n" +
+        "+++ b/src/hello.ts\n" +
+        "@@ -0,0 +1,5 @@\n" +
+        "+export function hello(): string {\n" +
         '+  return "world";\n' +
-        '+}\n',
+        "+}\n",
       verifyOutput: "Tests: 2 passed, 2 total",
       planVersion: "v1",
     };
@@ -55,12 +52,12 @@ describe("runMicroReview", () => {
         expected_output: "exit 0",
       },
       gitDiff:
-        'diff --git a/src/hello.ts b/src/hello.ts\n' +
-        '+++ b/src/hello.ts\n' +
-        '@@ -0,0 +1,3 @@\n' +
-        '+export function hello(): string {\n' +
+        "diff --git a/src/hello.ts b/src/hello.ts\n" +
+        "+++ b/src/hello.ts\n" +
+        "@@ -0,0 +1,3 @@\n" +
+        "+export function hello(): string {\n" +
         '+  return "world";\n' +
-        '+}\n',
+        "+}\n",
       verifyOutput: "Tests: 2 passed",
       planVersion: "v1",
     };
@@ -83,17 +80,17 @@ describe("runMicroReview", () => {
         expected_output: "exit 0",
       },
       gitDiff:
-        'diff --git a/src/hello.ts b/src/hello.ts\n' +
-        '+++ b/src/hello.ts\n' +
-        '@@ -0,0 +1,3 @@\n' +
-        '+export function hello(): string {\n' +
+        "diff --git a/src/hello.ts b/src/hello.ts\n" +
+        "+++ b/src/hello.ts\n" +
+        "@@ -0,0 +1,3 @@\n" +
+        "+export function hello(): string {\n" +
         '+  return "world";\n' +
-        '+}\n' +
-        'diff --git a/src/extra.ts b/src/extra.ts\n' +
-        '--- /dev/null\n' +
-        '+++ b/src/extra.ts\n' +
-        '@@ -0,0 +1,1 @@\n' +
-        '+export const extra = true;\n',
+        "+}\n" +
+        "diff --git a/src/extra.ts b/src/extra.ts\n" +
+        "--- /dev/null\n" +
+        "+++ b/src/extra.ts\n" +
+        "@@ -0,0 +1,1 @@\n" +
+        "+export const extra = true;\n",
       verifyOutput: "Tests: 1 passed",
       planVersion: "v1",
     };
@@ -112,9 +109,9 @@ describe("runMicroReview", () => {
         title: "Fix login bug",
       },
       gitDiff:
-        'diff --git a/src/auth.ts b/src/auth.ts\n' +
-        '+++ b/src/auth.ts\n' +
-        '+  const fixed = true;\n',
+        "diff --git a/src/auth.ts b/src/auth.ts\n" +
+        "+++ b/src/auth.ts\n" +
+        "+  const fixed = true;\n",
       verifyOutput: "Tests: 3 passed, 3 total",
       planVersion: "legacy",
     };
@@ -153,8 +150,8 @@ describe("runMicroReview", () => {
         expected_output: "exit 0",
       },
       gitDiff:
-        'diff --git a/src/index.ts b/src/index.ts\n' +
-        '+++ b/src/index.ts\n' +
+        "diff --git a/src/index.ts b/src/index.ts\n" +
+        "+++ b/src/index.ts\n" +
         '+import { something } from "./lib";\n',
       verifyOutput: "Tests: 5 passed",
       planVersion: "v1",

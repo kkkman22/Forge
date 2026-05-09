@@ -353,4 +353,17 @@ export const SKILL_FUNCTION_REGISTRY: readonly SkillFunctionEntry[] = [
     skills: ["forge-grill/SKILL.md"],
     parameterNames: ["tree", "glossary"],
   },
+  // --- forge-spec/SKILL.md (Living Doc, Sprint 3) ---
+  {
+    module: "living-doc/generator.ts",
+    functionName: "generateLivingDoc",
+    skills: ["forge-spec/SKILL.md"],
+    parameterNames: ["specsDir", "acceptanceDir"],
+  },
+  {
+    module: "living-doc/renderer.ts",
+    functionName: "renderLivingDoc",
+    skills: ["forge-spec/SKILL.md"],
+    parameterNames: ["data", "outputDir"],
+  },
 ] as const;

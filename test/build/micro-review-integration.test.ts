@@ -1,4 +1,4 @@
-import { describe, it, expect } from "vitest";
+import { describe, expect, it } from "vitest";
 import { runTaskPostVerification } from "../../src/build.js";
 import type { MicroReviewResult } from "../../src/build-micro-review.js";
 
