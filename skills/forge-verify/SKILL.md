@@ -1,6 +1,6 @@
 ---
 name: forge-verify
-description: "Evidence-based verification producing three-state verdicts (VERIFIED/NOT_VERIFIED/INCONCLUSIVE) with falsifiable claims. Use when user runs `/forge verify <topic>` / bugfix auto / debug Phase 4."
+description: "Verify deliverables with evidence-based three-state verdicts and falsifiable claims. Use when user runs `/forge verify <topic>` or during bugfix auto / debug Phase 4."
 disable-model-invocation: true
 ---
 

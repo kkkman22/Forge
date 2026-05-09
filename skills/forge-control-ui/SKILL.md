@@ -1,6 +1,6 @@
 ---
 name: forge-control-ui
-description: "Web/Electron harness for external UI verification. Use when running /forge test --ui or when forge-test detects a UI target with designer specs."
+description: "Verify Web/Electron UI through external harness execution. Use when running /forge test --ui or when forge-test detects a UI target with designer specs."
 disable-model-invocation: true
 ---
 
