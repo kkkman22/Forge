@@ -7,7 +7,7 @@
  */
 
 import path from "node:path";
-import type { PackRegistry, PackEntry, EnabledPacks } from "./types.js";
+import type { EnabledPacks, PackRegistry } from "./types.js";
 
 // ---------------------------------------------------------------------------
 // commandList
@@ -16,7 +16,10 @@ import type { PackRegistry, PackEntry, EnabledPacks } from "./types.js";
 /** List all packs with enabled status. */
 export function commandList(registry: PackRegistry, enabled: EnabledPacks): string {
   const enabledSet = new Set(enabled.order);
-  const lines: string[] = ["| Name | Display | Status | Extends |", "|------|---------|--------|---------|"];
+  const lines: string[] = [
+    "| Name | Display | Status | Extends |",
+    "|------|---------|--------|---------|",
+  ];
 
   const sorted = [...registry.packs.values()].sort((a, b) => a.name.localeCompare(b.name));
   for (const entry of sorted) {
@@ -39,7 +42,9 @@ export function commandEnable(
   registry: PackRegistry,
 ): { newConfig: string; message: string } | { error: string } {
   if (!registry.packs.has(name)) {
-    return { error: `pack not found: ${name}. Available: ${[...registry.packs.keys()].join(", ") || "none"}` };
+    return {
+      error: `pack not found: ${name}. Available: ${[...registry.packs.keys()].join(", ") || "none"}`,
+    };
   }
 
   // Parse existing packs list
@@ -63,7 +68,10 @@ export function commandEnable(
 // ---------------------------------------------------------------------------
 
 /** Disable a pack by removing it from .forge/config.md frontmatter. */
-export function commandDisable(name: string, config: string): { newConfig: string; message: string } {
+export function commandDisable(
+  name: string,
+  config: string,
+): { newConfig: string; message: string } {
   const { frontmatter, body } = splitConfig(config);
   const existingPacks = parsePacksField(frontmatter);
 
@@ -110,7 +118,7 @@ export function commandInspect(name: string, registry: PackRegistry): string {
 export function commandOverride(
   relativePath: string,
   enabled: EnabledPacks,
-  force: boolean,
+  _force: boolean,
 ): { sourcePath: string; targetPath: string } | { error: string } {
   // Path traversal check
   const normalized = path.normalize(relativePath);
@@ -118,11 +126,12 @@ export function commandOverride(
     return { error: `path traversal detected: ${relativePath}` };
   }
 
-  // Find source in enabled packs
-  for (const entry of enabled.entries) {
-    const candidate = path.join(entry.rootPath, normalized);
+  // Find source in enabled packs — return first pack that could provide the path.
+  // File existence check is the caller's responsibility (requires FileSystem).
+  if (enabled.entries.length > 0) {
+    const entry = enabled.entries[0];
     return {
-      sourcePath: candidate,
+      sourcePath: path.join(entry.rootPath, normalized),
       targetPath: path.join(enabled.customLayerRoot, normalized),
     };
   }
@@ -146,7 +155,11 @@ export function commandValidate(name: string | null, registry: PackRegistry): Va
   // For now, basic manifest validation (no filesystem checks)
   const entry = name ? registry.packs.get(name) : undefined;
   if (name && !entry) {
-    return { passed: false, pack: name, checks: [{ check: "exists", passed: false, detail: "not in registry" }] };
+    return {
+      passed: false,
+      pack: name,
+      checks: [{ check: "exists", passed: false, detail: "not in registry" }],
+    };
   }
 
   const target = entry!;
@@ -157,7 +170,10 @@ export function commandValidate(name: string | null, registry: PackRegistry): Va
 
   // Check: extends directories declared
   const catCount = Object.keys(target.extends).length;
-  checks.push({ check: `${catCount} categories declared`, passed: catCount > 0 || Object.keys(target.extends).length === 0 });
+  checks.push({
+    check: `${catCount} categories declared`,
+    passed: catCount > 0 || Object.keys(target.extends).length === 0,
+  });
 
   // Note: directory existence check requires filesystem, done at skill level
   return { passed: checks.every((c) => c.passed), pack: target.name, checks };
@@ -212,5 +228,5 @@ function rebuildFrontmatter(original: string, packs: string[]): string {
     lines.push("packs:");
     for (const p of packs) lines.push(`  - ${p}`);
   }
-  return lines.join("\n") + "\n";
+  return `${lines.join("\n")}\n`;
 }

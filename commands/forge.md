@@ -31,7 +31,6 @@ allowed-tools: Read, Glob, Grep, Skill
 | `abort` | `forge-abort` | 任务中止 |
 | `refactor` | `forge-refactor` | 重构引擎 |
 | `fix` | `forge-fix` | 修复引擎 |
-<<<<<<< HEAD
 | `accept` | `forge-accept` | 验收场景执行 |
 | `verify` | `forge-verify` | 证据化验证引擎 |
 | `control-cli` | `forge-control-cli` | CLI/TUI 外部验证 |

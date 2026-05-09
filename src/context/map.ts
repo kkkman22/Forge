@@ -8,12 +8,7 @@
 
 import path from "node:path";
 import { parse as parseYaml } from "yaml";
-import type {
-  ContextMapEntry,
-  ContextMapType,
-  EnabledPacks,
-  FileSystem,
-} from "../pack/types.js";
+import type { ContextMapEntry, ContextMapType, EnabledPacks, FileSystem } from "../pack/types.js";
 
 // ---------------------------------------------------------------------------
 // Types

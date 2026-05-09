@@ -77,8 +77,16 @@ const validManifestArb = fc.record({
   extends: fc.constant("{}"),
 });
 
+type ManifestRecord = {
+  name: string;
+  display_name: string;
+  description: string;
+  forge_min_version: string;
+  extends: string;
+};
+
 /** Build a minimal valid YAML string from a generated manifest. */
-function manifestToYaml(m: fc.Infer<typeof validManifestArb>): string {
+function manifestToYaml(m: ManifestRecord): string {
   return [
     `name: ${m.name}`,
     `display_name: "${m.display_name.replace(/"/g, '\\"')}"`,

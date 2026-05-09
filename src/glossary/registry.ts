@@ -8,12 +8,7 @@
  * **Validates: R1 Glossary loading, R2 Backward compat, R3 Custom override**
  */
 
-import type {
-  EnabledPacks,
-  FileSystem,
-  GlossaryEntry,
-  GlossaryRegistry,
-} from "../pack/types.js";
+import type { EnabledPacks, FileSystem, GlossaryEntry, GlossaryRegistry } from "../pack/types.js";
 
 // ---------------------------------------------------------------------------
 // Public API
@@ -51,7 +46,7 @@ export async function loadGlossary(
 
   // 1. Load from enabled packs (in order)
   for (const pack of enabledPacks.entries) {
-    const glossaryDir = pack.extends["glossary"];
+    const glossaryDir = pack.extends.glossary;
     if (!glossaryDir) continue;
 
     const files = await listMdFiles(glossaryDir, fs);
@@ -59,14 +54,7 @@ export async function loadGlossary(
       const context = fileNameToContext(file);
       const filePath = `${glossaryDir}/${file}`;
       const content = await fs.readFile(filePath);
-      parseGlossaryFile(
-        content,
-        context,
-        filePath,
-        `pack:${pack.name}`,
-        entries,
-        byTerm,
-      );
+      parseGlossaryFile(content, context, filePath, `pack:${pack.name}`, entries, byTerm);
     }
   }
 
@@ -78,14 +66,7 @@ export async function loadGlossary(
       const context = fileNameToContext(file);
       const filePath = `${customGlossaryDir}/${file}`;
       const content = await fs.readFile(filePath);
-      parseGlossaryFile(
-        content,
-        context,
-        filePath,
-        "custom",
-        entries,
-        byTerm,
-      );
+      parseGlossaryFile(content, context, filePath, "custom", entries, byTerm);
     }
   }
 
@@ -181,9 +162,7 @@ function addEntry(
     list = [];
     byTerm.set(entry.term, list);
   }
-  const existingIdx = list.findIndex(
-    (e) => `${e.context}::${e.term}` === key,
-  );
+  const existingIdx = list.findIndex((e) => `${e.context}::${e.term}` === key);
   if (existingIdx >= 0) {
     list[existingIdx] = entry;
   } else {
@@ -262,9 +241,7 @@ function parseLegacyGlossary(
 // ---------------------------------------------------------------------------
 
 /** Parse simple YAML frontmatter (key: value pairs, key: [list] syntax). */
-function parseFrontmatter(
-  yaml: string,
-): Record<string, string | string[] | null> {
+function parseFrontmatter(yaml: string): Record<string, string | string[] | null> {
   const result: Record<string, string | string[] | null> = {};
   for (const line of yaml.split("\n")) {
     const match = line.match(/^(\w+):\s*(.*)/);
@@ -291,10 +268,7 @@ function fileNameToContext(filename: string): string {
 }
 
 /** List all `*.md` files in a directory. */
-async function listMdFiles(
-  dir: string,
-  fs: FileSystem,
-): Promise<string[]> {
+async function listMdFiles(dir: string, fs: FileSystem): Promise<string[]> {
   let names: string[];
   try {
     names = await fs.readdir(dir);
@@ -302,15 +276,6 @@ async function listMdFiles(
     return [];
   }
   return names.filter((n) => n.endsWith(".md"));
-}
-
-/**
- * Split markdown content by `## ` headings, preserving the heading.
- * Skips `## 定义` as a section boundary — it belongs to the preceding term.
- */
-function splitByH2(content: string): string[] {
-  const parts = content.split(/\n(?=## (?!定义\s))/);
-  return parts.filter((p) => p.trim().length > 0);
 }
 
 /** Split markdown content by `### ` headings, preserving the heading. */

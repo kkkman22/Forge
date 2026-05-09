@@ -251,7 +251,14 @@ export interface RedGateResult {
 }
 
 /** Failure indicator patterns in test output. */
-const FAILURE_INDICATORS = ["FAIL", "Error", "AssertionError", "expected", "not defined", "Cannot find"];
+const FAILURE_INDICATORS = [
+  "FAIL",
+  "Error",
+  "AssertionError",
+  "expected",
+  "not defined",
+  "Cannot find",
+];
 
 /** Success indicator patterns. */
 const SUCCESS_INDICATORS = ["passed", "PASS", "all tests passed", "Tests:.*passed"];
@@ -274,10 +281,13 @@ export function validateRedGate(evidence: RedGateEvidence): RedGateResult {
   }
 
   // Check if output indicates test PASSED
-  const outputLower = evidence.actual_output.toLowerCase();
-  for (const indicator of SUCCESS_INDICATORS) {
+  const _outputLower = evidence.actual_output.toLowerCase();
+  for (const _indicator of SUCCESS_INDICATORS) {
     if (/passed/i.test(evidence.actual_output) && !/failed/i.test(evidence.actual_output)) {
-      return { valid: false, reason: "RED test PASSED — test may not assert missing behavior. Rewrite the test." };
+      return {
+        valid: false,
+        reason: "RED test PASSED — test may not assert missing behavior. Rewrite the test.",
+      };
     }
   }
 
@@ -287,7 +297,10 @@ export function validateRedGate(evidence: RedGateEvidence): RedGateResult {
   );
 
   if (!hasFailureIndicator) {
-    return { valid: false, reason: "actual_output does not contain failure indicators (FAIL/Error/AssertionError)" };
+    return {
+      valid: false,
+      reason: "actual_output does not contain failure indicators (FAIL/Error/AssertionError)",
+    };
   }
 
   return { valid: true };
@@ -332,7 +345,10 @@ export function compareExpectedOutput(spec: ExpectedSpec): ExpectedComparisonRes
   if (exitMatch) {
     const expectedCode = Number.parseInt(exitMatch[1], 10);
     const match = actual.exitCode === expectedCode;
-    return { match, detail: match ? undefined : `expected exit ${expectedCode}, got ${actual.exitCode}` };
+    return {
+      match,
+      detail: match ? undefined : `expected exit ${expectedCode}, got ${actual.exitCode}`,
+    };
   }
 
   // Form 2: substring match
@@ -348,7 +364,12 @@ export function compareExpectedOutput(spec: ExpectedSpec): ExpectedComparisonRes
   if (failMatch) {
     const reason = failMatch[1];
     const match = actual.exitCode !== 0 && actual.output.includes(reason);
-    return { match, detail: match ? undefined : `output does not contain "${reason}" and exit code is ${actual.exitCode}` };
+    return {
+      match,
+      detail: match
+        ? undefined
+        : `output does not contain "${reason}" and exit code is ${actual.exitCode}`,
+    };
   }
 
   return { match: false, detail: `unrecognized Expected format: "${trimmed}"` };
