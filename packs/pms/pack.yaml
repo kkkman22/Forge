@@ -1,0 +1,33 @@
+name: pms
+display_name: "Hotel PMS Domain Pack"
+description: "酒店前台管理系统（Property Management System）领域知识包"
+forge_min_version: "2.4.0"
+
+extends:
+  contexts: ./contexts
+  glossary: ./glossary
+  scenarios: ./scenarios
+  state_machines: ./state-machines
+  banned_patterns: ./banned-patterns.yaml
+  utils: ./utils
+  templates: ./templates
+  lint_rules: ./lint-rules
+  agents: ./agents
+
+feature_flags:
+  forced_acceptance_contexts:
+    - reservations
+    - folio-billing
+    - night-audit
+
+  mutation_critical_modules:
+    - "src/domain/folio/**/*.ts"
+    - "src/domain/night-audit/**/*.ts"
+    - "src/domain/pricing/**/*.ts"
+    - "src/domain/reservation/state/**/*.ts"
+
+  mutation_score_threshold: 85
+
+  business_day_defaults:
+    cutoff_hour: 4
+    timezone: "Asia/Shanghai"
