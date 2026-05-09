@@ -11,6 +11,8 @@ verify_commands:            # Ralph Loop: Build 完成后自动运行的验证�
 verify_timeout: 120         # 每条验证命令的超时时间（秒），默认 120
 verify_max_attempts: 3      # 验证失败后最大重试次数，默认 3，超过则触发 soft_failure + rollback
 ci_check_command: ""        # 项目的完整 CI 检查命令（如 "npm run check"），build 全量测试、test 验证清单和 ship Test 门禁必须使用此命令
+findings_retention_days: 30  # .forge/findings/ 研究产物 retention，默认 30 天
+post_push_verify_enabled: true  # ship 后跑一次 ci_check_command 并可选留痕
 # cmux 可选集成（全部 optional，不影响 Forge 核心行为）
 # cmux_integration: auto    # auto | on | off; auto=检测到 cmux 则启用，默认 auto
 # cmux_notification_budget: 5  # 每个会话的桌面通知上限，正整数或 0，默认 5
@@ -87,3 +89,4 @@ verify_commands:                      # TDD 循环使用的逐条验证命令
 - `.forge/knowledge/metrics.md`（指标追踪）
 - `.forge/knowledge/tool-health.md`（工具健康度）
 - `.forge/knowledge/skill-feedback.md`（SKILL 反馈）
+- `.forge/ship/*.md`（ship 阶段产物，含 post-push-verify 报告；保留 30 天）
