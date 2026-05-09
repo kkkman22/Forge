@@ -1,0 +1,19 @@
+schema_version: 1
+categories:
+  code:
+    - pattern: "UserService"
+      description: "类名不应出现在 spec"
+      suggestion_template: "改为业务角色描述"
+    - pattern: "regex:\\b\\w+Service\\b"
+      description: "Service 后缀类名"
+  infrastructure:
+    - pattern: "regex:\\bPOST\\s+/\\w+"
+      description: "HTTP 方法 + 路径"
+    - pattern: "SELECT"
+      description: "SQL 语句"
+  framework:
+    - pattern: "Controller"
+    - pattern: "Middleware"
+  technical:
+    - pattern: "Redis"
+    - pattern: "Kafka"

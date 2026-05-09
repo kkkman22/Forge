@@ -1,0 +1,3 @@
+name: demo-bad-manifest
+display_name: "Bad Manifest Pack"
+description: "Missing forge_min_version field"
