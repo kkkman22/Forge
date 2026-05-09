@@ -14,13 +14,17 @@ export interface TemplateRenderResult {
   outputSuggestedPath: string;
 }
 
+const SAFE_KEY_RE = /^\w+$/;
+
 /**
  * Resolve a dot-notated path against a value, e.g. "this.name" on { name: "A" } => "A".
+ * Validates each path segment to prevent prototype pollution.
  */
 function resolvePath(value: unknown, path: string): unknown {
   const parts = path.split(".");
   let current: unknown = value;
   for (const part of parts) {
+    if (!SAFE_KEY_RE.test(part)) return undefined;
     if (current == null || typeof current !== "object") return undefined;
     current = (current as Record<string, unknown>)[part];
   }
