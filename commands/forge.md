@@ -38,6 +38,7 @@ allowed-tools: Read, Glob, Grep, Skill
 | `control-ui` | `forge-control-ui` | Web/Electron 外部验证 |
 | `fix-conflicts` | `forge-fix-conflicts` | 三区感知合并冲突 |
 | `recap` | `forge-recap` | 时间窗复盘 |
+| `pack` | `forge-pack` | Pack 管理命令 |
 
 **示例**：
 - `/forge learn` → 直接调用 `Skill(forge-learn)`
