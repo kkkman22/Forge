@@ -77,3 +77,48 @@ export class NotificationService {
 - 添加输入验证（userId 非空、message 非空）
 - 运行全部测试确认无回归
 ```
+
+## Expected Output Field
+
+Every **Run** step in a task MUST include an `Expected:` line immediately after the command. This provides a ground-truth comparison for the build subagent.
+
+### Format
+
+```markdown
+Run: `<command>`
+Expected: <expected output specification>
+```
+
+### Three Legal Forms
+
+| Form | Syntax | Example |
+|------|--------|---------|
+| **Exit code** | `Expected: exit <N>` | `Expected: exit 0` or `Expected: exit 1` |
+| **Substring match** | `Expected: output contains "<string>"` | `Expected: output contains "test passed"` |
+| **Fail reason** | `Expected: FAIL -- "<reason>"` | `Expected: FAIL -- "function not defined"` |
+
+### Complete Task Example with Expected
+
+```markdown
+### Task 3: Pack type definitions
+
+**RED** -- write failing test
+File: `test/pack/types.test.ts`
+
+Run: `npx vitest run test/pack/types.test.ts`
+Expected: FAIL -- "Cannot find module ../../src/pack/types.js"
+
+**GREEN** -- write minimal code to pass
+File: `src/pack/types.ts`
+
+Run: `npx vitest run test/pack/types.test.ts`
+Expected: exit 0
+
+**REFACTOR** -- reorder types alphabetically
+Run: `npx vitest run test/pack/types.test.ts`
+Expected: exit 0
+```
+
+### Legacy Plans
+
+Plans created before this rule (no `Expected:` fields) are grandfathered: the self-check emits a **warning** (not error). New plans without Expected fields cause a self-check **error**.
