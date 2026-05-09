@@ -1,7 +1,7 @@
-import { describe, it, expect } from "vitest";
-import { resolvePath, resolveAllPaths } from "../../src/pack/resolver.js";
-import type { EnabledPacks, PackEntry } from "../../src/pack/types.js";
 import path from "node:path";
+import { describe, expect, it } from "vitest";
+import { resolveAllPaths, resolvePath } from "../../src/pack/resolver.js";
+import type { EnabledPacks, PackEntry } from "../../src/pack/types.js";
 
 // ---------------------------------------------------------------------------
 // Fixtures
@@ -24,10 +24,7 @@ function makePackEntry(overrides: Partial<PackEntry> = {}): PackEntry {
 
 const CUSTOM_ROOT = "/project/.forge/custom";
 
-function makeEnabled(
-  entries: PackEntry[] = [],
-  customRoot: string = CUSTOM_ROOT,
-): EnabledPacks {
+function makeEnabled(entries: PackEntry[] = [], customRoot: string = CUSTOM_ROOT): EnabledPacks {
   return {
     order: entries.map((e) => e.name),
     entries,
@@ -46,9 +43,7 @@ describe("resolvePath", () => {
     // Custom layer is always a candidate; resolver does no IO
     expect(result).not.toBeNull();
     expect(result!.layer).toBe("custom");
-    expect(result!.path).toBe(
-      path.resolve(CUSTOM_ROOT, "glossary/reservations.md"),
-    );
+    expect(result!.path).toBe(path.resolve(CUSTOM_ROOT, "glossary/reservations.md"));
   });
 
   it("returns custom layer path when entries exist (custom wins)", () => {
@@ -57,9 +52,7 @@ describe("resolvePath", () => {
     const result = resolvePath("glossary/reservations.md", enabled);
     expect(result).not.toBeNull();
     expect(result!.layer).toBe("custom");
-    expect(result!.path).toBe(
-      path.resolve(CUSTOM_ROOT, "glossary/reservations.md"),
-    );
+    expect(result!.path).toBe(path.resolve(CUSTOM_ROOT, "glossary/reservations.md"));
   });
 
   it("returns pack path for single pack when custom traversal fails", () => {
@@ -73,9 +66,7 @@ describe("resolvePath", () => {
     expect(allResults).toHaveLength(2);
     expect(allResults[0].layer).toBe("custom");
     expect(allResults[1].layer).toBe("pack:hotel-ops");
-    expect(allResults[1].path).toBe(
-      path.resolve("/packs/hotel-ops/glossary/reservations.md"),
-    );
+    expect(allResults[1].path).toBe(path.resolve("/packs/hotel-ops/glossary/reservations.md"));
   });
 
   it("multi-pack: all packs appear in declaration order", () => {
@@ -107,9 +98,7 @@ describe("resolvePath", () => {
     const result = resolvePath("contexts/reservations.md", enabled);
     expect(result).not.toBeNull();
     expect(result!.layer).toBe("custom");
-    expect(result!.path).toBe(
-      path.resolve(CUSTOM_ROOT, "contexts/reservations.md"),
-    );
+    expect(result!.path).toBe(path.resolve(CUSTOM_ROOT, "contexts/reservations.md"));
   });
 
   it("handles deeply nested relative paths", () => {
@@ -117,9 +106,7 @@ describe("resolvePath", () => {
     const enabled = makeEnabled([entry]);
     const result = resolvePath("a/b/c/d/e/file.md", enabled);
     expect(result).not.toBeNull();
-    expect(result!.path).toBe(
-      path.resolve(CUSTOM_ROOT, "a/b/c/d/e/file.md"),
-    );
+    expect(result!.path).toBe(path.resolve(CUSTOM_ROOT, "a/b/c/d/e/file.md"));
   });
 });
 
@@ -171,11 +158,6 @@ describe("resolveAllPaths", () => {
     const enabled = makeEnabled(packs);
     const results = resolveAllPaths("glossary/x.md", enabled);
     const layers = results.map((r) => r.layer);
-    expect(layers).toEqual([
-      "custom",
-      "pack:first",
-      "pack:second",
-      "pack:third",
-    ]);
+    expect(layers).toEqual(["custom", "pack:first", "pack:second", "pack:third"]);
   });
 });

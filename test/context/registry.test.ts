@@ -1,5 +1,5 @@
-import { describe, it, expect } from "vitest";
 import path from "node:path";
+import { describe, expect, it } from "vitest";
 import { loadContexts } from "../../src/context/registry.js";
 import type { EnabledPacks, FileSystem, PackEntry } from "../../src/pack/types.js";
 
@@ -24,10 +24,7 @@ function makePackEntry(overrides: Partial<PackEntry> = {}): PackEntry {
   };
 }
 
-function makeEnabled(
-  entries: PackEntry[] = [],
-  customRoot: string = CUSTOM_ROOT,
-): EnabledPacks {
+function makeEnabled(entries: PackEntry[] = [], customRoot: string = CUSTOM_ROOT): EnabledPacks {
   return {
     order: entries.map((e) => e.name),
     entries,

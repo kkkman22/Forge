@@ -380,9 +380,9 @@ export function compareExpectedOutput(spec: ExpectedSpec): ExpectedComparisonRes
 // ---------------------------------------------------------------------------
 
 import {
-  runMicroReview,
   type MicroReviewInput,
   type MicroReviewResult,
+  runMicroReview,
 } from "./build-micro-review.js";
 
 export type { MicroReviewInput, MicroReviewResult };

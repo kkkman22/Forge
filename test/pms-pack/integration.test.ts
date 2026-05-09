@@ -9,14 +9,14 @@
 import { readFileSync } from "node:fs";
 import { join } from "node:path";
 import { describe, expect, it } from "vitest";
-import { shouldBlockShip } from "../../src/accept-gate.js";
 import type { AcceptGateInput } from "../../src/accept-gate.js";
+import { shouldBlockShip } from "../../src/accept-gate.js";
+import type { EnabledPacks, PackEntry } from "../../src/pack/types.js";
 import {
   deriveStatePropertyTests,
   loadStateMachineDefinition,
   validateDefinition,
 } from "../../src/state-machine/index.js";
-import type { EnabledPacks, PackEntry } from "../../src/pack/types.js";
 
 // ---------------------------------------------------------------------------
 // Helpers

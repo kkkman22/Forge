@@ -1,4 +1,4 @@
-import { describe, it, expect } from "vitest";
+import { describe, expect, it } from "vitest";
 import { shouldBlockShip } from "../src/accept-gate.js";
 import type { EnabledPacks } from "../src/pack/types.js";
 
