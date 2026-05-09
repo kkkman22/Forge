@@ -1,9 +1,9 @@
 ---
-current_task: ""
-tier: ""
-task_type: ""
-project_phase: ""
-phase: ""
+current_task: "specs-unchecked-tasks-remediation"
+tier: "full"
+task_type: "remediation"
+project_phase: "ship"
+phase: "ship"
 updated: "2026-05-09"
 ---
 
@@ -11,7 +11,7 @@ updated: "2026-05-09"
 
 ## 当前任务
 
-（无）
+**specs-unchecked-tasks-remediation** — 补齐 .kiro/specs/ 下 4 个 spec 的未完成任务（偏差 1.1, 2.1–2.4, 3.1–3.4, 4.1–4.8）
 
 ## 已完成任务
 

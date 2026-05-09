@@ -1,6 +1,6 @@
 ---
 name: forge-control-cli
-description: "CLI/TUI harness for external verification of CLI applications. Use when running /forge test --cli or when forge-test detects a CLI target."
+description: "Verify CLI/TUI applications through external harness execution. Use when running /forge test --cli or when forge-test detects a CLI target."
 disable-model-invocation: true
 ---
 
