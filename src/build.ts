@@ -229,3 +229,66 @@ export function mergeResearchFindings(results: SubagentResult[]): string {
 
   return parts.join("\n\n");
 }
+
+// ---------------------------------------------------------------------------
+// RED Verification Gate (Pack System — R9)
+// ---------------------------------------------------------------------------
+
+/** Evidence fields required after RED phase before GREEN transition. */
+export interface RedGateEvidence {
+  /** The exact command that was run. */
+  command: string;
+  /** First 10 lines of actual output. */
+  actual_output: string;
+  /** Why the test should fail (e.g. "function not defined"). */
+  expected_failure_reason: string;
+}
+
+/** Result of RED gate validation. */
+export interface RedGateResult {
+  valid: boolean;
+  reason?: string;
+}
+
+/** Failure indicator patterns in test output. */
+const FAILURE_INDICATORS = ["FAIL", "Error", "AssertionError", "expected", "not defined", "Cannot find"];
+
+/** Success indicator patterns. */
+const SUCCESS_INDICATORS = ["passed", "PASS", "all tests passed", "Tests:.*passed"];
+
+/**
+ * Validate RED Verification Gate evidence.
+ *
+ * Per R9: three evidence fields must be present and actual_output must
+ * contain failure indicators (not success indicators).
+ */
+export function validateRedGate(evidence: RedGateEvidence): RedGateResult {
+  if (!evidence.command || evidence.command.trim() === "") {
+    return { valid: false, reason: "missing command field" };
+  }
+  if (!evidence.actual_output || evidence.actual_output.trim() === "") {
+    return { valid: false, reason: "missing actual_output field" };
+  }
+  if (!evidence.expected_failure_reason || evidence.expected_failure_reason.trim() === "") {
+    return { valid: false, reason: "missing expected_failure_reason field" };
+  }
+
+  // Check if output indicates test PASSED
+  const outputLower = evidence.actual_output.toLowerCase();
+  for (const indicator of SUCCESS_INDICATORS) {
+    if (/passed/i.test(evidence.actual_output) && !/failed/i.test(evidence.actual_output)) {
+      return { valid: false, reason: "RED test PASSED — test may not assert missing behavior. Rewrite the test." };
+    }
+  }
+
+  // Check if output contains at least one failure indicator
+  const hasFailureIndicator = FAILURE_INDICATORS.some((ind) =>
+    evidence.actual_output.includes(ind),
+  );
+
+  if (!hasFailureIndicator) {
+    return { valid: false, reason: "actual_output does not contain failure indicators (FAIL/Error/AssertionError)" };
+  }
+
+  return { valid: true };
+}
