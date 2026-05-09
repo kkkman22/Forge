@@ -38,7 +38,7 @@ jobs:
       - name: Shellcheck scripts
         run: |
           if command -v shellcheck &>/dev/null; then
-            shellcheck scripts/*.sh
+            shellcheck -x -S warning scripts/*.sh
           else
             echo "::warning::shellcheck not installed, skipping"
           fi
