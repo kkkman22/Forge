@@ -102,7 +102,11 @@ Testability / Behavior-not-Implementation / Brownfield Delta / Two-part Structur
 
 ## 5. Gate: Spec Not Locked → Block `/forge build`
 
+<HARD-GATE name="spec-lock">
+
 → 遵循 CLAUDE.md §2.2 前置检查。status 非 `"locked"` → 阻断 build，提示运行 `/forge spec`。轻量路径例外。
+
+</HARD-GATE>
 
 ---
 
