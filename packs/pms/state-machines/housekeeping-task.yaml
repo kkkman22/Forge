@@ -1,0 +1,60 @@
+name: housekeeping-task
+description: "客房清洁任务状态机，线性进度 + 任意节点可跳过"
+
+states:
+  - name: Pending
+    description: "任务已创建，等待分配或开始"
+  - name: InProgress
+    description: "清洁员正在执行任务"
+  - name: Completed
+    terminal: true
+    description: "任务已完成"
+  - name: Skipped
+    terminal: true
+    description: "任务被跳过"
+
+initial: Pending
+
+transitions:
+  - from: Pending
+    to: InProgress
+    event: StartTask
+    side_effects:
+      - "assign_cleaner"
+      - "record_start_time"
+
+  - from: InProgress
+    to: Completed
+    event: CompleteTask
+    side_effects:
+      - "update_room_status_to_clean"
+      - "record_completion_time"
+
+  - from: Pending
+    to: Skipped
+    event: SkipTask
+    guards:
+      - "skip_reason_provided"
+    side_effects:
+      - "log_skip_reason"
+      - "trigger_reassignment_if_needed"
+
+  - from: InProgress
+    to: Skipped
+    event: AbandonTask
+    guards:
+      - "abandon_reason_provided"
+    side_effects:
+      - "log_abandon_reason"
+      - "reset_room_status"
+      - "create_replacement_task"
+
+invariants:
+  - expression: "terminal_state_has_no_outgoing_transitions"
+    description: "Completed 和 Skipped 是终态，不可回退"
+
+  - expression: "skipped_requires_reason"
+    description: "跳过任务必须提供原因，确保审计追踪"
+
+  - expression: "completed_updates_room_status"
+    description: "Completed 必须触发房间状态更新为 Clean"
