@@ -1,0 +1,16 @@
+name: demo-full
+display_name: "Demo Full Pack"
+description: "A pack with all 9 extends categories for testing"
+forge_min_version: "2.4.0"
+depends_on: []
+extends:
+  contexts: ./contexts
+  glossary: ./glossary
+  scenarios: ./scenarios
+  state_machines: ./state-machines
+  banned_patterns: ./banned-patterns.yaml
+  lint_rules: ./lint-rules
+  templates: ./templates
+  agents: ./agents
+  utils: ./utils
+feature_flags: {}
