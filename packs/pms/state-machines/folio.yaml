@@ -1,0 +1,91 @@
+name: folio
+description: "Folio（账单）状态机，严格控制账务生命周期"
+
+states:
+  - name: Open
+    description: "账单已开，可以过账"
+  - name: Posted
+    description: "账单已过账，日结已处理"
+  - name: Closed
+    terminal: true
+    description: "账单已结清关闭"
+  - name: Voided
+    description: "账单已作废，可通过授权重开"
+
+initial: Open
+
+transitions:
+  - from: Open
+    to: Open
+    event: PostCharge
+    side_effects:
+      - "add_line_item"
+
+  - from: Open
+    to: Open
+    event: PostPayment
+    side_effects:
+      - "record_payment"
+
+  - from: Open
+    to: Open
+    event: TransferCharge
+    side_effects:
+      - "move_line_item_to_target_folio"
+
+  - from: Open
+    to: Posted
+    event: NightAuditPost
+    guards:
+      - "all_charges_verified"
+    side_effects:
+      - "lock_for_audit"
+
+  - from: Posted
+    to: Closed
+    event: SettleFolio
+    guards:
+      - "balance_is_zero"
+    side_effects:
+      - "generate_receipt"
+      - "archive_folio"
+
+  - from: Posted
+    to: Voided
+    event: VoidFolio
+    guards:
+      - "void_authorization_granted"
+    side_effects:
+      - "reverse_charges"
+      - "create_audit_trail"
+
+  - from: Voided
+    to: Open
+    event: ReopenFolio
+    guards:
+      - "reopen_authorization_granted"
+    side_effects:
+      - "restore_charges"
+      - "create_audit_trail"
+
+  - from: Open
+    to: Closed
+    event: ExpressCheckOut
+    guards:
+      - "pre_authorization_covers_balance"
+    side_effects:
+      - "capture_pre_auth"
+      - "generate_receipt"
+
+invariants:
+  - expression: "terminal_state_has_no_outgoing_transitions"
+    description: "Closed 是终态，不可直接重开（需要通过 Voided → Open 路径）"
+
+  - expression: "closed_requires_balanced_debits_and_credits"
+    description: "Closed Folio 的借贷必须平衡，不允许有余额的账单关闭"
+
+  - expression: "void_requires_authorization"
+    description: "Void 操作需要授权，防止未经审计的账单作废"
+
+  - expression: "no_state_requires_condition"
+    description: "Posted 状态需要 all_charges_verified 条件，不允许未验证的过账"
