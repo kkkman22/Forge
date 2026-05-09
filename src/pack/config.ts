@@ -8,7 +8,7 @@
  */
 
 import { parse as parseYaml } from "yaml";
-import type { PackRegistry, EnabledPacks, PackEntry } from "./types.js";
+import type { EnabledPacks, PackEntry, PackRegistry } from "./types.js";
 
 // ---------------------------------------------------------------------------
 // Frontmatter extraction
@@ -89,7 +89,9 @@ export function parseEnabledPacks(
     // Validate exists in registry
     const entry = registry.packs.get(name);
     if (!entry) {
-      errors.push(`pack not found: ${name}. Available packs: ${[...registry.packs.keys()].join(", ")}`);
+      errors.push(
+        `pack not found: ${name}. Available packs: ${[...registry.packs.keys()].join(", ")}`,
+      );
       continue;
     }
 

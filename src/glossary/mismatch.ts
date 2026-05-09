@@ -37,7 +37,7 @@ export function detectContextTermMismatch(
   currentContext: string,
   registry: GlossaryRegistry,
 ): Array<{ term: string; usedContext: string; definedIn: string[] }> {
-  const tokens = text.split(/[\s,.;:!?()\[\]{}"']+/).filter(Boolean);
+  const tokens = text.split(/[\s,.;:!?()[\]{}"']+/).filter((t) => t.length > 1);
   const seen = new Set<string>();
   const mismatches: Array<{ term: string; usedContext: string; definedIn: string[] }> = [];
 
@@ -49,9 +49,7 @@ export function detectContextTermMismatch(
     if (!entries || entries.length === 0) continue;
 
     // Check if term is defined in current context or _shared
-    const isInCurrentContext = entries.some(
-      (e) => e.context === currentContext,
-    );
+    const isInCurrentContext = entries.some((e) => e.context === currentContext);
     const isInShared = entries.some((e) => e.context === "_shared");
 
     if (isInCurrentContext || isInShared) continue;

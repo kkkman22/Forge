@@ -23,7 +23,7 @@ interface ScenarioState {
 }
 
 /** Keywords that start Gherkin steps. */
-const STEP_KEYWORDS = ["Given", "When", "Then", "And", "But"];
+const _STEP_KEYWORDS = ["Given", "When", "Then", "And", "But"];
 
 /** Patterns indicating internal state in THEN lines. */
 const INTERNAL_PATTERNS = [

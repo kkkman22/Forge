@@ -18,9 +18,7 @@ import type { EnabledPacks } from "./types.js";
 
 /** Return true if `resolved` starts with `expectedBase` (both absolute). */
 function isWithinBase(resolved: string, expectedBase: string): boolean {
-  const normBase = expectedBase.endsWith(path.sep)
-    ? expectedBase
-    : expectedBase + path.sep;
+  const normBase = expectedBase.endsWith(path.sep) ? expectedBase : expectedBase + path.sep;
   return resolved === expectedBase || resolved.startsWith(normBase);
 }
 

@@ -116,7 +116,7 @@ describe("loadContexts", () => {
     const pack = makePackEntry();
     const enabled = makeEnabled([pack]);
     const fs = makeMockFs(
-      new Map([
+      new Map<string, string | string[]>([
         ["/packs/hotel-ops/contexts", ["reservations.md"]],
         ["/packs/hotel-ops/contexts/reservations.md", CONTEXT_MD],
       ]),
@@ -153,7 +153,7 @@ Custom body.
 `;
 
     const fs = makeMockFs(
-      new Map([
+      new Map<string, string | string[]>([
         ["/packs/hotel-ops/contexts", ["reservations.md"]],
         ["/packs/hotel-ops/contexts/reservations.md", CONTEXT_MD],
         [`${CUSTOM_ROOT}/contexts`, ["reservations.md"]],
@@ -199,7 +199,7 @@ Beta body.
 `;
 
     const fs = makeMockFs(
-      new Map([
+      new Map<string, string | string[]>([
         ["/packs/alpha/contexts", ["reservations.md"]],
         ["/packs/alpha/contexts/reservations.md", alphaContext],
         ["/packs/beta/contexts", ["reservations.md"]],
@@ -230,7 +230,7 @@ Beta body.
     const pack = makePackEntry();
     const enabled = makeEnabled([pack]);
     const fs = makeMockFs(
-      new Map([
+      new Map<string, string | string[]>([
         ["/packs/hotel-ops/contexts", ["reservations.md", "_map.yaml"]],
         ["/packs/hotel-ops/contexts/reservations.md", CONTEXT_MD],
         ["/packs/hotel-ops/contexts/_map.yaml", "edges: []"],

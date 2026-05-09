@@ -7,33 +7,22 @@
  */
 
 import path from "node:path";
-import { parse as parseYaml } from "yaml";
-import type {
-  ContextEntry,
-  ContextRegistry,
-  EnabledPacks,
-  FileSystem,
-} from "../pack/types.js";
-import { parseFrontmatter, extractListField } from "../frontmatter.js";
+import { extractListField, parseFrontmatter } from "../frontmatter.js";
+import type { ContextEntry, ContextRegistry, EnabledPacks, FileSystem } from "../pack/types.js";
 
 // ---------------------------------------------------------------------------
 // Helpers
 // ---------------------------------------------------------------------------
 
 /** Parse a context .md file into a ContextEntry. */
-function parseContextFile(
-  content: string,
-  sourcePath: string,
-  layer: string,
-): ContextEntry | null {
+function parseContextFile(content: string, sourcePath: string, layer: string): ContextEntry | null {
   const fm = parseFrontmatter(content);
   if (!fm) return null;
 
   const name = fm.raw.match(/^name:\s*(.+)$/m)?.[1]?.trim();
   if (!name) return null;
 
-  const responsibility =
-    fm.raw.match(/^responsibility:\s*(.+)$/m)?.[1]?.trim() ?? "";
+  const responsibility = fm.raw.match(/^responsibility:\s*(.+)$/m)?.[1]?.trim() ?? "";
 
   return {
     name,
@@ -62,9 +51,7 @@ async function readContextFiles(
   if (!stat.isDirectory()) return [];
 
   const entries = await fs.readdir(dirPath);
-  const mdFiles = entries.filter(
-    (f) => f.endsWith(".md"),
-  );
+  const mdFiles = entries.filter((f) => f.endsWith(".md"));
 
   const results: ContextEntry[] = [];
   for (const file of mdFiles) {
