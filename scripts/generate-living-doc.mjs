@@ -286,7 +286,9 @@ fs.writeFileSync(path.join(outputDir, "assets", "styles.css"), renderStyles(), "
 fs.writeFileSync(path.join(outputDir, "index.html"), renderIndexPage(data), "utf-8");
 
 for (const [name, ctx] of data.contexts) {
-  fs.writeFileSync(path.join(outputDir, `${name}.html`), renderContextPage(ctx, name, data.generatedAt), "utf-8");
+  // Sanitize context name to prevent path traversal
+  const safeName = name.replace(/[^a-zA-Z0-9_-]/g, "_");
+  fs.writeFileSync(path.join(outputDir, `${safeName}.html`), renderContextPage(ctx, safeName, data.generatedAt), "utf-8");
 }
 
 console.log(`✅ Living doc generated at ${outputDir}/index.html (${data.globalStats.totalScenarios} scenarios)`);
