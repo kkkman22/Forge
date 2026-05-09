@@ -23,3 +23,40 @@ REFACTOR 阶段才是引入抽象的时机，且仅当同一模式重复出现 3
 - ✗ 为三个表单构建配置驱动的表单生成器 → ✓ 三个表单组件
 
 三行相似的代码好过一个过早的抽象。先实现朴素的、显然正确的版本。
+
+## RED Verification Gate
+
+After writing a failing test in the RED phase, the subagent MUST emit three evidence fields before proceeding to GREEN:
+
+1. **`command`**: The exact command run (e.g., `npx vitest run test/pack/loader.test.ts`)
+2. **`actual_output`**: First 10 lines of the real failure output
+3. **`expected_failure_reason`**: Why the test should fail (e.g., "function not defined", "assertion failed")
+
+### Rules
+
+- If `actual_output` shows the test **PASSED**: HALT. The test does not assert missing behavior. Rewrite the test.
+- If `actual_output` shows **ERROR** (syntax/import, not assertion failure): Fix the test itself, re-run, re-capture evidence.
+- If any evidence field is **missing**: Transition to GREEN is **blocked**.
+- This gate does **NOT** apply to REFACTOR phase (refactoring keeps tests green by definition).
+
+### Example 1: TypeScript / Vitest
+
+```
+RED Evidence:
+  command: npx vitest run test/pack/loader.test.ts
+  actual_output: |
+    ❯ loadPackRegistry > returns empty registry for empty packs directory
+    AssertionError: expected undefined to be defined
+  expected_failure_reason: "loadPackRegistry is not yet exported from src/pack/loader.ts"
+```
+
+### Example 2: Shell / Bash
+
+```
+RED Evidence:
+  command: bash scripts/check-readme-metrics.sh
+  actual_output: |
+    Error: metrics section not found in README.md
+    exit code: 1
+  expected_failure_reason: "README does not yet contain metrics section header"
+```
