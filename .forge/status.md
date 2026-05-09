@@ -1,14 +1,9 @@
 ---
-current_task: "resume-phase-coverage"
-tier: "standard"
-task_type: "multi-phase-engineering"
+current_task: ""
+tier: ""
+task_type: ""
 project_phase: ""
-phase: "approved"
-hints: "spec三件套已就绪, 10 tasks, 5 requirements"
-assumptions:
-  - "Spec 已存在于 .forge/specs/resume-phase-coverage/"
-  - "Requirements/Design/Tasks 三件套完整"
-  - "无需 decide/spec 阶段"
+phase: ""
 updated: "2026-05-09"
 ---
 
