@@ -325,11 +325,12 @@ export function applyLintRulesToFile(
     for (const pattern of rule.patterns) {
       if (pattern.type !== "regex") continue;
 
+      if (!isSafeRegex(pattern.expression)) continue;
+
       let regex: RegExp;
       try {
         regex = new RegExp(pattern.expression);
       } catch {
-        // Invalid regex, skip
         continue;
       }
 
@@ -398,4 +399,19 @@ function globToRegex(glob: string): string {
   s = s.replace(/\*/g, "[^/]*");
 
   return s;
+}
+
+/** Max regex pattern length to prevent ReDoS. */
+const MAX_REGEX_LENGTH = 500;
+
+/**
+ * Detect quantified groups with nested quantifiers: e.g. `(?:...)+\s*\1+`
+ * which cause catastrophic backtracking. Simple quantifiers like `\s*` are fine.
+ */
+const DANGEROUS_NESTED_QUANTIFIER_RE = /\((?:\?:|)[^)]*[+*{][^)]*\)[+*{]/;
+
+function isSafeRegex(pattern: string): boolean {
+  if (pattern.length > MAX_REGEX_LENGTH) return false;
+  if (DANGEROUS_NESTED_QUANTIFIER_RE.test(pattern)) return false;
+  return true;
 }

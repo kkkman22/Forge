@@ -26,7 +26,7 @@
 
 ## Scenario Library
 
-**Total: 45 files / 93 scenarios**
+**Total: 50 files / 103 scenarios**
 
 ### check-in/ (Sprint 2 — 5 files, 9 scenarios)
 
@@ -73,17 +73,18 @@
 | `normal-night-audit.feature` | Normal night audit run |
 | `room-move-reconciliation.feature` | Room move reconciliation during night audit |
 
-### overbooking/ (Sprint 3 — 5 files, 11 scenarios)
+### overbooking/ (Sprint 3 — 6 files, 13 scenarios)
 
 | File | Feature |
 |------|---------|
 | `compensation-policy.feature` | Compensation policy for overbooking |
 | `declined-at-check-in.feature` | Declined at check-in due to overbooking |
+| `guest-relocation.feature` | Guest relocation to partner hotel |
 | `overbook-within-policy.feature` | Overbook within policy |
 | `upgrade-to-resolve.feature` | Upgrade to resolve overbooking |
 | `walk-the-guest.feature` | Walk the guest to partner hotel |
 
-### corporate/ (Sprint 3 — 5 files, 12 scenarios)
+### corporate/ (Sprint 3 — 6 files, 14 scenarios)
 
 | File | Feature |
 |------|---------|
@@ -92,34 +93,38 @@
 | `credit-limit-exceeded.feature` | Credit limit exceeded |
 | `direct-bill-setup.feature` | Direct bill setup |
 | `monthly-invoice.feature` | Monthly invoice for corporate account |
+| `negotiated-rate-override.feature` | Negotiated rate override |
 
-### pos-integration/ (Sprint 3 — 5 files, 11 scenarios)
+### pos-integration/ (Sprint 3 — 6 files, 13 scenarios)
 
 | File | Feature |
 |------|---------|
 | `charge-to-room-from-restaurant.feature` | Charge to room from restaurant |
 | `chargeback.feature` | Chargeback for POS charge |
+| `daily-reconciliation.feature` | POS daily reconciliation |
 | `item-void-sync.feature` | Item void synchronization |
 | `pos-offline-queue.feature` | POS offline queue |
 | `split-bill.feature` | Split bill between room charge and cash |
 
-### invoice-tax/ (Sprint 3 — 5 files, 10 scenarios)
+### invoice-tax/ (Sprint 3 — 6 files, 12 scenarios)
 
 | File | Feature |
 |------|---------|
 | `refund-with-tax-adjustment.feature` | Refund with tax adjustment |
 | `split-tax-multi-jurisdiction.feature` | Split tax across multiple jurisdictions |
+| `tax-exempt-guest.feature` | Tax exempt guest handling |
 | `us-sales-tax.feature` | US sales tax on room charges |
 | `vat-invoice.feature` | VAT invoice generation |
 | `void-invoice.feature` | Void invoice |
 
-### loyalty/ (Sprint 3 — 5 files, 11 scenarios)
+### loyalty/ (Sprint 3 — 6 files, 13 scenarios)
 
 | File | Feature |
 |------|---------|
 | `earn-points-on-stay.feature` | Earn points on stay |
 | `loyalty-rate.feature` | Loyalty rate booking |
 | `partner-airline-miles.feature` | Partner airline miles earning |
+| `points-expiration.feature` | Points expiration |
 | `redeem-points.feature` | Redeem points for free night |
 | `tier-upgrade.feature` | Tier upgrade |
 
