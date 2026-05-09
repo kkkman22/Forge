@@ -13,20 +13,42 @@
 #
 # 用法：
 #   chmod +x forge/scripts/init.sh
-#   ./forge/scripts/init.sh
+#   ./forge/scripts/init.sh [--pack <name>] [--pack <name2>]
 # ============================================================================
 
 set -euo pipefail
 
-# ---------- --help ----------
-if [[ "${1:-}" == "--help" || "${1:-}" == "-h" ]]; then
-  echo "Usage: scripts/init.sh"
-  echo ""
-  echo "Initialize a Forge project in the current directory."
-  echo "Creates .forge/ structure, .claude/ agents, CLAUDE.md, config, and hooks."
-  echo "Interactive: prompts for project name, tech stack, and security level."
-  exit 0
-fi
+# ---------- Parse --pack flags ----------
+PACKS=()
+remaining_args=()
+while [[ $# -gt 0 ]]; do
+  case "$1" in
+    --pack)
+      if [[ -z "${2:-}" ]]; then
+        echo "❌ --pack requires a pack name" >&2; exit 1
+      fi
+      PACKS+=("$2"); shift 2
+      ;;
+    --help|-h)
+      echo "Usage: scripts/init.sh [OPTIONS]"
+      echo ""
+      echo "Initialize a Forge project in the current directory."
+      echo "Creates .forge/ structure, .claude/ agents, CLAUDE.md, config, and hooks."
+      echo ""
+      echo "Options:"
+      echo "  --pack <name>  Enable a domain pack during init (repeatable)"
+      echo "                 Available: pms"
+      echo "  --help, -h     Show this help message"
+      echo ""
+      echo "Interactive: prompts for project name, tech stack, and security level."
+      exit 0
+      ;;
+    *)
+      remaining_args+=("$1"); shift
+      ;;
+  esac
+done
+set -- "${remaining_args[@]+"${remaining_args[@]}"}"
 
 # ---------- 颜色定义 ----------
 RED='\033[0;31m'
@@ -256,6 +278,14 @@ $(printf '%b' "${stack_yaml}" | sed '/^$/d')
 security_level: ${security_level}
 knowledge_limit: 20
 ci_check_command: "${ci_check_cmd}"
+$(if [[ ${#PACKS[@]} -gt 0 ]]; then
+  echo "packs:"
+  for p in "${PACKS[@]}"; do echo "  - ${p}"; done
+fi)
+$(if [[ "${bday_cutoff:-}" ]]; then
+  echo "business_day_cutoff_hour: ${bday_cutoff}"
+  echo "business_day_timezone: \"${bday_tz}\""
+fi)
 ---
 
 # 项目配置
@@ -604,6 +634,73 @@ if command -v pip &>/dev/null || command -v pip3 &>/dev/null; then
   fi
 else
   info "未检测到 pip/pip3，跳过 code-review-graph 安装（grep 回退方案可用）"
+fi
+
+# ============================================================================
+# Step 8：Pack 配置（--pack 参数）
+# ============================================================================
+if [[ ${#PACKS[@]} -gt 0 ]]; then
+  info "Step 8/8：配置 Domain Pack"
+
+  for pack_name in "${PACKS[@]}"; do
+    # Check if pack exists
+    if [[ ! -d "${FORGE_ROOT}/packs/${pack_name}" ]]; then
+      warn "Pack \"${pack_name}\" 未找到于 packs/ 目录。配置已记录，但 Pack 功能将不可用直到安装。"
+      continue
+    fi
+
+    # PMS-specific setup
+    if [[ "${pack_name}" == "pms" ]]; then
+      echo ""
+      info "PMS Pack 配置"
+      echo "  PMS Pack 需要营业日时钟（Business Day Clock）配置："
+      echo ""
+
+      read -rep "$(echo -e "${BLUE}?${NC}") 营业日切日时间（小时 0-23）[4]: " bday_cutoff
+      bday_cutoff="${bday_cutoff:-4}"
+
+      read -rep "$(echo -e "${BLUE}?${NC}") 时区（IANA） [Asia/Shanghai]: " bday_tz
+      bday_tz="${bday_tz:-Asia/Shanghai}"
+
+      # Create .forge/custom/ for project-specific overrides
+      mkdir -p "${PROJECT_ROOT}/.forge/custom/pms"
+
+      # Re-write config.md with business_day settings
+      # (The config.md was already written in Step 2; now we update the frontmatter)
+      if command -v node &>/dev/null; then
+        node -e "
+          const fs = require('fs');
+          const path = '${PROJECT_ROOT}/.forge/config.md';
+          let content = fs.readFileSync(path, 'utf-8');
+          // Add packs and business_day settings to frontmatter
+          if (!content.includes('packs:')) {
+            content = content.replace('---\\n', '---\\npacks:\\n  - pms\\n');
+          }
+          content = content.replace('---\\n', '---\\nbusiness_day_cutoff_hour: ${bday_cutoff}\\nbusiness_day_timezone: \"${bday_tz}\"\\n');
+          fs.writeFileSync(path, content);
+        " 2>/dev/null || warn "无法自动更新 config.md frontmatter，请手动添加 business_day 配置"
+      fi
+
+      success "PMS Pack 已启用"
+      echo ""
+      echo -e "  ${CYAN}═══ PMS Pack 欢迎信息 ═══${NC}"
+      echo "  PMS Domain Pack v1.0 已激活！"
+      echo ""
+      echo "  包含内容："
+      echo "    • 8 个限界上下文（Reservations, Folio, Night Audit...）"
+      echo "    • 4 个状态机（预订, 账单, 房态, 客房任务）"
+      echo "    • 20 个 Gherkin 场景模板"
+      echo "    • 完整术语表 + 禁用词清单"
+      echo "    • BusinessDayClock（营业日时钟）"
+      echo ""
+      echo "  营业日配置：切日 ${bday_cutoff}:00, 时区 ${bday_tz}"
+      echo "  详见：packs/pms/README.md"
+      echo "  自定义覆盖：.forge/custom/pms/"
+      echo ""
+    fi
+
+    success "Pack \"${pack_name}\" 配置完成"
+  done
 fi
 
 # ============================================================================
