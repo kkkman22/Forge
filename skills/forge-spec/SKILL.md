@@ -71,6 +71,8 @@ disable-model-invocation: true
 | Anti-drift | 主目标、非目标代理信号、验证材料角色三项已填写 |
 | Two-part Structure | Current State 有 file:line 引用；Proposed Change 有变更/不变声明 |
 | Reversibility | 回滚清单和挂载点清单已填写 |
+| Spec Leak Check | 无实现细节泄露（通过 detectSpecLeak 扫描，需有 banned-patterns） |
+| Scenario Lint | 所有 Gherkin 场景通过 SCN001-SCN004 规则检查 |
 
 自检未通过 → 自动修正并重新自检，直到全部通过。全部通过后提示用户确认锁定。
 
