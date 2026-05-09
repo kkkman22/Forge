@@ -1,0 +1,35 @@
+rules:
+  - id: money/no-number-for-money
+    severity: warn
+    entry: ./money/no-number-for-money.yaml
+    target_globs:
+      - "src/**/*.ts"
+    description: "禁止 number 类型承载金额"
+
+  - id: money/require-money-factory
+    severity: error
+    entry: ./money/require-money-factory.yaml
+    target_globs:
+      - "src/domain/**/*.ts"
+    description: "禁止金额字面量绕过 Money 工厂方法"
+
+  - id: money/explicit-currency-exchange
+    severity: error
+    entry: ./money/explicit-currency-exchange.yaml
+    target_globs:
+      - "src/domain/**/*.ts"
+    description: "跨币种运算必须显式 exchange()"
+
+  - id: time/no-raw-date-in-domain
+    severity: error
+    entry: ./time/no-raw-date-in-domain.yaml
+    target_globs:
+      - "src/domain/**/*.ts"
+    description: "禁止业务代码中出现裸 new Date() / Date.now()"
+
+  - id: time/prefer-business-day-clock
+    severity: warn
+    entry: ./time/prefer-business-day-clock.yaml
+    target_globs:
+      - "src/domain/**/*.ts"
+    description: "已导入 BusinessDayClock 但未使用时警告"

@@ -12,8 +12,8 @@
  */
 
 import { describe, expect, it } from "vitest";
-import type { EnabledPacks, FileSystem, PackEntry } from "../../src/pack/types.js";
 import { loadGlossary } from "../../src/glossary/registry.js";
+import type { EnabledPacks, FileSystem, PackEntry } from "../../src/pack/types.js";
 
 // ---------------------------------------------------------------------------
 // In-memory filesystem
@@ -74,10 +74,7 @@ function makePack(name: string, glossaryDir: string): PackEntry {
   };
 }
 
-function makeEnabledPacks(
-  packs: PackEntry[],
-  customRoot = "/project/.forge/custom",
-): EnabledPacks {
+function makeEnabledPacks(packs: PackEntry[], customRoot = "/project/.forge/custom"): EnabledPacks {
   return {
     order: packs.map((p) => p.name),
     entries: packs,
@@ -131,9 +128,7 @@ describe("loadGlossary", () => {
 
     expect(registry.entries.size).toBe(2);
     expect(registry.entries.get("orders::Order")).toBeDefined();
-    expect(registry.entries.get("orders::Order")!.definition).toBe(
-      "A customer purchase request.",
-    );
+    expect(registry.entries.get("orders::Order")!.definition).toBe("A customer purchase request.");
     expect(registry.entries.get("orders::LineItem")).toBeDefined();
     expect(registry.entries.get("orders::LineItem")!.aliases).toEqual(["Item"]);
 
@@ -234,9 +229,7 @@ describe("loadGlossary", () => {
 
     expect(registry.entries.size).toBe(2);
     expect(registry.entries.get("_shared::Epic")).toBeDefined();
-    expect(registry.entries.get("_shared::Epic")!.definition).toBe(
-      "A large body of work.",
-    );
+    expect(registry.entries.get("_shared::Epic")!.definition).toBe("A large body of work.");
     expect(registry.entries.get("_shared::Story")).toBeDefined();
     expect(registry.entries.get("_shared::Story")!.context).toBe("_shared");
   });

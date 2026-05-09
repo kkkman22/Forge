@@ -11,7 +11,7 @@
  * @public
  */
 
-import type { StateMachineDefinition, ValidationReport, ValidationEntry } from "./types.js";
+import type { StateMachineDefinition, ValidationEntry, ValidationReport } from "./types.js";
 
 /**
  * Validate a state machine definition.
@@ -33,9 +33,7 @@ export function validateDefinition(def: StateMachineDefinition): ValidationRepor
   const warnings: ValidationEntry[] = [];
 
   const stateNames = new Set(def.states.map((s) => s.name));
-  const terminalStates = new Set(
-    def.states.filter((s) => s.terminal).map((s) => s.name),
-  );
+  const terminalStates = new Set(def.states.filter((s) => s.terminal).map((s) => s.name));
 
   // ST001: initial must be in states
   if (!stateNames.has(def.initial)) {

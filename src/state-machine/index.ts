@@ -3,15 +3,14 @@
  * @public
  */
 
+export { loadStateMachineDefinition } from "./loader.js";
+export { deriveStatePropertyTests } from "./property-derivation.js";
 export type {
-  StateSpec,
-  TransitionSpec,
   InvariantSpec,
   StateMachineDefinition,
-  ValidationReport,
+  StateSpec,
+  TransitionSpec,
   ValidationEntry,
+  ValidationReport,
 } from "./types.js";
-
-export { loadStateMachineDefinition } from "./loader.js";
 export { validateDefinition } from "./validator.js";
-export { deriveStatePropertyTests } from "./property-derivation.js";

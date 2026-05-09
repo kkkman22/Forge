@@ -1,0 +1,10 @@
+id: money/explicit-currency-exchange
+severity: error
+description: "跨币种运算必须显式 exchange()"
+target_globs:
+  - "src/domain/**/*.ts"
+patterns:
+  - type: regex
+    expression: "(?:amount|price|cost|fee|charge|total|balance)\s*[+\-*/]\s*(?:amount|price|cost|fee|charge|total|balance)"
+    message: "跨币种金额运算必须通过显式 exchange() 转换"
+    fix_suggestion: "先 exchange(targetCurrency) 再运算"

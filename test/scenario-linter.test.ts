@@ -1,4 +1,4 @@
-import { describe, it, expect } from "vitest";
+import { describe, expect, it } from "vitest";
 import { lintScenarios } from "../src/scenario-linter.js";
 
 const FILE = "spec.md";
@@ -15,7 +15,7 @@ describe("lintScenarios — SCN001: period termination", () => {
       "```",
     ].join("\n");
     const findings = lintScenarios(spec, FILE);
-    const scn001 = findings.filter(f => f.ruleId === "SCN001");
+    const scn001 = findings.filter((f) => f.ruleId === "SCN001");
     expect(scn001.length).toBe(3);
     expect(scn001.every((f) => f.severity === "error")).toBe(true);
   });

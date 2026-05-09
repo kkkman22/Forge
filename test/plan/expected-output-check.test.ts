@@ -1,4 +1,4 @@
-import { describe, it, expect } from "vitest";
+import { describe, expect, it } from "vitest";
 import { checkExpectedOutput } from "../../src/plan.js";
 
 describe("checkExpectedOutput", () => {
@@ -22,7 +22,7 @@ describe("checkExpectedOutput", () => {
       "Expected: exit 0",
       "### Task 2: test2",
       "Run: `npm test other`",
-      "Expected: FAIL -- \"module not found\"",
+      'Expected: FAIL -- "module not found"',
     ].join("\n");
     const result = checkExpectedOutput(planContent, false);
     expect(result.errors).toEqual([]);
@@ -34,19 +34,16 @@ describe("checkExpectedOutput", () => {
       "Run: cmd1",
       "Expected: exit 0",
       "Run: cmd2",
-      "Expected: output contains \"passed\"",
+      'Expected: output contains "passed"',
       "Run: cmd3",
-      "Expected: FAIL -- \"reason\"",
+      'Expected: FAIL -- "reason"',
     ].join("\n");
     const result = checkExpectedOutput(planContent, false);
     expect(result.errors).toEqual([]);
   });
 
   it("reports warning for legacy plan missing Expected", () => {
-    const planContent = [
-      "### Task 1: old",
-      "Run: `npm test`",
-    ].join("\n");
+    const planContent = ["### Task 1: old", "Run: `npm test`"].join("\n");
     const result = checkExpectedOutput(planContent, true);
     expect(result.errors).toEqual([]);
     expect(result.warnings.length).toBe(1);
