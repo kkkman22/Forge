@@ -55,7 +55,9 @@ export function detectSpecLeak(
 
     for (const [category, patterns] of bannedRegistry.categories) {
       for (const bp of patterns) {
-        const { regex, matchedLiteral } = buildRegex(bp.pattern);
+        const built = buildRegex(bp.pattern);
+        if (!built) continue;
+        const { regex, matchedLiteral } = built;
         const match = regex.exec(line);
         if (!match) continue;
 
@@ -93,10 +95,18 @@ export function detectSpecLeak(
  *   - "regex:..." → compile the rest as-is
  *   - otherwise   → word-bounded case-insensitive literal
  */
-function buildRegex(pattern: string): { regex: RegExp; matchedLiteral: string | null } {
+function buildRegex(pattern: string): { regex: RegExp; matchedLiteral: string | null } | null {
   if (pattern.startsWith("regex:")) {
     const expr = pattern.slice(6);
-    return { regex: new RegExp(expr), matchedLiteral: null };
+    if (expr.length > 500) return null;
+    try {
+      const regex = new RegExp(expr);
+      // Quick safety check: test against a medium string to catch catastrophic backtracking
+      regex.test("a".repeat(100));
+      return { regex, matchedLiteral: null };
+    } catch {
+      return null;
+    }
   }
   const escaped = pattern.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
   return { regex: new RegExp(`\\b${escaped}\\b`, "i"), matchedLiteral: pattern };
@@ -157,9 +167,7 @@ export async function loadBannedPatterns(
           pattern: r.pattern,
           description: typeof r.description === "string" ? r.description : "",
           suggestion_template:
-            typeof r.suggestion_template === "string"
-              ? r.suggestion_template
-              : undefined,
+            typeof r.suggestion_template === "string" ? r.suggestion_template : undefined,
         });
       }
     }

@@ -9,7 +9,7 @@ disable-model-invocation: true
 > **Trigger**: `/forge pack <subcommand>` via forge command router
 > **Purpose**: Discover, enable, inspect, and scaffold Domain Packs
 
-## Overview
+## 1. Overview
 
 Forge Packs provide domain-specific knowledge (Bounded Contexts, Glossary, Scenarios, Banned Patterns, etc.) that plugs into Forge's core methodology engines. This skill manages the pack lifecycle.
 

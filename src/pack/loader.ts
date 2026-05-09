@@ -9,7 +9,7 @@
 
 import path from "node:path";
 import { parse as parseYaml } from "yaml";
-import type { PackManifest, PackEntry, PackRegistry, FileSystem } from "./types.js";
+import type { FileSystem, PackEntry, PackManifest, PackRegistry } from "./types.js";
 
 // ---------------------------------------------------------------------------
 // Manifest validation
@@ -72,10 +72,7 @@ export function validateManifest(raw: Record<string, unknown>): string[] {
  * }
  * ```
  */
-export async function loadPackRegistry(
-  reposRoot: string,
-  fs: FileSystem,
-): Promise<PackRegistry> {
+export async function loadPackRegistry(reposRoot: string, fs: FileSystem): Promise<PackRegistry> {
   const packsDir = path.join(reposRoot, "packs");
   const packs = new Map<string, PackEntry>();
   const warnings: string[] = [];
@@ -105,7 +102,9 @@ export async function loadPackRegistry(
         throw new Error("parsed value is not an object");
       }
     } catch (err) {
-      warnings.push(`pack: ${dir} invalid manifest — parse error: ${err instanceof Error ? err.message : String(err)}`);
+      warnings.push(
+        `pack: ${dir} invalid manifest — parse error: ${err instanceof Error ? err.message : String(err)}`,
+      );
       continue;
     }
 
@@ -120,7 +119,9 @@ export async function loadPackRegistry(
 
     if (packs.has(name)) {
       const existing = packs.get(name)!;
-      warnings.push(`pack: ${name} duplicate — keeping ${path.basename(existing.rootPath)}, ignoring ${dir}`);
+      warnings.push(
+        `pack: ${name} duplicate — keeping ${path.basename(existing.rootPath)}, ignoring ${dir}`,
+      );
       continue;
     }
 
