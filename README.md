@@ -608,6 +608,32 @@ forge/
 
 ---
 
+## Domain Packs
+
+Forge 支持 Domain Pack 机制，为特定行业提供开箱即用的领域知识。
+
+### PMS Domain Pack v1.0
+
+酒店前台管理系统（Property Management System）领域包，包含：
+
+- **8 个限界上下文**：Reservations、Front Desk、Housekeeping、Folio-Billing、Night Audit、Rate-Inventory、Channel-Integration、Reporting
+- **分 Context 术语表**：每个上下文 12+ 术语，含中文别名
+- **4 个状态机**：Reservation、Folio、RoomStatus、HousekeepingTask（YAML 定义 + 自动 property test 派生）
+- **20 个 Gherkin 场景**：覆盖入住/退房/夜审/预订/账单核心流程
+- **禁用词清单**：防止实现泄漏到规格文档
+- **BusinessDayClock**：酒店营业日时钟（支持 DST）
+
+```bash
+# 启用 PMS Pack
+/forge init --pack pms
+
+# 场景可直接复制到 spec 的 ## Scenarios 部分
+```
+
+详见 `packs/pms/README.md`。
+
+---
+
 ## 开发
 
 ```bash
