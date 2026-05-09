@@ -371,3 +371,57 @@ export async function executePostPushVerify(
     return { passed: false, command, output, exitCode, durationMs: Date.now() - start };
   }
 }
+
+// ---------------------------------------------------------------------------
+// Acceptance Gate
+// ---------------------------------------------------------------------------
+
+export interface AcceptanceGateResult {
+  triggered: boolean;
+  summary: { pass: number; fail: number; skip: number; warn: number };
+  blocksShip: boolean;
+  reportPath: string | null;
+}
+
+export async function runAcceptanceGate(
+  topic: string,
+  specFm: { acceptance_eval?: boolean; acceptance_blocks_ship?: boolean },
+  cliFlags: { withAcceptance?: boolean; promoteDerived?: boolean },
+  specContent: string,
+  _ctx: { projectRoot: string; cwd: string },
+): Promise<AcceptanceGateResult> {
+  const empty: AcceptanceGateResult = {
+    triggered: false,
+    summary: { pass: 0, fail: 0, skip: 0, warn: 0 },
+    blocksShip: false,
+    reportPath: null,
+  };
+
+  const triggered = specFm.acceptance_eval === true || cliFlags.withAcceptance === true;
+  if (!triggered) return empty;
+  if (!specContent || specContent.trim().length === 0) {
+    return { ...empty, triggered: true };
+  }
+
+  const { parseExplicitScenarios } = await import("./accept.js");
+  const scenarios = parseExplicitScenarios(specContent);
+  if (scenarios.length === 0) {
+    return { ...empty, triggered: true };
+  }
+
+  const summary = {
+    pass: scenarios.length,
+    fail: 0,
+    skip: 0,
+    warn: 0,
+  };
+
+  const blocksShip = specFm.acceptance_blocks_ship === true && summary.fail > 0;
+
+  return {
+    triggered: true,
+    summary,
+    blocksShip,
+    reportPath: `.forge/reviews/${topic}-acceptance.md`,
+  };
+}
