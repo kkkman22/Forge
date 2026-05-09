@@ -229,3 +229,148 @@ export function mergeResearchFindings(results: SubagentResult[]): string {
 
   return parts.join("\n\n");
 }
+
+// ---------------------------------------------------------------------------
+// RED Verification Gate (Pack System — R9)
+// ---------------------------------------------------------------------------
+
+/** Evidence fields required after RED phase before GREEN transition. */
+export interface RedGateEvidence {
+  /** The exact command that was run. */
+  command: string;
+  /** First 10 lines of actual output. */
+  actual_output: string;
+  /** Why the test should fail (e.g. "function not defined"). */
+  expected_failure_reason: string;
+}
+
+/** Result of RED gate validation. */
+export interface RedGateResult {
+  valid: boolean;
+  reason?: string;
+}
+
+/** Failure indicator patterns in test output. */
+const FAILURE_INDICATORS = [
+  "FAIL",
+  "Error",
+  "AssertionError",
+  "expected",
+  "not defined",
+  "Cannot find",
+];
+
+/** Success indicator patterns. */
+const SUCCESS_INDICATORS = ["passed", "PASS", "all tests passed", "Tests:.*passed"];
+
+/**
+ * Validate RED Verification Gate evidence.
+ *
+ * Per R9: three evidence fields must be present and actual_output must
+ * contain failure indicators (not success indicators).
+ */
+export function validateRedGate(evidence: RedGateEvidence): RedGateResult {
+  if (!evidence.command || evidence.command.trim() === "") {
+    return { valid: false, reason: "missing command field" };
+  }
+  if (!evidence.actual_output || evidence.actual_output.trim() === "") {
+    return { valid: false, reason: "missing actual_output field" };
+  }
+  if (!evidence.expected_failure_reason || evidence.expected_failure_reason.trim() === "") {
+    return { valid: false, reason: "missing expected_failure_reason field" };
+  }
+
+  // Check if output indicates test PASSED
+  const _outputLower = evidence.actual_output.toLowerCase();
+  for (const _indicator of SUCCESS_INDICATORS) {
+    if (/passed/i.test(evidence.actual_output) && !/failed/i.test(evidence.actual_output)) {
+      return {
+        valid: false,
+        reason: "RED test PASSED — test may not assert missing behavior. Rewrite the test.",
+      };
+    }
+  }
+
+  // Check if output contains at least one failure indicator
+  const hasFailureIndicator = FAILURE_INDICATORS.some((ind) =>
+    evidence.actual_output.includes(ind),
+  );
+
+  if (!hasFailureIndicator) {
+    return {
+      valid: false,
+      reason: "actual_output does not contain failure indicators (FAIL/Error/AssertionError)",
+    };
+  }
+
+  return { valid: true };
+}
+
+// ---------------------------------------------------------------------------
+// Expected Output comparison (Pack System — R10.5)
+// ---------------------------------------------------------------------------
+
+/** Actual output from a command execution. */
+export interface ActualOutput {
+  exitCode: number;
+  output: string;
+}
+
+/** An Expected Output specification to compare against. */
+export interface ExpectedSpec {
+  expected: string;
+  actual: ActualOutput;
+}
+
+/** Result of expected output comparison. */
+export interface ExpectedComparisonResult {
+  match: boolean;
+  detail?: string;
+}
+
+/**
+ * Compare actual command output against an Expected specification.
+ *
+ * Three legal forms:
+ *   - `exit <N>` — match exit code
+ *   - `output contains "<string>"` — substring match in output
+ *   - `FAIL -- "<reason>"` — reason substring must appear in output
+ */
+export function compareExpectedOutput(spec: ExpectedSpec): ExpectedComparisonResult {
+  const { expected, actual } = spec;
+  const trimmed = expected.trim();
+
+  // Form 1: exit code
+  const exitMatch = /^exit\s+(\d+)$/.exec(trimmed);
+  if (exitMatch) {
+    const expectedCode = Number.parseInt(exitMatch[1], 10);
+    const match = actual.exitCode === expectedCode;
+    return {
+      match,
+      detail: match ? undefined : `expected exit ${expectedCode}, got ${actual.exitCode}`,
+    };
+  }
+
+  // Form 2: substring match
+  const containsMatch = /^output\s+contains\s+"(.+)"$/.exec(trimmed);
+  if (containsMatch) {
+    const needle = containsMatch[1];
+    const match = actual.output.includes(needle);
+    return { match, detail: match ? undefined : `output does not contain "${needle}"` };
+  }
+
+  // Form 3: fail reason
+  const failMatch = /^FAIL\s+--\s+"(.+)"$/.exec(trimmed);
+  if (failMatch) {
+    const reason = failMatch[1];
+    const match = actual.exitCode !== 0 && actual.output.includes(reason);
+    return {
+      match,
+      detail: match
+        ? undefined
+        : `output does not contain "${reason}" and exit code is ${actual.exitCode}`,
+    };
+  }
+
+  return { match: false, detail: `unrecognized Expected format: "${trimmed}"` };
+}

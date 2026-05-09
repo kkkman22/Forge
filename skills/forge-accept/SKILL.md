@@ -30,6 +30,7 @@ Parse spec scenarios (explicit Gherkin or derived from acceptance criteria), cla
 
 1. Read spec from `.forge/specs/<topic>/spec.md`
 2. `parseScenariosFromSpec(content)` → combined explicit + derived scenarios
+   - Before parsing, run `lintScenarios(specContent, filePath)` from `src/scenario-linter.ts` — malformed scenarios (error-severity) marked as `lint-failed` and skipped (not executed)
 3. If no scenarios found → warn and exit with SKIP
 
 ### Step 2: Classify & Select

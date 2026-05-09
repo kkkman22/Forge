@@ -21,11 +21,11 @@ context: reservations
 
 ### Scenario 1: 成功创建预订
 
-```gherkin
+\`\`\`gherkin
 Given 客人选择了标准间
 When 客人提交预订请求
 Then 系统创建预订并发送确认邮件
-```
+\`\`\`
 
 ### Scenario 2: 实现细节泄露
 

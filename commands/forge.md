@@ -31,13 +31,13 @@ allowed-tools: Read, Glob, Grep, Skill
 | `abort` | `forge-abort` | 任务中止 |
 | `refactor` | `forge-refactor` | 重构引擎 |
 | `fix` | `forge-fix` | 修复引擎 |
-<<<<<<< HEAD
 | `accept` | `forge-accept` | 验收场景执行 |
 | `verify` | `forge-verify` | 证据化验证引擎 |
 | `control-cli` | `forge-control-cli` | CLI/TUI 外部验证 |
 | `control-ui` | `forge-control-ui` | Web/Electron 外部验证 |
 | `fix-conflicts` | `forge-fix-conflicts` | 三区感知合并冲突 |
 | `recap` | `forge-recap` | 时间窗复盘 |
+| `pack` | `forge-pack` | Pack 管理命令 |
 
 **示例**：
 - `/forge learn` → 直接调用 `Skill(forge-learn)`
