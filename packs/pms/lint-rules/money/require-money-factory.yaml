@@ -1,0 +1,10 @@
+id: money/require-money-factory
+severity: error
+description: "禁止金额字面量绕过 Money 工厂方法"
+target_globs:
+  - "src/domain/**/*.ts"
+patterns:
+  - type: regex
+    expression: "(?:const|let|var)\s+(?:amount|price|cost|fee|charge|total|balance|subtotal|tax)\s*=\s*\d+(?:\.\d+)?\b"
+    message: "金额赋值应通过 Money.of() 工厂方法，不应使用裸数字字面量"
+    fix_suggestion: "使用 Money.of(100, 'CNY') 替代裸数字"

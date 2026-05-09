@@ -1,21 +1,11 @@
 ---
-current_task: "pms-pack-v1-pack"
+current_task: "ddd-tactical-bdd-collaboration"
 tier: "standard"
 task_type: "feature"
 project_phase: "build"
-phase: "ship"
-active_plan: "pms-pack-v1-pack"
-parent_task: "pms-pack-v1"
-sub_plans:
-  - name: "pms-pack-v1-core"
-    status: "shipped"
-    order: 1
-  - name: "pms-pack-v1-pack"
-    status: "approved"
-    order: 2
-  - name: "pms-pack-v1-scenarios"
-    status: "approved"
-    order: 3
+phase: "build"
+active_plan: "ddd-tactical-bdd-collaboration"
+spec_source: ".kiro/specs/ddd-tactical-bdd-collaboration"
 updated: "2026-05-10"
 ---
 
@@ -23,10 +13,10 @@ updated: "2026-05-10"
 
 ## 当前任务
 
-**pms-pack-v1-pack** — PMS Pack v1 域包内容（Phase 6-9）
+**ddd-tactical-bdd-collaboration** — DDD 战术层 + BDD 协作层（Sprint 3）
 - 档位：Standard (plan → build → review → test → ship)
-- Plan：`.forge/plans/pms-pack-v1-pack.md`
-- 子 plan 序列：core(1/3 ✅ shipped) → pack(2/3) → scenarios(3/3)
+- Spec：`.kiro/specs/ddd-tactical-bdd-collaboration/`
+- 分支：`worktree-ddd-tactical-bdd-collaboration`
 
 ## 已完成任务
 
@@ -44,3 +34,4 @@ updated: "2026-05-10"
 - Group C/D/E: 社区基础设施
 - specs-unchecked-tasks-remediation: 4 spec 偏差补齐（20 tasks，200 tests）
 - pms-pack-v1-core: PMS Pack v1 Core 引擎 (16/16 tasks, 67 tests)
+- pms-pack-v1-pack: PMS Pack v1 域包内容（跳过完成）

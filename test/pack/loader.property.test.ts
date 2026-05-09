@@ -11,12 +11,11 @@
  * **Validates: R1.1–R1.6 Pack discovery and manifest parsing**
  */
 
+import path from "node:path";
 import * as fc from "fast-check";
 import { describe, expect, it } from "vitest";
-
 import { loadPackRegistry, validateManifest } from "../../src/pack/loader.js";
 import type { FileSystem } from "../../src/pack/types.js";
-import path from "node:path";
 
 // ---------------------------------------------------------------------------
 // Helpers
@@ -73,7 +72,9 @@ const validManifestArb = fc.record({
   name: kebabArb,
   display_name: fc.string({ minLength: 1, maxLength: 40 }),
   description: fc.string({ minLength: 1, maxLength: 100 }),
-  forge_min_version: fc.tuple(fc.nat({ max: 9 }), fc.nat({ max: 20 }), fc.nat({ max: 99 })).map(([a, b, c]) => `${a}.${b}.${c}`),
+  forge_min_version: fc
+    .tuple(fc.nat({ max: 9 }), fc.nat({ max: 20 }), fc.nat({ max: 99 }))
+    .map(([a, b, c]) => `${a}.${b}.${c}`),
   extends: fc.constant("{}"),
 });
 
@@ -97,14 +98,16 @@ function manifestToYaml(m: ManifestRecord): string {
 }
 
 /** Arbitrary that generates a file map with 0–5 valid packs. */
-const validPacksFileMapArb = fc.array(validManifestArb, { minLength: 0, maxLength: 5 }).map((manifests) => {
-  const files: Record<string, string> = {};
-  for (const m of manifests) {
-    const dir = m.name;
-    files[path.join(PACKS_DIR, dir, "pack.yaml")] = manifestToYaml(m);
-  }
-  return files;
-});
+const validPacksFileMapArb = fc
+  .array(validManifestArb, { minLength: 0, maxLength: 5 })
+  .map((manifests) => {
+    const files: Record<string, string> = {};
+    for (const m of manifests) {
+      const dir = m.name;
+      files[path.join(PACKS_DIR, dir, "pack.yaml")] = manifestToYaml(m);
+    }
+    return files;
+  });
 
 // ---------------------------------------------------------------------------
 // Tests
@@ -173,11 +176,17 @@ describe("loadPackRegistry property: empty input stability", () => {
     await fc.assert(
       fc.asyncProperty(fc.constant(undefined), async () => {
         const fs: FileSystem = {
-          readdir: async () => { throw new Error("ENOENT"); },
-          readFile: async () => { throw new Error("ENOENT"); },
+          readdir: async () => {
+            throw new Error("ENOENT");
+          },
+          readFile: async () => {
+            throw new Error("ENOENT");
+          },
           writeFile: async () => {},
           exists: async () => false,
-          stat: async () => { throw new Error("ENOENT"); },
+          stat: async () => {
+            throw new Error("ENOENT");
+          },
         };
 
         const registry = await loadPackRegistry(REPOS_ROOT, fs);
@@ -190,10 +199,13 @@ describe("loadPackRegistry property: empty input stability", () => {
   });
 
   it("packs directory with subdirs but no pack.yaml returns empty registry", async () => {
-    const dirNamesArb = fc.array(fc.string({ minLength: 1, maxLength: 20 }).map((s) => s.replace(/[/\\]/g, "_")), {
-      minLength: 0,
-      maxLength: 10,
-    });
+    const dirNamesArb = fc.array(
+      fc.string({ minLength: 1, maxLength: 20 }).map((s) => s.replace(/[/\\]/g, "_")),
+      {
+        minLength: 0,
+        maxLength: 10,
+      },
+    );
 
     await fc.assert(
       fc.asyncProperty(dirNamesArb, async (dirNames) => {

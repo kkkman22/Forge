@@ -10,8 +10,8 @@
  */
 
 import { describe, expect, it } from "vitest";
-import type { GlossaryEntry, GlossaryRegistry } from "../../src/pack/types.js";
 import { detectContextTermMismatch } from "../../src/glossary/mismatch.js";
+import type { GlossaryEntry, GlossaryRegistry } from "../../src/pack/types.js";
 
 function makeEntry(
   term: string,
@@ -31,9 +31,7 @@ function makeEntry(
   };
 }
 
-function makeRegistry(
-  entries: GlossaryEntry[],
-): GlossaryRegistry {
+function makeRegistry(entries: GlossaryEntry[]): GlossaryRegistry {
   const entryMap = new Map<string, GlossaryEntry>();
   const byTerm = new Map<string, GlossaryEntry[]>();
 
@@ -52,30 +50,16 @@ function makeRegistry(
 
 describe("detectContextTermMismatch", () => {
   it("reports no mismatch when term is in the same context", () => {
-    const registry = makeRegistry([
-      makeEntry("Order", "orders"),
-      makeEntry("Invoice", "billing"),
-    ]);
+    const registry = makeRegistry([makeEntry("Order", "orders"), makeEntry("Invoice", "billing")]);
 
-    const mismatches = detectContextTermMismatch(
-      "The Order was placed.",
-      "orders",
-      registry,
-    );
+    const mismatches = detectContextTermMismatch("The Order was placed.", "orders", registry);
     expect(mismatches).toHaveLength(0);
   });
 
   it("reports mismatch for cross-context term usage", () => {
-    const registry = makeRegistry([
-      makeEntry("Order", "orders"),
-      makeEntry("Invoice", "billing"),
-    ]);
+    const registry = makeRegistry([makeEntry("Order", "orders"), makeEntry("Invoice", "billing")]);
 
-    const mismatches = detectContextTermMismatch(
-      "The Invoice was sent.",
-      "orders",
-      registry,
-    );
+    const mismatches = detectContextTermMismatch("The Invoice was sent.", "orders", registry);
     expect(mismatches).toHaveLength(1);
     expect(mismatches[0].term).toBe("Invoice");
     expect(mismatches[0].usedContext).toBe("orders");
@@ -83,17 +67,10 @@ describe("detectContextTermMismatch", () => {
   });
 
   it("never reports mismatch for _shared terms", () => {
-    const registry = makeRegistry([
-      makeEntry("Epic", "_shared"),
-      makeEntry("Order", "orders"),
-    ]);
+    const registry = makeRegistry([makeEntry("Epic", "_shared"), makeEntry("Order", "orders")]);
 
     // Using Epic in billing context should NOT be a mismatch because it's _shared
-    const mismatches = detectContextTermMismatch(
-      "The Epic was reviewed.",
-      "billing",
-      registry,
-    );
+    const mismatches = detectContextTermMismatch("The Epic was reviewed.", "billing", registry);
     expect(mismatches).toHaveLength(0);
   });
 
@@ -104,43 +81,29 @@ describe("detectContextTermMismatch", () => {
       makeEntry("SKU", "inventory"),
     ]);
 
-    const mismatches = detectContextTermMismatch(
-      "The Invoice references SKU.",
-      "orders",
-      registry,
-    );
+    const mismatches = detectContextTermMismatch("The Invoice references SKU.", "orders", registry);
     expect(mismatches).toHaveLength(2);
     const terms = mismatches.map((m) => m.term).sort();
     expect(terms).toEqual(["Invoice", "SKU"]);
   });
 
   it("deduplicates tokens — repeated cross-context term appears once", () => {
-    const registry = makeRegistry([
-      makeEntry("Invoice", "billing"),
-    ]);
+    const registry = makeRegistry([makeEntry("Invoice", "billing")]);
 
-    const mismatches = detectContextTermMismatch(
-      "Invoice Invoice Invoice",
-      "orders",
-      registry,
-    );
+    const mismatches = detectContextTermMismatch("Invoice Invoice Invoice", "orders", registry);
     expect(mismatches).toHaveLength(1);
     expect(mismatches[0].term).toBe("Invoice");
   });
 
   it("returns empty array for empty text", () => {
-    const registry = makeRegistry([
-      makeEntry("Order", "orders"),
-    ]);
+    const registry = makeRegistry([makeEntry("Order", "orders")]);
 
     const mismatches = detectContextTermMismatch("", "billing", registry);
     expect(mismatches).toHaveLength(0);
   });
 
   it("returns empty array for unknown terms", () => {
-    const registry = makeRegistry([
-      makeEntry("Order", "orders"),
-    ]);
+    const registry = makeRegistry([makeEntry("Order", "orders")]);
 
     const mismatches = detectContextTermMismatch(
       "Something completely unknown.",

@@ -1,0 +1,173 @@
+/**
+ * GuestProfile Value Object — PMS Specialization
+ *
+ * Immutable guest information. Unlike typical value objects which use
+ * structural equality, GuestProfile uses identity-based equality:
+ * two profiles are equal if they share the same guestId, even if
+ * other fields differ. This reflects the domain reality that a guest's
+ * identity is stable even when their details are updated.
+ *
+ * Placeholders:
+ *   {{GuestId}}, {{GuestName}}, {{Nationality}}, {{IdType}}
+ */
+
+type IdDocumentType =
+  | "Passport"
+  | "NationalId"
+  | "DriversLicense"
+  | "ResidencePermit"
+  | "Other";
+
+interface GuestNameParts {
+  readonly firstName: string;
+  readonly lastName: string;
+  readonly title?: string;
+}
+
+interface IdDocument {
+  readonly type: IdDocumentType;   // {{IdType}}
+  readonly number: string;
+  readonly issuingCountry: string;
+  readonly expiryDate?: Date;
+}
+
+export class GuestProfile {
+  private constructor(
+    private readonly _guestId: string,       // {{GuestId}}
+    private readonly _name: GuestNameParts,  // {{GuestName}} expanded
+    private readonly _nationality: string,   // {{Nationality}}
+    private readonly _idDocument: IdDocument, // {{IdType}} + number
+  ) {
+    this.validateName();
+    this.validateIdDocument();
+  }
+
+  // ---------------------------------------------------------------------------
+  // Factory
+  // ---------------------------------------------------------------------------
+
+  /**
+   * Create a GuestProfile value object.
+   *
+   * @param guestId    — Unique guest identifier ({{GuestId}})
+   * @param name       — Guest name parts ({{GuestName}})
+   * @param nationality — ISO 3166-1 alpha-2 country code ({{Nationality}})
+   * @param idDocument — Identity document ({{IdType}})
+   */
+  static of(
+    guestId: string,
+    name: GuestNameParts,
+    nationality: string,
+    idDocument: IdDocument,
+  ): GuestProfile {
+    return new GuestProfile(guestId, name, nationality, idDocument);
+  }
+
+  /**
+   * Convenience factory for simple guest creation.
+   */
+  static create(
+    guestId: string,       // {{GuestId}}
+    firstName: string,
+    lastName: string,
+    nationality: string,   // {{Nationality}}
+    idType: IdDocumentType, // {{IdType}}
+    idNumber: string,
+    idIssuingCountry: string,
+  ): GuestProfile {
+    return new GuestProfile(
+      guestId,
+      { firstName, lastName },
+      nationality,
+      { type: idType, number: idNumber, issuingCountry: idIssuingCountry },
+    );
+  }
+
+  // ---------------------------------------------------------------------------
+  // Validation
+  // ---------------------------------------------------------------------------
+
+  private validateName(): void {
+    if (!this._name.firstName || this._name.firstName.trim().length === 0) {
+      throw new Error("Guest first name is required");
+    }
+    if (!this._name.lastName || this._name.lastName.trim().length === 0) {
+      throw new Error("Guest last name is required");
+    }
+    if (this._name.firstName.length > 100) {
+      throw new Error("Guest first name exceeds maximum length (100)");
+    }
+    if (this._name.lastName.length > 100) {
+      throw new Error("Guest last name exceeds maximum length (100)");
+    }
+  }
+
+  private validateIdDocument(): void {
+    if (!this._idDocument.number || this._idDocument.number.trim().length === 0) {
+      throw new Error("ID document number is required");
+    }
+    if (!this._idDocument.issuingCountry || this._idDocument.issuingCountry.length !== 2) {
+      throw new Error("ID issuing country must be a valid ISO 3166-1 alpha-2 code");
+    }
+    if (this._idDocument.expiryDate) {
+      if (this._idDocument.expiryDate <= new Date()) {
+        throw new Error("ID document has expired");
+      }
+    }
+  }
+
+  // ---------------------------------------------------------------------------
+  // Equality — identity-based (by guestId, NOT by value)
+  // ---------------------------------------------------------------------------
+
+  /**
+   * Identity-based equality: two GuestProfiles are equal if they share
+   * the same guestId, regardless of other field values.
+   *
+   * This is intentional: a guest's profile data may change over time
+   * (name corrections, new ID document), but the guest identity remains.
+   */
+  equals(other: GuestProfile): boolean {
+    if (!(other instanceof GuestProfile)) {
+      return false;
+    }
+    return this._guestId === other._guestId;
+  }
+
+  // ---------------------------------------------------------------------------
+  // Accessors
+  // ---------------------------------------------------------------------------
+
+  get guestId(): string { return this._guestId; }             // {{GuestId}}
+  get name(): GuestNameParts { return this._name; }            // {{GuestName}}
+  get nationality(): string { return this._nationality; }      // {{Nationality}}
+  get idDocument(): IdDocument { return this._idDocument; }    // {{IdType}}
+
+  /** Full display name, e.g. "Mr John Smith" */
+  get displayName(): string {
+    const parts: string[] = [];
+    if (this._name.title) {
+      parts.push(this._name.title);
+    }
+    parts.push(this._name.firstName, this._name.lastName);
+    return parts.join(" ");
+  }
+
+  toString(): string {
+    return `${this._guestId}: ${this.displayName}`;
+  }
+
+  toJSON(): Record<string, unknown> {
+    return {
+      guestId: this._guestId,
+      name: this._name,
+      nationality: this._nationality,
+      idDocument: {
+        type: this._idDocument.type,
+        number: this._idDocument.number,
+        issuingCountry: this._idDocument.issuingCountry,
+        expiryDate: this._idDocument.expiryDate?.toISOString(),
+      },
+    };
+  }
+}

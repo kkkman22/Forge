@@ -8,8 +8,8 @@
  */
 
 import { describe, expect, it } from "vitest";
-import type { EnabledPacks, FileSystem, GlossaryEntry, PackEntry } from "../../src/pack/types.js";
 import { loadGlossary } from "../../src/glossary/registry.js";
+import type { EnabledPacks, FileSystem, GlossaryEntry, PackEntry } from "../../src/pack/types.js";
 
 // ---------------------------------------------------------------------------
 // In-memory filesystem (shared with registry.test.ts logic)
@@ -104,25 +104,17 @@ describe("loadGlossary properties", () => {
       customLayerRoot: "/project/.forge/custom",
     };
 
-
     const registry = await loadGlossary(enabled, fs);
 
     // Both entries should exist with distinct keys
     expect(registry.entries.get("orders::Product")).toBeDefined();
     expect(registry.entries.get("catalog::Product")).toBeDefined();
-    expect(registry.entries.get("orders::Product")!.definition).toBe(
-      "A product being ordered.",
-    );
-    expect(registry.entries.get("catalog::Product")!.definition).toBe(
-      "A product in the catalog.",
-    );
+    expect(registry.entries.get("orders::Product")!.definition).toBe("A product being ordered.");
+    expect(registry.entries.get("catalog::Product")!.definition).toBe("A product in the catalog.");
 
     // byTerm should list both under "Product"
     const byProduct = registry.byTerm.get("Product");
     expect(byProduct).toHaveLength(2);
-    expect(byProduct!.map((e: GlossaryEntry) => e.context).sort()).toEqual([
-      "catalog",
-      "orders",
-    ]);
+    expect(byProduct!.map((e: GlossaryEntry) => e.context).sort()).toEqual(["catalog", "orders"]);
   });
 });

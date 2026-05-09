@@ -1,6 +1,6 @@
-import { describe, it, expect } from "vitest";
+import { describe, expect, it } from "vitest";
 import { parseEnabledPacks } from "../../src/pack/config.js";
-import type { PackRegistry, PackEntry } from "../../src/pack/types.js";
+import type { PackEntry, PackRegistry } from "../../src/pack/types.js";
 
 function makeRegistry(names: string[]): PackRegistry {
   const packs = new Map<string, PackEntry>();

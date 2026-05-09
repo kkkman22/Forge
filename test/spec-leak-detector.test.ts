@@ -1,15 +1,12 @@
-import { describe, it, expect } from "vitest";
-import {
-  detectSpecLeak,
-  loadBannedPatterns,
-} from "../src/spec-leak-detector.js";
+import { describe, expect, it } from "vitest";
 import type {
   BannedPatternRegistry,
   EnabledPacks,
+  FileSystem,
   GlossaryRegistry,
   PackEntry,
-  FileSystem,
 } from "../src/pack/types.js";
+import { detectSpecLeak, loadBannedPatterns } from "../src/spec-leak-detector.js";
 
 // ---------------------------------------------------------------------------
 // Helpers
@@ -32,10 +29,7 @@ function makePackEntry(overrides: Partial<PackEntry> = {}): PackEntry {
 
 const CUSTOM_ROOT = "/project/.forge/custom";
 
-function makeEnabled(
-  entries: PackEntry[] = [],
-  customRoot: string = CUSTOM_ROOT,
-): EnabledPacks {
+function makeEnabled(entries: PackEntry[] = [], customRoot: string = CUSTOM_ROOT): EnabledPacks {
   return {
     order: entries.map((e) => e.name),
     entries,
@@ -48,9 +42,15 @@ function emptyGlossary(): GlossaryRegistry {
 }
 
 function makeBannedRegistry(
-  categories: Record<string, { pattern: string; description: string; suggestion_template?: string }[]>,
+  categories: Record<
+    string,
+    { pattern: string; description: string; suggestion_template?: string }[]
+  >,
 ): BannedPatternRegistry {
-  const map = new Map<string, { pattern: string; description: string; suggestion_template?: string }[]>();
+  const map = new Map<
+    string,
+    { pattern: string; description: string; suggestion_template?: string }[]
+  >();
   for (const [name, patterns] of Object.entries(categories)) {
     map.set(name, patterns);
   }
@@ -101,18 +101,10 @@ describe("detectSpecLeak", () => {
     ].join("\n");
 
     const banned = makeBannedRegistry({
-      code: [
-        { pattern: "UserService", description: "implementation class name" },
-      ],
+      code: [{ pattern: "UserService", description: "implementation class name" }],
     });
 
-    const findings = detectSpecLeak(
-      specText,
-      "spec.md",
-      banned,
-      emptyGlossary(),
-      "booking",
-    );
+    const findings = detectSpecLeak(specText, "spec.md", banned, emptyGlossary(), "booking");
 
     expect(findings).toEqual([]);
   });
@@ -130,13 +122,7 @@ describe("detectSpecLeak", () => {
       ],
     });
 
-    const findings = detectSpecLeak(
-      specText,
-      "spec.md",
-      banned,
-      emptyGlossary(),
-      "booking",
-    );
+    const findings = detectSpecLeak(specText, "spec.md", banned, emptyGlossary(), "booking");
 
     expect(findings).toHaveLength(1);
     expect(findings[0].category).toBe("code");
@@ -158,13 +144,7 @@ describe("detectSpecLeak", () => {
       ],
     });
 
-    const findings = detectSpecLeak(
-      specText,
-      "spec.md",
-      banned,
-      emptyGlossary(),
-      "booking",
-    );
+    const findings = detectSpecLeak(specText, "spec.md", banned, emptyGlossary(), "booking");
 
     expect(findings).toHaveLength(1);
     expect(findings[0].category).toBe("infrastructure");
@@ -175,9 +155,7 @@ describe("detectSpecLeak", () => {
     const specText = "The ReservationService manages all booking lifecycle events.";
 
     const banned = makeBannedRegistry({
-      code: [
-        { pattern: "ReservationService", description: "implementation class" },
-      ],
+      code: [{ pattern: "ReservationService", description: "implementation class" }],
     });
 
     const glossary: GlossaryRegistry = {
@@ -210,9 +188,7 @@ describe("detectSpecLeak", () => {
     const specText = "The KafkaProducer sends events.";
 
     const banned = makeBannedRegistry({
-      infrastructure: [
-        { pattern: "KafkaProducer", description: "infra detail" },
-      ],
+      infrastructure: [{ pattern: "KafkaProducer", description: "infra detail" }],
     });
 
     const glossary: GlossaryRegistry = {
@@ -258,9 +234,7 @@ describe("detectSpecLeak", () => {
 
     const banned = makeBannedRegistry({
       code: [{ pattern: "UserService", description: "impl class" }],
-      infrastructure: [
-        { pattern: "regex:POST\\s+/api/", description: "API endpoint" },
-      ],
+      infrastructure: [{ pattern: "regex:POST\\s+/api/", description: "API endpoint" }],
     });
 
     const findings = detectSpecLeak(specText, "spec.md", banned, emptyGlossary(), "booking");

@@ -1,4 +1,4 @@
-import { describe, it, expect } from "vitest";
+import { describe, expect, it } from "vitest";
 import { deriveStatePropertyTests } from "../../src/state-machine/property-derivation.js";
 import type { StateMachineDefinition } from "../../src/state-machine/types.js";
 
@@ -43,7 +43,10 @@ describe("deriveStatePropertyTests", () => {
   it("generates no_<state>_requires_<condition>_passed test", () => {
     const code = deriveStatePropertyTests(
       defWithInvariants([
-        { expression: "no_show_requires_arrival_cutoff_passed", description: "noshow needs cutoff" },
+        {
+          expression: "no_show_requires_arrival_cutoff_passed",
+          description: "noshow needs cutoff",
+        },
       ]),
     );
     expect(code).toContain("show");
@@ -64,9 +67,7 @@ describe("deriveStatePropertyTests", () => {
 
   it("generates TODO placeholder for unrecognized invariant", () => {
     const code = deriveStatePropertyTests(
-      defWithInvariants([
-        { expression: "custom_business_rule", description: "some custom rule" },
-      ]),
+      defWithInvariants([{ expression: "custom_business_rule", description: "some custom rule" }]),
     );
     expect(code).toContain("// TODO:");
     expect(code).toContain("custom_business_rule");

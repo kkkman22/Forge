@@ -1,4 +1,4 @@
-import { describe, it, expect } from "vitest";
+import { describe, expect, it } from "vitest";
 import { loadStateMachineDefinition } from "../../src/state-machine/loader.js";
 
 const VALID_YAML = `
@@ -98,9 +98,9 @@ invariants: []
   });
 
   it("includes filePath in error messages when provided", () => {
-    expect(() =>
-      loadStateMachineDefinition("not: yaml", "reservation.yaml"),
-    ).toThrow(/reservation\.yaml/);
+    expect(() => loadStateMachineDefinition("not: yaml", "reservation.yaml")).toThrow(
+      /reservation\.yaml/,
+    );
   });
 
   it("parses guards and side_effects on transitions", () => {

@@ -151,3 +151,19 @@ Greenfield Canonical Example（`order-batch-export`）与 Brownfield Variant（�
 | "需求很明确不需要写 spec" | 明确的需求也有隐含假设。spec 的价值是把假设显式化，15 分钟的 spec 能避免数小时的返工 |
 | "先写代码再补 spec" | 那是文档不是规格。spec 的价值在于编码前强制厘清需求，事后补写无法发现前置假设错误 |
 | "这个功能太小了不值得写 spec" | 小功能不需要长 spec，但仍需要验收标准。两行 spec 也是 spec |
+
+---
+
+## 10. Living Doc Generation (`--living-doc`)
+
+When `/forge spec --living-doc` is invoked:
+
+1. Call `generateLivingDoc(specsDir, acceptanceDir)` from `src/living-doc/generator.ts` — scans `.forge/specs/` for spec files, parses frontmatter and scenarios, merges acceptance verdicts from `.forge/acceptance/`
+2. Call `renderLivingDoc(data, outputDir)` from `src/living-doc/renderer.ts` — generates index.html + per-context pages + CSS
+3. Output: `✅ Living doc generated at .forge/docs/living/index.html (N scenarios)`
+
+**Output directory**: `.forge/docs/living/`
+
+**Zero-Pack behavior**: When no specs exist, `generateLivingDoc` returns empty data with 0 scenarios. `renderLivingDoc` produces a skeleton index page with zero stats. Exit 0.
+
+**Standalone script**: `node scripts/generate-living-doc.mjs`

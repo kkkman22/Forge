@@ -1,0 +1,276 @@
+/**
+ * Folio Aggregate Root — PMS Specialization
+ * Hotel billing aggregate with the core invariant: debits equal credits.
+ *
+ * Placeholders:
+ *   {{FolioId}}, {{GuestId}}, {{RoomNumber}}
+ *
+ * Invariant: After every mutation, total charges (debits) must equal
+ * total payments + adjustments (credits). This invariant is enforced
+ * by `assertBalanced()` called at the end of every state-changing method.
+ */
+
+type FolioStatus = "Open" | "Closed";
+
+interface FolioEntry {
+  readonly id: string;
+  readonly amount: number;
+  readonly description: string;
+  readonly postedAt: Date;
+}
+
+interface ChargeEntry extends FolioEntry {
+  readonly category: "Room" | "F&B" | "Minibar" | "Laundry" | "Spa" | "Other";
+}
+
+interface PaymentEntry extends FolioEntry {
+  readonly method: "Cash" | "CreditCard" | "DebitCard" | "BankTransfer" | "FolioTransfer";
+}
+
+interface AdjustmentEntry extends FolioEntry {
+  readonly reason: "Correction" | "Discount" | "Waiver" | "Comp";
+}
+
+export class Folio {
+  private _status: FolioStatus = "Open";
+  private _version: number = 0;
+  private readonly _charges: ChargeEntry[] = [];
+  private readonly _payments: PaymentEntry[] = [];
+  private readonly _adjustments: AdjustmentEntry[] = [];
+
+  private constructor(
+    private readonly _folioId: string,     // {{FolioId}}
+    private readonly _guestId: string,     // {{GuestId}}
+    private readonly _roomNumber: string,  // {{RoomNumber}}
+  ) {}
+
+  // ---------------------------------------------------------------------------
+  // Factory
+  // ---------------------------------------------------------------------------
+
+  static Open(
+    folioId: string,     // {{FolioId}}
+    guestId: string,     // {{GuestId}}
+    roomNumber: string,  // {{RoomNumber}}
+  ): Folio {
+    if (!folioId) {
+      throw new Error("Folio ID is required");
+    }
+    if (!guestId) {
+      throw new Error("Guest ID is required");
+    }
+    if (!roomNumber) {
+      throw new Error("Room number is required");
+    }
+
+    return new Folio(folioId, guestId, roomNumber);
+  }
+
+  // ---------------------------------------------------------------------------
+  // Mutation methods — each calls assertInvariants() at the end
+  // ---------------------------------------------------------------------------
+
+  /**
+   * Add a charge (debit) to the folio.
+   * Increases total debits.
+   */
+  AddCharge(
+    id: string,
+    amount: number,
+    description: string,
+    category: ChargeEntry["category"],
+  ): void {
+    if (this._status === "Closed") {
+      throw new Error("Cannot add charge to a closed folio");
+    }
+    if (amount <= 0) {
+      throw new Error("Charge amount must be positive");
+    }
+
+    this._charges.push({
+      id,
+      amount,
+      description,
+      category,
+      postedAt: new Date(),
+    });
+
+    this._version++;
+    this.assertInvariants();
+  }
+
+  /**
+   * Add a payment (credit) to the folio.
+   * Increases total credits.
+   */
+  AddPayment(
+    id: string,
+    amount: number,
+    description: string,
+    method: PaymentEntry["method"],
+  ): void {
+    if (this._status === "Closed") {
+      throw new Error("Cannot add payment to a closed folio");
+    }
+    if (amount <= 0) {
+      throw new Error("Payment amount must be positive");
+    }
+
+    this._payments.push({
+      id,
+      amount,
+      description,
+      method,
+      postedAt: new Date(),
+    });
+
+    this._version++;
+    this.assertInvariants();
+  }
+
+  /**
+   * Apply an adjustment (credit or debit correction).
+   * Positive adjustment = credit (discount/waiver).
+   * Negative adjustment = debit correction.
+   */
+  ApplyAdjustment(
+    id: string,
+    amount: number,
+    description: string,
+    reason: AdjustmentEntry["reason"],
+  ): void {
+    if (this._status === "Closed") {
+      throw new Error("Cannot apply adjustment to a closed folio");
+    }
+    if (amount === 0) {
+      throw new Error("Adjustment amount cannot be zero");
+    }
+
+    this._adjustments.push({
+      id,
+      amount,
+      description,
+      reason,
+      postedAt: new Date(),
+    });
+
+    this._version++;
+    this.assertInvariants();
+  }
+
+  /**
+   * Close the folio. Requires balanced state (debits == credits).
+   */
+  CloseFolio(): void {
+    if (this._status === "Closed") {
+      throw new Error("Folio is already closed");
+    }
+
+    // The core invariant must hold before closing
+    this.assertBalanced();
+
+    this._status = "Closed";
+    this._version++;
+  }
+
+  // ---------------------------------------------------------------------------
+  // Invariant enforcement — the core rule: debits equal credits
+  // ---------------------------------------------------------------------------
+
+  /**
+   * Assert all folio invariants. Called after every mutation.
+   *
+   * Invariant: total charges == total payments + total positive adjustments
+   * i.e., debits == credits (balanced entries).
+   */
+  private assertInvariants(): void {
+    this.assertBalanced();
+  }
+
+  /**
+   * The primary invariant: debits must equal credits.
+   * Throws if the folio is out of balance.
+   */
+  private assertBalanced(): void {
+    const totalCharges = this.totalCharges();
+    const totalPayments = this.totalPayments();
+    const totalPositiveAdjustments = this._adjustments
+      .filter((a) => a.amount > 0)
+      .reduce((sum, a) => sum + a.amount, 0);
+    const totalNegativeAdjustments = this._adjustments
+      .filter((a) => a.amount < 0)
+      .reduce((sum, a) => sum + Math.abs(a.amount), 0);
+
+    const totalDebits = totalCharges + totalNegativeAdjustments;
+    const totalCredits = totalPayments + totalPositiveAdjustments;
+
+    // Allow small floating-point tolerance
+    const tolerance = 0.01;
+    if (Math.abs(totalDebits - totalCredits) > tolerance) {
+      throw new Error(
+        `Folio invariant violated: debits (${totalDebits.toFixed(2)}) ` +
+        `do not equal credits (${totalCredits.toFixed(2)}). ` +
+        `Difference: ${(totalDebits - totalCredits).toFixed(2)}`,
+      );
+    }
+  }
+
+  // ---------------------------------------------------------------------------
+  // Totals
+  // ---------------------------------------------------------------------------
+
+  totalCharges(): number {
+    return this._charges.reduce((sum, c) => sum + c.amount, 0);
+  }
+
+  totalPayments(): number {
+    return this._payments.reduce((sum, p) => sum + p.amount, 0);
+  }
+
+  totalAdjustments(): number {
+    return this._adjustments.reduce((sum, a) => sum + a.amount, 0);
+  }
+
+  balance(): number {
+    return this.totalCharges() - this.totalPayments() - this.totalAdjustments();
+  }
+
+  // ---------------------------------------------------------------------------
+  // Accessors & serialization
+  // ---------------------------------------------------------------------------
+
+  get folioId(): string { return this._folioId; }       // {{FolioId}}
+  get guestId(): string { return this._guestId; }       // {{GuestId}}
+  get roomNumber(): string { return this._roomNumber; } // {{RoomNumber}}
+  get status(): FolioStatus { return this._status; }
+  get version(): number { return this._version; }
+
+  get charges(): ReadonlyArray<ChargeEntry> {
+    return Object.freeze([...this._charges]);
+  }
+
+  get payments(): ReadonlyArray<PaymentEntry> {
+    return Object.freeze([...this._payments]);
+  }
+
+  get adjustments(): ReadonlyArray<AdjustmentEntry> {
+    return Object.freeze([...this._adjustments]);
+  }
+
+  toJSON(): Record<string, unknown> {
+    return {
+      folioId: this._folioId,
+      guestId: this._guestId,
+      roomNumber: this._roomNumber,
+      status: this._status,
+      totalCharges: this.totalCharges(),
+      totalPayments: this.totalPayments(),
+      totalAdjustments: this.totalAdjustments(),
+      balance: this.balance(),
+      charges: this._charges,
+      payments: this._payments,
+      adjustments: this._adjustments,
+      version: this._version,
+    };
+  }
+}
