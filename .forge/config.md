@@ -7,6 +7,8 @@ stack:
 security_level: 1
 knowledge_limit: 20
 max_parallel_agents: 6    # Range: 1-10, default 6
+findings_retention_days: 30
+post_push_verify_enabled: true
 ---
 
 # 项目配置
@@ -70,3 +72,4 @@ bash scripts/build-dist.sh  # 分发包同步校验
 - `.forge/knowledge/metrics.md`（指标追踪）
 - `.forge/knowledge/tool-health.md`（工具健康度）
 - `.forge/knowledge/skill-feedback.md`（SKILL 反馈）
+- `.forge/ship/*.md`（ship 阶段产物，含 post-push-verify 报告；保留 30 天）

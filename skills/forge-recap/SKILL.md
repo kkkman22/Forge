@@ -1,6 +1,6 @@
 ---
 name: forge-recap
-description: "Time-window recap engine aggregating git history, sessions, and runs into a categorized summary. Use when running /forge recap to review recent activity."
+description: "Capture git history, sessions, and runs into a time-window categorized summary. Use when running /forge recap to review recent activity."
 disable-model-invocation: true
 ---
 
