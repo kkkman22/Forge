@@ -147,4 +147,40 @@ if [[ -d "${DEDUPE_DIR}" ]]; then
   fi
 fi
 
+# ---------------------------------------------------------------------------
+# Archive stale findings (.forge/findings/*)
+# ---------------------------------------------------------------------------
+
+FINDINGS_RETENTION_DAYS=30
+if [[ -f "${CONFIG_FILE}" ]]; then
+  F_CONFIGURED=$(sed -n '/^---$/,/^---$/p' "${CONFIG_FILE}" 2>/dev/null \
+    | (grep -E '^findings_retention_days:' || true) \
+    | head -1 | sed 's/findings_retention_days:[[:space:]]*//' \
+    | tr -d '[:space:]')
+  if [[ -n "${F_CONFIGURED:-}" ]] && [[ "${F_CONFIGURED}" =~ ^[0-9]+$ ]]; then
+    FINDINGS_RETENTION_DAYS="${F_CONFIGURED}"
+  fi
+fi
+
+FINDINGS_DIR=".forge/findings"
+FINDINGS_ARCHIVE=".forge/archive/findings"
+
+if [[ -d "${FINDINGS_DIR}" ]]; then
+  STALE_FINDINGS=$(find "${FINDINGS_DIR}" -type f -mtime "+${FINDINGS_RETENTION_DAYS}" 2>/dev/null || true)
+  if [[ -n "${STALE_FINDINGS}" ]]; then
+    if [[ "${DRY_RUN}" != "yes" ]]; then
+      mkdir -p "${FINDINGS_ARCHIVE}"
+    fi
+    while IFS= read -r file; do
+      [[ -z "${file}" ]] && continue
+      if [[ "${DRY_RUN}" == "yes" ]]; then
+        echo "would archive finding: ${file}"
+      else
+        mv -- "${file}" "${FINDINGS_ARCHIVE}/"
+        echo "archived finding: ${file}"
+      fi
+    done <<< "${STALE_FINDINGS}"
+  fi
+fi
+
 exit 0

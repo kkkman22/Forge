@@ -1,3 +1,6 @@
+import { globSync, readFileSync } from "node:fs";
+import { resolve } from "node:path";
+
 export interface TierAvailability {
   a: true;
   b: "preferred" | "degraded" | "unavailable";
@@ -162,4 +165,25 @@ export function parseAxeResult(json: unknown): AxeResultSummary {
   }
 
   return { p0, p1, p2, p3, violations };
+}
+
+// ---------------------------------------------------------------------------
+// Project-level driver
+// ---------------------------------------------------------------------------
+
+export function scanVueProject(
+  projectRoot: string,
+  rules: readonly VueA11yRule[],
+  patterns: readonly string[] = ["src/**/*.vue", "src/**/*.tsx"],
+): Vue3Violation[] {
+  const violations: Vue3Violation[] = [];
+  for (const pattern of patterns) {
+    const matches = globSync(pattern, { cwd: projectRoot });
+    for (const relative of matches) {
+      const absolute = resolve(projectRoot, relative);
+      const content = readFileSync(absolute, "utf-8");
+      violations.push(...scanVueTemplate(content, absolute, rules));
+    }
+  }
+  return violations;
 }
