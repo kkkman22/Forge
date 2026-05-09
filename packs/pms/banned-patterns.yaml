@@ -1,0 +1,68 @@
+# PMS Domain Pack — Banned Patterns
+# PMS 规格中的禁用词清单，防止实现泄漏到规格文档
+
+code:
+  description: "PMS 特定的实现层命名，不应出现在领域规格中"
+  patterns:
+    - regex: '\b\w+(Service|Repository|Manager|Engine|Handler)\b'
+      message: "避免 Service/Repository/Manager/Engine/Handler 后缀，使用领域术语"
+      examples:
+        - "ReservationService → Reservation（聚合本身就是业务操作入口）"
+        - "FolioRepository → Folio（聚合通过 ID 加载，不需要 Repository 抽象）"
+        - "NightAuditEngine → NightAuditSession（使用领域术语而非技术术语）"
+    - regex: '\b(ReservationService|FolioRepository|RoomAllocator|NightAuditEngine)\b'
+      message: "具体类名出现在规格中，属于实现泄漏"
+    - regex: '\b\w+ServiceImpl\b'
+      message: "避免 Impl 后缀，表明接口设计可能存在问题"
+    - regex: '\b\w+DTO\b'
+      message: "DTO 是传输层概念，规格应使用领域对象术语"
+    - regex: '\b\w+(Factory|Builder|Strategy)\b'
+      message: "设计模式名称不应出现在领域规格中"
+
+infrastructure:
+  description: "数据库和基础设施引用，规格应描述业务逻辑而非存储方式"
+  patterns:
+    - regex: '\b\w+_(table|tbl|db)\b'
+      message: "数据库表名不应出现在规格中"
+      examples:
+        - "reservations_table → 预订聚合（Reservation aggregate）"
+        - "folio_line_items → 账目（FolioLineItem）"
+    - regex: '\b(SELECT|INSERT|UPDATE|DELETE|FROM|WHERE)\b'
+      message: "SQL 语句不应出现在规格中"
+    - regex: '\b\w+-queue\b'
+      message: "队列名称不应出现在规格中"
+      examples:
+        - "reservation-events → 预订事件（ReservationEvent）"
+        - "night-audit-queue → 夜审流程（NightAuditSession）"
+    - regex: '\b(http|https)://\S+\b'
+      message: "API URL 不应出现在规格中，描述业务操作而非 HTTP 端点"
+    - regex: '\b(GET|POST|PUT|DELETE|PATCH)\s+/\w+'
+      message: "HTTP 方法和路径属于 API 设计，不是领域规格"
+
+framework:
+  description: "特定框架和库的术语，规格应与框架无关"
+  patterns:
+    - regex: '\b(Controller|Middleware|Interceptor|Guard|Pipe)\b'
+      message: "MVC 层术语不应出现在规格中"
+    - regex: '\b(NestJS|TypeORM|Prisma|Sequelize|Mongoose)\b'
+      message: "特定 ORM/框架名称不应出现在规格中"
+    - regex: '\b(Redux|Vuex|Pinia|MobX|Zustand)\b'
+      message: "前端状态管理库不应出现在规格中"
+    - regex: '\b(Express|Fastify|Koa|Hono)\b'
+      message: "Web 框架名称不应出现在规格中"
+    - regex: '\b(DI|IoC|Container|Injectable|Inject)\b'
+      message: "依赖注入术语不应出现在规格中"
+
+technical:
+  description: "基础设施技术组件名称，规格应使用领域概念替代"
+  patterns:
+    - regex: '\b(Redis|Memcached|Elasticsearch|MongoDB|PostgreSQL|MySQL)\b'
+      message: "具体数据库/缓存产品名称不应出现在规格中"
+    - regex: '\b(Kafka|RabbitMQ|SQS|EventBridge|NATS)\b'
+      message: "具体消息队列产品名称不应出现在规格中"
+    - regex: '\b(Docker|Kubernetes|K8s|AWS|GCP|Azure)\b'
+      message: "部署基础设施名称不应出现在规格中"
+    - regex: '\b(WebSocket|GraphQL|gRPC|REST)\b'
+      message: "通信协议名称不应出现在规格中"
+    - regex: '\b(JWT|OAuth|SAML|Session|Cookie)\b'
+      message: "认证技术细节不应出现在规格中"
