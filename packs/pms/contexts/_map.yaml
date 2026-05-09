@@ -1,0 +1,59 @@
+# PMS Context Map
+# 关系类型: partnership / customer-supplier / acl / open-host
+
+edges:
+  # Partnership — 双向协作
+  - from: reservations
+    to: front-desk
+    type: partnership
+    description: "预订确认后前台执行入住，退房后更新预订状态"
+
+  - from: front-desk
+    to: housekeeping
+    type: customer-supplier
+    description: "前台是客户：退房时需要清洁任务优先处理，入住时需要房间已就绪"
+    direction: "front-desk → housekeeping"
+
+  - from: reservations
+    to: folio-billing
+    type: customer-supplier
+    description: "预订是客户：确认时开账，入住后产生房费，退房时结算"
+    direction: "reservations → folio-billing"
+
+  - from: folio-billing
+    to: night-audit
+    type: partnership
+    description: "夜审触发 Folio 过账，Folio 提供日终收入数据"
+
+  - from: reservations
+    to: rate-inventory
+    type: customer-supplier
+    description: "预订是客户：查询可用房价和库存，确认后扣减库存"
+    direction: "reservations → rate-inventory"
+
+  - from: rate-inventory
+    to: channel-integration
+    type: open-host
+    description: "开放主机：Rate-Inventory 发布价格和库存变更事件，Channel-Integration 订阅并同步到外部渠道"
+
+  - from: channel-integration
+    to: reservations
+    type: acl
+    description: "防腐层：外部渠道预订消息经翻译后导入 Reservations，隔离外部 API 格式"
+    direction: "channel-integration → reservations"
+
+  - from: housekeeping
+    to: rate-inventory
+    type: customer-supplier
+    description: "房间状态变更（清洁完成/维修中）更新可用库存"
+    direction: "housekeeping → rate-inventory"
+
+  - from: night-audit
+    to: reporting
+    type: open-host
+    description: "开放主机：夜审完成后发布日结数据，Reporting 订阅构建报表"
+
+  - from: front-desk
+    to: folio-billing
+    type: partnership
+    description: "前台发起支付和退房结算，Folio-Billing 执行账务处理"
