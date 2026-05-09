@@ -87,10 +87,7 @@ function normalise(w: string): string {
  * Strategy: split criterion into keywords, normalise them, and check if most
  * appear in any added line. Returns the best-matching diff line as evidence.
  */
-function findEvidence(
-  criterion: string,
-  diff: string,
-): string | null {
+function findEvidence(criterion: string, diff: string): string | null {
   const keywords = criterion
     .split(/[\s,()']+/)
     .filter((w) => w.length > 1)
@@ -163,8 +160,7 @@ export function runMicroReview(input: MicroReviewInput): MicroReviewResult {
   const overBuilt = diffFiles.filter((f) => !declaredFiles.has(f));
 
   // 3. Verdict
-  const verdict =
-    missing.length === 0 && overBuilt.length === 0 ? "pass" : "needs_iteration";
+  const verdict = missing.length === 0 && overBuilt.length === 0 ? "pass" : "needs_iteration";
 
   return { covered, overBuilt, missing, verdict };
 }

@@ -4,10 +4,10 @@
  * Covers: empty enabled, single layer, multi-layer union, deduplication.
  */
 
-import { describe, it, expect } from "vitest";
-import { loadBannedPatterns } from "../../src/spec-leak-detector.js";
-import type { EnabledPacks, PackEntry, FileSystem } from "../../src/pack/types.js";
 import path from "node:path";
+import { describe, expect, it } from "vitest";
+import type { EnabledPacks, FileSystem, PackEntry } from "../../src/pack/types.js";
+import { loadBannedPatterns } from "../../src/spec-leak-detector.js";
 
 // ---------------------------------------------------------------------------
 // Helpers
@@ -30,10 +30,7 @@ function makePackEntry(overrides: Partial<PackEntry> = {}): PackEntry {
 
 const CUSTOM_ROOT = "/project/.forge/custom";
 
-function makeEnabled(
-  entries: PackEntry[] = [],
-  customRoot: string = CUSTOM_ROOT,
-): EnabledPacks {
+function makeEnabled(entries: PackEntry[] = [], customRoot: string = CUSTOM_ROOT): EnabledPacks {
   return {
     order: entries.map((e) => e.name),
     entries,

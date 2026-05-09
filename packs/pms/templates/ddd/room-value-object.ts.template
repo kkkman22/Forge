@@ -1,0 +1,128 @@
+/**
+ * Room Value Object — PMS Specialization (Parameterized by Bounded Context)
+ *
+ * The meaning of "Room" changes depending on the bounded context:
+ *
+ *   Reservations context: RoomType — a room category ("Deluxe", "Suite", "Standard")
+ *   Front-Desk context:   RoomUnit — a physical room ("301", "302", "101B")
+ *
+ * Placeholders:
+ *   {{ContextName}}  — "Reservation" or "FrontDesk"
+ *   {{RoomProperty}} — "roomType" or "roomNumber"
+ *
+ * This template adapts its validation and semantics based on the context.
+ */
+
+export class {{ContextName}}Room {
+  private constructor(
+    private readonly _{{RoomProperty}}: string,
+  ) {
+    this.validate();
+  }
+
+  // ---------------------------------------------------------------------------
+  // Validation — rules differ by context
+  // ---------------------------------------------------------------------------
+
+  private validate(): void {
+    const value = this._{{RoomProperty}};
+
+    if (!value || value.trim().length === 0) {
+      throw new Error("{{RoomProperty}} is required");
+    }
+
+    {{#if IsReservationContext}}
+    // Reservations context: RoomType must be a known category
+    const validRoomTypes = [
+      "Standard", "Superior", "Deluxe", "JuniorSuite", "Suite",
+      "ExecutiveSuite", "PresidentialSuite",
+    ];
+    if (!validRoomTypes.includes(value)) {
+      throw new Error(
+        `Invalid room type '${value}'; expected one of: ${validRoomTypes.join(", ")}`,
+      );
+    }
+    {{/if}}
+
+    {{#if IsFrontDeskContext}}
+    // Front-Desk context: RoomNumber must match building/floor/room pattern
+    const roomNumberPattern = /^[A-Z]?\d{2,4}[A-Z]?$/;
+    if (!roomNumberPattern.test(value)) {
+      throw new Error(
+        `Invalid room number '${value}'; expected format like '301', 'B1204', '45A'`,
+      );
+    }
+    {{/if}}
+  }
+
+  // ---------------------------------------------------------------------------
+  // Factory
+  // ---------------------------------------------------------------------------
+
+  /**
+   * Create a Room value object in the {{ContextName}} context.
+   * {{#if IsReservationContext}}
+   * Accepts a room type category (e.g., "Deluxe", "Suite").
+   * {{/if}}
+   * {{#if IsFrontDeskContext}}
+   * Accepts a physical room number (e.g., "301", "B1204").
+   * {{/if}}
+   */
+  static of(value: string): {{ContextName}}Room {
+    return new {{ContextName}}Room(value);
+  }
+
+  // ---------------------------------------------------------------------------
+  // Value Object protocol
+  // ---------------------------------------------------------------------------
+
+  /**
+   * Structural equality: two rooms are equal if their {{RoomProperty}} matches.
+   */
+  equals(other: {{ContextName}}Room): boolean {
+    if (!(other instanceof {{ContextName}}Room)) {
+      return false;
+    }
+    return this._{{RoomProperty}} === other._{{RoomProperty}};
+  }
+
+  toString(): string {
+    return this._{{RoomProperty}};
+  }
+
+  // ---------------------------------------------------------------------------
+  // Accessors
+  // ---------------------------------------------------------------------------
+
+  {{#if IsReservationContext}}
+  /** The room type category, e.g. "Deluxe", "Suite". */
+  get roomType(): string {
+    return this._{{RoomProperty}};
+  }
+  {{/if}}
+
+  {{#if IsFrontDeskContext}}
+  /** The physical room number, e.g. "301", "B1204". */
+  get roomNumber(): string {
+    return this._{{RoomProperty}};
+  }
+  {{/if}}
+
+  /**
+   * Returns a display-friendly label for this room.
+   * {{#if IsReservationContext}}
+   * Example: "Deluxe Room"
+   * {{/if}}
+   * {{#if IsFrontDeskContext}}
+   * Example: "Room 301"
+   * {{/if}}
+   */
+  get displayLabel(): string {
+    {{#if IsReservationContext}}
+    return `${this._{{RoomProperty}}} Room`;
+    {{/if}}
+    {{#if IsFrontDeskContext}}
+    return `Room ${this._{{RoomProperty}}}`;
+    {{/if}}
+  }
+}

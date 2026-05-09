@@ -4,11 +4,11 @@
  * Uses fast-check to verify invariants that hold across many random inputs.
  */
 
-import * as fc from "fast-check";
-import { describe, it, expect } from "vitest";
-import { resolvePath, resolveAllPaths } from "../../src/pack/resolver.js";
-import type { EnabledPacks, PackEntry } from "../../src/pack/types.js";
 import path from "node:path";
+import * as fc from "fast-check";
+import { describe, expect, it } from "vitest";
+import { resolveAllPaths, resolvePath } from "../../src/pack/resolver.js";
+import type { EnabledPacks, PackEntry } from "../../src/pack/types.js";
 
 // ---------------------------------------------------------------------------
 // Arbitrary generators
@@ -39,9 +39,7 @@ const arbUniquePackEntries = fc
   .uniqueArray(
     fc.record({
       name: arbPackName,
-      rootPath: fc.constantFrom("aa", "ab", "bb", "cd", "ef", "gh").map(
-        (s) => `/packs/${s}`,
-      ),
+      rootPath: fc.constantFrom("aa", "ab", "bb", "cd", "ef", "gh").map((s) => `/packs/${s}`),
     }),
     {
       minLength: 0,
@@ -87,57 +85,40 @@ describe("resolvePath properties", () => {
 
   it("custom always wins over pack for any safe path", () => {
     fc.assert(
-      fc.property(
-        arbSafeRelativePath,
-        arbUniquePackEntries,
-        (relPath, enabled) => {
-          if (enabled.entries.length === 0) return; // need at least one pack to compare
-          const result = resolvePath(relPath, enabled);
-          expect(result).not.toBeNull();
-          expect(result!.layer).toBe("custom");
-        },
-      ),
+      fc.property(arbSafeRelativePath, arbUniquePackEntries, (relPath, enabled) => {
+        if (enabled.entries.length === 0) return; // need at least one pack to compare
+        const result = resolvePath(relPath, enabled);
+        expect(result).not.toBeNull();
+        expect(result!.layer).toBe("custom");
+      }),
     );
   });
 
   it("resolution order is idempotent: same input produces same output", () => {
     fc.assert(
-      fc.property(
-        arbSafeRelativePath,
-        arbUniquePackEntries,
-        (relPath, enabled) => {
-          const first = resolvePath(relPath, enabled);
-          const second = resolvePath(relPath, enabled);
-          expect(first).toEqual(second);
+      fc.property(arbSafeRelativePath, arbUniquePackEntries, (relPath, enabled) => {
+        const first = resolvePath(relPath, enabled);
+        const second = resolvePath(relPath, enabled);
+        expect(first).toEqual(second);
 
-          const allFirst = resolveAllPaths(relPath, enabled);
-          const allSecond = resolveAllPaths(relPath, enabled);
-          expect(allFirst).toEqual(allSecond);
-        },
-      ),
+        const allFirst = resolveAllPaths(relPath, enabled);
+        const allSecond = resolveAllPaths(relPath, enabled);
+        expect(allFirst).toEqual(allSecond);
+      }),
     );
   });
 
   it("resolveAllPaths length is always 1 + entries.length for safe paths", () => {
     fc.assert(
-      fc.property(
-        arbSafeRelativePath,
-        arbUniquePackEntries,
-        (relPath, enabled) => {
-          const results = resolveAllPaths(relPath, enabled);
-          expect(results).toHaveLength(1 + enabled.entries.length);
-        },
-      ),
+      fc.property(arbSafeRelativePath, arbUniquePackEntries, (relPath, enabled) => {
+        const results = resolveAllPaths(relPath, enabled);
+        expect(results).toHaveLength(1 + enabled.entries.length);
+      }),
     );
   });
 
   it("path traversal attempt always returns null (Unix-style)", () => {
-    const traversalPaths = [
-      "../../etc/passwd",
-      "../../../etc/shadow",
-      "../secret",
-      "a/../../../b",
-    ];
+    const traversalPaths = ["../../etc/passwd", "../../../etc/shadow", "../secret", "a/../../../b"];
     fc.assert(
       fc.property(
         fc.constantFrom(...traversalPaths),
@@ -155,20 +136,16 @@ describe("resolvePath properties", () => {
 
   it("resolveAllPaths layers always start with custom followed by packs in order", () => {
     fc.assert(
-      fc.property(
-        arbSafeRelativePath,
-        arbUniquePackEntries,
-        (relPath, enabled) => {
-          const results = resolveAllPaths(relPath, enabled);
-          if (results.length === 0) return;
+      fc.property(arbSafeRelativePath, arbUniquePackEntries, (relPath, enabled) => {
+        const results = resolveAllPaths(relPath, enabled);
+        if (results.length === 0) return;
 
-          const layers = results.map((r) => r.layer);
-          expect(layers[0]).toBe("custom");
-          for (let i = 1; i < layers.length; i++) {
-            expect(layers[i]).toBe(`pack:${enabled.entries[i - 1].name}`);
-          }
-        },
-      ),
+        const layers = results.map((r) => r.layer);
+        expect(layers[0]).toBe("custom");
+        for (let i = 1; i < layers.length; i++) {
+          expect(layers[i]).toBe(`pack:${enabled.entries[i - 1].name}`);
+        }
+      }),
     );
   });
 });

@@ -4,7 +4,6 @@
  */
 
 import { describe, expect, it } from "vitest";
-import { detectSpecLeak, loadBannedPatterns } from "../../src/spec.js";
 import type {
   BannedPattern,
   BannedPatternRegistry,
@@ -12,6 +11,7 @@ import type {
   FileSystem,
   GlossaryRegistry,
 } from "../../src/pack/types.js";
+import { detectSpecLeak, loadBannedPatterns } from "../../src/spec.js";
 
 function makeFs(files: Record<string, string>): FileSystem {
   const store = new Map(Object.entries(files));
