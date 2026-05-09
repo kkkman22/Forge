@@ -292,3 +292,64 @@ export function validateRedGate(evidence: RedGateEvidence): RedGateResult {
 
   return { valid: true };
 }
+
+// ---------------------------------------------------------------------------
+// Expected Output comparison (Pack System — R10.5)
+// ---------------------------------------------------------------------------
+
+/** Actual output from a command execution. */
+export interface ActualOutput {
+  exitCode: number;
+  output: string;
+}
+
+/** An Expected Output specification to compare against. */
+export interface ExpectedSpec {
+  expected: string;
+  actual: ActualOutput;
+}
+
+/** Result of expected output comparison. */
+export interface ExpectedComparisonResult {
+  match: boolean;
+  detail?: string;
+}
+
+/**
+ * Compare actual command output against an Expected specification.
+ *
+ * Three legal forms:
+ *   - `exit <N>` — match exit code
+ *   - `output contains "<string>"` — substring match in output
+ *   - `FAIL -- "<reason>"` — reason substring must appear in output
+ */
+export function compareExpectedOutput(spec: ExpectedSpec): ExpectedComparisonResult {
+  const { expected, actual } = spec;
+  const trimmed = expected.trim();
+
+  // Form 1: exit code
+  const exitMatch = /^exit\s+(\d+)$/.exec(trimmed);
+  if (exitMatch) {
+    const expectedCode = Number.parseInt(exitMatch[1], 10);
+    const match = actual.exitCode === expectedCode;
+    return { match, detail: match ? undefined : `expected exit ${expectedCode}, got ${actual.exitCode}` };
+  }
+
+  // Form 2: substring match
+  const containsMatch = /^output\s+contains\s+"(.+)"$/.exec(trimmed);
+  if (containsMatch) {
+    const needle = containsMatch[1];
+    const match = actual.output.includes(needle);
+    return { match, detail: match ? undefined : `output does not contain "${needle}"` };
+  }
+
+  // Form 3: fail reason
+  const failMatch = /^FAIL\s+--\s+"(.+)"$/.exec(trimmed);
+  if (failMatch) {
+    const reason = failMatch[1];
+    const match = actual.exitCode !== 0 && actual.output.includes(reason);
+    return { match, detail: match ? undefined : `output does not contain "${reason}" and exit code is ${actual.exitCode}` };
+  }
+
+  return { match: false, detail: `unrecognized Expected format: "${trimmed}"` };
+}
