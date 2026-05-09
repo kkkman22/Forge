@@ -42,7 +42,7 @@ Each rule prevents a specific, documented error pattern.
 
 **Content**: Plan 文件里的 Sprint / Milestone / Phase 分组是 build 阶段内部执行分组，不是阶段边界。Plan 批准后 build 必须连续执行到最后一个任务完成才 exit 到 review；Sprint 完成 ≠ 阶段完成，不得在 Sprint 间输出总结并停下。进入 build 前若发现 plan 含 ≥2 个 Sprint 或 ≥1 个独立 ship 点，应先停下来提议拆 plan，拆分后每个 plan 对应一次完整 build → review → test → ship 周期。
 **Prevents**: 模型把 Sprint 边界当作里程碑停下输出总结，造成 build 阶段中途退出
-**Source**: `.forge/knowledge/glm-summary-ending.md` + phase-advance-hardening spec
+**Source**: `.forge/specs/phase-advance-hardening/spec.md` (phase-advance-hardening spec 驱动创建)
 **Added**: 2026-05-08
 **Confidence**: 0.85
 **Last_triggered**: 2026-05-08
