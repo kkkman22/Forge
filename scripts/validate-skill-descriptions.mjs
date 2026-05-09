@@ -12,7 +12,7 @@
 //   6. [NEW] 首句以祈使动词开头
 //   7. [NEW] 第二句以 "Use when" 开头
 //
-// 规则 5-7 默认 warning 模式，加 --strict 切换 error 模式。
+// 规则 5-7 默认 error 模式，加 --lenient 切换 warning 模式（逃生阀）。
 //
 // 规则镜像自 src/skill-description.ts，内联实现以避免依赖 dist/ 构建。
 //
@@ -35,15 +35,16 @@ import { fileURLToPath } from "node:url";
 const args = process.argv.slice(2);
 
 if (args.includes("--help") || args.includes("-h")) {
-  console.log(`Usage: scripts/validate-skill-descriptions.mjs [--strict]
+  console.log(`Usage: scripts/validate-skill-descriptions.mjs [--lenient]
 
 Validate SKILL.md frontmatter descriptions against two-sentence format rules.
 Checks: sentence count, imperative verb, "Use when" trigger, forbidden patterns.
-  --strict  Treat warnings as errors (exit 1 on any issue)`);
+  --lenient  Downgrade rule 5-7 failures to warnings (default: strict)`);
   process.exit(0);
 }
 
-const strict = args.includes("--strict");
+const lenient = args.includes("--lenient");
+const strict = !lenient;
 
 // ---------------------------------------------------------------------------
 // 规则定义（镜像 src/skill-description.ts）
@@ -271,7 +272,7 @@ function main() {
     console.log(`FAIL: ${failed} skill description(s) violate the spec.`);
     process.exit(1);
   }
-  if (warned > 0 && !strict) {
+  if (warned > 0 && lenient) {
     console.log("");
     console.log(`NOTE: ${warned} skill(s) have two-sentence format warnings. Run with --strict to enforce.`);
   }

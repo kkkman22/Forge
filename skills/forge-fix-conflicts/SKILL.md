@@ -1,6 +1,6 @@
 ---
 name: forge-fix-conflicts
-description: "Forge-aware merge conflict resolution using three-zone classification. Use when git merge/rebase produces conflicts inside .forge/ directory."
+description: "Fix merge conflicts using three-zone forge directory classification. Use when git merge or rebase produces conflicts inside the forge config tree."
 disable-model-invocation: true
 ---
 
