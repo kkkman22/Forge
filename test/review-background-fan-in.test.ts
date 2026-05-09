@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
-import { mergeReviewResults } from "../src/review.js";
 import type { SubagentResult } from "../src/loop-types.js";
+import { mergeReviewResults } from "../src/review.js";
 
 describe("review background fan-in", () => {
   it("merges results from successful agents when one fails", () => {

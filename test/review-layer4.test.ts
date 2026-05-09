@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
-import { buildReviewSubagents } from "../src/review.js";
 import type { ReviewSubagentContext } from "../src/review.js";
+import { buildReviewSubagents } from "../src/review.js";
 
 describe("buildReviewSubagents Layer 4", () => {
   const baseContext: ReviewSubagentContext = {
