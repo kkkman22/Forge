@@ -212,6 +212,40 @@ export function checkShipGateWithFreshness(
 }
 
 // ---------------------------------------------------------------------------
+// Forced Acceptance Gate [Sprint 2 — R6]
+// ---------------------------------------------------------------------------
+
+import type { AcceptGateDecision } from "./accept-gate.js";
+
+/**
+ * Extended ship gate with Forced Acceptance check.
+ *
+ * Adds a gate: pack-driven forced acceptance based on spec context.
+ * When acceptDecision.block is true, ship is blocked.
+ * When acceptDecision.warning is present, it is appended as advisory.
+ * @public
+ */
+export function checkShipGateWithAcceptance(
+  review: ReviewResult,
+  test: TestResult,
+  progress: ProgressResult,
+  acceptDecision: AcceptGateDecision,
+): ShipGateResult {
+  const result = checkShipGate(review, test, progress);
+
+  if (acceptDecision.block) {
+    result.reasons.push(
+      `🚫 Forced Acceptance: ${acceptDecision.reason ?? "acceptance gate blocked"}`,
+    );
+    result.allowed = false;
+  } else if (acceptDecision.warning) {
+    result.reasons.push(`⚠️ Acceptance: ${acceptDecision.warning}`);
+  }
+
+  return result;
+}
+
+// ---------------------------------------------------------------------------
 // Evolution artefact helpers (skills-cross-pollination — Requirement 8.7)
 // ---------------------------------------------------------------------------
 

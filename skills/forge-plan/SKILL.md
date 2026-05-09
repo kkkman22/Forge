@@ -99,7 +99,11 @@ Plan frontmatter 可含 `monolith_acknowledged: true`（用户明确知悉未拆
 
 ## 6. Gate: Plan Not Approved → Block `/forge build`
 
+<HARD-GATE name="plan-approve">
+
 → 遵循 CLAUDE.md §2.2 前置检查（Plan 批准门禁）。轻量路径不要求批准。
+
+</HARD-GATE>
 
 ---
 

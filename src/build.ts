@@ -374,3 +374,33 @@ export function compareExpectedOutput(spec: ExpectedSpec): ExpectedComparisonRes
 
   return { match: false, detail: `unrecognized Expected format: "${trimmed}"` };
 }
+
+// ---------------------------------------------------------------------------
+// Micro-Review Integration (Sprint 2 — R9)
+// ---------------------------------------------------------------------------
+
+import {
+  runMicroReview,
+  type MicroReviewInput,
+  type MicroReviewResult,
+} from "./build-micro-review.js";
+
+export type { MicroReviewInput, MicroReviewResult };
+
+/**
+ * Run post-verification Micro-Review for a completed atomic task.
+ *
+ * Wrapper around {@link runMicroReview} that the build SKILL calls
+ * after each task's Verify GREEN step. Returns the raw result for
+ * the SKILL to decide on iteration.
+ *
+ * @example
+ * ```ts
+ * const result = runTaskPostVerification({ task, gitDiff, verifyOutput, planVersion: "v1" });
+ * if (result.verdict === "needs_iteration") { /* loop back *\/ }
+ * ```
+ * @public
+ */
+export function runTaskPostVerification(input: MicroReviewInput): MicroReviewResult {
+  return runMicroReview(input);
+}

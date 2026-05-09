@@ -3,6 +3,7 @@ dist/claude-code/bundles/
 .DS_Store
 *.tsbuildinfo
 coverage/
+reports/mutation/
 .kiro/
 .claude/
 .forge/debug/
