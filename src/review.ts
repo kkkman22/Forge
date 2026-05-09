@@ -510,6 +510,18 @@ export function buildReviewSubagents(context: ReviewSubagentContext): SubagentIn
     maxTurns: 10,
   });
 
+  // Layer 4: Frontend accessibility check — only when Vue files are present
+  const hasVueFiles = context.changedFiles.some((f) => f.endsWith(".vue"));
+  if (hasVueFiles) {
+    const vueFiles = context.changedFiles.filter((f) => f.endsWith(".vue"));
+    invocations.push({
+      agentType: "frontend-check",
+      prompt: `Review frontend accessibility. Changed Vue files: ${vueFiles.join(", ")}`,
+      permissionMode: "default",
+      maxTurns: 10,
+    });
+  }
+
   return invocations;
 }
 
