@@ -49,6 +49,10 @@
     "zod": "4.4.1"
   },
   "overrides": {
-    "glob": "^11.0.0"
+    "glob": "^11.0.0",
+    "@anthropic-ai/sdk": "^0.95.1",
+    "hono": "^4.12.18",
+    "fast-uri": "^3.1.2",
+    "ip-address": "^10.2.0"
   }
 }

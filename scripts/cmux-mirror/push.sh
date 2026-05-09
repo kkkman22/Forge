@@ -11,5 +11,5 @@ if [[ ! -S "$socket_path" ]]; then
   exit 0
 fi
 
-echo "$payload" | nc -U "$socket_path" 2>/dev/null || true
+echo "$payload" | nc -U -w 1 "$socket_path" 2>/dev/null || true
 exit 0
