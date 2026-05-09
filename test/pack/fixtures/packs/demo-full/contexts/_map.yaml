@@ -1,0 +1,7 @@
+edges:
+  - source: reservations
+    target: billing
+    type: customer-supplier
+  - source: front-desk
+    target: reservations
+    type: partnership
