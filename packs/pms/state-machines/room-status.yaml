@@ -1,0 +1,112 @@
+name: room-status
+description: "房间物理状态机，管理客房的清洁和维护状态"
+
+states:
+  - name: Available
+    description: "房间空闲且已准备就绪，可分配给客人"
+  - name: Occupied
+    description: "房间已被客人入住"
+  - name: Dirty
+    description: "客人退房后或标记需要清洁"
+  - name: Clean
+    description: "清洁完成，等待检查"
+  - name: Inspected
+    description: "检查通过，可分配给新客人"
+  - name: OutOfService
+    description: "计划性维护中，暂时不可用"
+  - name: OutOfOrder
+    description: "设备故障或紧急维修，不可售卖"
+
+initial: Available
+
+transitions:
+  - from: Available
+    to: Occupied
+    event: CheckInGuest
+    side_effects:
+      - "update_room_status_in_inventory"
+
+  - from: Occupied
+    to: Dirty
+    event: GuestCheckOut
+    side_effects:
+      - "create_cleaning_task"
+      - "release_from_reservation"
+
+  - from: Dirty
+    to: Clean
+    event: CleaningCompleted
+    side_effects:
+      - "update_task_status"
+      - "log_cleaning_time"
+
+  - from: Clean
+    to: Inspected
+    event: InspectionPassed
+    side_effects:
+      - "mark_room_ready"
+
+  - from: Clean
+    to: Dirty
+    event: InspectionFailed
+    side_effects:
+      - "create_reclean_task"
+
+  - from: Inspected
+    to: Available
+    event: MarkAvailable
+    side_effects:
+      - "add_to_sellable_inventory"
+
+  - from: Available
+    to: OutOfService
+    event: ScheduleMaintenance
+    side_effects:
+      - "block_from_inventory"
+
+  - from: Occupied
+    to: OutOfOrder
+    event: ReportDefect
+    guards:
+      - "guest_relocated"
+    side_effects:
+      - "create_maintenance_request"
+      - "handle_guest_relocation"
+
+  - from: OutOfService
+    to: Dirty
+    event: MaintenanceCompleted
+    side_effects:
+      - "create_cleaning_task"
+
+  - from: OutOfOrder
+    to: Dirty
+    event: RepairCompleted
+    side_effects:
+      - "close_maintenance_request"
+      - "create_cleaning_task"
+
+  - from: Dirty
+    to: Dirty
+    event: TurndownService
+    side_effects:
+      - "log_turndown"
+
+  - from: Available
+    to: Dirty
+    event: MarkDirty
+    side_effects:
+      - "create_cleaning_task"
+
+invariants:
+  - expression: "terminal_state_has_no_outgoing_transitions"
+    description: "所有状态都有出边，此状态机无终态"
+
+  - expression: "inspected_before_available_only"
+    description: "Available 只能从 Inspected 达到，房间必须经过检查"
+
+  - expression: "occupied_requires_check_in"
+    description: "Occupied 只能从 Available 通过 CheckInGuest 达到"
+
+  - expression: "out_of_order_requires_guest_relocated"
+    description: "在住房间的 OutOfOrder 需要先完成客人搬迁"

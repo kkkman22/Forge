@@ -1,0 +1,128 @@
+name: reservation
+description: "预订聚合的生命周期状态机"
+
+states:
+  - name: Booked
+    description: "预订已创建，等待确认"
+  - name: Confirmed
+    description: "预订已确认，可入住"
+  - name: CheckedIn
+    description: "客人已入住"
+  - name: CheckedOut
+    terminal: true
+    description: "客人已退房，预订完成"
+  - name: NoShow
+    terminal: true
+    description: "到店截止时间未到店"
+  - name: Cancelled
+    terminal: true
+    description: "预订已取消"
+
+initial: Booked
+
+transitions:
+  - from: Booked
+    to: Confirmed
+    event: ConfirmReservation
+    guards:
+      - "payment_captured"
+
+  - from: Confirmed
+    to: CheckedIn
+    event: CheckIn
+    guards:
+      - "arrival_date_reached"
+      - "room_assigned"
+    side_effects:
+      - "allocate_room"
+      - "issue_key_card"
+
+  - from: CheckedIn
+    to: CheckedOut
+    event: CheckOut
+    guards:
+      - "folio_settled"
+    side_effects:
+      - "release_room"
+      - "trigger_housekeeping"
+
+  - from: Booked
+    to: Cancelled
+    event: CancelBooking
+    guards:
+      - "within_cancellation_window"
+    side_effects:
+      - "release_inventory"
+      - "refund_deposit"
+
+  - from: Confirmed
+    to: Cancelled
+    event: CancelReservation
+    guards:
+      - "within_cancellation_policy"
+    side_effects:
+      - "release_room"
+      - "apply_cancellation_fee"
+
+  - from: Confirmed
+    to: NoShow
+    event: MarkNoShow
+    guards:
+      - "arrival_cutoff_passed"
+    side_effects:
+      - "release_room"
+      - "charge_noshow_fee"
+
+  - from: Booked
+    to: CheckedIn
+    event: EarlyCheckIn
+    guards:
+      - "room_available"
+      - "early_checkin_approved"
+    side_effects:
+      - "allocate_room"
+
+  - from: Confirmed
+    to: CheckedIn
+    event: LateCheckIn
+    guards:
+      - "arrival_within_grace_period"
+    side_effects:
+      - "allocate_room"
+      - "issue_key_card"
+
+  - from: CheckedIn
+    to: CheckedIn
+    event: RoomMove
+    side_effects:
+      - "reassign_room"
+
+  - from: Booked
+    to: Confirmed
+    event: AutoConfirm
+    guards:
+      - "deposit_received"
+      - "within_confirmation_window"
+    side_effects:
+      - "send_confirmation_email"
+
+  - from: Confirmed
+    to: Confirmed
+    event: ModifyReservation
+    guards:
+      - "modification_allowed"
+    side_effects:
+      - "update_reservation_details"
+
+invariants:
+  - expression: "terminal_state_has_no_outgoing_transitions"
+    description: "终态（CheckedOut/NoShow/Cancelled）不得有出边"
+
+  - expression: "cancelled_before_check_in_only"
+    description: "Cancelled 只能从 Booked 或 Confirmed 达到，入住后不可取消"
+
+  - expression: "no_show_requires_arrival_cutoff_passed"
+    description: "NoShow 需满足到店截止条件，不能在入住日前标记"
+
+  - expression: "checked_out_requires_folio_settled"
+    description: "CheckedOut 需要 Folio 已结算，不允许未结账退房"
