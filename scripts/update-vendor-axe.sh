@@ -72,7 +72,19 @@ fi
 # Detect actual version from downloaded content
 ACTUAL_VERSION=$(grep -oP 'axe-core v\K[0-9.]+' "${TARGET}.tmp" 2>/dev/null || echo "${VERSION}")
 
-# Prepend version header
+# Prepend version header — preserve existing timestamp if content unchanged
+EXISTING_BODY=""
+if [[ -f "${TARGET}" ]]; then
+  EXISTING_BODY=$(sed '1,/^ \*\/$/d' "${TARGET}" 2>/dev/null || true)
+fi
+NEW_BODY=$(cat "${TARGET}.tmp")
+
+if [[ "${EXISTING_BODY}" == "${NEW_BODY}" ]]; then
+  rm -f "${TARGET}.tmp"
+  echo "OK: scripts/vendor/axe.min.js unchanged (axe-core@${ACTUAL_VERSION})"
+  exit 0
+fi
+
 {
   echo "/*! axe-core v${ACTUAL_VERSION} - https://unpkg.com/axe-core@${ACTUAL_VERSION}/axe.min.js"
   echo " *  Accessibility testing engine by Deque Systems"
