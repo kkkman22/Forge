@@ -26,3 +26,18 @@ import_source: "<path>"    # 可选，仅导入模式
 ## 反漂移声明 — 主目标 + 非目标代理信号 + 验证材料角色
 ## Delta — 仅棕地开发：New / Modified / Unchanged
 ```
+
+## Scenario Linter Rules
+
+All Gherkin scenarios in spec documents must pass the following rules before lock:
+
+| Rule | Description |
+|------|-------------|
+| SCN001 | Every Given/When/Then/And line must end with `.` or `。` |
+| SCN002 | Every Scenario must have at least one Given, one When, and one Then |
+| SCN003 | THEN lines must describe externally observable outcomes (no "database contains", "variable equals") |
+| SCN004 | Scenario titles must use kebab-case or Chinese (no mixed camelCase) |
+
+Error-severity findings block lock. Warning-severity findings are informational.
+
+Legacy specs (locked before this rule) are exempt via `lint_grandfathered: true` in frontmatter.

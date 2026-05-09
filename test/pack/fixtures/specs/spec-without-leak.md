@@ -21,8 +21,8 @@ context: front-desk
 
 ### Scenario 1: 成功入住
 
-```gherkin
+\`\`\`gherkin
 Given 客人持有有效预订
 When 前台确认客人身份
 Then 系统分配物理房间并生成房卡
-```
+\`\`\`
