@@ -33,7 +33,8 @@
     "@callback",
     "@prop",
     "@property",
-    "@visibleForTesting"
+    "@visibleForTesting",
+    "@context"
   ],
   "ignoredHighlightLanguages": ["gitignore", "markdown"],
   "externalSymbolLinkMappings": {
