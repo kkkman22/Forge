@@ -42,8 +42,8 @@ describe("resolvePath", () => {
     const result = resolvePath("glossary/reservations.md", enabled);
     // Custom layer is always a candidate; resolver does no IO
     expect(result).not.toBeNull();
-    expect(result!.layer).toBe("custom");
-    expect(result!.path).toBe(path.resolve(CUSTOM_ROOT, "glossary/reservations.md"));
+    expect(result?.layer).toBe("custom");
+    expect(result?.path).toBe(path.resolve(CUSTOM_ROOT, "glossary/reservations.md"));
   });
 
   it("returns custom layer path when entries exist (custom wins)", () => {
@@ -51,8 +51,8 @@ describe("resolvePath", () => {
     const enabled = makeEnabled([entry]);
     const result = resolvePath("glossary/reservations.md", enabled);
     expect(result).not.toBeNull();
-    expect(result!.layer).toBe("custom");
-    expect(result!.path).toBe(path.resolve(CUSTOM_ROOT, "glossary/reservations.md"));
+    expect(result?.layer).toBe("custom");
+    expect(result?.path).toBe(path.resolve(CUSTOM_ROOT, "glossary/reservations.md"));
   });
 
   it("returns pack path for single pack when custom traversal fails", () => {
@@ -97,8 +97,8 @@ describe("resolvePath", () => {
     const enabled = makeEnabled([entry]);
     const result = resolvePath("contexts/reservations.md", enabled);
     expect(result).not.toBeNull();
-    expect(result!.layer).toBe("custom");
-    expect(result!.path).toBe(path.resolve(CUSTOM_ROOT, "contexts/reservations.md"));
+    expect(result?.layer).toBe("custom");
+    expect(result?.path).toBe(path.resolve(CUSTOM_ROOT, "contexts/reservations.md"));
   });
 
   it("handles deeply nested relative paths", () => {
@@ -106,7 +106,7 @@ describe("resolvePath", () => {
     const enabled = makeEnabled([entry]);
     const result = resolvePath("a/b/c/d/e/file.md", enabled);
     expect(result).not.toBeNull();
-    expect(result!.path).toBe(path.resolve(CUSTOM_ROOT, "a/b/c/d/e/file.md"));
+    expect(result?.path).toBe(path.resolve(CUSTOM_ROOT, "a/b/c/d/e/file.md"));
   });
 });
 

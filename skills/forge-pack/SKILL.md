@@ -1,6 +1,7 @@
 ---
 name: forge-pack
-description: "Manage Forge Domain Packs: list, enable, disable, inspect, override, validate, scaffold. Trigger: /forge pack <subcommand>"
+description: "Orchestrate Forge Domain Pack lifecycle via list, enable, disable, inspect, override, validate, and scaffold subcommands. Use when running `/forge pack <subcommand>`, enabling a domain pack in a project, or creating a new pack skeleton."
+skeleton_exempt_legacy: true
 disable-model-invocation: true
 ---
 

@@ -17,13 +17,13 @@ afterEach(() => {
   rmSync(tmpDir, { recursive: true, force: true });
 });
 
-function readEvents(): any[] {
+function readEvents(): Array<Record<string, unknown>> {
   const content = readFileSync(eventsPath, "utf-8");
   return content
     .trim()
     .split("\n")
     .filter((l) => l.trim())
-    .map((l) => JSON.parse(l));
+    .map((l) => JSON.parse(l) as Record<string, unknown>);
 }
 
 describe("writeEvent: Events_NDJSON writer (R14.1, R14.2, R14.8)", () => {

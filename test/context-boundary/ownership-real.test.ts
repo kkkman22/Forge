@@ -1,9 +1,9 @@
-import { describe, it, expect, beforeEach, afterEach } from "vitest";
-import { loadOwnershipMap, resolveFileContext, checkBoundary } from "../../src/context-boundary.js";
-import type { BoundaryCheckInput } from "../../src/context-boundary.js";
-import { mkdtempSync, mkdirSync, writeFileSync, rmSync } from "node:fs";
-import { join } from "node:path";
+import { mkdirSync, mkdtempSync, rmSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
+import { join } from "node:path";
+import { afterEach, beforeEach, describe, expect, it } from "vitest";
+import type { BoundaryCheckInput } from "../../src/context-boundary.js";
+import { checkBoundary, loadOwnershipMap, resolveFileContext } from "../../src/context-boundary.js";
 
 let tempDir: string;
 
@@ -19,11 +19,14 @@ describe("loadOwnershipMap real implementation", () => {
   it("loads mappings from .forge/context-ownership.yaml", () => {
     const forgeDir = join(tempDir, ".forge");
     mkdirSync(forgeDir, { recursive: true });
-    writeFileSync(join(forgeDir, "context-ownership.yaml"), `schema_version: 1
+    writeFileSync(
+      join(forgeDir, "context-ownership.yaml"),
+      `schema_version: 1
 mappings:
   "src/domain/folio/**": folio-billing
   "src/domain/reservations/**": reservations
-`);
+`,
+    );
     const mappings = loadOwnershipMap(tempDir, join(forgeDir, "context-ownership.yaml"));
     expect(mappings["src/domain/folio/**"]).toBe("folio-billing");
     expect(mappings["src/domain/reservations/**"]).toBe("reservations");
@@ -45,9 +48,12 @@ mappings:
   it("falls back when mappings field is wrong type", () => {
     const forgeDir = join(tempDir, ".forge");
     mkdirSync(forgeDir, { recursive: true });
-    writeFileSync(join(forgeDir, "context-ownership.yaml"), `schema_version: 1
+    writeFileSync(
+      join(forgeDir, "context-ownership.yaml"),
+      `schema_version: 1
 mappings: "not-an-object"
-`);
+`,
+    );
     const mappings = loadOwnershipMap(tempDir, join(forgeDir, "context-ownership.yaml"));
     expect(Object.keys(mappings)).toHaveLength(0);
   });

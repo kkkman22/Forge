@@ -1,4 +1,3 @@
-import path from "node:path";
 import { describe, expect, it } from "vitest";
 import { loadContextMap } from "../../src/context/map.js";
 import type { EnabledPacks, FileSystem, PackEntry } from "../../src/pack/types.js";

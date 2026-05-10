@@ -73,7 +73,8 @@ export function validateDefinition(def: StateMachineDefinition): ValidationRepor
   const reachable = new Set<string>();
   const queue = [def.initial];
   while (queue.length > 0) {
-    const current = queue.pop()!;
+    const current = queue.pop();
+    if (current === undefined) break;
     if (reachable.has(current)) continue;
     reachable.add(current);
     for (const t of def.transitions) {

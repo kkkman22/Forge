@@ -3,6 +3,7 @@ import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
 import { createMockSocket } from "./mock-socket.js";
+import type { MirrorDaemonStartResult } from "./types.js";
 
 describe("tmux: OSC 777 passthrough (R1.3)", () => {
   let dir: string;
@@ -97,7 +98,7 @@ describe("tmux: OSC 777 passthrough (R1.3)", () => {
         forgeDir,
         socketDir: dir,
         cmuxAvailable: true,
-      })) as any;
+      })) as MirrorDaemonStartResult;
 
       expect(result.started).toBe(true);
       if (result.started) {

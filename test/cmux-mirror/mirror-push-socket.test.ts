@@ -5,10 +5,14 @@ import { join } from "node:path";
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
 import { createPushServer } from "../../scripts/cmux-mirror/lib/push-server.mjs";
 
+interface PushServer {
+  close: () => Promise<void> | void;
+}
+
 describe("mirror-push-socket: rate limiting (R17.3)", () => {
   let dir: string;
   let socketPath: string;
-  let server: any;
+  let server: PushServer | null = null;
 
   beforeEach(async () => {
     dir = mkdtempSync(join(tmpdir(), "cmux-push-rate-"));

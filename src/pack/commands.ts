@@ -154,15 +154,15 @@ export interface ValidationReport {
 export function commandValidate(name: string | null, registry: PackRegistry): ValidationReport {
   // For now, basic manifest validation (no filesystem checks)
   const entry = name ? registry.packs.get(name) : undefined;
-  if (name && !entry) {
+  if (!entry) {
     return {
       passed: false,
-      pack: name,
+      pack: name ?? "",
       checks: [{ check: "exists", passed: false, detail: "not in registry" }],
     };
   }
 
-  const target = entry!;
+  const target = entry;
   const checks: ValidationReport["checks"] = [];
 
   // Check: manifest parses (already done by loader)

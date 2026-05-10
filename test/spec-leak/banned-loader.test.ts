@@ -4,7 +4,6 @@
  * Covers: empty enabled, single layer, multi-layer union, deduplication.
  */
 
-import path from "node:path";
 import { describe, expect, it } from "vitest";
 import type { EnabledPacks, FileSystem, PackEntry } from "../../src/pack/types.js";
 import { loadBannedPatterns } from "../../src/spec-leak-detector.js";
@@ -41,7 +40,7 @@ function makeEnabled(entries: PackEntry[] = [], customRoot: string = CUSTOM_ROOT
 function createMockFs(files: Record<string, string | null>): FileSystem {
   return {
     readdir: async (dir: string) => {
-      const dirPrefix = dir.endsWith("/") ? dir : dir + "/";
+      const dirPrefix = dir.endsWith("/") ? dir : `${dir}/`;
       const entries = new Set<string>();
       for (const f of Object.keys(files)) {
         if (f.startsWith(dirPrefix)) {

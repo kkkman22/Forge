@@ -1,6 +1,6 @@
-import { describe, it, expect } from "vitest";
-import { resolveFileContext, checkBoundary } from "../../src/context-boundary.js";
+import { describe, expect, it } from "vitest";
 import type { BoundaryCheckInput } from "../../src/context-boundary.js";
+import { checkBoundary, resolveFileContext } from "../../src/context-boundary.js";
 
 describe("Context boundary priority properties", () => {
   it("JSDoc context overrides glob-based context", () => {
@@ -36,7 +36,7 @@ describe("Boundary check integration properties", () => {
   it("escape hatch suppresses violation", () => {
     const input: BoundaryCheckInput = {
       filePath: "src/domain/folio/svc.ts",
-      fileContent: "// @forge:allow-cross-context\nimport { x } from \"../reservations/svc\";",
+      fileContent: '// @forge:allow-cross-context\nimport { x } from "../reservations/svc";',
       contextMap: [],
       ownershipMap: {
         "src/domain/folio/**": "folio-billing",

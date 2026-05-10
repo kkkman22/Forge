@@ -78,17 +78,17 @@ describe("forge-storm round-trip", () => {
     // Load back
     const loaded = loadStormState(filePath);
     expect(loaded).not.toBeNull();
-    expect(loaded!.context).toBe("reservations");
-    expect(loaded!.startedAt).toBe("2026-05-10T08:00:00Z");
-    expect(loaded!.lastUpdated).toBe("2026-05-10T09:30:00Z");
-    expect(loaded!.phaseCompleted).toBe("events");
-    expect(loaded!.items.events).toHaveLength(2);
-    expect(loaded!.items.events[0].name).toBe("ReservationCreated");
-    expect(loaded!.items.events[0].description).toBe("A new reservation is made");
-    expect(loaded!.items.events[0].source).toBe("guest");
-    expect(loaded!.items.events[1].name).toBe("ReservationCancelled");
-    expect(loaded!.items.events[1].source).toBeUndefined();
-    expect(loaded!.items.commands).toHaveLength(0);
+    expect(loaded?.context).toBe("reservations");
+    expect(loaded?.startedAt).toBe("2026-05-10T08:00:00Z");
+    expect(loaded?.lastUpdated).toBe("2026-05-10T09:30:00Z");
+    expect(loaded?.phaseCompleted).toBe("events");
+    expect(loaded?.items.events).toHaveLength(2);
+    expect(loaded?.items.events[0].name).toBe("ReservationCreated");
+    expect(loaded?.items.events[0].description).toBe("A new reservation is made");
+    expect(loaded?.items.events[0].source).toBe("guest");
+    expect(loaded?.items.events[1].name).toBe("ReservationCancelled");
+    expect(loaded?.items.events[1].source).toBeUndefined();
+    expect(loaded?.items.commands).toHaveLength(0);
 
     // Serialize to markdown and verify key structural elements
     const md = serializeStormMarkdown(state);
@@ -269,11 +269,11 @@ describe("Pack lint rules load and apply", () => {
     // Verify the money/no-number-for-money rule loaded with correct metadata
     const moneyRule = realRules.find((r) => r.id === "money/no-number-for-money");
     expect(moneyRule).toBeDefined();
-    expect(moneyRule!.severity).toBe("warn");
-    expect(moneyRule!.target_globs).toEqual(["src/**/*.ts"]);
-    expect(moneyRule!.patterns.length).toBeGreaterThanOrEqual(1);
-    expect(moneyRule!.patterns[0].type).toBe("regex");
-    expect(moneyRule!.patterns[0].message).toBeTruthy();
+    expect(moneyRule?.severity).toBe("warn");
+    expect(moneyRule?.target_globs).toEqual(["src/**/*.ts"]);
+    expect(moneyRule?.patterns.length).toBeGreaterThanOrEqual(1);
+    expect(moneyRule?.patterns[0].type).toBe("regex");
+    expect(moneyRule?.patterns[0].message).toBeTruthy();
 
     // For the apply step, create a self-contained manifest + rule in tmpDir
     // with a regex that uses single backslashes (correctly matches real code).
@@ -320,8 +320,8 @@ describe("Pack lint rules load and apply", () => {
 
     const moneyFinding = findings.find((f) => f.ruleId === "money/no-number-for-money");
     expect(moneyFinding).toBeDefined();
-    expect(moneyFinding!.file).toBe(testFilePath);
-    expect(moneyFinding!.line).toBe(1);
+    expect(moneyFinding?.file).toBe(testFilePath);
+    expect(moneyFinding?.line).toBe(1);
   });
 });
 
@@ -384,13 +384,13 @@ describe("Living doc generation and rendering from temp specs", () => {
 
     const reservationsCtx = data.contexts.get("reservations");
     expect(reservationsCtx).toBeDefined();
-    expect(reservationsCtx!.specs).toHaveLength(1);
-    expect(reservationsCtx!.stats.total).toBe(2);
-    expect(reservationsCtx!.stats.pending).toBe(2);
+    expect(reservationsCtx?.specs).toHaveLength(1);
+    expect(reservationsCtx?.stats.total).toBe(2);
+    expect(reservationsCtx?.stats.pending).toBe(2);
 
     const billingCtx = data.contexts.get("billing");
     expect(billingCtx).toBeDefined();
-    expect(billingCtx!.stats.total).toBe(1);
+    expect(billingCtx?.stats.total).toBe(1);
 
     // Render to HTML
     const outputDir = path.join(tmpDir, "living-doc-output");

@@ -1,6 +1,7 @@
 ---
 name: forge-control-ui
 description: "Verify Web/Electron UI through external harness execution. Use when running /forge test --ui or when forge-test detects a UI target with designer specs."
+skeleton_exempt_legacy: true
 disable-model-invocation: true
 ---
 

@@ -1,12 +1,12 @@
 import path from "node:path";
-import { beforeEach, describe, expect, it, vi } from "vitest";
+import { describe, expect, it, vi } from "vitest";
 import { loadPackRegistry, validateManifest } from "../../src/pack/loader.js";
 import type { FileSystem } from "../../src/pack/types.js";
 
 function createMockFs(files: Record<string, string | null>): FileSystem {
   return {
     readdir: vi.fn(async (dir: string) => {
-      const dirPrefix = dir.endsWith("/") ? dir : dir + "/";
+      const dirPrefix = dir.endsWith("/") ? dir : `${dir}/`;
       const entries = new Set<string>();
       for (const f of Object.keys(files)) {
         if (f.startsWith(dirPrefix)) {
@@ -107,7 +107,7 @@ describe("loadPackRegistry", () => {
     });
     const result = await loadPackRegistry(REPOS_ROOT, fs);
     expect(result.packs.size).toBe(1);
-    expect(result.packs.get("shared-name")!.displayName).toBe("Alpha");
+    expect(result.packs.get("shared-name")?.displayName).toBe("Alpha");
     expect(result.warnings.some((w) => w.includes("duplicate"))).toBe(true);
   });
 

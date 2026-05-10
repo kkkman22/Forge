@@ -91,8 +91,8 @@ describe("spec.ts leak integration", () => {
 
     const infraPatterns = registry.categories.get("infrastructure");
     expect(infraPatterns).toBeDefined();
-    expect(infraPatterns!.length).toBe(1);
-    expect(infraPatterns![0].pattern).toBe("mysql");
+    expect(infraPatterns?.length).toBe(1);
+    expect(infraPatterns?.[0].pattern).toBe("mysql");
   });
 
   it("detectSpecLeak returns empty for clean spec text", () => {

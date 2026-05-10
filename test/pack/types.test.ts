@@ -1,13 +1,10 @@
 import { describe, expect, it } from "vitest";
 import type {
-  BannedPatternRegistry,
   ContextEntry,
   ContextMapType,
-  ContextRegistry,
   EnabledPacks,
   FileSystem,
   GlossaryEntry,
-  GlossaryRegistry,
   LeakCategory,
   LeakFinding,
   LintFinding,

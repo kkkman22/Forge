@@ -151,8 +151,9 @@ export async function loadBannedPatterns(
         seen.set(catName, new Set());
       }
 
-      const catPatterns = categories.get(catName)!;
-      const catSeen = seen.get(catName)!;
+      const catPatterns = categories.get(catName);
+      const catSeen = seen.get(catName);
+      if (!catPatterns || !catSeen) continue;
 
       for (const raw of rawPatterns) {
         if (!raw || typeof raw !== "object") continue;

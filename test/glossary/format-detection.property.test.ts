@@ -1,6 +1,6 @@
-import { describe, it, expect } from "vitest";
+import { describe, expect, it } from "vitest";
 import { loadGlossary } from "../../src/glossary/registry.js";
-import type { EnabledPacks, FileSystem } from "../../src/pack/types.js";
+import type { EnabledPacks, FileSystem, PackEntry } from "../../src/pack/types.js";
 
 function createMockFs(files: Record<string, string>): FileSystem {
   return {
@@ -30,24 +30,28 @@ function packGlossary(content: string): { packs: EnabledPacks; fs: FileSystem } 
   const files: Record<string, string> = {
     "/pack/glossary/test.md": content,
   };
+  const entry: PackEntry = {
+    name: "test-pack",
+    displayName: "Test Pack",
+    description: "test",
+    forgeMinVersion: "2.4.0",
+    dependsOn: [],
+    rootPath: "/pack",
+    manifestPath: "/pack/pack.yaml",
+    extends: {
+      glossary: "/pack/glossary",
+      contexts: "/pack/contexts",
+      scenarios: "/pack/scenarios",
+      bannedPatterns: "/pack/banned-patterns.yaml",
+      stateMachines: "/pack/state-machines",
+      lintRules: "/pack/lint-rules",
+    },
+    featureFlags: {},
+  };
   return {
     packs: {
       order: ["test-pack"],
-      entries: [
-        {
-          name: "test-pack",
-          rootPath: "/pack",
-          extends: {
-            glossary: "/pack/glossary",
-            contexts: "/pack/contexts",
-            scenarios: "/pack/scenarios",
-            bannedPatterns: "/pack/banned-patterns.yaml",
-            stateMachines: "/pack/state-machines",
-            lintRules: "/pack/lint-rules",
-          },
-          featureFlags: {},
-        } as any,
-      ],
+      entries: [entry],
       customLayerRoot: "/custom",
     },
     fs: createMockFs(files),

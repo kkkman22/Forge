@@ -55,7 +55,7 @@ describe("Zero-Pack-Zero-Impact invariant", () => {
     const result = resolvePath("glossary/orders.md", emptyEnabled);
     // Custom layer always exists as fallback — but no pack layers
     expect(result).not.toBeNull();
-    expect(result!.layer).toBe("custom");
+    expect(result?.layer).toBe("custom");
   });
 
   it("resolveAllPaths returns only custom layer for empty enabled packs", () => {
