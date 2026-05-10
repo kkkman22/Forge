@@ -1,6 +1,7 @@
 ---
 name: forge-recap
 description: "Capture git history, sessions, and runs into a time-window categorized summary. Use when running /forge recap to review recent activity."
+skeleton_exempt_legacy: true
 disable-model-invocation: true
 ---
 

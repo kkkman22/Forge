@@ -1,6 +1,6 @@
 ---
 name: forge-mutate
-description: "Mutation testing engine. Runs Stryker.js against critical modules declared in enabled packs, evaluates test suite effectiveness, and produces score reports. Use when running `/forge mutate`."
+description: "Audit test suite effectiveness with Stryker mutation testing against pack-declared critical modules. Use when running `/forge mutate`, verifying test quality after a build, or checking mutation score against the threshold declared by an enabled pack."
 skeleton_exempt_legacy: true
 disable-model-invocation: true
 ---

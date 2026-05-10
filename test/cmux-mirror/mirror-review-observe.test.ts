@@ -78,9 +78,9 @@ describe("mirror: review observation (R15)", () => {
     };
 
     const cmds = emitCommands(prev, next);
-    const notify = cmds.find((c: any) => c.method === "notification.create");
+    const notify = cmds.find((c: { method?: string }) => c.method === "notification.create");
     expect(notify).toBeDefined();
-    expect(notify!.params).toHaveProperty("title", "Review Complete");
+    expect(notify?.params).toHaveProperty("title", "Review Complete");
   });
 
   it("detects incomplete review when completed_at is missing", async () => {

@@ -225,10 +225,11 @@ context: OrderContext
     );
 
     const data = generateLivingDoc(specsDir, acceptanceDir);
-    const scenarios = data.contexts.get("OrderContext")!.specs[0].scenarios;
-    expect(scenarios[0].lastVerdict).toBe("pass");
-    expect(scenarios[1].lastVerdict).toBe("pending");
-    expect(scenarios[1].acceptanceReportPath).toBeNull();
+    const scenarios = data.contexts.get("OrderContext")?.specs[0].scenarios;
+    expect(scenarios).toBeDefined();
+    expect(scenarios?.[0].lastVerdict).toBe("pass");
+    expect(scenarios?.[1].lastVerdict).toBe("pending");
+    expect(scenarios?.[1].acceptanceReportPath).toBeNull();
     expect(data.globalStats.pass).toBe(1);
     expect(data.globalStats.pending).toBe(1);
   });

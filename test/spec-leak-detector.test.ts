@@ -60,7 +60,7 @@ function makeBannedRegistry(
 function createMockFs(files: Record<string, string | null>): FileSystem {
   return {
     readdir: async (dir: string) => {
-      const dirPrefix = dir.endsWith("/") ? dir : dir + "/";
+      const dirPrefix = dir.endsWith("/") ? dir : `${dir}/`;
       const entries = new Set<string>();
       for (const f of Object.keys(files)) {
         if (f.startsWith(dirPrefix)) {

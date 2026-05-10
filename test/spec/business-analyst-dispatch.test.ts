@@ -1,10 +1,12 @@
-import { describe, it, expect } from "vitest";
-import { shouldTriggerBusinessAnalyst, getCoreSubdomains } from "../../src/spec.js";
 import { existsSync } from "node:fs";
 import { resolve } from "node:path";
+import { describe, expect, it } from "vitest";
+import { getCoreSubdomains, shouldTriggerBusinessAnalyst } from "../../src/spec.js";
 
 describe("business-analyst dispatch path", () => {
-  const pmsPacks = [{ featureFlags: { core_subdomains: ["reservations", "folio-billing", "night-audit"] } }];
+  const pmsPacks = [
+    { featureFlags: { core_subdomains: ["reservations", "folio-billing", "night-audit"] } },
+  ];
 
   it("triggers business-analyst for Core subdomain (reservations)", () => {
     expect(shouldTriggerBusinessAnalyst("reservations", pmsPacks)).toBe(true);
@@ -33,6 +35,8 @@ describe("business-analyst dispatch path", () => {
 
   it("core subdomains are correctly collected", () => {
     const subdomains = getCoreSubdomains(pmsPacks);
-    expect(subdomains).toEqual(expect.arrayContaining(["reservations", "folio-billing", "night-audit"]));
+    expect(subdomains).toEqual(
+      expect.arrayContaining(["reservations", "folio-billing", "night-audit"]),
+    );
   });
 });

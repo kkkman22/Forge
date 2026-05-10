@@ -1,9 +1,5 @@
 import { describe, expect, it } from "vitest";
-import {
-  type MicroReviewInput,
-  type MicroReviewResult,
-  runMicroReview,
-} from "../../src/build-micro-review.js";
+import { type MicroReviewInput, runMicroReview } from "../../src/build-micro-review.js";
 
 describe("runMicroReview", () => {
   // ---------------------------------------------------------------------------

@@ -1,4 +1,3 @@
-import path from "node:path";
 import { describe, expect, it } from "vitest";
 import { loadContexts } from "../../src/context/registry.js";
 import type { EnabledPacks, FileSystem, PackEntry } from "../../src/pack/types.js";

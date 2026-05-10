@@ -25,11 +25,11 @@ describe("mirror: event consumption from events.ndjson (R14)", () => {
 
     writeFileSync(
       eventsPath,
-      [
+      `${[
         JSON.stringify({ schema_version: 1, type: "session_started", run_id: "r1" }),
         JSON.stringify({ schema_version: 1, type: "iter_started", run_id: "r1", iteration: 1 }),
         JSON.stringify({ schema_version: 1, type: "circuit_breaker_tripped", run_id: "r1" }),
-      ].join("\n") + "\n",
+      ].join("\n")}\n`,
     );
 
     const { events, cursor } = await readEventsSince(eventsPath, 0);
@@ -44,7 +44,7 @@ describe("mirror: event consumption from events.ndjson (R14)", () => {
     const { readEventsSince } = await import("../../scripts/cmux-mirror/lib/events.mjs");
 
     const line1 = JSON.stringify({ schema_version: 1, type: "session_started", run_id: "r1" });
-    writeFileSync(eventsPath, line1 + "\n");
+    writeFileSync(eventsPath, `${line1}\n`);
 
     const first = await readEventsSince(eventsPath, 0);
     expect(first.events).toHaveLength(1);
@@ -61,7 +61,7 @@ describe("mirror: event consumption from events.ndjson (R14)", () => {
       type: "circuit_breaker_tripped",
       run_id: "r1",
     });
-    writeFileSync(eventsPath, [line1, line2, line3].join("\n") + "\n");
+    writeFileSync(eventsPath, `${[line1, line2, line3].join("\n")}\n`);
 
     const second = await readEventsSince(eventsPath, first.cursor);
     expect(second.events).toHaveLength(2);
@@ -92,12 +92,12 @@ describe("mirror: event consumption from events.ndjson (R14)", () => {
 
     writeFileSync(
       eventsPath,
-      [
+      `${[
         "not json",
         JSON.stringify({ schema_version: 1, type: "session_started", run_id: "r1" }),
         "{broken",
         JSON.stringify({ schema_version: 1, type: "iter_started", run_id: "r1", iteration: 1 }),
-      ].join("\n") + "\n",
+      ].join("\n")}\n`,
     );
 
     const { events } = await readEventsSince(eventsPath, 0);

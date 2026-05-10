@@ -4,7 +4,6 @@
  * Uses fast-check to verify invariants that hold across many random inputs.
  */
 
-import path from "node:path";
 import * as fc from "fast-check";
 import { describe, expect, it } from "vitest";
 import { resolveAllPaths, resolvePath } from "../../src/pack/resolver.js";
@@ -89,7 +88,7 @@ describe("resolvePath properties", () => {
         if (enabled.entries.length === 0) return; // need at least one pack to compare
         const result = resolvePath(relPath, enabled);
         expect(result).not.toBeNull();
-        expect(result!.layer).toBe("custom");
+        expect(result?.layer).toBe("custom");
       }),
     );
   });

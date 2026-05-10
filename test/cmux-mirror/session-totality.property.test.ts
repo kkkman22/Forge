@@ -143,7 +143,6 @@ describe("session: budget integration (R7.3, R7.6)", () => {
 describe("session: property — any event sequence yields valid state", () => {
   it("for any sequence of onEvent/tickIdle, state is always valid", () => {
     const validStates = new Set(["unknown", "active", "inactive"]);
-    type Action = { type: "event" } | { type: "idle" };
 
     fc.assert(
       fc.property(

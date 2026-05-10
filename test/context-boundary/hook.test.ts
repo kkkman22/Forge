@@ -17,7 +17,7 @@ import { afterEach, beforeEach, describe, expect, it } from "vitest";
 
 const SCRIPT_PATH = path.resolve(__dirname, "../../scripts/check-context-boundary.mjs");
 
-const FIXTURES_DIR = path.resolve(__dirname, "__fixtures_hook__");
+const _FIXTURES_DIR = path.resolve(__dirname, "__fixtures_hook__");
 
 function createTempDir(): string {
   return fs.mkdtempSync(path.join(os.tmpdir(), "ctx-boundary-hook-"));
@@ -37,7 +37,7 @@ function writeOwnershipMap(tempDir: string, map: Record<string, string>): void {
   const forgeDir = path.join(tempDir, ".forge");
   fs.mkdirSync(forgeDir, { recursive: true });
   const lines = Object.entries(map).map(([k, v]) => `${k}: ${v}`);
-  fs.writeFileSync(path.join(forgeDir, "context-ownership.yaml"), lines.join("\n") + "\n");
+  fs.writeFileSync(path.join(forgeDir, "context-ownership.yaml"), `${lines.join("\n")}\n`);
 }
 
 function writeContextMap(
@@ -54,7 +54,7 @@ function writeContextMap(
     lines.push(`    type: ${e.type}`);
   }
 
-  fs.writeFileSync(path.join(packsDir, "_map.yaml"), lines.join("\n") + "\n");
+  fs.writeFileSync(path.join(packsDir, "_map.yaml"), `${lines.join("\n")}\n`);
 }
 
 function runHook(tempDir: string, toolInputPath: string): { exitCode: number; stderr: string } {
@@ -281,7 +281,7 @@ describe("check-context-boundary.mjs hook", () => {
     fs.writeFileSync(inputPath, JSON.stringify(toolInput));
 
     try {
-      const stderr = execFileSync("node", [SCRIPT_PATH, "Edit", inputPath], {
+      const _stderr = execFileSync("node", [SCRIPT_PATH, "Edit", inputPath], {
         cwd: tempDir,
         encoding: "utf-8",
         timeout: 5000,

@@ -109,12 +109,12 @@ describe("loadGlossary properties", () => {
     // Both entries should exist with distinct keys
     expect(registry.entries.get("orders::Product")).toBeDefined();
     expect(registry.entries.get("catalog::Product")).toBeDefined();
-    expect(registry.entries.get("orders::Product")!.definition).toBe("A product being ordered.");
-    expect(registry.entries.get("catalog::Product")!.definition).toBe("A product in the catalog.");
+    expect(registry.entries.get("orders::Product")?.definition).toBe("A product being ordered.");
+    expect(registry.entries.get("catalog::Product")?.definition).toBe("A product in the catalog.");
 
     // byTerm should list both under "Product"
     const byProduct = registry.byTerm.get("Product");
     expect(byProduct).toHaveLength(2);
-    expect(byProduct!.map((e: GlossaryEntry) => e.context).sort()).toEqual(["catalog", "orders"]);
+    expect(byProduct?.map((e: GlossaryEntry) => e.context).sort()).toEqual(["catalog", "orders"]);
   });
 });

@@ -81,8 +81,9 @@ export function loadOwnershipMap(
   try {
     const content = readFileSync(ownershipYamlPath, "utf-8");
     parseYamlMappings(content, mappings);
-  } catch (e) {
-    console.warn(`[context-boundary] Failed to parse ${ownershipYamlPath}: ${e}`);
+  } catch (_e) {
+    // Malformed YAML — fall back to empty mappings silently.
+    // Upstream callers decide whether the hook should be a no-op or warn.
   }
 
   return mappings;

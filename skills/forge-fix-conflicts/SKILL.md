@@ -1,6 +1,7 @@
 ---
 name: forge-fix-conflicts
 description: "Fix merge conflicts using three-zone forge directory classification. Use when git merge or rebase produces conflicts inside the forge config tree."
+skeleton_exempt_legacy: true
 disable-model-invocation: true
 ---
 
