@@ -11,6 +11,17 @@ Entries follow [Keep a Changelog](https://keepachangelog.com/) with Forge-specif
 
 ## [Unreleased]
 
+### Fixed
+
+- **Sprint 3 Gap Remediation** — Fixes from 2026-05-10 audit
+  - Merged `business-analyst.md` agent definition to main branch (Three Amigos collaboration now works)
+  - Glossary parser now supports aggregated YAML format (PMS Pack glossary loads 111 terms)
+  - `loadOwnershipMap` no longer a stub — reads `.forge/context-ownership.yaml` for real boundary checks
+  - 3 new Bonvoy loyalty scenarios in `pms-marriott-sample` (NoShow forfeit, tier amenity, points+cash)
+  - Lint rule form clarified via requirements amendment (YAML declarative, not Biome plugin)
+  - Audit findings archived (`.forge/findings/` + `.forge/decisions/`)
+  - Evolved rules R6/R7/R8 added for review blind-spot prevention
+
 ### Added
 
 - **PMS Domain Pack v1.0** — Hotel PMS domain knowledge pack
