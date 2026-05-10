@@ -89,6 +89,16 @@ export declare function checkShipGateWithChecklist(review: ReviewResult, test: T
  * @public
  */
 export declare function checkShipGateWithFreshness(review: ReviewResult, test: TestResult, progress: ProgressResult, currentHead: string, changedFiles: string[], checklist?: ChecklistEntry[]): ShipGateResult;
+import type { AcceptGateDecision } from "./accept-gate.js";
+/**
+ * Extended ship gate with Forced Acceptance check.
+ *
+ * Adds a gate: pack-driven forced acceptance based on spec context.
+ * When acceptDecision.block is true, ship is blocked.
+ * When acceptDecision.warning is present, it is appended as advisory.
+ * @public
+ */
+export declare function checkShipGateWithAcceptance(review: ReviewResult, test: TestResult, progress: ProgressResult, acceptDecision: AcceptGateDecision): ShipGateResult;
 import type { Episode, EpisodeTier } from "./episode.js";
 /**
  * Why the ship gate blocked the delivery. Drives the episode outcome:
@@ -138,3 +148,35 @@ export interface ShipGateBlockArtifacts {
  * @public
  */
 export declare function buildShipGateBlockArtifacts(topic: string, tier: EpisodeTier, reason: ShipGateBlockReason, situation: string, now: Date, sequenceInDay: number): ShipGateBlockArtifacts;
+export interface PostPushVerifyResult {
+    passed: boolean;
+    command: string;
+    output: string;
+    exitCode: number | null;
+    durationMs: number;
+}
+export declare function executePostPushVerify(topic: string, _prCreated: boolean, options?: {
+    forgeDir?: string;
+    ciCheckCommand?: string;
+}): Promise<PostPushVerifyResult>;
+export interface AcceptanceGateResult {
+    triggered: boolean;
+    summary: {
+        pass: number;
+        fail: number;
+        skip: number;
+        warn: number;
+    };
+    blocksShip: boolean;
+    reportPath: string | null;
+}
+export declare function runAcceptanceGate(topic: string, specFm: {
+    acceptance_eval?: boolean;
+    acceptance_blocks_ship?: boolean;
+}, cliFlags: {
+    withAcceptance?: boolean;
+    promoteDerived?: boolean;
+}, specContent: string, _ctx: {
+    projectRoot: string;
+    cwd: string;
+}): Promise<AcceptanceGateResult>;

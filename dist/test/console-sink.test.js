@@ -4,8 +4,8 @@
  * **Validates: v2.4 Requirement 6.3, 6.4**
  */
 import { describe, expect, it, vi } from "vitest";
-import { createLogEntry } from "../src/logger/index.js";
 import { createConsoleSink } from "../src/logger/console-sink.js";
+import { createLogEntry } from "../src/logger/index.js";
 describe("ConsoleSink", () => {
     it("writes info entries to stdout", () => {
         const spy = vi.spyOn(console, "log").mockImplementation(() => { });

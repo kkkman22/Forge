@@ -295,6 +295,11 @@ export function buildReviewEvolutionArtifacts(input, now, sequenceInDay) {
     }
     return out;
 }
+// ---------------------------------------------------------------------------
+// Subagent orchestration (Agent Team Migration — R1, R7)
+// ---------------------------------------------------------------------------
+import { readFileSync, renameSync, writeFileSync } from "node:fs";
+import { parse as parseYaml, stringify as stringifyYaml } from "yaml";
 /**
  * Build the list of SubagentInvocations for a review.
  *
@@ -323,6 +328,17 @@ export function buildReviewSubagents(context) {
         permissionMode: "default",
         maxTurns: 10,
     });
+    // Layer 4: Frontend accessibility check — only when Vue files are present
+    const hasVueFiles = context.changedFiles.some((f) => f.endsWith(".vue"));
+    if (hasVueFiles) {
+        const vueFiles = context.changedFiles.filter((f) => f.endsWith(".vue"));
+        invocations.push({
+            agentType: "frontend-check",
+            prompt: `Review frontend accessibility. Changed Vue files: ${vueFiles.join(", ")}`,
+            permissionMode: "default",
+            maxTurns: 10,
+        });
+    }
     return invocations;
 }
 /**
@@ -368,5 +384,66 @@ export function mergeReviewResults(results) {
     const { included } = filterByConfidence(allFindings);
     const deduped = deduplicateFindings(included);
     return applyCrossValidation(deduped);
+}
+function splitFrontmatterAndBody(content) {
+    const match = content.match(/^---\r?\n([\s\S]*?)\r?\n---/);
+    if (!match) {
+        return { fmText: "", body: content, fm: {} };
+    }
+    const fm = parseYaml(match[1]) ?? {};
+    const body = content.slice(match[0].length);
+    return { fmText: match[1], body, fm };
+}
+function renderWithFrontmatter(fm, body) {
+    const yamlStr = stringifyYaml(fm, { lineWidth: 0 }).trim();
+    return `---\n${yamlStr}\n---${body}`;
+}
+/**
+ * Initialize a review progress file with frontmatter (R15.1).
+ */
+export function initReviewFrontmatter(filePath, topic, reviewers) {
+    const layersStatus = {};
+    for (const r of reviewers) {
+        layersStatus[r.replace(/-/g, "_")] = "pending";
+    }
+    const fm = {
+        topic,
+        reviewers,
+        layers_status: layersStatus,
+        created_at: new Date().toISOString(),
+        completed_at: null,
+    };
+    const body = "\n\n# Review Report\n";
+    const tmpPath = `${filePath}.tmp`;
+    writeFileSync(tmpPath, renderWithFrontmatter(fm, body));
+    renameSync(tmpPath, filePath);
+}
+/**
+ * Update a single layer's status in the review frontmatter (R15.2, R15.3).
+ * Sets completed_at when all layers are "done".
+ */
+export function markLayerStatus(filePath, layerName, status) {
+    atomicUpdateFrontmatter(filePath, (fm) => {
+        if (!fm.layers_status)
+            fm.layers_status = {};
+        fm.layers_status[layerName] = status;
+        const layers = Object.values(fm.layers_status);
+        if (layers.length > 0 && layers.every((s) => s === "done")) {
+            fm.completed_at = new Date().toISOString();
+        }
+    });
+}
+/**
+ * Atomically update the YAML frontmatter of a file (R15.4, R15.5).
+ * Reads → parses → applies mutator → writes to tmp → renames.
+ * On mutator error, the file is left unchanged.
+ */
+export function atomicUpdateFrontmatter(filePath, mutator) {
+    const content = readFileSync(filePath, "utf-8");
+    const { fm, body } = splitFrontmatterAndBody(content);
+    mutator(fm);
+    const tmpPath = `${filePath}.tmp`;
+    writeFileSync(tmpPath, renderWithFrontmatter(fm, body));
+    renameSync(tmpPath, filePath);
 }
 //# sourceMappingURL=review.js.map

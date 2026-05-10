@@ -66,9 +66,7 @@ describe("E2E hard failure path", () => {
         vi.spyOn(console, "log").mockImplementation(() => { });
         vi.spyOn(console, "warn").mockImplementation(() => { });
         vi.spyOn(console, "error").mockImplementation(() => { });
-        const agent = new ScriptedAgent([
-            { kind: "failure", errorMessage: "persistent failure" },
-        ]);
+        const agent = new ScriptedAgent([{ kind: "failure", errorMessage: "persistent failure" }]);
         const executor = createMockEffectExecutor();
         const config = createConfig();
         const driver = new SdkDriver(config, executor, agent);

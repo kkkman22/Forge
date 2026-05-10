@@ -16,9 +16,9 @@
  */
 import { z } from "zod";
 export declare const PhaseSchema: z.ZodEnum<{
+    spec: "spec";
     plan: "plan";
     decide: "decide";
-    spec: "spec";
     build: "build";
     "build-light": "build-light";
     review: "review";
@@ -53,9 +53,9 @@ export declare const StatusFileSchema: z.ZodObject<{
     task_type: z.ZodOptional<z.ZodString>;
     project_phase: z.ZodOptional<z.ZodString>;
     phase: z.ZodOptional<z.ZodEnum<{
+        spec: "spec";
         plan: "plan";
         decide: "decide";
-        spec: "spec";
         build: "build";
         "build-light": "build-light";
         review: "review";

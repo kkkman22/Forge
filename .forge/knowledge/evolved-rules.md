@@ -1,6 +1,6 @@
 ---
 updated: "2026-05-10"
-rule_count: 5
+rule_count: 6
 max_rules: 15
 ---
 
@@ -74,6 +74,16 @@ This file keeps only rules that still need top-of-session reminders.
 **Confidence**: 0.85
 **Last_triggered**: 2026-05-10
 **Infra_Ref**: `CONTRIBUTING.md` Lint Strictness Layering 章节 + `biome.json` `overrides[].includes: ["test/**"]`
+
+### R6: src/dist 同步是 PR 合约一部分
+
+**Content**: 修改 `src/**/*.ts` 的 PR 必须同时包含对应 `dist/src/**` 的变更。Forge 的 `dist/` 是 tracked in git（hooks 运行时 + 分发包都读它）。开发者的思维模型应该是"src/ 和 dist/ 是同一次逻辑变更的两面"，不是"tsc 只是构建步骤可以之后再补"。如果 CI 报 dist-sync 失败，运行 `npm run dist:resync` + commit dist/。紧急情况允许 commit message 带 `[dist-sync-skip]` 绕过，但下一 PR 必须恢复同步。
+**Prevents**: Sprint 级别的 dist 积压漂移（2026-05-10 审计：Sprint 1-3 累计 300+ dist 文件未提交，`078e482` 一次性消除，但这种"突发大规模同步"本身说明缺乏持续守卫）
+**Source**: 2026-05-10 存量 biome / dist 积压清理会话
+**Added**: 2026-05-10
+**Confidence**: 0.85
+**Last_triggered**: 2026-05-10
+**Infra_Ref**: `scripts/check-dist-sync.mjs` + `CONTRIBUTING.md` §dist/ Sync Requirement
 
 ---
 

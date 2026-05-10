@@ -35,6 +35,8 @@ jobs:
           test -f dist/claude-code/bundles/forge/VERSION
           test -d dist/claude-code/bundles/forge/skills
           test -d dist/claude-code/bundles/forge/commands
+      - name: Verify dist sync
+        run: node scripts/check-dist-sync.mjs
       - name: Shellcheck scripts
         run: |
           if command -v shellcheck &>/dev/null; then

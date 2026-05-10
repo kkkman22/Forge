@@ -13,6 +13,7 @@
  *   Body: 目的, 需求 (with 当...则... scenarios), 不做什么, Delta (brownfield only)
  */
 import { type TermCandidate } from "./glossary-extractor.js";
+export { detectSpecLeak, loadBannedPatterns } from "./spec-leak-detector.js";
 export interface SpecFrontmatter {
     feature: string;
     status: "draft" | "locked";
@@ -131,3 +132,27 @@ export declare function detectGlossaryMiss(specText: string, glossaryTerms: stri
  * concatenate the notice without inserting a stray blank line.
  */
 export declare function renderGlossaryMissNotice(missed: TermCandidate[]): string;
+/**
+ * Collect the union of `core_subdomains` declared across all enabled packs.
+ *
+ * Each pack's `featureFlags.core_subdomains` is expected to be a `string[]`
+ * when present. Packs that omit the flag (or set it to a non-array value) are
+ * treated as contributing an empty set. The result is deduplicated.
+ *
+ * This function is pure.
+ */
+export declare function getCoreSubdomains(enabledPacks: Array<{
+    featureFlags: Record<string, unknown>;
+}>): string[];
+/**
+ * Determine whether the business-analyst subagent should be triggered in
+ * parallel during the spec phase.
+ *
+ * Returns `true` when `currentContext` is defined and appears in the union
+ * of core subdomains collected from the enabled packs.
+ *
+ * This function is pure.
+ */
+export declare function shouldTriggerBusinessAnalyst(currentContext: string | undefined, enabledPacks: Array<{
+    featureFlags: Record<string, unknown>;
+}>): boolean;

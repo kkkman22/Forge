@@ -44,6 +44,11 @@ export interface SkillDescriptionCheck {
     valid: boolean;
     errors: string[];
 }
+export interface DescriptionValidationExtended extends SkillDescriptionCheck {
+    sentenceCount: number;
+    firstSentenceStartsWithImperative: boolean;
+    secondSentenceStartsWithUseWhen: boolean;
+}
 /**
  * Parsed frontmatter subset needed by the description validator.
  * Both fields are optional so callers can distinguish a missing field
@@ -122,3 +127,10 @@ export interface SkillDescriptionFs {
  * **Validates: Requirement 3.6**
  */
 export declare function validateAllSkills(fs: SkillDescriptionFs, skillsDir: string): SkillDescriptionCheck[];
+export declare function splitSentences(text: string): string[];
+export declare function countSentences(text: string): number;
+export declare function startsWithImperative(sentence: string, whitelist: readonly string[]): boolean;
+export declare function secondSentenceStartsWithUseWhen(sentences: string[]): boolean;
+export declare function validateDescriptionExtended(content: string, options?: {
+    mode?: "warning" | "error";
+}): DescriptionValidationExtended;

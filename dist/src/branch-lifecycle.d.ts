@@ -7,7 +7,7 @@
  *
  * **Validates: Requirements 1.1–1.5, 2.1–2.5, 3.1–3.7**
  */
-import type { BranchTopicGateResult, CommitTopicCheckResult, PendingDeliveryRecord, UnshippedBranchWarning } from "./loop-types.js";
+import type { BranchTopicGateResult, CommitTopicCheckResult, IsolationContext, IsolationRecommendation, PendingDeliveryRecord, UnshippedBranchWarning } from "./loop-types.js";
 /**
  * Extract the topic segment from a `feature/<topic>` or `forge/<topic>` branch.
  * Returns `null` for branches that don't match the expected format.
@@ -45,3 +45,18 @@ export declare function checkCommitTopicMatch(branchName: string, commitTopic: s
  * @internal
  */
 export declare function detectUnshippedBranches(pendingDeliveries: PendingDeliveryRecord[], currentTopic: string): UnshippedBranchWarning[];
+/**
+ * Recommend a branch isolation strategy based on current development context.
+ *
+ * Decision priority:
+ *   1. Worktree at capacity → fallback to stash-feature
+ *   2. Dirty working tree → recommend worktree
+ *   3. Full tier → recommend worktree
+ *   4. Active worktrees exist → recommend worktree (consistency)
+ *   5. Default (clean, no worktrees, light/standard) → feature branch
+ *
+ * @param ctx  Current isolation context.
+ * @returns Recommendation with primary strategy, fallback, and reason.
+ * @public
+ */
+export declare function recommendIsolationStrategy(ctx: IsolationContext): IsolationRecommendation;

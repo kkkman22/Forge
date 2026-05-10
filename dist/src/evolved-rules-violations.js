@@ -128,12 +128,12 @@ export function applyTriggerUpdates(body, report) {
 }
 /** Replace or insert `**Last_triggered**: {date}` within a rule block. */
 function rewriteLastTriggered(block, date) {
-    const lineRe = /^\*\*Last_triggered\*\*:\s*.+$/mi;
+    const lineRe = /^\*\*Last_triggered\*\*:\s*.+$/im;
     if (lineRe.test(block)) {
         return block.replace(lineRe, `**Last_triggered**: ${date}`);
     }
     // Insert after **Confidence**: line
-    const confidenceRe = /^(\*\*Confidence\*\*:\s*.+)$/mi;
+    const confidenceRe = /^(\*\*Confidence\*\*:\s*.+)$/im;
     if (confidenceRe.test(block)) {
         return block.replace(confidenceRe, `$1\n**Last_triggered**: ${date}`);
     }

@@ -152,6 +152,30 @@ test("mergeSkillLists always prefers builtin", () => {
 - All `agents/*.md` are synced with `.claude/agents/`
 - Cross-references between files are consistent
 
+## dist/ Sync Requirement
+
+Forge's `dist/` directory is **tracked in git** because:
+
+- `hooks/hooks.json` references `dist/src/check-frozen.js` and `dist/src/check-sandbox.js` at runtime
+- `scripts/build-dist.sh` reads `dist/src/` to create distribution bundles
+- `package.json` exports and bin entries point to `dist/src/`
+
+This creates a requirement: **every PR that modifies `src/**/*.ts` must include the corresponding `dist/src/**` changes in the same PR.**
+
+### How to fix a "dist-sync failed" CI error
+
+1. Run `npm run dist:resync` (or `npm run dist:resync -- --yes` for auto-stage)
+2. Commit the staged dist/ changes: `git commit -m "chore(dist): resync"`
+3. Push again
+
+### Why this is enforced
+
+Without enforcement, dist/ drifts silently. The 2026-05-10 audit found ~300 untracked dist/ files accumulated across Sprint 1-3 — runtime was using old compiled logic while src/ had moved on. See commit `078e482` for the one-time resync that eliminated the backlog.
+
+### Emergency bypass
+
+For rare cases where src/ and dist/ MUST be in separate commits (e.g., hotfix where dist/ regen takes too long and src/ fix is urgent), include `[dist-sync-skip]` in the commit message. Use sparingly — the next PR will restore full sync.
+
 ## Security Model
 
 ### SDK Permission Bypass

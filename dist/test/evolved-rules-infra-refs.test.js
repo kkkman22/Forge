@@ -7,7 +7,9 @@ describe("extractBacktickPathsWithSections", () => {
         ]);
     });
     it("extracts path with §section", () => {
-        expect(extractBacktickPathsWithSections("`skills/forge-pack/SKILL.md` §Subcommands")).toEqual([{ path: "skills/forge-pack/SKILL.md", section: "Subcommands" }]);
+        expect(extractBacktickPathsWithSections("`skills/forge-pack/SKILL.md` §Subcommands")).toEqual([
+            { path: "skills/forge-pack/SKILL.md", section: "Subcommands" },
+        ]);
     });
     it("extracts multiple refs joined by +", () => {
         const line = "`a.md` §Foo + `b.ts` + `c.json`";
