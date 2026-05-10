@@ -81,8 +81,8 @@ export function loadOwnershipMap(
   try {
     const content = readFileSync(ownershipYamlPath, "utf-8");
     parseYamlMappings(content, mappings);
-  } catch {
-    // Malformed file — return empty, don't crash
+  } catch (e) {
+    console.warn(`[context-boundary] Failed to parse ${ownershipYamlPath}: ${e}`);
   }
 
   return mappings;
@@ -134,6 +134,15 @@ function parseYamlMappings(content: string, mappings: Record<string, string>): v
 // ---------------------------------------------------------------------------
 // resolveFileContext
 // ---------------------------------------------------------------------------
+
+/**
+ * Extract JSDoc @context tag from first 30 lines of file content.
+ */
+export function extractJsdocContext(fileContent: string): string | null {
+  const first30Lines = fileContent.split("\n").slice(0, 30).join("\n");
+  const match = first30Lines.match(/@context\s+([a-z][a-z0-9-]*)/);
+  return match ? match[1] : null;
+}
 
 /**
  * Determine which bounded context a file belongs to.
@@ -235,7 +244,8 @@ export function checkBoundary(input: BoundaryCheckInput): BoundaryCheckResult {
   const violations: BoundaryViolation[] = [];
   let escapeHatchUsed = 0;
 
-  const sourceContext = resolveFileContext(input.filePath, input.ownershipMap, null);
+  const jsdocContext = extractJsdocContext(input.fileContent);
+  const sourceContext = resolveFileContext(input.filePath, input.ownershipMap, jsdocContext);
 
   // File not in any context → no-op
   if (sourceContext === null) {
