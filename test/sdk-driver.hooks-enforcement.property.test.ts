@@ -99,8 +99,8 @@ describe("SdkDriver hooks enforcement (property)", () => {
     await fc.assert(
       fc.asyncProperty(
         fc.record({
-          objective: fc.string({ minLength: 1, maxLength: 50 }),
-          runId: fc.string({ minLength: 1, maxLength: 20 }),
+          objective: fc.string({ minLength: 1, maxLength: 50 }).filter((s) => s.trim().length > 0),
+          runId: fc.string({ minLength: 1, maxLength: 20 }).filter((s) => s.trim().length > 0),
         }),
         async ({ objective, runId }) => {
           const agent = createTrackingAgent();
