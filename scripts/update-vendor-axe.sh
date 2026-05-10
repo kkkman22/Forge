@@ -90,7 +90,8 @@ fi
   echo " *  Accessibility testing engine by Deque Systems"
   echo " *  License: MPL-2.0"
   echo " *"
-  echo " *  Updated: $(date -u +%Y-%m-%dT%H:%M:%SZ)"
+  CONTENT_HASH=$(shasum "${TARGET}.tmp" | cut -c1-12)
+  echo " *  Updated: ${CONTENT_HASH}"
   echo " *  To upgrade: bash scripts/update-vendor-axe.sh"
   echo " */"
   cat "${TARGET}.tmp"
