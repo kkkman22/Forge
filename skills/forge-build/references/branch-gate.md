@@ -9,9 +9,37 @@
 | Branch State | Action |
 |---|---|
 | On matching `feature/<topic>` | ✅ Pass |
-| Other, branch exists | `git checkout` |
-| Other, branch missing | `git checkout -b` |
-| `feature/<topic>` mismatch | 🚫 Block |
+| Other, branch exists, clean tree | `git checkout` |
+| Other, branch missing, clean tree | `git checkout -b` |
+| Not on `feature/<topic>` or `forge/<topic>` | → Isolation Recommendation (below) |
+| `feature/<topic>` mismatch (different topic) | 🚫 Block |
+
+## Isolation Recommendation
+
+When Branch Gate detects the developer is not on a matching branch, call
+`recommendIsolationStrategy` with current context:
+
+```
+inputs:
+  dirtyTree:       `git status --porcelain` non-empty
+  activeWorktrees: countActiveWorktrees(`git worktree list --porcelain`)
+  tier:            from .forge/status.md routing tier
+  maxConcurrent:   DEFAULT_MAX_CONCURRENT (3)
+```
+
+Present `AskUserQuestion` with:
+- **Option 1 (Recommended)**: `result.primary` — with `result.reason`
+- **Option 2**: `result.secondary`
+
+Selected option → execute corresponding git command:
+- `feature` → `git checkout -b feature/<topic>`
+- `worktree` → create worktree via `RunManager.setupWorktree` logic
+- `stash-feature` → `git stash` → `git checkout -b feature/<topic>`
+
+Function references:
+- `recommendIsolationStrategy` from `src/branch-lifecycle.ts`
+- `countActiveWorktrees` from `src/worktree-manager.ts`
+- Types: `IsolationContext`, `IsolationRecommendation` from `src/loop-types.ts`
 
 ## Unshipped Branch Warning
 
