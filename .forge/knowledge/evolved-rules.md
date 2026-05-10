@@ -33,7 +33,7 @@ This file keeps only rules that still need top-of-session reminders.
 **Added**: 2026-05-09
 **Confidence**: 0.9
 **Last_triggered**: 2026-05-10
-**Infra_Ref**: `skills/shared/next-step-protocol.md` §规则 3 + "三种违规形态"表
+**Infra_Ref**: `skills/shared/next-step-protocol.md` §三种违规形态
 
 ### R2: Review 必须对 "新增文件" 做主分支存在性验证
 
