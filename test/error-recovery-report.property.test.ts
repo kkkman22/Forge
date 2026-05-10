@@ -149,7 +149,7 @@ describe("Feature: error-recovery-strategy, Property 15: task segmentation", () 
         (planTaskIds, completedIds) => {
           // Ensure completed IDs are a subset of plan IDs
           const planSet = new Set(planTaskIds);
-          const completed = completedIds.filter((id) => planSet.has(id));
+          const completed = [...new Set(completedIds.filter((id) => planSet.has(id)))];
 
           const commitMatches: CommitTaskMatch[] = completed.map((id) => ({
             commit: {
