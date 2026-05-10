@@ -1,6 +1,6 @@
 ---
-updated: "2026-05-09"
-rule_count: 5
+updated: "2026-05-10"
+rule_count: 8
 max_rules: 15
 ---
 
@@ -64,3 +64,30 @@ Each rule prevents a specific, documented error pattern.
 **Added**: 2026-05-09
 **Confidence**: 0.9
 **Last_triggered**: 2026-05-09
+
+### R6: Review 必须对 "新增文件" 做主分支存在性验证
+
+**Content**: `/forge review` 的 spec-check agent 在声称"✅ 新增的 agent/skill/hook/template 文件已实现"之前，**必须**对被声称创建的文件执行一次主分支路径（非 worktree、非 draft、非 stash）的存在性校验。禁止仅依据"worktree 中存在"或"commit log 显示添加过"作为实现证据。推荐做法：review 时维护一个"claimed new file list"，对每条执行 `test -f <mainBranchPath>` 或使用只读文件工具读取首行。worktree 合并失败 / git add 遗漏 / rebase 丢 hunk 这三种事故的共同特征，就是"功能函数已合并但角色定义文件未合并"。
+**Prevents**: review 报告把 "worktree 里存在" 错误当作 "主分支已合并"，放行了不完整的交付（2026-05-10 Sprint 3 审计：`business-analyst.md` 触发代码合并但 agent 定义文件未合并）
+**Source**: 2026-05-10 三 Sprint 审计（`.kiro/specs/sprint-3-gap-remediation/`）— Sprint 3 R5 review 报告声称 "✅ agent.md + trigger logic" 与事实不符
+**Added**: 2026-05-10
+**Confidence**: 0.9
+**Last_triggered**: 2026-05-10
+
+### R7: Pack/Loader 约定差异必须有运行时验证
+
+**Content**: 当 Pack 交付"数据文件"（glossary/banned-patterns/state-machines 等），Core 交付"加载器"解析这些文件时，**必须**有至少一个集成测试真正对**当前启用 Pack** 调用 `loadXxx(enabledPacks)` 并断言 `result.size > 0` 或 `result.entries.length > 0`。Zero-Pack-Zero-Impact 测试（空输入 → 空输出）只覆盖反面，不覆盖正面；静态 grep 和单元测试 fixture 也看不到"Pack 实际格式与 Core parser 期望格式不符"这类 schema 断层。Pack 启用后第一次 `loadXxx` 返回空即视为交付失败，不是 Zero-Pack 合理降级。
+**Prevents**: Pack 数据格式演化后，loader 未同步导致启用 Pack 时默默返回空结果（2026-05-10 审计：PMS glossary 采用聚合 YAML 列表格式，`parseGlossaryFile` 按 Requirement 描述期望"每术语独立 frontmatter"，两者不匹配但所有单元测试和 Zero-Pack 测试都绿）
+**Source**: 2026-05-10 三 Sprint 审计 — Sprint 1 R6 glossary 格式断层
+**Added**: 2026-05-10
+**Confidence**: 0.9
+**Last_triggered**: 2026-05-10
+
+### R8: Stub With TODO 不是 Zero-Pack 合理降级
+
+**Content**: 核心业务函数返回空默认值（`return {}` / `return []` / `return null`）必须满足两个条件之一才算合法：(a) 明确对应 Zero-Pack-Zero-Impact 场景（输入为空、Pack 未启用）；(b) 有明确的 fallback 数据源声明并在有输入时产出非空结果。仅当函数声明为"v1 stub，v2 实装"并有 TODO 注释时，review 必须记录为 **P1 功能残缺**（不得降级为 P2/P3）。Zero-Pack 合理 no-op 和功能 stub 是两件事：前者是架构不变量，后者是欠债，不能混为一谈。Spec-check agent 的判据：函数对**非空且合法输入**返回空结果，即为功能残缺。
+**Prevents**: 把 "v1 stub 待实装" 的函数登记为 P2/P3 advisory 并 ship，导致"门禁看起来有，实际 no-op"（2026-05-10 审计：`loadOwnershipMap` 返回 `{}`，即使项目有 `.forge/context-ownership.yaml` 也读不到；Context Boundary Hook 因此大多数情况 no-op）
+**Source**: 2026-05-10 三 Sprint 审计 — Sprint 3 R4 Context Boundary Hook
+**Added**: 2026-05-10
+**Confidence**: 0.85
+**Last_triggered**: 2026-05-10
