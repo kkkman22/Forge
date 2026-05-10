@@ -174,3 +174,25 @@ export function canCreateWorktree(
 export function isValidWorktreeSource(currentBranch: string): boolean {
   return !currentBranch.startsWith("forge/");
 }
+
+// ---------------------------------------------------------------------------
+// Active worktree counting (branch-isolation-recommendation)
+// ---------------------------------------------------------------------------
+
+/**
+ * Count additional (non-main) worktrees from `git worktree list --porcelain` output.
+ *
+ * Returns `max(0, worktreeLineCount - 1)` since the main working tree
+ * is always listed first.
+ *
+ * @param porcelainOutput  Raw output from `git worktree list --porcelain`.
+ * @returns Number of additional worktrees beyond the main one.
+ * @public
+ */
+export function countActiveWorktrees(porcelainOutput: string): number {
+  if (!porcelainOutput || porcelainOutput.trim() === "") return 0;
+  const worktreeLines = porcelainOutput
+    .split("\n")
+    .filter((line) => line.startsWith("worktree "));
+  return Math.max(0, worktreeLines.length - 1);
+}
