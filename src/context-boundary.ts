@@ -9,8 +9,9 @@
  *   - checkBoundary
  */
 
-import type { ContextMapEntry } from "./pack/types.js";
 import { existsSync, readFileSync } from "node:fs";
+
+import type { ContextMapEntry } from "./pack/types.js";
 
 // ---------------------------------------------------------------------------
 // Types
@@ -68,7 +69,7 @@ const ESCAPE_HATCH_RE = /@forge:allow-cross-context/;
  * Returns empty object when file doesn't exist or is malformed.
  */
 export function loadOwnershipMap(
-  projectRoot: string,
+  _projectRoot: string,
   ownershipYamlPath: string,
 ): Record<string, string> {
   const mappings: Record<string, string> = {};
