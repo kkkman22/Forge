@@ -24,7 +24,7 @@ Note: `pms` must be enabled first (manual order enforcement).
 | New Context | `contexts/bonvoy-loyalty.md` | Adding a completely new Bounded Context |
 | Additive Glossary | `glossary/folio-billing.md` | Union merging of chain-specific terms |
 | State Machine | `state-machines/reservation.yaml` | Full override with extra state |
-| Scenarios | `scenarios/bonvoy/*.feature` | New scenarios in a new subdomain |
+| Scenarios | `scenarios/bonvoy/*.feature` (5 files) | New scenarios in a new subdomain |
 
 ## Experimental Flag
 
