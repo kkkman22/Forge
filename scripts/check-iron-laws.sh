@@ -5,8 +5,8 @@
 set -euo pipefail
 
 # Extract all name attributes from <IRON-LAW name="..."> and <HARD-GATE name="...">
-names=$(rg -o '<(IRON-LAW|HARD-GATE) name="[^"]*"' --no-filename -g '!templates/**' . \
-  | sed 's/<\(IRON-LAW\|HARD-GATE\) name="//;s/"$//')
+names=$(grep -rEo '<(IRON-LAW|HARD-GATE) name="[^"]*"' --include='*.md' --exclude-dir=templates . \
+  | sed 's/.*<\(IRON-LAW\|HARD-GATE\) name="//;s/"$//')
 
 if [ -z "$names" ]; then
   echo "No IRON-LAW or HARD-GATE name attributes found."
