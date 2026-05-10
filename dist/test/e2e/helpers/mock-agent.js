@@ -19,7 +19,7 @@ export class ScriptedAgent {
         this.script = script;
     }
     async run(_prompt, _cwd, _options) {
-        const response = this.script[this.callCount] ?? this.script.at(-1);
+        const response = this.script[this.callCount] ?? this.script.at(-1) ?? { kind: "stop" };
         this.callCount++;
         switch (response.kind) {
             case "success":

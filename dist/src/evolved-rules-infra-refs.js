@@ -53,7 +53,7 @@ export function parseInfraRefs(body) {
 }
 /** Extract the single `**Infra_Ref**:` line value (trimmed) from a rule block. */
 function extractInfraRefLine(block) {
-    const match = block.match(/^\*\*Infra_Ref\*\*:\s*(.+?)$/mi);
+    const match = block.match(/^\*\*Infra_Ref\*\*:\s*(.+?)$/im);
     return match ? match[1].trim() : null;
 }
 /**
@@ -81,7 +81,7 @@ export function extractBacktickPathsWithSections(line) {
 function isFileLikePath(value) {
     // Must have a file-ish extension or contain a path separator.
     // Also exclude strings that look like code snippets (contain [ ] or { })
-    if (/[\[\]\{\}]/.test(value))
+    if (/[[\]{}]/.test(value))
         return false;
     return /\.[a-zA-Z0-9]+$/.test(value) || value.includes("/");
 }

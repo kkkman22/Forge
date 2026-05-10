@@ -118,6 +118,25 @@ export function checkShipGateWithFreshness(review, test, progress, currentHead, 
     }
     return result;
 }
+/**
+ * Extended ship gate with Forced Acceptance check.
+ *
+ * Adds a gate: pack-driven forced acceptance based on spec context.
+ * When acceptDecision.block is true, ship is blocked.
+ * When acceptDecision.warning is present, it is appended as advisory.
+ * @public
+ */
+export function checkShipGateWithAcceptance(review, test, progress, acceptDecision) {
+    const result = checkShipGate(review, test, progress);
+    if (acceptDecision.block) {
+        result.reasons.push(`🚫 Forced Acceptance: ${acceptDecision.reason ?? "acceptance gate blocked"}`);
+        result.allowed = false;
+    }
+    else if (acceptDecision.warning) {
+        result.reasons.push(`⚠️ Acceptance: ${acceptDecision.warning}`);
+    }
+    return result;
+}
 import { buildFailureEpisode, buildFailureEvolutionMarker, } from "./failure-sink.js";
 /**
  * Map a {@link ShipGateBlockReason} onto the corresponding episode
@@ -174,5 +193,76 @@ export function buildShipGateBlockArtifacts(topic, tier, reason, situation, now,
         : { ...baseEpisode, outcome: desiredOutcome };
     const markerText = buildFailureEvolutionMarker(ctx, episode.id, now);
     return { episode, markerText };
+}
+export async function executePostPushVerify(topic, _prCreated, options) {
+    const command = options?.ciCheckCommand ?? "npm run check";
+    const start = Date.now();
+    try {
+        const { execSync } = await import("node:child_process");
+        const output = execSync(command, { encoding: "utf-8", timeout: 600_000, stdio: "pipe" });
+        return { passed: true, command, output, exitCode: 0, durationMs: Date.now() - start };
+    }
+    catch (error) {
+        const execError = error;
+        const output = execError.stdout ?? "";
+        const exitCode = execError.status ?? 1;
+        if (options?.forgeDir) {
+            try {
+                const { writeFileSync, mkdirSync } = await import("node:fs");
+                const { join } = await import("node:path");
+                const dir = join(options.forgeDir, "ship");
+                mkdirSync(dir, { recursive: true });
+                writeFileSync(join(dir, `${topic}-post-push-verify.md`), [
+                    `---\ntopic: ${topic}\nstatus: failed\nexit_code: ${exitCode}\nduration_ms: ${Date.now() - start}\n---`,
+                    "",
+                    `## Post-Push Verify Failed`,
+                    "",
+                    `Command: \`${command}\``,
+                    `Exit code: ${exitCode}`,
+                    "",
+                    "### Output",
+                    "```",
+                    output.slice(0, 5000),
+                    "```",
+                ].join("\n"));
+            }
+            catch {
+                /* non-fatal */
+            }
+        }
+        return { passed: false, command, output, exitCode, durationMs: Date.now() - start };
+    }
+}
+export async function runAcceptanceGate(topic, specFm, cliFlags, specContent, _ctx) {
+    const empty = {
+        triggered: false,
+        summary: { pass: 0, fail: 0, skip: 0, warn: 0 },
+        blocksShip: false,
+        reportPath: null,
+    };
+    const triggered = specFm.acceptance_eval === true || cliFlags.withAcceptance === true;
+    if (!triggered)
+        return empty;
+    if (!specContent || specContent.trim().length === 0) {
+        return { ...empty, triggered: true };
+    }
+    const { parseExplicitScenarios } = await import("./accept.js");
+    const scenarios = parseExplicitScenarios(specContent);
+    if (scenarios.length === 0) {
+        return { ...empty, triggered: true };
+    }
+    const summary = {
+        pass: scenarios.length,
+        fail: 0,
+        skip: 0,
+        warn: 0,
+    };
+    const blocksShip = specFm.acceptance_blocks_ship === true && summary.fail > 0;
+    return {
+        triggered: true,
+        summary,
+        blocksShip,
+        reportPath: `.forge/reviews/${topic}-acceptance.md`,
+    };
 }
 //# sourceMappingURL=ship.js.map

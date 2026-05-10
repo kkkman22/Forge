@@ -101,3 +101,65 @@ export declare function buildResearchSubagents(topics: string[]): SubagentInvoca
  * Failed subagents are noted in the document.
  */
 export declare function mergeResearchFindings(results: SubagentResult[]): string;
+/** Evidence fields required after RED phase before GREEN transition. */
+export interface RedGateEvidence {
+    /** The exact command that was run. */
+    command: string;
+    /** First 10 lines of actual output. */
+    actual_output: string;
+    /** Why the test should fail (e.g. "function not defined"). */
+    expected_failure_reason: string;
+}
+/** Result of RED gate validation. */
+export interface RedGateResult {
+    valid: boolean;
+    reason?: string;
+}
+/**
+ * Validate RED Verification Gate evidence.
+ *
+ * Per R9: three evidence fields must be present and actual_output must
+ * contain failure indicators (not success indicators).
+ */
+export declare function validateRedGate(evidence: RedGateEvidence): RedGateResult;
+/** Actual output from a command execution. */
+export interface ActualOutput {
+    exitCode: number;
+    output: string;
+}
+/** An Expected Output specification to compare against. */
+export interface ExpectedSpec {
+    expected: string;
+    actual: ActualOutput;
+}
+/** Result of expected output comparison. */
+export interface ExpectedComparisonResult {
+    match: boolean;
+    detail?: string;
+}
+/**
+ * Compare actual command output against an Expected specification.
+ *
+ * Three legal forms:
+ *   - `exit <N>` — match exit code
+ *   - `output contains "<string>"` — substring match in output
+ *   - `FAIL -- "<reason>"` — reason substring must appear in output
+ */
+export declare function compareExpectedOutput(spec: ExpectedSpec): ExpectedComparisonResult;
+import { type MicroReviewInput, type MicroReviewResult } from "./build-micro-review.js";
+export type { MicroReviewInput, MicroReviewResult };
+/**
+ * Run post-verification Micro-Review for a completed atomic task.
+ *
+ * Wrapper around {@link runMicroReview} that the build SKILL calls
+ * after each task's Verify GREEN step. Returns the raw result for
+ * the SKILL to decide on iteration.
+ *
+ * @example
+ * ```ts
+ * const result = runTaskPostVerification({ task, gitDiff, verifyOutput, planVersion: "v1" });
+ * if (result.verdict === "needs_iteration") { /* loop back *\/ }
+ * ```
+ * @public
+ */
+export declare function runTaskPostVerification(input: MicroReviewInput): MicroReviewResult;

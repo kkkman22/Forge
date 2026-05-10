@@ -158,4 +158,114 @@ export function mergeResearchFindings(results) {
     }
     return parts.join("\n\n");
 }
+/** Failure indicator patterns in test output. */
+const FAILURE_INDICATORS = [
+    "FAIL",
+    "Error",
+    "AssertionError",
+    "expected",
+    "not defined",
+    "Cannot find",
+];
+/** Success indicator patterns. */
+const SUCCESS_INDICATORS = ["passed", "PASS", "all tests passed", "Tests:.*passed"];
+/**
+ * Validate RED Verification Gate evidence.
+ *
+ * Per R9: three evidence fields must be present and actual_output must
+ * contain failure indicators (not success indicators).
+ */
+export function validateRedGate(evidence) {
+    if (!evidence.command || evidence.command.trim() === "") {
+        return { valid: false, reason: "missing command field" };
+    }
+    if (!evidence.actual_output || evidence.actual_output.trim() === "") {
+        return { valid: false, reason: "missing actual_output field" };
+    }
+    if (!evidence.expected_failure_reason || evidence.expected_failure_reason.trim() === "") {
+        return { valid: false, reason: "missing expected_failure_reason field" };
+    }
+    // Check if output indicates test PASSED
+    const _outputLower = evidence.actual_output.toLowerCase();
+    for (const _indicator of SUCCESS_INDICATORS) {
+        if (/passed/i.test(evidence.actual_output) && !/failed/i.test(evidence.actual_output)) {
+            return {
+                valid: false,
+                reason: "RED test PASSED — test may not assert missing behavior. Rewrite the test.",
+            };
+        }
+    }
+    // Check if output contains at least one failure indicator
+    const hasFailureIndicator = FAILURE_INDICATORS.some((ind) => evidence.actual_output.includes(ind));
+    if (!hasFailureIndicator) {
+        return {
+            valid: false,
+            reason: "actual_output does not contain failure indicators (FAIL/Error/AssertionError)",
+        };
+    }
+    return { valid: true };
+}
+/**
+ * Compare actual command output against an Expected specification.
+ *
+ * Three legal forms:
+ *   - `exit <N>` — match exit code
+ *   - `output contains "<string>"` — substring match in output
+ *   - `FAIL -- "<reason>"` — reason substring must appear in output
+ */
+export function compareExpectedOutput(spec) {
+    const { expected, actual } = spec;
+    const trimmed = expected.trim();
+    // Form 1: exit code
+    const exitMatch = /^exit\s+(\d+)$/.exec(trimmed);
+    if (exitMatch) {
+        const expectedCode = Number.parseInt(exitMatch[1], 10);
+        const match = actual.exitCode === expectedCode;
+        return {
+            match,
+            detail: match ? undefined : `expected exit ${expectedCode}, got ${actual.exitCode}`,
+        };
+    }
+    // Form 2: substring match
+    const containsMatch = /^output\s+contains\s+"(.+)"$/.exec(trimmed);
+    if (containsMatch) {
+        const needle = containsMatch[1];
+        const match = actual.output.includes(needle);
+        return { match, detail: match ? undefined : `output does not contain "${needle}"` };
+    }
+    // Form 3: fail reason
+    const failMatch = /^FAIL\s+--\s+"(.+)"$/.exec(trimmed);
+    if (failMatch) {
+        const reason = failMatch[1];
+        const match = actual.exitCode !== 0 && actual.output.includes(reason);
+        return {
+            match,
+            detail: match
+                ? undefined
+                : `output does not contain "${reason}" and exit code is ${actual.exitCode}`,
+        };
+    }
+    return { match: false, detail: `unrecognized Expected format: "${trimmed}"` };
+}
+// ---------------------------------------------------------------------------
+// Micro-Review Integration (Sprint 2 — R9)
+// ---------------------------------------------------------------------------
+import { runMicroReview, } from "./build-micro-review.js";
+/**
+ * Run post-verification Micro-Review for a completed atomic task.
+ *
+ * Wrapper around {@link runMicroReview} that the build SKILL calls
+ * after each task's Verify GREEN step. Returns the raw result for
+ * the SKILL to decide on iteration.
+ *
+ * @example
+ * ```ts
+ * const result = runTaskPostVerification({ task, gitDiff, verifyOutput, planVersion: "v1" });
+ * if (result.verdict === "needs_iteration") { /* loop back *\/ }
+ * ```
+ * @public
+ */
+export function runTaskPostVerification(input) {
+    return runMicroReview(input);
+}
 //# sourceMappingURL=build.js.map

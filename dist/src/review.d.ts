@@ -204,3 +204,18 @@ export interface ReviewSubagentContext {
  */
 export declare function buildReviewSubagents(context: ReviewSubagentContext): SubagentInvocation[];
 export declare function mergeReviewResults(results: SubagentResult[]): MergedFinding[];
+/**
+ * Initialize a review progress file with frontmatter (R15.1).
+ */
+export declare function initReviewFrontmatter(filePath: string, topic: string, reviewers: string[]): void;
+/**
+ * Update a single layer's status in the review frontmatter (R15.2, R15.3).
+ * Sets completed_at when all layers are "done".
+ */
+export declare function markLayerStatus(filePath: string, layerName: string, status: string): void;
+/**
+ * Atomically update the YAML frontmatter of a file (R15.4, R15.5).
+ * Reads → parses → applies mutator → writes to tmp → renames.
+ * On mutator error, the file is left unchanged.
+ */
+export declare function atomicUpdateFrontmatter(filePath: string, mutator: (fm: Record<string, unknown>) => void): void;

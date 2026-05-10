@@ -19,7 +19,7 @@ export { appendToBacklog, findOverlappingEntries, generateBacklogHeader, parseBa
 /** @deprecated Import from forge-loop/episode instead */
 export { generateEpisodeId, parseEpisode, renderEpisode } from "./episode.js";
 /** @deprecated Import from forge-loop/evolution-marker instead */
-export { aggregateEvolutionMarkers, parseEvolutionMarkers, validateEvolutionTarget } from "./evolution-marker.js";
+export { aggregateEvolutionMarkers, parseEvolutionMarkers, validateEvolutionTarget, } from "./evolution-marker.js";
 /** @deprecated Import from forge-loop/failure-sink instead */
 export { buildFailureEpisode, buildFailureEvolutionMarker } from "./failure-sink.js";
 /** @deprecated Import from forge-loop/pattern-stats instead */

@@ -24,6 +24,7 @@
  * **Validates: Requirements 3.1, 3.2, 3.3, 3.4, 3.5**
  */
 import { extractStringField, parseFrontmatter } from "./frontmatter.js";
+import { IMPERATIVE_WHITELIST } from "./skill-description-imperatives.js";
 // ---------------------------------------------------------------------------
 // Constants
 // ---------------------------------------------------------------------------
@@ -158,5 +159,76 @@ export function validateDescription(filePath, content) {
 export function validateAllSkills(fs, skillsDir) {
     const paths = fs.listSkillFiles(skillsDir);
     return paths.map((path) => validateDescription(path, fs.readFile(path)));
+}
+// ---------------------------------------------------------------------------
+// Two-sentence format helpers (Requirements 1.2, 1.3, 1.4)
+// ---------------------------------------------------------------------------
+const SENTENCE_END_RE = /[。.]/;
+export function splitSentences(text) {
+    if (text === "")
+        return [""];
+    return text.split(SENTENCE_END_RE);
+}
+export function countSentences(text) {
+    if (text.trim() === "")
+        return 0;
+    const parts = splitSentences(text);
+    // Filter trailing empty strings from consecutive/trailing punctuation
+    const nonEmpty = parts.filter((s) => s.trim() !== "");
+    // If all parts are empty after splitting, count as 1 (single unpunctuated sentence)
+    return nonEmpty.length === 0 ? 1 : nonEmpty.length;
+}
+export function startsWithImperative(sentence, whitelist) {
+    if (sentence === "")
+        return false;
+    const trimmed = sentence.trimStart();
+    if (trimmed === "")
+        return false;
+    const firstWord = trimmed.split(/\s+/)[0] ?? "";
+    return whitelist.includes(firstWord);
+}
+export function secondSentenceStartsWithUseWhen(sentences) {
+    if (sentences.length < 2)
+        return false;
+    // Find the second non-empty sentence
+    const nonEmpty = sentences.filter((s) => s.trim() !== "");
+    if (nonEmpty.length < 2)
+        return false;
+    const second = nonEmpty[1].trimStart();
+    return /^use\s+when/i.test(second);
+}
+// ---------------------------------------------------------------------------
+// Extended validation (Requirement 1.6)
+// ---------------------------------------------------------------------------
+const ENFORCEMENT_MODE = "error";
+export function validateDescriptionExtended(content, options) {
+    const mode = options?.mode ?? ENFORCEMENT_MODE;
+    const base = validateDescription("extended", content);
+    const description = base.description;
+    const sentences = splitSentences(description);
+    const sentenceCount = countSentences(description);
+    const firstSentenceStartsWithImperative = description !== "" && startsWithImperative(sentences[0] ?? "", IMPERATIVE_WHITELIST);
+    const secondStart = secondSentenceStartsWithUseWhen(sentences);
+    const errors = [...base.errors];
+    if (description !== "") {
+        if (sentenceCount !== 2) {
+            errors.push(`description 需要 2 句话，当前 ${sentenceCount} 句`);
+        }
+        if (!firstSentenceStartsWithImperative) {
+            errors.push("description 首句未以祈使动词开头");
+        }
+        if (!secondStart) {
+            errors.push('description 第二句未以 "Use when" 开头');
+        }
+    }
+    const extendedValid = mode === "warning" ? base.valid : errors.length === 0;
+    return {
+        ...base,
+        sentenceCount,
+        firstSentenceStartsWithImperative,
+        secondSentenceStartsWithUseWhen: secondStart,
+        valid: extendedValid,
+        errors,
+    };
 }
 //# sourceMappingURL=skill-description.js.map

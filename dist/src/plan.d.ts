@@ -186,3 +186,38 @@ export declare function normalizeLightweightTask(task: LightweightTask, glossary
  */
 export declare function normalizeAtomicTask(task: AtomicTask, glossary: Glossary): AtomicTask;
 export type { Glossary, GlossaryTerm };
+/** @public */
+export interface SplitTriggerResult {
+    triggered: boolean;
+    reasons: string[];
+}
+/**
+ * Evaluate whether a plan's structure triggers split recommendations.
+ *
+ * Four trigger conditions (any one suffices):
+ *   (a) task count > 15
+ *   (b) ≥2 Sprint/Milestone/Phase headings
+ *   (c) task names containing delivery keywords
+ *   (d) chained Sprint dependencies in execution strategy
+ *
+ * @public
+ */
+export declare function checkPlanStructure(tasks: Array<{
+    id: string;
+    name: string;
+}>, headings: string[], executionStrategy: string): SplitTriggerResult;
+/** Result of Expected Output completeness check. */
+export interface ExpectedOutputResult {
+    errors: string[];
+    warnings: string[];
+}
+/**
+ * Check plan content for Expected Output completeness.
+ *
+ * Per R10: Every Run step must have an Expected line following it.
+ * Legacy plans (isLegacy=true) emit warnings instead of errors.
+ *
+ * @param planContent - Full plan markdown content
+ * @param isLegacy - Whether this is a pre-Sprint-1 plan (warnings only)
+ */
+export declare function checkExpectedOutput(planContent: string, isLegacy: boolean): ExpectedOutputResult;
