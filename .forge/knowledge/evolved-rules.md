@@ -91,3 +91,12 @@ Each rule prevents a specific, documented error pattern.
 **Added**: 2026-05-10
 **Confidence**: 0.85
 **Last_triggered**: 2026-05-10
+
+### R9: Lint 严格度按源码/测试分层
+
+**Content**: biome / ESLint 配置对 `src/` 与 `test/` 应用分层严格度。`src/` 严格：禁止 non-null assertion (`!`)、禁止 `console`、禁止显式 `any`、要求所有 import 有序、所有 format 合规。`test/` 宽松：允许 `!`（测试 fixture 的结构由 setUp 保证，等价于隐式 `expect(...).toBeDefined()`）、允许 `console.log`（调试辅助）、测试代码里显式 `any` 仍需 case-by-case 提供精确类型。实现方式：`biome.json` 的 `overrides[].includes: ["test/**"]` 段追加 `"style": { "noNonNullAssertion": "off" }`。分层不是"妥协"是场景化语义分级；在测试里逐处加 `// biome-ignore` 注释才是反模式——它把合理的测试模式污染到源码并增加噪声。新增 override 必须在该次 PR 中明确决策记录（CHANGELOG 或 ADR）。
+**Prevents**: (a) 为了清零 lint warning 在测试文件里撒满 `biome-ignore` 注释造成噪声；(b) 把测试里的 `!` 用法反向迁移到源码降低类型安全；(c) 维护者反复纠结"测试里 `!` 到底要不要改"耗时
+**Source**: 2026-05-10 存量 biome 问题清理会话 — 全仓 noNonNullAssertion 28 处全部在 test/，源码 9 处已改为 null-check + early return
+**Added**: 2026-05-10
+**Confidence**: 0.85
+**Last_triggered**: 2026-05-10
