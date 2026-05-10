@@ -5,7 +5,7 @@ task_type: "feature"
 project_phase: "ship-complete"
 phase: "ship-complete"
 active_plan: null
-spec_source: ".kiro/specs/sprint-3-gap-remediation"
+spec_source: ".kiro/specs/dist-sync-guard"
 updated: "2026-05-10"
 ---
 
@@ -35,3 +35,4 @@ updated: "2026-05-10"
 - ddd-tactical-bdd-collaboration: DDD 战术层 + BDD 协作层
 - branch-isolation-recommendation: Branch Gate 隔离推荐逻辑
 - sprint-3-gap-remediation: 三 Sprint 审计缺口修复（12 tasks, 51 new tests, 4691 total）
+- dist-sync-guard: src/dist 同步守卫（15 commits, 21 tests, CI+本地+文档+R6）

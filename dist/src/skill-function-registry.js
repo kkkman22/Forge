@@ -75,11 +75,35 @@ export const SKILL_FUNCTION_REGISTRY = [
         skills: ["forge-build/SKILL.md"],
         parameterNames: ["branchName", "commitTopic"],
     },
-    // --- forge-decide/SKILL.md ---
+    {
+        module: "context-budget.ts",
+        functionName: "serializeExploreResult",
+        skills: ["forge-build/SKILL.md"],
+        parameterNames: ["input"],
+    },
+    {
+        module: "context-budget.ts",
+        functionName: "serializeTestOutput",
+        skills: ["forge-build/SKILL.md"],
+        parameterNames: ["summary"],
+    },
+    {
+        module: "context-budget.ts",
+        functionName: "serializeGitDiff",
+        skills: ["forge-build/SKILL.md"],
+        parameterNames: ["summary", "lineCount"],
+    },
+    {
+        module: "context-budget.ts",
+        functionName: "serializeGitStatus",
+        skills: ["forge-build/SKILL.md"],
+        parameterNames: ["summary", "fileCount"],
+    },
+    // --- forge-decide/SKILL.md + forge-build/SKILL.md ---
     {
         module: "context-budget.ts",
         functionName: "serializeSubagentSummary",
-        skills: ["forge-decide/SKILL.md"],
+        skills: ["forge-build/SKILL.md", "forge-decide/SKILL.md"],
         parameterNames: ["summary"],
     },
     {
@@ -303,6 +327,19 @@ export const SKILL_FUNCTION_REGISTRY = [
         functionName: "checkGrillGlossaryConflicts",
         skills: ["forge-grill/SKILL.md"],
         parameterNames: ["tree", "glossary"],
+    },
+    // --- forge-spec/SKILL.md (Living Doc, Sprint 3) ---
+    {
+        module: "living-doc/generator.ts",
+        functionName: "generateLivingDoc",
+        skills: ["forge-spec/SKILL.md"],
+        parameterNames: ["specsDir", "acceptanceDir"],
+    },
+    {
+        module: "living-doc/renderer.ts",
+        functionName: "renderLivingDoc",
+        skills: ["forge-spec/SKILL.md"],
+        parameterNames: ["data", "outputDir"],
     },
 ];
 //# sourceMappingURL=skill-function-registry.js.map

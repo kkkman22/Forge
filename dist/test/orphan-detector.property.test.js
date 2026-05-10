@@ -73,10 +73,10 @@ describe("ps output line regex property tests", () => {
         const line = "  1234     1  05:30:22 /usr/bin/node server.js";
         const match = line.trim().match(PS_LINE_RE);
         expect(match).not.toBeNull();
-        expect(match[1]).toBe("1234");
-        expect(match[2]).toBe("1");
-        expect(match[3]).toBe("05:30:22");
-        expect(match[4]).toBe("/usr/bin/node server.js");
+        expect(match?.[1]).toBe("1234");
+        expect(match?.[2]).toBe("1");
+        expect(match?.[3]).toBe("05:30:22");
+        expect(match?.[4]).toBe("/usr/bin/node server.js");
     });
     it("matches lines with commands containing spaces and special characters", () => {
         const cases = [
@@ -99,8 +99,8 @@ describe("ps output line regex property tests", () => {
         for (const { line, expectedPid, expectedCmd } of cases) {
             const match = line.trim().match(PS_LINE_RE);
             expect(match).not.toBeNull();
-            expect(match[1]).toBe(expectedPid);
-            expect(match[4]).toBe(expectedCmd);
+            expect(match?.[1]).toBe(expectedPid);
+            expect(match?.[4]).toBe(expectedCmd);
         }
     });
     it("rejects lines with non-numeric pid or ppid", () => {
@@ -127,14 +127,14 @@ describe("ps output line regex property tests", () => {
         const line = "1234 1 00:05 cmd\twith\ttabs";
         const match = line.trim().match(PS_LINE_RE);
         expect(match).not.toBeNull();
-        expect(match[4]).toContain("cmd");
+        expect(match?.[4]).toContain("cmd");
     });
     it("handles very long command strings", () => {
         const longCmd = `/usr/bin/java -Xmx4g -classpath ${"a".repeat(500)} MainClass arg1 arg2`;
         const line = `4242 1 10-00:00:00 ${longCmd}`;
         const match = line.trim().match(PS_LINE_RE);
         expect(match).not.toBeNull();
-        expect(match[4]).toBe(longCmd);
+        expect(match?.[4]).toBe(longCmd);
     });
 });
 //# sourceMappingURL=orphan-detector.property.test.js.map

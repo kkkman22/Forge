@@ -7,11 +7,10 @@
  * **Validates: Requirement 8 (Plan injection)**
  */
 import { execFileSync } from "node:child_process";
-import { mkdirSync, rmSync, writeFileSync } from "node:fs";
-import { join } from "node:path";
-import { mkdtempSync } from "node:fs";
+import { mkdirSync, mkdtempSync, rmSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
-import { describe, afterEach, it, expect } from "vitest";
+import { join } from "node:path";
+import { afterEach, describe, expect, it } from "vitest";
 const SCRIPT_PATH = join(process.cwd(), "scripts", "inject-plan-context.mjs");
 function createTempPlansDir() {
     const dir = mkdtempSync(join(tmpdir(), "forge-plan-test-"));
@@ -64,7 +63,7 @@ describe("inject-plan-context.mjs", () => {
         // Should contain at most 3 plan headers
         const planHeaders = output.match(/--- .+plan-\d+\.md ---/g);
         expect(planHeaders).not.toBeNull();
-        expect(planHeaders.length).toBeLessThanOrEqual(3);
+        expect(planHeaders?.length).toBeLessThanOrEqual(3);
     });
     it("skips plans without active/approved status", () => {
         tempDir = createTempPlansDir();

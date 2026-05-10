@@ -98,7 +98,7 @@ describe("review-report / plan-file / spec-file — passthrough unknown fields",
     });
     /** **Validates: Requirement 2.7** */
     it("SpecFileSchema preserves unknown fields", () => {
-        fc.assert(fc.property(specFileArb, fc.stringMatching(/^[a-z_]{3,20}$/).filter((k) => !KNOWN_SPEC.has(k)), fc.string({ maxLength: 40 }), (sample, key, value) => {
+        fc.assert(fc.property(specFileArb, fc.stringMatching(/^[a-z_]{3,20}$/).filter((k) => !KNOWN_SPEC.has(k) && k !== "__proto__"), fc.string({ maxLength: 40 }), (sample, key, value) => {
             const augmented = { ...sample, [key]: value };
             const result = SpecFileSchema.safeParse(augmented);
             expect(result.success).toBe(true);

@@ -13,6 +13,7 @@
  *   Body: 目的, 需求 (with 当...则... scenarios), 不做什么, Delta (brownfield only)
  */
 import { DEFAULT_EXTRACTION_RULES, extractCandidates, filterCandidates, } from "./glossary-extractor.js";
+export { detectSpecLeak, loadBannedPatterns } from "./spec-leak-detector.js";
 // ---------------------------------------------------------------------------
 // Spec lifecycle functions
 // ---------------------------------------------------------------------------
@@ -207,5 +208,42 @@ export function renderGlossaryMissNotice(missed) {
         return "";
     const terms = missed.map((c) => c.term).join(", ");
     return `[glossary-miss] 未定义术语：[${terms}]`;
+}
+// ---------------------------------------------------------------------------
+// Business-analyst parallel triggering
+// ---------------------------------------------------------------------------
+/**
+ * Collect the union of `core_subdomains` declared across all enabled packs.
+ *
+ * Each pack's `featureFlags.core_subdomains` is expected to be a `string[]`
+ * when present. Packs that omit the flag (or set it to a non-array value) are
+ * treated as contributing an empty set. The result is deduplicated.
+ *
+ * This function is pure.
+ */
+export function getCoreSubdomains(enabledPacks) {
+    const result = [];
+    for (const pack of enabledPacks) {
+        const subdomains = pack.featureFlags?.core_subdomains;
+        if (Array.isArray(subdomains)) {
+            result.push(...subdomains);
+        }
+    }
+    return [...new Set(result)];
+}
+/**
+ * Determine whether the business-analyst subagent should be triggered in
+ * parallel during the spec phase.
+ *
+ * Returns `true` when `currentContext` is defined and appears in the union
+ * of core subdomains collected from the enabled packs.
+ *
+ * This function is pure.
+ */
+export function shouldTriggerBusinessAnalyst(currentContext, enabledPacks) {
+    if (!currentContext)
+        return false;
+    const coreSubdomains = getCoreSubdomains(enabledPacks);
+    return coreSubdomains.includes(currentContext);
 }
 //# sourceMappingURL=spec.js.map

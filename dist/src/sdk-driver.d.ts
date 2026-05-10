@@ -36,9 +36,13 @@ export declare class SdkDriver {
     private readonly logger;
     /** Performance tracker for iteration/subagent timing and degradation detection. */
     private readonly perfTracker;
+    /** Events_NDJSON log path (cmux integration). */
+    private readonly eventsPath;
     constructor(config: SdkDriverConfig, effectExecutor: EffectExecutorInterface, agentAdapter: AgentInterface);
     /** Translation helper — falls back to key when no t() is configured. */
     private t;
+    /** Append an event to the NDJSON log (cmux integration). */
+    private emitEvent;
     /** Run the autonomous loop until a termination condition is met. */
     run(): Promise<SdkDriverResult>;
     /** Signal the driver to stop gracefully. */
@@ -56,6 +60,8 @@ export declare class SdkDriver {
     private buildIterationContext;
     /** Apply state mutations from an extracted iteration function. */
     private applyIterationResult;
+    /** Emit commit or rollback event based on iteration result. */
+    private emitIterResultEvent;
     /** Skill-aware iteration — delegates to extracted function. */
     private executeSkillAwareIteration;
     /** Build a SkillIterationContext extending the base context. */

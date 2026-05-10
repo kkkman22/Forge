@@ -9,8 +9,8 @@
  * **Validates: Requirements 3.1–3.11, 10.1–10.4**
  */
 import { describe, expect, it } from "vitest";
-import * as barrel from "../src/index.js";
 import * as deprecated from "../src/deprecated.js";
+import * as barrel from "../src/index.js";
 // ---------------------------------------------------------------------------
 // 1. Expected public value exports exist (Requirement 10.1, 10.2)
 // ---------------------------------------------------------------------------
@@ -149,9 +149,9 @@ describe("barrel file does not expose internal modules", () => {
         expect(exports.checkBranchTopicGate).toBeUndefined();
     });
     // Verify the total number of value exports
-    it("has exactly 88 value exports", () => {
+    it("has exactly 76 value exports", () => {
         const valueExports = Object.keys(exports).filter((key) => typeof exports[key] !== "undefined");
-        expect(valueExports).toHaveLength(88);
+        expect(valueExports).toHaveLength(76);
         expect(valueExports.sort()).toEqual([
             "CLASSIFICATION_MAP",
             "CliError",
@@ -166,6 +166,7 @@ describe("barrel file does not expose internal modules", () => {
             "buildSubagentInvocations",
             "buildVerificationCriteria",
             "canParseTestOutput",
+            "checkPlanStructure",
             "checkReviewFreshness",
             "checkShipGate",
             "checkShipGateWithChecklist",

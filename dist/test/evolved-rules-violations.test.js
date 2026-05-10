@@ -33,9 +33,7 @@ describe("scanForTriggers", () => {
     });
     it("skips signals with invalid regex without crashing", () => {
         const text = "test";
-        const badSignals = [
-            { ruleId: "R99", pattern: "[unclosed", type: "violation" },
-        ];
+        const badSignals = [{ ruleId: "R99", pattern: "[unclosed", type: "violation" }];
         expect(() => scanForTriggers(text, "2026-05-10", badSignals)).not.toThrow();
     });
     it("DEFAULT_SIGNALS covers R1-R5", () => {

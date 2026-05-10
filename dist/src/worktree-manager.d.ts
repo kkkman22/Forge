@@ -75,3 +75,14 @@ export declare function canCreateWorktree(activeCount: number, maxConcurrent?: n
  * @returns Whether the branch is a valid worktree source.
  */
 export declare function isValidWorktreeSource(currentBranch: string): boolean;
+/**
+ * Count additional (non-main) worktrees from `git worktree list --porcelain` output.
+ *
+ * Returns `max(0, worktreeLineCount - 1)` since the main working tree
+ * is always listed first.
+ *
+ * @param porcelainOutput  Raw output from `git worktree list --porcelain`.
+ * @returns Number of additional worktrees beyond the main one.
+ * @public
+ */
+export declare function countActiveWorktrees(porcelainOutput: string): number;
