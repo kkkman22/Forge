@@ -191,8 +191,6 @@ export function isValidWorktreeSource(currentBranch: string): boolean {
  */
 export function countActiveWorktrees(porcelainOutput: string): number {
   if (!porcelainOutput || porcelainOutput.trim() === "") return 0;
-  const worktreeLines = porcelainOutput
-    .split("\n")
-    .filter((line) => line.startsWith("worktree "));
+  const worktreeLines = porcelainOutput.split("\n").filter((line) => line.startsWith("worktree "));
   return Math.max(0, worktreeLines.length - 1);
 }

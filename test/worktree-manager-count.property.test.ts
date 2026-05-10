@@ -22,8 +22,7 @@ describe("countActiveWorktrees", () => {
   });
 
   it("counts 1 additional worktree", () => {
-    const output =
-      "worktree /repo/main\nbranch main\n\nworktree /repo/feat\nbranch feat";
+    const output = "worktree /repo/main\nbranch main\n\nworktree /repo/feat\nbranch feat";
     expect(countActiveWorktrees(output)).toBe(1);
   });
 
