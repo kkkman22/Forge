@@ -13,10 +13,7 @@ updated: "2026-05-10"
 
 ## 当前任务
 
-**ddd-tactical-bdd-collaboration** — DDD 战术层 + BDD 协作层（Sprint 3）
-- 档位：Standard (plan → build → review → test → ship)
-- Spec：`.kiro/specs/ddd-tactical-bdd-collaboration/`
-- 分支：`worktree-ddd-tactical-bdd-collaboration`
+无进行中任务。
 
 ## 已完成任务
 
@@ -35,3 +32,5 @@ updated: "2026-05-10"
 - specs-unchecked-tasks-remediation: 4 spec 偏差补齐（20 tasks，200 tests）
 - pms-pack-v1-core: PMS Pack v1 Core 引擎 (16/16 tasks, 67 tests)
 - pms-pack-v1-pack: PMS Pack v1 域包内容（跳过完成）
+- ddd-tactical-bdd-collaboration: DDD 战术层 + BDD 协作层
+- branch-isolation-recommendation: Branch Gate 隔离推荐逻辑
