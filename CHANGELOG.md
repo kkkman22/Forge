@@ -13,6 +13,26 @@ Entries follow [Keep a Changelog](https://keepachangelog.com/) with Forge-specif
 
 ### Fixed
 
+- **Evolved Rules Integration & Retirement (2026-05-10 session)** — R1-R9 分类融入基础设施或留在 evolved-rules
+  - R1-R4 退役到 `.forge/knowledge/solutions/evolved-rules-retired.md`（已永久融入 CLAUDE.md / SKILL.md / hooks）
+  - R5 (Implicit Idle) 融入 `skills/shared/next-step-protocol.md` 新增"三种违规形态"表
+  - R6 (Claimed New File Existence) + R7 (Pack/Loader Integration Evidence) + R8 (Stub Detection) 融入 `.claude/agents/spec-check.md` 新增 Check Items 3a/5/6 + 扩展 Severity Judgment 表
+  - R7 对应的 Plan 任务模板融入 `skills/forge-plan/references/atomic-task-format.md` 新增"Pack Data Task Integration Test Requirement"章节
+  - R9 (Lint 严格度分层) 固化到 `CONTRIBUTING.md` 新增"Lint Strictness Layering"章节
+  - `.forge/knowledge/evolved-rules.md` 活跃规则由 9 条精简至 5 条（R5/R6/R7/R8/R9 重编号为 R1-R5），每条新增 `Infra_Ref` 字段指向落地位置
+
+- **Legacy biome 存量清理 (2026-05-10 session)** — 全仓零 lint 告警
+  - 修复 4 errors（format + import 排序）+ 116 warnings + 13 infos
+  - 手工修复源码 9 处 `!` non-null assertion → null-check + early return
+  - 手工修复测试 12 处 `as any` → `MirrorDaemonStartResult` discriminated union（新增 `test/cmux-mirror/types.ts`）
+  - 手工修复 4 处其他 `any` → 精确类型或 `unknown` + narrowing
+  - 修复 `test/cmux-mirror/cmux-json-schema.test.ts` non-null-asserted-optional-chain
+  - 清理未使用类型定义 `Action` in `test/cmux-mirror/session-totality.property.test.ts`
+  - `biome.json` test override 追加 `noNonNullAssertion: "off"`（测试代码语义等价于 `expect(...).toBeDefined()`）
+  - README.md 指标同步：模块 126→134、测试文件 257→267、属性测试 129→132、总测试 4184→4691
+  - 6 个 skill 标记 `skeleton_exempt_legacy: true`（forge-pack + 5 个 utility skill）
+  - 3 个 skill description 重写满足 2 句 + 祈使动词首句规则（forge-mutate、forge-pack、forge-storm）
+
 - **Sprint 3 Gap Remediation** — Fixes from 2026-05-10 audit
   - Merged `business-analyst.md` agent definition to main branch (Three Amigos collaboration now works)
   - Glossary parser now supports aggregated YAML format (PMS Pack glossary loads 111 terms)

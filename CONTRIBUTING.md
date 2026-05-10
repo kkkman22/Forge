@@ -65,6 +65,24 @@ npm run test         # Run tests
 npm run check        # All of the above (CI uses this)
 ```
 
+### Lint Strictness Layering（源自 evolved-rules R9）
+
+Biome 规则按 `src/` 与 `test/` 分层严格度。这是项目的工程约定，新增 lint 规则时按此原则决定是否 override：
+
+| 范围 | 严格度 | 规则示例 |
+|------|--------|---------|
+| `src/` | **严格** | 禁止 `!` non-null assertion、禁止 `console`、禁止显式 `any`、要求 import 排序与 format 合规 |
+| `test/` | **宽松** | 允许 `!`（测试 fixture 结构由 setUp 保证，等价于隐式 `expect(...).toBeDefined()`）、允许 `console.log`（调试辅助）；`any` 仍需 case-by-case 提供精确类型 |
+
+**配置位置**：`biome.json` 的 `overrides[].includes: ["test/**"]` 段声明 `test/` 豁免项。
+
+**反模式**：
+
+- ❌ 在测试文件里撒满 `// biome-ignore lint/style/noNonNullAssertion: ...` 注释 — 这增加噪声，不是"合规"
+- ❌ 把测试里的 `!` 用法反向迁移到源码 — 这降低类型安全
+
+**正确姿态**：分层不是妥协，是场景化的语义分级。新增 override 必须在 PR 的 CHANGELOG 或 ADR 中记录决策理由。
+
 ## Commit Convention
 
 Use [Conventional Commits](https://www.conventionalcommits.org/):
