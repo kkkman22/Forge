@@ -5,7 +5,7 @@ task_type: "feature"
 project_phase: "ship-complete"
 phase: "ship-complete"
 active_plan: null
-spec_source: ".kiro/specs/ddd-tactical-bdd-collaboration"
+spec_source: ".kiro/specs/sprint-3-gap-remediation"
 updated: "2026-05-10"
 ---
 
@@ -34,3 +34,4 @@ updated: "2026-05-10"
 - pms-pack-v1-pack: PMS Pack v1 域包内容（跳过完成）
 - ddd-tactical-bdd-collaboration: DDD 战术层 + BDD 协作层
 - branch-isolation-recommendation: Branch Gate 隔离推荐逻辑
+- sprint-3-gap-remediation: 三 Sprint 审计缺口修复（12 tasks, 51 new tests, 4691 total）
