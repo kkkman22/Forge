@@ -1,10 +1,10 @@
 ---
-current_task: "ddd-tactical-bdd-collaboration"
+current_task: null
 tier: "standard"
 task_type: "feature"
-project_phase: "test"
-phase: "test"
-active_plan: "ddd-tactical-bdd-collaboration"
+project_phase: "ship-complete"
+phase: "ship-complete"
+active_plan: null
 spec_source: ".kiro/specs/ddd-tactical-bdd-collaboration"
 updated: "2026-05-10"
 ---
