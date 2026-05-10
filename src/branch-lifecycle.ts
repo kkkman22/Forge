@@ -11,6 +11,8 @@
 import type {
   BranchTopicGateResult,
   CommitTopicCheckResult,
+  IsolationContext,
+  IsolationRecommendation,
   PendingDeliveryRecord,
   UnshippedBranchWarning,
 } from "./loop-types.js";
@@ -149,4 +151,67 @@ export function detectUnshippedBranches(
       timestamp: d.timestamp,
       message: `分支 "${d.branchName}" (topic: ${d.topic}) 有未完成的交付记录，建议完成生命周期（merge/PR/discard）`,
     }));
+}
+
+// ---------------------------------------------------------------------------
+// Isolation strategy recommendation (branch-isolation-recommendation)
+// ---------------------------------------------------------------------------
+
+/**
+ * Recommend a branch isolation strategy based on current development context.
+ *
+ * Decision priority:
+ *   1. Worktree at capacity → fallback to stash-feature
+ *   2. Dirty working tree → recommend worktree
+ *   3. Full tier → recommend worktree
+ *   4. Active worktrees exist → recommend worktree (consistency)
+ *   5. Default (clean, no worktrees, light/standard) → feature branch
+ *
+ * @param ctx  Current isolation context.
+ * @returns Recommendation with primary strategy, fallback, and reason.
+ * @public
+ */
+export function recommendIsolationStrategy(ctx: IsolationContext): IsolationRecommendation {
+  // Priority 1: capacity check
+  if (ctx.activeWorktrees >= ctx.maxConcurrent) {
+    return {
+      primary: "stash-feature",
+      secondary: "worktree",
+      reason: `worktree 并发上限已满 (${ctx.activeWorktrees}/${ctx.maxConcurrent})`,
+    };
+  }
+
+  // Priority 2: dirty tree
+  if (ctx.dirtyTree) {
+    return {
+      primary: "worktree",
+      secondary: "stash-feature",
+      reason: "工作树有未提交变更",
+    };
+  }
+
+  // Priority 3: full tier
+  if (ctx.tier === "full") {
+    return {
+      primary: "worktree",
+      secondary: "feature",
+      reason: "Full tier 任务推荐 worktree 隔离",
+    };
+  }
+
+  // Priority 4: active worktrees → keep consistency
+  if (ctx.activeWorktrees >= 1) {
+    return {
+      primary: "worktree",
+      secondary: "feature",
+      reason: "已有活跃 worktree，保持并行开发一致性",
+    };
+  }
+
+  // Priority 5: default
+  return {
+    primary: "feature",
+    secondary: "worktree",
+    reason: "工作树干净，推荐创建 feature 分支",
+  };
 }

@@ -443,6 +443,34 @@ export interface CommitTopicCheckResult {
 }
 
 /**
+ * Context for recommending a branch isolation strategy.
+ * @public
+ */
+export interface IsolationContext {
+  /** Whether the working tree has uncommitted changes. */
+  dirtyTree: boolean;
+  /** Number of currently active worktrees (excluding main). */
+  activeWorktrees: number;
+  /** Task routing tier. */
+  tier: "light" | "standard" | "full";
+  /** Maximum allowed concurrent worktrees. */
+  maxConcurrent: number;
+}
+
+/**
+ * Recommended branch isolation strategy.
+ * @public
+ */
+export interface IsolationRecommendation {
+  /** Recommended primary isolation strategy. */
+  primary: "feature" | "worktree" | "stash-feature";
+  /** Fallback strategy. */
+  secondary: "stash-feature" | "feature" | "worktree";
+  /** Human-readable reason for the recommendation. */
+  reason: string;
+}
+
+/**
  * Warning about an unshipped branch with pending delivery.
  * @public
  */
