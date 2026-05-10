@@ -135,9 +135,16 @@ interface AggregatedTerm {
 }
 
 function extractFirstFrontmatter(content: string): Record<string, unknown> | null {
+  // Standard frontmatter: ---\n...\n---
   const match = content.match(/^---\n([\s\S]*?)\n---/);
-  if (!match) return null;
-  return parseFrontmatterExtended(match[1]);
+  if (match) return parseFrontmatterExtended(match[1]);
+
+  // Unclosed frontmatter: file starts with ---\n but no closing ---
+  if (content.startsWith("---\n")) {
+    return parseFrontmatterExtended(content.slice(4));
+  }
+
+  return null;
 }
 
 function parseAggregatedFormat(
