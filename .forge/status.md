@@ -1,19 +1,17 @@
 ---
-current_task: null
-tier: "standard"
-task_type: "feature"
-project_phase: "ship-complete"
-phase: "ship-complete"
-active_plan: null
-spec_source: ".kiro/specs/dist-sync-guard"
-updated: "2026-05-10"
+current_task: ""
+tier: ""
+task_type: ""
+project_phase: ""
+phase: ""
+updated: "2026-05-09"
 ---
 
 # 项目状态
 
 ## 当前任务
 
-无进行中任务。
+（无）
 
 ## 已完成任务
 
@@ -29,10 +27,3 @@ updated: "2026-05-10"
 - routing-assumptions: 路由器输出增加假设段落
 - skill-behavioral-guardrails: SKILL 行为护栏
 - Group C/D/E: 社区基础设施
-- specs-unchecked-tasks-remediation: 4 spec 偏差补齐（20 tasks，200 tests）
-- pms-pack-v1-core: PMS Pack v1 Core 引擎 (16/16 tasks, 67 tests)
-- pms-pack-v1-pack: PMS Pack v1 域包内容（跳过完成）
-- ddd-tactical-bdd-collaboration: DDD 战术层 + BDD 协作层
-- branch-isolation-recommendation: Branch Gate 隔离推荐逻辑
-- sprint-3-gap-remediation: 三 Sprint 审计缺口修复（12 tasks, 51 new tests, 4691 total）
-- dist-sync-guard: src/dist 同步守卫（15 commits, 21 tests, CI+本地+文档+R6）
