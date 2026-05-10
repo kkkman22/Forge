@@ -51,6 +51,8 @@ const NAME_ALLOWLIST = new Set([
   "@biomejs/biome",
   "@types/node",
   "@vitest/coverage-v8",
+  "@stryker-mutator/core",
+  "@stryker-mutator/vitest-runner",
   "fast-check",
   "typedoc",
   "typescript",

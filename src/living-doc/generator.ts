@@ -35,9 +35,9 @@ export interface LivingDocData {
   };
 }
 
-type Verdict = "pass" | "fail" | "pending" | "skip";
+export type Verdict = "pass" | "fail" | "pending" | "skip";
 
-interface VerdictEntry {
+export interface VerdictEntry {
   verdict: Verdict;
   timestamp: string;
 }
