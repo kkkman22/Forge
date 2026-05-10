@@ -122,3 +122,73 @@ Expected: exit 0
 ### Legacy Plans
 
 Plans created before this rule (no `Expected:` fields) are grandfathered: the self-check emits a **warning** (not error). New plans without Expected fields cause a self-check **error**.
+
+## Pack Data Task Integration Test Requirement（源自 evolved-rules R7）
+
+当原子任务的 `files` 字段包含 `packs/<name>/<category>/` 路径（即交付 Pack 数据），**Plan 必须同时包含一个配套的 integration test 任务**，验证对应的 Core loader 在启用该 Pack 后返回非空结果。
+
+### 适用判定
+
+适用该规则的路径前缀：
+
+- `packs/<name>/contexts/` → 要求 `loadContexts(enabledPacks)` 测试
+- `packs/<name>/glossary/` → 要求 `loadGlossary(enabledPacks)` 测试
+- `packs/<name>/banned-patterns.yaml` → 要求 `loadBannedPatterns(enabledPacks)` 测试
+- `packs/<name>/state-machines/` → 要求 `loadStateMachineDefinitions(enabledPacks)` 测试
+- `packs/<name>/lint-rules/` → 要求 `loadPackLintRules(enabledPacks)` 测试
+
+### 为什么 Zero-Pack 测试不够
+
+Zero-Pack-Zero-Impact 测试验证的是"空输入 → 空输出"，这**只覆盖反面**。它看不到 Pack 实际数据格式与 loader 期望格式的 schema 断层。例如 PMS Pack 的 glossary 采用聚合 YAML 格式，而 loader 期望 per-term frontmatter — 两侧静态测试都绿，但运行时 loader 返回空 registry，Spec Leak Detector 白名单因此失效。
+
+### 配套 integration test 任务模板
+
+```markdown
+### Task N+1: <PackName> Pack <Category> Integration Test
+
+**Files**:
+- Create: `test/<category>/<pack-name>-pack-integration.test.ts`
+
+**RED** — 写失败测试
+
+\```typescript
+import { describe, it, expect } from "vitest";
+import { load<Category> } from "../../src/<category>/registry.js";
+import type { EnabledPacks, PackEntry } from "../../src/pack/types.js";
+
+describe("<PackName> Pack <Category> integration", () => {
+  it("load<Category> returns non-empty registry when pack is enabled", async () => {
+    const entry: PackEntry = {
+      name: "<pack-name>",
+      rootPath: resolve(__dirname, "../../packs/<pack-name>"),
+      // ... 完整 PackEntry 字段
+    };
+    const enabled: EnabledPacks = {
+      order: ["<pack-name>"],
+      entries: [entry],
+      customLayerRoot: "/nonexistent",
+    };
+
+    const registry = await load<Category>(enabled, realFs);
+    expect(registry.entries.size).toBeGreaterThanOrEqual(<最低预期数量>);
+  });
+});
+\```
+
+Run: `npx vitest run test/<category>/<pack-name>-pack-integration.test.ts`
+Expected: FAIL — "Cannot find module" 或 loader 返回空结果
+
+**GREEN** — 按 Pack 实际数据让测试通过（通常不需要改 loader，除非 schema 断层）
+Run: `npx vitest run test/<category>/<pack-name>-pack-integration.test.ts`
+Expected: exit 0
+```
+
+### 断言强度要求
+
+| 断言类型 | 示例 | 适用场景 |
+|---------|------|---------|
+| **数量下限** | `expect(registry.entries.size).toBeGreaterThanOrEqual(80)` | 术语表、场景库等大量条目 |
+| **关键键存在** | `expect(registry.byTerm.get("Room")).toBeDefined()` | 核心术语、核心 Context |
+| **跨分区验证** | `expect(contexts.size).toBeGreaterThanOrEqual(3)` | 同词多 Context 定义（如 R6 的 Room） |
+
+**不可接受的弱断言**：`expect(registry).toBeDefined()` — 只验证加载没崩溃，未验证内容非空。
