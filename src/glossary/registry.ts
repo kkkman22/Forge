@@ -103,7 +103,14 @@ function parseGlossaryFile(
 
   // Format A: aggregated (Sprint 2 PMS Pack style)
   if (fm && Array.isArray(fm.terms) && fm.terms.length > 0) {
-    parseAggregatedFormat(fm as { terms: AggregatedTerm[] }, context, sourcePath, sourceLayer, entries, byTerm);
+    parseAggregatedFormat(
+      fm as { terms: AggregatedTerm[] },
+      context,
+      sourcePath,
+      sourceLayer,
+      entries,
+      byTerm,
+    );
     return;
   }
 
@@ -362,7 +369,7 @@ function parseFrontmatterExtended(yaml: string): Record<string, unknown> | null 
     for (const line of lines.slice(termsIndex + 1)) {
       const termMatch = line.match(/^\s+-\s+term:\s*(.*)/);
       if (termMatch) {
-        if (current && current.term) terms.push(current as AggregatedTerm);
+        if (current?.term) terms.push(current as AggregatedTerm);
         current = { term: termMatch[1].trim().replace(/^['"]|['"]$/g, "") };
         continue;
       }
@@ -383,7 +390,7 @@ function parseFrontmatterExtended(yaml: string): Record<string, unknown> | null 
         if (defMatch2) current.definition = defMatch2[1].trim().replace(/^['"]|['"]$/g, "");
       }
     }
-    if (current && current.term) terms.push(current as AggregatedTerm);
+    if (current?.term) terms.push(current as AggregatedTerm);
     result.terms = terms;
     return result;
   }
