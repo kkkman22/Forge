@@ -10,6 +10,7 @@
  */
 
 import type { ContextMapEntry } from "./pack/types.js";
+import { existsSync, readFileSync } from "node:fs";
 
 // ---------------------------------------------------------------------------
 // Types
@@ -62,17 +63,71 @@ const ESCAPE_HATCH_RE = /@forge:allow-cross-context/;
 // ---------------------------------------------------------------------------
 
 /**
- * Load a simple key: value ownership file (not full YAML).
- * Each line is expected to be `glob: contextName` or `glob:contextName`.
- * Lines starting with `#` are comments; blank lines are skipped.
+ * Load ownership map from .forge/context-ownership.yaml.
+ * Parses YAML map format under `mappings:` key.
+ * Returns empty object when file doesn't exist or is malformed.
  */
 export function loadOwnershipMap(
-  _projectRoot: string,
-  _ownershipYamlPath: string,
+  projectRoot: string,
+  ownershipYamlPath: string,
 ): Record<string, string> {
-  // Placeholder — file-system loading is tested through integration tests.
-  // Unit tests supply the ownership map directly.
-  return {};
+  const mappings: Record<string, string> = {};
+
+  if (!existsSync(ownershipYamlPath)) {
+    return mappings;
+  }
+
+  try {
+    const content = readFileSync(ownershipYamlPath, "utf-8");
+    parseYamlMappings(content, mappings);
+  } catch {
+    // Malformed file — return empty, don't crash
+  }
+
+  return mappings;
+}
+
+/** Parse YAML-style mappings from content. */
+function parseYamlMappings(content: string, mappings: Record<string, string>): void {
+  const lines = content.split("\n");
+  let inMappings = false;
+
+  for (const rawLine of lines) {
+    const line = rawLine.trim();
+
+    // Detect start of mappings block
+    if (/^mappings:\s*$/.test(line)) {
+      inMappings = true;
+      continue;
+    }
+
+    // Exit mappings block on next top-level key
+    if (inMappings && /^[a-zA-Z]/.test(line) && !line.startsWith('"')) {
+      // Check if it's a top-level key (no indent)
+      if (rawLine === rawLine.trimStart() && !/^"/.test(line)) {
+        inMappings = false;
+        continue;
+      }
+    }
+
+    if (!inMappings) continue;
+
+    // Parse "glob": context or glob: context
+    const quotedMatch = line.match(/^["']([^"']+)["']\s*:\s*(.+)/);
+    if (quotedMatch) {
+      const glob = quotedMatch[1].trim();
+      const context = quotedMatch[2].trim().replace(/^['"]|['"]$/g, "");
+      if (glob && context) mappings[glob] = context;
+      continue;
+    }
+
+    const plainMatch = line.match(/^(\S+)\s*:\s*(.+)/);
+    if (plainMatch) {
+      const glob = plainMatch[1].trim();
+      const context = plainMatch[2].trim().replace(/^['"]|['"]$/g, "");
+      if (glob && context && glob !== "schema_version") mappings[glob] = context;
+    }
+  }
 }
 
 // ---------------------------------------------------------------------------
