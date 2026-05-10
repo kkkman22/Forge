@@ -32,7 +32,7 @@ function createMockFs(files: Record<string, string>): FileSystem {
   };
 }
 
-function packEnabled(rootPath: string, files: Record<string, string>): EnabledPacks {
+function packEnabled(rootPath: string, _files: Record<string, string>): EnabledPacks {
   return {
     order: ["test-pack"],
     entries: [
@@ -48,7 +48,7 @@ function packEnabled(rootPath: string, files: Record<string, string>): EnabledPa
           lintRules: `${rootPath}/lint-rules`,
         },
         featureFlags: {},
-      },
+      } as any,
     ],
     customLayerRoot: "/custom",
   };
