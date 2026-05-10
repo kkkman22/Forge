@@ -148,6 +148,24 @@
         "hooks": [
           {
             "type": "command",
+            "command": "node scripts/record-evolved-rule-violation.mjs 2>/dev/null || true",
+            "timeout": 5
+          }
+        ]
+      },
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "node scripts/flag-stale-evolved-rules.mjs 2>/dev/null || true",
+            "timeout": 5
+          }
+        ]
+      },
+      {
+        "hooks": [
+          {
+            "type": "command",
             "command": "node scripts/cmux-mirror/sync-once.mjs .forge 2>/dev/null || true",
             "timeout": 2
           }
