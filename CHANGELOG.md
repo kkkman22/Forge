@@ -44,6 +44,13 @@ Entries follow [Keep a Changelog](https://keepachangelog.com/) with Forge-specif
 
 ### Added
 
+- **Evolved Rules Automation Infrastructure (补强 1/2/3)** — 规则演化模型闭环自动化
+  - **补强 1 (Staleness Auto-Detection)**: `src/evolved-rules-staleness.ts` 纯函数 + `scripts/flag-stale-evolved-rules.mjs` CLI。扫描 `.forge/runs/` session 目录 mtime，对 >= 5 sessions 未触发的规则自动标记 `stale_flags` frontmatter。通过 Stop hook 每会话执行。
+  - **补强 2 (Rule Violation Counter)**: `src/evolved-rules-violations.ts` 纯函数 + `scripts/record-evolved-rule-violation.mjs` CLI。扫描最近 24 小时内的 `.forge/runs/`、`.forge/progress/`、`.forge/reviews/` 内容，匹配 R1-R5 的 violation/guard 模式，自动更新 `Last_triggered` 字段。通过 Stop hook 每会话执行。
+  - **补强 3 (Infra_Ref Back-Validation)**: `src/evolved-rules-infra-refs.ts` 纯函数 + `scripts/verify-evolved-rule-infra-refs.mjs` CLI。解析每条规则的 `Infra_Ref` 字段，验证引用的文件与 section 在主分支仍存在。纳入 `npm run check` 和 CI，基础设施损坏立即 fail。Dogfooding 时抓到 1 个真实 Infra_Ref 漂移（R1 的 "§规则 3" 应为 "§三种违规形态"）。
+  - 37 个新单元测试全绿（13 staleness + 11 violation + 13 infra-refs）
+  - 规则演化模型现闭环：观察 → evolved-rules → 自动触发计数 → 自动 staleness 标记 → 人工决策融入/退役 → Infra_Ref 自动守护
+
 - **PMS Domain Pack v1.0** — Hotel PMS domain knowledge pack
   - 8 Bounded Contexts with context map (10 edges)
   - Context-specific glossary (9 files, 12+ terms each, Chinese aliases)
