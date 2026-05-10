@@ -2,6 +2,7 @@ import { mkdirSync, mkdtempSync, rmSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
+import type { MirrorDaemonStartResult } from "./types.js";
 
 describe("mirror: polling fallback with MIRROR_USE_POLLING=1 (R1.10)", () => {
   let dir: string;
@@ -35,7 +36,7 @@ describe("mirror: polling fallback with MIRROR_USE_POLLING=1 (R1.10)", () => {
       cmuxAvailable: true,
       forcePolling: true,
       pollIntervalMs: 50,
-    })) as any;
+    })) as MirrorDaemonStartResult;
 
     expect(result.started).toBe(true);
     if (result.started) {
@@ -56,7 +57,7 @@ describe("mirror: polling fallback with MIRROR_USE_POLLING=1 (R1.10)", () => {
       cmuxAvailable: true,
       forcePolling: true,
       pollIntervalMs: 50,
-    })) as any;
+    })) as MirrorDaemonStartResult;
 
     expect(result.started).toBe(true);
 
@@ -84,7 +85,7 @@ describe("mirror: polling fallback with MIRROR_USE_POLLING=1 (R1.10)", () => {
       cmuxAvailable: true,
       forcePolling: true,
       pollIntervalMs: 50,
-    })) as any;
+    })) as MirrorDaemonStartResult;
 
     expect(result.started).toBe(true);
     if (result.started) {

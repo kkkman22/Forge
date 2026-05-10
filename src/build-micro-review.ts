@@ -76,7 +76,7 @@ function extractDiffFiles(diff: string): string[] {
 function normalise(w: string): string {
   let n = w.toLowerCase();
   // strip common plural / verb suffix differences
-  if (n.endsWith("ies")) n = n.slice(0, -3) + "y";
+  if (n.endsWith("ies")) n = `${n.slice(0, -3)}y`;
   else if (n.endsWith("es")) n = n.slice(0, -2);
   else if (n.endsWith("s")) n = n.slice(0, -1);
   return n;

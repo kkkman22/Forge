@@ -4,6 +4,7 @@ import { join } from "node:path";
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
 import { emitCommands } from "../../scripts/cmux-mirror/lib/emitter.mjs";
 import { readForgeState } from "../../scripts/cmux-mirror/lib/reader.mjs";
+import type { MirrorDaemonStartResult } from "./types.js";
 
 /**
  * Async poll-with-timeout helper. Repeatedly calls `fn` until it returns
@@ -71,7 +72,7 @@ describe("mirror: fs.watch detects status.md changes", () => {
     const cmds = emitCommands(prev, next);
     const setStatus = cmds.find((c) => c.method === "set_status");
     expect(setStatus).toBeDefined();
-    expect(setStatus!.params).toMatchObject({ text: "Forge: build" });
+    expect(setStatus?.params).toMatchObject({ text: "Forge: build" });
   });
 
   it("emitCommands produces sidebar_state on state change", async () => {
@@ -110,7 +111,7 @@ describe("mirror: fs.watch detects status.md changes", () => {
       cmuxAvailable: true,
       forcePolling: true,
       pollIntervalMs: 50,
-    })) as any;
+    })) as MirrorDaemonStartResult;
 
     expect(result.started).toBe(true);
 

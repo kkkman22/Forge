@@ -251,7 +251,8 @@ export function generateLivingDoc(specsDir: string, acceptanceDir: string | null
       });
     }
 
-    const ctx = contexts.get(contextName)!;
+    const ctx = contexts.get(contextName);
+    if (!ctx) continue;
     ctx.specs.push({
       topic: specFile.replace(/\.md$/, ""),
       scenarios,

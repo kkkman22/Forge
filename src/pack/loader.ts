@@ -118,9 +118,9 @@ export async function loadPackRegistry(reposRoot: string, fs: FileSystem): Promi
     const name = manifest.name;
 
     if (packs.has(name)) {
-      const existing = packs.get(name)!;
+      const existing = packs.get(name);
       warnings.push(
-        `pack: ${name} duplicate — keeping ${path.basename(existing.rootPath)}, ignoring ${dir}`,
+        `pack: ${name} duplicate — keeping ${existing ? path.basename(existing.rootPath) : "first"}, ignoring ${dir}`,
       );
       continue;
     }

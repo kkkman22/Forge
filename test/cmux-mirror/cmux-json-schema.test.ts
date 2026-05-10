@@ -55,7 +55,7 @@ describe("templates/cmux.json (R9.1–R9.4, R9.7, R12.9)", () => {
     for (const layout of Object.values(config.layouts)) {
       const mirrorPane = layout.panes.find((p) => p.type === "Mirror_Pane");
       expect(mirrorPane).toBeDefined();
-      expect(mirrorPane!.size).toBe("15%");
+      expect(mirrorPane?.size).toBe("15%");
     }
   });
 
@@ -74,7 +74,7 @@ describe("templates/cmux.json (R9.1–R9.4, R9.7, R12.9)", () => {
         (p) => Array.isArray(p.buttons) && p.buttons.length > 0,
       );
       expect(paneWithButtons).toBeDefined();
-      for (const btn of paneWithButtons!.buttons!) {
+      for (const btn of paneWithButtons?.buttons ?? []) {
         expect(typeof btn.label).toBe("string");
         expect(typeof btn.action).toBe("string");
       }
@@ -94,7 +94,7 @@ describe("templates/cmux.json (R9.1–R9.4, R9.7, R12.9)", () => {
 
   it("workflow layout has panes for sidebar + main + progress", () => {
     const config = parseConfig();
-    const wf = config.layouts["workflow"];
+    const wf = config.layouts.workflow;
     expect(wf.panes.length).toBeGreaterThanOrEqual(2);
   });
 
@@ -107,7 +107,7 @@ describe("templates/cmux.json (R9.1–R9.4, R9.7, R12.9)", () => {
 
   it("dev layout is lightweight with sidebar only", () => {
     const config = parseConfig();
-    const dev = config.layouts["dev"];
+    const dev = config.layouts.dev;
     expect(dev.panes.length).toBeLessThanOrEqual(3);
   });
 });

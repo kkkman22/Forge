@@ -1,12 +1,12 @@
-import { describe, it, expect } from "vitest";
+import { describe, expect, it } from "vitest";
 
 // We test the parsing behavior by constructing content strings and checking
 // that loadGlossary (or the underlying parseGlossaryFile) produces correct entries.
 
 // Since parseGlossaryFile is private, we test through loadGlossary with a mock FS.
 
-import type { EnabledPacks, FileSystem } from "../../src/pack/types.js";
 import { loadGlossary } from "../../src/glossary/registry.js";
+import type { EnabledPacks, FileSystem, PackEntry } from "../../src/pack/types.js";
 
 function createMockFs(files: Record<string, string>): FileSystem {
   return {
@@ -33,23 +33,27 @@ function createMockFs(files: Record<string, string>): FileSystem {
 }
 
 function packEnabled(rootPath: string, _files: Record<string, string>): EnabledPacks {
+  const entry: PackEntry = {
+    name: "test-pack",
+    displayName: "Test Pack",
+    description: "test",
+    forgeMinVersion: "2.4.0",
+    dependsOn: [],
+    rootPath,
+    manifestPath: `${rootPath}/pack.yaml`,
+    extends: {
+      glossary: `${rootPath}/glossary`,
+      contexts: `${rootPath}/contexts`,
+      scenarios: `${rootPath}/scenarios`,
+      bannedPatterns: `${rootPath}/banned-patterns.yaml`,
+      stateMachines: `${rootPath}/state-machines`,
+      lintRules: `${rootPath}/lint-rules`,
+    },
+    featureFlags: {},
+  };
   return {
     order: ["test-pack"],
-    entries: [
-      {
-        name: "test-pack",
-        rootPath,
-        extends: {
-          glossary: `${rootPath}/glossary`,
-          contexts: `${rootPath}/contexts`,
-          scenarios: `${rootPath}/scenarios`,
-          bannedPatterns: `${rootPath}/banned-patterns.yaml`,
-          stateMachines: `${rootPath}/state-machines`,
-          lintRules: `${rootPath}/lint-rules`,
-        },
-        featureFlags: {},
-      } as any,
-    ],
+    entries: [entry],
     customLayerRoot: "/custom",
   };
 }

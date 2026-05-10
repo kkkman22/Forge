@@ -128,9 +128,9 @@ describe("loadGlossary", () => {
 
     expect(registry.entries.size).toBe(2);
     expect(registry.entries.get("orders::Order")).toBeDefined();
-    expect(registry.entries.get("orders::Order")!.definition).toBe("A customer purchase request.");
+    expect(registry.entries.get("orders::Order")?.definition).toBe("A customer purchase request.");
     expect(registry.entries.get("orders::LineItem")).toBeDefined();
-    expect(registry.entries.get("orders::LineItem")!.aliases).toEqual(["Item"]);
+    expect(registry.entries.get("orders::LineItem")?.aliases).toEqual(["Item"]);
 
     // byTerm index
     expect(registry.byTerm.get("Order")).toHaveLength(1);
@@ -173,8 +173,8 @@ describe("loadGlossary", () => {
     expect(registry.entries.size).toBe(2);
     expect(registry.entries.get("orders::Order")).toBeDefined();
     expect(registry.entries.get("inventory::SKU")).toBeDefined();
-    expect(registry.entries.get("orders::Order")!.context).toBe("orders");
-    expect(registry.entries.get("inventory::SKU")!.context).toBe("inventory");
+    expect(registry.entries.get("orders::Order")?.context).toBe("orders");
+    expect(registry.entries.get("inventory::SKU")?.context).toBe("inventory");
   });
 
   it("custom layer overrides pack layer", async () => {
@@ -209,8 +209,8 @@ describe("loadGlossary", () => {
 
     const entry = registry.entries.get("orders::Order");
     expect(entry).toBeDefined();
-    expect(entry!.definition).toBe("Custom definition.");
-    expect(entry!.sourceLayer).toBe("custom");
+    expect(entry?.definition).toBe("Custom definition.");
+    expect(entry?.sourceLayer).toBe("custom");
   });
 
   it("reads .forge/glossary.md as _shared for backward compat", async () => {
@@ -229,9 +229,9 @@ describe("loadGlossary", () => {
 
     expect(registry.entries.size).toBe(2);
     expect(registry.entries.get("_shared::Epic")).toBeDefined();
-    expect(registry.entries.get("_shared::Epic")!.definition).toBe("A large body of work.");
+    expect(registry.entries.get("_shared::Epic")?.definition).toBe("A large body of work.");
     expect(registry.entries.get("_shared::Story")).toBeDefined();
-    expect(registry.entries.get("_shared::Story")!.context).toBe("_shared");
+    expect(registry.entries.get("_shared::Story")?.context).toBe("_shared");
   });
 
   it("skips packs without glossary extends", async () => {

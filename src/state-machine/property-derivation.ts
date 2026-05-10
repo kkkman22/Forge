@@ -37,15 +37,18 @@ function classifyInvariant(expression: string): TemplateType | null {
 function parseParts(expression: string, type: TemplateType): Record<string, string> {
   switch (type) {
     case "state_before_state_only": {
-      const m = expression.match(/^(.+)_before_(.+)_only$/)!;
+      const m = expression.match(/^(.+)_before_(.+)_only$/);
+      if (!m) return {};
       return { state: m[1], before: m[2] };
     }
     case "no_state_requires_condition": {
-      const m = expression.match(/^no_(.+)_requires_(.+)_passed$/)!;
+      const m = expression.match(/^no_(.+)_requires_(.+)_passed$/);
+      if (!m) return {};
       return { state: m[1], condition: m[2] };
     }
     case "state_requires_condition": {
-      const m = expression.match(/^(.+)_requires_(.+)$/)!;
+      const m = expression.match(/^(.+)_requires_(.+)$/);
+      if (!m) return {};
       return { state: m[1], condition: m[2] };
     }
     default:

@@ -1,6 +1,6 @@
 ---
 updated: "2026-05-10"
-rule_count: 8
+rule_count: 9
 max_rules: 15
 ---
 

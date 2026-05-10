@@ -24,7 +24,7 @@ export async function runPlaywrightHarness(
 ): Promise<PlaywrightHarnessResult> {
   try {
     // Guarded import — only works if user has Playwright installed [R6.5]
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    // biome-ignore lint/suspicious/noExplicitAny: playwright is an optional peer with unknown shape at build time
     let pw: any = null;
     try {
       // @ts-expect-error — playwright is an optional peer; not installed in Forge itself [R6.5]

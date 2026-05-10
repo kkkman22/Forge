@@ -2,6 +2,7 @@ import { mkdirSync, mkdtempSync, rmSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
+import type { MirrorDaemonStartResult } from "./types.js";
 
 describe("mirror: startup and availability checks (R1.5–R1.10)", () => {
   let dir: string;
@@ -24,7 +25,7 @@ describe("mirror: startup and availability checks (R1.5–R1.10)", () => {
       forgeDir: dir,
       socketDir: dir,
       cmuxAvailable: false,
-    })) as any;
+    })) as MirrorDaemonStartResult;
     expect(result.started).toBe(false);
     expect(result.reason).toBe("cmux_unavailable");
   });
@@ -36,7 +37,7 @@ describe("mirror: startup and availability checks (R1.5–R1.10)", () => {
       forgeDir: missingDir,
       socketDir: dir,
       cmuxAvailable: true,
-    })) as any;
+    })) as MirrorDaemonStartResult;
     expect(result.started).toBe(false);
     expect(result.reason).toBe("forge_dir_missing");
   });
@@ -55,7 +56,7 @@ describe("mirror: startup and availability checks (R1.5–R1.10)", () => {
       forgeDir,
       socketDir: dir,
       cmuxAvailable: true,
-    })) as any;
+    })) as MirrorDaemonStartResult;
     expect(result.started).toBe(true);
     if (result.started) {
       await result.shutdown();
@@ -90,7 +91,7 @@ describe("mirror: signal handling (R1.9)", () => {
       forgeDir,
       socketDir: join(forgeDir, ".."),
       cmuxAvailable: true,
-    })) as any;
+    })) as MirrorDaemonStartResult;
 
     if (result.started) {
       await result.shutdown();
@@ -120,7 +121,7 @@ describe("mirror: polling fallback (R1.10)", () => {
       cmuxAvailable: true,
       forcePolling: true,
       pollIntervalMs: 50,
-    })) as any;
+    })) as MirrorDaemonStartResult;
 
     expect(result.started).toBe(true);
     if (result.started) {

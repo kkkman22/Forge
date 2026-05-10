@@ -47,7 +47,7 @@ function makeGlossary(entries: GlossaryEntry[]): GlossaryRegistry {
 
 const textArb = fc.string({ minLength: 0, maxLength: 500 });
 
-const bannedPatternArb = fc.record({
+const _bannedPatternArb = fc.record({
   pattern: fc.string({ minLength: 1, maxLength: 30 }).filter((s) => !s.includes("regex:")),
   description: fc.string({ minLength: 0, maxLength: 80 }),
 });

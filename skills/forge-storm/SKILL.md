@@ -1,6 +1,6 @@
 ---
 name: forge-storm
-description: "Event Storming 引导 skill — 通过 Socratic 问答收集领域事件/命令/聚合/策略/读模型，产出 event-storm.md。Use when running `/forge storm <context>` or exploring a new Bounded Context."
+description: "Capture domain events, commands, aggregates, policies, and read models through Socratic event-storming prompts into a structured output file. Use when running `/forge storm <context>`, exploring a new Bounded Context, or building a domain model before writing specs."
 skeleton_exempt_legacy: true
 disable-model-invocation: true
 ---

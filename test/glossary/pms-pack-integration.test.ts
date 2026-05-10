@@ -1,8 +1,8 @@
-import { describe, it, expect } from "vitest";
-import { loadGlossary } from "../../src/glossary/registry.js";
-import type { EnabledPacks, FileSystem } from "../../src/pack/types.js";
 import { existsSync, readdirSync, readFileSync } from "node:fs";
 import { resolve } from "node:path";
+import { describe, expect, it } from "vitest";
+import { loadGlossary } from "../../src/glossary/registry.js";
+import type { EnabledPacks, FileSystem, PackEntry } from "../../src/pack/types.js";
 
 const PMS_PACK_ROOT = resolve(__dirname, "../../packs/pms");
 const GLOSSARY_DIR = resolve(PMS_PACK_ROOT, "glossary");
@@ -28,23 +28,27 @@ describe.skipIf(!pmsPackAvailable)("Glossary loader against real PMS Pack", () =
   }
 
   function pmsEnabledPacks(): EnabledPacks {
+    const entry: PackEntry = {
+      name: "pms",
+      displayName: "Hotel PMS Domain Pack",
+      description: "PMS domain pack",
+      forgeMinVersion: "2.4.0",
+      dependsOn: [],
+      rootPath: PMS_PACK_ROOT,
+      manifestPath: resolve(PMS_PACK_ROOT, "pack.yaml"),
+      extends: {
+        glossary: GLOSSARY_DIR,
+        contexts: resolve(PMS_PACK_ROOT, "contexts"),
+        scenarios: resolve(PMS_PACK_ROOT, "scenarios"),
+        bannedPatterns: resolve(PMS_PACK_ROOT, "banned-patterns.yaml"),
+        stateMachines: resolve(PMS_PACK_ROOT, "state-machines"),
+        lintRules: resolve(PMS_PACK_ROOT, "lint-rules"),
+      },
+      featureFlags: {},
+    };
     return {
       order: ["pms"],
-      entries: [
-        {
-          name: "pms",
-          rootPath: PMS_PACK_ROOT,
-          extends: {
-            glossary: GLOSSARY_DIR,
-            contexts: resolve(PMS_PACK_ROOT, "contexts"),
-            scenarios: resolve(PMS_PACK_ROOT, "scenarios"),
-            bannedPatterns: resolve(PMS_PACK_ROOT, "banned-patterns.yaml"),
-            stateMachines: resolve(PMS_PACK_ROOT, "state-machines"),
-            lintRules: resolve(PMS_PACK_ROOT, "lint-rules"),
-          },
-          featureFlags: {},
-        } as any,
-      ],
+      entries: [entry],
       customLayerRoot: "/custom",
     };
   }
