@@ -30,8 +30,8 @@ export interface LivingDocData {
         pending: number;
     };
 }
-type Verdict = "pass" | "fail" | "pending" | "skip";
-interface VerdictEntry {
+export type Verdict = "pass" | "fail" | "pending" | "skip";
+export interface VerdictEntry {
     verdict: Verdict;
     timestamp: string;
 }
@@ -45,4 +45,3 @@ export declare function parseSpecScenarios(specContent: string, _specPath: strin
 };
 export declare function parseAcceptanceVerdicts(reportContent: string, _reportPath: string): Map<string, VerdictEntry>;
 export declare function generateLivingDoc(specsDir: string, acceptanceDir: string | null): LivingDocData;
-export {};
