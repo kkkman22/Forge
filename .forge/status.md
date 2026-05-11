@@ -1,9 +1,9 @@
 ---
-current_task: "feature-dossier-index"
-tier: "standard"
-task_type: "feature"
-project_phase: "build"
-phase: "build"
+current_task: ""
+tier: ""
+task_type: ""
+project_phase: ""
+phase: ""
 updated: "2026-05-11"
 ---
 
@@ -11,12 +11,7 @@ updated: "2026-05-11"
 
 ## 当前任务
 
-**feature-dossier-index** — Feature Dossier Index
-- Spec: `.kiro/specs/feature-dossier-index/requirements.md`
-- Design: `.kiro/specs/feature-dossier-index/design.md`
-- Plan: `.kiro/specs/feature-dossier-index/tasks.md`
-- 当前阶段：build
-- 分支：`feature/feature-dossier-index`
+（无）
 
 ## 已完成任务
 
@@ -32,3 +27,4 @@ updated: "2026-05-11"
 - routing-assumptions: 路由器输出增加假设段落
 - skill-behavioral-guardrails: SKILL 行为护栏
 - Group C/D/E: 社区基础设施
+- feature-dossier-index: Feature Dossier Index 系统（R1-R8，49 topics）
