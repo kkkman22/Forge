@@ -1,9 +1,9 @@
 ---
-current_task: "ccbp-inspired-hardening"
+current_task: "plugin-distribution"
 tier: "standard"
-task_type: "harness-layer-hardening"
-project_phase: "ship"
-phase: "ship"
+task_type: "plugin-distribution"
+project_phase: "build"
+phase: "build"
 updated: "2026-05-12"
 ---
 
@@ -11,13 +11,15 @@ updated: "2026-05-12"
 
 ## 当前任务
 
-**ccbp-inspired-hardening** — Claude Code Best Practice 借鉴的工程加固
-- Spec: `.kiro/specs/ccbp-inspired-hardening/`
-- 11 Requirements, 13 Tasks
-- 分支: `worktree-ccbp-inspired-hardening`
+**plugin-distribution** — Forge Plugin 化分发
+- Spec: `.kiro/specs/plugin-distribution/`
+- 8 Requirements, 14 Tasks
+- Phase A: 可行性评估 | Phase B: 实施（条件触发）
+- 分支: `worktree-plugin-distribution`
 
 ## 已完成任务
 
+- ccbp-inspired-hardening: Claude Code Best Practice 借鉴的工程加固
 - cmux-integration: Sprint 1-6 全部完成（33 tasks，25 test files，158 tests）
 - resume-phase-coverage: compaction 恢复后 SKILL.md 步骤遗漏修复
 - phase-advance-hardening: SKILL 驱动模式阶段推进断点修复
