@@ -1,6 +1,6 @@
 ---
 name: forge-resume
-description: "Resume an interrupted task by reconstructing state from status file and knowledge sessions. Use when user runs `/forge resume`, new session begins with prior task incomplete, or picking up interrupted work."
+description: "Resume an interrupted task by reconstructing state from status file and knowledge sessions. Supports --from-pr for cross-session PR recovery. Use when user runs `/forge resume`, new session begins with prior task incomplete, or picking up interrupted work."
 skeleton_exempt_legacy: true
 disable-model-invocation: true
 ---
@@ -24,9 +24,9 @@ Branch: !`git branch --show-current`
 
 `/forge resume` 通过五个问题快速重建工作上下文——正在解决什么问题、当前在哪一步、已知发现、下一步是什么、有什么阻塞。它从 `.forge/` 状态文件中自动提取答案，让开发者在新会话中无缝继续之前的工作。
 
-**核心原则**：恢复上下文的成本应该接近零。开发者不应该花时间回忆"我上次做到哪了"。
+**核心原则**：恢复上下文的成本应该接近零。
 
-**Session Boundary Recovery**: 每个 `/forge` 命令构成一个自然的 Session Boundary。`/forge resume` 是会话边界后恢复上下文的推荐方法。它从 `.forge/progress/` 读取任务完成状态，从 `.forge/knowledge/sessions/` 读取会话日志。建议用户在 `/forge` 命令之间开启新的 Claude Code 会话，以避免上下文累积（详见 CLAUDE.md §6 Session Boundaries）。
+**Session Boundary Recovery**: `/forge resume` 是会话边界后恢复上下文的推荐方法。从 `.forge/progress/` 读任务状态，从 `.forge/knowledge/sessions/` 读会话日志。建议 `/forge` 命令间开启新 Claude Code 会话（详见 CLAUDE.md §6）。
 
 ---
 
@@ -59,16 +59,9 @@ Branch: !`git branch --show-current`
 2. 如果存在 interim 文件：读取"进度快照"→ 问题 2；"关键发现"→ 问题 3；"异常记录"→ 问题 5；"活跃约束"→ 恢复后首次 Restatement 重新注入。
 3. 如果不存在 interim 文件，读取正式会话日志作为补充信息。
 
-**恢复后的首次 Restatement**：恢复上下文后，如果用户确认继续 build，在派发第一个 Subagent 之前**立即执行一次 Restatement Checkpoint**。
+**恢复后的首次 Restatement**：确认继续 build 后，派发第一个 Subagent 前**立即执行 Restatement Checkpoint**。
 
-**SKILL Reload（恢复后必读步骤）**：
-
-恢复上下文后，在执行任何阶段操作之前，必须：
-1. 从 status.md 读取当前 phase 字段
-2. 读取 skills/forge-{phase}/SKILL.md 完整内容
-3. 按 SKILL.md 定义的步骤顺序执行，不得跳步
-
-此步骤适用于所有阶段（build / review / test / ship / learn），不仅限于 build。Restatement 仅限 build 阶段；SKILL Reload 适用于全部阶段。
+**SKILL Reload（必读）**：恢复后执行任何阶段前：读 `status.md` phase → 读 `skills/forge-{phase}/SKILL.md` → 按步骤执行。适用于所有阶段。Restatement 仅限 build。
 
 ### Five-Question Mapping
 
@@ -102,25 +95,15 @@ Branch: !`git branch --show-current`
 
 ### 4.1 Auto-triggered Resume
 
-当 `/forge resume` 由 Context Exhaustion Protocol 触发时（即 Stop hook 检测到 `exhaustion_pending: true` 或存在新鲜 interim 文件），行为与用户手动触发不同：
+Context Exhaustion Protocol 触发时（`exhaustion_pending: true` 或新鲜 interim 文件）：
 
-1. **跳过确认** — 不询问"继续执行？"。耗尽协议已经决定继续。
-2. **先读 interim 文件** — 在读取 status.md 或 plan 文件之前，先读 `.forge/knowledge/sessions/` 中的 `-interim.md` 文件。它包含上一会话最准确的状态。
-3. **立即执行 Restatement** — 按 §2"恢复后的首次 Restatement"，在派发第一个 Subagent 之前执行 Restatement Checkpoint。
-4. **读取当前阶段 SKILL.md** — 按 §2 "SKILL Reload" 步骤，读取当前阶段对应的 SKILL.md 完整内容，确认从中断步骤继续。
-5. **从 next_task_number 恢复** — interim 文件包含 `next_task_number` 字段。使用该字段定位 plan 中的正确任务。如果 plan 使用非数字任务 ID 或字段无效，回退到扫描 progress 寻找"进行中"任务。
+1. **跳过确认** — 耗尽协议已决定继续
+2. **先读 interim 文件** — `.forge/knowledge/sessions/` 中 `-interim.md` 含最准确状态
+3. **立即 Restatement** — 派发第一个 Subagent 前
+4. **SKILL Reload** — 读取当前阶段 SKILL.md 从中断步骤继续
+5. **从 `next_task_number` 恢复** — 无效时回退到 progress 扫描
 
-**检测方式**：interim 文件的 frontmatter 包含 `phase: "build-exhaustion"`，或 conversation summary 中包含 compaction 恢复信号（如 "This session is being continued from a previous conversation"）。
-
-**输出格式**：
-
-```
-🔄 自动恢复（上下文耗尽恢复点）
-上次会话完成到 Task <K>/<M>
-从 Task <next_task_number> 继续构建...
-```
-
-然后立即开始下一个任务的 TDD 循环——无摘要、无确认、无阶段概览。
+输出 `🔄 自动恢复（上下文耗尽恢复点）` 后立即开始 TDD 循环。
 
 ## Common Rationalizations
 
@@ -133,7 +116,15 @@ Branch: !`git branch --show-current`
 
 ---
 
-## 5. 边界情况处理
+## 5. 从 PR 恢复（`--from-pr`）
+
+`/forge resume --from-pr <url-or-number>` → 运行 `scripts/resume-from-pr.mjs` → 输出 context bundle → 按 phase 建议下一步。
+
+**Slug 推断**：title `[spec:slug]` → branch `forge/slug` → description `.forge/specs/slug/` → decisions → interactive。**`--from-pr` 与 `--spec` 互斥**。失败模式 → 详见 references/from-pr-failure-modes.md。
+
+---
+
+## 6. 边界情况处理
 
 | 条件 | 处理 |
 |------|------|
@@ -146,11 +137,11 @@ Branch: !`git branch --show-current`
 
 ---
 
-## 6. 示例
+## 7. 示例
 
 → 详见 references/output-format.md §示例
 
-## Gotchas
+## 8. Gotchas
 - **Stale state**: .forge/status.md says phase=build but code already merged → resume starts wrong phase → verify git state matches forge state
 - **Missing context**: Resumed session lacks context about why decisions were made → repeats mistakes → reconstruct from .forge/knowledge/sessions/
 - **Phase skip**: Resume jumps to later phase, skipping intermediate work → incomplete delivery → verify all prior phases completed
