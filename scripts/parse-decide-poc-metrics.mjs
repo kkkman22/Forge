@@ -14,6 +14,11 @@ if (!TOPIC_ID) {
   process.exit(1);
 }
 
+if (!/^[A-Za-z0-9]([A-Za-z0-9-]*[A-Za-z0-9])?$/.test(TOPIC_ID)) {
+  console.error(`Invalid topic-id '${TOPIC_ID}'. Only alphanumeric characters and hyphens allowed.`);
+  process.exit(1);
+}
+
 const OUT_DIR = ".forge/runs/decide-poc";
 
 function parseJsonl(filePath) {
@@ -25,7 +30,7 @@ function parseJsonl(filePath) {
       try {
         return JSON.parse(l);
       } catch {
-        return null;
+        return null; // skip malformed JSONL lines
       }
     })
     .filter(Boolean);
@@ -75,9 +80,10 @@ const rows = [];
 
 for (const file of files) {
   const label = file.replace(".jsonl", "");
-  const parts = label.split("-");
-  const mode = parts[parts.length - 2]; // dag or teams
-  const iter = parts[parts.length - 1]; // iter1 or iter2
+  const modeMatch = label.match(/-(dag|teams)-/);
+  const iterMatch = label.match(/(iter\d+)$/);
+  const mode = modeMatch ? modeMatch[1] : "unknown";
+  const iter = iterMatch ? iterMatch[1] : "unknown";
 
   const metrics = parseJsonl(join(OUT_DIR, file));
   const duration = getDuration(label);
