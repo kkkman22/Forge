@@ -99,9 +99,11 @@ do_file_archive() {
   local slug="$1"
   local archive_dir=".forge/archive/${ARCHIVE_DATE}-${slug}"
 
-  # Validate slug format
-  if [[ ! "$slug" =~ ^[a-zA-Z0-9_-]+$ ]]; then
-    error "Slug 格式无效: $slug（仅允许字母、数字、连字符、下划线）" >&2
+  # Validate slug format: only alphanumeric, hyphens, underscores
+  local cleaned
+  cleaned=$(printf '%s' "$slug" | tr -d 'a-zA-Z0-9_-')
+  if [[ -n "$cleaned" ]]; then
+    error "Slug 格式无效: ${slug}（仅允许字母、数字、连字符、下划线）" >&2
     return 1
   fi
 
