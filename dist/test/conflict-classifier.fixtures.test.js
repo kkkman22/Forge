@@ -74,6 +74,8 @@ const fixtures = [
     [".forge/nested/deep/file.json", "open"],
     [".forge/temp-output.log", "open"],
     [".forge/cache.json", "open"],
+    [".forge/features/structured-observability.md", "open"],
+    [".forge/features/agent-skills-learnings.md", "open"],
     // Source zone (21 paths)
     ["src/index.ts", "source"],
     ["src/auth/login.ts", "source"],
