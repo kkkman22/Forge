@@ -1,9 +1,9 @@
 ---
-current_task: "ccbp-inspired-hardening"
+current_task: "archive-transcript-purge"
 tier: "standard"
 task_type: "harness-layer-hardening"
-project_phase: "ship"
-phase: "ship"
+project_phase: "plan"
+phase: "plan"
 updated: "2026-05-12"
 ---
 
@@ -11,10 +11,10 @@ updated: "2026-05-12"
 
 ## 当前任务
 
-**ccbp-inspired-hardening** — Claude Code Best Practice 借鉴的工程加固
-- Spec: `.kiro/specs/ccbp-inspired-hardening/`
-- 11 Requirements, 13 Tasks
-- 分支: `worktree-ccbp-inspired-hardening`
+**archive-transcript-purge** — CC project purge 集成到 Forge 归档流程
+- Spec: `.kiro/specs/archive-transcript-purge/`
+- 5 Requirements, 7 Tasks
+- 分支: `worktree-archive-transcript-purge`
 
 ## 已完成任务
 
