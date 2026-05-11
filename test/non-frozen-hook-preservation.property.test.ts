@@ -99,6 +99,17 @@ const EXPECTED_USER_PROMPT_SUBMIT_HOOKS: HookMatcher[] = [
 
 const EXPECTED_POST_TOOL_USE_HOOKS: HookMatcher[] = [
   {
+    matcher: "Write|Edit|MultiEdit",
+    hooks: [
+      {
+        type: "command",
+        command:
+          "bash forge/scripts/hook-check-frozen-post.sh 2>/dev/null || bash ~/.claude/skills/forge/scripts/hook-check-frozen-post.sh 2>/dev/null || true",
+        timeout: 5,
+      },
+    ],
+  },
+  {
     matcher: "Write|Edit",
     if: "Write(.forge/**)|Edit(.forge/**)",
     hooks: [
@@ -252,7 +263,7 @@ const NON_FROZEN_EVENT_TYPES = [
 // ---------------------------------------------------------------------------
 
 function _isFrozenCheckHook(_matcher: string | undefined, hook: HookEntry): boolean {
-  return hook.command.includes("check-frozen.sh");
+  return hook.command.includes("check-frozen.sh") || hook.command.includes("check-frozen-post.sh");
 }
 
 function getPlanContextHook(config: HooksConfig): HookMatcher | undefined {

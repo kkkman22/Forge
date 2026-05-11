@@ -49,6 +49,14 @@ Entries follow [Keep a Changelog](https://keepachangelog.com/) with Forge-specif
   - `[CHANGED]` hooks.json: added `if:` filters to 5 PreToolUse/PostToolUse entries to skip irrelevant tool calls
   - `[CHANGED]` agent frontmatter: forge-build gets `hooks: {Stop}` (CI allowlist) + `isolation: worktree`; forge-ship gets `hooks: {PreToolUse}` (branch protection); forge-plan gets `initialPrompt`
   - `[CHANGED]` CC minimum version bumped to 2.1.121 (recommended ≥2.1.138) — `scripts/init.sh` version gate
+- **Structured Frozen-Zone Feedback** (ADR-0001: Frozen-Zone Protection — Migrate from Exit-Code Blocking to Structured JSON Feedback)
+  - PreToolUse hook returns structured JSON diagnostic on frozen-zone violations
+  - PostToolUse defence-in-depth hook detects breaches and emits warning
+  - Zone_Registry reads from `.forge/config.md` at runtime
+  - Audit logging to `.forge/runs/*-frozen-events.jsonl` with rotation
+  - `/forge status` shows frozen-zone activity summary
+  - Feature flag `FORGE_STRUCTURED_FROZEN=1` (default); set to `0` for legacy mode
+  - Requires Claude Code 2.1.121+ for PostToolUse; PreToolUse works on 2.1.10+
 
 ### Fixed
 

@@ -76,6 +76,16 @@ verify_commands:                      # TDD 循环使用的逐条验证命令
 - `.forge/knowledge/evolved-rules.md`（only updatable by `/forge learn` rule distillation, not deletable outside maintenance）
 - `.forge/knowledge/rule-changelog.md`（append-only — only new entries, no deletion of history）
 
+<!-- 自定义 frozen 规则示例（取消注释启用）:
+- `.forge/guardrails/*.md`（status: locked）→ 新增自定义 frozen 规则
+-->
+
+<!-- FORGE_STRUCTURED_FROZEN feature flag:
+  设为 1（默认）：PreToolUse hook 返回结构化 JSON 诊断，PostToolUse hook 执行 defence-in-depth 检查
+  设为 0：回退到 legacy exit-code 阻断模式
+  在 .claude/settings.json env 块中设置
+-->
+
 ### 🟢 开放区（Open）— AI 可自由修改
 
 以下文件 AI 可以自由创建和修改：
