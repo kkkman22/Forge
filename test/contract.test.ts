@@ -929,10 +929,9 @@ describe("Contract: frozen-zone structured feedback scripts", () => {
     it(`${script} is executable`, () => {
       const scriptPath = resolve(ROOT, script);
       const mode = statSync(scriptPath).mode;
-      expect(
-        (mode & 0o111) !== 0,
-        `${script} is not executable. Run: chmod +x ${script}`,
-      ).toBe(true);
+      expect((mode & 0o111) !== 0, `${script} is not executable. Run: chmod +x ${script}`).toBe(
+        true,
+      );
     });
   }
 
