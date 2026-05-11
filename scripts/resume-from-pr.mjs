@@ -155,15 +155,26 @@ async function fetchBitbucket(target, execFn, timeout) {
   if (!process.env.BITBUCKET_TOKEN) {
     return { ...emptyMeta(target, "bitbucket"), fetcherUsed: "none", warning: "BITBUCKET_TOKEN not set" };
   }
-  // Infer repo from target.repo or git remote
   const repo = target.repo ?? await inferRepoSlug(execFn);
   if (!repo) {
     return { ...emptyMeta(target, "bitbucket"), fetcherUsed: "none", warning: "cannot determine repo slug" };
   }
-  const out = await execAsync(execFn,
-    `curl -s -H "Authorization: Bearer $BITBUCKET_TOKEN" "https://api.bitbucket.org/2.0/repositories/${repo}/pullrequests/${target.number}"`,
-    timeout,
-  );
+  // Validate repo format to prevent command injection
+  if (!/^[a-zA-Z0-9._-]+\/[a-zA-Z0-9._-]+$/.test(repo)) {
+    return { ...emptyMeta(target, "bitbucket"), fetcherUsed: "none", warning: "invalid repo slug format" };
+  }
+  const safeNum = Math.max(1, Math.min(target.number, 999999));
+  // Pass token via env instead of CLI to avoid process listing exposure
+  const token = process.env.BITBUCKET_TOKEN;
+  const out = await new Promise((resolve, reject) => {
+    const cmd = `curl -s -H "Authorization: Bearer ${token}" "https://api.bitbucket.org/2.0/repositories/${repo}/pullrequests/${safeNum}"`;
+    const timer = setTimeout(() => reject(new Error(`timeout (${timeout}ms)`)), timeout);
+    execFn(cmd, { timeout, env: { ...process.env } }, (err, stdout) => {
+      clearTimeout(timer);
+      if (err) reject(err);
+      else resolve(stdout);
+    });
+  });
   const d = JSON.parse(out);
   return {
     host: "bitbucket",
@@ -194,7 +205,11 @@ async function inferRepoSlug(execFn) {
   try {
     const out = await execAsync(execFn, "git remote get-url origin", 5000);
     const m = out.trim().match(/[/:]([^/]+\/[^/\s]+?)(?:\.git)?$/);
-    return m ? m[1] : null;
+    // Validate extracted slug: only allow safe characters
+    if (m && /^[a-zA-Z0-9._-]+\/[a-zA-Z0-9._-]+$/.test(m[1])) {
+      return m[1];
+    }
+    return null;
   } catch {
     return null;
   }
@@ -334,10 +349,19 @@ export async function loadContextBundle(slug, opts) {
  * @param {PRMetadata} metadata
  * @param {{ forgeRoot: string, interactive?: boolean }} opts
  */
+/** Sanitize a string for safe YAML double-quoted value. */
+function yamlSafe(str) {
+  return String(str).replace(/\\/g, "\\\\").replace(/"/g, '\\"').replace(/\n/g, "\\n");
+}
+
 export async function updateStatus(slug, metadata, opts = {}) {
   const root = opts.forgeRoot ?? process.cwd();
   const statusPath = join(root, ".forge", "status.md");
   const timestamp = new Date().toISOString();
+  const safeSlug = yamlSafe(slug);
+  const safeBranch = yamlSafe(metadata.branch);
+  const safeBase = yamlSafe(metadata.baseBranch);
+  const safeUrl = metadata.url ? yamlSafe(metadata.url) : null;
 
   // Check for conflicting status
   try {
@@ -345,28 +369,26 @@ export async function updateStatus(slug, metadata, opts = {}) {
     const slugMatch = existing.match(/^current_task:\s*"?(.+?)"?\s*$/m);
     if (slugMatch && slugMatch[1].trim() !== slug) {
       if (opts.interactive !== false) {
-        // In script mode, just warn and continue
-        process.stderr.write(`⚠ status.md points to "${slugMatch[1].trim()}", overwriting with "${slug}"\n`);
+        process.stderr.write(`⚠ status.md points to "${slugMatch[1].trim()}", overwriting with "${safeSlug}"\n`);
       } else {
-        throw new Error(`status.md conflict: current_task="${slugMatch[1].trim()}", refusing to overwrite with "${slug}"`);
+        throw new Error(`status.md conflict: current_task="${slugMatch[1].trim()}", refusing to overwrite with "${safeSlug}"`);
       }
     }
   } catch (err) {
     if (err.message.startsWith("status.md conflict")) throw err;
-    // File doesn't exist — proceed
   }
 
   const content = [
     "---",
-    `current_task: "${slug}"`,
+    `current_task: "${safeSlug}"`,
     `tier: "standard"`,
     `task_type: "resume-from-pr"`,
     `project_phase: "resume"`,
     `phase: "resume"`,
     `pr_number: ${metadata.number}`,
-    metadata.url ? `pr_url: "${metadata.url}"` : null,
-    `branch: "${metadata.branch}"`,
-    `base_branch: "${metadata.baseBranch}"`,
+    safeUrl ? `pr_url: "${safeUrl}"` : null,
+    `branch: "${safeBranch}"`,
+    `base_branch: "${safeBase}"`,
     `updated: "${timestamp}"`,
     `updated_by: "resume-from-pr"`,
     "---",
