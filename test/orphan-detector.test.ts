@@ -64,7 +64,7 @@ describe("OrphanDetector", () => {
     it("only returns PPID=1 processes matching patterns", async () => {
       await fc.assert(
         fc.asyncProperty(
-          fc.array(
+          fc.uniqueArray(
             fc.record({
               pid: fc.integer({ min: 100, max: 999 }),
               ppid: fc.integer({ min: 1, max: 999 }),
@@ -77,7 +77,7 @@ describe("OrphanDetector", () => {
                 fc.constant("bash script.sh"),
               ),
             }),
-            { maxLength: 10 },
+            { maxLength: 10, selector: (e) => e.pid },
           ),
           async (entries) => {
             const header = "  PID  PPID     ELAPSED COMMAND\n";
