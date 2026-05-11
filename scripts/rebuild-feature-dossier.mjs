@@ -78,8 +78,13 @@ const featuresDir = join(forgeRoot, "features");
 function validateTopic(topic) {
 	if (!/^[a-z0-9][a-z0-9.-]*$/.test(topic)) {
 		console.error(
-			`Error: Invalid topic name '${topic}'. Use lowercase kebab-case (a-z, 0-9, -).`,
+			`Error: Invalid topic name '${topic}'. Use lowercase kebab-case (a-z, 0-9, -, .).`,
 		);
+		process.exit(1);
+	}
+	// Path traversal defense: reject if normalized path would escape forgeRoot
+	if (topic.includes("..") || topic.includes("/") || topic.includes("\\")) {
+		console.error(`Error: Invalid topic name '${topic}'.`);
 		process.exit(1);
 	}
 }

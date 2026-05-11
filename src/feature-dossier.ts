@@ -71,6 +71,10 @@ export const STAGE_NAMES: StageName[] = [
 // Helpers
 // ---------------------------------------------------------------------------
 
+function emptyStages(): Record<StageName, StageFileEntry[]> {
+  return { decisions: [], specs: [], plans: [], reviews: [], progress: [], findings: [], debug: [] };
+}
+
 function escapeRegExp(str: string): string {
   return str.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
 }
@@ -130,6 +134,11 @@ export function matchStageFiles(stage: StageName, topic: string, files: string[]
 // ---------------------------------------------------------------------------
 
 export function scanStagesForTopic(topic: string, forgeRoot: string): StageScanResult {
+  // Path traversal defense: reject topic with path separators or traversal
+  if (topic.includes("/") || topic.includes("\\") || topic.includes("..")) {
+    return { topic, forgeRoot, stages: emptyStages() };
+  }
+
   const stages: Record<StageName, StageFileEntry[]> = {
     decisions: [],
     specs: [],
