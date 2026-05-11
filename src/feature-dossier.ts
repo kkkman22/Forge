@@ -72,7 +72,15 @@ export const STAGE_NAMES: StageName[] = [
 // ---------------------------------------------------------------------------
 
 function emptyStages(): Record<StageName, StageFileEntry[]> {
-  return { decisions: [], specs: [], plans: [], reviews: [], progress: [], findings: [], debug: [] };
+  return {
+    decisions: [],
+    specs: [],
+    plans: [],
+    reviews: [],
+    progress: [],
+    findings: [],
+    debug: [],
+  };
 }
 
 function escapeRegExp(str: string): string {
