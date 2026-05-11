@@ -30,6 +30,7 @@ interface HookEntry {
 
 interface HookMatcher {
   matcher?: string;
+  if?: string;
   hooks: HookEntry[];
 }
 
@@ -99,6 +100,7 @@ const EXPECTED_USER_PROMPT_SUBMIT_HOOKS: HookMatcher[] = [
 const EXPECTED_POST_TOOL_USE_HOOKS: HookMatcher[] = [
   {
     matcher: "Write|Edit",
+    if: "Write(.forge/**)|Edit(.forge/**)",
     hooks: [
       {
         type: "command",
@@ -109,6 +111,7 @@ const EXPECTED_POST_TOOL_USE_HOOKS: HookMatcher[] = [
   },
   {
     matcher: "Write|Edit",
+    if: "Write(.forge/**)|Edit(.forge/**)",
     hooks: [
       {
         type: "command",
@@ -119,6 +122,7 @@ const EXPECTED_POST_TOOL_USE_HOOKS: HookMatcher[] = [
   },
   {
     matcher: "Write|Edit",
+    if: "Write(.forge/**)|Edit(.forge/**)",
     hooks: [
       {
         type: "command",
@@ -220,7 +224,8 @@ const EXPECTED_TASK_COMPLETED_HOOKS: HookMatcher[] = [
 
 /** The plan context injection hook — the FIRST PreToolUse entry with matcher "Write|Edit|Bash" */
 const EXPECTED_PLAN_CONTEXT_HOOK: HookMatcher = {
-  matcher: "Write|Edit|Bash",
+  matcher: "Write|Edit",
+  if: "Write(.forge/**)|Edit(.forge/**)",
   hooks: [
     {
       type: "command",
@@ -254,7 +259,6 @@ function getPlanContextHook(config: HooksConfig): HookMatcher | undefined {
   const preToolUseHooks = config.hooks.PreToolUse ?? [];
   return preToolUseHooks.find(
     (group) =>
-      group.matcher === "Write|Edit|Bash" &&
       group.hooks.some((h) => h.command.includes("head -30 .forge/plans/")),
   );
 }
@@ -301,10 +305,10 @@ describe("Preservation: Non-frozen hooks are byte-identical to baseline", () => 
 describe("Preservation: Plan context injection hook retains || true fallback", () => {
   const config = loadHooksConfig();
 
-  it("plan context hook exists with matcher Write|Edit|Bash", () => {
+  it("plan context hook exists with matcher Write|Edit", () => {
     const planHook = getPlanContextHook(config);
     expect(planHook).toBeDefined();
-    expect(planHook?.matcher).toBe("Write|Edit|Bash");
+    expect(planHook?.matcher).toBe("Write|Edit");
   });
 
   it("plan context hook command is byte-identical to observed baseline", () => {

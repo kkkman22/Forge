@@ -15,6 +15,9 @@ reports/mutation/
 # Forge Stop hook dedupe markers
 .forge/.stop-hook-dedupe/
 
+# Compaction snapshot (transient runtime artifact)
+.forge/.compact-snapshot.md
+
 
 # dist manifest is tracked (used by CI to verify dist sync)
 !dist/claude-code/bundles/.manifest.sha256

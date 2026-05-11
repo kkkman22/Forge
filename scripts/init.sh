@@ -18,6 +18,41 @@
 
 set -euo pipefail
 
+# ---------- CC Version Check ----------
+check_cc_version() {
+  local min_version="2.1.121"
+  local recommended_version="2.1.138"
+  local version_output
+  version_output=$(claude --version 2>/dev/null || true)
+
+  if [ -z "$version_output" ]; then
+    warn "Cannot detect Claude Code version. Recommended >= $recommended_version"
+    return 0
+  fi
+
+  local current
+  current=$(echo "$version_output" | grep -oE '[0-9]+\.[0-9]+\.[0-9]+' | head -1 || true)
+
+  if [ -z "$current" ]; then
+    warn "Cannot parse Claude Code version from: $version_output. Recommended >= $recommended_version"
+    return 0
+  fi
+
+  if ! printf '%s\n%s\n' "$min_version" "$current" | LC_ALL=C sort -V -C 2>/dev/null; then
+    error "Claude Code version too old: $current < $min_version"
+    echo "   Please upgrade: https://docs.anthropic.com/en/docs/claude-code"
+    return 1
+  fi
+
+  if ! printf '%s\n%s\n' "$recommended_version" "$current" | LC_ALL=C sort -V -C 2>/dev/null; then
+    warn "Claude Code version $current is below recommended $recommended_version. Some features may not work."
+  fi
+
+  return 0
+}
+
+check_cc_version || exit 1
+
 # ---------- Parse --pack flags ----------
 PACKS=()
 remaining_args=()

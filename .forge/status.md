@@ -1,9 +1,9 @@
 ---
-current_task: "ccbp-inspired-hardening"
-tier: "standard"
+current_task: "ccbp-hardening-phase2"
+tier: "full"
 task_type: "harness-layer-hardening"
-project_phase: "ship"
-phase: "ship"
+project_phase: "spec"
+phase: "spec"
 updated: "2026-05-12"
 ---
 
@@ -11,10 +11,13 @@ updated: "2026-05-12"
 
 ## 当前任务
 
-**ccbp-inspired-hardening** — Claude Code Best Practice 借鉴的工程加固
-- Spec: `.kiro/specs/ccbp-inspired-hardening/`
-- 11 Requirements, 13 Tasks
-- 分支: `worktree-ccbp-inspired-hardening`
+**ccbp-hardening-phase2** — CCBP Phase 2: hooks if: 迁移 + compaction 保护 + agent frontmatter + rules 迁移
+- Spec: `.forge/specs/ccbp-hardening-phase2/spec.md` (locked)
+- Source: `.kiro/specs/ccbp-hardening-phase2/` (requirements + design + tasks)
+- Decision: `.forge/decisions/2026-05-12-ccbp-hardening-phase2-decide.md`
+- 10 Requirements, 9 Tasks, ~23 files
+- 分支: `worktree-ccbp-hardening-phase2`
+- 前置: `ccbp-inspired-hardening` (Phase 1) 必须完成
 
 ## 已完成任务
 
