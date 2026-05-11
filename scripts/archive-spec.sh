@@ -99,7 +99,8 @@ do_file_archive() {
   local slug="$1"
   local archive_dir=".forge/archive/${ARCHIVE_DATE}-${slug}"
 
-  # Validate slug format: only alphanumeric, hyphens, underscores
+  # Validate slug: only alphanumeric, hyphens, underscores
+  # Note: bash variables cannot contain null bytes (C string limitation)
   local cleaned
   cleaned=$(printf '%s' "$slug" | tr -d 'a-zA-Z0-9_-')
   if [[ -n "$cleaned" ]]; then
@@ -127,19 +128,19 @@ do_file_archive() {
 
   # Move spec directory
   if [[ -d "${spec_dir}" ]]; then
-    mv "${spec_dir}" "${archive_dir}/spec"
+    mv -n "${spec_dir}" "${archive_dir}/spec"
     success "已归档 spec: ${spec_dir} → ${archive_dir}/spec" >&2
   fi
 
   # Move plan file
   if [[ -f "${plan_file}" ]]; then
-    mv "${plan_file}" "${archive_dir}/plan.md"
+    mv -n "${plan_file}" "${archive_dir}/plan.md"
     success "已归档 plan: ${plan_file} → ${archive_dir}/plan.md" >&2
   fi
 
   # Move progress file
   if [[ -f "${progress_file}" ]]; then
-    mv "${progress_file}" "${archive_dir}/progress.md"
+    mv -n "${progress_file}" "${archive_dir}/progress.md"
     success "已归档 progress: ${progress_file} → ${archive_dir}/progress.md" >&2
   fi
 
@@ -176,13 +177,27 @@ resolve_project_path() {
   local git_dir
   git_dir=$(git rev-parse --git-dir 2>/dev/null)
 
+  local resolved
   if [[ "${common_dir}" == "${git_dir}" ]]; then
     # Not a worktree — use repo root
-    git rev-parse --show-toplevel
+    resolved=$(git rev-parse --show-toplevel)
   else
     # Worktree — common_dir points to main repo's .git
-    dirname "${common_dir}"
+    resolved=$(dirname "${common_dir}")
   fi
+
+  # Canonicalize to resolve symlinks
+  if command -v realpath &>/dev/null; then
+    resolved=$(realpath --canonicalize-existing "${resolved}" 2>/dev/null || echo "${resolved}")
+  fi
+
+  # Verify the resolved path looks like a valid directory
+  if [[ ! -d "${resolved}" ]]; then
+    warn "解析到的路径不是有效目录: ${resolved}"
+    return 1
+  fi
+
+  echo "${resolved}"
 }
 
 check_blacklist() {
@@ -190,9 +205,23 @@ check_blacklist() {
   local home_root
   home_root="$(cd ~ && pwd)"
 
-  case "$path" in
+  # Spec-required blacklist: /, $HOME, /tmp
+  # Additional: resolve symlinks via realpath for robustness
+  local resolved="${path}"
+  if command -v realpath &>/dev/null; then
+    resolved=$(realpath --canonicalize-existing "${path}" 2>/dev/null || echo "${path}")
+  fi
+
+  case "${path}" in
     /|/tmp|/tmp/*|"${home_root}"|"${home_root}/")
       error "拒绝对敏感路径执行 purge: ${path}"
+      return 1
+      ;;
+  esac
+  # Also check resolved path (catches symlinks to blacklisted dirs)
+  case "${resolved}" in
+    /|/tmp|"${home_root}"|"${home_root}/")
+      error "拒绝对敏感路径执行 purge (resolved): ${resolved}"
       return 1
       ;;
   esac
@@ -239,7 +268,10 @@ truncate_string() {
 json_escape() {
   local input="$1"
   # Escape backslash, double quote, and control characters
-  printf '%s' "${input}" | sed -e 's/\\/\\\\/g' -e 's/"/\\"/g' -e 's/	/\\t/g' | tr -d '\n' | sed 's/$//'
+  printf '%s' "${input}" \
+    | sed -e 's/\\/\\\\/g' -e 's/"/\\"/g' \
+    | sed -e 's/	/\\t/g' -e $'s/\r/\\\\r/g' -e $'s/\x0b/\\\\v/g' -e $'s/\x0c/\\\\f/g' \
+    | tr -d '\n'
 }
 
 write_purge_manifest() {
@@ -305,8 +337,13 @@ do_cc_purge() {
   local started_at
   started_at=$(date -u +"%Y-%m-%dT%H:%M:%SZ")
 
+  # Initialize variables referenced by trap (may fire before assignment)
+  local project_path="unknown"
+  local cc_version="unknown"
+  local dry_output=""
+
   # Set up Ctrl+C trap to record interruption
-  trap 'write_purge_manifest "${manifest_path}" "${SLUG}" "${project_path:-unknown}" "${cc_version:-unknown}" "${dry_output:-}" "interrupted" "${purge_flag}" "${started_at}"; exit 130' INT
+  trap 'write_purge_manifest "${manifest_path}" "${SLUG}" "${project_path}" "${cc_version}" "${dry_output}" "interrupted" "${purge_flag}" "${started_at}"; exit 130' INT
 
   if [[ "${purge_flag}" == "skip" ]]; then
     info "CC purge 已跳过（--purge-cc=skip）"
@@ -315,7 +352,6 @@ do_cc_purge() {
   fi
 
   # Resolve project path
-  local project_path
   project_path=$(resolve_project_path) || {
     warn "非 git 项目，跳过 CC transcripts 清理"
     write_purge_manifest "${manifest_path}" "${SLUG}" "unknown" "unknown" "" "skipped_no_git" "${purge_flag}" "${started_at}"
@@ -329,7 +365,6 @@ do_cc_purge() {
   }
 
   # CC availability check
-  local cc_version
   cc_version=$(detect_cc_version)
   if [[ "${cc_version}" == "not_installed" ]]; then
     warn "claude 未安装，跳过 CC transcripts 清理"
@@ -339,7 +374,6 @@ do_cc_purge() {
 
   # Dry-run preview
   info "正在执行 CC purge dry-run..."
-  local dry_output
   dry_output=$(cc_purge_preview "${project_path}")
   local dry_rc=$?
 
