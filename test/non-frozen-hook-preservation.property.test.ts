@@ -117,6 +117,17 @@ const EXPECTED_POST_TOOL_USE_HOOKS: HookMatcher[] = [
       },
     ],
   },
+  {
+    matcher: "Write|Edit",
+    hooks: [
+      {
+        type: "command",
+        command:
+          'node scripts/rebuild-feature-dossier.mjs --from-path "$TOOL_INPUT_FILE" 2>/dev/null || true',
+        timeout: 5,
+      },
+    ],
+  },
 ];
 
 const EXPECTED_STOP_HOOKS: HookMatcher[] = [

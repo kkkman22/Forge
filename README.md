@@ -317,6 +317,8 @@ Forge 通过 Claude Code 的 [Hooks](https://docs.anthropic.com/en/docs/claude-c
 │   └── skill-feedback.md       #   SKILL 执行反馈（自进化数据源）
 ├── debug/                       # /forge debug 记录
 │   └── <topic>.md
+├── features/                    # 自动生成的功能索引（PostToolUse Hook 维护）
+│   └── <topic>.md              #   派生视图，可随时重建
 └── archive/                     # 已完成任务归档
 ```
 
@@ -522,7 +524,7 @@ bash cmux-skills/install.sh --uninstall .claude/skills
 .forge/status.md
 ```
 
-**建议**：`config.md`、`specs/`、`plans/`、`knowledge/` 纳入版本控制（团队共享知识资产）；`.locks/`、`debug/`、`archive/`、`progress/`、`reviews/` 排除（临时数据）。
+**建议**：`config.md`、`specs/`、`plans/`、`knowledge/` 纳入版本控制（团队共享知识资产）；`.locks/`、`debug/`、`archive/`、`progress/`、`reviews/` 排除（临时数据）。`.forge/features/` 可选纳入或排除：纳入则团队共享功能回顾索引；排除则作为本地派生状态。
 
 ---
 
