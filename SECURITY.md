@@ -70,6 +70,17 @@ Forge 遵循 SemVer。安全修复通常以 patch 版本发布（例如 v2.3.1 �
 - 用户本地 git 配置或 shell 环境被篡改导致的 shell 注入
 - Claude API 本身的安全问题（请直接向 Anthropic 报告）
 
+## Plugin Distribution Trust Model
+
+Forge 通过 Claude Code Plugin 系统分发。安全模型：
+
+- **安装来源**：`claude plugin marketplace add` 锁定到 GitHub repo URL，commit SHA 校验
+- **版本锁定**：`claude plugin install forge@<tag>` 锁定到特定 tag，防止供应链漂移
+- **更新验证**：`claude plugin update` 需要 `claude plugin validate` 通过
+- **企业管控**：管理员可通过 `blockedMarketplaces` / `allowedChannelPlugins` 策略管控
+- **项目级隔离**：`.forge/` 目录始终在项目本地，plugin 更新不影响项目状态
+- **Plugin 不含第三方 MCP**：基础 plugin 不捆绑任何 MCP server
+
 ## Acknowledgements
 
 感谢所有负责任披露漏洞的研究者。在征得报告者同意后，会在 SECURITY.md 的致谢列表或 `CHANGELOG.md` 的 `[SECURITY]` 条目中署名。

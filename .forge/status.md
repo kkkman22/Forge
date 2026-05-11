@@ -1,9 +1,9 @@
 ---
-current_task: "forge-decide-agent-teams"
+current_task: "plugin-distribution"
 tier: "standard"
-task_type: "poc"
-project_phase: "plan"
-phase: "plan"
+task_type: "plugin-distribution"
+project_phase: "completed"
+phase: "completed"
 updated: "2026-05-12"
 ---
 
@@ -11,14 +11,15 @@ updated: "2026-05-12"
 
 ## 当前任务
 
-**forge-decide-agent-teams** — Agent Teams 版 /forge decide PoC
-- Spec: `.kiro/specs/forge-decide-agent-teams/`
-- 6 Requirements, 10 Tasks
-- 分支: `worktree-forge-decide-agent-teams`
+**plugin-distribution** — Forge Plugin 化分发 ✅ COMPLETED
+- Spec: `.kiro/specs/plugin-distribution/`
+- 8 Requirements, 14 Tasks
+- Phase A: conditional-go | Phase B: 12/14 tasks complete
 
 ## 已完成任务
 
 - archive-transcript-purge: CC project purge 集成到 Forge 归档流程（47 tests, 0 P0/P1）
+- plugin-distribution: Forge Plugin 化分发
 - ccbp-inspired-hardening: Claude Code Best Practice 借鉴的工程加固
 - cmux-integration: Sprint 1-6 全部完成（33 tasks，25 test files，158 tests）
 - resume-phase-coverage: compaction 恢复后 SKILL.md 步骤遗漏修复
