@@ -4,7 +4,7 @@
  * Covers: hooks `if:` filters, compact hooks, agent frontmatter,
  * dispatcher handlers, lazy-loaded rules, version gate, gitignore.
  */
-import { existsSync, readFileSync, accessSync, constants } from "node:fs";
+import { accessSync, constants, existsSync, readFileSync } from "node:fs";
 import { resolve } from "node:path";
 import { describe, expect, it } from "vitest";
 
@@ -30,10 +30,7 @@ describe("Contract: hooks if: filters", () => {
   });
 
   it("if: patterns use permission-rule syntax", () => {
-    const allEntries = [
-      ...(hooks.hooks?.PreToolUse ?? []),
-      ...(hooks.hooks?.PostToolUse ?? []),
-    ];
+    const allEntries = [...(hooks.hooks?.PreToolUse ?? []), ...(hooks.hooks?.PostToolUse ?? [])];
     const ifEntries = allEntries.filter((e: Record<string, unknown>) => "if" in e);
     for (const entry of ifEntries) {
       const ifVal = entry.if as string;

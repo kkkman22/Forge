@@ -257,9 +257,8 @@ function _isFrozenCheckHook(_matcher: string | undefined, hook: HookEntry): bool
 
 function getPlanContextHook(config: HooksConfig): HookMatcher | undefined {
   const preToolUseHooks = config.hooks.PreToolUse ?? [];
-  return preToolUseHooks.find(
-    (group) =>
-      group.hooks.some((h) => h.command.includes("head -30 .forge/plans/")),
+  return preToolUseHooks.find((group) =>
+    group.hooks.some((h) => h.command.includes("head -30 .forge/plans/")),
   );
 }
 
