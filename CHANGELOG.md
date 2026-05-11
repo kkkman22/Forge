@@ -11,6 +11,16 @@ Entries follow [Keep a Changelog](https://keepachangelog.com/) with Forge-specif
 
 ## [Unreleased]
 
+### Changed
+
+- **CCBP Hardening Phase 2** — Hooks `if:` conditional filtering migration, PreCompact/PostCompact compaction protection, agent frontmatter (hooks/initialPrompt/isolation), dispatcher 6-event unification, lazy-loaded rules, CC minimum version gate
+  - `[CHANGED]` hooks.json: added `if:` filters to 5 PreToolUse/PostToolUse entries to skip irrelevant tool calls
+  - `[ADDED]` `scripts/hook-precompact.sh` + `scripts/hook-postcompact.sh` — compaction boundary state protection
+  - `[CHANGED]` agent frontmatter: forge-build gets `hooks: {Stop}` (CI allowlist) + `isolation: worktree`; forge-ship gets `hooks: {PreToolUse}` (branch protection); forge-plan gets `initialPrompt`
+  - `[ADDED]` `.claude/hooks/scripts/dispatcher.sh` — unified 6-event dispatcher (SessionStart, UserPromptSubmit, PreToolUse, PostToolUse, Stop, TeammateIdle)
+  - `[ADDED]` 3 lazy-loaded rules: `.claude/rules/forge-src.md`, `skill-editing.md`, `branch-protection.md`
+  - `[CHANGED]` CC minimum version bumped to 2.1.121 (recommended ≥2.1.138) — `scripts/init.sh` version gate
+
 ### Fixed
 
 - **Evolved Rules Integration & Retirement (2026-05-10 session)** — R1-R9 分类融入基础设施或留在 evolved-rules
