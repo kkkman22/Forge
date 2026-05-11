@@ -129,6 +129,9 @@ describe("schemas — passthrough unknown fields", () => {
             ]);
             if (knownKeys.has(key))
                 return;
+            // __proto__ cannot be set via object literal / spread in JS
+            if (key === "__proto__")
+                return;
             const augmented = { ...sample, [key]: value };
             const result = ConfigFileSchema.safeParse(augmented);
             expect(result.success).toBe(true);
