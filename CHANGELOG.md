@@ -22,6 +22,16 @@ Entries follow [Keep a Changelog](https://keepachangelog.com/) with Forge-specif
   - `scripts/init.sh` 新增 CI AI 评审启用交互提示
   - 详见 `docs/ci-ultrareview-usage.md`
 
+### Changed
+
+- **归档流程增加 CC transcripts 清理**（ADR: `.forge/decisions/2026-05-12-cc-purge-integration.md`）
+  - 新增 `scripts/archive-spec.sh`：归档 spec/plan/progress 到 `.forge/archive/<date>-<slug>/` 并可选清理 Claude Code 项目状态
+  - 支持 `--purge-cc=ask|skip|auto`（默认 ask，交互两次确认）
+  - 生成 `purge-manifest.json` 记录 dry-run 预览、用户决策、执行结果
+  - 安全保护：黑名单路径拒绝、worktree 路径解析、CC 版本检测降级
+  - 需要 Claude Code >= 2.1.126（低版本自动跳过并 warning）
+  - 47 项 bash 测试覆盖所有分支
+
 ### Fixed
 
 - **Evolved Rules Integration & Retirement (2026-05-10 session)** — R1-R9 分类融入基础设施或留在 evolved-rules
