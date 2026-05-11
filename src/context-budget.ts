@@ -561,7 +561,7 @@ export function serializeSubagentSummary(summary: SubagentSummary): string {
   }
 
   if (summary.status === "DONE_WITH_CONCERNS" && summary.concerns && summary.concerns.length > 0) {
-    lines.push(`疑虑：${summary.concerns.join("; ")}`);
+    lines.push(`疑虑：${JSON.stringify(summary.concerns)}`);
   }
 
   return lines.join("\n");
@@ -626,7 +626,12 @@ export function deserializeSubagentSummary(text: string): SubagentSummary {
     }
     m = line.match(/^\s*疑虑：(.+)$/u);
     if (m) {
-      result.concerns = m[1].split("; ");
+      try {
+        result.concerns = JSON.parse(m[1]);
+      } catch {
+        // Fallback for legacy format (semicolon-separated)
+        result.concerns = m[1].split("; ");
+      }
     }
   }
 
