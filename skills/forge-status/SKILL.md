@@ -70,6 +70,16 @@ Progress files: !`ls .forge/progress/*.md 2>/dev/null || echo "none"`
   （无）
 ```
 
+## 6. Frozen-Zone 活动摘要
+
+在输出末尾追加 frozen-zone 活动摘要。运行：
+
+```bash
+bash scripts/summarize-frozen-events.sh --days=7
+```
+
+将输出追加到标准 status 输出的末尾。如果没有 frozen-zone 事件（日志为空），则跳过此节。
+
 ## Gotchas
 - **Stale status**: Status says "in progress" but work completed hours ago → misleading → always cross-check with git log
 - **Missing status file**: New project has no .forge/status.md → status returns nothing → create initial status file
@@ -147,3 +157,13 @@ $ /forge status
 🚫 阻塞（0）
   （无）
 ```
+
+## 6. Frozen-Zone 活动摘要
+
+在输出末尾追加 frozen-zone 活动摘要。运行：
+
+```bash
+bash scripts/summarize-frozen-events.sh --days=7
+```
+
+将输出追加到标准 status 输出的末尾。如果没有 frozen-zone 事件（日志为空），则跳过此节。
