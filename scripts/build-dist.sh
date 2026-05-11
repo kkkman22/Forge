@@ -150,3 +150,68 @@ cc_count=$(find "${CC_BUNDLE}" -type f | wc -l | tr -d '[:space:]')
 echo "  dist/claude-code/bundles/forge/  — ${cc_count} 个文件"
 echo "  版本: ${VERSION}"
 echo ""
+
+# ============================================================================
+# Plugin 分发包
+# ============================================================================
+info "构建 Plugin 分发包..."
+
+PLUGIN_DIST="${FORGE_ROOT}/dist-plugin"
+rm -rf "${PLUGIN_DIST}"
+mkdir -p "${PLUGIN_DIST}"
+
+# Copy plugin manifest
+cp -r "${FORGE_ROOT}/.claude-plugin" "${PLUGIN_DIST}/.claude-plugin"
+
+# Copy plugin assets (same as CC bundle but with plugin layout)
+cp -r "${FORGE_ROOT}/skills" "${PLUGIN_DIST}/skills"
+cp -r "${FORGE_ROOT}/agents" "${PLUGIN_DIST}/agents"
+cp -r "${FORGE_ROOT}/commands" "${PLUGIN_DIST}/commands"
+cp -r "${FORGE_ROOT}/templates" "${PLUGIN_DIST}/templates"
+cp -r "${FORGE_ROOT}/locales" "${PLUGIN_DIST}/locales"
+mkdir -p "${PLUGIN_DIST}/scripts"
+
+# Copy runtime scripts referenced by hooks
+for script in \
+  auto-resume.sh persistent-loop.sh hook-check-frozen.sh check-frozen.sh \
+  init.sh validate-knowledge.sh; do
+  if [[ -f "${FORGE_ROOT}/scripts/${script}" ]]; then
+    cp "${FORGE_ROOT}/scripts/${script}" "${PLUGIN_DIST}/scripts/${script}"
+    chmod +x "${PLUGIN_DIST}/scripts/${script}"
+  fi
+done
+
+# Copy runtime .mjs scripts referenced by hooks
+for script in \
+  inject-plan-context.mjs check-context-boundary.mjs \
+  rebuild-feature-dossier.mjs record-evolved-rule-violation.mjs \
+  flag-stale-evolved-rules.mjs; do
+  if [[ -f "${FORGE_ROOT}/scripts/${script}" ]]; then
+    cp "${FORGE_ROOT}/scripts/${script}" "${PLUGIN_DIST}/scripts/${script}"
+  fi
+done
+
+# Copy cmux-mirror if exists
+if [[ -d "${FORGE_ROOT}/scripts/cmux-mirror" ]]; then
+  cp -r "${FORGE_ROOT}/scripts/cmux-mirror" "${PLUGIN_DIST}/scripts/cmux-mirror"
+fi
+
+# Copy compiled JS needed by sandbox hooks
+if [[ -d "${FORGE_ROOT}/dist/src" ]]; then
+  mkdir -p "${PLUGIN_DIST}/dist/src"
+  for js in check-sandbox.js check-frozen.js state.js frontmatter.js; do
+    if [[ -f "${FORGE_ROOT}/dist/src/${js}" ]]; then
+      cp "${FORGE_ROOT}/dist/src/${js}" "${PLUGIN_DIST}/dist/src/"
+    fi
+  done
+fi
+
+# Create zip artifact
+ZIP_NAME="forge-plugin-${VERSION}.zip"
+(cd "${FORGE_ROOT}" && zip -r "${ZIP_NAME}" -r "${PLUGIN_DIST}" > /dev/null 2>&1 && mv "${ZIP_NAME}" "${PLUGIN_DIST}/")
+success "Plugin 分发包构建完成: ${PLUGIN_DIST}/"
+
+plugin_count=$(find "${PLUGIN_DIST}" -type f | wc -l | tr -d '[:space:]')
+echo "  ${PLUGIN_DIST}/  — ${plugin_count} 个文件"
+echo "  版本: ${VERSION}"
+echo ""
