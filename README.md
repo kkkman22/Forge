@@ -184,6 +184,7 @@ rm -rf /tmp/forge
 # 辅助命令
 /forge status  # 查看当前状态
 /forge resume  # 恢复上次会话
+/forge resume --from-pr https://github.com/org/repo/pull/42  # 从 PR 恢复上下文
 /forge debug   # 结构化调试
 /forge abort   # 安全中止当前任务
 ```
@@ -204,7 +205,7 @@ rm -rf /tmp/forge
 | `/forge ship` | 交付 | 门禁检查 + 四选项交付 | 标准、全量 |
 | `/forge learn` | 知识 | 五维度经验提取和沉淀，支持 `--from-chats` 从历史对话提取 | 全量 |
 | `/forge status` | 辅助 | 查看当前任务状态 | 所有 |
-| `/forge resume` | 辅助 | 五问题恢复上次会话上下文 | 所有 |
+| `/forge resume` | 辅助 | 五问题恢复上次会话上下文，支持 `--from-pr` 跨会话恢复 | 所有 |
 | `/forge debug` | 辅助 | 四阶段结构化根因分析 | 所有 |
 | `/forge verify` | 验证 | 证据化三态验证（VERIFIED/NOT_VERIFIED/INCONCLUSIVE） | 所有 |
 | `/forge control-cli` | 辅助 | CLI 控制面板交互 | 所有 |
@@ -345,6 +346,28 @@ Wave 1: task-1, task-2（并行）
 Wave 2: task-3, task-4（并行，task-1/2 完成后）
 Wave 3: task-5（task-3/4 完成后）
 ```
+
+---
+
+## 团队协作：接手他人 PR
+
+Forge 支持从 PR 一键恢复工作上下文，让团队成员无缝接手未完成的 PR：
+
+```bash
+# 从 PR URL 恢复（GitHub / GitLab / Bitbucket）
+/forge resume --from-pr https://github.com/org/repo/pull/42
+
+# 或用 PR 编号（自动推断 remote host）
+/forge resume --from-pr 42
+```
+
+`--from-pr` 会自动：
+1. 获取 PR 元数据（title、branch、description）
+2. 从 PR 信息推断关联的 Forge spec slug
+3. 加载 spec/plan/progress/reviews 等上下文
+4. 更新 `.forge/status.md` 使后续 `/forge status` 可见
+
+Slug 推断顺序：`[spec:slug]` title → `forge/slug` branch → `.forge/specs/slug/` in description → `.forge/decisions/` ADR → interactive prompt。
 
 ---
 

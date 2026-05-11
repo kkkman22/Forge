@@ -15,6 +15,9 @@ reports/mutation/
 # Forge Stop hook dedupe markers
 .forge/.stop-hook-dedupe/
 
+# Forge PR-slug resume cache
+.forge/.pr-slug-cache.json
+
 
 # dist manifest is tracked (used by CI to verify dist sync)
 !dist/claude-code/bundles/.manifest.sha256
