@@ -224,3 +224,30 @@ describe("loadContextBundle", () => {
     expect(result.missing.length).toBeGreaterThan(0);
   });
 });
+
+// ---------------------------------------------------------------------------
+// Property test: resolveSlug never crashes on arbitrary input
+// ---------------------------------------------------------------------------
+
+describe("resolveSlug property: no crash on arbitrary slug-like strings", () => {
+  const slugs = [
+    "abc", "a-b-c", "a0b1c2", "a", "123", "foo-bar-baz-qux",
+    "with-hyphens-and-numbers-123", "singleword", "x-y",
+  ];
+  for (const slug of slugs) {
+    it(`does not crash with branch containing "${slug}"`, () => {
+      const result = resumeModule.resolveSlug({
+        title: `PR for ${slug}`,
+        branch: `forge/${slug}`,
+        description: "",
+      });
+      expect(result).not.toBeNull();
+      expect(result.slug).toBe(slug);
+    });
+  }
+
+  it("handles empty strings gracefully", () => {
+    const result = resumeModule.resolveSlug({ title: "", branch: "", description: "" });
+    expect(result).toBeNull();
+  });
+});
