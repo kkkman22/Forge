@@ -831,7 +831,98 @@ describe("Contract: CLAUDE.md reference pointers resolve", () => {
 });
 
 // ---------------------------------------------------------------------------
-// 19. SKILL references/ structure
+// 19. UltraReview CI integration
+
+describe("Contract: ultrareview CI workflow", () => {
+  const workflowPath = resolve(ROOT, ".github", "workflows", "ultrareview.yml");
+
+  it(".github/workflows/ultrareview.yml exists", () => {
+    expect(existsSync(workflowPath), "ultrareview.yml workflow missing").toBe(true);
+  });
+
+  if (!existsSync(workflowPath)) return;
+
+  const workflow = readFileSync(workflowPath, "utf-8");
+
+  it("triggers on pull_request events", () => {
+    expect(workflow, "missing pull_request trigger").toContain("pull_request");
+  });
+
+  it("references ANTHROPIC_API_KEY secret", () => {
+    expect(workflow, "missing ANTHROPIC_API_KEY reference").toContain("ANTHROPIC_API_KEY");
+  });
+
+  it("uses upload-artifact step", () => {
+    expect(workflow, "missing upload-artifact step").toContain("upload-artifact");
+  });
+
+  it("calls run-ci-ultrareview.sh", () => {
+    expect(workflow, "missing run-ci-ultrareview.sh invocation").toContain("run-ci-ultrareview.sh");
+  });
+
+  it("has PR comment step", () => {
+    expect(workflow, "missing PR comment step").toContain("github-script");
+  });
+});
+
+describe("Contract: run-ci-ultrareview.sh script", () => {
+  const scriptPath = resolve(ROOT, "scripts", "run-ci-ultrareview.sh");
+
+  it("scripts/run-ci-ultrareview.sh exists and is executable", () => {
+    expect(existsSync(scriptPath), "run-ci-ultrareview.sh missing").toBe(true);
+    const stat = statSync(scriptPath);
+    // Check executable bit (owner)
+    expect(stat.mode & 0o100, "script not executable").toBeTruthy();
+  });
+
+  if (!existsSync(scriptPath)) return;
+
+  const script = readFileSync(scriptPath, "utf-8");
+
+  it("references claude ultrareview command", () => {
+    expect(script, "missing claude ultrareview invocation").toContain("claude ultrareview");
+  });
+
+  it("handles P0 exit code", () => {
+    expect(script, "missing P0 exit 1 handling").toContain("exit 1");
+  });
+
+  it("supports CI_ULTRAREVIEW_STRICT env var", () => {
+    expect(script, "missing STRICT env var support").toContain("CI_ULTRAREVIEW_STRICT");
+  });
+
+  it("supports CI_ULTRAREVIEW_TIMEOUT env var", () => {
+    expect(script, "missing TIMEOUT env var support").toContain("CI_ULTRAREVIEW_TIMEOUT");
+  });
+});
+
+describe("Contract: review artifact template", () => {
+  const templatePath = resolve(ROOT, "templates", "review-ci.md.tmpl");
+
+  it("templates/review-ci.md.tmpl exists", () => {
+    expect(existsSync(templatePath), "review artifact template missing").toBe(true);
+  });
+
+  if (!existsSync(templatePath)) return;
+
+  const template = readFileSync(templatePath, "utf-8");
+
+  it("contains required frontmatter fields", () => {
+    expect(template).toContain("source:");
+    expect(template).toContain("pr_number:");
+    expect(template).toContain("commit_sha:");
+    expect(template).toContain("severity_counts:");
+  });
+
+  it("contains required sections", () => {
+    expect(template).toContain("## Summary");
+    expect(template).toContain("## Findings");
+    expect(template).toContain("## Raw JSON");
+  });
+});
+
+// ---------------------------------------------------------------------------
+// 20. SKILL references/ structure
 // ---------------------------------------------------------------------------
 
 describe("Contract: SKILL references/ structure", () => {
