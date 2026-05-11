@@ -22,6 +22,10 @@ fi
 slug=$(grep '^current_task:' "$STATUS_FILE" 2>/dev/null | sed 's/current_task: *"{\{0,1\}//;s/"}\{0,1\} *$//')
 phase=$(grep '^phase:' "$STATUS_FILE" 2>/dev/null | sed 's/phase: *"{\{0,1\}//;s/"}\{0,1\} *$//')
 
+# Sanitize: only allow alphanumeric, dash, underscore
+slug=$(printf '%s' "$slug" | tr -cd 'a-zA-Z0-9_-')
+phase=$(printf '%s' "$phase" | tr -cd 'a-zA-Z0-9_-')
+
 if [ -z "$slug" ]; then
   log_event "precompact_skip" "no current_task in status.md"
   exit 0

@@ -17,6 +17,13 @@ if [ ! -f "$SNAPSHOT_FILE" ]; then
 fi
 
 slug=$(grep '^slug=' "$SNAPSHOT_FILE" 2>/dev/null | head -1 | sed 's/slug=//' || true)
+slug=$(printf '%s' "${slug:-}" | tr -cd 'a-zA-Z0-9_-')
+
+# Sanity check: snapshot must have expected header
+if ! grep -q '^slug=' "$SNAPSHOT_FILE" 2>/dev/null; then
+  rm -f "$SNAPSHOT_FILE"
+  exit 0
+fi
 
 cat "$SNAPSHOT_FILE"
 
