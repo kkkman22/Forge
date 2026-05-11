@@ -162,6 +162,26 @@ case "${security_choice}" in
   *)    security_level=1; security_label="标准" ;;
 esac
 
+# --- CI AI 评审 ---
+echo ""
+echo "  CI AI 评审（claude ultrareview）："
+echo "    启用后会在 PR 推送时自动触发 AI 代码评审。"
+echo "    需要在 GitHub 仓库 Settings > Secrets 中添加 ANTHROPIC_API_KEY。"
+echo ""
+read -rp "$(echo -e "${BLUE}?${NC}") 是否启用 CI AI 评审？[y/N] " enable_ultrareview
+
+if [[ "$enable_ultrareview" =~ ^[Yy] ]]; then
+  FORGE_ROOT="$(cd "$(dirname "$0")/.." && pwd)"
+  mkdir -p .github/workflows
+  if [ -f "$FORGE_ROOT/templates/ultrareview.yml" ]; then
+    cp "$FORGE_ROOT/templates/ultrareview.yml" .github/workflows/ultrareview.yml
+    echo "  ✓ 已安装 .github/workflows/ultrareview.yml"
+    echo "  ⚠ 请在 GitHub 仓库 Settings > Secrets > Actions 中添加 ANTHROPIC_API_KEY"
+  else
+    echo "  ⚠ templates/ultrareview.yml 不存在，跳过安装"
+  fi
+fi
+
 # --- CI 检查命令 ---
 echo ""
 echo "  CI 检查命令（ci_check_command）："

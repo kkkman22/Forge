@@ -14,6 +14,13 @@ Entries follow [Keep a Changelog](https://keepachangelog.com/) with Forge-specif
 ### Added
 
 - **`/forge resume --from-pr`** — one-command recovery from a Pull Request. Accepts GitHub/GitLab/Bitbucket URLs or bare PR numbers. Auto-resolves the associated Forge spec slug from PR metadata (title prefix, branch name, description link, or ADR), loads the full context bundle (spec/plan/progress/reviews), and updates `.forge/status.md`. Requires Claude Code 2.1.29+ for CC session recovery; falls back to Forge-only state recovery on older versions. See `scripts/resume-from-pr.mjs` and `skills/forge-resume/SKILL.md` §5.
+- **CI UltraReview 集成** — 每个 PR 自动触发 `claude ultrareview` AI 评审
+  - 新增 `scripts/run-ci-ultrareview.sh` 封装 CLI 调用、JSON 解析、artifact 生成
+  - 新增 `.github/workflows/ultrareview.yml` CI workflow（PR 触发、artifact 上传、PR 评论）
+  - 新增 `templates/review-ci.md.tmpl` 标准化评审产物模板
+  - `skills/forge-review/SKILL.md` 新增 CI 证据接入步骤和 `[confirmed-by-ci]` 前缀规则
+  - `scripts/init.sh` 新增 CI AI 评审启用交互提示
+  - 详见 `docs/ci-ultrareview-usage.md`
 
 ### Fixed
 

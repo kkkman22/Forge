@@ -1,0 +1,61 @@
+{
+  "summary": "AI ultra-review over PR #42. 8 total findings.",
+  "findings": [
+    {
+      "severity": "P0",
+      "file_path": "src/auth.ts",
+      "line": 42,
+      "category": "security",
+      "message": "Race condition in async token refresh — concurrent requests may use expired tokens"
+    },
+    {
+      "severity": "P1",
+      "file_path": "src/api/handler.ts",
+      "line": 108,
+      "category": "error-handling",
+      "message": "Unhandled promise rejection in error path — server may crash on malformed input"
+    },
+    {
+      "severity": "P1",
+      "file_path": "src/db/query.ts",
+      "line": 55,
+      "category": "performance",
+      "message": "N+1 query pattern in getUserRelations — fetches per row instead of batch"
+    },
+    {
+      "severity": "P2",
+      "file_path": "src/utils/format.ts",
+      "line": 12,
+      "category": "style",
+      "message": "Inconsistent date formatting — uses mixed ISO 8601 and locale strings"
+    },
+    {
+      "severity": "P2",
+      "file_path": "src/config.ts",
+      "line": 30,
+      "category": "maintainability",
+      "message": "Magic number 300 for timeout — should be named constant"
+    },
+    {
+      "severity": "P2",
+      "file_path": "src/logger.ts",
+      "line": 8,
+      "category": "style",
+      "message": "Console.log used instead of structured logger"
+    },
+    {
+      "severity": "P2",
+      "file_path": "src/types.ts",
+      "line": 22,
+      "category": "type-safety",
+      "message": "Explicit any in UserPayload — define proper interface"
+    },
+    {
+      "severity": "P3",
+      "file_path": "src/index.ts",
+      "line": 5,
+      "category": "style",
+      "message": "Unused import of EventEmitter"
+    }
+  ]
+}

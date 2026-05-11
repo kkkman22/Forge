@@ -24,6 +24,33 @@ Diff stat: !`git diff --stat HEAD~1 2>/dev/null || echo "no diff"`
 
 **Not For**：无代码变更（纯文档/配置）、build 未完成。
 
+## 1b. CI 证据接入
+
+开始评审前，检查是否存在 CI ultrareview 产物：
+
+```bash
+PR_NUMBER=$(git log -1 --format=%s | grep -oE '#[0-9]+' | head -1 | tr -d '#')
+CI_REVIEW=".forge/reviews/${PR_NUMBER}-ci.md"
+[ -f "$CI_REVIEW" ] && head -100 "$CI_REVIEW"
+```
+
+如果存在：
+- 读取 frontmatter 的 `severity_counts`
+- 读取 `## Findings` 各严重度列表
+- 在本次评审的 summary 中首行注明："CI 评审已覆盖 N 条 finding，本地评审将补充对齐 spec 与 ADR 的深度检查"
+
+如果不存在：按原有流程进行，不报警告。
+
+**`[confirmed-by-ci]` 前缀规则**：当本地发现的 finding 与 CI 产物中的 finding 匹配（`file_path` 与 `category` 相同）时，输出格式为：
+
+```
+- **[confirmed-by-ci] src/foo.ts:42** — <本地描述>
+```
+
+不匹配的本地 finding 不加前缀。
+
+**CI 产物只读**：`.forge/reviews/<pr>-ci.md` 不得被本地 `/forge review` 修改。
+
 ## 2. Subagent Parallel Execution
 
 **Persona 覆盖**：用户可在 `.claude/agents/` 下定义同名文件（spec-check.md、quality-check.md、security-check.md）覆盖默认评审标准。用户定义优先于 Forge 默认。
