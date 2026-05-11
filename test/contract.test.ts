@@ -331,6 +331,7 @@ describe("Contract: hooks.json semantic validation", () => {
   const VALID_TOOL_NAMES = new Set([
     "Write",
     "Edit",
+    "MultiEdit",
     "Bash",
     "Read",
     "Grep",
@@ -995,5 +996,67 @@ describe("Contract: SKILL references/ structure", () => {
         ).toBe(true);
       }
     }
+  });
+});
+
+// ---------------------------------------------------------------------------
+// 20. Frozen-zone structured feedback scripts
+// ---------------------------------------------------------------------------
+
+describe("Contract: frozen-zone structured feedback scripts", () => {
+  const requiredScripts = [
+    "scripts/zone-registry.sh",
+    "scripts/hook-check-frozen-structured.sh",
+    "scripts/hook-check-frozen-post.sh",
+    "scripts/hook-check-frozen.sh",
+    "scripts/print-zone-registry.sh",
+    "scripts/summarize-frozen-events.sh",
+  ];
+
+  for (const script of requiredScripts) {
+    it(`${script} exists`, () => {
+      const scriptPath = resolve(ROOT, script);
+      expect(existsSync(scriptPath), `Missing: ${script}`).toBe(true);
+    });
+
+    it(`${script} is executable`, () => {
+      const scriptPath = resolve(ROOT, script);
+      const mode = statSync(scriptPath).mode;
+      expect((mode & 0o111) !== 0, `${script} is not executable. Run: chmod +x ${script}`).toBe(
+        true,
+      );
+    });
+  }
+
+  it("hooks.json contains PostToolUse frozen-post hook", () => {
+    const hooksPath = resolve(ROOT, "hooks/hooks.json");
+    const hooksFile = JSON.parse(readFileSync(hooksPath, "utf-8"));
+    const postGroups = hooksFile.hooks.PostToolUse as Array<{
+      hooks: Array<{ command?: string }>;
+    }>;
+    const hasFrozenPost = postGroups.some((group) =>
+      group.hooks.some((h) => h.command?.includes("frozen-post")),
+    );
+    expect(hasFrozenPost, "PostToolUse missing frozen-post hook").toBe(true);
+  });
+
+  it("hooks.json PreToolUse frozen matcher includes MultiEdit", () => {
+    const hooksPath = resolve(ROOT, "hooks/hooks.json");
+    const hooksFile = JSON.parse(readFileSync(hooksPath, "utf-8"));
+    const preGroups = hooksFile.hooks.PreToolUse as Array<{
+      matcher?: string;
+      hooks: Array<{ command?: string }>;
+    }>;
+    const frozenGroup = preGroups.find((group) =>
+      group.hooks.some((h) => h.command?.includes("hook-check-frozen")),
+    );
+    expect(frozenGroup?.matcher).toContain("MultiEdit");
+  });
+
+  it("config.md contains HARD-GATE frozen-zone-protection block", () => {
+    const configPath = resolve(ROOT, ".forge/config.md");
+    const config = readFileSync(configPath, "utf-8");
+    expect(config).toContain('<HARD-GATE name="frozen-zone-protection">');
+    expect(config).toContain("</HARD-GATE>");
   });
 });
