@@ -1,17 +1,22 @@
 ---
-current_task: ""
-tier: ""
-task_type: ""
-project_phase: ""
-phase: ""
-updated: "2026-05-09"
+current_task: "feature-dossier-index"
+tier: "standard"
+task_type: "feature"
+project_phase: "build"
+phase: "build"
+updated: "2026-05-11"
 ---
 
 # 项目状态
 
 ## 当前任务
 
-（无）
+**feature-dossier-index** — Feature Dossier Index
+- Spec: `.kiro/specs/feature-dossier-index/requirements.md`
+- Design: `.kiro/specs/feature-dossier-index/design.md`
+- Plan: `.kiro/specs/feature-dossier-index/tasks.md`
+- 当前阶段：build
+- 分支：`feature/feature-dossier-index`
 
 ## 已完成任务
 
