@@ -122,7 +122,8 @@ const EXPECTED_POST_TOOL_USE_HOOKS: HookMatcher[] = [
     hooks: [
       {
         type: "command",
-        command: 'node scripts/rebuild-feature-dossier.mjs --from-path "$TOOL_INPUT_FILE" 2>/dev/null || true',
+        command:
+          'node scripts/rebuild-feature-dossier.mjs --from-path "$TOOL_INPUT_FILE" 2>/dev/null || true',
         timeout: 5,
       },
     ],
