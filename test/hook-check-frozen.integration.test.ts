@@ -110,7 +110,10 @@ describe("Integration: audit logging", () => {
 
   it("log_event writes JSONL entry", () => {
     const before = existsSync(logDir)
-      ? readFileSync(resolve(logDir, `${new Date().toISOString().slice(0, 10)}-frozen-events.jsonl`), "utf-8")
+      ? readFileSync(
+          resolve(logDir, `${new Date().toISOString().slice(0, 10)}-frozen-events.jsonl`),
+          "utf-8",
+        )
       : "";
 
     runHook("scripts/hook-check-frozen-structured.sh", {
