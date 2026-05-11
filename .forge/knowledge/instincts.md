@@ -1,5 +1,5 @@
 ---
-updated: "2026-04-29"
+updated: "2026-05-12"
 ---
 
 ## 模式列表
@@ -27,3 +27,19 @@ updated: "2026-04-29"
 **来源**: ship-delivery-pure-functions
 
 字符白名单无法拦截多字符攻击序列（如 `..`、`@{`、`.lock`）。输入验证必须同时包含字符级和序列级检查。对于 Git 分支名，还需检查首尾字符限制。
+
+### Shell hook 安全三件套：case allowlist + tr 净化 + 读取前校验
+
+**Confidence_Score**: 0.9
+**Tags**: security, hooks, shell, allowlist, sanitization
+**来源**: hooks-security-sanitization, ccbp-phase2-worktree-gitignore
+
+Hook 脚本中：(1) 用 `case` 语句精确匹配 allowlist，不用 `grep -qE` 正则；(2) 外部输入用 `tr -cd 'a-zA-Z0-9_-'` 净化后再拼接路径/文件名；(3) `cat` 外部文件前检查 header 标识，无效则删除+exit 0。
+
+### .claude/ 被 gitignore 时用 git add -f 跟踪
+
+**Confidence_Score**: 0.85
+**Tags**: git, gitignore, worktree, .claude
+**来源**: ccbp-phase2-worktree-gitignore
+
+`.claude/` 整体在 .gitignore 中排除。需要版本控制的文件（agents/、rules/、hooks/scripts/）必须 `git add -f`。忘记 -f 会导致 merge 时文件丢失。
