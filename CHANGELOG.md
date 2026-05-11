@@ -11,6 +11,19 @@ Entries follow [Keep a Changelog](https://keepachangelog.com/) with Forge-specif
 
 ## [Unreleased]
 
+### Added
+
+- **Plugin Distribution** — Forge 可通过 `claude plugin install forge` 安装，支持自动更新和版本锁定
+  - 新增 `.claude-plugin/plugin.json` 和 `.claude-plugin/marketplace.json`
+  - 新增 28 个 slash command wrappers（`commands/*.md`）
+  - 新增 `scripts/gen-plugin-commands.mjs` 自动生成命令文件
+  - 新增 `test/plugin-manifest.test.ts`（12 tests）
+  - `scripts/build-dist.sh` 新增 `dist-plugin/` 输出
+  - CI 新增 `plugin-validate` job
+  - `/forge status` 新增 clone + plugin 冲突检测
+  - README 新增方式三 Plugin 安装和迁移指南
+  - 参见 `.kiro/specs/plugin-distribution/feasibility.md` Phase A 可行性报告
+
 ### Fixed
 
 - **Evolved Rules Integration & Retirement (2026-05-10 session)** — R1-R9 分类融入基础设施或留在 evolved-rules

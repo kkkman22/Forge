@@ -242,6 +242,23 @@ PR 描述中必须引用对应 ADR 的编号（`ADR-NNNN`），否则 review 会
 
 Open an [Issue](https://github.com/anthropics/forge/issues) for discussion.
 
+## Testing Plugin Changes Locally
+
+Test local changes via `--plugin-dir` without publishing to marketplace:
+
+```bash
+# Validate manifest
+claude plugin validate .
+
+# Test in a single session
+claude --plugin-dir . -p "/forge status"
+
+# Or install from local path
+claude plugin install . --plugin-dir .
+```
+
+After modifying skills/agents/commands, re-run `node scripts/gen-plugin-commands.mjs` to regenerate command wrappers.
+
 ## Creating a New Skill
 
 1. Copy `templates/SKILL-TEMPLATE.md` to `skills/forge-<name>/SKILL.md`

@@ -54,7 +54,21 @@ Forge 从第一天起把安全视为工程纪律。防御分层落在代码、�
 
 ## 安装
 
-### 方式一：直接克隆（推荐，完整功能）
+### 方式一：Plugin 安装（推荐）
+
+```bash
+# 添加 Forge 官方 marketplace
+claude plugin marketplace add https://github.com/kkkman22/Forge
+
+# 安装 Forge plugin
+claude plugin install forge
+```
+
+安装后 `/forge` 及 28 个子命令立即可用。支持 `claude plugin update forge` 自动更新和版本锁定。
+
+> **适用场景**：所有新用户。只需 Claude Code，无需 git 或 Node.js。
+
+### 方式二：直接克隆（Forge Loop 开发者）
 
 ```bash
 git clone https://github.com/kkkman22/Forge.git ~/.claude/skills/forge
@@ -62,7 +76,7 @@ git clone https://github.com/kkkman22/Forge.git ~/.claude/skills/forge
 
 克隆安装包含完整功能：`/forge` 交互式命令 + Forge Loop 自主执行引擎。如需使用 Forge Loop，还需执行 `npm install && npx tsc`。
 
-### 方式二：分发包安装（轻量部署）
+### 方式三：分发包安装（企业内网）
 
 分发包只包含 `/forge` 交互式命令所需的文件（skills、agents、hooks、scripts、templates），不含 Forge Loop 及其依赖。适合只需要 `/forge` 命令的团队统一部署。
 
@@ -87,6 +101,30 @@ rm -rf /tmp/forge
 - `--backup`：安装前备份已有的同名目录
 
 > **分发包同步校验**：每次 push 到 main 分支后，CI 会校验 dist 包是否与源码同步，不一致时 CI 失败。
+
+### Plugin 迁移指南
+
+从 clone/dist 安装迁移到 plugin 安装：
+
+```bash
+# 1. 移除旧安装
+rm -rf ~/.claude/skills/forge
+
+# 2. 添加 marketplace 并安装 plugin
+claude plugin marketplace add https://github.com/kkkman22/Forge
+claude plugin install forge
+
+# 3. 验证安装
+claude plugin list | grep forge
+
+# 4. 在项目中测试
+/forge status
+```
+
+**注意事项**：
+- 项目级 `.forge/` 目录不受影响，无需迁移
+- 已有的 hooks 配置和知识库保持不变
+- Forge Loop 功能仍需 clone 安装方式
 
 ---
 
