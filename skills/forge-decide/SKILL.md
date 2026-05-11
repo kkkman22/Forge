@@ -1,6 +1,7 @@
 ---
 name: forge-decide
 description: "Decide through four-perspective Subagent deliberation covering product, architect, security, and designer viewpoints. Use when starting a full-tier task, facing irreversible technical choices, or needing threat modeling before implementation."
+context: fork
 skeleton_exempt_legacy: true
 disable-model-invocation: true
 ---
@@ -153,3 +154,9 @@ Mandatory token limits per perspective output (≤500 tokens). Structured output
 **Retention modes**: `Write-and-discard`（写入文件后丢弃 context 中的原始输出）; `Keep-in-context`（仅限 ≤200 tokens 的结构化输出保留）。
 
 → 详见 references/decision-format.md（完整 Context Budget 规则、Trimmer 签名）
+
+## Gotchas
+- **Groupthink**: All perspectives converge too quickly → blind spots → critic must challenge, not validate
+- **Missing designer**: UI task without designer perspective → usability gaps → always include designer when task involves UI
+- **Analysis paralysis**: Too many perspectives produce conflicting recommendations → no decision → timebox each perspective, force recommendation
+- **Premature consensus**: Perspectives agree because they share same assumptions → hidden risks → each perspective must state assumptions explicitly

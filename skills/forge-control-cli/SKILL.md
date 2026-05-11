@@ -63,3 +63,8 @@ Registered in `commands/forge.md` as `--cli` flag for `forge-test`.
 
 - **No new dependencies** [R5.9]: tmux via `child_process.spawn`; node-pty via optional `require()`
 - `package.json` must not gain new entries
+
+## Gotchas
+- **Terminal escape codes**: CLI output contains ANSI codes → output comparison fails → strip escape codes before assertion
+- **Timing sensitivity**: CLI takes time to start → assertion runs before output ready → use timeout-based polling, not fixed sleep
+- **Process cleanup**: CLI process not killed after test → port/resource leak → always clean up in teardown

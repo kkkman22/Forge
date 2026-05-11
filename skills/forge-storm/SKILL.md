@@ -1,6 +1,7 @@
 ---
 name: forge-storm
 description: "Capture domain events, commands, aggregates, policies, and read models through Socratic event-storming prompts into a structured output file. Use when running `/forge storm <context>`, exploring a new Bounded Context, or building a domain model before writing specs."
+context: fork
 skeleton_exempt_legacy: true
 disable-model-invocation: true
 ---
@@ -13,44 +14,34 @@ disable-model-invocation: true
 
 ---
 
-## 1. Overview
+## 1. Goal
 
-Event Storming 是一种快速领域建模技术。forge-storm 通过 5 个阶段逐一引导，产出结构化的 event-storm.md，为后续 `/forge spec` 提供领域模型输入。
+Produce a structured event-storm document (`.forge/contexts/<context>/event-storm.md`) that captures the domain model of a Bounded Context — events, commands, aggregates, policies, and read models — through Socratic dialogue, yielding input for `/forge spec`.
 
-**核心原则**：一个问题一轮，从自然语言提取结构化条目，Socratic 引导而非填表。
+**Constraints**:
+- One question per turn. Extract structured entries from natural language answers — never present a form to fill.
+- Accept signals like "差不多了", "这些够了", "next" as phase completion.
+- Each phase must collect at least 3 entries before suggesting advancement. When entries are thin, probe edge cases ("取消呢？", "超时呢？").
+- Phases advance automatically without mid-step confirmation (§2.7).
+- **Not For**: small changes (Light tier), well-understood domains, implementation details.
 
-**Not For**：小改动（Light 路径）、领域已充分理解时、实现细节讨论。
+## 2. Domain Coverage
 
-## 2. When to Use
+**Goal**: Cover five domain-modeling perspectives, in any order you choose, ensuring each is adequately explored before moving on.
 
-- 设计新 Bounded Context 时
-- 探索 Core Subdomain 业务规则时
-- `/forge decide` 前需要领域建模输入时
-- 团队需要统一领域语言时
+| Perspective | Guiding Question |
+|-------------|-----------------|
+| Domain Events | "什么事情在业务中发生后值得记录？" |
+| Commands | "哪些命令会触发这些事件？" |
+| Aggregates | "哪些 Command + Event 应由同一个一致性边界守护？" |
+| Policies | "哪些 event 自动触发下一步 command？" |
+| Read Models | "哪些视图/报表从 events 投影？" |
 
-**不适用**：小范围改动、已充分理解的领域、纯技术实现讨论。
+**Constraints**:
+- Every perspective must be represented in the final output.
+- If the user skips a perspective, note the gap and offer to revisit at the end.
 
-## 3. Five-Phase Flow
-
-| Phase | Color | Key Question |
-|-------|-------|-------------|
-| 1. Domain Events | 橙色 | "什么事情在业务中发生后值得记录？" |
-| 2. Commands | 蓝色 | "哪些命令会触发这些事件？" |
-| 3. Aggregates | 黄色 | "哪些 Command + Event 应由同一个一致性边界守护？" |
-| 4. Policies | 紫色 | "哪些 event 自动触发下一步 command？" |
-| 5. Read Models | 绿色 | "哪些视图/报表从 events 投影？" |
-
-每阶段：提问 → 收集 → 保存状态 → 自动推进（§2.7 无中间确认）。
-
-## 4. Interactive Patterns
-
-- **一轮一问**：每轮只问一个问题，等待用户回答。
-- **结构提取**：从自然语言回答中提取结构化 Event/Command/Aggregate 等。
-- **完成信号**：接受"差不多了"、"这些够了"、"next" 作为阶段完成信号。
-- **最低门槛**：每阶段至少 3 个条目后才建议进入下一阶段。
-- **补充追问**：条目不足时追问边界情况（"取消呢？"、"超时呢？"）。
-
-## 5. Output Format
+## 3. Output Format
 
 输出文件：`.forge/contexts/<context>/event-storm.md`
 
@@ -68,33 +59,30 @@ phase_completed: <events|commands|aggregates|policies|read_models>
 
 → 完整示例见 references/example-storm.md
 
-## 6. Resuming Interrupted Session
+## 4. Session Continuity
 
-读取已有 `.forge/contexts/<context>/event-storm.md` → 检查 `phase_completed` → 从下一阶段继续。
+**Goal**: Resume an interrupted storm session seamlessly, picking up exactly where it left off.
 
-流程：检查文件 → 解析 frontmatter → 确认已完成阶段 → 继续未完成阶段。
+**Constraints**:
+- Read the existing `.forge/contexts/<context>/event-storm.md` and parse its `phase_completed` frontmatter to determine resumption point.
+- If the file is corrupted or malformed, inform the user and offer restart or manual fix options.
+- Approach: your choice — inspect, parse, continue.
 
-若文件损坏或格式错误，提示用户重新开始或手动修正。
+## 5. Available Functions
 
-## 7. Execution Flow
+| Concept | Function | Params | Returns |
+|---------|----------|--------|---------|
+| Initialize | `initStormState(context)` | context name | `StormState` |
+| Save progress | `saveStormState(state)` | current StormState | void (writes file) |
+| Final output | `serializeStormMarkdown(state)` | completed StormState | markdown string |
 
-1. **检查** `.forge/contexts/<context>/event-storm.md` 是否存在
-2. **加载或初始化** StormState（使用 `src/storm.ts` 中的函数）
-3. **当前阶段**：提出 Socratic 问题
-4. **用户回答** → 提取条目 → `saveStormState`
-5. **阶段完成** → 自动推进下一阶段（§2.7 no-mid-step-confirmation）
-6. **5 阶段全部完成** → `serializeStormMarkdown` → 输出最终文件
-7. **建议**：`"可用 /forge spec 基于此风暴启动 spec 生成"`
+Use these as needed. No prescribed sequence — call them when your approach requires them.
 
-**函数映射**：
+## 6. Completion
 
-| 概念 | 函数调用 | 参数 | 返回 |
-|------|---------|------|------|
-| 初始化 | `initStormState(context)` | context name | `StormState` |
-| 保存 | `saveStormState(state)` | 当前 StormState | void（写入文件） |
-| 序列化 | `serializeStormMarkdown(state)` | 完成的 StormState | markdown string |
+When all five perspectives are sufficiently explored, produce the final markdown file and suggest: `"可用 /forge spec 基于此风暴启动 spec 生成"`
 
-## 8. Examples
+## 7. Examples
 
 **Phase 1 示例对话（PMS Reservations Context）**：
 
@@ -128,3 +116,8 @@ AI: 提取到 6 个领域事件：
 | "这太花时间了" | 30 分钟风暴节省数天返工 |
 | "直接写代码更快" | 没有领域模型的代码只是在堆 if-else |
 | "业务人员没空参加" | forge-storm 允许异步逐轮进行 |
+
+## Gotchas
+- **Premature modeling**: Jump to aggregates before exploring events → miss critical domain concepts → explore events first, model later
+- **Facilitator bias**: AI suggests events that match its training → domain-specific events missed → let user drive, AI only structures
+- **Scope explosion**: Event storm covers entire system → too many events → scope to one bounded context at a time

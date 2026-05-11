@@ -143,3 +143,8 @@ Scan 无候选 → `should_fully_stop: true` · Apply 验证失败 → 回滚+�
 |--------|------|
 | "顺便加个功能" | 重构和功能是独立变更，混合增加 review/rollback 风险 |
 | "能跑就不用重构" | 重构价值在于降低未来变更成本 |
+
+## Gotchas
+- **Behavior change disguised as refactor**: Rename + logic tweak in same commit → tests break → refactor must keep behavior identical, separate from feature changes
+- **Test suite too thin**: Refactor passes tests but breaks untested edge case → refactor introduces bug → ensure test coverage before refactoring
+- **Big bang refactor**: Change 20 files in one commit → hard to review, easy to break → incremental refactors, one concern per commit

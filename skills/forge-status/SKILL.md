@@ -5,6 +5,12 @@ skeleton_exempt_legacy: true
 disable-model-invocation: true
 ---
 
+## Current Context
+
+!`cat .forge/status.md 2>/dev/null || echo "no status file"`
+Branch: !`git branch --show-current`
+Progress files: !`ls .forge/progress/*.md 2>/dev/null || echo "none"`
+
 # /forge status — Status Query
 
 > **触发方式**：用户输入 `/forge status`
@@ -63,6 +69,11 @@ disable-model-invocation: true
 🚫 阻塞（0）
   （无）
 ```
+
+## Gotchas
+- **Stale status**: Status says "in progress" but work completed hours ago → misleading → always cross-check with git log
+- **Missing status file**: New project has no .forge/status.md → status returns nothing → create initial status file
+- **Phase value unexpected**: Custom phase value not in expected range → status display breaks → handle gracefully with fallback
 
 ## Common Rationalizations
 

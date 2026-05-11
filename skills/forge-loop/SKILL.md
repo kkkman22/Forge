@@ -138,3 +138,9 @@ $ /forge loop "为用户 API 添加分页功能"
 ```
 
 **Variants**: Fix loop: review blocked → fix → re-review pass · Circuit breaker: 3 fails → abort → /forge resume · Worktree: `--worktree` 隔离 · Resume: `--resume <branch>` 继续
+
+## Gotchas
+- **Infinite loop**: Task never completes → loop runs forever → set max iterations, stop on repeated failures
+- **State drift**: Long loop session → .forge/ files diverge from git reality → periodic state reconciliation every N iterations
+- **Context rot**: Loop runs 300k+ tokens → degraded intelligence → break loop, /clear, resume with fresh context
+- **Persistent loop orphan**: Session ends but persistent loop script keeps running → zombie processes → cleanup on SessionStart
