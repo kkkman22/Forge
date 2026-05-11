@@ -105,9 +105,12 @@ _parse_config_file() {
       # plans/*.md → plans/ (match any file under plans/)
       # config.md → config.md (exact match)
       local glob=""
-      if [[ "$raw_glob" == */* ]]; then
-        # Extract directory prefix: specs/*/spec.md → specs/
+      if [[ "$raw_glob" == *\** ]]; then
+        # Contains wildcard — extract directory prefix
         glob="${raw_glob%%/*}/"
+      elif [[ "$raw_glob" == */* ]]; then
+        # Has path separator but no wildcard — keep full path for exact match
+        glob="$raw_glob"
       else
         glob="$raw_glob"
       fi
@@ -133,7 +136,7 @@ _parse_config_file() {
   # Stop at "开放区" section or next ### heading
   local guarded_block=""
   guarded_block=$(printf '%s' "$content" | awk '
-    /受保护区/ { in_guarded=1; next }
+    /^###.*受保护区/ { in_guarded=1; next }
     /^###.*开放区/ { in_guarded=0 }
     in_guarded && /^### / { in_guarded=0 }
     in_guarded { print }
@@ -149,8 +152,12 @@ _parse_config_file() {
 
       # Convert glob to prefix pattern
       local glob=""
-      if [[ "$raw_glob" == */* ]]; then
+      if [[ "$raw_glob" == *\** ]]; then
+        # Contains wildcard — extract directory prefix
         glob="${raw_glob%%/*}/"
+      elif [[ "$raw_glob" == */* ]]; then
+        # Has path but no wildcard — keep full path for exact match
+        glob="$raw_glob"
       else
         glob="$raw_glob"
       fi
@@ -250,7 +257,7 @@ _path_matches_rule() {
   local forge_relative="$1"
   local glob="$2"
 
-  # Exact match
+  # Exact match (e.g. "config.md" or "knowledge/instincts.md")
   if [[ "$forge_relative" == "$glob" ]]; then
     return 0
   fi
