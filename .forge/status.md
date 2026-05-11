@@ -1,7 +1,7 @@
 ---
-current_task: "plugin-distribution"
-tier: "standard"
-task_type: "plugin-distribution"
+current_task: "ccbp-hardening-phase2"
+tier: "full"
+task_type: "harness-layer-hardening"
 project_phase: "completed"
 phase: "completed"
 updated: "2026-05-12"
@@ -11,16 +11,18 @@ updated: "2026-05-12"
 
 ## 当前任务
 
-**plugin-distribution** — Forge Plugin 化分发 ✅ COMPLETED
-- Spec: `.kiro/specs/plugin-distribution/`
-- 8 Requirements, 14 Tasks
-- Phase A: conditional-go | Phase B: 12/14 tasks complete
+**ccbp-hardening-phase2** — CCBP Phase 2: hooks if: 迁移 + compaction 保护 + agent frontmatter + rules 迁移 ✅ COMPLETED
+- Spec: `.forge/specs/ccbp-hardening-phase2/spec.md` (locked)
+- Source: `.kiro/specs/ccbp-hardening-phase2/` (requirements + design + tasks)
+- 10 Requirements, 9 Tasks, ~23 files
+- 3 commits merged to main
 
 ## 已完成任务
 
-- archive-transcript-purge: CC project purge 集成到 Forge 归档流程（47 tests, 0 P0/P1）
+- ccbp-hardening-phase2: CCBP Phase 2 hooks if: + compaction + agent frontmatter + dispatcher + rules + version gate
 - plugin-distribution: Forge Plugin 化分发
 - ccbp-inspired-hardening: Claude Code Best Practice 借鉴的工程加固
+- archive-transcript-purge: CC project purge 集成到 Forge 归档流程
 - cmux-integration: Sprint 1-6 全部完成（33 tasks，25 test files，158 tests）
 - resume-phase-coverage: compaction 恢复后 SKILL.md 步骤遗漏修复
 - phase-advance-hardening: SKILL 驱动模式阶段推进断点修复

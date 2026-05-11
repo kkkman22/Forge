@@ -1,0 +1,45 @@
+---
+name: forge-ship
+description: "Ship completed work with branch validation, push workflow, and post-push verification. Use when running /forge ship."
+tools:
+  - Read
+  - Write
+  - Edit
+  - Bash
+  - Glob
+  - Grep
+  - AskUserQuestion
+model: sonnet
+hooks:
+  PreToolUse:
+    - matcher: "Bash"
+      if: "Bash(git push*)"
+      type: command
+      command: |
+        bash -c '
+          branch=$(git rev-parse --abbrev-ref HEAD 2>/dev/null)
+          if [ "$branch" = "main" ] || [ "$branch" = "master" ]; then
+            echo "Forbidden: direct push to $branch" >&2
+            exit 2
+          fi
+          exit 0
+        '
+      timeout: 5
+---
+
+# forge-ship Agent
+
+Ship agent handling delivery workflow.
+
+## Core Flow
+
+1. Run final verification (`npm run check`)
+2. Validate branch (not main/master)
+3. Present merge options via AskUserQuestion
+4. Push or merge as selected
+5. Run post-push verification
+6. Update `.forge/status.md`
+
+## Branch Protection
+
+Never push to main/master directly. Always use feature branches.

@@ -31,6 +31,10 @@ Entries follow [Keep a Changelog](https://keepachangelog.com/) with Forge-specif
   - `/forge status` 新增 clone + plugin 冲突检测
   - README 新增方式三 Plugin 安装和迁移指南
   - 参见 `.kiro/specs/plugin-distribution/feasibility.md` Phase A 可行性报告
+- **CCBP Hardening Phase 2** — compaction protection + agent frontmatter + dispatcher + rules + version gate
+  - `[ADDED]` `scripts/hook-precompact.sh` + `scripts/hook-postcompact.sh` — compaction boundary state protection
+  - `[ADDED]` `.claude/hooks/scripts/dispatcher.sh` — unified 6-event dispatcher
+  - `[ADDED]` 3 lazy-loaded rules: `.claude/rules/forge-src.md`, `skill-editing.md`, `branch-protection.md`
 
 ### Changed
 
@@ -41,6 +45,10 @@ Entries follow [Keep a Changelog](https://keepachangelog.com/) with Forge-specif
   - 安全保护：黑名单路径拒绝、worktree 路径解析、CC 版本检测降级
   - 需要 Claude Code >= 2.1.126（低版本自动跳过并 warning）
   - 47 项 bash 测试覆盖所有分支
+- **CCBP Hardening Phase 2** — Hooks `if:` conditional filtering + agent frontmatter improvements
+  - `[CHANGED]` hooks.json: added `if:` filters to 5 PreToolUse/PostToolUse entries to skip irrelevant tool calls
+  - `[CHANGED]` agent frontmatter: forge-build gets `hooks: {Stop}` (CI allowlist) + `isolation: worktree`; forge-ship gets `hooks: {PreToolUse}` (branch protection); forge-plan gets `initialPrompt`
+  - `[CHANGED]` CC minimum version bumped to 2.1.121 (recommended ≥2.1.138) — `scripts/init.sh` version gate
 
 ### Fixed
 
