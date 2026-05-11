@@ -30,7 +30,9 @@
     "lint:rules": "node scripts/lint-evolved-rules.mjs",
     "check": "tsc --noEmit && biome check src/ test/ && vitest run && node scripts/check-public-api.mjs && bash scripts/check-readme-metrics.sh && bash scripts/check-skill-function-refs.sh && bash scripts/validate-skill-descriptions.sh && bash scripts/validate-skill-length.sh && bash scripts/validate-skill-skeleton.sh && bash scripts/check-evolution-marker-zones.sh && node scripts/validate-scripts-help.mjs && node scripts/lint-evolved-rules.mjs && node scripts/verify-evolved-rule-infra-refs.mjs && node scripts/check-dist-sync.mjs",
     "dist:resync": "bash scripts/dist-resync.sh",
-    "docs": "typedoc"
+    "docs": "typedoc",
+    "dossier:rebuild": "node scripts/rebuild-feature-dossier.mjs",
+    "dossier:rebuild:all": "node scripts/rebuild-feature-dossier.mjs --all"
   },
   "devDependencies": {
     "@biomejs/biome": "2.4.12",

@@ -119,6 +119,16 @@
             "timeout": 2
           }
         ]
+      },
+      {
+        "matcher": "Write|Edit",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "node scripts/rebuild-feature-dossier.mjs --from-path \"$TOOL_INPUT_FILE\" 2>/dev/null || true",
+            "timeout": 5
+          }
+        ]
       }
     ],
     "Stop": [
