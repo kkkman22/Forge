@@ -148,3 +148,29 @@ describe("Contract: forge-resume SKILL.md --from-pr feature", () => {
     expect(lineCount).toBeLessThanOrEqual(150);
   });
 });
+
+// ---------------------------------------------------------------------------
+// UltraReview CI awareness in forge-review
+
+describe("Contract: forge-review SKILL CI awareness", () => {
+  const skillPath = resolve(ROOT, "skills", "forge-review", "SKILL.md");
+  const content = readFileSync(skillPath, "utf-8");
+
+  it("contains CI evidence intake section", () => {
+    expect(content, "forge-review SKILL.md missing CI evidence intake section").toContain(
+      "CI 证据接入",
+    );
+  });
+
+  it("contains confirmed-by-ci prefix rule", () => {
+    expect(content, "forge-review SKILL.md missing [confirmed-by-ci] prefix rule").toContain(
+      "[confirmed-by-ci]",
+    );
+  });
+
+  it("declares CI artifacts read-only", () => {
+    expect(content, "forge-review SKILL.md missing CI artifact read-only declaration").toMatch(
+      /ci.*\.md.*(?:只读|不得.*修改)/i,
+    );
+  });
+});

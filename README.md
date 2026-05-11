@@ -41,6 +41,13 @@ Forge 从第一天起把安全视为工程纪律。防御分层落在代码、�
 - [CHANGELOG.md](CHANGELOG.md) — 所有安全修复以 `[SECURITY]` 前缀标注，每条关联至少一个 ADR
 - `.forge/decisions/ADR-*.md` + `.forge/knowledge/adr-index.md` — 架构决策（含安全决策）可检索追溯
 
+**CI AI 评审**：
+
+- 每个 PR 自动触发 `claude ultrareview`，产出 AI 评审报告（`.forge/reviews/<PR>-ci.md`）
+- P0 finding 阻断合并，P1-P3 记录但不阻断
+- 需配置 GitHub Secret `ANTHROPIC_API_KEY`，未配置时自动跳过
+- 详见 [CI UltraReview 操作手册](docs/ci-ultrareview-usage.md)
+
 **最小权限默认**：`/forge` 使用 Claude Code `acceptEdits` 权限模式，命令执行可被 Hook 拦截，敏感区域（specs/plans/ADR）按"冻结"或"受保护"分级保护，详见 `.forge/config.md`。
 
 ---
