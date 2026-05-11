@@ -1,0 +1,10 @@
+{
+  "title": "Add caching layer (cache-layer)",
+  "source": {
+    "branch": { "name": "feature/cache-layer" },
+    "commit": { "hash": "abc123def456" }
+  },
+  "destination": { "branch": { "name": "main" } },
+  "description": "Adds a caching layer.\n\nSee .forge/specs/cache-layer/ for the full spec.",
+  "links": { "html": { "href": "https://bitbucket.org/myteam/proj/pull-requests/7" } }
+}
