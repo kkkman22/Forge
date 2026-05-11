@@ -89,3 +89,8 @@ Scaffold `packs/<name>/` with `pack.yaml` and `README.md`.
 | Config missing frontmatter | Create frontmatter with packs field |
 | Override destination exists | Error unless --force |
 | Path traversal in override | Reject with error |
+
+## Gotchas
+- **Pack-format mismatch**: Pack YAML format evolves, loader not updated → pack loads empty → integration test must call loadXxx(enabledPacks) and assert result.size > 0
+- **Circular dependency**: Pack A depends on Pack B, B depends on A → infinite load → validate dependency DAG at enable time
+- **Override drift**: Local override diverges from pack origin → inconsistent behavior → document override with reason

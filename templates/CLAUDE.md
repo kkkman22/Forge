@@ -23,14 +23,13 @@
 用户覆盖优先：用户明确指定档位时，以用户为准。宁重勿轻：无法判定时，选择更重的档位。不可跳步：选定档位后，必须按序执行对应的命令序列。
 → 详见 docs/forge-constitution-detail.md §1
 
----
-
 ## 2. Execution Discipline
 
 ### 2.1 TDD Enforcement
 
-<IRON-LAW name="tdd-delete-and-restart">所有实现任务必须遵循 **RED → GREEN → REFACTOR** 循环。**铁律**：如果发现代码先于测试编写——删除代码，从测试开始。</IRON-LAW>
-→ 详见 docs/forge-constitution-detail.md §2.1
+<important if="executing /forge build or /forge plan">
+<IRON-LAW name="tdd-delete-and-restart">所有实现任务必须遵循 **RED → GREEN → REFACTOR** 循环。**铁律**：如果发现代码先于测试编写——删除代码，从测试开始。</IRON-LAW> → 详见 docs/forge-constitution-detail.md §2.1
+</important>
 
 ### 2.2 Pre-build Checks
 
@@ -39,8 +38,9 @@
 
 ### 2.3 Verification Iron Law
 
-<IRON-LAW name="verification-run-command">> **没有运行验证命令 = 不能声明通过。** 每个任务完成后必须运行验证命令；验证必须基于刚刚运行的命令输出；禁止"应该可以了"等声明；每个完成的任务必须执行原子提交。</IRON-LAW>
-→ 详见 docs/forge-constitution-detail.md §2.3
+<important if="completing any implementation task">
+<IRON-LAW name="verification-run-command">> **没有运行验证命令 = 不能声明通过。** 每个任务完成后必须运行验证命令；验证必须基于刚刚运行的命令输出；禁止"应该可以了"等声明；每个完成的任务必须执行原子提交。</IRON-LAW> → 详见 docs/forge-constitution-detail.md §2.3
+</important>
 
 ### 2.4 Three-Strike Reroute
 
@@ -49,7 +49,9 @@
 
 ### 2.7 No Confirmation Between Steps（铁律）
 
+<important if="completing a task or phase">
 <IRON-LAW name="no-mid-step-confirmation">> **阶段之间、任务之间，禁止停下来询问用户是否继续。** 与 TDD（§2.1）同级。**禁止**：问"是否继续"、以工作量为由停顿、提供选择、任何阶段间确认请求。**正确**：阶段完成 → `✅ <阶段> 完成` → 立即下一阶段。**唯一可停**：Three-strike、阻断性错误、分支保护阻断。</IRON-LAW>
+</important>
 → 详见 shared/next-step-protocol.md
 
 ### 2.5 Context Refresh Discipline
@@ -62,6 +64,9 @@ build 阶段主 Agent 必须执行周期性 Restatement Checkpoint：每完成 N
 > **原则**：代码编辑时沉默执行，决策点时简要说明。SKILL 定义的结构化输出永远不被压制。
 
 禁止操作预告、自我对话、逐步解说。保留所有 Forge 结构化输出。Decision_Point 允许 `[原因] → [选择] → [依据]`。非决策点散文 ≤200 tokens。结构化输出豁免清单、禁止模式表、详细示例 → 详见 docs/forge-constitution-detail.md §2.6
+
+### 2.8 Scripts as Black Box（铁律）
+> **原则**：scripts/ 中 user-facing 脚本必须先 `--help` 再调用。未尝试 `--help` 前不得 cat 源码。internal-only / one-off（记录在 `scripts/.help-exempt`）无此约束。需修改时允许读源码。→ 详见 docs/forge-constitution-detail.md §2.8
 
 ---
 
@@ -81,6 +86,7 @@ build 阶段主 Agent 必须执行周期性 Restatement Checkpoint：每完成 N
 
 ### 3.3 P0/P1 Must Fix
 
+<important if="running /forge review or /forge ship">
 | Level | Meaning | Handling |
 |-------|---------|----------|
 | **P0** | 阻塞发布 | 立即修复，**阻断 ship** |
@@ -89,6 +95,7 @@ build 阶段主 Agent 必须执行周期性 Restatement Checkpoint：每完成 N
 | P3 | 低影响 | 建议改进，开发者决定 |
 
 **铁律**：存在 P0/P1 时 ship 被阻断。修复后须重新评审。→ 详见 docs/forge-constitution-detail.md §3
+</important>
 
 ---
 
@@ -126,7 +133,7 @@ build 阶段主 Agent 必须执行周期性 Restatement Checkpoint：每完成 N
 
 每个 `/forge` 命令调用构成 Session_Boundary。阶段间上下文交接通过 `.forge/` 目录文件系统进行，而非对话历史。建议 `/forge` 命令之间开启新会话。
 
-**Subagent 隔离**：每个 Subagent 有独立上下文。**会话恢复**：`/forge resume` 从 `.forge/progress/` 和 `.forge/knowledge/sessions/` 读取。**并发控制**：`max_parallel_agents` 默认 6。HTTP 429 降级：第 1 次并发减半 → 第 2 次降至 2 → 第 3 次串行。降级记录到 `.forge/knowledge/tool-health.md`。新会话重置并发数。上下文超 100K tokens 时记录建议开启新会话提示（不阻断）。
+**Subagent 隔离**：每个 Subagent 有独立上下文。**会话恢复**：`/forge resume` 从 `.forge/progress/` 和 `.forge/knowledge/sessions/` 读取。**并发控制**：`max_parallel_agents` 默认 6。HTTP 429 降级：第 1 次并发减半 → 第 2 次降至 2 → 第 3 次串行。降级记录到 `.forge/knowledge/tool-health.md`。新会话重置并发数。<important if="context exceeds 100k tokens or session runs long">上下文超 100K tokens 时，考虑 `/clear` + `/forge resume`。`.forge/` 目录在会话间传递状态。</important>
 
 ---
 

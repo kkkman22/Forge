@@ -56,3 +56,8 @@ When `designerSpecPath` exists:
 ## 6. Graceful Degradation [R6.8]
 
 All tiers fail → `verdict: INCONCLUSIVE` + record controllers attempted.
+
+## Gotchas
+- **Async rendering**: UI not fully rendered when screenshot taken → false negative → wait for specific selector before capture
+- **Browser state leak**: Previous test left cookies/state → test interference → use fresh browser context per test
+- **Screenshot diff threshold**: Pixel-perfect comparison too strict → font rendering differences → use perceptual diff with tolerance

@@ -149,3 +149,8 @@ Forge 路由器从三个维度分析任务：
 | "用户没说档位，默认轻量吧" | 宁重勿轻原则。无法判定时选更重的档位，轻量误判成本远高于过重 |
 | "需求听起来简单，直接 standard" | 缺少锁定 Spec 或明确需求信号时不能假设。无 Spec 的全量任务是常见盲区 |
 | "假设差不多就行，用户会纠正的" | 假设必须基于实际项目扫描，至少覆盖技术栈和影响范围。空假设会导致下游 skill 行为偏差 |
+
+## Gotchas
+- **Under-routing**: Complex task routed to light → skips planning → analysis paralysis → when unsure, route to heavier tier
+- **Over-routing**: Simple typo fix routed to full → wasted cycles → respect user tier override
+- **Assumption hidden**: Router makes implicit assumptions about project → wrong tier → surface assumptions explicitly for user correction
