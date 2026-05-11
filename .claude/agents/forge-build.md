@@ -22,13 +22,13 @@ hooks:
     - type: command
       command: |
         bash -c '
-          ALLOWED_COMMANDS="npm run check|npm test|make check|npm run check"
-          ci_cmd=$(grep "^ci_check_command" .forge/config.md 2>/dev/null | sed "s/.*: *//;s/\"//g" || true)
+          ALLOWED_COMMANDS="npm run check npm test make check"
+          ci_cmd=$(grep "^ci_check_command:" .forge/config.md 2>/dev/null | head -1 | sed "s/^ci_check_command:[[:space:]]*//;s/[\"\x27]//g" || true)
           if [ -z "$ci_cmd" ]; then ci_cmd="npm run check"; fi
-          if ! echo "$ci_cmd" | grep -qE "^($ALLOWED_COMMANDS)$"; then
-            echo "{\"continue\": false, \"stopReason\": \"CI command not in allowlist: $ci_cmd\"}"
-            exit 0
-          fi
+          case " $ALLOWED_COMMANDS " in
+            *" $ci_cmd "*) ;;
+            *) echo "{\"continue\": false, \"stopReason\": \"CI command not in allowlist: $ci_cmd\"}"; exit 0 ;;
+          esac
           $ci_cmd > /tmp/forge-build-ci.log 2>&1
           exit_code=$?
           if [ $exit_code -ne 0 ]; then
