@@ -11,6 +11,10 @@ Entries follow [Keep a Changelog](https://keepachangelog.com/) with Forge-specif
 
 ## [Unreleased]
 
+### Added
+
+- **`/forge resume --from-pr`** — one-command recovery from a Pull Request. Accepts GitHub/GitLab/Bitbucket URLs or bare PR numbers. Auto-resolves the associated Forge spec slug from PR metadata (title prefix, branch name, description link, or ADR), loads the full context bundle (spec/plan/progress/reviews), and updates `.forge/status.md`. Requires Claude Code 2.1.29+ for CC session recovery; falls back to Forge-only state recovery on older versions. See `scripts/resume-from-pr.mjs` and `skills/forge-resume/SKILL.md` §5.
+
 ### Fixed
 
 - **Evolved Rules Integration & Retirement (2026-05-10 session)** — R1-R9 分类融入基础设施或留在 evolved-rules
