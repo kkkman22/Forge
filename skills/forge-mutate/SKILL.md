@@ -1,6 +1,7 @@
 ---
 name: forge-mutate
 description: "Audit test suite effectiveness with Stryker mutation testing against pack-declared critical modules. Use when running `/forge mutate`, verifying test quality after a build, or checking mutation score against the threshold declared by an enabled pack."
+context: fork
 skeleton_exempt_legacy: true
 disable-model-invocation: true
 ---
@@ -88,3 +89,8 @@ ship 门禁读最新 mutation artifact：
 ```
 
 → Stryker 配置细节和备选框架详见 references/frameworks.md
+
+## Gotchas
+- **Mutation score illusion**: Score high because mutants are trivial (change true→false) → real bugs still escape → use meaningful mutation operators
+- **Slow mutation run**: Full suite with mutations → 10x runtime → run against critical modules only, not full codebase
+- **False positives**: Mutant killed by unrelated test → score inflated → ensure each test targets specific behavior

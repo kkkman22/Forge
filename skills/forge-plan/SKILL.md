@@ -167,3 +167,9 @@ Frontmatter 字段：`topic`, `status` (draft/approved), `date`, `spec_ref`, `fo
 | "边做边想更高效" | 10 分钟规划节省数小时调试 |
 | "任务很明显不需要拆解" | 显式任务列表暴露隐藏依赖和边界情况 |
 | "规划是额外开销" | 没有计划的实现只是在打字 |
+
+## Gotchas
+- **Task too large**: Single task covers 5 files → ambiguous what "done" means → split to atomic tasks, one concern each
+- **Missing file mapping**: Plan lists tasks without specifying which files → agent searches mid-build → map files upfront in plan
+- **Plan drift**: Implementation deviates from plan → scope creep → re-read plan every 3 tasks, flag deviations
+- **Dependency ordering**: Task B depends on Task A, but B listed first → B fails → validate dependency ordering in self-check

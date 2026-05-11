@@ -5,6 +5,12 @@ skeleton_exempt_legacy: true
 disable-model-invocation: true
 ---
 
+## Current Context
+
+Branch: !`git branch --show-current`
+Plan status: !`head -5 .forge/plans/*.md 2>/dev/null || echo "no plan"`
+Last commit: !`git log --oneline -1 2>/dev/null || echo "no commits"`
+
 # /forge build — 执行引擎
 
 > **触发方式**：标准路径第二步 / 全量路径第四步 / 轻量路径第一步 / 直接输入 `/forge build`
@@ -228,3 +234,10 @@ completed_tasks: "<K>"
 - Interim 文件写入连续失败 2 次时，输出最小化 JSON handoff 到 stdout 作为 fallback。
 - Three-strike 触发期间**不执行**耗尽协议——让 Three-strike 先自行处理。
 - `next_task_number` 必须为正整数。解析失败时默认为 1，并记录 anomaly。
+
+## Gotchas
+- **Skipping RED phase**: Write implementation first, then backfill tests → tests verify implementation not behavior → must write failing test first
+- **Subagent context leak**: Subagent returns full raw output → main context polluted with 50 lines of grep results → subagent must return conclusion summary only
+- **Atomic commit omission**: Change 3 files, commit only 1 → inconsistent state → commit all files for each subtask immediately
+- **Three-strike ignored**: Same fix attempted 4th time → wasted context → stop at 3, enter debug
+- **Plan drift**: Build deviates from approved plan → scope creep → re-read plan after every 3 tasks

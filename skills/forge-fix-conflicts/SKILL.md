@@ -67,3 +67,8 @@ After merge: run `npm run check` (fallback to `ci_check_command`).
 - Frozen files are never auto-modified [R7.3]
 - All merge operations are logged with strategy used
 - Validation gate uses `npm run check` or `ci_check_command` [R14.11]
+
+## Gotchas
+- **Zone misclassification**: Forge file classified as open when actually frozen → overwrites locked spec → always check frozen zone status before resolving
+- **Partial resolution**: Resolve some conflicts, miss others → broken build → count conflicts before and after, ensure count reaches zero
+- **State desync**: .forge/status.md references branch that was rebased → status points to wrong state → update status.md after conflict resolution

@@ -5,6 +5,13 @@ skeleton_exempt_legacy: true
 disable-model-invocation: true
 ---
 
+## Current Context
+
+Phase: !`grep '^phase:' .forge/status.md 2>/dev/null || echo "no status"`
+Task: !`grep '^current_task:' .forge/status.md 2>/dev/null || echo "no task"`
+Last session: !`ls -t .forge/knowledge/sessions/*.md 2>/dev/null | head -1 || echo "no sessions"`
+Branch: !`git branch --show-current`
+
 # /forge resume — 会话恢复
 
 > **触发方式**：用户在新会话中输入 `/forge resume`
@@ -142,3 +149,8 @@ disable-model-invocation: true
 ## 6. 示例
 
 → 详见 references/output-format.md §示例
+
+## Gotchas
+- **Stale state**: .forge/status.md says phase=build but code already merged → resume starts wrong phase → verify git state matches forge state
+- **Missing context**: Resumed session lacks context about why decisions were made → repeats mistakes → reconstruct from .forge/knowledge/sessions/
+- **Phase skip**: Resume jumps to later phase, skipping intermediate work → incomplete delivery → verify all prior phases completed
