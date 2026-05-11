@@ -1,6 +1,6 @@
-import { describe, it, expect } from "vitest";
-import { readFileSync, existsSync, readdirSync } from "fs";
-import { join } from "path";
+import { existsSync, readdirSync, readFileSync } from "node:fs";
+import { join } from "node:path";
+import { describe, expect, it } from "vitest";
 
 const ROOT = join(import.meta.dirname, "..");
 
@@ -31,8 +31,7 @@ describe("Plugin Manifest", () => {
     expect(hooks).toBeDefined();
 
     const hookJson = JSON.stringify(hooks);
-    const pluginRootRefs = (hookJson.match(/\$\{CLAUDE_PLUGIN_ROOT\}/g) || [])
-      .length;
+    const pluginRootRefs = (hookJson.match(/\$\{CLAUDE_PLUGIN_ROOT\}/g) || []).length;
     expect(pluginRootRefs).toBeGreaterThan(0);
   });
 
@@ -102,10 +101,9 @@ describe("Plugin Asset Integrity", () => {
       .filter((n) => n !== "shared");
 
     for (const dir of dirs) {
-      expect(
-        existsSync(join(skillsDir, dir, "SKILL.md")),
-        `Missing skills/${dir}/SKILL.md`
-      ).toBe(true);
+      expect(existsSync(join(skillsDir, dir, "SKILL.md")), `Missing skills/${dir}/SKILL.md`).toBe(
+        true,
+      );
     }
   });
 });
