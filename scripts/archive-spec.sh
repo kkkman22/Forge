@@ -219,14 +219,96 @@ cc_purge_execute() {
   claude project purge "${project_path}" --yes 2>&1
 }
 
+# ---------- Manifest ----------
+
+MAX_MANIFEST_FIELD=10240
+
+truncate_string() {
+  local input="$1"
+  local max_len="${2:-${MAX_MANIFEST_FIELD}}"
+  if [[ ${#input} -gt ${max_len} ]]; then
+    echo "${input:0:${max_len}}"
+    return 1
+  fi
+  echo "${input}"
+  return 0
+}
+
+json_escape() {
+  local input="$1"
+  # Escape backslash, double quote, and control characters
+  printf '%s' "${input}" | sed -e 's/\\/\\\\/g' -e 's/"/\\"/g' -e 's/	/\\t/g' | tr -d '\n' | sed 's/$//'
+}
+
+write_purge_manifest() {
+  local manifest_path="$1"
+  local slug="$2"
+  local project_path="$3"
+  local cc_ver="$4"
+  local dry_output="$5"
+  local user_decision="$6"
+  local purge_flag="$7"
+  local started_at="$8"
+  local exec_output="${9:-}"
+  local exec_rc="${10:-}"
+
+  local dry_truncated="false"
+  local dry_escaped
+  dry_escaped=$(truncate_string "${dry_output}") || dry_truncated="true"
+  dry_escaped=$(json_escape "${dry_escaped}")
+
+  local cc_purge_available="true"
+  [[ "${cc_ver}" == "not_installed" ]] && cc_purge_available="false"
+
+  local finished_at
+  finished_at=$(date -u +"%Y-%m-%dT%H:%M:%SZ")
+
+  # Build JSON using printf (no jq dependency)
+  {
+    printf '{\n'
+    printf '  "slug": "%s",\n' "$(json_escape "${slug}")"
+    printf '  "archive_date": "%s",\n' "${ARCHIVE_DATE}"
+    printf '  "cc_project_path": "%s",\n' "$(json_escape "${project_path}")"
+    printf '  "cc_purge_available": %s,\n' "${cc_purge_available}"
+    printf '  "cc_version": "%s",\n' "$(json_escape "${cc_ver}")"
+    printf '  "dry_run_output": "%s",\n' "${dry_escaped}"
+    printf '  "dry_run_truncated": %s,\n' "${dry_truncated}"
+    printf '  "user_decision": "%s",\n' "${user_decision}"
+    printf '  "started_at": "%s",\n' "${started_at}"
+    printf '  "finished_at": "%s",\n' "${finished_at}"
+    printf '  "purge_cc_flag": "%s"' "${purge_flag}"
+
+    if [[ -n "${exec_output}" ]]; then
+      local exec_truncated="false"
+      local exec_escaped
+      exec_escaped=$(truncate_string "${exec_output}") || exec_truncated="true"
+      exec_escaped=$(json_escape "${exec_escaped}")
+      printf ',\n  "execution_output": {\n'
+      printf '    "exit_code": %s,\n' "${exec_rc:-0}"
+      printf '    "stdout": "%s",\n' "${exec_escaped}"
+      printf '    "stderr": ""\n'
+      printf '  }'
+    fi
+
+    printf '\n}\n'
+  } > "${manifest_path}"
+}
+
 # ---------- Phase 3-5: CC purge orchestration ----------
 
 do_cc_purge() {
   local archive_dir="$1"
   local purge_flag="$2"
+  local manifest_path="${archive_dir}/purge-manifest.json"
+  local started_at
+  started_at=$(date -u +"%Y-%m-%dT%H:%M:%SZ")
+
+  # Set up Ctrl+C trap to record interruption
+  trap 'write_purge_manifest "${manifest_path}" "${SLUG}" "${project_path:-unknown}" "${cc_version:-unknown}" "${dry_output:-}" "interrupted" "${purge_flag}" "${started_at}"; exit 130' INT
 
   if [[ "${purge_flag}" == "skip" ]]; then
     info "CC purge 已跳过（--purge-cc=skip）"
+    write_purge_manifest "${manifest_path}" "${SLUG}" "unknown" "unknown" "" "skipped" "${purge_flag}" "${started_at}"
     return 0
   fi
 
@@ -234,17 +316,22 @@ do_cc_purge() {
   local project_path
   project_path=$(resolve_project_path) || {
     warn "非 git 项目，跳过 CC transcripts 清理"
+    write_purge_manifest "${manifest_path}" "${SLUG}" "unknown" "unknown" "" "skipped_no_git" "${purge_flag}" "${started_at}"
     return 0
   }
 
   # Blacklist check
-  check_blacklist "${project_path}" || return 2
+  check_blacklist "${project_path}" || {
+    write_purge_manifest "${manifest_path}" "${SLUG}" "${project_path}" "unknown" "" "declined_blacklist" "${purge_flag}" "${started_at}"
+    return 2
+  }
 
   # CC availability check
   local cc_version
   cc_version=$(detect_cc_version)
   if [[ "${cc_version}" == "not_installed" ]]; then
     warn "claude 未安装，跳过 CC transcripts 清理"
+    write_purge_manifest "${manifest_path}" "${SLUG}" "${project_path}" "not_installed" "" "skipped_no_cc" "${purge_flag}" "${started_at}"
     return 0
   fi
 
@@ -256,6 +343,7 @@ do_cc_purge() {
 
   if [[ "${dry_output}" == "cc_purge_unavailable" ]] || [[ $dry_rc -ne 0 ]]; then
     warn "CC 版本不支持 purge 或 dry-run 失败，跳过清理"
+    write_purge_manifest "${manifest_path}" "${SLUG}" "${project_path}" "${cc_version}" "${dry_output}" "skipped_unavailable" "${purge_flag}" "${started_at}"
     return 0
   fi
 
@@ -265,30 +353,45 @@ do_cc_purge() {
   echo ""
 
   # Prompt 1 (unless auto)
+  local user_decision="auto"
   if [[ "${purge_flag}" == "ask" ]]; then
     if [[ -t 0 ]]; then
       read -rp "是否确认执行 CC purge？[y/N] " confirm1
       if [[ "${confirm1}" != "y" && "${confirm1}" != "Y" ]]; then
         info "用户拒绝 dry-run 预览阶段"
+        write_purge_manifest "${manifest_path}" "${SLUG}" "${project_path}" "${cc_version}" "${dry_output}" "declined_preview" "${purge_flag}" "${started_at}"
         return 0
       fi
     else
       warn "非 TTY 且 --purge-cc=ask，跳过 purge"
+      write_purge_manifest "${manifest_path}" "${SLUG}" "${project_path}" "${cc_version}" "${dry_output}" "declined_no_tty" "${purge_flag}" "${started_at}"
       return 0
     fi
+    user_decision="accepted"
   fi
+
+  # Write manifest before execution (crash safety)
+  write_purge_manifest "${manifest_path}" "${SLUG}" "${project_path}" "${cc_version}" "${dry_output}" "${user_decision}" "${purge_flag}" "${started_at}"
 
   # Execute purge
   info "正在执行 CC purge..."
   local exec_output
-  exec_output=$(cc_purge_execute "${project_path}") || {
+  local exec_rc=0
+  exec_output=$(cc_purge_execute "${project_path}") || exec_rc=$?
+
+  if [[ $exec_rc -ne 0 ]]; then
     error "CC purge 执行失败"
-    echo "${exec_output}"
+    echo "${exec_output}" >&2
+    # Update manifest with failure
+    write_purge_manifest "${manifest_path}" "${SLUG}" "${project_path}" "${cc_version}" "${dry_output}" "${user_decision}" "${purge_flag}" "${started_at}" "${exec_output}" "${exec_rc}"
     return 2
-  }
+  fi
+
+  # Update manifest with success
+  write_purge_manifest "${manifest_path}" "${SLUG}" "${project_path}" "${cc_version}" "${dry_output}" "${user_decision}" "${purge_flag}" "${started_at}" "${exec_output}" "0"
 
   success "CC purge 完成"
-  echo "${exec_output}"
+  trap - INT
   return 0
 }
 
