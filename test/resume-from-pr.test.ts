@@ -4,7 +4,7 @@
  * Tests parseTarget, fetchPRMetadata, resolveSlug, loadContextBundle
  * with mocked child_process.exec and filesystem operations.
  */
-import { describe, expect, it, vi, beforeEach, afterEach } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 // Dynamic import needed for .mjs ESM module
 const moduleUrl = new URL("../scripts/resume-from-pr.mjs", import.meta.url);
@@ -111,13 +111,16 @@ describe("fetchPRMetadata", () => {
 
   it("uses gh for github host", async () => {
     execMock.mockImplementation((_cmd: string, _opts: any, cb: Function) => {
-      cb(null, JSON.stringify({
-        title: "[spec:my-feature] Add widget",
-        headRefName: "forge/my-feature",
-        baseRefName: "main",
-        body: "See .forge/specs/my-feature/",
-        url: "https://github.com/org/repo/pull/1",
-      }));
+      cb(
+        null,
+        JSON.stringify({
+          title: "[spec:my-feature] Add widget",
+          headRefName: "forge/my-feature",
+          baseRefName: "main",
+          body: "See .forge/specs/my-feature/",
+          url: "https://github.com/org/repo/pull/1",
+        }),
+      );
     });
 
     const result = await resumeModule.fetchPRMetadata(
@@ -145,7 +148,9 @@ describe("fetchPRMetadata", () => {
 
   it("returns fetcherUsed='none' on timeout", async () => {
     // exec never calls back = timeout triggered by Promise.race
-    execMock.mockImplementation(() => { /* never resolves */ });
+    execMock.mockImplementation(() => {
+      /* never resolves */
+    });
 
     const result = await resumeModule.fetchPRMetadata(
       { host: "github", number: 1, url: null },
@@ -162,25 +167,41 @@ describe("fetchPRMetadata", () => {
 
 describe("resolveSlug", () => {
   it("extracts slug from [spec:slug] title prefix", () => {
-    const result = resumeModule.resolveSlug({ title: "[spec:my-feature] Add widget", branch: "main", description: "" });
+    const result = resumeModule.resolveSlug({
+      title: "[spec:my-feature] Add widget",
+      branch: "main",
+      description: "",
+    });
     expect(result.slug).toBe("my-feature");
     expect(result.resolutionPath).toBe("title");
   });
 
   it("extracts slug from (slug) title suffix", () => {
-    const result = resumeModule.resolveSlug({ title: "Add widget (my-feature)", branch: "main", description: "" });
+    const result = resumeModule.resolveSlug({
+      title: "Add widget (my-feature)",
+      branch: "main",
+      description: "",
+    });
     expect(result.slug).toBe("my-feature");
     expect(result.resolutionPath).toBe("title");
   });
 
   it("extracts slug from forge/ branch prefix", () => {
-    const result = resumeModule.resolveSlug({ title: "Some PR", branch: "forge/my-feature", description: "" });
+    const result = resumeModule.resolveSlug({
+      title: "Some PR",
+      branch: "forge/my-feature",
+      description: "",
+    });
     expect(result.slug).toBe("my-feature");
     expect(result.resolutionPath).toBe("branch");
   });
 
   it("extracts slug from feature/ branch prefix", () => {
-    const result = resumeModule.resolveSlug({ title: "Some PR", branch: "feature/my-feature", description: "" });
+    const result = resumeModule.resolveSlug({
+      title: "Some PR",
+      branch: "feature/my-feature",
+      description: "",
+    });
     expect(result.slug).toBe("my-feature");
     expect(result.resolutionPath).toBe("branch");
   });
@@ -206,7 +227,11 @@ describe("resolveSlug", () => {
   });
 
   it("returns null when no source matches", () => {
-    const result = resumeModule.resolveSlug({ title: "Random PR", branch: "main", description: "No specs here" });
+    const result = resumeModule.resolveSlug({
+      title: "Random PR",
+      branch: "main",
+      description: "No specs here",
+    });
     expect(result).toBeNull();
   });
 });
@@ -231,8 +256,15 @@ describe("loadContextBundle", () => {
 
 describe("resolveSlug property: no crash on arbitrary slug-like strings", () => {
   const slugs = [
-    "abc", "a-b-c", "a0b1c2", "a", "123", "foo-bar-baz-qux",
-    "with-hyphens-and-numbers-123", "singleword", "x-y",
+    "abc",
+    "a-b-c",
+    "a0b1c2",
+    "a",
+    "123",
+    "foo-bar-baz-qux",
+    "with-hyphens-and-numbers-123",
+    "singleword",
+    "x-y",
   ];
   for (const slug of slugs) {
     it(`does not crash with branch containing "${slug}"`, () => {
