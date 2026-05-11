@@ -11,6 +11,17 @@ Entries follow [Keep a Changelog](https://keepachangelog.com/) with Forge-specif
 
 ## [Unreleased]
 
+### Added
+
+- **Structured Frozen-Zone Feedback** (ADR-0001: Frozen-Zone Protection — Migrate from Exit-Code Blocking to Structured JSON Feedback)
+  - PreToolUse hook returns structured JSON diagnostic on frozen-zone violations
+  - PostToolUse defence-in-depth hook detects breaches and emits warning
+  - Zone_Registry reads from `.forge/config.md` at runtime
+  - Audit logging to `.forge/runs/*-frozen-events.jsonl` with rotation
+  - `/forge status` shows frozen-zone activity summary
+  - Feature flag `FORGE_STRUCTURED_FROZEN=1` (default); set to `0` for legacy mode
+  - Requires Claude Code 2.1.121+ for PostToolUse; PreToolUse works on 2.1.10+
+
 ### Fixed
 
 - **Evolved Rules Integration & Retirement (2026-05-10 session)** — R1-R9 分类融入基础设施或留在 evolved-rules
