@@ -19,6 +19,7 @@ updated: "2026-05-12"
 
 ## 已完成任务
 
+- frozen-zone-structured-feedback: 结构化 JSON frozen-zone 保护（ADR-0001，127 新测试）
 - ccbp-hardening-phase2: CCBP Phase 2 hooks if: + compaction + agent frontmatter + dispatcher + rules + version gate
 - plugin-distribution: Forge Plugin 化分发
 - ccbp-inspired-hardening: Claude Code Best Practice 借鉴的工程加固
