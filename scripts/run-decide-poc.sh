@@ -5,6 +5,13 @@ set -euo pipefail
 # Usage: ./scripts/run-decide-poc.sh <topic-id> [--iterations N]
 
 TOPIC_ID="${1:?Usage: run-decide-poc.sh <topic-id> [--iterations N]}"
+
+# Sanitize TOPIC_ID: only alphanumeric + single hyphens, no path traversal
+if [[ ! "$TOPIC_ID" =~ ^[A-Za-z0-9]([A-Za-z0-9-]*[A-Za-z0-9])?$ ]]; then
+  echo "Error: Invalid topic-id '$TOPIC_ID'. Only alphanumeric characters and hyphens allowed." >&2
+  exit 1
+fi
+
 shift || true
 
 ITERATIONS=2
@@ -55,7 +62,9 @@ run_mode() {
   fi
 
   claude -p "/forge decide $mode_flag $TOPIC" \
-    --output-format stream-json > "$OUT_DIR/${label}.jsonl" 2>/dev/null || true
+    --output-format stream-json > "$OUT_DIR/${label}.jsonl" 2>/dev/null || {
+      echo "  Warning: $mode iteration $iter exited with error" >&2
+    }
 
   local t1
   t1=$(date +%s)
