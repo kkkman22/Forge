@@ -12,7 +12,7 @@ import type { LintFinding } from "./pack/types.js";
  *
  * @param specText - Full spec markdown content
  * @param filePath - File path for findings
- * @param options - Optional additional rules from packs
+ * @param _options - Optional additional rules from packs
  * @returns Array of lint findings
  *
  * @example

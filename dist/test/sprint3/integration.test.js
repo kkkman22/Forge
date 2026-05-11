@@ -84,7 +84,7 @@ describe("forge-storm round-trip", () => {
 // ===========================================================================
 describe("Template renderer -> DDD aggregate-root template", () => {
     it("renders aggregate-root.ts.template with Order context and contains no unresolved placeholders for provided fields", () => {
-        const projectRoot = "/Users/king/code/Forge/.claude/worktrees/ddd-tactical-bdd-collaboration";
+        const projectRoot = path.resolve(__dirname, "../..");
         const templatePath = path.join(projectRoot, "templates/ddd/aggregate-root.ts.template");
         const template = fs.readFileSync(templatePath, "utf-8");
         const result = renderTemplate(template, {
@@ -212,7 +212,7 @@ describe("Context boundary violation detection", () => {
 describe("Pack lint rules load and apply", () => {
     it("loads rules from packs/pms/lint-rules/manifest.yaml and applies money/no-number-for-money rule", () => {
         // Verify the real manifest loads successfully
-        const projectRoot = "/Users/king/code/Forge/.claude/worktrees/ddd-tactical-bdd-collaboration";
+        const projectRoot = path.resolve(__dirname, "../..");
         const packRoot = path.join(projectRoot, "packs/pms");
         const realRules = loadPackLintRules(packRoot, "lint-rules/manifest.yaml");
         expect(realRules.length).toBeGreaterThanOrEqual(1);
