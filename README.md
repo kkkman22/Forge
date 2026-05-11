@@ -526,6 +526,26 @@ bash cmux-skills/install.sh --uninstall .claude/skills
 
 **建议**：`config.md`、`specs/`、`plans/`、`knowledge/` 纳入版本控制（团队共享知识资产）；`.locks/`、`debug/`、`archive/`、`progress/`、`reviews/` 排除（临时数据）。`.forge/features/` 可选纳入或排除：纳入则团队共享功能回顾索引；排除则作为本地派生状态。
 
+### 归档与 CC Transcripts 清理
+
+Forge 的归档脚本 (`scripts/archive-spec.sh`) 支持在归档完成后可选清理 Claude Code 的项目状态（transcripts、tasks、file history）：
+
+```bash
+# 交互模式（默认）：两次确认后执行
+bash scripts/archive-spec.sh my-spec --purge-cc=ask
+
+# 跳过 CC 清理
+bash scripts/archive-spec.sh my-spec --purge-cc=skip
+
+# 自动模式（CI 场景）
+bash scripts/archive-spec.sh my-spec --purge-cc=auto
+```
+
+- CC purge 需要 Claude Code >= 2.1.126
+- 每次 purge 都会生成 `purge-manifest.json` 记录操作详情
+- CC purge 失败不影响文件归档（归档已完成，仅 warning）
+- 安全保护：拒绝 `/`、`$HOME`、`/tmp` 等敏感路径
+
 ---
 
 ## Forge 库结构
