@@ -1,6 +1,6 @@
 ---
-updated: "2026-05-10"
-rule_count: 6
+updated: "2026-05-12"
+rule_count: 7
 max_rules: 15
 ---
 
@@ -84,6 +84,16 @@ This file keeps only rules that still need top-of-session reminders.
 **Confidence**: 0.85
 **Last_triggered**: 2026-05-10
 **Infra_Ref**: `scripts/check-dist-sync.mjs` + `CONTRIBUTING.md` §dist/ Sync Requirement
+
+### R7: .claude/ 被 gitignore — 必须用 git add -f 跟踪
+
+**Content**: `.claude/` 目录在 `.gitignore` 中被整体排除。需要版本控制的文件（`.claude/agents/`、`.claude/rules/`、`.claude/hooks/scripts/`）必须使用 `git add -f <path>` 强制添加。普通 `git add` 或 `git commit -a` 不会包含这些文件。在 worktree 中创建这些文件后，`git status` 也不显示它们。合并时如果忘记 `-f`，文件会丢失在 worktree 中，merge commit 不包含 agent/rule 定义。构建阶段创建 `.claude/` 下文件的最后一步必须是 `git add -f`。
+**Prevents**: agent/rule/dispatcher 文件在 worktree 中创建但未进入 merge commit，导致"功能代码已合并但角色定义未合并"（2026-05-12 ccbp-hardening-phase2 实际发生）
+**Source**: ccbp-phase2-worktree-gitignore knowledge document
+**Added**: 2026-05-12
+**Confidence**: 0.85
+**Last_triggered**: 2026-05-12
+**Infra_Ref**: `.gitignore` + instincts.md "git add -f" entry
 
 ---
 

@@ -1,20 +1,20 @@
 ---
-updated: "2026-04-30"
-total_sessions: 3
+updated: "2026-05-12"
+total_sessions: 4
 ---
 
 ## 命令使用统计
 
 | 命令 | 总调用 | 成功 | 失败 | 跳过 | 有效率 |
 |------|--------|------|------|------|--------|
-| /forge decide | 0 | 0 | 0 | 0 | -- |
-| /forge spec | 0 | 0 | 0 | 0 | -- |
-| /forge plan | 2 | 2 | 0 | 0 | 100% |
-| /forge build | 2 | 2 | 0 | 0 | 100% |
-| /forge review | 3 | 3 | 0 | 0 | 100% |
-| /forge test | 2 | 2 | 0 | 0 | 100% |
-| /forge ship | 3 | 3 | 0 | 0 | 100% |
-| /forge learn | 3 | 2 | 0 | 0 | 67% |
+| /forge decide | 1 | 1 | 0 | 0 | 100% |
+| /forge spec | 1 | 1 | 0 | 0 | 100% |
+| /forge plan | 3 | 3 | 0 | 0 | 100% |
+| /forge build | 3 | 3 | 0 | 0 | 100% |
+| /forge review | 4 | 4 | 0 | 0 | 100% |
+| /forge test | 3 | 3 | 0 | 0 | 100% |
+| /forge ship | 4 | 4 | 0 | 0 | 100% |
+| /forge learn | 4 | 3 | 0 | 0 | 75% |
 | /forge debug | 0 | 0 | 0 | 0 | -- |
 
 ## 路由准确度
@@ -23,6 +23,7 @@ total_sessions: 3
 |---------|---------|---------|--------|
 | 标准 | 2 | 0 | 100% |
 | 轻量 | 1 | 0 | 100% |
+| 全量 | 1 | 0 | 100% |
 
 ## 执行质量趋势
 
@@ -31,42 +32,43 @@ total_sessions: 3
 | 1 | 2026-04-29 | 标准 | 29% | 高(>1.5) | 0.29 | 0 |
 | 2 | 2026-04-29 | 标准 | 62% | N/A | 0.375 | 0 |
 | 3 | 2026-04-30 | 轻量 | 100% | N/A | 0 | 0 |
+| 4 | 2026-05-12 | 全量 | 78% | 正常(~1.0) | 0.33 | 0 |
 
 ## 验证命令健康度
 
 | 命令 | 总执行 | 成功 | 失败 | 成功率 | 最近状态 |
 |------|--------|------|------|--------|---------|
-| npx vitest run | 7 | 7 | 0 | 100% | pass |
-| npx biome check | 6 | 5 | 1 | 83% | pass |
+| npx vitest run | 8 | 8 | 0 | 100% | pass |
+| npx biome check | 7 | 6 | 1 | 86% | pass |
 
 ## performance_baselines
-2026-05-11T22:23:47.659Z | 0 benchmarks | 
-2026-05-11T16:00:04.164Z | 0 benchmarks | 
-2026-05-11T15:50:03.012Z | 0 benchmarks | 
-2026-05-11T15:41:39.855Z | 0 benchmarks | 
-2026-05-11T15:40:04.114Z | 0 benchmarks | 
-2026-05-11T08:41:13.698Z | 0 benchmarks | 
-2026-05-11T08:18:01.735Z | 0 benchmarks | 
-2026-05-10T10:52:13.546Z | 0 benchmarks | 
-2026-05-10T10:47:33.013Z | 0 benchmarks | 
-2026-05-10T10:25:24.404Z | 0 benchmarks | 
-2026-05-10T10:13:34.638Z | 0 benchmarks | 
-2026-05-10T10:06:14.600Z | 0 benchmarks | 
-2026-05-10T07:44:51.222Z | 0 benchmarks | 
-2026-05-10T07:40:47.578Z | 0 benchmarks | 
-2026-05-10T07:21:19.695Z | 0 benchmarks | 
-2026-05-10T07:06:16.348Z | 0 benchmarks | 
-2026-05-10T06:18:02.319Z | 0 benchmarks | 
-2026-05-10T05:31:58.509Z | 0 benchmarks | 
-2026-05-10T01:59:40.140Z | 0 benchmarks | 
-2026-05-10T01:57:59.096Z | 0 benchmarks | 
-2026-05-10T01:19:48.561Z | 0 benchmarks | 
-2026-05-10T01:15:23.223Z | 0 benchmarks | 
-2026-05-10T00:28:53.427Z | 0 benchmarks | 
-2026-05-09T21:23:30.185Z | 0 benchmarks | 
-2026-05-09T21:22:16.697Z | 0 benchmarks | 
-2026-05-09T21:20:20.391Z | 0 benchmarks | 
-2026-05-09T15:46:11.446Z | 0 benchmarks | 
-2026-05-09T07:28:07.235Z | 0 benchmarks | 
-2026-05-09T05:59:28.601Z | 0 benchmarks | 
-2026-05-09T05:40:57.949Z | 0 benchmarks | 
+2026-05-11T22:23:47.659Z | 0 benchmarks
+2026-05-11T16:00:04.164Z | 0 benchmarks
+2026-05-11T15:50:03.012Z | 0 benchmarks
+2026-05-11T15:41:39.855Z | 0 benchmarks
+2026-05-11T15:40:04.114Z | 0 benchmarks
+2026-05-11T08:41:13.698Z | 0 benchmarks
+2026-05-11T08:18:01.735Z | 0 benchmarks
+2026-05-10T10:52:13.546Z | 0 benchmarks
+2026-05-10T10:47:33.013Z | 0 benchmarks
+2026-05-10T10:25:24.404Z | 0 benchmarks
+2026-05-10T10:13:34.638Z | 0 benchmarks
+2026-05-10T10:06:14.600Z | 0 benchmarks
+2026-05-10T07:44:51.222Z | 0 benchmarks
+2026-05-10T07:40:17.578Z | 0 benchmarks
+2026-05-10T07:21:19.695Z | 0 benchmarks
+2026-05-10T07:06:16.348Z | 0 benchmarks
+2026-05-10T06:18:02.319Z | 0 benchmarks
+2026-05-10T05:31:58.509Z | 0 benchmarks
+2026-05-10T01:59:40.140Z | 0 benchmarks
+2026-05-10T01:57:59.096Z | 0 benchmarks
+2026-05-10T01:19:48.561Z | 0 benchmarks
+2026-05-10T01:15:23.223Z | 0 benchmarks
+2026-05-10T00:28:53.427Z | 0 benchmarks
+2026-05-09T21:23:30.185Z | 0 benchmarks
+2026-05-09T21:22:16.697Z | 0 benchmarks
+2026-05-09T21:20:20.391Z | 0 benchmarks
+2026-05-09T15:46:11.446Z | 0 benchmarks
+2026-05-09T07:28:07.235Z | 0 benchmarks
+2026-05-09T05:59:28.601Z | 0 benchmarks
+2026-05-09T05:40:57.949Z | 0 benchmarks
