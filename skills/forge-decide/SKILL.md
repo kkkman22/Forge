@@ -24,6 +24,8 @@ disable-model-invocation: true
 
 **Not For**：轻量路径任务 / 需求已完全明确且无技术风险的变更
 
+**Alternative**: Agent Teams mode (PoC) — 评估中，见 `skills/forge-decide-teams/SKILL.md` 和 `.kiro/specs/forge-decide-agent-teams/`
+
 ---
 
 ## 历史 ADR 提示 / Related ADRs

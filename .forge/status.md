@@ -1,9 +1,9 @@
 ---
-current_task: "ccbp-inspired-hardening"
+current_task: "forge-decide-agent-teams"
 tier: "standard"
-task_type: "harness-layer-hardening"
-project_phase: "ship"
-phase: "ship"
+task_type: "poc"
+project_phase: "plan"
+phase: "plan"
 updated: "2026-05-12"
 ---
 
@@ -11,13 +11,14 @@ updated: "2026-05-12"
 
 ## 当前任务
 
-**ccbp-inspired-hardening** — Claude Code Best Practice 借鉴的工程加固
-- Spec: `.kiro/specs/ccbp-inspired-hardening/`
-- 11 Requirements, 13 Tasks
-- 分支: `worktree-ccbp-inspired-hardening`
+**forge-decide-agent-teams** — Agent Teams 版 /forge decide PoC
+- Spec: `.kiro/specs/forge-decide-agent-teams/`
+- 6 Requirements, 10 Tasks
+- 分支: `worktree-forge-decide-agent-teams`
 
 ## 已完成任务
 
+- ccbp-inspired-hardening: Claude Code Best Practice 借鉴的工程加固
 - cmux-integration: Sprint 1-6 全部完成（33 tasks，25 test files，158 tests）
 - resume-phase-coverage: compaction 恢复后 SKILL.md 步骤遗漏修复
 - phase-advance-hardening: SKILL 驱动模式阶段推进断点修复
