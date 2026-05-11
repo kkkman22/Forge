@@ -72,3 +72,8 @@ Key rules:
 Reference: forge-build SKILL §7.
 
 Update `.forge/status.md` phase after each task. On all tasks complete, transition to review phase.
+
+## Gotchas
+- **Scope creep**: Light task grows beyond 1 file/20 lines → still treated as light, skips TDD → if change exceeds limits, re-route to standard build
+- **Skip verification**: No TDD ceremony → tempted to skip running tests entirely → still run relevant test file before declaring done
+- **Missing atomic commit**: Light changes feel too small for commit → uncommitted changes accumulate → commit immediately after change verified

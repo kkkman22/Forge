@@ -120,3 +120,8 @@ status.md 已重置。你可以使用 /forge 开始新任务。
 - **abort 不会撤销代码变更**。已提交的 commit 不会被回滚。abort 只清理 `.forge/` 状态文件。
 - **abort 不会删除知识**。`.forge/knowledge/` 目录不受影响——已沉淀的知识是项目资产。
 - **归档文件可以手动恢复**。从 `.forge/archive/` 手动移回即可。
+
+## Gotchas
+- **Partial abort**: Only archives status but leaves working tree dirty → git stash or commit before abort → remind user to clean up
+- **Orphan progress files**: Abort doesn't delete .forge/progress/ files → stale progress confused on resume → abort should note orphan files
+- **Double abort**: Running abort twice on same task → second abort finds nothing to abort → idempotent, just warn

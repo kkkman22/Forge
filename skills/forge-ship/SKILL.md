@@ -5,6 +5,13 @@ skeleton_exempt_legacy: true
 disable-model-invocation: true
 ---
 
+## Current Context
+
+Branch: !`git branch --show-current`
+Review status: !`head -3 .forge/reviews/*.md 2>/dev/null || echo "no review"`
+Test status: !`echo "run: npm run check"`
+Uncommitted: !`git status --short 2>/dev/null | head -10 || echo "clean"`
+
 # /forge ship — 交付引擎
 
 > **触发方式**：标准路径第五步 / 全量路径第七步 / 用户输入 `/forge ship`
@@ -173,3 +180,9 @@ $ /forge ship
 **Other Scenario Variants**:
 - **Gates not passed**: Report specific failed items (e.g. P0 issues), prompt to fix and re-run review + ship
 - **Discard operation**: Requires typing "discard" to confirm, all changes deleted after execution
+
+## Gotchas
+- **Review bypass**: Ship without review → undetected issues → enforce review gate, no skip
+- **Dist sync missing**: Code changed but dist/ not rebuilt → hooks use stale dist → verify dist/ in sync before ship
+- **Branch protection**: Ship on main → direct commit to protected branch → verify on feature branch
+- **Test gate skip**: Ship passes review but tests not run → runtime failures → verify test gate passed

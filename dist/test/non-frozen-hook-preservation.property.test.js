@@ -148,6 +148,15 @@ const EXPECTED_STOP_HOOKS = [
             },
         ],
     },
+    {
+        hooks: [
+            {
+                type: "command",
+                command: 'if [ -f .forge/status.md ]; then phase=$(grep \'^phase:\' .forge/status.md 2>/dev/null | sed \'s/phase: *"\\{0,1\\}//;s/"\\{0,1\\} *$//\'); if [ -n "$phase" ] && [ "$phase" != \'completed\' ] && [ "$phase" != \'\' ]; then echo "⚠️ Phase: $phase — did you verify your last change? Run the relevant test/lint command before stopping."; fi; fi',
+                timeout: 3,
+            },
+        ],
+    },
 ];
 const EXPECTED_TEAMMATE_IDLE_HOOKS = [
     {
