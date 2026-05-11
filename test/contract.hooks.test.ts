@@ -24,6 +24,7 @@ const hooksMap = hooksFile.hooks as Record<
 const KNOWN_TOOL_PATTERNS = new Set([
   "Write",
   "Edit",
+  "MultiEdit",
   "Bash",
   "Read",
   "Grep",

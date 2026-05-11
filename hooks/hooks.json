@@ -51,8 +51,8 @@
         ]
       },
       {
-        "matcher": "Write|Edit",
-        "if": "Write(.forge/**)|Edit(.forge/**)",
+        "matcher": "Write|Edit|MultiEdit",
+        "if": "Write(.forge/**)|Edit(.forge/**)|MultiEdit(.forge/**)",
         "hooks": [
           {
             "type": "command",
@@ -103,6 +103,16 @@
       }
     ],
     "PostToolUse": [
+      {
+        "matcher": "Write|Edit|MultiEdit",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "bash forge/scripts/hook-check-frozen-post.sh 2>/dev/null || bash ~/.claude/skills/forge/scripts/hook-check-frozen-post.sh 2>/dev/null || true",
+            "timeout": 5
+          }
+        ]
+      },
       {
         "matcher": "Write|Edit",
         "if": "Write(.forge/**)|Edit(.forge/**)",

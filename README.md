@@ -50,6 +50,8 @@ Forge 从第一天起把安全视为工程纪律。防御分层落在代码、�
 
 **最小权限默认**：`/forge` 使用 Claude Code `acceptEdits` 权限模式，命令执行可被 Hook 拦截，敏感区域（specs/plans/ADR）按"冻结"或"受保护"分级保护，详见 `.forge/config.md`。
 
+**结构化冻结区反馈**：Forge 的冻结区保护已升级为结构化 JSON 反馈 middleware。当 AI 尝试修改锁定的 spec 或已批准的 plan 时，不再只是粗暴阻断——hook 返回精确诊断信息（哪个文件、为什么冻结、替代路径、解锁方式），帮助模型自我修正。PostToolUse hook 作为 defence-in-depth 兜底，即使 PreToolUse 被绕过也能检测并上报违规。所有命中事件记录到 `.forge/runs/` 供审计。
+
 ---
 
 ## 前置条件
