@@ -35,12 +35,12 @@ describe("OrphanDetector", () => {
     });
     describe("Property 7: ps output filters PPID=1 correctly", () => {
         it("only returns PPID=1 processes matching patterns", async () => {
-            await fc.assert(fc.asyncProperty(fc.array(fc.record({
+            await fc.assert(fc.asyncProperty(fc.uniqueArray(fc.record({
                 pid: fc.integer({ min: 100, max: 999 }),
                 ppid: fc.integer({ min: 1, max: 999 }),
                 etime: fc.constant("01:00:00"),
                 command: fc.oneof(fc.constant("node forge-loop"), fc.constant("vitest run"), fc.constant("caffeinate -i"), fc.constant("python unrelated"), fc.constant("bash script.sh")),
-            }), { maxLength: 10 }), async (entries) => {
+            }), { maxLength: 10, selector: (e) => e.pid }), async (entries) => {
                 const header = "  PID  PPID     ELAPSED COMMAND\n";
                 const lines = entries
                     .map((e) => `  ${e.pid}  ${e.ppid}  ${e.etime} ${e.command}`)

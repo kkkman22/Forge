@@ -69,3 +69,8 @@ Parse spec scenarios (explicit Gherkin or derived from acceptance criteria), cla
 → references/scenario-format.md
 → references/runners.md
 → references/boundary-with-test.md
+
+## Gotchas
+- **Flaky external service**: Acceptance test hits real API → intermittent 5xx → add retry with backoff, don't mark scenario failed on transient errors
+- **Stale spec scenarios**: Spec was updated after test code written → test passes old scenarios, misses new ones → always re-read spec before acceptance run
+- **Environment dependency**: Test assumes specific env vars → passes locally, fails in CI → document required env vars in spec

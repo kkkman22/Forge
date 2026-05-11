@@ -115,3 +115,8 @@ disable-model-invocation: true
 |--------|------|
 | "P2不重要可跳过" | 积累降低健康度，现在修复成本最低 |
 | "直接改代码更快" | 流程确保追踪+验证+记录，绕过质量保障 |
+
+## Gotchas
+- **Over-fix**: Fix one bug, introduce two more → scope too broad → minimal change only, don't refactor nearby code
+- **Test skip**: Quick fix doesn't run tests → fix breaks something else → always run test suite after fix
+- **Root cause assumed**: Fix symptom without tracing to cause → recurrence → debug first, fix after root cause confirmed

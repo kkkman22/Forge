@@ -167,3 +167,8 @@ When `/forge spec --living-doc` is invoked:
 **Zero-Pack behavior**: When no specs exist, `generateLivingDoc` returns empty data with 0 scenarios. `renderLivingDoc` produces a skeleton index page with zero stats. Exit 0.
 
 **Standalone script**: `node scripts/generate-living-doc.mjs`
+
+## Gotchas
+- **Ambiguous acceptance criteria**: Spec says "works correctly" → untestable → criteria must be falsifiable (specific input → specific output)
+- **Scope creep in spec**: Spec includes implementation details → constrains solution space → spec describes WHAT not HOW
+- **Unlocked spec edited**: Spec modified after lock → plan/code built against wrong spec → warn on post-lock edits

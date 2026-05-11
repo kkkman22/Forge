@@ -1,17 +1,20 @@
 ---
-current_task: ""
-tier: ""
-task_type: ""
-project_phase: ""
-phase: ""
-updated: "2026-05-11"
+current_task: "ccbp-inspired-hardening"
+tier: "standard"
+task_type: "harness-layer-hardening"
+project_phase: "ship"
+phase: "ship"
+updated: "2026-05-12"
 ---
 
 # 项目状态
 
 ## 当前任务
 
-（无）
+**ccbp-inspired-hardening** — Claude Code Best Practice 借鉴的工程加固
+- Spec: `.kiro/specs/ccbp-inspired-hardening/`
+- 11 Requirements, 13 Tasks
+- 分支: `worktree-ccbp-inspired-hardening`
 
 ## 已完成任务
 

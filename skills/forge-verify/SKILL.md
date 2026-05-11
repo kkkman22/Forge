@@ -63,3 +63,8 @@ CLI_Harness 和 UI_Harness 产出相同 schema 的 `verdict.md`，Forge_Verify �
 | "代码看起来没问题，直接 VERIFIED" | 没有运行验证命令 = 不能声明通过（§2.3） |
 | "baseline 和上次一样，跳过 capture" | 每次必须完整捕获 |
 | "改动太小不需要 claim" | 所有验证都需要 Falsifiable_Claim |
+
+## Gotchas
+- **Vague claim**: "The feature works" → not falsifiable → claims must be specific (input X produces output Y)
+- **Self-attestation**: Agent verifies own work without external evidence → bias → require runnable evidence, not assertion
+- **Partial verification**: Verify happy path only → edge cases unverified → verify failure paths and boundary conditions
