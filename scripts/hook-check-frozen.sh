@@ -1,16 +1,36 @@
 #!/bin/bash
 # category: internal-only
-# hook-check-frozen.sh — Wrapper for check-frozen.js that provides clear
-# error diagnostics when the Node runtime or compiled script is missing.
+# hook-check-frozen.sh — Wrapper for frozen-zone protection hooks.
 #
-# Exit codes:
+# Dispatches to structured JSON hook or legacy TS-based hook based on
+# the FORGE_STRUCTURED_FROZEN feature flag.
+#
+# When FORGE_STRUCTURED_FROZEN=1 (default):
+#   Reads CC hook event from stdin, delegates to hook-check-frozen-structured.sh
+#
+# When FORGE_STRUCTURED_FROZEN=0:
+#   Legacy mode: delegates to check-frozen.js with exit-code-based blocking
+#
+# Exit codes (structured mode):
+#   0 — JSON decision emitted (deny with diagnostic, or silent allow)
+#   2 — catastrophic error
+#
+# Exit codes (legacy mode):
 #   0 — file is allowed (not frozen, or check passed)
 #   1 — file is blocked (frozen zone violation)
 #   2 — fatal: node not in PATH or check-frozen.js missing
-#
-# Integrated from: hooks/hooks.json PreToolUse section
 set -e
 
+script_dir="$(cd "$(dirname "$0")" && pwd)"
+
+if [[ "${FORGE_STRUCTURED_FROZEN:-1}" = "1" ]]; then
+  # Structured JSON mode — read stdin and delegate
+  if [[ -f "${script_dir}/hook-check-frozen-structured.sh" ]]; then
+    exec bash "${script_dir}/hook-check-frozen-structured.sh" "$@"
+  fi
+fi
+
+# Legacy mode or structured hook not found — use TS-based check
 FILE="$1"
 
 # Node must be available
