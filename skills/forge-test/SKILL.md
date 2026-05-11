@@ -156,3 +156,9 @@ $ /forge test
 | "测试通过了就不测了" | 通过不代表覆盖所有场景，边界条件和集成路径常被遗漏 |
 | "这个改动很小，不需要测试" | 小改更容易引入意外副作用，轻量路径也要求验证 |
 | "CI 会帮我测" | CI 是最终验证不是开发反馈，本地快速验证能节省大量时间 |
+
+## Gotchas
+- **Test tests nothing**: Test asserts trivial condition (always true) → passes but verifies nothing → each test must assert meaningful behavior
+- **Mock overuse**: Every dependency mocked → test passes but production fails → prefer real dependencies, mock only external services
+- **Flaky by design**: Test depends on timing or order → intermittent failures → tests must be deterministic
+- **Rationalization excuses**: Agent skips test with "this is trivial" → untested code → follow anti-rationalization table strictly

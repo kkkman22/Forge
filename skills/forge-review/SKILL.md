@@ -5,6 +5,12 @@ skeleton_exempt_legacy: true
 disable-model-invocation: true
 ---
 
+## Current Context
+
+Branch: !`git branch --show-current`
+Recent commits: !`git log --oneline -5 2>/dev/null || echo "no commits"`
+Diff stat: !`git diff --stat HEAD~1 2>/dev/null || echo "no diff"`
+
 # /forge review — 评审引擎
 
 > **触发**：标准路径第三步 / 全量路径第五步 / 轻量路径第二步 / 直接输入 `/forge review`
@@ -183,3 +189,9 @@ quality-check and security-check run as `background: true` agents [R11.1]. spec-
 - **Ctrl+B fallback**: if background mode unavailable, agents fall back to foreground
 - **Legacy compat**: older Claude Code versions ignore `background` field gracefully
 - **Failure handling**: background agent failure marked as `failed`, not abort. Markdown output schema unchanged [R11.6]
+
+## Gotchas
+- **Self-review**: Agent reviews own code → blind spots → review uses independent subagents, never same agent that wrote code
+- **Checklist fatigue**: Too many check items → agent skims, misses critical ones → prioritize P0/P1 items, group P2/P3
+- **Worktree-only evidence**: Review finds file exists in worktree → claims implemented → verify on main branch, not worktree
+- **Stale review**: Review at commit A, code changes to commit B → review invalid → record reviewed_at_commit, warn on diff

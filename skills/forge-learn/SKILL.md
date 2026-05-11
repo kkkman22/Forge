@@ -1,6 +1,7 @@
 ---
 name: forge-learn
 description: "Capture reusable lessons across five dimensions from completed session experience. Use when user runs `/forge learn`, task completes, or needs to convert session experience into persistent knowledge assets."
+context: fork
 skeleton_exempt_legacy: true
 disable-model-invocation: true
 ---
@@ -23,95 +24,125 @@ disable-model-invocation: true
 
 ---
 
-## 2. Execution Quality Analysis (Closed-loop Feedback)
+## Goals
 
-在知识提取之前，先对本次开发的执行质量进行结构化分析。四维度：First-pass Rate、Plan Accuracy、Review Interception Rate、Debug Trigger Rate。分析的**改进信号**（反复失败、Plan 偏差大、Review 高频问题、Debug 根因）直接作为五维度知识提取的输入，并追加到 `.forge/knowledge/metrics.md`。
+### G1: Execution Quality Assessment
+Produce a structured analysis of this session's execution quality across four dimensions (First-pass Rate, Plan Accuracy, Review Interception Rate, Debug Trigger Rate). Improvement signals feed directly into knowledge extraction.
 
-→ 详见 references/quality-analysis.md（数据源、维度计算、输出格式、函数签名 `analyzeSkillFeedback` / `crossValidateFailures`）
+### G2: Five-Dimension Knowledge Extraction
+Extract actionable knowledge across all five dimensions: Problem Pattern, Solution, Pitfall Record, Decision Rationale, Reusable Pattern. Each dimension must be covered — no omissions.
 
----
+### G3: Knowledge Document Generation
+Produce properly formatted knowledge documents with correct YAML frontmatter and five-section body. Documents must follow the exact format spec.
 
-## 3. Five-Dimension Knowledge Extraction
+### G4: Pattern Lifecycle Management
+Identify high-frequency patterns, promote them to instincts when thresholds are met, manage pattern staleness and decay, and distill error-prevention rules from accumulated data.
 
-以 **Subagent 模式**启动知识提取，每个维度由独立 Subagent 处理。五维度为：Problem Pattern、Solution、Pitfall Record、Decision Rationale、Reusable Pattern。
+### G5: Knowledge Base Health
+Maintain the knowledge base within configured limits, enforce confidence thresholds, merge overlapping entries, and ensure maintenance invariants hold at all times.
 
-**函数调用**：`generateKnowledgeDocument(title, tags, date, confidence, body)` / `validateKnowledgeFrontmatter(frontmatter)`
+### G6: Knowledge Backflow Wiring
+Ensure knowledge flows back into plan, build, and debug phases. Track adoption and adjust confidence accordingly. Record failure patterns.
 
-→ 详见 references/five-dimensions.md（维度详表、数据源、函数签名、Confidence Score Rules、分层架构）
+### G7: SKILL Feedback Detection
+Detect scenarios where SKILL.md guidance was inapplicable. Record for review but never auto-modify SKILL.md.
 
----
+### G8: Session Epilogue
+Produce a session episode, run evolution aggregation, archive task artifacts, and update status.
 
-## 4. SKILL Feedback Detection
-
-五维度提取后，检测 SKILL.md 指导是否有不适用的场景。记录到 `.forge/knowledge/skill-feedback.md`，同一类反馈频次 ≥ 3 时提醒审阅。**不自动修改** SKILL.md。
-
-→ 详见 references/skill-feedback.md
-
----
-
-## 5. Knowledge Document Format
-
-YAML frontmatter（title/tags/date/confidence）+ Body 五章节。confidence 范围 0.3–0.9。
-
-→ 详见 references/knowledge-format.md §5（完整模板与字段说明）
+### G9: 规则蒸馏 (Rule Distillation)
+Distill error-prevention rules from accumulated knowledge entries when confidence and frequency thresholds are met. Proposed rules follow the Evolved Rules protocol (`.forge/knowledge/evolved-rules.md`).
 
 ---
 
-## 6. High-Frequency Patterns and instincts.md
+## Constraints
 
-- 同一模式在 2+ 知识文档中出现且 confidence ≥ 0.5 → 提升为"直觉"写入 `instincts.md`
-- 模式 confidence ≥ 0.8、不依赖特定技术栈 → 建议用户提升到 `patterns/`
-- `instincts.md` 每个模式 Confidence_Score 必须在 0.3–0.9 范围
+### Knowledge Documents
+- Every knowledge document must have YAML frontmatter with title, tags, date, confidence (range 0.3–0.9)
+- Body must contain five sections: Problem Pattern, Solution, Pitfall Record, Decision Rationale, Reusable Pattern
+- Output path: `.forge/knowledge/solutions/<topic>.md` (kebab-case)
+- Tags overlap ≥ 50% with existing document → merge, do not create new
 
-### 6.5 Error-Prevention Rule Distillation
+### instincts.md
+- Pattern must appear in 2+ knowledge documents with confidence ≥ 0.5 to be promoted
+- Every pattern entry must include Confidence_Score in 0.3–0.9 range
+- Patterns with confidence ≥ 0.8 and no tech-stack dependency → suggest promotion to `patterns/`
 
-从积累的知识数据中蒸馏"错误预防规则"，写入 `.forge/knowledge/evolved-rules.md`（最多 15 条），通过 SessionStart hook 注入。**核心原则**：只添加"没有这条规则 Claude 就会犯错"的规则——不是知识转储。
+### Knowledge Base Limits
+- `solutions/` capped at 20 documents (configurable via `knowledge_limit` in `config.md`)
+- Confidence_Score < 0.3 patterns are automatically deleted
+- Invariant: document count ≤ limit ∧ no low-confidence patterns
 
-→ 详见 references/rule-distillation.md（数据源、蒸馏算法、阈值、排除、冲突检测、容量管理、陈旧检测、审批与写入）
+### Error-Prevention Rules (evolved-rules.md)
+- Maximum 15 rules
+- Only add rules where absence would cause Claude to err — not a knowledge dump
+- Written to `.forge/knowledge/evolved-rules.md`, injected via SessionStart hook
+
+### Backflow Confidence Adjustment
+- Knowledge adopted: confidence +0.05 (cap 0.9)
+- Knowledge found ineffective: confidence -0.1 (floor 0.3)
+- Failure pattern appearing 2+ times → write to `.forge/knowledge/known-failures.md`
+
+### SKILL Feedback
+- Record to `.forge/knowledge/skill-feedback.md`
+- Same feedback category ≥ 3 occurrences → remind user to review
+- Never auto-modify SKILL.md
+
+### Execution Quality
+- Four dimensions: First-pass Rate, Plan Accuracy, Review Interception Rate, Debug Trigger Rate
+- Results append to `.forge/knowledge/metrics.md`
+- Improvement signals must feed into five-dimension extraction
+
+### Session Episode
+- Write `sessions/<date>-<topic>.md` (≤20 lines)
+- Task artifacts archived to `.forge/archive/<date>-<topic>/`
+- Do not archive knowledge/ or config.md
+
+### Compaction Recovery
+- If resuming from a conversation summary: re-read this SKILL.md in full, verify all five dimensions are covered, verify document format correctness, then resume from interruption point
 
 ---
 
-## 7. Knowledge Base Maintenance
+## Output Format
 
-- `solutions/` 上限 20（`config.md` 中 `knowledge_limit` 可配置）
-- Confidence_Score < 0.3 的 instinct 模式自动删除
-- 写入前检测 tags 重叠度 ≥ 50% → 合并到已有文档
-- 不变量：文档数 ≤ 上限 ∧ 无低置信度模式
+### Knowledge Document Template
 
-**函数调用**：`maintainKnowledgeBase(state)`
+```yaml
+---
+title: "<知识标题>"
+tags: ["tag1", "tag2"]
+date: "YYYY-MM-DD"
+confidence: 0.85
+---
+```
 
-→ 详见 references/maintenance-invariants.md
+### Execution Flow Reference
+
+The full 21-step execution flow and task archival details are in references/knowledge-format.md §9.
+
+### Reference Documents
+
+| Topic | Reference |
+|-------|-----------|
+| Quality analysis (data sources, dimension calculation, output format, `analyzeSkillFeedback` / `crossValidateFailures`) | references/quality-analysis.md |
+| Five dimensions (dimension table, data sources, function signatures, Confidence Score Rules, layered architecture) | references/five-dimensions.md |
+| SKILL feedback | references/skill-feedback.md |
+| Knowledge format §5 (complete template and field descriptions) | references/knowledge-format.md |
+| Rule distillation (data sources, distillation algorithm, thresholds, exclusions, conflict detection, capacity, staleness, approval & write) | references/rule-distillation.md |
+| Maintenance invariants | references/maintenance-invariants.md |
+| Knowledge backflow | references/knowledge-backflow.md |
+| Examples | references/examples.md |
 
 ---
 
-## 8. Knowledge Backflow
+## Edge Cases
 
-- `/forge plan` Research：必须搜索知识库（solutions tags + instincts Tags）
-- `/forge build` 每任务：自动匹配 instincts.md 注入 Subagent 上下文
-- `/forge debug` Phase 2：自动搜索 solutions 踩坑
-- 回流被采用：confidence +0.05（上限 0.9）；无效：-0.1（下限 0.3）
-- 失败模式（2+ 次）写入 `.forge/knowledge/known-failures.md`
-- 每次 learn 完成写 `sessions/<date>-<topic>.md`（≤20 行）
-
-→ 详见 references/knowledge-backflow.md
-
----
-
-### 8.5 Compaction Recovery Check
-
-IF 本次执行是从 conversation summary 恢复（上下文压缩后继续），THEN：
-1. 重新读取本 SKILL.md 完整内容
-2. 确认 §3 Five-Dimension Knowledge Extraction 的五维度提取覆盖全部维度
-3. 确认 §5 Knowledge Document Format 格式正确
-4. 从中断点继续执行
-
-正常流程（无 compaction）忽略此段落。
-
-## 9. Execution Flow
-
-21 步执行流程（维护 → 回流 → 质量分析 → 五维度提取 → 文档生成 → 模式识别 → Glossary → 规则蒸馏 → Episode → Evolution → 归档）+ Task Archival：
-
-→ 详见 references/knowledge-format.md §9
+| Scenario | Handling |
+|----------|----------|
+| 首次执行（空知识库） | 创建 solutions/ 和 instincts.md，输出提示 |
+| 无可提取知识 | 提示本次较简单，未识别到新知识 |
+| 知识库已满 | 新文档 confidence 高于最低文档时提示替换确认 |
+| 无 `.forge/` 目录 | 提示先运行 `forge init` |
 
 ## Common Rationalizations
 
@@ -121,19 +152,7 @@ IF 本次执行是从 conversation summary 恢复（上下文压缩后继续）�
 | "知识沉淀是额外开销" | 不沉淀的经验等于没有发生过。下次遇到同样问题时你会从零开始 |
 | "代码本身就是文档" | 代码记录了"做了什么"，不记录"为什么这样做"和"试过什么不行" |
 
----
-
-## 10. Edge Case Handling
-
-| Scenario | Handling |
-|----------|----------|
-| 首次执行（空知识库） | 创建 solutions/ 和 instincts.md，输出提示 |
-| 无可提取知识 | 提示本次较简单，未识别到新知识 |
-| 知识库已满 | 新文档 confidence 高于最低文档时提示替换确认 |
-| 无 `.forge/` 目录 | 提示先运行 `forge init` |
-
----
-
-## 11. Examples
-
-→ 详见 references/examples.md
+## Gotchas
+- **Generic lessons**: "Be careful with types" → not actionable → lessons must include specific code pattern and trigger condition
+- **Duplicate knowledge**: Same lesson recorded across sessions → knowledge base bloat → check existing entries before adding
+- **Missing context**: Lesson recorded without the "why" → future sessions can't judge applicability → always include trigger condition and confidence score

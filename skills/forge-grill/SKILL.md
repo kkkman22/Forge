@@ -1,6 +1,7 @@
 ---
 name: forge-grill
 description: "Grill the user with one-question-at-a-time Socratic decision tree resolution. Use when user starts full-tier task, says grill me, replies dig deeper during decide phase, or before locking an ambiguous spec."
+context: fork
 skeleton_exempt_legacy: true
 disable-model-invocation: true
 ---
@@ -16,8 +17,6 @@ disable-model-invocation: true
 ## 1. Overview
 
 `/forge grill` 补齐 forge-decide 之前的"用户侧澄清"环节。decide 回答的是"四视角评估后的推荐方案"，grill 回答的是"用户已经想清楚的东西"。
-
-五类决策树根节点：functionality、boundary、dependency、assumption、non_goal。每轮只问一个问题，用户可接受 AI 建议 / 覆盖答案 / 要求继续下钻。
 
 **核心原则**：对齐缺失是头号失败模式。一次问一个问题，挖到底再进入 decide。
 
@@ -36,20 +35,21 @@ disable-model-invocation: true
 
 ---
 
-## 3. Core Loop
+## 3. Core Loop — Goals & Constraints
 
-Six-step loop implemented by pure functions in `src/grill.ts`. Driver layer orchestrates IO (user prompt, findings write, status.md bump).
+**Goal**: Walk a five-category decision tree (functionality, boundary, dependency, assumption, non_goal) one question at a time until every node is resolved, then produce a findings file.
 
-1. **Generate tree** — `generateDecisionTree(description, glossary)` 产出五类根节点，glossary 命中项挂到 `dependency` 分支
-2. **Select next** — `selectNextQuestion(tree)` 深度优先返回第一个 `pending` 且祖先 `resolved` 的节点；返回 `null` 即终止
-3. **Ask** — 展示节点 question + 可选 `aiSuggestion`；若问题可从代码库回答（已有实现 / 现存术语），派发 explore subagent 代替追问用户
-4. **Apply answer** — `applyAnswer(tree, nodeId, answer)` 纯函数返回新树，原树不变
-5. **Conflict check** — 每轮 `applyAnswer` 后调用 `checkGrillGlossaryConflicts(tree, glossary)`（封装 `detectConflict`）；`hasConflict === true` 时暂停 grill，把 `renderGrillConflictPrompt(result)` 的输出发给用户，按 R1.7 澄清（保留 / 替换 / 新增别名）后再续跑
-6. **Repeat until complete** — `isComplete(tree) === true` 后退出循环，进入 §5 输出
+**Constraints**:
+- Each round presents exactly one question; batch questioning is forbidden
+- Questions answerable from the codebase must be resolved via explore subagent rather than asked of the user
+- Every answer application must produce a new tree (immutable, original unchanged)
+- Glossary conflicts must be detected after each answer and surfaced to the user for clarification before continuing
+- Loop terminates only when all nodes are non-pending
+- User may accept AI suggestions, override answers, request deeper probing, or skip nodes
 
----
+**Approach**: Your choice of traversal strategy, conflict resolution ordering, and answer persistence — provided the constraints above hold. Reference implementations exist as pure functions in `src/grill.ts` with a driver layer handling IO (user prompts, findings writes, status.md updates).
 
-## 4. Function Calls
+**Available pure functions** (all IO-free; driver layer handles reads/writes):
 
 | Function | Parameters | Returns |
 |----------|-----------|---------|
@@ -62,11 +62,9 @@ Six-step loop implemented by pure functions in `src/grill.ts`. Driver layer orch
 | `extractNewGlossaryCandidates(tree, glossary)` | 决策树、现有 Glossary | `TermCandidate[]`（已排除现有术语） |
 | `renderGrillFindings(tree, summary)` | 决策树、对齐摘要字符串 | findings 文件 Markdown 正文（4 段） |
 
-所有函数 IO-free。Driver 层负责读 glossary、写 findings、更新 `.forge/status.md`。
-
 ---
 
-## 5. Output
+## 4. Output
 
 **Path**: `.forge/findings/grill-<topic>.md`
 
@@ -84,21 +82,20 @@ Four fixed sections produced by `renderGrillFindings`:
 
 ---
 
-## 6. Resume Support
+## 5. Resume Support
 
-中途关闭会话时，driver 将当前决策树序列化到 findings 文件，并把 `.forge/status.md` 的 `phase` 置为 `grill_abandoned`。
+**Goal**: Restore an interrupted grill session to the exact point of abandonment and continue seamlessly.
 
-`/forge resume` 识别此 phase 后：
+**Constraints**:
+- On session interruption, the current decision tree must be serialized to the findings file and `.forge/status.md` phase set to `grill_abandoned`
+- Resume must deserialize the tree and locate the next pending node
+- Replay of the same Q&A sequence must produce the same terminal state (`applyAnswer` is a pure function guaranteeing idempotency)
 
-1. 读 `.forge/findings/grill-<topic>.md` 反序列化 `DecisionTree`
-2. 继续调用 `selectNextQuestion(tree)` 定位下一个 pending 节点
-3. 从该节点恢复 grill 循环
-
-同一问答序列 replay 产出同一终态（`applyAnswer` 纯函数保证幂等）。详见需求 R4.10。
+**Approach**: Your choice of serialization format and resume detection — provided the constraints above hold. See requirement R4.10.
 
 ---
 
-## 7. Edge Cases
+## 6. Edge Cases
 
 | 情况 | 处理 |
 |------|------|
@@ -111,7 +108,7 @@ Four fixed sections produced by `renderGrillFindings`:
 
 ---
 
-## 8. Boundary with forge-decide
+## 7. Boundary with forge-decide
 
 | Skill | 产出物 | 对比 |
 |-------|--------|------|
@@ -129,3 +126,8 @@ grill 的 findings 可直接喂给 decide 作为 Round 1 上下文，减少视�
 | "我已经想清楚了不需要 grill" | grill 的价值是暴露你没意识到的盲点；跳过 = 把盲点留给 decide 或 build |
 | "一次问一个问题太慢" | 批量追问会让用户用一个回答覆盖多个问题，对齐精度反而下降 |
 | "grill 和 decide 功能重叠" | grill 逼用户澄清，decide 让 agent 评估。两者互补非替代 |
+
+## Gotchas
+- **Premature resolution**: User gives vague answer, grill marks resolved → ambiguity carried forward → ask follow-up before accepting
+- **Question overload**: Ask 5 questions at once → user gives shallow answers → one question at a time
+- **Circular questioning**: Re-ask same question in different words → user frustrated → track asked questions, don't repeat

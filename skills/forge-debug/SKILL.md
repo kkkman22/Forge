@@ -1,6 +1,7 @@
 ---
 name: forge-debug
 description: "Diagnose root causes through four-phase hypothesis verification with minimal-change repair. Use when user says debug this, reports a regression, or after three consecutive build failures trigger the three-strike reroute."
+context: fork
 skeleton_exempt_legacy: true
 disable-model-invocation: true
 ---
@@ -94,3 +95,9 @@ $ /forge debug
 ━━━ Phase 4 ━━━  🔴 RED FAIL ✅ → 🟢 GREEN PASS ✅ → 42/42 ✅
 ✅ 根因: db.query未处理null · 修复: 查询层统一过滤null
 ```
+
+## Gotchas
+- **Hypothesis fixation**: First hypothesis seems right → stop investigating alternatives → test hypothesis, don't assume
+- **Symptom vs cause**: Fix symptom, not root cause → bug recurs in different form → trace to root cause before fixing
+- **Three-strike loop**: Same hypothesis tested 3 times → confirms approach is wrong → question architecture, not implementation
+- **Context overflow**: Debug reads too many files → main context fills up → use subagent for exploration, return only findings
