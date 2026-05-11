@@ -74,6 +74,7 @@ Progress files: !`ls .forge/progress/*.md 2>/dev/null || echo "none"`
 - **Stale status**: Status says "in progress" but work completed hours ago → misleading → always cross-check with git log
 - **Missing status file**: New project has no .forge/status.md → status returns nothing → create initial status file
 - **Phase value unexpected**: Custom phase value not in expected range → status display breaks → handle gracefully with fallback
+- **Clone + Plugin conflict**: Both `~/.claude/skills/forge/` and `~/.claude/plugins/forge/` exist → warn user → plugin takes precedence
 
 ## Common Rationalizations
 
@@ -113,6 +114,26 @@ Progress files: !`ls .forge/progress/*.md 2>/dev/null || echo "none"`
 ━━━ 任务进度 ━━━
 
 ℹ️ 未找到进度文件。任务可能尚未开始执行。
+```
+
+### 4.4 Clone + Plugin 安装冲突
+
+检测以下两个路径同时存在：
+- `~/.claude/skills/forge/`（clone 或 dist 安装）
+- `~/.claude/plugins/forge/`（plugin 安装）
+
+同时存在时输出：
+
+```
+⚠️ 检测到 Forge 同时通过 clone 和 plugin 两种方式安装。
+  - Clone: ~/.claude/skills/forge/
+  - Plugin: ~/.claude/plugins/forge/
+
+建议移除其中一种以避免冲突：
+  claude plugin uninstall forge          # 保留 clone
+  rm -rf ~/.claude/skills/forge          # 保留 plugin
+
+Plugin 安装享有优先级。
 ```
 
 ---
