@@ -54,7 +54,7 @@ Forge 从第一天起把安全视为工程纪律。防御分层落在代码、�
 
 ## 前置条件
 
-- **Claude Code**：Forge 是 Claude Code 的 skill 包，需要 Claude Code 环境运行。
+- **Claude Code**：Forge 是 Claude Code 的 skill 包，需要 Claude Code 环境运行。**最低版本 2.1.121**（推荐 ≥2.1.138）。升级指南：https://docs.anthropic.com/en/docs/claude-code
 - **Subagent**：`/forge build`、`/forge decide` 和 `/forge review` 使用 Claude Code 的 Agent tool 派发独立的 Subagent 并行执行任务。Forge 的 Agent 定义文件（`agents/*.md`）作为 Subagent 类型定义使用。
 
 ---

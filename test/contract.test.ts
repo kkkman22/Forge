@@ -323,6 +323,8 @@ describe("Contract: hooks.json semantic validation", () => {
     "PostToolUse",
     "Stop",
     "TeammateIdle",
+    "PreCompact",
+    "PostCompact",
     "TaskCompleted",
   ]);
 
