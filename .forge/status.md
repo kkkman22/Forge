@@ -2,8 +2,8 @@
 current_task: "ccbp-inspired-hardening"
 tier: "standard"
 task_type: "harness-layer-hardening"
-project_phase: "build"
-phase: "build"
+project_phase: "ship"
+phase: "ship"
 updated: "2026-05-12"
 ---
 
