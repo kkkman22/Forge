@@ -3,7 +3,7 @@ current_task: "documentation-onboarding"
 tier: "standard"
 task_type: "documentation"
 project_phase: "in_progress"
-phase: "test"
+phase: "ship"
 updated: "2026-05-12"
 ---
 
