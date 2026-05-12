@@ -39,7 +39,7 @@ Produce properly formatted knowledge documents with correct YAML frontmatter and
 Identify high-frequency patterns, promote them to instincts when thresholds are met, manage pattern staleness and decay, and distill error-prevention rules from accumulated data.
 
 ### G5: Knowledge Base Health
-Maintain the knowledge base within configured limits, enforce confidence thresholds, merge overlapping entries, and ensure maintenance invariants hold at all times.
+Maintain the knowledge base within configured limits, enforce confidence thresholds, merge overlapping entries, and ensure maintenance invariants hold at all times. Run integrity lint (cross-file reference validation, orphan detection, contradiction detection) and regenerate the Layer A catalog index.
 
 ### G6: Knowledge Backflow Wiring
 Ensure knowledge flows back into plan, build, and debug phases. Track adoption and adjust confidence accordingly. Record failure patterns.
@@ -131,6 +131,8 @@ The full 21-step execution flow and task archival details are in references/know
 | Rule distillation (data sources, distillation algorithm, thresholds, exclusions, conflict detection, capacity, staleness, approval & write) | references/rule-distillation.md |
 | Maintenance invariants | references/maintenance-invariants.md |
 | Knowledge backflow | references/knowledge-backflow.md |
+| Knowledge integrity lint (`lintKnowledgeIntegrity`: reference validation, orphan detection, contradiction detection) | `src/knowledge-integrity.ts` |
+| Knowledge catalog (`buildCatalog`: Layer A progressive index generation) | `src/knowledge-catalog.ts` |
 | Examples | references/examples.md |
 
 ---

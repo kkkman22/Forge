@@ -190,9 +190,9 @@ describe("barrel file does not expose internal modules", () => {
   });
 
   // Verify the total number of value exports
-  it("has exactly 76 value exports", () => {
+  it("has exactly 85 value exports", () => {
     const valueExports = Object.keys(exports).filter((key) => typeof exports[key] !== "undefined");
-    expect(valueExports).toHaveLength(76);
+    expect(valueExports).toHaveLength(85);
     expect(valueExports.sort()).toEqual([
       "CLASSIFICATION_MAP",
       "CliError",
@@ -204,10 +204,14 @@ describe("barrel file does not expose internal modules", () => {
       "VALID_TRANSITIONS",
       "allEntriesVerified",
       "archiveTaskStatus",
+      "buildCatalog",
       "buildSubagentInvocations",
       "buildVerificationCriteria",
       "canParseTestOutput",
+      "checkContradictions",
+      "checkOrphanSolutions",
       "checkPlanStructure",
+      "checkReferenceIntegrity",
       "checkReviewFreshness",
       "checkShipGate",
       "checkShipGateWithChecklist",
@@ -234,16 +238,21 @@ describe("barrel file does not expose internal modules", () => {
       "isFixCandidate",
       "isMultiTaskMode",
       "isValidTransition",
+      "lintKnowledgeIntegrity",
       "listActiveTasks",
       "loadSkillsFromDir",
       "mergeSkillLists",
       "migrateToMultiTask",
       "parseChecklist",
+      "parseEvolvedRulesSummary",
+      "parseFailureSummary",
       "parseFixRecoveryGitLog",
+      "parseSolutionFrontmatter",
       "parseStatusEntries",
       "readTaskStatus",
       "reconstructStateFromGit",
       "removeTaskEntry",
+      "renderCatalog",
       "resolveStatusPath",
       "runSubagentsInParallel",
       "scanForPlaceholders",

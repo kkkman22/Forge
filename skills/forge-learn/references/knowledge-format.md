@@ -40,8 +40,10 @@ confidence: 0.85
 17. **Context budget report**: `serializeContextBudgetReport(report)` 追加到 `sessions/<date>-<topic>.md` 附录
 18. **自动生成 Episode**：`buildEpisodeFromSession(meta, phaseHistory, situation, lesson, sequenceInDay)` 构造 schema_version=2 episode，追加到 `sessions/<date>-<topic>.md`（Guarded zone 追加，Requirement 7.9）
 19. **Evolution 聚合**：扫描 reviews/progress/findings 的 Evolution 标记，调用 `generateEvolutionReport(fs, forgeRoot, skillsRegistry)` + `renderEvolutionReport` 生成 `.forge/knowledge/evolution-report.md`（开放区，每次覆盖；不保留历史快照，当前文件状态即真相，Requirements 8.9, 8.11, 8.14, 8.15）
-20. **Session layer cleanup**: Archive current session in sessions/
-21. **Re-check limits**: Ensure maintenance invariants hold
+20. **Knowledge integrity lint**：`lintKnowledgeIntegrity(input)` 检查跨文件引用完整性、孤儿文档、语义矛盾。Findings 以 advisory 形式呈现给用户，不阻断流程
+21. **Knowledge catalog regeneration**：`buildCatalog(input)` 重新生成 `.forge/knowledge/catalog.md`（开放区，每次覆盖）。提供 ~50 行全景索引供后续 plan/build/debug 阶段低成本查询
+22. **Session layer cleanup**: Archive current session in sessions/
+23. **Re-check limits**: Ensure maintenance invariants hold
 
 ### 9.1 Task Archival (Auto After Learn)
 
