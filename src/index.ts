@@ -17,91 +17,130 @@
 export { CliError } from "./cli-error.js";
 // Context budget management
 export {
-    CLASSIFICATION_MAP, canParseTestOutput,
-    classifySource,
-    deserializeContextBudgetReport,
-    deserializeExploreSummary,
-    deserializeGitDiff,
-    deserializeGitStatus,
-    deserializeReviewSummary,
-    deserializeSubagentSummary,
-    deserializeTestOutput, serializeContextBudgetReport,
-    serializeExploreResult,
-    serializeExploreSummary,
-    serializeGitDiff,
-    serializeGitStatus,
-    serializeReviewSummary,
-    serializeSubagentSummary,
-    serializeTestOutput, type ClassificationEntry,
-    type ContextBudgetReport, type ExploreSummary,
-    type GitDiffSummary,
-    type GitStatusSummary,
-    type InformationLifecycle,
-    type ReviewSummary,
-    type SubagentSummary, type TestOutputSummary
+  CLASSIFICATION_MAP,
+  type ClassificationEntry,
+  type ContextBudgetReport,
+  canParseTestOutput,
+  classifySource,
+  deserializeContextBudgetReport,
+  deserializeExploreSummary,
+  deserializeGitDiff,
+  deserializeGitStatus,
+  deserializeReviewSummary,
+  deserializeSubagentSummary,
+  deserializeTestOutput,
+  type ExploreSummary,
+  type GitDiffSummary,
+  type GitStatusSummary,
+  type InformationLifecycle,
+  type ReviewSummary,
+  type SubagentSummary,
+  serializeContextBudgetReport,
+  serializeExploreResult,
+  serializeExploreSummary,
+  serializeGitDiff,
+  serializeGitStatus,
+  serializeReviewSummary,
+  serializeSubagentSummary,
+  serializeTestOutput,
+  type TestOutputSummary,
 } from "./context-budget.js";
 // Fix checklist
 export {
-    VALID_TRANSITIONS, allEntriesVerified, createChecklist,
-    isValidTransition,
-    parseChecklist,
-    serializeChecklist,
-    updateEntryStatus, type ChecklistEntry,
-    type ChecklistStatus
+  allEntriesVerified,
+  type ChecklistEntry,
+  type ChecklistStatus,
+  createChecklist,
+  isValidTransition,
+  parseChecklist,
+  serializeChecklist,
+  updateEntryStatus,
+  VALID_TRANSITIONS,
 } from "./fix-checklist.js";
 // Fix recovery
 export {
-    isFixCandidate,
-    parseGitLog as parseFixRecoveryGitLog,
-    type RecoveryCandidate,
-    type RecoveryResult
+  isFixCandidate,
+  parseGitLog as parseFixRecoveryGitLog,
+  type RecoveryCandidate,
+  type RecoveryResult,
 } from "./fix-recovery.js";
 export { ForgeError } from "./forge-error.js";
 // Incremental verifier
 export {
-    INCREMENTAL_THRESHOLD, buildVerificationCriteria,
-    determineVerificationStrategy, type VerificationDecision,
-    type VerificationResult
+  buildVerificationCriteria,
+  determineVerificationStrategy,
+  INCREMENTAL_THRESHOLD,
+  type VerificationDecision,
+  type VerificationResult,
 } from "./incremental-verifier.js";
+// Knowledge catalog (Layer A progressive index)
+export {
+  buildCatalog,
+  type CatalogInput,
+  type EvolvedRulesSummary,
+  type FailureSummary,
+  parseEvolvedRulesSummary,
+  parseFailureSummary,
+  parseSolutionFrontmatter,
+  renderCatalog,
+  type SolutionSummary,
+} from "./knowledge-catalog.js";
+// Knowledge integrity linter
+export {
+  checkContradictions,
+  checkOrphanSolutions,
+  checkReferenceIntegrity,
+  type IntegrityFinding,
+  type IntegrityInput,
+  lintKnowledgeIntegrity,
+} from "./knowledge-integrity.js";
 // Core types (from loop-types.js)
 export type {
-    AgentInterface,
-    AgentOutput,
-    AgentResult,
-    AgentRunOptions,
-    BranchTopicGateResult,
-    CommitTopicCheckResult,
-    LoopConfig,
-    ParallelExecutionResult,
-    PendingDeliveryRecord,
-    RunLimits,
-    SubagentInvocation,
-    SubagentResult,
-    TokenUsage,
-    UnshippedBranchWarning
+  AgentInterface,
+  AgentOutput,
+  AgentResult,
+  AgentRunOptions,
+  BranchTopicGateResult,
+  CommitTopicCheckResult,
+  LoopConfig,
+  ParallelExecutionResult,
+  PendingDeliveryRecord,
+  RunLimits,
+  SubagentInvocation,
+  SubagentResult,
+  TokenUsage,
+  UnshippedBranchWarning,
 } from "./loop-types.js";
 // Plan engine
 export {
-    FORBIDDEN_PLACEHOLDERS, checkPlanStructure, detectPlanFormat,
-    extractHeadingAnchors, scanForPlaceholders, validateAtomicTask,
-    validateDependencies,
-    validateDesignReferences,
-    validateLightweightPlan,
-    validateLightweightTask,
-    validatePlan,
-    validatePlanTasks,
-    validateSpecLocked, type AtomicTask, type DesignReferenceEntry,
-    type DesignReferenceValidation, type LightweightTask,
-    type PlanFormat,
-    type SplitTriggerResult, type TDDSteps
+  type AtomicTask,
+  checkPlanStructure,
+  type DesignReferenceEntry,
+  type DesignReferenceValidation,
+  detectPlanFormat,
+  extractHeadingAnchors,
+  FORBIDDEN_PLACEHOLDERS,
+  type LightweightTask,
+  type PlanFormat,
+  type SplitTriggerResult,
+  scanForPlaceholders,
+  type TDDSteps,
+  validateAtomicTask,
+  validateDependencies,
+  validateDesignReferences,
+  validateLightweightPlan,
+  validateLightweightTask,
+  validatePlan,
+  validatePlanTasks,
+  validateSpecLocked,
 } from "./plan.js";
 // Quality gate
 // Quality gate
 export {
-    evaluateReviewGate,
-    evaluateShipGate,
-    evaluateTestGate,
-    type GateResult
+  evaluateReviewGate,
+  evaluateShipGate,
+  evaluateTestGate,
+  type GateResult,
 } from "./quality-gate.js";
 // Agent adapter
 export { SdkAgentAdapter, type SdkAgentAdapterConfig } from "./sdk-agent-adapter.js";
@@ -109,65 +148,58 @@ export { SdkAgentAdapter, type SdkAgentAdapterConfig } from "./sdk-agent-adapter
 export { SdkDriver, type SdkDriverConfig, type SdkDriverResult } from "./sdk-driver.js";
 // Ship gate
 export {
-    checkReviewFreshness,
-    checkShipGate,
-    checkShipGateWithChecklist,
-    checkShipGateWithFreshness,
-    type ProgressResult,
-    type ReviewFreshnessResult,
-    type ReviewResult,
-    type ShipGateResult,
-    type TestResult
+  checkReviewFreshness,
+  checkShipGate,
+  checkShipGateWithChecklist,
+  checkShipGateWithFreshness,
+  type ProgressResult,
+  type ReviewFreshnessResult,
+  type ReviewResult,
+  type ShipGateResult,
+  type TestResult,
 } from "./ship.js";
 // SKILL plugin mechanism
 export {
-    installSkill,
-    loadSkillsFromDir,
-    mergeSkillLists,
-    type SkillManifest,
-    type SkillPhase
+  installSkill,
+  loadSkillsFromDir,
+  mergeSkillLists,
+  type SkillManifest,
+  type SkillPhase,
 } from "./skill-loader.js";
 export {
-    checkVersionCompatibility, validateManifest, type ValidationResult as SkillValidationResult
+  checkVersionCompatibility,
+  type ValidationResult as SkillValidationResult,
+  validateManifest,
 } from "./skill-validator.js";
 // Multi-task status tracking
 export {
-    hasTaskName,
-    parseStatusEntries,
-    removeTaskEntry,
-    serializeStatusEntries, upsertTaskEntry, type TaskStatusEntry
+  hasTaskName,
+  parseStatusEntries,
+  removeTaskEntry,
+  serializeStatusEntries,
+  type TaskStatusEntry,
+  upsertTaskEntry,
 } from "./state.js";
 // Status manager
 export {
-    archiveTaskStatus,
-    getMostRecentActiveTask,
-    listActiveTasks, migrateToMultiTask,
-    readTaskStatus, writeTaskStatus, type ManagedTaskEntry, type StatusManagerIO
+  archiveTaskStatus,
+  getMostRecentActiveTask,
+  listActiveTasks,
+  type ManagedTaskEntry,
+  migrateToMultiTask,
+  readTaskStatus,
+  type StatusManagerIO,
+  writeTaskStatus,
 } from "./status-manager.js";
 // Status resolver
 export {
-    isMultiTaskMode, reconstructStateFromGit,
-    resolveStatusPath,
-    slugify, type ReconstructedState,
-    type ResolvedStatus,
-    type ResolverContext
+  isMultiTaskMode,
+  type ReconstructedState,
+  type ResolvedStatus,
+  type ResolverContext,
+  reconstructStateFromGit,
+  resolveStatusPath,
+  slugify,
 } from "./status-resolver.js";
 // Subagent runner
 export { buildSubagentInvocations, runSubagentsInParallel } from "./subagent-runner.js";
-// Knowledge catalog (Layer A progressive index)
-export {
-    buildCatalog, parseEvolvedRulesSummary,
-    parseFailureSummary,
-    parseSolutionFrontmatter,
-    renderCatalog, type CatalogInput,
-    type EvolvedRulesSummary,
-    type FailureSummary, type SolutionSummary
-} from "./knowledge-catalog.js";
-// Knowledge integrity linter
-export {
-    checkContradictions,
-    checkOrphanSolutions,
-    checkReferenceIntegrity, lintKnowledgeIntegrity, type IntegrityFinding,
-    type IntegrityInput
-} from "./knowledge-integrity.js";
-
