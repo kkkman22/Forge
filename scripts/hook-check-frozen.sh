@@ -41,6 +41,7 @@ fi
 
 # Search for check-frozen.js in known locations
 for candidate in \
+  "${script_dir}/../dist/src/check-frozen.js" \
   "forge/dist/src/check-frozen.js" \
   "$HOME/.claude/skills/forge/dist/src/check-frozen.js"; do
   if [ -f "$candidate" ]; then
