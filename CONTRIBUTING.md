@@ -262,7 +262,7 @@ After modifying skills/agents/commands, re-run `node scripts/gen-plugin-commands
 ## Creating a New Skill
 
 1. Copy `templates/SKILL-TEMPLATE.md` to `skills/forge-<name>/SKILL.md`
-2. Follow the [SKILL.md Style Guide](/.forge/knowledge/skill-style-guide.md) for frontmatter, section structure, and description format
+2. Follow the [SKILL.md Style Guide](.forge/knowledge/skill-style-guide.md) for frontmatter, section structure, and description format
 3. Use the quick checklist at the end of the style guide as your PR self-check
 4. Run `node scripts/validate-skill-descriptions.mjs --strict` and `node scripts/validate-skill-skeleton.mjs` to verify compliance
 
