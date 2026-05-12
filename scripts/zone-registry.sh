@@ -19,9 +19,6 @@ set -euo pipefail
 # Feature flag: default to structured mode
 FORGE_STRUCTURED_FROZEN="${FORGE_STRUCTURED_FROZEN:-1}"
 
-# Maximum time (ms) to spend reading a target file for status qualifier
-readonly STATUS_READ_TIMEOUT_MS=100
-
 # Audit log rotation threshold
 readonly AUDIT_LOG_MAX_BYTES=10485760  # 10 MB
 
@@ -168,7 +165,8 @@ _parse_config_file() {
       fi
 
       local category="guarded-${modifier}"
-      local reason_code="GUARDED_$(echo "$modifier" | tr '[:lower:]' '[:upper:]')_VIOLATION"
+      local reason_code
+      reason_code="GUARDED_$(echo "$modifier" | tr '[:lower:]' '[:upper:]')_VIOLATION"
 
       rules="${rules}${glob}"$'\t'"${category}"$'\t'"${reason_code}"$'\t'$'\n'
     done <<< "$guarded_block"

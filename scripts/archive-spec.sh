@@ -156,7 +156,7 @@ archive_version: 1
 
 - **Slug**: ${slug}
 - **Archive Date**: ${ARCHIVE_DATE}
-- **Source Files**: $(ls "${archive_dir}" | grep -v archive-manifest.md | tr '\n' ', ')
+- **Source Files**: $(for f in "${archive_dir}"/*; do [[ "$(basename "$f")" != "archive-manifest.md" ]] && basename "$f"; done | tr '\n' ', ')
 MANIFEST_EOF
 
   success "文件级归档完成: ${archive_dir}" >&2
@@ -313,9 +313,8 @@ write_purge_manifest() {
     printf '  "purge_cc_flag": "%s"' "${purge_flag}"
 
     if [[ -n "${exec_output}" ]]; then
-      local exec_truncated="false"
       local exec_escaped
-      exec_escaped=$(truncate_string "${exec_output}") || exec_truncated="true"
+      exec_escaped=$(truncate_string "${exec_output}")
       exec_escaped=$(json_escape "${exec_escaped}")
       printf ',\n  "execution_output": {\n'
       printf '    "exit_code": %s,\n' "${exec_rc:-0}"
