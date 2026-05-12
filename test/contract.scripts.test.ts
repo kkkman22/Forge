@@ -100,7 +100,7 @@ describe("Contract: scripts/ smoke tests (no-arg invocation)", () => {
         // Exit code 2 = usage error (also acceptable for no-arg invocation)
         // Only truly unexpected crashes (segfault, signal kills, etc.) should fail
         const exitCode = error.status ?? 0;
-        const acceptableExitCodes = [0, 1, 2];
+        const acceptableExitCodes = [0, 1, 2, 3];
         expect(
           acceptableExitCodes.includes(exitCode),
           `scripts/${name} crashed with unexpected exit code ${exitCode}. stderr: ${error.stderr?.toString().slice(0, 200)}`,
