@@ -1,10 +1,16 @@
 ---
 name: forge-decide-teams
-description: "[PoC] 使用 Agent Teams 的 /forge decide 并行多视角决策"
+description: "Execute multi-perspective decision analysis using parallel agent teams for complex architectural or product choices. Use when `/forge decide` is invoked and the topic involves architecture, security, cost, or product trade-offs requiring multiple viewpoints."
 allowed-tools: Read, Write, Bash, Agent
 ---
 
 # forge-decide-teams
+
+## 1. Prerequisites
+
+- `CLAUDE_CODE_EXPERIMENTAL_AGENT_TEAMS=1` 环境变量已设置
+- tmux 已安装且可用
+- Claude Code >= 2.1.32
 
 ## Execution Contract (non-negotiable)
 
@@ -99,3 +105,8 @@ adr_path: ".forge/decisions/<date>-<slug>.md"
 | "没有 env var 也能跑" | PoC 必须验证 Agent Teams 能力存在，退化到 DAG 不是本 skill 的职责 |
 | "跳过版本检查" | 版本 <2.1.32 的 Agent Teams API 不稳定，检查是必要防御 |
 | "超时不需要提示用户" | 20 分钟是合理的注意力窗口，超时后用户应有权决定是否继续 |
+
+## 2. Deliverable
+
+- `.forge/runs/<timestamp>-decide-teams-run.md` 运行记录
+- `.forge/decisions/<date>-<slug>.md` 最终 ADR（由 team-lead 写入）

@@ -45,7 +45,7 @@ parse_args() {
   for arg in "$@"; do
     case "$arg" in
       --help|-h)
-        echo "用法: scripts/archive-spec.sh <slug> [--purge-cc=ask|skip|auto]"
+        echo "Usage: scripts/archive-spec.sh <slug> [--purge-cc=ask|skip|auto]"
         echo ""
         echo "归档已完成的 spec，并可选清理 Claude Code transcripts。"
         echo ""
