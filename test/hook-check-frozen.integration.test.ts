@@ -5,9 +5,9 @@
  * and verifying the output format.
  */
 import { execSync } from "node:child_process";
-import { existsSync, readFileSync, rmSync, writeFileSync } from "node:fs";
+import { existsSync, readFileSync } from "node:fs";
 import { resolve } from "node:path";
-import { afterEach, beforeEach, describe, expect, it } from "vitest";
+import { describe, expect, it } from "vitest";
 
 const ROOT = resolve(import.meta.dirname, "..");
 
@@ -109,13 +109,6 @@ describe("Integration: audit logging", () => {
   const logDir = resolve(ROOT, ".forge", "runs");
 
   it("log_event writes JSONL entry", () => {
-    const before = existsSync(logDir)
-      ? readFileSync(
-          resolve(logDir, `${new Date().toISOString().slice(0, 10)}-frozen-events.jsonl`),
-          "utf-8",
-        )
-      : "";
-
     runHook("scripts/hook-check-frozen-structured.sh", {
       tool_name: "Write",
       tool_input: { file_path: ".forge/config.md" },
