@@ -71,7 +71,7 @@ latest_handoff=$(find_latest "$FORGE_DIR/handoffs" '*.md')
 if [ -n "$latest_handoff" ]; then
   echo "━━━ 最近的 Handoff ━━━"
   # Show only the Decided section (most important for context recovery)
-  sed -n '/### Decided/,/### /p' "$latest_handoff" 2>/dev/null | head -10
+  awk '/### Decided/{f=1} f{print; if(++n>=10) exit}' "$latest_handoff" 2>/dev/null
   echo ""
 fi
 
