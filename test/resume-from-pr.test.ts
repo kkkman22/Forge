@@ -9,7 +9,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 // Dynamic import needed for .mjs ESM module
 const moduleUrl = new URL("../scripts/resume-from-pr.mjs", import.meta.url);
 
-// Will be set after dynamic import
+// biome-ignore lint/suspicious/noExplicitAny: dynamic ESM import
 let resumeModule: any;
 
 beforeEach(async () => {
@@ -98,6 +98,7 @@ describe("parseTarget", () => {
 // ---------------------------------------------------------------------------
 
 describe("fetchPRMetadata", () => {
+  // biome-ignore lint/suspicious/noExplicitAny: mock type
   let execMock: any;
 
   beforeEach(() => {
@@ -110,18 +111,21 @@ describe("fetchPRMetadata", () => {
   });
 
   it("uses gh for github host", async () => {
-    execMock.mockImplementation((_cmd: string, _opts: any, cb: Function) => {
-      cb(
-        null,
-        JSON.stringify({
-          title: "[spec:my-feature] Add widget",
-          headRefName: "forge/my-feature",
-          baseRefName: "main",
-          body: "See .forge/specs/my-feature/",
-          url: "https://github.com/org/repo/pull/1",
-        }),
-      );
-    });
+    execMock.mockImplementation(
+      // biome-ignore lint/suspicious/noExplicitAny: mock callback
+      (_cmd: string, _opts: any, cb: (e: Error | null, s: string) => void) => {
+        cb(
+          null,
+          JSON.stringify({
+            title: "[spec:my-feature] Add widget",
+            headRefName: "forge/my-feature",
+            baseRefName: "main",
+            body: "See .forge/specs/my-feature/",
+            url: "https://github.com/org/repo/pull/1",
+          }),
+        );
+      },
+    );
 
     const result = await resumeModule.fetchPRMetadata(
       { host: "github", number: 1, url: "https://github.com/org/repo/pull/1" },
@@ -134,9 +138,12 @@ describe("fetchPRMetadata", () => {
   });
 
   it("returns fetcherUsed='none' on gh not installed", async () => {
-    execMock.mockImplementation((_cmd: string, _opts: any, cb: Function) => {
-      cb(new Error("command not found: gh"));
-    });
+    execMock.mockImplementation(
+      // biome-ignore lint/suspicious/noExplicitAny: mock callback
+      (_cmd: string, _opts: any, cb: (e: Error | null, s: string) => void) => {
+        cb(new Error("command not found: gh"));
+      },
+    );
 
     const result = await resumeModule.fetchPRMetadata(
       { host: "github", number: 1, url: null },
