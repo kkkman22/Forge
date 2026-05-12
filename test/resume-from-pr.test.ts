@@ -141,7 +141,7 @@ describe("fetchPRMetadata", () => {
     execMock.mockImplementation(
       // biome-ignore lint/suspicious/noExplicitAny: mock callback
       (_cmd: string, _opts: any, cb: (e: Error | null, s: string) => void) => {
-        cb(new Error("command not found: gh"));
+        cb(new Error("command not found: gh"), "");
       },
     );
 
