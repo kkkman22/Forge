@@ -1,6 +1,6 @@
 ---
 name: forge-resume
-description: "Resume an interrupted task by reconstructing state from status file and knowledge sessions. Supports --from-pr for cross-session PR recovery. Use when user runs `/forge resume`, new session begins with prior task incomplete, or picking up interrupted work."
+description: "Resume an interrupted task by reconstructing state from status file, knowledge sessions, or a PR context via --from-pr. Use when user runs `/forge resume`, a new session begins with prior work incomplete, or picking up interrupted work."
 skeleton_exempt_legacy: true
 disable-model-invocation: true
 ---
