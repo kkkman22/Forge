@@ -17,7 +17,7 @@ allowed-tools: Read, Write, Bash, Agent
 - 禁止在未启用 Agent Teams 时退化为 DAG（那是另一个 skill 的职责）
 - 禁止直接调用 viewpoint agents（必须经过 team-lead 协调）
 
-## Overview
+## 1. 概述
 
 Agent Teams 版 `/forge decide` 的 PoC 实现。使用 Claude Code 原生 Agent Teams 能力（tmux 面板并行）替代现有 DAG subagent 模式。完全 opt-in，通过 `/forge decide --mode=teams <topic>` 触发。
 
