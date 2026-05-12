@@ -14,10 +14,19 @@ script_dir="$(cd "$(dirname "$0")" && pwd)"
 
 # Feature flag check
 if [[ "${FORGE_STRUCTURED_FROZEN:-1}" = "0" ]]; then
-  if [[ -f "${script_dir}/hook-check-frozen-legacy.sh" ]]; then
-    exec bash "${script_dir}/hook-check-frozen-legacy.sh" "$@"
+  # Legacy scripts expect file path as $1 — parse from stdin
+  _legacy_input=""
+  _legacy_input=$(cat)
+  _legacy_file_path=""
+  if command -v jq >/dev/null 2>&1; then
+    _legacy_file_path=$(printf '%s' "$_legacy_input" | jq -r '.tool_input.file_path // empty' 2>/dev/null) || _legacy_file_path=""
+  else
+    _legacy_file_path=$(printf '%s' "$_legacy_input" | grep -o '"file_path":"[^"]*"' | head -1 | cut -d'"' -f4) || _legacy_file_path=""
   fi
-  exec bash "${script_dir}/hook-check-frozen.sh" "$@"
+  if [[ -f "${script_dir}/hook-check-frozen-legacy.sh" ]]; then
+    exec bash "${script_dir}/hook-check-frozen-legacy.sh" "$_legacy_file_path"
+  fi
+  exec bash "${script_dir}/hook-check-frozen.sh" "$_legacy_file_path"
 fi
 
 source "${script_dir}/zone-registry.sh"
