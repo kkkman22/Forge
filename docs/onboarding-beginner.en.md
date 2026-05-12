@@ -1,6 +1,6 @@
-> ⚠️ This translation may be behind the Chinese version. Chinese last updated: 2026-05-12
+[← Back to Index](./INDEX.en.md) | [中文版](./onboarding-beginner.md)
 
-[中文版](./onboarding-beginner.md) | [← Back to Index](./INDEX.en.md)
+> ⚠️ This translation may be behind the Chinese version. Chinese last updated: 2026-05-12
 
 # Forge Beginner Onboarding
 

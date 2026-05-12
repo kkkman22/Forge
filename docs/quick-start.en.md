@@ -1,6 +1,6 @@
-> ⚠️ This translation may be behind the Chinese version. Chinese last updated: 2026-05-12
+[← Back to Index](./INDEX.en.md) | [中文版](./quick-start.md)
 
-[中文版](./quick-start.md) | [← Back to Index](./INDEX.en.md)
+> ⚠️ This translation may be behind the Chinese version. Chinese last updated: 2026-05-12
 
 # Forge Quick Start Guide
 
