@@ -353,6 +353,7 @@ Forge 通过 Claude Code 的 [Hooks](https://docs.anthropic.com/en/docs/claude-c
 │   └── <topic>.md              #   评审报告
 ├── handoffs/                    # 跨阶段决策传递
 ├── knowledge/                   # /forge learn 输出
+│   ├── catalog.md              #   全景索引（Layer A，~50 行入口）
 │   ├── solutions/              #   解决方案文档
 │   │   └── <topic>.md
 │   ├── sessions/               #   会话日志
@@ -371,6 +372,30 @@ Forge 通过 Claude Code 的 [Hooks](https://docs.anthropic.com/en/docs/claude-c
 ```
 
 所有状态文件统一使用 `.md` 格式 + YAML frontmatter，避免 AI 写纯 YAML 的缩进错误。
+
+---
+
+## 知识复利：越用越强
+
+Forge 的知识系统不是静态文档库，而是一个自动化的复利引擎。每次 `/forge learn` 执行都会让后续工作流变得更聪明：
+
+**自动沉淀**：每次开发完成后，`/forge learn` 从五个维度（问题模式、解决方案、踩坑记录、决策理由、可复用模式）提取知识，写入 `solutions/` 和 `instincts.md`。
+
+**自动回流**：`/forge plan` 的 Research 步骤强制搜索知识库；`/forge build` 自动匹配 instinct 模式注入 Subagent 上下文；`/forge debug` 自动搜索历史踩坑记录。新工作流自动站在前人肩上。
+
+**置信度生命周期**：每条知识携带 Beta 分布置信度（`successes / applications`）。被采用且有效 → 置信度上升；被采用但无效 → 置信度下降；长期未引用（60 天）→ 标记为陈旧候选。知识库自动保持健康。
+
+**规则蒸馏**：高频模式（confidence ≥ 0.8）自动提升为 `evolved-rules.md` 中的错误预防规则，通过 SessionStart Hook 注入每次会话。被基础设施吸收后退役，腾出容量。
+
+**完整性保障**：知识库 Lint 检查跨文件引用完整性（`instincts.md` 来源 → `solutions/` 文件是否存在）、孤儿文档检测、语义矛盾检测。`catalog.md` 提供 ~50 行的全景索引，让 Agent 以最低成本了解"知识库有什么"。
+
+```
+知识流动路径：
+
+  /forge build → 踩坑 → /forge learn → solutions/ + instincts.md
+       ↑                                        │
+       └────── /forge plan Research ←───────────┘
+```
 
 ---
 
