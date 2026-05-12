@@ -1,6 +1,6 @@
-import { describe, it, expect } from "vitest";
-import { readFileSync, existsSync } from "fs";
-import { join } from "path";
+import { existsSync, readFileSync } from "node:fs";
+import { join } from "node:path";
+import { describe, expect, it } from "vitest";
 
 const ROOT = join(__dirname, "..");
 
@@ -75,32 +75,26 @@ describe("forge-decide-teams: viewpoint agent files", () => {
     expect(fm.color).toBe(VIEWPOINT_COLORS[name]);
   });
 
-  it.each(VIEWPOINT_AGENTS)(
-    "%s disallows Write/Edit/Bash",
-    (name) => {
-      const content = readAgent(name);
-      const fm = parseFrontmatter(content);
-      const disallowed = fm.disallowedTools as string[] | undefined;
-      expect(disallowed).toBeDefined();
-      expect(disallowed!).toContain("Write");
-      expect(disallowed!).toContain("Edit");
-      expect(disallowed!).toContain("Bash");
-    },
-  );
+  it.each(VIEWPOINT_AGENTS)("%s disallows Write/Edit/Bash", (name) => {
+    const content = readAgent(name);
+    const fm = parseFrontmatter(content);
+    const disallowed = fm.disallowedTools as string[] | undefined;
+    expect(disallowed).toBeDefined();
+    expect(disallowed!).toContain("Write");
+    expect(disallowed!).toContain("Edit");
+    expect(disallowed!).toContain("Bash");
+  });
 
-  it.each(VIEWPOINT_AGENTS)(
-    "%s has allowedTools with Read/Glob/Grep/SendMessage",
-    (name) => {
-      const content = readAgent(name);
-      const fm = parseFrontmatter(content);
-      const allowed = fm.allowedTools as string[] | undefined;
-      expect(allowed).toBeDefined();
-      expect(allowed!).toContain("Read");
-      expect(allowed!).toContain("Glob");
-      expect(allowed!).toContain("Grep");
-      expect(allowed!).toContain("SendMessage");
-    },
-  );
+  it.each(VIEWPOINT_AGENTS)("%s has allowedTools with Read/Glob/Grep/SendMessage", (name) => {
+    const content = readAgent(name);
+    const fm = parseFrontmatter(content);
+    const allowed = fm.allowedTools as string[] | undefined;
+    expect(allowed).toBeDefined();
+    expect(allowed!).toContain("Read");
+    expect(allowed!).toContain("Glob");
+    expect(allowed!).toContain("Grep");
+    expect(allowed!).toContain("SendMessage");
+  });
 });
 
 describe("forge-decide-teams: team lead agent", () => {
@@ -159,13 +153,7 @@ describe("forge-decide-teams: SKILL file", () => {
 });
 
 describe("forge-decide-teams: PoC topics file", () => {
-  const topicsPath = join(
-    ROOT,
-    ".kiro",
-    "specs",
-    "forge-decide-agent-teams",
-    "poc-topics.md",
-  );
+  const topicsPath = join(ROOT, ".kiro", "specs", "forge-decide-agent-teams", "poc-topics.md");
 
   it("exists", () => {
     expect(existsSync(topicsPath)).toBe(true);
