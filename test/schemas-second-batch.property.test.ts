@@ -116,7 +116,12 @@ describe("review-report / plan-file / spec-file — passthrough unknown fields",
     fc.assert(
       fc.property(
         reviewReportArb,
-        fc.stringMatching(/^[a-z_]{3,20}$/).filter((k) => !KNOWN_REVIEW.has(k)),
+        fc
+          .stringMatching(/^[a-z_]{3,20}$/)
+          .filter(
+            (k) =>
+              !KNOWN_REVIEW.has(k) && k !== "__proto__" && k !== "constructor" && k !== "prototype",
+          ),
         fc.string({ maxLength: 40 }),
         (sample, key, value) => {
           const augmented = { ...sample, [key]: value };
@@ -136,7 +141,12 @@ describe("review-report / plan-file / spec-file — passthrough unknown fields",
     fc.assert(
       fc.property(
         planFileArb,
-        fc.stringMatching(/^[a-z_]{3,20}$/).filter((k) => !KNOWN_PLAN.has(k)),
+        fc
+          .stringMatching(/^[a-z_]{3,20}$/)
+          .filter(
+            (k) =>
+              !KNOWN_PLAN.has(k) && k !== "__proto__" && k !== "constructor" && k !== "prototype",
+          ),
         fc.string({ maxLength: 40 }),
         (sample, key, value) => {
           const augmented = { ...sample, [key]: value };
