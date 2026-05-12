@@ -7,3 +7,23 @@
 {"timestamp":"2026-05-12T02:27:26Z","event":"precompact_snapshot","detail":"slug=ccbp-hardening-phase2 phase=completed"}
 {"timestamp":"2026-05-12T02:27:29Z","event":"postcompact_restore","detail":"slug=ccbp-hardening-phase2"}
 {"timestamp":"2026-05-12T02:27:29Z","event":"precompact_snapshot","detail":"slug=ccbp-hardening-phase2 phase=completed"}
+{"timestamp":"2026-05-12T04:02:31Z","event":"postcompact_restore","detail":"slug=ccbp-hardening-phase2"}
+{"timestamp":"2026-05-12T04:02:31Z","event":"precompact_snapshot","detail":"slug=ccbp-hardening-phase2 phase=completed"}
+{"timestamp":"2026-05-12T04:04:04Z","event":"postcompact_restore","detail":"slug=ccbp-hardening-phase2"}
+{"timestamp":"2026-05-12T04:04:04Z","event":"precompact_snapshot","detail":"slug=ccbp-hardening-phase2 phase=completed"}
+{"timestamp":"2026-05-12T04:05:37Z","event":"postcompact_restore","detail":"slug=ccbp-hardening-phase2"}
+{"timestamp":"2026-05-12T04:05:37Z","event":"precompact_snapshot","detail":"slug=ccbp-hardening-phase2 phase=completed"}
+{"timestamp":"2026-05-12T04:06:49Z","event":"postcompact_restore","detail":"slug=ccbp-hardening-phase2"}
+{"timestamp":"2026-05-12T04:06:49Z","event":"precompact_snapshot","detail":"slug=ccbp-hardening-phase2 phase=completed"}
+{"timestamp":"2026-05-12T04:08:51Z","event":"postcompact_restore","detail":"slug=ccbp-hardening-phase2"}
+{"timestamp":"2026-05-12T04:08:51Z","event":"precompact_snapshot","detail":"slug=ccbp-hardening-phase2 phase=completed"}
+{"timestamp":"2026-05-12T04:10:04Z","event":"postcompact_restore","detail":"slug=ccbp-hardening-phase2"}
+{"timestamp":"2026-05-12T04:10:04Z","event":"precompact_snapshot","detail":"slug=ccbp-hardening-phase2 phase=completed"}
+{"timestamp":"2026-05-12T04:11:59Z","event":"postcompact_restore","detail":"slug=ccbp-hardening-phase2"}
+{"timestamp":"2026-05-12T04:11:59Z","event":"precompact_snapshot","detail":"slug=ccbp-hardening-phase2 phase=completed"}
+{"timestamp":"2026-05-12T04:13:12Z","event":"postcompact_restore","detail":"slug=ccbp-hardening-phase2"}
+{"timestamp":"2026-05-12T04:13:12Z","event":"precompact_snapshot","detail":"slug=ccbp-hardening-phase2 phase=completed"}
+{"timestamp":"2026-05-12T04:14:55Z","event":"postcompact_restore","detail":"slug=ccbp-hardening-phase2"}
+{"timestamp":"2026-05-12T04:14:55Z","event":"precompact_snapshot","detail":"slug=ccbp-hardening-phase2 phase=completed"}
+{"timestamp":"2026-05-12T04:16:08Z","event":"postcompact_restore","detail":"slug=ccbp-hardening-phase2"}
+{"timestamp":"2026-05-12T04:16:08Z","event":"precompact_snapshot","detail":"slug=ccbp-hardening-phase2 phase=completed"}
