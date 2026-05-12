@@ -5,6 +5,8 @@
 [![License: MIT](https://img.shields.io/badge/License-MIT-green.svg)](./LICENSE)
 
 > **18 命令覆盖完整开发生命周期，三维路由自动匹配复杂度，统一状态系统跨会话感知。**
+>
+> 前置条件：Claude Code ≥ 2.1.121 | [安装指南](docs/quick-start.md)
 
 ---
 
@@ -99,6 +101,14 @@ bash /tmp/forge/scripts/install-dist.sh
 | `/forge learn` | 五维度经验沉淀 | 全量 |
 
 > 完整 18 命令速查表和三维路由详解 → [docs/reference-commands.md](docs/reference-commands.md)
+
+### 三维路由
+
+| 档位 | 判定条件 | 命令序列 |
+|------|---------|----------|
+| **轻量路径** | 影响 ≤1 文件，改动 ≤20 行 | `build → review` |
+| **标准路径** | 需求明确或有现成 Spec | `plan → build → review → test → ship` |
+| **全量路径** | 新服务/数据库/认证变更或需求模糊 | `decide → spec → plan → build → review → test → ship → learn` |
 
 ---
 
