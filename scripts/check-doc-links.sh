@@ -16,8 +16,8 @@ for FILE in $MD_FILES; do
   while IFS= read -r LINE; do
     LINE_NUM=$((LINE_NUM + 1))
     # Extract markdown links [text](path) — skip URLs with :// (absolute)
-    LINKS=$(echo "$LINE" | grep -oE '\[([^]]+)\]\(([^)]+)\)' || true)
-    for LINK in $LINKS; do
+    while IFS= read -r LINK; do
+      [ -n "$LINK" ] || continue
       # Extract path from (path)
       PATH_PART=$(echo "$LINK" | sed -E 's/.*\]\(([^)]+)\).*/\1/')
       # Skip absolute URLs, anchors-only, mailto
@@ -48,7 +48,7 @@ for FILE in $MD_FILES; do
         echo "[ERROR] $FILE:$LINE_NUM → $TARGET (file not found)"
         ERRORS=$((ERRORS + 1))
       fi
-    done
+    done < <(echo "$LINE" | grep -oE '\[([^]]+)\]\(([^)]+)\)' || true)
   done < "$FILE"
 done
 
