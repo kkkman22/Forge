@@ -1,9 +1,9 @@
 ---
-current_task: "ccbp-hardening-phase2"
-tier: "full"
-task_type: "harness-layer-hardening"
-project_phase: "completed"
-phase: "completed"
+current_task: "documentation-onboarding"
+tier: "standard"
+task_type: "documentation"
+project_phase: "in_progress"
+phase: "test"
 updated: "2026-05-12"
 ---
 
@@ -11,11 +11,39 @@ updated: "2026-05-12"
 
 ## 当前任务
 
-**ccbp-hardening-phase2** — CCBP Phase 2: hooks if: 迁移 + compaction 保护 + agent frontmatter + rules 迁移 ✅ COMPLETED
-- Spec: `.forge/specs/ccbp-hardening-phase2/spec.md` (locked)
-- Source: `.kiro/specs/ccbp-hardening-phase2/` (requirements + design + tasks)
-- 10 Requirements, 9 Tasks, ~23 files
-- 3 commits merged to main
+**documentation-onboarding** — 新用户引导文档与 README 优化
+- Spec: `.forge/specs/documentation-onboarding/spec.md` (locked)
+- Plan: `.forge/plans/documentation-onboarding.md` (approved)
+- 分支: `feature/documentation-onboarding`
+- 6 需求，20 任务，24 个新/修改文件
+- build 完成，进入 review
+
+## Build 完成摘要
+
+### 新建文件（24 个）
+
+| 类别 | 文件 |
+|------|------|
+| 基础设施 | `docs/INDEX.md`, `docs/INDEX.en.md`, `scripts/check-doc-links.sh`, `scripts/check-doc-structure.sh` |
+| 参考文档 | `docs/reference-security.md`, `docs/reference-architecture.md`, `docs/reference-advanced.md`, `docs/reference-commands.md` |
+| 快速入门 | `docs/quick-start.md`, `docs/quick-start.en.md` |
+| 引导路径 | `docs/onboarding-beginner.md`, `docs/onboarding-beginner.en.md`, `docs/onboarding-daily.md`, `docs/onboarding-daily.en.md`, `docs/onboarding-advanced.md`, `docs/onboarding-advanced.en.md` |
+| 工作流示例 | `docs/workflow-bugfix.md`, `docs/workflow-feature.md`, `docs/workflow-complex.md`, `docs/workflow-resume.md` |
+
+### 修改文件（3 个）
+
+| 文件 | 说明 |
+|------|------|
+| `README.md` | 从 782 行重组为 148 行，添加导航索引和路由表 |
+| `package.json` | `check` 脚本追加文档验证 |
+| `CONTRIBUTING.md` | 修复失效链接 |
+
+### 验证结果
+
+- `bash scripts/check-doc-links.sh` — ✅ 全部链接有效
+- `bash scripts/check-doc-structure.sh` — ✅ 结构合规
+- 合约测试 — ✅ 433/433 通过
+- `npm run check` — 1 个前置 flaky 属性测试（与文档无关），其余全部通过
 
 ## 已完成任务
 
