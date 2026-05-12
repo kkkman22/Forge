@@ -18,7 +18,7 @@ read_field() {
   # Escape field for safe use in grep pattern
   local escaped_field
   escaped_field=$(printf '%s\n' "$field" | sed 's/[[\.*^$()+?{|\\]/\\&/g')
-  grep "^${escaped_field}:" "$file" 2>/dev/null | head -1 | sed "s/^${escaped_field}: *\"\\{0,1\\}//;s/\"\\{0,1\\} *$//" || echo ""
+  grep "^${escaped_field}:" "$file" 2>/dev/null | sed -n "1s/^${escaped_field}: *\"\\{0,1\\}//;s/\"\\{0,1\\} *$//p" || echo ""
 }
 
 # Check if a file was modified within the last N minutes.
@@ -45,5 +45,5 @@ find_latest() {
   if [ ! -d "$dir" ]; then
     return
   fi
-  find "$dir" -maxdepth 1 -name "$pattern" -exec stat -f '%m %N' {} \; 2>/dev/null | sort -rn | head -1 | cut -d' ' -f2-
+  find "$dir" -maxdepth 1 -name "$pattern" -exec stat -f '%m %N' {} \; 2>/dev/null | sort -rn | awk 'NR==1{sub(/^[0-9]+ /,""); print}'
 }
