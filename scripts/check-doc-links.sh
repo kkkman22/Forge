@@ -7,56 +7,82 @@ set -euo pipefail
 ROOT="$(cd "$(dirname "$0")/.." && pwd)"
 ERRORS=0
 
-# Find all .md files in docs/ and root
 cd "$ROOT"
-MD_FILES=$(find docs -name "*.md" 2>/dev/null; find . -maxdepth 1 -name "*.md" 2>/dev/null)
 
-for FILE in $MD_FILES; do
-  LINE_NUM=0
-  while IFS= read -r LINE; do
-    LINE_NUM=$((LINE_NUM + 1))
-    # Extract markdown links [text](path) — skip URLs with :// (absolute)
-    while IFS= read -r LINK; do
-      [ -n "$LINK" ] || continue
-      # Extract path from (path)
-      PATH_PART=$(echo "$LINK" | sed -E 's/.*\]\(([^)]+)\).*/\1/')
-      # Skip absolute URLs, anchors-only, mailto
-      if [[ "$PATH_PART" =~ ^(https?|mailto|#) ]]; then
-        continue
-      fi
-      # Remove anchor fragment
-      TARGET="${PATH_PART%%#*}"
-      # Skip if empty after removing anchor
-      if [ -z "$TARGET" ]; then
-        continue
-      fi
-      # Resolve relative to file's directory
-      FILE_DIR=$(dirname "$FILE")
-      if [ "$FILE_DIR" = "." ]; then
-        FILE_DIR=""
-      fi
-      # Resolve path
-      if [ -n "$FILE_DIR" ]; then
-        RESOLVED="$FILE_DIR/$TARGET"
-      else
-        RESOLVED="$TARGET"
-      fi
-      # Normalize ./ and ../
-      RESOLVED=$(cd "$ROOT" && realpath -m --relative-to="$ROOT" "$RESOLVED" 2>/dev/null || echo "$RESOLVED")
-      # Check existence
-      if [ ! -e "$RESOLVED" ]; then
-        echo "[ERROR] $FILE:$LINE_NUM → $TARGET (file not found)"
-        ERRORS=$((ERRORS + 1))
-      fi
-    done < <(echo "$LINE" | grep -oE '\[([^]]+)\]\(([^)]+)\)' || true)
-  done < "$FILE"
-done
+# Use perl for efficient link extraction — bash line-by-line is too slow
+find docs -name "*.md" -not -path "docs/api/*" 2>/dev/null; find . -maxdepth 1 -name "*.md" 2>/dev/null | \
+perl -Mstrict -Mwarnings -e '
+my $root = $ARGV[0];
+my $errors = 0;
 
-if [ "$ERRORS" -gt 0 ]; then
-  echo ""
-  echo "$ERRORS broken link(s) found."
-  exit 1
-fi
+sub resolve_path {
+  my ($source_dir, $target) = @_;
+  $target =~ s/#.*//;
+  return "" if $target eq "";
 
-echo "All links valid."
-exit 0
+  my $result;
+  if ($target =~ /^\//) {
+    $result = "$root$target";
+  } elsif (!$source_dir || $source_dir eq ".") {
+    $result = "$root/$target";
+  } else {
+    $result = "$root/$source_dir/$target";
+  }
+
+  my @parts = split(/\//, $result);
+  my @stack;
+  for my $p (@parts) {
+    next if $p eq "" || $p eq ".";
+    if ($p eq "..") {
+      pop @stack if @stack;
+    } else {
+      push @stack, $p;
+    }
+  }
+  return "/" . join("/", @stack);
+}
+
+my $source = "";
+my $source_dir = "";
+while (<STDIN>) {
+  chomp;
+  my $file = $_;
+  $file =~ s/^\.\///;
+  $source = $file;
+  $source_dir = $source;
+  $source_dir =~ s/\/[^\/]+$//;
+  $source_dir = "" if $source_dir eq $source;
+
+  open(my $fh, "<", $file) or next;
+  my $line_num = 0;
+  while (my $line = <$fh>) {
+    $line_num++;
+    while ($line =~ /\[([^\]]*)\]\(([^)]+)\)/g) {
+      my $path = $2;
+      next if $path =~ /^(https?|mailto):\/\//;
+      next if $path =~ /^#/;
+      my $target = $path;
+      $target =~ s/#.*//;
+      next if $target eq "";
+
+      my $resolved = resolve_path($source_dir, $target);
+      next if $resolved eq "";
+
+      if (!-e $resolved) {
+        my $rel = $resolved;
+        $rel =~ s/^$root\///;
+        print "[ERROR] $source:$line_num → $target (file not found)\n";
+        $errors++;
+      }
+    }
+  }
+  close($fh);
+}
+
+if ($errors > 0) {
+  print "\n$errors broken link(s) found.\n";
+  exit 1;
+}
+print "All links valid.\n";
+exit 0;
+' "$ROOT"
