@@ -2,11 +2,20 @@
 
 # Forge 高级功能参考
 
-## Forge Loop — 自主执行引擎
+## Forge Loop — 带工程纪律的自主执行引擎
 
 > **注意**：Forge Loop 是独立于 `/forge` 命令的高级功能，需要完整仓库（克隆安装方式）。分发包安装方式不包含 Forge Loop。
 
-Forge Loop 是基于 [Claude Agent SDK](https://docs.anthropic.com/en/docs/claude-agent-sdk) 构建的自主循环执行引擎。与 `/forge` 命令（在 Claude Code 对话中由 AI 解释执行）不同，Forge Loop 是一个独立的 Node.js CLI 程序，在系统终端中运行，通过 Agent SDK 驱动 Claude Code 自主迭代执行任务，无需人工逐步干预。
+Forge Loop 是基于 [Claude Agent SDK](https://docs.anthropic.com/en/docs/claude-agent-sdk) 构建的**带工程纪律的自主执行引擎**。与 `/forge` 命令（在 Claude Code 对话中由 AI 解释执行）不同，Forge Loop 是一个独立的 Node.js CLI 程序，在系统终端中运行，通过 Agent SDK 驱动 Claude Code 自主迭代执行任务，无需人工逐步干预。
+
+### 与 Claude Code 官方命令对比
+
+| 差异维度 | Forge Loop | `/goal` + `/loop` |
+|----------|-----------|-------------------|
+| Git 事务 | 每次成功迭代自动 commit，失败自动 rollback | 无内置 Git 事务 |
+| 熔断器 + 指数退避 | 连续失败自动中止，退避时间递增 | 无内置熔断机制 |
+| 质量门禁 | Spec 锁定 + 三层评审 + PBT 验证 | 通用代码质量，无 Spec 对齐 |
+| Spec 对齐 | Spec_Alignment_Review 独立层 | 无 Spec 级验证 |
 
 ### 前置条件
 
