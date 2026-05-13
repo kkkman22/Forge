@@ -1,6 +1,6 @@
 {
   "name": "forge",
-  "description": "Unified AI coding workflow framework — 28 commands covering the full development lifecycle with TDD, spec-driven planning, and automated review.",
+  "description": "Unified AI coding workflow framework — 22 commands covering the full development lifecycle with TDD, spec-driven planning, and automated review.",
   "version": "2.3.0",
   "author": {
     "name": "Forge contributors",
