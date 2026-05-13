@@ -15,9 +15,21 @@ disable-model-invocation: true
 
 ## 1. Overview
 
-`/forge abort` 是 Forge 工作流的安全退出机制。当用户在任何阶段发现当前任务不值得继续（需求不成立、方向错误、优先级变更等），可以通过 abort 干净地中止任务，而不是手动删文件或无视状态开新任务。
+`/forge abort` 是 Forge 工作流的精简中止机制——仅归档 `.forge/status.md` 并重置 Forge-local 工作状态。
 
-**核心原则**：中止不是失败，是明智的止损。已产生的工作成果（决策文档、Spec、Plan 等）归档保留，不丢弃——它们可能在未来有参考价值。
+**核心原则**：中止不是失败，是明智的止损。已产生的工作成果归档保留，不丢弃。
+
+**Delegation_Adapter**: 会话级 abort 逻辑不在此 skill 范围内。Forge 只管 `.forge/` 状态文件的归档与重置。会话级取消由 Claude Code 平台原生处理。
+
+> ⚠️ Slimming Notice: 此 skill 已从"会话级 abort"精简为"归档+重置"。首次使用新版本时将输出 Deprecation_Notice。
+
+**职责范围**（精简后）：
+1. 归档 `.forge/status.md` 到 `.forge/archive/<ISO-date>-<topic>/`
+2. 重置 Forge-local 工作状态（progress、status、findings 当前指针）
+
+**不在范围内**：
+- 会话级 abort（由 Claude Code 平台原生处理）
+- Forge Loop worktree 清理（由 Forge Loop 独立管理，不触碰）
 
 ---
 

@@ -20,6 +20,40 @@ disable-model-invocation: true
 
 **核心原则**：完成即沉淀。每次开发都是一次学习机会，不沉淀的经验等于没有发生过。
 
+## Auto_Memory Boundary
+
+> 引用 `skills/shared/native-command-matrix.md` 获取完整配置
+
+**Auto_Memory 负责会话级快速记忆；forge-learn 负责跨项目 ADR 与五维度结构化沉淀。**
+
+### 已委托给 Auto_Memory（v2.1.59+，不再由 forge-learn 覆盖）
+
+| 类别 | 说明 |
+|------|------|
+| Build commands | Auto_Memory 自动捕获构建指令 |
+| Debugging notes | Auto_Memory 自动捕获调试记录 |
+| Routine repl invocations | Auto_Memory 自动记录常规操作 |
+
+### forge-learn 保留的差异化范围
+
+| 类别 | 说明 |
+|------|------|
+| 跨项目 ADR | 跨项目架构决策记录的生成与同步 |
+| 五维度结构化沉淀 | event / decision / pattern / anti-pattern / rule |
+| `--from-chats` 历史对话提取 | 从历史对话中批量提取知识 |
+| 规则蒸馏 | 从知识积累中蒸馏错误预防规则（Evolved Rules） |
+| 执行质量评估 | 四维度执行质量分析 |
+
+### Fallback 行为
+
+当 Claude Code 版本 < 2.1.59（无 Auto_Memory）时：恢复完整遗留覆盖范围（包含上述已委托类别），并 emit Deprecation_Notice：
+
+`⚠️ [Forge Slimming] /forge learn 可委托给 Auto_Memory（Claude Code ≥ 2.1.59）处理会话级记忆。当前版本不满足，使用完整遗留范围。`
+
+### 不可降级规则
+
+forge-learn **不会** emit 严格会话作用域且已被 Auto_Memory 覆盖的 ADR 条目。
+
 **Not For**：轻量路径的简单修复（无值得沉淀的经验）/ 中止的任务（abort 后无需 learn）
 
 ---

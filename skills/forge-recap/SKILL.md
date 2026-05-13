@@ -15,6 +15,30 @@ disable-model-invocation: true
 
 Produce a categorized recap of recent project activity over a configurable time window, covering commits, sessions, and task progress.
 
+## Delegation_Adapter
+
+> 引用 `skills/shared/native-command-matrix.md` 获取完整配置
+
+**Forge recap = `/compact` + `/context` + Forge 结构化摘要**
+
+执行路径选择：
+
+1. **standardPath**: 探测 `claude --version` ≥ 2.0.0
+   - 调用 `/compact` 压缩当前会话上下文
+   - 调用 `/context` 获取当前 context 状态
+   - 两个 Native_Command 都成功(exit 0) → 执行 Forge 差异化上层
+   - 任一 Native_Command 失败(exit ≠ 0) → abort Forge 上层，透传 exit code
+
+2. **legacyPath**: 版本不满足或 Native_Command 不可用
+   - 运行下方完整遗留行为
+   - 首次触发时 emit Deprecation_Notice（per-session 去重）
+   - Notice: `⚠️ [Forge Slimming] /forge recap 基础层可委托给 /compact + /context（Claude Code ≥ 2.0.0）`
+
+**Forge 差异化上层**（standardPath 成功后）：
+- 从 `.forge/status.md` 提取当前 Spec 阶段、frozen file 列表
+- 从 `.forge/progress/` 提取未完成的 progress 项
+- 合并输出：Native_Command 结果 + Forge 结构化摘要
+
 ## Goal
 
 ## Data Sources
