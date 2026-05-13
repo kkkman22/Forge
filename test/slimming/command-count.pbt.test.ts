@@ -2,10 +2,10 @@
 // Validates that the single source of truth (commands/forge.md subcommand table)
 // produces consistent counts across all declaration targets.
 
-import { describe, it, expect } from "vitest";
+import { existsSync, readFileSync } from "node:fs";
+import { join } from "node:path";
 import fc from "fast-check";
-import { readFileSync, existsSync } from "fs";
-import { join } from "path";
+import { describe, expect, it } from "vitest";
 
 const ROOT = join(import.meta.dirname, "..", "..");
 const FORGE_MD = join(ROOT, "commands", "forge.md");

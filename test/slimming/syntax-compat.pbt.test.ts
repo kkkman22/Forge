@@ -1,8 +1,8 @@
 // Feature: forge-slimming-plan, Property 5: Command Syntax Backward Compatibility
 // Validates pre-slimming invocation syntax is accepted post-slimming.
 
-import { describe, it, expect } from "vitest";
 import fc from "fast-check";
+import { describe, expect, it } from "vitest";
 
 const SUBCOMMANDS = [
   "plan",

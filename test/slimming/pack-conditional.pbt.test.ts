@@ -1,8 +1,8 @@
 // Feature: forge-slimming-plan, Property 4: Pack Conditional Skill Registration
 // Validates that shouldRegister is consistent across commands/, plugin.json, and audit log.
 
-import { describe, it, expect } from "vitest";
 import fc from "fast-check";
+import { describe, expect, it } from "vitest";
 
 interface Skill {
   name: string;
