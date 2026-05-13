@@ -13,6 +13,14 @@ Entries follow [Keep a Changelog](https://keepachangelog.com/) with Forge-specif
 
 ### Added
 
+- **Forge Slimming Plan (T1/T2/T3)** — delegate overlapping capabilities to Claude Code native commands
+  - T1: teams/ cleanup verified, command count aligned to SST=22, archive audit script, v2.3 observability sync
+  - T2: `/forge recap` delegates to `/compact`+`/context`; `/forge resume` delegates to `/resume`; `/forge abort` narrowed to archive+reset; `/forge learn` deduplicates with Auto_Memory; `/forge review` adds `--delegate-quality`/`--delegate-security` flags
+  - T3: `forge-mutate` pack-conditional registration (requires `mutation_critical_modules` flag); gate skill boundary clarification; usage metrics pipeline for R14/R16 evaluation
+  - New scripts: `audit-archive-candidates.mjs`, `metrics-recorder.mjs`, `aggregate-metrics.mjs`, `validate-gate-boundary.mjs`
+  - `gen-plugin-commands.mjs` now supports `--verify-count` (CI) and `--stamp-count`
+  - Forge Loop repositioned as "autonomous execution with engineering discipline"
+  - Deviation record: SST=22 within 18-22 target, R14/R16 evaluations pending 14-day metrics
 - **`/forge resume --from-pr`** — one-command recovery from a Pull Request. Accepts GitHub/GitLab/Bitbucket URLs or bare PR numbers. Auto-resolves the associated Forge spec slug from PR metadata (title prefix, branch name, description link, or ADR), loads the full context bundle (spec/plan/progress/reviews), and updates `.forge/status.md`. Requires Claude Code 2.1.29+ for CC session recovery; falls back to Forge-only state recovery on older versions. See `scripts/resume-from-pr.mjs` and `skills/forge-resume/SKILL.md` §5.
 - **CI UltraReview 集成** — 每个 PR 自动触发 `claude ultrareview` AI 评审
   - 新增 `scripts/run-ci-ultrareview.sh` 封装 CLI 调用、JSON 解析、artifact 生成
