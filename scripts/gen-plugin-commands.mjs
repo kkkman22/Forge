@@ -113,7 +113,31 @@ if (STAMP_COUNT) {
 }
 
 // --- Default: generate command files ---
+
+// Pack conditional registration: load enabled pack feature flags
+const PACKS_DIR = join(ROOT, "packs");
+const enabledFlags = new Set();
+
+if (existsSync(PACKS_DIR)) {
+  for (const entry of readdirSync(PACKS_DIR, { withFileTypes: true })) {
+    if (!entry.isDirectory()) continue;
+    const packFile = join(PACKS_DIR, entry.name, "pack.yaml");
+    if (!existsSync(packFile)) continue;
+    const packContent = readFileSync(packFile, "utf-8");
+    if (/^enabled:\s*true\b/m.test(packContent) || !/^enabled:/m.test(packContent)) {
+      const ffMatch = packContent.match(/^feature_flags:\s*\n([\s\S]*?)(?=\n\S|\n$)/m);
+      if (ffMatch) {
+        const flagNames = ffMatch[1].match(/^\s{2}(\w[\w-]*)/gm);
+        if (flagNames) {
+          for (const f of flagNames) enabledFlags.add(f.trim());
+        }
+      }
+    }
+  }
+}
+
 const commands = [];
+const skippedPackConditional = [];
 
 for (const entry of readdirSync(SKILLS_DIR, { withFileTypes: true })) {
   if (!entry.isDirectory() || SKIP.includes(entry.name)) continue;
@@ -128,6 +152,17 @@ for (const entry of readdirSync(SKILLS_DIR, { withFileTypes: true })) {
   const fm = frontmatterMatch[1];
   const nameMatch = fm.match(/^name:\s*["']?(.+?)["']?\s*$/m);
   const descMatch = fm.match(/^description:\s*["']?(.+?)["']?\s*$/m);
+
+  // Pack conditional: check if skill requires a pack feature flag
+  const packCondMatch = fm.match(/^pack_conditional:\s*\n\s+required_flag:\s*(\S+)/m);
+  if (packCondMatch) {
+    const requiredFlag = packCondMatch[1];
+    if (!enabledFlags.has(requiredFlag)) {
+      skippedPackConditional.push({ skillName: entry.name, requiredFlag });
+      console.log(`SKIP-PACK  ${entry.name} (requires flag: ${requiredFlag})`);
+      continue;
+    }
+  }
 
   const name = nameMatch ? nameMatch[1].trim() : entry.name;
   const desc = descMatch
