@@ -7,6 +7,8 @@ deliverable_exempt: true
 
 # /forge accept — Acceptance Scenario Eval
 
+**Use when** you need to validate that user-facing acceptance scenarios (defined in spec) actually pass against the running system. This is *behavioral validation from the user's perspective* — running scenario scripts and recording pass/fail with evidence. Do not confuse with `/forge verify` (evidence-based three-state verdict) or `/forge ship` (merge + release).
+
 > **Trigger**: `/forge accept` or `/forge ship --with-acceptance`
 > **Responsibility**: Run acceptance scenarios from spec against real runtime
 > **Output path**: `.forge/acceptance/<topic>/`

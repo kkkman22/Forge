@@ -56,6 +56,17 @@ claude plugin install forge
 
 ---
 
+## Gate Skills 对比
+
+| 维度 | `/forge accept` | `/forge verify` | `/forge ship` |
+|------|----------------|-----------------|---------------|
+| 触发时机 | Spec 验收场景执行 | 证据化三态验证收尾 | 最终交付前合规/合并/release |
+| 主要责任 | 运行场景脚本并记录验收结果 | 汇总所有证据、产出三态结论 | 综合前置门禁、执行合并/tag |
+| 典型输出 | `.forge/acceptance/<scenario>.md` | `.forge/findings/<topic>/verify-this/` | PR merge + tag + CHANGELOG |
+| 下游接续 | → `/forge verify` 或 `/forge ship --with-acceptance` | → `/forge ship` | Release 完成 |
+
+---
+
 ## 安装方式
 
 ### Plugin 安装（推荐）

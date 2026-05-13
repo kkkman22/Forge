@@ -7,6 +7,8 @@ disable-model-invocation: true
 
 # /forge verify — 证据化验证引擎
 
+**Use when** you need to produce an evidence-based three-state verdict (VERIFIED / NOT_VERIFIED / INCONCLUSIVE) for a specific deliverable or claim. This is *evidence aggregation and tri-state judgment* — collecting all available evidence and producing a falsifiable conclusion. Do not confuse with `/forge accept` (running acceptance scenarios) or `/forge ship` (merge + release).
+
 > **触发**：`/forge verify <topic>` / bugfix tier 自动 / `/forge debug` Phase 4
 > **输出**：`.forge/findings/<topic>/verify-this/`
 
