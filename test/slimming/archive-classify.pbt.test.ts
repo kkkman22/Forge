@@ -1,8 +1,8 @@
 // Feature: forge-slimming-plan, Property 2: Archive Classify Correctness
 // Validates the shipped/active/ambiguous classification logic.
 
-import { describe, it, expect } from "vitest";
 import fc from "fast-check";
+import { describe, expect, it } from "vitest";
 
 interface Evidence {
   inRoadmapShipped: boolean;
@@ -42,12 +42,7 @@ describe("Property 2: Archive Classify Correctness", () => {
   it("shipped when dual evidence and not active", () => {
     fc.assert(
       fc.property(evidenceArb, (e) => {
-        if (
-          e.inRoadmapShipped &&
-          e.inChangelog &&
-          !e.inActiveProgress &&
-          !e.inStatusCurrent
-        ) {
+        if (e.inRoadmapShipped && e.inChangelog && !e.inActiveProgress && !e.inStatusCurrent) {
           expect(classify(e)).toBe("shipped");
         }
       }),
@@ -61,10 +56,7 @@ describe("Property 2: Archive Classify Correctness", () => {
         const result = classify(e);
         const isActive = e.inActiveProgress || e.inStatusCurrent;
         const isShipped =
-          e.inRoadmapShipped &&
-          e.inChangelog &&
-          !e.inActiveProgress &&
-          !e.inStatusCurrent;
+          e.inRoadmapShipped && e.inChangelog && !e.inActiveProgress && !e.inStatusCurrent;
         if (!isActive && !isShipped) {
           expect(result).toBe("ambiguous");
         }

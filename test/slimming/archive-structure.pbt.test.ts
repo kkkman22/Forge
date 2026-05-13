@@ -1,8 +1,8 @@
 // Feature: forge-slimming-plan, Property 6: Archive Preserves Directory Structure
 // Validates that archived content matches the original structure.
 
-import { describe, it, expect } from "vitest";
 import fc from "fast-check";
+import { describe, expect, it } from "vitest";
 
 interface FileEntry {
   relativePath: string;
@@ -61,10 +61,13 @@ describe("Property 6: Archive Structure Preservation", () => {
       fc.property(
         fc.string({ minLength: 1 }).filter((s) => /^[a-z-]+$/.test(s)),
         fc.record({ date: fc.stringMatching(/^\d{4}-\d{2}-\d{2}$/) }),
-        fc.array(fc.record({ relativePath: fc.stringMatching(/^[a-z0-9/_.-]+$/), content: fc.string() }), {
-          minLength: 1,
-          maxLength: 5,
-        }),
+        fc.array(
+          fc.record({ relativePath: fc.stringMatching(/^[a-z0-9/_.-]+$/), content: fc.string() }),
+          {
+            minLength: 1,
+            maxLength: 5,
+          },
+        ),
         (slug, { date }, files) => {
           const { mapping } = simulateArchive(files, slug, date);
 
