@@ -1,8 +1,8 @@
 // Feature: forge-slimming-plan, Property 3: Delegation Adapter Unified Behavior
 // Validates path selection, exit code propagation, notice dedup, and source tagging.
 
-import { describe, it, expect } from "vitest";
 import fc from "fast-check";
+import { describe, expect, it } from "vitest";
 
 type Command = "recap" | "resume" | "abort" | "learn" | "review";
 type ExecutionPath = "standard" | "legacy";
