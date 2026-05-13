@@ -88,75 +88,103 @@
 
 - ✅ **Forge Loop × Skills 融合**（核心演进方向）
   - **Loop 驱动 Skills**：`skill-scheduler.ts` 的 `determineNextSkill()` 根据 StatusFile 状态决定下一个 SKILL 阶段；`SKILL_COMMAND_SEQUENCES` 定义 tier 对应的阶段序列（light/standard/full）
-  - **Skills 双模式运行**：`execution-mode.ts` 实现 `interactive` / `autonomous` 双模式；`resolveConfirmation()` 为 11 个确认点定义自主模式预设策略（router→auto-detect、plan→auto-approve、build→continue、review→auto-fix、ship→keep branch，以及 refactor/fix 流程）
-  - **状态感知**：`SdkDriver.executeSkillAwareIteration()` 每轮读取 StatusFile，提取 phase/tier/loopFields；`initializeLoopFields()` 启动时写入 `mode: "autonomous"`、`loop_run_id`、`loop_iteration`、`skill_sequence`；`clearLoopFieldsOnShutdown()` 结束时清除
-  - **门禁复用**：`evaluateQualityGateForPhase()` 在每轮迭代后评估质量门禁；`evaluateReviewGate()` 复用 review P0/P1 逻辑；`reviewFixAttempts` 管理 review-fix 循环熔断
-  - **分发包可用**：Loop 核心逻辑通过 `forge-loop` npm 包发布，分发包用户可通过 `npx forge-loop` 使用
+  - **Skills 双模式运行**：`execution-mode.ts` 实现 `interactive` / `autonomous` 双模式；`resolveConfirmation()` 为 11 个确认点定义自主模式预设策略
+  - **状态感知**：`SdkDriver.executeSkillAwareIteration()` 每轮读取 StatusFile，提取 phase/tier/loopFields；`initializeLoopFields()` + `clearLoopFieldsOnShutdown()` 管理生命周期
+  - **门禁复用**：`evaluateQualityGateForPhase()` 每轮评估质量门禁；`evaluateReviewGate()` 复用 review P0/P1 逻辑；`reviewFixAttempts` 管理 review-fix 循环熔断
+  - **分发包可用**：Loop 核心逻辑通过 `forge-loop` npm 包发布
 
 - ✅ **平台抽象层**
-  - `AgentInterface`（`loop-types.ts`）定义通用 Agent 接口：`name`、`run()`、`close()`
-  - `SdkAgentAdapter` 是 Claude Agent SDK 的具体实现，是唯一导入 `@anthropic-ai/claude-agent-sdk` 的模块
-  - `EffectExecutorInterface` 抽象 effect 执行层，与 Agent 实现解耦
-  - 替换 Agent 只需实现 `AgentInterface`，无需修改 `SdkDriver` 或 `orchestrator`
+  - `AgentInterface`（`loop-types.ts`）定义通用 Agent 接口
+  - `SdkAgentAdapter` 是 Claude Agent SDK 的唯一具体实现
+  - `EffectExecutorInterface` 抽象 effect 执行层
 
-- ✅ **国际化（i18n）支持**
-  - `src/i18n.ts`：翻译引擎，支持点分隔路径查找、字符串插值、回退链（当前 locale → 默认 locale → key 原文）
-  - `locales/en.json` + `locales/zh.json`：中英文翻译数据
-  - `src/locale-detector.ts`：自动检测系统语言环境
-  - CLI `--lang <zh|en>` 标志手动切换语言
-  - `SdkDriver` 全链路 i18n：所有用户可见字符串通过 `this.t()` 翻译函数输出
+- ✅ **国际化（i18n）支持** — `src/i18n.ts` + `locales/{en,zh}.json` + CLI `--lang`，`SdkDriver` 全链路 i18n
 
-- ✅ **API 文档生成（TypeDoc）**
-  - `package.json` 配置 `typedoc`（v0.28.19），`npm run docs` 生成 API 文档
-  - CI 流水线包含 `Verify docs generation` 步骤，保持文档与代码同步
-  - `docs/api/` 目录包含完整的生成文档（classes、functions、interfaces、modules）
+- ✅ **API 文档生成（TypeDoc）** — `npm run docs`，CI `Verify docs generation` 步骤
 
-- ✅ **可观测性增强**（部分完成）
-  - Token 使用量追踪：每轮迭代记录 input/output/cache tokens，累计统计
-  - 结构化完成摘要：`formatCompletionSummary()` 输出 objective、tier、iterations、per-phase pass/fail、branch name、unresolved issues
-  - 统一错误层次：`ForgeError` 基类 + `CliError`/`FrozenZoneViolation`/`UnexpectedEffectError` 子类，含 machine-readable `code` 字段
-  - i18n 化的日志输出：所有 warn/error 通过翻译函数输出
-  - ⏳ 结构化 JSON 日志格式（可选）— 未实现
-  - ⏳ 命令执行耗时统计和性能基线 — 未实现
+- ✅ **可观测性增强（全部完成）**
+  - Token 使用量追踪：每轮迭代记录 input/output/cache tokens
+  - 结构化完成摘要：`formatCompletionSummary()`
+  - 统一错误层次：`ForgeError` + 子类，含 machine-readable `code`
+  - i18n 化的日志输出
+  - ✅ **结构化 JSON 日志格式** — `logger/index.ts` 支持 `format: "json"`，`--log-format json` + `--log-file` 启用 dual-write
+  - ✅ **命令执行耗时统计和性能基线** — `performance-tracker.ts` + `formatPerformanceBaseline()`，追踪 iteration timing / subagent timing / degradation detection
 
 ---
 
-## 中期 — v2.x（剩余改进）
+## v2.4 已完成（2026-05）— 中期改进全部交付
 
-- **Agent Teams → 独立 Subagent 迁移**（优先级：高）
-  - `/forge review`：三层评审从 Agent Team 改为独立 Subagent 并行执行 + 主 Agent 汇总（已验证可行）
-  - `/forge decide`：四视角决策从 Agent Team 改为两轮 Subagent（第一轮并行评估，第二轮 critic 交叉审查）
-  - `/forge build` 全量路径研究阶段：从 Agent Team 改为独立 Subagent 并行研究
-  - 更新 `forge-review/SKILL.md`、`forge-decide/SKILL.md`、`forge-build/SKILL.md` 中的 Agent Team 配置章节
-  - 更新 `CLAUDE.md` 和 `templates/CLAUDE.md` 中的 Agent Team 相关描述
-  - 清理 `teams/` 目录和 `.claude/teams/` 参考配置
+- ✅ **Agent Teams → 独立 Subagent 迁移** — 见 `.forge/archive/2026-04-29-agent-team-migration/`
+  - `/forge review`：三层评审改为独立 Subagent 并行 + 主 Agent 汇总（`subagent-runner.ts` 的 `buildSubagentInvocations` + `runSubagentsInParallel`）
+  - `/forge decide`：四视角决策改为两轮 Subagent（并行评估 + critic 交叉审查）
+  - `/forge build` 全量路径研究阶段：独立 Subagent 并行研究
+  - 保留 `skills/forge-decide-teams/` 作为 PoC，跟进官方 Agent Teams 演进
+- ✅ **上下文预算管理** — `src/context-budget.ts` 实现 CLASSIFICATION_MAP + 六种 trimmer
+  - `Explore_Summarizer`：Explore 结果摘要化（文件签名 + 关键入口）
+  - `Review_Summarizer`：Review 报告只保留 findings 列表
+  - `Test_Output_Trimmer`：vitest 只保留失败用例和摘要
+  - `Git_Output_Limiter`：git diff/status 超阈值时只展示文件列表
+  - `Subagent_Summary_Protocol`：定义"留 context"vs"丢弃"协议
+  - 四种信息生命周期：`persistent` / `phase-scoped` / `ephemeral` / `write-and-discard`
+- ✅ **错误恢复策略** — `src/error-recovery.ts`
+  - `Git_State_Scanner`：基于 git log 重建执行状态
+  - `buildReconciliationPatch`：commit/progress/status 三方对齐
+  - 中断点精确定位：区分"未提交"/"已提交未更新 progress"/"progress 更新 phase 未推进"
+  - `/forge resume --from-pr` 跨会话恢复
+- ✅ **Plugin 分发**（`.forge/decisions/2026-05-12-plugin-distribution.md`）
+  - `.claude-plugin/plugin.json` + `marketplace.json` 官方插件分发
+  - 28 个 slash command 自动生成（`scripts/gen-plugin-commands.mjs`）
+  - CI `plugin-validate` job 验证 manifest + 版本同步
+  - 保留 clone（Forge Loop 开发者）+ dist（企业内网）双通道
+- ✅ **CC Purge 集成**（`.forge/decisions/2026-05-12-cc-purge-integration.md`）
+  - `scripts/archive-spec.sh --purge-cc=ask|skip|auto` 集成 `claude project purge`
+  - 两提示流（dry-run + confirm）、manifest-first、worktree-aware、黑名单保护
+- ✅ **MCP Server 集成** — `src/mcp/`（server + tools + trimmers + schemas）暴露 Forge 能力为 MCP tool
+- ✅ **CCBP Hardening Phase 2**（`.forge/archive/2026-05-12-ccbp-hardening-phase2/`）— hooks dispatcher 统一 + 参数校验
 
-- **上下文预算管理**（优先级：高）
-  - Explore agent 返回结果摘要化（文件签名 + 关键入口点，而非全量代码）
-  - Review 报告只保留 findings 列表，分析过程写入独立文件不留在 context
-  - 测试输出裁剪：vitest 只保留失败用例和摘要统计，通过用例静默
-  - Subagent 结果摘要协议：定义"需要留在 context 的信息"vs"一次性消费后丢弃的信息"
-  - git diff/status 输出限制：超过阈值时只展示文件列表 + 统计，不展示全量 diff
+---
 
-- **错误恢复策略**（优先级：高）
-  - 会话中断后的自动恢复：基于 git log + progress.md + status.md 重建执行状态
-  - `/forge resume` 增强：检测 git 中已完成但 progress 未标记的任务（commit 存在但 progress 未更新）
-  - 长任务拆分策略：build 和 review 可在不同会话中完成，中间状态通过文件系统持久化
-  - 中断点精确定位：区分"任务完成但未提交"、"已提交但 progress 未更新"、"progress 已更新但 phase 未推进"
+## v2.5 / v2.6 — 瘦身 + 与官方原生能力对齐（进行中）
 
-- **可观测性增强（剩余项）**
-  - 结构化 JSON 日志输出（可选格式，便于日志聚合工具消费）
-  - 命令执行耗时统计和性能基线（每轮迭代 wall-clock 时间、Agent 调用延迟）
+> **战略定位**：Claude Code 过去一年新增了 Skills、Plugins、Subagents、Checkpointing、Auto Memory、Worktrees、Agent Teams、`/loop`、`/goal`、`/code-review`、`/ultrareview` 等能力。Forge 应站在官方原语之上，只保留方法论差异化，避免重复造轮子。
 
-- **Events_NDJSON 多消费者复用**（优先级：中）
-  - `.forge/events.ndjson` 事件流已由 cmux Mirror_Daemon 消费，未来可扩展更多消费者
-  - 潜在消费者：IDE 插件（VS Code 状态栏）、Web Dashboard、CI 集成报告器
-  - 字节游标协议允许并发读取，无需锁定
+### v2.5 目标 — 收缩与官方重叠的基础能力
 
-- **cmux claude-teams 模式**（优先级：低）
-  - 利用 cmux 多窗格能力，为 `/forge decide` 和 `/forge review` 的多 Subagent 提供可视化面板
-  - 每个 Subagent 在独立 cmux pane 中运行，主 Agent 在中央 pane 协调
-  - 依赖 Agent Teams 可靠性问题解决（参见长期规划中的阻塞条件）
+- **`/forge recap`** 改为轻量 wrapper，依赖官方 `/compact` + `/context`
+- **`/forge resume`** 基础层依赖官方 `/resume` + Checkpointing，只保留"五问题结构化"和 `--from-pr`
+- **`/forge abort`** 只做归档 `.forge/status.md` + 重置，停止重复实现中止逻辑
+- **`/forge learn`** 裁掉 Auto Memory 已覆盖的内容（build commands / debugging notes），聚焦跨项目 ADR 和五维度结构化沉淀
+- **`/forge review`** 安全层/质量层改为可选委托给官方 `/code-review` + `/security-review`，保留 Spec-alignment 层作为差异化
+- **Forge Loop 定位刷新** — 文档重写，从"自主执行"改为"带工程纪律的自主执行"，明确对比 `/goal` 和 `/loop` 的差异（Git 事务、熔断器、质量门禁、Spec 对齐）
+
+### v2.6 目标 — skill 归位 + 数量精简
+
+- **`forge-mutate` 归位到 pack** — 当前依赖 pack 声明的 `mutation_critical_modules` 才有意义；改为随 pack 启用自动注册，不再常驻主包 skill 列表
+- **`forge-refactor` + `forge-fix` + `forge-fix-conflicts` 整合评估** — 三者命令序列相近，考虑合并为 `forge-maintenance` 单 skill 的三个子命令
+- **`forge-accept` + `forge-verify` + `forge-ship` 职责明确化** — 不一定合并，但 README 和文档需要讲清楚三者的决策边界
+- **`forge-grill` / `forge-zoom-out` 使用率评估** — 跟踪实际调用频次，若低则并入 `decide` / `debug`
+- **目标**：主包 skill 数量从 30 降到 ~20，plugin.json 和 README 对齐真实命令集
+
+### v2.5 / v2.6 明确保留（不动）
+
+- `skills/forge-decide-teams/` — PoC 跟进 Agent Teams 趋势，每季度评估
+- `cmux-skills/forge-loop-signals/` — opt-in 可视化，30 行声明式文件，零维护成本
+- `/forge control-cli` + `/forge control-ui` — 是 `/forge test` 三态验证体系的执行层，不是通用 harness
+- `forge-storm` — 是 `/forge spec` 的前置方法论能力，对 DDD 项目有独有价值
+- `forge-pack-pms` — 本来就在 `packs/` 目录，不是主包 skill，无需调整
+
+---
+
+## 剩余中期项（未完成）
+
+- **Events_NDJSON 多消费者扩展**（优先级：中）
+  - 当前：cmux Mirror_Daemon 单消费者
+  - 目标：IDE 插件（VS Code 状态栏）、Web Dashboard、CI 集成报告器
+  - 字节游标协议已就位，无需协议改动
+
+- **cmux claude-teams 模式**（优先级：低，阻塞中）
+  - 利用 cmux 多窗格为 `/forge decide` 和 `/forge review` 多 Subagent 提供可视化面板
+  - 阻塞条件：等待官方 Agent Teams 可靠性问题解决（见 v3.0 长期项）
 
 ---
 
@@ -167,25 +195,41 @@
 - **Agent Teams 重新评估**（阻塞条件：Claude Code 官方解决以下问题）
   - 会话恢复：`/resume` 能恢复 in-process teammates（当前官方文档明确标注为已知限制）
   - 状态持久化：team config 在 context compaction 后不丢失（[#23620](https://github.com/anthropics/claude-code/issues/23620) Open）
-  - Shutdown 可靠性：teammates 关闭不阻塞主流程（当前 shutdown 需等待当前请求完成）
-  - 内存 GC 不破坏 team membership：v2.1.47-v2.1.59 的 GC 优化过度清理了 team 记录（[#29271](https://github.com/anthropics/claude-code/issues/29271) Open）
-  - SendMessage 接收者验证：不存在的接收者应报错而非静默丢失消息（[#25135](https://github.com/anthropics/claude-code/issues/25135) Open）
-  - **跟进策略**：每季度检查上述 issues 状态，官方解决后重新评估 `/forge decide` 和 `/forge review` 是否回迁 Agent Team 模式
-  - **回迁判定标准**：Agent Team 仅用于需要多轮持续对话的场景（成员间实时依赖），fan-out → gather → merge 模式永久使用独立 Subagent
+  - Shutdown 可靠性：teammates 关闭不阻塞主流程
+  - 内存 GC 不破坏 team membership（[#29271](https://github.com/anthropics/claude-code/issues/29271) Open）
+  - SendMessage 接收者验证（[#25135](https://github.com/anthropics/claude-code/issues/25135) Open）
+  - **跟进策略**：每季度检查上述 issues 状态
+  - **回迁判定**：Agent Team 仅用于需要多轮持续对话的场景；fan-out → gather → merge 模式永久使用独立 Subagent
 
 - **社区建设**
   - 贡献者指南完善和 issue 模板标准化
   - SKILL 插件机制：支持第三方开发和发布自定义 SKILL
   - 示例项目和最佳实践文档
 
-- **沙箱执行环境**
-  - 隔离的任务执行沙箱，限制文件系统和网络访问范围
-  - 细粒度的权限控制模型，替代当前的 `bypassPermissions` 方案
+- **沙箱执行环境**（已有雏形）
+  - 当前：`check-sandbox.ts` + `sandbox-policy.ts` + `sdk-sandbox-policy.ts` 提供基础能力
+  - 目标：细粒度的权限控制模型，替代 `bypassPermissions`
 
 - **多 AI 平台支持**
-  - 基于平台抽象层，支持 Claude 以外的 AI 编码助手
-  - 统一的 Agent 协议适配器
-  - 跨平台的状态文件和工作流兼容
+  - 平台抽象层已就位（`AgentInterface`），当前只有 claude + mock 两个 adapter
+  - 目标：添加 Codex / Gemini CLI 等 adapter，验证抽象层通用性
+
+---
+
+## Forge 的核心护城河（瘦身时不动的部分）
+
+以下能力是 Forge 区别于 Claude Code 原生 + 其他 plugin 的真正差异化，任何瘦身决策都不影响这些：
+
+1. **三维路由**（tier × type × phase）+ 自动降级
+2. **TDD 铁律** — Plan 阶段强制嵌入 TDD 步骤 + hooks 强制执行
+3. **Spec 锁定 + frozen zone 分级保护**（locked/approved/open 三级 + `FrozenZoneViolation`）
+4. **五维度结构化 learn** — 跨项目经验库 + ADR
+5. **Property-based Testing 文化** — 133 个 PBT 文件
+6. **三层独立评审中的 Spec-alignment 层**
+7. **Forge Loop 的工程纪律** — Git 事务、熔断器、指数退避、完成摘要、PUA 引擎
+8. **Domain Pack 机制** — PMS pack 作为示例
+9. **证据化三态验证**（VERIFIED / NOT_VERIFIED / INCONCLUSIVE）+ control-cli/ui 执行层
+10. **事件风暴（storm）作为 `/forge spec` 的 DDD 前置**
 
 ---
 
