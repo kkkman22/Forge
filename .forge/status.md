@@ -1,10 +1,10 @@
 ---
-current_task: "documentation-onboarding"
+current_task: "forge-slimming-plan"
 tier: "standard"
-task_type: "documentation"
+task_type: "slimming"
 project_phase: "in_progress"
-phase: "ship"
-updated: "2026-05-12"
+phase: "plan"
+updated: "2026-05-13"
 ---
 
 # 项目状态
