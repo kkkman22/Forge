@@ -4,6 +4,10 @@ description: "Audit test suite effectiveness with Stryker mutation testing again
 context: fork
 skeleton_exempt_legacy: true
 disable-model-invocation: true
+pack_conditional:
+  required_flag: mutation_critical_modules
+  rationale: "Stryker mutation testing only has ROI against pack-declared critical modules"
+  fallback_message: "forge-mutate requires a pack declaring mutation_critical_modules. Enable a pack (e.g. pms) that declares this feature flag."
 ---
 
 # /forge mutate — Mutation Testing Engine
