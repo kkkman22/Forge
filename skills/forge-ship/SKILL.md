@@ -14,6 +14,8 @@ Uncommitted: !`git status --short 2>/dev/null | head -10 || echo "clean"`
 
 # /forge ship — 交付引擎
 
+**Use when** all gates have passed (review, test, optionally acceptance) and you are ready to merge/release. This is the *final delivery step* — enforcing compliance checks, executing merge, tagging release. Do not confuse with `/forge accept` (running acceptance scenarios) or `/forge verify` (producing evidence verdicts).
+
 > **触发方式**：标准路径第五步 / 全量路径第七步 / 用户输入 `/forge ship`
 > **职责**：有门禁检查的交付流程，确保只有通过评审和测试的代码才能交付
 > **输出路径**：交付产物（merge/PR/branch）+ 提示 `/forge learn`
