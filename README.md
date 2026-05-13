@@ -73,7 +73,7 @@ claude plugin install forge
 git clone https://github.com/kkkman22/Forge.git ~/.claude/skills/forge
 ```
 
-> 包含完整功能：`/forge` 命令 + Forge Loop 自主执行引擎。额外需要 `npm install && npx tsc`。
+> 包含完整功能：`/forge` 命令 + Forge Loop 带工程纪律的自主执行引擎。额外需要 `npm install && npx tsc`。
 
 ### 分发包安装（企业内网）
 
