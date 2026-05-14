@@ -385,7 +385,12 @@ export function validatePlanTasks(tasks: AtomicTask[]): boolean {
   }
 
   const dependencyErrors = validateDependencies(tasks);
-  return dependencyErrors.length === 0;
+  if (dependencyErrors.length > 0) return false;
+
+  if (detectCycleInTasks(tasks)) return false;
+  if (validateTopologicalOrder(tasks)) return false;
+
+  return true;
 }
 
 // ---------------------------------------------------------------------------
