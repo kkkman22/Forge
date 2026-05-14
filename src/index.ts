@@ -74,10 +74,12 @@ export {
   type GlossaryCheckResult,
   type GlossaryConflictInfo,
   type GlossaryConflictResolution,
+  getAdvisoryPath,
   hashCandidates,
   normalizeInput,
   renderGlossaryAdvisory,
   renderGlossaryConflictPrompt,
+  renderPendingAdvisoryNotice,
   runGlossaryCheck,
 } from "./glossary-hook.js";
 // Incremental verifier

@@ -190,9 +190,9 @@ describe("barrel file does not expose internal modules", () => {
   });
 
   // Verify the total number of value exports
-  it("has exactly 91 value exports", () => {
+  it("has exactly 93 value exports", () => {
     const valueExports = Object.keys(exports).filter((key) => typeof exports[key] !== "undefined");
-    expect(valueExports).toHaveLength(91);
+    expect(valueExports).toHaveLength(93);
     expect(valueExports.sort()).toEqual([
       "CLASSIFICATION_MAP",
       "CliError",
@@ -233,6 +233,7 @@ describe("barrel file does not expose internal modules", () => {
       "evaluateShipGate",
       "evaluateTestGate",
       "extractHeadingAnchors",
+      "getAdvisoryPath",
       "getMostRecentActiveTask",
       "hasTaskName",
       "hashCandidates",
@@ -258,6 +259,7 @@ describe("barrel file does not expose internal modules", () => {
       "renderCatalog",
       "renderGlossaryAdvisory",
       "renderGlossaryConflictPrompt",
+      "renderPendingAdvisoryNotice",
       "resolveStatusPath",
       "runGlossaryCheck",
       "runSubagentsInParallel",
