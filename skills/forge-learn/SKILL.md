@@ -56,6 +56,16 @@ forge-learn **不会** emit 严格会话作用域且已被 Auto_Memory 覆盖的
 
 **Not For**：轻量路径的简单修复（无值得沉淀的经验）/ 中止的任务（abort 后无需 learn）
 
+### §1.5 Pre-flight: Branch Gate
+
+调用 `runBranchGate({ skill: "learn", mode, currentBranch, currentTask, pendingDeliveries, alreadyCheckedThisPhase, isCleanTree })`：
+- `passed` / `skipped` → 继续后续 §
+- `auto_fixed` → 输出 `✅ 已自动切换到 <newBranch>` 后继续
+- `blocked` → 中止 skill，按 mode 输出对应提示
+- `warned` → 输出警告但继续
+
+默认严重度：warn。可通过 `severityOverride` 覆盖。
+
 ---
 
 ## Goals

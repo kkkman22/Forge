@@ -149,15 +149,24 @@ describe("barrel file does not expose internal modules", () => {
         expect(exports.checkBranchTopicGate).toBeUndefined();
     });
     // Verify the total number of value exports
+<<<<<<< HEAD
     it("has exactly 91 value exports", () => {
         const valueExports = Object.keys(exports).filter((key) => typeof exports[key] !== "undefined");
         expect(valueExports).toHaveLength(91);
+=======
+    it("has exactly 85 value exports", () => {
+        const valueExports = Object.keys(exports).filter((key) => typeof exports[key] !== "undefined");
+        expect(valueExports).toHaveLength(85);
+>>>>>>> origin/main
         expect(valueExports.sort()).toEqual([
             "CLASSIFICATION_MAP",
             "CliError",
             "FORBIDDEN_PLACEHOLDERS",
             "ForgeError",
+<<<<<<< HEAD
             "GLOSSARY_BLOCK_POLICY",
+=======
+>>>>>>> origin/main
             "INCREMENTAL_THRESHOLD",
             "SdkAgentAdapter",
             "SdkDriver",
@@ -194,7 +203,10 @@ describe("barrel file does not expose internal modules", () => {
             "extractHeadingAnchors",
             "getMostRecentActiveTask",
             "hasTaskName",
+<<<<<<< HEAD
             "hashCandidates",
+=======
+>>>>>>> origin/main
             "installSkill",
             "isFixCandidate",
             "isMultiTaskMode",
@@ -204,7 +216,10 @@ describe("barrel file does not expose internal modules", () => {
             "loadSkillsFromDir",
             "mergeSkillLists",
             "migrateToMultiTask",
+<<<<<<< HEAD
             "normalizeInput",
+=======
+>>>>>>> origin/main
             "parseChecklist",
             "parseEvolvedRulesSummary",
             "parseFailureSummary",
@@ -215,10 +230,14 @@ describe("barrel file does not expose internal modules", () => {
             "reconstructStateFromGit",
             "removeTaskEntry",
             "renderCatalog",
+<<<<<<< HEAD
             "renderGlossaryAdvisory",
             "renderGlossaryConflictPrompt",
             "resolveStatusPath",
             "runGlossaryCheck",
+=======
+            "resolveStatusPath",
+>>>>>>> origin/main
             "runSubagentsInParallel",
             "scanForPlaceholders",
             "serializeChecklist",

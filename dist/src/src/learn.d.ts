@@ -28,7 +28,10 @@ import type { Episode, EpisodeOutcome, EpisodeTier } from "./episode.js";
 import { type EvolutionReport } from "./evolution-marker.js";
 import { type Glossary, type GlossaryTerm } from "./glossary.js";
 import { type TermCandidate } from "./glossary-extractor.js";
+<<<<<<< HEAD
 export { renderGlossaryConflictPrompt, runGlossaryCheck } from "./glossary-hook.js";
+=======
+>>>>>>> origin/main
 import { type Pattern } from "./pattern-stats.js";
 export interface KnowledgeFrontmatter {
     title: string;

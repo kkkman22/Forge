@@ -142,6 +142,7 @@ export declare function resumeFromZoomOut(statusContent: string): string;
  * Pure: same input → same output. No IO.
  */
 export declare function isZoomOutTrigger(userInput: string): boolean;
+<<<<<<< HEAD
 /**
  * Context for deciding whether to automatically trigger a zoom-out.
  * The calling code (SKILL behavior layer) populates this from session state.
@@ -192,3 +193,5 @@ export declare function shouldAutoTriggerZoomOut(context: AutoTriggerContext): A
  * Pure: same input → same output. No IO.
  */
 export declare function formatAutoZoomOutInjection(output: ZoomOutOutput, scenario: "debug" | "decide"): string;
+=======
+>>>>>>> origin/main
