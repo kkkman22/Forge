@@ -355,6 +355,39 @@ export const SKILL_FUNCTION_REGISTRY: readonly SkillFunctionEntry[] = [
     skills: ["forge-grill/SKILL.md"],
     parameterNames: ["tree", "glossary"],
   },
+  {
+    module: "zoom-out.ts",
+    functionName: "shouldAutoTriggerZoomOut",
+    skills: ["forge-decide/SKILL.md"],
+    parameterNames: ["context"],
+  },
+  // --- Glossary Hook (7-phase unified dispatch) ---
+  {
+    module: "glossary-hook.ts",
+    functionName: "runGlossaryCheck",
+    skills: [
+      "forge-decide/SKILL.md",
+      "forge-grill/SKILL.md",
+      "forge-spec/SKILL.md",
+      "forge-plan/SKILL.md",
+      "forge-review/SKILL.md",
+      "forge-learn/SKILL.md",
+      "forge-build/SKILL.md",
+    ],
+    parameterNames: ["input"],
+  },
+  {
+    module: "glossary-hook.ts",
+    functionName: "getAdvisoryPath",
+    skills: ["forge-spec/SKILL.md"],
+    parameterNames: ["phase", "topic"],
+  },
+  {
+    module: "glossary-hook.ts",
+    functionName: "renderPendingAdvisoryNotice",
+    skills: ["forge-plan/SKILL.md"],
+    parameterNames: ["paths"],
+  },
   // --- forge-spec/SKILL.md (Living Doc, Sprint 3) ---
   {
     module: "living-doc/generator.ts",
