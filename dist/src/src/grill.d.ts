@@ -15,7 +15,11 @@
  *
  * **Validates: Requirements 4.4**
  */
+<<<<<<< HEAD
+import type { Glossary, GlossaryTerm } from "./glossary.js";
+=======
 import { type Glossary, type GlossaryTerm } from "./glossary.js";
+>>>>>>> origin/main
 import { type TermCandidate } from "./glossary-extractor.js";
 /**
  * Alignment categories covered by the decision tree. Every grill session

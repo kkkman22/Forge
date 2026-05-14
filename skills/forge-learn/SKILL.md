@@ -95,7 +95,7 @@ Detect scenarios where SKILL.md guidance was inapplicable. Record for review but
 Produce a session episode, run evolution aggregation, archive task artifacts, and update status.
 
 ### G9: 规则蒸馏 (Rule Distillation)
-Distill error-prevention rules from accumulated knowledge entries when confidence and frequency thresholds are met. Proposed rules follow the Evolved Rules protocol (`.forge/knowledge/evolved-rules.md`).
+Distill error-prevention rules from accumulated knowledge entries when confidence and frequency thresholds are met. Proposed rules follow the Evolved Rules protocol (`.forge/knowledge/evolved-rules.md`). 内部使用 `runGlossaryCheck({ phase: 'learn' })` 检测术语冲突。
 
 ---
 

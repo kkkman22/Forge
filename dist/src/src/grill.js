@@ -15,8 +15,13 @@
  *
  * **Validates: Requirements 4.4**
  */
+<<<<<<< HEAD
+import { DEFAULT_EXTRACTION_RULES, extractCandidates, filterCandidates, } from "./glossary-extractor.js";
+import { runGlossaryCheck } from "./glossary-hook.js";
+=======
 import { detectConflict } from "./glossary.js";
 import { DEFAULT_EXTRACTION_RULES, extractCandidates, filterCandidates, } from "./glossary-extractor.js";
+>>>>>>> origin/main
 // ---------------------------------------------------------------------------
 // Constants
 // ---------------------------------------------------------------------------
@@ -483,6 +488,8 @@ function renderQAPairs(nodes) {
         visit(root);
     return lines;
 }
+<<<<<<< HEAD
+=======
 // ---------------------------------------------------------------------------
 // Glossary conflict detection for grill rounds (Task 4.6)
 // ---------------------------------------------------------------------------
@@ -502,6 +509,7 @@ const GRILL_CONFLICT_DEFINITION_MAX_LENGTH = 80;
  * producing a well-formed ISO date string on the provisional term.
  */
 const GRILL_CONFLICT_DEFAULT_DATE = "1970-01-01";
+>>>>>>> origin/main
 /**
  * Check a grill decision tree for glossary conflicts introduced by the
  * user's answers (or by the root description / question prompts).
@@ -535,6 +543,25 @@ const GRILL_CONFLICT_DEFAULT_DATE = "1970-01-01";
  * **Validates: Requirements 4.7**
  */
 export function checkGrillGlossaryConflicts(tree, glossary, now = new Date()) {
+<<<<<<< HEAD
+    const result = runGlossaryCheck({
+        phase: "grill",
+        mode: "interactive",
+        rawInput: { kind: "decision_tree", tree },
+        glossary,
+        now,
+        alreadyChecked: new Set(),
+    });
+    return {
+        hasConflict: result.hasConflict,
+        conflictingTerms: result.conflicts
+            .filter((c) => c.reason !== undefined)
+            .map((c) => ({
+            candidate: c.candidate,
+            existing: c.existing,
+            reason: c.reason,
+        })),
+=======
     const text = collectTreeText(tree);
     const raw = extractCandidates(text, []);
     const candidates = filterCandidates(raw, DEFAULT_EXTRACTION_RULES);
@@ -558,6 +585,7 @@ export function checkGrillGlossaryConflicts(tree, glossary, now = new Date()) {
     return {
         hasConflict: conflictingTerms.length > 0,
         conflictingTerms,
+>>>>>>> origin/main
     };
 }
 /**
@@ -587,6 +615,12 @@ export function renderGrillConflictPrompt(result) {
     return lines.join("\n");
 }
 // ---------------------------------------------------------------------------
+<<<<<<< HEAD
+// Internal helpers — grill conflict detection (retained for reference)
+// NOTE: truncateDefinition and safeIsoDate were removed as unused after
+// migrating checkGrillGlossaryConflicts to use glossary-hook.
+// ---------------------------------------------------------------------------
+=======
 // Internal helpers — grill conflict detection
 // ---------------------------------------------------------------------------
 /**
@@ -614,6 +648,7 @@ function safeIsoDate(now) {
         return GRILL_CONFLICT_DEFAULT_DATE;
     return new Date(ms).toISOString().slice(0, 10);
 }
+>>>>>>> origin/main
 // ---------------------------------------------------------------------------
 // Findings parsing & resume support (Task 4.7)
 // ---------------------------------------------------------------------------

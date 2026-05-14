@@ -21,6 +21,8 @@ export { allEntriesVerified, createChecklist, isValidTransition, parseChecklist,
 // Fix recovery
 export { isFixCandidate, parseGitLog as parseFixRecoveryGitLog, } from "./fix-recovery.js";
 export { ForgeError } from "./forge-error.js";
+// Glossary consistency hook
+export { GLOSSARY_BLOCK_POLICY, hashCandidates, normalizeInput, renderGlossaryAdvisory, renderGlossaryConflictPrompt, runGlossaryCheck, } from "./glossary-hook.js";
 // Incremental verifier
 export { buildVerificationCriteria, determineVerificationStrategy, INCREMENTAL_THRESHOLD, } from "./incremental-verifier.js";
 // Knowledge catalog (Layer A progressive index)
