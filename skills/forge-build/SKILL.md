@@ -35,11 +35,11 @@ Build 启动时读取 `.forge/status.md` → 提取 `work_nature` 字段 → 按
 
 | work_nature | 行为 |
 |-------------|------|
-| `feature` (默认) | 走原有通用流程（§2-§6），不加载 refactor/bugfix references |
-| `refactor` | 加载 `references/refactor-mode.md` + `references/refactor-method-library.md` → 预检 → scan/design/apply |
-| `bugfix` | 加载 `references/bugfix-mode.md` + `references/bugfix-method-library.md` → 预检 → analyze/apply/verify |
+| `feature` (默认) | 走原有通用流程（§2-§6），不加载 nature-specific references |
+| `refactor` | 加载 `references/refactor-mode.md` + `references/refactor-method-library.md` → 执行预检 → scan/design/apply |
+| `bugfix` | 加载 `references/bugfix-mode.md` + `references/bugfix-method-library.md` → 执行预检 → analyze/apply/verify |
 
-**条件加载**：仅当 `work_nature ≠ feature` 时读取对应 reference。feature mode 不加载 refactor / bugfix references，避免 token 浪费。
+**条件加载**：仅当 `work_nature ≠ feature` 时读取对应 reference。feature mode 不读取 refactor / bugfix references。
 
 **预检查入口闸门**：nature mode 第一步执行 nature-specific 预检查。不通过 → 结构化拒绝（`🚫 命中检查：<条目> 证据：<路径> 建议：<路由>`）→ 回路由器。
 

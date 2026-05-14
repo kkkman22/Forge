@@ -40,9 +40,9 @@ allowed-tools: Read, Glob, Grep, Skill
 
 **子命令后的剩余参数**作为该 Skill 的输入传递。
 
-**透传子命令**：`refactor` 和 `fix` 已退化为 `build` 的内部分支模式。dispatch 逻辑：
+**透传子命令**：`refactor` 和 `fix` 子命令已退化为 `build` 的内部分支模式。dispatch 逻辑：
 1. 读取 `.forge/status.md`
-2. 写入/覆盖 `work_nature` 字段（refactor / bugfix）
+2. 写入/覆盖 `work_nature` 字段为对应值（refactor / bugfix）
 3. 调用 `Skill(skill="forge", args="build")`
 
 用户入口不变：`/forge refactor` 和 `/forge fix` 仍正常工作。
