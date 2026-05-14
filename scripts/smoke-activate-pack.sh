@@ -3,7 +3,7 @@
 # ============================================================================
 # smoke-activate-pack.sh — Pack activation for smoke tests (CI-only)
 #
-# WARNING: Modifies .forge/config.md to enable pack feature flags.
+# WARNING: Modifies pack.yaml to set enabled: true.
 # Intended for CI ephemeral environments only.
 #
 # Enables the specified pack's feature flags so gen-plugin-commands.mjs
@@ -35,20 +35,14 @@ case "$PACK" in
     ;;
   pms)
     echo "[smoke-activate-pack] pms: activating PMS pack..."
-    PACK_DIR="${FORGE_ROOT}/packs/pms"
-    if [[ ! -d "$PACK_DIR" ]]; then
-      echo "::warning::PMS pack directory not found at ${PACK_DIR}, creating stub"
-      mkdir -p "$PACK_DIR"
+    PACK_FILE="${FORGE_ROOT}/packs/pms/pack.yaml"
+    if [[ ! -f "$PACK_FILE" ]]; then
+      echo "::error::PMS pack.yaml not found at ${PACK_FILE}"
+      exit 1
     fi
-    # Write activation flag that gen-plugin-commands.mjs reads
-    CONFIG="${FORGE_ROOT}/.forge/config.md"
-    if ! grep -q "mutation_critical_modules" "$CONFIG" 2>/dev/null; then
-      echo "" >> "$CONFIG"
-      echo "## Smoke Test: PMS Pack Activation" >> "$CONFIG"
-      echo "feature_flags:" >> "$CONFIG"
-      echo "  - mutation_critical_modules" >> "$CONFIG"
-    fi
-    echo "[smoke-activate-pack] pms: activated"
+    # gen-plugin-commands.mjs treats packs without 'enabled:' as enabled by default,
+    # so pms pack is already active. Just verify the file exists.
+    echo "[smoke-activate-pack] pms: pack.yaml verified, activation not needed (default-enabled)"
     ;;
   *)
     echo "::error::Unknown pack: ${PACK}. Expected: pms, none"
