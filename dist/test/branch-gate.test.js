@@ -46,6 +46,23 @@ describe("runBranchGate", () => {
             expect(result.suggestedBranch).toBe("feature/my-task");
         }
     });
+    it("returns blocked when currentTask contains unsafe characters", () => {
+        const result = runBranchGate(baseInput({
+            currentBranch: "feature/task",
+            currentTask: "task; rm -rf /",
+        }));
+        expect(result.kind).toBe("blocked");
+        if (result.kind === "blocked") {
+            expect(result.reasons.some(r => r.includes("不安全字符"))).toBe(true);
+        }
+    });
+    it("returns blocked when currentTask contains path traversal", () => {
+        const result = runBranchGate(baseInput({
+            currentBranch: "feature/task",
+            currentTask: "../etc/passwd",
+        }));
+        expect(result.kind).toBe("blocked");
+    });
     it("returns warned when branch topic mismatches and severity is warn", () => {
         const result = runBranchGate(baseInput({
             currentBranch: "feature/other-task",

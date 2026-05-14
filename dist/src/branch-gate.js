@@ -23,12 +23,20 @@ export const DEFAULT_SEVERITY = {
 // ---------------------------------------------------------------------------
 // Core dispatch
 // ---------------------------------------------------------------------------
+const SAFE_TASK_RE = /^[a-zA-Z0-9_-]+$/;
 export function runBranchGate(input) {
     if (input.alreadyCheckedThisPhase) {
         return { kind: "skipped", reason: "already_checked_this_phase" };
     }
     if (input.currentTask === null) {
         return { kind: "skipped", reason: "no_current_task" };
+    }
+    if (!SAFE_TASK_RE.test(input.currentTask)) {
+        return {
+            kind: "blocked",
+            reasons: [`任务名 "${input.currentTask}" 包含不安全字符，仅允许 [a-zA-Z0-9_-]`],
+            suggestedBranch: "feature/<valid-topic>",
+        };
     }
     if (input.currentBranch === "main" || input.currentBranch === "master") {
         return { kind: "passed" };
