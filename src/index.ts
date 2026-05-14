@@ -203,3 +203,14 @@ export {
 } from "./status-resolver.js";
 // Subagent runner
 export { buildSubagentInvocations, runSubagentsInParallel } from "./subagent-runner.js";
+// Inline grill orchestration
+export {
+  type AlreadyTriggered,
+  type GrillInlineMode,
+  type GrillInlineReason,
+  type GrillInlineResult,
+  formatInlineGrillInjection,
+  renderInlineGrillAdvisory,
+  renderInlineGrillConfirmPrompt,
+  shouldTriggerInlineGrill,
+} from "./grill-inline.js";

@@ -1,0 +1,17 @@
+{
+  "$schema": "https://anthropic.com/claude-code/marketplace.schema.json",
+  "name": "forge-official",
+  "description": "Forge official marketplace — unified AI coding workflow framework with 22 commands covering the full development lifecycle",
+  "owner": {
+    "name": "Forge contributors",
+    "url": "https://github.com/kkkman22/Forge"
+  },
+  "plugins": [
+    {
+      "name": "forge",
+      "description": "Unified AI coding workflow framework — TDD, spec-driven planning, automated review, and 22 slash commands",
+      "source": "./",
+      "category": "development"
+    }
+  ]
+}
