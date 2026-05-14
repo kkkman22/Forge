@@ -77,6 +77,20 @@ export const SKILL_FUNCTION_REGISTRY: readonly SkillFunctionEntry[] = [
     parameterNames: ["branchName", "taskTopic"],
   },
   {
+    module: "branch-gate.ts",
+    functionName: "runBranchGate",
+    skills: [
+      "forge-plan/SKILL.md",
+      "forge-build/SKILL.md",
+      "forge-review/SKILL.md",
+      "forge-test/SKILL.md",
+      "forge-ship/SKILL.md",
+      "forge-debug/SKILL.md",
+      "forge-learn/SKILL.md",
+    ],
+    parameterNames: ["input"],
+  },
+  {
     module: "branch-lifecycle.ts",
     functionName: "detectUnshippedBranches",
     skills: ["forge-build/SKILL.md"],
@@ -360,6 +374,31 @@ export const SKILL_FUNCTION_REGISTRY: readonly SkillFunctionEntry[] = [
     functionName: "shouldAutoTriggerZoomOut",
     skills: ["forge-decide/SKILL.md"],
     parameterNames: ["context"],
+  },
+  // --- forge-spec/SKILL.md + forge-decide/SKILL.md (inline grill triggers) ---
+  {
+    module: "grill-inline.ts",
+    functionName: "shouldTriggerInlineGrill",
+    skills: ["forge-spec/SKILL.md", "forge-decide/SKILL.md"],
+    parameterNames: ["input"],
+  },
+  {
+    module: "grill-inline.ts",
+    functionName: "renderInlineGrillConfirmPrompt",
+    skills: ["forge-spec/SKILL.md", "forge-decide/SKILL.md"],
+    parameterNames: ["reason"],
+  },
+  {
+    module: "grill-inline.ts",
+    functionName: "renderInlineGrillAdvisory",
+    skills: ["forge-spec/SKILL.md", "forge-decide/SKILL.md"],
+    parameterNames: ["reason"],
+  },
+  {
+    module: "grill-inline.ts",
+    functionName: "formatInlineGrillInjection",
+    skills: ["forge-spec/SKILL.md", "forge-decide/SKILL.md"],
+    parameterNames: ["result", "mode"],
   },
   // --- Glossary Hook (7-phase unified dispatch) ---
   {

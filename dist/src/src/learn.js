@@ -28,7 +28,10 @@ import { generateEpisodeId } from "./episode.js";
 import { aggregateEvolutionMarkers, parseEvolutionMarkers, } from "./evolution-marker.js";
 import { findStaleterms } from "./glossary.js";
 import { DEFAULT_EXTRACTION_RULES, extractCandidates, filterCandidates, } from "./glossary-extractor.js";
+<<<<<<< HEAD
 export { renderGlossaryConflictPrompt, runGlossaryCheck } from "./glossary-hook.js";
+=======
+>>>>>>> origin/main
 import { findUpgradableEpisodes } from "./pattern-stats.js";
 // ---------------------------------------------------------------------------
 // Constants

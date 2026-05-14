@@ -21,8 +21,11 @@ export { allEntriesVerified, createChecklist, isValidTransition, parseChecklist,
 // Fix recovery
 export { isFixCandidate, parseGitLog as parseFixRecoveryGitLog, } from "./fix-recovery.js";
 export { ForgeError } from "./forge-error.js";
+<<<<<<< HEAD
 // Glossary consistency hook
 export { GLOSSARY_BLOCK_POLICY, hashCandidates, normalizeInput, renderGlossaryAdvisory, renderGlossaryConflictPrompt, runGlossaryCheck, } from "./glossary-hook.js";
+=======
+>>>>>>> origin/main
 // Incremental verifier
 export { buildVerificationCriteria, determineVerificationStrategy, INCREMENTAL_THRESHOLD, } from "./incremental-verifier.js";
 // Knowledge catalog (Layer A progressive index)
@@ -51,4 +54,9 @@ export { archiveTaskStatus, getMostRecentActiveTask, listActiveTasks, migrateToM
 export { isMultiTaskMode, reconstructStateFromGit, resolveStatusPath, slugify, } from "./status-resolver.js";
 // Subagent runner
 export { buildSubagentInvocations, runSubagentsInParallel } from "./subagent-runner.js";
+<<<<<<< HEAD
+=======
+// Inline grill orchestration
+export { formatInlineGrillInjection, renderInlineGrillAdvisory, renderInlineGrillConfirmPrompt, shouldTriggerInlineGrill, } from "./grill-inline.js";
+>>>>>>> origin/main
 //# sourceMappingURL=index.js.map

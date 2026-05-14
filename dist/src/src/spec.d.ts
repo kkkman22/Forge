@@ -13,7 +13,10 @@
  *   Body: 目的, 需求 (with 当...则... scenarios), 不做什么, Delta (brownfield only)
  */
 import { type TermCandidate } from "./glossary-extractor.js";
+<<<<<<< HEAD
 export { renderGlossaryConflictPrompt, runGlossaryCheck } from "./glossary-hook.js";
+=======
+>>>>>>> origin/main
 export { detectSpecLeak, loadBannedPatterns } from "./spec-leak-detector.js";
 export interface SpecFrontmatter {
     feature: string;
