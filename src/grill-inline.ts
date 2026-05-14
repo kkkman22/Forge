@@ -86,3 +86,26 @@ const ADVISORY_TEMPLATES: Record<GrillInlineReason, string> = {
 export function renderInlineGrillAdvisory(reason: GrillInlineReason): string {
   return ADVISORY_TEMPLATES[reason];
 }
+
+// ---------------------------------------------------------------------------
+// Injection formatting
+// ---------------------------------------------------------------------------
+
+export function formatInlineGrillInjection(
+  result: GrillInlineResult,
+  mode: GrillInlineMode,
+): string {
+  if (result.kind === "completed") {
+    return [
+      `[Inline Grill 对齐结果 — ${mode}]`,
+      `对齐摘要：${result.alignmentSummary}`,
+      "请基于以上对齐结果重新生成内容。",
+    ].join("\n");
+  }
+
+  if (result.kind === "skipped") {
+    return `[Inline Grill] 已跳过 (${result.reason})。保留原始内容。`;
+  }
+
+  return `[Inline Grill] 已中止（用户中途退出）。部分对齐结果已丢弃。`;
+}
