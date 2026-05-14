@@ -32,7 +32,7 @@ Produce a categorized recap of recent project activity over a configurable time 
 2. **legacyPath**: 版本不满足或 Native_Command 不可用
    - 运行下方完整遗留行为
    - 首次触发时 emit Deprecation_Notice（per-session 去重）
-   - Notice: `⚠️ [Forge Slimming] /forge recap 基础层可委托给 /compact + /context（Claude Code ≥ 2.0.0）`
+   - Notice: `⚠️ [Forge Slimming] /forge recap 基础层可委托给 /compact + /context（Claude Code ≥ 2.0.0）。迁移指南：docs/slimming-migration.md`
 
 **Forge 差异化上层**（standardPath 成功后）：
 - 从 `.forge/status.md` 提取当前 Spec 阶段、frozen file 列表

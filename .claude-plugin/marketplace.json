@@ -9,7 +9,7 @@
   "plugins": [
     {
       "name": "forge",
-      "description": "Unified AI coding workflow framework — TDD, spec-driven planning, automated review, and 28 slash commands",
+      "description": "Unified AI coding workflow framework — TDD, spec-driven planning, automated review, and 22 slash commands",
       "source": "./",
       "category": "development"
     }

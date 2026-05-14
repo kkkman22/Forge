@@ -133,7 +133,7 @@
   - `/forge resume --from-pr` 跨会话恢复
 - ✅ **Plugin 分发**（`.forge/decisions/2026-05-12-plugin-distribution.md`）
   - `.claude-plugin/plugin.json` + `marketplace.json` 官方插件分发
-  - 28 个 slash command 自动生成（`scripts/gen-plugin-commands.mjs`）
+  - 22 个 slash command 自动生成（`scripts/gen-plugin-commands.mjs`）
   - CI `plugin-validate` job 验证 manifest + 版本同步
   - 保留 clone（Forge Loop 开发者）+ dist（企业内网）双通道
 - ✅ **CC Purge 集成**（`.forge/decisions/2026-05-12-cc-purge-integration.md`）
