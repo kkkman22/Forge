@@ -22,6 +22,8 @@ disable-model-invocation: true
 
 **Not For**：已完全明确需求且无歧义的任务 · 轻量档位（成本不划算） · 纯技术风险决策（交给 decide）
 
+> **Inline Mode**: The core functions of this skill (`generateDecisionTree`, `selectNextQuestion`, `applyAnswer`, etc.) can be invoked directly by `forge-spec` and `forge-decide` as inline sub-processes. Inline invocations do not write `findings/grill-<topic>.md` and are invisible to the explicit grill session state. The explicit `/forge grill` entry point and all existing trigger paths remain unchanged.
+
 ---
 
 ## 2. Triggers
