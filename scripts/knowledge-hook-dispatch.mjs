@@ -38,6 +38,9 @@ if (args[0] === "--from-path") {
   const inputPath = args[1];
   if (!inputPath) process.exit(0);
 
+  // Path traversal defense: reject absolute paths and parent references
+  if (inputPath.startsWith("/") || inputPath.includes("..")) process.exit(0);
+
   const relPath = inputPath.replace(/^\.forge\//, "").replace(/^\.\/\.forge\//, "");
 
   // Prevent infinite loop: catalog.md rebuild should not trigger itself

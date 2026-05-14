@@ -179,7 +179,7 @@ function dispatchCatalogRebuild(knowledgeDir: string, now: Date): KnowledgeHookR
     };
   } catch (e) {
     console.warn(`knowledge-hooks: catalog rebuild failed: ${(e as Error).message}`);
-    return { kind: "skipped", reason: "no_change_detected" };
+    return { kind: "skipped", reason: "no_change_detected" as const };
   }
 }
 
