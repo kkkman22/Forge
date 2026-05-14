@@ -22,6 +22,7 @@
 
 import { extractStringField } from "./frontmatter.js";
 import type { Glossary, GlossaryTerm } from "./glossary.js";
+import type { TaskGraph } from "./task-graph.js";
 
 // ---------------------------------------------------------------------------
 // Types — Full format (Atomic Task)
@@ -76,6 +77,29 @@ export interface DesignReferenceEntry {
 export interface DesignReferenceValidation {
   valid: boolean;
   errors: string[];
+}
+
+// ---------------------------------------------------------------------------
+// Task Graph bridge
+// ---------------------------------------------------------------------------
+
+/**
+ * Convert AtomicTask[] or LightweightTask[] to a TaskGraph for use with
+ * task-graph.ts validation and scheduling functions.
+ *
+ * Each task's `taskNumber` is mapped to `task-{n}` string ID format.
+ * Undefined or missing `dependsOn` is normalized to empty array.
+ * @public
+ */
+export function toTaskGraph(tasks: AtomicTask[] | LightweightTask[]): TaskGraph {
+  return {
+    tasks: tasks.map((t) => ({
+      id: `task-${t.taskNumber}`,
+      title: t.title,
+      dependsOn: (t.dependsOn ?? []).map((d) => `task-${d}`),
+      status: "pending" as import("./task-graph.js").TaskStatus,
+    })),
+  };
 }
 
 // ---------------------------------------------------------------------------
