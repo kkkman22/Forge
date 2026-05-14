@@ -111,6 +111,19 @@ export {
   type IntegrityInput,
   lintKnowledgeIntegrity,
 } from "./knowledge-integrity.js";
+// Knowledge hooks (event-driven catalog rebuild + integrity lint)
+export {
+  computeInputFilePaths,
+  dispatchKnowledgeEvent,
+  hashEvent,
+  isCatalogStale,
+  isThrottled,
+  shouldTriggerEpisodeThreshold,
+  THRESHOLD_MILESTONES,
+  type KnowledgeEvent,
+  type KnowledgeHookInput,
+  type KnowledgeHookResult,
+} from "./knowledge-hooks.js";
 // Branch gate
 export {
   DEFAULT_SEVERITY,
