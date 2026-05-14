@@ -25,5 +25,7 @@ export interface SkillFunctionEntry {
     skills: string[];
     /** Parameter names for contract verification */
     parameterNames: string[];
+    /** If true, the function is registered via MCP server.tool() instead of export function */
+    mcpTool?: boolean;
 }
 export declare const SKILL_FUNCTION_REGISTRY: readonly SkillFunctionEntry[];

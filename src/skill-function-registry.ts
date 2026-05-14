@@ -30,6 +30,8 @@ export interface SkillFunctionEntry {
   skills: string[];
   /** Parameter names for contract verification */
   parameterNames: string[];
+  /** If true, the function is registered via MCP server.tool() instead of export function */
+  mcpTool?: boolean;
 }
 
 // ---------------------------------------------------------------------------
@@ -365,5 +367,14 @@ export const SKILL_FUNCTION_REGISTRY: readonly SkillFunctionEntry[] = [
     functionName: "renderLivingDoc",
     skills: ["forge-spec/SKILL.md"],
     parameterNames: ["data", "outputDir"],
+  },
+
+  // --- MCP Tools ---
+  {
+    module: "mcp/tools/forge-git.ts",
+    functionName: "forge_git",
+    skills: ["forge-review/SKILL.md"],
+    parameterNames: ["subcommand", "args"],
+    mcpTool: true,
   },
 ] as const;
