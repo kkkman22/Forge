@@ -89,6 +89,23 @@ Skill 启动时先展示与当前任务最相关的历史 ADR，帮助用户感�
 
 **与 Critic 的关系**：auto zoom-out 在 Critic 标记 `needs_revision` 后、视角修正前触发。不替代 Critic 审查。
 
+### Round 2a: Inline Grill Trigger (conditional)
+
+After Round 2 Critic output:
+
+1. If Critic flags `disagreement_kind: "requirement_side"`:
+   - Call `shouldTriggerInlineGrill({ mode, reason: "decide_requirement_disagreement", alreadyTriggered })`
+   - `trigger: true` (interactive): Render `renderInlineGrillConfirmPrompt("decide_requirement_disagreement")`, await user confirmation, run inline grill loop with subset of decision categories (functionality / boundary / non_goal only), inject via `formatInlineGrillInjection(result, "decide")` → re-run Round 1 for affected perspectives only
+   - `trigger: false` (autonomous): Render `renderInlineGrillAdvisory("decide_requirement_disagreement")`, write advisory to decision document §否决记录
+2. If user expresses hesitation 3 consecutive times + requirement_side disagreement detected:
+   - **grill takes priority over zoom-out** (grill resolves root cause: unclear requirements)
+3. If user expresses hesitation 3 consecutive times + only technical_side disagreement:
+   - **zoom-out takes priority** (positional issue, not requirements)
+
+**Constraints**:
+- Technical-side disagreement does NOT trigger inline grill (handled by critic needs_revision)
+- Frequency: at most once per session per reason
+
 ---
 
 ## 3. Four-Perspective Evaluation
