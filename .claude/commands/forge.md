@@ -29,8 +29,8 @@ allowed-tools: Read, Glob, Grep, Skill
 | `status` | `forge-status` | 状态查询 |
 | `resume` | `forge-resume` | 会话恢复 |
 | `abort` | `forge-abort` | 任务中止 |
-| `refactor` | `forge-refactor` | 重构引擎 |
-| `fix` | `forge-fix` | 修复引擎 |
+| `refactor` | → `build` (refactor mode) | 透传 `work_nature=refactor` 到 forge-build |
+| `fix` | → `build` (bugfix mode) | 透传 `work_nature=bugfix` 到 forge-build |
 
 **示例**：
 - `/forge learn` → 直接调用 `Skill(forge-learn)`
@@ -39,6 +39,13 @@ allowed-tools: Read, Glob, Grep, Skill
 - `/forge spec api-spec.yaml` → 调用 `Skill(forge-spec)`，传入 `api-spec.yaml` 作为参数
 
 **子命令后的剩余参数**作为该 Skill 的输入传递。
+
+**透传子命令**：`refactor` 和 `fix` 已退化为 `build` 的内部分支模式。dispatch 逻辑：
+1. 读取 `.forge/status.md`
+2. 写入/覆盖 `work_nature` 字段（refactor / bugfix）
+3. 调用 `Skill(skill="forge", args="build")`
+
+用户入口不变：`/forge refactor` 和 `/forge fix` 仍正常工作。
 
 ## 2. 任务路由（子命令未匹配时）
 
