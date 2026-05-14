@@ -68,3 +68,29 @@ export function classify(path: string): Zone {
   // Everything else under .forge/ is open
   return "open";
 }
+
+// ---------------------------------------------------------------------------
+// Failure-sink driver helper
+// ---------------------------------------------------------------------------
+
+import { type FailureContext } from "./failure-sink.js";
+
+export interface ConflictValidationFailedInput {
+  topic: string;
+  tier: "light" | "standard" | "full";
+  conflictPath: string;
+  checkOutput?: string;
+}
+
+export function buildConflictValidationFailedContext(input: ConflictValidationFailedInput): FailureContext {
+  return {
+    skill: "forge-fix-conflicts",
+    topic: input.topic,
+    tier: input.tier,
+    trigger: "conflict_validation_failed",
+    situation: input.checkOutput
+      ? `冲突验证失败：${input.conflictPath} — ${input.checkOutput}`
+      : `冲突验证失败：${input.conflictPath}`,
+    rootCause: input.checkOutput,
+  };
+}
