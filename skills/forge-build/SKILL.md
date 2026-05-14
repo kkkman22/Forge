@@ -129,7 +129,7 @@ GREEN 阶段的代码必须是"能让测试通过的最简单实现"。REFACTOR 
 
 **6.0.1 No Mid-build Confirmation（铁律）**: Build 阶段内部，任务之间**绝对禁止**停下来询问用户。完成一个任务 → 一行摘要 → 立即下一个任务。唯一允许停下来的 3 种情况：Three-strike / 阻断性错误 / 分支保护。→ 详见 references/no-mid-build-confirmation.md
 
-**6.1** Test First → CLAUDE.md §2.1 | **6.2** Atomic Commits (1 per task) | **6.3** Verify First → §2.3, P5 chain | **6.4** Three-strike → §2.4 | **6.5** Conciseness → §2.6 (structured outputs exempt)
+**6.1** Test First → CLAUDE.md §2.1 | **6.2** Atomic Commits (1 per task; 可选：config `glossary_check_on_commit: true` 启用 `runGlossaryCheck({ phase: 'build' })` commit message 术语检查) | **6.3** Verify First → §2.3, P5 chain | **6.4** Three-strike → §2.4 | **6.5** Conciseness → §2.6 (structured outputs exempt)
 
 ### 6.6 Change Summary
 
