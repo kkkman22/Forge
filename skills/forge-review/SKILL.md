@@ -28,6 +28,16 @@ Diff stat: !`git diff --stat HEAD~1 2>/dev/null || echo "no diff"`
 
 **Not For**：无代码变更（纯文档/配置）、build 未完成。
 
+### §1.5 Pre-flight: Branch Gate
+
+调用 `runBranchGate({ skill: "review", mode, currentBranch, currentTask, pendingDeliveries, alreadyCheckedThisPhase, isCleanTree })`：
+- `passed` / `skipped` → 继续后续 §
+- `auto_fixed` → 输出 `✅ 已自动切换到 <newBranch>` 后继续
+- `blocked` → 中止 skill，按 mode 输出对应提示
+- `warned` → 输出警告但继续
+
+默认严重度：block。可通过 `severityOverride` 覆盖。
+
 ## 1b. CI 证据接入
 
 开始评审前，检查是否存在 CI ultrareview 产物：
