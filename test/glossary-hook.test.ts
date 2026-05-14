@@ -5,6 +5,7 @@ import {
   type GlossaryCheckMode,
   hashCandidates,
   normalizeInput,
+  runGlossaryCheck,
 } from "../src/glossary-hook.js";
 import type { GlossaryCheckInput } from "../src/glossary-hook.js";
 import type { TermCandidate } from "../src/glossary-extractor.js";
@@ -253,5 +254,119 @@ describe("normalizeInput", () => {
     expect(a.map((c: TermCandidate) => c.term)).toEqual(
       b.map((c: TermCandidate) => c.term),
     );
+  });
+});
+
+describe("runGlossaryCheck", () => {
+  const glossary: Glossary = {
+    schema_version: 1,
+    updated: "2026-01-01",
+    terms: [
+      {
+        term: "Foo",
+        definition: "existing def",
+        last_updated: "2026-01-01",
+      },
+    ],
+  };
+
+  it("detects conflict when candidate matches existing term with different definition", () => {
+    const input: GlossaryCheckInput = {
+      phase: "decide",
+      mode: "interactive",
+      rawInput: {
+        kind: "candidates",
+        terms: [
+          { term: "Foo", definition: "new def", last_updated: "2026-01-01" },
+        ],
+      },
+      glossary,
+      now: new Date(),
+      alreadyChecked: new Set(),
+    };
+    const result = runGlossaryCheck(input);
+    expect(result.hasConflict).toBe(true);
+    expect(result.conflicts).toHaveLength(1);
+    expect(result.shouldBlock).toBe(true);
+  });
+
+  it("no conflict when candidate is new term", () => {
+    const input: GlossaryCheckInput = {
+      phase: "decide",
+      mode: "interactive",
+      rawInput: {
+        kind: "candidates",
+        terms: [
+          { term: "Bar", definition: "new term", last_updated: "2026-01-01" },
+        ],
+      },
+      glossary,
+      now: new Date(),
+      alreadyChecked: new Set(),
+    };
+    const result = runGlossaryCheck(input);
+    expect(result.hasConflict).toBe(false);
+    expect(result.newCandidates).toHaveLength(1);
+    expect(result.shouldBlock).toBe(false);
+  });
+
+  it("autonomous mode never blocks even with conflicts", () => {
+    const input: GlossaryCheckInput = {
+      phase: "decide",
+      mode: "autonomous",
+      rawInput: {
+        kind: "candidates",
+        terms: [
+          { term: "Foo", definition: "new def", last_updated: "2026-01-01" },
+        ],
+      },
+      glossary,
+      now: new Date(),
+      alreadyChecked: new Set(),
+    };
+    const result = runGlossaryCheck(input);
+    expect(result.hasConflict).toBe(true);
+    expect(result.shouldBlock).toBe(false);
+  });
+
+  it("frequency control: skips already-checked candidate set", () => {
+    const checked = new Set<string>();
+    const input: GlossaryCheckInput = {
+      phase: "decide",
+      mode: "interactive",
+      rawInput: {
+        kind: "candidates",
+        terms: [
+          { term: "Foo", definition: "new def", last_updated: "2026-01-01" },
+        ],
+      },
+      glossary,
+      now: new Date(),
+      alreadyChecked: checked,
+    };
+    const r1 = runGlossaryCheck(input);
+    expect(r1.hasConflict).toBe(true);
+    checked.add(`decide:${hashCandidates(normalizeInput(input))}`);
+    const r2 = runGlossaryCheck(input);
+    expect(r2.hasConflict).toBe(false);
+  });
+
+  it("plan phase does not block even with conflicts", () => {
+    const input: GlossaryCheckInput = {
+      phase: "plan",
+      mode: "interactive",
+      rawInput: {
+        kind: "candidates",
+        terms: [
+          { term: "Foo", definition: "new def", last_updated: "2026-01-01" },
+        ],
+      },
+      glossary,
+      now: new Date(),
+      alreadyChecked: new Set(),
+    };
+    const result = runGlossaryCheck(input);
+    expect(result.hasConflict).toBe(true);
+    expect(result.shouldBlock).toBe(false);
   });
 });
