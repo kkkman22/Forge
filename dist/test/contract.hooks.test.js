@@ -18,6 +18,7 @@ const hooksMap = hooksFile.hooks;
 const KNOWN_TOOL_PATTERNS = new Set([
     "Write",
     "Edit",
+    "MultiEdit",
     "Bash",
     "Read",
     "Grep",
