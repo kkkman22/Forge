@@ -6,10 +6,12 @@ import {
   GLOSSARY_BLOCK_POLICY,
   type GlossaryCheckMode,
   type GlossaryCheckPhase,
+  getAdvisoryPath,
   hashCandidates,
   normalizeInput,
   renderGlossaryAdvisory,
   renderGlossaryConflictPrompt,
+  renderPendingAdvisoryNotice,
   runGlossaryCheck,
 } from "../src/glossary-hook.js";
 
@@ -404,5 +406,35 @@ describe("render functions", () => {
       conflicts: [],
     };
     expect(renderGlossaryAdvisory(noConflict)).toBe("");
+  });
+});
+
+// ---------------------------------------------------------------------------
+// AC9: pending_glossary_advisories support
+// ---------------------------------------------------------------------------
+
+describe("AC9 pending_glossary_advisories", () => {
+  it("getAdvisoryPath returns deterministic path under .forge/findings", () => {
+    const path = getAdvisoryPath("spec", "my-feature");
+    expect(path).toBe(".forge/findings/glossary-advisory-spec-my-feature.md");
+  });
+
+  it("getAdvisoryPath with different phase produces different path", () => {
+    expect(getAdvisoryPath("decide", "my-feature")).not.toBe(getAdvisoryPath("spec", "my-feature"));
+  });
+
+  it("renderPendingAdvisoryNotice renders advisory list for plan startup", () => {
+    const paths = [
+      ".forge/findings/glossary-advisory-spec-my-feature.md",
+      ".forge/findings/glossary-advisory-decide-my-feature.md",
+    ];
+    const notice = renderPendingAdvisoryNotice(paths);
+    expect(notice).toContain("pending glossary advisories");
+    expect(notice).toContain("glossary-advisory-spec-my-feature.md");
+    expect(notice).toContain("glossary-advisory-decide-my-feature.md");
+  });
+
+  it("renderPendingAdvisoryNotice returns empty string for empty list", () => {
+    expect(renderPendingAdvisoryNotice([])).toBe("");
   });
 });

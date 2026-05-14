@@ -311,6 +311,20 @@ export function renderGlossaryConflictPrompt(
 // Render: autonomous advisory
 // ---------------------------------------------------------------------------
 
+export function getAdvisoryPath(phase: GlossaryCheckPhase, topic: string): string {
+  return `.forge/findings/glossary-advisory-${phase}-${topic}.md`;
+}
+
+export function renderPendingAdvisoryNotice(paths: string[]): string {
+  if (paths.length === 0) return "";
+  const lines: string[] = [];
+  lines.push(`[glossary] pending glossary advisories (${paths.length}):`);
+  for (const p of paths) {
+    lines.push(`  - ${p}`);
+  }
+  return lines.join("\n");
+}
+
 export function renderGlossaryAdvisory(result: GlossaryCheckResult): string {
   if (!result.hasConflict || result.conflicts.length === 0) return "";
 
