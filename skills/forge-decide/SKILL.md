@@ -170,7 +170,7 @@ Backend-only (3 perspectives) 与 UI-involved (4 perspectives) 两种典型场�
 
 ## ADR 输出 / ADR Output
 
-决策确认后，Skill 同时生成 `.forge/decisions/<date>-<topic>.md`（视角对话全文）与 `.forge/decisions/ADR-NNNN-<topic>.md`（可检索的架构决策记录），并更新 `.forge/knowledge/adr-index.md`。
+决策确认后，Skill 同时生成 `.forge/decisions/<date>-<topic>.md`（视角对话全文）与 `.forge/decisions/ADR-NNNN-<topic>.md`（可检索的架构决策记录），并更新 `.forge/knowledge/adr-index.md`。ADR 写入完成后，hooks.json PostToolUse 自动触发 catalog rebuild（`scripts/knowledge-hook-dispatch.mjs`），`catalog.md` 将在 5 秒内包含新 ADR。
 
 → 详见 references/adr-output.md（完整流程、FinalizeAdrInput 构造、supersession 更新）
 

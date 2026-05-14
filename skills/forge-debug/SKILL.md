@@ -54,7 +54,7 @@ disable-model-invocation: true
 
 ### Phase 4 — Fix Verification
 
-RED（复现测试）→ GREEN（最小修复）→ 全量测试确认无新问题。→ TDD 规则详见 ../forge-build/references/tdd-rules.md。完成后 status: "resolved"。Interactive 提示 `/forge learn`；autonomous 跳过。
+RED（复现测试）→ GREEN（最小修复）→ 全量测试确认无新问题。→ TDD 规则详见 ../forge-build/references/tdd-rules.md。完成后 status: "resolved"。Interactive 提示 `/forge learn`；autonomous 跳过。Solutions 写入完成后，hooks.json PostToolUse 自动触发 integrity lint（同 forge-learn）。
 
 ---
 
