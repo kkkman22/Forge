@@ -5,6 +5,7 @@ import {
   DEFAULT_EXTRACTION_RULES,
 } from "./glossary-extractor.js";
 import type { Glossary } from "./glossary.js";
+import { detectConflict } from "./glossary.js";
 import type { DecisionTree, DecisionTreeNode } from "./grill.js";
 import type { SessionData } from "./learn.js";
 
@@ -191,4 +192,56 @@ export function normalizeInput(input: GlossaryCheckInput): TermCandidate[] {
     case "commit_message":
       return textToCandidates(input.rawInput.message, existing);
   }
+}
+
+// ---------------------------------------------------------------------------
+// Dispatch: unified glossary check entry point
+// ---------------------------------------------------------------------------
+
+export function runGlossaryCheck(input: GlossaryCheckInput): GlossaryCheckResult {
+  const candidates = normalizeInput(input);
+  const cacheKey = `${input.phase}:${hashCandidates(candidates)}`;
+
+  if (input.alreadyChecked.has(cacheKey)) {
+    return {
+      phase: input.phase,
+      hasConflict: false,
+      conflicts: [],
+      newCandidates: [],
+      shouldBlock: false,
+    };
+  }
+
+  const conflicts: GlossaryConflictInfo[] = [];
+  const newCandidates: TermCandidate[] = [];
+  const timestamp = input.now.toISOString().slice(0, 10);
+
+  for (const c of candidates) {
+    const provisional = {
+      term: c.term,
+      definition: c.context,
+      last_updated: timestamp,
+    };
+    const result = detectConflict(input.glossary, provisional);
+    if (result.hasConflict && result.conflictingTerm !== undefined && result.reason !== undefined) {
+      conflicts.push({
+        candidate: c.term,
+        existing: result.conflictingTerm,
+        reason: result.reason,
+      });
+    } else {
+      newCandidates.push(c);
+    }
+  }
+
+  const shouldBlock = conflicts.length > 0
+    && GLOSSARY_BLOCK_POLICY[input.phase][input.mode];
+
+  return {
+    phase: input.phase,
+    hasConflict: conflicts.length > 0,
+    conflicts,
+    newCandidates,
+    shouldBlock,
+  };
 }
