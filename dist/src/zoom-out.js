@@ -227,6 +227,81 @@ export function isZoomOutTrigger(userInput) {
     }
     return false;
 }
+/**
+ * Pure function that determines whether a zoom-out should be automatically
+ * triggered based on the current execution context.
+ *
+ * Rules:
+ *   - debug:  trigger when debugLogRounds >= 2 and not already triggered
+ *   - decide: trigger when (rounds >= 2 && !consensus) || hesitation >= 3,
+ *             and not already triggered
+ *   - Frequency limit: each scenario triggers at most once per session
+ *
+ * Pure: same input → same output. No IO.
+ */
+export function shouldAutoTriggerZoomOut(context) {
+    const { scenario, alreadyTriggered } = context;
+    if (alreadyTriggered) {
+        return { shouldTrigger: false, scenario, reason: "本会话此场景已自动触发过 zoom-out" };
+    }
+    if (scenario === "debug") {
+        const rounds = context.debugLogRounds ?? 0;
+        if (rounds >= 2) {
+            return {
+                shouldTrigger: true,
+                scenario: "debug",
+                reason: `日志调试已 ${rounds} 轮失败，建议退后看全局视角`,
+            };
+        }
+        return { shouldTrigger: false, scenario, reason: `日志调试仅 ${rounds} 轮，未达阈值` };
+    }
+    if (scenario === "decide") {
+        const rounds = context.decideRounds ?? 0;
+        const hesitation = context.decideUserHesitationCount ?? 0;
+        const consensus = context.decideConsensusReached ?? true;
+        const noConsensus = rounds >= 2 && !consensus;
+        const highHesitation = hesitation >= 3;
+        if (noConsensus || highHesitation) {
+            return {
+                shouldTrigger: true,
+                scenario: "decide",
+                reason: noConsensus
+                    ? `决策 ${rounds} 轮未达共识，建议退后看全局约束`
+                    : `用户连续 ${hesitation} 次犹豫，建议退后看全局视角`,
+            };
+        }
+        return { shouldTrigger: false, scenario, reason: "决策进展正常" };
+    }
+    return { shouldTrigger: false, scenario, reason: "未知场景" };
+}
+/**
+ * Prefix labels for auto-triggered zoom-out injection, keyed by scenario.
+ */
+const AUTO_TRIGGER_LABELS = {
+    debug: "[自动视角重置]",
+    decide: "[全局位置参考]",
+};
+/**
+ * Description text for auto-triggered zoom-out injection, keyed by scenario.
+ */
+const AUTO_TRIGGER_DESCRIPTIONS = {
+    debug: "以下是当前任务在系统中的位置概览，供重新分析时参考：",
+    decide: "以下是当前决策在系统中的位置概览，供下一轮评估参考：",
+};
+/**
+ * Format a {@link ZoomOutOutput} as an injection block suitable for
+ * prepending to a subsequent phase's prompt context. The output is wrapped
+ * in a horizontal-rule block and prefixed with a scenario-specific label
+ * and description.
+ *
+ * Pure: same input → same output. No IO.
+ */
+export function formatAutoZoomOutInjection(output, scenario) {
+    const rendered = renderZoomOut(output);
+    const label = AUTO_TRIGGER_LABELS[scenario];
+    const description = AUTO_TRIGGER_DESCRIPTIONS[scenario];
+    return ["---", `${label} ${description}`, "", rendered, "---"].join("\n");
+}
 // ---------------------------------------------------------------------------
 // Internal frontmatter helpers
 // ---------------------------------------------------------------------------
