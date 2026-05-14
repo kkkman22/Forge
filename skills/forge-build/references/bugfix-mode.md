@@ -1,78 +1,83 @@
-# Bugfix Mode
+# Bugfix Mode — forge-build 内部分支
 
-> forge-build 内部分支模式。`work_nature=bugfix` 时由 build SKILL 读取本文件。
+> 当 `work_nature=bugfix` 时，build 进入 bugfix mode。
+> 核心原则：先定位根因，再定点修复，最后验证闭环。
 
-## Pre-flight Checks
+## 1. Pre-flight Checks（3 项入口约束）
 
-修复启动前必须逐条验证。**任一命中不得继续**。
+任一命中 → 不得继续修复 → 结构化拒绝 → 回路由器。
 
 | # | Check Item | Route on Hit |
 |---|------------|-------------|
-| 1 | **Not from review output** | → Use `/forge debug` |
-| 2 | **Requires architecture change** | → Use `/forge debug` (trigger ADR) |
-| 3 | **Description insufficient** (no error msg, no reproduction steps) | → Prompt for info, return to router |
+| 1 | **Non-review issue** — 问题非 review 产出 | → Use `/forge debug` |
+| 2 | **Requires architecture change** — P0 需架构变更 | → Use `/forge debug` → ADR |
+| 3 | **Insufficient description** — 无错误信息、无复现步骤 | → 补充信息，回路由 |
 
 **Rejection**: `🚫 命中检查：<条目> 证据：<路径/分析> 建议：<路由> 重入：<条件>`
 
-## Phases
+## 2. Analyze Phase (fix-analyze)
 
-### Analyze (tier=standard/full)
+**职责**：通过读代码定位根因，产出结构化分析报告。
 
-通过实际读代码定位根因，产出 `.forge/findings/fix-analysis.md`。
+**产出**：`.forge/findings/fix-analysis.md`
 
-**5-Step Analysis**:
-
+**5 步分析**：
 1. **Locate** — Grep/Glob → file:line
-2. **Reproduce** — Normal vs failure path divergence
-3. **Confirm** — Root cause classification (→ bugfix-method-library.md): 逻辑/状态/数据/并发/配置/缺防御
-4. **Assess** — Impact scope evaluation
-5. **Propose** — 2-3 fix proposals with recommendation
+2. **Reproduce** — 正常 vs 失败路径分叉
+3. **Confirm** — 根因分类（→ references/bugfix-method-library.md）：逻辑/状态/数据/并发/配置/缺防御
+4. **Assess** — 影响面评估
+5. **Propose** — 2-3 修复方案 + 推荐
 
-Report format: `.forge/findings/fix-analysis.md` (frontmatter: topic/date/status) + Issue Location + Root Cause + Impact + Fix Proposals.
+**报告格式**：`.forge/findings/fix-analysis.md`（frontmatter: topic/date/status）+ Issue Location + Root Cause + Impact Assessment + Fix Proposals。
 
-### Apply
+**Skip condition**: Tier=light 时跳过 analyze，直接 apply。
 
-按选定方案定点修复。**只改 analyze 声明的文件**，需改其他文件 → 回 analyze 更新。
+## 3. Apply Phase (fix-apply)
+
+按选定方案定点修复。**只改 analyze 声明的文件**。需改其他文件 → 回 analyze 更新。
 
 逐文件修复 → 每文件跑测试 → 全量验证。
 
-Commit 策略：analyze 不 commit；apply commit。
+## 4. Verify Phase
 
-### Verify
+验证清单：
+1. 复现验证（问题不再现）
+2. 期望验证（行为符合预期）
+3. 影响面回归（无回归）
+4. 全量测试（全部通过）
 
-验证清单：1. 复现验证（问题不再现） 2. 期望验证（行为符合预期） 3. 影响面回归（无回归） 4. 全量测试（全部通过）。
+产出 `.forge/findings/fix-note.md`（frontmatter: topic/date/status:resolved + 问题描述/根因/修复方案/改动文件/验证结果/经验总结）。
 
-产出 `.forge/findings/fix-note.md`。
+## 5. 日志调试升级机制
 
-## Log Escalation (max 2 rounds)
+修复未生效（verify 阶段验证失败）时：
 
-修复未生效时：
-
-1. **Round 1**: 关键路径添加日志 → 运行复现 → 分析 → 调整修复 → apply + verify
-2. **Round 2** (still fails): 扩大日志范围 → 重新分析 → 调整修复
-3. **2 rounds exhausted**: 回 analyze 重新做根因分析
+1. **第 1 轮**：关键路径添加日志 → 运行复现 → 分析 → 调整修复 → apply + verify
+2. **第 2 轮**（仍失败）：扩大日志范围 → 重新分析 → 调整修复
+3. **2 轮后仍失败**：回到 analyze 阶段重新做根因分析
 
 日志调试完成后清理添加的日志代码。
 
-## Light Tier Fast-Track
+## 6. Tier=light 快速通道
 
-**条件**：AI 能一眼确定根因、修复涉及 1-2 处改动、无跨模块风险。
+**入场条件**：AI 读代码后能一眼确定根因、修复涉及 1-2 处改动、无跨模块风险。
 
-**流程**：跳过 analyze，直接 apply → review。apply 仍需运行验证。
+**流程**：跳过 analyze，直接 apply → verify → review。
 
-## Phase Transitions
+## 7. Phase 更新 + Commit 策略
 
 | 当前阶段完成 | phase 更新为 |
 |-------------|-------------|
 | fix-analyze | fix-apply |
 | fix-apply | review |
 
-## fix-note.md Template
+fix-analyze 不 commit（仅产出分析文档）；fix-apply commit（产出代码变更）。
 
-修复完成后产出 `.forge/findings/fix-note.md`：frontmatter (topic/date/status:resolved) + 问题描述 / 根因 / 修复方案 / 改动文件 / 验证结果 / 经验总结。
+## Known AI Failure Modes
 
-## Escape Hatch
-
-- `--nature=bugfix` 显式覆盖 router 判定
-- `/forge fix` 子命令直接进入 bugfix mode
-- 预检不通过 → 结构化拒绝 → 回路由器
+| Failure | Correct |
+|---------|---------|
+| 不读代码猜根因 | 执行分析五步，Grep/Glob 定位 |
+| 范围外改动 | 只改 analyze 声明的文件 |
+| 跳过验证 | 逐项执行，每项有输出证据 |
+| 只修症状 | 追踪根因，修复根因非症状 |

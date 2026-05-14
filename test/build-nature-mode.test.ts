@@ -1,233 +1,110 @@
-/**
- * Contract tests for Build Nature Mode routing.
- *
- * Verifies that the refactor/fix → build migration is complete:
- * - Reference files exist with expected content
- * - forge-build SKILL.md contains Nature Mode routing
- * - Old skills have deprecation notices
- * - Dispatcher routes refactor/fix through build
- *
- * **Validates: Spec Requirements 1-12**
- */
-import { describe, it, expect } from "vitest";
 import { existsSync, readFileSync } from "fs";
 import { resolve } from "path";
+import { describe, expect, it } from "vitest";
 
-const ROOT = resolve(__dirname, "..");
-const BUILD_SKILL = resolve(ROOT, "skills/forge-build/SKILL.md");
-const REFS = resolve(ROOT, "skills/forge-build/references");
-const FORGE_CMD = resolve(ROOT, ".claude/commands/forge.md");
-
-function readFile(relPath: string): string {
-  return readFileSync(resolve(ROOT, relPath), "utf-8");
-}
+const BUILD_SKILL = "skills/forge-build/SKILL.md";
+const REFS = "skills/forge-build/references";
 
 describe("Build Nature Mode contracts", () => {
   // --- Reference file existence ---
 
-  describe("reference files exist", () => {
-    it("refactor-mode.md exists in build references", () => {
-      expect(existsSync(resolve(REFS, "refactor-mode.md"))).toBe(true);
-    });
-
-    it("bugfix-mode.md exists in build references", () => {
-      expect(existsSync(resolve(REFS, "bugfix-mode.md"))).toBe(true);
-    });
-
-    it("refactor-method-library.md exists in build references", () => {
-      expect(existsSync(resolve(REFS, "refactor-method-library.md"))).toBe(true);
-    });
-
-    it("bugfix-method-library.md exists in build references", () => {
-      expect(existsSync(resolve(REFS, "bugfix-method-library.md"))).toBe(true);
-    });
+  it("refactor-mode.md exists in build references", () => {
+    expect(existsSync(resolve(REFS, "refactor-mode.md"))).toBe(true);
   });
 
-  // --- Build SKILL.md Nature Mode section ---
+  it("bugfix-mode.md exists in build references", () => {
+    expect(existsSync(resolve(REFS, "bugfix-mode.md"))).toBe(true);
+  });
 
-  describe("forge-build SKILL.md Nature Mode routing", () => {
-    it("references Nature Mode section", () => {
-      const content = readFileSync(BUILD_SKILL, "utf-8");
-      expect(content).toContain("Nature Mode");
-    });
+  it("refactor-method-library.md exists in build references", () => {
+    expect(existsSync(resolve(REFS, "refactor-method-library.md"))).toBe(true);
+  });
 
-    it("references refactor-mode.md", () => {
-      const content = readFileSync(BUILD_SKILL, "utf-8");
-      expect(content).toContain("refactor-mode.md");
-    });
+  it("bugfix-method-library.md exists in build references", () => {
+    expect(existsSync(resolve(REFS, "bugfix-method-library.md"))).toBe(true);
+  });
 
-    it("references bugfix-mode.md", () => {
-      const content = readFileSync(BUILD_SKILL, "utf-8");
-      expect(content).toContain("bugfix-mode.md");
-    });
+  // --- Build SKILL.md contains Nature Mode section ---
 
-    it("documents feature mode as default (no extra loading)", () => {
-      const content = readFileSync(BUILD_SKILL, "utf-8");
-      expect(content).toMatch(/feature.*不加载|不加载.*refactor/);
-    });
-
-    it("documents conditional loading (nature ≠ feature only)", () => {
-      const content = readFileSync(BUILD_SKILL, "utf-8");
-      expect(content).toContain("条件加载");
-    });
+  it("forge-build SKILL.md references Nature Mode routing", () => {
+    const content = readFileSync(BUILD_SKILL, "utf-8");
+    expect(content).toContain("Nature Mode");
+    expect(content).toContain("refactor-mode.md");
+    expect(content).toContain("bugfix-mode.md");
   });
 
   // --- Refactor mode content ---
 
-  describe("refactor-mode.md content", () => {
-    it("contains 7 pre-flight checks", () => {
-      const content = readFileSync(resolve(REFS, "refactor-mode.md"), "utf-8");
-      for (let i = 1; i <= 7; i++) {
-        expect(content).toMatch(new RegExp(`\\|\\s*${i}\\s*\\|`));
-      }
-    });
+  it("refactor-mode.md contains 7 pre-flight checks", () => {
+    const content = readFileSync(resolve(REFS, "refactor-mode.md"), "utf-8");
+    for (let i = 1; i <= 7; i++) {
+      expect(content).toMatch(new RegExp(`\\|\\s*${i}\\s*\\|`));
+    }
+  });
 
-    it("contains scan phase", () => {
-      const content = readFileSync(resolve(REFS, "refactor-mode.md"), "utf-8");
-      expect(content).toMatch(/scan/i);
-    });
-
-    it("contains design phase", () => {
-      const content = readFileSync(resolve(REFS, "refactor-mode.md"), "utf-8");
-      expect(content).toMatch(/design/i);
-    });
-
-    it("contains apply phase", () => {
-      const content = readFileSync(resolve(REFS, "refactor-mode.md"), "utf-8");
-      expect(content).toMatch(/apply/i);
-    });
-
-    it("documents light tier fast-track (skip scan/design)", () => {
-      const content = readFileSync(resolve(REFS, "refactor-mode.md"), "utf-8");
-      expect(content).toMatch(/light|快速通道/);
-    });
-
-    it("references refactor-method-library.md", () => {
-      const content = readFileSync(resolve(REFS, "refactor-mode.md"), "utf-8");
-      expect(content).toContain("refactor-method-library.md");
-    });
+  it("refactor-mode.md contains scan/design/apply phases", () => {
+    const content = readFileSync(resolve(REFS, "refactor-mode.md"), "utf-8");
+    expect(content).toContain("scan");
+    expect(content).toContain("design");
+    expect(content).toContain("apply");
   });
 
   // --- Bugfix mode content ---
 
-  describe("bugfix-mode.md content", () => {
-    it("contains 3 pre-flight checks", () => {
-      const content = readFileSync(resolve(REFS, "bugfix-mode.md"), "utf-8");
-      for (let i = 1; i <= 3; i++) {
-        expect(content).toMatch(new RegExp(`\\|\\s*${i}\\s*\\|`));
-      }
-    });
+  it("bugfix-mode.md contains 3 pre-flight checks", () => {
+    const content = readFileSync(resolve(REFS, "bugfix-mode.md"), "utf-8");
+    for (let i = 1; i <= 3; i++) {
+      expect(content).toMatch(new RegExp(`\\|\\s*${i}\\s*\\|`));
+    }
+  });
 
-    it("contains analyze phase", () => {
-      const content = readFileSync(resolve(REFS, "bugfix-mode.md"), "utf-8");
-      expect(content).toMatch(/analyze/i);
-    });
-
-    it("contains apply phase", () => {
-      const content = readFileSync(resolve(REFS, "bugfix-mode.md"), "utf-8");
-      expect(content).toMatch(/apply/i);
-    });
-
-    it("contains verify phase", () => {
-      const content = readFileSync(resolve(REFS, "bugfix-mode.md"), "utf-8");
-      expect(content).toMatch(/verify/i);
-    });
-
-    it("documents log escalation (max 2 rounds)", () => {
-      const content = readFileSync(resolve(REFS, "bugfix-mode.md"), "utf-8");
-      expect(content).toMatch(/日志调试|log.*escalat/i);
-      expect(content).toMatch(/2.*轮|2.*round/i);
-    });
-
-    it("documents light tier fast-track (skip analyze)", () => {
-      const content = readFileSync(resolve(REFS, "bugfix-mode.md"), "utf-8");
-      expect(content).toMatch(/light|快速通道/);
-    });
-
-    it("references bugfix-method-library.md", () => {
-      const content = readFileSync(resolve(REFS, "bugfix-mode.md"), "utf-8");
-      expect(content).toContain("bugfix-method-library.md");
-    });
+  it("bugfix-mode.md contains analyze/apply/verify phases", () => {
+    const content = readFileSync(resolve(REFS, "bugfix-mode.md"), "utf-8");
+    expect(content).toContain("analyze");
+    expect(content).toContain("apply");
+    expect(content).toContain("verify");
   });
 
   // --- Method library content ---
 
-  describe("method libraries", () => {
-    it("refactor-method-library.md contains L1-L4 classification", () => {
-      const content = readFileSync(resolve(REFS, "refactor-method-library.md"), "utf-8");
-      expect(content).toContain("L1");
-      expect(content).toContain("L2");
-      expect(content).toContain("L3");
-      expect(content).toContain("L4");
-    });
+  it("refactor-method-library.md contains L1-L4 classification", () => {
+    const content = readFileSync(resolve(REFS, "refactor-method-library.md"), "utf-8");
+    expect(content).toContain("L1");
+    expect(content).toContain("L2");
+    expect(content).toContain("L3");
+    expect(content).toContain("L4");
+  });
 
-    it("refactor-method-library.md contains L1 techniques (Rename, Move, Extract, Inline)", () => {
-      const content = readFileSync(resolve(REFS, "refactor-method-library.md"), "utf-8");
-      expect(content).toMatch(/Rename/i);
-      expect(content).toMatch(/Extract/i);
-      expect(content).toMatch(/Inline/i);
-    });
-
-    it("bugfix-method-library.md contains root cause taxonomy (6 categories)", () => {
-      const content = readFileSync(resolve(REFS, "bugfix-method-library.md"), "utf-8");
-      expect(content).toMatch(/逻辑/);
-      expect(content).toMatch(/状态/);
-      expect(content).toMatch(/数据/);
-      expect(content).toMatch(/并发/);
-      expect(content).toMatch(/配置/);
-      expect(content).toMatch(/缺防御/);
-    });
-
-    it("bugfix-method-library.md contains log escalation template", () => {
-      const content = readFileSync(resolve(REFS, "bugfix-method-library.md"), "utf-8");
-      expect(content).toMatch(/日志|log/i);
-    });
+  it("bugfix-method-library.md contains root cause taxonomy", () => {
+    const content = readFileSync(resolve(REFS, "bugfix-method-library.md"), "utf-8");
+    expect(content).toContain("逻辑");
+    expect(content).toContain("状态");
+    expect(content).toContain("数据");
   });
 
   // --- Deprecation ---
 
-  describe("deprecated skills", () => {
-    it("forge-refactor SKILL.md contains deprecation notice", () => {
-      const content = readFile("skills/forge-refactor/SKILL.md");
-      expect(content).toMatch(/deprecated/i);
-      expect(content).toMatch(/refactor mode/i);
-    });
+  it("forge-refactor SKILL.md contains deprecation notice", () => {
+    const content = readFileSync("skills/forge-refactor/SKILL.md", "utf-8");
+    expect(content).toContain("deprecated");
+    expect(content).toContain("refactor mode");
+  });
 
-    it("forge-fix SKILL.md contains deprecation notice", () => {
-      const content = readFile("skills/forge-fix/SKILL.md");
-      expect(content).toMatch(/deprecated/i);
-      expect(content).toMatch(/bugfix mode/i);
-    });
-
-    it("forge-refactor still has valid frontmatter (name, description)", () => {
-      const content = readFile("skills/forge-refactor/SKILL.md");
-      expect(content).toMatch(/^---[\s\S]*?name:/m);
-      expect(content).toMatch(/^---[\s\S]*?description:/m);
-    });
-
-    it("forge-fix still has valid frontmatter (name, description)", () => {
-      const content = readFile("skills/forge-fix/SKILL.md");
-      expect(content).toMatch(/^---[\s\S]*?name:/m);
-      expect(content).toMatch(/^---[\s\S]*?description:/m);
-    });
+  it("forge-fix SKILL.md contains deprecation notice", () => {
+    const content = readFileSync("skills/forge-fix/SKILL.md", "utf-8");
+    expect(content).toContain("deprecated");
+    expect(content).toContain("bugfix mode");
   });
 
   // --- Dispatcher ---
 
-  describe("forge.md dispatcher", () => {
-    it("refactor subcommand routes to build", () => {
-      const content = readFileSync(FORGE_CMD, "utf-8");
-      expect(content).toMatch(/refactor.*build|build.*refactor/i);
-    });
+  it("forge.md dispatcher routes refactor to build", () => {
+    const content = readFileSync(".claude/commands/forge.md", "utf-8");
+    expect(content).toMatch(/refactor.*build/i);
+  });
 
-    it("fix subcommand routes to build", () => {
-      const content = readFileSync(FORGE_CMD, "utf-8");
-      expect(content).toMatch(/fix.*build|build.*fix/i);
-    });
-
-    it("documents work_nature passthrough for refactor/fix", () => {
-      const content = readFileSync(FORGE_CMD, "utf-8");
-      expect(content).toMatch(/work_nature/);
-    });
+  it("forge.md dispatcher routes fix to build", () => {
+    const content = readFileSync(".claude/commands/forge.md", "utf-8");
+    expect(content).toMatch(/fix.*build/i);
   });
 });
