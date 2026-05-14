@@ -93,7 +93,7 @@ Skill 启动时先展示与当前任务最相关的历史 ADR，帮助用户感�
 
 ## 3. Four-Perspective Evaluation
 
-四视角输出格式（product / architect / security / designer）、Glossary alignment check、UI 触发判定信号：
+四视角输出格式（product / architect / security / designer）、Glossary alignment check（内部使用 `runGlossaryCheck({ phase: 'decide' })`）、UI 触发判定信号：
 
 → 详见 references/perspective-formats.md
 
