@@ -2,7 +2,7 @@
 name: quality-check
 description: 代码质量评审者。在 /forge review 的 Agent Team 中提供 Layer 2 评审，检查命名一致性、错误处理、性能、测试覆盖率、代码重复和可维护性。
 model: sonnet
-maxTurns: 15
+maxTurns: 12
 tools: Read, Glob, Grep
 permissionMode: plan
 memory: project
@@ -84,6 +84,28 @@ AI 代码异味检测 [R2.1, R2.2]。以下四类模式必须扫描：
 **Evolution Marker**：同一模式在单次 `/forge review` 运行中出现 ≥ 2 次 → 发出 `Evolution: target=quality-check#deslop-<pattern>` 标记 [R2.5]。
 
 **降级**：若 deslop 执行抛出未捕获异常、超过 60 秒预算、或输出无法解析为四列 schema → 在 Markdown 输出末尾标注 `deslop: skipped`，其余五维度继续 [R2.7]。
+
+---
+
+## Check Method
+
+**铁律**：Diff 上下文已由编排层预读并注入 prompt。Agent 必须基于 prompt 中的 diff 内容分析，**严禁逐文件 Read 所有变更文件**。
+
+1. **基于 prompt 中的 diff 内容逐文件分析**六个维度的质量问题
+2. 对 diff 中可见的代码直接判断命名、错误处理、性能、重复等问题
+3. **仅对存疑项**用 Read 深入验证（**上限 5 次 Read**）：
+   - 需要看函数完整上下文才能判断的性能问题
+   - 需要确认是否有对应测试的新增逻辑
+   - 需要确认重复代码是否已有公共函数
+4. 应用 Deslop 检测（Check Item 7）扫描 diff 中的 AI 代码异味
+5. 产出结构化输出
+
+**Read 预算**：整个评审过程最多 5 次 Read 调用。超出则停止 Read，基于已有信息产出结论。
+
+**禁止行为**：
+- ❌ 在 prompt 已提供 diff 内容时，仍然逐文件 Read 所有变更文件
+- ❌ 对 diff 中已可见的内容重复 Read 原文件
+- ❌ Read lock 文件、dist/ 目录、或 .d.ts 文件
 
 ---
 
