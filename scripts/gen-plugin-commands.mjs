@@ -151,7 +151,7 @@ if (existsSync(PACKS_DIR)) {
     if (!existsSync(packFile)) continue;
     const packContent = readFileSync(packFile, "utf-8");
     if (/^enabled:\s*true\b/m.test(packContent) || !/^enabled:/m.test(packContent)) {
-      const ffMatch = packContent.match(/^feature_flags:\s*\n([\s\S]*?)(?=\n\S|\n$)/m);
+      const ffMatch = packContent.match(/^feature_flags:\s*\n([\s\S]*)/m);
       if (ffMatch) {
         const flagNames = ffMatch[1].match(/^\s{2}(\w[\w-]*)/gm);
         if (flagNames) {
