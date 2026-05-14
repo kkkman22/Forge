@@ -40,7 +40,9 @@ import {
   filterCandidates,
   type TermCandidate,
 } from "./glossary-extractor.js";
-export { runGlossaryCheck, renderGlossaryConflictPrompt } from "./glossary-hook.js";
+
+export { renderGlossaryConflictPrompt, runGlossaryCheck } from "./glossary-hook.js";
+
 import { findUpgradableEpisodes, type Pattern } from "./pattern-stats.js";
 
 // ---------------------------------------------------------------------------
