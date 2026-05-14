@@ -53,13 +53,27 @@ describe("Direction 1: Registry functions exist in source modules", () => {
             const modulePath = resolve(SRC_DIR, entry.module);
             expect(existsSync(modulePath), `Module not found: src/${entry.module}`).toBe(true);
             const content = readFileSync(modulePath, "utf-8");
-            // Check that the function is exported
+            // Check that the function is exported (or registered as MCP tool)
             const exportPattern = new RegExp(`export\\s+function\\s+${entry.functionName}\\s*\\(`);
-            expect(exportPattern.test(content), `${entry.functionName} not found as exported function in src/${entry.module}`).toBe(true);
+            const mcpToolPattern = new RegExp(`server\\.tool\\s*\\(\\s*["']${entry.functionName}["']`);
+            const found = entry.mcpTool
+                ? mcpToolPattern.test(content) || exportPattern.test(content)
+                : exportPattern.test(content);
+            expect(found, `${entry.functionName} not found as exported function or MCP tool in src/${entry.module}`).toBe(true);
         });
         it(`${entry.functionName} has expected parameters: [${entry.parameterNames.join(", ")}]`, () => {
             const modulePath = resolve(SRC_DIR, entry.module);
             const content = readFileSync(modulePath, "utf-8");
+            if (entry.mcpTool) {
+                // MCP tools: check parameter names appear in the zod schema object
+                const toolPattern = new RegExp(`server\\.tool\\s*\\(\\s*["']${entry.functionName}["'][^,]*,\\s*\\{[^\\}]*\\}`);
+                const toolMatch = content.match(toolPattern);
+                const schemaContent = toolMatch ? toolMatch[0] : content;
+                for (const param of entry.parameterNames) {
+                    expect(schemaContent, `Parameter "${param}" not found in ${entry.functionName} MCP tool schema`).toContain(param);
+                }
+                return;
+            }
             // Extract the function signature (from "export function name(" to the closing ")")
             const sigPattern = new RegExp(`export\\s+function\\s+${entry.functionName}\\s*\\(([^)]*(?:\\([^)]*\\)[^)]*)*)\\)`);
             const sigMatch = content.match(sigPattern);
