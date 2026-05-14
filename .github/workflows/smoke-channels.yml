@@ -27,7 +27,6 @@ jobs:
         run: bash scripts/smoke-install.sh "${{ matrix.channel }}"
 
       - name: Activate pack (${{ matrix.pack }})
-        if: matrix.pack != 'none'
         run: bash scripts/smoke-activate-pack.sh "${{ matrix.pack }}"
 
       - name: Generate commands with pack context
