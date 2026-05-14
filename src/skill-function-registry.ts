@@ -355,6 +355,31 @@ export const SKILL_FUNCTION_REGISTRY: readonly SkillFunctionEntry[] = [
     skills: ["forge-grill/SKILL.md"],
     parameterNames: ["tree", "glossary"],
   },
+  // --- forge-spec/SKILL.md + forge-decide/SKILL.md (inline grill triggers) ---
+  {
+    module: "grill-inline.ts",
+    functionName: "shouldTriggerInlineGrill",
+    skills: ["forge-spec/SKILL.md", "forge-decide/SKILL.md"],
+    parameterNames: ["input"],
+  },
+  {
+    module: "grill-inline.ts",
+    functionName: "renderInlineGrillConfirmPrompt",
+    skills: ["forge-spec/SKILL.md", "forge-decide/SKILL.md"],
+    parameterNames: ["reason"],
+  },
+  {
+    module: "grill-inline.ts",
+    functionName: "renderInlineGrillAdvisory",
+    skills: ["forge-spec/SKILL.md", "forge-decide/SKILL.md"],
+    parameterNames: ["reason"],
+  },
+  {
+    module: "grill-inline.ts",
+    functionName: "formatInlineGrillInjection",
+    skills: ["forge-spec/SKILL.md", "forge-decide/SKILL.md"],
+    parameterNames: ["result", "mode"],
+  },
   // --- forge-spec/SKILL.md (Living Doc, Sprint 3) ---
   {
     module: "living-doc/generator.ts",
