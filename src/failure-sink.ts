@@ -33,7 +33,15 @@ import { type Episode, type EpisodeTier, generateEpisodeId } from "./episode.js"
  *
  * @internal
  */
-export type FailureTrigger = "three_strike" | "new_review_pattern" | "ship_gate_blocked";
+export type FailureTrigger =
+  | "three_strike"
+  | "new_review_pattern"
+  | "ship_gate_blocked"
+  | "debug_resolved"
+  | "grill_abandoned"
+  | "test_layer_failed"
+  | "conflict_validation_failed"
+  | "loop_circuit_broken";
 
 /**
  * Context collected at the failure site. Callers build this record
@@ -86,6 +94,16 @@ function lessonFor(trigger: FailureTrigger): string {
       return "review 发现了尚未沉淀的新问题模式，值得补入知识库";
     case "ship_gate_blocked":
       return "交付门禁拦截需要在流程或检查清单中修补漏洞";
+    case "debug_resolved":
+      return "调试虽已结束，记录根因模式以便后续识别相同症状";
+    case "grill_abandoned":
+      return "需求澄清中止，未完成边界对齐——后续返工风险升高";
+    case "test_layer_failed":
+      return "测试 layer 失败暴露代码与 spec 之间的偏差，值得作为模式沉淀";
+    case "conflict_validation_failed":
+      return "冲突解决后验证未通过，提示合并策略或测试覆盖不足";
+    case "loop_circuit_broken":
+      return "Forge Loop 熔断暴露循环目标可能不可达或方法未收敛";
   }
 }
 
