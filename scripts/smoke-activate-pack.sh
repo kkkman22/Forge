@@ -31,7 +31,18 @@ FORGE_ROOT="$(cd "${SCRIPT_DIR}/.." && pwd)"
 
 case "$PACK" in
   none)
-    echo "[smoke-activate-pack] none: no pack activation"
+    echo "[smoke-activate-pack] none: disabling all packs..."
+    for pf in "${FORGE_ROOT}"/packs/*/pack.yaml; do
+      if [[ -f "$pf" ]]; then
+        if grep -q "^enabled:" "$pf"; then
+          sed -i 's/^enabled:.*/enabled: false/' "$pf"
+        else
+          # Insert enabled: false after the first line (name:)
+          sed -i '1a\enabled: false' "$pf"
+        fi
+        echo "[smoke-activate-pack] none: disabled $(basename "$(dirname "$pf")")"
+      fi
+    done
     ;;
   pms)
     echo "[smoke-activate-pack] pms: activating PMS pack..."
