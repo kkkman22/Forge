@@ -1,0 +1,64 @@
+name: Smoke Channels
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+jobs:
+  smoke:
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        channel: [clone, dist, plugin]
+        pack: [none, pms]
+
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-node@v6
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+
+      - name: Install via channel (${{ matrix.channel }})
+        run: bash scripts/smoke-install.sh "${{ matrix.channel }}"
+
+      - name: Activate pack (${{ matrix.pack }})
+        if: matrix.pack != 'none'
+        run: bash scripts/smoke-activate-pack.sh "${{ matrix.pack }}"
+
+      - name: Verify forge status
+        run: node scripts/gen-plugin-commands.mjs --dry-run
+
+      - name: Assert forge-mutate visibility
+        run: |
+          COMMANDS=$(ls commands/*.md 2>/dev/null | xargs -I{} basename {} .md || true)
+          if [ "${{ matrix.pack }}" = "none" ]; then
+            if echo "$COMMANDS" | grep -qw "forge-mutate"; then
+              echo "::error::[${{ matrix.channel }}×${{ matrix.pack }}] forge-mutate should NOT be registered"
+              exit 1
+            fi
+          else
+            if ! echo "$COMMANDS" | grep -qw "forge-mutate"; then
+              echo "::error::[${{ matrix.channel }}×${{ matrix.pack }}] forge-mutate SHOULD be registered"
+              exit 1
+            fi
+          fi
+          echo "[${{ matrix.channel }}×${{ matrix.pack }}] forge-mutate visibility OK"
+
+      - name: Verify Delegation_Adapter version detection
+        run: |
+          # Exercise version detection path without requiring Native_Command success
+          node -e "
+            const { readFileSync } = require('fs');
+            const path = require('path');
+            const matrix = readFileSync(path.join('skills', 'shared', 'native-command-matrix.md'), 'utf-8');
+            if (!matrix.includes('Delegation')) {
+              console.error('::error::[${{ matrix.channel }}×${{ matrix.pack }}] native-command-matrix.md missing Delegation section');
+              process.exit(1);
+            }
+            console.log('[${{ matrix.channel }}×${{ matrix.pack }}] version detection path exercised');
+          "

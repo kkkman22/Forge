@@ -53,20 +53,46 @@ if (VERIFY_COUNT) {
       file: join(ROOT, "docs", "reference-commands.md"),
       pattern: /(\d+)\s*(?:命令|commands?)/gi,
     },
+    {
+      file: join(ROOT, "ROADMAP.md"),
+      pattern: /(\d+)\s*(?:个\s*)?slash\s*(?:命令|command)/gi,
+    },
+    {
+      file: join(ROOT, "CHANGELOG.md"),
+      pattern: /(\d+)\s*(?:个\s*)?slash\s*(?:命令|command)/gi,
+    },
   ];
+
+  // Scan .forge/decisions/*.md — skip lines with (historical: annotation
+  const decisionsDir = join(ROOT, ".forge", "decisions");
+  if (existsSync(decisionsDir)) {
+    for (const entry of readdirSync(decisionsDir, { withFileTypes: true })) {
+      if (!entry.isFile() || !entry.name.endsWith(".md")) continue;
+      targets.push({
+        file: join(decisionsDir, entry.name),
+        pattern: /(\d+)\s*(?:个\s*)?(?:slash\s*)?(?:命令|command)/gi,
+        skipHistorical: true,
+      });
+    }
+  }
 
   let ok = true;
   for (const t of targets) {
     if (!existsSync(t.file)) continue;
     const content = readFileSync(t.file, "utf-8");
-    const matches = [...content.matchAll(t.pattern)];
-    for (const m of matches) {
-      const n = Number.parseInt(m[1], 10);
-      if (n !== SST_COUNT) {
-        console.error(
-          `MISMATCH ${t.file}: found ${n}, SST=${SST_COUNT} (line context: "${m[0]}")`,
-        );
-        ok = false;
+    const lines = content.split("\n");
+    for (let i = 0; i < lines.length; i++) {
+      const line = lines[i];
+      if (t.skipHistorical && line.includes("(historical:")) continue;
+      const matches = [...line.matchAll(t.pattern)];
+      for (const m of matches) {
+        const n = Number.parseInt(m[1], 10);
+        if (n !== SST_COUNT) {
+          console.error(
+            `MISMATCH ${t.file}:${i + 1}: found ${n}, SST=${SST_COUNT} (context: "${m[0].trim()}")`,
+          );
+          ok = false;
+        }
       }
     }
   }

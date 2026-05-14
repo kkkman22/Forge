@@ -24,7 +24,7 @@ Diff stat: !`git diff --stat HEAD~1 2>/dev/null || echo "no diff"`
 
 ## Delegation_Adapter
 
-→ 详见 references/delegation-adapter.md
+→ 详见 references/delegation-adapter.md（迁移指南：docs/slimming-migration.md）
 
 **Not For**：无代码变更（纯文档/配置）、build 未完成。
 

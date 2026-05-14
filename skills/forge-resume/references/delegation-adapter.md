@@ -14,6 +14,6 @@
 2. **legacyPath**: 版本不满足
    - 运行完整遗留行为（SKILL.md §2-§8）
    - 首次触发时 emit Deprecation_Notice（per-session 去重）
-   - Notice: `⚠️ [Forge Slimming] /forge resume 基础层可委托给 /resume + Checkpointing（Claude Code ≥ 2.0.0）`
+   - Notice: `⚠️ [Forge Slimming] /forge resume 基础层可委托给 /resume + Checkpointing（Claude Code ≥ 2.0.0）。迁移指南：docs/slimming-migration.md`
 
 3. **`--from-pr` 模式**: 无论版本，保留现有完整行为（PR_Slug_Mapping + PR_Context_Bundle 注入），不走委托路径

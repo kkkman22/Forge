@@ -48,7 +48,7 @@ disable-model-invocation: true
 
 当 Claude Code 版本 < 2.1.59（无 Auto_Memory）时：恢复完整遗留覆盖范围（包含上述已委托类别），并 emit Deprecation_Notice：
 
-`⚠️ [Forge Slimming] /forge learn 可委托给 Auto_Memory（Claude Code ≥ 2.1.59）处理会话级记忆。当前版本不满足，使用完整遗留范围。`
+`⚠️ [Forge Slimming] /forge learn 可委托给 Auto_Memory（Claude Code ≥ 2.1.59）处理会话级记忆。当前版本不满足，使用完整遗留范围。迁移指南：docs/slimming-migration.md`
 
 ### 不可降级规则
 

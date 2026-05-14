@@ -1,10 +1,10 @@
 ---
-current_task: "forge-slimming-plan"
+current_task: "forge-slimming-followups"
 tier: "standard"
-task_type: "slimming"
+task_type: "slimming-followups"
 project_phase: "in_progress"
 phase: "plan"
-updated: "2026-05-13"
+updated: "2026-05-14"
 ---
 
 # 项目状态

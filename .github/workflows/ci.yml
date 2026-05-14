@@ -231,6 +231,8 @@ jobs:
           echo "Commands check passed: $count commands"
       - name: Build plugin dist package
         run: bash scripts/build-dist.sh
+      - name: Verify command count in docs
+        run: node scripts/gen-plugin-commands.mjs --verify-count
       - name: Verify plugin dist
         run: |
           test -d dist-plugin/.claude-plugin

@@ -46,4 +46,4 @@ sources:
 
 ## Fallback
 
-版本不满足时：使用内建 subagent + emit Deprecation_Notice。
+版本不满足时：使用内建 subagent + emit Deprecation_Notice。迁移指南：docs/slimming-migration.md

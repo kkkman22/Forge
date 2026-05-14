@@ -27,7 +27,7 @@ Feasibility report at `.kiro/specs/plugin-distribution/feasibility.md`:
 
 1. `.claude-plugin/plugin.json` — inline hooks with `${CLAUDE_PLUGIN_ROOT}`, skills/agents auto-discovered
 2. `.claude-plugin/marketplace.json` — single plugin entry, self-hosted
-3. `commands/*.md` — 28 slash command wrappers generated from skill frontmatter
+3. `commands/*.md` — 28 slash command wrappers generated from skill frontmatter (historical: count at time of writing was 28; current SST=22)
 4. `scripts/gen-plugin-commands.mjs` — auto-generation, CI-integrated
 5. `test/plugin-manifest.test.ts` — 12 contract tests
 6. CI `plugin-validate` job — manifest validation + version sync
