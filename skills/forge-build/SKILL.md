@@ -29,6 +29,16 @@ Last commit: !`git log --oneline -1 2>/dev/null || echo "no commits"`
 
 **Plan 即合同铁律**：Plan 批准后，所有任务必须全部完成。Plan 中任务的 priority（P0/P1/P2/P3）仅决定执行顺序，不表示"可跳过"或"留到后续"。禁止输出"建议后续再做"、"P2 可以推迟"等跳过话术。如果任务不该做，它就不应出现在 Plan 中。
 
+### §1.5 Pre-flight: Branch Gate
+
+调用 `runBranchGate({ skill: "build", mode, currentBranch, currentTask, pendingDeliveries, alreadyCheckedThisPhase, isCleanTree })`：
+- `passed` / `skipped` → 继续后续 §
+- `auto_fixed` → 输出 `✅ 已自动切换到 <newBranch>` 后继续
+- `blocked` → 中止 skill，按 mode 输出对应提示
+- `warned` → 输出警告但继续
+
+默认严重度：block。可通过 `severityOverride` 覆盖。
+
 ## 1a. Nature Mode 路由
 
 Build 启动时读取 `.forge/status.md` → 提取 `work_nature` 字段 → 按值路由：
@@ -56,11 +66,11 @@ Build 启动时读取 `.forge/status.md` → 提取 `work_nature` 字段 → 按
 | 1 | **Spec Gate** — scan `.forge/specs/` status | Not `"locked"` (no-Spec Plan exempt) | → `/forge spec` |
 | 2 | **Plan Gate** — scan `.forge/plans/` status | Not `"approved"` | → `/forge plan` |
 | 3 | **Dir Integrity** — `.forge/` subdirs exist | Missing | → `forge init` |
-| 4 | **Branch Gate** — current vs expected branch | Not on `feature/<topic>` or `forge/<topic>` | → Auto-switch |
+| 4 | **Branch Gate** — `runBranchGate` 统一 hook | Not on `feature/<topic>` or `forge/<topic>` | → Auto-switch / Block |
 
 **Rejection Output**: `🚫 Build 前置检查未通过 — 命名：<检查> 证据：<文件状态> 建议：<路由> 重入：<条件>`. Multiple failures → list all. Autonomous → JSON.
 
-**函数调用**: `checkBuildGate(specStatus, planStatus)` — 参数：从 `.forge/specs/<topic>/spec.md` 和 `.forge/plans/<topic>.md` frontmatter 读取 status 字段；返回 `{ allowed, reasons }`；`allowed: false` 时以本段 rejection 格式输出所有未通过项
+**函数调用**: `runBranchGate({ skill: "build", ... })` — 调用 `src/branch-gate.ts` 统一调度层；参数从 `.forge/status.md` 和 git state 读取；返回 `BranchGateResult`；按 result.kind 处理（详见 §1.5）
 
 → Branch Gate auto-switch / unshipped-branch warning / lightweight exception 详见 references/branch-gate.md
 
