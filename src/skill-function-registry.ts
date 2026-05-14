@@ -77,6 +77,20 @@ export const SKILL_FUNCTION_REGISTRY: readonly SkillFunctionEntry[] = [
     parameterNames: ["branchName", "taskTopic"],
   },
   {
+    module: "branch-gate.ts",
+    functionName: "runBranchGate",
+    skills: [
+      "forge-plan/SKILL.md",
+      "forge-build/SKILL.md",
+      "forge-review/SKILL.md",
+      "forge-test/SKILL.md",
+      "forge-ship/SKILL.md",
+      "forge-debug/SKILL.md",
+      "forge-learn/SKILL.md",
+    ],
+    parameterNames: ["skill", "mode", "currentBranch", "currentTask", "pendingDeliveries", "alreadyCheckedThisPhase", "isCleanTree"],
+  },
+  {
     module: "branch-lifecycle.ts",
     functionName: "detectUnshippedBranches",
     skills: ["forge-build/SKILL.md"],
