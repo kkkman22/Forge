@@ -1,6 +1,6 @@
-import { describe, it, expect } from "vitest";
 import { existsSync, readFileSync } from "fs";
 import { resolve } from "path";
+import { describe, expect, it } from "vitest";
 
 const BUILD_SKILL = "skills/forge-build/SKILL.md";
 const REFS = "skills/forge-build/references";
