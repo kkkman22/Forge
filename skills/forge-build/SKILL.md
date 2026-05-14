@@ -29,6 +29,22 @@ Last commit: !`git log --oneline -1 2>/dev/null || echo "no commits"`
 
 **Plan 即合同铁律**：Plan 批准后，所有任务必须全部完成。Plan 中任务的 priority（P0/P1/P2/P3）仅决定执行顺序，不表示"可跳过"或"留到后续"。禁止输出"建议后续再做"、"P2 可以推迟"等跳过话术。如果任务不该做，它就不应出现在 Plan 中。
 
+## 1a. Nature Mode 路由
+
+Build 启动时读取 `.forge/status.md` → 提取 `work_nature` 字段 → 按值路由：
+
+| work_nature | 行为 |
+|-------------|------|
+| `feature` (默认) | 走原有通用流程（§2-§6），不加载 refactor/bugfix references |
+| `refactor` | 加载 `references/refactor-mode.md` + `references/refactor-method-library.md` → 预检 → scan/design/apply |
+| `bugfix` | 加载 `references/bugfix-mode.md` + `references/bugfix-method-library.md` → 预检 → analyze/apply/verify |
+
+**条件加载**：仅当 `work_nature ≠ feature` 时读取对应 reference。feature mode 不加载 refactor / bugfix references，避免 token 浪费。
+
+**预检查入口闸门**：nature mode 第一步执行 nature-specific 预检查。不通过 → 结构化拒绝（`🚫 命中检查：<条目> 证据：<路径> 建议：<路由>`）→ 回路由器。
+
+**逃生舱**：`--nature=refactor|bugfix|feature` 显式覆盖、`/forge refactor` / `/forge fix` 子命令仍可进入对应 mode。
+
 → 函数签名详见 references/function-contracts.md
 
 ## 2. Pre-build Checks
