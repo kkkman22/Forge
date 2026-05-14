@@ -2,8 +2,8 @@
 current_task: "forge-slimming-followups"
 tier: "standard"
 task_type: "slimming-followups"
-project_phase: "in_progress"
-phase: "plan"
+project_phase: "completed"
+phase: "ship"
 updated: "2026-05-14"
 ---
 
