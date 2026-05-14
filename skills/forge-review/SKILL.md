@@ -59,6 +59,76 @@ CI_REVIEW=".forge/reviews/${PR_NUMBER}-ci.md"
 
 **Persona 覆盖**：用户可在 `.claude/agents/` 下定义同名文件（spec-check.md、quality-check.md、security-check.md）覆盖默认评审标准。用户定义优先于 Forge 默认。
 
+### 2.0 Diff Context Preparation（前置步骤）
+
+在启动任何 Subagent 之前，编排层**必须**执行以下步骤准备 diff 上下文：
+
+#### Step 1：确定 diff 基准
+
+```bash
+BASE_BRANCH=$(git merge-base main HEAD 2>/dev/null || echo "HEAD~1")
+```
+
+#### Step 2：获取 diff stat
+
+```bash
+git diff --stat ${BASE_BRANCH}...HEAD
+```
+
+#### Step 3：获取 diff 内容（带智能截断）
+
+**优先路径（forge-context MCP 可用时）**：
+
+调用 `forge_git(subcommand="diff-content", args="${BASE_BRANCH}...HEAD")`。
+
+该工具自动执行：
+- 按文件优先级排序（源码 > 配置 > 测试 > 生成文件 > lock 文件）
+- 单文件上限 200 行，总量上限 3000 行
+- 截断后附注省略文件列表
+
+**降级路径（forge-context MCP 不可用时）**：
+
+```bash
+DIFF_CONTENT=$(git diff ${BASE_BRANCH}...HEAD -- \
+  ':(exclude)*.lock' ':(exclude)package-lock.json' ':(exclude)dist/*' ':(exclude)*.d.ts' \
+  | head -3000)
+```
+
+降级路径的局限：无文件优先级排序，大文件可能占满预算。
+
+**检测方法**：尝试调用 `forge_git`，如果工具不存在或返回错误，自动切换到降级路径。不报警告，不阻断流程。
+
+#### Step 4：写入 diff context 文件
+
+将 diff 内容写入 `.forge/reviews/.diff-context.md`，格式：
+
+```markdown
+---
+base: <BASE_BRANCH commit hash>
+head: <HEAD commit hash>
+file_count: <N>
+total_added: <N>
+total_removed: <N>
+truncated: <true|false>
+source: <"forge_git" | "shell_fallback">
+---
+
+## Diff Stat
+<git diff --stat output>
+
+## Diff Content
+<truncated patch content>
+```
+
+**此文件作为 Subagent prompt 的一部分传入**，消除 agent 逐文件 Read 的需求。
+
+**截断策略**：
+- diff ≤3000 行：完整注入
+- diff >3000 行：按文件优先级截断（优先路径）或暴力截断（降级路径）
+- 截断后附注省略文件列表，agent 可对存疑项用 Read 深入验证（最多 3-5 次）
+
+> **推荐**：安装 forge-context MCP 可显著提升大变更集（≥15 文件）的评审质量。`scripts/init.sh` 会自动配置。
+
 使用 Agent tool 独立启动，无需 Agent Team。
 
 | Subagent | Definition File | Layer |
@@ -153,7 +223,7 @@ IF 本次执行是从 conversation summary 恢复（上下文压缩后继续）�
 
 ## 11. Execution Flow
 
-1. **前置检查**（§15）→ 2. **并行启动 Subagent** → 3. **状态确认** → 4. **合并管线** → 5. **质量门** → 6. **P0/P1 判定** → 7. **输出报告**（写入 frontmatter 时执行 `git rev-parse HEAD` 记录 `reviewed_at_commit`）→ 8. **生成 P1 Fix Checklist**（§9，存在 P0/P1 时）
+1. **前置检查**（§15）→ 1.5. **Diff Context Preparation**（§2.0，写入 `.forge/reviews/.diff-context.md`）→ 2. **并行启动 Subagent**（prompt 包含 diff context 引用）→ 3. **状态确认** → 4. **合并管线** → 5. **质量门** → 6. **P0/P1 判定** → 7. **输出报告**（写入 frontmatter 时执行 `git rev-parse HEAD` 记录 `reviewed_at_commit`）→ 8. **生成 P1 Fix Checklist**（§9，存在 P0/P1 时）
 
 **Step 1.1 状态确认**：主动跟踪每个 Subagent，不假设"启动即完成"。正常完成 → 进入管线；截断 → 重试 1 次；错误 → 重试 1 次；429 → 降级等待后重试；超时(180s) → 标记 `incomplete`。**不得在 Subagent 运行中合并结果**。
 
