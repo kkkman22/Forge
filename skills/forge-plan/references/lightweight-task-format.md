@@ -16,7 +16,7 @@ Used when Spec includes a `design.md`. Plan provides File Mapping, Dependency Gr
 | Property | Corresponding Correctness Property number from design.md (if applicable) |
 | Verify Command | Command to verify task completion |
 | Commit Message | Atomic commit message |
-| Dependencies | Prerequisite task numbers (optional) |
+| Depends On | Prerequisite task numbers (empty array if none) |
 
 **Lightweight Task does not include complete RED/GREEN/REFACTOR code.** The build phase reads the relevant design.md sections via Design Reference and writes code in TDD fashion.
 
