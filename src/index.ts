@@ -203,3 +203,18 @@ export {
 } from "./status-resolver.js";
 // Subagent runner
 export { buildSubagentInvocations, runSubagentsInParallel } from "./subagent-runner.js";
+// Glossary consistency hook
+export {
+  GLOSSARY_BLOCK_POLICY,
+  type GlossaryCheckInput,
+  type GlossaryCheckMode,
+  type GlossaryCheckPhase,
+  type GlossaryCheckResult,
+  type GlossaryConflictInfo,
+  type GlossaryConflictResolution,
+  hashCandidates,
+  normalizeInput,
+  renderGlossaryAdvisory,
+  renderGlossaryConflictPrompt,
+  runGlossaryCheck,
+} from "./glossary-hook.js";
