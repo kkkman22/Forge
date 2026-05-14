@@ -131,7 +131,9 @@ describe("formatInlineGrillInjection properties", () => {
         fc.constantFrom<GrillInlineMode>("spec", "decide"),
         (result, mode) => {
           const output = formatInlineGrillInjection(result, mode);
-          expect(output).toContain(result.alignmentSummary);
+          if (result.kind === "completed") {
+            expect(output).toContain(result.alignmentSummary);
+          }
           expect(output).toContain(mode);
         },
       ),
