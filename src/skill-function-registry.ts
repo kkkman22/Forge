@@ -88,7 +88,7 @@ export const SKILL_FUNCTION_REGISTRY: readonly SkillFunctionEntry[] = [
       "forge-debug/SKILL.md",
       "forge-learn/SKILL.md",
     ],
-    parameterNames: ["skill", "mode", "currentBranch", "currentTask", "pendingDeliveries", "alreadyCheckedThisPhase", "isCleanTree"],
+    parameterNames: ["input"],
   },
   {
     module: "branch-lifecycle.ts",
