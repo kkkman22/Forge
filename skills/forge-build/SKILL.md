@@ -86,6 +86,8 @@ Direct edit, no Subagent. Pause every 2 steps for confirmation. Verify, commit. 
 
 Read task list → per task: **Closure-First Probes** (→ references/closure-probes.md) → **Subagent TDD** → progress update → atomic commit → **Final Validation** (§3.5).
 
+任务按 Plan 中 `dependsOn` 拓扑顺序执行。依赖图由 Plan Step 3.5 生成，build 遵循拓扑排序确保依赖在依赖者之前完成。
+
 Mandatory Restatement Checkpoint (counter init 3) + Subagent Status handling + Invocation contract + Framework API verification + Self-check。→ 详见 references/subagent-orchestration.md
 
 ### 3.3 Full (new service/db/auth/ambiguous)
