@@ -34,65 +34,52 @@ Agent 在 Read 阶段耗尽上下文 → 无空间产出结构化输出 → 截�
 
 ## Solution
 
-### 已实施（quick fix，a94ef8c）
+### 已实施（Phase 1 — quick fix，a94ef8c）
 
 - `maxTurns` 15→20
 - Agent 定义增加效率约束文本："优先用 prompt 传入的 diff 摘要，禁止逐文件 Read"
 - **局限**：prompt 约束文本不可靠，agent 仍可能按自己逻辑读取
 
-### 待实施（完整修复）
+### 已实施（Phase 2 — 完整修复）
 
-**核心思路**：编排层（forge-review）预读 diff 并注入 agent prompt，消除 agent 的 Read 需求。
+**改动清单**：
 
-#### 改动 1：forge-review SKILL.md 增加预读步骤
+1. **`src/mcp/tools/forge-git.ts`** — 新增 `diff-content` 子命令 + `truncateDiffContent()` 函数
+   - 智能截断：按文件优先级（源码 > 配置 > 测试 > 生成文件 > lock）
+   - 单文件上限 200 行，总量上限 3000 行
+   - 截断后附注省略文件列表
 
-在启动 agent 前，主线程执行：
+2. **`skills/forge-review/SKILL.md`** — §2.0 Diff Context Preparation 前置步骤
+   - 编排层在启动 agent 前执行 `forge_git(diff-content)` 写入 `.forge/reviews/.diff-context.md`
+   - Execution Flow 更新为包含 Step 1.5
 
-```bash
-# 1. Diff stat（已做）
-git diff --stat main...HEAD
+3. **`.claude/agents/spec-check.md`** — Check Method 重写 + maxTurns 20→12
+   - 铁律：基于 prompt diff 分析，Read 上限 5 次
+   - 明确禁止行为列表
 
-# 2. 变更内容摘要（新增）
-git diff main...HEAD -- '*.ts' '*.js' '*.mjs' '*.sh' '*.json' '*.yml' '*.md'
-```
+4. **`.claude/agents/quality-check.md`** — 新增 Check Method + maxTurns 15→12
+   - 同样的铁律和 Read 预算约束
 
-将 diff 内容作为 prompt 的一部分传给每个 agent。
+5. **`.claude/agents/security-check.md`** — 新增 Check Method + maxTurns 15→12
+   - 同样的铁律和 Read 预算约束
 
-#### 改动 2：三个 agent 定义统一修改
+6. **`test/mcp/diff-truncation.test.ts`** — 6 个单元测试覆盖截断逻辑
 
-spec-check.md、quality-check.md、security-check.md 的 Check Method 统一改为：
+### 后续优化（Phase 3，未实施）
 
-```
-1. 基于 prompt 中传入的 diff 摘要分析变更（不做 Read）
-2. 仅对存疑项用 Read 深入验证（最多 3-5 次）
-3. 产出结构化输出
-```
-
-#### 改动 3：Diff 注入 prompt 模板
-
-```
-你正在评审 forge-slimming-followups 的变更。
-
-## Diff 摘要
-{git diff --stat}
-
-## 变更内容
-{git diff 完整内容}
-
-## Spec 位置
-.kiro/specs/forge-slimming-followups/requirements.md
-
-请基于以上信息进行 {layer} 评审。仅对存疑项用 Read 验证。
-```
+- **forge_read 深入验证脚本**：为 review 场景预置分析脚本模板，agent 通过 MCP 沙箱获取精炼摘要而非 Read 全文
+- **工具硬限制**：大变更集时将 agent tools 从 `Read, Glob, Grep` 缩减为 `Grep`（只允许搜索不允许全文读取）
+- **Token 监控**：在合并管线中记录每个 agent 的 token 消耗，超过 150K 时标注 warning
+- **自动拆分**：如果注入 diff 后 agent 仍截断（极大变更集），编排层检测截断并自动拆分为多次评审（按文件分组）
 
 #### 预期效果
 
-| 指标 | 当前 | 修复后 |
-|------|------|--------|
-| Agent Read 调用 | 22+ | 0-5 |
-| Token 消耗 | 663K+ | <200K |
-| 输出完整性 | 截断 | 完整 |
-| maxTurns 需求 | 20 | 8-10 |
+| 指标 | Phase 1 (quick fix) | Phase 2 (当前) | Phase 3 (目标) |
+|------|------|--------|--------|
+| Agent Read 调用 | 22+ | 0-5 | 0-2 |
+| Token 消耗 | 663K+ | <200K | <120K |
+| 输出完整性 | 截断 | 完整 | 完整 |
+| maxTurns 需求 | 20 | 12 | 8-10 |
 
 ### 优先级
 
@@ -100,7 +87,9 @@ P1 — review 是 ship 的前置门禁，spec-check 截断意味着 Layer 1 评�
 
 ### 相关文件
 
-- `.claude/agents/spec-check.md` — agent 定义
-- `.claude/agents/quality-check.md` — 同类风险
-- `.claude/agents/security-check.md` — 同类风险
-- `skills/forge-review/SKILL.md` — 编排层，需增加预读步骤
+- `.claude/agents/spec-check.md` — agent 定义（已修改）
+- `.claude/agents/quality-check.md` — 同类风险（已修改）
+- `.claude/agents/security-check.md` — 同类风险（已修改）
+- `skills/forge-review/SKILL.md` — 编排层（已增加 §2.0 预读步骤）
+- `src/mcp/tools/forge-git.ts` — diff-content 子命令（新增）
+- `test/mcp/diff-truncation.test.ts` — 截断逻辑测试（新增）

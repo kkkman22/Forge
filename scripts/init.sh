@@ -603,9 +603,9 @@ else
 fi
 
 # ============================================================================
-# Step 6：配置 forge-context MCP Server
+# Step 6：配置 forge-context MCP Server（推荐）
 # ============================================================================
-info "Step 6/7：配置 forge-context MCP Server"
+info "Step 6/7：配置 forge-context MCP Server（推荐：大变更集评审质量显著提升）"
 
 mcp_server_path="${FORGE_ROOT}/dist/src/mcp/server.js"
 
@@ -654,7 +654,7 @@ if [ -f "$mcp_server_path" ]; then
         ;;
     esac
   else
-    warn "未检测到 node 命令，跳过 MCP Server 配置。请手动添加 forge-context 到 .claude/settings.json 的 mcpServers 中。"
+    warn "未检测到 node 命令，跳过 MCP Server 配置。forge-context 为推荐组件（/forge review 大变更集评审依赖智能截断）。请安装 node 后重新运行 init，或手动添加 forge-context 到 .claude/settings.json 的 mcpServers 中。"
   fi
 else
   info "未找到 MCP server（${mcp_server_path}），跳过 MCP 配置（运行 npm run build 后重新初始化可启用）"

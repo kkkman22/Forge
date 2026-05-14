@@ -64,6 +64,96 @@ export function formatStatusSummary(summary: GitStatusSummary): string {
 }
 
 // ---------------------------------------------------------------------------
+// Diff content truncation for review context injection
+// ---------------------------------------------------------------------------
+
+/** Maximum total lines for diff-content output. */
+const DIFF_CONTENT_MAX_LINES = 3000;
+
+/** Maximum lines per single file in diff output. */
+const DIFF_PER_FILE_MAX_LINES = 200;
+
+/**
+ * Truncate full diff content for review context injection.
+ *
+ * Strategy:
+ * 1. Split diff into per-file hunks
+ * 2. For each file: keep up to DIFF_PER_FILE_MAX_LINES (prioritize hunks, truncate large files)
+ * 3. If total exceeds DIFF_CONTENT_MAX_LINES, drop lowest-priority files (test files, generated)
+ * 4. Append truncation notice with list of omitted files
+ */
+export function truncateDiffContent(rawDiff: string): string {
+  if (!rawDiff.trim()) return "（无 diff 内容）";
+
+  const lines = rawDiff.split("\n");
+  if (lines.length <= DIFF_CONTENT_MAX_LINES) {
+    return rawDiff;
+  }
+
+  // Split into per-file sections
+  const fileSections: Array<{ header: string; filePath: string; lines: string[] }> = [];
+  let currentSection: { header: string; filePath: string; lines: string[] } | null = null;
+
+  for (const line of lines) {
+    if (line.startsWith("diff --git ")) {
+      if (currentSection) fileSections.push(currentSection);
+      const pathMatch = line.match(/diff --git a\/.+ b\/(.+)/);
+      const filePath = pathMatch ? pathMatch[1] : "unknown";
+      currentSection = { header: line, filePath, lines: [] };
+    } else if (currentSection) {
+      currentSection.lines.push(line);
+    }
+  }
+  if (currentSection) fileSections.push(currentSection);
+
+  // Priority: source files > config > tests > generated/lock files
+  const priority = (filePath: string): number => {
+    if (filePath.match(/\.(lock|lockb)$|package-lock|yarn\.lock/)) return 0;
+    if (filePath.match(/dist\/|\.d\.ts$/)) return 1;
+    if (filePath.match(/test\/|\.test\.|\.spec\.|__tests__/)) return 2;
+    if (filePath.match(/\.(json|yml|yaml|toml)$/)) return 3;
+    return 4; // source files highest priority
+  };
+
+  // Sort by priority descending (highest first)
+  const sorted = [...fileSections].sort((a, b) => priority(b.filePath) - priority(a.filePath));
+
+  // Truncate per-file and accumulate
+  const outputSections: string[] = [];
+  const omittedFiles: string[] = [];
+  let totalLines = 0;
+
+  for (const section of sorted) {
+    let sectionLines: string[];
+    if (section.lines.length > DIFF_PER_FILE_MAX_LINES) {
+      sectionLines = section.lines.slice(0, DIFF_PER_FILE_MAX_LINES);
+      sectionLines.push(`\n... [truncated: ${section.lines.length - DIFF_PER_FILE_MAX_LINES} more lines in ${section.filePath}]`);
+    } else {
+      sectionLines = section.lines;
+    }
+
+    const sectionTotal = sectionLines.length + 1; // +1 for header
+    if (totalLines + sectionTotal > DIFF_CONTENT_MAX_LINES) {
+      omittedFiles.push(section.filePath);
+      continue;
+    }
+
+    outputSections.push(`${section.header}\n${sectionLines.join("\n")}`);
+    totalLines += sectionTotal;
+  }
+
+  let result = outputSections.join("\n");
+
+  if (omittedFiles.length > 0) {
+    result += `\n\n--- [diff truncated: ${omittedFiles.length} files omitted for context budget] ---`;
+    result += `\n省略文件：${omittedFiles.join(", ")}`;
+    result += "\n（对省略文件如有存疑，可用 Read 或 forge_read 深入验证）";
+  }
+
+  return result;
+}
+
+// ---------------------------------------------------------------------------
 // Tool registration
 // ---------------------------------------------------------------------------
 
@@ -72,6 +162,7 @@ const TOOL_DESCRIPTION = [
   "",
   "Subcommands:",
   "- diff: file-level change summary (file count, per-file +/- stats)",
+  "- diff-content: patch content with intelligent truncation for review (max ~3000 lines)",
   "- status: categorized file listing (staged/modified/untracked counts)",
   "- log: recent commit history (oneline format, default 20 commits)",
   "",
@@ -86,7 +177,7 @@ export function registerForgeGit(server: McpServer): void {
     "forge_git",
     TOOL_DESCRIPTION,
     {
-      subcommand: z.enum(["diff", "status", "log"]).describe("Git subcommand"),
+      subcommand: z.enum(["diff", "diff-content", "status", "log"]).describe("Git subcommand"),
       args: z.string().optional().describe("Additional git arguments"),
     },
     async ({ subcommand, args }) => {
@@ -107,6 +198,23 @@ export function registerForgeGit(server: McpServer): void {
           const summary = parseDiffStat(result.stdout);
           return {
             content: [{ type: "text" as const, text: formatDiffSummary(summary) }],
+          };
+        }
+
+        case "diff-content": {
+          const result = await execCommand(`git diff${extraArgs}`, 60000);
+          if (result.exitCode !== 0) {
+            const errOutput = result.stderr
+              ? `${result.stdout}\n\nSTDERR:\n${result.stderr}`
+              : result.stdout;
+            return {
+              content: [{ type: "text" as const, text: errOutput || "git diff failed" }],
+              isError: true,
+            };
+          }
+          const truncated = truncateDiffContent(result.stdout);
+          return {
+            content: [{ type: "text" as const, text: truncated }],
           };
         }
 
