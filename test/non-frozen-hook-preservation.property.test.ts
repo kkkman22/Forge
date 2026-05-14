@@ -143,6 +143,18 @@ const EXPECTED_POST_TOOL_USE_HOOKS: HookMatcher[] = [
       },
     ],
   },
+  {
+    matcher: "Write|Edit",
+    if: "Write(.forge/**)|Edit(.forge/**)",
+    hooks: [
+      {
+        type: "command",
+        command:
+          'node scripts/knowledge-hook-dispatch.mjs --from-path "$TOOL_INPUT_FILE" 2>/dev/null || true',
+        timeout: 5,
+      },
+    ],
+  },
 ];
 
 const EXPECTED_STOP_HOOKS: HookMatcher[] = [
