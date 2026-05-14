@@ -94,6 +94,18 @@ export {
   type IntegrityInput,
   lintKnowledgeIntegrity,
 } from "./knowledge-integrity.js";
+// Branch gate
+export {
+  DEFAULT_SEVERITY,
+  type BranchGateInput,
+  type BranchGateMode,
+  type BranchGateResult,
+  type BranchGateSeverity,
+  type BranchGateSkill,
+  renderBranchGateAdvisory,
+  renderBranchGatePrompt,
+  runBranchGate,
+} from "./branch-gate.js";
 // Core types (from loop-types.js)
 export type {
   AgentInterface,
