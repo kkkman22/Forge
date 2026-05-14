@@ -17,6 +17,7 @@
  */
 
 import { detectConflict, type Glossary, type GlossaryTerm } from "./glossary.js";
+import { runGlossaryCheck } from "./glossary-hook.js";
 import {
   DEFAULT_EXTRACTION_RULES,
   extractCandidates,
@@ -676,31 +677,23 @@ export function checkGrillGlossaryConflicts(
   glossary: Glossary,
   now: Date = new Date(),
 ): GrillConflictCheckResult {
-  const text = collectTreeText(tree);
-  const raw = extractCandidates(text, []);
-  const candidates = filterCandidates(raw, DEFAULT_EXTRACTION_RULES);
-  const timestamp = safeIsoDate(now);
-  const conflictingTerms: GrillConflictCheckResult["conflictingTerms"] = [];
-
-  for (const candidate of candidates) {
-    const provisional: GlossaryTerm = {
-      term: candidate.term,
-      definition: truncateDefinition(candidate.context),
-      last_updated: timestamp,
-    };
-    const result = detectConflict(glossary, provisional);
-    if (result.hasConflict && result.conflictingTerm !== undefined && result.reason !== undefined) {
-      conflictingTerms.push({
-        candidate: candidate.term,
-        existing: result.conflictingTerm,
-        reason: result.reason,
-      });
-    }
-  }
-
+  const result = runGlossaryCheck({
+    phase: "grill",
+    mode: "interactive",
+    rawInput: { kind: "decision_tree", tree },
+    glossary,
+    now,
+    alreadyChecked: new Set(),
+  });
   return {
-    hasConflict: conflictingTerms.length > 0,
-    conflictingTerms,
+    hasConflict: result.hasConflict,
+    conflictingTerms: result.conflicts
+      .filter((c): c is typeof c & { reason: NonNullable<typeof c.reason> } => c.reason !== undefined)
+      .map((c) => ({
+        candidate: c.candidate,
+        existing: c.existing,
+        reason: c.reason,
+      })),
   };
 }
 

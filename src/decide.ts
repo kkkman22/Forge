@@ -38,6 +38,7 @@ import {
 } from "./adr-registry.js";
 import { parseFrontmatter } from "./frontmatter.js";
 import { detectConflict, type Glossary, type GlossaryTerm } from "./glossary.js";
+import { runGlossaryCheck } from "./glossary-hook.js";
 
 export interface DecideContext {
   taskDescription: string;
@@ -942,19 +943,28 @@ export function checkDecideGlossaryConflicts(
   candidateTerms: GlossaryTerm[],
   glossary: Glossary,
 ): DecideGlossaryConflict[] {
-  const conflicts: DecideGlossaryConflict[] = [];
-  for (const candidate of candidateTerms) {
-    const result = detectConflict(glossary, candidate);
-    if (result.hasConflict && result.conflictingTerm !== undefined && result.reason !== undefined) {
-      conflicts.push({
-        term: candidate.term,
-        existing: result.conflictingTerm,
-        candidate,
-        reason: result.reason,
-      });
-    }
-  }
-  return conflicts;
+  const result = runGlossaryCheck({
+    phase: "decide",
+    mode: "interactive",
+    rawInput: { kind: "candidates", terms: candidateTerms },
+    glossary,
+    now: new Date(),
+    alreadyChecked: new Set(),
+  });
+  const byName = new Map<string, GlossaryTerm>();
+  for (const t of candidateTerms) byName.set(t.term.trim().toLowerCase(), t);
+
+  return result.conflicts
+    .filter((c): c is typeof c & { reason: NonNullable<typeof c.reason> } => c.reason !== undefined)
+    .map((c) => {
+      const original = byName.get(c.candidate.trim().toLowerCase());
+      return {
+        term: c.candidate,
+        existing: c.existing,
+        candidate: original ?? { term: c.candidate, definition: c.existing.definition, last_updated: c.existing.last_updated },
+        reason: c.reason,
+      };
+    });
 }
 
 /**

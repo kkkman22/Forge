@@ -4,7 +4,7 @@ import {
   filterCandidates,
   DEFAULT_EXTRACTION_RULES,
 } from "./glossary-extractor.js";
-import type { Glossary } from "./glossary.js";
+import type { Glossary, GlossaryTerm } from "./glossary.js";
 import { detectConflict } from "./glossary.js";
 import type { DecisionTree, DecisionTreeNode } from "./grill.js";
 import type { SessionData } from "./learn.js";
@@ -163,7 +163,7 @@ export function normalizeInput(input: GlossaryCheckInput): TermCandidate[] {
     case "decision_tree":
       return textToCandidates(
         collectTreeText(input.rawInput.tree as DecisionTree),
-        existing,
+        [], // don't exclude existing — need to detect redefinitions
       );
 
     case "spec_content":
@@ -199,6 +199,11 @@ export function normalizeInput(input: GlossaryCheckInput): TermCandidate[] {
 // ---------------------------------------------------------------------------
 
 export function runGlossaryCheck(input: GlossaryCheckInput): GlossaryCheckResult {
+  // Fast path for candidates: pass full GlossaryTerm (with aliases) directly
+  if (input.rawInput.kind === "candidates") {
+    return runCandidatesCheck(input, input.rawInput.terms);
+  }
+
   const candidates = normalizeInput(input);
   const cacheKey = `${input.phase}:${hashCandidates(candidates)}`;
 
@@ -217,7 +222,7 @@ export function runGlossaryCheck(input: GlossaryCheckInput): GlossaryCheckResult
   const timestamp = input.now.toISOString().slice(0, 10);
 
   for (const c of candidates) {
-    const provisional = {
+    const provisional: GlossaryTerm = {
       term: c.term,
       definition: c.context,
       last_updated: timestamp,
@@ -231,6 +236,50 @@ export function runGlossaryCheck(input: GlossaryCheckInput): GlossaryCheckResult
       });
     } else {
       newCandidates.push(c);
+    }
+  }
+
+  const shouldBlock = conflicts.length > 0
+    && GLOSSARY_BLOCK_POLICY[input.phase][input.mode];
+
+  return {
+    phase: input.phase,
+    hasConflict: conflicts.length > 0,
+    conflicts,
+    newCandidates,
+    shouldBlock,
+  };
+}
+
+function runCandidatesCheck(
+  input: GlossaryCheckInput,
+  terms: GlossaryTerm[],
+): GlossaryCheckResult {
+  const cacheKey = `${input.phase}:${hashCandidates(terms.map((t) => ({ term: t.term, context: t.definition, frequency: 1 })))}`;
+
+  if (input.alreadyChecked.has(cacheKey)) {
+    return {
+      phase: input.phase,
+      hasConflict: false,
+      conflicts: [],
+      newCandidates: [],
+      shouldBlock: false,
+    };
+  }
+
+  const conflicts: GlossaryConflictInfo[] = [];
+  const newCandidates: TermCandidate[] = [];
+
+  for (const candidate of terms) {
+    const result = detectConflict(input.glossary, candidate);
+    if (result.hasConflict && result.conflictingTerm !== undefined && result.reason !== undefined) {
+      conflicts.push({
+        candidate: candidate.term,
+        existing: result.conflictingTerm,
+        reason: result.reason,
+      });
+    } else {
+      newCandidates.push({ term: candidate.term, context: candidate.definition, frequency: 1 });
     }
   }
 
