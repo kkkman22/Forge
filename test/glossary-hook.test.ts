@@ -6,8 +6,10 @@ import {
   hashCandidates,
   normalizeInput,
   runGlossaryCheck,
+  renderGlossaryConflictPrompt,
+  renderGlossaryAdvisory,
 } from "../src/glossary-hook.js";
-import type { GlossaryCheckInput } from "../src/glossary-hook.js";
+import type { GlossaryCheckInput, GlossaryCheckResult } from "../src/glossary-hook.js";
 import type { TermCandidate } from "../src/glossary-extractor.js";
 import type { Glossary, GlossaryTerm } from "../src/glossary.js";
 
@@ -368,5 +370,57 @@ describe("runGlossaryCheck", () => {
     const result = runGlossaryCheck(input);
     expect(result.hasConflict).toBe(true);
     expect(result.shouldBlock).toBe(false);
+  });
+});
+
+describe("render functions", () => {
+  const conflictResult: GlossaryCheckResult = {
+    phase: "decide",
+    hasConflict: true,
+    shouldBlock: true,
+    conflicts: [
+      {
+        candidate: "Event Sourcing",
+        existing: {
+          term: "Event Sourcing",
+          definition: "existing def",
+          last_updated: "2026-01-01",
+        },
+        reason: "same_term_different_definition",
+      },
+    ],
+    newCandidates: [],
+  };
+
+  it("renderGlossaryConflictPrompt produces unified prompt", () => {
+    const prompt = renderGlossaryConflictPrompt(conflictResult, "interactive");
+    expect(prompt).toContain("⚠️");
+    expect(prompt).toContain("Event Sourcing");
+    expect(prompt).toContain("existing def");
+    expect(prompt).toContain("保留现有");
+  });
+
+  it("renderGlossaryConflictPrompt returns empty string for no conflict", () => {
+    const noConflict: GlossaryCheckResult = {
+      ...conflictResult,
+      hasConflict: false,
+      conflicts: [],
+    };
+    expect(renderGlossaryConflictPrompt(noConflict, "interactive")).toBe("");
+  });
+
+  it("renderGlossaryAdvisory produces markdown advisory", () => {
+    const advisory = renderGlossaryAdvisory(conflictResult);
+    expect(advisory).toContain("Glossary Advisory");
+    expect(advisory).toContain("Event Sourcing");
+  });
+
+  it("renderGlossaryAdvisory returns empty string for no conflict", () => {
+    const noConflict: GlossaryCheckResult = {
+      ...conflictResult,
+      hasConflict: false,
+      conflicts: [],
+    };
+    expect(renderGlossaryAdvisory(noConflict)).toBe("");
   });
 });

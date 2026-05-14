@@ -245,3 +245,63 @@ export function runGlossaryCheck(input: GlossaryCheckInput): GlossaryCheckResult
     shouldBlock,
   };
 }
+
+// ---------------------------------------------------------------------------
+// Render: unified prompt template
+// ---------------------------------------------------------------------------
+
+export function renderGlossaryConflictPrompt(
+  result: GlossaryCheckResult,
+  _mode: GlossaryCheckMode,
+): string {
+  if (!result.hasConflict || result.conflicts.length === 0) return "";
+
+  const lines: string[] = [];
+  lines.push(`⚠️ 检测到术语冲突 (${result.conflicts.length}):`);
+  for (const conflict of result.conflicts) {
+    lines.push(
+      `  - "${conflict.candidate}"`,
+      `    现有定义: ${conflict.existing.definition}`,
+      `    冲突原因: ${conflict.reason}`,
+    );
+  }
+  lines.push("请选择处理：");
+  lines.push("  1. 保留现有");
+  lines.push("  2. 替换为新定义");
+  lines.push("  3. 新增为别名");
+  lines.push("  4. 跳过（保留歧义）");
+  return lines.join("\n");
+}
+
+// ---------------------------------------------------------------------------
+// Render: autonomous advisory
+// ---------------------------------------------------------------------------
+
+export function renderGlossaryAdvisory(result: GlossaryCheckResult): string {
+  if (!result.hasConflict || result.conflicts.length === 0) return "";
+
+  const lines: string[] = [];
+  lines.push(`# Glossary Advisory: ${result.phase}`);
+  lines.push("");
+  lines.push(
+    `本次 autonomous 执行检测到术语冲突 ${result.conflicts.length} 处。`,
+  );
+  lines.push(
+    "建议在交互模式下运行 `/forge learn --review-glossary` 进行人工裁定。",
+  );
+  lines.push("");
+  lines.push("## 冲突清单");
+  for (const conflict of result.conflicts) {
+    lines.push(
+      `- "${conflict.candidate}": existing = "${conflict.existing.definition}", reason = ${conflict.reason}`,
+    );
+  }
+  if (result.newCandidates.length > 0) {
+    lines.push("");
+    lines.push("## 候选新术语");
+    for (const c of result.newCandidates) {
+      lines.push(`- ${c.term} (frequency: ${c.frequency})`);
+    }
+  }
+  return lines.join("\n");
+}
