@@ -108,3 +108,82 @@ describe("loop driver — loop_circuit_broken trigger integration", () => {
     expect(ctx.situation).toContain("run-2026-05-14-001");
   });
 });
+
+// ---------------------------------------------------------------------------
+// test_layer_failed
+// ---------------------------------------------------------------------------
+
+import {
+  buildTestLayerFailedContext,
+  type TestLayerFailedInput,
+} from "../src/test-engine.js";
+
+describe("test driver — test_layer_failed trigger integration", () => {
+  it("buildTestLayerFailedContext produces valid FailureContext", () => {
+    const ctx = buildTestLayerFailedContext({
+      topic: "auth-refactor",
+      tier: "standard",
+      failedLayer: "Layer 1",
+      failedCases: ["auth-token-expiry", "auth-refresh-flow"],
+    });
+    expect(ctx.trigger).toBe("test_layer_failed");
+    expect(ctx.skill).toBe("forge-test");
+    expect(ctx.rootCause).toContain("Layer 1");
+    expect(ctx.rootCause).toContain("auth-token-expiry");
+  });
+
+  it("works without failedCases", () => {
+    const ctx = buildTestLayerFailedContext({
+      topic: "auth-refactor",
+      tier: "standard",
+      failedLayer: "Layer 2",
+    });
+    expect(ctx.trigger).toBe("test_layer_failed");
+    expect(ctx.rootCause).toContain("Layer 2");
+  });
+
+  it("emitted episode has correct structure", () => {
+    const ctx = buildTestLayerFailedContext({
+      topic: "auth-refactor",
+      tier: "standard",
+      failedLayer: "Layer 3",
+      failedCases: ["checklist-noTodoFixme"],
+    });
+    const ep = buildFailureEpisode(ctx, FIXED_NOW, 1);
+    expect(ep.outcome).toBe("failure");
+    expect(ep.body).toContain("trigger: test_layer_failed");
+  });
+});
+
+// ---------------------------------------------------------------------------
+// conflict_validation_failed
+// ---------------------------------------------------------------------------
+
+import {
+  buildConflictValidationFailedContext,
+  type ConflictValidationFailedInput,
+} from "../src/conflict-classifier.js";
+
+describe("conflict driver — conflict_validation_failed trigger integration", () => {
+  it("buildConflictValidationFailedContext produces valid FailureContext", () => {
+    const ctx = buildConflictValidationFailedContext({
+      topic: "config-merge",
+      tier: "standard",
+      conflictPath: ".forge/config.md",
+      checkOutput: "frozen-zone integrity check failed",
+    });
+    expect(ctx.trigger).toBe("conflict_validation_failed");
+    expect(ctx.skill).toBe("forge-fix-conflicts");
+    expect(ctx.rootCause).toContain("frozen-zone integrity check failed");
+  });
+
+  it("works without checkOutput", () => {
+    const ctx = buildConflictValidationFailedContext({
+      topic: "config-merge",
+      tier: "standard",
+      conflictPath: ".forge/progress/demo.md",
+    });
+    expect(ctx.trigger).toBe("conflict_validation_failed");
+    expect(ctx.situation).toContain(".forge/progress/demo.md");
+  });
+});
