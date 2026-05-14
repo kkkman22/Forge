@@ -35,7 +35,7 @@ disable-model-invocation: true
 
 ### Step 1: Research
 
-搜索历史经验和项目上下文。强制步骤：读取 `knowledge/catalog.md`（全景索引，~50 行）、按需深入 `knowledge/` 相关条目、读取 `instincts.md`、读取锁定 Spec、派发 explore agent 扫描代码库。可选：`metrics.md`（偏差率 > 1.2 时预估时间乘系数）、`tool-health.md`（退化命令注入警告）。
+搜索历史经验和项目上下文。强制步骤：读取 `knowledge/catalog.md`（全景索引，~50 行）、按需深入 `knowledge/` 相关条目、读取 `instincts.md`、读取锁定 Spec、派发 explore agent 扫描代码库。可选：`metrics.md`（偏差率 > 1.2 时预估时间乘系数）、`tool-health.md`（退化命令注入警告）。`catalog.md` 新鲜度由 hooks.json PostToolUse 自动维护（`scripts/knowledge-hook-dispatch.mjs`），plan 启动时如 catalog 过期会自动 rebuild，无需手动 `/forge learn` 刷新。
 
 ### Step 2: File Mapping
 

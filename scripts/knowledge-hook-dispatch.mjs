@@ -15,7 +15,7 @@ import { fileURLToPath } from "node:url";
 const __dirname = fileURLToPath(new URL(".", import.meta.url));
 const projectRoot = resolve(__dirname, "..");
 
-const modPath = join(projectRoot, "dist", "src", "knowledge-hooks.js");
+const modPath = join(projectRoot, "dist", "src", "src", "knowledge-hooks.js");
 let mod;
 try {
   mod = await import(modPath);
