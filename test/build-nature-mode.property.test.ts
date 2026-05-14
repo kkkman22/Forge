@@ -1,7 +1,7 @@
 import * as fc from "fast-check";
 import { describe, expect, it } from "vitest";
-import { getCommandSequence } from "../src/skill-scheduler.js";
 import { getWorkNatureSequenceKey, type Tier, type WorkNature } from "../src/router.js";
+import { getCommandSequence } from "../src/skill-scheduler.js";
 
 const tierArb: fc.Arbitrary<Tier> = fc.constantFrom("light", "standard", "full");
 const workNatureArb: fc.Arbitrary<WorkNature> = fc.constantFrom("feature", "refactor", "bugfix");
