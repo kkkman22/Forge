@@ -3,6 +3,7 @@ import {
   shouldTriggerInlineGrill,
   renderInlineGrillConfirmPrompt,
   renderInlineGrillAdvisory,
+  formatInlineGrillInjection,
   type AlreadyTriggered,
 } from "../src/grill-inline.js";
 
@@ -115,5 +116,44 @@ describe("renderInlineGrillAdvisory", () => {
   it("renders advisory with decide_user_hesitation reason", () => {
     const result = renderInlineGrillAdvisory("decide_user_hesitation");
     expect(result).toContain("decide_user_hesitation");
+  });
+});
+
+describe("formatInlineGrillInjection", () => {
+  it("formats completed result for spec mode", () => {
+    const result = formatInlineGrillInjection(
+      { kind: "completed", tree: {}, alignmentSummary: "3 items clarified" },
+      "spec",
+    );
+    expect(result).toContain("Inline Grill 对齐结果");
+    expect(result).toContain("spec");
+    expect(result).toContain("3 items clarified");
+  });
+
+  it("formats completed result for decide mode", () => {
+    const result = formatInlineGrillInjection(
+      { kind: "completed", tree: {}, alignmentSummary: "requirements aligned" },
+      "decide",
+    );
+    expect(result).toContain("Inline Grill 对齐结果");
+    expect(result).toContain("decide");
+    expect(result).toContain("requirements aligned");
+  });
+
+  it("formats skipped result with reason", () => {
+    const result = formatInlineGrillInjection(
+      { kind: "skipped", reason: "user_declined" },
+      "spec",
+    );
+    expect(result).toContain("跳过");
+    expect(result).toContain("user_declined");
+  });
+
+  it("formats abandoned result", () => {
+    const result = formatInlineGrillInjection(
+      { kind: "abandoned", partialTree: {} },
+      "decide",
+    );
+    expect(result).toContain("中止");
   });
 });
