@@ -341,5 +341,13 @@ export const SKILL_FUNCTION_REGISTRY = [
         skills: ["forge-spec/SKILL.md"],
         parameterNames: ["data", "outputDir"],
     },
+    // --- MCP Tools ---
+    {
+        module: "mcp/tools/forge-git.ts",
+        functionName: "forge_git",
+        skills: ["forge-review/SKILL.md"],
+        parameterNames: ["subcommand", "args"],
+        mcpTool: true,
+    },
 ];
 //# sourceMappingURL=skill-function-registry.js.map
