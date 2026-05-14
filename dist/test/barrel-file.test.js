@@ -149,12 +149,13 @@ describe("barrel file does not expose internal modules", () => {
         expect(exports.checkBranchTopicGate).toBeUndefined();
     });
     // Verify the total number of value exports
-    it("has exactly 85 value exports", () => {
+    it("has exactly 89 value exports", () => {
         const valueExports = Object.keys(exports).filter((key) => typeof exports[key] !== "undefined");
-        expect(valueExports).toHaveLength(85);
+        expect(valueExports).toHaveLength(89);
         expect(valueExports.sort()).toEqual([
             "CLASSIFICATION_MAP",
             "CliError",
+            "DEFAULT_SEVERITY",
             "FORBIDDEN_PLACEHOLDERS",
             "ForgeError",
             "INCREMENTAL_THRESHOLD",
@@ -211,8 +212,11 @@ describe("barrel file does not expose internal modules", () => {
             "readTaskStatus",
             "reconstructStateFromGit",
             "removeTaskEntry",
+            "renderBranchGateAdvisory",
+            "renderBranchGatePrompt",
             "renderCatalog",
             "resolveStatusPath",
+            "runBranchGate",
             "runSubagentsInParallel",
             "scanForPlaceholders",
             "serializeChecklist",
