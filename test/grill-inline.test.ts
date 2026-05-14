@@ -1,6 +1,8 @@
 import { describe, it, expect } from "vitest";
 import {
   shouldTriggerInlineGrill,
+  renderInlineGrillConfirmPrompt,
+  renderInlineGrillAdvisory,
   type AlreadyTriggered,
 } from "../src/grill-inline.js";
 
@@ -72,5 +74,46 @@ describe("shouldTriggerInlineGrill", () => {
       },
     });
     expect(result.trigger).toBe(true);
+  });
+});
+
+describe("renderInlineGrillConfirmPrompt", () => {
+  it("renders Chinese prompt for spec_high_ambiguity", () => {
+    const result = renderInlineGrillConfirmPrompt("spec_high_ambiguity");
+    expect(result).toContain("检测到");
+    expect(result).toContain("模糊");
+    expect(result).toContain("grill");
+  });
+
+  it("renders Chinese prompt for decide_requirement_disagreement", () => {
+    const result = renderInlineGrillConfirmPrompt("decide_requirement_disagreement");
+    expect(result).toContain("需求侧");
+    expect(result).toContain("grill");
+  });
+
+  it("renders Chinese prompt for decide_user_hesitation", () => {
+    const result = renderInlineGrillConfirmPrompt("decide_user_hesitation");
+    expect(result).toContain("犹豫");
+    expect(result).toContain("grill");
+  });
+});
+
+describe("renderInlineGrillAdvisory", () => {
+  it("renders advisory with spec_high_ambiguity reason", () => {
+    const result = renderInlineGrillAdvisory("spec_high_ambiguity");
+    expect(result).toContain("spec_high_ambiguity");
+    expect(result).toContain("autonomous");
+    expect(result).toContain("/forge grill");
+  });
+
+  it("renders advisory with decide_requirement_disagreement reason", () => {
+    const result = renderInlineGrillAdvisory("decide_requirement_disagreement");
+    expect(result).toContain("decide_requirement_disagreement");
+    expect(result).toContain("/forge grill");
+  });
+
+  it("renders advisory with decide_user_hesitation reason", () => {
+    const result = renderInlineGrillAdvisory("decide_user_hesitation");
+    expect(result).toContain("decide_user_hesitation");
   });
 });
