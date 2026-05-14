@@ -27,6 +27,8 @@ export { buildVerificationCriteria, determineVerificationStrategy, INCREMENTAL_T
 export { buildCatalog, parseEvolvedRulesSummary, parseFailureSummary, parseSolutionFrontmatter, renderCatalog, } from "./knowledge-catalog.js";
 // Knowledge integrity linter
 export { checkContradictions, checkOrphanSolutions, checkReferenceIntegrity, lintKnowledgeIntegrity, } from "./knowledge-integrity.js";
+// Branch gate
+export { DEFAULT_SEVERITY, renderBranchGateAdvisory, renderBranchGatePrompt, runBranchGate, } from "./branch-gate.js";
 // Plan engine
 export { checkPlanStructure, detectPlanFormat, extractHeadingAnchors, FORBIDDEN_PLACEHOLDERS, scanForPlaceholders, validateAtomicTask, validateDependencies, validateDesignReferences, validateLightweightPlan, validateLightweightTask, validatePlan, validatePlanTasks, validateSpecLocked, } from "./plan.js";
 // Quality gate
