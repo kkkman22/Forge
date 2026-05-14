@@ -1,5 +1,9 @@
 ---
+<<<<<<< HEAD
+status: locked
+=======
 status: draft
+>>>>>>> origin/main
 created: "2026-05-14"
 topic: glossary-consistency-hook
 ---

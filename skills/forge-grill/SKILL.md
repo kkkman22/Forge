@@ -45,7 +45,7 @@ disable-model-invocation: true
 - Each round presents exactly one question; batch questioning is forbidden
 - Questions answerable from the codebase must be resolved via explore subagent rather than asked of the user
 - Every answer application must produce a new tree (immutable, original unchanged)
-- Glossary conflicts must be detected after each answer and surfaced to the user for clarification before continuing
+- Glossary conflicts must be detected after each answer and surfaced to the user for clarification before continuing（内部使用 `runGlossaryCheck({ phase: 'grill' })`）
 - Loop terminates only when all nodes are non-pending
 - User may accept AI suggestions, override answers, request deeper probing, or skip nodes
 

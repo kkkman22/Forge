@@ -24,7 +24,11 @@
  */
 import { type AdrCriteriaResult, type DecisionCandidate, type DecisionSignals } from "./adr-criteria.js";
 import { type AdrEntry, type AdrStatus } from "./adr-registry.js";
+<<<<<<< HEAD
+import type { Glossary, GlossaryTerm } from "./glossary.js";
+=======
 import { type Glossary, type GlossaryTerm } from "./glossary.js";
+>>>>>>> origin/main
 export interface DecideContext {
     taskDescription: string;
     involvedFiles: string[];

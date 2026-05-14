@@ -65,6 +65,23 @@ export {
   type RecoveryResult,
 } from "./fix-recovery.js";
 export { ForgeError } from "./forge-error.js";
+// Glossary consistency hook
+export {
+  GLOSSARY_BLOCK_POLICY,
+  type GlossaryCheckInput,
+  type GlossaryCheckMode,
+  type GlossaryCheckPhase,
+  type GlossaryCheckResult,
+  type GlossaryConflictInfo,
+  type GlossaryConflictResolution,
+  getAdvisoryPath,
+  hashCandidates,
+  normalizeInput,
+  renderGlossaryAdvisory,
+  renderGlossaryConflictPrompt,
+  renderPendingAdvisoryNotice,
+  runGlossaryCheck,
+} from "./glossary-hook.js";
 // Incremental verifier
 export {
   buildVerificationCriteria,

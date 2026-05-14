@@ -17,6 +17,7 @@ export { CLASSIFICATION_MAP, type ClassificationEntry, type ContextBudgetReport,
 export { allEntriesVerified, type ChecklistEntry, type ChecklistStatus, createChecklist, isValidTransition, parseChecklist, serializeChecklist, updateEntryStatus, VALID_TRANSITIONS, } from "./fix-checklist.js";
 export { isFixCandidate, parseGitLog as parseFixRecoveryGitLog, type RecoveryCandidate, type RecoveryResult, } from "./fix-recovery.js";
 export { ForgeError } from "./forge-error.js";
+export { GLOSSARY_BLOCK_POLICY, type GlossaryCheckInput, type GlossaryCheckMode, type GlossaryCheckPhase, type GlossaryCheckResult, type GlossaryConflictInfo, type GlossaryConflictResolution, hashCandidates, normalizeInput, renderGlossaryAdvisory, renderGlossaryConflictPrompt, runGlossaryCheck, } from "./glossary-hook.js";
 export { buildVerificationCriteria, determineVerificationStrategy, INCREMENTAL_THRESHOLD, type VerificationDecision, type VerificationResult, } from "./incremental-verifier.js";
 export { buildCatalog, type CatalogInput, type EvolvedRulesSummary, type FailureSummary, parseEvolvedRulesSummary, parseFailureSummary, parseSolutionFrontmatter, renderCatalog, type SolutionSummary, } from "./knowledge-catalog.js";
 export { checkContradictions, checkOrphanSolutions, checkReferenceIntegrity, type IntegrityFinding, type IntegrityInput, lintKnowledgeIntegrity, } from "./knowledge-integrity.js";

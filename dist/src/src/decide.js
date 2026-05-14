@@ -25,7 +25,11 @@
 import { evaluateAdrCriteria, } from "./adr-criteria.js";
 import { applySupersession, nextAdrId, renderAdrIndex, } from "./adr-registry.js";
 import { parseFrontmatter } from "./frontmatter.js";
+<<<<<<< HEAD
+import { runGlossaryCheck } from "./glossary-hook.js";
+=======
 import { detectConflict } from "./glossary.js";
+>>>>>>> origin/main
 // ---------------------------------------------------------------------------
 // Constants
 // ---------------------------------------------------------------------------
@@ -657,6 +661,34 @@ export function resolveUpstreamFile(status) {
  * Ordering follows the input order of `candidateTerms`.
  */
 export function checkDecideGlossaryConflicts(candidateTerms, glossary) {
+<<<<<<< HEAD
+    const result = runGlossaryCheck({
+        phase: "decide",
+        mode: "interactive",
+        rawInput: { kind: "candidates", terms: candidateTerms },
+        glossary,
+        now: new Date(),
+        alreadyChecked: new Set(),
+    });
+    const byName = new Map();
+    for (const t of candidateTerms)
+        byName.set(t.term.trim().toLowerCase(), t);
+    return result.conflicts
+        .filter((c) => c.reason !== undefined)
+        .map((c) => {
+        const original = byName.get(c.candidate.trim().toLowerCase());
+        return {
+            term: c.candidate,
+            existing: c.existing,
+            candidate: original ?? {
+                term: c.candidate,
+                definition: c.existing.definition,
+                last_updated: c.existing.last_updated,
+            },
+            reason: c.reason,
+        };
+    });
+=======
     const conflicts = [];
     for (const candidate of candidateTerms) {
         const result = detectConflict(glossary, candidate);
@@ -670,6 +702,7 @@ export function checkDecideGlossaryConflicts(candidateTerms, glossary) {
         }
     }
     return conflicts;
+>>>>>>> origin/main
 }
 /**
  * Render a user-facing clarification prompt for the given conflicts.

@@ -149,15 +149,22 @@ describe("barrel file does not expose internal modules", () => {
         expect(exports.checkBranchTopicGate).toBeUndefined();
     });
     // Verify the total number of value exports
+<<<<<<< HEAD
+    it("has exactly 91 value exports", () => {
+        const valueExports = Object.keys(exports).filter((key) => typeof exports[key] !== "undefined");
+        expect(valueExports).toHaveLength(91);
+=======
     it("has exactly 89 value exports", () => {
         const valueExports = Object.keys(exports).filter((key) => typeof exports[key] !== "undefined");
         expect(valueExports).toHaveLength(89);
+>>>>>>> origin/main
         expect(valueExports.sort()).toEqual([
             "CLASSIFICATION_MAP",
             "CliError",
             "DEFAULT_SEVERITY",
             "FORBIDDEN_PLACEHOLDERS",
             "ForgeError",
+            "GLOSSARY_BLOCK_POLICY",
             "INCREMENTAL_THRESHOLD",
             "SdkAgentAdapter",
             "SdkDriver",
@@ -194,6 +201,7 @@ describe("barrel file does not expose internal modules", () => {
             "extractHeadingAnchors",
             "getMostRecentActiveTask",
             "hasTaskName",
+            "hashCandidates",
             "installSkill",
             "isFixCandidate",
             "isMultiTaskMode",
@@ -203,6 +211,7 @@ describe("barrel file does not expose internal modules", () => {
             "loadSkillsFromDir",
             "mergeSkillLists",
             "migrateToMultiTask",
+            "normalizeInput",
             "parseChecklist",
             "parseEvolvedRulesSummary",
             "parseFailureSummary",
@@ -215,8 +224,14 @@ describe("barrel file does not expose internal modules", () => {
             "renderBranchGateAdvisory",
             "renderBranchGatePrompt",
             "renderCatalog",
+            "renderGlossaryAdvisory",
+            "renderGlossaryConflictPrompt",
             "resolveStatusPath",
+<<<<<<< HEAD
+            "runGlossaryCheck",
+=======
             "runBranchGate",
+>>>>>>> origin/main
             "runSubagentsInParallel",
             "scanForPlaceholders",
             "serializeChecklist",

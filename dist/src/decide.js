@@ -25,7 +25,7 @@
 import { evaluateAdrCriteria, } from "./adr-criteria.js";
 import { applySupersession, nextAdrId, renderAdrIndex, } from "./adr-registry.js";
 import { parseFrontmatter } from "./frontmatter.js";
-import { detectConflict } from "./glossary.js";
+import { runGlossaryCheck } from "./glossary-hook.js";
 // ---------------------------------------------------------------------------
 // Constants
 // ---------------------------------------------------------------------------
@@ -657,19 +657,32 @@ export function resolveUpstreamFile(status) {
  * Ordering follows the input order of `candidateTerms`.
  */
 export function checkDecideGlossaryConflicts(candidateTerms, glossary) {
-    const conflicts = [];
-    for (const candidate of candidateTerms) {
-        const result = detectConflict(glossary, candidate);
-        if (result.hasConflict && result.conflictingTerm !== undefined && result.reason !== undefined) {
-            conflicts.push({
-                term: candidate.term,
-                existing: result.conflictingTerm,
-                candidate,
-                reason: result.reason,
-            });
-        }
-    }
-    return conflicts;
+    const result = runGlossaryCheck({
+        phase: "decide",
+        mode: "interactive",
+        rawInput: { kind: "candidates", terms: candidateTerms },
+        glossary,
+        now: new Date(),
+        alreadyChecked: new Set(),
+    });
+    const byName = new Map();
+    for (const t of candidateTerms)
+        byName.set(t.term.trim().toLowerCase(), t);
+    return result.conflicts
+        .filter((c) => c.reason !== undefined)
+        .map((c) => {
+        const original = byName.get(c.candidate.trim().toLowerCase());
+        return {
+            term: c.candidate,
+            existing: c.existing,
+            candidate: original ?? {
+                term: c.candidate,
+                definition: c.existing.definition,
+                last_updated: c.existing.last_updated,
+            },
+            reason: c.reason,
+        };
+    });
 }
 /**
  * Render a user-facing clarification prompt for the given conflicts.
