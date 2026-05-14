@@ -157,3 +157,25 @@ describe("formatInlineGrillInjection", () => {
     expect(result).toContain("中止");
   });
 });
+
+describe("grill-inline barrel exports", () => {
+  it("re-exports shouldTriggerInlineGrill from index", async () => {
+    const mod = await import("../src/index.js");
+    expect(typeof mod.shouldTriggerInlineGrill).toBe("function");
+  });
+
+  it("re-exports renderInlineGrillConfirmPrompt from index", async () => {
+    const mod = await import("../src/index.js");
+    expect(typeof mod.renderInlineGrillConfirmPrompt).toBe("function");
+  });
+
+  it("re-exports renderInlineGrillAdvisory from index", async () => {
+    const mod = await import("../src/index.js");
+    expect(typeof mod.renderInlineGrillAdvisory).toBe("function");
+  });
+
+  it("re-exports formatInlineGrillInjection from index", async () => {
+    const mod = await import("../src/index.js");
+    expect(typeof mod.formatInlineGrillInjection).toBe("function");
+  });
+});
