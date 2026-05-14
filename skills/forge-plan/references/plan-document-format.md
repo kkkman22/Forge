@@ -52,7 +52,7 @@ format: "lightweight"
 - **File**: `<file-path>`
 - **Design Reference**: `design.md#<anchor>` — <一句话摘要>
 - **Property**: Property N（如适用）
-- **Depends On**: (none | Task N, Task M)
+- **Depends On**: `[N, M]` or `[]`
 - **Verify**: `<command>`
 - **Commit**: `<commit message>`
 
@@ -85,6 +85,7 @@ spec_ref: ".forge/specs/user-notification/spec.md"
 
 ## Task Breakdown
 ### Task 1：<任务标题>（N min）
+**Depends On**: `[]` or `[N, M]`
 **文件**：`<文件路径>`
 **RED** — 写失败的测试 ...
 **GREEN** — 写最少代码让测试通过 ...
