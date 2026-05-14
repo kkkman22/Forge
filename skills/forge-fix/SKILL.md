@@ -58,6 +58,10 @@ disable-model-invocation: true
 1. **第 1 轮**：在关键路径添加日志 → 运行复现步骤 → 分析日志 → 调整修复 → 重新 apply + verify
 2. **第 2 轮**（仍失败）：扩大日志范围 → 重新分析 → 调整修复
 3. **2 轮后仍失败**：回到 analyze 阶段重新做根因分析
+4. **自动视角重置**：第 2 轮日志调试失败后、回到 analyze 前，检查 `shouldAutoTriggerZoomOut({ scenario: "debug", debugLogRounds: 2, alreadyTriggered })`：
+   - `shouldTrigger: true` → autonomous 模式直接执行 zoom-out；interactive 模式提示「当前讨论似乎陷入局部，建议先退后一步看看整体位置。是否继续？」
+   - zoom-out 输出通过 `formatAutoZoomOutInjection(output, "debug")` 包装后注入 re-analyze 上下文
+   - 设置 `autoZoomOutTriggered.debug = true` 防止重复触发
 
 **规则**：日志调试最多 2 轮。日志调试完成后清理添加的日志代码。
 
