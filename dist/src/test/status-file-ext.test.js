@@ -1,0 +1,249 @@
+/**
+ * Unit tests for status-file-ext.ts — StatusFile Loop extension fields.
+ *
+ * Tests core functionality: extractLoopFields, writeLoopFields,
+ * clearLoopFields, updateIterationStatus.
+ *
+ * **Validates: Requirements 6.1, 6.2, 6.3, 6.4, 6.5, 6.6**
+ */
+import { describe, expect, it } from "vitest";
+import { clearLoopFields, extractLoopFields, updateIterationStatus, writeLoopFields, } from "../src/status-file-ext.js";
+// ---------------------------------------------------------------------------
+// extractLoopFields
+// ---------------------------------------------------------------------------
+describe("extractLoopFields", () => {
+    it("extracts all Loop fields from valid frontmatter", () => {
+        const content = `---
+current_task: "some task"
+tier: "standard"
+phase: "build"
+mode: "autonomous"
+loop_run_id: "a1b2c3d4"
+loop_iteration: 3
+skill_sequence: "plan,build,review,test,ship"
+---
+body content
+`;
+        const fields = extractLoopFields(content);
+        expect(fields.mode).toBe("autonomous");
+        expect(fields.loopRunId).toBe("a1b2c3d4");
+        expect(fields.loopIteration).toBe(3);
+        expect(fields.skillSequence).toEqual(["plan", "build", "review", "test", "ship"]);
+    });
+    it("returns empty object for content without frontmatter", () => {
+        const fields = extractLoopFields("just plain text");
+        expect(fields.mode).toBeUndefined();
+        expect(fields.loopRunId).toBeUndefined();
+        expect(fields.loopIteration).toBeUndefined();
+        expect(fields.skillSequence).toBeUndefined();
+    });
+    it("returns empty object for empty string", () => {
+        const fields = extractLoopFields("");
+        expect(fields.mode).toBeUndefined();
+        expect(fields.loopRunId).toBeUndefined();
+        expect(fields.loopIteration).toBeUndefined();
+        expect(fields.skillSequence).toBeUndefined();
+    });
+    it("returns undefined for missing Loop fields in valid frontmatter", () => {
+        const content = `---
+current_task: "some task"
+tier: "standard"
+---
+body
+`;
+        const fields = extractLoopFields(content);
+        expect(fields.mode).toBeUndefined();
+        expect(fields.loopRunId).toBeUndefined();
+        expect(fields.loopIteration).toBeUndefined();
+        expect(fields.skillSequence).toBeUndefined();
+    });
+    it("returns undefined for invalid mode value", () => {
+        const content = `---
+mode: "invalid_mode"
+---
+`;
+        const fields = extractLoopFields(content);
+        expect(fields.mode).toBeUndefined();
+    });
+    it("extracts interactive mode", () => {
+        const content = `---
+mode: "interactive"
+---
+`;
+        const fields = extractLoopFields(content);
+        expect(fields.mode).toBe("interactive");
+    });
+    it("handles loop_iteration of 0", () => {
+        const content = `---
+loop_iteration: 0
+---
+`;
+        const fields = extractLoopFields(content);
+        expect(fields.loopIteration).toBe(0);
+    });
+    it("handles skill_sequence with spaces around commas", () => {
+        const content = `---
+skill_sequence: "plan, build, review"
+---
+`;
+        const fields = extractLoopFields(content);
+        expect(fields.skillSequence).toEqual(["plan", "build", "review"]);
+    });
+});
+// ---------------------------------------------------------------------------
+// writeLoopFields
+// ---------------------------------------------------------------------------
+describe("writeLoopFields", () => {
+    it("writes all Loop fields into existing frontmatter", () => {
+        const content = `---
+current_task: "some task"
+---
+body
+`;
+        const result = writeLoopFields(content, {
+            mode: "autonomous",
+            loopRunId: "run-123",
+            loopIteration: 5,
+            skillSequence: ["plan", "build", "review"],
+        });
+        expect(result).toContain('mode: "autonomous"');
+        expect(result).toContain('loop_run_id: "run-123"');
+        expect(result).toContain("loop_iteration: 5");
+        expect(result).toContain('skill_sequence: "plan,build,review"');
+        expect(result).toContain('current_task: "some task"');
+        expect(result).toContain("body");
+    });
+    it("updates existing Loop fields", () => {
+        const content = `---
+mode: "interactive"
+loop_iteration: 1
+---
+`;
+        const result = writeLoopFields(content, {
+            mode: "autonomous",
+            loopIteration: 2,
+        });
+        expect(result).toContain('mode: "autonomous"');
+        expect(result).toContain("loop_iteration: 2");
+        expect(result).not.toContain('"interactive"');
+        expect(result).not.toContain("loop_iteration: 1");
+    });
+    it("creates frontmatter when missing", () => {
+        const result = writeLoopFields("plain text", {
+            mode: "autonomous",
+            loopRunId: "abc",
+        });
+        expect(result).toContain("---");
+        expect(result).toContain('mode: "autonomous"');
+        expect(result).toContain('loop_run_id: "abc"');
+        expect(result).toContain("plain text");
+    });
+    it("returns content unchanged when no fields provided and no frontmatter", () => {
+        const content = "plain text";
+        const result = writeLoopFields(content, {});
+        expect(result).toBe(content);
+    });
+    it("preserves other fields when writing Loop fields", () => {
+        const content = `---
+current_task: "task"
+tier: "full"
+phase: "build"
+---
+body content here
+`;
+        const result = writeLoopFields(content, { mode: "autonomous" });
+        expect(result).toContain('current_task: "task"');
+        expect(result).toContain('tier: "full"');
+        expect(result).toContain('phase: "build"');
+        expect(result).toContain('mode: "autonomous"');
+        expect(result).toContain("body content here");
+    });
+});
+// ---------------------------------------------------------------------------
+// clearLoopFields
+// ---------------------------------------------------------------------------
+describe("clearLoopFields", () => {
+    it("removes all Loop fields from frontmatter", () => {
+        const content = `---
+current_task: "some task"
+tier: "standard"
+mode: "autonomous"
+loop_run_id: "a1b2c3d4"
+loop_iteration: 3
+skill_sequence: "plan,build,review,test,ship"
+---
+body
+`;
+        const result = clearLoopFields(content);
+        expect(result).not.toContain("mode:");
+        expect(result).not.toContain("loop_run_id:");
+        expect(result).not.toContain("loop_iteration:");
+        expect(result).not.toContain("skill_sequence:");
+        expect(result).toContain('current_task: "some task"');
+        expect(result).toContain('tier: "standard"');
+        expect(result).toContain("body");
+    });
+    it("returns content unchanged when no frontmatter", () => {
+        const content = "plain text";
+        expect(clearLoopFields(content)).toBe(content);
+    });
+    it("returns content unchanged when no Loop fields present", () => {
+        const content = `---
+current_task: "task"
+tier: "standard"
+---
+body
+`;
+        const result = clearLoopFields(content);
+        expect(result).toContain('current_task: "task"');
+        expect(result).toContain('tier: "standard"');
+    });
+});
+// ---------------------------------------------------------------------------
+// updateIterationStatus
+// ---------------------------------------------------------------------------
+describe("updateIterationStatus", () => {
+    it("updates phase and loop_iteration in existing frontmatter", () => {
+        const content = `---
+current_task: "task"
+phase: "plan"
+loop_iteration: 1
+---
+body
+`;
+        const result = updateIterationStatus(content, "build", 2);
+        expect(result).toContain('phase: "build"');
+        expect(result).toContain("loop_iteration: 2");
+        expect(result).not.toContain('"plan"');
+        expect(result).not.toContain("loop_iteration: 1");
+        expect(result).toContain('current_task: "task"');
+    });
+    it("adds phase and loop_iteration when not present", () => {
+        const content = `---
+current_task: "task"
+---
+body
+`;
+        const result = updateIterationStatus(content, "review", 5);
+        expect(result).toContain('phase: "review"');
+        expect(result).toContain("loop_iteration: 5");
+        expect(result).toContain('current_task: "task"');
+    });
+    it("creates frontmatter when missing", () => {
+        const result = updateIterationStatus("plain text", "build", 1);
+        expect(result).toContain("---");
+        expect(result).toContain('phase: "build"');
+        expect(result).toContain("loop_iteration: 1");
+        expect(result).toContain("plain text");
+    });
+    it("handles iteration 0", () => {
+        const content = `---
+phase: "router"
+---
+`;
+        const result = updateIterationStatus(content, "plan", 0);
+        expect(result).toContain('phase: "plan"');
+        expect(result).toContain("loop_iteration: 0");
+    });
+});
+//# sourceMappingURL=status-file-ext.test.js.map
