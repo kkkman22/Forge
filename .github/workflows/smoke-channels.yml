@@ -30,8 +30,8 @@ jobs:
         if: matrix.pack != 'none'
         run: bash scripts/smoke-activate-pack.sh "${{ matrix.pack }}"
 
-      - name: Verify forge status
-        run: node scripts/gen-plugin-commands.mjs --dry-run
+      - name: Generate commands with pack context
+        run: node scripts/gen-plugin-commands.mjs
 
       - name: Assert forge-mutate visibility
         run: |

@@ -69,7 +69,18 @@ const EXPECTED_USER_PROMPT_SUBMIT_HOOKS = [
 ];
 const EXPECTED_POST_TOOL_USE_HOOKS = [
     {
+        matcher: "Write|Edit|MultiEdit",
+        hooks: [
+            {
+                type: "command",
+                command: "bash forge/scripts/hook-check-frozen-post.sh 2>/dev/null || bash ~/.claude/skills/forge/scripts/hook-check-frozen-post.sh 2>/dev/null || true",
+                timeout: 5,
+            },
+        ],
+    },
+    {
         matcher: "Write|Edit",
+        if: "Write(.forge/**)|Edit(.forge/**)",
         hooks: [
             {
                 type: "command",
@@ -79,6 +90,7 @@ const EXPECTED_POST_TOOL_USE_HOOKS = [
     },
     {
         matcher: "Write|Edit",
+        if: "Write(.forge/**)|Edit(.forge/**)",
         hooks: [
             {
                 type: "command",
@@ -89,6 +101,7 @@ const EXPECTED_POST_TOOL_USE_HOOKS = [
     },
     {
         matcher: "Write|Edit",
+        if: "Write(.forge/**)|Edit(.forge/**)",
         hooks: [
             {
                 type: "command",
@@ -180,7 +193,8 @@ const EXPECTED_TASK_COMPLETED_HOOKS = [
 ];
 /** The plan context injection hook — the FIRST PreToolUse entry with matcher "Write|Edit|Bash" */
 const EXPECTED_PLAN_CONTEXT_HOOK = {
-    matcher: "Write|Edit|Bash",
+    matcher: "Write|Edit",
+    if: "Write(.forge/**)|Edit(.forge/**)",
     hooks: [
         {
             type: "command",
@@ -203,12 +217,11 @@ const NON_FROZEN_EVENT_TYPES = [
 // Helpers
 // ---------------------------------------------------------------------------
 function _isFrozenCheckHook(_matcher, hook) {
-    return hook.command.includes("check-frozen.sh");
+    return hook.command.includes("check-frozen.sh") || hook.command.includes("check-frozen-post.sh");
 }
 function getPlanContextHook(config) {
     const preToolUseHooks = config.hooks.PreToolUse ?? [];
-    return preToolUseHooks.find((group) => group.matcher === "Write|Edit|Bash" &&
-        group.hooks.some((h) => h.command.includes("head -30 .forge/plans/")));
+    return preToolUseHooks.find((group) => group.hooks.some((h) => h.command.includes("head -30 .forge/plans/")));
 }
 function getNonFrozenPreToolUseHooks(config) {
     const preToolUseHooks = config.hooks.PreToolUse ?? [];
@@ -240,10 +253,10 @@ describe("Preservation: Non-frozen hooks are byte-identical to baseline", () => 
 });
 describe("Preservation: Plan context injection hook retains || true fallback", () => {
     const config = loadHooksConfig();
-    it("plan context hook exists with matcher Write|Edit|Bash", () => {
+    it("plan context hook exists with matcher Write|Edit", () => {
         const planHook = getPlanContextHook(config);
         expect(planHook).toBeDefined();
-        expect(planHook?.matcher).toBe("Write|Edit|Bash");
+        expect(planHook?.matcher).toBe("Write|Edit");
     });
     it("plan context hook command is byte-identical to observed baseline", () => {
         const planHook = getPlanContextHook(config);

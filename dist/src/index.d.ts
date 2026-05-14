@@ -18,6 +18,8 @@ export { allEntriesVerified, type ChecklistEntry, type ChecklistStatus, createCh
 export { isFixCandidate, parseGitLog as parseFixRecoveryGitLog, type RecoveryCandidate, type RecoveryResult, } from "./fix-recovery.js";
 export { ForgeError } from "./forge-error.js";
 export { buildVerificationCriteria, determineVerificationStrategy, INCREMENTAL_THRESHOLD, type VerificationDecision, type VerificationResult, } from "./incremental-verifier.js";
+export { buildCatalog, type CatalogInput, type EvolvedRulesSummary, type FailureSummary, parseEvolvedRulesSummary, parseFailureSummary, parseSolutionFrontmatter, renderCatalog, type SolutionSummary, } from "./knowledge-catalog.js";
+export { checkContradictions, checkOrphanSolutions, checkReferenceIntegrity, type IntegrityFinding, type IntegrityInput, lintKnowledgeIntegrity, } from "./knowledge-integrity.js";
 export type { AgentInterface, AgentOutput, AgentResult, AgentRunOptions, BranchTopicGateResult, CommitTopicCheckResult, LoopConfig, ParallelExecutionResult, PendingDeliveryRecord, RunLimits, SubagentInvocation, SubagentResult, TokenUsage, UnshippedBranchWarning, } from "./loop-types.js";
 export { type AtomicTask, checkPlanStructure, type DesignReferenceEntry, type DesignReferenceValidation, detectPlanFormat, extractHeadingAnchors, FORBIDDEN_PLACEHOLDERS, type LightweightTask, type PlanFormat, type SplitTriggerResult, scanForPlaceholders, type TDDSteps, validateAtomicTask, validateDependencies, validateDesignReferences, validateLightweightPlan, validateLightweightTask, validatePlan, validatePlanTasks, validateSpecLocked, } from "./plan.js";
 export { evaluateReviewGate, evaluateShipGate, evaluateTestGate, type GateResult, } from "./quality-gate.js";

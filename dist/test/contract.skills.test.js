@@ -82,4 +82,45 @@ describe("Contract: skills/*/SKILL.md contains required content sections", () =>
         });
     }
 });
+// ---------------------------------------------------------------------------
+// Contract: forge-resume SKILL.md --from-pr feature
+// ---------------------------------------------------------------------------
+describe("Contract: forge-resume SKILL.md --from-pr feature", () => {
+    const resumeSkillPath = resolve(skillsDir, "forge-resume", "SKILL.md");
+    it("forge-resume SKILL.md contains '从 PR 恢复' section", () => {
+        expect(existsSync(resumeSkillPath), "Missing: skills/forge-resume/SKILL.md").toBe(true);
+        const content = readFileSync(resumeSkillPath, "utf-8");
+        expect(content).toContain("从 PR 恢复");
+        expect(content).toMatch(/##\s+5\.\s+从 PR 恢复|--from-pr/);
+    });
+    it("forge-resume SKILL.md documents --from-pr flag", () => {
+        const content = readFileSync(resumeSkillPath, "utf-8");
+        expect(content).toContain("--from-pr");
+        expect(content).toContain("scripts/resume-from-pr.mjs");
+    });
+    it("forge-resume SKILL.md documents mutual exclusion with --spec", () => {
+        const content = readFileSync(resumeSkillPath, "utf-8");
+        expect(content).toMatch(/--from-pr.*--spec.*互斥|互斥.*--from-pr.*--spec/);
+    });
+    it("forge-resume SKILL.md stays within 150 lines", () => {
+        const content = readFileSync(resumeSkillPath, "utf-8");
+        const lineCount = content.split("\n").length;
+        expect(lineCount).toBeLessThanOrEqual(150);
+    });
+});
+// ---------------------------------------------------------------------------
+// UltraReview CI awareness in forge-review
+describe("Contract: forge-review SKILL CI awareness", () => {
+    const skillPath = resolve(ROOT, "skills", "forge-review", "SKILL.md");
+    const content = readFileSync(skillPath, "utf-8");
+    it("contains CI evidence intake section", () => {
+        expect(content, "forge-review SKILL.md missing CI evidence intake section").toContain("CI 证据接入");
+    });
+    it("contains confirmed-by-ci prefix rule", () => {
+        expect(content, "forge-review SKILL.md missing [confirmed-by-ci] prefix rule").toContain("[confirmed-by-ci]");
+    });
+    it("declares CI artifacts read-only", () => {
+        expect(content, "forge-review SKILL.md missing CI artifact read-only declaration").toMatch(/ci.*\.md.*(?:只读|不得.*修改)/i);
+    });
+});
 //# sourceMappingURL=contract.skills.test.js.map

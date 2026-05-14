@@ -24,6 +24,16 @@ export declare function formatDiffSummary(summary: GitDiffSummary): string;
  */
 export declare function formatStatusSummary(summary: GitStatusSummary): string;
 /**
+ * Truncate full diff content for review context injection.
+ *
+ * Strategy:
+ * 1. Split diff into per-file hunks
+ * 2. For each file: keep up to DIFF_PER_FILE_MAX_LINES (prioritize hunks, truncate large files)
+ * 3. If total exceeds DIFF_CONTENT_MAX_LINES, drop lowest-priority files (test files, generated)
+ * 4. Append truncation notice with list of omitted files
+ */
+export declare function truncateDiffContent(rawDiff: string): string;
+/**
  * Register the `forge_git` tool on the given MCP server.
  */
 export declare function registerForgeGit(server: McpServer): void;
