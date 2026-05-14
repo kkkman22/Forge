@@ -1,7 +1,7 @@
 ---
-current_task: "grill-auto-trigger-and-inline"
+current_task: "branch-topic-gate-hook"
 tier: "standard"
-task_type: "grill-auto-trigger-and-inline"
+task_type: "branch-topic-gate-hook"
 project_phase: "active"
 phase: "plan"
 work_nature: "feature"
@@ -12,13 +12,15 @@ updated: "2026-05-14"
 
 ## 当前任务
 
-**grill-auto-trigger-and-inline** — grill 下沉为内部模块 + 自动触发机制
-- Spec: `.forge/specs/grill-auto-trigger-and-inline/spec.md` (draft)
+**branch-topic-gate-hook** — 分支与任务一致性 hook 普及到所有 skill
+- Spec: `.forge/specs/branch-topic-gate-hook/spec.md` (draft)
 - Plan: 待生成
-- 分支: `worktree-grill-auto-trigger-and-inline`
+- 分支: `worktree-branch-topic-gate-hook`
 
 ## 已完成任务
 
+- failure-sink-trigger-expansion: (暂停)
+- grill-auto-trigger-and-inline: (暂停)
 - frozen-zone-structured-feedback: 结构化 JSON frozen-zone 保护（ADR-0001，127 新测试）
 - ccbp-hardening-phase2: CCBP Phase 2 hooks if: + compaction + agent frontmatter + dispatcher + rules + version gate
 - plugin-distribution: Forge Plugin 化分发
