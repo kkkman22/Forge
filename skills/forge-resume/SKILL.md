@@ -30,7 +30,7 @@ Branch: !`git branch --show-current`
 
 ## Delegation_Adapter
 
-→ 详见 references/delegation-adapter.md
+→ 详见 references/delegation-adapter.md（迁移指南：docs/slimming-migration.md）
 
 **Not For**：首次开始新任务（用 `/forge`）、上一个任务已完成（用 `/forge` 开始新任务）
 
