@@ -190,9 +190,9 @@ describe("barrel file does not expose internal modules", () => {
   });
 
   // Verify the total number of value exports
-  it("has exactly 85 value exports", () => {
+  it("has exactly 89 value exports", () => {
     const valueExports = Object.keys(exports).filter((key) => typeof exports[key] !== "undefined");
-    expect(valueExports).toHaveLength(85);
+    expect(valueExports).toHaveLength(89);
     expect(valueExports.sort()).toEqual([
       "CLASSIFICATION_MAP",
       "CliError",
@@ -232,6 +232,7 @@ describe("barrel file does not expose internal modules", () => {
       "evaluateShipGate",
       "evaluateTestGate",
       "extractHeadingAnchors",
+      "formatInlineGrillInjection",
       "getMostRecentActiveTask",
       "hasTaskName",
       "installSkill",
@@ -253,6 +254,8 @@ describe("barrel file does not expose internal modules", () => {
       "reconstructStateFromGit",
       "removeTaskEntry",
       "renderCatalog",
+      "renderInlineGrillAdvisory",
+      "renderInlineGrillConfirmPrompt",
       "resolveStatusPath",
       "runSubagentsInParallel",
       "scanForPlaceholders",
@@ -266,6 +269,7 @@ describe("barrel file does not expose internal modules", () => {
       "serializeStatusEntries",
       "serializeSubagentSummary",
       "serializeTestOutput",
+      "shouldTriggerInlineGrill",
       "slugify",
       "updateEntryStatus",
       "upsertTaskEntry",
