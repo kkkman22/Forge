@@ -1,17 +1,17 @@
-import { describe, it, expect } from "vitest";
+import { describe, expect, it } from "vitest";
+import type { Glossary, GlossaryTerm } from "../src/glossary.js";
+import type { TermCandidate } from "../src/glossary-extractor.js";
+import type { GlossaryCheckInput, GlossaryCheckResult } from "../src/glossary-hook.js";
 import {
   GLOSSARY_BLOCK_POLICY,
-  type GlossaryCheckPhase,
   type GlossaryCheckMode,
+  type GlossaryCheckPhase,
   hashCandidates,
   normalizeInput,
-  runGlossaryCheck,
-  renderGlossaryConflictPrompt,
   renderGlossaryAdvisory,
+  renderGlossaryConflictPrompt,
+  runGlossaryCheck,
 } from "../src/glossary-hook.js";
-import type { GlossaryCheckInput, GlossaryCheckResult } from "../src/glossary-hook.js";
-import type { TermCandidate } from "../src/glossary-extractor.js";
-import type { Glossary, GlossaryTerm } from "../src/glossary.js";
 
 describe("glossary-hook types and constants", () => {
   const allPhases: GlossaryCheckPhase[] = [
@@ -149,12 +149,10 @@ describe("normalizeInput", () => {
         kind: "review_findings",
         findings: [
           {
-            description:
-              "Command Handler naming inconsistency with CommandHandler",
+            description: "Command Handler naming inconsistency with CommandHandler",
           },
           {
-            description:
-              "Command Handler should follow the same pattern as elsewhere",
+            description: "Command Handler should follow the same pattern as elsewhere",
           },
         ],
       },
@@ -190,10 +188,7 @@ describe("normalizeInput", () => {
       rawInput: {
         kind: "session",
         data: {
-          decisions: [
-            "Event Sourcing pattern adopted",
-            "Event Sourcing for all aggregates",
-          ],
+          decisions: ["Event Sourcing pattern adopted", "Event Sourcing for all aggregates"],
           findings: [],
           reviews: [],
           progress: [],
@@ -244,8 +239,7 @@ describe("normalizeInput", () => {
       mode: "interactive",
       rawInput: {
         kind: "spec_content",
-        markdown:
-          "Use Event Sourcing for the Command Handler. Event Sourcing is key.",
+        markdown: "Use Event Sourcing for the Command Handler. Event Sourcing is key.",
       },
       glossary: emptyGlossary,
       now: new Date(),
@@ -253,9 +247,7 @@ describe("normalizeInput", () => {
     };
     const a = normalizeInput(input);
     const b = normalizeInput(input);
-    expect(a.map((c: TermCandidate) => c.term)).toEqual(
-      b.map((c: TermCandidate) => c.term),
-    );
+    expect(a.map((c: TermCandidate) => c.term)).toEqual(b.map((c: TermCandidate) => c.term));
   });
 });
 
@@ -278,9 +270,7 @@ describe("runGlossaryCheck", () => {
       mode: "interactive",
       rawInput: {
         kind: "candidates",
-        terms: [
-          { term: "Foo", definition: "new def", last_updated: "2026-01-01" },
-        ],
+        terms: [{ term: "Foo", definition: "new def", last_updated: "2026-01-01" }],
       },
       glossary,
       now: new Date(),
@@ -298,9 +288,7 @@ describe("runGlossaryCheck", () => {
       mode: "interactive",
       rawInput: {
         kind: "candidates",
-        terms: [
-          { term: "Bar", definition: "new term", last_updated: "2026-01-01" },
-        ],
+        terms: [{ term: "Bar", definition: "new term", last_updated: "2026-01-01" }],
       },
       glossary,
       now: new Date(),
@@ -318,9 +306,7 @@ describe("runGlossaryCheck", () => {
       mode: "autonomous",
       rawInput: {
         kind: "candidates",
-        terms: [
-          { term: "Foo", definition: "new def", last_updated: "2026-01-01" },
-        ],
+        terms: [{ term: "Foo", definition: "new def", last_updated: "2026-01-01" }],
       },
       glossary,
       now: new Date(),
@@ -338,9 +324,7 @@ describe("runGlossaryCheck", () => {
       mode: "interactive",
       rawInput: {
         kind: "candidates",
-        terms: [
-          { term: "Foo", definition: "new def", last_updated: "2026-01-01" },
-        ],
+        terms: [{ term: "Foo", definition: "new def", last_updated: "2026-01-01" }],
       },
       glossary,
       now: new Date(),
@@ -359,9 +343,7 @@ describe("runGlossaryCheck", () => {
       mode: "interactive",
       rawInput: {
         kind: "candidates",
-        terms: [
-          { term: "Foo", definition: "new def", last_updated: "2026-01-01" },
-        ],
+        terms: [{ term: "Foo", definition: "new def", last_updated: "2026-01-01" }],
       },
       glossary,
       now: new Date(),

@@ -37,7 +37,7 @@ import {
   renderAdrIndex,
 } from "./adr-registry.js";
 import { parseFrontmatter } from "./frontmatter.js";
-import { detectConflict, type Glossary, type GlossaryTerm } from "./glossary.js";
+import type { Glossary, GlossaryTerm } from "./glossary.js";
 import { runGlossaryCheck } from "./glossary-hook.js";
 
 export interface DecideContext {
@@ -961,7 +961,11 @@ export function checkDecideGlossaryConflicts(
       return {
         term: c.candidate,
         existing: c.existing,
-        candidate: original ?? { term: c.candidate, definition: c.existing.definition, last_updated: c.existing.last_updated },
+        candidate: original ?? {
+          term: c.candidate,
+          definition: c.existing.definition,
+          last_updated: c.existing.last_updated,
+        },
         reason: c.reason,
       };
     });

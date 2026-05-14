@@ -1,8 +1,8 @@
-import { describe, it, expect } from "vitest";
 import * as fc from "fast-check";
-import { hashCandidates, normalizeInput } from "../src/glossary-hook.js";
-import type { GlossaryCheckInput } from "../src/glossary-hook.js";
+import { describe, expect, it } from "vitest";
 import type { Glossary } from "../src/glossary.js";
+import type { GlossaryCheckInput } from "../src/glossary-hook.js";
+import { hashCandidates, normalizeInput } from "../src/glossary-hook.js";
 
 const emptyGlossary: Glossary = { schema_version: 1, updated: "", terms: [] };
 
@@ -35,43 +35,37 @@ describe("glossary-hook property tests", () => {
 
   it("normalizeInput with spec_content is deterministic", () => {
     fc.assert(
-      fc.property(
-        fc.string({ minLength: 0, maxLength: 500 }),
-        (text) => {
-          const input: GlossaryCheckInput = {
-            phase: "spec",
-            mode: "interactive",
-            rawInput: { kind: "spec_content", markdown: text },
-            glossary: emptyGlossary,
-            now: new Date("2026-01-01"),
-            alreadyChecked: new Set(),
-          };
-          const a = normalizeInput(input);
-          const b = normalizeInput(input);
-          expect(a.map((c) => c.term)).toEqual(b.map((c) => c.term));
-        },
-      ),
+      fc.property(fc.string({ minLength: 0, maxLength: 500 }), (text) => {
+        const input: GlossaryCheckInput = {
+          phase: "spec",
+          mode: "interactive",
+          rawInput: { kind: "spec_content", markdown: text },
+          glossary: emptyGlossary,
+          now: new Date("2026-01-01"),
+          alreadyChecked: new Set(),
+        };
+        const a = normalizeInput(input);
+        const b = normalizeInput(input);
+        expect(a.map((c) => c.term)).toEqual(b.map((c) => c.term));
+      }),
     );
   });
 
   it("normalizeInput with commit_message is deterministic", () => {
     fc.assert(
-      fc.property(
-        fc.string({ minLength: 0, maxLength: 200 }),
-        (text) => {
-          const input: GlossaryCheckInput = {
-            phase: "build",
-            mode: "interactive",
-            rawInput: { kind: "commit_message", message: text },
-            glossary: emptyGlossary,
-            now: new Date("2026-01-01"),
-            alreadyChecked: new Set(),
-          };
-          const a = normalizeInput(input);
-          const b = normalizeInput(input);
-          expect(a.map((c) => c.term)).toEqual(b.map((c) => c.term));
-        },
-      ),
+      fc.property(fc.string({ minLength: 0, maxLength: 200 }), (text) => {
+        const input: GlossaryCheckInput = {
+          phase: "build",
+          mode: "interactive",
+          rawInput: { kind: "commit_message", message: text },
+          glossary: emptyGlossary,
+          now: new Date("2026-01-01"),
+          alreadyChecked: new Set(),
+        };
+        const a = normalizeInput(input);
+        const b = normalizeInput(input);
+        expect(a.map((c) => c.term)).toEqual(b.map((c) => c.term));
+      }),
     );
   });
 

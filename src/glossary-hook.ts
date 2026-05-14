@@ -1,11 +1,11 @@
-import type { TermCandidate } from "./glossary-extractor.js";
-import {
-  extractCandidates,
-  filterCandidates,
-  DEFAULT_EXTRACTION_RULES,
-} from "./glossary-extractor.js";
 import type { Glossary, GlossaryTerm } from "./glossary.js";
 import { detectConflict } from "./glossary.js";
+import type { TermCandidate } from "./glossary-extractor.js";
+import {
+  DEFAULT_EXTRACTION_RULES,
+  extractCandidates,
+  filterCandidates,
+} from "./glossary-extractor.js";
 import type { DecisionTree, DecisionTreeNode } from "./grill.js";
 import type { SessionData } from "./learn.js";
 
@@ -111,10 +111,7 @@ function collectGlossaryNames(glossary: Glossary): string[] {
   return out;
 }
 
-function textToCandidates(
-  text: string,
-  existingTerms: string[],
-): TermCandidate[] {
+function textToCandidates(text: string, existingTerms: string[]): TermCandidate[] {
   const raw = extractCandidates(text, existingTerms);
   return filterCandidates(raw, DEFAULT_EXTRACTION_RULES);
 }
@@ -170,24 +167,17 @@ export function normalizeInput(input: GlossaryCheckInput): TermCandidate[] {
       return textToCandidates(input.rawInput.markdown, existing);
 
     case "plan_content": {
-      const text = input.rawInput.tasks
-        .map((t) => `${t.title}. ${t.description}`)
-        .join(". ");
+      const text = input.rawInput.tasks.map((t) => `${t.title}. ${t.description}`).join(". ");
       return textToCandidates(text, existing);
     }
 
     case "review_findings": {
-      const text = input.rawInput.findings
-        .map((f) => f.description)
-        .join(". ");
+      const text = input.rawInput.findings.map((f) => f.description).join(". ");
       return textToCandidates(text, existing);
     }
 
     case "session":
-      return textToCandidates(
-        collectSessionText(input.rawInput.data),
-        existing,
-      );
+      return textToCandidates(collectSessionText(input.rawInput.data), existing);
 
     case "commit_message":
       return textToCandidates(input.rawInput.message, existing);
@@ -239,8 +229,7 @@ export function runGlossaryCheck(input: GlossaryCheckInput): GlossaryCheckResult
     }
   }
 
-  const shouldBlock = conflicts.length > 0
-    && GLOSSARY_BLOCK_POLICY[input.phase][input.mode];
+  const shouldBlock = conflicts.length > 0 && GLOSSARY_BLOCK_POLICY[input.phase][input.mode];
 
   return {
     phase: input.phase,
@@ -251,10 +240,7 @@ export function runGlossaryCheck(input: GlossaryCheckInput): GlossaryCheckResult
   };
 }
 
-function runCandidatesCheck(
-  input: GlossaryCheckInput,
-  terms: GlossaryTerm[],
-): GlossaryCheckResult {
+function runCandidatesCheck(input: GlossaryCheckInput, terms: GlossaryTerm[]): GlossaryCheckResult {
   const cacheKey = `${input.phase}:${hashCandidates(terms.map((t) => ({ term: t.term, context: t.definition, frequency: 1 })))}`;
 
   if (input.alreadyChecked.has(cacheKey)) {
@@ -283,8 +269,7 @@ function runCandidatesCheck(
     }
   }
 
-  const shouldBlock = conflicts.length > 0
-    && GLOSSARY_BLOCK_POLICY[input.phase][input.mode];
+  const shouldBlock = conflicts.length > 0 && GLOSSARY_BLOCK_POLICY[input.phase][input.mode];
 
   return {
     phase: input.phase,
@@ -332,12 +317,8 @@ export function renderGlossaryAdvisory(result: GlossaryCheckResult): string {
   const lines: string[] = [];
   lines.push(`# Glossary Advisory: ${result.phase}`);
   lines.push("");
-  lines.push(
-    `本次 autonomous 执行检测到术语冲突 ${result.conflicts.length} 处。`,
-  );
-  lines.push(
-    "建议在交互模式下运行 `/forge learn --review-glossary` 进行人工裁定。",
-  );
+  lines.push(`本次 autonomous 执行检测到术语冲突 ${result.conflicts.length} 处。`);
+  lines.push("建议在交互模式下运行 `/forge learn --review-glossary` 进行人工裁定。");
   lines.push("");
   lines.push("## 冲突清单");
   for (const conflict of result.conflicts) {
