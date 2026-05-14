@@ -20,6 +20,8 @@ import {
   type TermCandidate,
 } from "./glossary-extractor.js";
 
+export { renderGlossaryConflictPrompt, runGlossaryCheck } from "./glossary-hook.js";
+
 export { detectSpecLeak, loadBannedPatterns } from "./spec-leak-detector.js";
 
 // ---------------------------------------------------------------------------

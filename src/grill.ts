@@ -16,13 +16,14 @@
  * **Validates: Requirements 4.4**
  */
 
-import { detectConflict, type Glossary, type GlossaryTerm } from "./glossary.js";
+import type { Glossary, GlossaryTerm } from "./glossary.js";
 import {
   DEFAULT_EXTRACTION_RULES,
   extractCandidates,
   filterCandidates,
   type TermCandidate,
 } from "./glossary-extractor.js";
+import { runGlossaryCheck } from "./glossary-hook.js";
 
 // ---------------------------------------------------------------------------
 // Types
@@ -598,25 +599,9 @@ function renderQAPairs(nodes: DecisionTreeNode[]): string[] {
 
 // ---------------------------------------------------------------------------
 // Glossary conflict detection for grill rounds (Task 4.6)
+// NOTE: constants GRILL_CONFLICT_DEFINITION_MAX_LENGTH and
+// GRILL_CONFLICT_DEFAULT_DATE removed — now handled by glossary-hook.
 // ---------------------------------------------------------------------------
-
-/**
- * Maximum number of characters from a candidate's context snippet kept
- * as the provisional definition when checking for glossary conflicts.
- * Matches the `CONTEXT_RADIUS`-driven snippet width in the extractor
- * but clamps at a slightly larger window so the provisional definition
- * preserves enough signal for a meaningful diff against an existing
- * glossary entry.
- */
-const GRILL_CONFLICT_DEFINITION_MAX_LENGTH = 80;
-
-/**
- * Date used when no timestamp is supplied to
- * {@link checkGrillGlossaryConflicts}. A fixed sentinel keeps the
- * function pure with respect to its explicit arguments while still
- * producing a well-formed ISO date string on the provisional term.
- */
-const GRILL_CONFLICT_DEFAULT_DATE = "1970-01-01";
 
 /**
  * A single conflict surfaced while checking grill answers against the
@@ -676,31 +661,25 @@ export function checkGrillGlossaryConflicts(
   glossary: Glossary,
   now: Date = new Date(),
 ): GrillConflictCheckResult {
-  const text = collectTreeText(tree);
-  const raw = extractCandidates(text, []);
-  const candidates = filterCandidates(raw, DEFAULT_EXTRACTION_RULES);
-  const timestamp = safeIsoDate(now);
-  const conflictingTerms: GrillConflictCheckResult["conflictingTerms"] = [];
-
-  for (const candidate of candidates) {
-    const provisional: GlossaryTerm = {
-      term: candidate.term,
-      definition: truncateDefinition(candidate.context),
-      last_updated: timestamp,
-    };
-    const result = detectConflict(glossary, provisional);
-    if (result.hasConflict && result.conflictingTerm !== undefined && result.reason !== undefined) {
-      conflictingTerms.push({
-        candidate: candidate.term,
-        existing: result.conflictingTerm,
-        reason: result.reason,
-      });
-    }
-  }
-
+  const result = runGlossaryCheck({
+    phase: "grill",
+    mode: "interactive",
+    rawInput: { kind: "decision_tree", tree },
+    glossary,
+    now,
+    alreadyChecked: new Set(),
+  });
   return {
-    hasConflict: conflictingTerms.length > 0,
-    conflictingTerms,
+    hasConflict: result.hasConflict,
+    conflictingTerms: result.conflicts
+      .filter(
+        (c): c is typeof c & { reason: NonNullable<typeof c.reason> } => c.reason !== undefined,
+      )
+      .map((c) => ({
+        candidate: c.candidate,
+        existing: c.existing,
+        reason: c.reason,
+      })),
   };
 }
 
@@ -734,33 +713,10 @@ export function renderGrillConflictPrompt(result: GrillConflictCheckResult): str
 }
 
 // ---------------------------------------------------------------------------
-// Internal helpers — grill conflict detection
+// Internal helpers — grill conflict detection (retained for reference)
+// NOTE: truncateDefinition and safeIsoDate were removed as unused after
+// migrating checkGrillGlossaryConflicts to use glossary-hook.
 // ---------------------------------------------------------------------------
-
-/**
- * Clamp a candidate's context snippet to at most
- * `GRILL_CONFLICT_DEFINITION_MAX_LENGTH` characters. Empty input falls
- * back to the candidate's original string identity via the caller; the
- * helper itself just guards against unbounded snippets leaking into
- * the provisional glossary term.
- */
-function truncateDefinition(context: string): string {
-  const trimmed = context.trim();
-  if (trimmed.length <= GRILL_CONFLICT_DEFINITION_MAX_LENGTH) return trimmed;
-  return trimmed.slice(0, GRILL_CONFLICT_DEFINITION_MAX_LENGTH);
-}
-
-/**
- * Derive a YYYY-MM-DD ISO date from a `Date`, defaulting to a stable
- * sentinel when the input is not a valid date object. Used only to
- * populate `GlossaryTerm.last_updated` on the provisional term; the
- * field is never persisted.
- */
-function safeIsoDate(now: Date): string {
-  const ms = now instanceof Date ? now.getTime() : Number.NaN;
-  if (Number.isNaN(ms)) return GRILL_CONFLICT_DEFAULT_DATE;
-  return new Date(ms).toISOString().slice(0, 10);
-}
 
 // ---------------------------------------------------------------------------
 // Findings parsing & resume support (Task 4.7)

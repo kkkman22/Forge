@@ -142,3 +142,56 @@ export declare function resumeFromZoomOut(statusContent: string): string;
  * Pure: same input → same output. No IO.
  */
 export declare function isZoomOutTrigger(userInput: string): boolean;
+<<<<<<< HEAD
+/**
+ * Context for deciding whether to automatically trigger a zoom-out.
+ * The calling code (SKILL behavior layer) populates this from session state.
+ *
+ *   - scenario:                  which trigger scenario is being evaluated
+ *   - debugLogRounds:            (debug only) number of failed log-debug rounds
+ *   - decideRounds:              (decide only) number of subagent rounds so far
+ *   - decideConsensusReached:    (decide only) whether a consensus was reached
+ *   - decideUserHesitationCount: (decide only) consecutive user hesitation count
+ *   - alreadyTriggered:          frequency guard — true if this scenario already
+ *                                auto-triggered in this session
+ */
+export interface AutoTriggerContext {
+    scenario: "debug" | "decide";
+    debugLogRounds?: number;
+    decideRounds?: number;
+    decideConsensusReached?: boolean;
+    decideUserHesitationCount?: number;
+    alreadyTriggered: boolean;
+}
+/**
+ * Decision returned by {@link shouldAutoTriggerZoomOut}.
+ */
+export interface AutoTriggerDecision {
+    shouldTrigger: boolean;
+    scenario: "debug" | "decide";
+    reason: string;
+}
+/**
+ * Pure function that determines whether a zoom-out should be automatically
+ * triggered based on the current execution context.
+ *
+ * Rules:
+ *   - debug:  trigger when debugLogRounds >= 2 and not already triggered
+ *   - decide: trigger when (rounds >= 2 && !consensus) || hesitation >= 3,
+ *             and not already triggered
+ *   - Frequency limit: each scenario triggers at most once per session
+ *
+ * Pure: same input → same output. No IO.
+ */
+export declare function shouldAutoTriggerZoomOut(context: AutoTriggerContext): AutoTriggerDecision;
+/**
+ * Format a {@link ZoomOutOutput} as an injection block suitable for
+ * prepending to a subsequent phase's prompt context. The output is wrapped
+ * in a horizontal-rule block and prefixed with a scenario-specific label
+ * and description.
+ *
+ * Pure: same input → same output. No IO.
+ */
+export declare function formatAutoZoomOutInjection(output: ZoomOutOutput, scenario: "debug" | "decide"): string;
+=======
+>>>>>>> origin/main
