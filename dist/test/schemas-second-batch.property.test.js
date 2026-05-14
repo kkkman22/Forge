@@ -76,7 +76,9 @@ describe("review-report / plan-file / spec-file — passthrough unknown fields",
     const KNOWN_SPEC = new Set(["feature", "status", "date", "importSource"]);
     /** **Validates: Requirement 2.7** */
     it("ReviewReportSchema preserves unknown fields", () => {
-        fc.assert(fc.property(reviewReportArb, fc.stringMatching(/^[a-z_]{3,20}$/).filter((k) => !KNOWN_REVIEW.has(k)), fc.string({ maxLength: 40 }), (sample, key, value) => {
+        fc.assert(fc.property(reviewReportArb, fc
+            .stringMatching(/^[a-z_]{3,20}$/)
+            .filter((k) => !KNOWN_REVIEW.has(k) && k !== "__proto__" && k !== "constructor" && k !== "prototype"), fc.string({ maxLength: 40 }), (sample, key, value) => {
             const augmented = { ...sample, [key]: value };
             const result = ReviewReportSchema.safeParse(augmented);
             expect(result.success).toBe(true);
@@ -87,7 +89,9 @@ describe("review-report / plan-file / spec-file — passthrough unknown fields",
     });
     /** **Validates: Requirement 2.7** */
     it("PlanFileSchema preserves unknown fields", () => {
-        fc.assert(fc.property(planFileArb, fc.stringMatching(/^[a-z_]{3,20}$/).filter((k) => !KNOWN_PLAN.has(k)), fc.string({ maxLength: 40 }), (sample, key, value) => {
+        fc.assert(fc.property(planFileArb, fc
+            .stringMatching(/^[a-z_]{3,20}$/)
+            .filter((k) => !KNOWN_PLAN.has(k) && k !== "__proto__" && k !== "constructor" && k !== "prototype"), fc.string({ maxLength: 40 }), (sample, key, value) => {
             const augmented = { ...sample, [key]: value };
             const result = PlanFileSchema.safeParse(augmented);
             expect(result.success).toBe(true);

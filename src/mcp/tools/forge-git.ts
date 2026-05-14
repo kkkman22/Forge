@@ -127,7 +127,9 @@ export function truncateDiffContent(rawDiff: string): string {
     let sectionLines: string[];
     if (section.lines.length > DIFF_PER_FILE_MAX_LINES) {
       sectionLines = section.lines.slice(0, DIFF_PER_FILE_MAX_LINES);
-      sectionLines.push(`\n... [truncated: ${section.lines.length - DIFF_PER_FILE_MAX_LINES} more lines in ${section.filePath}]`);
+      sectionLines.push(
+        `\n... [truncated: ${section.lines.length - DIFF_PER_FILE_MAX_LINES} more lines in ${section.filePath}]`,
+      );
     } else {
       sectionLines = section.lines;
     }

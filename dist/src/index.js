@@ -23,6 +23,10 @@ export { isFixCandidate, parseGitLog as parseFixRecoveryGitLog, } from "./fix-re
 export { ForgeError } from "./forge-error.js";
 // Incremental verifier
 export { buildVerificationCriteria, determineVerificationStrategy, INCREMENTAL_THRESHOLD, } from "./incremental-verifier.js";
+// Knowledge catalog (Layer A progressive index)
+export { buildCatalog, parseEvolvedRulesSummary, parseFailureSummary, parseSolutionFrontmatter, renderCatalog, } from "./knowledge-catalog.js";
+// Knowledge integrity linter
+export { checkContradictions, checkOrphanSolutions, checkReferenceIntegrity, lintKnowledgeIntegrity, } from "./knowledge-integrity.js";
 // Plan engine
 export { checkPlanStructure, detectPlanFormat, extractHeadingAnchors, FORBIDDEN_PLACEHOLDERS, scanForPlaceholders, validateAtomicTask, validateDependencies, validateDesignReferences, validateLightweightPlan, validateLightweightTask, validatePlan, validatePlanTasks, validateSpecLocked, } from "./plan.js";
 // Quality gate

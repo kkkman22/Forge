@@ -34,8 +34,8 @@ function extractFrozenCheckHooks(config) {
     const frozenChecks = [];
     for (const hookGroup of preToolUseHooks) {
         const matcher = hookGroup.matcher ?? "";
-        // Only look at Write|Edit and Bash matchers (not Write|Edit|Bash which is the plan context hook)
-        if (matcher !== "Write|Edit" && matcher !== "Bash") {
+        // Only look at Write|Edit, Write|Edit|MultiEdit and Bash matchers (not Write|Edit|Bash which is the plan context hook)
+        if (matcher !== "Write|Edit" && matcher !== "Write|Edit|MultiEdit" && matcher !== "Bash") {
             continue;
         }
         for (const hook of hookGroup.hooks) {
@@ -53,9 +53,11 @@ function extractFrozenCheckHooks(config) {
 describe("Bug Condition: Frozen zone hook chain swallows exit codes via || true", () => {
     const config = loadHooksConfig();
     const frozenCheckHooks = extractFrozenCheckHooks(config);
-    it("should find frozen-check hooks for both Write|Edit and Bash matchers", () => {
+    it("should find frozen-check hooks for both Write|Edit|MultiEdit and Bash matchers", () => {
         const matchers = frozenCheckHooks.map((h) => h.matcher);
-        expect(matchers).toContain("Write|Edit");
+        // Accept either Write|Edit or Write|Edit|MultiEdit (upgrade path)
+        const hasWriteEditMatcher = matchers.includes("Write|Edit") || matchers.includes("Write|Edit|MultiEdit");
+        expect(hasWriteEditMatcher, `Expected Write|Edit or Write|Edit|MultiEdit matcher, got: ${matchers}`).toBe(true);
         expect(matchers).toContain("Bash");
     });
     it("frozen-check hook commands must NOT end with || true (property-based)", () => {
@@ -78,7 +80,8 @@ describe("Bug Condition: Frozen zone hook chain swallows exit codes via || true"
         }), { numRuns: 40 });
     });
     it("Write|Edit frozen-check command must not swallow check-frozen exit code", () => {
-        const writeEditHook = frozenCheckHooks.find((h) => h.matcher === "Write|Edit");
+        const writeEditHook = frozenCheckHooks.find((h) => h.matcher === "Write|Edit|MultiEdit") ||
+            frozenCheckHooks.find((h) => h.matcher === "Write|Edit");
         expect(writeEditHook).toBeDefined();
         // The command should NOT end with `|| true`
         const command = writeEditHook?.command.trim();

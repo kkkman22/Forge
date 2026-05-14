@@ -272,11 +272,14 @@ describe("Contract: hooks.json semantic validation", () => {
         "PostToolUse",
         "Stop",
         "TeammateIdle",
+        "PreCompact",
+        "PostCompact",
         "TaskCompleted",
     ]);
     const VALID_TOOL_NAMES = new Set([
         "Write",
         "Edit",
+        "MultiEdit",
         "Bash",
         "Read",
         "Grep",
@@ -648,7 +651,77 @@ describe("Contract: CLAUDE.md reference pointers resolve", () => {
     });
 });
 // ---------------------------------------------------------------------------
-// 19. SKILL references/ structure
+// 19. UltraReview CI integration
+describe("Contract: ultrareview CI workflow", () => {
+    const workflowPath = resolve(ROOT, ".github", "workflows", "ultrareview.yml");
+    it(".github/workflows/ultrareview.yml exists", () => {
+        expect(existsSync(workflowPath), "ultrareview.yml workflow missing").toBe(true);
+    });
+    if (!existsSync(workflowPath))
+        return;
+    const workflow = readFileSync(workflowPath, "utf-8");
+    it("triggers on pull_request events", () => {
+        expect(workflow, "missing pull_request trigger").toContain("pull_request");
+    });
+    it("references ANTHROPIC_API_KEY secret", () => {
+        expect(workflow, "missing ANTHROPIC_API_KEY reference").toContain("ANTHROPIC_API_KEY");
+    });
+    it("uses upload-artifact step", () => {
+        expect(workflow, "missing upload-artifact step").toContain("upload-artifact");
+    });
+    it("calls run-ci-ultrareview.sh", () => {
+        expect(workflow, "missing run-ci-ultrareview.sh invocation").toContain("run-ci-ultrareview.sh");
+    });
+    it("has PR comment step", () => {
+        expect(workflow, "missing PR comment step").toContain("github-script");
+    });
+});
+describe("Contract: run-ci-ultrareview.sh script", () => {
+    const scriptPath = resolve(ROOT, "scripts", "run-ci-ultrareview.sh");
+    it("scripts/run-ci-ultrareview.sh exists and is executable", () => {
+        expect(existsSync(scriptPath), "run-ci-ultrareview.sh missing").toBe(true);
+        const stat = statSync(scriptPath);
+        // Check executable bit (owner)
+        expect(stat.mode & 0o100, "script not executable").toBeTruthy();
+    });
+    if (!existsSync(scriptPath))
+        return;
+    const script = readFileSync(scriptPath, "utf-8");
+    it("references claude ultrareview command", () => {
+        expect(script, "missing claude ultrareview invocation").toContain("claude ultrareview");
+    });
+    it("handles P0 exit code", () => {
+        expect(script, "missing P0 exit 1 handling").toContain("exit 1");
+    });
+    it("supports CI_ULTRAREVIEW_STRICT env var", () => {
+        expect(script, "missing STRICT env var support").toContain("CI_ULTRAREVIEW_STRICT");
+    });
+    it("supports CI_ULTRAREVIEW_TIMEOUT env var", () => {
+        expect(script, "missing TIMEOUT env var support").toContain("CI_ULTRAREVIEW_TIMEOUT");
+    });
+});
+describe("Contract: review artifact template", () => {
+    const templatePath = resolve(ROOT, "templates", "review-ci.md.tmpl");
+    it("templates/review-ci.md.tmpl exists", () => {
+        expect(existsSync(templatePath), "review artifact template missing").toBe(true);
+    });
+    if (!existsSync(templatePath))
+        return;
+    const template = readFileSync(templatePath, "utf-8");
+    it("contains required frontmatter fields", () => {
+        expect(template).toContain("source:");
+        expect(template).toContain("pr_number:");
+        expect(template).toContain("commit_sha:");
+        expect(template).toContain("severity_counts:");
+    });
+    it("contains required sections", () => {
+        expect(template).toContain("## Summary");
+        expect(template).toContain("## Findings");
+        expect(template).toContain("## Raw JSON");
+    });
+});
+// ---------------------------------------------------------------------------
+// 20. SKILL references/ structure
 // ---------------------------------------------------------------------------
 describe("Contract: SKILL references/ structure", () => {
     const skillsWithRefs = {
@@ -709,6 +782,50 @@ describe("Contract: SKILL references/ structure", () => {
                 expect(existsSync(resolvedPath), `Broken cross-SKILL ref in ${dir.name}/SKILL.md: ${ref}`).toBe(true);
             }
         }
+    });
+});
+// ---------------------------------------------------------------------------
+// 20. Frozen-zone structured feedback scripts
+// ---------------------------------------------------------------------------
+describe("Contract: frozen-zone structured feedback scripts", () => {
+    const requiredScripts = [
+        "scripts/zone-registry.sh",
+        "scripts/hook-check-frozen-structured.sh",
+        "scripts/hook-check-frozen-post.sh",
+        "scripts/hook-check-frozen.sh",
+        "scripts/print-zone-registry.sh",
+        "scripts/summarize-frozen-events.sh",
+    ];
+    for (const script of requiredScripts) {
+        it(`${script} exists`, () => {
+            const scriptPath = resolve(ROOT, script);
+            expect(existsSync(scriptPath), `Missing: ${script}`).toBe(true);
+        });
+        it(`${script} is executable`, () => {
+            const scriptPath = resolve(ROOT, script);
+            const mode = statSync(scriptPath).mode;
+            expect((mode & 0o111) !== 0, `${script} is not executable. Run: chmod +x ${script}`).toBe(true);
+        });
+    }
+    it("hooks.json contains PostToolUse frozen-post hook", () => {
+        const hooksPath = resolve(ROOT, "hooks/hooks.json");
+        const hooksFile = JSON.parse(readFileSync(hooksPath, "utf-8"));
+        const postGroups = hooksFile.hooks.PostToolUse;
+        const hasFrozenPost = postGroups.some((group) => group.hooks.some((h) => h.command?.includes("frozen-post")));
+        expect(hasFrozenPost, "PostToolUse missing frozen-post hook").toBe(true);
+    });
+    it("hooks.json PreToolUse frozen matcher includes MultiEdit", () => {
+        const hooksPath = resolve(ROOT, "hooks/hooks.json");
+        const hooksFile = JSON.parse(readFileSync(hooksPath, "utf-8"));
+        const preGroups = hooksFile.hooks.PreToolUse;
+        const frozenGroup = preGroups.find((group) => group.hooks.some((h) => h.command?.includes("hook-check-frozen")));
+        expect(frozenGroup?.matcher).toContain("MultiEdit");
+    });
+    it("config.md contains HARD-GATE frozen-zone-protection block", () => {
+        const configPath = resolve(ROOT, ".forge/config.md");
+        const config = readFileSync(configPath, "utf-8");
+        expect(config).toContain('<HARD-GATE name="frozen-zone-protection">');
+        expect(config).toContain("</HARD-GATE>");
     });
 });
 //# sourceMappingURL=contract.test.js.map
