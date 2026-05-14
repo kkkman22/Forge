@@ -227,6 +227,7 @@ export function isZoomOutTrigger(userInput) {
     }
     return false;
 }
+<<<<<<< HEAD
 /**
  * Pure function that determines whether a zoom-out should be automatically
  * triggered based on the current execution context.
@@ -302,6 +303,8 @@ export function formatAutoZoomOutInjection(output, scenario) {
     const description = AUTO_TRIGGER_DESCRIPTIONS[scenario];
     return ["---", `${label} ${description}`, "", rendered, "---"].join("\n");
 }
+=======
+>>>>>>> origin/main
 // ---------------------------------------------------------------------------
 // Internal frontmatter helpers
 // ---------------------------------------------------------------------------

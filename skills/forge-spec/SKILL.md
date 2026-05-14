@@ -76,6 +76,23 @@ disable-model-invocation: true
 
 自检未通过 → 自动修正并重新自检，直到全部通过。全部通过后提示用户确认锁定。
 
+### Step 2a: Inline Grill Trigger (conditional)
+
+After Step 2 Review completes:
+
+1. If `ambiguity_score >= threshold`:
+   - Call `shouldTriggerInlineGrill({ mode, reason: "spec_high_ambiguity", alreadyTriggered })`
+   - `trigger: true` (interactive): Render `renderInlineGrillConfirmPrompt("spec_high_ambiguity")`, await user confirmation
+     - User confirms: Run inline grill loop using `generateDecisionTree` / `selectNextQuestion` / `applyAnswer`, then `formatInlineGrillInjection` → re-generate draft → re-run Step 2 Review
+     - User declines: Continue to Step 3 Lock with ambiguity warning preserved
+   - `trigger: false` (autonomous): Render `renderInlineGrillAdvisory("spec_high_ambiguity")`, write to `.forge/findings/spec-ambiguity-advisory-<topic>.md`, continue to Step 3
+2. If `ambiguity_score < threshold`: Skip directly to Step 3 Lock
+
+**Constraints**:
+- Inline grill does NOT write `findings/grill-<topic>.md`
+- Spec frontmatter: set `inline_grill_applied: true` when grill completed
+- Frequency: at most once per session per reason
+
 → 每项检查的合格标准与反例详见 references/quality-standards.md
 
 ### Step 3: Lock

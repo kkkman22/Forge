@@ -111,6 +111,18 @@ export {
   type IntegrityInput,
   lintKnowledgeIntegrity,
 } from "./knowledge-integrity.js";
+// Branch gate
+export {
+  DEFAULT_SEVERITY,
+  type BranchGateInput,
+  type BranchGateMode,
+  type BranchGateResult,
+  type BranchGateSeverity,
+  type BranchGateSkill,
+  renderBranchGateAdvisory,
+  renderBranchGatePrompt,
+  runBranchGate,
+} from "./branch-gate.js";
 // Core types (from loop-types.js)
 export type {
   AgentInterface,
@@ -220,3 +232,14 @@ export {
 } from "./status-resolver.js";
 // Subagent runner
 export { buildSubagentInvocations, runSubagentsInParallel } from "./subagent-runner.js";
+// Inline grill orchestration
+export {
+  type AlreadyTriggered,
+  type GrillInlineMode,
+  type GrillInlineReason,
+  type GrillInlineResult,
+  formatInlineGrillInjection,
+  renderInlineGrillAdvisory,
+  renderInlineGrillConfirmPrompt,
+  shouldTriggerInlineGrill,
+} from "./grill-inline.js";

@@ -32,6 +32,16 @@ Uncommitted: !`git status --short 2>/dev/null | head -10 || echo "clean"`
 
 **Not For**：review 或 test 未执行 / 存在未解决的 P0/P1 问题
 
+### §1.5 Pre-flight: Branch Gate
+
+调用 `runBranchGate({ skill: "ship", mode, currentBranch, currentTask, pendingDeliveries, alreadyCheckedThisPhase, isCleanTree })`：
+- `passed` / `skipped` → 继续后续 §
+- `auto_fixed` → 输出 `✅ 已自动切换到 <newBranch>` 后继续
+- `blocked` → 中止 skill，按 mode 输出对应提示
+- `warned` → 输出警告但继续
+
+默认严重度：block。可通过 `severityOverride` 覆盖。
+
 ## 2. Gate Checks
 
 <HARD-GATE name="ship-gate-sequence">
