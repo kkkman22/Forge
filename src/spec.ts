@@ -19,6 +19,7 @@ import {
   filterCandidates,
   type TermCandidate,
 } from "./glossary-extractor.js";
+export { runGlossaryCheck, renderGlossaryConflictPrompt } from "./glossary-hook.js";
 
 export { detectSpecLeak, loadBannedPatterns } from "./spec-leak-detector.js";
 
