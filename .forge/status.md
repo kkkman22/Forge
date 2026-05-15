@@ -1,9 +1,9 @@
 ---
-current_task: "atomic-task-depends-on-utilization"
+current_task: "none"
 tier: "standard"
-task_type: "feature"
-project_phase: "plan"
-phase: "active"
+task_type: ""
+project_phase: "idle"
+phase: "completed"
 work_nature: "feature"
 updated: "2026-05-15"
 ---
@@ -12,12 +12,11 @@ updated: "2026-05-15"
 
 ## 当前任务
 
-**atomic-task-depends-on-utilization** — AtomicTask dependsOn 字段启用 & plan 拆解增强
-**Spec**: `.forge/specs/atomic-task-depends-on-utilization/spec.md` (locked)
-**阶段序列**: plan → build → review → test → ship
+无活跃任务。
 
 ## 已完成任务
 
+- atomic-task-depends-on-utilization: AtomicTask dependsOn 字段验证（verification-only，9/9 AC，5420 tests）
 - knowledge-hooks-auto-rebuild: 知识库 catalog/integrity 自动 hook（事件驱动，7 commits，32 tests）
 - branch-topic-gate-hook: (暂停)
 - failure-sink-trigger-expansion: (暂停)
