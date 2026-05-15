@@ -182,3 +182,28 @@ export function checkSpecHealth(input: SpecHealthInput): SpecHealthReport {
 
   return { ambiguityScore: score, dimensions, overallVerdict: verdict, recommendations };
 }
+
+// ---------------------------------------------------------------------------
+// Advisory rendering
+// ---------------------------------------------------------------------------
+
+export function renderSpecHealthAdvisory(report: SpecHealthReport): string {
+  const lines: string[] = [
+    `## Spec Health Advisory`,
+    `**Verdict**: ${report.overallVerdict}`,
+    `**Score**: ${report.ambiguityScore.toFixed(2)}`,
+    ``,
+    `### Dimensions`,
+  ];
+  for (const dim of Object.values(report.dimensions)) {
+    const icon = dim.passed ? "✅" : "❌";
+    lines.push(`- ${dim.dimension}: ${icon} (${dim.errorCount} issues)`);
+  }
+  if (report.recommendations.length > 0) {
+    lines.push("", "### Recommendations");
+    for (const r of report.recommendations) {
+      lines.push(`- [${r.kind}] ${r.reason}`);
+    }
+  }
+  return lines.join("\n");
+}
