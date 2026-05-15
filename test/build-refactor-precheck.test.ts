@@ -12,9 +12,10 @@
  *
  * **Validates: Spec Requirements 1, 6, 8**
  */
-import { describe, it, expect } from "vitest";
+
 import { readFileSync } from "fs";
 import { resolve } from "path";
+import { describe, expect, it } from "vitest";
 
 const ROOT = resolve(__dirname, "..");
 const REFACTOR_MODE = resolve(ROOT, "skills/forge-build/references/refactor-mode.md");

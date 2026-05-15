@@ -7,8 +7,8 @@
  *   - Episode IDs increment correctly across triggers
  */
 
-import { describe, expect, it } from "vitest";
 import * as fc from "fast-check";
+import { describe, expect, it } from "vitest";
 import {
   buildFailureEpisode,
   type FailureContext,

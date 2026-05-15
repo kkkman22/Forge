@@ -1,6 +1,6 @@
-import { describe, it, expect } from "vitest";
 import { readFileSync } from "fs";
 import { resolve } from "path";
+import { describe, expect, it } from "vitest";
 
 const SKILL_PATH = resolve(__dirname, "../../skills/forge-plan/SKILL.md");
 const DEP_RULES_PATH = resolve(__dirname, "../../skills/forge-plan/references/dependency-rules.md");

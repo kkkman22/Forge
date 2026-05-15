@@ -1,13 +1,13 @@
-import { describe, it, expect } from "vitest";
 import * as fc from "fast-check";
+import { describe, expect, it } from "vitest";
 import {
-  shouldTriggerInlineGrill,
-  renderInlineGrillAdvisory,
-  formatInlineGrillInjection,
-  type GrillInlineReason,
   type AlreadyTriggered,
-  type GrillInlineResult,
+  formatInlineGrillInjection,
   type GrillInlineMode,
+  type GrillInlineReason,
+  type GrillInlineResult,
+  renderInlineGrillAdvisory,
+  shouldTriggerInlineGrill,
 } from "../src/grill-inline.js";
 
 const REASONS: GrillInlineReason[] = [
@@ -25,63 +25,53 @@ const alreadyTriggeredArb: fc.Arbitrary<AlreadyTriggered> = fc.record({
 describe("shouldTriggerInlineGrill properties", () => {
   it("autonomous mode always returns trigger=false", () => {
     fc.assert(
-      fc.property(
-        fc.constantFrom(...REASONS),
-        alreadyTriggeredArb,
-        (reason, triggered) => {
-          const result = shouldTriggerInlineGrill({
-            mode: "autonomous",
-            reason,
-            alreadyTriggered: triggered,
-          });
-          expect(result.trigger).toBe(false);
-          expect(result.rationale).toBe("autonomous_mode");
-        },
-      ),
+      fc.property(fc.constantFrom(...REASONS), alreadyTriggeredArb, (reason, triggered) => {
+        const result = shouldTriggerInlineGrill({
+          mode: "autonomous",
+          reason,
+          alreadyTriggered: triggered,
+        });
+        expect(result.trigger).toBe(false);
+        expect(result.rationale).toBe("autonomous_mode");
+      }),
     );
   });
 
   it("interactive + already triggered reason always returns trigger=false", () => {
     fc.assert(
-      fc.property(
-        fc.constantFrom(...REASONS),
-        (reason) => {
-          const triggered: AlreadyTriggered = {
-            spec_high_ambiguity: true,
-            decide_requirement_disagreement: true,
-            decide_user_hesitation: true,
-          };
-          const result = shouldTriggerInlineGrill({
-            mode: "interactive",
-            reason,
-            alreadyTriggered: triggered,
-          });
-          expect(result.trigger).toBe(false);
-          expect(result.rationale).toBe("frequency_limit");
-        },
-      ),
+      fc.property(fc.constantFrom(...REASONS), (reason) => {
+        const triggered: AlreadyTriggered = {
+          spec_high_ambiguity: true,
+          decide_requirement_disagreement: true,
+          decide_user_hesitation: true,
+        };
+        const result = shouldTriggerInlineGrill({
+          mode: "interactive",
+          reason,
+          alreadyTriggered: triggered,
+        });
+        expect(result.trigger).toBe(false);
+        expect(result.rationale).toBe("frequency_limit");
+      }),
     );
   });
 
   it("interactive + fresh reason always returns trigger=true", () => {
     fc.assert(
-      fc.property(
-        fc.constantFrom(...REASONS),
-        (reason) => {
-          const fresh: AlreadyTriggered = {
-            spec_high_ambiguity: false,
-            decide_requirement_disagreement: false,
-            decide_user_hesitation: false,
-          };
-          const result = shouldTriggerInlineGrill({
-            mode: "interactive",
-            reason,
-            alreadyTriggered: fresh,
-          });
-          expect(result.trigger).toBe(true);
-          expect(result.rationale).toBe(reason);
-        },
-      ),
+      fc.property(fc.constantFrom(...REASONS), (reason) => {
+        const fresh: AlreadyTriggered = {
+          spec_high_ambiguity: false,
+          decide_requirement_disagreement: false,
+          decide_user_hesitation: false,
+        };
+        const result = shouldTriggerInlineGrill({
+          mode: "interactive",
+          reason,
+          alreadyTriggered: fresh,
+        });
+        expect(result.trigger).toBe(true);
+        expect(result.rationale).toBe(reason);
+      }),
     );
   });
 
@@ -105,14 +95,11 @@ describe("shouldTriggerInlineGrill properties", () => {
 describe("renderInlineGrillAdvisory properties", () => {
   it("output always contains the reason string and '/forge grill'", () => {
     fc.assert(
-      fc.property(
-        fc.constantFrom(...REASONS),
-        (reason) => {
-          const output = renderInlineGrillAdvisory(reason);
-          expect(output).toContain(reason);
-          expect(output).toContain("/forge grill");
-        },
-      ),
+      fc.property(fc.constantFrom(...REASONS), (reason) => {
+        const output = renderInlineGrillAdvisory(reason);
+        expect(output).toContain(reason);
+        expect(output).toContain("/forge grill");
+      }),
     );
   });
 });

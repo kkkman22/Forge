@@ -200,7 +200,7 @@ export function getNextPhase(current: DebugPhase): DebugPhase | null {
 // Failure-sink driver helper
 // ---------------------------------------------------------------------------
 
-import { type FailureContext } from "./failure-sink.js";
+import type { FailureContext } from "./failure-sink.js";
 
 export interface DebugResolvedInput {
   topic: string;
@@ -214,9 +214,7 @@ export function buildDebugResolvedContext(input: DebugResolvedInput): FailureCon
     topic: input.topic,
     tier: input.tier,
     trigger: "debug_resolved",
-    situation: input.rootCause
-      ? `调试完成，根因：${input.rootCause}`
-      : "调试完成",
+    situation: input.rootCause ? `调试完成，根因：${input.rootCause}` : "调试完成",
     rootCause: input.rootCause,
   };
 }

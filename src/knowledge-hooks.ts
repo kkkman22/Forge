@@ -178,6 +178,7 @@ function dispatchCatalogRebuild(knowledgeDir: string, now: Date): KnowledgeHookR
       durationMs: Date.now() - start,
     };
   } catch (e) {
+    // biome-ignore lint/suspicious/noConsole: hook-sidecar diagnostic, not app output
     console.warn(`knowledge-hooks: catalog rebuild failed: ${(e as Error).message}`);
     return { kind: "skipped", reason: "no_change_detected" as const };
   }
@@ -198,6 +199,7 @@ function dispatchIntegrityLint(knowledgeDir: string): KnowledgeHookResult {
 
     return { kind: "linted", findings };
   } catch (e) {
+    // biome-ignore lint/suspicious/noConsole: hook-sidecar diagnostic, not app output
     console.warn(`knowledge-hooks: integrity lint failed: ${(e as Error).message}`);
     return { kind: "linted", findings: [] };
   }
@@ -210,6 +212,7 @@ function dispatchInstinctsProposals(_knowledgeDir: string, _now: Date): Knowledg
     const proposals: UpgradeSuggestion[] = [];
     return { kind: "instincts_proposals", proposals };
   } catch (e) {
+    // biome-ignore lint/suspicious/noConsole: hook-sidecar diagnostic, not app output
     console.warn(`knowledge-hooks: instincts proposals failed: ${(e as Error).message}`);
     return { kind: "instincts_proposals", proposals: [] };
   }
