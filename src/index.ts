@@ -256,3 +256,22 @@ export {
   renderInlineGrillConfirmPrompt,
   shouldTriggerInlineGrill,
 } from "./grill-inline.js";
+// Spec Health
+export {
+  checkSpecHealth,
+  classifyVerdict,
+  computeAmbiguityScore,
+  computeSpecHash,
+  parseHealthCache,
+  renderSpecHealthAdvisory,
+  shouldRecompute,
+} from "./spec-health.js";
+export type {
+  DimensionScore,
+  HealthCache,
+  HealthRecommendation,
+  HealthVerdict,
+  SpecHealthDimension,
+  SpecHealthInput,
+  SpecHealthReport,
+} from "./spec-health.js";
