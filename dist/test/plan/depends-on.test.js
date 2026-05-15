@@ -1,6 +1,6 @@
-import { describe, it, expect } from "vitest";
+import { describe, expect, it } from "vitest";
 import { toTaskGraph } from "../../src/plan.js";
-import { validateGraph, topologicalOrder } from "../../src/task-graph.js";
+import { topologicalOrder, validateGraph } from "../../src/task-graph.js";
 function makeAtomicTask(n, dependsOn = []) {
     return {
         taskNumber: n,
@@ -19,11 +19,7 @@ function makeAtomicTask(n, dependsOn = []) {
 }
 describe("toTaskGraph", () => {
     it("converts AtomicTask[] to TaskGraph", () => {
-        const tasks = [
-            makeAtomicTask(1, []),
-            makeAtomicTask(2, [1]),
-            makeAtomicTask(3, [1, 2]),
-        ];
+        const tasks = [makeAtomicTask(1, []), makeAtomicTask(2, [1]), makeAtomicTask(3, [1, 2])];
         const graph = toTaskGraph(tasks);
         expect(graph.tasks).toHaveLength(3);
         expect(graph.tasks[0].id).toBe("task-1");
@@ -50,8 +46,26 @@ describe("toTaskGraph", () => {
     });
     it("converts LightweightTask[] to TaskGraph", () => {
         const tasks = [
-            { taskNumber: 1, title: "T1", filePath: "a.ts", goal: "g", designReference: "design.md#s1", verifyCommand: "npm t", commitMessage: "m1", dependsOn: [] },
-            { taskNumber: 2, title: "T2", filePath: "b.ts", goal: "g", designReference: "design.md#s2", verifyCommand: "npm t", commitMessage: "m2", dependsOn: [1] },
+            {
+                taskNumber: 1,
+                title: "T1",
+                filePath: "a.ts",
+                goal: "g",
+                designReference: "design.md#s1",
+                verifyCommand: "npm t",
+                commitMessage: "m1",
+                dependsOn: [],
+            },
+            {
+                taskNumber: 2,
+                title: "T2",
+                filePath: "b.ts",
+                goal: "g",
+                designReference: "design.md#s2",
+                verifyCommand: "npm t",
+                commitMessage: "m2",
+                dependsOn: [1],
+            },
         ];
         const graph = toTaskGraph(tasks);
         expect(graph.tasks).toHaveLength(2);

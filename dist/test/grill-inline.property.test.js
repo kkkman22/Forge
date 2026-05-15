@@ -1,6 +1,6 @@
-import { describe, it, expect } from "vitest";
 import * as fc from "fast-check";
-import { shouldTriggerInlineGrill, renderInlineGrillAdvisory, formatInlineGrillInjection, } from "../src/grill-inline.js";
+import { describe, expect, it } from "vitest";
+import { formatInlineGrillInjection, renderInlineGrillAdvisory, shouldTriggerInlineGrill, } from "../src/grill-inline.js";
 const REASONS = [
     "spec_high_ambiguity",
     "decide_requirement_disagreement",

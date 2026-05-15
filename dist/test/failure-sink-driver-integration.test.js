@@ -10,7 +10,7 @@ const FIXED_NOW = new Date("2026-05-14T10:00:00.000Z");
 // ---------------------------------------------------------------------------
 // debug_resolved
 // ---------------------------------------------------------------------------
-import { buildDebugResolvedContext, } from "../src/debug.js";
+import { buildDebugResolvedContext } from "../src/debug.js";
 describe("debug driver — debug_resolved trigger integration", () => {
     it("buildDebugResolvedContext produces valid FailureContext with trigger=debug_resolved", () => {
         const ctx = buildDebugResolvedContext({
@@ -38,7 +38,7 @@ describe("debug driver — debug_resolved trigger integration", () => {
 // ---------------------------------------------------------------------------
 // grill_abandoned
 // ---------------------------------------------------------------------------
-import { buildGrillAbandonedContext, } from "../src/grill.js";
+import { buildGrillAbandonedContext } from "../src/grill.js";
 describe("grill driver — grill_abandoned trigger integration", () => {
     it("buildGrillAbandonedContext produces valid FailureContext", () => {
         const ctx = buildGrillAbandonedContext({
@@ -62,7 +62,7 @@ describe("grill driver — grill_abandoned trigger integration", () => {
 // ---------------------------------------------------------------------------
 // loop_circuit_broken
 // ---------------------------------------------------------------------------
-import { buildLoopCircuitBrokenContext, } from "../src/orchestrator.js";
+import { buildLoopCircuitBrokenContext } from "../src/orchestrator.js";
 describe("loop driver — loop_circuit_broken trigger integration", () => {
     it("buildLoopCircuitBrokenContext produces valid FailureContext", () => {
         const ctx = buildLoopCircuitBrokenContext({
@@ -88,7 +88,7 @@ describe("loop driver — loop_circuit_broken trigger integration", () => {
 // ---------------------------------------------------------------------------
 // test_layer_failed
 // ---------------------------------------------------------------------------
-import { buildTestLayerFailedContext, } from "../src/test-engine.js";
+import { buildTestLayerFailedContext } from "../src/test-engine.js";
 describe("test driver — test_layer_failed trigger integration", () => {
     it("buildTestLayerFailedContext produces valid FailureContext", () => {
         const ctx = buildTestLayerFailedContext({
