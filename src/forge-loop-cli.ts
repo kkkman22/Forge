@@ -808,6 +808,7 @@ async function main(): Promise<void> {
           t: _t,
           logSinkConfig,
           sandboxEnabled: !!opts.sandbox,
+          sdkNativeSandbox: !!sandboxProfile,
           forceNoHooks: opts.forceNoHooks === true,
         },
         effectExecutor,
