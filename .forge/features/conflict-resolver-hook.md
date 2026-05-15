@@ -13,7 +13,7 @@ total_files: 1
 | 阶段 | 文件 | 状态 | 最近更新 |
 |------|------|------|---------|
 | Decide | — | — | — |
-| Spec | [spec.md](../specs/conflict-resolver-hook/spec.md) | draft | 2026-05-14 |
+| Spec | [spec.md](../specs/conflict-resolver-hook/spec.md) | locked | 2026-05-15 |
 | Plan | — | — | — |
 | Build | — | — | — |
 | Review | — | — | — |
