@@ -40,3 +40,4 @@ updated: "2026-05-15"
 - Group C/D/E: 社区基础设施
 - feature-dossier-index: Feature Dossier Index 系统（R1-R8，49 topics）
 - documentation-onboarding: 新用户引导文档与 README 优化
+- spec-health-hook: 统一 spec 健康度评估 hook（9 commits，33 tests，3-layer review passed）
