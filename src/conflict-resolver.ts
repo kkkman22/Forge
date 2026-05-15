@@ -110,7 +110,7 @@ export interface ResolveResult {
   validationGate: ValidationGate;
 }
 
-interface ResolveContext {
+export interface ResolveContext {
   statusContent: string;
   repoRoot: string;
   readFileContent: (path: string) => Promise<string>;
