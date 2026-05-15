@@ -27,7 +27,7 @@ export interface ResolveResult {
     refusedPaths: string[];
     validationGate: ValidationGate;
 }
-interface ResolveContext {
+export interface ResolveContext {
     statusContent: string;
     repoRoot: string;
     readFileContent: (path: string) => Promise<string>;
@@ -49,4 +49,3 @@ export declare function handleMergeConflict(mergeError: string, mode: ResolveMod
     repoRoot: string;
 }): Promise<HandleMergeConflictResult>;
 export declare function parseConflictedPaths(gitOutput: string): string[];
-export {};

@@ -12,6 +12,8 @@
  *
  * **Validates: Requirements 3.1–3.11, 10.1–10.4**
  */
+// Branch gate
+export { DEFAULT_SEVERITY, renderBranchGateAdvisory, renderBranchGatePrompt, runBranchGate, } from "./branch-gate.js";
 // Error hierarchy
 export { CliError } from "./cli-error.js";
 // Context budget management
@@ -23,16 +25,16 @@ export { isFixCandidate, parseGitLog as parseFixRecoveryGitLog, } from "./fix-re
 export { ForgeError } from "./forge-error.js";
 // Glossary consistency hook
 export { GLOSSARY_BLOCK_POLICY, getAdvisoryPath, hashCandidates, normalizeInput, renderGlossaryAdvisory, renderGlossaryConflictPrompt, renderPendingAdvisoryNotice, runGlossaryCheck, } from "./glossary-hook.js";
+// Inline grill orchestration
+export { formatInlineGrillInjection, renderInlineGrillAdvisory, renderInlineGrillConfirmPrompt, shouldTriggerInlineGrill, } from "./grill-inline.js";
 // Incremental verifier
 export { buildVerificationCriteria, determineVerificationStrategy, INCREMENTAL_THRESHOLD, } from "./incremental-verifier.js";
 // Knowledge catalog (Layer A progressive index)
 export { buildCatalog, parseEvolvedRulesSummary, parseFailureSummary, parseSolutionFrontmatter, renderCatalog, } from "./knowledge-catalog.js";
-// Knowledge integrity linter
-export { checkContradictions, checkOrphanSolutions, checkReferenceIntegrity, lintKnowledgeIntegrity, } from "./knowledge-integrity.js";
 // Knowledge hooks (event-driven catalog rebuild + integrity lint)
 export { computeInputFilePaths, dispatchKnowledgeEvent, hashEvent, isCatalogStale, isThrottled, shouldTriggerEpisodeThreshold, THRESHOLD_MILESTONES, } from "./knowledge-hooks.js";
-// Branch gate
-export { DEFAULT_SEVERITY, renderBranchGateAdvisory, renderBranchGatePrompt, runBranchGate, } from "./branch-gate.js";
+// Knowledge integrity linter
+export { checkContradictions, checkOrphanSolutions, checkReferenceIntegrity, lintKnowledgeIntegrity, } from "./knowledge-integrity.js";
 // Plan engine
 export { checkPlanStructure, detectPlanFormat, extractHeadingAnchors, FORBIDDEN_PLACEHOLDERS, scanForPlaceholders, validateAtomicTask, validateDependencies, validateDesignReferences, validateLightweightPlan, validateLightweightTask, validatePlan, validatePlanTasks, validateSpecLocked, } from "./plan.js";
 // Quality gate
@@ -47,6 +49,8 @@ export { checkReviewFreshness, checkShipGate, checkShipGateWithChecklist, checkS
 // SKILL plugin mechanism
 export { installSkill, loadSkillsFromDir, mergeSkillLists, } from "./skill-loader.js";
 export { checkVersionCompatibility, validateManifest, } from "./skill-validator.js";
+// Spec Health
+export { checkSpecHealth, classifyVerdict, computeAmbiguityScore, computeSpecHash, parseHealthCache, renderSpecHealthAdvisory, shouldRecompute, } from "./spec-health.js";
 // Multi-task status tracking
 export { hasTaskName, parseStatusEntries, removeTaskEntry, serializeStatusEntries, upsertTaskEntry, } from "./state.js";
 // Status manager
@@ -55,6 +59,4 @@ export { archiveTaskStatus, getMostRecentActiveTask, listActiveTasks, migrateToM
 export { isMultiTaskMode, reconstructStateFromGit, resolveStatusPath, slugify, } from "./status-resolver.js";
 // Subagent runner
 export { buildSubagentInvocations, runSubagentsInParallel } from "./subagent-runner.js";
-// Inline grill orchestration
-export { formatInlineGrillInjection, renderInlineGrillAdvisory, renderInlineGrillConfirmPrompt, shouldTriggerInlineGrill, } from "./grill-inline.js";
 //# sourceMappingURL=index.js.map

@@ -1,6 +1,6 @@
-import { describe, it, expect } from "vitest";
+import { describe, expect, it } from "vitest";
 import { toTaskGraph } from "../../src/plan.js";
-import { validateGraph, topologicalOrder } from "../../src/task-graph.js";
+import { topologicalOrder, validateGraph } from "../../src/task-graph.js";
 function makeAtomicTask(n, dependsOn = []) {
     return {
         taskNumber: n,

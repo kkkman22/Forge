@@ -6,8 +6,8 @@
  *   - Every trigger produces a non-empty lesson
  *   - Episode IDs increment correctly across triggers
  */
-import { describe, expect, it } from "vitest";
 import * as fc from "fast-check";
+import { describe, expect, it } from "vitest";
 import { buildFailureEpisode, } from "../src/failure-sink.js";
 const ALL_TRIGGERS = [
     "three_strike",

@@ -1,8 +1,8 @@
 /**
  * Unit tests for branch-gate module — runBranchGate, DEFAULT_SEVERITY.
  */
-import { describe, it, expect } from "vitest";
-import { runBranchGate, DEFAULT_SEVERITY, } from "../src/branch-gate.js";
+import { describe, expect, it } from "vitest";
+import { DEFAULT_SEVERITY, runBranchGate, } from "../src/branch-gate.js";
 const baseInput = (overrides = {}) => ({
     skill: "build",
     mode: "interactive",
@@ -53,7 +53,7 @@ describe("runBranchGate", () => {
         }));
         expect(result.kind).toBe("blocked");
         if (result.kind === "blocked") {
-            expect(result.reasons.some(r => r.includes("不安全字符"))).toBe(true);
+            expect(result.reasons.some((r) => r.includes("不安全字符"))).toBe(true);
         }
     });
     it("returns blocked when currentTask contains path traversal", () => {
@@ -82,7 +82,7 @@ describe("runBranchGate", () => {
         }));
         expect(result.kind).toBe("blocked");
         if (result.kind === "blocked") {
-            expect(result.reasons.some(r => r.includes("不符合"))).toBe(true);
+            expect(result.reasons.some((r) => r.includes("不符合"))).toBe(true);
         }
     });
     it("returns auto_fixed when autonomous + topic mismatch + clean tree + valid branch", () => {
@@ -115,7 +115,7 @@ describe("runBranchGate", () => {
         const result = runBranchGate(baseInput({ pendingDeliveries: deliveries }));
         expect(result.kind).toBe("warned");
         if (result.kind === "warned") {
-            expect(result.reasons.some(r => r.includes("未完成"))).toBe(true);
+            expect(result.reasons.some((r) => r.includes("未完成"))).toBe(true);
         }
     });
     it("severityOverride overrides default severity", () => {

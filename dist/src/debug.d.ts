@@ -106,7 +106,7 @@ export declare function isValidPhaseTransition(from: DebugPhase, to: DebugPhase)
  * Returns null if the current phase is the last one (fix).
  */
 export declare function getNextPhase(current: DebugPhase): DebugPhase | null;
-import { type FailureContext } from "./failure-sink.js";
+import type { FailureContext } from "./failure-sink.js";
 export interface DebugResolvedInput {
     topic: string;
     tier: "light" | "standard" | "full";

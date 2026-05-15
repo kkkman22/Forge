@@ -64,9 +64,7 @@ export function validatePreCompletionChecklist(state) {
     };
 }
 export function buildTestLayerFailedContext(input) {
-    const cases = input.failedCases?.length
-        ? `，失败用例：${input.failedCases.join("、")}`
-        : "";
+    const cases = input.failedCases?.length ? `，失败用例：${input.failedCases.join("、")}` : "";
     return {
         skill: "forge-test",
         topic: input.topic,

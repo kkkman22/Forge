@@ -1,6 +1,6 @@
-import { describe, it, expect } from "vitest";
 import { readFileSync } from "fs";
 import { resolve } from "path";
+import { describe, expect, it } from "vitest";
 const ATOMIC_PATH = resolve(__dirname, "../../skills/forge-plan/references/atomic-task-format.md");
 const LW_PATH = resolve(__dirname, "../../skills/forge-plan/references/lightweight-task-format.md");
 const DOC_PATH = resolve(__dirname, "../../skills/forge-plan/references/plan-document-format.md");

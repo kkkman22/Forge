@@ -450,6 +450,13 @@ export const SKILL_FUNCTION_REGISTRY = [
         skills: ["forge-fix-conflicts/SKILL.md"],
         parameterNames: ["paths", "mode", "context"],
     },
+    // --- forge-spec/SKILL.md (spec-health) ---
+    {
+        module: "spec-health.ts",
+        functionName: "checkSpecHealth",
+        skills: ["forge-spec/SKILL.md"],
+        parameterNames: ["input"],
+    },
     // --- MCP Tools ---
     {
         module: "mcp/tools/forge-git.ts",

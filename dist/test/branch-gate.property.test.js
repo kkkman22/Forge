@@ -11,7 +11,8 @@ import * as fc from "fast-check";
 import { describe, expect, it } from "vitest";
 import { DEFAULT_SEVERITY, runBranchGate, } from "../src/branch-gate.js";
 const branchSkillArb = fc.constantFrom("plan", "build", "review", "test", "ship", "debug", "learn");
-const branchNameArb = fc.oneof(fc.tuple(fc.constantFrom("feature", "forge"), fc.string({ minLength: 1, maxLength: 20 }))
+const branchNameArb = fc.oneof(fc
+    .tuple(fc.constantFrom("feature", "forge"), fc.string({ minLength: 1, maxLength: 20 }))
     .map(([prefix, topic]) => `${prefix}/${topic}`), fc.string({ minLength: 1, maxLength: 20 }));
 const baseInput = (overrides = {}) => ({
     skill: "build",
@@ -32,8 +33,8 @@ describe("Branch Gate PBT", () => {
                 currentTask: task,
                 alreadyCheckedThisPhase: true,
             }));
-            return result.kind === "skipped"
-                && result.reason === "already_checked_this_phase";
+            return (result.kind === "skipped" &&
+                result.reason === "already_checked_this_phase");
         }));
     });
     it("currentTask=null always returns skipped", () => {
@@ -43,8 +44,7 @@ describe("Branch Gate PBT", () => {
                 currentBranch: branch,
                 currentTask: null,
             }));
-            return result.kind === "skipped"
-                && result.reason === "no_current_task";
+            return (result.kind === "skipped" && result.reason === "no_current_task");
         }));
     });
     it("DEFAULT_SEVERITY covers all skills", () => {
@@ -65,7 +65,7 @@ describe("Branch Gate PBT", () => {
         }));
     });
     it("auto_fixed only when autonomous + clean tree + valid format + topic mismatch", () => {
-        fc.assert(fc.property(branchSkillArb, fc.string({ minLength: 1, maxLength: 20 }).filter(t => t !== "target-task"), (skill, otherTopic) => {
+        fc.assert(fc.property(branchSkillArb, fc.string({ minLength: 1, maxLength: 20 }).filter((t) => t !== "target-task"), (skill, otherTopic) => {
             const resultClean = runBranchGate(baseInput({
                 skill,
                 mode: "autonomous",
