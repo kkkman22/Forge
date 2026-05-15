@@ -30,6 +30,24 @@ describe("parseHealthCache", () => {
     expect(cache!.specHash).toBe("abc123");
     expect(cache!.score).toBe(0.9);
   });
+
+  it("returns null for malformed health field (wrong types)", () => {
+    const fm = {
+      health: { score: "not-a-number", verdict: "healthy", spec_hash: "abc", generated_at: "2026" },
+    };
+    expect(parseHealthCache(fm)).toBeNull();
+  });
+
+  it("returns null for invalid verdict value", () => {
+    const fm = {
+      health: { score: 0.9, verdict: "invalid", spec_hash: "abc", generated_at: "2026" },
+    };
+    expect(parseHealthCache(fm)).toBeNull();
+  });
+
+  it("returns null when health is null", () => {
+    expect(parseHealthCache({ health: null })).toBeNull();
+  });
 });
 
 describe("shouldRecompute", () => {
