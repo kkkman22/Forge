@@ -441,6 +441,44 @@ export const SKILL_FUNCTION_REGISTRY: readonly SkillFunctionEntry[] = [
     parameterNames: ["data", "outputDir"],
   },
 
+  // --- forge-fix-conflicts/SKILL.md (conflict-resolver-hook) ---
+  {
+    module: "conflict-resolver.ts",
+    functionName: "parseConflictedPaths",
+    skills: ["forge-fix-conflicts/SKILL.md"],
+    parameterNames: ["gitOutput"],
+  },
+  {
+    module: "conflict-resolver.ts",
+    functionName: "classifyConflictZone",
+    skills: ["forge-fix-conflicts/SKILL.md"],
+    parameterNames: ["path", "statusContent"],
+  },
+  {
+    module: "conflict-resolver.ts",
+    functionName: "applyGuardedMerge",
+    skills: ["forge-fix-conflicts/SKILL.md"],
+    parameterNames: ["type", "ours", "theirs"],
+  },
+  {
+    module: "conflict-resolver.ts",
+    functionName: "buildFrozenRefusalPrompt",
+    skills: ["forge-fix-conflicts/SKILL.md"],
+    parameterNames: ["paths"],
+  },
+  {
+    module: "conflict-resolver.ts",
+    functionName: "validateConflictResolution",
+    skills: ["forge-fix-conflicts/SKILL.md"],
+    parameterNames: ["attempts"],
+  },
+  {
+    module: "conflict-resolver.ts",
+    functionName: "resolveConflicts",
+    skills: ["forge-fix-conflicts/SKILL.md"],
+    parameterNames: ["paths", "mode", "context"],
+  },
+
   // --- MCP Tools ---
   {
     module: "mcp/tools/forge-git.ts",

@@ -11,7 +11,7 @@ disable-model-invocation: true
 > **委托**：内部使用 `src/conflict-resolver.ts` 处理逻辑
 > **模式**：interactive
 
-## Overview
+## 概述
 
 显式入口，扫描当前冲突并调用 `resolveConflicts(paths, "interactive")`。
 核心三区分类、guarded 合并、frozen 拒绝、Three-Strike 逻辑全部在 `src/conflict-resolver.ts` 纯函数中实现。
