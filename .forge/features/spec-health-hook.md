@@ -13,11 +13,11 @@ total_files: 1
 | 阶段 | 文件 | 状态 | 最近更新 |
 |------|------|------|---------|
 | Decide | — | — | — |
-| Spec | [spec.md](../specs/spec-health-hook/spec.md) | draft | 2026-05-14 |
-| Plan | — | — | — |
-| Build | — | — | — |
-| Review | — | — | — |
-| Findings | — | — | — |
+| Spec | [spec.md](../specs/spec-health-hook/spec.md) | locked | 2026-05-15 |
+| Plan | [plan.md](../plans/spec-health-hook.md) | approved | 2026-05-15 |
+| Build | 9 commits, 33 tests | completed | 2026-05-15 |
+| Review | 3-layer, P1 fixed | completed | 2026-05-15 |
+| Findings | P2/P3 advisory only | completed | 2026-05-15 |
 | Debug | — | — | — |
 
 ## 摘要
