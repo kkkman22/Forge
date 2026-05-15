@@ -3,9 +3,11 @@ import {
   computeAmbiguityScore,
   classifyVerdict,
   checkSpecHealth,
+  renderSpecHealthAdvisory,
   type SpecHealthInput,
   type SpecHealthDimension,
   type DimensionScore,
+  type SpecHealthReport,
 } from "../src/spec-health.js";
 import type { BannedPatternRegistry, GlossaryRegistry } from "../src/pack/types.js";
 
@@ -164,5 +166,40 @@ describe("checkSpecHealth", () => {
     };
     const report = checkSpecHealth(input);
     expect(report.recommendations).toEqual([{ kind: "no_action", reason: "All dimensions healthy" }]);
+  });
+});
+
+describe("renderSpecHealthAdvisory", () => {
+  it("renders marginal advisory with score", () => {
+    const report: SpecHealthReport = {
+      ambiguityScore: 0.78,
+      dimensions: {
+        leak: { dimension: "leak", passed: true, errorCount: 0, details: [] },
+        scenario: { dimension: "scenario", passed: false, errorCount: 1, details: ["SCN001"] },
+        glossary: { dimension: "glossary", passed: true, errorCount: 0, details: [] },
+      },
+      overallVerdict: "marginal",
+      recommendations: [{ kind: "trigger_grill", reason: "low score" }],
+    };
+    const text = renderSpecHealthAdvisory(report);
+    expect(text).toContain("0.78");
+    expect(text).toContain("marginal");
+  });
+
+  it("renders degraded advisory with issues", () => {
+    const report: SpecHealthReport = {
+      ambiguityScore: 0.42,
+      dimensions: {
+        leak: { dimension: "leak", passed: false, errorCount: 3, details: ["a", "b", "c"] },
+        scenario: { dimension: "scenario", passed: false, errorCount: 2, details: ["x", "y"] },
+        glossary: { dimension: "glossary", passed: true, errorCount: 0, details: [] },
+      },
+      overallVerdict: "degraded",
+      recommendations: [{ kind: "rerun_spec_review", reason: "3 leaks" }],
+    };
+    const text = renderSpecHealthAdvisory(report);
+    expect(text).toContain("degraded");
+    expect(text).toContain("leak: ❌ (3 issues)");
+    expect(text).toContain("scenario: ❌ (2 issues)");
   });
 });
