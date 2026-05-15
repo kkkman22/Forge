@@ -1,5 +1,5 @@
-import { parseConflictedPaths, resolveConflicts } from "./conflict-resolver.js";
 import type { ResolveMode, ResolveResult } from "./conflict-resolver.js";
+import { parseConflictedPaths, resolveConflicts } from "./conflict-resolver.js";
 
 export interface BuildGitHookOptions {
   cwd: string;

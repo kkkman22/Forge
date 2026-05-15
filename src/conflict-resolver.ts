@@ -1,7 +1,7 @@
 import { classify } from "./conflict-classifier.js";
 import {
-  mergeProgressFile,
   mergeInstinctsOrFailures,
+  mergeProgressFile,
   mergeReviewsFile,
   reassignAdrId,
 } from "./guarded-merger.js";
