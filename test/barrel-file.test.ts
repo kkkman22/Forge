@@ -190,9 +190,9 @@ describe("barrel file does not expose internal modules", () => {
   });
 
   // Verify the total number of value exports
-  it("has exactly 101 value exports", () => {
+  it("has exactly 108 value exports", () => {
     const valueExports = Object.keys(exports).filter((key) => typeof exports[key] !== "undefined");
-    expect(valueExports).toHaveLength(101);
+    expect(valueExports).toHaveLength(108);
     expect(valueExports.sort()).toEqual([
       "CLASSIFICATION_MAP",
       "CliError",
@@ -203,6 +203,7 @@ describe("barrel file does not expose internal modules", () => {
       "INCREMENTAL_THRESHOLD",
       "SdkAgentAdapter",
       "SdkDriver",
+      "THRESHOLD_MILESTONES",
       "VALID_TRANSITIONS",
       "allEntriesVerified",
       "archiveTaskStatus",
@@ -220,6 +221,7 @@ describe("barrel file does not expose internal modules", () => {
       "checkShipGateWithFreshness",
       "checkVersionCompatibility",
       "classifySource",
+      "computeInputFilePaths",
       "createChecklist",
       "deserializeContextBudgetReport",
       "deserializeExploreSummary",
@@ -230,6 +232,7 @@ describe("barrel file does not expose internal modules", () => {
       "deserializeTestOutput",
       "detectPlanFormat",
       "determineVerificationStrategy",
+      "dispatchKnowledgeEvent",
       "evaluateReviewGate",
       "evaluateShipGate",
       "evaluateTestGate",
@@ -239,9 +242,12 @@ describe("barrel file does not expose internal modules", () => {
       "getMostRecentActiveTask",
       "hasTaskName",
       "hashCandidates",
+      "hashEvent",
       "installSkill",
+      "isCatalogStale",
       "isFixCandidate",
       "isMultiTaskMode",
+      "isThrottled",
       "isValidTransition",
       "lintKnowledgeIntegrity",
       "listActiveTasks",
@@ -281,6 +287,7 @@ describe("barrel file does not expose internal modules", () => {
       "serializeStatusEntries",
       "serializeSubagentSummary",
       "serializeTestOutput",
+      "shouldTriggerEpisodeThreshold",
       "shouldTriggerInlineGrill",
       "slugify",
       "updateEntryStatus",
