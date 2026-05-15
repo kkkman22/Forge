@@ -73,7 +73,7 @@ export function classify(path: string): Zone {
 // Failure-sink driver helper
 // ---------------------------------------------------------------------------
 
-import { type FailureContext } from "./failure-sink.js";
+import type { FailureContext } from "./failure-sink.js";
 
 export interface ConflictValidationFailedInput {
   topic: string;
@@ -82,7 +82,9 @@ export interface ConflictValidationFailedInput {
   checkOutput?: string;
 }
 
-export function buildConflictValidationFailedContext(input: ConflictValidationFailedInput): FailureContext {
+export function buildConflictValidationFailedContext(
+  input: ConflictValidationFailedInput,
+): FailureContext {
   return {
     skill: "forge-fix-conflicts",
     topic: input.topic,

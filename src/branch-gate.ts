@@ -19,8 +19,7 @@ import type { PendingDeliveryRecord } from "./loop-types.js";
 // Types
 // ---------------------------------------------------------------------------
 
-export type BranchGateSkill =
-  | "plan" | "build" | "review" | "test" | "ship" | "debug" | "learn";
+export type BranchGateSkill = "plan" | "build" | "review" | "test" | "ship" | "debug" | "learn";
 
 export type BranchGateMode = "autonomous" | "interactive";
 
@@ -92,11 +91,7 @@ export function runBranchGate(input: BranchGateInput): BranchGateResult {
     const suggestedBranch = `feature/${input.currentTask}`;
     const branchTopic = extractBranchTopic(input.currentBranch);
 
-    if (
-      input.mode === "autonomous"
-      && branchTopic !== null
-      && input.isCleanTree
-    ) {
+    if (input.mode === "autonomous" && branchTopic !== null && input.isCleanTree) {
       return {
         kind: "auto_fixed",
         previousBranch: input.currentBranch,
@@ -114,7 +109,7 @@ export function runBranchGate(input: BranchGateInput): BranchGateResult {
   if (unshipped.length > 0) {
     return {
       kind: "warned",
-      reasons: unshipped.map(u => u.message),
+      reasons: unshipped.map((u) => u.message),
       suggestedBranch: input.currentBranch,
     };
   }
@@ -134,7 +129,7 @@ export function renderBranchGatePrompt(result: BranchGateResult): string {
     case "blocked":
       return [
         "🚫 分支门禁阻断：",
-        ...result.reasons.map(r => `  - ${r}`),
+        ...result.reasons.map((r) => `  - ${r}`),
         "",
         `建议分支：${result.suggestedBranch}`,
         "",
@@ -146,7 +141,7 @@ export function renderBranchGatePrompt(result: BranchGateResult): string {
     case "warned":
       return [
         "⚠️ 分支门禁警告：",
-        ...result.reasons.map(r => `  - ${r}`),
+        ...result.reasons.map((r) => `  - ${r}`),
         "",
         `建议分支：${result.suggestedBranch}`,
       ].join("\n");
@@ -165,7 +160,7 @@ export function renderBranchGateAdvisory(result: BranchGateResult): string {
         "## Branch Gate Advisory (branch-gate-blocked)",
         "",
         "Branch gate blocked execution.",
-        ...result.reasons.map(r => `- ${r}`),
+        ...result.reasons.map((r) => `- ${r}`),
         "",
         `Suggested branch: ${result.suggestedBranch}`,
         "Action: switch to the suggested branch and retry.",
@@ -174,7 +169,7 @@ export function renderBranchGateAdvisory(result: BranchGateResult): string {
       return [
         "## Branch Gate Advisory (branch-gate-warned)",
         "",
-        ...result.reasons.map(r => `- ${r}`),
+        ...result.reasons.map((r) => `- ${r}`),
         "",
         "未交付分支 detected — consider completing their lifecycle (merge/PR/discard).",
       ].join("\n");

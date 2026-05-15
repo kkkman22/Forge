@@ -10,18 +10,25 @@
 import * as fc from "fast-check";
 import { describe, expect, it } from "vitest";
 import {
-  DEFAULT_SEVERITY,
-  runBranchGate,
   type BranchGateInput,
   type BranchGateSkill,
+  DEFAULT_SEVERITY,
+  runBranchGate,
 } from "../src/branch-gate.js";
 
 const branchSkillArb = fc.constantFrom<BranchGateSkill>(
-  "plan", "build", "review", "test", "ship", "debug", "learn",
+  "plan",
+  "build",
+  "review",
+  "test",
+  "ship",
+  "debug",
+  "learn",
 );
 
 const branchNameArb = fc.oneof(
-  fc.tuple(fc.constantFrom("feature", "forge"), fc.string({ minLength: 1, maxLength: 20 }))
+  fc
+    .tuple(fc.constantFrom("feature", "forge"), fc.string({ minLength: 1, maxLength: 20 }))
     .map(([prefix, topic]) => `${prefix}/${topic}`),
   fc.string({ minLength: 1, maxLength: 20 }),
 );
@@ -40,29 +47,41 @@ const baseInput = (overrides: Partial<BranchGateInput> = {}): BranchGateInput =>
 describe("Branch Gate PBT", () => {
   it("alreadyCheckedThisPhase=true always returns skipped", () => {
     fc.assert(
-      fc.property(branchSkillArb, branchNameArb, fc.string({ minLength: 1 }), (skill, branch, task) => {
-        const result = runBranchGate(baseInput({
-          skill,
-          currentBranch: branch,
-          currentTask: task,
-          alreadyCheckedThisPhase: true,
-        }));
-        return result.kind === "skipped"
-          && (result as { reason: string }).reason === "already_checked_this_phase";
-      }),
+      fc.property(
+        branchSkillArb,
+        branchNameArb,
+        fc.string({ minLength: 1 }),
+        (skill, branch, task) => {
+          const result = runBranchGate(
+            baseInput({
+              skill,
+              currentBranch: branch,
+              currentTask: task,
+              alreadyCheckedThisPhase: true,
+            }),
+          );
+          return (
+            result.kind === "skipped" &&
+            (result as { reason: string }).reason === "already_checked_this_phase"
+          );
+        },
+      ),
     );
   });
 
   it("currentTask=null always returns skipped", () => {
     fc.assert(
       fc.property(branchSkillArb, branchNameArb, (skill, branch) => {
-        const result = runBranchGate(baseInput({
-          skill,
-          currentBranch: branch,
-          currentTask: null,
-        }));
-        return result.kind === "skipped"
-          && (result as { reason: string }).reason === "no_current_task";
+        const result = runBranchGate(
+          baseInput({
+            skill,
+            currentBranch: branch,
+            currentTask: null,
+          }),
+        );
+        return (
+          result.kind === "skipped" && (result as { reason: string }).reason === "no_current_task"
+        );
       }),
     );
   });
@@ -77,12 +96,14 @@ describe("Branch Gate PBT", () => {
   it("main/master branch always passes regardless of other inputs", () => {
     fc.assert(
       fc.property(branchSkillArb, fc.constantFrom("autonomous", "interactive"), (skill, mode) => {
-        const result = runBranchGate(baseInput({
-          skill,
-          mode: mode as BranchGateInput["mode"],
-          currentBranch: "main",
-          currentTask: "anything",
-        }));
+        const result = runBranchGate(
+          baseInput({
+            skill,
+            mode: mode as BranchGateInput["mode"],
+            currentBranch: "main",
+            currentTask: "anything",
+          }),
+        );
         return result.kind === "passed";
       }),
     );
@@ -92,24 +113,28 @@ describe("Branch Gate PBT", () => {
     fc.assert(
       fc.property(
         branchSkillArb,
-        fc.string({ minLength: 1, maxLength: 20 }).filter(t => t !== "target-task"),
+        fc.string({ minLength: 1, maxLength: 20 }).filter((t) => t !== "target-task"),
         (skill, otherTopic) => {
-          const resultClean = runBranchGate(baseInput({
-            skill,
-            mode: "autonomous",
-            currentBranch: `feature/${otherTopic}`,
-            currentTask: "target-task",
-            isCleanTree: true,
-          }));
+          const resultClean = runBranchGate(
+            baseInput({
+              skill,
+              mode: "autonomous",
+              currentBranch: `feature/${otherTopic}`,
+              currentTask: "target-task",
+              isCleanTree: true,
+            }),
+          );
           if (resultClean.kind !== "auto_fixed") return false;
 
-          const resultDirty = runBranchGate(baseInput({
-            skill,
-            mode: "autonomous",
-            currentBranch: `feature/${otherTopic}`,
-            currentTask: "target-task",
-            isCleanTree: false,
-          }));
+          const resultDirty = runBranchGate(
+            baseInput({
+              skill,
+              mode: "autonomous",
+              currentBranch: `feature/${otherTopic}`,
+              currentTask: "target-task",
+              isCleanTree: false,
+            }),
+          );
           return resultDirty.kind !== "auto_fixed";
         },
       ),

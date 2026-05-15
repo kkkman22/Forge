@@ -1,4 +1,4 @@
-import { describe, it, expect } from "vitest";
+import { describe, expect, it } from "vitest";
 
 describe("barrel exports", () => {
   it("exports spec-health functions from index", async () => {

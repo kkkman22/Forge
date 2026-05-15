@@ -13,14 +13,14 @@
 import * as fc from "fast-check";
 import { describe, expect, it } from "vitest";
 import {
-    type AtomicTask,
-    FORBIDDEN_PLACEHOLDERS,
-    scanForPlaceholders,
-    type TDDSteps,
-    validateAtomicTask,
-    validateDependencies,
-    validatePlanTasks,
-    validateSpecLocked,
+  type AtomicTask,
+  FORBIDDEN_PLACEHOLDERS,
+  scanForPlaceholders,
+  type TDDSteps,
+  validateAtomicTask,
+  validateDependencies,
+  validatePlanTasks,
+  validateSpecLocked,
 } from "../src/plan.js";
 
 // ---------------------------------------------------------------------------

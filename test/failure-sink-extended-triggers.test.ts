@@ -74,12 +74,9 @@ describe("failure-sink extended triggers — buildFailureEpisode", () => {
   }
 
   it("all 5 new triggers produce distinct lesson text", () => {
-    const lessons = newTriggers.map(({ trigger, skill, situation }, i) =>
-      buildFailureEpisode(
-        makeCtx({ trigger, skill, situation }),
-        FIXED_NOW,
-        i + 1,
-      ).lesson,
+    const lessons = newTriggers.map(
+      ({ trigger, skill, situation }, i) =>
+        buildFailureEpisode(makeCtx({ trigger, skill, situation }), FIXED_NOW, i + 1).lesson,
     );
     const unique = new Set(lessons);
     expect(unique.size).toBe(lessons.length);
@@ -97,11 +94,7 @@ describe("failure-sink extended triggers — buildFailureEpisode", () => {
       1,
     ).lesson;
     for (const t of existing) {
-      const existingLesson = buildFailureEpisode(
-        makeCtx({ trigger: t }),
-        FIXED_NOW,
-        2,
-      ).lesson;
+      const existingLesson = buildFailureEpisode(makeCtx({ trigger: t }), FIXED_NOW, 2).lesson;
       expect(newLesson).not.toBe(existingLesson);
     }
   });
@@ -111,11 +104,7 @@ describe("failure-sink extended triggers — buildFailureEvolutionMarker", () =>
   for (const { trigger, skill, situation } of newTriggers) {
     it(`renders marker with target=${skill}#${trigger}`, () => {
       const ctx = makeCtx({ trigger, skill, situation });
-      const marker = buildFailureEvolutionMarker(
-        ctx,
-        "ep-2026-05-14-001",
-        FIXED_NOW,
-      );
+      const marker = buildFailureEvolutionMarker(ctx, "ep-2026-05-14-001", FIXED_NOW);
       expect(marker).toContain(`target: ${skill}#${trigger}`);
       expect(marker.endsWith("\n")).toBe(true);
     });
