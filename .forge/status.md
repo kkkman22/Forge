@@ -1,24 +1,23 @@
 ---
-current_task: "branch-topic-gate-hook"
+current_task: "none"
 tier: "standard"
-task_type: "branch-topic-gate-hook"
-project_phase: "active"
-phase: "plan"
+task_type: ""
+project_phase: "idle"
+phase: "completed"
 work_nature: "feature"
-updated: "2026-05-14"
+updated: "2026-05-15"
 ---
 
 # 项目状态
 
 ## 当前任务
 
-**branch-topic-gate-hook** — 分支与任务一致性 hook 普及到所有 skill
-- Spec: `.forge/specs/branch-topic-gate-hook/spec.md` (draft)
-- Plan: 待生成
-- 分支: `worktree-branch-topic-gate-hook`
+无活跃任务。
 
 ## 已完成任务
 
+- knowledge-hooks-auto-rebuild: 知识库 catalog/integrity 自动 hook（事件驱动，7 commits，32 tests）
+- branch-topic-gate-hook: (暂停)
 - failure-sink-trigger-expansion: (暂停)
 - grill-auto-trigger-and-inline: (暂停)
 - frozen-zone-structured-feedback: 结构化 JSON frozen-zone 保护（ADR-0001，127 新测试）
