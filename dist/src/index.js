@@ -22,13 +22,15 @@ export { allEntriesVerified, createChecklist, isValidTransition, parseChecklist,
 export { isFixCandidate, parseGitLog as parseFixRecoveryGitLog, } from "./fix-recovery.js";
 export { ForgeError } from "./forge-error.js";
 // Glossary consistency hook
-export { GLOSSARY_BLOCK_POLICY, hashCandidates, normalizeInput, renderGlossaryAdvisory, renderGlossaryConflictPrompt, runGlossaryCheck, } from "./glossary-hook.js";
+export { GLOSSARY_BLOCK_POLICY, getAdvisoryPath, hashCandidates, normalizeInput, renderGlossaryAdvisory, renderGlossaryConflictPrompt, renderPendingAdvisoryNotice, runGlossaryCheck, } from "./glossary-hook.js";
 // Incremental verifier
 export { buildVerificationCriteria, determineVerificationStrategy, INCREMENTAL_THRESHOLD, } from "./incremental-verifier.js";
 // Knowledge catalog (Layer A progressive index)
 export { buildCatalog, parseEvolvedRulesSummary, parseFailureSummary, parseSolutionFrontmatter, renderCatalog, } from "./knowledge-catalog.js";
 // Knowledge integrity linter
 export { checkContradictions, checkOrphanSolutions, checkReferenceIntegrity, lintKnowledgeIntegrity, } from "./knowledge-integrity.js";
+// Knowledge hooks (event-driven catalog rebuild + integrity lint)
+export { computeInputFilePaths, dispatchKnowledgeEvent, hashEvent, isCatalogStale, isThrottled, shouldTriggerEpisodeThreshold, THRESHOLD_MILESTONES, } from "./knowledge-hooks.js";
 // Branch gate
 export { DEFAULT_SEVERITY, renderBranchGateAdvisory, renderBranchGatePrompt, runBranchGate, } from "./branch-gate.js";
 // Plan engine
@@ -53,4 +55,6 @@ export { archiveTaskStatus, getMostRecentActiveTask, listActiveTasks, migrateToM
 export { isMultiTaskMode, reconstructStateFromGit, resolveStatusPath, slugify, } from "./status-resolver.js";
 // Subagent runner
 export { buildSubagentInvocations, runSubagentsInParallel } from "./subagent-runner.js";
+// Inline grill orchestration
+export { formatInlineGrillInjection, renderInlineGrillAdvisory, renderInlineGrillConfirmPrompt, shouldTriggerInlineGrill, } from "./grill-inline.js";
 //# sourceMappingURL=index.js.map

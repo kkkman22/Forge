@@ -49,3 +49,11 @@ export interface ChecklistResult {
  * Returns { passed, failedItems } where failedItems lists all items that are false.
  */
 export declare function validatePreCompletionChecklist(state: ChecklistState): ChecklistResult;
+import { type FailureContext } from "./failure-sink.js";
+export interface TestLayerFailedInput {
+    topic: string;
+    tier: "light" | "standard" | "full";
+    failedLayer: string;
+    failedCases?: string[];
+}
+export declare function buildTestLayerFailedContext(input: TestLayerFailedInput): FailureContext;
