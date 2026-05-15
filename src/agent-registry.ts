@@ -11,8 +11,8 @@
 import type { WarmQuery } from "@anthropic-ai/claude-agent-sdk";
 import type { AgentInterface, AgentOutputSchema } from "./loop-types.js";
 import { MockAgentAdapter } from "./mock-agent-adapter.js";
-import { SdkAgentAdapter } from "./sdk-agent-adapter.js";
 import type { SandboxProfile } from "./sandbox-profile.js";
+import { SdkAgentAdapter } from "./sdk-agent-adapter.js";
 
 // ---------------------------------------------------------------------------
 // Types
