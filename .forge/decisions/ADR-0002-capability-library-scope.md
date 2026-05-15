@@ -36,20 +36,72 @@ Forge 在 v2.5/v2.6 完成了 4 个能力库化 spec（`zoom-out-auto-trigger` /
 | 3 | Glossary 一致性 Hook | `.forge/specs/glossary-consistency-hook/` | 低 |
 | 4 | Spec-health Hook | `.forge/specs/spec-health-hook/` | 中（与 grill-auto-trigger 强关联） |
 
-### Tier 2：v2.7 排期评估
+### Tier 2：v2.7 排期（已修订）
 
-下列 4 个候选有价值但复杂度中等，等 Tier 1 实施完后基于使用率数据决定是否起 spec：
+经过 2026-05-14 的二次深度评估（基于 Tier 1 spec 实施风险分析），原 4 个 Tier 2 候选**修订为 2 个起 spec、2 个降级到 Tier 3**。详见后续"二次评估说明"章节。
 
-| 候选 | 触发面扩张方向 | 关键风险 |
-|------|----------------|----------|
-| Debug 自动触发 | test layer 失败 / review P0 架构变更 / fix-conflicts 验证失败 | 频率控制，避免过度暂停主流程 |
-| Verify 自动触发 | test Layer 3 / build 任务完成 claim 落盘 / accept 场景验证 | IO 开销，需 autonomous 采样而非全量 |
-| Plan 任务图 Hook | task-graph 推广到 build/loop 共用 | plan 缺失时 fallback 复杂度 |
-| Knowledge Integrity / Catalog 自动 Hook | episode 累积自动 rebuild instincts | catalog 重建 IO 节流 |
+#### Tier 2 已起 spec（2 个）
+
+| # | Spec | 路径 | 关键价值 |
+|---|------|------|----------|
+| T2-1 | Knowledge Integrity / Catalog 自动 Hook | `.forge/specs/knowledge-hooks-auto-rebuild/` | 事件驱动 catalog 刷新，让 plan/build/decide 研究阶段命中率最大化 |
+| T2-2 | AtomicTask dependsOn 字段利用 | `.forge/specs/atomic-task-depends-on-utilization/` | 解决 ROADMAP L-16，让 plan 输出图数据为下游评估提供基础 |
+
+#### 二次评估说明：从 Tier 2 降级的 2 个候选
+
+##### Debug 自动触发面扩张 → Tier 3
+
+**原候选**：test layer 失败 / review P0 架构变更 / fix-conflicts 验证失败时自动启动 debug 4 阶段诊断。
+
+**降级理由**：
+- failure-sink-trigger-expansion（Tier 1 spec 1）已经覆盖"失败信号沉淀"这个真痛点
+- "自动暂停主流程进入诊断"是高昂动作，自动触发会破坏 Forge Loop 节奏
+- 当前 build 的 three-strike 升级路径已经覆盖大部分场景
+- 反模式风险高（触发链过长 + autonomous 模式硬阻塞）
+- 边际价值仅是 UX 改进（用户不用手动跑 `/forge debug`），不是能力补充
+
+**替代方案**：在 review SKILL.md 加一行 prompt——"P0+架构变更时建议下一步运行 `/forge debug`"。零代码即可达成 90% 价值。
+
+**重新评估触发条件**：
+- review 阶段 P0+架构变更后用户**未跑** debug 的比例 > 50%（来自使用率 metrics）
+- failure-sink 数据显示有大量"应启动诊断但未启动"的失败模式
+
+##### Verify 自动触发面扩张 → Tier 3
+
+**原候选**：test Layer 3 / build 任务完成 claim 落盘 / accept 场景验证时自动跑 verify。
+
+**降级理由**：
+- verify 是同步 IO orchestrator，单次成本 5-30 秒（涉及 git 切换 + baseline 捕获）
+- 一次 build 可能 5-15 个任务，全量自动 verify 等于 25 秒-7.5 分钟纯开销 / build
+- 与 Forge Loop 吞吐量直接冲突
+- verify 的核心价值依赖用户**意识到需要证据**，自动化稀释这个价值
+- 多数 build 任务完成不需要严格证据链（开发者凭直觉确认）
+- 反模式风险极高（autonomous 模式硬阻塞 + 时间型缓存）
+
+**替代方案**：在 build / test SKILL.md 加可选的 `--with-verify` flag，让用户在关键任务上显式开启。
+
+**重新评估触发条件**：
+- "build 任务完成后需要 verify"的需求被多个用户主动反馈 ≥ 5 次
+- verify 的执行成本通过 baseline 缓存优化降低到 < 2 秒（需要单独优化 spec）
+
+##### Plan 任务图 Hook → 拆分为 atomic-task-depends-on-utilization spec
+
+**原候选**：task-graph.ts 推广到 build/loop 共用，让 build 多任务可以并行执行。
+
+**调整理由**：
+- task-graph.ts 当前是孤儿模块（只在测试中引用）
+- 真正的瓶颈是 plan 不输出图数据（dependsOn 字段已存在但未填充）
+- 让 build/loop 消费图的复杂度引入大于收益（性能瓶颈在 LLM 推理）
+- 强行普及 = 为抽象而抽象（反模式 1：过度抽象）
+
+**调整后**：
+- 起 spec `atomic-task-depends-on-utilization`：仅做 plan 输出图数据 + Self-Check 校验
+- **不**普及 task-graph 到 build / loop 生产消费
+- task-graph 保持当前状态（库已成熟，作为未来评估的 infrastructure 预留）
 
 ### Tier 3：记录但不立即评估
 
-下列 4 个候选**当前阶段做不划算**，但有未来重启评估的合理触发条件。
+下列 6 个候选**当前阶段做不划算**，但有未来重启评估的合理触发条件。前 4 个为初次扫描的结论，后 2 个为 Tier 2 二次评估降级的候选。
 
 #### Tier 3 候选 #1：Chat-preference-extractor 自动触发
 
@@ -82,6 +134,20 @@ Forge 在 v2.5/v2.6 完成了 4 个能力库化 spec（`zoom-out-auto-trigger` /
   - v3.0 Events_NDJSON 多消费者扩展完成（已就位的字节游标协议）
   - opt-in 隐私同意机制建立（用户明确选择"开启 forge 性能可观测性"）
   - 性能数据消费者（IDE 插件 / Web Dashboard / CI 报告器）有正式合约
+
+#### Tier 3 候选 #5：Debug 自动触发面扩张（Tier 2 降级）
+
+- **保留显式触发的理由**：见上方"二次评估说明"中的降级分析
+- **重新评估触发条件**：
+  - review 阶段 P0+架构变更后用户**未跑** debug 的比例 > 50%
+  - failure-sink 数据显示大量"应启动诊断但未启动"的失败模式
+
+#### Tier 3 候选 #6：Verify 自动触发面扩张（Tier 2 降级）
+
+- **保留显式触发的理由**：见上方"二次评估说明"中的降级分析
+- **重新评估触发条件**：
+  - "build 任务完成后需要 verify"的需求被多个用户主动反馈 ≥ 5 次
+  - verify 单次执行成本通过 baseline 缓存优化降到 < 2 秒
 
 ### 反模式：明确不 library-ize（永久保留现状）
 
