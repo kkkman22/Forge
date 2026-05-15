@@ -21,6 +21,27 @@
  */
 import { extractStringField } from "./frontmatter.js";
 // ---------------------------------------------------------------------------
+// Task Graph bridge
+// ---------------------------------------------------------------------------
+/**
+ * Convert AtomicTask[] or LightweightTask[] to a TaskGraph for use with
+ * task-graph.ts validation and scheduling functions.
+ *
+ * Each task's `taskNumber` is mapped to `task-{n}` string ID format.
+ * Undefined or missing `dependsOn` is normalized to empty array.
+ * @public
+ */
+export function toTaskGraph(tasks) {
+    return {
+        tasks: tasks.map((t) => ({
+            id: `task-${t.taskNumber}`,
+            title: t.title,
+            dependsOn: (t.dependsOn ?? []).map((d) => `task-${d}`),
+            status: "pending",
+        })),
+    };
+}
+// ---------------------------------------------------------------------------
 // Constants
 // ---------------------------------------------------------------------------
 /** @public */
@@ -257,7 +278,13 @@ export function validatePlanTasks(tasks) {
         return false;
     }
     const dependencyErrors = validateDependencies(tasks);
-    return dependencyErrors.length === 0;
+    if (dependencyErrors.length > 0)
+        return false;
+    if (detectCycleInTasks(tasks))
+        return false;
+    if (validateTopologicalOrder(tasks))
+        return false;
+    return true;
 }
 // ---------------------------------------------------------------------------
 // Lightweight format — format detection

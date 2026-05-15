@@ -59,4 +59,16 @@ export function classify(path) {
     // Everything else under .forge/ is open
     return "open";
 }
+export function buildConflictValidationFailedContext(input) {
+    return {
+        skill: "forge-fix-conflicts",
+        topic: input.topic,
+        tier: input.tier,
+        trigger: "conflict_validation_failed",
+        situation: input.checkOutput
+            ? `冲突验证失败：${input.conflictPath} — ${input.checkOutput}`
+            : `冲突验证失败：${input.conflictPath}`,
+        rootCause: input.checkOutput,
+    };
+}
 //# sourceMappingURL=conflict-classifier.js.map

@@ -20,6 +20,7 @@
  *   TBD, TODO, 待定, 后续补充, 类似 Task, 添加适当的错误处理
  */
 import type { Glossary, GlossaryTerm } from "./glossary.js";
+import type { TaskGraph } from "./task-graph.js";
 /** @public */
 export interface TDDSteps {
     red: {
@@ -69,6 +70,15 @@ export interface DesignReferenceValidation {
     valid: boolean;
     errors: string[];
 }
+/**
+ * Convert AtomicTask[] or LightweightTask[] to a TaskGraph for use with
+ * task-graph.ts validation and scheduling functions.
+ *
+ * Each task's `taskNumber` is mapped to `task-{n}` string ID format.
+ * Undefined or missing `dependsOn` is normalized to empty array.
+ * @public
+ */
+export declare function toTaskGraph(tasks: AtomicTask[] | LightweightTask[]): TaskGraph;
 /** @public */
 export declare const FORBIDDEN_PLACEHOLDERS: string[];
 /**
