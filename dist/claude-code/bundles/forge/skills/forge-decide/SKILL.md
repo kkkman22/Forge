@@ -73,6 +73,22 @@ Skill 启动时先展示与当前任务最相关的历史 ADR，帮助用户感�
 
 **容错机制**：Round 1 使用 `Promise.allSettled`，单个视角失败不阻断其他。失败的视角标注"评估失败"。如果所有 Round 1 Subagent 均失败，决策终止并向用户报告。
 
+### 自动视角重置（Auto Zoom-Out）
+
+当 decide 阶段出现以下信号时，自动触发 zoom-out 打破局部锁定：
+
+**触发条件**（满足任一即触发）：
+- Subagent 评估 ≥ 2 轮且未达共识（`consensus_score` 低于阈值）
+- 用户连续 3 次表达犹豫（「再想想」/「不确定」/「都行」）
+
+**触发流程**：
+1. 调用 `shouldAutoTriggerZoomOut({ scenario: "decide", decideRounds, decideConsensusReached, decideUserHesitationCount, alreadyTriggered })`
+2. `shouldTrigger: true` → autonomous 模式直接执行 zoom-out；interactive 模式提示「当前讨论似乎陷入局部，建议先退后一步看看整体位置。是否继续？」
+3. zoom-out 输出通过 `formatAutoZoomOutInjection(output, "decide")` 包装后注入下一轮 Subagent 的 system context
+4. 设置 `autoZoomOutTriggered.decide = true` 防止重复触发
+
+**与 Critic 的关系**：auto zoom-out 在 Critic 标记 `needs_revision` 后、视角修正前触发。不替代 Critic 审查。
+
 ### Round 2a: Inline Grill Trigger (conditional)
 
 After Round 2 Critic output:
@@ -94,7 +110,7 @@ After Round 2 Critic output:
 
 ## 3. Four-Perspective Evaluation
 
-四视角输出格式（product / architect / security / designer）、Glossary alignment check、UI 触发判定信号：
+四视角输出格式（product / architect / security / designer）、Glossary alignment check（内部使用 `runGlossaryCheck({ phase: 'decide' })`）、UI 触发判定信号：
 
 → 详见 references/perspective-formats.md
 
@@ -154,7 +170,7 @@ Backend-only (3 perspectives) 与 UI-involved (4 perspectives) 两种典型场�
 
 ## ADR 输出 / ADR Output
 
-决策确认后，Skill 同时生成 `.forge/decisions/<date>-<topic>.md`（视角对话全文）与 `.forge/decisions/ADR-NNNN-<topic>.md`（可检索的架构决策记录），并更新 `.forge/knowledge/adr-index.md`。
+决策确认后，Skill 同时生成 `.forge/decisions/<date>-<topic>.md`（视角对话全文）与 `.forge/decisions/ADR-NNNN-<topic>.md`（可检索的架构决策记录），并更新 `.forge/knowledge/adr-index.md`。ADR 写入完成后，hooks.json PostToolUse 自动触发 catalog rebuild（`scripts/knowledge-hook-dispatch.mjs`），`catalog.md` 将在 5 秒内包含新 ADR。
 
 → 详见 references/adr-output.md（完整流程、FinalizeAdrInput 构造、supersession 更新）
 

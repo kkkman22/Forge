@@ -1,5 +1,5 @@
 ---
-status: draft
+status: locked
 created: "2026-05-14"
 topic: spec-health-hook
 ---
@@ -18,9 +18,9 @@ topic: spec-health-hook
 
 | 库 | 职责 | 当前调用方 |
 |----|------|-----------|
-| `src/spec-leak-detector.ts` (`detectSpecLeak`, `loadBannedPatterns`) | 检测 spec 中实现细节泄漏（类名/库名/函数名） | forge-spec Step 2 / forge-review Layer 1 |
-| `src/scenario-linter.ts` (`lintScenarios`) | Gherkin 场景的 SCN001-SCN004 规则检查 | forge-spec Step 2 / forge-accept Step 1 |
-| `src/glossary.ts` + glossary-consistency-hook spec | 术语漂移检测 | forge-spec Step 7 / 各 phase |
+| `src/spec-leak-detector.ts:32` (`detectSpecLeak`) + `:123` (`loadBannedPatterns`) | 检测 spec 中实现细节泄漏（类名/库名/函数名） | forge-spec Step 2 / forge-review Layer 1 |
+| `src/scenario-linter.ts:63` (`lintScenarios`) | Gherkin 场景的 SCN001-SCN004 规则检查 | forge-spec Step 2 / forge-accept Step 1 |
+| `src/glossary.ts:81` (`Glossary` type) + glossary-consistency-hook spec | 术语漂移检测 | forge-spec Step 7 / 各 phase |
 
 后果：
 - 三个独立维度（leak / scenario / glossary）对应三个独立分数，没有统一的"spec 健康度"度量
@@ -215,15 +215,77 @@ threshold:
 9. grill-auto-trigger 触发条件改为读 `checkSpecHealth().recommendations` → 行为正确
 10. 三维度的现有测试（spec-leak / scenario-linter / glossary）零回归
 
-## 风险与缓解
+## 场景
 
-| 风险 | 影响 | 缓解 |
-|------|------|------|
-| 权重设计主观 | 不同项目 score 偏差 | 权重和 threshold 由 `.forge/config.md` 可配置，PBT 仅验证不变量 |
-| frontmatter 缓存被手工编辑误导 | 旧分数掩盖新问题 | spec_hash 校验失败强制重算，缓存仅是性能优化 |
-| degraded verdict 阻塞频率过高 | UX 退化 | 阈值默认偏宽松（ambiguity_min: 0.7），用户可在 config 收紧或放松 |
-| 与 grill-auto-trigger 循环触发 | 死锁 | 频率控制独立维护：grill-inline 已有 alreadyTriggered 字段，不和 spec-health 共享 |
-| 多 skill 同时跑 hook 重复计算 | 性能浪费 | 缓存机制（spec_hash 比对），任意 skill 第一次跑后写入 frontmatter，后续 skill 复用 |
+```gherkin
+Feature: Spec Health Check
+
+  Scenario: All dimensions clean
+    Given spec content has zero leaks, zero scenario errors, zero glossary misses
+    When checkSpecHealth is called
+    Then ambiguityScore equals 1.0
+    And overallVerdict equals "healthy"
+    And recommendations contain exactly one "no_action"
+
+  Scenario: Leak saturation drops score
+    Given spec content contains 5 banned pattern matches
+    And zero scenario errors and zero glossary misses
+    When checkSpecHealth is called
+    Then leak_factor equals 0
+    And ambiguityScore drops by at least 0.4
+
+  Scenario: Cache hit on unchanged spec
+    Given spec frontmatter has health field with spec_hash matching current content
+    When checkSpecHealth is called
+    Then cached score is reused without re-running detectors
+
+  Scenario: Cache miss on modified spec
+    Given spec frontmatter has health field with spec_hash NOT matching current content
+    When checkSpecHealth is called
+    Then all three detectors are re-invoked and new score is written
+
+  Scenario: Degraded verdict in interactive mode
+    Given ambiguityScore below 0.7
+    And mode is "interactive"
+    When plan phase starts
+    Then user is prompted with 3 options: return to spec, trigger grill, force continue
+
+  Scenario: Degraded verdict in autonomous mode
+    Given ambiguityScore below 0.7
+    And mode is "autonomous"
+    When plan phase starts
+    Then advisory is written to findings/
+    And plan continues without blocking
+
+  Scenario: Marginal verdict triggers grill recommendation
+    Given ambiguityScore between 0.7 and 0.85
+    When debug Phase 1 starts
+    Then recommendations include { kind: "trigger_grill" }
+
+  Scenario: Degraded verdict adds review sub-item
+    Given overallVerdict is "degraded"
+    When review Layer 1 starts
+    Then spec re-validation sub-item is added to review checklist
+```
+
+## Reversibility
+
+- **回滚**：删除 `src/spec-health.ts` + 测试文件，还原 `src/index.ts` barrel 导出，还原 5 个 SKILL.md diff
+- **挂载点**：所有下游 skill 接入点都是"读取 spec frontmatter health 字段"的加法操作，不修改现有控制流——移除接入代码即恢复原行为
+- **数据残留**：spec frontmatter 中的 `health` 字段为附加元数据，删除不影响 spec 自身 `status`/`topic` 字段
+
+## 风险与缓解（反模式对照）
+
+| 反模式 | 是否风险 | 缓解 |
+|--------|----------|------|
+| 过度抽象 | 低 | 输入已归一化（SpecHealthInput），三个底层库接口零修改，hook 是薄调度层 |
+| 触发链过长 | 中 | hook 不自动触发其他 hook；grill-auto-trigger 读 recommendation 是单步判定，非链式；已有 `alreadyTriggered` 防循环 |
+| 状态管理复杂度 | 低 | 不引入新 status.md 字段；缓存存储在 spec frontmatter（语义归属位置），不增加全局状态 |
+| autonomous 硬阻塞 | 否 | 双模式行为明确：autonomous 写 advisory 不阻塞；degraded 也仅 advisory + 警告，不 abort |
+| 时间型缓存 | 否 | 使用 spec_hash（sha256 内容哈希）作缓存 key，非 TTL；spec 任意修改强制重算 |
+| 权重设计主观 | 低 | 权重和 threshold 由 `.forge/config.md` 可配置，PBT 仅验证不变量 |
+| degraded 阻塞频率过高 | 低 | 阈值默认偏宽松（ambiguity_min: 0.7），用户可在 config 调整 |
+| 多 skill 并行重复计算 | 低 | 缓存机制（spec_hash 比对），首次写入 frontmatter 后复用 |
 
 ## 实施顺序
 

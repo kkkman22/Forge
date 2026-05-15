@@ -8,6 +8,7 @@
 |------|------|------|
 | **Task Number** | `Task N` | `Task 1` |
 | **Task Title** | One-sentence description of task goal | Create notification service core interface |
+| **Depends On** | Prerequisite task numbers (empty array if none) | `[1, 2]` or `[]` |
 | **File Path** | Full relative path | `src/services/notification.ts` |
 | **Estimated Time** | 2-5 minutes | 3 min |
 | **TDD Steps** | RED → GREEN → REFACTOR | — |
@@ -101,6 +102,8 @@ Expected: <expected output specification>
 
 ```markdown
 ### Task 3: Pack type definitions
+
+**Depends On**: [1, 2]
 
 **RED** -- write failing test
 File: `test/pack/types.test.ts`

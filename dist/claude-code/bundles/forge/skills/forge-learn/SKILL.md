@@ -56,6 +56,16 @@ forge-learn **不会** emit 严格会话作用域且已被 Auto_Memory 覆盖的
 
 **Not For**：轻量路径的简单修复（无值得沉淀的经验）/ 中止的任务（abort 后无需 learn）
 
+### §1.5 Pre-flight: Branch Gate
+
+调用 `runBranchGate({ skill: "learn", mode, currentBranch, currentTask, pendingDeliveries, alreadyCheckedThisPhase, isCleanTree })`：
+- `passed` / `skipped` → 继续后续 §
+- `auto_fixed` → 输出 `✅ 已自动切换到 <newBranch>` 后继续
+- `blocked` → 中止 skill，按 mode 输出对应提示
+- `warned` → 输出警告但继续
+
+默认严重度：warn。可通过 `severityOverride` 覆盖。
+
 ---
 
 ## Goals
@@ -73,7 +83,7 @@ Produce properly formatted knowledge documents with correct YAML frontmatter and
 Identify high-frequency patterns, promote them to instincts when thresholds are met, manage pattern staleness and decay, and distill error-prevention rules from accumulated data.
 
 ### G5: Knowledge Base Health
-Maintain the knowledge base within configured limits, enforce confidence thresholds, merge overlapping entries, and ensure maintenance invariants hold at all times. Run integrity lint (cross-file reference validation, orphan detection, contradiction detection) and regenerate the Layer A catalog index.
+Maintain the knowledge base within configured limits, enforce confidence thresholds, merge overlapping entries, and ensure maintenance invariants hold at all times. Run integrity lint (cross-file reference validation, orphan detection, contradiction detection) and regenerate the Layer A catalog index. Solutions 写入完成后，hooks.json PostToolUse 自动触发 integrity lint（`scripts/knowledge-hook-dispatch.mjs`），findings 写入 `.forge/findings/integrity-<timestamp>.md`。
 
 ### G6: Knowledge Backflow Wiring
 Ensure knowledge flows back into plan, build, and debug phases. Track adoption and adjust confidence accordingly. Record failure patterns.
@@ -85,7 +95,7 @@ Detect scenarios where SKILL.md guidance was inapplicable. Record for review but
 Produce a session episode, run evolution aggregation, archive task artifacts, and update status.
 
 ### G9: 规则蒸馏 (Rule Distillation)
-Distill error-prevention rules from accumulated knowledge entries when confidence and frequency thresholds are met. Proposed rules follow the Evolved Rules protocol (`.forge/knowledge/evolved-rules.md`).
+Distill error-prevention rules from accumulated knowledge entries when confidence and frequency thresholds are met. Proposed rules follow the Evolved Rules protocol (`.forge/knowledge/evolved-rules.md`). 内部使用 `runGlossaryCheck({ phase: 'learn' })` 检测术语冲突。
 
 ---
 
