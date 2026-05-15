@@ -1,4 +1,73 @@
 import { describe, it, expect } from "vitest";
+import type { CheckAttempt } from "../src/conflict-resolver.js";
+
+describe("buildFrozenRefusalPrompt", () => {
+  it("generates 3-option prompt for frozen paths", async () => {
+    const { buildFrozenRefusalPrompt } = await import("../src/conflict-resolver.js");
+    const prompt = buildFrozenRefusalPrompt([".forge/specs/auth/spec.md"]);
+    expect(prompt).toContain("手动解决");
+    expect(prompt).toContain("解锁后合并");
+    expect(prompt).toContain("中止合并");
+    expect(prompt).toContain(".forge/specs/auth/spec.md");
+  });
+
+  it("handles multiple frozen paths", async () => {
+    const { buildFrozenRefusalPrompt } = await import("../src/conflict-resolver.js");
+    const prompt = buildFrozenRefusalPrompt([
+      ".forge/specs/auth/spec.md",
+      ".forge/config.md",
+    ]);
+    expect(prompt).toContain(".forge/specs/auth/spec.md");
+    expect(prompt).toContain(".forge/config.md");
+  });
+});
+
+describe("validateConflictResolution", () => {
+  it("returns passed when no failures", async () => {
+    const { validateConflictResolution } = await import("../src/conflict-resolver.js");
+    const gate = validateConflictResolution([]);
+    expect(gate.passed).toBe(true);
+    expect(gate.attemptCount).toBe(0);
+    expect(gate.escalateToDebug).toBe(false);
+  });
+
+  it("returns passed when last attempt succeeded", async () => {
+    const { validateConflictResolution } = await import("../src/conflict-resolver.js");
+    const attempts: CheckAttempt[] = [
+      { timestamp: 1, filesSinceLastAttempt: new Set(["a.ts"]), exitCode: 1 },
+      { timestamp: 2, filesSinceLastAttempt: new Set(["a.ts"]), exitCode: 0 },
+    ];
+    const gate = validateConflictResolution(attempts);
+    expect(gate.passed).toBe(true);
+    expect(gate.escalateToDebug).toBe(false);
+  });
+
+  it("escalates after 3 consecutive failures with file changes", async () => {
+    const { validateConflictResolution } = await import("../src/conflict-resolver.js");
+    const attempts: CheckAttempt[] = [
+      { timestamp: 1, filesSinceLastAttempt: new Set(["a.ts"]), exitCode: 1 },
+      { timestamp: 2, filesSinceLastAttempt: new Set(["b.ts"]), exitCode: 1 },
+      { timestamp: 3, filesSinceLastAttempt: new Set(["c.ts"]), exitCode: 1 },
+    ];
+    const gate = validateConflictResolution(attempts);
+    expect(gate.passed).toBe(false);
+    expect(gate.escalateToDebug).toBe(true);
+    expect(gate.attemptCount).toBe(3);
+  });
+
+  it("does not escalate on re-runs without file changes", async () => {
+    const { validateConflictResolution } = await import("../src/conflict-resolver.js");
+    const attempts: CheckAttempt[] = [
+      { timestamp: 1, filesSinceLastAttempt: new Set(["a.ts"]), exitCode: 1 },
+      { timestamp: 2, filesSinceLastAttempt: new Set(), exitCode: 1 },
+      { timestamp: 3, filesSinceLastAttempt: new Set(), exitCode: 1 },
+    ];
+    const gate = validateConflictResolution(attempts);
+    expect(gate.passed).toBe(false);
+    expect(gate.escalateToDebug).toBe(false);
+    expect(gate.attemptCount).toBe(1);
+  });
+});
 
 describe("classifyConflictZone", () => {
   it("classifies frozen paths", async () => {
