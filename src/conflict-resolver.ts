@@ -99,6 +99,75 @@ function countStrikes(attempts: CheckAttempt[]): number {
   return count;
 }
 
+export type ResolveMode = "autonomous" | "interactive";
+
+export interface ResolveResult {
+  allResolved: boolean;
+  frozenRefused: boolean;
+  escalateToDebug: boolean;
+  resolvedPaths: string[];
+  refusedPaths: string[];
+  validationGate: ValidationGate;
+}
+
+interface ResolveContext {
+  statusContent: string;
+  repoRoot: string;
+  readFileContent: (path: string) => Promise<string>;
+  writeFileContent: (path: string, content: string) => Promise<void>;
+}
+
+export async function resolveConflicts(
+  paths: string[],
+  _mode: ResolveMode,
+  context: ResolveContext,
+): Promise<ResolveResult> {
+  const resolvedPaths: string[] = [];
+  const refusedPaths: string[] = [];
+  let frozenRefused = false;
+
+  for (const path of paths) {
+    const zone = classifyConflictZone(path, context.statusContent);
+
+    if (zone === "frozen") {
+      frozenRefused = true;
+      refusedPaths.push(path);
+    } else if (zone === "guarded") {
+      const fileType = inferGuardedFileType(path);
+      const ours = await context.readFileContent(path);
+      const theirs = await context.readFileContent(path);
+      const result = applyGuardedMerge(fileType, ours, theirs);
+      await context.writeFileContent(path, result.merged);
+      resolvedPaths.push(path);
+    } else if (zone === "open") {
+      const ours = await context.readFileContent(path);
+      await context.writeFileContent(path, ours);
+      resolvedPaths.push(path);
+    } else {
+      refusedPaths.push(path);
+    }
+  }
+
+  const allResolved = resolvedPaths.length === paths.length;
+
+  return {
+    allResolved,
+    frozenRefused,
+    escalateToDebug: false,
+    resolvedPaths,
+    refusedPaths,
+    validationGate: { passed: allResolved, attemptCount: 0, escalateToDebug: false },
+  };
+}
+
+function inferGuardedFileType(path: string): GuardedFileType {
+  if (path.includes("/progress/")) return "progress";
+  if (path.includes("/knowledge/")) return "known-failures";
+  if (path.includes("/reviews/")) return "reviews";
+  if (/ADR-\d+/.test(path)) return "adr";
+  return "progress";
+}
+
 export function parseConflictedPaths(gitOutput: string): string[] {
   const matches = gitOutput.matchAll(/Merge conflict in (.+)$/gm);
   const seen = new Set<string>();

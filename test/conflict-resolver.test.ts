@@ -1,6 +1,94 @@
 import { describe, it, expect } from "vitest";
 import type { CheckAttempt } from "../src/conflict-resolver.js";
 
+describe("resolveConflicts", () => {
+  it("resolves all guarded conflicts automatically", async () => {
+    const { resolveConflicts } = await import("../src/conflict-resolver.js");
+    const result = await resolveConflicts(
+      [".forge/progress/auth.md", ".forge/reviews/auth.md"],
+      "autonomous",
+      {
+        statusContent: "current_task: auth\n",
+        repoRoot: "/tmp/test",
+        readFileContent: async (_p: string) => "- [ ] task-a: Do A",
+        writeFileContent: async () => {},
+      },
+    );
+    expect(result.allResolved).toBe(true);
+    expect(result.frozenRefused).toBe(false);
+    expect(result.resolvedPaths).toContain(".forge/progress/auth.md");
+    expect(result.resolvedPaths).toContain(".forge/reviews/auth.md");
+  });
+
+  it("refuses frozen conflicts in autonomous mode", async () => {
+    const { resolveConflicts } = await import("../src/conflict-resolver.js");
+    const result = await resolveConflicts(
+      [".forge/specs/auth/spec.md"],
+      "autonomous",
+      {
+        statusContent: "current_task: auth\n",
+        repoRoot: "/tmp/test",
+        readFileContent: async () => "status: locked",
+        writeFileContent: async () => {},
+      },
+    );
+    expect(result.allResolved).toBe(false);
+    expect(result.frozenRefused).toBe(true);
+    expect(result.refusedPaths).toContain(".forge/specs/auth/spec.md");
+  });
+
+  it("resolves open conflicts with ours strategy", async () => {
+    const { resolveConflicts } = await import("../src/conflict-resolver.js");
+    const result = await resolveConflicts(
+      [".forge/findings/note.md"],
+      "autonomous",
+      {
+        statusContent: "",
+        repoRoot: "/tmp/test",
+        readFileContent: async () => "our content",
+        writeFileContent: async () => {},
+      },
+    );
+    expect(result.allResolved).toBe(true);
+    expect(result.resolvedPaths).toContain(".forge/findings/note.md");
+  });
+
+  it("leaves source conflicts unresolved", async () => {
+    const { resolveConflicts } = await import("../src/conflict-resolver.js");
+    const result = await resolveConflicts(
+      ["src/index.ts"],
+      "autonomous",
+      {
+        statusContent: "",
+        repoRoot: "/tmp/test",
+        readFileContent: async () => "",
+        writeFileContent: async () => {},
+      },
+    );
+    expect(result.allResolved).toBe(false);
+    expect(result.refusedPaths).toContain("src/index.ts");
+  });
+
+  it("handles mixed zones: guarded resolved, frozen refused, source skipped", async () => {
+    const { resolveConflicts } = await import("../src/conflict-resolver.js");
+    const result = await resolveConflicts(
+      [".forge/progress/auth.md", ".forge/specs/auth/spec.md", "src/main.ts"],
+      "autonomous",
+      {
+        statusContent: "current_task: auth\n",
+        repoRoot: "/tmp/test",
+        readFileContent: async () => "- [ ] task-a: Do A",
+        writeFileContent: async () => {},
+      },
+    );
+    expect(result.resolvedPaths).toContain(".forge/progress/auth.md");
+    expect(result.refusedPaths).toContain(".forge/specs/auth/spec.md");
+    expect(result.refusedPaths).toContain("src/main.ts");
+    expect(result.allResolved).toBe(false);
+    expect(result.frozenRefused).toBe(true);
+  });
+});
+
 describe("buildFrozenRefusalPrompt", () => {
   it("generates 3-option prompt for frozen paths", async () => {
     const { buildFrozenRefusalPrompt } = await import("../src/conflict-resolver.js");
