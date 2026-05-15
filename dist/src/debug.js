@@ -124,4 +124,16 @@ export function getNextPhase(current) {
     }
     return DEBUG_PHASES[index + 1];
 }
+export function buildDebugResolvedContext(input) {
+    return {
+        skill: "forge-debug",
+        topic: input.topic,
+        tier: input.tier,
+        trigger: "debug_resolved",
+        situation: input.rootCause
+            ? `调试完成，根因：${input.rootCause}`
+            : "调试完成",
+        rootCause: input.rootCause,
+    };
+}
 //# sourceMappingURL=debug.js.map
