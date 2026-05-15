@@ -182,6 +182,10 @@ export function checkSandboxAccess(
 // CLI entry point
 // ---------------------------------------------------------------------------
 
+/**
+ * @deprecated CLI entry point is deprecated — use SDK native sandbox via `--sandbox` instead.
+ * Retained for backward compatibility with existing hooks.json configurations.
+ */
 function main(): void {
   const toolType = process.argv[2];
   const toolInputFile = process.argv[3];
