@@ -13,18 +13,6 @@
  * **Validates: Requirements 3.1–3.11, 10.1–10.4**
  */
 
-// Branch gate
-export {
-  type BranchGateInput,
-  type BranchGateMode,
-  type BranchGateResult,
-  type BranchGateSeverity,
-  type BranchGateSkill,
-  DEFAULT_SEVERITY,
-  renderBranchGateAdvisory,
-  renderBranchGatePrompt,
-  runBranchGate,
-} from "./branch-gate.js";
 // Error hierarchy
 export { CliError } from "./cli-error.js";
 // Context budget management
@@ -94,17 +82,6 @@ export {
   renderPendingAdvisoryNotice,
   runGlossaryCheck,
 } from "./glossary-hook.js";
-// Inline grill orchestration
-export {
-  type AlreadyTriggered,
-  formatInlineGrillInjection,
-  type GrillInlineMode,
-  type GrillInlineReason,
-  type GrillInlineResult,
-  renderInlineGrillAdvisory,
-  renderInlineGrillConfirmPrompt,
-  shouldTriggerInlineGrill,
-} from "./grill-inline.js";
 // Incremental verifier
 export {
   buildVerificationCriteria,
@@ -125,19 +102,6 @@ export {
   renderCatalog,
   type SolutionSummary,
 } from "./knowledge-catalog.js";
-// Knowledge hooks (event-driven catalog rebuild + integrity lint)
-export {
-  computeInputFilePaths,
-  dispatchKnowledgeEvent,
-  hashEvent,
-  isCatalogStale,
-  isThrottled,
-  type KnowledgeEvent,
-  type KnowledgeHookInput,
-  type KnowledgeHookResult,
-  shouldTriggerEpisodeThreshold,
-  THRESHOLD_MILESTONES,
-} from "./knowledge-hooks.js";
 // Knowledge integrity linter
 export {
   checkContradictions,
@@ -147,6 +111,31 @@ export {
   type IntegrityInput,
   lintKnowledgeIntegrity,
 } from "./knowledge-integrity.js";
+// Knowledge hooks (event-driven catalog rebuild + integrity lint)
+export {
+  computeInputFilePaths,
+  dispatchKnowledgeEvent,
+  hashEvent,
+  isCatalogStale,
+  isThrottled,
+  shouldTriggerEpisodeThreshold,
+  THRESHOLD_MILESTONES,
+  type KnowledgeEvent,
+  type KnowledgeHookInput,
+  type KnowledgeHookResult,
+} from "./knowledge-hooks.js";
+// Branch gate
+export {
+  DEFAULT_SEVERITY,
+  type BranchGateInput,
+  type BranchGateMode,
+  type BranchGateResult,
+  type BranchGateSeverity,
+  type BranchGateSkill,
+  renderBranchGateAdvisory,
+  renderBranchGatePrompt,
+  runBranchGate,
+} from "./branch-gate.js";
 // Core types (from loop-types.js)
 export type {
   AgentInterface,
@@ -224,25 +213,6 @@ export {
   type ValidationResult as SkillValidationResult,
   validateManifest,
 } from "./skill-validator.js";
-export type {
-  DimensionScore,
-  HealthCache,
-  HealthRecommendation,
-  HealthVerdict,
-  SpecHealthDimension,
-  SpecHealthInput,
-  SpecHealthReport,
-} from "./spec-health.js";
-// Spec Health
-export {
-  checkSpecHealth,
-  classifyVerdict,
-  computeAmbiguityScore,
-  computeSpecHash,
-  parseHealthCache,
-  renderSpecHealthAdvisory,
-  shouldRecompute,
-} from "./spec-health.js";
 // Multi-task status tracking
 export {
   hasTaskName,
@@ -275,3 +245,33 @@ export {
 } from "./status-resolver.js";
 // Subagent runner
 export { buildSubagentInvocations, runSubagentsInParallel } from "./subagent-runner.js";
+// Inline grill orchestration
+export {
+  type AlreadyTriggered,
+  type GrillInlineMode,
+  type GrillInlineReason,
+  type GrillInlineResult,
+  formatInlineGrillInjection,
+  renderInlineGrillAdvisory,
+  renderInlineGrillConfirmPrompt,
+  shouldTriggerInlineGrill,
+} from "./grill-inline.js";
+// Spec Health
+export {
+  checkSpecHealth,
+  classifyVerdict,
+  computeAmbiguityScore,
+  computeSpecHash,
+  parseHealthCache,
+  renderSpecHealthAdvisory,
+  shouldRecompute,
+} from "./spec-health.js";
+export type {
+  DimensionScore,
+  HealthCache,
+  HealthRecommendation,
+  HealthVerdict,
+  SpecHealthDimension,
+  SpecHealthInput,
+  SpecHealthReport,
+} from "./spec-health.js";

@@ -1,10 +1,6 @@
+import { describe, it, expect } from "vitest";
 import fc from "fast-check";
-import { describe, expect, it } from "vitest";
-import {
-  computeAmbiguityScore,
-  type DimensionScore,
-  type SpecHealthDimension,
-} from "../src/spec-health.js";
+import { computeAmbiguityScore, type DimensionScore, type SpecHealthDimension } from "../src/spec-health.js";
 
 function makeDim(dimension: SpecHealthDimension, errorCount: number): DimensionScore {
   return { dimension, passed: errorCount === 0, errorCount, details: [] };

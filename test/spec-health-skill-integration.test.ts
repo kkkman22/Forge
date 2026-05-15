@@ -1,29 +1,21 @@
-import { describe, expect, it } from "vitest";
-import type { BannedPatternRegistry, GlossaryRegistry } from "../src/pack/types.js";
+import { describe, it, expect } from "vitest";
 import {
   checkSpecHealth,
   computeSpecHash,
-  type SpecHealthInput,
   shouldRecompute,
+  type SpecHealthInput,
 } from "../src/spec-health.js";
+import type { BannedPatternRegistry, GlossaryRegistry } from "../src/pack/types.js";
 
 function makeBannedRegistry(patterns: string[]): BannedPatternRegistry {
   const categories = new Map<string, import("../src/pack/types.js").BannedPattern[]>();
-  categories.set(
-    "code",
-    patterns.map((p, i) => ({ pattern: p, description: `banned-${i}` })),
-  );
+  categories.set("code", patterns.map((p, i) => ({ pattern: p, description: `banned-${i}` })));
   return { categories };
 }
 
 const EMPTY_BANNED: BannedPatternRegistry = { categories: new Map() };
 const EMPTY_GLOSSARY: GlossaryRegistry = { entries: new Map(), byTerm: new Map() };
-const DEFAULT_THRESHOLDS = {
-  leak_max: 0,
-  scenario_max: 0,
-  glossary_miss_max: 2,
-  ambiguity_min: 0.7,
-};
+const DEFAULT_THRESHOLDS = { leak_max: 0, scenario_max: 0, glossary_miss_max: 2, ambiguity_min: 0.7 };
 
 describe("Skill integration contracts", () => {
   describe("forge-spec: Step 2 health frontmatter", () => {
@@ -58,12 +50,7 @@ describe("Skill integration contracts", () => {
 
     it("forces recomputation when spec_hash differs", () => {
       const hash = computeSpecHash("new content");
-      const cache = {
-        specHash: "old_hash",
-        score: 0.5,
-        verdict: "degraded" as const,
-        generatedAt: "",
-      };
+      const cache = { specHash: "old_hash", score: 0.5, verdict: "degraded" as const, generatedAt: "" };
       expect(shouldRecompute(hash, cache)).toBe(true);
     });
   });
@@ -73,13 +60,7 @@ describe("Skill integration contracts", () => {
       const input: SpecHealthInput = {
         specContent: "Use ServiceX and ServiceY and ServiceZ and ServiceW and ServiceV",
         specFilePath: "spec.md",
-        bannedRegistry: makeBannedRegistry([
-          "ServiceX",
-          "ServiceY",
-          "ServiceZ",
-          "ServiceW",
-          "ServiceV",
-        ]),
+        bannedRegistry: makeBannedRegistry(["ServiceX", "ServiceY", "ServiceZ", "ServiceW", "ServiceV"]),
         glossaryRegistry: EMPTY_GLOSSARY,
         thresholds: DEFAULT_THRESHOLDS,
       };
