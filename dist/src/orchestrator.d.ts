@@ -51,7 +51,7 @@ export declare function transition(state: OrchestratorState, event: Orchestrator
     state: OrchestratorState;
     effects: OrchestratorEffect[];
 };
-import { type FailureContext } from "./failure-sink.js";
+import type { FailureContext } from "./failure-sink.js";
 export interface LoopCircuitBrokenInput {
     topic: string;
     tier: "light" | "standard" | "full";

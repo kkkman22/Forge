@@ -10,9 +10,9 @@
  *
  * **Validates: Spec Requirements 2, 7, 8**
  */
-import { describe, it, expect, beforeAll } from "vitest";
 import { readFileSync } from "fs";
 import { resolve } from "path";
+import { beforeAll, describe, expect, it } from "vitest";
 const ROOT = resolve(__dirname, "..");
 const BUGFIX_MODE = resolve(ROOT, "skills/forge-build/references/bugfix-mode.md");
 describe("Bugfix Mode pre-flight checks", () => {

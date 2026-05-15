@@ -130,9 +130,7 @@ export function buildDebugResolvedContext(input) {
         topic: input.topic,
         tier: input.tier,
         trigger: "debug_resolved",
-        situation: input.rootCause
-            ? `调试完成，根因：${input.rootCause}`
-            : "调试完成",
+        situation: input.rootCause ? `调试完成，根因：${input.rootCause}` : "调试完成",
         rootCause: input.rootCause,
     };
 }

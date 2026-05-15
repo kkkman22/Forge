@@ -119,6 +119,7 @@ function dispatchCatalogRebuild(knowledgeDir, now) {
         };
     }
     catch (e) {
+        // biome-ignore lint/suspicious/noConsole: hook-sidecar diagnostic, not app output
         console.warn(`knowledge-hooks: catalog rebuild failed: ${e.message}`);
         return { kind: "skipped", reason: "no_change_detected" };
     }
@@ -137,6 +138,7 @@ function dispatchIntegrityLint(knowledgeDir) {
         return { kind: "linted", findings };
     }
     catch (e) {
+        // biome-ignore lint/suspicious/noConsole: hook-sidecar diagnostic, not app output
         console.warn(`knowledge-hooks: integrity lint failed: ${e.message}`);
         return { kind: "linted", findings: [] };
     }
@@ -149,6 +151,7 @@ function dispatchInstinctsProposals(_knowledgeDir, _now) {
         return { kind: "instincts_proposals", proposals };
     }
     catch (e) {
+        // biome-ignore lint/suspicious/noConsole: hook-sidecar diagnostic, not app output
         console.warn(`knowledge-hooks: instincts proposals failed: ${e.message}`);
         return { kind: "instincts_proposals", proposals: [] };
     }

@@ -190,9 +190,9 @@ describe("barrel file does not expose internal modules", () => {
   });
 
   // Verify the total number of value exports
-  it("has exactly 108 value exports", () => {
+  it("has exactly 115 value exports", () => {
     const valueExports = Object.keys(exports).filter((key) => typeof exports[key] !== "undefined");
-    expect(valueExports).toHaveLength(108);
+    expect(valueExports).toHaveLength(115);
     expect(valueExports.sort()).toEqual([
       "CLASSIFICATION_MAP",
       "CliError",
@@ -219,9 +219,13 @@ describe("barrel file does not expose internal modules", () => {
       "checkShipGate",
       "checkShipGateWithChecklist",
       "checkShipGateWithFreshness",
+      "checkSpecHealth",
       "checkVersionCompatibility",
       "classifySource",
+      "classifyVerdict",
+      "computeAmbiguityScore",
       "computeInputFilePaths",
+      "computeSpecHash",
       "createChecklist",
       "deserializeContextBudgetReport",
       "deserializeExploreSummary",
@@ -259,6 +263,7 @@ describe("barrel file does not expose internal modules", () => {
       "parseEvolvedRulesSummary",
       "parseFailureSummary",
       "parseFixRecoveryGitLog",
+      "parseHealthCache",
       "parseSolutionFrontmatter",
       "parseStatusEntries",
       "readTaskStatus",
@@ -272,6 +277,7 @@ describe("barrel file does not expose internal modules", () => {
       "renderInlineGrillAdvisory",
       "renderInlineGrillConfirmPrompt",
       "renderPendingAdvisoryNotice",
+      "renderSpecHealthAdvisory",
       "resolveStatusPath",
       "runBranchGate",
       "runGlossaryCheck",
@@ -287,6 +293,7 @@ describe("barrel file does not expose internal modules", () => {
       "serializeStatusEntries",
       "serializeSubagentSummary",
       "serializeTestOutput",
+      "shouldRecompute",
       "shouldTriggerEpisodeThreshold",
       "shouldTriggerInlineGrill",
       "slugify",

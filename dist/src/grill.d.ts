@@ -319,7 +319,7 @@ export declare function resumeGrillFromFindings(content: string, now?: Date): {
     tree: DecisionTree;
     nextNode: DecisionTreeNode | null;
 } | null;
-import { type FailureContext } from "./failure-sink.js";
+import type { FailureContext } from "./failure-sink.js";
 export interface GrillAbandonedInput {
     topic: string;
     tier: "light" | "standard" | "full";

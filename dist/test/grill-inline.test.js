@@ -1,5 +1,5 @@
-import { describe, it, expect } from "vitest";
-import { shouldTriggerInlineGrill, renderInlineGrillConfirmPrompt, renderInlineGrillAdvisory, formatInlineGrillInjection, } from "../src/grill-inline.js";
+import { describe, expect, it } from "vitest";
+import { formatInlineGrillInjection, renderInlineGrillAdvisory, renderInlineGrillConfirmPrompt, shouldTriggerInlineGrill, } from "../src/grill-inline.js";
 const freshTriggered = {
     spec_high_ambiguity: false,
     decide_requirement_disagreement: false,
