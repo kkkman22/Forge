@@ -69,7 +69,7 @@ export const SKILL_FUNCTION_REGISTRY = [
             "forge-debug/SKILL.md",
             "forge-learn/SKILL.md",
         ],
-        parameterNames: ["skill", "mode", "currentBranch", "currentTask", "pendingDeliveries", "alreadyCheckedThisPhase", "isCleanTree"],
+        parameterNames: ["input"],
     },
     {
         module: "branch-lifecycle.ts",
@@ -342,6 +342,64 @@ export const SKILL_FUNCTION_REGISTRY = [
         skills: ["forge-grill/SKILL.md"],
         parameterNames: ["tree", "glossary"],
     },
+    {
+        module: "zoom-out.ts",
+        functionName: "shouldAutoTriggerZoomOut",
+        skills: ["forge-decide/SKILL.md"],
+        parameterNames: ["context"],
+    },
+    // --- forge-spec/SKILL.md + forge-decide/SKILL.md (inline grill triggers) ---
+    {
+        module: "grill-inline.ts",
+        functionName: "shouldTriggerInlineGrill",
+        skills: ["forge-spec/SKILL.md", "forge-decide/SKILL.md"],
+        parameterNames: ["input"],
+    },
+    {
+        module: "grill-inline.ts",
+        functionName: "renderInlineGrillConfirmPrompt",
+        skills: ["forge-spec/SKILL.md", "forge-decide/SKILL.md"],
+        parameterNames: ["reason"],
+    },
+    {
+        module: "grill-inline.ts",
+        functionName: "renderInlineGrillAdvisory",
+        skills: ["forge-spec/SKILL.md", "forge-decide/SKILL.md"],
+        parameterNames: ["reason"],
+    },
+    {
+        module: "grill-inline.ts",
+        functionName: "formatInlineGrillInjection",
+        skills: ["forge-spec/SKILL.md", "forge-decide/SKILL.md"],
+        parameterNames: ["result", "mode"],
+    },
+    // --- Glossary Hook (7-phase unified dispatch) ---
+    {
+        module: "glossary-hook.ts",
+        functionName: "runGlossaryCheck",
+        skills: [
+            "forge-decide/SKILL.md",
+            "forge-grill/SKILL.md",
+            "forge-spec/SKILL.md",
+            "forge-plan/SKILL.md",
+            "forge-review/SKILL.md",
+            "forge-learn/SKILL.md",
+            "forge-build/SKILL.md",
+        ],
+        parameterNames: ["input"],
+    },
+    {
+        module: "glossary-hook.ts",
+        functionName: "getAdvisoryPath",
+        skills: ["forge-spec/SKILL.md"],
+        parameterNames: ["phase", "topic"],
+    },
+    {
+        module: "glossary-hook.ts",
+        functionName: "renderPendingAdvisoryNotice",
+        skills: ["forge-plan/SKILL.md"],
+        parameterNames: ["paths"],
+    },
     // --- forge-spec/SKILL.md (Living Doc, Sprint 3) ---
     {
         module: "living-doc/generator.ts",
@@ -354,6 +412,43 @@ export const SKILL_FUNCTION_REGISTRY = [
         functionName: "renderLivingDoc",
         skills: ["forge-spec/SKILL.md"],
         parameterNames: ["data", "outputDir"],
+    },
+    // --- forge-fix-conflicts/SKILL.md (conflict-resolver-hook) ---
+    {
+        module: "conflict-resolver.ts",
+        functionName: "parseConflictedPaths",
+        skills: ["forge-fix-conflicts/SKILL.md"],
+        parameterNames: ["gitOutput"],
+    },
+    {
+        module: "conflict-resolver.ts",
+        functionName: "classifyConflictZone",
+        skills: ["forge-fix-conflicts/SKILL.md"],
+        parameterNames: ["path", "statusContent"],
+    },
+    {
+        module: "conflict-resolver.ts",
+        functionName: "applyGuardedMerge",
+        skills: ["forge-fix-conflicts/SKILL.md"],
+        parameterNames: ["type", "ours", "theirs"],
+    },
+    {
+        module: "conflict-resolver.ts",
+        functionName: "buildFrozenRefusalPrompt",
+        skills: ["forge-fix-conflicts/SKILL.md"],
+        parameterNames: ["paths"],
+    },
+    {
+        module: "conflict-resolver.ts",
+        functionName: "validateConflictResolution",
+        skills: ["forge-fix-conflicts/SKILL.md"],
+        parameterNames: ["attempts"],
+    },
+    {
+        module: "conflict-resolver.ts",
+        functionName: "resolveConflicts",
+        skills: ["forge-fix-conflicts/SKILL.md"],
+        parameterNames: ["paths", "mode", "context"],
     },
     // --- MCP Tools ---
     {

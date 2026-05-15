@@ -53,4 +53,6 @@ export declare function hashCandidates(candidates: TermCandidate[]): string;
 export declare function normalizeInput(input: GlossaryCheckInput): TermCandidate[];
 export declare function runGlossaryCheck(input: GlossaryCheckInput): GlossaryCheckResult;
 export declare function renderGlossaryConflictPrompt(result: GlossaryCheckResult, _mode: GlossaryCheckMode): string;
+export declare function getAdvisoryPath(phase: GlossaryCheckPhase, topic: string): string;
+export declare function renderPendingAdvisoryNotice(paths: string[]): string;
 export declare function renderGlossaryAdvisory(result: GlossaryCheckResult): string;

@@ -244,7 +244,12 @@ describe("Property 9: Plan 任务有效性", () => {
     // -----------------------------------------------------------------------
     it("plan with all valid tasks passes validation (Req 4.5)", () => {
         fc.assert(fc.property(fc.array(validAtomicTaskArb, { minLength: 1, maxLength: 10 }), (tasks) => {
-            expect(validatePlanTasks(tasks)).toBe(true);
+            // Assign unique sequential task numbers so validators that key off
+            // taskNumber (cycle detection / topological ordering) don't merge
+            // distinct tasks. Generator independence is fine for shape testing
+            // but validatePlanTasks treats duplicate taskNumbers as one node.
+            const uniqueTasks = tasks.map((task, idx) => ({ ...task, taskNumber: idx + 1 }));
+            expect(validatePlanTasks(uniqueTasks)).toBe(true);
         }), { numRuns: 50 });
     });
     it("plan with at least one invalid task fails validation (Req 4.5)", () => {

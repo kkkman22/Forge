@@ -27,7 +27,7 @@ import { type Episode, type EpisodeTier } from "./episode.js";
  *
  * @internal
  */
-export type FailureTrigger = "three_strike" | "new_review_pattern" | "ship_gate_blocked";
+export type FailureTrigger = "three_strike" | "new_review_pattern" | "ship_gate_blocked" | "debug_resolved" | "grill_abandoned" | "test_layer_failed" | "conflict_validation_failed" | "loop_circuit_broken";
 /**
  * Context collected at the failure site. Callers build this record
  * from `status.md`, the router decision, and the specific failure

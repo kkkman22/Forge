@@ -149,15 +149,9 @@ describe("barrel file does not expose internal modules", () => {
         expect(exports.checkBranchTopicGate).toBeUndefined();
     });
     // Verify the total number of value exports
-<<<<<<< HEAD
-    it("has exactly 91 value exports", () => {
+    it("has exactly 108 value exports", () => {
         const valueExports = Object.keys(exports).filter((key) => typeof exports[key] !== "undefined");
-        expect(valueExports).toHaveLength(91);
-=======
-    it("has exactly 89 value exports", () => {
-        const valueExports = Object.keys(exports).filter((key) => typeof exports[key] !== "undefined");
-        expect(valueExports).toHaveLength(89);
->>>>>>> origin/main
+        expect(valueExports).toHaveLength(108);
         expect(valueExports.sort()).toEqual([
             "CLASSIFICATION_MAP",
             "CliError",
@@ -168,6 +162,7 @@ describe("barrel file does not expose internal modules", () => {
             "INCREMENTAL_THRESHOLD",
             "SdkAgentAdapter",
             "SdkDriver",
+            "THRESHOLD_MILESTONES",
             "VALID_TRANSITIONS",
             "allEntriesVerified",
             "archiveTaskStatus",
@@ -185,6 +180,7 @@ describe("barrel file does not expose internal modules", () => {
             "checkShipGateWithFreshness",
             "checkVersionCompatibility",
             "classifySource",
+            "computeInputFilePaths",
             "createChecklist",
             "deserializeContextBudgetReport",
             "deserializeExploreSummary",
@@ -195,16 +191,22 @@ describe("barrel file does not expose internal modules", () => {
             "deserializeTestOutput",
             "detectPlanFormat",
             "determineVerificationStrategy",
+            "dispatchKnowledgeEvent",
             "evaluateReviewGate",
             "evaluateShipGate",
             "evaluateTestGate",
             "extractHeadingAnchors",
+            "formatInlineGrillInjection",
+            "getAdvisoryPath",
             "getMostRecentActiveTask",
             "hasTaskName",
             "hashCandidates",
+            "hashEvent",
             "installSkill",
+            "isCatalogStale",
             "isFixCandidate",
             "isMultiTaskMode",
+            "isThrottled",
             "isValidTransition",
             "lintKnowledgeIntegrity",
             "listActiveTasks",
@@ -226,12 +228,12 @@ describe("barrel file does not expose internal modules", () => {
             "renderCatalog",
             "renderGlossaryAdvisory",
             "renderGlossaryConflictPrompt",
+            "renderInlineGrillAdvisory",
+            "renderInlineGrillConfirmPrompt",
+            "renderPendingAdvisoryNotice",
             "resolveStatusPath",
-<<<<<<< HEAD
-            "runGlossaryCheck",
-=======
             "runBranchGate",
->>>>>>> origin/main
+            "runGlossaryCheck",
             "runSubagentsInParallel",
             "scanForPlaceholders",
             "serializeChecklist",
@@ -244,6 +246,8 @@ describe("barrel file does not expose internal modules", () => {
             "serializeStatusEntries",
             "serializeSubagentSummary",
             "serializeTestOutput",
+            "shouldTriggerEpisodeThreshold",
+            "shouldTriggerInlineGrill",
             "slugify",
             "updateEntryStatus",
             "upsertTaskEntry",
