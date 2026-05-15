@@ -5,6 +5,10 @@
  * ambiguity_score ([0, 1]) and a SpecHealthReport with verdict + recommendations.
  */
 
+import { detectSpecLeak } from "./spec-leak-detector.js";
+import { lintScenarios } from "./scenario-linter.js";
+import type { BannedPatternRegistry, GlossaryRegistry } from "./pack/types.js";
+
 // ---------------------------------------------------------------------------
 // Constants
 // ---------------------------------------------------------------------------
@@ -47,8 +51,8 @@ export interface SpecHealthReport {
 export interface SpecHealthInput {
   specContent: string;
   specFilePath: string;
-  bannedRegistry: import("./pack/types.js").BannedPatternRegistry;
-  glossaryRegistry: import("./pack/types.js").GlossaryRegistry;
+  bannedRegistry: BannedPatternRegistry;
+  glossaryRegistry: GlossaryRegistry;
   thresholds: {
     leak_max: number;
     scenario_max: number;
@@ -81,4 +85,100 @@ export function classifyVerdict(
   if (score >= 0.85) return "healthy";
   if (score >= 0.7) return "marginal";
   return "degraded";
+}
+
+// ---------------------------------------------------------------------------
+// Glossary miss detection (internal helper)
+// ---------------------------------------------------------------------------
+
+const TECH_TERM_RE = /\b[A-Z][A-Za-z]+(?:\.[A-Z][A-Za-z]+)+\b/g;
+
+const GHERKIN_KEYWORDS = new Set(["Given", "When", "Then", "And", "But", "Scenario", "Feature", "Background", "Examples"]);
+
+function computeGlossaryMissCount(specContent: string, registry: GlossaryRegistry): number {
+  const matches = specContent.matchAll(TECH_TERM_RE);
+  let missCount = 0;
+  for (const m of matches) {
+    const term = m[0];
+    if (GHERKIN_KEYWORDS.has(term)) continue;
+    if (!registry.byTerm.has(term)) {
+      missCount++;
+    }
+  }
+  return missCount;
+}
+
+// ---------------------------------------------------------------------------
+// Recommendation generation
+// ---------------------------------------------------------------------------
+
+function generateRecommendations(
+  dims: Record<SpecHealthDimension, DimensionScore>,
+  verdict: HealthVerdict,
+): HealthRecommendation[] {
+  if (verdict === "healthy") {
+    return [{ kind: "no_action", reason: "All dimensions healthy" }];
+  }
+
+  const recs: HealthRecommendation[] = [];
+
+  if (verdict === "degraded" || verdict === "marginal") {
+    recs.push({ kind: "trigger_grill", reason: `Spec ambiguity score ${verdict}` });
+  }
+
+  if (dims.leak.errorCount > 0) {
+    recs.push({ kind: "rerun_spec_review", reason: `${dims.leak.errorCount} implementation detail leaks detected` });
+  }
+
+  if (dims.glossary.errorCount > 0) {
+    recs.push({ kind: "rerun_glossary_check", reason: `${dims.glossary.errorCount} undefined glossary terms` });
+  }
+
+  return recs;
+}
+
+// ---------------------------------------------------------------------------
+// Main orchestration: checkSpecHealth
+// ---------------------------------------------------------------------------
+
+export function checkSpecHealth(input: SpecHealthInput): SpecHealthReport {
+  const leakFindings = detectSpecLeak(
+    input.specContent,
+    input.specFilePath,
+    input.bannedRegistry,
+    input.glossaryRegistry,
+    "spec",
+  );
+
+  const lintFindings = lintScenarios(input.specContent, input.specFilePath);
+  const errorLintCount = lintFindings.filter((f) => f.severity === "error").length;
+
+  const glossaryMissCount = computeGlossaryMissCount(input.specContent, input.glossaryRegistry);
+
+  const dimensions: Record<SpecHealthDimension, DimensionScore> = {
+    leak: {
+      dimension: "leak",
+      passed: leakFindings.length === 0,
+      errorCount: leakFindings.length,
+      details: leakFindings.map((f) => f.original),
+    },
+    scenario: {
+      dimension: "scenario",
+      passed: errorLintCount === 0,
+      errorCount: errorLintCount,
+      details: lintFindings.filter((f) => f.severity === "error").map((f) => f.message),
+    },
+    glossary: {
+      dimension: "glossary",
+      passed: glossaryMissCount === 0,
+      errorCount: glossaryMissCount,
+      details: [],
+    },
+  };
+
+  const score = computeAmbiguityScore(dimensions);
+  const verdict = classifyVerdict(score, input.thresholds);
+  const recommendations = generateRecommendations(dimensions, verdict);
+
+  return { ambiguityScore: score, dimensions, overallVerdict: verdict, recommendations };
 }
