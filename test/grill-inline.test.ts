@@ -1,10 +1,10 @@
-import { describe, it, expect } from "vitest";
+import { describe, expect, it } from "vitest";
 import {
-  shouldTriggerInlineGrill,
-  renderInlineGrillConfirmPrompt,
-  renderInlineGrillAdvisory,
-  formatInlineGrillInjection,
   type AlreadyTriggered,
+  formatInlineGrillInjection,
+  renderInlineGrillAdvisory,
+  renderInlineGrillConfirmPrompt,
+  shouldTriggerInlineGrill,
 } from "../src/grill-inline.js";
 
 const freshTriggered: AlreadyTriggered = {
@@ -141,19 +141,13 @@ describe("formatInlineGrillInjection", () => {
   });
 
   it("formats skipped result with reason", () => {
-    const result = formatInlineGrillInjection(
-      { kind: "skipped", reason: "user_declined" },
-      "spec",
-    );
+    const result = formatInlineGrillInjection({ kind: "skipped", reason: "user_declined" }, "spec");
     expect(result).toContain("跳过");
     expect(result).toContain("user_declined");
   });
 
   it("formats abandoned result", () => {
-    const result = formatInlineGrillInjection(
-      { kind: "abandoned", partialTree: {} },
-      "decide",
-    );
+    const result = formatInlineGrillInjection({ kind: "abandoned", partialTree: {} }, "decide");
     expect(result).toContain("中止");
   });
 });

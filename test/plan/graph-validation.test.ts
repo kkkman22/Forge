@@ -1,6 +1,6 @@
-import { describe, it, expect } from "vitest";
-import { validatePlanTasks } from "../../src/plan.js";
+import { describe, expect, it } from "vitest";
 import type { AtomicTask } from "../../src/plan.js";
+import { validatePlanTasks } from "../../src/plan.js";
 
 function makeTask(n: number, dependsOn: number[] = []): AtomicTask {
   return {
@@ -21,27 +21,17 @@ function makeTask(n: number, dependsOn: number[] = []): AtomicTask {
 
 describe("validatePlanTasks — graph validation", () => {
   it("rejects cycle in full format tasks", () => {
-    const tasks = [
-      makeTask(1, [2]),
-      makeTask(2, [1]),
-    ];
+    const tasks = [makeTask(1, [2]), makeTask(2, [1])];
     expect(validatePlanTasks(tasks)).toBe(false);
   });
 
   it("rejects out-of-order dependencies", () => {
-    const tasks = [
-      makeTask(1, [2]),
-      makeTask(2),
-    ];
+    const tasks = [makeTask(1, [2]), makeTask(2)];
     expect(validatePlanTasks(tasks)).toBe(false);
   });
 
   it("accepts valid topological order with dependencies", () => {
-    const tasks = [
-      makeTask(1),
-      makeTask(2, [1]),
-      makeTask(3, [1, 2]),
-    ];
+    const tasks = [makeTask(1), makeTask(2, [1]), makeTask(3, [1, 2])];
     expect(validatePlanTasks(tasks)).toBe(true);
   });
 

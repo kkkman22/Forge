@@ -56,12 +56,9 @@ export function shouldTriggerInlineGrill(input: {
 // ---------------------------------------------------------------------------
 
 const CONFIRM_PROMPTS: Record<GrillInlineReason, string> = {
-  spec_high_ambiguity:
-    "检测到 spec 草案存在模糊点。是否进入 grill 子流程逐项澄清？",
-  decide_requirement_disagreement:
-    "检测到需求侧存在分歧。是否进入 grill 子流程澄清需求边界？",
-  decide_user_hesitation:
-    "检测到您对决策方向多次表达犹豫。是否进入 grill 子流程帮助厘清偏好？",
+  spec_high_ambiguity: "检测到 spec 草案存在模糊点。是否进入 grill 子流程逐项澄清？",
+  decide_requirement_disagreement: "检测到需求侧存在分歧。是否进入 grill 子流程澄清需求边界？",
+  decide_user_hesitation: "检测到您对决策方向多次表达犹豫。是否进入 grill 子流程帮助厘清偏好？",
 };
 
 export function renderInlineGrillConfirmPrompt(reason: GrillInlineReason): string {

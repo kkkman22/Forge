@@ -96,7 +96,7 @@ export function validatePreCompletionChecklist(state: ChecklistState): Checklist
 // Failure-sink driver helper
 // ---------------------------------------------------------------------------
 
-import { type FailureContext } from "./failure-sink.js";
+import type { FailureContext } from "./failure-sink.js";
 
 export interface TestLayerFailedInput {
   topic: string;
@@ -106,9 +106,7 @@ export interface TestLayerFailedInput {
 }
 
 export function buildTestLayerFailedContext(input: TestLayerFailedInput): FailureContext {
-  const cases = input.failedCases?.length
-    ? `，失败用例：${input.failedCases.join("、")}`
-    : "";
+  const cases = input.failedCases?.length ? `，失败用例：${input.failedCases.join("、")}` : "";
   return {
     skill: "forge-test",
     topic: input.topic,

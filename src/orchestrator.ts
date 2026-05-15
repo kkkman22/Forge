@@ -321,7 +321,7 @@ export function transition(
 // Failure-sink driver helper
 // ---------------------------------------------------------------------------
 
-import { type FailureContext } from "./failure-sink.js";
+import type { FailureContext } from "./failure-sink.js";
 
 export interface LoopCircuitBrokenInput {
   topic: string;
