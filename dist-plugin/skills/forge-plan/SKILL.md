@@ -21,11 +21,21 @@ disable-model-invocation: true
 
 **Not For**：轻量路径任务（≤1 文件 ≤20 行）、Spec 已包含完整任务拆解的情况。
 
+### §1.5 Pre-flight: Branch Gate
+
+调用 `runBranchGate({ skill: "plan", mode, currentBranch, currentTask, pendingDeliveries, alreadyCheckedThisPhase, isCleanTree })`：
+- `passed` / `skipped` → 继续后续 §
+- `auto_fixed` → 输出 `✅ 已自动切换到 <newBranch>` 后继续
+- `blocked` → 中止 skill，按 mode 输出对应提示
+- `warned` → 输出警告但继续
+
+默认严重度：warn。可通过 `severityOverride` 覆盖。
+
 ## 2. Five-Step Planning Process
 
 ### Step 1: Research
 
-搜索历史经验和项目上下文。强制步骤：读取 `knowledge/catalog.md`（全景索引，~50 行）、按需深入 `knowledge/` 相关条目、读取 `instincts.md`、读取锁定 Spec、派发 explore agent 扫描代码库。可选：`metrics.md`（偏差率 > 1.2 时预估时间乘系数）、`tool-health.md`（退化命令注入警告）。
+搜索历史经验和项目上下文。强制步骤：读取 `knowledge/catalog.md`（全景索引，~50 行）、按需深入 `knowledge/` 相关条目、读取 `instincts.md`、读取锁定 Spec、派发 explore agent 扫描代码库。可选：`metrics.md`（偏差率 > 1.2 时预估时间乘系数）、`tool-health.md`（退化命令注入警告）。`catalog.md` 新鲜度由 hooks.json PostToolUse 自动维护（`scripts/knowledge-hook-dispatch.mjs`），plan 启动时如 catalog 过期会自动 rebuild，无需手动 `/forge learn` 刷新。
 
 ### Step 2: File Mapping
 
@@ -41,6 +51,22 @@ disable-model-invocation: true
 
 任务命名优先使用 `.forge/glossary.md` 定义的规范术语；如发现同义词/别名，自动替换为 canonical term，保持跨 skill 命名一致。
 
+Glossary Hook: Task Breakdown 后调用 `runGlossaryCheck({ phase: 'plan' })` 检查 task title 术语一致性。启动时如 spec frontmatter 含 `pending_glossary_advisories`，调用 `renderPendingAdvisoryNotice(paths)` 显示 advisory 列表。
+
+### Step 3.5: 依赖识别
+
+对每个任务 T_i，回答：
+- T_i 的 RED 步骤是否需要 T_j (j < i) 已实现的内容？
+  → 若是，T_i.dependsOn.push(T_j.taskNumber)
+- T_i 的 GREEN 步骤是否需要 T_j 的产物？
+  → 若是，同上
+- T_i 是否仅在文档/配置层面，无运行时依赖？
+  → dependsOn 留空数组 []
+
+输出：每个任务的 dependsOn 字段填充完整（包括空数组）
+
+→ 识别规则详见 references/dependency-rules.md
+
 ### Step 4: Self-Check
 
 | Check | Criteria |
@@ -49,6 +75,7 @@ disable-model-invocation: true
 | Placeholder Scan | 零占位符 → 详见 references/prohibited-content.md |
 | Type Consistency | 所有引用有定义（full）/ Design Reference 有效（lightweight） |
 | Dependencies | 无循环依赖，拓扑排序正确 |
+| Dependency Graph Validity | `validateGraph(toTaskGraph(tasks))` 通过；循环依赖自动修正 |
 | Plan Structure | Split_Trigger 任一命中 → 警告 + 等待用户选择 → 详见 references/plan-split-wizard.md |
 
 未通过则自动修正并重新自检。

@@ -28,6 +28,16 @@ disable-model-invocation: true
 - 已知根因的简单修复
 - 非代码问题（环境配置、权限等）
 
+### §1.5 Pre-flight: Branch Gate
+
+调用 `runBranchGate({ skill: "debug", mode, currentBranch, currentTask, pendingDeliveries, alreadyCheckedThisPhase, isCleanTree })`：
+- `passed` / `skipped` → 继续后续 §
+- `auto_fixed` → 输出 `✅ 已自动切换到 <newBranch>` 后继续
+- `blocked` → 中止 skill，按 mode 输出对应提示
+- `warned` → 输出警告但继续
+
+默认严重度：warn。`--cross-branch` 时 `severityOverride: warn` 允许跨分支调试。
+
 ## 2. Four-Phase Process
 
 ### Phase 1 — Root Cause Investigation (Fix Proposals Prohibited)
@@ -44,7 +54,7 @@ disable-model-invocation: true
 
 ### Phase 4 — Fix Verification
 
-RED（复现测试）→ GREEN（最小修复）→ 全量测试确认无新问题。→ TDD 规则详见 ../forge-build/references/tdd-rules.md。完成后 status: "resolved"。Interactive 提示 `/forge learn`；autonomous 跳过。
+RED（复现测试）→ GREEN（最小修复）→ 全量测试确认无新问题。→ TDD 规则详见 ../forge-build/references/tdd-rules.md。完成后 status: "resolved"。Interactive 提示 `/forge learn`；autonomous 跳过。Solutions 写入完成后，hooks.json PostToolUse 自动触发 integrity lint（同 forge-learn）。
 
 ---
 

@@ -25,6 +25,16 @@ disable-model-invocation: true
 - 纯文档更新
 - 无行为影响的静态内容变更
 
+### §1.5 Pre-flight: Branch Gate
+
+调用 `runBranchGate({ skill: "test", mode, currentBranch, currentTask, pendingDeliveries, alreadyCheckedThisPhase, isCleanTree })`：
+- `passed` / `skipped` → 继续后续 §
+- `auto_fixed` → 输出 `✅ 已自动切换到 <newBranch>` 后继续
+- `blocked` → 中止 skill，按 mode 输出对应提示
+- `warned` → 输出警告但继续
+
+默认严重度：block。可通过 `severityOverride` 覆盖。
+
 ## 2. Three-Layer Verification
 
 ### Layer 1 — Unit Tests

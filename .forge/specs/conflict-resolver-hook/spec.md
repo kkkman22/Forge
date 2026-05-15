@@ -1,5 +1,5 @@
 ---
-status: draft
+status: locked
 created: "2026-05-14"
 topic: conflict-resolver-hook
 ---
@@ -295,6 +295,21 @@ async function resolveConflicts(
 | conflict-resolver 抽象化过早 | 模块边界不清 | 先复制现有 fix-conflicts 逻辑到 conflict-resolver，再让 fix-conflicts SKILL.md 引用，分两步走 |
 | Three-Strike 计数器跨阶段共享语义不清 | 误升级 debug | 每个触发点维护独立计数器，conflict-resolver 仅返回单次调用的尝试数 |
 | ship_merge 自动处理冲突后用户失去 review 机会 | 静默 merge 错误 | autonomous 模式下处理结果写到 `.forge/ship/<topic>-merge-conflict-log.md`，post-push verify 时回看 |
+
+### 风险与缓解（反模式对照）
+
+| 反模式 | 是否风险 | 缓解 |
+|--------|----------|------|
+| 过度抽象 | 是 | conflict-resolver 仅暴露 5 个函数 + 1 个顶层入口，每个触发点通过 normalizer 适配各自 schema（如 ship 传 statusContent，build 传 git stderr），不做 phase-specific 分支 |
+| 触发链过长 | 否 | conflict-resolver 不触发其他 hook/技能，仅返回三态结果由调用方决定后续行为。最长链：git operation → conflict-resolver → 调用方处理，共 2 步 |
+| 状态管理复杂度 | 否 | conflict-resolver 不引入新状态字段，不修改 status.md。Three-Strike 计数器由调用方维护，不跨阶段持久化 |
+| autonomous 硬阻塞 | 是（显式例外） | frozen 区冲突是显式声明的安全例外（autonomous abort merge）。其余场景（guarded/open）全部自动处理不阻塞 |
+| 时间型缓存 | 否 | conflict-resolver 无缓存机制，每次调用实时分类和合并 |
+
+## Reversibility
+
+- **回滚清单**：删除 `src/conflict-resolver.ts` + `src/build-git-hook.ts` + 对应测试文件；`src/ship.ts` revert `ship_merge` 改动回直接 abort；`src/run-manager.ts` 移除 conflict-resolver 调用；SKILL.md 恢复原版。所有变更均为新增或独立模块，无共享状态交叉依赖
+- **挂载点清单**：`ship.ts:ship_merge` effect 的 catch 分支、`run-manager.ts` worktree 合并路径、build 阶段 git 同步操作包装点、`/forge fix-conflicts` 命令入口
 
 ## 实施顺序建议
 
