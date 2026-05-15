@@ -42,7 +42,7 @@ disable-model-invocation: true
 
 ### Phase 1 — Root Cause Investigation (Fix Proposals Prohibited)
 
-完整理解问题：1. 完整阅读错误栈+日志 2. 稳定复现 3. 检查最近 Git 变更 4. 追踪数据流。**铁律**：Phase 1 未完成不能提出修复。产出：`.forge/debug/<topic>.md` (status: "investigating")。
+完整理解问题：1. 完整阅读错误栈+日志 2. 稳定复现 3. 检查最近 Git 变更 4. 追踪数据流 5. Read spec health verdict — if marginal/degraded, include "problem may stem from ambiguous spec" as hypothesis. If recommendations contain `trigger_grill`, optionally trigger grill-inline. **铁律**：Phase 1 未完成不能提出修复。产出：`.forge/debug/<topic>.md` (status: "investigating")。
 
 ### Phase 2 — Pattern Analysis
 
