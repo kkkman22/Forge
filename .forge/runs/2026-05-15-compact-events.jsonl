@@ -22,3 +22,7 @@
 {"timestamp":"2026-05-15T05:24:43Z","event":"precompact_snapshot","detail":"slug=atomic-task-depends-on-utilization phase=active"}
 {"timestamp":"2026-05-15T05:28:54Z","event":"postcompact_restore","detail":"slug=atomic-task-depends-on-utilization"}
 {"timestamp":"2026-05-15T05:28:54Z","event":"precompact_snapshot","detail":"slug=atomic-task-depends-on-utilization phase=active"}
+{"timestamp":"2026-05-15T07:39:49Z","event":"postcompact_restore","detail":"slug=atomic-task-depends-on-utilization"}
+{"timestamp":"2026-05-15T07:39:49Z","event":"precompact_snapshot","detail":"slug=none phase=completed"}
+{"timestamp":"2026-05-15T07:41:01Z","event":"postcompact_restore","detail":"slug=none"}
+{"timestamp":"2026-05-15T07:41:01Z","event":"precompact_snapshot","detail":"slug=none phase=completed"}
