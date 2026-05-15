@@ -10,7 +10,8 @@
     "rootDir": ".",
     "declaration": true,
     "allowJs": true,
-    "sourceMap": true
+    "sourceMap": true,
+    "types": ["vitest/globals"]
   },
   "include": ["src/**/*.ts", "test/**/*.ts", "test/**/*.d.ts", "scripts/cmux-mirror/lib/**/*.mjs"],
   "exclude": ["node_modules", "dist"]
