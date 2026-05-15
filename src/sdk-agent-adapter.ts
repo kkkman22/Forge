@@ -20,6 +20,7 @@ import {
   type WarmQuery,
 } from "@anthropic-ai/claude-agent-sdk";
 import { validateAgentOutput } from "./agent-output.js";
+import { createFrozenZoneHook } from "./frozen-zone-hook.js";
 import type {
   AgentInterface,
   AgentOutputSchema,
@@ -27,8 +28,7 @@ import type {
   AgentRunOptions,
   TokenUsage,
 } from "./loop-types.js";
-import { FORGE_LOOP_TOOLS, toSdkSandboxSettings, type SandboxProfile } from "./sandbox-profile.js";
-import { createFrozenZoneHook } from "./frozen-zone-hook.js";
+import { FORGE_LOOP_TOOLS, type SandboxProfile, toSdkSandboxSettings } from "./sandbox-profile.js";
 
 // ---------------------------------------------------------------------------
 // Configuration
@@ -153,11 +153,13 @@ export class SdkAgentAdapter implements AgentInterface {
         allowedTools: [...FORGE_LOOP_TOOLS],
         sandbox: toSdkSandboxSettings(sandboxProfile, cwd),
         hooks: {
-          PreToolUse: [{
-            matcher: "Write|Edit",
-            hooks: [createFrozenZoneHook(cwd)],
-            timeout: 5,
-          }],
+          PreToolUse: [
+            {
+              matcher: "Write|Edit",
+              hooks: [createFrozenZoneHook(cwd)],
+              timeout: 5,
+            },
+          ],
         },
       }),
       outputFormat: {

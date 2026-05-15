@@ -5,13 +5,13 @@
  * Returns deny for Write/Edit on files in frozen zone with locked/approved status.
  */
 
+import { existsSync, readFileSync } from "node:fs";
 import type {
   HookCallback,
   HookJSONOutput,
   PreToolUseHookSpecificOutput,
 } from "@anthropic-ai/claude-agent-sdk";
-import { isFrozenZonePath, extractStatus } from "./check-frozen.js";
-import { existsSync, readFileSync } from "node:fs";
+import { extractStatus, isFrozenZonePath } from "./check-frozen.js";
 
 /**
  * Create a frozen zone protection SDK programmatic hook.
