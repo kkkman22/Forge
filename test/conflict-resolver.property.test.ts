@@ -1,11 +1,11 @@
-import { describe, it, expect } from "vitest";
 import * as fc from "fast-check";
+import { describe, expect, it } from "vitest";
+import type { CheckAttempt } from "../src/conflict-resolver.js";
 import {
-  parseConflictedPaths,
   classifyConflictZone,
+  parseConflictedPaths,
   validateConflictResolution,
 } from "../src/conflict-resolver.js";
-import type { CheckAttempt } from "../src/conflict-resolver.js";
 
 describe("PBT: parseConflictedPaths", () => {
   it("always returns valid strings from any input", () => {
@@ -51,16 +51,19 @@ describe("PBT: validateConflictResolution invariants", () => {
         fc.array(
           fc.record({
             timestamp: fc.integer({ min: 0, max: 1_000_000 }),
-            filesSinceLastAttempt: fc.uniqueArray(fc.string(), { minLength: 0, maxLength: 5 }).map((a) => new Set(a)),
+            filesSinceLastAttempt: fc
+              .uniqueArray(fc.string(), { minLength: 0, maxLength: 5 })
+              .map((a) => new Set(a)),
             exitCode: fc.integer({ min: 0, max: 2 }),
           }),
         ),
         (rawAttempts) => {
           const attempts: CheckAttempt[] = rawAttempts.map((a) => ({
             ...a,
-            filesSinceLastAttempt: a.filesSinceLastAttempt instanceof Set
-              ? a.filesSinceLastAttempt
-              : new Set(Array.isArray(a.filesSinceLastAttempt) ? a.filesSinceLastAttempt : []),
+            filesSinceLastAttempt:
+              a.filesSinceLastAttempt instanceof Set
+                ? a.filesSinceLastAttempt
+                : new Set(Array.isArray(a.filesSinceLastAttempt) ? a.filesSinceLastAttempt : []),
           }));
           const gate = validateConflictResolution(attempts);
           expect(gate.attemptCount).toBeGreaterThanOrEqual(0);

@@ -1,33 +1,25 @@
-import { describe, it, expect } from "vitest";
+import { describe, expect, it } from "vitest";
 
 describe("ship_merge conflict-resolver integration", () => {
   it("resolves guarded conflicts via conflict-resolver", async () => {
     const { resolveConflicts } = await import("../src/conflict-resolver.js");
-    const result = await resolveConflicts(
-      [".forge/progress/auth.md"],
-      "autonomous",
-      {
-        statusContent: "current_task: auth\n",
-        repoRoot: "/tmp/test",
-        readFileContent: async () => "- [ ] task-a: Do A",
-        writeFileContent: async () => {},
-      },
-    );
+    const result = await resolveConflicts([".forge/progress/auth.md"], "autonomous", {
+      statusContent: "current_task: auth\n",
+      repoRoot: "/tmp/test",
+      readFileContent: async () => "- [ ] task-a: Do A",
+      writeFileContent: async () => {},
+    });
     expect(result.allResolved).toBe(true);
   });
 
   it("abort merge when frozen conflict refused in autonomous", async () => {
     const { resolveConflicts } = await import("../src/conflict-resolver.js");
-    const result = await resolveConflicts(
-      [".forge/specs/auth/spec.md"],
-      "autonomous",
-      {
-        statusContent: "current_task: auth\n",
-        repoRoot: "/tmp/test",
-        readFileContent: async () => "status: locked",
-        writeFileContent: async () => {},
-      },
-    );
+    const result = await resolveConflicts([".forge/specs/auth/spec.md"], "autonomous", {
+      statusContent: "current_task: auth\n",
+      repoRoot: "/tmp/test",
+      readFileContent: async () => "status: locked",
+      writeFileContent: async () => {},
+    });
     expect(result.frozenRefused).toBe(true);
     expect(result.allResolved).toBe(false);
   });
