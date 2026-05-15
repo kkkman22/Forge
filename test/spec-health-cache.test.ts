@@ -1,4 +1,4 @@
-import { describe, expect, it } from "vitest";
+import { describe, it, expect } from "vitest";
 import { computeSpecHash, parseHealthCache, shouldRecompute } from "../src/spec-health.js";
 
 describe("computeSpecHash", () => {
@@ -52,25 +52,11 @@ describe("parseHealthCache", () => {
 
 describe("shouldRecompute", () => {
   it("returns true when spec hash differs", () => {
-    expect(
-      shouldRecompute("hash_a", {
-        specHash: "hash_b",
-        score: 1.0,
-        verdict: "healthy",
-        generatedAt: "",
-      }),
-    ).toBe(true);
+    expect(shouldRecompute("hash_a", { specHash: "hash_b", score: 1.0, verdict: "healthy", generatedAt: "" })).toBe(true);
   });
 
   it("returns false when spec hash matches", () => {
-    expect(
-      shouldRecompute("hash_a", {
-        specHash: "hash_a",
-        score: 1.0,
-        verdict: "healthy",
-        generatedAt: "",
-      }),
-    ).toBe(false);
+    expect(shouldRecompute("hash_a", { specHash: "hash_a", score: 1.0, verdict: "healthy", generatedAt: "" })).toBe(false);
   });
 
   it("returns true when cache is null", () => {

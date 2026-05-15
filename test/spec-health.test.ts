@@ -1,15 +1,15 @@
-import { describe, expect, it } from "vitest";
-import type { BannedPatternRegistry, GlossaryRegistry } from "../src/pack/types.js";
+import { describe, it, expect } from "vitest";
 import {
-  checkSpecHealth,
-  classifyVerdict,
   computeAmbiguityScore,
-  type DimensionScore,
+  classifyVerdict,
+  checkSpecHealth,
   renderSpecHealthAdvisory,
-  type SpecHealthDimension,
   type SpecHealthInput,
+  type SpecHealthDimension,
+  type DimensionScore,
   type SpecHealthReport,
 } from "../src/spec-health.js";
+import type { BannedPatternRegistry, GlossaryRegistry } from "../src/pack/types.js";
 
 function makeDim(dimension: SpecHealthDimension, errorCount: number): DimensionScore {
   return { dimension, passed: errorCount === 0, errorCount, details: [] };
@@ -93,10 +93,7 @@ describe("classifyVerdict", () => {
 
 function makeBannedRegistry(patterns: string[]): BannedPatternRegistry {
   const categories = new Map<string, import("../src/pack/types.js").BannedPattern[]>();
-  categories.set(
-    "code",
-    patterns.map((p, i) => ({ pattern: p, description: `banned-${i}` })),
-  );
+  categories.set("code", patterns.map((p, i) => ({ pattern: p, description: `banned-${i}` })));
   return { categories };
 }
 
@@ -105,14 +102,8 @@ function makeGlossaryRegistry(terms: string[]): GlossaryRegistry {
   const byTerm = new Map();
   for (const t of terms) {
     const entry = {
-      term: t,
-      context: "default",
-      definition: `def-${t}`,
-      aliases: [],
-      updated: "",
-      source: null,
-      sourcePath: "",
-      sourceLayer: "core" as const,
+      term: t, context: "default", definition: `def-${t}`, aliases: [],
+      updated: "", source: null, sourcePath: "", sourceLayer: "core" as const,
     };
     entries.set(t, entry);
     byTerm.set(t, [entry]);
@@ -121,10 +112,7 @@ function makeGlossaryRegistry(terms: string[]): GlossaryRegistry {
 }
 
 const DEFAULT_THRESHOLDS = {
-  leak_max: 0,
-  scenario_max: 0,
-  glossary_miss_max: 2,
-  ambiguity_min: 0.7,
+  leak_max: 0, scenario_max: 0, glossary_miss_max: 2, ambiguity_min: 0.7,
 };
 
 describe("checkSpecHealth", () => {
@@ -146,11 +134,7 @@ describe("checkSpecHealth", () => {
       specContent: "Use UserService.callApi() to fetch DataRepository.query() and HttpClient.get()",
       specFilePath: "test.md",
       bannedRegistry: makeBannedRegistry([
-        "UserService",
-        "DataRepository",
-        "HttpClient",
-        "callApi",
-        "query",
+        "UserService", "DataRepository", "HttpClient", "callApi", "query",
       ]),
       glossaryRegistry: makeGlossaryRegistry([]),
       thresholds: DEFAULT_THRESHOLDS,
@@ -164,13 +148,7 @@ describe("checkSpecHealth", () => {
     const input: SpecHealthInput = {
       specContent: "Use ServiceA and ServiceB and ServiceC and ServiceD and ServiceE",
       specFilePath: "test.md",
-      bannedRegistry: makeBannedRegistry([
-        "ServiceA",
-        "ServiceB",
-        "ServiceC",
-        "ServiceD",
-        "ServiceE",
-      ]),
+      bannedRegistry: makeBannedRegistry(["ServiceA", "ServiceB", "ServiceC", "ServiceD", "ServiceE"]),
       glossaryRegistry: makeGlossaryRegistry([]),
       thresholds: DEFAULT_THRESHOLDS,
     };
@@ -187,9 +165,7 @@ describe("checkSpecHealth", () => {
       thresholds: DEFAULT_THRESHOLDS,
     };
     const report = checkSpecHealth(input);
-    expect(report.recommendations).toEqual([
-      { kind: "no_action", reason: "All dimensions healthy" },
-    ]);
+    expect(report.recommendations).toEqual([{ kind: "no_action", reason: "All dimensions healthy" }]);
   });
 });
 
