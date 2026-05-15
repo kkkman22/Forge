@@ -5,6 +5,7 @@
  * ambiguity_score ([0, 1]) and a SpecHealthReport with verdict + recommendations.
  */
 
+import { createHash } from "node:crypto";
 import { detectSpecLeak } from "./spec-leak-detector.js";
 import { lintScenarios } from "./scenario-linter.js";
 import type { BannedPatternRegistry, GlossaryRegistry } from "./pack/types.js";
@@ -206,4 +207,35 @@ export function renderSpecHealthAdvisory(report: SpecHealthReport): string {
     }
   }
   return lines.join("\n");
+}
+
+// ---------------------------------------------------------------------------
+// Cache mechanism (spec_hash + frontmatter)
+// ---------------------------------------------------------------------------
+
+export interface HealthCache {
+  specHash: string;
+  score: number;
+  verdict: HealthVerdict;
+  generatedAt: string;
+}
+
+export function computeSpecHash(content: string): string {
+  return createHash("sha256").update(content).digest("hex");
+}
+
+export function parseHealthCache(frontmatter: Record<string, unknown>): HealthCache | null {
+  const health = frontmatter.health as Record<string, unknown> | undefined;
+  if (!health || typeof health !== "object") return null;
+  return {
+    specHash: health.spec_hash as string,
+    score: health.score as number,
+    verdict: health.verdict as HealthVerdict,
+    generatedAt: health.generated_at as string,
+  };
+}
+
+export function shouldRecompute(currentHash: string, cache: HealthCache | null): boolean {
+  if (!cache) return true;
+  return currentHash !== cache.specHash;
 }
