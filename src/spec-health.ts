@@ -225,14 +225,16 @@ export function computeSpecHash(content: string): string {
 }
 
 export function parseHealthCache(frontmatter: Record<string, unknown>): HealthCache | null {
-  const health = frontmatter.health as Record<string, unknown> | undefined;
-  if (!health || typeof health !== "object") return null;
-  return {
-    specHash: health.spec_hash as string,
-    score: health.score as number,
-    verdict: health.verdict as HealthVerdict,
-    generatedAt: health.generated_at as string,
-  };
+  const health = frontmatter.health;
+  if (typeof health !== "object" || health === null) return null;
+  const h = health as Record<string, unknown>;
+  const specHash = h.spec_hash;
+  const score = h.score;
+  const verdict = h.verdict;
+  const generatedAt = h.generated_at;
+  if (typeof specHash !== "string" || typeof score !== "number" || typeof generatedAt !== "string") return null;
+  if (verdict !== "healthy" && verdict !== "marginal" && verdict !== "degraded") return null;
+  return { specHash, score, verdict, generatedAt };
 }
 
 export function shouldRecompute(currentHash: string, cache: HealthCache | null): boolean {
