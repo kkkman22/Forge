@@ -12,6 +12,7 @@ import type { WarmQuery } from "@anthropic-ai/claude-agent-sdk";
 import type { AgentInterface, AgentOutputSchema } from "./loop-types.js";
 import { MockAgentAdapter } from "./mock-agent-adapter.js";
 import { SdkAgentAdapter } from "./sdk-agent-adapter.js";
+import type { SandboxProfile } from "./sandbox-profile.js";
 
 // ---------------------------------------------------------------------------
 // Types
@@ -86,6 +87,8 @@ export interface BuiltinAgentDeps {
   warmQuery: WarmQuery;
   /** JSON schema for structured output validation. */
   outputSchema: AgentOutputSchema;
+  /** Sandbox profile for SDK native sandbox mode. When set, enables acceptEdits + SDK sandbox. */
+  sandboxProfile?: SandboxProfile;
 }
 
 /**
@@ -106,6 +109,7 @@ export function registerBuiltinAgents(registry: AgentRegistry, deps: BuiltinAgen
         outputSchema: deps.outputSchema,
         maxBudgetUsd: config.budgetUsd,
         globalTimeoutMs: config.timeoutMs,
+        sandboxProfile: deps.sandboxProfile,
       }),
   );
 
