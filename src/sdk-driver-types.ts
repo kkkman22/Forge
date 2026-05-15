@@ -102,6 +102,8 @@ export interface SdkDriverConfig {
   logSinkConfig?: LogSinkConfig;
   /** Whether to enable sandbox mode with fine-grained access control. */
   sandboxEnabled?: boolean;
+  /** Whether SDK native sandbox is active (via SdkAgentAdapter). Skips .sandbox-active.json write. */
+  sdkNativeSandbox?: boolean;
   /** Skip hooks protection validation and run without PreToolUse guards. */
   forceNoHooks?: boolean;
 }
