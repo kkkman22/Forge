@@ -149,9 +149,9 @@ npm run test:coverage # 测试 + 覆盖率报告
 bash scripts/build-dist.sh
 ```
 
-**技术栈**：TypeScript 5.9（strict）、141 个 TypeScript 模块、Vitest 3.2、fast-check 4.7（属性测试）、Biome 2.4（lint + format）。运行时依赖：`@anthropic-ai/claude-agent-sdk`、`commander`。
+**技术栈**：TypeScript 5.9（strict）、148 个 TypeScript 模块、Vitest 3.2、fast-check 4.7（属性测试）、Biome 2.4（lint + format）。运行时依赖：`@anthropic-ai/claude-agent-sdk`、`commander`。
 
-**测试策略**：5108 个测试（280 个测试文件，其中 133 个为 fast-check 属性测试文件）验证不变量。覆盖率 ~89% statements。
+**测试策略**：5511 个测试（307 个测试文件，其中 142 个为 fast-check 属性测试文件）验证不变量。覆盖率 ~89% statements。
 
 ---
 
