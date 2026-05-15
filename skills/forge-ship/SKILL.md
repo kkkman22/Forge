@@ -126,7 +126,7 @@ Autonomous 模式通过 `.forge/config.md` 的 `ship_default_method` 字段控�
 1. Gate checks (three gates): Review passed? Test passed? Progress complete?
 2. Not passed → 🚫 Block, list failed items
 3. Passed → Show four delivery options
-4. Execute chosen delivery method
+4. Execute chosen delivery method (Merge to main 时含 conflict-resolver 自动处理，详见 references/delivery-options.md §Option 1)
 5. Cleanup Worktree + prompt `/forge learn`
 6. Post-Push Verify (see §9)
 
@@ -157,7 +157,7 @@ After push/PR: run `npm run check` (fallback: `ci_check_command` from config) wi
 | Review 不完整 | 🚫 Ship 阻断：评审报告存在 incomplete Layer。请重新运行 /forge review |
 | Test 未执行 | 🚫 Ship 阻断：测试未执行。请先运行 /forge test |
 | Progress 部分完成 | 🚫 Ship 阻断：列出未完成任务 |
-| Git 操作失败 | ⚠️ 列出可能原因（网络/权限/冲突），建议检查或选其他方式 |
+| Git 操作失败 | ⚠️ Merge 冲突时自动调用 `resolveConflicts`（详见 references/delivery-options.md §Option 1）；非冲突类 Git 错误列出可能原因（网络/权限），建议检查或选其他方式 |
 | gh CLI 未安装 | ⚠️ 提示安装方式，建议选其他选项 |
 | 无 `.forge/` 目录 | ⚠️ 请先运行 forge init |
 
