@@ -115,6 +115,7 @@ interface ResolveContext {
   repoRoot: string;
   readFileContent: (path: string) => Promise<string>;
   writeFileContent: (path: string, content: string) => Promise<void>;
+  runCheckCommand?: () => Promise<{ exitCode: number; changedFiles: Set<string> }>;
 }
 
 export async function resolveConflicts(
@@ -150,13 +151,62 @@ export async function resolveConflicts(
 
   const allResolved = resolvedPaths.length === paths.length;
 
-  return {
-    allResolved,
-    frozenRefused,
+  let validationGate: ValidationGate = {
+    passed: allResolved,
+    attemptCount: 0,
     escalateToDebug: false,
+  };
+  if (allResolved && context.runCheckCommand) {
+    const checkResult = await context.runCheckCommand();
+    const attempt: CheckAttempt = {
+      timestamp: Date.now(),
+      filesSinceLastAttempt: checkResult.changedFiles,
+      exitCode: checkResult.exitCode,
+    };
+    validationGate = validateConflictResolution([attempt]);
+  }
+
+  return {
+    allResolved: allResolved && validationGate.passed,
+    frozenRefused,
+    escalateToDebug: validationGate.escalateToDebug,
     resolvedPaths,
     refusedPaths,
-    validationGate: { passed: allResolved, attemptCount: 0, escalateToDebug: false },
+    validationGate,
+  };
+}
+
+export interface HandleMergeConflictResult {
+  handled: boolean;
+  resolvedPaths: string[];
+  refusedPaths: string[];
+  shouldAbort: boolean;
+  shouldEscalateDebug: boolean;
+}
+
+export async function handleMergeConflict(
+  mergeError: string,
+  mode: ResolveMode,
+  context: Omit<ResolveContext, "repoRoot"> & { repoRoot: string },
+): Promise<HandleMergeConflictResult> {
+  const paths = parseConflictedPaths(mergeError);
+  if (paths.length === 0) {
+    return {
+      handled: false,
+      resolvedPaths: [],
+      refusedPaths: [],
+      shouldAbort: true,
+      shouldEscalateDebug: false,
+    };
+  }
+
+  const result = await resolveConflicts(paths, mode, context);
+  return {
+    handled: true,
+    resolvedPaths: result.resolvedPaths,
+    refusedPaths: result.refusedPaths,
+    shouldAbort: result.frozenRefused || !result.allResolved,
+    shouldEscalateDebug: result.escalateToDebug,
   };
 }
 

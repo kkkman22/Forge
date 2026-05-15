@@ -1,37 +1,66 @@
 import { describe, expect, it } from "vitest";
 
 describe("ship_merge conflict-resolver integration", () => {
-  it("resolves guarded conflicts via conflict-resolver", async () => {
-    const { resolveConflicts } = await import("../src/conflict-resolver.js");
-    const result = await resolveConflicts([".forge/progress/auth.md"], "autonomous", {
-      statusContent: "current_task: auth\n",
+  it("resolves guarded conflicts via handleMergeConflict", async () => {
+    const { handleMergeConflict } = await import("../src/conflict-resolver.js");
+    const result = await handleMergeConflict(
+      "Ship merge failed: CONFLICT (content): Merge conflict in .forge/progress/auth.md",
+      "autonomous",
+      {
+        statusContent: "current_task: auth\n",
+        repoRoot: "/tmp/test",
+        readFileContent: async () => "- [ ] task-a: Do A",
+        writeFileContent: async () => {},
+      },
+    );
+    expect(result.handled).toBe(true);
+    expect(result.resolvedPaths).toContain(".forge/progress/auth.md");
+    expect(result.shouldAbort).toBe(false);
+  });
+
+  it("aborts on frozen conflict in autonomous via handleMergeConflict", async () => {
+    const { handleMergeConflict } = await import("../src/conflict-resolver.js");
+    const result = await handleMergeConflict(
+      "CONFLICT (content): Merge conflict in .forge/specs/auth/spec.md",
+      "autonomous",
+      {
+        statusContent: "current_task: auth\n",
+        repoRoot: "/tmp/test",
+        readFileContent: async () => "status: locked",
+        writeFileContent: async () => {},
+      },
+    );
+    expect(result.handled).toBe(true);
+    expect(result.shouldAbort).toBe(true);
+    expect(result.refusedPaths).toContain(".forge/specs/auth/spec.md");
+  });
+
+  it("returns not handled when no conflict paths found", async () => {
+    const { handleMergeConflict } = await import("../src/conflict-resolver.js");
+    const result = await handleMergeConflict("Some other error message", "autonomous", {
+      statusContent: "",
       repoRoot: "/tmp/test",
-      readFileContent: async () => "- [ ] task-a: Do A",
+      readFileContent: async () => "",
       writeFileContent: async () => {},
     });
-    expect(result.allResolved).toBe(true);
+    expect(result.handled).toBe(false);
+    expect(result.shouldAbort).toBe(true);
   });
 
-  it("abort merge when frozen conflict refused in autonomous", async () => {
-    const { resolveConflicts } = await import("../src/conflict-resolver.js");
-    const result = await resolveConflicts([".forge/specs/auth/spec.md"], "autonomous", {
-      statusContent: "current_task: auth\n",
-      repoRoot: "/tmp/test",
-      readFileContent: async () => "status: locked",
-      writeFileContent: async () => {},
-    });
-    expect(result.frozenRefused).toBe(true);
-    expect(result.allResolved).toBe(false);
-  });
-
-  it("parseConflictedPaths extracts paths from merge error", async () => {
-    const { parseConflictedPaths } = await import("../src/conflict-resolver.js");
-    const errMsg = `Ship merge failed: CONFLICT (content): Merge conflict in .forge/reviews/auth.md`;
-    const paths = parseConflictedPaths(errMsg);
-    expect(paths).toEqual([".forge/reviews/auth.md"]);
-  });
-
-  it("no conflict — resolver not needed", () => {
-    expect(true).toBe(true);
+  it("resolves reviews conflict and proceeds with merge", async () => {
+    const { handleMergeConflict } = await import("../src/conflict-resolver.js");
+    const result = await handleMergeConflict(
+      "CONFLICT (content): Merge conflict in .forge/reviews/auth.md",
+      "autonomous",
+      {
+        statusContent: "current_task: auth\n",
+        repoRoot: "/tmp/test",
+        readFileContent: async () => "[quality][P2] src/a.ts: Issue",
+        writeFileContent: async () => {},
+      },
+    );
+    expect(result.handled).toBe(true);
+    expect(result.resolvedPaths).toContain(".forge/reviews/auth.md");
+    expect(result.shouldAbort).toBe(false);
   });
 });

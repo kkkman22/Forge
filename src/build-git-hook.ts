@@ -6,8 +6,8 @@ export interface BuildGitHookOptions {
   simulateOutput?: string;
   mode?: ResolveMode;
   statusContent?: string;
-  readFileContent?: (path: string) => Promise<string>;
-  writeFileContent?: (path: string, content: string) => Promise<void>;
+  readFileContent: (path: string) => Promise<string>;
+  writeFileContent: (path: string, content: string) => Promise<void>;
 }
 
 export interface BuildGitHookResult {
@@ -31,8 +31,8 @@ export const buildGitHook = {
     const result = await resolveConflicts(paths, mode, {
       statusContent: options.statusContent ?? "",
       repoRoot: options.cwd,
-      readFileContent: options.readFileContent ?? (async () => ""),
-      writeFileContent: options.writeFileContent ?? (async () => {}),
+      readFileContent: options.readFileContent,
+      writeFileContent: options.writeFileContent,
     });
 
     if (result.escalateToDebug) {
