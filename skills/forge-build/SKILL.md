@@ -37,6 +37,10 @@ Last commit: !`git log --oneline -1 2>/dev/null || echo "no commits"`
 - `blocked` → 中止 skill，按 mode 输出对应提示
 - `warned` → 输出警告但继续
 
+### §1.6 Pre-flight: Spec Health Check
+
+Same as forge-plan §1.6. Verify locked spec is still healthy before build starts.
+
 默认严重度：block。可通过 `severityOverride` 覆盖。
 
 ## 1a. Nature Mode 路由
