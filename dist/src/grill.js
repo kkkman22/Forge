@@ -765,4 +765,18 @@ function parseFindingsNodeLine(match) {
         },
     };
 }
+export function buildGrillAbandonedContext(input) {
+    return {
+        skill: "forge-grill",
+        topic: input.topic,
+        tier: input.tier,
+        trigger: "grill_abandoned",
+        situation: input.lastPendingNode
+            ? `需求澄清中止，最后待决节点：${input.lastPendingNode}`
+            : "需求澄清被用户中止",
+        rootCause: input.lastPendingNode
+            ? `未完成边界对齐，最后待决问题：${input.lastPendingNode}`
+            : undefined,
+    };
+}
 //# sourceMappingURL=grill.js.map

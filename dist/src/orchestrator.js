@@ -253,4 +253,21 @@ export function transition(state, event, limits = {}) {
         }
     }
 }
+export function buildLoopCircuitBrokenContext(input) {
+    const category = input.failureCategory ?? "连续错误超限";
+    return {
+        skill: "forge-loop",
+        topic: input.topic,
+        tier: input.tier,
+        trigger: "loop_circuit_broken",
+        situation: [
+            `熔断器触发：${input.consecutiveFailures} 次连续失败`,
+            input.runId ? `(run: ${input.runId})` : undefined,
+            `归类：${category}`,
+        ]
+            .filter(Boolean)
+            .join(" "),
+        rootCause: `${input.consecutiveFailures} 次连续失败，${category}`,
+    };
+}
 //# sourceMappingURL=orchestrator.js.map
