@@ -1,4 +1,4 @@
-import { describe, it, expect } from "vitest";
+import { describe, expect, it } from "vitest";
 
 describe("buildGitHook", () => {
   it("returns success when no conflicts", async () => {

@@ -1,4 +1,4 @@
-import { describe, it, expect } from "vitest";
+import { describe, expect, it } from "vitest";
 import type { CheckAttempt } from "../src/conflict-resolver.js";
 
 describe("resolveConflicts", () => {
@@ -22,16 +22,12 @@ describe("resolveConflicts", () => {
 
   it("refuses frozen conflicts in autonomous mode", async () => {
     const { resolveConflicts } = await import("../src/conflict-resolver.js");
-    const result = await resolveConflicts(
-      [".forge/specs/auth/spec.md"],
-      "autonomous",
-      {
-        statusContent: "current_task: auth\n",
-        repoRoot: "/tmp/test",
-        readFileContent: async () => "status: locked",
-        writeFileContent: async () => {},
-      },
-    );
+    const result = await resolveConflicts([".forge/specs/auth/spec.md"], "autonomous", {
+      statusContent: "current_task: auth\n",
+      repoRoot: "/tmp/test",
+      readFileContent: async () => "status: locked",
+      writeFileContent: async () => {},
+    });
     expect(result.allResolved).toBe(false);
     expect(result.frozenRefused).toBe(true);
     expect(result.refusedPaths).toContain(".forge/specs/auth/spec.md");
@@ -39,32 +35,24 @@ describe("resolveConflicts", () => {
 
   it("resolves open conflicts with ours strategy", async () => {
     const { resolveConflicts } = await import("../src/conflict-resolver.js");
-    const result = await resolveConflicts(
-      [".forge/findings/note.md"],
-      "autonomous",
-      {
-        statusContent: "",
-        repoRoot: "/tmp/test",
-        readFileContent: async () => "our content",
-        writeFileContent: async () => {},
-      },
-    );
+    const result = await resolveConflicts([".forge/findings/note.md"], "autonomous", {
+      statusContent: "",
+      repoRoot: "/tmp/test",
+      readFileContent: async () => "our content",
+      writeFileContent: async () => {},
+    });
     expect(result.allResolved).toBe(true);
     expect(result.resolvedPaths).toContain(".forge/findings/note.md");
   });
 
   it("leaves source conflicts unresolved", async () => {
     const { resolveConflicts } = await import("../src/conflict-resolver.js");
-    const result = await resolveConflicts(
-      ["src/index.ts"],
-      "autonomous",
-      {
-        statusContent: "",
-        repoRoot: "/tmp/test",
-        readFileContent: async () => "",
-        writeFileContent: async () => {},
-      },
-    );
+    const result = await resolveConflicts(["src/index.ts"], "autonomous", {
+      statusContent: "",
+      repoRoot: "/tmp/test",
+      readFileContent: async () => "",
+      writeFileContent: async () => {},
+    });
     expect(result.allResolved).toBe(false);
     expect(result.refusedPaths).toContain("src/index.ts");
   });
@@ -101,10 +89,7 @@ describe("buildFrozenRefusalPrompt", () => {
 
   it("handles multiple frozen paths", async () => {
     const { buildFrozenRefusalPrompt } = await import("../src/conflict-resolver.js");
-    const prompt = buildFrozenRefusalPrompt([
-      ".forge/specs/auth/spec.md",
-      ".forge/config.md",
-    ]);
+    const prompt = buildFrozenRefusalPrompt([".forge/specs/auth/spec.md", ".forge/config.md"]);
     expect(prompt).toContain(".forge/specs/auth/spec.md");
     expect(prompt).toContain(".forge/config.md");
   });
@@ -197,17 +182,15 @@ describe("classifyConflictZone", () => {
 describe("applyGuardedMerge", () => {
   it("merges progress files by task_id", async () => {
     const { applyGuardedMerge } = await import("../src/conflict-resolver.js");
-    const result = applyGuardedMerge("progress",
-      "- [ ] task-a: Do A",
-      "- [x] task-a: Done A",
-    );
+    const result = applyGuardedMerge("progress", "- [ ] task-a: Do A", "- [x] task-a: Done A");
     expect(result.merged).toContain("[x] task-a");
     expect(result.conflicts).toBeInstanceOf(Array);
   });
 
   it("merges instincts by confidence=max, count=sum", async () => {
     const { applyGuardedMerge } = await import("../src/conflict-resolver.js");
-    const result = applyGuardedMerge("known-failures",
+    const result = applyGuardedMerge(
+      "known-failures",
       "p1: confidence=0.5 count=3 | Text",
       "p1: confidence=0.8 count=2 | Text",
     );
@@ -218,7 +201,8 @@ describe("applyGuardedMerge", () => {
 
   it("merges reviews by append + sort", async () => {
     const { applyGuardedMerge } = await import("../src/conflict-resolver.js");
-    const result = applyGuardedMerge("reviews",
+    const result = applyGuardedMerge(
+      "reviews",
       "[quality][P2] src/a.ts: Issue",
       "[security][P0] src/b.ts: Issue",
     );
@@ -229,10 +213,7 @@ describe("applyGuardedMerge", () => {
 
   it("merges ADR with ID reassignment", async () => {
     const { applyGuardedMerge } = await import("../src/conflict-resolver.js");
-    const result = applyGuardedMerge("adr",
-      "ADR-001: Keep",
-      "ADR-001: New\nADR-002: Also New",
-    );
+    const result = applyGuardedMerge("adr", "ADR-001: Keep", "ADR-001: New\nADR-002: Also New");
     expect(result.merged).toContain("ADR-001");
     expect(result.conflicts).toEqual([]);
   });
@@ -248,11 +229,7 @@ CONFLICT (content): Merge conflict in .forge/reviews/auth.md
 Auto-merging src/index.ts
 CONFLICT (content): Merge conflict in src/index.ts`;
     const paths = parseConflictedPaths(gitOutput);
-    expect(paths).toEqual([
-      ".forge/progress/auth.md",
-      ".forge/reviews/auth.md",
-      "src/index.ts",
-    ]);
+    expect(paths).toEqual([".forge/progress/auth.md", ".forge/reviews/auth.md", "src/index.ts"]);
   });
 
   it("returns empty array when no conflicts", async () => {
