@@ -254,7 +254,10 @@ async function main(): Promise<void> {
     .option("--log-format <text|json>", "Log output format (text|json)", "text")
     .option("--log-level <debug|info|warn|error>", "Minimum log level", "info")
     .option("--log-file <path>", "Write JSON logs to file (dual-write mode)")
-    .option("--sandbox [profile]", "Enable sandbox mode with fine-grained access control. Optionally specify a profile name.")
+    .option(
+      "--sandbox [profile]",
+      "Enable sandbox mode with fine-grained access control. Optionally specify a profile name.",
+    )
     .option("--force-no-hooks", "Skip hooks protection validation (use at your own risk)", false)
     .option("--skills-dir <path>", "Load external SKILL plugins from directory")
     .option("--agent <name>", "Agent to use for iterations (claude|mock)", "claude")

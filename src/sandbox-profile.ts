@@ -113,9 +113,7 @@ export function loadSandboxProfile(cwd: string, profileName?: string): SandboxPr
     const profile = v2.profiles[name];
     if (!profile) {
       const available = Object.keys(v2.profiles).join(", ");
-      throw new Error(
-        `Sandbox profile "${name}" not found. Available profiles: ${available}`,
-      );
+      throw new Error(`Sandbox profile "${name}" not found. Available profiles: ${available}`);
     }
     return profile;
   }
