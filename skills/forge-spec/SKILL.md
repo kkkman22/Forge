@@ -76,6 +76,8 @@ disable-model-invocation: true
 
 自检未通过 → 自动修正并重新自检，直到全部通过。全部通过后提示用户确认锁定。
 
+After Step 2 Review completes, call `checkSpecHealth(input)` and write result to spec frontmatter `health: { score, verdict, spec_hash, generated_at }`. This caches the health assessment for downstream skills (plan/build/debug/review).
+
 ### Step 2a: Inline Grill Trigger (conditional)
 
 After Step 2 Review completes:
