@@ -1,9 +1,9 @@
 ---
-current_task: "none"
+current_task: "atomic-task-depends-on-utilization"
 tier: "standard"
-task_type: ""
-project_phase: "idle"
-phase: "completed"
+task_type: "feature"
+project_phase: "plan"
+phase: "active"
 work_nature: "feature"
 updated: "2026-05-15"
 ---
@@ -12,7 +12,9 @@ updated: "2026-05-15"
 
 ## 当前任务
 
-无活跃任务。
+**atomic-task-depends-on-utilization** — AtomicTask dependsOn 字段启用 & plan 拆解增强
+**Spec**: `.forge/specs/atomic-task-depends-on-utilization/spec.md` (locked)
+**阶段序列**: plan → build → review → test → ship
 
 ## 已完成任务
 
