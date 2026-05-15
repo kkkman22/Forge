@@ -8,3 +8,11 @@ export declare function normalizePath(p: string): string;
  * Total function — always returns a valid Zone [R13.1].
  */
 export declare function classify(path: string): Zone;
+import { type FailureContext } from "./failure-sink.js";
+export interface ConflictValidationFailedInput {
+    topic: string;
+    tier: "light" | "standard" | "full";
+    conflictPath: string;
+    checkOutput?: string;
+}
+export declare function buildConflictValidationFailedContext(input: ConflictValidationFailedInput): FailureContext;

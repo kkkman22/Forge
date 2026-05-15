@@ -63,4 +63,17 @@ export function validatePreCompletionChecklist(state) {
         failedItems,
     };
 }
+export function buildTestLayerFailedContext(input) {
+    const cases = input.failedCases?.length
+        ? `，失败用例：${input.failedCases.join("、")}`
+        : "";
+    return {
+        skill: "forge-test",
+        topic: input.topic,
+        tier: input.tier,
+        trigger: "test_layer_failed",
+        situation: `${input.failedLayer} 验证失败${cases}`,
+        rootCause: `${input.failedLayer} 失败${cases}`,
+    };
+}
 //# sourceMappingURL=test-engine.js.map
