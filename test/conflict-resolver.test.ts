@@ -37,6 +37,50 @@ describe("classifyConflictZone", () => {
   });
 });
 
+describe("applyGuardedMerge", () => {
+  it("merges progress files by task_id", async () => {
+    const { applyGuardedMerge } = await import("../src/conflict-resolver.js");
+    const result = applyGuardedMerge("progress",
+      "- [ ] task-a: Do A",
+      "- [x] task-a: Done A",
+    );
+    expect(result.merged).toContain("[x] task-a");
+    expect(result.conflicts).toBeInstanceOf(Array);
+  });
+
+  it("merges instincts by confidence=max, count=sum", async () => {
+    const { applyGuardedMerge } = await import("../src/conflict-resolver.js");
+    const result = applyGuardedMerge("known-failures",
+      "p1: confidence=0.5 count=3 | Text",
+      "p1: confidence=0.8 count=2 | Text",
+    );
+    expect(result.merged).toContain("confidence=0.8");
+    expect(result.merged).toContain("count=5");
+    expect(result.conflicts).toBeInstanceOf(Array);
+  });
+
+  it("merges reviews by append + sort", async () => {
+    const { applyGuardedMerge } = await import("../src/conflict-resolver.js");
+    const result = applyGuardedMerge("reviews",
+      "[quality][P2] src/a.ts: Issue",
+      "[security][P0] src/b.ts: Issue",
+    );
+    expect(result.merged).toContain("quality");
+    expect(result.merged).toContain("security");
+    expect(result.conflicts).toEqual([]);
+  });
+
+  it("merges ADR with ID reassignment", async () => {
+    const { applyGuardedMerge } = await import("../src/conflict-resolver.js");
+    const result = applyGuardedMerge("adr",
+      "ADR-001: Keep",
+      "ADR-001: New\nADR-002: Also New",
+    );
+    expect(result.merged).toContain("ADR-001");
+    expect(result.conflicts).toEqual([]);
+  });
+});
+
 describe("parseConflictedPaths", () => {
   it("extracts conflicted file paths from git stderr", async () => {
     const { parseConflictedPaths } = await import("../src/conflict-resolver.js");
