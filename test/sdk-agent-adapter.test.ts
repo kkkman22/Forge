@@ -564,3 +564,96 @@ describe("warm query consumption", () => {
     });
   });
 });
+
+// ---------------------------------------------------------------------------
+// Sandbox mode integration (sandbox-execution spec)
+// ---------------------------------------------------------------------------
+
+describe("sandbox mode", () => {
+  const sandboxProfile: import("../src/sandbox-profile.js").SandboxProfile = {
+    fileSystem: { allow: ["."], deny: [".env"] },
+    network: { mode: "restricted", allow: ["api.anthropic.com"] },
+  };
+
+  async function consumeWarmQuery(adapter: SdkAgentAdapter): Promise<void> {
+    mockWarmQueryQuery.mockReturnValue(makeAsyncGenerator([buildSuccessResult()]));
+    await adapter.run("warm-up", "/test/cwd");
+  }
+
+  it("uses acceptEdits permissionMode when sandboxProfile is set", async () => {
+    const adapter = createAdapter({ sandboxProfile });
+    await consumeWarmQuery(adapter);
+    mockSdkQuery.mockReturnValue(makeAsyncGenerator([buildSuccessResult()]));
+
+    await adapter.run("sandbox prompt", "/test/cwd");
+
+    expect(mockSdkQuery).toHaveBeenCalledOnce();
+    const callArgs = mockSdkQuery.mock.calls[0][0];
+    expect(callArgs.options.permissionMode).toBe("acceptEdits");
+  });
+
+  it("does not set allowDangerouslySkipPermissions in sandbox mode", async () => {
+    const adapter = createAdapter({ sandboxProfile });
+    await consumeWarmQuery(adapter);
+    mockSdkQuery.mockReturnValue(makeAsyncGenerator([buildSuccessResult()]));
+
+    await adapter.run("sandbox prompt", "/test/cwd");
+
+    const callArgs = mockSdkQuery.mock.calls[0][0];
+    expect(callArgs.options.allowDangerouslySkipPermissions).toBeUndefined();
+  });
+
+  it("includes allowedTools with FORGE_LOOP_TOOLS in sandbox mode", async () => {
+    const adapter = createAdapter({ sandboxProfile });
+    await consumeWarmQuery(adapter);
+    mockSdkQuery.mockReturnValue(makeAsyncGenerator([buildSuccessResult()]));
+
+    await adapter.run("sandbox prompt", "/test/cwd");
+
+    const callArgs = mockSdkQuery.mock.calls[0][0];
+    expect(callArgs.options.allowedTools).toContain("Write");
+    expect(callArgs.options.allowedTools).toContain("Edit");
+    expect(callArgs.options.allowedTools).toContain("Bash");
+    expect(callArgs.options.allowedTools).toContain("Read");
+    expect(callArgs.options.allowedTools).toContain("Agent");
+  });
+
+  it("includes sandbox settings in sandbox mode", async () => {
+    const adapter = createAdapter({ sandboxProfile });
+    await consumeWarmQuery(adapter);
+    mockSdkQuery.mockReturnValue(makeAsyncGenerator([buildSuccessResult()]));
+
+    await adapter.run("sandbox prompt", "/test/cwd");
+
+    const callArgs = mockSdkQuery.mock.calls[0][0];
+    expect(callArgs.options.sandbox).toBeDefined();
+    expect(callArgs.options.sandbox.enabled).toBe(true);
+  });
+
+  it("includes hooks with frozen zone protection in sandbox mode", async () => {
+    const adapter = createAdapter({ sandboxProfile });
+    await consumeWarmQuery(adapter);
+    mockSdkQuery.mockReturnValue(makeAsyncGenerator([buildSuccessResult()]));
+
+    await adapter.run("sandbox prompt", "/test/cwd");
+
+    const callArgs = mockSdkQuery.mock.calls[0][0];
+    expect(callArgs.options.hooks).toBeDefined();
+    expect(callArgs.options.hooks.PreToolUse).toBeDefined();
+    expect(callArgs.options.hooks.PreToolUse.length).toBeGreaterThan(0);
+  });
+
+  it("keeps bypassPermissions when no sandboxProfile", async () => {
+    const adapter = createAdapter(); // no sandboxProfile
+    await consumeWarmQuery(adapter);
+    mockSdkQuery.mockReturnValue(makeAsyncGenerator([buildSuccessResult()]));
+
+    await adapter.run("normal prompt", "/test/cwd");
+
+    const callArgs = mockSdkQuery.mock.calls[0][0];
+    expect(callArgs.options.permissionMode).toBe("bypassPermissions");
+    expect(callArgs.options.allowDangerouslySkipPermissions).toBe(true);
+    expect(callArgs.options.sandbox).toBeUndefined();
+    expect(callArgs.options.hooks).toBeUndefined();
+  });
+});
