@@ -65,7 +65,7 @@ describe("Direction 1: Registry functions exist in source modules", () => {
       const content = readFileSync(modulePath, "utf-8");
 
       // Check that the function is exported (or registered as MCP tool)
-      const exportPattern = new RegExp(`export\\s+function\\s+${entry.functionName}\\s*\\(`);
+      const exportPattern = new RegExp(`export\\s+(?:async\\s+)?function\\s+${entry.functionName}\\s*\\(`);
       const mcpToolPattern = new RegExp(`server\\.tool\\s*\\(\\s*["']${entry.functionName}["']`);
       const found = entry.mcpTool
         ? mcpToolPattern.test(content) || exportPattern.test(content)
@@ -96,9 +96,9 @@ describe("Direction 1: Registry functions exist in source modules", () => {
         return;
       }
 
-      // Extract the function signature (from "export function name(" to the closing ")")
+      // Extract the function signature (from "export [async] function name(" to the closing ")")
       const sigPattern = new RegExp(
-        `export\\s+function\\s+${entry.functionName}\\s*\\(([^)]*(?:\\([^)]*\\)[^)]*)*)\\)`,
+        `export\\s+(?:async\\s+)?function\\s+${entry.functionName}\\s*\\(([^)]*(?:\\([^)]*\\)[^)]*)*)\\)`,
       );
       const sigMatch = content.match(sigPattern);
       expect(

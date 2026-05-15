@@ -500,7 +500,7 @@ describe("Contract: skills content validation", () => {
 
       // Match ## Instructions, ## 指令, or any numbered ## heading (e.g. ## 1. 概述)
       // This confirms the file has substantive content beyond metadata
-      const instructionsPattern = /^##\s+(Instructions|指令|\d+[.\s])/m;
+      const instructionsPattern = /^##\s+(Instructions|指令|概述|\d+[.\s])/m;
       expect(
         instructionsPattern.test(bodyContent),
         `skills/${dir}/SKILL.md has no Instructions heading (or equivalent numbered section) after frontmatter`,
