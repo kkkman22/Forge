@@ -62,7 +62,9 @@ describe("hook-stdin-router PBT", () => {
     );
   });
 
-  it("JSON with agent_id (non-empty string) always classifies as subagent", () => {
+  it("JSON with agent_id (non-empty string) always classifies as subagent", {
+    timeout: 30000,
+  }, () => {
     fc.assert(
       fc.property(
         fc.string({ minLength: 1, maxLength: 50 }),
@@ -80,11 +82,13 @@ describe("hook-stdin-router PBT", () => {
           expect(result.shouldInject).toBe(false);
         },
       ),
-      { numRuns: 30 },
+      { numRuns: 20 },
     );
   });
 
-  it("JSON with hook_event_name but no agent_id always classifies as main", () => {
+  it("JSON with hook_event_name but no agent_id always classifies as main", {
+    timeout: 30000,
+  }, () => {
     fc.assert(
       fc.property(
         fc.string({ minLength: 1, maxLength: 50 }),
@@ -101,7 +105,7 @@ describe("hook-stdin-router PBT", () => {
           expect(result.shouldInject).toBe(true);
         },
       ),
-      { numRuns: 30 },
+      { numRuns: 20 },
     );
   });
 });

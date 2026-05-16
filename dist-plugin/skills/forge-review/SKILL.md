@@ -40,30 +40,9 @@ Diff stat: !`git diff --stat HEAD~1 2>/dev/null || echo "no diff"`
 
 ## 1b. CI 证据接入
 
-开始评审前，检查是否存在 CI ultrareview 产物：
+开始评审前检测 CI ultrareview 产物（`.forge/reviews/<pr>-ci.md`）。存在时读取 frontmatter 的 `severity_counts` 与 `## Findings`，在 summary 首行注明 CI 已覆盖；本地 finding 与 CI 匹配时加 `[confirmed-by-ci]` 前缀。CI 产物只读，本地评审不得修改。
 
-```bash
-PR_NUMBER=$(git log -1 --format=%s | grep -oE '#[0-9]+' | head -1 | tr -d '#')
-CI_REVIEW=".forge/reviews/${PR_NUMBER}-ci.md"
-[ -f "$CI_REVIEW" ] && head -100 "$CI_REVIEW"
-```
-
-如果存在：
-- 读取 frontmatter 的 `severity_counts`
-- 读取 `## Findings` 各严重度列表
-- 在本次评审的 summary 中首行注明："CI 评审已覆盖 N 条 finding，本地评审将补充对齐 spec 与 ADR 的深度检查"
-
-如果不存在：按原有流程进行，不报警告。
-
-**`[confirmed-by-ci]` 前缀规则**：当本地发现的 finding 与 CI 产物中的 finding 匹配（`file_path` 与 `category` 相同）时，输出格式为：
-
-```
-- **[confirmed-by-ci] src/foo.ts:42** — <本地描述>
-```
-
-不匹配的本地 finding 不加前缀。
-
-**CI 产物只读**：`.forge/reviews/<pr>-ci.md` 不得被本地 `/forge review` 修改。
+→ 详见 references/ci-evidence-integration.md（完整检测脚本、前缀规则、缺失/存在分支处理）
 
 ## 2. Subagent Parallel Execution
 
@@ -71,73 +50,16 @@ CI_REVIEW=".forge/reviews/${PR_NUMBER}-ci.md"
 
 ### 2.0 Diff Context Preparation（前置步骤）
 
-在启动任何 Subagent 之前，编排层**必须**执行以下步骤准备 diff 上下文：
+在启动任何 Subagent 之前，编排层**必须**准备 diff 上下文：
 
-#### Step 1：确定 diff 基准
+1. **确定基准**：`BASE_BRANCH=$(git merge-base main HEAD 2>/dev/null || echo "HEAD~1")`
+2. **获取 diff stat**：`git diff --stat ${BASE_BRANCH}...HEAD`
+3. **获取 diff 内容（带智能截断）**：优先 `forge_git(subcommand="diff-content", args="${BASE_BRANCH}...HEAD")`（按文件优先级排序，单文件 200 行/总量 3000 行上限）；MCP 不可用时降级到 `git diff ... | head -3000`（无优先级）
+4. **写入** `.forge/reviews/.diff-context.md`，frontmatter 含 `base/head/file_count/total_added/total_removed/truncated/source`，正文为 diff stat + 截断后的 patch
 
-```bash
-BASE_BRANCH=$(git merge-base main HEAD 2>/dev/null || echo "HEAD~1")
-```
+此文件作为 Subagent prompt 的一部分传入，消除 agent 逐文件 Read 的需求。截断后 agent 可对存疑项用 Read 深入验证（最多 3-5 次）。
 
-#### Step 2：获取 diff stat
-
-```bash
-git diff --stat ${BASE_BRANCH}...HEAD
-```
-
-#### Step 3：获取 diff 内容（带智能截断）
-
-**优先路径（forge-context MCP 可用时）**：
-
-调用 `forge_git(subcommand="diff-content", args="${BASE_BRANCH}...HEAD")`。
-
-该工具自动执行：
-- 按文件优先级排序（源码 > 配置 > 测试 > 生成文件 > lock 文件）
-- 单文件上限 200 行，总量上限 3000 行
-- 截断后附注省略文件列表
-
-**降级路径（forge-context MCP 不可用时）**：
-
-```bash
-DIFF_CONTENT=$(git diff ${BASE_BRANCH}...HEAD -- \
-  ':(exclude)*.lock' ':(exclude)package-lock.json' ':(exclude)dist/*' ':(exclude)*.d.ts' \
-  | head -3000)
-```
-
-降级路径的局限：无文件优先级排序，大文件可能占满预算。
-
-**检测方法**：尝试调用 `forge_git`，如果工具不存在或返回错误，自动切换到降级路径。不报警告，不阻断流程。
-
-#### Step 4：写入 diff context 文件
-
-将 diff 内容写入 `.forge/reviews/.diff-context.md`，格式：
-
-```markdown
----
-base: <BASE_BRANCH commit hash>
-head: <HEAD commit hash>
-file_count: <N>
-total_added: <N>
-total_removed: <N>
-truncated: <true|false>
-source: <"forge_git" | "shell_fallback">
----
-
-## Diff Stat
-<git diff --stat output>
-
-## Diff Content
-<truncated patch content>
-```
-
-**此文件作为 Subagent prompt 的一部分传入**，消除 agent 逐文件 Read 的需求。
-
-**截断策略**：
-- diff ≤3000 行：完整注入
-- diff >3000 行：按文件优先级截断（优先路径）或暴力截断（降级路径）
-- 截断后附注省略文件列表，agent 可对存疑项用 Read 深入验证（最多 3-5 次）
-
-> **推荐**：安装 forge-context MCP 可显著提升大变更集（≥15 文件）的评审质量。`scripts/init.sh` 会自动配置。
+→ 详见 references/diff-context-preparation.md（完整脚本、frontmatter 模板、forge_git MCP 降级判定）
 
 使用 Agent tool 独立启动，无需 Agent Team。
 
