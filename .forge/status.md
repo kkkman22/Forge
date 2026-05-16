@@ -1,9 +1,9 @@
 ---
-current_task: "missions-inspired-rigor"
+current_task: "local-ci-parity"
 tier: "standard"
 task_type: "feature"
 project_phase: "active"
-phase: "shipped"
+phase: "plan"
 work_nature: "feature"
 updated: "2026-05-16"
 ---
