@@ -28,8 +28,8 @@ interface HookEntry {
 const UNBOUNDED_FORGE_READ =
   /(?:head|tail|cat)\s+.*\.forge\/(?:plans|progress)\//;
 
-/** Acceptable byte/line limit markers */
-const HAS_LIMIT = /(?:head\s+-[cn]\s+\d+|head\s+-\d{1,2}[^0-9]|tail\s+-[cn]\s+\d+|\|.*head\s+-c\s+\d+|MAX_TOTAL_CHARS|maxBytes|maxBytes\s*=\s*\d+)/;
+/** Acceptable byte limit markers (line-based limits like head -N are NOT safe on globs) */
+const HAS_LIMIT = /(?:head\s+-c\s+\d+|tail\s+-c\s+\d+|\|.*head\s+-c\s+\d+|MAX_TOTAL_CHARS|maxBytes|maxBytes\s*=\s*\d+|inject-plan-context\.mjs|inject-evolved-rules\.mjs)/;
 
 function extractCommands(configPath: string): { path: string; command: string }[] {
   let raw: string;
@@ -43,9 +43,13 @@ function extractCommands(configPath: string): { path: string; command: string }[
   const hooks = json.hooks ?? json;
   const commands: { path: string; command: string }[] = [];
 
-  for (const entries of Object.values(hooks) as HookEntry[][]) {
+  // Only check injection hooks: SessionStart + UserPromptSubmit
+  const injectionEvents = ["SessionStart", "UserPromptSubmit"];
+  for (const eventName of injectionEvents) {
+    const entries = hooks[eventName];
+    if (!entries) continue;
     for (const group of entries) {
-      const inner = group.hooks ?? [];
+      const inner = (group as { hooks?: HookEntry[] }).hooks ?? [];
       for (const h of inner) {
         if (h.command) {
           commands.push({ path: configPath, command: h.command });
@@ -73,34 +77,47 @@ describe("hooks config integrity", () => {
     expect(violations).toEqual([]);
   });
 
-  it("PBT: any command fragment with unbounded forge read is rejected by the checker", () => {
-    fc.assert(
-      fc.property(
-        fc.record({
-          command: fc.oneof(
-            fc.constant("head -50 .forge/plans/*.md"),
-            fc.constant("tail -20 .forge/progress/*.md"),
-            fc.constant("cat .forge/plans/plan.md"),
-            fc.constant("head .forge/plans/test.md"),
-            fc.constant("tail .forge/progress/prog.md"),
-            fc.constant("echo hello"),
-            fc.constant("node scripts/inject-plan-context.mjs"),
-            fc.constant("cat /etc/passwd"),
-          ),
-          timeout: fc.integer({ min: 1, max: 30 }),
-        }),
-        (fragment) => {
-          const cmd = fragment.command;
-          const matchesPattern = UNBOUNDED_FORGE_READ.test(cmd);
-          const hasLimit = HAS_LIMIT.test(cmd);
+  it("PBT: checker correctly classifies known bad vs safe commands", () => {
+    const badCommands = [
+      "head -50 .forge/plans/*.md",
+      "tail -20 .forge/progress/*.md",
+      "cat .forge/plans/plan.md",
+      "head .forge/plans/test.md",
+      "tail .forge/progress/prog.md",
+      "cat .forge/plans/active.md 2>/dev/null",
+    ];
 
-          // If matches unbounded forge read pattern, it must have a limit
-          if (matchesPattern) {
-            expect(hasLimit).toBe(true);
-          }
-        },
-      ),
-      { numRuns: 30 },
+    const safeCommands = [
+      "echo hello",
+      "node scripts/inject-plan-context.mjs",
+      "cat /etc/passwd",
+      "ls -la .forge/",
+      "node forge/scripts/inject-evolved-rules.mjs 2>/dev/null || true",
+      "head -c 4096 .forge/plans/plan.md",
+      "tail -c 8192 .forge/progress/prog.md",
+    ];
+
+    // Bad commands must be detected (match pattern, no limit)
+    for (const cmd of badCommands) {
+      expect(UNBOUNDED_FORGE_READ.test(cmd)).toBe(true);
+      expect(HAS_LIMIT.test(cmd)).toBe(false);
+    }
+
+    // Safe commands must not be flagged
+    for (const cmd of safeCommands) {
+      const matchesPattern = UNBOUNDED_FORGE_READ.test(cmd);
+      const hasLimit = HAS_LIMIT.test(cmd);
+      // Either doesn't match the pattern, or has a limit
+      expect(matchesPattern && !hasLimit).toBe(false);
+    }
+
+    // PBT: arbitrary strings never cause the regex to throw
+    fc.assert(
+      fc.property(fc.string({ maxLength: 500 }), (s) => {
+        expect(() => UNBOUNDED_FORGE_READ.test(s)).not.toThrow();
+        expect(() => HAS_LIMIT.test(s)).not.toThrow();
+      }),
+      { numRuns: 50 },
     );
   });
 });
