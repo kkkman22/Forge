@@ -626,9 +626,7 @@ describe("Contract: hooks.json evolved rules integration", () => {
     const hasEvolvedRulesHook = sessionStartGroups.some((group) =>
       group.hooks.some((h) => h.command?.includes("inject-evolved-rules")),
     );
-    expect(hasEvolvedRulesHook, "SessionStart missing hook for evolved-rules injection").toBe(
-      true,
-    );
+    expect(hasEvolvedRulesHook, "SessionStart missing hook for evolved-rules injection").toBe(true);
   });
 
   it("SessionStart evolved-rules hook uses inject-evolved-rules.mjs script", () => {
