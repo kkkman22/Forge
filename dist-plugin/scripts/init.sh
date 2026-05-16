@@ -603,61 +603,84 @@ else
 fi
 
 # ============================================================================
-# Step 6：配置 forge-context MCP Server（推荐）
+# Step 6：配置 forge-context MCP Server（智能 diff 截断）
 # ============================================================================
-info "Step 6/7：配置 forge-context MCP Server（推荐：大变更集评审质量显著提升）"
+info "Step 6/7：forge-context MCP（智能 diff 截断）"
+echo ""
+echo "📦 Plugin 用户（marketplace 安装）：已通过 plugin 自动启用，可跳过此步。"
+echo "   验证：claude mcp list | grep forge-context"
+echo ""
+echo "🛠 源仓库 / 全局安装 / --plugin-dir 用户：init.sh 会把 forge-context"
+echo "   写入项目的 .claude/settings.json，绕过 plugin 配置。"
+echo ""
+echo "为什么需要："
+echo "  • Token 消耗：spec-check 单次评审 700K+ → <200K（19 文件变更实测）"
+echo "  • 完整性：避免三个评审 agent 因上下文溢出输出截断"
+echo "  • 智能截断：源码 > 配置 > 测试 > 生成文件 > lock 优先级"
+echo "  • 一致性：三个 agent 共享同一份 diff 内容，结论可比"
+echo ""
+echo "不配置的影响："
+echo "  • Review 走 git diff | head -1500 降级路径"
+echo "  • 大变更集（≥15 文件）评审可能截断"
+echo "  • lock 文件、生成文件可能挤占预算"
+echo ""
 
 mcp_server_path="${FORGE_ROOT}/dist/src/mcp/server.js"
 
-if [ -f "$mcp_server_path" ]; then
-  if command -v node &>/dev/null; then
-    # Ensure settings.json exists (may not exist if hooks step was skipped)
-    if [ ! -f "${settings_file}" ]; then
-      mkdir -p "${PROJECT_ROOT}/.claude"
-      echo '{}' > "${settings_file}"
-      info "创建了空的 .claude/settings.json"
-    fi
-
-    # Merge forge-context into mcpServers section
-    mcp_result=$(node -e "
-      const fs = require('fs');
-      const settingsPath = '${settings_file}';
-      const serverPath = '${mcp_server_path}';
-      let settings;
-      try {
-        settings = JSON.parse(fs.readFileSync(settingsPath, 'utf-8'));
-      } catch (e) {
-        settings = {};
-      }
-      if (!settings.mcpServers) settings.mcpServers = {};
-      if (settings.mcpServers['forge-context']) {
-        process.stdout.write('SKIP');
-      } else {
-        settings.mcpServers['forge-context'] = {
-          command: 'node',
-          args: [serverPath]
-        };
-        fs.writeFileSync(settingsPath, JSON.stringify(settings, null, 2) + '\n');
-        process.stdout.write('OK');
-      }
-    " 2>&1) || true
-
-    case "${mcp_result}" in
-      SKIP)
-        warn "forge-context MCP 配置已存在，跳过（避免覆盖）"
-        ;;
-      OK)
-        success "forge-context MCP Server 已配置到 .claude/settings.json"
-        ;;
-      *)
-        warn "MCP 配置写入失败：${mcp_result}"
-        ;;
-    esac
-  else
-    warn "未检测到 node 命令，跳过 MCP Server 配置。forge-context 为推荐组件（/forge review 大变更集评审依赖智能截断）。请安装 node 后重新运行 init，或手动添加 forge-context 到 .claude/settings.json 的 mcpServers 中。"
-  fi
+# Plugin context detection — if plugin already provides forge-context, skip
+if [[ -n "${CLAUDE_PLUGIN_ROOT:-}" ]] && [[ -f "${CLAUDE_PLUGIN_ROOT}/dist/src/mcp/server.js" ]]; then
+  success "forge-context 已通过 plugin 自动启用，跳过 settings.json 配置"
 else
-  info "未找到 MCP server（${mcp_server_path}），跳过 MCP 配置（运行 npm run build 后重新初始化可启用）"
+  if [ -f "$mcp_server_path" ]; then
+    if command -v node &>/dev/null; then
+      # Ensure settings.json exists (may not exist if hooks step was skipped)
+      if [ ! -f "${settings_file}" ]; then
+        mkdir -p "${PROJECT_ROOT}/.claude"
+        echo '{}' > "${settings_file}"
+        info "创建了空的 .claude/settings.json"
+      fi
+
+      # Merge forge-context into mcpServers section
+      mcp_result=$(node -e "
+        const fs = require('fs');
+        const settingsPath = '${settings_file}';
+        const serverPath = '${mcp_server_path}';
+        let settings;
+        try {
+          settings = JSON.parse(fs.readFileSync(settingsPath, 'utf-8'));
+        } catch (e) {
+          settings = {};
+        }
+        if (!settings.mcpServers) settings.mcpServers = {};
+        if (settings.mcpServers['forge-context']) {
+          process.stdout.write('SKIP');
+        } else {
+          settings.mcpServers['forge-context'] = {
+            command: 'node',
+            args: [serverPath]
+          };
+          fs.writeFileSync(settingsPath, JSON.stringify(settings, null, 2) + '\n');
+          process.stdout.write('OK');
+        }
+      " 2>&1) || true
+
+      case "${mcp_result}" in
+        SKIP)
+          warn "forge-context MCP 配置已存在，跳过（避免覆盖）"
+          ;;
+        OK)
+          success "forge-context MCP Server 已配置到 .claude/settings.json"
+          ;;
+        *)
+          warn "MCP 配置写入失败：${mcp_result}"
+          ;;
+      esac
+    else
+      warn "未检测到 node 命令，跳过 MCP Server 配置。forge-context 为推荐组件（/forge review 大变更集评审依赖智能截断）。请安装 node 后重新运行 init，或手动添加 forge-context 到 .claude/settings.json 的 mcpServers 中。"
+    fi
+  else
+    info "未找到 MCP server（${mcp_server_path}），跳过 MCP 配置（运行 npm run build 后重新初始化可启用）"
+  fi
 fi
 
 # --- Install cmux workspace layout (idempotent) ---
