@@ -306,3 +306,15 @@ quality-check and security-check run as `background: true` agents [R11.1]. spec-
 - **Checklist fatigue**: Too many check items → agent skims, misses critical ones → prioritize P0/P1 items, group P2/P3
 - **Worktree-only evidence**: Review finds file exists in worktree → claims implemented → verify on main branch, not worktree
 - **Stale review**: Review at commit A, code changes to commit B → review invalid → record reviewed_at_commit, warn on diff
+
+## 4.5 Known-failures Accumulation
+
+After receiving three-layer review reports, forge-review SKILL:
+
+1. Extracts all `known-failures append-block` from reviewer output
+2. Reads `.forge/knowledge/known-failures.md` (creates if missing)
+3. Calls `mergeKnownFailures(existing, newBlocks)` to dedup and merge
+4. Writes result back to `.forge/knowledge/known-failures.md`
+5. Outputs: `本次新增 N 条、更新 M 条 known-failures`
+
+Retention: >100 entries triggers auto-archive to `.forge/archive/known-failures-<date>.md`, keeping latest 80.

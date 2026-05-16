@@ -26,7 +26,7 @@ const DEFAULT_TIMEOUT_MS = 30_000;
  * @param paths - File paths to inject via FORGE_FILES env var
  * @param timeoutMs - Timeout in milliseconds
  */
-export function execReadScript(script, language, paths, timeoutMs) {
+export function execReadScript(script, language, paths, timeoutMs, options) {
     return new Promise((resolve) => {
         const env = {
             ...process.env,
@@ -34,7 +34,12 @@ export function execReadScript(script, language, paths, timeoutMs) {
         };
         const cmd = language === "javascript" ? "node" : "/bin/sh";
         const args = language === "javascript" ? ["-e", script] : ["-c", script];
-        const child = execFile(cmd, args, { timeout: timeoutMs, maxBuffer: 10 * 1024 * 1024, env }, (error, stdout, stderr) => {
+        const child = execFile(cmd, args, {
+            timeout: timeoutMs,
+            maxBuffer: 10 * 1024 * 1024,
+            env,
+            ...(options?.cwd ? { cwd: options.cwd } : {}),
+        }, (error, stdout, stderr) => {
             if (error && "killed" in error && error.killed) {
                 resolve({
                     stdout: String(stdout),
@@ -83,7 +88,7 @@ const TOOL_DESCRIPTION = [
 /**
  * Register the `forge_read` tool on the given MCP server.
  */
-export function registerForgeRead(server) {
+export function registerForgeRead(server, root) {
     server.tool("forge_read", TOOL_DESCRIPTION, {
         paths: z.array(z.string()).describe("File paths to analyze"),
         script: z.string().describe("Analysis script code"),
@@ -93,7 +98,8 @@ export function registerForgeRead(server) {
             .describe("Script language (javascript or shell)"),
     }, async ({ paths, script, language }) => {
         // Execute script with FORGE_FILES env var
-        const result = await execReadScript(script, language, paths, DEFAULT_TIMEOUT_MS);
+        const readOpts = root ? { cwd: root.path } : undefined;
+        const result = await execReadScript(script, language, paths, DEFAULT_TIMEOUT_MS, readOpts);
         // Handle timeout
         if (result.timedOut) {
             return {

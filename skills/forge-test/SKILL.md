@@ -55,6 +55,19 @@ disable-model-invocation: true
 - **如果非空**：使用 `forge_exec` 执行该命令（server-side trimming）。当 MCP 不可用时，回退到 `scripts/run-with-trim.sh` 或直接执行。覆盖清单项 1-4。从合并输出中提取各项通过/失败状态。
 - **如果为空或缺失**：为每个清单项分别运行对应命令（优先使用 `forge_exec`）。
 
+**漂移检测**：
+
+在读取 `ci_check_command` 之前，先调用 `detectCiCommandDrift(frontmatter, packageJsonRaw)` 判断漂移状态，按 `kind` 分支：
+
+| `kind` | 处理 |
+|--------|------|
+| `has_ci_command` | 正常路径：使用 `ci_check_command` 值 |
+| `drift_with_npm_check` | 输出 `warning` 文本 → 使用 `forge_exec` 执行 `npm run check` → 在 `.forge/findings/<topic>-ci-drift.md` 记录漂移（仅首次） |
+| `no_check_no_field` | 走原有逐项回退（清单项 1-4 分别执行） |
+| `malformed_package_json` | 输出 `reason` 警告 → 走逐项回退 |
+
+所有分支均不阻断 ship。漂移仅是质量信号。
+
 **7 项清单**：
 
 | # | Item | Method |

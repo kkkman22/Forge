@@ -12,6 +12,7 @@
  * **Validates: Requirement 4**
  */
 import type { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
+import type { ResolvedRoot } from "../project-root.js";
 export interface ReadExecResult {
     stdout: string;
     stderr: string;
@@ -26,8 +27,10 @@ export interface ReadExecResult {
  * @param paths - File paths to inject via FORGE_FILES env var
  * @param timeoutMs - Timeout in milliseconds
  */
-export declare function execReadScript(script: string, language: "javascript" | "shell", paths: string[], timeoutMs: number): Promise<ReadExecResult>;
+export declare function execReadScript(script: string, language: "javascript" | "shell", paths: string[], timeoutMs: number, options?: {
+    cwd?: string;
+}): Promise<ReadExecResult>;
 /**
  * Register the `forge_read` tool on the given MCP server.
  */
-export declare function registerForgeRead(server: McpServer): void;
+export declare function registerForgeRead(server: McpServer, root?: ResolvedRoot): void;

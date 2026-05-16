@@ -176,6 +176,36 @@ Without enforcement, dist/ drifts silently. The 2026-05-10 audit found ~300 untr
 
 For rare cases where src/ and dist/ MUST be in separate commits (e.g., hotfix where dist/ regen takes too long and src/ fix is urgent), include `[dist-sync-skip]` in the commit message. Use sparingly — the next PR will restore full sync.
 
+## Pre-push Verification (Opt-in)
+
+Forge provides a `pre-push` git hook that runs `npm run check` before allowing pushes to `main`. This catches CI failures locally before they reach GitHub.
+
+### Setup (one-time)
+
+```bash
+git config core.hooksPath .githooks
+```
+
+### What it does
+
+- **Only triggers on pushes to `main`** — feature branch pushes pass through without delay
+- Runs `npm run check` (typecheck + lint + tests + all script validations)
+- Blocks the push if the check fails
+
+### Emergency bypass
+
+```bash
+git push --no-verify
+```
+
+### Custom guard branch
+
+Set `FORGE_PRE_PUSH_BRANCH` to guard a different branch (e.g., `release/*`):
+
+```bash
+FORGE_PRE_PUSH_BRANCH=refs/heads/release/v2 git push
+```
+
 ## Security Model
 
 ### SDK Permission Bypass
