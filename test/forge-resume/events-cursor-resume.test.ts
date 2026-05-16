@@ -1,9 +1,9 @@
 import { describe, expect, it } from "vitest";
 import {
-  parseEventsNdjson,
   extractLatestCursor,
-  type PhaseStartEvent,
   type PhaseEndEvent,
+  type PhaseStartEvent,
+  parseEventsNdjson,
 } from "../../src/events-cursor.js";
 
 type PhaseEvent = PhaseStartEvent | PhaseEndEvent;
@@ -36,7 +36,7 @@ function makeEndEvent(overrides: Partial<PhaseEndEvent> = {}): PhaseEndEvent {
 }
 
 function eventsToNdjson(events: PhaseEvent[]): string {
-  return events.map((e) => JSON.stringify(e)).join("\n") + "\n";
+  return `${events.map((e) => JSON.stringify(e)).join("\n")}\n`;
 }
 
 describe("events-cursor", () => {
@@ -50,20 +50,20 @@ describe("events-cursor", () => {
     });
 
     it("validates phase_start schema — requires phase, iteration, session_id", () => {
-      const bad = JSON.stringify({ type: "phase_start", ts: "2026-05-16T10:00:00Z" }) + "\n";
+      const bad = `${JSON.stringify({ type: "phase_start", ts: "2026-05-16T10:00:00Z" })}\n`;
       const events = parseEventsNdjson(bad);
       expect(events).toHaveLength(0);
     });
 
     it("validates phase_end schema — requires exit_code", () => {
-      const bad = JSON.stringify({ type: "phase_end", ts: "2026-05-16T10:00:00Z", phase: "build", iteration: 1, session_id: "s1" }) + "\n";
+      const bad = `${JSON.stringify({ type: "phase_end", ts: "2026-05-16T10:00:00Z", phase: "build", iteration: 1, session_id: "s1" })}\n`;
       const events = parseEventsNdjson(bad);
       expect(events).toHaveLength(0);
     });
 
     it("tolerates corrupted last line — skips and recovers", () => {
       const valid = eventsToNdjson([makeStartEvent(), makeEndEvent()]);
-      const corrupted = valid + '{"type":"phase_start","ts":"2026-05';
+      const corrupted = `${valid}{"type":"phase_start","ts":"2026-05`;
       const events = parseEventsNdjson(corrupted);
       expect(events).toHaveLength(2);
     });
@@ -73,7 +73,9 @@ describe("events-cursor", () => {
       const e2 = makeStartEvent({ session_id: "sess-002", iteration: 2 });
       const ndjson = eventsToNdjson([e1, makeEndEvent(), e2]);
       const events = parseEventsNdjson(ndjson);
-      const sessions = new Set(events.filter((e) => e.type === "phase_start").map((e) => e.session_id));
+      const sessions = new Set(
+        events.filter((e) => e.type === "phase_start").map((e) => e.session_id),
+      );
       expect(sessions.size).toBe(2);
     });
   });

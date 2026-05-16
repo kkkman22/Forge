@@ -1,9 +1,5 @@
 import { describe, expect, it } from "vitest";
-import {
-  detectRecurrence,
-  type KnownFailure,
-  type DiffSummary,
-} from "../../src/known-failures.js";
+import { type DiffSummary, detectRecurrence, type KnownFailure } from "../../src/known-failures.js";
 
 function makeFailure(overrides: Partial<KnownFailure> = {}): KnownFailure {
   return {
@@ -34,7 +30,10 @@ describe("known-failures — recurrence", () => {
 
   it("does not flag when fix evidence found in diff", () => {
     const failures: KnownFailure[] = [makeFailure()];
-    const diff = makeDiff(["src/foo.ts"], "function bar() { return actualData; }\n// fix: implement actual logic");
+    const diff = makeDiff(
+      ["src/foo.ts"],
+      "function bar() { return actualData; }\n// fix: implement actual logic",
+    );
     const result = detectRecurrence(failures, diff);
     expect(result).toHaveLength(0);
   });
@@ -49,7 +48,10 @@ describe("known-failures — recurrence", () => {
   it("lists matched patterns at report head", () => {
     const failures: KnownFailure[] = [
       makeFailure(),
-      makeFailure({ pattern_id: "other-pattern", signature: "something else entirely not in diff" }),
+      makeFailure({
+        pattern_id: "other-pattern",
+        signature: "something else entirely not in diff",
+      }),
     ];
     const diff = makeDiff(["src/foo.ts"], "stub function returns {}");
     const result = detectRecurrence(failures, diff);

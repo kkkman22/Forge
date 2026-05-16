@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { detectRecurrence, } from "../../src/known-failures.js";
+import { detectRecurrence } from "../../src/known-failures.js";
 function makeFailure(overrides = {}) {
     return {
         pattern_id: "spec-stub-empty-default",
@@ -39,7 +39,10 @@ describe("known-failures — recurrence", () => {
     it("lists matched patterns at report head", () => {
         const failures = [
             makeFailure(),
-            makeFailure({ pattern_id: "other-pattern", signature: "something else entirely not in diff" }),
+            makeFailure({
+                pattern_id: "other-pattern",
+                signature: "something else entirely not in diff",
+            }),
         ];
         const diff = makeDiff(["src/foo.ts"], "stub function returns {}");
         const result = detectRecurrence(failures, diff);

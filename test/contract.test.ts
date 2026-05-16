@@ -1136,6 +1136,7 @@ describe("Contract: stop hooks should not block", () => {
     for (const group of stopGroups) {
       for (const hook of group.hooks ?? []) {
         if (hook.type !== "command" || !hook.command) continue;
+        // biome-ignore lint/suspicious/noTemplateCurlyInString: literal shell variable check
         if (hook.command.includes("${CLAUDE_PLUGIN_ROOT}")) continue;
         commands.push(hook.command);
       }
@@ -1192,23 +1193,23 @@ describe("Contract: PostToolUse boundary feedback", () => {
 
       // Write tool input file (relative path so ownership glob matches)
       const toolInputPath = join(tmp, "tool-input.json");
-      writeFileSync(toolInputPath, JSON.stringify({
-        file_path: "src/payment/service.ts",
-      }));
+      writeFileSync(
+        toolInputPath,
+        JSON.stringify({
+          file_path: "src/payment/service.ts",
+        }),
+      );
 
       // Write ownership map
       mkdirSync(join(tmp, ".forge"), { recursive: true });
       writeFileSync(
         join(tmp, ".forge", "context-ownership.yaml"),
-        'src/payment/**: payment\nsrc/order/**: order\n',
+        "src/payment/**: payment\nsrc/order/**: order\n",
       );
 
       // Write context map
       mkdirSync(join(tmp, ".forge", "custom", "contexts"), { recursive: true });
-      writeFileSync(
-        join(tmp, ".forge", "custom", "contexts", "_map.yaml"),
-        "",
-      );
+      writeFileSync(join(tmp, ".forge", "custom", "contexts", "_map.yaml"), "");
 
       const scriptPath = resolve(ROOT, "scripts/check-context-boundary.mjs");
       const result = spawnSync("node", [scriptPath, "PostToolUse", toolInputPath], {
@@ -1231,9 +1232,9 @@ describe("Contract: PostToolUse boundary feedback", () => {
       hooks: Array<Record<string, unknown>>;
     }>;
 
-    const hasContinueOnBlock = postGroups?.some((group) =>
-      group.hooks?.some((hook) => hook.continueOnBlock === true),
-    ) ?? false;
+    const hasContinueOnBlock =
+      postGroups?.some((group) => group.hooks?.some((hook) => hook.continueOnBlock === true)) ??
+      false;
 
     expect(hasContinueOnBlock).toBe(true);
   });
