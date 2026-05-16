@@ -69,7 +69,9 @@ const EXPECTED_SESSION_START_HOOKS: HookMatcher[] = [
       {
         type: "command",
         command:
-          "if [ -f .forge/knowledge/evolved-rules.md ]; then echo '=== Evolved Rules ==='; cat .forge/knowledge/evolved-rules.md; fi",
+          "node forge/scripts/inject-evolved-rules.mjs 2>/dev/null || node ~/.claude/skills/forge/scripts/inject-evolved-rules.mjs 2>/dev/null || true",
+  // Baseline migrated by spec subagent-hook-context-budget task 18.
+  // Old inline `cat` retired in Step 3 — replaced by capped injector script.
         timeout: 5,
       },
     ],
