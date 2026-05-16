@@ -1,4 +1,4 @@
-type PhaseType = "plan" | "build" | "review" | "test" | "ship" | "learn" | "decide" | "spec" | "debug";
+export type PhaseType = "plan" | "build" | "review" | "test" | "ship" | "learn" | "decide" | "spec" | "debug";
 export interface PhaseStartEvent {
     type: "phase_start";
     ts: string;
@@ -21,4 +21,3 @@ export interface PhaseEndEvent {
 export type PhaseEvent = PhaseStartEvent | PhaseEndEvent;
 export declare function parseEventsNdjson(content: string): PhaseEvent[];
 export declare function extractLatestCursor(events: PhaseEvent[]): PhaseEvent | undefined;
-export {};
