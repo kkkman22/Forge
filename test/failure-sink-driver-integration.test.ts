@@ -14,7 +14,7 @@ const FIXED_NOW = new Date("2026-05-14T10:00:00.000Z");
 // debug_resolved
 // ---------------------------------------------------------------------------
 
-import { buildDebugResolvedContext, type DebugResolvedInput } from "../src/debug.js";
+import { buildDebugResolvedContext } from "../src/debug.js";
 
 describe("debug driver — debug_resolved trigger integration", () => {
   it("buildDebugResolvedContext produces valid FailureContext with trigger=debug_resolved", () => {
@@ -46,7 +46,7 @@ describe("debug driver — debug_resolved trigger integration", () => {
 // grill_abandoned
 // ---------------------------------------------------------------------------
 
-import { buildGrillAbandonedContext, type GrillAbandonedInput } from "../src/grill.js";
+import { buildGrillAbandonedContext } from "../src/grill.js";
 
 describe("grill driver — grill_abandoned trigger integration", () => {
   it("buildGrillAbandonedContext produces valid FailureContext", () => {
@@ -74,7 +74,7 @@ describe("grill driver — grill_abandoned trigger integration", () => {
 // loop_circuit_broken
 // ---------------------------------------------------------------------------
 
-import { buildLoopCircuitBrokenContext, type LoopCircuitBrokenInput } from "../src/orchestrator.js";
+import { buildLoopCircuitBrokenContext } from "../src/orchestrator.js";
 
 describe("loop driver — loop_circuit_broken trigger integration", () => {
   it("buildLoopCircuitBrokenContext produces valid FailureContext", () => {
@@ -104,7 +104,7 @@ describe("loop driver — loop_circuit_broken trigger integration", () => {
 // test_layer_failed
 // ---------------------------------------------------------------------------
 
-import { buildTestLayerFailedContext, type TestLayerFailedInput } from "../src/test-engine.js";
+import { buildTestLayerFailedContext } from "../src/test-engine.js";
 
 describe("test driver — test_layer_failed trigger integration", () => {
   it("buildTestLayerFailedContext produces valid FailureContext", () => {
@@ -147,10 +147,7 @@ describe("test driver — test_layer_failed trigger integration", () => {
 // conflict_validation_failed
 // ---------------------------------------------------------------------------
 
-import {
-  buildConflictValidationFailedContext,
-  type ConflictValidationFailedInput,
-} from "../src/conflict-classifier.js";
+import { buildConflictValidationFailedContext } from "../src/conflict-classifier.js";
 
 describe("conflict driver — conflict_validation_failed trigger integration", () => {
   it("buildConflictValidationFailedContext produces valid FailureContext", () => {
