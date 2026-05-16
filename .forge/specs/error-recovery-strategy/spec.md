@@ -1,5 +1,6 @@
 ---
 status: locked
+contract_legacy: true
 created: "2026-04-29"
 source: ".kiro/specs/error-recovery-strategy"
 ---
