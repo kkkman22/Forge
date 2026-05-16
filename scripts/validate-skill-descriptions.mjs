@@ -127,9 +127,45 @@ function secondSentenceStartsWithUseWhen(sentences) {
 function validateDescription(filePath, content) {
   const fm = parseFrontmatter(content);
   const description = fm === null ? "" : (extractStringField(fm.raw, "description") ?? "");
+  const isDeprecated = fm !== null && /^deprecated:\s*true\s*$/m.test(fm.raw);
   const length = description.length;
   const errors = [];
   const warnings = [];
+
+  // Deprecated SKILLs use "DEPRECATED — use X instead." format and are exempt
+  // from two-sentence imperative rules. They still must have a non-empty
+  // description and no forbidden marketing patterns.
+  if (isDeprecated) {
+    if (fm === null) {
+      errors.push("缺少 frontmatter");
+    } else if (description === "") {
+      errors.push("description 字段缺失或为空");
+    }
+    if (length > MAX_LENGTH) {
+      errors.push(`description 超长：${length} > ${MAX_LENGTH}`);
+    }
+    const hitReasons = [];
+    for (const { pattern, reason } of FORBIDDEN_PATTERNS) {
+      if (pattern.test(description)) {
+        hitReasons.push(reason);
+        errors.push(`description 命中禁用模式：${reason}`);
+      }
+    }
+    return {
+      filePath,
+      description,
+      length,
+      hasUseWhen: false,
+      hasForbiddenPatterns: hitReasons,
+      sentenceCount: countSentences(description),
+      firstSentenceStartsWithImperative: false,
+      secondSentenceStartsWithUseWhen: false,
+      valid: errors.length === 0,
+      warnings: [],
+      errors,
+      deprecated: true,
+    };
+  }
 
   // --- 原有规则（始终 enforced） ---
 
