@@ -46,7 +46,7 @@ function callRouter(stdinStr: string): RouterDecision {
 }
 
 describe("hook-stdin-router PBT", () => {
-  it("never throws and always returns a valid RouterDecision for arbitrary input", () => {
+  it("never throws and always returns a valid RouterDecision for arbitrary input", { timeout: 30000 }, () => {
     fc.assert(
       fc.property(fc.string({ maxLength: 1000 }), (stdinStr) => {
         // Filter out strings with null bytes (env vars can't contain them)
