@@ -137,7 +137,7 @@ describe("Feature: forge-review-fix-optimization, Property 13: Backlog overlap d
                 normalizedEntry === normalizedAf || normalizedEntry.startsWith(`${normalizedAf}/`)
               );
             });
-            const inResult = result.some((r) => r.id === e.id);
+            const inResult = result.includes(e);
             expect(inResult).toBe(matches);
           }
         },
