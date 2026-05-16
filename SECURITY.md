@@ -79,7 +79,14 @@ Forge 通过 Claude Code Plugin 系统分发。安全模型：
 - **更新验证**：`claude plugin update` 需要 `claude plugin validate` 通过
 - **企业管控**：管理员可通过 `blockedMarketplaces` / `allowedChannelPlugins` 策略管控
 - **项目级隔离**：`.forge/` 目录始终在项目本地，plugin 更新不影响项目状态
-- **Plugin 不含第三方 MCP**：基础 plugin 不捆绑任何 MCP server
+- **Plugin 仅捆绑 forge-context（first-party 本地 MCP）**：源代码与 plugin 同仓库审计，通过 stdio 在用户机器本地运行，仅访问 git 命令和指定文件，不发起任何网络请求。Plugin 不引入任何第三方 MCP server。
+
+## Known Limitations
+
+- **`--plugin-dir` 本地开发模式**：受 [claude-code#15308](https://github.com/anthropics/claude-code/issues/15308) 影响，
+  通过 `--plugin-dir` 加载未发布的本地 plugin 时，plugin.json 的 `mcpServers` 不会自动加载。
+  绕过方法：改用 marketplace 安装，或在项目目录下运行 `bash scripts/init.sh` 把 forge-context
+  写入 `.claude/settings.json`（settings.json 优先级高于 plugin.json）。
 
 ## Acknowledgements
 
