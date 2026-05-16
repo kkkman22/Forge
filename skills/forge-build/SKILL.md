@@ -145,6 +145,8 @@ Read `ci_check_command` from `config.md` → execute as-is. Empty → `verify_co
 
 下一个原子任务启动前，必须先读取上一任务的 handoff block 作为接续输入。
 
+**Carry-Over Discipline（R2.AC6）**：若上一任务的 `not_completed` 字段非空，下一任务 plan 阶段必须在三种处理之一中显式选择：(a) 纳入当前任务范围立即处理；(b) 作为已知 backlog 写入 spec 的 `Out of Scope` 章节并附理由；(c) 升级为新的 atomic task。**静默忽略 = P1**。
+
 light tier 降级：仅必填 `commands_executed` 和 `procedure_compliance`。
 
 **Self-Check Handoff 项**（§3.5 运行时验证）：
