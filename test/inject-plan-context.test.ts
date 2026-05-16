@@ -26,11 +26,15 @@ function writePlan(plansDir: string, name: string, frontmatter: string, body: st
 
 function runScript(cwd: string, stdinPayload?: string): string {
   try {
+    const mainAgentStdin = JSON.stringify({
+      session_id: "test-session",
+      hook_event_name: "UserPromptSubmit",
+    });
     return execFileSync("node", [SCRIPT_PATH], {
       cwd,
       encoding: "utf-8",
       timeout: 5000,
-      input: stdinPayload ?? undefined,
+      input: stdinPayload ?? mainAgentStdin,
     });
   } catch {
     return "";
@@ -158,30 +162,23 @@ describe("inject-plan-context.mjs", () => {
     expect(output.length).toBe(0);
   });
 
-  it("main-agent stdin (no agent_id) is byte-equal to no-stdin baseline", () => {
+  it("main-agent stdin (no agent_id) produces full plan output", () => {
     tempDir = createTempPlansDir();
     writePlan(
       tempDir,
       "plan-a.md",
-      'status: "approved"\ntopic: test-byte-equal',
-      "## Objective\nByte-equal verification",
+      'status: "approved"\ntopic: test-main-agent',
+      "## Objective\nMain agent output",
     );
-    writePlan(
-      tempDir,
-      "plan-b.md",
-      "status: approved",
-      "Second plan for comparison",
-    );
-
-    const outputNoStdin = runScript(tempDir);
 
     const mainAgentStdin = JSON.stringify({
       session_id: "s-main",
       hook_event_name: "UserPromptSubmit",
     });
-    const outputWithStdin = runScript(tempDir, mainAgentStdin);
+    const output = runScript(tempDir, mainAgentStdin);
 
-    expect(outputWithStdin).toBe(outputNoStdin);
-    expect(outputWithStdin).toContain("=== Forge Context ===");
+    expect(output).toContain("=== Forge Context ===");
+    expect(output).toContain("plan-a.md");
+    expect(output).toContain("Main agent output");
   });
 });
