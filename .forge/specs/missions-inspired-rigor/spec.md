@@ -1,6 +1,7 @@
 ---
 topic: missions-inspired-rigor
 status: locked
+contract_legacy: true
 locked_date: "2026-05-16"
 source: ".kiro/specs/missions-inspired-rigor"
 contract_legacy: false
