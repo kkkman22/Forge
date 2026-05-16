@@ -1,9 +1,8 @@
 import { describe, expect, it } from "vitest";
 import {
+  type AcceptanceCriterion,
   extractAcceptanceCriteria,
   validateContract,
-  type AcceptanceCriterion,
-  type ContractValidationResult,
 } from "../../src/contract-validator.js";
 
 function makeAC(overrides: Partial<AcceptanceCriterion> = {}): AcceptanceCriterion {
@@ -74,14 +73,18 @@ describe("contract-validator", () => {
       const spec = makeSpecMD([makeAC({ verifyBy: "jest" })]);
       const result = validateContract(spec);
       expect(result.valid).toBe(false);
-      expect(result.errors.some((e) => e.includes("whitelist") || e.includes("Verify-By"))).toBe(true);
+      expect(result.errors.some((e) => e.includes("whitelist") || e.includes("Verify-By"))).toBe(
+        true,
+      );
     });
 
     it("fails when Evidence contains placeholder (TBD / 待补)", () => {
       const spec = makeSpecMD([makeAC({ evidence: "TBD" })]);
       const result = validateContract(spec);
       expect(result.valid).toBe(false);
-      expect(result.errors.some((e) => e.includes("placeholder") || e.includes("Evidence"))).toBe(true);
+      expect(result.errors.some((e) => e.includes("placeholder") || e.includes("Evidence"))).toBe(
+        true,
+      );
     });
 
     it("skips validation when contract_legacy: true in frontmatter", () => {

@@ -76,7 +76,11 @@ export function isCommandDenied(command, denyPatterns) {
  */
 export function execCommand(command, timeoutMs, options) {
     return new Promise((resolve) => {
-        const child = execFile("/bin/sh", ["-c", command], { timeout: timeoutMs, maxBuffer: 10 * 1024 * 1024, ...(options?.cwd ? { cwd: options.cwd } : {}) }, (error, stdout, stderr) => {
+        const child = execFile("/bin/sh", ["-c", command], {
+            timeout: timeoutMs,
+            maxBuffer: 10 * 1024 * 1024,
+            ...(options?.cwd ? { cwd: options.cwd } : {}),
+        }, (error, stdout, stderr) => {
             if (error && "killed" in error && error.killed) {
                 resolve({ stdout: String(stdout), stderr: String(stderr), exitCode: 1, timedOut: true });
                 return;

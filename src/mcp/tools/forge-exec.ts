@@ -90,12 +90,20 @@ export interface ExecResult {
 /**
  * Execute a shell command in a child subprocess with timeout support.
  */
-export function execCommand(command: string, timeoutMs: number, options?: { cwd?: string }): Promise<ExecResult> {
+export function execCommand(
+  command: string,
+  timeoutMs: number,
+  options?: { cwd?: string },
+): Promise<ExecResult> {
   return new Promise((resolve) => {
     const child = execFile(
       "/bin/sh",
       ["-c", command],
-      { timeout: timeoutMs, maxBuffer: 10 * 1024 * 1024, ...(options?.cwd ? { cwd: options.cwd } : {}) },
+      {
+        timeout: timeoutMs,
+        maxBuffer: 10 * 1024 * 1024,
+        ...(options?.cwd ? { cwd: options.cwd } : {}),
+      },
       (error, stdout, stderr) => {
         if (error && "killed" in error && error.killed) {
           resolve({ stdout: String(stdout), stderr: String(stderr), exitCode: 1, timedOut: true });

@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { parseHandoffBlock, validateHandoff, serializeHandoff, } from "../../src/handoff-schema.js";
+import { parseHandoffBlock, serializeHandoff, validateHandoff, } from "../../src/handoff-schema.js";
 function makeHandoff(overrides = {}) {
     return {
         task_id: "T-1",

@@ -56,7 +56,9 @@ describe("known-failures — append", () => {
     describe("mergeKnownFailures", () => {
         it("appends new entries to existing file", () => {
             const existing = [makeFailure()];
-            const newBlocks = [generateAppendBlock(makeIssue({ severity: "P0", message: "different issue" }), "new123")];
+            const newBlocks = [
+                generateAppendBlock(makeIssue({ severity: "P0", message: "different issue" }), "new123"),
+            ];
             const result = mergeKnownFailures(existing, newBlocks);
             expect(result).toHaveLength(2);
         });
@@ -72,7 +74,11 @@ describe("known-failures — append", () => {
             expect(result[0].last_seen).toBeTruthy();
         });
         it("archives entries when count exceeds 100", () => {
-            const existing = Array.from({ length: 101 }, (_, i) => makeFailure({ pattern_id: `pattern-${i}`, first_seen: `2026-05-${String(i % 30 + 1).padStart(2, "0")}`, last_seen: `2026-05-${String(i % 30 + 1).padStart(2, "0")}` }));
+            const existing = Array.from({ length: 101 }, (_, i) => makeFailure({
+                pattern_id: `pattern-${i}`,
+                first_seen: `2026-05-${String((i % 30) + 1).padStart(2, "0")}`,
+                last_seen: `2026-05-${String((i % 30) + 1).padStart(2, "0")}`,
+            }));
             const result = mergeKnownFailures(existing, []);
             expect(result.length).toBeLessThanOrEqual(80);
         });
