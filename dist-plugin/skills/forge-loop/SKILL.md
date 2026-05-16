@@ -144,3 +144,42 @@ $ /forge loop "为用户 API 添加分页功能"
 - **State drift**: Long loop session → .forge/ files diverge from git reality → periodic state reconciliation every N iterations
 - **Context rot**: Loop runs 300k+ tokens → degraded intelligence → break loop, /clear, resume with fresh context
 - **Persistent loop orphan**: Session ends but persistent loop script keeps running → zombie processes → cleanup on SessionStart
+
+## 13. Fresh-Context Subsession Discipline（R4 — Mission-grade Loop）
+
+forge-loop 调度下一个 SKILL 阶段时，**必须**通过 `Skill(skill="forge", args="<phase>")` 触发新 fresh-context 子会话。**禁止**在同一会话内串联多个 SKILL 实例。
+
+**理由**：每次 SKILL 调用都从状态文件读取上下文，避免单一会话因长度膨胀超时。Factory Missions 实战验证：单 agent run 短（实现 51 turns / 验证 30 turns），靠 fresh-context 重启撑长周期。
+
+**状态文件白名单**（交接仅通过这些文件）：
+- `.forge/status.md`
+- `.forge/specs/<topic>/spec.md`
+- `.forge/plans/<topic>.md`
+- `.forge/progress/<topic>.md`
+- `.forge/findings/<topic>.md`
+- `.forge/knowledge/known-failures.md`
+- `.forge/runs/<run-id>/events.ndjson`
+
+**禁止依赖**：上一阶段会话的对话历史、agent 的"记忆"、任何不在白名单中的内存变量。
+
+**events.ndjson 增强字段**：phase_start / phase_end 事件必须包含 `session_id`、`wall_clock_elapsed_seconds`、`token_budget_used`。phase_end 额外含 `exit_code`。完整 schema 范例：
+
+```json
+{"type":"phase_start","ts":"2026-05-16T10:00:00Z","phase":"build",
+ "iteration":3,"session_id":"<uuid>","wall_clock_elapsed_seconds":1234,
+ "token_budget_used":234500}
+
+{"type":"phase_end","ts":"2026-05-16T10:42:31Z","phase":"build",
+ "iteration":3,"session_id":"<uuid>","exit_code":0,
+ "wall_clock_elapsed_seconds":3785,"token_budget_used":456789}
+```
+
+> **文档定位说明**：此章节承担 design.md 中"Section 9 events.ndjson schema"的全部职责。原 §9 名 `Distribution Package Environment` 保留不动；本 §13 是 R4 完整入口（fresh-context discipline + events schema + Mission Summary）。
+
+**Mission Summary（关机序列增量）**：forge-loop 正常或异常结束时输出：
+- Total wall-clock
+- Total skill invocations
+- Total iterations
+- Token budget used
+- Milestones completed
+- Known-failures matched / new
