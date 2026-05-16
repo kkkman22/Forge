@@ -89,7 +89,10 @@ export function parseKnownFailures(content) {
 export function detectRecurrence(failures, diff) {
     const results = [];
     for (const failure of failures) {
-        const sigWords = failure.signature.toLowerCase().split(/\s+/).filter((w) => w.length > 3);
+        const sigWords = failure.signature
+            .toLowerCase()
+            .split(/\s+/)
+            .filter((w) => w.length > 3);
         const diffLower = diff.changedText.toLowerCase();
         const matchCount = sigWords.filter((word) => diffLower.includes(word)).length;
         const matchRatio = sigWords.length > 0 ? matchCount / sigWords.length : 0;

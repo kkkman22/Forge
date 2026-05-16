@@ -1,8 +1,17 @@
 const TDD_KEYWORDS = ["RED", "GREEN", "REFACTOR"];
 const REQUIRED_FIELDS = [
-    "task_id", "completed", "not_completed", "commands_executed", "issues_found", "procedure_compliance",
+    "task_id",
+    "completed",
+    "not_completed",
+    "commands_executed",
+    "issues_found",
+    "procedure_compliance",
 ];
-const LIGHT_REQUIRED = ["task_id", "commands_executed", "procedure_compliance"];
+const LIGHT_REQUIRED = [
+    "task_id",
+    "commands_executed",
+    "procedure_compliance",
+];
 export function parseHandoffBlock(block) {
     const codeMatch = block.match(/```(?:yaml[ \t]+handoff|yaml|handoff)\s*\n([\s\S]*?)```/);
     if (!codeMatch)
@@ -139,7 +148,8 @@ export function validateHandoff(handoff, options = {}) {
     const errors = [];
     const required = tier === "light" ? LIGHT_REQUIRED : REQUIRED_FIELDS;
     for (const field of required) {
-        if (!(field in handoff) || handoff[field] === undefined) {
+        if (!(field in handoff) ||
+            handoff[field] === undefined) {
             errors.push(`Missing required field: ${field}`);
         }
     }

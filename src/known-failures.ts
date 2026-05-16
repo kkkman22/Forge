@@ -49,7 +49,10 @@ export function generateAppendBlock(issue: ReviewIssue, commitSha: string): Appe
   };
 }
 
-export function mergeKnownFailures(existing: KnownFailure[], newBlocks: AppendBlock[]): KnownFailure[] {
+export function mergeKnownFailures(
+  existing: KnownFailure[],
+  newBlocks: AppendBlock[],
+): KnownFailure[] {
   const map = new Map<string, KnownFailure>();
   for (const entry of existing) {
     map.set(entry.pattern_id, { ...entry });
@@ -135,7 +138,10 @@ export function detectRecurrence(failures: KnownFailure[], diff: DiffSummary): s
   const results: string[] = [];
 
   for (const failure of failures) {
-    const sigWords = failure.signature.toLowerCase().split(/\s+/).filter((w) => w.length > 3);
+    const sigWords = failure.signature
+      .toLowerCase()
+      .split(/\s+/)
+      .filter((w) => w.length > 3);
     const diffLower = diff.changedText.toLowerCase();
 
     const matchCount = sigWords.filter((word) => diffLower.includes(word)).length;
@@ -144,9 +150,7 @@ export function detectRecurrence(failures: KnownFailure[], diff: DiffSummary): s
     if (matchRatio < 0.2) continue;
 
     const fixKeywords = failure.fix_required.toLowerCase().split(/\s+/);
-    const fixInDiff = fixKeywords.some(
-      (kw) => kw.length > 3 && diffLower.includes(kw),
-    );
+    const fixInDiff = fixKeywords.some((kw) => kw.length > 3 && diffLower.includes(kw));
 
     if (!fixInDiff) {
       results.push(

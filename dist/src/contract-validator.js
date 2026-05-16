@@ -47,7 +47,7 @@ export function extractAcceptanceCriteria(specMarkdown) {
 }
 export function validateContract(specMarkdown) {
     const frontmatter = FRONTMATTER_PATTERN.exec(specMarkdown);
-    if (frontmatter && frontmatter[1].includes("contract_legacy: true")) {
+    if (frontmatter?.[1].includes("contract_legacy: true")) {
         return { valid: true, errors: [], legacySkipped: true };
     }
     const criteria = extractAcceptanceCriteria(specMarkdown);
