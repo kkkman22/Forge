@@ -6,9 +6,10 @@
  *
  * Also validates all 3 config files as static fixtures.
  */
-import * as fc from "fast-check";
+
 import { readFileSync } from "node:fs";
 import { join } from "node:path";
+import * as fc from "fast-check";
 import { describe, expect, it } from "vitest";
 
 const CONFIG_PATHS = [
@@ -25,11 +26,11 @@ interface HookEntry {
 }
 
 /** Match unbounded head/tail/cat on .forge/plans or .forge/progress */
-const UNBOUNDED_FORGE_READ =
-  /(?:head|tail|cat)\s+.*\.forge\/(?:plans|progress)\//;
+const UNBOUNDED_FORGE_READ = /(?:head|tail|cat)\s+.*\.forge\/(?:plans|progress)\//;
 
 /** Acceptable byte limit markers (line-based limits like head -N are NOT safe on globs) */
-const HAS_LIMIT = /(?:head\s+-c\s+\d+|tail\s+-c\s+\d+|\|.*head\s+-c\s+\d+|MAX_TOTAL_CHARS|maxBytes|maxBytes\s*=\s*\d+|inject-plan-context\.mjs|inject-evolved-rules\.mjs)/;
+const HAS_LIMIT =
+  /(?:head\s+-c\s+\d+|tail\s+-c\s+\d+|\|.*head\s+-c\s+\d+|MAX_TOTAL_CHARS|maxBytes|maxBytes\s*=\s*\d+|inject-plan-context\.mjs|inject-evolved-rules\.mjs)/;
 
 function extractCommands(configPath: string): { path: string; command: string }[] {
   let raw: string;
