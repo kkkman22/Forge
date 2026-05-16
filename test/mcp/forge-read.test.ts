@@ -282,3 +282,35 @@ describe("forge_read tool response format", () => {
     expect(result.exitCode).toBe(1);
   });
 });
+
+// ---------------------------------------------------------------------------
+// execReadScript with cwd option
+// ---------------------------------------------------------------------------
+
+describe("execReadScript with cwd", () => {
+  afterEach(() => {
+    vi.restoreAllMocks();
+  });
+
+  it("passes cwd option to execFile", async () => {
+    let capturedOpts: Record<string, unknown> = {};
+    mockedExecFile.mockImplementation(
+      (
+        _cmd: string,
+        _args: string[],
+        opts: Record<string, unknown>,
+        cb: (err: null, stdout: string, stderr: string) => void,
+      ) => {
+        capturedOpts = opts;
+        cb(null, "done", "");
+        return {};
+      },
+    );
+
+    const result = await execReadScript("console.log(1)", "javascript", [], 30000, {
+      cwd: "/custom/root",
+    });
+    expect(capturedOpts.cwd).toBe("/custom/root");
+    expect(result.exitCode).toBe(0);
+  });
+});

@@ -94,6 +94,13 @@ class Calculator {
 2. 质疑架构——问题可能不在代码层面
 3. 与开发者讨论，重新评估方向
 
+### §2.4.1 Stop Hook 安全约束（Claude Code 2.1.143+）
+
+Claude Code 在 Stop hook 连续 8 次返回 block（exit 2 或 block JSON）时会强制结束 turn。
+Forge 的 Stop hook 链（plugin.json）以"提示式 echo"为主要交互方式，**禁止使用 exit 2
+或输出 `{"continue":false}` / `{"decision":"block"}`**。该约束由 `test/contract.test.ts`
+的 `stop-hook-no-block` 套件守护。
+
 ### §2.5 Context Refresh Discipline (Full Details)
 
 在标准路径和全量路径的 build 阶段，主 Agent 必须执行周期性的 Restatement Checkpoint：

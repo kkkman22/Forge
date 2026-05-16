@@ -7,6 +7,7 @@
 > **22 命令覆盖完整开发生命周期，三维路由自动匹配复杂度，统一状态系统跨会话感知。**
 >
 > 前置条件：Claude Code ≥ 2.1.121 | [安装指南](docs/quick-start.md)
+> 建议 Claude Code ≥ 2.1.143（forge-context env-first 路径解析、Stop hook 安全网、PostToolUse 反馈链均依赖此版本平台特性，旧版本会自动降级到 fallback 路径）
 
 ---
 

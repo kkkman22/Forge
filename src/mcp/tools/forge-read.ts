@@ -15,6 +15,7 @@
 import { execFile } from "node:child_process";
 import type { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { z } from "zod";
+import type { ResolvedRoot } from "../project-root.js";
 
 // ---------------------------------------------------------------------------
 // Constants
@@ -47,6 +48,7 @@ export function execReadScript(
   language: "javascript" | "shell",
   paths: string[],
   timeoutMs: number,
+  options?: { cwd?: string },
 ): Promise<ReadExecResult> {
   return new Promise((resolve) => {
     const env = {
@@ -60,7 +62,12 @@ export function execReadScript(
     const child = execFile(
       cmd,
       args,
-      { timeout: timeoutMs, maxBuffer: 10 * 1024 * 1024, env },
+      {
+        timeout: timeoutMs,
+        maxBuffer: 10 * 1024 * 1024,
+        env,
+        ...(options?.cwd ? { cwd: options.cwd } : {}),
+      },
       (error, stdout, stderr) => {
         if (error && "killed" in error && error.killed) {
           resolve({
@@ -115,7 +122,7 @@ const TOOL_DESCRIPTION = [
 /**
  * Register the `forge_read` tool on the given MCP server.
  */
-export function registerForgeRead(server: McpServer): void {
+export function registerForgeRead(server: McpServer, root?: ResolvedRoot): void {
   server.tool(
     "forge_read",
     TOOL_DESCRIPTION,
@@ -129,7 +136,8 @@ export function registerForgeRead(server: McpServer): void {
     },
     async ({ paths, script, language }) => {
       // Execute script with FORGE_FILES env var
-      const result = await execReadScript(script, language, paths, DEFAULT_TIMEOUT_MS);
+      const readOpts = root ? { cwd: root.path } : undefined;
+      const result = await execReadScript(script, language, paths, DEFAULT_TIMEOUT_MS, readOpts);
 
       // Handle timeout
       if (result.timedOut) {
