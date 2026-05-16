@@ -17,8 +17,8 @@ for spec in "$specs_dir"/*/spec.md; do
   # Must be locked
   grep -q 'status: locked' "$spec" || continue
   # Check lock_date
-  lock_date=$(grep -oP 'locked_date:\s*"\K[^"]+' "$spec" 2>/dev/null || echo "")
-  if [[ -n "$lock_date" && "$lock_date" < "$cutoff_date" ]]; then
+  lock_date=$(grep -oP 'locked:\s*"\K[^"]+' "$spec" 2>/dev/null || echo "")
+  if [[ -z "$lock_date" || "$lock_date" < "$cutoff_date" ]]; then
     sed -i '' '/^status: locked$/a\
 contract_legacy: true
 ' "$spec"
