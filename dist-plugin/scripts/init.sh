@@ -224,7 +224,14 @@ echo "    运行所有 CI 检查的单条命令（如 npm run check）。"
 echo "    build 全量测试和 test 验证清单将使用此命令，确保本地验证与 CI 一致。"
 echo "    如果留空，将按 verify_commands 列表逐条执行。"
 echo ""
-read -rep "$(echo -e "${BLUE}?${NC}") CI 检查命令（留空跳过）: " ci_check_cmd
+detected_default="$(node scripts/suggest-ci-command.mjs 2>/dev/null || echo "")"
+if [ -n "$detected_default" ]; then
+  echo "    检测到 package.json 中已定义：$detected_default"
+  read -rep "$(echo -e "${BLUE}?${NC}") CI 检查命令 [$detected_default]: " ci_check_cmd
+  ci_check_cmd="${ci_check_cmd:-$detected_default}"
+else
+  read -rep "$(echo -e "${BLUE}?${NC}") CI 检查命令（留空跳过）: " ci_check_cmd
+fi
 
 # ---------- 输入清洗（防止 shell 注入） ----------
 # 移除换行符和 shell 元字符

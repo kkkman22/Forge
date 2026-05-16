@@ -487,6 +487,14 @@ export const SKILL_FUNCTION_REGISTRY: readonly SkillFunctionEntry[] = [
     parameterNames: ["input"],
   },
 
+  // --- forge-test/SKILL.md (ci-drift) ---
+  {
+    module: "ci-command-drift.ts",
+    functionName: "detectCiCommandDrift",
+    skills: ["forge-test/SKILL.md"],
+    parameterNames: ["frontmatter", "packageJsonRaw"],
+  },
+
   // --- MCP Tools ---
   {
     module: "mcp/tools/forge-git.ts",
