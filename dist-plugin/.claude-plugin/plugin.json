@@ -1,7 +1,13 @@
 {
   "name": "forge",
   "description": "Unified AI coding workflow framework — 22 commands covering the full development lifecycle with TDD, spec-driven planning, and automated review.",
-  "version": "2.3.0",
+  "version": "2.4.0",
+  "mcpServers": {
+    "forge-context": {
+      "command": "node",
+      "args": ["${CLAUDE_PLUGIN_ROOT}/dist/src/mcp/server.js"]
+    }
+  },
   "author": {
     "name": "Forge contributors",
     "url": "https://github.com/kkkman22/Forge"

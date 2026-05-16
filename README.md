@@ -96,6 +96,16 @@ bash /tmp/forge/scripts/install-dist.sh
 
 > 只含 `/forge` 命令，不含 Forge Loop。适合团队统一部署。
 
+### 自带 forge-context MCP
+
+Forge plugin 自带 `forge-context` first-party MCP server，为 `/forge review` 提供智能 diff 截断和上下文优化。
+
+- **零网络**：通过 stdio 在本地运行，不发起任何外部请求
+- **零配置**：marketplace 安装后自动启用，源仓库用户由 init.sh 配置
+- **智能优先级**：源码 > 配置 > 测试 > 生成文件 > lock，确保关键变更进入 token 预算
+
+> 实测效果：`/forge review` 19 文件变更场景 token 消耗从 700K+ 降至 <200K。
+
 ---
 
 ## 命令概览

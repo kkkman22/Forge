@@ -721,7 +721,27 @@ describe("Contract: review artifact template", () => {
     });
 });
 // ---------------------------------------------------------------------------
-// 20. SKILL references/ structure
+// 20. plugin.json mcpServers field (forge-context MCP)
+// ---------------------------------------------------------------------------
+describe("Contract: plugin.json declares forge-context MCP server", () => {
+    const pluginPath = resolve(ROOT, ".claude-plugin", "plugin.json");
+    const content = readFileSync(pluginPath, "utf-8");
+    const json = JSON.parse(content);
+    it("plugin.json contains mcpServers field", () => {
+        expect(json.mcpServers).toBeDefined();
+    });
+    it("plugin.json contains forge-context entry", () => {
+        expect(json.mcpServers["forge-context"]).toBeDefined();
+    });
+    it("forge-context uses node as command", () => {
+        expect(json.mcpServers["forge-context"].command).toBe("node");
+    });
+    it("forge-context args reference dist/src/mcp/server.js", () => {
+        expect(json.mcpServers["forge-context"].args[0]).toContain("dist/src/mcp/server.js");
+    });
+});
+// ---------------------------------------------------------------------------
+// 21. SKILL references/ structure
 // ---------------------------------------------------------------------------
 describe("Contract: SKILL references/ structure", () => {
     const skillsWithRefs = {
