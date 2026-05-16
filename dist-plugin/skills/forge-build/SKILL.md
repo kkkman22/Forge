@@ -37,6 +37,10 @@ Last commit: !`git log --oneline -1 2>/dev/null || echo "no commits"`
 - `blocked` → 中止 skill，按 mode 输出对应提示
 - `warned` → 输出警告但继续
 
+### §1.6 Pre-flight: Spec Health Check
+
+Same as forge-plan §1.6. Verify locked spec is still healthy before build starts.
+
 默认严重度：block。可通过 `severityOverride` 覆盖。
 
 ## 1a. Nature Mode 路由
@@ -54,6 +58,23 @@ Build 启动时读取 `.forge/status.md` → 提取 `work_nature` 字段 → 按
 **预检查入口闸门**：nature mode 第一步执行 nature-specific 预检查。不通过 → 结构化拒绝（`🚫 命中检查：<条目> 证据：<路径> 建议：<路由>`）→ 回路由器。
 
 **逃生舱**：`--nature=refactor|bugfix|feature` 显式覆盖、`/forge refactor` / `/forge fix` 子命令仍可进入对应 mode。
+
+### §1b. Git Operations Conflict Hook
+
+Build 阶段中途执行 `git rebase` / `git pull` / `git merge` 同步 main 时，如果产生 `.forge/` 目录下的冲突：
+
+1. 解析冲突路径：`parseConflictedPaths(stderr)`
+2. 调用 `resolveConflicts(paths, mode, context)`（`src/conflict-resolver.ts`）
+3. 按三区分类自动处理：
+   - **frozen 区**：autonomous → 暂停 build + advisory；interactive → 3 选项
+   - **guarded 区**：自动语义合并（progress: completed > pending；reviews: append + sort）
+   - **open 区**：accept ours
+   - **source 区**：留给用户手动解决
+4. 全部解决 → `git add` + 继续 rebase/merge → build 继续
+5. 部分解决 / frozen 拒绝 → 暂停 build，提示用户手动处理或运行 `/forge fix-conflicts`
+6. Three-Strike：`validateConflictResolution` 连续 3 次失败 → 触发 `/forge debug`
+
+**不适用场景**：非 `.forge/` 目录的源码冲突不由此 hook 处理，留给用户手动解决。
 
 → 函数签名详见 references/function-contracts.md
 

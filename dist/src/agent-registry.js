@@ -50,6 +50,7 @@ export function registerBuiltinAgents(registry, deps) {
         outputSchema: deps.outputSchema,
         maxBudgetUsd: config.budgetUsd,
         globalTimeoutMs: config.timeoutMs,
+        sandboxProfile: deps.sandboxProfile,
     }));
     registry.register("mock", (config) => new MockAgentAdapter({
         cwd: config.cwd,

@@ -9,6 +9,7 @@
  */
 import type { WarmQuery } from "@anthropic-ai/claude-agent-sdk";
 import type { AgentInterface, AgentOutputSchema } from "./loop-types.js";
+import type { SandboxProfile } from "./sandbox-profile.js";
 /** Common configuration shared by all agent factories. */
 export interface AgentFactoryConfig {
     /** Working directory for the agent session. */
@@ -41,6 +42,8 @@ export interface BuiltinAgentDeps {
     warmQuery: WarmQuery;
     /** JSON schema for structured output validation. */
     outputSchema: AgentOutputSchema;
+    /** Sandbox profile for SDK native sandbox mode. When set, enables acceptEdits + SDK sandbox. */
+    sandboxProfile?: SandboxProfile;
 }
 /**
  * Register the built-in "claude" and "mock" agents.

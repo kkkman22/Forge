@@ -126,7 +126,7 @@ describe("test driver — test_layer_failed trigger integration", () => {
 // ---------------------------------------------------------------------------
 // conflict_validation_failed
 // ---------------------------------------------------------------------------
-import { buildConflictValidationFailedContext, } from "../src/conflict-classifier.js";
+import { buildConflictValidationFailedContext } from "../src/conflict-classifier.js";
 describe("conflict driver — conflict_validation_failed trigger integration", () => {
     it("buildConflictValidationFailedContext produces valid FailureContext", () => {
         const ctx = buildConflictValidationFailedContext({

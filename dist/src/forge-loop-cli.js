@@ -162,7 +162,7 @@ async function main() {
         .option("--log-format <text|json>", "Log output format (text|json)", "text")
         .option("--log-level <debug|info|warn|error>", "Minimum log level", "info")
         .option("--log-file <path>", "Write JSON logs to file (dual-write mode)")
-        .option("--sandbox", "Enable sandbox mode with fine-grained access control", false)
+        .option("--sandbox [profile]", "Enable sandbox mode with fine-grained access control. Optionally specify a profile name.")
         .option("--force-no-hooks", "Skip hooks protection validation (use at your own risk)", false)
         .option("--skills-dir <path>", "Load external SKILL plugins from directory")
         .option("--agent <name>", "Agent to use for iterations (claude|mock)", "claude")
@@ -362,8 +362,21 @@ async function main() {
         // ---------------------------------------------------------------
         // Create AgentRegistry, register builtins, and resolve agent
         // ---------------------------------------------------------------
+        // Load sandbox profile if --sandbox is specified
+        let sandboxProfile;
+        if (opts.sandbox) {
+            const { loadSandboxProfile: loadProfile } = await import("./sandbox-profile.js");
+            const profileName = typeof opts.sandbox === "string" ? opts.sandbox : undefined;
+            try {
+                sandboxProfile = loadProfile(cwd, profileName);
+            }
+            catch (err) {
+                const message = err instanceof Error ? err.message : String(err);
+                throw new CliError(`Error: ${message}`);
+            }
+        }
         const agentRegistry = createAgentRegistry();
-        registerBuiltinAgents(agentRegistry, { warmQuery, outputSchema });
+        registerBuiltinAgents(agentRegistry, { warmQuery, outputSchema, sandboxProfile });
         const agentName = opts.agent ?? "claude";
         if (!agentRegistry.has(agentName)) {
             throw new CliError(`Error: Invalid --agent value "${agentName}". Available agents: ${agentRegistry.listAgents().join(", ")}`);
@@ -598,7 +611,8 @@ async function main() {
             writeStatusFile: (content) => writeTaskStatus(managerIO, forgeRoot, objective, content),
             t: _t,
             logSinkConfig,
-            sandboxEnabled: opts.sandbox === true,
+            sandboxEnabled: !!opts.sandbox,
+            sdkNativeSandbox: !!sandboxProfile,
             forceNoHooks: opts.forceNoHooks === true,
         }, effectExecutor, agentAdapter);
         // ---------------------------------------------------------------

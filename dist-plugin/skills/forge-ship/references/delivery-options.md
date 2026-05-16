@@ -23,7 +23,25 @@ AskUserQuestion:
 
 ## Option 1: Merge to Main Branch
 
-通过 `ship_merge` 效果执行：checkout main → merge branch → delete branch。Merge 失败时自动执行 `merge --abort` 恢复。适用场景：个人项目、小团队直接合并。
+通过 `ship_merge` 效果执行：checkout main → merge branch → delete branch。
+
+**冲突自动处理**（conflict-resolver-hook 集成）：
+
+Merge 失败时**不再直接 abort**，而是先尝试 conflict-resolver 自动处理：
+
+1. 解析 merge stderr 提取冲突路径：`parseConflictedPaths(mergeError)`
+2. 调用 `resolveConflicts(paths, mode, context)` 按三区分类处理：
+   - **frozen 区**：autonomous 模式 → `merge --abort` + 提示用户；interactive 模式 → 渲染 3 选项（`buildFrozenRefusalPrompt`）
+   - **guarded 区**：自动语义合并（`applyGuardedMerge`）
+   - **open 区**：accept ours
+   - **source 区**：留给用户手动解决
+3. 全部解决 → `git add` + `git commit` 完成 merge → 继续 delete branch
+4. 部分解决 / frozen 拒绝 → `merge --abort` 恢复 + 提示用户手动处理或运行 `/forge fix-conflicts`
+5. Three-Strike 升级：`validateConflictResolution` 连续 3 次失败 → 触发 `/forge debug`
+
+**Fallback**：如果 `parseConflictedPaths` 返回空（非标准 merge 错误），仍走旧路径 `merge --abort`。
+
+适用场景：个人项目、小团队直接合并。
 
 ## Option 2: Push and Create PR
 
