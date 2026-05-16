@@ -4,7 +4,7 @@
 [![Security Audit](https://img.shields.io/badge/security--audit-npm%20audit%20%2B%20deps-blue)](./.github/workflows/ci.yml)
 [![License: MIT](https://img.shields.io/badge/License-MIT-green.svg)](./LICENSE)
 
-> **22 命令覆盖完整开发生命周期，三维路由自动匹配复杂度，统一状态系统跨会话感知。**
+> **统一 `/forge` 入口 + 22 个内部子命令覆盖完整开发生命周期，三维路由自动匹配复杂度，统一状态系统跨会话感知。**
 >
 > 前置条件：Claude Code ≥ 2.1.121 | [安装指南](docs/quick-start.md)
 > 建议 Claude Code ≥ 2.1.143（forge-context env-first 路径解析、Stop hook 安全网、PostToolUse 反馈链均依赖此版本平台特性，旧版本会自动降级到 fallback 路径）
@@ -122,7 +122,7 @@ Forge plugin 自带 `forge-context` first-party MCP server，为 `/forge review`
 | `/forge decide` | 四视角前置决策 | 全量 |
 | `/forge learn` | 五维度经验沉淀 | 全量 |
 
-> 完整 22 命令速查表和三维路由详解 → [docs/reference-commands.md](docs/reference-commands.md)
+> 完整子命令速查表和三维路由详解 → [docs/reference-commands.md](docs/reference-commands.md)
 
 ### 三维路由
 
