@@ -1,4 +1,4 @@
-type PhaseType =
+export type PhaseType =
   | "plan"
   | "build"
   | "review"
