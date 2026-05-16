@@ -3,17 +3,15 @@ current_task: "missions-inspired-rigor"
 tier: "standard"
 task_type: "feature"
 project_phase: "active"
-phase: "build-complete"
+phase: "shipped"
 work_nature: "feature"
 updated: "2026-05-16"
 ---
 
 # 项目状态
 
-## 当前任务
+## 已交付
 
-missions-inspired-rigor: Missions 演讲四条设计原则落地（R1-R4）
-
-## 构建完成
-
-6 commits, 4 new src files, 5 new test files, 44 tests, 5608/5612 total pass.
+missions-inspired-rigor: 8 commits merged to main (7edd3ff).
+R1-R4: validation contract, handoff schema, known-failures, events-cursor.
+44 new tests, 0 P0/P1 review findings.
