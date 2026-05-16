@@ -1,2 +1,7 @@
 {"timestamp":"2026-05-16T00:32:20Z","event":"postcompact_restore","detail":"slug=none"}
 {"timestamp":"2026-05-16T00:32:20Z","event":"precompact_snapshot","detail":"slug=none phase=completed"}
+{"timestamp":"2026-05-16T09:38:11Z","event":"precompact_snapshot","detail":"slug=missions-inspired-rigor phase=shipped"}
+{"timestamp":"2026-05-16T09:49:13Z","event":"postcompact_restore","detail":"slug=missions-inspired-rigor"}
+{"timestamp":"2026-05-16T09:49:13Z","event":"precompact_snapshot","detail":"slug=missions-inspired-rigor phase=shipped"}
+{"timestamp":"2026-05-16T09:50:48Z","event":"postcompact_restore","detail":"slug=missions-inspired-rigor"}
+{"timestamp":"2026-05-16T09:50:48Z","event":"precompact_snapshot","detail":"slug=missions-inspired-rigor phase=shipped"}
