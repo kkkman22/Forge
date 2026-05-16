@@ -219,7 +219,7 @@ if [[ -d "${FORGE_ROOT}/dist/src/mcp" ]]; then
   info "forge-context MCP server (dist/src/mcp/) 已捆绑到 plugin"
 fi
 ZIP_NAME="forge-plugin-${VERSION}.zip"
-(cd "${FORGE_ROOT}" && zip -r "${ZIP_NAME}" -r "${PLUGIN_DIST}" > /dev/null 2>&1 && mv "${ZIP_NAME}" "${PLUGIN_DIST}/")
+(cd "${PLUGIN_DIST}" && zip -r "${FORGE_ROOT}/${ZIP_NAME}" . > /dev/null 2>&1 && mv "${FORGE_ROOT}/${ZIP_NAME}" .)
 success "Plugin 分发包构建完成: ${PLUGIN_DIST}/"
 
 plugin_count=$(find "${PLUGIN_DIST}" -type f | wc -l | tr -d '[:space:]')
