@@ -1,6 +1,6 @@
 {
   "name": "forge",
-  "description": "Unified AI coding workflow framework — 22 commands covering the full development lifecycle with TDD, spec-driven planning, and automated review.",
+  "description": "Unified AI coding workflow framework — single /forge slash command with 22 internal subcommands, TDD, spec-driven planning, and automated review.",
   "version": "2.4.1",
   "mcpServers": {
     "forge-context": {
@@ -38,7 +38,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "if [ -f .forge/knowledge/evolved-rules.md ]; then echo '=== Evolved Rules ==='; cat .forge/knowledge/evolved-rules.md; fi",
+            "command": "node \"${CLAUDE_PLUGIN_ROOT}/scripts/inject-evolved-rules.mjs\" 2>/dev/null || node forge/scripts/inject-evolved-rules.mjs 2>/dev/null || true",
             "timeout": 5
           }
         ]

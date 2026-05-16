@@ -1,3 +1,5 @@
+[← 返回索引](./INDEX.md)
+
 # Forge Slimming 迁移指南
 
 > 本指南覆盖 `forge-slimming-plan` 中 T2 命令委托带来的变更，帮助你理解哪些命令被委托、如何适应、以及低版本 Claude Code 的 fallback 行为。
