@@ -12,6 +12,7 @@
  */
 import { type WarmQuery } from "@anthropic-ai/claude-agent-sdk";
 import type { AgentInterface, AgentOutputSchema, AgentResult, AgentRunOptions, TokenUsage } from "./loop-types.js";
+import { type SandboxProfile } from "./sandbox-profile.js";
 /**
  * Configuration for the SDK agent adapter.
  *
@@ -33,6 +34,8 @@ export interface SdkAgentAdapterConfig {
      * Defaults to 1,800,000 ms (30 minutes).
      */
     globalTimeoutMs?: number;
+    /** Sandbox profile for SDK native sandbox mode. When set, uses acceptEdits + allowedTools + sandbox. */
+    sandboxProfile?: SandboxProfile;
 }
 /**
  * Wraps the Agent SDK's `query()` to implement `AgentInterface`.

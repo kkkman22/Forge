@@ -1,5 +1,5 @@
-import { readFileSync } from "fs";
-import { resolve } from "path";
+import { readFileSync } from "node:fs";
+import { resolve } from "node:path";
 import { describe, expect, it } from "vitest";
 const SKILL_PATH = resolve(__dirname, "../../skills/forge-review/SKILL.md");
 describe("Review SKILL.md — Layer 2 dependency order check", () => {

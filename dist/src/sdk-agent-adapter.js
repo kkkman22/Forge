@@ -12,6 +12,8 @@
  */
 import { query as sdkQuery, } from "@anthropic-ai/claude-agent-sdk";
 import { validateAgentOutput } from "./agent-output.js";
+import { createFrozenZoneHook } from "./frozen-zone-hook.js";
+import { FORGE_LOOP_TOOLS, toSdkSandboxSettings } from "./sandbox-profile.js";
 // ---------------------------------------------------------------------------
 // Constants
 // ---------------------------------------------------------------------------
@@ -86,10 +88,24 @@ export class SdkAgentAdapter {
         // Because the SDK permission layer is bypassed here, the integrity of
         // these upper-layer mechanisms is critical. Any changes to the hook
         // configuration or frozen-zone logic must be reviewed carefully.
+        const sandboxProfile = this.config.sandboxProfile;
         const sdkOptions = {
             cwd,
-            permissionMode: "bypassPermissions",
-            allowDangerouslySkipPermissions: true,
+            permissionMode: sandboxProfile ? "acceptEdits" : "bypassPermissions",
+            ...(!sandboxProfile && { allowDangerouslySkipPermissions: true }),
+            ...(sandboxProfile && {
+                allowedTools: [...FORGE_LOOP_TOOLS],
+                sandbox: toSdkSandboxSettings(sandboxProfile, cwd),
+                hooks: {
+                    PreToolUse: [
+                        {
+                            matcher: "Write|Edit",
+                            hooks: [createFrozenZoneHook(cwd)],
+                            timeout: 5,
+                        },
+                    ],
+                },
+            }),
             outputFormat: {
                 type: "json_schema",
                 schema: this.config.outputSchema,

@@ -19,7 +19,7 @@ export function applyGuardedMerge(type, ours, theirs) {
         }
         case "adr": {
             const r = reassignAdrId(theirs, 1);
-            return { merged: ours + "\n" + r.resolvedContent, conflicts: [] };
+            return { merged: `${ours}\n${r.resolvedContent}`, conflicts: [] };
         }
     }
 }

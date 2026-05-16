@@ -15,14 +15,14 @@
  */
 import { z } from "zod";
 export declare const SpecStatusSchema: z.ZodEnum<{
-    draft: "draft";
     locked: "locked";
+    draft: "draft";
 }>;
 export declare const SpecFileSchema: z.ZodObject<{
     feature: z.ZodOptional<z.ZodString>;
     status: z.ZodOptional<z.ZodEnum<{
-        draft: "draft";
         locked: "locked";
+        draft: "draft";
     }>>;
     date: z.ZodOptional<z.ZodString>;
     importSource: z.ZodOptional<z.ZodString>;
