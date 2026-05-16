@@ -99,7 +99,30 @@ class Calculator {
 Claude Code 在 Stop hook 连续 8 次返回 block（exit 2 或 block JSON）时会强制结束 turn。
 Forge 的 Stop hook 链（plugin.json）以"提示式 echo"为主要交互方式，**禁止使用 exit 2
 或输出 `{"continue":false}` / `{"decision":"block"}`**。该约束由 `test/contract.test.ts`
-的 `stop-hook-no-block` 套件守护。
+的 `stop-hook-no-block` 套件守护，覆盖 4 个外部脚本（persistent-loop / record-evolved-rule-violation /
+flag-stale-evolved-rules / cmux-mirror）以及 plugin.json 中所有 Stop 段的 inline bash 命令。
+完整审计见 ADR `2026-05-16-stop-hook-block-cap-audit.md`。
+
+### §2.4.2 PostToolUse 反馈链（Claude Code 2.1.139+）
+
+Claude Code 2.1.139 给 PostToolUse hook 引入 `continueOnBlock: true`：当 hook
+返回 block（exit 2 或 block JSON）时，平台不再静默吞掉，而是把 hook 的 stderr/stdout
+作为"拒绝原因"反馈给 Claude，让其在**当前 turn**自我修正，而不是等到 `/forge review`。
+
+Forge 在 PostToolUse 上启用一条带 `continueOnBlock: true` 的反馈链：把 PreToolUse 阶段
+执行的 `check-context-boundary.mjs` 镜像为 PostToolUse 模式（直接读磁盘文件而非 toolInput），
+弥补 PreToolUse 在多步 Edit 后看不到文件最终态、跨上下文 import 漏检的盲区。
+
+设计取舍：
+- **PreToolUse 优先阻断**：能在写入前阻断的违规仍在 PreToolUse 解决，避免无效 IO。
+- **PostToolUse 兜底**：PreToolUse 漏检后，PostToolUse 在文件落盘后立即检测，触发
+  `continueOnBlock` 把诊断回传给 Claude。
+- **不滥用 continueOnBlock**：仅对真正能输出可执行诊断的 hook 启用。后台同步类
+  hook（cmux-mirror、rebuild-feature-dossier）继续走 `|| true` 静默兜底，避免误报浪费 turn。
+
+stderr 诊断格式以 `[Forge] 上下文边界违规：<path>` 开头，便于 Claude 直接识别根因。
+该机制由 `test/contract.test.ts` 的 `Contract: PostToolUse boundary feedback` 套件守护，
+完整评估见 ADR `2026-05-16-postooluse-feedback-evaluation.md`。
 
 ### §2.5 Context Refresh Discipline (Full Details)
 
