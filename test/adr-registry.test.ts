@@ -295,11 +295,7 @@ describe("nextAdrId", () => {
   });
 
   it("should return ADR-0004 after ADR-0003 (single-entry consolidation)", () => {
-    const entries = [
-      makeEntry("ADR-0001"),
-      makeEntry("ADR-0002"),
-      makeEntry("ADR-0003"),
-    ];
+    const entries = [makeEntry("ADR-0001"), makeEntry("ADR-0002"), makeEntry("ADR-0003")];
     expect(nextAdrId(entries)).toBe("ADR-0004");
   });
 
