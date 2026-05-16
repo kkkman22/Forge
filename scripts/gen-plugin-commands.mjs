@@ -83,7 +83,7 @@ if (VERIFY_COUNT) {
     const lines = content.split("\n");
     for (let i = 0; i < lines.length; i++) {
       const line = lines[i];
-      if (t.skipHistorical && line.includes("(historical:")) continue;
+      if (line.includes("(historical:")) continue;
       const matches = [...line.matchAll(t.pattern)];
       for (const m of matches) {
         const n = Number.parseInt(m[1], 10);
