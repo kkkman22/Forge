@@ -24,9 +24,14 @@ function writePlan(plansDir: string, name: string, frontmatter: string, body: st
   writeFileSync(join(plansDir, ".forge", "plans", name), `---\n${frontmatter}\n---\n\n${body}`);
 }
 
-function runScript(cwd: string): string {
+function runScript(cwd: string, stdinPayload?: string): string {
   try {
-    return execFileSync("node", [SCRIPT_PATH], { cwd, encoding: "utf-8", timeout: 5000 });
+    return execFileSync("node", [SCRIPT_PATH], {
+      cwd,
+      encoding: "utf-8",
+      timeout: 5000,
+      input: stdinPayload ?? undefined,
+    });
   } catch {
     return "";
   }
@@ -132,5 +137,51 @@ describe("inject-plan-context.mjs", () => {
     expect(output).toContain(".forge/plans/test-plan.md");
     expect(output).toContain("Task 1");
     expect(output).toContain("Task 2");
+  });
+
+  it("subagent stdin (with agent_id) yields zero-byte stdout", () => {
+    tempDir = createTempPlansDir();
+    writePlan(
+      tempDir,
+      "active-plan.md",
+      "status: approved",
+      "This plan should NOT appear in subagent output",
+    );
+
+    const subagentStdin = JSON.stringify({
+      session_id: "s1",
+      hook_event_name: "UserPromptSubmit",
+      agent_id: "spec-check",
+    });
+
+    const output = runScript(tempDir, subagentStdin);
+    expect(output.length).toBe(0);
+  });
+
+  it("main-agent stdin (no agent_id) is byte-equal to no-stdin baseline", () => {
+    tempDir = createTempPlansDir();
+    writePlan(
+      tempDir,
+      "plan-a.md",
+      'status: "approved"\ntopic: test-byte-equal',
+      "## Objective\nByte-equal verification",
+    );
+    writePlan(
+      tempDir,
+      "plan-b.md",
+      "status: approved",
+      "Second plan for comparison",
+    );
+
+    const outputNoStdin = runScript(tempDir);
+
+    const mainAgentStdin = JSON.stringify({
+      session_id: "s-main",
+      hook_event_name: "UserPromptSubmit",
+    });
+    const outputWithStdin = runScript(tempDir, mainAgentStdin);
+
+    expect(outputWithStdin).toBe(outputNoStdin);
+    expect(outputWithStdin).toContain("=== Forge Context ===");
   });
 });
