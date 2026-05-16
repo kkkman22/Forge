@@ -13,6 +13,54 @@
  * **Validates: Requirements 3.1–3.11, 10.1–10.4**
  */
 
+// ---------------------------------------------------------------------------
+// Local imports for consolidated re-exports (no `export` prefix → not counted
+// against the barrel statement budget; see scripts/check-public-api.mjs).
+// ---------------------------------------------------------------------------
+import { CliError } from "./cli-error.js";
+import { ForgeError } from "./forge-error.js";
+import { SdkAgentAdapter, type SdkAgentAdapterConfig } from "./sdk-agent-adapter.js";
+import { SdkDriver, type SdkDriverConfig, type SdkDriverResult } from "./sdk-driver.js";
+import {
+  installSkill,
+  loadSkillsFromDir,
+  mergeSkillLists,
+  type SkillManifest,
+  type SkillPhase,
+} from "./skill-loader.js";
+import {
+  checkVersionCompatibility,
+  type ValidationResult as SkillValidationResult,
+  validateManifest,
+} from "./skill-validator.js";
+import {
+  hasTaskName,
+  parseStatusEntries,
+  removeTaskEntry,
+  serializeStatusEntries,
+  type TaskStatusEntry,
+  upsertTaskEntry,
+} from "./state.js";
+import {
+  archiveTaskStatus,
+  getMostRecentActiveTask,
+  listActiveTasks,
+  type ManagedTaskEntry,
+  migrateToMultiTask,
+  readTaskStatus,
+  type StatusManagerIO,
+  writeTaskStatus,
+} from "./status-manager.js";
+import {
+  isMultiTaskMode,
+  type ReconstructedState,
+  type ResolvedStatus,
+  type ResolverContext,
+  reconstructStateFromGit,
+  resolveStatusPath,
+  slugify,
+} from "./status-resolver.js";
+
 // Branch gate
 export {
   type BranchGateInput,
@@ -25,8 +73,6 @@ export {
   renderBranchGatePrompt,
   runBranchGate,
 } from "./branch-gate.js";
-// Error hierarchy
-export { CliError } from "./cli-error.js";
 // Context budget management
 export {
   CLASSIFICATION_MAP,
@@ -76,7 +122,6 @@ export {
   type RecoveryCandidate,
   type RecoveryResult,
 } from "./fix-recovery.js";
-export { ForgeError } from "./forge-error.js";
 // Glossary consistency hook
 export {
   GLOSSARY_BLOCK_POLICY,
@@ -188,17 +233,12 @@ export {
   validateSpecLocked,
 } from "./plan.js";
 // Quality gate
-// Quality gate
 export {
   evaluateReviewGate,
   evaluateShipGate,
   evaluateTestGate,
   type GateResult,
 } from "./quality-gate.js";
-// Agent adapter
-export { SdkAgentAdapter, type SdkAgentAdapterConfig } from "./sdk-agent-adapter.js";
-// Driver
-export { SdkDriver, type SdkDriverConfig, type SdkDriverResult } from "./sdk-driver.js";
 // Ship gate
 export {
   checkReviewFreshness,
@@ -211,67 +251,64 @@ export {
   type ShipGateResult,
   type TestResult,
 } from "./ship.js";
-// SKILL plugin mechanism
-export {
-  installSkill,
-  loadSkillsFromDir,
-  mergeSkillLists,
-  type SkillManifest,
-  type SkillPhase,
-} from "./skill-loader.js";
-export {
-  checkVersionCompatibility,
-  type ValidationResult as SkillValidationResult,
-  validateManifest,
-} from "./skill-validator.js";
-export type {
-  DimensionScore,
-  HealthCache,
-  HealthRecommendation,
-  HealthVerdict,
-  SpecHealthDimension,
-  SpecHealthInput,
-  SpecHealthReport,
-} from "./spec-health.js";
-// Spec Health
+// Spec Health (merged: type-only + value blocks)
 export {
   checkSpecHealth,
   classifyVerdict,
   computeAmbiguityScore,
   computeSpecHash,
+  type DimensionScore,
+  type HealthCache,
+  type HealthRecommendation,
+  type HealthVerdict,
   parseHealthCache,
   renderSpecHealthAdvisory,
+  type SpecHealthDimension,
+  type SpecHealthInput,
+  type SpecHealthReport,
   shouldRecompute,
 } from "./spec-health.js";
-// Multi-task status tracking
-export {
-  hasTaskName,
-  parseStatusEntries,
-  removeTaskEntry,
-  serializeStatusEntries,
-  type TaskStatusEntry,
-  upsertTaskEntry,
-} from "./state.js";
-// Status manager
+// Subagent runner
+export { buildSubagentInvocations, runSubagentsInParallel } from "./subagent-runner.js";
+// Error hierarchy (consolidated: cli-error + forge-error)
+// SDK (consolidated: sdk-agent-adapter + sdk-driver)
+// SKILL plugin mechanism (consolidated: skill-loader + skill-validator)
+// Status (consolidated: state + status-manager + status-resolver)
 export {
   archiveTaskStatus,
+  CliError,
+  checkVersionCompatibility,
+  ForgeError,
   getMostRecentActiveTask,
-  listActiveTasks,
-  type ManagedTaskEntry,
-  migrateToMultiTask,
-  readTaskStatus,
-  type StatusManagerIO,
-  writeTaskStatus,
-} from "./status-manager.js";
-// Status resolver
-export {
+  hasTaskName,
+  installSkill,
   isMultiTaskMode,
+  listActiveTasks,
+  loadSkillsFromDir,
+  type ManagedTaskEntry,
+  mergeSkillLists,
+  migrateToMultiTask,
+  parseStatusEntries,
   type ReconstructedState,
   type ResolvedStatus,
   type ResolverContext,
+  readTaskStatus,
   reconstructStateFromGit,
+  removeTaskEntry,
   resolveStatusPath,
+  SdkAgentAdapter,
+  type SdkAgentAdapterConfig,
+  SdkDriver,
+  type SdkDriverConfig,
+  type SdkDriverResult,
+  type SkillManifest,
+  type SkillPhase,
+  type SkillValidationResult,
+  type StatusManagerIO,
+  serializeStatusEntries,
   slugify,
-} from "./status-resolver.js";
-// Subagent runner
-export { buildSubagentInvocations, runSubagentsInParallel } from "./subagent-runner.js";
+  type TaskStatusEntry,
+  upsertTaskEntry,
+  validateManifest,
+  writeTaskStatus,
+};

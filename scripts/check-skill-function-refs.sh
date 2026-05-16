@@ -52,11 +52,21 @@ while IFS= read -r skill_file; do
       continue
     fi
 
-    # Search for "export function <func>" in src/
-    if ! grep -rql "export function ${func}" "${SRC_DIR}/" 2>/dev/null; then
-      echo "❌ skills/${skill_rel} references '${func}' but no matching export in src/"
-      errors=$((errors + 1))
+    # Search for export in src/ — supports both regular and async functions,
+    # exported const arrow functions, and MCP tool registration via tools[].
+    if grep -rqlE "export (async )?function ${func}\b" "${SRC_DIR}/" 2>/dev/null; then
+      continue
     fi
+    if grep -rqlE "export const ${func}\b" "${SRC_DIR}/" 2>/dev/null; then
+      continue
+    fi
+    # MCP tools are registered by tool name string, not as exported functions.
+    # Match patterns like: name: "forge_git" or "forge_git": { ... } in MCP files.
+    if grep -rqE "[\"']${func}[\"']" "${SRC_DIR}/mcp/" 2>/dev/null; then
+      continue
+    fi
+    echo "❌ skills/${skill_rel} references '${func}' but no matching export in src/"
+    errors=$((errors + 1))
   done < <(extract_refs "$skill_file")
 done < <(find "${SKILLS_DIR}" -name "SKILL.md" -type f)
 
