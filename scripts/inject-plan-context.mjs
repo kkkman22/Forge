@@ -10,6 +10,7 @@
  */
 import { readdirSync, readFileSync, statSync } from "node:fs";
 import { join } from "node:path";
+import { shouldSkipForSubagent } from "./lib/hook-stdin-router.mjs";
 
 const PLANS_DIR = ".forge/plans";
 const MAX_PLANS = 3;
@@ -32,6 +33,8 @@ function extractHead(content) {
 }
 
 try {
+  if (await shouldSkipForSubagent()) process.exit(0);
+
   let entries;
   try {
     entries = readdirSync(PLANS_DIR)
