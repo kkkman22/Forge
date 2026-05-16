@@ -6,7 +6,7 @@ const FORGE_MD = resolve(import.meta.dirname, "../../commands/forge.md");
 const content = readFileSync(FORGE_MD, "utf-8");
 
 describe("commands/forge.md Skill syntax (R2)", () => {
-  it("should contain zero non-example occurrences of Skill(skill=\"forge\", args=...) pseudo-call", () => {
+  it('should contain zero non-example occurrences of Skill(skill="forge", args=...) pseudo-call', () => {
     const lines = content.split("\n");
     const nonExampleLines = lines.filter((l) => !l.includes("❌"));
     const matches = nonExampleLines.join("\n").match(/Skill\(skill="forge"/g);
