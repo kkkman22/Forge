@@ -1,9 +1,9 @@
 import { describe, expect, it } from "vitest";
 import {
-  parseHandoffBlock,
-  validateHandoff,
-  serializeHandoff,
   type HandoffBlock,
+  parseHandoffBlock,
+  serializeHandoff,
+  validateHandoff,
 } from "../../src/handoff-schema.js";
 
 function makeHandoff(overrides: Partial<HandoffBlock> = {}): HandoffBlock {
@@ -13,7 +13,8 @@ function makeHandoff(overrides: Partial<HandoffBlock> = {}): HandoffBlock {
     not_completed: [],
     commands_executed: [{ cmd: "npm run check", exit_code: 0 }],
     issues_found: [],
-    procedure_compliance: "RED: test/foo.test.ts added failing case\nGREEN: src/foo.ts implemented\nREFACTOR: skipped",
+    procedure_compliance:
+      "RED: test/foo.test.ts added failing case\nGREEN: src/foo.ts implemented\nREFACTOR: skipped",
     ...overrides,
   };
 }
@@ -106,7 +107,11 @@ describe("handoff-schema", () => {
       });
       const result = validateHandoff(handoff);
       expect(result.valid).toBe(false);
-      expect(result.errors.some((e) => e.includes("RED") || e.includes("GREEN") || e.includes("REFACTOR"))).toBe(true);
+      expect(
+        result.errors.some(
+          (e) => e.includes("RED") || e.includes("GREEN") || e.includes("REFACTOR"),
+        ),
+      ).toBe(true);
     });
 
     it("accepts procedure_compliance with 'skipped'", () => {

@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { parseEventsNdjson, extractLatestCursor, } from "../../src/events-cursor.js";
+import { extractLatestCursor, parseEventsNdjson, } from "../../src/events-cursor.js";
 function makeStartEvent(overrides = {}) {
     return {
         type: "phase_start",
@@ -26,7 +26,7 @@ function makeEndEvent(overrides = {}) {
     };
 }
 function eventsToNdjson(events) {
-    return events.map((e) => JSON.stringify(e)).join("\n") + "\n";
+    return `${events.map((e) => JSON.stringify(e)).join("\n")}\n`;
 }
 describe("events-cursor", () => {
     describe("parseEventsNdjson", () => {
@@ -38,18 +38,18 @@ describe("events-cursor", () => {
             expect(events[1].type).toBe("phase_end");
         });
         it("validates phase_start schema — requires phase, iteration, session_id", () => {
-            const bad = JSON.stringify({ type: "phase_start", ts: "2026-05-16T10:00:00Z" }) + "\n";
+            const bad = `${JSON.stringify({ type: "phase_start", ts: "2026-05-16T10:00:00Z" })}\n`;
             const events = parseEventsNdjson(bad);
             expect(events).toHaveLength(0);
         });
         it("validates phase_end schema — requires exit_code", () => {
-            const bad = JSON.stringify({ type: "phase_end", ts: "2026-05-16T10:00:00Z", phase: "build", iteration: 1, session_id: "s1" }) + "\n";
+            const bad = `${JSON.stringify({ type: "phase_end", ts: "2026-05-16T10:00:00Z", phase: "build", iteration: 1, session_id: "s1" })}\n`;
             const events = parseEventsNdjson(bad);
             expect(events).toHaveLength(0);
         });
         it("tolerates corrupted last line — skips and recovers", () => {
             const valid = eventsToNdjson([makeStartEvent(), makeEndEvent()]);
-            const corrupted = valid + '{"type":"phase_start","ts":"2026-05';
+            const corrupted = `${valid}{"type":"phase_start","ts":"2026-05`;
             const events = parseEventsNdjson(corrupted);
             expect(events).toHaveLength(2);
         });

@@ -1,11 +1,11 @@
 import { describe, expect, it } from "vitest";
 import {
   generateAppendBlock,
+  type KnownFailure,
   mergeKnownFailures,
   parseKnownFailures,
-  serializeKnownFailures,
-  type KnownFailure,
   type ReviewIssue,
+  serializeKnownFailures,
 } from "../../src/known-failures.js";
 
 function makeIssue(overrides: Partial<ReviewIssue> = {}): ReviewIssue {
@@ -71,7 +71,9 @@ describe("known-failures — append", () => {
   describe("mergeKnownFailures", () => {
     it("appends new entries to existing file", () => {
       const existing: KnownFailure[] = [makeFailure()];
-      const newBlocks = [generateAppendBlock(makeIssue({ severity: "P0", message: "different issue" }), "new123")!];
+      const newBlocks = [
+        generateAppendBlock(makeIssue({ severity: "P0", message: "different issue" }), "new123")!,
+      ];
       const result = mergeKnownFailures(existing, newBlocks);
       expect(result).toHaveLength(2);
     });
@@ -90,7 +92,11 @@ describe("known-failures — append", () => {
 
     it("archives entries when count exceeds 100", () => {
       const existing: KnownFailure[] = Array.from({ length: 101 }, (_, i) =>
-        makeFailure({ pattern_id: `pattern-${i}`, first_seen: `2026-05-${String(i % 30 + 1).padStart(2, "0")}`, last_seen: `2026-05-${String(i % 30 + 1).padStart(2, "0")}` }),
+        makeFailure({
+          pattern_id: `pattern-${i}`,
+          first_seen: `2026-05-${String((i % 30) + 1).padStart(2, "0")}`,
+          last_seen: `2026-05-${String((i % 30) + 1).padStart(2, "0")}`,
+        }),
       );
       const result = mergeKnownFailures(existing, []);
       expect(result.length).toBeLessThanOrEqual(80);

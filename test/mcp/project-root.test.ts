@@ -1,5 +1,5 @@
 import { describe, expect, it, vi } from "vitest";
-import { resolveProjectRoot, logResolvedRoot } from "../../src/mcp/project-root.js";
+import { logResolvedRoot, resolveProjectRoot } from "../../src/mcp/project-root.js";
 
 describe("resolveProjectRoot", () => {
   it("uses CLAUDE_PROJECT_DIR when set and non-empty", () => {
