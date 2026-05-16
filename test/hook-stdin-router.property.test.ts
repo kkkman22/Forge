@@ -6,17 +6,13 @@
  * - Any JSON with agent_id → callerKind === "subagent"
  * - Any JSON with hook_event_name but no agent_id → callerKind === "main"
  */
-import * as fc from "fast-check";
+
 import { execFileSync } from "node:child_process";
 import { join } from "node:path";
+import * as fc from "fast-check";
 import { describe, expect, it } from "vitest";
 
-const SCRIPT_PATH = join(
-  process.cwd(),
-  "scripts",
-  "lib",
-  "hook-stdin-router.mjs",
-);
+const SCRIPT_PATH = join(process.cwd(), "scripts", "lib", "hook-stdin-router.mjs");
 
 interface RouterDecision {
   shouldInject: boolean;
@@ -28,11 +24,14 @@ function callRouter(stdinStr: string): RouterDecision {
   try {
     const result = execFileSync(
       "node",
-      ["-e", `
+      [
+        "-e",
+        `
         import { classifyHookCaller } from "${SCRIPT_PATH}";
         const d = await classifyHookCaller({ _testStdin: process.env._TEST_STDIN, timeoutMs: 1000 });
         process.stdout.write(JSON.stringify(d));
-      `],
+      `,
+      ],
       {
         encoding: "utf-8",
         timeout: 5000,
@@ -46,7 +45,9 @@ function callRouter(stdinStr: string): RouterDecision {
 }
 
 describe("hook-stdin-router PBT", () => {
-  it("never throws and always returns a valid RouterDecision for arbitrary input", { timeout: 30000 }, () => {
+  it("never throws and always returns a valid RouterDecision for arbitrary input", {
+    timeout: 30000,
+  }, () => {
     fc.assert(
       fc.property(fc.string({ maxLength: 1000 }), (stdinStr) => {
         // Filter out strings with null bytes (env vars can't contain them)

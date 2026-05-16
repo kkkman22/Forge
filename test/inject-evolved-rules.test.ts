@@ -18,10 +18,7 @@ function createTempDir(): string {
   return dir;
 }
 
-function runScript(
-  cwd: string,
-  stdinPayload?: string,
-): { stdout: string; exitCode: number } {
+function runScript(cwd: string, stdinPayload?: string): { stdout: string; exitCode: number } {
   try {
     const stdout = execFileSync("node", [SCRIPT_PATH], {
       cwd,
@@ -72,7 +69,7 @@ describe("inject-evolved-rules.mjs", () => {
     });
     const result = runScript(tempDir, mainStdin);
     expect(result.exitCode).toBe(0);
-    expect(result.stdout).toBe("=== Evolved Rules ===\n" + content);
+    expect(result.stdout).toBe(`=== Evolved Rules ===\n${content}`);
     expect(result.stdout).not.toContain("truncated");
   });
 
@@ -96,7 +93,10 @@ describe("inject-evolved-rules.mjs", () => {
 
   it("subagent stdin (with agent_id) → exit 0, stdout zero bytes", () => {
     tempDir = createTempDir();
-    writeFileSync(join(tempDir, RULES_FILE, "../" + RULES_FILE.split("/").pop()!), "should not appear");
+    writeFileSync(
+      join(tempDir, RULES_FILE, `../${RULES_FILE.split("/").pop()!}`),
+      "should not appear",
+    );
     writeFileSync(join(tempDir, RULES_FILE), "Rules content that should be skipped");
 
     const subagentStdin = JSON.stringify({
