@@ -27,21 +27,40 @@ if [[ -z "$runs_dir" ]]; then
   exit 0
 fi
 
-# Calculate cutoff date
+# Calculate cutoff date (BSD/GNU date compatibility).
 cutoff=$(date -u -v-${DAYS}d +%Y-%m-%d 2>/dev/null || date -u -d "${DAYS} days ago" +%Y-%m-%d 2>/dev/null || echo "")
 
-# Collect relevant log lines and aggregate
-result=$(cat "${runs_dir}"/*-frozen-events.jsonl 2>/dev/null | while IFS= read -r line; do
-  [[ -z "$line" ]] && continue
+# Aggregate categories with a single awk pass over all log files.
+# Avoids per-line fork chains (printf|grep|head|cut) that dominated runtime.
+result=$(
+  shopt -s nullglob
+  files=("${runs_dir}"/*-frozen-events.jsonl)
+  if [[ ${#files[@]} -eq 0 ]]; then
+    echo ""
+    exit 0
+  fi
+  awk -v cutoff="$cutoff" '
+    {
+      # Extract timestamp date prefix (first 10 chars after "timestamp":")
+      ts = ""
+      if (match($0, /"timestamp":"[0-9]{4}-[0-9]{2}-[0-9]{2}/)) {
+        ts = substr($0, RSTART + 13, 10)
+      }
+      if (cutoff != "" && ts != "" && ts < cutoff) next
 
-  # Extract date from timestamp
-  ts=$(printf '%s' "$line" | grep -oE '"timestamp":"[0-9]{4}-[0-9]{2}-[0-9]{2}' | head -1 | cut -d'"' -f4) || continue
-  [[ -n "$cutoff" ]] && [[ "$ts" < "$cutoff" ]] && continue
-
-  category=$(printf '%s' "$line" | grep -oE '"category":"[^"]*"' | head -1 | cut -d'"' -f4) || category="unknown"
-
-  printf '%s\n' "$category"
-done | sort | uniq -c | sort -rn)
+      # Extract category value
+      cat = "unknown"
+      if (match($0, /"category":"[^"]*"/)) {
+        cat = substr($0, RSTART + 12, RLENGTH - 13)
+      }
+      counts[cat]++
+    }
+    END {
+      for (c in counts) printf "%d\t%s\n", counts[c], c
+    }
+  ' "${files[@]}" \
+    | sort -rn -k1,1
+)
 
 if [[ -z "$result" ]]; then
   echo "Frozen-zone: 0 hits in last ${DAYS} days."
@@ -51,8 +70,7 @@ fi
 total=$(printf '%s\n' "$result" | awk '{s+=$1} END {print s}')
 echo "Frozen-zone: ${total} hits in last ${DAYS} days"
 
-printf '%s\n' "$result" | while read -r count category; do
-  echo "  ${category}: ${count}"
-done
+# Output is already "<count>\t<category>" — render as "  category: count".
+printf '%s\n' "$result" | awk -F'\t' '{ printf "  %s: %d\n", $2, $1 }'
 
 echo "  See ${runs_dir}/ for full log."
