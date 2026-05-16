@@ -31,6 +31,14 @@ disable-model-invocation: true
 
 默认严重度：warn。可通过 `severityOverride` 覆盖。
 
+### §1.6 Pre-flight: Spec Health Check
+
+Read spec frontmatter `health` field. If spec_hash matches current content, reuse cached score. Otherwise, call `checkSpecHealth` to recompute.
+
+- `verdict=degraded` + interactive → prompt user: 1) return to spec 2) trigger grill 3) force continue
+- `verdict=degraded` + autonomous → write advisory to `.forge/findings/spec-health-advisory-<topic>.md`, continue
+- `verdict=marginal` → output warning, continue
+
 ## 2. Five-Step Planning Process
 
 ### Step 1: Research

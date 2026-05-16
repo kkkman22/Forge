@@ -5,70 +5,51 @@ skeleton_exempt_legacy: true
 disable-model-invocation: true
 ---
 
-# /forge fix-conflicts — Merge Conflict Resolution
+# /forge fix-conflicts — 显式冲突处理入口
 
-> **Trigger**: Git merge/rebase produces conflicts in `.forge/` directory
-> **Output**: Resolved conflicts with semantic merge where possible
+> **触发**：用户主动调用 `/forge fix-conflicts`
+> **委托**：内部使用 `src/conflict-resolver.ts` 处理逻辑
+> **模式**：interactive
 
-## 1. Overview
+## 概述
 
-Three-zone merge conflict resolution:
-- **Frozen**: Refuse auto-merge, offer 3 options [R7.3]
-- **Guarded**: Semantic merge using type-specific strategies [R7.6-R7.9]
-- **Open**: Accept any side (prefer ours)
-- **Source**: Leave for manual resolution
+显式入口，扫描当前冲突并调用 `resolveConflicts(paths, "interactive")`。
+核心三区分类、guarded 合并、frozen 拒绝、Three-Strike 逻辑全部在 `src/conflict-resolver.ts` 纯函数中实现。
 
-→ Details: references/zone-classification.md
+## 行为
 
-## 2. Frozen Zone Handling [R7.3, R7.4, R7.5]
+1. 扫描当前 git 冲突路径
+2. 调用 `resolveConflicts(paths, "interactive", context)`
+3. frozen 区 → 渲染 `buildFrozenRefusalPrompt(paths)` 3 选项
+4. guarded 区 → 自动语义合并
+5. open 区 → accept ours
+6. source 区 → 保留冲突标记
+7. 运行 `npm run check` 验证
+8. 渲染结果到对话框
 
-When frozen file has conflict, offer 3 options:
+## 三区分类
 
-| Option | Action |
-|--------|--------|
-| manual resolve | Keep worktree/index state, indicate manual edit |
-| unlock then merge | Change status to `draft` + write unlock log + three-way merge |
-| abort merge | `git merge --abort` or `git rebase --abort` |
+| Zone | 文件 | 自动处理 |
+|------|------|---------|
+| frozen | specs (locked), plans (approved), config.md | 拒绝 → 3 选项 |
+| guarded | progress, reviews, knowledge, ADR | 语义合并 |
+| open | 其他 .forge/ 文件 | accept ours |
+| source | .forge/ 之外 | 留给用户 |
 
-→ Details: references/frozen-refusal-flow.md
+## 函数契约
 
-## 3. Guarded Zone Merge Rules
+详见 `src/conflict-resolver.ts`：
+- `parseConflictedPaths(stderr)` → 提取冲突路径
+- `classifyConflictZone(path, status)` → 区域分类
+- `applyGuardedMerge(type, ours, theirs)` → guarded 合并
+- `buildFrozenRefusalPrompt(paths)` → frozen 拒绝提示
+- `validateConflictResolution(attempts)` → Three-Strike 门禁
+- `resolveConflicts(paths, mode, ctx)` → 顶层编排
 
-| File Type | Merge Strategy | Reference |
-|-----------|---------------|-----------|
-| progress/*.md | task_id merge: completed > pending | R7.6 |
-| instincts/known-failures | confidence=max, count=sum | R7.7 |
-| ADR-*.md | Reassign IDs sequentially | R7.8 |
-| reviews/*.md | Append both, sort by (layer, severity) | R7.9 |
+## Validation Gate
 
-→ Details: references/guarded-merge-rules.md
+合并后运行 `npm run check`。Three-Strike：同文件修改 = 新尝试，3 次连续失败 → `/forge debug`。
 
-## 4. Validation Gate [R7.11, R7.12]
+## References
 
-After merge: run `npm run check` (fallback to `ci_check_command`).
-
-**Three-Strike Rule**:
-- Same file changed = new attempt
-- Unchanged file re-run = same attempt (no increment)
-- 3 consecutive failures → trigger `/forge debug`
-
-## 5. Execution Flow
-
-1. Scan conflicted paths
-2. Classify each into zone
-3. Frozen → 3-option flow
-4. Guarded → semantic merge
-5. Open → accept ours
-6. Run validation gate
-7. Report results
-
-## Constraints
-
-- Frozen files are never auto-modified [R7.3]
-- All merge operations are logged with strategy used
-- Validation gate uses `npm run check` or `ci_check_command` [R14.11]
-
-## Gotchas
-- **Zone misclassification**: Forge file classified as open when actually frozen → overwrites locked spec → always check frozen zone status before resolving
-- **Partial resolution**: Resolve some conflicts, miss others → broken build → count conflicts before and after, ensure count reaches zero
-- **State desync**: .forge/status.md references branch that was rebased → status points to wrong state → update status.md after conflict resolution
+详细规则见 `src/conflict-resolver.ts` 和 `src/conflict-classifier.ts`、`src/guarded-merger.ts`。

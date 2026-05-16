@@ -56,9 +56,9 @@ export function formatStatusSummary(summary) {
 // Diff content truncation for review context injection
 // ---------------------------------------------------------------------------
 /** Maximum total lines for diff-content output. */
-const DIFF_CONTENT_MAX_LINES = 3000;
+const DIFF_CONTENT_MAX_LINES = 1500;
 /** Maximum lines per single file in diff output. */
-const DIFF_PER_FILE_MAX_LINES = 200;
+const DIFF_PER_FILE_MAX_LINES = 100;
 /**
  * Truncate full diff content for review context injection.
  *

@@ -94,7 +94,11 @@ export class SdkDriver {
         // unless explicitly overridden with forceNoHooks.
         const hooksResult = validateHooksPresence(this.config.cwd);
         if (!hooksResult.valid) {
-            if (!this.config.forceNoHooks) {
+            if (this.config.sdkNativeSandbox) {
+                // SDK native sandbox provides OS-level protection — downgrade to warning
+                this.logger.log(createLogEntry("hooks_protection_sdk_sandbox_fallback", "warn", `Hooks protection missing but SDK native sandbox active: ${hooksResult.reason ?? "unknown"}`, { runId: this.config.runId }));
+            }
+            else if (!this.config.forceNoHooks) {
                 throw new HooksProtectionMissingError(hooksResult.reason ?? "unknown", this.config.cwd);
             }
             // Explicit bypass: warn + write audit flag
@@ -114,20 +118,27 @@ export class SdkDriver {
                 }), { runId: this.config.runId }));
             }
         }
-        // Sandbox mode: write runtime policy file.
-        if (this.config.sandboxEnabled) {
+        // Sandbox mode: write runtime policy file (legacy shell-hook mode only).
+        // SDK native sandbox mode (sdkNativeSandbox) handles isolation via SdkAgentAdapter
+        // and does not need .sandbox-active.json.
+        if (this.config.sandboxEnabled && !this.config.sdkNativeSandbox) {
             try {
                 const sandboxActivePath = path.join(this.config.cwd, ".forge", ".sandbox-active.json");
                 const policy = loadSandboxPolicy(this.config.cwd);
                 mkdirSync(path.dirname(sandboxActivePath), { recursive: true });
                 writeFileSync(sandboxActivePath, JSON.stringify({ projectRoot: this.config.cwd, policy }));
-                this.logger.log(createLogEntry("sandbox_enabled", "info", "Sandbox mode activated", {
+                this.logger.log(createLogEntry("sandbox_enabled", "info", "Sandbox mode activated (legacy shell hook)", {
                     runId: this.config.runId,
                 }));
             }
             catch (err) {
                 this.logger.log(createLogEntry("sandbox_init_failed", "warn", `Sandbox init failed: ${err instanceof Error ? err.message : String(err)}`, { runId: this.config.runId }));
             }
+        }
+        if (this.config.sdkNativeSandbox) {
+            this.logger.log(createLogEntry("sandbox_enabled", "info", "SDK native sandbox mode activated", {
+                runId: this.config.runId,
+            }));
         }
         try {
             // Dispatch start event.
