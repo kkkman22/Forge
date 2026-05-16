@@ -29,3 +29,5 @@
 {"timestamp":"2026-05-16T15:14:54Z","event":"precompact_snapshot","detail":"slug=single-entry-command-consolidation phase=shipped"}
 {"timestamp":"2026-05-16T15:20:05Z","event":"postcompact_restore","detail":"slug=single-entry-command-consolidation"}
 {"timestamp":"2026-05-16T15:20:05Z","event":"precompact_snapshot","detail":"slug=single-entry-command-consolidation phase=shipped"}
+{"timestamp":"2026-05-16T15:34:09Z","event":"postcompact_restore","detail":"slug=single-entry-command-consolidation"}
+{"timestamp":"2026-05-16T15:34:10Z","event":"precompact_snapshot","detail":"slug=single-entry-command-consolidation phase=shipped"}
