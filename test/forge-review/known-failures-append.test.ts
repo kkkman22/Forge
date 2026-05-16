@@ -35,16 +35,18 @@ describe("known-failures — append", () => {
   describe("generateAppendBlock", () => {
     it("generates append-block from P0 issue", () => {
       const block = generateAppendBlock(makeIssue({ severity: "P0" }), "abc123");
-      expect(block.pattern_id).toBeTruthy();
-      expect(block.severity).toBe("P0");
-      expect(block.first_seen_commit).toBe("abc123");
-      expect(block.signature).toBeTruthy();
-      expect(block.fix_required).toBeTruthy();
+      expect(block).not.toBeNull();
+      expect(block!.pattern_id).toBeTruthy();
+      expect(block!.severity).toBe("P0");
+      expect(block!.first_seen_commit).toBe("abc123");
+      expect(block!.signature).toBeTruthy();
+      expect(block!.fix_required).toBeTruthy();
     });
 
     it("generates append-block from P1 issue", () => {
       const block = generateAppendBlock(makeIssue({ severity: "P1" }), "def456");
-      expect(block.severity).toBe("P1");
+      expect(block).not.toBeNull();
+      expect(block!.severity).toBe("P1");
     });
 
     it("returns null for P2 issue (no append)", () => {
@@ -60,6 +62,8 @@ describe("known-failures — append", () => {
     it("generates deterministic pattern_id from same signature", () => {
       const b1 = generateAppendBlock(makeIssue(), "abc");
       const b2 = generateAppendBlock(makeIssue(), "def");
+      expect(b1).not.toBeNull();
+      expect(b2).not.toBeNull();
       expect(b1!.pattern_id).toBe(b2!.pattern_id);
     });
   });
