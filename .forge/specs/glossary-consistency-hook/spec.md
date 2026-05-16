@@ -1,6 +1,7 @@
 ---
 <<<<<<< HEAD
 status: locked
+contract_legacy: true
 =======
 status: draft
 >>>>>>> origin/main
