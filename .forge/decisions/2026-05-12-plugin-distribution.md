@@ -55,7 +55,7 @@ Feasibility report at `.kiro/specs/plugin-distribution/feasibility.md`:
 
 ## Update 2026-05-16
 
-The "Phase B Component 3: commands/*.md — 28 slash command wrappers" decision is partially superseded by ADR-0003. The original design prioritized "plugin completeness" (all tools visible via `/`), but 6 months of use showed 27 wrappers conflicting with SKILL orchestration conventions (`disable-model-invocation`, auto-advance). This update reclaims the single-entry model.
+The "Phase B Component 3: commands/*.md — (historical: 28 slash command wrappers replaced by single-entry model in ADR-0003)" decision is partially superseded by ADR-0003. The original design prioritized "plugin completeness" (all tools visible via `/`), but 6 months of use showed 27 wrappers conflicting with SKILL orchestration conventions (`disable-model-invocation`, auto-advance). This update reclaims the single-entry model.
 
 New decision: `.forge/decisions/ADR-0003-single-entry-command-consolidation.md`
 
