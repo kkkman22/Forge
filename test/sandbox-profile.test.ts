@@ -1,13 +1,13 @@
-import { existsSync, readFileSync, writeFileSync, mkdirSync, rmSync } from "node:fs";
-import { join } from "node:path";
+import { mkdirSync, rmSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
+import { join } from "node:path";
 import {
   FORGE_LOOP_TOOLS,
   loadSandboxProfile,
-  toSdkSandboxSettings,
   type SandboxConfigV1,
   type SandboxConfigV2,
   type SandboxProfile,
+  toSdkSandboxSettings,
 } from "../src/sandbox-profile.js";
 
 // ---------------------------------------------------------------------------
@@ -15,7 +15,10 @@ import {
 // ---------------------------------------------------------------------------
 
 function makeTmpDir(): string {
-  const dir = join(tmpdir(), `sandbox-profile-test-${Date.now()}-${Math.random().toString(36).slice(2)}`);
+  const dir = join(
+    tmpdir(),
+    `sandbox-profile-test-${Date.now()}-${Math.random().toString(36).slice(2)}`,
+  );
   mkdirSync(dir, { recursive: true });
   return dir;
 }

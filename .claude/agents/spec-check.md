@@ -2,7 +2,7 @@
 name: spec-check
 description: Spec 对齐评审者。在 /forge review 的 Agent Team 中提供 Layer 1 评审，逐条对照规格检查实现完整性和 scope creep。
 model: sonnet
-maxTurns: 12
+maxTurns: 6
 tools: Read, Glob, Grep
 permissionMode: plan
 memory: project
@@ -88,24 +88,25 @@ Review 声明"✅ 新增 agent / skill / hook / template / config 文件"之前�
 
 ## Check Method
 
-**铁律**：Diff 上下文已由编排层预读并注入 prompt。Agent 必须基于 prompt 中的 diff 内容分析，**严禁逐文件 Read 所有变更文件**。
+**铁律**：每次评审的**第一步**必须调用 `forge_git(subcommand="diff-content", args="${BASE}...HEAD")` 工具获取已截断的 diff patch 作为唯一的变更上下文。在拿到 diff 之前，**严禁**使用 Read/Glob/Grep。如果 `forge_git` 工具不可用（MCP server 未启动），降级为单次 `Bash("git diff ${BASE}...HEAD | head -1500")`。
 
-1. **基于 prompt 中的 diff 摘要分析变更**（不做 Read）
-   - 从 diff content 中识别每个文件的变更意图
-   - 从 diff stat 中确认变更范围
-2. 读取 spec 文件（仅 requirements.md），提取所有需求和验收标准
-3. 逐条对照 diff 摘要中的变更，确认每个需求有对应实现
-4. **仅对存疑的验收标准**，用 Read 读取具体文件验证（**上限 5 次 Read**）
-5. 扫描变更文件列表，识别不在 Spec 中的新增功能（scope creep）
-6. 扫描实现 R-x 的函数，应用 Stub Detection（Check Item 3a）
-7. 如果是棕地项目，检查 Delta "不变"列表中的文件是否被修改
-8. 对声明的新增文件执行主分支存在性验证（Check Item 5）
-9. 对 Pack/Loader 类变更验证 integration test 存在性（Check Item 6）
+1. **Step 0（强制首步）**：调用 `forge_git(subcommand="diff-content")` 拿到 diff patch
+2. **基于 diff 内容分析变更**（不做额外 Read）
+   - 从 diff 中识别每个文件的变更意图
+   - 从文件头/路径中确认变更范围
+3. 读取 spec 文件（仅 requirements.md），提取所有需求和验收标准
+4. 逐条对照 diff 中的变更，确认每个需求有对应实现
+5. **仅对存疑的验收标准**，用 Read 读取具体文件验证（**上限 3 次 Read**）
+6. 扫描变更文件列表，识别不在 Spec 中的新增功能（scope creep）
+7. 扫描实现 R-x 的函数，应用 Stub Detection（Check Item 3a）
+8. 如果是棕地项目，检查 Delta "不变"列表中的文件是否被修改
+9. 对声明的新增文件执行主分支存在性验证（Check Item 5）
+10. 对 Pack/Loader 类变更验证 integration test 存在性（Check Item 6）
 
-**Read 预算**：整个评审过程最多 5 次 Read 调用。超出则停止 Read，基于已有信息产出结论。
+**Read 预算**：除 Step 0 的 forge_git 调用外，整个评审过程最多 3 次 Read 调用。超出则停止 Read，基于已有信息产出结论。
 
 **禁止行为**：
-- ❌ 在 prompt 已提供 diff 摘要时，仍然逐文件 Read 所有变更文件
+- ❌ 跳过 Step 0 直接 Read 变更文件
 - ❌ 对 diff 中已可见的内容重复 Read 原文件
 - ❌ Read lock 文件、dist/ 目录、或 .d.ts 文件
 
