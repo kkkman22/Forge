@@ -134,28 +134,13 @@ Read `ci_check_command` from `config.md` → execute as-is. Empty → `verify_co
 
 ## 3.6 Handoff Block（R2 — 原子任务交接）
 
-每完成一个原子任务并准备 commit 前，build agent 必须在 `.forge/progress/<topic>.md` 对应任务条目下追加一份 5 字段 handoff block（fenced code block，语言标记 `yaml` 或 `handoff`）：
+每完成一个原子任务并准备 commit 前，build agent 必须在 `.forge/progress/<topic>.md` 对应任务条目下追加 5 字段 handoff block（`task_id` / `completed` / `not_completed` / `commands_executed` / `issues_found` / `procedure_compliance`）。下一任务启动前必须读取上一任务的 handoff 作为接续输入。
 
-- `task_id`: 任务编号
-- `completed`: 已完成事项列表
-- `not_completed`: 未完成事项（完整完成则 `[]`）
-- `commands_executed`: 命令列表，每条含 `cmd` 和 `exit_code`
-- `issues_found`: 发现的问题（无则 `[]`）
-- `procedure_compliance`: TDD 阶段执行描述（RED/GREEN/REFACTOR 或 `skipped`）
+**Carry-Over Discipline（R2.AC6）**：上一任务 `not_completed` 非空时，下一任务 plan 阶段必须显式选择 (a) 纳入当前任务、(b) 写入 Out of Scope、(c) 升级为新原子任务之一。**静默忽略 = P1**。
 
-下一个原子任务启动前，必须先读取上一任务的 handoff block 作为接续输入。
+§3.5 Final Validation 运行时校验每个 commit 都有 handoff、含全部字段、`commands_executed` 非空、`procedure_compliance` 含 TDD 阶段标记。缺失输出 P1，build 不结束。
 
-**Carry-Over Discipline（R2.AC6）**：若上一任务的 `not_completed` 字段非空，下一任务 plan 阶段必须在三种处理之一中显式选择：(a) 纳入当前任务范围立即处理；(b) 作为已知 backlog 写入 spec 的 `Out of Scope` 章节并附理由；(c) 升级为新的 atomic task。**静默忽略 = P1**。
-
-light tier 降级：仅必填 `commands_executed` 和 `procedure_compliance`。
-
-**Self-Check Handoff 项**（§3.5 运行时验证）：
-- 已 commit 的每个原子任务都对应一份 handoff block
-- 每份 handoff block 包含 5 个字段（standard/full tier）
-- `commands_executed` 数组中至少有一条 `cmd`
-- `procedure_compliance` 包含 RED/GREEN/REFACTOR 或 `skipped`
-
-缺失即输出 P1，build 不结束。
+→ 详见 references/handoff-block.md（字段定义、light tier 降级、Self-Check 完整清单）
 
 ---
 
@@ -238,76 +223,13 @@ Trimmer 函数签名详见 references/function-contracts.md
 
 > 当所有 Trimmer 仍不足以维持上下文时的应急协议。这不是失败——这是长时间 build 会话的正常边界条件。
 
-### 11.1 Detection Signals
+**触发信号（任一）**：auto-compact 触发并丢失任务跟踪 / 无法不重读 progress 即回忆任务编号 / Restatement 摘要 >800 tokens / 推理质量退化 / 上下文利用率 >80%。
 
-观察到以下**任一**信号时，立即触发耗尽协议：
+**强制序列**：(1) 写 `.forge/knowledge/sessions/<date>-<topic>-interim.md`（含 progress snapshot / key findings / active constraints / anomalies）→ (2) 更新 `.forge/status.md` 添加 `exhaustion_pending: "true"`，phase 仍为 `"build"` → (3) 输出 `⚠️ Context exhaustion detected. Interim state saved. → Continuing with /forge resume`，然后立即调用：`Skill(skill="forge", args="resume")`。
 
-1. Auto-compact 触发且丢失已完成的任务跟踪
-2. 无法在不重读 progress 文件的情况下回忆当前任务编号
-3. Restatement Checkpoint 摘要超过 800 tokens（正常预算的两倍）
-4. 推理质量退化——重复提问、丢失 TDD 阶段跟踪
-5. 上下文利用率超过 80%
+**安全限制**：单次会话 ≤5 次耗尽轮转；interim 写入失败 2 次降级为 JSON handoff；Three-strike 触发期间不执行此协议。
 
-### 11.2 Mandatory Exhaustion Sequence
-
-检测到耗尽时，**替代**输出手动续接提示，执行以下序列：
-
-**Step 1: 写入 Interim 状态**（必须成功后再做其他操作）
-
-写入 `.forge/knowledge/sessions/<date>-<topic>-interim.md`：
-
-```yaml
----
-date: "<ISO timestamp>"
-task: "<status.md 中的 current_task>"
-phase: "build-exhaustion"
-exhaustion_signal: "<触发了哪个检测信号>"
-next_task_number: "<N>"
-total_tasks: "<M>"
-completed_tasks: "<K>"
----
-
-## Progress Snapshot
-<已完成的任务名称，每行一个>
-
-## Key Findings
-<从 .forge/findings/<topic>.md 复制>
-
-## Active Constraints
-<剩余任务的阻塞项或特殊注意事项>
-
-## Anomalies
-<本会话中发生的意外情况>
-```
-
-**Step 2: 更新 Status 文件**
-
-更新 `.forge/status.md`：`phase` 保持 `"build"` 不变，添加字段 `exhaustion_pending: "true"`，更新 `updated` 时间戳。
-
-**Step 3: 输出 Handoff 并自动恢复**
-
-输出**仅此消息**：
-
-```
-⚠️ Context exhaustion detected. Interim state saved.
-→ Continuing with /forge resume
-```
-
-然后立即调用：`Skill(skill="forge", args="resume")`
-
-### 11.3 What NOT to Do
-
-- **禁止**输出长段"剩余任务"清单让用户手动复制
-- **禁止**输出"请在新会话中运行 /forge resume"
-- **禁止**在写入 interim 文件之前停止
-- **禁止**因为"progress 文件已经跟踪了"而跳过 interim 写入
-
-### 11.4 Safety Limits
-
-- 单次 build 会话最多 **5 次**耗尽轮转。达到 5 次后停止并报告。
-- Interim 文件写入连续失败 2 次时，输出最小化 JSON handoff 到 stdout 作为 fallback。
-- Three-strike 触发期间**不执行**耗尽协议——让 Three-strike 先自行处理。
-- `next_task_number` 必须为正整数。解析失败时默认为 1，并记录 anomaly。
+→ 详见 references/context-exhaustion.md（完整 interim 模板、Step-by-step 流程、What NOT to Do 清单）
 
 ## Gotchas
 - **Skipping RED phase**: Write implementation first, then backfill tests → tests verify implementation not behavior → must write failing test first

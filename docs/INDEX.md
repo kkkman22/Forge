@@ -49,6 +49,7 @@
 | 安全与信任参考 | [reference-security.md](./reference-security.md) | 安全机制表、审计说明、CI 评审、冻结区反馈 | 了解 Forge 安全机制 |
 | CI UltraReview 手册 | [ci-ultrareview-usage.md](./ci-ultrareview-usage.md) | PR 自动 AI 评审配置与使用 | 配置 CI 评审 |
 | Forge 宪法详解 | [forge-constitution-detail.md](./forge-constitution-detail.md) | 宪法各条款的详细说明和示例 | 深入理解 Forge 行为准则 |
+| Slimming 迁移指南 | [slimming-migration.md](./slimming-migration.md) | T2 命令委托的变更说明与 fallback 行为 | 升级 Forge 版本、理解委托命令变化 |
 | opusplan 模式指南 | [opusplan-guide.md](./opusplan-guide.md) | plan 用 opus、执行用 sonnet 的节省模式 | 优化 token 使用成本 |
 
 ---

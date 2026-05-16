@@ -74,6 +74,7 @@ describe("Contract: scripts/ smoke tests (no-arg invocation)", () => {
     "install-dist.sh", // Requires dist bundle to exist
     "build-dist.sh", // Requires build environment
     "check-readme-metrics.sh", // Runs full metrics check which can be slow
+    "update-vendor-axe.sh", // Performs network fetch from unpkg.com (flaky in test env)
   ]);
 
   for (const { name, path: scriptPath } of scriptFiles) {

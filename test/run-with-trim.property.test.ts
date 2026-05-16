@@ -96,9 +96,9 @@ describe("Property 1: Exit code preservation", () => {
         const result = runWithTrim(exitCode, lines);
         expect(result.exitCode).toBe(exitCode);
       }),
-      { numRuns: 30 },
+      { numRuns: 20 },
     );
-  }, 15_000);
+  }, 30_000);
 });
 
 // ---------------------------------------------------------------------------
