@@ -1,10 +1,10 @@
 ---
-current_task: "missions-inspired-rigor"
+current_task: "single-entry-command-consolidation"
 tier: "standard"
 task_type: "feature"
 project_phase: "active"
-phase: "shipped"
-work_nature: "feature"
+phase: "build"
+work_nature: "structural-refactor"
 updated: "2026-05-16"
 ---
 
@@ -13,5 +13,9 @@ updated: "2026-05-16"
 ## 已交付
 
 missions-inspired-rigor: 8 commits merged to main (7edd3ff).
-R1-R4: validation contract, handoff schema, known-failures, events-cursor.
-44 new tests, 0 P0/P1 review findings.
+
+## 当前任务
+
+single-entry-command-consolidation: 收敛 28 个 slash command 为 /forge 单入口。
+Spec: .kiro/specs/single-entry-command-consolidation/
+Plan: .forge/plans/single-entry-command-consolidation.md

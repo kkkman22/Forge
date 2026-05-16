@@ -60,9 +60,10 @@ describe("Plugin Manifest", () => {
 describe("Commands Directory", () => {
   const commandsDir = join(ROOT, "commands");
 
-  it("has >= 20 command files", () => {
+  it("has exactly 1 user-facing command file (single-entry model)", () => {
     const files = readdirSync(commandsDir).filter((f) => f.endsWith(".md"));
-    expect(files.length).toBeGreaterThanOrEqual(20);
+    expect(files.length).toBe(1);
+    expect(files[0]).toBe("forge.md");
   });
 
   it("every command .md has description frontmatter", () => {
