@@ -162,7 +162,19 @@ forge-loop 调度下一个 SKILL 阶段时，**必须**通过 `Skill(skill="forg
 
 **禁止依赖**：上一阶段会话的对话历史、agent 的"记忆"、任何不在白名单中的内存变量。
 
-**events.ndjson 增强字段**：phase_start / phase_end 事件必须包含 `session_id`、`wall_clock_elapsed_seconds`、`token_budget_used`。
+**events.ndjson 增强字段**：phase_start / phase_end 事件必须包含 `session_id`、`wall_clock_elapsed_seconds`、`token_budget_used`。phase_end 额外含 `exit_code`。完整 schema 范例：
+
+```json
+{"type":"phase_start","ts":"2026-05-16T10:00:00Z","phase":"build",
+ "iteration":3,"session_id":"<uuid>","wall_clock_elapsed_seconds":1234,
+ "token_budget_used":234500}
+
+{"type":"phase_end","ts":"2026-05-16T10:42:31Z","phase":"build",
+ "iteration":3,"session_id":"<uuid>","exit_code":0,
+ "wall_clock_elapsed_seconds":3785,"token_budget_used":456789}
+```
+
+> **文档定位说明**：此章节承担 design.md 中"Section 9 events.ndjson schema"的全部职责。原 §9 名 `Distribution Package Environment` 保留不动；本 §13 是 R4 完整入口（fresh-context discipline + events schema + Mission Summary）。
 
 **Mission Summary（关机序列增量）**：forge-loop 正常或异常结束时输出：
 - Total wall-clock
