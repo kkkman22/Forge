@@ -13,6 +13,7 @@
  */
 import type { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import type { GitDiffSummary, GitStatusSummary } from "../../context-budget.js";
+import type { ResolvedRoot } from "../project-root.js";
 /**
  * Format a GitDiffSummary into a human-readable string matching the
  * `serializeGitDiff` output format from `context-budget.ts`.
@@ -36,4 +37,4 @@ export declare function truncateDiffContent(rawDiff: string): string;
 /**
  * Register the `forge_git` tool on the given MCP server.
  */
-export declare function registerForgeGit(server: McpServer): void;
+export declare function registerForgeGit(server: McpServer, root?: ResolvedRoot): void;

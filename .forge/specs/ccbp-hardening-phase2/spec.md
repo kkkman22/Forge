@@ -1,6 +1,7 @@
 ---
 feature: "ccbp-hardening-phase2"
 status: locked
+contract_legacy: true
 date: "2026-05-12"
 import_source: ".kiro/specs/ccbp-hardening-phase2/"
 decide_ref: ".forge/decisions/2026-05-12-ccbp-hardening-phase2-decide.md"

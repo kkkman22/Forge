@@ -9,6 +9,7 @@
  */
 import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { StdioServerTransport } from "@modelcontextprotocol/sdk/server/stdio.js";
+import { logResolvedRoot, resolveProjectRoot } from "./project-root.js";
 import { registerForgeExec } from "./tools/forge-exec.js";
 import { registerForgeGit } from "./tools/forge-git.js";
 import { registerForgeRead } from "./tools/forge-read.js";
@@ -30,10 +31,13 @@ const server = new McpServer({
     name: "forge-context",
     version: "1.0.0",
 });
-// Register tools
-registerForgeExec(server);
-registerForgeGit(server);
-registerForgeRead(server);
+// Resolve project root from CLAUDE_PROJECT_DIR or cwd
+const root = resolveProjectRoot();
+logResolvedRoot(root);
+// Register tools with resolved root
+registerForgeExec(server, root);
+registerForgeGit(server, root);
+registerForgeRead(server, root);
 // Connect via stdio transport
 const transport = new StdioServerTransport();
 await server.connect(transport);

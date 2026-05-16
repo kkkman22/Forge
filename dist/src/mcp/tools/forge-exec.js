@@ -13,6 +13,7 @@
  */
 import { execFile } from "node:child_process";
 import { readFile } from "node:fs/promises";
+import { join } from "node:path";
 import { z } from "zod";
 import { trimCommandOutput } from "../trimmers/output.js";
 // ---------------------------------------------------------------------------
@@ -73,9 +74,9 @@ export function isCommandDenied(command, denyPatterns) {
 /**
  * Execute a shell command in a child subprocess with timeout support.
  */
-export function execCommand(command, timeoutMs) {
+export function execCommand(command, timeoutMs, options) {
     return new Promise((resolve) => {
-        const child = execFile("/bin/sh", ["-c", command], { timeout: timeoutMs, maxBuffer: 10 * 1024 * 1024 }, (error, stdout, stderr) => {
+        const child = execFile("/bin/sh", ["-c", command], { timeout: timeoutMs, maxBuffer: 10 * 1024 * 1024, ...(options?.cwd ? { cwd: options.cwd } : {}) }, (error, stdout, stderr) => {
             if (error && "killed" in error && error.killed) {
                 resolve({ stdout: String(stdout), stderr: String(stderr), exitCode: 1, timedOut: true });
                 return;
@@ -107,13 +108,14 @@ const TOOL_DESCRIPTION = [
 /**
  * Register the `forge_exec` tool on the given MCP server.
  */
-export function registerForgeExec(server) {
+export function registerForgeExec(server, root) {
+    const settingsPath = root ? join(root.path, ".claude/settings.json") : undefined;
     server.tool("forge_exec", TOOL_DESCRIPTION, {
         command: z.string().describe("Shell command to execute"),
         timeout: z.number().optional().default(30000).describe("Timeout in ms"),
     }, async ({ command, timeout }) => {
         // 1. Check deny rules
-        const denyPatterns = await readDenyPatterns();
+        const denyPatterns = await readDenyPatterns(settingsPath);
         const denyReason = isCommandDenied(command, denyPatterns);
         if (denyReason) {
             return {
@@ -122,7 +124,8 @@ export function registerForgeExec(server) {
             };
         }
         // 2. Execute command
-        const result = await execCommand(command, timeout);
+        const execOpts = root ? { cwd: root.path } : undefined;
+        const result = await execCommand(command, timeout, execOpts);
         // 3. Handle timeout
         if (result.timedOut) {
             return {

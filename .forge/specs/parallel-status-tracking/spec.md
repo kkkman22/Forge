@@ -1,5 +1,6 @@
 ---
 status: locked
+contract_legacy: true
 created: "2026-04-30"
 source: ".kiro/specs/parallel-status-tracking"
 ---
