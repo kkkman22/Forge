@@ -1,6 +1,6 @@
 ---
 id: "ADR-0003"
-title: "Single-Entry Command Consolidation: 28 slash commands → /forge"
+title: "Single-Entry Command Consolidation"
 status: accepted
 date: "2026-05-16"
 deciders:
@@ -14,7 +14,7 @@ supersedes_partial: "2026-05-12-plugin-distribution.md §Phase B wrapper command
 
 ## Context
 
-Forge v2.4 (ADR: `2026-05-12-plugin-distribution`) introduced `commands/` with 28 slash commands (`/forge` + 27 `/forge-<sub>` wrappers) for "plugin completeness" — letting users see all tools when typing `/`.
+Forge v2.4 (ADR: `2026-05-12-plugin-distribution`) introduced `commands/` with multiple slash commands (`/forge` + wrapper commands) for "plugin completeness" — letting users see all tools when typing `/`. (historical: original count was 28 total commands)
 
 Two problems emerged:
 
