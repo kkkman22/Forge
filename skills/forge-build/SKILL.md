@@ -132,6 +132,29 @@ Read `ci_check_command` from `config.md` → execute as-is. Empty → `verify_co
 
 **Three-Layer Truncation**: (1) `forge_exec` MCP (2) `run-with-trim.sh` fallback (3) AI Iron Law — failure output unchanged.
 
+## 3.6 Handoff Block（R2 — 原子任务交接）
+
+每完成一个原子任务并准备 commit 前，build agent 必须在 `.forge/progress/<topic>.md` 对应任务条目下追加一份 5 字段 handoff block（fenced code block，语言标记 `yaml` 或 `handoff`）：
+
+- `task_id`: 任务编号
+- `completed`: 已完成事项列表
+- `not_completed`: 未完成事项（完整完成则 `[]`）
+- `commands_executed`: 命令列表，每条含 `cmd` 和 `exit_code`
+- `issues_found`: 发现的问题（无则 `[]`）
+- `procedure_compliance`: TDD 阶段执行描述（RED/GREEN/REFACTOR 或 `skipped`）
+
+下一个原子任务启动前，必须先读取上一任务的 handoff block 作为接续输入。
+
+light tier 降级：仅必填 `commands_executed` 和 `procedure_compliance`。
+
+**Self-Check Handoff 项**（§3.5 运行时验证）：
+- 已 commit 的每个原子任务都对应一份 handoff block
+- 每份 handoff block 包含 5 个字段（standard/full tier）
+- `commands_executed` 数组中至少有一条 `cmd`
+- `procedure_compliance` 包含 RED/GREEN/REFACTOR 或 `skipped`
+
+缺失即输出 P1，build 不结束。
+
 ---
 
 ## 4. TDD Iron Rules
