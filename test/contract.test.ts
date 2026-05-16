@@ -619,26 +619,26 @@ describe("Contract: hooks.json evolved rules integration", () => {
   const hooksPath = resolve(ROOT, "hooks/hooks.json");
   const hooksFile = JSON.parse(readFileSync(hooksPath, "utf-8"));
 
-  it("SessionStart contains a hook entry referencing evolved-rules.md", () => {
+  it("SessionStart contains a hook entry for evolved-rules injection", () => {
     const sessionStartGroups = hooksFile.hooks.SessionStart as Array<{
       hooks: Array<{ command?: string }>;
     }>;
     const hasEvolvedRulesHook = sessionStartGroups.some((group) =>
-      group.hooks.some((h) => h.command?.includes("evolved-rules.md")),
+      group.hooks.some((h) => h.command?.includes("inject-evolved-rules")),
     );
-    expect(hasEvolvedRulesHook, "SessionStart missing hook referencing evolved-rules.md").toBe(
+    expect(hasEvolvedRulesHook, "SessionStart missing hook for evolved-rules injection").toBe(
       true,
     );
   });
 
-  it("SessionStart evolved-rules hook uses conditional if [ -f check", () => {
+  it("SessionStart evolved-rules hook uses inject-evolved-rules.mjs script", () => {
     const sessionStartGroups = hooksFile.hooks.SessionStart as Array<{
       hooks: Array<{ command?: string }>;
     }>;
     const evolvedRulesHook = sessionStartGroups
       .flatMap((group) => group.hooks)
-      .find((h) => h.command?.includes("evolved-rules.md"));
-    expect(evolvedRulesHook?.command).toContain("if [ -f");
+      .find((h) => h.command?.includes("inject-evolved-rules.mjs"));
+    expect(evolvedRulesHook?.command).toContain("inject-evolved-rules.mjs");
   });
 
   it("SessionStart evolved-rules hook has a positive integer timeout", () => {
@@ -646,10 +646,10 @@ describe("Contract: hooks.json evolved rules integration", () => {
       hooks: Array<{ command?: string; timeout?: unknown }>;
     }>;
     const evolvedRulesGroup = sessionStartGroups.find((group) =>
-      group.hooks.some((h) => h.command?.includes("evolved-rules.md")),
+      group.hooks.some((h) => h.command?.includes("evolved-rules")),
     );
     const evolvedRulesHandler = evolvedRulesGroup?.hooks.find((h) =>
-      h.command?.includes("evolved-rules.md"),
+      h.command?.includes("evolved-rules"),
     );
     expect(evolvedRulesHandler?.timeout).toBeDefined();
     expect(
