@@ -8,6 +8,7 @@ const HOOK = resolve(ROOT, ".githooks/pre-push");
 describe("pre-push hook", () => {
   it("contains correct guard branch default (refs/heads/main)", () => {
     const content = readFileSync(HOOK, "utf-8");
+    // biome-ignore lint/suspicious/noTemplateCurlyInString: matching shell parameter expansion in source file
     expect(content).toContain('guard_branch="${FORGE_PRE_PUSH_BRANCH:-refs/heads/main}"');
   });
 
