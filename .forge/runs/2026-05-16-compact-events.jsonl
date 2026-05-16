@@ -22,3 +22,11 @@
 {"timestamp":"2026-05-16T15:41:30Z","event":"precompact_snapshot","detail":"slug=local-ci-parity phase=plan"}
 {"timestamp":"2026-05-16T15:42:08Z","event":"postcompact_restore","detail":"slug=local-ci-parity"}
 {"timestamp":"2026-05-16T15:42:08Z","event":"precompact_snapshot","detail":"slug=local-ci-parity phase=plan"}
+{"timestamp":"2026-05-16T15:44:30Z","event":"postcompact_restore","detail":"slug=local-ci-parity"}
+{"timestamp":"2026-05-16T15:44:30Z","event":"precompact_snapshot","detail":"slug=subagent-hook-context-budget phase=plan"}
+{"timestamp":"2026-05-16T15:46:20Z","event":"postcompact_restore","detail":"slug=subagent-hook-context-budget"}
+{"timestamp":"2026-05-16T15:46:20Z","event":"precompact_snapshot","detail":"slug=subagent-hook-context-budget phase=plan"}
+{"timestamp":"2026-05-16T15:49:06Z","event":"postcompact_restore","detail":"slug=subagent-hook-context-budget"}
+{"timestamp":"2026-05-16T15:49:06Z","event":"precompact_snapshot","detail":"slug=subagent-hook-context-budget phase=plan"}
+{"timestamp":"2026-05-16T15:51:08Z","event":"postcompact_restore","detail":"slug=subagent-hook-context-budget"}
+{"timestamp":"2026-05-16T15:51:08Z","event":"precompact_snapshot","detail":"slug=subagent-hook-context-budget phase=plan"}
