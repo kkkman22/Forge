@@ -1,4 +1,13 @@
-type PhaseType = "plan" | "build" | "review" | "test" | "ship" | "learn" | "decide" | "spec" | "debug";
+type PhaseType =
+  | "plan"
+  | "build"
+  | "review"
+  | "test"
+  | "ship"
+  | "learn"
+  | "decide"
+  | "spec"
+  | "debug";
 
 export interface PhaseStartEvent {
   type: "phase_start";
@@ -24,7 +33,15 @@ export interface PhaseEndEvent {
 export type PhaseEvent = PhaseStartEvent | PhaseEndEvent;
 
 const VALID_PHASES = new Set<string>([
-  "plan", "build", "review", "test", "ship", "learn", "decide", "spec", "debug",
+  "plan",
+  "build",
+  "review",
+  "test",
+  "ship",
+  "learn",
+  "decide",
+  "spec",
+  "debug",
 ]);
 
 export function parseEventsNdjson(content: string): PhaseEvent[] {

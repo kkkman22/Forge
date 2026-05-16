@@ -39,7 +39,9 @@ export function extractAcceptanceCriteria(specMarkdown: string): AcceptanceCrite
 
   const acText = acSection[1];
 
-  const numberedItems = acText.match(/\d+\.\d+\.\s+WHEN[\s\S]*?(?=\n\d+\.\d+\.\s+WHEN|\n\d+\.\s+WHEN|\n#{1,3}\s|$)/g);
+  const numberedItems = acText.match(
+    /\d+\.\d+\.\s+WHEN[\s\S]*?(?=\n\d+\.\d+\.\s+WHEN|\n\d+\.\s+WHEN|\n#{1,3}\s|$)/g,
+  );
 
   if (!numberedItems) {
     const simpleItems = acText.match(/\d+\.\s+WHEN[\s\S]*?(?=\n\d+\.\s+WHEN|\n#{1,3}\s|$)/g);
@@ -76,7 +78,7 @@ export function extractAcceptanceCriteria(specMarkdown: string): AcceptanceCrite
 
 export function validateContract(specMarkdown: string): ContractValidationResult {
   const frontmatter = FRONTMATTER_PATTERN.exec(specMarkdown);
-  if (frontmatter && frontmatter[1].includes("contract_legacy: true")) {
+  if (frontmatter?.[1].includes("contract_legacy: true")) {
     return { valid: true, errors: [], legacySkipped: true };
   }
 
@@ -87,7 +89,9 @@ export function validateContract(specMarkdown: string): ContractValidationResult
     if (!ac.verifyBy || ac.verifyBy.trim() === "") {
       errors.push(`AC ${ac.id}: missing Verify-By field`);
     } else if (!VERIFY_BY_WHITELIST.has(ac.verifyBy)) {
-      errors.push(`AC ${ac.id}: Verify-By "${ac.verifyBy}" not in whitelist (vitest/bash/forge_git/forge_exec/manual)`);
+      errors.push(
+        `AC ${ac.id}: Verify-By "${ac.verifyBy}" not in whitelist (vitest/bash/forge_git/forge_exec/manual)`,
+      );
     }
 
     if (!ac.evidence || ac.evidence.trim() === "") {

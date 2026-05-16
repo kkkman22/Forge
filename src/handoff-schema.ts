@@ -30,9 +30,18 @@ interface RawFields {
 
 const TDD_KEYWORDS = ["RED", "GREEN", "REFACTOR"];
 const REQUIRED_FIELDS: (keyof HandoffBlock)[] = [
-  "task_id", "completed", "not_completed", "commands_executed", "issues_found", "procedure_compliance",
+  "task_id",
+  "completed",
+  "not_completed",
+  "commands_executed",
+  "issues_found",
+  "procedure_compliance",
 ];
-const LIGHT_REQUIRED: (keyof HandoffBlock)[] = ["task_id", "commands_executed", "procedure_compliance"];
+const LIGHT_REQUIRED: (keyof HandoffBlock)[] = [
+  "task_id",
+  "commands_executed",
+  "procedure_compliance",
+];
 
 export function parseHandoffBlock(block: string): HandoffBlock {
   const codeMatch = block.match(/```(?:yaml[ \t]+handoff|yaml|handoff)\s*\n([\s\S]*?)```/);
@@ -140,8 +149,14 @@ function readCommands(lines: string[], start: number): { entries: CommandEntry[]
       i++;
       continue;
     }
-    if (/^\s*$/.test(lines[i])) { i++; continue; }
-    if (/^\s{2,4}\S/.test(lines[i])) { i++; continue; }
+    if (/^\s*$/.test(lines[i])) {
+      i++;
+      continue;
+    }
+    if (/^\s{2,4}\S/.test(lines[i])) {
+      i++;
+      continue;
+    }
     break;
   }
 
@@ -171,7 +186,10 @@ export function validateHandoff(
   const required = tier === "light" ? LIGHT_REQUIRED : REQUIRED_FIELDS;
 
   for (const field of required) {
-    if (!(field in handoff) || (handoff as unknown as Record<string, unknown>)[field] === undefined) {
+    if (
+      !(field in handoff) ||
+      (handoff as unknown as Record<string, unknown>)[field] === undefined
+    ) {
       errors.push(`Missing required field: ${field}`);
     }
   }

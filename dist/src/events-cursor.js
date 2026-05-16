@@ -1,5 +1,13 @@
 const VALID_PHASES = new Set([
-    "plan", "build", "review", "test", "ship", "learn", "decide", "spec", "debug",
+    "plan",
+    "build",
+    "review",
+    "test",
+    "ship",
+    "learn",
+    "decide",
+    "spec",
+    "debug",
 ]);
 export function parseEventsNdjson(content) {
     const events = [];
