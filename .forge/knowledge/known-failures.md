@@ -46,6 +46,19 @@ retention：>100 条触发自动归档到 `.forge/archive/known-failures-<date>.
   signature: "实现 schema/parser 完整且单元测试 100% 绿，但 SKILL 部署后 .forge/progress/*.md 持续 0 条真实 handoff block"
   fix_required: "完成 R2 类'agent 必须输出特定结构'的实现后，必须用一次最小真实 build 触发 SKILL 输出（dogfooding），并在 spec 的 Validation Contract 中将 'Verify-By: vitest' 升级为 'Verify-By: vitest + manual'，要求 progress 文件 grep 出至少一条真实 handoff block。"
   source_review: ".forge/reviews/missions-inspired-rigor-audit-fixes.md"
+
+- pattern_id: ci-check-command-frontmatter-drift
+  severity: P1
+  first_seen: "2026-05-16"
+  last_seen: "2026-05-16"
+  occurrence_count: 1
+  first_seen_commit: 855fec9d22927bbbb6ea7e228029070c8d507e16
+  last_seen_commit: 855fec9d22927bbbb6ea7e228029070c8d507e16
+  signature: "templates/config.md frontmatter 已声明 ci_check_command 字段，但仓库 .forge/config.md 未补齐该字段；forge-test SKILL Layer 3 因此走逐项回退分支，AI 自拼 typecheck/lint/test 三件套，漏掉 dist-sync、check-doc-structure、validate-skill-* 等十余条校验，推送后 GitHub CI 才暴露失败"
+  fix_required: "1) 验证命令 grep '^ci_check_command:' .forge/config.md 必须有输出且值与 package.json scripts.check 一致；2) 缺失时 forge-test SKILL 应通过 detectCiCommandDrift 主动检测并降级到 npm run check（Spec local-ci-parity Req 2 已实现）；3) forge init 在检测到 package.json scripts.check 时应主动建议默认值（Req 4 已实现）。"
+  source_review: ".kiro/specs/local-ci-parity/"
+  detection_signal: "GitHub CI 失败列表里包含本地从未运行的命令名（dist-sync、check-doc-structure、validate-skill-* 等）"
+  verification_command: "grep '^ci_check_command:' .forge/config.md"
 ```
 
 ---

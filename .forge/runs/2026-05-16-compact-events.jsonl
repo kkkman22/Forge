@@ -1,9 +1,33 @@
 {"timestamp":"2026-05-16T00:32:20Z","event":"postcompact_restore","detail":"slug=none"}
 {"timestamp":"2026-05-16T00:32:20Z","event":"precompact_snapshot","detail":"slug=none phase=completed"}
-{"timestamp":"2026-05-16T14:05:12Z","event":"precompact_snapshot","detail":"slug=local-ci-parity phase=plan"}
-{"timestamp":"2026-05-16T14:07:10Z","event":"postcompact_restore","detail":"slug=local-ci-parity"}
-{"timestamp":"2026-05-16T14:07:10Z","event":"precompact_snapshot","detail":"slug=local-ci-parity phase=plan"}
-{"timestamp":"2026-05-16T14:10:47Z","event":"postcompact_restore","detail":"slug=local-ci-parity"}
-{"timestamp":"2026-05-16T14:10:47Z","event":"precompact_snapshot","detail":"slug=local-ci-parity phase=plan"}
-{"timestamp":"2026-05-16T14:12:09Z","event":"postcompact_restore","detail":"slug=local-ci-parity"}
-{"timestamp":"2026-05-16T14:12:09Z","event":"precompact_snapshot","detail":"slug=local-ci-parity phase=plan"}
+{"timestamp":"2026-05-16T09:38:11Z","event":"precompact_snapshot","detail":"slug=missions-inspired-rigor phase=shipped"}
+{"timestamp":"2026-05-16T09:49:13Z","event":"postcompact_restore","detail":"slug=missions-inspired-rigor"}
+{"timestamp":"2026-05-16T09:49:13Z","event":"precompact_snapshot","detail":"slug=missions-inspired-rigor phase=shipped"}
+{"timestamp":"2026-05-16T09:50:48Z","event":"postcompact_restore","detail":"slug=missions-inspired-rigor"}
+{"timestamp":"2026-05-16T09:50:48Z","event":"precompact_snapshot","detail":"slug=missions-inspired-rigor phase=shipped"}
+{"timestamp":"2026-05-16T14:18:12Z","event":"postcompact_restore","detail":"slug=missions-inspired-rigor"}
+{"timestamp":"2026-05-16T14:18:12Z","event":"precompact_snapshot","detail":"slug=single-entry-command-consolidation phase=shipped"}
+{"timestamp":"2026-05-16T14:19:32Z","event":"postcompact_restore","detail":"slug=single-entry-command-consolidation"}
+{"timestamp":"2026-05-16T14:19:32Z","event":"precompact_snapshot","detail":"slug=single-entry-command-consolidation phase=shipped"}
+{"timestamp":"2026-05-16T15:00:38Z","event":"postcompact_restore","detail":"slug=single-entry-command-consolidation"}
+{"timestamp":"2026-05-16T15:00:38Z","event":"precompact_snapshot","detail":"slug=single-entry-command-consolidation phase=shipped"}
+{"timestamp":"2026-05-16T15:02:13Z","event":"postcompact_restore","detail":"slug=single-entry-command-consolidation"}
+{"timestamp":"2026-05-16T15:02:13Z","event":"precompact_snapshot","detail":"slug=single-entry-command-consolidation phase=shipped"}
+{"timestamp":"2026-05-16T15:04:08Z","event":"postcompact_restore","detail":"slug=single-entry-command-consolidation"}
+{"timestamp":"2026-05-16T15:04:08Z","event":"precompact_snapshot","detail":"slug=single-entry-command-consolidation phase=shipped"}
+{"timestamp":"2026-05-16T15:05:49Z","event":"postcompact_restore","detail":"slug=single-entry-command-consolidation"}
+{"timestamp":"2026-05-16T15:05:49Z","event":"precompact_snapshot","detail":"slug=single-entry-command-consolidation phase=shipped"}
+{"timestamp":"2026-05-16T15:07:22Z","event":"postcompact_restore","detail":"slug=single-entry-command-consolidation"}
+{"timestamp":"2026-05-16T15:07:22Z","event":"precompact_snapshot","detail":"slug=single-entry-command-consolidation phase=shipped"}
+{"timestamp":"2026-05-16T15:09:22Z","event":"postcompact_restore","detail":"slug=single-entry-command-consolidation"}
+{"timestamp":"2026-05-16T15:09:22Z","event":"precompact_snapshot","detail":"slug=single-entry-command-consolidation phase=shipped"}
+{"timestamp":"2026-05-16T15:10:58Z","event":"postcompact_restore","detail":"slug=single-entry-command-consolidation"}
+{"timestamp":"2026-05-16T15:10:58Z","event":"precompact_snapshot","detail":"slug=single-entry-command-consolidation phase=shipped"}
+{"timestamp":"2026-05-16T15:13:13Z","event":"postcompact_restore","detail":"slug=single-entry-command-consolidation"}
+{"timestamp":"2026-05-16T15:13:13Z","event":"precompact_snapshot","detail":"slug=single-entry-command-consolidation phase=shipped"}
+{"timestamp":"2026-05-16T15:14:54Z","event":"postcompact_restore","detail":"slug=single-entry-command-consolidation"}
+{"timestamp":"2026-05-16T15:14:54Z","event":"precompact_snapshot","detail":"slug=single-entry-command-consolidation phase=shipped"}
+{"timestamp":"2026-05-16T15:20:05Z","event":"postcompact_restore","detail":"slug=single-entry-command-consolidation"}
+{"timestamp":"2026-05-16T15:20:05Z","event":"precompact_snapshot","detail":"slug=single-entry-command-consolidation phase=shipped"}
+{"timestamp":"2026-05-16T15:34:09Z","event":"postcompact_restore","detail":"slug=single-entry-command-consolidation"}
+{"timestamp":"2026-05-16T15:34:10Z","event":"precompact_snapshot","detail":"slug=single-entry-command-consolidation phase=shipped"}
