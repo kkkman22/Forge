@@ -87,6 +87,12 @@ if [[ -f "${FORGE_ROOT}/dist/src/check-frozen.js" ]]; then
   info "check-frozen.js 及其依赖已复制到分发包 dist/src/"
 fi
 
+# Copy compiled MCP server (forge-context) — first-party MCP for review optimization
+if [[ -d "${FORGE_ROOT}/dist/src/mcp" ]]; then
+  mkdir -p "${CC_BUNDLE}/dist/src/mcp"
+  cp -r "${FORGE_ROOT}/dist/src/mcp"/. "${CC_BUNDLE}/dist/src/mcp/"
+fi
+
 # 写入版本号
 echo "${VERSION}" > "${CC_BUNDLE}/VERSION"
 
@@ -206,7 +212,12 @@ if [[ -d "${FORGE_ROOT}/dist/src" ]]; then
   done
 fi
 
-# Create zip artifact
+# Copy compiled MCP server (forge-context) — first-party MCP for review optimization
+if [[ -d "${FORGE_ROOT}/dist/src/mcp" ]]; then
+  mkdir -p "${PLUGIN_DIST}/dist/src/mcp"
+  cp -r "${FORGE_ROOT}/dist/src/mcp"/. "${PLUGIN_DIST}/dist/src/mcp/"
+  info "forge-context MCP server (dist/src/mcp/) 已捆绑到 plugin"
+fi
 ZIP_NAME="forge-plugin-${VERSION}.zip"
 (cd "${FORGE_ROOT}" && zip -r "${ZIP_NAME}" -r "${PLUGIN_DIST}" > /dev/null 2>&1 && mv "${ZIP_NAME}" "${PLUGIN_DIST}/")
 success "Plugin 分发包构建完成: ${PLUGIN_DIST}/"
