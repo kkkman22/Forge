@@ -25,8 +25,12 @@ const MAX_BYTES = 4096;
     if (buf.length <= MAX_BYTES) {
       process.stdout.write(buf);
     } else {
-      process.stdout.write(buf.subarray(0, MAX_BYTES));
-      process.stdout.write(`\n[... ${buf.length - MAX_BYTES} bytes truncated]\n`);
+      // Truncate at last newline to avoid splitting multi-byte UTF-8
+      let end = MAX_BYTES;
+      const nl = buf.subarray(0, MAX_BYTES).lastIndexOf(0x0a);
+      if (nl > 0) end = nl + 1;
+      process.stdout.write(buf.subarray(0, end));
+      process.stdout.write(`[... ${buf.length - end} bytes truncated]\n`);
     }
   } catch {
     process.exit(0);
