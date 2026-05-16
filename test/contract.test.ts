@@ -1238,4 +1238,20 @@ describe("Contract: PostToolUse boundary feedback", () => {
 
     expect(hasContinueOnBlock).toBe(true);
   });
+
+  // CI drift detection in forge-test SKILL
+  it("forge-test SKILL.md contains drift detection section", () => {
+    const skillPath = resolve(ROOT, "skills/forge-test/SKILL.md");
+    const content = readFileSync(skillPath, "utf-8");
+    expect(content).toContain("漂移检测");
+    expect(content).toContain("detectCiCommandDrift");
+  });
+
+  // pre-push hook exists and is executable
+  it(".githooks/pre-push exists and is executable", () => {
+    const hookPath = resolve(ROOT, ".githooks/pre-push");
+    expect(existsSync(hookPath)).toBe(true);
+    const mode = statSync(hookPath).mode & 0o777;
+    expect(mode & 0o111).not.toBe(0); // at least one execute bit
+  });
 });
