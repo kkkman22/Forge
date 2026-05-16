@@ -7,17 +7,10 @@
  * **6 payload classes** per design.md "Unit Tests" list.
  */
 import { execFileSync } from "node:child_process";
-import { mkdtempSync, rmSync } from "node:fs";
-import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { afterEach, describe, expect, it } from "vitest";
 
-const SCRIPT_PATH = join(
-  process.cwd(),
-  "scripts",
-  "lib",
-  "hook-stdin-router.mjs",
-);
+const SCRIPT_PATH = join(process.cwd(), "scripts", "lib", "hook-stdin-router.mjs");
 
 interface RouterDecision {
   shouldInject: boolean;
@@ -30,13 +23,12 @@ interface RouterDecision {
  * We use a small wrapper that imports the module and JSON-serializes the decision.
  */
 function runRouter(stdinPayload: string | null): RouterDecision {
-  // Create a temp script that imports the router and calls classifyHookCaller
-  // with stdin mocked via an env var (since we can't easily pipe stdin in sync)
-  const wrapper = join(process.cwd(), "scripts", "lib", "_test-router-call.mjs");
   try {
     const result = execFileSync(
       "node",
-      ["-e", `
+      [
+        "-e",
+        `
         import { classifyHookCaller } from "${SCRIPT_PATH}";
         const stdin = process.env._TEST_STDIN;
         let opts = {};
@@ -48,7 +40,8 @@ function runRouter(stdinPayload: string | null): RouterDecision {
         }
         const d = await classifyHookCaller(opts);
         process.stdout.write(JSON.stringify(d));
-      `],
+      `,
+      ],
       {
         encoding: "utf-8",
         timeout: 5000,
@@ -67,16 +60,11 @@ function runRouter(stdinPayload: string | null): RouterDecision {
 }
 
 describe("hook-stdin-router (classifyHookCaller)", () => {
-  let tempDir: string;
+  const tempDir: string = "";
 
   afterEach(() => {
-    if (tempDir) {
-      try {
-        rmSync(tempDir, { recursive: true, force: true });
-      } catch {
-        // Best effort
-      }
-    }
+    // No temp dirs needed — router tests are stateless
+    void tempDir;
   });
 
   it("empty stdin (pipe closed) → callerKind 'unknown', shouldSkipForSubagent true", () => {
