@@ -185,6 +185,43 @@ describe("readDenyPatterns", () => {
     });
 });
 // ---------------------------------------------------------------------------
+// execCommand cwd option
+// ---------------------------------------------------------------------------
+describe("execCommand with cwd", () => {
+    afterEach(() => {
+        vi.restoreAllMocks();
+    });
+    it("passes cwd option to execFile", async () => {
+        mockedExecFile.mockImplementation((_cmd, _args, opts, cb) => {
+            expect(opts.cwd).toBe("/custom/root");
+            cb(null, "done", "");
+            return {};
+        });
+        const result = await execCommand("pwd", 30000, { cwd: "/custom/root" });
+        expect(result.exitCode).toBe(0);
+        expect(result.stdout).toBe("done");
+    });
+});
+// ---------------------------------------------------------------------------
+// readDenyPatterns from root path
+// ---------------------------------------------------------------------------
+describe("readDenyPatterns from root path", () => {
+    afterEach(() => {
+        vi.restoreAllMocks();
+    });
+    it("reads deny patterns from root-based settings path", async () => {
+        const settings = {
+            permissions: {
+                deny: ["Bash(rm -rf *)"],
+            },
+        };
+        mockedReadFile.mockResolvedValue(JSON.stringify(settings));
+        const patterns = await readDenyPatterns("/custom/root/.claude/settings.json");
+        expect(patterns).toEqual(["Bash(rm -rf *)"]);
+        expect(mockedReadFile).toHaveBeenCalledWith("/custom/root/.claude/settings.json", "utf-8");
+    });
+});
+// ---------------------------------------------------------------------------
 // Integration: trimCommandOutput applied to exec results
 // ---------------------------------------------------------------------------
 describe("forge_exec output trimming integration", () => {

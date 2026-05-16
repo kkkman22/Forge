@@ -1,6 +1,7 @@
 ---
 topic: "documentation-onboarding"
 status: locked
+contract_legacy: true
 date: "2026-05-12"
 source: ".kiro/specs/documentation-onboarding/"
 requirements_count: 6

@@ -1,5 +1,6 @@
 ---
 status: locked
+contract_legacy: true
 created: "2026-05-14"
 topic: refactor-fix-into-build-mode
 ---

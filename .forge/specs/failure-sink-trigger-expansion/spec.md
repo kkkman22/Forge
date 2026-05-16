@@ -1,5 +1,6 @@
 ---
 status: locked
+contract_legacy: true
 created: "2026-05-14"
 topic: failure-sink-trigger-expansion
 ---

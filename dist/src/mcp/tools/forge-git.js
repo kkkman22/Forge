@@ -152,7 +152,8 @@ const TOOL_DESCRIPTION = [
 /**
  * Register the `forge_git` tool on the given MCP server.
  */
-export function registerForgeGit(server) {
+export function registerForgeGit(server, root) {
+    const execOpts = root ? { cwd: root.path } : undefined;
     server.tool("forge_git", TOOL_DESCRIPTION, {
         subcommand: z.enum(["diff", "diff-content", "status", "log"]).describe("Git subcommand"),
         args: z.string().optional().describe("Additional git arguments"),
@@ -160,7 +161,7 @@ export function registerForgeGit(server) {
         const extraArgs = args ? ` ${args}` : "";
         switch (subcommand) {
             case "diff": {
-                const result = await execCommand(`git diff --stat${extraArgs}`, 30000);
+                const result = await execCommand(`git diff --stat${extraArgs}`, 30000, execOpts);
                 if (result.exitCode !== 0) {
                     const errOutput = result.stderr
                         ? `${result.stdout}\n\nSTDERR:\n${result.stderr}`
@@ -176,7 +177,7 @@ export function registerForgeGit(server) {
                 };
             }
             case "diff-content": {
-                const result = await execCommand(`git diff${extraArgs}`, 60000);
+                const result = await execCommand(`git diff${extraArgs}`, 60000, execOpts);
                 if (result.exitCode !== 0) {
                     const errOutput = result.stderr
                         ? `${result.stdout}\n\nSTDERR:\n${result.stderr}`
@@ -192,7 +193,7 @@ export function registerForgeGit(server) {
                 };
             }
             case "status": {
-                const result = await execCommand(`git status --porcelain${extraArgs}`, 30000);
+                const result = await execCommand(`git status --porcelain${extraArgs}`, 30000, execOpts);
                 if (result.exitCode !== 0) {
                     const errOutput = result.stderr
                         ? `${result.stdout}\n\nSTDERR:\n${result.stderr}`
@@ -211,7 +212,7 @@ export function registerForgeGit(server) {
                 // Default to 20 commits if no args override
                 const logArgs = args || "--oneline -20";
                 const command = args ? `git log ${args}` : `git log ${logArgs}`;
-                const result = await execCommand(command, 30000);
+                const result = await execCommand(command, 30000, execOpts);
                 if (result.exitCode !== 0) {
                     const errOutput = result.stderr
                         ? `${result.stdout}\n\nSTDERR:\n${result.stderr}`

@@ -227,4 +227,23 @@ describe("forge_git tool behavior", () => {
         });
     });
 });
+// ---------------------------------------------------------------------------
+// git -C prefix with ResolvedRoot
+// ---------------------------------------------------------------------------
+describe("forge_git with ResolvedRoot", () => {
+    afterEach(() => {
+        vi.restoreAllMocks();
+    });
+    it("passes cwd option for root-based git operations", async () => {
+        let capturedOpts = {};
+        mockedExecFile.mockImplementation((_cmd, _args, opts, cb) => {
+            capturedOpts = opts;
+            cb(null, "2 files changed", "");
+            return {};
+        });
+        const { execCommand } = await import("../../src/mcp/tools/forge-exec.js");
+        await execCommand("git diff --stat", 30000, { cwd: "/custom/root" });
+        expect(capturedOpts.cwd).toBe("/custom/root");
+    });
+});
 //# sourceMappingURL=forge-git.test.js.map
