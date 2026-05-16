@@ -11,6 +11,34 @@ Entries follow [Keep a Changelog](https://keepachangelog.com/) with Forge-specif
 
 ## [Unreleased]
 
+### Breaking Changes
+
+- **Single-Entry Command Consolidation** — 28 个 `/forge-<sub>` slash command 收敛为 `/forge` 单入口 (ADR-0003)
+  - 所有子命令改为 `/forge <subcommand>` 路由分发（如 `/forge build` 而非 `/forge-build`）
+  - 删除 27 个 `commands/forge-*.md` wrapper 文件
+  - 修复 `commands/forge.md` 内 `Skill(skill="forge", args="...")` 伪调用语法（调不到任何 skill）
+  - `gen-plugin-commands.mjs` 改为 single-entry mode（不再生成 wrapper）
+  - 迁移表：
+
+    | 旧调用 | 新调用 |
+    |--------|--------|
+    | `/forge-plan` | `/forge plan` |
+    | `/forge-build` | `/forge build` |
+    | `/forge-review` | `/forge review` |
+    | `/forge-test` | `/forge test` |
+    | `/forge-ship` | `/forge ship` |
+    | `/forge-learn` | `/forge learn` |
+    | `/forge-decide` | `/forge decide` |
+    | `/forge-spec` | `/forge spec` |
+    | `/forge-debug` | `/forge debug` |
+    | `/forge-loop` | `/forge loop` |
+    | `/forge-status` | `/forge status` |
+    | `/forge-resume` | `/forge resume` |
+    | `/forge-abort` | `/forge abort` |
+
+  - 升级 plugin 后请重启 Claude Code 让命令面板刷新
+  - 参见 `.kiro/specs/single-entry-command-consolidation/`
+
 ### Added
 
 - **Forge Slimming Plan (T1/T2/T3)** — delegate overlapping capabilities to Claude Code native commands
@@ -31,7 +59,7 @@ Entries follow [Keep a Changelog](https://keepachangelog.com/) with Forge-specif
   - 详见 `docs/ci-ultrareview-usage.md`
 - **Plugin Distribution** — Forge 可通过 `claude plugin install forge` 安装，支持自动更新和版本锁定
   - 新增 `.claude-plugin/plugin.json` 和 `.claude-plugin/marketplace.json`
-  - 新增 22 个 slash command wrappers（`commands/*.md`）
+  - 新增 22 个 slash command wrappers（`commands/*.md`） (historical: replaced by single-entry model in v2.5.0)
   - 新增 `scripts/gen-plugin-commands.mjs` 自动生成命令文件
   - 新增 `test/plugin-manifest.test.ts`（12 tests）
   - `scripts/build-dist.sh` 新增 `dist-plugin/` 输出
