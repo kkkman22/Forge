@@ -1,0 +1,2 @@
+{"timestamp":"2026-05-16T00:32:20Z","event":"postcompact_restore","detail":"slug=none"}
+{"timestamp":"2026-05-16T00:32:20Z","event":"precompact_snapshot","detail":"slug=none phase=completed"}
