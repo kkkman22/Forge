@@ -12,6 +12,7 @@
  * **Validates: Requirement 2**
  */
 import type { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
+import type { ResolvedRoot } from "../project-root.js";
 /**
  * Read deny patterns from `.claude/settings.json`.
  *
@@ -36,8 +37,10 @@ export interface ExecResult {
 /**
  * Execute a shell command in a child subprocess with timeout support.
  */
-export declare function execCommand(command: string, timeoutMs: number): Promise<ExecResult>;
+export declare function execCommand(command: string, timeoutMs: number, options?: {
+    cwd?: string;
+}): Promise<ExecResult>;
 /**
  * Register the `forge_exec` tool on the given MCP server.
  */
-export declare function registerForgeExec(server: McpServer): void;
+export declare function registerForgeExec(server: McpServer, root?: ResolvedRoot): void;

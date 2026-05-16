@@ -1,0 +1,34 @@
+#!/usr/bin/env bash
+# Forge pre-push hook — run full CI check when pushing to main
+# Install: git config core.hooksPath .githooks
+# Skip: git push --no-verify (built-in git)
+set -euo pipefail
+
+remote="${1:-}"
+url="${2:-}"
+guard_branch="${FORGE_PRE_PUSH_BRANCH:-refs/heads/main}"
+
+# stdin format: <local_ref> <local_sha> <remote_ref> <remote_sha>
+target_main=0
+while read -r local_ref local_sha remote_ref remote_sha; do
+  if [ "$remote_ref" = "$guard_branch" ]; then
+    target_main=1
+    break
+  fi
+done
+
+if [ "$target_main" -eq 0 ]; then
+  exit 0
+fi
+
+echo "[pre-push] target=$guard_branch detected (remote=$remote)"
+echo "[pre-push] running: npm run check"
+
+if ! npm run check; then
+  echo ""
+  echo "❌ pre-push blocked: npm run check failed"
+  echo "   Fix and retry, or skip temporarily: git push --no-verify"
+  exit 1
+fi
+
+echo "✅ pre-push passed"
