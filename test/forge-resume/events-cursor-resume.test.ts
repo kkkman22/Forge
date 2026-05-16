@@ -2,10 +2,13 @@ import { describe, expect, it } from "vitest";
 import {
   parseEventsNdjson,
   extractLatestCursor,
-  type PhaseEvent,
+  type PhaseStartEvent,
+  type PhaseEndEvent,
 } from "../../src/events-cursor.js";
 
-function makeStartEvent(overrides: Partial<PhaseEvent> = {}): PhaseEvent {
+type PhaseEvent = PhaseStartEvent | PhaseEndEvent;
+
+function makeStartEvent(overrides: Partial<PhaseStartEvent> = {}): PhaseStartEvent {
   return {
     type: "phase_start",
     ts: "2026-05-16T10:00:00Z",
@@ -18,7 +21,7 @@ function makeStartEvent(overrides: Partial<PhaseEvent> = {}): PhaseEvent {
   };
 }
 
-function makeEndEvent(overrides: Partial<PhaseEvent> = {}): PhaseEvent {
+function makeEndEvent(overrides: Partial<PhaseEndEvent> = {}): PhaseEndEvent {
   return {
     type: "phase_end",
     ts: "2026-05-16T10:42:31Z",
