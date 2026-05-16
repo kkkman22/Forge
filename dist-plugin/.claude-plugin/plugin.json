@@ -1,11 +1,13 @@
 {
   "name": "forge",
   "description": "Unified AI coding workflow framework — 22 commands covering the full development lifecycle with TDD, spec-driven planning, and automated review.",
-  "version": "2.4.0",
+  "version": "2.4.1",
   "mcpServers": {
     "forge-context": {
       "command": "node",
-      "args": ["${CLAUDE_PLUGIN_ROOT}/dist/src/mcp/server.js"]
+      "args": [
+        "${CLAUDE_PLUGIN_ROOT}/dist/src/mcp/server.js"
+      ]
     }
   },
   "author": {
@@ -14,7 +16,13 @@
   },
   "license": "MIT",
   "homepage": "https://github.com/kkkman22/Forge",
-  "keywords": ["workflow", "tdd", "spec-driven", "code-review", "ci"],
+  "keywords": [
+    "workflow",
+    "tdd",
+    "spec-driven",
+    "code-review",
+    "ci"
+  ],
   "hooks": {
     "SessionStart": [
       {
@@ -142,6 +150,17 @@
           {
             "type": "command",
             "command": "node \"${CLAUDE_PLUGIN_ROOT}/scripts/rebuild-feature-dossier.mjs\" --from-path \"$TOOL_INPUT_FILE\" 2>/dev/null || true",
+            "timeout": 5
+          }
+        ]
+      },
+      {
+        "matcher": "Write|Edit",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "node \"${CLAUDE_PLUGIN_ROOT}/scripts/check-context-boundary.mjs\" PostToolUse \"$TOOL_INPUT_FILE\" 2>/dev/null || node forge/scripts/check-context-boundary.mjs PostToolUse \"$TOOL_INPUT_FILE\" 2>/dev/null",
+            "continueOnBlock": true,
             "timeout": 5
           }
         ]
