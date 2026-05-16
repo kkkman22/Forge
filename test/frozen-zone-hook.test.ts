@@ -1,17 +1,18 @@
-import {
-  createFrozenZoneHook,
-} from "../src/frozen-zone-hook.js";
-import type { HookInput } from "@anthropic-ai/claude-agent-sdk";
-import { existsSync, mkdirSync, writeFileSync, rmSync } from "node:fs";
-import { join } from "node:path";
+import { mkdirSync, rmSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
+import { join } from "node:path";
+import type { HookInput } from "@anthropic-ai/claude-agent-sdk";
+import { createFrozenZoneHook } from "../src/frozen-zone-hook.js";
 
 // ---------------------------------------------------------------------------
 // Helpers
 // ---------------------------------------------------------------------------
 
 function makeTmpDir(): string {
-  const dir = join(tmpdir(), `frozen-zone-hook-test-${Date.now()}-${Math.random().toString(36).slice(2)}`);
+  const dir = join(
+    tmpdir(),
+    `frozen-zone-hook-test-${Date.now()}-${Math.random().toString(36).slice(2)}`,
+  );
   mkdirSync(dir, { recursive: true });
   mkdirSync(join(dir, ".forge"), { recursive: true });
   mkdirSync(join(dir, ".forge", "specs"), { recursive: true });
@@ -63,11 +64,9 @@ describe("createFrozenZoneHook", () => {
   });
 
   it("returns empty object for empty file_path", async () => {
-    const result = await hook(
-      makeHookInput("Write", ""),
-      "tool-use-3",
-      { signal: new AbortController().signal },
-    );
+    const result = await hook(makeHookInput("Write", ""), "tool-use-3", {
+      signal: new AbortController().signal,
+    });
     expect(result).toEqual({});
   });
 
@@ -75,11 +74,9 @@ describe("createFrozenZoneHook", () => {
     const specPath = join(tmpDir, ".forge", "specs", "my-spec.md");
     writeFileSync(specPath, "---\nstatus: locked\n---\n# My Spec\n");
 
-    const result = await hook(
-      makeHookInput("Write", specPath),
-      "tool-use-4",
-      { signal: new AbortController().signal },
-    );
+    const result = await hook(makeHookInput("Write", specPath), "tool-use-4", {
+      signal: new AbortController().signal,
+    });
 
     const output = result as {
       hookSpecificOutput?: { permissionDecision?: string; permissionDecisionReason?: string };
@@ -92,11 +89,9 @@ describe("createFrozenZoneHook", () => {
     const planPath = join(tmpDir, ".forge", "plans", "my-plan.md");
     writeFileSync(planPath, "---\nstatus: approved\n---\n# My Plan\n");
 
-    const result = await hook(
-      makeHookInput("Edit", planPath),
-      "tool-use-5",
-      { signal: new AbortController().signal },
-    );
+    const result = await hook(makeHookInput("Edit", planPath), "tool-use-5", {
+      signal: new AbortController().signal,
+    });
 
     const output = result as {
       hookSpecificOutput?: { permissionDecision?: string };
@@ -108,11 +103,9 @@ describe("createFrozenZoneHook", () => {
     const specPath = join(tmpDir, ".forge", "specs", "draft-spec.md");
     writeFileSync(specPath, "---\nstatus: draft\n---\n# Draft\n");
 
-    const result = await hook(
-      makeHookInput("Write", specPath),
-      "tool-use-6",
-      { signal: new AbortController().signal },
-    );
+    const result = await hook(makeHookInput("Write", specPath), "tool-use-6", {
+      signal: new AbortController().signal,
+    });
     expect(result).toEqual({});
   });
 
@@ -148,11 +141,9 @@ describe("Frozen zone hook independence from SDK sandbox", () => {
     writeFileSync(specPath, "---\nstatus: locked\n---\n# Locked\n");
 
     const hook = createFrozenZoneHook(tmpDir);
-    const result = await hook(
-      makeHookInput("Write", specPath),
-      "tool-use-8",
-      { signal: new AbortController().signal },
-    );
+    const result = await hook(makeHookInput("Write", specPath), "tool-use-8", {
+      signal: new AbortController().signal,
+    });
 
     // Verify output structure matches SDK SyncHookJSONOutput
     expect(result).toBeDefined();
