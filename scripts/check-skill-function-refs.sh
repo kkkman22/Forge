@@ -28,20 +28,33 @@ echo "==============================="
 # Extract function references from a SKILL.md file.
 # Only matches lines with explicit call-site markers to avoid false positives
 # from code examples, git commit messages, and Claude Code invocation syntax.
-#
-# Matched patterns:
-#   **Function Call**: `funcName(`
-#   **Function call**: `funcName(`
-#   **函数调用**：`funcName(`
-#   Call `funcName(`  /  call `funcName(`
-#   调用 `funcName(`
 extract_refs() {
   local file="$1"
-  # Step 1: grep lines with call-site markers + backtick function pattern
   grep -iE '(Function [Cc]all|函数调用|[Cc]all |调用 ).*`[a-zA-Z_][a-zA-Z0-9_]*\(' "$file" 2>/dev/null \
     | sed -E 's/.*`([a-zA-Z_][a-zA-Z0-9_]*)\(.*/\1/' \
     | sort -u
 }
+
+# Pre-compute the set of valid identifiers (one scan over src/, much faster
+# than grep'ing per skill reference). Patterns recognized:
+#   export function NAME    /  export async function NAME
+#   export const NAME       /  export class NAME    /  export interface NAME
+#   "NAME" / 'NAME'         (only inside src/mcp/ — MCP tool names)
+TMP_VALID="$(mktemp)"
+trap 'rm -f "$TMP_VALID"' EXIT
+
+# Extract identifiers from export declarations in src/
+grep -rhE '^(export (async )?function|export const|export class|export interface) [A-Za-z_][A-Za-z0-9_]*' "${SRC_DIR}/" 2>/dev/null \
+  | sed -E 's/^(export (async )?function|export const|export class|export interface) +([A-Za-z_][A-Za-z0-9_]*).*/\3/' \
+  | sort -u >> "$TMP_VALID"
+
+# Extract MCP tool names (string literals inside src/mcp/)
+grep -rhoE '["'\''][A-Za-z_][A-Za-z0-9_]*["'\'']' "${SRC_DIR}/mcp/" 2>/dev/null \
+  | tr -d '"'\' \
+  | sort -u >> "$TMP_VALID"
+
+# Collapse to unique identifiers
+sort -u -o "$TMP_VALID" "$TMP_VALID"
 
 # Scan all SKILL.md files
 while IFS= read -r skill_file; do
@@ -52,11 +65,12 @@ while IFS= read -r skill_file; do
       continue
     fi
 
-    # Search for "export function <func>" in src/
-    if ! grep -rql "export function ${func}" "${SRC_DIR}/" 2>/dev/null; then
-      echo "❌ skills/${skill_rel} references '${func}' but no matching export in src/"
-      errors=$((errors + 1))
+    # Lookup against the precomputed valid identifier set
+    if grep -Fxq -- "$func" "$TMP_VALID"; then
+      continue
     fi
+    echo "❌ skills/${skill_rel} references '${func}' but no matching export in src/"
+    errors=$((errors + 1))
   done < <(extract_refs "$skill_file")
 done < <(find "${SKILLS_DIR}" -name "SKILL.md" -type f)
 

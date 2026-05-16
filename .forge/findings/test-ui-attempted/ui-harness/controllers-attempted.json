@@ -5,7 +5,7 @@
   },
   {
     "tier": "cmux-browser",
-    "reason": "cmux browser CLI not available (requires cmux runtime)"
+    "reason": "cmux not available"
   },
   {
     "tier": "playwright",
