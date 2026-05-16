@@ -1,3 +1,9 @@
 {"timestamp":"2026-05-16T00:32:20Z","event":"postcompact_restore","detail":"slug=none"}
 {"timestamp":"2026-05-16T00:32:20Z","event":"precompact_snapshot","detail":"slug=none phase=completed"}
-{"timestamp":"2026-05-16T00:51:50Z","event":"precompact_snapshot","detail":"slug=none phase=completed"}
+{"timestamp":"2026-05-16T14:05:12Z","event":"precompact_snapshot","detail":"slug=local-ci-parity phase=plan"}
+{"timestamp":"2026-05-16T14:07:10Z","event":"postcompact_restore","detail":"slug=local-ci-parity"}
+{"timestamp":"2026-05-16T14:07:10Z","event":"precompact_snapshot","detail":"slug=local-ci-parity phase=plan"}
+{"timestamp":"2026-05-16T14:10:47Z","event":"postcompact_restore","detail":"slug=local-ci-parity"}
+{"timestamp":"2026-05-16T14:10:47Z","event":"precompact_snapshot","detail":"slug=local-ci-parity phase=plan"}
+{"timestamp":"2026-05-16T14:12:09Z","event":"postcompact_restore","detail":"slug=local-ci-parity"}
+{"timestamp":"2026-05-16T14:12:09Z","event":"precompact_snapshot","detail":"slug=local-ci-parity phase=plan"}
