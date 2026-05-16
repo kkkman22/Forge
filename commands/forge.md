@@ -120,11 +120,11 @@ allowed-tools: Read, Glob, Grep, Skill
 
 | 完成阶段 | 下一步行为 |
 |---------|-----------|
-| plan | 输出摘要 → **立即调用** `Skill(skill="forge", args="build")` |
-| build | 输出摘要 → **立即调用** `Skill(skill="forge", args="review")` |
-| review（通过） | 输出摘要 → **立即调用** `Skill(skill="forge", args="test")`（标准/全量）或 `Skill(skill="forge", args="ship")`（轻量） |
-| test（通过） | 输出摘要 → **立即调用** `Skill(skill="forge", args="ship")` |
-| ship | 输出摘要 → **立即调用** `Skill(skill="forge", args="learn")`（全量）或标记完成（标准） |
+| plan | 输出摘要 → **立即调用** `Skill(forge-build)` |
+| build | 输出摘要 → **立即调用** `Skill(forge-review)` |
+| review（通过） | 输出摘要 → **立即调用** `Skill(forge-test)`（标准/全量）或 `Skill(forge-ship)`（轻量） |
+| test（通过） | 输出摘要 → **立即调用** `Skill(forge-ship)` |
+| ship | 输出摘要 → **立即调用** `Skill(forge-learn)`（全量）或标记完成（标准） |
 
 每个阶段完成时输出一行摘要即可，格式：`✅ <阶段> 完成 → 自动进入 <下一阶段>`，然后直接调用，不要输出"是否继续？"之类的确认提示。
 
@@ -149,20 +149,18 @@ allowed-tools: Read, Glob, Grep, Skill
 
 ## ⚠️ AI 调用约束（关键）
 
-**所有子 skill（forge-plan、forge-build、forge-review 等）都设置了 `disable-model-invocation: true`，AI 不能直接通过 `Skill("forge-review")` 调用它们。**
+所有子 skill（forge-plan、forge-build、forge-review 等）的 SKILL.md frontmatter 都设置了 `disable-model-invocation: true`。AI **不能在 `commands/forge.md` 之外**自主通过 `Skill(...)` 触发它们；只能在本文件描述的编排逻辑内、由 `forge` slash command 显式调起。
 
-正确的调用方式：
+正确的调用方式（在 `commands/forge.md` 编排上下文内）：
 
 ```
-✅ 正确：Skill(skill="forge", args="review")
-✅ 正确：Skill(skill="forge", args="plan .forge/specs/xxx")
-✅ 正确：Skill(skill="forge", args="ship")
+✅ 正确：Skill(forge-build)
+✅ 正确：Skill(forge-router)
+✅ 正确：Skill(forge-plan)
 
-❌ 错误：Skill(skill="forge-review")        → Unknown skill
-❌ 错误：Skill(skill="forge-plan")           → Unknown skill
-❌ 错误：Skill(skill="forge-ship")           → Unknown skill
+❌ 错误：Skill(skill="forge", args="build")  → 不存在名为 forge 的 skill
+❌ 错误：在 commands/forge.md 之外的对话上下文中调用 Skill(forge-build)
+                                              → disable-model-invocation 阻止
 ```
 
-**原因**：`forge` 是唯一注册的统一入口 skill。子 skill 目录虽然存在于 `skills/` 下，但 `disable-model-invocation: true` 阻止了 AI 直接调用。所有子命令必须通过 `/forge <子命令>` 路由分发。
-
-**编排后续阶段时**：当 AI 需要自动推进到下一阶段（如 review 通过后进入 test），必须使用 `Skill(skill="forge", args="test")` 而非 `Skill(skill="forge-test")`。
+编排后续阶段时：当 AI 需要自动推进到下一阶段（如 review 通过后进入 test），必须使用 `Skill(forge-test)`。
