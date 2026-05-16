@@ -1,16 +1,20 @@
 {"timestamp":"2026-05-16T00:32:20Z","event":"postcompact_restore","detail":"slug=none"}
 {"timestamp":"2026-05-16T00:32:20Z","event":"precompact_snapshot","detail":"slug=none phase=completed"}
-{"timestamp":"2026-05-16T08:52:56Z","event":"precompact_snapshot","detail":"slug=none phase=completed"}
-{"timestamp":"2026-05-16T08:55:42Z","event":"postcompact_restore","detail":"slug=none"}
-{"timestamp":"2026-05-16T08:55:42Z","event":"precompact_snapshot","detail":"slug=none phase=completed"}
-{"timestamp":"2026-05-16T09:00:05Z","event":"postcompact_restore","detail":"slug=none"}
-{"timestamp":"2026-05-16T09:00:06Z","event":"precompact_snapshot","detail":"slug=none phase=completed"}
-{"timestamp":"2026-05-16T09:01:43Z","event":"postcompact_restore","detail":"slug=none"}
-{"timestamp":"2026-05-16T09:01:43Z","event":"precompact_snapshot","detail":"slug=none phase=completed"}
-{"timestamp":"2026-05-16T09:03:38Z","event":"precompact_snapshot","detail":"slug=missions-inspired-rigor phase=build-complete"}
-{"timestamp":"2026-05-16T09:04:42Z","event":"postcompact_restore","detail":"slug=missions-inspired-rigor"}
-{"timestamp":"2026-05-16T09:08:10Z","event":"precompact_snapshot","detail":"slug=missions-inspired-rigor phase=build-complete"}
-{"timestamp":"2026-05-16T09:11:22Z","event":"postcompact_restore","detail":"slug=missions-inspired-rigor"}
-{"timestamp":"2026-05-16T09:11:22Z","event":"precompact_snapshot","detail":"slug=missions-inspired-rigor phase=build-complete"}
-{"timestamp":"2026-05-16T09:14:20Z","event":"postcompact_restore","detail":"slug=missions-inspired-rigor"}
-{"timestamp":"2026-05-16T09:14:21Z","event":"precompact_snapshot","detail":"slug=missions-inspired-rigor phase=build-complete"}
+{"timestamp":"2026-05-16T13:59:33Z","event":"postcompact_restore","detail":"slug=missions-inspired-rigor"}
+{"timestamp":"2026-05-16T13:59:34Z","event":"precompact_snapshot","detail":"slug=single-entry-command-consolidation phase=build"}
+{"timestamp":"2026-05-16T14:01:00Z","event":"postcompact_restore","detail":"slug=single-entry-command-consolidation"}
+{"timestamp":"2026-05-16T14:01:00Z","event":"precompact_snapshot","detail":"slug=single-entry-command-consolidation phase=build"}
+{"timestamp":"2026-05-16T14:02:29Z","event":"postcompact_restore","detail":"slug=single-entry-command-consolidation"}
+{"timestamp":"2026-05-16T14:02:29Z","event":"precompact_snapshot","detail":"slug=single-entry-command-consolidation phase=build"}
+{"timestamp":"2026-05-16T14:03:48Z","event":"postcompact_restore","detail":"slug=single-entry-command-consolidation"}
+{"timestamp":"2026-05-16T14:03:48Z","event":"precompact_snapshot","detail":"slug=single-entry-command-consolidation phase=build"}
+{"timestamp":"2026-05-16T14:04:02Z","event":"postcompact_restore","detail":"slug=single-entry-command-consolidation"}
+{"timestamp":"2026-05-16T14:04:02Z","event":"precompact_snapshot","detail":"slug=single-entry-command-consolidation phase=build"}
+{"timestamp":"2026-05-16T14:04:25Z","event":"postcompact_restore","detail":"slug=single-entry-command-consolidation"}
+{"timestamp":"2026-05-16T14:04:26Z","event":"precompact_snapshot","detail":"slug=single-entry-command-consolidation phase=build"}
+{"timestamp":"2026-05-16T14:04:47Z","event":"postcompact_restore","detail":"slug=single-entry-command-consolidation"}
+{"timestamp":"2026-05-16T14:04:47Z","event":"precompact_snapshot","detail":"slug=single-entry-command-consolidation phase=build"}
+{"timestamp":"2026-05-16T14:09:42Z","event":"postcompact_restore","detail":"slug=single-entry-command-consolidation"}
+{"timestamp":"2026-05-16T14:09:43Z","event":"precompact_snapshot","detail":"slug=single-entry-command-consolidation phase=build"}
+{"timestamp":"2026-05-16T14:11:27Z","event":"postcompact_restore","detail":"slug=single-entry-command-consolidation"}
+{"timestamp":"2026-05-16T14:11:27Z","event":"precompact_snapshot","detail":"slug=single-entry-command-consolidation phase=build"}
