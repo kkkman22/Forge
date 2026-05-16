@@ -145,3 +145,15 @@ Context Exhaustion Protocol 触发时（`exhaustion_pending: true` 或新鲜 int
 - **Stale state**: .forge/status.md says phase=build but code already merged → resume starts wrong phase → verify git state matches forge state
 - **Missing context**: Resumed session lacks context about why decisions were made → repeats mistakes → reconstruct from .forge/knowledge/sessions/
 - **Phase skip**: Resume jumps to later phase, skipping intermediate work → incomplete delivery → verify all prior phases completed
+
+## 9. Events.ndjson Cursor Recovery（R4）
+
+当 `/forge resume <run-id>` 被调用时：
+
+1. 读取 `.forge/runs/<run-id>/events.ndjson`
+2. 调用 `parseEventsNdjson(content)` 解析事件流
+3. 调用 `extractLatestCursor(events)` 获取最新游标（最后一条 `phase_end`，或若无匹配 end 则为最后一条 `phase_start`）
+4. 结合 `.forge/status.md` 的 `phase` + `skill_sequence` 字段，在新会话中重启 forge-loop
+5. 从游标指向的阶段继续，状态完全恢复
+
+**容错**：events.ndjson 最后一行 JSON 损坏时，parser 跳过损坏行从倒数第二条恢复。
