@@ -1086,3 +1086,108 @@ describe("Contract: frozen-zone structured feedback scripts", () => {
     expect(config).toContain("</HARD-GATE>");
   });
 });
+
+// ---------------------------------------------------------------------------
+// Contract: Stop hooks must not block (8-block cap compliance)
+// ---------------------------------------------------------------------------
+
+import { mkdtempSync, rmSync, writeFileSync, mkdirSync } from "node:fs";
+import { tmpdir } from "node:os";
+import { join } from "node:path";
+import { spawnSync } from "node:child_process";
+
+describe("Contract: stop hooks should not block", () => {
+  const STOP_HOOK_SCRIPTS = [
+    "scripts/persistent-loop.sh",
+    "scripts/record-evolved-rule-violation.mjs",
+    "scripts/flag-stale-evolved-rules.mjs",
+    "scripts/cmux-mirror/sync-once.mjs",
+  ];
+
+  for (const script of STOP_HOOK_SCRIPTS) {
+    it(`${script} exits 0 and emits no block JSON`, () => {
+      const tmp = mkdtempSync(join(tmpdir(), "forge-stop-"));
+      try {
+        const cmd = script.endsWith(".sh") ? "bash" : "node";
+        const result = spawnSync(cmd, [resolve(ROOT, script)], {
+          cwd: tmp,
+          encoding: "utf-8",
+          timeout: 10000,
+        });
+        expect(result.status).toBe(0);
+        expect(result.stdout).not.toMatch(/"continue"\s*:\s*false/);
+        expect(result.stdout).not.toMatch(/"decision"\s*:\s*"block"/);
+      } finally {
+        rmSync(tmp, { recursive: true, force: true });
+      }
+    });
+  }
+});
+
+// ---------------------------------------------------------------------------
+// Contract: PostToolUse boundary feedback
+// ---------------------------------------------------------------------------
+
+describe("Contract: PostToolUse boundary feedback", () => {
+  it("check-context-boundary PostToolUse mode blocks on cross-context import", () => {
+    const tmp = mkdtempSync(join(tmpdir(), "forge-postu-"));
+    try {
+      // Create src/ directory structure
+      mkdirSync(join(tmp, "src"), { recursive: true });
+      mkdirSync(join(tmp, "src", "payment"), { recursive: true });
+      mkdirSync(join(tmp, "src", "order"), { recursive: true });
+
+      // Write a file with cross-context import
+      writeFileSync(
+        join(tmp, "src", "payment", "service.ts"),
+        'import { Order } from "../order/types";\nexport class PaymentService {}\n',
+      );
+
+      // Write tool input file (relative path so ownership glob matches)
+      const toolInputPath = join(tmp, "tool-input.json");
+      writeFileSync(toolInputPath, JSON.stringify({
+        file_path: "src/payment/service.ts",
+      }));
+
+      // Write ownership map
+      mkdirSync(join(tmp, ".forge"), { recursive: true });
+      writeFileSync(
+        join(tmp, ".forge", "context-ownership.yaml"),
+        'src/payment/**: payment\nsrc/order/**: order\n',
+      );
+
+      // Write context map
+      mkdirSync(join(tmp, ".forge", "custom", "contexts"), { recursive: true });
+      writeFileSync(
+        join(tmp, ".forge", "custom", "contexts", "_map.yaml"),
+        "",
+      );
+
+      const scriptPath = resolve(ROOT, "scripts/check-context-boundary.mjs");
+      const result = spawnSync("node", [scriptPath, "PostToolUse", toolInputPath], {
+        cwd: tmp,
+        encoding: "utf-8",
+        timeout: 10000,
+      });
+
+      expect(result.status).toBe(2);
+      expect(result.stderr).toContain("上下文边界违规");
+    } finally {
+      rmSync(tmp, { recursive: true, force: true });
+    }
+  });
+
+  it("plugin.json has at least one PostToolUse hook with continueOnBlock", () => {
+    const pluginPath = resolve(ROOT, ".claude-plugin/plugin.json");
+    const plugin = JSON.parse(readFileSync(pluginPath, "utf-8"));
+    const postGroups = plugin.hooks?.PostToolUse as Array<{
+      hooks: Array<Record<string, unknown>>;
+    }>;
+
+    const hasContinueOnBlock = postGroups?.some((group) =>
+      group.hooks?.some((hook) => hook.continueOnBlock === true),
+    ) ?? false;
+
+    expect(hasContinueOnBlock).toBe(true);
+  });
+});

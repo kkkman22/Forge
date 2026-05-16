@@ -1,21 +1,24 @@
 #!/usr/bin/env node
 
 /**
- * Context boundary PreToolUse hook.
+ * Context boundary PreToolUse/PostToolUse hook.
  *
  * Checks Write/Edit operations against declared Context Map relationships.
  * Blocks cross-context imports that have no declared relationship or that
  * use a blocked relationship type (customer-supplier, conformist) without
  * an ACL or escape hatch.
  *
- * Usage: node scripts/check-context-boundary.mjs <tool-type> <tool-input-file>
- *   tool-type:      "Write" or "Edit"
+ * PreToolUse mode: inspects tool input content/new_string.
+ * PostToolUse mode: reads file from disk after write completes.
+ *
+ * Usage: node scripts/check-context-boundary.mjs <mode> <tool-input-file>
+ *   mode:            "Write", "Edit", or "PostToolUse"
  *   tool-input-file: path to temp file containing JSON of tool arguments
  *
  * Exit codes:
  *   0 — allow (no violations or file not applicable)
- *   1 — block (violations found, message on stderr)
- *   2 — fatal error (node / dependencies missing)
+ *   1 — block (PreToolUse violations found, message on stderr)
+ *   2 — block (PostToolUse violations found, message on stderr; triggers continueOnBlock)
  */
 
 import { readFileSync, existsSync, readdirSync, statSync } from "node:fs";
@@ -418,7 +421,26 @@ function checkBoundary(filePath, fileContent, ownershipMap, contextMap) {
 // Formatting
 // ---------------------------------------------------------------------------
 
-function formatViolationMessage(filePath, violations, escapeHatchUsed) {
+function formatViolationMessage(filePath, violations, escapeHatchUsed, chineseFormat = false) {
+  if (chineseFormat) {
+    const lines = [
+      `[Forge] 上下文边界违规：${filePath}`,
+      "",
+    ];
+
+    for (const v of violations) {
+      lines.push(`  第 ${v.line} 行：import ${v.importStatement}`);
+      lines.push(`    ${v.sourceContext} → ${v.targetContext}（关系：${v.relationshipType}）`);
+      lines.push(`  修复建议：${v.suggestion}`);
+      lines.push("");
+    }
+
+    if (escapeHatchUsed > 0) {
+      lines.push(`  （${escapeHatchUsed} 个 import 通过 @forge:allow-cross-context 绕过）`);
+    }
+
+    return lines.join("\n");
+  }
   const lines = [
     `Context Boundary Violation: ${filePath}`,
     "",
@@ -450,8 +472,10 @@ function main() {
     process.exit(0);
   }
 
-  // Only check Write and Edit
-  if (toolType !== "Write" && toolType !== "Edit") {
+  const isPostToolUse = toolType === "PostToolUse";
+
+  // Only check Write, Edit, and PostToolUse
+  if (toolType !== "Write" && toolType !== "Edit" && !isPostToolUse) {
     process.exit(0);
   }
 
@@ -477,14 +501,20 @@ function main() {
     process.exit(0);
   }
 
-  // Get proposed file content
-  const fileContent = toolInput.content ?? toolInput.new_string ?? "";
+  // Get file content: PostToolUse reads from disk, PreToolUse from tool input
+  let fileContent;
+  if (isPostToolUse) {
+    if (!existsSync(filePath)) {
+      process.exit(0);
+    }
+    fileContent = readFileSync(filePath, "utf-8");
+  } else {
+    fileContent = toolInput.content ?? toolInput.new_string ?? "";
+  }
+
   if (!fileContent) {
     process.exit(0);
   }
-
-  // For Edit tool, also check old_string context is not needed
-  // We check the new content being written
 
   // Load ownership map
   const ownershipMap = loadOwnershipMap();
@@ -500,9 +530,11 @@ function main() {
   const result = checkBoundary(normalisedPath, fileContent, ownershipMap, contextMap);
 
   if (result.violations.length > 0) {
-    const message = formatViolationMessage(normalisedPath, result.violations, result.escapeHatchUsed);
+    const message = formatViolationMessage(normalisedPath, result.violations, result.escapeHatchUsed, isPostToolUse);
     process.stderr.write(message + "\n");
-    process.exit(1);
+    // PostToolUse: exit 2 triggers continueOnBlock feedback to Claude
+    // PreToolUse: exit 1 blocks the tool call
+    process.exit(isPostToolUse ? 2 : 1);
   }
 
   process.exit(0);
