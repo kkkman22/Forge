@@ -1,6 +1,6 @@
 # Dependency Discipline — 详细规范
 
-> 从 `skills/forge/lib//instructions.md §6.7` 拆分。SKILL 主文件只保留一行摘要指针。
+> 从 `../instructions.md §6.7` 拆分。SKILL 主文件只保留一行摘要指针。
 
 添加新依赖前必须确认以下 4 项：
 

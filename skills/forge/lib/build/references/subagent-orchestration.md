@@ -1,6 +1,6 @@
 # Subagent Orchestration — 详细规范
 
-> 从 `skills/forge/lib//instructions.md §3.2 Standard Path` 拆分。SKILL 主文件只保留摘要指针。
+> 从 `../instructions.md §3.2 Standard Path` 拆分。SKILL 主文件只保留摘要指针。
 
 ## Restatement Checkpoint（mandatory）
 

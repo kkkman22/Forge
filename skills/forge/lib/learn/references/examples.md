@@ -1,6 +1,6 @@
 # Examples — Knowledge Sedimentation
 
-> 从 `skills/forge/lib//instructions.md §11` 拆分。SKILL 主文件只保留一行摘要指针。
+> 从 `../instructions.md §11` 拆分。SKILL 主文件只保留一行摘要指针。
 
 ## 正常知识沉淀
 

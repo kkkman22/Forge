@@ -1,6 +1,6 @@
 # SKILL Feedback Detection — 详细规范
 
-> 从 `skills/forge/lib//instructions.md §4` 拆分。SKILL 主文件只保留一行摘要指针。
+> 从 `../instructions.md §4` 拆分。SKILL 主文件只保留一行摘要指针。
 
 五维度提取后，检测 SKILL.md 指导是否有不适用的场景。
 

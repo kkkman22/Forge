@@ -1,6 +1,6 @@
 # No Mid-build Confirmation（铁律）— 详细规范
 
-> 从 `skills/forge/lib//instructions.md §6.0.1` 拆分。SKILL 主文件只保留铁律陈述与指针。
+> 从 `../instructions.md §6.0.1` 拆分。SKILL 主文件只保留铁律陈述与指针。
 
 Build 阶段内部，任务之间**绝对禁止**停下来询问用户。这是与 TDD 同级的铁律，没有例外。
 
