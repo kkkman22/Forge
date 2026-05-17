@@ -70,7 +70,7 @@ build 阶段主 Agent 必须执行周期性 Restatement Checkpoint：每完成 N
 
 ### 3.1 Execution-Assessment Separation
 
-写代码的 Agent 不评审自己的代码。`/forge review` 使用独立 Subagent（spec-check、quality-check、security-check）。评审者只对照 Spec 和代码质量标准。
+写代码的 Agent 不评审自己的代码。`/forge review` 使用独立 Subagent（spec-check、quality-check、security-check）。评审者只对照 Spec 和代码质量标准。且**不允许**主 Agent 在 subagent 全部失败后自行顶替评审。Subagent 不可用时按 `forge-review` SKILL §2.5 fallback ladder 处理（L0→L1→L2→L3），L3 阻断 ship。详见 ADR `.forge/decisions/2026-05-18-review-fallback-ladder.md`。
 
 ### 3.2 Three-Layer Review
 

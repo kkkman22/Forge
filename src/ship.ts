@@ -15,6 +15,9 @@
 
 import type { ChecklistEntry } from "./fix-checklist.js";
 import { allEntriesVerified } from "./fix-checklist.js";
+import type { Methodology } from "./schemas/review-report.js";
+import { appendFileSync, mkdirSync } from "node:fs";
+import { join } from "node:path";
 
 // ---------------------------------------------------------------------------
 // Types
@@ -30,6 +33,8 @@ export interface ReviewResult {
   p1Count: number;
   /** Commit hash at the time of review. Optional for backward compatibility. */
   reviewedAtCommit?: string;
+  /** How the review report was produced. Default: subagent-parallel. */
+  methodology?: Methodology;
 }
 
 /** @public */
@@ -50,6 +55,13 @@ export interface ProgressResult {
 export interface ShipGateResult {
   allowed: boolean;
   reasons: string[];
+  forceSkipped?: boolean;
+}
+
+/** @public */
+export interface ShipOptions {
+  forceSkipReview?: boolean;
+  forceSkipReason?: string;
 }
 
 // ---------------------------------------------------------------------------
@@ -123,6 +135,13 @@ export function checkShipGate(
 ): ShipGateResult {
   const reasons: string[] = [];
 
+  // Gate 0: Review methodology check (fallback ladder guard)
+  if (review.methodology === "unavailable") {
+    reasons.push(
+      "Review unavailable: methodology=unavailable; subagent paths exhausted (L0+L1+L2 all failed)",
+    );
+  }
+
   // Gate 1: Review passed (no P0/P1)
   if (!review.passed || review.p0Count > 0 || review.p1Count > 0) {
     const issues: string[] = [];
@@ -154,6 +173,55 @@ export function checkShipGate(
     allowed: reasons.length === 0,
     reasons,
   };
+}
+
+/**
+ * Extended ship gate with force-skip-review escape hatch.
+ *
+ * When forceSkipReview is true, bypasses all normal gates and returns
+ * allowed=true with a SKIPPED-BY-FORCE reason. Requires a non-empty
+ * reason to provide audit trail.
+ * @public
+ */
+export function checkShipGateWithForceSkip(
+  review: ReviewResult,
+  test: TestResult,
+  progress: ProgressResult,
+  options: ShipOptions,
+): ShipGateResult {
+  if (options.forceSkipReview) {
+    if (!options.forceSkipReason || options.forceSkipReason.trim().length === 0) {
+      throw new Error("--force-skip-review requires --reason='<non-empty>'");
+    }
+    return {
+      allowed: true,
+      reasons: [`SKIPPED-BY-FORCE: ${options.forceSkipReason}`],
+      forceSkipped: true,
+    };
+  }
+  return checkShipGate(review, test, progress);
+}
+
+/**
+ * Record a force-skip-review event to the findings file for audit trail.
+ *
+ * Writes an entry to `.forge/findings/force-skip-review-<date>.md` with
+ * commit hash, reason, user, and timestamp.
+ * @public
+ */
+export function recordForceSkip(commitHash: string, reason: string, user: string): void {
+  const sanitizedReason = reason.replace(/[\r\n]/g, " ").slice(0, 500);
+  const sanitizedUser = user.replace(/[\r\n\])#]/g, "").slice(0, 100);
+  const sanitizedHash = commitHash.replace(/[^a-f0-9]/g, "").slice(0, 40);
+
+  const date = new Date().toISOString().slice(0, 10);
+  const dir = ".forge/findings";
+  const filePath = join(dir, `force-skip-review-${date}.md`);
+
+  mkdirSync(dir, { recursive: true });
+
+  const entry = `## ${sanitizedHash} (${sanitizedUser})\n\nReason: ${sanitizedReason}\nTimestamp: ${new Date().toISOString()}\n`;
+  appendFileSync(filePath, entry);
 }
 
 /**

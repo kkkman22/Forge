@@ -91,6 +91,34 @@ node scripts/prepare-diff-context.mjs
 
 **合并管线**：`filterByConfidence` → `deduplicateFindings` → `applyCrossValidation`
 
+## 2.5 Fallback Ladder
+
+| Level | 评审者 | 触发条件 | 可信度 | 行为 |
+|---|---|---|---|---|
+| L0 | 三 subagent 并行（concurrency=N，默认 3）| 默认 | 高 | `methodology: subagent-parallel` |
+| L1 | 三 subagent 串行（concurrency=1）| L0 全失败 | 高（同上，仅速度慢）| `methodology: subagent-serial`，自动重试 1 次 |
+| L2 | CI ultrareview 异步证据 | L1 全失败 + `.forge/reviews/<pr>-ci.md` 存在 | 中 | `methodology: ci-evidence` |
+| L3 | （无评审者）| L0+L1+L2 全部不可用 | — | `methodology: unavailable`、`result: blocked`、阻断 ship |
+
+实现入口：`src/review.ts` 的 `runReviewFallbackLadder()`。
+
+<HARD-GATE name="no-mainagent-review">
+
+**主 Agent 在 fallback ladder 任一级失败后，禁止以以下 4 种形式接管评审**：
+
+1. 直接 Read diff 自评：调用 Read/Grep/Bash 读源码并产出 finding
+2. 调用本地工具自评：用 forge_git/forge_read 等 MCP 工具产出 finding
+3. Skill 内联自评：通过 `Skill(forge, "review")` inline 路径再次进入 review SKILL 自评
+4. 重写已有 subagent 报告：基于残缺 subagent output 拼凑完整 review 报告
+
+违反此约束的 review 报告**自动判定为 invalid**，ship gate 拒绝放行。
+
+唯一合法路径：L0 → L1 → L2 → L3。L3 之后由用户手工干预（修复 SDK / 等待上游 / 使用 `--force-skip-review` 逃生阀）。
+
+理由：subagent 隔离的核心价值是 fresh context，不是身份。同一会话主 Agent 即使没 build 这块代码，也带有 build 阶段的上下文偏置，违反 §3.1 Execution-Assessment Separation 的设计意图。
+
+</HARD-GATE>
+
 ## 3. Three-Layer Review
 
 **动态选择**：认证代码 → security 深度 OWASP；DB schema → quality 加迁移检查；API 变更 → spec 加兼容性检查；前端 UI → quality 加可访问性；仅重构 → spec 快速扫描。
