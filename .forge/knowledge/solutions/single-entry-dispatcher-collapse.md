@@ -2,7 +2,12 @@
 title: "Single-Entry Dispatcher: Security Controls & Review Pitfalls"
 tags: ["dispatcher", "security-controls", "chokepoint", "review", "stub-detection", "dist-sync"]
 date: "2026-05-17"
-confidence: 0.85
+confidence: 0.9
+related:
+  - .forge/decisions/ADR-0004-skills-collapse-and-dispatcher.md
+  - .forge/knowledge/evolved-rules.md#R8
+  - .forge/knowledge/evolved-rules.md#R9
+  - .forge/findings/learn-report-forge-single-entry-skills-collapse.md
 ---
 
 ## Problem Pattern
