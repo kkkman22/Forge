@@ -21,3 +21,4 @@
 {"timestamp":"2026-05-17T07:27:02Z","event":"precompact_snapshot","detail":"slug=forge-single-entry-skills-collapse phase=plan_approved"}
 {"timestamp":"2026-05-17T13:42:50Z","event":"postcompact_restore","detail":"slug=forge-single-entry-skills-collapse"}
 {"timestamp":"2026-05-17T13:42:50Z","event":"precompact_snapshot","detail":"slug=forge-single-entry-skills-collapse phase=completed"}
+{"timestamp":"2026-05-17T14:50:12Z","event":"precompact_snapshot","detail":"slug=forge-single-entry-skills-collapse phase=completed"}
