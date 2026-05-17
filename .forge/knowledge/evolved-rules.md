@@ -1,6 +1,6 @@
 ---
 updated: "2026-05-17"
-rule_count: 8
+rule_count: 9
 max_rules: 15
 ---
 
@@ -99,11 +99,21 @@ This file keeps only rules that still need top-of-session reminders.
 
 **Content**: Dispatcher/安全检查点函数的 stub/mock **禁止**返回成功状态（`{ ok: true }`、`return null`、`return []`）。Stub 必须返回明确的错误码（`{ ok: false, code: "E_STUB" }`），让调用方和 reviewer 能立即识别"这个检查还没有实装"。硬编码 `{ ok: true }` 的 stub 在 review 中等同于安全控制不存在——reviewer 无法从调用链区分"通过了检查"和"跳过了检查"。生产路径中，路径解析成功后的下一步**必须**读取实际文件内容，不得用 mock 字符串代替。
 **Prevents**: 安全控制函数被 stub 静默绕过（2026-05-17 forge-single-entry-skills-collapse P1-S1: tools resolve 用 mock content，P1-S2: integrity check 返回 `{ ok: true }`）
-**Source**: `.forge/reviews/forge-single-entry-skills-collapse.md` P1-S1 + P1-S2
+**Source**: `.forge/reviews/forge-single-entry-skills-collapse.md` P1-S1 + P1-S2; cross-ref `.forge/knowledge/solutions/single-entry-dispatcher-collapse.md`; ADR-0004 §Decision/§Rollback
+**Added**: 2026-05-17
+**Confidence**: 0.9
+**Last_triggered**: 2026-05-17 (re-confirmed via /forge learn second-pass execution scoring)
+**Infra_Ref**: `.claude/agents/spec-check.md` + `.claude/agents/quality-check.md` Check Item for stub detection
+
+### R9: Verdict Claims Must Cite Evidence and Be Re-verified
+
+**Content**: 任何"通过/PASS/已完成"的声明（无论来自 task report、review verdict、test summary、ship gate）必须满足两个条件之一：(a) 命令实测输出（exit code + tail），(b) 至少 2 个独立证据点（如 grep 路径 + 文件存在性 + 测试运行）。**禁止**仅凭"我刚才修了，应该好了"或"我看代码逻辑对了"作为 verdict 依据。Verdict 一旦发出，**禁止**在原 verdict 文档内"原地修订"——必须明确标记 retracted 并写新 verdict（带新 timestamp）。原因：原地改写会让下游 reader 看不到 retraction，把 stale claim 当成 fresh truth。同样适用于 deferral 语义降级（"已 PASS" → "pass-pending-X"）这类边界变化，应保留原 verdict 历史。
+**Prevents**: (a) 自我汇报 PASS 但 main agent 复核发现 FAIL（2026-05-17 多次：dispatcher-mode-flag 误算 fail count、refs-cross-rewrite vacuous PASS、build-summary R1.2 verdict 草率 pass）；(b) deferral 边界变化原地覆盖原 verdict（spec.md update_after_lock 是正确做法的反例：保留原 lock 状态 + 显式 update entry）
+**Source**: 2026-05-17 single-entry-skills-collapse session — 5+ instances of self-reported PASS contradicted by independent verification
 **Added**: 2026-05-17
 **Confidence**: 0.85
 **Last_triggered**: 2026-05-17
-**Infra_Ref**: `.claude/agents/spec-check.md` + `.claude/agents/quality-check.md` Check Item for stub detection
+**Infra_Ref**: `skills/forge/lib/review/instructions.md` §Quality Gate; `skills/forge/lib/test/instructions.md` §3 Verification Iron Law; spec.md `update_after_lock` pattern
 
 ---
 
