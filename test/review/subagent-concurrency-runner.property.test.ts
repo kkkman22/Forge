@@ -2,10 +2,7 @@ import * as fc from "fast-check";
 import { describe, expect, it } from "vitest";
 
 import type { SubagentInvocation, SubagentResult } from "../../src/loop-types.js";
-import {
-  runSubagentsInParallel,
-  runSubagentsWithConcurrency,
-} from "../../src/subagent-runner.js";
+import { runSubagentsInParallel, runSubagentsWithConcurrency } from "../../src/subagent-runner.js";
 
 function makeInvocations(n: number): SubagentInvocation[] {
   return Array.from({ length: n }, (_, i) => ({
@@ -59,7 +56,7 @@ describe("runSubagentsWithConcurrency property tests", () => {
           expect(totalResult).toBe(shouldFail.length);
         },
       ),
-      { numRuns: 50 },
+      { numRuns: 200 },
     );
   });
 
@@ -71,16 +68,22 @@ describe("runSubagentsWithConcurrency property tests", () => {
         async (_seed, shouldFail) => {
           const invocations = makeInvocations(shouldFail.length);
 
-          const makeExecutor = () => async (inv: SubagentInvocation): Promise<SubagentResult> => {
-            const idx = parseInt(inv.agentType.split("-")[1], 10);
-            if (shouldFail[idx]) {
-              return { agentType: inv.agentType, status: "failure", error: "fail" };
-            }
-            return { agentType: inv.agentType, status: "success", output: `ok-${idx}` };
-          };
+          const makeExecutor =
+            () =>
+            async (inv: SubagentInvocation): Promise<SubagentResult> => {
+              const idx = parseInt(inv.agentType.split("-")[1], 10);
+              if (shouldFail[idx]) {
+                return { agentType: inv.agentType, status: "failure", error: "fail" };
+              }
+              return { agentType: inv.agentType, status: "success", output: `ok-${idx}` };
+            };
 
           const parallel = await runSubagentsInParallel(invocations, makeExecutor());
-          const bounded = await runSubagentsWithConcurrency(invocations, makeExecutor(), shouldFail.length);
+          const bounded = await runSubagentsWithConcurrency(
+            invocations,
+            makeExecutor(),
+            shouldFail.length,
+          );
 
           const sort = <T extends { agentType: string }>(arr: T[]) =>
             [...arr].sort((a, b) => a.agentType.localeCompare(b.agentType));
@@ -93,7 +96,7 @@ describe("runSubagentsWithConcurrency property tests", () => {
           );
         },
       ),
-      { numRuns: 50 },
+      { numRuns: 200 },
     );
   });
 
@@ -119,7 +122,7 @@ describe("runSubagentsWithConcurrency property tests", () => {
           expect(result.succeeded).toHaveLength(expectedSuccesses);
         },
       ),
-      { numRuns: 50 },
+      { numRuns: 200 },
     );
   });
 });
