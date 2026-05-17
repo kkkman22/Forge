@@ -1,10 +1,7 @@
 import { describe, expect, it } from "vitest";
 
 import type { SubagentInvocation, SubagentResult } from "../../src/loop-types.js";
-import {
-  runSubagentsInParallel,
-  runSubagentsWithConcurrency,
-} from "../../src/subagent-runner.js";
+import { runSubagentsInParallel, runSubagentsWithConcurrency } from "../../src/subagent-runner.js";
 
 function makeInvocation(i: number): SubagentInvocation {
   return {
@@ -31,8 +28,10 @@ describe("runSubagentsWithConcurrency", () => {
     const concurrencyHigh = await runSubagentsWithConcurrency(invocations, executor, 3);
     const concurrencyHigher = await runSubagentsWithConcurrency(invocations, executor, 10);
 
-    const extract = (r: { succeeded: Array<{ agentType: string }>; failed: Array<{ agentType: string }> }) =>
-      [...r.succeeded.map((s) => s.agentType)].sort();
+    const extract = (r: {
+      succeeded: Array<{ agentType: string }>;
+      failed: Array<{ agentType: string }>;
+    }) => [...r.succeeded.map((s) => s.agentType)].sort();
 
     expect(extract(concurrencyHigh)).toEqual(extract(parallel));
     expect(extract(concurrencyHigher)).toEqual(extract(parallel));
@@ -81,24 +80,42 @@ describe("runSubagentsWithConcurrency", () => {
 
   it("throws on concurrency=0", async () => {
     await expect(
-      runSubagentsWithConcurrency([], async () => ({ agentType: "x", status: "success" as const, output: "" }), 0),
+      runSubagentsWithConcurrency(
+        [],
+        async () => ({ agentType: "x", status: "success" as const, output: "" }),
+        0,
+      ),
     ).rejects.toThrow("concurrency must be >= 1");
   });
 
   it("throws on concurrency=-1", async () => {
     await expect(
-      runSubagentsWithConcurrency([], async () => ({ agentType: "x", status: "success" as const, output: "" }), -1),
+      runSubagentsWithConcurrency(
+        [],
+        async () => ({ agentType: "x", status: "success" as const, output: "" }),
+        -1,
+      ),
     ).rejects.toThrow("concurrency must be >= 1");
   });
 
   it("throws on concurrency=101", async () => {
     await expect(
-      runSubagentsWithConcurrency([], async () => ({ agentType: "x", status: "success" as const, output: "" }), 101),
+      runSubagentsWithConcurrency(
+        [],
+        async () => ({ agentType: "x", status: "success" as const, output: "" }),
+        101,
+      ),
     ).rejects.toThrow("concurrency must be <= 100");
   });
 
   it("executor rejection isolated to single invocation", async () => {
-    const invocations = [makeInvocation(0), makeInvocation(1), makeInvocation(2), makeInvocation(3), makeInvocation(4)];
+    const invocations = [
+      makeInvocation(0),
+      makeInvocation(1),
+      makeInvocation(2),
+      makeInvocation(3),
+      makeInvocation(4),
+    ];
 
     const executor = async (inv: SubagentInvocation): Promise<SubagentResult> => {
       if (inv.agentType === "agent-2") {
