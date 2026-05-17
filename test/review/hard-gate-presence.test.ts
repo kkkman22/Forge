@@ -1,13 +1,16 @@
-import { describe, expect, it } from "vitest";
 import { readFileSync } from "node:fs";
 import { join } from "node:path";
+import { describe, expect, it } from "vitest";
 
 const worktreePath = "/Users/king/code/Forge/.claude/worktrees/review-no-mainagent-fallback";
 const instructionsPath = join(worktreePath, "skills/forge/lib/review/instructions.md");
-const distPluginInstructionsPath = join(worktreePath, "dist-plugin/skills/forge/lib/review/instructions.md");
+const distPluginInstructionsPath = join(
+  worktreePath,
+  "dist-plugin/skills/forge/lib/review/instructions.md",
+);
 
 describe("Hard-gate presence", () => {
-  it("skills/forge/lib/review/instructions.md contains <HARD-GATE name=\"no-mainagent-review\">", () => {
+  it('skills/forge/lib/review/instructions.md contains <HARD-GATE name="no-mainagent-review">', () => {
     const content = readFileSync(instructionsPath, "utf-8");
     expect(content).toContain('<HARD-GATE name="no-mainagent-review">');
   });

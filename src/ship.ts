@@ -13,11 +13,11 @@
  *   - Requirements 16.3, 16.4: Hard constraints on review and test gates
  */
 
+import { appendFileSync, mkdirSync } from "node:fs";
+import { join } from "node:path";
 import type { ChecklistEntry } from "./fix-checklist.js";
 import { allEntriesVerified } from "./fix-checklist.js";
 import type { Methodology } from "./schemas/review-report.js";
-import { appendFileSync, mkdirSync } from "node:fs";
-import { join } from "node:path";
 
 // ---------------------------------------------------------------------------
 // Types

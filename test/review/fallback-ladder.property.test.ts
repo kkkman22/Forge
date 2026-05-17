@@ -1,5 +1,5 @@
-import { describe, expect, it, vi } from "vitest";
 import * as fc from "fast-check";
+import { describe, expect, it, vi } from "vitest";
 import type { SubagentInvocation, SubagentResult } from "../../src/loop-types.js";
 
 vi.mock("../../src/subagent-runner.js", () => ({
@@ -9,11 +9,7 @@ vi.mock("../../src/subagent-runner.js", () => ({
 import { runReviewFallbackLadder } from "../../src/review.js";
 import { runSubagentsWithConcurrency } from "../../src/subagent-runner.js";
 
-const ARBITRARY_AGENT_TYPES = [
-  "spec-check",
-  "quality-check",
-  "security-check",
-] as const;
+const ARBITRARY_AGENT_TYPES = ["spec-check", "quality-check", "security-check"] as const;
 
 function makeInvocation(agentType: string): SubagentInvocation {
   return { agentType, prompt: `Review ${agentType}`, permissionMode: "default", maxTurns: 10 };
