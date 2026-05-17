@@ -19,7 +19,7 @@ confidence: 0.65
 
 ## 踩坑记录
 
-- `skills/forge-build/SKILL.md:171` 的 "Append 5-block summary" 在格式定义行 175 已改为 3-block 后仍残留旧值。步骤描述和格式定义在不同行，容易漏改。
+- `skills/forge/lib/build/instructions.md:171` 的 "Append 5-block summary" 在格式定义行 175 已改为 3-block 后仍残留旧值。步骤描述和格式定义在不同行，容易漏改。
 - `agents/` 和 `.claude/agents/` 的 3 个 review agent 正文存在英文/中文标题不一致（spec-check、quality-check、security-check），frontmatter 的 model 字段虽然正确同步，但正文语言版本不同。根因：PR 只同步了 frontmatter 变更，未执行完整文件同步。
 
 ## 决策理由

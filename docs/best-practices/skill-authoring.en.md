@@ -43,7 +43,7 @@ disable-model-invocation: true   # Prevent direct AI invocation
 
 ## YAML Frontmatter Rules
 
-- `name`: Must match directory name (e.g., `skills/forge-plan/SKILL.md` → `name: forge-plan`)
+- `name`: Must match directory name (e.g., `skills/forge/lib/plan/instructions.md` → `name: forge-plan`)
 - `description`: One-line functional description, validated by contract tests
 - `disable-model-invocation`: Must be `true`; all SKILLs dispatch through `/forge`
 
