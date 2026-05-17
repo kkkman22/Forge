@@ -20,9 +20,18 @@ function createTempPlansDir() {
 function writePlan(plansDir, name, frontmatter, body) {
     writeFileSync(join(plansDir, ".forge", "plans", name), `---\n${frontmatter}\n---\n\n${body}`);
 }
-function runScript(cwd) {
+function runScript(cwd, stdinPayload) {
     try {
-        return execFileSync("node", [SCRIPT_PATH], { cwd, encoding: "utf-8", timeout: 5000 });
+        const mainAgentStdin = JSON.stringify({
+            session_id: "test-session",
+            hook_event_name: "UserPromptSubmit",
+        });
+        return execFileSync("node", [SCRIPT_PATH], {
+            cwd,
+            encoding: "utf-8",
+            timeout: 5000,
+            input: stdinPayload ?? mainAgentStdin,
+        });
     }
     catch {
         return "";
@@ -102,6 +111,29 @@ describe("inject-plan-context.mjs", () => {
         expect(output).toContain(".forge/plans/test-plan.md");
         expect(output).toContain("Task 1");
         expect(output).toContain("Task 2");
+    });
+    it("subagent stdin (with agent_id) yields zero-byte stdout", () => {
+        tempDir = createTempPlansDir();
+        writePlan(tempDir, "active-plan.md", "status: approved", "This plan should NOT appear in subagent output");
+        const subagentStdin = JSON.stringify({
+            session_id: "s1",
+            hook_event_name: "UserPromptSubmit",
+            agent_id: "spec-check",
+        });
+        const output = runScript(tempDir, subagentStdin);
+        expect(output.length).toBe(0);
+    });
+    it("main-agent stdin (no agent_id) produces full plan output", () => {
+        tempDir = createTempPlansDir();
+        writePlan(tempDir, "plan-a.md", 'status: "approved"\ntopic: test-main-agent', "## Objective\nMain agent output");
+        const mainAgentStdin = JSON.stringify({
+            session_id: "s-main",
+            hook_event_name: "UserPromptSubmit",
+        });
+        const output = runScript(tempDir, mainAgentStdin);
+        expect(output).toContain("=== Forge Context ===");
+        expect(output).toContain("plan-a.md");
+        expect(output).toContain("Main agent output");
     });
 });
 //# sourceMappingURL=inject-plan-context.test.js.map

@@ -1,8 +1,8 @@
 import { readFileSync } from "node:fs";
 import { resolve } from "node:path";
 import { describe, expect, it } from "vitest";
-const SKILL_PATH = resolve(__dirname, "../../skills/forge-plan/SKILL.md");
-const DEP_RULES_PATH = resolve(__dirname, "../../skills/forge-plan/references/dependency-rules.md");
+const SKILL_PATH = resolve(__dirname, "../../skills/forge/lib/plan/instructions.md");
+const DEP_RULES_PATH = resolve(__dirname, "../../skills/forge/lib/plan/references/dependency-rules.md");
 describe("Plan SKILL.md — Step 3.5 dependency identification", () => {
     const skill = readFileSync(SKILL_PATH, "utf-8");
     it("contains Step 3.5 dependency identification sub-step", () => {
