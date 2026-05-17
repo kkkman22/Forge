@@ -7,12 +7,13 @@
 ---
 topic: "<主题>"
 date: "YYYY-MM-DD"
-result: "pass" | "fail" | "incomplete"
+result: "pass" | "fail" | "blocked" | "incomplete"
 reviewed_at_commit: "<git rev-parse HEAD>"  # 评审时的 commit SHA
 p0_count: 0
 p1_count: 0
 p2_count: 0
 p3_count: 0
+methodology: subagent-parallel  # 评审产出路径，缺省 subagent-parallel
 layers:
   spec_check: "pass"
   quality_check: "pass"
@@ -21,3 +22,12 @@ layers:
 ```
 
 `reviewed_at_commit` 供 ship 阶段 freshness 验证使用。
+
+## methodology 字段语义
+
+| 值 | 含义 |
+|---|---|
+| `subagent-parallel` | 默认。三个 subagent 并行/滚动窗口产出 |
+| `subagent-serial` | 降级。`FORGE_REVIEW_CONCURRENCY=1` 时使用 |
+| `ci-evidence` | CI ultrareview 异步覆盖路径 |
+| `unavailable` | 所有 subagent 路径不可用、CI 也无覆盖。parser 强制 `result=blocked` |
