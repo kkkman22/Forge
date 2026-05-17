@@ -22,7 +22,7 @@ describe("R2.7: audit log out of workspace", () => {
       lib_hash: "def456",
       tools_granted: ["Read", "Bash"],
       dispatch_mode: "inline",
-      outcome: "success",
+      outcome: "success" as const,
       prev_hmac: "",
       hmac: "hmac1",
     }, { auditDir: TMP_DIR });
@@ -43,7 +43,7 @@ describe("R2.7: audit log out of workspace", () => {
       lib_hash: "h2",
       tools_granted: ["Read"],
       dispatch_mode: "inline",
-      outcome: "success",
+      outcome: "success" as const,
       prev_hmac: "",
       hmac: "hmac1",
     };
@@ -54,7 +54,7 @@ describe("R2.7: audit log out of workspace", () => {
       lib_hash: "h4",
       tools_granted: ["Read", "Glob"],
       dispatch_mode: "fork",
-      outcome: "success",
+      outcome: "success" as const,
       prev_hmac: "hmac1",
       hmac: "hmac2",
     };
@@ -78,7 +78,7 @@ describe("R2.7: audit log out of workspace", () => {
       lib_hash: "y",
       tools_granted: [],
       dispatch_mode: "inline",
-      outcome: "success",
+      outcome: "success" as const,
       prev_hmac: "",
       hmac: "h",
     }, { auditDir: TMP_DIR });
