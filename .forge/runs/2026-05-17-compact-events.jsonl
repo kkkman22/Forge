@@ -32,3 +32,5 @@
 {"timestamp":"2026-05-17T16:11:10Z","event":"precompact_snapshot","detail":"slug=forge-single-entry-skills-collapse phase=completed"}
 {"timestamp":"2026-05-17T16:13:11Z","event":"postcompact_restore","detail":"slug=forge-single-entry-skills-collapse"}
 {"timestamp":"2026-05-17T16:13:12Z","event":"precompact_snapshot","detail":"slug=forge-single-entry-skills-collapse phase=completed"}
+{"timestamp":"2026-05-17T16:15:36Z","event":"postcompact_restore","detail":"slug=forge-single-entry-skills-collapse"}
+{"timestamp":"2026-05-17T16:15:36Z","event":"precompact_snapshot","detail":"slug=forge-single-entry-skills-collapse phase=completed"}
