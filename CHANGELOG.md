@@ -39,6 +39,14 @@ Entries follow [Keep a Changelog](https://keepachangelog.com/) with Forge-specif
   - 升级 plugin 后请重启 Claude Code 让命令面板刷新
   - 参见 `.kiro/specs/single-entry-command-consolidation/`
 
+- **Skills Collapse & Dispatcher** — 29 个 `skills/forge-*/SKILL.md` 迁移到 `skills/forge/lib/<sub>/instructions.md`，`forge` 成为唯一注册 skill (ADR-0004)
+  - Plugin manifest 注册 1 个 skill (`forge`)，通过 9-step dispatcher 分发到 29 个 lib sub-skill
+  - 新增 `src/forge-dispatcher.ts` (9-step chokepoint)、`scripts/regen-skill-registry.mjs` (TOML)、`scripts/build-lib-manifest.mjs` (SHA-256 manifest)
+  - `commands/forge.md` 降级为 ≤25 行 thin stub，透传 `Skill(forge)`
+  - Fork/inline dispatch: 18 fork (Agent tool) + 11 inline (Read + execute)
+  - 迁移脚本 `scripts/migrate-skills-to-lib.mjs` 含 4-pattern cross-ref rewrite
+  - 参见 ADR-0004、`.kiro/specs/forge-single-entry-skills-collapse/spec.md`
+
 ### Added
 
 - **Forge Slimming Plan (T1/T2/T3)** — delegate overlapping capabilities to Claude Code native commands
@@ -49,12 +57,12 @@ Entries follow [Keep a Changelog](https://keepachangelog.com/) with Forge-specif
   - `gen-plugin-commands.mjs` now supports `--verify-count` (CI) and `--stamp-count`
   - Forge Loop repositioned as "autonomous execution with engineering discipline"
   - Deviation record: SST=22 within 18-22 target, R14/R16 evaluations pending 14-day metrics
-- **`/forge resume --from-pr`** — one-command recovery from a Pull Request. Accepts GitHub/GitLab/Bitbucket URLs or bare PR numbers. Auto-resolves the associated Forge spec slug from PR metadata (title prefix, branch name, description link, or ADR), loads the full context bundle (spec/plan/progress/reviews), and updates `.forge/status.md`. Requires Claude Code 2.1.29+ for CC session recovery; falls back to Forge-only state recovery on older versions. See `scripts/resume-from-pr.mjs` and `skills/forge-resume/SKILL.md` §5.
+- **`/forge resume --from-pr`** — one-command recovery from a Pull Request. Accepts GitHub/GitLab/Bitbucket URLs or bare PR numbers. Auto-resolves the associated Forge spec slug from PR metadata (title prefix, branch name, description link, or ADR), loads the full context bundle (spec/plan/progress/reviews), and updates `.forge/status.md`. Requires Claude Code 2.1.29+ for CC session recovery; falls back to Forge-only state recovery on older versions. See `scripts/resume-from-pr.mjs` and `skills/forge/lib/resume/instructions.md` §5.
 - **CI UltraReview 集成** — 每个 PR 自动触发 `claude ultrareview` AI 评审
   - 新增 `scripts/run-ci-ultrareview.sh` 封装 CLI 调用、JSON 解析、artifact 生成
   - 新增 `.github/workflows/ultrareview.yml` CI workflow（PR 触发、artifact 上传、PR 评论）
   - 新增 `templates/review-ci.md.tmpl` 标准化评审产物模板
-  - `skills/forge-review/SKILL.md` 新增 CI 证据接入步骤和 `[confirmed-by-ci]` 前缀规则
+  - `skills/forge/lib/review/instructions.md` 新增 CI 证据接入步骤和 `[confirmed-by-ci]` 前缀规则
   - `scripts/init.sh` 新增 CI AI 评审启用交互提示
   - 详见 `docs/ci-ultrareview-usage.md`
 - **Plugin Distribution** — Forge 可通过 `claude plugin install forge` 安装，支持自动更新和版本锁定
@@ -100,7 +108,7 @@ Entries follow [Keep a Changelog](https://keepachangelog.com/) with Forge-specif
   - R1-R4 退役到 `.forge/knowledge/solutions/evolved-rules-retired.md`（已永久融入 CLAUDE.md / SKILL.md / hooks）
   - R5 (Implicit Idle) 融入 `skills/shared/next-step-protocol.md` 新增"三种违规形态"表
   - R6 (Claimed New File Existence) + R7 (Pack/Loader Integration Evidence) + R8 (Stub Detection) 融入 `.claude/agents/spec-check.md` 新增 Check Items 3a/5/6 + 扩展 Severity Judgment 表
-  - R7 对应的 Plan 任务模板融入 `skills/forge-plan/references/atomic-task-format.md` 新增"Pack Data Task Integration Test Requirement"章节
+  - R7 对应的 Plan 任务模板融入 `skills/forge/lib/plan/references/atomic-task-format.md` 新增"Pack Data Task Integration Test Requirement"章节
   - R9 (Lint 严格度分层) 固化到 `CONTRIBUTING.md` 新增"Lint Strictness Layering"章节
   - `.forge/knowledge/evolved-rules.md` 活跃规则由 9 条精简至 5 条（R5/R6/R7/R8/R9 重编号为 R1-R5），每条新增 `Infra_Ref` 字段指向落地位置
 
