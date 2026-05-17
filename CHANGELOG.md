@@ -11,6 +11,8 @@ Entries follow [Keep a Changelog](https://keepachangelog.com/) with Forge-specif
 
 ## [Unreleased]
 
+## [2.5.0] - 2026-05-17
+
 ### Breaking Changes
 
 - **Single-Entry Command Consolidation** — 28 个 `/forge-<sub>` slash command 收敛为 `/forge` 单入口 (ADR-0003)
