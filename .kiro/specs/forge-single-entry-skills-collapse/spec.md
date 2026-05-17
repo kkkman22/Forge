@@ -12,6 +12,12 @@ update_after_lock:
   - date: 2026-05-17
     sections: [R2.2, R2.8]
     reason: "spike feedback: CLAUDE_PLUGIN_ROOT unset in dev mode; dev mode is first-class; silent shadow deferred to ship"
+  - date: 2026-05-17
+    sections: [R4.2]
+    reason: "Task 6: original regex /forge-[a-z]/ caught prose concept names (forge-build skill etc). R4.2 intent is path references only. New regex /(?:\\.\\.\\/|skills\\/)forge-[a-z]/ matches that intent."
+  - date: 2026-05-17
+    sections: [R4.1]
+    reason: "Task 6: test regex captured cross-sub refs (../build/references/X.md) as self-relative. Added fullRef.includes('../') skip — cross-sub refs validated by R4.2, not R4.1."
 contract_legacy: false
 locked_at: "2026-05-17"
 locked_after_self_check: "v2 — 3 FAILs resolved (Boundary Clarity / Scenario Lint / Traceability) + count consistency 29 sub"
@@ -184,11 +190,11 @@ sub 来自 R2.1 已验证 token；SHALL NOT 接受 `..`、绝对路径、symlink
 
 **R4.1** WHEN 迁移完成 THEN `skills/forge/lib/<sub>/instructions.md` 内对同 sub `references/*.md` 的引用 SHALL 保持原相对路径形式 `references/<file>.md`（`<sub>` 内部相对引用不变）。
 - **Verify-By**: vitest
-- **Evidence**: `test/single-entry/refs-self-relative.test.ts` 全 lib glob 找 `references/<file>.md` 模式（不带 `../` 前缀），每条断言路径相对该 instructions.md 所在目录可 resolve
+- **Evidence**: `test/single-entry/refs-self-relative.test.ts` 全 lib glob 找 `references/<file>.md` 模式；跨 sub 引用（含 `../`）跳过不检查（由 R4.2 覆盖）；仅验证同 sub 自引用的 `references/<file>.md` 路径存在
 
 **R4.2** WHEN 迁移完成 THEN 跨 sub 引用 SHALL 从原 `../forge-<other-sub>/references/<file>.md` 重写为 `../<other-sub>/references/<file>.md`。
 - **Verify-By**: vitest
-- **Evidence**: `test/single-entry/refs-cross-rewrite.test.ts` 全 lib grep 断言 (a) 不存在 `../forge-` 形式残留路径；(b) 所有 `../<sub>/` 形式 sub 均在 R3.5 表格的 29 sub 列表内
+- **Evidence**: `test/single-entry/refs-cross-rewrite.test.ts` 全 lib grep 断言 (a) 不存在路径形式 `forge-X` 残留（路径形式 = `../forge-X/` OR `skills/forge-X/`）；prose 中的 `forge-X` 概念名引用允许保留（如 "forge-build skill", "ADR-0003 删除了 27 wrappers"）；(b) 所有 `../<sub>/` 形式 sub 均在 R3.5 表格的 29 sub 列表内
 
 **R4.3** WHEN 跨 sub 引用存在 THEN 必须出现在 `skills/forge/lib/manifest.json` 的 `references[]` 数组（被 R2.6 lib integrity 覆盖）。
 - **Verify-By**: vitest
