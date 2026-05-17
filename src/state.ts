@@ -328,7 +328,8 @@ function parseReviewReportViaSchema(content: string | undefined): {
     p1_count: (value.p1_count as number | undefined) ?? REVIEW_REPORT_DEFAULTS.p1_count,
     p2_count: (value.p2_count as number | undefined) ?? REVIEW_REPORT_DEFAULTS.p2_count,
     p3_count: (value.p3_count as number | undefined) ?? REVIEW_REPORT_DEFAULTS.p3_count,
-    methodology: (value.methodology as Methodology | undefined) ?? REVIEW_REPORT_DEFAULTS.methodology,
+    methodology:
+      (value.methodology as Methodology | undefined) ?? REVIEW_REPORT_DEFAULTS.methodology,
   };
 
   if (resultStr === null)
