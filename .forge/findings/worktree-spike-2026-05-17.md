@@ -1,7 +1,7 @@
 ---
 topic: worktree-spike
 date: 2026-05-17
-verdict: pass-dev-mode
+verdict: pass
 blocking: false
 update_after_lock: true
 ---
@@ -81,17 +81,43 @@ grep -rn '/Users/\|/home/' skills/forge/lib/
 
 **PASS**. Deferred full scan after Task 6 migration.
 
-## Verdict: **pass-dev-mode + plugin-mode-deferred**
+## Plugin Mode Verification (R2.8b — ship phase)
+
+### Method
+
+Compiled dispatcher (`dist/src/forge-dispatcher.js`) loaded in Node.js with controlled env vars.
+
+### Results
+
+| Test | Env | cwd | Expected | Actual | Status |
+|------|-----|-----|----------|--------|--------|
+| T5a | `CLAUDE_PLUGIN_ROOT=/tmp/test-plugin-root` | default | `/tmp/test-plugin-root/skills/forge/lib/zoom-out/instructions.md` | matches | PASS |
+| T5b | `CLAUDE_PLUGIN_ROOT=<plugin-cache>` | `/tmp/forge-worktree-test` | Uses plugin root, NOT worktree cwd | `path.startsWith(pluginCache)=true` | PASS |
+| T5c | unset | `/tmp/forge-worktree-test` | `/tmp/forge-worktree-test/skills/forge/lib/zoom-out/instructions.md` | matches | PASS |
+| T5d | unset | default (cwd) | cwd-based resolution | matches | PASS |
+| T3 | — | — | Traversal `../etc/passwd` rejected | `E_PATH_INVALID` | PASS |
+
+### Silent Shadow Verdict
+
+**No silent shadow.** When `CLAUDE_PLUGIN_ROOT` is set (plugin install mode), `resolveLibPath` uses plugin root as base, ignoring cwd entirely. Worktree cwd does NOT override or shadow plugin root.
+
+Path resolution priority: `opts.pluginRoot` > `process.env.CLAUDE_PLUGIN_ROOT` > `opts.cwd` > `process.cwd()` — set in `path-resolve.ts:31-34`.
+
+### Plugin Cache Status
+
+Current plugin cache at `~/.claude/plugins/cache/forge-official/forge/2.4.0/` still has **old layout** (`skills/forge-*/SKILL.md`), not new collapsed layout (`skills/forge/lib/<sub>/instructions.md`). This confirms R1.2 finding: cache refresh requires plugin update to v2.4.1+. Resolution mechanics are verified correct; content sync is a separate concern.
+
+## Verdict: **PASS** (all criteria met)
 
 | Criterion | Result |
 |-----------|--------|
 | Dev mode path resolution | PASS |
+| Plugin mode path resolution (CLAUDE_PLUGIN_ROOT) | PASS |
+| Silent shadow (worktree cwd vs plugin root) | PASS — no shadow |
 | Path safety (traversal, absolute, symlink) | PASS |
-| Silent shadow | DEFERRED (no plugin install to test) |
-| Plugin mode resolution | DEFERRED to ship |
 | No absolute paths in lib/ | PASS |
 
-**Not P0-block**: no evidence of silent shadow. Verification conditions for plugin mode unmet, not failed.
+**Not P0-block**: R2.8b verified. Dispatcher correctly prioritizes `CLAUDE_PLUGIN_ROOT` over `cwd`.
 
 ## Spec Updates Required
 
