@@ -10,3 +10,7 @@
 {"timestamp":"2026-05-17T01:43:30Z","event":"precompact_snapshot","detail":"slug=subagent-hook-context-budget phase=shipped"}
 {"timestamp":"2026-05-17T01:47:13Z","event":"postcompact_restore","detail":"slug=subagent-hook-context-budget"}
 {"timestamp":"2026-05-17T01:47:13Z","event":"precompact_snapshot","detail":"slug=subagent-hook-context-budget phase=shipped"}
+{"timestamp":"2026-05-17T02:03:55Z","event":"postcompact_restore","detail":"slug=subagent-hook-context-budget"}
+{"timestamp":"2026-05-17T02:03:55Z","event":"precompact_snapshot","detail":"slug=subagent-hook-context-budget phase=shipped"}
+{"timestamp":"2026-05-17T02:22:05Z","event":"postcompact_restore","detail":"slug=subagent-hook-context-budget"}
+{"timestamp":"2026-05-17T02:22:05Z","event":"precompact_snapshot","detail":"slug=subagent-hook-context-budget phase=shipped"}
