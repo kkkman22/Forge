@@ -2,3 +2,5 @@
 
 | ID | Title | Status | Date | File |
 | --- | --- | --- | --- | --- |
+| ADR-0003 | Single-Entry Command Consolidation | accepted | 2026-05-16 | ADR-0003-single-entry-command-consolidation.md |
+| ADR-0004 | Skills Collapse and Dispatcher | accepted | 2026-05-17 | ADR-0004-skills-collapse-and-dispatcher.md |
