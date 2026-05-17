@@ -27,7 +27,7 @@ allowed_tools:
 
 **Not For**：轻量路径任务 / 需求已完全明确且无技术风险的变更
 
-**Alternative**: Agent Teams mode (PoC) — 评估中，见 `skills/forge/lib//instructions.md` 和 `.kiro/specs/forge-decide-agent-teams/`
+**Alternative**: Agent Teams mode (PoC) — 评估中，见 `../decide-teams/instructions.md` 和 `.kiro/specs/forge-decide-agent-teams/`
 
 ---
 

@@ -1,6 +1,6 @@
 # Execution Quality Analysis — 详细规范
 
-> 从 `skills/forge/lib//instructions.md §2` 拆分。SKILL 主文件只保留摘要与函数签名指针。
+> 从 `../instructions.md §2` 拆分。SKILL 主文件只保留摘要与函数签名指针。
 
 ## Analysis Data Sources
 

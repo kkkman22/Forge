@@ -1,6 +1,6 @@
 # Change Summary — 详细规范
 
-> 从 `skills/forge/lib//instructions.md §6.6` 拆分。SKILL 主文件只保留一行摘要指针。
+> 从 `../instructions.md §6.6` 拆分。SKILL 主文件只保留一行摘要指针。
 
 每个 Subagent 在原子提交前，必须输出三段式变更摘要：
 

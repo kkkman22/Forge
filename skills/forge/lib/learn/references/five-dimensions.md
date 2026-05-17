@@ -1,6 +1,6 @@
 # Five-Dimension Knowledge Extraction — 详细规范
 
-> 从 `skills/forge/lib//instructions.md §3` 拆分。SKILL 主文件只保留摘要与函数签名指针。
+> 从 `../instructions.md §3` 拆分。SKILL 主文件只保留摘要与函数签名指针。
 
 以 **Subagent 模式**启动知识提取，每个维度由独立 Subagent 处理。
 
