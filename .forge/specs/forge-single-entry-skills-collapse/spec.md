@@ -8,6 +8,10 @@ related_adrs:
   - "ADR-0003 (extends)"
   - "ADR-0004 (will be created in this spec)"
 acceptance_eval: false
+update_after_lock:
+  - date: 2026-05-17
+    sections: [R2.2, R2.8]
+    reason: "spike feedback: CLAUDE_PLUGIN_ROOT unset in dev mode; dev mode is first-class; silent shadow deferred to ship"
 contract_legacy: false
 locked_at: "2026-05-17"
 locked_after_self_check: "v2 — 3 FAILs resolved (Boundary Clarity / Scenario Lint / Traceability) + count consistency 29 sub"
@@ -74,9 +78,12 @@ C(X) :≡  Forge plugin 安装后
 - **Verify-By**: vitest
 - **Evidence**: `test/single-entry/topic-allowlist.test.ts` 注入 `../../../etc/passwd`、`forge-build`（带 dash 形式）、`buidl`（typo）、`<script>` 等输入，断言 dispatcher reject 全部，且仅 29 个 token 通过
 
-**R2.2 [C2 Path Safety]** WHEN dispatcher 解析 lib 路径 THEN the system SHALL 通过 `${CLAUDE_PLUGIN_ROOT}/skills/forge/lib/<sub>/instructions.md` 模式构造，sub 来自 R2.1 已验证 token；SHALL NOT 接受 `..`、绝对路径、symlinks。
+**R2.2 [C2 Path Safety]** WHEN dispatcher 解析 lib 路径 THEN the system SHALL 按双模式构造：
+- **plugin install mode** (`CLAUDE_PLUGIN_ROOT` set): `${CLAUDE_PLUGIN_ROOT}/skills/forge/lib/<sub>/instructions.md`
+- **dev mode** (`CLAUDE_PLUGIN_ROOT` unset): `${cwd}/skills/forge/lib/<sub>/instructions.md`
+sub 来自 R2.1 已验证 token；SHALL NOT 接受 `..`、绝对路径、symlinks。两种模式下 `realpath(resolved)` 必须落在各自的 root 内（plugin root 或 cwd）。
 - **Verify-By**: vitest
-- **Evidence**: `test/single-entry/path-safety.test.ts` 校验 dispatcher 内部路径构造函数，注入恶意 sub（含 `..`、`/etc/passwd`）应在 R2.1 即被拦；旁路构造测试断言 `realpath` 落在 plugin root 内
+- **Evidence**: `test/single-entry/path-safety.test.ts` 校验 dispatcher 内部路径构造函数双模式：注入恶意 sub（含 `..`、`/etc/passwd`）应在 R2.1 即被拦；旁路构造测试断言 `realpath` 落在 root 内；dev mode（CLAUDE_PLUGIN_ROOT=unset）和 plugin mode（mock CLAUDE_PLUGIN_ROOT）各跑一组
 
 **R2.3 [C3 Per-sub allowed-tools 默认拒绝]** WHEN dispatcher 调用 Agent tool 执行某个 sub THEN the system SHALL 从该 sub 的 `lib/<sub>/instructions.md` frontmatter 读取 `allowed_tools: [...]`（authoritative），把 exact subset 作为 Agent 调用的 `tools` 参数；SHALL NOT 把 `/forge` 自身的 union 工具集传给子调用；frontmatter 缺失 `allowed_tools` 字段 → 返回 `E_TOOLS_UNDECLARED` 错误并阻断。
 - **Verify-By**: vitest
@@ -98,12 +105,13 @@ C(X) :≡  Forge plugin 安装后
 - **Verify-By**: vitest
 - **Evidence**: `test/single-entry/audit-log.test.ts` mock `${CLAUDE_PLUGIN_DATA}` 到临时目录，调用 dispatcher 触发 sub，断言：(a) audit 文件存在于临时目录而不在 `.forge/`；(b) 单行 NDJSON 含全部字段；(c) `prev_hmac` + 当前行内容 → 当前 hmac 链可验证；(d) 非工作区路径写入失败 → 警告但 dispatcher 仍返回结果
 
-**R2.8 [C8 Worktree Resolution Spike — Wave 0 BLOCKER]** WHEN 实施开始前（Wave 0）THEN the system SHALL 通过 spike 验证三件事并产出 `.forge/findings/worktree-spike-<date>.md`：
-1. plugin 全局安装后，`cd` 到 `.claude/worktrees/<x>/` 运行 `/forge` → `${CLAUDE_PLUGIN_ROOT}` 仍指向 plugin 安装根（不是 worktree 副本）
-2. 同一 plugin 在 main + worktree 两处同时安装 → Claude Code loader 要么按 manifest ID 去重，要么报错；**silent shadow（同名 skill 静默被覆盖）→ P0 阻断**，整个 plan A 退回方案 C
-3. registry.toml + lib 路径全部以 `${CLAUDE_PLUGIN_ROOT}` / `${PLUGIN_ROOT}` 前缀，无任何绝对路径
+**R2.8 [C8 Worktree Resolution Spike]** WHEN 实施开始前（Wave 0）THEN the system SHALL 通过 spike 验证并产出 `.forge/findings/worktree-spike-<date>.md`：
+1. **dev mode**（`CLAUDE_PLUGIN_ROOT` unset）：cwd-relative lib 路径解析正确 → spike 已验证 PASS
+2. **plugin mode**：`CLAUDE_PLUGIN_ROOT` 指向 plugin 安装根时 lib 路径解析正确 → ship 阶段 manual evidence（安装 plugin 后重跑）
+3. **silent shadow**：同一 plugin 在 main + worktree 两处同时安装 → Claude Code loader 去重/报错/静默覆盖 → **ship 阶段 manual evidence**，不阻塞 build 开始。如发现 silent shadow → ship 阻断，回退到 v2.5.1 fix
+4. registry.toml + lib 路径无绝对路径前缀
 - **Verify-By**: manual + vitest
-- **Evidence**: spike 文档 `.forge/findings/worktree-spike-<date>.md` 含三项实测命令、输出截图/文本、verdict（pass / fail-with-mitigation / P0-block）；`test/single-entry/no-absolute-paths.test.ts` 全仓 grep 断言 lib/ + registry.toml 无 `/Users/`、`/home/` 等绝对路径前缀
+- **Evidence**: spike 文档 `.forge/findings/worktree-spike-<date>.md` 含实测命令、输出、verdict（`pass-dev-mode + plugin-mode-deferred`）；`test/single-entry/no-absolute-paths.test.ts` 全仓 grep 断言 lib/ + registry.toml 无绝对路径前缀
 
 **R2.9 [C9 Bare /forge subcommand listing]** —— 同 R1.3，已合并。
 
@@ -197,7 +205,7 @@ C(X) :≡  Forge plugin 安装后
 **R5.2** WHEN dispatcher 接收 `/forge <topic>` THEN 它 SHALL 按以下顺序执行（R2 chokepoint）：
 1. Mode resolve：读 `.forge/config.md` 的 `skills.dispatcher_mode`（R2.10）
 2. Topic validation：把 topic 与 29 sub 白名单匹配（R2.1）
-3. Path resolve：构造 `${CLAUDE_PLUGIN_ROOT}/skills/forge/lib/<sub>/instructions.md`（R2.2）
+3. Path resolve：按双模式构造 lib 路径（R2.2：CLAUDE_PLUGIN_ROOT set → plugin root; unset → cwd-relative）
 4. Integrity check：lib hash vs manifest（R2.6）
 5. Tools resolve：lib frontmatter `allowed_tools`（R2.3）
 6. Mode resolve：lib frontmatter `dispatch_mode`（R3）
@@ -257,7 +265,7 @@ C(X) :≡  Forge plugin 安装后
 
 ### 挂载点清单
 
-- `${CLAUDE_PLUGIN_ROOT}` —— Claude Code 提供，不依赖项目代码
+- `${CLAUDE_PLUGIN_ROOT}` —— Claude Code 提供（plugin install mode）；dev mode 下 unset，使用 cwd 替代
 - `${CLAUDE_PLUGIN_DATA}` —— Claude Code 提供（audit log 路径）
 - `commands/forge.md` —— 现有 plugin 注册路径（保留 stub）
 - `skills/forge/SKILL.md` —— 新唯一注册点
@@ -276,7 +284,7 @@ C(X) :≡  Forge plugin 安装后
 - 试图给某个 sub 单独"暴露" `/forge-<sub>` 入口（破坏 R1.2）
 - 改 lib instructions.md 的业务逻辑（应只迁移 + frontmatter 调整，不动业务）
 - 试图把 dispatcher 内的 R2.1-R2.7 控制移除"以简化代码"
-- 在 R2.8 worktree spike 失败时仍想继续 plan A（应退回方案 C）
+- 在 R2.8 worktree spike 发现 silent shadow 时仍想继续 plan A（应退回方案 C，ship 阶段验证）
 - 把 `/forge-X` 字符串从 README/docs 全局禁用（超出本 spec 范围）
 
 ### 验证材料角色
