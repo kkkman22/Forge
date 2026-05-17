@@ -34,9 +34,11 @@ describe("checkShipGate — methodology field checks", () => {
 
     const result = checkShipGate(review, passTest, doneProgress);
 
-    expect(result.reasons.some((r) =>
-      r.includes("methodology=unavailable") && r.includes("subagent paths exhausted"),
-    )).toBe(true);
+    expect(
+      result.reasons.some(
+        (r) => r.includes("methodology=unavailable") && r.includes("subagent paths exhausted"),
+      ),
+    ).toBe(true);
   });
 
   it("ship passes when review.methodology is subagent-parallel and other gates pass", () => {

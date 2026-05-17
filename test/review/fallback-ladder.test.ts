@@ -1,11 +1,8 @@
-import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { mkdirSync, rmSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
-import type {
-  SubagentInvocation,
-  SubagentResult,
-} from "../../src/loop-types.js";
+import type { SubagentInvocation, SubagentResult } from "../../src/loop-types.js";
 
 // Mock the subagent-runner module
 vi.mock("../../src/subagent-runner.js", () => ({
@@ -14,6 +11,8 @@ vi.mock("../../src/subagent-runner.js", () => ({
 
 import { runReviewFallbackLadder } from "../../src/review.js";
 import { runSubagentsWithConcurrency } from "../../src/subagent-runner.js";
+
+const mockedRunner = runSubagentsWithConcurrency as unknown as ReturnType<typeof vi.fn>;
 
 const tempDir = join(process.cwd(), ".forge", "reviews");
 
@@ -71,7 +70,7 @@ describe("runReviewFallbackLadder", () => {
       return makeSuccessResult(inv.agentType);
     };
 
-    (runSubagentsWithConcurrency as any).mockResolvedValue({
+    mockedRunner.mockResolvedValue({
       succeeded: invocations.map((inv) => ({ agentType: inv.agentType, result: "ok" })),
       failed: [],
     });
@@ -92,7 +91,7 @@ describe("runReviewFallbackLadder", () => {
     const concurrencyValues: number[] = [];
     let callCount = 0;
 
-    (runSubagentsWithConcurrency as any).mockImplementation(
+    mockedRunner.mockImplementation(
       (
         invs: SubagentInvocation[],
         _exec: (inv: SubagentInvocation) => Promise<SubagentResult>,
@@ -136,7 +135,7 @@ describe("runReviewFallbackLadder", () => {
     const invocations = [makeInvocation(0), makeInvocation(1), makeInvocation(2)];
     let callCount = 0;
 
-    (runSubagentsWithConcurrency as any).mockImplementation(() => {
+    mockedRunner.mockImplementation(() => {
       callCount++;
 
       // All fail on L0
@@ -155,9 +154,7 @@ describe("runReviewFallbackLadder", () => {
           { agentType: "agent-0", result: "ok" },
           { agentType: "agent-1", result: "ok" },
         ],
-        failed: [
-          { agentType: "agent-2", error: "timeout" },
-        ],
+        failed: [{ agentType: "agent-2", error: "timeout" }],
       };
     });
 
@@ -175,10 +172,10 @@ describe("runReviewFallbackLadder", () => {
 
   it("L1 all-fail with CI evidence file present uses ci-evidence methodology", async () => {
     const invocations = [makeInvocation(0), makeInvocation(1), makeInvocation(2)];
-    let callCount = 0;
+    let _callCount = 0;
 
-    (runSubagentsWithConcurrency as any).mockImplementation(() => {
-      callCount++;
+    mockedRunner.mockImplementation(() => {
+      _callCount++;
       return {
         succeeded: [],
         failed: invocations.map((inv) => ({
@@ -190,14 +187,17 @@ describe("runReviewFallbackLadder", () => {
 
     // Create CI evidence file
     const ciFilePath = join(tempDir, "test-pr-ci.md");
-    writeFileSync(ciFilePath, `---
+    writeFileSync(
+      ciFilePath,
+      `---
 p0_count: 0
 p1_count: 1
 p2_count: 2
 p3_count: 3
 ---
 CI review findings...
-`);
+`,
+    );
 
     const executor = async (inv: SubagentInvocation): Promise<SubagentResult> => {
       return makeFailureResult(inv.agentType, "No task found with ID: test-456");
@@ -223,7 +223,7 @@ CI review findings...
   it("L0 + L1 + L2 all unavailable produces unavailable report", async () => {
     const invocations = [makeInvocation(0), makeInvocation(1), makeInvocation(2)];
 
-    (runSubagentsWithConcurrency as any).mockResolvedValue({
+    mockedRunner.mockResolvedValue({
       succeeded: [],
       failed: invocations.map((inv) => ({
         agentType: inv.agentType,
@@ -249,7 +249,7 @@ CI review findings...
     const invocations = [makeInvocation(0), makeInvocation(1), makeInvocation(2)];
     let callCount = 0;
 
-    (runSubagentsWithConcurrency as any).mockImplementation(() => {
+    mockedRunner.mockImplementation(() => {
       callCount++;
       // Always fail
       return {
@@ -276,7 +276,7 @@ CI review findings...
   it("L1 retry produces visible status output (mock console.warn)", async () => {
     const invocations = [makeInvocation(0), makeInvocation(1), makeInvocation(2)];
 
-    (runSubagentsWithConcurrency as any).mockResolvedValue({
+    mockedRunner.mockResolvedValue({
       succeeded: [],
       failed: invocations.map((inv) => ({
         agentType: inv.agentType,
@@ -296,16 +296,14 @@ CI review findings...
     expect(mockConsoleWarn).toHaveBeenCalledWith(
       expect.stringContaining("retrying with concurrency=1"),
     );
-    expect(mockConsoleWarn).toHaveBeenCalledWith(
-      expect.stringContaining("L1 retry result:"),
-    );
+    expect(mockConsoleWarn).toHaveBeenCalledWith(expect.stringContaining("L1 retry result:"));
   });
 
   it("L1 report frontmatter includes retry_count and l0_failure_signature", async () => {
     const invocations = [makeInvocation(0), makeInvocation(1), makeInvocation(2)];
     let callCount = 0;
 
-    (runSubagentsWithConcurrency as any).mockImplementation(() => {
+    mockedRunner.mockImplementation(() => {
       callCount++;
       // All fail on L0
       if (callCount === 1) {
@@ -338,7 +336,7 @@ CI review findings...
     const invocations = [makeInvocation(0), makeInvocation(1), makeInvocation(2)];
     let callCount = 0;
 
-    (runSubagentsWithConcurrency as any).mockImplementation(() => {
+    mockedRunner.mockImplementation(() => {
       callCount++;
       // All fail on L0
       if (callCount === 1) {
@@ -384,7 +382,7 @@ CI review findings...
   it("main-agent fallback rejected — no Read/Grep/Bash invoked after L3", async () => {
     const invocations = [makeInvocation(0), makeInvocation(1), makeInvocation(2)];
 
-    (runSubagentsWithConcurrency as any).mockResolvedValue({
+    mockedRunner.mockResolvedValue({
       succeeded: [],
       failed: invocations.map((inv) => ({
         agentType: inv.agentType,

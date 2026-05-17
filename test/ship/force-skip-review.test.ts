@@ -1,12 +1,8 @@
-import { beforeEach, describe, expect, it, vi } from "vitest";
 import { mkdirSync, readFileSync, rmSync } from "node:fs";
 import { join } from "node:path";
+import { beforeEach, describe, expect, it, vi } from "vitest";
 
-import {
-  type ShipOptions,
-  checkShipGateWithForceSkip,
-  recordForceSkip,
-} from "../../src/ship.js";
+import { checkShipGateWithForceSkip, recordForceSkip, type ShipOptions } from "../../src/ship.js";
 
 const tempDir = join(process.cwd(), ".forge", "findings");
 
@@ -36,9 +32,9 @@ describe("checkShipGateWithForceSkip", () => {
     const test = { passed: true };
     const progress = { totalTasks: 5, completedTasks: 5 };
 
-    expect(() =>
-      checkShipGateWithForceSkip(review, test, progress, options),
-    ).toThrow("--force-skip-review requires --reason='<non-empty>'");
+    expect(() => checkShipGateWithForceSkip(review, test, progress, options)).toThrow(
+      "--force-skip-review requires --reason='<non-empty>'",
+    );
   });
 
   it("--force-skip-review with empty reason throws", () => {
@@ -47,9 +43,9 @@ describe("checkShipGateWithForceSkip", () => {
     const test = { passed: true };
     const progress = { totalTasks: 5, completedTasks: 5 };
 
-    expect(() =>
-      checkShipGateWithForceSkip(review, test, progress, options),
-    ).toThrow("--force-skip-review requires --reason='<non-empty>'");
+    expect(() => checkShipGateWithForceSkip(review, test, progress, options)).toThrow(
+      "--force-skip-review requires --reason='<non-empty>'",
+    );
   });
 
   it("--force-skip-review with non-empty reason returns passed + forceSkipped=true", () => {
