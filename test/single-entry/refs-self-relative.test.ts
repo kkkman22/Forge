@@ -6,6 +6,11 @@ import { glob } from "glob";
 const ROOT = resolve(import.meta.dirname, "..", "..");
 
 describe("R4.1: self-relative references within same sub", () => {
+  it("lib must contain 29 instructions.md (Task 6 prerequisite)", async () => {
+    const libs = await glob("skills/forge/lib/*/instructions.md", { cwd: ROOT });
+    expect(libs.length).toBeGreaterThanOrEqual(29);
+  });
+
   it("all references/ paths in lib are self-relative (no ../ prefix for same-sub refs)", async () => {
     const libs = await glob("skills/forge/lib/*/instructions.md", { cwd: ROOT });
     const violations: string[] = [];

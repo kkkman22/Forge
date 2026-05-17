@@ -6,6 +6,11 @@ import { readFileSync } from "node:fs";
 const ROOT = resolve(import.meta.dirname, "..", "..");
 
 describe("R2.8 sec sub-check: no absolute paths in lib + registry", () => {
+  it("lib must contain 29 instructions.md (Task 6 prerequisite)", async () => {
+    const libs = await glob("skills/forge/lib/*/instructions.md", { cwd: ROOT });
+    expect(libs.length).toBeGreaterThanOrEqual(29);
+  });
+
   it("lib/ contains no absolute path prefixes", async () => {
     const files = await glob("skills/forge/lib/**/*.md", { cwd: ROOT });
     const registryFiles = await glob("skills/forge/registry.toml", { cwd: ROOT });
