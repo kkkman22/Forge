@@ -15,7 +15,6 @@
  * The script does not exist yet at task-1 RED time; tests fail on import error.
  */
 import { describe, expect, it } from "vitest";
-// @ts-expect-error — script under test is .mjs created in task 2
 import {
     formatFrontmatter,
     parseAddedRemoved,

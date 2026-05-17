@@ -164,6 +164,16 @@
             "timeout": 5
           }
         ]
+      },
+      {
+        "matcher": "Write|Edit",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "node \"${CLAUDE_PLUGIN_ROOT}/scripts/check-diff-context-integrity.mjs\" \"$TOOL_INPUT_FILE\" 2>/dev/null || node forge/scripts/check-diff-context-integrity.mjs \"$TOOL_INPUT_FILE\" 2>/dev/null",
+            "timeout": 5
+          }
+        ]
       }
     ],
     "Stop": [
