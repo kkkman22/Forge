@@ -14,6 +14,28 @@ retention：>100 条触发自动归档到 `.forge/archive/known-failures-<date>.
 ## Active Patterns
 
 ```yaml
+- pattern_id: security-control-stub-returns-ok-true
+  severity: P1
+  first_seen: "2026-05-17"
+  last_seen: "2026-05-17"
+  occurrence_count: 1
+  first_seen_commit: 37f5cf0
+  last_seen_commit: 37f5cf0
+  signature: "Security chokepoint function (integrity check, tool scoping) returns hardcoded { ok: true } instead of performing actual validation. Mock/stub from initial scaffold never replaced with real implementation."
+  fix_required: "Every security control in a dispatcher chokepoint must perform actual validation. Stubs must return errors, not { ok: true }. Review must verify production path calls real functions, not stubs."
+  source_review: ".forge/reviews/forge-single-entry-skills-collapse.md (P1-S1, P1-S2)"
+
+- pattern_id: mock-content-used-in-production-path
+  severity: P1
+  first_seen: "2026-05-17"
+  last_seen: "2026-05-17"
+  occurrence_count: 1
+  first_seen_commit: 37f5cf0
+  last_seen_commit: 37f5cf0
+  signature: "Dispatcher reads hardcoded mock string instead of actual file content when resolving per-entry behavior (tools, dispatch mode). Production path skips file read."
+  fix_required: "After path resolution succeeds, always read the actual file. Mock paths should be isolated behind explicit mock guards, not used as default fallback."
+  source_review: ".forge/reviews/forge-single-entry-skills-collapse.md (P1-S1)"
+
 - pattern_id: spec-skill-doc-skeleton-incomplete
   severity: P1
   first_seen: "2026-05-16"

@@ -1,6 +1,6 @@
 ---
-updated: "2026-05-12"
-rule_count: 7
+updated: "2026-05-17"
+rule_count: 8
 max_rules: 15
 ---
 
@@ -94,6 +94,16 @@ This file keeps only rules that still need top-of-session reminders.
 **Confidence**: 0.85
 **Last_triggered**: 2026-05-12
 **Infra_Ref**: `.gitignore` + instincts.md "git add -f" entry
+
+### R8: Security Chokepoint Stubs Must Fail Visibly
+
+**Content**: Dispatcher/安全检查点函数的 stub/mock **禁止**返回成功状态（`{ ok: true }`、`return null`、`return []`）。Stub 必须返回明确的错误码（`{ ok: false, code: "E_STUB" }`），让调用方和 reviewer 能立即识别"这个检查还没有实装"。硬编码 `{ ok: true }` 的 stub 在 review 中等同于安全控制不存在——reviewer 无法从调用链区分"通过了检查"和"跳过了检查"。生产路径中，路径解析成功后的下一步**必须**读取实际文件内容，不得用 mock 字符串代替。
+**Prevents**: 安全控制函数被 stub 静默绕过（2026-05-17 forge-single-entry-skills-collapse P1-S1: tools resolve 用 mock content，P1-S2: integrity check 返回 `{ ok: true }`）
+**Source**: `.forge/reviews/forge-single-entry-skills-collapse.md` P1-S1 + P1-S2
+**Added**: 2026-05-17
+**Confidence**: 0.85
+**Last_triggered**: 2026-05-17
+**Infra_Ref**: `.claude/agents/spec-check.md` + `.claude/agents/quality-check.md` Check Item for stub detection
 
 ---
 
