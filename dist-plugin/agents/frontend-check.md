@@ -34,7 +34,7 @@ Run `detectTierAvailability` to determine which tiers can execute. Log the avail
 
 ### Step 2: Tier A Static Scan (always)
 
-1. Load rules from `skills/forge-review/references/frontend-check-patterns.md`
+1. Load rules from `skills/forge/lib/review/references/frontend-check-patterns.md`
 2. Glob `src/**/*.vue` and `src/**/*.tsx`
 3. Apply `scanVueTemplate()` per file
 4. Collect violations, categorize by severity
@@ -82,6 +82,6 @@ Combine all tier results into Layer 4 section of review report.
 
 ## References
 
-→ skills/forge-review/references/frontend-check-patterns.md
-→ skills/forge-review/references/frontend-check-tier-b.md
-→ skills/forge-review/references/frontend-check-tier-c.md
+→ skills/forge/lib/review/references/frontend-check-patterns.md
+→ skills/forge/lib/review/references/frontend-check-tier-b.md
+→ skills/forge/lib/review/references/frontend-check-tier-c.md
