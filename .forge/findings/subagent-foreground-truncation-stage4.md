@@ -5,12 +5,13 @@ commit: 37b329a
 generated_at: 2026-05-17T01:05:07Z
 last_updated: 2026-05-17T01:10:00Z
 experiment: option-3-step-0.5-optional
-result: closure-with-known-limitations
+result: complete
 spec_status: closure
+closure_upgraded_by: forge-review-diff-context-fidelity-stage2 (2026-05-17)
 followup_specs:
-  - forge-review-diff-context-fidelity (orchestrator: .diff-context.md writes summary instead of patch)
+  - forge-review-diff-context-fidelity (RESOLVED: scripted preparation + CI contract + PostToolUse guard)
 known_limitations:
-  - preamble-before-layer-heading (LLM model behavior, prompt-resistant)
+  - preamble-before-layer-heading (LLM model behavior, now guarded by CI contract test)
 ---
 
 # Subagent Foreground Truncation — Stage 4 Real Smoke

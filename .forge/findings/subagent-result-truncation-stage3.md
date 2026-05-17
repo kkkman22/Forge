@@ -4,8 +4,9 @@ stage: 3
 commit: b2d1f65
 generated_at: 2026-05-17T00:34:16Z
 experiment: background-fallback
-result: failed
-followup_spec: subagent-foreground-truncation
+result: complete
+closure_upgraded_by: forge-review-diff-context-fidelity-stage2 (2026-05-17)
+followup_spec: subagent-foreground-truncation (RESOLVED via cascade closure)
 three_strike_reroute_triggered: true
 ---
 
