@@ -57,13 +57,15 @@ export interface QualityGateItem {
 export interface ReviewReportFrontmatter {
   topic: string;
   date: string;
-  result: "pass" | "fail" | "incomplete";
+  result: "pass" | "fail" | "blocked" | "incomplete";
   /** Commit hash at the time of review. Optional for backward compatibility. */
   reviewed_at_commit?: string;
   p0_count: number;
   p1_count: number;
   p2_count: number;
   p3_count: number;
+  /** How the review report was produced. Default: subagent-parallel. */
+  methodology?: "subagent-parallel" | "subagent-serial" | "ci-evidence" | "unavailable";
 }
 
 export interface QualityGateResult {
