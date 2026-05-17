@@ -122,12 +122,14 @@ monolith_acknowledged: true
 **Expected**: output contains "forge" (or "not installed" → install first)
 
 **Verdict 格式**（写入 spike 文档）：
-- `pass` — `${CLAUDE_PLUGIN_ROOT}` 解析稳定，loader 无 silent shadow → 继续 Task 1
-- `fail-with-mitigation` — 有问题但可缓解（如必须用相对路径）→ 修订 spec R2.2 后继续
-- `P0-block` — silent shadow 出现 → 整个 plan A 作废，本 plan 标记 status: aborted，重新 decide
+- `pass-dev-mode` — cwd-relative 解析正确，path safety 全过 → 继续 Task 1
+- `fail-with-mitigation` — 有问题但可缓解 → 修订 spec R2.2 后继续
+- `aborted` — 不可恢复的问题 → plan 标记 status: aborted，重新 decide
+
+本 spike 已 **PASS**（commit a92d8e7，verdict: `pass-dev-mode + plugin-mode-deferred`）。plan 后续任务可继续。silent shadow 验证推迟到 Pre-Ship Verification Checklist（见 plan 末尾）。
 
 **Verify-By**: manual
-**Evidence**: `.forge/findings/worktree-spike-2026-05-17.md` 含三步实测命令、输出文本、final verdict
+**Evidence**: `.forge/findings/worktree-spike-2026-05-17.md` 含实测命令、输出、final verdict
 
 **Commit Message**: `docs(forge-collapse): add worktree path resolution spike report`
 
@@ -742,6 +744,19 @@ Task 0 (Wave 0 spike, P0 blocker)
 2. **R-2 测试用 stub fixture**：Task 1-3 写测试时 lib 还不存在，部分测试需要 fixture mock 或跳到 Task 6 后才能 GREEN。这是预期，不视为缺陷。
 3. **R-3 dispatch_mode flag 实际行为**：Task 10 把 legacy 模式实现为"输出提示，不实际执行 legacy 路径"。这是 spec R2.10 允许的简化。完整 legacy 路径实现可在 v2.5.1 补，本 plan 不做。
 4. **手动验证依赖**：R1.2（`/` 菜单）和 R2.8（worktree spike）需要人工在 Claude Code CLI 实测。Task 0 + Task 15 都包含 manual evidence。
+
+## Pre-Ship Verification Checklist (R2.8b deferred items)
+
+ship 阶段（Task 15 之后、merge 之前）必须完成以下 manual evidence：
+
+1. `claude plugin install file:///Users/king/code/Forge` 安装 plugin
+2. 验证 `${CLAUDE_PLUGIN_ROOT}` 解析到 plugin install 根
+3. `cd .claude/worktrees/<x>/ && /forge zoom-out test`
+   → lib 路径仍指向 plugin install 根（不是 worktree 副本）
+4. （可行时）main + worktree 同时装 plugin → 观察 loader 行为
+5. silent shadow → P0 阻断 ship，回退到 v2.5.1 fix
+
+verdict 追加到 `.forge/findings/worktree-spike-2026-05-17.md` §Plugin Mode Verification。
 
 ## 配套文件交接（plan → build）
 
