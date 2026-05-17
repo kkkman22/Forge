@@ -15,6 +15,7 @@ export function parseReviewConfig(configContent: string | undefined): ReviewConf
     if (Number.isInteger(parsed) && parsed >= MIN && parsed <= MAX) {
       return { subagent_concurrency: parsed };
     }
+    // biome-ignore lint/suspicious/noConsole: config parser warning is intentional (no logger access)
     console.warn(
       `FORGE_REVIEW_CONCURRENCY invalid (${envValue}); falling back to config.md or default=${DEFAULT_CONCURRENCY}`,
     );
@@ -27,6 +28,7 @@ export function parseReviewConfig(configContent: string | undefined): ReviewConf
       if (Number.isInteger(parsed) && parsed >= MIN && parsed <= MAX) {
         return { subagent_concurrency: parsed };
       }
+      // biome-ignore lint/suspicious/noConsole: config parser warning is intentional (no logger access)
       console.warn(
         `subagent_concurrency invalid in config.md (${match[1]}); falling back to default=${DEFAULT_CONCURRENCY}`,
       );

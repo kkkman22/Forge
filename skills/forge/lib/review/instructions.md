@@ -83,7 +83,7 @@ node scripts/prepare-diff-context.mjs
 | security-check | `.claude/agents/security-check.md` | 3 — Security & Risk |
 | frontend-check | `.claude/agents/frontend-check.md` | 4 — Frontend (conditional) |
 
-**启动**：标准/全量路径并行启动 3 个（`Promise.allSettled`）；轻量/无 Spec 模式仅 quality-check + security-check。**Layer 4**：检测到 `src/**/*.vue` 或 `package.json` 含 `vue` 时并行启动 frontend-check agent。
+**启动**：标准/全量路径按 `review.subagent_concurrency` 配置启动（默认 3，范围 1-10；可通过 `FORGE_REVIEW_CONCURRENCY` 环境变量覆盖），使用 `runSubagentsWithConcurrency`；轻量/无 Spec 模式仅 quality-check + security-check。**Layer 4**：检测到 `src/**/*.vue` 或 `package.json` 含 `vue` 时并行启动 frontend-check agent。**SDK 抽风时**（命中 `Error: No task found with ID` 等 task registry purge 现象，详见 `.forge/findings/agent-sdk-task-id-purge-2.1.143.md`）可临时设 `FORGE_REVIEW_CONCURRENCY=1` 完全串行。
 
 **容错**：`Promise.allSettled` 等待。单个失败不阻断；全部失败则终止。失败 Layer 标注"评审失败"。
 
