@@ -247,10 +247,13 @@ export {
   checkShipGate,
   checkShipGateWithChecklist,
   checkShipGateWithFreshness,
+  checkShipGateWithForceSkip,
+  recordForceSkip,
   type ProgressResult,
   type ReviewFreshnessResult,
   type ReviewResult,
   type ShipGateResult,
+  type ShipOptions,
   type TestResult,
 } from "./ship.js";
 // Spec Health (merged: type-only + value blocks)

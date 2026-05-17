@@ -76,6 +76,23 @@ Uncommitted: !`git status --short 2>/dev/null | head -10 || echo "clean"`
 
 **全部通过**后进入交付选项选择。
 
+**Escape Hatch — `--force-skip-review`**：在极端紧急场景（CI 系统也下线、所有 fallback 不可用、但必须紧急 ship）时，提供 `--force-skip-review --reason="<non-empty>"` CLI 选项。此可逆逃生阀：
+
+- 绕过 methodology 字段检查和所有门禁
+- 在 commit message 中添加 `Reviewed-by: SKIPPED-BY-FORCE (reason: <user input>)`
+- 写入审计记录到 `.forge/findings/force-skip-review-<date>.md`，含 commit hash、reason、timestamp 和 user identity
+
+此逃生阀**可逆**：移除 flag 即可重新启用正常门禁。滥用可通过 findings 文件追溯。
+
+**函数调用**：`checkShipGateWithForceSkip(review, test, progress, options)`
+- 参数：`review` — `ReviewResult`；`test` — `TestResult`；`progress` — `ProgressResult`；`options` — `ShipOptions`（含 `forceSkipReview?: boolean`、`forceSkipReason?: string`）
+- 返回：`{ allowed: boolean, reasons: string[], forceSkipped?: boolean }`
+- 用途：当 `forceSkipReview=true` 且 `forceSkipReason` 非空时，绕过所有门禁并返回 `allowed=true`
+
+**函数调用**：`recordForceSkip(commitHash, reason, user)`
+- 参数：`commitHash` — commit hash；`reason` — force-skip 原因；`user` — 用户标识
+- 用途：记录 force-skip 事件到 findings 文件以供审计
+
 </HARD-GATE>
 
 ---

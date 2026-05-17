@@ -385,6 +385,8 @@ import {
   buildFailureEvolutionMarker,
   type FailureContext,
 } from "./failure-sink.js";
+import type { Methodology } from "./schemas/review-report.js";
+import { runSubagentsWithConcurrency } from "./subagent-runner.js";
 
 /**
  * Input for {@link buildReviewEvolutionArtifacts}.
@@ -663,4 +665,210 @@ export function atomicUpdateFrontmatter(
   const tmpPath = `${filePath}.tmp`;
   writeFileSync(tmpPath, renderWithFrontmatter(fm, body));
   renameSync(tmpPath, filePath);
+}
+
+// ---------------------------------------------------------------------------
+// Fallback Ladder Implementation (R1, R2, R3, R5)
+// ---------------------------------------------------------------------------
+
+/**
+ * Input for the review fallback ladder.
+ */
+export interface FallbackLadderInput {
+  /** Subagent invocations to execute. */
+  invocations: SubagentInvocation[];
+  /** Executor function for each invocation. */
+  executor: (inv: SubagentInvocation) => Promise<SubagentResult>;
+  /** Optional path to CI evidence file. */
+  ciEvidencePath?: string;
+}
+
+/**
+ * Output from the review fallback ladder.
+ */
+export interface FallbackLadderResult {
+  /** The methodology used to produce the review. */
+  methodology: Methodology;
+  /** Successfully completed subagent results. */
+  succeeded: Array<{ agentType: string; result: string }>;
+  /** Failed subagent records. */
+  failed: Array<{ agentType: string; error: string }>;
+  /** Trace of fallback ladder execution. */
+  trace: FallbackLadderTrace[];
+  /** Number of retries performed (0 or 1). */
+  retryCount: number;
+  /** Signature of L0 failure (e.g., "task-id-purge"). */
+  l0FailureSignature?: string;
+  /** CI evidence if L2 was used. */
+  ciEvidence?: { severity_counts: Record<string, number>; raw: string };
+}
+
+/**
+ * Single level execution trace entry.
+ */
+export interface FallbackLadderTrace {
+  level: "L0" | "L1" | "L2" | "L3";
+  startedAt: number;
+  finishedAt: number;
+  outcome: "all-success" | "partial-success" | "all-fail" | "ci-hit" | "ci-miss" | "unavailable";
+}
+
+/**
+ * Execute the review fallback ladder: L0 → L1 → L2 → L3.
+ *
+ * L0: Parallel subagent execution (default concurrency)
+ * L1: Serial retry (concurrency=1) if L0 all-fail
+ * L2: CI evidence if L1 all-fail and file exists
+ * L3: Unavailable report if L2 miss
+ *
+ * @param input - Fallback ladder configuration
+ * @returns Fallback ladder result with methodology and trace
+ */
+export async function runReviewFallbackLadder(
+  input: FallbackLadderInput,
+): Promise<FallbackLadderResult> {
+  const trace: FallbackLadderTrace[] = [];
+
+  // ─── L0: Default parallel path ───
+  const l0Start = Date.now();
+  const l0 = await runSubagentsWithConcurrency(
+    input.invocations,
+    input.executor,
+    3, // Default concurrency from config would be used in real implementation
+  );
+  const l0AllFail = l0.succeeded.length === 0;
+  trace.push({
+    level: "L0",
+    startedAt: l0Start,
+    finishedAt: Date.now(),
+    outcome: l0AllFail ? "all-fail" : l0.failed.length > 0 ? "partial-success" : "all-success",
+  });
+
+  if (!l0AllFail) {
+    return {
+      methodology: "subagent-parallel",
+      succeeded: l0.succeeded,
+      failed: l0.failed,
+      trace,
+      retryCount: 0,
+    };
+  }
+
+  // ─── L1: Serial retry ───
+  const l0Sig = summarizeFailureSignature(l0.failed);
+  // biome-ignore lint/suspicious/noConsole: User feedback for fallback ladder
+  console.warn(`⚠ L0 subagent dispatch failed (${l0Sig}); retrying with concurrency=1...`);
+
+  const l1Start = Date.now();
+  const l1 = await runSubagentsWithConcurrency(input.invocations, input.executor, 1);
+  const l1AllFail = l1.succeeded.length === 0;
+  trace.push({
+    level: "L1",
+    startedAt: l1Start,
+    finishedAt: Date.now(),
+    outcome: l1AllFail ? "all-fail" : l1.failed.length > 0 ? "partial-success" : "all-success",
+  });
+
+  // biome-ignore lint/suspicious/noConsole: User feedback for fallback ladder
+  console.warn(
+    `L1 retry result: ${l1.succeeded.length}/${input.invocations.length} subagents recovered`,
+  );
+
+  if (!l1AllFail) {
+    return {
+      methodology: "subagent-serial",
+      succeeded: l1.succeeded,
+      failed: l1.failed,
+      trace,
+      retryCount: 1,
+      l0FailureSignature: l0Sig,
+    };
+  }
+
+  // ─── L2: CI evidence ───
+  // biome-ignore lint/suspicious/noConsole: User feedback for fallback ladder
+  console.warn(`⚠ L1 retry exhausted; checking CI evidence (L2)...`);
+  const l2Start = Date.now();
+
+  if (input.ciEvidencePath) {
+    const ciResult = tryParseCiEvidence(input.ciEvidencePath);
+    if (ciResult) {
+      trace.push({ level: "L2", startedAt: l2Start, finishedAt: Date.now(), outcome: "ci-hit" });
+      return {
+        methodology: "ci-evidence",
+        succeeded: [],
+        failed: [],
+        trace,
+        retryCount: 1,
+        l0FailureSignature: l0Sig,
+        ciEvidence: ciResult,
+      };
+    }
+  }
+  trace.push({ level: "L2", startedAt: l2Start, finishedAt: Date.now(), outcome: "ci-miss" });
+
+  // ─── L3: Unavailable ───
+  trace.push({
+    level: "L3",
+    startedAt: Date.now(),
+    finishedAt: Date.now(),
+    outcome: "unavailable",
+  });
+
+  return {
+    methodology: "unavailable",
+    succeeded: [],
+    failed: l1.failed,
+    trace,
+    retryCount: 1,
+    l0FailureSignature: l0Sig,
+  };
+}
+
+/**
+ * Summarize failure signature from error messages.
+ */
+function summarizeFailureSignature(failed: Array<{ agentType: string; error: string }>): string {
+  const errorTypes = new Set(
+    failed.map((f) => {
+      if (/No task found with ID/.test(f.error)) return "task-id-purge";
+      if (/timeout/i.test(f.error)) return "timeout";
+      if (/turn limit/i.test(f.error)) return "turn-limit";
+      return "other";
+    }),
+  );
+  return Array.from(errorTypes).join(",");
+}
+
+/**
+ * Try to parse CI evidence from a file.
+ */
+function tryParseCiEvidence(
+  path: string,
+): { severity_counts: Record<string, number>; raw: string } | null {
+  try {
+    if (path.includes("..")) {
+      return null;
+    }
+    const normalized = path.replace(/\\/g, "/");
+    if (!normalized.includes(".forge/reviews/")) {
+      return null;
+    }
+    const content = readFileSync(path, "utf-8");
+    const { fm } = splitFrontmatterAndBody(content);
+
+    const severity_counts: Record<string, number> = {};
+    if (fm.p0_count !== undefined) severity_counts.p0 = Number(fm.p0_count);
+    if (fm.p1_count !== undefined) severity_counts.p1 = Number(fm.p1_count);
+    if (fm.p2_count !== undefined) severity_counts.p2 = Number(fm.p2_count);
+    if (fm.p3_count !== undefined) severity_counts.p3 = Number(fm.p3_count);
+
+    if (Object.keys(severity_counts).length === 0) {
+      return null;
+    }
+
+    return { severity_counts, raw: content };
+  } catch {
+    return null;
+  }
 }

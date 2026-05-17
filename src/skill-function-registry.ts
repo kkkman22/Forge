@@ -192,6 +192,18 @@ export const SKILL_FUNCTION_REGISTRY: readonly SkillFunctionEntry[] = [
   },
   {
     module: "ship.ts",
+    functionName: "checkShipGateWithForceSkip",
+    skills: ["forge/lib/ship/instructions.md"],
+    parameterNames: ["review", "test", "progress", "options"],
+  },
+  {
+    module: "ship.ts",
+    functionName: "recordForceSkip",
+    skills: ["forge/lib/ship/instructions.md"],
+    parameterNames: ["commitHash", "reason", "user"],
+  },
+  {
+    module: "ship.ts",
     functionName: "buildShipGateBlockArtifacts",
     skills: ["forge/lib/ship/instructions.md"],
     parameterNames: ["topic", "tier", "reason", "situation", "now", "sequenceInDay"],
