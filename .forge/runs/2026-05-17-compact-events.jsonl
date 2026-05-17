@@ -14,3 +14,5 @@
 {"timestamp":"2026-05-17T02:03:55Z","event":"precompact_snapshot","detail":"slug=subagent-hook-context-budget phase=shipped"}
 {"timestamp":"2026-05-17T02:22:05Z","event":"postcompact_restore","detail":"slug=subagent-hook-context-budget"}
 {"timestamp":"2026-05-17T02:22:05Z","event":"precompact_snapshot","detail":"slug=subagent-hook-context-budget phase=shipped"}
+{"timestamp":"2026-05-17T06:40:10Z","event":"precompact_snapshot","detail":"slug=forge-single-entry-skills-collapse phase=plan_approved"}
+{"timestamp":"2026-05-17T06:41:56Z","event":"postcompact_restore","detail":"slug=forge-single-entry-skills-collapse"}

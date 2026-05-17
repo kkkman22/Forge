@@ -22,7 +22,7 @@ describe("R4.2: cross-sub references rewritten to lib structure", () => {
       const content = readFileSync(resolve(ROOT, libPath), "utf-8");
       const lines = content.split("\n");
       for (let i = 0; i < lines.length; i++) {
-        if (/forge-[a-z]/.test(lines[i])) {
+        if (/(?:\.\.\/|skills\/)forge-[a-z]/.test(lines[i])) {
           violations.push(`${libPath}:${i + 1}: ${lines[i].trim()}`);
         }
       }

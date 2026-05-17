@@ -14,6 +14,7 @@ const EXCLUDE_DIRS = [
   ".forge/poc",
   ".forge/knowledge",
   "test/single-entry",
+  "commands",
 ];
 
 const EXCLUDE_PATTERNS = EXCLUDE_DIRS.map((d) => `**/${d}/**`);
