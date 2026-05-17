@@ -1,3 +1,7 @@
+<!-- MIGRATION STUB: created during 2026-05-17 Task 6 to satisfy SKILL.md:68 reference.
+  Original file was never authored. Content reflects spec section indications;
+  treat as placeholder pending forge-recap maintenance pass. -->
+
 # Category Heuristics for Recap
 
 Classification rules for commits and tasks:
