@@ -53,7 +53,7 @@ This file keeps only rules that still need top-of-session reminders.
 **Added**: 2026-05-10
 **Confidence**: 0.9
 **Last_triggered**: 2026-05-10
-**Infra_Ref**: `.claude/agents/spec-check.md` Check Item 6 + `skills/forge-plan/references/atomic-task-format.md` Pack Data Task Integration Test Requirement
+**Infra_Ref**: `.claude/agents/spec-check.md` Check Item 6 + `skills/forge/lib/plan/references/atomic-task-format.md` Pack Data Task Integration Test Requirement
 
 ### R4: Stub With TODO 不是 Zero-Pack 合理降级
 

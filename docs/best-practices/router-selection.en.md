@@ -47,5 +47,5 @@ User input: /forge <task description>
 ## Related Files
 
 - Routing entry: `CLAUDE.md §1 Task Routing Rules`
-- Router SKILL: `skills/forge-router/SKILL.md`
+- Router SKILL: `skills/forge/lib/router/instructions.md`
 - Scheduler: `src/skill-scheduler.ts`
