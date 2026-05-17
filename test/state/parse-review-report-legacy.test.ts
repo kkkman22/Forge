@@ -1,10 +1,5 @@
 import { describe, expect, it } from "vitest";
-import {
-  parseReviewReportGraceful,
-  REVIEW_REPORT_DEFAULTS,
-} from "../../src/state.js";
-
-const VALID_METHODOLOGIES = ["subagent-parallel", "subagent-serial", "ci-evidence", "unavailable"] as const;
+import { parseReviewReportGraceful } from "../../src/state.js";
 
 describe("parseReviewReportLegacy — methodology field", () => {
   it("fills methodology default for old reports without field", () => {
