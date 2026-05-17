@@ -2,8 +2,8 @@ import { existsSync, readFileSync } from "node:fs";
 import { resolve } from "node:path";
 import { describe, expect, it } from "vitest";
 
-const BUILD_SKILL = "skills/forge-build/SKILL.md";
-const REFS = "skills/forge-build/references";
+const BUILD_SKILL = "skills/forge/lib/build/instructions.md";
+const REFS = "skills/forge/lib/build/references";
 
 describe("Build Nature Mode contracts", () => {
   // --- Reference file existence ---
@@ -85,13 +85,13 @@ describe("Build Nature Mode contracts", () => {
   // --- Deprecation ---
 
   it("forge-refactor SKILL.md contains deprecation notice", () => {
-    const content = readFileSync("skills/forge-refactor/SKILL.md", "utf-8");
+    const content = readFileSync("skills/forge/lib/refactor/instructions.md", "utf-8");
     expect(content).toContain("deprecated");
     expect(content).toContain("refactor mode");
   });
 
   it("forge-fix SKILL.md contains deprecation notice", () => {
-    const content = readFileSync("skills/forge-fix/SKILL.md", "utf-8");
+    const content = readFileSync("skills/forge/lib/fix/instructions.md", "utf-8");
     expect(content).toContain("deprecated");
     expect(content).toContain("bugfix mode");
   });

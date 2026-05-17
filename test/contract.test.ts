@@ -39,49 +39,44 @@ describe("Contract: router tiers ↔ README", () => {
 });
 
 // ---------------------------------------------------------------------------
-// 2. All 12 skill directories exist
+// 2. All skill instructions exist in collapsed lib structure
 // ---------------------------------------------------------------------------
 
-describe("Contract: all 12 skill directories exist", () => {
+describe("Contract: all skill instructions exist in collapsed lib", () => {
   const expectedSkills = [
-    "forge-router",
-    "forge-decide",
-    "forge-spec",
-    "forge-plan",
-    "forge-build",
-    "forge-review",
-    "forge-test",
-    "forge-ship",
-    "forge-learn",
-    "forge-debug",
-    "forge-status",
-    "forge-resume",
-    "forge-abort",
+    "router",
+    "decide",
+    "spec",
+    "plan",
+    "build",
+    "review",
+    "test",
+    "ship",
+    "learn",
+    "debug",
+    "status",
+    "resume",
+    "abort",
   ];
 
   for (const skill of expectedSkills) {
-    it(`skills/${skill}/SKILL.md exists`, () => {
-      const skillPath = resolve(ROOT, `skills/${skill}/SKILL.md`);
-      expect(existsSync(skillPath), `Missing: skills/${skill}/SKILL.md`).toBe(true);
+    it(`skills/forge/lib/${skill}/instructions.md exists`, () => {
+      const skillPath = resolve(ROOT, `skills/forge/lib/${skill}/instructions.md`);
+      expect(existsSync(skillPath), `Missing: skills/forge/lib/${skill}/instructions.md`).toBe(true);
     });
   }
 
   for (const skill of expectedSkills) {
-    it(`skills/${skill}/SKILL.md has YAML frontmatter with name field`, () => {
-      const content = readFileSync(resolve(ROOT, `skills/${skill}/SKILL.md`), "utf-8");
-      expect(content.startsWith("---\n"), `${skill} SKILL.md missing frontmatter`).toBe(true);
-      expect(content).toContain(`name: ${skill}`);
+    it(`skills/forge/lib/${skill}/instructions.md has YAML frontmatter`, () => {
+      const content = readFileSync(resolve(ROOT, `skills/forge/lib/${skill}/instructions.md`), "utf-8");
+      expect(content.startsWith("---\n"), `${skill} instructions.md missing frontmatter`).toBe(true);
     });
   }
 
-  it("only forge-router allows model invocation (others have disable-model-invocation: true)", () => {
+  it("no skill has disable-model-invocation (collapsed mode, dispatcher handles it)", () => {
     for (const skill of expectedSkills) {
-      const content = readFileSync(resolve(ROOT, `skills/${skill}/SKILL.md`), "utf-8");
-      if (skill === "forge-router") {
-        expect(content).not.toContain("disable-model-invocation: true");
-      } else {
-        expect(content).toContain("disable-model-invocation: true");
-      }
+      const content = readFileSync(resolve(ROOT, `skills/forge/lib/${skill}/instructions.md`), "utf-8");
+      expect(content).not.toContain("disable-model-invocation: true");
     }
   });
 });
@@ -713,8 +708,8 @@ describe("Contract: config.md evolved rules protection", () => {
 // ---------------------------------------------------------------------------
 
 describe("Contract: forge-learn SKILL.md rule distillation", () => {
-  const skillDir = resolve(ROOT, "skills/forge-learn");
-  const skillPath = resolve(skillDir, "SKILL.md");
+  const skillDir = resolve(ROOT, "skills/forge/lib/learn");
+  const skillPath = resolve(skillDir, "instructions.md");
   const content = readFileSync(skillPath, "utf-8");
 
   const referencesDir = resolve(skillDir, "references");
@@ -954,20 +949,20 @@ describe("Contract: plugin.json declares forge-context MCP server", () => {
 
 describe("Contract: SKILL references/ structure", () => {
   const skillsWithRefs: Record<string, string[]> = {
-    "forge-build": [
+    "build": [
       "tdd-rules.md",
       "closure-probes.md",
       "context-budget.md",
       "anti-drift.md",
       "function-contracts.md",
     ],
-    "forge-review": [
+    "review": [
       "confidence-filtering.md",
       "dedup-pipeline.md",
       "quality-gate.md",
       "function-contracts.md",
     ],
-    "forge-plan": [
+    "plan": [
       "atomic-task-format.md",
       "lightweight-task-format.md",
       "prohibited-content.md",
@@ -975,48 +970,49 @@ describe("Contract: SKILL references/ structure", () => {
     ],
   };
 
+  const libDir = resolve(ROOT, "skills", "forge", "lib");
+
   for (const [skill, expectedFiles] of Object.entries(skillsWithRefs)) {
-    describe(`skills/${skill}/references/`, () => {
+    describe(`skills/forge/lib/${skill}/references/`, () => {
       for (const file of expectedFiles) {
         it(`${file} exists`, () => {
-          const refPath = resolve(ROOT, "skills", skill, "references", file);
-          expect(existsSync(refPath), `Missing: skills/${skill}/references/${file}`).toBe(true);
+          const refPath = resolve(libDir, skill, "references", file);
+          expect(existsSync(refPath), `Missing: skills/forge/lib/${skill}/references/${file}`).toBe(true);
         });
       }
     });
   }
 
-  it("all internal reference pointers in SKILL.md files point to existing files", () => {
+  it("all internal reference pointers in instructions.md files point to existing files", () => {
     for (const skill of Object.keys(skillsWithRefs)) {
-      const skillContent = readFileSync(resolve(ROOT, "skills", skill, "SKILL.md"), "utf-8");
+      const skillContent = readFileSync(resolve(libDir, skill, "instructions.md"), "utf-8");
       const refs = skillContent.match(/→ 详见 references\/[\w-]+\.md/g) || [];
       for (const ref of refs) {
         const fileName = ref.replace("→ 详见 references/", "");
-        const refPath = resolve(ROOT, "skills", skill, "references", fileName);
+        const refPath = resolve(libDir, skill, "references", fileName);
         expect(
           existsSync(refPath),
-          `Broken pointer in ${skill}/SKILL.md: references/${fileName}`,
+          `Broken pointer in ${skill}/instructions.md: references/${fileName}`,
         ).toBe(true);
       }
     }
   });
 
   it("cross-SKILL reference pointers resolve to existing files", () => {
-    const crossRefPattern = /\.\.\/forge-build\/references\/[\w-]+\.md/g;
-    const skillsDir = resolve(ROOT, "skills");
+    const crossRefPattern = /\.\.\/build\/references\/[\w-]+\.md/g;
 
-    for (const dir of readdirSync(skillsDir, { withFileTypes: true })) {
+    for (const dir of readdirSync(libDir, { withFileTypes: true })) {
       if (!dir.isDirectory()) continue;
-      const skillPath = resolve(skillsDir, dir.name, "SKILL.md");
-      if (!existsSync(skillPath)) continue;
+      const instrPath = resolve(libDir, dir.name, "instructions.md");
+      if (!existsSync(instrPath)) continue;
 
-      const content = readFileSync(skillPath, "utf-8");
+      const content = readFileSync(instrPath, "utf-8");
       const refs = content.match(crossRefPattern) || [];
       for (const ref of refs) {
-        const resolvedPath = resolve(skillsDir, dir.name, ref);
+        const resolvedPath = resolve(libDir, dir.name, ref);
         expect(
           existsSync(resolvedPath),
-          `Broken cross-SKILL ref in ${dir.name}/SKILL.md: ${ref}`,
+          `Broken cross-SKILL ref in ${dir.name}/instructions.md: ${ref}`,
         ).toBe(true);
       }
     }
@@ -1239,7 +1235,7 @@ describe("Contract: PostToolUse boundary feedback", () => {
 
   // CI drift detection in forge-test SKILL
   it("forge-test SKILL.md contains drift detection section", () => {
-    const skillPath = resolve(ROOT, "skills/forge-test/SKILL.md");
+    const skillPath = resolve(ROOT, "skills/forge/lib/test/instructions.md");
     const content = readFileSync(skillPath, "utf-8");
     expect(content).toContain("漂移检测");
     expect(content).toContain("detectCiCommandDrift");
