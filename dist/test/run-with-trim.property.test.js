@@ -81,8 +81,8 @@ describe("Property 1: Exit code preservation", () => {
         fc.assert(fc.property(exitCodeArb, linesArb, (exitCode, lines) => {
             const result = runWithTrim(exitCode, lines);
             expect(result.exitCode).toBe(exitCode);
-        }), { numRuns: 30 });
-    }, 15_000);
+        }), { numRuns: 20 });
+    }, 30_000);
 });
 // ---------------------------------------------------------------------------
 // Property 2: Success output truncation

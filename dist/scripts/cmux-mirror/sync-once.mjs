@@ -5,6 +5,7 @@
  */
 import { existsSync, readFileSync, writeFileSync, renameSync, unlinkSync } from "node:fs";
 import { join } from "node:path";
+import { shouldSkipForSubagent } from "../lib/hook-stdin-router.mjs";
 import { cmuxAvailable } from "./lib/availability.mjs";
 import { readForgeState } from "./lib/reader.mjs";
 import { emitCommands } from "./lib/emitter.mjs";
@@ -127,6 +128,8 @@ export async function syncOnceWithRespawn(opts = {}) {
 // CLI entry point
 const args = process.argv.slice(2);
 if (args.length > 0 && args[0] !== "--test") {
+    if (await shouldSkipForSubagent())
+        process.exit(0);
     const forgeDir = args[0] || ".forge";
     // Validate: reject path traversal
     if (forgeDir.includes("..")) {
