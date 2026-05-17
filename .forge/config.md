@@ -7,6 +7,7 @@ stack:
 security_level: 1
 knowledge_limit: 20
 max_parallel_agents: 6    # Range: 1-10, default 6
+review.subagent_concurrency: 3  # Range: 1-10; default 3; env FORGE_REVIEW_CONCURRENCY overrides
 findings_retention_days: 30
 post_push_verify_enabled: true
 ci_check_command: "npm run check"
