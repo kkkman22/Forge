@@ -62,6 +62,8 @@ export interface ReviewReportFields {
   p1_count: number;
   p2_count: number;
   p3_count: number;
+  /** How the review report was produced. Default: subagent-parallel. */
+  methodology: string;
 }
 
 // ---------------------------------------------------------------------------
@@ -87,6 +89,7 @@ export const REVIEW_REPORT_DEFAULTS: ReviewReportFields = {
   p1_count: 0,
   p2_count: 0,
   p3_count: 0,
+  methodology: "subagent-parallel",
 };
 
 // ---------------------------------------------------------------------------
@@ -307,6 +310,8 @@ function parseReviewReportViaSchema(content: string | undefined): {
   if (p2 !== null) rawFields.p2_count = p2;
   const p3 = extractNumericField(fm.raw, "p3_count");
   if (p3 !== null) rawFields.p3_count = p3;
+  const methodologyStr = extractStringField(fm.raw, "methodology");
+  if (methodologyStr !== null) rawFields.methodology = methodologyStr;
 
   const { value, errors } = safeParseReviewReport(rawFields);
 
@@ -318,6 +323,7 @@ function parseReviewReportViaSchema(content: string | undefined): {
     p1_count: (value.p1_count as number | undefined) ?? REVIEW_REPORT_DEFAULTS.p1_count,
     p2_count: (value.p2_count as number | undefined) ?? REVIEW_REPORT_DEFAULTS.p2_count,
     p3_count: (value.p3_count as number | undefined) ?? REVIEW_REPORT_DEFAULTS.p3_count,
+    methodology: (value.methodology as string | undefined) ?? REVIEW_REPORT_DEFAULTS.methodology,
   };
 
   if (resultStr === null)
@@ -356,14 +362,32 @@ function parseReviewReportLegacy(content: string | undefined): {
   const p1 = extractNumericField(fm.raw, "p1_count");
   const p2 = extractNumericField(fm.raw, "p2_count");
   const p3 = extractNumericField(fm.raw, "p3_count");
+  const methodologyRaw = extractStringField(fm.raw, "methodology");
+
+  const VALID_METHODOLOGIES = ["subagent-parallel", "subagent-serial", "ci-evidence", "unavailable"];
+  let methodology = "subagent-parallel";
+  if (methodologyRaw !== null) {
+    if (VALID_METHODOLOGIES.includes(methodologyRaw)) {
+      methodology = methodologyRaw;
+    } else {
+      warnings.push(`methodology field invalid: ${methodologyRaw}`);
+    }
+  }
+
+  let finalResult = resultStr ?? REVIEW_REPORT_DEFAULTS.result;
+  if (methodology === "unavailable" && finalResult !== "blocked") {
+    warnings.push("methodology=unavailable forces result=blocked");
+    finalResult = "blocked";
+  }
 
   const parsed: ReviewReportFields = {
-    result: resultStr ?? REVIEW_REPORT_DEFAULTS.result,
+    result: finalResult,
     reviewed_at_commit: reviewedCommit ?? REVIEW_REPORT_DEFAULTS.reviewed_at_commit,
     p0_count: p0 ?? REVIEW_REPORT_DEFAULTS.p0_count,
     p1_count: p1 ?? REVIEW_REPORT_DEFAULTS.p1_count,
     p2_count: p2 ?? REVIEW_REPORT_DEFAULTS.p2_count,
     p3_count: p3 ?? REVIEW_REPORT_DEFAULTS.p3_count,
+    methodology,
   };
 
   if (resultStr === null)
