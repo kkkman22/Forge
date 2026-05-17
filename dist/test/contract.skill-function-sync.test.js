@@ -91,19 +91,22 @@ describe("Direction 1: Registry functions exist in source modules", () => {
 // Direction 2: SKILL.md → Registry (every SKILL reference has a registry entry)
 // ---------------------------------------------------------------------------
 describe("Direction 2: SKILL.md function references have registry entries", () => {
-    const skillDirs = readdirSync(SKILLS_DIR, { withFileTypes: true })
-        .filter((d) => d.isDirectory())
-        .map((d) => d.name);
-    for (const dir of skillDirs) {
-        const skillPath = resolve(SKILLS_DIR, dir, "SKILL.md");
-        if (!existsSync(skillPath))
+    const libDir = resolve(SKILLS_DIR, "forge", "lib");
+    const subDirs = existsSync(libDir)
+        ? readdirSync(libDir, { withFileTypes: true })
+            .filter((d) => d.isDirectory())
+            .map((d) => d.name)
+        : [];
+    for (const dir of subDirs) {
+        const instrPath = resolve(libDir, dir, "instructions.md");
+        if (!existsSync(instrPath))
             continue;
-        const content = readFileSync(skillPath, "utf-8");
+        const content = readFileSync(instrPath, "utf-8");
         const refs = extractFunctionReferences(content);
         for (const funcName of refs) {
-            it(`${dir}/SKILL.md → ${funcName} has a registry entry`, () => {
+            it(`skills/forge/lib/${dir}/instructions.md → ${funcName} has a registry entry`, () => {
                 const entry = SKILL_FUNCTION_REGISTRY.find((e) => e.functionName === funcName);
-                expect(entry, `"${funcName}" referenced in skills/${dir}/SKILL.md but missing from SKILL_FUNCTION_REGISTRY. ` +
+                expect(entry, `"${funcName}" referenced in skills/forge/lib/${dir}/instructions.md but missing from SKILL_FUNCTION_REGISTRY. ` +
                     `Add an entry to src/skill-function-registry.ts.`).toBeDefined();
             });
         }
@@ -120,7 +123,7 @@ describe("Direction 3: Registry SKILL references contain the function name", () 
                 expect(existsSync(skillPath), `SKILL file not found: skills/${skill}`).toBe(true);
                 // Check both main SKILL.md and references/function-contracts.md
                 const skillContent = readFileSync(skillPath, "utf-8");
-                const skillDir = skill.replace(/\/SKILL\.md$/, "");
+                const skillDir = skill.replace(/\/(?:SKILL\.md|instructions\.md)$/, "");
                 const refPath = resolve(SKILLS_DIR, skillDir, "references", "function-contracts.md");
                 const refContent = existsSync(refPath) ? readFileSync(refPath, "utf-8") : "";
                 const allContent = skillContent + refContent;
