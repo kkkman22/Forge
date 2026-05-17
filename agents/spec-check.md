@@ -6,7 +6,6 @@ maxTurns: 10
 tools: Read, Glob, Grep
 permissionMode: plan
 memory: project
-background: true
 ---
 
 # Spec-Check — Spec Alignment Review Agent
@@ -114,11 +113,11 @@ Review 声明"✅ 新增 agent / skill / hook / template / config 文件"之前�
 **铁律**：每次评审的**第一步**必须调用 `forge_git(subcommand="diff-content", args="${BASE}...HEAD")` 工具获取已截断的 diff patch 作为唯一的变更上下文。在拿到 diff 之前，**严禁**使用 Read/Glob/Grep。如果 `forge_git` 工具不可用（MCP server 未启动），降级为单次 `Bash("git diff ${BASE}...HEAD | head -1500")`。
 
 1. **Step 0（强制首步）**：调用 `forge_git(subcommand="diff-content")` 拿到 diff patch
-2. **Step 0.5（强制次步）**：执行 `## Step 0.5 — Mandatory Context Read (one-shot)`（见下文）— **一次** Read 调用合并 spec contract extraction 与 known-failures recurrence detection
+2. **Step 0.5（可选次步）**：在确定的精确路径下，按需执行 `## Step 0.5 — Optional Context Read`（见下文）
 3. **基于 diff 内容分析变更**（不做额外 Read）
    - 从 diff 中识别每个文件的变更意图
    - 从文件头/路径中确认变更范围
-4. 逐条对照 diff 中的变更，确认每个需求有对应实现（依据 Step 0.5 提取的 contract 表）
+4. 逐条对照 diff 中的变更，确认每个需求有对应实现（依据 Step 0.5 提取的 contract 表，若有）
 5. **仅对存疑的验收标准**，用 Read 读取具体文件验证（**上限 3 次 Read**）
 6. 扫描变更文件列表，识别不在 Spec 中的新增功能（scope creep）
 7. 扫描实现 R-x 的函数，应用 Stub Detection（Check Item 3a）
@@ -126,38 +125,44 @@ Review 声明"✅ 新增 agent / skill / hook / template / config 文件"之前�
 9. 对声明的新增文件执行主分支存在性验证（Check Item 5）
 10. 对 Pack/Loader 类变更验证 integration test 存在性（Check Item 6）
 
-**Read 预算**：除 Step 0 的 forge_git 调用与 Step 0.5 的合并 Read 外，整个评审过程最多 3 次 Read 调用。超出则停止 Read，基于已有信息产出结论。
+**Read 预算**：除 Step 0 的 forge_git 调用外，整个评审过程最多 3 次 Read 调用（包含 Step 0.5 的 optional Read，若执行）。超出则停止 Read，基于已有信息产出结论。
 
 **禁止行为**：
 - ❌ 跳过 Step 0 直接 Read 变更文件
 - ❌ 对 diff 中已可见的内容重复 Read 原文件
 - ❌ Read lock 文件、dist/ 目录、或 .d.ts 文件
+- ❌ 用 Glob 枚举 `.forge/plans/`、`.forge/specs/` 或任何目录通配符 — Step 0.5 只允许对**已知精确路径**做 Read
 
 ---
 
-## Step 0.5 — Mandatory Context Read (one-shot)
+## Step 0.5 — Optional Context Read (precise paths only)
 
-合并 spec contract extraction 与 known-failures recurrence detection 为**一次** Read 调用，避免打满 Turn Budget Discipline 的预算。
+可选的上下文增强读取。**禁止**使用 Glob 枚举目录；只对已知精确路径做 Read。
 
 **执行规则**：
 
-1. **优先级判定**：先用 Glob 列出 `.forge/specs/<topic>/requirements.md`（如存在）和 `.forge/knowledge/known-failures.md`（如存在）。
-   - 仅 spec/requirements.md 存在 → Read 它，按 Path A 处理（contract extraction）。
-   - 仅 known-failures.md 存在 → Read 它，按 Path B 处理（recurrence detection）。
-   - 两份都存在 → Read **较小**的那份（用 Glob 输出的 size 判定），另一份的关键信息从 diff context 推导。
-   - 两份都不存在 → 跳过 Step 0.5，直接进 Step 1+。
-2. **Path A — Contract Extraction**（当 Read 选中 spec/requirements.md）：
-   从 spec 中提取 Validation Contract 章节（`Verify-By` / `Evidence` 字段），构建 `Map<AC-id, {VerifyBy, Evidence}>`。若某条 AC 缺 `Verify-By` 或 `Evidence` → 输出 P1 issue `spec contract incomplete — missing Verify-By/Evidence`。后续评审**优先**按 contract 表逐条匹配：
-   - `Verify-By: vitest` → 在 diff 中找对应测试文件，检查测试名匹配 Evidence
-   - `Verify-By: bash` → 在 diff 中找对应脚本变更或验证脚本存在
-   - `Verify-By: forge_git` / `Verify-By: forge_exec` → 在 diff 中验证可通过该工具调用
-   - `Verify-By: manual` → 标记为需人工确认，不自动判定
-   - **禁止**在 contract 不完整时输出"已实现"判定
-   - AC 标注 `Verify-By: vitest` 但测试 diff 只有 `expect(true).toBe(true)` 等空断言 → **P0**
-3. **Path B — Known-failures Recurrence Detection**（当 Read 选中 known-failures.md）：
-   For each entry, check if the current diff contains patterns matching the `signature` field. If matched and no fix evidence in diff → output P1 issue: `known-failure recurrence — pattern <pattern_id>, last seen at <last_seen>`.
+1. **来源识别**：从 invocation prompt 中提取 `Spec path: <exact-path>` 字面量。
+   - prompt 含 `Spec path: <P>` AND `<P> != "unknown"` AND `<P>` 是 `.md` 后缀文件 → 进入 Path A。
+   - 否则跳过 Path A。
+2. **Path A — Contract Extraction (optional)**（仅当 prompt 给出精确 spec 路径时执行）：
+   - 直接 `Read(<P>)`，**不**用 Glob，**不**对 `.forge/specs/` 或 `.forge/plans/` 目录做枚举。
+   - 从 spec 中提取 Validation Contract 章节（`Verify-By` / `Evidence` 字段），构建 `Map<AC-id, {VerifyBy, Evidence}>`。若某条 AC 缺 `Verify-By` 或 `Evidence` → 输出 P1 issue `spec contract incomplete — missing Verify-By/Evidence`。后续评审**优先**按 contract 表逐条匹配：
+     - `Verify-By: vitest` → 在 diff 中找对应测试文件，检查测试名匹配 Evidence
+     - `Verify-By: bash` → 在 diff 中找对应脚本变更或验证脚本存在
+     - `Verify-By: forge_git` / `Verify-By: forge_exec` → 在 diff 中验证可通过该工具调用
+     - `Verify-By: manual` → 标记为需人工确认，不自动判定
+     - **禁止**在 contract 不完整时输出"已实现"判定
+     - AC 标注 `Verify-By: vitest` 但测试 diff 只有 `expect(true).toBe(true)` 等空断言 → **P0**
+   - 若 Read 失败（文件不存在或 ENOENT）→ silent skip，进入 Step 1+。
+3. **Path B — Known-failures Recurrence Detection (optional)**：
+   - 仅当 `.forge/knowledge/known-failures.md` 存在 AND review scope ≥ 1 file（在 diff 中）时执行。
+   - 直接 `Read(.forge/knowledge/known-failures.md)`，不 Glob。
+   - For each entry, check if the current diff contains patterns matching the `signature` field. If matched and no fix evidence in diff → output P1 issue: `known-failure recurrence — pattern <pattern_id>, last seen at <last_seen>`.
+   - 若 known-failures.md 不存在 → silent skip。
 
-**预算**：Step 0.5 仅消耗 1 次 Glob + 1 次 Read（共 2 个 turn），与 forge_git 首步合计占用 3 turns，剩余 ≥ 6 turns 给主流程 + final-report turn。
+**预算**：Step 0.5 在最坏情况（Path A + Path B 都执行）消耗 2 次 Read（Glob 调用数 = 0），与 forge_git 首步合计占用 3 turns，剩余 ≥ 7 turns 给主流程 + final-report turn。
+
+> 与 quality-check / security-check 的 `Step 0.5 — Known-failures Recurrence Detection (optional)` 同模式：可选执行 + 精确路径 + silent skip。
 
 ---
 
