@@ -1,9 +1,9 @@
 import { readFileSync } from "node:fs";
 import { resolve } from "node:path";
 import { describe, expect, it } from "vitest";
-const ATOMIC_PATH = resolve(__dirname, "../../skills/forge-plan/references/atomic-task-format.md");
-const LW_PATH = resolve(__dirname, "../../skills/forge-plan/references/lightweight-task-format.md");
-const DOC_PATH = resolve(__dirname, "../../skills/forge-plan/references/plan-document-format.md");
+const ATOMIC_PATH = resolve(__dirname, "../../skills/forge/lib/plan/references/atomic-task-format.md");
+const LW_PATH = resolve(__dirname, "../../skills/forge/lib/plan/references/lightweight-task-format.md");
+const DOC_PATH = resolve(__dirname, "../../skills/forge/lib/plan/references/plan-document-format.md");
 describe("Plan template — Depends On field", () => {
     it("atomic-task-format.md mentions Depends On", () => {
         const content = readFileSync(ATOMIC_PATH, "utf-8");

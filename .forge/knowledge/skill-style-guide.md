@@ -1,44 +1,48 @@
 ---
-style_guide_version: "1.0"
-updated: "2026-05-08"
+style_guide_version: "2.0"
+updated: "2026-05-17"
 related_specs: ["oz-skills-inspiration", "skills-cross-pollination"]
 ---
 
-# Forge SKILL.md Style Guide v1.0
+# Forge Skill Authoring Style Guide v2.0
 
 ## 1. Overview
 
-This guide defines the authoring standard for all `skills/forge-*/SKILL.md` files. It consolidates conventions observed across 19 existing skills into a single reference.
+This guide defines the authoring standard for all `skills/forge/lib/*/instructions.md` files. It consolidates conventions observed across 29 existing sub-skills into a single reference.
 
-**Audience**: Skill authors (human or AI agent) creating new forge-* skills.
+**Audience**: Skill authors (human or AI agent) creating new forge sub-skills.
 
-**Relationship to CLAUDE.md**: CLAUDE.md is the project constitution (cross-skill behavior rules). This guide is the authoring manual (how to write a compliant SKILL.md).
+**Relationship to CLAUDE.md**: CLAUDE.md is the project constitution (cross-skill behavior rules). This guide is the authoring manual (how to write a compliant instructions.md).
+
+**Architecture**: Since v2.5 (ADR-0004), `forge` is the sole registered skill. Sub-skills live under `skills/forge/lib/<sub>/instructions.md` and are dispatched by the 9-step chokepoint in `src/forge-dispatcher.ts`. Sub-skills are NOT registered as Claude Code skills — the dispatcher handles invocation via `Agent` (fork) or `Read` (inline).
 
 ## 2. Frontmatter Field Specification
 
 | Field | Type | Required | Description |
 |-------|------|----------|-------------|
-| `name` | string | Yes | Skill directory name without `forge-` prefix (e.g., `forge-plan` → `plan`). Must match kebab-case directory name. |
+| `name` | string | No | Optional display name. If omitted, inferred from directory name. |
 | `description` | string | Yes | Two-sentence format (see Section 4). |
-| `disable-model-invocation` | boolean | Yes | Must be `true` for all forge-* sub-skills (invoked via `/forge <command>` only). |
-| `license` | string | No | License identifier if applicable. |
-| `deliverable_exempt` | boolean | No | Set `true` for query/tool skills where Deliverable is trivial (e.g., forge-status). Must explain exemption in first paragraph. |
-| `skeleton_exempt_legacy` | boolean | No | Set `true` for existing skills not yet retrofitted. **New skills must NOT use this flag.** |
-| `style_guide_version` | string | No | Semantic version of this guide the skill adheres to (e.g., `"1.0"`). |
+| `dispatch_mode` | string | Yes | `fork` (Agent tool) or `inline` (Read + execute). See dispatch table in `skills/forge/SKILL.md`. |
+| `allowed_tools` | string[] | Yes | Tools the sub-skill needs. Fork mode: tools for spawned Agent. Inline mode: tools for main agent. |
+| `deliverable_exempt` | boolean | No | Set `true` for query/tool sub-skills where Deliverable is trivial (e.g., status). Must explain exemption in first paragraph. |
+| `skeleton_exempt_legacy` | boolean | No | Set `true` for existing sub-skills not yet retrofitted. **New sub-skills must NOT use this flag.** |
+| `style_guide_version` | string | No | Semantic version of this guide the sub-skill adheres to (e.g., `"2.0"`). |
+
+**Note**: `disable-model-invocation` is no longer used. Sub-skills are not registered with Claude Code — the dispatcher enforces invocation control.
 
 **Common errors**:
-- Missing `disable-model-invocation: true` → skill can be invoked directly by AI, bypassing `/forge` routing
 - Description without "Use when" → validator rejects it
-- Using `name` that doesn't match directory → routing breaks
+- Missing `dispatch_mode` → dispatcher cannot route correctly
+- Using `allowed_tools` that don't match actual needs → tool access denied at dispatch time
 
-## 3. SKILL.md Section Skeleton
+## 3. instructions.md Section Skeleton
 
-Every new SKILL.md must follow this structure:
+Every new instructions.md must follow this structure:
 
 ```
 ## 1. Overview
 ## 2. Prerequisites
-## 3..N-1. Workflow (skill-specific sections)
+## 3..N-1. Workflow (sub-skill-specific sections)
 ## N. Deliverable
 ```
 
@@ -88,23 +92,23 @@ Every `description` field must follow this exact format:
 
 ## 5. Naming Conventions
 
-- **Directory**: `forge-<verb-or-noun>` in kebab-case (e.g., `forge-build`, `forge-loop`)
+- **Directory**: `<verb-or-noun>` in kebab-case under `skills/forge/lib/` (e.g., `build`, `loop`)
 - **Title**: Single H1 in Title Case (e.g., `# /forge build — Execution Engine`)
 - **Section numbering**: `## 1.`, `## 2.`, etc. with period and space
-- **File name**: Always `SKILL.md` (uppercase)
+- **File name**: Always `instructions.md` (lowercase)
 
 ## 6. references/ Directory
 
-Content that exceeds 150-line SKILL.md limit goes into `references/`:
+Content that exceeds 150-line instructions.md limit goes into `references/`:
 
 - **What belongs**: Detailed workflows, pattern catalogs, examples, format specs
-- **What stays in SKILL.md**: Overview, Prerequisites, high-level workflow, Deliverable
+- **What stays in instructions.md**: Overview, Prerequisites, high-level workflow, Deliverable
 - **Reference syntax**: `→ 详见 references/<filename>.md`
 - **Naming**: kebab-case, descriptive (e.g., `frontend-check-patterns.md`)
 
 ## 7. scripts/ Directory
 
-Skills should treat `scripts/` as black-box CLIs (see CLAUDE.md §2.8):
+Sub-skills should treat `scripts/` as black-box CLIs (see CLAUDE.md §2.8):
 
 - Always run `--help` before using a script
 - Never `cat` or `read` script source unless modification is needed
@@ -121,7 +125,7 @@ Every script must declare its category in a header comment:
 
 | Category | Criteria | --help Required |
 |----------|----------|----------------|
-| `user-facing` | Referenced in package.json, CLAUDE.md, SKILL.md, or /forge commands | Yes |
+| `user-facing` | Referenced in package.json, CLAUDE.md, instructions.md, or /forge commands | Yes |
 | `internal-only` | Only sourced by other scripts, hooks, or CI | No |
 | `one-off` | Temporary migration/tool | No |
 
@@ -131,7 +135,7 @@ Every script must declare its category in a header comment:
 
 | # | Anti-Pattern | Why | Correct Approach |
 |---|-------------|-----|-----------------|
-| 1 | Emoji in SKILL.md body | Distracts, inconsistent rendering | Plain text only |
+| 1 | Emoji in instructions.md body | Distracts, inconsistent rendering | Plain text only |
 | 2 | Hardcoded absolute paths | Breaks across environments | Use relative paths |
 | 3 | Version numbers in description | Becomes stale immediately | Keep in separate docs |
 | 4 | Prose-style Deliverable | Not machine-parseable | Use structured fields |
@@ -141,18 +145,18 @@ Every script must declare its category in a header comment:
 ## 9. Version Evolution
 
 - **style_guide_version** uses semver: `X.Y`
-- **Minor (1.x)**: New optional fields, relaxed rules, expanded anti-patterns — backward compatible
-- **Major (2.0+)**: Breaking changes (new required fields, removed fields) — requires ADR at `.forge/decisions/ADR-NNNN-skill-style-guide-vN.md`
+- **Minor (2.x)**: New optional fields, relaxed rules, expanded anti-patterns — backward compatible
+- **Major (3.0+)**: Breaking changes (new required fields, removed fields) — requires ADR at `.forge/decisions/ADR-NNNN-skill-style-guide-vN.md`
 - Changes logged in `.forge/knowledge/skill-style-guide-changelog.md`
 
 ## 10. Quick Checklist (PR Self-Check)
 
 - [ ] `description` follows two-sentence format (imperative verb + "Use when")
+- [ ] `dispatch_mode` declared (`fork` or `inline`)
+- [ ] `allowed_tools` lists all needed tools
 - [ ] Contains `## Prerequisites` table with Block Condition and Route columns
 - [ ] Contains `## Deliverable` with structured fields (or `deliverable_exempt: true`)
-- [ ] SKILL.md is 150 lines or fewer (detailed content in `references/`)
-- [ ] `disable-model-invocation: true` in frontmatter
-- [ ] `name` matches directory name (without `forge-` prefix)
+- [ ] instructions.md is 150 lines or fewer (detailed content in `references/`)
 - [ ] No emoji, no hardcoded paths, no version numbers in description
 - [ ] Section numbering uses `## N.` format
 - [ ] References use `→ 详见 references/<file>.md` syntax

@@ -78,3 +78,12 @@ bash scripts/build-dist.sh  # 分发包同步校验
 - `.forge/knowledge/tool-health.md`（工具健康度）
 - `.forge/knowledge/skill-feedback.md`（SKILL 反馈）
 - `.forge/ship/*.md`（ship 阶段产物，含 post-push-verify 报告；保留 30 天）
+
+## Skills Dispatcher Mode
+
+`skills.dispatcher_mode`: `collapsed` (default) | `legacy`
+
+- `collapsed`：使用 `skills/forge/lib/` 路径（v2.5+，spec R2.10）
+- `legacy`：使用旧 `skills/forge-X/SKILL.md` 路径（v2.4 兼容；需配合 `git revert` 物理迁移才能真正生效；本字段仅声明意图，dispatcher 在 collapsed 路径下统一处理）
+
+> v2.5 起 `legacy` 模式仅在迁移期保留为 advisory。完整 dispatcher 实现见 ADR-0004。

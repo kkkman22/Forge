@@ -27,7 +27,7 @@ Light tier review omits Layer 1 (spec-check), running only quality-check and sec
 
 ## Configuration
 
-Review configuration is defined in `CLAUDE.md §3 Review Discipline` and `skills/forge-review/SKILL.md`. Subagent definitions are at:
+Review configuration is defined in `CLAUDE.md §3 Review Discipline` and `skills/forge/lib/review/instructions.md`. Subagent definitions are at:
 
 - `agents/spec-check.md`
 - `agents/quality-check.md`
@@ -44,6 +44,6 @@ Review results are written to `.forge/reviews/` directory, containing:
 
 ## Related Files
 
-- Review SKILL: `skills/forge-review/SKILL.md`
+- Review SKILL: `skills/forge/lib/review/instructions.md`
 - Agent definitions: `agents/spec-check.md`, `agents/quality-check.md`, `agents/security-check.md`
 - Subagent runner: `src/subagent-runner.ts`

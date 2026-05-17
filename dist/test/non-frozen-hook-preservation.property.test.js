@@ -12,9 +12,9 @@
  *
  * **Validates: Requirements 3.4, 3.5, 3.6**
  */
+import * as fc from "fast-check";
 import { readFileSync } from "node:fs";
 import { resolve } from "node:path";
-import * as fc from "fast-check";
 import { describe, expect, it } from "vitest";
 function loadHooksConfig() {
     const hooksPath = resolve(process.cwd(), "hooks/hooks.json");
@@ -42,7 +42,9 @@ const EXPECTED_SESSION_START_HOOKS = [
         hooks: [
             {
                 type: "command",
-                command: "if [ -f .forge/knowledge/evolved-rules.md ]; then echo '=== Evolved Rules ==='; cat .forge/knowledge/evolved-rules.md; fi",
+                command: "node forge/scripts/inject-evolved-rules.mjs 2>/dev/null || node ~/.claude/skills/forge/scripts/inject-evolved-rules.mjs 2>/dev/null || true",
+                // Baseline migrated by spec subagent-hook-context-budget task 18.
+                // Old inline `cat` retired in Step 3 — replaced by capped injector script.
                 timeout: 5,
             },
         ],
@@ -117,6 +119,23 @@ const EXPECTED_POST_TOOL_USE_HOOKS = [
             {
                 type: "command",
                 command: 'node scripts/knowledge-hook-dispatch.mjs --from-path "$TOOL_INPUT_FILE" 2>/dev/null || true',
+                timeout: 5,
+            },
+        ],
+    },
+    // Baseline migrated by spec forge-review-diff-context-fidelity Stage 2.
+    // PostToolUse guard for .forge/reviews/.diff-context.md narrative-summary
+    // anti-pattern. Triggers exit 2 when Write/Edit produces a file missing
+    // unified diff hunk markers. See:
+    //   .kiro/specs/forge-review-diff-context-fidelity/{bugfix,design}.md
+    //   scripts/check-diff-context-integrity.mjs
+    {
+        matcher: "Write|Edit",
+        if: "Write(.forge/reviews/.diff-context.md)|Edit(.forge/reviews/.diff-context.md)",
+        hooks: [
+            {
+                type: "command",
+                command: 'node forge/scripts/check-diff-context-integrity.mjs "$TOOL_INPUT_FILE" 2>/dev/null || node ~/.claude/skills/forge/scripts/check-diff-context-integrity.mjs "$TOOL_INPUT_FILE" 2>/dev/null || node scripts/check-diff-context-integrity.mjs "$TOOL_INPUT_FILE" 2>/dev/null',
                 timeout: 5,
             },
         ],

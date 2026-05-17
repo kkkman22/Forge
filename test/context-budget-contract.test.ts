@@ -14,13 +14,13 @@ import { describe, expect, it } from "vitest";
 const ROOT = resolve(import.meta.dirname, "..");
 
 const readSkill = (name: string) =>
-  readFileSync(resolve(ROOT, "skills", name, "SKILL.md"), "utf-8");
+  readFileSync(resolve(ROOT, "skills", "forge", "lib", name, "instructions.md"), "utf-8");
 
 const readSkillWithRefs = (name: string, ...refFiles: string[]) => {
   const main = readSkill(name);
   const refs = refFiles
     .map((f) => {
-      const p = resolve(ROOT, "skills", name, "references", f);
+      const p = resolve(ROOT, "skills", "forge", "lib", name, "references", f);
       return existsSync(p) ? readFileSync(p, "utf-8") : "";
     })
     .join("\n");
@@ -28,7 +28,7 @@ const readSkillWithRefs = (name: string, ...refFiles: string[]) => {
 };
 
 describe("Contract: forge-build/SKILL.md context budget section", () => {
-  const content = readSkillWithRefs("forge-build", "context-budget.md");
+  const content = readSkillWithRefs("build", "context-budget.md");
 
   it("contains Context Budget Management heading", () => {
     expect(content).toContain("## Context Budget Management");
@@ -68,7 +68,7 @@ describe("Contract: forge-build/SKILL.md context budget section", () => {
 });
 
 describe("Contract: forge-review/SKILL.md context budget section", () => {
-  const content = readSkill("forge-review");
+  const content = readSkill("review");
 
   it("contains Context Budget Management heading", () => {
     expect(content).toMatch(/#\s+.*Context Budget Management/);
@@ -97,7 +97,7 @@ describe("Contract: forge-review/SKILL.md context budget section", () => {
 });
 
 describe("Contract: forge-decide/SKILL.md context budget section", () => {
-  const content = readSkill("forge-decide");
+  const content = readSkill("decide");
 
   it("contains Context Budget Management heading", () => {
     expect(content).toContain("## Context Budget Management");
