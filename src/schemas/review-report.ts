@@ -24,6 +24,19 @@ export const ReviewResultSchema = z.string().min(1);
 /** Severity counts must be non-negative integers. */
 export const SeverityCountSchema = z.number().int().min(0);
 
+/** Review report production methodology. */
+export const MethodologySchema = z.enum([
+  "subagent-parallel",
+  "subagent-serial",
+  "ci-evidence",
+  "unavailable",
+]);
+
+export type Methodology = z.infer<typeof MethodologySchema>;
+
+/** Default methodology when field is absent. */
+export const METHODOLOGY_DEFAULT: Methodology = "subagent-parallel";
+
 // ---------------------------------------------------------------------------
 // Top-level schema
 // ---------------------------------------------------------------------------
@@ -36,6 +49,7 @@ export const ReviewReportSchema = z
     p1_count: SeverityCountSchema.optional(),
     p2_count: SeverityCountSchema.optional(),
     p3_count: SeverityCountSchema.optional(),
+    methodology: MethodologySchema.optional(),
   })
   .passthrough();
 
@@ -60,11 +74,24 @@ export interface SafeParseReviewResult {
  */
 export function safeParseReviewReport(raw: unknown): SafeParseReviewResult {
   const result = ReviewReportSchema.safeParse(raw);
-  if (result.success) {
-    return { value: result.data, errors: [] };
-  }
+  const errors: string[] = [];
 
-  const errors = result.error.issues.map((issue) => `${issue.path.join(".")}: ${issue.message}`);
+  if (result.success) {
+    const value = { ...result.data };
+
+    if (value.methodology === undefined) {
+      value.methodology = METHODOLOGY_DEFAULT;
+    }
+
+    if (value.methodology === "unavailable" && value.result !== "blocked") {
+      errors.push(
+        `methodology=unavailable forces result=blocked (was ${JSON.stringify(value.result ?? null)})`,
+      );
+      value.result = "blocked";
+    }
+
+    return { value, errors };
+  }
 
   const partial: Record<string, unknown> = {};
   if (raw !== null && typeof raw === "object" && !Array.isArray(raw)) {
@@ -78,9 +105,24 @@ export function safeParseReviewReport(raw: unknown): SafeParseReviewResult {
       const fieldResult = fieldSchema.safeParse(value);
       if (fieldResult.success) {
         partial[key] = fieldResult.data;
+      } else if (key === "methodology") {
+        partial.methodology = METHODOLOGY_DEFAULT;
+        errors.push(`methodology field invalid: ${JSON.stringify(value)}`);
       }
     }
   }
+
+  if (partial.methodology === undefined) {
+    partial.methodology = METHODOLOGY_DEFAULT;
+  }
+
+  if (partial.methodology === "unavailable" && partial.result !== "blocked") {
+    errors.push(
+      `methodology=unavailable forces result=blocked (was ${JSON.stringify(partial.result ?? null)})`,
+    );
+    partial.result = "blocked";
+  }
+
   return { value: partial as Partial<ReviewReport>, errors };
 }
 
@@ -91,4 +133,5 @@ const FIELD_SCHEMAS: Record<string, z.ZodTypeAny> = {
   p1_count: SeverityCountSchema,
   p2_count: SeverityCountSchema,
   p3_count: SeverityCountSchema,
+  methodology: MethodologySchema,
 };
