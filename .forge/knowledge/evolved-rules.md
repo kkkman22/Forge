@@ -42,7 +42,7 @@ This file keeps only rules that still need top-of-session reminders.
 **Source**: 2026-05-10 三 Sprint 审计（`.kiro/specs/sprint-3-gap-remediation/`）
 **Added**: 2026-05-10
 **Confidence**: 0.9
-**Last_triggered**: 2026-05-10
+**Last_triggered**: 2026-05-17
 **Infra_Ref**: `.claude/agents/spec-check.md` Check Item 5 + Severity Judgment 表
 
 ### R3: Pack/Loader 约定差异必须有运行时验证
@@ -53,7 +53,7 @@ This file keeps only rules that still need top-of-session reminders.
 **Added**: 2026-05-10
 **Confidence**: 0.9
 **Last_triggered**: 2026-05-10
-**Infra_Ref**: `.claude/agents/spec-check.md` Check Item 6 + `skills/forge-plan/references/atomic-task-format.md` Pack Data Task Integration Test Requirement
+**Infra_Ref**: `.claude/agents/spec-check.md` Check Item 6 + `skills/forge/lib/plan/references/atomic-task-format.md` Pack Data Task Integration Test Requirement
 
 ### R4: Stub With TODO 不是 Zero-Pack 合理降级
 

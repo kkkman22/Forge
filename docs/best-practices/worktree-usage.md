@@ -66,6 +66,6 @@ git checkout -b feature/<topic>
 
 ## 相关文件
 
-- Build SKILL：`skills/forge-build/SKILL.md` §2.1 Branch Gate
+- Build SKILL：`skills/forge/lib/build/instructions.md` §2.1 Branch Gate
 - 状态管理：`src/status-manager.ts`
 - Worktree 管理：`src/worktree-manager.ts`

@@ -43,7 +43,7 @@ disable-model-invocation: true   # 防止 AI 直接调用
 
 ## YAML Frontmatter 规则
 
-- `name`: 必须与目录名一致（如 `skills/forge-plan/SKILL.md` → `name: forge-plan`）
+- `name`: 必须与目录名一致（如 `skills/forge/lib/plan/instructions.md` → `name: forge-plan`）
 - `description`: 一句话功能描述，用于 contract test 验证
 - `disable-model-invocation`: 必须为 `true`，所有 SKILL 通过 `/forge` 入口分发
 

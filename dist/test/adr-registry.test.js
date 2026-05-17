@@ -250,6 +250,10 @@ describe("nextAdrId", () => {
         const entries = [makeEntry("ADR-0001"), makeEntry("ADR-0042"), makeEntry("ADR-0007")];
         expect(nextAdrId(entries)).toBe("ADR-0043");
     });
+    it("should return ADR-0004 after ADR-0003 (single-entry consolidation)", () => {
+        const entries = [makeEntry("ADR-0001"), makeEntry("ADR-0002"), makeEntry("ADR-0003")];
+        expect(nextAdrId(entries)).toBe("ADR-0004");
+    });
     it("always returns 4-digit zero-padded format", () => {
         expect(nextAdrId([makeEntry("ADR-0001")])).toMatch(/^ADR-\d{4}$/);
         expect(nextAdrId([makeEntry("ADR-0099")])).toBe("ADR-0100");

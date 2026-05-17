@@ -5,32 +5,14 @@ import { describe, expect, it } from "vitest";
 const FORGE_MD = resolve(import.meta.dirname, "../../commands/forge.md");
 const content = readFileSync(FORGE_MD, "utf-8");
 
-const CORE_SUBCOMMANDS = [
-  "plan",
-  "build",
-  "review",
-  "test",
-  "ship",
-  "learn",
-  "decide",
-  "spec",
-  "debug",
-  "loop",
-  "status",
-  "resume",
-  "abort",
-] as const;
-
-describe("commands/forge.md subcommand table (R1)", () => {
-  it("should list all 13 core subcommands", () => {
-    for (const sub of CORE_SUBCOMMANDS) {
-      const re = new RegExp(`\\| \`${sub}\` \\|`);
-      expect(content, `subcommand '${sub}' missing from table`).toMatch(re);
-    }
+describe("commands/forge.md is thin stub (R1)", () => {
+  it("should NOT contain old subcommand dispatch table", () => {
+    const tableRows = content.match(/^\| `\w[\w-]*` \|/gm);
+    expect(tableRows).toBeNull();
   });
 
-  it("should have a subcommand dispatch table with at least 13 rows", () => {
-    const tableRows = content.match(/^\| `\w[\w-]*` \|/gm);
-    expect(tableRows?.length ?? 0).toBeGreaterThanOrEqual(13);
+  it("should delegate to Skill(forge) not list subcommands", () => {
+    expect(content).not.toMatch(/Skill\(forge-[a-z]/);
+    expect(content).toMatch(/Skill\(forge\)/);
   });
 });

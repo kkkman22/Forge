@@ -14,7 +14,7 @@ import { readFileSync } from "node:fs";
 import { resolve } from "node:path";
 import { beforeAll, describe, expect, it } from "vitest";
 const ROOT = resolve(__dirname, "..");
-const BUGFIX_MODE = resolve(ROOT, "skills/forge-build/references/bugfix-mode.md");
+const BUGFIX_MODE = resolve(ROOT, "skills/forge/lib/build/references/bugfix-mode.md");
 describe("Bugfix Mode pre-flight checks", () => {
     let content;
     it("bugfix-mode.md file exists", () => {

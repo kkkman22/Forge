@@ -33,7 +33,7 @@ retired_rules: ["R1", "R2", "R3", "R4"]
 **原 Content**: Plan 批准后，所有任务必须全部完成，无论其 priority 标记（P0/P1/P2/P3）。Priority 仅决定执行顺序（高优先），不表示"可跳过"或"留到后续"。禁止输出"建议后续再做"、"P2 可以推迟"等跳过话术。
 
 **融入位置**：
-- `skills/forge-build/SKILL.md §1 Overview` — "**Plan 即合同铁律**" 段落（verbatim 实现）
+- `skills/forge/lib/build/instructions.md §1 Overview` — "**Plan 即合同铁律**" 段落（verbatim 实现）
 
 **原 Source**: 用户反馈 — build 阶段 AI 只做 P0/P1，P2 回复"建议后续再做"
 **原 Confidence**: 0.9
@@ -46,7 +46,7 @@ retired_rules: ["R1", "R2", "R3", "R4"]
 
 **融入位置**：
 - `src/plan.ts` — `checkPlanStructure()` 纯函数
-- `skills/forge-plan/SKILL.md Step 4a` — Plan Structure Warning（当 plan 含多 Sprint 时 prompt 拆分或 `monolith_acknowledged: true`）
+- `skills/forge/lib/plan/instructions.md Step 4a` — Plan Structure Warning（当 plan 含多 Sprint 时 prompt 拆分或 `monolith_acknowledged: true`）
 
 **原 Source**: `.forge/specs/phase-advance-hardening/spec.md`
 **原 Confidence**: 0.85
@@ -58,11 +58,11 @@ retired_rules: ["R1", "R2", "R3", "R4"]
 **原 Content**: 上下文压缩恢复后，或新会话通过 /forge resume 恢复后，必须先读取当前阶段对应的 SKILL.md 完整内容，再执行任何操作。禁止凭 conversation summary 摘要跳步执行。
 
 **融入位置**：
-- `skills/forge-resume/SKILL.md §2` — "SKILL Reload（恢复后必读步骤）" 段
-- `skills/forge-ship/SKILL.md §3.5` — Compaction Recovery Check
-- `skills/forge-review/SKILL.md §7c` — Compaction Recovery Check
-- `skills/forge-test/SKILL.md §3.5` — Compaction Recovery Check
-- `skills/forge-learn/SKILL.md §8.5` — Compaction Recovery Check
+- `skills/forge/lib/resume/instructions.md §2` — "SKILL Reload（恢复后必读步骤）" 段
+- `skills/forge/lib/ship/instructions.md §3.5` — Compaction Recovery Check
+- `skills/forge/lib/review/instructions.md §7c` — Compaction Recovery Check
+- `skills/forge/lib/test/instructions.md §3.5` — Compaction Recovery Check
+- `skills/forge/lib/learn/instructions.md §8.5` — Compaction Recovery Check
 
 **原 Source**: 用户反馈 — ship 阶段 compaction 恢复后跳过 AskUserQuestion 合并选项提示
 **原 Confidence**: 0.9

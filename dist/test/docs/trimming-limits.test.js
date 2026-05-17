@@ -2,7 +2,7 @@
  * Trimming limits validation tests for context bloat control.
  *
  * Covers:
- *   - skills/forge-build/SKILL.md §Context Budget Management contains all six limit values with imperative language
+ *   - skills/forge/lib/build/instructions.md §Context Budget Management contains all six limit values with imperative language
  *   - Structured_Output exemption clause is present
  *
  * **Validates: Requirements 2.8, 2.9**
@@ -15,7 +15,7 @@ function readDoc(filename) {
     return readFileSync(resolve(PROJECT_ROOT, filename), "utf-8");
 }
 describe("SKILL.md trimming limits", () => {
-    const skillContent = readDoc("skills/forge-build/SKILL.md");
+    const skillContent = readDoc("skills/forge/lib/build/instructions.md");
     it("contains all six limit values with imperative language (Req 2.8)", () => {
         // The six limits from the spec:
         // Explore Agent 300, Subagent results 200, test pass 50, test fail 300,

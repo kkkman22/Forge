@@ -46,7 +46,7 @@
 
 ### 明确保留（不动）
 
-- `skills/forge-decide-teams/` — PoC 跟进 Agent Teams 趋势，每季度评估
+- `skills/forge/lib/decide-teams/` — PoC 跟进 Agent Teams 趋势，每季度评估
 - `cmux-skills/forge-loop-signals/` — opt-in 可视化，30 行声明式文件，零维护成本
 - `/forge control-cli` + `/forge control-ui` — `/forge test` 三态验证体系的执行层
 - `forge-storm` — `/forge spec` 的前置方法论能力，对 DDD 项目有独有价值

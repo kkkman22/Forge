@@ -55,3 +55,12 @@ Two problems emerged:
 2. `node scripts/gen-plugin-commands.mjs` (restored script regenerates 27 wrappers)
 3. Manually restore `Skill(skill="forge", args="...")` syntax in forge.md (not recommended — it was a bug)
 4. Set ADR-0003 status to `superseded`, create ADR-0004 documenting rollback reason
+
+## Update 2026-05-17
+
+ADR-0004 (`skills-collapse-and-dispatcher.md`) further specifies ADR-0003 §Decision and §Rollback:
+
+- **§Decision**: Extends "delete 27 wrappers" to "physically migrate all 29 sub-skills to `skills/forge/lib/<sub>/instructions.md`, making `forge` the sole registered skill". ADR-0003's single-entry mandate is preserved; ADR-0004 adds the physical migration and dispatcher chokepoint.
+- **§Rollback**: Extends "git revert" with a `dispatcher_mode = legacy` feature flag for gradual rollback, plus physical git revert as fallback.
+
+ADR-0003 remains `status: accepted`. This update marks the scope that ADR-0004 further refines; conclusions unchanged.
