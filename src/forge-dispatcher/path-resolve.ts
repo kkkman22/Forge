@@ -32,7 +32,9 @@ export function resolveLibPath(
     return { ok: false, code: "E_PATH_INVALID", reason: "traversal or absolute" };
   }
 
-  const pluginRoot = opts?.pluginRoot ?? process.env.CLAUDE_PLUGIN_ROOT;
+  const pluginRoot = opts && "pluginRoot" in opts
+    ? opts.pluginRoot
+    : process.env.CLAUDE_PLUGIN_ROOT;
   const cwd = opts?.cwd ?? process.cwd();
   const root = pluginRoot ?? cwd;
   const normalizedRoot = normalize(root);
