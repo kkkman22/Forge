@@ -1,6 +1,6 @@
 # Error-Prevention Rule Distillation — 详细规范
 
-> 从 `skills/forge/lib//instructions.md §6.5` 拆分。SKILL 主文件只保留一行摘要指针。
+> 从 `../instructions.md §6.5` 拆分。SKILL 主文件只保留一行摘要指针。
 
 从积累的知识数据中蒸馏出"错误预防规则"——Claude 在没有明确指导时会犯错的高价值模式。规则写入 `.forge/knowledge/evolved-rules.md`（最多 15 条），通过 SessionStart hook 注入上下文。
 

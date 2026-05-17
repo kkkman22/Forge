@@ -148,9 +148,9 @@ Triggers CLI/TUI external verification harness. Automatically triggered when:
 - `--cli` flag is explicitly passed, OR
 - `.forge/config.md` has `cli_harness: true`
 
-Execution: delegates to `skills/forge/lib//` which selects the best available tier (project > cmux > tmux > node-pty). Output written to `.forge/findings/<topic>/cli-harness/`.
+Execution: delegates to `../control-cli/` which selects the best available tier (project > cmux > tmux > node-pty). Output written to `.forge/findings/<topic>/cli-harness/`.
 
-**UI variant**: `/forge test --ui` delegates to `skills/forge/lib//` for web/Electron testing.
+**UI variant**: `/forge test --ui` delegates to `../control-ui/` for web/Electron testing.
 
 ## 7. Edge Cases
 

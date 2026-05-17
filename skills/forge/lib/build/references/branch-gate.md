@@ -1,6 +1,6 @@
 # Branch Gate — 详细规范
 
-> 从 `skills/forge/lib//instructions.md §2.1` 拆分。SKILL 主文件只保留一行摘要指针。
+> 从 `../instructions.md §2.1` 拆分。SKILL 主文件只保留一行摘要指针。
 
 ## Branch State Table
 

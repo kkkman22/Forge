@@ -1,6 +1,6 @@
 # Knowledge Backflow — 详细规范
 
-> 从 `skills/forge/lib//instructions.md §8` 拆分。SKILL 主文件只保留一行摘要指针。
+> 从 `../instructions.md §8` 拆分。SKILL 主文件只保留一行摘要指针。
 
 ## Plan Phase Backflow (Mandatory)
 
