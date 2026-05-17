@@ -98,20 +98,21 @@ export async function dispatchForgeSubcommand(
     return { code: toolsResult.code };
   }
 
-  // Step 6: resolveDispatchMode
+  // Step 6: resolveDispatchMode — read from lib frontmatter
   let dispatchMode: string = "inline";
   if (mocks?.resolveDispatchMode) {
     dispatchMode = mocks.resolveDispatchMode() as string;
   } else if (opts?._overrideFrontmatter?.dispatch_mode !== undefined) {
     dispatchMode = opts._overrideFrontmatter.dispatch_mode as string;
   } else {
-    // Default: fork for known fork-mode subs (zoom-out is fork, status is inline)
-    const FORK_SUBS = new Set([
-      "learn", "decide", "decide-teams", "debug", "grill", "storm", "recap",
-      "mutate", "zoom-out", "review", "build", "plan", "spec", "ship", "test",
-      "loop", "accept", "pack",
-    ]);
-    dispatchMode = FORK_SUBS.has(sub) ? "fork" : "inline";
+    // Parse dispatch_mode from libContent frontmatter
+    const fmMatch = libContent.match(/^---\n([\s\S]*?)\n---/);
+    if (fmMatch) {
+      const modeMatch = fmMatch[1].match(/dispatch_mode:\s*([a-z]+)/);
+      if (modeMatch) {
+        dispatchMode = modeMatch[1];
+      }
+    }
   }
 
   // Step 7: wrapWorkspaceContext
