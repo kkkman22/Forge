@@ -80,9 +80,9 @@ describe("Commands Directory", () => {
 });
 
 describe("Plugin Asset Integrity", () => {
-  it("skills directory has >= 25 skill directories", () => {
-    const skillsDir = join(ROOT, "skills");
-    const dirs = readdirSync(skillsDir, { withFileTypes: true })
+  it("skills/forge/lib has >= 25 sub-skill directories", () => {
+    const libDir = join(ROOT, "skills", "forge", "lib");
+    const dirs = readdirSync(libDir, { withFileTypes: true })
       .filter((d) => d.isDirectory())
       .map((d) => d.name);
     expect(dirs.length).toBeGreaterThanOrEqual(25);
@@ -94,15 +94,14 @@ describe("Plugin Asset Integrity", () => {
     expect(files.length).toBeGreaterThanOrEqual(10);
   });
 
-  it("all referenced skill directories have SKILL.md", () => {
-    const skillsDir = join(ROOT, "skills");
-    const dirs = readdirSync(skillsDir, { withFileTypes: true })
+  it("all sub-skill directories have instructions.md", () => {
+    const libDir = join(ROOT, "skills", "forge", "lib");
+    const dirs = readdirSync(libDir, { withFileTypes: true })
       .filter((d) => d.isDirectory())
-      .map((d) => d.name)
-      .filter((n) => n !== "shared");
+      .map((d) => d.name);
 
     for (const dir of dirs) {
-      expect(existsSync(join(skillsDir, dir, "SKILL.md")), `Missing skills/${dir}/SKILL.md`).toBe(
+      expect(existsSync(join(libDir, dir, "instructions.md")), `Missing skills/forge/lib/${dir}/instructions.md`).toBe(
         true,
       );
     }
