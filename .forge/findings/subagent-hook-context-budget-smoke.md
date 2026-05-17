@@ -2,9 +2,10 @@
 spec: subagent-hook-context-budget
 task: 20
 kind: dogfood-smoke
-status: partial-closure
+status: complete
 generated_at: 2026-05-16T23:29:19Z
-last_updated: 2026-05-17T00:30:00Z
+last_updated: 2026-05-17T02:25:00Z
+closure_upgraded_by: forge-review-diff-context-fidelity-stage2 (2026-05-17)
 generated_by: kiro/claude-opus-4.7 (mock-smoke harness)
 commit: 05e97c2
 followup_spec: subagent-result-truncation
