@@ -108,6 +108,8 @@ export function safeParseReviewReport(raw: unknown): SafeParseReviewResult {
       } else if (key === "methodology") {
         partial.methodology = METHODOLOGY_DEFAULT;
         errors.push(`methodology field invalid: ${JSON.stringify(value)}`);
+      } else {
+        errors.push(`${key}: ${fieldResult.error.issues[0]?.message ?? "invalid"}`);
       }
     }
   }
