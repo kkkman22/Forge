@@ -14,28 +14,20 @@ describe("parseReviewConfig", () => {
     expect(result).toEqual<ReviewConfig>({ subagent_concurrency: 3 });
   });
 
-  it.each([1, 5, 10])(
-    "should parse review.subagent_concurrency: %i",
-    (n) => {
-      const result = parseReviewConfig(`review.subagent_concurrency: ${n}\n`);
-      expect(result).toEqual<ReviewConfig>({ subagent_concurrency: n });
-    },
-  );
+  it.each([1, 5, 10])("should parse review.subagent_concurrency: %i", (n) => {
+    const result = parseReviewConfig(`review.subagent_concurrency: ${n}\n`);
+    expect(result).toEqual<ReviewConfig>({ subagent_concurrency: n });
+  });
 
-  it.each([0, 11, -1])(
-    "should fallback to default with warning when config value invalid (%i)",
-    (invalid) => {
-      const spy = vi.spyOn(console, "warn").mockImplementation(() => {});
-      const result = parseReviewConfig(
-        `review.subagent_concurrency: ${invalid}\n`,
-      );
-      expect(result).toEqual<ReviewConfig>({ subagent_concurrency: 3 });
-      expect(spy).toHaveBeenCalledWith(
-        expect.stringContaining("subagent_concurrency invalid"),
-      );
-      spy.mockRestore();
-    },
-  );
+  it.each([
+    0, 11, -1,
+  ])("should fallback to default with warning when config value invalid (%i)", (invalid) => {
+    const spy = vi.spyOn(console, "warn").mockImplementation(() => {});
+    const result = parseReviewConfig(`review.subagent_concurrency: ${invalid}\n`);
+    expect(result).toEqual<ReviewConfig>({ subagent_concurrency: 3 });
+    expect(spy).toHaveBeenCalledWith(expect.stringContaining("subagent_concurrency invalid"));
+    spy.mockRestore();
+  });
 
   it("should fallback to default silently when config value is non-numeric", () => {
     const result = parseReviewConfig("review.subagent_concurrency: abc\n");
