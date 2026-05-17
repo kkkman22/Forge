@@ -472,6 +472,8 @@ describe("R2.1: topic allowlist enforces 29 sub names", () => {
 **Files**:
 - Modify: `commands/forge.md`
 
+**前置条件**：`test/single-entry/no-skill-x-references.test.ts` 已排除 `commands/` 目录（Task 6 commit a3b7950），Task 9 rewrite 后应移除该排除并验证 commands/forge.md 不含 `Skill(forge-X)` 调用。
+
 **实现**：把 195 行 dispatcher 缩为 ~15 行 stub：
 ```yaml
 ---
