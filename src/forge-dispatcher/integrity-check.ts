@@ -1,5 +1,5 @@
-import { readFileSync } from "node:fs";
 import { createHash } from "node:crypto";
+import { readFileSync } from "node:fs";
 import { dirname, relative, resolve } from "node:path";
 
 export type IntegrityResult =
@@ -10,10 +10,7 @@ export interface IntegrityOpts {
   manifestPath?: string;
 }
 
-export function checkIntegrity(
-  libPath: string,
-  opts?: IntegrityOpts,
-): IntegrityResult {
+export function checkIntegrity(libPath: string, opts?: IntegrityOpts): IntegrityResult {
   // libPath: .../skills/forge/lib/<sub>/instructions.md
   // libDir:  .../skills/forge/lib/
   const libDir = dirname(dirname(libPath));

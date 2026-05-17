@@ -1,17 +1,15 @@
 import { readFileSync } from "node:fs";
 import { validateTopic } from "./forge-dispatcher/allowlist.js";
+import { checkIntegrity } from "./forge-dispatcher/integrity-check.js";
 import { resolveLibPath } from "./forge-dispatcher/path-resolve.js";
 import { resolveAllowedTools } from "./forge-dispatcher/tools-resolve.js";
-import { wrapWorkspaceContext } from "./forge-dispatcher/untrusted-fence.js";
-import { appendAuditLog } from "./forge-dispatcher/audit-log.js";
-import { checkIntegrity } from "./forge-dispatcher/integrity-check.js";
 
-export { validateTopic, ALLOW_LIST } from "./forge-dispatcher/allowlist.js";
-export { resolveLibPath } from "./forge-dispatcher/path-resolve.js";
-export { resolveAllowedTools } from "./forge-dispatcher/tools-resolve.js";
-export { wrapWorkspaceContext, UNTRUSTED_PREAMBLE } from "./forge-dispatcher/untrusted-fence.js";
+export { ALLOW_LIST, validateTopic } from "./forge-dispatcher/allowlist.js";
 export { appendAuditLog, computeHmac } from "./forge-dispatcher/audit-log.js";
 export { checkIntegrity } from "./forge-dispatcher/integrity-check.js";
+export { resolveLibPath } from "./forge-dispatcher/path-resolve.js";
+export { resolveAllowedTools } from "./forge-dispatcher/tools-resolve.js";
+export { UNTRUSTED_PREAMBLE, wrapWorkspaceContext } from "./forge-dispatcher/untrusted-fence.js";
 
 export interface DispatchOpts {
   mode?: string;
@@ -51,9 +49,7 @@ export async function dispatchForgeSubcommand(
   if (!topicResult.ok) {
     return {
       code: topicResult.code,
-      suggestion: topicResult.suggestion
-        ? `did you mean: ${topicResult.suggestion}?`
-        : undefined,
+      suggestion: topicResult.suggestion ? `did you mean: ${topicResult.suggestion}?` : undefined,
     };
   }
 
@@ -148,9 +144,7 @@ export async function dispatchForgeSubcommand(
     mocks.writeAuditLog();
   }
 
-  const notice = dispatcherMode === "legacy"
-    ? "legacy mode requires Forge < 2.6"
-    : undefined;
+  const notice = dispatcherMode === "legacy" ? "legacy mode requires Forge < 2.6" : undefined;
 
   return {
     code: "OK",
