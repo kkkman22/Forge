@@ -47,5 +47,5 @@ Forge 使用三级路由系统，根据任务复杂度选择执行路径：
 ## 相关文件
 
 - 路由入口：`CLAUDE.md §1 Task Routing Rules`
-- Router SKILL：`skills/forge-router/SKILL.md`
+- Router SKILL：`skills/forge/lib/router/instructions.md`
 - 调度器：`src/skill-scheduler.ts`

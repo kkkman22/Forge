@@ -27,7 +27,7 @@ Forge review 使用三层并行评审，每层由独立 Subagent 执行：
 
 ## 配置
 
-评审配置在 `CLAUDE.md §3 Review Discipline` 和 `skills/forge-review/SKILL.md` 中定义。Subagent 定义文件位于：
+评审配置在 `CLAUDE.md §3 Review Discipline` 和 `skills/forge/lib/review/instructions.md` 中定义。Subagent 定义文件位于：
 
 - `agents/spec-check.md`
 - `agents/quality-check.md`
@@ -44,6 +44,6 @@ Forge review 使用三层并行评审，每层由独立 Subagent 执行：
 
 ## 相关文件
 
-- Review SKILL：`skills/forge-review/SKILL.md`
+- Review SKILL：`skills/forge/lib/review/instructions.md`
 - Agent 定义：`agents/spec-check.md`、`agents/quality-check.md`、`agents/security-check.md`
 - Subagent 运行器：`src/subagent-runner.ts`

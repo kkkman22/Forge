@@ -66,6 +66,6 @@ Reads context from `.forge/progress/` and `.forge/knowledge/sessions/`.
 
 ## Related Files
 
-- Build SKILL: `skills/forge-build/SKILL.md` §2.1 Branch Gate
+- Build SKILL: `skills/forge/lib/build/instructions.md` §2.1 Branch Gate
 - State management: `src/status-manager.ts`
 - Worktree management: `src/worktree-manager.ts`
