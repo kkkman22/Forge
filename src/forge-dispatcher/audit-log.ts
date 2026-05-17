@@ -1,7 +1,7 @@
-import { resolve } from "node:path";
-import { appendFileSync, mkdirSync } from "node:fs";
 import { createHash } from "node:crypto";
+import { appendFileSync, mkdirSync } from "node:fs";
 import { homedir } from "node:os";
+import { resolve } from "node:path";
 
 export interface AuditEntry {
   ts: string;
@@ -39,6 +39,7 @@ export async function appendAuditLog(entry: AuditEntry, opts?: AuditOpts): Promi
   try {
     mkdirSync(dir, { recursive: true });
   } catch {
+    // biome-ignore lint/suspicious/noConsole: audit degradation warning is intentional
     console.warn(`[forge-audit] cannot create audit dir: ${dir}`);
     return;
   }
@@ -47,8 +48,9 @@ export async function appendAuditLog(entry: AuditEntry, opts?: AuditOpts): Promi
   const line = JSON.stringify(entry);
 
   try {
-    appendFileSync(logPath, line + "\n");
+    appendFileSync(logPath, `${line}\n`);
   } catch {
+    // biome-ignore lint/suspicious/noConsole: audit degradation warning is intentional
     console.warn(`[forge-audit] cannot write audit log: ${logPath}`);
   }
 }
