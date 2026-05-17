@@ -34,6 +34,9 @@ export const MethodologySchema = z.enum([
 
 export type Methodology = z.infer<typeof MethodologySchema>;
 
+/** Runtime array of valid methodology values for legacy path validation. */
+export const METHODOLOGY_VALUES = MethodologySchema.options as readonly Methodology[];
+
 /** Default methodology when field is absent. */
 export const METHODOLOGY_DEFAULT: Methodology = "subagent-parallel";
 
