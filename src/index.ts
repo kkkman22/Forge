@@ -268,8 +268,14 @@ export {
   type SpecHealthReport,
   shouldRecompute,
 } from "./spec-health.js";
+// Config
+export { parseReviewConfig, type ReviewConfig } from "./config.js";
 // Subagent runner
-export { buildSubagentInvocations, runSubagentsInParallel } from "./subagent-runner.js";
+export {
+  buildSubagentInvocations,
+  runSubagentsInParallel,
+  runSubagentsWithConcurrency,
+} from "./subagent-runner.js";
 // Error hierarchy (consolidated: cli-error + forge-error)
 // SDK (consolidated: sdk-agent-adapter + sdk-driver)
 // SKILL plugin mechanism (consolidated: skill-loader + skill-validator)

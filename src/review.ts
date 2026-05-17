@@ -469,6 +469,7 @@ export function buildReviewEvolutionArtifacts(
 
 import { readFileSync, renameSync, writeFileSync } from "node:fs";
 import { parse as parseYaml, stringify as stringifyYaml } from "yaml";
+import { parseReviewConfig } from "./config.js";
 import type { SubagentInvocation, SubagentResult } from "./loop-types.js";
 
 /** Context for building review subagent invocations. */
