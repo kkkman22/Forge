@@ -60,7 +60,7 @@ Build phase complete. Ready for `/forge review`.
 
 | # | Item | Status | Evidence |
 |---|------|--------|----------|
-| R1.2 | / menu visibility | pass | menu-visibility-2026-05-17.md |
+| R1.2 | / menu visibility | pass-pending-ship-cache-refresh | menu-visibility-2026-05-17.md — 29 `forge:forge-<sub>` still visible from v2.4.0 plugin cache |
 | R2.8a | Dev mode spike | PASS | worktree-spike-2026-05-17.md |
 | R2.8b | Plugin mode + silent shadow | DEFERRED | ship phase gate |
 
@@ -75,6 +75,9 @@ Build phase complete. Ready for `/forge review`.
 
 1. **R2.8b Plugin mode verification** — install plugin and re-run lib
    path resolution check. Failure → ship blocked, fallback to v2.5.1.
+2. **R1.2 Plugin cache refresh** — after v2.5.0 ship, user runs
+   `claude plugin update forge-official` to flush v2.4.0 cache.
+   Verify `/` menu no longer shows 29 `forge:forge-<sub>` entries.
 
 ## Files Created
 
