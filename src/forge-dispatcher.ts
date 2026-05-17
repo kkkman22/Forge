@@ -1,14 +1,17 @@
+import { readFileSync } from "node:fs";
 import { validateTopic } from "./forge-dispatcher/allowlist.js";
 import { resolveLibPath } from "./forge-dispatcher/path-resolve.js";
 import { resolveAllowedTools } from "./forge-dispatcher/tools-resolve.js";
 import { wrapWorkspaceContext } from "./forge-dispatcher/untrusted-fence.js";
 import { appendAuditLog } from "./forge-dispatcher/audit-log.js";
+import { checkIntegrity } from "./forge-dispatcher/integrity-check.js";
 
 export { validateTopic, ALLOW_LIST } from "./forge-dispatcher/allowlist.js";
 export { resolveLibPath } from "./forge-dispatcher/path-resolve.js";
 export { resolveAllowedTools } from "./forge-dispatcher/tools-resolve.js";
 export { wrapWorkspaceContext, UNTRUSTED_PREAMBLE } from "./forge-dispatcher/untrusted-fence.js";
 export { appendAuditLog, computeHmac } from "./forge-dispatcher/audit-log.js";
+export { checkIntegrity } from "./forge-dispatcher/integrity-check.js";
 
 export interface DispatchOpts {
   mode?: string;
@@ -66,26 +69,30 @@ export async function dispatchForgeSubcommand(
     return { code: pathResult.code };
   }
 
-  // Step 4: checkIntegrity (placeholder — Task 7 provides real implementation)
+  // Step 4: checkIntegrity — sha256 vs manifest.json
   const integrityResult = mocks?.checkIntegrity
     ? (mocks.checkIntegrity(pathResult.path) as { ok: boolean })
-    : { ok: true };
+    : checkIntegrity(pathResult.path);
 
   if (!integrityResult.ok) {
     return { code: "E_INTEGRITY_MISMATCH" };
   }
 
-  // Step 5: resolveAllowedTools
-  const mockLibContent = `---
-description: mock
-allowed_tools:
-  - Read
-dispatch_mode: fork
----`;
+  // Step 5: resolveAllowedTools — read actual lib instructions.md
+  let libContent: string;
+  if (mocks?.resolveAllowedTools) {
+    libContent = "";
+  } else {
+    try {
+      libContent = readFileSync(pathResult.path, "utf-8");
+    } catch {
+      return { code: "E_LIB_READ_FAILED" };
+    }
+  }
 
   const toolsResult = mocks?.resolveAllowedTools
-    ? (mocks.resolveAllowedTools(mockLibContent) as ReturnType<typeof resolveAllowedTools>)
-    : resolveAllowedTools(mockLibContent);
+    ? (mocks.resolveAllowedTools(libContent) as ReturnType<typeof resolveAllowedTools>)
+    : resolveAllowedTools(libContent);
 
   if (!toolsResult.ok) {
     return { code: toolsResult.code };
