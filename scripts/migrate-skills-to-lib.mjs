@@ -114,8 +114,26 @@ function rewriteCrossRefs(dir) {
     let content = readFileSync(filePath, "utf-8");
     const original = content;
 
-    // Replace ../forge-<sub>/ with ../<sub>/
+    // Pattern 1: ../forge-<sub>/ → ../<sub>/
     content = content.replace(/\.\.\/forge-([a-z][a-z0-9-]*)\//g, "../$1/");
+
+    // Pattern 2: skills/forge-<sub>/SKILL.md → ../<sub>/instructions.md
+    content = content.replace(
+      /skills\/forge-([a-z][a-z0-9-]*)\/SKILL\.md/g,
+      "../$1/instructions.md",
+    );
+
+    // Pattern 3: skills/forge-<sub>/references/ → ../<sub>/references/
+    content = content.replace(
+      /skills\/forge-([a-z][a-z0-9-]*)\/references\//g,
+      "../$1/references/",
+    );
+
+    // Pattern 4: skills/forge-<sub>/ (generic, must run last) → ../<sub>/
+    content = content.replace(
+      /skills\/forge-([a-z][a-z0-9-]*)\//g,
+      "../$1/",
+    );
 
     if (content !== original && !DRY_RUN) {
       writeFileSync(filePath, content);
