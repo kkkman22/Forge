@@ -3,6 +3,7 @@
 import { readdirSync, readFileSync, writeFileSync, existsSync } from "node:fs";
 import { resolve, join } from "node:path";
 import { createHash } from "node:crypto";
+import { globSync } from "glob";
 
 const ROOT = resolve(import.meta.dirname, "..");
 const LIB_DIR = join(ROOT, "skills", "forge", "lib");
@@ -14,11 +15,7 @@ function sha256(filePath) {
 }
 
 function buildManifest() {
-  const manifest = {
-    version: 1,
-    generated_at: new Date().toISOString(),
-  };
-
+  const subs = {};
   const entries = readdirSync(LIB_DIR, { withFileTypes: true });
 
   for (const entry of entries) {
@@ -27,18 +24,32 @@ function buildManifest() {
     const instrPath = join(subDir, "instructions.md");
     if (!existsSync(instrPath)) continue;
 
-    manifest[entry.name] = {
-      sha256: sha256(instrPath),
+    const refPattern = join(LIB_DIR, entry.name, "references", "**/*.md");
+    const refFiles = globSync(refPattern).sort();
+
+    const references = refFiles.map((refPath) => {
+      const rel = refPath.replace(LIB_DIR + "/", "");
+      return { path: rel, sha256: sha256(refPath) };
+    });
+
+    subs[entry.name] = {
+      instructions: {
+        path: `${entry.name}/instructions.md`,
+        sha256: sha256(instrPath),
+      },
+      references,
     };
   }
 
-  return manifest;
+  return {
+    version: 1,
+    generated_at: new Date().toISOString(),
+    subs,
+  };
 }
 
 const manifest = buildManifest();
 writeFileSync(OUTPUT, JSON.stringify(manifest, null, 2) + "\n");
 
-const subCount = Object.keys(manifest).filter(
-  (k) => k !== "version" && k !== "generated_at",
-).length;
+const subCount = Object.keys(manifest.subs).length;
 console.log(`manifest.json generated with ${subCount} subs`);
