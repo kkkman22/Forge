@@ -1,6 +1,5 @@
-import { resolve, normalize, isAbsolute } from "node:path";
 import { realpathSync } from "node:fs";
-import type { ValidatedSub } from "./allowlist.js";
+import { isAbsolute, normalize, resolve } from "node:path";
 
 interface PathOk {
   ok: true;
@@ -24,17 +23,13 @@ function hasTraversal(segment: string): boolean {
   return segment.includes("..") || segment.includes("/") || segment.includes("\\");
 }
 
-export function resolveLibPath(
-  sub: string,
-  opts?: PathResolveOpts,
-): PathResolveResult {
+export function resolveLibPath(sub: string, opts?: PathResolveOpts): PathResolveResult {
   if (hasTraversal(sub) || isAbsolute(sub)) {
     return { ok: false, code: "E_PATH_INVALID", reason: "traversal or absolute" };
   }
 
-  const pluginRoot = opts && "pluginRoot" in opts
-    ? opts.pluginRoot
-    : process.env.CLAUDE_PLUGIN_ROOT;
+  const pluginRoot =
+    opts && "pluginRoot" in opts ? opts.pluginRoot : process.env.CLAUDE_PLUGIN_ROOT;
   const cwd = opts?.cwd ?? process.cwd();
   const root = pluginRoot ?? cwd;
   const normalizedRoot = normalize(root);
@@ -42,14 +37,14 @@ export function resolveLibPath(
   const resolved = resolve(normalizedRoot, "skills/forge/lib", sub, "instructions.md");
   const normalized = normalize(resolved);
 
-  if (!normalized.startsWith(normalizedRoot + "/") && normalized !== normalizedRoot) {
+  if (!normalized.startsWith(`${normalizedRoot}/`) && normalized !== normalizedRoot) {
     return { ok: false, code: "E_PATH_INVALID", reason: "escapes root" };
   }
 
   try {
     const real = realpathSync(normalized);
     const realRoot = realpathSync(normalizedRoot);
-    if (!real.startsWith(realRoot + "/") && real !== realRoot) {
+    if (!real.startsWith(`${realRoot}/`) && real !== realRoot) {
       return { ok: false, code: "E_PATH_INVALID", reason: "symlink escapes root" };
     }
   } catch {
