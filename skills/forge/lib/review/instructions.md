@@ -162,7 +162,7 @@ IF 本次执行是从 conversation summary 恢复（上下文压缩后继续）�
 
 ## 10. Review Report Format
 
-`.forge/reviews/<topic>.md`。YAML frontmatter（topic/date/result/reviewed_at_commit/p0-p3_count/layers）+ 正文。
+`.forge/reviews/<topic>.md`。YAML frontmatter（topic/date/result/reviewed_at_commit/p0-p3_count/methodology/layers）+ 正文。methodology 缺省 `subagent-parallel`。
 
 → 详见 references/review-report-format.md（完整 Frontmatter 模板）
 
