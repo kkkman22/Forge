@@ -50,16 +50,26 @@ Diff stat: !`git diff --stat HEAD~1 2>/dev/null || echo "no diff"`
 
 ### 2.0 Diff Context Preparation（前置步骤）
 
-在启动任何 Subagent 之前，编排层**必须**准备 diff 上下文：
+在启动任何 Subagent 之前，编排层**必须**准备 diff 上下文。
 
-1. **确定基准**：`BASE_BRANCH=$(git merge-base main HEAD 2>/dev/null || echo "HEAD~1")`
-2. **获取 diff stat**：`git diff --stat ${BASE_BRANCH}...HEAD`
-3. **获取 diff 内容（带智能截断）**：优先 `forge_git(subcommand="diff-content", args="${BASE_BRANCH}...HEAD")`（按文件优先级排序，单文件 200 行/总量 3000 行上限）；MCP 不可用时降级到 `git diff ... | head -3000`（无优先级）
-4. **写入** `.forge/reviews/.diff-context.md`，frontmatter 含 `base/head/file_count/total_added/total_removed/truncated/source`，正文为 diff stat + 截断后的 patch
+**单一调用**：
+
+```bash
+node scripts/prepare-diff-context.mjs
+```
+
+脚本自动执行：
+
+- 解析 BASE_BRANCH（`git merge-base main HEAD`，fallback `HEAD~1`）
+- 取 diff stat 与原始 diff content
+- 应用智能截断（按文件优先级 + 单文件 200 行 / 总量 1500 行上限，复用 `truncateDiffContent` pure function，零 MCP 依赖）
+- 写入 `.forge/reviews/.diff-context.md`，含 frontmatter（`base/head/file_count/total_added/total_removed/truncated/source: shell_with_truncate_lib`）+ `## Diff Stat` + `## Diff Content`（含真实 unified diff hunk）
+
+**禁止**手工拼接 narrative summary（如 "See forge_git output" / "Key changes: -..." 等）替代真实 patch hunk。脚本输出的 `## Diff Content` 段**必须**含 unified diff hunk 标记（`@@ ... @@` / `--- a/<path>` / `+++ b/<path>`）。如脚本不可用（构建未完成等极端情况）→ fallback shell：`git diff ${BASE_BRANCH}...HEAD | head -3000` 直接写入 `## Diff Content` 段，**绝不**替换为 narrative summary。
 
 此文件作为 Subagent prompt 的一部分传入，消除 agent 逐文件 Read 的需求。截断后 agent 可对存疑项用 Read 深入验证（最多 3-5 次）。
 
-→ 详见 references/diff-context-preparation.md（完整脚本、frontmatter 模板、forge_git MCP 降级判定）
+→ 详见 references/diff-context-preparation.md（脚本契约、frontmatter 模板、`## Why Narrative Summary is Forbidden`）
 
 使用 Agent tool 独立启动，无需 Agent Team。
 
