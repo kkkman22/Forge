@@ -1,8 +1,8 @@
 import { describe, expect, it } from "vitest";
 import {
+  MethodologySchema,
   ReviewReportSchema,
   safeParseReviewReport,
-  MethodologySchema,
 } from "../../src/schemas/review-report.js";
 
 describe("ReviewReportSchema — methodology field", () => {

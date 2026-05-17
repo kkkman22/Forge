@@ -3,7 +3,12 @@ import { afterEach, describe, expect, it } from "vitest";
 import { safeParseReviewReport } from "../../src/schemas/review-report.js";
 import { parseReviewReportGraceful } from "../../src/state.js";
 
-const VALID_METHODOLOGIES = ["subagent-parallel", "subagent-serial", "ci-evidence", "unavailable"] as const;
+const VALID_METHODOLOGIES = [
+  "subagent-parallel",
+  "subagent-serial",
+  "ci-evidence",
+  "unavailable",
+] as const;
 
 function withZodParser<T>(fn: () => T): T {
   const prev = process.env.FORGE_USE_ZOD_PARSER;
@@ -68,24 +73,41 @@ describe("methodology parsing invariants (property tests)", () => {
       fc.constant("no frontmatter"),
       // Valid methodology
       ...VALID_METHODOLOGIES.map((m) =>
-        fc.constant([
-          "---",
-          `result: pass`,
-          `methodology: ${m}`,
-          "p0_count: 0",
-          "p1_count: 0",
-          "p2_count: 0",
-          "p3_count: 0",
-          "---",
-          "",
-        ].join("\n")),
+        fc.constant(
+          [
+            "---",
+            `result: pass`,
+            `methodology: ${m}`,
+            "p0_count: 0",
+            "p1_count: 0",
+            "p2_count: 0",
+            "p3_count: 0",
+            "---",
+            "",
+          ].join("\n"),
+        ),
       ),
       // Invalid methodology (random string)
-      fc.string({ minLength: 1, maxLength: 20 }).map((s) =>
+      fc
+        .string({ minLength: 1, maxLength: 20 })
+        .map((s) =>
+          [
+            "---",
+            "result: pass",
+            `methodology: ${s}`,
+            "p0_count: 0",
+            "p1_count: 0",
+            "p2_count: 0",
+            "p3_count: 0",
+            "---",
+            "",
+          ].join("\n"),
+        ),
+      // No methodology field
+      fc.constant(
         [
           "---",
           "result: pass",
-          `methodology: ${s}`,
           "p0_count: 0",
           "p1_count: 0",
           "p2_count: 0",
@@ -94,17 +116,6 @@ describe("methodology parsing invariants (property tests)", () => {
           "",
         ].join("\n"),
       ),
-      // No methodology field
-      fc.constant([
-        "---",
-        "result: pass",
-        "p0_count: 0",
-        "p1_count: 0",
-        "p2_count: 0",
-        "p3_count: 0",
-        "---",
-        "",
-      ].join("\n")),
     );
 
     fc.assert(
