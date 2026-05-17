@@ -223,20 +223,22 @@ describe("Contract: agent files use Claude Code native frontmatter", () => {
 
 describe("Contract: dist bundle completeness (if built)", () => {
   const platforms = ["claude-code"];
-  const expectedSkillDirs = [
-    "forge-router",
-    "forge-decide",
-    "forge-spec",
-    "forge-plan",
-    "forge-build",
-    "forge-review",
-    "forge-test",
-    "forge-ship",
-    "forge-learn",
-    "forge-debug",
-    "forge-status",
-    "forge-resume",
-    "forge-abort",
+  // After v2.5.0 (ADR-0004), 29 forge-* skills are collapsed into
+  // skills/forge/lib/<sub>/instructions.md under a single registered forge skill.
+  const expectedLibSubs = [
+    "router",
+    "decide",
+    "spec",
+    "plan",
+    "build",
+    "review",
+    "test",
+    "ship",
+    "learn",
+    "debug",
+    "status",
+    "resume",
+    "abort",
   ];
 
   for (const platform of platforms) {
@@ -244,12 +246,20 @@ describe("Contract: dist bundle completeness (if built)", () => {
     const bundleExists = existsSync(bundleRoot);
 
     if (bundleExists) {
-      for (const skill of expectedSkillDirs) {
-        it(`dist/${platform} contains skills/${skill}/SKILL.md`, () => {
-          const skillPath = resolve(bundleRoot, `skills/${skill}/SKILL.md`);
+      it(`dist/${platform} contains skills/forge/SKILL.md (single entry)`, () => {
+        const skillPath = resolve(bundleRoot, "skills/forge/SKILL.md");
+        expect(
+          existsSync(skillPath),
+          `Missing in ${platform} bundle: skills/forge/SKILL.md`,
+        ).toBe(true);
+      });
+
+      for (const sub of expectedLibSubs) {
+        it(`dist/${platform} contains skills/forge/lib/${sub}/instructions.md`, () => {
+          const libPath = resolve(bundleRoot, `skills/forge/lib/${sub}/instructions.md`);
           expect(
-            existsSync(skillPath),
-            `Missing in ${platform} bundle: skills/${skill}/SKILL.md`,
+            existsSync(libPath),
+            `Missing in ${platform} bundle: skills/forge/lib/${sub}/instructions.md`,
           ).toBe(true);
         });
       }
