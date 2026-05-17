@@ -21,7 +21,12 @@ import {
   extractStringField,
   parseFrontmatter,
 } from "./frontmatter.js";
-import { safeParseReviewReport } from "./schemas/review-report.js";
+import {
+  METHODOLOGY_DEFAULT,
+  METHODOLOGY_VALUES,
+  type Methodology,
+  safeParseReviewReport,
+} from "./schemas/review-report.js";
 import { safeParseStatusFile } from "./schemas/status-file.js";
 
 // ---------------------------------------------------------------------------
@@ -63,7 +68,7 @@ export interface ReviewReportFields {
   p2_count: number;
   p3_count: number;
   /** How the review report was produced. Default: subagent-parallel. */
-  methodology: string;
+  methodology: Methodology;
 }
 
 // ---------------------------------------------------------------------------
@@ -89,7 +94,7 @@ export const REVIEW_REPORT_DEFAULTS: ReviewReportFields = {
   p1_count: 0,
   p2_count: 0,
   p3_count: 0,
-  methodology: "subagent-parallel",
+  methodology: METHODOLOGY_DEFAULT,
 };
 
 // ---------------------------------------------------------------------------
@@ -323,7 +328,7 @@ function parseReviewReportViaSchema(content: string | undefined): {
     p1_count: (value.p1_count as number | undefined) ?? REVIEW_REPORT_DEFAULTS.p1_count,
     p2_count: (value.p2_count as number | undefined) ?? REVIEW_REPORT_DEFAULTS.p2_count,
     p3_count: (value.p3_count as number | undefined) ?? REVIEW_REPORT_DEFAULTS.p3_count,
-    methodology: (value.methodology as string | undefined) ?? REVIEW_REPORT_DEFAULTS.methodology,
+    methodology: (value.methodology as Methodology | undefined) ?? REVIEW_REPORT_DEFAULTS.methodology,
   };
 
   if (resultStr === null)
@@ -364,11 +369,10 @@ function parseReviewReportLegacy(content: string | undefined): {
   const p3 = extractNumericField(fm.raw, "p3_count");
   const methodologyRaw = extractStringField(fm.raw, "methodology");
 
-  const VALID_METHODOLOGIES = ["subagent-parallel", "subagent-serial", "ci-evidence", "unavailable"];
-  let methodology = "subagent-parallel";
+  let methodology: Methodology = METHODOLOGY_DEFAULT;
   if (methodologyRaw !== null) {
-    if (VALID_METHODOLOGIES.includes(methodologyRaw)) {
-      methodology = methodologyRaw;
+    if ((METHODOLOGY_VALUES as readonly string[]).includes(methodologyRaw)) {
+      methodology = methodologyRaw as Methodology;
     } else {
       warnings.push(`methodology field invalid: ${methodologyRaw}`);
     }

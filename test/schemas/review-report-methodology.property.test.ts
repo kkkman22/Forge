@@ -80,18 +80,20 @@ describe("methodology parsing invariants (property tests)", () => {
           "",
         ].join("\n")),
       ),
-      // Invalid methodology
-      fc.constant([
-        "---",
-        "result: pass",
-        "methodology: bogus",
-        "p0_count: 0",
-        "p1_count: 0",
-        "p2_count: 0",
-        "p3_count: 0",
-        "---",
-        "",
-      ].join("\n")),
+      // Invalid methodology (random string)
+      fc.string({ minLength: 1, maxLength: 20 }).map((s) =>
+        [
+          "---",
+          "result: pass",
+          `methodology: ${s}`,
+          "p0_count: 0",
+          "p1_count: 0",
+          "p2_count: 0",
+          "p3_count: 0",
+          "---",
+          "",
+        ].join("\n"),
+      ),
       // No methodology field
       fc.constant([
         "---",
