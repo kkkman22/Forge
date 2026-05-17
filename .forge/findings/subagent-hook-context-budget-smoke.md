@@ -4,7 +4,7 @@ task: 20
 kind: dogfood-smoke
 status: partial-closure
 generated_at: 2026-05-16T23:29:19Z
-last_updated: 2026-05-16T23:50:00Z
+last_updated: 2026-05-17T00:30:00Z
 generated_by: kiro/claude-opus-4.7 (mock-smoke harness)
 commit: 05e97c2
 followup_spec: subagent-result-truncation
@@ -297,6 +297,18 @@ Now let me check for known-failures to detect any recurrence patterns:
 2. **spec-check returned incomplete**: The synchronous agent returned only a preamble line. Possible causes: (a) agent hit max turns before producing report, (b) agent output was summarized/truncated by the framework. However, this agent returned synchronously (not async), suggesting it completed early without full analysis.
 
 3. **security-check truncated output**: Agent used 6 tools over 19s (substantial work) but its final message was a preamble about "known-failures" rather than the expected structured report. The report content may have been generated in earlier turns and not captured in the final result field.
+
+## Stage 2 Cross-Reference (2026-05-17)
+
+Stage 2 of the `subagent-result-truncation` spec applied Turn Budget Discipline IRON-LAW + maxTurns: 10 to all three agent definitions. Results on commit acf3b4d:
+
+- **security-check**: FAIL → **PASS** ✅ (complete Layer 3 report)
+- **quality-check**: PASS → **PASS** ✅ (stable, preserved)
+- **spec-check**: FAIL → **FAIL** (still preamble-only; foreground agent, different execution path)
+
+Status remains `partial-closure` — acceptance criterion 2 not fully met (spec-check still truncates).
+
+Full Stage 2 findings: `.forge/findings/subagent-result-truncation-stage2.md`
 
 ## References
 
