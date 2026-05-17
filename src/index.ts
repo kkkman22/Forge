@@ -73,6 +73,8 @@ export {
   renderBranchGatePrompt,
   runBranchGate,
 } from "./branch-gate.js";
+// Config
+export { parseReviewConfig, type ReviewConfig } from "./config.js";
 // Context budget management
 export {
   CLASSIFICATION_MAP,
@@ -268,8 +270,6 @@ export {
   type SpecHealthReport,
   shouldRecompute,
 } from "./spec-health.js";
-// Config
-export { parseReviewConfig, type ReviewConfig } from "./config.js";
 // Subagent runner
 export {
   buildSubagentInvocations,
