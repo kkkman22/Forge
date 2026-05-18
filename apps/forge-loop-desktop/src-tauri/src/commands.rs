@@ -310,10 +310,11 @@ pub async fn start_task(app_handle: tauri::AppHandle, state: State<'_, AppState>
     if task.sleep_inhibit {
         let mut sg = state.sleep_guard.lock().map_err(|e| e.to_string())?;
         if sg.is_none() {
-            let guard = SleepGuard::new(std::path::PathBuf::from("/usr/bin/true"));
+            let mut guard = SleepGuard::new(std::path::PathBuf::from("/usr/bin/true"));
             if let Err(e) = guard.enable() {
                 tracing::warn!("Failed to enable sleep guard: {}", e);
             }
+            guard.start_lid_watcher();
             *sg = Some(guard);
         }
     }
@@ -387,6 +388,11 @@ pub fn toggle_sleep_inhibit(enabled: bool) -> Result<(), String> {
     } else {
         guard.disable().map_err(|e| e.to_string())
     }
+}
+
+#[tauri::command]
+pub fn setup_sudoers() -> Result<(), String> {
+    crate::sleep_guard::SleepGuard::setup_sudoers().map_err(|e| e.to_string())
 }
 
 // --- Review Commands ---
