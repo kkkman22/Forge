@@ -7,6 +7,6 @@
 | 同名 spec (locked) | ⚠️ 先将 status 改为 draft，再重新运行 |
 | 需求模糊 | 追问：问题？目标用户？关键场景？ |
 | 自检反复失败（3次） | 停止自动修正，呈现问题给用户 |
-| 无 `.forge/` | ⚠️ 先运行 forge init |
+| 无 `.forge/` | ⚠️ 先运行 /forge init |
 
 → 导入模式边界情况详见 references/import-mode.md

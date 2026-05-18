@@ -159,7 +159,7 @@ Execution: delegates to `../control-cli/` which selects the best available tier 
 | No test framework | ⚠️ 未检测到测试框架。Layer 1 无法执行 |
 | Test timeout (>5 min) | ⚠️ 可能原因：未关闭的异步操作、数据量过大、死循环 |
 | Some checklist items unverifiable | Mark as "unverifiable" not "passed", suggest configuring the corresponding tool |
-| No `.forge/` directory | ⚠️ 请先运行 forge init |
+| No `.forge/` directory | ⚠️ 请先运行 /forge init |
 
 ---
 
