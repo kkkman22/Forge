@@ -11,6 +11,16 @@ Entries follow [Keep a Changelog](https://keepachangelog.com/) with Forge-specif
 
 ## [Unreleased]
 
+### Added
+
+- `/forge init` 子命令：plugin 用户可像调用其他 SKILL 一样初始化项目，无需手动定位 init.sh
+- SessionStart bootstrap 引导：plugin 已激活但项目未初始化时，自动提示运行 `/forge init`
+- `init.sh` 检测 `${CLAUDE_PLUGIN_ROOT}` 环境变量，正确解析 plugin 模式资源根
+
+### Changed
+
+- 14 个 SKILL 的 Edge Cases 文案：`forge init` → `/forge init`，与新入口对齐
+
 ## [2.5.0] - 2026-05-17
 
 ### Breaking Changes
