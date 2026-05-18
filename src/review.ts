@@ -494,6 +494,9 @@ export function buildReviewSubagents(context: ReviewSubagentContext): SubagentIn
   const diffContextPreamble = [
     `Diff context: .forge/reviews/.diff-context.md`,
     `Turn Budget: Read diff-context first → produce FINDINGS → use remaining turns for deep-dives (max 3-5 reads).`,
+    `Hard constraint: Your final turn MUST be a text block containing FINDINGS, not a tool_use call.`,
+    `If turn budget is running low (≤2 remaining), stop reading files and output partial FINDINGS immediately.`,
+    `Insufficient evidence for a finding → omit it rather than spend turns investigating.`,
   ].join("\n");
 
   if (context.hasSpec) {
