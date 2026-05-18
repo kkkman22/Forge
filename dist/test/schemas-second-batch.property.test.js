@@ -21,6 +21,7 @@ const reviewReportArb = fc.record({
     p1_count: fc.integer({ min: 0, max: 50 }),
     p2_count: fc.integer({ min: 0, max: 100 }),
     p3_count: fc.integer({ min: 0, max: 200 }),
+    methodology: fc.constantFrom("subagent-parallel", "subagent-serial", "ci-evidence", "unavailable"),
 }, { requiredKeys: [] });
 const planFileArb = fc.record({
     format: fc.constantFrom("full", "lightweight"),
@@ -44,8 +45,16 @@ describe("review-report / plan-file / spec-file — round-trip", () => {
         fc.assert(fc.property(reviewReportArb, (sample) => {
             const wire = JSON.parse(JSON.stringify(sample));
             const { value, errors } = safeParseReviewReport(wire);
-            expect(errors).toEqual([]);
-            expect(value).toEqual(sample);
+            // methodology=unavailable forces result=blocked → errors expected
+            if (sample.methodology === "unavailable" && sample.result !== "blocked") {
+                expect(value.result).toBe("blocked");
+                expect(errors.length).toBeGreaterThan(0);
+            }
+            else {
+                expect(errors).toEqual([]);
+                const expected = { ...sample, methodology: sample.methodology ?? "subagent-parallel" };
+                expect(value).toEqual(expected);
+            }
         }), { numRuns: 50 });
     });
     /** **Validates: Requirement 2.9** */

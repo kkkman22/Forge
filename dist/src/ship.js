@@ -12,6 +12,8 @@
  *   - Requirements 10.3: Checklist gate — all P0/P1 entries must be verified
  *   - Requirements 16.3, 16.4: Hard constraints on review and test gates
  */
+import { appendFileSync, mkdirSync } from "node:fs";
+import { join } from "node:path";
 import { allEntriesVerified } from "./fix-checklist.js";
 /**
  * Check whether the review report is still fresh relative to the current HEAD.
@@ -57,6 +59,10 @@ export function checkReviewFreshness(reviewedCommit, currentHead, changedFiles) 
  */
 export function checkShipGate(review, test, progress) {
     const reasons = [];
+    // Gate 0: Review methodology check (fallback ladder guard)
+    if (review.methodology === "unavailable") {
+        reasons.push("Review unavailable: methodology=unavailable; subagent paths exhausted (L0+L1+L2 all failed)");
+    }
     // Gate 1: Review passed (no P0/P1)
     if (!review.passed || review.p0Count > 0 || review.p1Count > 0) {
         const issues = [];
@@ -82,6 +88,45 @@ export function checkShipGate(review, test, progress) {
         allowed: reasons.length === 0,
         reasons,
     };
+}
+/**
+ * Extended ship gate with force-skip-review escape hatch.
+ *
+ * When forceSkipReview is true, bypasses all normal gates and returns
+ * allowed=true with a SKIPPED-BY-FORCE reason. Requires a non-empty
+ * reason to provide audit trail.
+ * @public
+ */
+export function checkShipGateWithForceSkip(review, test, progress, options) {
+    if (options.forceSkipReview) {
+        if (!options.forceSkipReason || options.forceSkipReason.trim().length === 0) {
+            throw new Error("--force-skip-review requires --reason='<non-empty>'");
+        }
+        return {
+            allowed: true,
+            reasons: [`SKIPPED-BY-FORCE: ${options.forceSkipReason}`],
+            forceSkipped: true,
+        };
+    }
+    return checkShipGate(review, test, progress);
+}
+/**
+ * Record a force-skip-review event to the findings file for audit trail.
+ *
+ * Writes an entry to `.forge/findings/force-skip-review-<date>.md` with
+ * commit hash, reason, user, and timestamp.
+ * @public
+ */
+export function recordForceSkip(commitHash, reason, user) {
+    const sanitizedReason = reason.replace(/[\r\n]/g, " ").slice(0, 500);
+    const sanitizedUser = user.replace(/[\r\n\])#]/g, "").slice(0, 100);
+    const sanitizedHash = commitHash.replace(/[^a-f0-9]/g, "").slice(0, 40);
+    const date = new Date().toISOString().slice(0, 10);
+    const dir = ".forge/findings";
+    const filePath = join(dir, `force-skip-review-${date}.md`);
+    mkdirSync(dir, { recursive: true });
+    const entry = `## ${sanitizedHash} (${sanitizedUser})\n\nReason: ${sanitizedReason}\nTimestamp: ${new Date().toISOString()}\n`;
+    appendFileSync(filePath, entry);
 }
 /**
  * Extended ship gate with P1 Fix Checklist verification.

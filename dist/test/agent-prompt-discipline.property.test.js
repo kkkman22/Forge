@@ -46,7 +46,7 @@ function checkAgentContract(fields, body) {
 const VALID_BODY = [
     "## Identity",
     "## Turn Budget Discipline (IRON-LAW)",
-    "Use forge_git(subcommand=\"diff-content\") first.",
+    'Use forge_git(subcommand="diff-content") first.',
     "Read 预算 ≤ 3.",
     "## Final Report Block",
     "Final report must start with ## Layer N.",

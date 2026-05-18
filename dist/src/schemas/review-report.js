@@ -19,6 +19,17 @@ import { z } from "zod";
 export const ReviewResultSchema = z.string().min(1);
 /** Severity counts must be non-negative integers. */
 export const SeverityCountSchema = z.number().int().min(0);
+/** Review report production methodology. */
+export const MethodologySchema = z.enum([
+    "subagent-parallel",
+    "subagent-serial",
+    "ci-evidence",
+    "unavailable",
+]);
+/** Runtime array of valid methodology values for legacy path validation. */
+export const METHODOLOGY_VALUES = MethodologySchema.options;
+/** Default methodology when field is absent. */
+export const METHODOLOGY_DEFAULT = "subagent-parallel";
 // ---------------------------------------------------------------------------
 // Top-level schema
 // ---------------------------------------------------------------------------
@@ -30,6 +41,7 @@ export const ReviewReportSchema = z
     p1_count: SeverityCountSchema.optional(),
     p2_count: SeverityCountSchema.optional(),
     p3_count: SeverityCountSchema.optional(),
+    methodology: MethodologySchema.optional(),
 })
     .passthrough();
 /**
@@ -42,10 +54,18 @@ export const ReviewReportSchema = z
  */
 export function safeParseReviewReport(raw) {
     const result = ReviewReportSchema.safeParse(raw);
+    const errors = [];
     if (result.success) {
-        return { value: result.data, errors: [] };
+        const value = { ...result.data };
+        if (value.methodology === undefined) {
+            value.methodology = METHODOLOGY_DEFAULT;
+        }
+        if (value.methodology === "unavailable" && value.result !== "blocked") {
+            errors.push(`methodology=unavailable forces result=blocked (was ${JSON.stringify(value.result ?? null)})`);
+            value.result = "blocked";
+        }
+        return { value, errors };
     }
-    const errors = result.error.issues.map((issue) => `${issue.path.join(".")}: ${issue.message}`);
     const partial = {};
     if (raw !== null && typeof raw === "object" && !Array.isArray(raw)) {
         const rawObj = raw;
@@ -59,7 +79,21 @@ export function safeParseReviewReport(raw) {
             if (fieldResult.success) {
                 partial[key] = fieldResult.data;
             }
+            else if (key === "methodology") {
+                partial.methodology = METHODOLOGY_DEFAULT;
+                errors.push(`methodology field invalid: ${JSON.stringify(value)}`);
+            }
+            else {
+                errors.push(`${key}: ${fieldResult.error.issues[0]?.message ?? "invalid"}`);
+            }
         }
+    }
+    if (partial.methodology === undefined) {
+        partial.methodology = METHODOLOGY_DEFAULT;
+    }
+    if (partial.methodology === "unavailable" && partial.result !== "blocked") {
+        errors.push(`methodology=unavailable forces result=blocked (was ${JSON.stringify(partial.result ?? null)})`);
+        partial.result = "blocked";
     }
     return { value: partial, errors };
 }
@@ -70,5 +104,6 @@ const FIELD_SCHEMAS = {
     p1_count: SeverityCountSchema,
     p2_count: SeverityCountSchema,
     p3_count: SeverityCountSchema,
+    methodology: MethodologySchema,
 };
 //# sourceMappingURL=review-report.js.map

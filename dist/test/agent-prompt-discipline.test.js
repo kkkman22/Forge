@@ -95,10 +95,7 @@ describe.each([
     });
 });
 describe("Contract: codex toml integrity (Stage 2)", () => {
-    const TOML_FILES = [
-        ".codex/agents/quality-check.toml",
-        ".codex/agents/security-check.toml",
-    ];
+    const TOML_FILES = [".codex/agents/quality-check.toml", ".codex/agents/security-check.toml"];
     for (const tomlPath of TOML_FILES) {
         it(`${tomlPath} developer_instructions contains Turn Budget Discipline IRON-LAW segment`, () => {
             const content = readFileSync(resolve(ROOT, tomlPath), "utf-8");

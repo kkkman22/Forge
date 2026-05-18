@@ -1,9 +1,9 @@
-import { describe, it, expect } from "vitest";
-import { resolveAllowedTools } from "../../src/forge-dispatcher/tools-resolve.js";
-import { checkIntegrity } from "../../src/forge-dispatcher/integrity-check.js";
-import { readFileSync, writeFileSync, mkdirSync, rmSync } from "node:fs";
-import { resolve } from "node:path";
 import { createHash } from "node:crypto";
+import { mkdirSync, readFileSync, rmSync, writeFileSync } from "node:fs";
+import { resolve } from "node:path";
+import { describe, expect, it } from "vitest";
+import { checkIntegrity } from "../../src/forge-dispatcher/integrity-check.js";
+import { resolveAllowedTools } from "../../src/forge-dispatcher/tools-resolve.js";
 const LIB_ROOT = resolve(import.meta.dirname, "../../skills/forge/lib");
 const MANIFEST_PATH = resolve(LIB_ROOT, "manifest.json");
 describe("Integration: dispatcher reads real lib (no mocks)", () => {

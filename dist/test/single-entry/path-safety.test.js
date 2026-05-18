@@ -1,4 +1,4 @@
-import { describe, it, expect } from "vitest";
+import { describe, expect, it } from "vitest";
 import { resolveLibPath } from "../../src/forge-dispatcher/path-resolve.js";
 const CWD = process.cwd();
 describe("R2.2: path safety — dual mode, no traversal/absolute/symlink", () => {

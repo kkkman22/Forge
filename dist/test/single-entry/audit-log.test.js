@@ -1,6 +1,6 @@
-import { describe, it, expect, beforeEach, afterEach } from "vitest";
+import { existsSync, mkdirSync, readFileSync, rmSync } from "node:fs";
 import { resolve } from "node:path";
-import { mkdirSync, rmSync, existsSync, readFileSync } from "node:fs";
+import { afterEach, beforeEach, describe, expect, it } from "vitest";
 import { appendAuditLog } from "../../src/forge-dispatcher/audit-log.js";
 const TMP_DIR = resolve(import.meta.dirname, "..", "__audit_tmp__");
 describe("R2.7: audit log out of workspace", () => {
@@ -54,9 +54,7 @@ describe("R2.7: audit log out of workspace", () => {
         };
         await appendAuditLog(entry1, { auditDir: TMP_DIR });
         await appendAuditLog(entry2, { auditDir: TMP_DIR });
-        const lines = readFileSync(resolve(TMP_DIR, "dispatch.log"), "utf-8")
-            .trim()
-            .split("\n");
+        const lines = readFileSync(resolve(TMP_DIR, "dispatch.log"), "utf-8").trim().split("\n");
         expect(lines).toHaveLength(2);
         const parsed2 = JSON.parse(lines[1]);
         expect(parsed2.prev_hmac).toBe("hmac1");

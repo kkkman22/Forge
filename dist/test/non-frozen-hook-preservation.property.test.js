@@ -12,9 +12,9 @@
  *
  * **Validates: Requirements 3.4, 3.5, 3.6**
  */
-import * as fc from "fast-check";
 import { readFileSync } from "node:fs";
 import { resolve } from "node:path";
+import * as fc from "fast-check";
 import { describe, expect, it } from "vitest";
 function loadHooksConfig() {
     const hooksPath = resolve(process.cwd(), "hooks/hooks.json");
