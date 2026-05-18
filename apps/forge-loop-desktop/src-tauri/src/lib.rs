@@ -61,6 +61,18 @@ pub fn run() {
             commands::get_task_log,
         ])
         .setup(|app| {
+            // Resource integrity check
+            let res_dir = app.path().resource_dir()?;
+            let node_bin = res_dir.join("node/bin/node");
+            let cli_js = res_dir.join("forge-loop/dist/src/forge-loop-cli.js");
+            if !node_bin.exists() || !cli_js.exists() {
+                eprintln!(
+                    "WARNING: Bundled resources incomplete. node={} cli={}",
+                    node_bin.exists(),
+                    cli_js.exists()
+                );
+            }
+
             #[cfg(debug_assertions)]
             {
                 let window = app.get_webview_window("main").unwrap();
