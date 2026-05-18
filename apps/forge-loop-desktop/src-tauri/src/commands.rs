@@ -248,3 +248,92 @@ pub fn toggle_sleep_inhibit(enabled: bool) -> Result<(), String> {
         guard.disable().map_err(|e| e.to_string())
     }
 }
+
+// --- Review Commands ---
+
+#[tauri::command]
+pub fn approve_task(state: State<AppState>, task_id: String) -> Result<(), String> {
+    let mut store = state.task_store.lock().map_err(|e| e.to_string())?;
+    let task = store
+        .get(&task_id)
+        .cloned()
+        .ok_or_else(|| format!("task not found: {}", task_id))?;
+
+    let (run_id, completed_at) = match &task.status {
+        TaskStatus::AwaitingReview { run_id, completed_at } => {
+            (run_id.clone(), *completed_at)
+        }
+        _ => return Err("task is not awaiting review".into()),
+    };
+
+    store
+        .update(&task_id, |t| {
+            t.status = TaskStatus::Completed { run_id, completed_at };
+        })
+        .map_err(|e| e.to_string())
+}
+
+#[tauri::command]
+pub async fn reject_task(
+    state: State<'_, AppState>,
+    task_id: String,
+    feedback: String,
+) -> Result<String, String> {
+    {
+        let mut store = state.task_store.lock().map_err(|e| e.to_string())?;
+        store
+            .update(&task_id, |t| {
+                // Prepend feedback to objective
+                match &t.target {
+                    TaskTarget::Objective { text } => {
+                        t.target = TaskTarget::Objective {
+                            text: format!("{}\n---\n用户反馈：{}", text, feedback),
+                        };
+                    }
+                    TaskTarget::SpecFile { path } => {
+                        t.target = TaskTarget::Objective {
+                            text: format!("Spec: {}\n---\n用户反馈：{}", path, feedback),
+                        };
+                    }
+                }
+            })
+            .map_err(|e| e.to_string())?;
+    }
+    retry_task(state, task_id).await
+}
+
+#[tauri::command]
+pub fn get_diff(task_id: String, repo_path: String) -> Result<String, String> {
+    let output = std::process::Command::new("git")
+        .args(["diff", "HEAD~1", "--stat"])
+        .current_dir(&repo_path)
+        .output()
+        .map_err(|e| format!("git diff failed: {}", e))?;
+
+    Ok(String::from_utf8_lossy(&output.stdout).to_string())
+}
+
+#[tauri::command]
+pub fn get_task_log(
+    task_id: String,
+    run_id: String,
+    lines: usize,
+) -> Result<String, String> {
+    let data_dir = dirs::data_dir()
+        .unwrap_or_default()
+        .join("forge-loop-desktop")
+        .join("runs")
+        .join(&task_id)
+        .join(format!("{}.log", run_id));
+
+    if !data_dir.exists() {
+        return Ok(String::new());
+    }
+
+    let content = std::fs::read_to_string(&data_dir)
+        .map_err(|e| format!("failed to read log: {}", e))?;
+
+    let all_lines: Vec<&str> = content.lines().collect();
+    let start = all_lines.len().saturating_sub(lines);
+    Ok(all_lines[start..].join("\n"))
+}

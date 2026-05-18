@@ -55,6 +55,10 @@ pub fn run() {
             commands::clear_credentials,
             commands::get_sleep_status,
             commands::toggle_sleep_inhibit,
+            commands::approve_task,
+            commands::reject_task,
+            commands::get_diff,
+            commands::get_task_log,
         ])
         .setup(|app| {
             #[cfg(debug_assertions)]
