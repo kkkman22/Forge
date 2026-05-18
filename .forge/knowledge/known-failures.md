@@ -14,6 +14,58 @@ retention：>100 条触发自动归档到 `.forge/archive/known-failures-<date>.
 ## Active Patterns
 
 ```yaml
+- pattern_id: tauri-child-process-zombie-on-parent-exit
+  severity: P1
+  first_seen: "2026-05-19"
+  last_seen: "2026-05-19"
+  occurrence_count: 1
+  first_seen_commit: dce8820
+  last_seen_commit: dce8820
+  signature: "Tauri Rust backend spawns child processes (forge-loop CLI via ProcessManager) without setting independent process groups. When app exits or crashes, child processes become zombies or orphaned — still consuming resources, holding file locks, or running indefinitely."
+  fix_required: "Use process_group_kill (POSIX setpgid + kill(-pgid)) when spawning. On app exit (RunEvent::Exit), synchronously kill all tracked children via kill_task_sync(). Mark Running tasks as Failed on next launch via recover_orphan_processes()."
+  source_review: "apps/forge-loop-desktop/src-tauri/src/process_manager.rs"
+  detection_signal: "After force-quitting the desktop app, `ps aux | grep forge-loop` still shows running child processes"
+  verification_command: "grep -c 'kill_task_sync\\|setpgid\\|process_group' apps/forge-loop-desktop/src-tauri/src/process_manager.rs"
+
+- pattern_id: macos-dmg-not-notarized-gatekeeper-blocks-launch
+  severity: P1
+  first_seen: "2026-05-19"
+  last_seen: "2026-05-19"
+  occurrence_count: 1
+  first_seen_commit: dce8820
+  last_seen_commit: dce8820
+  signature: "macOS .dmg built by cargo tauri build is unsigned and unnotarized. On macOS 10.15+, Gatekeeper blocks double-click launch with 'cannot be opened because it is from an unidentified developer'. Users must bypass via System Preferences > Security & Privacy."
+  fix_required: "Configure tauri.conf.json bundle.macOS.signingIdentity and notarize credentials. CI pipeline must run `xcrun notarytool submit` after build. Local dev builds can skip signing but must document the Gatekeeper bypass steps in README."
+  source_review: "apps/forge-loop-desktop/src-tauri/tauri.conf.json"
+  detection_signal: "User reports 'cannot be opened' error on double-click; `spctl --assess --type execute` returns rejected"
+  verification_command: "codesign -dv apps/forge-loop-desktop/src-tauri/target/release/bundle/macos/*.app 2>&1 | head -3"
+
+- pattern_id: pmset-disablesleep-not-recovered-after-crash
+  severity: P1
+  first_seen: "2026-05-19"
+  last_seen: "2026-05-19"
+  occurrence_count: 1
+  first_seen_commit: dce8820
+  last_seen_commit: dce8820
+  signature: "pmset disablesleep is called on task start but never reverted if app crashes or is force-killed. System remains in no-sleep state indefinitely, draining battery on laptops. Normal exit handler clears it, but crash path skips cleanup."
+  fix_required: "Use file-based panic marker pattern: write .panic_marker on startup, clear on clean exit. On next launch, check marker + running_count == 0 → call pmset sleepenable. Also add recover_stale_inhibition() in app setup to catch orphaned disablesleep state."
+  source_review: "apps/forge-loop-desktop/src-tauri/src/sleep_guard.rs, src/lib.rs"
+  detection_signal: "After app crash, `pmset -g | grep disablesleep` still shows 1; laptop battery drains overnight"
+  verification_command: "grep -c 'recover_stale\\|panic_marker\\|clear_panic' apps/forge-loop-desktop/src-tauri/src/lib.rs"
+
+- pattern_id: bundled-node-path-with-spaces-spawn-fails
+  severity: P2
+  first_seen: "2026-05-19"
+  last_seen: "2026-05-19"
+  occurrence_count: 1
+  first_seen_commit: dce8820
+  last_seen_commit: dce8820
+  signature: "Bundled Node.js binary path contains spaces (e.g. /Applications/Forge Loop.app/Contents/Resources/node/bin/node). std::process::Command splits on spaces when path is not properly quoted or passed as separate args, causing spawn ENOENT."
+  fix_required: "Always pass binary path as first arg to Command::new(), not as part of .args(). In ProcessManager::spawn_task, construct the node path from resources_dir and pass it directly. Test with `cargo test` after renaming resources dir to include spaces."
+  source_review: "apps/forge-loop-desktop/src-tauri/src/process_manager.rs"
+  detection_signal: "App launches on system with spaces in Application path, task start fails with 'No such file or directory'"
+  verification_command: "grep -A5 'Command::new' apps/forge-loop-desktop/src-tauri/src/process_manager.rs | head -10"
+
 - pattern_id: security-control-stub-returns-ok-true
   severity: P1
   first_seen: "2026-05-17"
