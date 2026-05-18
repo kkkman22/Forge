@@ -1,5 +1,6 @@
 pub mod commands;
 pub mod process_manager;
+pub mod status_watcher;
 pub mod task_store;
 
 use commands::AppState;
