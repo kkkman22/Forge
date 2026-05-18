@@ -41,6 +41,9 @@ pub fn run() {
         .manage(AppState {
             task_store: Mutex::new(task_store),
             process_manager: AsyncMutex::new(process_manager),
+            exit_poller_started: std::sync::atomic::AtomicBool::new(false),
+            status_watcher: AsyncMutex::new(None),
+            sleep_guard: Mutex::new(None),
         })
         .invoke_handler(tauri::generate_handler![
             commands::create_task,
@@ -66,7 +69,6 @@ pub fn run() {
             commands::check_update,
         ])
         .setup(|app| {
-            // Resource integrity check
             let res_dir = app.path().resource_dir()?;
             let node_bin = res_dir.join("node/bin/node");
             let cli_js = res_dir.join("forge-loop/dist/src/forge-loop-cli.js");

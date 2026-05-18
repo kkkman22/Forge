@@ -2,10 +2,9 @@ use crate::task_store::{BranchStrategy, Task, TaskId, TaskStatus};
 use chrono::Utc;
 use std::collections::HashMap;
 use std::path::{Path, PathBuf};
-use std::process::Command;
 use tokio::io::AsyncReadExt;
 use tokio::process::{Child, Command as AsyncCommand};
-use tokio::sync::Mutex;
+use tauri::AppHandle;
 use uuid::Uuid;
 
 #[derive(Debug, thiserror::Error)]
@@ -29,6 +28,7 @@ struct ProcessHandle {
     started_at: chrono::DateTime<Utc>,
     log_path: PathBuf,
     task_id: TaskId,
+    run_id: RunId,
 }
 
 pub struct ProcessManager {
@@ -36,6 +36,15 @@ pub struct ProcessManager {
     node_path: PathBuf,
     cli_path: PathBuf,
     runs_dir: PathBuf,
+    app_handle: Option<AppHandle>,
+}
+
+#[derive(Debug, serde::Serialize, Clone)]
+pub struct TaskCompletedEvent {
+    pub task_id: TaskId,
+    pub run_id: RunId,
+    pub exit_code: i32,
+    pub success: bool,
 }
 
 impl ProcessManager {
@@ -45,7 +54,12 @@ impl ProcessManager {
             node_path: app_resources_dir.join("node/bin/node"),
             cli_path: app_resources_dir.join("forge-loop/dist/src/forge-loop-cli.js"),
             runs_dir: runs_dir.to_path_buf(),
+            app_handle: None,
         }
+    }
+
+    pub fn set_app_handle(&mut self, handle: AppHandle) {
+        self.app_handle = Some(handle);
     }
 
     pub async fn spawn_task(
@@ -88,6 +102,10 @@ impl ProcessManager {
             });
         }
 
+        let task_id = task.id.clone();
+        let run_id_clone = run_id.clone();
+        let app_handle = self.app_handle.clone();
+
         self.registry.insert(
             task.id.clone(),
             ProcessHandle {
@@ -95,10 +113,51 @@ impl ProcessManager {
                 started_at: Utc::now(),
                 log_path,
                 task_id: task.id.clone(),
+                run_id: run_id.clone(),
             },
         );
 
+        // Spawn exit watcher
+        if let Some(handle) = app_handle {
+            tokio::spawn(async move {
+                // We need to wait for the child — but it's now in the registry.
+                // The exit watcher polls via a channel. Instead, we'll use
+                // a different approach: take the child out, wait, then signal.
+                // For now, emit event when process_manager detects exit via poll.
+                let _ = handle;
+                let _ = task_id;
+                let _ = run_id_clone;
+            });
+        }
+
         Ok(run_id)
+    }
+
+    /// Check for exited processes and return their task IDs + exit codes.
+    /// Call this periodically or after receiving a status event.
+    pub fn poll_exits(&mut self) -> Vec<(TaskId, RunId, i32)> {
+        let mut exited = Vec::new();
+        let mut to_remove = Vec::new();
+
+        for (task_id, handle) in &mut self.registry {
+            match handle.child.try_wait() {
+                Ok(Some(status)) => {
+                    let exit_code = status.code().unwrap_or(-1);
+                    exited.push((task_id.clone(), handle.run_id.clone(), exit_code));
+                    to_remove.push(task_id.clone());
+                }
+                Ok(None) => {}
+                Err(_) => {
+                    to_remove.push(task_id.clone());
+                }
+            }
+        }
+
+        for task_id in &to_remove {
+            self.registry.remove(task_id);
+        }
+
+        exited
     }
 
     pub async fn stop_task(&mut self, task_id: &TaskId) -> Result<(), ProcessError> {
@@ -107,33 +166,29 @@ impl ProcessManager {
             .get_mut(task_id)
             .ok_or_else(|| ProcessError::NotRunning(task_id.clone()))?;
 
-        // Send SIGTERM
         if let Some(id) = handle.child.id() {
             unsafe {
                 libc::kill(-(id as i32), libc::SIGTERM);
             }
         }
 
-        // Wait up to 30 seconds
         match tokio::time::timeout(
             std::time::Duration::from_secs(30),
             handle.child.wait(),
         )
         .await
         {
-            Ok(Ok(status)) => {
+            Ok(Ok(_status)) => {
                 self.registry.remove(task_id);
                 Ok(())
             }
             _ => {
-                // SIGKILL
                 if let Some(id) = handle.child.id() {
                     unsafe {
                         libc::kill(-(id as i32), libc::SIGKILL);
                     }
                 }
-                let _ = handle.child.kill().await;
-                self.registry.remove(task_id);
+                let _ = self.registry.remove(task_id);
                 Ok(())
             }
         }
@@ -158,10 +213,13 @@ impl ProcessManager {
         }
     }
 
+    pub fn running_count(&self) -> usize {
+        self.registry.len()
+    }
+
     fn build_cli_args(&self, task: &Task, run_id: &str) -> Vec<String> {
         let mut args = vec![self.cli_path.to_string_lossy().to_string()];
 
-        // Objective or spec
         match &task.target {
             crate::task_store::TaskTarget::Objective { text } => {
                 args.push(text.clone());
@@ -171,12 +229,10 @@ impl ProcessManager {
             }
         }
 
-        // Tier
         if let Some(tier) = &task.tier {
             args.extend(["--tier".into(), tier.clone()]);
         }
 
-        // Branch strategy
         match &task.branch_strategy {
             BranchStrategy::NewWorktree { .. } => {
                 args.push("--worktree".into());
@@ -187,7 +243,6 @@ impl ProcessManager {
             BranchStrategy::CurrentBranch => {}
         }
 
-        // Limits
         if let Some(n) = task.max_iterations {
             args.extend(["--max-iterations".into(), n.to_string()]);
         }
@@ -195,10 +250,8 @@ impl ProcessManager {
             args.extend(["--max-budget-usd".into(), usd.to_string()]);
         }
 
-        // Disable forge-loop's built-in sleep prevention (App handles it via pmset)
         args.extend(["--prevent-sleep".into(), "off".into()]);
 
-        // JSON logging
         let log_path = self.runs_dir.join(&task.id).join(format!("{}.log", run_id));
         args.extend([
             "--log-format".into(),
@@ -215,8 +268,9 @@ async fn write_lines_to_file<R: tokio::io::AsyncRead + Unpin>(
     mut reader: R,
     path: &Path,
 ) -> std::io::Result<()> {
-    use tokio::io::BufReader;
     use tokio::io::AsyncBufReadExt;
+    use tokio::io::AsyncWriteExt;
+    use tokio::io::BufReader;
 
     let buf_reader = BufReader::new(&mut reader);
     let mut lines = buf_reader.lines();
@@ -227,13 +281,11 @@ async fn write_lines_to_file<R: tokio::io::AsyncRead + Unpin>(
         .await?;
 
     while let Some(line) = lines.next_line().await? {
-        // Truncate long lines to 1KB
         let truncated = if line.len() > 1024 {
             &line[..1024]
         } else {
             &line
         };
-        use tokio::io::AsyncWriteExt;
         file.write_all(truncated.as_bytes()).await?;
         file.write_all(b"\n").await?;
     }
@@ -327,7 +379,8 @@ mod tests {
             path: ".kiro/specs/test/spec.md".into(),
         };
         let args = pm.build_cli_args(&task, "run-spec");
-        assert!(args.iter().any(|a| a.contains("--spec")));
+        assert!(args.iter().any(|a| a == "--spec"));
+        assert!(args.iter().any(|a| a == ".kiro/specs/test/spec.md"));
     }
 
     #[test]
@@ -347,5 +400,20 @@ mod tests {
         task.max_budget_usd = Some(10.0);
         let args = pm.build_cli_args(&task, "run-budget");
         assert_contains(&args, "--max-budget-usd");
+    }
+
+    #[test]
+    fn test_poll_exits_empty() {
+        let dir = tempfile::tempdir().unwrap();
+        let mut pm = ProcessManager::new(dir.path(), dir.path());
+        let exits = pm.poll_exits();
+        assert!(exits.is_empty());
+    }
+
+    #[test]
+    fn test_running_count() {
+        let dir = tempfile::tempdir().unwrap();
+        let pm = ProcessManager::new(dir.path(), dir.path());
+        assert_eq!(pm.running_count(), 0);
     }
 }
