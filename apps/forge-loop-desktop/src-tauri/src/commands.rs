@@ -18,6 +18,7 @@ pub struct AppState {
     pub exit_poller_started: std::sync::atomic::AtomicBool,
     pub status_watcher: AsyncMutex<Option<StatusWatcher>>,
     pub sleep_guard: Mutex<Option<SleepGuard>>,
+    pub backlight_ctl_path: PathBuf,
 }
 
 #[derive(serde::Deserialize)]
@@ -71,7 +72,30 @@ pub fn create_task(state: State<AppState>, input: TaskInput) -> Result<Task, Str
 
 #[tauri::command]
 pub fn list_tasks(state: State<AppState>) -> Result<Vec<Task>, String> {
-    let store = state.task_store.lock().map_err(|e| e.to_string())?;
+    let mut store = state.task_store.lock().map_err(|e| e.to_string())?;
+    let completed_count = store.list().iter().filter(|t| matches!(t.status, TaskStatus::Completed { .. })).count();
+    if completed_count > 100 {
+        let _ = store.prune_completed(100);
+    }
+
+    // Mark tasks as failed if their repo_path was deleted
+    let tasks_snapshot = store.list().to_vec();
+    for task in &tasks_snapshot {
+        if !matches!(task.status, TaskStatus::Queued | TaskStatus::Paused) {
+            continue;
+        }
+        if !task.repo_path.exists() {
+            let tid = task.id.clone();
+            let _ = store.update(&tid, |t| {
+                t.status = TaskStatus::Failed {
+                    run_id: String::new(),
+                    error: "Repository path no longer exists".into(),
+                    failed_at: Utc::now(),
+                };
+            });
+        }
+    }
+
     Ok(store.list().to_vec())
 }
 
@@ -217,7 +241,7 @@ fn ensure_exit_poller(app_handle: &tauri::AppHandle, state: &AppState) {
                 }
             }
 
-            // Disable sleep guard when no tasks running
+            // Disable sleep guard when no tasks running and update tray
             let running = {
                 let pm = state.process_manager.lock().await;
                 pm.running_count()
@@ -228,7 +252,12 @@ fn ensure_exit_poller(app_handle: &tauri::AppHandle, state: &AppState) {
                     Err(_) => return,
                 };
                 if let Some(ref guard) = *sg {
-                    let _ = guard.disable();
+                    if guard.is_inhibited() {
+                        let _ = guard.disable();
+                        let _ = handle.emit("sleep-status-changed", serde_json::json!({
+                            "is_inhibited": false
+                        }));
+                    }
                 }
             }
         }
@@ -253,6 +282,14 @@ pub async fn start_task(app_handle: tauri::AppHandle, state: State<'_, AppState>
             .map_err(|e| format!("git status failed: {}", e))?;
         if !output.stdout.is_empty() {
             return Err("working tree not clean — commit or stash changes first".into());
+        }
+    }
+
+    // Validate spec file exists if target is spec_file
+    if let TaskTarget::SpecFile { path } = &task.target {
+        let spec_path = task.repo_path.join(path);
+        if !spec_path.exists() {
+            return Err(format!("spec file not found: {}", spec_path.display()));
         }
     }
 
@@ -310,9 +347,13 @@ pub async fn start_task(app_handle: tauri::AppHandle, state: State<'_, AppState>
     if task.sleep_inhibit {
         let mut sg = state.sleep_guard.lock().map_err(|e| e.to_string())?;
         if sg.is_none() {
-            let mut guard = SleepGuard::new(std::path::PathBuf::from("/usr/bin/true"));
+            let mut guard = SleepGuard::new(state.backlight_ctl_path.clone());
             if let Err(e) = guard.enable() {
                 tracing::warn!("Failed to enable sleep guard: {}", e);
+            } else {
+                let _ = app_handle.emit("sleep-status-changed", serde_json::json!({
+                    "is_inhibited": true
+                }));
             }
             guard.start_lid_watcher();
             *sg = Some(guard);
@@ -375,14 +416,14 @@ pub fn clear_credentials() -> Result<(), String> {
 // --- Sleep Commands ---
 
 #[tauri::command]
-pub fn get_sleep_status() -> Result<crate::sleep_guard::SleepStatus, String> {
-    let guard = crate::sleep_guard::SleepGuard::new(std::path::PathBuf::from("/usr/bin/true"));
+pub fn get_sleep_status(state: State<AppState>) -> Result<crate::sleep_guard::SleepStatus, String> {
+    let guard = crate::sleep_guard::SleepGuard::new(state.backlight_ctl_path.clone());
     Ok(guard.get_status())
 }
 
 #[tauri::command]
-pub fn toggle_sleep_inhibit(enabled: bool) -> Result<(), String> {
-    let guard = crate::sleep_guard::SleepGuard::new(std::path::PathBuf::from("/usr/bin/true"));
+pub fn toggle_sleep_inhibit(state: State<AppState>, enabled: bool) -> Result<(), String> {
+    let guard = crate::sleep_guard::SleepGuard::new(state.backlight_ctl_path.clone());
     if enabled {
         guard.enable().map_err(|e| e.to_string())
     } else {
@@ -487,12 +528,64 @@ pub fn get_task_log(
 // --- System Commands ---
 
 #[tauri::command]
+pub fn uninstall_cleanup() -> Result<(), String> {
+    // Remove sudoers file
+    if std::path::Path::new("/etc/sudoers.d/forge-loop").exists() {
+        crate::sleep_guard::SleepGuard::cleanup_sudoers()
+            .map_err(|e| e.to_string())?;
+    }
+
+    // Remove app data
+    let data_dir = dirs::data_dir()
+        .ok_or("cannot determine data directory")?
+        .join("forge-loop-desktop");
+    if data_dir.exists() {
+        std::fs::remove_dir_all(&data_dir)
+            .map_err(|e| format!("failed to remove data: {}", e))?;
+    }
+
+    // Remove logs
+    let log_dir = dirs::home_dir()
+        .map(|h| h.join("Library/Logs/forge-loop-desktop"));
+    if let Some(ref dir) = log_dir {
+        if dir.exists() {
+            std::fs::remove_dir_all(dir)
+                .map_err(|e| format!("failed to remove logs: {}", e))?;
+        }
+    }
+
+    Ok(())
+}
+
+#[tauri::command]
 pub fn export_diagnostics() -> Result<String, String> {
     let path = crate::app_logging::export_diagnostics()?;
     Ok(path.to_string_lossy().to_string())
 }
 
 #[tauri::command]
-pub fn check_update() -> Result<Option<String>, String> {
-    Ok(None)
+pub async fn check_update() -> Result<Option<String>, String> {
+    let client = reqwest::Client::builder()
+        .timeout(std::time::Duration::from_secs(5))
+        .build()
+        .map_err(|e| e.to_string())?;
+
+    let resp = client
+        .get("https://api.github.com/repos/anthropics/forge-loop-desktop/releases/latest")
+        .header("User-Agent", "forge-loop-desktop")
+        .send()
+        .await
+        .map_err(|e| e.to_string())?;
+
+    if !resp.status().is_success() {
+        return Ok(None);
+    }
+
+    let body: serde_json::Value = resp.json().await.map_err(|e| e.to_string())?;
+    let tag = body["tag_name"].as_str().unwrap_or("");
+    if !tag.is_empty() {
+        Ok(Some(tag.to_string()))
+    } else {
+        Ok(None)
+    }
 }

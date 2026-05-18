@@ -19,6 +19,8 @@ const editingTask = ref<Task | null>(null);
 const reviewTask = ref<Task | null>(null);
 const diffContent = ref("");
 const reviewReport = ref("");
+const detailTask = ref<Task | null>(null);
+const detailLog = ref("");
 
 const filteredTasks = computed(() => {
   if (filterStatus.value === "all") return tasks.value;
@@ -131,6 +133,30 @@ function handleEdit(taskId: string) {
   }
 }
 
+async function handleDetail(taskId: string) {
+  const task = tasks.value.find((t) => t.id === taskId);
+  if (!task) return;
+  detailTask.value = task;
+  detailLog.value = "";
+  if (task.executions.length > 0) {
+    const lastExec = task.executions[task.executions.length - 1];
+    try {
+      detailLog.value = await invoke<string>("get_task_log", {
+        taskId: task.id,
+        runId: lastExec.run_id,
+        lines: 100,
+      });
+    } catch {
+      detailLog.value = "";
+    }
+  }
+}
+
+function closeDetail() {
+  detailTask.value = null;
+  detailLog.value = "";
+}
+
 async function handleFormSubmit(input: TaskInput) {
   try {
     if (editingTask.value) {
@@ -155,8 +181,12 @@ onMounted(async () => {
   await fetchTasks();
 
   // Listen for process exit events to auto-refresh
-  await listen("process-exit", () => {
+  await listen<{ task_id: string; new_status: string }>("process-exit", (event) => {
     fetchTasks();
+    // Auto-open review panel when task completes
+    if (event.payload.new_status === "awaiting_review") {
+      handleReview(event.payload.task_id);
+    }
   });
 
   // Listen for task-status-update events (progress from StatusWatcher)
@@ -259,6 +289,7 @@ onMounted(async () => {
           @retry="handleRetry"
           @edit="handleEdit"
           @delete="handleDelete"
+          @detail="handleDetail"
         />
       </div>
     </div>
@@ -280,5 +311,44 @@ onMounted(async () => {
       @approve="handleApprove"
       @reject="handleReject"
     />
+
+    <!-- Detail side panel -->
+    <div v-if="detailTask" class="fixed inset-0 z-50 flex" @keydown.escape="closeDetail">
+      <div class="w-[40%] bg-black/20" @click="closeDetail" />
+      <div class="w-[60%] bg-white flex flex-col shadow-2xl" :style="{ fontFamily: 'var(--font-body)' }">
+        <div class="flex items-center justify-between px-6 py-4 border-b border-[var(--color-hairline)]">
+          <h2 class="text-[21px] font-semibold" :style="{ fontFamily: 'var(--font-display)' }">
+            {{ detailTask.title }}
+          </h2>
+          <button class="p-2 text-[var(--color-ink-muted)] hover:text-[var(--color-ink)]" @click="closeDetail">
+            <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
+              <path d="M4 4l8 8M12 4l-8 8" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
+            </svg>
+          </button>
+        </div>
+        <div class="flex-1 overflow-y-auto p-6 space-y-4">
+          <div class="grid grid-cols-2 gap-4 text-[15px]">
+            <div><span class="text-[var(--color-ink-muted)]">仓库:</span> <span class="font-mono text-[14px]">{{ detailTask.repo_path }}</span></div>
+            <div><span class="text-[var(--color-ink-muted)]">状态:</span> {{ detailTask.status }}</div>
+            <div><span class="text-[var(--color-ink-muted)]">执行次数:</span> {{ detailTask.executions.length }}</div>
+            <div><span class="text-[var(--color-ink-muted)]">创建:</span> {{ new Date(detailTask.created_at).toLocaleString() }}</div>
+          </div>
+          <div v-if="detailTask.executions.length > 0" class="mt-4">
+            <h3 class="text-[17px] font-semibold mb-2">执行记录</h3>
+            <div v-for="(exec, idx) in detailTask.executions" :key="idx" class="p-3 rounded-[var(--rounded-sm)] bg-[#f5f5f7] mb-2 text-[14px]">
+              <div class="flex justify-between">
+                <span class="text-[var(--color-ink-muted)]">Run {{ exec.run_id.slice(0, 8) }}</span>
+                <span>{{ exec.exit_code !== null ? `exit ${exec.exit_code}` : "running..." }}</span>
+              </div>
+              <div v-if="exec.iterations != null" class="mt-1">{{ exec.iterations }} 次迭代</div>
+            </div>
+          </div>
+          <div v-if="detailLog" class="mt-4">
+            <h3 class="text-[17px] font-semibold mb-2">最近日志</h3>
+            <pre class="bg-[var(--color-surface-dark)] rounded-[var(--rounded-sm)] p-4 text-white font-mono text-[13px] overflow-x-auto whitespace-pre-wrap max-h-[400px]">{{ detailLog }}</pre>
+          </div>
+        </div>
+      </div>
+    </div>
   </div>
 </template>

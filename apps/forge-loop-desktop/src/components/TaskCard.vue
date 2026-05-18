@@ -12,6 +12,7 @@ defineEmits<{
   retry: [taskId: string];
   edit: [taskId: string];
   delete: [taskId: string];
+  detail: [taskId: string];
 }>();
 
 const statusConfig: Record<string, { label: string; color: string; bg: string }> = {
@@ -54,7 +55,8 @@ function formatTime(iso: string): string {
     :style="{ fontFamily: 'var(--font-body)' }"
     role="button"
     tabindex="0"
-    @keydown.enter="task.status === 'awaiting_review' ? $emit('review', task.id) : $emit('edit', task.id)"
+    @keydown.enter="task.status === 'awaiting_review' ? $emit('review', task.id) : $emit('detail', task.id)"
+    @click="$emit('detail', task.id)"
   >
     <!-- Status badge -->
     <span
