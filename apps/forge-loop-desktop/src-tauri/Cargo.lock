@@ -1033,6 +1033,7 @@ name = "forge-loop-desktop"
 version = "0.1.0"
 dependencies = [
  "chrono",
+ "dirs",
  "notify",
  "security-framework",
  "serde",
