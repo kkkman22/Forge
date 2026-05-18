@@ -1,3 +1,4 @@
+pub mod app_logging;
 pub mod commands;
 pub mod keychain_manager;
 pub mod process_manager;
@@ -14,6 +15,8 @@ use tokio::sync::Mutex as AsyncMutex;
 
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
+    let _ = app_logging::init_logging();
+
     let data_dir = dirs::data_dir()
         .unwrap_or_else(|| PathBuf::from("."))
         .join("forge-loop-desktop");
@@ -59,6 +62,8 @@ pub fn run() {
             commands::reject_task,
             commands::get_diff,
             commands::get_task_log,
+            commands::export_diagnostics,
+            commands::check_update,
         ])
         .setup(|app| {
             // Resource integrity check

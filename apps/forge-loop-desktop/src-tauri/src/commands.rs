@@ -337,3 +337,17 @@ pub fn get_task_log(
     let start = all_lines.len().saturating_sub(lines);
     Ok(all_lines[start..].join("\n"))
 }
+
+// --- System Commands ---
+
+#[tauri::command]
+pub fn export_diagnostics() -> Result<String, String> {
+    let path = crate::app_logging::export_diagnostics()?;
+    Ok(path.to_string_lossy().to_string())
+}
+
+#[tauri::command]
+pub fn check_update() -> Result<Option<String>, String> {
+    // Stub: check GitHub Releases API for latest version
+    Ok(None)
+}
