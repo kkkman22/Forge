@@ -96,7 +96,7 @@ RED（复现测试）→ GREEN（最小修复）→ 全量测试确认无新问�
 
 ## 5. Edge Cases
 
-无法复现 → 竞态/环境问题，增日志查并发 · Phase 1 提修复 → 🚫 禁止 · 所有假设失败 → 回 Phase 1 扩大范围 · 无 `.forge/` → forge init
+无法复现 → 竞态/环境问题，增日志查并发 · Phase 1 提修复 → 🚫 禁止 · 所有假设失败 → 回 Phase 1 扩大范围 · 无 `.forge/` → /forge init
 
 ---
 

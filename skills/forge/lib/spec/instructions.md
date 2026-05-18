@@ -139,7 +139,7 @@ Testability / Behavior-not-Implementation / Brownfield Delta / Two-part Structur
 
 ## 6. Execution Flow
 
-1. **前置检查**：`.forge/` 目录是否存在。不存在 → 提示先运行 `forge init`
+1. **前置检查**：`.forge/` 目录是否存在。不存在 → 提示先运行 `/forge init`
 2. **读取上下文**：`.forge/decisions/`（如有）→ `.forge/config.md` → `.forge/specs/`
 3. **Propose**：基于上下文生成规格草案（详见 §2 Step 1）
 4. **Review**：执行自检（详见 §2 Step 2），未通过则自动修正并重新自检

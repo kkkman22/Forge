@@ -93,7 +93,7 @@ Build 阶段中途执行 `git rebase` / `git pull` / `git merge` 同步 main 时
 |---|-------|---------|-------|
 | 1 | **Spec Gate** — scan `.forge/specs/` status | Not `"locked"` (no-Spec Plan exempt) | → `/forge spec` |
 | 2 | **Plan Gate** — scan `.forge/plans/` status | Not `"approved"` | → `/forge plan` |
-| 3 | **Dir Integrity** — `.forge/` subdirs exist | Missing | → `forge init` |
+| 3 | **Dir Integrity** — `.forge/` subdirs exist | Missing | → `/forge init` |
 | 4 | **Branch Gate** — `runBranchGate` 统一 hook | Not on `feature/<topic>` or `forge/<topic>` | → Auto-switch / Block |
 
 **Rejection Output**: `🚫 Build 前置检查未通过 — 命名：<检查> 证据：<文件状态> 建议：<路由> 重入：<条件>`. Multiple failures → list all. Autonomous → JSON.
@@ -201,7 +201,7 @@ GREEN 阶段的代码必须是"能让测试通过的最简单实现"。REFACTOR 
 
 → 详见 references/status-updates.md §8-§10
 
-Spec/Plan not ready → §2 rejection. Subagent timeout → block → `/forge resume`. Worktree conflict → pause → manual resolve. No `.forge/` → `forge init`.
+Spec/Plan not ready → §2 rejection. Subagent timeout → block → `/forge resume`. Worktree conflict → pause → manual resolve. No `.forge/` → `/forge init`.
 
 ---
 
