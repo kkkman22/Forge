@@ -1,7 +1,7 @@
 # Build Progress: forge-loop-desktop-app
 
 ## Summary
-18 commits on `forge/loop-desktop-app`. Rust: 37 tests (34 unit + 3 integration). Frontend: 20 tests. Build: OK. .app = 15MB, .dmg = 5.1MB.
+20 commits on `forge/loop-desktop-app`. Rust: 37 tests (34 unit + 3 integration). Frontend: 20 unit + 19 E2E. Build: OK. Resources: 169MB (Node 115MB + SDK 54MB).
 
 ## Wave 1 — COMPLETE
 ### Task 1: Tauri project scaffold ✅ a2a67f9
@@ -40,7 +40,19 @@
 ## P1 Completion — COMPLETE
 ### Orphan recovery, shutdown hooks, real zip, drag-drop, integration tests ✅ 760bbd4
 
+## SDK Bundling — COMPLETE
+### Real forge-loop SDK + Node into Resources ✅ a82f0d3
+- Node v24.15.0 arm64 (115MB) + forge-loop SDK (54MB) = 169MB
+- Excluded @anthropic-ai platform binaries (198MB claude binary) — uses system claude CLI
+- DMG will be <200MB with compression
+
+## Playwright E2E — COMPLETE
+### 19 smoke tests ✅ 2936fa7
+- Task list: rendering, filtering, CRUD, status actions
+- Form dialog: required fields, fill+submit, cancel
+- Settings page: auth, logs, diagnostics, navigation
+- Mock Tauri IPC via vite alias when E2E=true
+
 ## Remaining (non-blocking, post-ship)
 - Apple Developer ID signing + notarize (needs Apple account)
-- Playwright E2E via tauri-driver (needs WDIO setup)
 - Knowledge capture (Task 15: /forge learn)
