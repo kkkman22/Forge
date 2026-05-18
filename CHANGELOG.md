@@ -11,15 +11,29 @@ Entries follow [Keep a Changelog](https://keepachangelog.com/) with Forge-specif
 
 ## [Unreleased]
 
+## [2.6.0] - 2026-05-18
+
 ### Added
 
 - `/forge init` 子命令：plugin 用户可像调用其他 SKILL 一样初始化项目，无需手动定位 init.sh
+- `skills/forge/lib/init/instructions.md` — init 作为 inline sub-skill 通过 dispatcher 正常路由（方案 C，符合 ADR-0004）
 - SessionStart bootstrap 引导：plugin 已激活但项目未初始化时，自动提示运行 `/forge init`
+- `scripts/bootstrap-check.mjs` — 纯函数 `shouldShowBootstrap` + SessionStart hook
+- `src/forge-root-resolver.ts` — 纯函数 `resolveForgeRoot`，plugin > script-relative > global 三阶优先级
 - `init.sh` 检测 `${CLAUDE_PLUGIN_ROOT}` 环境变量，正确解析 plugin 模式资源根
+- Dispatcher allowlist 扩展至 30 个子命令（新增 `init`）
 
 ### Changed
 
 - 14 个 SKILL 的 Edge Cases 文案：`forge init` → `/forge init`，与新入口对齐
+- `commands/forge.md` 恢复为 thin stub（≤13 行），符合 ADR-0004 约束
+- `dist-plugin/` 构建脚本同步 `bootstrap-check.mjs`、`inject-evolved-rules.mjs`、`inject-plan-context.mjs`
+
+### Fixed
+
+- `dist/claude-code/bundles/forge/dist/src/check-frozen.js` 缺失导致 contract 测试失败
+- `commands/forge.md` 子命令分发表违反 ADR-0004 thin stub 约束（8 个 single-entry 测试失败）
+- `dist-plugin/scripts/bootstrap-check.mjs` 未同步导致 plugin 模式 bootstrap 引导不生效
 
 ## [2.5.0] - 2026-05-17
 
