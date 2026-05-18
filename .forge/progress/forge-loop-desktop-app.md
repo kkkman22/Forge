@@ -1,7 +1,7 @@
 # Build Progress: forge-loop-desktop-app
 
 ## Summary
-20 commits on `forge/loop-desktop-app`. Rust: 37 tests (34 unit + 3 integration). Frontend: 20 unit + 19 E2E. Build: OK. Resources: 169MB (Node 115MB + SDK 54MB).
+22 commits on `forge/loop-desktop-app`. Rust: 37 tests. Frontend: 20 unit + 19 E2E. Build: OK. Resources: 169MB.
 
 ## Wave 1 — COMPLETE
 ### Task 1: Tauri project scaffold ✅ a2a67f9
@@ -48,11 +48,20 @@
 
 ## Playwright E2E — COMPLETE
 ### 19 smoke tests ✅ 2936fa7
-- Task list: rendering, filtering, CRUD, status actions
-- Form dialog: required fields, fill+submit, cancel
-- Settings page: auth, logs, diagnostics, navigation
-- Mock Tauri IPC via vite alias when E2E=true
+
+## P1 Gap Fixes — COMPLETE
+### 7 fixes ✅ 2fc2fc0
+- delete_task stops child process first (R2.8)
+- Resource integrity panics in release (R9.6)
+- CLAUDE_CONFIG_DIR injected in child env (AC 8.7)
+- Frontend notification listener (R6.1-6.2)
+- Frontend task-status-update consumer (R5.3)
+- prune_completed called on delete
+- E2E notification plugin mock
 
 ## Remaining (non-blocking, post-ship)
 - Apple Developer ID signing + notarize (needs Apple account)
+- Tray icon sleep status indicator (R7.8)
+- LidWatcher integration (R7.5)
+- Backlight control script (R7.6) — placeholder /usr/bin/true
 - Knowledge capture (Task 15: /forge learn)
