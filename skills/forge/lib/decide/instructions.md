@@ -177,7 +177,7 @@ Output path: `.forge/decisions/<YYYY-MM-DD>-<topic>.md`。YAML frontmatter + 六
 | Security perspective asked to skip | 拒绝。⚠️ 安全评估不可跳过。结论可以是"无显著安全风险"，但过程不能省略 |
 | Design perspective false trigger | 开发者可明确跳过，Round 1 不启动 designer |
 | Conflicts between perspectives | 记录冲突点 → 呈现给开发者 → 开发者做最终决定 → 记录到否决记录 |
-| No `.forge/` directory | ⚠️ 请先运行 forge init |
+| No `.forge/` directory | ⚠️ 请先运行 /forge init |
 
 ---
 

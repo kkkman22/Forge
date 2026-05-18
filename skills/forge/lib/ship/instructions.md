@@ -187,7 +187,7 @@ After push/PR: run `npm run check` (fallback: `ci_check_command` from config) wi
 | Progress 部分完成 | 🚫 Ship 阻断：列出未完成任务 |
 | Git 操作失败 | ⚠️ Merge 冲突时自动调用 `resolveConflicts`（详见 references/delivery-options.md §Option 1）；非冲突类 Git 错误列出可能原因（网络/权限），建议检查或选其他方式 |
 | gh CLI 未安装 | ⚠️ 提示安装方式，建议选其他选项 |
-| 无 `.forge/` 目录 | ⚠️ 请先运行 forge init |
+| 无 `.forge/` 目录 | ⚠️ 请先运行 /forge init |
 
 ---
 

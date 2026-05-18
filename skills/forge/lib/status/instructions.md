@@ -103,7 +103,7 @@ bash scripts/summarize-frozen-events.sh --days=7
 ### 4.1 无 `.forge/` 目录
 
 ```
-⚠️ 未检测到 .forge/ 目录。请先运行 forge init 初始化项目。
+⚠️ 未检测到 .forge/ 目录。请先运行 /forge init 初始化项目。
 ```
 
 ### 4.2 无 status.md
