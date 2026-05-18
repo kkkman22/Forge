@@ -110,9 +110,18 @@ pub fn update_task(
 }
 
 #[tauri::command]
-pub fn delete_task(state: State<AppState>, task_id: String) -> Result<(), String> {
+pub async fn delete_task(state: State<'_, AppState>, task_id: String) -> Result<(), String> {
+    // Stop child process if running
+    {
+        let mut pm = state.process_manager.lock().await;
+        if pm.is_alive(&task_id) {
+            pm.stop_task(&task_id).await.map_err(|e| e.to_string())?;
+        }
+    }
     let mut store = state.task_store.lock().map_err(|e| e.to_string())?;
-    store.remove(&task_id).map_err(|e| e.to_string())
+    store.remove(&task_id).map_err(|e| e.to_string())?;
+    let _ = store.prune_completed(100);
+    Ok(())
 }
 
 #[tauri::command]

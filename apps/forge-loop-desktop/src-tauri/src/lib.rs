@@ -102,16 +102,29 @@ pub fn run() {
             let res_dir = app.path().resource_dir()?;
             let node_bin = res_dir.join("node/bin/node");
             let cli_js = res_dir.join("forge-loop/dist/src/forge-loop-cli.js");
-            if !node_bin.exists() || !cli_js.exists() {
-                eprintln!(
-                    "WARNING: Bundled resources incomplete. node={} cli={}",
-                    node_bin.exists(),
-                    cli_js.exists()
-                );
+
+            #[cfg(not(debug_assertions))]
+            {
+                if !node_bin.exists() || !cli_js.exists() {
+                    let msg = format!(
+                        "Bundled resources incomplete — cannot start.\nnode={} cli={}",
+                        node_bin.exists(),
+                        cli_js.exists()
+                    );
+                    tracing::error!("{}", msg);
+                    panic!("{}", msg);
+                }
             }
 
             #[cfg(debug_assertions)]
             {
+                if !node_bin.exists() || !cli_js.exists() {
+                    eprintln!(
+                        "WARNING: Bundled resources incomplete. node={} cli={}",
+                        node_bin.exists(),
+                        cli_js.exists()
+                    );
+                }
                 let window = app.get_webview_window("main").unwrap();
                 window.open_devtools();
             }
