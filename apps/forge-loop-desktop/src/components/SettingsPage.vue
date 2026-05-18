@@ -1,11 +1,13 @@
 <script setup lang="ts">
 import { ref, onMounted } from "vue";
 import { invoke } from "@tauri-apps/api/core";
-import type { AuthStatus } from "../types/index";
+import type { AuthStatus, SleepStatus } from "../types/index";
 
 const authStatus = ref<AuthStatus>({ mode: "none", is_valid: false });
+const sleepStatus = ref<SleepStatus>({ is_inhibited: false, sudoers_configured: false });
 const apiKeyInput = ref("");
 const saving = ref(false);
+const settingUpSudoers = ref(false);
 const error = ref<string | null>(null);
 const success = ref<string | null>(null);
 const logLevel = ref("info");
@@ -13,6 +15,14 @@ const logLevel = ref("info");
 async function fetchAuthStatus() {
   try {
     authStatus.value = await invoke<AuthStatus>("get_auth_status");
+  } catch {
+    // Ignore
+  }
+}
+
+async function fetchSleepStatus() {
+  try {
+    sleepStatus.value = await invoke<SleepStatus>("get_sleep_status");
   } catch {
     // Ignore
   }
@@ -46,6 +56,20 @@ async function clearCredentials() {
   }
 }
 
+async function handleSetupSudoers() {
+  settingUpSudoers.value = true;
+  error.value = null;
+  try {
+    await invoke("setup_sudoers");
+    success.value = "休眠控制已授权（sudoers 已配置）";
+    await fetchSleepStatus();
+  } catch (e) {
+    error.value = String(e);
+  } finally {
+    settingUpSudoers.value = false;
+  }
+}
+
 async function exportDiag() {
   try {
     const path = await invoke<string>("export_diagnostics");
@@ -55,7 +79,10 @@ async function exportDiag() {
   }
 }
 
-onMounted(fetchAuthStatus);
+onMounted(async () => {
+  await fetchAuthStatus();
+  await fetchSleepStatus();
+});
 </script>
 
 <template>
@@ -145,6 +172,43 @@ onMounted(fetchAuthStatus);
           >
             清除凭据
           </button>
+        </div>
+      </section>
+
+      <!-- Sleep suppression section -->
+      <section class="rounded-[var(--rounded-lg)] border border-[var(--color-hairline)] p-6">
+        <h2 class="text-[19px] font-semibold mb-4" :style="{ fontFamily: 'var(--font-display)' }">
+          休眠控制
+        </h2>
+
+        <div class="mb-4 flex items-center gap-2 text-[15px]">
+          <span class="text-[var(--color-ink-muted)]">sudoers 状态:</span>
+          <span
+            class="px-2.5 py-0.5 rounded-[var(--rounded-pill)] text-[13px] font-medium"
+            :class="{
+              'bg-[#e8f5e9] text-[#34c759]': sleepStatus.sudoers_configured,
+              'bg-[#fff8e1] text-[#ff9500]': !sleepStatus.sudoers_configured,
+            }"
+          >
+            {{ sleepStatus.sudoers_configured ? "已授权 ✓" : "未配置" }}
+          </span>
+        </div>
+
+        <div v-if="!sleepStatus.sudoers_configured" class="space-y-3">
+          <p class="text-[14px] text-[var(--color-ink-muted)]">
+            休眠抑制需要 pmset 免密权限。点击下方按钮，输入管理员密码完成授权。
+          </p>
+          <button
+            class="px-5 py-2.5 rounded-[var(--rounded-pill)] text-[15px] bg-[var(--color-primary)] text-white font-medium active:scale-[0.97] transition-transform disabled:opacity-40"
+            :disabled="settingUpSudoers"
+            @click="handleSetupSudoers"
+          >
+            {{ settingUpSudoers ? "授权中..." : "授权 pmset" }}
+          </button>
+        </div>
+
+        <div v-else class="p-3 rounded-[var(--rounded-sm)] bg-[#f5f5f7] text-[14px] text-[var(--color-ink-muted)]">
+          pmset 免密权限已配置，任务执行时可自动抑制系统休眠和合盖背光。
         </div>
       </section>
 

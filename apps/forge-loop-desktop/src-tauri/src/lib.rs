@@ -8,8 +8,11 @@ pub mod task_store;
 
 use commands::AppState;
 use process_manager::ProcessManager;
+use sleep_guard::SleepGuard;
 use std::path::PathBuf;
 use std::sync::Mutex;
+use tauri::menu::{MenuBuilder, MenuItemBuilder};
+use tauri::tray::TrayIconBuilder;
 use tauri::Manager;
 use task_store::TaskStatus;
 use tokio::sync::Mutex as AsyncMutex;
@@ -91,6 +94,7 @@ pub fn run() {
             commands::clear_credentials,
             commands::get_sleep_status,
             commands::toggle_sleep_inhibit,
+            commands::setup_sudoers,
             commands::approve_task,
             commands::reject_task,
             commands::get_diff,
@@ -128,6 +132,44 @@ pub fn run() {
                 let window = app.get_webview_window("main").unwrap();
                 window.open_devtools();
             }
+
+            // Setup tray icon with sleep status
+            let show_item = MenuItemBuilder::with_id("show", "Show Forge Loop").build(app)?;
+            let quit_item = MenuItemBuilder::with_id("quit", "Quit").build(app)?;
+            let menu = MenuBuilder::new(app)
+                .items(&[&show_item, &quit_item])
+                .build()?;
+
+            let _tray = TrayIconBuilder::new()
+                .icon(app.default_window_icon().cloned().unwrap())
+                .menu(&menu)
+                .tooltip("Forge Loop")
+                .on_menu_event(|app, event| {
+                    match event.id.as_ref() {
+                        "show" => {
+                            if let Some(window) = app.get_webview_window("main") {
+                                let _ = window.show();
+                                let _ = window.set_focus();
+                            }
+                        }
+                        "quit" => {
+                            app.exit(0);
+                        }
+                        _ => {}
+                    }
+                })
+                .build(app)?;
+
+            // Recover stale sleep inhibition from previous crash
+            {
+                let guard = SleepGuard::new(PathBuf::from("/usr/bin/true"));
+                match guard.recover_stale_inhibition() {
+                    Ok(true) => tracing::info!("Recovered stale sleep inhibition"),
+                    Ok(false) => {}
+                    Err(e) => tracing::warn!("Failed to check stale inhibition: {}", e),
+                }
+            }
+
             Ok(())
         })
         .build(tauri::generate_context!())

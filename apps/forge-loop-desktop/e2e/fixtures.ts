@@ -169,8 +169,10 @@ const handlers: Record<string, (...args: unknown[]) => unknown> = {
   },
   get_recent_repos: () => ["/Users/test/project-a", "/Users/test/project-b"],
   get_auth_status: () => ({ mode: "claude_code_session", is_valid: true }),
+  get_sleep_status: () => ({ is_inhibited: false, sudoers_configured: false }),
   store_api_key: () => {},
   clear_credentials: () => {},
+  setup_sudoers: () => {},
   export_diagnostics: () => "/tmp/forge-diagnostics.zip",
 };
 
