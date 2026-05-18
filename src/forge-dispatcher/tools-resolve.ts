@@ -1,9 +1,9 @@
-interface ToolsOk {
+export interface ToolsOk {
   ok: true;
   tools: string[];
 }
 
-interface ToolsErr {
+export interface ToolsErr {
   ok: false;
   code: "E_TOOLS_UNDECLARED";
 }
