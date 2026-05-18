@@ -1,7 +1,7 @@
 {
   "name": "forge",
   "description": "Unified AI coding workflow framework — single /forge slash command with 22 internal subcommands, TDD, spec-driven planning, and automated review.",
-  "version": "2.5.0",
+  "version": "2.6.0",
   "mcpServers": {
     "forge-context": {
       "command": "node",
