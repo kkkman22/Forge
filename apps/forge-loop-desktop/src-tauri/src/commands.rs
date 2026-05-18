@@ -1,16 +1,23 @@
 use crate::process_manager::ProcessManager;
+use crate::sleep_guard::SleepGuard;
+use crate::status_watcher::StatusWatcher;
 use crate::task_store::{
     BranchStrategy, ExecutionOutcome, ExecutionRecord, Task, TaskStore, TaskTarget, TaskStatus,
 };
 use chrono::Utc;
 use std::path::PathBuf;
 use std::sync::Mutex;
+use tauri::Emitter;
+use tauri::Manager;
 use tauri::State;
 use tokio::sync::Mutex as AsyncMutex;
 
 pub struct AppState {
     pub task_store: Mutex<TaskStore>,
     pub process_manager: AsyncMutex<ProcessManager>,
+    pub exit_poller_started: std::sync::atomic::AtomicBool,
+    pub status_watcher: AsyncMutex<Option<StatusWatcher>>,
+    pub sleep_guard: Mutex<Option<SleepGuard>>,
 }
 
 #[derive(serde::Deserialize)]
@@ -24,6 +31,14 @@ pub struct TaskInput {
     pub max_iterations: Option<u32>,
     pub max_budget_usd: Option<f64>,
     pub sleep_inhibit: Option<bool>,
+}
+
+#[derive(Debug, serde::Serialize, Clone)]
+pub struct ProcessExitEvent {
+    pub task_id: String,
+    pub run_id: String,
+    pub exit_code: i32,
+    pub new_status: String,
 }
 
 #[tauri::command]
@@ -120,8 +135,99 @@ pub fn get_recent_repos(state: State<AppState>) -> Result<Vec<String>, String> {
 
 // --- Execution Commands ---
 
+fn ensure_exit_poller(app_handle: &tauri::AppHandle, state: &AppState) {
+    use std::sync::atomic::Ordering;
+    if state.exit_poller_started.swap(true, Ordering::Relaxed) {
+        return; // Already started
+    }
+
+    let handle = app_handle.clone();
+    tokio::spawn(async move {
+        let mut interval = tokio::time::interval(std::time::Duration::from_secs(2));
+        loop {
+            interval.tick().await;
+
+            let state = handle.state::<AppState>();
+            let mut pm = state.process_manager.lock().await;
+            let exits = pm.poll_exits();
+            drop(pm);
+
+            for (tid, rid, exit_code) in exits {
+                let mut store = match state.task_store.lock() {
+                    Ok(s) => s,
+                    Err(_) => continue,
+                };
+
+                let task = store.get(&tid).cloned();
+                if let Some(task) = task {
+                    let new_status = if exit_code == 0 {
+                        TaskStatus::AwaitingReview {
+                            run_id: rid.clone(),
+                            completed_at: Utc::now(),
+                        }
+                    } else {
+                        TaskStatus::Failed {
+                            run_id: rid.clone(),
+                            error: format!("Process exited with code {}", exit_code),
+                            failed_at: Utc::now(),
+                        }
+                    };
+                    let status_name = match &new_status {
+                        TaskStatus::AwaitingReview { .. } => "awaiting_review",
+                        TaskStatus::Failed { .. } => "failed",
+                        _ => "unknown",
+                    };
+                    let _ = store.update(&tid, |t| {
+                        t.status = new_status;
+                        if let Some(exec) = t.executions.last_mut() {
+                            exec.ended_at = Some(Utc::now());
+                            exec.exit_code = Some(exit_code);
+                            exec.outcome = if exit_code == 0 {
+                                ExecutionOutcome::Success
+                            } else {
+                                ExecutionOutcome::Failed(format!("exit code {}", exit_code))
+                            };
+                        }
+                    });
+                    let _ = store.save();
+                    drop(store);
+
+                    let _ = handle.emit("process-exit", ProcessExitEvent {
+                        task_id: tid,
+                        run_id: rid,
+                        exit_code,
+                        new_status: status_name.to_string(),
+                    });
+
+                    if exit_code == 0 {
+                        let _ = handle.emit("notification-request", serde_json::json!({
+                            "title": "Forge Loop 任务完成",
+                            "body": task.title,
+                        }));
+                    }
+                }
+            }
+
+            // Disable sleep guard when no tasks running
+            let running = {
+                let pm = state.process_manager.lock().await;
+                pm.running_count()
+            };
+            if running == 0 {
+                let mut sg = match state.sleep_guard.lock() {
+                    Ok(g) => g,
+                    Err(_) => return,
+                };
+                if let Some(ref guard) = *sg {
+                    let _ = guard.disable();
+                }
+            }
+        }
+    });
+}
+
 #[tauri::command]
-pub async fn start_task(state: State<'_, AppState>, task_id: String) -> Result<String, String> {
+pub async fn start_task(app_handle: tauri::AppHandle, state: State<'_, AppState>, task_id: String) -> Result<String, String> {
     let task = {
         let store = state.task_store.lock().map_err(|e| e.to_string())?;
         store
@@ -130,7 +236,6 @@ pub async fn start_task(state: State<'_, AppState>, task_id: String) -> Result<S
             .ok_or_else(|| format!("task not found: {}", task_id))?
     };
 
-    // Validate git status for current_branch strategy
     if matches!(task.branch_strategy, BranchStrategy::CurrentBranch) {
         let output = std::process::Command::new("git")
             .args(["status", "--porcelain"])
@@ -142,7 +247,6 @@ pub async fn start_task(state: State<'_, AppState>, task_id: String) -> Result<S
         }
     }
 
-    // Read API key from KeychainManager
     let km = crate::keychain_manager::KeychainManager::new();
     let api_key = km
         .get_api_key()
@@ -153,29 +257,57 @@ pub async fn start_task(state: State<'_, AppState>, task_id: String) -> Result<S
         return Err("ANTHROPIC_API_KEY not set — configure in Settings".into());
     }
 
-    let mut pm = state.process_manager.lock().await;
-    let run_id = pm
-        .spawn_task(&task, &api_key)
-        .await
-        .map_err(|e| e.to_string())?;
+    let run_id = {
+        let mut pm = state.process_manager.lock().await;
+        pm.spawn_task(&task, &api_key)
+            .await
+            .map_err(|e| e.to_string())?
+    };
 
-    let mut store = state.task_store.lock().map_err(|e| e.to_string())?;
-    store
-        .update(&task_id, |t| {
-            t.status = TaskStatus::Running {
-                run_id: run_id.clone(),
-                started_at: Utc::now(),
-            };
-            t.executions.push(ExecutionRecord {
-                run_id: run_id.clone(),
-                started_at: Utc::now(),
-                ended_at: None,
-                exit_code: None,
-                iterations: None,
-                outcome: ExecutionOutcome::Pending,
-            });
-        })
-        .map_err(|e| e.to_string())?;
+    {
+        let mut store = state.task_store.lock().map_err(|e| e.to_string())?;
+        store
+            .update(&task_id, |t| {
+                t.status = TaskStatus::Running {
+                    run_id: run_id.clone(),
+                    started_at: Utc::now(),
+                };
+                t.executions.push(ExecutionRecord {
+                    run_id: run_id.clone(),
+                    started_at: Utc::now(),
+                    ended_at: None,
+                    exit_code: None,
+                    iterations: None,
+                    outcome: ExecutionOutcome::Pending,
+                });
+            })
+            .map_err(|e| e.to_string())?;
+    }
+
+    ensure_exit_poller(&app_handle, &state);
+
+    // Start status watcher for this task
+    {
+        let mut sw_guard = state.status_watcher.lock().await;
+        if sw_guard.is_none() {
+            *sw_guard = Some(StatusWatcher::new(app_handle.clone()));
+        }
+        if let Some(ref mut sw) = *sw_guard {
+            let _ = sw.watch(task_id.clone(), &task.repo_path, &run_id);
+        }
+    }
+
+    // Enable sleep guard if task has sleep_inhibit
+    if task.sleep_inhibit {
+        let mut sg = state.sleep_guard.lock().map_err(|e| e.to_string())?;
+        if sg.is_none() {
+            let guard = SleepGuard::new(std::path::PathBuf::from("/usr/bin/true"));
+            if let Err(e) = guard.enable() {
+                tracing::warn!("Failed to enable sleep guard: {}", e);
+            }
+            *sg = Some(guard);
+        }
+    }
 
     Ok(run_id)
 }
@@ -197,7 +329,6 @@ pub async fn stop_task(state: State<'_, AppState>, task_id: String) -> Result<()
 
 #[tauri::command]
 pub async fn retry_task(state: State<'_, AppState>, task_id: String) -> Result<String, String> {
-    // Reset to queued status, then start
     {
         let mut store = state.task_store.lock().map_err(|e| e.to_string())?;
         store
@@ -206,7 +337,7 @@ pub async fn retry_task(state: State<'_, AppState>, task_id: String) -> Result<S
             })
             .map_err(|e| e.to_string())?;
     }
-    start_task(state, task_id).await
+    Ok(task_id)
 }
 
 // --- Auth Commands ---
@@ -283,7 +414,6 @@ pub async fn reject_task(
         let mut store = state.task_store.lock().map_err(|e| e.to_string())?;
         store
             .update(&task_id, |t| {
-                // Prepend feedback to objective
                 match &t.target {
                     TaskTarget::Objective { text } => {
                         t.target = TaskTarget::Objective {
@@ -304,6 +434,7 @@ pub async fn reject_task(
 
 #[tauri::command]
 pub fn get_diff(task_id: String, repo_path: String) -> Result<String, String> {
+    let _ = task_id;
     let output = std::process::Command::new("git")
         .args(["diff", "HEAD~1", "--stat"])
         .current_dir(&repo_path)
@@ -348,6 +479,5 @@ pub fn export_diagnostics() -> Result<String, String> {
 
 #[tauri::command]
 pub fn check_update() -> Result<Option<String>, String> {
-    // Stub: check GitHub Releases API for latest version
     Ok(None)
 }
