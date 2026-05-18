@@ -19,9 +19,7 @@ function extractSubcommandsFromSkill(content: string): string[] {
     const idx = content.indexOf(section);
     if (idx === -1) continue;
     const nextSection = content.indexOf("\n### ", idx + section.length);
-    const block = nextSection === -1
-      ? content.slice(idx)
-      : content.slice(idx, nextSection);
+    const block = nextSection === -1 ? content.slice(idx) : content.slice(idx, nextSection);
     const matches = block.matchAll(/`(\w[\w-]*)`/g);
     for (const m of matches) {
       subs.push(m[1]);

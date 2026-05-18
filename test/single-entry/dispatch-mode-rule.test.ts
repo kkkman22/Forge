@@ -1,7 +1,7 @@
-import { describe, it, expect } from "vitest";
+import { readFileSync } from "node:fs";
 import { resolve } from "node:path";
-import { readFileSync, existsSync } from "node:fs";
 import { glob } from "glob";
+import { describe, expect, it } from "vitest";
 
 const ROOT = resolve(import.meta.dirname, "..", "..");
 const SPEC_PATH = resolve(ROOT, ".kiro/specs/forge-single-entry-skills-collapse/spec.md");
@@ -48,8 +48,16 @@ function parseR35Table(specContent: string): Map<string, string> {
       inTable = true;
       continue;
     }
-    if (inTable && line.startsWith("|") && !line.startsWith("|---") && !line.includes("sub | mode")) {
-      const cols = line.split("|").map((c) => c.trim()).filter(Boolean);
+    if (
+      inTable &&
+      line.startsWith("|") &&
+      !line.startsWith("|---") &&
+      !line.includes("sub | mode")
+    ) {
+      const cols = line
+        .split("|")
+        .map((c) => c.trim())
+        .filter(Boolean);
       if (cols.length >= 2) {
         table.set(cols[0], cols[1]);
       }
@@ -103,9 +111,7 @@ describe("R3.5: dispatch_mode matches spec table", () => {
       const actualMode = modeMatch?.[1] ?? "inline";
 
       if (actualMode !== expectedMode) {
-        violations.push(
-          `${sub}: expected=${expectedMode} actual=${actualMode}`,
-        );
+        violations.push(`${sub}: expected=${expectedMode} actual=${actualMode}`);
       }
     }
 

@@ -1,7 +1,7 @@
-import { describe, it, expect } from "vitest";
-import { resolve } from "node:path";
 import { existsSync, readFileSync } from "node:fs";
+import { resolve } from "node:path";
 import { glob } from "glob";
+import { describe, expect, it } from "vitest";
 
 const ROOT = resolve(import.meta.dirname, "..", "..");
 const MANIFEST_PATH = resolve(ROOT, "skills/forge/lib/manifest.json");

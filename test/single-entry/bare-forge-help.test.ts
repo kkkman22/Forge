@@ -1,6 +1,6 @@
-import { describe, it, expect } from "vitest";
+import { existsSync, readFileSync } from "node:fs";
 import { resolve } from "node:path";
-import { readFileSync, existsSync } from "node:fs";
+import { describe, expect, it } from "vitest";
 
 const ROOT = resolve(import.meta.dirname, "..", "..");
 const SKILL_PATH = resolve(ROOT, "skills/forge/SKILL.md");
@@ -48,10 +48,7 @@ describe("R1.3: bare /forge lists all 29 subcommands in 4 tiers", () => {
     const content = readFileSync(SKILL_PATH, "utf-8");
 
     for (const sub of SUBS) {
-      expect(
-        content,
-        `missing subcommand: ${sub}`,
-      ).toContain(sub);
+      expect(content, `missing subcommand: ${sub}`).toContain(sub);
     }
   });
 
@@ -59,10 +56,9 @@ describe("R1.3: bare /forge lists all 29 subcommands in 4 tiers", () => {
     const content = readFileSync(SKILL_PATH, "utf-8");
 
     for (const heading of TIER_HEADINGS) {
-      expect(
-        content,
-        `missing tier heading: ${heading}`,
-      ).toMatch(new RegExp(`##.*${heading}`, "i"));
+      expect(content, `missing tier heading: ${heading}`).toMatch(
+        new RegExp(`##.*${heading}`, "i"),
+      );
     }
   });
 });
