@@ -378,4 +378,33 @@ mod tests {
         assert_eq!(store.recent_repos().len(), 5);
         assert_eq!(store.recent_repos()[0], "/repo-6");
     }
+
+    #[test]
+    fn test_orphan_running_marked_failed_on_load() {
+        let (mut store, _dir) = test_store();
+        let mut task = sample_task();
+        task.status = TaskStatus::Running {
+            run_id: "orphan-run".into(),
+            started_at: Utc::now(),
+        };
+        let id = store.add(task).unwrap();
+
+        // Simulate orphan recovery
+        let tasks = store.list().to_vec();
+        for t in tasks {
+            if let TaskStatus::Running { run_id, .. } = &t.status {
+                let rid = run_id.clone();
+                store.update(&t.id, |task| {
+                    task.status = TaskStatus::Failed {
+                        run_id: rid,
+                        error: "App exited unexpectedly".into(),
+                        failed_at: Utc::now(),
+                    };
+                }).unwrap();
+            }
+        }
+
+        let recovered = store.get(&id).unwrap();
+        assert!(matches!(recovered.status, TaskStatus::Failed { .. }));
+    }
 }
