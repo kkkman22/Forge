@@ -1,12 +1,12 @@
 import { realpathSync } from "node:fs";
 import { isAbsolute, normalize, resolve } from "node:path";
 
-interface PathOk {
+export interface PathOk {
   ok: true;
   path: string;
 }
 
-interface PathErr {
+export interface PathErr {
   ok: false;
   code: "E_PATH_INVALID";
   reason: string;
