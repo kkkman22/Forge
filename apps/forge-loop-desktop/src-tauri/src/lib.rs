@@ -1,4 +1,5 @@
 pub mod commands;
+pub mod keychain_manager;
 pub mod process_manager;
 pub mod status_watcher;
 pub mod task_store;
@@ -48,6 +49,9 @@ pub fn run() {
             commands::start_task,
             commands::stop_task,
             commands::retry_task,
+            commands::store_api_key,
+            commands::get_auth_status,
+            commands::clear_credentials,
         ])
         .setup(|app| {
             #[cfg(debug_assertions)]

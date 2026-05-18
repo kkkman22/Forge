@@ -142,8 +142,13 @@ pub async fn start_task(state: State<'_, AppState>, task_id: String) -> Result<S
         }
     }
 
-    // TODO: Read API key from KeychainManager (Task 8)
-    let api_key = std::env::var("ANTHROPIC_API_KEY").unwrap_or_default();
+    // Read API key from KeychainManager
+    let km = crate::keychain_manager::KeychainManager::new();
+    let api_key = km
+        .get_api_key()
+        .map_err(|e| e.to_string())?
+        .or_else(|| std::env::var("ANTHROPIC_API_KEY").ok())
+        .unwrap_or_default();
     if api_key.is_empty() {
         return Err("ANTHROPIC_API_KEY not set — configure in Settings".into());
     }
@@ -202,4 +207,26 @@ pub async fn retry_task(state: State<'_, AppState>, task_id: String) -> Result<S
             .map_err(|e| e.to_string())?;
     }
     start_task(state, task_id).await
+}
+
+// --- Auth Commands ---
+
+#[tauri::command]
+pub async fn store_api_key(key: String) -> Result<bool, String> {
+    let km = crate::keychain_manager::KeychainManager::new();
+    km.validate_api_key(&key).await?;
+    km.store_api_key(&key)?;
+    Ok(true)
+}
+
+#[tauri::command]
+pub fn get_auth_status() -> Result<crate::keychain_manager::AuthStatus, String> {
+    let km = crate::keychain_manager::KeychainManager::new();
+    Ok(km.get_auth_status())
+}
+
+#[tauri::command]
+pub fn clear_credentials() -> Result<(), String> {
+    let km = crate::keychain_manager::KeychainManager::new();
+    km.delete_api_key()
 }
