@@ -1,6 +1,7 @@
 pub mod commands;
 pub mod keychain_manager;
 pub mod process_manager;
+pub mod sleep_guard;
 pub mod status_watcher;
 pub mod task_store;
 
@@ -52,6 +53,8 @@ pub fn run() {
             commands::store_api_key,
             commands::get_auth_status,
             commands::clear_credentials,
+            commands::get_sleep_status,
+            commands::toggle_sleep_inhibit,
         ])
         .setup(|app| {
             #[cfg(debug_assertions)]
