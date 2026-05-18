@@ -3,6 +3,7 @@ import { ref, computed, onMounted } from "vue";
 import { useRouter } from "vue-router";
 import { invoke } from "@tauri-apps/api/core";
 import { listen } from "@tauri-apps/api/event";
+import { sendNotification, isPermissionGranted, requestPermission } from "@tauri-apps/plugin-notification";
 import type { Task, TaskStatus, TaskInput } from "../types/index";
 import TaskCard from "./TaskCard.vue";
 import FilterBar from "./FilterBar.vue";
@@ -156,6 +157,38 @@ onMounted(async () => {
   // Listen for process exit events to auto-refresh
   await listen("process-exit", () => {
     fetchTasks();
+  });
+
+  // Listen for task-status-update events (progress from StatusWatcher)
+  await listen<{ task_id: string; phase: string | null; iteration: number | null; progress_summary: string | null }>(
+    "task-status-update",
+    (event) => {
+      const idx = tasks.value.findIndex((t) => t.id === event.payload.task_id);
+      if (idx !== -1) {
+        // Trigger reactivity by replacing the task object
+        const updated = { ...tasks.value[idx] };
+        if (updated.metadata) {
+          updated.metadata = { ...updated.metadata };
+        }
+        tasks.value.splice(idx, 1, updated);
+      }
+    },
+  );
+
+  // Listen for notification-request events and show native notification
+  await listen<{ title: string; body: string }>("notification-request", async (event) => {
+    try {
+      let granted = await isPermissionGranted();
+      if (!granted) {
+        const permission = await requestPermission();
+        granted = permission === "granted";
+      }
+      if (granted) {
+        sendNotification({ title: event.payload.title, body: event.payload.body });
+      }
+    } catch {
+      // Notification not available (e.g. in browser preview)
+    }
   });
 });
 </script>

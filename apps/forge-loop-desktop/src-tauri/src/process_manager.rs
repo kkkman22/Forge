@@ -82,6 +82,7 @@ impl ProcessManager {
             .args(&args)
             .current_dir(&task.repo_path)
             .env("ANTHROPIC_API_KEY", api_key)
+            .env("CLAUDE_CONFIG_DIR", dirs::home_dir().map(|h| h.join(".claude")).unwrap_or_default())
             .stdout(std::process::Stdio::piped())
             .stderr(std::process::Stdio::piped())
             .process_group(0)

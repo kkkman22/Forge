@@ -189,3 +189,16 @@ export async function listen(_event: string, _handler: (payload: unknown) => voi
 export async function open(_options: Record<string, unknown>): Promise<string | string[] | null> {
   return null;
 }
+
+// Mock notification plugin
+export async function isPermissionGranted(): Promise<boolean> {
+  return true;
+}
+
+export async function requestPermission(): Promise<string> {
+  return "granted";
+}
+
+export function sendNotification(_options: { title: string; body: string }): void {
+  // No-op in E2E
+}

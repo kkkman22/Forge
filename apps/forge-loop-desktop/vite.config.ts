@@ -29,6 +29,7 @@ export default defineConfig({
           "@tauri-apps/api/core": path.resolve(__dirname, "e2e/fixtures.ts"),
           "@tauri-apps/api/event": path.resolve(__dirname, "e2e/fixtures.ts"),
           "@tauri-apps/plugin-dialog": path.resolve(__dirname, "e2e/fixtures.ts"),
+          "@tauri-apps/plugin-notification": path.resolve(__dirname, "e2e/fixtures.ts"),
         },
       }
     : undefined,
