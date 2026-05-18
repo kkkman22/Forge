@@ -11,7 +11,35 @@ use process_manager::ProcessManager;
 use std::path::PathBuf;
 use std::sync::Mutex;
 use tauri::Manager;
+use task_store::TaskStatus;
 use tokio::sync::Mutex as AsyncMutex;
+
+fn recover_orphan_processes(store: &mut task_store::TaskStore) {
+    use chrono::Utc;
+    let tasks = store.list().to_vec();
+    for task in tasks {
+        if let TaskStatus::Running { run_id, .. } = &task.status {
+            tracing::warn!(
+                "Orphan process detected: task={} run_id={}. Marking as failed.",
+                task.id,
+                run_id
+            );
+            let rid = run_id.clone();
+            let _ = store.update(&task.id, |t| {
+                t.status = TaskStatus::Failed {
+                    run_id: rid,
+                    error: "App exited unexpectedly — process lost".into(),
+                    failed_at: Utc::now(),
+                };
+                if let Some(exec) = t.executions.last_mut() {
+                    exec.ended_at = Some(Utc::now());
+                    exec.outcome = task_store::ExecutionOutcome::Aborted;
+                }
+            });
+        }
+    }
+    let _ = store.save();
+}
 
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
@@ -26,8 +54,10 @@ pub fn run() {
 
     let _ = std::fs::create_dir_all(&runs_dir);
 
-    let task_store = task_store::TaskStore::load(&store_path)
+    let mut task_store = task_store::TaskStore::load(&store_path)
         .expect("failed to load task store");
+
+    recover_orphan_processes(&mut task_store);
 
     let resources_dir = std::env::current_exe()
         .map(|p| p.parent().unwrap().parent().unwrap().join("Resources"))
