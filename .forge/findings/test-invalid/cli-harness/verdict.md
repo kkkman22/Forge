@@ -1,4 +1,0 @@
----
-verdict: INCONCLUSIVE
-controller: project
----
