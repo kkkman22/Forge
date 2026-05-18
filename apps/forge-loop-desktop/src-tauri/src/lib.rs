@@ -117,6 +117,21 @@ pub fn run() {
             }
             Ok(())
         })
-        .run(tauri::generate_context!())
-        .expect("error while running tauri application");
+        .build(tauri::generate_context!())
+        .expect("error while building tauri application")
+        .run(|app_handle, event| {
+            if let tauri::RunEvent::Exit = event {
+                let state = app_handle.state::<AppState>();
+                if let Ok(store) = state.task_store.lock() {
+                    let _ = store.save();
+                }
+                if let Ok(mut sg) = state.sleep_guard.lock() {
+                    if let Some(ref guard) = *sg {
+                        let _ = guard.disable();
+                    }
+                    *sg = None;
+                }
+                tracing::info!("Forge Loop Desktop shutting down");
+            }
+        });
 }

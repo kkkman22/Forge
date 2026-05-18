@@ -212,6 +212,10 @@ impl TaskStore {
         self.save()
     }
 
+    pub fn store_path(&self) -> &Path {
+        &self.path
+    }
+
     pub fn get(&self, task_id: &TaskId) -> Option<&Task> {
         self.data.tasks.iter().find(|t| t.id == *task_id)
     }

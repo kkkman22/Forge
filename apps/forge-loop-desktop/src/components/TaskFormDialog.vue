@@ -102,6 +102,23 @@ async function handleBrowse() {
   }
 }
 
+function handleDrop(e: DragEvent) {
+  e.preventDefault();
+  const files = e.dataTransfer?.files;
+  if (files && files.length > 0) {
+    // Tauri provides file paths in the File object's path property
+    const file = files[0];
+    const path = (file as unknown as { path?: string }).path;
+    if (path) {
+      repoPath.value = path;
+    }
+  }
+}
+
+function handleDragOver(e: DragEvent) {
+  e.preventDefault();
+}
+
 function handleKeydown(e: KeyboardEvent) {
   if (e.key === "Escape") {
     emit("cancel");
@@ -161,7 +178,7 @@ onMounted(async () => {
           <label class="block text-[14px] font-medium text-[var(--color-ink-muted)] mb-1.5">
             目标仓库 <span class="text-[var(--color-error)]">*</span>
           </label>
-          <div class="flex gap-2">
+          <div class="flex gap-2" @drop="handleDrop" @dragover="handleDragOver">
             <input
               v-model="repoPath"
               type="text"
