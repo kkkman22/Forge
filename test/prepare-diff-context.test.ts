@@ -16,9 +16,9 @@
  */
 import { describe, expect, it } from "vitest";
 import {
-    formatFrontmatter,
-    parseAddedRemoved,
-    parseFileCount,
+  formatFrontmatter,
+  parseAddedRemoved,
+  parseFileCount,
 } from "../scripts/prepare-diff-context.mjs";
 
 describe("prepare-diff-context: parseFileCount", () => {
@@ -33,15 +33,14 @@ describe("prepare-diff-context: parseFileCount", () => {
   });
 
   it("returns 5 for multi-file stat", () => {
-    const stat =
-      [
-        "src/a.ts | 10 ++++++++++",
-        "src/b.ts | 12 ++++++++++++",
-        "src/c.ts | 8 ++++++++",
-        "test/d.test.ts | 20 ++++++++++++++++++++",
-        "README.md | 3 ++-",
-        " 5 files changed, 51 insertions(+), 2 deletions(-)",
-      ].join("\n");
+    const stat = [
+      "src/a.ts | 10 ++++++++++",
+      "src/b.ts | 12 ++++++++++++",
+      "src/c.ts | 8 ++++++++",
+      "test/d.test.ts | 20 ++++++++++++++++++++",
+      "README.md | 3 ++-",
+      " 5 files changed, 51 insertions(+), 2 deletions(-)",
+    ].join("\n");
     expect(parseFileCount(stat)).toBe(5);
   });
 });

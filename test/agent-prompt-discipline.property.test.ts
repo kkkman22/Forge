@@ -26,10 +26,7 @@ interface ContractCheckResult {
  * Pure contract scanner: given a (frontmatter fields, body) pair, decide if
  * the agent file satisfies the Turn Budget Discipline contract.
  */
-function checkAgentContract(
-  fields: { maxTurns?: string },
-  body: string,
-): ContractCheckResult {
+function checkAgentContract(fields: { maxTurns?: string }, body: string): ContractCheckResult {
   const reasons: string[] = [];
   const maxTurns = fields.maxTurns ? Number.parseInt(fields.maxTurns, 10) : NaN;
   if (!Number.isFinite(maxTurns) || maxTurns < 10) {
@@ -56,7 +53,7 @@ function checkAgentContract(
 const VALID_BODY = [
   "## Identity",
   "## Turn Budget Discipline (IRON-LAW)",
-  "Use forge_git(subcommand=\"diff-content\") first.",
+  'Use forge_git(subcommand="diff-content") first.',
   "Read 预算 ≤ 3.",
   "## Final Report Block",
   "Final report must start with ## Layer N.",
@@ -93,9 +90,7 @@ describe("PBT: agent-prompt-discipline contract scanner", () => {
         );
         const result = checkAgentContract({ maxTurns: String(mt) }, mutated);
         expect(result.passes).toBe(false);
-        expect(
-          result.reasons.some((r) => r.includes("Turn Budget Discipline")),
-        ).toBe(true);
+        expect(result.reasons.some((r) => r.includes("Turn Budget Discipline"))).toBe(true);
       }),
       { numRuns: 30 },
     );
@@ -107,9 +102,7 @@ describe("PBT: agent-prompt-discipline contract scanner", () => {
         const mutated = VALID_BODY.replace("## Final Report Block", "");
         const result = checkAgentContract({ maxTurns: String(mt) }, mutated);
         expect(result.passes).toBe(false);
-        expect(
-          result.reasons.some((r) => r.includes("Final Report Block")),
-        ).toBe(true);
+        expect(result.reasons.some((r) => r.includes("Final Report Block"))).toBe(true);
       }),
       { numRuns: 30 },
     );

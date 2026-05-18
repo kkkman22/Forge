@@ -101,9 +101,10 @@ describe("Plugin Asset Integrity", () => {
       .map((d) => d.name);
 
     for (const dir of dirs) {
-      expect(existsSync(join(libDir, dir, "instructions.md")), `Missing skills/forge/lib/${dir}/instructions.md`).toBe(
-        true,
-      );
+      expect(
+        existsSync(join(libDir, dir, "instructions.md")),
+        `Missing skills/forge/lib/${dir}/instructions.md`,
+      ).toBe(true);
     }
   });
 });

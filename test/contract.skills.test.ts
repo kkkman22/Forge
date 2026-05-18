@@ -122,7 +122,9 @@ describe("Contract: forge-resume SKILL.md --from-pr feature", () => {
   const resumeSkillPath = resolve(ROOT, "skills", "forge", "lib", "resume", "instructions.md");
 
   it("forge-resume SKILL.md contains '从 PR 恢复' section", () => {
-    expect(existsSync(resumeSkillPath), "Missing: skills/forge/lib/resume/instructions.md").toBe(true);
+    expect(existsSync(resumeSkillPath), "Missing: skills/forge/lib/resume/instructions.md").toBe(
+      true,
+    );
     const content = readFileSync(resumeSkillPath, "utf-8");
     expect(content).toContain("从 PR 恢复");
     expect(content).toMatch(/##\s+5\.\s+从 PR 恢复|--from-pr/);

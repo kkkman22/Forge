@@ -1,7 +1,7 @@
-import { describe, it, expect } from "vitest";
+import { existsSync, readFileSync } from "node:fs";
 import { resolve } from "node:path";
-import { readFileSync, existsSync } from "node:fs";
 import { glob } from "glob";
+import { describe, expect, it } from "vitest";
 
 const ROOT = resolve(import.meta.dirname, "..", "..");
 
@@ -19,17 +19,13 @@ describe("R4.3: cross-lib references resolve correctly", () => {
       const content = readFileSync(resolve(ROOT, libPath), "utf-8");
       const sub = libPath.split("/")[3];
       const crossRefPattern = /\.\.\/([a-z][a-z0-9-]*)\/(references\/[a-zA-Z0-9_.-]+\.md)/g;
-      let match;
-
-      while ((match = crossRefPattern.exec(content)) !== null) {
-        const targetSub = match[1];
-        const refPath = match[2];
+      for (const m of content.matchAll(crossRefPattern)) {
+        const targetSub = m[1];
+        const refPath = m[2];
         const fullPath = resolve(ROOT, "skills/forge/lib", targetSub, refPath);
 
         if (!existsSync(fullPath)) {
-          violations.push(
-            `${libPath}: ${sub} refs ${targetSub}/${refPath} — not found`,
-          );
+          violations.push(`${libPath}: ${sub} refs ${targetSub}/${refPath} — not found`);
         }
       }
     }

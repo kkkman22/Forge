@@ -77,18 +77,15 @@ describe("PBT: .diff-context.md contract scanner", () => {
 
   it("frontmatter missing any required field is detected (P4)", () => {
     fc.assert(
-      fc.property(
-        fc.constantFrom(...REQUIRED_FRONTMATTER_FIELDS),
-        (omittedField) => {
-          const fields: Record<string, string> = {};
-          for (const k of REQUIRED_FRONTMATTER_FIELDS) {
-            if (k !== omittedField) fields[k] = "stub";
-          }
-          const missing = frontmatterMissingFields(fields);
-          expect(missing).toContain(omittedField);
-          expect(missing.length).toBe(1);
-        },
-      ),
+      fc.property(fc.constantFrom(...REQUIRED_FRONTMATTER_FIELDS), (omittedField) => {
+        const fields: Record<string, string> = {};
+        for (const k of REQUIRED_FRONTMATTER_FIELDS) {
+          if (k !== omittedField) fields[k] = "stub";
+        }
+        const missing = frontmatterMissingFields(fields);
+        expect(missing).toContain(omittedField);
+        expect(missing.length).toBe(1);
+      }),
       { numRuns: REQUIRED_FRONTMATTER_FIELDS.length },
     );
   });

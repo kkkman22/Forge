@@ -1,7 +1,7 @@
-import { describe, it, expect } from "vitest";
+import { existsSync, readFileSync } from "node:fs";
 import { resolve } from "node:path";
-import { readFileSync, existsSync } from "node:fs";
 import { glob } from "glob";
+import { describe, expect, it } from "vitest";
 
 const ROOT = resolve(import.meta.dirname, "..", "..");
 
@@ -19,16 +19,12 @@ describe("R4.1: self-relative references within same sub", () => {
       const content = readFileSync(resolve(ROOT, libPath), "utf-8");
       const sub = libPath.split("/")[3];
       const refPattern = /(?:Read|read)\s*\(?["']([^"']*references\/[^"']+)["']/g;
-      let match;
-
-      while ((match = refPattern.exec(content)) !== null) {
-        const refPath = match[1];
+      for (const m of content.matchAll(refPattern)) {
+        const refPath = m[1];
         if (refPath.startsWith("../")) {
           const targetSub = refPath.match(/\.\.\/([^/]+)/)?.[1];
           if (targetSub === sub) {
-            violations.push(
-              `${libPath}: self-reference uses ../${sub}/ instead of references/`,
-            );
+            violations.push(`${libPath}: self-reference uses ../${sub}/ instead of references/`);
           }
         }
       }
@@ -43,13 +39,10 @@ describe("R4.1: self-relative references within same sub", () => {
 
     for (const libPath of libs) {
       const content = readFileSync(resolve(ROOT, libPath), "utf-8");
-      // Match references/XXX.md but capture leading path context to skip cross-sub refs
       const refPattern = /([^"\s]*references\/([a-zA-Z0-9_-]+\.md))/g;
-      let match;
-
-      while ((match = refPattern.exec(content)) !== null) {
-        const fullRef = match[1];
-        const refFile = match[2];
+      for (const m of content.matchAll(refPattern)) {
+        const fullRef = m[1];
+        const refFile = m[2];
         // Skip cross-sub references (contains ../)
         if (fullRef.includes("../")) continue;
 
@@ -57,9 +50,7 @@ describe("R4.1: self-relative references within same sub", () => {
         const fullPath = resolve(ROOT, "skills/forge/lib", sub, "references", refFile);
 
         if (!existsSync(fullPath)) {
-          violations.push(
-            `${libPath}: references ${refFile} but file not found at ${fullPath}`,
-          );
+          violations.push(`${libPath}: references ${refFile} but file not found at ${fullPath}`);
         }
       }
     }

@@ -1,7 +1,7 @@
-import { describe, it, expect } from "vitest";
-import { glob } from "glob";
-import { resolve } from "node:path";
 import { existsSync } from "node:fs";
+import { resolve } from "node:path";
+import { glob } from "glob";
+import { describe, expect, it } from "vitest";
 
 const ROOT = resolve(import.meta.dirname, "..", "..");
 const SUBS = [
@@ -43,8 +43,6 @@ describe("R1.4: migration structure", () => {
   });
 
   it.each(SUBS)("instructions.md exists for sub %s", (sub) => {
-    expect(
-      existsSync(resolve(ROOT, `skills/forge/lib/${sub}/instructions.md`)),
-    ).toBe(true);
+    expect(existsSync(resolve(ROOT, `skills/forge/lib/${sub}/instructions.md`))).toBe(true);
   });
 });

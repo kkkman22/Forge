@@ -54,23 +54,25 @@ describe("Contract: review subagent Turn Budget Discipline (Stage 1 — spec-che
     expect(fields.maxTurns, "maxTurns frontmatter field is required").toBeDefined();
     const value = Number.parseInt(fields.maxTurns, 10);
     expect(Number.isFinite(value), `maxTurns must be numeric, got "${fields.maxTurns}"`).toBe(true);
-    expect(value, "Stage 1 raises maxTurns from 6 to 10 to leave room for final-report turn").toBeGreaterThanOrEqual(
-      10,
-    );
+    expect(
+      value,
+      "Stage 1 raises maxTurns from 6 to 10 to leave room for final-report turn",
+    ).toBeGreaterThanOrEqual(10);
   });
 
   it("spec-check.md prompt contains Turn Budget Discipline IRON-LAW segment", () => {
     const { body } = parseAgentFile(SPEC_CHECK);
-    expect(body, "## Turn Budget Discipline header is required").toContain("## Turn Budget Discipline");
+    expect(body, "## Turn Budget Discipline header is required").toContain(
+      "## Turn Budget Discipline",
+    );
     expect(body, "Turn Budget Discipline must be marked as an IRON-LAW").toContain("IRON-LAW");
   });
 
   it("spec-check.md prompt contains Final Report Block anchor", () => {
     const { body } = parseAgentFile(SPEC_CHECK);
-    expect(
-      body,
-      "## Final Report Block anchor signals the final-report-turn template",
-    ).toContain("## Final Report Block");
+    expect(body, "## Final Report Block anchor signals the final-report-turn template").toContain(
+      "## Final Report Block",
+    );
   });
 
   it("spec-check.md preserves Step 0 forge_git IRON-LAW (regression guard)", () => {
@@ -83,13 +85,11 @@ describe("Contract: review subagent Turn Budget Discipline (Stage 1 — spec-che
 
   it("spec-check.md preserves Read budget contract (regression guard)", () => {
     const { body } = parseAgentFile(SPEC_CHECK);
-    expect(
-      body,
-      "Read 预算 ≤ 3 contract must remain after Step 0.5/0.6 merge",
-    ).toContain("Read 预算");
+    expect(body, "Read 预算 ≤ 3 contract must remain after Step 0.5/0.6 merge").toContain(
+      "Read 预算",
+    );
   });
 });
-
 
 describe.each([
   { name: "quality-check", path: ".claude/agents/quality-check.md", layer: "Layer 2" },
@@ -100,27 +100,28 @@ describe.each([
     expect(fields.maxTurns, "maxTurns frontmatter field is required").toBeDefined();
     const value = Number.parseInt(fields.maxTurns, 10);
     expect(Number.isFinite(value), `maxTurns must be numeric, got "${fields.maxTurns}"`).toBe(true);
-    expect(value, "Stage 2 raises maxTurns from 6 to 10 to leave room for final-report turn").toBeGreaterThanOrEqual(
-      10,
-    );
+    expect(
+      value,
+      "Stage 2 raises maxTurns from 6 to 10 to leave room for final-report turn",
+    ).toBeGreaterThanOrEqual(10);
   });
 
   it(`${path} prompt contains Turn Budget Discipline IRON-LAW segment`, () => {
     const { body } = parseAgentFile(path);
-    expect(body, "## Turn Budget Discipline header is required").toContain("## Turn Budget Discipline");
+    expect(body, "## Turn Budget Discipline header is required").toContain(
+      "## Turn Budget Discipline",
+    );
     expect(body, "Turn Budget Discipline must be marked as an IRON-LAW").toContain("IRON-LAW");
   });
 
   it(`${path} prompt contains Final Report Block anchor referencing ${layer}`, () => {
     const { body } = parseAgentFile(path);
-    expect(
-      body,
-      "## Final Report Block anchor signals the final-report-turn template",
-    ).toContain("## Final Report Block");
-    expect(
-      body,
-      `Final Report Block must reference the reviewer's own layer (${layer})`,
-    ).toContain(`## ${layer}`);
+    expect(body, "## Final Report Block anchor signals the final-report-turn template").toContain(
+      "## Final Report Block",
+    );
+    expect(body, `Final Report Block must reference the reviewer's own layer (${layer})`).toContain(
+      `## ${layer}`,
+    );
   });
 
   it(`${path} preserves Step 0 forge_git IRON-LAW (regression guard)`, () => {
@@ -133,19 +134,14 @@ describe.each([
 
   it(`${path} preserves Read budget contract (regression guard)`, () => {
     const { body } = parseAgentFile(path);
-    expect(
-      body,
-      "Read 预算 ≤ 3 contract must remain after Step 0.5/0.6 merge",
-    ).toContain("Read 预算");
+    expect(body, "Read 预算 ≤ 3 contract must remain after Step 0.5/0.6 merge").toContain(
+      "Read 预算",
+    );
   });
 });
 
-
 describe("Contract: codex toml integrity (Stage 2)", () => {
-  const TOML_FILES = [
-    ".codex/agents/quality-check.toml",
-    ".codex/agents/security-check.toml",
-  ];
+  const TOML_FILES = [".codex/agents/quality-check.toml", ".codex/agents/security-check.toml"];
 
   for (const tomlPath of TOML_FILES) {
     it(`${tomlPath} developer_instructions contains Turn Budget Discipline IRON-LAW segment`, () => {

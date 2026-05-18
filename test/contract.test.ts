@@ -62,20 +62,30 @@ describe("Contract: all skill instructions exist in collapsed lib", () => {
   for (const skill of expectedSkills) {
     it(`skills/forge/lib/${skill}/instructions.md exists`, () => {
       const skillPath = resolve(ROOT, `skills/forge/lib/${skill}/instructions.md`);
-      expect(existsSync(skillPath), `Missing: skills/forge/lib/${skill}/instructions.md`).toBe(true);
+      expect(existsSync(skillPath), `Missing: skills/forge/lib/${skill}/instructions.md`).toBe(
+        true,
+      );
     });
   }
 
   for (const skill of expectedSkills) {
     it(`skills/forge/lib/${skill}/instructions.md has YAML frontmatter`, () => {
-      const content = readFileSync(resolve(ROOT, `skills/forge/lib/${skill}/instructions.md`), "utf-8");
-      expect(content.startsWith("---\n"), `${skill} instructions.md missing frontmatter`).toBe(true);
+      const content = readFileSync(
+        resolve(ROOT, `skills/forge/lib/${skill}/instructions.md`),
+        "utf-8",
+      );
+      expect(content.startsWith("---\n"), `${skill} instructions.md missing frontmatter`).toBe(
+        true,
+      );
     });
   }
 
   it("no skill has disable-model-invocation (collapsed mode, dispatcher handles it)", () => {
     for (const skill of expectedSkills) {
-      const content = readFileSync(resolve(ROOT, `skills/forge/lib/${skill}/instructions.md`), "utf-8");
+      const content = readFileSync(
+        resolve(ROOT, `skills/forge/lib/${skill}/instructions.md`),
+        "utf-8",
+      );
       expect(content).not.toContain("disable-model-invocation: true");
     }
   });
@@ -248,10 +258,9 @@ describe("Contract: dist bundle completeness (if built)", () => {
     if (bundleExists) {
       it(`dist/${platform} contains skills/forge/SKILL.md (single entry)`, () => {
         const skillPath = resolve(bundleRoot, "skills/forge/SKILL.md");
-        expect(
-          existsSync(skillPath),
-          `Missing in ${platform} bundle: skills/forge/SKILL.md`,
-        ).toBe(true);
+        expect(existsSync(skillPath), `Missing in ${platform} bundle: skills/forge/SKILL.md`).toBe(
+          true,
+        );
       });
 
       for (const sub of expectedLibSubs) {
@@ -959,20 +968,20 @@ describe("Contract: plugin.json declares forge-context MCP server", () => {
 
 describe("Contract: SKILL references/ structure", () => {
   const skillsWithRefs: Record<string, string[]> = {
-    "build": [
+    build: [
       "tdd-rules.md",
       "closure-probes.md",
       "context-budget.md",
       "anti-drift.md",
       "function-contracts.md",
     ],
-    "review": [
+    review: [
       "confidence-filtering.md",
       "dedup-pipeline.md",
       "quality-gate.md",
       "function-contracts.md",
     ],
-    "plan": [
+    plan: [
       "atomic-task-format.md",
       "lightweight-task-format.md",
       "prohibited-content.md",
@@ -987,7 +996,9 @@ describe("Contract: SKILL references/ structure", () => {
       for (const file of expectedFiles) {
         it(`${file} exists`, () => {
           const refPath = resolve(libDir, skill, "references", file);
-          expect(existsSync(refPath), `Missing: skills/forge/lib/${skill}/references/${file}`).toBe(true);
+          expect(existsSync(refPath), `Missing: skills/forge/lib/${skill}/references/${file}`).toBe(
+            true,
+          );
         });
       }
     });

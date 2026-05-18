@@ -224,8 +224,8 @@ jobs:
       - name: Verify commands directory
         run: |
           count=$(ls commands/*.md 2>/dev/null | wc -l)
-          if [ "$count" -lt 20 ]; then
-            echo "::error::Expected >= 20 commands, found $count"
+          if [ "$count" -lt 1 ]; then
+            echo "::error::Expected >= 1 commands, found $count"
             exit 1
           fi
           echo "Commands check passed: $count commands"

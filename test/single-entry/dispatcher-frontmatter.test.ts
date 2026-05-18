@@ -1,6 +1,6 @@
-import { describe, it, expect } from "vitest";
+import { existsSync, readFileSync } from "node:fs";
 import { resolve } from "node:path";
-import { readFileSync, existsSync } from "node:fs";
+import { describe, expect, it } from "vitest";
 
 const ROOT = resolve(import.meta.dirname, "..", "..");
 const SKILL_PATH = resolve(ROOT, "skills/forge/SKILL.md");
@@ -37,8 +37,6 @@ describe("R5.1: dispatcher SKILL.md frontmatter", () => {
     const toolsMatch = fm![1].match(/allowed-tools:\s*(.+)/);
     expect(toolsMatch).toBeTruthy();
     const tools = toolsMatch![1].split(/,\s*/).map((t) => t.trim());
-    expect(new Set(tools)).toEqual(
-      new Set(["Read", "Agent", "Glob", "Grep", "Bash", "Skill"]),
-    );
+    expect(new Set(tools)).toEqual(new Set(["Read", "Agent", "Glob", "Grep", "Bash", "Skill"]));
   });
 });

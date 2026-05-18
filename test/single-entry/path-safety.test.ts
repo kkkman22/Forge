@@ -1,6 +1,5 @@
-import { describe, it, expect } from "vitest";
+import { describe, expect, it } from "vitest";
 import { resolveLibPath } from "../../src/forge-dispatcher/path-resolve.js";
-import { resolve } from "node:path";
 
 const CWD = process.cwd();
 

@@ -1,6 +1,6 @@
-import { describe, it, expect } from "vitest";
+import { existsSync, readFileSync } from "node:fs";
 import { resolve } from "node:path";
-import { readFileSync, existsSync } from "node:fs";
+import { describe, expect, it } from "vitest";
 
 const ROOT = resolve(import.meta.dirname, "..", "..");
 const ADR_PATH = resolve(ROOT, ".forge/decisions/ADR-0004-skills-collapse-and-dispatcher.md");
@@ -38,7 +38,10 @@ describe("R6.1: ADR-0004 exists and has correct frontmatter", () => {
 });
 
 describe("R6.2: ADR-0003 updated with supersedes note", () => {
-  const ADR3_PATH = resolve(ROOT, ".forge/decisions/ADR-0003-single-entry-command-consolidation.md");
+  const ADR3_PATH = resolve(
+    ROOT,
+    ".forge/decisions/ADR-0003-single-entry-command-consolidation.md",
+  );
 
   it("ADR-0003 contains update note referencing ADR-0004", () => {
     const content = readFileSync(ADR3_PATH, "utf-8");
