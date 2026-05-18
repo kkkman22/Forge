@@ -51,9 +51,10 @@ bash /tmp/forge/scripts/install-dist.sh
 在项目根目录执行：
 
 ```bash
-~/.claude/skills/forge/scripts/init.sh
+/forge init
 ```
 
+> Plugin 用户使用 `/forge init`，clone 用户也可使用 `bash forge/scripts/init.sh`，两者等价。
 > 预期输出：`.forge/` 目录创建完成，包含 `config.md` 和 `status.md`。
 
 ### 步骤 3：验证安装

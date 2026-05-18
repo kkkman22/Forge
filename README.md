@@ -29,7 +29,7 @@ claude plugin marketplace add https://github.com/kkkman22/Forge
 claude plugin install forge
 
 # 2. 初始化项目（仅首次）
-~/.claude/skills/forge/scripts/init.sh
+/forge init
 
 # 3. 验证安装
 /forge status
