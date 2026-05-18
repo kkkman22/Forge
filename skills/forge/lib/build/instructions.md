@@ -238,6 +238,31 @@ Trimmer 函数签名详见 references/function-contracts.md
 
 → 详见 references/context-exhaustion.md（完整 interim 模板、Step-by-step 流程、What NOT to Do 清单）
 
+## 12. 自动推进（铁律）
+
+<IRON-LAW name="build-auto-advance">
+
+Build 全部任务完成且 Final Validation 通过后，**必须立即自动调用下一阶段**，不得停下来等待用户确认。
+
+**成功时**：输出一行摘要，然后**立即调用** `Skill(skill="forge", args="review")`。
+
+```
+✅ build 完成 → 自动进入 review
+```
+
+**禁止**：
+- 输出"是否继续进入 review？"
+- 输出"build 完成，接下来可以运行 /forge review"
+- 静默 idle（无输出、等待用户输入）— 与显式询问同罪
+
+**失败/阻断时**：输出问题清单，停止等待用户决定。
+
+→ 详见 shared/next-step-protocol.md
+
+</IRON-LAW>
+
+---
+
 ## Gotchas
 - **Skipping RED phase**: Write implementation first, then backfill tests → tests verify implementation not behavior → must write failing test first
 - **Subagent context leak**: Subagent returns full raw output → main context polluted with 50 lines of grep results → subagent must return conclusion summary only
