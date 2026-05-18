@@ -1,13 +1,16 @@
+use crate::process_manager::ProcessManager;
 use crate::task_store::{
-    BranchStrategy, Task, TaskStore, TaskTarget, TaskStatus,
+    BranchStrategy, ExecutionOutcome, ExecutionRecord, Task, TaskStore, TaskTarget, TaskStatus,
 };
 use chrono::Utc;
 use std::path::PathBuf;
 use std::sync::Mutex;
 use tauri::State;
+use tokio::sync::Mutex as AsyncMutex;
 
 pub struct AppState {
     pub task_store: Mutex<TaskStore>,
+    pub process_manager: AsyncMutex<ProcessManager>,
 }
 
 #[derive(serde::Deserialize)]
@@ -113,4 +116,90 @@ pub fn reorder_task(
 pub fn get_recent_repos(state: State<AppState>) -> Result<Vec<String>, String> {
     let store = state.task_store.lock().map_err(|e| e.to_string())?;
     Ok(store.recent_repos().to_vec())
+}
+
+// --- Execution Commands ---
+
+#[tauri::command]
+pub async fn start_task(state: State<'_, AppState>, task_id: String) -> Result<String, String> {
+    let task = {
+        let store = state.task_store.lock().map_err(|e| e.to_string())?;
+        store
+            .get(&task_id)
+            .cloned()
+            .ok_or_else(|| format!("task not found: {}", task_id))?
+    };
+
+    // Validate git status for current_branch strategy
+    if matches!(task.branch_strategy, BranchStrategy::CurrentBranch) {
+        let output = std::process::Command::new("git")
+            .args(["status", "--porcelain"])
+            .current_dir(&task.repo_path)
+            .output()
+            .map_err(|e| format!("git status failed: {}", e))?;
+        if !output.stdout.is_empty() {
+            return Err("working tree not clean — commit or stash changes first".into());
+        }
+    }
+
+    // TODO: Read API key from KeychainManager (Task 8)
+    let api_key = std::env::var("ANTHROPIC_API_KEY").unwrap_or_default();
+    if api_key.is_empty() {
+        return Err("ANTHROPIC_API_KEY not set — configure in Settings".into());
+    }
+
+    let mut pm = state.process_manager.lock().await;
+    let run_id = pm
+        .spawn_task(&task, &api_key)
+        .await
+        .map_err(|e| e.to_string())?;
+
+    let mut store = state.task_store.lock().map_err(|e| e.to_string())?;
+    store
+        .update(&task_id, |t| {
+            t.status = TaskStatus::Running {
+                run_id: run_id.clone(),
+                started_at: Utc::now(),
+            };
+            t.executions.push(ExecutionRecord {
+                run_id: run_id.clone(),
+                started_at: Utc::now(),
+                ended_at: None,
+                exit_code: None,
+                iterations: None,
+                outcome: ExecutionOutcome::Pending,
+            });
+        })
+        .map_err(|e| e.to_string())?;
+
+    Ok(run_id)
+}
+
+#[tauri::command]
+pub async fn stop_task(state: State<'_, AppState>, task_id: String) -> Result<(), String> {
+    let mut pm = state.process_manager.lock().await;
+    pm.stop_task(&task_id).await.map_err(|e| e.to_string())?;
+
+    let mut store = state.task_store.lock().map_err(|e| e.to_string())?;
+    store
+        .update(&task_id, |t| {
+            t.status = TaskStatus::Paused;
+        })
+        .map_err(|e| e.to_string())?;
+
+    Ok(())
+}
+
+#[tauri::command]
+pub async fn retry_task(state: State<'_, AppState>, task_id: String) -> Result<String, String> {
+    // Reset to queued status, then start
+    {
+        let mut store = state.task_store.lock().map_err(|e| e.to_string())?;
+        store
+            .update(&task_id, |t| {
+                t.status = TaskStatus::Queued;
+            })
+            .map_err(|e| e.to_string())?;
+    }
+    start_task(state, task_id).await
 }
