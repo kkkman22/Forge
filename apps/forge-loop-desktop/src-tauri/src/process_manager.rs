@@ -218,6 +218,25 @@ impl ProcessManager {
         self.registry.len()
     }
 
+    pub fn running_task_ids(&self) -> Vec<TaskId> {
+        self.registry.keys().cloned().collect()
+    }
+
+    /// Kill a task's process synchronously (for shutdown).
+    /// Sends SIGKILL to the process group, no graceful wait.
+    pub fn kill_task_sync(&mut self, task_id: &TaskId) -> Result<(), ProcessError> {
+        if let Some(handle) = self.registry.get_mut(task_id) {
+            if let Some(id) = handle.child.id() {
+                unsafe {
+                    libc::kill(-(id as i32), libc::SIGKILL);
+                }
+            }
+            let _ = handle.child.try_wait();
+            self.registry.remove(task_id);
+        }
+        Ok(())
+    }
+
     fn build_cli_args(&self, task: &Task, run_id: &str) -> Vec<String> {
         let mut args = vec![self.cli_path.to_string_lossy().to_string()];
 

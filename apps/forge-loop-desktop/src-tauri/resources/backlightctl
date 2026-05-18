@@ -1,0 +1,62 @@
+#!/usr/bin/env python3
+"""Forge Loop backlight controller.
+
+Usage: backlightctl <brightness>
+  brightness: integer 0-100
+
+Calls macOS DisplayServices private framework to set built-in display brightness.
+Used by SleepGuard's LidWatcher to dim the screen when the lid is closed
+while keeping the system awake.
+
+Exit codes:
+  0  success
+  1  invalid arguments
+  2  framework load failed
+  3  brightness API call failed
+"""
+
+import ctypes
+import sys
+
+
+def main() -> int:
+    if len(sys.argv) != 2:
+        print("Usage: backlightctl <brightness 0-100>", file=sys.stderr)
+        return 1
+
+    try:
+        level = int(sys.argv[1])
+    except ValueError:
+        print(f"Invalid brightness level: {sys.argv[1]!r}", file=sys.stderr)
+        return 1
+
+    if not 0 <= level <= 100:
+        print(f"Brightness {level} out of range (0-100)", file=sys.stderr)
+        return 1
+
+    brightness = level / 100.0
+
+    framework = (
+        "/System/Library/PrivateFrameworks/DisplayServices.framework/DisplayServices"
+    )
+    try:
+        ds = ctypes.CDLL(framework)
+    except OSError as exc:
+        print(f"Failed to load DisplayServices: {exc}", file=sys.stderr)
+        return 2
+
+    # DisplayServicesSetBrightness(CGDirectDisplayID, float) -> int
+    ds.DisplayServicesSetBrightness.argtypes = [ctypes.c_uint32, ctypes.c_float]
+    ds.DisplayServicesSetBrightness.restype = ctypes.c_int
+
+    # Display ID 0 targets the main built-in display.
+    result = ds.DisplayServicesSetBrightness(0, ctypes.c_float(brightness))
+    if result != 0:
+        print(f"DisplayServicesSetBrightness returned {result}", file=sys.stderr)
+        return 3
+
+    return 0
+
+
+if __name__ == "__main__":
+    sys.exit(main())
