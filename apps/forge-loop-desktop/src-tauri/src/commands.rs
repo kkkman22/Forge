@@ -230,3 +230,21 @@ pub fn clear_credentials() -> Result<(), String> {
     let km = crate::keychain_manager::KeychainManager::new();
     km.delete_api_key()
 }
+
+// --- Sleep Commands ---
+
+#[tauri::command]
+pub fn get_sleep_status() -> Result<crate::sleep_guard::SleepStatus, String> {
+    let guard = crate::sleep_guard::SleepGuard::new(std::path::PathBuf::from("/usr/bin/true"));
+    Ok(guard.get_status())
+}
+
+#[tauri::command]
+pub fn toggle_sleep_inhibit(enabled: bool) -> Result<(), String> {
+    let guard = crate::sleep_guard::SleepGuard::new(std::path::PathBuf::from("/usr/bin/true"));
+    if enabled {
+        guard.enable().map_err(|e| e.to_string())
+    } else {
+        guard.disable().map_err(|e| e.to_string())
+    }
+}
