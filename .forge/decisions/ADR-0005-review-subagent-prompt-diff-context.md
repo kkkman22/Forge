@@ -6,7 +6,8 @@ date: "2026-05-18"
 deciders:
   - "@king"
 related_adrs:
-  - "ADR-0004" # fallback ladder uses review results
+  - "2026-05-18-review-fallback-ladder" # fallback ladder consumes review results
+  - "ADR-0004" # skills collapse dispatcher
 ---
 
 # ADR-0005: Review subagent prompt must include diff-context path and turn budget discipline

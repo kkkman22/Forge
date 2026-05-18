@@ -488,41 +488,42 @@ export interface ReviewSubagentContext {
  * Always includes quality-check and security-check.
  * Includes spec-check only when a locked Spec is available (hasSpec === true).
  */
+const DEFAULT_REVIEW_TURNS = 10;
+
+const DIFF_CONTEXT_PREAMBLE = `Diff context: .forge/reviews/.diff-context.md
+Turn Budget: Read diff-context first → produce FINDINGS → use remaining turns for deep-dives (max 3-5 reads).
+Hard constraint: Your final turn MUST be a text block containing FINDINGS, not a tool_use call.
+If turn budget is running low (≤2 remaining), stop reading files and output partial FINDINGS immediately.
+Insufficient evidence for a finding → omit it rather than spend turns investigating.`;
+
+function buildPrompt(task: string): string {
+  return `${DIFF_CONTEXT_PREAMBLE}\n${task}`;
+}
+
 export function buildReviewSubagents(context: ReviewSubagentContext): SubagentInvocation[] {
   const invocations: SubagentInvocation[] = [];
-
-  const diffContextPreamble = [
-    `Diff context: .forge/reviews/.diff-context.md`,
-    `Turn Budget: Read diff-context first → produce FINDINGS → use remaining turns for deep-dives (max 3-5 reads).`,
-    `Hard constraint: Your final turn MUST be a text block containing FINDINGS, not a tool_use call.`,
-    `If turn budget is running low (≤2 remaining), stop reading files and output partial FINDINGS immediately.`,
-    `Insufficient evidence for a finding → omit it rather than spend turns investigating.`,
-  ].join("\n");
 
   if (context.hasSpec) {
     invocations.push({
       agentType: "spec-check",
-      prompt: [
-        diffContextPreamble,
-        `Review spec alignment. Spec path: ${context.specPath ?? "unknown"}.`,
-      ].join("\n"),
+      prompt: buildPrompt(`Review spec alignment. Spec path: ${context.specPath ?? "unknown"}.`),
       permissionMode: "default",
-      maxTurns: 10,
+      maxTurns: DEFAULT_REVIEW_TURNS,
     });
   }
 
   invocations.push({
     agentType: "quality-check",
-    prompt: [diffContextPreamble, "Review code quality."].join("\n"),
+    prompt: buildPrompt("Review code quality."),
     permissionMode: "default",
-    maxTurns: 10,
+    maxTurns: DEFAULT_REVIEW_TURNS,
   });
 
   invocations.push({
     agentType: "security-check",
-    prompt: [diffContextPreamble, "Review security and risk."].join("\n"),
+    prompt: buildPrompt("Review security and risk."),
     permissionMode: "default",
-    maxTurns: 10,
+    maxTurns: DEFAULT_REVIEW_TURNS,
   });
 
   // Layer 4: Frontend accessibility check — only when Vue files are present
@@ -533,7 +534,7 @@ export function buildReviewSubagents(context: ReviewSubagentContext): SubagentIn
       agentType: "frontend-check",
       prompt: `Review frontend accessibility. Changed Vue files: ${vueFiles.join(", ")}`,
       permissionMode: "default",
-      maxTurns: 10,
+      maxTurns: DEFAULT_REVIEW_TURNS,
     });
   }
 
