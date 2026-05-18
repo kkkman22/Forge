@@ -13,6 +13,7 @@
  *   - Structured data must use YAML frontmatter (--- delimited block at start)
  *   **Validates: Requirements 11.2**
  */
+import { type Methodology } from "./schemas/review-report.js";
 export interface StateFile {
     /** File path relative to .forge/, e.g. "config.md", "specs/feature/spec.md" */
     path: string;
@@ -44,6 +45,8 @@ export interface ReviewReportFields {
     p1_count: number;
     p2_count: number;
     p3_count: number;
+    /** How the review report was produced. Default: subagent-parallel. */
+    methodology: Methodology;
 }
 export declare const STATUS_DEFAULTS: StatusFields;
 export declare const REVIEW_REPORT_DEFAULTS: ReviewReportFields;

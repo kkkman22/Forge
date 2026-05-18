@@ -1,7 +1,7 @@
-import { describe, it, expect } from "vitest";
-import { resolve } from "node:path";
 import { readFileSync } from "node:fs";
+import { resolve } from "node:path";
 import { glob } from "glob";
+import { describe, expect, it } from "vitest";
 const ROOT = resolve(import.meta.dirname, "..", "..");
 const SPEC_PATH = resolve(ROOT, ".kiro/specs/forge-single-entry-skills-collapse/spec.md");
 const EXPECTED_MODES = {
@@ -44,8 +44,14 @@ function parseR35Table(specContent) {
             inTable = true;
             continue;
         }
-        if (inTable && line.startsWith("|") && !line.startsWith("|---") && !line.includes("sub | mode")) {
-            const cols = line.split("|").map((c) => c.trim()).filter(Boolean);
+        if (inTable &&
+            line.startsWith("|") &&
+            !line.startsWith("|---") &&
+            !line.includes("sub | mode")) {
+            const cols = line
+                .split("|")
+                .map((c) => c.trim())
+                .filter(Boolean);
             if (cols.length >= 2) {
                 table.set(cols[0], cols[1]);
             }

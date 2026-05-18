@@ -1,4 +1,4 @@
-import { describe, it, expect, vi } from "vitest";
+import { describe, expect, it, vi } from "vitest";
 import { dispatchForgeSubcommand } from "../../src/forge-dispatcher.js";
 describe("R3.2: inline mode reads instructions.md in main context", () => {
     it("inline sub does NOT call Agent tool", async () => {

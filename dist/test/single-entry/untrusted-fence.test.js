@@ -1,4 +1,4 @@
-import { describe, it, expect } from "vitest";
+import { describe, expect, it } from "vitest";
 import { wrapWorkspaceContext } from "../../src/forge-dispatcher/untrusted-fence.js";
 describe("R2.4: untrusted workspace fence", () => {
     it("wraps workspace files in <untrusted> tags", () => {
@@ -7,8 +7,8 @@ describe("R2.4: untrusted workspace fence", () => {
             { path: ".forge/config.md", content: "tier: standard" },
         ];
         const result = wrapWorkspaceContext(files);
-        expect(result).toContain("<untrusted source=\".forge/status.md\">");
-        expect(result).toContain("<untrusted source=\".forge/config.md\">");
+        expect(result).toContain('<untrusted source=".forge/status.md">');
+        expect(result).toContain('<untrusted source=".forge/config.md">');
         expect(result).toContain("</untrusted>");
     });
     it("includes preamble before untrusted content", () => {

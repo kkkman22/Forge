@@ -27,6 +27,8 @@ import { archiveTaskStatus, getMostRecentActiveTask, listActiveTasks, migrateToM
 import { isMultiTaskMode, reconstructStateFromGit, resolveStatusPath, slugify, } from "./status-resolver.js";
 // Branch gate
 export { DEFAULT_SEVERITY, renderBranchGateAdvisory, renderBranchGatePrompt, runBranchGate, } from "./branch-gate.js";
+// Config
+export { parseReviewConfig } from "./config.js";
 // Context budget management
 export { CLASSIFICATION_MAP, canParseTestOutput, classifySource, deserializeContextBudgetReport, deserializeExploreSummary, deserializeGitDiff, deserializeGitStatus, deserializeReviewSummary, deserializeSubagentSummary, deserializeTestOutput, serializeContextBudgetReport, serializeExploreResult, serializeExploreSummary, serializeGitDiff, serializeGitStatus, serializeReviewSummary, serializeSubagentSummary, serializeTestOutput, } from "./context-budget.js";
 // Fix checklist
@@ -50,11 +52,11 @@ export { checkPlanStructure, detectPlanFormat, extractHeadingAnchors, FORBIDDEN_
 // Quality gate
 export { evaluateReviewGate, evaluateShipGate, evaluateTestGate, } from "./quality-gate.js";
 // Ship gate
-export { checkReviewFreshness, checkShipGate, checkShipGateWithChecklist, checkShipGateWithFreshness, } from "./ship.js";
+export { checkReviewFreshness, checkShipGate, checkShipGateWithChecklist, checkShipGateWithForceSkip, checkShipGateWithFreshness, recordForceSkip, } from "./ship.js";
 // Spec Health (merged: type-only + value blocks)
 export { checkSpecHealth, classifyVerdict, computeAmbiguityScore, computeSpecHash, parseHealthCache, renderSpecHealthAdvisory, shouldRecompute, } from "./spec-health.js";
 // Subagent runner
-export { buildSubagentInvocations, runSubagentsInParallel } from "./subagent-runner.js";
+export { buildSubagentInvocations, runSubagentsInParallel, runSubagentsWithConcurrency, } from "./subagent-runner.js";
 // Error hierarchy (consolidated: cli-error + forge-error)
 // SDK (consolidated: sdk-agent-adapter + sdk-driver)
 // SKILL plugin mechanism (consolidated: skill-loader + skill-validator)

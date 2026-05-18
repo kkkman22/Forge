@@ -1,6 +1,6 @@
-import { describe, it, expect } from "vitest";
+import { existsSync, readFileSync } from "node:fs";
 import { resolve } from "node:path";
-import { readFileSync, existsSync } from "node:fs";
+import { describe, expect, it } from "vitest";
 const ROOT = resolve(import.meta.dirname, "..", "..");
 const SKILL_PATH = resolve(ROOT, "skills/forge/SKILL.md");
 describe("R5.3: dispatcher SKILL.md size ≤ 250 lines", () => {

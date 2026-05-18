@@ -13,6 +13,7 @@
  *   - Requirements 16.3, 16.4: Hard constraints on review and test gates
  */
 import type { ChecklistEntry } from "./fix-checklist.js";
+import type { Methodology } from "./schemas/review-report.js";
 /** @public */
 export interface ReviewResult {
     /** Whether the review passed (no P0/P1 issues). */
@@ -23,6 +24,8 @@ export interface ReviewResult {
     p1Count: number;
     /** Commit hash at the time of review. Optional for backward compatibility. */
     reviewedAtCommit?: string;
+    /** How the review report was produced. Default: subagent-parallel. */
+    methodology?: Methodology;
 }
 /** @public */
 export interface TestResult {
@@ -40,6 +43,12 @@ export interface ProgressResult {
 export interface ShipGateResult {
     allowed: boolean;
     reasons: string[];
+    forceSkipped?: boolean;
+}
+/** @public */
+export interface ShipOptions {
+    forceSkipReview?: boolean;
+    forceSkipReason?: string;
 }
 /** @public */
 export interface ReviewFreshnessResult {
@@ -72,6 +81,23 @@ export declare function checkReviewFreshness(reviewedCommit: string | undefined,
  * @public
  */
 export declare function checkShipGate(review: ReviewResult, test: TestResult, progress: ProgressResult): ShipGateResult;
+/**
+ * Extended ship gate with force-skip-review escape hatch.
+ *
+ * When forceSkipReview is true, bypasses all normal gates and returns
+ * allowed=true with a SKIPPED-BY-FORCE reason. Requires a non-empty
+ * reason to provide audit trail.
+ * @public
+ */
+export declare function checkShipGateWithForceSkip(review: ReviewResult, test: TestResult, progress: ProgressResult, options: ShipOptions): ShipGateResult;
+/**
+ * Record a force-skip-review event to the findings file for audit trail.
+ *
+ * Writes an entry to `.forge/findings/force-skip-review-<date>.md` with
+ * commit hash, reason, user, and timestamp.
+ * @public
+ */
+export declare function recordForceSkip(commitHash: string, reason: string, user: string): void;
 /**
  * Extended ship gate with P1 Fix Checklist verification.
  *

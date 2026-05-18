@@ -1,4 +1,4 @@
-import { describe, it, expect } from "vitest";
+import { describe, expect, it } from "vitest";
 import { resolveAllowedTools } from "../../src/forge-dispatcher/tools-resolve.js";
 describe("R2.3: per-sub allowed-tools from frontmatter", () => {
     it("extracts allowed_tools from valid frontmatter", () => {

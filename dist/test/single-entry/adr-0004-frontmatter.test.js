@@ -1,6 +1,6 @@
-import { describe, it, expect } from "vitest";
+import { existsSync, readFileSync } from "node:fs";
 import { resolve } from "node:path";
-import { readFileSync, existsSync } from "node:fs";
+import { describe, expect, it } from "vitest";
 const ROOT = resolve(import.meta.dirname, "..", "..");
 const ADR_PATH = resolve(ROOT, ".forge/decisions/ADR-0004-skills-collapse-and-dispatcher.md");
 describe("R6.1: ADR-0004 exists and has correct frontmatter", () => {

@@ -1,15 +1,39 @@
-import { describe, it, expect } from "vitest";
-import { resolve } from "node:path";
 import { existsSync, readFileSync } from "node:fs";
+import { resolve } from "node:path";
 import { glob } from "glob";
+import { describe, expect, it } from "vitest";
 const ROOT = resolve(import.meta.dirname, "..", "..");
 const REGISTRY_PATH = resolve(ROOT, "skills/forge/registry.toml");
 const SUBS = [
-    "abort", "accept", "build", "build-light", "control-cli", "control-ui",
-    "debug", "decide", "decide-teams", "fix", "fix-conflicts", "grill",
-    "learn", "loop", "mutate", "pack", "plan", "recap", "refactor",
-    "resume", "review", "router", "ship", "spec", "status", "storm",
-    "test", "verify", "zoom-out",
+    "abort",
+    "accept",
+    "build",
+    "build-light",
+    "control-cli",
+    "control-ui",
+    "debug",
+    "decide",
+    "decide-teams",
+    "fix",
+    "fix-conflicts",
+    "grill",
+    "learn",
+    "loop",
+    "mutate",
+    "pack",
+    "plan",
+    "recap",
+    "refactor",
+    "resume",
+    "review",
+    "router",
+    "ship",
+    "spec",
+    "status",
+    "storm",
+    "test",
+    "verify",
+    "zoom-out",
 ];
 function parseSection(content, sub) {
     const result = {};
@@ -54,7 +78,11 @@ function parseFrontmatter(content) {
         const key = line.slice(0, colonIdx).trim();
         const rest = line.slice(colonIdx + 1).trim();
         if (rest.startsWith("[")) {
-            fm[key] = rest.slice(1, -1).split(",").map((s) => s.trim().replace(/^["']|["']$/g, "")).filter(Boolean);
+            fm[key] = rest
+                .slice(1, -1)
+                .split(",")
+                .map((s) => s.trim().replace(/^["']|["']$/g, ""))
+                .filter(Boolean);
             i++;
         }
         else if (rest === "" && i + 1 < lines.length && /^\s+-\s/.test(lines[i + 1])) {

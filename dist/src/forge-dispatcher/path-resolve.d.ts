@@ -1,8 +1,8 @@
-interface PathOk {
+export interface PathOk {
     ok: true;
     path: string;
 }
-interface PathErr {
+export interface PathErr {
     ok: false;
     code: "E_PATH_INVALID";
     reason: string;
@@ -13,4 +13,3 @@ export interface PathResolveOpts {
     cwd?: string;
 }
 export declare function resolveLibPath(sub: string, opts?: PathResolveOpts): PathResolveResult;
-export {};

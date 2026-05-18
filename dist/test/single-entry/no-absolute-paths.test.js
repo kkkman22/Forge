@@ -1,7 +1,7 @@
-import { describe, it, expect } from "vitest";
+import { readFileSync } from "node:fs";
 import { resolve } from "node:path";
 import { glob } from "glob";
-import { readFileSync } from "node:fs";
+import { describe, expect, it } from "vitest";
 const ROOT = resolve(import.meta.dirname, "..", "..");
 describe("R2.8 sec sub-check: no absolute paths in lib + registry", () => {
     it("lib must contain 29 instructions.md (Task 6 prerequisite)", async () => {

@@ -47,13 +47,15 @@ export interface QualityGateItem {
 export interface ReviewReportFrontmatter {
     topic: string;
     date: string;
-    result: "pass" | "fail" | "incomplete";
+    result: "pass" | "fail" | "blocked" | "incomplete";
     /** Commit hash at the time of review. Optional for backward compatibility. */
     reviewed_at_commit?: string;
     p0_count: number;
     p1_count: number;
     p2_count: number;
     p3_count: number;
+    /** How the review report was produced. Default: subagent-parallel. */
+    methodology?: "subagent-parallel" | "subagent-serial" | "ci-evidence" | "unavailable";
 }
 export interface QualityGateResult {
     passed: boolean;
@@ -139,6 +141,7 @@ export interface QualityGateOptions {
  */
 export declare function runReportQualityGate(findings: MergedFinding[], options?: QualityGateOptions): QualityGateResult;
 import type { Episode, EpisodeTier } from "./episode.js";
+import type { Methodology } from "./schemas/review-report.js";
 /**
  * Input for {@link buildReviewEvolutionArtifacts}.
  *
@@ -219,3 +222,63 @@ export declare function markLayerStatus(filePath: string, layerName: string, sta
  * On mutator error, the file is left unchanged.
  */
 export declare function atomicUpdateFrontmatter(filePath: string, mutator: (fm: Record<string, unknown>) => void): void;
+/**
+ * Input for the review fallback ladder.
+ */
+export interface FallbackLadderInput {
+    /** Subagent invocations to execute. */
+    invocations: SubagentInvocation[];
+    /** Executor function for each invocation. */
+    executor: (inv: SubagentInvocation) => Promise<SubagentResult>;
+    /** Optional path to CI evidence file. */
+    ciEvidencePath?: string;
+}
+/**
+ * Output from the review fallback ladder.
+ */
+export interface FallbackLadderResult {
+    /** The methodology used to produce the review. */
+    methodology: Methodology;
+    /** Successfully completed subagent results. */
+    succeeded: Array<{
+        agentType: string;
+        result: string;
+    }>;
+    /** Failed subagent records. */
+    failed: Array<{
+        agentType: string;
+        error: string;
+    }>;
+    /** Trace of fallback ladder execution. */
+    trace: FallbackLadderTrace[];
+    /** Number of retries performed (0 or 1). */
+    retryCount: number;
+    /** Signature of L0 failure (e.g., "task-id-purge"). */
+    l0FailureSignature?: string;
+    /** CI evidence if L2 was used. */
+    ciEvidence?: {
+        severity_counts: Record<string, number>;
+        raw: string;
+    };
+}
+/**
+ * Single level execution trace entry.
+ */
+export interface FallbackLadderTrace {
+    level: "L0" | "L1" | "L2" | "L3";
+    startedAt: number;
+    finishedAt: number;
+    outcome: "all-success" | "partial-success" | "all-fail" | "ci-hit" | "ci-miss" | "unavailable";
+}
+/**
+ * Execute the review fallback ladder: L0 → L1 → L2 → L3.
+ *
+ * L0: Parallel subagent execution (default concurrency)
+ * L1: Serial retry (concurrency=1) if L0 all-fail
+ * L2: CI evidence if L1 all-fail and file exists
+ * L3: Unavailable report if L2 miss
+ *
+ * @param input - Fallback ladder configuration
+ * @returns Fallback ladder result with methodology and trace
+ */
+export declare function runReviewFallbackLadder(input: FallbackLadderInput): Promise<FallbackLadderResult>;

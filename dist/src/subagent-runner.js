@@ -73,4 +73,64 @@ export async function runSubagentsInParallel(invocations, executor) {
     }
     return { succeeded, failed };
 }
+/**
+ * Run SubagentInvocations with bounded concurrency.
+ *
+ * - concurrency >= N: equivalent to runSubagentsInParallel (allSettled)
+ * - concurrency === 1: sequential for-await
+ * - 1 < concurrency < N: rolling window using Promise.race + Set
+ *
+ * @public
+ */
+export async function runSubagentsWithConcurrency(invocations, executor, concurrency) {
+    if (concurrency < 1)
+        throw new Error("concurrency must be >= 1");
+    if (concurrency > 100)
+        throw new Error("concurrency must be <= 100");
+    if (concurrency >= invocations.length) {
+        return runSubagentsInParallel(invocations, executor);
+    }
+    const succeeded = [];
+    const failed = [];
+    let nextIndex = 0;
+    const inflight = new Set();
+    const startNext = () => {
+        if (nextIndex >= invocations.length)
+            return false;
+        const i = nextIndex++;
+        const inv = invocations[i];
+        const p = (async () => {
+            try {
+                const result = await executor(inv);
+                if (result.status === "success") {
+                    succeeded.push({ agentType: result.agentType, result: result.output ?? "" });
+                }
+                else {
+                    failed.push({ agentType: result.agentType, error: result.error ?? "Unknown error" });
+                }
+            }
+            catch (err) {
+                failed.push({
+                    agentType: inv.agentType,
+                    error: err instanceof Error ? err.message : String(err),
+                });
+            }
+        })();
+        const wrapped = p.finally(() => {
+            inflight.delete(wrapped);
+        });
+        inflight.add(wrapped);
+        return true;
+    };
+    for (let k = 0; k < concurrency && startNext(); k++) {
+        /* fill initial window */
+    }
+    while (inflight.size > 0) {
+        await Promise.race(inflight);
+        while (inflight.size < concurrency && startNext()) {
+            /* refill */
+        }
+    }
+    return { succeeded, failed };
+}
 //# sourceMappingURL=subagent-runner.js.map

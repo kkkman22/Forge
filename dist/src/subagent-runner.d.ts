@@ -29,3 +29,13 @@ export declare function buildSubagentInvocations(agentTypes: string[], taskDescr
  * @public
  */
 export declare function runSubagentsInParallel(invocations: SubagentInvocation[], executor: (invocation: SubagentInvocation) => Promise<SubagentResult>): Promise<ParallelExecutionResult>;
+/**
+ * Run SubagentInvocations with bounded concurrency.
+ *
+ * - concurrency >= N: equivalent to runSubagentsInParallel (allSettled)
+ * - concurrency === 1: sequential for-await
+ * - 1 < concurrency < N: rolling window using Promise.race + Set
+ *
+ * @public
+ */
+export declare function runSubagentsWithConcurrency(invocations: SubagentInvocation[], executor: (invocation: SubagentInvocation) => Promise<SubagentResult>, concurrency: number): Promise<ParallelExecutionResult>;
