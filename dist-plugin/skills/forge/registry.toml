@@ -1,7 +1,7 @@
 # AUTO-GENERATED — DO NOT EDIT
 # Source: skills/forge/lib/<sub>/instructions.md frontmatter
 # Regen: node scripts/regen-skill-registry.mjs
-# Last regen: 2026-05-17T11:04:31.238Z
+# Last regen: 2026-05-18T03:43:28.332Z
 
 [abort]
 dispatch_mode = "inline"
@@ -62,6 +62,11 @@ description = "Fix merge conflicts using three-zone forge directory classificati
 dispatch_mode = "fork"
 allowed_tools = ["Read", "Agent"]
 description = "Grill the user with one-question-at-a-time Socratic decision tree resolution. Use when user starts full-tier task, says grill me, replies dig deeper during decide phase, or before locking an ambiguous spec."
+
+[init]
+dispatch_mode = "inline"
+allowed_tools = ["Bash", "Read"]
+description = "Initialize a Forge project by creating .forge/ directory, config, agents, and CLAUDE.md. Use when user runs `/forge init`, project has no .forge/ directory, or plugin is installed but project not yet initialized."
 
 [learn]
 dispatch_mode = "fork"

@@ -122,7 +122,7 @@ Loop 字段（写入 §3 Step 2）：`mode`, `loop_run_id`, `loop_iteration`, `s
 
 ## 11. Edge Cases
 
-无 `.forge/` → forge init · Active task → warn · Residual `loop_run_id` → cleanup + continue · Empty objective → auto-reject · Invalid `--tier` → error + valid list · No hooks.json → warn · Invalid worktree branch → error · Resume branch missing → error
+无 `.forge/` → /forge init · Active task → warn · Residual `loop_run_id` → cleanup + continue · Empty objective → auto-reject · Invalid `--tier` → error + valid list · No hooks.json → warn · Invalid worktree branch → error · Resume branch missing → error
 
 ---
 

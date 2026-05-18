@@ -125,7 +125,15 @@ IF 本次执行是从 conversation summary 恢复（上下文压缩后继续）�
 
 ### 4.2 Prompt `/forge learn`
 
-交付完成后（丢弃除外），**立即调用** `Skill(skill="forge", args="learn")`，不输出确认提示（→ 详见 shared/next-step-protocol.md）
+交付完成后（丢弃除外），**必须立即自动调用下一阶段**，不输出确认提示（→ 详见 shared/next-step-protocol.md）：
+
+- **全量路径**：输出 `✅ ship 完成 → 自动进入 learn`，然后**立即调用** `Skill(skill="forge", args="learn")`
+- **标准路径**：输出 `✅ ship 完成 → 任务交付完毕`，标记任务完成
+
+**禁止**：
+- 输出"是否需要运行 /forge learn？"
+- 输出"交付完成，建议运行 /forge learn 沉淀经验"
+- 静默 idle（无输出、等待用户输入）— 与显式询问同罪
 
 **Mode 判断**：如果 `mode` 为 `autonomous`，learn 由 Skill Scheduler 按 tier=full 自动调度。
 
@@ -179,7 +187,7 @@ After push/PR: run `npm run check` (fallback: `ci_check_command` from config) wi
 | Progress 部分完成 | 🚫 Ship 阻断：列出未完成任务 |
 | Git 操作失败 | ⚠️ Merge 冲突时自动调用 `resolveConflicts`（详见 references/delivery-options.md §Option 1）；非冲突类 Git 错误列出可能原因（网络/权限），建议检查或选其他方式 |
 | gh CLI 未安装 | ⚠️ 提示安装方式，建议选其他选项 |
-| 无 `.forge/` 目录 | ⚠️ 请先运行 forge init |
+| 无 `.forge/` 目录 | ⚠️ 请先运行 /forge init |
 
 ---
 

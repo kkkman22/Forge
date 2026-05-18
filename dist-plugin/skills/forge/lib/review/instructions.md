@@ -200,7 +200,7 @@ IF 本次执行是从 conversation summary 恢复（上下文压缩后继续）�
 
 **Step 1.1 状态确认**：主动跟踪每个 Subagent，不假设"启动即完成"。正常完成 → 进入管线；截断 → 重试 1 次；错误 → 重试 1 次；429 → 降级等待后重试；超时(180s) → 标记 `incomplete`。**不得在 Subagent 运行中合并结果**。
 
-**Step 4 自动推进（铁律）**：通过 → **立即调用** `Skill(skill="forge", args="<next>")`，不输出确认提示。仅输出 `✅ review 通过 → 自动进入 <下一阶段>`，然后直接调用 Skill（→ 详见 shared/next-step-protocol.md）；未通过 → 输出问题清单，停止等待用户修复后重新评审。
+**Step 4 自动推进（铁律）**：通过 → **立即调用** `Skill(skill="forge", args="<next>")`，不输出确认提示。仅输出 `✅ review 通过 → 自动进入 <下一阶段>`，然后直接调用 Skill（→ 详见 shared/next-step-protocol.md）；未通过 → 输出问题清单，停止等待用户修复后重新评审。静默 idle（无输出、等待用户输入）与显式询问同罪。
 
 ## 12. Examples
 
@@ -209,7 +209,7 @@ IF 本次执行是从 conversation summary 恢复（上下文压缩后继续）�
 
 ## 13. Edge Cases
 
-无 Spec → 不启动 spec-check，Layer 1 标注"已跳过"。无代码变更 → 提示先 build。无 `.forge/` → 提示 `forge init`。输出过长 → 截断提示见文件。
+无 Spec → 不启动 spec-check，Layer 1 标注"已跳过"。无代码变更 → 提示先 build。无 `.forge/` → 提示 `/forge init`。输出过长 → 截断提示见文件。
 
 ## 14. Canvas Output (`--canvas`)
 
