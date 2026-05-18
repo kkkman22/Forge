@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { ref, computed, onMounted } from "vue";
+import { useRouter } from "vue-router";
 import { invoke } from "@tauri-apps/api/core";
 import { listen } from "@tauri-apps/api/event";
 import type { Task, TaskStatus, TaskInput } from "../types/index";
@@ -8,6 +9,7 @@ import FilterBar from "./FilterBar.vue";
 import ReviewPanel from "./ReviewPanel.vue";
 import TaskFormDialog from "./TaskFormDialog.vue";
 
+const router = useRouter();
 const tasks = ref<Task[]>([]);
 const loading = ref(false);
 const filterStatus = ref<TaskStatus | "all">("all");
@@ -16,7 +18,6 @@ const editingTask = ref<Task | null>(null);
 const reviewTask = ref<Task | null>(null);
 const diffContent = ref("");
 const reviewReport = ref("");
-const showSettings = ref(false);
 
 const filteredTasks = computed(() => {
   if (filterStatus.value === "all") return tasks.value;
@@ -176,7 +177,7 @@ onMounted(async () => {
         <button
           class="p-2 text-[var(--color-ink-muted)] hover:text-[var(--color-ink)] transition-colors"
           title="设置"
-          @click="showSettings = !showSettings"
+          @click="router.push('/settings')"
         >
           <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
             <circle cx="10" cy="10" r="3" stroke="currentColor" stroke-width="1.5"/>
