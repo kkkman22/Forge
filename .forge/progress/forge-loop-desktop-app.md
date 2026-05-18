@@ -1,7 +1,7 @@
 # Build Progress: forge-loop-desktop-app
 
 ## Summary
-22 commits on `forge/loop-desktop-app`. Rust: 37 tests. Frontend: 20 unit + 19 E2E. Build: OK. Resources: 169MB.
+24 commits on `forge/loop-desktop-app`. Rust: 37 tests. Frontend: 20 unit + 19 E2E. Build: OK. Resources: 169MB.
 
 ## Wave 1 — COMPLETE
 ### Task 1: Tauri project scaffold ✅ a2a67f9
@@ -61,7 +61,5 @@
 
 ## Remaining (non-blocking, post-ship)
 - Apple Developer ID signing + notarize (needs Apple account)
-- Tray icon sleep status indicator (R7.8)
-- LidWatcher integration (R7.5)
-- Backlight control script (R7.6) — placeholder /usr/bin/true
+- Backlight control script (R7.6) — placeholder /usr/bin/true (real script needs hardware-specific path)
 - Knowledge capture (Task 15: /forge learn)
