@@ -44,7 +44,7 @@ pub fn export_diagnostics() -> Result<PathBuf, String> {
         .map(|d| d.join("forge-loop-desktop"))
         .ok_or("cannot determine data directory")?;
 
-    let output_path = data_dir.join("diagnostics.zip");
+    let _output_path = data_dir.join("diagnostics.zip");
 
     // Collect files for the diagnostics package
     let mut files_to_include: Vec<PathBuf> = Vec::new();

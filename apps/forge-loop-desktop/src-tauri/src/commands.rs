@@ -214,7 +214,7 @@ fn ensure_exit_poller(app_handle: &tauri::AppHandle, state: &AppState) {
                 pm.running_count()
             };
             if running == 0 {
-                let mut sg = match state.sleep_guard.lock() {
+                let sg = match state.sleep_guard.lock() {
                     Ok(g) => g,
                     Err(_) => return,
                 };
