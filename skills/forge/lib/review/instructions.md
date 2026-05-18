@@ -209,7 +209,7 @@ IF 本次执行是从 conversation summary 恢复（上下文压缩后继续）�
 
 ## 13. Edge Cases
 
-无 Spec → 不启动 spec-check，Layer 1 标注"已跳过"。无代码变更 → 提示先 build。无 `.forge/` → 提示 `forge init`。输出过长 → 截断提示见文件。
+无 Spec → 不启动 spec-check，Layer 1 标注"已跳过"。无代码变更 → 提示先 build。无 `.forge/` → 提示 `/forge init`。输出过长 → 截断提示见文件。
 
 ## 14. Canvas Output (`--canvas`)
 

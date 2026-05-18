@@ -193,7 +193,7 @@ The full 21-step execution flow and task archival details are in references/know
 | 首次执行（空知识库） | 创建 solutions/ 和 instincts.md，输出提示 |
 | 无可提取知识 | 提示本次较简单，未识别到新知识 |
 | 知识库已满 | 新文档 confidence 高于最低文档时提示替换确认 |
-| 无 `.forge/` 目录 | 提示先运行 `forge init` |
+| 无 `.forge/` 目录 | 提示先运行 `/forge init` |
 
 ## Common Rationalizations
 

@@ -129,7 +129,7 @@ Context Exhaustion Protocol 触发时（`exhaustion_pending: true` 或新鲜 int
 | 条件 | 处理 |
 |------|------|
 | Context compaction 恢复 | 读取当前阶段 SKILL.md 完整内容后继续。不执行 Restatement（Restatement 仅限 build 阶段）。 |
-| 无 `.forge/` 目录 | ⚠️ 没有可恢复的工作上下文。请运行 forge init 或 /forge 开始新任务 |
+| 无 `.forge/` 目录 | ⚠️ 没有可恢复的工作上下文。请运行 /forge init 或 /forge 开始新任务 |
 | 无 Plan 文件 | ℹ️ 未找到计划文件。运行 /forge 开始新任务 |
 | 无 Progress 文件 | 展示全局状态 + Plan Objective，提示"建议从 Task 1 开始执行" |
 | 所有任务已完成 | 提示"Build 阶段已完成。建议运行 /forge review" |
