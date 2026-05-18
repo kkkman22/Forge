@@ -28,3 +28,4 @@ tracing-subscriber = { version = "0.3", features = ["json"] }
 tracing-appender = "0.2"
 security-framework = "3"
 tempfile = "3"
+dirs = "6"
