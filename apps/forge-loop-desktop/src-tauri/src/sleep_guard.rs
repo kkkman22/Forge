@@ -116,10 +116,16 @@ impl SleepGuard {
 
     pub fn setup_sudoers() -> Result<(), SleepGuardError> {
         let content = "%admin ALL=(ALL) NOPASSWD: /usr/bin/pmset\n";
-        let tmp_path = "/tmp/forge-loop-sudoers";
 
-        std::fs::write(tmp_path, content)?;
+        let mut tmp_file = tempfile::NamedTempFile::new()
+            .map_err(|e| SleepGuardError::SudoersFailed(e.to_string()))?;
+        use std::io::Write;
+        tmp_file.write_all(content.as_bytes())
+            .map_err(|e| SleepGuardError::SudoersFailed(e.to_string()))?;
+        tmp_file.flush()
+            .map_err(|e| SleepGuardError::SudoersFailed(e.to_string()))?;
 
+        let tmp_path = tmp_file.path().to_string_lossy().to_string();
         let cmd = format!(
             "cp {} /etc/sudoers.d/forge-loop && chmod 0440 /etc/sudoers.d/forge-loop",
             tmp_path
@@ -135,7 +141,7 @@ impl SleepGuard {
             ));
         }
 
-        let _ = std::fs::remove_file(tmp_path);
+        drop(tmp_file);
         Ok(())
     }
 

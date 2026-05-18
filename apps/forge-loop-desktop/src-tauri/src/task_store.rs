@@ -197,7 +197,7 @@ impl TaskStore {
         Ok(())
     }
 
-    pub fn prune_completed(&mut self, max_keep: usize) {
+    pub fn prune_completed(&mut self, max_keep: usize) -> Result<(), TaskStoreError> {
         let (completed, mut active): (Vec<_>, Vec<_>) =
             self.data.tasks.drain(..).partition(|t| {
                 matches!(t.status, TaskStatus::Completed { .. })
@@ -209,6 +209,7 @@ impl TaskStore {
             .collect();
         active.append(&mut kept);
         self.data.tasks = active;
+        self.save()
     }
 
     pub fn get(&self, task_id: &TaskId) -> Option<&Task> {
@@ -330,7 +331,7 @@ mod tests {
             };
             store.add(task).unwrap();
         }
-        store.prune_completed(3);
+        store.prune_completed(3).unwrap();
         let completed = store
             .list()
             .iter()
