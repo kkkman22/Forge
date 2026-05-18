@@ -100,8 +100,14 @@ warn()    { echo -e "${YELLOW}⚠️${NC} $1"; }
 error()   { echo -e "${RED}❌${NC} $1"; }
 
 # ---------- 检测 Forge 库路径 ----------
-# 支持三种安装位置
+# 支持四种安装位置（plugin > clone > global > fail）
 detect_forge_root() {
+  # 情况 0：plugin 模式（V2.5.0 marketplace 安装）
+  if [[ -n "${CLAUDE_PLUGIN_ROOT:-}" ]] && [[ -d "${CLAUDE_PLUGIN_ROOT}/agents" ]]; then
+    echo "${CLAUDE_PLUGIN_ROOT}"
+    return
+  fi
+
   local script_dir
   script_dir="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 
@@ -119,6 +125,10 @@ detect_forge_root() {
 
   # 情况 3：找不到 Forge 库
   error "无法找到 Forge 库文件。请确认 Forge 已正确安装。"
+  echo "  已检查路径：" >&2
+  echo "    \${CLAUDE_PLUGIN_ROOT}=${CLAUDE_PLUGIN_ROOT:-<unset>}" >&2
+  echo "    ${script_dir}/.." >&2
+  echo "    \$HOME/.claude/skills/forge" >&2
   exit 1
 }
 
