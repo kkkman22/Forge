@@ -49,6 +49,7 @@ function formatTime(iso: string): string {
 
 <template>
   <div
+    :data-task-id="task.id"
     class="flex items-center gap-4 px-4 py-3 rounded-[var(--rounded-md)] transition-colors"
     :style="{ fontFamily: 'var(--font-body)' }"
     role="button"
