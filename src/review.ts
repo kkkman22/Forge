@@ -491,10 +491,18 @@ export interface ReviewSubagentContext {
 export function buildReviewSubagents(context: ReviewSubagentContext): SubagentInvocation[] {
   const invocations: SubagentInvocation[] = [];
 
+  const diffContextPreamble = [
+    `Diff context: .forge/reviews/.diff-context.md`,
+    `Turn Budget: Read diff-context first → produce FINDINGS → use remaining turns for deep-dives (max 3-5 reads).`,
+  ].join("\n");
+
   if (context.hasSpec) {
     invocations.push({
       agentType: "spec-check",
-      prompt: `Review spec alignment. Spec path: ${context.specPath ?? "unknown"}. Changed files: ${context.changedFiles.join(", ")}`,
+      prompt: [
+        diffContextPreamble,
+        `Review spec alignment. Spec path: ${context.specPath ?? "unknown"}.`,
+      ].join("\n"),
       permissionMode: "default",
       maxTurns: 10,
     });
@@ -502,14 +510,14 @@ export function buildReviewSubagents(context: ReviewSubagentContext): SubagentIn
 
   invocations.push({
     agentType: "quality-check",
-    prompt: `Review code quality. Changed files: ${context.changedFiles.join(", ")}`,
+    prompt: [diffContextPreamble, "Review code quality."].join("\n"),
     permissionMode: "default",
     maxTurns: 10,
   });
 
   invocations.push({
     agentType: "security-check",
-    prompt: `Review security and risk. Changed files: ${context.changedFiles.join(", ")}`,
+    prompt: [diffContextPreamble, "Review security and risk."].join("\n"),
     permissionMode: "default",
     maxTurns: 10,
   });
