@@ -126,7 +126,25 @@ After Round 2 Critic output:
 3. **Round 1**: Launch 3 or 4 perspective Subagents in parallel, wait with `Promise.allSettled`
 4. **Round 2**: Collect all perspective outputs, launch Critic cross-review. Blocking issues → tag `needs_revision`; passed → generate decision document
 5. **Output decision document**: Write to `.forge/decisions/<date>-<topic>.md`
-6. **人工确认后推进**：用户确认决策方向后调用 /forge spec（→ 详见 shared/next-step-protocol.md）
+6. **主动询问用户确认**：决策文档生成后，**必须主动使用 AskUserQuestion 询问用户**：
+
+```
+📋 决策分析完成，请确认方向：
+
+1. ✅ 确认决策，进入 /forge spec
+2. 🔄 需要修改（请说明哪个视角需要调整）
+3. ❌ 否决，重新分析
+
+请选择（1/2/3）：
+```
+
+用户选择 1 后，输出 `✅ decide 完成 → 自动进入 spec`，然后**立即调用** `Skill(skill="forge", args="spec")`。
+
+**禁止**：
+- 输出决策文档后静默等待用户主动输入下一步命令
+- 不提供选项让用户猜测下一步该做什么
+
+→ 详见 shared/next-step-protocol.md
 
 ---
 
@@ -159,7 +177,7 @@ Output path: `.forge/decisions/<YYYY-MM-DD>-<topic>.md`。YAML frontmatter + 六
 | Security perspective asked to skip | 拒绝。⚠️ 安全评估不可跳过。结论可以是"无显著安全风险"，但过程不能省略 |
 | Design perspective false trigger | 开发者可明确跳过，Round 1 不启动 designer |
 | Conflicts between perspectives | 记录冲突点 → 呈现给开发者 → 开发者做最终决定 → 记录到否决记录 |
-| No `.forge/` directory | ⚠️ 请先运行 forge init |
+| No `.forge/` directory | ⚠️ 请先运行 /forge init |
 
 ---
 

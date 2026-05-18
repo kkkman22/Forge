@@ -15,7 +15,7 @@
  */
 import * as pathPosix from "node:path/posix";
 import { extractListField, extractNumericField, extractStringField, parseFrontmatter, } from "./frontmatter.js";
-import { safeParseReviewReport } from "./schemas/review-report.js";
+import { METHODOLOGY_DEFAULT, METHODOLOGY_VALUES, safeParseReviewReport, } from "./schemas/review-report.js";
 import { safeParseStatusFile } from "./schemas/status-file.js";
 // ---------------------------------------------------------------------------
 // Default value tables (State Resilience Layer 1)
@@ -38,6 +38,7 @@ export const REVIEW_REPORT_DEFAULTS = {
     p1_count: 0,
     p2_count: 0,
     p3_count: 0,
+    methodology: METHODOLOGY_DEFAULT,
 };
 // ---------------------------------------------------------------------------
 // Graceful parsing (State Resilience Layer 1)
@@ -227,6 +228,9 @@ function parseReviewReportViaSchema(content) {
     const p3 = extractNumericField(fm.raw, "p3_count");
     if (p3 !== null)
         rawFields.p3_count = p3;
+    const methodologyStr = extractStringField(fm.raw, "methodology");
+    if (methodologyStr !== null)
+        rawFields.methodology = methodologyStr;
     const { value, errors } = safeParseReviewReport(rawFields);
     const parsed = {
         result: value.result ?? REVIEW_REPORT_DEFAULTS.result,
@@ -235,6 +239,7 @@ function parseReviewReportViaSchema(content) {
         p1_count: value.p1_count ?? REVIEW_REPORT_DEFAULTS.p1_count,
         p2_count: value.p2_count ?? REVIEW_REPORT_DEFAULTS.p2_count,
         p3_count: value.p3_count ?? REVIEW_REPORT_DEFAULTS.p3_count,
+        methodology: value.methodology ?? REVIEW_REPORT_DEFAULTS.methodology,
     };
     if (resultStr === null)
         warnings.push("Review report missing 'result', defaulting to 'incomplete'");
@@ -269,13 +274,29 @@ function parseReviewReportLegacy(content) {
     const p1 = extractNumericField(fm.raw, "p1_count");
     const p2 = extractNumericField(fm.raw, "p2_count");
     const p3 = extractNumericField(fm.raw, "p3_count");
+    const methodologyRaw = extractStringField(fm.raw, "methodology");
+    let methodology = METHODOLOGY_DEFAULT;
+    if (methodologyRaw !== null) {
+        if (METHODOLOGY_VALUES.includes(methodologyRaw)) {
+            methodology = methodologyRaw;
+        }
+        else {
+            warnings.push(`methodology field invalid: ${methodologyRaw}`);
+        }
+    }
+    let finalResult = resultStr ?? REVIEW_REPORT_DEFAULTS.result;
+    if (methodology === "unavailable" && finalResult !== "blocked") {
+        warnings.push("methodology=unavailable forces result=blocked");
+        finalResult = "blocked";
+    }
     const parsed = {
-        result: resultStr ?? REVIEW_REPORT_DEFAULTS.result,
+        result: finalResult,
         reviewed_at_commit: reviewedCommit ?? REVIEW_REPORT_DEFAULTS.reviewed_at_commit,
         p0_count: p0 ?? REVIEW_REPORT_DEFAULTS.p0_count,
         p1_count: p1 ?? REVIEW_REPORT_DEFAULTS.p1_count,
         p2_count: p2 ?? REVIEW_REPORT_DEFAULTS.p2_count,
         p3_count: p3 ?? REVIEW_REPORT_DEFAULTS.p3_count,
+        methodology,
     };
     if (resultStr === null)
         warnings.push("Review report missing 'result', defaulting to 'incomplete'");

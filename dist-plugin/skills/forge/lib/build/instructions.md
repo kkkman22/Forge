@@ -93,7 +93,7 @@ Build 阶段中途执行 `git rebase` / `git pull` / `git merge` 同步 main 时
 |---|-------|---------|-------|
 | 1 | **Spec Gate** — scan `.forge/specs/` status | Not `"locked"` (no-Spec Plan exempt) | → `/forge spec` |
 | 2 | **Plan Gate** — scan `.forge/plans/` status | Not `"approved"` | → `/forge plan` |
-| 3 | **Dir Integrity** — `.forge/` subdirs exist | Missing | → `forge init` |
+| 3 | **Dir Integrity** — `.forge/` subdirs exist | Missing | → `/forge init` |
 | 4 | **Branch Gate** — `runBranchGate` 统一 hook | Not on `feature/<topic>` or `forge/<topic>` | → Auto-switch / Block |
 
 **Rejection Output**: `🚫 Build 前置检查未通过 — 命名：<检查> 证据：<文件状态> 建议：<路由> 重入：<条件>`. Multiple failures → list all. Autonomous → JSON.
@@ -201,7 +201,7 @@ GREEN 阶段的代码必须是"能让测试通过的最简单实现"。REFACTOR 
 
 → 详见 references/status-updates.md §8-§10
 
-Spec/Plan not ready → §2 rejection. Subagent timeout → block → `/forge resume`. Worktree conflict → pause → manual resolve. No `.forge/` → `forge init`.
+Spec/Plan not ready → §2 rejection. Subagent timeout → block → `/forge resume`. Worktree conflict → pause → manual resolve. No `.forge/` → `/forge init`.
 
 ---
 
@@ -237,6 +237,31 @@ Trimmer 函数签名详见 references/function-contracts.md
 **安全限制**：单次会话 ≤5 次耗尽轮转；interim 写入失败 2 次降级为 JSON handoff；Three-strike 触发期间不执行此协议。
 
 → 详见 references/context-exhaustion.md（完整 interim 模板、Step-by-step 流程、What NOT to Do 清单）
+
+## 12. 自动推进（铁律）
+
+<IRON-LAW name="build-auto-advance">
+
+Build 全部任务完成且 Final Validation 通过后，**必须立即自动调用下一阶段**，不得停下来等待用户确认。
+
+**成功时**：输出一行摘要，然后**立即调用** `Skill(skill="forge", args="review")`。
+
+```
+✅ build 完成 → 自动进入 review
+```
+
+**禁止**：
+- 输出"是否继续进入 review？"
+- 输出"build 完成，接下来可以运行 /forge review"
+- 静默 idle（无输出、等待用户输入）— 与显式询问同罪
+
+**失败/阻断时**：输出问题清单，停止等待用户决定。
+
+→ 详见 shared/next-step-protocol.md
+
+</IRON-LAW>
+
+---
 
 ## Gotchas
 - **Skipping RED phase**: Write implementation first, then backfill tests → tests verify implementation not behavior → must write failing test first

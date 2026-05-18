@@ -1,11 +1,11 @@
 {
   "version": 1,
-  "generated_at": "2026-05-17T15:58:04.889Z",
+  "generated_at": "2026-05-18T03:43:28.275Z",
   "subs": {
     "abort": {
       "instructions": {
         "path": "abort/instructions.md",
-        "sha256": "6fad0c868fdec1f5ee3c918ff74d45f173f33613ca49c87fdfd4007643c8204b"
+        "sha256": "934d8694b761ae709bf1577bbd7674af98d8c52db49d150dea1076fa2c7272c1"
       },
       "references": [
         {
@@ -41,7 +41,7 @@
     "build": {
       "instructions": {
         "path": "build/instructions.md",
-        "sha256": "c66832e5b2c52aae6f2fe5101e3209badd4c4447d1f1c97151c117157fb93bf4"
+        "sha256": "c661b1cd493586fb0be0f7ac4764b5ad9bba0919b34ac11452dfc0d594d656bb"
       },
       "references": [
         {
@@ -177,7 +177,7 @@
     "debug": {
       "instructions": {
         "path": "debug/instructions.md",
-        "sha256": "528d56d434db2247bd00377a02198eb9e2653e79f7ae788c33eb19bad25ffecf"
+        "sha256": "c7f81a26c76a05eabb96d03f3aa61e79af0b40d66b06435b1525a344a5ac326c"
       },
       "references": [
         {
@@ -189,7 +189,7 @@
     "decide": {
       "instructions": {
         "path": "decide/instructions.md",
-        "sha256": "1be2f511fc97fbbd6bd664b4ac78ebe7b961b3cbcfb2c0b2c774f9aadb76a648"
+        "sha256": "d924ff3a796de4036fb02e52cbb5aed5211a88ab49ecd616a252997f5c2a9091"
       },
       "references": [
         {
@@ -277,10 +277,17 @@
         }
       ]
     },
+    "init": {
+      "instructions": {
+        "path": "init/instructions.md",
+        "sha256": "e7bc628de7cd062f2af296861937795db2625850c43be885df4917decc55c9ea"
+      },
+      "references": []
+    },
     "learn": {
       "instructions": {
         "path": "learn/instructions.md",
-        "sha256": "a7d103ab4d22218a77f1c150cb3ae3ced147cabc972f5705e7a68eb6b50da1af"
+        "sha256": "bf7db75e160eb87d21b914ef67145389825b0fba9c66aff8871a39b9002f9de5"
       },
       "references": [
         {
@@ -328,7 +335,7 @@
     "loop": {
       "instructions": {
         "path": "loop/instructions.md",
-        "sha256": "709cdde2f467daa6889a63a57fe6dae1cb2fcf86012204b0b15f1d86a71760eb"
+        "sha256": "9acb521f6330e1742a2eb7292bd01cf8b660b96757b8d0d3f918d19b06f16b56"
       },
       "references": [
         {
@@ -363,7 +370,7 @@
     "plan": {
       "instructions": {
         "path": "plan/instructions.md",
-        "sha256": "42df7788a6c504d202a4986964d83132974bb3a8b133eac648057e9bcdad26f7"
+        "sha256": "f4aad3d08039c0d43894b60552a900e2d1b99b51a12eb47fd4424d0286aa522f"
       },
       "references": [
         {
@@ -435,7 +442,7 @@
     "resume": {
       "instructions": {
         "path": "resume/instructions.md",
-        "sha256": "0bf8a3731500b744c8e906fd894facb3116be916a4679dc5890f2647169e99d3"
+        "sha256": "6c82e3d0c5e4462fb9a36075afad133fc92ba14457079ecba6605136c7272c3d"
       },
       "references": [
         {
@@ -459,7 +466,7 @@
     "review": {
       "instructions": {
         "path": "review/instructions.md",
-        "sha256": "22b1d97cb4cb86b487c24a89498d85f18fc941c5aa8b6adaa4ced3c7d58f1465"
+        "sha256": "772e37f1e1f19f4f2c32cc7eb1d97a09a0afbe5314b5d351ee72d1b1239225f4"
       },
       "references": [
         {
@@ -512,7 +519,7 @@
         },
         {
           "path": "review/references/review-report-format.md",
-          "sha256": "b6efc4018c42b936921f2a4bdcc07b8c991c18c9280820a8487f43206d17d96c"
+          "sha256": "7bb92b3a36f40475856e85b1467712f55bfaafc18f779820abee0bc5ba2cafad"
         }
       ]
     },
@@ -535,7 +542,7 @@
     "ship": {
       "instructions": {
         "path": "ship/instructions.md",
-        "sha256": "ef261677ad3a7a788b3d131a4f6c6bcb3751687571ff22d24d12dd4ecbb8a6d7"
+        "sha256": "d4c26c232390d415d557cfe8994d5412e8c7ce76448a322fa5f26f0c2d3942ad"
       },
       "references": [
         {
@@ -559,12 +566,12 @@
     "spec": {
       "instructions": {
         "path": "spec/instructions.md",
-        "sha256": "8260f9b1c77c32c985a63555d55a7052fb9eb9fa3545b84935f0eb885a83f37a"
+        "sha256": "c3e29ff9fd1f9c266e7db359e42604d877fc14646476cc505814f1f892f18648"
       },
       "references": [
         {
           "path": "spec/references/edge-cases.md",
-          "sha256": "567e245f598a84d7f4fdb0c0b9a138ac18ac23ea46b4234046cbc12b96a51ef4"
+          "sha256": "5191d0c693914c932caa4ef52a6a6d9118792c27cf78843cf5853090a0ed7cdf"
         },
         {
           "path": "spec/references/examples.md",
@@ -595,7 +602,7 @@
     "status": {
       "instructions": {
         "path": "status/instructions.md",
-        "sha256": "657beaabc9643f0861d502445c4bd27f80ec144d5e58c3de67c1fcf733e9a58b"
+        "sha256": "c8735e8bba079cc5d99062177a6f5842528e763a65b0a74c7b87a1c74b98964b"
       },
       "references": [
         {
@@ -619,7 +626,7 @@
     "test": {
       "instructions": {
         "path": "test/instructions.md",
-        "sha256": "b61adf4799b4a969824321c9053f436033bae3fa721dcbd83a58e20c04dbe3ca"
+        "sha256": "c96575818096b2a8ea5a98fb098fbd89534c72082c9bb8ab79ce235d8fd55dca"
       },
       "references": [
         {
