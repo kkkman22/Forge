@@ -167,7 +167,7 @@ impl ProcessManager {
                 args.push(text.clone());
             }
             crate::task_store::TaskTarget::SpecFile { path } => {
-                args.push(format!("--spec {}", path));
+                args.extend(["--spec".into(), path.clone()]);
             }
         }
 
