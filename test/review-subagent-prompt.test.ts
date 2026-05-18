@@ -38,6 +38,17 @@ describe("buildReviewSubagents prompt diff-context", () => {
     }
   });
 
+  it("spec/quality/security prompts contain hard constraints", () => {
+    const types = ["spec-check", "quality-check", "security-check"];
+    for (const t of types) {
+      const inv = invocations.find((i) => i.agentType === t);
+      expect(inv).toBeDefined();
+      expect(inv!.prompt).toContain("final turn");
+      expect(inv!.prompt).toContain("tool_use");
+      expect(inv!.prompt).toContain("Insufficient evidence");
+    }
+  });
+
   it("frontend-check prompt does NOT contain diff-context path", () => {
     const frontend = invocations.find((i) => i.agentType === "frontend-check");
     expect(frontend).toBeDefined();
