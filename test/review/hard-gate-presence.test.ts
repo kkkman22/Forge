@@ -1,11 +1,11 @@
 import { readFileSync } from "node:fs";
-import { join } from "node:path";
+import { join, resolve } from "node:path";
 import { describe, expect, it } from "vitest";
 
-const worktreePath = "/Users/king/code/Forge/.claude/worktrees/review-no-mainagent-fallback";
-const instructionsPath = join(worktreePath, "skills/forge/lib/review/instructions.md");
+const projectRoot = resolve(import.meta.dirname, "../..");
+const instructionsPath = join(projectRoot, "skills/forge/lib/review/instructions.md");
 const distPluginInstructionsPath = join(
-  worktreePath,
+  projectRoot,
   "dist-plugin/skills/forge/lib/review/instructions.md",
 );
 
