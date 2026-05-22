@@ -27,3 +27,5 @@ reports/mutation/
 
 # Generated API documentation
 docs/api/
+
+apps/forge-loop-desktop/src-tauri/resources/node/bin/node
