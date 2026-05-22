@@ -238,7 +238,7 @@ export function appendEntry(existingMarkdown: string, entry: IterationEntry): st
 const DEFAULT_NOTES_CHAR_BUDGET = 8000;
 
 /** Minimum number of recent entries kept in full detail during compaction. */
-const MIN_FULL_DETAIL_ENTRIES = 3;
+export const MIN_FULL_DETAIL_ENTRIES = 3;
 
 /**
  * Compact notes markdown when it exceeds a character budget.
