@@ -17,7 +17,11 @@ import { isContextOverflowError } from "../src/context-overflow.js";
 
 describe("isContextOverflowError", () => {
   it("matches 'context window limit' error", () => {
-    expect(isContextOverflowError(new Error("API Error: The model has reached its context window limit"))).toBe(true);
+    expect(
+      isContextOverflowError(
+        new Error("API Error: The model has reached its context window limit"),
+      ),
+    ).toBe(true);
   });
 
   it("matches 'context_window_limit' error", () => {
@@ -25,7 +29,9 @@ describe("isContextOverflowError", () => {
   });
 
   it("matches 'maxTokens ... exceed' error (case-insensitive)", () => {
-    expect(isContextOverflowError(new Error("maxTokens would exceed the allowed limit"))).toBe(true);
+    expect(isContextOverflowError(new Error("maxTokens would exceed the allowed limit"))).toBe(
+      true,
+    );
     expect(isContextOverflowError(new Error("MaxTokens input exceed budget"))).toBe(true);
   });
 
@@ -49,10 +55,12 @@ describe("isContextOverflowError", () => {
 describe("compactNotesContent", () => {
   function makeNotesMd(entries: Array<{ n: number; summary: string; success?: boolean }>): string {
     const header = "# Run: test-run\n\n## Iteration Log\n";
-    const body = entries.map((e) => {
-      const h = e.success === false ? `### Iteration ${e.n} (Failed)` : `### Iteration ${e.n}`;
-      return `${h}\n\n**Summary:** ${e.summary}\n`;
-    }).join("\n");
+    const body = entries
+      .map((e) => {
+        const h = e.success === false ? `### Iteration ${e.n} (Failed)` : `### Iteration ${e.n}`;
+        return `${h}\n\n**Summary:** ${e.summary}\n`;
+      })
+      .join("\n");
     return `${header}\n${body}\n`;
   }
 
@@ -65,7 +73,10 @@ describe("compactNotesContent", () => {
   it("compacts older entries when exceeding budget", () => {
     const entries = Array.from({ length: 6 }, (_, i) => ({
       n: i + 1,
-      summary: `Iteration ${i + 1} did some work that was moderately long to exceed the budget when combined together with padding text`.repeat(3),
+      summary:
+        `Iteration ${i + 1} did some work that was moderately long to exceed the budget when combined together with padding text`.repeat(
+          3,
+        ),
     }));
     const md = makeNotesMd(entries);
     // Budget is small enough to force compaction

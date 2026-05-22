@@ -658,9 +658,7 @@ describe("setupWorktree file-lock integration", () => {
       },
     );
 
-    expect(() => RunManager.setupWorktree("my task", "/main/repo")).toThrow(
-      /worktree add failed/,
-    );
+    expect(() => RunManager.setupWorktree("my task", "/main/repo")).toThrow(/worktree add failed/);
 
     // Lock should still be released in the finally block
     expect(unlinkSync).toHaveBeenCalled();
