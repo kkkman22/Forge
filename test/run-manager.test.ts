@@ -45,6 +45,7 @@ import {
   openSync,
   readdirSync,
   readFileSync,
+  rmSync,
   unlinkSync,
   writeFileSync,
 } from "node:fs";
@@ -255,38 +256,40 @@ describe("persistNotes", () => {
 // ---------------------------------------------------------------------------
 
 describe("setupWorktree", () => {
-  it("throws when concurrency limit is reached", () => {
-    // Mock git worktree list to return 4 worktrees (1 main + 3 additional)
-    const worktreeOutput = [
-      "worktree /main/repo",
-      "HEAD abc123",
-      "branch refs/heads/main",
-      "",
-      "worktree /worktrees/wt1",
-      "HEAD def456",
-      "branch refs/heads/forge/wt1",
-      "",
-      "worktree /worktrees/wt2",
-      "HEAD ghi789",
-      "branch refs/heads/forge/wt2",
-      "",
-      "worktree /worktrees/wt3",
-      "HEAD jkl012",
-      "branch refs/heads/forge/wt3",
-    ].join("\n");
+  it("removes stale worktree directory before creating new one", () => {
+    // Simulate a stale directory left by a previous interrupted run
+    const worktreeOutput = ["worktree /main/repo", "HEAD abc123", "branch refs/heads/main"].join(
+      "\n",
+    );
 
     (execFileSync as Mock).mockImplementation(
       (_exec: string, args: string[], _opts?: Record<string, unknown>) => {
         if (args[0] === "worktree" && args[1] === "list") {
           return Buffer.from(worktreeOutput);
         }
-        return Buffer.from(`${FAKE_SHA}\n`);
+        if (args[0] === "rev-parse" && args[1] === "--verify") {
+          throw new Error("branch not found");
+        }
+        if (args[0] === "rev-parse") {
+          return Buffer.from(`${FAKE_SHA}\n`);
+        }
+        return Buffer.from("");
       },
     );
 
-    expect(() => RunManager.setupWorktree("my task", "/main/repo", 3)).toThrow(
-      /Cannot create worktree/,
-    );
+    // Simulate stale directory existing at the worktree path
+    // The worktree path for "/main/repo" + "mytask" is "/main/repo-forge-worktrees/mytask/"
+    const stalePath = "/main/repo-forge-worktrees/mytask/";
+    (existsSync as Mock).mockImplementation((p: string) => p === stalePath);
+
+    const result = RunManager.setupWorktree("my task", "/main/repo");
+
+    // rmSync should have been called to clean up the stale directory
+    expect(rmSync).toHaveBeenCalledWith(stalePath, { recursive: true, force: true });
+
+    // Worktree creation should still succeed
+    expect(result.runId).toBe(FAKE_UUID);
+    expect(result.branchName).toBe("forge/mytask");
   });
 
   it("creates worktree when under limit", () => {
@@ -312,7 +315,7 @@ describe("setupWorktree", () => {
       },
     );
 
-    const result = RunManager.setupWorktree("my task", "/main/repo", 3);
+    const result = RunManager.setupWorktree("my task", "/main/repo");
 
     const mock = execFileSync as Mock;
 
@@ -378,7 +381,7 @@ describe("setupWorktree orphan branch cleanup", () => {
       }
     });
 
-    expect(() => RunManager.setupWorktree("my task", "/main/repo", 3)).toThrow(
+    expect(() => RunManager.setupWorktree("my task", "/main/repo")).toThrow(
       /Run directory initialization failed/,
     );
 
@@ -424,7 +427,7 @@ describe("setupWorktree orphan branch cleanup", () => {
     });
 
     try {
-      RunManager.setupWorktree("my task", "/main/repo", 3);
+      RunManager.setupWorktree("my task", "/main/repo");
       // Should not reach here
       expect.unreachable("Expected setupWorktree to throw");
     } catch (err) {
@@ -476,7 +479,7 @@ describe("setupWorktree orphan branch cleanup", () => {
       }
     });
 
-    expect(() => RunManager.setupWorktree("my task", "/main/repo", 3)).toThrow();
+    expect(() => RunManager.setupWorktree("my task", "/main/repo")).toThrow();
 
     // Worktree removal should happen before branch deletion
     expect(gitCallOrder).toEqual(["worktree-remove", "branch-delete"]);
@@ -574,7 +577,7 @@ describe("setupWorktree file-lock integration", () => {
 
     (openSync as Mock).mockReturnValue(42);
 
-    RunManager.setupWorktree("my task", "/main/repo", 3);
+    RunManager.setupWorktree("my task", "/main/repo");
 
     // Lock was acquired (openSync called with O_CREAT | O_EXCL flags)
     expect(openSync).toHaveBeenCalled();
@@ -598,7 +601,7 @@ describe("setupWorktree file-lock integration", () => {
     });
 
     try {
-      expect(() => RunManager.setupWorktree("my task", "/main/repo", 3)).toThrow(/lock timeout/i);
+      expect(() => RunManager.setupWorktree("my task", "/main/repo")).toThrow(/lock timeout/i);
     } finally {
       vi.spyOn(Date, "now").mockRestore();
     }
@@ -634,7 +637,7 @@ describe("setupWorktree file-lock integration", () => {
     const warnSpy = vi.spyOn(console, "warn").mockImplementation(() => {});
 
     // Should NOT throw — falls back to lockless mode
-    const result = RunManager.setupWorktree("my task", "/main/repo", 3);
+    const result = RunManager.setupWorktree("my task", "/main/repo");
 
     expect(result.runId).toBe(FAKE_UUID);
     expect(warnSpy).toHaveBeenCalledWith(expect.stringContaining("file-lock mechanism failed"));
@@ -645,36 +648,18 @@ describe("setupWorktree file-lock integration", () => {
   it("releases lock even when worktree creation throws", () => {
     (openSync as Mock).mockReturnValue(42);
 
-    // Make git worktree list return 4 worktrees to trigger concurrency error
-    const worktreeOutput = [
-      "worktree /main/repo",
-      "HEAD abc123",
-      "branch refs/heads/main",
-      "",
-      "worktree /worktrees/wt1",
-      "HEAD def456",
-      "branch refs/heads/forge/wt1",
-      "",
-      "worktree /worktrees/wt2",
-      "HEAD ghi789",
-      "branch refs/heads/forge/wt2",
-      "",
-      "worktree /worktrees/wt3",
-      "HEAD jkl012",
-      "branch refs/heads/forge/wt3",
-    ].join("\n");
-
+    // Make git worktree add throw to trigger the error path
     (execFileSync as Mock).mockImplementation(
       (_exec: string, args: string[], _opts?: Record<string, unknown>) => {
-        if (args[0] === "worktree" && args[1] === "list") {
-          return Buffer.from(worktreeOutput);
+        if (args[0] === "worktree" && args[1] === "add") {
+          throw new Error("worktree add failed");
         }
         return Buffer.from(`${FAKE_SHA}\n`);
       },
     );
 
-    expect(() => RunManager.setupWorktree("my task", "/main/repo", 3)).toThrow(
-      /Cannot create worktree/,
+    expect(() => RunManager.setupWorktree("my task", "/main/repo")).toThrow(
+      /worktree add failed/,
     );
 
     // Lock should still be released in the finally block

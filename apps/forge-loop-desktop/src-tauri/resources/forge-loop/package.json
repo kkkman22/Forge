@@ -1,0 +1,63 @@
+{
+  "name": "forge-loop",
+  "version": "2.6.0",
+  "private": false,
+  "exports": {
+    ".": "./dist/src/index.js",
+    "./deprecated": "./dist/src/deprecated.js"
+  },
+  "files": [
+    "dist/src/"
+  ],
+  "type": "module",
+  "engines": {
+    "node": ">=20"
+  },
+  "bin": {
+    "forge-loop": "dist/src/forge-loop-cli.js"
+  },
+  "scripts": {
+    "test": "vitest run",
+    "test:e2e": "vitest run test/e2e/",
+    "test:coverage": "vitest run --coverage",
+    "test:watch": "vitest",
+    "bench": "vitest bench --run",
+    "bench:ci": "vitest bench --run --reporter=verbose",
+    "lint": "biome check src/ test/",
+    "lint:fix": "biome check --write src/ test/",
+    "format": "biome format --write src/ test/",
+    "typecheck": "tsc --noEmit",
+    "lint:rules": "node scripts/lint-evolved-rules.mjs",
+    "check": "tsc --noEmit && biome check src/ test/ && vitest run && node scripts/check-public-api.mjs && bash scripts/check-readme-metrics.sh && bash scripts/check-skill-function-refs.sh && bash scripts/validate-skill-descriptions.sh && bash scripts/validate-skill-length.sh && bash scripts/validate-skill-skeleton.sh && bash scripts/check-evolution-marker-zones.sh && node scripts/validate-scripts-help.mjs && node scripts/lint-evolved-rules.mjs && node scripts/verify-evolved-rule-infra-refs.mjs && node scripts/check-dist-sync.mjs && bash scripts/check-doc-links.sh && bash scripts/check-doc-structure.sh",
+    "dist:resync": "bash scripts/dist-resync.sh",
+    "docs": "typedoc",
+    "dossier:rebuild": "node scripts/rebuild-feature-dossier.mjs",
+    "dossier:rebuild:all": "node scripts/rebuild-feature-dossier.mjs --all"
+  },
+  "devDependencies": {
+    "@biomejs/biome": "2.4.12",
+    "@stryker-mutator/core": "9.6.1",
+    "@stryker-mutator/vitest-runner": "9.6.1",
+    "@types/node": "24.12.2",
+    "@vitest/coverage-v8": "3.2.4",
+    "fast-check": "4.7.0",
+    "typedoc": "0.28.19",
+    "typescript": "5.9.3",
+    "vitest": "3.2.4"
+  },
+  "dependencies": {
+    "@anthropic-ai/claude-agent-sdk": "0.3.142",
+    "@modelcontextprotocol/sdk": "1.29.0",
+    "commander": "14.0.3",
+    "minimatch": "10.2.5",
+    "yaml": "2.8.4",
+    "zod": "4.4.1"
+  },
+  "overrides": {
+    "glob": "^11.0.0",
+    "@anthropic-ai/sdk": "^0.95.1",
+    "hono": "^4.12.18",
+    "fast-uri": "^3.1.2",
+    "ip-address": "^10.2.0"
+  }
+}

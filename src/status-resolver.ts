@@ -31,13 +31,16 @@ export function slugify(taskName: string): string {
   // Trim leading/trailing hyphens
   const trimmed = replaced.replace(/^-+|-+$/g, "");
 
-  if (trimmed.length === 0) {
-    throw new Error(
-      `Cannot slugify task name: "${taskName}" — no ASCII alphanumeric characters found`,
-    );
+  if (trimmed.length > 0) {
+    return trimmed;
   }
 
-  return trimmed;
+  // Fallback for non-ASCII names (e.g. CJK): use a short hash of the original
+  let hash = 0;
+  for (let i = 0; i < taskName.length; i++) {
+    hash = ((hash << 5) - hash + taskName.charCodeAt(i)) | 0;
+  }
+  return `task-${(hash >>> 0).toString(36)}`;
 }
 
 // ---------------------------------------------------------------------------

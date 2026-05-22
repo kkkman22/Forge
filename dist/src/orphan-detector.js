@@ -46,6 +46,50 @@ export function deletePidFile(sessionId, baseDir) {
         // File may not exist
     }
 }
+/**
+ * Count the number of active Forge loop sessions by scanning PID files.
+ * A session is considered active if its `sessionPid` process is still alive.
+ * Stale PID files (dead process) are cleaned up during the scan.
+ * @internal
+ */
+export function countActiveSessions(baseDir) {
+    const dir = join(baseDir, ".pids");
+    let files;
+    try {
+        files = readdirSync(dir).filter((f) => f.startsWith("session-") && f.endsWith(".pid"));
+    }
+    catch {
+        return 0;
+    }
+    let activeCount = 0;
+    for (const file of files) {
+        const filePath = join(dir, file);
+        const content = readPidFile(filePath);
+        if (!content) {
+            try {
+                unlinkSync(filePath);
+            }
+            catch {
+                // Ignore
+            }
+            continue;
+        }
+        try {
+            process.kill(content.sessionPid, 0);
+            activeCount++; // Session still running
+        }
+        catch {
+            // Session is dead — clean up stale PID file
+            try {
+                unlinkSync(filePath);
+            }
+            catch {
+                // Ignore
+            }
+        }
+    }
+    return activeCount;
+}
 /** @internal */
 export async function cleanupStaleSessions(baseDir) {
     const orphans = [];

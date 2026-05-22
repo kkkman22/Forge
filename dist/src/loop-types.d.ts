@@ -125,8 +125,8 @@ export interface LoopConfig {
     preventSleep: boolean;
     /** Base delay in ms for exponential backoff on hard failures. Default: 60000. */
     backoffBaseMs: number;
-    /** Maximum number of concurrent worktrees allowed. Default: 3. */
-    maxConcurrentWorktrees: number;
+    /** Maximum number of concurrent active Forge loops. Default: 6. */
+    maxConcurrentLoops: number;
     /** External SKILL plugin directory. */
     skillsDir?: string;
 }

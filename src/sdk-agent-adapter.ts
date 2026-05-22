@@ -83,7 +83,6 @@ export class SdkAgentAdapter implements AgentInterface {
   readonly name = "claude-sdk";
 
   private readonly config: SdkAgentAdapterConfig;
-  private warmQueryUsed = false;
   private activeQuery: Query | null = null;
 
   constructor(config: SdkAgentAdapterConfig) {
@@ -94,8 +93,7 @@ export class SdkAgentAdapter implements AgentInterface {
    * Execute a single iteration by sending a prompt to the Agent SDK.
    *
    * 1. Creates an `AbortController` wired to `options.signal` if provided.
-   * 2. Calls `warmQuery.query(prompt)` on first invocation, or the
-   *    standalone `query()` with full options on subsequent calls.
+   * 2. Calls `sdkQuery()` with full options including structured output schema.
    * 3. Iterates the async generator to collect messages.
    * 4. Extracts `structured_output` and `usage` from the `SDKResultMessage`.
    * 5. Maps SDK usage fields to `TokenUsage`.
@@ -174,13 +172,10 @@ export class SdkAgentAdapter implements AgentInterface {
     };
 
     // Obtain the async generator (Query).
-    let queryHandle: Query;
-    if (!this.warmQueryUsed) {
-      this.warmQueryUsed = true;
-      queryHandle = this.config.warmQuery.query(prompt);
-    } else {
-      queryHandle = sdkQuery({ prompt, options: sdkOptions });
-    }
+    // Always use sdkQuery() with full options instead of the warm query handle.
+    // The warm query lacks structured output schema and other SDK options,
+    // causing the first iteration to return unusable results.
+    const queryHandle = sdkQuery({ prompt, options: sdkOptions });
     this.activeQuery = queryHandle;
 
     // Set up global timeout: abort the SDK call if it exceeds the configured

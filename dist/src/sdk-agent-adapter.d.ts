@@ -49,15 +49,13 @@ export interface SdkAgentAdapterConfig {
 export declare class SdkAgentAdapter implements AgentInterface {
     readonly name = "claude-sdk";
     private readonly config;
-    private warmQueryUsed;
     private activeQuery;
     constructor(config: SdkAgentAdapterConfig);
     /**
      * Execute a single iteration by sending a prompt to the Agent SDK.
      *
      * 1. Creates an `AbortController` wired to `options.signal` if provided.
-     * 2. Calls `warmQuery.query(prompt)` on first invocation, or the
-     *    standalone `query()` with full options on subsequent calls.
+     * 2. Calls `sdkQuery()` with full options including structured output schema.
      * 3. Iterates the async generator to collect messages.
      * 4. Extracts `structured_output` and `usage` from the `SDKResultMessage`.
      * 5. Maps SDK usage fields to `TokenUsage`.

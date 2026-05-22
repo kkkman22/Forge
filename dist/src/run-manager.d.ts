@@ -101,16 +101,14 @@ export declare class RunManager {
     /**
      * Set up a worktree for parallel execution.
      *
-     * Checks the concurrency limit, computes the worktree path, creates
-     * the worktree with a new branch, and initializes the run directory
-     * inside the worktree.
+     * Computes the worktree path, creates the worktree with a new branch,
+     * and initializes the run directory inside the worktree.
      *
      * @param objective      The user-provided objective string.
      * @param repoRoot       Absolute path to the main repository root.
-     * @param maxConcurrent  Maximum number of concurrent worktrees allowed.
      * @returns A {@link RunSetup} with an additional `worktreePath` field.
      */
-    static setupWorktree(objective: string, repoRoot: string, maxConcurrent: number, t?: TranslateFn): RunSetup & {
+    static setupWorktree(objective: string, repoRoot: string, t?: TranslateFn): RunSetup & {
         worktreePath: string;
     };
 }

@@ -72,7 +72,7 @@ function createPuaConfig(overrides) {
             maxConsecutiveFailures: 10, // High threshold so PUA can exercise
             preventSleep: true,
             backoffBaseMs: 60000,
-            maxConcurrentWorktrees: 3,
+            maxConcurrentLoops: 3,
         },
         limits: { maxIterations: 10 },
         cwd: "/test/repo",
@@ -344,7 +344,7 @@ describe("Methodology chain exhaustion doesn't block Orchestrator circuit-breaki
                 maxConsecutiveFailures: 8,
                 preventSleep: true,
                 backoffBaseMs: 60000,
-                maxConcurrentWorktrees: 3,
+                maxConcurrentLoops: 3,
             },
         });
         const driver = new SdkDriver(config, executor, agent);

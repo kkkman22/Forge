@@ -20,10 +20,10 @@
  */
 export declare const DEFAULT_BACKOFF_BASE_MS = 60000;
 /**
- * Default maximum number of concurrent Git worktrees allowed.
- * Used as the default value for `LoopConfig.maxConcurrentWorktrees`.
+ * Default maximum number of concurrent active Forge loops allowed.
+ * Used as the default value for `LoopConfig.maxConcurrentLoops`.
  */
-export declare const DEFAULT_MAX_CONCURRENT_WORKTREES = 3;
+export declare const DEFAULT_MAX_CONCURRENT_LOOPS = 6;
 /** Known routing tiers for --tier validation. */
 export declare const VALID_TIERS: ReadonlySet<string>;
 /** Supported locale codes for --lang validation. */

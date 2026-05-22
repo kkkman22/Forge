@@ -64,7 +64,7 @@ function createConfig(overrides) {
             maxConsecutiveFailures: 3,
             preventSleep: true,
             backoffBaseMs: 60000,
-            maxConcurrentWorktrees: 3,
+            maxConcurrentLoops: 3,
         },
         limits: { maxIterations: 1 },
         cwd: "/test/repo",
@@ -222,7 +222,7 @@ describe("abort summary includes P0/P1 issues", () => {
                 maxConsecutiveFailures: 3,
                 preventSleep: true,
                 backoffBaseMs: 60000,
-                maxConcurrentWorktrees: 3,
+                maxConcurrentLoops: 3,
             },
             readReviewFile: () => reviewContent,
         });
