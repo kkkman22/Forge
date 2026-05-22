@@ -51,11 +51,11 @@ import type { LoopConfig, RunLimits } from "./loop-types.js";
 import {
   cleanupOrphans,
   cleanupStaleSessions,
+  countActiveSessions,
   deletePidFile,
   detectPpidOrphans,
   type PidFileContent,
   writePidFile,
-  countActiveSessions,
 } from "./orphan-detector.js";
 import { ProcessRegistry } from "./process-registry.js";
 import type { TaskType } from "./pua-engine.js";
@@ -618,11 +618,7 @@ async function main(): Promise<void> {
           }
         }
 
-        const worktreeSetup = RunManager.setupWorktree(
-          objective,
-          cwd,
-          _t,
-        );
+        const worktreeSetup = RunManager.setupWorktree(objective, cwd, _t);
         runSetup = worktreeSetup;
         worktreePath = worktreeSetup.worktreePath;
         effectiveCwd = worktreeSetup.worktreePath;

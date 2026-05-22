@@ -477,7 +477,12 @@ export class SdkDriver {
     const iter = this.orchestratorState.currentIteration;
     // DEBUG: log lastEffects to diagnose missing iter_committed
     this.logger.log(
-      createLogEntry("debug_emit_iter", "info", `emitIterResultEvent: lastEffects=${JSON.stringify(result.lastEffects.map(e => e.type))}`, { runId: this.config.runId, iteration: iter }),
+      createLogEntry(
+        "debug_emit_iter",
+        "info",
+        `emitIterResultEvent: lastEffects=${JSON.stringify(result.lastEffects.map((e) => e.type))}`,
+        { runId: this.config.runId, iteration: iter },
+      ),
     );
     if (result.lastEffects.some((e) => e.type === "commit")) {
       this.emitEvent("iter_committed", { iteration: iter });
