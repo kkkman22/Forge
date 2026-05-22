@@ -48,4 +48,4 @@ export declare function buildCommitMessageForPhase(phase: string, iterationNumbe
  * @param currentCommitCount - The current commit count from orchestrator state.
  * @returns A `CommitStrategyResult` with adjusted effects and optional state adjustment.
  */
-export declare function applySkillAwareCommitStrategy(effects: OrchestratorEffect[], phase: string, success: boolean, iterationNumber: number, summary: string, objective: string, currentCommitCount: number): CommitStrategyResult;
+export declare function applySkillAwareCommitStrategy(effects: OrchestratorEffect[], phase: string | undefined, success: boolean, iterationNumber: number, summary: string, objective: string, currentCommitCount: number): CommitStrategyResult;

@@ -14,6 +14,7 @@
 import { buildIterationPrompt } from "./context-accumulator.js";
 import { FrozenZoneViolation } from "./effect-executor.js";
 import { buildEntry } from "./event-log.js";
+import { createLogEntry } from "./logger/index.js";
 import { transition } from "./orchestrator.js";
 import { appendAndPersistNotes, buildIterationEntry } from "./sdk-notes-manager.js";
 // ---------------------------------------------------------------------------
@@ -25,6 +26,13 @@ const ZERO_TOKEN_USAGE = {
     cacheReadTokens: 0,
     cacheCreationTokens: 0,
 };
+// ---------------------------------------------------------------------------
+// Internal helpers
+// ---------------------------------------------------------------------------
+function isNoOpIteration(output) {
+    return (Array.isArray(output.key_changes_made) &&
+        output.key_changes_made.length === 0);
+}
 // ---------------------------------------------------------------------------
 // executeGenericIteration
 // ---------------------------------------------------------------------------
@@ -79,7 +87,11 @@ export async function executeGenericIteration(ctx) {
         ctx.perfTracker.recordSubagentTiming(ctx.agentAdapter.name, subagentStartMs, agentEndMs, iterationNumber);
         const output = agentResult.output;
         const usage = agentResult.usage;
-        if (output.should_fully_stop) {
+        // DEBUG: log structured output to diagnose success=false issue
+        ctx.logger.log(createLogEntry("debug_output", "info", `Structured output: success=${output.success}, summary="${output.summary?.slice(0, 100)}", changes=${JSON.stringify(output.key_changes_made)?.slice(0, 200)}`, { runId: ctx.config.runId, iteration: iterationNumber }));
+        // Auto-stop: if the iteration succeeded but made no changes, the task
+        // is complete — stop the loop rather than keep verifying indefinitely.
+        if (output.should_fully_stop || (output.success && isNoOpIteration(output))) {
             // Stop condition met — dispatch stop_condition_met event.
             const stopResult = transition(orchestratorState, { type: "stop_condition_met" }, ctx.limits);
             orchestratorState = stopResult.state;

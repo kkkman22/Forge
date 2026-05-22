@@ -43,7 +43,7 @@ function createConfig(overrides) {
             maxConsecutiveFailures: 3,
             preventSleep: true,
             backoffBaseMs: 100,
-            maxConcurrentWorktrees: 3,
+            maxConcurrentLoops: 3,
         },
         limits: { maxIterations: 10 },
         cwd: "/tmp/forge-e2e-test",

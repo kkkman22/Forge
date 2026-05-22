@@ -396,7 +396,7 @@ describe("Feature: sdk-autonomous-loop, Property 1: Driver input validation", ()
                 maxConsecutiveFailures: 3,
                 preventSleep: false,
                 backoffBaseMs: 60000,
-                maxConcurrentWorktrees: 3,
+                maxConcurrentLoops: 3,
             },
             limits: {},
             cwd: "/test/repo",

@@ -5,6 +5,8 @@ use std::path::{Path, PathBuf};
 use tokio::io::AsyncReadExt;
 use tokio::process::{Child, Command as AsyncCommand};
 use tauri::AppHandle;
+use tauri::Emitter;
+use tauri::Manager;
 use uuid::Uuid;
 
 #[derive(Debug, thiserror::Error)]
@@ -49,10 +51,43 @@ pub struct TaskCompletedEvent {
 
 impl ProcessManager {
     pub fn new(app_resources_dir: &Path, runs_dir: &Path) -> Self {
+        let node_path = {
+            let bundled = app_resources_dir.join("node/bin/node");
+            if bundled.exists() {
+                bundled
+            } else {
+                PathBuf::from("node")
+            }
+        };
+
+        let cli_path = {
+            let bundled = app_resources_dir.join("forge-loop/dist/src/forge-loop-cli.js");
+            if bundled.exists() {
+                bundled
+            } else {
+                // Dev mode: CARGO_MANIFEST_DIR = apps/forge-loop-desktop/src-tauri
+                let manifest_dir = PathBuf::from(env!("CARGO_MANIFEST_DIR"));
+                let dev_cli = manifest_dir
+                    .parent()        // apps/forge-loop-desktop/src-tauri -> apps/forge-loop-desktop
+                    .and_then(|p| p.parent())  // apps/forge-loop-desktop -> apps
+                    .and_then(|p| p.parent())  // apps -> monorepo root
+                    .map(|root| root.join("dist/src/forge-loop-cli.js"))
+                    .unwrap_or_else(|| bundled.clone());
+                if dev_cli.exists() {
+                    dev_cli
+                } else {
+                    bundled
+                }
+            }
+        };
+
+        tracing::info!("node resolved to: {}", node_path.display());
+        tracing::info!("cli resolved to: {}", cli_path.display());
+
         Self {
             registry: HashMap::new(),
-            node_path: app_resources_dir.join("node/bin/node"),
-            cli_path: app_resources_dir.join("forge-loop/dist/src/forge-loop-cli.js"),
+            node_path,
+            cli_path,
             runs_dir: runs_dir.to_path_buf(),
             app_handle: None,
         }
@@ -66,6 +101,7 @@ impl ProcessManager {
         &mut self,
         task: &Task,
         api_key: &str,
+        base_url: Option<&str>,
     ) -> Result<RunId, ProcessError> {
         if self.registry.contains_key(&task.id) {
             return Err(ProcessError::AlreadyRunning(task.id.clone()));
@@ -83,17 +119,22 @@ impl ProcessManager {
             .current_dir(&task.repo_path)
             .env("ANTHROPIC_API_KEY", api_key)
             .env("CLAUDE_CONFIG_DIR", dirs::home_dir().map(|h| h.join(".claude")).unwrap_or_default())
+            .env("ANTHROPIC_BASE_URL", base_url.unwrap_or("https://api.anthropic.com"))
             .stdout(std::process::Stdio::piped())
             .stderr(std::process::Stdio::piped())
             .process_group(0)
             .spawn()
             .map_err(|e| ProcessError::SpawnFailed(e.to_string()))?;
 
-        // Spawn log writers
+        // Spawn log writers that also parse progress from JSON log lines
+        let task_id_for_log = task.id.clone();
+        let handle_for_log = self.app_handle.clone();
         if let Some(stdout) = child.stdout.take() {
             let log_path_clone = log_path.clone();
+            let tid = task_id_for_log.clone();
+            let ah = handle_for_log.clone();
             tokio::spawn(async move {
-                let _ = write_lines_to_file(stdout, &log_path_clone).await;
+                let _ = write_lines_and_emit_progress(stdout, &log_path_clone, &tid, ah.as_ref()).await;
             });
         }
         if let Some(stderr) = child.stderr.take() {
@@ -253,14 +294,24 @@ impl ProcessManager {
             args.extend(["--tier".into(), tier.clone()]);
         }
 
-        match &task.branch_strategy {
-            BranchStrategy::NewWorktree { .. } => {
-                args.push("--worktree".into());
+        let prev_branch = task
+            .executions
+            .iter()
+            .rev()
+            .find_map(|e| e.branch_name.clone());
+
+        if let Some(branch) = prev_branch {
+            args.extend(["--resume".into(), branch]);
+        } else {
+            match &task.branch_strategy {
+                BranchStrategy::NewWorktree { .. } => {
+                    args.push("--worktree".into());
+                }
+                BranchStrategy::ExistingBranch { name } => {
+                    args.extend(["--resume".into(), name.clone()]);
+                }
+                BranchStrategy::CurrentBranch => {}
             }
-            BranchStrategy::ExistingBranch { name } => {
-                args.extend(["--resume".into(), name.clone()]);
-            }
-            BranchStrategy::CurrentBranch => {}
         }
 
         if let Some(n) = task.max_iterations {
@@ -271,6 +322,7 @@ impl ProcessManager {
         }
 
         args.extend(["--prevent-sleep".into(), "off".into()]);
+        args.push("--force-no-hooks".into());
 
         let log_path = self.runs_dir.join(&task.id).join(format!("{}.log", run_id));
         args.extend([
@@ -308,6 +360,95 @@ async fn write_lines_to_file<R: tokio::io::AsyncRead + Unpin>(
         };
         file.write_all(truncated.as_bytes()).await?;
         file.write_all(b"\n").await?;
+    }
+    Ok(())
+}
+
+#[derive(serde::Serialize, Clone)]
+struct LogProgressEvent {
+    task_id: String,
+    phase: Option<String>,
+    iteration: Option<u32>,
+    message: Option<String>,
+}
+
+async fn write_lines_and_emit_progress<R: tokio::io::AsyncRead + Unpin>(
+    reader: R,
+    path: &Path,
+    task_id: &str,
+    app_handle: Option<&AppHandle>,
+) -> std::io::Result<()> {
+    use tokio::io::AsyncBufReadExt;
+    use tokio::io::AsyncWriteExt;
+    use tokio::io::BufReader;
+
+    let buf_reader = BufReader::new(reader);
+    let mut lines = buf_reader.lines();
+    let mut file = tokio::fs::OpenOptions::new()
+        .create(true)
+        .append(true)
+        .open(path)
+        .await?;
+
+    while let Some(line) = lines.next_line().await? {
+        let truncated = if line.len() > 1024 {
+            &line[..1024]
+        } else {
+            &line
+        };
+        file.write_all(truncated.as_bytes()).await?;
+        file.write_all(b"\n").await?;
+
+        // Try to parse as JSON log entry and extract progress
+        if let Ok(val) = serde_json::from_str::<serde_json::Value>(truncated) {
+            // Detect run_started event from CLI and persist branch metadata
+            if val.get("event").and_then(|v| v.as_str()) == Some("forge_loop_run_started") {
+                if let Some(handle) = app_handle {
+                    let branch_name = val.get("branch_name").and_then(|v| v.as_str()).unwrap_or("").to_string();
+                    let worktree_path = val.get("worktree_path").and_then(|v| v.as_str()).filter(|s| !s.is_empty()).map(|s| s.to_string());
+                    if !branch_name.is_empty() {
+                        let tid = task_id.to_string();
+                        let state = handle.state::<crate::commands::AppState>();
+                        let mut store = match state.task_store.lock() {
+                            Ok(s) => s,
+                            Err(_) => { continue; }
+                        };
+                        let _ = store.update(&tid, |t| {
+                            if let Some(exec) = t.executions.last_mut() {
+                                if exec.branch_name.is_none() {
+                                    exec.branch_name = Some(branch_name);
+                                }
+                                if exec.worktree_path.is_none() && worktree_path.is_some() {
+                                    exec.worktree_path = worktree_path;
+                                }
+                            }
+                        });
+                    }
+                }
+                continue;
+            }
+
+            let phase = val.get("phase").and_then(|v| v.as_str()).map(|s| s.to_string());
+            let iteration = val.get("iteration").and_then(|v| v.as_u64()).map(|n| n as u32);
+            let message = val.get("message").and_then(|v| v.as_str()).map(|s| s.to_string());
+
+            if phase.is_some() || iteration.is_some() {
+                if let Some(handle) = app_handle {
+                    let summary = match (&phase, &iteration) {
+                        (Some(p), Some(i)) => Some(format!("阶段: {} | 迭代: {}", p, i)),
+                        (Some(p), None) => Some(format!("阶段: {}", p)),
+                        (None, Some(i)) => Some(format!("迭代: {}", i)),
+                        _ => None,
+                    };
+                    let _ = handle.emit("task-status-update", LogProgressEvent {
+                        task_id: task_id.to_string(),
+                        phase: phase.clone(),
+                        iteration,
+                        message: summary.or(message),
+                    });
+                }
+            }
+        }
     }
     Ok(())
 }
@@ -420,6 +561,30 @@ mod tests {
         task.max_budget_usd = Some(10.0);
         let args = pm.build_cli_args(&task, "run-budget");
         assert_contains(&args, "--max-budget-usd");
+    }
+
+    #[test]
+    fn test_build_cli_args_resumes_from_previous_branch() {
+        let dir = tempfile::tempdir().unwrap();
+        let pm = ProcessManager::new(dir.path(), dir.path());
+        let mut task = test_task();
+        task.branch_strategy = BranchStrategy::NewWorktree {
+            name: "feature/test".into(),
+        };
+        task.executions.push(crate::task_store::ExecutionRecord {
+            run_id: "prev-run".into(),
+            started_at: Utc::now(),
+            ended_at: None,
+            exit_code: Some(0),
+            iterations: None,
+            outcome: crate::task_store::ExecutionOutcome::Success,
+            branch_name: Some("forge/fix-auth-bug".into()),
+            worktree_path: None,
+        });
+        let args = pm.build_cli_args(&task, "run-new");
+        assert_contains(&args, "--resume");
+        assert_contains(&args, "forge/fix-auth-bug");
+        assert!(!args.iter().any(|a| a == "--worktree"));
     }
 
     #[test]

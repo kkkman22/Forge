@@ -38,9 +38,39 @@ impl KeychainManager {
     }
 
     pub fn detect_claude_code_session(&self) -> bool {
-        let home = dirs::home_dir().unwrap_or_default();
-        let credentials = home.join(".claude/.credentials.json");
-        credentials.exists()
+        self.get_claude_code_api_key().is_some()
+    }
+
+    pub fn get_claude_code_api_key(&self) -> Option<String> {
+        let (key, _) = self.read_claude_code_env()?;
+        Some(key)
+    }
+
+    pub fn get_claude_code_base_url(&self) -> Option<String> {
+        let (_, url) = self.read_claude_code_env()?;
+        url
+    }
+
+    fn read_claude_code_env(&self) -> Option<(String, Option<String>)> {
+        let home = dirs::home_dir()?;
+        let settings = home.join(".claude/settings.json");
+        if !settings.exists() {
+            return None;
+        }
+        let content = std::fs::read_to_string(&settings).ok()?;
+        let json: serde_json::Value = serde_json::from_str(&content).ok()?;
+        let env = json.get("env")?;
+        let key = env
+            .get("ANTHROPIC_AUTH_TOKEN")
+            .and_then(|v| v.as_str())
+            .filter(|s| !s.is_empty())
+            .map(|s| s.to_string())?;
+        let base_url = env
+            .get("ANTHROPIC_BASE_URL")
+            .and_then(|v| v.as_str())
+            .filter(|s| !s.is_empty())
+            .map(|s| s.to_string());
+        Some((key, base_url))
     }
 
     pub fn get_auth_status(&self) -> AuthStatus {

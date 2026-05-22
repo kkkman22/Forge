@@ -65,7 +65,7 @@ function createConfig(overrides?: Partial<SdkDriverConfig>): SdkDriverConfig {
       maxConsecutiveFailures: 3,
       preventSleep: true,
       backoffBaseMs: 60000,
-      maxConcurrentWorktrees: 3,
+      maxConcurrentLoops: 3,
     },
     limits: { maxIterations: 3 },
     cwd: "/tmp/forge-e2e-test",

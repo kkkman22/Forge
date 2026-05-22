@@ -32,10 +32,10 @@ describe("Integration: dispatcher reads real lib (no mocks)", () => {
         const result = checkIntegrity(libPath);
         expect(result.ok).toBe(true);
     });
-    it("checkIntegrity passes for all 29 subs against manifest", () => {
+    it("checkIntegrity passes for all 30 subs against manifest", () => {
         const manifest = JSON.parse(readFileSync(MANIFEST_PATH, "utf-8"));
         const subs = Object.keys(manifest.subs);
-        expect(subs.length).toBe(29);
+        expect(subs.length).toBe(30);
         for (const sub of subs) {
             const libPath = resolve(LIB_ROOT, sub, "instructions.md");
             const result = checkIntegrity(libPath);

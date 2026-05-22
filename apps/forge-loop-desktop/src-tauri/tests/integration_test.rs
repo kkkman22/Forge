@@ -45,6 +45,8 @@ fn test_full_task_lifecycle() {
             exit_code: None,
             iterations: None,
             outcome: ExecutionOutcome::Pending,
+            branch_name: None,
+            worktree_path: None,
         });
     }).unwrap();
 
@@ -167,6 +169,8 @@ fn test_orphan_recovery() {
         exit_code: None,
         iterations: None,
         outcome: ExecutionOutcome::Pending,
+        branch_name: None,
+        worktree_path: None,
     });
     let id = store.add(task).unwrap();
 

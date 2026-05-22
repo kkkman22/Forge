@@ -21,6 +21,13 @@ export declare function writePidFile(sessionId: string, content: PidFileContent,
 export declare function readPidFile(filePath: string): PidFileContent | null;
 /** @internal */
 export declare function deletePidFile(sessionId: string, baseDir: string): void;
+/**
+ * Count the number of active Forge loop sessions by scanning PID files.
+ * A session is considered active if its `sessionPid` process is still alive.
+ * Stale PID files (dead process) are cleaned up during the scan.
+ * @internal
+ */
+export declare function countActiveSessions(baseDir: string): number;
 /** @internal */
 export declare function cleanupStaleSessions(baseDir: string): Promise<OrphanProcess[]>;
 /** @internal */

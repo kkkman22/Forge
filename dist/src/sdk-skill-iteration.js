@@ -14,6 +14,7 @@
 import { buildSkillAwarePrompt } from "./context-accumulator.js";
 import { FrozenZoneViolation } from "./effect-executor.js";
 import { buildEntry } from "./event-log.js";
+import { createLogEntry } from "./logger/index.js";
 import { transition } from "./orchestrator.js";
 import { applySkillAwareCommitStrategy } from "./sdk-commit-strategy.js";
 import { appendAndPersistNotes, buildIterationEntry } from "./sdk-notes-manager.js";
@@ -33,6 +34,14 @@ const ZERO_TOKEN_USAGE = {
 // ---------------------------------------------------------------------------
 // Internal helpers
 // ---------------------------------------------------------------------------
+/**
+ * Detect a no-op iteration: success but no changes made and no new learnings.
+ * This indicates the task was already completed in a previous iteration.
+ */
+function isNoOpIteration(output) {
+    return (Array.isArray(output.key_changes_made) &&
+        output.key_changes_made.length === 0);
+}
 /**
  * Evaluate the appropriate quality gate for a completed skill phase.
  *
@@ -163,6 +172,8 @@ export async function executeSkillAwareIteration(ctx) {
         ctx.perfTracker.recordSubagentTiming(ctx.agentAdapter.name, subagentStartMs, agentEndMs, iterationNumber);
         const output = agentResult.output;
         const usage = agentResult.usage;
+        // DEBUG: log structured output to diagnose success=false issue
+        ctx.logger.log(createLogEntry("debug_output", "info", `Structured output: success=${output.success}, summary="${output.summary?.slice(0, 100)}", changes=${JSON.stringify(output.key_changes_made)?.slice(0, 200)}, phase=${output.skill_phase_completed}`, { runId: ctx.config.runId, iteration: iterationNumber }));
         // Evaluate quality gates based on the completed skill phase.
         // This overrides any agent-reported gate_result with an independent evaluation.
         completedPhase = output.skill_phase_completed;
@@ -179,7 +190,9 @@ export async function executeSkillAwareIteration(ctx) {
         else if (output.gate_result === "blocked") {
             reviewFixAttempts++;
         }
-        if (output.should_fully_stop) {
+        // Auto-stop: if the iteration succeeded but made no changes, the task
+        // is complete — stop the loop rather than keep verifying indefinitely.
+        if (output.should_fully_stop || (output.success && isNoOpIteration(output))) {
             // Stop condition met — dispatch stop_condition_met event.
             // Mark as normal completion for StatusFile cleanup (Req 6.3).
             loopCompletedNormally = true;
@@ -272,6 +285,8 @@ export async function executeSkillAwareIteration(ctx) {
     // Apply skill-aware commit strategy: replace/remove commit effects based on
     // shouldCommitForPhase() and use phase-specific commit messages (Req 7.1–7.7).
     const effectivePhase = completedPhase ?? nextPhase;
+    // DEBUG: log commit strategy inputs
+    ctx.logger.log(createLogEntry("debug_commit_strategy", "info", `Commit strategy: completedPhase=${completedPhase}, nextPhase=${nextPhase}, effectivePhase=${effectivePhase}, success=${iterationSuccess}, effects=${JSON.stringify(result.effects.map(e => e.type))}`, { runId: ctx.config.runId, iteration: iterationNumber }));
     const commitResult = applySkillAwareCommitStrategy(result.effects, effectivePhase, iterationSuccess, iterationNumber, iterationSummary, ctx.config.objective, orchestratorState.commitCount);
     const adjustedEffects = commitResult.effects;
     if (commitResult.stateAdjustment) {
@@ -296,6 +311,8 @@ export async function executeSkillAwareIteration(ctx) {
     }
     catch (effectError) {
         const effectMessage = effectError instanceof Error ? effectError.message : String(effectError);
+        // DEBUG: log effect execution errors
+        ctx.logger.log(createLogEntry("debug_effect_error", "error", `Effect execution failed: ${effectMessage}`, { runId: ctx.config.runId, iteration: iterationNumber }));
         // FrozenZoneViolation: terminate loop directly without backoff (Req 8.2).
         if (effectError instanceof FrozenZoneViolation) {
             const abortResult = transition(orchestratorState, { type: "stop_condition_met" }, ctx.limits);

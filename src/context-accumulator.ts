@@ -231,6 +231,69 @@ export function appendEntry(existingMarkdown: string, entry: IterationEntry): st
 }
 
 // ---------------------------------------------------------------------------
+// Notes compaction
+// ---------------------------------------------------------------------------
+
+/** Default character budget for compacted notes (~2000 tokens at 4 chars/token). */
+const DEFAULT_NOTES_CHAR_BUDGET = 8000;
+
+/** Minimum number of recent entries kept in full detail during compaction. */
+const MIN_FULL_DETAIL_ENTRIES = 3;
+
+/**
+ * Compact notes markdown when it exceeds a character budget.
+ *
+ * Keeps the most recent {@link MIN_FULL_DETAIL_ENTRIES} entries in full detail
+ * and replaces older entries with a single-line summary:
+ * ```
+ * ### Iteration N (compacted): <summary>
+ * ```
+ *
+ * When `markdown` is within budget it is returned unchanged.
+ *
+ * @param markdown   The full notes.md content.
+ * @param charBudget Maximum characters for the compacted output.
+ * @returns Compacted markdown string.
+ */
+export function compactNotesContent(
+  markdown: string,
+  charBudget: number = DEFAULT_NOTES_CHAR_BUDGET,
+): string {
+  if (markdown.length <= charBudget) return markdown;
+
+  // Parse into a NotesDocument so we can selectively compact entries.
+  const doc = parseNotesDocument(markdown);
+  const entries = doc.entries;
+
+  if (entries.length <= MIN_FULL_DETAIL_ENTRIES) return markdown;
+
+  const splitIndex = Math.max(0, entries.length - MIN_FULL_DETAIL_ENTRIES);
+  const compacted = entries.slice(0, splitIndex);
+  const kept = entries.slice(splitIndex);
+
+  // Build compacted header lines.
+  const compactedLines = compacted.map(
+    (e) => `### Iteration ${e.number} (compacted): ${e.summary}`,
+  );
+
+  // Rebuild the document with compacted old entries + full recent entries.
+  const branchLine = doc.branchName !== undefined ? `\nBranch: ${doc.branchName}` : "";
+  const header = `# Run: ${doc.runId}${branchLine}\n\n## Iteration Log\n`;
+
+  const body = [
+    ...compactedLines,
+    "",
+    ...kept.map((e) => formatIterationEntry(e)),
+  ].join("\n");
+
+  const result = `${header}\n${body}\n`;
+
+  // If compaction didn't bring us under budget, return anyway — partial help
+  // is better than none. The retry with a shorter prompt is still valuable.
+  return result;
+}
+
+// ---------------------------------------------------------------------------
 // Prompt construction
 // ---------------------------------------------------------------------------
 
@@ -286,6 +349,7 @@ Run ID: ${params.runId}
 4. If you made code changes, run build/tests/linters/formatters if available to validate your work. Do NOT make any git commits - that will be handled automatically by the orchestrator
 5. If you started any long-running background processes (dev servers, browsers, watchers, Electron, etc.), stop them before finishing the iteration
 6. Only submit the final JSON object after the result is final: your work is complete, validation is done, and you have stopped any background processes you started
+7. Be mindful of context window usage. Use targeted grep/search to locate relevant code before reading entire files. Avoid reading files larger than 200 lines unless necessary
 
 ## Output
 

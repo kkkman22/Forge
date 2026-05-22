@@ -17,7 +17,6 @@ import type { AgentOutputSchema } from "../src/loop-types.js";
 // ---------------------------------------------------------------------------
 
 const mockSdkQuery = vi.fn();
-const mockWarmQueryQuery = vi.fn();
 const mockWarmQueryClose = vi.fn();
 
 vi.mock("@anthropic-ai/claude-agent-sdk", () => ({
@@ -35,7 +34,7 @@ const outputSchema: AgentOutputSchema = buildAgentOutputSchema({ includeStopFiel
 
 function createMockWarmQuery() {
   return {
-    query: mockWarmQueryQuery,
+    query: mockSdkQuery,
     close: mockWarmQueryClose,
   };
 }
@@ -155,7 +154,7 @@ describe("successful query", () => {
         cache_creation_input_tokens: 8,
       },
     });
-    mockWarmQueryQuery.mockReturnValue(makeAsyncGenerator([successResult]));
+    mockSdkQuery.mockReturnValue(makeAsyncGenerator([successResult]));
 
     const adapter = createAdapter();
     const result = await adapter.run("test prompt", "/test/cwd");
@@ -176,7 +175,7 @@ describe("successful query", () => {
 
   it("calls onUsage callback with mapped token usage", async () => {
     const successResult = buildSuccessResult();
-    mockWarmQueryQuery.mockReturnValue(makeAsyncGenerator([successResult]));
+    mockSdkQuery.mockReturnValue(makeAsyncGenerator([successResult]));
 
     const adapter = createAdapter();
     const onUsage = vi.fn();
@@ -201,7 +200,7 @@ describe("validation failure", () => {
     const invalidResult = buildSuccessResult({
       structured_output: { success: "not-a-boolean", summary: 123 },
     });
-    mockWarmQueryQuery.mockReturnValue(makeAsyncGenerator([invalidResult]));
+    mockSdkQuery.mockReturnValue(makeAsyncGenerator([invalidResult]));
 
     const adapter = createAdapter();
 
@@ -214,7 +213,7 @@ describe("validation failure", () => {
     const invalidResult = buildSuccessResult({
       structured_output: { success: "not-a-boolean" },
     });
-    mockWarmQueryQuery.mockReturnValue(makeAsyncGenerator([invalidResult]));
+    mockSdkQuery.mockReturnValue(makeAsyncGenerator([invalidResult]));
 
     const adapter = createAdapter();
 
@@ -231,7 +230,7 @@ describe("validation failure", () => {
 describe("SDK error propagation", () => {
   it("throws when SDK returns an error result", async () => {
     const errorResult = buildErrorResult(["Something went wrong"]);
-    mockWarmQueryQuery.mockReturnValue(makeAsyncGenerator([errorResult]));
+    mockSdkQuery.mockReturnValue(makeAsyncGenerator([errorResult]));
 
     const adapter = createAdapter();
 
@@ -242,7 +241,7 @@ describe("SDK error propagation", () => {
 
   it("joins multiple error messages with semicolons", async () => {
     const errorResult = buildErrorResult(["Error one", "Error two"]);
-    mockWarmQueryQuery.mockReturnValue(makeAsyncGenerator([errorResult]));
+    mockSdkQuery.mockReturnValue(makeAsyncGenerator([errorResult]));
 
     const adapter = createAdapter();
 
@@ -252,7 +251,7 @@ describe("SDK error propagation", () => {
   });
 
   it("throws when no result message is returned", async () => {
-    mockWarmQueryQuery.mockReturnValue(makeAsyncGenerator([]));
+    mockSdkQuery.mockReturnValue(makeAsyncGenerator([]));
 
     const adapter = createAdapter();
 
@@ -269,23 +268,23 @@ describe("SDK error propagation", () => {
 describe("AbortController signal", () => {
   it("passes an AbortController to the SDK query", async () => {
     const successResult = buildSuccessResult();
-    mockWarmQueryQuery.mockReturnValue(makeAsyncGenerator([successResult]));
+    mockSdkQuery.mockReturnValue(makeAsyncGenerator([successResult]));
 
     const adapter = createAdapter();
     const controller = new AbortController();
     await adapter.run("test prompt", "/test/cwd", { signal: controller.signal });
 
-    // The warm query is called with just the prompt, but the adapter creates
-    // an internal AbortController. We verify the adapter doesn't throw when
-    // a signal is provided.
-    expect(mockWarmQueryQuery).toHaveBeenCalledWith("test prompt");
+    // sdkQuery receives options with abortController
+    expect(mockSdkQuery).toHaveBeenCalledOnce();
+    const callArgs = mockSdkQuery.mock.calls[0][0];
+    expect(callArgs.options.abortController).toBeDefined();
   });
 
   it("aborts the internal controller when the external signal is already aborted", async () => {
     // When signal is already aborted, the adapter should abort its internal controller.
     // The SDK query may still complete if it yields results before checking abort.
     const successResult = buildSuccessResult();
-    mockWarmQueryQuery.mockReturnValue(makeAsyncGenerator([successResult]));
+    mockSdkQuery.mockReturnValue(makeAsyncGenerator([successResult]));
 
     const adapter = createAdapter();
     const controller = new AbortController();
@@ -296,21 +295,14 @@ describe("AbortController signal", () => {
     expect(result.output.success).toBe(true);
   });
 
-  it("wires external signal abort to internal AbortController on subsequent calls", async () => {
+  it("wires external signal abort to internal AbortController", async () => {
     const successResult = buildSuccessResult();
-    // First call uses warm query
-    mockWarmQueryQuery.mockReturnValue(makeAsyncGenerator([successResult]));
-    // Second call uses standalone sdkQuery
     mockSdkQuery.mockReturnValue(makeAsyncGenerator([successResult]));
 
     const adapter = createAdapter();
 
-    // First call — consumes warm query
-    await adapter.run("first prompt", "/test/cwd");
-
-    // Second call — uses standalone sdkQuery, which receives options with abortController
     const controller = new AbortController();
-    await adapter.run("second prompt", "/test/cwd", { signal: controller.signal });
+    await adapter.run("test prompt", "/test/cwd", { signal: controller.signal });
 
     expect(mockSdkQuery).toHaveBeenCalledOnce();
     const callArgs = mockSdkQuery.mock.calls[0][0];
@@ -325,19 +317,11 @@ describe("AbortController signal", () => {
 
 describe("maxBudgetUsd passthrough", () => {
   it("passes maxBudgetUsd through to sdkQuery options when configured", async () => {
-    const successResult = buildSuccessResult();
-    // First call uses warm query
-    mockWarmQueryQuery.mockReturnValue(makeAsyncGenerator([successResult]));
-    // Second call uses standalone sdkQuery
-    mockSdkQuery.mockReturnValue(makeAsyncGenerator([successResult]));
+    mockSdkQuery.mockReturnValue(makeAsyncGenerator([buildSuccessResult()]));
 
     const adapter = createAdapter({ maxBudgetUsd: 5.0 });
 
-    // First call — consumes warm query
-    await adapter.run("first prompt", "/test/cwd");
-
-    // Second call — uses standalone sdkQuery with full options
-    await adapter.run("second prompt", "/test/cwd");
+    await adapter.run("test prompt", "/test/cwd");
 
     expect(mockSdkQuery).toHaveBeenCalledOnce();
     const callArgs = mockSdkQuery.mock.calls[0][0];
@@ -345,17 +329,11 @@ describe("maxBudgetUsd passthrough", () => {
   });
 
   it("does not include maxBudgetUsd when not configured", async () => {
-    const successResult = buildSuccessResult();
-    mockWarmQueryQuery.mockReturnValue(makeAsyncGenerator([successResult]));
-    mockSdkQuery.mockReturnValue(makeAsyncGenerator([successResult]));
+    mockSdkQuery.mockReturnValue(makeAsyncGenerator([buildSuccessResult()]));
 
     const adapter = createAdapter(); // no maxBudgetUsd
 
-    // First call — consumes warm query
-    await adapter.run("first prompt", "/test/cwd");
-
-    // Second call — uses standalone sdkQuery
-    await adapter.run("second prompt", "/test/cwd");
+    await adapter.run("test prompt", "/test/cwd");
 
     expect(mockSdkQuery).toHaveBeenCalledOnce();
     const callArgs = mockSdkQuery.mock.calls[0][0];
@@ -368,14 +346,6 @@ describe("maxBudgetUsd passthrough", () => {
 // ---------------------------------------------------------------------------
 
 describe("close()", () => {
-  it("calls warmQuery.close()", async () => {
-    const adapter = createAdapter();
-
-    await adapter.close();
-
-    expect(mockWarmQueryClose).toHaveBeenCalledOnce();
-  });
-
   it("closes active query if one is in progress", async () => {
     // Simulate an active query by starting a run that we can control
     const mockClose = vi.fn();
@@ -393,7 +363,7 @@ describe("close()", () => {
     // Attach a close method to the generator to simulate Query.close()
     (gen as unknown as { close: Mock }).close = mockClose;
 
-    mockWarmQueryQuery.mockReturnValue(gen);
+    mockSdkQuery.mockReturnValue(gen);
 
     const adapter = createAdapter();
 
@@ -406,7 +376,7 @@ describe("close()", () => {
     // Close while the query is active
     await adapter.close();
 
-    expect(mockWarmQueryClose).toHaveBeenCalledOnce();
+    expect(mockClose).toHaveBeenCalledOnce();
 
     // Resolve the generator so the run promise can settle
     if (resolveGenerator) (resolveGenerator as () => void)();
@@ -425,19 +395,8 @@ describe("close()", () => {
 
 describe("global timeout", () => {
   /**
-   * Helper: consume the warm query with a quick success so subsequent calls
-   * use the standalone sdkQuery path where we can intercept the AbortController.
-   */
-  async function consumeWarmQuery(adapter: SdkAgentAdapter): Promise<void> {
-    mockWarmQueryQuery.mockReturnValue(makeAsyncGenerator([buildSuccessResult()]));
-    await adapter.run("warm-up prompt", "/test/cwd");
-  }
-
-  /**
    * Helper: mock sdkQuery to return a generator that hangs until the adapter's
-   * internal AbortController fires. This simulates a real SDK call that respects
-   * the abort signal. We use the standalone sdkQuery path because it receives
-   * the AbortController in options, allowing us to listen for the abort event.
+   * internal AbortController fires.
    */
   function mockSdkQueryWithAbortAwareHang(): void {
     mockSdkQuery.mockImplementation(
@@ -463,7 +422,6 @@ describe("global timeout", () => {
 
   it("throws error containing 'timeout' keyword when SDK call exceeds configured timeout", async () => {
     const adapter = createAdapter({ globalTimeoutMs: 10 });
-    await consumeWarmQuery(adapter);
 
     mockSdkQueryWithAbortAwareHang();
 
@@ -472,7 +430,6 @@ describe("global timeout", () => {
 
   it("includes the configured timeout duration in the error message", async () => {
     const adapter = createAdapter({ globalTimeoutMs: 50 });
-    await consumeWarmQuery(adapter);
 
     mockSdkQueryWithAbortAwareHang();
 
@@ -483,7 +440,7 @@ describe("global timeout", () => {
 
   it("does not throw when SDK call completes before timeout", async () => {
     const successResult = buildSuccessResult();
-    mockWarmQueryQuery.mockReturnValue(makeAsyncGenerator([successResult]));
+    mockSdkQuery.mockReturnValue(makeAsyncGenerator([successResult]));
 
     const adapter = createAdapter({ globalTimeoutMs: 5000 });
 
@@ -497,7 +454,7 @@ describe("global timeout", () => {
     vi.useFakeTimers();
     try {
       const successResult = buildSuccessResult();
-      mockWarmQueryQuery.mockReturnValue(makeAsyncGenerator([successResult]));
+      mockSdkQuery.mockReturnValue(makeAsyncGenerator([successResult]));
 
       const adapter = createAdapter({ globalTimeoutMs: 100 });
 
@@ -518,7 +475,7 @@ describe("global timeout", () => {
     // The constant DEFAULT_GLOBAL_TIMEOUT_MS = 1_800_000 is used internally.
     const adapter = createAdapter(); // no globalTimeoutMs
     const successResult = buildSuccessResult();
-    mockWarmQueryQuery.mockReturnValue(makeAsyncGenerator([successResult]));
+    mockSdkQuery.mockReturnValue(makeAsyncGenerator([successResult]));
 
     const result = await adapter.run("test prompt", "/test/cwd");
     expect(result.output.success).toBe(true);
@@ -529,39 +486,30 @@ describe("global timeout", () => {
 // Warm query consumption (Requirements 2.1, 2.2)
 // ---------------------------------------------------------------------------
 
-describe("warm query consumption", () => {
-  it("first call uses warmQuery.query(), second call uses standalone sdkQuery()", async () => {
-    const successResult = buildSuccessResult();
-    mockWarmQueryQuery.mockReturnValue(makeAsyncGenerator([successResult]));
-    mockSdkQuery.mockReturnValue(makeAsyncGenerator([successResult]));
+describe("sdkQuery usage", () => {
+  it("always uses sdkQuery with full options", async () => {
+    mockSdkQuery.mockImplementation(() => makeAsyncGenerator([buildSuccessResult()]));
 
     const adapter = createAdapter();
 
-    // First call — should use warm query
     await adapter.run("first prompt", "/test/cwd");
-    expect(mockWarmQueryQuery).toHaveBeenCalledOnce();
-    expect(mockWarmQueryQuery).toHaveBeenCalledWith("first prompt");
-    expect(mockSdkQuery).not.toHaveBeenCalled();
-
-    // Second call — should use standalone sdkQuery
     await adapter.run("second prompt", "/test/cwd");
-    expect(mockWarmQueryQuery).toHaveBeenCalledOnce(); // still only once
-    expect(mockSdkQuery).toHaveBeenCalledOnce();
 
-    // Verify standalone sdkQuery was called with correct options
-    const callArgs = mockSdkQuery.mock.calls[0][0];
-    expect(callArgs.prompt).toBe("second prompt");
-    expect(callArgs.options.cwd).toBe("/test/cwd");
-    expect(callArgs.options.permissionMode).toBe("bypassPermissions");
-    expect(callArgs.options.allowDangerouslySkipPermissions).toBe(true);
-    expect(callArgs.options.outputFormat).toEqual({
-      type: "json_schema",
-      schema: outputSchema,
-    });
-    expect(callArgs.options.systemPrompt).toEqual({
-      type: "preset",
-      preset: "claude_code",
-    });
+    expect(mockSdkQuery).toHaveBeenCalledTimes(2);
+
+    for (const callArgs of mockSdkQuery.mock.calls.map((c: unknown[]) => c[0] as Record<string, any>)) {
+      expect(callArgs.options.cwd).toBe("/test/cwd");
+      expect(callArgs.options.permissionMode).toBe("bypassPermissions");
+      expect(callArgs.options.allowDangerouslySkipPermissions).toBe(true);
+      expect(callArgs.options.outputFormat).toEqual({
+        type: "json_schema",
+        schema: outputSchema,
+      });
+      expect(callArgs.options.systemPrompt).toEqual({
+        type: "preset",
+        preset: "claude_code",
+      });
+    }
   });
 });
 
@@ -575,15 +523,9 @@ describe("sandbox mode", () => {
     network: { mode: "restricted", allow: ["api.anthropic.com"] },
   };
 
-  async function consumeWarmQuery(adapter: SdkAgentAdapter): Promise<void> {
-    mockWarmQueryQuery.mockReturnValue(makeAsyncGenerator([buildSuccessResult()]));
-    await adapter.run("warm-up", "/test/cwd");
-  }
-
   it("uses acceptEdits permissionMode when sandboxProfile is set", async () => {
-    const adapter = createAdapter({ sandboxProfile });
-    await consumeWarmQuery(adapter);
     mockSdkQuery.mockReturnValue(makeAsyncGenerator([buildSuccessResult()]));
+    const adapter = createAdapter({ sandboxProfile });
 
     await adapter.run("sandbox prompt", "/test/cwd");
 
@@ -593,9 +535,8 @@ describe("sandbox mode", () => {
   });
 
   it("does not set allowDangerouslySkipPermissions in sandbox mode", async () => {
-    const adapter = createAdapter({ sandboxProfile });
-    await consumeWarmQuery(adapter);
     mockSdkQuery.mockReturnValue(makeAsyncGenerator([buildSuccessResult()]));
+    const adapter = createAdapter({ sandboxProfile });
 
     await adapter.run("sandbox prompt", "/test/cwd");
 
@@ -604,9 +545,8 @@ describe("sandbox mode", () => {
   });
 
   it("includes allowedTools with FORGE_LOOP_TOOLS in sandbox mode", async () => {
-    const adapter = createAdapter({ sandboxProfile });
-    await consumeWarmQuery(adapter);
     mockSdkQuery.mockReturnValue(makeAsyncGenerator([buildSuccessResult()]));
+    const adapter = createAdapter({ sandboxProfile });
 
     await adapter.run("sandbox prompt", "/test/cwd");
 
@@ -619,9 +559,8 @@ describe("sandbox mode", () => {
   });
 
   it("includes sandbox settings in sandbox mode", async () => {
-    const adapter = createAdapter({ sandboxProfile });
-    await consumeWarmQuery(adapter);
     mockSdkQuery.mockReturnValue(makeAsyncGenerator([buildSuccessResult()]));
+    const adapter = createAdapter({ sandboxProfile });
 
     await adapter.run("sandbox prompt", "/test/cwd");
 
@@ -631,9 +570,8 @@ describe("sandbox mode", () => {
   });
 
   it("includes hooks with frozen zone protection in sandbox mode", async () => {
-    const adapter = createAdapter({ sandboxProfile });
-    await consumeWarmQuery(adapter);
     mockSdkQuery.mockReturnValue(makeAsyncGenerator([buildSuccessResult()]));
+    const adapter = createAdapter({ sandboxProfile });
 
     await adapter.run("sandbox prompt", "/test/cwd");
 
@@ -644,9 +582,8 @@ describe("sandbox mode", () => {
   });
 
   it("keeps bypassPermissions when no sandboxProfile", async () => {
-    const adapter = createAdapter(); // no sandboxProfile
-    await consumeWarmQuery(adapter);
     mockSdkQuery.mockReturnValue(makeAsyncGenerator([buildSuccessResult()]));
+    const adapter = createAdapter(); // no sandboxProfile
 
     await adapter.run("normal prompt", "/test/cwd");
 

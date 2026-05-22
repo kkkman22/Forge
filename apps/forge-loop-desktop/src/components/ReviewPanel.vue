@@ -11,6 +11,7 @@ const props = defineProps<{
 const emit = defineEmits<{
   approve: [taskId: string];
   reject: [taskId: string, feedback: string];
+  close: [];
 }>();
 
 const activeTab = ref<"overview" | "diff" | "review">("overview");
@@ -62,57 +63,64 @@ function handleKeydown(e: KeyboardEvent) {
     e.preventDefault();
     handleReject();
   } else if (e.key === "Escape") {
-    closeRejectDialog();
+    if (showRejectDialog.value) closeRejectDialog();
   }
 }
 </script>
 
 <template>
-  <div class="fixed inset-0 z-50 flex" @keydown="handleKeydown">
-    <div class="w-[40%] bg-black/20" @click="$emit('approve', '')" />
-    <div
-      class="w-[60%] bg-white flex flex-col shadow-2xl"
-      :style="{ fontFamily: 'var(--font-body)' }"
-    >
-      <!-- Tab bar -->
-      <div class="flex border-b border-[var(--color-hairline)]">
-        <button
-          v-for="tab in (['overview', 'diff', 'review'] as const)"
-          :key="tab"
-          class="px-6 py-3 text-[17px] relative transition-colors"
-          :class="
-            activeTab === tab
-              ? 'text-[var(--color-primary)] font-semibold'
-              : 'text-[var(--color-ink-muted)]'
-          "
-          @click="activeTab = tab"
-        >
-          {{ tab === "overview" ? "概览" : tab === "diff" ? "代码变更" : "Review 报告" }}
-          <span
-            v-if="activeTab === tab"
-            class="absolute bottom-0 left-0 right-0 h-[2px] bg-[var(--color-primary)]"
-          />
-        </button>
+  <div style="position: fixed; inset: 0; z-index: 50; display: flex" @keydown="handleKeydown">
+    <!-- Left overlay -->
+    <div style="width: 40%; background: rgba(0,0,0,0.2); backdrop-filter: blur(4px)" @click="$emit('close')" />
+    <!-- Right panel -->
+    <div style="width: 60%; background: white; display: flex; flex-direction: column; box-shadow: -8px 0 30px rgba(0,0,0,0.08); border-radius: 20px 0 0 20px; font-family: var(--font-body)">
+
+      <!-- Header with tabs -->
+      <div style="padding: 24px 28px 0; flex-shrink: 0">
+        <!-- Close button row -->
+        <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 20px">
+          <h2 style="font-size: 20px; font-weight: 700; color: #0f172a; margin: 0; font-family: var(--font-display)">审核任务</h2>
+          <button style="width: 32px; height: 32px; border-radius: 50%; background: #f1f5f9; border: none; cursor: pointer; display: flex; align-items: center; justify-content: center; color: #64748b" @click="$emit('close')">
+            <svg width="14" height="14" viewBox="0 0 14 14" fill="none"><path d="M3 3l8 8M11 3l-8 8" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>
+          </button>
+        </div>
+        <!-- Tab switcher (pill style) -->
+        <div style="display: flex; gap: 4px; background: #f1f5f9; border-radius: 12px; padding: 4px; width: fit-content; margin-bottom: 20px">
+          <button
+            v-for="tab in (['overview', 'diff', 'review'] as const)"
+            :key="tab"
+            :style="{
+              padding: '8px 20px',
+              borderRadius: '10px',
+              fontSize: '14px',
+              fontWeight: 500,
+              border: 'none',
+              cursor: 'pointer',
+              transition: 'all 0.2s',
+              background: activeTab === tab ? 'white' : 'transparent',
+              color: activeTab === tab ? '#0f172a' : '#94a3b8',
+              boxShadow: activeTab === tab ? '0 1px 3px rgba(0,0,0,0.08)' : 'none'
+            }"
+            @click="activeTab = tab"
+          >
+            {{ tab === "overview" ? "概览" : tab === "diff" ? "代码变更" : "Review 报告" }}
+          </button>
+        </div>
       </div>
 
       <!-- Tab content -->
-      <div class="flex-1 overflow-y-auto p-6">
+      <div style="flex: 1; overflow-y: auto; padding: 0 28px 28px">
         <!-- Overview -->
-        <div v-if="activeTab === 'overview'" class="space-y-4">
-          <h2
-            class="text-[24px] font-semibold tracking-[-0.28px]"
-            :style="{ fontFamily: 'var(--font-display)' }"
-          >
-            {{ task.title }}
-          </h2>
-          <div class="grid grid-cols-2 gap-4 text-[17px]">
-            <div>
-              <span class="text-[var(--color-ink-muted)]">迭代数</span>
-              <span class="ml-2 font-semibold">{{ iterations }}</span>
+        <div v-if="activeTab === 'overview'" style="display: flex; flex-direction: column; gap: 16px">
+          <h3 style="font-size: 18px; font-weight: 600; color: #0f172a; margin: 0">{{ task.title }}</h3>
+          <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px">
+            <div style="padding: 20px; border-radius: 14px; background: #dbeafe">
+              <span style="font-size: 12px; color: #2563eb; display: block; margin-bottom: 6px; font-weight: 500">迭代数</span>
+              <span style="font-size: 24px; font-weight: 700; color: #0f172a">{{ iterations }}</span>
             </div>
-            <div>
-              <span class="text-[var(--color-ink-muted)]">运行时长</span>
-              <span class="ml-2 font-semibold">{{ duration }}</span>
+            <div style="padding: 20px; border-radius: 14px; background: #ede9fe">
+              <span style="font-size: 12px; color: #7c3aed; display: block; margin-bottom: 6px; font-weight: 500">运行时长</span>
+              <span style="font-size: 24px; font-weight: 700; color: #0f172a">{{ duration }}</span>
             </div>
           </div>
         </div>
@@ -120,7 +128,7 @@ function handleKeydown(e: KeyboardEvent) {
         <!-- Diff -->
         <div
           v-if="activeTab === 'diff'"
-          class="bg-[var(--color-surface-dark)] rounded-[var(--rounded-md)] p-4 text-white font-mono text-[14px] overflow-x-auto whitespace-pre-wrap"
+          style="background: #1e293b; border-radius: 14px; padding: 20px; color: white; font-family: monospace; font-size: 13px; overflow-x: auto; white-space: pre-wrap"
         >
           {{ diffContent || "No diff available" }}
         </div>
@@ -128,26 +136,27 @@ function handleKeydown(e: KeyboardEvent) {
         <!-- Review report -->
         <div
           v-if="activeTab === 'review'"
-          class="prose max-w-none text-[17px]"
+          style="font-size: 15px; color: #334155; line-height: 1.6"
         >
           {{ reviewReport || "No review report available" }}
         </div>
       </div>
 
       <!-- Action bar -->
-      <div
-        class="px-6 py-4 border-t border-[var(--color-hairline)] flex justify-end gap-3"
-        style="backdrop-filter: saturate(180%) blur(20px)"
-      >
+      <div style="padding: 16px 28px; border-top: 1px solid #f1f5f9; display: flex; justify-content: flex-end; gap: 12px; flex-shrink: 0">
         <button
-          class="px-6 py-3 rounded-[var(--rounded-pill)] text-[17px] bg-[var(--color-error)] text-white font-medium active:scale-[0.97] transition-transform"
+          style="padding: 12px 28px; border-radius: 14px; font-size: 14px; font-weight: 600; color: white; background: #ef4444; border: none; cursor: pointer; transition: all 0.15s"
           @click="handleReject"
+          @mouseenter="($event.currentTarget as HTMLElement).style.opacity = '0.9'"
+          @mouseleave="($event.currentTarget as HTMLElement).style.opacity = '1'"
         >
           打回
         </button>
         <button
-          class="px-6 py-3 rounded-[var(--rounded-pill)] text-[17px] bg-[var(--color-primary)] text-white font-medium active:scale-[0.97] transition-transform"
+          style="padding: 12px 28px; border-radius: 14px; font-size: 14px; font-weight: 600; color: white; background: #4f46e5; border: none; cursor: pointer; box-shadow: 0 4px 12px rgba(79,70,229,0.3); transition: all 0.15s"
           @click="handleApprove"
+          @mouseenter="($event.currentTarget as HTMLElement).style.opacity = '0.9'"
+          @mouseleave="($event.currentTarget as HTMLElement).style.opacity = '1'"
         >
           通过
         </button>
@@ -156,26 +165,38 @@ function handleKeydown(e: KeyboardEvent) {
       <!-- Reject dialog -->
       <div
         v-if="showRejectDialog"
-        class="absolute inset-0 bg-black/40 flex items-center justify-center z-10"
+        style="position: absolute; inset: 0; background: rgba(0,0,0,0.4); backdrop-filter: blur(4px); display: flex; align-items: center; justify-content: center; z-index: 10"
       >
-        <div class="bg-white rounded-[var(--rounded-lg)] p-6 w-[80%] max-w-md">
-          <h3 class="text-[21px] font-semibold mb-4" :style="{ fontFamily: 'var(--font-display)' }">
+        <div style="background: white; border-radius: 20px; padding: 28px; width: 80%; max-width: 420px; box-shadow: 0 25px 60px rgba(0,0,0,0.15)">
+          <h3 style="font-size: 18px; font-weight: 700; color: #0f172a; margin: 0 0 20px; font-family: var(--font-display)">
             打回反馈
           </h3>
           <textarea
             v-model="feedbackText"
-            class="w-full h-32 p-3 border border-[var(--color-hairline)] rounded-[var(--rounded-sm)] text-[17px] resize-none focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)]"
+            style="width: 100%; height: 128px; padding: 14px 16px; border-radius: 12px; font-size: 14px; border: 1.5px solid #e2e8f0; background: white; outline: none; resize: none; color: #0f172a; box-sizing: border-box; font-family: inherit; transition: border-color 0.2s"
             placeholder="请描述需要修改的内容..."
+            @focus="($event.currentTarget as HTMLElement).style.borderColor = '#4f46e5'"
+            @blur="($event.currentTarget as HTMLElement).style.borderColor = '#e2e8f0'"
           />
-          <div class="flex justify-end gap-3 mt-4">
+          <div style="display: flex; justify-content: flex-end; gap: 12px; margin-top: 20px">
             <button
-              class="px-4 py-2 text-[var(--color-ink-muted)] hover:text-[var(--color-ink)]"
+              style="padding: 10px 20px; border-radius: 12px; font-size: 14px; color: #94a3b8; font-weight: 500; background: none; border: none; cursor: pointer"
               @click="closeRejectDialog"
             >
               取消
             </button>
             <button
-              class="px-6 py-2 rounded-[var(--rounded-pill)] bg-[var(--color-error)] text-white font-medium active:scale-[0.97] transition-transform disabled:opacity-50"
+              :style="{
+                padding: '10px 24px',
+                borderRadius: '12px',
+                fontSize: '14px',
+                fontWeight: 600,
+                border: 'none',
+                cursor: feedbackText.trim() ? 'pointer' : 'not-allowed',
+                color: 'white',
+                background: feedbackText.trim() ? '#ef4444' : '#fca5a5',
+                transition: 'all 0.15s'
+              }"
               :disabled="!feedbackText.trim()"
               @click="submitReject"
             >
