@@ -21,17 +21,4 @@
 {"timestamp":"2026-05-17T07:27:02Z","event":"precompact_snapshot","detail":"slug=forge-single-entry-skills-collapse phase=plan_approved"}
 {"timestamp":"2026-05-17T13:42:50Z","event":"postcompact_restore","detail":"slug=forge-single-entry-skills-collapse"}
 {"timestamp":"2026-05-17T13:42:50Z","event":"precompact_snapshot","detail":"slug=forge-single-entry-skills-collapse phase=completed"}
-{"timestamp":"2026-05-17T15:20:22Z","event":"postcompact_restore","detail":"slug=forge-single-entry-skills-collapse"}
-{"timestamp":"2026-05-17T15:20:22Z","event":"precompact_snapshot","detail":"slug=forge-single-entry-skills-collapse phase=completed"}
-{"timestamp":"2026-05-17T16:00:14Z","event":"precompact_snapshot","detail":"slug=forge-single-entry-skills-collapse phase=completed"}
-{"timestamp":"2026-05-17T16:01:09Z","event":"postcompact_restore","detail":"slug=forge-single-entry-skills-collapse"}
-{"timestamp":"2026-05-17T16:06:21Z","event":"precompact_snapshot","detail":"slug=forge-single-entry-skills-collapse phase=completed"}
-{"timestamp":"2026-05-17T16:08:55Z","event":"postcompact_restore","detail":"slug=forge-single-entry-skills-collapse"}
-{"timestamp":"2026-05-17T16:08:55Z","event":"precompact_snapshot","detail":"slug=forge-single-entry-skills-collapse phase=completed"}
-{"timestamp":"2026-05-17T16:11:10Z","event":"postcompact_restore","detail":"slug=forge-single-entry-skills-collapse"}
-{"timestamp":"2026-05-17T16:11:10Z","event":"precompact_snapshot","detail":"slug=forge-single-entry-skills-collapse phase=completed"}
-{"timestamp":"2026-05-17T16:13:11Z","event":"postcompact_restore","detail":"slug=forge-single-entry-skills-collapse"}
-{"timestamp":"2026-05-17T16:13:12Z","event":"precompact_snapshot","detail":"slug=forge-single-entry-skills-collapse phase=completed"}
-{"timestamp":"2026-05-17T16:15:36Z","event":"postcompact_restore","detail":"slug=forge-single-entry-skills-collapse"}
-{"timestamp":"2026-05-17T16:15:36Z","event":"precompact_snapshot","detail":"slug=forge-single-entry-skills-collapse phase=completed"}
-{"timestamp":"2026-05-17T23:40:10Z","event":"precompact_snapshot","detail":"slug=forge-single-entry-skills-collapse phase=completed"}
+{"timestamp":"2026-05-17T14:50:12Z","event":"precompact_snapshot","detail":"slug=forge-single-entry-skills-collapse phase=completed"}
