@@ -497,7 +497,9 @@ describe("sdkQuery usage", () => {
 
     expect(mockSdkQuery).toHaveBeenCalledTimes(2);
 
-    for (const callArgs of mockSdkQuery.mock.calls.map((c: unknown[]) => c[0] as Record<string, any>)) {
+    for (const callArgs of mockSdkQuery.mock.calls.map(
+      (c: unknown[]) => c[0] as Record<string, any>,
+    )) {
       expect(callArgs.options.cwd).toBe("/test/cwd");
       expect(callArgs.options.permissionMode).toBe("bypassPermissions");
       expect(callArgs.options.allowDangerouslySkipPermissions).toBe(true);
