@@ -18,7 +18,7 @@ function buildMinimalConfig(overrides = {}) {
             maxConsecutiveFailures: 3,
             preventSleep: false,
             backoffBaseMs: 60000,
-            maxConcurrentWorktrees: 3,
+            maxConcurrentLoops: 3,
         },
         limits: { maxIterations: 5, maxTokens: 10000 },
         cwd: `/tmp/forge-hooks-test-${Math.random().toString(36).slice(2)}`,

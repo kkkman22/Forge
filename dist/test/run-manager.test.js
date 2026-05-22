@@ -35,7 +35,7 @@ vi.mock("node:fs", () => ({
 // Import after mocking
 import { execFileSync } from "node:child_process";
 import { randomUUID } from "node:crypto";
-import { existsSync, mkdirSync, openSync, readdirSync, readFileSync, unlinkSync, writeFileSync, } from "node:fs";
+import { existsSync, mkdirSync, openSync, readdirSync, readFileSync, rmSync, unlinkSync, writeFileSync, } from "node:fs";
 import { acquireFileLock, RunManager, releaseFileLock } from "../src/run-manager.js";
 // ---------------------------------------------------------------------------
 // Constants
@@ -196,32 +196,31 @@ describe("persistNotes", () => {
 // setupWorktree (Requirements 7.1, 7.2, 7.4)
 // ---------------------------------------------------------------------------
 describe("setupWorktree", () => {
-    it("throws when concurrency limit is reached", () => {
-        // Mock git worktree list to return 4 worktrees (1 main + 3 additional)
-        const worktreeOutput = [
-            "worktree /main/repo",
-            "HEAD abc123",
-            "branch refs/heads/main",
-            "",
-            "worktree /worktrees/wt1",
-            "HEAD def456",
-            "branch refs/heads/forge/wt1",
-            "",
-            "worktree /worktrees/wt2",
-            "HEAD ghi789",
-            "branch refs/heads/forge/wt2",
-            "",
-            "worktree /worktrees/wt3",
-            "HEAD jkl012",
-            "branch refs/heads/forge/wt3",
-        ].join("\n");
+    it("removes stale worktree directory before creating new one", () => {
+        // Simulate a stale directory left by a previous interrupted run
+        const worktreeOutput = ["worktree /main/repo", "HEAD abc123", "branch refs/heads/main"].join("\n");
         execFileSync.mockImplementation((_exec, args, _opts) => {
             if (args[0] === "worktree" && args[1] === "list") {
                 return Buffer.from(worktreeOutput);
             }
-            return Buffer.from(`${FAKE_SHA}\n`);
+            if (args[0] === "rev-parse" && args[1] === "--verify") {
+                throw new Error("branch not found");
+            }
+            if (args[0] === "rev-parse") {
+                return Buffer.from(`${FAKE_SHA}\n`);
+            }
+            return Buffer.from("");
         });
-        expect(() => RunManager.setupWorktree("my task", "/main/repo", 3)).toThrow(/Cannot create worktree/);
+        // Simulate stale directory existing at the worktree path
+        // The worktree path for "/main/repo" + "mytask" is "/main/repo-forge-worktrees/mytask/"
+        const stalePath = "/main/repo-forge-worktrees/mytask/";
+        existsSync.mockImplementation((p) => p === stalePath);
+        const result = RunManager.setupWorktree("my task", "/main/repo");
+        // rmSync should have been called to clean up the stale directory
+        expect(rmSync).toHaveBeenCalledWith(stalePath, { recursive: true, force: true });
+        // Worktree creation should still succeed
+        expect(result.runId).toBe(FAKE_UUID);
+        expect(result.branchName).toBe("forge/mytask");
     });
     it("creates worktree when under limit", () => {
         // Mock git worktree list to return only the main worktree
@@ -240,7 +239,7 @@ describe("setupWorktree", () => {
             // git worktree add — no-op
             return Buffer.from("");
         });
-        const result = RunManager.setupWorktree("my task", "/main/repo", 3);
+        const result = RunManager.setupWorktree("my task", "/main/repo");
         const mock = execFileSync;
         // Verify git worktree add was called
         const worktreeAddCall = mock.mock.calls.find((call) => Array.isArray(call[1]) && call[1][0] === "worktree" && call[1][1] === "add");
@@ -288,7 +287,7 @@ describe("setupWorktree orphan branch cleanup", () => {
                 throw new Error("EACCES: permission denied");
             }
         });
-        expect(() => RunManager.setupWorktree("my task", "/main/repo", 3)).toThrow(/Run directory initialization failed/);
+        expect(() => RunManager.setupWorktree("my task", "/main/repo")).toThrow(/Run directory initialization failed/);
         // Verify git branch -D was called to clean up the orphan branch
         const branchDeleteCall = gitCalls.find((call) => call[0] === "branch" && call[1] === "-D");
         expect(branchDeleteCall).toBeDefined();
@@ -322,7 +321,7 @@ describe("setupWorktree orphan branch cleanup", () => {
             }
         });
         try {
-            RunManager.setupWorktree("my task", "/main/repo", 3);
+            RunManager.setupWorktree("my task", "/main/repo");
             // Should not reach here
             expect.unreachable("Expected setupWorktree to throw");
         }
@@ -365,7 +364,7 @@ describe("setupWorktree orphan branch cleanup", () => {
                 throw new Error("EACCES: permission denied");
             }
         });
-        expect(() => RunManager.setupWorktree("my task", "/main/repo", 3)).toThrow();
+        expect(() => RunManager.setupWorktree("my task", "/main/repo")).toThrow();
         // Worktree removal should happen before branch deletion
         expect(gitCallOrder).toEqual(["worktree-remove", "branch-delete"]);
     });
@@ -441,7 +440,7 @@ describe("setupWorktree file-lock integration", () => {
             return Buffer.from("");
         });
         openSync.mockReturnValue(42);
-        RunManager.setupWorktree("my task", "/main/repo", 3);
+        RunManager.setupWorktree("my task", "/main/repo");
         // Lock was acquired (openSync called with O_CREAT | O_EXCL flags)
         expect(openSync).toHaveBeenCalled();
         // Lock was released (unlinkSync called on the lock file)
@@ -461,7 +460,7 @@ describe("setupWorktree file-lock integration", () => {
             return callCount === 1 ? 0 : 10_000;
         });
         try {
-            expect(() => RunManager.setupWorktree("my task", "/main/repo", 3)).toThrow(/lock timeout/i);
+            expect(() => RunManager.setupWorktree("my task", "/main/repo")).toThrow(/lock timeout/i);
         }
         finally {
             vi.spyOn(Date, "now").mockRestore();
@@ -489,38 +488,21 @@ describe("setupWorktree file-lock integration", () => {
         });
         const warnSpy = vi.spyOn(console, "warn").mockImplementation(() => { });
         // Should NOT throw — falls back to lockless mode
-        const result = RunManager.setupWorktree("my task", "/main/repo", 3);
+        const result = RunManager.setupWorktree("my task", "/main/repo");
         expect(result.runId).toBe(FAKE_UUID);
         expect(warnSpy).toHaveBeenCalledWith(expect.stringContaining("file-lock mechanism failed"));
         warnSpy.mockRestore();
     });
     it("releases lock even when worktree creation throws", () => {
         openSync.mockReturnValue(42);
-        // Make git worktree list return 4 worktrees to trigger concurrency error
-        const worktreeOutput = [
-            "worktree /main/repo",
-            "HEAD abc123",
-            "branch refs/heads/main",
-            "",
-            "worktree /worktrees/wt1",
-            "HEAD def456",
-            "branch refs/heads/forge/wt1",
-            "",
-            "worktree /worktrees/wt2",
-            "HEAD ghi789",
-            "branch refs/heads/forge/wt2",
-            "",
-            "worktree /worktrees/wt3",
-            "HEAD jkl012",
-            "branch refs/heads/forge/wt3",
-        ].join("\n");
+        // Make git worktree add throw to trigger the error path
         execFileSync.mockImplementation((_exec, args, _opts) => {
-            if (args[0] === "worktree" && args[1] === "list") {
-                return Buffer.from(worktreeOutput);
+            if (args[0] === "worktree" && args[1] === "add") {
+                throw new Error("worktree add failed");
             }
             return Buffer.from(`${FAKE_SHA}\n`);
         });
-        expect(() => RunManager.setupWorktree("my task", "/main/repo", 3)).toThrow(/Cannot create worktree/);
+        expect(() => RunManager.setupWorktree("my task", "/main/repo")).toThrow(/worktree add failed/);
         // Lock should still be released in the finally block
         expect(unlinkSync).toHaveBeenCalled();
     });

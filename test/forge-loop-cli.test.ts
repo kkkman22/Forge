@@ -41,7 +41,7 @@ const {
   backupWorktreeNotes,
   VALID_TIERS,
   DEFAULT_BACKOFF_BASE_MS,
-  DEFAULT_MAX_CONCURRENT_WORKTREES,
+  DEFAULT_MAX_CONCURRENT_LOOPS,
   SUPPORTED_LOCALES,
 } = await import("../src/forge-loop-cli.js");
 const { detectSkillAwareMode, validateHooksPresence } = await import("../src/sdk-driver.js");
@@ -339,14 +339,14 @@ describe("LoopConfig and RunLimits construction", () => {
       maxConsecutiveFailures: 3,
       preventSleep: true,
       backoffBaseMs: DEFAULT_BACKOFF_BASE_MS,
-      maxConcurrentWorktrees: DEFAULT_MAX_CONCURRENT_WORKTREES,
+      maxConcurrentLoops: DEFAULT_MAX_CONCURRENT_LOOPS,
     };
 
     expect(loopConfig.agent).toBe("claude");
     expect(loopConfig.maxConsecutiveFailures).toBe(3);
     expect(loopConfig.preventSleep).toBe(true);
     expect(loopConfig.backoffBaseMs).toBe(DEFAULT_BACKOFF_BASE_MS);
-    expect(loopConfig.maxConcurrentWorktrees).toBe(DEFAULT_MAX_CONCURRENT_WORKTREES);
+    expect(loopConfig.maxConcurrentLoops).toBe(DEFAULT_MAX_CONCURRENT_LOOPS);
   });
 
   it("RunLimits are constructed from parsed options", () => {

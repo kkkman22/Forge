@@ -180,7 +180,7 @@ describe("SdkDriver PUA state restoration debug logging", () => {
         maxConsecutiveFailures: 3,
         preventSleep: false,
         backoffBaseMs: 60000,
-        maxConcurrentWorktrees: 3,
+        maxConcurrentLoops: 3,
       },
       limits: { maxIterations: 1 },
       cwd: "/test/repo",

@@ -81,13 +81,24 @@ export function buildCommitMessageForPhase(
  */
 export function applySkillAwareCommitStrategy(
   effects: OrchestratorEffect[],
-  phase: string,
+  phase: string | undefined,
   success: boolean,
   iterationNumber: number,
   summary: string,
   objective: string,
   currentCommitCount: number,
 ): CommitStrategyResult {
+  // When the agent doesn't report a skill_phase_completed and the scheduler
+  // defaults to "router", allow commits through — the skill-aware commit
+  // strategy should only filter when the agent is actively participating in
+  // a multi-phase SKILL workflow.
+  if (!phase || phase === "router") {
+    // No skill phase reported — allow the orchestrator's default commit/rollback
+    // effects through unchanged. This happens when the agent doesn't set
+    // skill_phase_completed (e.g. skill-aware mode without actual SKILL usage).
+    return { effects };
+  }
+
   if (shouldCommitForPhase(phase, success)) {
     // Replace the generic commit message with a phase-specific one (Req 7.1–7.3).
     const commitMessage = buildCommitMessageForPhase(phase, iterationNumber, summary, objective);

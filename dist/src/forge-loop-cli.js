@@ -29,7 +29,7 @@ import { ensureGlossaryExists } from "./glossary-driver.js";
 import { parseTranslationFile, translate } from "./i18n.js";
 import { detectLocale } from "./locale-detector.js";
 import { createDualSink, createFileWriter, createLogEntry, createLogSink, validateFileWritable, } from "./logger/index.js";
-import { cleanupOrphans, cleanupStaleSessions, deletePidFile, detectPpidOrphans, writePidFile, } from "./orphan-detector.js";
+import { cleanupOrphans, cleanupStaleSessions, deletePidFile, detectPpidOrphans, writePidFile, countActiveSessions, } from "./orphan-detector.js";
 import { ProcessRegistry } from "./process-registry.js";
 import { branchExists, RunManager } from "./run-manager.js";
 import { detectSkillAwareMode, SdkDriver } from "./sdk-driver.js";
@@ -48,10 +48,10 @@ const PACKAGE_VERSION = JSON.parse(readFileSync(path.join(path.dirname(new URL(i
  */
 export const DEFAULT_BACKOFF_BASE_MS = 60_000;
 /**
- * Default maximum number of concurrent Git worktrees allowed.
- * Used as the default value for `LoopConfig.maxConcurrentWorktrees`.
+ * Default maximum number of concurrent active Forge loops allowed.
+ * Used as the default value for `LoopConfig.maxConcurrentLoops`.
  */
-export const DEFAULT_MAX_CONCURRENT_WORKTREES = 3;
+export const DEFAULT_MAX_CONCURRENT_LOOPS = 6;
 // ---------------------------------------------------------------------------
 // Tier validation
 // ---------------------------------------------------------------------------
@@ -352,7 +352,16 @@ async function main() {
         // ---------------------------------------------------------------
         // Pre-warm Agent SDK
         // ---------------------------------------------------------------
-        const warmQuery = await startup();
+        // Pass bypassPermissions to startup() so the warm-query subprocess
+        // is spawned with the correct permission mode from the start.
+        // Without this, the pre-warmed subprocess uses "default" mode and
+        // hangs waiting for interactive permission approval that never comes.
+        const warmQuery = await startup({
+            options: {
+                permissionMode: "bypassPermissions",
+                allowDangerouslySkipPermissions: true,
+            },
+        });
         // ---------------------------------------------------------------
         // Build output schema
         // ---------------------------------------------------------------
@@ -390,7 +399,7 @@ async function main() {
             maxConsecutiveFailures: 3,
             preventSleep,
             backoffBaseMs: DEFAULT_BACKOFF_BASE_MS,
-            maxConcurrentWorktrees: DEFAULT_MAX_CONCURRENT_WORKTREES,
+            maxConcurrentLoops: DEFAULT_MAX_CONCURRENT_LOOPS,
             skillsDir: opts.skillsDir,
         };
         const limits = {
@@ -437,7 +446,14 @@ async function main() {
             }));
         }
         else if (useWorktree) {
-            const worktreeSetup = RunManager.setupWorktree(objective, cwd, loopConfig.maxConcurrentWorktrees, _t);
+            // Check concurrent loop limit (based on active processes, not worktrees)
+            if (hasForgeDir) {
+                const activeSessions = countActiveSessions(path.join(cwd, ".forge"));
+                if (activeSessions >= loopConfig.maxConcurrentLoops) {
+                    throw new CliError(`Error: ${activeSessions} active loop(s) already running (limit: ${loopConfig.maxConcurrentLoops}). Wait for a loop to finish or increase the limit.`);
+                }
+            }
+            const worktreeSetup = RunManager.setupWorktree(objective, cwd, _t);
             runSetup = worktreeSetup;
             worktreePath = worktreeSetup.worktreePath;
             effectiveCwd = worktreeSetup.worktreePath;
@@ -445,6 +461,14 @@ async function main() {
         else {
             runSetup = RunManager.setupNewRun(objective, cwd);
         }
+        // Emit structured run_started event for downstream consumers (desktop app, CI).
+        // biome-ignore lint/suspicious/noConsole: structured event emitted before logSink exists
+        console.log(JSON.stringify({
+            event: "forge_loop_run_started",
+            run_id: runSetup.runId,
+            branch_name: runSetup.branchName,
+            worktree_path: worktreePath ?? null,
+        }));
         // ---------------------------------------------------------------
         // Spawn sleep prevention process
         // ---------------------------------------------------------------
@@ -642,13 +666,17 @@ async function main() {
         process.on("SIGINT", handleSignal);
         process.on("SIGTERM", handleSignal);
         process.on("SIGHUP", handleSignal);
-        // Process group cleanup on exit (synchronous — catches abnormal exits)
-        process.on("exit", () => {
-            try {
-                process.kill(-process.pid, "SIGTERM");
-            }
-            catch {
-                // Ignore errors during exit cleanup
+        // Process group cleanup on exit (synchronous — catches abnormal exits).
+        // Only kill the process group on non-zero exit to avoid converting a
+        // clean exit (code 0) into a signal exit (-1) observed by the parent.
+        process.on("exit", (code) => {
+            if (code !== 0) {
+                try {
+                    process.kill(-process.pid, "SIGTERM");
+                }
+                catch {
+                    // Ignore errors during exit cleanup
+                }
             }
         });
         // ---------------------------------------------------------------

@@ -15,7 +15,7 @@ import { closeSync, constants, existsSync, mkdirSync, openSync, readdirSync, rea
 import path from "node:path";
 import { formatNotesDocument, parseNotesDocument } from "./context-accumulator.js";
 import { deduplicateBranchName, sanitizeBranchName } from "./git-transaction.js";
-import { canCreateWorktree, computeWorktreePath } from "./worktree-manager.js";
+import { computeWorktreePath } from "./worktree-manager.js";
 // ---------------------------------------------------------------------------
 // Branch existence check
 // ---------------------------------------------------------------------------
@@ -262,16 +262,14 @@ export class RunManager {
     /**
      * Set up a worktree for parallel execution.
      *
-     * Checks the concurrency limit, computes the worktree path, creates
-     * the worktree with a new branch, and initializes the run directory
-     * inside the worktree.
+     * Computes the worktree path, creates the worktree with a new branch,
+     * and initializes the run directory inside the worktree.
      *
      * @param objective      The user-provided objective string.
      * @param repoRoot       Absolute path to the main repository root.
-     * @param maxConcurrent  Maximum number of concurrent worktrees allowed.
      * @returns A {@link RunSetup} with an additional `worktreePath` field.
      */
-    static setupWorktree(objective, repoRoot, maxConcurrent, t) {
+    static setupWorktree(objective, repoRoot, t) {
         const runId = randomUUID();
         // --- File-lock serialization (R2) ---
         // Acquire a file lock to serialize the concurrency check + worktree
@@ -303,24 +301,7 @@ export class RunManager {
             console.warn(warningMsg);
         }
         try {
-            // --- Critical section: concurrency check + worktree creation ---
-            // Count active worktrees
-            const worktreeOutput = execFileSync("git", ["worktree", "list", "--porcelain"], {
-                cwd: repoRoot,
-                timeout: 30_000,
-                killSignal: "SIGTERM",
-            })
-                .toString()
-                .trim();
-            // Count worktree entries (each starts with "worktree ")
-            const activeCount = worktreeOutput
-                ? worktreeOutput.split("\n").filter((line) => line.startsWith("worktree ")).length
-                : 0;
-            // Check concurrency limit (subtract 1 for the main worktree)
-            const additionalWorktrees = activeCount > 0 ? activeCount - 1 : 0;
-            if (!canCreateWorktree(additionalWorktrees, maxConcurrent)) {
-                throw new Error(`Cannot create worktree: ${additionalWorktrees} active worktree(s) already exist (limit: ${maxConcurrent})`);
-            }
+            // --- Critical section: worktree creation ---
             // Sanitize objective for branch name and worktree slug
             let sanitizedSlug = sanitizeBranchName(objective);
             if (sanitizedSlug === "") {
@@ -340,6 +321,13 @@ export class RunManager {
             })
                 .toString()
                 .trim();
+            // Clean up stale worktree directory left by a previous interrupted run.
+            // When a task is stopped mid-creation, the directory remains on disk
+            // but is not registered in `git worktree list`, causing "already exists"
+            // on retry. Remove it before attempting creation.
+            if (existsSync(worktreePath)) {
+                rmSync(worktreePath, { recursive: true, force: true });
+            }
             // Create worktree with a new branch
             execFileSync("git", ["worktree", "add", worktreePath, "-b", branchName], {
                 cwd: repoRoot,
