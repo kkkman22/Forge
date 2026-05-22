@@ -1,27 +1,69 @@
 @import "tailwindcss";
 
-/* Apple Design Language — Forge Loop Design Tokens */
+/* Soft UI — Forge Loop Design Tokens (inspired by modern task management) */
 :root {
-  --color-primary: #0066cc;
-  --color-primary-on-dark: #2997ff;
-  --color-canvas: #ffffff;
-  --color-canvas-parchment: #f5f5f7;
-  --color-surface-dark: #1d1d1f;
-  --color-ink: #1d1d1f;
-  --color-ink-muted: #6e6e73;
-  --color-success: #34c759;
-  --color-warning: #ff9500;
-  --color-error: #ff3b30;
-  --color-hairline: #e0e0e0;
+  /* Sidebar */
+  --sidebar-bg: #1a1650;
+  --sidebar-text: #e0e7ff;
+  --sidebar-text-muted: #a5b4fc;
+  --sidebar-active-bg: rgba(129, 140, 248, 0.18);
+  --sidebar-accent: #818cf8;
 
-  --font-display: "SF Pro Display", system-ui, -apple-system, sans-serif;
-  --font-body: "SF Pro Text", system-ui, -apple-system, sans-serif;
+  /* Main */
+  --color-bg: #f5f3ff;
+  --color-card: #ffffff;
+  --color-primary: #4f46e5;
+  --color-primary-soft: #eef2ff;
+  --color-primary-light: #e0e7ff;
+  --color-ink: #1e1b4b;
+  --color-ink-muted: #6366f1;
+  --color-ink-secondary: #6b7280;
+  --color-border: #e5e7eb;
+  --color-surface-secondary: #f3f4f6;
+  --color-surface-dark: #1e1b4b;
+  --color-hairline: #e5e7eb;
 
-  --rounded-sm: 8px;
-  --rounded-md: 12px;
-  --rounded-lg: 18px;
+  /* Pastel accents */
+  --accent-mint: #d1fae5;
+  --accent-mint-text: #059669;
+  --accent-yellow: #fef3c7;
+  --accent-yellow-text: #d97706;
+  --accent-blue: #dbeafe;
+  --accent-blue-text: #2563eb;
+  --accent-rose: #fce7f3;
+  --accent-rose-text: #db2777;
+  --accent-purple: #ede9fe;
+  --accent-purple-text: #7c3aed;
+  --accent-orange: #ffedd5;
+  --accent-orange-text: #ea580c;
+
+  /* Status */
+  --color-success: #10b981;
+  --color-warning: #f59e0b;
+  --color-error: #ef4444;
+  --color-info: #3b82f6;
+
+  /* Typography */
+  --font-display: "Inter", system-ui, -apple-system, sans-serif;
+  --font-body: "Inter", system-ui, -apple-system, sans-serif;
+
+  /* Shapes — Soft UI uses large radii */
+  --rounded-xs: 10px;
+  --rounded-sm: 14px;
+  --rounded-md: 18px;
+  --rounded-lg: 24px;
+  --rounded-xl: 30px;
   --rounded-pill: 9999px;
 
+  /* Shadows — Soft, diffused */
+  --shadow-xs: 0 1px 2px rgba(79, 70, 229, 0.04);
+  --shadow-sm: 0 2px 8px rgba(79, 70, 229, 0.06), 0 1px 2px rgba(0, 0, 0, 0.04);
+  --shadow-md: 0 4px 16px rgba(79, 70, 229, 0.08), 0 2px 4px rgba(0, 0, 0, 0.04);
+  --shadow-lg: 0 8px 32px rgba(79, 70, 229, 0.10), 0 4px 8px rgba(0, 0, 0, 0.04);
+  --shadow-xl: 0 16px 48px rgba(79, 70, 229, 0.12), 0 8px 16px rgba(0, 0, 0, 0.06);
+  --shadow-card-hover: 0 8px 24px rgba(79, 70, 229, 0.10), 0 2px 8px rgba(0, 0, 0, 0.04);
+
+  /* Spacing */
   --space-xs: 4px;
   --space-sm: 8px;
   --space-md: 16px;
@@ -38,9 +80,49 @@
 
 body {
   font-family: var(--font-body);
-  font-size: 17px;
-  line-height: 1.47;
+  font-size: 15px;
+  line-height: 1.5;
   color: var(--color-ink);
-  background: var(--color-canvas);
+  background: var(--color-bg);
   -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+/* Sidebar navigation links */
+.sidebar-link {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px 16px;
+  border-radius: var(--rounded-sm);
+  font-size: 15px;
+  font-weight: 500;
+  color: var(--sidebar-text);
+  text-decoration: none;
+  transition: background 0.2s ease, color 0.2s ease, transform 0.15s ease;
+  margin-bottom: 4px;
+}
+
+.sidebar-link:hover {
+  background: var(--sidebar-active-bg);
+}
+
+.sidebar-link.router-link-exact-active {
+  background: var(--sidebar-active-bg);
+  color: #c7d2fe;
+}
+
+/* Scrollbar — softer */
+::-webkit-scrollbar {
+  width: 6px;
+}
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+::-webkit-scrollbar-thumb {
+  background: rgba(79, 70, 229, 0.12);
+  border-radius: 3px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: rgba(79, 70, 229, 0.22);
 }

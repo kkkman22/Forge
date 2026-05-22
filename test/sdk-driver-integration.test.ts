@@ -137,7 +137,7 @@ function createConfig(overrides?: Partial<SdkDriverConfig>): SdkDriverConfig {
       maxConsecutiveFailures: 3,
       preventSleep: true,
       backoffBaseMs: 60000,
-      maxConcurrentWorktrees: 3,
+      maxConcurrentLoops: 3,
     },
     limits: { maxIterations: 10 },
     cwd: "/test/repo",
@@ -560,7 +560,7 @@ describe("circuit breaker: review blocked × 3 → aborted", () => {
         maxConsecutiveFailures: 3,
         preventSleep: true,
         backoffBaseMs: 1, // Minimal backoff for fast tests
-        maxConcurrentWorktrees: 3,
+        maxConcurrentLoops: 3,
       },
       limits: { maxIterations: 20 },
       readStatusFile: () =>
@@ -615,7 +615,7 @@ describe("circuit breaker: review blocked × 3 → aborted", () => {
         maxConsecutiveFailures: 3,
         preventSleep: true,
         backoffBaseMs: 60000,
-        maxConcurrentWorktrees: 3,
+        maxConcurrentLoops: 3,
       },
       limits: { maxIterations: 5 },
       readStatusFile: () =>
@@ -661,7 +661,7 @@ describe("circuit breaker: review blocked × 3 → aborted", () => {
         maxConsecutiveFailures: 3,
         preventSleep: true,
         backoffBaseMs: 1,
-        maxConcurrentWorktrees: 3,
+        maxConcurrentLoops: 3,
       },
       limits: { maxIterations: 20 },
       readStatusFile: () =>

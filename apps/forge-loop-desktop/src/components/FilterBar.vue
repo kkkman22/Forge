@@ -23,24 +23,25 @@ const tabs: FilterTab[] = [
 
 <template>
   <div
-    class="flex gap-1 px-2 py-1 bg-[var(--color-surface-secondary)] rounded-[var(--rounded-pill)]"
+    class="inline-flex gap-1.5 p-1.5 bg-[var(--color-card)] rounded-[var(--rounded-md)] shadow-[var(--shadow-sm)] border border-[var(--color-border)]"
     :style="{ fontFamily: 'var(--font-body)' }"
   >
     <button
       v-for="tab in tabs"
       :key="tab.key"
-      class="px-4 py-1.5 rounded-[var(--rounded-pill)] text-[14px] font-medium transition-all"
+      class="px-5 py-2.5 rounded-[var(--rounded-sm)] text-[14px] font-medium transition-all duration-200"
       :class="
         current === tab.key
-          ? 'bg-white text-[var(--color-ink)] shadow-sm'
-          : 'text-[var(--color-ink-muted)] hover:text-[var(--color-ink)]'
+          ? 'bg-[var(--color-primary)] text-white shadow-[var(--shadow-xs)]'
+          : 'text-[var(--color-ink-secondary)] hover:text-[var(--color-ink)] hover:bg-[var(--color-surface-secondary)]'
       "
       @click="emit('change', tab.key)"
     >
       {{ tab.label }}
       <span
         v-if="counts[tab.key] && counts[tab.key] > 0"
-        class="ml-1 text-[12px] opacity-60"
+        class="ml-2 text-[12px] px-2 py-0.5 rounded-[var(--rounded-pill)] font-semibold"
+        :class="current === tab.key ? 'bg-white/20 text-white' : 'bg-[var(--color-surface-secondary)] text-[var(--color-ink-secondary)]'"
       >
         {{ counts[tab.key] }}
       </span>

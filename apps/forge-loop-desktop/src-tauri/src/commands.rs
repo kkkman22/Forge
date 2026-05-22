@@ -7,8 +7,48 @@ use crate::task_store::{
 use chrono::Utc;
 use std::path::PathBuf;
 use std::sync::Mutex;
-use tauri::Emitter;
-use tauri::Manager;
+use tauri::{Emitter, Manager};
+use tauri::menu::MenuItem;
+
+/// Parse iteration count from the completion_summary log entry.
+/// Looks for `"event":"completion_summary"` line and extracts `Iterations: N`.
+fn parse_iterations_from_log(log_dir: &std::path::Path, run_id: &str) -> Option<u32> {
+    let log_path = log_dir.join(format!("{}.log", run_id));
+    let content = std::fs::read_to_string(&log_path).ok()?;
+    for line in content.lines() {
+        if line.contains(r#""event":"completion_summary""#) {
+            // Find "Iterations: N" in the message
+            if let Some(pos) = line.find("Iterations: ") {
+                let rest = &line[pos + "Iterations: ".len()..];
+                let num_str: String = rest.chars().take_while(|c| c.is_ascii_digit()).collect();
+                return num_str.parse().ok();
+            }
+        }
+    }
+    None
+}
+
+fn update_tray_sleep_status(app: &tauri::AppHandle, inhibited: bool) {
+    if let Some(menu) = app.menu() {
+        if let Some(item) = menu.get("sleep_status") {
+            if let Some(menu_item) = item.as_menuitem() {
+                if inhibited {
+                    let _ = menu_item.set_text("休眠抑制中");
+                } else {
+                    let _ = menu_item.set_text("休眠未抑制");
+                }
+            }
+        }
+    }
+    if let Some(tray) = app.tray_by_id("main") {
+        let tooltip = if inhibited {
+            "Forge Loop — 休眠抑制中"
+        } else {
+            "Forge Loop"
+        };
+        let _ = tray.set_tooltip(Some(tooltip));
+    }
+}
 use tauri::State;
 use tokio::sync::Mutex as AsyncMutex;
 
@@ -168,6 +208,67 @@ pub fn get_recent_repos(state: State<AppState>) -> Result<Vec<String>, String> {
 
 // --- Execution Commands ---
 
+struct RunMetadata {
+    branch_name: String,
+    worktree_path: Option<String>,
+}
+
+fn scan_newest_notes_branch(runs_dir: &std::path::Path) -> Option<String> {
+    if !runs_dir.exists() {
+        return None;
+    }
+    let mut latest: Option<(std::path::PathBuf, std::time::SystemTime)> = None;
+    if let Ok(entries) = std::fs::read_dir(runs_dir) {
+        for entry in entries.flatten() {
+            let notes = entry.path().join("notes.md");
+            if notes.exists() {
+                if let Ok(modified) = notes.metadata().and_then(|m| m.modified()) {
+                    if latest.as_ref().map_or(true, |(_, t)| modified > *t) {
+                        latest = Some((notes, modified));
+                    }
+                }
+            }
+        }
+    }
+    let notes_path = latest?.0;
+    let content = std::fs::read_to_string(&notes_path).ok()?;
+    for line in content.lines() {
+        let trimmed = line.trim();
+        if trimmed.starts_with("Branch: ") {
+            return Some(trimmed.trim_start_matches("Branch: ").trim().to_string());
+        }
+    }
+    None
+}
+
+fn scan_run_metadata(repo_path: &std::path::Path) -> Option<RunMetadata> {
+    if let Some(branch) = scan_newest_notes_branch(&repo_path.join(".forge/runs")) {
+        return Some(RunMetadata {
+            branch_name: branch,
+            worktree_path: None,
+        });
+    }
+    let worktrees_dir = repo_path.join(".claude/worktrees");
+    if worktrees_dir.exists() {
+        if let Ok(entries) = std::fs::read_dir(&worktrees_dir) {
+            for entry in entries.flatten() {
+                let wt_path = entry.path();
+                if wt_path.is_dir() {
+                    if let Some(branch) =
+                        scan_newest_notes_branch(&wt_path.join(".forge/runs"))
+                    {
+                        return Some(RunMetadata {
+                            branch_name: branch,
+                            worktree_path: Some(wt_path.to_string_lossy().to_string()),
+                        });
+                    }
+                }
+            }
+        }
+    }
+    None
+}
+
 fn ensure_exit_poller(app_handle: &tauri::AppHandle, state: &AppState) {
     use std::sync::atomic::Ordering;
     if state.exit_poller_started.swap(true, Ordering::Relaxed) {
@@ -210,11 +311,17 @@ fn ensure_exit_poller(app_handle: &tauri::AppHandle, state: &AppState) {
                         TaskStatus::Failed { .. } => "failed",
                         _ => "unknown",
                     };
+                    // Parse iteration count from completion log
+                    let iterations = dirs::data_dir()
+                        .map(|d| d.join("forge-loop-desktop").join("runs").join(&tid))
+                        .and_then(|log_dir| parse_iterations_from_log(&log_dir, &rid));
+
                     let _ = store.update(&tid, |t| {
                         t.status = new_status;
                         if let Some(exec) = t.executions.last_mut() {
                             exec.ended_at = Some(Utc::now());
                             exec.exit_code = Some(exit_code);
+                            exec.iterations = iterations;
                             exec.outcome = if exit_code == 0 {
                                 ExecutionOutcome::Success
                             } else {
@@ -227,7 +334,7 @@ fn ensure_exit_poller(app_handle: &tauri::AppHandle, state: &AppState) {
 
                     let _ = handle.emit("process-exit", ProcessExitEvent {
                         task_id: tid,
-                        run_id: rid,
+                        run_id: rid.clone(),
                         exit_code,
                         new_status: status_name.to_string(),
                     });
@@ -237,6 +344,25 @@ fn ensure_exit_poller(app_handle: &tauri::AppHandle, state: &AppState) {
                             "title": "Forge Loop 任务完成",
                             "body": task.title,
                         }));
+                    }
+
+                    // Clean up worktree if task used one
+                    if matches!(task.branch_strategy, BranchStrategy::NewWorktree { .. }) {
+                        if let Some(exec) = task.executions.last() {
+                            if let Some(ref wt_path) = exec.worktree_path {
+                                let _ = std::process::Command::new("git")
+                                    .args(["worktree", "remove", "--force"])
+                                    .arg(wt_path)
+                                    .current_dir(&task.repo_path)
+                                    .output();
+                            }
+                            if let Some(ref branch) = exec.branch_name {
+                                let _ = std::process::Command::new("git")
+                                    .args(["branch", "-D", branch])
+                                    .current_dir(&task.repo_path)
+                                    .output();
+                            }
+                        }
                     }
                 }
             }
@@ -257,6 +383,7 @@ fn ensure_exit_poller(app_handle: &tauri::AppHandle, state: &AppState) {
                         let _ = handle.emit("sleep-status-changed", serde_json::json!({
                             "is_inhibited": false
                         }));
+                        update_tray_sleep_status(&handle, false);
                     }
                 }
             }
@@ -274,6 +401,56 @@ pub async fn start_task(app_handle: tauri::AppHandle, state: State<'_, AppState>
             .ok_or_else(|| format!("task not found: {}", task_id))?
     };
 
+    // Pre-clean worktrees from previous runs to avoid "3 active worktrees" limit
+    if matches!(task.branch_strategy, BranchStrategy::NewWorktree { .. }) {
+        if let Ok(output) = std::process::Command::new("git")
+            .args(["worktree", "list", "--porcelain"])
+            .current_dir(&task.repo_path)
+            .output()
+        {
+            let stdout = String::from_utf8_lossy(&output.stdout);
+            let mut wt_path: Option<std::path::PathBuf> = None;
+            let mut wt_branch: Option<String> = None;
+            for line in stdout.lines() {
+                if line.starts_with("worktree ") {
+                    wt_path = Some(std::path::PathBuf::from(line.trim_start_matches("worktree ")));
+                } else if line.starts_with("branch ") {
+                    wt_branch = Some(line.trim_start_matches("branch ").to_string());
+                } else if line.is_empty() {
+                    if let (Some(p), Some(b)) = (wt_path.take(), wt_branch.take()) {
+                        if b.starts_with("forge/run-") {
+                            let _ = std::process::Command::new("git")
+                                .args(["worktree", "remove", "--force"])
+                                .arg(&p)
+                                .current_dir(&task.repo_path)
+                                .output();
+                            let _ = std::process::Command::new("git")
+                                .args(["branch", "-D", &b])
+                                .current_dir(&task.repo_path)
+                                .output();
+                        }
+                    }
+                    wt_path = None;
+                    wt_branch = None;
+                }
+            }
+            // Handle last entry if file doesn't end with empty line
+            if let (Some(p), Some(b)) = (wt_path, wt_branch) {
+                if b.starts_with("forge/run-") {
+                    let _ = std::process::Command::new("git")
+                        .args(["worktree", "remove", "--force"])
+                        .arg(&p)
+                        .current_dir(&task.repo_path)
+                        .output();
+                    let _ = std::process::Command::new("git")
+                        .args(["branch", "-D", &b])
+                        .current_dir(&task.repo_path)
+                        .output();
+                }
+            }
+        }
+    }
+
     if matches!(task.branch_strategy, BranchStrategy::CurrentBranch) {
         let output = std::process::Command::new("git")
             .args(["status", "--porcelain"])
@@ -281,7 +458,7 @@ pub async fn start_task(app_handle: tauri::AppHandle, state: State<'_, AppState>
             .output()
             .map_err(|e| format!("git status failed: {}", e))?;
         if !output.stdout.is_empty() {
-            return Err("working tree not clean — commit or stash changes first".into());
+            return Err("工作区不干净 — 请先 commit 或 stash 更改".into());
         }
     }
 
@@ -298,26 +475,42 @@ pub async fn start_task(app_handle: tauri::AppHandle, state: State<'_, AppState>
         .get_api_key()
         .map_err(|e| e.to_string())?
         .or_else(|| std::env::var("ANTHROPIC_API_KEY").ok())
+        .or_else(|| km.get_claude_code_api_key())
         .unwrap_or_default();
     if api_key.is_empty() {
-        return Err("ANTHROPIC_API_KEY not set — configure in Settings".into());
+        return Err("未设置 ANTHROPIC_API_KEY — 请在设置中配置".into());
     }
+
+    let base_url = km.get_claude_code_base_url()
+        .or_else(|| std::env::var("ANTHROPIC_BASE_URL").ok());
 
     let run_id = {
         let mut pm = state.process_manager.lock().await;
-        pm.spawn_task(&task, &api_key)
+        pm.spawn_task(&task, &api_key, base_url.as_deref())
             .await
             .map_err(|e| e.to_string())?
     };
 
     {
         let mut store = state.task_store.lock().map_err(|e| e.to_string())?;
+        let branch_name = match &task.branch_strategy {
+            BranchStrategy::ExistingBranch { name } => Some(name.clone()),
+            _ => None,
+        };
         store
             .update(&task_id, |t| {
                 t.status = TaskStatus::Running {
                     run_id: run_id.clone(),
                     started_at: Utc::now(),
                 };
+                let now = Utc::now();
+                for exec in &mut t.executions {
+                    if exec.exit_code.is_none() {
+                        exec.exit_code = Some(-1);
+                        exec.ended_at = Some(now);
+                        exec.outcome = ExecutionOutcome::Aborted;
+                    }
+                }
                 t.executions.push(ExecutionRecord {
                     run_id: run_id.clone(),
                     started_at: Utc::now(),
@@ -325,6 +518,8 @@ pub async fn start_task(app_handle: tauri::AppHandle, state: State<'_, AppState>
                     exit_code: None,
                     iterations: None,
                     outcome: ExecutionOutcome::Pending,
+                    branch_name,
+                    worktree_path: None,
                 });
             })
             .map_err(|e| e.to_string())?;
@@ -354,6 +549,7 @@ pub async fn start_task(app_handle: tauri::AppHandle, state: State<'_, AppState>
                 let _ = app_handle.emit("sleep-status-changed", serde_json::json!({
                     "is_inhibited": true
                 }));
+                update_tray_sleep_status(&app_handle, true);
             }
             guard.start_lid_watcher();
             *sg = Some(guard);
@@ -372,6 +568,14 @@ pub async fn stop_task(state: State<'_, AppState>, task_id: String) -> Result<()
     store
         .update(&task_id, |t| {
             t.status = TaskStatus::Paused;
+            // Close the last open execution record
+            if let Some(last) = t.executions.last_mut() {
+                if last.exit_code.is_none() {
+                    last.exit_code = Some(-1);
+                    last.ended_at = Some(Utc::now());
+                    last.outcome = ExecutionOutcome::Aborted;
+                }
+            }
         })
         .map_err(|e| e.to_string())?;
 
@@ -385,6 +589,28 @@ pub async fn retry_task(state: State<'_, AppState>, task_id: String) -> Result<S
         store
             .update(&task_id, |t| {
                 t.status = TaskStatus::Queued;
+                let now = Utc::now();
+                for exec in &mut t.executions {
+                    if exec.exit_code.is_none() {
+                        exec.exit_code = Some(-1);
+                        exec.ended_at = Some(now);
+                        exec.outcome = ExecutionOutcome::Aborted;
+                    }
+                }
+            })
+            .map_err(|e| e.to_string())?;
+    }
+    Ok(task_id)
+}
+
+#[tauri::command]
+pub async fn restart_task(state: State<'_, AppState>, task_id: String) -> Result<String, String> {
+    {
+        let mut store = state.task_store.lock().map_err(|e| e.to_string())?;
+        store
+            .update(&task_id, |t| {
+                t.status = TaskStatus::Queued;
+                t.executions.clear();
             })
             .map_err(|e| e.to_string())?;
     }
@@ -450,7 +676,7 @@ pub fn approve_task(state: State<AppState>, task_id: String) -> Result<(), Strin
         TaskStatus::AwaitingReview { run_id, completed_at } => {
             (run_id.clone(), *completed_at)
         }
-        _ => return Err("task is not awaiting review".into()),
+        _ => return Err("任务不在待审核状态".into()),
     };
 
     store
@@ -489,15 +715,62 @@ pub async fn reject_task(
 }
 
 #[tauri::command]
-pub fn get_diff(task_id: String, repo_path: String) -> Result<String, String> {
+pub fn get_diff(
+    task_id: String,
+    repo_path: String,
+    worktree_path: Option<String>,
+    branch_name: Option<String>,
+) -> Result<String, String> {
     let _ = task_id;
+    let _ = branch_name;
+    // Use worktree path if available, otherwise fall back to main repo
+    let target_dir = worktree_path.unwrap_or_else(|| repo_path.clone());
+
+    // Find the merge-base between HEAD and the main branch to diff
+    // the entire branch's changes, not just the last commit.
+    let base_output = std::process::Command::new("git")
+        .args(["merge-base", "HEAD", "main"])
+        .current_dir(&target_dir)
+        .output()
+        .ok();
+
+    let diff_args = match base_output {
+        Some(ref out) if out.status.success() => {
+            let base = String::from_utf8_lossy(&out.stdout).trim().to_string();
+            vec!["diff".to_string(), format!("{}..HEAD", base), "--stat".to_string()]
+        }
+        _ => vec!["diff".to_string(), "HEAD~1".to_string(), "--stat".to_string()],
+    };
+
     let output = std::process::Command::new("git")
-        .args(["diff", "HEAD~1", "--stat"])
-        .current_dir(&repo_path)
+        .args(&diff_args)
+        .current_dir(&target_dir)
         .output()
         .map_err(|e| format!("git diff failed: {}", e))?;
 
     Ok(String::from_utf8_lossy(&output.stdout).to_string())
+}
+
+/// Read the run's notes.md from the worktree as a review report.
+#[tauri::command]
+pub fn get_review_report(
+    task_id: String,
+    run_id: String,
+    repo_path: String,
+    worktree_path: Option<String>,
+) -> Result<String, String> {
+    let target_dir = worktree_path.unwrap_or(repo_path);
+    let notes_path = std::path::Path::new(&target_dir)
+        .join(".forge")
+        .join("runs")
+        .join(&run_id)
+        .join("notes.md");
+
+    if notes_path.exists() {
+        std::fs::read_to_string(&notes_path).map_err(|e| format!("Failed to read notes: {}", e))
+    } else {
+        Ok(String::new())
+    }
 }
 
 #[tauri::command]

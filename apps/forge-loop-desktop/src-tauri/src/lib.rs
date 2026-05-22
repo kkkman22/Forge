@@ -13,6 +13,7 @@ use std::path::PathBuf;
 use std::sync::Mutex;
 use tauri::menu::{MenuBuilder, MenuItemBuilder};
 use tauri::tray::TrayIconBuilder;
+use tauri::image::Image;
 use tauri::Manager;
 use task_store::TaskStatus;
 use tokio::sync::Mutex as AsyncMutex;
@@ -161,6 +162,7 @@ pub fn run() {
             commands::start_task,
             commands::stop_task,
             commands::retry_task,
+            commands::restart_task,
             commands::store_api_key,
             commands::get_auth_status,
             commands::clear_credentials,
@@ -170,6 +172,7 @@ pub fn run() {
             commands::approve_task,
             commands::reject_task,
             commands::get_diff,
+            commands::get_review_report,
             commands::get_task_log,
             commands::export_diagnostics,
             commands::check_update,
@@ -206,8 +209,8 @@ pub fn run() {
                 window.open_devtools();
             }
 
-            // Setup tray icon with sleep status
-            let sleep_status_item = MenuItemBuilder::with_id("sleep_status", "🔓 休眠未抑制")
+            // Setup tray icon with sleep status (hidden by default, shown when sleep is inhibited)
+            let sleep_status_item = MenuItemBuilder::with_id("sleep_status", "休眠未抑制")
                 .enabled(false)
                 .build(app)?;
             let show_item = MenuItemBuilder::with_id("show", "显示 Forge Loop").build(app)?;
@@ -216,10 +219,14 @@ pub fn run() {
                 .items(&[&sleep_status_item, &show_item, &quit_item])
                 .build()?;
 
-            let _tray = TrayIconBuilder::new()
-                .icon(app.default_window_icon().cloned().unwrap())
+            let tray_img = Image::from_bytes(include_bytes!("../icons/tray-icon.png"))
+                .expect("failed to load tray icon");
+
+            let _tray = TrayIconBuilder::with_id("main")
+                .icon(tray_img)
+                .icon_as_template(false)
                 .menu(&menu)
-                .tooltip("Forge Loop — 休眠未抑制")
+                .tooltip("Forge Loop")
                 .on_menu_event(|app, event| {
                     match event.id.as_ref() {
                         "show" => {

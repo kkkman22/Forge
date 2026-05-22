@@ -94,12 +94,19 @@ impl StatusWatcher {
         let events_path = Self::find_latest_events(repo_path);
         let latest_event = events_path.and_then(|p| Self::parse_latest_event(&p));
 
+        let summary = match (&phase, &iteration) {
+            (Some(p), Some(i)) => Some(format!("阶段: {} | 迭代: {}", p, i)),
+            (Some(p), None) => Some(format!("阶段: {}", p)),
+            (None, Some(i)) => Some(format!("迭代: {}", i)),
+            (None, None) => None,
+        };
+
         TaskStatusUpdate {
             task_id: task_id.clone(),
             phase,
             iteration,
             latest_event,
-            progress_summary: None,
+            progress_summary: summary,
         }
     }
 

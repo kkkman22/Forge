@@ -62,6 +62,10 @@ pub struct ExecutionRecord {
     pub exit_code: Option<i32>,
     pub iterations: Option<u32>,
     pub outcome: ExecutionOutcome,
+    #[serde(default)]
+    pub branch_name: Option<String>,
+    #[serde(default)]
+    pub worktree_path: Option<String>,
 }
 
 #[derive(Debug, Serialize, Deserialize, Clone)]
@@ -116,9 +120,25 @@ impl TaskStore {
     pub fn load(path: &Path) -> Result<Self, TaskStoreError> {
         if path.exists() {
             let content = fs::read_to_string(path)?;
-            let data: TaskStoreData = serde_json::from_str(&content)?;
+            let mut data: TaskStoreData = serde_json::from_str(&content)?;
             if data.schema_version != 1 {
                 return Err(TaskStoreError::InvalidSchemaVersion(data.schema_version));
+            }
+            // Fix stale execution records: any record with exit_code == null should be marked aborted
+            for task in &mut data.tasks {
+                let is_active = matches!(
+                    task.status,
+                    TaskStatus::Running { .. }
+                );
+                if !is_active {
+                    for exec in &mut task.executions {
+                        if exec.exit_code.is_none() {
+                            exec.exit_code = Some(-1);
+                            exec.ended_at = Some(chrono::Utc::now());
+                            exec.outcome = ExecutionOutcome::Aborted;
+                        }
+                    }
+                }
             }
             Ok(Self {
                 path: path.to_path_buf(),

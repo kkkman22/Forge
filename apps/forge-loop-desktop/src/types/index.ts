@@ -2,12 +2,31 @@ export type TaskId = string;
 export type RunId = string;
 
 export type TaskStatus =
-  | "queued"
-  | "running"
-  | "paused"
-  | "awaiting_review"
-  | "completed"
-  | "failed";
+  | { type: "queued" }
+  | { type: "running"; run_id: string; started_at: string }
+  | { type: "paused" }
+  | { type: "awaiting_review"; run_id: string; completed_at: string }
+  | { type: "completed"; run_id: string; completed_at: string }
+  | { type: "failed"; run_id: string; error: string; failed_at: string };
+
+export type TaskStatusLabel = "queued" | "running" | "paused" | "awaiting_review" | "completed" | "failed";
+
+export function statusType(s: TaskStatus): TaskStatusLabel {
+  return s.type;
+}
+
+const statusLabelMap: Record<TaskStatusLabel, string> = {
+  queued: "排队中",
+  running: "执行中",
+  paused: "已暂停",
+  awaiting_review: "待审核",
+  completed: "已完成",
+  failed: "失败",
+};
+
+export function statusLabel(s: TaskStatus): string {
+  return statusLabelMap[s.type] || s.type;
+}
 
 export type BranchStrategy =
   | { type: "current_branch" }
@@ -25,6 +44,8 @@ export interface ExecutionRecord {
   exit_code: number | null;
   iterations: number | null;
   outcome: "success" | "failed" | "aborted" | "pending";
+  branch_name: string | null;
+  worktree_path: string | null;
 }
 
 export interface Task {
@@ -51,13 +72,13 @@ export interface TaskMetadata {
 
 export interface TaskInput {
   title: string;
-  repo_path: string;
-  branch_strategy: BranchStrategy;
+  repoPath: string;
+  branchStrategy: BranchStrategy;
   target: TaskTarget;
   tier?: "auto" | "light" | "standard" | "full";
-  max_iterations?: number;
-  max_budget_usd?: number;
-  sleep_inhibit?: boolean;
+  maxIterations?: number;
+  maxBudgetUsd?: number;
+  sleepInhibit?: boolean;
 }
 
 export interface TaskStatusUpdate {
