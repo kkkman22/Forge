@@ -280,11 +280,7 @@ export function compactNotesContent(
   const branchLine = doc.branchName !== undefined ? `\nBranch: ${doc.branchName}` : "";
   const header = `# Run: ${doc.runId}${branchLine}\n\n## Iteration Log\n`;
 
-  const body = [
-    ...compactedLines,
-    "",
-    ...kept.map((e) => formatIterationEntry(e)),
-  ].join("\n");
+  const body = [...compactedLines, "", ...kept.map((e) => formatIterationEntry(e))].join("\n");
 
   const result = `${header}\n${body}\n`;
 

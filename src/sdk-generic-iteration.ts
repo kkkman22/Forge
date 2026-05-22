@@ -38,10 +38,7 @@ const ZERO_TOKEN_USAGE: TokenUsage = {
 // ---------------------------------------------------------------------------
 
 function isNoOpIteration(output: AgentOutput): boolean {
-  return (
-    Array.isArray(output.key_changes_made) &&
-    output.key_changes_made.length === 0
-  );
+  return Array.isArray(output.key_changes_made) && output.key_changes_made.length === 0;
 }
 
 // ---------------------------------------------------------------------------
@@ -114,7 +111,12 @@ export async function executeGenericIteration(ctx: IterationContext): Promise<It
 
     // DEBUG: log structured output to diagnose success=false issue
     ctx.logger.log(
-      createLogEntry("debug_output", "info", `Structured output: success=${output.success}, summary="${output.summary?.slice(0, 100)}", changes=${JSON.stringify(output.key_changes_made)?.slice(0, 200)}`, { runId: ctx.config.runId, iteration: iterationNumber }),
+      createLogEntry(
+        "debug_output",
+        "info",
+        `Structured output: success=${output.success}, summary="${output.summary?.slice(0, 100)}", changes=${JSON.stringify(output.key_changes_made)?.slice(0, 200)}`,
+        { runId: ctx.config.runId, iteration: iterationNumber },
+      ),
     );
 
     // Auto-stop: if the iteration succeeded but made no changes, the task
@@ -167,7 +169,12 @@ export async function executeGenericIteration(ctx: IterationContext): Promise<It
     // Context overflow recovery: compact notes and retry once.
     if (isContextOverflowError(error)) {
       ctx.logger.log(
-        createLogEntry("compact_notes_triggered", "info", `Context overflow detected — compacting notes and retrying`, { runId: ctx.config.runId, iteration: iterationNumber }),
+        createLogEntry(
+          "compact_notes_triggered",
+          "info",
+          `Context overflow detected — compacting notes and retrying`,
+          { runId: ctx.config.runId, iteration: iterationNumber },
+        ),
       );
 
       const compactedNotes = compactNotesContent(notesContent);
@@ -195,14 +202,23 @@ export async function executeGenericIteration(ctx: IterationContext): Promise<It
         const usage: TokenUsage = retryResult.usage;
 
         ctx.logger.log(
-          createLogEntry("debug_output", "info", `Retry after compaction: success=${output.success}, summary="${output.summary?.slice(0, 100)}"`, { runId: ctx.config.runId, iteration: iterationNumber }),
+          createLogEntry(
+            "debug_output",
+            "info",
+            `Retry after compaction: success=${output.success}, summary="${output.summary?.slice(0, 100)}"`,
+            { runId: ctx.config.runId, iteration: iterationNumber },
+          ),
         );
 
         // Use compacted notes going forward.
         notesContent = compactedNotes;
 
         if (output.should_fully_stop || (output.success && isNoOpIteration(output))) {
-          const stopResult = transition(orchestratorState, { type: "stop_condition_met" }, ctx.limits);
+          const stopResult = transition(
+            orchestratorState,
+            { type: "stop_condition_met" },
+            ctx.limits,
+          );
           orchestratorState = stopResult.state;
           const lastEffects = stopResult.effects;
           await ctx.executeEffects(stopResult.effects);
@@ -276,7 +292,12 @@ export async function executeGenericIteration(ctx: IterationContext): Promise<It
         // Retry also failed — fall through to normal hard failure handling.
         const retryErrorMsg = retryError instanceof Error ? retryError.message : String(retryError);
         ctx.logger.log(
-          createLogEntry("compact_notes_retry_failed", "warn", `Retry after compaction also failed: ${retryErrorMsg}`, { runId: ctx.config.runId, iteration: iterationNumber }),
+          createLogEntry(
+            "compact_notes_retry_failed",
+            "warn",
+            `Retry after compaction also failed: ${retryErrorMsg}`,
+            { runId: ctx.config.runId, iteration: iterationNumber },
+          ),
         );
       }
     }
