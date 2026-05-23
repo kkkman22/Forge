@@ -30,7 +30,7 @@ export { parseSpecArgs, parseExternalSpec, scoreImportedContent, runImportMode }
 export type { ParseSpecArgsResult, ExternalSpecContent, ImportModeResult } from "./spec-import.js";
 export { runBugfixOrchestration } from "./spec-bugfix-orchestration.js";
 export type { BugfixOrchestrationResult } from "./spec-bugfix-orchestration.js";
-export { validateContractGate, enforceEarsSyntax } from "./spec-validation.js";
+export { validateContractGate, enforceEarsSyntax, detectSpecLeakFromBundle } from "./spec-validation.js";
 export type { ContractGateResult, EarsEnforcementResult } from "./spec-validation.js";
 
 // ---------------------------------------------------------------------------

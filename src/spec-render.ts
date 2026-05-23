@@ -13,6 +13,7 @@ import type {
   SpecFileFrontmatter,
   TasksSeedDocument,
 } from "./spec-bundle.js";
+import { enforceEarsSyntax } from "./spec-validation.js";
 
 // ---------------------------------------------------------------------------
 // Internal: frontmatter renderer
@@ -72,7 +73,8 @@ export function renderRequirementsMarkdown(doc: RequirementsDocument): string {
       parts.push("#### Acceptance Criteria");
       parts.push("");
       for (const clause of us.earsCriteria) {
-        parts.push(`- 当 ${clause.when} 时 系统应当 ${clause.shall}`);
+        const enforced = enforceEarsSyntax(`当 ${clause.when} 时 系统应当 ${clause.shall}`);
+        parts.push(`- ${enforced.output}`);
       }
       parts.push("");
     }
