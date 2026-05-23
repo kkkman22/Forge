@@ -65,9 +65,14 @@ function parseFrontmatter(text: string): SpecFileFrontmatter | ParseError[] {
   const validStatuses = ["draft", "locked"];
   const validVariants: WorkflowVariant[] = ["requirements-first", "design-first", "quick-plan"];
 
-  const s = status!;
-  if (!validStatuses.includes(s)) {
-    errors.push({ message: `Invalid status '${s}', expected draft|locked` });
+  // After the early return above, feature / status / date are guaranteed non-empty.
+  // Use explicit guards instead of `!` to satisfy lint/style/noNonNullAssertion.
+  if (!feature || !status || !date) {
+    return [{ message: "internal: required frontmatter fields missing after validation" }];
+  }
+
+  if (!validStatuses.includes(status)) {
+    errors.push({ message: `Invalid status '${status}', expected draft|locked` });
   }
 
   const wv = workflow_variant ?? "requirements-first";
@@ -78,9 +83,9 @@ function parseFrontmatter(text: string): SpecFileFrontmatter | ParseError[] {
   if (errors.length > 0) return errors;
 
   return {
-    feature: feature!,
-    status: s as "draft" | "locked",
-    date: date!,
+    feature,
+    status: status as "draft" | "locked",
+    date,
     workflow_variant: wv as WorkflowVariant,
     brownfield: getValue("brownfield") === "true",
     kind: getValue("kind") as "feature" | "bugfix" | undefined,
@@ -230,10 +235,9 @@ export function parseRequirementsMarkdown(text: string): ParseResult<Requirement
   const earsCriteria: EarsClause[] = [];
 
   const reqRegex = /### Requirement \d+: (.+)/g;
-  let reqMatch: RegExpExecArray | null;
   const reqBlocks: { title: string; start: number }[] = [];
 
-  while ((reqMatch = reqRegex.exec(body)) !== null) {
+  for (const reqMatch of body.matchAll(reqRegex)) {
     reqBlocks.push({ title: reqMatch[1], start: reqMatch.index });
   }
 
@@ -368,10 +372,9 @@ export function parseTasksMarkdown(text: string): ParseResult<TasksSeedDocument>
   // Extract tasks
   const tasks: TaskSeed[] = [];
   const taskRegex = /### (T-\d+(?:\.\d+)?)\s+(.+)/g;
-  let taskMatch: RegExpExecArray | null;
   const taskBlocks: { id: string; title: string; start: number }[] = [];
 
-  while ((taskMatch = taskRegex.exec(body)) !== null) {
+  for (const taskMatch of body.matchAll(taskRegex)) {
     taskBlocks.push({
       id: taskMatch[1],
       title: taskMatch[2],

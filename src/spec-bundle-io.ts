@@ -48,22 +48,25 @@ function parseLegacySpec(text: string): SpecDocument {
   // Extract requirements (需求)
   const requirements: Requirement[] = [];
   const reqRegex = /###\s*需求\s*\d+[:：]\s*(.+)/g;
-  let reqMatch: RegExpExecArray | null;
-  while ((reqMatch = reqRegex.exec(body)) !== null) {
-    const title = reqMatch[1].trim();
-    // Extract scenarios from lines starting with - 当...则...
-    const restStart = reqMatch.index + reqMatch[0].length;
-    const nextReq = reqRegex.exec(body);
-    const restEnd = nextReq ? nextReq.index : body.length;
-    reqRegex.lastIndex = reqMatch.index + 1; // reset for next outer loop iteration
-    const blockText = body.slice(restStart, restEnd);
+  // Two-pass parsing: first collect heading positions, then slice block bodies.
+  const reqHeadings: { title: string; restStart: number }[] = [];
+  for (const m of body.matchAll(reqRegex)) {
+    reqHeadings.push({
+      title: m[1].trim(),
+      restStart: (m.index ?? 0) + m[0].length,
+    });
+  }
+  for (let i = 0; i < reqHeadings.length; i++) {
+    const heading = reqHeadings[i];
+    const restEnd = reqHeadings[i + 1]?.restStart ?? body.length;
+    const blockText = body.slice(heading.restStart, restEnd);
 
     const scenarios = blockText
       .split("\n")
       .filter((l) => l.trim().startsWith("-") && l.includes("当"))
       .map((l) => l.replace(/^[-*]\s*/, "").trim());
 
-    requirements.push({ title, description: "", scenarios });
+    requirements.push({ title: heading.title, description: "", scenarios });
   }
 
   // Extract exclusions (不做什么)
@@ -161,14 +164,18 @@ export function loadSpecBundle(
       tasks = tasksResult.doc;
     }
 
-    const frontmatter = reqResult.doc?.frontmatter;
+    const requirementsDoc = reqResult.doc;
+    if (!requirementsDoc) {
+      throw new Error("internal: requirements.md parsed without errors but doc is missing");
+    }
+    const frontmatter = requirementsDoc.frontmatter;
 
     return {
       feature: frontmatter.feature,
       kind: frontmatter.kind ?? "feature",
       layout: "three-file",
       variant: frontmatter.workflow_variant,
-      primary: reqResult.doc!,
+      primary: requirementsDoc,
       ...(design ? { design } : {}),
       ...(tasks ? { tasks } : {}),
       ...(hasLegacy ? { migrationHint: true } : {}),
