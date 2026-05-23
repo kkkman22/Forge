@@ -99,18 +99,34 @@ describe("enforceEarsSyntax", () => {
     expect(result.retries).toBe(0);
   });
 
-  it("rewrites to EARS format within retries", () => {
+  it("rewrites arrow-style to EARS format", () => {
+    const result = enforceEarsSyntax("用户提交 → 返回成功");
+    expect(result.output).toBe("当 用户提交 时 系统应当 返回成功");
+    expect(result.retries).toBe(1);
+  });
+
+  it("rewrites '后' style to EARS format", () => {
     const result = enforceEarsSyntax("用户提交后返回成功");
-    // Should produce EARS format after internal rewrite
     expect(result.output).toContain("当");
+    expect(result.output).toContain("系统应当");
     expect(result.retries).toBeGreaterThan(0);
   });
 
-  it("marks exhausted when EARS regex still doesn't match", () => {
-    // The simple rewriter wraps text, so "..." becomes "当 ... 时 系统应当 ..."
-    // which actually matches EARS_FULL. So exhausted is only true when
-    // the rewriter can't form a valid EARS (empty input edge case).
-    const result = enforceEarsSyntax("", { maxRetries: 1 });
-    expect(result.retries).toBe(1);
+  it("marks exhausted when input is empty", () => {
+    const result = enforceEarsSyntax("", { maxRetries: 3 });
+    expect(result.exhausted).toBe(true);
+  });
+
+  it("fallback wraps arbitrary text as EARS", () => {
+    const result = enforceEarsSyntax("@#$%", { maxRetries: 3 });
+    expect(result.output).toContain("当");
+    expect(result.output).toContain("系统应当");
+    expect(result.retries).toBe(4); // Falls through to strategy 4
+  });
+
+  it("legacy EARS format passes through unchanged", () => {
+    const result = enforceEarsSyntax("当 提交 则 成功");
+    expect(result.output).toBe("当 提交 则 成功");
+    expect(result.retries).toBe(0);
   });
 });

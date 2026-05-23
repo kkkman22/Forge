@@ -9,7 +9,7 @@ import { existsSync, mkdirSync, rmSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
 import { tmpdir } from "node:os";
 import { describe, expect, it } from "vitest";
-import { parseSpecArgs, parseExternalSpec, scoreImportedContent } from "../src/spec-import.js";
+import { parseSpecArgs, parseExternalSpec, scoreImportedContent, runImportMode } from "../src/spec-import.js";
 
 let testDir: string;
 
@@ -103,5 +103,34 @@ describe("scoreImportedContent", () => {
       hasArchitecture: false,
     });
     expect(result).toBe("quick-plan");
+  });
+});
+
+describe("runImportMode", () => {
+  it("returns error when input file not found", () => {
+    const result = runImportMode("/nonexistent/path/spec.md", "/tmp/out");
+    expect(result.success).toBe(false);
+    expect(result.error).toContain("not found");
+  });
+
+  it("imports external spec and writes requirements.md", () => {
+    const dir = createTestDir();
+    try {
+      const inputFile = join(dir, "user-auth.md");
+      writeFileSync(inputFile, `# User Auth
+
+- 当 用户登录 时 系统应当 返回 token
+`);
+
+      const outputDir = join(dir, "output");
+      mkdirSync(join(outputDir, "user-auth"), { recursive: true });
+
+      const result = runImportMode(inputFile, outputDir);
+      expect(result.success).toBe(true);
+      expect(result.feature).toBe("user-auth");
+      expect(result.variant).toBe("requirements-first");
+    } finally {
+      cleanup();
+    }
   });
 });

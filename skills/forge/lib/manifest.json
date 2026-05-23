@@ -1,6 +1,6 @@
 {
   "version": 1,
-  "generated_at": "2026-05-23T09:16:39.713Z",
+  "generated_at": "2026-05-23T10:26:20.254Z",
   "subs": {
     "abort": {
       "instructions": {
@@ -41,7 +41,7 @@
     "build": {
       "instructions": {
         "path": "build/instructions.md",
-        "sha256": "c661b1cd493586fb0be0f7ac4764b5ad9bba0919b34ac11452dfc0d594d656bb"
+        "sha256": "2e9c6ea1d1858be26c0e3ced1378b695c3ab51fa0fd2e85070a0ac8df77efc13"
       },
       "references": [
         {
@@ -224,7 +224,7 @@
     "fix": {
       "instructions": {
         "path": "fix/instructions.md",
-        "sha256": "6fc2f50802ea8a8af6b3bbcbe9daa5054c6117e72541cbd1b8c56439e41f2752"
+        "sha256": "2b0fc9ab99c213fdbe906e4bc8af3418a8518c014d7acbf41b41d4d36ad26f1c"
       },
       "references": [
         {

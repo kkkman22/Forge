@@ -5,8 +5,9 @@
  */
 import * as fc from "fast-check";
 import { describe, expect, it } from "vitest";
-import { derivePbtTasksFromUnchanged } from "../src/spec-pbt-derivation.js";
+import { derivePbtTasksFromUnchanged, computeFailSignature, triggerThreeStrikeReroute } from "../src/spec-pbt-derivation.js";
 import type { BugfixDocument, EarsClause, SpecBundle, SpecFileFrontmatter, TasksSeedDocument } from "../src/spec-bundle.js";
+import type { FixFailure } from "../src/spec-pbt-derivation.js";
 
 function makeEars(when: string, shall: string, suffix = ""): EarsClause {
   return {
@@ -181,5 +182,40 @@ describe("derivePbtTasksFromUnchanged", () => {
         },
       ),
     );
+  });
+});
+
+// ---------------------------------------------------------------------------
+// §2.4 Three-strike reroute
+// ---------------------------------------------------------------------------
+
+describe("triggerThreeStrikeReroute", () => {
+  it("does not reroute before 3 same-signature failures", () => {
+    const failure: FixFailure = { testName: "test-a", firstLine: "Expected 1" };
+    const result = triggerThreeStrikeReroute([], failure);
+    expect(result.reroute).toBe(false);
+    expect(result.failures).toHaveLength(1);
+  });
+
+  it("triggers reroute after 3 same-signature failures", () => {
+    const failure: FixFailure = { testName: "test-a", firstLine: "Expected 1" };
+    const history: FixFailure[] = [
+      { testName: "test-a", firstLine: "Expected 1" },
+      { testName: "test-a", firstLine: "Expected 1" },
+    ];
+    const result = triggerThreeStrikeReroute(history, failure);
+    expect(result.reroute).toBe(true);
+  });
+
+  it("computes deterministic fail_signature", () => {
+    const f1: FixFailure = { testName: "test-a", firstLine: "line 1" };
+    const f2: FixFailure = { testName: "test-a", firstLine: "line 1" };
+    expect(computeFailSignature([f1])).toBe(computeFailSignature([f2]));
+  });
+
+  it("different failures produce different signatures", () => {
+    const f1: FixFailure = { testName: "test-a", firstLine: "line 1" };
+    const f2: FixFailure = { testName: "test-b", firstLine: "line 2" };
+    expect(computeFailSignature([f1])).not.toBe(computeFailSignature([f2]));
   });
 });

@@ -90,10 +90,10 @@ describe("Build Nature Mode contracts", () => {
     expect(content).toContain("refactor mode");
   });
 
-  it("forge-fix SKILL.md contains deprecation notice", () => {
+  it("forge-fix SKILL.md references bugfix three-file workflow", () => {
     const content = readFileSync("skills/forge/lib/fix/instructions.md", "utf-8");
-    expect(content).toContain("deprecated");
-    expect(content).toContain("bugfix mode");
+    expect(content).toContain("runBugfixOrchestration");
+    expect(content).toContain("detectSpecKind");
   });
 
   // --- Dispatcher ---
