@@ -159,6 +159,22 @@ export function parseIntentDictionary(yamlContent: string): IntentDefinition[] {
     throw new Error("No intent definitions found in dictionary");
   }
 
+  // R6-1: Soft warning when dictionary exceeds 8 intents
+  if (definitions.length > 8) {
+    console.warn(
+      `[intent_dict_warning] Dictionary has ${definitions.length} intents (threshold: 8). Consider merging or retiring low-usage entries.`,
+    );
+  }
+
+  // R6-2: Soft warning when single intent has > 20 triggers
+  for (const def of definitions) {
+    if (def.triggers.length > 20) {
+      console.warn(
+        `[intent_dict_warning] Intent "${def.name}" has ${def.triggers.length} triggers (threshold: 20). Consider splitting.`,
+      );
+    }
+  }
+
   // Validate duplicate triggers (R3-4)
   for (const def of definitions) {
     for (const trigger of def.triggers) {
