@@ -34,10 +34,7 @@ export interface RefineOptions {
 // detectSpecTriggers
 // ---------------------------------------------------------------------------
 
-export function detectSpecTriggers(
-  featureDir: string,
-  options?: DetectOptions,
-): SpecTriggers {
+export function detectSpecTriggers(featureDir: string, options?: DetectOptions): SpecTriggers {
   const reqPath = join(featureDir, "requirements.md");
   const designPath = join(featureDir, "design.md");
   const tasksPath = join(featureDir, "tasks.md");
@@ -141,7 +138,7 @@ export function refineDownstream(
 
 function readFrontmatterStatus(filePath: string): string | undefined {
   try {
-    const { readFileSync } = require("fs");
+    const { readFileSync } = require("node:fs");
     const content = readFileSync(filePath, "utf-8");
     const match = content.match(/^---\n[\s\S]*?status:\s*(\w+)/);
     return match?.[1];

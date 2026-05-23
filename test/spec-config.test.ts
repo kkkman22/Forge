@@ -4,7 +4,7 @@
  * Validates: Requirement 12
  */
 import { describe, expect, it } from "vitest";
-import { parseSpecLayoutConfig, SpecLayoutConfig } from "../src/spec-config.js";
+import { parseSpecLayoutConfig } from "../src/spec-config.js";
 
 describe("parseSpecLayoutConfig", () => {
   it("defaults to 'three-file' when no config specified", () => {

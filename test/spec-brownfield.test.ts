@@ -6,16 +6,25 @@
  *
  * Validates: Requirement 9
  */
+
 import * as fc from "fast-check";
-import { existsSync, mkdirSync, rmSync, writeFileSync } from "node:fs";
-import { join } from "node:path";
-import { tmpdir } from "node:os";
 import { describe, expect, it } from "vitest";
 import { detectBrownfieldSignals, runBrownfieldSelfChecks } from "../src/spec-brownfield.js";
-import type { SpecBundle, RequirementsDocument, DesignDocument, SpecFileFrontmatter } from "../src/spec-bundle.js";
+import type {
+  DesignDocument,
+  RequirementsDocument,
+  SpecBundle,
+  SpecFileFrontmatter,
+} from "../src/spec-bundle.js";
 
 function makeFm(): SpecFileFrontmatter {
-  return { feature: "test", status: "draft", date: "2026-05-23", workflow_variant: "requirements-first", brownfield: true };
+  return {
+    feature: "test",
+    status: "draft",
+    date: "2026-05-23",
+    workflow_variant: "requirements-first",
+    brownfield: true,
+  };
 }
 
 function makeBrownfieldBundle(): SpecBundle {
@@ -32,7 +41,11 @@ function makeBrownfieldBundle(): SpecBundle {
       earsCriteria: [],
       nonFunctional: [],
       outOfScope: [],
-      delta: { added: ["新增 spec.ts 辅助函数"], modified: ["修改 spec.ts 接口"], unchanged: ["config.ts 不变"] },
+      delta: {
+        added: ["新增 spec.ts 辅助函数"],
+        modified: ["修改 spec.ts 接口"],
+        unchanged: ["config.ts 不变"],
+      },
     } as RequirementsDocument,
     design: {
       frontmatter: makeFm(),

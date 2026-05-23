@@ -7,7 +7,7 @@
  * Validates: Requirement 3
  */
 
-import type { RequirementsDocument, EarsClause } from "./spec-bundle.js";
+import type { RequirementsDocument } from "./spec-bundle.js";
 
 // ---------------------------------------------------------------------------
 // Types
@@ -40,8 +40,17 @@ const EARS_LEGACY_REGEX = /^当\s+.+\s*则\s+.+$/;
 // ---------------------------------------------------------------------------
 
 const VAGUE_TERMS = [
-  "适当", "合理", "等等", "等等", "之类的", "之类的",
-  "maybe", "should probably", "reasonable", "appropriate", "etc",
+  "适当",
+  "合理",
+  "等等",
+  "等等",
+  "之类的",
+  "之类的",
+  "maybe",
+  "should probably",
+  "reasonable",
+  "appropriate",
+  "etc",
 ];
 
 // ---------------------------------------------------------------------------

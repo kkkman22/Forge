@@ -5,16 +5,28 @@
  */
 import { describe, expect, it } from "vitest";
 import {
-  parseBugfixMarkdown,
   parseBugfixDesignMarkdown,
-  renderBugfixMarkdown,
+  parseBugfixMarkdown,
   renderBugfixDesignMarkdown,
+  renderBugfixMarkdown,
   runBugfixSelfChecks,
 } from "../src/spec-bugfix.js";
-import type { SpecBundle, BugfixDocument, BugfixDesignDocument, EarsClause, SpecFileFrontmatter } from "../src/spec-bundle.js";
+import type {
+  BugfixDesignDocument,
+  BugfixDocument,
+  EarsClause,
+  SpecBundle,
+  SpecFileFrontmatter,
+} from "../src/spec-bundle.js";
 
 function makeFm(): SpecFileFrontmatter {
-  return { feature: "test", status: "draft", date: "2026-05-23", workflow_variant: "requirements-first", kind: "bugfix" };
+  return {
+    feature: "test",
+    status: "draft",
+    date: "2026-05-23",
+    workflow_variant: "requirements-first",
+    kind: "bugfix",
+  };
 }
 
 function makeEars(overrides?: Partial<EarsClause>): EarsClause {
@@ -230,7 +242,11 @@ describe("runBugfixSelfChecks", () => {
   // BFX-03: Current != Expected (verbatim)
   it("BFX-03: fails P0 when Current=Expected verbatim", () => {
     const clause = makeEars({ when: "X", shall: "same", raw: "当 X 时 系统应当 same" });
-    const bundle = makeBugfixBundle({ current: [clause], expected: [clause], unchanged: [makeEars()] });
+    const bundle = makeBugfixBundle({
+      current: [clause],
+      expected: [clause],
+      unchanged: [makeEars()],
+    });
     const result = runBugfixSelfChecks(bundle);
     expect(result.pass).toBe(false);
     expect(result.findings.some((f) => f.rule === "BFX-03")).toBe(true);

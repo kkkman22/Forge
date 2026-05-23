@@ -5,7 +5,13 @@
  */
 import { describe, expect, it } from "vitest";
 import { runBugfixOrchestration } from "../src/spec-bugfix-orchestration.js";
-import type { SpecBundle, BugfixDocument, SpecFileFrontmatter, BugfixDesignDocument, TasksSeedDocument } from "../src/spec-bundle.js";
+import type {
+  BugfixDesignDocument,
+  BugfixDocument,
+  SpecBundle,
+  SpecFileFrontmatter,
+  TasksSeedDocument,
+} from "../src/spec-bundle.js";
 
 function makeBugfixBundle(): SpecBundle {
   const fm: SpecFileFrontmatter = {
@@ -18,14 +24,34 @@ function makeBugfixBundle(): SpecBundle {
   const doc: BugfixDocument = {
     frontmatter: { ...fm, kind: "bugfix" },
     current: [
-      { line: 1, when: "用户提交登录表单", shall: "系统返回 500 错误", raw: "当 用户提交登录表单 时 系统应当 系统返回 500 错误" },
+      {
+        line: 1,
+        when: "用户提交登录表单",
+        shall: "系统返回 500 错误",
+        raw: "当 用户提交登录表单 时 系统应当 系统返回 500 错误",
+      },
     ],
     expected: [
-      { line: 1, when: "用户提交登录表单", shall: "系统返回 200 并创建会话", raw: "当 用户提交登录表单 时 系统应当 系统返回 200 并创建会话" },
+      {
+        line: 1,
+        when: "用户提交登录表单",
+        shall: "系统返回 200 并创建会话",
+        raw: "当 用户提交登录表单 时 系统应当 系统返回 200 并创建会话",
+      },
     ],
     unchanged: [
-      { line: 1, when: "用户提交注册表单", shall: "系统创建账户", raw: "当 用户提交注册表单 时 系统应当 系统创建账户" },
-      { line: 2, when: "用户登出", shall: "系统清除会话", raw: "当 用户登出 时 系统应当 系统清除会话" },
+      {
+        line: 1,
+        when: "用户提交注册表单",
+        shall: "系统创建账户",
+        raw: "当 用户提交注册表单 时 系统应当 系统创建账户",
+      },
+      {
+        line: 2,
+        when: "用户登出",
+        shall: "系统清除会话",
+        raw: "当 用户登出 时 系统应当 系统清除会话",
+      },
     ],
   };
   return {
@@ -97,7 +123,12 @@ describe("runBugfixOrchestration", () => {
       layout: "three-file",
       variant: "requirements-first",
       primary: {
-        frontmatter: { feature: "test", status: "locked", date: "2026-05-23", workflow_variant: "requirements-first" },
+        frontmatter: {
+          feature: "test",
+          status: "locked",
+          date: "2026-05-23",
+          workflow_variant: "requirements-first",
+        },
         intro: "",
         glossary: [],
         userStories: [],

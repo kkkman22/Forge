@@ -5,8 +5,8 @@
  */
 
 import type {
-  BugfixDocument,
   BugfixDesignDocument,
+  BugfixDocument,
   EarsClause,
   SpecBundle,
   SpecFileFrontmatter,
@@ -16,8 +16,14 @@ import type {
 // Parse result types
 // ---------------------------------------------------------------------------
 
-export interface ParseError { line?: number; message: string; }
-export interface ParseResult<T> { doc?: T; errors?: ParseError[]; }
+export interface ParseError {
+  line?: number;
+  message: string;
+}
+export interface ParseResult<T> {
+  doc?: T;
+  errors?: ParseError[];
+}
 
 // ---------------------------------------------------------------------------
 // parseBugfixMarkdown
@@ -36,8 +42,14 @@ export function parseBugfixMarkdown(text: string): ParseResult<BugfixDocument> {
   const unchanged = extractEarsFromSection(body, "Unchanged Behavior");
 
   // Validate all three sections exist
-  if (!hasSection(body, "Current Behavior") || !hasSection(body, "Expected Behavior") || !hasSection(body, "Unchanged Behavior")) {
-    return { errors: [{ message: "Missing required section (Current/Expected/Unchanged Behavior)" }] };
+  if (
+    !hasSection(body, "Current Behavior") ||
+    !hasSection(body, "Expected Behavior") ||
+    !hasSection(body, "Unchanged Behavior")
+  ) {
+    return {
+      errors: [{ message: "Missing required section (Current/Expected/Unchanged Behavior)" }],
+    };
   }
 
   return {
@@ -158,21 +170,33 @@ export function runBugfixSelfChecks(bundle: SpecBundle): BugfixCheckResult {
 
   // BFX-01: Three sections must exist
   if (doc.current.length === 0 || doc.expected.length === 0 || doc.unchanged.length === 0) {
-    findings.push({ rule: "BFX-01", severity: "P0", message: "All three sections (Current/Expected/Unchanged) must have entries" });
+    findings.push({
+      rule: "BFX-01",
+      severity: "P0",
+      message: "All three sections (Current/Expected/Unchanged) must have entries",
+    });
   }
 
   // BFX-02: Sections must not be empty/placeholder
   const allClauses = [...doc.current, ...doc.expected, ...doc.unchanged];
   for (const clause of allClauses) {
     if (!clause.raw || clause.raw.trim() === "" || /^(TODO|TBD|待补充)$/i.test(clause.raw.trim())) {
-      findings.push({ rule: "BFX-02", severity: "P0", message: `Placeholder or empty clause: "${clause.raw}"` });
+      findings.push({
+        rule: "BFX-02",
+        severity: "P0",
+        message: `Placeholder or empty clause: "${clause.raw}"`,
+      });
     }
   }
 
   // BFX-03: Current != Expected verbatim
   for (let i = 0; i < Math.min(doc.current.length, doc.expected.length); i++) {
     if (doc.current[i].raw === doc.expected[i].raw) {
-      findings.push({ rule: "BFX-03", severity: "P0", message: `Current and Expected are identical at index ${i}: "${doc.current[i].raw}"` });
+      findings.push({
+        rule: "BFX-03",
+        severity: "P0",
+        message: `Current and Expected are identical at index ${i}: "${doc.current[i].raw}"`,
+      });
     }
   }
 
@@ -184,7 +208,11 @@ export function runBugfixSelfChecks(bundle: SpecBundle): BugfixCheckResult {
       if (u.when === e.when && u.shall !== e.shall) {
         // Unchanged says system should do A, Expected says system should do B for same condition
         // This means the fix changes what Unchanged says shouldn't change — conflict!
-        findings.push({ rule: "BFX-04", severity: "P0", message: `Unchanged and Expected conflict on condition "${u.when}": unchanged="${u.shall}" vs expected="${e.shall}"` });
+        findings.push({
+          rule: "BFX-04",
+          severity: "P0",
+          message: `Unchanged and Expected conflict on condition "${u.when}": unchanged="${u.shall}" vs expected="${e.shall}"`,
+        });
       }
     }
   }
@@ -199,7 +227,11 @@ export function runBugfixSelfChecks(bundle: SpecBundle): BugfixCheckResult {
   // BFX-06: At least 1 non-[manual] Unchanged entry
   const nonManual = doc.unchanged.filter((u) => !u.raw.endsWith("[manual]"));
   if (doc.unchanged.length > 0 && nonManual.length === 0) {
-    findings.push({ rule: "BFX-06", severity: "P1", message: "All Unchanged entries are [manual]; at least one automated PBT needed" });
+    findings.push({
+      rule: "BFX-06",
+      severity: "P1",
+      message: "All Unchanged entries are [manual]; at least one automated PBT needed",
+    });
   }
 
   return { pass: findings.every((f) => f.severity !== "P0") || findings.length === 0, findings };
@@ -249,12 +281,22 @@ function extractEarsFromSection(body: string, heading: string): EarsClause[] {
     const line = lines[i].trim();
     const match = line.match(/^[-*]\s*当\s+(.+?)\s+时\s+系统(?:应当)?\s+(.+)$/);
     if (match) {
-      clauses.push({ line: i + 1, when: match[1].trim(), shall: match[2].trim(), raw: line.replace(/^[-*]\s*/, "") });
+      clauses.push({
+        line: i + 1,
+        when: match[1].trim(),
+        shall: match[2].trim(),
+        raw: line.replace(/^[-*]\s*/, ""),
+      });
       continue;
     }
     const legacyMatch = line.match(/^[-*]\s*当\s+(.+?)\s*则\s+(.+)$/);
     if (legacyMatch) {
-      clauses.push({ line: i + 1, when: legacyMatch[1].trim(), shall: legacyMatch[2].trim(), raw: line.replace(/^[-*]\s*/, "") });
+      clauses.push({
+        line: i + 1,
+        when: legacyMatch[1].trim(),
+        shall: legacyMatch[2].trim(),
+        raw: line.replace(/^[-*]\s*/, ""),
+      });
     }
   }
   return clauses;

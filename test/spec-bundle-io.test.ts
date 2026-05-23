@@ -4,8 +4,8 @@
  * Validates: Requirement 1, 6
  */
 import { existsSync, mkdirSync, readFileSync, rmSync, writeFileSync } from "node:fs";
-import { join } from "node:path";
 import { tmpdir } from "node:os";
+import { join } from "node:path";
 import { describe, expect, it } from "vitest";
 import { loadSpecBundle, writeSpecBundle } from "../src/spec-bundle-io.js";
 
@@ -30,7 +30,9 @@ function cleanup() {
 function writeThreeFileFeature(dir: string, feature: string) {
   mkdirSync(dir, { recursive: true });
 
-  writeFileSync(join(dir, "requirements.md"), `---
+  writeFileSync(
+    join(dir, "requirements.md"),
+    `---
 feature: ${feature}
 status: draft
 date: 2026-05-23
@@ -56,9 +58,12 @@ Test intro.
 ## Out of Scope
 
 - nothing
-`);
+`,
+  );
 
-  writeFileSync(join(dir, "design.md"), `---
+  writeFileSync(
+    join(dir, "design.md"),
+    `---
 feature: ${feature}
 status: draft
 date: 2026-05-23
@@ -86,9 +91,12 @@ Testing text.
 ## Rollout
 
 Rollout text.
-`);
+`,
+  );
 
-  writeFileSync(join(dir, "tasks.md"), `---
+  writeFileSync(
+    join(dir, "tasks.md"),
+    `---
 feature: ${feature}
 status: draft
 date: 2026-05-23
@@ -102,12 +110,15 @@ workflow_variant: requirements-first
 ### T-01 First
 
 - 目标：Do something
-`);
+`,
+  );
 }
 
 function writeLegacySpec(dir: string, feature: string) {
   mkdirSync(dir, { recursive: true });
-  writeFileSync(join(dir, "spec.md"), `---
+  writeFileSync(
+    join(dir, "spec.md"),
+    `---
 feature: ${feature}
 status: locked
 date: 2026-05-20
@@ -126,7 +137,8 @@ Test purpose.
 ## 不做什么
 
 - nothing
-`);
+`,
+  );
 }
 
 // ---------------------------------------------------------------------------
@@ -267,7 +279,13 @@ describe("writeSpecBundle", () => {
               workflow_variant: "requirements-first",
             },
             tasks: [
-              { id: "T-01", title: "Test", goal: "Do X", related_requirements: [], status: "pending" },
+              {
+                id: "T-01",
+                title: "Test",
+                goal: "Do X",
+                related_requirements: [],
+                status: "pending",
+              },
             ],
           },
         },

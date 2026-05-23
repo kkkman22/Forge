@@ -7,10 +7,9 @@
 import * as fc from "fast-check";
 import { describe, expect, it } from "vitest";
 import {
-  parseRequirementsMarkdown,
   parseDesignMarkdown,
+  parseRequirementsMarkdown,
   parseTasksMarkdown,
-  type ParseError,
 } from "../src/spec-parser.js";
 
 // ---------------------------------------------------------------------------
@@ -456,10 +455,13 @@ describe("PBT: parser robustness", () => {
           const sections: string[] = [];
           sections.push("## Introduction\n\nIntro.");
           if (flags.hasGlossary) sections.push("## Glossary\n\n- **Term**: Def");
-          sections.push(`## Requirements\n\n### Requirement 1: Test\n\n#### Acceptance Criteria\n\n- 当 X 时 系统应当 Y`);
+          sections.push(
+            `## Requirements\n\n### Requirement 1: Test\n\n#### Acceptance Criteria\n\n- 当 X 时 系统应当 Y`,
+          );
           if (flags.hasNonFunctional) sections.push("## Non-functional Requirements\n\n- NFR");
           sections.push("## Out of Scope\n\n- nothing");
-          if (flags.hasDelta) sections.push("## Delta\n\n### 新增\n\n- a\n\n### 修改\n\n- b\n\n### 不变\n\n- c");
+          if (flags.hasDelta)
+            sections.push("## Delta\n\n### 新增\n\n- a\n\n### 修改\n\n- b\n\n### 不变\n\n- c");
 
           const md = `---
 feature: pbt

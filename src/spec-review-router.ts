@@ -8,12 +8,8 @@
  * Validates: Requirement 6
  */
 
+import type { BugfixDocument, EarsClause, SpecBundle } from "./spec-bundle.js";
 import { isBugfixBundle } from "./spec-bundle.js";
-import type {
-  BugfixDocument,
-  EarsClause,
-  SpecBundle,
-} from "./spec-bundle.js";
 
 export interface SpecReference {
   file: string;
@@ -121,7 +117,11 @@ function extractEarsCriteria(bundle: SpecBundle): EarsClause[] {
     return primary.earsCriteria as EarsClause[];
   }
   if ("current" in primary) {
-    const doc = primary as { current: EarsClause[]; expected: EarsClause[]; unchanged: EarsClause[] };
+    const doc = primary as {
+      current: EarsClause[];
+      expected: EarsClause[];
+      unchanged: EarsClause[];
+    };
     return [...doc.current, ...doc.expected, ...doc.unchanged];
   }
   return [];

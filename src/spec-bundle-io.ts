@@ -10,7 +10,7 @@
 
 import { existsSync, mkdirSync, readFileSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
-
+import type { Requirement, SpecDocument, SpecFrontmatter } from "./spec.js";
 import type {
   DesignDocument,
   RequirementsDocument,
@@ -19,8 +19,11 @@ import type {
   TasksSeedDocument,
 } from "./spec-bundle.js";
 import { specDocumentToBundle } from "./spec-bundle.js";
-import type { SpecDocument, SpecFrontmatter, Requirement } from "./spec.js";
-import { parseDesignMarkdown, parseRequirementsMarkdown, parseTasksMarkdown } from "./spec-parser.js";
+import {
+  parseDesignMarkdown,
+  parseRequirementsMarkdown,
+  parseTasksMarkdown,
+} from "./spec-parser.js";
 
 // ---------------------------------------------------------------------------
 // Internal: legacy spec.md parser
@@ -131,14 +134,18 @@ export function loadSpecBundle(
   if (hasThreeFile) {
     const reqResult = parseRequirementsMarkdown(readFileSync(reqPath, "utf-8"));
     if (reqResult.errors) {
-      throw new Error(`Parse error in requirements.md: ${reqResult.errors.map((e) => e.message).join(", ")}`);
+      throw new Error(
+        `Parse error in requirements.md: ${reqResult.errors.map((e) => e.message).join(", ")}`,
+      );
     }
 
     let design: DesignDocument | undefined;
     if (existsSync(designPath)) {
       const designResult = parseDesignMarkdown(readFileSync(designPath, "utf-8"));
       if (designResult.errors) {
-        throw new Error(`Parse error in design.md: ${designResult.errors.map((e) => e.message).join(", ")}`);
+        throw new Error(
+          `Parse error in design.md: ${designResult.errors.map((e) => e.message).join(", ")}`,
+        );
       }
       design = designResult.doc;
     }
@@ -147,12 +154,14 @@ export function loadSpecBundle(
     if (existsSync(tasksPath)) {
       const tasksResult = parseTasksMarkdown(readFileSync(tasksPath, "utf-8"));
       if (tasksResult.errors) {
-        throw new Error(`Parse error in tasks.md: ${tasksResult.errors.map((e) => e.message).join(", ")}`);
+        throw new Error(
+          `Parse error in tasks.md: ${tasksResult.errors.map((e) => e.message).join(", ")}`,
+        );
       }
       tasks = tasksResult.doc;
     }
 
-    const frontmatter = reqResult.doc!.frontmatter;
+    const frontmatter = reqResult.doc?.frontmatter;
 
     return {
       feature: frontmatter.feature,

@@ -8,10 +8,7 @@
  */
 import * as fc from "fast-check";
 import { describe, expect, it } from "vitest";
-import {
-  resolveSpecVariant,
-  scoreTaskDescription,
-} from "../src/spec-variant.js";
+import { resolveSpecVariant, scoreTaskDescription } from "../src/spec-variant.js";
 
 // ---------------------------------------------------------------------------
 // resolveSpecVariant
@@ -37,7 +34,11 @@ describe("resolveSpecVariant", () => {
   });
 
   it("Standard tier with high behavior score → requirements-first", () => {
-    const result = resolveSpecVariant({ tier: "Standard", behaviorScore: 10, architectureScore: 1 });
+    const result = resolveSpecVariant({
+      tier: "Standard",
+      behaviorScore: 10,
+      architectureScore: 1,
+    });
     expect(result.variant).toBe("requirements-first");
     expect(result.source).toBe("auto");
   });
