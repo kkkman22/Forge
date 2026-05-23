@@ -174,4 +174,65 @@ describe("migrateLegacySpec", () => {
       cleanup();
     }
   });
+
+  // P2-B: rollback when frontmatter feature differs from directory name.
+  // Reproduces the audit-flagged corner case where the directory was named
+  // (say) "auth" but the spec.md frontmatter says feature: "authentication".
+  // The plans file lives under plans/<feature>.md, so rollback must use the
+  // captured rename path — not a path reconstructed from the directory.
+  it("rolls back plans .legacy correctly when feature name differs from directory name", () => {
+    const root = createTestDir();
+    try {
+      const featureDir = join(root, "auth"); // directory name
+      mkdirSync(featureDir, { recursive: true });
+      // spec.md uses a DIFFERENT name in frontmatter
+      const spec = `---
+feature: authentication
+status: locked
+date: 2026-05-20
+---
+
+# 目的
+
+Test rollback path for feature/dirname mismatch.
+
+## 需求
+
+### 需求 1: Trigger Analyze P0
+
+- 当 用户输入相同条件 则 系统应当 返回 A
+- 当 用户输入相同条件 则 系统应当 返回 B
+`;
+      writeFileSync(join(featureDir, "spec.md"), spec);
+
+      // plans file lives under <feature> name from frontmatter, not dir name
+      const plansDir = join(root, "plans");
+      mkdirSync(plansDir, { recursive: true });
+      const plansPath = join(plansDir, "authentication.md");
+      writeFileSync(
+        plansPath,
+        "---\n---\n\n## Tasks\n\n### T-99 Some task\n\nlegacy plan task content\n",
+      );
+
+      // Migration should fail at the P0 Analyze gate (ANL-04 conflict —
+      // same `当 X 时` with two different shall) and fully roll back.
+      const result = migrateLegacySpec(featureDir);
+      expect(result.success).toBe(false);
+      expect(result.error).toContain("rolling back");
+
+      // Three files were rolled back
+      expect(existsSync(join(featureDir, "requirements.md"))).toBe(false);
+      expect(existsSync(join(featureDir, "design.md"))).toBe(false);
+      expect(existsSync(join(featureDir, "tasks.md"))).toBe(false);
+
+      // spec.md restored
+      expect(existsSync(join(featureDir, "spec.md"))).toBe(true);
+
+      // plans/authentication.md restored (NOT left as .legacy)
+      expect(existsSync(plansPath)).toBe(true);
+      expect(existsSync(`${plansPath}.legacy`)).toBe(false);
+    } finally {
+      cleanup();
+    }
+  });
 });
