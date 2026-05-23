@@ -75,6 +75,8 @@ describe("Contract: scripts/ smoke tests (no-arg invocation)", () => {
     "build-dist.sh", // Requires build environment
     "check-readme-metrics.sh", // Runs full metrics check which can be slow
     "update-vendor-axe.sh", // Performs network fetch from unpkg.com (flaky in test env)
+    "build-dmg.sh", // Requires network (curl), Node.js download, and frontend build toolchain
+    "bundle-node.sh", // Requires network (curl) to download Node.js binary
   ]);
 
   for (const { name, path: scriptPath } of scriptFiles) {

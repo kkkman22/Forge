@@ -89,6 +89,13 @@ export function readFileContent(reader: (() => string) | undefined): string | nu
   }
 }
 
+/** Extract the `result` field from review YAML frontmatter. */
+function parseReviewResult(content: string | null): string | undefined {
+  if (!content) return undefined;
+  const match = content.match(/^---\s*\n[\s\S]*?\nresult:\s*(\S+)/m);
+  return match?.[1];
+}
+
 // ---------------------------------------------------------------------------
 // executeSkillAwareIteration
 // ---------------------------------------------------------------------------
@@ -147,7 +154,7 @@ export async function executeSkillAwareIteration(
     tier: ctx.config.presetTier ?? getTierFromStatus(statusContent),
     planStatus: undefined, // Plan status is determined by the agent
     hasIncompleteTasks: undefined,
-    reviewResult: undefined,
+    reviewResult: parseReviewResult(readFileContent(ctx.config.readReviewFile)),
     testPassed: undefined,
     reviewFixAttempts,
     maxReviewFixAttempts: ctx.config.loopConfig.maxConsecutiveFailures,
@@ -240,7 +247,9 @@ export async function executeSkillAwareIteration(
 
     // Auto-stop: if the iteration succeeded but made no changes, the task
     // is complete — stop the loop rather than keep verifying indefinitely.
-    if (output.should_fully_stop || (output.success && isNoOpIteration(output))) {
+    // Skip auto-stop when gate is blocked to allow circuit-breaker to trigger.
+    const gateBlocked = output.gate_result === "blocked";
+    if (output.should_fully_stop || (output.success && isNoOpIteration(output) && !gateBlocked)) {
       // Stop condition met — dispatch stop_condition_met event.
       // Mark as normal completion for StatusFile cleanup (Req 6.3).
       loopCompletedNormally = true;
@@ -393,8 +402,12 @@ export async function executeSkillAwareIteration(
           reviewFixAttempts++;
         }
 
-        // Auto-stop handling.
-        if (output.should_fully_stop || (output.success && isNoOpIteration(output))) {
+        // Auto-stop handling (skip when gate is blocked for circuit-breaker).
+        const retryGateBlocked = output.gate_result === "blocked";
+        if (
+          output.should_fully_stop ||
+          (output.success && isNoOpIteration(output) && !retryGateBlocked)
+        ) {
           loopCompletedNormally = true;
           const stopResult = transition(
             orchestratorState,
