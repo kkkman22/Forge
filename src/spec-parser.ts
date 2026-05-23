@@ -1,0 +1,386 @@
+/**
+ * Three-file markdown parsers for Kiro-style spec layout.
+ *
+ * Pure functions: parseRequirementsMarkdown, parseDesignMarkdown, parseTasksMarkdown.
+ * Each returns either a parsed document or a list of ParseError.
+ *
+ * Validates: Requirement 1
+ */
+
+import type {
+  DesignDocument,
+  EarsClause,
+  GlossaryEntry,
+  RequirementsDocument,
+  SpecFileFrontmatter,
+  TaskSeed,
+  TasksSeedDocument,
+  UserStory,
+  Wave,
+  WorkflowVariant,
+} from "./spec-bundle.js";
+
+// ---------------------------------------------------------------------------
+// Result types
+// ---------------------------------------------------------------------------
+
+export interface ParseError {
+  line?: number;
+  message: string;
+}
+
+export interface ParseResult<T> {
+  doc?: T;
+  errors?: ParseError[];
+}
+
+// ---------------------------------------------------------------------------
+// Internal: frontmatter parser
+// ---------------------------------------------------------------------------
+
+function parseFrontmatter(text: string): SpecFileFrontmatter | ParseError[] {
+  const match = text.match(/^---\n([\s\S]*?)\n---/);
+  if (!match) {
+    return [{ message: "Missing YAML frontmatter" }];
+  }
+
+  const yaml = match[1];
+  const getValue = (key: string): string | undefined => {
+    const m = yaml.match(new RegExp(`^${key}:\\s*(.+)$`, "m"));
+    return m?.[1]?.trim();
+  };
+
+  const feature = getValue("feature");
+  const status = getValue("status");
+  const date = getValue("date");
+  const workflow_variant = getValue("workflow_variant");
+
+  const errors: ParseError[] = [];
+  if (!feature) errors.push({ message: "Missing 'feature' in frontmatter" });
+  if (!status) errors.push({ message: "Missing 'status' in frontmatter" });
+  if (!date) errors.push({ message: "Missing 'date' in frontmatter" });
+
+  if (errors.length > 0) return errors;
+
+  const validStatuses = ["draft", "locked"];
+  const validVariants: WorkflowVariant[] = ["requirements-first", "design-first", "quick-plan"];
+
+  const s = status!;
+  if (!validStatuses.includes(s)) {
+    errors.push({ message: `Invalid status '${s}', expected draft|locked` });
+  }
+
+  const wv = workflow_variant ?? "requirements-first";
+  if (!validVariants.includes(wv as WorkflowVariant)) {
+    errors.push({ message: `Invalid workflow_variant '${wv}'` });
+  }
+
+  if (errors.length > 0) return errors;
+
+  return {
+    feature: feature!,
+    status: s as "draft" | "locked",
+    date: date!,
+    workflow_variant: wv as WorkflowVariant,
+    brownfield: getValue("brownfield") === "true",
+    kind: getValue("kind") as "feature" | "bugfix" | undefined,
+    migrated_from: getValue("migrated_from"),
+    import_source: getValue("import_source"),
+    contract_legacy: getValue("contract_legacy") === "true",
+  };
+}
+
+// ---------------------------------------------------------------------------
+// Internal: body section extractor
+// ---------------------------------------------------------------------------
+
+function extractSection(body: string, heading: string): string {
+  const escaped = heading.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+  // No 'm' flag: ^ matches start-of-string, $ matches end-of-string
+  // \n## stops at next section heading
+  const regex = new RegExp(`(?:^|\\n)## ${escaped}[ \\t]*\\n([\\s\\S]*?)(?=\\n## |$)`, "");
+  const match = body.match(regex);
+  return match?.[1]?.trim() ?? "";
+}
+
+function extractSubsection(body: string, heading: string): string {
+  const escaped = heading.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+  const regex = new RegExp(`(?:^|\\n)#{3,4} ${escaped}[ \\t]*\\n([\\s\\S]*?)(?=\\n#{2,4} |$)`, "");
+  const match = body.match(regex);
+  return match?.[1]?.trim() ?? "";
+}
+
+function extractListItems(text: string): string[] {
+  return text
+    .split("\n")
+    .map((l) => l.replace(/^[-*]\s*/, "").trim())
+    .filter((l) => l.length > 0);
+}
+
+// ---------------------------------------------------------------------------
+// Internal: EARS clause extraction
+// ---------------------------------------------------------------------------
+
+function extractEarsClauses(text: string): EarsClause[] {
+  const clauses: EarsClause[] = [];
+  const lines = text.split("\n");
+
+  for (let i = 0; i < lines.length; i++) {
+    const line = lines[i].trim();
+    if (!line) continue;
+
+    // Match "- 当 X 时 系统应当 Y" or "- 当 X 则 Y"
+    const fullMatch = line.match(/^[-*]\s*当\s+(.+?)\s+时\s+系统(?:应当)?\s+(.+)$/);
+    if (fullMatch) {
+      clauses.push({
+        line: i + 1,
+        when: fullMatch[1].trim(),
+        shall: fullMatch[2].trim(),
+        raw: line.replace(/^[-*]\s*/, ""),
+      });
+      continue;
+    }
+
+    // Legacy: "当 X 则 Y"
+    const legacyMatch = line.match(/^[-*]\s*当\s+(.+?)\s*则\s+(.+)$/);
+    if (legacyMatch) {
+      clauses.push({
+        line: i + 1,
+        when: legacyMatch[1].trim(),
+        shall: legacyMatch[2].trim(),
+        raw: line.replace(/^[-*]\s*/, ""),
+      });
+    }
+  }
+
+  return clauses;
+}
+
+// ---------------------------------------------------------------------------
+// Internal: glossary extraction
+// ---------------------------------------------------------------------------
+
+function extractGlossary(text: string): GlossaryEntry[] {
+  return extractListItems(text)
+    .map((item) => {
+      const match = item.match(/^\*\*(.+?)\*\*:\s*(.+)$/);
+      if (match) return { term: match[1], definition: match[2] };
+      return null;
+    })
+    .filter((e): e is GlossaryEntry => e !== null);
+}
+
+// ---------------------------------------------------------------------------
+// parseRequirementsMarkdown
+// ---------------------------------------------------------------------------
+
+export function parseRequirementsMarkdown(text: string): ParseResult<RequirementsDocument> {
+  if (!text || text.trim().length === 0) {
+    return { errors: [{ message: "Empty input" }] };
+  }
+
+  const fmResult = parseFrontmatter(text);
+  if (Array.isArray(fmResult)) {
+    return { errors: fmResult };
+  }
+  const frontmatter = fmResult as SpecFileFrontmatter;
+
+  const body = text.replace(/^---[\s\S]*?---\n*/, "");
+  const intro = extractSection(body, "Introduction");
+  const glossaryText = extractSection(body, "Glossary");
+  const glossary = extractGlossary(glossaryText);
+  const nfrText = extractSection(body, "Non-functional Requirements");
+  const nonFunctional = extractListItems(nfrText);
+  const oosText = extractSection(body, "Out of Scope");
+  const outOfScope = extractListItems(oosText);
+
+  // Extract requirements and their acceptance criteria
+  const userStories: UserStory[] = [];
+  const earsCriteria: EarsClause[] = [];
+
+  const reqRegex = /### Requirement \d+: (.+)/g;
+  let reqMatch: RegExpExecArray | null;
+  const reqBlocks: { title: string; start: number }[] = [];
+
+  while ((reqMatch = reqRegex.exec(body)) !== null) {
+    reqBlocks.push({ title: reqMatch[1], start: reqMatch.index });
+  }
+
+  for (let i = 0; i < reqBlocks.length; i++) {
+    const block = reqBlocks[i];
+    const nextStart = reqBlocks[i + 1]?.start ?? body.length;
+    const blockText = body.slice(block.start, nextStart);
+
+    const acText = extractSubsection(blockText, "Acceptance Criteria");
+    const clauses = extractEarsClauses(acText);
+    earsCriteria.push(...clauses);
+
+    const descMatch = blockText.match(/\*\*User Story:\*\*\s*(.+)/);
+    userStories.push({
+      title: block.title,
+      description: descMatch?.[1] ?? "",
+      earsCriteria: clauses,
+    });
+  }
+
+  // Delta section (optional, brownfield)
+  let delta: RequirementsDocument["delta"];
+  const deltaText = extractSection(body, "Delta");
+  if (deltaText) {
+    const added = extractListItems(extractSubsection(deltaText, "新增"));
+    const modified = extractListItems(extractSubsection(deltaText, "修改"));
+    const unchanged = extractListItems(extractSubsection(deltaText, "不变"));
+    if (added.length > 0 || modified.length > 0 || unchanged.length > 0) {
+      delta = { added, modified, unchanged };
+    }
+  }
+
+  return {
+    doc: {
+      frontmatter,
+      intro,
+      glossary,
+      userStories,
+      earsCriteria,
+      nonFunctional,
+      outOfScope,
+      ...(delta ? { delta } : {}),
+    },
+  };
+}
+
+// ---------------------------------------------------------------------------
+// parseDesignMarkdown
+// ---------------------------------------------------------------------------
+
+export function parseDesignMarkdown(text: string): ParseResult<DesignDocument> {
+  if (!text || text.trim().length === 0) {
+    return { errors: [{ message: "Empty input" }] };
+  }
+
+  const fmResult = parseFrontmatter(text);
+  if (Array.isArray(fmResult)) {
+    return { errors: fmResult };
+  }
+  const frontmatter = fmResult as SpecFileFrontmatter;
+
+  const body = text.replace(/^---[\s\S]*?---\n*/, "");
+  const overview = extractSection(body, "Overview");
+  const architecture = extractSection(body, "Architecture");
+  const ciText = extractSection(body, "Components and Interfaces");
+  const componentInterfaces = extractListItems(ciText);
+  const dataModel = extractSection(body, "Data Models") || extractSection(body, "Components and Interfaces");
+  const errorHandling = extractSection(body, "Error Handling");
+  const testingStrategy = extractSection(body, "Testing Strategy");
+  const rollout = extractSection(body, "Rollout");
+  const oqText = extractSection(body, "Open Questions");
+  const openQuestions = extractListItems(oqText).map((q) => q.replace(/^\d+\.\s*/, ""));
+
+  // Brownfield optional sections
+  const currentState = extractSection(body, "Current State") || undefined;
+  const proposedChange = extractSection(body, "Proposed Change") || undefined;
+  const reversibility = extractSection(body, "Reversibility") || undefined;
+
+  // Use dedicated data model section if exists
+  const dmSection = extractSection(body, "Data Models");
+
+  return {
+    doc: {
+      frontmatter,
+      overview,
+      architecture,
+      componentInterfaces,
+      dataModel: dmSection || dataModel,
+      errorHandling,
+      testingStrategy,
+      rollout,
+      openQuestions: openQuestions.filter((q) => q.length > 0),
+      ...(currentState ? { currentState } : {}),
+      ...(proposedChange ? { proposedChange } : {}),
+      ...(reversibility ? { reversibility } : {}),
+    },
+  };
+}
+
+// ---------------------------------------------------------------------------
+// parseTasksMarkdown
+// ---------------------------------------------------------------------------
+
+export function parseTasksMarkdown(text: string): ParseResult<TasksSeedDocument> {
+  if (!text || text.trim().length === 0) {
+    return { errors: [{ message: "Empty input" }] };
+  }
+
+  const fmResult = parseFrontmatter(text);
+  if (Array.isArray(fmResult)) {
+    return { errors: fmResult };
+  }
+  const frontmatter = fmResult as SpecFileFrontmatter;
+
+  const body = text.replace(/^---[\s\S]*?---\n*/, "");
+
+  // Extract waves from JSON code fence
+  let waves: Wave[] | undefined;
+  const waveMatch = body.match(/```json\s*\n([\s\S]*?)\n```/);
+  if (waveMatch) {
+    try {
+      const parsed = JSON.parse(waveMatch[1]);
+      if (parsed.waves && Array.isArray(parsed.waves)) {
+        waves = parsed.waves as Wave[];
+      }
+    } catch {
+      // Invalid JSON — waves remain undefined
+    }
+  }
+
+  // Extract tasks
+  const tasks: TaskSeed[] = [];
+  const taskRegex = /### (T-\d+(?:\.\d+)?)\s+(.+)/g;
+  let taskMatch: RegExpExecArray | null;
+  const taskBlocks: { id: string; title: string; start: number }[] = [];
+
+  while ((taskMatch = taskRegex.exec(body)) !== null) {
+    taskBlocks.push({
+      id: taskMatch[1],
+      title: taskMatch[2],
+      start: taskMatch.index,
+    });
+  }
+
+  for (let i = 0; i < taskBlocks.length; i++) {
+    const block = taskBlocks[i];
+    const nextStart = taskBlocks[i + 1]?.start ?? body.length;
+    const blockText = body.slice(block.start, nextStart);
+
+    const goalMatch = blockText.match(/[-*]\s*目标[：:]\s*(.+)/);
+    const reqMatch = blockText.match(/[-*]\s*关联需求[：:]\s*(.+)/);
+    const depMatch = blockText.match(/[-*]\s*depends_on:\s*(.+)/);
+    const catMatch = blockText.match(/[-*]\s*category:\s*(.+)/);
+    const verMatch = blockText.match(/[-*]\s*verification:\s*(.+)/);
+
+    const relatedReqs = reqMatch
+      ? reqMatch[1].split(/[,，]/).map((s: string) => s.trim())
+      : [];
+
+    const task: TaskSeed = {
+      id: block.id,
+      title: block.title,
+      goal: goalMatch?.[1]?.trim() ?? "",
+      related_requirements: relatedReqs,
+      status: "pending",
+      ...(depMatch ? { depends_on: depMatch[1].split(/[,，\s]+/).filter(Boolean) } : {}),
+      ...(catMatch ? { category: catMatch[1].trim() as TaskSeed["category"] } : {}),
+      ...(verMatch ? { verification: verMatch[1].trim() as TaskSeed["verification"] } : {}),
+    };
+
+    tasks.push(task);
+  }
+
+  return {
+    doc: {
+      frontmatter,
+      tasks,
+      ...(waves ? { waves } : {}),
+    },
+  };
+}
