@@ -5,7 +5,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "bash forge/scripts/auto-resume.sh 2>/dev/null || bash ~/.claude/skills/forge/scripts/auto-resume.sh 2>/dev/null || true",
+            "command": "bash scripts/auto-resume.sh 2>/dev/null || bash forge/scripts/auto-resume.sh 2>/dev/null || bash ~/.claude/skills/forge/scripts/auto-resume.sh 2>/dev/null || true",
             "timeout": 5
           }
         ]
@@ -14,7 +14,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "node forge/scripts/inject-evolved-rules.mjs 2>/dev/null || node ~/.claude/skills/forge/scripts/inject-evolved-rules.mjs 2>/dev/null || true",
+            "command": "node scripts/inject-evolved-rules.mjs 2>/dev/null || node forge/scripts/inject-evolved-rules.mjs 2>/dev/null || node ~/.claude/skills/forge/scripts/inject-evolved-rules.mjs 2>/dev/null || true",
             "timeout": 5
           }
         ]
@@ -36,7 +36,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "node forge/dist/src/check-frozen.js \"$TOOL_INPUT_FILE\" 2>/dev/null || node ~/.claude/skills/forge/dist/src/check-frozen.js \"$TOOL_INPUT_FILE\" 2>/dev/null",
+            "command": "node dist/src/check-frozen.js \"$TOOL_INPUT_FILE\" 2>/dev/null || node forge/dist/src/check-frozen.js \"$TOOL_INPUT_FILE\" 2>/dev/null || node ~/.claude/skills/forge/dist/src/check-frozen.js \"$TOOL_INPUT_FILE\" 2>/dev/null || true",
             "timeout": 5
           }
         ]
@@ -46,7 +46,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "echo \"$TOOL_INPUT\" | grep -oE '\\.forge/(specs|plans)/[a-zA-Z0-9_.-]+|\\.forge/config\\.md' | sort -u | while read -r f; do node forge/dist/src/check-frozen.js \"$f\" 2>/dev/null || node ~/.claude/skills/forge/dist/src/check-frozen.js \"$f\" 2>/dev/null; done",
+            "command": "echo \"$TOOL_INPUT\" | grep -oE '\\.forge/(specs|plans)/[a-zA-Z0-9_.-]+|\\.forge/config\\.md' | sort -u | while read -r f; do node dist/src/check-frozen.js \"$f\" 2>/dev/null || node forge/dist/src/check-frozen.js \"$f\" 2>/dev/null || node ~/.claude/skills/forge/dist/src/check-frozen.js \"$f\" 2>/dev/null || true; done",
             "timeout": 5
           }
         ]
@@ -72,7 +72,7 @@
           },
           {
             "type": "command",
-            "command": "bash forge/scripts/persistent-loop.sh 2>/dev/null || bash ~/.claude/skills/forge/scripts/persistent-loop.sh 2>/dev/null || true",
+            "command": "bash scripts/persistent-loop.sh 2>/dev/null || bash forge/scripts/persistent-loop.sh 2>/dev/null || bash ~/.claude/skills/forge/scripts/persistent-loop.sh 2>/dev/null || true",
             "timeout": 5
           }
         ]
