@@ -275,7 +275,7 @@ export async function scheduleWave(
   let degraded429 = false;
   let concurrency = options.maxConcurrency;
 
-  const remaining = [...wave.taskIds];
+  const remaining = [...wave.tasks];
 
   while (remaining.length > 0) {
     const batch = remaining.splice(0, concurrency);

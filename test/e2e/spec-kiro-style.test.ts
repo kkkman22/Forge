@@ -356,7 +356,10 @@ User management system
     const parsed = parseExternalSpec(external);
     expect(parsed.earsCriteria.length).toBeGreaterThan(0);
 
-    const score = scoreImportedContent(parsed);
+    const score = scoreImportedContent({
+      earsCriteria: parsed.earsCriteria,
+      hasArchitecture: /##\s*(?:Architecture|架构)/.test(external),
+    });
     expect(score).toBeDefined();
   });
 

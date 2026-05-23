@@ -6,7 +6,8 @@ import { join } from "node:path";
 import { tmpdir } from "node:os";
 import { describe, expect, it } from "vitest";
 import { scheduleWave, buildThreeStrikeDebugReroute } from "../src/build.js";
-import type { Wave, FixFailure } from "../src/spec-bundle.js";
+import type { Wave } from "../src/spec-bundle.js";
+import type { FixFailure } from "../src/spec-pbt-derivation.js";
 
 // ---------------------------------------------------------------------------
 // scheduleWave
@@ -14,7 +15,7 @@ import type { Wave, FixFailure } from "../src/spec-bundle.js";
 
 describe("scheduleWave", () => {
   it("executes all tasks in a wave", async () => {
-    const wave: Wave = { id: "W1", taskIds: ["T-01", "T-02", "T-03"] };
+    const wave: Wave = { wave: 1, tasks: ["T-01", "T-02", "T-03"] };
     const executed: string[] = [];
     const result = await scheduleWave(wave, {
       maxConcurrency: 6,
@@ -26,7 +27,7 @@ describe("scheduleWave", () => {
   });
 
   it("tracks failed tasks", async () => {
-    const wave: Wave = { id: "W1", taskIds: ["T-01", "T-02"] };
+    const wave: Wave = { wave: 1, tasks: ["T-01", "T-02"] };
     const result = await scheduleWave(wave, {
       maxConcurrency: 6,
       executor: async (id) => id === "T-01",
@@ -36,7 +37,7 @@ describe("scheduleWave", () => {
   });
 
   it("degrades concurrency on 429 signal", async () => {
-    const wave: Wave = { id: "W1", taskIds: ["T-01", "T-02", "T-03", "T-04"] };
+    const wave: Wave = { wave: 1, tasks: ["T-01", "T-02", "T-03", "T-04"] };
     let callCount = 0;
     const batches: number[] = [];
     const result = await scheduleWave(wave, {

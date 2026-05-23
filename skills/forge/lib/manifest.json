@@ -1,6 +1,6 @@
 {
   "version": 1,
-  "generated_at": "2026-05-23T10:26:20.254Z",
+  "generated_at": "2026-05-23T11:57:43.258Z",
   "subs": {
     "abort": {
       "instructions": {
@@ -533,7 +533,7 @@
     "router": {
       "instructions": {
         "path": "router/instructions.md",
-        "sha256": "3aed36175bcc8a664dbe34ffc7c345a801c5ec5aad6aff9ea9cab41bd0fe8456"
+        "sha256": "8bd174aa9c72416aca8cdec1f6a0eba09967a04aada3fa2bfc8d769794ef460a"
       },
       "references": [
         {
