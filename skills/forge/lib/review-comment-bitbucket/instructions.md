@@ -7,6 +7,12 @@ allowed_tools:
   - Write
 ---
 
+## Instructions
+
+Posts review findings to Bitbucket PRs as tasks and inline comments.
+Uses stable idempotent markers for cross-run reconciliation, platform gate for safe dispatch,
+and partial-failure semantics to continue on individual tool call errors.
+
 ## Spec
 
 - Design: `.kiro/specs/review-comment-bitbucket/design.md`
