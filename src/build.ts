@@ -5,6 +5,8 @@
  *   - checkBuildGate:       Verifies Spec is locked AND Plan is approved before build
  *   - trackFixAttempts:     Tracks consecutive fix failures and triggers escalation
  *   - shouldEscalateToDebug: Determines if 3 consecutive failures have been reached
+ *   - scheduleWave:         Execute wave tasks in parallel with 429 degradation
+ *   - buildThreeStrikeDebugReroute: §2.4 three-strike with fail_signature + debug template
  *
  * Gate check (Property 8):
  *   Build is allowed ONLY when spec.status === "locked" AND plan.status === "approved".
@@ -14,6 +16,19 @@
  *   When the same fix fails 3 consecutive times → system stops and escalates to /forge debug.
  *   Fewer than 3 consecutive failures → continues normally.
  */
+
+import { existsSync, mkdirSync, writeFileSync } from "node:fs";
+import { join } from "node:path";
+
+import { triggerThreeStrikeReroute, computeFailSignature } from "./spec-pbt-derivation.js";
+import type { FixFailure, ThreeStrikeResult } from "./spec-pbt-derivation.js";
+import { parseWaves } from "./spec-wave.js";
+import type { Wave, TaskSeed } from "./spec-bundle.js";
+
+export { parseWaves } from "./spec-wave.js";
+export { triggerThreeStrikeReroute, computeFailSignature } from "./spec-pbt-derivation.js";
+export type { FixFailure, ThreeStrikeResult } from "./spec-pbt-derivation.js";
+export type { Wave, TaskSeed } from "./spec-bundle.js";
 
 // ---------------------------------------------------------------------------
 // Types
@@ -228,6 +243,125 @@ export function mergeResearchFindings(results: SubagentResult[]): string {
   }
 
   return parts.join("\n\n");
+}
+
+// ---------------------------------------------------------------------------
+// Wave orchestration (Requirement 4 — T-18)
+// ---------------------------------------------------------------------------
+
+export interface ScheduleWaveOptions {
+  maxConcurrency: number;
+  executor: (taskId: string) => Promise<boolean>;
+  onHttp429?: () => void;
+}
+
+export interface ScheduleWaveResult {
+  completed: string[];
+  failed: string[];
+  degraded429: boolean;
+}
+
+/**
+ * Execute tasks in a single wave with concurrency control and 429 degradation.
+ *
+ * Degradation staircase: maxConcurrency → floor(max/2) → 2 → 1 (serial).
+ */
+export async function scheduleWave(
+  wave: Wave,
+  options: ScheduleWaveOptions,
+): Promise<ScheduleWaveResult> {
+  const completed: string[] = [];
+  const failed: string[] = [];
+  let degraded429 = false;
+  let concurrency = options.maxConcurrency;
+
+  const remaining = [...wave.taskIds];
+
+  while (remaining.length > 0) {
+    const batch = remaining.splice(0, concurrency);
+    const results = await Promise.allSettled(
+      batch.map((id) => options.executor(id)),
+    );
+
+    for (let i = 0; i < results.length; i++) {
+      const r = results[i];
+      if (r.status === "fulfilled" && r.value) {
+        completed.push(batch[i]);
+      } else {
+        failed.push(batch[i]);
+      }
+    }
+
+    // Check for 429 signal
+    if (options.onHttp429) {
+      options.onHttp429();
+      degraded429 = true;
+      // Degrade: max → floor(max/2) → 2 → 1
+      if (concurrency > 2) {
+        concurrency = Math.floor(concurrency / 2);
+      } else {
+        concurrency = 1;
+      }
+    }
+  }
+
+  return { completed, failed, degraded429 };
+}
+
+// ---------------------------------------------------------------------------
+// §2.4 Three-strike debug reroute (Requirement 15 — T-25)
+// ---------------------------------------------------------------------------
+
+export interface ThreeStrikeDebugRerouteResult extends ThreeStrikeResult {
+  debugFilePath: string;
+}
+
+/**
+ * Build three-strike debug reroute decision and write diagnostic template.
+ *
+ * Calls triggerThreeStrikeReroute to compute fail_signature and reroute decision.
+ * If reroute === true, writes diagnostic template to .forge/debug/<topic>.md.
+ */
+export function buildThreeStrikeDebugReroute(
+  history: FixFailure[],
+  currentFailure: FixFailure,
+  debugDir: string,
+  topic: string,
+): ThreeStrikeDebugRerouteResult {
+  const result = triggerThreeStrikeReroute(history, currentFailure);
+  const debugFilePath = join(debugDir, `${topic}.md`);
+
+  if (result.reroute) {
+    try {
+      if (!existsSync(debugDir)) {
+        mkdirSync(debugDir, { recursive: true });
+      }
+      const sig = computeFailSignature([...history, currentFailure]);
+      const template = `# Debug: ${topic}
+
+**fail_signature**: ${sig}
+**failures**: ${result.failures.length}
+**triggered_at**: ${new Date().toISOString()}
+
+## Diagnosis
+
+(To be filled by /forge debug agent)
+
+## Root Cause
+
+(Pending)
+
+## Fix Strategy
+
+(Pending)
+`;
+      writeFileSync(debugFilePath, template, "utf-8");
+    } catch {
+      // Best-effort write — never block reroute
+    }
+  }
+
+  return { ...result, debugFilePath };
 }
 
 // ---------------------------------------------------------------------------

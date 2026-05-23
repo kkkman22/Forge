@@ -99,12 +99,12 @@ export function detectSpecTriggers(
 export function refineDownstream(
   bundle: SpecBundle,
   target: "design" | "tasks",
-  options?: RefineOptions,
+  options?: RefineOptions & { eventsPath?: string },
 ): SpecBundle {
   const hasSnapshot = options?.hasSnapshot ?? true;
+  const eventsPath = options?.eventsPath;
 
   if (target === "design") {
-    // Refining design: clear design and tasks
     return {
       ...bundle,
       design: undefined,
@@ -114,7 +114,11 @@ export function refineDownstream(
 
   if (target === "tasks") {
     if (!hasSnapshot) {
-      // Fallback: full regen
+      if (eventsPath) {
+        import("./event-writer.js").then(({ writeEvent }) => {
+          writeEvent(eventsPath, "refine_fallback_to_full_regen", { target });
+        });
+      }
       return {
         ...bundle,
         design: undefined,
@@ -122,7 +126,6 @@ export function refineDownstream(
       };
     }
 
-    // Partial: only clear tasks, keep design
     return {
       ...bundle,
       tasks: undefined,

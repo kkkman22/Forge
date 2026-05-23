@@ -4,11 +4,11 @@
  * Validates: Requirement 10
  */
 
-import { existsSync, readFileSync, writeFileSync } from "node:fs";
+import { existsSync, readFileSync, writeFileSync, mkdirSync } from "node:fs";
 import { join } from "node:path";
 
-import type { EarsClause, RequirementsDocument, SpecFileFrontmatter, WorkflowVariant } from "./spec-bundle.js";
-import { renderRequirementsMarkdown } from "./spec-render.js";
+import type { EarsClause, RequirementsDocument, SpecFileFrontmatter, TasksSeedDocument, DesignDocument, WorkflowVariant } from "./spec-bundle.js";
+import { renderRequirementsMarkdown, renderDesignMarkdown, renderTasksMarkdown } from "./spec-render.js";
 
 // ---------------------------------------------------------------------------
 // parseSpecArgs
@@ -119,6 +119,7 @@ export interface ImportModeResult {
 export function runImportMode(
   inputPath: string,
   outputDir: string,
+  eventsPath?: string,
 ): ImportModeResult {
   if (!existsSync(inputPath)) {
     return { success: false, feature: "", variant: "requirements-first", outputPath: "", error: `Input file not found: ${inputPath}` };
@@ -156,10 +157,45 @@ export function runImportMode(
     };
 
     const outputPath = join(outputDir, feature);
+    if (!existsSync(outputPath)) {
+      mkdirSync(outputPath, { recursive: true });
+    }
     writeFileSync(join(outputPath, "requirements.md"), renderRequirementsMarkdown(reqDoc));
+
+    // Generate design.md
+    const designDoc: DesignDocument = {
+      frontmatter: { ...fm },
+      overview: content.purpose,
+      architecture: "",
+      componentInterfaces: [],
+      dataModel: "",
+      errorHandling: "",
+      testingStrategy: "",
+      rollout: "",
+      openQuestions: [],
+    };
+    writeFileSync(join(outputPath, "design.md"), renderDesignMarkdown(designDoc));
+
+    // Generate tasks.md
+    const tasksDoc: TasksSeedDocument = {
+      frontmatter: { ...fm, status: "draft" },
+      tasks: content.earsCriteria.map((c, i) => ({
+        id: `T-${String(i + 1).padStart(2, "0")}`,
+        title: `Implement: ${c.when}`,
+        goal: `Verify: 当 ${c.when} 时 系统应当 ${c.shall}`,
+        related_requirements: [`Requirement ${i + 1}`],
+        status: "pending" as const,
+      })),
+    };
+    writeFileSync(join(outputPath, "tasks.md"), renderTasksMarkdown(tasksDoc));
 
     return { success: true, feature, variant, outputPath };
   } catch (err) {
+    if (eventsPath) {
+      import("./event-writer.js").then(({ writeEvent }) => {
+        writeEvent(eventsPath, "spec_import_failed", { error: String(err) });
+      });
+    }
     return { success: false, feature: "", variant: "requirements-first", outputPath: "", error: String(err) };
   }
 }
