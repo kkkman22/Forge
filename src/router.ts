@@ -90,6 +90,8 @@ export interface RouteHint {
   tag: string;
   /** Human-readable description of the behavioral adjustment. */
   description: string;
+  /** Origin of this hint. Defaults to 'taskType' when serialized. */
+  source?: "taskType" | "projectPhase" | "workNature" | "intent";
 }
 
 export interface ClassificationResult {
@@ -658,7 +660,7 @@ export function generateHints(
     const commandActive = commandSet.has(rule.hint.command);
 
     if (typeMatch && phaseMatch && commandActive) {
-      hints.push(rule.hint);
+      hints.push({ ...rule.hint, source: "taskType" });
     }
   }
 
