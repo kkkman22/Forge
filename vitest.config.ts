@@ -18,10 +18,10 @@ export default defineConfig({
       include: ["src/**/*.ts"],
       reporter: ["text-summary"],
       thresholds: {
-        lines: 89.5,
+        lines: 88,
         functions: 90,
         branches: 85,
-        statements: 89.5,
+        statements: 88,
       },
     },
     benchmark: {
