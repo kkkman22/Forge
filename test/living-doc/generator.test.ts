@@ -233,4 +233,55 @@ context: OrderContext
     expect(data.globalStats.pass).toBe(1);
     expect(data.globalStats.pending).toBe(1);
   });
+
+  // T-09.5: three-file layout support
+  it("reads scenarios from three-file layout (requirements.md in topic dir)", () => {
+    const topicDir = path.join(specsDir, "auth");
+    fs.mkdirSync(topicDir);
+    fs.writeFileSync(
+      path.join(topicDir, "requirements.md"),
+      `---
+context: AuthContext
+workflow_variant: requirements-first
+---
+# Auth Requirements
+
+## Scenarios
+
+### Login with valid credentials
+### Logout clears session
+`,
+    );
+    fs.writeFileSync(path.join(topicDir, "design.md"), "---\n---\n# Auth Design\n");
+    fs.writeFileSync(path.join(topicDir, "tasks.md"), "---\n---\n# Auth Tasks\n");
+
+    const data = generateLivingDoc(specsDir, null);
+    expect(data.contexts.size).toBe(1);
+    const ctx = data.contexts.get("AuthContext")!;
+    expect(ctx.specs).toHaveLength(1);
+    expect(ctx.specs[0].scenarios).toHaveLength(2);
+    expect(ctx.specs[0].scenarios[0].title).toBe("Login with valid credentials");
+  });
+
+  it("includes workflow_variant badge in spec entry", () => {
+    const topicDir = path.join(specsDir, "payment");
+    fs.mkdirSync(topicDir);
+    fs.writeFileSync(
+      path.join(topicDir, "requirements.md"),
+      `---
+context: PaymentContext
+workflow_variant: design-first
+---
+# Payment
+
+## Scenarios
+
+### Process payment
+`,
+    );
+
+    const data = generateLivingDoc(specsDir, null);
+    const ctx = data.contexts.get("PaymentContext")!;
+    expect(ctx.specs[0].workflowVariant).toBe("design-first");
+  });
 });
