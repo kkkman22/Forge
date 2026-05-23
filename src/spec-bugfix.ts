@@ -10,6 +10,7 @@ import type {
   EarsClause,
   SpecBundle,
   SpecFileFrontmatter,
+  WorkflowVariant,
 } from "./spec-bundle.js";
 
 // ---------------------------------------------------------------------------
@@ -256,7 +257,13 @@ function parseFrontmatter(text: string): SpecFileFrontmatter | ParseError[] {
     return [{ message: "Missing required frontmatter fields" }];
   }
 
-  return { feature, status: status as "draft" | "locked", date, workflow_variant: wv as any, kind };
+  return {
+    feature,
+    status: status as "draft" | "locked",
+    date,
+    workflow_variant: wv as WorkflowVariant,
+    kind,
+  };
 }
 
 function extractSection(body: string, heading: string): string {
