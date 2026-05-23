@@ -202,12 +202,19 @@ export function migrateLegacySpec(featureDir: string): MigrationResult {
     if (!existsSync(specPath) && existsSync(legacyPath)) {
       try { renameSync(legacyPath, specPath); } catch { /* best effort */ }
     }
+    // Rollback plans file if it was renamed to .legacy
+    const specRoot = join(featureDir, "..");
+    const plansLegacy = join(specRoot, "..", "plans", `${feature}.md.legacy`);
+    if (existsSync(plansLegacy)) {
+      try { renameSync(plansLegacy, plansLegacy.replace(/\.legacy$/, "")); } catch { /* best effort */ }
+    }
     return { success: false, error: String(err) };
   }
 }
 
 /**
  * Migrate legacy .forge/plans/<feature>.md to the specs directory.
+ * Parses plan task entries and merges them into the generated tasks.md.
  */
 function migratePlansFile(featureDir: string, feature: string): void {
   // featureDir is .forge/specs/<feature>/, plans are at .forge/plans/<feature>.md
@@ -216,14 +223,36 @@ function migratePlansFile(featureDir: string, feature: string): void {
   if (!existsSync(plansPath)) return;
 
   const planText = readFileSync(plansPath, "utf-8");
-  // Extract task-like entries from plan and append to tasks.md
-  const taskMatches = [...planText.matchAll(/###\s*(T-\d+)\s+(.+)/g)];
+
+  // Parse task entries from the plan
+  const taskMatches = [...planText.matchAll(/###\s*(T-\d+(?:\.\d+)?)\s+(.+)/g)];
   if (taskMatches.length > 0) {
     const tasksPath = join(featureDir, "tasks.md");
-    const existing = existsSync(tasksPath) ? readFileSync(tasksPath, "utf-8") : "";
-    if (!existing.includes("Migrated from plans/")) {
-      const appended = `\n\n<!-- Migrated from plans/${feature}.md -->\n`;
-      writeFileSync(tasksPath, existing + appended);
+
+    // Parse existing tasks.md if it exists
+    let existingContent = "";
+    if (existsSync(tasksPath)) {
+      existingContent = readFileSync(tasksPath, "utf-8");
+    }
+
+    // Extract existing task IDs to avoid duplicates
+    const existingIds = new Set(
+      [...existingContent.matchAll(/###\s*(T-\d+(?:\.\d+)?)\s+/g)].map((m) => m[1]),
+    );
+
+    // Build merged task entries
+    const mergedTasks: string[] = [];
+    for (const match of taskMatches) {
+      const id = match[1];
+      const title = match[2].trim();
+      if (!existingIds.has(id)) {
+        mergedTasks.push(`### ${id} ${title}\n\n- 目标：${title}\n- 关联需求：\n- status: pending\n`);
+      }
+    }
+
+    if (mergedTasks.length > 0) {
+      const appended = `\n\n<!-- Migrated from plans/${feature}.md -->\n\n${mergedTasks.join("\n")}`;
+      writeFileSync(tasksPath, existingContent + appended);
     }
   }
 
