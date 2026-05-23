@@ -128,15 +128,52 @@ export function generateLivingDoc(specsDir, acceptanceDir) {
             }
         }
     }
-    // 1-2. List spec files and parse them
-    const specFiles = fs.existsSync(specsDir)
-        ? fs.readdirSync(specsDir).filter((f) => f.endsWith(".md"))
-        : [];
+    // 1-2. List spec files and parse them (flat .md files AND three-file topic dirs)
     const DEFAULT_CONTEXT = "default";
-    for (const specFile of specFiles) {
-        const specPath = path.join(specsDir, specFile);
-        const content = fs.readFileSync(specPath, "utf-8");
-        const parsed = parseSpecScenarios(content, specPath);
+    // Collect spec entries: flat .md files and three-file topic dirs
+    const specEntries = [];
+    if (fs.existsSync(specsDir)) {
+        const entries = fs.readdirSync(specsDir, { withFileTypes: true });
+        for (const entry of entries) {
+            if (entry.isFile() && entry.name.endsWith(".md")) {
+                const specPath = path.join(specsDir, entry.name);
+                const content = fs.readFileSync(specPath, "utf-8");
+                specEntries.push({
+                    specPath,
+                    specContent: content,
+                    topic: entry.name.replace(/\.md$/, ""),
+                });
+            }
+            else if (entry.isDirectory()) {
+                // Three-file layout: specs/<topic>/requirements.md (or spec.md)
+                const topicDir = path.join(specsDir, entry.name);
+                const threeFile = ["requirements.md", "spec.md"].find((f) => {
+                    try {
+                        return fs.statSync(path.join(topicDir, f)).isFile();
+                    }
+                    catch {
+                        return false;
+                    }
+                });
+                if (threeFile) {
+                    const specPath = path.join(topicDir, threeFile);
+                    const content = fs.readFileSync(specPath, "utf-8");
+                    // Extract workflow_variant from frontmatter
+                    const fmMatch = content.match(/^---\n([\s\S]*?)\n---/);
+                    let workflowVariant;
+                    if (fmMatch) {
+                        const wvMatch = fmMatch[1].match(/workflow_variant:\s*(.+)/);
+                        if (wvMatch)
+                            workflowVariant = wvMatch[1].trim();
+                    }
+                    specEntries.push({ specPath, specContent: content, topic: entry.name, workflowVariant });
+                }
+            }
+        }
+    }
+    for (const specEntry of specEntries) {
+        const { specPath, specContent, workflowVariant } = specEntry;
+        const parsed = parseSpecScenarios(specContent, specPath);
         const contextName = parsed.context ?? DEFAULT_CONTEXT;
         // 4-5. Merge verdicts and build scenarios
         const scenarios = parsed.scenarios.map((s) => {
@@ -170,9 +207,10 @@ export function generateLivingDoc(specsDir, acceptanceDir) {
         if (!ctx)
             continue;
         ctx.specs.push({
-            topic: specFile.replace(/\.md$/, ""),
+            topic: specEntry.topic,
             scenarios,
             specPath,
+            workflowVariant,
         });
         // 6. Calculate context stats
         for (const s of scenarios) {
