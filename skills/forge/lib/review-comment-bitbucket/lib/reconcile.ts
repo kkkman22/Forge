@@ -69,11 +69,11 @@ export function reconcile(input: {
           });
         } else {
           // Task exists, status RESOLVED, autoReopenRegressed=false → skip-duplicate
-          skips.push({ kind: "skip-duplicate", finding_hash: h });
+          skips.push({ kind: "skip-duplicate", finding_hash: h, task_id: task.task_id, reason: "resolved-no-reopen" });
         }
       } else {
         // Task exists, status OPEN → skip-duplicate
-        skips.push({ kind: "skip-duplicate", finding_hash: h });
+        skips.push({ kind: "skip-duplicate", finding_hash: h, task_id: task.task_id, reason: "already-open" });
       }
     } else {
       // No task but comment exists
@@ -82,7 +82,7 @@ export function reconcile(input: {
         creates.push({ kind: "create", finding });
       } else {
         // p0_p1_strategy !== "pr-task" → skip with orphan-comment label
-        skips.push({ kind: "skip-duplicate", finding_hash: h });
+        skips.push({ kind: "skip-duplicate", finding_hash: h, reason: "orphan-comment" });
       }
     }
   }
@@ -102,7 +102,7 @@ export function reconcile(input: {
       });
     } else {
       // Otherwise → skip-duplicate
-      skips.push({ kind: "skip-duplicate", finding_hash: h });
+      skips.push({ kind: "skip-duplicate", finding_hash: h, task_id: task.task_id, reason: "historical-resolved" });
     }
   }
 
