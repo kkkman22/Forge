@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
-import { computeSpecHash, parseHealthCache, shouldRecompute } from "../src/spec-health.js";
+import { computeBundleHash, computeSpecHash, parseHealthCache, shouldRecompute } from "../src/spec-health.js";
+import type { SpecBundle } from "../src/spec-bundle.js";
 
 describe("computeSpecHash", () => {
   it("returns consistent sha256 hex for same content", () => {
@@ -75,5 +76,80 @@ describe("shouldRecompute", () => {
 
   it("returns true when cache is null", () => {
     expect(shouldRecompute("hash_a", null)).toBe(true);
+  });
+});
+
+// ---------------------------------------------------------------------------
+// computeBundleHash (T-09.6: three-file health check)
+// ---------------------------------------------------------------------------
+
+describe("computeBundleHash", () => {
+  const legacyBundle: SpecBundle = {
+    feature: "test",
+    kind: "feature",
+    layout: "legacy-single",
+    variant: "requirements-first",
+    primary: {
+      frontmatter: { feature: "test", status: "locked", date: "2026-05-23", workflow_variant: "requirements-first" },
+      intro: "Test intro",
+      glossary: [],
+      userStories: [],
+      earsCriteria: [],
+      nonFunctional: [],
+      outOfScope: [],
+    },
+  };
+
+  const threeFileBundle: SpecBundle = {
+    feature: "auth",
+    kind: "feature",
+    layout: "three-file",
+    variant: "requirements-first",
+    primary: {
+      frontmatter: { feature: "auth", status: "locked", date: "2026-05-23", workflow_variant: "requirements-first" },
+      intro: "Auth intro",
+      glossary: [],
+      userStories: [],
+      earsCriteria: [],
+      nonFunctional: [],
+      outOfScope: [],
+    },
+    design: {
+      frontmatter: { feature: "auth", status: "locked", date: "2026-05-23", workflow_variant: "requirements-first" },
+      overview: "Auth design",
+      architecture: "",
+      componentInterfaces: [],
+      dataModel: "",
+      errorHandling: "",
+      testingStrategy: "",
+      rollout: "",
+      openQuestions: [],
+    },
+    tasks: {
+      frontmatter: { feature: "auth", status: "locked", date: "2026-05-23", workflow_variant: "requirements-first" },
+      tasks: [{ id: "T-01", title: "Test", goal: "Do it", related_requirements: [], status: "pending" }],
+    },
+  };
+
+  it("returns stable hash for legacy-single bundle", () => {
+    const hash1 = computeBundleHash(legacyBundle);
+    const hash2 = computeBundleHash(legacyBundle);
+    expect(hash1).toBe(hash2);
+    expect(hash1).toMatch(/^[0-9a-f]{64}$/);
+  });
+
+  it("returns stable hash for three-file bundle", () => {
+    const hash1 = computeBundleHash(threeFileBundle);
+    const hash2 = computeBundleHash(threeFileBundle);
+    expect(hash1).toBe(hash2);
+  });
+
+  it("produces different hashes for different bundles", () => {
+    expect(computeBundleHash(legacyBundle)).not.toBe(computeBundleHash(threeFileBundle));
+  });
+
+  it("three-file hash changes when design is added/removed", () => {
+    const bundleNoDesign = { ...threeFileBundle, design: undefined };
+    expect(computeBundleHash(threeFileBundle)).not.toBe(computeBundleHash(bundleNoDesign));
   });
 });
