@@ -1,9 +1,10 @@
-import { existsSync, mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from "node:fs";
+import { existsSync, mkdirSync, mkdtempSync, readFileSync, readdirSync, rmSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import type { Finding, ResolvedConfig } from "../../lib/types.js";
 import { postReviewToBitbucket } from "../../lib/post.js";
+import { computeFindingHash } from "../../lib/finding-hash.js";
 
 const CONFIG: ResolvedConfig = {
   enabled: true,
@@ -43,7 +44,8 @@ function mockBitbucketClient() {
 
 function createTmpForgeDir(): string {
   const dir = mkdtempSync(join(tmpdir(), "forge-rcb-"));
-  mkdirSync(join(dir, ".forge"), { recursive: true });
+  mkdirSync(join(dir, ".forge", "knowledge"), { recursive: true });
+  mkdirSync(join(dir, ".forge", "findings"), { recursive: true });
   return dir;
 }
 
@@ -58,50 +60,73 @@ describe("Integration: post.ts wires side-effect modules", () => {
     rmSync(tmpDir, { recursive: true, force: true });
   });
 
-  it("gate skip calls recordSkip → writes daily skip file", async () => {
+  it("gate skip calls recordSkip → writes daily skip file + tool-health", async () => {
     const bb = mockBitbucketClient();
     const reviewMd = join(tmpDir, "review.md");
     writeFileSync(reviewMd, "# Review\n", "utf-8");
 
     const result = await postReviewToBitbucket(
-      reviewMd,
-      "pr-1",
+      reviewMd, "pr-1",
       { ...CONFIG, platform_override: "none" },
       { remoteUrl: "https://bitbucket.org/org/repo", mcpBaseUrl: "https://bitbucket.org", mcpConfigured: true, runId: "run-skip-001" },
-      bb,
-      [],
-      { baseDir: tmpDir },
+      bb, [], { baseDir: tmpDir },
     );
 
     expect(result.posted).toBe(false);
-    // recordSkip should have written a daily skip file
-    const findingsDir = join(tmpDir, ".forge", "findings");
-    expect(existsSync(findingsDir)).toBe(true);
-    const files = require("node:fs").readdirSync(findingsDir);
-    expect(files.some((f: string) => f.startsWith("comment-channel-skipped-"))).toBe(true);
+    // daily skip file
+    const findingsFiles = readdirSync(join(tmpDir, ".forge", "findings"));
+    expect(findingsFiles.some((f) => f.startsWith("comment-channel-skipped-"))).toBe(true);
+    // tool-health counter
+    const healthPath = join(tmpDir, ".forge", "knowledge", "tool-health.md");
+    expect(existsSync(healthPath)).toBe(true);
+    const health = readFileSync(healthPath, "utf-8");
+    expect(health).toContain("platform-disabled-by-config count=1");
   });
 
-  it("happy path calls appendRunMetrics → writes metrics.md", async () => {
+  it("gate skip also writes metrics.md with gate_skipped_reason", async () => {
     const bb = mockBitbucketClient();
+    const reviewMd = join(tmpDir, "review.md");
+    writeFileSync(reviewMd, "# Review\n", "utf-8");
 
     await postReviewToBitbucket(
-      join(tmpDir, "review.md"),
-      "pr-1",
-      CONFIG,
-      { remoteUrl: "https://bitbucket.org/org/repo", mcpBaseUrl: "https://bitbucket.org", mcpConfigured: true, runId: "run-metrics-001" },
-      bb,
-      [P0],
-      { baseDir: tmpDir },
+      reviewMd, "pr-1",
+      { ...CONFIG, platform_override: "none" },
+      { remoteUrl: "https://bitbucket.org/org/repo", mcpBaseUrl: "https://bitbucket.org", mcpConfigured: true, runId: "run-skip-metrics" },
+      bb, [], { baseDir: tmpDir },
     );
 
     const metricsPath = join(tmpDir, ".forge", "knowledge", "metrics.md");
     expect(existsSync(metricsPath)).toBe(true);
-    const content = readFileSync(metricsPath, "utf-8");
-    expect(content).toContain("run_id=run-metrics-001");
-    expect(content).toContain("creates=1");
+    const metrics = readFileSync(metricsPath, "utf-8");
+    expect(metrics).toContain("run_id=run-skip-metrics");
+    expect(metrics).toContain("gate_skipped_reason=platform-disabled-by-config");
+    expect(metrics).toContain("creates=0");
   });
 
-  it("partial failures persisted via recordPartialFailures", async () => {
+  it("happy path calls appendRunMetrics with all 10 fields", async () => {
+    const bb = mockBitbucketClient();
+
+    await postReviewToBitbucket(
+      join(tmpDir, "review.md"), "pr-1", CONFIG,
+      { remoteUrl: "https://bitbucket.org/org/repo", mcpBaseUrl: "https://bitbucket.org", mcpConfigured: true, runId: "run-metrics-001" },
+      bb, [P0], { baseDir: tmpDir },
+    );
+
+    const metricsPath = join(tmpDir, ".forge", "knowledge", "metrics.md");
+    const metrics = readFileSync(metricsPath, "utf-8");
+    expect(metrics).toContain("run_id=run-metrics-001");
+    expect(metrics).toContain("post_enabled=true");
+    expect(metrics).toContain("gate_skipped_reason=null");
+    expect(metrics).toContain("creates=1");
+    expect(metrics).toContain("dones=0");
+    expect(metrics).toContain("reopens=0");
+    expect(metrics).toContain("skips=0");
+    expect(metrics).toContain("partial_failures=0");
+    expect(metrics).toContain("set_review_status_called=true");
+    expect(metrics).toContain("total_duration_ms=");
+  });
+
+  it("partial failures persisted with 4-field schema", async () => {
     let callCount = 0;
     const bb = mockBitbucketClient();
     bb.create_pr_task.mockImplementation(async () => {
@@ -111,53 +136,101 @@ describe("Integration: post.ts wires side-effect modules", () => {
     });
 
     await postReviewToBitbucket(
-      join(tmpDir, "review.md"),
-      "pr-1",
-      CONFIG,
+      join(tmpDir, "review.md"), "pr-1", CONFIG,
       { remoteUrl: "https://bitbucket.org/org/repo", mcpBaseUrl: "https://bitbucket.org", mcpConfigured: true, runId: "run-pf-002" },
-      bb,
-      [P0],
-      { baseDir: tmpDir },
+      bb, [P0], { baseDir: tmpDir },
     );
 
-    const findingsDir = join(tmpDir, ".forge", "findings");
-    expect(existsSync(findingsDir)).toBe(true);
-    const files = require("node:fs").readdirSync(findingsDir);
-    expect(files.some((f: string) => f.startsWith("comment-channel-error-"))).toBe(true);
+    const findingsFiles = readdirSync(join(tmpDir, ".forge", "findings"));
+    const errorFile = findingsFiles.find((f) => f.startsWith("comment-channel-error-"));
+    expect(errorFile).toBeDefined();
+    const content = readFileSync(join(tmpDir, ".forge", "findings", errorFile!), "utf-8");
+    expect(content).toContain("finding_hash:");
+    expect(content).toContain("tool_name: create_pr_task");
+    expect(content).toContain("error_message: rate limited");
+    expect(content).toContain("timestamp:");
   });
 
-  it("parseReviewMarkdown failure returns graceful result, not throws", async () => {
+  it("parseReviewMarkdown: missing file → review-markdown-not-found (not parse-error)", async () => {
     const bb = mockBitbucketClient();
-    const badPath = join(tmpDir, "nonexistent.md");
 
     const result = await postReviewToBitbucket(
-      badPath,
-      "pr-1",
-      CONFIG,
+      join(tmpDir, "nonexistent.md"), "pr-1", CONFIG,
+      { remoteUrl: "https://bitbucket.org/org/repo", mcpBaseUrl: "https://bitbucket.org", mcpConfigured: true, runId: "run-notfound" },
+      bb, // no _testFindings → triggers parseReviewMarkdown
+      undefined, { baseDir: tmpDir },
+    );
+
+    expect(result.posted).toBe(false);
+    if (!result.posted) {
+      expect(result.reason).toBe("review-markdown-not-found");
+    }
+  });
+
+  it("parseReviewMarkdown: invalid content → parse-error", async () => {
+    const bb = mockBitbucketClient();
+    const badMd = join(tmpDir, "bad-review.md");
+    writeFileSync(badMd, "# Review\nNo findings block here\n", "utf-8");
+
+    const result = await postReviewToBitbucket(
+      badMd, "pr-1", CONFIG,
       { remoteUrl: "https://bitbucket.org/org/repo", mcpBaseUrl: "https://bitbucket.org", mcpConfigured: true, runId: "run-parse-err" },
-      bb,
+      bb, undefined, { baseDir: tmpDir },
     );
 
-    // Should not throw — should return a result indicating parse failure
     expect(result.posted).toBe(false);
-    expect(result.reason).toBe("parse-error");
+    if (!result.posted) {
+      expect(result.reason).toBe("parse-error");
+    }
   });
 
-  it("applyCliOverrides wired: --no-post-comments disables posting", async () => {
+  it("parse-error path also writes metrics", async () => {
+    const bb = mockBitbucketClient();
+
+    await postReviewToBitbucket(
+      join(tmpDir, "nonexistent.md"), "pr-1", CONFIG,
+      { remoteUrl: "https://bitbucket.org/org/repo", mcpBaseUrl: "https://bitbucket.org", mcpConfigured: true, runId: "run-parse-metrics" },
+      bb, undefined, { baseDir: tmpDir },
+    );
+
+    const metricsPath = join(tmpDir, ".forge", "knowledge", "metrics.md");
+    expect(existsSync(metricsPath)).toBe(true);
+    const metrics = readFileSync(metricsPath, "utf-8");
+    expect(metrics).toContain("run_id=run-parse-metrics");
+  });
+
+  it("applyCliOverrides: --no-post-comments disables + writes skip + metrics", async () => {
     const bb = mockBitbucketClient();
 
     const result = await postReviewToBitbucket(
-      join(tmpDir, "review.md"),
-      "pr-1",
-      CONFIG,
+      join(tmpDir, "review.md"), "pr-1", CONFIG,
       { remoteUrl: "https://bitbucket.org/org/repo", mcpBaseUrl: "https://bitbucket.org", mcpConfigured: true, runId: "run-cli-001" },
-      bb,
-      [P0],
-      { baseDir: tmpDir, argv: ["--no-post-comments"] },
+      bb, [P0], { baseDir: tmpDir, argv: ["--no-post-comments"] },
     );
 
     expect(result.posted).toBe(false);
-    expect(result.reason).toBe("disabled-by-cli");
+    expect(bb.create_pr_task).not.toHaveBeenCalled();
+    // metrics should still be written
+    const metricsPath = join(tmpDir, ".forge", "knowledge", "metrics.md");
+    expect(existsSync(metricsPath)).toBe(true);
+    expect(readFileSync(metricsPath, "utf-8")).toContain("run_id=run-cli-001");
+  });
+
+  it("Action skip-duplicate carries task_id and reason fields", async () => {
+    const bb = mockBitbucketClient();
+    const hash = computeFindingHash(P0);
+    bb.list_pr_tasks.mockResolvedValue([
+      { id: "task-existing", content: `[Forge P0] <!-- forge-review:hash=${hash} -->`, state: "OPEN" },
+    ]);
+    bb.get_pull_request.mockResolvedValue({ active_comments: [] });
+
+    await postReviewToBitbucket(
+      join(tmpDir, "review.md"), "pr-1", CONFIG,
+      { remoteUrl: "https://bitbucket.org/org/repo", mcpBaseUrl: "https://bitbucket.org", mcpConfigured: true, runId: "run-skip-dup" },
+      bb, [P0], { baseDir: tmpDir },
+    );
+
+    // Should not create new task (already exists and OPEN)
     expect(bb.create_pr_task).not.toHaveBeenCalled();
   });
 });

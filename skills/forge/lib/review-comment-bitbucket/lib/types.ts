@@ -34,7 +34,7 @@ export type Action =
   | { kind: "create"; finding: Finding }
   | { kind: "done"; task_id: string; comment_id?: string; finding_hash: string }
   | { kind: "reopen"; task_id: string; comment_id?: string; finding: Finding }
-  | { kind: "skip-duplicate"; finding_hash: string };
+  | { kind: "skip-duplicate"; finding_hash: string; task_id?: string; reason?: string };
 
 export interface ActionPlan {
   creates: Action[];
@@ -83,8 +83,14 @@ export interface PostContext {
   runId: string;
 }
 
+export type PostFailureReason =
+  | GateSkipReason
+  | "disabled-by-cli"
+  | "review-markdown-not-found"
+  | "parse-error";
+
 export type PostResult =
-  | { posted: false; reason: GateSkipReason }
+  | { posted: false; reason: PostFailureReason }
   | { posted: true; plan_summary: PlanSummary; partial_failures?: ToolFailure[] };
 
 export interface PlanSummary {
