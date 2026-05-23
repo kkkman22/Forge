@@ -7,9 +7,8 @@
  */
 
 import { createHash } from "node:crypto";
-
-import { isBugfixBundle } from "./spec-bundle.js";
 import type { SpecBundle, TaskSeed } from "./spec-bundle.js";
+import { isBugfixBundle } from "./spec-bundle.js";
 
 /**
  * Derive regression-test tasks from the Unchanged Behavior section of a bugfix spec.

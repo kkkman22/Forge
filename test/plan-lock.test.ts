@@ -3,10 +3,15 @@
  */
 import { describe, expect, it } from "vitest";
 import { lockPlan } from "../src/plan.js";
-import type { TasksSeedDocument, SpecFileFrontmatter } from "../src/spec-bundle.js";
+import type { SpecFileFrontmatter, TasksSeedDocument } from "../src/spec-bundle.js";
 
 function makeFm(): SpecFileFrontmatter {
-  return { feature: "test", status: "draft", date: "2026-05-23", workflow_variant: "requirements-first" };
+  return {
+    feature: "test",
+    status: "draft",
+    date: "2026-05-23",
+    workflow_variant: "requirements-first",
+  };
 }
 
 describe("lockPlan", () => {
@@ -14,8 +19,21 @@ describe("lockPlan", () => {
     const doc: TasksSeedDocument = {
       frontmatter: makeFm(),
       tasks: [
-        { id: "T-01", title: "Do something", goal: "Implement it", related_requirements: ["R1"], status: "pending" },
-        { id: "T-02", title: "Do more", goal: "More implementation", related_requirements: ["R2"], status: "pending", depends_on: ["T-01"] },
+        {
+          id: "T-01",
+          title: "Do something",
+          goal: "Implement it",
+          related_requirements: ["R1"],
+          status: "pending",
+        },
+        {
+          id: "T-02",
+          title: "Do more",
+          goal: "More implementation",
+          related_requirements: ["R2"],
+          status: "pending",
+          depends_on: ["T-01"],
+        },
       ],
     };
 

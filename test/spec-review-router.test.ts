@@ -4,15 +4,15 @@
  * Validates: Requirement 6 — review reads spec via loadSpecBundle
  */
 import { describe, expect, it } from "vitest";
-import { buildReviewSpecContext } from "../src/spec-review-router.js";
 import type {
-  SpecBundle,
-  RequirementsDocument,
-  DesignDocument,
-  TasksSeedDocument,
   BugfixDocument,
+  DesignDocument,
+  RequirementsDocument,
+  SpecBundle,
   SpecFileFrontmatter,
+  TasksSeedDocument,
 } from "../src/spec-bundle.js";
+import { buildReviewSpecContext } from "../src/spec-review-router.js";
 
 function makeFeatureBundle(): SpecBundle {
   const fm: SpecFileFrontmatter = {
@@ -32,7 +32,12 @@ function makeFeatureBundle(): SpecBundle {
       glossary: [{ term: "JWT", definition: "JSON Web Token" }],
       userStories: [],
       earsCriteria: [
-        { line: 1, when: "用户登录", shall: "返回 token", raw: "当 用户登录 时 系统应当 返回 token" },
+        {
+          line: 1,
+          when: "用户登录",
+          shall: "返回 token",
+          raw: "当 用户登录 时 系统应当 返回 token",
+        },
       ],
       nonFunctional: [],
       outOfScope: [],
@@ -51,7 +56,13 @@ function makeFeatureBundle(): SpecBundle {
     tasks: {
       frontmatter: fm,
       tasks: [
-        { id: "T-01", title: "Implement login", goal: "Login endpoint", related_requirements: [], status: "pending" },
+        {
+          id: "T-01",
+          title: "Implement login",
+          goal: "Login endpoint",
+          related_requirements: [],
+          status: "pending",
+        },
       ],
     } as TasksSeedDocument,
   };
@@ -98,7 +109,9 @@ function makeBugfixBundle(): SpecBundle {
       frontmatter: { ...fm, kind: "bugfix" },
       current: [{ line: 1, when: "登录", shall: "500错误", raw: "当 登录 时 系统应当 500错误" }],
       expected: [{ line: 1, when: "登录", shall: "200 OK", raw: "当 登录 时 系统应当 200 OK" }],
-      unchanged: [{ line: 1, when: "注册", shall: "创建账户", raw: "当 注册 时 系统应当 创建账户" }],
+      unchanged: [
+        { line: 1, when: "注册", shall: "创建账户", raw: "当 注册 时 系统应当 创建账户" },
+      ],
     } as BugfixDocument,
   };
 }

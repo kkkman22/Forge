@@ -6,25 +6,25 @@
  * Validates: Requirement 1 (三文件目录结构)
  */
 import { describe, expect, it } from "vitest";
+import type { SpecDocument } from "../src/spec.js";
 import {
-  type SpecBundle,
-  type RequirementsDocument,
+  type BugfixDesignDocument,
+  type BugfixDocument,
   type DesignDocument,
-  type TasksSeedDocument,
-  type SpecFileFrontmatter,
-  type WorkflowVariant,
   type EarsClause,
+  isBugfixBundle,
+  isFeatureBundle,
+  type RequirementsDocument,
+  type SpecBundle,
+  type SpecFileFrontmatter,
   type SpecKind,
   type SpecStatus,
-  type TaskSeed,
-  type Wave,
-  type BugfixDocument,
-  type BugfixDesignDocument,
-  isFeatureBundle,
-  isBugfixBundle,
   specDocumentToBundle,
+  type TaskSeed,
+  type TasksSeedDocument,
+  type Wave,
+  type WorkflowVariant,
 } from "../src/spec-bundle.js";
-import type { SpecDocument } from "../src/spec.js";
 
 // ---------------------------------------------------------------------------
 // Helpers
@@ -51,9 +51,7 @@ function makeSpecDocument(overrides?: Partial<SpecDocument>): SpecDocument {
   };
 }
 
-function makeSpecFileFrontmatter(
-  overrides?: Partial<SpecFileFrontmatter>,
-): SpecFileFrontmatter {
+function makeSpecFileFrontmatter(overrides?: Partial<SpecFileFrontmatter>): SpecFileFrontmatter {
   return {
     feature: "test-feature",
     status: "draft",
@@ -77,7 +75,9 @@ function makeRequirementsDocument(): RequirementsDocument {
     frontmatter: makeSpecFileFrontmatter(),
     intro: "Introduction text",
     glossary: [{ term: "SpecBundle", definition: "三文件聚合视图" }],
-    userStories: [{ title: "US1", description: "作为...我希望...", earsCriteria: [makeEarsClause()] }],
+    userStories: [
+      { title: "US1", description: "作为...我希望...", earsCriteria: [makeEarsClause()] },
+    ],
     earsCriteria: [makeEarsClause()],
     nonFunctional: ["性能要求"],
     outOfScope: ["不做什么"],
@@ -121,11 +121,7 @@ function makeTasksSeedDocument(): TasksSeedDocument {
 
 describe("T-01 Data Contract: type existence", () => {
   it("WorkflowVariant allows three variants", () => {
-    const variants: WorkflowVariant[] = [
-      "requirements-first",
-      "design-first",
-      "quick-plan",
-    ];
+    const variants: WorkflowVariant[] = ["requirements-first", "design-first", "quick-plan"];
     expect(variants).toHaveLength(3);
   });
 

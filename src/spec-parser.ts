@@ -300,7 +300,8 @@ export function parseDesignMarkdown(text: string): ParseResult<DesignDocument> {
   const architecture = extractSection(body, "Architecture");
   const ciText = extractSection(body, "Components and Interfaces");
   const componentInterfaces = extractListItems(ciText);
-  const dataModel = extractSection(body, "Data Models") || extractSection(body, "Components and Interfaces");
+  const dataModel =
+    extractSection(body, "Data Models") || extractSection(body, "Components and Interfaces");
   const errorHandling = extractSection(body, "Error Handling");
   const testingStrategy = extractSection(body, "Testing Strategy");
   const rollout = extractSection(body, "Rollout");
@@ -389,9 +390,7 @@ export function parseTasksMarkdown(text: string): ParseResult<TasksSeedDocument>
     const catMatch = blockText.match(/[-*]\s*category:\s*(.+)/);
     const verMatch = blockText.match(/[-*]\s*verification:\s*(.+)/);
 
-    const relatedReqs = reqMatch
-      ? reqMatch[1].split(/[,，]/).map((s: string) => s.trim())
-      : [];
+    const relatedReqs = reqMatch ? reqMatch[1].split(/[,，]/).map((s: string) => s.trim()) : [];
 
     const task: TaskSeed = {
       id: block.id,

@@ -7,8 +7,8 @@
 
 import { createHash } from "node:crypto";
 import type { BannedPatternRegistry, GlossaryRegistry } from "./pack/types.js";
-import type { SpecBundle } from "./spec-bundle.js";
 import { lintScenarios } from "./scenario-linter.js";
+import type { SpecBundle } from "./spec-bundle.js";
 import { detectSpecLeak } from "./spec-leak-detector.js";
 
 // ---------------------------------------------------------------------------
@@ -249,7 +249,7 @@ export function computeSpecHash(content: string): string {
  */
 export function computeBundleHash(
   bundle: SpecBundle,
-  readFile?: (filePath: string) => string,
+  _readFile?: (filePath: string) => string,
 ): string {
   const parts: string[] = [];
 
