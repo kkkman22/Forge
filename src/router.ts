@@ -26,7 +26,7 @@
 
 import { PromptDefenseError } from "./forge-error.js";
 import { scanInput } from "./prompt-defense.js";
-import { matchIntents, intentsToHints, parseIntentDictionary } from "./router-intents.js";
+import { intentsToHints, matchIntents, parseIntentDictionary } from "./router-intents.js";
 
 // ---------------------------------------------------------------------------
 // Tier (complexity dimension) — determines WHICH commands to run

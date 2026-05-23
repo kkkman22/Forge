@@ -1,9 +1,8 @@
 import { describe, expect, it, vi, beforeEach } from "vitest";
 import { classifyTask, _resetIntentDictCache } from "../../src/router.js";
+import type { TaskSignals } from "../../src/router.js";
 import { detectIntentCancellation } from "../../src/router-intents.js";
 import { scanInput } from "../../src/prompt-defense.js";
-import type { TaskSignals } from "../../src/router.js";
-import type { TaskSignals } from "../../src/router.js";
 
 vi.mock("../../src/prompt-defense.js", () => ({
   scanInput: vi.fn(() => ({
