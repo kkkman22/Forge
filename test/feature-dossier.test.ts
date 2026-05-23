@@ -57,6 +57,22 @@ describe("deriveTopicFromPath", () => {
     expect(deriveTopicFromPath("decisions/ADR-TEMPLATE.md")).toBeNull();
   });
 
+  it("extracts topic from specs/requirements.md (three-file)", () => {
+    expect(deriveTopicFromPath("specs/auth/requirements.md")).toBe("auth");
+  });
+
+  it("extracts topic from specs/design.md (three-file)", () => {
+    expect(deriveTopicFromPath("specs/user-api/design.md")).toBe("user-api");
+  });
+
+  it("extracts topic from specs/tasks.md (three-file)", () => {
+    expect(deriveTopicFromPath("specs/payment/tasks.md")).toBe("payment");
+  });
+
+  it("extracts topic from specs/bugfix.md (bugfix spec)", () => {
+    expect(deriveTopicFromPath("specs/auth/bugfix.md")).toBe("auth");
+  });
+
   it("returns null for non-spec file in specs subdirectory", () => {
     expect(deriveTopicFromPath("specs/foo/notes.md")).toBeNull();
   });
@@ -138,6 +154,25 @@ describe("matchStageFiles", () => {
   it("matches spec directory name", () => {
     const files = ["spec.md"];
     expect(matchStageFiles("specs", topic, files)).toEqual(["spec.md"]);
+  });
+
+  it("matches three-file layout in specs", () => {
+    const files = ["requirements.md", "design.md", "tasks.md"];
+    expect(matchStageFiles("specs", topic, files)).toEqual(["requirements.md", "design.md", "tasks.md"]);
+  });
+
+  it("matches mixed layout (legacy + three-file)", () => {
+    const files = ["spec.md", "requirements.md", "design.md", "tasks.md"];
+    const result = matchStageFiles("specs", topic, files);
+    expect(result).toContain("spec.md");
+    expect(result).toContain("requirements.md");
+    expect(result).toContain("design.md");
+    expect(result).toContain("tasks.md");
+  });
+
+  it("matches bugfix.md in specs", () => {
+    const files = ["bugfix.md", "design.md", "tasks.md"];
+    expect(matchStageFiles("specs", topic, files)).toEqual(["bugfix.md", "design.md", "tasks.md"]);
   });
 });
 
