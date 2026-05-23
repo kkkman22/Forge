@@ -499,6 +499,26 @@ export const SKILL_FUNCTION_REGISTRY: readonly SkillFunctionEntry[] = [
     parameterNames: ["input"],
   },
 
+  // --- forge-spec/SKILL.md (three-file spec system) ---
+  {
+    module: "spec-refine.ts",
+    functionName: "detectSpecTriggers",
+    skills: ["forge/lib/spec/instructions.md"],
+    parameterNames: ["featureDir"],
+  },
+  {
+    module: "spec-variant.ts",
+    functionName: "resolveSpecVariant",
+    skills: ["forge/lib/spec/instructions.md"],
+    parameterNames: ["input"],
+  },
+  {
+    module: "spec-analyze.ts",
+    functionName: "analyzeRequirements",
+    skills: ["forge/lib/spec/instructions.md"],
+    parameterNames: ["req"],
+  },
+
   // --- forge-test/SKILL.md (ci-drift) ---
   {
     module: "ci-command-drift.ts",

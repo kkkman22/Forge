@@ -1,6 +1,6 @@
 {
   "version": 1,
-  "generated_at": "2026-05-18T03:43:28.275Z",
+  "generated_at": "2026-05-23T09:16:39.713Z",
   "subs": {
     "abort": {
       "instructions": {
@@ -370,7 +370,7 @@
     "plan": {
       "instructions": {
         "path": "plan/instructions.md",
-        "sha256": "f4aad3d08039c0d43894b60552a900e2d1b99b51a12eb47fd4424d0286aa522f"
+        "sha256": "016bf41c2ea80df16a3c4f39fa488fc8c748d74d80828a657cf3e8be43fe665f"
       },
       "references": [
         {
@@ -406,13 +406,6 @@
           "sha256": "a464084e44506539f0bd8ba9398d7202742f8882beb3f7a716e8a844e0506c88"
         }
       ]
-    },
-    "review-comment-bitbucket": {
-      "instructions": {
-        "path": "review-comment-bitbucket/instructions.md",
-        "sha256": "8c7cf4d7b81da94ebb738abcd1ff5c5cc5de8fe6300455e85dfca12a32c9f1ea"
-      },
-      "references": []
     },
     "recap": {
       "instructions": {
@@ -530,6 +523,13 @@
         }
       ]
     },
+    "review-comment-bitbucket": {
+      "instructions": {
+        "path": "review-comment-bitbucket/instructions.md",
+        "sha256": "8c7cf4d7b81da94ebb738abcd1ff5c5cc5de8fe6300455e85dfca12a32c9f1ea"
+      },
+      "references": []
+    },
     "router": {
       "instructions": {
         "path": "router/instructions.md",
@@ -573,7 +573,7 @@
     "spec": {
       "instructions": {
         "path": "spec/instructions.md",
-        "sha256": "c3e29ff9fd1f9c266e7db359e42604d877fc14646476cc505814f1f892f18648"
+        "sha256": "8267ad4884779d3a9fef703cdfd8115ccaabb4ef8a7201e78ebe0be0b678db7f"
       },
       "references": [
         {
@@ -598,7 +598,7 @@
         },
         {
           "path": "spec/references/spec-format.md",
-          "sha256": "22219bf5f233e5ec89eb44700c6e6511c78130c019c1ffbb9a174b9d7c71c881"
+          "sha256": "99d4f9857b3fd8e95525e76f88199b581bff479ee6cc05675a523137bf466d95"
         },
         {
           "path": "spec/references/spec-leak-detector.md",
