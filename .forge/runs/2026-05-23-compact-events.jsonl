@@ -23,3 +23,9 @@
 {"timestamp":"2026-05-23T02:08:34Z","event":"precompact_snapshot","detail":"slug=review-comment-bitbucket phase=build"}
 {"timestamp":"2026-05-23T02:13:57Z","event":"postcompact_restore","detail":"slug=review-comment-bitbucket"}
 {"timestamp":"2026-05-23T02:13:57Z","event":"precompact_snapshot","detail":"slug=review-comment-bitbucket phase=build"}
+{"timestamp":"2026-05-23T09:11:09Z","event":"postcompact_restore","detail":"slug=forge-kiro-style-spec-workflow"}
+{"timestamp":"2026-05-23T09:11:09Z","event":"precompact_snapshot","detail":"slug=review-comment-bitbucket phase=build"}
+{"timestamp":"2026-05-23T09:12:40Z","event":"postcompact_restore","detail":"slug=review-comment-bitbucket"}
+{"timestamp":"2026-05-23T09:12:40Z","event":"precompact_snapshot","detail":"slug=review-comment-bitbucket phase=build"}
+{"timestamp":"2026-05-23T09:14:06Z","event":"postcompact_restore","detail":"slug=review-comment-bitbucket"}
+{"timestamp":"2026-05-23T09:14:06Z","event":"precompact_snapshot","detail":"slug=review-comment-bitbucket phase=build"}
