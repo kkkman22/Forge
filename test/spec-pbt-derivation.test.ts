@@ -5,9 +5,19 @@
  */
 import * as fc from "fast-check";
 import { describe, expect, it } from "vitest";
-import { derivePbtTasksFromUnchanged, computeFailSignature, triggerThreeStrikeReroute } from "../src/spec-pbt-derivation.js";
-import type { BugfixDocument, EarsClause, SpecBundle, SpecFileFrontmatter, TasksSeedDocument } from "../src/spec-bundle.js";
+import type {
+  BugfixDocument,
+  EarsClause,
+  SpecBundle,
+  SpecFileFrontmatter,
+  TasksSeedDocument,
+} from "../src/spec-bundle.js";
 import type { FixFailure } from "../src/spec-pbt-derivation.js";
+import {
+  computeFailSignature,
+  derivePbtTasksFromUnchanged,
+  triggerThreeStrikeReroute,
+} from "../src/spec-pbt-derivation.js";
 
 function makeEars(when: string, shall: string, suffix = ""): EarsClause {
   return {
@@ -35,7 +45,13 @@ function makeBugfixBundle(unchanged: EarsClause[]): SpecBundle {
   const tasks: TasksSeedDocument = {
     frontmatter: { ...fm, kind: "bugfix" },
     tasks: [
-      { id: "BFX-01", title: "Fix root cause", goal: "Fix it", related_requirements: [], status: "pending" },
+      {
+        id: "BFX-01",
+        title: "Fix root cause",
+        goal: "Fix it",
+        related_requirements: [],
+        status: "pending",
+      },
     ],
   };
   return {
@@ -70,11 +86,7 @@ describe("derivePbtTasksFromUnchanged", () => {
   });
 
   it("each task has source_clause pointing to one unchanged clause", () => {
-    const unchanged = [
-      makeEars("A", "do A"),
-      makeEars("B", "do B"),
-      makeEars("C", "do C"),
-    ];
+    const unchanged = [makeEars("A", "do A"), makeEars("B", "do B"), makeEars("C", "do C")];
     const bundle = makeBugfixBundle(unchanged);
 
     const tasks = derivePbtTasksFromUnchanged(bundle);
@@ -96,10 +108,7 @@ describe("derivePbtTasksFromUnchanged", () => {
   });
 
   it("all derived tasks have category regression-test", () => {
-    const unchanged = [
-      makeEars("A", "do A"),
-      makeEars("B", "do B"),
-    ];
+    const unchanged = [makeEars("A", "do A"), makeEars("B", "do B")];
     const bundle = makeBugfixBundle(unchanged);
 
     const tasks = derivePbtTasksFromUnchanged(bundle);
@@ -115,7 +124,12 @@ describe("derivePbtTasksFromUnchanged", () => {
       layout: "three-file",
       variant: "requirements-first",
       primary: {
-        frontmatter: { feature: "test", status: "locked", date: "2026-05-23", workflow_variant: "requirements-first" },
+        frontmatter: {
+          feature: "test",
+          status: "locked",
+          date: "2026-05-23",
+          workflow_variant: "requirements-first",
+        },
         intro: "",
         glossary: [],
         userStories: [],
@@ -142,7 +156,7 @@ describe("derivePbtTasksFromUnchanged", () => {
           { minLength: 1, maxLength: 15 },
         ),
         (entries) => {
-          const unchanged = entries.map((e, i) =>
+          const unchanged = entries.map((e, _i) =>
             makeEars(e.when, e.shall, e.manual ? "[manual]" : ""),
           );
           // Deduplicate by raw text

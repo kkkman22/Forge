@@ -396,7 +396,11 @@ export function discoverTopics(forgeRoot: string): TopicDiscoveryResult {
         if (!stat.isDirectory()) continue;
         const subFiles = fs.readdirSync(entryPath);
         const hasLegacy = subFiles.includes("spec.md");
-        const hasThreeFile = subFiles.includes("requirements.md") || subFiles.includes("design.md") || subFiles.includes("tasks.md") || subFiles.includes("bugfix.md");
+        const hasThreeFile =
+          subFiles.includes("requirements.md") ||
+          subFiles.includes("design.md") ||
+          subFiles.includes("tasks.md") ||
+          subFiles.includes("bugfix.md");
         if (hasLegacy || hasThreeFile) {
           topicSet.add(entry);
         } else {

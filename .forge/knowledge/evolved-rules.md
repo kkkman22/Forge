@@ -113,7 +113,7 @@ This file keeps only rules that still need top-of-session reminders.
 **Added**: 2026-05-17
 **Confidence**: 0.85
 **Last_triggered**: 2026-05-17
-**Infra_Ref**: `skills/forge/lib/review/instructions.md` §Quality Gate; `skills/forge/lib/test/instructions.md` §3 Verification Iron Law; spec.md `update_after_lock` pattern
+**Infra_Ref**: `skills/forge/lib/review/instructions.md` §7 + `skills/forge/lib/test/instructions.md` §3.1
 
 ---
 

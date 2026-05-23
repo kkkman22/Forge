@@ -61,3 +61,32 @@ describe("buildReviewSubagents prompt diff-context", () => {
     expect(frontend!.prompt).toContain("components/App.vue");
   });
 });
+
+describe("buildReviewSubagents prompt — final-report contract", () => {
+  const ctx = {
+    hasSpec: true,
+    specPath: ".kiro/specs/example/spec.md",
+    changedFiles: ["src/x.ts"],
+  };
+  const invocations = buildReviewSubagents(ctx);
+
+  it("each review prompt teaches the sentinel marker", () => {
+    for (const t of ["spec-check", "quality-check", "security-check"]) {
+      const inv = invocations.find((i) => i.agentType === t);
+      expect(inv).toBeDefined();
+      // Prompt mentions the literal sentinel and the heading shape so the
+      // model knows what closes a valid run.
+      expect(inv!.prompt).toContain("<!-- review-final -->");
+      expect(inv!.prompt).toMatch(/Layer\s*N/);
+      expect(inv!.prompt).toMatch(/Severity/);
+    }
+  });
+
+  it("each review prompt warns that a preamble-only ending is rejected", () => {
+    for (const t of ["spec-check", "quality-check", "security-check"]) {
+      const inv = invocations.find((i) => i.agentType === t);
+      expect(inv).toBeDefined();
+      expect(inv!.prompt).toMatch(/preamble|Now let me check|incomplete/i);
+    }
+  });
+});

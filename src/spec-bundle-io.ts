@@ -10,7 +10,7 @@
 
 import { existsSync, mkdirSync, readFileSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
-
+import type { Requirement, SpecDocument, SpecFrontmatter } from "./spec.js";
 import type {
   DesignDocument,
   RequirementsDocument,
@@ -19,8 +19,11 @@ import type {
   TasksSeedDocument,
 } from "./spec-bundle.js";
 import { specDocumentToBundle } from "./spec-bundle.js";
-import type { SpecDocument, SpecFrontmatter, Requirement } from "./spec.js";
-import { parseDesignMarkdown, parseRequirementsMarkdown, parseTasksMarkdown } from "./spec-parser.js";
+import {
+  parseDesignMarkdown,
+  parseRequirementsMarkdown,
+  parseTasksMarkdown,
+} from "./spec-parser.js";
 
 // ---------------------------------------------------------------------------
 // Internal: legacy spec.md parser
@@ -45,22 +48,25 @@ function parseLegacySpec(text: string): SpecDocument {
   // Extract requirements (需求)
   const requirements: Requirement[] = [];
   const reqRegex = /###\s*需求\s*\d+[:：]\s*(.+)/g;
-  let reqMatch: RegExpExecArray | null;
-  while ((reqMatch = reqRegex.exec(body)) !== null) {
-    const title = reqMatch[1].trim();
-    // Extract scenarios from lines starting with - 当...则...
-    const restStart = reqMatch.index + reqMatch[0].length;
-    const nextReq = reqRegex.exec(body);
-    const restEnd = nextReq ? nextReq.index : body.length;
-    reqRegex.lastIndex = reqMatch.index + 1; // reset for next outer loop iteration
-    const blockText = body.slice(restStart, restEnd);
+  // Two-pass parsing: first collect heading positions, then slice block bodies.
+  const reqHeadings: { title: string; restStart: number }[] = [];
+  for (const m of body.matchAll(reqRegex)) {
+    reqHeadings.push({
+      title: m[1].trim(),
+      restStart: (m.index ?? 0) + m[0].length,
+    });
+  }
+  for (let i = 0; i < reqHeadings.length; i++) {
+    const heading = reqHeadings[i];
+    const restEnd = reqHeadings[i + 1]?.restStart ?? body.length;
+    const blockText = body.slice(heading.restStart, restEnd);
 
     const scenarios = blockText
       .split("\n")
       .filter((l) => l.trim().startsWith("-") && l.includes("当"))
       .map((l) => l.replace(/^[-*]\s*/, "").trim());
 
-    requirements.push({ title, description: "", scenarios });
+    requirements.push({ title: heading.title, description: "", scenarios });
   }
 
   // Extract exclusions (不做什么)
@@ -131,14 +137,18 @@ export function loadSpecBundle(
   if (hasThreeFile) {
     const reqResult = parseRequirementsMarkdown(readFileSync(reqPath, "utf-8"));
     if (reqResult.errors) {
-      throw new Error(`Parse error in requirements.md: ${reqResult.errors.map((e) => e.message).join(", ")}`);
+      throw new Error(
+        `Parse error in requirements.md: ${reqResult.errors.map((e) => e.message).join(", ")}`,
+      );
     }
 
     let design: DesignDocument | undefined;
     if (existsSync(designPath)) {
       const designResult = parseDesignMarkdown(readFileSync(designPath, "utf-8"));
       if (designResult.errors) {
-        throw new Error(`Parse error in design.md: ${designResult.errors.map((e) => e.message).join(", ")}`);
+        throw new Error(
+          `Parse error in design.md: ${designResult.errors.map((e) => e.message).join(", ")}`,
+        );
       }
       design = designResult.doc;
     }
@@ -147,19 +157,25 @@ export function loadSpecBundle(
     if (existsSync(tasksPath)) {
       const tasksResult = parseTasksMarkdown(readFileSync(tasksPath, "utf-8"));
       if (tasksResult.errors) {
-        throw new Error(`Parse error in tasks.md: ${tasksResult.errors.map((e) => e.message).join(", ")}`);
+        throw new Error(
+          `Parse error in tasks.md: ${tasksResult.errors.map((e) => e.message).join(", ")}`,
+        );
       }
       tasks = tasksResult.doc;
     }
 
-    const frontmatter = reqResult.doc!.frontmatter;
+    const requirementsDoc = reqResult.doc;
+    if (!requirementsDoc) {
+      throw new Error("internal: requirements.md parsed without errors but doc is missing");
+    }
+    const frontmatter = requirementsDoc.frontmatter;
 
     return {
       feature: frontmatter.feature,
       kind: frontmatter.kind ?? "feature",
       layout: "three-file",
       variant: frontmatter.workflow_variant,
-      primary: reqResult.doc!,
+      primary: requirementsDoc,
       ...(design ? { design } : {}),
       ...(tasks ? { tasks } : {}),
       ...(hasLegacy ? { migrationHint: true } : {}),

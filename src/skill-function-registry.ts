@@ -501,6 +501,42 @@ export const SKILL_FUNCTION_REGISTRY: readonly SkillFunctionEntry[] = [
 
   // --- forge-spec/SKILL.md (three-file spec system) ---
   {
+    module: "spec.ts",
+    functionName: "routeSpecEntry",
+    skills: ["forge/lib/spec/instructions.md"],
+    parameterNames: ["argv", "featureDir", "outputDir", "existingBundle"],
+  },
+  {
+    module: "plan.ts",
+    functionName: "lockPlan",
+    skills: ["forge/lib/plan/instructions.md"],
+    parameterNames: ["doc"],
+  },
+  {
+    module: "spec-plan-upgrade.ts",
+    functionName: "upgradeTasksSeed",
+    skills: ["forge/lib/plan/instructions.md"],
+    parameterNames: ["doc"],
+  },
+  {
+    module: "spec-migration.ts",
+    functionName: "migrateLegacySpec",
+    skills: ["forge/lib/spec/instructions.md"],
+    parameterNames: ["featureDir"],
+  },
+  {
+    module: "spec-refine.ts",
+    functionName: "refineDownstream",
+    skills: ["forge/lib/spec/instructions.md"],
+    parameterNames: ["bundle", "target", "options"],
+  },
+  {
+    module: "spec-import.ts",
+    functionName: "runImportMode",
+    skills: ["forge/lib/spec/instructions.md"],
+    parameterNames: ["inputPath", "outputDir"],
+  },
+  {
     module: "spec-refine.ts",
     functionName: "detectSpecTriggers",
     skills: ["forge/lib/spec/instructions.md"],
@@ -525,6 +561,18 @@ export const SKILL_FUNCTION_REGISTRY: readonly SkillFunctionEntry[] = [
     functionName: "parseWaves",
     skills: ["forge/lib/build/instructions.md"],
     parameterNames: ["jsonBlock", "tasks"],
+  },
+  {
+    module: "build.ts",
+    functionName: "scheduleWave",
+    skills: ["forge/lib/build/instructions.md"],
+    parameterNames: ["wave", "options"],
+  },
+  {
+    module: "build.ts",
+    functionName: "buildThreeStrikeDebugReroute",
+    skills: ["forge/lib/build/instructions.md"],
+    parameterNames: ["history", "currentFailure", "debugDir", "topic"],
   },
   {
     module: "spec-pbt-derivation.ts",

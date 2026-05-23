@@ -7,10 +7,15 @@
  */
 import { describe, expect, it } from "vitest";
 import { analyzeRequirements } from "../src/spec-analyze.js";
-import type { RequirementsDocument, EarsClause, SpecFileFrontmatter } from "../src/spec-bundle.js";
+import type { EarsClause, RequirementsDocument, SpecFileFrontmatter } from "../src/spec-bundle.js";
 
 function makeFrontmatter(): SpecFileFrontmatter {
-  return { feature: "test", status: "draft", date: "2026-05-23", workflow_variant: "requirements-first" };
+  return {
+    feature: "test",
+    status: "draft",
+    date: "2026-05-23",
+    workflow_variant: "requirements-first",
+  };
 }
 
 function makeEarsClause(overrides?: Partial<EarsClause>): EarsClause {
@@ -22,11 +27,13 @@ function makeReqDoc(overrides?: Partial<RequirementsDocument>): RequirementsDocu
     frontmatter: makeFrontmatter(),
     intro: "Intro",
     glossary: [],
-    userStories: [{
-      title: "R1",
-      description: "Test requirement",
-      earsCriteria: [makeEarsClause()],
-    }],
+    userStories: [
+      {
+        title: "R1",
+        description: "Test requirement",
+        earsCriteria: [makeEarsClause()],
+      },
+    ],
     earsCriteria: [makeEarsClause()],
     nonFunctional: ["NFR"],
     outOfScope: ["Out"],
@@ -49,11 +56,13 @@ describe("ANL-01: EARS compliance", () => {
   it("reports P1 when criteria don't match EARS", () => {
     const doc = makeReqDoc({
       earsCriteria: [{ line: 1, when: "", shall: "", raw: "Some non-EARS text" }],
-      userStories: [{
-        title: "R1",
-        description: "",
-        earsCriteria: [{ line: 1, when: "", shall: "", raw: "Some non-EARS text" }],
-      }],
+      userStories: [
+        {
+          title: "R1",
+          description: "",
+          earsCriteria: [{ line: 1, when: "", shall: "", raw: "Some non-EARS text" }],
+        },
+      ],
     });
     const result = analyzeRequirements(doc);
     const anl01 = result.findings.find((f) => f.rule === "ANL-01");
@@ -84,11 +93,13 @@ describe("ANL-03: Ambiguity detection", () => {
   it("reports P2 when vague terms found", () => {
     const doc = makeReqDoc({
       earsCriteria: [makeEarsClause({ raw: "当 合适的时候 系统应当 适当的处理" })],
-      userStories: [{
-        title: "R1",
-        description: "",
-        earsCriteria: [makeEarsClause({ raw: "当 合适的时候 系统应当 适当的处理" })],
-      }],
+      userStories: [
+        {
+          title: "R1",
+          description: "",
+          earsCriteria: [makeEarsClause({ raw: "当 合适的时候 系统应当 适当的处理" })],
+        },
+      ],
     });
     const result = analyzeRequirements(doc);
     const anl03 = result.findings.find((f) => f.rule === "ANL-03");
@@ -112,17 +123,35 @@ describe("ANL-04: Conflict detection", () => {
   it("reports P0 when contradictory EARS clauses found", () => {
     const doc = makeReqDoc({
       earsCriteria: [
-        makeEarsClause({ when: "用户提交", shall: "返回成功", raw: "当 用户提交 时 系统应当 返回成功" }),
-        makeEarsClause({ when: "用户提交", shall: "返回失败", raw: "当 用户提交 时 系统应当 返回失败" }),
+        makeEarsClause({
+          when: "用户提交",
+          shall: "返回成功",
+          raw: "当 用户提交 时 系统应当 返回成功",
+        }),
+        makeEarsClause({
+          when: "用户提交",
+          shall: "返回失败",
+          raw: "当 用户提交 时 系统应当 返回失败",
+        }),
       ],
-      userStories: [{
-        title: "R1",
-        description: "",
-        earsCriteria: [
-          makeEarsClause({ when: "用户提交", shall: "返回成功", raw: "当 用户提交 时 系统应当 返回成功" }),
-          makeEarsClause({ when: "用户提交", shall: "返回失败", raw: "当 用户提交 时 系统应当 返回失败" }),
-        ],
-      }],
+      userStories: [
+        {
+          title: "R1",
+          description: "",
+          earsCriteria: [
+            makeEarsClause({
+              when: "用户提交",
+              shall: "返回成功",
+              raw: "当 用户提交 时 系统应当 返回成功",
+            }),
+            makeEarsClause({
+              when: "用户提交",
+              shall: "返回失败",
+              raw: "当 用户提交 时 系统应当 返回失败",
+            }),
+          ],
+        },
+      ],
     });
     const result = analyzeRequirements(doc);
     const anl04 = result.findings.find((f) => f.rule === "ANL-04");
@@ -136,13 +165,13 @@ describe("ANL-04: Conflict detection", () => {
         makeEarsClause({ when: "用户提交", shall: "返回成功", raw: "..." }),
         makeEarsClause({ when: "用户取消", shall: "返回取消", raw: "..." }),
       ],
-      userStories: [{
-        title: "R1",
-        description: "",
-        earsCriteria: [
-          makeEarsClause({ when: "用户提交", shall: "返回成功", raw: "..." }),
-        ],
-      }],
+      userStories: [
+        {
+          title: "R1",
+          description: "",
+          earsCriteria: [makeEarsClause({ when: "用户提交", shall: "返回成功", raw: "..." })],
+        },
+      ],
     });
     const result = analyzeRequirements(doc);
     const anl04 = result.findings.find((f) => f.rule === "ANL-04");
@@ -197,11 +226,13 @@ describe("analyzeRequirements overall", () => {
   it("returns pass=true with P2-only findings (warning only)", () => {
     const doc = makeReqDoc({
       earsCriteria: [makeEarsClause({ raw: "当 合适的时候 系统应当 适当的处理" })],
-      userStories: [{
-        title: "R1",
-        description: "",
-        earsCriteria: [makeEarsClause({ raw: "当 合适的时候 系统应当 适当的处理" })],
-      }],
+      userStories: [
+        {
+          title: "R1",
+          description: "",
+          earsCriteria: [makeEarsClause({ raw: "当 合适的时候 系统应当 适当的处理" })],
+        },
+      ],
     });
     const result = analyzeRequirements(doc);
     expect(result.pass).toBe(true);

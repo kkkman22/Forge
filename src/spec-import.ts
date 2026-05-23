@@ -4,11 +4,22 @@
  * Validates: Requirement 10
  */
 
-import { existsSync, readFileSync, writeFileSync, mkdirSync } from "node:fs";
+import { existsSync, mkdirSync, readFileSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
 
-import type { EarsClause, RequirementsDocument, SpecFileFrontmatter, TasksSeedDocument, DesignDocument, WorkflowVariant } from "./spec-bundle.js";
-import { renderRequirementsMarkdown, renderDesignMarkdown, renderTasksMarkdown } from "./spec-render.js";
+import type {
+  DesignDocument,
+  EarsClause,
+  RequirementsDocument,
+  SpecFileFrontmatter,
+  TasksSeedDocument,
+  WorkflowVariant,
+} from "./spec-bundle.js";
+import {
+  renderDesignMarkdown,
+  renderRequirementsMarkdown,
+  renderTasksMarkdown,
+} from "./spec-render.js";
 
 // ---------------------------------------------------------------------------
 // parseSpecArgs
@@ -74,7 +85,9 @@ export function parseExternalSpec(text: string): ExternalSpecContent {
   // Extract NFR
   const nfrMatch = text.match(/##\s*Non-?functional[\s\S]*?\n([\s\S]*?)(?=\n## |$)/i);
   const nonFunctional = (nfrMatch?.[1] ?? "")
-    .split("\n").map((l) => l.replace(/^[-*]\s*/, "").trim()).filter(Boolean);
+    .split("\n")
+    .map((l) => l.replace(/^[-*]\s*/, "").trim())
+    .filter(Boolean);
 
   return { purpose, earsCriteria, nonFunctional, outOfScope: [] };
 }
@@ -122,7 +135,13 @@ export function runImportMode(
   eventsPath?: string,
 ): ImportModeResult {
   if (!existsSync(inputPath)) {
-    return { success: false, feature: "", variant: "requirements-first", outputPath: "", error: `Input file not found: ${inputPath}` };
+    return {
+      success: false,
+      feature: "",
+      variant: "requirements-first",
+      outputPath: "",
+      error: `Input file not found: ${inputPath}`,
+    };
   }
 
   try {
@@ -133,7 +152,11 @@ export function runImportMode(
       hasArchitecture: /##\s*(?:Architecture|架构)/.test(text),
     });
 
-    const feature = inputPath.replace(/\.\w+$/, "").split("/").pop() ?? "imported";
+    const feature =
+      inputPath
+        .replace(/\.\w+$/, "")
+        .split("/")
+        .pop() ?? "imported";
     const fm: SpecFileFrontmatter = {
       feature,
       status: "draft",
@@ -196,6 +219,12 @@ export function runImportMode(
         writeEvent(eventsPath, "spec_import_failed", { error: String(err) });
       });
     }
-    return { success: false, feature: "", variant: "requirements-first", outputPath: "", error: String(err) };
+    return {
+      success: false,
+      feature: "",
+      variant: "requirements-first",
+      outputPath: "",
+      error: String(err),
+    };
   }
 }

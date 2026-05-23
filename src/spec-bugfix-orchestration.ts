@@ -7,7 +7,6 @@
  * Validates: Requirement 14
  */
 
-import { isBugfixBundle } from "./spec-bundle.js";
 import type {
   BugfixDesignDocument,
   BugfixDocument,
@@ -16,6 +15,7 @@ import type {
   TaskSeed,
   TasksSeedDocument,
 } from "./spec-bundle.js";
+import { isBugfixBundle } from "./spec-bundle.js";
 import { derivePbtTasksFromUnchanged } from "./spec-pbt-derivation.js";
 
 export interface OrchestrationStep {
@@ -37,7 +37,12 @@ export interface BugfixOrchestrationResult {
  */
 export function runBugfixOrchestration(bundle: SpecBundle): BugfixOrchestrationResult {
   if (!isBugfixBundle(bundle)) {
-    return { steps: [], variantDetection: false, brownfieldDetection: false, specLeakMode: "lenient" };
+    return {
+      steps: [],
+      variantDetection: false,
+      brownfieldDetection: false,
+      specLeakMode: "lenient",
+    };
   }
 
   const doc = bundle.primary;

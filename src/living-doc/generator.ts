@@ -210,7 +210,12 @@ export function generateLivingDoc(specsDir: string, acceptanceDir: string | null
   const DEFAULT_CONTEXT = "default";
 
   // Collect spec entries: flat .md files and three-file topic dirs
-  const specEntries: Array<{ specPath: string; specContent: string; topic: string; workflowVariant?: string }> = [];
+  const specEntries: Array<{
+    specPath: string;
+    specContent: string;
+    topic: string;
+    workflowVariant?: string;
+  }> = [];
 
   if (fs.existsSync(specsDir)) {
     const entries = fs.readdirSync(specsDir, { withFileTypes: true });
@@ -219,12 +224,20 @@ export function generateLivingDoc(specsDir: string, acceptanceDir: string | null
       if (entry.isFile() && entry.name.endsWith(".md")) {
         const specPath = path.join(specsDir, entry.name);
         const content = fs.readFileSync(specPath, "utf-8");
-        specEntries.push({ specPath, specContent: content, topic: entry.name.replace(/\.md$/, "") });
+        specEntries.push({
+          specPath,
+          specContent: content,
+          topic: entry.name.replace(/\.md$/, ""),
+        });
       } else if (entry.isDirectory()) {
         // Three-file layout: specs/<topic>/requirements.md (or spec.md)
         const topicDir = path.join(specsDir, entry.name);
         const threeFile = ["requirements.md", "spec.md"].find((f) => {
-          try { return fs.statSync(path.join(topicDir, f)).isFile(); } catch { return false; }
+          try {
+            return fs.statSync(path.join(topicDir, f)).isFile();
+          } catch {
+            return false;
+          }
         });
         if (threeFile) {
           const specPath = path.join(topicDir, threeFile);

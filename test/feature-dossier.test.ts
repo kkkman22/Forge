@@ -158,7 +158,11 @@ describe("matchStageFiles", () => {
 
   it("matches three-file layout in specs", () => {
     const files = ["requirements.md", "design.md", "tasks.md"];
-    expect(matchStageFiles("specs", topic, files)).toEqual(["requirements.md", "design.md", "tasks.md"]);
+    expect(matchStageFiles("specs", topic, files)).toEqual([
+      "requirements.md",
+      "design.md",
+      "tasks.md",
+    ]);
   });
 
   it("matches mixed layout (legacy + three-file)", () => {

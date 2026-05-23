@@ -6,10 +6,15 @@
  * Validates: Requirement 10
  */
 import { existsSync, mkdirSync, rmSync, writeFileSync } from "node:fs";
-import { join } from "node:path";
 import { tmpdir } from "node:os";
+import { join } from "node:path";
 import { describe, expect, it } from "vitest";
-import { parseSpecArgs, parseExternalSpec, scoreImportedContent, runImportMode } from "../src/spec-import.js";
+import {
+  parseExternalSpec,
+  parseSpecArgs,
+  runImportMode,
+  scoreImportedContent,
+} from "../src/spec-import.js";
 
 let testDir: string;
 
@@ -117,10 +122,13 @@ describe("runImportMode", () => {
     const dir = createTestDir();
     try {
       const inputFile = join(dir, "user-auth.md");
-      writeFileSync(inputFile, `# User Auth
+      writeFileSync(
+        inputFile,
+        `# User Auth
 
 - 当 用户登录 时 系统应当 返回 token
-`);
+`,
+      );
 
       const outputDir = join(dir, "output");
       mkdirSync(join(outputDir, "user-auth"), { recursive: true });

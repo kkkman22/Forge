@@ -1,6 +1,11 @@
 import { describe, expect, it } from "vitest";
-import { computeBundleHash, computeSpecHash, parseHealthCache, shouldRecompute } from "../src/spec-health.js";
 import type { SpecBundle } from "../src/spec-bundle.js";
+import {
+  computeBundleHash,
+  computeSpecHash,
+  parseHealthCache,
+  shouldRecompute,
+} from "../src/spec-health.js";
 
 describe("computeSpecHash", () => {
   it("returns consistent sha256 hex for same content", () => {
@@ -90,7 +95,12 @@ describe("computeBundleHash", () => {
     layout: "legacy-single",
     variant: "requirements-first",
     primary: {
-      frontmatter: { feature: "test", status: "locked", date: "2026-05-23", workflow_variant: "requirements-first" },
+      frontmatter: {
+        feature: "test",
+        status: "locked",
+        date: "2026-05-23",
+        workflow_variant: "requirements-first",
+      },
       intro: "Test intro",
       glossary: [],
       userStories: [],
@@ -106,7 +116,12 @@ describe("computeBundleHash", () => {
     layout: "three-file",
     variant: "requirements-first",
     primary: {
-      frontmatter: { feature: "auth", status: "locked", date: "2026-05-23", workflow_variant: "requirements-first" },
+      frontmatter: {
+        feature: "auth",
+        status: "locked",
+        date: "2026-05-23",
+        workflow_variant: "requirements-first",
+      },
       intro: "Auth intro",
       glossary: [],
       userStories: [],
@@ -115,7 +130,12 @@ describe("computeBundleHash", () => {
       outOfScope: [],
     },
     design: {
-      frontmatter: { feature: "auth", status: "locked", date: "2026-05-23", workflow_variant: "requirements-first" },
+      frontmatter: {
+        feature: "auth",
+        status: "locked",
+        date: "2026-05-23",
+        workflow_variant: "requirements-first",
+      },
       overview: "Auth design",
       architecture: "",
       componentInterfaces: [],
@@ -126,8 +146,15 @@ describe("computeBundleHash", () => {
       openQuestions: [],
     },
     tasks: {
-      frontmatter: { feature: "auth", status: "locked", date: "2026-05-23", workflow_variant: "requirements-first" },
-      tasks: [{ id: "T-01", title: "Test", goal: "Do it", related_requirements: [], status: "pending" }],
+      frontmatter: {
+        feature: "auth",
+        status: "locked",
+        date: "2026-05-23",
+        workflow_variant: "requirements-first",
+      },
+      tasks: [
+        { id: "T-01", title: "Test", goal: "Do it", related_requirements: [], status: "pending" },
+      ],
     },
   };
 

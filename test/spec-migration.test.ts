@@ -6,8 +6,8 @@
  * Validates: Requirements 7, 8, 9
  */
 import { existsSync, mkdirSync, readFileSync, rmSync, writeFileSync } from "node:fs";
-import { join } from "node:path";
 import { tmpdir } from "node:os";
+import { join } from "node:path";
 import { describe, expect, it } from "vitest";
 import { migrateLegacySpec } from "../src/spec-migration.js";
 

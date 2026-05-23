@@ -7,7 +7,7 @@
  * Validates: Requirement 9
  */
 
-import type { SpecBundle, RequirementsDocument, DesignDocument } from "./spec-bundle.js";
+import type { DesignDocument, RequirementsDocument, SpecBundle } from "./spec-bundle.js";
 
 // ---------------------------------------------------------------------------
 // Types
@@ -42,15 +42,26 @@ export interface BrownfieldCheckResult {
 
 const BROWNFIELD_KEYWORDS_ZH = ["改造", "重构", "修改既有", "修复", "升级", "迁移", "替换"];
 const BROWNFIELD_KEYWORDS_EN = [
-  "refactor", "restructure", "modify existing", "fix", "upgrade", "migrate",
-  "replace", "rewrite", "port", "brownfield",
+  "refactor",
+  "restructure",
+  "modify existing",
+  "fix",
+  "upgrade",
+  "migrate",
+  "replace",
+  "rewrite",
+  "port",
+  "brownfield",
 ];
 
 // ---------------------------------------------------------------------------
 // detectBrownfieldSignals
 // ---------------------------------------------------------------------------
 
-export function detectBrownfieldSignals(input: BrownfieldInput, eventsPath?: string): BrownfieldResult {
+export function detectBrownfieldSignals(
+  input: BrownfieldInput,
+  eventsPath?: string,
+): BrownfieldResult {
   const signals: string[] = [];
 
   if (input.hasGitHistory) signals.push("git-history");
@@ -103,24 +114,47 @@ export function runBrownfieldSelfChecks(bundle: SpecBundle): BrownfieldCheckResu
 
   // BF-01: Delta must exist with all three subsections non-empty
   if (!req.delta) {
-    findings.push({ rule: "BF-01", severity: "P0", message: "Missing Delta section in requirements" });
-  } else if (req.delta.added.length === 0 || req.delta.modified.length === 0 || req.delta.unchanged.length === 0) {
-    findings.push({ rule: "BF-01", severity: "P0", message: "Delta subsections must all be non-empty" });
+    findings.push({
+      rule: "BF-01",
+      severity: "P0",
+      message: "Missing Delta section in requirements",
+    });
+  } else if (
+    req.delta.added.length === 0 ||
+    req.delta.modified.length === 0 ||
+    req.delta.unchanged.length === 0
+  ) {
+    findings.push({
+      rule: "BF-01",
+      severity: "P0",
+      message: "Delta subsections must all be non-empty",
+    });
   }
 
   // BF-02: Current State must have file:line references
   if (!design?.currentState || !/\S+:\d+/.test(design.currentState)) {
-    findings.push({ rule: "BF-02", severity: "P0", message: "Current State missing file:line references" });
+    findings.push({
+      rule: "BF-02",
+      severity: "P0",
+      message: "Current State missing file:line references",
+    });
   }
 
   // BF-03: Reversibility must have both rollback and mount points
   if (!design?.reversibility) {
     findings.push({ rule: "BF-03", severity: "P0", message: "Missing Reversibility section" });
   } else {
-    const hasRollback = design.reversibility.includes("回滚") || design.reversibility.toLowerCase().includes("rollback");
-    const hasMount = design.reversibility.includes("挂载") || design.reversibility.toLowerCase().includes("mount");
+    const hasRollback =
+      design.reversibility.includes("回滚") ||
+      design.reversibility.toLowerCase().includes("rollback");
+    const hasMount =
+      design.reversibility.includes("挂载") || design.reversibility.toLowerCase().includes("mount");
     if (!hasRollback || !hasMount) {
-      findings.push({ rule: "BF-03", severity: "P0", message: "Reversibility must have both rollback plan and mount points" });
+      findings.push({
+        rule: "BF-03",
+        severity: "P0",
+        message: "Reversibility must have both rollback plan and mount points",
+      });
     }
   }
 
@@ -129,7 +163,11 @@ export function runBrownfieldSelfChecks(bundle: SpecBundle): BrownfieldCheckResu
     const currentFiles = design.currentState.match(/\b\w+\.\w+/g) ?? [];
     for (const added of req.delta.added) {
       const fileRef = added.match(/\b\w+\.\w+/)?.[0];
-      if (fileRef && currentFiles.length > 0 && !currentFiles.some((cf) => cf === fileRef || cf.endsWith("/" + fileRef))) {
+      if (
+        fileRef &&
+        currentFiles.length > 0 &&
+        !currentFiles.some((cf) => cf === fileRef || cf.endsWith(`/${fileRef}`))
+      ) {
         findings.push({
           rule: "BF-04",
           severity: "P1",
