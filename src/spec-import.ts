@@ -4,7 +4,7 @@
  * Validates: Requirement 10
  */
 
-import { existsSync, readFileSync, writeFileSync } from "node:fs";
+import { existsSync, readFileSync, writeFileSync, mkdirSync } from "node:fs";
 import { join } from "node:path";
 
 import type { EarsClause, RequirementsDocument, SpecFileFrontmatter, TasksSeedDocument, DesignDocument, WorkflowVariant } from "./spec-bundle.js";
@@ -119,6 +119,7 @@ export interface ImportModeResult {
 export function runImportMode(
   inputPath: string,
   outputDir: string,
+  eventsPath?: string,
 ): ImportModeResult {
   if (!existsSync(inputPath)) {
     return { success: false, feature: "", variant: "requirements-first", outputPath: "", error: `Input file not found: ${inputPath}` };
@@ -190,6 +191,11 @@ export function runImportMode(
 
     return { success: true, feature, variant, outputPath };
   } catch (err) {
+    if (eventsPath) {
+      import("./event-writer.js").then(({ writeEvent }) => {
+        writeEvent(eventsPath, "spec_import_failed", { error: String(err) });
+      });
+    }
     return { success: false, feature: "", variant: "requirements-first", outputPath: "", error: String(err) };
   }
 }
