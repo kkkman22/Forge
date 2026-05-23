@@ -1,10 +1,6 @@
 import type {
-  Action,
-  ActionPlan,
   CommentRecord,
   Finding,
-  GateInput,
-  GateSkipReason,
   PostContext,
   PostResult,
   ResolvedConfig,
@@ -16,6 +12,9 @@ import { computeFindingHash, buildMarker, extractMarker } from "./finding-hash.j
 import { formatFinding } from "./format.js";
 import { reconcile } from "./reconcile.js";
 import { parseReviewMarkdown } from "./parse-review.js";
+import { recordSkip } from "./skip-trace.js";
+import { recordPartialFailures, appendRunMetrics } from "./observability.js";
+import { applyCliOverrides } from "./cli.js";
 
 export interface BitbucketClient {
   list_pr_tasks(params: { pull_request_id: string }): Promise<any[]>;
@@ -40,6 +39,11 @@ export interface BitbucketClient {
   }): Promise<void>;
 }
 
+interface PostOptions {
+  baseDir?: string;
+  argv?: string[];
+}
+
 export async function postReviewToBitbucket(
   reviewMarkdownPath: string,
   pullRequestId: string,
@@ -47,7 +51,22 @@ export async function postReviewToBitbucket(
   ctx: PostContext,
   bitbucket: BitbucketClient,
   _testFindings?: Finding[],
+  options?: PostOptions,
 ): Promise<PostResult> {
+  const startTime = Date.now();
+  const baseDir = options?.baseDir;
+
+  // 0. CLI overrides
+  if (options?.argv) {
+    config = applyCliOverrides(config, options.argv);
+  }
+  if (!config.enabled) {
+    if (baseDir) {
+      await recordSkip(reviewMarkdownPath, "platform-disabled-by-config" as any, ctx).catch(() => {});
+    }
+    return { posted: false, reason: "disabled-by-cli" };
+  }
+
   // 1. Platform gate
   const gate = checkPlatformGate({
     remoteUrl: ctx.remoteUrl,
@@ -57,11 +76,23 @@ export async function postReviewToBitbucket(
   });
 
   if (gate.skip) {
+    if (baseDir) {
+      await recordSkip(reviewMarkdownPath, gate.reason!, ctx).catch(() => {});
+    }
     return { posted: false, reason: gate.reason };
   }
 
   // 2. Parse review markdown
-  const allFindings = _testFindings ?? await parseReviewMarkdown(reviewMarkdownPath);
+  let allFindings: Finding[];
+  if (_testFindings !== undefined) {
+    allFindings = _testFindings;
+  } else {
+    try {
+      allFindings = await parseReviewMarkdown(reviewMarkdownPath);
+    } catch (e: any) {
+      return { posted: false, reason: "parse-error" };
+    }
+  }
   const targets = allFindings.filter((f) => f.priority !== "P3");
 
   // 3. Fetch existing tasks and comments
@@ -268,6 +299,25 @@ export async function postReviewToBitbucket(
         timestamp: Date.now(),
       });
     }
+  }
+
+  // 7. Persist side-effects
+  if (baseDir) {
+    if (failures.length > 0) {
+      await recordPartialFailures(failures, baseDir).catch(() => {});
+    }
+    await appendRunMetrics({
+      run_id: ctx.runId,
+      post_enabled: true,
+      gate_skipped_reason: null,
+      creates: plan.creates.length,
+      dones: plan.dones.length,
+      reopens: plan.reopens.length,
+      skips: plan.skips.length,
+      partial_failures: failures.length,
+      set_review_status_called: plan.has_p0_p1 && config.request_changes_on_p0_p1,
+      total_duration_ms: Date.now() - startTime,
+    }, baseDir).catch(() => {});
   }
 
   return {

@@ -1,6 +1,17 @@
 import type { Finding, FormatOutput } from "./types.js";
 import { computeFindingHash, buildMarker } from "./finding-hash.js";
 
+const CONTROL_CHARS_RE = /[\x00-\x08\x0B\x0C\x0E-\x1F\x7F]/g;
+
+function stripControlChars(s: string): string {
+  return s.replace(CONTROL_CHARS_RE, "");
+}
+
+function escapeSuggestion(suggestion: string): string {
+  // Strip control characters and escape backtick sequences that could break fences
+  return stripControlChars(suggestion);
+}
+
 export function formatFinding(finding: Finding, runId: string, prefix: string): FormatOutput {
   const hash = computeFindingHash(finding);
   const marker = buildMarker(prefix, hash);
@@ -18,13 +29,13 @@ export function formatFinding(finding: Finding, runId: string, prefix: string): 
 
   // Suggestion block (if present)
   if (finding.suggestion) {
-    // Check if message contains triple backticks
-    const hasTripleBackticks = finding.message.includes("```");
+    const hasTripleBackticks = finding.message.includes("```") || finding.suggestion.includes("```");
     const backticks = hasTripleBackticks ? "````" : "```";
+    const safeSuggestion = escapeSuggestion(finding.suggestion);
 
     comment_text += "\n";
     comment_text += `${backticks}suggestion\n`;
-    comment_text += finding.suggestion + "\n";
+    comment_text += safeSuggestion + "\n";
     comment_text += `${backticks}\n`;
   }
 
@@ -67,6 +78,8 @@ export function formatFinding(finding: Finding, runId: string, prefix: string): 
     }
 
     task_text = prefixPart + fileAndLine + separatorPart + truncatedMessage + spaceForMarker;
+    // Strip control characters from task text
+    task_text = stripControlChars(task_text);
   }
 
   // Build done_comment_text
