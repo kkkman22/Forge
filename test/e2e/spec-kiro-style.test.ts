@@ -6,38 +6,41 @@
  */
 import { describe, expect, it } from "vitest";
 
-import { parseRequirementsMarkdown, parseDesignMarkdown, parseTasksMarkdown } from "../../src/spec-parser.js";
-import { resolveSpecVariant, scoreTaskDescription } from "../../src/spec-variant.js";
-import { parseVariantOverride } from "../../src/spec-variant-override.js";
-import { renderRequirementsMarkdown, renderDesignMarkdown, renderTasksMarkdown } from "../../src/spec-render.js";
+import { classify } from "../../src/conflict-classifier.js";
 import { analyzeRequirements } from "../../src/spec-analyze.js";
-import { refineDownstream } from "../../src/spec-refine.js";
-import { detectBrownfieldSignals, runBrownfieldSelfChecks } from "../../src/spec-brownfield.js";
-import { parseSpecArgs, parseExternalSpec, scoreImportedContent } from "../../src/spec-import.js";
-import { validateContractGate, detectSpecLeakFromBundle as detectSpecLeak, enforceEarsSyntax } from "../../src/spec-validation.js";
-import { computeDependencyClosure } from "../../src/spec-wave.js";
-import { upgradeTasksSeed, detectLegacyPlanFallback } from "../../src/spec-plan-upgrade.js";
-import { buildReviewSpecContext } from "../../src/spec-review-router.js";
+import { detectBrownfieldSignals } from "../../src/spec-brownfield.js";
 import {
-  parseBugfixMarkdown,
   parseBugfixDesignMarkdown,
-  renderBugfixMarkdown,
+  parseBugfixMarkdown,
   renderBugfixDesignMarkdown,
+  renderBugfixMarkdown,
   runBugfixSelfChecks,
 } from "../../src/spec-bugfix.js";
 import { runBugfixOrchestration } from "../../src/spec-bugfix-orchestration.js";
-import { derivePbtTasksFromUnchanged } from "../../src/spec-pbt-derivation.js";
-import { computeBundleHash } from "../../src/spec-health.js";
-import { classify } from "../../src/conflict-classifier.js";
 import type {
-  SpecBundle,
+  EarsClause,
   RequirementsDocument,
-  DesignDocument,
-  TasksSeedDocument,
+  SpecBundle,
   SpecFileFrontmatter,
   TaskSeed,
-  EarsClause,
+  TasksSeedDocument,
 } from "../../src/spec-bundle.js";
+import { computeBundleHash } from "../../src/spec-health.js";
+import { parseExternalSpec, parseSpecArgs, scoreImportedContent } from "../../src/spec-import.js";
+import { parseDesignMarkdown, parseRequirementsMarkdown } from "../../src/spec-parser.js";
+import { derivePbtTasksFromUnchanged } from "../../src/spec-pbt-derivation.js";
+import { detectLegacyPlanFallback, upgradeTasksSeed } from "../../src/spec-plan-upgrade.js";
+import { refineDownstream } from "../../src/spec-refine.js";
+import { renderDesignMarkdown, renderRequirementsMarkdown } from "../../src/spec-render.js";
+import { buildReviewSpecContext } from "../../src/spec-review-router.js";
+import {
+  detectSpecLeakFromBundle as detectSpecLeak,
+  enforceEarsSyntax,
+  validateContractGate,
+} from "../../src/spec-validation.js";
+import { resolveSpecVariant, scoreTaskDescription } from "../../src/spec-variant.js";
+import { parseVariantOverride } from "../../src/spec-variant-override.js";
+import { computeDependencyClosure } from "../../src/spec-wave.js";
 
 // ---------------------------------------------------------------------------
 // Helpers
@@ -133,14 +136,16 @@ OAuth integration
       frontmatter: makeFm(),
       intro: "Auth system",
       glossary: [],
-      userStories: [{
-        title: "User Login",
-        description: "Users can log in",
-        earsCriteria: [
-          makeEars("用户登录", "返回 token", "vitest", "auth.test.ts"),
-          makeEars("密码错误", "返回 401", "vitest", "auth.test.ts"),
-        ],
-      }],
+      userStories: [
+        {
+          title: "User Login",
+          description: "Users can log in",
+          earsCriteria: [
+            makeEars("用户登录", "返回 token", "vitest", "auth.test.ts"),
+            makeEars("密码错误", "返回 401", "vitest", "auth.test.ts"),
+          ],
+        },
+      ],
       earsCriteria: [
         makeEars("用户登录", "返回 token", "vitest", "auth.test.ts"),
         makeEars("密码错误", "返回 401", "vitest", "auth.test.ts"),
@@ -164,9 +169,7 @@ OAuth integration
         intro: "",
         glossary: [],
         userStories: [],
-        earsCriteria: [
-          makeEars("用户登录", "返回 token", "vitest", "auth.test.ts"),
-        ],
+        earsCriteria: [makeEars("用户登录", "返回 token", "vitest", "auth.test.ts")],
         nonFunctional: [],
         outOfScope: [],
       },
@@ -183,7 +186,8 @@ OAuth integration
 
 describe("E2E: Design-First flow", () => {
   it("variant detection selects design-first for architecture input", () => {
-    const text = "微服务 数据库 缓存 中间件 队列 Postgres Redis Kafka gRPC microservice container deploy kubernetes serverless infrastructure";
+    const text =
+      "微服务 数据库 缓存 中间件 队列 Postgres Redis Kafka gRPC microservice container deploy kubernetes serverless infrastructure";
     const score = scoreTaskDescription(text);
     const result = resolveSpecVariant({ tier: "Standard", ...score });
     expect(result.variant).toBe("design-first");
@@ -356,7 +360,10 @@ User management system
     const parsed = parseExternalSpec(external);
     expect(parsed.earsCriteria.length).toBeGreaterThan(0);
 
-    const score = scoreImportedContent(parsed);
+    const score = scoreImportedContent({
+      earsCriteria: parsed.earsCriteria,
+      hasArchitecture: /##\s*(?:Architecture|架构)/.test(external),
+    });
     expect(score).toBeDefined();
   });
 
@@ -424,10 +431,17 @@ describe("E2E: Validation Contract & Spec Leak", () => {
 // ---------------------------------------------------------------------------
 
 describe("E2E: EARS enforcement", () => {
-  it("wraps non-EARS text into EARS format", () => {
-    const result = enforceEarsSyntax("用户登录返回 token", { maxRetries: 3 });
+  it("rewrites non-EARS arrow-style text into EARS format", () => {
+    const result = enforceEarsSyntax("用户登录 → 返回 token", { maxRetries: 3 });
     expect(result.output).toContain("当");
     expect(result.output).toContain("系统应当");
+    expect(result.exhausted).toBeFalsy();
+  });
+
+  it("marks unmatched non-EARS text exhausted (so ANL-01 can flag it)", () => {
+    const result = enforceEarsSyntax("用户登录返回 token", { maxRetries: 3 });
+    expect(result.exhausted).toBe(true);
+    expect(result.output).toBe("用户登录返回 token");
   });
 });
 
@@ -438,9 +452,30 @@ describe("E2E: EARS enforcement", () => {
 describe("E2E: Plan tasks.md single source", () => {
   it("upgradeTasksSeed generates waves from dependency graph", () => {
     const tasks: TaskSeed[] = [
-      { id: "T-01", title: "Setup", goal: "Setup project", related_requirements: [], status: "pending", depends_on: undefined },
-      { id: "T-02", title: "Login", goal: "Login endpoint", related_requirements: [], status: "pending", depends_on: ["T-01"] },
-      { id: "T-03", title: "Tests", goal: "Write tests", related_requirements: [], status: "pending", depends_on: ["T-02"] },
+      {
+        id: "T-01",
+        title: "Setup",
+        goal: "Setup project",
+        related_requirements: [],
+        status: "pending",
+        depends_on: undefined,
+      },
+      {
+        id: "T-02",
+        title: "Login",
+        goal: "Login endpoint",
+        related_requirements: [],
+        status: "pending",
+        depends_on: ["T-01"],
+      },
+      {
+        id: "T-03",
+        title: "Tests",
+        goal: "Write tests",
+        related_requirements: [],
+        status: "pending",
+        depends_on: ["T-02"],
+      },
     ];
 
     const doc: TasksSeedDocument = {
@@ -497,7 +532,15 @@ describe("E2E: Review spec context routing", () => {
       },
       tasks: {
         frontmatter: makeFm(),
-        tasks: [{ id: "T-01", title: "Login", goal: "Do it", related_requirements: [], status: "pending" }],
+        tasks: [
+          {
+            id: "T-01",
+            title: "Login",
+            goal: "Do it",
+            related_requirements: [],
+            status: "pending",
+          },
+        ],
       },
     };
 
@@ -516,8 +559,22 @@ describe("E2E: Wave scheduling", () => {
   it("computeDependencyClosure returns transitive deps", () => {
     const tasks: TaskSeed[] = [
       { id: "T-01", title: "A", goal: "a", related_requirements: [], status: "pending" },
-      { id: "T-02", title: "B", goal: "b", related_requirements: [], status: "pending", depends_on: ["T-01"] },
-      { id: "T-03", title: "C", goal: "c", related_requirements: [], status: "pending", depends_on: ["T-02"] },
+      {
+        id: "T-02",
+        title: "B",
+        goal: "b",
+        related_requirements: [],
+        status: "pending",
+        depends_on: ["T-01"],
+      },
+      {
+        id: "T-03",
+        title: "C",
+        goal: "c",
+        related_requirements: [],
+        status: "pending",
+        depends_on: ["T-02"],
+      },
     ];
 
     const closure = computeDependencyClosure("T-03", tasks);

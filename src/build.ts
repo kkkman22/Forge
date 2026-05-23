@@ -20,15 +20,14 @@
 import { existsSync, mkdirSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
 
-import { triggerThreeStrikeReroute, computeFailSignature } from "./spec-pbt-derivation.js";
+import type { Wave } from "./spec-bundle.js";
 import type { FixFailure, ThreeStrikeResult } from "./spec-pbt-derivation.js";
-import { parseWaves } from "./spec-wave.js";
-import type { Wave, TaskSeed } from "./spec-bundle.js";
+import { computeFailSignature, triggerThreeStrikeReroute } from "./spec-pbt-derivation.js";
 
-export { parseWaves } from "./spec-wave.js";
-export { triggerThreeStrikeReroute, computeFailSignature } from "./spec-pbt-derivation.js";
+export type { TaskSeed, Wave } from "./spec-bundle.js";
 export type { FixFailure, ThreeStrikeResult } from "./spec-pbt-derivation.js";
-export type { Wave, TaskSeed } from "./spec-bundle.js";
+export { computeFailSignature, triggerThreeStrikeReroute } from "./spec-pbt-derivation.js";
+export { parseWaves } from "./spec-wave.js";
 
 // ---------------------------------------------------------------------------
 // Types
@@ -275,13 +274,11 @@ export async function scheduleWave(
   let degraded429 = false;
   let concurrency = options.maxConcurrency;
 
-  const remaining = [...wave.taskIds];
+  const remaining = [...wave.tasks];
 
   while (remaining.length > 0) {
     const batch = remaining.splice(0, concurrency);
-    const results = await Promise.allSettled(
-      batch.map((id) => options.executor(id)),
-    );
+    const results = await Promise.allSettled(batch.map((id) => options.executor(id)));
 
     for (let i = 0; i < results.length; i++) {
       const r = results[i];
