@@ -78,7 +78,7 @@ export interface SpecLeakResult {
   findings: { line?: number; pattern: string }[];
 }
 
-export function detectSpecLeak(
+export function detectSpecLeakFromBundle(
   bundle: SpecBundle,
   scope: "strict" | "lenient",
 ): SpecLeakResult {
