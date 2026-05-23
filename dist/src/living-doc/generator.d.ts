@@ -12,6 +12,7 @@ export interface LivingDocContext {
         topic: string;
         scenarios: LivingDocScenario[];
         specPath: string;
+        workflowVariant?: string;
     }>;
     stats: {
         total: number;
