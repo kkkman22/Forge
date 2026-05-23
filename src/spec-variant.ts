@@ -81,13 +81,15 @@ export function scoreTaskDescription(text: string): ScoreResult {
 
 const VALID_VARIANTS: WorkflowVariant[] = ["requirements-first", "design-first", "quick-plan"];
 
-export function resolveSpecVariant(input: VariantInput): VariantResult {
+export function resolveSpecVariant(input: VariantInput, eventsPath?: string): VariantResult {
   // Forced rules (not overridable by config)
   if (input.tier === "Light") {
+    emitVariantEvent(eventsPath, "quick-plan", "auto");
     return { variant: "quick-plan", source: "auto" };
   }
 
   if (input.tier === "Full") {
+    emitVariantEvent(eventsPath, "requirements-first", "auto");
     return { variant: "requirements-first", source: "auto" };
   }
 
@@ -95,18 +97,35 @@ export function resolveSpecVariant(input: VariantInput): VariantResult {
   const ratio = input.architectureScore / Math.max(input.behaviorScore, 1);
 
   if (ratio > 1.5) {
+    emitVariantEvent(eventsPath, "design-first", "auto");
     return { variant: "design-first", source: "auto" };
   }
 
   if (ratio < 0.67) {
+    emitVariantEvent(eventsPath, "requirements-first", "auto");
     return { variant: "requirements-first", source: "auto" };
   }
 
   // Tied range [0.67, 1.5]
   const fallback = input.defaultVariant;
-  if (fallback && VALID_VARIANTS.includes(fallback)) {
-    return { variant: fallback, source: "auto-tied-fallback" };
+  if (fallback) {
+    if (!VALID_VARIANTS.includes(fallback)) {
+      import("./event-writer.js").then(({ writeEvent }) => {
+        if (eventsPath) writeEvent(eventsPath, "invalid_default_variant_config", { defaultVariant: fallback });
+      });
+    } else {
+      emitVariantEvent(eventsPath, fallback, "auto-tied-fallback");
+      return { variant: fallback, source: "auto-tied-fallback" };
+    }
   }
 
+  emitVariantEvent(eventsPath, "requirements-first", "auto");
   return { variant: "requirements-first", source: "auto" };
+}
+
+function emitVariantEvent(eventsPath: string | undefined, variant: string, source: string): void {
+  if (!eventsPath) return;
+  import("./event-writer.js").then(({ writeEvent }) => {
+    writeEvent(eventsPath, "spec_variant_resolved", { variant, source });
+  });
 }

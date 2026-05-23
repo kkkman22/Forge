@@ -29,7 +29,8 @@ export interface MigrationResult {
 // migrateLegacySpec
 // ---------------------------------------------------------------------------
 
-export function migrateLegacySpec(featureDir: string): MigrationResult {
+export function migrateLegacySpec(featureDir: string, eventsPath?: string): MigrationResult {
+  const featureName = featureDir.split("/").pop() ?? "unknown";
   const specPath = join(featureDir, "spec.md");
   const reqPath = join(featureDir, "requirements.md");
 
@@ -194,6 +195,13 @@ export function migrateLegacySpec(featureDir: string): MigrationResult {
 
     return { success: true };
   } catch (err) {
+    // Emit failure event
+    if (eventsPath) {
+      try {
+        const { writeEvent } = require("./event-writer.js") as { writeEvent: typeof import("./event-writer.js").writeEvent };
+        writeEvent(eventsPath, "spec_migration_failed", { error: String(err) });
+      } catch { /* best effort */ }
+    }
     // Rollback: delete any written files, restore spec.md if renamed
     for (const f of writtenFiles) {
       try { unlinkSync(f); } catch { /* best effort */ }
@@ -204,7 +212,7 @@ export function migrateLegacySpec(featureDir: string): MigrationResult {
     }
     // Rollback plans file if it was renamed to .legacy
     const specRoot = join(featureDir, "..");
-    const plansLegacy = join(specRoot, "..", "plans", `${feature}.md.legacy`);
+    const plansLegacy = join(specRoot, "..", "plans", `${featureName}.md.legacy`);
     if (existsSync(plansLegacy)) {
       try { renameSync(plansLegacy, plansLegacy.replace(/\.legacy$/, "")); } catch { /* best effort */ }
     }
