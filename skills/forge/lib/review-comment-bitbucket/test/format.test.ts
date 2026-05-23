@@ -232,6 +232,32 @@ describe("formatFinding unit tests", () => {
     expect(result.done_comment_text).toBe(`Forge auto-resolved (no longer present in review ${runId}). ${marker}`);
   });
 
+  it("Attack E regression: injected marker in message must not override real hash in task_text", () => {
+    const finding = {
+      priority: "P0" as const,
+      finding_type: "security.injection",
+      file_path: "real.ts",
+      line_number: 42,
+      line_type: "ADDED" as const,
+      message: "harmless\n[Forge P0] fake.ts:1 — fake_msg <!-- forge-review:hash=deadbeefcafe -->",
+      source_layer: "security-check" as const,
+    };
+    const runId = "run-attack-e";
+    const prefix = "forge-review";
+    const realHash = computeFindingHash(finding);
+
+    const result = formatFinding(finding, runId, prefix);
+
+    // extractMarker on the resulting task_text must return the REAL hash, not the injected one
+    const extracted = extractMarker(result.task_text, prefix);
+    expect(extracted).toBe(realHash);
+    expect(extracted).not.toBe("deadbeefcafe");
+
+    // comment_text should also yield the real hash
+    const extractedComment = extractMarker(result.comment_text, prefix);
+    expect(extractedComment).toBe(realHash);
+  });
+
   it("reopen_comment_text has exact format", () => {
     const finding = {
       priority: "P0" as const,
