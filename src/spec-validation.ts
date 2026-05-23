@@ -86,14 +86,16 @@ export function detectSpecLeak(
   const text = [req.intro, ...req.earsCriteria.map((c) => c.raw)].join("\n");
 
   const findings: SpecLeakResult["findings"] = [];
+  const lines = text.split("\n");
   const patterns = scope === "strict"
     ? STRICT_PATTERNS
     : LENIENT_EXTRA_PATTERNS;
 
-  for (const pattern of patterns) {
-    const match = text.match(pattern);
-    if (match) {
-      findings.push({ pattern: pattern.source });
+  for (let i = 0; i < lines.length; i++) {
+    for (const pattern of patterns) {
+      if (pattern.test(lines[i])) {
+        findings.push({ line: i + 1, pattern: pattern.source });
+      }
     }
   }
 
@@ -113,6 +115,35 @@ export interface EarsEnforcementResult {
   exhausted?: boolean;
 }
 
+// Rewrite strategies: ordered from most specific to least specific
+const REWRITE_STRATEGIES: Array<(text: string) => string | null> = [
+  // Strategy 1: Split on "→" or "→" (result)
+  (text) => {
+    const sep = text.includes("→") ? "→" : text.includes("->") ? "->" : null;
+    if (!sep) return null;
+    const parts = text.split(sep);
+    if (parts.length !== 2) return null;
+    return `当 ${parts[0].trim()} 时 系统应当 ${parts[1].trim()}`;
+  },
+  // Strategy 2: Split on "后" (after)
+  (text) => {
+    const match = text.match(/^(.+?)后\s*(.+)$/);
+    if (!match) return null;
+    return `当 ${match[1].trim()} 时 系统应当 ${match[2].trim()}`;
+  },
+  // Strategy 3: Split on "then" / "则" (then)
+  (text) => {
+    const match = text.match(/^(.+?)\s*(?:then|则)\s*(.+)$/i);
+    if (!match) return null;
+    return `当 ${match[1].trim()} 时 系统应当 ${match[2].trim()}`;
+  },
+  // Strategy 4: Last resort — wrap entire text as both condition and action
+  (text) => {
+    if (!text.trim()) return null;
+    return `当 ${text.trim()} 时 系统应当 ${text.trim()}`;
+  },
+];
+
 export function enforceEarsSyntax(
   text: string,
   options?: { maxRetries?: number },
@@ -123,16 +154,18 @@ export function enforceEarsSyntax(
     return { output: text, retries: 0 };
   }
 
-  // Simple rewrite strategy: wrap content in EARS pattern
-  for (let attempt = 1; attempt <= maxRetries; attempt++) {
-    const rewritten = `当 ${text} 时 系统应当 ${text}`;
+  if (!text.trim()) {
+    return { output: text, retries: 0, exhausted: true };
+  }
 
-    if (EARS_FULL.test(rewritten)) {
-      return { output: rewritten, retries: attempt };
+  // Try each strategy in order
+  for (let attempt = 0; attempt < REWRITE_STRATEGIES.length; attempt++) {
+    const rewritten = REWRITE_STRATEGIES[attempt](text);
+    if (rewritten && (EARS_FULL.test(rewritten) || EARS_LEGACY.test(rewritten))) {
+      return { output: rewritten, retries: attempt + 1 };
     }
   }
 
-  // Exhausted — return best effort
-  const fallback = `当 ${text} 时 系统应当 ${text}`;
-  return { output: fallback, retries: maxRetries, exhausted: true };
+  // Exhausted — return original + failure marker
+  return { output: text, retries: maxRetries, exhausted: true };
 }

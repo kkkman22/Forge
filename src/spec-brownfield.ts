@@ -116,6 +116,35 @@ export function runBrownfieldSelfChecks(bundle: SpecBundle): BrownfieldCheckResu
     }
   }
 
+  // BF-04: Anti-drift — Delta added/modified must reference real files in Current State
+  if (req.delta && design?.currentState) {
+    const currentFiles = design.currentState.match(/\b\w+\.\w+/g) ?? [];
+    for (const added of req.delta.added) {
+      const fileRef = added.match(/\b\w+\.\w+/)?.[0];
+      if (fileRef && currentFiles.length > 0 && !currentFiles.some((cf) => cf === fileRef || cf.endsWith("/" + fileRef))) {
+        findings.push({
+          rule: "BF-04",
+          severity: "P1",
+          message: `Delta added "${added}" references "${fileRef}" not found in Current State`,
+        });
+      }
+    }
+  }
+
+  // BF-05: Anti-drift — Proposed Change must cover all Delta modified items
+  if (req.delta && design?.proposedChange) {
+    for (const mod of req.delta.modified) {
+      const fileRef = mod.match(/\b\w+\.\w+/)?.[0];
+      if (fileRef && !design.proposedChange.includes(fileRef)) {
+        findings.push({
+          rule: "BF-05",
+          severity: "P1",
+          message: `Delta modified "${mod}" references "${fileRef}" not covered in Proposed Change`,
+        });
+      }
+    }
+  }
+
   return {
     pass: findings.length === 0,
     findings,

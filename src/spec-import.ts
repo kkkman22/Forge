@@ -1,12 +1,14 @@
 /**
- * External spec import — parseSpecArgs, parseExternalSpec, scoreImportedContent.
+ * External spec import — parseSpecArgs, parseExternalSpec, scoreImportedContent, runImportMode.
  *
  * Validates: Requirement 10
  */
 
-import { existsSync } from "node:fs";
+import { existsSync, readFileSync, writeFileSync } from "node:fs";
+import { join } from "node:path";
 
-import type { EarsClause, WorkflowVariant } from "./spec-bundle.js";
+import type { EarsClause, RequirementsDocument, SpecFileFrontmatter, WorkflowVariant } from "./spec-bundle.js";
+import { renderRequirementsMarkdown } from "./spec-render.js";
 
 // ---------------------------------------------------------------------------
 // parseSpecArgs
@@ -96,4 +98,68 @@ export function scoreImportedContent(input: {
   }
   // Both present: default RF
   return "requirements-first";
+}
+
+// ---------------------------------------------------------------------------
+// runImportMode
+// ---------------------------------------------------------------------------
+
+export interface ImportModeResult {
+  success: boolean;
+  feature: string;
+  variant: WorkflowVariant;
+  outputPath: string;
+  error?: string;
+}
+
+/**
+ * Import an external spec file and convert it into Forge three-file layout.
+ * Returns the output directory path.
+ */
+export function runImportMode(
+  inputPath: string,
+  outputDir: string,
+): ImportModeResult {
+  if (!existsSync(inputPath)) {
+    return { success: false, feature: "", variant: "requirements-first", outputPath: "", error: `Input file not found: ${inputPath}` };
+  }
+
+  try {
+    const text = readFileSync(inputPath, "utf-8");
+    const content = parseExternalSpec(text);
+    const variant = scoreImportedContent({
+      earsCriteria: content.earsCriteria,
+      hasArchitecture: /##\s*(?:Architecture|架构)/.test(text),
+    });
+
+    const feature = inputPath.replace(/\.\w+$/, "").split("/").pop() ?? "imported";
+    const fm: SpecFileFrontmatter = {
+      feature,
+      status: "draft",
+      date: new Date().toISOString().slice(0, 10),
+      workflow_variant: variant,
+      import_source: inputPath,
+    };
+
+    const reqDoc: RequirementsDocument = {
+      frontmatter: fm,
+      intro: content.purpose,
+      glossary: [],
+      userStories: content.earsCriteria.map((c, i) => ({
+        title: `Imported Requirement ${i + 1}`,
+        description: c.raw,
+        earsCriteria: [c],
+      })),
+      earsCriteria: content.earsCriteria,
+      nonFunctional: content.nonFunctional,
+      outOfScope: content.outOfScope,
+    };
+
+    const outputPath = join(outputDir, feature);
+    writeFileSync(join(outputPath, "requirements.md"), renderRequirementsMarkdown(reqDoc));
+
+    return { success: true, feature, variant, outputPath };
+  } catch (err) {
+    return { success: false, feature: "", variant: "requirements-first", outputPath: "", error: String(err) };
+  }
 }

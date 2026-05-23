@@ -116,6 +116,12 @@ Read task list → per task: **Closure-First Probes** (→ references/closure-pr
 
 任务按 Plan 中 `dependsOn` 拓扑顺序执行。依赖图由 Plan Step 3.5 生成，build 遵循拓扑排序确保依赖在依赖者之前完成。
 
+**Wave Orchestration (Requirement 4)**：当 `tasks.md` 含 JSON wave 块时，使用 `parseWaves(jsonBlock, tasks)` 从 `src/spec-wave.ts` 解析 wave 分组。
+- Wave 内任务可并行（`max_parallel_agents` 默认 6）
+- Wave 间串行（前 wave 全部完成才进入下一 wave）
+- HTTP 429 降级阶梯：第 1 次并发减半 → 第 2 次降至 2 → 第 3 次串行（1 agent）
+- 不含 wave 块时退化为单任务串行模式
+
 Mandatory Restatement Checkpoint (counter init 3) + Subagent Status handling + Invocation contract + Framework API verification + Self-check。→ 详见 references/subagent-orchestration.md
 
 ### 3.3 Full (new service/db/auth/ambiguous)
@@ -165,6 +171,7 @@ GREEN 阶段的代码必须是"能让测试通过的最简单实现"。REFACTOR 
 
 **5.1 Three-strike**: 3 consecutive fails → `debugger` agent (maxTurns=15): read errors → one hypothesis → minimal fix → report if 3 more. `🚫 连续失败 3 次 → debugger. 尝试 1/2/3：<原因>`
 - **函数调用**: `analyzeFixAttempts(sequence)` — 参数：当前任务的修复尝试序列 `FixAttemptSequence`；返回 `{ shouldEscalate, consecutiveFailures, escalationIndex }`；`shouldEscalate: true` 时触发 three-strike 重路由到 `/forge debug`
+- **§2.4 联动 (Requirement 15)**：Three-strike 触发时同步调用 `triggerThreeStrikeReroute(history, currentFailure)`（`src/spec-pbt-derivation.ts`）→ 计算 `fail_signature = computeFailSignature(failures)` → 如果 `result.reroute === true` → 自动进入 `/forge debug` → 写诊断模板到 `.forge/debug/<topic>.md`
 → 函数签名详见 references/function-contracts.md
 
 **5.1a Failure 自动沉淀**: Three-strike 触发时同步调用 `buildThreeStrikeFailureArtifacts(topic, tier, situation, rootCause, now, seq)`（`src/build.ts`）→ 写 failure episode 到 `.forge/knowledge/sessions/<date>-<topic>.md` 并在 `.forge/progress/<topic>.md` 末尾追加 Evolution 标记 `target=forge-build#three_strike`。写入失败降级为 `console.warn`，不阻断重路由流程。

@@ -50,8 +50,8 @@ description = "Execute multi-perspective decision analysis using parallel agent 
 
 [fix]
 dispatch_mode = "inline"
-allowed_tools = ["Read", "Write"]
-description = "DEPRECATED — use /forge build with work_nature=bugfix instead. Fix a single identified defect with minimal change."
+allowed_tools = ["Read", "Write", "Bash"]
+description = "Bugfix three-file workflow — uses runBugfixOrchestration with bugfix.md + design.md + tasks.md."
 
 [fix-conflicts]
 dispatch_mode = "inline"

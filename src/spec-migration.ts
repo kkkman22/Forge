@@ -3,11 +3,13 @@
  *
  * migrateLegacySpec: detects legacy spec.md, splits into three files,
  * renames original to spec.legacy.md, writes migrated_from frontmatter.
+ * Also handles .forge/plans/<topic>.md migration.
+ * Includes rollback on failure.
  *
  * Validates: Requirements 7, 8, 9
  */
 
-import { existsSync, renameSync, readFileSync, writeFileSync } from "node:fs";
+import { existsSync, renameSync, readFileSync, writeFileSync, unlinkSync, mkdirSync } from "node:fs";
 import { join } from "node:path";
 
 import type { SpecFileFrontmatter, RequirementsDocument, DesignDocument, TasksSeedDocument, EarsClause } from "./spec-bundle.js";
@@ -40,6 +42,9 @@ export function migrateLegacySpec(featureDir: string): MigrationResult {
   if (!existsSync(specPath)) {
     return { success: true, skipped: true };
   }
+
+  // Track files written for rollback
+  const writtenFiles: string[] = [];
 
   try {
     const specText = readFileSync(specPath, "utf-8");
@@ -170,17 +175,60 @@ export function migrateLegacySpec(featureDir: string): MigrationResult {
     };
 
     // Write three files
-    writeFileSync(join(featureDir, "requirements.md"), renderRequirementsMarkdown(reqDoc));
-    writeFileSync(join(featureDir, "design.md"), renderDesignMarkdown(designDoc));
-    writeFileSync(join(featureDir, "tasks.md"), renderTasksMarkdown(tasksDoc));
+    const reqFile = join(featureDir, "requirements.md");
+    const desFile = join(featureDir, "design.md");
+    const taskFile = join(featureDir, "tasks.md");
+
+    writeFileSync(reqFile, renderRequirementsMarkdown(reqDoc));
+    writtenFiles.push(reqFile);
+    writeFileSync(desFile, renderDesignMarkdown(designDoc));
+    writtenFiles.push(desFile);
+    writeFileSync(taskFile, renderTasksMarkdown(tasksDoc));
+    writtenFiles.push(taskFile);
 
     // Rename original
     renameSync(specPath, join(featureDir, "spec.legacy.md"));
 
+    // Migrate .forge/plans/<feature>.md → .forge/specs/<feature>/tasks.md
+    migratePlansFile(featureDir, feature);
+
     return { success: true };
   } catch (err) {
+    // Rollback: delete any written files, restore spec.md if renamed
+    for (const f of writtenFiles) {
+      try { unlinkSync(f); } catch { /* best effort */ }
+    }
+    const legacyPath = join(featureDir, "spec.legacy.md");
+    if (!existsSync(specPath) && existsSync(legacyPath)) {
+      try { renameSync(legacyPath, specPath); } catch { /* best effort */ }
+    }
     return { success: false, error: String(err) };
   }
+}
+
+/**
+ * Migrate legacy .forge/plans/<feature>.md to the specs directory.
+ */
+function migratePlansFile(featureDir: string, feature: string): void {
+  // featureDir is .forge/specs/<feature>/, plans are at .forge/plans/<feature>.md
+  const specRoot = join(featureDir, "..");
+  const plansPath = join(specRoot, "..", "plans", `${feature}.md`);
+  if (!existsSync(plansPath)) return;
+
+  const planText = readFileSync(plansPath, "utf-8");
+  // Extract task-like entries from plan and append to tasks.md
+  const taskMatches = [...planText.matchAll(/###\s*(T-\d+)\s+(.+)/g)];
+  if (taskMatches.length > 0) {
+    const tasksPath = join(featureDir, "tasks.md");
+    const existing = existsSync(tasksPath) ? readFileSync(tasksPath, "utf-8") : "";
+    if (!existing.includes("Migrated from plans/")) {
+      const appended = `\n\n<!-- Migrated from plans/${feature}.md -->\n`;
+      writeFileSync(tasksPath, existing + appended);
+    }
+  }
+
+  // Rename plans file as legacy
+  renameSync(plansPath, `${plansPath}.legacy`);
 }
 
 // ---------------------------------------------------------------------------

@@ -32,7 +32,7 @@ function makeBrownfieldBundle(): SpecBundle {
       earsCriteria: [],
       nonFunctional: [],
       outOfScope: [],
-      delta: { added: ["a.ts"], modified: ["b.ts"], unchanged: ["c.ts"] },
+      delta: { added: ["新增 spec.ts 辅助函数"], modified: ["修改 spec.ts 接口"], unchanged: ["config.ts 不变"] },
     } as RequirementsDocument,
     design: {
       frontmatter: makeFm(),
@@ -45,7 +45,7 @@ function makeBrownfieldBundle(): SpecBundle {
       rollout: "",
       openQuestions: [],
       currentState: "src/spec.ts:1-50",
-      proposedChange: "- 变更点：Add\n- 不变点：Keep",
+      proposedChange: "- 变更点：修改 spec.ts 接口\n- 不变点：Keep",
       reversibility: "- 回滚清单：Delete\n- 挂载点：spec.ts",
     } as DesignDocument,
   };
@@ -210,5 +210,32 @@ describe("runBrownfieldSelfChecks", () => {
     const result = runBrownfieldSelfChecks(nonBfBundle);
     expect(result.pass).toBe(true); // Skipped = pass
     expect(result.skipped).toBe(true);
+  });
+
+  it("reports P1 when Delta added references file not in Current State (BF-04)", () => {
+    const bundle = makeBrownfieldBundle();
+    (bundle.primary as RequirementsDocument).delta = {
+      added: ["新增 unknown.ts 模块"],
+      modified: ["修改 spec.ts 接口"],
+      unchanged: ["config.ts 不变"],
+    };
+
+    const result = runBrownfieldSelfChecks(bundle);
+    expect(result.pass).toBe(false);
+    expect(result.findings.some((f) => f.rule === "BF-04")).toBe(true);
+    expect(result.findings.find((f) => f.rule === "BF-04")!.severity).toBe("P1");
+  });
+
+  it("reports P1 when Delta modified not covered in Proposed Change (BF-05)", () => {
+    const bundle = makeBrownfieldBundle();
+    (bundle.primary as RequirementsDocument).delta = {
+      added: ["新增 spec.ts 辅助函数"],
+      modified: ["修改 other.ts 接口"],
+      unchanged: ["config.ts 不变"],
+    };
+
+    const result = runBrownfieldSelfChecks(bundle);
+    expect(result.pass).toBe(false);
+    expect(result.findings.some((f) => f.rule === "BF-05")).toBe(true);
   });
 });

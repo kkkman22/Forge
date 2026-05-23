@@ -519,6 +519,40 @@ export const SKILL_FUNCTION_REGISTRY: readonly SkillFunctionEntry[] = [
     parameterNames: ["req"],
   },
 
+  // --- forge-build (wave orchestration + three-strike) ---
+  {
+    module: "spec-wave.ts",
+    functionName: "parseWaves",
+    skills: ["forge/lib/build/instructions.md"],
+    parameterNames: ["jsonBlock", "tasks"],
+  },
+  {
+    module: "spec-pbt-derivation.ts",
+    functionName: "triggerThreeStrikeReroute",
+    skills: ["forge/lib/build/instructions.md"],
+    parameterNames: ["history", "currentFailure"],
+  },
+  {
+    module: "spec-pbt-derivation.ts",
+    functionName: "computeFailSignature",
+    skills: ["forge/lib/build/instructions.md"],
+    parameterNames: ["failures"],
+  },
+
+  // --- forge-fix (bugfix three-file workflow) ---
+  {
+    module: "spec-kind.ts",
+    functionName: "detectSpecKind",
+    skills: ["forge/lib/fix/instructions.md"],
+    parameterNames: ["files", "mode"],
+  },
+  {
+    module: "spec-bugfix-orchestration.ts",
+    functionName: "runBugfixOrchestration",
+    skills: ["forge/lib/fix/instructions.md"],
+    parameterNames: ["bundle"],
+  },
+
   // --- forge-test/SKILL.md (ci-drift) ---
   {
     module: "ci-command-drift.ts",
