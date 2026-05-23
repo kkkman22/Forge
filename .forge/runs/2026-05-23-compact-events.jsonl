@@ -21,3 +21,5 @@
 {"timestamp":"2026-05-23T02:06:36Z","event":"precompact_snapshot","detail":"slug=review-comment-bitbucket phase=build"}
 {"timestamp":"2026-05-23T02:07:53Z","event":"postcompact_restore","detail":"slug=review-comment-bitbucket"}
 {"timestamp":"2026-05-23T02:08:34Z","event":"precompact_snapshot","detail":"slug=review-comment-bitbucket phase=build"}
+{"timestamp":"2026-05-23T02:13:57Z","event":"postcompact_restore","detail":"slug=review-comment-bitbucket"}
+{"timestamp":"2026-05-23T02:13:57Z","event":"precompact_snapshot","detail":"slug=review-comment-bitbucket phase=build"}
