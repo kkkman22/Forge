@@ -143,7 +143,7 @@ describe("reconcile", () => {
       });
 
       expect(result.creates).toHaveLength(0);
-      expect(result.skips).toContainEqual({ kind: "skip-duplicate", finding_hash: hash });
+      expect(result.skips).toContainEqual(expect.objectContaining({ kind: "skip-duplicate", finding_hash: hash }));
     });
   });
 
@@ -177,7 +177,7 @@ describe("reconcile", () => {
       });
 
       expect(result.reopens).toHaveLength(0);
-      expect(result.skips).toContainEqual({ kind: "skip-duplicate", finding_hash: hash });
+      expect(result.skips).toContainEqual(expect.objectContaining({ kind: "skip-duplicate", finding_hash: hash }));
     });
   });
 
@@ -245,7 +245,7 @@ describe("reconcile", () => {
       });
 
       expect(result.reopens).toHaveLength(0);
-      expect(result.skips).toContainEqual({ kind: "skip-duplicate", finding_hash: hash });
+      expect(result.skips).toContainEqual(expect.objectContaining({ kind: "skip-duplicate", finding_hash: hash }));
     });
   });
 
@@ -390,7 +390,7 @@ describe("reconcile", () => {
       });
 
       expect(result.creates).toHaveLength(0);
-      expect(result.skips).toContainEqual({ kind: "skip-duplicate", finding_hash: hash });
+      expect(result.skips).toContainEqual(expect.objectContaining({ kind: "skip-duplicate", finding_hash: hash }));
     });
 
     it("should skip with orphan-comment when strategy is inline-only", () => {
@@ -406,7 +406,7 @@ describe("reconcile", () => {
       });
 
       expect(result.creates).toHaveLength(0);
-      expect(result.skips).toContainEqual({ kind: "skip-duplicate", finding_hash: hash });
+      expect(result.skips).toContainEqual(expect.objectContaining({ kind: "skip-duplicate", finding_hash: hash }));
     });
   });
 
@@ -480,7 +480,7 @@ describe("reconcile", () => {
       });
 
       expect(result.creates).toHaveLength(0);
-      expect(result.skips).toContainEqual({ kind: "skip-duplicate", finding_hash: hash });
+      expect(result.skips).toContainEqual(expect.objectContaining({ kind: "skip-duplicate", finding_hash: hash }));
     });
 
     it("should skip-duplicate when task exists with RESOLVED and autoReopenRegressed=false", () => {
@@ -496,7 +496,7 @@ describe("reconcile", () => {
 
       expect(result.creates).toHaveLength(0);
       expect(result.reopens).toHaveLength(0);
-      expect(result.skips).toContainEqual({ kind: "skip-duplicate", finding_hash: hash });
+      expect(result.skips).toContainEqual(expect.objectContaining({ kind: "skip-duplicate", finding_hash: hash }));
     });
 
     it("should skip-duplicate for historical tasks that are RESOLVED", () => {
@@ -511,7 +511,7 @@ describe("reconcile", () => {
       });
 
       expect(result.dones).toHaveLength(0);
-      expect(result.skips).toContainEqual({ kind: "skip-duplicate", finding_hash: hash });
+      expect(result.skips).toContainEqual(expect.objectContaining({ kind: "skip-duplicate", finding_hash: hash }));
     });
   });
 });

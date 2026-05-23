@@ -1,15 +1,26 @@
 import type { Finding, FormatOutput } from "./types.js";
 import { computeFindingHash, buildMarker } from "./finding-hash.js";
 
-const CONTROL_CHARS_RE = /[\x00-\x08\x0B\x0C\x0E-\x1F\x7F]/g;
+// Unicode \p{C} covers C0 (x00-x1F), DEL (x7F), C1 (x80-x9F), surrogates, U+2028/U+2029, etc.
+// Additionally strip \t \n \r for task_text where line breaks are disallowed.
+const TASK_TEXT_DISALLOWED_RE = /[\t\n\r\u2028\u2029\u202e\p{C}]/gu;
 
-function stripControlChars(s: string): string {
-  return s.replace(CONTROL_CHARS_RE, "");
+function sanitizeTaskText(s: string): string {
+  return s.replace(TASK_TEXT_DISALLOWED_RE, "");
 }
 
-function escapeSuggestion(suggestion: string): string {
-  // Strip control characters and escape backtick sequences that could break fences
-  return stripControlChars(suggestion);
+function maxConsecutiveBackticks(s: string): number {
+  let max = 0;
+  let current = 0;
+  for (const ch of s) {
+    if (ch === "`") {
+      current++;
+      if (current > max) max = current;
+    } else {
+      current = 0;
+    }
+  }
+  return max;
 }
 
 export function formatFinding(finding: Finding, runId: string, prefix: string): FormatOutput {
@@ -29,13 +40,17 @@ export function formatFinding(finding: Finding, runId: string, prefix: string): 
 
   // Suggestion block (if present)
   if (finding.suggestion) {
-    const hasTripleBackticks = finding.message.includes("```") || finding.suggestion.includes("```");
-    const backticks = hasTripleBackticks ? "````" : "```";
-    const safeSuggestion = escapeSuggestion(finding.suggestion);
+    // Calculate fence length: one more than the longest backtick run in either message or suggestion
+    const maxBackticks = Math.max(
+      maxConsecutiveBackticks(finding.message),
+      maxConsecutiveBackticks(finding.suggestion),
+    );
+    const fenceLen = Math.max(3, maxBackticks + 1);
+    const backticks = "`".repeat(fenceLen);
 
     comment_text += "\n";
     comment_text += `${backticks}suggestion\n`;
-    comment_text += safeSuggestion + "\n";
+    comment_text += finding.suggestion + "\n";
     comment_text += `${backticks}\n`;
   }
 
@@ -51,10 +66,9 @@ export function formatFinding(finding: Finding, runId: string, prefix: string): 
     const prefixPart = `[Forge ${finding.priority}] `;
     const fileAndLine = `${finding.file_path}:${finding.line_number}`;
     const separatorPart = " — ";
-    const spaceForMarker = " " + marker;  // Space before marker
+    const spaceForMarker = " " + marker;
     const ellipsis = "...";
 
-    // Calculate how much space we have for the message
     const prefixLength = prefixPart.length;
     const fileAndLineLength = fileAndLine.length;
     const separatorLength = separatorPart.length;
@@ -66,10 +80,8 @@ export function formatFinding(finding: Finding, runId: string, prefix: string): 
 
     let truncatedMessage = finding.message;
     if (finding.message.length > availableForMessage) {
-      // Need to truncate
       const truncateTo = availableForMessage - ellipsisLength;
       truncatedMessage = finding.message.slice(0, Math.max(0, truncateTo));
-      // Ensure we don't cut in the middle of a word
       const lastSpace = truncatedMessage.lastIndexOf(" ");
       if (lastSpace > truncateTo * 0.5) {
         truncatedMessage = truncatedMessage.slice(0, lastSpace);
@@ -78,8 +90,7 @@ export function formatFinding(finding: Finding, runId: string, prefix: string): 
     }
 
     task_text = prefixPart + fileAndLine + separatorPart + truncatedMessage + spaceForMarker;
-    // Strip control characters from task text
-    task_text = stripControlChars(task_text);
+    task_text = sanitizeTaskText(task_text);
   }
 
   // Build done_comment_text

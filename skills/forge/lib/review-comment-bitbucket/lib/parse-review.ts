@@ -8,6 +8,7 @@ const VALID_SOURCE_LAYERS = new Set<string>([
   "quality-check",
   "security-check",
 ]);
+const SAFE_FILE_PATH_RE = /^[A-Za-z0-9._/\-]+$/;
 
 export class ReviewMarkdownNotFoundError extends Error {
   constructor(public readonly filePath: string) {
@@ -74,6 +75,12 @@ export async function parseReviewMarkdown(
       throw new ReviewMarkdownParseError(
         "invalid-file-path",
         `Finding ${i}: missing file_path`,
+      );
+    }
+    if (!SAFE_FILE_PATH_RE.test(r.file_path as string)) {
+      throw new ReviewMarkdownParseError(
+        "invalid-file-path",
+        `Finding ${i}: file_path contains unsafe characters`,
       );
     }
     if (typeof r.line_number !== "number") {
