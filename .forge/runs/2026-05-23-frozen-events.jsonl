@@ -63,3 +63,11 @@
 {"timestamp":"2026-05-23T08:41:16Z","session_id":"unknown","tool_name":"Edit","path":".forge/plans/frozen-zone-structured-feedback.md","category":"frozen-plan","reason_code":"PLAN_APPROVED","decision":"pre","outcome":"denied"}
 {"timestamp":"2026-05-23T08:41:16Z","session_id":"unknown","tool_name":"Write","path":".forge/config.md","category":"frozen-config","reason_code":"CONFIG_ROOT","decision":"post","outcome":"breached"}
 {"timestamp":"2026-05-23T08:41:17Z","session_id":"unknown","tool_name":"Write","path":".forge/config.md","category":"frozen-config","reason_code":"CONFIG_ROOT","decision":"pre","outcome":"denied"}
+{"timestamp":"2026-05-23T11:58:21Z","session_id":"unknown","tool_name":"Write","path":".forge/config.md","category":"frozen-config","reason_code":"CONFIG_ROOT","decision":"pre","outcome":"denied"}
+{"timestamp":"2026-05-23T11:58:22Z","session_id":"unknown","tool_name":"Edit","path":".forge/plans/frozen-zone-structured-feedback.md","category":"frozen-plan","reason_code":"PLAN_APPROVED","decision":"pre","outcome":"denied"}
+{"timestamp":"2026-05-23T11:58:22Z","session_id":"unknown","tool_name":"Write","path":".forge/config.md","category":"frozen-config","reason_code":"CONFIG_ROOT","decision":"post","outcome":"breached"}
+{"timestamp":"2026-05-23T11:58:23Z","session_id":"unknown","tool_name":"Write","path":".forge/config.md","category":"frozen-config","reason_code":"CONFIG_ROOT","decision":"pre","outcome":"denied"}
+{"timestamp":"2026-05-23T12:00:36Z","session_id":"unknown","tool_name":"Write","path":".forge/config.md","category":"frozen-config","reason_code":"CONFIG_ROOT","decision":"pre","outcome":"denied"}
+{"timestamp":"2026-05-23T12:00:36Z","session_id":"unknown","tool_name":"Edit","path":".forge/plans/frozen-zone-structured-feedback.md","category":"frozen-plan","reason_code":"PLAN_APPROVED","decision":"pre","outcome":"denied"}
+{"timestamp":"2026-05-23T12:00:36Z","session_id":"unknown","tool_name":"Write","path":".forge/config.md","category":"frozen-config","reason_code":"CONFIG_ROOT","decision":"post","outcome":"breached"}
+{"timestamp":"2026-05-23T12:00:37Z","session_id":"unknown","tool_name":"Write","path":".forge/config.md","category":"frozen-config","reason_code":"CONFIG_ROOT","decision":"pre","outcome":"denied"}
