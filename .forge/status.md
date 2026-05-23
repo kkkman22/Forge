@@ -1,36 +1,31 @@
 ---
-current_task: "forge-loop-desktop-app"
-tier: "full"
-task_type: "fullstack"
-project_phase: "greenfield"
+current_task: "review-comment-bitbucket"
+tier: "standard"
+task_type: "feature"
+project_phase: "implementation"
 phase: "build"
 work_nature: "feature"
-updated: "2026-05-18"
-branch: "forge/loop-desktop-app"
-spec_path: ".kiro/specs/forge-loop-desktop-app/"
-hints: "scaffold-first,tech-stack-review,apple-design-lang,process-lifecycle,keychain-security"
+updated: "2026-05-23"
+branch: "worktree-review-comment-bitbucket"
+spec_path: ".kiro/specs/review-comment-bitbucket/"
+plan_path: ".kiro/specs/review-comment-bitbucket/tasks.md"
+hints: "pure-function-modules,property-based-testing,bitbucket-mcp-power,tdd-enforced"
 assumptions:
   - "spec 目录含 requirements+design+tasks = decide+spec+plan 完成"
-  - "前端框架 Vue 3（非 React）"
-  - "forge-loop SDK CLI 入口可用"
-  - "项目位于 apps/forge-loop-desktop/ 独立目录"
+  - "19 tasks / 6 phases / 10 wave parallel"
+  - "所有 lib/ 模块为纯函数，副作用集中在 post.ts"
+  - "27 条 correctness property 用 fast-check 实现"
 ---
 
 # 项目状态
 
-## 当前任务：forge-loop-desktop-app
+## 当前任务：review-comment-bitbucket
 
-Full-tier build。macOS 桌面应用（Tauri 2.x + Vue 3 + Rust）。
+Standard-tier build。为 `/forge review` 产出增加 Bitbucket PR 投递通道。
 
-**Spec**：`.kiro/specs/forge-loop-desktop-app/`
-**Plan**：tasks.md（15 tasks，9 waves）
+**Spec**：`.kiro/specs/review-comment-bitbucket/`
+**Plan**：`.kiro/specs/review-comment-bitbucket/tasks.md`（19 tasks，6 phases，10 waves）
 
 ## 已完成
 
 forge-single-entry-skills-collapse: 47 commits merged to main (6127feb).
-
-missions-inspired-rigor: 8 commits merged to main (7edd3ff).
-
-single-entry-command-consolidation: 9 commits merged to main (4390392).
-
-subagent-hook-context-budget: 19 commits merged to main (4331fac).
