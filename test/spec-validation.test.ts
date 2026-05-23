@@ -5,18 +5,35 @@
  * Validates: Requirements 11, 12
  */
 import { describe, expect, it } from "vitest";
-import { validateContractGate, detectSpecLeakFromBundle, enforceEarsSyntax } from "../src/spec-validation.js";
-import type { SpecBundle, RequirementsDocument, EarsClause, SpecFileFrontmatter } from "../src/spec-bundle.js";
+import type {
+  EarsClause,
+  RequirementsDocument,
+  SpecBundle,
+  SpecFileFrontmatter,
+} from "../src/spec-bundle.js";
+import {
+  detectSpecLeakFromBundle,
+  enforceEarsSyntax,
+  validateContractGate,
+} from "../src/spec-validation.js";
 
 function makeFm(): SpecFileFrontmatter {
-  return { feature: "test", status: "draft", date: "2026-05-23", workflow_variant: "requirements-first" };
+  return {
+    feature: "test",
+    status: "draft",
+    date: "2026-05-23",
+    workflow_variant: "requirements-first",
+  };
 }
 
 function makeEars(overrides?: Partial<EarsClause>): EarsClause {
   return { line: 1, when: "X", shall: "Y", raw: "当 X 时 系统应当 Y", ...overrides };
 }
 
-function makeBundle(opts?: { contractLegacy?: boolean; earsOverrides?: Partial<EarsClause> }): SpecBundle {
+function makeBundle(opts?: {
+  contractLegacy?: boolean;
+  earsOverrides?: Partial<EarsClause>;
+}): SpecBundle {
   return {
     feature: "test",
     kind: "feature",
@@ -117,11 +134,16 @@ describe("enforceEarsSyntax", () => {
     expect(result.exhausted).toBe(true);
   });
 
-  it("fallback wraps arbitrary text as EARS", () => {
+  it("marks exhausted when no rewrite strategy matches", () => {
     const result = enforceEarsSyntax("@#$%", { maxRetries: 3 });
-    expect(result.output).toContain("当");
-    expect(result.output).toContain("系统应当");
-    expect(result.retries).toBe(4); // Falls through to strategy 4
+    expect(result.exhausted).toBe(true);
+    expect(result.output).toBe("@#$%"); // returned unchanged so ANL-01 can flag
+  });
+
+  it("comma-style rewrites to EARS format", () => {
+    const result = enforceEarsSyntax("用户提交，返回成功");
+    expect(result.output).toBe("当 用户提交 时 系统应当 返回成功");
+    expect(result.retries).toBe(4);
   });
 
   it("legacy EARS format passes through unchanged", () => {

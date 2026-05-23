@@ -6,22 +6,22 @@
  * Validates: Requirement 1
  */
 import { describe, expect, it } from "vitest";
+import type {
+  DesignDocument,
+  RequirementsDocument,
+  SpecFileFrontmatter,
+  TasksSeedDocument,
+} from "../src/spec-bundle.js";
 import {
-  renderRequirementsMarkdown,
-  renderDesignMarkdown,
-  renderTasksMarkdown,
-} from "../src/spec-render.js";
-import {
-  parseRequirementsMarkdown,
   parseDesignMarkdown,
+  parseRequirementsMarkdown,
   parseTasksMarkdown,
 } from "../src/spec-parser.js";
-import type {
-  RequirementsDocument,
-  DesignDocument,
-  TasksSeedDocument,
-  SpecFileFrontmatter,
-} from "../src/spec-bundle.js";
+import {
+  renderDesignMarkdown,
+  renderRequirementsMarkdown,
+  renderTasksMarkdown,
+} from "../src/spec-render.js";
 
 function makeFrontmatter(overrides?: Partial<SpecFileFrontmatter>): SpecFileFrontmatter {
   return {
@@ -64,7 +64,12 @@ describe("renderRequirementsMarkdown round-trip", () => {
           title: "US1",
           description: "Story",
           earsCriteria: [
-            { line: 1, when: "用户点击提交", shall: "系统保存数据", raw: "当 用户点击提交 时 系统应当 系统保存数据" },
+            {
+              line: 1,
+              when: "用户点击提交",
+              shall: "系统保存数据",
+              raw: "当 用户点击提交 时 系统应当 系统保存数据",
+            },
           ],
         },
       ],
@@ -151,8 +156,21 @@ describe("renderTasksMarkdown round-trip", () => {
     const doc: TasksSeedDocument = {
       frontmatter: makeFrontmatter(),
       tasks: [
-        { id: "T-01", title: "First", goal: "Do A", related_requirements: ["R1"], status: "pending" },
-        { id: "T-02", title: "Second", goal: "Do B", related_requirements: [], status: "pending", depends_on: ["T-01"] },
+        {
+          id: "T-01",
+          title: "First",
+          goal: "Do A",
+          related_requirements: ["R1"],
+          status: "pending",
+        },
+        {
+          id: "T-02",
+          title: "Second",
+          goal: "Do B",
+          related_requirements: [],
+          status: "pending",
+          depends_on: ["T-01"],
+        },
       ],
     };
 

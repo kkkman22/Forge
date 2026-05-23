@@ -22,13 +22,13 @@
 
 import { extractStringField } from "./frontmatter.js";
 import type { Glossary, GlossaryTerm } from "./glossary.js";
-import type { TaskGraph } from "./task-graph.js";
-
-import { upgradeTasksSeed } from "./spec-plan-upgrade.js";
 import type { TasksSeedDocument } from "./spec-bundle.js";
 
-export { upgradeTasksSeed } from "./spec-plan-upgrade.js";
+import { upgradeTasksSeed } from "./spec-plan-upgrade.js";
+import type { TaskGraph } from "./task-graph.js";
+
 export type { TasksSeedDocument } from "./spec-bundle.js";
+export { upgradeTasksSeed } from "./spec-plan-upgrade.js";
 
 // ---------------------------------------------------------------------------
 // Types — Full format (Atomic Task)

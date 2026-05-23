@@ -1,7 +1,7 @@
 # AUTO-GENERATED — DO NOT EDIT
 # Source: skills/forge/lib/<sub>/instructions.md frontmatter
 # Regen: node scripts/regen-skill-registry.mjs
-# Last regen: 2026-05-18T03:43:28.332Z
+# Last regen: 2026-05-23T12:16:55.450Z
 
 [abort]
 dispatch_mode = "inline"

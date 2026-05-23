@@ -14,23 +14,30 @@
  */
 
 import {
-  DEFAULT_EXTRACTION_RULES,
-  extractCandidates,
-  filterCandidates,
-  type TermCandidate,
+    DEFAULT_EXTRACTION_RULES,
+    extractCandidates,
+    filterCandidates,
+    type TermCandidate,
 } from "./glossary-extractor.js";
 
 export { renderGlossaryConflictPrompt, runGlossaryCheck } from "./glossary-hook.js";
-
-export { detectSpecLeak, loadBannedPatterns } from "./spec-leak-detector.js";
-
-export { detectSpecKind } from "./spec-kind.js";
-export type { SpecKind } from "./spec-bundle.js";
-export { parseSpecArgs, parseExternalSpec, scoreImportedContent, runImportMode } from "./spec-import.js";
-export type { ParseSpecArgsResult, ExternalSpecContent, ImportModeResult } from "./spec-import.js";
 export { runBugfixOrchestration } from "./spec-bugfix-orchestration.js";
 export type { BugfixOrchestrationResult } from "./spec-bugfix-orchestration.js";
-export { validateContractGate, enforceEarsSyntax, detectSpecLeakFromBundle } from "./spec-validation.js";
+export type { SpecKind } from "./spec-bundle.js";
+export {
+    parseExternalSpec,
+    parseSpecArgs,
+    runImportMode,
+    scoreImportedContent
+} from "./spec-import.js";
+export type { ExternalSpecContent, ImportModeResult, ParseSpecArgsResult } from "./spec-import.js";
+export { detectSpecKind } from "./spec-kind.js";
+export { detectSpecLeak, loadBannedPatterns } from "./spec-leak-detector.js";
+export {
+    detectSpecLeakFromBundle,
+    enforceEarsSyntax,
+    validateContractGate
+} from "./spec-validation.js";
 export type { ContractGateResult, EarsEnforcementResult } from "./spec-validation.js";
 
 // ---------------------------------------------------------------------------
@@ -346,13 +353,13 @@ export function shouldTriggerBusinessAnalyst(
 // Spec entry routing (Requirements 10, 14 — import + bugfix)
 // ---------------------------------------------------------------------------
 
-import { parseSpecArgs, runImportMode } from "./spec-import.js";
-import type { ImportModeResult } from "./spec-import.js";
-import { detectSpecKind } from "./spec-kind.js";
-import { runBugfixOrchestration } from "./spec-bugfix-orchestration.js";
-import type { BugfixOrchestrationResult } from "./spec-bugfix-orchestration.js";
-import type { SpecBundle } from "./spec-bundle.js";
 import { readdirSync } from "node:fs";
+import type { BugfixOrchestrationResult } from "./spec-bugfix-orchestration.js";
+import { runBugfixOrchestration } from "./spec-bugfix-orchestration.js";
+import type { SpecBundle } from "./spec-bundle.js";
+import type { ImportModeResult } from "./spec-import.js";
+import { parseSpecArgs, runImportMode } from "./spec-import.js";
+import { detectSpecKind } from "./spec-kind.js";
 
 export type SpecRouteResult =
   | { mode: "default" }

@@ -4,11 +4,16 @@
  * Validates: Requirement 4, 7
  */
 import { describe, expect, it } from "vitest";
-import { upgradeTasksSeed, detectLegacyPlanFallback } from "../src/spec-plan-upgrade.js";
-import type { TaskSeed, TasksSeedDocument, SpecFileFrontmatter, Wave } from "../src/spec-bundle.js";
+import type { SpecFileFrontmatter, TaskSeed, TasksSeedDocument, Wave } from "../src/spec-bundle.js";
+import { detectLegacyPlanFallback, upgradeTasksSeed } from "../src/spec-plan-upgrade.js";
 
 function makeFm(): SpecFileFrontmatter {
-  return { feature: "auth", status: "draft", date: "2026-05-23", workflow_variant: "requirements-first" };
+  return {
+    feature: "auth",
+    status: "draft",
+    date: "2026-05-23",
+    workflow_variant: "requirements-first",
+  };
 }
 
 function makeTaskSeed(overrides: Partial<TaskSeed> = {}): TaskSeed {

@@ -6,11 +6,18 @@
  */
 import * as fc from "fast-check";
 import { describe, expect, it } from "vitest";
-import { parseWaves, computeDependencyClosure } from "../src/spec-wave.js";
 import type { TaskSeed } from "../src/spec-bundle.js";
+import { computeDependencyClosure, parseWaves } from "../src/spec-wave.js";
 
 function makeTask(id: string, deps?: string[]): TaskSeed {
-  return { id, title: id, goal: `Goal ${id}`, related_requirements: [], status: "pending", depends_on: deps };
+  return {
+    id,
+    title: id,
+    goal: `Goal ${id}`,
+    related_requirements: [],
+    status: "pending",
+    depends_on: deps,
+  };
 }
 
 // ---------------------------------------------------------------------------
@@ -21,7 +28,10 @@ describe("parseWaves", () => {
   it("parses valid JSON wave block", () => {
     const tasks = [makeTask("T-01"), makeTask("T-02", ["T-01"])];
     const jsonBlock = JSON.stringify({
-      waves: [{ wave: 1, tasks: ["T-01"] }, { wave: 2, tasks: ["T-02"] }],
+      waves: [
+        { wave: 1, tasks: ["T-01"] },
+        { wave: 2, tasks: ["T-02"] },
+      ],
     });
 
     const waves = parseWaves(jsonBlock, tasks);
@@ -39,10 +49,7 @@ describe("parseWaves", () => {
   });
 
   it("throws on cycle detected in dependencies", () => {
-    const tasks = [
-      makeTask("T-01", ["T-02"]),
-      makeTask("T-02", ["T-01"]),
-    ];
+    const tasks = [makeTask("T-01", ["T-02"]), makeTask("T-02", ["T-01"])];
     const jsonBlock = JSON.stringify({
       waves: [{ wave: 1, tasks: ["T-01", "T-02"] }],
     });
@@ -68,21 +75,13 @@ describe("computeDependencyClosure", () => {
   });
 
   it("includes transitive dependencies", () => {
-    const tasks = [
-      makeTask("T-01"),
-      makeTask("T-02", ["T-01"]),
-      makeTask("T-03", ["T-02"]),
-    ];
+    const tasks = [makeTask("T-01"), makeTask("T-02", ["T-01"]), makeTask("T-03", ["T-02"])];
     const closure = computeDependencyClosure("T-03", tasks);
     expect(closure.sort()).toEqual(["T-01", "T-02", "T-03"]);
   });
 
   it("excludes non-dependency tasks", () => {
-    const tasks = [
-      makeTask("T-01"),
-      makeTask("T-02"),
-      makeTask("T-03", ["T-01"]),
-    ];
+    const tasks = [makeTask("T-01"), makeTask("T-02"), makeTask("T-03", ["T-01"])];
     const closure = computeDependencyClosure("T-03", tasks);
     expect(closure).not.toContain("T-02");
   });
@@ -99,7 +98,10 @@ describe("computeDependencyClosure", () => {
         fc.array(fc.nat({ max: 20 }), { minLength: 1, maxLength: 10 }).map((nums) => {
           const unique = [...new Set(nums)];
           return unique.map((n, i) =>
-            makeTask(`T-${String(n).padStart(2, "0")}`, i > 0 ? [`T-${String(unique[i - 1]).padStart(2, "0")}`] : undefined),
+            makeTask(
+              `T-${String(n).padStart(2, "0")}`,
+              i > 0 ? [`T-${String(unique[i - 1]).padStart(2, "0")}`] : undefined,
+            ),
           );
         }),
         (tasks) => {

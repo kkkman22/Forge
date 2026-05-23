@@ -56,7 +56,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "bash scripts/hook-check-frozen.sh \"$TOOL_INPUT_FILE\" 2>/dev/null || bash forge/scripts/hook-check-frozen.sh \"$TOOL_INPUT_FILE\" 2>/dev/null || bash ~/.claude/skills/forge/scripts/hook-check-frozen.sh \"$TOOL_INPUT_FILE\" 2>/dev/null || true",
+            "command": "bash scripts/hook-check-frozen.sh \"$TOOL_INPUT_FILE\" 2>/dev/null || bash forge/scripts/hook-check-frozen.sh \"$TOOL_INPUT_FILE\" 2>/dev/null || bash ~/.claude/skills/forge/scripts/hook-check-frozen.sh \"$TOOL_INPUT_FILE\" 2>/dev/null",
             "timeout": 5
           }
         ]
@@ -66,7 +66,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "echo \"$TOOL_INPUT\" | grep -oE '\\.forge/(specs|plans)/[a-zA-Z0-9_.-]+|\\.forge/config\\.md' | sort -u | while read -r f; do bash scripts/hook-check-frozen.sh \"$f\" 2>/dev/null || bash forge/scripts/hook-check-frozen.sh \"$f\" 2>/dev/null || bash ~/.claude/skills/forge/scripts/hook-check-frozen.sh \"$f\" 2>/dev/null || true; done",
+            "command": "echo \"$TOOL_INPUT\" | grep -oE '\\.forge/(specs|plans)/[a-zA-Z0-9_.-]+|\\.forge/config\\.md' | sort -u | while read -r f; do bash scripts/hook-check-frozen.sh \"$f\" 2>/dev/null || bash forge/scripts/hook-check-frozen.sh \"$f\" 2>/dev/null || bash ~/.claude/skills/forge/scripts/hook-check-frozen.sh \"$f\" 2>/dev/null; done",
             "timeout": 5
           }
         ]
@@ -164,7 +164,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "node scripts/check-diff-context-integrity.mjs \"$TOOL_INPUT_FILE\" 2>/dev/null || node forge/scripts/check-diff-context-integrity.mjs \"$TOOL_INPUT_FILE\" 2>/dev/null || node ~/.claude/skills/forge/scripts/check-diff-context-integrity.mjs \"$TOOL_INPUT_FILE\" 2>/dev/null || true",
+            "command": "node scripts/check-diff-context-integrity.mjs \"$TOOL_INPUT_FILE\" 2>/dev/null || node forge/scripts/check-diff-context-integrity.mjs \"$TOOL_INPUT_FILE\" 2>/dev/null || node ~/.claude/skills/forge/scripts/check-diff-context-integrity.mjs \"$TOOL_INPUT_FILE\" 2>/dev/null",
             "timeout": 5
           }
         ]

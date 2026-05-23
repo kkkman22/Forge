@@ -9,7 +9,6 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 // Dynamic import needed for .mjs ESM module
 const moduleUrl = new URL("../scripts/resume-from-pr.mjs", import.meta.url);
 
-// biome-ignore lint/suspicious/noExplicitAny: dynamic ESM import
 let resumeModule: any;
 
 beforeEach(async () => {
@@ -98,7 +97,6 @@ describe("parseTarget", () => {
 // ---------------------------------------------------------------------------
 
 describe("fetchPRMetadata", () => {
-  // biome-ignore lint/suspicious/noExplicitAny: mock type
   let execMock: any;
 
   beforeEach(() => {
@@ -112,7 +110,6 @@ describe("fetchPRMetadata", () => {
 
   it("uses gh for github host", async () => {
     execMock.mockImplementation(
-      // biome-ignore lint/suspicious/noExplicitAny: mock callback
       (_cmd: string, _opts: any, cb: (e: Error | null, s: string) => void) => {
         cb(
           null,
@@ -139,7 +136,6 @@ describe("fetchPRMetadata", () => {
 
   it("returns fetcherUsed='none' on gh not installed", async () => {
     execMock.mockImplementation(
-      // biome-ignore lint/suspicious/noExplicitAny: mock callback
       (_cmd: string, _opts: any, cb: (e: Error | null, s: string) => void) => {
         cb(new Error("command not found: gh"), "");
       },

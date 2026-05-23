@@ -9,11 +9,22 @@
  * Validates: Requirements 7, 8, 9
  */
 
-import { existsSync, renameSync, readFileSync, writeFileSync, unlinkSync, mkdirSync } from "node:fs";
+import { existsSync, readFileSync, renameSync, unlinkSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
 
-import type { SpecFileFrontmatter, RequirementsDocument, DesignDocument, TasksSeedDocument, EarsClause } from "./spec-bundle.js";
-import { renderRequirementsMarkdown, renderDesignMarkdown, renderTasksMarkdown } from "./spec-render.js";
+import { analyzeRequirements } from "./spec-analyze.js";
+import type {
+    DesignDocument,
+    EarsClause,
+    RequirementsDocument,
+    SpecFileFrontmatter,
+    TasksSeedDocument,
+} from "./spec-bundle.js";
+import {
+    renderDesignMarkdown,
+    renderRequirementsMarkdown,
+    renderTasksMarkdown,
+} from "./spec-render.js";
 
 // ---------------------------------------------------------------------------
 // Types
@@ -71,11 +82,10 @@ export function migrateLegacySpec(featureDir: string, eventsPath?: string): Migr
     const userStories: { title: string; description: string; earsCriteria: EarsClause[] }[] = [];
 
     const reqRegex = /###\s*需求\s*\d+[:：]\s*(.+)/g;
-    let reqMatch: RegExpExecArray | null;
     const reqBlocks: { title: string; start: number }[] = [];
 
-    while ((reqMatch = reqRegex.exec(body)) !== null) {
-      reqBlocks.push({ title: reqMatch[1].trim(), start: reqMatch.index });
+    for (const reqMatch of body.matchAll(reqRegex)) {
+      reqBlocks.push({ title: reqMatch[1].trim(), start: reqMatch.index ?? 0 });
     }
 
     for (let i = 0; i < reqBlocks.length; i++) {
@@ -114,7 +124,10 @@ export function migrateLegacySpec(featureDir: string, eventsPath?: string): Migr
 
     // Parse exclusions (不做什么)
     const exclText = extractSection(body, "不做什么") || extractSection(body, "Out of Scope");
-    const outOfScope = exclText.split("\n").map((l) => l.replace(/^[-*]\s*/, "").trim()).filter(Boolean);
+    const outOfScope = exclText
+      .split("\n")
+      .map((l) => l.replace(/^[-*]\s*/, "").trim())
+      .filter(Boolean);
 
     // Parse Delta (brownfield)
     let delta: RequirementsDocument["delta"];
@@ -193,28 +206,55 @@ export function migrateLegacySpec(featureDir: string, eventsPath?: string): Migr
     // Migrate .forge/plans/<feature>.md → .forge/specs/<feature>/tasks.md
     migratePlansFile(featureDir, feature);
 
+    // P0-only Analyze fallback: if migrated requirements have P0 issues,
+    // roll back to legacy state so the user can retry without losing data.
+    const analyzeResult = analyzeRequirements(reqDoc);
+    const p0Findings = analyzeResult.findings.filter((f) => f.severity === "P0");
+    if (p0Findings.length > 0) {
+      throw new Error(
+        `Post-migration Analyze surfaced ${p0Findings.length} P0 finding(s); rolling back. ` +
+          `First issue: ${p0Findings[0].rule} — ${p0Findings[0].message}`,
+      );
+    }
+
     return { success: true };
   } catch (err) {
     // Emit failure event
     if (eventsPath) {
       try {
-        const { writeEvent } = require("./event-writer.js") as { writeEvent: typeof import("./event-writer.js").writeEvent };
+        const { writeEvent } = require("./event-writer.js") as {
+          writeEvent: typeof import("./event-writer.js").writeEvent;
+        };
         writeEvent(eventsPath, "spec_migration_failed", { error: String(err) });
-      } catch { /* best effort */ }
+      } catch {
+        /* best effort */
+      }
     }
     // Rollback: delete any written files, restore spec.md if renamed
     for (const f of writtenFiles) {
-      try { unlinkSync(f); } catch { /* best effort */ }
+      try {
+        unlinkSync(f);
+      } catch {
+        /* best effort */
+      }
     }
     const legacyPath = join(featureDir, "spec.legacy.md");
     if (!existsSync(specPath) && existsSync(legacyPath)) {
-      try { renameSync(legacyPath, specPath); } catch { /* best effort */ }
+      try {
+        renameSync(legacyPath, specPath);
+      } catch {
+        /* best effort */
+      }
     }
     // Rollback plans file if it was renamed to .legacy
     const specRoot = join(featureDir, "..");
     const plansLegacy = join(specRoot, "..", "plans", `${featureName}.md.legacy`);
     if (existsSync(plansLegacy)) {
-      try { renameSync(plansLegacy, plansLegacy.replace(/\.legacy$/, "")); } catch { /* best effort */ }
+      try {
+        renameSync(plansLegacy, plansLegacy.replace(/\.legacy$/, ""));
+      } catch {
+        /* best effort */
+      }
     }
     return { success: false, error: String(err) };
   }
@@ -254,7 +294,9 @@ function migratePlansFile(featureDir: string, feature: string): void {
       const id = match[1];
       const title = match[2].trim();
       if (!existingIds.has(id)) {
-        mergedTasks.push(`### ${id} ${title}\n\n- 目标：${title}\n- 关联需求：\n- status: pending\n`);
+        mergedTasks.push(
+          `### ${id} ${title}\n\n- 目标：${title}\n- 关联需求：\n- status: pending\n`,
+        );
       }
     }
 

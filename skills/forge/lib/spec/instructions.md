@@ -158,14 +158,18 @@ Testability / Behavior-not-Implementation / Brownfield Delta / Two-part Structur
 ## 6. Execution Flow
 
 1. **前置检查**：`.forge/` 目录是否存在。不存在 → 提示先运行 `/forge init`
-2. **读取上下文**：`.forge/decisions/`（如有）→ `.forge/config.md` → `.forge/specs/`
-3. **Pre-check**：`detectSpecTriggers()` 检查迁移/Refine → `resolveSpecVariant()` 选择变体
-4. **Propose**：基于上下文和变体生成三文件草案（详见 §2 Step 1）
-5. **Review**：执行自检 + `analyzeRequirements()` 预检（详见 §2 Step 2），未通过则自动修正并重新自检
-6. **用户确认或修改**：确认 → 进入 Lock；修改意见 → 更新草案回到 Review；拒绝 → 保持 draft
-7. **Lock**：锁定规格（详见 §2 Step 3）。三文件各自独立 lock，写入 `requirements.md` + `design.md` + `tasks.md`
-8. **Glossary-miss 扫描**：读取 `.forge/glossary.md` 的术语表，对生成/导入的 spec 文本调用 `detectGlossaryMiss`。如发现未定义术语，输出 `[glossary-miss] 未定义术语：[...]` 提示用户在 learn 阶段回写。不阻断 lock 流程。Step 7 调用 `runGlossaryCheck({ phase: 'spec' })` 进行术语漂移检测。Autonomous 模式下，冲突写入 `getAdvisoryPath('spec', topic)` 指定路径，并将路径添加到 spec frontmatter `pending_glossary_advisories: [...]` 字段。
-9. **自动推进（铁律）**：Lock 成功后，输出 `✅ spec 完成 → 自动进入 plan`，然后**立即调用** `Skill(skill="forge", args="plan")`。不输出"是否继续？"等确认文本。静默 idle（无输出、等待用户输入）与显式询问同罪。（→ 详见 shared/next-step-protocol.md）
+2. **入口路由**：调用 `routeSpecEntry(argv, featureDir, outputDir, existingBundle?)`（`src/spec.ts`）按 argv 分发：
+   - `mode: "import"` → 自动调用 `runImportMode(path, outputDir)` 写齐三文件并返回；
+   - `mode: "bugfix"` → `detectSpecKind` 命中 `bugfix.md` 时自动调 `runBugfixOrchestration(bundle)`；
+   - `mode: "feature" | "default"` → 走下面标准流程。
+3. **读取上下文**：`.forge/decisions/`（如有）→ `.forge/config.md` → `.forge/specs/`
+4. **Pre-check**：`detectSpecTriggers()` 检查迁移/Refine。`migrationNeeded === true` 时**必须立即调用** `migrateLegacySpec(featureDir)` 把 legacy `spec.md` + `plans/<topic>.md` 透明迁移成三文件后再继续。`refineTarget` 命中时调 `refineDownstream(bundle, target)`。然后 `resolveSpecVariant()` 选择变体。
+5. **Propose**：基于上下文和变体生成三文件草案（详见 §2 Step 1）
+6. **Review**：执行自检 + `analyzeRequirements()` 预检（详见 §2 Step 2），未通过则自动修正并重新自检
+7. **用户确认或修改**：确认 → 进入 Lock；修改意见 → 更新草案回到 Review；拒绝 → 保持 draft
+8. **Lock**：锁定规格（详见 §2 Step 3）。三文件各自独立 lock，写入 `requirements.md` + `design.md` + `tasks.md`
+9. **Glossary-miss 扫描**：读取 `.forge/glossary.md` 的术语表，对生成/导入的 spec 文本调用 `detectGlossaryMiss`。如发现未定义术语，输出 `[glossary-miss] 未定义术语：[...]` 提示用户在 learn 阶段回写。不阻断 lock 流程。Step 7 调用 `runGlossaryCheck({ phase: 'spec' })` 进行术语漂移检测。Autonomous 模式下，冲突写入 `getAdvisoryPath('spec', topic)` 指定路径，并将路径添加到 spec frontmatter `pending_glossary_advisories: [...]` 字段。
+10. **自动推进（铁律）**：Lock 成功后，输出 `✅ spec 完成 → 自动进入 plan`，然后**立即调用** `Skill(skill="forge", args="plan")`。不输出"是否继续？"等确认文本。静默 idle（无输出、等待用户输入）与显式询问同罪。（→ 详见 shared/next-step-protocol.md）
 
 ---
 
