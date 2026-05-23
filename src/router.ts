@@ -804,7 +804,9 @@ export function classifyTask(
         // R6-4: Soft warning for overload
         const intentCount = hints.filter((h) => h.source === "intent").length;
         if (intentCount > MAX_RUNTIME_INTENT_HINTS) {
-          // Non-blocking: just an advisory (would emit audit event in production)
+          console.warn(
+            `[intent_overload] ${intentCount} intent hints emitted (threshold: ${MAX_RUNTIME_INTENT_HINTS})`,
+          );
         }
       }
     } catch {
