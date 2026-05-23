@@ -113,6 +113,11 @@ dispatch_mode = "fork"
 allowed_tools = ["Read", "Agent", "Bash"]
 description = "Review build output through parallel subagents covering spec alignment, code quality, and security with P0/P1 ship-blocking severity classification. Use when running `/forge review`, build completes, or a multi-perspective code quality gate is needed before ship."
 
+[review-comment-bitbucket]
+dispatch_mode = "inline"
+allowed_tools = ["Read", "Bash", "Write"]
+description = "Post review findings to Bitbucket PR as tasks and inline comments with stable idempotent markers, cross-run reconciliation, and platform gate."
+
 [router]
 dispatch_mode = "inline"
 allowed_tools = ["Read", "Glob", "Grep"]
