@@ -407,6 +407,13 @@
         }
       ]
     },
+    "review-comment-bitbucket": {
+      "instructions": {
+        "path": "review-comment-bitbucket/instructions.md",
+        "sha256": "8c7cf4d7b81da94ebb738abcd1ff5c5cc5de8fe6300455e85dfca12a32c9f1ea"
+      },
+      "references": []
+    },
     "recap": {
       "instructions": {
         "path": "recap/instructions.md",

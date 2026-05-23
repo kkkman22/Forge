@@ -11,3 +11,15 @@
 {"timestamp":"2026-05-23T00:24:04Z","event":"precompact_snapshot","detail":"slug=forge-loop-desktop-app phase=build"}
 {"timestamp":"2026-05-23T00:25:49Z","event":"postcompact_restore","detail":"slug=forge-loop-desktop-app"}
 {"timestamp":"2026-05-23T00:25:49Z","event":"precompact_snapshot","detail":"slug=forge-loop-desktop-app phase=build"}
+{"timestamp":"2026-05-23T01:55:24Z","event":"precompact_snapshot","detail":"slug=review-comment-bitbucket phase=build"}
+{"timestamp":"2026-05-23T01:55:39Z","event":"postcompact_restore","detail":"slug=review-comment-bitbucket"}
+{"timestamp":"2026-05-23T01:55:39Z","event":"precompact_snapshot","detail":"slug=review-comment-bitbucket phase=build"}
+{"timestamp":"2026-05-23T01:56:57Z","event":"postcompact_restore","detail":"slug=review-comment-bitbucket"}
+{"timestamp":"2026-05-23T01:56:57Z","event":"precompact_snapshot","detail":"slug=review-comment-bitbucket phase=build"}
+{"timestamp":"2026-05-23T02:05:27Z","event":"postcompact_restore","detail":"slug=review-comment-bitbucket"}
+{"timestamp":"2026-05-23T02:05:27Z","event":"precompact_snapshot","detail":"slug=review-comment-bitbucket phase=build"}
+{"timestamp":"2026-05-23T02:06:36Z","event":"precompact_snapshot","detail":"slug=review-comment-bitbucket phase=build"}
+{"timestamp":"2026-05-23T02:07:53Z","event":"postcompact_restore","detail":"slug=review-comment-bitbucket"}
+{"timestamp":"2026-05-23T02:08:34Z","event":"precompact_snapshot","detail":"slug=review-comment-bitbucket phase=build"}
+{"timestamp":"2026-05-23T02:13:57Z","event":"postcompact_restore","detail":"slug=review-comment-bitbucket"}
+{"timestamp":"2026-05-23T02:13:57Z","event":"precompact_snapshot","detail":"slug=review-comment-bitbucket phase=build"}
