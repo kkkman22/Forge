@@ -43,24 +43,36 @@ Bitbucket Data Center 8.x/9.x 提供 **"No incomplete tasks" merge check**（参
 ### 3.1 Finding → Bitbucket 映射
 
 ```
-P0/P1 finding
-    ├─ create_pr_task("[P0] <one-line summary> · 详见 inline comment")
+P0/P1 finding（必须修复，阻断 ship — 详见 spec review-comment-bitbucket）
+    ├─ create_pr_task("[Forge P0/P1] <one-line summary>")
     └─ add_comment(
          file_path, line_number, line_type,
-         comment_text=<详细描述>,
+         comment_text=<详细描述 + 链接到 task>,
          suggestion=<可选的 committable suggestion>
        )
-       └─ task 文本中 reference 该 comment 的 URL/ID
 
-P2 finding
+P2 finding（建议修复 — 详见 spec review-comment-bitbucket）
     └─ add_comment（普通 inline comment，无 task）
 
-P3 finding
-    └─ 仅写入 .forge/reviews/<run-id>.md，不打扰 PR
+P3 finding（开发者决定 — 不进入 spec scope，仅本节描述）
+    └─ 仅写入 .forge/reviews/<run-id>.md
+    └─ 不创建 PR Task
+    └─ 不创建 inline comment
+    └─ 不影响 set_review_status
 
 存在任何 P0/P1 → set_review_status(pull_request_id, request_changes=true,
                                    comment="Forge review found N P0/P1 findings")
 ```
+
+#### P3 处理规则（不进入 spec，仅文档化）
+
+P3 finding 在本通道**完全不向 PR 投递**，理由：
+
+1. **§3.3 P0/P1 必须修是阻断语义，P2 是协商语义，P3 是纯建议性** — 把 P3 投递到 PR 会稀释 task/comment 的信号强度，违反"high-signal only"原则（呼应 Claude 官方 `/code-review` 的过滤准则）
+2. **review markdown 已是 source of truth** — 开发者主动查看 `.forge/reviews/<run-id>.md` 即可看到 P3，不需要 PR 通知
+3. **可观测性兜底** — `.forge/knowledge/metrics.md` 累计每次 review 的 P3 计数，便于团队事后分析"我们丢了多少建议"
+
+如果未来需要支持"P3 也投递"，应通过新增 `p3_strategy: inline` 配置项实现（schema 已预留，见 §5.2），但**默认且强烈建议保持 `p3_strategy: none`**。本 spec **不实现 P3 inline 模式**。
 
 ### 3.2 设计依据
 
@@ -125,6 +137,57 @@ P3 finding
 - CLI flag 提供 ad-hoc 控制（比如调试时临时关闭、紧急 ship 时临时启用）
 - 默认关闭遵循"opt-in 引入新副作用"原则，避免老用户升级 Forge 后意外向 PR 发评论
 
+#### A5: 平台前置门禁（Platform Precondition Gate）
+
+**采纳**：在 post 流程启动前增加 **平台前置门禁**——只有当当前仓库实际托管于 Bitbucket 时才走此流程，否则静默跳过（不报错）。
+
+执行顺序（高 → 低）：
+
+1. **远端 URL 检测**（主路径，零成本）
+   - 读取 `git config --get remote.origin.url`（或当前 PR 关联的 remote）
+   - 匹配 Bitbucket 特征：
+     - URL 包含 `bitbucket.` 子域（如 `bitbucket.yourcompany.com`、`bitbucket.org`）
+     - 或匹配 `BITBUCKET_BASE_URL` 配置的 host（环境变量或 MCP 配置中已注入）
+   - 多 remote 时：优先 `origin`，其次 PR upstream，最后所有 remotes 取第一个匹配项
+
+2. **配置覆盖**（second，应对边缘情况）
+   - `.forge/config.md` 的 `review.comment_channel.platform_override`：
+     - `auto`（默认）：完全依赖远端 URL 检测
+     - `bitbucket`：强制识别为 Bitbucket（用于私有镜像 / 内网代理 / 非标准域名场景）
+     - `none`：强制禁用，永不识别为 Bitbucket（即使 URL 匹配也跳过）
+
+3. **MCP 配置可达性检查**（pre-flight）
+   - 即使 URL 匹配，也需确认 `bitbucket` MCP power 已配置且 `BITBUCKET_BASE_URL` 与 remote URL **同源**
+   - 不同源时跳过并记录 `.forge/findings/comment-channel-skipped-<date>.md`：
+     - `reason: mcp-base-url-mismatch`
+     - `remote_url: <git remote>`
+     - `mcp_base_url: <BITBUCKET_BASE_URL>`
+
+4. **失败模式：静默跳过 + 留痕**
+   - 任何检测失败 → post 流程**静默跳过**，review markdown 仍正常产出
+   - skip 原因写入：
+     - 同一 review run 的 `.forge/reviews/<run-id>.md` 末尾追加 `## comment_channel: skipped (reason: <code>)` 段
+     - `.forge/knowledge/tool-health.md` 累积 skip 计数（用于检测配置漂移）
+
+依据：
+- **避免对非 Bitbucket 项目造成噪音或误调用**：Forge 是通用框架，可能被 fork 到 GitHub/GitLab/Gitea 项目使用。即使 SKILL 锁定 bitbucket，运行时也必须自检平台
+- **静默跳过而非报错**：在 GitHub 项目里跑 `/forge ship --post-comments` 不应当 fatal，应当降级（review markdown 仍是 source of truth）
+- **配置覆盖应对企业内网**：有的团队 Bitbucket 部署在 `code.internal.example.com` 这种无 `bitbucket` 关键字的域名，需要手动 override 路径
+- **MCP 同源校验防止跨实例误发**：避免一个 MCP 配置指向 staging Bitbucket，但 git remote 指向 production，导致评论发错地方
+
+##### 检测决策矩阵
+
+| 远端 URL 特征 | platform_override | bitbucket MCP 配置 | 同源 | 决策 |
+|---|---|---|---|---|
+| 含 `bitbucket.` | auto | 已配置 | ✓ | ✅ 走 post 流程 |
+| 含 `bitbucket.` | auto | 已配置 | ✗ | ⏭ 跳过（mcp-base-url-mismatch） |
+| 含 `bitbucket.` | auto | 未配置 | — | ⏭ 跳过（mcp-not-configured） |
+| 不含 `bitbucket.` | auto | 任意 | — | ⏭ 跳过（platform-not-bitbucket） |
+| 任意 | bitbucket | 已配置 | ✓ | ✅ 走 post 流程（强制） |
+| 任意 | bitbucket | 已配置 | ✗ | ⏭ 跳过（mcp-base-url-mismatch） |
+| 任意 | bitbucket | 未配置 | — | ⏭ 跳过 + 警告（override-but-mcp-missing） |
+| 任意 | none | 任意 | — | ⏭ 跳过（platform-disabled-by-config） |
+
 ## 4. 架构对接现有 Forge 设计
 
 ### 4.1 与 ADR-0005 fallback ladder 的关系
@@ -132,6 +195,8 @@ P3 finding
 ```
 L0 (subagent parallel) → 产出 .forge/reviews/*.md
                         ↓ opt-in (--post-comments / config.md)
+                     [A5 平台前置门禁] ← 检测当前仓库是否 Bitbucket
+                        ↓ 通过
                      新 SKILL: forge-review-comment-bitbucket
                         ↓ 调用 bitbucket MCP power
                      PR Tasks + inline comments
@@ -141,7 +206,7 @@ L3 (unavailable)      → 不 post（review 未产出，无可 post 内容）
                         Forge ship 阶段照常 block
 ```
 
-不修改 fallback ladder 本身，post 通道是 review 完成后的**独立交付层**。
+不修改 fallback ladder 本身，post 通道是 review 完成后的**独立交付层**，前置门禁是该层的入口守卫。
 
 ### 4.2 与 §3.3 P0/P1 阻断的关系
 
@@ -172,11 +237,15 @@ review-comment-bitbucket/
 ├── instructions.md       # SKILL 主文档
 ├── lib/
 │   ├── post.ts          # 主入口：read review markdown → call bitbucket tools
+│   ├── platform-gate.ts # A5 决定：平台前置门禁（远端 URL + override + MCP 同源）
 │   ├── finding-hash.ts  # 稳定 hash 计算
-│   ├── reconcile.ts     # 已有 vs 当前 finding 对账
+│   ├── reconcile.ts     # 已有 vs 当前 finding 对账（含 auto-reopen-regressed）
 │   └── format.ts        # finding → comment_text / task_text 格式化
 └── test/
-    └── *.test.ts        # 纯函数测试（hash、reconcile、format）
+    ├── platform-gate.test.ts  # 8 行决策矩阵的边界测试
+    ├── finding-hash.test.ts
+    ├── reconcile.test.ts
+    └── format.test.ts
 ```
 
 ### 5.2 配置项（写入 `.forge/config.md`）
@@ -186,6 +255,7 @@ review:
   comment_channel:
     enabled: false              # 默认关闭（A4 决定），opt-in
     platform: bitbucket         # A3 决定：暂仅支持 bitbucket
+    platform_override: auto     # A5 决定：auto | bitbucket | none
     p0_p1_strategy: both        # both（task + inline，默认）| pr-task | inline-only
     p2_strategy: inline         # inline | none
     p3_strategy: none           # none（默认，仅写 markdown）| inline
@@ -226,6 +296,10 @@ review:
 | 大量 P2 评论造成噪音 | 配置 `p2_strategy: none` 关闭 P2 inline comment |
 | Bitbucket 实例 API rate limit | 批量 post 时加 100ms 间隔；幂等机制本身减少重复调用 |
 | review subagent 输出格式变化 | finding 格式应统一为结构化 schema（spec 阶段定义） |
+| **GitHub/GitLab/Gitea 项目误用此 SKILL** | A5 平台前置门禁静默跳过 + `.forge/findings/comment-channel-skipped-*.md` 留痕 |
+| **MCP 配置指向错实例（staging vs prod）** | A5 MCP 同源校验：remote URL host 必须匹配 `BITBUCKET_BASE_URL` |
+| **企业内网域名不含 bitbucket 关键字** | A5 `platform_override: bitbucket` 显式强制 |
+| **远端 URL 探测脚本失败（无 git / 无 remote）** | 视为 `platform-not-bitbucket`，静默跳过；记录到 tool-health.md |
 
 **待用户回答的开放问题**：（已全部回答，参见 §3.3）
 
@@ -233,6 +307,7 @@ review:
 ✅ Q2 → A2: 双方都能关，含 auto-reopen-regressed 兜底
 ✅ Q3 → A3: 暂仅支持 Bitbucket，SKILL 命名锁定
 ✅ Q4 → A4: per-project 默认关闭，CLI flag 覆盖
+✅ Q5 → A5: 平台前置门禁（远端 URL + override + MCP 同源），失败静默跳过
 
 ## 7. 下一步
 
