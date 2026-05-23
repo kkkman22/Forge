@@ -5,7 +5,7 @@
  * Validates: Requirements 11, 12
  */
 import { describe, expect, it } from "vitest";
-import { validateContractGate, detectSpecLeak, enforceEarsSyntax } from "../src/spec-validation.js";
+import { validateContractGate, detectSpecLeakFromBundle, enforceEarsSyntax } from "../src/spec-validation.js";
 import type { SpecBundle, RequirementsDocument, EarsClause, SpecFileFrontmatter } from "../src/spec-bundle.js";
 
 function makeFm(): SpecFileFrontmatter {
@@ -68,25 +68,25 @@ describe("validateContractGate", () => {
 });
 
 // T-15: Spec Leak
-describe("detectSpecLeak", () => {
+describe("detectSpecLeakFromBundle", () => {
   it("detects class names in strict mode", () => {
     const bundle = makeBundle();
     (bundle.primary as RequirementsDocument).intro = "Use FormService to submit";
-    const result = detectSpecLeak(bundle, "strict");
+    const result = detectSpecLeakFromBundle(bundle, "strict");
     expect(result.leaked).toBe(true);
   });
 
   it("allows technical nouns in lenient mode", () => {
     const bundle = makeBundle();
     (bundle.primary as RequirementsDocument).intro = "Use FormService to submit";
-    const result = detectSpecLeak(bundle, "lenient");
+    const result = detectSpecLeakFromBundle(bundle, "lenient");
     expect(result.leaked).toBe(false);
   });
 
   it("detects code snippets even in lenient mode", () => {
     const bundle = makeBundle();
     (bundle.primary as RequirementsDocument).intro = "function submit() { return fetch('/api') }";
-    const result = detectSpecLeak(bundle, "lenient");
+    const result = detectSpecLeakFromBundle(bundle, "lenient");
     expect(result.leaked).toBe(true);
   });
 });

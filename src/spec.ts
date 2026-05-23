@@ -24,6 +24,15 @@ export { renderGlossaryConflictPrompt, runGlossaryCheck } from "./glossary-hook.
 
 export { detectSpecLeak, loadBannedPatterns } from "./spec-leak-detector.js";
 
+export { detectSpecKind } from "./spec-kind.js";
+export type { SpecKind } from "./spec-bundle.js";
+export { parseSpecArgs, parseExternalSpec, scoreImportedContent, runImportMode } from "./spec-import.js";
+export type { ParseSpecArgsResult, ExternalSpecContent, ImportModeResult } from "./spec-import.js";
+export { runBugfixOrchestration } from "./spec-bugfix-orchestration.js";
+export type { BugfixOrchestrationResult } from "./spec-bugfix-orchestration.js";
+export { validateContractGate, enforceEarsSyntax, detectSpecLeakFromBundle } from "./spec-validation.js";
+export type { ContractGateResult, EarsEnforcementResult } from "./spec-validation.js";
+
 // ---------------------------------------------------------------------------
 // Types
 // ---------------------------------------------------------------------------
@@ -331,4 +340,61 @@ export function shouldTriggerBusinessAnalyst(
   if (!currentContext) return false;
   const coreSubdomains = getCoreSubdomains(enabledPacks);
   return coreSubdomains.includes(currentContext);
+}
+
+// ---------------------------------------------------------------------------
+// Spec entry routing (Requirements 10, 14 — import + bugfix)
+// ---------------------------------------------------------------------------
+
+import { parseSpecArgs, runImportMode } from "./spec-import.js";
+import type { ImportModeResult } from "./spec-import.js";
+import { detectSpecKind } from "./spec-kind.js";
+import { runBugfixOrchestration } from "./spec-bugfix-orchestration.js";
+import type { BugfixOrchestrationResult } from "./spec-bugfix-orchestration.js";
+import type { SpecBundle } from "./spec-bundle.js";
+import { readdirSync } from "node:fs";
+
+export type SpecRouteResult =
+  | { mode: "default" }
+  | { mode: "import"; path: string; result: ImportModeResult }
+  | { mode: "feature"; feature: string }
+  | { mode: "bugfix"; bundle: SpecBundle; result: BugfixOrchestrationResult };
+
+/**
+ * Route spec entry based on argv and feature directory contents.
+ *
+ * - Import mode: `/forge spec <file.md>` → parseSpecArgs → runImportMode
+ * - Bugfix mode: bugfix.md detected → runBugfixOrchestration
+ * - Feature mode: `/forge spec <feature-name>` → feature flow
+ * - Default: `/forge spec` → default flow
+ */
+export function routeSpecEntry(
+  argv: string[],
+  featureDir: string,
+  outputDir: string,
+  existingBundle?: SpecBundle,
+): SpecRouteResult {
+  const parsed = parseSpecArgs(argv);
+
+  if (parsed.mode === "import" && parsed.path) {
+    const result = runImportMode(parsed.path, outputDir);
+    return { mode: "import", path: parsed.path, result };
+  }
+
+  if (parsed.mode === "feature" && parsed.feature) {
+    // Check if this is actually a bugfix
+    try {
+      const files = readdirSync(featureDir);
+      const kind = detectSpecKind(files);
+      if (kind === "bugfix" && existingBundle) {
+        const result = runBugfixOrchestration(existingBundle);
+        return { mode: "bugfix", bundle: existingBundle, result };
+      }
+    } catch {
+      // Directory doesn't exist yet — feature mode
+    }
+    return { mode: "feature", feature: parsed.feature };
+  }
+
+  return { mode: "default" };
 }

@@ -50,7 +50,7 @@ const BROWNFIELD_KEYWORDS_EN = [
 // detectBrownfieldSignals
 // ---------------------------------------------------------------------------
 
-export function detectBrownfieldSignals(input: BrownfieldInput): BrownfieldResult {
+export function detectBrownfieldSignals(input: BrownfieldInput, eventsPath?: string): BrownfieldResult {
   const signals: string[] = [];
 
   if (input.hasGitHistory) signals.push("git-history");
@@ -72,10 +72,18 @@ export function detectBrownfieldSignals(input: BrownfieldInput): BrownfieldResul
     }
   }
 
-  return {
+  const result: BrownfieldResult = {
     brownfield: signals.length > 0,
     signals,
   };
+
+  if (result.brownfield && eventsPath) {
+    import("./event-writer.js").then(({ writeEvent }) => {
+      writeEvent(eventsPath, "brownfield_mode_inferred", { signals: result.signals });
+    });
+  }
+
+  return result;
 }
 
 // ---------------------------------------------------------------------------

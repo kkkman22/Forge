@@ -78,7 +78,7 @@ export interface SpecLeakResult {
   findings: { line?: number; pattern: string }[];
 }
 
-export function detectSpecLeak(
+export function detectSpecLeakFromBundle(
   bundle: SpecBundle,
   scope: "strict" | "lenient",
 ): SpecLeakResult {
@@ -146,9 +146,10 @@ const REWRITE_STRATEGIES: Array<(text: string) => string | null> = [
 
 export function enforceEarsSyntax(
   text: string,
-  options?: { maxRetries?: number },
+  options?: { maxRetries?: number; eventsPath?: string },
 ): EarsEnforcementResult {
   const maxRetries = options?.maxRetries ?? 3;
+  const eventsPath = options?.eventsPath;
 
   if (EARS_FULL.test(text) || EARS_LEGACY.test(text)) {
     return { output: text, retries: 0 };
@@ -166,6 +167,11 @@ export function enforceEarsSyntax(
     }
   }
 
-  // Exhausted — return original + failure marker
+  // Exhausted — emit event and return original + failure marker
+  if (eventsPath) {
+    import("./event-writer.js").then(({ writeEvent }) => {
+      writeEvent(eventsPath, "ears_enforcement_exhausted", { input: text.slice(0, 200) });
+    });
+  }
   return { output: text, retries: maxRetries, exhausted: true };
 }

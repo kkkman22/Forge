@@ -14,7 +14,7 @@ import { analyzeRequirements } from "../../src/spec-analyze.js";
 import { refineDownstream } from "../../src/spec-refine.js";
 import { detectBrownfieldSignals, runBrownfieldSelfChecks } from "../../src/spec-brownfield.js";
 import { parseSpecArgs, parseExternalSpec, scoreImportedContent } from "../../src/spec-import.js";
-import { validateContractGate, detectSpecLeak, enforceEarsSyntax } from "../../src/spec-validation.js";
+import { validateContractGate, detectSpecLeakFromBundle as detectSpecLeak, enforceEarsSyntax } from "../../src/spec-validation.js";
 import { computeDependencyClosure } from "../../src/spec-wave.js";
 import { upgradeTasksSeed, detectLegacyPlanFallback } from "../../src/spec-plan-upgrade.js";
 import { buildReviewSpecContext } from "../../src/spec-review-router.js";
