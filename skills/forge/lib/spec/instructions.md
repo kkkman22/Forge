@@ -14,7 +14,7 @@ allowed_tools:
 
 > **触发方式**：全量路径第二步 / 用户输入 `/forge spec` / `/forge spec <file-path>` 导入外部规格
 > **职责**：将需求固化为可审阅、可测试、可锁定的规格文档，锁定后成为 build 和 review 的唯一真理源
-> **输出路径**：`.forge/specs/<feature>/spec.md`
+> **输出路径**：`.forge/specs/<feature>/requirements.md` + `design.md` + `tasks.md`（三文件布局）或 `.forge/specs/<feature>/spec.md`（legacy 兼容）
 
 ---
 
@@ -23,6 +23,8 @@ allowed_tools:
 `/forge spec` 通过三步流程（Propose → Review → Lock）将模糊的需求转化为结构化的规格文档。规格文档是 Forge 工作流的核心合同——锁定后，build 按它实现，review 按它验收，任何偏离都会被拦截。
 
 **核心原则**：规格描述行为，不描述实现。写"当用户提交表单时，系统返回成功提示"，不写"调用 FormService.submit() 方法"。
+
+**三文件布局（Kiro-style）**：默认输出 `requirements.md` + `design.md` + `tasks.md` 三个文件到 `.forge/specs/<feature>/` 目录。使用 `loadSpecBundle()` 读取，`resolveSpecVariant()` 自动选择工作流变体（requirements-first / design-first / quick-plan）。聊天层可通过自然语言覆盖（如"切换到 design-first"），不引入任何新 CLI flag。
 
 **Not For**：单行修复 / typo 纠正 / 需求已明确且自包含的变更 / 已有外部 PM 交付完整 spec（用导入模式）
 
@@ -41,6 +43,18 @@ allowed_tools:
 ---
 
 ## 2. Three-step Flow
+
+### Step 0: Pre-check
+
+1. 调用 `detectSpecTriggers(featureDir)` 检查迁移与 Refine 需求
+   - Legacy `spec.md` 存在但无三文件 → 自动触发 T-08 迁移
+   - Requirements mtime > Design mtime → 自动触发 T-07 Refine
+2. 调用 `resolveSpecVariant(input)` 自动选择变体
+   - 行为关键词为主 → requirements-first
+   - 架构关键词为主 → design-first
+   - Light tier → quick-plan
+3. 聊天层覆盖：用户输入"切换到 design-first"等自然语言时，`parseVariantOverride(text)` 捕获并覆盖变体选择
+4. Bugfix 模式：`/forge fix` 入口直接走 bugfix 流程，跳过变体判定和 brownfield 检测
 
 ### Step 1: Propose (Generate Draft)
 
@@ -82,6 +96,8 @@ allowed_tools:
 
 自检未通过 → 自动修正并重新自检，直到全部通过。全部通过后提示用户确认锁定。
 
+**Analyze Pre-check**：Requirements lock 后、Design 生成前，调用 `analyzeRequirements(req)` 执行 ANL-01~05 五项规则（EARS 合规、一致性、歧义、冲突、完整性）。P0 阻断 Design 生成，P1 建议修正。
+
 After Step 2 Review completes, call `checkSpecHealth(input)` and write result to spec frontmatter `health: { score, verdict, spec_hash, generated_at }`. This caches the health assessment for downstream skills (plan/build/debug/review).
 
 ### Step 2a: Inline Grill Trigger (conditional)
@@ -113,9 +129,11 @@ After Step 2 Review completes:
 
 ## 3. Spec Document Format
 
-YAML frontmatter（feature/status/date/import_source）+ Body 八章节（目的/需求/场景汇总/Current State/Proposed Change/不做什么/Reversibility/反漂移声明/Delta）。
+**三文件布局**（默认）：`requirements.md`（EARS 验收标准 + Glossary + Delta）+ `design.md`（架构 + 数据模型 + 错误处理）+ `tasks.md`（任务列表 + Wave 块 + DoD）。
 
-→ 详见 references/spec-format.md（完整模板）
+**Legacy 兼容**：单文件 `spec.md`（八章节），通过 `layout: "legacy-single"` 在 SpecBundle 中标记。迁移由 T-08 自动执行。
+
+→ 详见 references/spec-format.md（完整三文件蓝本 + 兼容切片表）
 
 ---
 
@@ -141,12 +159,13 @@ Testability / Behavior-not-Implementation / Brownfield Delta / Two-part Structur
 
 1. **前置检查**：`.forge/` 目录是否存在。不存在 → 提示先运行 `/forge init`
 2. **读取上下文**：`.forge/decisions/`（如有）→ `.forge/config.md` → `.forge/specs/`
-3. **Propose**：基于上下文生成规格草案（详见 §2 Step 1）
-4. **Review**：执行自检（详见 §2 Step 2），未通过则自动修正并重新自检
-5. **用户确认或修改**：确认 → 进入 Lock；修改意见 → 更新草案回到 Review；拒绝 → 保持 draft
-6. **Lock**：锁定规格（详见 §2 Step 3）
-7. **Glossary-miss 扫描**：读取 `.forge/glossary.md` 的术语表，对生成/导入的 spec 文本调用 `detectGlossaryMiss`。如发现未定义术语，输出 `[glossary-miss] 未定义术语：[...]` 提示用户在 learn 阶段回写。不阻断 lock 流程。Step 7 调用 `runGlossaryCheck({ phase: 'spec' })` 进行术语漂移检测。Autonomous 模式下，冲突写入 `getAdvisoryPath('spec', topic)` 指定路径，并将路径添加到 spec frontmatter `pending_glossary_advisories: [...]` 字段。
-8. **自动推进（铁律）**：Lock 成功后，输出 `✅ spec 完成 → 自动进入 plan`，然后**立即调用** `Skill(skill="forge", args="plan")`。不输出"是否继续？"等确认文本。静默 idle（无输出、等待用户输入）与显式询问同罪。（→ 详见 shared/next-step-protocol.md）
+3. **Pre-check**：`detectSpecTriggers()` 检查迁移/Refine → `resolveSpecVariant()` 选择变体
+4. **Propose**：基于上下文和变体生成三文件草案（详见 §2 Step 1）
+5. **Review**：执行自检 + `analyzeRequirements()` 预检（详见 §2 Step 2），未通过则自动修正并重新自检
+6. **用户确认或修改**：确认 → 进入 Lock；修改意见 → 更新草案回到 Review；拒绝 → 保持 draft
+7. **Lock**：锁定规格（详见 §2 Step 3）。三文件各自独立 lock，写入 `requirements.md` + `design.md` + `tasks.md`
+8. **Glossary-miss 扫描**：读取 `.forge/glossary.md` 的术语表，对生成/导入的 spec 文本调用 `detectGlossaryMiss`。如发现未定义术语，输出 `[glossary-miss] 未定义术语：[...]` 提示用户在 learn 阶段回写。不阻断 lock 流程。Step 7 调用 `runGlossaryCheck({ phase: 'spec' })` 进行术语漂移检测。Autonomous 模式下，冲突写入 `getAdvisoryPath('spec', topic)` 指定路径，并将路径添加到 spec frontmatter `pending_glossary_advisories: [...]` 字段。
+9. **自动推进（铁律）**：Lock 成功后，输出 `✅ spec 完成 → 自动进入 plan`，然后**立即调用** `Skill(skill="forge", args="plan")`。不输出"是否继续？"等确认文本。静默 idle（无输出、等待用户输入）与显式询问同罪。（→ 详见 shared/next-step-protocol.md）
 
 ---
 
