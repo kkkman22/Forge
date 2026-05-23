@@ -133,6 +133,71 @@ retention：>100 条触发自动归档到 `.forge/archive/known-failures-<date>.
   source_review: ".kiro/specs/local-ci-parity/"
   detection_signal: "GitHub CI 失败列表里包含本地从未运行的命令名（dist-sync、check-doc-structure、validate-skill-* 等）"
   verification_command: "grep '^ci_check_command:' .forge/config.md"
+
+- pattern_id: skill-function-defined-without-production-caller
+  severity: P0
+  first_seen: "2026-05-23"
+  last_seen: "2026-05-23"
+  occurrence_count: 1
+  first_seen_commit: bb72a5d
+  last_seen_commit: 2f3adb3
+  signature: "新增大量纯函数（detectSpecKind / runImportMode / runBugfixOrchestration / parseWaves / scheduleWave / triggerThreeStrikeReroute / migrateLegacySpec 等），单元测试全绿、SKILL.md 散文里提到了函数名，但 src/ 中没有任何 production caller import 这些函数。skill-function-registry 注册项与 SKILL.md 引用都只是契约表，不等于运行时调用。结果：spec 描述的 wave 并行执行 / 三振写诊断模板 / 自动迁移在生产路径上从不触发；3 轮 review 后才暴露。"
+  fix_required: "审核 P0/P1 级 wire 工作时，每个 wire commit 必须以 'production caller grep 命中' 为验收证据：grep '函数名' src/build.ts | wc -l；同时 skill instructions.md 必须显式调用该函数（不只是 narrative 提及）。三层判据缺一不可：(A) 函数存在 (B) 实现非 stub (C) production caller 引用（skill instructions.md 显式 + src/ 实际 import）。仅 contract test 注册项不足以视为接入。"
+  source_review: ".forge/reviews/forge-kiro-style-spec-workflow-round2.md, forge-kiro-style-spec-workflow-round3.md"
+  detection_signal: "grep '<新函数名>' src/ 在新函数所在文件以外命中数为 0；commit message 自陈 'wire X' 但 git diff 显示 src/build.ts / src/plan.ts / src/spec.ts 一字未改"
+  verification_command: "for f in detectSpecKind runImportMode parseWaves scheduleWave triggerThreeStrikeReroute migrateLegacySpec; do echo \"$f: $(grep -RIn \"$f\" src/ | grep -vE 'spec-kind|spec-import|spec-wave|spec-pbt|spec-migration|spec-bugfix' | wc -l)\"; done"
+
+- pattern_id: ears-rewrite-identity-wrap-defeats-anl-01
+  severity: P0
+  first_seen: "2026-05-23"
+  last_seen: "2026-05-23"
+  occurrence_count: 1
+  first_seen_commit: d48ed18
+  last_seen_commit: 2f3adb3
+  signature: "enforceEarsSyntax 多策略重写函数的最后一个兜底策略写成 'return 当 ${text} 时 系统应当 ${text}'（identity wrap），任意输入第一次必匹配 EARS_FULL，后续 retries 是死代码。renderer 无论传什么乱码都得到形式合规的输出，ANL-01 检查在生产路径上永远不会拒绝。Round 2 audit 误以为'多策略'已修复，实际只是把恒等映射伪装成 strategy[3]。"
+  fix_required: "兜底策略不允许复用同一段文本作为 condition 与 action。可选 split（comma / 顿号）+ 兜底 exhausted=true 不写盘。验证：fast-check 测试需断言 'retries=策略次数 → 所有策略都不命中 → exhausted=true && output===input'；不能有 pure identity wrap 路径。"
+  source_review: ".forge/reviews/forge-kiro-style-spec-workflow-round2.md (P0-4)"
+  detection_signal: "grep 兜底策略形如 '当 ${text} 时 系统应当 ${text}'（或类似 identity 模板）"
+  verification_command: "grep -E '当\\\\s+\\\\$\\\\{[a-z]+\\\\}\\\\s+时\\\\s+系统应当\\\\s+\\\\$\\\\{[a-z]+\\\\}' src/spec-validation.ts || echo 'no identity wrap (PASS)'"
+
+- pattern_id: type-broken-fixture-passes-tests-fails-typecheck
+  severity: P0
+  first_seen: "2026-05-23"
+  last_seen: "2026-05-23"
+  occurrence_count: 1
+  first_seen_commit: 279f57f3
+  last_seen_commit: 2f3adb3
+  signature: "wire commit 让 src/build.ts:scheduleWave 读 wave.taskIds，但 Wave 类型字段是 wave.tasks。fixture 测试用 { id, taskIds } 与函数实现一致（互相 reinforce），单元测试全绿，但 npx tsc --noEmit 报 4 个 TS2353 / TS2551。production 数据流 parseWaves → scheduleWave 直接断（parseWaves 输出永远没 taskIds 字段，运行时 NPE）。开发者看到 vitest 全绿就 commit，没跑 typecheck。"
+  fix_required: "task GREEN 验证必须 'tsc --noEmit && vitest'，不允许只跑 vitest。SKILL build/instructions.md §3.5 Final Validation 已写要求跑 npm run check（含 typecheck），需要在 forge-build 的 task post-verify 强制执行而非可选。"
+  source_review: ".forge/reviews/forge-kiro-style-spec-workflow-round3.md (§4.1)"
+  detection_signal: "vitest 全绿 + tsc --noEmit 报 TS2353/TS2551 类型不一致错误；fixture 字段名与生产类型字段名不匹配"
+  verification_command: "npx tsc --noEmit 2>&1 | grep -E 'TS2353|TS2551' | wc -l"
+
+- pattern_id: double-implementation-only-rename
+  severity: P1
+  first_seen: "2026-05-23"
+  last_seen: "2026-05-23"
+  occurrence_count: 1
+  first_seen_commit: 5401e1c0
+  last_seen_commit: 2f3adb3
+  signature: "spec-validation.ts 与 spec-leak-detector.ts 都导出 detectSpecLeak。Round 2 review 报双实现冲突，开发者把 spec-validation.ts 的 detectSpecLeak 重命名为 detectSpecLeakFromBundle 就声明已修复，但两边的扫描逻辑（5 条硬编码正则 vs banned-patterns.yaml 注册表）依旧并存且不同步，spec-health.ts 仍调用 leak-detector 老路径。重命名 ≠ 合并。"
+  fix_required: "合并双实现成 layered design：canonical（pack-aware）+ adapter（bundle-aware）。adapter 的词典必须从 canonical 派生（lenient = strict − structural-only），并在文件头注释清楚 layering 关系。删除或显式标记任何 'rename only' commit 留下的死代码。"
+  source_review: ".forge/reviews/forge-kiro-style-spec-workflow-round3.md (P0-11)"
+  detection_signal: "两个文件都 export 同名函数（grep -RIn 'export.*<函数名>' src/）；下游 caller 分别走不同实现"
+  verification_command: "grep -RIn 'export.*detectSpecLeak\\\\b' src/ | wc -l  # 期望 1"
+
+- pattern_id: rollback-uses-derived-path-not-recorded-path
+  severity: P2
+  first_seen: "2026-05-23"
+  last_seen: "2026-05-23"
+  occurrence_count: 1
+  first_seen_commit: 031fd063
+  last_seen_commit: 2f3adb3
+  signature: "spec-migration.ts 回滚路径用 featureName（目录名）重构 plans .legacy 路径，但前向迁移用 frontmatter feature 字段定位 plans/<feature>.md。两者不一致时（feature: 'authentication' / 目录名 'auth'），回滚找错文件，原 plans 文件留在 .legacy 状态丢失。"
+  fix_required: "前向操作的副作用路径必须在执行时 capture（写入闭包变量或返回值），回滚时直接使用 captured 值，不要在 catch 块里基于 derived 信息重新计算路径。模式：let renamedPath: string | null = null; renamedPath = doRename(...); 在 catch 中直接 renameSync(renamedPath, ...)。"
+  source_review: ".forge/reviews/forge-kiro-style-spec-workflow-round4.md (P2-B)"
+  detection_signal: "前向操作用 frontmatter / 解析得到的标识，回滚操作用目录名 / 命令行参数等不同来源；两者可能不一致"
+  verification_command: "grep -A3 'catch (err)' src/spec-migration.ts | grep -E 'featureName|featureDir.split' || echo 'no derived rollback (PASS)'"
 ```
 
 ---

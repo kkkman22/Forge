@@ -41,7 +41,6 @@ export interface MigrationResult {
 // ---------------------------------------------------------------------------
 
 export function migrateLegacySpec(featureDir: string, eventsPath?: string): MigrationResult {
-  const featureName = featureDir.split("/").pop() ?? "unknown";
   const specPath = join(featureDir, "spec.md");
   const reqPath = join(featureDir, "requirements.md");
 
@@ -57,6 +56,9 @@ export function migrateLegacySpec(featureDir: string, eventsPath?: string): Migr
 
   // Track files written for rollback
   const writtenFiles: string[] = [];
+  // Track the actual legacy plans path returned by migratePlansFile so
+  // rollback can rename it back regardless of feature/dirname mismatch.
+  let plansLegacyRenamed: string | null = null;
 
   try {
     const specText = readFileSync(specPath, "utf-8");
@@ -203,8 +205,10 @@ export function migrateLegacySpec(featureDir: string, eventsPath?: string): Migr
     // Rename original
     renameSync(specPath, join(featureDir, "spec.legacy.md"));
 
-    // Migrate .forge/plans/<feature>.md → .forge/specs/<feature>/tasks.md
-    migratePlansFile(featureDir, feature);
+    // Migrate .forge/plans/<feature>.md → .forge/specs/<feature>/tasks.md.
+    // Capture the actual renamed path so rollback can restore it accurately
+    // even when frontmatter `feature` differs from the directory name.
+    plansLegacyRenamed = migratePlansFile(featureDir, feature);
 
     // P0-only Analyze fallback: if migrated requirements have P0 issues,
     // roll back to legacy state so the user can retry without losing data.
@@ -246,12 +250,12 @@ export function migrateLegacySpec(featureDir: string, eventsPath?: string): Migr
         /* best effort */
       }
     }
-    // Rollback plans file if it was renamed to .legacy
-    const specRoot = join(featureDir, "..");
-    const plansLegacy = join(specRoot, "..", "plans", `${featureName}.md.legacy`);
-    if (existsSync(plansLegacy)) {
+    // Rollback plans file using the actual renamed path captured during
+    // forward migration. This is correct even when frontmatter `feature`
+    // does not match the directory name (P2-B audit fix).
+    if (plansLegacyRenamed && existsSync(plansLegacyRenamed)) {
       try {
-        renameSync(plansLegacy, plansLegacy.replace(/\.legacy$/, ""));
+        renameSync(plansLegacyRenamed, plansLegacyRenamed.replace(/\.legacy$/, ""));
       } catch {
         /* best effort */
       }
@@ -263,12 +267,15 @@ export function migrateLegacySpec(featureDir: string, eventsPath?: string): Migr
 /**
  * Migrate legacy .forge/plans/<feature>.md to the specs directory.
  * Parses plan task entries and merges them into the generated tasks.md.
+ *
+ * @returns The path of the renamed `.legacy` plans file (so the caller can
+ *   undo the rename during rollback), or `null` when no plans file existed.
  */
-function migratePlansFile(featureDir: string, feature: string): void {
+function migratePlansFile(featureDir: string, feature: string): string | null {
   // featureDir is .forge/specs/<feature>/, plans are at .forge/plans/<feature>.md
   const specRoot = join(featureDir, "..");
   const plansPath = join(specRoot, "..", "plans", `${feature}.md`);
-  if (!existsSync(plansPath)) return;
+  if (!existsSync(plansPath)) return null;
 
   const planText = readFileSync(plansPath, "utf-8");
 
@@ -307,7 +314,9 @@ function migratePlansFile(featureDir: string, feature: string): void {
   }
 
   // Rename plans file as legacy
-  renameSync(plansPath, `${plansPath}.legacy`);
+  const legacyPlansPath = `${plansPath}.legacy`;
+  renameSync(plansPath, legacyPlansPath);
+  return legacyPlansPath;
 }
 
 // ---------------------------------------------------------------------------
