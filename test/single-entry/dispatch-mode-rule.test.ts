@@ -37,6 +37,7 @@ const EXPECTED_MODES: Record<string, string> = {
   "fix-conflicts": "inline",
   "control-cli": "inline",
   "control-ui": "inline",
+  "review-comment-bitbucket": "inline",
 };
 
 function parseR35Table(specContent: string): Map<string, string> {
@@ -93,7 +94,7 @@ describe("R3.5: dispatch_mode matches spec table", () => {
 
   it("lib frontmatter dispatch_mode matches EXPECTED_MODES", async () => {
     const libs = await glob("skills/forge/lib/*/instructions.md", { cwd: ROOT });
-    expect(libs).toHaveLength(30);
+    expect(libs).toHaveLength(31);
 
     const violations: string[] = [];
 

@@ -4,7 +4,7 @@ export default defineConfig({
   test: {
     globals: true,
     environment: "node",
-    include: ["test/**/*.test.ts", "packs/**/*.test.ts"],
+    include: ["test/**/*.test.ts", "packs/**/*.test.ts", "skills/**/*.test.ts"],
     testTimeout: 5000,
     pool: "forks",
     poolOptions: {
