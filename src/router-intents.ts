@@ -61,7 +61,7 @@ function normalizeWord(word: string): string {
  * key-value with string arrays and objects.
  */
 export function parseIntentDictionary(yamlContent: string): IntentDefinition[] {
-  if (!yamlContent || !yamlContent.trim()) {
+  if (!yamlContent?.trim()) {
     throw new Error("Intent dictionary is empty");
   }
 
@@ -253,8 +253,7 @@ function findWholeWordMatch(text: string, word: string): number {
   const lastChar = word[word.length - 1] ?? "";
 
   const boundaryBeforeOk = idx === 0 || isCJK(firstChar) || !isWordChar(before);
-  const boundaryAfterOk =
-    idx + word.length >= text.length || isCJK(lastChar) || !isWordChar(after);
+  const boundaryAfterOk = idx + word.length >= text.length || isCJK(lastChar) || !isWordChar(after);
 
   if (boundaryBeforeOk && boundaryAfterOk) return idx;
   return -1;
