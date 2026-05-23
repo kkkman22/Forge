@@ -17,7 +17,7 @@ export function formatFinding(finding: Finding, runId: string, prefix: string): 
   comment_text += finding.message + "\n";
 
   // Suggestion block (if present)
-  if (finding.suggestion && finding.suggestion.trim() !== "") {
+  if (finding.suggestion) {
     // Check if message contains triple backticks
     const hasTripleBackticks = finding.message.includes("```");
     const backticks = hasTripleBackticks ? "````" : "```";
