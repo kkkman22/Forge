@@ -24,6 +24,12 @@ import { extractStringField } from "./frontmatter.js";
 import type { Glossary, GlossaryTerm } from "./glossary.js";
 import type { TaskGraph } from "./task-graph.js";
 
+import { upgradeTasksSeed } from "./spec-plan-upgrade.js";
+import type { TasksSeedDocument } from "./spec-bundle.js";
+
+export { upgradeTasksSeed } from "./spec-plan-upgrade.js";
+export type { TasksSeedDocument } from "./spec-bundle.js";
+
 // ---------------------------------------------------------------------------
 // Types — Full format (Atomic Task)
 // ---------------------------------------------------------------------------
@@ -859,4 +865,20 @@ export function checkExpectedOutput(planContent: string, isLegacy: boolean): Exp
   }
 
   return { errors, warnings };
+}
+
+// ---------------------------------------------------------------------------
+// Three-file tasks.md lock flow (Requirement 4 — T-09.4)
+// ---------------------------------------------------------------------------
+
+/**
+ * Lock a tasks.md document by upgrading it with auto-generated waves
+ * and transitioning status from draft to locked.
+ */
+export function lockPlan(doc: TasksSeedDocument): TasksSeedDocument {
+  const upgraded = upgradeTasksSeed(doc);
+  return {
+    ...upgraded,
+    frontmatter: { ...upgraded.frontmatter, status: "locked" },
+  };
 }
