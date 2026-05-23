@@ -132,11 +132,15 @@ function extractEarsClauses(text: string): EarsClause[] {
     // Match "- 当 X 时 系统应当 Y" or "- 当 X 则 Y"
     const fullMatch = line.match(/^[-*]\s*当\s+(.+?)\s+时\s+系统(?:应当)?\s+(.+)$/);
     if (fullMatch) {
+      const raw = line.replace(/^[-*]\s*/, "");
+      const { verifyBy, evidence, cleanedShall } = extractAnnotations(fullMatch[2].trim());
       clauses.push({
         line: i + 1,
         when: fullMatch[1].trim(),
-        shall: fullMatch[2].trim(),
-        raw: line.replace(/^[-*]\s*/, ""),
+        shall: cleanedShall,
+        raw: stripAnnotations(raw),
+        ...(verifyBy ? { verifyBy: verifyBy as EarsClause["verifyBy"] } : {}),
+        ...(evidence ? { evidence } : {}),
       });
       continue;
     }
@@ -144,16 +148,43 @@ function extractEarsClauses(text: string): EarsClause[] {
     // Legacy: "当 X 则 Y"
     const legacyMatch = line.match(/^[-*]\s*当\s+(.+?)\s*则\s+(.+)$/);
     if (legacyMatch) {
+      const raw = line.replace(/^[-*]\s*/, "");
+      const { verifyBy, evidence, cleanedShall } = extractAnnotations(legacyMatch[2].trim());
       clauses.push({
         line: i + 1,
         when: legacyMatch[1].trim(),
-        shall: legacyMatch[2].trim(),
-        raw: line.replace(/^[-*]\s*/, ""),
+        shall: cleanedShall,
+        raw: stripAnnotations(raw),
+        ...(verifyBy ? { verifyBy: verifyBy as EarsClause["verifyBy"] } : {}),
+        ...(evidence ? { evidence } : {}),
       });
     }
   }
 
   return clauses;
+}
+
+const VERIFY_BY_RE = /\[Verify-By:\s*(\w+)\]/i;
+const EVIDENCE_RE = /\[Evidence:\s*([^\]]+)\]/i;
+
+function extractAnnotations(shall: string): {
+  verifyBy: string | undefined;
+  evidence: string | undefined;
+  cleanedShall: string;
+} {
+  const vbMatch = shall.match(VERIFY_BY_RE);
+  const evMatch = shall.match(EVIDENCE_RE);
+  let cleaned = shall;
+  cleaned = cleaned.replace(VERIFY_BY_RE, "").replace(EVIDENCE_RE, "").trim();
+  return {
+    verifyBy: vbMatch?.[1]?.toLowerCase(),
+    evidence: evMatch?.[1]?.trim(),
+    cleanedShall: cleaned,
+  };
+}
+
+function stripAnnotations(raw: string): string {
+  return raw.replace(VERIFY_BY_RE, "").replace(EVIDENCE_RE, "").replace(/\s+/g, " ").trim();
 }
 
 // ---------------------------------------------------------------------------
