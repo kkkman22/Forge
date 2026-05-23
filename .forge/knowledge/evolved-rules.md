@@ -1,6 +1,6 @@
 ---
-updated: "2026-05-17"
-rule_count: 9
+updated: "2026-05-23"
+rule_count: 12
 max_rules: 15
 ---
 
@@ -114,6 +114,36 @@ This file keeps only rules that still need top-of-session reminders.
 **Confidence**: 0.85
 **Last_triggered**: 2026-05-17
 **Infra_Ref**: `skills/forge/lib/review/instructions.md` §7 + `skills/forge/lib/test/instructions.md` §3.1
+
+### R10: Wire Commits Must Show Production Caller Diff
+
+**Content**: 任何声称"wire X into production"的 commit，diff 中**必须**包含对 entry 文件（`src/build.ts` / `src/plan.ts` / `src/spec.ts` / `src/review.ts` 等编排器或 SKILL 入口对应文件）的修改。仅修改 `*-registry.ts`、`skills/**/instructions.md` 散文叙述、新增独立模块自身——这三类都不构成 production 接入证据。verify 命令：`git show --name-only <commit> | grep -E 'src/(build|plan|spec|review)\\.ts$'` 必须有命中。如果新模块的入口由 SKILL.md 触发（AI agent 通过 Bash/Read 调用），SKILL instructions.md 必须显式写出函数签名调用（含参数），不能仅"narrative 提及"。Round 2-3 review 重复 fail 的根因就是这一条没守住。
+**Prevents**: 单元函数齐了但生产路径没接，spec 描述的功能（wave 并行 / 三振写诊断 / 自动迁移）从不触发；3 轮 review 才暴露
+**Source**: `.forge/reviews/forge-kiro-style-spec-workflow-round2.md` + `round3.md` — 7 个 wire commits 全部 0 production caller
+**Added**: 2026-05-23
+**Confidence**: 0.9
+**Last_triggered**: 2026-05-23
+**Infra_Ref**: `.claude/agents/quality-check.md` + `skills/forge/lib/review/instructions.md` Check Item: "wire commits must show entry-file diff"
+
+### R11: GREEN 必须含 typecheck，不止 vitest
+
+**Content**: TDD GREEN 阶段的"测试通过"判定必须包含 `npx tsc --noEmit` 或等价 typecheck，不能只看 vitest 输出。原因：fixture 字段名错（如 `wave.taskIds` vs 类型 `wave.tasks`）时 vitest 仍可全绿（运行时弱类型 + fixture 与函数实现互相 reinforce），但 typecheck 立即报 TS2353/TS2551，且生产数据流会立即断（运行时 NPE）。每个 task 的 GREEN verify 模板：`npx tsc --noEmit && npx vitest run <test files>`，缺一不可。SKILL build/instructions.md §3.5 已要求 npm run check（含 tsc），需要在 forge-build task post-verify 强制执行而非可选跳过。
+**Prevents**: fixture 与生产类型字段名不一致，单元测试欺骗性全绿，typecheck 立即 broken（2026-05-23 wire commit `279f57f3` 引入 4 个 TS 错误）
+**Source**: `.forge/reviews/forge-kiro-style-spec-workflow-round3.md` §4.1
+**Added**: 2026-05-23
+**Confidence**: 0.9
+**Last_triggered**: 2026-05-23
+**Infra_Ref**: `skills/forge/lib/build/instructions.md` §3.5 Final Validation
+
+### R12: 重命名 ≠ 合并，双实现修复必须删一边
+
+**Content**: review 报"双实现冲突"时，**禁止**只把其中一个函数改名再 export 出去就声称已修。合并双实现的最低判据：删除其中一个实现，或合并成 layered design（canonical + adapter，adapter 词典从 canonical 派生）。验证：`grep -RIn 'export.*<原函数名>\\b' src/ \| wc -l` 必须 = 1；下游所有 caller 收敛到一个函数。如果保留两个 export，文件头注释必须明确 layering 关系（"canonical 是 X / adapter 是 Y / 词典派生关系是 Z"），并有死代码标记或显式删除计划。
+**Prevents**: 把 detectSpecLeak 重命名为 detectSpecLeakFromBundle 就声明双实现已合并，实际两边的扫描逻辑（5 条硬编码正则 vs banned-patterns.yaml 注册表）依旧并存且不同步（2026-05-23 commit `5401e1c0`）
+**Source**: `.forge/reviews/forge-kiro-style-spec-workflow-round3.md` (P0-11)
+**Added**: 2026-05-23
+**Confidence**: 0.85
+**Last_triggered**: 2026-05-23
+**Infra_Ref**: `.claude/agents/spec-check.md` Check Item: "rename ≠ merge for double-implementation"
 
 ---
 
