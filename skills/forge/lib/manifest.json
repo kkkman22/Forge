@@ -1,6 +1,6 @@
 {
   "version": 1,
-  "generated_at": "2026-05-23T10:26:20.254Z",
+  "generated_at": "2026-05-23T12:21:08.763Z",
   "subs": {
     "abort": {
       "instructions": {
@@ -41,7 +41,7 @@
     "build": {
       "instructions": {
         "path": "build/instructions.md",
-        "sha256": "2e9c6ea1d1858be26c0e3ced1378b695c3ab51fa0fd2e85070a0ac8df77efc13"
+        "sha256": "ddb83b72b25a40db6a24d2a8ed8a8df553ecd2c0fcb989d83b79babab158b6aa"
       },
       "references": [
         {
@@ -370,7 +370,7 @@
     "plan": {
       "instructions": {
         "path": "plan/instructions.md",
-        "sha256": "016bf41c2ea80df16a3c4f39fa488fc8c748d74d80828a657cf3e8be43fe665f"
+        "sha256": "4ae6eb545d402628731ec6a6121ceb7ff58edd1b3d521da6054c1d38e48a003c"
       },
       "references": [
         {
@@ -466,7 +466,7 @@
     "review": {
       "instructions": {
         "path": "review/instructions.md",
-        "sha256": "772e37f1e1f19f4f2c32cc7eb1d97a09a0afbe5314b5d351ee72d1b1239225f4"
+        "sha256": "25404be224f15cbb186b55f5110c700558010bcf4541d041c0ea73ae5e11b239"
       },
       "references": [
         {
@@ -496,6 +496,10 @@
         {
           "path": "review/references/diff-context-preparation.md",
           "sha256": "12ba06e2c5964450694f561e16602fd28ff54409a6deb96d5af71d60d6c328c2"
+        },
+        {
+          "path": "review/references/final-report-contract.md",
+          "sha256": "cb5939248670f3c1642f0fc2238e1c2904e43e4b40ba1d5d16c49d41bd687aa5"
         },
         {
           "path": "review/references/frontend-check-patterns.md",
@@ -573,7 +577,7 @@
     "spec": {
       "instructions": {
         "path": "spec/instructions.md",
-        "sha256": "8267ad4884779d3a9fef703cdfd8115ccaabb4ef8a7201e78ebe0be0b678db7f"
+        "sha256": "f3fed81489cf6f029030e811756c41eb4c39a08f3f9a9bd3a02b8799e6d25a71"
       },
       "references": [
         {

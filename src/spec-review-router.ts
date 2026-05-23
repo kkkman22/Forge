@@ -10,6 +10,7 @@
 
 import { isBugfixBundle } from "./spec-bundle.js";
 import type {
+  BugfixDocument,
   EarsClause,
   SpecBundle,
 } from "./spec-bundle.js";
@@ -86,7 +87,7 @@ function buildLegacyContext(bundle: SpecBundle): ReviewSpecContext {
 }
 
 function buildBugfixContext(bundle: SpecBundle): ReviewSpecContext {
-  const doc = bundle.primary;
+  const doc = bundle.primary as BugfixDocument;
   const taskIds = bundle.tasks?.tasks.map((t) => t.id) ?? [];
 
   const allClauses = [...doc.current, ...doc.expected, ...doc.unchanged];

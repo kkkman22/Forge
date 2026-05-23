@@ -385,6 +385,7 @@ import {
   buildFailureEvolutionMarker,
   type FailureContext,
 } from "./failure-sink.js";
+import { enforceFinalReportContract, validateFinalReportBlock } from "./review-final-block.js";
 import type { Methodology } from "./schemas/review-report.js";
 import { runSubagentsWithConcurrency } from "./subagent-runner.js";
 
@@ -490,11 +491,23 @@ export interface ReviewSubagentContext {
  */
 const DEFAULT_REVIEW_TURNS = 10;
 
+const FINAL_REPORT_CONTRACT = `Final-Report Contract (HARD):
+Your last assistant message MUST be a Markdown report block with this exact shape:
+  1. A heading like "## Layer N — <Title>" matching your role.
+  2. At least one Markdown table whose header includes a "Severity" column
+     (use "无 issue 发现" inside the table body if everything is clean — keep the header).
+  3. End the message with the literal sentinel line: <!-- review-final -->
+The orchestrator only treats your run as complete when it sees the sentinel.
+A message ending with a preamble like "Now let me check..." or "Let me verify..."
+is rejected as incomplete and your run will be retried, even if the SDK reports success.`;
+
 const DIFF_CONTEXT_PREAMBLE = `Diff context: .forge/reviews/.diff-context.md
 Turn Budget: Read diff-context first → produce FINDINGS → use remaining turns for deep-dives (max 3-5 reads).
 Hard constraint: Your final turn MUST be a text block containing FINDINGS, not a tool_use call.
 If turn budget is running low (≤2 remaining), stop reading files and output partial FINDINGS immediately.
-Insufficient evidence for a finding → omit it rather than spend turns investigating.`;
+Insufficient evidence for a finding → omit it rather than spend turns investigating.
+
+${FINAL_REPORT_CONTRACT}`;
 
 function buildPrompt(task: string): string {
   return `${DIFF_CONTEXT_PREAMBLE}\n${task}`;
@@ -741,13 +754,50 @@ export async function runReviewFallbackLadder(
 ): Promise<FallbackLadderResult> {
   const trace: FallbackLadderTrace[] = [];
 
+  // Wrap the executor so the final-report contract is enforced *before*
+  // the runner classifies success/failure. This catches the original
+  // incident: the SDK reports success with an output that is just a
+  // preamble like "Now let me check..." — without enforcement, the
+  // runner would mark that as success and the orchestrator would idle
+  // waiting for a non-existent follow-up.
+  const guardedExecutor = async (inv: SubagentInvocation): Promise<SubagentResult> => {
+    const raw = await input.executor(inv);
+    return enforceFinalReportContract(raw);
+  };
+
+  // Also re-validate the runner's `succeeded` array. This is defense-in-
+  // depth: in the real-world incident, the malformed result was already
+  // wearing a "success" sticker by the time it reached the runner.
+  // Splitting/reclassifying here makes the policy hold no matter where
+  // upstream classification happened.
+  const reclassifyResult = (res: {
+    succeeded: Array<{ agentType: string; result: string }>;
+    failed: Array<{ agentType: string; error: string }>;
+  }): {
+    succeeded: Array<{ agentType: string; result: string }>;
+    failed: Array<{ agentType: string; error: string }>;
+  } => {
+    const succeeded: Array<{ agentType: string; result: string }> = [];
+    const failed = [...res.failed];
+    for (const ok of res.succeeded) {
+      const v = validateFinalReportBlock(ok.result, ok.agentType);
+      if (v.valid) {
+        succeeded.push(ok);
+      } else {
+        failed.push({ agentType: ok.agentType, error: `incomplete-report:${v.reason}` });
+      }
+    }
+    return { succeeded, failed };
+  };
+
   // ─── L0: Default parallel path ───
   const l0Start = Date.now();
-  const l0 = await runSubagentsWithConcurrency(
+  const l0Raw = await runSubagentsWithConcurrency(
     input.invocations,
-    input.executor,
+    guardedExecutor,
     3, // Default concurrency from config would be used in real implementation
   );
+  const l0 = reclassifyResult(l0Raw);
   const l0AllFail = l0.succeeded.length === 0;
   trace.push({
     level: "L0",
@@ -772,7 +822,8 @@ export async function runReviewFallbackLadder(
   console.warn(`⚠ L0 subagent dispatch failed (${l0Sig}); retrying with concurrency=1...`);
 
   const l1Start = Date.now();
-  const l1 = await runSubagentsWithConcurrency(input.invocations, input.executor, 1);
+  const l1Raw = await runSubagentsWithConcurrency(input.invocations, guardedExecutor, 1);
+  const l1 = reclassifyResult(l1Raw);
   const l1AllFail = l1.succeeded.length === 0;
   trace.push({
     level: "L1",
@@ -846,6 +897,7 @@ function summarizeFailureSignature(failed: Array<{ agentType: string; error: str
       if (/No task found with ID/.test(f.error)) return "task-id-purge";
       if (/timeout/i.test(f.error)) return "timeout";
       if (/turn limit/i.test(f.error)) return "turn-limit";
+      if (/^incomplete-report:/.test(f.error)) return "incomplete-report";
       return "other";
     }),
   );
