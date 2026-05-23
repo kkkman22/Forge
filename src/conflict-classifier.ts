@@ -16,6 +16,10 @@ export type Zone = "frozen" | "guarded" | "open" | "source";
 const FROZEN_PATTERNS = [
   /^\.forge\/config\.md$/,
   /^\.forge\/specs\/[^/]+\/spec\.md$/,
+  /^\.forge\/specs\/[^/]+\/requirements\.md$/,
+  /^\.forge\/specs\/[^/]+\/design\.md$/,
+  /^\.forge\/specs\/[^/]+\/tasks\.md$/,
+  /^\.forge\/specs\/[^/]+\/bugfix\.md$/,
   /^\.forge\/plans\/[^/]+\.md$/,
 ];
 
