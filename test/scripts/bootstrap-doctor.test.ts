@@ -1,4 +1,4 @@
-import { describe, it, expect } from "vitest";
+import { describe, expect, it } from "vitest";
 import { shouldRunCmuxDoctor } from "../../scripts/bootstrap-check.mjs";
 
 describe("shouldRunCmuxDoctor", () => {
@@ -19,8 +19,7 @@ describe("shouldRunCmuxDoctor", () => {
   it("returns user_dismissed when both cmux.json and dismiss file exist", () => {
     const env = { cwd: "/project" };
     const fsExists = (path: string) =>
-      path === "/project/cmux.json" ||
-      path === "/project/.forge/.bootstrap-doctor-dismissed";
+      path === "/project/cmux.json" || path === "/project/.forge/.bootstrap-doctor-dismissed";
     const result = shouldRunCmuxDoctor(env, fsExists);
     expect(result).toEqual({ run: false, reason: "user_dismissed" });
   });

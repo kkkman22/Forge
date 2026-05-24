@@ -1,4 +1,4 @@
-import { describe, it, expect, vi, beforeEach } from "vitest";
+import { beforeEach, describe, expect, it, vi } from "vitest";
 
 vi.mock("node:child_process", () => ({
   execFile: vi.fn(),
@@ -13,7 +13,12 @@ import { runCli } from "../../scripts/cmux-mirror/lib/cli.mjs";
 
 const mockExecFile = vi.mocked(execFile);
 
-function mockExecSuccess(_bin: string, args: string[], _opts: unknown, cb: (err: null, stdout: string, stderr: string) => void) {
+function mockExecSuccess(
+  _bin: string,
+  args: string[],
+  _opts: unknown,
+  cb: (err: null, stdout: string, stderr: string) => void,
+) {
   cb(null, `mock-stdout args=${JSON.stringify(args)}`, "");
 }
 
@@ -103,7 +108,7 @@ describe("runCli --window injection", () => {
 
   it("allows opts.windowId to override env", async () => {
     process.env.CMUX_WINDOW_ID = "env-value";
-    await runCli(["status"], { windowId: "opt-value" });
+    await runCli(["status"], { windowId: "opt-value" } as never);
     expect(mockExecFile).toHaveBeenCalledWith(
       "cmux",
       ["--window", "opt-value", "status"],
@@ -113,7 +118,7 @@ describe("runCli --window injection", () => {
   });
 
   it("opts.windowId is validated the same as env", async () => {
-    await runCli(["status"], { windowId: "../evil" });
+    await runCli(["status"], { windowId: "../evil" } as never);
     expect(mockExecFile).toHaveBeenCalledWith(
       "cmux",
       ["status"],
