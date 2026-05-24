@@ -18,10 +18,11 @@ function diag(
 function parseArgs(raw: string): Record<string, string> {
   const args: Record<string, string> = {};
   if (!raw) return args;
-  let match: RegExpExecArray | null;
   const re = new RegExp(KV_RE.source, "g");
-  while ((match = re.exec(raw)) !== null) {
+  let match: RegExpExecArray | null = re.exec(raw);
+  while (match !== null) {
     args[match[1]] = match[2];
+    match = re.exec(raw);
   }
   return args;
 }
@@ -56,7 +57,13 @@ export function parseEmbeds(
         // Validate: reject absolute paths (traversal validated by consumer)
         if (embedPath.startsWith("/")) {
           diagnostics.push(
-            diag("error", `file embed path must be relative, got absolute: "${embedPath}"`, filePath, lineNum, "EMBED_PATH_ABSOLUTE"),
+            diag(
+              "error",
+              `file embed path must be relative, got absolute: "${embedPath}"`,
+              filePath,
+              lineNum,
+              "EMBED_PATH_ABSOLUTE",
+            ),
           );
           i++;
           continue;
@@ -82,7 +89,13 @@ export function parseEmbeds(
       if (insideBlock) {
         // Nesting detected
         diagnostics.push(
-          diag("error", `Nested ssot:begin detected for topic "${beginMatch[1]}" inside "${currentTopic}" — nesting is not allowed`, filePath, lineNum, "EMBED_NESTING"),
+          diag(
+            "error",
+            `Nested ssot:begin detected for topic "${beginMatch[1]}" inside "${currentTopic}" — nesting is not allowed`,
+            filePath,
+            lineNum,
+            "EMBED_NESTING",
+          ),
         );
         i++;
         continue;
@@ -104,7 +117,13 @@ export function parseEmbeds(
       if (!insideBlock) {
         // Orphaned end marker
         diagnostics.push(
-          diag("error", `Orphaned ssot:end for topic "${endMatch[1]}" without matching begin`, filePath, lineNum, "EMBED_ORPHAN_END"),
+          diag(
+            "error",
+            `Orphaned ssot:end for topic "${endMatch[1]}" without matching begin`,
+            filePath,
+            lineNum,
+            "EMBED_ORPHAN_END",
+          ),
         );
         i++;
         continue;
@@ -113,7 +132,13 @@ export function parseEmbeds(
       if (endTopic !== currentTopic) {
         // Topic mismatch
         diagnostics.push(
-          diag("error", `Topic mismatch: begin has "${currentTopic}" but end has "${endTopic}"`, filePath, lineNum, "EMBED_TOPIC_MISMATCH"),
+          diag(
+            "error",
+            `Topic mismatch: begin has "${currentTopic}" but end has "${endTopic}"`,
+            filePath,
+            lineNum,
+            "EMBED_TOPIC_MISMATCH",
+          ),
         );
         // Reset block state
         insideBlock = false;
@@ -145,7 +170,13 @@ export function parseEmbeds(
   // Unclosed block at end of file
   if (insideBlock) {
     diagnostics.push(
-      diag("error", `unclosed ssot:begin for topic "${currentTopic}" at line ${beginLine}`, filePath, beginLine, "EMBED_UNCLOSED"),
+      diag(
+        "error",
+        `unclosed ssot:begin for topic "${currentTopic}" at line ${beginLine}`,
+        filePath,
+        beginLine,
+        "EMBED_UNCLOSED",
+      ),
     );
   }
 

@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
-import { countDocPairs, checkQuota } from "../../src/docs-governance/quota.js";
-import type { Config, DiagnosticRecord } from "../../src/docs-governance/types.js";
+import { checkQuota, countDocPairs } from "../../src/docs-governance/quota.js";
+import type { Config } from "../../src/docs-governance/types.js";
 
 describe("countDocPairs", () => {
   it("counts md files as pairs (cn+en=1)", () => {
@@ -67,7 +67,9 @@ describe("checkQuota", () => {
 
   it("accepts --allow-grow with valid ADR path", () => {
     const files = ["docs/a.md", "docs/b.md"];
-    const diags = checkQuota(files, baseConfig(1), { allowGrow: ".forge/decisions/ADR-0042-quota-raise.md" });
+    const diags = checkQuota(files, baseConfig(1), {
+      allowGrow: ".forge/decisions/ADR-0042-quota-raise.md",
+    });
     // Should not have the NO_ADR error
     expect(diags.every((d) => d.code !== "QUOTA_ALLOW_GROW_NO_ADR")).toBe(true);
   });

@@ -83,7 +83,9 @@ describe("parseEmbeds", () => {
     ].join("\n");
     const { directives, diagnostics } = parseEmbeds(content, P("docs/broken.md"));
     expect(directives).toHaveLength(0);
-    expect(diagnostics.some((d) => d.severity === "error" && d.message.includes("unclosed"))).toBe(true);
+    expect(diagnostics.some((d) => d.severity === "error" && d.message.includes("unclosed"))).toBe(
+      true,
+    );
   });
 
   // ─── Topic mismatch ─────────────────────────────────
@@ -95,7 +97,9 @@ describe("parseEmbeds", () => {
     ].join("\n");
     const { directives, diagnostics } = parseEmbeds(content, P("docs/mismatch.md"));
     expect(directives).toHaveLength(0);
-    expect(diagnostics.some((d) => d.severity === "error" && d.message.includes("mismatch"))).toBe(true);
+    expect(diagnostics.some((d) => d.severity === "error" && d.message.includes("mismatch"))).toBe(
+      true,
+    );
   });
 
   // ─── file-embed directive ───────────────────────────
@@ -157,17 +161,15 @@ describe("parseEmbeds", () => {
       "outer end",
       "<!-- ssot:end topic=outer -->",
     ].join("\n");
-    const { directives, diagnostics } = parseEmbeds(content, P("docs/nested.md"));
-    expect(diagnostics.some((d) => d.severity === "error" && d.message.includes("nest"))).toBe(true);
+    const { diagnostics } = parseEmbeds(content, P("docs/nested.md"));
+    expect(diagnostics.some((d) => d.severity === "error" && d.message.includes("nest"))).toBe(
+      true,
+    );
   });
 
   // ─── Orphaned end marker ────────────────────────────
   it("detects orphaned end marker without matching begin", () => {
-    const content = [
-      "Some text",
-      "<!-- ssot:end topic=commands -->",
-      "More text",
-    ].join("\n");
+    const content = ["Some text", "<!-- ssot:end topic=commands -->", "More text"].join("\n");
     const { directives, diagnostics } = parseEmbeds(content, P("docs/orphan-end.md"));
     expect(directives).toHaveLength(0);
     expect(diagnostics.some((d) => d.severity === "error")).toBe(true);
@@ -176,7 +178,8 @@ describe("parseEmbeds", () => {
   // ─── PBT: bytes outside embed directives preserved exactly (P13) ─
   it("preserves bytes outside embed directives exactly", () => {
     const beforeEmbed = "# Title\n\nSome content with special chars: <>&\"'\n\n";
-    const embedBlock = "<!-- ssot:begin topic=test render=raw -->\nembedded\n<!-- ssot:end topic=test -->\n";
+    const embedBlock =
+      "<!-- ssot:begin topic=test render=raw -->\nembedded\n<!-- ssot:end topic=test -->\n";
     const afterEmbed = "\nTrailing content with unicode: éèê üöä\n";
     const content = beforeEmbed + embedBlock + afterEmbed;
 

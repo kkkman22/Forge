@@ -39,7 +39,13 @@ export function loadSsotRegistry(
 
   // Missing / empty → defaults + warning
   if (!raw || !Array.isArray(raw) || raw.length === 0) {
-    diagnostics.push(diag("warning", "No ssot_sources configured; using 4 default entries", "SSOT_DEFAULT_FALLBACK"));
+    diagnostics.push(
+      diag(
+        "warning",
+        "No ssot_sources configured; using 4 default entries",
+        "SSOT_DEFAULT_FALLBACK",
+      ),
+    );
     return { entries: [...DEFAULT_SSOT_ENTRIES], diagnostics };
   }
 
@@ -51,7 +57,11 @@ export function loadSsotRegistry(
     const reserved = hasReservedPrefix(item.topic);
     if (reserved) {
       diagnostics.push(
-        diag("error", `Topic "${item.topic}" uses reserved prefix "${reserved}"`, "SSOT_RESERVED_PREFIX"),
+        diag(
+          "error",
+          `Topic "${item.topic}" uses reserved prefix "${reserved}"`,
+          "SSOT_RESERVED_PREFIX",
+        ),
       );
       continue;
     }
@@ -59,7 +69,11 @@ export function loadSsotRegistry(
     // Duplicate check
     if (seenTopics.has(item.topic)) {
       diagnostics.push(
-        diag("error", `duplicate topic "${item.topic}" — first occurrence kept`, "SSOT_DUPLICATE_TOPIC"),
+        diag(
+          "error",
+          `duplicate topic "${item.topic}" — first occurrence kept`,
+          "SSOT_DUPLICATE_TOPIC",
+        ),
       );
       continue;
     }
@@ -68,7 +82,11 @@ export function loadSsotRegistry(
     // Renderer validation (only when registry provided)
     if (knownRenderers && !knownRenderers.has(item.renderer)) {
       diagnostics.push(
-        diag("error", `Renderer "${item.renderer}" for topic "${item.topic}" is not registered`, "SSOT_UNKNOWN_RENDERER"),
+        diag(
+          "error",
+          `Renderer "${item.renderer}" for topic "${item.topic}" is not registered`,
+          "SSOT_UNKNOWN_RENDERER",
+        ),
       );
       continue;
     }

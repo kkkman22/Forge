@@ -1,4 +1,4 @@
-import { readdirSync, lstatSync } from "node:fs";
+import { lstatSync, readdirSync } from "node:fs";
 import { join } from "node:path";
 import type { DiagnosticRecord, DocPath } from "./types.js";
 
@@ -66,7 +66,7 @@ export function checkRootWhitelist(
       severity: "critical",
       file: "LICENSE.md" as DocPath,
       message:
-        'Both LICENSE and LICENSE.md exist in root. Only one is allowed — remove one to resolve ambiguity.',
+        "Both LICENSE and LICENSE.md exist in root. Only one is allowed — remove one to resolve ambiguity.",
       code: "LICENSE_MUTUAL_EXCLUSION",
     });
     diagnostics.push({
@@ -74,7 +74,7 @@ export function checkRootWhitelist(
       severity: "critical",
       file: "LICENSE" as DocPath,
       message:
-        'Both LICENSE and LICENSE.md exist in root. Only one is allowed — remove one to resolve ambiguity.',
+        "Both LICENSE and LICENSE.md exist in root. Only one is allowed — remove one to resolve ambiguity.",
       code: "LICENSE_MUTUAL_EXCLUSION",
     });
   }

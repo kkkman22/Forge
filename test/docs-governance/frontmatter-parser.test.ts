@@ -65,7 +65,11 @@ describe("parseFrontmatter — unknown fields", () => {
 
     const result = parseFrontmatter(text);
     expect(result.diagnostics.length).toBeGreaterThan(0);
-    expect(result.diagnostics.some((d) => d.message.includes("unrecognized") || d.message.includes("Unrecognized"))).toBe(true);
+    expect(
+      result.diagnostics.some(
+        (d) => d.message.includes("unrecognized") || d.message.includes("Unrecognized"),
+      ),
+    ).toBe(true);
   });
 });
 
@@ -96,14 +100,15 @@ describe("parseFrontmatter — block boundary", () => {
 
   it("requires second standalone --- to close", () => {
     // Only opening --- with no closing ---
-    const text = "---\ntitle: Test\ncategory: getting-started\naudience:\n  - new-user\nupdated: '2026-05-01'\nowner: Team\nNo closing markers";
+    const text =
+      "---\ntitle: Test\ncategory: getting-started\naudience:\n  - new-user\nupdated: '2026-05-01'\nowner: Team\nNo closing markers";
     const result = parseFrontmatter(text);
     // No closing --- means no valid frontmatter block
     expect(result.frontmatter).toBeNull();
   });
 
   it("does not treat --- in body as frontmatter boundary", () => {
-    const text = VALID_YAML + "\n---\nThis is a horizontal rule in body\n";
+    const text = `${VALID_YAML}\n---\nThis is a horizontal rule in body\n`;
     const result = parseFrontmatter(text);
     expect(result.frontmatter).not.toBeNull();
     // The third --- should be part of body

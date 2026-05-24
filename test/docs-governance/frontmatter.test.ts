@@ -1,11 +1,11 @@
 import { describe, expect, it } from "vitest";
 import {
-  frontmatterSchema,
-  CATEGORY_VALUES,
   AUDIENCE_VALUES,
   CATEGORY_ORDER,
+  CATEGORY_VALUES,
+  frontmatterSchema,
 } from "../../src/docs-governance/frontmatter/schema.js";
-import type { Frontmatter, Category, Audience } from "../../src/docs-governance/types.js";
+import type { Audience, Category } from "../../src/docs-governance/types.js";
 
 // ─────────────────────────────────────────────────────────────
 // Helpers
@@ -83,15 +83,11 @@ describe("frontmatterSchema — title", () => {
   });
 
   it("rejects title exceeding 200 chars", () => {
-    expect(() =>
-      frontmatterSchema.parse({ ...validInput, title: "A".repeat(201) }),
-    ).toThrow();
+    expect(() => frontmatterSchema.parse({ ...validInput, title: "A".repeat(201) })).toThrow();
   });
 
   it("accepts title of exactly 200 chars", () => {
-    expect(() =>
-      frontmatterSchema.parse({ ...validInput, title: "A".repeat(200) }),
-    ).not.toThrow();
+    expect(() => frontmatterSchema.parse({ ...validInput, title: "A".repeat(200) })).not.toThrow();
   });
 
   it("accepts CJK characters in title", () => {
@@ -106,16 +102,12 @@ describe("frontmatterSchema — title", () => {
 // ─────────────────────────────────────────────────────────────
 describe("frontmatterSchema — category", () => {
   it("rejects invalid category", () => {
-    expect(() =>
-      frontmatterSchema.parse({ ...validInput, category: "invalid" }),
-    ).toThrow();
+    expect(() => frontmatterSchema.parse({ ...validInput, category: "invalid" })).toThrow();
   });
 
   it("accepts all 7 category values", () => {
     for (const cat of CATEGORY_VALUES) {
-      expect(() =>
-        frontmatterSchema.parse({ ...validInput, category: cat }),
-      ).not.toThrow();
+      expect(() => frontmatterSchema.parse({ ...validInput, category: cat })).not.toThrow();
     }
   });
 });
@@ -125,9 +117,7 @@ describe("frontmatterSchema — category", () => {
 // ─────────────────────────────────────────────────────────────
 describe("frontmatterSchema — audience", () => {
   it("rejects empty audience array", () => {
-    expect(() =>
-      frontmatterSchema.parse({ ...validInput, audience: [] }),
-    ).toThrow();
+    expect(() => frontmatterSchema.parse({ ...validInput, audience: [] })).toThrow();
   });
 
   it("rejects audience with more than 6 items", () => {
@@ -186,43 +176,31 @@ describe("frontmatterSchema — audience", () => {
 // ─────────────────────────────────────────────────────────────
 describe("frontmatterSchema — updated", () => {
   it("rejects date before 2026-04-28", () => {
-    expect(() =>
-      frontmatterSchema.parse({ ...validInput, updated: "2026-04-27" }),
-    ).toThrow();
+    expect(() => frontmatterSchema.parse({ ...validInput, updated: "2026-04-27" })).toThrow();
   });
 
   it("accepts date 2026-04-28 (boundary)", () => {
-    expect(() =>
-      frontmatterSchema.parse({ ...validInput, updated: "2026-04-28" }),
-    ).not.toThrow();
+    expect(() => frontmatterSchema.parse({ ...validInput, updated: "2026-04-28" })).not.toThrow();
   });
 
   it("accepts today's date", () => {
     const today = new Date().toISOString().slice(0, 10);
-    expect(() =>
-      frontmatterSchema.parse({ ...validInput, updated: today }),
-    ).not.toThrow();
+    expect(() => frontmatterSchema.parse({ ...validInput, updated: today })).not.toThrow();
   });
 
   it("rejects future date beyond today", () => {
     const future = new Date();
     future.setUTCDate(future.getUTCDate() + 1);
     const futureStr = future.toISOString().slice(0, 10);
-    expect(() =>
-      frontmatterSchema.parse({ ...validInput, updated: futureStr }),
-    ).toThrow();
+    expect(() => frontmatterSchema.parse({ ...validInput, updated: futureStr })).toThrow();
   });
 
   it("rejects non-YYYY-MM-DD format", () => {
-    expect(() =>
-      frontmatterSchema.parse({ ...validInput, updated: "2026/05/01" }),
-    ).toThrow();
+    expect(() => frontmatterSchema.parse({ ...validInput, updated: "2026/05/01" })).toThrow();
   });
 
   it("rejects malformed date string", () => {
-    expect(() =>
-      frontmatterSchema.parse({ ...validInput, updated: "not-a-date" }),
-    ).toThrow();
+    expect(() => frontmatterSchema.parse({ ...validInput, updated: "not-a-date" })).toThrow();
   });
 });
 
@@ -231,21 +209,15 @@ describe("frontmatterSchema — updated", () => {
 // ─────────────────────────────────────────────────────────────
 describe("frontmatterSchema — owner", () => {
   it("rejects empty owner", () => {
-    expect(() =>
-      frontmatterSchema.parse({ ...validInput, owner: "" }),
-    ).toThrow();
+    expect(() => frontmatterSchema.parse({ ...validInput, owner: "" })).toThrow();
   });
 
   it("rejects owner exceeding 100 chars", () => {
-    expect(() =>
-      frontmatterSchema.parse({ ...validInput, owner: "X".repeat(101) }),
-    ).toThrow();
+    expect(() => frontmatterSchema.parse({ ...validInput, owner: "X".repeat(101) })).toThrow();
   });
 
   it("accepts owner of exactly 100 chars", () => {
-    expect(() =>
-      frontmatterSchema.parse({ ...validInput, owner: "X".repeat(100) }),
-    ).not.toThrow();
+    expect(() => frontmatterSchema.parse({ ...validInput, owner: "X".repeat(100) })).not.toThrow();
   });
 });
 
@@ -317,9 +289,7 @@ describe("frontmatterSchema — mirror_of", () => {
 // ─────────────────────────────────────────────────────────────
 describe("frontmatterSchema — strictness", () => {
   it("rejects unknown fields", () => {
-    expect(() =>
-      frontmatterSchema.parse({ ...validInput, extra_field: "oops" }),
-    ).toThrow();
+    expect(() => frontmatterSchema.parse({ ...validInput, extra_field: "oops" })).toThrow();
   });
 
   it("rejects missing title", () => {

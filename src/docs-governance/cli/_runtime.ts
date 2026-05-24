@@ -52,7 +52,7 @@ export async function run(
 
   if (process.env.CI === "true") {
     const annotations = formatGitHubAnnotations(diagnostics);
-    if (annotations) process.stdout.write(annotations + "\n");
+    if (annotations) process.stdout.write(`${annotations}\n`);
   }
 
   process.exit(severityToExitCode(diagnostics));

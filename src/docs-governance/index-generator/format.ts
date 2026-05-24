@@ -1,5 +1,5 @@
-import type { Category, DocPair } from "../types.js";
 import { CATEGORY_VALUES } from "../frontmatter/schema.js";
+import type { Category, DocPair } from "../types.js";
 
 export const CATEGORY_ORDER = CATEGORY_VALUES;
 

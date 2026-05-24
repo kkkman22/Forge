@@ -11,7 +11,7 @@ interface ExtractedLink {
 
 export function gfmAnchor(text: string): string {
   // Strip code spans
-  let s = text.replace(/`[^`]+`/g, "");
+  const s = text.replace(/`[^`]+`/g, "");
   const out: string[] = [];
   for (const ch of s) {
     if ((ch >= "a" && ch <= "z") || (ch >= "0" && ch <= "9")) {
@@ -52,7 +52,7 @@ export function extractLinks(text: string): ExtractedLink[] {
   const lines = text.split("\n");
   const links: ExtractedLink[] = [];
   let inFencedCode = false;
-  let inIndentedCode = false;
+  const _inIndentedCode = false;
 
   for (let i = 0; i < lines.length; i++) {
     const line = lines[i];
@@ -69,22 +69,29 @@ export function extractLinks(text: string): ExtractedLink[] {
 
     // Inline links: [text](target)
     const inlineRe = /\[([^\]]*)\]\(([^)]+)\)/g;
-    let match: RegExpExecArray | null;
-    while ((match = inlineRe.exec(line)) !== null) {
+    let match: RegExpExecArray | null = inlineRe.exec(line);
+    while (match !== null) {
       const target = match[2].trim();
-      if (isExternalLink(target)) continue;
+      if (isExternalLink(target)) {
+        match = inlineRe.exec(line);
+        continue;
+      }
       links.push({ target, line: i + 1, raw: match[0] });
+      match = inlineRe.exec(line);
     }
 
     // Image links: ![alt](src)
     const imgRe = /!\[([^\]]*)\]\(([^)]+)\)/g;
-    while ((match = imgRe.exec(line)) !== null) {
-      const target = match[2].trim();
-      if (isExternalLink(target)) continue;
-      // Already captured by inline regex above, skip dedup by checking
-      if (!links.some((l) => l.raw === match![0] && l.line === i + 1)) {
-        links.push({ target, line: i + 1, raw: match![0] });
+    match = imgRe.exec(line);
+    while (match !== null) {
+      const m = match;
+      const target = m[2].trim();
+      if (!isExternalLink(target)) {
+        if (!links.some((l) => l.raw === m[0] && l.line === i + 1)) {
+          links.push({ target, line: i + 1, raw: m[0] });
+        }
       }
+      match = imgRe.exec(line);
     }
 
     // Reference-style definitions: [ref]: target
