@@ -118,6 +118,7 @@ npm link && forge-loop "你的目标"            # 全局链接后直接使用
 | **Reviews Frontmatter** | 评审结果结构化存储（原子重写） |
 | **Browser QA** | cmux browser 命令驱动的端到端 QA |
 | **工作区布局** | 3 种 Forge 专属 cmux 布局模板 |
+| **多窗口隔离** | 自动在 `CMUX_WINDOW_ID` 存在时向所有 cmux 调用注入 `--window`，确保多窗口环境下事件精准投递（cmux 0.64.8+） |
 
 ### Agent Teams 在 cmux 下原生可用
 
@@ -137,6 +138,21 @@ cmux 自 0.63 起原生支持 Claude Code Teams（`cmux claude-teams`），自 0
 # 安装 Forge 专属布局模板（可选）
 bash scripts/cmux-mirror/install-template.sh .
 ```
+
+**推荐 cmux 最低版本**：0.64.3（启用命令面板 `commands` 字段）。强烈推荐 0.64.10 起（启用 `agent_resume_approvals` + `cmux reorder-workspaces` 批量）。
+
+### 0.64+ 原生能力（Forge 直接复用）
+
+cmux 0.64 起为 Claude Code 工作流原生提供以下能力，Forge 不再造轮子，直接复用：
+
+| 能力 | cmux 版本 | Forge 复用方式 |
+|------|----------|---------------|
+| Session Restore on Quit（Claude Code 会话恢复） | 0.64.0 | 关闭最后一个窗口后重启不丢上下文，Forge 会话连续性自动受益 |
+| `cmux top` JSON 状态快照 | 0.64.0 | `/forge status` / `/forge debug` 可调用以获取 surface / 未读 / 孤儿 dev server 信息（opt-in） |
+| **多窗口隔离 `--window`** | 0.64.8 | `scripts/cmux-mirror/{cli.mjs, push.sh, hook-notify.sh}` 自动在 `CMUX_WINDOW_ID` 存在时附加；零配置 |
+| `cmux config doctor` 离线 cmux.json 校验 | 0.64.3 | `scripts/bootstrap-check.mjs` SessionStart 顺手校验，advisory 不阻断 |
+| `agent_resume_approvals` resume 预批准 | 0.64.10 | `templates/cmux.json` 顶层字段；`/forge resume` 不再被 cmux 拦截 |
+| `cmux notification jump-to-unread` | 0.64.5 | frozen-zone 拦截通知附跳转；`hook-notify.sh` 自动调用 |
 
 ### 卸载
 
@@ -169,6 +185,8 @@ rm -rf .claude/skills/forge-sidebar-sync .claude/skills/forge-browser-qa .claude
 - `skills/forge/lib/forge-cmux-loop-signals/` — cmux loop signals SKILL（条件分发）
 - `test/cmux-mirror/` — 33 tests（含 6 个 property tests：availability / budget-monotonic / dedupe-idempotent / events-tolerance / payload-mapping / session-totality）
 - `skills/forge/lib/{review,build,ship,abort,test,control-cli,control-ui}/references/cmux*.md` — SKILL 集成参考
+
+> **提示（cmux 0.64.7+ 用户）**：宪法 §2.4 三连失败要求 reroute。cmux 用户可在 `/forge debug` 触发后用 `cmux conversation fork` 保留失败链、从原始 turn 分叉新假设。零代码变更，零集成成本。
 
 ---
 
