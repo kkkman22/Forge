@@ -22,7 +22,7 @@ if (args.includes("--help") || args.includes("-h")) {
   process.stdout.write(
     formatHelp(SCRIPT_NAME, "Check that docs with body changes have updated frontmatter date.", [
       "--json       Output diagnostics as NDJSON",
-      "--fix        Auto-update 'updated' field to UTC today",
+      "--fix        Auto-update 'updated' field to UTC today (also re-stages the file via git add)",
       "--help       Show this help message",
     ]),
   );
