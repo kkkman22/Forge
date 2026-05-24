@@ -5,9 +5,9 @@
  * Outputs a migration suggestion list.
  */
 import { existsSync, readFileSync } from "node:fs";
-import { readdirSync, statSync } from "node:fs";
-import { resolve, join, relative } from "node:path";
+import { resolve, relative } from "node:path";
 import { commonHelp } from "../src/docs-governance/cli/_help.js";
+import { walkMdFiles } from "../src/docs-governance/cli/scan-files.js";
 
 const SCRIPT_NAME = "scan-literal-mismatches";
 const DOCS_DIR = "docs";
@@ -26,22 +26,6 @@ interface LiteralMatch {
   literal: string;
   count: number;
   suggestion: string;
-}
-
-function collectMdFiles(dir: string): string[] {
-  const files: string[] = [];
-  if (!existsSync(dir)) return files;
-
-  const entries = readdirSync(dir, { withFileTypes: true });
-  for (const entry of entries) {
-    const fullPath = join(dir, entry.name);
-    if (entry.isDirectory()) {
-      files.push(...collectMdFiles(fullPath));
-    } else if (entry.isFile() && entry.name.endsWith(".md")) {
-      files.push(fullPath);
-    }
-  }
-  return files;
 }
 
 function isInFencedCodeBlock(lines: string[], targetLineIdx: number): boolean {
@@ -105,7 +89,7 @@ if (!existsSync(docsDir)) {
   process.exit(1);
 }
 
-const mdFiles = collectMdFiles(docsDir);
+const mdFiles = walkMdFiles(docsDir);
 const allMatches: LiteralMatch[] = [];
 
 for (const filePath of mdFiles) {

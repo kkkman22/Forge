@@ -6,12 +6,12 @@
  * Default: dry-run, output suggestions only
  */
 import { existsSync, readFileSync, writeFileSync } from "node:fs";
-import { readdirSync, statSync } from "node:fs";
-import { resolve, join, relative } from "node:path";
+import { resolve, relative } from "node:path";
 import { execFileSync } from "node:child_process";
 import { parseFrontmatter } from "../src/docs-governance/frontmatter/parser.js";
 import { serializeFrontmatter } from "../src/docs-governance/frontmatter/serializer.js";
 import { classify } from "../src/docs-governance/domains.js";
+import { walkMdFiles } from "../src/docs-governance/cli/scan-files.js";
 import type { Frontmatter, DocPath } from "../src/docs-governance/types.js";
 import { commonHelp } from "../src/docs-governance/cli/_help.js";
 
@@ -25,27 +25,6 @@ interface MigrationSuggestion {
   audience: Frontmatter["audience"];
   updated: string;
   owner: string;
-}
-
-function collectMdFiles(dir: string): string[] {
-  const files: string[] = [];
-  if (!existsSync(dir)) return files;
-
-  const entries = readdirSync(dir, { withFileTypes: true });
-  for (const entry of entries) {
-    const fullPath = join(dir, entry.name);
-    if (entry.isDirectory()) {
-      files.push(...collectMdFiles(fullPath));
-    } else if (
-      entry.isFile() &&
-      entry.name.endsWith(".md") &&
-      !entry.name.startsWith("INDEX") &&
-      entry.name !== "README.md"
-    ) {
-      files.push(fullPath);
-    }
-  }
-  return files;
 }
 
 function extractH1(content: string): string | undefined {
@@ -154,7 +133,7 @@ if (!existsSync(docsDir)) {
   process.exit(1);
 }
 
-const mdFiles = collectMdFiles(docsDir);
+const mdFiles = walkMdFiles(docsDir);
 const suggestions: MigrationSuggestion[] = [];
 
 for (const filePath of mdFiles) {
