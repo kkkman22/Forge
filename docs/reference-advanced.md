@@ -130,14 +130,12 @@ cmux 自 0.63 起原生支持 Claude Code Teams（`cmux claude-teams`），自 0
 ### 使用
 
 ```bash
-# 安装 cmux 后，Forge 自动检测并启用集成
-# 无需任何配置
+# 安装 cmux 后，下次 /forge 调用即可自动检测并启用 cmux SKILL
+# sticky 状态机在该进程内保持判定结果
+# 无需任何配置或手动安装步骤
 
 # 安装 Forge 专属布局模板（可选）
 bash scripts/cmux-mirror/install-template.sh .
-
-# 安装 cmux 可选技能包（可选）
-bash cmux-skills/install.sh --apply .claude/skills
 ```
 
 ### 卸载
@@ -146,17 +144,29 @@ bash cmux-skills/install.sh --apply .claude/skills
 # 移除布局模板
 rm cmux.json
 
-# 移除技能包
-bash cmux-skills/install.sh --uninstall .claude/skills
+# 卸载或停用 cmux 后，下次 /forge 调用 Conditional_Availability_Gate
+# 自动转为拒绝分发，cmux SKILL 自然失活，无需额外清理步骤
 
 # cmux 集成代码随 Forge 一起存在，但不产生任何运行时开销
 ```
+
+### 升级说明
+
+如果之前安装过旧版 cmux 技能包（`.claude/skills/forge-sidebar-sync/` 等），可以手动清理旧目录：
+
+```bash
+rm -rf .claude/skills/forge-sidebar-sync .claude/skills/forge-browser-qa .claude/skills/forge-loop-signals
+```
+
+保留旧目录不会破坏 Zero-Impact 不变量：未装 cmux 时旧目录中的 SKILL 仍受其原 `Requirements: cmux installed` 约束而自然失活。
 
 ### 新增文件
 
 - `scripts/cmux-mirror/` — 6 个主脚本（mirror、sync-once、push、hook-notify、browser-qa、install-template）+ 13 个库模块
 - `templates/cmux.json` — 工作区布局模板（3 种布局）
-- `cmux-skills/` — 3 个可选 SKILL.md（forge-sidebar-sync / forge-browser-qa / forge-loop-signals）+ 安装器
+- `skills/forge/lib/forge-cmux-sidebar-sync/` — cmux sidebar sync SKILL（条件分发）
+- `skills/forge/lib/forge-cmux-browser-qa/` — cmux browser QA SKILL（条件分发）
+- `skills/forge/lib/forge-cmux-loop-signals/` — cmux loop signals SKILL（条件分发）
 - `test/cmux-mirror/` — 33 tests（含 6 个 property tests：availability / budget-monotonic / dedupe-idempotent / events-tolerance / payload-mapping / session-totality）
 - `skills/forge/lib/{review,build,ship,abort,test,control-cli,control-ui}/references/cmux*.md` — SKILL 集成参考
 
