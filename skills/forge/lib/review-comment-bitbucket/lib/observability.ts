@@ -11,8 +11,7 @@ export async function recordPartialFailures(
   }
 
   try {
-    const now = new Date();
-    const dateStr = now.toISOString().split("T")[0];
+    const dateStr = new Date(failures[0].timestamp).toISOString().split("T")[0];
     const errorFilePath = path.join(baseDir, ".forge", "findings", `comment-channel-error-${dateStr}.md`);
     const findingsDir = path.dirname(errorFilePath);
 
