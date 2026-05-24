@@ -3,33 +3,17 @@
  * Quota checker — counts doc pairs and checks against config max_count.
  * Exit codes: 0 = clean, 1 = quota exceeded, 3 = internal error.
  */
-import { existsSync, readdirSync, readFileSync } from "node:fs";
-import { join, relative, resolve } from "node:path";
+import { readFileSync } from "node:fs";
+import { resolve } from "node:path";
 import { computeExitResult } from "../src/docs-governance/cli/_runtime.js";
 import { formatDiagnostics, formatNdjson } from "../src/docs-governance/reporter/diagnostic.js";
 import { formatHelp } from "../src/docs-governance/cli/_help.js";
 import { countDocPairs, checkQuota } from "../src/docs-governance/quota.js";
 import { loadConfigWithDefaults } from "../src/docs-governance/config.js";
+import { walkMdFiles } from "../src/docs-governance/cli/scan-files.js";
 import type { DiagnosticRecord, DocPath } from "../src/docs-governance/types.js";
 
 const SCRIPT_NAME = "check-docs-quota";
-
-function walkMdFiles(dir: string, rootDir: string): string[] {
-  const results: string[] = [];
-  if (!existsSync(dir)) return results;
-
-  const entries = readdirSync(dir, { withFileTypes: true });
-  for (const entry of entries) {
-    if (entry.name.startsWith(".")) continue;
-    const full = join(dir, entry.name);
-    if (entry.isDirectory()) {
-      results.push(...walkMdFiles(full, rootDir));
-    } else if (entry.isFile() && entry.name.endsWith(".md")) {
-      results.push(relative(rootDir, full));
-    }
-  }
-  return results;
-}
 
 // ── Main ──
 
@@ -65,7 +49,7 @@ const result = computeExitResult((): DiagnosticRecord[] => {
 
   // Collect doc files
   const docsDir = resolve(rootDir, "docs");
-  const mdFiles = walkMdFiles(docsDir, rootDir);
+  const mdFiles = walkMdFiles(docsDir, { relativeTo: rootDir });
 
   // Check quota
   return checkQuota(mdFiles, config, { allowGrow });

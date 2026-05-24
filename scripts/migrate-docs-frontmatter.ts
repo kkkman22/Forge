@@ -6,12 +6,12 @@
  * Default: dry-run, output suggestions only
  */
 import { existsSync, readFileSync, writeFileSync } from "node:fs";
-import { readdirSync, statSync } from "node:fs";
-import { resolve, join, relative } from "node:path";
-import { execSync } from "node:child_process";
+import { resolve, relative } from "node:path";
+import { execFileSync } from "node:child_process";
 import { parseFrontmatter } from "../src/docs-governance/frontmatter/parser.js";
 import { serializeFrontmatter } from "../src/docs-governance/frontmatter/serializer.js";
 import { classify } from "../src/docs-governance/domains.js";
+import { walkMdFiles } from "../src/docs-governance/cli/scan-files.js";
 import type { Frontmatter, DocPath } from "../src/docs-governance/types.js";
 import { commonHelp } from "../src/docs-governance/cli/_help.js";
 
@@ -25,27 +25,6 @@ interface MigrationSuggestion {
   audience: Frontmatter["audience"];
   updated: string;
   owner: string;
-}
-
-function collectMdFiles(dir: string): string[] {
-  const files: string[] = [];
-  if (!existsSync(dir)) return files;
-
-  const entries = readdirSync(dir, { withFileTypes: true });
-  for (const entry of entries) {
-    const fullPath = join(dir, entry.name);
-    if (entry.isDirectory()) {
-      files.push(...collectMdFiles(fullPath));
-    } else if (
-      entry.isFile() &&
-      entry.name.endsWith(".md") &&
-      !entry.name.startsWith("INDEX") &&
-      entry.name !== "README.md"
-    ) {
-      files.push(fullPath);
-    }
-  }
-  return files;
 }
 
 function extractH1(content: string): string | undefined {
@@ -72,7 +51,7 @@ function inferCategory(filePath: string, content: string): Frontmatter["category
 
 function getLastGitDate(filePath: string): string {
   try {
-    return execSync(`git log -1 --format=%cs -- "${filePath}"`, { encoding: "utf-8" }).trim();
+    return execFileSync("git", ["log", "-1", "--format=%cs", "--", filePath], { encoding: "utf-8" }).trim();
   } catch {
     return new Date().toISOString().slice(0, 10);
   }
@@ -140,13 +119,13 @@ if (args.includes("--help") || args.includes("-h")) {
       SCRIPT_NAME,
       "Semi-automatic frontmatter migration for docs/ .md files.\n" +
         "Default: dry-run (output suggestions only).\n" +
-        "--apply: write generated frontmatter to files.",
+        "--apply --force: write generated frontmatter to files (requires --force for safety).",
     ),
   );
   process.exit(0);
 }
 
-const applyMode = args.includes("--apply");
+const applyMode = args.includes("--apply") && args.includes("--force");
 const docsDir = resolve(process.cwd(), DOCS_DIR);
 
 if (!existsSync(docsDir)) {
@@ -154,7 +133,7 @@ if (!existsSync(docsDir)) {
   process.exit(1);
 }
 
-const mdFiles = collectMdFiles(docsDir);
+const mdFiles = walkMdFiles(docsDir);
 const suggestions: MigrationSuggestion[] = [];
 
 for (const filePath of mdFiles) {
@@ -183,6 +162,8 @@ for (const s of suggestions) {
   }
 }
 
-if (!applyMode) {
-  process.stdout.write("\nRun with --apply to write frontmatter to files.\n");
+if (!applyMode && args.includes("--apply") && !args.includes("--force")) {
+  process.stdout.write("\n⚠ --apply requires --force to confirm destructive writes.\n");
+} else if (!applyMode) {
+  process.stdout.write("\nRun with --apply --force to write frontmatter to files.\n");
 }

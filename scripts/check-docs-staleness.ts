@@ -4,7 +4,7 @@
  * Exit codes: 0 = clean (or warnings only), 1 = error/critical staleness, 2 = critical, 3 = internal error.
  * CI mode: critical/invalid → exit 1; warning → exit 0 + ::warning:: annotation.
  */
-import { readdirSync, readFileSync, statSync } from "node:fs";
+import { readFileSync } from "node:fs";
 import { join, relative, resolve } from "node:path";
 import { parseFrontmatter } from "../src/docs-governance/frontmatter/parser.js";
 import { classifyStaleness } from "../src/docs-governance/staleness.js";
@@ -16,6 +16,7 @@ import {
 } from "../src/docs-governance/reporter/diagnostic.js";
 import { formatHelp } from "../src/docs-governance/cli/_help.js";
 import { loadConfigWithDefaults } from "../src/docs-governance/config.js";
+import { walkMdFiles, shouldExcludeIndex } from "../src/docs-governance/cli/scan-files.js";
 import type { DiagnosticRecord, DocPath, Severity } from "../src/docs-governance/types.js";
 
 const SCRIPT_NAME = "check-docs-staleness";
@@ -37,48 +38,6 @@ if (args.includes("--help") || args.includes("-h")) {
 
 const jsonMode = args.includes("--json");
 const ciMode = args.includes("--ci");
-
-// ── File scanning ──
-
-function shouldExclude(filename: string): boolean {
-  if (filename.match(/^INDEX/i)) return true;
-  if (filename === "README.md") return true;
-  return false;
-}
-
-function collectMdFiles(dir: string): string[] {
-  const results: string[] = [];
-
-  function walk(current: string): void {
-    let entries: string[];
-    try {
-      entries = readdirSync(current);
-    } catch {
-      return;
-    }
-
-    for (const entry of entries) {
-      if (entry.startsWith(".")) continue;
-
-      const fullPath = join(current, entry);
-      let stat;
-      try {
-        stat = statSync(fullPath);
-      } catch {
-        continue;
-      }
-
-      if (stat.isDirectory()) {
-        walk(fullPath);
-      } else if (stat.isFile() && entry.endsWith(".md") && !shouldExclude(entry)) {
-        results.push(fullPath);
-      }
-    }
-  }
-
-  walk(dir);
-  return results.sort();
-}
 
 // ── Staleness to severity mapping ──
 
@@ -115,7 +74,7 @@ try {
 const today = new Date();
 
 const result = computeExitResult(() => {
-  const files = collectMdFiles(docsDir);
+  const files = walkMdFiles(docsDir, { excludeFn: shouldExcludeIndex });
   const diagnostics: DiagnosticRecord[] = [];
 
   for (const filePath of files) {

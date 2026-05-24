@@ -15,15 +15,15 @@
  *
  * Exit codes: 0 = clean, 1 = stale/mismatch, 3 = internal error.
  */
-import { existsSync, readFileSync, readdirSync } from "node:fs";
+import { existsSync, readFileSync } from "node:fs";
 import { execSync } from "node:child_process";
-import { join, relative, resolve } from "node:path";
-import { loadConfigWithDefaults } from "../src/docs-governance/config.js";
+import { relative, resolve } from "node:path";
 import { computeExitResult } from "../src/docs-governance/cli/_runtime.js";
 import { formatDiagnostics, formatNdjson } from "../src/docs-governance/reporter/diagnostic.js";
 import { commonHelp } from "../src/docs-governance/cli/_help.js";
+import { walkMdFiles } from "../src/docs-governance/cli/scan-files.js";
+import { loadSsotData, buildDefaultRegistry } from "../src/docs-governance/ssot/ssot-loader.js";
 import { syncEmbeds } from "../src/docs-governance/ssot/embed-sync.js";
-import { createRendererRegistry } from "../src/docs-governance/ssot/renderer-registry.js";
 import { commandsTableRenderer } from "../src/docs-governance/ssot/renderers/commands-table.js";
 import { routingTableRenderer } from "../src/docs-governance/ssot/renderers/routing-table.js";
 import { securityTiersRenderer } from "../src/docs-governance/ssot/renderers/security-tiers.js";
@@ -34,48 +34,14 @@ import type { DiagnosticRecord, DocPath, RendererFn } from "../src/docs-governan
 const SCRIPT_NAME = "check-docs-embeds";
 const DOCS_DIR = "docs";
 
+const RENDERERS: [string, RendererFn][] = [
+  ["commands-table", commandsTableRenderer as RendererFn],
+  ["routing-table", routingTableRenderer as RendererFn],
+  ["security-tiers", securityTiersRenderer as RendererFn],
+  ["json-list", jsonListRenderer as RendererFn],
+];
+
 // ── Helpers ──
-
-function collectMdFiles(dir: string): string[] {
-  const files: string[] = [];
-  if (!existsSync(dir)) return files;
-  const entries = readdirSync(dir, { withFileTypes: true });
-  for (const entry of entries) {
-    const fullPath = join(dir, entry.name);
-    if (entry.isDirectory() && entry.name !== "_ssot") {
-      files.push(...collectMdFiles(fullPath));
-    } else if (entry.isFile() && entry.name.endsWith(".md")) {
-      files.push(fullPath);
-    }
-  }
-  return files;
-}
-
-function loadSsotData(rootDir: string): Map<string, string> {
-  const configPath = resolve(rootDir, ".forge/config.md");
-  let raw = "";
-  try {
-    raw = readFileSync(configPath, "utf-8");
-  } catch {
-    return new Map();
-  }
-
-  const config = loadConfigWithDefaults(raw);
-  const ssotData = new Map<string, string>();
-
-  for (const entry of config.docs.ssot_sources) {
-    const sourcePath = resolve(rootDir, entry.source);
-    try {
-      if (existsSync(sourcePath)) {
-        ssotData.set(entry.topic, readFileSync(sourcePath, "utf-8"));
-      }
-    } catch {
-      // Source file missing — renderer will handle null source
-    }
-  }
-
-  return ssotData;
-}
 
 function loadFileEmbeds(rootDir: string, files: string[], ssotData: Map<string, string>): void {
   const embedPaths = new Set<string>();
@@ -102,15 +68,6 @@ function loadFileEmbeds(rootDir: string, files: string[], ssotData: Map<string, 
       // Missing — syncEmbeds reports error
     }
   }
-}
-
-function buildRegistry(): ReturnType<typeof createRendererRegistry> {
-  const reg = createRendererRegistry();
-  reg.register("commands-table", commandsTableRenderer as RendererFn);
-  reg.register("routing-table", routingTableRenderer as RendererFn);
-  reg.register("security-tiers", securityTiersRenderer as RendererFn);
-  reg.register("json-list", jsonListRenderer as RendererFn);
-  return reg;
 }
 
 function unifiedDiff(filePath: string, oldContent: string, newContent: string): string {
@@ -190,9 +147,9 @@ const result = computeExitResult((): DiagnosticRecord[] => {
     return [];
   }
 
-  const reg = buildRegistry();
+  const reg = buildDefaultRegistry(RENDERERS);
   const ssotData = loadSsotData(rootDir);
-  const mdFiles = collectMdFiles(docsDir);
+  const mdFiles = walkMdFiles(docsDir, { skipSsot: true });
 
   // Load file-embed content
   loadFileEmbeds(rootDir, mdFiles, ssotData);
