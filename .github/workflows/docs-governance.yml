@@ -21,6 +21,9 @@ on:
       - "scripts/check-docs-*"
       - "scripts/build-docs-*"
 
+permissions:
+  contents: read
+
 jobs:
   docs-check:
     runs-on: ubuntu-latest

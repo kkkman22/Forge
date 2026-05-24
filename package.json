@@ -33,7 +33,7 @@
     "docs": "typedoc",
     "dossier:rebuild": "node scripts/rebuild-feature-dossier.mjs",
     "dossier:rebuild:all": "node scripts/rebuild-feature-dossier.mjs --all",
-    "docs:check": "npx tsx scripts/check-docs-frontmatter.ts && npx tsx scripts/check-docs-bilingual.ts && npx tsx scripts/check-docs-staleness.ts && npx tsx scripts/check-docs-links.ts && npx tsx scripts/check-docs-quota.ts && npx tsx scripts/check-docs-index.ts && npx tsx scripts/check-docs-embeds.ts",
+    "docs:check": "npx tsx scripts/check-docs-frontmatter.ts && npx tsx scripts/check-docs-bilingual.ts && npx tsx scripts/check-docs-staleness.ts && npx tsx scripts/check-docs-updated.ts && npx tsx scripts/check-docs-links.ts && npx tsx scripts/check-docs-quota.ts && npx tsx scripts/check-docs-index.ts && npx tsx scripts/check-docs-embeds.ts && npx tsx scripts/check-docs-root-whitelist.ts",
     "docs:check:frontmatter": "npx tsx scripts/check-docs-frontmatter.ts",
     "docs:check:bilingual": "npx tsx scripts/check-docs-bilingual.ts",
     "docs:check:staleness": "npx tsx scripts/check-docs-staleness.ts",
