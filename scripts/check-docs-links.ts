@@ -3,12 +3,13 @@
  * Link checker — scans docs/ for internal markdown links and validates anchors.
  * Exit codes: 0 = clean, 1 = broken link, 3 = internal error.
  */
-import { existsSync, readFileSync, readdirSync, statSync } from "node:fs";
-import { join, relative, resolve, dirname, basename } from "node:path";
+import { readFileSync } from "node:fs";
+import { join, resolve, dirname } from "node:path";
 import { computeExitResult } from "../src/docs-governance/cli/_runtime.js";
 import { formatDiagnostics, formatNdjson } from "../src/docs-governance/reporter/diagnostic.js";
 import { commonHelp } from "../src/docs-governance/cli/_help.js";
 import { extractLinks, gfmAnchor, dedupAnchorsInDoc } from "../src/docs-governance/link-checker.js";
+import { walkMdFiles } from "../src/docs-governance/cli/scan-files.js";
 import type { DiagnosticRecord, DocPath } from "../src/docs-governance/types.js";
 
 const SCRIPT_NAME = "check-docs-links";
@@ -16,23 +17,6 @@ const SCRIPT_NAME = "check-docs-links";
 interface HeadingEntry {
   text: string;
   anchor: string;
-}
-
-function walkMdFiles(dir: string, rootDir: string): string[] {
-  const results: string[] = [];
-  if (!existsSync(dir)) return results;
-
-  const entries = readdirSync(dir, { withFileTypes: true });
-  for (const entry of entries) {
-    if (entry.name.startsWith(".")) continue;
-    const full = join(dir, entry.name);
-    if (entry.isDirectory()) {
-      results.push(...walkMdFiles(full, rootDir));
-    } else if (entry.isFile() && entry.name.endsWith(".md")) {
-      results.push(relative(rootDir, full));
-    }
-  }
-  return results;
 }
 
 function extractHeadings(text: string): HeadingEntry[] {
@@ -76,7 +60,7 @@ const result = computeExitResult((): DiagnosticRecord[] => {
   const diags: DiagnosticRecord[] = [];
   const docsDir = resolve(rootDir, "docs");
 
-  const mdFiles = walkMdFiles(docsDir, rootDir);
+  const mdFiles = walkMdFiles(docsDir, { relativeTo: rootDir });
   if (mdFiles.length === 0) return diags;
 
   // Build anchor map: file -> Set of valid anchors
