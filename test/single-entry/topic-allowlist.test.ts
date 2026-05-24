@@ -63,7 +63,11 @@ describe("R2.1: topic allowlist enforces 32 sub names", () => {
   });
 
   it("allows all three cmux subs", () => {
-    const cmuxSubs = ["forge-cmux-sidebar-sync", "forge-cmux-browser-qa", "forge-cmux-loop-signals"];
+    const cmuxSubs = [
+      "forge-cmux-sidebar-sync",
+      "forge-cmux-browser-qa",
+      "forge-cmux-loop-signals",
+    ];
     for (const s of cmuxSubs) {
       expect(VALID).toContain(s);
     }

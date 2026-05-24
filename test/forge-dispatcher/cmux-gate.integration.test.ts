@@ -1,9 +1,9 @@
 import { readFileSync } from "node:fs";
 import { resolve } from "node:path";
 import { beforeEach, describe, expect, it, vi } from "vitest";
-import { dispatchForgeSubcommand } from "../../src/forge-dispatcher.js";
 import { __resetGateForTest } from "../../src/forge-dispatcher/cmux-gate.js";
 import { checkIntegrity } from "../../src/forge-dispatcher/integrity-check.js";
+import { dispatchForgeSubcommand } from "../../src/forge-dispatcher.js";
 
 const LIB_ROOT = resolve(import.meta.dirname, "../../skills/forge/lib");
 
@@ -62,9 +62,7 @@ describe("Integration: cmux gate with real manifest and paths", () => {
   });
 
   it("manifest includes all 3 cmux subs", () => {
-    const manifest = JSON.parse(
-      readFileSync(resolve(LIB_ROOT, "manifest.json"), "utf-8"),
-    );
+    const manifest = JSON.parse(readFileSync(resolve(LIB_ROOT, "manifest.json"), "utf-8"));
     const subs = Object.keys(manifest.subs);
     expect(subs.length).toBe(34);
     for (const sub of CMUX_SUBS) {
@@ -74,9 +72,7 @@ describe("Integration: cmux gate with real manifest and paths", () => {
   });
 
   it("integrity check passes for all 34 subs", () => {
-    const manifest = JSON.parse(
-      readFileSync(resolve(LIB_ROOT, "manifest.json"), "utf-8"),
-    );
+    const manifest = JSON.parse(readFileSync(resolve(LIB_ROOT, "manifest.json"), "utf-8"));
     for (const sub of Object.keys(manifest.subs)) {
       const libPath = resolve(LIB_ROOT, sub, "instructions.md");
       const result = checkIntegrity(libPath);

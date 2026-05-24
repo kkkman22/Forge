@@ -1,6 +1,6 @@
-import { describe, expect, it, vi, beforeEach } from "vitest";
-import { dispatchForgeSubcommand } from "../../src/forge-dispatcher.js";
+import { beforeEach, describe, expect, it, vi } from "vitest";
 import { __resetGateForTest } from "../../src/forge-dispatcher/cmux-gate.js";
+import { dispatchForgeSubcommand } from "../../src/forge-dispatcher.js";
 
 describe("Step 2.5: cmux gate integration in dispatcher", () => {
   beforeEach(() => {

@@ -38,6 +38,9 @@ const EXPECTED_MODES: Record<string, string> = {
   "control-cli": "inline",
   "control-ui": "inline",
   "review-comment-bitbucket": "inline",
+  "forge-cmux-sidebar-sync": "inline",
+  "forge-cmux-browser-qa": "inline",
+  "forge-cmux-loop-signals": "inline",
 };
 
 function parseR35Table(specContent: string): Map<string, string> {

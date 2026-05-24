@@ -10,6 +10,10 @@ allowed_tools:
 
 Keeps the cmux sidebar panel updated with current Forge phase, tier, and task progress.
 
+## 1. Overview
+
+This skill keeps the cmux sidebar panel updated with current Forge phase, tier, and task progress.
+
 ## When This Activates
 
 Automatically via `sync-once.mjs` hooks when Forge state files change. No manual trigger needed.
