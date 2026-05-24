@@ -3,6 +3,13 @@ import { appendFileSync, mkdirSync } from "node:fs";
 import { homedir } from "node:os";
 import { resolve } from "node:path";
 
+export type GateBlockReason =
+  | "integration_off"
+  | "socket_path_invalid"
+  | "socket_missing"
+  | "socket_not_socket"
+  | "sticky_unavailable";
+
 export interface AuditEntry {
   ts: string;
   sub: string;
@@ -13,6 +20,9 @@ export interface AuditEntry {
   outcome: "success" | "failure" | "rejected";
   prev_hmac: string;
   hmac: string;
+  gate_result: "go" | "n_a" | "blocked";
+  cmux_available: boolean | null;
+  gate_reason: GateBlockReason | null;
 }
 
 export interface AuditOpts {
