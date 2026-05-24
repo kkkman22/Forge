@@ -44,8 +44,18 @@ echo "$now_ms" > "$dedupe_ts_file" 2>/dev/null || true
 
 # Step 2: Notify via cmux (R6.3) — best-effort
 task_name="${FORGE_TASK:-unknown}"
-cmux notify "Forge Frozen" "Branch frozen for: ${task_name}" 2>/dev/null || true
-cmux log "hook-notify: frozen interception for ${task_name}" 2>/dev/null || true
+
+# R1.4: Construct --window prefix when CMUX_WINDOW_ID is set
+window_args=()
+if [[ -n "${CMUX_WINDOW_ID:-}" ]]; then
+  window_args=("--window" "$CMUX_WINDOW_ID")
+fi
+
+cmux "${window_args[@]}" notify "Forge Frozen" "Branch frozen for: ${task_name}" 2>/dev/null || true
+cmux "${window_args[@]}" log "hook-notify: frozen interception for ${task_name}" 2>/dev/null || true
+
+# R3.1: Trigger jump to unread workspace (cmux 0.64.5+; || true for older versions)
+cmux "${window_args[@]}" notification jump-to-unread 2>/dev/null || true
 
 # Step 3: Always exit 0 (R6.1, R12.7)
 exit 0
