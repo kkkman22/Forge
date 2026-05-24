@@ -40,12 +40,24 @@
     {
       "includes": [
         "src/docs-governance/index-generator/generator.ts",
+        "src/docs-governance/index-generator/format.ts",
         "src/docs-governance/ssot/renderers/*.ts"
       ],
       "linter": {
         "rules": {
           "suspicious": {
             "noConsole": "off"
+          },
+          "style": {
+            "noRestrictedImports": {
+              "level": "error",
+              "options": {
+                "paths": {
+                  "child_process": "Generators/renderers must be pure — use execFileSync in CLI scripts only",
+                  "node:child_process": "Generators/renderers must be pure — use execFileSync in CLI scripts only"
+                }
+              }
+            }
           }
         }
       }

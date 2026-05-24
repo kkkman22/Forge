@@ -274,3 +274,33 @@ The following are NOT valid rule candidates:
 - General best practices Claude already knows
 - Raw knowledge data (belongs in knowledge files, not rules)
 - Standards enforced by existing tools (e.g. Biome code style)
+
+---
+
+## §8 Docs Governance
+
+Forge 的文档治理系统通过五层机制确保文档质量：分类隔离、自动索引、过时检测、配额纪律、SSOT 段落级嵌入。完整参考手册见 [docs/reference-docs-governance.md](./reference-docs-governance.md)。
+
+### 核心机制
+
+| 层级 | 机制 | 实现位置 |
+|------|------|---------|
+| 1. 分类隔离 | Frontmatter 必填字段 + enum 验证 | `src/docs-governance/frontmatter/` |
+| 2. 自动索引 | INDEX.md / INDEX.en.md 自动生成 | `src/docs-governance/index-generator/` |
+| 3. 过时检测 | 90d warning / 180d critical | `src/docs-governance/staleness.ts` |
+| 4. 配额纪律 | docs.max_count 上限控制 | `src/docs-governance/quota.ts` |
+| 5. SSOT 嵌入 | 数据源 → 渲染器 → Markdown 嵌入 | `src/docs-governance/ssot/` |
+
+### 强制检查
+
+Pre-commit hook 和 CI 自动运行 9 个检查器。所有检查通过才能合并。
+
+```bash
+npm run docs:check          # 本地运行全部检查
+npm run docs:index          # 重新生成 INDEX
+npm run docs:embeds         # 重新渲染嵌入指令
+```
+
+### 宽限期
+
+在 `.forge/config.md` 中设置 `docs.grace_period_until: YYYY-MM-DD`，宽限期内 error 降级为 warning，不阻断合并。CI 会在宽限期到期时发出通知。

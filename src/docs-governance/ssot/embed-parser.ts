@@ -107,6 +107,45 @@ export function parseEmbeds(
       beginLine = lineNum;
       // Calculate char offset just after the begin marker line (including its newline)
       beginCharEnd = lineEndOffset(lines, i);
+
+      // Check if end marker is on the same line
+      const afterBegin = line.substring(beginMatch.index + beginMatch[0].length);
+      const sameLineEnd = END_RE.exec(afterBegin);
+      if (sameLineEnd) {
+        const endTopic = sameLineEnd[1];
+        if (endTopic !== currentTopic) {
+          diagnostics.push(
+            diag(
+              "error",
+              `Topic mismatch: begin has "${currentTopic}" but end has "${endTopic}"`,
+              filePath,
+              lineNum,
+              "EMBED_TOPIC_MISMATCH",
+            ),
+          );
+          insideBlock = false;
+          i++;
+          continue;
+        }
+        // Single-line embed: extract content between markers
+        const innerStart = beginMatch.index + beginMatch[0].length;
+        const innerEnd = innerStart + sameLineEnd.index;
+        const innerContent = line.substring(innerStart, innerEnd);
+        directives.push({
+          file: filePath,
+          topic: currentTopic,
+          render: currentRender,
+          args: currentArgs,
+          beginLine,
+          endLine: lineNum,
+          innerContent,
+          kind: "ssot-block",
+        });
+        insideBlock = false;
+        i++;
+        continue;
+      }
+
       i++;
       continue;
     }

@@ -14,7 +14,7 @@ export function syncEmbeds(
   fileContent: string,
   filePath: DocPath,
   registry: RendererRegistry,
-  ssotData: Map<string, string>,
+  ssotData: Map<string, unknown>,
 ): { content: string; diagnostics: DiagnosticRecord[] } {
   const allDiagnostics: DiagnosticRecord[] = [];
   const { directives, diagnostics: parseDiags } = parseEmbeds(fileContent, filePath);
@@ -41,7 +41,6 @@ export function syncEmbeds(
   const sorted = [...directives].sort((a, b) => b.beginLine - a.beginLine);
 
   let content = fileContent;
-  const lines = content.split("\n");
 
   for (const directive of sorted) {
     if (directive.kind === "file-embed") {
@@ -57,7 +56,7 @@ export function syncEmbeds(
         });
         continue;
       }
-      content = replaceLineRange(content, directive.beginLine, directive.endLine, embedContent);
+      content = replaceLineRange(content, directive.beginLine, directive.endLine, String(embedContent));
     } else {
       // ssot-block — resolve renderer and render
       const renderer = registry.resolve(directive.render);
@@ -83,13 +82,28 @@ export function syncEmbeds(
 
       allDiagnostics.push(...result.diagnostics);
 
-      // Build replacement: begin marker + rendered content + end marker
-      const lines = content.split("\n");
-      const beginLine = lines[directive.beginLine - 1];
-      const endLine = lines[directive.endLine - 1];
-      const replacement = `${beginLine}\n${result.markdown}\n${endLine}`;
-
-      content = replaceLineRange(content, directive.beginLine, directive.endLine, replacement);
+      if (directive.beginLine === directive.endLine) {
+        // Single-line embed: replace inner content between markers on same line
+        const lines = content.split("\n");
+        const line = lines[directive.beginLine - 1];
+        const beginMarker = `<!-- ssot:begin topic=${directive.topic} render=${directive.render}`;
+        const endMarker = `<!-- ssot:end topic=${directive.topic} -->`;
+        const beginIdx = line.indexOf(beginMarker);
+        const endIdx = line.indexOf(endMarker);
+        if (beginIdx !== -1 && endIdx !== -1) {
+          const afterBegin = beginIdx + line.substring(beginIdx).indexOf("-->") + 3;
+          lines[directive.beginLine - 1] =
+            line.substring(0, afterBegin) + result.markdown + line.substring(endIdx);
+          content = lines.join("\n");
+        }
+      } else {
+        // Multi-line embed: begin marker + rendered content + end marker
+        const lines = content.split("\n");
+        const beginLine = lines[directive.beginLine - 1];
+        const endLine = lines[directive.endLine - 1];
+        const replacement = `${beginLine}\n${result.markdown}\n${endLine}`;
+        content = replaceLineRange(content, directive.beginLine, directive.endLine, replacement);
+      }
     }
   }
 

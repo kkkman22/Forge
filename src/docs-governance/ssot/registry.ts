@@ -3,10 +3,10 @@ import type { Config, DiagnosticRecord, DocPath, SsotRegistryEntry } from "../ty
 const RESERVED_PREFIXES = ["internal-", "debug-", "forge-meta-"] as const;
 
 const DEFAULT_SSOT_ENTRIES: readonly SsotRegistryEntry[] = [
-  { topic: "commands", source: "commands/*.md", renderer: "commands-table" },
+  { topic: "commands", source: "docs/_ssot/commands.json", renderer: "commands-table" },
   { topic: "routing", source: "docs/_ssot/routing.json", renderer: "routing-table" },
   { topic: "security-tiers", source: "docs/_ssot/security-tiers.json", renderer: "security-tiers" },
-  { topic: "gate-skills", source: "docs/_ssot/gate-skills.json", renderer: "commands-table" },
+  { topic: "gate-skills", source: "docs/_ssot/gate-skills.json", renderer: "json-list" },
 ];
 
 function hasReservedPrefix(topic: string): string | false {

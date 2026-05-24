@@ -4,7 +4,7 @@ import { loadConfigWithDefaults } from "../config.js";
 import { createRendererRegistry } from "./renderer-registry.js";
 import type { RendererFn } from "../types.js";
 
-export function loadSsotData(rootDir: string): Map<string, string> {
+export function loadSsotData(rootDir: string): Map<string, unknown> {
   const configPath = resolve(rootDir, ".forge/config.md");
   let raw = "";
   try {
@@ -14,13 +14,23 @@ export function loadSsotData(rootDir: string): Map<string, string> {
   }
 
   const config = loadConfigWithDefaults(raw);
-  const ssotData = new Map<string, string>();
+  const ssotData = new Map<string, unknown>();
 
   for (const entry of config.docs.ssot_sources) {
     const sourcePath = resolve(rootDir, entry.source);
     try {
       if (existsSync(sourcePath)) {
-        ssotData.set(entry.topic, readFileSync(sourcePath, "utf-8"));
+        const content = readFileSync(sourcePath, "utf-8");
+        // Attempt JSON parse for .json files
+        if (sourcePath.endsWith(".json")) {
+          try {
+            ssotData.set(entry.topic, JSON.parse(content));
+          } catch {
+            ssotData.set(entry.topic, content);
+          }
+        } else {
+          ssotData.set(entry.topic, content);
+        }
       }
     } catch {
       // Source file missing — renderer will handle null source
