@@ -1,0 +1,77 @@
+name: Docs Governance
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - "docs/**"
+      - ".forge/config.md"
+      - "docs/_ssot/**"
+      - "*.md"
+      - "src/docs-governance/**"
+      - "scripts/check-docs-*"
+      - "scripts/build-docs-*"
+  pull_request:
+    paths:
+      - "docs/**"
+      - ".forge/config.md"
+      - "docs/_ssot/**"
+      - "*.md"
+      - "src/docs-governance/**"
+      - "scripts/check-docs-*"
+      - "scripts/build-docs-*"
+
+permissions:
+  contents: read
+
+jobs:
+  docs-check:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version-file: ".nvmrc"
+          cache: "npm"
+
+      - run: npm ci
+
+      - name: Run docs governance checks
+        run: npm run docs:check -- --ci
+        timeout-minutes: 10
+        env:
+          CI: "true"
+
+      - name: Upload diagnostics on failure
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: docs-governance-diagnostics
+          path: docs-governance-diagnostics.ndjson
+          retention-days: 7
+
+  docs-bypass-detect:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Detect --no-verify bypass
+        run: |
+          # Check recent commits for --no-verify trailer or missing hook traces
+          COMMITS=$(git log --format='%H %s' origin/main..HEAD 2>/dev/null || git log --format='%H %s' -5)
+
+          while IFS=' ' read -r hash msg; do
+            # Check for --no-verify in commit trailers
+            TRAILERS=$(git log -1 --format='%(trailers)' "$hash" 2>/dev/null)
+            if echo "$TRAILERS" | grep -qi "no-verify"; then
+              echo "::error::Commit $hash ($msg) has --no-verify trailer. Docs governance checks were bypassed."
+              exit 1
+            fi
+          done <<< "$COMMITS"
+
+          echo "No --no-verify bypass detected."

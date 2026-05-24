@@ -1,0 +1,107 @@
+#!/bin/sh
+# docs-governance pre-commit hook
+# Decision tree: detect what changed, run only relevant checkers.
+# Lightweight path (no docs/ changes): exit 0 immediately.
+
+set -e
+
+# ── Grace period check ──
+GRACE_UNTIL=""
+CONFIG_FILE=".forge/config.md"
+if [ -f "$CONFIG_FILE" ]; then
+  GRACE_UNTIL=$(grep -A1 'grace_period_until' "$CONFIG_FILE" 2>/dev/null | grep -oE '[0-9]{4}-[0-9]{2}-[0-9]{2}' | head -1)
+fi
+
+TODAY=$(date -u +%Y-%m-%d 2>/dev/null || date +%Y-%m-%d)
+IN_GRACE=""
+if [ -n "$GRACE_UNTIL" ] && [ "$TODAY" \< "$GRACE_UNTIL" ]; then
+  IN_GRACE="1"
+fi
+
+# ── Detect changed files ──
+STAGED=$(git diff --cached --name-only 2>/dev/null || echo "")
+
+if [ -z "$STAGED" ]; then
+  # No staged files — nothing to check
+  exit 0
+fi
+
+# ── Lightweight path: no docs/ changes ──
+DOCS_CHANGED=$(echo "$STAGED" | grep -c "^docs/" || echo "0")
+CONFIG_CHANGED=$(echo "$STAGED" | grep -c "^\.forge/config\.md$" || echo "0")
+ROOT_MD_CHANGED=$(echo "$STAGED" | grep -c "^[A-Z][^.]*\.md$" || echo "0")
+SSOT_CHANGED=$(echo "$STAGED" | grep -c "^docs/_ssot/" || echo "0")
+
+if [ "$DOCS_CHANGED" -eq 0 ] && [ "$CONFIG_CHANGED" -eq 0 ] && [ "$ROOT_MD_CHANGED" -eq 0 ] && [ "$SSOT_CHANGED" -eq 0 ]; then
+  # Lightweight path — no docs-related changes
+  exit 0
+fi
+
+echo "📝 docs-governance: checking staged changes..."
+
+FAILED=0
+
+# ── Helper: run checker with grace period support ──
+run_checker() {
+  label="$1"
+  shift
+  if [ -n "$IN_GRACE" ]; then
+    # Grace period: downgrade errors to warnings
+    output=$("$@" 2>&1) && rc=$? || rc=$?
+    if [ "$rc" -ne 0 ]; then
+      echo "  ⚠️  $label: issues found (grace period — not blocking)"
+      echo "$output" | head -5
+      # Don't set FAILED during grace period
+    else
+      echo "  ✅ $label: clean"
+    fi
+  else
+    output=$("$@" 2>&1) && rc=$? || rc=$?
+    if [ "$rc" -ne 0 ]; then
+      echo "  ❌ $label: failed"
+      echo "$output"
+      FAILED=1
+    else
+      echo "  ✅ $label: clean"
+    fi
+  fi
+}
+
+# ── Decision tree ──
+
+# Root .md files → root whitelist check
+if [ "$ROOT_MD_CHANGED" -ne 0 ]; then
+  run_checker "Root whitelist" npx tsx scripts/check-docs-root-whitelist.ts
+fi
+
+# Docs/ files → frontmatter, bilingual, index, updated checks
+if [ "$DOCS_CHANGED" -ne 0 ]; then
+  run_checker "Frontmatter" npx tsx scripts/check-docs-frontmatter.ts
+  run_checker "Bilingual" npx tsx scripts/check-docs-bilingual.ts
+  run_checker "Index sync" npx tsx scripts/check-docs-index.ts
+  run_checker "Updated" npx tsx scripts/check-docs-updated.ts
+fi
+
+# Docs/ or SSOT → embed sync check
+if [ "$DOCS_CHANGED" -ne 0 ] || [ "$SSOT_CHANGED" -ne 0 ]; then
+  run_checker "Embed sync" npx tsx scripts/check-docs-embeds.ts
+fi
+
+# Config changes → staleness, links, quota
+if [ "$CONFIG_CHANGED" -ne 0 ]; then
+  run_checker "Staleness" npx tsx scripts/check-docs-staleness.ts
+  run_checker "Links" npx tsx scripts/check-docs-links.ts
+  run_checker "Quota" npx tsx scripts/check-docs-quota.ts
+fi
+
+# ── Result ──
+
+if [ "$FAILED" -ne 0 ]; then
+  echo ""
+  echo "🚫 docs-governance checks failed."
+  echo "   Run \`npm run docs:build\` to regenerate, then re-stage."
+  exit 1
+fi
+
+echo "  ✅ All docs-governance checks passed."
+exit 0
