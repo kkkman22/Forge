@@ -1,5 +1,5 @@
-import { statSync as fsStatSync } from "node:fs";
 import type { statSync as StatSyncFn } from "node:fs";
+import { statSync as fsStatSync } from "node:fs";
 
 export const CMUX_GATED_SUBS: ReadonlySet<string> = new Set([
   "forge-cmux-sidebar-sync",
