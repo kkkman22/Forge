@@ -122,7 +122,7 @@ npm link && forge-loop "你的目标"            # 全局链接后直接使用
 
 ### Agent Teams 在 cmux 下原生可用
 
-cmux 自 0.63 起原生支持 Claude Code Teams（`cmux claude-teams`），自 0.64.5 起支持 Codex Teams（`cmux codex-teams`）。Forge Tier 1 PoC `/forge decide --mode=teams` 在 cmux 终端中**零额外配置**——cmux 自动设置 `CLAUDE_CODE_EXPERIMENTAL_AGENT_TEAMS=1`、注入 tmux shim、把 teammate 显示为原生 cmux 分屏（带 sidebar 元数据 + 注意力提醒环 + macOS 桌面通知）。
+cmux 自 0.63 起原生支持 Claude Code Teams（`cmux claude-teams`）。Forge Tier 1 PoC `/forge decide --mode=teams` 在 cmux 终端中**零额外配置**——cmux 自动设置 `CLAUDE_CODE_EXPERIMENTAL_AGENT_TEAMS=1`、注入 tmux shim、把 teammate 显示为原生 cmux 分屏（带 sidebar 元数据 + 注意力提醒环 + macOS 桌面通知）。
 
 详见：[Claude Code Teams 集成（cmux 官方文档）](https://cmux.com/docs/agent-integrations/claude-code-teams)。
 
