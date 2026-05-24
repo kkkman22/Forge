@@ -1,7 +1,9 @@
 ---
-name: forge-loop-signals
-description: Visual signals for Forge Loop long-running iterations in cmux sidebar
-trigger: forge loop signals, cmux loop, loop monitor
+description: "Visual signals for Forge Loop long-running iterations in cmux sidebar. Requires cmux installed."
+dispatch_mode: inline
+allowed_tools:
+  - Read
+  - Bash
 ---
 
 # Forge Loop Signals
