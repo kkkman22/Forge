@@ -88,6 +88,83 @@ cleanup_dedupe_stale() {
 }
 
 # ---------------------------------------------------------------------------
+# Progress format helpers & artifact-based phase detection
+# ---------------------------------------------------------------------------
+
+# Count pending tasks in a progress file (supports both checkbox and Status: formats)
+count_pending() {
+  local file="$1"
+  if [ ! -f "$file" ]; then
+    echo "0"
+    return
+  fi
+  local checkbox_pending=0 status_pending=0 in_progress=0
+  checkbox_pending=$(grep -c '\- \[ \]' "$file" 2>/dev/null) || true
+  checkbox_pending=${checkbox_pending:-0}
+  status_pending=$(grep -c 'Status: PENDING' "$file" 2>/dev/null) || true
+  status_pending=${status_pending:-0}
+  in_progress=$(grep -c 'Status: IN_PROGRESS' "$file" 2>/dev/null) || true
+  in_progress=${in_progress:-0}
+  echo $(( checkbox_pending + status_pending + in_progress ))
+}
+
+# Detect effective phase from artifacts (fallback when status.md phase is stale).
+# Trusts review/test/ship files over status.md because the model often forgets
+# to update the phase field after transitions.
+detect_effective_phase() {
+  local declared_phase="$1"
+  local topic="$2"
+
+  local latest_review latest_test ship_file
+  latest_review=$(find_latest "$FORGE_DIR/reviews" '*.md')
+  latest_test=$(find_latest "$FORGE_DIR/test-results" '*.md')
+  ship_file="$FORGE_DIR/ship/${topic}.md"
+
+  # If review exists and passed → phase is at least "review"
+  if [ -n "$latest_review" ]; then
+    local review_result p0 p1
+    review_result=$(read_field "$latest_review" "result")
+    p0=$(read_field "$latest_review" "p0_count")
+    p1=$(read_field "$latest_review" "p1_count")
+    p0=${p0:-0}
+    p1=${p1:-0}
+
+    if [ "$review_result" = "pass" ] && [ "$p0" -eq 0 ] && [ "$p1" -eq 0 ]; then
+      # Review passed — check if test also passed
+      if [ -n "$latest_test" ]; then
+        local test_result
+        test_result=$(read_field "$latest_test" "result")
+        if [ "$test_result" = "pass" ]; then
+          # Test passed — check if ship done
+          if [ -f "$ship_file" ]; then
+            echo "ship"
+            return
+          fi
+          echo "test"
+          return
+        fi
+      fi
+      echo "review"
+      return
+    fi
+  fi
+
+  # No passed review — check if build tasks are complete
+  local progress_file="$FORGE_DIR/progress/${topic}.md"
+  if [ -f "$progress_file" ] && [ -s "$progress_file" ]; then
+    local pending
+    pending=$(count_pending "$progress_file")
+    if [ "$pending" -eq 0 ]; then
+      echo "build"
+      return
+    fi
+  fi
+
+  # Default: trust status.md
+  echo "$declared_phase"
+}
+
+# ---------------------------------------------------------------------------
 # Script-local helpers (existing)
 # ---------------------------------------------------------------------------
 
@@ -153,13 +230,70 @@ cleanup_dedupe_stale
 # Read current topic for dedupe hash
 current_topic=$(read_field "$STATUS_FILE" "current_task")
 
+# Compute effective phase from artifacts (handles stale status.md phase)
+effective_phase=$(detect_effective_phase "$current_phase" "$current_topic")
+
 # Only activate for standard and full tiers (light path is too simple for auto-fix)
 if [ "$current_tier" = "light" ]; then
   exit 0
 fi
 
+# ---------------------------------------------------------------------------
+# Context Exhaustion Heuristic (model-independent)
+# ---------------------------------------------------------------------------
+# GLM 5.1 does not expose context utilization metrics, so the model-level
+# detection (>80%) never fires. This heuristic uses git commit count on the
+# current branch as a proxy: each build task = 1 atomic commit, so N commits
+# ≈ N tasks worth of context consumed.
+#
+# Default threshold: 12 commits (configurable via .forge/config.md
+# context_commit_threshold). Can be overridden with
+# FORGE_CONTEXT_COMMIT_THRESHOLD env var.
+
+# Case 0: Context exhaustion by commit count proxy
+if [ "$effective_phase" = "build" ] || [ "$effective_phase" = "review" ] || [ "$effective_phase" = "test" ]; then
+  exhaustion_flag=$(read_field "$STATUS_FILE" "exhaustion_pending")
+  if [ "$exhaustion_flag" != "true" ]; then
+    # Determine threshold: env var > config.md > default 12
+    ctx_threshold="${FORGE_CONTEXT_COMMIT_THRESHOLD:-}"
+    if [ -z "$ctx_threshold" ]; then
+      ctx_threshold=$(read_field "$FORGE_DIR/config.md" "context_commit_threshold")
+    fi
+    ctx_threshold=${ctx_threshold:-12}
+
+    # Count commits on current branch since diverging from main
+    merge_base=$(git merge-base main HEAD 2>/dev/null || echo "")
+    if [ -n "$merge_base" ]; then
+      commit_count=$(git rev-list --count "${merge_base}..HEAD" 2>/dev/null || echo "0")
+      if [ "$commit_count" -ge "$ctx_threshold" ]; then
+        # Set exhaustion flag so model-level protocol can pick up
+        # (add field to status.md)
+        if grep -q '^exhaustion_pending:' "$STATUS_FILE" 2>/dev/null; then
+          sed -i.bak 's/^exhaustion_pending:.*/exhaustion_pending: "true"/' "$STATUS_FILE" 2>/dev/null
+          rm -f "${STATUS_FILE}.bak" 2>/dev/null
+        else
+          # Insert after the last frontmatter field before ---
+          sed -i.bak '/^---$/i\
+exhaustion_pending: "true"\
+' "$STATUS_FILE" 2>/dev/null
+          rm -f "${STATUS_FILE}.bak" 2>/dev/null
+        fi
+
+        echo "⚠️ [CONTEXT HEURISTIC] 检测到 ${commit_count} 个 commits（阈值 ${ctx_threshold}）。上下文可能已接近耗尽。"
+        echo ""
+        echo "请执行以下操作："
+        echo "1. 将当前进度快照写入 .forge/knowledge/sessions/ interim 文件"
+        echo "2. 立即调用 Skill(skill=\"forge\", args=\"resume\") 恢复上下文并继续"
+        echo ""
+        echo "如需继续（非推荐），运行任意命令继续。"
+        exit 0
+      fi
+    fi
+  fi
+fi
+
 # Case 1: Review just completed with P0/P1 issues → activate auto-fix loop
-if [ "$current_phase" = "review" ] || [ "$current_phase" = "test" ]; then
+if [ "$effective_phase" = "review" ] || [ "$effective_phase" = "test" ]; then
   blocking_count=$(count_blocking_issues)
 
   if [ "$blocking_count" -gt 0 ]; then
@@ -212,12 +346,13 @@ if [ "$auto_fix_active" = "true" ]; then
 fi
 
 # Case 3: Build phase incomplete — inject resume command
-if [ "$current_phase" = "build" ]; then
+if [ "$effective_phase" = "build" ]; then
   progress_count=$(find "$FORGE_DIR/progress" -maxdepth 1 -name '*.md' 2>/dev/null | wc -l | tr -d ' ')
   if [ "$progress_count" -gt 0 ]; then
-    pending=$(find "$FORGE_DIR/progress" -maxdepth 1 -name '*.md' -exec grep -c '\- \[ \]' {} + 2>/dev/null | awk '{s+=$1}END{print s}' || true)
-    pending=$(echo "$pending" | head -1)
-    pending=${pending:-0}
+    pending=0
+    for pf in "$FORGE_DIR/progress"/*.md; do
+      [ -f "$pf" ] && pending=$(( pending + $(count_pending "$pf") ))
+    done
     if [ "$pending" -gt 0 ]; then
       exhaustion_flag=$(read_field "$STATUS_FILE" "exhaustion_pending")
 
@@ -276,10 +411,12 @@ current_mode=$(read_field "$STATUS_FILE" "mode")
 if [ "$current_mode" = "autonomous" ]; then
   progress_count=$(find "$FORGE_DIR/progress" -maxdepth 1 -name '*.md' 2>/dev/null | wc -l | tr -d ' ')
   if [ "${progress_count:-0}" -gt 0 ]; then
-    pending=$(find "$FORGE_DIR/progress" -maxdepth 1 -name '*.md' -exec grep -c '\- \[ \]' {} + 2>/dev/null | awk '{s+=$1}END{print s}' | tail -1 || echo 0)
-    pending=${pending:-0}
+    pending=0
+    for pf in "$FORGE_DIR/progress"/*.md; do
+      [ -f "$pf" ] && pending=$(( pending + $(count_pending "$pf") ))
+    done
     if [ "$pending" -gt 0 ]; then
-      hash=$(compute_phase_state_hash "$current_phase" "$current_tier" "$current_topic" "0" "$pending")
+      hash=$(compute_phase_state_hash "$effective_phase" "$current_tier" "$current_topic" "0" "$pending")
       if check_and_mark_dedupe "$hash"; then
         echo "🔄 [LOOP HANDOFF] 当前 phase 已 ship，但 progress 中仍有未完成任务（进入下一 Sprint）。"
         echo "请立即调用 Skill(skill=\"forge\", args=\"resume\") 恢复上下文并推进下一轮迭代。"
@@ -293,7 +430,7 @@ if [ "$current_mode" = "autonomous" ]; then
   if [ -n "$skill_sequence" ] && [ -n "$loop_iteration" ]; then
     total_phases=$(echo "$skill_sequence" | tr ',' '\n' | wc -l | tr -d ' ')
     if [ "${loop_iteration:-0}" -lt "$total_phases" ]; then
-      hash=$(compute_phase_state_hash "$current_phase" "$current_tier" "$current_topic" "$total_phases" "$loop_iteration")
+      hash=$(compute_phase_state_hash "$effective_phase" "$current_tier" "$current_topic" "$total_phases" "$loop_iteration")
       if check_and_mark_dedupe "$hash"; then
         echo "🔄 [LOOP HANDOFF] 当前 phase 已 ship，但 progress 中仍有未完成任务（进入下一 Sprint）。"
         echo "请立即调用 Skill(skill=\"forge\", args=\"resume\") 恢复上下文并推进下一轮迭代。"
@@ -304,15 +441,15 @@ if [ "$current_mode" = "autonomous" ]; then
 fi
 
 # Case 5: plan → build (Requirement 3.2)
-# Trigger: phase=plan + plan approved + tier≠light + progress empty
-if [ "$current_phase" = "plan" ]; then
+# Trigger: effective_phase=plan + plan approved + tier≠light + progress empty
+if [ "$effective_phase" = "plan" ]; then
   latest_plan=$(find_latest "$FORGE_DIR/plans" '*.md')
   if [ -n "$latest_plan" ]; then
     plan_status=$(read_field "$latest_plan" "status")
     if [ "$plan_status" = "approved" ]; then
       progress_file="$FORGE_DIR/progress/${current_topic}.md"
       if [ ! -f "$progress_file" ] || [ ! -s "$progress_file" ]; then
-        hash=$(compute_phase_state_hash "$current_phase" "$current_tier" "$current_topic" "0" "0")
+        hash=$(compute_phase_state_hash "$effective_phase" "$current_tier" "$current_topic" "0" "0")
         if check_and_mark_dedupe "$hash"; then
           echo "🔄 [AUTO-ADVANCE] Plan 已批准，build 阶段未启动。"
           echo "请立即调用 Skill(skill=\"forge\", args=\"build\") 进入构建阶段。"
@@ -324,19 +461,17 @@ if [ "$current_phase" = "plan" ]; then
 fi
 
 # Case 6: build → review (Requirement 3.3)
-# Trigger: phase=build + progress all [x] + review missing or stale
-if [ "$current_phase" = "build" ]; then
+# Trigger: effective_phase=build + progress all done + review missing or stale
+if [ "$effective_phase" = "build" ]; then
   progress_file="$FORGE_DIR/progress/${current_topic}.md"
   if [ -f "$progress_file" ] && [ -s "$progress_file" ]; then
-    pending=$(grep -c '\- \[ \]' "$progress_file" 2>/dev/null || true)
-    pending=$(echo "$pending" | head -1)
-    pending=${pending:-0}
+    pending=$(count_pending "$progress_file")
     if [ "$pending" -eq 0 ]; then
       latest_review=$(find_latest "$FORGE_DIR/reviews" '*.md')
       progress_mtime=$(stat_mtime "$progress_file")
       review_mtime=$(stat_mtime "$latest_review")
       if [ -z "$latest_review" ] || [ "$review_mtime" -lt "$progress_mtime" ]; then
-        hash=$(compute_phase_state_hash "$current_phase" "$current_tier" "$current_topic" "0" "0")
+        hash=$(compute_phase_state_hash "$effective_phase" "$current_tier" "$current_topic" "0" "0")
         if check_and_mark_dedupe "$hash"; then
           echo "🔄 [AUTO-ADVANCE] Build 阶段所有任务已完成，review 未执行或已过期。"
           echo "请立即调用 Skill(skill=\"forge\", args=\"review\") 进入评审阶段。"
@@ -348,8 +483,8 @@ if [ "$current_phase" = "build" ]; then
 fi
 
 # Case 7: review → test (Requirement 3.4)
-# Trigger: phase=review + review pass (P0=0, P1=0) + tier∈(standard,full) + test missing
-if [ "$current_phase" = "review" ]; then
+# Trigger: effective_phase=review + review pass (P0=0, P1=0) + tier∈(standard,full) + test missing
+if [ "$effective_phase" = "review" ]; then
   latest_review=$(find_latest "$FORGE_DIR/reviews" '*.md')
   if [ -n "$latest_review" ]; then
     review_result=$(read_field "$latest_review" "result")
@@ -361,7 +496,7 @@ if [ "$current_phase" = "review" ]; then
       if [ "$current_tier" = "standard" ] || [ "$current_tier" = "full" ]; then
         latest_test=$(find_latest "$FORGE_DIR/test-results" '*.md')
         if [ -z "$latest_test" ]; then
-          hash=$(compute_phase_state_hash "$current_phase" "$current_tier" "$current_topic" "0" "0")
+          hash=$(compute_phase_state_hash "$effective_phase" "$current_tier" "$current_topic" "0" "0")
           if check_and_mark_dedupe "$hash"; then
             echo "🔄 [AUTO-ADVANCE] Review 已通过（P0=0, P1=0），test 阶段未执行。"
             echo "请立即调用 Skill(skill=\"forge\", args=\"test\") 进入测试阶段。"
@@ -374,15 +509,15 @@ if [ "$current_phase" = "review" ]; then
 fi
 
 # Case 8: test → ship (Requirement 3.5)
-# Trigger: phase=test + test pass + ship artifact missing
-if [ "$current_phase" = "test" ]; then
+# Trigger: effective_phase=test + test pass + ship artifact missing
+if [ "$effective_phase" = "test" ]; then
   latest_test=$(find_latest "$FORGE_DIR/test-results" '*.md')
   if [ -n "$latest_test" ]; then
     test_result=$(read_field "$latest_test" "result")
     if [ "$test_result" = "pass" ]; then
       ship_file="$FORGE_DIR/ship/${current_topic}.md"
       if [ ! -f "$ship_file" ]; then
-        hash=$(compute_phase_state_hash "$current_phase" "$current_tier" "$current_topic" "0" "0")
+        hash=$(compute_phase_state_hash "$effective_phase" "$current_tier" "$current_topic" "0" "0")
         if check_and_mark_dedupe "$hash"; then
           echo "🔄 [AUTO-ADVANCE] Test 阶段全部通过，ship 阶段未执行。"
           echo "请立即调用 Skill(skill=\"forge\", args=\"ship\") 进入交付阶段。"
@@ -394,13 +529,13 @@ if [ "$current_phase" = "test" ]; then
 fi
 
 # Case 9: ship → learn (Requirement 3.6)
-# Trigger: phase=ship + tier=full + ship artifact exists + learn missing
-if [ "$current_phase" = "ship" ] && [ "$current_tier" = "full" ]; then
+# Trigger: effective_phase=ship + tier=full + ship artifact exists + learn missing
+if [ "$effective_phase" = "ship" ] && [ "$current_tier" = "full" ]; then
   ship_file="$FORGE_DIR/ship/${current_topic}.md"
   if [ -f "$ship_file" ]; then
     learn_file="$FORGE_DIR/knowledge/sessions/${current_topic}-learned.md"
     if [ ! -f "$learn_file" ]; then
-      hash=$(compute_phase_state_hash "$current_phase" "$current_tier" "$current_topic" "0" "0")
+      hash=$(compute_phase_state_hash "$effective_phase" "$current_tier" "$current_topic" "0" "0")
       if check_and_mark_dedupe "$hash"; then
         echo "🔄 [AUTO-ADVANCE] Ship 已完成（tier=full），learn 阶段未执行。"
         echo "请立即调用 Skill(skill=\"forge\", args=\"learn\") 沉淀本次开发经验。"
