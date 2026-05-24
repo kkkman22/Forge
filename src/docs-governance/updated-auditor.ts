@@ -1,11 +1,11 @@
-interface DiffHunk {
+export interface DiffHunk {
   oldStart: number;
   oldCount: number;
   newStart: number;
   newCount: number;
 }
 
-interface FrontmatterRange {
+export interface FrontmatterRange {
   start: number;
   end: number;
 }

@@ -1,6 +1,6 @@
 import type { Config, DiagnosticRecord, DocPath } from "./types.js";
 
-interface QuotaOptions {
+export interface QuotaOptions {
   allowGrow?: string;
 }
 

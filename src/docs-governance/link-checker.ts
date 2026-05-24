@@ -1,9 +1,9 @@
-interface HeadingEntry {
+export interface HeadingEntry {
   text: string;
   anchor: string;
 }
 
-interface ExtractedLink {
+export interface ExtractedLink {
   target: string;
   line: number;
   raw: string;

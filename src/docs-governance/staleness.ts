@@ -1,6 +1,6 @@
 import type { Frontmatter } from "./types.js";
 
-interface StalenessConfig {
+export interface StalenessConfig {
   warning_days: number;
   critical_days: number;
   exempt_paths: readonly string[];
