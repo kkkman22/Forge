@@ -1,0 +1,8 @@
+[
+  { "label": "freeze-gate", "value": "PreToolUse hook — 冻结区硬阻断" },
+  { "label": "inject-defense", "value": "scanInput — Prompt injection 检测" },
+  { "label": "shell-guard", "value": "Git transaction 白名单构造器" },
+  { "label": "supply-chain", "value": "精确版本锁定 + npm audit CI" },
+  { "label": "property-test", "value": "109 property-based test 不变量验证" },
+  { "label": "ai-review", "value": "claude ultrareview — PR AI 评审" }
+]
