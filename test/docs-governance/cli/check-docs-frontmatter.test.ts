@@ -169,26 +169,25 @@ describe("check-docs-frontmatter CLI logic", () => {
 
   describe("file exclusion logic", () => {
     it("excludes INDEX*.md files from scanning", () => {
-      // INDEX files should be skipped by the CLI scan logic
-      const filename = "INDEX-getting-started.md";
+      const filename: string = "INDEX-getting-started.md";
       const shouldExclude = filename.match(/^INDEX/i) !== null || filename === "README.md";
       expect(shouldExclude).toBe(true);
     });
 
     it("excludes README.md from scanning", () => {
-      const filename = "README.md";
+      const filename: string = "README.md";
       const shouldExclude = filename === "README.md";
       expect(shouldExclude).toBe(true);
     });
 
     it("includes regular doc files", () => {
-      const filename = "guide.md";
+      const filename: string = "guide.md";
       const shouldExclude = filename.match(/^INDEX/i) !== null || filename === "README.md";
       expect(shouldExclude).toBe(false);
     });
 
     it("includes .en.md files", () => {
-      const filename = "guide.en.md";
+      const filename: string = "guide.en.md";
       const shouldExclude = filename.match(/^INDEX/i) !== null || filename === "README.md";
       expect(shouldExclude).toBe(false);
     });
