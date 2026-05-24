@@ -1,8 +1,8 @@
 import { describe, expect, it } from "vitest";
 import { loadSsotRegistry } from "../../../src/docs-governance/ssot/registry.js";
-import type { Config, DiagnosticRecord, SsotRegistryEntry } from "../../../src/docs-governance/types.js";
+import type { Config, DiagnosticRecord, DocPath, SsotRegistryEntry } from "../../../src/docs-governance/types.js";
 
-const EMPTY_FILE = "" as string & { readonly [Symbol.uniqueSymbol]: void };
+const EMPTY_FILE = "" as DocPath;
 
 function makeConfig(overrides: Partial<Config["docs"]> = {}): Config {
   return {
