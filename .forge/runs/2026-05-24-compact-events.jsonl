@@ -41,3 +41,19 @@
 {"timestamp":"2026-05-24T12:51:41Z","event":"precompact_snapshot","detail":"slug=cmux-skills-collapse phase=build"}
 {"timestamp":"2026-05-24T12:53:00Z","event":"postcompact_restore","detail":"slug=cmux-skills-collapse"}
 {"timestamp":"2026-05-24T12:53:00Z","event":"precompact_snapshot","detail":"slug=cmux-skills-collapse phase=build"}
+{"timestamp":"2026-05-24T13:02:17Z","event":"postcompact_restore","detail":"slug=cmux-skills-collapse"}
+{"timestamp":"2026-05-24T13:02:17Z","event":"precompact_snapshot","detail":"slug=cmux-skills-collapse phase=build"}
+{"timestamp":"2026-05-24T13:03:38Z","event":"postcompact_restore","detail":"slug=cmux-skills-collapse"}
+{"timestamp":"2026-05-24T13:03:38Z","event":"precompact_snapshot","detail":"slug=cmux-skills-collapse phase=build"}
+{"timestamp":"2026-05-24T13:04:46Z","event":"postcompact_restore","detail":"slug=cmux-skills-collapse"}
+{"timestamp":"2026-05-24T13:04:46Z","event":"precompact_snapshot","detail":"slug=cmux-skills-collapse phase=build"}
+{"timestamp":"2026-05-24T13:06:09Z","event":"postcompact_restore","detail":"slug=cmux-skills-collapse"}
+{"timestamp":"2026-05-24T13:06:09Z","event":"precompact_snapshot","detail":"slug=cmux-skills-collapse phase=build"}
+{"timestamp":"2026-05-24T13:07:24Z","event":"postcompact_restore","detail":"slug=cmux-skills-collapse"}
+{"timestamp":"2026-05-24T13:07:24Z","event":"precompact_snapshot","detail":"slug=cmux-skills-collapse phase=build"}
+{"timestamp":"2026-05-24T13:08:50Z","event":"postcompact_restore","detail":"slug=cmux-skills-collapse"}
+{"timestamp":"2026-05-24T13:08:50Z","event":"precompact_snapshot","detail":"slug=cmux-skills-collapse phase=build"}
+{"timestamp":"2026-05-24T13:10:05Z","event":"postcompact_restore","detail":"slug=cmux-skills-collapse"}
+{"timestamp":"2026-05-24T13:10:05Z","event":"precompact_snapshot","detail":"slug=cmux-skills-collapse phase=build"}
+{"timestamp":"2026-05-24T13:11:46Z","event":"postcompact_restore","detail":"slug=cmux-skills-collapse"}
+{"timestamp":"2026-05-24T13:11:46Z","event":"precompact_snapshot","detail":"slug=cmux-skills-collapse phase=build"}
