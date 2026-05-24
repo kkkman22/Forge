@@ -1,5 +1,5 @@
 import * as yaml from "yaml";
-import type { Config, DiagnosticRecord, SsotRegistryEntry } from "./types.js";
+import type { Config, DiagnosticRecord, DocPath, SsotRegistryEntry } from "./types.js";
 
 const DEFAULT_ROOT_WHITELIST = [
   "README.md",

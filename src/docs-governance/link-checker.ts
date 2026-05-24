@@ -69,7 +69,7 @@ export function extractLinks(text: string): ExtractedLink[] {
 
     // Inline links: [text](target)
     const inlineRe = /\[([^\]]*)\]\(([^)]+)\)/g;
-    let match;
+    let match: RegExpExecArray | null;
     while ((match = inlineRe.exec(line)) !== null) {
       const target = match[2].trim();
       if (isExternalLink(target)) continue;
@@ -82,8 +82,8 @@ export function extractLinks(text: string): ExtractedLink[] {
       const target = match[2].trim();
       if (isExternalLink(target)) continue;
       // Already captured by inline regex above, skip dedup by checking
-      if (!links.some((l) => l.raw === match[0] && l.line === i + 1)) {
-        links.push({ target, line: i + 1, raw: match[0] });
+      if (!links.some((l) => l.raw === match![0] && l.line === i + 1)) {
+        links.push({ target, line: i + 1, raw: match![0] });
       }
     }
 

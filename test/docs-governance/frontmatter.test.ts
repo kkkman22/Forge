@@ -307,7 +307,7 @@ describe("frontmatterSchema — mirror_of", () => {
   });
 
   it("allows mirror_of to be undefined", () => {
-    const { mirror_of: _, ...withoutMirror } = validInput;
+    const { mirror_of: _, ...withoutMirror } = validInput as any;
     expect(() => frontmatterSchema.parse(withoutMirror)).not.toThrow();
   });
 });
