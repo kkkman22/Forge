@@ -106,6 +106,28 @@
           }
         ]
       }
+    ],
+    "PreCompact": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "bash scripts/hook-precompact.sh 2>/dev/null || bash forge/scripts/hook-precompact.sh 2>/dev/null || bash ~/.claude/skills/forge/scripts/hook-precompact.sh 2>/dev/null || true",
+            "timeout": 5
+          }
+        ]
+      }
+    ],
+    "PostCompact": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "bash scripts/hook-postcompact.sh 2>/dev/null || bash forge/scripts/hook-postcompact.sh 2>/dev/null || bash ~/.claude/skills/forge/scripts/hook-postcompact.sh 2>/dev/null || true",
+            "timeout": 5
+          }
+        ]
+      }
     ]
   },
   "env": {
