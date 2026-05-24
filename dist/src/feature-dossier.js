@@ -48,6 +48,10 @@ export function deriveTopicFromPath(relPath) {
     m = relPath.match(/^specs\/([^/]+)\/spec\.md$/);
     if (m)
         return m[1];
+    // specs/<topic>/{requirements|design|tasks|bugfix}.md (three-file / bugfix layout)
+    m = relPath.match(/^specs\/([^/]+)\/(requirements|design|tasks|bugfix)\.md$/);
+    if (m)
+        return m[1];
     // plans|reviews|progress|findings|debug/<topic>.md
     m = relPath.match(/^(plans|reviews|progress|findings|debug)\/(.+)\.md$/);
     if (m)
@@ -66,8 +70,9 @@ export function matchStageFiles(stage, topic, files) {
     }
     if (stage === "specs") {
         // specs uses directory matching; files are from inside specs/<topic>/
-        // Only spec.md is relevant
-        return files.includes("spec.md") ? ["spec.md"] : [];
+        // Match legacy spec.md and three-file layout (requirements/design/tasks/bugfix)
+        const specFiles = ["spec.md", "requirements.md", "design.md", "tasks.md", "bugfix.md"];
+        return files.filter((f) => specFiles.includes(f));
     }
     // Exact match for plans, reviews, progress, findings, debug
     const exactRe = new RegExp(`^${escaped}\\.md$`);
@@ -100,12 +105,13 @@ export function scanStagesForTopic(topic, forgeRoot) {
             continue;
         }
         if (stage === "specs") {
-            // specs/<topic>/spec.md
+            // specs/<topic>/ — legacy spec.md and/or three-file layout
             const specDir = path.join(stageDir, topic);
             try {
                 const specFiles = fs.readdirSync(specDir);
-                if (specFiles.includes("spec.md")) {
-                    stages.specs.push(readStageFile(stageDir, `${topic}/spec.md`, stage));
+                const matched = matchStageFiles("specs", topic, specFiles);
+                for (const name of matched) {
+                    stages.specs.push(readStageFile(stageDir, `${topic}/${name}`, stage));
                 }
             }
             catch {
@@ -305,7 +311,12 @@ export function discoverTopics(forgeRoot) {
                 if (!stat.isDirectory())
                     continue;
                 const subFiles = fs.readdirSync(entryPath);
-                if (subFiles.includes("spec.md")) {
+                const hasLegacy = subFiles.includes("spec.md");
+                const hasThreeFile = subFiles.includes("requirements.md") ||
+                    subFiles.includes("design.md") ||
+                    subFiles.includes("tasks.md") ||
+                    subFiles.includes("bugfix.md");
+                if (hasLegacy || hasThreeFile) {
                     topicSet.add(entry);
                 }
                 else {

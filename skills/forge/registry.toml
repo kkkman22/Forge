@@ -1,7 +1,7 @@
 # AUTO-GENERATED — DO NOT EDIT
 # Source: skills/forge/lib/<sub>/instructions.md frontmatter
 # Regen: node scripts/regen-skill-registry.mjs
-# Last regen: 2026-05-23T12:16:55.450Z
+# Last regen: 2026-05-24T06:38:17.208Z
 
 [abort]
 dispatch_mode = "inline"
@@ -57,6 +57,21 @@ description = "Bugfix three-file workflow — uses runBugfixOrchestration with b
 dispatch_mode = "inline"
 allowed_tools = ["Read", "Edit", "Bash"]
 description = "Fix merge conflicts using three-zone forge directory classification. Use when git merge or rebase produces conflicts inside the forge config tree."
+
+[forge-cmux-browser-qa]
+dispatch_mode = "inline"
+allowed_tools = ["Read", "Bash"]
+description = "Browser-based QA verification using cmux browser commands during /forge test. Requires cmux installed."
+
+[forge-cmux-loop-signals]
+dispatch_mode = "inline"
+allowed_tools = ["Read", "Bash"]
+description = "Visual signals for Forge Loop long-running iterations in cmux sidebar. Requires cmux installed."
+
+[forge-cmux-sidebar-sync]
+dispatch_mode = "inline"
+allowed_tools = ["Read", "Bash"]
+description = "Keep cmux sidebar in sync with Forge lifecycle state changes. Requires cmux installed."
 
 [grill]
 dispatch_mode = "fork"

@@ -5,6 +5,7 @@
  * ambiguity_score ([0, 1]) and a SpecHealthReport with verdict + recommendations.
  */
 import type { BannedPatternRegistry, GlossaryRegistry } from "./pack/types.js";
+import type { SpecBundle } from "./spec-bundle.js";
 export type SpecHealthDimension = "leak" | "scenario" | "glossary";
 export interface DimensionScore {
     dimension: SpecHealthDimension;
@@ -57,5 +58,12 @@ export interface HealthCache {
     generatedAt: string;
 }
 export declare function computeSpecHash(content: string): string;
+/**
+ * Compute a stable hash for a SpecBundle.
+ * Three-file layout: concatenates raw content of requirements → design → tasks.
+ * Legacy-single layout: hashes the primary content directly.
+ * Order is fixed for deterministic output.
+ */
+export declare function computeBundleHash(bundle: SpecBundle, _readFile?: (filePath: string) => string): string;
 export declare function parseHealthCache(frontmatter: Record<string, unknown>): HealthCache | null;
 export declare function shouldRecompute(currentHash: string, cache: HealthCache | null): boolean;

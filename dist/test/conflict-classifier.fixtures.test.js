@@ -28,6 +28,16 @@ const fixtures = [
     [".forge/plans/c.md", "frozen"],
     [".forge/plans/d.md", "frozen"],
     [".forge/plans/e.md", "frozen"],
+    // Frozen zone: three-file layout (T-09.1)
+    [".forge/specs/auth/requirements.md", "frozen"],
+    [".forge/specs/auth/design.md", "frozen"],
+    [".forge/specs/auth/tasks.md", "frozen"],
+    [".forge/specs/user-api/requirements.md", "frozen"],
+    [".forge/specs/user-api/design.md", "frozen"],
+    [".forge/specs/user-api/tasks.md", "frozen"],
+    [".forge/specs/payment/bugfix.md", "frozen"],
+    // Open zone: legacy backup files (not frozen)
+    [".forge/specs/auth/spec.legacy.md", "open"],
     // Guarded zone (21 paths)
     [".forge/progress/auth.md", "guarded"],
     [".forge/progress/user-api.md", "guarded"],

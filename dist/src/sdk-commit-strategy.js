@@ -56,14 +56,10 @@ export function buildCommitMessageForPhase(phase, iterationNumber, summary, obje
  * @returns A `CommitStrategyResult` with adjusted effects and optional state adjustment.
  */
 export function applySkillAwareCommitStrategy(effects, phase, success, iterationNumber, summary, objective, currentCommitCount) {
-    // When the agent doesn't report a skill_phase_completed and the scheduler
-    // defaults to "router", allow commits through — the skill-aware commit
-    // strategy should only filter when the agent is actively participating in
-    // a multi-phase SKILL workflow.
-    if (!phase || phase === "router") {
-        // No skill phase reported — allow the orchestrator's default commit/rollback
-        // effects through unchanged. This happens when the agent doesn't set
-        // skill_phase_completed (e.g. skill-aware mode without actual SKILL usage).
+    // No skill phase reported — allow the orchestrator's default commit/rollback
+    // effects through unchanged. This happens when the agent doesn't set
+    // skill_phase_completed (e.g. skill-aware mode without actual SKILL usage).
+    if (!phase) {
         return { effects };
     }
     if (shouldCommitForPhase(phase, success)) {

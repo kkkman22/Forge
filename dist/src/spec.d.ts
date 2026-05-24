@@ -14,7 +14,15 @@
  */
 import { type TermCandidate } from "./glossary-extractor.js";
 export { renderGlossaryConflictPrompt, runGlossaryCheck } from "./glossary-hook.js";
+export type { BugfixOrchestrationResult } from "./spec-bugfix-orchestration.js";
+export { runBugfixOrchestration } from "./spec-bugfix-orchestration.js";
+export type { SpecKind } from "./spec-bundle.js";
+export type { ExternalSpecContent, ImportModeResult, ParseSpecArgsResult } from "./spec-import.js";
+export { parseExternalSpec, parseSpecArgs, runImportMode, scoreImportedContent, } from "./spec-import.js";
+export { detectSpecKind } from "./spec-kind.js";
 export { detectSpecLeak, loadBannedPatterns } from "./spec-leak-detector.js";
+export type { ContractGateResult, EarsEnforcementResult } from "./spec-validation.js";
+export { detectSpecLeakFromBundle, enforceEarsSyntax, validateContractGate, } from "./spec-validation.js";
 export interface SpecFrontmatter {
     feature: string;
     status: "draft" | "locked";
@@ -157,3 +165,29 @@ export declare function getCoreSubdomains(enabledPacks: Array<{
 export declare function shouldTriggerBusinessAnalyst(currentContext: string | undefined, enabledPacks: Array<{
     featureFlags: Record<string, unknown>;
 }>): boolean;
+import type { BugfixOrchestrationResult } from "./spec-bugfix-orchestration.js";
+import type { SpecBundle } from "./spec-bundle.js";
+import type { ImportModeResult } from "./spec-import.js";
+export type SpecRouteResult = {
+    mode: "default";
+} | {
+    mode: "import";
+    path: string;
+    result: ImportModeResult;
+} | {
+    mode: "feature";
+    feature: string;
+} | {
+    mode: "bugfix";
+    bundle: SpecBundle;
+    result: BugfixOrchestrationResult;
+};
+/**
+ * Route spec entry based on argv and feature directory contents.
+ *
+ * - Import mode: `/forge spec <file.md>` → parseSpecArgs → runImportMode
+ * - Bugfix mode: bugfix.md detected → runBugfixOrchestration
+ * - Feature mode: `/forge spec <feature-name>` → feature flow
+ * - Default: `/forge spec` → default flow
+ */
+export declare function routeSpecEntry(argv: string[], featureDir: string, outputDir: string, existingBundle?: SpecBundle): SpecRouteResult;

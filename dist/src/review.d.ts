@@ -199,12 +199,6 @@ export interface ReviewSubagentContext {
     specPath?: string;
     changedFiles: string[];
 }
-/**
- * Build the list of SubagentInvocations for a review.
- *
- * Always includes quality-check and security-check.
- * Includes spec-check only when a locked Spec is available (hasSpec === true).
- */
 export declare function buildReviewSubagents(context: ReviewSubagentContext): SubagentInvocation[];
 export declare function mergeReviewResults(results: SubagentResult[]): MergedFinding[];
 /**

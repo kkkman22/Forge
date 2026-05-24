@@ -1,3 +1,5 @@
+import type { GateBlockReason } from "./cmux-gate.js";
+export type { GateBlockReason } from "./cmux-gate.js";
 export interface AuditEntry {
     ts: string;
     sub: string;
@@ -8,6 +10,9 @@ export interface AuditEntry {
     outcome: "success" | "failure" | "rejected";
     prev_hmac: string;
     hmac: string;
+    gate_result: "go" | "n_a" | "blocked";
+    cmux_available: boolean | null;
+    gate_reason: GateBlockReason | null;
 }
 export interface AuditOpts {
     auditDir?: string;

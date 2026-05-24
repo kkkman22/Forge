@@ -11,7 +11,8 @@
  * Design reference: sdk-driver-decomposition § design.md
  * **Validates: Requirements 4.1, 4.2, 10.6**
  */
-import { buildSkillAwarePrompt } from "./context-accumulator.js";
+import { buildSkillAwarePrompt, compactNotesContent } from "./context-accumulator.js";
+import { isContextOverflowError } from "./context-overflow.js";
 import { FrozenZoneViolation } from "./effect-executor.js";
 import { buildEntry } from "./event-log.js";
 import { createLogEntry } from "./logger/index.js";
@@ -39,8 +40,7 @@ const ZERO_TOKEN_USAGE = {
  * This indicates the task was already completed in a previous iteration.
  */
 function isNoOpIteration(output) {
-    return (Array.isArray(output.key_changes_made) &&
-        output.key_changes_made.length === 0);
+    return Array.isArray(output.key_changes_made) && output.key_changes_made.length === 0;
 }
 /**
  * Evaluate the appropriate quality gate for a completed skill phase.
@@ -73,6 +73,13 @@ export function readFileContent(reader) {
     catch {
         return null;
     }
+}
+/** Extract the `result` field from review YAML frontmatter. */
+function parseReviewResult(content) {
+    if (!content)
+        return undefined;
+    const match = content.match(/^---\s*\n[\s\S]*?\nresult:\s*(\S+)/m);
+    return match?.[1];
 }
 // ---------------------------------------------------------------------------
 // executeSkillAwareIteration
@@ -122,7 +129,7 @@ export async function executeSkillAwareIteration(ctx) {
         tier: ctx.config.presetTier ?? getTierFromStatus(statusContent),
         planStatus: undefined, // Plan status is determined by the agent
         hasIncompleteTasks: undefined,
-        reviewResult: undefined,
+        reviewResult: parseReviewResult(readFileContent(ctx.config.readReviewFile)),
         testPassed: undefined,
         reviewFixAttempts,
         maxReviewFixAttempts: ctx.config.loopConfig.maxConsecutiveFailures,
@@ -192,7 +199,9 @@ export async function executeSkillAwareIteration(ctx) {
         }
         // Auto-stop: if the iteration succeeded but made no changes, the task
         // is complete — stop the loop rather than keep verifying indefinitely.
-        if (output.should_fully_stop || (output.success && isNoOpIteration(output))) {
+        // Skip auto-stop when gate is blocked to allow circuit-breaker to trigger.
+        const gateBlocked = output.gate_result === "blocked";
+        if (output.should_fully_stop || (output.success && isNoOpIteration(output) && !gateBlocked)) {
             // Stop condition met — dispatch stop_condition_met event.
             // Mark as normal completion for StatusFile cleanup (Req 6.3).
             loopCompletedNormally = true;
@@ -257,6 +266,133 @@ export async function executeSkillAwareIteration(ctx) {
     }
     catch (error) {
         const errorMessage = error instanceof Error ? error.message : String(error);
+        // Context overflow recovery: compact notes and retry once.
+        if (isContextOverflowError(error)) {
+            ctx.logger.log(createLogEntry("compact_notes_triggered", "info", `Context overflow detected — compacting notes and retrying`, { runId: ctx.config.runId, iteration: iterationNumber }));
+            const compactedNotes = compactNotesContent(notesContent);
+            const retryPrompt = buildSkillAwarePrompt({
+                base: {
+                    iteration: iterationNumber,
+                    runId: ctx.config.runId,
+                    objective: ctx.config.objective,
+                    notesContent: compactedNotes,
+                    stopWhen: ctx.config.limits.stopWhen,
+                },
+                skill: {
+                    phase: nextPhase === "completed" || nextPhase === "aborted" ? "" : nextPhase,
+                    tier: ctx.config.presetTier ?? "standard",
+                    taskType: ctx.config.presetTaskType,
+                    projectPhase: ctx.config.presetProjectPhase,
+                    workNature: ctx.config.presetWorkNature,
+                },
+                puaContext,
+            });
+            try {
+                const subagentStartMs = Date.now();
+                const retryAgentResult = await ctx.agentAdapter.run(retryPrompt, ctx.config.cwd, {
+                    signal,
+                });
+                agentEndMs = Date.now();
+                ctx.perfTracker.recordSubagentTiming(ctx.agentAdapter.name, subagentStartMs, agentEndMs, iterationNumber);
+                const output = retryAgentResult.output;
+                const usage = retryAgentResult.usage;
+                ctx.logger.log(createLogEntry("debug_output", "info", `Retry after compaction: success=${output.success}, summary="${output.summary?.slice(0, 100)}"`, { runId: ctx.config.runId, iteration: iterationNumber }));
+                // Use compacted notes going forward.
+                notesContent = compactedNotes;
+                // Evaluate quality gates for the completed phase.
+                completedPhase = output.skill_phase_completed;
+                if (completedPhase) {
+                    const gateResult = evaluateQualityGateForPhase(completedPhase, ctx);
+                    if (gateResult) {
+                        output.gate_result = gateResult.status;
+                    }
+                }
+                if (output.gate_result === "passed") {
+                    reviewFixAttempts = 0;
+                }
+                else if (output.gate_result === "blocked") {
+                    reviewFixAttempts++;
+                }
+                // Auto-stop handling (skip when gate is blocked for circuit-breaker).
+                const retryGateBlocked = output.gate_result === "blocked";
+                if (output.should_fully_stop ||
+                    (output.success && isNoOpIteration(output) && !retryGateBlocked)) {
+                    loopCompletedNormally = true;
+                    const stopResult = transition(orchestratorState, { type: "stop_condition_met" }, ctx.limits);
+                    orchestratorState = stopResult.state;
+                    const lastEffects = stopResult.effects;
+                    await ctx.executeEffects(stopResult.effects);
+                    iterationEntry = buildIterationEntry(iterationNumber, true, output);
+                    ({ notesDocument, notesContent } = appendAndPersistNotes(notesDocument, notesContent, iterationEntry, ctx.config.notesPath, usage, ctx.logger, orchestratorState, (key, params) => ctx.t(key, params), ctx.config.runId));
+                    if (puaEnabled)
+                        ctx.puaStateManager?.handleSuccess();
+                    safeUpdateIterationStatus(ctx.statusFileIO, nextPhase, iterationNumber);
+                    return {
+                        orchestratorState,
+                        notesDocument,
+                        notesContent,
+                        lastEffects,
+                        reviewFixAttempts,
+                        loopCompletedNormally,
+                    };
+                }
+                // Determine success/soft-failure with gate override.
+                const isGateBlocked = output.gate_result === "blocked";
+                const isTestOrShipPhase = completedPhase === "test" || completedPhase === "ship";
+                if (output.success && !(isGateBlocked && isTestOrShipPhase)) {
+                    event = { type: "iteration_success", summary: output.summary, tokenUsage: usage };
+                    iterationEntry = buildIterationEntry(iterationNumber, true, output);
+                    iterationSuccess = true;
+                    iterationSummary = output.summary;
+                }
+                else {
+                    event = { type: "iteration_soft_failure", summary: output.summary, tokenUsage: usage };
+                    iterationEntry = buildIterationEntry(iterationNumber, false, output);
+                    iterationSuccess = false;
+                    iterationSummary = output.summary;
+                }
+                // Dispatch, apply commit strategy, execute effects, append notes.
+                const retryDispatchResult = transition(orchestratorState, event, ctx.limits);
+                const retryPreState = orchestratorState;
+                orchestratorState = retryDispatchResult.state;
+                const retryEffectivePhase = completedPhase ?? nextPhase;
+                const retryCommitResult = applySkillAwareCommitStrategy(retryDispatchResult.effects, retryEffectivePhase, iterationSuccess, iterationNumber, iterationSummary, ctx.config.objective, orchestratorState.commitCount);
+                let lastEffects = retryCommitResult.effects;
+                if (retryCommitResult.stateAdjustment) {
+                    orchestratorState = {
+                        ...orchestratorState,
+                        commitCount: retryCommitResult.stateAdjustment.commitCount,
+                    };
+                }
+                const retryLogEntry = buildEntry(ctx.config.runId, retryPreState.currentIteration, event, retryPreState, retryDispatchResult.state, lastEffects);
+                lastEffects = [...lastEffects, { type: "write_event_log", entry: retryLogEntry }];
+                await ctx.executeEffects(lastEffects);
+                ({ notesDocument, notesContent } = appendAndPersistNotes(notesDocument, notesContent, iterationEntry, ctx.config.notesPath, usage, ctx.logger, orchestratorState, (key, params) => ctx.t(key, params), ctx.config.runId));
+                if (puaEnabled) {
+                    if (iterationSuccess) {
+                        ctx.puaStateManager?.handleSuccess();
+                    }
+                    else {
+                        ctx.puaStateManager?.handleFailure(iterationSummary, orchestratorState.consecutiveFailures);
+                    }
+                }
+                safeUpdateIterationStatus(ctx.statusFileIO, nextPhase, iterationNumber);
+                const retryEffectEndMs = Date.now();
+                ctx.perfTracker.recordIterationTiming(iterStartMs, agentEndMs, retryEffectEndMs, iterationNumber, nextPhase);
+                return {
+                    orchestratorState,
+                    notesDocument,
+                    notesContent,
+                    lastEffects,
+                    reviewFixAttempts,
+                    loopCompletedNormally,
+                };
+            }
+            catch (retryError) {
+                const retryErrorMsg = retryError instanceof Error ? retryError.message : String(retryError);
+                ctx.logger.log(createLogEntry("compact_notes_retry_failed", "warn", `Retry after compaction also failed: ${retryErrorMsg}`, { runId: ctx.config.runId, iteration: iterationNumber }));
+            }
+        }
         const zeroUsage = ZERO_TOKEN_USAGE;
         event = {
             type: "iteration_hard_failure",
@@ -286,7 +422,7 @@ export async function executeSkillAwareIteration(ctx) {
     // shouldCommitForPhase() and use phase-specific commit messages (Req 7.1–7.7).
     const effectivePhase = completedPhase ?? nextPhase;
     // DEBUG: log commit strategy inputs
-    ctx.logger.log(createLogEntry("debug_commit_strategy", "info", `Commit strategy: completedPhase=${completedPhase}, nextPhase=${nextPhase}, effectivePhase=${effectivePhase}, success=${iterationSuccess}, effects=${JSON.stringify(result.effects.map(e => e.type))}`, { runId: ctx.config.runId, iteration: iterationNumber }));
+    ctx.logger.log(createLogEntry("debug_commit_strategy", "info", `Commit strategy: completedPhase=${completedPhase}, nextPhase=${nextPhase}, effectivePhase=${effectivePhase}, success=${iterationSuccess}, effects=${JSON.stringify(result.effects.map((e) => e.type))}`, { runId: ctx.config.runId, iteration: iterationNumber }));
     const commitResult = applySkillAwareCommitStrategy(result.effects, effectivePhase, iterationSuccess, iterationNumber, iterationSummary, ctx.config.objective, orchestratorState.commitCount);
     const adjustedEffects = commitResult.effects;
     if (commitResult.stateAdjustment) {
@@ -312,7 +448,10 @@ export async function executeSkillAwareIteration(ctx) {
     catch (effectError) {
         const effectMessage = effectError instanceof Error ? effectError.message : String(effectError);
         // DEBUG: log effect execution errors
-        ctx.logger.log(createLogEntry("debug_effect_error", "error", `Effect execution failed: ${effectMessage}`, { runId: ctx.config.runId, iteration: iterationNumber }));
+        ctx.logger.log(createLogEntry("debug_effect_error", "error", `Effect execution failed: ${effectMessage}`, {
+            runId: ctx.config.runId,
+            iteration: iterationNumber,
+        }));
         // FrozenZoneViolation: terminate loop directly without backoff (Req 8.2).
         if (effectError instanceof FrozenZoneViolation) {
             const abortResult = transition(orchestratorState, { type: "stop_condition_met" }, ctx.limits);

@@ -469,6 +469,105 @@ export const SKILL_FUNCTION_REGISTRY = [
         skills: ["forge/lib/spec/instructions.md"],
         parameterNames: ["input"],
     },
+    // --- forge-spec/SKILL.md (three-file spec system) ---
+    {
+        module: "spec.ts",
+        functionName: "routeSpecEntry",
+        skills: ["forge/lib/spec/instructions.md"],
+        parameterNames: ["argv", "featureDir", "outputDir", "existingBundle"],
+    },
+    {
+        module: "plan.ts",
+        functionName: "lockPlan",
+        skills: ["forge/lib/plan/instructions.md"],
+        parameterNames: ["doc"],
+    },
+    {
+        module: "spec-plan-upgrade.ts",
+        functionName: "upgradeTasksSeed",
+        skills: ["forge/lib/plan/instructions.md"],
+        parameterNames: ["doc"],
+    },
+    {
+        module: "spec-migration.ts",
+        functionName: "migrateLegacySpec",
+        skills: ["forge/lib/spec/instructions.md"],
+        parameterNames: ["featureDir"],
+    },
+    {
+        module: "spec-refine.ts",
+        functionName: "refineDownstream",
+        skills: ["forge/lib/spec/instructions.md"],
+        parameterNames: ["bundle", "target", "options"],
+    },
+    {
+        module: "spec-import.ts",
+        functionName: "runImportMode",
+        skills: ["forge/lib/spec/instructions.md"],
+        parameterNames: ["inputPath", "outputDir"],
+    },
+    {
+        module: "spec-refine.ts",
+        functionName: "detectSpecTriggers",
+        skills: ["forge/lib/spec/instructions.md"],
+        parameterNames: ["featureDir"],
+    },
+    {
+        module: "spec-variant.ts",
+        functionName: "resolveSpecVariant",
+        skills: ["forge/lib/spec/instructions.md"],
+        parameterNames: ["input"],
+    },
+    {
+        module: "spec-analyze.ts",
+        functionName: "analyzeRequirements",
+        skills: ["forge/lib/spec/instructions.md"],
+        parameterNames: ["req"],
+    },
+    // --- forge-build (wave orchestration + three-strike) ---
+    {
+        module: "spec-wave.ts",
+        functionName: "parseWaves",
+        skills: ["forge/lib/build/instructions.md"],
+        parameterNames: ["jsonBlock", "tasks"],
+    },
+    {
+        module: "build.ts",
+        functionName: "scheduleWave",
+        skills: ["forge/lib/build/instructions.md"],
+        parameterNames: ["wave", "options"],
+    },
+    {
+        module: "build.ts",
+        functionName: "buildThreeStrikeDebugReroute",
+        skills: ["forge/lib/build/instructions.md"],
+        parameterNames: ["history", "currentFailure", "debugDir", "topic"],
+    },
+    {
+        module: "spec-pbt-derivation.ts",
+        functionName: "triggerThreeStrikeReroute",
+        skills: ["forge/lib/build/instructions.md"],
+        parameterNames: ["history", "currentFailure"],
+    },
+    {
+        module: "spec-pbt-derivation.ts",
+        functionName: "computeFailSignature",
+        skills: ["forge/lib/build/instructions.md"],
+        parameterNames: ["failures"],
+    },
+    // --- forge-fix (bugfix three-file workflow) ---
+    {
+        module: "spec-kind.ts",
+        functionName: "detectSpecKind",
+        skills: ["forge/lib/fix/instructions.md"],
+        parameterNames: ["files", "mode"],
+    },
+    {
+        module: "spec-bugfix-orchestration.ts",
+        functionName: "runBugfixOrchestration",
+        skills: ["forge/lib/fix/instructions.md"],
+        parameterNames: ["bundle"],
+    },
     // --- forge-test/SKILL.md (ci-drift) ---
     {
         module: "ci-command-drift.ts",

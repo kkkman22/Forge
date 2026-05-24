@@ -147,6 +147,29 @@ export function renderSpecHealthAdvisory(report) {
 export function computeSpecHash(content) {
     return createHash("sha256").update(content).digest("hex");
 }
+/**
+ * Compute a stable hash for a SpecBundle.
+ * Three-file layout: concatenates raw content of requirements → design → tasks.
+ * Legacy-single layout: hashes the primary content directly.
+ * Order is fixed for deterministic output.
+ */
+export function computeBundleHash(bundle, _readFile) {
+    const parts = [];
+    if (bundle.layout === "three-file") {
+        // Primary is RequirementsDocument or BugfixDocument — its raw text is the first part
+        const primaryRaw = JSON.stringify(bundle.primary);
+        parts.push(primaryRaw);
+        if (bundle.design)
+            parts.push(JSON.stringify(bundle.design));
+        if (bundle.tasks)
+            parts.push(JSON.stringify(bundle.tasks));
+    }
+    else {
+        // Legacy-single: hash primary as-is
+        parts.push(JSON.stringify(bundle.primary));
+    }
+    return createHash("sha256").update(parts.join("\n---SPLIT---\n")).digest("hex");
+}
 export function parseHealthCache(frontmatter) {
     const health = frontmatter.health;
     if (typeof health !== "object" || health === null)

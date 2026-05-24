@@ -20,7 +20,10 @@
  *   TBD, TODO, 待定, 后续补充, 类似 Task, 添加适当的错误处理
  */
 import type { Glossary, GlossaryTerm } from "./glossary.js";
+import type { TasksSeedDocument } from "./spec-bundle.js";
 import type { TaskGraph } from "./task-graph.js";
+export type { TasksSeedDocument } from "./spec-bundle.js";
+export { upgradeTasksSeed } from "./spec-plan-upgrade.js";
 /** @public */
 export interface TDDSteps {
     red: {
@@ -231,3 +234,8 @@ export interface ExpectedOutputResult {
  * @param isLegacy - Whether this is a pre-Sprint-1 plan (warnings only)
  */
 export declare function checkExpectedOutput(planContent: string, isLegacy: boolean): ExpectedOutputResult;
+/**
+ * Lock a tasks.md document by upgrading it with auto-generated waves
+ * and transitioning status from draft to locked.
+ */
+export declare function lockPlan(doc: TasksSeedDocument): TasksSeedDocument;

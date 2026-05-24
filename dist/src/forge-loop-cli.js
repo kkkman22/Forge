@@ -29,7 +29,7 @@ import { ensureGlossaryExists } from "./glossary-driver.js";
 import { parseTranslationFile, translate } from "./i18n.js";
 import { detectLocale } from "./locale-detector.js";
 import { createDualSink, createFileWriter, createLogEntry, createLogSink, validateFileWritable, } from "./logger/index.js";
-import { cleanupOrphans, cleanupStaleSessions, deletePidFile, detectPpidOrphans, writePidFile, countActiveSessions, } from "./orphan-detector.js";
+import { cleanupOrphans, cleanupStaleSessions, countActiveSessions, deletePidFile, detectPpidOrphans, writePidFile, } from "./orphan-detector.js";
 import { ProcessRegistry } from "./process-registry.js";
 import { branchExists, RunManager } from "./run-manager.js";
 import { detectSkillAwareMode, SdkDriver } from "./sdk-driver.js";

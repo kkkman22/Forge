@@ -33,7 +33,7 @@ const EXPECTED_SESSION_START_HOOKS = [
         hooks: [
             {
                 type: "command",
-                command: "bash forge/scripts/auto-resume.sh 2>/dev/null || bash ~/.claude/skills/forge/scripts/auto-resume.sh 2>/dev/null || true",
+                command: "bash scripts/auto-resume.sh 2>/dev/null || bash forge/scripts/auto-resume.sh 2>/dev/null || bash ~/.claude/skills/forge/scripts/auto-resume.sh 2>/dev/null || true",
                 timeout: 5,
             },
         ],
@@ -42,9 +42,11 @@ const EXPECTED_SESSION_START_HOOKS = [
         hooks: [
             {
                 type: "command",
-                command: "node forge/scripts/inject-evolved-rules.mjs 2>/dev/null || node ~/.claude/skills/forge/scripts/inject-evolved-rules.mjs 2>/dev/null || true",
+                command: "node scripts/inject-evolved-rules.mjs 2>/dev/null || node forge/scripts/inject-evolved-rules.mjs 2>/dev/null || node ~/.claude/skills/forge/scripts/inject-evolved-rules.mjs 2>/dev/null || true",
                 // Baseline migrated by spec subagent-hook-context-budget task 18.
                 // Old inline `cat` retired in Step 3 — replaced by capped injector script.
+                // Path order updated 2026-05-23: project-relative `scripts/` added as primary
+                // to fix node loader resolution errors when forge/ does not exist in repo root.
                 timeout: 5,
             },
         ],
@@ -55,7 +57,7 @@ const EXPECTED_USER_PROMPT_SUBMIT_HOOKS = [
         hooks: [
             {
                 type: "command",
-                command: "node forge/scripts/inject-plan-context.mjs 2>/dev/null || node ~/.claude/skills/forge/scripts/inject-plan-context.mjs 2>/dev/null || true",
+                command: "node scripts/inject-plan-context.mjs 2>/dev/null || node forge/scripts/inject-plan-context.mjs 2>/dev/null || node ~/.claude/skills/forge/scripts/inject-plan-context.mjs 2>/dev/null || true",
             },
         ],
     },
@@ -75,7 +77,7 @@ const EXPECTED_POST_TOOL_USE_HOOKS = [
         hooks: [
             {
                 type: "command",
-                command: "bash forge/scripts/hook-check-frozen-post.sh 2>/dev/null || bash ~/.claude/skills/forge/scripts/hook-check-frozen-post.sh 2>/dev/null || true",
+                command: "bash scripts/hook-check-frozen-post.sh 2>/dev/null || bash forge/scripts/hook-check-frozen-post.sh 2>/dev/null || bash ~/.claude/skills/forge/scripts/hook-check-frozen-post.sh 2>/dev/null || true",
                 timeout: 5,
             },
         ],
@@ -129,13 +131,14 @@ const EXPECTED_POST_TOOL_USE_HOOKS = [
     // unified diff hunk markers. See:
     //   .kiro/specs/forge-review-diff-context-fidelity/{bugfix,design}.md
     //   scripts/check-diff-context-integrity.mjs
+    // Path order updated 2026-05-23: project-relative `scripts/` added as primary.
     {
         matcher: "Write|Edit",
         if: "Write(.forge/reviews/.diff-context.md)|Edit(.forge/reviews/.diff-context.md)",
         hooks: [
             {
                 type: "command",
-                command: 'node forge/scripts/check-diff-context-integrity.mjs "$TOOL_INPUT_FILE" 2>/dev/null || node ~/.claude/skills/forge/scripts/check-diff-context-integrity.mjs "$TOOL_INPUT_FILE" 2>/dev/null || node scripts/check-diff-context-integrity.mjs "$TOOL_INPUT_FILE" 2>/dev/null',
+                command: 'node scripts/check-diff-context-integrity.mjs "$TOOL_INPUT_FILE" 2>/dev/null || node forge/scripts/check-diff-context-integrity.mjs "$TOOL_INPUT_FILE" 2>/dev/null || node ~/.claude/skills/forge/scripts/check-diff-context-integrity.mjs "$TOOL_INPUT_FILE" 2>/dev/null',
                 timeout: 5,
             },
         ],
@@ -150,7 +153,7 @@ const EXPECTED_STOP_HOOKS = [
             },
             {
                 type: "command",
-                command: "bash forge/scripts/persistent-loop.sh 2>/dev/null || bash ~/.claude/skills/forge/scripts/persistent-loop.sh 2>/dev/null || true",
+                command: "bash scripts/persistent-loop.sh 2>/dev/null || bash forge/scripts/persistent-loop.sh 2>/dev/null || bash ~/.claude/skills/forge/scripts/persistent-loop.sh 2>/dev/null || true",
                 timeout: 5,
             },
         ],
@@ -216,7 +219,8 @@ const EXPECTED_TASK_COMPLETED_HOOKS = [
         hooks: [
             {
                 type: "command",
-                command: "echo '✅ 团队任务已完成。负责人请汇总队友输出并检查是否需要合并发现。'",
+                command: "bash scripts/hook-task-completed.sh 2>&1 || bash forge/scripts/hook-task-completed.sh 2>&1 || bash ~/.claude/skills/forge/scripts/hook-task-completed.sh 2>&1",
+                timeout: 10,
             },
         ],
     },
