@@ -45,11 +45,7 @@ export interface Doc {
   readonly bodyHash: string;
 }
 
-export type PairState =
-  | "paired"
-  | "cn-only"
-  | "en-only"
-  | "orphan_mirror";
+export type PairState = "paired" | "cn-only" | "en-only" | "orphan_mirror";
 
 export interface DocPair {
   readonly slug: string;

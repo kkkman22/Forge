@@ -45,11 +45,7 @@ const DEFAULTS = {
   },
 } as const;
 
-function makeWarning(
-  field: string,
-  reason: string,
-  fallback: string,
-): DiagnosticRecord {
+function makeWarning(field: string, reason: string, fallback: string): DiagnosticRecord {
   return {
     script: "config",
     severity: "warning",
@@ -89,14 +85,9 @@ function toStringArray(
   return raw.map(String);
 }
 
-function parseSsotSources(
-  raw: unknown,
-  diags: DiagnosticRecord[],
-): readonly SsotRegistryEntry[] {
+function parseSsotSources(raw: unknown, diags: DiagnosticRecord[]): readonly SsotRegistryEntry[] {
   if (!Array.isArray(raw)) {
-    diags.push(
-      makeWarning("docs.ssot_sources", "is missing or not an array", "4 default entries"),
-    );
+    diags.push(makeWarning("docs.ssot_sources", "is missing or not an array", "4 default entries"));
     return DEFAULTS.docs.ssot_sources;
   }
   const entries: SsotRegistryEntry[] = [];
@@ -113,9 +104,7 @@ function parseSsotSources(
     }
   }
   if (entries.length === 0) {
-    diags.push(
-      makeWarning("docs.ssot_sources", "has no valid entries", "4 default entries"),
-    );
+    diags.push(makeWarning("docs.ssot_sources", "has no valid entries", "4 default entries"));
     return DEFAULTS.docs.ssot_sources;
   }
   return entries;
@@ -125,9 +114,7 @@ export function loadConfigWithDefaults(raw: string): Config {
   const diags: DiagnosticRecord[] = [];
 
   if (!raw || !raw.trim()) {
-    diags.push(
-      makeWarning("config", "is empty", "all defaults"),
-    );
+    diags.push(makeWarning("config", "is empty", "all defaults"));
     return {
       docs: { ...DEFAULTS.docs },
       staleness: { ...DEFAULTS.staleness },
@@ -176,9 +163,7 @@ export function loadConfigWithDefaults(raw: string): Config {
       ),
       ssot_sources: parseSsotSources(docs.ssot_sources, diags),
       grace_period_until:
-        typeof docs.grace_period_until === "string"
-          ? docs.grace_period_until
-          : undefined,
+        typeof docs.grace_period_until === "string" ? docs.grace_period_until : undefined,
     },
     staleness: {
       warning_days: clampInt(
