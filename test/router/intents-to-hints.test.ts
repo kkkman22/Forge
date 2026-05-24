@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
-import { intentsToHints } from "../../src/router-intents.js";
 import type { IntentDefinition } from "../../src/router-intents.js";
+import { intentsToHints } from "../../src/router-intents.js";
 
 const TEST_INTENTS: IntentDefinition[] = [
   {
@@ -16,9 +16,7 @@ const TEST_INTENTS: IntentDefinition[] = [
     name: "tdd-strict",
     description: "strict TDD",
     triggers: ["tdd-strict"],
-    emit_hints: [
-      { command: "build", tag: "tdd-strict", description: "strict build" },
-    ],
+    emit_hints: [{ command: "build", tag: "tdd-strict", description: "strict build" }],
   },
 ];
 

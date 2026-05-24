@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
-import { generateHints, classifyTask } from "../../src/router.js";
 import type { RouteHint, TaskSignals } from "../../src/router.js";
+import { classifyTask, generateHints } from "../../src/router.js";
 
 const BASE_SIGNALS: TaskSignals = {
   filesAffected: 3,
@@ -49,7 +49,11 @@ describe("RouteHint.source field (R1-1/R1-2/R1-3/R1-5)", () => {
 
   it("deserialize hint without source should fallback to 'taskType' (R1-2 read side)", () => {
     // Simulate a hint from old status.md that doesn't have source field
-    const rawHint: RouteHint = { command: "build", tag: "migration-safety", description: "some desc" };
+    const rawHint: RouteHint = {
+      command: "build",
+      tag: "migration-safety",
+      description: "some desc",
+    };
     const resolvedSource = rawHint.source ?? "taskType";
     expect(resolvedSource).toBe("taskType");
   });

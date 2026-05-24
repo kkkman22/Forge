@@ -1,8 +1,8 @@
-import { describe, expect, it, vi, beforeEach } from "vitest";
-import { classifyTask, _resetIntentDictCache } from "../../src/router.js";
-import type { TaskSignals } from "../../src/router.js";
-import { detectIntentCancellation } from "../../src/router-intents.js";
+import { beforeEach, describe, expect, it, vi } from "vitest";
 import { scanInput } from "../../src/prompt-defense.js";
+import type { TaskSignals } from "../../src/router.js";
+import { _resetIntentDictCache, classifyTask } from "../../src/router.js";
+import { detectIntentCancellation } from "../../src/router-intents.js";
 
 vi.mock("../../src/prompt-defense.js", () => ({
   scanInput: vi.fn(() => ({
@@ -55,12 +55,14 @@ describe("E2E: intent signal flow (T-11)", () => {
   it("prompt-defense critical suppresses intent hints entirely", () => {
     vi.mocked(scanInput).mockReturnValueOnce({
       safe: false,
-      threats: [{
-        type: "instruction_override",
-        severity: "critical",
-        confidence: 0.95,
-        pattern: "io-001",
-      }],
+      threats: [
+        {
+          type: "instruction_override",
+          severity: "critical",
+          confidence: 0.95,
+          pattern: "io-001",
+        },
+      ],
       detectionTimeMs: 0.1,
     });
 
@@ -78,7 +80,11 @@ describe("E2E: intent signal flow (T-11)", () => {
   });
 
   it("cancellation: detectIntentCancellation removes specific intent hints", () => {
-    const result = detectIntentCancellation("忽略 ultrathink", ["ultrathink", "tdd-strict", "security-deep"]);
+    const result = detectIntentCancellation("忽略 ultrathink", [
+      "ultrathink",
+      "tdd-strict",
+      "security-deep",
+    ]);
     expect(result.cancelAll).toBe(false);
     expect(result.cancelByName).toEqual(["ultrathink"]);
   });

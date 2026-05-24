@@ -1,5 +1,5 @@
-import { describe, expect, it, vi, beforeEach } from "vitest";
-import { classifyTask, _resetIntentDictCache } from "../../src/router.js";
+import { beforeEach, describe, expect, it, vi } from "vitest";
+import { _resetIntentDictCache, classifyTask } from "../../src/router.js";
 
 vi.mock("../../src/prompt-defense.js", () => ({
   scanInput: vi.fn(() => ({

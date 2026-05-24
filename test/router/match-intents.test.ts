@@ -1,24 +1,20 @@
-import { describe, expect, it } from "vitest";
 import * as fc from "fast-check";
-import { matchIntents } from "../../src/router-intents.js";
+import { describe, expect, it } from "vitest";
 import type { IntentDefinition } from "../../src/router-intents.js";
+import { matchIntents } from "../../src/router-intents.js";
 
 const TEST_DICT: IntentDefinition[] = [
   {
     name: "ultrathink",
     description: "deep reasoning",
     triggers: ["深思熟虑", "ultrathink", "think hard"],
-    emit_hints: [
-      { command: "decide", tag: "reasoning-deep", description: "deep" },
-    ],
+    emit_hints: [{ command: "decide", tag: "reasoning-deep", description: "deep" }],
   },
   {
     name: "tdd-strict",
     description: "strict TDD",
     triggers: ["严格 tdd", "tdd-strict"],
-    emit_hints: [
-      { command: "build", tag: "tdd-strict", description: "strict" },
-    ],
+    emit_hints: [{ command: "build", tag: "tdd-strict", description: "strict" }],
   },
 ];
 

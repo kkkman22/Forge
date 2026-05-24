@@ -804,8 +804,8 @@ export function classifyTask(
         // R6-4: Soft warning for overload
         const intentCount = hints.filter((h) => h.source === "intent").length;
         if (intentCount > MAX_RUNTIME_INTENT_HINTS) {
-          console.warn(
-            `[intent_overload] ${intentCount} intent hints emitted (threshold: ${MAX_RUNTIME_INTENT_HINTS})`,
+          process.stderr.write(
+            `[intent_overload] ${intentCount} intent hints emitted (threshold: ${MAX_RUNTIME_INTENT_HINTS})\n`,
           );
         }
       }

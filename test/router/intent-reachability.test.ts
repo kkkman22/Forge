@@ -1,6 +1,6 @@
 import { describe, expect, it, vi } from "vitest";
-import { classifyTask } from "../../src/router.js";
 import type { TaskSignals } from "../../src/router.js";
+import { classifyTask } from "../../src/router.js";
 
 vi.mock("../../src/prompt-defense.js", () => ({
   scanInput: vi.fn(() => ({
