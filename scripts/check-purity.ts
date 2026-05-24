@@ -14,10 +14,10 @@ const TARGET_PATTERNS = [
 ];
 
 const FORBIDDEN = [
-  { pattern: /child_process|node:child_process/g, name: "child_process import" },
-  { pattern: /\bDate\b|\bDate\.now\(\)/g, name: "Date usage" },
-  { pattern: /\bprocess\.env\b/g, name: "process.env access" },
-  { pattern: /\bMath\.random\b/g, name: "Math.random() call" },
+  { pattern: /child_process|node:child_process/, name: "child_process import" },
+  { pattern: /\bDate\b(?!\w)/, name: "Date usage" },
+  { pattern: /\bprocess\.env\b/, name: "process.env access" },
+  { pattern: /\bMath\.random\b/, name: "Math.random() call" },
 ];
 
 let violations = 0;
@@ -27,19 +27,15 @@ for (const pat of TARGET_PATTERNS) {
   for (const file of files) {
     const content = readFileSync(file, "utf-8");
     const rel = relative(process.cwd(), file);
-    for (const rule of FORBIDDEN) {
-      const matches = content.match(rule.pattern);
-      if (matches) {
-        // Allow in comments
-        const lines = content.split("\n");
-        for (let i = 0; i < lines.length; i++) {
-          const line = lines[i];
-          const trimmed = line.trim();
-          if (trimmed.startsWith("//") || trimmed.startsWith("*") || trimmed.startsWith("/*")) continue;
-          if (rule.pattern.test(line)) {
-            console.error(`${rel}:${i + 1}: forbidden ${rule.name}`);
-            violations++;
-          }
+    const lines = content.split("\n");
+    for (let i = 0; i < lines.length; i++) {
+      const line = lines[i];
+      const trimmed = line.trim();
+      if (trimmed.startsWith("//") || trimmed.startsWith("*") || trimmed.startsWith("/*")) continue;
+      for (const rule of FORBIDDEN) {
+        if (rule.pattern.test(line)) {
+          console.error(`${rel}:${i + 1}: forbidden ${rule.name}`);
+          violations++;
         }
       }
     }

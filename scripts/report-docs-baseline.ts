@@ -1,5 +1,5 @@
-import { readdirSync, statSync, writeFileSync } from "node:fs";
-import { join, relative } from "node:path";
+import { readdirSync, lstatSync, writeFileSync, existsSync } from "node:fs";
+import { join, relative, resolve } from "node:path";
 import { classify, EXCLUDED_PREFIXES } from "../src/docs-governance/domains.js";
 
 interface BaselineEntry {
@@ -11,14 +11,20 @@ interface BaselineEntry {
 
 function walkMarkdownFiles(rootDir: string): string[] {
   const results: string[] = [];
+  const resolvedRoot = resolve(rootDir);
   function walk(dir: string): void {
     const entries = readdirSync(dir, { withFileTypes: true });
     for (const entry of entries) {
       const fullPath = join(dir, entry.name);
+      // Skip symlinks to prevent escaping the repo
+      const stat = lstatSync(fullPath);
+      if (stat.isSymbolicLink()) continue;
+      // Verify path stays under rootDir
+      if (!resolve(fullPath).startsWith(resolvedRoot)) continue;
       if (entry.name.startsWith(".") && entry.name !== ".forge" && entry.name !== ".kiro" && entry.name !== ".claude") continue;
       const rel = relative(rootDir, fullPath);
       if (EXCLUDED_PREFIXES.some((p) => rel.startsWith(p))) continue;
-      if (entry.isDirectory()) {
+      if (stat.isDirectory()) {
         walk(fullPath);
       } else if (entry.name.endsWith(".md")) {
         results.push(rel);
@@ -69,6 +75,11 @@ function formatBaselineReport(entries: BaselineEntry[]): string {
 }
 
 const rootDir = process.cwd();
+// Guard: verify we're in a project root
+if (!existsSync(join(rootDir, ".forge/config.md")) && !existsSync(join(rootDir, "package.json"))) {
+  console.error("Error: not in a project root (no .forge/config.md or package.json found).");
+  process.exit(3);
+}
 const entries = generateBaseline(rootDir);
 const report = formatBaselineReport(entries);
 
