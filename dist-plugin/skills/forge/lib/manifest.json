@@ -1,6 +1,6 @@
 {
   "version": 1,
-  "generated_at": "2026-05-18T03:43:28.275Z",
+  "generated_at": "2026-05-24T06:50:39.295Z",
   "subs": {
     "abort": {
       "instructions": {
@@ -41,7 +41,7 @@
     "build": {
       "instructions": {
         "path": "build/instructions.md",
-        "sha256": "c661b1cd493586fb0be0f7ac4764b5ad9bba0919b34ac11452dfc0d594d656bb"
+        "sha256": "ddb83b72b25a40db6a24d2a8ed8a8df553ecd2c0fcb989d83b79babab158b6aa"
       },
       "references": [
         {
@@ -217,14 +217,14 @@
     "decide-teams": {
       "instructions": {
         "path": "decide-teams/instructions.md",
-        "sha256": "2832b76b0d13f33d2a3873ce03ad466ce626aef7896c84f3d1086fc470018536"
+        "sha256": "30b076beb0426ac2c097c959f33c840652ba077a964b573e398246105f9698d9"
       },
       "references": []
     },
     "fix": {
       "instructions": {
         "path": "fix/instructions.md",
-        "sha256": "6fc2f50802ea8a8af6b3bbcbe9daa5054c6117e72541cbd1b8c56439e41f2752"
+        "sha256": "2b0fc9ab99c213fdbe906e4bc8af3418a8518c014d7acbf41b41d4d36ad26f1c"
       },
       "references": [
         {
@@ -252,6 +252,27 @@
           "sha256": "5f8b04f505d2d79a97fb43c2ac7bb13b45e6e0e9d243cb5830e84a7cfb4d7e41"
         }
       ]
+    },
+    "forge-cmux-browser-qa": {
+      "instructions": {
+        "path": "forge-cmux-browser-qa/instructions.md",
+        "sha256": "4ae68be01ed32d1b7d6909e2efb3e2404fa3cbb8f8b6d6929021afaaff69532b"
+      },
+      "references": []
+    },
+    "forge-cmux-loop-signals": {
+      "instructions": {
+        "path": "forge-cmux-loop-signals/instructions.md",
+        "sha256": "4796c74b7f0a481d3f67b0b744adf6a0bc90ab961095a5a90b40062228d7b2cd"
+      },
+      "references": []
+    },
+    "forge-cmux-sidebar-sync": {
+      "instructions": {
+        "path": "forge-cmux-sidebar-sync/instructions.md",
+        "sha256": "49cc05acdc7db05c96ab424f4b116873dae6d81fbcb79cc196aef3acc6c06ffd"
+      },
+      "references": []
     },
     "grill": {
       "instructions": {
@@ -370,7 +391,7 @@
     "plan": {
       "instructions": {
         "path": "plan/instructions.md",
-        "sha256": "f4aad3d08039c0d43894b60552a900e2d1b99b51a12eb47fd4424d0286aa522f"
+        "sha256": "4ae6eb545d402628731ec6a6121ceb7ff58edd1b3d521da6054c1d38e48a003c"
       },
       "references": [
         {
@@ -406,13 +427,6 @@
           "sha256": "a464084e44506539f0bd8ba9398d7202742f8882beb3f7a716e8a844e0506c88"
         }
       ]
-    },
-    "review-comment-bitbucket": {
-      "instructions": {
-        "path": "review-comment-bitbucket/instructions.md",
-        "sha256": "8c7cf4d7b81da94ebb738abcd1ff5c5cc5de8fe6300455e85dfca12a32c9f1ea"
-      },
-      "references": []
     },
     "recap": {
       "instructions": {
@@ -473,7 +487,7 @@
     "review": {
       "instructions": {
         "path": "review/instructions.md",
-        "sha256": "772e37f1e1f19f4f2c32cc7eb1d97a09a0afbe5314b5d351ee72d1b1239225f4"
+        "sha256": "25404be224f15cbb186b55f5110c700558010bcf4541d041c0ea73ae5e11b239"
       },
       "references": [
         {
@@ -505,6 +519,10 @@
           "sha256": "12ba06e2c5964450694f561e16602fd28ff54409a6deb96d5af71d60d6c328c2"
         },
         {
+          "path": "review/references/final-report-contract.md",
+          "sha256": "cb5939248670f3c1642f0fc2238e1c2904e43e4b40ba1d5d16c49d41bd687aa5"
+        },
+        {
           "path": "review/references/frontend-check-patterns.md",
           "sha256": "d72fa33991acea59d8ecdd17b3cb1070663e60eb51d5bce1c9a18d90500d8d35"
         },
@@ -530,10 +548,17 @@
         }
       ]
     },
+    "review-comment-bitbucket": {
+      "instructions": {
+        "path": "review-comment-bitbucket/instructions.md",
+        "sha256": "8c7cf4d7b81da94ebb738abcd1ff5c5cc5de8fe6300455e85dfca12a32c9f1ea"
+      },
+      "references": []
+    },
     "router": {
       "instructions": {
         "path": "router/instructions.md",
-        "sha256": "3aed36175bcc8a664dbe34ffc7c345a801c5ec5aad6aff9ea9cab41bd0fe8456"
+        "sha256": "8bd174aa9c72416aca8cdec1f6a0eba09967a04aada3fa2bfc8d769794ef460a"
       },
       "references": [
         {
@@ -573,7 +598,7 @@
     "spec": {
       "instructions": {
         "path": "spec/instructions.md",
-        "sha256": "c3e29ff9fd1f9c266e7db359e42604d877fc14646476cc505814f1f892f18648"
+        "sha256": "f3fed81489cf6f029030e811756c41eb4c39a08f3f9a9bd3a02b8799e6d25a71"
       },
       "references": [
         {
@@ -598,7 +623,7 @@
         },
         {
           "path": "spec/references/spec-format.md",
-          "sha256": "22219bf5f233e5ec89eb44700c6e6511c78130c019c1ffbb9a174b9d7c71c881"
+          "sha256": "99d4f9857b3fd8e95525e76f88199b581bff479ee6cc05675a523137bf466d95"
         },
         {
           "path": "spec/references/spec-leak-detector.md",

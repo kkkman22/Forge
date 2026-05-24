@@ -43,6 +43,8 @@ Forge 路由器从三个维度分析任务：
 
 **项目阶段信号**：greenfield（从零开始）· iteration（现有功能迭代，默认）· refactor（不改外部行为）· bugfix（修复已知 bug）。
 
+**执行偏好信号（Intent Signals）**：用户在任务描述中表达的执行偏好（"深思熟虑"、"严格 TDD"、"安全审计"等），由 `src/router-intents.ts` 从 `templates/router-intents.md` 词典匹配，注入为 `source: 'intent'` 的 RouteHint。Prompt-defense critical/high 级别抑制 intent 匹配；medium 级别双信号共存。
+
 **假设生成**：从技术栈、影响范围、实现模式、数据层、棕地/绿地维度生成 3-5 条显式假设。内容必须来自实际项目扫描，至少覆盖技术栈和影响范围。
 
 ### Step 2：建议档位 + 维度
@@ -61,10 +63,18 @@ Forge 路由器从三个维度分析任务：
 📋 路由分析
 档位：<light|standard|full> | 类型：<task_type> | 阶段：<project_phase>
 理由：<一句话> | 命令序列：<commands>
-行为提示：<hint tags>
+
+行为提示（来自 taskType / projectPhase）：
+  - <hint tags>
+
+执行偏好（来自任务描述）：
+  - <intent tag> (将影响 <command> 阶段)
+  [无则不显示此分组]
+
 假设：1. <判断>（基于 <来源>）...
 [全量额外] 💡 可选：先跑 /forge grill 对齐，或回复 skip 跳过
 确认？或覆盖：light/standard/full，--type=，--phase=
+              取消执行偏好可回复"取消 intent 信号"或"忽略 <intent名>"
 ```
 
 ### Step 3：用户确认或覆盖
@@ -74,6 +84,7 @@ Forge 路由器从三个维度分析任务：
 - **用户覆盖维度**（回复 `--type=backend` 等）：覆盖对应维度，重新生成行为提示
 - **用户纠正假设**（回复具体纠正内容）：更新对应假设，继续流程
 - **用户触发 grill**（见 §9）：转入 `/forge grill`，grill 完成后续跑 decide
+- **用户取消 intent 信号**（回复含取消语义关键词"取消/忽略/不要/跳过/撤销/cancel/skip/no intent/ignore"）：调用 `detectIntentCancellation` 剔除全部/指定 intent hints，保留其他来源 hint
 - **用户在初始输入中指定**（如 `/forge --type=frontend --phase=refactor 重构登录组件`）：直接采用
 
 ---

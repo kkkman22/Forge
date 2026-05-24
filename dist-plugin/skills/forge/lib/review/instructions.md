@@ -198,7 +198,9 @@ IF 本次执行是从 conversation summary 恢复（上下文压缩后继续）�
 
 1. **前置检查**（§15）→ 1.5. **Diff Context Preparation**（§2.0，写入 `.forge/reviews/.diff-context.md`）→ 2. **并行启动 Subagent**（prompt 包含 diff context 引用）→ 3. **状态确认** → 4. **合并管线** → 5. **质量门** → 6. **P0/P1 判定** → 7. **输出报告**（写入 frontmatter 时执行 `git rev-parse HEAD` 记录 `reviewed_at_commit`）→ 8. **生成 P1 Fix Checklist**（§9，存在 P0/P1 时）
 
-**Step 1.1 状态确认**：主动跟踪每个 Subagent，不假设"启动即完成"。正常完成 → 进入管线；截断 → 重试 1 次；错误 → 重试 1 次；429 → 降级等待后重试；超时(180s) → 标记 `incomplete`。**不得在 Subagent 运行中合并结果**。
+**Step 1.1 状态确认**：主动跟踪每个 Subagent，不假设"启动即完成"。**完成判定只看两件事**：(a) 框架返回的 `status` 字段是否 `success`；(b) `output` 末尾是否带有 sentinel `<!-- review-final -->`（详见 references/final-report-contract.md）。**禁止**主 Agent 阅读或解析 subagent 的自然语言 `result` 文本来判断"是否完成"——历史事故中 subagent 把中间话（"Now let me check..."）作为 result 返回时，主 Agent 误判为"还在跑"并 idle 等待永远不来的通知。
+
+正常完成（status=success + sentinel 存在）→ 进入管线；缺 sentinel → fallback ladder 自动重判为 `incomplete-report:missing-sentinel` 并触发 L1 重试，主 Agent 不需要也不应该自己处理；截断 → 重试 1 次；错误 → 重试 1 次；429 → 降级等待后重试；超时(180s) → 标记 `incomplete`。**不得在 Subagent 运行中合并结果**。
 
 **Step 4 自动推进（铁律）**：通过 → **立即调用** `Skill(skill="forge", args="<next>")`，不输出确认提示。仅输出 `✅ review 通过 → 自动进入 <下一阶段>`，然后直接调用 Skill（→ 详见 shared/next-step-protocol.md）；未通过 → 输出问题清单，停止等待用户修复后重新评审。静默 idle（无输出、等待用户输入）与显式询问同罪。
 
