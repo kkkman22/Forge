@@ -64,29 +64,30 @@ describe("classifyStaleness", () => {
 
   // PBT: staleness level monotonicity (P8)
   it("PBT: daysDiff > critical => critical; warning < daysDiff <= critical => warning", () => {
+    // Generate date strings directly to avoid fc.date Invalid Date issues
+    const dateStrArb = fc.integer({ min: -400, max: 0 }).map((offset) => {
+      const d = new Date(today);
+      d.setDate(d.getDate() + offset);
+      return d.toISOString().slice(0, 10);
+    });
+
     fc.assert(
-      fc.property(
-        fc.date({ min: new Date("2026-01-01"), max: new Date("2026-05-24") }),
-        (updatedDate) => {
-          const dateStr = updatedDate.toISOString().slice(0, 10);
-          const fm = baseFm({ updated: dateStr });
-          const result = classifyStaleness(fm, today, { warning_days: 90, critical_days: 180, exempt_paths: [] });
+      fc.property(dateStrArb, (dateStr) => {
+        const fm = baseFm({ updated: dateStr });
+        const result = classifyStaleness(fm, today, { warning_days: 90, critical_days: 180, exempt_paths: [] });
 
-          const updated = new Date(dateStr);
-          const diffMs = today.getTime() - updated.getTime();
-          const daysDiff = Math.floor(diffMs / (1000 * 60 * 60 * 24));
+        const updated = new Date(`${dateStr}T00:00:00Z`);
+        const diffMs = today.getTime() - updated.getTime();
+        const daysDiff = Math.floor(diffMs / (1000 * 60 * 60 * 24));
 
-          if (daysDiff < 0) {
-            expect(result).toBe("invalid"); // future
-          } else if (daysDiff > 180) {
-            expect(result).toBe("critical");
-          } else if (daysDiff > 90) {
-            expect(result).toBe("warning");
-          } else {
-            expect(result).toBe("fresh");
-          }
-        },
-      ),
+        if (daysDiff > 180) {
+          expect(result).toBe("critical");
+        } else if (daysDiff > 90) {
+          expect(result).toBe("warning");
+        } else {
+          expect(result).toBe("fresh");
+        }
+      }),
     );
   });
 });
