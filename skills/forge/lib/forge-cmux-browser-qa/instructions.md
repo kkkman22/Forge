@@ -1,7 +1,9 @@
 ---
-name: forge-browser-qa
-description: Browser-based QA verification using cmux browser commands during /forge test
-trigger: forge browser qa, cmux browser test, browser qa
+description: "Browser-based QA verification using cmux browser commands during /forge test. Requires cmux installed."
+dispatch_mode: inline
+allowed_tools:
+  - Read
+  - Bash
 ---
 
 # Forge Browser QA
