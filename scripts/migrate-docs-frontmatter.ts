@@ -119,13 +119,13 @@ if (args.includes("--help") || args.includes("-h")) {
       SCRIPT_NAME,
       "Semi-automatic frontmatter migration for docs/ .md files.\n" +
         "Default: dry-run (output suggestions only).\n" +
-        "--apply: write generated frontmatter to files.",
+        "--apply --force: write generated frontmatter to files (requires --force for safety).",
     ),
   );
   process.exit(0);
 }
 
-const applyMode = args.includes("--apply");
+const applyMode = args.includes("--apply") && args.includes("--force");
 const docsDir = resolve(process.cwd(), DOCS_DIR);
 
 if (!existsSync(docsDir)) {
@@ -162,6 +162,8 @@ for (const s of suggestions) {
   }
 }
 
-if (!applyMode) {
-  process.stdout.write("\nRun with --apply to write frontmatter to files.\n");
+if (!applyMode && args.includes("--apply") && !args.includes("--force")) {
+  process.stdout.write("\n⚠ --apply requires --force to confirm destructive writes.\n");
+} else if (!applyMode) {
+  process.stdout.write("\nRun with --apply --force to write frontmatter to files.\n");
 }

@@ -45,19 +45,24 @@ FAILED=0
 run_checker() {
   label="$1"
   shift
+  timeout_s="${CHECKER_TIMEOUT:-30}"
   if [ -n "$IN_GRACE" ]; then
     # Grace period: downgrade errors to warnings
-    output=$("$@" 2>&1) && rc=$? || rc=$?
-    if [ "$rc" -ne 0 ]; then
+    output=$(timeout "$timeout_s" "$@" 2>&1) && rc=$? || rc=$?
+    if [ "$rc" -eq 124 ]; then
+      echo "  ⚠️  $label: timed out after ${timeout_s}s (grace period — not blocking)"
+    elif [ "$rc" -ne 0 ]; then
       echo "  ⚠️  $label: issues found (grace period — not blocking)"
       echo "$output" | head -5
-      # Don't set FAILED during grace period
     else
       echo "  ✅ $label: clean"
     fi
   else
-    output=$("$@" 2>&1) && rc=$? || rc=$?
-    if [ "$rc" -ne 0 ]; then
+    output=$(timeout "$timeout_s" "$@" 2>&1) && rc=$? || rc=$?
+    if [ "$rc" -eq 124 ]; then
+      echo "  ❌ $label: timed out after ${timeout_s}s"
+      FAILED=1
+    elif [ "$rc" -ne 0 ]; then
       echo "  ❌ $label: failed"
       echo "$output"
       FAILED=1
