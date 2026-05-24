@@ -1,3 +1,4 @@
+import { statSync as fsStatSync } from "node:fs";
 import type { statSync as StatSyncFn } from "node:fs";
 
 export const CMUX_GATED_SUBS: ReadonlySet<string> = new Set([
@@ -73,7 +74,7 @@ export function checkCmuxGate(sub: string, opts?: CmuxGateOpts): GateResult {
   }
 
   const env = opts?.env ?? process.env;
-  const statSync = opts?.statSync ?? require("node:fs").statSync;
+  const statSync = opts?.statSync ?? fsStatSync;
   const result = cmuxAvailableShim(env, statSync);
 
   if (!result.ok) {
