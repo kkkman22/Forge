@@ -61,9 +61,16 @@
   - 目标：IDE 插件（VS Code 状态栏）、Web Dashboard、CI 集成报告器
   - 字节游标协议已就位，无需协议改动
 
-- **cmux claude-teams 模式**（优先级：低，阻塞中）
-  - 利用 cmux 多窗格为 `/forge decide` 和 `/forge review` 多 Subagent 提供可视化面板
-  - 阻塞条件：等待官方 Agent Teams 可靠性问题解决（见 v3.0）
+- **cmux 终端深度集成**（优先级：低，跟随 Tier 1）
+  - cmux 0.63+ 已原生支持 Claude Code Teams（`cmux claude-teams`）和 Codex Teams（`cmux codex-teams`），自动注入 tmux shim、设置 `CLAUDE_CODE_EXPERIMENTAL_AGENT_TEAMS=1`、把 teammate 渲染为原生分屏
+  - Forge 不再造可视化轮子；策略转为"在 cmux 终端中检测到时优先建议 `cmux claude-teams`，并复用 sidebar/通知环投射 `/forge decide --mode=teams` 的中间状态"
+  - 余下增量在 `cmux-skills/forge-loop-signals/` 与 `forge-sidebar-sync/` 中持续维护，零运行时开销
+
+- **Agent Teams 分层 adoption（Tier 0：立即可做）**（优先级：中）
+  - 三个动作不依赖任何 issue 关闭、不切换主流程：
+    1. **`TaskCompleted` / `TeammateIdle` / `TaskCreated` hook 集成** — 即使主流程是 Subagent，用户偶尔自发开 Agent Teams 时这些 hook 让 Forge 的 review/test 门禁也能拦截 teammate 提交
+    2. **Subagent definition 复用** — `agents/*.md`（product/architect/security/designer/critic/spec-check/quality-check/security-check）补 frontmatter 后可同时作为 Subagent 和 teammate 使用，零重写
+    3. **`forge-decide-agent-teams` PoC 收尾** — `.forge/plans/forge-decide-agent-teams.md` 已 approved，11 个任务跑完得出 adopt/keep/hybrid 决策。当前停滞需要 close 或 ship
 
 ---
 
@@ -71,14 +78,42 @@
 
 面向社区开放，构建可扩展的 AI 编码工作流生态。
 
-- **Agent Teams 重新评估**（阻塞条件：Claude Code 官方解决以下问题）
-  - 会话恢复：`/resume` 能恢复 in-process teammates（当前官方文档明确标注为已知限制）
-  - 状态持久化：team config 在 context compaction 后不丢失（[#23620](https://github.com/anthropics/claude-code/issues/23620) Open）
-  - Shutdown 可靠性：teammates 关闭不阻塞主流程
-  - 内存 GC 不破坏 team membership（[#29271](https://github.com/anthropics/claude-code/issues/29271) Open）
-  - SendMessage 接收者验证（[#25135](https://github.com/anthropics/claude-code/issues/25135) Open）
-  - **跟进策略**：每季度检查上述 issues 状态
-  - **回迁判定**：Agent Team 仅用于需要多轮持续对话的场景；fan-out → gather → merge 模式永久使用独立 Subagent
+- **Agent Teams 分层 adoption（Tier 1 / 2 / 3，长期跟踪）**
+
+  ROADMAP 早期把 Agent Teams 视为"等所有 issue 关闭后整体回迁"。基于 2026-05 官方文档与 issues 跟踪，这个判断已修正——**没有"整体回迁"这件事**，而是按场景分层取舍。
+
+  **Tier 1 — 受限场景启用**（约束满足时作为 `/forge decide` 的可选模式，非默认）
+
+  仅在以下条件**全部**满足时把 Agent Teams 当作 high-token / high-quality 的可选模式（类似 opusplan 的定位，不替换 Subagent，是补充）：
+  - 终端环境为 cmux（推荐，0 配置；`cmux claude-teams` 自动注入 shim 与 env）/ macOS/Linux + tmux / iTerm2 / Ghostty 等支持 split-pane 的终端
+  - 任务路由器判定为 full-tier 且 task type ∈ {architecture, research, debug-with-competing-hypotheses}
+  - 决策可在单次 20 分钟内完成（无需 resume）
+  - token 预算允许 5x 单 session 消耗
+
+  **Tier 2 — 永不回迁**（写入 ADR 关闭讨论）
+  - `/forge review` — 本质是 fan-out → gather → merge，子任务无相互依赖；review 需要 `/forge resume`；spec-check / quality-check / security-check 必须由同一逻辑去重。Subagent 模式更合适
+  - `/forge build` 与 `/forge loop` — 需要原子 commit + git transaction + Restatement Checkpoint + 熔断器；与 Agent Teams 的 resume / shutdown 不可靠直接冲突
+
+  **Tier 3 — 长期跟踪的官方限制**（非全部要求关闭，仅作判断依据）
+
+  | 类型 | 项目 | 状态 | 影响 Forge 的判定 |
+  |------|------|------|--------------|
+  | 架构性（不会修复） | Lead 固定，无法转移领导权 | 永久 | Tier 1 单 session 场景可接受 |
+  | 架构性 | Permissions spawn 时锁定，无法 per-teammate | 永久 | 与 Forge 三区权限模型矛盾 |
+  | 架构性 | Split-pane 仅 tmux/iTerm2 | 永久 | Tier 1 通过环境检测兜底；**对 cmux 用户已缓解**（cmux 原生 split-pane） |
+  | bug | `/resume` 不恢复 in-process teammates | Open（官方 Limitations） | Tier 1 通过任务时长上限规避 |
+  | bug | Idle teammates 不响应（[#29163](https://github.com/anthropics/claude-code/issues/29163)、[#29271](https://github.com/anthropics/claude-code/issues/29271)、[#24108](https://github.com/anthropics/claude-code/issues/24108)） | Open | 通过 `TeammateIdle` hook + 超时兜底；**cmux 用户额外受益**于 cmux 通知 + sidebar 徽章，idle 状态可视化降低实际危害 |
+  | bug | SendMessage 运行时不可用（[#47021](https://github.com/anthropics/claude-code/issues/47021)、[#50622](https://github.com/anthropics/claude-code/issues/50622)） | Open | Tier 1 PoC 用 lead 协调而非 teammate 互发 |
+  | bug | Context compaction 丢 team config（[#23620](https://github.com/anthropics/claude-code/issues/23620)） | Open | Tier 1 通过任务时长上限规避 |
+  | tradeoff | 每 teammate 独立 context = token 5x | 永久 | Tier 1 仅在 full-tier 启用 |
+
+  **2026 年期间已经改善的项**（影响判定）：
+  - ✅ 三个 hook 加入：`TeammateIdle` / `TaskCreated` / `TaskCompleted`
+  - ✅ Task claiming 文件锁防 race
+  - ✅ Subagent definition 可作为 teammate 引用（Forge 的 agents 直接复用）
+  - ✅ Plan approval 模式（teammate 在 read-only plan mode 等 lead 批准）
+
+  **跟进策略**：季度复检上表，重点关注 Tier 1 启用条件中"任务时长上限"是否能因 resume 修复而放宽
 
 - **社区建设**
   - 贡献者指南完善和 issue 模板标准化
