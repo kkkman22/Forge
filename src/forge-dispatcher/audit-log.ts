@@ -2,13 +2,9 @@ import { createHash } from "node:crypto";
 import { appendFileSync, mkdirSync } from "node:fs";
 import { homedir } from "node:os";
 import { resolve } from "node:path";
+import type { GateBlockReason } from "./cmux-gate.js";
 
-export type GateBlockReason =
-  | "integration_off"
-  | "socket_path_invalid"
-  | "socket_missing"
-  | "socket_not_socket"
-  | "sticky_unavailable";
+export type { GateBlockReason } from "./cmux-gate.js";
 
 export interface AuditEntry {
   ts: string;
