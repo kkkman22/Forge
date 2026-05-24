@@ -106,7 +106,7 @@ npm link && forge-loop "你的目标"            # 全局链接后直接使用
 
 > **Zero-Impact 不变量**：未安装 cmux 时，Forge 行为零变化。所有 cmux 集成代码在 `cmuxAvailable()` 返回 false 时立即短路退出。
 
-[cmux](https://github.com/nickgnd/tmux-mcp) 是一个终端复用器，Forge 可选地将生命周期状态投射到 cmux 侧边栏和通知。
+[cmux](https://github.com/manaflow-ai/cmux)（[cmux.dev](https://www.cmux.dev/)）是基于 Ghostty 的原生 macOS 终端，专为 AI coding agent 设计——垂直标签页、注意力提醒环、socket API、内置浏览器、原生 Claude Code Teams 支持。Forge 可选地将生命周期状态投射到 cmux 侧边栏与通知。
 
 ### 功能
 
@@ -118,6 +118,14 @@ npm link && forge-loop "你的目标"            # 全局链接后直接使用
 | **Reviews Frontmatter** | 评审结果结构化存储（原子重写） |
 | **Browser QA** | cmux browser 命令驱动的端到端 QA |
 | **工作区布局** | 3 种 Forge 专属 cmux 布局模板 |
+
+### Agent Teams 在 cmux 下原生可用
+
+cmux 自 0.63 起原生支持 Claude Code Teams（`cmux claude-teams`），自 0.64.5 起支持 Codex Teams（`cmux codex-teams`）。Forge Tier 1 PoC `/forge decide --mode=teams` 在 cmux 终端中**零额外配置**——cmux 自动设置 `CLAUDE_CODE_EXPERIMENTAL_AGENT_TEAMS=1`、注入 tmux shim、把 teammate 显示为原生 cmux 分屏（带 sidebar 元数据 + 注意力提醒环 + macOS 桌面通知）。
+
+详见：[Claude Code Teams 集成（cmux 官方文档）](https://cmux.com/docs/agent-integrations/claude-code-teams)。
+
+> Tier 0 hook（`TaskCompleted` / `TaskCreated` / `TeammateIdle`）在 cmux 终端中行为与普通终端**完全一致**，无需 cmux 特殊适配。
 
 ### 使用
 
@@ -146,10 +154,11 @@ bash cmux-skills/install.sh --uninstall .claude/skills
 
 ### 新增文件
 
-- `scripts/cmux-mirror/` — 4 个主脚本 + 14 个库模块
-- `templates/cmux.json` — 工作区布局模板
-- `cmux-skills/` — 3 个可选 SKILL.md + 安装器
-- `test/cmux-mirror/` — 25 tests (including 10 property tests)
+- `scripts/cmux-mirror/` — 6 个主脚本（mirror、sync-once、push、hook-notify、browser-qa、install-template）+ 13 个库模块
+- `templates/cmux.json` — 工作区布局模板（3 种布局）
+- `cmux-skills/` — 3 个可选 SKILL.md（forge-sidebar-sync / forge-browser-qa / forge-loop-signals）+ 安装器
+- `test/cmux-mirror/` — 33 tests（含 6 个 property tests：availability / budget-monotonic / dedupe-idempotent / events-tolerance / payload-mapping / session-totality）
+- `skills/forge/lib/{review,build,ship,abort,test,control-cli,control-ui}/references/cmux*.md` — SKILL 集成参考
 
 ---
 

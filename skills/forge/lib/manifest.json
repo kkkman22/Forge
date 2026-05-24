@@ -1,6 +1,6 @@
 {
   "version": 1,
-  "generated_at": "2026-05-23T12:21:08.763Z",
+  "generated_at": "2026-05-24T05:41:40.597Z",
   "subs": {
     "abort": {
       "instructions": {
@@ -217,7 +217,7 @@
     "decide-teams": {
       "instructions": {
         "path": "decide-teams/instructions.md",
-        "sha256": "2832b76b0d13f33d2a3873ce03ad466ce626aef7896c84f3d1086fc470018536"
+        "sha256": "30b076beb0426ac2c097c959f33c840652ba077a964b573e398246105f9698d9"
       },
       "references": []
     },

@@ -1,6 +1,9 @@
 ---
 topic: "forge-decide-agent-teams"
-status: "approved"
+status: "superseded"
+superseded_by: ".forge/archive/2026-05-24-agent-teams-poc-plan/README.md"
+superseded_reason: "PoC infrastructure shipped but live comparison runs never executed; superseded by Tier 1 governance in ROADMAP.md and ADR-0007"
+superseded_date: "2026-05-24"
 date: "2026-05-12"
 spec_ref: ".kiro/specs/forge-decide-agent-teams"
 format: "lightweight"

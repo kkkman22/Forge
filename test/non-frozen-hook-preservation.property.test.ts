@@ -262,7 +262,9 @@ const EXPECTED_TASK_COMPLETED_HOOKS: HookMatcher[] = [
     hooks: [
       {
         type: "command",
-        command: "echo '✅ 团队任务已完成。负责人请汇总队友输出并检查是否需要合并发现。'",
+        command:
+          "bash scripts/hook-task-completed.sh 2>&1 || bash forge/scripts/hook-task-completed.sh 2>&1 || bash ~/.claude/skills/forge/scripts/hook-task-completed.sh 2>&1",
+        timeout: 10,
       },
     ],
   },
