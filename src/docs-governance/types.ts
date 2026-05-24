@@ -2,7 +2,7 @@
 // Path & Domain
 // ─────────────────────────────────────────────────────────────
 declare const DocPathBrand: unique symbol;
-export type DocPath = string & { readonly [DocPathBrand]: void };
+export type DocPath = string & { readonly [DocPathBrand]: undefined };
 
 export type Domain = "A" | "B" | "C" | "D" | "EXCLUDED";
 

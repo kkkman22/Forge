@@ -1,8 +1,13 @@
-import { describe, expect, it } from "vitest";
 import * as fc from "fast-check";
-import type { DiagnosticRecord, DocPath, Severity } from "../../src/docs-governance/types.js";
-import { formatDiagnostics, formatNdjson, summarize, truncateMessage } from "../../src/docs-governance/reporter/diagnostic.js";
+import { describe, expect, it } from "vitest";
+import {
+  formatDiagnostics,
+  formatNdjson,
+  summarize,
+  truncateMessage,
+} from "../../src/docs-governance/reporter/diagnostic.js";
 import { severityToExitCode } from "../../src/docs-governance/reporter/exit-code.js";
+import type { DiagnosticRecord, DocPath, Severity } from "../../src/docs-governance/types.js";
 import { ExitCode } from "../../src/docs-governance/types.js";
 
 const makeRecord = (severity: Severity): DiagnosticRecord => ({

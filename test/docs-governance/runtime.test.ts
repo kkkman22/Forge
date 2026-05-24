@@ -1,9 +1,8 @@
-import { describe, expect, it, vi } from "vitest";
-import type { DiagnosticRecord } from "../../src/docs-governance/types.js";
-
+import { describe, expect, it } from "vitest";
 // We test the logic directly since _runtime.ts calls process.exit
 // which is hard to test in-process. We extract the core logic.
 import { computeExitResult } from "../../src/docs-governance/cli/_runtime.js";
+import type { DiagnosticRecord } from "../../src/docs-governance/types.js";
 
 describe("computeExitResult", () => {
   it("returns severity exit code on success", () => {

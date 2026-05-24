@@ -1,8 +1,8 @@
 import { describe, expect, it } from "vitest";
 import { loadSsotRegistry } from "../../../src/docs-governance/ssot/registry.js";
-import type { Config, DiagnosticRecord, DocPath, SsotRegistryEntry } from "../../../src/docs-governance/types.js";
+import type { Config, DocPath, SsotRegistryEntry } from "../../../src/docs-governance/types.js";
 
-const EMPTY_FILE = "" as DocPath;
+const _EMPTY_FILE = "" as DocPath;
 
 function makeConfig(overrides: Partial<Config["docs"]> = {}): Config {
   return {
@@ -48,7 +48,9 @@ describe("loadSsotRegistry", () => {
   });
 
   it("returns 4 default entries when ssot_sources is undefined", () => {
-    const config = makeConfig({ ssot_sources: undefined as unknown as readonly SsotRegistryEntry[] });
+    const config = makeConfig({
+      ssot_sources: undefined as unknown as readonly SsotRegistryEntry[],
+    });
     const { entries, diagnostics } = loadSsotRegistry(config);
     expect(entries).toHaveLength(4);
     expect(diagnostics.some((d) => d.severity === "warning")).toBe(true);
@@ -64,7 +66,9 @@ describe("loadSsotRegistry", () => {
     const { entries, diagnostics } = loadSsotRegistry(config);
     expect(entries).toHaveLength(1);
     expect(entries[0].topic).toBe("valid-topic");
-    expect(diagnostics.some((d) => d.severity === "error" && d.message.includes("internal-"))).toBe(true);
+    expect(diagnostics.some((d) => d.severity === "error" && d.message.includes("internal-"))).toBe(
+      true,
+    );
   });
 
   it("rejects topics with reserved prefix 'debug-'", () => {
@@ -74,7 +78,9 @@ describe("loadSsotRegistry", () => {
     const config = makeConfig({ ssot_sources: sources });
     const { entries, diagnostics } = loadSsotRegistry(config);
     expect(entries).toHaveLength(0);
-    expect(diagnostics.some((d) => d.severity === "error" && d.message.includes("debug-"))).toBe(true);
+    expect(diagnostics.some((d) => d.severity === "error" && d.message.includes("debug-"))).toBe(
+      true,
+    );
   });
 
   it("rejects topics with reserved prefix 'forge-meta-'", () => {
@@ -84,7 +90,9 @@ describe("loadSsotRegistry", () => {
     const config = makeConfig({ ssot_sources: sources });
     const { entries, diagnostics } = loadSsotRegistry(config);
     expect(entries).toHaveLength(0);
-    expect(diagnostics.some((d) => d.severity === "error" && d.message.includes("forge-meta-"))).toBe(true);
+    expect(
+      diagnostics.some((d) => d.severity === "error" && d.message.includes("forge-meta-")),
+    ).toBe(true);
   });
 
   // ─── Duplicate detection ─────────────────────────────
@@ -98,7 +106,9 @@ describe("loadSsotRegistry", () => {
     // Only the first occurrence kept
     expect(entries).toHaveLength(1);
     expect(entries[0].source).toBe("a.json");
-    expect(diagnostics.some((d) => d.severity === "error" && d.message.includes("duplicate"))).toBe(true);
+    expect(diagnostics.some((d) => d.severity === "error" && d.message.includes("duplicate"))).toBe(
+      true,
+    );
   });
 
   // ─── Renderer validation ─────────────────────────────
@@ -112,7 +122,9 @@ describe("loadSsotRegistry", () => {
     const { entries, diagnostics } = loadSsotRegistry(config, knownRenderers);
     expect(entries).toHaveLength(1);
     expect(entries[0].topic).toBe("valid");
-    expect(diagnostics.some((d) => d.severity === "error" && d.message.includes("nonexistent-renderer"))).toBe(true);
+    expect(
+      diagnostics.some((d) => d.severity === "error" && d.message.includes("nonexistent-renderer")),
+    ).toBe(true);
   });
 
   it("accepts all renderers when no registry is passed", () => {

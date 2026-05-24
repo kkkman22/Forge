@@ -1,9 +1,8 @@
-import { mkdirSync, rmSync, writeFileSync, symlinkSync, existsSync } from "node:fs";
-import { join } from "node:path";
+import { mkdirSync, rmSync, symlinkSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
-import { describe, expect, it, afterEach } from "vitest";
+import { join } from "node:path";
+import { afterEach, describe, expect, it } from "vitest";
 import { checkRootWhitelist } from "../../src/docs-governance/root-whitelist.js";
-import type { DiagnosticRecord } from "../../src/docs-governance/types.js";
 
 const DEFAULT_WHITELIST = [
   "README.md",
@@ -167,9 +166,7 @@ describe("checkRootWhitelist", () => {
     const crits = diags.filter((d) => d.code === "LICENSE_MUTUAL_EXCLUSION");
     expect(crits).toHaveLength(2);
     // README.md should NOT generate an error
-    const others = diags.filter(
-      (d) => d.code === "ROOT_FILE_NOT_WHITELISTED",
-    );
+    const others = diags.filter((d) => d.code === "ROOT_FILE_NOT_WHITELISTED");
     expect(others).toHaveLength(0);
   });
 

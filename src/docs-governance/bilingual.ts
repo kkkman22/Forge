@@ -1,4 +1,4 @@
-import type { Doc, DocPair, DocPath, PairState, DiagnosticRecord, Severity } from "./types.js";
+import type { DiagnosticRecord, Doc, DocPair, DocPath, PairState, Severity } from "./types.js";
 
 // ─────────────────────────────────────────────────────────────
 // Constants
@@ -73,20 +73,24 @@ export function checkBilingualPairs(pairs: readonly DocPair[]): DiagnosticRecord
         break;
 
       case "orphan_mirror":
-        diagnostics.push(makeDiagnostic(
-          pair.en!.path,
-          "warning",
-          `orphan_mirror: EN file "${pair.en!.path}" has mirror_of but CN counterpart is missing`,
-          { code: "orphan_mirror" },
-        ));
+        diagnostics.push(
+          makeDiagnostic(
+            pair.en?.path,
+            "warning",
+            `orphan_mirror: EN file "${pair.en?.path}" has mirror_of but CN counterpart is missing`,
+            { code: "orphan_mirror" },
+          ),
+        );
         break;
 
       case "en-only": {
-        diagnostics.push(makeDiagnostic(
-          pair.en!.path,
-          "notice",
-          `EN file "${pair.en!.path}" exists without CN counterpart`,
-        ));
+        diagnostics.push(
+          makeDiagnostic(
+            pair.en?.path,
+            "notice",
+            `EN file "${pair.en?.path}" exists without CN counterpart`,
+          ),
+        );
         break;
       }
 
@@ -99,24 +103,28 @@ export function checkBilingualPairs(pairs: readonly DocPair[]): DiagnosticRecord
 
         // Check category consistency (R12.8)
         if (en.frontmatter.category !== cn.frontmatter.category) {
-          diagnostics.push(makeDiagnostic(
-            en.path,
-            "error",
-            `R12.8 category mismatch: EN="${en.frontmatter.category}", CN="${cn.frontmatter.category}"`,
-            { code: "category_mismatch" },
-          ));
+          diagnostics.push(
+            makeDiagnostic(
+              en.path,
+              "error",
+              `R12.8 category mismatch: EN="${en.frontmatter.category}", CN="${cn.frontmatter.category}"`,
+              { code: "category_mismatch" },
+            ),
+          );
         }
 
         // Check audience consistency (R12.8)
         const enAud = [...en.frontmatter.audience].sort();
         const cnAud = [...cn.frontmatter.audience].sort();
         if (JSON.stringify(enAud) !== JSON.stringify(cnAud)) {
-          diagnostics.push(makeDiagnostic(
-            en.path,
-            "error",
-            `R12.8 audience mismatch: EN=[${en.frontmatter.audience.join(",")}], CN=[${cn.frontmatter.audience.join(",")}]`,
-            { code: "audience_mismatch" },
-          ));
+          diagnostics.push(
+            makeDiagnostic(
+              en.path,
+              "error",
+              `R12.8 audience mismatch: EN=[${en.frontmatter.audience.join(",")}], CN=[${cn.frontmatter.audience.join(",")}]`,
+              { code: "audience_mismatch" },
+            ),
+          );
         }
 
         // Check mirror_drift (> 14 days between updated dates)
@@ -192,24 +200,25 @@ function validateMirrorOf(en: Doc, pair: DocPair): DiagnosticRecord[] {
 
   // Check: must be a relative path (no leading /)
   if (mirrorOf.startsWith("/")) {
-    diagnostics.push(makeDiagnostic(
-      en.path,
-      "error",
-      `mirror_of must be a relative path, got: "${mirrorOf}"`,
-      { code: "mirror_of_absolute" },
-    ));
+    diagnostics.push(
+      makeDiagnostic(en.path, "error", `mirror_of must be a relative path, got: "${mirrorOf}"`, {
+        code: "mirror_of_absolute",
+      }),
+    );
     return diagnostics;
   }
 
   // Check: must point to the CN counterpart
   const expectedCN = `${pair.slug}.md`;
   if (mirrorOf !== expectedCN) {
-    diagnostics.push(makeDiagnostic(
-      en.path,
-      "error",
-      `mirror_of should point to CN counterpart "${expectedCN}", got: "${mirrorOf}"`,
-      { code: "mirror_of_mismatch" },
-    ));
+    diagnostics.push(
+      makeDiagnostic(
+        en.path,
+        "error",
+        `mirror_of should point to CN counterpart "${expectedCN}", got: "${mirrorOf}"`,
+        { code: "mirror_of_mismatch" },
+      ),
+    );
   }
 
   return diagnostics;
@@ -223,19 +232,21 @@ function checkMirrorDrift(cn: Doc, en: Doc): DiagnosticRecord[] {
   const diffDays = diffMs / (1000 * 60 * 60 * 24);
 
   if (diffDays > DRIFT_THRESHOLD_DAYS) {
-    return [makeDiagnostic(
-      en.path,
-      "warning",
-      `mirror_drift: updated dates differ by ${Math.round(diffDays)} days (CN="${cn.frontmatter.updated}", EN="${en.frontmatter.updated}")`,
-      { code: "mirror_drift", drift_days: Math.round(diffDays) },
-    )];
+    return [
+      makeDiagnostic(
+        en.path,
+        "warning",
+        `mirror_drift: updated dates differ by ${Math.round(diffDays)} days (CN="${cn.frontmatter.updated}", EN="${en.frontmatter.updated}")`,
+        { code: "mirror_drift", drift_days: Math.round(diffDays) },
+      ),
+    ];
   }
 
   return [];
 }
 
 function makeDiagnostic(
-  file: DocPath,
+  file: DocPath | undefined,
   severity: Severity,
   message: string,
   extra?: Record<string, string | number | boolean>,
@@ -243,7 +254,7 @@ function makeDiagnostic(
   return {
     script: "bilingual-checker",
     severity,
-    file,
+    file: (file ?? "unknown") as DocPath,
     message,
     ...(extra ? { extra } : {}),
   };

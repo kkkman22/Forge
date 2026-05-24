@@ -1,4 +1,4 @@
-import type { RenderInput, RenderResult } from "../../types.js";
+import type { DocPath, RenderInput, RenderResult } from "../../types.js";
 
 interface JsonListEntry {
   label: string;
@@ -10,7 +10,14 @@ export function jsonListRenderer(input: RenderInput): RenderResult {
   if (!Array.isArray(source)) {
     return {
       markdown: "",
-      diagnostics: [{ script: "json-list", severity: "error", file: "" as any, message: "Source must be an array" }],
+      diagnostics: [
+        {
+          script: "json-list",
+          severity: "error",
+          file: "" as DocPath,
+          message: "Source must be an array",
+        },
+      ],
     };
   }
 

@@ -1,9 +1,9 @@
-import { describe, expect, it } from "vitest";
 import * as fc from "fast-check";
+import { describe, expect, it } from "vitest";
 import { commandsTableRenderer } from "../../../src/docs-governance/ssot/renderers/commands-table.js";
+import { jsonListRenderer } from "../../../src/docs-governance/ssot/renderers/json-list.js";
 import { routingTableRenderer } from "../../../src/docs-governance/ssot/renderers/routing-table.js";
 import { securityTiersRenderer } from "../../../src/docs-governance/ssot/renderers/security-tiers.js";
-import { jsonListRenderer } from "../../../src/docs-governance/ssot/renderers/json-list.js";
 import type { RenderInput } from "../../../src/docs-governance/types.js";
 
 const baseInput = (source: unknown): RenderInput => ({
@@ -15,10 +15,12 @@ const baseInput = (source: unknown): RenderInput => ({
 
 describe("commands-table renderer", () => {
   it("renders table with headers and rows", () => {
-    const result = commandsTableRenderer(baseInput([
-      { name: "/forge build", tier: "Standard", summary: "Build" },
-      { name: "/forge plan", tier: "Standard", summary: "Plan" },
-    ]));
+    const result = commandsTableRenderer(
+      baseInput([
+        { name: "/forge build", tier: "Standard", summary: "Build" },
+        { name: "/forge plan", tier: "Standard", summary: "Plan" },
+      ]),
+    );
     expect(result.diagnostics).toHaveLength(0);
     expect(result.markdown).toContain("| Command | Tier | Summary |");
     expect(result.markdown).toContain("/forge build");
@@ -26,19 +28,25 @@ describe("commands-table renderer", () => {
   });
 
   it("deduplicates by name", () => {
-    const result = commandsTableRenderer(baseInput([
-      { name: "a", tier: "L", summary: "first" },
-      { name: "a", tier: "L", summary: "dup" },
-    ]));
-    const rows = result.markdown.split("\n").filter((l) => l.startsWith("| /") || l.startsWith("| a"));
+    const result = commandsTableRenderer(
+      baseInput([
+        { name: "a", tier: "L", summary: "first" },
+        { name: "a", tier: "L", summary: "dup" },
+      ]),
+    );
+    const rows = result.markdown
+      .split("\n")
+      .filter((l) => l.startsWith("| /") || l.startsWith("| a"));
     expect(rows).toHaveLength(1);
   });
 
   it("sorts by name ascending", () => {
-    const result = commandsTableRenderer(baseInput([
-      { name: "z-cmd", tier: "L", summary: "z" },
-      { name: "a-cmd", tier: "L", summary: "a" },
-    ]));
+    const result = commandsTableRenderer(
+      baseInput([
+        { name: "z-cmd", tier: "L", summary: "z" },
+        { name: "a-cmd", tier: "L", summary: "a" },
+      ]),
+    );
     const lines = result.markdown.split("\n");
     const aIdx = lines.findIndex((l) => l.includes("a-cmd"));
     const zIdx = lines.findIndex((l) => l.includes("z-cmd"));
@@ -53,9 +61,9 @@ describe("commands-table renderer", () => {
 
 describe("routing-table renderer", () => {
   it("renders routing table", () => {
-    const result = routingTableRenderer(baseInput([
-      { tier: "Light", condition: "≤1 file", sequence: ["build", "review"] },
-    ]));
+    const result = routingTableRenderer(
+      baseInput([{ tier: "Light", condition: "≤1 file", sequence: ["build", "review"] }]),
+    );
     expect(result.markdown).toContain("| Tier | Condition | Command Sequence |");
     expect(result.markdown).toContain("build → review");
   });
@@ -63,19 +71,21 @@ describe("routing-table renderer", () => {
 
 describe("security-tiers renderer", () => {
   it("renders tier hierarchy", () => {
-    const result = securityTiersRenderer(baseInput([
-      { level: 1, name: "Basic", capabilities: ["read"], constraints: ["no write"] },
-    ]));
+    const result = securityTiersRenderer(
+      baseInput([{ level: 1, name: "Basic", capabilities: ["read"], constraints: ["no write"] }]),
+    );
     expect(result.markdown).toContain("### Level 1: Basic");
     expect(result.markdown).toContain("- read");
     expect(result.markdown).toContain("- no write");
   });
 
   it("sorts by level ascending", () => {
-    const result = securityTiersRenderer(baseInput([
-      { level: 3, name: "High", capabilities: [], constraints: [] },
-      { level: 1, name: "Low", capabilities: [], constraints: [] },
-    ]));
+    const result = securityTiersRenderer(
+      baseInput([
+        { level: 3, name: "High", capabilities: [], constraints: [] },
+        { level: 1, name: "Low", capabilities: [], constraints: [] },
+      ]),
+    );
     const lines = result.markdown.split("\n");
     const lowIdx = lines.findIndex((l) => l.includes("Low"));
     const highIdx = lines.findIndex((l) => l.includes("High"));
@@ -85,10 +95,12 @@ describe("security-tiers renderer", () => {
 
 describe("json-list renderer", () => {
   it("renders bullet list", () => {
-    const result = jsonListRenderer(baseInput([
-      { label: "Version", value: "2.6.0" },
-      { label: "Commands", value: 22 },
-    ]));
+    const result = jsonListRenderer(
+      baseInput([
+        { label: "Version", value: "2.6.0" },
+        { label: "Commands", value: 22 },
+      ]),
+    );
     expect(result.markdown).toContain("- **Version**: 2.6.0");
     expect(result.markdown).toContain("- **Commands**: 22");
   });

@@ -1,5 +1,10 @@
 import { describe, expect, it } from "vitest";
-import { CATEGORY_ORDER, formatEntry, formatCategoryGroup, generateIndexFooter } from "../../src/docs-governance/index-generator/format.js";
+import {
+  CATEGORY_ORDER,
+  formatCategoryGroup,
+  formatEntry,
+  generateIndexFooter,
+} from "../../src/docs-governance/index-generator/format.js";
 import type { DocPair, DocPath, Frontmatter } from "../../src/docs-governance/types.js";
 
 const makeFm = (overrides: Partial<Frontmatter> = {}): Frontmatter => ({
@@ -11,19 +16,39 @@ const makeFm = (overrides: Partial<Frontmatter> = {}): Frontmatter => ({
   ...overrides,
 });
 
-const makePair = (slug: string, overrides: { cn?: Partial<Frontmatter>; en?: Partial<Frontmatter> } = {}): DocPair => ({
+const makePair = (
+  slug: string,
+  overrides: { cn?: Partial<Frontmatter>; en?: Partial<Frontmatter> } = {},
+): DocPair => ({
   slug,
   directory: "docs" as DocPath,
-  cn: { path: `docs/${slug}.md` as any, domain: "A", frontmatter: makeFm({ title: slug, ...overrides.cn }), bodyHash: "" },
-  en: overrides.en ? { path: `docs/${slug}.en.md` as any, domain: "A", frontmatter: makeFm({ title: `${slug} (EN)`, ...overrides.en }), bodyHash: "" } : undefined,
+  cn: {
+    path: `docs/${slug}.md` as any,
+    domain: "A",
+    frontmatter: makeFm({ title: slug, ...overrides.cn }),
+    bodyHash: "",
+  },
+  en: overrides.en
+    ? {
+        path: `docs/${slug}.en.md` as any,
+        domain: "A",
+        frontmatter: makeFm({ title: `${slug} (EN)`, ...overrides.en }),
+        bodyHash: "",
+      }
+    : undefined,
   state: overrides.en ? "paired" : "cn-only",
 });
 
 describe("CATEGORY_ORDER", () => {
   it("has 7 categories in correct order", () => {
     expect(CATEGORY_ORDER).toEqual([
-      "getting-started", "daily-use", "advanced",
-      "troubleshooting", "contributing", "reference", "audits",
+      "getting-started",
+      "daily-use",
+      "advanced",
+      "troubleshooting",
+      "contributing",
+      "reference",
+      "audits",
     ]);
   });
 });

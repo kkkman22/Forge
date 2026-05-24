@@ -35,7 +35,7 @@ export function buildIndex(pairs: DocPair[]): { cn: string; en: string } {
     sections.push(formatCategoryGroup(cat, g));
   }
 
-  const cn = sections.join("\n\n") + "\n\n" + generateIndexFooter();
+  const cn = `${sections.join("\n\n")}\n\n${generateIndexFooter()}`;
 
   // Generate English version (INDEX.en.md)
   const en = buildEnglishIndex(groups);
@@ -52,7 +52,7 @@ function buildEnglishIndex(groups: Map<Category, DocPair[]>): string {
     const label = catLabelEn(cat);
     sections.push([`## ${label}`, "", ...entries].join("\n"));
   }
-  return sections.join("\n\n") + "\n\n" + generateIndexFooter();
+  return `${sections.join("\n\n")}\n\n${generateIndexFooter()}`;
 }
 
 function formatEnglishEntry(pair: DocPair): string {

@@ -1,6 +1,10 @@
-import { describe, expect, it } from "vitest";
 import * as fc from "fast-check";
-import { gfmAnchor, dedupAnchorsInDoc, extractLinks } from "../../src/docs-governance/link-checker.js";
+import { describe, expect, it } from "vitest";
+import {
+  dedupAnchorsInDoc,
+  extractLinks,
+  gfmAnchor,
+} from "../../src/docs-governance/link-checker.js";
 
 describe("gfmAnchor", () => {
   it("lowercases ASCII letters", () => {
@@ -40,7 +44,7 @@ describe("gfmAnchor", () => {
       fc.property(fc.string({ minLength: 1, maxLength: 50 }), (text) => {
         const anchor = gfmAnchor(text);
         // Allowed: lowercase ascii letters, digits, CJK, dash, underscore
-        const allowed = /^[a-z0-9一-鿿㐀-䶿\-\s]*$/;
+        const _allowed = /^[a-z0-9一-鿿㐀-䶿\-\s]*$/;
         // Note: spaces are converted to dashes, so no spaces in output
         for (const ch of anchor) {
           const isLowerAlpha = ch >= "a" && ch <= "z";

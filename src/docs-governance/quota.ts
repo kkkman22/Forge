@@ -1,4 +1,4 @@
-import type { Config, DiagnosticRecord } from "./types.js";
+import type { Config, DiagnosticRecord, DocPath } from "./types.js";
 
 interface QuotaOptions {
   allowGrow?: string;
@@ -10,9 +10,7 @@ export function countDocPairs(files: string[]): {
 } {
   // Exclude INDEX*.md, README.md, .mdx
   const excluded = (name: string) =>
-    name.startsWith("INDEX") ||
-    name === "README.md" ||
-    name.endsWith(".mdx");
+    name.startsWith("INDEX") || name === "README.md" || name.endsWith(".mdx");
 
   const filtered = files.filter((f) => {
     const parts = f.split("/");
@@ -54,14 +52,11 @@ export function checkQuota(
     if (options?.allowGrow) {
       // Must be a path under .forge/decisions/
       const adrPath = options.allowGrow;
-      if (
-        !adrPath.startsWith(".forge/decisions/") ||
-        !adrPath.endsWith(".md")
-      ) {
+      if (!adrPath.startsWith(".forge/decisions/") || !adrPath.endsWith(".md")) {
         diags.push({
           script: "check-docs-quota",
           severity: "error",
-          file: ".forge/config.md" as any,
+          file: ".forge/config.md" as DocPath,
           message: `--allow-grow requires a valid ADR path under .forge/decisions/, got: ${adrPath}`,
           code: "QUOTA_ALLOW_GROW_NO_ADR",
         });
@@ -70,14 +65,14 @@ export function checkQuota(
       diags.push({
         script: "check-docs-quota",
         severity: "warning",
-        file: ".forge/config.md" as any,
+        file: ".forge/config.md" as DocPath,
         message: `Doc count ${count} exceeds quota ${maxCount}, but --allow-grow is active with ADR`,
       });
     } else {
       diags.push({
         script: "check-docs-quota",
         severity: "error",
-        file: ".forge/config.md" as any,
+        file: ".forge/config.md" as DocPath,
         message: `Doc count ${count} >= max_count ${maxCount}. Use --allow-grow with an ADR to raise the limit.`,
         code: "QUOTA_EXCEEDED",
       });
@@ -86,7 +81,7 @@ export function checkQuota(
     diags.push({
       script: "check-docs-quota",
       severity: "warning",
-      file: ".forge/config.md" as any,
+      file: ".forge/config.md" as DocPath,
       message: `Doc count ${count} is 1 below max_count ${maxCount}. Approaching limit.`,
     });
   }

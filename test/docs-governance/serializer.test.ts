@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
-import { serialize } from "../../src/docs-governance/frontmatter/serializer.js";
 import { parseFrontmatter } from "../../src/docs-governance/frontmatter/parser.js";
-import type { Frontmatter, Audience } from "../../src/docs-governance/types.js";
+import { serialize } from "../../src/docs-governance/frontmatter/serializer.js";
+import type { Audience, Frontmatter } from "../../src/docs-governance/types.js";
 
 // ─────────────────────────────────────────────────────────────
 // Helpers

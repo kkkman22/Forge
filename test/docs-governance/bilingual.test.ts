@@ -1,6 +1,12 @@
 import { describe, expect, it } from "vitest";
-import { pairBilingual, checkBilingualPairs } from "../../src/docs-governance/bilingual.js";
-import type { Doc, Frontmatter, DocPath, Domain, Audience } from "../../src/docs-governance/types.js";
+import { checkBilingualPairs, pairBilingual } from "../../src/docs-governance/bilingual.js";
+import type {
+  Audience,
+  Doc,
+  DocPath,
+  Domain,
+  Frontmatter,
+} from "../../src/docs-governance/types.js";
 
 // ─────────────────────────────────────────────────────────────
 // Helpers
@@ -18,10 +24,7 @@ const DEFAULT_FM: Frontmatter = {
   owner: "Team",
 };
 
-function makeDoc(
-  path: string,
-  fmOverrides?: Partial<Frontmatter>,
-): Doc {
+function makeDoc(path: string, fmOverrides?: Partial<Frontmatter>): Doc {
   const fm: Frontmatter = { ...DEFAULT_FM, ...fmOverrides } as Frontmatter;
   return {
     path: p(path),
@@ -36,10 +39,7 @@ function makeDoc(
 // ─────────────────────────────────────────────────────────────
 describe("pairBilingual", () => {
   it("pairs .md and .en.md by slug in same directory", () => {
-    const docs: Doc[] = [
-      makeDoc("docs/guide.md"),
-      makeDoc("docs/guide.en.md"),
-    ];
+    const docs: Doc[] = [makeDoc("docs/guide.md"), makeDoc("docs/guide.en.md")];
 
     const pairs = pairBilingual(docs);
     expect(pairs).toHaveLength(1);
@@ -72,9 +72,7 @@ describe("pairBilingual", () => {
   });
 
   it("marks orphan_mirror when EN has mirror_of but CN counterpart is missing", () => {
-    const docs: Doc[] = [
-      makeDoc("other/guide.en.md", { mirror_of: "guide.md" }),
-    ];
+    const docs: Doc[] = [makeDoc("other/guide.en.md", { mirror_of: "guide.md" })];
 
     const pairs = pairBilingual(docs);
     expect(pairs).toHaveLength(1);
@@ -84,10 +82,7 @@ describe("pairBilingual", () => {
   });
 
   it("does not pair files with same slug from different directories", () => {
-    const docs: Doc[] = [
-      makeDoc("docs/guide.md"),
-      makeDoc("api/guide.en.md"),
-    ];
+    const docs: Doc[] = [makeDoc("docs/guide.md"), makeDoc("api/guide.en.md")];
 
     const pairs = pairBilingual(docs);
     expect(pairs).toHaveLength(2);
@@ -216,7 +211,8 @@ describe("checkBilingualPairs — category/audience consistency", () => {
     const diagnostics = checkBilingualPairs(pairs);
     const mismatchErrors = diagnostics.filter(
       (d) =>
-        (d.message.toLowerCase().includes("category") || d.message.toLowerCase().includes("audience")) &&
+        (d.message.toLowerCase().includes("category") ||
+          d.message.toLowerCase().includes("audience")) &&
         d.severity === "error",
     );
     expect(mismatchErrors).toHaveLength(0);
@@ -228,9 +224,7 @@ describe("checkBilingualPairs — category/audience consistency", () => {
 // ─────────────────────────────────────────────────────────────
 describe("checkBilingualPairs — orphan_mirror", () => {
   it("produces warning for orphan_mirror (EN without CN counterpart)", () => {
-    const docs: Doc[] = [
-      makeDoc("docs/guide.en.md", { mirror_of: "guide.md" }),
-    ];
+    const docs: Doc[] = [makeDoc("docs/guide.en.md", { mirror_of: "guide.md" })];
 
     const pairs = pairBilingual(docs);
     expect(pairs[0]!.state).toBe("orphan_mirror");
@@ -269,9 +263,7 @@ describe("checkBilingualPairs — mirror_drift", () => {
 
     const pairs = pairBilingual(docs);
     const diagnostics = checkBilingualPairs(pairs);
-    const driftWarnings = diagnostics.filter(
-      (d) => d.message.toLowerCase().includes("drift"),
-    );
+    const driftWarnings = diagnostics.filter((d) => d.message.toLowerCase().includes("drift"));
     expect(driftWarnings).toHaveLength(0);
   });
 });

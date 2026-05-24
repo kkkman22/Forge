@@ -30,22 +30,20 @@ export function findFrontmatterRange(lines: string[]): FrontmatterRange | null {
 export function parseDiffHunks(diff: string): DiffHunk[] {
   const hunks: DiffHunk[] = [];
   const hunkRe = /^@@ -(\d+)(?:,(\d+))? \+(\d+)(?:,(\d+))? @@/gm;
-  let match;
-  while ((match = hunkRe.exec(diff)) !== null) {
+  let match: RegExpExecArray | null = hunkRe.exec(diff);
+  while (match !== null) {
     hunks.push({
       oldStart: Number.parseInt(match[1], 10),
       oldCount: match[2] ? Number.parseInt(match[2], 10) : 1,
       newStart: Number.parseInt(match[3], 10),
       newCount: match[4] ? Number.parseInt(match[4], 10) : 1,
     });
+    match = hunkRe.exec(diff);
   }
   return hunks;
 }
 
-export function isFrontmatterOnlyChange(
-  fileContent: string,
-  diff: string,
-): boolean {
+export function isFrontmatterOnlyChange(fileContent: string, diff: string): boolean {
   const lines = fileContent.split("\n");
   const fmRange = findFrontmatterRange(lines);
   if (!fmRange) return false;

@@ -1,6 +1,6 @@
 import { parse as parseYaml } from "yaml";
+import type { DiagnosticRecord, DocPath, Frontmatter, Severity } from "../types.js";
 import { frontmatterSchema } from "./schema.js";
-import type { Frontmatter, DiagnosticRecord, DocPath, Severity } from "../types.js";
 
 // ─────────────────────────────────────────────────────────────
 // Types
@@ -59,7 +59,7 @@ export function parseFrontmatter(text: string): ParseResult {
 
   // Frontmatter block must start with --- on the very first line
   const lines = src.split("\n");
-  if (lines.length === 0 || lines[0]!.trim() !== DELIMITER) {
+  if (lines.length === 0 || lines[0]?.trim() !== DELIMITER) {
     return {
       frontmatter: null,
       body: src,
@@ -70,7 +70,7 @@ export function parseFrontmatter(text: string): ParseResult {
   // Find closing ---
   let closeIndex = -1;
   for (let i = 1; i < lines.length; i++) {
-    if (lines[i]!.trim() === DELIMITER) {
+    if (lines[i]?.trim() === DELIMITER) {
       closeIndex = i;
       break;
     }
@@ -105,9 +105,7 @@ export function parseFrontmatter(text: string): ParseResult {
       frontmatter: null,
       body,
       diagnostics: [
-        makeDiagnostic(
-          `YAML parse error: ${err instanceof Error ? err.message : String(err)}`,
-        ),
+        makeDiagnostic(`YAML parse error: ${err instanceof Error ? err.message : String(err)}`),
       ],
     };
   }
@@ -132,9 +130,7 @@ export function parseFrontmatter(text: string): ParseResult {
   // Validate with Zod schema
   const result = frontmatterSchema.safeParse(parsed);
   if (!result.success) {
-    const messages = result.error.issues.map(
-      (iss) => `${iss.path.join(".")}: ${iss.message}`,
-    );
+    const messages = result.error.issues.map((iss) => `${iss.path.join(".")}: ${iss.message}`);
     return {
       frontmatter: null,
       body,

@@ -1,5 +1,5 @@
 import { z } from "zod";
-import type { Category, Audience } from "../types.js";
+import type { Audience, Category } from "../types.js";
 
 // ─────────────────────────────────────────────────────────────
 // Category & Audience enums

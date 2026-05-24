@@ -1,4 +1,4 @@
-import type { RenderInput, RenderResult } from "../../types.js";
+import type { DocPath, RenderInput, RenderResult } from "../../types.js";
 
 interface RoutingEntry {
   tier: string;
@@ -11,7 +11,14 @@ export function routingTableRenderer(input: RenderInput): RenderResult {
   if (!Array.isArray(source)) {
     return {
       markdown: "",
-      diagnostics: [{ script: "routing-table", severity: "error", file: "" as any, message: "Source must be an array" }],
+      diagnostics: [
+        {
+          script: "routing-table",
+          severity: "error",
+          file: "" as DocPath,
+          message: "Source must be an array",
+        },
+      ],
     };
   }
 

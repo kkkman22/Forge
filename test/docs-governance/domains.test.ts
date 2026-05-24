@@ -1,5 +1,5 @@
-import { describe, expect, it } from "vitest";
 import * as fc from "fast-check";
+import { describe, expect, it } from "vitest";
 import { classify } from "../../src/docs-governance/domains.js";
 
 describe("classify", () => {
@@ -109,7 +109,13 @@ describe("classify", () => {
     const valid = new Set(["A", "B", "C", "D", "EXCLUDED", "UNCLASSIFIED"]);
     fc.assert(
       fc.property(
-        fc.string({ unit: fc.constantFrom(..."abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789_-/.".split("")), minLength: 1, maxLength: 100 }),
+        fc.string({
+          unit: fc.constantFrom(
+            ..."abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789_-/.".split(""),
+          ),
+          minLength: 1,
+          maxLength: 100,
+        }),
         (path) => {
           if (!path.endsWith(".md")) {
             // Non-md files still classify — they just won't be docs

@@ -1,9 +1,17 @@
-import { describe, expect, it } from "vitest";
 import * as fc from "fast-check";
+import { describe, expect, it } from "vitest";
 import { buildIndex } from "../../src/docs-governance/index-generator/generator.js";
-import type { DocPair, Frontmatter, Category } from "../../src/docs-governance/types.js";
+import type { Category, DocPair, Frontmatter } from "../../src/docs-governance/types.js";
 
-const CATEGORIES: Category[] = ["getting-started", "daily-use", "advanced", "troubleshooting", "contributing", "reference", "audits"];
+const CATEGORIES: Category[] = [
+  "getting-started",
+  "daily-use",
+  "advanced",
+  "troubleshooting",
+  "contributing",
+  "reference",
+  "audits",
+];
 
 const makeFm = (title: string, category: Category = "reference"): Frontmatter => ({
   title,
@@ -44,10 +52,7 @@ describe("buildIndex", () => {
   });
 
   it("sorts entries by title within category", () => {
-    const pairs = [
-      makePair("z-page", "Zebra"),
-      makePair("a-page", "Apple"),
-    ];
+    const pairs = [makePair("z-page", "Zebra"), makePair("a-page", "Apple")];
     const result = buildIndex(pairs);
     const lines = result.cn.split("\n");
     const appleIdx = lines.findIndex((l) => l.includes("Apple"));
@@ -64,8 +69,16 @@ describe("buildIndex", () => {
   it("PBT: gen(gen(input)) === gen(input) (idempotency)", () => {
     const categoryArb = fc.constantFrom(...CATEGORIES);
     const pairArb = fc.record({
-      slug: fc.string({ minLength: 1, maxLength: 10, unit: fc.constantFrom(..."abcdefghijklmnopqrstuvwxyz".split("")) }),
-      title: fc.string({ minLength: 1, maxLength: 20, unit: fc.constantFrom(..."abcdefghijklmnopqrstuvwxyz ABCDEF".split("")) }),
+      slug: fc.string({
+        minLength: 1,
+        maxLength: 10,
+        unit: fc.constantFrom(..."abcdefghijklmnopqrstuvwxyz".split("")),
+      }),
+      title: fc.string({
+        minLength: 1,
+        maxLength: 20,
+        unit: fc.constantFrom(..."abcdefghijklmnopqrstuvwxyz ABCDEF".split("")),
+      }),
       category: categoryArb,
     });
 

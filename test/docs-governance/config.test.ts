@@ -78,9 +78,7 @@ describe("loadConfigWithDefaults", () => {
     const invalid = VALID_CONFIG.replace("max_count: 30", "max_count: 0");
     const config = loadConfigWithDefaults(invalid);
     expect(config.docs.max_count).toBe(30); // default
-    const diag = config.diagnosticsFromConfigLoad.find(
-      (d) => d.code === "CONFIG_FIELD_INVALID",
-    );
+    const diag = config.diagnosticsFromConfigLoad.find((d) => d.code === "CONFIG_FIELD_INVALID");
     expect(diag).toBeDefined();
   });
 
@@ -103,10 +101,7 @@ describe("loadConfigWithDefaults", () => {
   });
 
   it("warns on invalid critical_days (out of range)", () => {
-    const invalid = VALID_CONFIG.replace(
-      "critical_days: 180",
-      "critical_days: 1000",
-    );
+    const invalid = VALID_CONFIG.replace("critical_days: 180", "critical_days: 1000");
     const config = loadConfigWithDefaults(invalid);
     expect(config.staleness.critical_days).toBe(180);
   });
@@ -129,10 +124,7 @@ describe("loadConfigWithDefaults", () => {
   });
 
   it("falls back to default ssot_sources when missing", () => {
-    const noSsot = VALID_CONFIG.replace(
-      /  ssot_sources:\n(    - .*\n)*/g,
-      "",
-    );
+    const noSsot = VALID_CONFIG.replace(/ {2}ssot_sources:\n( {4}- .*\n)*/g, "");
     const config = loadConfigWithDefaults(noSsot);
     expect(config.docs.ssot_sources).toHaveLength(4);
   });

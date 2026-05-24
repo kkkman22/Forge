@@ -1,5 +1,9 @@
 import { describe, expect, it } from "vitest";
-import { isFrontmatterOnlyChange, parseDiffHunks, findFrontmatterRange } from "../../src/docs-governance/updated-auditor.js";
+import {
+  findFrontmatterRange,
+  isFrontmatterOnlyChange,
+  parseDiffHunks,
+} from "../../src/docs-governance/updated-auditor.js";
 
 describe("findFrontmatterRange", () => {
   it("finds frontmatter range in typical doc", () => {
