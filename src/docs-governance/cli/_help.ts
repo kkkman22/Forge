@@ -1,11 +1,5 @@
 export function formatHelp(scriptName: string, description: string, options: string[]): string {
-  const lines = [
-    `Usage: ${scriptName} [options]`,
-    "",
-    description,
-    "",
-    "Options:",
-  ];
+  const lines = [`Usage: ${scriptName} [options]`, "", description, "", "Options:"];
   for (const opt of options) {
     lines.push(`  ${opt}`);
   }

@@ -36,6 +36,19 @@
           }
         }
       }
+    },
+    {
+      "includes": [
+        "src/docs-governance/index-generator/generator.ts",
+        "src/docs-governance/ssot/renderers/*.ts"
+      ],
+      "linter": {
+        "rules": {
+          "suspicious": {
+            "noConsole": "off"
+          }
+        }
+      }
     }
   ],
   "assist": {
