@@ -13,7 +13,7 @@ const DEFAULT_ROOT_WHITELIST = [
 ] as const;
 
 const DEFAULT_SSOT_SOURCES: readonly SsotRegistryEntry[] = [
-  { topic: "commands", source: "commands/*.md", renderer: "commands-table" },
+  { topic: "commands", source: "docs/_ssot/commands.json", renderer: "commands-table" },
   {
     topic: "routing",
     source: "docs/_ssot/routing.json",
@@ -27,7 +27,7 @@ const DEFAULT_SSOT_SOURCES: readonly SsotRegistryEntry[] = [
   {
     topic: "gate-skills",
     source: "docs/_ssot/gate-skills.json",
-    renderer: "commands-table",
+    renderer: "json-list",
   },
 ] as const;
 

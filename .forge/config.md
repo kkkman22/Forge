@@ -11,6 +11,20 @@ review.subagent_concurrency: 3  # Range: 1-10; default 3; env FORGE_REVIEW_CONCU
 findings_retention_days: 30
 post_push_verify_enabled: true
 ci_check_command: "npm run check"
+docs.grace_period_until: "2026-06-01"
+docs.ssot_sources:
+  - topic: "commands"
+    source: "docs/_ssot/commands.json"
+    renderer: "commands-table"
+  - topic: "routing"
+    source: "docs/_ssot/routing.json"
+    renderer: "routing-table"
+  - topic: "security-tiers"
+    source: "docs/_ssot/security-tiers.json"
+    renderer: "security-tiers"
+  - topic: "gate-skills"
+    source: "docs/_ssot/gate-skills.json"
+    renderer: "json-list"
 ---
 
 # 项目配置

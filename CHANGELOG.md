@@ -11,6 +11,29 @@ Entries follow [Keep a Changelog](https://keepachangelog.com/) with Forge-specif
 
 ## [Unreleased]
 
+## [2.7.0] - 2026-05-25
+
+### Added
+
+- **Docs Governance System**: 五层文档治理系统（分类隔离、自动索引、过时检测、配额纪律、SSOT 嵌入）
+- 13 个 CLI 脚本（9 个检查器 + 2 个构建器 + 2 个迁移工具）+ `npm run docs:check` 聚合命令
+- Pre-commit hook 决策树：根据变更路径自动选择运行的检查器
+- CI workflow (`.github/workflows/docs-governance.yml`)：push/PR 自动检查
+- SSOT 嵌入机制：`docs/_ssot/` 数据源 + 5 个渲染器（commands-table、routing-table、security-tiers、json-list、count）
+- 4 个初始 SSOT 数据源：commands、routing、security-tiers、gate-skills
+- Biome `noRestrictedImports` 规则：禁止 generator/renderer 中导入 child_process
+- `/forge learn` 文档治理预检：自动运行 quota/staleness/links 检查器
+- `docs/reference-docs-governance.md` + EN mirror：完整参考手册
+- `src/docs-governance/reporter/learn-docs-check.ts`：可编程的治理检查 wrapper
+
+### Changed
+
+- README.md / docs/INDEX.md 中的硬编码命令数量替换为 SSOT 嵌入指令
+- `.forge/config.md` 新增 `docs.grace_period_until`、`docs.ssot_sources` 字段
+- `src/docs-governance/ssot/embed-parser.ts` 支持单行嵌入指令（begin/end 同行）
+- `src/docs-governance/ssot/ssot-loader.ts` 支持 JSON 自动解析
+- `docs/forge-constitution-detail.md` 新增 §8 文档治理章节
+
 ## [2.6.0] - 2026-05-18
 
 ### Added

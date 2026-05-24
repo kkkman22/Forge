@@ -1,0 +1,5 @@
+[
+  { "tier": "轻量 (Light)", "condition": "影响文件 ≤ 1 且改动 ≤ 20 行", "sequence": ["build", "review"] },
+  { "tier": "标准 (Standard)", "condition": "有明确需求或现成 Spec", "sequence": ["plan", "build", "review", "test", "ship"] },
+  { "tier": "全量 (Full)", "condition": "新服务/新数据库/认证变更/需求模糊", "sequence": ["decide", "spec", "plan", "build", "review", "test", "ship", "learn"] }
+]

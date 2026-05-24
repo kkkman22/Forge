@@ -28,6 +28,7 @@ import { commandsTableRenderer } from "../src/docs-governance/ssot/renderers/com
 import { routingTableRenderer } from "../src/docs-governance/ssot/renderers/routing-table.js";
 import { securityTiersRenderer } from "../src/docs-governance/ssot/renderers/security-tiers.js";
 import { jsonListRenderer } from "../src/docs-governance/ssot/renderers/json-list.js";
+import { countRenderer } from "../src/docs-governance/ssot/renderers/count.js";
 import { parseEmbeds } from "../src/docs-governance/ssot/embed-parser.js";
 import type { DiagnosticRecord, DocPath, RendererFn } from "../src/docs-governance/types.js";
 
@@ -39,11 +40,12 @@ const RENDERERS: [string, RendererFn][] = [
   ["routing-table", routingTableRenderer as RendererFn],
   ["security-tiers", securityTiersRenderer as RendererFn],
   ["json-list", jsonListRenderer as RendererFn],
+  ["count", countRenderer as RendererFn],
 ];
 
 // ── Helpers ──
 
-function loadFileEmbeds(rootDir: string, files: string[], ssotData: Map<string, string>): void {
+function loadFileEmbeds(rootDir: string, files: string[], ssotData: Map<string, unknown>): void {
   const embedPaths = new Set<string>();
   for (const filePath of files) {
     const content = readFileSync(filePath, "utf-8");
@@ -150,6 +152,13 @@ const result = computeExitResult((): DiagnosticRecord[] => {
   const reg = buildDefaultRegistry(RENDERERS);
   const ssotData = loadSsotData(rootDir);
   const mdFiles = walkMdFiles(docsDir, { skipSsot: true });
+
+  // Also scan root .md files for embed directives
+  const rootWhitelist = ["README.md"] as const;
+  for (const name of rootWhitelist) {
+    const p = resolve(rootDir, name);
+    if (existsSync(p)) mdFiles.push(p);
+  }
 
   // Load file-embed content
   loadFileEmbeds(rootDir, mdFiles, ssotData);

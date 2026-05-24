@@ -1,0 +1,47 @@
+[
+  {
+    "level": 1,
+    "name": "标准 (Standard)",
+    "capabilities": [
+      "文件读写（非冻结区）",
+      "Git 操作（非 force push）",
+      "测试执行",
+      "npm 脚本运行"
+    ],
+    "constraints": [
+      "不可修改冻结区文件（specs/plans/ADR）",
+      "不可 force push 到 main",
+      "不可安装未审计的依赖"
+    ]
+  },
+  {
+    "level": 2,
+    "name": "提升 (Elevated)",
+    "capabilities": [
+      "Level 1 全部能力",
+      "修改受保护区文件（追加模式）",
+      "创建新分支",
+      "推送代码到远程"
+    ],
+    "constraints": [
+      "受保护区不可删除已有内容",
+      "ADR 只能追加或 supersession",
+      "所有变更必须通过 pre-commit hook"
+    ]
+  },
+  {
+    "level": 3,
+    "name": "受限 (Restricted)",
+    "capabilities": [
+      "Level 2 全部能力",
+      "修改冻结区文件（需用户解锁）",
+      "管理 CI/CD 配置",
+      "操作共享基础设施"
+    ],
+    "constraints": [
+      "冻结区修改必须用户明确授权",
+      "CI 变更需额外 review",
+      "所有操作记录到 .forge/runs/"
+    ]
+  }
+]

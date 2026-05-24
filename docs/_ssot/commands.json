@@ -1,0 +1,23 @@
+[
+  { "name": "/forge", "tier": "all", "summary": "统一入口 — 三维路由，分析任务复杂度并建议档位" },
+  { "name": "/forge decide", "tier": "full", "summary": "四视角前置决策（产品/架构/安全/设计）" },
+  { "name": "/forge spec", "tier": "full", "summary": "将需求固化为可锁定的规格文档" },
+  { "name": "/forge plan", "tier": "standard", "summary": "将 Spec 拆解为含 TDD 步骤的原子任务" },
+  { "name": "/forge build", "tier": "all", "summary": "按计划以 TDD 方式逐任务实现" },
+  { "name": "/forge review", "tier": "all", "summary": "三层独立评审（Spec 对齐/质量/安全）" },
+  { "name": "/forge test", "tier": "standard", "summary": "三层验证（单元测试/浏览器 QA/清单）" },
+  { "name": "/forge ship", "tier": "standard", "summary": "门禁检查 + 四选项交付" },
+  { "name": "/forge learn", "tier": "full", "summary": "五维度经验提取和沉淀" },
+  { "name": "/forge loop", "tier": "all", "summary": "自主执行引擎，循环完成多轮迭代" },
+  { "name": "/forge status", "tier": "all", "summary": "查看当前任务状态" },
+  { "name": "/forge resume", "tier": "all", "summary": "五问题恢复上次会话上下文" },
+  { "name": "/forge debug", "tier": "all", "summary": "四阶段结构化根因分析" },
+  { "name": "/forge verify", "tier": "all", "summary": "证据化三态验证" },
+  { "name": "/forge control-cli", "tier": "all", "summary": "CLI 控制面板交互" },
+  { "name": "/forge control-ui", "tier": "all", "summary": "Web UI 控制面板交互" },
+  { "name": "/forge fix-conflicts", "tier": "all", "summary": "结构化冲突修复" },
+  { "name": "/forge recap", "tier": "all", "summary": "会话摘要与上下文回顾" },
+  { "name": "/forge abort", "tier": "all", "summary": "安全中止当前任务" },
+  { "name": "/forge refactor", "tier": "all", "summary": "重构模式（透传到 build）" },
+  { "name": "/forge fix", "tier": "all", "summary": "Bugfix 模式（透传到 build）" }
+]
