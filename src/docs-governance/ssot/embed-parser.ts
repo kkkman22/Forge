@@ -53,6 +53,14 @@ export function parseEmbeds(
       const fileMatch = FILE_EMBED_RE.exec(trimmed);
       if (fileMatch) {
         const embedPath = fileMatch[1];
+        // Validate: reject absolute paths (traversal validated by consumer)
+        if (embedPath.startsWith("/")) {
+          diagnostics.push(
+            diag("error", `file embed path must be relative, got absolute: "${embedPath}"`, filePath, lineNum, "EMBED_PATH_ABSOLUTE"),
+          );
+          i++;
+          continue;
+        }
         directives.push({
           file: filePath,
           topic: `file:${embedPath}`,

@@ -1,14 +1,7 @@
 import type { Category, DocPair } from "../types.js";
+import { CATEGORY_VALUES } from "../frontmatter/schema.js";
 
-export const CATEGORY_ORDER: readonly Category[] = [
-  "getting-started",
-  "daily-use",
-  "advanced",
-  "troubleshooting",
-  "contributing",
-  "reference",
-  "audits",
-];
+export const CATEGORY_ORDER = CATEGORY_VALUES;
 
 const CATEGORY_LABELS: Record<Category, string> = {
   "getting-started": "Getting Started",

@@ -100,6 +100,11 @@ function parseSsotSources(raw: unknown, diags: DiagnosticRecord[]): readonly Sso
       typeof (item as Record<string, unknown>).renderer === "string"
     ) {
       const r = item as Record<string, string>;
+      // Validate source path: reject absolute and traversal paths
+      if (r.source.startsWith("/") || r.source.includes("..")) {
+        diags.push(makeWarning("docs.ssot_sources", `source "${r.source}" is invalid (must be relative, no ..)`, "entry skipped"));
+        continue;
+      }
       entries.push({ topic: r.topic, source: r.source, renderer: r.renderer });
     }
   }
