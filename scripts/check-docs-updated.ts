@@ -4,7 +4,7 @@
  * Exit codes: 0 = clean, 1 = violation, 3 = internal error.
  */
 import { readFileSync, writeFileSync } from "node:fs";
-import { execSync } from "node:child_process";
+import { execFileSync } from "node:child_process";
 import { resolve } from "node:path";
 import { findFrontmatterRange, isFrontmatterOnlyChange, parseDiffHunks } from "../src/docs-governance/updated-auditor.js";
 import { computeExitResult } from "../src/docs-governance/cli/_runtime.js";
@@ -39,7 +39,7 @@ const result = computeExitResult((): DiagnosticRecord[] => {
   // Get list of staged .md files
   let stagedFiles: string;
   try {
-    stagedFiles = execSync("git diff --cached --name-only --diff-filter=ACMR -- *.md", {
+    stagedFiles = execFileSync("git", ["diff", "--cached", "--name-only", "--diff-filter=ACMR", "--", "*.md"], {
       cwd: rootDir,
       encoding: "utf-8",
     });
@@ -67,7 +67,7 @@ const result = computeExitResult((): DiagnosticRecord[] => {
     // Get the diff for this file
     let diff: string;
     try {
-      diff = execSync(`git diff --cached -- ${file}`, {
+      diff = execFileSync("git", ["diff", "--cached", "--", file], {
         cwd: rootDir,
         encoding: "utf-8",
       });
@@ -117,7 +117,7 @@ const result = computeExitResult((): DiagnosticRecord[] => {
         writeFileSync(filePath, lines.join("\n"), "utf-8");
         // Re-stage the file
         try {
-          execSync(`git add -- ${file}`, { cwd: rootDir });
+          execFileSync("git", ["add", "--", file], { cwd: rootDir });
         } catch {
           // Best effort
         }

@@ -8,7 +8,7 @@
 import { existsSync, readFileSync, writeFileSync } from "node:fs";
 import { readdirSync, statSync } from "node:fs";
 import { resolve, join, relative } from "node:path";
-import { execSync } from "node:child_process";
+import { execFileSync } from "node:child_process";
 import { parseFrontmatter } from "../src/docs-governance/frontmatter/parser.js";
 import { serializeFrontmatter } from "../src/docs-governance/frontmatter/serializer.js";
 import { classify } from "../src/docs-governance/domains.js";
@@ -72,7 +72,7 @@ function inferCategory(filePath: string, content: string): Frontmatter["category
 
 function getLastGitDate(filePath: string): string {
   try {
-    return execSync(`git log -1 --format=%cs -- "${filePath}"`, { encoding: "utf-8" }).trim();
+    return execFileSync("git", ["log", "-1", "--format=%cs", "--", filePath], { encoding: "utf-8" }).trim();
   } catch {
     return new Date().toISOString().slice(0, 10);
   }
