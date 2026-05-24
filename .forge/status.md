@@ -3,10 +3,10 @@ current_task: "docs-governance-system"
 tier: "standard"
 task_type: "feature"
 project_phase: "implementation"
-phase: "build"
+phase: "ship"
 work_nature: "feature"
 updated: "2026-05-24"
-branch: "worktree-docs-governance-system"
+branch: ""
 spec_path: ".kiro/specs/docs-governance-system/"
 plan_path: ".kiro/specs/docs-governance-system/tasks.md"
 hints: "docs-governance,frontmatter,index-generator,ssot,embeds,pre-commit,tdd"
@@ -22,12 +22,13 @@ assumptions:
 
 ## 当前任务：docs-governance-system
 
-Standard-tier build。文档治理体系：五层机制（分类隔离、总目录自动生成、失修检测、数量纪律、SSOT 段落级嵌入），7 个父任务 / 56 个子任务 / 7 个 wave / 5 个迁移阶段。
+Standard-tier ship 完成（核心 library 层）。23 commits merged to main (76581bc1)。
 
-**Spec**：`.kiro/specs/docs-governance-system/`
-**Plan**：`.kiro/specs/docs-governance-system/tasks.md`（7 tasks，7 waves）
+**已交付**：20 modules, 256 tests, 18 correctness properties (P1-P18)。
+**待后续 PR**：CLI script entries, pre-commit hook, CI workflow, frontmatter migration, SSOT embed-sync, documentation (wave 7)。
 
 ## 已完成
 
+docs-governance-system core library: 23 commits merged to main (76581bc1).
 forge-single-entry-skills-collapse: 47 commits merged to main (6127feb).
 cmux-skills-collapse: merged to main.
