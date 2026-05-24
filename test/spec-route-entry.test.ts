@@ -10,13 +10,8 @@ import { existsSync, mkdirSync, mkdtempSync, rmSync, writeFileSync } from "node:
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
-
-import type {
-    BugfixDocument,
-    RequirementsDocument,
-    SpecBundle,
-} from "../src/spec-bundle.js";
 import { routeSpecEntry } from "../src/spec.js";
+import type { BugfixDocument, RequirementsDocument, SpecBundle } from "../src/spec-bundle.js";
 
 // ---------------------------------------------------------------------------
 // Test scaffolding
@@ -66,13 +61,28 @@ function makeBugfixBundle(feature: string): SpecBundle {
       kind: "bugfix",
     },
     current: [
-      { line: 1, when: "用户提交登录", shall: "返回 500 错误", raw: "当 用户提交登录 时 系统应当 返回 500 错误" },
+      {
+        line: 1,
+        when: "用户提交登录",
+        shall: "返回 500 错误",
+        raw: "当 用户提交登录 时 系统应当 返回 500 错误",
+      },
     ],
     expected: [
-      { line: 2, when: "用户提交登录", shall: "返回 200 并创建会话", raw: "当 用户提交登录 时 系统应当 返回 200 并创建会话" },
+      {
+        line: 2,
+        when: "用户提交登录",
+        shall: "返回 200 并创建会话",
+        raw: "当 用户提交登录 时 系统应当 返回 200 并创建会话",
+      },
     ],
     unchanged: [
-      { line: 3, when: "用户登出", shall: "清除 session", raw: "当 用户登出 时 系统应当 清除 session" },
+      {
+        line: 3,
+        when: "用户登出",
+        shall: "清除 session",
+        raw: "当 用户登出 时 系统应当 清除 session",
+      },
     ],
   };
   return {

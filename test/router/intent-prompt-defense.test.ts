@@ -1,6 +1,6 @@
 import { describe, expect, it, vi } from "vitest";
-import { classifyTask } from "../../src/router.js";
 import type { TaskSignals } from "../../src/router.js";
+import { classifyTask } from "../../src/router.js";
 
 vi.mock("../../src/prompt-defense.js", () => ({
   scanInput: vi.fn(),
@@ -36,7 +36,15 @@ describe("classifyTask intent + prompt-defense integration (R7)", () => {
   it("R7-6: critical severity suppresses all intent hints", () => {
     vi.mocked(scanInput).mockReturnValue(makeScanResult([{ severity: "critical" }]) as any);
     expect(() =>
-      classifyTask(BASE_SIGNALS, undefined, undefined, "backend", "iteration", "feature", "OAuth 要深思熟虑 迁移"),
+      classifyTask(
+        BASE_SIGNALS,
+        undefined,
+        undefined,
+        "backend",
+        "iteration",
+        "feature",
+        "OAuth 要深思熟虑 迁移",
+      ),
     ).toThrow(/prompt-defense/i);
   });
 
@@ -56,7 +64,9 @@ describe("classifyTask intent + prompt-defense integration (R7)", () => {
   });
 
   it("R7-7: medium severity allows intent matching (dual signal)", () => {
-    vi.mocked(scanInput).mockReturnValue(makeScanResult([{ severity: "medium", type: "context_manipulation" }]) as any);
+    vi.mocked(scanInput).mockReturnValue(
+      makeScanResult([{ severity: "medium", type: "context_manipulation" }]) as any,
+    );
     const result = classifyTask(
       BASE_SIGNALS,
       undefined,

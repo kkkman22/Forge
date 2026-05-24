@@ -14,31 +14,31 @@
  */
 
 import {
-    DEFAULT_EXTRACTION_RULES,
-    extractCandidates,
-    filterCandidates,
-    type TermCandidate,
+  DEFAULT_EXTRACTION_RULES,
+  extractCandidates,
+  filterCandidates,
+  type TermCandidate,
 } from "./glossary-extractor.js";
 
 export { renderGlossaryConflictPrompt, runGlossaryCheck } from "./glossary-hook.js";
-export { runBugfixOrchestration } from "./spec-bugfix-orchestration.js";
 export type { BugfixOrchestrationResult } from "./spec-bugfix-orchestration.js";
+export { runBugfixOrchestration } from "./spec-bugfix-orchestration.js";
 export type { SpecKind } from "./spec-bundle.js";
-export {
-    parseExternalSpec,
-    parseSpecArgs,
-    runImportMode,
-    scoreImportedContent
-} from "./spec-import.js";
 export type { ExternalSpecContent, ImportModeResult, ParseSpecArgsResult } from "./spec-import.js";
+export {
+  parseExternalSpec,
+  parseSpecArgs,
+  runImportMode,
+  scoreImportedContent,
+} from "./spec-import.js";
 export { detectSpecKind } from "./spec-kind.js";
 export { detectSpecLeak, loadBannedPatterns } from "./spec-leak-detector.js";
-export {
-    detectSpecLeakFromBundle,
-    enforceEarsSyntax,
-    validateContractGate
-} from "./spec-validation.js";
 export type { ContractGateResult, EarsEnforcementResult } from "./spec-validation.js";
+export {
+  detectSpecLeakFromBundle,
+  enforceEarsSyntax,
+  validateContractGate,
+} from "./spec-validation.js";
 
 // ---------------------------------------------------------------------------
 // Types

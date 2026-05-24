@@ -161,16 +161,16 @@ export function parseIntentDictionary(yamlContent: string): IntentDefinition[] {
 
   // R6-1: Soft warning when dictionary exceeds 8 intents
   if (definitions.length > 8) {
-    console.warn(
-      `[intent_dict_warning] Dictionary has ${definitions.length} intents (threshold: 8). Consider merging or retiring low-usage entries.`,
+    process.stderr.write(
+      `[intent_dict_warning] Dictionary has ${definitions.length} intents (threshold: 8). Consider merging or retiring low-usage entries.\n`,
     );
   }
 
   // R6-2: Soft warning when single intent has > 20 triggers
   for (const def of definitions) {
     if (def.triggers.length > 20) {
-      console.warn(
-        `[intent_dict_warning] Intent "${def.name}" has ${def.triggers.length} triggers (threshold: 20). Consider splitting.`,
+      process.stderr.write(
+        `[intent_dict_warning] Intent "${def.name}" has ${def.triggers.length} triggers (threshold: 20). Consider splitting.\n`,
       );
     }
   }

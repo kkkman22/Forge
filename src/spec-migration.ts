@@ -14,16 +14,16 @@ import { join } from "node:path";
 
 import { analyzeRequirements } from "./spec-analyze.js";
 import type {
-    DesignDocument,
-    EarsClause,
-    RequirementsDocument,
-    SpecFileFrontmatter,
-    TasksSeedDocument,
+  DesignDocument,
+  EarsClause,
+  RequirementsDocument,
+  SpecFileFrontmatter,
+  TasksSeedDocument,
 } from "./spec-bundle.js";
 import {
-    renderDesignMarkdown,
-    renderRequirementsMarkdown,
-    renderTasksMarkdown,
+  renderDesignMarkdown,
+  renderRequirementsMarkdown,
+  renderTasksMarkdown,
 } from "./spec-render.js";
 
 // ---------------------------------------------------------------------------
