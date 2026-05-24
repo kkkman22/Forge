@@ -419,7 +419,7 @@ format: "lightweight"
 
 ### Task 27: cmux-skills/ 可选技能包
 - **Goal**: 3 个 SKILL.md（≤3072 bytes each）+ install.sh（dry-run/--apply/--uninstall）
-- **File**: `cmux-skills/forge-sidebar-sync/SKILL.md`, `cmux-skills/forge-browser-qa/SKILL.md`, `cmux-skills/forge-loop-signals/SKILL.md`, `cmux-skills/install.sh`
+- **File**: ~~`cmux-skills/forge-sidebar-sync/SKILL.md`~~, ~~`cmux-skills/forge-browser-qa/SKILL.md`~~, ~~`cmux-skills/forge-loop-signals/SKILL.md`~~, ~~`cmux-skills/install.sh`~~ — 旧路径已 superseded，新路径见顶部 File Mapping 中 `skills/forge/lib/forge-cmux-{sidebar-sync,browser-qa,loop-signals}/instructions.md`（详见 `.kiro/specs/cmux-skills-collapse/`）
 - **Design Reference**: design.md#4.10 — cmux-skills 可选技能包
 - **Property**: R10.1–R10.10
 - **Depends On**: Task 5, Task 8
