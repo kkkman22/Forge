@@ -1,9 +1,8 @@
-import { describe, expect, it, vi, beforeEach } from "vitest";
+import { beforeEach, describe, expect, it, vi } from "vitest";
 import {
-  checkCmuxGate,
-  CMUX_GATED_SUBS,
   __resetGateForTest,
-  type GateResult,
+  CMUX_GATED_SUBS,
+  checkCmuxGate,
 } from "../../src/forge-dispatcher/cmux-gate.js";
 
 const makeStatSocket = () => ({ isSocket: () => true });

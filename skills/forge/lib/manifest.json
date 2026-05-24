@@ -1,6 +1,6 @@
 {
   "version": 1,
-  "generated_at": "2026-05-24T06:38:38.516Z",
+  "generated_at": "2026-05-24T06:50:39.295Z",
   "subs": {
     "abort": {
       "instructions": {
@@ -256,21 +256,21 @@
     "forge-cmux-browser-qa": {
       "instructions": {
         "path": "forge-cmux-browser-qa/instructions.md",
-        "sha256": "f37896c590141c7e1431b174101104b2015fc445bf6209ce5b032345cf0502c1"
+        "sha256": "4ae68be01ed32d1b7d6909e2efb3e2404fa3cbb8f8b6d6929021afaaff69532b"
       },
       "references": []
     },
     "forge-cmux-loop-signals": {
       "instructions": {
         "path": "forge-cmux-loop-signals/instructions.md",
-        "sha256": "0aa8c9de84858f18b0028ec1589e9be713b9ebaf413df676dfcc34f67cd6d08c"
+        "sha256": "4796c74b7f0a481d3f67b0b744adf6a0bc90ab961095a5a90b40062228d7b2cd"
       },
       "references": []
     },
     "forge-cmux-sidebar-sync": {
       "instructions": {
         "path": "forge-cmux-sidebar-sync/instructions.md",
-        "sha256": "d612b26d9e235e6e3db254c9dba6879c13146f77b4202cfd6570c756956fcf15"
+        "sha256": "49cc05acdc7db05c96ab424f4b116873dae6d81fbcb79cc196aef3acc6c06ffd"
       },
       "references": []
     },

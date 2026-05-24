@@ -7,8 +7,12 @@ import { resolveAllowedTools } from "./forge-dispatcher/tools-resolve.js";
 
 export { ALLOW_LIST, validateTopic } from "./forge-dispatcher/allowlist.js";
 export { appendAuditLog, computeHmac } from "./forge-dispatcher/audit-log.js";
-export { checkCmuxGate, CMUX_GATED_SUBS, __resetGateForTest } from "./forge-dispatcher/cmux-gate.js";
-export type { GateResult, GateBlockReason } from "./forge-dispatcher/cmux-gate.js";
+export type { GateBlockReason, GateResult } from "./forge-dispatcher/cmux-gate.js";
+export {
+  __resetGateForTest,
+  CMUX_GATED_SUBS,
+  checkCmuxGate,
+} from "./forge-dispatcher/cmux-gate.js";
 export { checkIntegrity } from "./forge-dispatcher/integrity-check.js";
 export { resolveLibPath } from "./forge-dispatcher/path-resolve.js";
 export { resolveAllowedTools } from "./forge-dispatcher/tools-resolve.js";
@@ -59,9 +63,9 @@ export async function dispatchForgeSubcommand(
   const sub = topicResult.value;
 
   // === Step 2.5: Conditional_Availability_Gate ===
-  const gateResult: GateResult = (opts?._mocks as Record<string, unknown> | undefined)
-    ?.checkCmuxGate
-    ? ((opts._mocks as Record<string, unknown>).checkCmuxGate(sub) as GateResult)
+  const mockFns = opts?._mocks as Record<string, unknown> | undefined;
+  const gateResult: GateResult = mockFns?.checkCmuxGate
+    ? (mockFns.checkCmuxGate as (sub: string) => GateResult)(sub)
     : checkCmuxGate(sub);
 
   if (!gateResult.ok) {

@@ -1,17 +1,41 @@
-import { readFileSync } from "node:fs";
 import { createHash } from "node:crypto";
+import { readFileSync } from "node:fs";
 import { resolve } from "node:path";
 import { describe, expect, it } from "vitest";
-import { checkCmuxGate, CMUX_GATED_SUBS } from "../../src/forge-dispatcher/cmux-gate.js";
+import { CMUX_GATED_SUBS, checkCmuxGate } from "../../src/forge-dispatcher/cmux-gate.js";
 
 const LIB_ROOT = resolve(import.meta.dirname, "../../skills/forge/lib");
 
 const NON_CMUX_SUBS = [
-  "abort", "accept", "build", "build-light", "control-cli", "control-ui",
-  "debug", "decide", "decide-teams", "fix", "fix-conflicts", "grill",
-  "learn", "loop", "mutate", "pack", "plan", "recap", "refactor",
-  "resume", "review", "router", "ship", "spec", "status", "storm",
-  "test", "verify", "zoom-out",
+  "abort",
+  "accept",
+  "build",
+  "build-light",
+  "control-cli",
+  "control-ui",
+  "debug",
+  "decide",
+  "decide-teams",
+  "fix",
+  "fix-conflicts",
+  "grill",
+  "learn",
+  "loop",
+  "mutate",
+  "pack",
+  "plan",
+  "recap",
+  "refactor",
+  "resume",
+  "review",
+  "router",
+  "ship",
+  "spec",
+  "status",
+  "storm",
+  "test",
+  "verify",
+  "zoom-out",
 ];
 
 describe("Zero-Impact: non-cmux subs unaffected by migration", () => {
@@ -34,9 +58,7 @@ describe("Zero-Impact: non-cmux subs unaffected by migration", () => {
   });
 
   it("non-cmux sub instructions.md sha256 set matches expected count", () => {
-    const manifest = JSON.parse(
-      readFileSync(resolve(LIB_ROOT, "manifest.json"), "utf-8"),
-    );
+    const manifest = JSON.parse(readFileSync(resolve(LIB_ROOT, "manifest.json"), "utf-8"));
     let nonCmuxCount = 0;
     for (const sub of Object.keys(manifest.subs)) {
       if (!CMUX_GATED_SUBS.has(sub)) {
@@ -55,7 +77,10 @@ describe("Zero-Impact: non-cmux subs unaffected by migration", () => {
 
   it("gate adds zero overhead: non-cmux subs never probe cmux", () => {
     let probeCount = 0;
-    const statSpy = () => { probeCount++; throw new Error("ENOENT"); };
+    const statSpy = () => {
+      probeCount++;
+      throw new Error("ENOENT");
+    };
 
     for (const sub of NON_CMUX_SUBS) {
       checkCmuxGate(sub, { statSync: statSpy as any });

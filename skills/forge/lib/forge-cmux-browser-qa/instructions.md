@@ -10,6 +10,10 @@ allowed_tools:
 
 Provides browser-based quality assurance during the `/forge test` phase using cmux browser commands.
 
+## 1. Overview
+
+This skill provides browser-based quality assurance during `/forge test` using cmux browser commands.
+
 ## Usage
 
 Activated automatically during `/forge test` when cmux browser capabilities are available.

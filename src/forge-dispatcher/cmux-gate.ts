@@ -42,10 +42,7 @@ function blocked(reason: GateBlockReason): GateResult {
   };
 }
 
-function cmuxAvailableShim(
-  env: NodeJS.ProcessEnv,
-  statSync: typeof StatSyncFn,
-): GateResult {
+function cmuxAvailableShim(env: NodeJS.ProcessEnv, statSync: typeof StatSyncFn): GateResult {
   if (stickyUnavailable) return blocked("sticky_unavailable");
 
   const integration = env.CMUX_INTEGRATION ?? "";
@@ -57,10 +54,7 @@ function cmuxAvailableShim(
 
   const socketPath = env.CMUX_SOCKET_PATH ?? "/tmp/cmux.sock";
   if (socketPath.includes("..")) return blocked("socket_path_invalid");
-  if (
-    env.CMUX_SOCKET_PATH &&
-    !ALLOWED_SOCKET_PREFIXES.some((p) => socketPath.startsWith(p))
-  ) {
+  if (env.CMUX_SOCKET_PATH && !ALLOWED_SOCKET_PREFIXES.some((p) => socketPath.startsWith(p))) {
     return blocked("socket_path_invalid");
   }
 

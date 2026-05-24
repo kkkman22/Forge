@@ -10,6 +10,10 @@ allowed_tools:
 
 Displays Forge Loop iteration state in the cmux sidebar — running, interrupted, or terminated.
 
+## 1. Overview
+
+This skill displays Forge Loop iteration state in the cmux sidebar — running, interrupted, or terminated.
+
 ## Loop States Displayed
 
 - **Running** (blue): Active iteration in progress
