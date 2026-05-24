@@ -1,7 +1,7 @@
 import { existsSync, mkdirSync, readFileSync, rmSync } from "node:fs";
 import { resolve } from "node:path";
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
-import { appendAuditLog } from "../../src/forge-dispatcher/audit-log.js";
+import { appendAuditLog, type GateBlockReason } from "../../src/forge-dispatcher/audit-log.js";
 
 const TMP_DIR = resolve(import.meta.dirname, "..", "__audit_tmp__");
 
@@ -26,6 +26,9 @@ describe("R2.7: audit log out of workspace", () => {
         outcome: "success" as const,
         prev_hmac: "",
         hmac: "hmac1",
+        gate_result: "n_a",
+        cmux_available: null,
+        gate_reason: null,
       },
       { auditDir: TMP_DIR },
     );
@@ -49,6 +52,9 @@ describe("R2.7: audit log out of workspace", () => {
       outcome: "success" as const,
       prev_hmac: "",
       hmac: "hmac1",
+      gate_result: "n_a" as const,
+      cmux_available: null as boolean | null,
+      gate_reason: null as GateBlockReason | null,
     };
     const entry2 = {
       ts: "2026-05-17T00:00:01Z",
@@ -60,6 +66,9 @@ describe("R2.7: audit log out of workspace", () => {
       outcome: "success" as const,
       prev_hmac: "hmac1",
       hmac: "hmac2",
+      gate_result: "n_a" as const,
+      cmux_available: null as boolean | null,
+      gate_reason: null as GateBlockReason | null,
     };
 
     await appendAuditLog(entry1, { auditDir: TMP_DIR });
@@ -83,11 +92,66 @@ describe("R2.7: audit log out of workspace", () => {
         outcome: "success" as const,
         prev_hmac: "",
         hmac: "h",
+        gate_result: "n_a",
+        cmux_available: null,
+        gate_reason: null,
       },
       { auditDir: TMP_DIR },
     );
 
     const workspaceAuditDir = resolve(process.cwd(), ".forge/debug");
     expect(existsSync(resolve(workspaceAuditDir, "dispatch.log"))).toBe(false);
+  });
+
+  it("writes gate_result fields for cmux-gated entry", async () => {
+    await appendAuditLog(
+      {
+        ts: "2026-05-24T00:00:00Z",
+        sub: "forge-cmux-sidebar-sync",
+        topic_hash: "g1",
+        lib_hash: "",
+        tools_granted: [],
+        dispatch_mode: "n_a",
+        outcome: "rejected" as const,
+        prev_hmac: "",
+        hmac: "hgate",
+        gate_result: "blocked",
+        cmux_available: false,
+        gate_reason: "socket_missing",
+      },
+      { auditDir: TMP_DIR },
+    );
+
+    const line = readFileSync(resolve(TMP_DIR, "dispatch.log"), "utf-8").trim();
+    const parsed = JSON.parse(line);
+    expect(parsed.gate_result).toBe("blocked");
+    expect(parsed.cmux_available).toBe(false);
+    expect(parsed.gate_reason).toBe("socket_missing");
+  });
+
+  it("writes n_a gate fields for non-cmux entry", async () => {
+    await appendAuditLog(
+      {
+        ts: "2026-05-24T00:00:01Z",
+        sub: "build",
+        topic_hash: "n1",
+        lib_hash: "lib1",
+        tools_granted: ["Read"],
+        dispatch_mode: "inline",
+        outcome: "success" as const,
+        prev_hmac: "",
+        hmac: "hna",
+        gate_result: "n_a",
+        cmux_available: null,
+        gate_reason: null,
+      },
+      { auditDir: TMP_DIR },
+    );
+
+    const line = readFileSync(resolve(TMP_DIR, "dispatch.log"), "utf-8").trim();
+    const parsed = JSON.parse(line);
+    expect(parsed.gate_result).toBe("n_a");
+    expect(parsed.cmux_available).toBeNull();
+    expect(parsed.gate_reason).toBeNull();
   });
 });
