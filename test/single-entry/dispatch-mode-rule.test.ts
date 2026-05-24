@@ -97,7 +97,7 @@ describe("R3.5: dispatch_mode matches spec table", () => {
 
   it("lib frontmatter dispatch_mode matches EXPECTED_MODES", async () => {
     const libs = await glob("skills/forge/lib/*/instructions.md", { cwd: ROOT });
-    expect(libs).toHaveLength(31);
+    expect(libs).toHaveLength(34);
 
     const violations: string[] = [];
 
