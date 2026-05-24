@@ -44,6 +44,22 @@ jobs:
         timeout-minutes: 10
         env:
           CI: "true"
+          FORGE_HOOK: "1"
+
+      - name: Check grace period expiry
+        run: |
+          CONFIG=".forge/config.md"
+          if [ -f "$CONFIG" ]; then
+            GRACE_UNTIL=$(grep -A1 'grace_period_until' "$CONFIG" 2>/dev/null | grep -oE '[0-9]{4}-[0-9]{2}-[0-9]{2}' | head -1)
+            if [ -n "$GRACE_UNTIL" ]; then
+              TODAY=$(date -u +%Y-%m-%d)
+              if [ "$TODAY" \> "$GRACE_UNTIL" ]; then
+                echo "::warning::Grace period expired on $GRACE_UNTIL. All docs governance checks are now enforced."
+              else
+                echo "::notice::Grace period active until $GRACE_UNTIL. Checks run but do not block."
+              fi
+            fi
+          fi
 
       - name: Upload diagnostics on failure
         if: failure()

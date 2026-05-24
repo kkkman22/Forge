@@ -5,14 +5,14 @@
  */
 import { existsSync, chmodSync, statSync } from "node:fs";
 import { resolve } from "node:path";
-import { execSync } from "node:child_process";
+import { execFileSync } from "node:child_process";
 
 const GITHOOKS_DIR = ".githooks";
 const PRE_COMMIT_HOOK = resolve(GITHOOKS_DIR, "pre-commit");
 
 function isGitRepo(): boolean {
   try {
-    execSync("git rev-parse --git-dir", { stdio: "pipe" });
+    execFileSync("git", ["rev-parse", "--git-dir"], { stdio: "pipe" });
     return true;
   } catch {
     return false;
@@ -21,7 +21,7 @@ function isGitRepo(): boolean {
 
 function getCurrentHooksPath(): string | undefined {
   try {
-    return execSync("git config core.hooksPath", { encoding: "utf-8" }).trim();
+    return execFileSync("git", ["config", "core.hooksPath"], { encoding: "utf-8" }).trim();
   } catch {
     return undefined;
   }
@@ -63,7 +63,7 @@ function main(): void {
   }
 
   ensureExecutable(PRE_COMMIT_HOOK);
-  execSync(`git config core.hooksPath ${GITHOOKS_DIR}`);
+  execFileSync("git", ["config", "core.hooksPath", GITHOOKS_DIR]);
   process.stdout.write(`Installed git hooks from ${GITHOOKS_DIR}/.\n`);
 }
 

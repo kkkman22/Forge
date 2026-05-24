@@ -45,9 +45,8 @@ export function syncEmbeds(
 
   for (const directive of sorted) {
     if (directive.kind === "file-embed") {
-      // #[[file:relative]] — look up in ssotData
-      const fileContent = ssotData.get(directive.topic);
-      if (fileContent === undefined) {
+      const embedContent = ssotData.get(directive.topic);
+      if (embedContent === undefined) {
         allDiagnostics.push({
           script: "embed-sync",
           severity: "error",
@@ -58,7 +57,7 @@ export function syncEmbeds(
         });
         continue;
       }
-      content = replaceLineRange(content, directive.beginLine, directive.endLine, fileContent);
+      content = replaceLineRange(content, directive.beginLine, directive.endLine, embedContent);
     } else {
       // ssot-block — resolve renderer and render
       const renderer = registry.resolve(directive.render);
