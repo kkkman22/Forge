@@ -63,10 +63,10 @@ format: "lightweight"
 | `hooks/hooks.json` | MODIFY | 追加 3 条非阻塞 sync-once 条目 |
 | `scripts/prune-event-logs.sh` | MODIFY | 追加 dedupe GC 段 |
 | `scripts/init.sh` | MODIFY | 追加 install-template.sh 调用 |
-| `cmux-skills/forge-sidebar-sync/SKILL.md` | CREATE | 可选技能：侧边栏同步 |
-| `cmux-skills/forge-browser-qa/SKILL.md` | CREATE | 可选技能：浏览器 QA |
-| `cmux-skills/forge-loop-signals/SKILL.md` | CREATE | 可选技能：Loop 信号 |
-| `cmux-skills/install.sh` | CREATE | 可选技能包安装器 |
+| `skills/forge/lib/forge-cmux-sidebar-sync/instructions.md` | CREATE | 可选技能：侧边栏同步（moved by spec cmux-skills-collapse） |
+| `skills/forge/lib/forge-cmux-browser-qa/instructions.md` | CREATE | 可选技能：浏览器 QA（moved by spec cmux-skills-collapse） |
+| `skills/forge/lib/forge-cmux-loop-signals/instructions.md` | CREATE | 可选技能：Loop 信号（moved by spec cmux-skills-collapse） |
+| `cmux-skills/install.sh` | DELETE | removed by spec cmux-skills-collapse |
 | `skills/forge-review/references/cmux.md` | CREATE | review cmux 集成参考 |
 | `skills/forge-build/references/cmux.md` | CREATE | build cmux 集成参考 |
 | `skills/forge-ship/references/cmux.md` | CREATE | ship cmux 集成参考 |
@@ -425,6 +425,7 @@ format: "lightweight"
 - **Depends On**: Task 5, Task 8
 - **Verify**: `npx vitest run test/cmux-mirror/cmux-skills-install.test.ts`
 - **Commit**: `feat(cmux): add optional cmux skills bundle with installer`
+- **Notes**: → superseded by .kiro/specs/cmux-skills-collapse/
 
 ---
 
@@ -462,6 +463,7 @@ format: "lightweight"
 - **Depends On**: (none — documentation only)
 - **Verify**: `bash scripts/check-readme-metrics.sh`
 - **Commit**: `docs(cmux): update README with cmux integration section`
+- **Notes**: → rewritten per .kiro/specs/cmux-skills-collapse/ R6
 
 ---
 
