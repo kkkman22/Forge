@@ -24,7 +24,7 @@ function diag(
   return {
     script: "ssot-registry",
     severity,
-    file: "" as string & { readonly [Symbol.uniqueSymbol]: void },
+    file: "" as DocPath,
     message,
     code,
   };

@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import * as fc from "fast-check";
-import type { DiagnosticRecord, Severity } from "../../src/docs-governance/types.js";
+import type { DiagnosticRecord, DocPath, Severity } from "../../src/docs-governance/types.js";
 import { formatDiagnostics, formatNdjson, summarize, truncateMessage } from "../../src/docs-governance/reporter/diagnostic.js";
 import { severityToExitCode } from "../../src/docs-governance/reporter/exit-code.js";
 import { ExitCode } from "../../src/docs-governance/types.js";
@@ -8,7 +8,7 @@ import { ExitCode } from "../../src/docs-governance/types.js";
 const makeRecord = (severity: Severity): DiagnosticRecord => ({
   script: "check-docs-test",
   severity,
-  file: "docs/test.md" as string & { readonly [Symbol.uniqueSymbol]: void },
+  file: "docs/test.md" as DocPath,
   message: "test message",
 });
 

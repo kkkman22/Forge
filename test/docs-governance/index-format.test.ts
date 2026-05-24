@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { CATEGORY_ORDER, formatEntry, formatCategoryGroup, generateIndexFooter } from "../../src/docs-governance/index-generator/format.js";
-import type { DocPair, Frontmatter } from "../../src/docs-governance/types.js";
+import type { DocPair, DocPath, Frontmatter } from "../../src/docs-governance/types.js";
 
 const makeFm = (overrides: Partial<Frontmatter> = {}): Frontmatter => ({
   title: "Test Doc",
@@ -13,7 +13,7 @@ const makeFm = (overrides: Partial<Frontmatter> = {}): Frontmatter => ({
 
 const makePair = (slug: string, overrides: { cn?: Partial<Frontmatter>; en?: Partial<Frontmatter> } = {}): DocPair => ({
   slug,
-  directory: "docs" as string & { readonly [Symbol.uniqueSymbol]: void },
+  directory: "docs" as DocPath,
   cn: { path: `docs/${slug}.md` as any, domain: "A", frontmatter: makeFm({ title: slug, ...overrides.cn }), bodyHash: "" },
   en: overrides.en ? { path: `docs/${slug}.en.md` as any, domain: "A", frontmatter: makeFm({ title: `${slug} (EN)`, ...overrides.en }), bodyHash: "" } : undefined,
   state: overrides.en ? "paired" : "cn-only",
