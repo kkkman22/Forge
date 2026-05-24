@@ -1,5 +1,5 @@
 ---
-updated: "2026-05-12"
+updated: "2026-05-24"
 ---
 
 ## 模式列表
@@ -43,3 +43,17 @@ Hook 脚本中：(1) 用 `case` 语句精确匹配 allowlist，不用 `grep -qE`
 **来源**: ccbp-phase2-worktree-gitignore
 
 `.claude/` 整体在 .gitignore 中排除。需要版本控制的文件（agents/、rules/、hooks/scripts/）必须 `git add -f`。忘记 -f 会导致 merge 时文件丢失。
+
+### Agent tool 并行启动后必须用返回的 agentId 数量做 sanity check
+
+**Confidence_Score**: 0.6
+**Tags**: tool-quirks, agent-tool, subagent, parallel, task-output
+**来源**: 2026-05-24 /forge review spec-check 内联返回观察
+
+并行启动 N 个 subagent 时，Agent tool 有两种返回路径：(1) **异步路径** 返回 `Async agent launched successfully` + `agentId`，需后续 TaskOutput 拉取；(2) **内联路径** subagent 提前完成（如只读了文件就退出），结果直接塞进 tool result，**不返回 agentId**。
+
+内联路径下 subagent 仍按 internal ID 在 `tasks/` 写 `*.output` 文件，但该 ID 未注册到 task registry。事后用 grep 找到的文件 ID 喂给 TaskOutput 一定得到 `No task found`。UI 偶尔会把 internal ID 双倍拼接展示（如 `<id><id>`），任何非标准 hex 长度的 ID 一律视为无效，不要传给 TaskOutput。
+
+**防御步骤**：(a) 启动 N 个 subagent 后立即校验显式返回 agentId 数量；(b) 数量 < N 时直接采用内联 tool result 文本，**禁止**事后 grep `tasks/` 反向补 ID；(c) 仅对确认异步的 agentId 调 TaskOutput；(d) 内联内容明显不完整（只有读文件痕迹、无评审结论）时**重试**该 layer 而非接受残缺结果。
+
+落点：`.claude/agents/forge-review.md` §Agent Tool ID Defense。
