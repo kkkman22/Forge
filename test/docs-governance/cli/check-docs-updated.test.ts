@@ -29,14 +29,17 @@ function run(args: string[], env?: Record<string, string>) {
 // We test the CLI logic by testing the core functions that the script uses.
 // Since the script calls git, we test the pure logic here.
 
+import { computeExitResult } from "../../../src/docs-governance/cli/_runtime.js";
+import {
+  formatDiagnostics,
+  formatNdjson,
+} from "../../../src/docs-governance/reporter/diagnostic.js";
+import type { DiagnosticRecord } from "../../../src/docs-governance/types.js";
 import {
   findFrontmatterRange,
   isFrontmatterOnlyChange,
   parseDiffHunks,
 } from "../../../src/docs-governance/updated-auditor.js";
-import { computeExitResult } from "../../../src/docs-governance/cli/_runtime.js";
-import { formatDiagnostics, formatNdjson } from "../../../src/docs-governance/reporter/diagnostic.js";
-import type { DiagnosticRecord } from "../../../src/docs-governance/types.js";
 
 const SCRIPT_NAME = "check-docs-updated";
 

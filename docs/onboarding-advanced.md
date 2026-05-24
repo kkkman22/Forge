@@ -1,3 +1,12 @@
+---
+title: 'Forge 高级用户/贡献者引导'
+category: contributing
+audience:
+- maintainer
+updated: '2026-05-12'
+owner: forge-maintainers
+---
+
 [← 返回索引](./INDEX.md) | [English Version](./onboarding-advanced.en.md)
 
 # Forge 高级用户/贡献者引导

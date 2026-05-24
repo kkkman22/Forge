@@ -56,7 +56,12 @@ export function syncEmbeds(
         });
         continue;
       }
-      content = replaceLineRange(content, directive.beginLine, directive.endLine, String(embedContent));
+      content = replaceLineRange(
+        content,
+        directive.beginLine,
+        directive.endLine,
+        String(embedContent),
+      );
     } else {
       // ssot-block — resolve renderer and render
       const renderer = registry.resolve(directive.render);

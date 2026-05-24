@@ -1,3 +1,12 @@
+---
+title: 'Forge Slimming 迁移指南'
+category: reference
+audience:
+- maintainer
+updated: '2026-05-17'
+owner: forge-maintainers
+---
+
 [← 返回索引](./INDEX.md)
 
 # Forge Slimming 迁移指南

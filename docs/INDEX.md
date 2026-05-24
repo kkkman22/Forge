@@ -1,5 +1,35 @@
+## Getting Started
+
+- [Forge 快速入门指南](quick-start.md) / [Forge 快速入门指南 (EN)](quick-start.en.md) — getting-started — 2026-05-18
+
+## Advanced
+
+- [Forge 高级功能参考](reference-advanced.md) — advanced — 2026-05-24
+
+## Contributing
+
+- [Forge 高级用户/贡献者引导](onboarding-advanced.md) / [Forge 高级用户/贡献者引导 (EN)](onboarding-advanced.en.md) — contributing — 2026-05-12
+
 ## Reference
 
+- [CI UltraReview — 操作手册](ci-ultrareview-usage.md) — reference — 2026-05-12
 - [Docs Governance](docs-governance.md) — reference — 2026-05-24
+- [Docs Governance 参考手册](reference-docs-governance.md) / [Docs Governance 参考手册 (EN)](reference-docs-governance.en.md) — reference — 2026-05-24
+- [Forge Slimming 迁移指南](slimming-migration.md) — reference — 2026-05-17
+- [Forge — 项目宪法详细内容](forge-constitution-detail.md) — reference — 2026-05-24
+- [Forge 初次接触者引导](onboarding-beginner.md) / [Forge 初次接触者引导 (EN)](onboarding-beginner.en.md) — reference — 2026-05-24
+- [Forge 命令速查与路由详解](reference-commands.md) — reference — 2026-05-16
+- [Forge 安全与信任](reference-security.md) — reference — 2026-05-12
+- [Forge 日常开发者引导](onboarding-daily.md) / [Forge 日常开发者引导 (EN)](onboarding-daily.en.md) — reference — 2026-05-12
+- [Forge 架构与状态保护](reference-architecture.md) — reference — 2026-05-12
+- [Review 配置指南](best-practices/review-configuration.md) / [Review 配置指南 (EN)](best-practices/review-configuration.en.md) — reference — 2026-05-17
+- [Router 选择指南](best-practices/router-selection.md) / [Router 选择指南 (EN)](best-practices/router-selection.en.md) — reference — 2026-05-17
+- [SKILL 编写指南](best-practices/skill-authoring.md) / [SKILL 编写指南 (EN)](best-practices/skill-authoring.en.md) — reference — 2026-05-17
+- [Worktree 使用指南](best-practices/worktree-usage.md) / [Worktree 使用指南 (EN)](best-practices/worktree-usage.en.md) — reference — 2026-05-17
+- [opusplan 模式指南](opusplan-guide.md) — reference — 2026-05-12
+- [工作流示例：Bug 修复（轻量路径）](workflow-bugfix.md) — reference — 2026-05-12
+- [工作流示例：会话恢复与团队协作](workflow-resume.md) — reference — 2026-05-12
+- [工作流示例：复杂需求（全量路径）](workflow-complex.md) — reference — 2026-05-12
+- [工作流示例：新功能开发（标准路径）](workflow-feature.md) — reference — 2026-05-12
 
 由 `scripts/build-docs-index.ts` 生成；请勿手动编辑

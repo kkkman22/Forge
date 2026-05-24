@@ -1,3 +1,12 @@
+---
+title: Worktree Usage Guide
+category: reference
+audience:
+- maintainer
+updated: '2026-05-17'
+owner: forge-maintainers
+---
+
 # Worktree Usage Guide
 
 ## Overview

@@ -1,3 +1,12 @@
+---
+title: 'Worktree 使用指南'
+category: reference
+audience:
+- maintainer
+updated: '2026-05-17'
+owner: forge-maintainers
+---
+
 # Worktree 使用指南
 
 ## 概述

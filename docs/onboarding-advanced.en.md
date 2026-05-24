@@ -1,3 +1,12 @@
+---
+title: Forge Advanced User / Contributor Onboarding
+category: contributing
+audience:
+- maintainer
+updated: '2026-05-12'
+owner: forge-maintainers
+---
+
 [← Back to Index](./INDEX.en.md) | [中文版](./onboarding-advanced.md)
 
 > ⚠️ This translation may be behind the Chinese version. Chinese last updated: 2026-05-12

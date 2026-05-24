@@ -1,3 +1,12 @@
+---
+title: 'Forge 快速入门指南'
+category: getting-started
+audience:
+- maintainer
+updated: '2026-05-18'
+owner: forge-maintainers
+---
+
 [← 返回索引](./INDEX.md) | [English Version](./quick-start.en.md)
 
 # Forge 快速入门指南

@@ -1,5 +1,6 @@
-import { existsSync, readdirSync, lstatSync, statSync } from "node:fs";
-import { join, resolve, relative } from "node:path";
+import type { Dirent } from "node:fs";
+import { existsSync, lstatSync, readdirSync, statSync } from "node:fs";
+import { join, relative, resolve } from "node:path";
 
 export interface WalkOptions {
   skipHidden?: boolean;
@@ -32,9 +33,9 @@ export function walkMdFiles(dir: string, opts: WalkOptions = {}): string[] {
   const resolvedRoot = symlinkSafe ? resolve(dir) : undefined;
 
   function walk(current: string): void {
-    let entries;
+    let entries: Dirent<string>[];
     try {
-      entries = readdirSync(current, { withFileTypes: true });
+      entries = readdirSync(current, { withFileTypes: true }) as Dirent<string>[];
     } catch {
       return;
     }

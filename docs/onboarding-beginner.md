@@ -1,3 +1,12 @@
+---
+title: 'Forge 初次接触者引导'
+category: reference
+audience:
+- maintainer
+updated: '2026-05-24'
+owner: forge-maintainers
+---
+
 [← 返回索引](./INDEX.md) | [English Version](./onboarding-beginner.en.md)
 
 # Forge 初次接触者引导

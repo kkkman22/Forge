@@ -1,7 +1,10 @@
 import { describe, expect, it } from "vitest";
-import { parseFrontmatter } from "../../../src/docs-governance/frontmatter/parser.js";
 import { computeExitResult } from "../../../src/docs-governance/cli/_runtime.js";
-import { formatDiagnostics, formatNdjson } from "../../../src/docs-governance/reporter/diagnostic.js";
+import { parseFrontmatter } from "../../../src/docs-governance/frontmatter/parser.js";
+import {
+  formatDiagnostics,
+  formatNdjson,
+} from "../../../src/docs-governance/reporter/diagnostic.js";
 import type { DiagnosticRecord, DocPath } from "../../../src/docs-governance/types.js";
 
 // ── Helpers ──
@@ -128,16 +131,12 @@ describe("check-docs-frontmatter CLI logic", () => {
     });
 
     it("returns 1 for error-level diagnostics", () => {
-      const result = computeExitResult(() => [
-        makeDiagnostic("docs/a.md", "error", "bad"),
-      ]);
+      const result = computeExitResult(() => [makeDiagnostic("docs/a.md", "error", "bad")]);
       expect(result.exitCode).toBe(1);
     });
 
     it("returns 2 for critical-level diagnostics", () => {
-      const result = computeExitResult(() => [
-        makeDiagnostic("docs/a.md", "critical", "very bad"),
-      ]);
+      const result = computeExitResult(() => [makeDiagnostic("docs/a.md", "critical", "very bad")]);
       expect(result.exitCode).toBe(2);
     });
 

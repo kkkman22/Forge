@@ -1,3 +1,12 @@
+---
+title: 'CI UltraReview — 操作手册'
+category: reference
+audience:
+- maintainer
+updated: '2026-05-12'
+owner: forge-maintainers
+---
+
 [← 返回索引](./INDEX.md)
 
 # CI UltraReview — 操作手册

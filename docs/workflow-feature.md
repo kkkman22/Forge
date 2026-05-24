@@ -1,3 +1,12 @@
+---
+title: '工作流示例：新功能开发（标准路径）'
+category: reference
+audience:
+- maintainer
+updated: '2026-05-12'
+owner: forge-maintainers
+---
+
 [← 返回索引](./INDEX.md)
 
 # 工作流示例：新功能开发（标准路径）
