@@ -1,6 +1,6 @@
 {
   "version": 1,
-  "generated_at": "2026-05-24T05:41:40.597Z",
+  "generated_at": "2026-05-24T06:38:38.516Z",
   "subs": {
     "abort": {
       "instructions": {
@@ -252,6 +252,27 @@
           "sha256": "5f8b04f505d2d79a97fb43c2ac7bb13b45e6e0e9d243cb5830e84a7cfb4d7e41"
         }
       ]
+    },
+    "forge-cmux-browser-qa": {
+      "instructions": {
+        "path": "forge-cmux-browser-qa/instructions.md",
+        "sha256": "f37896c590141c7e1431b174101104b2015fc445bf6209ce5b032345cf0502c1"
+      },
+      "references": []
+    },
+    "forge-cmux-loop-signals": {
+      "instructions": {
+        "path": "forge-cmux-loop-signals/instructions.md",
+        "sha256": "0aa8c9de84858f18b0028ec1589e9be713b9ebaf413df676dfcc34f67cd6d08c"
+      },
+      "references": []
+    },
+    "forge-cmux-sidebar-sync": {
+      "instructions": {
+        "path": "forge-cmux-sidebar-sync/instructions.md",
+        "sha256": "d612b26d9e235e6e3db254c9dba6879c13146f77b4202cfd6570c756956fcf15"
+      },
+      "references": []
     },
     "grill": {
       "instructions": {
