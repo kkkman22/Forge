@@ -1,5 +1,5 @@
-import { parseEmbeds } from "./embed-parser.js";
 import type { DiagnosticRecord, DocPath, RendererRegistry } from "../types.js";
+import { parseEmbeds } from "./embed-parser.js";
 
 /**
  * Synchronise all embed directives in `fileContent` using the provided
