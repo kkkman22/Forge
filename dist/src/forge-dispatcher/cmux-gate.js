@@ -1,3 +1,4 @@
+import { statSync as fsStatSync } from "node:fs";
 export const CMUX_GATED_SUBS = new Set([
     "forge-cmux-sidebar-sync",
     "forge-cmux-browser-qa",
@@ -44,7 +45,7 @@ export function checkCmuxGate(sub, opts) {
         return { ok: true, gate_result: "n_a", cmux_available: null };
     }
     const env = opts?.env ?? process.env;
-    const statSync = opts?.statSync ?? require("node:fs").statSync;
+    const statSync = opts?.statSync ?? fsStatSync;
     const result = cmuxAvailableShim(env, statSync);
     if (!result.ok) {
         stickyUnavailable = true;
