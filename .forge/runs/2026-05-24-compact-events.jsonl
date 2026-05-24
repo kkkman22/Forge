@@ -41,3 +41,11 @@
 {"timestamp":"2026-05-24T12:51:41Z","event":"precompact_snapshot","detail":"slug=cmux-skills-collapse phase=build"}
 {"timestamp":"2026-05-24T12:53:00Z","event":"postcompact_restore","detail":"slug=cmux-skills-collapse"}
 {"timestamp":"2026-05-24T12:53:00Z","event":"precompact_snapshot","detail":"slug=cmux-skills-collapse phase=build"}
+{"timestamp":"2026-05-24T13:29:24Z","event":"postcompact_restore","detail":"slug=cmux-skills-collapse"}
+{"timestamp":"2026-05-24T13:29:24Z","event":"precompact_snapshot","detail":"slug=cmux-claude-uplift-064 phase=build"}
+{"timestamp":"2026-05-24T13:30:41Z","event":"postcompact_restore","detail":"slug=cmux-claude-uplift-064"}
+{"timestamp":"2026-05-24T13:30:41Z","event":"precompact_snapshot","detail":"slug=cmux-claude-uplift-064 phase=build"}
+{"timestamp":"2026-05-24T13:35:33Z","event":"postcompact_restore","detail":"slug=cmux-claude-uplift-064"}
+{"timestamp":"2026-05-24T13:35:33Z","event":"precompact_snapshot","detail":"slug=cmux-claude-uplift-064 phase=build"}
+{"timestamp":"2026-05-24T13:36:51Z","event":"postcompact_restore","detail":"slug=cmux-claude-uplift-064"}
+{"timestamp":"2026-05-24T13:36:51Z","event":"precompact_snapshot","detail":"slug=cmux-claude-uplift-064 phase=build"}
