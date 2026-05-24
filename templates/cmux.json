@@ -1,5 +1,20 @@
 {
   "version": 1,
+  "_minimum_cmux_version": {
+    "_comment": "cmux ignores underscore-prefixed fields. These are for developer reference only.",
+    "commands": "0.64.3",
+    "agent_resume_approvals": "0.64.10"
+  },
+  "commands": [
+    { "label": "/forge build", "action": "forge.build", "description": "Standard tier build" },
+    { "label": "/forge review", "action": "forge.review", "description": "Three-layer review" },
+    { "label": "/forge ship", "action": "forge.ship", "description": "Push + PR + verify" }
+  ],
+  "agent_resume_approvals": [
+    "claude --resume",
+    "claude --continue",
+    "claude --session-id"
+  ],
   "layouts": {
     "workflow": {
       "name": "Workflow",
