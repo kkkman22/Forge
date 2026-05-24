@@ -1,4 +1,4 @@
-import type { Config, DiagnosticRecord, SsotRegistryEntry } from "../types.js";
+import type { Config, DiagnosticRecord, DocPath, SsotRegistryEntry } from "../types.js";
 
 const RESERVED_PREFIXES = ["internal-", "debug-", "forge-meta-"] as const;
 
