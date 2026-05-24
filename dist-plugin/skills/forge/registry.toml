@@ -1,7 +1,7 @@
 # AUTO-GENERATED — DO NOT EDIT
 # Source: skills/forge/lib/<sub>/instructions.md frontmatter
 # Regen: node scripts/regen-skill-registry.mjs
-# Last regen: 2026-05-18T03:43:28.332Z
+# Last regen: 2026-05-24T06:38:17.208Z
 
 [abort]
 dispatch_mode = "inline"
@@ -50,13 +50,28 @@ description = "Execute multi-perspective decision analysis using parallel agent 
 
 [fix]
 dispatch_mode = "inline"
-allowed_tools = ["Read", "Write"]
-description = "DEPRECATED — use /forge build with work_nature=bugfix instead. Fix a single identified defect with minimal change."
+allowed_tools = ["Read", "Write", "Bash"]
+description = "Bugfix three-file workflow — uses runBugfixOrchestration with bugfix.md + design.md + tasks.md."
 
 [fix-conflicts]
 dispatch_mode = "inline"
 allowed_tools = ["Read", "Edit", "Bash"]
 description = "Fix merge conflicts using three-zone forge directory classification. Use when git merge or rebase produces conflicts inside the forge config tree."
+
+[forge-cmux-browser-qa]
+dispatch_mode = "inline"
+allowed_tools = ["Read", "Bash"]
+description = "Browser-based QA verification using cmux browser commands during /forge test. Requires cmux installed."
+
+[forge-cmux-loop-signals]
+dispatch_mode = "inline"
+allowed_tools = ["Read", "Bash"]
+description = "Visual signals for Forge Loop long-running iterations in cmux sidebar. Requires cmux installed."
+
+[forge-cmux-sidebar-sync]
+dispatch_mode = "inline"
+allowed_tools = ["Read", "Bash"]
+description = "Keep cmux sidebar in sync with Forge lifecycle state changes. Requires cmux installed."
 
 [grill]
 dispatch_mode = "fork"
@@ -112,6 +127,11 @@ description = "Resume an interrupted task by reconstructing state from status fi
 dispatch_mode = "fork"
 allowed_tools = ["Read", "Agent", "Bash"]
 description = "Review build output through parallel subagents covering spec alignment, code quality, and security with P0/P1 ship-blocking severity classification. Use when running `/forge review`, build completes, or a multi-perspective code quality gate is needed before ship."
+
+[review-comment-bitbucket]
+dispatch_mode = "inline"
+allowed_tools = ["Read", "Bash", "Write"]
+description = "Post review findings to Bitbucket PR as tasks and inline comments with stable idempotent markers, cross-run reconciliation, and platform gate."
 
 [router]
 dispatch_mode = "inline"
