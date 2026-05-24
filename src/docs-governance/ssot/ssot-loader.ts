@@ -1,8 +1,8 @@
 import { existsSync, readFileSync } from "node:fs";
 import { resolve } from "node:path";
 import { loadConfigWithDefaults } from "../config.js";
-import { createRendererRegistry } from "./renderer-registry.js";
 import type { RendererFn } from "../types.js";
+import { createRendererRegistry } from "./renderer-registry.js";
 
 export function loadSsotData(rootDir: string): Map<string, unknown> {
   const configPath = resolve(rootDir, ".forge/config.md");
@@ -40,7 +40,9 @@ export function loadSsotData(rootDir: string): Map<string, unknown> {
   return ssotData;
 }
 
-export function buildDefaultRegistry(renderers: [string, RendererFn][]): ReturnType<typeof createRendererRegistry> {
+export function buildDefaultRegistry(
+  renderers: [string, RendererFn][],
+): ReturnType<typeof createRendererRegistry> {
   const reg = createRendererRegistry();
   for (const [name, fn] of renderers) {
     reg.register(name, fn);

@@ -5,12 +5,12 @@
  */
 import { readFileSync } from "node:fs";
 import { join, relative, resolve } from "node:path";
-import { parseFrontmatter } from "../src/docs-governance/frontmatter/parser.js";
-import { pairBilingual, checkBilingualPairs } from "../src/docs-governance/bilingual.js";
-import { computeExitResult } from "../src/docs-governance/cli/_runtime.js";
-import { formatDiagnostics, formatNdjson } from "../src/docs-governance/reporter/diagnostic.js";
+import { checkBilingualPairs, pairBilingual } from "../src/docs-governance/bilingual.js";
 import { formatHelp } from "../src/docs-governance/cli/_help.js";
-import { walkMdFiles } from "../src/docs-governance/cli/scan-files.js";
+import { computeExitResult } from "../src/docs-governance/cli/_runtime.js";
+import { shouldExcludeIndex, walkMdFiles } from "../src/docs-governance/cli/scan-files.js";
+import { parseFrontmatter } from "../src/docs-governance/frontmatter/parser.js";
+import { formatDiagnostics, formatNdjson } from "../src/docs-governance/reporter/diagnostic.js";
 import type { DiagnosticRecord, Doc, DocPath } from "../src/docs-governance/types.js";
 
 const SCRIPT_NAME = "check-docs-bilingual";
@@ -81,7 +81,7 @@ const rootDir = resolve(process.cwd());
 const docsDir = join(rootDir, "docs");
 
 const result = computeExitResult(() => {
-  const files = walkMdFiles(docsDir, { extensions: [".md", ".en.md"] });
+  const files = walkMdFiles(docsDir, { extensions: [".md", ".en.md"], excludeFn: shouldExcludeIndex });
   const { docs, diagnostics } = buildDocs(files, rootDir);
 
   const pairs = pairBilingual(docs);

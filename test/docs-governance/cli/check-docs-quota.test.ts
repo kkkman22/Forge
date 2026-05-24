@@ -25,8 +25,11 @@ function run(args: string[], env?: Record<string, string>) {
 }
 
 import { computeExitResult } from "../../../src/docs-governance/cli/_runtime.js";
-import { formatDiagnostics, formatNdjson } from "../../../src/docs-governance/reporter/diagnostic.js";
-import { countDocPairs, checkQuota } from "../../../src/docs-governance/quota.js";
+import { checkQuota, countDocPairs } from "../../../src/docs-governance/quota.js";
+import {
+  formatDiagnostics,
+  formatNdjson,
+} from "../../../src/docs-governance/reporter/diagnostic.js";
 import type { Config, DiagnosticRecord } from "../../../src/docs-governance/types.js";
 
 const SCRIPT_NAME = "check-docs-quota";

@@ -1,11 +1,11 @@
 import { describe, expect, it } from "vitest";
-import { classifyStaleness } from "../../../src/docs-governance/staleness.js";
 import { computeExitResult } from "../../../src/docs-governance/cli/_runtime.js";
 import {
   formatDiagnostics,
   formatGitHubAnnotations,
   formatNdjson,
 } from "../../../src/docs-governance/reporter/diagnostic.js";
+import { classifyStaleness } from "../../../src/docs-governance/staleness.js";
 import type { DiagnosticRecord, DocPath, Frontmatter } from "../../../src/docs-governance/types.js";
 
 // ── Helpers ──
@@ -189,9 +189,7 @@ describe("check-docs-staleness CLI logic", () => {
     });
 
     it("returns 0 for warning-only staleness (not critical)", () => {
-      const result = computeExitResult(() => [
-        makeDiagnostic("docs/aging.md", "warning", "aging"),
-      ]);
+      const result = computeExitResult(() => [makeDiagnostic("docs/aging.md", "warning", "aging")]);
       expect(result.exitCode).toBe(0);
     });
 
@@ -220,9 +218,7 @@ describe("check-docs-staleness CLI logic", () => {
 
     it("CI mode: warning -> exit 0 + ::warning:: annotation", () => {
       // Warning severity maps to exit 0
-      const result = computeExitResult(() => [
-        makeDiagnostic("docs/aging.md", "warning", "aging"),
-      ]);
+      const result = computeExitResult(() => [makeDiagnostic("docs/aging.md", "warning", "aging")]);
       expect(result.exitCode).toBe(0);
       // The annotation is produced separately by formatGitHubAnnotations
     });

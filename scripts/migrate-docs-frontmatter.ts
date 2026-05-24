@@ -5,15 +5,14 @@
  * --apply: write generated frontmatter to files
  * Default: dry-run, output suggestions only
  */
-import { existsSync, readFileSync, writeFileSync } from "node:fs";
-import { resolve, relative } from "node:path";
 import { execFileSync } from "node:child_process";
-import { parseFrontmatter } from "../src/docs-governance/frontmatter/parser.js";
-import { serializeFrontmatter } from "../src/docs-governance/frontmatter/serializer.js";
-import { classify } from "../src/docs-governance/domains.js";
-import { walkMdFiles } from "../src/docs-governance/cli/scan-files.js";
-import type { Frontmatter, DocPath } from "../src/docs-governance/types.js";
+import { existsSync, readFileSync, writeFileSync } from "node:fs";
+import { relative, resolve } from "node:path";
 import { commonHelp } from "../src/docs-governance/cli/_help.js";
+import { walkMdFiles } from "../src/docs-governance/cli/scan-files.js";
+import { parseFrontmatter } from "../src/docs-governance/frontmatter/parser.js";
+import { serialize } from "../src/docs-governance/frontmatter/serializer.js";
+import type { Frontmatter } from "../src/docs-governance/types.js";
 
 const SCRIPT_NAME = "migrate-docs-frontmatter";
 const DOCS_DIR = "docs";
@@ -105,7 +104,7 @@ function applyMigration(filePath: string, suggestion: MigrationSuggestion): void
     owner: suggestion.owner,
   };
 
-  const serialized = serializeFrontmatter(fm);
+  const serialized = serialize(fm);
   writeFileSync(filePath, `${serialized}\n${body}`, "utf-8");
 }
 
@@ -140,7 +139,7 @@ for (const filePath of mdFiles) {
   const content = readFileSync(filePath, "utf-8");
   const { frontmatter } = parseFrontmatter(content);
 
-  if (frontmatter === undefined) {
+  if (frontmatter === undefined || frontmatter === null) {
     // Missing frontmatter — generate suggestion
     suggestions.push(generateSuggestion(filePath, content));
   }

@@ -1,3 +1,12 @@
+---
+title: 'Forge 高级功能参考'
+category: advanced
+audience:
+- maintainer
+updated: '2026-05-24'
+owner: forge-maintainers
+---
+
 [← 返回索引](./INDEX.md)
 
 # Forge 高级功能参考

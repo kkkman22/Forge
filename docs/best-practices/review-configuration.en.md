@@ -1,3 +1,12 @@
+---
+title: Review Configuration Guide
+category: reference
+audience:
+- maintainer
+updated: '2026-05-17'
+owner: forge-maintainers
+---
+
 # Review Configuration Guide
 
 ## Three-Layer Review

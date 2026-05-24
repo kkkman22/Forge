@@ -1,8 +1,17 @@
 import { describe, expect, it } from "vitest";
-import { pairBilingual, checkBilingualPairs } from "../../../src/docs-governance/bilingual.js";
+import { checkBilingualPairs, pairBilingual } from "../../../src/docs-governance/bilingual.js";
 import { computeExitResult } from "../../../src/docs-governance/cli/_runtime.js";
-import { formatDiagnostics, formatNdjson } from "../../../src/docs-governance/reporter/diagnostic.js";
-import type { DiagnosticRecord, Doc, DocPair, DocPath, Frontmatter } from "../../../src/docs-governance/types.js";
+import {
+  formatDiagnostics,
+  formatNdjson,
+} from "../../../src/docs-governance/reporter/diagnostic.js";
+import type {
+  DiagnosticRecord,
+  Doc,
+  DocPair,
+  DocPath,
+  Frontmatter,
+} from "../../../src/docs-governance/types.js";
 
 // ── Helpers ──
 
@@ -65,10 +74,7 @@ describe("check-docs-bilingual CLI logic", () => {
     });
 
     it("groups docs in different directories separately", () => {
-      const docs: Doc[] = [
-        makeDoc("docs/a/guide.md"),
-        makeDoc("docs/b/guide.md"),
-      ];
+      const docs: Doc[] = [makeDoc("docs/a/guide.md"), makeDoc("docs/b/guide.md")];
       const pairs = pairBilingual(docs);
       expect(pairs).toHaveLength(2);
       expect(pairs.every((p) => p.state === "cn-only")).toBe(true);
@@ -191,9 +197,7 @@ describe("check-docs-bilingual CLI logic", () => {
 
     it("returns 0 for warning-level issues (orphan_mirror)", () => {
       const result = computeExitResult(() => {
-        const docs: Doc[] = [
-          makeDoc("docs/guide.en.md", { mirror_of: "guide.md" }),
-        ];
+        const docs: Doc[] = [makeDoc("docs/guide.en.md", { mirror_of: "guide.md" })];
         return checkBilingualPairs(pairBilingual(docs));
       });
       expect(result.exitCode).toBe(0);

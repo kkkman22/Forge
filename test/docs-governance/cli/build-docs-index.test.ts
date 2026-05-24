@@ -1,10 +1,10 @@
-import { mkdirSync, rmSync, writeFileSync, existsSync, readFileSync } from "node:fs";
-import { join } from "node:path";
 import { execSync } from "node:child_process";
-import { describe, expect, it, beforeAll, afterAll } from "vitest";
-import { buildIndex } from "../../../src/docs-governance/index-generator/generator.js";
+import { existsSync, mkdirSync, readFileSync, rmSync, writeFileSync } from "node:fs";
+import { join } from "node:path";
+import { afterAll, beforeAll, describe, expect, it } from "vitest";
 import { pairBilingual } from "../../../src/docs-governance/bilingual.js";
 import { parseFrontmatter } from "../../../src/docs-governance/frontmatter/parser.js";
+import { buildIndex } from "../../../src/docs-governance/index-generator/generator.js";
 import type { Doc, DocPath, Domain, Frontmatter } from "../../../src/docs-governance/types.js";
 
 // ─────────────────────────────────────────────────────────────
@@ -89,10 +89,7 @@ describe("build-docs-index core logic", () => {
       mirror_of: "intro.md",
     };
 
-    const docs: Doc[] = [
-      makeDoc("docs/intro.md", fm1),
-      makeDoc("docs/intro.en.md", fm1en),
-    ];
+    const docs: Doc[] = [makeDoc("docs/intro.md", fm1), makeDoc("docs/intro.en.md", fm1en)];
 
     const pairs = pairBilingual(docs);
     const result = buildIndex(pairs);

@@ -1,3 +1,12 @@
+---
+title: 'Review 配置指南'
+category: reference
+audience:
+- maintainer
+updated: '2026-05-17'
+owner: forge-maintainers
+---
+
 # Review 配置指南
 
 ## 三层评审

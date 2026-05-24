@@ -1,3 +1,12 @@
+---
+title: 'Router 选择指南'
+category: reference
+audience:
+- maintainer
+updated: '2026-05-17'
+owner: forge-maintainers
+---
+
 # Router 选择指南
 
 ## 三级路由

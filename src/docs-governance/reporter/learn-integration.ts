@@ -50,7 +50,13 @@ export function extractLearnInsights(
   }
 
   // Trend: severity distribution
-  const severityCounts: Record<string, number> = { critical: 0, error: 0, warning: 0, notice: 0, info: 0 };
+  const severityCounts: Record<string, number> = {
+    critical: 0,
+    error: 0,
+    warning: 0,
+    notice: 0,
+    info: 0,
+  };
   for (const d of diagnostics) {
     severityCounts[d.severity] = (severityCounts[d.severity] ?? 0) + 1;
   }

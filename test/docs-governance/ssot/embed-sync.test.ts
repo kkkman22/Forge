@@ -85,13 +85,7 @@ describe("syncEmbeds", () => {
 
   // ─── #[[file:...]] replacement ─────────────────────────
   it("replaces #[[file:relative]] with file content from ssotData", () => {
-    const content = [
-      "# Title",
-      "",
-      "#[[file:shared/snippet.md]]",
-      "",
-      "After embed",
-    ].join("\n");
+    const content = ["# Title", "", "#[[file:shared/snippet.md]]", "", "After embed"].join("\n");
 
     const ssotData = new Map<string, string>();
     ssotData.set("file:shared/snippet.md", "This is the **embedded** snippet.");
@@ -121,9 +115,9 @@ describe("syncEmbeds", () => {
       emptySsotData(),
     );
 
-    expect(diagnostics.some((d) => d.severity === "error" && d.message.includes("missing.md"))).toBe(
-      true,
-    );
+    expect(
+      diagnostics.some((d) => d.severity === "error" && d.message.includes("missing.md")),
+    ).toBe(true);
   });
 
   // ─── Unclosed marker detection ─────────────────────────
@@ -141,7 +135,9 @@ describe("syncEmbeds", () => {
       emptySsotData(),
     );
 
-    expect(diagnostics.some((d) => d.severity === "error" && d.code === "EMBED_UNCLOSED")).toBe(true);
+    expect(diagnostics.some((d) => d.severity === "error" && d.code === "EMBED_UNCLOSED")).toBe(
+      true,
+    );
     // Content should be preserved unchanged since block is invalid
     expect(result).toBe(content);
   });
@@ -164,7 +160,9 @@ describe("syncEmbeds", () => {
     expect(
       diagnostics.some(
         (d) =>
-          d.severity === "error" && d.message.includes("nonexistent") && d.code === "EMBED_UNKNOWN_RENDERER",
+          d.severity === "error" &&
+          d.message.includes("nonexistent") &&
+          d.code === "EMBED_UNKNOWN_RENDERER",
       ),
     ).toBe(true);
   });
@@ -192,12 +190,17 @@ describe("syncEmbeds", () => {
 
   // ─── External bytes preserved (P13) ────────────────────
   it("preserves bytes outside embed blocks exactly (P13)", () => {
-    const before = "# Title with <special> & \"chars\"\n\nParagraph.\n\n";
+    const before = '# Title with <special> & "chars"\n\nParagraph.\n\n';
     const block = "<!-- ssot:begin topic=test render=echo -->\ninner\n<!-- ssot:end topic=test -->";
     const after = "\n\nTrailing with unicode: éèê üöä 🎉\n";
     const content = before + block + after;
 
-    const { content: result } = syncEmbeds(content, P("docs/p13.md"), registryWithEcho(), emptySsotData());
+    const { content: result } = syncEmbeds(
+      content,
+      P("docs/p13.md"),
+      registryWithEcho(),
+      emptySsotData(),
+    );
 
     // Before and after must be byte-identical
     expect(result.startsWith(before)).toBe(true);
@@ -416,6 +419,6 @@ describe("syncEmbeds", () => {
     const { content: result } = syncEmbeds(content, P("docs/capture.md"), reg, ssotData);
 
     expect(receivedSource).toBe('[{"name":"test"}]');
-    expect(result).toContain('source:');
+    expect(result).toContain("source:");
   });
 });

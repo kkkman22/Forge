@@ -25,8 +25,15 @@ function run(args: string[], env?: Record<string, string>) {
 }
 
 import { computeExitResult } from "../../../src/docs-governance/cli/_runtime.js";
-import { formatDiagnostics, formatNdjson } from "../../../src/docs-governance/reporter/diagnostic.js";
-import { extractLinks, gfmAnchor, dedupAnchorsInDoc } from "../../../src/docs-governance/link-checker.js";
+import {
+  dedupAnchorsInDoc,
+  extractLinks,
+  gfmAnchor,
+} from "../../../src/docs-governance/link-checker.js";
+import {
+  formatDiagnostics,
+  formatNdjson,
+} from "../../../src/docs-governance/reporter/diagnostic.js";
 import type { DiagnosticRecord } from "../../../src/docs-governance/types.js";
 
 const SCRIPT_NAME = "check-docs-links";
@@ -103,9 +110,7 @@ describe("check-docs-links CLI logic", () => {
     });
 
     it("formats NDJSON with line and code fields", () => {
-      const diags = [
-        makeDiag({ line: 10, code: "BROKEN_ANCHOR" }),
-      ];
+      const diags = [makeDiag({ line: 10, code: "BROKEN_ANCHOR" })];
       const output = formatNdjson(diags);
       const parsed = JSON.parse(output);
       expect(parsed.script).toBe(SCRIPT_NAME);

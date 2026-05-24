@@ -1,3 +1,12 @@
+---
+title: 'SKILL 编写指南'
+category: reference
+audience:
+- maintainer
+updated: '2026-05-17'
+owner: forge-maintainers
+---
+
 # SKILL 编写指南
 
 ## 概述

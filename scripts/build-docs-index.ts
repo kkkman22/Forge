@@ -3,18 +3,18 @@
  * Build docs index — scans docs/ for .md files, generates INDEX.md and INDEX.en.md.
  * Exit codes: 0 = success, 1 = error (no valid docs found), 3 = internal error.
  */
-import { readFileSync, writeFileSync, existsSync } from "node:fs";
+import { existsSync, readFileSync, writeFileSync } from "node:fs";
 import { join, resolve } from "node:path";
-import { parseFrontmatter } from "../src/docs-governance/frontmatter/parser.js";
 import { pairBilingual } from "../src/docs-governance/bilingual.js";
-import { buildIndex } from "../src/docs-governance/index-generator/generator.js";
-import { classify, EXCLUDED_PREFIXES } from "../src/docs-governance/domains.js";
-import { computeExitResult } from "../src/docs-governance/cli/_runtime.js";
-import { formatDiagnostics, formatNdjson } from "../src/docs-governance/reporter/diagnostic.js";
 import { commonHelp } from "../src/docs-governance/cli/_help.js";
-import { walkMdFiles } from "../src/docs-governance/cli/scan-files.js";
+import { computeExitResult } from "../src/docs-governance/cli/_runtime.js";
 import { makeDiagnosticFactory } from "../src/docs-governance/cli/diagnostic-helper.js";
-import type { Doc, DocPath, Frontmatter, DiagnosticRecord } from "../src/docs-governance/types.js";
+import { walkMdFiles } from "../src/docs-governance/cli/scan-files.js";
+import { classify, EXCLUDED_PREFIXES } from "../src/docs-governance/domains.js";
+import { parseFrontmatter } from "../src/docs-governance/frontmatter/parser.js";
+import { buildIndex } from "../src/docs-governance/index-generator/generator.js";
+import { formatDiagnostics, formatNdjson } from "../src/docs-governance/reporter/diagnostic.js";
+import type { DiagnosticRecord, Doc, DocPath, Frontmatter } from "../src/docs-governance/types.js";
 
 const SCRIPT_NAME = "build-docs-index";
 const makeDiagnostic = makeDiagnosticFactory(SCRIPT_NAME);
@@ -48,8 +48,9 @@ const result = computeExitResult(() => {
     return diagnostics;
   }
 
-  // 1. Walk and collect .md files
-  const mdFiles = walkMdFiles(docsDir, { relativeTo: docsDir, symlinkSafe: true, allowDotDirs: [".forge", ".kiro"], excludedPrefixes: EXCLUDED_PREFIXES });
+  // 1. Walk and collect .md files (exclude api/ build artifacts)
+  const mdFiles = walkMdFiles(docsDir, { relativeTo: docsDir, symlinkSafe: true, allowDotDirs: [".forge", ".kiro"], excludedPrefixes: EXCLUDED_PREFIXES })
+    .filter((f) => !f.startsWith("api/"));
 
   // 2. Parse frontmatter for each file
   const docs: Doc[] = [];

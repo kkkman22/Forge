@@ -39,8 +39,8 @@ describe("migrate-docs-frontmatter helpers", () => {
       const filePath = "docs/api-reference.md";
       const content = "# API Reference\n\nEndpoint details.";
       const lower = filePath.toLowerCase() + " " + content.slice(0, 500).toLowerCase();
-      const hasSpecial = ["getting started", "troubleshoot", "contribut", "advanced"].some(
-        (kw) => lower.includes(kw),
+      const hasSpecial = ["getting started", "troubleshoot", "contribut", "advanced"].some((kw) =>
+        lower.includes(kw),
       );
       expect(hasSpecial).toBe(false);
       // Default should be "reference"

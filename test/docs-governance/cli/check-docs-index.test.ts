@@ -1,7 +1,7 @@
-import { mkdirSync, rmSync, writeFileSync, readFileSync, existsSync } from "node:fs";
-import { join } from "node:path";
 import { execSync } from "node:child_process";
-import { describe, expect, it, beforeAll, afterAll } from "vitest";
+import { existsSync, mkdirSync, readFileSync, rmSync, writeFileSync } from "node:fs";
+import { join } from "node:path";
+import { afterAll, beforeAll, describe, expect, it } from "vitest";
 
 // ─────────────────────────────────────────────────────────────
 // Helpers
@@ -39,14 +39,7 @@ function createFile(dir: string, relPath: string, content: string): void {
 }
 
 function runCheckIndex(docsDir: string): { stdout: string; stderr: string; exitCode: number } {
-  const scriptPath = join(
-    import.meta.dirname,
-    "..",
-    "..",
-    "..",
-    "scripts",
-    "check-docs-index.ts",
-  );
+  const scriptPath = join(import.meta.dirname, "..", "..", "..", "scripts", "check-docs-index.ts");
   try {
     const stdout = execSync(`npx tsx "${scriptPath}" "${docsDir}"`, {
       encoding: "utf-8",
@@ -66,14 +59,7 @@ function runCheckIndex(docsDir: string): { stdout: string; stderr: string; exitC
 }
 
 function runBuildIndex(docsDir: string): void {
-  const scriptPath = join(
-    import.meta.dirname,
-    "..",
-    "..",
-    "..",
-    "scripts",
-    "build-docs-index.ts",
-  );
+  const scriptPath = join(import.meta.dirname, "..", "..", "..", "scripts", "build-docs-index.ts");
   execSync(`npx tsx "${scriptPath}" "${docsDir}"`, {
     encoding: "utf-8",
     cwd: TMP_DIR,

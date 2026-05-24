@@ -119,16 +119,8 @@ describe("check-docs-embeds logic", () => {
   });
 
   it("produces diff-friendly output for mismatches", () => {
-    const original = [
-      "line1",
-      "line2-old",
-      "line3",
-    ].join("\n");
-    const rendered = [
-      "line1",
-      "line2-new",
-      "line3",
-    ].join("\n");
+    const original = ["line1", "line2-old", "line3"].join("\n");
+    const rendered = ["line1", "line2-new", "line3"].join("\n");
 
     // Simulate unified diff generation
     const origLines = original.split("\n");

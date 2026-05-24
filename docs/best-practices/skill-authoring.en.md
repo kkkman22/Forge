@@ -1,3 +1,12 @@
+---
+title: SKILL Authoring Guide
+category: reference
+audience:
+- maintainer
+updated: '2026-05-17'
+owner: forge-maintainers
+---
+
 # SKILL Authoring Guide
 
 ## Overview

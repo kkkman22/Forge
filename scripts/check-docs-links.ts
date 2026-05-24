@@ -4,12 +4,12 @@
  * Exit codes: 0 = clean, 1 = broken link, 3 = internal error.
  */
 import { readFileSync } from "node:fs";
-import { join, resolve, dirname } from "node:path";
-import { computeExitResult } from "../src/docs-governance/cli/_runtime.js";
-import { formatDiagnostics, formatNdjson } from "../src/docs-governance/reporter/diagnostic.js";
+import { dirname, join, resolve } from "node:path";
 import { commonHelp } from "../src/docs-governance/cli/_help.js";
-import { extractLinks, gfmAnchor, dedupAnchorsInDoc } from "../src/docs-governance/link-checker.js";
+import { computeExitResult } from "../src/docs-governance/cli/_runtime.js";
 import { walkMdFiles } from "../src/docs-governance/cli/scan-files.js";
+import { dedupAnchorsInDoc, extractLinks } from "../src/docs-governance/link-checker.js";
+import { formatDiagnostics, formatNdjson } from "../src/docs-governance/reporter/diagnostic.js";
 import type { DiagnosticRecord, DocPath } from "../src/docs-governance/types.js";
 
 const SCRIPT_NAME = "check-docs-links";
@@ -60,12 +60,17 @@ const result = computeExitResult((): DiagnosticRecord[] => {
   const diags: DiagnosticRecord[] = [];
   const docsDir = resolve(rootDir, "docs");
 
-  const mdFiles = walkMdFiles(docsDir, { relativeTo: rootDir });
+  const mdFiles = walkMdFiles(docsDir, { relativeTo: rootDir })
+    .filter((f) => !f.startsWith("docs/api/"));
+  // Also include root-level .md files (domain D) for link resolution
+  const rootMdFiles = walkMdFiles(rootDir, { relativeTo: rootDir, extensions: [".md"] })
+    .filter((f) => !f.includes("/"));
+  const allFiles = [...mdFiles, ...rootMdFiles];
   if (mdFiles.length === 0) return diags;
 
   // Build anchor map: file -> Set of valid anchors
   const anchorMap = new Map<string, Set<string>>();
-  const fileSet = new Set(mdFiles);
+  const fileSet = new Set(allFiles);
 
   for (const file of mdFiles) {
     const fullPath = resolve(rootDir, file);

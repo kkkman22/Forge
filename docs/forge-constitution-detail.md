@@ -1,3 +1,12 @@
+---
+title: 'Forge — 项目宪法详细内容'
+category: reference
+audience:
+- maintainer
+updated: '2026-05-24'
+owner: forge-maintainers
+---
+
 [← 返回索引](./INDEX.md)
 
 # Forge — 项目宪法详细内容

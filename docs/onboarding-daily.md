@@ -1,3 +1,12 @@
+---
+title: 'Forge 日常开发者引导'
+category: reference
+audience:
+- maintainer
+updated: '2026-05-12'
+owner: forge-maintainers
+---
+
 [← 返回索引](./INDEX.md) | [English Version](./onboarding-daily.en.md)
 
 # Forge 日常开发者引导

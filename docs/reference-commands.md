@@ -1,3 +1,12 @@
+---
+title: 'Forge 命令速查与路由详解'
+category: reference
+audience:
+- maintainer
+updated: '2026-05-16'
+owner: forge-maintainers
+---
+
 [← 返回索引](./INDEX.md)
 
 # Forge 命令速查与路由详解

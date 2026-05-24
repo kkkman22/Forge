@@ -1,3 +1,12 @@
+---
+title: 'Forge 架构与状态保护'
+category: reference
+audience:
+- maintainer
+updated: '2026-05-12'
+owner: forge-maintainers
+---
+
 [← 返回索引](./INDEX.md)
 
 # Forge 架构与状态保护

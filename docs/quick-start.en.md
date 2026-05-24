@@ -1,3 +1,12 @@
+---
+title: Forge Quick Start Guide
+category: getting-started
+audience:
+- maintainer
+updated: '2026-05-12'
+owner: forge-maintainers
+---
+
 [← Back to Index](./INDEX.en.md) | [中文版](./quick-start.md)
 
 > ⚠️ This translation may be behind the Chinese version. Chinese last updated: 2026-05-12
