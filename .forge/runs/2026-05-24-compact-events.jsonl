@@ -33,3 +33,51 @@
 {"timestamp":"2026-05-24T06:46:38Z","event":"precompact_snapshot","detail":"slug=cmux-skills-collapse phase=build"}
 {"timestamp":"2026-05-24T06:48:03Z","event":"postcompact_restore","detail":"slug=cmux-skills-collapse"}
 {"timestamp":"2026-05-24T06:48:03Z","event":"precompact_snapshot","detail":"slug=cmux-skills-collapse phase=build"}
+{"timestamp":"2026-05-24T06:50:57Z","event":"postcompact_restore","detail":"slug=cmux-skills-collapse"}
+{"timestamp":"2026-05-24T06:50:57Z","event":"precompact_snapshot","detail":"slug=cmux-skills-collapse phase=build"}
+{"timestamp":"2026-05-24T06:52:13Z","event":"postcompact_restore","detail":"slug=cmux-skills-collapse"}
+{"timestamp":"2026-05-24T06:52:13Z","event":"precompact_snapshot","detail":"slug=cmux-skills-collapse phase=build"}
+{"timestamp":"2026-05-24T06:54:06Z","event":"postcompact_restore","detail":"slug=cmux-skills-collapse"}
+{"timestamp":"2026-05-24T06:54:06Z","event":"precompact_snapshot","detail":"slug=cmux-skills-collapse phase=build"}
+{"timestamp":"2026-05-24T06:55:13Z","event":"postcompact_restore","detail":"slug=cmux-skills-collapse"}
+{"timestamp":"2026-05-24T06:55:13Z","event":"precompact_snapshot","detail":"slug=cmux-skills-collapse phase=build"}
+{"timestamp":"2026-05-24T06:56:38Z","event":"postcompact_restore","detail":"slug=cmux-skills-collapse"}
+{"timestamp":"2026-05-24T06:56:38Z","event":"precompact_snapshot","detail":"slug=cmux-skills-collapse phase=build"}
+{"timestamp":"2026-05-24T06:57:46Z","event":"postcompact_restore","detail":"slug=cmux-skills-collapse"}
+{"timestamp":"2026-05-24T06:57:46Z","event":"precompact_snapshot","detail":"slug=cmux-skills-collapse phase=build"}
+{"timestamp":"2026-05-24T06:59:32Z","event":"postcompact_restore","detail":"slug=cmux-skills-collapse"}
+{"timestamp":"2026-05-24T06:59:32Z","event":"precompact_snapshot","detail":"slug=cmux-skills-collapse phase=build"}
+{"timestamp":"2026-05-24T07:00:32Z","event":"postcompact_restore","detail":"slug=cmux-skills-collapse"}
+{"timestamp":"2026-05-24T07:00:32Z","event":"precompact_snapshot","detail":"slug=cmux-skills-collapse phase=build"}
+{"timestamp":"2026-05-24T07:02:18Z","event":"postcompact_restore","detail":"slug=cmux-skills-collapse"}
+{"timestamp":"2026-05-24T07:02:18Z","event":"precompact_snapshot","detail":"slug=cmux-skills-collapse phase=build"}
+{"timestamp":"2026-05-24T07:03:16Z","event":"postcompact_restore","detail":"slug=cmux-skills-collapse"}
+{"timestamp":"2026-05-24T07:03:16Z","event":"precompact_snapshot","detail":"slug=cmux-skills-collapse phase=build"}
+{"timestamp":"2026-05-24T07:06:01Z","event":"postcompact_restore","detail":"slug=cmux-skills-collapse"}
+{"timestamp":"2026-05-24T07:06:01Z","event":"precompact_snapshot","detail":"slug=cmux-skills-collapse phase=build"}
+{"timestamp":"2026-05-24T07:07:02Z","event":"postcompact_restore","detail":"slug=cmux-skills-collapse"}
+{"timestamp":"2026-05-24T07:07:02Z","event":"precompact_snapshot","detail":"slug=cmux-skills-collapse phase=build"}
+{"timestamp":"2026-05-24T07:08:40Z","event":"postcompact_restore","detail":"slug=cmux-skills-collapse"}
+{"timestamp":"2026-05-24T07:08:40Z","event":"precompact_snapshot","detail":"slug=cmux-skills-collapse phase=build"}
+{"timestamp":"2026-05-24T07:09:46Z","event":"postcompact_restore","detail":"slug=cmux-skills-collapse"}
+{"timestamp":"2026-05-24T07:09:46Z","event":"precompact_snapshot","detail":"slug=cmux-skills-collapse phase=build"}
+{"timestamp":"2026-05-24T07:11:25Z","event":"postcompact_restore","detail":"slug=cmux-skills-collapse"}
+{"timestamp":"2026-05-24T07:11:25Z","event":"precompact_snapshot","detail":"slug=cmux-skills-collapse phase=build"}
+{"timestamp":"2026-05-24T07:12:29Z","event":"postcompact_restore","detail":"slug=cmux-skills-collapse"}
+{"timestamp":"2026-05-24T07:12:29Z","event":"precompact_snapshot","detail":"slug=cmux-skills-collapse phase=build"}
+{"timestamp":"2026-05-24T07:13:53Z","event":"postcompact_restore","detail":"slug=cmux-skills-collapse"}
+{"timestamp":"2026-05-24T07:13:53Z","event":"precompact_snapshot","detail":"slug=cmux-skills-collapse phase=build"}
+{"timestamp":"2026-05-24T07:14:58Z","event":"postcompact_restore","detail":"slug=cmux-skills-collapse"}
+{"timestamp":"2026-05-24T07:14:59Z","event":"precompact_snapshot","detail":"slug=cmux-skills-collapse phase=build"}
+{"timestamp":"2026-05-24T07:21:43Z","event":"postcompact_restore","detail":"slug=cmux-skills-collapse"}
+{"timestamp":"2026-05-24T07:21:43Z","event":"precompact_snapshot","detail":"slug=cmux-skills-collapse phase=build"}
+{"timestamp":"2026-05-24T07:22:43Z","event":"postcompact_restore","detail":"slug=cmux-skills-collapse"}
+{"timestamp":"2026-05-24T07:22:43Z","event":"precompact_snapshot","detail":"slug=cmux-skills-collapse phase=build"}
+{"timestamp":"2026-05-24T07:24:28Z","event":"postcompact_restore","detail":"slug=cmux-skills-collapse"}
+{"timestamp":"2026-05-24T07:24:28Z","event":"precompact_snapshot","detail":"slug=cmux-skills-collapse phase=build"}
+{"timestamp":"2026-05-24T07:25:30Z","event":"postcompact_restore","detail":"slug=cmux-skills-collapse"}
+{"timestamp":"2026-05-24T07:25:30Z","event":"precompact_snapshot","detail":"slug=cmux-skills-collapse phase=build"}
+{"timestamp":"2026-05-24T07:28:50Z","event":"postcompact_restore","detail":"slug=cmux-skills-collapse"}
+{"timestamp":"2026-05-24T07:28:50Z","event":"precompact_snapshot","detail":"slug=cmux-skills-collapse phase=build"}
+{"timestamp":"2026-05-24T07:29:57Z","event":"postcompact_restore","detail":"slug=cmux-skills-collapse"}
+{"timestamp":"2026-05-24T07:29:57Z","event":"precompact_snapshot","detail":"slug=cmux-skills-collapse phase=build"}
