@@ -57,7 +57,7 @@ updated: "2026-05-24"
 | 24. templates/cmux.json | done | e56c0e7d |
 | 25. install-template.sh + init.sh | done | e56c0e7d |
 | 26. browser-qa.mjs | done | e56c0e7d |
-| 27. cmux-skills/ | done | e56c0e7d |
+| 27. cmux-skills/ | done | e56c0e7d | → superseded by .kiro/specs/cmux-skills-collapse/ |
 | 28. prune-event-logs.sh 扩展 | done | e56c0e7d |
 
 ## Sprint 6 — 文档与收尾
@@ -65,7 +65,7 @@ updated: "2026-05-24"
 | Task | Status | Commit | Notes |
 |------|--------|--------|-------|
 | 29. SKILL references | done | e56c0e7d | 文件落在 v2.5 collapsed 路径 `skills/forge/lib/{review,build,ship,abort,test,control-cli,control-ui}/references/cmux*.md`，原 plan 的 `skills/forge-X/references/` 路径随 dispatcher 迁移废弃 |
-| 30. README.md | done | e56c0e7d | 内容迁移到 `docs/reference-advanced.md` 「cmux 集成（可选）」段落，README 仅保留索引行（与 reference-* 拆分文档结构一致） |
+| 30. README.md | done | e56c0e7d | 内容迁移到 `docs/reference-advanced.md` 「cmux 集成（可选）」段落，README 仅保留索引行（与 reference-* 拆分文档结构一致）→ rewritten per .kiro/specs/cmux-skills-collapse/ R6 |
 | 31. ROADMAP.md | done | e56c0e7d | ROADMAP.md §剩余中期项已登记 Events_NDJSON 多消费者扩展 + cmux claude-teams 模式 |
 | 32. 最终回归 | pending | — | 需重跑 `npm run check && bash scripts/build-dist.sh` 留痕；CI 已绿但本地未签 |
 | 33. E2E 手工验收 | blocked | — | 需在装 cmux 的 macOS 开发机执行 design.md §11 的 10 步序列，输出 `.forge/knowledge/sessions/cmux-integration-acceptance.md` |

@@ -1,6 +1,6 @@
 ---
 name: forge
-description: "Use when the user types /forge <subcommand> or /forge <task description>. Unified dispatcher entry point that routes to 29 sub-skills via lib instructions.md. Handles tier routing, branch protection, and phase auto-advance."
+description: "Use when the user types /forge <subcommand> or /forge <task description>. Unified dispatcher entry point that routes to 32 sub-skills via lib instructions.md. Handles tier routing, branch protection, and phase auto-advance."
 allowed-tools: Read, Agent, Glob, Grep, Bash, Skill
 skeleton_exempt_legacy: true
 ---
@@ -11,7 +11,7 @@ skeleton_exempt_legacy: true
 
 ## 1. Overview
 
-Forge's sole registered skill. All 29 sub-skills live under `skills/forge/lib/<sub>/instructions.md` and are dispatched through the 9-step chokepoint in `src/forge-dispatcher.ts`. Users invoke via `/forge <sub>` (direct) or `/forge <description>` (router-analyzed).
+Forge's sole registered skill. All 32 sub-skills live under `skills/forge/lib/<sub>/instructions.md` and are dispatched through the 10-step chokepoint in `src/forge-dispatcher.ts`. Users invoke via `/forge <sub>` (direct) or `/forge <description>` (router-analyzed).
 
 ## 2. Subcommand Listing
 
@@ -25,7 +25,7 @@ Forge's sole registered skill. All 29 sub-skills live under `skills/forge/lib/<s
 `decide` `spec` `plan` `build` `review` `test` `ship` `learn`
 
 ### Auxiliary
-`debug` `loop` `status` `resume` `abort` `zoom-out` `recap` `grill` `storm` `mutate` `router` `verify` `accept` `refactor` `fix` `pack` `decide-teams` `build-light` `fix-conflicts` `control-cli` `control-ui`
+`debug` `loop` `status` `resume` `abort` `zoom-out` `recap` `grill` `storm` `mutate` `router` `verify` `accept` `refactor` `fix` `pack` `decide-teams` `build-light` `fix-conflicts` `control-cli` `control-ui` `forge-cmux-browser-qa` `forge-cmux-loop-signals` `forge-cmux-sidebar-sync`
 
 Tier is logical, not physical — a sub can appear in multiple tiers. Routing logic in `skills/forge/lib/router/instructions.md`.
 

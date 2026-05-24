@@ -14,13 +14,15 @@ allowed_tools:
 
 > **触发方式**：标准路径的第一步，全量路径的第三步，或用户直接输入 `/forge plan`
 > **职责**：将锁定的 Spec 拆解为包含 TDD 步骤的原子任务，生成可直接执行的开发计划
-> **输出路径**：`.forge/plans/<topic>.md`
+> **输出路径**：`.forge/specs/<topic>/tasks.md`（三文件单源）。Legacy 回退：`.forge/plans/<topic>.md`
 
 ---
 
 ## 1. Overview
 
 五步流程（Research → File Mapping → Task Breakdown → Self-Check → User Approval）将锁定的 Spec 转化为原子任务列表。每个任务包含文件路径、TDD 步骤、完整代码、验证命令和提交信息。
+
+**三文件单源**：plan 阶段不再向 `.forge/plans/<topic>.md` 写入独立文件。而是直接读取并就地升级 `.forge/specs/<topic>/tasks.md`（draft → locked），补全任务编号、JSON wave 块、估时、status 字段、DoD。运行时调用 `lockPlan(doc)`（`src/plan.ts`），传入解析得到的 `TasksSeedDocument`；它内部会调用 `upgradeTasksSeed` 补 wave/status，最终 frontmatter `status` 从 draft 切到 locked。当 `tasks.md` 不存在但 `plans/<topic>.md` 存在时，作为兼容回退以 plans 文件为只读种子合成 tasks.md。
 
 **核心原则**：计划中不允许任何模糊内容。写不出完整代码说明还没想清楚，回去重新研究。
 

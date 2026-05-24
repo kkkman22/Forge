@@ -20,6 +20,8 @@
  *   TBD, TODO, 待定, 后续补充, 类似 Task, 添加适当的错误处理
  */
 import { extractStringField } from "./frontmatter.js";
+import { upgradeTasksSeed } from "./spec-plan-upgrade.js";
+export { upgradeTasksSeed } from "./spec-plan-upgrade.js";
 // ---------------------------------------------------------------------------
 // Task Graph bridge
 // ---------------------------------------------------------------------------
@@ -667,5 +669,19 @@ export function checkExpectedOutput(planContent, isLegacy) {
         }
     }
     return { errors, warnings };
+}
+// ---------------------------------------------------------------------------
+// Three-file tasks.md lock flow (Requirement 4 — T-09.4)
+// ---------------------------------------------------------------------------
+/**
+ * Lock a tasks.md document by upgrading it with auto-generated waves
+ * and transitioning status from draft to locked.
+ */
+export function lockPlan(doc) {
+    const upgraded = upgradeTasksSeed(doc);
+    return {
+        ...upgraded,
+        frontmatter: { ...upgraded.frontmatter, status: "locked" },
+    };
 }
 //# sourceMappingURL=plan.js.map

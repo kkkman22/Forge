@@ -11,7 +11,8 @@
  * Design reference: sdk-driver-decomposition § design.md
  * **Validates: Requirements 3.1, 3.2, 10.5**
  */
-import { buildIterationPrompt } from "./context-accumulator.js";
+import { buildIterationPrompt, compactNotesContent } from "./context-accumulator.js";
+import { isContextOverflowError } from "./context-overflow.js";
 import { FrozenZoneViolation } from "./effect-executor.js";
 import { buildEntry } from "./event-log.js";
 import { createLogEntry } from "./logger/index.js";
@@ -30,8 +31,7 @@ const ZERO_TOKEN_USAGE = {
 // Internal helpers
 // ---------------------------------------------------------------------------
 function isNoOpIteration(output) {
-    return (Array.isArray(output.key_changes_made) &&
-        output.key_changes_made.length === 0);
+    return Array.isArray(output.key_changes_made) && output.key_changes_made.length === 0;
 }
 // ---------------------------------------------------------------------------
 // executeGenericIteration
@@ -124,6 +124,64 @@ export async function executeGenericIteration(ctx) {
     catch (error) {
         // Hard failure — SDK error or validation error.
         const errorMessage = error instanceof Error ? error.message : String(error);
+        // Context overflow recovery: compact notes and retry once.
+        if (isContextOverflowError(error)) {
+            ctx.logger.log(createLogEntry("compact_notes_triggered", "info", `Context overflow detected — compacting notes and retrying`, { runId: ctx.config.runId, iteration: iterationNumber }));
+            const compactedNotes = compactNotesContent(notesContent);
+            const retryPrompt = buildIterationPrompt({
+                iteration: iterationNumber,
+                runId: ctx.config.runId,
+                objective: ctx.config.objective,
+                notesContent: compactedNotes,
+                stopWhen: ctx.limits.stopWhen,
+            });
+            try {
+                const subagentStartMs = Date.now();
+                const retryResult = await ctx.agentAdapter.run(retryPrompt, ctx.config.cwd, { signal });
+                agentEndMs = Date.now();
+                ctx.perfTracker.recordSubagentTiming(ctx.agentAdapter.name, subagentStartMs, agentEndMs, iterationNumber);
+                const output = retryResult.output;
+                const usage = retryResult.usage;
+                ctx.logger.log(createLogEntry("debug_output", "info", `Retry after compaction: success=${output.success}, summary="${output.summary?.slice(0, 100)}"`, { runId: ctx.config.runId, iteration: iterationNumber }));
+                // Use compacted notes going forward.
+                notesContent = compactedNotes;
+                if (output.should_fully_stop || (output.success && isNoOpIteration(output))) {
+                    const stopResult = transition(orchestratorState, { type: "stop_condition_met" }, ctx.limits);
+                    orchestratorState = stopResult.state;
+                    const lastEffects = stopResult.effects;
+                    await ctx.executeEffects(stopResult.effects);
+                    iterationEntry = buildIterationEntry(iterationNumber, true, output);
+                    ({ notesDocument, notesContent } = appendAndPersistNotes(notesDocument, notesContent, iterationEntry, ctx.config.notesPath, usage, ctx.logger, orchestratorState, (key, params) => ctx.t(key, params), ctx.config.runId));
+                    return { orchestratorState, notesDocument, notesContent, lastEffects };
+                }
+                if (output.success) {
+                    event = { type: "iteration_success", summary: output.summary, tokenUsage: usage };
+                    iterationEntry = buildIterationEntry(iterationNumber, true, output);
+                }
+                else {
+                    event = { type: "iteration_soft_failure", summary: output.summary, tokenUsage: usage };
+                    iterationEntry = buildIterationEntry(iterationNumber, false, output);
+                }
+                // Retry succeeded — dispatch event and execute effects inline,
+                // then return early to skip the hard-failure path below.
+                const retryResult_dispatch = transition(orchestratorState, event, ctx.limits);
+                const retryPreState = orchestratorState;
+                orchestratorState = retryResult_dispatch.state;
+                let lastEffects = retryResult_dispatch.effects;
+                const retryLogEntry = buildEntry(ctx.config.runId, retryPreState.currentIteration, event, retryPreState, retryResult_dispatch.state, retryResult_dispatch.effects);
+                lastEffects = [...lastEffects, { type: "write_event_log", entry: retryLogEntry }];
+                await ctx.executeEffects(lastEffects);
+                ({ notesDocument, notesContent } = appendAndPersistNotes(notesDocument, notesContent, iterationEntry, ctx.config.notesPath, usage, ctx.logger, orchestratorState, (key, params) => ctx.t(key, params), ctx.config.runId));
+                const retryEffectEndMs = Date.now();
+                ctx.perfTracker.recordIterationTiming(iterStartMs, agentEndMs, retryEffectEndMs, iterationNumber, "generic");
+                return { orchestratorState, notesDocument, notesContent, lastEffects };
+            }
+            catch (retryError) {
+                // Retry also failed — fall through to normal hard failure handling.
+                const retryErrorMsg = retryError instanceof Error ? retryError.message : String(retryError);
+                ctx.logger.log(createLogEntry("compact_notes_retry_failed", "warn", `Retry after compaction also failed: ${retryErrorMsg}`, { runId: ctx.config.runId, iteration: iterationNumber }));
+            }
+        }
         const zeroUsage = ZERO_TOKEN_USAGE;
         event = {
             type: "iteration_hard_failure",

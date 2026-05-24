@@ -101,6 +101,24 @@ export declare function parseListSection(block: string, title: string): string[]
  * @returns Updated Markdown string with the new entry appended.
  */
 export declare function appendEntry(existingMarkdown: string, entry: IterationEntry): string;
+/** Minimum number of recent entries kept in full detail during compaction. */
+export declare const MIN_FULL_DETAIL_ENTRIES = 3;
+/**
+ * Compact notes markdown when it exceeds a character budget.
+ *
+ * Keeps the most recent {@link MIN_FULL_DETAIL_ENTRIES} entries in full detail
+ * and replaces older entries with a single-line summary:
+ * ```
+ * ### Iteration N (compacted): <summary>
+ * ```
+ *
+ * When `markdown` is within budget it is returned unchanged.
+ *
+ * @param markdown   The full notes.md content.
+ * @param charBudget Maximum characters for the compacted output.
+ * @returns Compacted markdown string.
+ */
+export declare function compactNotesContent(markdown: string, charBudget?: number): string;
 /**
  * Construct the iteration prompt injected into the agent for each iteration.
  *

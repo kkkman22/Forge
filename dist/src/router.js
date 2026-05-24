@@ -25,6 +25,7 @@
  */
 import { PromptDefenseError } from "./forge-error.js";
 import { scanInput } from "./prompt-defense.js";
+import { intentsToHints, matchIntents, parseIntentDictionary } from "./router-intents.js";
 // ---------------------------------------------------------------------------
 // Command sequences per tier (unchanged)
 // ---------------------------------------------------------------------------
@@ -44,6 +45,30 @@ const COMMAND_SEQUENCES = {
     standard: ["plan", "build", "review", "test", "ship"],
     full: ["decide", "spec", "plan", "build", "review", "test", "ship", "learn"],
 };
+// ---------------------------------------------------------------------------
+// Intent dictionary loader (lazy, cached)
+// ---------------------------------------------------------------------------
+const MAX_RUNTIME_INTENT_HINTS = 5;
+let _intentDictCache = null;
+function loadIntentDictionary() {
+    if (_intentDictCache !== null)
+        return _intentDictCache;
+    try {
+        const fs = require("node:fs");
+        const path = require("node:path");
+        const dictPath = path.resolve(__dirname, "../templates/router-intents.md");
+        const content = fs.readFileSync(dictPath, "utf-8");
+        _intentDictCache = parseIntentDictionary(content);
+    }
+    catch {
+        _intentDictCache = [];
+    }
+    return _intentDictCache;
+}
+/** @visibleForTesting Reset the cached intent dictionary (for tests). */
+export function _resetIntentDictCache() {
+    _intentDictCache = null;
+}
 // ---------------------------------------------------------------------------
 // WorkNature detection — keyword-based classification
 // ---------------------------------------------------------------------------
@@ -504,7 +529,7 @@ export function generateHints(taskType, projectPhase, commandSequence) {
         // Check command is in active sequence
         const commandActive = commandSet.has(rule.hint.command);
         if (typeMatch && phaseMatch && commandActive) {
-            hints.push(rule.hint);
+            hints.push({ ...rule.hint, source: "taskType" });
         }
     }
     // Deduplicate by tag (same tag from different rules = keep first)
@@ -543,6 +568,7 @@ export function classifyTask(signals, userOverride, projectContext, taskType = "
     const { tier, reason } = classifyTier(signals, userOverride, projectContext);
     const commandSequence = COMMAND_SEQUENCES[tier];
     const hints = generateHints(taskType, projectPhase, commandSequence);
+    let suppressIntent = false;
     // Prompt defense: scan raw description when provided. Critical threats
     // throw immediately so the task never reaches downstream skills; high /
     // medium threats surface as RouteHints so skills can decide how to react.
@@ -552,20 +578,64 @@ export function classifyTask(signals, userOverride, projectContext, taskType = "
         if (critical.length > 0) {
             throw new PromptDefenseError(`Input rejected by prompt-defense: ${critical.length} critical threat(s) detected`, critical);
         }
+        // R7-6: critical/high suppress intent matching
+        const highSeverity = scan.threats.filter((t) => t.severity === "high");
+        if (highSeverity.length > 0) {
+            suppressIntent = true;
+        }
         for (const threat of scan.threats) {
             if (threat.severity === "high" || threat.severity === "medium") {
                 hints.push({
                     command: "*",
                     tag: "prompt-defense-warning",
                     description: `${threat.type} detected (${threat.severity}); pattern ${threat.pattern}`,
+                    source: "taskType",
                 });
             }
+        }
+    }
+    // Intent matching (R7-8/R7-7: runs when not suppressed)
+    let intentReasonSuffix = "";
+    if (!suppressIntent && rawDescription !== undefined && rawDescription !== "") {
+        try {
+            const dict = loadIntentDictionary();
+            const matched = matchIntents(rawDescription, dict);
+            if (matched.length > 0) {
+                let intentHints = intentsToHints(matched);
+                // R7-2: Filter unreachable hints (command not in tier's sequence)
+                const cmdSet = new Set(commandSequence);
+                intentHints = intentHints.filter((h) => {
+                    if (cmdSet.has(h.command))
+                        return true;
+                    return false;
+                });
+                // R7-3: Deduplicate by (command, tag)
+                const existingKeys = new Set(hints.map((h) => `${h.command}:${h.tag}`));
+                for (const ih of intentHints) {
+                    const key = `${ih.command}:${ih.tag}`;
+                    if (!existingKeys.has(key)) {
+                        hints.push(ih);
+                        existingKeys.add(key);
+                    }
+                }
+                // R7-5: Append intent names to reason
+                const names = [...new Set(matched.map((m) => m.name))];
+                intentReasonSuffix = `\nintent: ${names.join(", ")} (命中)`;
+                // R6-4: Soft warning for overload
+                const intentCount = hints.filter((h) => h.source === "intent").length;
+                if (intentCount > MAX_RUNTIME_INTENT_HINTS) {
+                    process.stderr.write(`[intent_overload] ${intentCount} intent hints emitted (threshold: ${MAX_RUNTIME_INTENT_HINTS})\n`);
+                }
+            }
+        }
+        catch {
+            // R2-4: Dictionary load failure → skip intent step, no blocking
         }
     }
     const assumptions = generateAssumptions(signals, projectContext);
     return {
         tier,
-        reason,
+        reason: reason + intentReasonSuffix,
         commandSequence,
         taskType,
         projectPhase,

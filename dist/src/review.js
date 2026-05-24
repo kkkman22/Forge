@@ -256,6 +256,7 @@ export function runReportQualityGate(findings, options) {
     };
 }
 import { buildFailureEpisode, buildFailureEvolutionMarker, } from "./failure-sink.js";
+import { enforceFinalReportContract, validateFinalReportBlock } from "./review-final-block.js";
 import { runSubagentsWithConcurrency } from "./subagent-runner.js";
 /**
  * Pure helper that turns a review's evolution signals into write-ready
@@ -307,27 +308,47 @@ import { parse as parseYaml, stringify as stringifyYaml } from "yaml";
  * Always includes quality-check and security-check.
  * Includes spec-check only when a locked Spec is available (hasSpec === true).
  */
+const DEFAULT_REVIEW_TURNS = 10;
+const FINAL_REPORT_CONTRACT = `Final-Report Contract (HARD):
+Your last assistant message MUST be a Markdown report block with this exact shape:
+  1. A heading like "## Layer N — <Title>" matching your role.
+  2. At least one Markdown table whose header includes a "Severity" column
+     (use "无 issue 发现" inside the table body if everything is clean — keep the header).
+  3. End the message with the literal sentinel line: <!-- review-final -->
+The orchestrator only treats your run as complete when it sees the sentinel.
+A message ending with a preamble like "Now let me check..." or "Let me verify..."
+is rejected as incomplete and your run will be retried, even if the SDK reports success.`;
+const DIFF_CONTEXT_PREAMBLE = `Diff context: .forge/reviews/.diff-context.md
+Turn Budget: Read diff-context first → produce FINDINGS → use remaining turns for deep-dives (max 3-5 reads).
+Hard constraint: Your final turn MUST be a text block containing FINDINGS, not a tool_use call.
+If turn budget is running low (≤2 remaining), stop reading files and output partial FINDINGS immediately.
+Insufficient evidence for a finding → omit it rather than spend turns investigating.
+
+${FINAL_REPORT_CONTRACT}`;
+function buildPrompt(task) {
+    return `${DIFF_CONTEXT_PREAMBLE}\n${task}`;
+}
 export function buildReviewSubagents(context) {
     const invocations = [];
     if (context.hasSpec) {
         invocations.push({
             agentType: "spec-check",
-            prompt: `Review spec alignment. Spec path: ${context.specPath ?? "unknown"}. Changed files: ${context.changedFiles.join(", ")}`,
+            prompt: buildPrompt(`Review spec alignment. Spec path: ${context.specPath ?? "unknown"}.`),
             permissionMode: "default",
-            maxTurns: 10,
+            maxTurns: DEFAULT_REVIEW_TURNS,
         });
     }
     invocations.push({
         agentType: "quality-check",
-        prompt: `Review code quality. Changed files: ${context.changedFiles.join(", ")}`,
+        prompt: buildPrompt("Review code quality."),
         permissionMode: "default",
-        maxTurns: 10,
+        maxTurns: DEFAULT_REVIEW_TURNS,
     });
     invocations.push({
         agentType: "security-check",
-        prompt: `Review security and risk. Changed files: ${context.changedFiles.join(", ")}`,
+        prompt: buildPrompt("Review security and risk."),
         permissionMode: "default",
-        maxTurns: 10,
+        maxTurns: DEFAULT_REVIEW_TURNS,
     });
     // Layer 4: Frontend accessibility check — only when Vue files are present
     const hasVueFiles = context.changedFiles.some((f) => f.endsWith(".vue"));
@@ -337,7 +358,7 @@ export function buildReviewSubagents(context) {
             agentType: "frontend-check",
             prompt: `Review frontend accessibility. Changed Vue files: ${vueFiles.join(", ")}`,
             permissionMode: "default",
-            maxTurns: 10,
+            maxTurns: DEFAULT_REVIEW_TURNS,
         });
     }
     return invocations;
@@ -460,9 +481,39 @@ export function atomicUpdateFrontmatter(filePath, mutator) {
  */
 export async function runReviewFallbackLadder(input) {
     const trace = [];
+    // Wrap the executor so the final-report contract is enforced *before*
+    // the runner classifies success/failure. This catches the original
+    // incident: the SDK reports success with an output that is just a
+    // preamble like "Now let me check..." — without enforcement, the
+    // runner would mark that as success and the orchestrator would idle
+    // waiting for a non-existent follow-up.
+    const guardedExecutor = async (inv) => {
+        const raw = await input.executor(inv);
+        return enforceFinalReportContract(raw);
+    };
+    // Also re-validate the runner's `succeeded` array. This is defense-in-
+    // depth: in the real-world incident, the malformed result was already
+    // wearing a "success" sticker by the time it reached the runner.
+    // Splitting/reclassifying here makes the policy hold no matter where
+    // upstream classification happened.
+    const reclassifyResult = (res) => {
+        const succeeded = [];
+        const failed = [...res.failed];
+        for (const ok of res.succeeded) {
+            const v = validateFinalReportBlock(ok.result, ok.agentType);
+            if (v.valid) {
+                succeeded.push(ok);
+            }
+            else {
+                failed.push({ agentType: ok.agentType, error: `incomplete-report:${v.reason}` });
+            }
+        }
+        return { succeeded, failed };
+    };
     // ─── L0: Default parallel path ───
     const l0Start = Date.now();
-    const l0 = await runSubagentsWithConcurrency(input.invocations, input.executor, 3);
+    const l0Raw = await runSubagentsWithConcurrency(input.invocations, guardedExecutor, 3);
+    const l0 = reclassifyResult(l0Raw);
     const l0AllFail = l0.succeeded.length === 0;
     trace.push({
         level: "L0",
@@ -484,7 +535,8 @@ export async function runReviewFallbackLadder(input) {
     // biome-ignore lint/suspicious/noConsole: User feedback for fallback ladder
     console.warn(`⚠ L0 subagent dispatch failed (${l0Sig}); retrying with concurrency=1...`);
     const l1Start = Date.now();
-    const l1 = await runSubagentsWithConcurrency(input.invocations, input.executor, 1);
+    const l1Raw = await runSubagentsWithConcurrency(input.invocations, guardedExecutor, 1);
+    const l1 = reclassifyResult(l1Raw);
     const l1AllFail = l1.succeeded.length === 0;
     trace.push({
         level: "L1",
@@ -551,6 +603,8 @@ function summarizeFailureSignature(failed) {
             return "timeout";
         if (/turn limit/i.test(f.error))
             return "turn-limit";
+        if (/^incomplete-report:/.test(f.error))
+            return "incomplete-report";
         return "other";
     }));
     return Array.from(errorTypes).join(",");

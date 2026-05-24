@@ -38,6 +38,9 @@ const EXPECTED_MODES: Record<string, string> = {
   "control-cli": "inline",
   "control-ui": "inline",
   "review-comment-bitbucket": "inline",
+  "forge-cmux-sidebar-sync": "inline",
+  "forge-cmux-browser-qa": "inline",
+  "forge-cmux-loop-signals": "inline",
 };
 
 function parseR35Table(specContent: string): Map<string, string> {
@@ -94,7 +97,7 @@ describe("R3.5: dispatch_mode matches spec table", () => {
 
   it("lib frontmatter dispatch_mode matches EXPECTED_MODES", async () => {
     const libs = await glob("skills/forge/lib/*/instructions.md", { cwd: ROOT });
-    expect(libs).toHaveLength(31);
+    expect(libs).toHaveLength(34);
 
     const violations: string[] = [];
 

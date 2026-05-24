@@ -28,3 +28,8 @@
 {"timestamp":"2026-05-24T05:44:26Z","event":"precompact_snapshot","detail":"slug=review-comment-bitbucket phase=build"}
 {"timestamp":"2026-05-24T05:45:37Z","event":"postcompact_restore","detail":"slug=review-comment-bitbucket"}
 {"timestamp":"2026-05-24T05:45:37Z","event":"precompact_snapshot","detail":"slug=review-comment-bitbucket phase=build"}
+{"timestamp":"2026-05-24T06:45:31Z","event":"precompact_snapshot","detail":"slug=cmux-skills-collapse phase=build"}
+{"timestamp":"2026-05-24T06:46:38Z","event":"postcompact_restore","detail":"slug=cmux-skills-collapse"}
+{"timestamp":"2026-05-24T06:46:38Z","event":"precompact_snapshot","detail":"slug=cmux-skills-collapse phase=build"}
+{"timestamp":"2026-05-24T06:48:03Z","event":"postcompact_restore","detail":"slug=cmux-skills-collapse"}
+{"timestamp":"2026-05-24T06:48:03Z","event":"precompact_snapshot","detail":"slug=cmux-skills-collapse phase=build"}

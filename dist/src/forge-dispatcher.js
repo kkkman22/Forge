@@ -1,10 +1,12 @@
 import { readFileSync } from "node:fs";
 import { validateTopic } from "./forge-dispatcher/allowlist.js";
+import { checkCmuxGate } from "./forge-dispatcher/cmux-gate.js";
 import { checkIntegrity } from "./forge-dispatcher/integrity-check.js";
 import { resolveLibPath } from "./forge-dispatcher/path-resolve.js";
 import { resolveAllowedTools } from "./forge-dispatcher/tools-resolve.js";
 export { ALLOW_LIST, validateTopic } from "./forge-dispatcher/allowlist.js";
 export { appendAuditLog, computeHmac } from "./forge-dispatcher/audit-log.js";
+export { __resetGateForTest, CMUX_GATED_SUBS, checkCmuxGate, } from "./forge-dispatcher/cmux-gate.js";
 export { checkIntegrity } from "./forge-dispatcher/integrity-check.js";
 export { resolveLibPath } from "./forge-dispatcher/path-resolve.js";
 export { resolveAllowedTools } from "./forge-dispatcher/tools-resolve.js";
@@ -26,6 +28,15 @@ export async function dispatchForgeSubcommand(topic, opts) {
         };
     }
     const sub = topicResult.value;
+    // === Step 2.5: Conditional_Availability_Gate ===
+    const mockFns = opts?._mocks;
+    const gateResult = mockFns?.checkCmuxGate
+        ? mockFns.checkCmuxGate(sub)
+        : checkCmuxGate(sub);
+    if (!gateResult.ok) {
+        return { code: "SKILL_UNAVAILABLE" };
+    }
+    // === Step 2.5 end ===
     // Step 3: resolveLibPath
     const cwd = opts?.cwd ?? process.cwd();
     const pathResult = mocks?.resolveLibPath

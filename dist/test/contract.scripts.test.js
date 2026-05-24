@@ -60,6 +60,9 @@ describe("Contract: scripts/ smoke tests (no-arg invocation)", () => {
         "build-dist.sh", // Requires build environment
         "check-readme-metrics.sh", // Runs full metrics check which can be slow
         "update-vendor-axe.sh", // Performs network fetch from unpkg.com (flaky in test env)
+        "build-dmg.sh", // Requires network (curl), Node.js download, and frontend build toolchain
+        "bundle-node.sh", // Requires network (curl) to download Node.js binary
+        "bundle-forge-loop.sh", // Triggers full `npm run build` on missing dist; far exceeds 10s smoke budget
     ]);
     for (const { name, path: scriptPath } of scriptFiles) {
         if (SKIP_NO_ARG.has(name)) {

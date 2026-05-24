@@ -55,6 +55,8 @@ export interface RouteHint {
     tag: string;
     /** Human-readable description of the behavioral adjustment. */
     description: string;
+    /** Origin of this hint. Defaults to 'taskType' when serialized. */
+    source?: "taskType" | "projectPhase" | "workNature" | "intent";
 }
 export interface ClassificationResult {
     tier: Tier;
@@ -71,6 +73,8 @@ export interface ClassificationResult {
     /** Explicit assumptions surfaced during routing analysis. */
     assumptions: string[];
 }
+/** @visibleForTesting Reset the cached intent dictionary (for tests). */
+export declare function _resetIntentDictCache(): void;
 /**
  * Detect the work nature from a task description using keyword matching.
  *

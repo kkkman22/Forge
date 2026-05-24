@@ -14,7 +14,11 @@
  */
 import { DEFAULT_EXTRACTION_RULES, extractCandidates, filterCandidates, } from "./glossary-extractor.js";
 export { renderGlossaryConflictPrompt, runGlossaryCheck } from "./glossary-hook.js";
+export { runBugfixOrchestration } from "./spec-bugfix-orchestration.js";
+export { parseExternalSpec, parseSpecArgs, runImportMode, scoreImportedContent, } from "./spec-import.js";
+export { detectSpecKind } from "./spec-kind.js";
 export { detectSpecLeak, loadBannedPatterns } from "./spec-leak-detector.js";
+export { detectSpecLeakFromBundle, enforceEarsSyntax, validateContractGate, } from "./spec-validation.js";
 // ---------------------------------------------------------------------------
 // Spec lifecycle functions
 // ---------------------------------------------------------------------------
@@ -246,5 +250,43 @@ export function shouldTriggerBusinessAnalyst(currentContext, enabledPacks) {
         return false;
     const coreSubdomains = getCoreSubdomains(enabledPacks);
     return coreSubdomains.includes(currentContext);
+}
+// ---------------------------------------------------------------------------
+// Spec entry routing (Requirements 10, 14 — import + bugfix)
+// ---------------------------------------------------------------------------
+import { readdirSync } from "node:fs";
+import { runBugfixOrchestration } from "./spec-bugfix-orchestration.js";
+import { parseSpecArgs, runImportMode } from "./spec-import.js";
+import { detectSpecKind } from "./spec-kind.js";
+/**
+ * Route spec entry based on argv and feature directory contents.
+ *
+ * - Import mode: `/forge spec <file.md>` → parseSpecArgs → runImportMode
+ * - Bugfix mode: bugfix.md detected → runBugfixOrchestration
+ * - Feature mode: `/forge spec <feature-name>` → feature flow
+ * - Default: `/forge spec` → default flow
+ */
+export function routeSpecEntry(argv, featureDir, outputDir, existingBundle) {
+    const parsed = parseSpecArgs(argv);
+    if (parsed.mode === "import" && parsed.path) {
+        const result = runImportMode(parsed.path, outputDir);
+        return { mode: "import", path: parsed.path, result };
+    }
+    if (parsed.mode === "feature" && parsed.feature) {
+        // Check if this is actually a bugfix
+        try {
+            const files = readdirSync(featureDir);
+            const kind = detectSpecKind(files);
+            if (kind === "bugfix" && existingBundle) {
+                const result = runBugfixOrchestration(existingBundle);
+                return { mode: "bugfix", bundle: existingBundle, result };
+            }
+        }
+        catch {
+            // Directory doesn't exist yet — feature mode
+        }
+        return { mode: "feature", feature: parsed.feature };
+    }
+    return { mode: "default" };
 }
 //# sourceMappingURL=spec.js.map

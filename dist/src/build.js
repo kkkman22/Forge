@@ -5,6 +5,8 @@
  *   - checkBuildGate:       Verifies Spec is locked AND Plan is approved before build
  *   - trackFixAttempts:     Tracks consecutive fix failures and triggers escalation
  *   - shouldEscalateToDebug: Determines if 3 consecutive failures have been reached
+ *   - scheduleWave:         Execute wave tasks in parallel with 429 degradation
+ *   - buildThreeStrikeDebugReroute: §2.4 three-strike with fail_signature + debug template
  *
  * Gate check (Property 8):
  *   Build is allowed ONLY when spec.status === "locked" AND plan.status === "approved".
@@ -14,6 +16,11 @@
  *   When the same fix fails 3 consecutive times → system stops and escalates to /forge debug.
  *   Fewer than 3 consecutive failures → continues normally.
  */
+import { existsSync, mkdirSync, writeFileSync } from "node:fs";
+import { join } from "node:path";
+import { computeFailSignature, triggerThreeStrikeReroute } from "./spec-pbt-derivation.js";
+export { computeFailSignature, triggerThreeStrikeReroute } from "./spec-pbt-derivation.js";
+export { parseWaves } from "./spec-wave.js";
 // ---------------------------------------------------------------------------
 // Build gate check (Property 8)
 // ---------------------------------------------------------------------------
@@ -157,6 +164,85 @@ export function mergeResearchFindings(results) {
         parts.push(s.output ?? "");
     }
     return parts.join("\n\n");
+}
+/**
+ * Execute tasks in a single wave with concurrency control and 429 degradation.
+ *
+ * Degradation staircase: maxConcurrency → floor(max/2) → 2 → 1 (serial).
+ */
+export async function scheduleWave(wave, options) {
+    const completed = [];
+    const failed = [];
+    let degraded429 = false;
+    let concurrency = options.maxConcurrency;
+    const remaining = [...wave.tasks];
+    while (remaining.length > 0) {
+        const batch = remaining.splice(0, concurrency);
+        const results = await Promise.allSettled(batch.map((id) => options.executor(id)));
+        for (let i = 0; i < results.length; i++) {
+            const r = results[i];
+            if (r.status === "fulfilled" && r.value) {
+                completed.push(batch[i]);
+            }
+            else {
+                failed.push(batch[i]);
+            }
+        }
+        // Check for 429 signal
+        if (options.onHttp429) {
+            options.onHttp429();
+            degraded429 = true;
+            // Degrade: max → floor(max/2) → 2 → 1
+            if (concurrency > 2) {
+                concurrency = Math.floor(concurrency / 2);
+            }
+            else {
+                concurrency = 1;
+            }
+        }
+    }
+    return { completed, failed, degraded429 };
+}
+/**
+ * Build three-strike debug reroute decision and write diagnostic template.
+ *
+ * Calls triggerThreeStrikeReroute to compute fail_signature and reroute decision.
+ * If reroute === true, writes diagnostic template to .forge/debug/<topic>.md.
+ */
+export function buildThreeStrikeDebugReroute(history, currentFailure, debugDir, topic) {
+    const result = triggerThreeStrikeReroute(history, currentFailure);
+    const debugFilePath = join(debugDir, `${topic}.md`);
+    if (result.reroute) {
+        try {
+            if (!existsSync(debugDir)) {
+                mkdirSync(debugDir, { recursive: true });
+            }
+            const sig = computeFailSignature([...history, currentFailure]);
+            const template = `# Debug: ${topic}
+
+**fail_signature**: ${sig}
+**failures**: ${result.failures.length}
+**triggered_at**: ${new Date().toISOString()}
+
+## Diagnosis
+
+(To be filled by /forge debug agent)
+
+## Root Cause
+
+(Pending)
+
+## Fix Strategy
+
+(Pending)
+`;
+            writeFileSync(debugFilePath, template, "utf-8");
+        }
+        catch {
+            // Best-effort write — never block reroute
+        }
+    }
+    return { ...result, debugFilePath };
 }
 /** Failure indicator patterns in test output. */
 const FAILURE_INDICATORS = [

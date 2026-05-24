@@ -7,7 +7,6 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 // Dynamic import needed for .mjs ESM module
 const moduleUrl = new URL("../scripts/resume-from-pr.mjs", import.meta.url);
-// biome-ignore lint/suspicious/noExplicitAny: dynamic ESM import
 let resumeModule;
 beforeEach(async () => {
     resumeModule = await import(moduleUrl.href);
@@ -84,7 +83,6 @@ describe("parseTarget", () => {
 // fetchPRMetadata
 // ---------------------------------------------------------------------------
 describe("fetchPRMetadata", () => {
-    // biome-ignore lint/suspicious/noExplicitAny: mock type
     let execMock;
     beforeEach(() => {
         execMock = vi.fn();
@@ -94,9 +92,7 @@ describe("fetchPRMetadata", () => {
         vi.restoreAllMocks();
     });
     it("uses gh for github host", async () => {
-        execMock.mockImplementation(
-        // biome-ignore lint/suspicious/noExplicitAny: mock callback
-        (_cmd, _opts, cb) => {
+        execMock.mockImplementation((_cmd, _opts, cb) => {
             cb(null, JSON.stringify({
                 title: "[spec:my-feature] Add widget",
                 headRefName: "forge/my-feature",
@@ -112,9 +108,7 @@ describe("fetchPRMetadata", () => {
         expect(result.fetcherUsed).toBe("gh");
     });
     it("returns fetcherUsed='none' on gh not installed", async () => {
-        execMock.mockImplementation(
-        // biome-ignore lint/suspicious/noExplicitAny: mock callback
-        (_cmd, _opts, cb) => {
+        execMock.mockImplementation((_cmd, _opts, cb) => {
             cb(new Error("command not found: gh"), "");
         });
         const result = await resumeModule.fetchPRMetadata({ host: "github", number: 1, url: null }, { exec: execMock });
