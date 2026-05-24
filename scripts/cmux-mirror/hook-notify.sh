@@ -51,11 +51,11 @@ if [[ -n "${CMUX_WINDOW_ID:-}" ]]; then
   window_args=("--window" "$CMUX_WINDOW_ID")
 fi
 
-cmux "${window_args[@]}" notify "Forge Frozen" "Branch frozen for: ${task_name}" 2>/dev/null || true
-cmux "${window_args[@]}" log "hook-notify: frozen interception for ${task_name}" 2>/dev/null || true
+cmux ${window_args[@]+"${window_args[@]}"} notify "Forge Frozen" "Branch frozen for: ${task_name}" 2>/dev/null || true
+cmux ${window_args[@]+"${window_args[@]}"} log "hook-notify: frozen interception for ${task_name}" 2>/dev/null || true
 
 # R3.1: Trigger jump to unread workspace (cmux 0.64.5+; || true for older versions)
-cmux "${window_args[@]}" notification jump-to-unread 2>/dev/null || true
+cmux ${window_args[@]+"${window_args[@]}"} notification jump-to-unread 2>/dev/null || true
 
 # Step 3: Always exit 0 (R6.1, R12.7)
 exit 0
