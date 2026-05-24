@@ -1,7 +1,9 @@
 ---
-name: forge-sidebar-sync
-description: Keep cmux sidebar in sync with Forge lifecycle state changes
-trigger: forge sidebar sync, cmux sidebar, sync sidebar
+description: "Keep cmux sidebar in sync with Forge lifecycle state changes. Requires cmux installed."
+dispatch_mode: inline
+allowed_tools:
+  - Read
+  - Bash
 ---
 
 # Forge Sidebar Sync
