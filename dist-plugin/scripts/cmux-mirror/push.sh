@@ -11,5 +11,12 @@ if [[ ! -S "$socket_path" ]]; then
   exit 0
 fi
 
+# R1.3: Inject window_id when CMUX_WINDOW_ID is set
+if [[ -n "${CMUX_WINDOW_ID:-}" ]]; then
+  if command -v jq >/dev/null 2>&1; then
+    payload=$(printf '%s' "$payload" | jq --arg wid "$CMUX_WINDOW_ID" '. + {window_id: $wid}' 2>/dev/null || printf '%s' "$payload")
+  fi
+fi
+
 echo "$payload" | nc -U -w 1 "$socket_path" 2>/dev/null || true
 exit 0
