@@ -115,3 +115,41 @@
   - GREEN：实现 dispatcher 全部导出，27/27 通过 ✅
   - REFACTOR：biome auto-fix import 折叠 + 函数签名换行 ✅
   - Atomic commit：本任务 1 commit
+
+### T5: StreamJsonAdapter — ✅ 完成
+
+#### Handoff Block
+
+- task_id: T5
+- completed:
+  - src/stream-json-adapter.ts（NDJSON line buffering + 事件分类 + 部分消息去重 + usage 累加 + 错误路由）
+  - 导出：StreamJsonAdapter（EventEmitter 子类）、IterationFailedError、LineTooLargeError、StreamJsonAdapterOptions、UsageAccumulator
+  - 事件分类：EXPOSED_TYPES（system/assistant/user/tool_use/tool_result/result）暴露给消费者；HIDDEN_TYPES（message_start/delta/stop、content_block_*、ping）丢弃；error → IterationFailedError + api-errors.jsonl；unknown → 透传 + unknown-events.jsonl（forward-compat）
+  - 部分消息去重：按 message.id；重复触发写入 dedup.jsonl
+  - usage 累加：优先 cost_usd（连续累加 USD），缺失时按 token 维度（input/output/cacheCreation/cacheRead）；同 message.id 仅累加一次（防止 partial + final 双计）
+  - parse error 处理：JSON.parse 失败写入 parse-errors.jsonl（raw_line 截断 1 KiB），不中断流处理
+  - line buffering：处理 chunk 跨边界拼接；endOfStream() 在未见 result 时合成 stream-truncated 事件（携带 last_event_type）
+  - 64 MiB 单行上限：超限抛 LineTooLargeError 并清空 buffer
+  - test/stream-json-adapter/stream-json-adapter.test.ts 16 个测试覆盖 AC 6.1–6.8：
+    - 事件分类 3 例（exposed assistant、hidden message_start 不发、5 种 exposed type 全发）
+    - 解析错误 2 例（写入 parse-errors.jsonl、raw_line 1 KiB 截断）
+    - 部分消息去重 1 例（同 message.id 第二次进 dedup.jsonl，仅 emit 1 次）
+    - usage 累加 3 例（cost_usd 单累加、缺失时 token 兜底、同 id 防双计）
+    - unknown forward-compat 2 例（透传 + 写日志、known type 上的新字段不触发 unknown 日志）
+    - error 事件 1 例（IterationFailedError + api-errors.jsonl）
+    - line buffering 2 例（chunk 拼接、单行越限抛 LineTooLargeError）
+    - EOF stream-truncated 2 例（无 result → 合成、有 result → 不合成）
+- not_completed:
+  - 实际接入 claude --print --output-format stream-json 子进程（消费 chunk）：T6 CliSubprocessDriver 负责
+  - 与 forge-loop driver 集成、消息中转给 loop-types.ts：T8 SDK 改造负责
+- commands_executed:
+  - `npx vitest run test/stream-json-adapter/stream-json-adapter.test.ts` → 16/16 pass
+  - `npx tsc --noEmit` → 0 errors
+  - `npx biome check src/stream-json-adapter.ts test/stream-json-adapter/` → 0 errors（biome --write auto-fix 完成）
+- issues_found:
+  - 测试初版 makeAdapter() 无形参却传 maxLineBytes，TS 报错；改为 `makeAdapter(opts?: { maxLineBytes?: number })` 适配 LineTooLargeError 测试
+- procedure_compliance:
+  - RED：先写 16 测试模块导入失败（src/stream-json-adapter.ts 不存在）✅
+  - GREEN：实现 adapter 全部导出，16/16 通过 ✅
+  - REFACTOR：biome auto-fix EXPOSED_TYPES Set 折叠、override on() 签名合并 ✅
+  - Atomic commit：本任务 1 commit
