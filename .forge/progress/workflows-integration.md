@@ -351,3 +351,40 @@
   - GREEN：实现 controller，8/8 通过 ✅
   - REFACTOR：删除 dead vars 过 biome lint ✅
   - Atomic commit：本任务 1 commit（controller + 测试 + progress 偏差记录）
+
+### T12: Desktop IPC 回归 — ⚠️ 部分完成（diff 工具 + baseline + 兼容测试；live record-replay 待主循环接入）
+
+#### Handoff Block
+
+- task_id: T12
+- completed:
+  - scripts/diff-ipc-schema.mjs 新增（可执行 +x）：CLI 入口 `node scripts/diff-ipc-schema.mjs <baseline> <current>`，按事件类型分组比对字段名/typeof，规则：
+    - 允许 current 新增字段（forward-compat）
+    - 允许 current 新增事件类型（superset）
+    - 禁止 baseline 字段被重命名/删除/typeof 变化（exit 1）
+    - 禁止 baseline 事件类型在 current 中缺失（exit 1）
+  - apps/forge-loop-desktop/test/fixtures/ipc-baseline.ndjson 新增 12 行 baseline NDJSON：覆盖 12 种 supported_events 全部事件类型（version、forge_loop_run_started、iteration_start、progress、message、tool_use、tool_result、iteration_end、completion、warning、error、run_completed），首帧为 version handshake，每行字段含 `event`/`run_id`/`schema`/`ts`
+  - test/diff-ipc-schema/diff-ipc-schema.test.ts 6 个测试覆盖 AC 8.2：identical → 0；新增字段 → 0；新增事件 → 0；重命名字段 → 1；类型变化 → 1；事件类型缺失 → 1
+  - test/ipc-compat/ipc-compat.test.ts 7 个测试覆盖 AC 8.5 / 8.6 / 8.7 / 8.8：
+    - 8.5：baseline 首帧是 version handshake，含 `schema` 整数 + `supported_events` 字符串数组
+    - 8.6：未知字段忽略；未知事件类型不抛；2000 字节超长行解析成功；future schema=99 仍解析已知事件类型
+    - 8.7：baseline 中 0 条 `partial` / `message_delta` 事件
+    - 8.8：baseline 自身 diff 自身 → exit 0 + stdout `diff OK`
+- not_completed:
+  - **live record-replay**：录制阶段需要真实 `claude --print --output-format stream-json` 跑 forge-loop 落盘 NDJSON，但本任务范围内 forge-loop-cli 主循环仍在 SDK 路径（T8/T10/T11 累计偏差），换芯尚未落地，无法产生"换芯前"和"换芯后"两份对比数据。决定：把 live recorder 与主循环改造捆绑放到下一阶段（T13/T14 之后）作为收尾验证。本任务先把 baseline schema、diff 工具、forward-compat 解析契约固定下来，作为 anchoring contract。
+  - **AC 10.5 cleanup-errors.jsonl + 主循环退出清理**：仍延后到主循环改造时落实，与 T11 progress 块 `decided_in_T11` 一致
+  - **process_manager.rs Rust 端实测**：Rust 端 `cargo test` 不在本 TS 工作流范围；Node-side 模拟以 `parseNdjsonLenient` 镜像 desktop 解析契约，AC 8.6 真正的 Rust panic-free 验证留给 desktop CI（apps/forge-loop-desktop/src-tauri/Cargo.toml 现有 process_manager 单元测试范围内补充，本任务不改 Rust 代码）
+- commands_executed:
+  - `npx vitest run test/diff-ipc-schema/ test/ipc-compat/` → 13/13 pass
+  - `npx tsc --noEmit` → 0 errors
+  - `npx biome check --write scripts/diff-ipc-schema.mjs test/diff-ipc-schema/ test/ipc-compat/` → 0 errors（auto-fix object-formatting）
+  - `chmod +x scripts/diff-ipc-schema.mjs`
+  - 第一次尝试在 `apps/forge-loop-desktop/test/ipc-compat.test.ts` 落盘失败：desktop 子项目 node_modules 未安装（@vitejs/plugin-vue 缺失），决定迁移测试至根项目 `test/ipc-compat/` 并保留 baseline fixture 在 desktop 子项目下作为 single-source-of-truth
+- issues_found:
+  - 工具与测试位置权衡：原计划在 `apps/forge-loop-desktop/test/ipc-compat.test.ts` 落测试以贴近 desktop 端，但 desktop 子项目独立 vitest config + 独立 deps，需要单独 `npm install` 才能跑。改为根项目 test 目录持有，baseline NDJSON 仍在 desktop 子项目（保持 single-source-of-truth 与 ADR Requirement 8.2 一致）。Node-side 解析契约模拟 Rust desktop 行为，AC 8.6 的"watcher 不 panic"在 Rust 单元测试侧补全
+  - baseline schema=1：第一版固定 schema=1，未来若 IPC 协议升级（新增 partial-stream 事件等），需要按 AC 8.2 同步落 ADR 并 bump schema 整数
+- procedure_compliance:
+  - RED：先写 13 测试失败（diff 脚本不存在 + ipc-compat baseline 不存在）✅
+  - GREEN：实现 diff 脚本 + baseline，13/13 通过 ✅
+  - REFACTOR：biome auto-fix object-formatting ✅
+  - Atomic commit：本任务 1 commit（diff 脚本 + baseline + 2 个测试 + progress 偏差记录）
