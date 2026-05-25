@@ -1,4 +1,4 @@
-import { existsSync, mkdirSync, readFileSync, rmSync } from "node:fs";
+import { existsSync, mkdirSync, rmSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { Readable } from "node:stream";
@@ -40,19 +40,70 @@ describe("StreamJsonAdapter", () => {
     expect(result.delivered[2].type).toBe("result");
   });
 
-  it("hides protocol-internal events from delivery", async () => {
+  it("merges partial events into a single assistant message and delivers (R6.3)", async () => {
     const adapter = new StreamJsonAdapter(runDir);
     const events = [
-      JSON.stringify({ type: "message_start", message: { id: "m1" } }),
-      JSON.stringify({ type: "message_delta", delta: { stop_reason: "end" } }),
+      JSON.stringify({ type: "message_start", message: { id: "m1", role: "assistant" } }),
+      JSON.stringify({
+        type: "content_block_start",
+        index: 0,
+        message: { id: "m1" },
+        content_block: { type: "text", text: "" },
+      }),
+      JSON.stringify({
+        type: "content_block_delta",
+        index: 0,
+        message: { id: "m1" },
+        delta: { type: "text_delta", text: "Hello " },
+      }),
+      JSON.stringify({
+        type: "content_block_delta",
+        index: 0,
+        message: { id: "m1" },
+        delta: { type: "text_delta", text: "world" },
+      }),
+      JSON.stringify({ type: "content_block_stop", index: 0, message: { id: "m1" } }),
+      JSON.stringify({
+        type: "message_delta",
+        message: { id: "m1" },
+        delta: { stop_reason: "end_turn" },
+      }),
       JSON.stringify({ type: "message_stop", message: { id: "m1" } }),
       JSON.stringify({ type: "ping" }),
       JSON.stringify({ type: "result", subtype: "success" }),
     ];
     const result = await adapter.consume(linesToStream(events));
-    // Only the result event should be delivered; hidden types are suppressed
-    expect(result.delivered.length).toBe(1);
-    expect(result.delivered[0].type).toBe("result");
+    // Two delivered: merged assistant message + result
+    expect(result.delivered.length).toBe(2);
+    const merged = result.delivered[0] as {
+      type: string;
+      message: { id: string; content: Array<{ text: string }>; stop_reason?: string };
+    };
+    expect(merged.type).toBe("assistant");
+    expect(merged.message.id).toBe("m1");
+    expect(merged.message.content[0].text).toBe("Hello world");
+    expect(merged.message.stop_reason).toBe("end_turn");
+    expect(result.delivered[1].type).toBe("result");
+  });
+
+  it("dedups duplicate message_stop on same message.id", async () => {
+    const adapter = new StreamJsonAdapter(runDir);
+    const events = [
+      JSON.stringify({ type: "message_start", message: { id: "m1", role: "assistant" } }),
+      JSON.stringify({
+        type: "content_block_start",
+        index: 0,
+        message: { id: "m1" },
+        content_block: { type: "text", text: "ok" },
+      }),
+      JSON.stringify({ type: "message_stop", message: { id: "m1" } }),
+      JSON.stringify({ type: "message_stop", message: { id: "m1" } }),
+      JSON.stringify({ type: "result", subtype: "success" }),
+    ];
+    const result = await adapter.consume(linesToStream(events));
+    // Only one merged message + result
+    expect(result.delivered.length).toBe(2);
+    expect(existsSync(join(runDir, "dedup.jsonl"))).toBe(true);
   });
 
   it("records parse errors without aborting", async () => {
