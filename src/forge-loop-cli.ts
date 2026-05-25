@@ -35,6 +35,7 @@ import { formatNotesDocument } from "./context-accumulator.js";
 import { EffectExecutor } from "./effect-executor.js";
 import { ensureGlossaryExists, type GlossaryFs } from "./glossary-driver.js";
 import { type I18nConfig, parseTranslationFile, translate } from "./i18n.js";
+import { IpcEmitter } from "./ipc-emitter.js";
 import { detectLocale } from "./locale-detector.js";
 import {
   createDualSink,
@@ -591,15 +592,13 @@ async function main(): Promise<void> {
       }
 
       // Emit structured run_started event for downstream consumers (desktop app, CI).
-      // biome-ignore lint/suspicious/noConsole: structured event emitted before logSink exists
-      console.log(
-        JSON.stringify({
-          event: "forge_loop_run_started",
-          run_id: runSetup.runId,
-          branch_name: runSetup.branchName,
-          worktree_path: worktreePath ?? null,
-        }),
-      );
+      const ipcEmitter = new IpcEmitter(runSetup.runId);
+      ipcEmitter.emitVersion();
+      ipcEmitter.emit({
+        event: "forge_loop_run_started",
+        branch_name: runSetup.branchName,
+        worktree_path: worktreePath ?? null,
+      });
 
       // ---------------------------------------------------------------
       // Spawn sleep prevention process
@@ -902,6 +901,13 @@ async function main(): Promise<void> {
       // ---------------------------------------------------------------
       try {
         const result = await driver.run();
+
+        // Emit run_completed for downstream consumers
+        ipcEmitter.emit({
+          event: "run_completed",
+          total_iterations: result.commitCount,
+          status: "success",
+        });
 
         // Persist final notes.
         RunManager.persistNotes(
