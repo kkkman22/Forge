@@ -1,5 +1,5 @@
 import { execSync } from "node:child_process";
-import { existsSync, mkdirSync, readFileSync, rmSync, writeFileSync } from "node:fs";
+import { mkdirSync, readFileSync, rmSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
 
@@ -104,7 +104,7 @@ describe("check-docs-index CLI", () => {
     // Now modify the index to make it stale
     const indexPath = join(docsDir, "INDEX.md");
     const original = readFileSync(indexPath, "utf-8");
-    writeFileSync(indexPath, original + "\n<!-- stale -->\n", "utf-8");
+    writeFileSync(indexPath, `${original}\n<!-- stale -->\n`, "utf-8");
 
     const result = runCheckIndex(docsDir);
     expect(result.exitCode).toBe(1);
@@ -121,7 +121,7 @@ describe("check-docs-index CLI", () => {
     // Tamper with EN index
     const enIndexPath = join(docsDir, "INDEX.en.md");
     const original = readFileSync(enIndexPath, "utf-8");
-    writeFileSync(enIndexPath, original + "\n<!-- tampered -->\n", "utf-8");
+    writeFileSync(enIndexPath, `${original}\n<!-- tampered -->\n`, "utf-8");
 
     const result = runCheckIndex(docsDir);
     expect(result.exitCode).toBe(1);
