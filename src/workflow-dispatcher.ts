@@ -227,7 +227,8 @@ export function updateStatusMd(
   let content: string;
   try {
     content = readFileSync(statusPath, "utf-8");
-  } catch {
+  } catch (err) {
+    if ((err as NodeJS.ErrnoException).code !== "ENOENT") throw err;
     content = "---\n---\n";
   }
 

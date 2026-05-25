@@ -1,4 +1,4 @@
-import { mkdirSync, rmSync, writeFileSync, readFileSync, existsSync } from "node:fs";
+import { mkdirSync, rmSync, writeFileSync, readFileSync, existsSync, readdirSync } from "node:fs";
 import { join } from "node:path";
 import { tmpdir } from "node:os";
 import { describe, expect, it, beforeEach, afterEach } from "vitest";
@@ -51,7 +51,7 @@ describe("WorkflowAuditWriter", () => {
     });
 
     const dir = join(forgeRoot, "decisions");
-    const files = require("node:fs").readdirSync(dir);
+    const files = readdirSync(dir);
     expect(files.length).toBe(1);
     expect(files[0]).toMatch(/^\d{4}-\d{2}-\d{2}-auth-strategy\.md$/);
   });

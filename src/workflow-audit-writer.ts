@@ -49,8 +49,8 @@ export class WorkflowAuditWriter {
     let existing = "";
     try {
       existing = readFileSync(destPath, "utf-8");
-    } catch {
-      // File doesn't exist — that's fine
+    } catch (err) {
+      if ((err as NodeJS.ErrnoException).code !== "ENOENT") throw err;
     }
 
     const newSection = formatPayload(target);
