@@ -79,11 +79,20 @@ jobs:
       - name: Detect --no-verify bypass
         run: |
           # Check recent commits for --no-verify trailer or missing hook traces
-          COMMITS=$(git log --format='%H %s' origin/main..HEAD 2>/dev/null || git log --format='%H %s' -5)
+          RANGE="HEAD~5..HEAD"
+          if git rev-parse --verify origin/main >/dev/null 2>&1; then
+            RANGE="origin/main..HEAD"
+          fi
+          COMMITS=$(git log --format='%H %s' "$RANGE" 2>/dev/null || true)
+
+          if [ -z "$COMMITS" ]; then
+            echo "No commits to inspect."
+            exit 0
+          fi
 
           while IFS=' ' read -r hash msg; do
-            # Check for --no-verify in commit trailers
-            TRAILERS=$(git log -1 --format='%(trailers)' "$hash" 2>/dev/null)
+            [ -z "$hash" ] && continue
+            TRAILERS=$(git log -1 --format='%(trailers)' "$hash" 2>/dev/null || true)
             if echo "$TRAILERS" | grep -qi "no-verify"; then
               echo "::error::Commit $hash ($msg) has --no-verify trailer. Docs governance checks were bypassed."
               exit 1
