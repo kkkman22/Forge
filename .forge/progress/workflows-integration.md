@@ -246,3 +246,37 @@
   - GREEN：实现 adapter，7/7 通过 ✅
   - REFACTOR：biome auto-fix import 折叠 + JSDoc 调整 ✅
   - Atomic commit：本任务 1 commit（adapter + deprecate 注释 + 测试 + progress 偏差记录）
+
+### T9: WorkflowAuditWriter — ✅ 完成
+
+#### Handoff Block
+
+- task_id: T9
+- completed:
+  - src/workflow-audit-writer.ts 新增 `resolveDestPath(ctx)` + `writeAuditRecord(ctx, content)` + `FrozenZoneViolation` Error 子类 + `AuditWriteContext` / `AuditSubcommand` 类型
+  - 路径解析（AC 4.1/4.2/4.3）：review → `<forgeRoot>/reviews/<topic>.md`；decide → `<forgeRoot>/decisions/<date>-<slug>.md`（slugify 小写、去非字母数字、空格转 `-`、截 60 字符）；learn → `<forgeRoot>/knowledge/sessions/<runId>.md`
+  - Append-only invariant（AC 4.5）：`appendFileSync` 保证已有内容永远是新文件内容的严格前缀；fast-check 100 次随机 (existing, append) 对全部满足 prefix 不变量
+  - mkdir -p 父目录（AC 4.6）：写入前 `mkdirSync(parent, { recursive: true })`，缺省路径自动创建
+  - Frozen Zone 阻断（AC 4.7）：`isFrozenZone(destPath)` 回调返回 true 时抛 `FrozenZoneViolation`，并向 `<forgeRoot>/runs/<runId>/dispatch.jsonl` 追加 `{subcommand, run_id, frozen_zone_blocked: true, timestamp}` 记录；callback 缺省 / 返回 false 时正常写入
+  - hook-check-frozen.sh 集成点（AC 4.8）：`preWriteHook(destPath) => number` 注入点，非 0 抛通用 Error 含 exit code；返回 0 正常写入。生产端由调用方 wrap `child_process.spawnSync('hook-check-frozen.sh', [destPath]).status` 接入
+  - test/workflow-audit-writer/workflow-audit-writer.test.ts 11 个测试覆盖 AC 4.1 / 4.2 / 4.3 / 4.5 / 4.6 / 4.7 / 4.8：
+    - 4.1–4.3：三个子命令路径解析点测
+    - 4.5：preserves prefix（点测 + fast-check 100 次属性测试）
+    - 4.6：mkdir -p 父目录不存在时自动创建
+    - 4.7：FrozenZoneViolation 抛出 + dispatch.jsonl 写入 + callback false 路径放行
+    - 4.8：preWriteHook 非 0 抛错 + 0 放行且回调被调用 1 次
+- not_completed:
+  - 真实 hook-check-frozen.sh 子进程接入：写入端在调用 writeAuditRecord 之前 wrap 一层 `() => spawnSync(...).status ?? 1` 即可；本任务定位为 lib，不直接 spawn shell（保持纯函数注入）
+  - dispatch.jsonl 完整 14 字段写入：当前仅在 frozen-zone 阻断时写最小记录（subcommand/run_id/frozen_zone_blocked/timestamp）；完整 DispatchRecord（chosen_level / l1_trigger_reason 等）由 dispatcher 模块负责，此处不重复
+  - 调用点接入（forge-review / forge-decide / forge-learn skill）：等待 T11 主循环改造完成后由 skill 编排层接入
+- commands_executed:
+  - `npx vitest run test/workflow-audit-writer/` → 11/11 pass
+  - `npx tsc --noEmit` → 0 errors
+  - `npx biome check --write src/workflow-audit-writer.ts test/workflow-audit-writer/` → 0 errors
+- issues_found:
+  - 设计取舍：FrozenZoneViolation 的 dispatch.jsonl 记录与正式 DispatchRecord schema（14 字段）刻意不对齐——这里仅记录 frozen-zone 拦截事件作为审计 breadcrumb，完整记录由上游 dispatcher 写入，避免双写冲突
+- procedure_compliance:
+  - RED：先写 11 测试失败（src/workflow-audit-writer.ts 不存在）✅
+  - GREEN：实现 lib，11/11 通过 ✅
+  - REFACTOR：biome auto-fix（import 排序）✅
+  - Atomic commit：本任务 1 commit（lib + 测试 + progress 块）
