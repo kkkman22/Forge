@@ -22,7 +22,6 @@ export interface CliDriverConfig {
   maxTurns: number;
   resumeSessionId?: string;
   sessionId?: string;
-  noWarmup?: boolean;
 }
 
 interface BuildEnvOpts {
