@@ -1,0 +1,165 @@
+const BEGIN_RE = /<!--\s*ssot:begin\s+topic=(\S+)\s+render=(\S+)(.*?)\s*-->/;
+const END_RE = /<!--\s*ssot:end\s+topic=(\S+)\s*-->/;
+const FILE_EMBED_RE = /^#\[\[file:([^\]]+)]]$/;
+const KV_RE = /(\w+)=(\S+)/g;
+function diag(severity, message, file, line, code) {
+    return { script: "embed-parser", severity, file, message, line, code };
+}
+function parseArgs(raw) {
+    const args = {};
+    if (!raw)
+        return args;
+    const re = new RegExp(KV_RE.source, "g");
+    let match = re.exec(raw);
+    while (match !== null) {
+        args[match[1]] = match[2];
+        match = re.exec(raw);
+    }
+    return args;
+}
+export function parseEmbeds(fileContent, filePath) {
+    const diagnostics = [];
+    const directives = [];
+    const lines = fileContent.split("\n");
+    let i = 0;
+    let insideBlock = false;
+    let currentTopic = "";
+    let currentRender = "";
+    let currentArgs = {};
+    let beginLine = 0;
+    // Track character offset for raw innerContent extraction
+    let beginCharEnd = 0;
+    while (i < lines.length) {
+        const line = lines[i];
+        const lineNum = i + 1; // 1-indexed
+        // Check for file-embed (only outside ssot-block)
+        if (!insideBlock) {
+            const trimmed = line.trim();
+            const fileMatch = FILE_EMBED_RE.exec(trimmed);
+            if (fileMatch) {
+                const embedPath = fileMatch[1];
+                // Validate: reject absolute paths (traversal validated by consumer)
+                if (embedPath.startsWith("/")) {
+                    diagnostics.push(diag("error", `file embed path must be relative, got absolute: "${embedPath}"`, filePath, lineNum, "EMBED_PATH_ABSOLUTE"));
+                    i++;
+                    continue;
+                }
+                directives.push({
+                    file: filePath,
+                    topic: `file:${embedPath}`,
+                    render: "file-embed",
+                    args: {},
+                    beginLine: lineNum,
+                    endLine: lineNum,
+                    innerContent: "",
+                    kind: "file-embed",
+                });
+                i++;
+                continue;
+            }
+        }
+        // Check for begin marker
+        const beginMatch = BEGIN_RE.exec(line);
+        if (beginMatch) {
+            if (insideBlock) {
+                // Nesting detected
+                diagnostics.push(diag("error", `Nested ssot:begin detected for topic "${beginMatch[1]}" inside "${currentTopic}" — nesting is not allowed`, filePath, lineNum, "EMBED_NESTING"));
+                i++;
+                continue;
+            }
+            insideBlock = true;
+            currentTopic = beginMatch[1];
+            currentRender = beginMatch[2];
+            currentArgs = parseArgs(beginMatch[3]);
+            beginLine = lineNum;
+            // Calculate char offset just after the begin marker line (including its newline)
+            beginCharEnd = lineEndOffset(lines, i);
+            // Check if end marker is on the same line
+            const afterBegin = line.substring(beginMatch.index + beginMatch[0].length);
+            const sameLineEnd = END_RE.exec(afterBegin);
+            if (sameLineEnd) {
+                const endTopic = sameLineEnd[1];
+                if (endTopic !== currentTopic) {
+                    diagnostics.push(diag("error", `Topic mismatch: begin has "${currentTopic}" but end has "${endTopic}"`, filePath, lineNum, "EMBED_TOPIC_MISMATCH"));
+                    insideBlock = false;
+                    i++;
+                    continue;
+                }
+                // Single-line embed: extract content between markers
+                const innerStart = beginMatch.index + beginMatch[0].length;
+                const innerEnd = innerStart + sameLineEnd.index;
+                const innerContent = line.substring(innerStart, innerEnd);
+                directives.push({
+                    file: filePath,
+                    topic: currentTopic,
+                    render: currentRender,
+                    args: currentArgs,
+                    beginLine,
+                    endLine: lineNum,
+                    innerContent,
+                    kind: "ssot-block",
+                });
+                insideBlock = false;
+                i++;
+                continue;
+            }
+            i++;
+            continue;
+        }
+        // Check for end marker
+        const endMatch = END_RE.exec(line);
+        if (endMatch) {
+            if (!insideBlock) {
+                // Orphaned end marker
+                diagnostics.push(diag("error", `Orphaned ssot:end for topic "${endMatch[1]}" without matching begin`, filePath, lineNum, "EMBED_ORPHAN_END"));
+                i++;
+                continue;
+            }
+            const endTopic = endMatch[1];
+            if (endTopic !== currentTopic) {
+                // Topic mismatch
+                diagnostics.push(diag("error", `Topic mismatch: begin has "${currentTopic}" but end has "${endTopic}"`, filePath, lineNum, "EMBED_TOPIC_MISMATCH"));
+                // Reset block state
+                insideBlock = false;
+                i++;
+                continue;
+            }
+            // Extract raw inner content from original string
+            const endCharStart = lineStartOffset(lines, i);
+            const innerContent = fileContent.substring(beginCharEnd, endCharStart);
+            // Complete directive
+            directives.push({
+                file: filePath,
+                topic: currentTopic,
+                render: currentRender,
+                args: currentArgs,
+                beginLine,
+                endLine: lineNum,
+                innerContent,
+                kind: "ssot-block",
+            });
+            insideBlock = false;
+            i++;
+            continue;
+        }
+        i++;
+    }
+    // Unclosed block at end of file
+    if (insideBlock) {
+        diagnostics.push(diag("error", `unclosed ssot:begin for topic "${currentTopic}" at line ${beginLine}`, filePath, beginLine, "EMBED_UNCLOSED"));
+    }
+    return { directives, diagnostics };
+}
+/** Character offset of the start of line `lineIdx` (0-indexed). */
+function lineStartOffset(lines, lineIdx) {
+    let offset = 0;
+    for (let i = 0; i < lineIdx; i++) {
+        offset += lines[i].length + 1; // +1 for "\n"
+    }
+    return offset;
+}
+/** Character offset just past line `lineIdx` text (NOT including its trailing newline). */
+function lineEndOffset(lines, lineIdx) {
+    return lineStartOffset(lines, lineIdx) + lines[lineIdx].length;
+}
+//# sourceMappingURL=embed-parser.js.map
