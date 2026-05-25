@@ -33,6 +33,7 @@ import { CliSubprocessDriver } from "./cli-subprocess-driver.js";
 import { extractConfigLang, mergeLogConfig, parseLogConfig } from "./config-store.js";
 import { formatNotesDocument } from "./context-accumulator.js";
 import { EffectExecutor } from "./effect-executor.js";
+import { classifyExitCode } from "./error-handler.js";
 import { ensureGlossaryExists, type GlossaryFs } from "./glossary-driver.js";
 import { type I18nConfig, parseTranslationFile, translate } from "./i18n.js";
 import { IpcEmitter } from "./ipc-emitter.js";
@@ -970,6 +971,20 @@ async function main(): Promise<void> {
             );
           }
         }
+      } catch (err) {
+        // Emit error event for desktop / CI consumers (R8.3, R10)
+        const errorMessage = err instanceof Error ? err.message : String(err);
+        // Classify: CliError → user error (non-retryable); other → unexpected
+        const isCliError = err instanceof CliError;
+        const exitCode = isCliError ? 1 : 139;
+        const classification = classifyExitCode(exitCode);
+        ipcEmitter.emitError({
+          code: isCliError ? "cli_error" : "unexpected_failure",
+          message: errorMessage,
+          fatal: true,
+          retryable: classification.retryable,
+        });
+        throw err;
       } finally {
         // Clean up signal handlers.
         process.removeListener("SIGINT", handleSignal);
