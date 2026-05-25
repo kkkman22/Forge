@@ -191,6 +191,7 @@ interface CliOptions {
   forceNoHooks?: boolean;
   skillsDir?: string;
   agent?: string;
+  noWarmup?: boolean;
 }
 
 // ---------------------------------------------------------------------------
@@ -262,6 +263,7 @@ async function main(): Promise<void> {
     .option("--force-no-hooks", "Skip hooks protection validation (use at your own risk)", false)
     .option("--skills-dir <path>", "Load external SKILL plugins from directory")
     .option("--agent <name>", "Agent to use for iterations (claude|mock)", "claude")
+    .option("--no-warmup", "Skip warm-up spawn (for sandbox/CI)", false)
     .action(async (objective: string, opts: CliOptions) => {
       const cwd = process.cwd();
       const preventSleep = opts.preventSleep !== "off";
@@ -615,8 +617,7 @@ async function main(): Promise<void> {
       let sleepProcess: ChildProcess | null = null;
 
       // Warm-up spawn + Agent adapter (moved after runSetup is available)
-      {
-        // Warm-up (will be gated by --no-warmup in T10)
+      if (!opts.noWarmup) {
         const warmupArgs = [
           "--print", "--output-format=stream-json", "--max-turns=1",
           "--permission-mode=bypassPermissions", "--dangerously-skip-permissions",
@@ -635,7 +636,7 @@ async function main(): Promise<void> {
           throw new CliError(`Warm-up failed (exit ${warmupExitCode})`);
         }
         writeFileSync(path.join(runSetup.runDir, "warm-up.json"), JSON.stringify({ exitCode: warmupExitCode }));
-      }
+      } // end warmup gate
 
       // Agent adapter: CliSubprocessDriver replaces agent-sdk
       const agentAdapter = new CliSubprocessDriver({
