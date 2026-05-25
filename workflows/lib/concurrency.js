@@ -10,12 +10,13 @@
  *   > 6 (default)
  */
 
-export const MAX_PARALLEL = parseInt(
+const _raw = parseInt(
   process.env.FORGE_MAX_PARALLEL_AGENTS_RUNTIME ||
     process.env.FORGE_MAX_PARALLEL_AGENTS ||
     "6",
   10,
 );
+export const MAX_PARALLEL = Number.isFinite(_raw) && _raw > 0 ? _raw : 6;
 
 /**
  * Execute async functions in capped-parallelism chunks.

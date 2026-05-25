@@ -1,4 +1,4 @@
-import { execSync } from "node:child_process";
+import { execFileSync } from "node:child_process";
 import { appendFileSync, existsSync, mkdirSync, readFileSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
 
@@ -62,9 +62,14 @@ export interface DispatchResult {
   payload?: unknown;
 }
 
+export interface FallbackResult {
+  output?: string;
+  methodology?: string;
+}
+
 export interface DispatchDeps {
   tryL0?: (ctx: DispatchContext) => Promise<unknown>;
-  runFallback?: (ctx: DispatchContext) => Promise<unknown>;
+  runFallback?: (ctx: DispatchContext) => Promise<FallbackResult | null>;
   allFallbacksFailed?: boolean;
 }
 
@@ -94,7 +99,7 @@ export function probeL0Eligibility(ctx: DispatchContext): ProbeResult {
     return { eligible: false, reason: "workflow_missing" };
   }
   try {
-    execSync(`node --check "${workflowFile}"`, { stdio: "pipe" });
+    execFileSync("node", ["--check", workflowFile], { stdio: "pipe" });
   } catch {
     return { eligible: false, reason: "workflow_syntax_error" };
   }
@@ -105,7 +110,7 @@ export function probeL0Eligibility(ctx: DispatchContext): ProbeResult {
     return { eligible: false, reason: "concurrency_uncontrolled" };
   }
   try {
-    execSync(`node --check "${concurrencyFile}"`, { stdio: "pipe" });
+    execFileSync("node", ["--check", concurrencyFile], { stdio: "pipe" });
   } catch {
     return { eligible: false, reason: "concurrency_uncontrolled" };
   }
@@ -153,13 +158,12 @@ export async function dispatch(
 
     const fallbackResult = deps.runFallback
       ? await deps.runFallback(ctx)
-      : { output: "subagent fallback", methodology: "subagent-parallel" };
+      : ({ output: "subagent fallback", methodology: "subagent-parallel" } as FallbackResult);
 
     return {
       chosenLevel: "L1",
       l1TriggerReason: probe.reason ?? "unmatched_state",
-      methodology:
-        ((fallbackResult as Record<string, unknown>)?.methodology as string) ?? "subagent-parallel",
+      methodology: fallbackResult?.methodology ?? "subagent-parallel",
       payload: fallbackResult,
     };
   }
@@ -187,7 +191,7 @@ export async function dispatch(
 
     const fallbackResult = deps.runFallback
       ? await deps.runFallback(ctx)
-      : { output: "subagent fallback after L0 failure", methodology: "workflow-then-subagent" };
+      : ({ output: "subagent fallback after L0 failure", methodology: "workflow-then-subagent" } as FallbackResult);
 
     return {
       chosenLevel: "L1",
