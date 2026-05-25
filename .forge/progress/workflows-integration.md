@@ -57,3 +57,28 @@
   - GREEN：实现 concurrency.js + 改写 multi-agent-review.js，29 测试通过 ✅
   - REFACTOR：biome --write 自动修复 import 顺序，无残留 lint ✅
   - Atomic commit：本任务 1 commit
+
+### T3: Fallback Ladder 规则文件 — ✅ 完成
+
+#### Handoff Block
+
+- task_id: T3
+- completed:
+  - .claude/rules/workflow-fallback-ladder.md（frontmatter `inclusion: always` + `applies_to: [forge-review, forge-decide, forge-learn]`）
+  - L0–L3 四级表格（含触发条件、methodology 字段值、阻断 ship 标记）
+  - cross-reference ADR `2026-05-18-review-fallback-ladder.md`
+  - HARD-GATE block `l3-no-main-agent-substitute` 声明 L3 禁止主 agent 顶替
+  - 列举 7 种 `l1_trigger_reason` + 5 种 `l0_failure_signature` 字面值
+  - test/rules/workflow-fallback-ladder.test.ts 16 个测试 (R3.1–R3.5 + R11.6)：文件存在、L0–L3 markers、ADR cross-ref、hard-gate 关键词、frontmatter inclusion: always、5 种 methodology 值、4 行级别表格、forge-build 不引用本规则
+- not_completed:
+  - AC 3.4 integration-test（三个 SKILL 渲染后 system prompt 含规则正文）：依赖 SKILL 加载器集成测试基础设施，本任务用 `inclusion: always` frontmatter 间接满足
+- commands_executed:
+  - `npx vitest run test/rules/workflow-fallback-ladder.test.ts` → 16/16 pass
+  - `npx biome check test/rules/workflow-fallback-ladder.test.ts` → 0 errors
+- issues_found:
+  - 初版表格行正则只匹配 `| L0 |` 形式，但规则文件用 `**L0**` 加粗；扩展正则为 `\*{0,2}L[0-3]\*{0,2}` 兼容 markdown 强调
+- procedure_compliance:
+  - RED：先写 16 测试全失败 (1 通过为空 forge-build skill 默认 pass)，确认 GREEN 前 15 失败 ✅
+  - GREEN：创建规则文件，16/16 测试通过 ✅
+  - REFACTOR：表格行正则修正、biome 0 errors ✅
+  - Atomic commit：本任务 1 commit
