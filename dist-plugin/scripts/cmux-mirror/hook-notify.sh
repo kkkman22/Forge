@@ -45,10 +45,13 @@ echo "$now_ms" > "$dedupe_ts_file" 2>/dev/null || true
 # Step 2: Notify via cmux (R6.3) — best-effort
 task_name="${FORGE_TASK:-unknown}"
 
-# R1.4: Construct --window prefix when CMUX_WINDOW_ID is set
+# R1.4: Construct --window prefix when CMUX_WINDOW_ID is set and valid
 window_args=()
 if [[ -n "${CMUX_WINDOW_ID:-}" ]]; then
-  window_args=("--window" "$CMUX_WINDOW_ID")
+  # R1.6: Validate against whitelist (must match cli.mjs SAFE_WINDOW_ID)
+  if [[ "$CMUX_WINDOW_ID" =~ ^[A-Za-z0-9._:-]{1,64}$ ]] && [[ "$CMUX_WINDOW_ID" != *".."* ]]; then
+    window_args=("--window" "$CMUX_WINDOW_ID")
+  fi
 fi
 
 cmux ${window_args[@]+"${window_args[@]}"} notify "Forge Frozen" "Branch frozen for: ${task_name}" 2>/dev/null || true
