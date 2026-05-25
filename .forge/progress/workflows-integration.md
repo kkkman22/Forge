@@ -82,3 +82,36 @@
   - GREEN：创建规则文件，16/16 测试通过 ✅
   - REFACTOR：表格行正则修正、biome 0 errors ✅
   - Atomic commit：本任务 1 commit
+
+### T4: WorkflowDispatcher 骨架 — ✅ 完成
+
+#### Handoff Block
+
+- task_id: T4
+- completed:
+  - src/workflow-dispatcher.ts（纯函数骨架，未连接 bp() runtime 与 L1 ladder，由 caller 在 T8/T9 接入）
+  - 导出类型：DispatchContext、DispatchRecord、ChosenLevel、L1TriggerReason、L0FailureSignature、Subcommand、Mode、ProbeResult
+  - 导出函数：probeL0Eligibility(ctx)（5 步探测：env、mode、文件存在、node --check、并发桥接 import 校验）、resolveL1Trigger(reason?)（默认兜底 unmatched_state）、classifyL0Failure(err)（5 类签名穷举，含未识别 fallback bp_exception）、writeDispatchRecord(ctx, record)（append-only JSONL，自动 mkdir -p）、updateStatusMd(ctx, level)（idempotent upsert dispatch_chosen_level/subcommand/run_id；L3 时写入 phase=<subcommand>-blocked）、isolatePartialFindings(ctx, content)（写入 .forge/runs/<runId>/l0-partial/，绝不写 .forge/reviews/）
+  - test/workflow-dispatcher/workflow-dispatcher.test.ts 27 个测试覆盖 R2.2/R2.4/R2.5/R2.7/R2.8/R2.9/R2.10：
+    - probeL0Eligibility 7 例（5 条件正/反 + 并发桥接两种失败模式）
+    - resolveL1Trigger 2 例（默认 unmatched_state + 显式透传）
+    - classifyL0Failure 7 例（5 签名 + ReferenceError 路径 + unknown fallback）
+    - writeDispatchRecord 3 unit + 1 fast-check 100 轮属性测试（必备字段 + ISO-8601 + JSON 合法）
+    - updateStatusMd 3 例（写入新字段、L3 → phase 阻断、idempotent 不重复）
+    - isolatePartialFindings 2 例（路径正确 + 不污染 .forge/reviews/）
+    - R2.7 静态扫描：dispatcher 源码不含 "是否继续" / continue? / proceed?
+    - R2.9 fast-check 200 轮：所有状态向量都命中 L0 或 7 个枚举 reason，无黑洞
+- not_completed:
+  - AC 2.1/2.3/2.6/2.8(end-to-end)/2.10(forge-ship 集成) 标为 integration-test：依赖 caller 接入（T8 在 forge-loop-cli.ts 调用 dispatcher、T9 在 audit writer 与 dispatcher 协同），本任务仅交付 dispatcher 单元层
+  - L0 实际 bp() 调用、L1 路由（runReviewFallbackLadder/forge-decide-lead/forge-learn）：T8 + 既有 forge-review SKILL fallback ladder 处理
+- commands_executed:
+  - `npx vitest run test/workflow-dispatcher/workflow-dispatcher.test.ts` → 27/27 pass
+  - `npx tsc --noEmit` → 0 errors
+  - `npx biome check src/workflow-dispatcher.ts test/workflow-dispatcher/` → 0 errors（biome --write auto-fix 完成）
+- issues_found:
+  - resolveWorkflowFile 内置 review → multi-agent-review.js 兼容路径：T1 创建的文件名是 multi-agent-review.js 而非 review.js；保留 fallback 而非强制重命名，避免破坏 T1
+- procedure_compliance:
+  - RED：先写 27 测试模块导入失败（src/workflow-dispatcher.ts 不存在）✅
+  - GREEN：实现 dispatcher 全部导出，27/27 通过 ✅
+  - REFACTOR：biome auto-fix import 折叠 + 函数签名换行 ✅
+  - Atomic commit：本任务 1 commit
