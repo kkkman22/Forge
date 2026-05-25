@@ -3,10 +3,9 @@
  *
  * Three-layer code review (spec-check, quality-check, security-check)
  * with adversarial verification and synthesis.
- *
- * Placeholder for Phase 2 integration with WorkflowDispatcher.
- * Currently the L0 path; will be enhanced with chunkedParallel in T2.
  */
+
+import { chunkedParallel } from './lib/concurrency.js';
 
 export const meta = {
   name: 'multi-agent-review',
