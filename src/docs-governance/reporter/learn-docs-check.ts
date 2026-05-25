@@ -66,10 +66,7 @@ export function runDocsGovernanceCheck(rootDir: string): DocsGovernanceResult {
         }
       } else {
         hasIssues = true;
-        const reason =
-          execErr.code === "ENOENT"
-            ? "working directory not found"
-            : (execErr.message ?? "script missing or failed to execute");
+        const reason = execErr.code === "ENOENT" ? "working directory not found" : (execErr.message ?? "script missing or failed to execute");
         errors.push(`${script}: ${reason}`);
       }
     }
