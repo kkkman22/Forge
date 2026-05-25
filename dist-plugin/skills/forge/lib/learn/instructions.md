@@ -71,6 +71,31 @@ forge-learn **不会** emit 严格会话作用域且已被 Auto_Memory 覆盖的
 
 默认严重度：warn。可通过 `severityOverride` 覆盖。
 
+### §1.6 Pre-flight: Docs Governance Check
+
+Run the three docs governance checkers to detect document health issues before knowledge extraction:
+
+```bash
+npx tsx scripts/check-docs-quota.ts --json
+npx tsx scripts/check-docs-staleness.ts --json
+npx tsx scripts/check-docs-links.ts --json
+```
+
+**Budget**: 10 seconds total. If any checker times out, treat as `needs_attention`.
+
+**Processing**:
+1. Parse NDJSON output from each checker
+2. Extract critical/error-level diagnostics
+3. If any checker returns non-zero exit code, times out, or script is missing → mark "文档增量" section as `needs_attention` but do NOT block main learn flow
+4. If all three checkers complete with zero status and no critical diagnostics → mark as `clean` with UTC ISO 8601 timestamp
+
+**Session output**: Write critical-level issues into `.forge/knowledge/sessions/<session>.md` under a `## 文档治理诊断` section, each containing:
+- Source detector name
+- Document relative path
+- Issue summary
+
+This check is informational only — it enriches the learn session with documentation health context.
+
 ---
 
 ## Goals
