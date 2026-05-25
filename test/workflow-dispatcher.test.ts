@@ -1,4 +1,4 @@
-import { mkdirSync, rmSync, writeFileSync, existsSync, readFileSync } from "node:fs";
+import { mkdirSync, rmSync, writeFileSync, existsSync, readFileSync, readdirSync } from "node:fs";
 import { join } from "node:path";
 import { tmpdir } from "node:os";
 import { describe, expect, it, beforeEach, afterEach, vi } from "vitest";
@@ -28,6 +28,7 @@ describe("WorkflowDispatcher", () => {
 
   afterEach(() => {
     rmSync(tmpDir, { recursive: true, force: true });
+    delete process.env.CLAUDE_CODE_WORKFLOWS;
   });
 
   function makeCtx(overrides: Partial<DispatchContext> = {}): DispatchContext {
@@ -204,7 +205,7 @@ describe("WorkflowDispatcher", () => {
 
       const partialDir = join(runDir, "l0-partial");
       expect(existsSync(partialDir)).toBe(true);
-      const files = require("node:fs").readdirSync(partialDir);
+      const files = readdirSync(partialDir);
       expect(files.length).toBe(1);
       expect(files[0]).toMatch(/^review-/);
     });

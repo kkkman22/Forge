@@ -78,22 +78,24 @@ export class StreamJsonAdapter {
 
       if (event.type === "result") {
         hasResult = true;
-        const u = event.usage as Record<string, number> | undefined;
-        if (u) {
-          usage.inputTokens += u.input_tokens ?? 0;
-          usage.outputTokens += u.output_tokens ?? 0;
-          usage.cacheCreationTokens += u.cache_creation_input_tokens ?? 0;
-          usage.cacheReadTokens += u.cache_read_input_tokens ?? 0;
+        const u = event.usage;
+        if (typeof u === "object" && u !== null) {
+          const usageObj = u as Record<string, number>;
+          usage.inputTokens += usageObj.input_tokens ?? 0;
+          usage.outputTokens += usageObj.output_tokens ?? 0;
+          usage.cacheCreationTokens += usageObj.cache_creation_input_tokens ?? 0;
+          usage.cacheReadTokens += usageObj.cache_read_input_tokens ?? 0;
         }
         if (typeof event.cost_usd === "number") {
           costUsd = event.cost_usd;
         }
       }
 
-      if (EXPOSED_TYPES.has(event.type as string) || !HIDDEN_TYPES.has(event.type as string)) {
-        if (!EXPOSED_TYPES.has(event.type as string) && event.type !== "result") {
-          this.logUnknownEvent(event);
-        }
+      if (!EXPOSED_TYPES.has(event.type as string) && !HIDDEN_TYPES.has(event.type as string)) {
+        this.logUnknownEvent(event);
+      }
+
+      if (!HIDDEN_TYPES.has(event.type as string)) {
         delivered.push(event);
       }
     }
