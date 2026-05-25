@@ -26,6 +26,12 @@ const HIDDEN_TYPES = new Set([
   "ping",
 ]);
 
+interface PartialBucket {
+  message_start?: Record<string, unknown>;
+  content_blocks: Map<number, Record<string, unknown>>;
+  deltas: Record<string, unknown>[];
+}
+
 // ---------------------------------------------------------------------------
 // StreamJsonAdapter
 // ---------------------------------------------------------------------------
@@ -50,6 +56,10 @@ export class StreamJsonAdapter {
     let lastEventType: string | null = null;
     let hasResult = false;
 
+    // Partial-message buffers (R6.3): keyed by message.id
+    const partialBuffers = new Map<string, PartialBucket>();
+    const deliveredMessageIds = new Set<string>();
+
     const rl = createInterface({ input: stdout, crlfDelay: Infinity });
 
     for await (const line of rl) {
@@ -73,6 +83,24 @@ export class StreamJsonAdapter {
       }
 
       if (HIDDEN_TYPES.has(event.type as string)) {
+        // R6.3: buffer partials, merge on message_stop
+        const messageId = this.extractMessageId(event);
+        if (messageId) {
+          this.bufferPartial(partialBuffers, messageId, event);
+          if (event.type === "message_stop") {
+            // Already delivered? Dedup.
+            if (deliveredMessageIds.has(messageId)) {
+              this.logDedup(messageId, event);
+            } else {
+              const merged = this.mergeBuffer(partialBuffers.get(messageId));
+              if (merged) {
+                delivered.push(merged);
+                deliveredMessageIds.add(messageId);
+              }
+            }
+            partialBuffers.delete(messageId);
+          }
+        }
         continue;
       }
 
@@ -95,9 +123,16 @@ export class StreamJsonAdapter {
         this.logUnknownEvent(event);
       }
 
-      if (!HIDDEN_TYPES.has(event.type as string)) {
-        delivered.push(event);
+      // Dedup exposed assistant/user messages by message.id
+      const eventMessageId = this.extractMessageId(event);
+      if (eventMessageId && deliveredMessageIds.has(eventMessageId)) {
+        this.logDedup(eventMessageId, event);
+        continue;
       }
+      if (eventMessageId) {
+        deliveredMessageIds.add(eventMessageId);
+      }
+      delivered.push(event);
     }
 
     if (!hasResult) {
@@ -109,6 +144,67 @@ export class StreamJsonAdapter {
     }
 
     return { delivered, usage, costUsd, lastEventType };
+  }
+
+  private extractMessageId(event: Record<string, unknown>): string | null {
+    // message_start has top-level message.id; other partial events nest similarly
+    const msg = event.message as { id?: string } | undefined;
+    if (msg?.id) return msg.id;
+    if (typeof event.id === "string") return event.id;
+    return null;
+  }
+
+  private bufferPartial(
+    buffers: Map<string, PartialBucket>,
+    messageId: string,
+    event: Record<string, unknown>,
+  ): void {
+    let bucket = buffers.get(messageId);
+    if (!bucket) {
+      bucket = { content_blocks: new Map(), deltas: [] };
+      buffers.set(messageId, bucket);
+    }
+    if (event.type === "message_start") {
+      bucket.message_start = event.message as Record<string, unknown> | undefined;
+    } else if (event.type === "content_block_start") {
+      const idx = (event.index as number | undefined) ?? 0;
+      bucket.content_blocks.set(idx, (event.content_block as Record<string, unknown>) ?? {});
+    } else if (event.type === "content_block_delta") {
+      const idx = (event.index as number | undefined) ?? 0;
+      const existing = bucket.content_blocks.get(idx) ?? {};
+      const delta = event.delta as Record<string, unknown> | undefined;
+      // Merge text deltas onto existing block
+      if (delta?.type === "text_delta" && typeof delta.text === "string") {
+        const prevText = (existing.text as string | undefined) ?? "";
+        existing.text = prevText + delta.text;
+        existing.type = existing.type ?? "text";
+      } else if (delta) {
+        Object.assign(existing, delta);
+      }
+      bucket.content_blocks.set(idx, existing);
+    } else if (event.type === "message_delta") {
+      bucket.deltas.push((event.delta as Record<string, unknown>) ?? {});
+    }
+    // content_block_stop, message_stop, ping: no-op for accumulation
+  }
+
+  private mergeBuffer(bucket: PartialBucket | undefined): Record<string, unknown> | null {
+    if (!bucket?.message_start) return null;
+    const indexes = Array.from(bucket.content_blocks.keys()).sort((a, b) => a - b);
+    const content = indexes.map((i) => bucket.content_blocks.get(i)).filter(Boolean);
+    const merged: Record<string, unknown> = {
+      type: "assistant",
+      message: {
+        ...bucket.message_start,
+        content,
+      },
+    };
+    // Apply message_delta accumulated fields (e.g., stop_reason)
+    if (bucket.deltas.length > 0) {
+      const finalDelta = Object.assign({}, ...bucket.deltas);
+      Object.assign(merged.message as Record<string, unknown>, finalDelta);
+    }
+    return merged;
   }
 
   private logParseError(rawLine: string): void {
@@ -130,5 +226,14 @@ export class StreamJsonAdapter {
       `${JSON.stringify(event)}\n`,
       "utf-8",
     );
+  }
+
+  private logDedup(messageId: string, event: Record<string, unknown>): void {
+    const entry = {
+      message_id: messageId,
+      event_type: event.type,
+      timestamp: new Date().toISOString(),
+    };
+    appendFileSync(join(this.runDir, "dedup.jsonl"), `${JSON.stringify(entry)}\n`, "utf-8");
   }
 }
