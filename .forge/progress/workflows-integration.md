@@ -217,3 +217,32 @@
   - GREEN：实现 emitter，8/8 通过 ✅
   - REFACTOR：清理 unused vars，过 biome lint ✅
   - Atomic commit：本任务 1 commit
+
+### T8: SdkDriver 改造 — ⚠️ 部分完成（adapter 层 + deprecation 标注；默认换芯延后到 T11）
+
+#### Handoff Block
+
+- task_id: T8
+- completed:
+  - src/cli-agent-adapter.ts 新增 `ClaudeCliAgentAdapter implements AgentInterface`：组合 buildArgs/buildEnv（T6）+ StreamJsonAdapter（T5），通过 `spawn` 注入解耦真实 child_process；run() 写一帧 user NDJSON → end stdin → 监听 stdout chunk → adapter.feed → exit 时合成 AgentResult；close() 在仍存活时发 SIGTERM
+  - src/sdk-agent-adapter.ts 在 SdkAgentAdapter 类的 JSDoc 顶部添加 `@deprecated` 标注，明确指向 cli-agent-adapter.ts 与 T11 默认换芯计划
+  - test/cli-agent-adapter/cli-agent-adapter.test.ts 7 个测试覆盖 AgentInterface 契约（name/run/close）+ spawn 注入（命令名/args 包含核心 flag）+ usage 累加（result event input/output → AgentResult.usage）+ 异常退出码传递为 IterationFailedError reject
+  - 现有 R5.5 静态合规复核：6 个文件中 5 个仅 `import type`（agent-registry/sandbox-profile/frozen-zone-hook/sdk-driver/sdk-agent-adapter（adapter 自身豁免，是被 deprecate 的实现）），仅 forge-loop-cli.ts:30 仍有 runtime `import { startup }`（warm-up 替代专属，T10 拆除）
+- not_completed:
+  - **R5.1–5.4 真正换芯（在 forge-loop-cli.ts 把 `agentRegistry.resolve('claude')` 替换为 ClaudeCliAgentAdapter，移除 startup() 与 warmQuery 链）**：本任务范围内**未实施**。原因：default-swap 同时影响 (1) warm-query 注入路径、(2) effect-executor、(3) 100+ 现有 SDK 集成测试，单 task 内一次性切换会破坏 dist 同步与 CI baseline。决定：把默认 driver 替换捆绑到 T11（错误处理与降级），届时 retry/backoff 链路与 startup() 拆除一并交付，单 commit 一次性切。Plan 文档对应位置补 `decided_in_T8` 注释。
+  - R5.2 stdin NDJSON 帧的多帧驱动（system prompt injection / initial message 序列）：T11 真正接入主循环时，把 RunManager 的 effects → NDJSON frame 的拼装逻辑写入 ClaudeCliAgentAdapter
+  - R5.3 与 EffectExecutor 派发集成：依赖 T11 主循环改造
+  - R5.7 stderr.log 捕获 + LogSink 转发：依赖 T11 spawn 注入实例化时把 child.stderr 接到 logger
+  - R5.9 背压检测 4 MiB/5s → 60s → kill+retry：依赖 T11
+- commands_executed:
+  - `npx vitest run test/cli-agent-adapter/` → 7/7 pass
+  - `npx tsc --noEmit` → 0 errors
+  - `npx biome check --write src/cli-agent-adapter.ts test/cli-agent-adapter/` → 0 errors
+  - `rg "from '@anthropic-ai/claude-agent-sdk'" src/forge-loop-cli.ts src/sdk-driver.ts src/sdk-agent-adapter.ts src/agent-registry.ts src/sandbox-profile.ts src/frozen-zone-hook.ts` → 5 行 type-only + 1 行 runtime（forge-loop-cli.ts:30 startup，T10 处理）+ adapter 自身的 query/sdkQuery（被 deprecate 的实现，T11 删除）
+- issues_found:
+  - 设计权衡：T8 拆为「adapter 提供 + 默认换芯」两步。adapter 提供与 deprecate 注释**安全可单独合并**；默认换芯**必须**与 T11 retry/timeout 一起交付，否则中间状态会让 forge-loop 在 SDK 错误处理代码路径下跑 CLI subprocess，行为分裂。Sprint 评审需要追认此偏差。
+- procedure_compliance:
+  - RED：先写 7 测试失败（cli-agent-adapter.ts 不存在）✅
+  - GREEN：实现 adapter，7/7 通过 ✅
+  - REFACTOR：biome auto-fix import 折叠 + JSDoc 调整 ✅
+  - Atomic commit：本任务 1 commit（adapter + deprecate 注释 + 测试 + progress 偏差记录）
