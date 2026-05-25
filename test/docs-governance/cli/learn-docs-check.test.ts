@@ -1,10 +1,10 @@
-import { resolve } from "node:path";
-import { describe, expect, it } from "vitest";
+import { describe, it, expect } from "vitest";
 import {
-  type DocsGovernanceResult,
-  formatDocsGovernanceSection,
   runDocsGovernanceCheck,
+  formatDocsGovernanceSection,
+  type DocsGovernanceResult,
 } from "../../../src/docs-governance/reporter/learn-docs-check.js";
+import { resolve } from "node:path";
 
 const ROOT = resolve(__dirname, "../../../");
 

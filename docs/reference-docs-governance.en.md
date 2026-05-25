@@ -2,7 +2,7 @@
 title: Docs Governance Reference
 category: reference
 audience: [maintainer, contributor]
-updated: 2026-05-24
+updated: 2026-05-25
 owner: forge-maintainers
 mirror_of: reference-docs-governance.md
 ---
