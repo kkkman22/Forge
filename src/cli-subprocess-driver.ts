@@ -1,4 +1,4 @@
-import { spawn, type ChildProcess } from "node:child_process";
+import { type ChildProcess, spawn } from "node:child_process";
 import { appendFileSync, mkdirSync } from "node:fs";
 import { join } from "node:path";
 import type { AgentInterface, AgentResult, AgentRunOptions, TokenUsage } from "./loop-types.js";
@@ -117,10 +117,11 @@ export class CliSubprocessDriver implements AgentInterface {
     });
 
     // stdin: write NDJSON frame then close
-    const frame = JSON.stringify({
-      type: "user",
-      message: { role: "user", content: prompt },
-    }) + "\n";
+    const frame =
+      JSON.stringify({
+        type: "user",
+        message: { role: "user", content: prompt },
+      }) + "\n";
     this.child.stdin!.write(frame);
     this.child.stdin!.end();
 
@@ -140,10 +141,11 @@ export class CliSubprocessDriver implements AgentInterface {
     return {
       output: {
         success: exitCode === 0,
-        summary: result.delivered
-          .filter((e) => e.type === "result")
-          .map((e) => String(e.result ?? ""))
-          .join("") || "completed",
+        summary:
+          result.delivered
+            .filter((e) => e.type === "result")
+            .map((e) => String(e.result ?? ""))
+            .join("") || "completed",
         key_changes_made: [],
         key_learnings: [],
       },

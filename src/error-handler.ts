@@ -31,7 +31,7 @@ export function classifyExitCode(code: number): ExitCodeClassification {
 }
 
 export function computeBackoffDelay(attempt: number): number {
-  return DEFAULT_BACKOFF_BASE_MS * Math.pow(2, attempt - 1);
+  return DEFAULT_BACKOFF_BASE_MS * 2 ** (attempt - 1);
 }
 
 export function shouldRetry(exitCode: number, currentAttempt: number): boolean {

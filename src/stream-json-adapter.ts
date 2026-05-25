@@ -1,7 +1,7 @@
 import { appendFileSync, mkdirSync } from "node:fs";
 import { join } from "node:path";
-import type { Readable } from "node:stream";
 import { createInterface } from "node:readline";
+import type { Readable } from "node:stream";
 import type { TokenUsage } from "./loop-types.js";
 
 // ---------------------------------------------------------------------------
@@ -17,8 +17,12 @@ export interface AdapterResult {
 
 const EXPOSED_TYPES = new Set(["system", "assistant", "user", "tool_use", "tool_result", "result"]);
 const HIDDEN_TYPES = new Set([
-  "message_start", "message_delta", "message_stop",
-  "content_block_start", "content_block_delta", "content_block_stop",
+  "message_start",
+  "message_delta",
+  "message_stop",
+  "content_block_start",
+  "content_block_delta",
+  "content_block_stop",
   "ping",
 ]);
 
@@ -36,7 +40,12 @@ export class StreamJsonAdapter {
 
   async consume(stdout: Readable): Promise<AdapterResult> {
     const delivered: Array<Record<string, unknown>> = [];
-    const usage: TokenUsage = { inputTokens: 0, outputTokens: 0, cacheReadTokens: 0, cacheCreationTokens: 0 };
+    const usage: TokenUsage = {
+      inputTokens: 0,
+      outputTokens: 0,
+      cacheReadTokens: 0,
+      cacheCreationTokens: 0,
+    };
     let costUsd = 0;
     let lastEventType: string | null = null;
     let hasResult = false;
@@ -58,7 +67,9 @@ export class StreamJsonAdapter {
 
       if (event.type === "error") {
         this.logApiError(event);
-        throw new Error(`Stream error: ${(event.error as Record<string, unknown>)?.message ?? "unknown"}`);
+        throw new Error(
+          `Stream error: ${(event.error as Record<string, unknown>)?.message ?? "unknown"}`,
+        );
       }
 
       if (HIDDEN_TYPES.has(event.type as string)) {
@@ -104,14 +115,18 @@ export class StreamJsonAdapter {
       error_message: "JSON parse failed",
       timestamp: new Date().toISOString(),
     };
-    appendFileSync(join(this.runDir, "parse-errors.jsonl"), JSON.stringify(entry) + "\n", "utf-8");
+    appendFileSync(join(this.runDir, "parse-errors.jsonl"), `${JSON.stringify(entry)}\n`, "utf-8");
   }
 
   private logApiError(event: Record<string, unknown>): void {
-    appendFileSync(join(this.runDir, "api-errors.jsonl"), JSON.stringify(event) + "\n", "utf-8");
+    appendFileSync(join(this.runDir, "api-errors.jsonl"), `${JSON.stringify(event)}\n`, "utf-8");
   }
 
   private logUnknownEvent(event: Record<string, unknown>): void {
-    appendFileSync(join(this.runDir, "unknown-events.jsonl"), JSON.stringify(event) + "\n", "utf-8");
+    appendFileSync(
+      join(this.runDir, "unknown-events.jsonl"),
+      `${JSON.stringify(event)}\n`,
+      "utf-8",
+    );
   }
 }
