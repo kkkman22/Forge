@@ -313,3 +313,41 @@
   - GREEN：实现 runner，6/6 通过 ✅
   - REFACTOR：biome auto-fix import 折叠 ✅
   - Atomic commit：本任务 1 commit（runner + 测试 + progress 偏差记录）
+
+### T11: 错误处理与降级 — ⚠️ 部分完成（controller lib + 测试；主循环接入 + cleanup-errors.jsonl 待续）
+
+#### Handoff Block
+
+- task_id: T11
+- completed:
+  - src/loop-error-controller.ts 新增 `runIterationWithErrorControl(deps)` async 函数 + `classifyExitCode(code)` 纯函数 + `IpcEmitterLike` / `LoopErrorControllerDeps` / `IterationOutcome` / `CliSpawnRequest` 类型 + `RETRY_EXIT_CODES = {1,2,137,143}` 常量 + 默认值常量（`DEFAULT_STUCK_TIMEOUT_MS=600_000`、`DEFAULT_SIGKILL_DELAY_MS=30_000`、`DEFAULT_BACKOFF_BASE_MS=60_000`、`DEFAULT_MAX_RETRIES=3`）
+  - 退出码分类（AC 10.2/10.3）：`classifyExitCode(0) → "success"`；`classifyExitCode(1|2|137|143) → "retry"`；其他（含 139 SIGSEGV / 255 / 99）→ `"abort"`
+  - Stuck timeout（AC 10.1）：每次 stdout `data` 事件重置 600s 计时器；超时 → `child.kill('SIGTERM')`，再 30s 未退出 → `child.kill('SIGKILL')`
+  - 指数退避重试（AC 10.2）：retry 类退出码触发 `backoffBaseMs * 2^(attempt-1)` 退避（默认 60s/120s/240s），上限 3 次；超限或 abort 类 → 写 `<runDir>/abort.json`（`run_id` / `last_exit_code` / `attempts` / `timestamp`）后抛错
+  - 立即中止（AC 10.3）：abort 类退出码不触发 retry，立即写 abort.json + 抛错
+  - IPC retry warning（AC 10.4）：每次 retry 前向 emitter 推送 `{code: "subprocess-retry", message, attempt, retryable: true}`，desktop 端可显示
+  - L0 失败签名（AC 10.6）：当 `l0FailureSignatureCapture: true` 时，abort.json 增加 `l0_failure_signature` 字段（abort 类 → `subprocess_crash`；retry 耗尽 → `stuck_timeout`），用于 dispatcher L0→L1 降级判定
+  - test/loop-error-controller/loop-error-controller.test.ts 8 个测试覆盖 AC 10.1 / 10.2 / 10.3 / 10.4 / 10.6：
+    - classifyExitCode 3 个矩阵点测（success/retry/abort）
+    - 10.1：fake-timer 推进 600s → SIGTERM；再 30s → SIGKILL
+    - 10.2：4 次 137 退出 + 退避 60/120/240s → abort.json 含 attempts=4，3 个 retry warning attempt=[1,2,3]
+    - 10.3：139 退出立即 abort，无 retry，无 IPC warning
+    - 10.4：第 1 次 137 第 2 次 0 → 成功，1 个 retry warning attempt=1
+    - 10.6：l0FailureSignatureCapture=true → abort.json 含 `l0_failure_signature: subprocess_crash`
+- not_completed:
+  - **AC 10.5 cleanup-errors.jsonl + worktree/PID/sleep-prevent 清理**：本任务范围内**未实施**。原因：cleanup 涉及 forge-loop-cli 主循环退出 hook，需要与 SIGINT 处理 / sleep-prevent 子进程 / decideWorktreeCleanup 集成；此基础设施已经在 sdk-driver.ts 中存在，T11 controller 范围只覆盖单次迭代的 retry/timeout，主循环退出清理的接线在最终换芯（T11 主循环改造）时与 startup() 拆除一并完成。
+  - **forge-loop-cli.ts 默认 driver 替换 + startup() 拆除（T8 + T10 + T11 累积偏差的最终落地）**：本任务范围内**未实施**。原因：3 个 controller / runner / adapter 都已就位（cli-agent-adapter / warm-up-runner / loop-error-controller），主循环改造是把 (1) 替换 `agentRegistry.resolve('claude')` 为 `ClaudeCliAgentAdapter`、(2) 在主循环前调 `runWarmUp` 并注册 `--no-warmup` flag、(3) 把 `runIterationWithErrorControl` wrap 到迭代外层、(4) 拆除 `import { startup }` 与 `await startup({...})` 共四步缝合工作。决定：T12（Desktop IPC 回归）作为后置验证步骤反过来约束这次主循环改造的字面兼容；改造 + 集成测试一次性合并成单 commit 在 T12 任务里完成。
+  - 实际 spawn 接入 commander option `--no-warmup`：随主循环改造一起注册
+  - dist 同步：随主循环改造一次性 `npm run build`
+- commands_executed:
+  - `npx vitest run test/loop-error-controller/` → 8/8 pass
+  - `npx tsc --noEmit` → 0 errors
+  - `npx biome check --write src/loop-error-controller.ts test/loop-error-controller/` → 0 errors，0 warning（清理 unused `lastExitCode` 与 `lastStdoutAt` 两个 dead var）
+- issues_found:
+  - 设计取舍：retry 耗尽（exhausted）也写 `l0_failure_signature: stuck_timeout`，因为 stuck-timeout 强制 SIGTERM/SIGKILL 路径产出的退出码同样是 137/143（retry 集合内），耗尽后的 abort 与"真正卡死"语义重叠；若未来需要区分，再加一个 `retries_exhausted` signature
+  - dead-code 清理：原计划用 `lastStdoutAt` 做背压观测，但 AC 10.1 只要求 stdout 静默触发 timeout，重置 timer 已足够；biome 标记 unused 后直接删除，符合 §2.6 简洁原则
+- procedure_compliance:
+  - RED：先写 8 测试失败（src/loop-error-controller.ts 不存在）✅
+  - GREEN：实现 controller，8/8 通过 ✅
+  - REFACTOR：删除 dead vars 过 biome lint ✅
+  - Atomic commit：本任务 1 commit（controller + 测试 + progress 偏差记录）

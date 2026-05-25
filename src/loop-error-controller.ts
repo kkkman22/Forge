@@ -1,0 +1,177 @@
+/**
+ * LoopErrorController — implements forge-loop subprocess error handling per
+ * Requirement 10:
+ *   - 10.1: stuck timeout (600s no stdout → SIGTERM, +30s → SIGKILL)
+ *   - 10.2: exit code in {1,2,137,143} → exponential backoff retry ≤3 → abort.json
+ *   - 10.3: other exit codes → immediate abort, no retry
+ *   - 10.4: each retry emits IPC warning {code: "subprocess-retry", attempt}
+ *   - 10.6: l0FailureSignatureCapture writes `l0_failure_signature` into
+ *           abort.json so the dispatcher can downgrade L0 → L1
+ *
+ * AC 10.5 (cleanup-errors.jsonl) lives in the main-loop wrapper — this
+ * controller only owns one iteration.
+ *
+ * See:
+ *   - .kiro/specs/workflows-integration/requirements.md §Requirement 10
+ *   - src/cli-subprocess-driver.ts (signal-chain helper for kill chain)
+ */
+
+import type { ChildProcess } from "node:child_process";
+import { mkdirSync, writeFileSync } from "node:fs";
+import { join } from "node:path";
+
+export const RETRY_EXIT_CODES = new Set([1, 2, 137, 143]);
+export const DEFAULT_STUCK_TIMEOUT_MS = 600_000;
+export const DEFAULT_SIGKILL_DELAY_MS = 30_000;
+export const DEFAULT_BACKOFF_BASE_MS = 60_000;
+export const DEFAULT_MAX_RETRIES = 3;
+
+export type ExitCodeClass = "success" | "retry" | "abort";
+
+export function classifyExitCode(code: number): ExitCodeClass {
+  if (code === 0) return "success";
+  if (RETRY_EXIT_CODES.has(code)) return "retry";
+  return "abort";
+}
+
+export interface CliSpawnRequest {
+  cmd: string;
+  args: string[];
+  env: Record<string, string>;
+  cwd?: string;
+}
+
+export interface IpcWarningFrame {
+  code: string;
+  message: string;
+  attempt?: number;
+  retryable?: boolean;
+}
+
+export interface IpcEmitterLike {
+  warning: (frame: IpcWarningFrame) => void;
+}
+
+export interface LoopErrorControllerDeps {
+  runId: string;
+  runDir: string;
+  /** Spawn the iteration subprocess (caller passes a closure with prepared args). */
+  spawn: (req?: CliSpawnRequest) => ChildProcess;
+  emitter: IpcEmitterLike;
+  stuckTimeoutMs?: number;
+  sigkillDelayMs?: number;
+  maxRetries?: number;
+  backoffBaseMs?: number;
+  /** When true, write `l0_failure_signature` into abort.json (AC 10.6). */
+  l0FailureSignatureCapture?: boolean;
+}
+
+export interface IterationOutcome {
+  success: boolean;
+  exitCode: number;
+  attempts: number;
+}
+
+export async function runIterationWithErrorControl(
+  deps: LoopErrorControllerDeps,
+): Promise<IterationOutcome> {
+  mkdirSync(deps.runDir, { recursive: true });
+  const stuckTimeoutMs = deps.stuckTimeoutMs ?? DEFAULT_STUCK_TIMEOUT_MS;
+  const sigkillDelayMs = deps.sigkillDelayMs ?? DEFAULT_SIGKILL_DELAY_MS;
+  const maxRetries = deps.maxRetries ?? DEFAULT_MAX_RETRIES;
+  const backoffBaseMs = deps.backoffBaseMs ?? DEFAULT_BACKOFF_BASE_MS;
+
+  let attempt = 0;
+
+  while (true) {
+    const code = await runOnce(deps, stuckTimeoutMs, sigkillDelayMs);
+    attempt++;
+
+    const cls = classifyExitCode(code);
+    if (cls === "success") {
+      return { success: true, exitCode: code, attempts: attempt };
+    }
+
+    if (cls === "abort") {
+      writeAbort(deps, code, attempt, "subprocess_crash");
+      throw new Error(
+        `loop-error-controller abort: non-retry exit code ${code} after ${attempt} attempt(s)`,
+      );
+    }
+
+    // cls === "retry"
+    if (attempt > maxRetries) {
+      writeAbort(deps, code, attempt, "stuck_timeout");
+      throw new Error(
+        `loop-error-controller abort: exhausted ${maxRetries} retries (last exit ${code})`,
+      );
+    }
+
+    // Emit warning frame, then exponential backoff.
+    deps.emitter.warning({
+      code: "subprocess-retry",
+      message: `subprocess exited ${code}, retrying (${attempt}/${maxRetries})`,
+      attempt,
+      retryable: true,
+    });
+
+    const backoff = backoffBaseMs * 2 ** (attempt - 1);
+    await sleep(backoff);
+  }
+}
+
+async function runOnce(
+  deps: LoopErrorControllerDeps,
+  stuckTimeoutMs: number,
+  sigkillDelayMs: number,
+): Promise<number> {
+  const child = deps.spawn();
+  let stuckTimer: ReturnType<typeof setTimeout> | null = null;
+  let killTimer: ReturnType<typeof setTimeout> | null = null;
+
+  const armStuckTimer = () => {
+    if (stuckTimer) clearTimeout(stuckTimer);
+    stuckTimer = setTimeout(() => {
+      child.kill?.("SIGTERM");
+      killTimer = setTimeout(() => {
+        child.kill?.("SIGKILL");
+      }, sigkillDelayMs);
+    }, stuckTimeoutMs);
+  };
+
+  child.stdout?.on?.("data", () => {
+    armStuckTimer();
+  });
+
+  armStuckTimer();
+
+  return new Promise<number>((resolve) => {
+    child.on("exit", (code: number | null) => {
+      if (stuckTimer) clearTimeout(stuckTimer);
+      if (killTimer) clearTimeout(killTimer);
+      resolve(code ?? -1);
+    });
+  });
+}
+
+function writeAbort(
+  deps: LoopErrorControllerDeps,
+  exitCode: number,
+  attempts: number,
+  signature: "subprocess_crash" | "stuck_timeout",
+): void {
+  const record: Record<string, unknown> = {
+    run_id: deps.runId,
+    last_exit_code: exitCode,
+    attempts,
+    timestamp: new Date().toISOString(),
+  };
+  if (deps.l0FailureSignatureCapture) {
+    record.l0_failure_signature = signature;
+  }
+  writeFileSync(join(deps.runDir, "abort.json"), `${JSON.stringify(record, null, 2)}\n`);
+}
+
+function sleep(ms: number): Promise<void> {
+  return new Promise((resolve) => setTimeout(resolve, ms));
+}
