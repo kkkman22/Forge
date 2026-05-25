@@ -93,12 +93,35 @@ export async function runWarmUp(deps: WarmUpDeps): Promise<WarmUpResult> {
 
   return new Promise<WarmUpResult>((resolve, reject) => {
     let timedOut = false;
+    let settled = false;
     const timer = setTimeout(() => {
       timedOut = true;
       child.kill?.("SIGTERM");
     }, timeoutMs);
 
+    // Mirror Node spawn semantics: on ENOENT / EACCES the child emits
+    // 'error' and never 'exit'. Propagate as warm-up failure so the
+    // Promise rejects instead of hanging until timeout.
+    child.on("error", (err: Error) => {
+      if (settled) return;
+      settled = true;
+      clearTimeout(timer);
+      writeRecord(deps, {
+        run_id: deps.runId,
+        exit_code: -1,
+        duration_ms: Date.now() - startedAt,
+        timestamp: new Date().toISOString(),
+        tokens: { input: 0, output: 0, cacheRead: 0, cacheCreation: 0 },
+        stderr: stderrBuf,
+        timed_out: false,
+        spawn_error: err.message,
+      });
+      reject(new Error(`warm-up failed: spawn error: ${err.message}`));
+    });
+
     child.on("exit", (code: number | null) => {
+      if (settled) return;
+      settled = true;
       clearTimeout(timer);
       const exitCode = code ?? -1;
       const durationMs = Date.now() - startedAt;

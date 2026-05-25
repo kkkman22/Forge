@@ -70,9 +70,10 @@ export class ClaudeCliAgentAdapter implements AgentInterface {
     adapter.on("event", (evt) => {
       if (evt.type === "assistant") {
         const msg = evt.message as { content?: unknown } | undefined;
-        if (msg && typeof msg.content === "string") {
-          messages.push(msg.content);
-          options?.onMessage?.(msg.content);
+        const text = extractAssistantText(msg);
+        if (text.length > 0) {
+          messages.push(text);
+          options?.onMessage?.(text);
         }
       }
     });
@@ -89,6 +90,14 @@ export class ClaudeCliAgentAdapter implements AgentInterface {
             ? err
             : new IterationFailedError("unknown", err.message),
         );
+      });
+
+      // Mirror Node spawn semantics: on ENOENT / EACCES the child emits
+      // 'error' and never 'exit'. Propagate as iteration failure so the
+      // run() Promise rejects instead of hanging.
+      child.on("error", (err: Error) => {
+        this.current = null;
+        reject(new IterationFailedError("spawn_error", err.message));
       });
 
       // Feed the prompt as a single user NDJSON frame, then close stdin.
@@ -133,4 +142,35 @@ function toTokenUsage(adapter: StreamJsonAdapter): TokenUsage {
     cacheReadTokens: t.cacheRead,
     cacheCreationTokens: t.cacheCreation,
   };
+}
+
+/**
+ * Extract human-visible text from a Claude `assistant` event payload.
+ *
+ * The Anthropic Messages API (and `claude --output-format=stream-json`)
+ * emits `message.content` as an array of content blocks:
+ *   [{ type: "text", text: "..." }, { type: "tool_use", ... }, ...]
+ *
+ * Only `text` blocks contribute to the visible transcript. Tool-use,
+ * image, and other block types are ignored here (they surface via their
+ * own event types upstream). Legacy/test fixtures that pass a string
+ * directly are accepted as a single text block.
+ */
+function extractAssistantText(msg: { content?: unknown } | undefined): string {
+  if (!msg) return "";
+  const c = msg.content;
+  if (typeof c === "string") return c;
+  if (!Array.isArray(c)) return "";
+  const parts: string[] = [];
+  for (const block of c) {
+    if (
+      block &&
+      typeof block === "object" &&
+      (block as { type?: unknown }).type === "text" &&
+      typeof (block as { text?: unknown }).text === "string"
+    ) {
+      parts.push((block as { text: string }).text);
+    }
+  }
+  return parts.join("");
 }

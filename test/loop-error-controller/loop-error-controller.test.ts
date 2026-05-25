@@ -270,3 +270,141 @@ describe("LoopErrorController: AC 10.6 — workflow subprocess crash signature",
     expect(record.l0_failure_signature).toBe("subprocess_crash");
   });
 });
+
+describe("LoopErrorController: F10 — spawn ENOENT / spawn error rejects (no hang)", () => {
+  it("rejects when child emits 'error' before 'exit' (e.g. ENOENT)", async () => {
+    const { emitter } = captureEmitter();
+    const spawn = vi.fn(() => {
+      const child = makeFakeChild();
+      const enoent = Object.assign(new Error("spawn claude ENOENT"), {
+        code: "ENOENT",
+        errno: -2,
+      });
+      // Mirror real Node behaviour: emit 'error' on the next tick; never 'exit'.
+      queueMicrotask(() => child.emit("error", enoent));
+      return child as unknown as ReturnType<LoopErrorControllerDeps["spawn"]>;
+    });
+
+    await expect(
+      runIterationWithErrorControl({
+        runId: "run_enoent",
+        runDir,
+        spawn,
+        emitter,
+        stuckTimeoutMs: 600_000,
+        sigkillDelayMs: 30_000,
+        maxRetries: 0,
+        backoffBaseMs: 60_000,
+      }),
+    ).rejects.toThrow(/ENOENT|spawn/i);
+  });
+});
+
+describe("LoopErrorController: F12 — l0_failure_signature mapping correctness", () => {
+  it("retry exhaustion (137 ceiling) writes 'retry_exhausted', NOT 'stuck_timeout'", async () => {
+    vi.useFakeTimers();
+    const { emitter } = captureEmitter();
+    const spawn = vi.fn(() => {
+      const child = makeFakeChild();
+      // Always exit 137 — but NOT due to a stuck timer firing.
+      queueMicrotask(() => child.emit("exit", 137));
+      return child as unknown as ReturnType<LoopErrorControllerDeps["spawn"]>;
+    });
+
+    const promise = runIterationWithErrorControl({
+      runId: "run_exhaust",
+      runDir,
+      spawn,
+      emitter,
+      stuckTimeoutMs: 600_000,
+      sigkillDelayMs: 30_000,
+      maxRetries: 3,
+      backoffBaseMs: 60_000,
+      l0FailureSignatureCapture: true,
+    });
+    const settled = promise.then(
+      (v) => ({ ok: true as const, v }),
+      (e: Error) => ({ ok: false as const, e }),
+    );
+
+    await vi.advanceTimersByTimeAsync(60_000);
+    await vi.advanceTimersByTimeAsync(120_000);
+    await vi.advanceTimersByTimeAsync(240_000);
+    await vi.advanceTimersByTimeAsync(10);
+
+    const result = await settled;
+    expect(result.ok).toBe(false);
+
+    const record = JSON.parse(readFileSync(join(runDir, "abort.json"), "utf-8"));
+    expect(record.l0_failure_signature).toBe("retry_exhausted");
+  });
+
+  it("stuck timer firing tags 'stuck_timeout' (regardless of subsequent exit code)", async () => {
+    vi.useFakeTimers();
+    const { emitter } = captureEmitter();
+    const spawn = vi.fn(() => {
+      const child = makeFakeChild();
+      // Don't emit 'exit' — let the stuck timer fire SIGTERM. The kill mock is
+      // a no-op so we then synthesise the exit ourselves via SIGKILL path.
+      child.kill = vi.fn((sig) => {
+        if (sig === "SIGTERM") {
+          // simulate that SIGKILL eventually fires and child exits
+          queueMicrotask(() => child.emit("exit", 143));
+        }
+        return true;
+      });
+      return child as unknown as ReturnType<LoopErrorControllerDeps["spawn"]>;
+    });
+
+    const promise = runIterationWithErrorControl({
+      runId: "run_stuck",
+      runDir,
+      spawn,
+      emitter,
+      stuckTimeoutMs: 600_000,
+      sigkillDelayMs: 30_000,
+      maxRetries: 0,
+      backoffBaseMs: 60_000,
+      l0FailureSignatureCapture: true,
+    });
+    const settled = promise.then(
+      (v) => ({ ok: true as const, v }),
+      (e: Error) => ({ ok: false as const, e }),
+    );
+
+    // Advance past the stuck timer.
+    await vi.advanceTimersByTimeAsync(600_001);
+    await vi.advanceTimersByTimeAsync(10);
+
+    const result = await settled;
+    expect(result.ok).toBe(false);
+    const record = JSON.parse(readFileSync(join(runDir, "abort.json"), "utf-8"));
+    expect(record.l0_failure_signature).toBe("stuck_timeout");
+  });
+
+  it("non-retry exit code keeps 'subprocess_crash' signature", async () => {
+    const { emitter } = captureEmitter();
+    const spawn = vi.fn(() => {
+      const child = makeFakeChild();
+      queueMicrotask(() => child.emit("exit", 5)); // not in retry set, no stuck
+      return child as unknown as ReturnType<LoopErrorControllerDeps["spawn"]>;
+    });
+
+    await expect(
+      runIterationWithErrorControl({
+        runId: "run_crash",
+        runDir,
+        spawn,
+        emitter,
+        stuckTimeoutMs: 600_000,
+        sigkillDelayMs: 30_000,
+        maxRetries: 0,
+        backoffBaseMs: 60_000,
+        l0FailureSignatureCapture: true,
+      }),
+    ).rejects.toThrow();
+
+    const record = JSON.parse(readFileSync(join(runDir, "abort.json"), "utf-8"));
+    expect(record.l0_failure_signature).toBe("subprocess_crash");
+  });
+});

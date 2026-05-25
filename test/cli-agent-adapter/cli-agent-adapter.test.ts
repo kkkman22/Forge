@@ -100,6 +100,203 @@ describe("ClaudeCliAgentAdapter: spawn integration shape", () => {
   });
 });
 
+describe("ClaudeCliAgentAdapter: assistant content-blocks extraction (F9)", () => {
+  it("collects text from a single content-block array assistant event", async () => {
+    const seen: string[] = [];
+    const adapter = new ClaudeCliAgentAdapter(
+      makeDeps({
+        spawn: () =>
+          makeFakeChild({
+            stdout: `${JSON.stringify({
+              type: "assistant",
+              message: { content: [{ type: "text", text: "hello from cli" }] },
+            })}\n${JSON.stringify({
+              type: "result",
+              subtype: "success",
+              message: { id: "m1", usage: { input_tokens: 1, output_tokens: 1 } },
+            })}\n`,
+            exitCode: 0,
+          }),
+      }),
+    );
+    const result = await adapter.run("p", "/tmp", { onMessage: (m) => seen.push(m) });
+    expect(result.output.summary).toBe("hello from cli");
+    expect(seen).toEqual(["hello from cli"]);
+  });
+
+  it("joins multiple text blocks within one assistant event", async () => {
+    const adapter = new ClaudeCliAgentAdapter(
+      makeDeps({
+        spawn: () =>
+          makeFakeChild({
+            stdout: `${JSON.stringify({
+              type: "assistant",
+              message: {
+                content: [
+                  { type: "text", text: "first " },
+                  { type: "text", text: "second" },
+                ],
+              },
+            })}\n${JSON.stringify({
+              type: "result",
+              subtype: "success",
+              message: { id: "m1", usage: { input_tokens: 1, output_tokens: 1 } },
+            })}\n`,
+            exitCode: 0,
+          }),
+      }),
+    );
+    const result = await adapter.run("p", "/tmp");
+    expect(result.output.summary).toBe("first second");
+  });
+
+  it("ignores non-text content blocks (tool_use, image, etc.)", async () => {
+    const adapter = new ClaudeCliAgentAdapter(
+      makeDeps({
+        spawn: () =>
+          makeFakeChild({
+            stdout: `${JSON.stringify({
+              type: "assistant",
+              message: {
+                content: [
+                  { type: "text", text: "before" },
+                  { type: "tool_use", id: "tu_1", name: "bash", input: {} },
+                  { type: "text", text: "after" },
+                ],
+              },
+            })}\n${JSON.stringify({
+              type: "result",
+              subtype: "success",
+              message: { id: "m1", usage: { input_tokens: 1, output_tokens: 1 } },
+            })}\n`,
+            exitCode: 0,
+          }),
+      }),
+    );
+    const result = await adapter.run("p", "/tmp");
+    expect(result.output.summary).toBe("beforeafter");
+  });
+
+  it("accumulates text across multiple assistant events", async () => {
+    const adapter = new ClaudeCliAgentAdapter(
+      makeDeps({
+        spawn: () =>
+          makeFakeChild({
+            stdout: `${JSON.stringify({
+              type: "assistant",
+              message: { content: [{ type: "text", text: "a1" }] },
+            })}\n${JSON.stringify({
+              type: "assistant",
+              message: { content: [{ type: "text", text: "a2" }] },
+            })}\n${JSON.stringify({
+              type: "result",
+              subtype: "success",
+              message: { id: "m1", usage: { input_tokens: 1, output_tokens: 1 } },
+            })}\n`,
+            exitCode: 0,
+          }),
+      }),
+    );
+    const result = await adapter.run("p", "/tmp");
+    expect(result.output.summary).toBe("a1\na2");
+  });
+
+  it("treats string content (legacy/fallback) as a single text block", async () => {
+    const adapter = new ClaudeCliAgentAdapter(
+      makeDeps({
+        spawn: () =>
+          makeFakeChild({
+            stdout: `${JSON.stringify({
+              type: "assistant",
+              message: { content: "legacy-string" },
+            })}\n${JSON.stringify({
+              type: "result",
+              subtype: "success",
+              message: { id: "m1", usage: { input_tokens: 1, output_tokens: 1 } },
+            })}\n`,
+            exitCode: 0,
+          }),
+      }),
+    );
+    const result = await adapter.run("p", "/tmp");
+    expect(result.output.summary).toBe("legacy-string");
+  });
+
+  it("emits no message when content array contains only non-text blocks", async () => {
+    const seen: string[] = [];
+    const adapter = new ClaudeCliAgentAdapter(
+      makeDeps({
+        spawn: () =>
+          makeFakeChild({
+            stdout: `${JSON.stringify({
+              type: "assistant",
+              message: {
+                content: [{ type: "tool_use", id: "tu_1", name: "bash", input: {} }],
+              },
+            })}\n${JSON.stringify({
+              type: "result",
+              subtype: "success",
+              message: { id: "m1", usage: { input_tokens: 1, output_tokens: 1 } },
+            })}\n`,
+            exitCode: 0,
+          }),
+      }),
+    );
+    const result = await adapter.run("p", "/tmp", { onMessage: (m) => seen.push(m) });
+    expect(result.output.summary).toBe("");
+    expect(seen).toEqual([]);
+  });
+});
+
+describe("ClaudeCliAgentAdapter: F10 — spawn ENOENT rejects (no hang)", () => {
+  it("rejects the run() Promise when child emits 'error' before 'exit'", async () => {
+    const adapter = new ClaudeCliAgentAdapter(
+      makeDeps({
+        spawn: () => {
+          const child = makeFakeChildEmitError();
+          return child;
+        },
+      }),
+    );
+    await expect(adapter.run("hi", "/tmp")).rejects.toThrow(/ENOENT|spawn/i);
+  });
+});
+
+function makeFakeChildEmitError() {
+  const listeners: Record<string, Array<(...args: unknown[]) => void>> = {};
+  const child = {
+    pid: 12345,
+    stdin: {
+      write: () => true,
+      end: () => {},
+    },
+    stdout: {
+      on: () => {},
+      setEncoding: () => {},
+    },
+    stderr: {
+      on: () => {},
+      setEncoding: () => {},
+    },
+    on: (event: string, cb: (...args: unknown[]) => void) => {
+      listeners[event] ??= [];
+      listeners[event].push(cb);
+      // Mirror Node behaviour: emit 'error' on next tick; never 'exit'.
+      if (event === "error") {
+        queueMicrotask(() => {
+          const enoent = Object.assign(new Error("spawn claude ENOENT"), {
+            code: "ENOENT",
+            errno: -2,
+          });
+          for (const fn of listeners.error ?? []) fn(enoent);
+        });
+      }
+    },
+    kill: () => true,
+  };
+  return child as unknown as import("node:child_process").ChildProcess;
+}
+
 function makeFakeChild(opts: { stdout: string; exitCode: number }) {
   const listeners: Record<string, Array<(...args: unknown[]) => void>> = {};
   const stdoutListeners: Array<(chunk: Buffer) => void> = [];

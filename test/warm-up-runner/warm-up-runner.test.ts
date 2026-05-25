@@ -161,3 +161,19 @@ describe("WarmUpRunner: AC 9.5 — --no-warmup skip", () => {
     expect(existsSync(join(runDir, "warm-up.json"))).toBe(false);
   });
 });
+
+describe("WarmUpRunner: F10 — spawn ENOENT rejects (no hang)", () => {
+  it("rejects when child emits 'error' before 'exit'", async () => {
+    const child = makeFakeChild();
+    const { spawn } = captureSpawn(child);
+
+    const promise = runWarmUp({ runId: "run_enoent", runDir, spawn });
+    const enoent = Object.assign(new Error("spawn claude ENOENT"), {
+      code: "ENOENT",
+      errno: -2,
+    });
+    queueMicrotask(() => child.emit("error", enoent));
+
+    await expect(promise).rejects.toThrow(/ENOENT|spawn/i);
+  });
+});

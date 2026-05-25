@@ -84,12 +84,30 @@ export async function runIterationWithErrorControl(
   let attempt = 0;
 
   while (true) {
-    const code = await runOnce(deps, stuckTimeoutMs, sigkillDelayMs);
+    let outcome: { exitCode: number; stuckTimerFired: boolean };
+    try {
+      outcome = await runOnce(deps, stuckTimeoutMs, sigkillDelayMs);
+    } catch (err) {
+      // child.on("error") fired (e.g. ENOENT). No exit code; map as crash.
+      attempt++;
+      writeAbort(deps, -1, attempt, "subprocess_crash");
+      throw err instanceof Error
+        ? err
+        : new Error(`loop-error-controller spawn error: ${String(err)}`);
+    }
     attempt++;
+    const code = outcome.exitCode;
 
     const cls = classifyExitCode(code);
     if (cls === "success") {
       return { success: true, exitCode: code, attempts: attempt };
+    }
+
+    // Stuck timer firing always tags 'stuck_timeout', regardless of subsequent
+    // exit code (forced-exit 137/143 from our own SIGKILL still means stuck).
+    if (outcome.stuckTimerFired) {
+      writeAbort(deps, code, attempt, "stuck_timeout");
+      throw new Error(`loop-error-controller abort: stuck timeout (last exit ${code})`);
     }
 
     if (cls === "abort") {
@@ -101,7 +119,7 @@ export async function runIterationWithErrorControl(
 
     // cls === "retry"
     if (attempt > maxRetries) {
-      writeAbort(deps, code, attempt, "stuck_timeout");
+      writeAbort(deps, code, attempt, "retry_exhausted");
       throw new Error(
         `loop-error-controller abort: exhausted ${maxRetries} retries (last exit ${code})`,
       );
@@ -124,14 +142,16 @@ async function runOnce(
   deps: LoopErrorControllerDeps,
   stuckTimeoutMs: number,
   sigkillDelayMs: number,
-): Promise<number> {
+): Promise<{ exitCode: number; stuckTimerFired: boolean }> {
   const child = deps.spawn();
   let stuckTimer: ReturnType<typeof setTimeout> | null = null;
   let killTimer: ReturnType<typeof setTimeout> | null = null;
+  let stuckTimerFired = false;
 
   const armStuckTimer = () => {
     if (stuckTimer) clearTimeout(stuckTimer);
     stuckTimer = setTimeout(() => {
+      stuckTimerFired = true;
       child.kill?.("SIGTERM");
       killTimer = setTimeout(() => {
         child.kill?.("SIGKILL");
@@ -145,11 +165,24 @@ async function runOnce(
 
   armStuckTimer();
 
-  return new Promise<number>((resolve) => {
+  return new Promise<{ exitCode: number; stuckTimerFired: boolean }>((resolve, reject) => {
+    let settled = false;
     child.on("exit", (code: number | null) => {
+      if (settled) return;
+      settled = true;
       if (stuckTimer) clearTimeout(stuckTimer);
       if (killTimer) clearTimeout(killTimer);
-      resolve(code ?? -1);
+      resolve({ exitCode: code ?? -1, stuckTimerFired });
+    });
+    // Mirror Node spawn semantics: on ENOENT/EACCES the child emits 'error'
+    // and never 'exit'. Reject so the outer loop can write abort.json and
+    // propagate without hanging.
+    child.on("error", (err: Error) => {
+      if (settled) return;
+      settled = true;
+      if (stuckTimer) clearTimeout(stuckTimer);
+      if (killTimer) clearTimeout(killTimer);
+      reject(err);
     });
   });
 }
@@ -158,7 +191,7 @@ function writeAbort(
   deps: LoopErrorControllerDeps,
   exitCode: number,
   attempts: number,
-  signature: "subprocess_crash" | "stuck_timeout",
+  signature: "subprocess_crash" | "stuck_timeout" | "retry_exhausted",
 ): void {
   const record: Record<string, unknown> = {
     run_id: deps.runId,
