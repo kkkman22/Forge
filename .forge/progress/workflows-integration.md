@@ -280,3 +280,36 @@
   - GREEN：实现 lib，11/11 通过 ✅
   - REFACTOR：biome auto-fix（import 排序）✅
   - Atomic commit：本任务 1 commit（lib + 测试 + progress 块）
+
+### T10: Warm-up 替代 — ⚠️ 部分完成（runner lib + 测试；主循环接入延后到 T11）
+
+#### Handoff Block
+
+- task_id: T10
+- completed:
+  - src/warm-up-runner.ts 新增 `runWarmUp(deps)` 异步函数 + `WarmUpDeps` / `WarmUpResult` / `CliSpawnRequest` 类型
+  - args 契约（AC 9.1/9.2）：spawn `claude --print --output-format=stream-json --input-format=stream-json --include-partial-messages --max-turns 1`；写入单行 NDJSON `{"type":"user","message":{role:"user", content:"_"}}` 后立即 `stdin.end()`
+  - warm-up.json 记录（AC 9.3）：写入 `<runDir>/warm-up.json` 含 `run_id` / `exit_code` / `duration_ms` / `timestamp` / `tokens` / `stderr` / `timed_out`；`tokens` 字段全 0（warm-up 消耗不计入 `--max-tokens` 配额）；返回值 `deductFromBudget: false` 显式标识
+  - 失败中止（AC 9.4）：非 0 退出码 → reject `Error("warm-up failed (exit N): <stderr>")`；30s 超时 → kill SIGTERM + reject `Error("warm-up timeout")`；两种失败路径都仍写出 warm-up.json 用于审计
+  - skip 路径（AC 9.5）：`skip: true`（来自 `--no-warmup` flag）→ 0ms 返回 `{skipped: true}`，不 spawn 子进程，不写文件
+  - test/warm-up-runner/warm-up-runner.test.ts 6 个测试覆盖 AC 9.1 / 9.2 / 9.3 / 9.4（含 30s 超时 path）/ 9.5：
+    - 9.1/9.2：args 集合包含 `--print`、`--output-format=stream-json`、`--max-turns 1`；stdin 收到合法 user NDJSON 帧；end() 被调用
+    - 9.3：warm-up.json 存在且字段齐全；tokens baseline 全 0；deductFromBudget=false
+    - 9.4：非 0 退出 reject 含 stderr passthrough；30s timer 触发 SIGTERM kill 后 reject `/timeout/i`
+    - 9.5：skip 路径不 spawn，无文件写入
+- not_completed:
+  - **forge-loop-cli.ts 主循环接入 + `--no-warmup` flag 注册**：本任务范围内**未实施**。原因：runner 的 first-spawn 注入需要与 T11 retry/timeout 改造统一拆除 `startup()` 的 warm-query 路径（forge-loop-cli.ts:30 import + L504 `await startup({...})`）；中间状态会让 forge-loop 同时持有 SDK warm-query handle 和 CLI warm-up runner，行为分裂。决定：runner 提供与 deprecate 注释**安全可单独合并**；接入主循环 + 注册 commander flag **必须**与 T11 一起交付。Plan 文档对应位置补 `decided_in_T10` 注释。
+  - commander `--no-warmup` flag：T11 在主循环接入时同步注册（默认 false）
+  - dist 同步：T11 切换默认 driver 时统一执行 `npm run build`
+- commands_executed:
+  - `npx vitest run test/warm-up-runner/` → 6/6 pass（含 30s fake-timer 超时路径无 unhandled rejection）
+  - `npx tsc --noEmit` → 0 errors
+  - `npx biome check --write src/warm-up-runner.ts test/warm-up-runner/` → 0 errors（auto-fix import 折叠）
+- issues_found:
+  - 测试模式权衡：30s fake-timer 超时测试需要在 `runWarmUp` 返回 promise 后**立即**附加 `.then(ok, err)` rejection handler，否则 vitest fake-timer 推进时 reject 比 expect handler 先抵达 → unhandled rejection。已采用 settled-pattern（`promise.then(v=>{ok}, e=>{err})`）规避
+  - skip 路径不写 warm-up.json：选择"跳过 = 没发生"语义而不是"写一条 skipped:true 记录"，与 §config Guarded_Zone 仅追加原则不冲突（不写就是 0 增量），且避免 dispatch 层后续做差异判定
+- procedure_compliance:
+  - RED：先写 6 测试失败（src/warm-up-runner.ts 不存在）✅
+  - GREEN：实现 runner，6/6 通过 ✅
+  - REFACTOR：biome auto-fix import 折叠 ✅
+  - Atomic commit：本任务 1 commit（runner + 测试 + progress 偏差记录）
