@@ -62,8 +62,8 @@ export interface SdkDriverConfig {
   runId: string;
   /** Path to the run directory. */
   runDir: string;
-  /** Pre-warmed Agent SDK query handle. */
-  warmQuery: unknown;
+  /** Pre-warmed Agent SDK query handle (optional after CliSubprocessDriver migration). */
+  warmQuery?: unknown;
   /** Base commit SHA for branch commit counting. */
   baseCommit: string;
   /** Path to the notes.md file for persistence. */
