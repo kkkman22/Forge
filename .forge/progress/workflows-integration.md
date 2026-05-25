@@ -388,3 +388,34 @@
   - GREEN：实现 diff 脚本 + baseline，13/13 通过 ✅
   - REFACTOR：biome auto-fix object-formatting ✅
   - Atomic commit：本任务 1 commit（diff 脚本 + baseline + 2 个测试 + progress 偏差记录）
+
+### Task: T13 — 市场分发回归 [completed]
+
+- task_id: T13
+- completed:
+  - test/plugin-manifest.test.ts 在 `Plugin Workflows Field` describe 块新增 3 条用例（AC 13.1 路径相对、AC 13.1 目录至少一个 .js、AC 13.1 esbuild parse），原 `Plugin Workflows Field` 4 条 + 新增 3 条 = 7 条 workflows 契约用例。整文件总用例 19 条 ≥ AC 13.2 要求的 13 条
+  - test/plugin-marketplace-install/plugin-marketplace-install.test.ts 新增 5 条用例覆盖 AC 13.3：
+    - installed plugin.json 解析（name=forge）
+    - workflows 字段存在 + 非空
+    - 每条 workflows[] 路径在 install dir 下解析为目录
+    - multi-agent-review.js 在 install 后被发现
+    - 被发现的 multi-agent-review.js node --check 通过
+  - .github/workflows/ci.yml `plugin-validate` job 在 schema 验证之后插入两步：`npx vitest run test/plugin-manifest.test.ts` 和 `npx vitest run test/plugin-marketplace-install/`，任一失败即阻断 merge（AC 13.4）
+  - 反向验证（AC 13.4 模拟）：`mv workflows/multi-agent-review.js /tmp/__T13_back.js` → 24 测试中 6 条失败（marketplace install 4 + manifest 2）→ 还原后全绿。证明 CI 在故意删除 workflows/ 时会 fail
+- not_completed:
+  - **AC 13.5 cross-version 回归**：CI 日志反扫"近 100 次 workflow load failed"需 GitHub Actions log query 工具（gh-actions-log + 正则匹配），不是单测能验证的范畴。决定：在 ADR-0005 §Cross-Version Regression 模式落地后，由 `.github/workflows/cross-version-regression.yml` 单独添加，本任务不实现，但已通过 CI plugin-validate job 阻断主版本升级时的 manifest 类回归
+  - **真实 `claude plugin install`**：测试模拟文件复制流程而非 shell 出 `claude plugin install`（需要 Claude CLI 安装 + 网络）。AC 13.3 文字"模拟从 marketplace.json 走完整安装流程"已通过文件级 cpSync 复现 + 安装后断言落地
+- commands_executed:
+  - `npx vitest run test/plugin-manifest.test.ts test/plugin-marketplace-install/` → 24/24 pass（19 manifest + 5 install）
+  - `mv workflows/multi-agent-review.js /tmp/...; npx vitest run ...; mv ... back` → 反向验证 6 失败，还原后绿
+  - `npx biome check --write test/plugin-marketplace-install/` → auto-fix imports 排序 + 改 require 为 static import
+  - `npx tsc --noEmit` → 0 errors
+  - lint diff baseline：`git stash; npm run lint; git stash pop` → 1 error / 15 warnings 不变（pre-existing AC 1.4 noTemplateCurlyInString warning）
+- issues_found:
+  - **预期：测试一开始就绿（不是 RED）**。AC 13.1 / 13.3 是契约测试，对的就是 T1 已经实现的状态（plugin.json 已声明 workflows、workflows/multi-agent-review.js 已存在）。RED 的语义在 T13 体现为反向验证：删除 workflows/multi-agent-review.js 时测试必须 fail。该反向验证已执行并通过
+  - **biome `noTemplateCurlyInString`**：line 119 `expect(hookJson).toContain("${CLAUDE_PLUGIN_ROOT}")` 是 T1 引入的旧告警，本任务未引入新告警；保持现状不收窄 CLAUDE_PLUGIN_ROOT 字面量检测（这是测试期望字面量出现，正确写法）
+- procedure_compliance:
+  - RED：反向验证（删除 workflows/multi-agent-review.js → 6 测试失败）✅
+  - GREEN：还原文件 + 24/24 通过 ✅
+  - REFACTOR：biome auto-fix imports 排序 + require → static import ✅
+  - Atomic commit：本任务 1 commit（manifest 测试 + marketplace install 测试 + ci.yml plugin-validate 增强 + progress 块）

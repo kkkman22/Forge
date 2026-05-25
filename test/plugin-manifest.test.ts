@@ -118,6 +118,41 @@ describe("Plugin Workflows Field (R1: workflows-integration)", () => {
     const hookJson = JSON.stringify(manifest.hooks);
     expect(hookJson).toContain("${CLAUDE_PLUGIN_ROOT}");
   });
+
+  it("AC 13.1: every workflows[] path is relative (does not start with / or ~)", () => {
+    const manifest = JSON.parse(readFileSync(pluginPath, "utf-8"));
+    for (const entry of manifest.workflows) {
+      expect(typeof entry).toBe("string");
+      expect(entry.startsWith("/")).toBe(false);
+      expect(entry.startsWith("~")).toBe(false);
+    }
+  });
+
+  it("AC 13.1: every workflows[] directory contains at least one .js file", () => {
+    const manifest = JSON.parse(readFileSync(pluginPath, "utf-8"));
+    for (const entry of manifest.workflows) {
+      const absDir = join(ROOT, entry);
+      expect(existsSync(absDir)).toBe(true);
+      const jsFiles = readdirSync(absDir).filter((f) => f.endsWith(".js"));
+      expect(jsFiles.length).toBeGreaterThan(0);
+    }
+  });
+
+  it("AC 13.1: at least one .js in workflows/ parses via esbuild --analyze", () => {
+    const jsFiles = readdirSync(workflowsDir).filter((f) => f.endsWith(".js"));
+    expect(jsFiles.length).toBeGreaterThan(0);
+    let parsedAtLeastOne = false;
+    for (const f of jsFiles) {
+      const result = execFileSync(
+        "npx",
+        ["--no-install", "esbuild", join(workflowsDir, f), "--bundle=false", "--log-level=silent"],
+        { stdio: "pipe" },
+      );
+      expect(result.length).toBeGreaterThan(0);
+      parsedAtLeastOne = true;
+    }
+    expect(parsedAtLeastOne).toBe(true);
+  });
 });
 
 describe("Plugin Asset Integrity", () => {
