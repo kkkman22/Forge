@@ -17,7 +17,7 @@ status: open
 | F5 | P1 | (cleanup hook) | Implement `.forge/runs/<runId>/cleanup-errors.jsonl` + worktree/PID/sleep-prevent cleanup (R10.5) | unfixed |
 | F6 | P1 | `.github/workflows/cross-version-regression.yml` | Add cross-version regression workflow (R13.5) | unfixed |
 | F7 | P1 | `src/workflow-dispatcher.ts` | 429 listener → dynamic degradation 6→3→2→1 → env injection (R12.5) | unfixed |
-| F8 | P1 | `tool-health.md` writer | flock advisory lock + 5-process concurrent append safety test (R12.7) | unfixed |
+| F8 | P1 | `tool-health.md` writer | flock advisory lock + 5-process concurrent append safety test (R12.7) | fixed |
 | F9 | P1 | `src/cli-agent-adapter.ts:71-78` | Iterate `msg.content` as array of blocks (text). Add real-fixture test | fixed |
 | F10 | P1 | `cli-agent-adapter.ts:64-118` + `warm-up-runner.ts:75-130` + `loop-error-controller.ts:128-155` | Attach `child.on("error", reject)` on every spawn; ENOENT injection test | fixed |
 | F11 | P1 | `workflow-audit-writer.ts:89-99` vs `workflow-dispatcher.ts:54-71,172-178` | Single source of truth for `dispatch.jsonl` schema; contract test on every line | fixed |
