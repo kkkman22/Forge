@@ -419,3 +419,42 @@
   - GREEN：还原文件 + 24/24 通过 ✅
   - REFACTOR：biome auto-fix imports 排序 + require → static import ✅
   - Atomic commit：本任务 1 commit（manifest 测试 + marketplace install 测试 + ci.yml plugin-validate 增强 + progress 块）
+
+### Task: T14 — CLI flag 兼容性回归 [completed]
+
+- task_id: T14
+- completed:
+  - test/cli-flag-compat/cli-flag-compat.test.ts 新增 34 条用例覆盖 Requirement 7 / AC 7.1–7.5：
+    - AC 7.1（2 条）：源码声明 21 个保留 flag 字面（regex `"<flag>[ <\\["]`）；option block 内不存在新增/删除 flag（blockStart 锚 `.name("forge-loop")`，blockEnd 锚下一个 `.action(`）
+    - AC 7.2（21 条）：每个 flag 一条 parse smoke，断言 `program.parse(["obj", ...argv], { from: "user" })` 成功且 `opts[expectKey]` defined（boolean 类 flag 还断言值为 true）
+    - AC 7.3（2 条）：`--unknown-flag` 与 `--max-iter`（typo / 短化保留 flag）通过 `exitOverride()` 抛出 + 非零退出
+    - AC 7.4（1 条）：boolean flag (`--worktree` / `--pua` / `--force-no-hooks`) 在 `.option(...)` 调用窗口（前 400 字符）内出现 `, false)`；string flag (`--prevent-sleep` / `--log-format` / `--log-level` / `--agent`) 各自匹配预期默认值字面
+    - AC 7.5（4 条）：baseline 文件存在；baseline 含全部 21 flag；当前 helpInformation() 含全部 21 flag；snapshot equality 用 `extractFlagLines`（提取以 `--` 开头的行 → trim → 折叠空白 → 排序后 deepEqual）
+    - 进程级 smoke（1 条）：`tsx src/forge-loop-cli.ts objective --definitely-unknown` 退出非零 + stderr 含 `unknown option`，tsx 缺失时跳过
+    - 自检（3 条）：`RESERVED_FLAGS_21.length === 21`、CLI 源码可读、node child_process 可用
+  - scripts/record-help-baseline.mjs 新增（chmod +x）：CLI 入口 `node scripts/record-help-baseline.mjs [--check|--help]`。`buildProgram()` 镜像 src/forge-loop-cli.ts L234–L264 的 commander 选项块，调用 `helpInformation()` 写入 `test/cli-flag-compat/fixtures/help-baseline.txt`。`--check` 模式：读 baseline、与当前生成对照（trim 后 strict equal），漂移 → 非零退出
+  - test/cli-flag-compat/fixtures/help-baseline.txt 录制完成：覆盖 21 个保留 flag + `-h, --help`
+  - .github/workflows/ci.yml `plugin-validate` job 在 T13 两步基础上再插入 2 步：`npx vitest run test/cli-flag-compat/`（AC 7.1–7.5 单测）、`node scripts/record-help-baseline.mjs --check`（AC 7.5 baseline drift gate）
+  - §2.8 合规：`record-help-baseline.mjs` 支持 `--help`，避免 user-facing 脚本黑盒缺口
+- not_completed:
+  - **主循环 record-replay**：T8 / T10 / T11 / T12 / T14 累计的"主循环切换 SDK→stream-json"集成性改动仍待一次合并 commit（替换 `agentRegistry.resolve('claude')` → `ClaudeCliAgentAdapter`、注册 `--no-warmup` flag、接入 `runWarmUp` 与 `runIterationWithErrorControl`、AC 10.5 cleanup-errors.jsonl）。本任务没有把这些放入 commit，因为 T14 的范围是"CLI 字面兼容回归测试"，不是"换芯落地"。一旦换芯 commit 落地，T14 的 process-level smoke 测试将自动覆盖到真实 startup 路径
+  - **`--help` 真实 binary 比对**：测试中的 `current --help` 由 commander 的 helpInformation() 生成而非 spawn `forge-loop --help`，避免 dist build 依赖。binary 形态的 smoke 通过 tsx 跑 `--definitely-unknown` 实测了 `unknown option` 路径，足以验证主循环 commander 装配未坏
+- commands_executed:
+  - `npx vitest run test/cli-flag-compat/` → 34/34 pass
+  - `node scripts/record-help-baseline.mjs` → 写入 fixtures/help-baseline.txt
+  - `node scripts/record-help-baseline.mjs --check` → `help baseline OK`
+  - `npx tsc --noEmit` → 0 errors
+  - `npx biome check --write test/cli-flag-compat/ scripts/record-help-baseline.mjs` → auto-fix imports + 多行 expect 折叠 + 转义字符类清理
+  - lint diff baseline：1 error / 15 warnings（pre-existing T1 noTemplateCurlyInString，未变化）
+- issues_found:
+  - **regex 迭代 4 轮**（每一轮都因为 commander option block 的细节）：
+    1. `program.parse(["node","forge-loop","obj",...argv], { from:"user" })` 把 node+script 当成 commander 用户参数 → 第一次 24 fail。修：`from: "user"` 时直接传 `["obj", ...argv]`
+    2. `--force-no-hooks` 的 description 是 `"Skip hooks protection validation (use at your own risk)"`，里面带 `)` → 原本用 `[^)]` 的字符类不能匹配跨 `)` 的尾部 `, false)`。修：改为 `src.indexOf(`.option("--flag"`)` 锚定，slice 400 字符前向，然后正则 `/,\s*false\s*\)/`
+    3. `--sandbox` / `--pua-task-type` / `--resume` 用多行 `.option(\n  "--xxx"` 形式，原 regex `\.option\("--[a-z-]+` 单行匹配漏掉它们 → declaredFlags 缺成员。修：改为 `"--[a-z-]+(?=[ <"\[])` 在整 option block 内 token 扫描
+    4. 第一次 anchor 用 `program[\s\S]*?\.action\(` 非贪婪匹配，结果命中 skillCmd 子命令的 `.action(`（在 forge-loop block 之前的 L209）→ declaredFlags 为空。修：改为 `blockStart = src.indexOf('.name("forge-loop")')`、`blockEnd = src.indexOf(".action(", blockStart)`
+  - **CI 顺序**：本次把 cli-flag-compat 与 baseline drift 检查放在 plugin-validate job 而非独立 job，因为它们与 plugin manifest 同属"接口契约 gate"，复用 npm ci 缓存
+- procedure_compliance:
+  - RED：先写 34 测试、第一次跑就 24 fail（commander parse 误用 + regex 边界）✅
+  - GREEN：按上述 4 轮迭代修正，34/34 pass ✅
+  - REFACTOR：biome auto-fix imports 排序、多行 expect 折叠、字符类内转义清理 ✅
+  - Atomic commit：本任务 1 commit（cli-flag-compat 测试 34 条 + record-help-baseline 脚本 + baseline fixture + ci.yml plugin-validate 增强 + progress T14 块）
