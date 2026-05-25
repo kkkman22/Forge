@@ -1,5 +1,5 @@
-import { existsSync, mkdirSync, readFileSync, writeFileSync, appendFileSync } from "node:fs";
 import { execSync } from "node:child_process";
+import { appendFileSync, existsSync, mkdirSync, readFileSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
 
 // ---------------------------------------------------------------------------
@@ -111,7 +111,10 @@ export function probeL0Eligibility(ctx: DispatchContext): ProbeResult {
   }
 
   const workflowSrc = readFileSync(workflowFile, "utf-8");
-  if (!workflowSrc.includes("from './lib/concurrency") && !workflowSrc.includes('from "./lib/concurrency')) {
+  if (
+    !workflowSrc.includes("from './lib/concurrency") &&
+    !workflowSrc.includes('from "./lib/concurrency')
+  ) {
     return { eligible: false, reason: "concurrency_uncontrolled" };
   }
 
@@ -127,7 +130,8 @@ export function classifyL0Failure(err: Error): L0FailureSignature {
   if (msg.includes("frozenzone") || msg.includes("frozen_zone")) return "frozen_zone_blocked";
   if (msg.includes("schema validation")) return "schema_validation_failed";
   if (msg.includes("stuck timeout") || msg.includes("stuck_timeout")) return "stuck_timeout";
-  if (msg.includes("subprocess") || msg.includes("exit code") || msg.includes("crash")) return "subprocess_crash";
+  if (msg.includes("subprocess") || msg.includes("exit code") || msg.includes("crash"))
+    return "subprocess_crash";
   return "bp_exception";
 }
 
@@ -135,7 +139,10 @@ export function classifyL0Failure(err: Error): L0FailureSignature {
 // dispatch — L0 try + L1 fallback
 // ---------------------------------------------------------------------------
 
-export async function dispatch(ctx: DispatchContext, deps: DispatchDeps = {}): Promise<DispatchResult> {
+export async function dispatch(
+  ctx: DispatchContext,
+  deps: DispatchDeps = {},
+): Promise<DispatchResult> {
   const probe = probeL0Eligibility(ctx);
 
   if (!probe.eligible) {
@@ -151,7 +158,8 @@ export async function dispatch(ctx: DispatchContext, deps: DispatchDeps = {}): P
     return {
       chosenLevel: "L1",
       l1TriggerReason: probe.reason ?? "unmatched_state",
-      methodology: (fallbackResult as Record<string, unknown>)?.methodology as string ?? "subagent-parallel",
+      methodology:
+        ((fallbackResult as Record<string, unknown>)?.methodology as string) ?? "subagent-parallel",
       payload: fallbackResult,
     };
   }

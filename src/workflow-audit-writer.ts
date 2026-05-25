@@ -62,11 +62,7 @@ export class WorkflowAuditWriter {
       case "review":
         return join(this.forgeRoot, "reviews", `${target.topic}.md`);
       case "decide":
-        return join(
-          this.forgeRoot,
-          "decisions",
-          `${isoDate()}-${slugify(target.topic)}.md`,
-        );
+        return join(this.forgeRoot, "decisions", `${isoDate()}-${slugify(target.topic)}.md`);
       case "learn":
         return join(this.forgeRoot, "knowledge", "sessions", `${target.runId}.md`);
     }
@@ -82,7 +78,10 @@ function isoDate(): string {
 }
 
 function slugify(s: string): string {
-  return s.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "");
+  return s
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, "-")
+    .replace(/^-|-$/g, "");
 }
 
 function formatPayload(target: AuditWriteTarget): string {
