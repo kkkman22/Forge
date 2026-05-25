@@ -50,3 +50,9 @@
 {"timestamp":"2026-05-24T13:36:51Z","event":"postcompact_restore","detail":"slug=cmux-claude-uplift-064"}
 {"timestamp":"2026-05-24T13:36:51Z","event":"precompact_snapshot","detail":"slug=cmux-claude-uplift-064 phase=build"}
 {"timestamp":"2026-05-24T14:27:07Z","event":"precompact_snapshot","detail":"slug=docs-governance-system phase=build"}
+{"timestamp":"2026-05-24T23:37:11Z","event":"postcompact_restore","detail":"slug=cmux-claude-uplift-064"}
+{"timestamp":"2026-05-24T23:37:11Z","event":"precompact_snapshot","detail":"slug=docs-governance-system phase=ship completed=0
+0 pending=11"}
+{"timestamp":"2026-05-24T23:38:38Z","event":"postcompact_restore","detail":"slug=docs-governance-system"}
+{"timestamp":"2026-05-24T23:38:38Z","event":"precompact_snapshot","detail":"slug=docs-governance-system phase=ship completed=0
+0 pending=11"}

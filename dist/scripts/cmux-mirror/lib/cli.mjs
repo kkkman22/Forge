@@ -1,13 +1,26 @@
 import { execFile } from "node:child_process";
 import { markUnavailable } from "./availability.mjs";
 const DEFAULT_TIMEOUT_MS = 5000;
+const SAFE_WINDOW_ID = /^[A-Za-z0-9._:-]{1,64}$/;
+function resolveWindowId(opts) {
+    const candidate = opts.windowId ?? process.env.CMUX_WINDOW_ID ?? "";
+    if (!candidate)
+        return null;
+    if (candidate.includes(".."))
+        return null;
+    if (!SAFE_WINDOW_ID.test(candidate))
+        return null;
+    return candidate;
+}
 /**
  * Run a cmux CLI command (R1.4, R11.2).
  * Returns null on EPIPE/ECONNREFUSED/ENOENT (triggers markUnavailable).
  */
-export function runCli(args, { timeoutMs = DEFAULT_TIMEOUT_MS } = {}) {
+export function runCli(args, { timeoutMs = DEFAULT_TIMEOUT_MS, windowId } = {}) {
+    const winId = resolveWindowId({ windowId });
+    const finalArgs = winId ? ["--window", winId, ...args] : args;
     return new Promise((resolve) => {
-        execFile("cmux", args, { timeout: timeoutMs }, (err, stdout, stderr) => {
+        execFile("cmux", finalArgs, { timeout: timeoutMs }, (err, stdout, stderr) => {
             if (err) {
                 const msg = (err.message ?? "").toLowerCase();
                 if (err.code === "ENOENT" ||
