@@ -79,6 +79,44 @@ describe("Commands Directory", () => {
   });
 });
 
+describe("Plugin Workflows Field (R1: workflows-integration)", () => {
+  const pluginPath = join(ROOT, ".claude-plugin", "plugin.json");
+  const workflowsDir = join(ROOT, "workflows");
+  const multiAgentReview = join(workflowsDir, "multi-agent-review.js");
+
+  it("AC 1.1: plugin.json declares workflows field with ./workflows", () => {
+    const manifest = JSON.parse(readFileSync(pluginPath, "utf-8"));
+    expect(manifest.workflows).toBeDefined();
+    expect(Array.isArray(manifest.workflows)).toBe(true);
+    expect(manifest.workflows).toContain("./workflows");
+  });
+
+  it("AC 1.2: workflows/multi-agent-review.js exists at plugin root", () => {
+    expect(existsSync(workflowsDir)).toBe(true);
+    expect(existsSync(multiAgentReview)).toBe(true);
+  });
+
+  it("AC 1.2: multi-agent-review.js parses as valid JavaScript", () => {
+    const source = readFileSync(multiAgentReview, "utf-8");
+    expect(source.length).toBeGreaterThan(0);
+    expect(() => new Function(source)).not.toThrow();
+  });
+
+  it("AC 1.4: existing workflows field does not break mcpServers/hooks paths", () => {
+    const manifest = JSON.parse(readFileSync(pluginPath, "utf-8"));
+    expect(manifest.mcpServers).toBeDefined();
+    expect(manifest.mcpServers["forge-context"]).toBeDefined();
+    expect(manifest.hooks).toBeDefined();
+    expect(manifest.hooks.SessionStart).toBeDefined();
+    expect(manifest.hooks.UserPromptSubmit).toBeDefined();
+    expect(manifest.hooks.PreToolUse).toBeDefined();
+    expect(manifest.hooks.PostToolUse).toBeDefined();
+    expect(manifest.hooks.Stop).toBeDefined();
+    const hookJson = JSON.stringify(manifest.hooks);
+    expect(hookJson).toContain("${CLAUDE_PLUGIN_ROOT}");
+  });
+});
+
 describe("Plugin Asset Integrity", () => {
   it("skills/forge/lib has >= 25 sub-skill directories", () => {
     const libDir = join(ROOT, "skills", "forge", "lib");
