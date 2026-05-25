@@ -108,3 +108,40 @@ describe("Plugin Asset Integrity", () => {
     }
   });
 });
+
+describe("Workflows Field", () => {
+  const pluginPath = join(ROOT, ".claude-plugin", "plugin.json");
+
+  it("plugin.json declares workflows field with relative path", () => {
+    const plugin = JSON.parse(readFileSync(pluginPath, "utf-8"));
+    expect(plugin.workflows).toBeDefined();
+    expect(plugin.workflows).toBeInstanceOf(Array);
+    expect(plugin.workflows).toContain("./workflows");
+  });
+
+  it("workflows directory exists at plugin root", () => {
+    const plugin = JSON.parse(readFileSync(pluginPath, "utf-8"));
+    const workflowsDir = join(ROOT, plugin.workflows[0]);
+    expect(existsSync(workflowsDir)).toBe(true);
+    expect(readdirSync(workflowsDir).filter((f) => f.endsWith(".js")).length).toBeGreaterThan(0);
+  });
+
+  it("multi-agent-review.js exists in workflows directory", () => {
+    const plugin = JSON.parse(readFileSync(pluginPath, "utf-8"));
+    const reviewWorkflow = join(ROOT, plugin.workflows[0], "multi-agent-review.js");
+    expect(existsSync(reviewWorkflow)).toBe(true);
+  });
+
+  it("workflows JS files pass node --check syntax validation", () => {
+    const plugin = JSON.parse(readFileSync(pluginPath, "utf-8"));
+    const workflowsDir = join(ROOT, plugin.workflows[0]);
+    const jsFiles = readdirSync(workflowsDir)
+      .filter((f) => f.endsWith(".js"))
+      .map((f) => join(workflowsDir, f));
+
+    for (const file of jsFiles) {
+      const { execSync } = require("node:child_process");
+      expect(() => execSync(`node --check "${file}"`, { stdio: "pipe" })).not.toThrow();
+    }
+  });
+});

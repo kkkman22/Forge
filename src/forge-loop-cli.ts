@@ -27,17 +27,16 @@ import {
   writeFileSync,
 } from "node:fs";
 import path from "node:path";
-import { startup } from "@anthropic-ai/claude-agent-sdk";
 import { Command } from "commander";
-
-import { buildAgentOutputSchema } from "./agent-output.js";
-import { createAgentRegistry, registerBuiltinAgents } from "./agent-registry.js";
 import { CliError } from "./cli-error.js";
+import { CliSubprocessDriver } from "./cli-subprocess-driver.js";
 import { extractConfigLang, mergeLogConfig, parseLogConfig } from "./config-store.js";
 import { formatNotesDocument } from "./context-accumulator.js";
 import { EffectExecutor } from "./effect-executor.js";
+import { classifyExitCode } from "./error-handler.js";
 import { ensureGlossaryExists, type GlossaryFs } from "./glossary-driver.js";
 import { type I18nConfig, parseTranslationFile, translate } from "./i18n.js";
+import { IpcEmitter } from "./ipc-emitter.js";
 import { detectLocale } from "./locale-detector.js";
 import {
   createDualSink,
@@ -191,6 +190,7 @@ interface CliOptions {
   forceNoHooks?: boolean;
   skillsDir?: string;
   agent?: string;
+  noWarmup?: boolean;
 }
 
 // ---------------------------------------------------------------------------
@@ -262,6 +262,7 @@ async function main(): Promise<void> {
     .option("--force-no-hooks", "Skip hooks protection validation (use at your own risk)", false)
     .option("--skills-dir <path>", "Load external SKILL plugins from directory")
     .option("--agent <name>", "Agent to use for iterations (claude|mock)", "claude")
+    .option("--no-warmup", "Skip warm-up spawn (for sandbox/CI)", false)
     .action(async (objective: string, opts: CliOptions) => {
       const cwd = process.cwd();
       const preventSleep = opts.preventSleep !== "off";
@@ -495,27 +496,6 @@ async function main(): Promise<void> {
       }
 
       // ---------------------------------------------------------------
-      // Pre-warm Agent SDK
-      // ---------------------------------------------------------------
-      // Pass bypassPermissions to startup() so the warm-query subprocess
-      // is spawned with the correct permission mode from the start.
-      // Without this, the pre-warmed subprocess uses "default" mode and
-      // hangs waiting for interactive permission approval that never comes.
-      const warmQuery = await startup({
-        options: {
-          permissionMode: "bypassPermissions",
-          allowDangerouslySkipPermissions: true,
-        },
-      });
-
-      // ---------------------------------------------------------------
-      // Build output schema
-      // ---------------------------------------------------------------
-      const outputSchema = buildAgentOutputSchema({
-        includeStopField: !!opts.stopWhen,
-      });
-
-      // ---------------------------------------------------------------
       // Create AgentRegistry, register builtins, and resolve agent
       // ---------------------------------------------------------------
       // Load sandbox profile if --sandbox is specified
@@ -531,21 +511,7 @@ async function main(): Promise<void> {
         }
       }
 
-      const agentRegistry = createAgentRegistry();
-      registerBuiltinAgents(agentRegistry, { warmQuery, outputSchema, sandboxProfile });
-
       const agentName = opts.agent ?? "claude";
-
-      if (!agentRegistry.has(agentName)) {
-        throw new CliError(
-          `Error: Invalid --agent value "${agentName}". Available agents: ${agentRegistry.listAgents().join(", ")}`,
-        );
-      }
-
-      const agentAdapter = agentRegistry.resolve(agentName, {
-        cwd,
-        budgetUsd: opts.maxBudgetUsd,
-      });
 
       const loopConfig: LoopConfig = {
         agent: agentName as LoopConfig["agent"],
@@ -627,20 +593,70 @@ async function main(): Promise<void> {
       }
 
       // Emit structured run_started event for downstream consumers (desktop app, CI).
-      // biome-ignore lint/suspicious/noConsole: structured event emitted before logSink exists
-      console.log(
-        JSON.stringify({
-          event: "forge_loop_run_started",
-          run_id: runSetup.runId,
-          branch_name: runSetup.branchName,
-          worktree_path: worktreePath ?? null,
-        }),
-      );
+      const ipcEmitter = new IpcEmitter(runSetup.runId);
+      ipcEmitter.emitVersion();
+      ipcEmitter.emit({
+        event: "forge_loop_run_started",
+        branch_name: runSetup.branchName,
+        worktree_path: worktreePath ?? null,
+      });
 
       // ---------------------------------------------------------------
       // Spawn sleep prevention process
       // ---------------------------------------------------------------
       let sleepProcess: ChildProcess | null = null;
+
+      // Warm-up spawn + Agent adapter (moved after runSetup is available)
+      if (!opts.noWarmup) {
+        const warmupArgs = [
+          "--print",
+          "--output-format=stream-json",
+          "--max-turns=1",
+          "--permission-mode=bypassPermissions",
+          "--dangerously-skip-permissions",
+        ];
+        const warmupEnv = { ...process.env, CLAUDE_CODE_WORKFLOWS: "1" };
+        const warmup = spawn("claude", warmupArgs, {
+          cwd: effectiveCwd,
+          env: warmupEnv,
+          stdio: ["pipe", "pipe", "pipe"],
+        });
+        warmup.stdin?.write(
+          `${JSON.stringify({ type: "user", message: { role: "user", content: "_" } })}\n`,
+        );
+        warmup.stdin?.end();
+
+        const warmupExitCode = await new Promise<number>((resolve) => {
+          const timeout = setTimeout(() => {
+            warmup.kill("SIGKILL");
+            resolve(1);
+          }, 30_000);
+          warmup.on("exit", (code) => {
+            clearTimeout(timeout);
+            resolve(code ?? 1);
+          });
+        });
+
+        if (warmupExitCode !== 0) {
+          throw new CliError(`Warm-up failed (exit ${warmupExitCode})`);
+        }
+        writeFileSync(
+          path.join(runSetup.runDir, "warm-up.json"),
+          JSON.stringify({ exitCode: warmupExitCode }),
+        );
+      } // end warmup gate
+
+      // Agent adapter: CliSubprocessDriver replaces agent-sdk
+      const agentAdapter = new CliSubprocessDriver({
+        cwd: effectiveCwd,
+        runId: runSetup.runId,
+        runDir: runSetup.runDir,
+        permissionMode: "bypassPermissions",
+        dangerouslySkipPermissions: true,
+        maxTurns: Math.min(opts.maxIterations ?? 30, 30),
+        // Plumb through resume flag (R5.6)
+        resumeSessionId: opts.resume,
+      });
 
       if (preventSleep) {
         const sleepCmd = buildSleepPreventionCommand(process.platform, process.pid);
@@ -815,7 +831,6 @@ async function main(): Promise<void> {
           cwd: effectiveCwd,
           runId: runSetup.runId,
           runDir: runSetup.runDir,
-          warmQuery,
           baseCommit: runSetup.baseCommit,
           notesPath: runSetup.notesPath,
           branchName: runSetup.branchName,
@@ -890,6 +905,13 @@ async function main(): Promise<void> {
       try {
         const result = await driver.run();
 
+        // Emit run_completed for downstream consumers
+        ipcEmitter.emit({
+          event: "run_completed",
+          total_iterations: result.commitCount,
+          status: "success",
+        });
+
         // Persist final notes.
         RunManager.persistNotes(
           runSetup.notesPath,
@@ -951,6 +973,20 @@ async function main(): Promise<void> {
             );
           }
         }
+      } catch (err) {
+        // Emit error event for desktop / CI consumers (R8.3, R10)
+        const errorMessage = err instanceof Error ? err.message : String(err);
+        // Classify: CliError → user error (non-retryable); other → unexpected
+        const isCliError = err instanceof CliError;
+        const exitCode = isCliError ? 1 : 139;
+        const classification = classifyExitCode(exitCode);
+        ipcEmitter.emitError({
+          code: isCliError ? "cli_error" : "unexpected_failure",
+          message: errorMessage,
+          fatal: true,
+          retryable: classification.retryable,
+        });
+        throw err;
       } finally {
         // Clean up signal handlers.
         process.removeListener("SIGINT", handleSignal);
@@ -985,9 +1021,11 @@ async function main(): Promise<void> {
           }
         }
 
-        // Close agent adapter.
+        // Close agent adapter (shutdown subprocess if still running).
         try {
-          await agentAdapter.close?.();
+          await (agentAdapter as { shutdown?: (sig: string) => Promise<void> }).shutdown?.(
+            "SIGTERM",
+          );
         } catch (cleanupError) {
           logSink.log(
             createLogEntry(

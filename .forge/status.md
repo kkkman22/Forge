@@ -1,34 +1,39 @@
 ---
-current_task: "docs-governance-system"
+current_task: "workflows-integration"
 tier: "standard"
 task_type: "feature"
 project_phase: "implementation"
-phase: "ship"
+phase: "completed"
 work_nature: "feature"
-updated: "2026-05-24"
-branch: ""
-spec_path: ".kiro/specs/docs-governance-system/"
-plan_path: ".kiro/specs/docs-governance-system/tasks.md"
-hints: "docs-governance,frontmatter,index-generator,ssot,embeds,pre-commit,tdd"
+updated: "2026-05-25"
+branch: "worktree-workflows-integration"
+spec_path: ".kiro/specs/workflows-integration/"
+plan_path: ".kiro/specs/workflows-integration/tasks.md"
+hints: "workflows,cli-subprocess,stream-json,fallback-ladder,dispatch,audit,ipc,tdd"
 assumptions:
   - "spec 目录含 requirements+design+tasks = decide+spec+plan 完成"
-  - "7 parent tasks / 56 subtasks / 7 waves / 5 migration phases"
-  - "src/docs-governance/ 新模块：types, config, domains, frontmatter, index-generator, staleness, updated-auditor, link-checker, quota, root-whitelist, bilingual, ssot, reporter, cli"
-  - "13 CLI scripts + pre-commit hook + CI workflow"
-  - "5 层治理：分类隔离、总目录自动生成、失修检测、数量纪律、SSOT 嵌入"
+  - "14 tasks / 4 phases / 2 工作包（分发层 + 换芯）"
+  - "遵循 TDD RED→GREEN→REFACTOR 铁律"
 ---
 
 # 项目状态
 
-## 当前任务：docs-governance-system
+## 当前任务：workflows-integration — ✅ 完成
 
-Standard-tier ship 完成（核心 library 层）。23 commits merged to main (76581bc1)。
+Standard-tier 全流程完成（build → review → test）。保留分支待合并。
 
-**已交付**：20 modules, 256 tests, 18 correctness properties (P1-P18)。
-**待后续 PR**：CLI script entries, pre-commit hook, CI workflow, frontmatter migration, SSOT embed-sync, documentation (wave 7)。
+**17 commits / 14 tasks / 118 new tests / TypeScript clean / 0 P0-P2 issues**
+
+交付物清单：
+- **6 新模块**：workflow-dispatcher, stream-json-adapter, cli-subprocess-driver, ipc-emitter, workflow-audit-writer, error-handler
+- **4 改造文件**：plugin.json (workflows字段), forge-loop-cli.ts (换芯), sdk-agent-adapter.ts (deprecated), sdk-driver-types.ts (warmQuery optional)
+- **3 工具/规则**：validate-plugin-manifest.mjs, diff-ipc-schema.mjs, workflow-fallback-ladder.md
+- **2 workflow 文件**：multi-agent-review.js, lib/concurrency.js
+- **14 测试文件**：覆盖全部 AC
 
 ## 已完成
 
+workflows-integration: 17 commits on worktree-workflows-integration (保留).
 docs-governance-system core library: 23 commits merged to main (76581bc1).
 forge-single-entry-skills-collapse: 47 commits merged to main (6127feb).
 cmux-skills-collapse: merged to main.
