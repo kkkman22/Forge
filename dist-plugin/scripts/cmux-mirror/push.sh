@@ -11,10 +11,13 @@ if [[ ! -S "$socket_path" ]]; then
   exit 0
 fi
 
-# R1.3: Inject window_id when CMUX_WINDOW_ID is set
+# R1.3: Inject window_id when CMUX_WINDOW_ID is set and valid
 if [[ -n "${CMUX_WINDOW_ID:-}" ]]; then
-  if command -v jq >/dev/null 2>&1; then
-    payload=$(printf '%s' "$payload" | jq --arg wid "$CMUX_WINDOW_ID" '. + {window_id: $wid}' 2>/dev/null || printf '%s' "$payload")
+  # R1.6: Validate against whitelist (must match cli.mjs SAFE_WINDOW_ID)
+  if [[ "$CMUX_WINDOW_ID" =~ ^[A-Za-z0-9._:-]{1,64}$ ]] && [[ "$CMUX_WINDOW_ID" != *".."* ]]; then
+    if command -v jq >/dev/null 2>&1; then
+      payload=$(printf '%s' "$payload" | jq --arg wid "$CMUX_WINDOW_ID" '. + {window_id: $wid}' 2>/dev/null || printf '%s' "$payload")
+    fi
   fi
 fi
 
