@@ -1,3 +1,4 @@
+import { execFileSync } from "node:child_process";
 import { existsSync, readdirSync, readFileSync } from "node:fs";
 import { join } from "node:path";
 import { describe, expect, it } from "vitest";
@@ -96,10 +97,12 @@ describe("Plugin Workflows Field (R1: workflows-integration)", () => {
     expect(existsSync(multiAgentReview)).toBe(true);
   });
 
-  it("AC 1.2: multi-agent-review.js parses as valid JavaScript", () => {
+  it("AC 1.2: multi-agent-review.js passes node --check (syntactic validity)", () => {
     const source = readFileSync(multiAgentReview, "utf-8");
     expect(source.length).toBeGreaterThan(0);
-    expect(() => new Function(source)).not.toThrow();
+    expect(() =>
+      execFileSync("node", ["--check", multiAgentReview], { stdio: "pipe" }),
+    ).not.toThrow();
   });
 
   it("AC 1.4: existing workflows field does not break mcpServers/hooks paths", () => {

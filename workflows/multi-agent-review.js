@@ -14,7 +14,9 @@
  * workflow is unavailable — see .claude/rules/workflow-fallback-ladder.md.
  */
 
-const meta = {
+import { chunkedParallel } from "./lib/concurrency.js";
+
+export const meta = {
   name: "multi-agent-review",
   version: "1.0.0",
   description: "Three-layer parallel review: spec-check, quality-check, security-check",
@@ -29,9 +31,8 @@ const meta = {
   },
 };
 
-async function run(bp, ctx = {}) {
+export async function run(bp, ctx = {}) {
   const { phase, agent, log, return: ret } = bp;
-  const { chunkedParallel } = require("./lib/concurrency.js");
 
   const reviewers = [
     { id: "spec-check", subagent: "spec-check", layer: 1 },
@@ -69,4 +70,4 @@ async function run(bp, ctx = {}) {
   return ret({ findings, severityCounts, layersCompleted });
 }
 
-module.exports = { meta, run };
+export default { meta, run };
