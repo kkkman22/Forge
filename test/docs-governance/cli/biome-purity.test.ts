@@ -1,7 +1,7 @@
-import { describe, it, expect } from "vitest";
 import { execFileSync } from "node:child_process";
-import { readFileSync, writeFileSync, unlinkSync } from "node:fs";
+import { readFileSync, unlinkSync, writeFileSync } from "node:fs";
 import { resolve } from "node:path";
+import { describe, expect, it } from "vitest";
 
 const ROOT = resolve(__dirname, "../../../");
 

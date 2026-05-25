@@ -1,8 +1,6 @@
 import { execFileSync } from "node:child_process";
-import { mkdirSync, rmSync, writeFileSync } from "node:fs";
-import { tmpdir } from "node:os";
-import { join, resolve } from "node:path";
-import { afterEach, describe, expect, it } from "vitest";
+import { resolve } from "node:path";
+import { describe, expect, it } from "vitest";
 
 const SCRIPT = resolve(__dirname, "../../../scripts/check-docs-updated.ts");
 const ROOT = resolve(__dirname, "../../..");
@@ -38,7 +36,6 @@ import type { DiagnosticRecord } from "../../../src/docs-governance/types.js";
 import {
   findFrontmatterRange,
   isFrontmatterOnlyChange,
-  parseDiffHunks,
 } from "../../../src/docs-governance/updated-auditor.js";
 
 const SCRIPT_NAME = "check-docs-updated";

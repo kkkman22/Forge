@@ -38,7 +38,7 @@ describe("migrate-docs-frontmatter helpers", () => {
     it("defaults to reference", () => {
       const filePath = "docs/api-reference.md";
       const content = "# API Reference\n\nEndpoint details.";
-      const lower = filePath.toLowerCase() + " " + content.slice(0, 500).toLowerCase();
+      const lower = `${filePath.toLowerCase()} ${content.slice(0, 500).toLowerCase()}`;
       const hasSpecial = ["getting started", "troubleshoot", "contribut", "advanced"].some((kw) =>
         lower.includes(kw),
       );
