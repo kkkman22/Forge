@@ -654,6 +654,8 @@ async function main(): Promise<void> {
         permissionMode: "bypassPermissions",
         dangerouslySkipPermissions: true,
         maxTurns: Math.min(opts.maxIterations ?? 30, 30),
+        // Plumb through resume flag (R5.6)
+        resumeSessionId: opts.resume,
       });
 
       if (preventSleep) {
