@@ -50,7 +50,7 @@ export class IpcEmitter {
       ...frame,
     };
     const line = JSON.stringify(full);
-    const truncated = line.slice(0, 1024) + "\n";
+    const truncated = `${line.slice(0, 1024)}\n`;
     process.stdout.write(truncated);
   }
 

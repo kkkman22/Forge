@@ -1,4 +1,4 @@
-import { describe, expect, it, vi, beforeEach, afterEach } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 describe("concurrency.js", () => {
   const originalEnv = { ...process.env };
@@ -39,11 +39,7 @@ describe("concurrency.js", () => {
   describe("chunkedParallel", () => {
     it("executes all functions and returns results in order", async () => {
       const { chunkedParallel } = await importFresh();
-      const fns = [
-        () => Promise.resolve(1),
-        () => Promise.resolve(2),
-        () => Promise.resolve(3),
-      ];
+      const fns = [() => Promise.resolve(1), () => Promise.resolve(2), () => Promise.resolve(3)];
       const results = await chunkedParallel(fns);
       expect(results).toEqual([1, 2, 3]);
     });

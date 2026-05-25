@@ -1,8 +1,8 @@
-import { mkdirSync, rmSync, existsSync, readFileSync } from "node:fs";
-import { join } from "node:path";
+import { existsSync, mkdirSync, readFileSync, rmSync } from "node:fs";
 import { tmpdir } from "node:os";
+import { join } from "node:path";
 import { Readable } from "node:stream";
-import { describe, expect, it, beforeEach, afterEach } from "vitest";
+import { afterEach, beforeEach, describe, expect, it } from "vitest";
 import { StreamJsonAdapter } from "../src/stream-json-adapter.js";
 
 function linesToStream(lines: string[]): Readable {
@@ -57,10 +57,7 @@ describe("StreamJsonAdapter", () => {
 
   it("records parse errors without aborting", async () => {
     const adapter = new StreamJsonAdapter(runDir);
-    const events = [
-      "not valid json",
-      JSON.stringify({ type: "result", subtype: "success" }),
-    ];
+    const events = ["not valid json", JSON.stringify({ type: "result", subtype: "success" })];
     const result = await adapter.consume(linesToStream(events));
     expect(result.delivered.length).toBe(1);
     expect(existsSync(join(runDir, "parse-errors.jsonl"))).toBe(true);
@@ -69,7 +66,10 @@ describe("StreamJsonAdapter", () => {
   it("throws on error events", async () => {
     const adapter = new StreamJsonAdapter(runDir);
     const events = [
-      JSON.stringify({ type: "error", error: { type: "rate_limit", message: "too many requests" } }),
+      JSON.stringify({
+        type: "error",
+        error: { type: "rate_limit", message: "too many requests" },
+      }),
     ];
     await expect(adapter.consume(linesToStream(events))).rejects.toThrow();
     expect(existsSync(join(runDir, "api-errors.jsonl"))).toBe(true);
@@ -89,9 +89,7 @@ describe("StreamJsonAdapter", () => {
 
   it("synthesizes stream-truncated when EOF without result", async () => {
     const adapter = new StreamJsonAdapter(runDir);
-    const events = [
-      JSON.stringify({ type: "assistant", message: { role: "assistant" } }),
-    ];
+    const events = [JSON.stringify({ type: "assistant", message: { role: "assistant" } })];
     const result = await adapter.consume(linesToStream(events));
     const lastDelivered = result.delivered[result.delivered.length - 1];
     expect(lastDelivered.type).toBe("stream-truncated");

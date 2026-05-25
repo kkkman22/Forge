@@ -1,7 +1,7 @@
+import { execSync } from "node:child_process";
 import { readFileSync } from "node:fs";
 import { join } from "node:path";
 import { describe, expect, it } from "vitest";
-import { execSync } from "node:child_process";
 
 const ROOT = join(import.meta.dirname, "..");
 
@@ -56,7 +56,9 @@ describe("T8: SdkDriver replacement — agent-sdk removal", () => {
     // No import of startup from agent-sdk
     expect(content).not.toMatch(/import.*\{[^}]*startup[^}]*\}.*from.*claude-agent-sdk/);
     // No runtime call to startup() (ignore comments)
-    const codeLines = content.split("\n").filter((l) => !l.trim().startsWith("*") && !l.trim().startsWith("//"));
+    const codeLines = content
+      .split("\n")
+      .filter((l) => !l.trim().startsWith("*") && !l.trim().startsWith("//"));
     for (const line of codeLines) {
       expect(line).not.toMatch(/^(?![/ {*]).*\bstartup\s*\(/);
     }

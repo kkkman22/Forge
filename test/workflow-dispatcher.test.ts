@@ -1,20 +1,20 @@
-import { mkdirSync, rmSync, writeFileSync, existsSync, readFileSync, readdirSync } from "node:fs";
-import { join } from "node:path";
+import { existsSync, mkdirSync, readdirSync, readFileSync, rmSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
-import { describe, expect, it, beforeEach, afterEach, vi } from "vitest";
+import { join } from "node:path";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import type {
   DispatchContext,
   DispatchRecord,
-  L1TriggerReason,
   L0FailureSignature,
+  L1TriggerReason,
 } from "../src/workflow-dispatcher.js";
 import {
-  probeL0Eligibility,
-  dispatch,
-  writeDispatchRecord,
-  updateStatusMd,
-  isolatePartialFindings,
   classifyL0Failure,
+  dispatch,
+  isolatePartialFindings,
+  probeL0Eligibility,
+  updateStatusMd,
+  writeDispatchRecord,
 } from "../src/workflow-dispatcher.js";
 
 describe("WorkflowDispatcher", () => {
@@ -50,7 +50,10 @@ describe("WorkflowDispatcher", () => {
       mkdirSync(wfDir, { recursive: true });
       writeFileSync(join(wfDir, "review.js"), "export const meta = {};\n");
       mkdirSync(join(wfDir, "lib"), { recursive: true });
-      writeFileSync(join(wfDir, "lib", "concurrency.js"), "export const chunkedParallel = () => {};\n");
+      writeFileSync(
+        join(wfDir, "lib", "concurrency.js"),
+        "export const chunkedParallel = () => {};\n",
+      );
       writeFileSync(
         join(wfDir, "review.js"),
         "import { chunkedParallel } from './lib/concurrency.js';\nexport const meta = {};\n",
@@ -122,7 +125,10 @@ describe("WorkflowDispatcher", () => {
       const wfDir = join(tmpDir, "workflows");
       mkdirSync(wfDir, { recursive: true });
       mkdirSync(join(wfDir, "lib"), { recursive: true });
-      writeFileSync(join(wfDir, "lib", "concurrency.js"), "export const chunkedParallel = () => {};\n");
+      writeFileSync(
+        join(wfDir, "lib", "concurrency.js"),
+        "export const chunkedParallel = () => {};\n",
+      );
       writeFileSync(
         join(wfDir, "review.js"),
         "import { chunkedParallel } from './lib/concurrency.js';\nexport const meta = {};\n",
@@ -130,7 +136,9 @@ describe("WorkflowDispatcher", () => {
 
       const result = await dispatch(makeCtx(), {
         tryL0: vi.fn().mockRejectedValue(new Error("bp() exception")),
-        runFallback: vi.fn().mockResolvedValue({ output: "fallback result", methodology: "workflow-then-subagent" }),
+        runFallback: vi
+          .fn()
+          .mockResolvedValue({ output: "fallback result", methodology: "workflow-then-subagent" }),
       });
       expect(result.chosenLevel).toBe("L1");
       expect(result.methodology).toBe("workflow-then-subagent");
@@ -223,7 +231,9 @@ describe("WorkflowDispatcher", () => {
     });
 
     it("classifies subprocess_crash", () => {
-      expect(classifyL0Failure(new Error("subprocess exited with code 1"))).toBe("subprocess_crash");
+      expect(classifyL0Failure(new Error("subprocess exited with code 1"))).toBe(
+        "subprocess_crash",
+      );
     });
 
     it("classifies stuck_timeout", () => {

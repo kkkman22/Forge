@@ -1,7 +1,7 @@
 import { type ChildProcess, spawn } from "node:child_process";
 import { appendFileSync, mkdirSync } from "node:fs";
 import { join } from "node:path";
-import type { AgentInterface, AgentResult, AgentRunOptions, TokenUsage } from "./loop-types.js";
+import type { AgentInterface, AgentResult, AgentRunOptions } from "./loop-types.js";
 import { StreamJsonAdapter } from "./stream-json-adapter.js";
 
 // ---------------------------------------------------------------------------
@@ -105,34 +105,43 @@ export class CliSubprocessDriver implements AgentInterface {
     mkdirSync(config.runDir, { recursive: true });
   }
 
-  async run(prompt: string, cwd: string, options?: AgentRunOptions): Promise<AgentResult> {
+  async run(prompt: string, cwd: string, _options?: AgentRunOptions): Promise<AgentResult> {
     const args = buildArgs(this.config);
     const env = buildEnv({ maxParallelAgents: 6, reviewConcurrency: 3 });
 
-    this.child = spawn("claude", args, {
+    const child = spawn("claude", args, {
       cwd,
       env,
       stdio: ["pipe", "pipe", "pipe"],
     });
+    this.child = child;
 
     // stdin: write NDJSON frame then close
-    const frame =
-      JSON.stringify({
-        type: "user",
-        message: { role: "user", content: prompt },
-      }) + "\n";
-    this.child.stdin!.write(frame);
-    this.child.stdin!.end();
+    const frame = `${JSON.stringify({
+      type: "user",
+      message: { role: "user", content: prompt },
+    })}\n`;
+    child.stdin?.write(frame);
+    child.stdin?.end();
+
+    // stderr: capture to file (set up before consuming stdout)
+    if (child.stderr) {
+      this.captureStderr(child.stderr);
+    }
 
     // stdout: pipe through StreamJsonAdapter
-    const result = await this.adapter.consume(this.child.stdout!);
-
-    // stderr: capture to file
-    this.captureStderr(this.child.stderr!);
+    const result = child.stdout
+      ? await this.adapter.consume(child.stdout)
+      : {
+          delivered: [],
+          usage: { inputTokens: 0, outputTokens: 0, cacheReadTokens: 0, cacheCreationTokens: 0 },
+          costUsd: 0,
+          lastEventType: null,
+        };
 
     // Wait for exit
     const exitCode = await new Promise<number>((resolve) => {
-      this.child!.on("exit", (code) => resolve(code ?? 0));
+      child.on("exit", (code) => resolve(code ?? 0));
     });
 
     this.child = null;

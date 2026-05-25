@@ -1,9 +1,5 @@
 import { describe, expect, it, vi } from "vitest";
-import {
-  IpcEmitter,
-  IPC_SCHEMA_VERSION,
-  SUPPORTED_EVENTS,
-} from "../src/ipc-emitter.js";
+import { IPC_SCHEMA_VERSION, IpcEmitter, SUPPORTED_EVENTS } from "../src/ipc-emitter.js";
 
 describe("IpcEmitter", () => {
   it("emits version frame on construction", () => {

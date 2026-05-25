@@ -1,9 +1,9 @@
-import { mkdirSync, rmSync, readFileSync } from "node:fs";
-import { join } from "node:path";
+import { mkdirSync, readFileSync, rmSync } from "node:fs";
 import { tmpdir } from "node:os";
-import { describe, expect, it, beforeEach, afterEach, vi } from "vitest";
+import { join } from "node:path";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import type { CliDriverConfig } from "../src/cli-subprocess-driver.js";
-import { CliSubprocessDriver, buildArgs, buildEnv } from "../src/cli-subprocess-driver.js";
+import { buildArgs, buildEnv, CliSubprocessDriver } from "../src/cli-subprocess-driver.js";
 
 describe("CliSubprocessDriver", () => {
   let runDir: string;
@@ -107,7 +107,9 @@ describe("CliSubprocessDriver", () => {
 
       const mockChild = {
         killed: false,
-        kill: vi.fn((sig: string) => { if (sig === "SIGKILL") mockChild.killed = true; }),
+        kill: vi.fn((sig: string) => {
+          if (sig === "SIGKILL") mockChild.killed = true;
+        }),
       };
       (driver as unknown as { child: unknown }).child = mockChild;
 
