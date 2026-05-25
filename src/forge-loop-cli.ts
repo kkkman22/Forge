@@ -27,11 +27,11 @@ import {
   writeFileSync,
 } from "node:fs";
 import path from "node:path";
-import { startup } from "@anthropic-ai/claude-agent-sdk";
 import { Command } from "commander";
 
+import { CliSubprocessDriver } from "./cli-subprocess-driver.js";
+
 import { buildAgentOutputSchema } from "./agent-output.js";
-import { createAgentRegistry, registerBuiltinAgents } from "./agent-registry.js";
 import { CliError } from "./cli-error.js";
 import { extractConfigLang, mergeLogConfig, parseLogConfig } from "./config-store.js";
 import { formatNotesDocument } from "./context-accumulator.js";
@@ -495,20 +495,6 @@ async function main(): Promise<void> {
       }
 
       // ---------------------------------------------------------------
-      // Pre-warm Agent SDK
-      // ---------------------------------------------------------------
-      // Pass bypassPermissions to startup() so the warm-query subprocess
-      // is spawned with the correct permission mode from the start.
-      // Without this, the pre-warmed subprocess uses "default" mode and
-      // hangs waiting for interactive permission approval that never comes.
-      const warmQuery = await startup({
-        options: {
-          permissionMode: "bypassPermissions",
-          allowDangerouslySkipPermissions: true,
-        },
-      });
-
-      // ---------------------------------------------------------------
       // Build output schema
       // ---------------------------------------------------------------
       const outputSchema = buildAgentOutputSchema({
@@ -531,21 +517,7 @@ async function main(): Promise<void> {
         }
       }
 
-      const agentRegistry = createAgentRegistry();
-      registerBuiltinAgents(agentRegistry, { warmQuery, outputSchema, sandboxProfile });
-
       const agentName = opts.agent ?? "claude";
-
-      if (!agentRegistry.has(agentName)) {
-        throw new CliError(
-          `Error: Invalid --agent value "${agentName}". Available agents: ${agentRegistry.listAgents().join(", ")}`,
-        );
-      }
-
-      const agentAdapter = agentRegistry.resolve(agentName, {
-        cwd,
-        budgetUsd: opts.maxBudgetUsd,
-      });
 
       const loopConfig: LoopConfig = {
         agent: agentName as LoopConfig["agent"],
@@ -641,6 +613,39 @@ async function main(): Promise<void> {
       // Spawn sleep prevention process
       // ---------------------------------------------------------------
       let sleepProcess: ChildProcess | null = null;
+
+      // Warm-up spawn + Agent adapter (moved after runSetup is available)
+      {
+        // Warm-up (will be gated by --no-warmup in T10)
+        const warmupArgs = [
+          "--print", "--output-format=stream-json", "--max-turns=1",
+          "--permission-mode=bypassPermissions", "--dangerously-skip-permissions",
+        ];
+        const warmupEnv = { ...process.env, CLAUDE_CODE_WORKFLOWS: "1" };
+        const warmup = spawn("claude", warmupArgs, { cwd: effectiveCwd, env: warmupEnv, stdio: ["pipe", "pipe", "pipe"] });
+        warmup.stdin!.write(JSON.stringify({ type: "user", message: { role: "user", content: "_" } }) + "\n");
+        warmup.stdin!.end();
+
+        const warmupExitCode = await new Promise<number>((resolve) => {
+          const timeout = setTimeout(() => { warmup.kill("SIGKILL"); resolve(1); }, 30_000);
+          warmup.on("exit", (code) => { clearTimeout(timeout); resolve(code ?? 1); });
+        });
+
+        if (warmupExitCode !== 0) {
+          throw new CliError(`Warm-up failed (exit ${warmupExitCode})`);
+        }
+        writeFileSync(path.join(runSetup.runDir, "warm-up.json"), JSON.stringify({ exitCode: warmupExitCode }));
+      }
+
+      // Agent adapter: CliSubprocessDriver replaces agent-sdk
+      const agentAdapter = new CliSubprocessDriver({
+        cwd: effectiveCwd,
+        runId: runSetup.runId,
+        runDir: runSetup.runDir,
+        permissionMode: "bypassPermissions",
+        dangerouslySkipPermissions: true,
+        maxTurns: Math.min(opts.maxIterations ?? 30, 30),
+      });
 
       if (preventSleep) {
         const sleepCmd = buildSleepPreventionCommand(process.platform, process.pid);
@@ -815,7 +820,6 @@ async function main(): Promise<void> {
           cwd: effectiveCwd,
           runId: runSetup.runId,
           runDir: runSetup.runDir,
-          warmQuery,
           baseCommit: runSetup.baseCommit,
           notesPath: runSetup.notesPath,
           branchName: runSetup.branchName,
@@ -985,9 +989,9 @@ async function main(): Promise<void> {
           }
         }
 
-        // Close agent adapter.
+        // Close agent adapter (shutdown subprocess if still running).
         try {
-          await agentAdapter.close?.();
+          await (agentAdapter as { shutdown?: (sig: string) => Promise<void> }).shutdown?.("SIGTERM");
         } catch (cleanupError) {
           logSink.log(
             createLogEntry(
