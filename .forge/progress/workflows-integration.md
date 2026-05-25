@@ -181,3 +181,39 @@
   - GREEN：实现 helpers，21/21 通过 ✅
   - REFACTOR：biome auto-fix import 排序 ✅
   - Atomic commit：本任务 1 commit
+
+### T7: IpcEmitter — ✅ 完成
+
+#### Handoff Block
+
+- task_id: T7
+- completed:
+  - src/ipc-emitter.ts 实现 desktop IPC 帧编码器：
+    - `createIpcEmitter({ runId, write })` 通用 emit；自动补全 event/run_id/schema/ts；用 write 注入解耦 stdout
+    - `formatVersionFrame(runId)` 版本握手帧（event=version, schema=1, supported_events=[12 种]）
+    - `formatErrorFrame({ runId, code, message, fatal, retryable })` AC 8.3
+    - `formatWarningFrame({ runId, code, message, attempt? })` 强制 fatal=false/retryable=false（AC 8.4）
+    - 1024 byte 截断（AC 8.1）：JSON 字段级递减，保留 event/run_id/ts；最坏退化为硬切片
+  - 导出常量：SCHEMA_VERSION=1、MAX_LINE_BYTES=1024、SUPPORTED_EVENTS（12 种 frozen tuple）
+  - SUPPORTED_EVENTS 严格剔除 partial / message_delta（AC 8.7 + R6.3 partial 合并隔离）
+  - test/ipc-emitter/ipc-emitter.test.ts 8 个测试覆盖 AC 8.1 / 8.3 / 8.4 / 8.5 / 8.7：
+    - 8.1：所有帧含 event/run_id/schema/ts；超长行 ≤ 1024 byte 且仍合法 JSON
+    - 8.5：version 帧 12 种 supported_events 全在；schema 正整数
+    - 8.3：error 帧 fatal/retryable 显式；SIGSEGV 类 retryable=false
+    - 8.4：warning 帧默认 fatal/retryable 都为 false；subprocess-retry 帧含 attempt
+    - 8.7：SUPPORTED_EVENTS 不含 partial / message_delta
+- not_completed:
+  - record-replay 回归 + scripts/diff-ipc-schema.mjs（AC 8.2 / 8.8）：T12 desktop IPC 回归任务负责
+  - 实际写入 process.stdout：T8 SdkDriver 改造时把 emitter 接到 forge-loop-cli stdout 写出
+  - process_manager.rs 对未知字段/事件/超长行 panic-free（AC 8.6 desktop 端）：T12 用 record-replay 验证
+- commands_executed:
+  - `npx vitest run test/ipc-emitter/` → 8/8 pass
+  - `npx tsc --noEmit` → 0 errors
+  - `npx biome check src/ipc-emitter.ts test/ipc-emitter/` → 0 errors，0 warning（清理 unused emitter 变量与 afterEach import）
+- issues_found:
+  - 截断策略权衡：选择"字段级递减字符串"而非"hard byte slice"以保住 JSON 合法性；event/run_id/ts 保留不削；极端情况下退化为硬切（实际很罕见，因为 event/code/runId 三者总和 < 200 byte）
+- procedure_compliance:
+  - RED：8 测试模块导入失败 ✅
+  - GREEN：实现 emitter，8/8 通过 ✅
+  - REFACTOR：清理 unused vars，过 biome lint ✅
+  - Atomic commit：本任务 1 commit
