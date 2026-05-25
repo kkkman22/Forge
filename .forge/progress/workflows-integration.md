@@ -153,3 +153,31 @@
   - GREEN：实现 adapter 全部导出，16/16 通过 ✅
   - REFACTOR：biome auto-fix EXPOSED_TYPES Set 折叠、override on() 签名合并 ✅
   - Atomic commit：本任务 1 commit
+
+### T6: CliSubprocessDriver — ✅ 完成（helpers 层）
+
+#### Handoff Block
+
+- task_id: T6
+- completed:
+  - src/cli-subprocess-driver.ts 三个纯函数 helpers + spawn 请求类型：
+    - `buildArgs(opts)`：组装 claude CLI 参数；包含 --print / --output-format=stream-json / --include-partial-messages / --input-format=stream-json / --max-turns / --permission-mode；可选 --dangerously-skip-permissions / --allowed-tools / --disallowed-tools / --mcp-config / --add-dir (重复) / --system-prompt-file；session 接续 --resume 与 --session-id 互斥（resume 优先）
+    - `buildEnv(baseEnv, overrides)`：显式合并 process.env + 转发 ANTHROPIC_API_KEY/AUTH_TOKEN/BASE_URL/CLAUDE_CODE_OAUTH_TOKEN/CLAUDE_CODE_WORKFLOWS/USE_BEDROCK/USE_VERTEX；不改原对象
+    - `scheduleSignalChain({ send, stillAlive, now, schedule, runDir, runId })`：SIGINT 立即 → 10s SIGTERM → 5s SIGKILL；每步检查 stillAlive() 终止链；写入 `.forge/runs/<runId>/signal_chain.jsonl`（schedule 回调可注入，单元测试用同步 stub）
+  - 导出：CliSpawnRequest（cmd/args/env/cwd 数据形状），SubprocessOptions、PermissionMode、SignalChain、SignalChainDeps
+  - test/cli-subprocess-driver/cli-subprocess-driver.test.ts 21 个测试覆盖 AC 5.1 / 5.6 / 5.8（buildArgs 10、session 3、buildEnv 4、signal chain 3、spawn request 1）
+- not_completed:
+  - 实际 spawn() 调用、stdin NDJSON 写入、stderr 捕获到 stderr.log（AC 5.2/5.3/5.7）：T8 SdkDriver 改造负责（在 forge-loop-cli.ts 用 child_process.spawn 与 StreamJsonAdapter 组合）
+  - 背压检测 4 MiB/5s → 60s → kill+retry（AC 5.9）：T11 错误处理与降级负责
+  - --max-iterations 外层循环计数：T8 主循环负责
+- commands_executed:
+  - `npx vitest run test/cli-subprocess-driver/` → 21/21 pass
+  - `npx tsc --noEmit` → 0 errors
+  - `npx biome check --write src/cli-subprocess-driver.ts test/cli-subprocess-driver/` → 0 errors（auto-fix import 排序）
+- issues_found:
+  - 设计权衡：把信号链调度抽成 `schedule(cb, delayMs)` 注入接口，避免单元测试依赖真实 setTimeout/sleep；T8 集成时传 `(cb, ms) => setTimeout(cb, ms).unref()`
+- procedure_compliance:
+  - RED：先写 21 测试模块导入失败 ✅
+  - GREEN：实现 helpers，21/21 通过 ✅
+  - REFACTOR：biome auto-fix import 排序 ✅
+  - Atomic commit：本任务 1 commit
