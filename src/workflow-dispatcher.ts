@@ -191,7 +191,10 @@ export async function dispatch(
 
     const fallbackResult = deps.runFallback
       ? await deps.runFallback(ctx)
-      : ({ output: "subagent fallback after L0 failure", methodology: "workflow-then-subagent" } as FallbackResult);
+      : ({
+          output: "subagent fallback after L0 failure",
+          methodology: "workflow-then-subagent",
+        } as FallbackResult);
 
     return {
       chosenLevel: "L1",
@@ -208,7 +211,7 @@ export async function dispatch(
 
 export function writeDispatchRecord(runDir: string, record: DispatchRecord): void {
   mkdirSync(runDir, { recursive: true });
-  const line = JSON.stringify(record) + "\n";
+  const line = `${JSON.stringify(record)}\n`;
   appendFileSync(join(runDir, "dispatch.jsonl"), line, "utf-8");
 }
 

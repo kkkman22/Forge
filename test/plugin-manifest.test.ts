@@ -123,9 +123,7 @@ describe("Workflows Field", () => {
     const plugin = JSON.parse(readFileSync(pluginPath, "utf-8"));
     const workflowsDir = join(ROOT, plugin.workflows[0]);
     expect(existsSync(workflowsDir)).toBe(true);
-    expect(
-      readdirSync(workflowsDir).filter((f) => f.endsWith(".js")).length,
-    ).toBeGreaterThan(0);
+    expect(readdirSync(workflowsDir).filter((f) => f.endsWith(".js")).length).toBeGreaterThan(0);
   });
 
   it("multi-agent-review.js exists in workflows directory", () => {

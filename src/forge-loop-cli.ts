@@ -28,11 +28,8 @@ import {
 } from "node:fs";
 import path from "node:path";
 import { Command } from "commander";
-
-import { CliSubprocessDriver } from "./cli-subprocess-driver.js";
-
-import { buildAgentOutputSchema } from "./agent-output.js";
 import { CliError } from "./cli-error.js";
+import { CliSubprocessDriver } from "./cli-subprocess-driver.js";
 import { extractConfigLang, mergeLogConfig, parseLogConfig } from "./config-store.js";
 import { formatNotesDocument } from "./context-accumulator.js";
 import { EffectExecutor } from "./effect-executor.js";
@@ -497,13 +494,6 @@ async function main(): Promise<void> {
       }
 
       // ---------------------------------------------------------------
-      // Build output schema
-      // ---------------------------------------------------------------
-      const outputSchema = buildAgentOutputSchema({
-        includeStopField: !!opts.stopWhen,
-      });
-
-      // ---------------------------------------------------------------
       // Create AgentRegistry, register builtins, and resolve agent
       // ---------------------------------------------------------------
       // Load sandbox profile if --sandbox is specified
@@ -619,23 +609,41 @@ async function main(): Promise<void> {
       // Warm-up spawn + Agent adapter (moved after runSetup is available)
       if (!opts.noWarmup) {
         const warmupArgs = [
-          "--print", "--output-format=stream-json", "--max-turns=1",
-          "--permission-mode=bypassPermissions", "--dangerously-skip-permissions",
+          "--print",
+          "--output-format=stream-json",
+          "--max-turns=1",
+          "--permission-mode=bypassPermissions",
+          "--dangerously-skip-permissions",
         ];
         const warmupEnv = { ...process.env, CLAUDE_CODE_WORKFLOWS: "1" };
-        const warmup = spawn("claude", warmupArgs, { cwd: effectiveCwd, env: warmupEnv, stdio: ["pipe", "pipe", "pipe"] });
-        warmup.stdin!.write(JSON.stringify({ type: "user", message: { role: "user", content: "_" } }) + "\n");
-        warmup.stdin!.end();
+        const warmup = spawn("claude", warmupArgs, {
+          cwd: effectiveCwd,
+          env: warmupEnv,
+          stdio: ["pipe", "pipe", "pipe"],
+        });
+        warmup.stdin?.write(
+          `${JSON.stringify({ type: "user", message: { role: "user", content: "_" } })}\n`,
+        );
+        warmup.stdin?.end();
 
         const warmupExitCode = await new Promise<number>((resolve) => {
-          const timeout = setTimeout(() => { warmup.kill("SIGKILL"); resolve(1); }, 30_000);
-          warmup.on("exit", (code) => { clearTimeout(timeout); resolve(code ?? 1); });
+          const timeout = setTimeout(() => {
+            warmup.kill("SIGKILL");
+            resolve(1);
+          }, 30_000);
+          warmup.on("exit", (code) => {
+            clearTimeout(timeout);
+            resolve(code ?? 1);
+          });
         });
 
         if (warmupExitCode !== 0) {
           throw new CliError(`Warm-up failed (exit ${warmupExitCode})`);
         }
-        writeFileSync(path.join(runSetup.runDir, "warm-up.json"), JSON.stringify({ exitCode: warmupExitCode }));
+        writeFileSync(
+          path.join(runSetup.runDir, "warm-up.json"),
+          JSON.stringify({ exitCode: warmupExitCode }),
+        );
       } // end warmup gate
 
       // Agent adapter: CliSubprocessDriver replaces agent-sdk
@@ -992,7 +1000,9 @@ async function main(): Promise<void> {
 
         // Close agent adapter (shutdown subprocess if still running).
         try {
-          await (agentAdapter as { shutdown?: (sig: string) => Promise<void> }).shutdown?.("SIGTERM");
+          await (agentAdapter as { shutdown?: (sig: string) => Promise<void> }).shutdown?.(
+            "SIGTERM",
+          );
         } catch (cleanupError) {
           logSink.log(
             createLogEntry(

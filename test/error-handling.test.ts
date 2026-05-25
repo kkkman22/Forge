@@ -1,14 +1,14 @@
-import { mkdirSync, rmSync, readFileSync, existsSync } from "node:fs";
-import { join } from "node:path";
+import { existsSync, mkdirSync, readFileSync, rmSync } from "node:fs";
 import { tmpdir } from "node:os";
-import { describe, expect, it, beforeEach, afterEach, vi } from "vitest";
+import { join } from "node:path";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import {
   classifyExitCode,
   computeBackoffDelay,
-  shouldRetry,
-  STUCK_TIMEOUT_MS,
-  RETRYABLE_EXIT_CODES,
   DEFAULT_BACKOFF_BASE_MS,
+  RETRYABLE_EXIT_CODES,
+  STUCK_TIMEOUT_MS,
+  shouldRetry,
 } from "../src/error-handler.js";
 
 describe("Error Handling & Degradation", () => {

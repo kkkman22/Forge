@@ -1,8 +1,8 @@
-import { mkdirSync, rmSync, writeFileSync, readFileSync, existsSync, readdirSync } from "node:fs";
-import { join } from "node:path";
+import { existsSync, mkdirSync, readdirSync, readFileSync, rmSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
-import { describe, expect, it, beforeEach, afterEach } from "vitest";
-import { WorkflowAuditWriter, FrozenZoneViolation } from "../src/workflow-audit-writer.js";
+import { join } from "node:path";
+import { afterEach, beforeEach, describe, expect, it } from "vitest";
+import { FrozenZoneViolation, WorkflowAuditWriter } from "../src/workflow-audit-writer.js";
 
 describe("WorkflowAuditWriter", () => {
   let tmpDir: string;
@@ -84,9 +84,7 @@ describe("WorkflowAuditWriter", () => {
   });
 
   it("throws FrozenZoneViolation for locked spec paths", async () => {
-    const writer = new WorkflowAuditWriter(forgeRoot, (p) =>
-      p.includes("specs/locked"),
-    );
+    const writer = new WorkflowAuditWriter(forgeRoot, (p) => p.includes("specs/locked"));
     // Force the resolveDestPath to return a frozen path
     const writerWithFrozenPath = new WorkflowAuditWriter(
       forgeRoot,
