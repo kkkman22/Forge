@@ -12,7 +12,44 @@
  */
 
 import { appendFileSync, mkdirSync } from "node:fs";
-import { join } from "node:path";
+import { isAbsolute, join, resolve } from "node:path";
+import { appendDispatchRecord, frozenZoneRecord } from "./dispatch-record.js";
+
+const SAFE_SLUG_RE = /^[a-zA-Z0-9._-]{1,64}$/;
+
+export class InvalidIdentifierError extends Error {
+  constructor(field: string, value: string) {
+    super(`invalid ${field}: ${JSON.stringify(value)} — must match ${SAFE_SLUG_RE.source}`);
+    this.name = "InvalidIdentifierError";
+  }
+}
+
+export class PathContainmentError extends Error {
+  constructor(dest: string, base: string) {
+    super(`path containment violation: ${dest} escapes ${base}`);
+    this.name = "PathContainmentError";
+  }
+}
+
+function assertSafeSlug(field: string, value: string): void {
+  if (!SAFE_SLUG_RE.test(value) || value === "." || value === "..") {
+    throw new InvalidIdentifierError(field, value);
+  }
+}
+
+function assertContained(dest: string, base: string): void {
+  const absDest = resolve(dest);
+  const absBase = resolve(base);
+  // resolve() collapses `..` segments; if absDest doesn't start with absBase
+  // followed by either path separator or end-of-string, it escaped.
+  if (
+    absDest !== absBase &&
+    !absDest.startsWith(`${absBase}/`) &&
+    !absDest.startsWith(`${absBase}\\`)
+  ) {
+    throw new PathContainmentError(absDest, absBase);
+  }
+}
 
 export type AuditSubcommand = "review" | "decide" | "learn";
 
@@ -21,6 +58,8 @@ export interface AuditWriteContext {
   forgeRoot: string;
   /** Run identifier — recorded into dispatch.jsonl on violation. */
   runId: string;
+  /** Optional session id (passed through to dispatch.jsonl on violation). */
+  sessionId?: string;
   /** Which workflow produced this record. */
   subcommand: AuditSubcommand;
   /** Logical topic / branch slug — required for review and decide. */
@@ -51,24 +90,49 @@ export class FrozenZoneViolation extends Error {
 }
 
 export function resolveDestPath(ctx: AuditWriteContext): string {
+  // F13: validate slug-shaped fields against /^[a-zA-Z0-9._-]{1,64}$/ before
+  // they're spliced into a filesystem path. Rejects "../foo", "/etc/passwd",
+  // empty strings, NUL bytes, and other path-traversal payloads.
+  assertSafeSlug("runId", ctx.runId);
+  if (ctx.subcommand === "review") {
+    if (!ctx.topic) throw new InvalidIdentifierError("topic", "");
+    assertSafeSlug("topic", ctx.topic);
+  }
+  if (ctx.subcommand === "decide" && ctx.date) {
+    assertSafeSlug("date", ctx.date);
+  }
+
+  let dest: string;
   switch (ctx.subcommand) {
     case "review":
-      return join(ctx.forgeRoot, "reviews", `${ctx.topic ?? "unknown"}.md`);
+      dest = join(ctx.forgeRoot, "reviews", `${ctx.topic}.md`);
+      break;
     case "decide": {
       const date = ctx.date ?? new Date().toISOString().slice(0, 10);
       const slug = slugify(ctx.topic ?? "untitled");
-      return join(ctx.forgeRoot, "decisions", `${date}-${slug}.md`);
+      dest = join(ctx.forgeRoot, "decisions", `${date}-${slug}.md`);
+      break;
     }
     case "learn":
-      return join(ctx.forgeRoot, "knowledge", "sessions", `${ctx.runId}.md`);
+      dest = join(ctx.forgeRoot, "knowledge", "sessions", `${ctx.runId}.md`);
+      break;
   }
+
+  // F13: assert resolved dest stays under forgeRoot. Belt-and-braces — slug
+  // validation already prevents `..`, but defence-in-depth costs nothing.
+  assertContained(dest, isAbsolute(ctx.forgeRoot) ? ctx.forgeRoot : resolve(ctx.forgeRoot));
+  return dest;
 }
 
 export function writeAuditRecord(ctx: AuditWriteContext, content: string): string {
   const dest = resolveDestPath(ctx);
 
   if (ctx.isFrozenZone?.(dest)) {
-    appendDispatchRecord(ctx, true);
+    appendDispatchRecord(
+      ctx.forgeRoot,
+      ctx.runId,
+      frozenZoneRecord(ctx.subcommand, ctx.runId, ctx.sessionId),
+    );
     throw new FrozenZoneViolation(dest);
   }
 
@@ -84,18 +148,6 @@ export function writeAuditRecord(ctx: AuditWriteContext, content: string): strin
   if (parent) mkdirSync(parent, { recursive: true });
   appendFileSync(dest, content);
   return dest;
-}
-
-function appendDispatchRecord(ctx: AuditWriteContext, frozenZoneBlocked: boolean): void {
-  const runDir = join(ctx.forgeRoot, "runs", ctx.runId);
-  mkdirSync(runDir, { recursive: true });
-  const record = {
-    subcommand: ctx.subcommand,
-    run_id: ctx.runId,
-    frozen_zone_blocked: frozenZoneBlocked,
-    timestamp: new Date().toISOString(),
-  };
-  appendFileSync(join(runDir, "dispatch.jsonl"), `${JSON.stringify(record)}\n`);
 }
 
 function slugify(s: string): string {

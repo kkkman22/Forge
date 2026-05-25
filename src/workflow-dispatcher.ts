@@ -17,28 +17,53 @@
  */
 
 import { execFileSync } from "node:child_process";
-import { appendFileSync, existsSync, mkdirSync, readFileSync, writeFileSync } from "node:fs";
-import { dirname, join } from "node:path";
+import { existsSync, mkdirSync, readFileSync, writeFileSync } from "node:fs";
+import { dirname, isAbsolute, join, resolve } from "node:path";
+import {
+  appendDispatchRecord,
+  type ChosenLevel,
+  type DispatchRecord,
+  type L0FailureSignature,
+  type L1TriggerReason,
+  type Mode,
+  type Subcommand,
+} from "./dispatch-record.js";
 
-export type Subcommand = "review" | "decide" | "learn";
-export type Mode = "interactive" | "loop";
-export type ChosenLevel = "L0" | "L1" | "L2" | "L3";
+export type { ChosenLevel, DispatchRecord, L0FailureSignature, L1TriggerReason, Mode, Subcommand };
 
-export type L1TriggerReason =
-  | "gate_disabled"
-  | "env_unset"
-  | "non_interactive"
-  | "workflow_missing"
-  | "workflow_syntax_error"
-  | "concurrency_uncontrolled"
-  | "unmatched_state";
+const SAFE_SLUG_RE = /^[a-zA-Z0-9._-]{1,64}$/;
 
-export type L0FailureSignature =
-  | "bp_exception"
-  | "schema_validation_failed"
-  | "subprocess_crash"
-  | "stuck_timeout"
-  | "frozen_zone_blocked";
+export class InvalidRunIdError extends Error {
+  constructor(value: string) {
+    super(`invalid runId: ${JSON.stringify(value)} — must match ${SAFE_SLUG_RE.source}`);
+    this.name = "InvalidRunIdError";
+  }
+}
+
+export class RunDirContainmentError extends Error {
+  constructor(dest: string, base: string) {
+    super(`runDir containment violation: ${dest} escapes ${base}`);
+    this.name = "RunDirContainmentError";
+  }
+}
+
+function assertSafeRunId(runId: string): void {
+  if (!SAFE_SLUG_RE.test(runId) || runId === "." || runId === "..") {
+    throw new InvalidRunIdError(runId);
+  }
+}
+
+function assertRunDirContained(forgeRoot: string, runDir: string): void {
+  const absBase = isAbsolute(forgeRoot) ? join(forgeRoot, "runs") : resolve(forgeRoot, "runs");
+  const absDest = resolve(runDir);
+  if (
+    absDest !== absBase &&
+    !absDest.startsWith(`${absBase}/`) &&
+    !absDest.startsWith(`${absBase}\\`)
+  ) {
+    throw new RunDirContainmentError(absDest, absBase);
+  }
+}
 
 export interface DispatchContext {
   subcommand: Subcommand;
@@ -49,25 +74,6 @@ export interface DispatchContext {
   forgeRoot: string;
   /** Absolute path to ${CLAUDE_PLUGIN_ROOT}. */
   pluginRoot: string;
-}
-
-export interface DispatchRecord {
-  subcommand: string;
-  mode: Mode;
-  run_id: string;
-  session_id: string;
-  workflow_state_id: string;
-  workflow_version: string;
-  gate_enabled: boolean;
-  workflow_available: boolean;
-  chosen_level: ChosenLevel;
-  l1_trigger_reason?: string;
-  l0_failure_signature?: string;
-  exit_code: number;
-  duration_ms: number;
-  /** ISO-8601 timestamp. */
-  timestamp: string;
-  frozen_zone_blocked: boolean;
 }
 
 export interface ProbeResult {
@@ -170,11 +176,13 @@ export function classifyL0Failure(err: unknown): L0FailureSignature {
  * Returns the absolute path to the JSONL file.
  */
 export function writeDispatchRecord(ctx: DispatchContext, record: DispatchRecord): string {
+  // F14: validate runId at the dispatcher boundary; assert resolved
+  // .forge/runs/<runId>/ stays under forgeRoot. Defence-in-depth against
+  // ".." / "/etc" / NUL-byte payloads slipping in via session metadata.
+  assertSafeRunId(ctx.runId);
   const runDir = join(ctx.forgeRoot, "runs", ctx.runId);
-  mkdirSync(runDir, { recursive: true });
-  const path = join(runDir, "dispatch.jsonl");
-  appendFileSync(path, `${JSON.stringify(record)}\n`);
-  return path;
+  assertRunDirContained(ctx.forgeRoot, runDir);
+  return appendDispatchRecord(ctx.forgeRoot, ctx.runId, record);
 }
 
 /**
@@ -213,7 +221,11 @@ export function updateStatusMd(ctx: DispatchContext, level: ChosenLevel): void {
  * via `precursor_partial:` field.
  */
 export function isolatePartialFindings(ctx: DispatchContext, partialContent: string): string {
+  // F14: same validation as writeDispatchRecord — partial findings live
+  // under the same `.forge/runs/<runId>/` tree.
+  assertSafeRunId(ctx.runId);
   const partialDir = join(ctx.forgeRoot, "runs", ctx.runId, "l0-partial");
+  assertRunDirContained(ctx.forgeRoot, partialDir);
   mkdirSync(partialDir, { recursive: true });
   const timestamp = Date.now();
   const path = join(partialDir, `${ctx.subcommand}-${timestamp}.md`);

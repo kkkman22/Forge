@@ -41,6 +41,18 @@ export interface CliSpawnRequest {
   cwd: string;
 }
 
+/**
+ * Base environment vars always copied to the subprocess. Anything not in
+ * BASE_ENV ∪ FORWARDED_ENV is dropped — this is a strict allowlist, not a
+ * blocklist (F15). Adding a new variable requires editing this list.
+ *
+ * Rationale: leaking arbitrary parent-process env (AWS_SECRET_ACCESS_KEY,
+ * GITHUB_TOKEN, ssh-agent sockets, ...) into a long-running child is a
+ * classic supply-chain risk. The CLI only needs PATH for binary lookup and
+ * HOME/USER for `~` expansion; everything else is opt-in.
+ */
+const BASE_ENV = ["PATH", "HOME", "USER", "SHELL", "TZ", "LANG", "LC_ALL", "TMPDIR"];
+
 const FORWARDED_ENV = [
   "ANTHROPIC_API_KEY",
   "ANTHROPIC_AUTH_TOKEN",
@@ -100,11 +112,11 @@ export function buildEnv(
   baseEnv: Record<string, string | undefined>,
   overrides: Record<string, string>,
 ): Record<string, string> {
+  // F15: strict allowlist — start from {} and only copy named keys. Drops
+  // arbitrary parent-process env (AWS_*, GITHUB_TOKEN, ssh sockets, ...) that
+  // would otherwise leak into the subprocess.
   const out: Record<string, string> = {};
-  for (const [k, v] of Object.entries(baseEnv)) {
-    if (typeof v === "string") out[k] = v;
-  }
-  for (const key of FORWARDED_ENV) {
+  for (const key of [...BASE_ENV, ...FORWARDED_ENV]) {
     const v = baseEnv[key];
     if (typeof v === "string") out[key] = v;
   }

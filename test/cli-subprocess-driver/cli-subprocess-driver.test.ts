@@ -124,13 +124,11 @@ describe("CliSubprocessDriver: AC 5.1(e) — buildEnv", () => {
       {
         ANTHROPIC_API_KEY: "sk-test",
         CLAUDE_CODE_OAUTH_TOKEN: "oa-test",
-        UNRELATED: "x",
       },
       {},
     );
     expect(env.ANTHROPIC_API_KEY).toBe("sk-test");
     expect(env.CLAUDE_CODE_OAUTH_TOKEN).toBe("oa-test");
-    expect(env.UNRELATED).toBe("x");
   });
 
   it("forwards CLAUDE_CODE_WORKFLOWS gate by default", () => {
@@ -147,6 +145,46 @@ describe("CliSubprocessDriver: AC 5.1(e) — buildEnv", () => {
     const orig = { ANTHROPIC_API_KEY: "k" };
     buildEnv(orig, { EXTRA: "v" });
     expect(orig).not.toHaveProperty("EXTRA");
+  });
+
+  it("F15: drops non-whitelisted vars (AWS_SECRET_ACCESS_KEY, GITHUB_TOKEN, ...)", () => {
+    const env = buildEnv(
+      {
+        // Whitelisted — must survive.
+        ANTHROPIC_API_KEY: "sk-x",
+        PATH: "/usr/bin",
+        HOME: "/home/u",
+        USER: "u",
+        // Not whitelisted — must be dropped to prevent leakage.
+        AWS_SECRET_ACCESS_KEY: "AKIA...secret",
+        GITHUB_TOKEN: "ghp_...secret",
+        SSH_AUTH_SOCK: "/tmp/ssh-xxx",
+        DATABASE_URL: "postgres://...",
+        OPENAI_API_KEY: "sk-other",
+        UNRELATED: "x",
+      },
+      {},
+    );
+    // Whitelisted keys present.
+    expect(env.ANTHROPIC_API_KEY).toBe("sk-x");
+    expect(env.PATH).toBe("/usr/bin");
+    expect(env.HOME).toBe("/home/u");
+    expect(env.USER).toBe("u");
+    // Non-whitelisted keys absent.
+    expect(env).not.toHaveProperty("AWS_SECRET_ACCESS_KEY");
+    expect(env).not.toHaveProperty("GITHUB_TOKEN");
+    expect(env).not.toHaveProperty("SSH_AUTH_SOCK");
+    expect(env).not.toHaveProperty("DATABASE_URL");
+    expect(env).not.toHaveProperty("OPENAI_API_KEY");
+    expect(env).not.toHaveProperty("UNRELATED");
+  });
+
+  it("F15: overrides win even for non-whitelisted keys (caller responsibility)", () => {
+    // If the caller explicitly chooses to set MY_FLAG via overrides, that's
+    // their explicit choice and we honour it. The allowlist only filters
+    // baseEnv (i.e. process.env).
+    const env = buildEnv({ MY_FLAG: "ignored-from-base" }, { MY_FLAG: "set-by-caller" });
+    expect(env.MY_FLAG).toBe("set-by-caller");
   });
 });
 

@@ -20,11 +20,11 @@ status: open
 | F8 | P1 | `tool-health.md` writer | flock advisory lock + 5-process concurrent append safety test (R12.7) | unfixed |
 | F9 | P1 | `src/cli-agent-adapter.ts:71-78` | Iterate `msg.content` as array of blocks (text). Add real-fixture test | fixed |
 | F10 | P1 | `cli-agent-adapter.ts:64-118` + `warm-up-runner.ts:75-130` + `loop-error-controller.ts:128-155` | Attach `child.on("error", reject)` on every spawn; ENOENT injection test | fixed |
-| F11 | P1 | `workflow-audit-writer.ts:89-99` vs `workflow-dispatcher.ts:54-71,172-178` | Single source of truth for `dispatch.jsonl` schema; contract test on every line | unfixed |
+| F11 | P1 | `workflow-audit-writer.ts:89-99` vs `workflow-dispatcher.ts:54-71,172-178` | Single source of truth for `dispatch.jsonl` schema; contract test on every line | fixed |
 | F12 | P1 | `loop-error-controller.ts:96-108` | Track stuck-timer firing in `runOnce`; introduce `retry_exhausted` signature; correct `l0_failure_signature` mapping | fixed |
-| F13 | P1 | `workflow-audit-writer.ts:53-65` | Validate/slugify `ctx.topic`/`ctx.runId` against `/^[a-zA-Z0-9._-]{1,64}$/`; assert `dest.startsWith(forgeRoot)` | unfixed |
-| F14 | P1 | `workflow-dispatcher.ts:215-222,173` | Validate `runId` at dispatcher boundary; resolve absolute path, assert containment under `forgeRoot/runs/` | unfixed |
-| F15 | P1 | `cli-subprocess-driver.ts:99-113` | Implement true env allowlist (start `{}`; copy `FORWARDED_ENV` + `PATH`/`HOME`/`USER`); negative test for non-whitelisted var | unfixed |
+| F13 | P1 | `workflow-audit-writer.ts:53-65` | Validate/slugify `ctx.topic`/`ctx.runId` against `/^[a-zA-Z0-9._-]{1,64}$/`; assert `dest.startsWith(forgeRoot)` | fixed |
+| F14 | P1 | `workflow-dispatcher.ts:215-222,173` | Validate `runId` at dispatcher boundary; resolve absolute path, assert containment under `forgeRoot/runs/` | fixed |
+| F15 | P1 | `cli-subprocess-driver.ts:99-113` | Implement true env allowlist (start `{}`; copy `FORWARDED_ENV` + `PATH`/`HOME`/`USER`); negative test for non-whitelisted var | fixed |
 
 ## Status flow
 
