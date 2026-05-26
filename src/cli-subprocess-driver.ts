@@ -4,6 +4,7 @@ import { join } from "node:path";
 import { STUCK_TIMEOUT_MS } from "./error-handler.js";
 import { createLogEntry } from "./logger/index.js";
 import type { AgentInterface, AgentResult, AgentRunOptions } from "./loop-types.js";
+import type { RateLimitDegrader } from "./rate-limit-degrader.js";
 import { StreamJsonAdapter } from "./stream-json-adapter.js";
 
 // ---------------------------------------------------------------------------
@@ -26,6 +27,7 @@ export interface CliDriverConfig {
   sessionId?: string;
   logSink?: { log: (entry: ReturnType<typeof createLogEntry>) => void };
   stuckTimeoutMs?: number;
+  rateLimitDegrader?: RateLimitDegrader;
 }
 
 interface SignalChainEntry {
@@ -113,7 +115,9 @@ export class CliSubprocessDriver implements AgentInterface {
 
   constructor(config: CliDriverConfig) {
     this.config = config;
-    this.adapter = new StreamJsonAdapter(config.runDir);
+    this.adapter = new StreamJsonAdapter(config.runDir, {
+      degrader: config.rateLimitDegrader,
+    });
     mkdirSync(config.runDir, { recursive: true });
   }
 
@@ -141,6 +145,7 @@ export class CliSubprocessDriver implements AgentInterface {
     // Stuck detection interval
     const checkInterval = Math.min(Math.floor(stuckTimeout / 10), 5_000);
     let stuckHandled = false;
+    let killTimer: ReturnType<typeof setTimeout> | null = null;
     const stuckCheckInterval = setInterval(() => {
       if (stuckHandled) return;
       if (Date.now() - lastStdoutEvent >= stuckTimeout) {
@@ -149,7 +154,7 @@ export class CliSubprocessDriver implements AgentInterface {
         child.kill("SIGTERM");
 
         // Escalate to SIGKILL after 30s if still alive
-        setTimeout(() => {
+        killTimer = setTimeout(() => {
           if (!child.killed) {
             this.recordSignalChain("SIGKILL", "stuck_timeout");
             child.kill("SIGKILL");
@@ -204,6 +209,7 @@ export class CliSubprocessDriver implements AgentInterface {
       };
     } finally {
       clearInterval(stuckCheckInterval);
+      if (killTimer) clearTimeout(killTimer);
     }
   }
 
