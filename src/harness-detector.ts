@@ -11,8 +11,9 @@
  */
 
 import { execSync } from "node:child_process";
-import { existsSync, globSync } from "node:fs";
+import { existsSync } from "node:fs";
 import { join } from "node:path";
+import { globSync } from "glob";
 
 const CMUX_SOCKET_TIMEOUT = 1000;
 
