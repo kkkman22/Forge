@@ -1,6 +1,7 @@
 import { type ChildProcess, spawn } from "node:child_process";
 import { appendFileSync, mkdirSync } from "node:fs";
 import { join } from "node:path";
+import { createLogEntry } from "./logger/index.js";
 import type { AgentInterface, AgentResult, AgentRunOptions } from "./loop-types.js";
 import { StreamJsonAdapter } from "./stream-json-adapter.js";
 
@@ -22,6 +23,7 @@ export interface CliDriverConfig {
   maxTurns: number;
   resumeSessionId?: string;
   sessionId?: string;
+  logSink?: { log: (entry: ReturnType<typeof createLogEntry>) => void };
 }
 
 interface BuildEnvOpts {
@@ -179,8 +181,30 @@ export class CliSubprocessDriver implements AgentInterface {
 
   private captureStderr(stderr: NodeJS.ReadableStream): void {
     const stderrPath = join(this.config.runDir, "stderr.log");
+    let buffer = "";
     stderr.on("data", (chunk: Buffer) => {
-      appendFileSync(stderrPath, chunk.toString(), "utf-8");
+      const text = chunk.toString();
+      appendFileSync(stderrPath, text, "utf-8");
+
+      if (this.config.logSink) {
+        buffer += text;
+        const lines = buffer.split("\n");
+        buffer = lines.pop() ?? "";
+        for (const line of lines) {
+          if (line.length > 0) {
+            this.config.logSink.log(
+              createLogEntry("subprocess_stderr", "warn", line, { runId: this.config.runId }),
+            );
+          }
+        }
+      }
+    });
+    stderr.on("end", () => {
+      if (this.config.logSink && buffer.length > 0) {
+        this.config.logSink.log(
+          createLogEntry("subprocess_stderr", "warn", buffer, { runId: this.config.runId }),
+        );
+      }
     });
   }
 }

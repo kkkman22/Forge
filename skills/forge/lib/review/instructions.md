@@ -272,6 +272,43 @@ quality-check and security-check run as `background: true` agents [R11.1]. spec-
 - **Worktree-only evidence**: Review finds file exists in worktree → claims implemented → verify on main branch, not worktree
 - **Stale review**: Review at commit A, code changes to commit B → review invalid → record reviewed_at_commit, warn on diff
 
+## Workflow Dispatch (R1)
+
+When user triggers `/forge review`, follow this dispatch protocol for workflow eligibility:
+
+### Dispatch Protocol
+
+1. **Probe workflow eligibility** (5 conditions — all must pass for L0):
+   - `process.env.CLAUDE_CODE_WORKFLOWS === '1'`
+   - `mode === 'interactive'` (not autonomous/loop)
+   - `${CLAUDE_PLUGIN_ROOT}/workflows/multi-agent-review.js` exists
+   - `node --check` passes on workflow file
+   - Concurrency bridge: `workflows/lib/concurrency.js` exists + reachable
+
+2. **If all 5 pass → attempt L0**:
+   ```
+   Call WorkflowDispatcher.dispatch(ctx, { tryL0, runFallback, auditWriter })
+   ```
+   The dispatcher auto-fills 14 fields and writes `dispatch.jsonl` + updates `status.md`.
+
+3. **If any probe fails OR L0 throws → fall back to L1**:
+   ```
+   runReviewFallbackLadder(...)  // existing subagent-parallel path
+   ```
+   Dispatcher records `chosen_level: L1` with `l1_trigger_reason` / `l0_failure_signature`.
+
+4. **Dispatch record always written**: `.forge/runs/<runId>/dispatch.jsonl` with all 14 fields (handled by dispatcher, not SKILL).
+
+5. **Status always updated**: `.forge/status.md` receives `dispatch_chosen_level`, `dispatch_subcommand`, `dispatch_run_id` (handled by dispatcher).
+
+6. **No confirmation prompts**: Phase transitions follow §2.7 — `✅ review 完成 → 自动进入 <next>`.
+
+### Reference
+
+- Fallback ladder: `@.claude/rules/workflow-fallback-ladder.md`
+- Dispatcher module: `src/workflow-dispatcher.ts`
+- Audit writer module: `src/workflow-audit-writer.ts`
+
 ## 4.5 Known-failures Accumulation
 
 After receiving three-layer review reports, forge-review SKILL:

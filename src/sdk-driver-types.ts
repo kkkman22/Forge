@@ -106,6 +106,8 @@ export interface SdkDriverConfig {
   sdkNativeSandbox?: boolean;
   /** Skip hooks protection validation and run without PreToolUse guards. */
   forceNoHooks?: boolean;
+  /** IPC emitter for stdout NDJSON event bridge. When provided, emitEvent dual-writes to IPC. */
+  ipcEmitter?: import("../src/ipc-emitter.js").IpcEmitter;
 }
 
 /**

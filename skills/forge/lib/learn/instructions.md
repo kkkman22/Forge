@@ -211,6 +211,32 @@ The full 21-step execution flow and task archival details are in references/know
 
 ---
 
+## Workflow Dispatch (R1)
+
+When user triggers `/forge learn`, follow this dispatch protocol:
+
+### Dispatch Protocol
+
+1. **Probe workflow eligibility** (same 5 conditions):
+   - `process.env.CLAUDE_CODE_WORKFLOWS === '1'`
+   - `mode === 'interactive'`
+   - `${CLAUDE_PLUGIN_ROOT}/workflows/learn.js` exists (future: when available)
+   - `node --check` passes
+   - Concurrency bridge reachable
+
+2. **If all 5 pass → attempt L0** via `WorkflowDispatcher.dispatch(ctx, deps)`. Dispatcher auto-fills 14 fields, writes `dispatch.jsonl` + updates `status.md`.
+
+3. **If any fails → L1**: existing subagent knowledge extraction path. Dispatcher records `chosen_level: L1`.
+
+4. **Dispatch record always written** (14 fields, handled by dispatcher).
+5. **Status always updated** (3 dispatch fields in status.md, handled by dispatcher).
+6. **No confirmation prompts** between dispatch and execution.
+
+### Reference
+
+- Fallback ladder: `@.claude/rules/workflow-fallback-ladder.md`
+- Dispatcher: `src/workflow-dispatcher.ts`
+
 ## Edge Cases
 
 | Scenario | Handling |

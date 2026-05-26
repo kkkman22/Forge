@@ -1,3 +1,4 @@
+import { execFileSync } from "node:child_process";
 import { existsSync, mkdirSync, readFileSync, writeFileSync } from "node:fs";
 import { dirname, join } from "node:path";
 
@@ -29,6 +30,7 @@ export class WorkflowAuditWriter {
   constructor(
     private forgeRoot: string,
     private frozenZoneChecker: (path: string) => boolean,
+    private hookCheckPath?: string,
   ) {}
 
   async write(target: AuditWriteTarget): Promise<void> {
@@ -37,6 +39,19 @@ export class WorkflowAuditWriter {
     // Frozen-zone pre-check
     if (this.frozenZoneChecker(destPath)) {
       throw new FrozenZoneViolation([destPath]);
+    }
+
+    // Hook check: call external frozen-zone hook script
+    if (this.hookCheckPath && existsSync(this.hookCheckPath)) {
+      try {
+        execFileSync("bash", [this.hookCheckPath, destPath], {
+          stdio: "pipe",
+          timeout: 5000,
+        });
+      } catch (err) {
+        const msg = err instanceof Error ? err.message : String(err);
+        throw new FrozenZoneViolation([destPath, `hook rejected: ${msg}`]);
+      }
     }
 
     // mkdir -p

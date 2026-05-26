@@ -221,8 +221,30 @@ $ /forge ship
 - **Gates not passed**: Report specific failed items (e.g. P0 issues), prompt to fix and re-run review + ship
 - **Discard operation**: Requires typing "discard" to confirm, all changes deleted after execution
 
+## Dispatch Status Check (R6)
+
+Before running ship gates (§2), read `.forge/status.md` frontmatter to check dispatch status:
+
+1. Parse `.forge/status.md` YAML frontmatter
+2. Extract `dispatch_chosen_level` field
+3. Decision tree:
+   - `dispatch_chosen_level === 'L3'` → **ABORT** ship with error:
+     ```
+     🚫 Ship blocked: review/decide/learn unavailable (L3 fallback).
+     See .forge/runs/<dispatch_run_id>/dispatch.jsonl for details.
+     ```
+   - `dispatch_chosen_level === 'L2'` → **WARN** but continue:
+     ```
+     ⚠️ Ship proceeding with subagent-serial fallback (degraded review).
+     ```
+   - `dispatch_chosen_level ∈ {'L0', 'L1'}` OR field missing → **CONTINUE** normally
+4. If `.forge/status.md` does not exist, treat `dispatch_chosen_level` as missing (CONTINUE, do not throw)
+
+**Single source of truth**: Only read `.forge/status.md` three fields (`dispatch_chosen_level`, `dispatch_subcommand`, `dispatch_run_id`). Do NOT parse `dispatch.jsonl` directly.
+
 ## Gotchas
 - **Review bypass**: Ship without review → undetected issues → enforce review gate, no skip
 - **Dist sync missing**: Code changed but dist/ not rebuilt → hooks use stale dist → verify dist/ in sync before ship
 - **Branch protection**: Ship on main → direct commit to protected branch → verify on feature branch
 - **Test gate skip**: Ship passes review but tests not run → runtime failures → verify test gate passed
+- **Dispatch L3**: Ship blocked when review/decide/learn all unavailable → fix subagent infrastructure first

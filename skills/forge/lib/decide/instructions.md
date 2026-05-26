@@ -160,6 +160,32 @@ Output path: `.forge/decisions/<YYYY-MM-DD>-<topic>.md`。YAML frontmatter + 六
 
 每个角色的输出**严格限制在 500 tokens 以内**。超出时截断并提示精简。
 
+## Workflow Dispatch (R1)
+
+When user triggers `/forge decide`, follow this dispatch protocol:
+
+### Dispatch Protocol
+
+1. **Probe workflow eligibility** (same 5 conditions as review):
+   - `process.env.CLAUDE_CODE_WORKFLOWS === '1'`
+   - `mode === 'interactive'`
+   - `${CLAUDE_PLUGIN_ROOT}/workflows/decide.js` exists (future: when available)
+   - `node --check` passes
+   - Concurrency bridge reachable
+
+2. **If all 5 pass → attempt L0** via `WorkflowDispatcher.dispatch(ctx, deps)`. Dispatcher auto-fills 14 fields, writes `dispatch.jsonl` + updates `status.md`.
+
+3. **If any fails → L1**: existing two-round subagent path. Dispatcher records `chosen_level: L1`.
+
+4. **Dispatch record always written** (14 fields, handled by dispatcher).
+5. **Status always updated** (3 dispatch fields in status.md, handled by dispatcher).
+6. **No confirmation prompts** between dispatch and execution.
+
+### Reference
+
+- Fallback ladder: `@.claude/rules/workflow-fallback-ladder.md`
+- Dispatcher: `src/workflow-dispatcher.ts`
+
 ## Common Rationalizations
 
 | 合理化 | 反驳 |
