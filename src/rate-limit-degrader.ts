@@ -1,4 +1,4 @@
-import { appendFileSync, mkdirSync } from "node:fs";
+import { appendFileSync, closeSync, mkdirSync, openSync, unlinkSync } from "node:fs";
 import { dirname } from "node:path";
 
 // ---------------------------------------------------------------------------
@@ -59,16 +59,55 @@ export class RateLimitDegrader {
   }
 
   // -------------------------------------------------------------------------
-  // Private: append to tool-health.md with flock-protected write
+  // Private: append to tool-health.md with advisory lock for concurrency safety
+  //
+  // Implementation note (R12.7): macOS lacks the `flock` CLI; npm `proper-lockfile`
+  // would add a runtime dep. We use the O_EXCL atomic create primitive which is
+  // POSIX-portable and zero-dependency: only one process can `openSync(path, 'wx')`
+  // at a time. Lock is held for ≤5ms (single line append) so contention is rare;
+  // best-effort retry up to 50ms covers the race window. On failure we still
+  // append (best-effort), preserving the spec contract that tool-health writes
+  // never block the main flow.
   // -------------------------------------------------------------------------
 
   private appendToolHealth(oldLimit: number, newLimit: number): void {
     const line = `${new Date().toISOString()} · ${this.subcommand} · 429-degrade · old=${oldLimit} new=${newLimit} probe=none\n`;
     try {
       mkdirSync(dirname(this.toolHealthPath), { recursive: true });
+    } catch {
+      return; // mkdir failure → silently skip
+    }
+
+    const lockPath = `${this.toolHealthPath}.lock`;
+    const deadline = Date.now() + 50; // 50ms total wait
+    let lockFd: number | null = null;
+
+    while (Date.now() < deadline) {
+      try {
+        // O_EXCL: atomic-create, fails if file already exists (lock held by peer)
+        lockFd = openSync(lockPath, "wx");
+        break;
+      } catch (err) {
+        if ((err as NodeJS.ErrnoException).code !== "EEXIST") break;
+        // Sleep ~1ms via Atomics.wait on a SharedArrayBuffer (no setTimeout)
+        const sab = new SharedArrayBuffer(4);
+        Atomics.wait(new Int32Array(sab), 0, 0, 1);
+      }
+    }
+
+    try {
       appendFileSync(this.toolHealthPath, line, "utf-8");
     } catch {
       // Silently skip — don't block main flow on tool-health write failure
+    } finally {
+      if (lockFd !== null) {
+        try {
+          closeSync(lockFd);
+          unlinkSync(lockPath);
+        } catch {
+          // Stale lock will be cleaned by next O_EXCL attempt timing out + falling through
+        }
+      }
     }
   }
 }

@@ -880,8 +880,14 @@ async function main(): Promise<void> {
       // validates the factory can be wired in the production path.
       // The SKILL agent imports createAuditWriter directly from
       // workflow-audit-factory.ts to build the writer at dispatch time.
+      // hookCheckPath enforces R4.8 — workflow audit writes call
+      // scripts/hook-check-frozen.sh before touching any audit zone.
       // ---------------------------------------------------------------
-      createAuditWriter(forgeRoot);
+      const hookCheckPath = path.join(
+        process.env.CLAUDE_PLUGIN_ROOT ?? cwd,
+        "scripts/hook-check-frozen.sh",
+      );
+      createAuditWriter(forgeRoot, hookCheckPath);
 
       // ---------------------------------------------------------------
       // Wire signal handlers
