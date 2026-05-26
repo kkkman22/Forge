@@ -17,6 +17,23 @@ import {
   writeDispatchRecord,
 } from "../src/workflow-dispatcher.js";
 
+// ---------------------------------------------------------------------------
+// Helper: set up a valid L0 workflow environment
+// ---------------------------------------------------------------------------
+function setupL0Workflow(tmpDir: string) {
+  const wfDir = join(tmpDir, "workflows");
+  mkdirSync(wfDir, { recursive: true });
+  mkdirSync(join(wfDir, "lib"), { recursive: true });
+  writeFileSync(
+    join(wfDir, "lib", "concurrency.js"),
+    "export const chunkedParallel = () => {};\n",
+  );
+  writeFileSync(
+    join(wfDir, "review.js"),
+    "import { chunkedParallel } from './lib/concurrency.js';\nexport const meta = {};\n",
+  );
+}
+
 describe("WorkflowDispatcher", () => {
   let tmpDir: string;
 
@@ -244,6 +261,223 @@ describe("WorkflowDispatcher", () => {
       expect(classifyL0Failure(new Error("FrozenZoneViolation: .forge/specs/locked"))).toBe(
         "frozen_zone_blocked",
       );
+    });
+  });
+
+  // ---------------------------------------------------------------------------
+  // T1: 14-field auto-fill tests
+  // ---------------------------------------------------------------------------
+
+  describe("dispatch 14-field auto-fill", () => {
+    describe("R7.1: duration_ms timing", () => {
+      it("measures duration_ms > 0", async () => {
+        delete process.env.CLAUDE_CODE_WORKFLOWS;
+        const result = await dispatch(makeCtx(), {
+          runFallback: vi.fn().mockResolvedValue({ output: "ok" }),
+        });
+        expect(result.record).toBeDefined();
+        expect(result.record!.duration_ms).toBeGreaterThanOrEqual(0);
+      });
+    });
+
+    describe("R7.2: gate_enabled auto-detection", () => {
+      it("sets gate_enabled=true when CLAUDE_CODE_WORKFLOWS=1", async () => {
+        process.env.CLAUDE_CODE_WORKFLOWS = "1";
+        setupL0Workflow(tmpDir);
+
+        const result = await dispatch(makeCtx());
+        expect(result.record).toBeDefined();
+        expect(result.record!.gate_enabled).toBe(true);
+        delete process.env.CLAUDE_CODE_WORKFLOWS;
+      });
+
+      it("sets gate_enabled=false when env unset", async () => {
+        delete process.env.CLAUDE_CODE_WORKFLOWS;
+        const result = await dispatch(makeCtx(), {
+          runFallback: vi.fn().mockResolvedValue({ output: "ok" }),
+        });
+        expect(result.record).toBeDefined();
+        expect(result.record!.gate_enabled).toBe(false);
+      });
+    });
+
+    describe("R7.2: workflow_available from probe", () => {
+      it("sets workflow_available=true when probe succeeds", async () => {
+        process.env.CLAUDE_CODE_WORKFLOWS = "1";
+        setupL0Workflow(tmpDir);
+
+        const result = await dispatch(makeCtx());
+        expect(result.record).toBeDefined();
+        expect(result.record!.workflow_available).toBe(true);
+        delete process.env.CLAUDE_CODE_WORKFLOWS;
+      });
+
+      it("sets workflow_available=false when probe fails", async () => {
+        delete process.env.CLAUDE_CODE_WORKFLOWS;
+        const result = await dispatch(makeCtx(), {
+          runFallback: vi.fn().mockResolvedValue({ output: "ok" }),
+        });
+        expect(result.record).toBeDefined();
+        expect(result.record!.workflow_available).toBe(false);
+      });
+    });
+
+    describe("R7.3: unique workflow_state_id", () => {
+      it("generates unique wsid_* IDs across 100 calls", async () => {
+        delete process.env.CLAUDE_CODE_WORKFLOWS;
+        const ids = new Set<string>();
+        for (let i = 0; i < 100; i++) {
+          const result = await dispatch(makeCtx({ runId: `run-${i}` }), {
+            runFallback: vi.fn().mockResolvedValue({ output: "ok" }),
+          });
+          expect(result.record).toBeDefined();
+          expect(result.record!.workflow_state_id).toMatch(/^wsid_/);
+          ids.add(result.record!.workflow_state_id);
+        }
+        expect(ids.size).toBe(100);
+      });
+    });
+
+    describe("R7.4: workflow_version from meta.version", () => {
+      it("reads meta.version from workflow file", async () => {
+        process.env.CLAUDE_CODE_WORKFLOWS = "1";
+        const wfDir = join(tmpDir, "workflows");
+        mkdirSync(wfDir, { recursive: true });
+        mkdirSync(join(wfDir, "lib"), { recursive: true });
+        writeFileSync(
+          join(wfDir, "lib", "concurrency.js"),
+          "export const chunkedParallel = () => {};\n",
+        );
+        writeFileSync(
+          join(wfDir, "review.js"),
+          `import { chunkedParallel } from './lib/concurrency.js';\nexport const meta = { version: '1.1.0' };\n`,
+        );
+
+        const result = await dispatch(makeCtx());
+        expect(result.record).toBeDefined();
+        expect(result.record!.workflow_version).toBe("1.1.0");
+        delete process.env.CLAUDE_CODE_WORKFLOWS;
+      });
+
+      it("defaults workflow_version to 'unknown' when meta.version missing", async () => {
+        delete process.env.CLAUDE_CODE_WORKFLOWS;
+        const result = await dispatch(makeCtx(), {
+          runFallback: vi.fn().mockResolvedValue({ output: "ok" }),
+        });
+        expect(result.record).toBeDefined();
+        expect(result.record!.workflow_version).toBe("unknown");
+      });
+    });
+
+    describe("R7.5: ISO-8601 timestamp", () => {
+      it("writes valid ISO-8601 timestamp in dispatch.jsonl", async () => {
+        delete process.env.CLAUDE_CODE_WORKFLOWS;
+        await dispatch(makeCtx(), {
+          runFallback: vi.fn().mockResolvedValue({ output: "ok" }),
+        });
+
+        const runDir = join(tmpDir, ".forge", "runs", "run-001");
+        const content = readFileSync(join(runDir, "dispatch.jsonl"), "utf-8").trim();
+        const record = JSON.parse(content);
+        expect(record.timestamp).toBeDefined();
+        const parsed = Date.parse(record.timestamp);
+        expect(parsed).not.toBeNaN();
+        // ISO-8601 check: contains 'T' and ends with 'Z'
+        expect(record.timestamp).toMatch(/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}/);
+      });
+    });
+
+    describe("R7.7: exit_code mapping", () => {
+      it("L0 success -> exit_code 0", async () => {
+        process.env.CLAUDE_CODE_WORKFLOWS = "1";
+        setupL0Workflow(tmpDir);
+
+        const result = await dispatch(makeCtx());
+        expect(result.record).toBeDefined();
+        expect(result.record!.exit_code).toBe(0);
+        delete process.env.CLAUDE_CODE_WORKFLOWS;
+      });
+
+      it("L0 fail -> L1 fallback -> exit_code 1", async () => {
+        process.env.CLAUDE_CODE_WORKFLOWS = "1";
+        setupL0Workflow(tmpDir);
+
+        const result = await dispatch(makeCtx(), {
+          tryL0: vi.fn().mockRejectedValue(new Error("bp() exception")),
+          runFallback: vi
+            .fn()
+            .mockResolvedValue({ output: "fallback", methodology: "workflow-then-subagent" }),
+        });
+        expect(result.record).toBeDefined();
+        expect(result.record!.exit_code).toBe(1);
+        delete process.env.CLAUDE_CODE_WORKFLOWS;
+      });
+
+      it("L1 direct -> exit_code 0", async () => {
+        delete process.env.CLAUDE_CODE_WORKFLOWS;
+        const result = await dispatch(makeCtx(), {
+          runFallback: vi.fn().mockResolvedValue({ output: "ok" }),
+        });
+        expect(result.record).toBeDefined();
+        expect(result.record!.exit_code).toBe(0);
+      });
+
+      it("L3 blocked -> exit_code 2", async () => {
+        delete process.env.CLAUDE_CODE_WORKFLOWS;
+        const result = await dispatch(makeCtx(), {
+          runFallback: vi.fn().mockResolvedValue(null),
+          allFallbacksFailed: true,
+        });
+        expect(result.record).toBeDefined();
+        expect(result.record!.exit_code).toBe(2);
+      });
+    });
+
+    describe("R1.2: dispatch.jsonl has all 14 fields", () => {
+      it("writes a record with all 14 required fields", async () => {
+        delete process.env.CLAUDE_CODE_WORKFLOWS;
+        await dispatch(makeCtx(), {
+          runFallback: vi.fn().mockResolvedValue({ output: "ok" }),
+        });
+
+        const runDir = join(tmpDir, ".forge", "runs", "run-001");
+        const content = readFileSync(join(runDir, "dispatch.jsonl"), "utf-8").trim();
+        const record = JSON.parse(content);
+        const requiredFields = [
+          "subcommand",
+          "mode",
+          "run_id",
+          "session_id",
+          "workflow_state_id",
+          "workflow_version",
+          "gate_enabled",
+          "workflow_available",
+          "chosen_level",
+          "exit_code",
+          "duration_ms",
+          "timestamp",
+          "frozen_zone_blocked",
+        ];
+        for (const field of requiredFields) {
+          expect(record).toHaveProperty(field);
+        }
+      });
+    });
+
+    describe("R1.3: status.md updated with dispatch fields", () => {
+      it("writes dispatch_chosen_level, subcommand, run_id to status.md", async () => {
+        const statusPath = join(tmpDir, ".forge", "status.md");
+        writeFileSync(statusPath, "---\ncurrent_task: test\nphase: build\n---\n# Status\n");
+        delete process.env.CLAUDE_CODE_WORKFLOWS;
+        await dispatch(makeCtx(), {
+          runFallback: vi.fn().mockResolvedValue({ output: "ok" }),
+        });
+
+        const updated = readFileSync(statusPath, "utf-8");
+        expect(updated).toContain("dispatch_chosen_level: L1");
+        expect(updated).toContain("dispatch_subcommand: review");
+        expect(updated).toContain("dispatch_run_id: run-001");
+      });
     });
   });
 });
