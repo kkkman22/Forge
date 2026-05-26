@@ -67,10 +67,16 @@ export interface FallbackResult {
   methodology?: string;
 }
 
+export interface AuditWriterLike {
+  write(target: { subcommand: string; runId: string; topic: string; payload: unknown }): Promise<void>;
+}
+
 export interface DispatchDeps {
   tryL0?: (ctx: DispatchContext) => Promise<unknown>;
   runFallback?: (ctx: DispatchContext) => Promise<FallbackResult | null>;
   allFallbacksFailed?: boolean;
+  auditWriter?: AuditWriterLike;
+  topic?: string;
 }
 
 export interface ProbeResult {
@@ -233,6 +239,24 @@ export async function dispatch(
           methodology: "workflow-then-subagent",
           payload: fallbackResult,
         };
+      }
+    }
+  }
+
+  // Call audit writer (if provided) for non-L3 results
+  if (result.chosenLevel !== "L3" && deps.auditWriter && deps.topic) {
+    try {
+      await deps.auditWriter.write({
+        subcommand: ctx.subcommand,
+        runId: ctx.runId,
+        topic: deps.topic,
+        payload: result.payload ?? {},
+      });
+    } catch (err) {
+      if (err instanceof Error && (err.constructor.name === "FrozenZoneViolation" || err.message.includes("FrozenZone"))) {
+        frozenZoneBlocked = true;
+      } else {
+        throw err;
       }
     }
   }

@@ -480,4 +480,78 @@ describe("WorkflowDispatcher", () => {
       });
     });
   });
+
+  // ---------------------------------------------------------------------------
+  // T2: AuditWriter integration tests
+  // ---------------------------------------------------------------------------
+
+  describe("dispatch auditWriter integration", () => {
+    it("calls auditWriter.write for L1 result", async () => {
+      delete process.env.CLAUDE_CODE_WORKFLOWS;
+      const auditWriter = { write: vi.fn().mockResolvedValue(undefined) };
+
+      await dispatch(makeCtx(), {
+        runFallback: vi.fn().mockResolvedValue({ output: "ok" }),
+        auditWriter,
+        topic: "test-topic",
+      });
+
+      expect(auditWriter.write).toHaveBeenCalledTimes(1);
+      expect(auditWriter.write).toHaveBeenCalledWith(
+        expect.objectContaining({
+          subcommand: "review",
+          runId: "run-001",
+          topic: "test-topic",
+        }),
+      );
+    });
+
+    it("does not call auditWriter for L3 result", async () => {
+      delete process.env.CLAUDE_CODE_WORKFLOWS;
+      const auditWriter = { write: vi.fn().mockResolvedValue(undefined) };
+
+      await dispatch(makeCtx(), {
+        runFallback: vi.fn().mockResolvedValue(null),
+        allFallbacksFailed: true,
+        auditWriter,
+        topic: "test-topic",
+      });
+
+      expect(auditWriter.write).not.toHaveBeenCalled();
+    });
+
+    it("sets frozen_zone_blocked=true when auditWriter throws FrozenZoneViolation", async () => {
+      delete process.env.CLAUDE_CODE_WORKFLOWS;
+      class FrozenZoneViolation extends Error {
+        constructor() {
+          super("FrozenZoneViolation");
+          this.name = "FrozenZoneViolation";
+        }
+      }
+      const auditWriter = {
+        write: vi.fn().mockRejectedValue(new FrozenZoneViolation()),
+      };
+
+      const result = await dispatch(makeCtx(), {
+        runFallback: vi.fn().mockResolvedValue({ output: "ok" }),
+        auditWriter,
+        topic: "frozen-topic",
+      });
+
+      expect(result.record.frozen_zone_blocked).toBe(true);
+    });
+
+    it("skips auditWriter when topic not provided", async () => {
+      delete process.env.CLAUDE_CODE_WORKFLOWS;
+      const auditWriter = { write: vi.fn().mockResolvedValue(undefined) };
+
+      await dispatch(makeCtx(), {
+        runFallback: vi.fn().mockResolvedValue({ output: "ok" }),
+        auditWriter,
+        // no topic
+      });
+
+      expect(auditWriter.write).not.toHaveBeenCalled();
+    });
+  });
 });
