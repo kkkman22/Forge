@@ -1,0 +1,104 @@
+name: Cross-version check
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+jobs:
+  test-matrix:
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        node-version: [18, 20, 22]
+
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-node@v6
+        with:
+          node-version: ${{ matrix.node-version }}
+          cache: npm
+      - run: npm ci
+      - name: Build
+        run: npm run build 2>/dev/null || true
+      - run: npm test
+
+  scan-ci-logs:
+    needs: test-matrix
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    permissions:
+      issues: write
+      pull-requests: write
+
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-node@v6
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - name: Scan recent CI logs
+        id: scan
+        run: |
+          output=$(node scripts/scan-recent-ci-logs.mjs --repo ${{ github.repository }} --count 20) || true
+          echo "result<<EOF" >> "$GITHUB_OUTPUT"
+          echo "$output" >> "$GITHUB_OUTPUT"
+          echo "EOF" >> "$GITHUB_OUTPUT"
+
+          matched=$(echo "$output" | node -e "
+            const chunks = [];
+            process.stdin.on('data', (d) => chunks.push(d));
+            process.stdin.on('end', () => {
+              try {
+                const s = JSON.parse(chunks.join(''));
+                process.exit(s.matched_patterns.length > 0 ? 1 : 0);
+              } catch { process.exit(0); }
+            });
+          " 2>/dev/null) || echo "has_matches=true" >> "$GITHUB_OUTPUT"
+
+      - name: Comment on matching PRs
+        if: steps.scan.outputs.has_matches == 'true'
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const result = `${{ steps.scan.outputs.result }}`;
+            let summary;
+            try {
+              summary = JSON.parse(result);
+            } catch {
+              return;
+            }
+
+            const body = [
+              '## CI Log Scan Findings',
+              '',
+              `- **Scanned runs**: ${summary.scanned_runs}`,
+              `- **Failed runs**: ${summary.failed_runs}`,
+              `- **Pattern counts**: ${JSON.stringify(summary.pattern_counts, null, 2)}`,
+              '',
+              '### Matched patterns',
+              '',
+            ];
+
+            for (const m of summary.matched_patterns.slice(0, 10)) {
+              body.push(`- Run \`${m.run_id}\`: **${m.pattern}** — \`${m.log_line.slice(0, 120)}\``);
+            }
+
+            const { data: prs } = await github.rest.pulls.list({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              state: 'open',
+              per_page: 5,
+            });
+
+            for (const pr of prs) {
+              await github.rest.issues.createComment({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                issue_number: pr.number,
+                body: body.join('\n'),
+              });
+            }
