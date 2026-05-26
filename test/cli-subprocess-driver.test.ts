@@ -1,4 +1,4 @@
-import { mkdirSync, readFileSync, rmSync, writeFileSync } from "node:fs";
+import { mkdirSync, readFileSync, rmSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
@@ -135,7 +135,9 @@ describe("CliSubprocessDriver", () => {
       const driver = new CliSubprocessDriver(makeConfig({ logSink }));
 
       // Access private method via cast
-      const captureStderr = (driver as unknown as { captureStderr: (s: NodeJS.ReadableStream) => void }).captureStderr.bind(driver);
+      const captureStderr = (
+        driver as unknown as { captureStderr: (s: NodeJS.ReadableStream) => void }
+      ).captureStderr.bind(driver);
 
       const chunks: ((chunk: Buffer) => void)[] = [];
       const endCbs: (() => void)[] = [];
@@ -144,7 +146,7 @@ describe("CliSubprocessDriver", () => {
           if (event === "data") chunks.push(cb as (chunk: Buffer) => void);
           if (event === "end") endCbs.push(cb as () => void);
         }),
-      };
+      } as unknown as NodeJS.ReadableStream;
 
       captureStderr(mockStream);
 
@@ -161,7 +163,9 @@ describe("CliSubprocessDriver", () => {
 
     it("writes to stderr.log even without logSink", () => {
       const driver = new CliSubprocessDriver(makeConfig());
-      const captureStderr = (driver as unknown as { captureStderr: (s: NodeJS.ReadableStream) => void }).captureStderr.bind(driver);
+      const captureStderr = (
+        driver as unknown as { captureStderr: (s: NodeJS.ReadableStream) => void }
+      ).captureStderr.bind(driver);
 
       const chunks: ((chunk: Buffer) => void)[] = [];
       const endCbs: (() => void)[] = [];
@@ -170,7 +174,7 @@ describe("CliSubprocessDriver", () => {
           if (event === "data") chunks.push(cb as (chunk: Buffer) => void);
           if (event === "end") endCbs.push(cb as () => void);
         }),
-      };
+      } as unknown as NodeJS.ReadableStream;
 
       captureStderr(mockStream);
       chunks[0](Buffer.from("error output\n"));
@@ -181,7 +185,9 @@ describe("CliSubprocessDriver", () => {
 
     it("does not throw when logSink is undefined", () => {
       const driver = new CliSubprocessDriver(makeConfig());
-      const captureStderr = (driver as unknown as { captureStderr: (s: NodeJS.ReadableStream) => void }).captureStderr.bind(driver);
+      const captureStderr = (
+        driver as unknown as { captureStderr: (s: NodeJS.ReadableStream) => void }
+      ).captureStderr.bind(driver);
 
       const chunks: ((chunk: Buffer) => void)[] = [];
       const endCbs: (() => void)[] = [];
@@ -190,7 +196,7 @@ describe("CliSubprocessDriver", () => {
           if (event === "data") chunks.push(cb as (chunk: Buffer) => void);
           if (event === "end") endCbs.push(cb as () => void);
         }),
-      };
+      } as unknown as NodeJS.ReadableStream;
 
       expect(() => {
         captureStderr(mockStream);

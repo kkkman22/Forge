@@ -1,6 +1,6 @@
-import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { readFileSync } from "node:fs";
 import { join } from "node:path";
+import { afterEach, describe, expect, it, vi } from "vitest";
 
 describe("concurrency.js", () => {
   const originalEnv = { ...process.env };
@@ -119,7 +119,6 @@ describe("concurrency.js", () => {
       const { chunkedParallel } = await importFresh();
       let maxConcurrent = 0;
       let current = 0;
-      const startOrder: number[][] = [];
       const batchStarts: number[] = [];
 
       const fns = Array.from({ length: 4 }, (_, i) => () => {
