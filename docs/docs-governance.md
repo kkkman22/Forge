@@ -6,6 +6,8 @@ updated: 2026-05-24
 owner: forge-maintainers
 ---
 
+[← 返回索引](./INDEX.md)
+
 # Docs Governance System
 
 Five-layer documentation governance: category isolation, auto-generated index, staleness detection, quota discipline, and SSOT paragraph-level embedding.

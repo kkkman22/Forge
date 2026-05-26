@@ -7,7 +7,7 @@ owner: forge-maintainers
 mirror_of: reference-docs-governance.en.md
 ---
 
-[← 返回索引](./INDEX.md)
+[← 返回索引](./INDEX.md) | [English Version](./reference-docs-governance.en.md)
 
 # Docs Governance 参考手册
 
