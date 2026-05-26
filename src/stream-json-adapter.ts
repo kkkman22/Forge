@@ -2,6 +2,7 @@ import { appendFileSync, mkdirSync } from "node:fs";
 import { join } from "node:path";
 import { createInterface } from "node:readline";
 import type { Readable, Writable } from "node:stream";
+import type { RateLimitDegrader } from "./rate-limit-degrader.js";
 import type { TokenUsage } from "./loop-types.js";
 
 // ---------------------------------------------------------------------------
@@ -60,11 +61,17 @@ interface PartialBucket {
 // StreamJsonAdapter
 // ---------------------------------------------------------------------------
 
+export interface StreamJsonAdapterOptions {
+  degrader?: RateLimitDegrader;
+}
+
 export class StreamJsonAdapter {
   private runDir: string;
+  private degrader?: RateLimitDegrader;
 
-  constructor(runDir: string) {
+  constructor(runDir: string, options?: StreamJsonAdapterOptions) {
     this.runDir = runDir;
+    this.degrader = options?.degrader;
     mkdirSync(runDir, { recursive: true });
   }
 
@@ -190,6 +197,13 @@ export class StreamJsonAdapter {
         const lineBytes = line.length + 1;
 
         lastEventType = event.type as string;
+
+        // 429 rate-limit detection — degrade concurrency for next spawn
+        if ((event.type === "tool_result" || event.type === "result") && this.degrader) {
+          if (event.status_code === 429 || event.subtype === "rate_limit") {
+            this.degrader.on429();
+          }
+        }
 
         if (event.type === "error") {
           this.logApiError(event);
