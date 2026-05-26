@@ -1,7 +1,7 @@
-import * as fc from "fast-check";
 import { mkdirSync, readFileSync, rmSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
+import * as fc from "fast-check";
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
 import type { DispatchContext, DispatchRecord } from "../../src/workflow-dispatcher.js";
 import { dispatch, writeDispatchRecord } from "../../src/workflow-dispatcher.js";
@@ -30,7 +30,7 @@ const NUM_RUNS = process.env.CI ? 100 : 1000;
 const ISO_8601_RE = /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(\.\d+)?(Z|[+-]\d{2}:\d{2})$/;
 
 function isValidIso8601(s: string): boolean {
-  return ISO_8601_RE.test(s) && !isNaN(Date.parse(s));
+  return ISO_8601_RE.test(s) && !Number.isNaN(Date.parse(s));
 }
 
 describe("R2.5: dispatch JSONL schema property", () => {

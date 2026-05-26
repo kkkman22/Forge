@@ -1,8 +1,5 @@
 import * as fc from "fast-check";
-import { mkdtempSync, rmSync, writeFileSync } from "node:fs";
-import { tmpdir } from "node:os";
-import { join } from "node:path";
-import { afterEach, describe, expect, it } from "vitest";
+import { describe, expect, it } from "vitest";
 import { isFrozenZonePath, isHardFrozenSourceFile } from "../../src/check-frozen.js";
 import { buildEnv } from "../../src/cli-subprocess-driver.js";
 import { getProtectionZone, normalizeForgePath } from "../../src/state.js";
@@ -10,18 +7,28 @@ import { getProtectionZone, normalizeForgePath } from "../../src/state.js";
 const numRuns = process.env.CI ? 100 : 1000;
 
 const FROZEN_PREFIXES = ["specs/", "plans/", "config.md"];
-const GUARDED_PREFIXES = ["progress/", "reviews/", "knowledge/instincts.md", "knowledge/known-failures.md", "knowledge/solutions/"];
+const GUARDED_PREFIXES = [
+  "progress/",
+  "reviews/",
+  "knowledge/instincts.md",
+  "knowledge/known-failures.md",
+  "knowledge/solutions/",
+];
 
 const frozenPathArb = fc.constantFrom(...FROZEN_PREFIXES).chain((prefix) => {
   if (prefix.endsWith("/")) {
-    return fc.string({ minLength: 1, maxLength: 30 }).map((s) => `${prefix}${s.replace(/\//g, "_")}.md`);
+    return fc
+      .string({ minLength: 1, maxLength: 30 })
+      .map((s) => `${prefix}${s.replace(/\//g, "_")}.md`);
   }
   return fc.constant(prefix);
 });
 
 const guardedPathArb = fc.constantFrom(...GUARDED_PREFIXES).chain((prefix) => {
   if (prefix.endsWith("/")) {
-    return fc.string({ minLength: 1, maxLength: 30 }).map((s) => `${prefix}${s.replace(/\//g, "_")}.md`);
+    return fc
+      .string({ minLength: 1, maxLength: 30 })
+      .map((s) => `${prefix}${s.replace(/\//g, "_")}.md`);
   }
   return fc.constant(prefix);
 });
@@ -109,9 +116,9 @@ describe("R11.1 hard-frozen source files", () => {
   it("random non-matching paths are never hard-frozen", () => {
     fc.assert(
       fc.property(
-        fc.string({ minLength: 1, maxLength: 50 }).filter(
-          (s) => !s.includes("prompt-defense-patterns"),
-        ),
+        fc
+          .string({ minLength: 1, maxLength: 50 })
+          .filter((s) => !s.includes("prompt-defense-patterns")),
         (path) => {
           expect(isHardFrozenSourceFile(path)).toBe(false);
         },
@@ -128,7 +135,7 @@ describe("R12.4 state-id uniqueness", () => {
 
     for (let i = 0; i < runCount; i++) {
       const runId = `run-${i}-${Date.now()}`;
-      const subcommand = ["review", "decide", "learn"][i % 3] as const;
+      const subcommand = ["review", "decide", "learn"][i % 3];
       const stateId = `wsid_${runId}_${subcommand}_${Date.now()}_${i}`;
       expect(stateIds.has(stateId)).toBe(false);
       stateIds.add(stateId);
@@ -153,9 +160,7 @@ describe("R12.4 state-id uniqueness", () => {
           });
 
           const leakedKeys = Object.keys(env).filter(
-            (k) =>
-              k.startsWith("FORGE_MAX_PARALLEL_AGENTS_RUNTIME") &&
-              !snapshotBefore.has(k),
+            (k) => k.startsWith("FORGE_MAX_PARALLEL_AGENTS_RUNTIME") && !snapshotBefore.has(k),
           );
 
           expect(leakedKeys.length).toBeLessThanOrEqual(1);
@@ -219,4 +224,3 @@ describe("R12.4 state-id uniqueness", () => {
     );
   });
 });
-

@@ -4,10 +4,7 @@
 
 import { writeFileSync } from "node:fs";
 import { join } from "node:path";
-import {
-  classifyExitCode,
-  computeBackoffDelay,
-} from "./error-handler.js";
+import { classifyExitCode, computeBackoffDelay } from "./error-handler.js";
 
 export interface RetryLoopOpts {
   driver: { run(prompt: string, cwd: string): Promise<{ exitCode: number }> };

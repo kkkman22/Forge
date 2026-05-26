@@ -1,10 +1,10 @@
 import { type ChildProcess, spawn } from "node:child_process";
 import { appendFileSync, mkdirSync } from "node:fs";
 import { join } from "node:path";
+import { STUCK_TIMEOUT_MS } from "./error-handler.js";
 import { createLogEntry } from "./logger/index.js";
 import type { AgentInterface, AgentResult, AgentRunOptions } from "./loop-types.js";
 import { StreamJsonAdapter } from "./stream-json-adapter.js";
-import { STUCK_TIMEOUT_MS } from "./error-handler.js";
 
 // ---------------------------------------------------------------------------
 // Types

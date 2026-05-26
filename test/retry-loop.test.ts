@@ -1,8 +1,8 @@
-import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
-import { runMainLoopWithRetry, type RetryLoopOpts, type AbortJson } from "../src/retry-loop.js";
-import { DEFAULT_BACKOFF_BASE_MS } from "../src/error-handler.js";
 import { writeFileSync } from "node:fs";
 import { join } from "node:path";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+import { DEFAULT_BACKOFF_BASE_MS } from "../src/error-handler.js";
+import { type AbortJson, type RetryLoopOpts, runMainLoopWithRetry } from "../src/retry-loop.js";
 
 vi.mock("node:fs", () => ({
   writeFileSync: vi.fn(),

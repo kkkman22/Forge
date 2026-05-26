@@ -4,7 +4,6 @@ import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import type { CliDriverConfig } from "../src/cli-subprocess-driver.js";
-import { STUCK_TIMEOUT_MS } from "../src/error-handler.js";
 
 // ---------------------------------------------------------------------------
 // Mock child_process at module level (ESM-compatible)
@@ -155,7 +154,7 @@ describe("CliSubprocessDriver stuck timer + signal_chain.jsonl", () => {
     vi.useFakeTimers();
 
     const stuckTimeout = 60_000;
-    const mockChild = mockSpawnResult.child;
+    const _mockChild = mockSpawnResult.child;
 
     const driver = new CliSubprocessDriver(makeConfig({ stuckTimeoutMs: stuckTimeout }));
     const runPromise = driver.run("test prompt", "/tmp/project");

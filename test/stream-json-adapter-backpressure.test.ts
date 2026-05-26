@@ -1,4 +1,4 @@
-import { existsSync, mkdirSync, readFileSync, rmSync } from "node:fs";
+import { mkdirSync, rmSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { Readable, Writable } from "node:stream";
@@ -23,16 +23,31 @@ function createControllableStream(): {
   const r = new Readable({ read() {} });
   return {
     stream: r,
-    push(chunk: string) { r.push(chunk); },
-    end() { r.push(null); },
+    push(chunk: string) {
+      r.push(chunk);
+    },
+    end() {
+      r.push(null);
+    },
   };
 }
 
-function createFakeStdin(): { stdin: Writable & { pause(): void; resume(): void }; calls: string[] } {
+function createFakeStdin(): {
+  stdin: Writable & { pause(): void; resume(): void };
+  calls: string[];
+} {
   const calls: string[] = [];
-  const stdin = new Writable({ write(_chunk, _enc, cb) { cb(); } }) as Writable & { pause(): void; resume(): void };
-  stdin.pause = () => { calls.push("pause"); };
-  stdin.resume = () => { calls.push("resume"); };
+  const stdin = new Writable({
+    write(_chunk, _enc, cb) {
+      cb();
+    },
+  }) as Writable & { pause(): void; resume(): void };
+  stdin.pause = () => {
+    calls.push("pause");
+  };
+  stdin.resume = () => {
+    calls.push("resume");
+  };
   return { stdin, calls };
 }
 
@@ -77,10 +92,10 @@ describe("StreamJsonAdapter backpressure", () => {
     vi.setSystemTime(baseTime);
 
     const { stream, push, end } = createControllableStream();
-    const bigLine = JSON.stringify({ type: "system", data: "x".repeat(5 * MiB) }) + "\n";
+    const bigLine = `${JSON.stringify({ type: "system", data: "x".repeat(5 * MiB) })}\n`;
 
     push(bigLine);
-    push(JSON.stringify({ type: "result", subtype: "success" }) + "\n");
+    push(`${JSON.stringify({ type: "result", subtype: "success" })}\n`);
     end();
 
     await adapter.consume(stream, stdin);
@@ -100,11 +115,11 @@ describe("StreamJsonAdapter backpressure", () => {
     const adapter = new StreamJsonAdapter(runDir);
     const { stdin, calls } = createFakeStdin();
 
-    const bigLine = JSON.stringify({ type: "system", data: "y".repeat(20 * MiB) }) + "\n";
+    const bigLine = `${JSON.stringify({ type: "system", data: "y".repeat(20 * MiB) })}\n`;
 
     const { stream, push, end } = createControllableStream();
     push(bigLine);
-    push(JSON.stringify({ type: "result", subtype: "success" }) + "\n");
+    push(`${JSON.stringify({ type: "result", subtype: "success" })}\n`);
     end();
 
     await adapter.consume(stream, stdin);
@@ -136,7 +151,7 @@ describe("StreamJsonAdapter backpressure", () => {
     const prefix = '{"type":"system","data":"';
     const suffix = '"}';
     const padding = targetSize - prefix.length - suffix.length;
-    const largeLine = prefix + "x".repeat(Math.max(0, padding)) + suffix + "\n";
+    const largeLine = `${prefix + "x".repeat(Math.max(0, padding)) + suffix}\n`;
 
     const { stream, push } = createControllableStream();
     push(largeLine);
@@ -160,9 +175,9 @@ describe("StreamJsonAdapter backpressure", () => {
     const { stream, push, end } = createControllableStream();
 
     for (let i = 0; i < 3; i++) {
-      push(JSON.stringify({ type: "system", data: "b".repeat(20 * MiB), idx: i }) + "\n");
+      push(`${JSON.stringify({ type: "system", data: "b".repeat(20 * MiB), idx: i })}\n`);
     }
-    push(JSON.stringify({ type: "result", subtype: "success" }) + "\n");
+    push(`${JSON.stringify({ type: "result", subtype: "success" })}\n`);
     end();
 
     const result = await adapter.consume(stream, stdin);
@@ -194,8 +209,8 @@ describe("StreamJsonAdapter backpressure", () => {
     const adapter = new StreamJsonAdapter(runDir);
     const { stream, push, end } = createControllableStream();
 
-    push(JSON.stringify({ type: "system", data: "z".repeat(20 * MiB) }) + "\n");
-    push(JSON.stringify({ type: "result", subtype: "success" }) + "\n");
+    push(`${JSON.stringify({ type: "system", data: "z".repeat(20 * MiB) })}\n`);
+    push(`${JSON.stringify({ type: "result", subtype: "success" })}\n`);
     end();
 
     const result = await adapter.consume(stream);

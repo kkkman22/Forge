@@ -2,8 +2,8 @@ import { appendFileSync, mkdirSync } from "node:fs";
 import { join } from "node:path";
 import { createInterface } from "node:readline";
 import type { Readable, Writable } from "node:stream";
-import type { RateLimitDegrader } from "./rate-limit-degrader.js";
 import type { TokenUsage } from "./loop-types.js";
+import type { RateLimitDegrader } from "./rate-limit-degrader.js";
 
 // ---------------------------------------------------------------------------
 // Error classes
@@ -75,7 +75,10 @@ export class StreamJsonAdapter {
     mkdirSync(runDir, { recursive: true });
   }
 
-  async consume(stdout: Readable, stdin?: Writable & { pause?(): void; resume?(): void }): Promise<AdapterResult> {
+  async consume(
+    stdout: Readable,
+    stdin?: Writable & { pause?(): void; resume?(): void },
+  ): Promise<AdapterResult> {
     const delivered: Array<Record<string, unknown>> = [];
     const usage: TokenUsage = {
       inputTokens: 0,
@@ -96,11 +99,11 @@ export class StreamJsonAdapter {
     let backpressureStartedAt: number | null = null;
     let lastWarningLoggedAt: number | null = null;
     const HIGH_WATERMARK = 16 * 1024 * 1024; // 16 MiB
-    const LOW_WATERMARK = 4 * 1024 * 1024;   // 4 MiB
+    const LOW_WATERMARK = 4 * 1024 * 1024; // 4 MiB
     const WARNING_THRESHOLD = 4 * 1024 * 1024; // 4 MiB
-    const WARNING_DURATION = 5000;             // 5 seconds continuous
-    const MAX_BACKPRESSURE_MS = 60000;         // 60 seconds
-    const MAX_LINE_BYTES = 64 * 1024 * 1024;   // 64 MiB
+    const WARNING_DURATION = 5000; // 5 seconds continuous
+    const MAX_BACKPRESSURE_MS = 60000; // 60 seconds
+    const MAX_LINE_BYTES = 64 * 1024 * 1024; // 64 MiB
     let stdinPaused = false;
 
     // Backpressure check logic — shared between inline checks and setInterval

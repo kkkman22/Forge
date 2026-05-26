@@ -106,11 +106,25 @@ describe("T19: diffIpcSchema type checking", () => {
 
     writeFileSync(
       baseline,
-      [JSON.stringify({ event: "unique_test_event", run_id: "r1", schema: 1, ts: "2026-01-01T00:00:00.000Z" })].join("\n") + "\n",
+      `${[
+        JSON.stringify({
+          event: "unique_test_event",
+          run_id: "r1",
+          schema: 1,
+          ts: "2026-01-01T00:00:00.000Z",
+        }),
+      ].join("\n")}\n`,
     );
     writeFileSync(
       current,
-      [JSON.stringify({ event: "other_event", run_id: "r2", schema: 1, ts: "2026-01-01T00:00:00.000Z" })].join("\n") + "\n",
+      `${[
+        JSON.stringify({
+          event: "other_event",
+          run_id: "r2",
+          schema: 1,
+          ts: "2026-01-01T00:00:00.000Z",
+        }),
+      ].join("\n")}\n`,
     );
 
     expect(() => {
@@ -127,11 +141,26 @@ describe("T19: diffIpcSchema type checking", () => {
 
     writeFileSync(
       baseline,
-      [JSON.stringify({ event: "iteration_start", run_id: "r1", schema: 1, ts: "2026-01-01T00:00:00.000Z", iteration: 1 })].join("\n") + "\n",
+      `${[
+        JSON.stringify({
+          event: "iteration_start",
+          run_id: "r1",
+          schema: 1,
+          ts: "2026-01-01T00:00:00.000Z",
+          iteration: 1,
+        }),
+      ].join("\n")}\n`,
     );
     writeFileSync(
       current,
-      [JSON.stringify({ event: "iteration_start", run_id: "r2", schema: 1, ts: "2026-01-01T00:00:00.000Z" })].join("\n") + "\n",
+      `${[
+        JSON.stringify({
+          event: "iteration_start",
+          run_id: "r2",
+          schema: 1,
+          ts: "2026-01-01T00:00:00.000Z",
+        }),
+      ].join("\n")}\n`,
     );
 
     expect(() => {
@@ -148,11 +177,27 @@ describe("T19: diffIpcSchema type checking", () => {
 
     writeFileSync(
       baseline,
-      [JSON.stringify({ event: "iteration_start", run_id: "r1", schema: 1, ts: "2026-01-01T00:00:00.000Z", iteration: 1 })].join("\n") + "\n",
+      `${[
+        JSON.stringify({
+          event: "iteration_start",
+          run_id: "r1",
+          schema: 1,
+          ts: "2026-01-01T00:00:00.000Z",
+          iteration: 1,
+        }),
+      ].join("\n")}\n`,
     );
     writeFileSync(
       current,
-      [JSON.stringify({ event: "iteration_start", run_id: "r2", schema: 1, ts: "2026-01-01T00:00:00.000Z", iteration: "not-a-number" })].join("\n") + "\n",
+      `${[
+        JSON.stringify({
+          event: "iteration_start",
+          run_id: "r2",
+          schema: 1,
+          ts: "2026-01-01T00:00:00.000Z",
+          iteration: "not-a-number",
+        }),
+      ].join("\n")}\n`,
     );
 
     expect(() => {
@@ -169,11 +214,28 @@ describe("T19: diffIpcSchema type checking", () => {
 
     writeFileSync(
       baseline,
-      [JSON.stringify({ event: "iteration_start", run_id: "r1", schema: 1, ts: "2026-01-01T00:00:00.000Z", iteration: 1 })].join("\n") + "\n",
+      `${[
+        JSON.stringify({
+          event: "iteration_start",
+          run_id: "r1",
+          schema: 1,
+          ts: "2026-01-01T00:00:00.000Z",
+          iteration: 1,
+        }),
+      ].join("\n")}\n`,
     );
     writeFileSync(
       current,
-      [JSON.stringify({ event: "iteration_start", run_id: "r2", schema: 1, ts: "2026-01-01T00:00:00.000Z", iteration: 1, new_field: "extra" })].join("\n") + "\n",
+      `${[
+        JSON.stringify({
+          event: "iteration_start",
+          run_id: "r2",
+          schema: 1,
+          ts: "2026-01-01T00:00:00.000Z",
+          iteration: 1,
+          new_field: "extra",
+        }),
+      ].join("\n")}\n`,
     );
 
     const result = execSync(`node scripts/diff-ipc-schema.mjs "${baseline}" "${current}"`, {

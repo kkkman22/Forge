@@ -1,7 +1,7 @@
-import * as fc from "fast-check";
 import { mkdirSync, rmSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
+import * as fc from "fast-check";
 import { afterEach, describe, expect, it } from "vitest";
 import type { DispatchContext, L1TriggerReason } from "../../src/workflow-dispatcher.js";
 import { dispatch, probeL0Eligibility } from "../../src/workflow-dispatcher.js";
@@ -41,7 +41,9 @@ describe("R2.2: dispatcher L1 trigger property", () => {
     delete process.env.CLAUDE_CODE_WORKFLOWS;
   });
 
-  it("for any single L1 trigger reason, probe reports that exact reason", { timeout: 60_000 }, () => {
+  it("for any single L1 trigger reason, probe reports that exact reason", {
+    timeout: 60_000,
+  }, () => {
     fc.assert(
       fc.property(fc.constantFrom(...L1_REASONS), (reason) => {
         delete process.env.CLAUDE_CODE_WORKFLOWS;
@@ -111,7 +113,7 @@ describe("R2.2: dispatcher L1 trigger property", () => {
           mode: fc.constantFrom("interactive", "loop"),
           gateEnabled: fc.boolean(),
         }),
-        ({ subcommand, mode, gateEnabled }) => {
+        async ({ subcommand, mode, gateEnabled }) => {
           if (gateEnabled) {
             process.env.CLAUDE_CODE_WORKFLOWS = "1";
           } else {
@@ -125,7 +127,7 @@ describe("R2.2: dispatcher L1 trigger property", () => {
             const probe = probeL0Eligibility(ctx);
 
             if (!probe.eligible) {
-              return dispatch(ctx, {
+              await dispatch(ctx, {
                 runFallback: async () => ({ output: "fb", methodology: "subagent-parallel" }),
               }).then((result) => {
                 expect(result.chosenLevel).toBe("L1");
@@ -134,6 +136,7 @@ describe("R2.2: dispatcher L1 trigger property", () => {
                 expect(validReasons.has(result.l1TriggerReason!)).toBe(true);
               });
             }
+            return;
           } finally {
             rmSync(tmpDir, { recursive: true, force: true });
             delete process.env.CLAUDE_CODE_WORKFLOWS;

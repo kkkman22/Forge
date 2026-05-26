@@ -1,7 +1,7 @@
-import { appendFileSync, existsSync, unlinkSync } from "node:fs";
-import { execFileSync } from "node:child_process";
-import { join } from "node:path";
 import type { ChildProcess } from "node:child_process";
+import { execFileSync } from "node:child_process";
+import { appendFileSync, existsSync, unlinkSync } from "node:fs";
+import { join } from "node:path";
 
 export interface CleanupContext {
   runId: string;
@@ -68,11 +68,7 @@ export async function runCleanupChain(ctx: CleanupContext): Promise<void> {
   // Write cleanup-errors.jsonl
   for (const err of errors) {
     try {
-      appendFileSync(
-        join(ctx.runDir, "cleanup-errors.jsonl"),
-        `${JSON.stringify(err)}\n`,
-        "utf-8",
-      );
+      appendFileSync(join(ctx.runDir, "cleanup-errors.jsonl"), `${JSON.stringify(err)}\n`, "utf-8");
     } catch {
       // Silently swallow — we cannot log errors about error-logging
     }
