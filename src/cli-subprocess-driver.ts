@@ -210,13 +210,20 @@ export class CliSubprocessDriver implements AgentInterface {
   async shutdown(_signal: NodeJS.Signals): Promise<void> {
     if (!this.child || this.child.killed) return;
 
+    this.recordSignalChain("SIGINT", "user_interrupt");
     this.child.kill("SIGINT");
 
     await new Promise<void>((resolve) => {
       setTimeout(() => {
-        if (!this.child?.killed) this.child?.kill("SIGTERM");
+        if (!this.child?.killed) {
+          this.recordSignalChain("SIGTERM", "user_interrupt");
+          this.child?.kill("SIGTERM");
+        }
         setTimeout(() => {
-          if (!this.child?.killed) this.child?.kill("SIGKILL");
+          if (!this.child?.killed) {
+            this.recordSignalChain("SIGKILL", "user_interrupt");
+            this.child?.kill("SIGKILL");
+          }
           resolve();
         }, 5_000);
       }, 10_000);
