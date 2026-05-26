@@ -1,3 +1,5 @@
+[中文版](./INDEX.md) | [← INDEX (English)](./INDEX.en.md)
+
 ## Getting Started
 
 - [Forge 快速入门指南 (EN)](quick-start.en.md) / [Forge 快速入门指南 (中)](quick-start.md) — 2026-05-18

@@ -9,11 +9,25 @@ ERRORS=0
 
 cd "$ROOT"
 
-# Check 1: each docs/*.md first line contains return-to-index link
+# Helper: print first non-empty content line after optional yaml frontmatter.
+# Markdown convention here: files may begin with `---` ... `---` frontmatter,
+# followed by the first content paragraph (typically a navigation link). We
+# inspect that first content line rather than the literal first line.
+first_content_line() {
+  awk '
+    BEGIN { in_fm = 0; seen = 0 }
+    NR == 1 && $0 == "---" { in_fm = 1; next }
+    in_fm && $0 == "---" { in_fm = 0; next }
+    in_fm { next }
+    !seen && NF > 0 { print; seen = 1; exit }
+  ' "$1"
+}
+
+# Check 1: each docs/*.md first content line contains return-to-index link
 for FILE in docs/*.md; do
   [ -e "$FILE" ] || continue
-  FIRST_LINE=$(head -n 1 "$FILE")
-  if ! echo "$FIRST_LINE" | grep -qE '\(./INDEX'; then
+  LINE=$(first_content_line "$FILE")
+  if ! echo "$LINE" | grep -qE '\(\.?/?INDEX'; then
     echo "[ERROR] $FILE: first line missing return-to-index link"
     ERRORS=$((ERRORS + 1))
   fi
@@ -35,7 +49,7 @@ for FILE in docs/*.md; do
   BASENAME=$(basename "$FILE" .md)
   if [ "$BASENAME" = "INDEX" ]; then
     if [ -e "docs/INDEX.en.md" ]; then
-      if ! grep -qE '\(./INDEX\.en\.md\)' "$FILE"; then
+      if ! grep -qE '\(\.?/?INDEX\.en\.md\)' "$FILE"; then
         echo "[ERROR] $FILE: missing English version link"
         ERRORS=$((ERRORS + 1))
       fi
@@ -44,7 +58,7 @@ for FILE in docs/*.md; do
   fi
   EN_FILE="docs/${BASENAME}.en.md"
   if [ -e "$EN_FILE" ]; then
-    if ! grep -qE "\(./${BASENAME}\.en\.md\)" "$FILE"; then
+    if ! grep -qE "\(\.?/?${BASENAME}\.en\.md\)" "$FILE"; then
       echo "[ERROR] $FILE: missing English version link"
       ERRORS=$((ERRORS + 1))
     fi
