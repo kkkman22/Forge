@@ -854,6 +854,7 @@ async function main(): Promise<void> {
           sandboxEnabled: !!opts.sandbox,
           sdkNativeSandbox: !!sandboxProfile,
           forceNoHooks: opts.forceNoHooks === true,
+          ipcEmitter,
         },
         effectExecutor,
         agentAdapter,

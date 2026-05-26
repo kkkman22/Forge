@@ -67,10 +67,21 @@ export interface FallbackResult {
   methodology?: string;
 }
 
+export interface AuditWriterLike {
+  write(target: {
+    subcommand: string;
+    runId: string;
+    topic: string;
+    payload: unknown;
+  }): Promise<void>;
+}
+
 export interface DispatchDeps {
   tryL0?: (ctx: DispatchContext) => Promise<unknown>;
   runFallback?: (ctx: DispatchContext) => Promise<FallbackResult | null>;
   allFallbacksFailed?: boolean;
+  auditWriter?: AuditWriterLike;
+  topic?: string;
 }
 
 export interface ProbeResult {
@@ -141,68 +152,154 @@ export function classifyL0Failure(err: Error): L0FailureSignature {
 }
 
 // ---------------------------------------------------------------------------
-// dispatch — L0 try + L1 fallback
+// readWorkflowVersion — extract meta.version from workflow file
+// ---------------------------------------------------------------------------
+
+export function readWorkflowVersion(ctx: DispatchContext): string {
+  const workflowFile = join(ctx.pluginRoot, "workflows", `${ctx.subcommand}.js`);
+  try {
+    const src = readFileSync(workflowFile, "utf-8");
+    const match = src.match(/version\s*:\s*['"]([^'"]+)['"]/);
+    return match?.[1] ?? "unknown";
+  } catch {
+    return "unknown";
+  }
+}
+
+// ---------------------------------------------------------------------------
+// computeExitCode — map dispatch result to exit code
+// ---------------------------------------------------------------------------
+
+export function computeExitCode(result: DispatchResult): number {
+  if (result.chosenLevel === "L3") return 2;
+  if (result.chosenLevel === "L0") return 0;
+  if (result.chosenLevel === "L1" && result.l0FailureSignature) return 1;
+  return 0;
+}
+
+// ---------------------------------------------------------------------------
+// dispatch — L0 try + L1 fallback + 14-field auto-fill
 // ---------------------------------------------------------------------------
 
 export async function dispatch(
   ctx: DispatchContext,
   deps: DispatchDeps = {},
-): Promise<DispatchResult> {
+): Promise<DispatchResult & { record: DispatchRecord }> {
+  const startTime = Date.now();
   const probe = probeL0Eligibility(ctx);
+  const gateEnabled = process.env.CLAUDE_CODE_WORKFLOWS === "1";
+  const workflowAvailable = probe.eligible;
+  const workflowVersion = readWorkflowVersion(ctx);
+
+  let result: DispatchResult;
+  let frozenZoneBlocked = false;
 
   if (!probe.eligible) {
     // L1 path
     if (deps.allFallbacksFailed) {
-      return { chosenLevel: "L3", result: "blocked" };
+      result = { chosenLevel: "L3", result: "blocked" };
+    } else {
+      const fallbackResult = deps.runFallback
+        ? await deps.runFallback(ctx)
+        : ({ output: "subagent fallback", methodology: "subagent-parallel" } as FallbackResult);
+
+      result = {
+        chosenLevel: "L1",
+        l1TriggerReason: probe.reason ?? "unmatched_state",
+        methodology: fallbackResult?.methodology ?? "subagent-parallel",
+        payload: fallbackResult,
+      };
     }
+  } else {
+    // L0 path — try workflow
+    try {
+      const l0Result = deps.tryL0 ? await deps.tryL0(ctx) : { output: "workflow result" };
+      result = {
+        chosenLevel: "L0",
+        methodology: "workflow",
+        payload: l0Result,
+      };
+    } catch (err) {
+      const error = err instanceof Error ? err : new Error(String(err));
+      const signature = classifyL0Failure(error);
 
-    const fallbackResult = deps.runFallback
-      ? await deps.runFallback(ctx)
-      : ({ output: "subagent fallback", methodology: "subagent-parallel" } as FallbackResult);
+      // Isolate partial findings
+      const runDir = join(ctx.forgeRoot, "runs", ctx.runId);
+      isolatePartialFindings(runDir, ctx.subcommand, error.message);
 
-    return {
-      chosenLevel: "L1",
-      l1TriggerReason: probe.reason ?? "unmatched_state",
-      methodology: fallbackResult?.methodology ?? "subagent-parallel",
-      payload: fallbackResult,
-    };
-  }
+      // Fallback to L1
+      if (deps.allFallbacksFailed) {
+        result = { chosenLevel: "L3", result: "blocked" };
+      } else {
+        const fallbackResult = deps.runFallback
+          ? await deps.runFallback(ctx)
+          : ({
+              output: "subagent fallback after L0 failure",
+              methodology: "workflow-then-subagent",
+            } as FallbackResult);
 
-  // L0 path — try workflow
-  try {
-    const result = deps.tryL0 ? await deps.tryL0(ctx) : { output: "workflow result" };
-    return {
-      chosenLevel: "L0",
-      methodology: "workflow",
-      payload: result,
-    };
-  } catch (err) {
-    const error = err instanceof Error ? err : new Error(String(err));
-    const signature = classifyL0Failure(error);
-
-    // Isolate partial findings
-    const runDir = join(ctx.forgeRoot, "runs", ctx.runId);
-    isolatePartialFindings(runDir, ctx.subcommand, error.message);
-
-    // Fallback to L1
-    if (deps.allFallbacksFailed) {
-      return { chosenLevel: "L3", result: "blocked" };
-    }
-
-    const fallbackResult = deps.runFallback
-      ? await deps.runFallback(ctx)
-      : ({
-          output: "subagent fallback after L0 failure",
+        result = {
+          chosenLevel: "L1",
+          l0FailureSignature: signature,
           methodology: "workflow-then-subagent",
-        } as FallbackResult);
-
-    return {
-      chosenLevel: "L1",
-      l0FailureSignature: signature,
-      methodology: "workflow-then-subagent",
-      payload: fallbackResult,
-    };
+          payload: fallbackResult,
+        };
+      }
+    }
   }
+
+  // Call audit writer (if provided) for non-L3 results
+  if (result.chosenLevel !== "L3" && deps.auditWriter && deps.topic) {
+    try {
+      await deps.auditWriter.write({
+        subcommand: ctx.subcommand,
+        runId: ctx.runId,
+        topic: deps.topic,
+        payload: result.payload ?? {},
+      });
+    } catch (err) {
+      if (
+        err instanceof Error &&
+        (err.constructor.name === "FrozenZoneViolation" || err.message.includes("FrozenZone"))
+      ) {
+        frozenZoneBlocked = true;
+      } else {
+        throw err;
+      }
+    }
+  }
+
+  // Build and persist the 14-field dispatch record
+  const exitCode = computeExitCode(result);
+  const stateId = `wsid_${ctx.runId}_${ctx.subcommand}_${Date.now()}`;
+
+  const record: DispatchRecord = {
+    subcommand: ctx.subcommand,
+    mode: ctx.mode,
+    run_id: ctx.runId,
+    session_id: ctx.sessionId,
+    workflow_state_id: stateId,
+    workflow_version: workflowVersion,
+    gate_enabled: gateEnabled,
+    workflow_available: workflowAvailable,
+    chosen_level: result.chosenLevel,
+    l1_trigger_reason: result.l1TriggerReason,
+    l0_failure_signature: result.l0FailureSignature,
+    exit_code: exitCode,
+    duration_ms: Date.now() - startTime,
+    timestamp: new Date().toISOString(),
+    frozen_zone_blocked: frozenZoneBlocked,
+  };
+
+  const runDir = join(ctx.forgeRoot, "runs", ctx.runId);
+  writeDispatchRecord(runDir, record);
+  updateStatusMd(join(ctx.forgeRoot, "status.md"), {
+    dispatch_chosen_level: result.chosenLevel,
+    dispatch_subcommand: ctx.subcommand,
+    dispatch_run_id: ctx.runId,
+  });
+
+  return { ...result, record };
 }
 
 // ---------------------------------------------------------------------------
