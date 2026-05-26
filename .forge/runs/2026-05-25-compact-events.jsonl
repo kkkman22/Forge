@@ -12,3 +12,6 @@
 {"timestamp":"2026-05-25T15:28:30Z","event":"postcompact_restore","detail":"slug=workflows-integration"}
 {"timestamp":"2026-05-25T15:28:30Z","event":"precompact_snapshot","detail":"slug=workflows-integration phase=completed completed=4 pending=0
 0"}
+{"timestamp":"2026-05-25T23:20:29Z","event":"postcompact_restore","detail":"slug=workflows-integration"}
+{"timestamp":"2026-05-25T23:20:29Z","event":"precompact_snapshot","detail":"slug=workflows-integration phase=completed completed=4 pending=0
+0"}
