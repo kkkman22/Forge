@@ -1,4 +1,4 @@
-import { existsSync, mkdirSync, readdirSync, readFileSync, rmSync, writeFileSync } from "node:fs";
+import { chmodSync, existsSync, mkdirSync, readdirSync, readFileSync, rmSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
@@ -116,5 +116,149 @@ describe("WorkflowAuditWriter", () => {
     const updated = readFileSync(join(forgeRoot, "reviews", "append-test.md"), "utf-8");
     expect(updated.startsWith(original)).toBe(true);
     expect(updated.length).toBeGreaterThan(original.length);
+  });
+});
+
+// ---------------------------------------------------------------------------
+// R2.4: hookCheckFrozen support
+// ---------------------------------------------------------------------------
+
+describe("WorkflowAuditWriter hookCheckFrozen (R2.4)", () => {
+  let tmpDir: string;
+  let forgeRoot: string;
+  let hookDir: string;
+
+  beforeEach(() => {
+    tmpDir = join(tmpdir(), `waw-hook-test-${Date.now()}`);
+    forgeRoot = join(tmpDir, ".forge");
+    hookDir = join(tmpDir, "scripts");
+    mkdirSync(forgeRoot, { recursive: true });
+    mkdirSync(join(forgeRoot, "reviews"), { recursive: true });
+    mkdirSync(join(forgeRoot, "decisions"), { recursive: true });
+    mkdirSync(join(forgeRoot, "knowledge", "sessions"), { recursive: true });
+    mkdirSync(hookDir, { recursive: true });
+  });
+
+  afterEach(() => {
+    rmSync(tmpDir, { recursive: true, force: true });
+  });
+
+  const frozenChecker = () => false; // nothing frozen in these tests
+
+  /** Helper: create a hook script that exits 0 (approve) */
+  function makeApproveHook(name: string): string {
+    const path = join(hookDir, name);
+    writeFileSync(path, "#!/bin/bash\nexit 0\n", "utf-8");
+    chmodSync(path, 0o755);
+    return path;
+  }
+
+  /** Helper: create a hook script that exits 1 (reject) with a message to stderr */
+  function makeRejectHook(name: string, msg: string): string {
+    const path = join(hookDir, name);
+    writeFileSync(path, `#!/bin/bash\necho "${msg}" >&2\nexit 1\n`, "utf-8");
+    chmodSync(path, 0o755);
+    return path;
+  }
+
+  /** Helper: create a hook script that records its $1 argument to a file */
+  function makeRecordArgHook(name: string, recordFile: string): string {
+    const path = join(hookDir, name);
+    writeFileSync(path, `#!/bin/bash\necho "$1" > "${recordFile}"\nexit 0\n`, "utf-8");
+    chmodSync(path, 0o755);
+    return path;
+  }
+
+  it("allows write when hook exits 0", async () => {
+    const hookPath = makeApproveHook("approve-hook.sh");
+    const writer = new WorkflowAuditWriter(forgeRoot, frozenChecker, hookPath);
+
+    await expect(
+      writer.write({
+        subcommand: "review",
+        runId: "run-hook-001",
+        topic: "allowed-topic",
+        payload: { ok: true },
+      }),
+    ).resolves.not.toThrow();
+
+    expect(existsSync(join(forgeRoot, "reviews", "allowed-topic.md"))).toBe(true);
+  });
+
+  it("throws FrozenZoneViolation when hook exits 1", async () => {
+    const hookPath = makeRejectHook("reject-hook.sh", "blocked by policy");
+    const writer = new WorkflowAuditWriter(forgeRoot, frozenChecker, hookPath);
+
+    await expect(
+      writer.write({
+        subcommand: "review",
+        runId: "run-hook-002",
+        topic: "blocked-topic",
+        payload: {},
+      }),
+    ).rejects.toThrow(FrozenZoneViolation);
+
+    // Verify the error message contains the hook rejection reason
+    try {
+      await writer.write({
+        subcommand: "review",
+        runId: "run-hook-002b",
+        topic: "blocked-topic-b",
+        payload: {},
+      });
+      expect.unreachable("Should have thrown");
+    } catch (err) {
+      expect(err).toBeInstanceOf(FrozenZoneViolation);
+      const violation = err as FrozenZoneViolation;
+      expect(violation.paths[1]).toContain("hook rejected");
+      expect(violation.paths[0]).toContain("blocked-topic-b");
+    }
+  });
+
+  it("skips hook check when hookCheckPath is undefined (graceful degradation)", async () => {
+    const writer = new WorkflowAuditWriter(forgeRoot, frozenChecker);
+
+    await expect(
+      writer.write({
+        subcommand: "review",
+        runId: "run-hook-003",
+        topic: "no-hook-topic",
+        payload: { data: 1 },
+      }),
+    ).resolves.not.toThrow();
+
+    expect(existsSync(join(forgeRoot, "reviews", "no-hook-topic.md"))).toBe(true);
+  });
+
+  it("skips hook check when hookCheckPath points to non-existent file", async () => {
+    const writer = new WorkflowAuditWriter(forgeRoot, frozenChecker, "/nonexistent/hook.sh");
+
+    await expect(
+      writer.write({
+        subcommand: "review",
+        runId: "run-hook-004",
+        topic: "missing-hook-topic",
+        payload: { data: 2 },
+      }),
+    ).resolves.not.toThrow();
+
+    expect(existsSync(join(forgeRoot, "reviews", "missing-hook-topic.md"))).toBe(true);
+  });
+
+  it("passes correct destPath as argument to hook script", async () => {
+    const recordFile = join(tmpDir, "arg-record.txt");
+    const hookPath = makeRecordArgHook("record-hook.sh", recordFile);
+    const writer = new WorkflowAuditWriter(forgeRoot, frozenChecker, hookPath);
+
+    await writer.write({
+      subcommand: "review",
+      runId: "run-hook-005",
+      topic: "arg-check-topic",
+      payload: {},
+    });
+
+    const recordedArg = readFileSync(recordFile, "utf-8").trim();
+    const expectedDest = join(forgeRoot, "reviews", "arg-check-topic.md");
+    expect(recordedArg).toBe(expectedDest);
   });
 });
