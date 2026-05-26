@@ -1,9 +1,9 @@
-import * as fc from "fast-check";
 import { mkdtempSync, readFileSync, rmSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
+import * as fc from "fast-check";
 import { afterEach, describe, expect, it } from "vitest";
-import { WorkflowAuditWriter, type AuditSubcommand } from "../../src/workflow-audit-writer.js";
+import { type AuditSubcommand, WorkflowAuditWriter } from "../../src/workflow-audit-writer.js";
 
 const numRuns = process.env.CI ? 100 : 1000;
 
@@ -33,14 +33,19 @@ describe("R4.5 audit-writer prefix property", () => {
           runId: fc.string({ minLength: 1, maxLength: 20 }).filter((s) => s.trim().length > 0),
         }),
         subcommandArb,
-        fc.array(
-          fc.dictionary(fc.string({ minLength: 1, maxLength: 10 }), fc.jsonValue()),
-          { minLength: 2, maxLength: 10 },
-        ),
+        fc.array(fc.dictionary(fc.string({ minLength: 1, maxLength: 10 }), fc.jsonValue()), {
+          minLength: 2,
+          maxLength: 10,
+        }),
         async (identifiers, subcommand, payloads) => {
           const forgeRoot = makeTmp();
           const writer = new WorkflowAuditWriter(forgeRoot, () => false);
-          const destPath = resolveExpectedPath(forgeRoot, subcommand, identifiers.topic, identifiers.runId);
+          const destPath = resolveExpectedPath(
+            forgeRoot,
+            subcommand,
+            identifiers.topic,
+            identifiers.runId,
+          );
 
           for (const payload of payloads) {
             const before = fileReadOrNull(destPath);
@@ -94,9 +99,7 @@ describe("R4.5 audit-writer prefix property", () => {
           const forgeRoot = makeTmp();
           const writer = new WorkflowAuditWriter(forgeRoot, () => true);
 
-          await expect(
-            writer.write({ subcommand, runId, topic, payload }),
-          ).rejects.toThrow();
+          await expect(writer.write({ subcommand, runId, topic, payload })).rejects.toThrow();
         },
       ),
       { numRuns },
@@ -122,7 +125,10 @@ function resolveExpectedPath(
     case "review":
       return join(forgeRoot, "reviews", `${topic}.md`);
     case "decide": {
-      const slug = topic.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "");
+      const slug = topic
+        .toLowerCase()
+        .replace(/[^a-z0-9]+/g, "-")
+        .replace(/^-|-$/g, "");
       const date = new Date().toISOString().slice(0, 10);
       return join(forgeRoot, "decisions", `${date}-${slug}.md`);
     }

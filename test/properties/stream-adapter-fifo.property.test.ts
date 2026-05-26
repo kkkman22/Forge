@@ -1,8 +1,8 @@
-import * as fc from "fast-check";
 import { mkdtempSync, rmSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { Readable } from "node:stream";
+import * as fc from "fast-check";
 import { afterEach, describe, expect, it } from "vitest";
 import { StreamJsonAdapter } from "../../src/stream-json-adapter.js";
 
@@ -14,55 +14,68 @@ type ExposedType = (typeof EXPOSED_TYPES)[number];
 
 const exposedTypeArb: fc.Arbitrary<ExposedType> = fc.constantFrom(...EXPOSED_TYPES);
 
-const streamEventArb: fc.Arbitrary<Record<string, unknown>> = fc.record({
-  type: exposedTypeArb,
-  run_id: fc.string({ minLength: 1, maxLength: 20 }),
-  session_id: fc.uuid(),
-  ts: fc.date({ noInvalidDate: true }).map((d) => d.toISOString()),
-}).chain((base) => {
-  switch (base.type) {
-    case "result":
-      return fc.constant({
-        ...base,
-        cost_usd: 0,
-        usage: {
-          input_tokens: 0,
-          output_tokens: 0,
-          cache_read_input_tokens: 0,
-          cache_creation_input_tokens: 0,
-        },
-      } as Record<string, unknown>);
-    case "assistant":
-      return fc.record({
-        message: fc.record({
-          id: fc.uuid(),
-          role: fc.constant("assistant"),
-          content: fc.string({ minLength: 1, maxLength: 50 }),
-        }),
-      }).map((msg) => ({ ...base, ...msg } as Record<string, unknown>));
-    case "user":
-      return fc.record({
-        message: fc.record({
-          id: fc.uuid(),
-          role: fc.constant("user"),
-          content: fc.string({ minLength: 1, maxLength: 50 }),
-        }),
-      }).map((msg) => ({ ...base, ...msg } as Record<string, unknown>));
-    case "tool_use":
-      return fc.record({
-        id: fc.uuid(),
-        name: fc.string({ minLength: 1, maxLength: 20 }),
-        input: fc.dictionary(fc.string({ minLength: 1, maxLength: 10 }), fc.string({ maxLength: 20 })),
-      }).map((tool) => ({ ...base, ...tool } as Record<string, unknown>));
-    case "tool_result":
-      return fc.record({
-        id: fc.uuid(),
-        content: fc.string({ minLength: 0, maxLength: 50 }),
-      }).map((tool) => ({ ...base, ...tool } as Record<string, unknown>));
-    default:
-      return fc.constant(base as Record<string, unknown>);
-  }
-});
+const streamEventArb: fc.Arbitrary<Record<string, unknown>> = fc
+  .record({
+    type: exposedTypeArb,
+    run_id: fc.string({ minLength: 1, maxLength: 20 }),
+    session_id: fc.uuid(),
+    ts: fc.date({ noInvalidDate: true }).map((d) => d.toISOString()),
+  })
+  .chain((base) => {
+    switch (base.type) {
+      case "result":
+        return fc.constant({
+          ...base,
+          cost_usd: 0,
+          usage: {
+            input_tokens: 0,
+            output_tokens: 0,
+            cache_read_input_tokens: 0,
+            cache_creation_input_tokens: 0,
+          },
+        } as Record<string, unknown>);
+      case "assistant":
+        return fc
+          .record({
+            message: fc.record({
+              id: fc.uuid(),
+              role: fc.constant("assistant"),
+              content: fc.string({ minLength: 1, maxLength: 50 }),
+            }),
+          })
+          .map((msg) => ({ ...base, ...msg }) as Record<string, unknown>);
+      case "user":
+        return fc
+          .record({
+            message: fc.record({
+              id: fc.uuid(),
+              role: fc.constant("user"),
+              content: fc.string({ minLength: 1, maxLength: 50 }),
+            }),
+          })
+          .map((msg) => ({ ...base, ...msg }) as Record<string, unknown>);
+      case "tool_use":
+        return fc
+          .record({
+            id: fc.uuid(),
+            name: fc.string({ minLength: 1, maxLength: 20 }),
+            input: fc.dictionary(
+              fc.string({ minLength: 1, maxLength: 10 }),
+              fc.string({ maxLength: 20 }),
+            ),
+          })
+          .map((tool) => ({ ...base, ...tool }) as Record<string, unknown>);
+      case "tool_result":
+        return fc
+          .record({
+            id: fc.uuid(),
+            content: fc.string({ minLength: 0, maxLength: 50 }),
+          })
+          .map((tool) => ({ ...base, ...tool }) as Record<string, unknown>);
+      default:
+        return fc.constant(base as Record<string, unknown>);
+    }
+  });
 
 describe("R5.3 + R6.1 stream-adapter FIFO property", () => {
   const tmpDirs: string[] = [];
@@ -88,12 +101,10 @@ describe("R5.3 + R6.1 stream-adapter FIFO property", () => {
           const runDir = makeTmp();
           const adapter = new StreamJsonAdapter(runDir);
 
-          const exposedEvents = events.filter((e) =>
-            EXPOSED_TYPES.includes(e.type as ExposedType),
-          );
+          const exposedEvents = events.filter((e) => EXPOSED_TYPES.includes(e.type as ExposedType));
           const uniqueIdEvents = deduplicateByMessageId(exposedEvents);
 
-          const ndjson = events.map((e) => JSON.stringify(e)).join("\n") + "\n";
+          const ndjson = `${events.map((e) => JSON.stringify(e)).join("\n")}\n`;
           const stdout = Readable.from([ndjson]);
 
           const result = await adapter.consume(stdout);
@@ -119,14 +130,15 @@ describe("R5.3 + R6.1 stream-adapter FIFO property", () => {
           const runDir = makeTmp();
           const adapter = new StreamJsonAdapter(runDir);
 
-          const ndjson = events.map((e) => JSON.stringify(e)).join("\n") + "\n";
+          const ndjson = `${events.map((e) => JSON.stringify(e)).join("\n")}\n`;
           const stdout = Readable.from([ndjson]);
 
           const result = await adapter.consume(stdout);
 
           for (const event of result.delivered) {
-            expect(typeof event.type).toBe("string");
-            expect(event.type.length).toBeGreaterThan(0);
+            const evt = event as Record<string, unknown>;
+            expect(typeof evt.type).toBe("string");
+            expect((evt.type as string).length).toBeGreaterThan(0);
           }
         },
       ),
@@ -143,7 +155,7 @@ describe("R5.3 + R6.1 stream-adapter FIFO property", () => {
           const adapter = new StreamJsonAdapter(runDir);
 
           const hasResult = events.some((e) => e.type === "result");
-          const ndjson = events.map((e) => JSON.stringify(e)).join("\n") + "\n";
+          const ndjson = `${events.map((e) => JSON.stringify(e)).join("\n")}\n`;
           const stdout = Readable.from([ndjson]);
 
           const result = await adapter.consume(stdout);
@@ -183,4 +195,3 @@ function isSubsequence(needle: string[], haystack: string[]): boolean {
   }
   return true;
 }
-

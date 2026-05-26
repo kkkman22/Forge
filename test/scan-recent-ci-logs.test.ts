@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 import {
-  CRITICAL_PATTERNS,
   buildSummary,
+  CRITICAL_PATTERNS,
   matchPatterns,
   parseArgs,
 } from "../scripts/scan-recent-ci-logs.mjs";
@@ -113,10 +113,7 @@ describe("scan-recent-ci-logs", () => {
     });
 
     it("matches multiple occurrences of same pattern", () => {
-      const log = [
-        "workflow load failed at step 1",
-        "workflow load failed at step 2",
-      ].join("\n");
+      const log = ["workflow load failed at step 1", "workflow load failed at step 2"].join("\n");
       const matches = matchPatterns(1, log) as MatchedPattern[];
       const wfMatches = matches.filter((m) => m.pattern === "workflow load failed");
       expect(wfMatches).toHaveLength(2);
@@ -139,8 +136,22 @@ describe("scan-recent-ci-logs", () => {
   describe("buildSummary", () => {
     it("produces correct structure for empty matches", () => {
       const runs: RunInfo[] = [
-        { databaseId: 1, status: "completed", conclusion: "success", headBranch: "main", createdAt: "2026-05-26T10:00:00Z", event: "push" },
-        { databaseId: 2, status: "completed", conclusion: "success", headBranch: "main", createdAt: "2026-05-26T10:01:00Z", event: "push" },
+        {
+          databaseId: 1,
+          status: "completed",
+          conclusion: "success",
+          headBranch: "main",
+          createdAt: "2026-05-26T10:00:00Z",
+          event: "push",
+        },
+        {
+          databaseId: 2,
+          status: "completed",
+          conclusion: "success",
+          headBranch: "main",
+          createdAt: "2026-05-26T10:01:00Z",
+          event: "push",
+        },
       ];
       const allMatches: MatchedPattern[] = [];
 
@@ -154,9 +165,30 @@ describe("scan-recent-ci-logs", () => {
 
     it("counts failed runs correctly", () => {
       const runs: RunInfo[] = [
-        { databaseId: 1, status: "completed", conclusion: "success", headBranch: "main", createdAt: "2026-05-26T10:00:00Z", event: "push" },
-        { databaseId: 2, status: "completed", conclusion: "failure", headBranch: "main", createdAt: "2026-05-26T10:01:00Z", event: "push" },
-        { databaseId: 3, status: "completed", conclusion: "failure", headBranch: "dev", createdAt: "2026-05-26T10:02:00Z", event: "push" },
+        {
+          databaseId: 1,
+          status: "completed",
+          conclusion: "success",
+          headBranch: "main",
+          createdAt: "2026-05-26T10:00:00Z",
+          event: "push",
+        },
+        {
+          databaseId: 2,
+          status: "completed",
+          conclusion: "failure",
+          headBranch: "main",
+          createdAt: "2026-05-26T10:01:00Z",
+          event: "push",
+        },
+        {
+          databaseId: 3,
+          status: "completed",
+          conclusion: "failure",
+          headBranch: "dev",
+          createdAt: "2026-05-26T10:02:00Z",
+          event: "push",
+        },
       ];
       const summary = buildSummary(runs, []);
       expect(summary.failed_runs).toBe(2);
@@ -172,7 +204,7 @@ describe("scan-recent-ci-logs", () => {
       const summary = buildSummary([], matches);
 
       expect(summary.pattern_counts["workflow load failed"]).toBe(2);
-      expect(summary.pattern_counts["stuck_timeout"]).toBe(1);
+      expect(summary.pattern_counts.stuck_timeout).toBe(1);
     });
 
     it("passes matched_patterns through", () => {

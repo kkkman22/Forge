@@ -1,4 +1,4 @@
-import { existsSync, mkdirSync, readFileSync, rmSync, writeFileSync } from "node:fs";
+import { mkdirSync, rmSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
@@ -23,7 +23,11 @@ vi.mock("node:fs", async (importOriginal) => {
 });
 
 import { execFileSync } from "node:child_process";
-import { existsSync as mockExistsSync, unlinkSync as mockUnlinkSync, appendFileSync as mockAppendFileSync } from "node:fs";
+import {
+  appendFileSync as mockAppendFileSync,
+  existsSync as mockExistsSync,
+  unlinkSync as mockUnlinkSync,
+} from "node:fs";
 
 // ---------------------------------------------------------------------------
 // Helpers
@@ -110,11 +114,9 @@ describe("runCleanupChain", () => {
     expect(mockUnlinkSync).toHaveBeenCalledWith(pidFile);
 
     // Step 3: worktree removed
-    expect(execFileSync).toHaveBeenCalledWith(
-      "git",
-      ["worktree", "remove", "/tmp/fake-worktree"],
-      { stdio: "pipe" },
-    );
+    expect(execFileSync).toHaveBeenCalledWith("git", ["worktree", "remove", "/tmp/fake-worktree"], {
+      stdio: "pipe",
+    });
 
     // Step 4: sleep process killed
     expect(sleepProcess.kill).toHaveBeenCalled();
@@ -217,7 +219,9 @@ describe("runCleanupChain", () => {
     // Verify 5 error records were appended
     expect(mockAppendFileSync).toHaveBeenCalledTimes(5);
 
-    const records = mockAppendFileSync.mock.calls.map((call) => {
+    const records = (
+      mockAppendFileSync as unknown as { mock: { calls: string[][] } }
+    ).mock.calls.map((call) => {
       const line = String(call[1]).trim();
       return JSON.parse(line);
     });

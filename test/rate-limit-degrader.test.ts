@@ -1,4 +1,4 @@
-import { existsSync, readFileSync, rmSync, mkdirSync } from "node:fs";
+import { existsSync, mkdirSync, readFileSync, rmSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
@@ -84,7 +84,8 @@ describe("RateLimitDegrader", () => {
     expect(lines.length).toBe(3);
 
     // Verify format: <iso-date> · review · 429-degrade · old=<n> new=<n> probe=none
-    const pattern = /^\d{4}-\d{2}-\d{2}T[\d:.]+Z · review · 429-degrade · old=\d+ new=\d+ probe=none$/;
+    const pattern =
+      /^\d{4}-\d{2}-\d{2}T[\d:.]+Z · review · 429-degrade · old=\d+ new=\d+ probe=none$/;
     for (const line of lines) {
       expect(line).toMatch(pattern);
     }
@@ -114,7 +115,8 @@ describe("RateLimitDegrader", () => {
     expect(lines.length).toBe(20);
 
     // Every line must be complete (match the format pattern)
-    const pattern = /^\d{4}-\d{2}-\d{2}T[\d:.]+Z · review · 429-degrade · old=\d+ new=\d+ probe=none$/;
+    const pattern =
+      /^\d{4}-\d{2}-\d{2}T[\d:.]+Z · review · 429-degrade · old=\d+ new=\d+ probe=none$/;
     for (const line of lines) {
       expect(line).toMatch(pattern);
     }

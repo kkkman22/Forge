@@ -1,9 +1,9 @@
-import * as fc from "fast-check";
-import { mkdirSync, rmSync, writeFileSync } from "node:fs";
+import { mkdirSync, rmSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
+import * as fc from "fast-check";
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
-import type { ChosenLevel, DispatchContext } from "../../src/workflow-dispatcher.js";
+import type { DispatchContext } from "../../src/workflow-dispatcher.js";
 import { dispatch, probeL0Eligibility } from "../../src/workflow-dispatcher.js";
 
 const VALID_LEVELS = new Set<string>(["L0", "L1", "L3"]);
@@ -88,7 +88,14 @@ describe("R2.9: dispatcher no-blackhole property", () => {
             fc.constant("unknown error"),
           ),
         }),
-        async ({ subcommand, mode, gateEnabled, allFallbacksFailed, tryL0Fails, l0ErrorMessage }) => {
+        async ({
+          subcommand,
+          mode,
+          gateEnabled,
+          allFallbacksFailed,
+          tryL0Fails,
+          l0ErrorMessage,
+        }) => {
           if (gateEnabled) {
             process.env.CLAUDE_CODE_WORKFLOWS = "1";
           } else {

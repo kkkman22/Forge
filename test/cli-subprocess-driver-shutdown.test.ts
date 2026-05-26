@@ -119,7 +119,10 @@ describe("CliSubprocessDriver shutdown signal chain (Task 2)", () => {
 
     const signalChainPath = join(runDir, "signal_chain.jsonl");
     const content = readFileSync(signalChainPath, "utf-8");
-    const entries = content.trim().split("\n").map((l) => JSON.parse(l));
+    const entries = content
+      .trim()
+      .split("\n")
+      .map((l) => JSON.parse(l));
 
     expect(entries.length).toBe(3);
     expect(entries[0].elapsed_ms).toBeLessThan(entries[1].elapsed_ms);
