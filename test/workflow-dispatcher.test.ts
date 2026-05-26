@@ -24,10 +24,7 @@ function setupL0Workflow(tmpDir: string) {
   const wfDir = join(tmpDir, "workflows");
   mkdirSync(wfDir, { recursive: true });
   mkdirSync(join(wfDir, "lib"), { recursive: true });
-  writeFileSync(
-    join(wfDir, "lib", "concurrency.js"),
-    "export const chunkedParallel = () => {};\n",
-  );
+  writeFileSync(join(wfDir, "lib", "concurrency.js"), "export const chunkedParallel = () => {};\n");
   writeFileSync(
     join(wfDir, "review.js"),
     "import { chunkedParallel } from './lib/concurrency.js';\nexport const meta = {};\n",

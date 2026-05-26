@@ -68,7 +68,12 @@ export interface FallbackResult {
 }
 
 export interface AuditWriterLike {
-  write(target: { subcommand: string; runId: string; topic: string; payload: unknown }): Promise<void>;
+  write(target: {
+    subcommand: string;
+    runId: string;
+    topic: string;
+    payload: unknown;
+  }): Promise<void>;
 }
 
 export interface DispatchDeps {
@@ -253,7 +258,10 @@ export async function dispatch(
         payload: result.payload ?? {},
       });
     } catch (err) {
-      if (err instanceof Error && (err.constructor.name === "FrozenZoneViolation" || err.message.includes("FrozenZone"))) {
+      if (
+        err instanceof Error &&
+        (err.constructor.name === "FrozenZoneViolation" || err.message.includes("FrozenZone"))
+      ) {
         frozenZoneBlocked = true;
       } else {
         throw err;
