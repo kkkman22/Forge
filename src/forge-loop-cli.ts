@@ -28,6 +28,7 @@ import {
 } from "node:fs";
 import path from "node:path";
 import { Command } from "commander";
+import { runCleanupChain } from "./cleanup-chain.js";
 import { CliError } from "./cli-error.js";
 import { CliSubprocessDriver } from "./cli-subprocess-driver.js";
 import { extractConfigLang, mergeLogConfig, parseLogConfig } from "./config-store.js";
@@ -58,6 +59,8 @@ import {
 } from "./orphan-detector.js";
 import { ProcessRegistry } from "./process-registry.js";
 import type { TaskType } from "./pua-engine.js";
+import { RateLimitDegrader } from "./rate-limit-degrader.js";
+import { runMainLoopWithRetry } from "./retry-loop.js";
 import { branchExists, RunManager } from "./run-manager.js";
 import { detectSkillAwareMode, SdkDriver } from "./sdk-driver.js";
 import { installSkill } from "./skill-loader.js";
@@ -705,6 +708,11 @@ async function main(): Promise<void> {
 
       // Agent adapter: CliSubprocessDriver replaces agent-sdk
       // logSink is now available for stderr dual-write (R4)
+      const toolHealthPath = path.join(effectiveCwd, ".forge", "knowledge", "tool-health.md");
+      const degrader = hasForgeDir
+        ? new RateLimitDegrader(loopConfig.maxConcurrentLoops, toolHealthPath, "loop")
+        : undefined;
+
       const agentAdapter = new CliSubprocessDriver({
         cwd: effectiveCwd,
         runId: runSetup.runId,
@@ -715,6 +723,7 @@ async function main(): Promise<void> {
         // Plumb through resume flag (R5.6)
         resumeSessionId: opts.resume,
         logSink,
+        rateLimitDegrader: degrader,
       });
 
       if (preventSleep) {
@@ -918,7 +927,41 @@ async function main(): Promise<void> {
       // Run the driver loop
       // ---------------------------------------------------------------
       try {
-        const result = await driver.run();
+        // Top-level retry wrapper for subprocess resilience
+        // biome-ignore lint/suspicious/noExplicitAny: result type inferred from SdkDriver.run()
+        let loopRunResult: any = null;
+
+        await runMainLoopWithRetry({
+          driver: {
+            run: async () => {
+              try {
+                loopRunResult = await driver.run();
+                return { exitCode: 0 };
+              } catch (err) {
+                const isCliError = err instanceof CliError;
+                const exitCode = isCliError ? 1 : 139;
+                const classification = classifyExitCode(exitCode);
+                ipcEmitter.emitError({
+                  code: isCliError ? "cli_error" : "unexpected_failure",
+                  message: err instanceof Error ? err.message : String(err),
+                  fatal: !classification.retryable,
+                  retryable: classification.retryable,
+                });
+                return { exitCode };
+              }
+            },
+          },
+          prompt: objective,
+          cwd: effectiveCwd,
+          runDir: runSetup.runDir,
+          maxRetries: loopConfig.maxConsecutiveFailures,
+        });
+
+        if (!loopRunResult) {
+          throw new CliError("Loop aborted after retries — see abort.json for details.");
+        }
+
+        const result = loopRunResult as Awaited<ReturnType<SdkDriver["run"]>>;
 
         // Emit run_completed for downstream consumers
         ipcEmitter.emit({
@@ -1003,6 +1046,15 @@ async function main(): Promise<void> {
         });
         throw err;
       } finally {
+        // Structured cleanup chain
+        await runCleanupChain({
+          runId: sessionId,
+          runDir: runSetup.runDir,
+          pidFile: hasForgeDir ? path.join(pidsBaseDir, `${sessionId}.pid`) : undefined,
+          sleepProcess: sleepProcess ?? undefined,
+          worktreePath: worktreePath ?? undefined,
+        });
+
         // Clean up signal handlers.
         process.removeListener("SIGINT", handleSignal);
         process.removeListener("SIGTERM", handleSignal);

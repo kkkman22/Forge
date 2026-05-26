@@ -1,5 +1,5 @@
-import { execSync } from "node:child_process";
-import { appendFileSync } from "node:fs";
+import { appendFileSync, mkdirSync } from "node:fs";
+import { dirname } from "node:path";
 
 // ---------------------------------------------------------------------------
 // RateLimitDegrader — 429 rate-limit degradation state machine
@@ -64,21 +64,11 @@ export class RateLimitDegrader {
 
   private appendToolHealth(oldLimit: number, newLimit: number): void {
     const line = `${new Date().toISOString()} · ${this.subcommand} · 429-degrade · old=${oldLimit} new=${newLimit} probe=none\n`;
-
-    // Try flock-protected append (macOS/Linux)
     try {
-      const lockFile = `${this.toolHealthPath}.lock`;
-      execSync(
-        `(flock -x 200; printf %s '${line.replace(/'/g, "'\\''")}' >> "${this.toolHealthPath}") 200>"${lockFile}"`,
-        { stdio: "pipe" },
-      );
+      mkdirSync(dirname(this.toolHealthPath), { recursive: true });
+      appendFileSync(this.toolHealthPath, line, "utf-8");
     } catch {
-      // Fallback to non-locked append (best-effort)
-      try {
-        appendFileSync(this.toolHealthPath, line, "utf-8");
-      } catch {
-        // Silently skip — don't block main flow on tool-health write failure
-      }
+      // Silently skip — don't block main flow on tool-health write failure
     }
   }
 }

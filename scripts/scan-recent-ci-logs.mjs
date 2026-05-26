@@ -3,7 +3,7 @@
 import { appendFileSync, existsSync } from "node:fs";
 import { resolve, dirname } from "node:path";
 import { fileURLToPath } from "node:url";
-import { execSync } from "node:child_process";
+import { execFileSync } from "node:child_process";
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const ROOT = resolve(__dirname, "..");
@@ -111,25 +111,22 @@ export function buildSummary(runs, allMatches) {
 }
 
 /**
- * @param {string} command
- * @returns {string}
- */
-function ghExec(command) {
-  return execSync(command, { encoding: "utf-8", stdio: ["pipe", "pipe", "pipe"] }).trim();
-}
-
-/**
  * @param {string} repo
  * @param {number} count
  * @param {string|null} branch
  * @returns {Array}
  */
 function fetchRuns(repo, count, branch) {
-  let cmd = `gh run list --repo ${repo} --limit ${count} --json databaseId,status,conclusion,headBranch,createdAt,event`;
+  const args = [
+    "run", "list",
+    "--repo", repo,
+    "--limit", String(count),
+    "--json", "databaseId,status,conclusion,headBranch,createdAt,event",
+  ];
   if (branch) {
-    cmd += ` --branch ${branch}`;
+    args.push("--branch", branch);
   }
-  const raw = ghExec(cmd);
+  const raw = execFileSync("gh", args, { encoding: "utf-8", stdio: ["pipe", "pipe", "pipe"] }).trim();
   return JSON.parse(raw);
 }
 
@@ -140,7 +137,10 @@ function fetchRuns(repo, count, branch) {
  */
 function fetchRunLogs(repo, runId) {
   try {
-    return ghExec(`gh run view ${runId} --repo ${repo} --log`);
+    return execFileSync("gh", ["run", "view", String(runId), "--repo", repo, "--log"], {
+      encoding: "utf-8",
+      stdio: ["pipe", "pipe", "pipe"],
+    }).trim();
   } catch {
     return "";
   }
