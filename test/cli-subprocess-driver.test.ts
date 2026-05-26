@@ -1,4 +1,4 @@
-import { mkdirSync, readFileSync, rmSync } from "node:fs";
+import { mkdirSync, readFileSync, rmSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
@@ -126,6 +126,77 @@ describe("CliSubprocessDriver", () => {
 
       vi.useRealTimers();
       await shutdownPromise;
+    });
+  });
+
+  describe("stderr → LogSink (R4)", () => {
+    it("splits stderr by line and calls logSink per line", () => {
+      const logSink = { log: vi.fn() };
+      const driver = new CliSubprocessDriver(makeConfig({ logSink }));
+
+      // Access private method via cast
+      const captureStderr = (driver as unknown as { captureStderr: (s: NodeJS.ReadableStream) => void }).captureStderr.bind(driver);
+
+      const chunks: ((chunk: Buffer) => void)[] = [];
+      const endCbs: (() => void)[] = [];
+      const mockStream = {
+        on: vi.fn((event: string, cb: (data?: unknown) => void) => {
+          if (event === "data") chunks.push(cb as (chunk: Buffer) => void);
+          if (event === "end") endCbs.push(cb as () => void);
+        }),
+      };
+
+      captureStderr(mockStream);
+
+      // Simulate one chunk with 3 lines
+      const data = chunks[0];
+      data(Buffer.from("line1\nline2\nline3\n"));
+
+      expect(logSink.log).toHaveBeenCalledTimes(3);
+      for (const call of logSink.log.mock.calls) {
+        expect(call[0].event).toBe("subprocess_stderr");
+        expect(call[0].level).toBe("warn");
+      }
+    });
+
+    it("writes to stderr.log even without logSink", () => {
+      const driver = new CliSubprocessDriver(makeConfig());
+      const captureStderr = (driver as unknown as { captureStderr: (s: NodeJS.ReadableStream) => void }).captureStderr.bind(driver);
+
+      const chunks: ((chunk: Buffer) => void)[] = [];
+      const endCbs: (() => void)[] = [];
+      const mockStream = {
+        on: vi.fn((event: string, cb: (data?: unknown) => void) => {
+          if (event === "data") chunks.push(cb as (chunk: Buffer) => void);
+          if (event === "end") endCbs.push(cb as () => void);
+        }),
+      };
+
+      captureStderr(mockStream);
+      chunks[0](Buffer.from("error output\n"));
+
+      const stderrContent = readFileSync(join(runDir, "stderr.log"), "utf-8");
+      expect(stderrContent).toContain("error output");
+    });
+
+    it("does not throw when logSink is undefined", () => {
+      const driver = new CliSubprocessDriver(makeConfig());
+      const captureStderr = (driver as unknown as { captureStderr: (s: NodeJS.ReadableStream) => void }).captureStderr.bind(driver);
+
+      const chunks: ((chunk: Buffer) => void)[] = [];
+      const endCbs: (() => void)[] = [];
+      const mockStream = {
+        on: vi.fn((event: string, cb: (data?: unknown) => void) => {
+          if (event === "data") chunks.push(cb as (chunk: Buffer) => void);
+          if (event === "end") endCbs.push(cb as () => void);
+        }),
+      };
+
+      expect(() => {
+        captureStderr(mockStream);
+        chunks[0](Buffer.from("test\n"));
+        endCbs[0]();
+      }).not.toThrow();
     });
   });
 });
