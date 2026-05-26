@@ -65,6 +65,7 @@ export interface DispatchResult {
 export interface FallbackResult {
   output?: string;
   methodology?: string;
+  precursor_partial?: string;
 }
 
 export interface AuditWriterLike {
@@ -78,7 +79,10 @@ export interface AuditWriterLike {
 
 export interface DispatchDeps {
   tryL0?: (ctx: DispatchContext) => Promise<unknown>;
-  runFallback?: (ctx: DispatchContext) => Promise<FallbackResult | null>;
+  runFallback?: (
+    ctx: DispatchContext,
+    extras?: { precursorPartial?: string },
+  ) => Promise<FallbackResult | null>;
   allFallbacksFailed?: boolean;
   auditWriter?: AuditWriterLike;
   topic?: string;
@@ -223,26 +227,30 @@ export async function dispatch(
       const error = err instanceof Error ? err : new Error(String(err));
       const signature = classifyL0Failure(error);
 
-      // Isolate partial findings
+      // Isolate partial findings (R2.8)
       const runDir = join(ctx.forgeRoot, "runs", ctx.runId);
-      isolatePartialFindings(runDir, ctx.subcommand, error.message);
+      const partialPath = isolatePartialFindings(runDir, ctx.subcommand, error.message);
 
-      // Fallback to L1
+      // Fallback to L1, passing precursor_partial cross-reference (R2.8)
       if (deps.allFallbacksFailed) {
         result = { chosenLevel: "L3", result: "blocked" };
       } else {
         const fallbackResult = deps.runFallback
-          ? await deps.runFallback(ctx)
+          ? await deps.runFallback(ctx, { precursorPartial: partialPath })
           : ({
               output: "subagent fallback after L0 failure",
               methodology: "workflow-then-subagent",
+              precursor_partial: partialPath,
             } as FallbackResult);
 
         result = {
           chosenLevel: "L1",
           l0FailureSignature: signature,
           methodology: "workflow-then-subagent",
-          payload: fallbackResult,
+          payload: {
+            ...(fallbackResult ?? {}),
+            precursor_partial: fallbackResult?.precursor_partial ?? partialPath,
+          },
         };
       }
     }
@@ -266,6 +274,16 @@ export async function dispatch(
       } else {
         throw err;
       }
+    }
+  }
+
+  // R2.6: when L3 (all fallbacks exhausted), write blocked audit record so
+  // forge-ship and downstream consumers see a blocked stub via standard reads.
+  if (result.chosenLevel === "L3" && deps.topic) {
+    try {
+      writeBlockedAuditRecord(ctx.forgeRoot, ctx.subcommand, deps.topic, ctx.runId);
+    } catch {
+      // Audit-write failure must not mask the L3 blocked state itself
     }
   }
 
@@ -297,6 +315,8 @@ export async function dispatch(
     dispatch_chosen_level: result.chosenLevel,
     dispatch_subcommand: ctx.subcommand,
     dispatch_run_id: ctx.runId,
+    // R2.6: blocked phase only on L3 (do not overwrite phase on success paths)
+    phase: result.chosenLevel === "L3" ? `${ctx.subcommand}-blocked` : undefined,
   });
 
   return { ...result, record };
@@ -322,6 +342,7 @@ export function updateStatusMd(
     dispatch_chosen_level: string;
     dispatch_subcommand: string;
     dispatch_run_id: string;
+    phase?: string;
   },
 ): void {
   let content: string;
@@ -340,25 +361,77 @@ export function updateStatusMd(
     fm = fm.replace(/^dispatch_chosen_level:.*\n?/m, "");
     fm = fm.replace(/^dispatch_subcommand:.*\n?/m, "");
     fm = fm.replace(/^dispatch_run_id:.*\n?/m, "");
+    if (fields.phase !== undefined) {
+      fm = fm.replace(/^phase:.*\n?/m, "");
+    }
     fm += `\ndispatch_chosen_level: ${fields.dispatch_chosen_level}`;
     fm += `\ndispatch_subcommand: ${fields.dispatch_subcommand}`;
     fm += `\ndispatch_run_id: ${fields.dispatch_run_id}`;
+    if (fields.phase !== undefined) {
+      fm += `\nphase: ${fields.phase}`;
+    }
     content = content.replace(fmMatch[0], `---\n${fm}\n---`);
   } else {
-    content = `---\ndispatch_chosen_level: ${fields.dispatch_chosen_level}\ndispatch_subcommand: ${fields.dispatch_subcommand}\ndispatch_run_id: ${fields.dispatch_run_id}\n---\n${content}`;
+    const phaseLine = fields.phase !== undefined ? `\nphase: ${fields.phase}` : "";
+    content = `---\ndispatch_chosen_level: ${fields.dispatch_chosen_level}\ndispatch_subcommand: ${fields.dispatch_subcommand}\ndispatch_run_id: ${fields.dispatch_run_id}${phaseLine}\n---\n${content}`;
   }
 
   writeFileSync(statusPath, content, "utf-8");
 }
 
 // ---------------------------------------------------------------------------
-// isolatePartialFindings
+// isolatePartialFindings — returns absolute path of the partial file (R2.8)
 // ---------------------------------------------------------------------------
 
-export function isolatePartialFindings(runDir: string, subcommand: string, content: string): void {
+export function isolatePartialFindings(
+  runDir: string,
+  subcommand: string,
+  content: string,
+): string {
   const partialDir = join(runDir, "l0-partial");
   mkdirSync(partialDir, { recursive: true });
   const ts = new Date().toISOString().replace(/[:.]/g, "-");
   const filename = `${subcommand}-${ts}.md`;
-  writeFileSync(join(partialDir, filename), content, "utf-8");
+  const fullPath = join(partialDir, filename);
+  writeFileSync(fullPath, content, "utf-8");
+  return fullPath;
+}
+
+// ---------------------------------------------------------------------------
+// writeBlockedAuditRecord — R2.6: when chosenLevel = L3, write a blocked
+// stub into the audit zone so forge-ship can find it via standard read paths.
+// Uses append-only semantics consistent with WorkflowAuditWriter.
+// ---------------------------------------------------------------------------
+
+export function writeBlockedAuditRecord(
+  forgeRoot: string,
+  subcommand: Subcommand,
+  topic: string,
+  runId: string,
+): string {
+  const filename = subcommand === "review" ? `${topic}.md` : `${runId}-blocked.md`;
+  const subdir =
+    subcommand === "review"
+      ? "reviews"
+      : subcommand === "decide"
+        ? "decisions"
+        : join("knowledge", "sessions");
+  const destDir = join(forgeRoot, subdir);
+  mkdirSync(destDir, { recursive: true });
+  const destPath = join(destDir, filename);
+
+  const stub = [
+    "",
+    "---",
+    `# ${subcommand} (${runId}) — blocked`,
+    "",
+    "result: blocked",
+    "methodology: unavailable",
+    "",
+    `All fallback levels exhausted. See .forge/runs/${runId}/dispatch.jsonl for details.`,
+    "",
+  ].join("\n");
+
+  appendFileSync(destPath, stub, "utf-8");
+  return destPath;
 }
