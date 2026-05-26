@@ -77,14 +77,14 @@ describe("diff-ipc-schema script", () => {
 
     writeFileSync(
       baseline,
-      [
+      `${[
         JSON.stringify({ event: "iteration_start", schema: 1, run_id: "r1", ts: "2026-01-01" }),
-      ].join("\n") + "\n",
+      ].join("\n")}\n`,
     );
 
     writeFileSync(
       current,
-      [
+      `${[
         JSON.stringify({
           event: "iteration_start",
           schema: 1,
@@ -93,7 +93,7 @@ describe("diff-ipc-schema script", () => {
           extra_field: true,
         }),
         JSON.stringify({ event: "new_event", schema: 1, run_id: "r2", ts: "2026-01-02" }),
-      ].join("\n") + "\n",
+      ].join("\n")}\n`,
     );
 
     const result = execSync(`node scripts/diff-ipc-schema.mjs "${baseline}" "${current}"`, {
@@ -115,7 +115,7 @@ describe("diff-ipc-schema script", () => {
 
     writeFileSync(
       current,
-      [JSON.stringify({ event: "iteration_start", run_id: "r2" })].join("\n") + "\n",
+      `${[JSON.stringify({ event: "iteration_start", run_id: "r2" })].join("\n")}\n`,
     );
 
     expect(() => {

@@ -8,7 +8,7 @@ import { StreamJsonAdapter } from "../src/stream-json-adapter.js";
 function linesToStream(lines: string[]): Readable {
   const r = new Readable({ read() {} });
   for (const line of lines) {
-    r.push(line + "\n");
+    r.push(`${line}\n`);
   }
   r.push(null);
   return r;
