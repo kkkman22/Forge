@@ -42,3 +42,16 @@
 
 ## Phase 8: CI 跨版本
 - [x] T27: CI 跨版本 + scan-recent-ci-logs.mjs
+
+## Review
+- [x] 3-layer review completed — 4 P1 findings (shell injection × 2, orphaned setTimeout, production wiring gaps)
+- [x] All P1 findings fixed with atomic commit (d1bd2d06)
+
+## Test (Layer 3 pre-completion checklist)
+- [x] 1. Unit tests run: 7281 passed, 17 pre-existing failures (contract tests needing dist/ artifacts)
+- [x] 2. All non-contract tests pass
+- [x] 3. TypeScript type check passes (`tsc --noEmit`)
+- [x] 4. Lint passes (`biome check` — 267 files, no issues)
+- [x] 5. Acceptance criteria verified against spec (R1–R8 all implemented)
+- [x] 6. No TODO/FIXME/HACK/XXX in changed files
+- [x] 7. Progress file updated
