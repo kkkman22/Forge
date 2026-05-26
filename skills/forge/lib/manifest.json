@@ -1,6 +1,6 @@
 {
   "version": 1,
-  "generated_at": "2026-05-25T00:44:28.160Z",
+  "generated_at": "2026-05-26T06:06:45.759Z",
   "subs": {
     "abort": {
       "instructions": {
@@ -16,8 +16,7 @@
           "path": "abort/references/function-contracts.md",
           "sha256": "54b66c75e11e09faa782bfb7dc4dff342091260c7a6b155c16815830637808c0"
         }
-      ],
-      "sha256": "934d8694b761ae70"
+      ]
     },
     "accept": {
       "instructions": {
@@ -37,8 +36,7 @@
           "path": "accept/references/scenario-format.md",
           "sha256": "4c0092da8106200e2acdae01c3be56973f46fbdb493d34a4bf587fd9b92952c9"
         }
-      ],
-      "sha256": "d10a2120da601120"
+      ]
     },
     "build": {
       "instructions": {
@@ -122,8 +120,7 @@
           "path": "build/references/tdd-rules.md",
           "sha256": "44ea25b181a0f5e15452dd1f90563e986d8defad6bb4be54427656a3321b7610"
         }
-      ],
-      "sha256": "ddb83b72b25a40db"
+      ]
     },
     "build-light": {
       "instructions": {
@@ -135,8 +132,7 @@
           "path": "build-light/references/function-contracts.md",
           "sha256": "08c00e7e465f6c1c74cc569db68db65bcb80c3b1c40c874cfada4a3a33ac2d97"
         }
-      ],
-      "sha256": "fba2613d2005b1dc"
+      ]
     },
     "control-cli": {
       "instructions": {
@@ -156,8 +152,7 @@
           "path": "control-cli/references/tmux-harness.md",
           "sha256": "bbb2710d456608b55e98601ad2deb5f902340e62f059be18f234d3ecc71dbc79"
         }
-      ],
-      "sha256": "35fa37e57152641d"
+      ]
     },
     "control-ui": {
       "instructions": {
@@ -177,8 +172,7 @@
           "path": "control-ui/references/playwright-adapter.md",
           "sha256": "adcd763ade6d64c416f30b3680bc1850fffe8a8aabb7d4e4391542adc37a2832"
         }
-      ],
-      "sha256": "1c198bc725bb1164"
+      ]
     },
     "debug": {
       "instructions": {
@@ -190,13 +184,12 @@
           "path": "debug/references/function-contracts.md",
           "sha256": "1c80eb69d95ae6860ba925a4ed7ce7de12af8311246817440c5bab8f2fa02810"
         }
-      ],
-      "sha256": "c7f81a26c76a05ea"
+      ]
     },
     "decide": {
       "instructions": {
         "path": "decide/instructions.md",
-        "sha256": "445c0b2aca1bbe6adad043c99585f1be5579362b6af3e34ada429585a754f4c4"
+        "sha256": "48bd4463081c87eb61d4cb9d1fb29d994f42b425020ed55fd69ab9fd02f955ca"
       },
       "references": [
         {
@@ -219,16 +212,14 @@
           "path": "decide/references/perspective-formats.md",
           "sha256": "e1d52b2ad1846061d1e43d2e617f13ec61b2e57c75d1ef32dba9100751d3c51a"
         }
-      ],
-      "sha256": "445c0b2aca1bbe6a"
+      ]
     },
     "decide-teams": {
       "instructions": {
         "path": "decide-teams/instructions.md",
         "sha256": "30b076beb0426ac2c097c959f33c840652ba077a964b573e398246105f9698d9"
       },
-      "references": [],
-      "sha256": "30b076beb0426ac2"
+      "references": []
     },
     "fix": {
       "instructions": {
@@ -240,8 +231,7 @@
           "path": "fix/references/function-contracts.md",
           "sha256": "daee1ec89b4b3dc965a1989c32851ec99f9a324d62e288852dd90a335013a303"
         }
-      ],
-      "sha256": "2b0fc9ab99c213fd"
+      ]
     },
     "fix-conflicts": {
       "instructions": {
@@ -261,32 +251,28 @@
           "path": "fix-conflicts/references/zone-classification.md",
           "sha256": "5f8b04f505d2d79a97fb43c2ac7bb13b45e6e0e9d243cb5830e84a7cfb4d7e41"
         }
-      ],
-      "sha256": "01644d32483d37ad"
+      ]
     },
     "forge-cmux-browser-qa": {
       "instructions": {
         "path": "forge-cmux-browser-qa/instructions.md",
         "sha256": "4ae68be01ed32d1b7d6909e2efb3e2404fa3cbb8f8b6d6929021afaaff69532b"
       },
-      "references": [],
-      "sha256": "4ae68be01ed32d1b"
+      "references": []
     },
     "forge-cmux-loop-signals": {
       "instructions": {
         "path": "forge-cmux-loop-signals/instructions.md",
         "sha256": "4796c74b7f0a481d3f67b0b744adf6a0bc90ab961095a5a90b40062228d7b2cd"
       },
-      "references": [],
-      "sha256": "4796c74b7f0a481d"
+      "references": []
     },
     "forge-cmux-sidebar-sync": {
       "instructions": {
         "path": "forge-cmux-sidebar-sync/instructions.md",
         "sha256": "49cc05acdc7db05c96ab424f4b116873dae6d81fbcb79cc196aef3acc6c06ffd"
       },
-      "references": [],
-      "sha256": "49cc05acdc7db05c"
+      "references": []
     },
     "grill": {
       "instructions": {
@@ -310,21 +296,19 @@
           "path": "grill/references/question-strategies.md",
           "sha256": "8337f348265ef329e8b7b861f1d236063e5f1f5ffb6ef46ffc61eceb0ed26b7a"
         }
-      ],
-      "sha256": "a15d8a297727fd49"
+      ]
     },
     "init": {
       "instructions": {
         "path": "init/instructions.md",
         "sha256": "e7bc628de7cd062f2af296861937795db2625850c43be885df4917decc55c9ea"
       },
-      "references": [],
-      "sha256": "e7bc628de7cd062f"
+      "references": []
     },
     "learn": {
       "instructions": {
         "path": "learn/instructions.md",
-        "sha256": "ca7459d17d6789c4f82c373bf2ccb1844f5a1b42e01009df4d49261802231289"
+        "sha256": "815be21f5ae1732f2c0cc6a239c88e9e076bc668b15389d02ed69ee176a5b75a"
       },
       "references": [
         {
@@ -367,8 +351,7 @@
           "path": "learn/references/skill-feedback.md",
           "sha256": "ba9ded80969b54974c4c998e420fa9217915d68da82157a7b867994c55d0d060"
         }
-      ],
-      "sha256": "ca7459d17d6789c4"
+      ]
     },
     "loop": {
       "instructions": {
@@ -384,8 +367,7 @@
           "path": "loop/references/iteration-control.md",
           "sha256": "1b09a5194a1d4e2f830d23cd22e61af5984018af04aa3b434d5dbec99ef046b3"
         }
-      ],
-      "sha256": "9acb521f6330e174"
+      ]
     },
     "mutate": {
       "instructions": {
@@ -397,16 +379,14 @@
           "path": "mutate/references/frameworks.md",
           "sha256": "25571f54eb4a2d8c7bedaf10eacc71e7c8eab301e270bba7794d8a6cf708c497"
         }
-      ],
-      "sha256": "a5e55ce16f63d1fd"
+      ]
     },
     "pack": {
       "instructions": {
         "path": "pack/instructions.md",
         "sha256": "22191dc38fb299fe6fb14327ff033394c6c4fdbed869265af74a44d63018f178"
       },
-      "references": [],
-      "sha256": "22191dc38fb299fe"
+      "references": []
     },
     "plan": {
       "instructions": {
@@ -446,8 +426,7 @@
           "path": "plan/references/prohibited-content.md",
           "sha256": "a464084e44506539f0bd8ba9398d7202742f8882beb3f7a716e8a844e0506c88"
         }
-      ],
-      "sha256": "4ae6eb545d402628"
+      ]
     },
     "recap": {
       "instructions": {
@@ -463,8 +442,7 @@
           "path": "recap/references/data-sources.md",
           "sha256": "0c87ad9d7cece2f6b591968930af6ef026f82caccfe024e81b92e62be73e1eba"
         }
-      ],
-      "sha256": "da00a31301a194d3"
+      ]
     },
     "refactor": {
       "instructions": {
@@ -480,8 +458,7 @@
           "path": "refactor/references/method-library.md",
           "sha256": "7e225a3f13c320ec1fd0253710f02d7e5f2df68e505c26587c44285d55432d9f"
         }
-      ],
-      "sha256": "f01448aec26e1ad0"
+      ]
     },
     "resume": {
       "instructions": {
@@ -505,13 +482,12 @@
           "path": "resume/references/output-format.md",
           "sha256": "ec12e0763c7e82d499df968eb57a49fba38cfadbad5541c5556a6026172ff7b0"
         }
-      ],
-      "sha256": "6c82e3d0c5e4462f"
+      ]
     },
     "review": {
       "instructions": {
         "path": "review/instructions.md",
-        "sha256": "d20155d2c6fca606437e41b010bf3c15d06e7557dc0912c02b0186a4f54bd948"
+        "sha256": "1525634c6457d5fa1ebc39345a99196084d41540224f5f74344b34bf436211e4"
       },
       "references": [
         {
@@ -570,16 +546,14 @@
           "path": "review/references/review-report-format.md",
           "sha256": "7bb92b3a36f40475856e85b1467712f55bfaafc18f779820abee0bc5ba2cafad"
         }
-      ],
-      "sha256": "d20155d2c6fca606"
+      ]
     },
     "review-comment-bitbucket": {
       "instructions": {
         "path": "review-comment-bitbucket/instructions.md",
         "sha256": "8c7cf4d7b81da94ebb738abcd1ff5c5cc5de8fe6300455e85dfca12a32c9f1ea"
       },
-      "references": [],
-      "sha256": "8c7cf4d7b81da94e"
+      "references": []
     },
     "router": {
       "instructions": {
@@ -595,8 +569,7 @@
           "path": "router/references/function-contracts.md",
           "sha256": "927ae5d155d64c142351817448288ac94063ed535e886b9432eaed7c109fa0ac"
         }
-      ],
-      "sha256": "8bd174aa9c72416a"
+      ]
     },
     "ship": {
       "instructions": {
@@ -620,8 +593,7 @@
           "path": "ship/references/gate-checks.md",
           "sha256": "11edd07e31e69a71a4cff2c8da0ed75d0377742dc51252451a09d32ab4caddb6"
         }
-      ],
-      "sha256": "9b39af2066c9cc74"
+      ]
     },
     "spec": {
       "instructions": {
@@ -657,8 +629,7 @@
           "path": "spec/references/spec-leak-detector.md",
           "sha256": "3a2c38355ed5b25d1fbbaa17140c952c4b44309b93ccc0479f108f57ec311b99"
         }
-      ],
-      "sha256": "f3fed81489cf6f02"
+      ]
     },
     "status": {
       "instructions": {
@@ -670,8 +641,7 @@
           "path": "status/references/function-contracts.md",
           "sha256": "722d46f3369eaf93f1b1cd7a332b5d09c3bf59a0ca8da34d9fcd1f106cf10935"
         }
-      ],
-      "sha256": "c8735e8bba079cc5"
+      ]
     },
     "storm": {
       "instructions": {
@@ -683,8 +653,7 @@
           "path": "storm/references/example-storm.md",
           "sha256": "4c0da70624c313a30e309152e1bcca4247caf88e7e9d8109d75b92fd5e667b25"
         }
-      ],
-      "sha256": "da12c3bf38818110"
+      ]
     },
     "test": {
       "instructions": {
@@ -700,8 +669,7 @@
           "path": "test/references/function-contracts.md",
           "sha256": "65da991ec4f403af59bbbfd75be8b31632768ed0f171f445a28493d8442cf927"
         }
-      ],
-      "sha256": "c96575818096b2a8"
+      ]
     },
     "verify": {
       "instructions": {
@@ -721,8 +689,7 @@
           "path": "verify/references/workflow.md",
           "sha256": "014c0b5a823e5455efd55cea40c0cb2977461e3be58833595cf72eb40ed80932"
         }
-      ],
-      "sha256": "c6a4ed6e75af189d"
+      ]
     },
     "zoom-out": {
       "instructions": {
@@ -734,8 +701,7 @@
           "path": "zoom-out/references/function-contracts.md",
           "sha256": "45ee1ff09884433b4dffcb001df547e0319c418025298554dd665382aef73113"
         }
-      ],
-      "sha256": "e763c0e140aca5e0"
+      ]
     }
   }
 }

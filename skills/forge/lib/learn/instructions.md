@@ -224,7 +224,13 @@ When user triggers `/forge learn`, follow this dispatch protocol:
    - `node --check` passes
    - Concurrency bridge reachable
 
-2. **If all 5 pass → attempt L0** via `WorkflowDispatcher.dispatch(ctx, deps)`. Dispatcher auto-fills 14 fields, writes `dispatch.jsonl` + updates `status.md`.
+2. **If all 5 pass → attempt L0**:
+   ```
+   import { createAuditWriter } from './workflow-audit-factory.js';
+   const auditWriter = createAuditWriter(forgeRoot);
+   WorkflowDispatcher.dispatch(ctx, { tryL0, runFallback, auditWriter })
+   ```
+   Dispatcher auto-fills 14 fields, writes `dispatch.jsonl` + updates `status.md`.
 
 3. **If any fails → L1**: existing subagent knowledge extraction path. Dispatcher records `chosen_level: L1`.
 
