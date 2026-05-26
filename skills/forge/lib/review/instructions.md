@@ -287,6 +287,8 @@ When user triggers `/forge review`, follow this dispatch protocol for workflow e
 
 2. **If all 5 pass → attempt L0**:
    ```
+   import { createAuditWriter } from './workflow-audit-factory.js';
+   const auditWriter = createAuditWriter(forgeRoot);
    Call WorkflowDispatcher.dispatch(ctx, { tryL0, runFallback, auditWriter })
    ```
    The dispatcher auto-fills 14 fields and writes `dispatch.jsonl` + updates `status.md`.
