@@ -68,6 +68,7 @@ import {
   type StatusManagerIO,
   writeTaskStatus,
 } from "./status-manager.js";
+import { createAuditWriter } from "./workflow-audit-factory.js";
 import { decideWorktreeCleanup, isValidWorktreeSource } from "./worktree-manager.js";
 
 // Read package version for skill compatibility checks
@@ -646,32 +647,10 @@ async function main(): Promise<void> {
         );
       } // end warmup gate
 
-      // Agent adapter: CliSubprocessDriver replaces agent-sdk
-      const agentAdapter = new CliSubprocessDriver({
-        cwd: effectiveCwd,
-        runId: runSetup.runId,
-        runDir: runSetup.runDir,
-        permissionMode: "bypassPermissions",
-        dangerouslySkipPermissions: true,
-        maxTurns: Math.min(opts.maxIterations ?? 30, 30),
-        // Plumb through resume flag (R5.6)
-        resumeSessionId: opts.resume,
-      });
-
-      if (preventSleep) {
-        const sleepCmd = buildSleepPreventionCommand(process.platform, process.pid);
-        if (sleepCmd) {
-          sleepProcess = spawn(sleepCmd.command, sleepCmd.args, {
-            detached: sleepCmd.detached,
-            stdio: "ignore",
-          });
-          // Unref so the sleep process doesn't keep the event loop alive.
-          sleepProcess.unref();
-        }
-      }
-
       // ---------------------------------------------------------------
       // Create LogSink (Req 1.1, 1.2, 1.3, 2.1, 2.2, 2.3, 8.1, 8.3)
+      // Must be created before CliSubprocessDriver so stderr can be
+      // dual-written to both file and LogSink (R4 wiring).
       // ---------------------------------------------------------------
 
       // Read log config from .forge/config.md frontmatter
@@ -722,6 +701,32 @@ async function main(): Promise<void> {
       } else {
         // Single sink: stdout only
         logSink = createLogSink(logSinkConfig);
+      }
+
+      // Agent adapter: CliSubprocessDriver replaces agent-sdk
+      // logSink is now available for stderr dual-write (R4)
+      const agentAdapter = new CliSubprocessDriver({
+        cwd: effectiveCwd,
+        runId: runSetup.runId,
+        runDir: runSetup.runDir,
+        permissionMode: "bypassPermissions",
+        dangerouslySkipPermissions: true,
+        maxTurns: Math.min(opts.maxIterations ?? 30, 30),
+        // Plumb through resume flag (R5.6)
+        resumeSessionId: opts.resume,
+        logSink,
+      });
+
+      if (preventSleep) {
+        const sleepCmd = buildSleepPreventionCommand(process.platform, process.pid);
+        if (sleepCmd) {
+          sleepProcess = spawn(sleepCmd.command, sleepCmd.args, {
+            detached: sleepCmd.detached,
+            stdio: "ignore",
+          });
+          // Unref so the sleep process doesn't keep the event loop alive.
+          sleepProcess.unref();
+        }
       }
 
       // ---------------------------------------------------------------
@@ -859,6 +864,15 @@ async function main(): Promise<void> {
         effectExecutor,
         agentAdapter,
       );
+
+      // ---------------------------------------------------------------
+      // Create WorkflowAuditWriter for SKILL dispatch (R2 wiring, P1-1)
+      // SKILL instructions call dispatch(ctx, { auditWriter }) — this
+      // validates the factory can be wired in the production path.
+      // The SKILL agent imports createAuditWriter directly from
+      // workflow-audit-factory.ts to build the writer at dispatch time.
+      // ---------------------------------------------------------------
+      createAuditWriter(forgeRoot);
 
       // ---------------------------------------------------------------
       // Wire signal handlers

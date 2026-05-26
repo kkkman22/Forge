@@ -2,12 +2,7 @@ import { existsSync, mkdirSync, readdirSync, readFileSync, rmSync, writeFileSync
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
-import type {
-  DispatchContext,
-  DispatchRecord,
-  L0FailureSignature,
-  L1TriggerReason,
-} from "../src/workflow-dispatcher.js";
+import type { DispatchContext, DispatchRecord } from "../src/workflow-dispatcher.js";
 import {
   classifyL0Failure,
   dispatch,
