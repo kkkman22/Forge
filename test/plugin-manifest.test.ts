@@ -116,6 +116,7 @@ describe("Plugin Workflows Field (R1: workflows-integration)", () => {
     expect(manifest.hooks.PostToolUse).toBeDefined();
     expect(manifest.hooks.Stop).toBeDefined();
     const hookJson = JSON.stringify(manifest.hooks);
+    // biome-ignore lint/suspicious/noTemplateCurlyInString: literal shell variable check
     expect(hookJson).toContain("${CLAUDE_PLUGIN_ROOT}");
   });
 

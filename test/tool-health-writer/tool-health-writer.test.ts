@@ -182,7 +182,12 @@ describe("ToolHealthWriter: 5-process concurrent append safety (R12.7)", () => {
       if (nodeMajor >= 22) {
         return execFileAsync(
           process.execPath,
-          ["--experimental-strip-types", "--no-warnings=ExperimentalWarning", workerPath, ...workerArgs],
+          [
+            "--experimental-strip-types",
+            "--no-warnings=ExperimentalWarning",
+            workerPath,
+            ...workerArgs,
+          ],
           { timeout: 30_000 },
         );
       }
