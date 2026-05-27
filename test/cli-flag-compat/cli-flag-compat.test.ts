@@ -254,7 +254,9 @@ describe("CLI flag compatibility (AC 7.5) — --help snapshot regression", () =>
   it("baseline contains every reserved flag from the 22-flag list", () => {
     if (!existsSync(HELP_BASELINE)) return; // first test already failed; don't double-fail
     const baseline = readFileSync(HELP_BASELINE, "utf-8");
-    for (const flag of RESERVED_FLAGS_22) {
+    // Negation flags (--no-xxx) are hidden from Commander --help output
+    const helpVisibleFlags = RESERVED_FLAGS_22.filter((f) => !f.startsWith("--no-"));
+    for (const flag of helpVisibleFlags) {
       expect(baseline.includes(flag), `baseline help missing ${flag}`).toBe(true);
     }
   });
@@ -265,7 +267,9 @@ describe("CLI flag compatibility (AC 7.5) — --help snapshot regression", () =>
     // necessary for a regression check.
     const program = buildProgram();
     const helpText = program.helpInformation();
-    for (const flag of RESERVED_FLAGS_22) {
+    // Negation flags (--no-xxx) are hidden from Commander --help output
+    const helpVisibleFlags = RESERVED_FLAGS_22.filter((f) => !f.startsWith("--no-"));
+    for (const flag of helpVisibleFlags) {
       expect(helpText.includes(flag), `help info missing ${flag}`).toBe(true);
     }
   });
