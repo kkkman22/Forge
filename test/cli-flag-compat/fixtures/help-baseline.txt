@@ -36,4 +36,6 @@ Options:
                                        directory
   --agent <name>                       Agent to use for iterations (claude|mock)
                                        (default: "claude")
+  --no-warmup                          Skip warm-up spawn (for sandbox/CI)
+                                       (default: false)
   -h, --help                           display help for command

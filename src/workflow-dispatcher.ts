@@ -1,79 +1,91 @@
-/**
- * WorkflowDispatcher — orchestrates L0/L1/L2/L3 fallback ladder for
- * /forge review, /forge decide, /forge learn.
- *
- * This module implements the dispatcher *skeleton*: pure functions for
- * eligibility probing, error classification, dispatch.jsonl audit
- * writing, and status.md updates. The actual L0 invocation (`bp()`)
- * and L1 ladder (`runReviewFallbackLadder` / `forge-decide-lead` /
- * `forge-learn`) are wired up by the caller — typically the SKILL
- * dispatcher or `forge-loop-cli.ts`.
- *
- * See:
- *   - .kiro/specs/workflows-integration/requirements.md §Requirement 2
- *   - .kiro/specs/workflows-integration/design.md §3.2
- *   - .claude/rules/workflow-fallback-ladder.md
- *   - ADR 2026-05-18-review-fallback-ladder.md
- */
-
 import { execFileSync } from "node:child_process";
-import { existsSync, mkdirSync, readFileSync, writeFileSync } from "node:fs";
-import { dirname, isAbsolute, join, resolve } from "node:path";
-import {
-  appendDispatchRecord,
-  type ChosenLevel,
-  type DispatchRecord,
-  type L0FailureSignature,
-  type L1TriggerReason,
-  type Mode,
-  type Subcommand,
-} from "./dispatch-record.js";
+import { appendFileSync, existsSync, mkdirSync, readFileSync, writeFileSync } from "node:fs";
+import { join } from "node:path";
 
-export type { ChosenLevel, DispatchRecord, L0FailureSignature, L1TriggerReason, Mode, Subcommand };
+// ---------------------------------------------------------------------------
+// Types
+// ---------------------------------------------------------------------------
 
-const SAFE_SLUG_RE = /^[a-zA-Z0-9._-]{1,64}$/;
+export type Subcommand = "review" | "decide" | "learn";
+export type DispatchMode = "interactive" | "loop";
+export type ChosenLevel = "L0" | "L1" | "L2" | "L3";
 
-export class InvalidRunIdError extends Error {
-  constructor(value: string) {
-    super(`invalid runId: ${JSON.stringify(value)} — must match ${SAFE_SLUG_RE.source}`);
-    this.name = "InvalidRunIdError";
-  }
-}
+export type L1TriggerReason =
+  | "gate_disabled"
+  | "env_unset"
+  | "non_interactive"
+  | "workflow_missing"
+  | "workflow_syntax_error"
+  | "concurrency_uncontrolled"
+  | "unmatched_state";
 
-export class RunDirContainmentError extends Error {
-  constructor(dest: string, base: string) {
-    super(`runDir containment violation: ${dest} escapes ${base}`);
-    this.name = "RunDirContainmentError";
-  }
-}
-
-function assertSafeRunId(runId: string): void {
-  if (!SAFE_SLUG_RE.test(runId) || runId === "." || runId === "..") {
-    throw new InvalidRunIdError(runId);
-  }
-}
-
-function assertRunDirContained(forgeRoot: string, runDir: string): void {
-  const absBase = isAbsolute(forgeRoot) ? join(forgeRoot, "runs") : resolve(forgeRoot, "runs");
-  const absDest = resolve(runDir);
-  if (
-    absDest !== absBase &&
-    !absDest.startsWith(`${absBase}/`) &&
-    !absDest.startsWith(`${absBase}\\`)
-  ) {
-    throw new RunDirContainmentError(absDest, absBase);
-  }
-}
+export type L0FailureSignature =
+  | "bp_exception"
+  | "schema_validation_failed"
+  | "subprocess_crash"
+  | "stuck_timeout"
+  | "frozen_zone_blocked";
 
 export interface DispatchContext {
   subcommand: Subcommand;
   runId: string;
   sessionId: string;
-  mode: Mode;
-  /** Absolute path to .forge/ directory. */
+  mode: DispatchMode;
   forgeRoot: string;
-  /** Absolute path to ${CLAUDE_PLUGIN_ROOT}. */
   pluginRoot: string;
+}
+
+export interface DispatchRecord {
+  subcommand: string;
+  mode: DispatchMode;
+  run_id: string;
+  session_id: string;
+  workflow_state_id: string;
+  workflow_version: string;
+  gate_enabled: boolean;
+  workflow_available: boolean;
+  chosen_level: ChosenLevel;
+  l1_trigger_reason?: string;
+  l0_failure_signature?: string;
+  exit_code: number;
+  duration_ms: number;
+  timestamp: string;
+  frozen_zone_blocked: boolean;
+}
+
+export interface DispatchResult {
+  chosenLevel: ChosenLevel;
+  l1TriggerReason?: L1TriggerReason;
+  l0FailureSignature?: L0FailureSignature;
+  methodology?: string;
+  result?: string;
+  payload?: unknown;
+}
+
+export interface FallbackResult {
+  output?: string;
+  methodology?: string;
+  precursor_partial?: string;
+}
+
+export interface AuditWriterLike {
+  write(target: {
+    subcommand: string;
+    runId: string;
+    topic: string;
+    payload: unknown;
+  }): Promise<void>;
+}
+
+export interface DispatchDeps {
+  tryL0?: (ctx: DispatchContext) => Promise<unknown>;
+  runFallback?: (
+    ctx: DispatchContext,
+    extras?: { precursorPartial?: string },
+  ) => Promise<FallbackResult | null>;
+  allFallbacksFailed?: boolean;
+  auditWriter?: AuditWriterLike;
+  topic?: string;
 }
 
 export interface ProbeResult {
@@ -81,50 +93,47 @@ export interface ProbeResult {
   reason?: L1TriggerReason;
 }
 
-/**
- * Probe whether L0 (native workflow) path is eligible for the given context.
- *
- * Five conditions (all must pass):
- *   1. process.env.CLAUDE_CODE_WORKFLOWS === '1'
- *   2. ctx.mode === 'interactive'
- *   3. ${pluginRoot}/workflows/<subcommand>.js exists
- *   4. node --check on the workflow file passes
- *   5. ${pluginRoot}/workflows/lib/concurrency.js exists AND workflow source
- *      imports from './lib/concurrency'
- *
- * The 5th condition (tengu_workflows_enabled gate) is inferred at runtime
- * by attempting `bp()` — if `bp` is undefined, classify as bp_exception.
- */
+// ---------------------------------------------------------------------------
+// probeL0Eligibility — 5-step probe
+// ---------------------------------------------------------------------------
+
 export function probeL0Eligibility(ctx: DispatchContext): ProbeResult {
+  // Step 1: env check
   if (process.env.CLAUDE_CODE_WORKFLOWS !== "1") {
     return { eligible: false, reason: "env_unset" };
   }
+
+  // Step 2: mode check
   if (ctx.mode !== "interactive") {
     return { eligible: false, reason: "non_interactive" };
   }
 
-  const workflowPath = resolveWorkflowFile(ctx);
-  if (!existsSync(workflowPath)) {
+  // Step 3: workflow file exists + syntax check
+  const workflowFile = join(ctx.pluginRoot, "workflows", `${ctx.subcommand}.js`);
+  if (!existsSync(workflowFile)) {
     return { eligible: false, reason: "workflow_missing" };
   }
-
   try {
-    execFileSync("node", ["--check", workflowPath], { stdio: "pipe" });
+    execFileSync("node", ["--check", workflowFile], { stdio: "pipe" });
   } catch {
     return { eligible: false, reason: "workflow_syntax_error" };
   }
 
-  const concurrencyHelper = join(ctx.pluginRoot, "workflows", "lib", "concurrency.js");
-  if (!existsSync(concurrencyHelper)) {
+  // Step 4 & 5: concurrency bridge probe
+  const concurrencyFile = join(ctx.pluginRoot, "workflows", "lib", "concurrency.js");
+  if (!existsSync(concurrencyFile)) {
+    return { eligible: false, reason: "concurrency_uncontrolled" };
+  }
+  try {
+    execFileSync("node", ["--check", concurrencyFile], { stdio: "pipe" });
+  } catch {
     return { eligible: false, reason: "concurrency_uncontrolled" };
   }
 
-  const workflowSource = readFileSync(workflowPath, "utf-8");
+  const workflowSrc = readFileSync(workflowFile, "utf-8");
   if (
-    !workflowSource.includes("from './lib/concurrency'") &&
-    !workflowSource.includes('from "./lib/concurrency"') &&
-    !workflowSource.includes("from './lib/concurrency.js'") &&
-    !workflowSource.includes('from "./lib/concurrency.js"')
+    !workflowSrc.includes("from './lib/concurrency") &&
+    !workflowSrc.includes('from "./lib/concurrency')
   ) {
     return { eligible: false, reason: "concurrency_uncontrolled" };
   }
@@ -132,137 +141,297 @@ export function probeL0Eligibility(ctx: DispatchContext): ProbeResult {
   return { eligible: true };
 }
 
-/**
- * Resolve the L1 trigger reason. If the caller supplies an explicit reason,
- * pass it through; otherwise default to `unmatched_state` (the catch-all
- * for AC R2.9 — no state-space black holes).
- */
-export function resolveL1Trigger(reason?: L1TriggerReason): L1TriggerReason {
-  return reason ?? "unmatched_state";
-}
+// ---------------------------------------------------------------------------
+// classifyL0Failure
+// ---------------------------------------------------------------------------
 
-/**
- * Classify a thrown error from L0 execution into one of the five
- * documented failure signatures. Falls back to `bp_exception` for
- * unrecognised errors so dispatch records remain well-formed.
- */
-export function classifyL0Failure(err: unknown): L0FailureSignature {
-  const message = err instanceof Error ? `${err.name}: ${err.message}` : String(err);
-  const lower = message.toLowerCase();
-
-  if (
-    lower.includes("frozen_zone") ||
-    lower.includes("frozen-zone") ||
-    lower.includes("frozen zone")
-  ) {
-    return "frozen_zone_blocked";
-  }
-  if (lower.includes("stuck") || lower.includes("timeout")) {
-    return "stuck_timeout";
-  }
-  if (lower.includes("subprocess") || lower.includes("sigsegv") || lower.includes("crashed")) {
+export function classifyL0Failure(err: Error): L0FailureSignature {
+  const msg = err.message.toLowerCase();
+  if (msg.includes("frozenzone") || msg.includes("frozen_zone")) return "frozen_zone_blocked";
+  if (msg.includes("schema validation")) return "schema_validation_failed";
+  if (msg.includes("stuck timeout") || msg.includes("stuck_timeout")) return "stuck_timeout";
+  if (msg.includes("subprocess") || msg.includes("exit code") || msg.includes("crash"))
     return "subprocess_crash";
-  }
-  if (lower.includes("schema") && (lower.includes("valid") || lower.includes("validation"))) {
-    return "schema_validation_failed";
-  }
   return "bp_exception";
 }
 
-/**
- * Append a DispatchRecord as a single JSON line to
- * .forge/runs/<runId>/dispatch.jsonl. Creates parent directories as needed.
- *
- * Returns the absolute path to the JSONL file.
- */
-export function writeDispatchRecord(ctx: DispatchContext, record: DispatchRecord): string {
-  // F14: validate runId at the dispatcher boundary; assert resolved
-  // .forge/runs/<runId>/ stays under forgeRoot. Defence-in-depth against
-  // ".." / "/etc" / NUL-byte payloads slipping in via session metadata.
-  assertSafeRunId(ctx.runId);
+// ---------------------------------------------------------------------------
+// readWorkflowVersion — extract meta.version from workflow file
+// ---------------------------------------------------------------------------
+
+export function readWorkflowVersion(ctx: DispatchContext): string {
+  const workflowFile = join(ctx.pluginRoot, "workflows", `${ctx.subcommand}.js`);
+  try {
+    const src = readFileSync(workflowFile, "utf-8");
+    const match = src.match(/version\s*:\s*['"]([^'"]+)['"]/);
+    return match?.[1] ?? "unknown";
+  } catch {
+    return "unknown";
+  }
+}
+
+// ---------------------------------------------------------------------------
+// computeExitCode — map dispatch result to exit code
+// ---------------------------------------------------------------------------
+
+export function computeExitCode(result: DispatchResult): number {
+  if (result.chosenLevel === "L3") return 2;
+  if (result.chosenLevel === "L0") return 0;
+  if (result.chosenLevel === "L1" && result.l0FailureSignature) return 1;
+  return 0;
+}
+
+// ---------------------------------------------------------------------------
+// dispatch — L0 try + L1 fallback + 14-field auto-fill
+// ---------------------------------------------------------------------------
+
+export async function dispatch(
+  ctx: DispatchContext,
+  deps: DispatchDeps = {},
+): Promise<DispatchResult & { record: DispatchRecord }> {
+  const startTime = Date.now();
+  const probe = probeL0Eligibility(ctx);
+  const gateEnabled = process.env.CLAUDE_CODE_WORKFLOWS === "1";
+  const workflowAvailable = probe.eligible;
+  const workflowVersion = readWorkflowVersion(ctx);
+
+  let result: DispatchResult;
+  let frozenZoneBlocked = false;
+
+  if (!probe.eligible) {
+    // L1 path
+    if (deps.allFallbacksFailed) {
+      result = { chosenLevel: "L3", result: "blocked" };
+    } else {
+      const fallbackResult = deps.runFallback
+        ? await deps.runFallback(ctx)
+        : ({ output: "subagent fallback", methodology: "subagent-parallel" } as FallbackResult);
+
+      result = {
+        chosenLevel: "L1",
+        l1TriggerReason: probe.reason ?? "unmatched_state",
+        methodology: fallbackResult?.methodology ?? "subagent-parallel",
+        payload: fallbackResult,
+      };
+    }
+  } else {
+    // L0 path — try workflow
+    try {
+      const l0Result = deps.tryL0 ? await deps.tryL0(ctx) : { output: "workflow result" };
+      result = {
+        chosenLevel: "L0",
+        methodology: "workflow",
+        payload: l0Result,
+      };
+    } catch (err) {
+      const error = err instanceof Error ? err : new Error(String(err));
+      const signature = classifyL0Failure(error);
+
+      // Isolate partial findings (R2.8)
+      const runDir = join(ctx.forgeRoot, "runs", ctx.runId);
+      const partialPath = isolatePartialFindings(runDir, ctx.subcommand, error.message);
+
+      // Fallback to L1, passing precursor_partial cross-reference (R2.8)
+      if (deps.allFallbacksFailed) {
+        result = { chosenLevel: "L3", result: "blocked" };
+      } else {
+        const fallbackResult = deps.runFallback
+          ? await deps.runFallback(ctx, { precursorPartial: partialPath })
+          : ({
+              output: "subagent fallback after L0 failure",
+              methodology: "workflow-then-subagent",
+              precursor_partial: partialPath,
+            } as FallbackResult);
+
+        result = {
+          chosenLevel: "L1",
+          l0FailureSignature: signature,
+          methodology: "workflow-then-subagent",
+          payload: {
+            ...(fallbackResult ?? {}),
+            precursor_partial: fallbackResult?.precursor_partial ?? partialPath,
+          },
+        };
+      }
+    }
+  }
+
+  // Call audit writer (if provided) for non-L3 results
+  if (result.chosenLevel !== "L3" && deps.auditWriter && deps.topic) {
+    try {
+      await deps.auditWriter.write({
+        subcommand: ctx.subcommand,
+        runId: ctx.runId,
+        topic: deps.topic,
+        payload: result.payload ?? {},
+      });
+    } catch (err) {
+      if (
+        err instanceof Error &&
+        (err.constructor.name === "FrozenZoneViolation" || err.message.includes("FrozenZone"))
+      ) {
+        frozenZoneBlocked = true;
+      } else {
+        throw err;
+      }
+    }
+  }
+
+  // R2.6: when L3 (all fallbacks exhausted), write blocked audit record so
+  // forge-ship and downstream consumers see a blocked stub via standard reads.
+  if (result.chosenLevel === "L3" && deps.topic) {
+    try {
+      writeBlockedAuditRecord(ctx.forgeRoot, ctx.subcommand, deps.topic, ctx.runId);
+    } catch {
+      // Audit-write failure must not mask the L3 blocked state itself
+    }
+  }
+
+  // Build and persist the 14-field dispatch record
+  const exitCode = computeExitCode(result);
+  const stateId = `wsid_${ctx.runId}_${ctx.subcommand}_${Date.now()}`;
+
+  const record: DispatchRecord = {
+    subcommand: ctx.subcommand,
+    mode: ctx.mode,
+    run_id: ctx.runId,
+    session_id: ctx.sessionId,
+    workflow_state_id: stateId,
+    workflow_version: workflowVersion,
+    gate_enabled: gateEnabled,
+    workflow_available: workflowAvailable,
+    chosen_level: result.chosenLevel,
+    l1_trigger_reason: result.l1TriggerReason,
+    l0_failure_signature: result.l0FailureSignature,
+    exit_code: exitCode,
+    duration_ms: Date.now() - startTime,
+    timestamp: new Date().toISOString(),
+    frozen_zone_blocked: frozenZoneBlocked,
+  };
+
   const runDir = join(ctx.forgeRoot, "runs", ctx.runId);
-  assertRunDirContained(ctx.forgeRoot, runDir);
-  return appendDispatchRecord(ctx.forgeRoot, ctx.runId, record);
+  writeDispatchRecord(runDir, record);
+  updateStatusMd(join(ctx.forgeRoot, "status.md"), {
+    dispatch_chosen_level: result.chosenLevel,
+    dispatch_subcommand: ctx.subcommand,
+    dispatch_run_id: ctx.runId,
+    // R2.6: blocked phase only on L3 (do not overwrite phase on success paths)
+    phase: result.chosenLevel === "L3" ? `${ctx.subcommand}-blocked` : undefined,
+  });
+
+  return { ...result, record };
 }
 
-/**
- * Update .forge/status.md with the three dispatch fields (R2.10):
- *   dispatch_chosen_level
- *   dispatch_subcommand
- *   dispatch_run_id
- *
- * When chosen_level is L3, also updates `phase` to `<subcommand>-blocked`
- * so forge-ship SKILL can read the field and block ship without parsing
- * dispatch.jsonl.
- */
-export function updateStatusMd(ctx: DispatchContext, level: ChosenLevel): void {
-  const statusPath = join(ctx.forgeRoot, "status.md");
-  let content = existsSync(statusPath) ? readFileSync(statusPath, "utf-8") : "";
+// ---------------------------------------------------------------------------
+// writeDispatchRecord — 14-field JSONL
+// ---------------------------------------------------------------------------
 
-  content = upsertField(content, "dispatch_chosen_level", level);
-  content = upsertField(content, "dispatch_subcommand", ctx.subcommand);
-  content = upsertField(content, "dispatch_run_id", ctx.runId);
+export function writeDispatchRecord(runDir: string, record: DispatchRecord): void {
+  mkdirSync(runDir, { recursive: true });
+  const line = `${JSON.stringify(record)}\n`;
+  appendFileSync(join(runDir, "dispatch.jsonl"), line, "utf-8");
+}
 
-  if (level === "L3") {
-    content = upsertField(content, "phase", `${ctx.subcommand}-blocked`);
+// ---------------------------------------------------------------------------
+// updateStatusMd — 3 dispatch fields
+// ---------------------------------------------------------------------------
+
+export function updateStatusMd(
+  statusPath: string,
+  fields: {
+    dispatch_chosen_level: string;
+    dispatch_subcommand: string;
+    dispatch_run_id: string;
+    phase?: string;
+  },
+): void {
+  let content: string;
+  try {
+    content = readFileSync(statusPath, "utf-8");
+  } catch (err) {
+    if ((err as NodeJS.ErrnoException).code !== "ENOENT") throw err;
+    content = "---\n---\n";
   }
 
-  mkdirSync(dirname(statusPath), { recursive: true });
-  writeFileSync(statusPath, content);
+  // Inject into frontmatter
+  const fmMatch = content.match(/^---\n([\s\S]*?)\n---/);
+  if (fmMatch) {
+    let fm = fmMatch[1];
+    // Remove existing dispatch fields
+    fm = fm.replace(/^dispatch_chosen_level:.*\n?/m, "");
+    fm = fm.replace(/^dispatch_subcommand:.*\n?/m, "");
+    fm = fm.replace(/^dispatch_run_id:.*\n?/m, "");
+    if (fields.phase !== undefined) {
+      fm = fm.replace(/^phase:.*\n?/m, "");
+    }
+    fm += `\ndispatch_chosen_level: ${fields.dispatch_chosen_level}`;
+    fm += `\ndispatch_subcommand: ${fields.dispatch_subcommand}`;
+    fm += `\ndispatch_run_id: ${fields.dispatch_run_id}`;
+    if (fields.phase !== undefined) {
+      fm += `\nphase: ${fields.phase}`;
+    }
+    content = content.replace(fmMatch[0], `---\n${fm}\n---`);
+  } else {
+    const phaseLine = fields.phase !== undefined ? `\nphase: ${fields.phase}` : "";
+    content = `---\ndispatch_chosen_level: ${fields.dispatch_chosen_level}\ndispatch_subcommand: ${fields.dispatch_subcommand}\ndispatch_run_id: ${fields.dispatch_run_id}${phaseLine}\n---\n${content}`;
+  }
+
+  writeFileSync(statusPath, content, "utf-8");
 }
 
-/**
- * Write partial findings (from a failed L0 phase) to an isolated location
- * inside .forge/runs/<runId>/l0-partial/<subcommand>-<timestamp>.md.
- *
- * **Crucially**, this MUST NOT write to .forge/reviews/ or
- * .forge/decisions/ — those are Guarded zones reserved for the L1 retry
- * product. The L1 product's frontmatter cross-references the partial
- * via `precursor_partial:` field.
- */
-export function isolatePartialFindings(ctx: DispatchContext, partialContent: string): string {
-  // F14: same validation as writeDispatchRecord — partial findings live
-  // under the same `.forge/runs/<runId>/` tree.
-  assertSafeRunId(ctx.runId);
-  const partialDir = join(ctx.forgeRoot, "runs", ctx.runId, "l0-partial");
-  assertRunDirContained(ctx.forgeRoot, partialDir);
+// ---------------------------------------------------------------------------
+// isolatePartialFindings — returns absolute path of the partial file (R2.8)
+// ---------------------------------------------------------------------------
+
+export function isolatePartialFindings(
+  runDir: string,
+  subcommand: string,
+  content: string,
+): string {
+  const partialDir = join(runDir, "l0-partial");
   mkdirSync(partialDir, { recursive: true });
-  const timestamp = Date.now();
-  const path = join(partialDir, `${ctx.subcommand}-${timestamp}.md`);
-  writeFileSync(path, partialContent);
-  return path;
+  const ts = new Date().toISOString().replace(/[:.]/g, "-");
+  const filename = `${subcommand}-${ts}.md`;
+  const fullPath = join(partialDir, filename);
+  writeFileSync(fullPath, content, "utf-8");
+  return fullPath;
 }
 
-// ── internal helpers ──────────────────────────────────────────────────────
+// ---------------------------------------------------------------------------
+// writeBlockedAuditRecord — R2.6: when chosenLevel = L3, write a blocked
+// stub into the audit zone so forge-ship can find it via standard read paths.
+// Uses append-only semantics consistent with WorkflowAuditWriter.
+// ---------------------------------------------------------------------------
 
-function resolveWorkflowFile(ctx: DispatchContext): string {
-  // Map subcommand → workflow filename. For now, only review has a workflow;
-  // decide/learn workflows can ship later. Caller can override by passing
-  // their own pluginRoot/workflow layout; default convention is
-  // ${pluginRoot}/workflows/<subcommand>.js, with `review` aliased to the
-  // multi-agent-review.js implementation.
-  const filename = ctx.subcommand === "review" ? "review.js" : `${ctx.subcommand}.js`;
-  const primary = join(ctx.pluginRoot, "workflows", filename);
-  if (existsSync(primary)) return primary;
-  // Fallback for review: the canonical multi-agent-review.js.
-  if (ctx.subcommand === "review") {
-    const fallback = join(ctx.pluginRoot, "workflows", "multi-agent-review.js");
-    if (existsSync(fallback)) return fallback;
-  }
-  return primary; // existsSync check at call site will report missing
-}
+export function writeBlockedAuditRecord(
+  forgeRoot: string,
+  subcommand: Subcommand,
+  topic: string,
+  runId: string,
+): string {
+  const filename = subcommand === "review" ? `${topic}.md` : `${runId}-blocked.md`;
+  const subdir =
+    subcommand === "review"
+      ? "reviews"
+      : subcommand === "decide"
+        ? "decisions"
+        : join("knowledge", "sessions");
+  const destDir = join(forgeRoot, subdir);
+  mkdirSync(destDir, { recursive: true });
+  const destPath = join(destDir, filename);
 
-function upsertField(content: string, key: string, value: string): string {
-  const re = new RegExp(`^${escapeRegExp(key)}:.*$`, "m");
-  const line = `${key}: ${value}`;
-  if (re.test(content)) {
-    return content.replace(re, line);
-  }
-  // Append to end with a leading newline if needed.
-  const sep = content.length > 0 && !content.endsWith("\n") ? "\n" : "";
-  return `${content}${sep}${line}\n`;
-}
+  const stub = [
+    "",
+    "---",
+    `# ${subcommand} (${runId}) — blocked`,
+    "",
+    "result: blocked",
+    "methodology: unavailable",
+    "",
+    `All fallback levels exhausted. See .forge/runs/${runId}/dispatch.jsonl for details.`,
+    "",
+  ].join("\n");
 
-function escapeRegExp(s: string): string {
-  return s.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+  appendFileSync(destPath, stub, "utf-8");
+  return destPath;
 }
