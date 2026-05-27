@@ -253,7 +253,11 @@ describe("Contract: dist bundle completeness (if built)", () => {
 
   for (const platform of platforms) {
     const bundleRoot = resolve(ROOT, `dist/${platform}/bundles/forge`);
-    const bundleExists = existsSync(bundleRoot);
+    // Only run bundle assertions when a full build-dist has been executed.
+    // The dist/ directory may be partially committed to git (e.g. INSTALL.md
+    // without skills/ or VERSION), which would cause false positives.  Use
+    // VERSION as sentinel — it is generated exclusively by build-dist.sh.
+    const bundleExists = existsSync(resolve(bundleRoot, "VERSION"));
 
     if (bundleExists) {
       it(`dist/${platform} contains skills/forge/SKILL.md (single entry)`, () => {
