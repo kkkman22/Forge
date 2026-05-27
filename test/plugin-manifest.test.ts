@@ -1,3 +1,4 @@
+import { execFileSync } from "node:child_process";
 import { existsSync, readdirSync, readFileSync } from "node:fs";
 import { join } from "node:path";
 import { describe, expect, it } from "vitest";
@@ -76,6 +77,81 @@ describe("Commands Directory", () => {
 
   it("forge.md command exists", () => {
     expect(existsSync(join(commandsDir, "forge.md"))).toBe(true);
+  });
+});
+
+describe("Plugin Workflows Field (R1: workflows-integration)", () => {
+  const pluginPath = join(ROOT, ".claude-plugin", "plugin.json");
+  const workflowsDir = join(ROOT, "workflows");
+  const multiAgentReview = join(workflowsDir, "multi-agent-review.js");
+
+  it("AC 1.1: plugin.json declares workflows field with ./workflows", () => {
+    const manifest = JSON.parse(readFileSync(pluginPath, "utf-8"));
+    expect(manifest.workflows).toBeDefined();
+    expect(Array.isArray(manifest.workflows)).toBe(true);
+    expect(manifest.workflows).toContain("./workflows");
+  });
+
+  it("AC 1.2: workflows/multi-agent-review.js exists at plugin root", () => {
+    expect(existsSync(workflowsDir)).toBe(true);
+    expect(existsSync(multiAgentReview)).toBe(true);
+  });
+
+  it("AC 1.2: multi-agent-review.js passes node --check (syntactic validity)", () => {
+    const source = readFileSync(multiAgentReview, "utf-8");
+    expect(source.length).toBeGreaterThan(0);
+    expect(() =>
+      execFileSync("node", ["--check", multiAgentReview], { stdio: "pipe" }),
+    ).not.toThrow();
+  });
+
+  it("AC 1.4: existing workflows field does not break mcpServers/hooks paths", () => {
+    const manifest = JSON.parse(readFileSync(pluginPath, "utf-8"));
+    expect(manifest.mcpServers).toBeDefined();
+    expect(manifest.mcpServers["forge-context"]).toBeDefined();
+    expect(manifest.hooks).toBeDefined();
+    expect(manifest.hooks.SessionStart).toBeDefined();
+    expect(manifest.hooks.UserPromptSubmit).toBeDefined();
+    expect(manifest.hooks.PreToolUse).toBeDefined();
+    expect(manifest.hooks.PostToolUse).toBeDefined();
+    expect(manifest.hooks.Stop).toBeDefined();
+    const hookJson = JSON.stringify(manifest.hooks);
+    expect(hookJson).toContain("${CLAUDE_PLUGIN_ROOT}");
+  });
+
+  it("AC 13.1: every workflows[] path is relative (does not start with / or ~)", () => {
+    const manifest = JSON.parse(readFileSync(pluginPath, "utf-8"));
+    for (const entry of manifest.workflows) {
+      expect(typeof entry).toBe("string");
+      expect(entry.startsWith("/")).toBe(false);
+      expect(entry.startsWith("~")).toBe(false);
+    }
+  });
+
+  it("AC 13.1: every workflows[] directory contains at least one .js file", () => {
+    const manifest = JSON.parse(readFileSync(pluginPath, "utf-8"));
+    for (const entry of manifest.workflows) {
+      const absDir = join(ROOT, entry);
+      expect(existsSync(absDir)).toBe(true);
+      const jsFiles = readdirSync(absDir).filter((f) => f.endsWith(".js"));
+      expect(jsFiles.length).toBeGreaterThan(0);
+    }
+  });
+
+  it("AC 13.1: at least one .js in workflows/ parses via esbuild --analyze", () => {
+    const jsFiles = readdirSync(workflowsDir).filter((f) => f.endsWith(".js"));
+    expect(jsFiles.length).toBeGreaterThan(0);
+    let parsedAtLeastOne = false;
+    for (const f of jsFiles) {
+      const result = execFileSync(
+        "npx",
+        ["--no-install", "esbuild", join(workflowsDir, f), "--bundle=false", "--log-level=silent"],
+        { stdio: "pipe" },
+      );
+      expect(result.length).toBeGreaterThan(0);
+      parsedAtLeastOne = true;
+    }
+    expect(parsedAtLeastOne).toBe(true);
   });
 });
 

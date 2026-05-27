@@ -77,6 +77,12 @@ const DEFAULT_GLOBAL_TIMEOUT_MS = 1_800_000;
  * zero-latency startup. Subsequent calls use the standalone `query()`
  * function with full options. Tracks warm query consumption via an
  * internal flag.
+ *
+ * @deprecated Slated for removal once the workflows-integration default-swap
+ *   (T11) lands. New code should construct {@link ClaudeCliAgentAdapter} from
+ *   `cli-agent-adapter.ts`. This adapter remains while warm-query and
+ *   startup() compatibility paths are still wired in forge-loop-cli.ts.
+ *
  * @public
  */
 export class SdkAgentAdapter implements AgentInterface {

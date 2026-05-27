@@ -1,88 +1,109 @@
+#!/usr/bin/env node
 /**
- * diff-ipc-schema.mjs — Compare IPC schema baseline vs current output
- *
- * Compatibility contract (non-breaking = OK, breaking = fail):
- *   (a) baseline event types must be a subset of current event types
- *   (b) baseline field names AND their typeof types must match in current
- *   (c) new fields in current are allowed (extension)
- *   (d) new event types in current are allowed (extension)
+ * diff-ipc-schema.mjs — IPC NDJSON schema regression diff (Requirement 8.2 + 8.8).
  *
  * Usage: node scripts/diff-ipc-schema.mjs <baseline.ndjson> <current.ndjson>
- * Exit 0 = compatible, non-zero = breaking change.
+ *
+ * Compares two NDJSON files frame-by-frame. The CURRENT file is allowed to:
+ *   - add new fields to existing event types (forward-compat per AC 8.2)
+ *   - emit new event types (superset per AC 8.8)
+ * The CURRENT file is NOT allowed to:
+ *   - rename or remove fields that exist in baseline frames of the same event
+ *   - change the JS-typeof of a baseline-known field
+ *   - drop event types that exist in baseline
+ *
+ * Exits 0 on safe diff, 1 on regression.
  */
 
 import { readFileSync } from "node:fs";
 
-/**
- * Compare two NDJSON files for IPC schema compatibility.
- * @param {string} baselinePath
- * @param {string} currentPath
- * @returns {{ ok: boolean, issues: string[] }}
- */
-export function diffIpcSchema(baselinePath, currentPath) {
-  const issues = [];
+function parseNdjson(path) {
+  const lines = readFileSync(path, "utf-8").split("\n").filter((l) => l.trim().length > 0);
+  return lines.map((l) => JSON.parse(l));
+}
 
-  const baselineLines = readFileSync(baselinePath, "utf-8").trim().split("\n").filter(Boolean);
-  const currentLines = readFileSync(currentPath, "utf-8").trim().split("\n").filter(Boolean);
-
-  // baselineEvents: event -> Map<field, typeof value>
-  const baselineEvents = new Map();
-  for (const line of baselineLines) {
-    try {
-      const obj = JSON.parse(line);
-      if (!obj.event) continue;
-      const fieldTypes = new Map();
-      for (const [key, val] of Object.entries(obj)) {
-        fieldTypes.set(key, typeof val);
-      }
-      baselineEvents.set(obj.event, fieldTypes);
-    } catch { /* skip malformed */ }
+function indexByEvent(frames) {
+  const map = new Map();
+  for (const f of frames) {
+    const key = f.event ?? "<unknown>";
+    if (!map.has(key)) map.set(key, []);
+    map.get(key).push(f);
   }
+  return map;
+}
 
-  // currentEvents: event -> Map<field, Set<typeof values>>
-  const currentEvents = new Map();
-  for (const line of currentLines) {
-    try {
-      const obj = JSON.parse(line);
-      if (!obj.event) continue;
-      if (!currentEvents.has(obj.event)) currentEvents.set(obj.event, new Map());
-      const existing = currentEvents.get(obj.event);
-      for (const [key, val] of Object.entries(obj)) {
-        if (!existing.has(key)) existing.set(key, new Set());
-        existing.get(key).add(typeof val);
-      }
-    } catch { /* skip malformed */ }
+function fieldShape(frame) {
+  const shape = {};
+  for (const [k, v] of Object.entries(frame)) {
+    shape[k] = typeofWithNull(v);
   }
+  return shape;
+}
 
-  for (const [event, baselineFields] of baselineEvents) {
-    const currentFields = currentEvents.get(event);
-    if (!currentFields) {
-      issues.push(`missing event type: ${event}`);
+function typeofWithNull(v) {
+  if (v === null) return "null";
+  if (Array.isArray(v)) return "array";
+  return typeof v;
+}
+
+function diff(baseline, current) {
+  const baselineByEvent = indexByEvent(baseline);
+  const currentByEvent = indexByEvent(current);
+  const errors = [];
+
+  for (const [event, baselineFrames] of baselineByEvent) {
+    const currentFrames = currentByEvent.get(event);
+    if (!currentFrames || currentFrames.length === 0) {
+      errors.push(`missing event type: "${event}" present in baseline but absent in current`);
       continue;
     }
-    for (const [field, baselineType] of baselineFields) {
-      const currentTypes = currentFields.get(field);
-      if (!currentTypes) {
-        issues.push(`missing field '${field}' in event '${event}'`);
-        continue;
+
+    // Union of baseline shapes for this event.
+    const expected = {};
+    for (const f of baselineFrames) {
+      for (const [k, t] of Object.entries(fieldShape(f))) {
+        expected[k] = t;
       }
-      if (!currentTypes.has(baselineType)) {
-        issues.push(`type mismatch: field '${field}' in event '${event}' expected ${baselineType}, got [${[...currentTypes].join(", ")}]`);
+    }
+
+    // Each current frame of this event must contain every expected field with
+    // matching type (or null is permitted as a relaxation? — strict for now).
+    for (let i = 0; i < currentFrames.length; i++) {
+      const got = fieldShape(currentFrames[i]);
+      for (const [field, expectedType] of Object.entries(expected)) {
+        if (!(field in got)) {
+          errors.push(
+            `missing field "${field}" on event "${event}" frame #${i} (expected type ${expectedType})`,
+          );
+        } else if (got[field] !== expectedType) {
+          errors.push(
+            `type mismatch for field "${field}" on event "${event}" frame #${i}: expected ${expectedType}, got ${got[field]}`,
+          );
+        }
       }
     }
   }
 
-  return { ok: issues.length === 0, issues };
+  return errors;
 }
 
-// CLI mode
-const [,, baseline, current] = process.argv;
-if (baseline && current) {
-  const result = diffIpcSchema(baseline, current);
-  if (!result.ok) {
-    process.stderr.write(`IPC schema diff FAILED:\n${result.issues.join("\n")}\n`);
+function main() {
+  const [, , baselinePath, currentPath] = process.argv;
+  if (!baselinePath || !currentPath) {
+    console.error("usage: diff-ipc-schema.mjs <baseline.ndjson> <current.ndjson>");
+    process.exit(2);
+  }
+
+  const baseline = parseNdjson(baselinePath);
+  const current = parseNdjson(currentPath);
+  const errors = diff(baseline, current);
+
+  if (errors.length > 0) {
+    console.error("IPC schema regression detected:");
+    for (const e of errors) console.error(`  - ${e}`);
     process.exit(1);
   }
-  process.stdout.write("IPC schema diff OK\n");
-  process.exit(0);
+  console.log("IPC schema diff OK (current is forward-compatible with baseline)");
 }
+
+main();
