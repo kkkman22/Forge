@@ -37,7 +37,7 @@ interface SignalChainEntry {
   timestamp: string;
 }
 
-interface BuildEnvOpts {
+export interface BuildEnvOpts {
   maxParallelAgents: number;
   reviewConcurrency: number;
   runtimeConcurrency?: number;
