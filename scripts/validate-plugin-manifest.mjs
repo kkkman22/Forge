@@ -9,9 +9,10 @@
 
 import { existsSync, readdirSync, readFileSync } from "node:fs";
 import { execSync } from "node:child_process";
-import { join, resolve } from "node:path";
+import { join, resolve, dirname } from "node:path";
+import { fileURLToPath } from "node:url";
 
-const ROOT = resolve(import.meta.dirname, "..");
+const ROOT = resolve(dirname(fileURLToPath(import.meta.url)), "..");
 const pluginPath = join(ROOT, ".claude-plugin", "plugin.json");
 
 let errors = 0;

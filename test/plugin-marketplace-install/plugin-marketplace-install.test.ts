@@ -22,6 +22,7 @@ import {
   readFileSync,
   rmSync,
   statSync,
+  writeFileSync,
 } from "node:fs";
 import { tmpdir } from "node:os";
 import { join, resolve } from "node:path";
@@ -63,6 +64,9 @@ describe("Plugin Marketplace Install (AC 13.3)", () => {
       const src = join(sourcePath, d);
       if (existsSync(src)) cpSync(src, join(installDir, d), { recursive: true });
     }
+
+    // Node 18 runs --check in CJS mode by default; ESM workflow .js files fail without this.
+    writeFileSync(join(installDir, "package.json"), '{"type":"module"}');
 
     installedPluginPath = join(installDir, ".claude-plugin", "plugin.json");
   });

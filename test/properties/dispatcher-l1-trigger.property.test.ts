@@ -74,6 +74,7 @@ describe("R2.2: dispatcher L1 trigger property", () => {
               process.env.CLAUDE_CODE_WORKFLOWS = "1";
               const wfDir = join(tmpDir, "workflows");
               mkdirSync(wfDir, { recursive: true });
+              writeFileSync(join(tmpDir, "package.json"), '{"type":"module"}');
               writeFileSync(
                 join(wfDir, "review.js"),
                 "import { chunkedParallel } from './lib/concurrency.js';\nexport const meta = {};\n",
