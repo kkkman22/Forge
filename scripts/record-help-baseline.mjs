@@ -63,7 +63,8 @@ function buildProgram() {
     )
     .option("--force-no-hooks", "Skip hooks protection validation (use at your own risk)", false)
     .option("--skills-dir <path>", "Load external SKILL plugins from directory")
-    .option("--agent <name>", "Agent to use for iterations (claude|mock)", "claude");
+    .option("--agent <name>", "Agent to use for iterations (claude|mock)", "claude")
+    .option("--no-warmup", "Skip warm-up spawn (for sandbox/CI)", false);
   return p;
 }
 
