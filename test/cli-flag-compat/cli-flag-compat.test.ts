@@ -4,12 +4,12 @@
  * After the forge-loop driver swap (SDK → claude --print stream-json),
  * the public CLI surface must remain literally compatible:
  *
- *   - 21 reserved flags still parse with their original semantics
+ *   - 22 reserved flags still parse with their original semantics
  *   - `--unknown-flag` is still rejected with non-zero exit
  *   - `--help` output structure (the snapshot) does not regress
  *   - any newly added flag has a default value (no breaking new flag)
  *
- * The 21-flag list is anchored to Requirement 7.1.
+ * The 22-flag list is anchored to Requirement 7.1.
  */
 
 import { execFileSync, spawnSync } from "node:child_process";
@@ -22,8 +22,8 @@ const ROOT = resolve(__dirname, "../..");
 const CLI_SRC = resolve(ROOT, "src/forge-loop-cli.ts");
 const HELP_BASELINE = resolve(__dirname, "fixtures/help-baseline.txt");
 
-// AC 7.1: 21 reserved flags. Source: requirements.md §Requirement 7.1.
-const RESERVED_FLAGS_21: ReadonlyArray<string> = [
+// AC 7.1: 22 reserved flags. Source: requirements.md §Requirement 7.1.
+const RESERVED_FLAGS_22: ReadonlyArray<string> = [
   "--max-iterations",
   "--max-tokens",
   "--stop-when",
@@ -45,6 +45,7 @@ const RESERVED_FLAGS_21: ReadonlyArray<string> = [
   "--nature",
   "--pua",
   "--pua-task-type",
+  "--no-warmup",
 ];
 
 // Build a Commander instance mirroring the CLI option block in
@@ -79,6 +80,7 @@ function buildProgram() {
     .option("--force-no-hooks", "Skip hooks protection validation (use at your own risk)", false)
     .option("--skills-dir <path>", "Load external SKILL plugins from directory")
     .option("--agent <name>", "Agent to use for iterations (claude|mock)", "claude")
+    .option("--no-warmup", "Skip warm-up spawn (for sandbox/CI)", false)
     .exitOverride() // throw instead of process.exit so tests can catch
     .action(() => {
       // no-op for parse-only tests
@@ -86,10 +88,10 @@ function buildProgram() {
   return program;
 }
 
-describe("CLI flag compatibility (AC 7.1) — 21 reserved flags", () => {
-  it("registers exactly the 21 reserved flags in the source", () => {
+describe("CLI flag compatibility (AC 7.1) — 22 reserved flags", () => {
+  it("registers exactly the 22 reserved flags in the source", () => {
     const src = readFileSync(CLI_SRC, "utf-8");
-    for (const flag of RESERVED_FLAGS_21) {
+    for (const flag of RESERVED_FLAGS_22) {
       // Match `.option("<flag>` OR `.option(\n  "<flag>` (multi-line form).
       // We just look for `"<flag>` immediately followed by space/`<`/`[`/`"`.
       const pattern = new RegExp(`"${flag.replace(/-/g, "\\-")}[ <\\["]`);
@@ -97,7 +99,7 @@ describe("CLI flag compatibility (AC 7.1) — 21 reserved flags", () => {
     }
   });
 
-  it("source file does not introduce new mandatory flags beyond the 21 reserved", () => {
+  it("source file does not introduce new mandatory flags beyond the 22 reserved", () => {
     const src = readFileSync(CLI_SRC, "utf-8");
     // Locate the forge-loop main option block: starts at `.name("forge-loop")`
     // and ends at the matching `.action(` on the same chained call. We anchor
@@ -116,12 +118,12 @@ describe("CLI flag compatibility (AC 7.1) — 21 reserved flags", () => {
     // Every declared flag must be in our reserved list (no breaking new flag).
     for (const f of declaredFlags) {
       expect(
-        RESERVED_FLAGS_21.includes(f),
+        RESERVED_FLAGS_22.includes(f),
         `unexpected new flag ${f} in forge-loop-cli.ts — AC 7.4 forbids breaking new flags`,
       ).toBe(true);
     }
     // And every reserved flag must be declared (no removed flag).
-    for (const f of RESERVED_FLAGS_21) {
+    for (const f of RESERVED_FLAGS_22) {
       expect(declaredFlags.has(f), `reserved flag ${f} removed from forge-loop-cli.ts`).toBe(true);
     }
   });
@@ -249,10 +251,10 @@ describe("CLI flag compatibility (AC 7.5) — --help snapshot regression", () =>
     ).toBe(true);
   });
 
-  it("baseline contains every reserved flag from the 21-flag list", () => {
+  it("baseline contains every reserved flag from the 22-flag list", () => {
     if (!existsSync(HELP_BASELINE)) return; // first test already failed; don't double-fail
     const baseline = readFileSync(HELP_BASELINE, "utf-8");
-    for (const flag of RESERVED_FLAGS_21) {
+    for (const flag of RESERVED_FLAGS_22) {
       expect(baseline.includes(flag), `baseline help missing ${flag}`).toBe(true);
     }
   });
@@ -263,7 +265,7 @@ describe("CLI flag compatibility (AC 7.5) — --help snapshot regression", () =>
     // necessary for a regression check.
     const program = buildProgram();
     const helpText = program.helpInformation();
-    for (const flag of RESERVED_FLAGS_21) {
+    for (const flag of RESERVED_FLAGS_22) {
       expect(helpText.includes(flag), `help info missing ${flag}`).toBe(true);
     }
   });
@@ -313,8 +315,8 @@ describe("CLI flag compatibility — process-level smoke (AC 7.3 binary form)", 
 // Helper for static check that the file itself compiles — guards against
 // accidental syntax errors from regex authoring above.
 describe("test-file self-validity", () => {
-  it("RESERVED_FLAGS_21 length is exactly 21", () => {
-    expect(RESERVED_FLAGS_21.length).toBe(21);
+  it("RESERVED_FLAGS_22 length is exactly 22", () => {
+    expect(RESERVED_FLAGS_22.length).toBe(22);
   });
   it("forge-loop-cli.ts is readable", () => {
     expect(existsSync(CLI_SRC)).toBe(true);
