@@ -159,9 +159,10 @@ describe("CLI flag compatibility (AC 7.2) — per-flag parse smoke", () => {
     { flag: "--nature", argv: ["--nature", "bugfix"], expect: "nature" },
     { flag: "--pua", argv: ["--pua"], expect: "pua", value: true },
     { flag: "--pua-task-type", argv: ["--pua-task-type", "debug"], expect: "puaTaskType" },
+    { flag: "--no-warmup", argv: ["--no-warmup"], expect: "warmup", value: false },
   ];
 
-  expect(cases.length).toBe(21);
+  expect(cases.length).toBe(22);
 
   for (const c of cases) {
     it(`${c.flag} parses without error and exposes opts.${c.expect}`, () => {
