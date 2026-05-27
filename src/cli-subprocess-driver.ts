@@ -1,186 +1,281 @@
-/**
- * CliSubprocessDriver — replaces Agent SDK with `claude --print --output-format stream-json`
- * subprocess invocation. T6 ships pure-function helpers (buildArgs, buildEnv,
- * scheduleSignalChain) plus a thin spawn request type. Actual spawn() wiring
- * lives in T8 SdkDriver swap (forge-loop-cli.ts), where these helpers are composed
- * with StreamJsonAdapter.
- *
- * See:
- *   - .kiro/specs/workflows-integration/requirements.md §Requirement 5
- *   - .kiro/specs/workflows-integration/design.md §3.x — CliSubprocessDriver
- */
-
+import { type ChildProcess, spawn } from "node:child_process";
 import { appendFileSync, mkdirSync } from "node:fs";
 import { join } from "node:path";
+import { STUCK_TIMEOUT_MS } from "./error-handler.js";
+import { createLogEntry } from "./logger/index.js";
+import type { AgentInterface, AgentResult, AgentRunOptions } from "./loop-types.js";
+import type { RateLimitDegrader } from "./rate-limit-degrader.js";
+import { StreamJsonAdapter } from "./stream-json-adapter.js";
 
-export type PermissionMode = "default" | "acceptEdits" | "bypassPermissions" | "plan";
+// ---------------------------------------------------------------------------
+// Types
+// ---------------------------------------------------------------------------
 
-export interface SubprocessOptions {
-  /** Path to .forge/runs/<runId>/ — used for stderr.log, signal_chain.jsonl, etc. */
-  runDir: string;
-  /** Run identifier — embedded in signal-chain records. */
+export interface CliDriverConfig {
+  cwd: string;
   runId: string;
-
-  permissionMode: PermissionMode;
-  allowDangerouslySkipPermissions?: boolean;
-  allowedTools: string[];
-  disallowedTools: string[];
+  runDir: string;
+  permissionMode: string;
+  dangerouslySkipPermissions: boolean;
+  allowedTools?: string[];
+  disallowedTools?: string[];
   mcpConfig?: string;
-  additionalDirectories: string[];
-  systemPromptPath?: string;
-
+  additionalDirs?: string[];
+  systemPromptFile?: string;
   maxTurns: number;
   resumeSessionId?: string;
-  newSessionId?: string;
+  sessionId?: string;
+  logSink?: { log: (entry: ReturnType<typeof createLogEntry>) => void };
+  stuckTimeoutMs?: number;
+  rateLimitDegrader?: RateLimitDegrader;
 }
 
-export interface CliSpawnRequest {
-  cmd: string;
-  args: string[];
-  env: Record<string, string>;
-  cwd: string;
+interface SignalChainEntry {
+  signal: "SIGINT" | "SIGTERM" | "SIGKILL";
+  reason: "stuck_timeout" | "user_interrupt" | "backpressure_unrelieved";
+  elapsed_ms: number;
+  timestamp: string;
 }
 
-/**
- * Base environment vars always copied to the subprocess. Anything not in
- * BASE_ENV ∪ FORWARDED_ENV is dropped — this is a strict allowlist, not a
- * blocklist (F15). Adding a new variable requires editing this list.
- *
- * Rationale: leaking arbitrary parent-process env (AWS_SECRET_ACCESS_KEY,
- * GITHUB_TOKEN, ssh-agent sockets, ...) into a long-running child is a
- * classic supply-chain risk. The CLI only needs PATH for binary lookup and
- * HOME/USER for `~` expansion; everything else is opt-in.
- */
-const BASE_ENV = ["PATH", "HOME", "USER", "SHELL", "TZ", "LANG", "LC_ALL", "TMPDIR"];
+interface BuildEnvOpts {
+  maxParallelAgents: number;
+  reviewConcurrency: number;
+  runtimeConcurrency?: number;
+}
 
-const FORWARDED_ENV = [
-  "ANTHROPIC_API_KEY",
-  "ANTHROPIC_AUTH_TOKEN",
-  "ANTHROPIC_BASE_URL",
-  "CLAUDE_CODE_OAUTH_TOKEN",
-  "CLAUDE_CODE_WORKFLOWS",
-  "CLAUDE_CODE_USE_BEDROCK",
-  "CLAUDE_CODE_USE_VERTEX",
-];
+// ---------------------------------------------------------------------------
+// buildArgs — CLI argument construction (exported for testing)
+// ---------------------------------------------------------------------------
 
-export function buildArgs(opts: SubprocessOptions): string[] {
-  const args: string[] = [
+export function buildArgs(config: CliDriverConfig): string[] {
+  const args = [
     "--print",
     "--output-format=stream-json",
     "--include-partial-messages",
     "--input-format=stream-json",
-    "--max-turns",
-    String(opts.maxTurns),
-    "--permission-mode",
-    opts.permissionMode,
+    `--permission-mode=${config.permissionMode}`,
+    `--max-turns=${config.maxTurns}`,
   ];
 
-  if (opts.allowDangerouslySkipPermissions) {
+  if (config.dangerouslySkipPermissions) {
     args.push("--dangerously-skip-permissions");
   }
-
-  if (opts.allowedTools.length > 0) {
-    args.push("--allowed-tools", opts.allowedTools.join(","));
+  if (config.allowedTools?.length) {
+    args.push(`--allowed-tools=${config.allowedTools.join(",")}`);
   }
-  if (opts.disallowedTools.length > 0) {
-    args.push("--disallowed-tools", opts.disallowedTools.join(","));
+  if (config.disallowedTools?.length) {
+    args.push(`--disallowed-tools=${config.disallowedTools.join(",")}`);
   }
-
-  if (opts.mcpConfig) {
-    args.push("--mcp-config", opts.mcpConfig);
+  if (config.mcpConfig) {
+    args.push(`--mcp-config=${config.mcpConfig}`);
   }
-
-  for (const dir of opts.additionalDirectories) {
-    args.push("--add-dir", dir);
+  for (const dir of config.additionalDirs ?? []) {
+    args.push(`--add-dir=${dir}`);
   }
-
-  if (opts.systemPromptPath) {
-    args.push("--system-prompt-file", opts.systemPromptPath);
+  if (config.systemPromptFile) {
+    args.push(`--system-prompt-file=${config.systemPromptFile}`);
   }
 
-  // Session: --resume wins over --session-id when both provided.
-  if (opts.resumeSessionId) {
-    args.push("--resume", opts.resumeSessionId);
-  } else if (opts.newSessionId) {
-    args.push("--session-id", opts.newSessionId);
+  // Session: --resume takes priority over --session-id
+  if (config.resumeSessionId) {
+    args.push(`--resume=${config.resumeSessionId}`);
+  } else if (config.sessionId) {
+    args.push(`--session-id=${config.sessionId}`);
   }
 
   return args;
 }
 
-export function buildEnv(
-  baseEnv: Record<string, string | undefined>,
-  overrides: Record<string, string>,
-): Record<string, string> {
-  // F15: strict allowlist — start from {} and only copy named keys. Drops
-  // arbitrary parent-process env (AWS_*, GITHUB_TOKEN, ssh sockets, ...) that
-  // would otherwise leak into the subprocess.
-  const out: Record<string, string> = {};
-  for (const key of [...BASE_ENV, ...FORWARDED_ENV]) {
-    const v = baseEnv[key];
-    if (typeof v === "string") out[key] = v;
+// ---------------------------------------------------------------------------
+// buildEnv — environment construction (exported for testing)
+// ---------------------------------------------------------------------------
+
+export function buildEnv(opts: BuildEnvOpts): NodeJS.ProcessEnv {
+  return {
+    ...process.env,
+    CLAUDE_CODE_WORKFLOWS: process.env.CLAUDE_CODE_WORKFLOWS ?? "1",
+    FORGE_MAX_PARALLEL_AGENTS: String(opts.maxParallelAgents),
+    FORGE_REVIEW_CONCURRENCY: String(opts.reviewConcurrency),
+    ...(opts.runtimeConcurrency != null
+      ? { FORGE_MAX_PARALLEL_AGENTS_RUNTIME: String(opts.runtimeConcurrency) }
+      : {}),
+  };
+}
+
+// ---------------------------------------------------------------------------
+// CliSubprocessDriver
+// ---------------------------------------------------------------------------
+
+export class CliSubprocessDriver implements AgentInterface {
+  readonly name = "claude-cli";
+  private config: CliDriverConfig;
+  private adapter: StreamJsonAdapter;
+  child: ChildProcess | null = null;
+  private runStartTime = 0;
+
+  constructor(config: CliDriverConfig) {
+    this.config = config;
+    this.adapter = new StreamJsonAdapter(config.runDir, {
+      degrader: config.rateLimitDegrader,
+    });
+    mkdirSync(config.runDir, { recursive: true });
   }
-  Object.assign(out, overrides);
-  return out;
-}
 
-// ---------------------------------------------------------------------------
-// Signal forwarding chain (AC 5.8)
-// ---------------------------------------------------------------------------
+  async run(prompt: string, cwd: string, _options?: AgentRunOptions): Promise<AgentResult> {
+    const args = buildArgs(this.config);
+    const env = buildEnv({ maxParallelAgents: 6, reviewConcurrency: 3 });
+    const stuckTimeout = this.config.stuckTimeoutMs ?? STUCK_TIMEOUT_MS;
 
-type Signal = "SIGINT" | "SIGTERM" | "SIGKILL";
+    const child = spawn("claude", args, {
+      cwd,
+      env,
+      stdio: ["pipe", "pipe", "pipe"],
+    });
+    this.child = child;
+    this.runStartTime = Date.now();
 
-export interface SignalChainDeps {
-  send: (signal: Signal) => void;
-  stillAlive: () => boolean;
-  now: () => number;
-  schedule: (cb: () => void, delayMs: number) => void;
-  runDir?: string;
-  runId?: string;
-}
-
-export interface SignalChain {
-  start(): void;
-}
-
-const SIGTERM_DELAY_MS = 10_000;
-const SIGKILL_DELAY_MS = 5_000;
-
-export function scheduleSignalChain(deps: SignalChainDeps): SignalChain {
-  const records: Array<{ signal: Signal; ts_ms: number }> = [];
-
-  const log = (signal: Signal) => {
-    records.push({ signal, ts_ms: deps.now() });
-    if (deps.runDir) {
-      mkdirSync(deps.runDir, { recursive: true });
-      appendFileSync(
-        join(deps.runDir, "signal_chain.jsonl"),
-        `${JSON.stringify({
-          signal,
-          ts_ms: deps.now(),
-          run_id: deps.runId ?? "",
-          timestamp: new Date().toISOString(),
-        })}\n`,
-      );
+    // Track last stdout activity for stuck detection
+    let lastStdoutEvent = Date.now();
+    if (child.stdout) {
+      child.stdout.on("data", () => {
+        lastStdoutEvent = Date.now();
+      });
     }
-  };
 
-  const start = () => {
-    deps.send("SIGINT");
-    log("SIGINT");
+    // Stuck detection interval
+    const checkInterval = Math.min(Math.floor(stuckTimeout / 10), 5_000);
+    let stuckHandled = false;
+    let killTimer: ReturnType<typeof setTimeout> | null = null;
+    const stuckCheckInterval = setInterval(() => {
+      if (stuckHandled) return;
+      if (Date.now() - lastStdoutEvent >= stuckTimeout) {
+        stuckHandled = true;
+        this.recordSignalChain("SIGTERM", "stuck_timeout");
+        child.kill("SIGTERM");
 
-    deps.schedule(() => {
-      if (!deps.stillAlive()) return;
-      deps.send("SIGTERM");
-      log("SIGTERM");
+        // Escalate to SIGKILL after 30s if still alive
+        killTimer = setTimeout(() => {
+          if (!child.killed) {
+            this.recordSignalChain("SIGKILL", "stuck_timeout");
+            child.kill("SIGKILL");
+          }
+        }, 30_000);
+      }
+    }, checkInterval);
 
-      deps.schedule(() => {
-        if (!deps.stillAlive()) return;
-        deps.send("SIGKILL");
-        log("SIGKILL");
-      }, SIGKILL_DELAY_MS);
-    }, SIGTERM_DELAY_MS);
-  };
+    try {
+      // stdin: write NDJSON frame then close
+      const frame = `${JSON.stringify({
+        type: "user",
+        message: { role: "user", content: prompt },
+      })}\n`;
+      child.stdin?.write(frame);
+      child.stdin?.end();
 
-  return { start };
+      // stderr: capture to file (set up before consuming stdout)
+      if (child.stderr) {
+        this.captureStderr(child.stderr);
+      }
+
+      // stdout: pipe through StreamJsonAdapter
+      const result = child.stdout
+        ? await this.adapter.consume(child.stdout)
+        : {
+            delivered: [],
+            usage: { inputTokens: 0, outputTokens: 0, cacheReadTokens: 0, cacheCreationTokens: 0 },
+            costUsd: 0,
+            lastEventType: null,
+          };
+
+      // Wait for exit
+      const exitCode = await new Promise<number>((resolve) => {
+        child.on("exit", (code) => resolve(code ?? 0));
+      });
+
+      this.child = null;
+
+      return {
+        output: {
+          success: exitCode === 0,
+          summary:
+            result.delivered
+              .filter((e) => e.type === "result")
+              .map((e) => String(e.result ?? ""))
+              .join("") || "completed",
+          key_changes_made: [],
+          key_learnings: [],
+        },
+        usage: result.usage,
+      };
+    } finally {
+      clearInterval(stuckCheckInterval);
+      if (killTimer) clearTimeout(killTimer);
+    }
+  }
+
+  async shutdown(_signal: NodeJS.Signals): Promise<void> {
+    if (!this.child || this.child.killed) return;
+
+    this.recordSignalChain("SIGINT", "user_interrupt");
+    this.child.kill("SIGINT");
+
+    await new Promise<void>((resolve) => {
+      setTimeout(() => {
+        if (!this.child?.killed) {
+          this.recordSignalChain("SIGTERM", "user_interrupt");
+          this.child?.kill("SIGTERM");
+        }
+        setTimeout(() => {
+          if (!this.child?.killed) {
+            this.recordSignalChain("SIGKILL", "user_interrupt");
+            this.child?.kill("SIGKILL");
+          }
+          resolve();
+        }, 5_000);
+      }, 10_000);
+    });
+  }
+
+  private recordSignalChain(
+    signal: SignalChainEntry["signal"],
+    reason: SignalChainEntry["reason"],
+  ): void {
+    const entry: SignalChainEntry = {
+      signal,
+      reason,
+      elapsed_ms: Date.now() - this.runStartTime,
+      timestamp: new Date().toISOString(),
+    };
+    const path = join(this.config.runDir, "signal_chain.jsonl");
+    appendFileSync(path, `${JSON.stringify(entry)}\n`, "utf-8");
+  }
+
+  private captureStderr(stderr: NodeJS.ReadableStream): void {
+    const stderrPath = join(this.config.runDir, "stderr.log");
+    let buffer = "";
+    stderr.on("data", (chunk: Buffer) => {
+      const text = chunk.toString();
+      appendFileSync(stderrPath, text, "utf-8");
+
+      if (this.config.logSink) {
+        buffer += text;
+        const lines = buffer.split("\n");
+        buffer = lines.pop() ?? "";
+        for (const line of lines) {
+          if (line.length > 0) {
+            this.config.logSink.log(
+              createLogEntry("subprocess_stderr", "warn", line, { runId: this.config.runId }),
+            );
+          }
+        }
+      }
+    });
+    stderr.on("end", () => {
+      if (this.config.logSink && buffer.length > 0) {
+        this.config.logSink.log(
+          createLogEntry("subprocess_stderr", "warn", buffer, { runId: this.config.runId }),
+        );
+      }
+    });
+  }
 }

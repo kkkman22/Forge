@@ -1,139 +1,72 @@
 #!/usr/bin/env node
-// category: user-facing
-// ============================================================================
-// validate-plugin-manifest.mjs — Forge plugin.json contract validator
-//
-// Validates `.claude-plugin/plugin.json` consistency for marketplace
-// distribution. Specifically (R1, R13 of workflows-integration):
-//
-//   1. plugin.json exists and is valid JSON.
-//   2. If `workflows` field is declared, every entry resolves to an existing
-//      directory under the plugin root.
-//   3. Every `*.js` file under each workflows directory parses with
-//      `node --check` (syntax-only). Any failure is reported as
-//      "workflow load failed: <file>: <reason>".
-//   4. mcpServers and hooks fields, when present, retain `${CLAUDE_PLUGIN_ROOT}`
-//      tokens unchanged (no accidental rewrites).
-//
-// Usage:
-//   node scripts/validate-plugin-manifest.mjs           # cwd assumed plugin root
-//   node scripts/validate-plugin-manifest.mjs --root .  # explicit root
-//
-// Exit codes:
-//   0  manifest valid (or missing optional fields)
-//   1  fatal validation error
-//
-// Help:
-//   node scripts/validate-plugin-manifest.mjs --help
-// ============================================================================
 
-import { execFileSync } from "node:child_process";
-import { existsSync, readFileSync, readdirSync, statSync } from "node:fs";
+/**
+ * validate-plugin-manifest.mjs — Validate plugin.json workflows field
+ *
+ * Usage: node scripts/validate-plugin-manifest.mjs
+ * Exit 0 = valid, non-zero = invalid.
+ */
+
+import { existsSync, readdirSync, readFileSync } from "node:fs";
+import { execSync } from "node:child_process";
 import { join, resolve } from "node:path";
-import process from "node:process";
 
-const args = process.argv.slice(2);
+const ROOT = resolve(import.meta.dirname, "..");
+const pluginPath = join(ROOT, ".claude-plugin", "plugin.json");
 
-if (args.includes("--help") || args.includes("-h")) {
-  console.log(
-    [
-      "validate-plugin-manifest.mjs — Forge plugin.json contract validator",
-      "",
-      "Usage:",
-      "  node scripts/validate-plugin-manifest.mjs [--root <dir>]",
-      "",
-      "Options:",
-      "  --root <dir>   plugin root (default: current working directory)",
-      "  --help, -h     show this help",
-      "",
-      "Validates:",
-      "  - plugin.json present and parseable",
-      "  - workflows[] paths resolve to existing directories",
-      "  - every *.js under workflows[] passes node --check",
-      "",
-      "Exit code 1 with stderr 'workflow load failed' on any workflow failure.",
-    ].join("\n"),
-  );
-  process.exit(0);
+let errors = 0;
+
+function fail(msg) {
+  process.stderr.write(`FAIL: ${msg}\n`);
+  errors++;
 }
 
-const rootIdx = args.indexOf("--root");
-const root = rootIdx >= 0 ? resolve(args[rootIdx + 1] ?? ".") : resolve(process.cwd());
-
-const manifestPath = join(root, ".claude-plugin", "plugin.json");
-
-if (!existsSync(manifestPath)) {
-  process.stderr.write(`plugin manifest not found: ${manifestPath}\n`);
-  process.exit(1);
-}
-
-let manifest;
 try {
-  manifest = JSON.parse(readFileSync(manifestPath, "utf-8"));
-} catch (err) {
-  process.stderr.write(`plugin manifest invalid JSON: ${err.message}\n`);
-  process.exit(1);
-}
+  const plugin = JSON.parse(readFileSync(pluginPath, "utf-8"));
 
-if (!manifest.name || !manifest.version) {
-  process.stderr.write("plugin manifest missing required name/version\n");
-  process.exit(1);
-}
+  // workflows field
+  if (!plugin.workflows) {
+    fail("plugin.json missing 'workflows' field");
+  } else {
+    if (!Array.isArray(plugin.workflows)) {
+      fail("'workflows' must be an array");
+    } else {
+      for (const wfPath of plugin.workflows) {
+        const absPath = join(ROOT, wfPath);
+        if (!existsSync(absPath)) {
+          fail(`workflows directory not found: ${wfPath}`);
+          continue;
+        }
 
-if (manifest.workflows !== undefined) {
-  if (!Array.isArray(manifest.workflows)) {
-    process.stderr.write("plugin manifest 'workflows' must be an array\n");
-    process.exit(1);
-  }
+        const jsFiles = readdirSync(absPath).filter((f) => f.endsWith(".js"));
+        if (jsFiles.length === 0) {
+          fail(`no .js files in workflows directory: ${wfPath}`);
+        }
 
-  for (const entry of manifest.workflows) {
-    if (typeof entry !== "string") {
-      process.stderr.write(`workflow load failed: non-string entry ${JSON.stringify(entry)}\n`);
-      process.exit(1);
-    }
-
-    const dir = resolve(root, entry);
-    if (!existsSync(dir) || !statSync(dir).isDirectory()) {
-      process.stderr.write(`workflow load failed: directory missing: ${entry}\n`);
-      process.exit(1);
-    }
-
-    const jsFiles = collectJsFiles(dir);
-    for (const jsFile of jsFiles) {
-      try {
-        execFileSync("node", ["--check", jsFile], { stdio: ["ignore", "ignore", "pipe"] });
-      } catch (err) {
-        const stderr = err.stderr?.toString() ?? err.message ?? "syntax error";
-        process.stderr.write(`workflow load failed: ${jsFile}: ${stderr}\n`);
-        process.exit(1);
+        for (const file of jsFiles) {
+          const fullPath = join(absPath, file);
+          try {
+            execSync(`node --check "${fullPath}"`, { stdio: "pipe" });
+          } catch {
+            fail(`workflow file syntax error: ${join(wfPath, file)}`);
+          }
+        }
       }
     }
   }
+
+  // Existing fields still valid
+  if (!plugin.name) fail("plugin.json missing 'name'");
+  if (!plugin.hooks) fail("plugin.json missing 'hooks'");
+  if (!plugin.mcpServers) fail("plugin.json missing 'mcpServers'");
+} catch (err) {
+  fail(`failed to parse plugin.json: ${err.message}`);
 }
 
-if (manifest.hooks !== undefined && typeof manifest.hooks === "object") {
-  const hookJson = JSON.stringify(manifest.hooks);
-  // Best-effort sanity: warn (not fail) if no PLUGIN_ROOT references but hooks exist.
-  if (Object.keys(manifest.hooks).length > 0 && !hookJson.includes("CLAUDE_PLUGIN_ROOT")) {
-    process.stderr.write(
-      "warning: plugin hooks present but no ${CLAUDE_PLUGIN_ROOT} references found\n",
-    );
-  }
+if (errors > 0) {
+  process.stderr.write(`\n${errors} error(s) found\n`);
+  process.exit(1);
 }
 
-process.stdout.write(`plugin manifest OK: ${manifest.name}@${manifest.version}\n`);
+process.stdout.write("plugin.json validation passed\n");
 process.exit(0);
-
-function collectJsFiles(dir) {
-  const out = [];
-  const entries = readdirSync(dir, { withFileTypes: true });
-  for (const entry of entries) {
-    const full = join(dir, entry.name);
-    if (entry.isDirectory()) {
-      out.push(...collectJsFiles(full));
-    } else if (entry.isFile() && entry.name.endsWith(".js")) {
-      out.push(full);
-    }
-  }
-  return out;
-}
