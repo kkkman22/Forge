@@ -175,24 +175,24 @@ describe("ToolHealthWriter: 5-process concurrent append safety (R12.7)", () => {
     const PROCS = 5;
     const PER_PROC = 4;
 
+    // --experimental-strip-types is only available on Node 22+.
+    // On older versions, fall back to npx tsx.
+    const nodeMajor = Number.parseInt(process.version.slice(1).split(".")[0], 10);
+    const spawnWorker = (workerArgs: string[]): Promise<{ stdout: string; stderr: string }> => {
+      if (nodeMajor >= 22) {
+        return execFileAsync(
+          process.execPath,
+          ["--experimental-strip-types", "--no-warnings=ExperimentalWarning", workerPath, ...workerArgs],
+          { timeout: 30_000 },
+        );
+      }
+      return execFileAsync("npx", ["tsx", workerPath, ...workerArgs], { timeout: 30_000 });
+    };
+
     const tasks: Array<Promise<{ stdout: string; stderr: string }>> = [];
     for (let p = 0; p < PROCS; p++) {
-      tasks.push(
-        execFileAsync(
-          process.execPath,
-          [
-            "--experimental-strip-types",
-            "--no-warnings=ExperimentalWarning",
-            workerPath,
-            healthPath,
-            "review",
-            "429-degrade",
-            `proc${p}`,
-            String(PER_PROC),
-          ],
-          { timeout: 30_000 },
-        ),
-      );
+      const workerArgs = [healthPath, "review", "429-degrade", `proc${p}`, String(PER_PROC)];
+      tasks.push(spawnWorker(workerArgs));
     }
     await Promise.all(tasks);
 
