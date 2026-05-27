@@ -50,6 +50,8 @@ function makeCtx(overrides: Partial<DispatchContext> = {}): DispatchContext {
 function seedL0Eligible(): { restoreEnv: () => void } {
   const wfDir = join(tmpRoot, "workflows", "lib");
   mkdirSync(wfDir, { recursive: true });
+  // Node 18 runs --check in CJS mode by default; ESM syntax fails without this.
+  writeFileSync(join(tmpRoot, "package.json"), '{"type":"module"}');
   writeFileSync(
     join(tmpRoot, "workflows", "review.js"),
     "import { chunkedParallel } from './lib/concurrency.js';\nexport const meta = { version: '1.0.0' };\n",

@@ -1,9 +1,10 @@
 import { execSync } from "node:child_process";
 import { readdirSync, readFileSync } from "node:fs";
-import { join } from "node:path";
+import { dirname, join } from "node:path";
+import { fileURLToPath } from "node:url";
 import { describe, expect, it } from "vitest";
 
-const ROOT = join(import.meta.dirname, "..");
+const ROOT = join(dirname(fileURLToPath(import.meta.url)), "..");
 
 describe("T13: Marketplace Distribution Regression", () => {
   const pluginPath = join(ROOT, ".claude-plugin", "plugin.json");

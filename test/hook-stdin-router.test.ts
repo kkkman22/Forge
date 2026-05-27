@@ -27,6 +27,7 @@ function runRouter(stdinPayload: string | null): RouterDecision {
     const result = execFileSync(
       "node",
       [
+        "--input-type=module",
         "-e",
         `
         import { classifyHookCaller } from "${SCRIPT_PATH}";

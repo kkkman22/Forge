@@ -19,6 +19,8 @@ function setupL0Workflow(tmpDir: string) {
   const wfDir = join(tmpDir, "workflows");
   mkdirSync(wfDir, { recursive: true });
   mkdirSync(join(wfDir, "lib"), { recursive: true });
+  // Node 18 runs --check in CJS mode by default; ESM syntax fails without this.
+  writeFileSync(join(tmpDir, "package.json"), '{"type":"module"}');
   writeFileSync(join(wfDir, "lib", "concurrency.js"), "export const chunkedParallel = () => {};\n");
   writeFileSync(
     join(wfDir, "review.js"),
@@ -55,6 +57,7 @@ describe("WorkflowDispatcher", () => {
   describe("probeL0Eligibility", () => {
     it("returns eligible when all 5 conditions pass", () => {
       process.env.CLAUDE_CODE_WORKFLOWS = "1";
+      writeFileSync(join(tmpDir, "package.json"), '{"type":"module"}');
       const wfDir = join(tmpDir, "workflows");
       mkdirSync(wfDir, { recursive: true });
       writeFileSync(join(wfDir, "review.js"), "export const meta = {};\n");
@@ -109,6 +112,7 @@ describe("WorkflowDispatcher", () => {
 
     it("returns ineligible when concurrency bridge missing", () => {
       process.env.CLAUDE_CODE_WORKFLOWS = "1";
+      writeFileSync(join(tmpDir, "package.json"), '{"type":"module"}');
       const wfDir = join(tmpDir, "workflows");
       mkdirSync(wfDir, { recursive: true });
       writeFileSync(join(wfDir, "review.js"), "export const meta = {};\n");
@@ -131,6 +135,7 @@ describe("WorkflowDispatcher", () => {
 
     it("chooses L0 then falls back to L1 on runtime failure", async () => {
       process.env.CLAUDE_CODE_WORKFLOWS = "1";
+      writeFileSync(join(tmpDir, "package.json"), '{"type":"module"}');
       const wfDir = join(tmpDir, "workflows");
       mkdirSync(wfDir, { recursive: true });
       mkdirSync(join(wfDir, "lib"), { recursive: true });

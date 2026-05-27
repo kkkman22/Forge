@@ -24,6 +24,8 @@ export type ResolveResult =
   | { kind: "global"; root: string }
   | { kind: "not-found"; checked: string[] };
 
+import { dirname } from "node:path";
+
 export function resolveForgeRoot(input: ResolveInput, fs: FsProbe): ResolveResult {
   const checked: string[] = [];
 
@@ -36,9 +38,7 @@ export function resolveForgeRoot(input: ResolveInput, fs: FsProbe): ResolveResul
   }
 
   // scriptDir/../agents — resolve parent
-  const scriptParent = `${input.scriptDir.replace(/\/$/, "")}/..`;
-  // Normalize: resolve ".." by removing the last path component
-  const normalizedParent = scriptParent.replace(/\/[^/]+\/\.\.$/, "");
+  const normalizedParent = dirname(input.scriptDir.replace(/\/$/, ""));
   checked.push(normalizedParent);
   if (fs.isDir(`${normalizedParent}/agents`)) {
     return { kind: "script-relative", root: normalizedParent };
