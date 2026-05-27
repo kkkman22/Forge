@@ -85,3 +85,6 @@
 {"timestamp":"2026-05-26T15:05:14Z","event":"postcompact_restore","detail":"slug=workflows-integration-resilience"}
 {"timestamp":"2026-05-26T15:05:14Z","event":"precompact_snapshot","detail":"slug=workflows-integration-resilience phase=test completed=36 pending=0
 0"}
+{"timestamp":"2026-05-26T16:18:18Z","event":"postcompact_restore","detail":"slug=workflows-integration-resilience"}
+{"timestamp":"2026-05-26T16:18:18Z","event":"precompact_snapshot","detail":"slug=workflows-integration-resilience phase=test completed=36 pending=0
+0"}
