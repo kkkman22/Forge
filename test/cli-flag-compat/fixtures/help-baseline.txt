@@ -1,0 +1,39 @@
+Usage: forge-loop [options] <objective>
+
+Run an autonomous loop with Claude Code Agent SDK
+
+Arguments:
+  objective                            The objective for the autonomous loop
+
+Options:
+  --max-iterations <n>                 Maximum number of iterations
+  --max-tokens <n>                     Maximum cumulative token limit
+  --stop-when <condition>              Natural-language stop condition
+  --prevent-sleep <on|off>             Control sleep prevention (default: "on")
+  --worktree                           Run in a separate Git worktree (default:
+                                       false)
+  --max-budget-usd <amount>            Maximum dollar budget
+  --tier <tier>                        Preset routing tier (light|standard|full)
+  --type <type>                        Preset task type
+  --phase <phase>                      Preset project phase
+  --nature <nature>                    Preset work nature
+                                       (feature|refactor|bugfix)
+  --pua                                Enable PUA Quality Engine (default:
+                                       false)
+  --pua-task-type <type>               PUA task type
+  --resume <branchName>                Resume an existing run on a forge/ branch
+  --lang <locale>                      Set display language (zh|en)
+  --log-format <text|json>             Log output format (text|json) (default:
+                                       "text")
+  --log-level <debug|info|warn|error>  Minimum log level (default: "info")
+  --log-file <path>                    Write JSON logs to file (dual-write mode)
+  --sandbox [profile]                  Enable sandbox mode with fine-grained
+                                       access control. Optionally specify a
+                                       profile name.
+  --force-no-hooks                     Skip hooks protection validation (use at
+                                       your own risk) (default: false)
+  --skills-dir <path>                  Load external SKILL plugins from
+                                       directory
+  --agent <name>                       Agent to use for iterations (claude|mock)
+                                       (default: "claude")
+  -h, --help                           display help for command

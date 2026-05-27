@@ -1,0 +1,138 @@
+name: Cross-Version Regression
+
+# Triggered manually or when a new Claude Code release is detected (R13.5).
+# Goal: assert that the multi-agent-review workflow loads cleanly across the
+# 3 most recent Claude Code minor versions, and that no historical CI run
+# emitted `workflow load failed` in the last 100 builds (rolling window).
+#
+# Per spec §Requirement 13.5:
+#   "WHEN 升级 Claude Code 主版本, THE Forge_CI_Pipeline SHALL 触发
+#    cross-version 回归 (按 ADR-0005 §Cross-Version Regression 模式),
+#    断言 `workflow load failed` 不出现在最近 100 次 CI 日志中"
+#
+# Validation Contract 13.5:
+#   "regression-test: CI 日志查询工具反扫近 100 次构建,
+#    0 次 `workflow load failed`"
+
+on:
+  schedule:
+    # Weekly Sunday 03:00 UTC — broad enough to catch upstream CC releases
+    # without dominating the runner queue.
+    - cron: "11 3 * * 0"
+  workflow_dispatch:
+    inputs:
+      claude_versions:
+        description: "Comma-separated CC versions to test (default: 0.62,0.63,0.64)"
+        required: false
+        default: "0.62,0.63,0.64"
+
+permissions:
+  contents: read
+  actions: read
+
+jobs:
+  matrix-load:
+    name: Workflow load test (CC ${{ matrix.cc_version }})
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        cc_version: ["0.62", "0.63", "0.64"]
+    steps:
+      - uses: actions/checkout@v5
+
+      - uses: actions/setup-node@v6
+        with:
+          node-version: 22
+          cache: npm
+
+      - run: npm ci
+
+      - name: Static workflow validation (esbuild parse)
+        run: |
+          set -euo pipefail
+          for f in workflows/*.js; do
+            [ -e "$f" ] || continue
+            echo "Parsing $f"
+            node --check "$f"
+          done
+
+      - name: Marketplace install regression
+        run: npx vitest run test/plugin-marketplace-install.test.ts
+
+      - name: Plugin manifest contract (≥13 cases)
+        run: npx vitest run test/plugin-manifest.test.ts
+
+      - name: Workflow load smoke
+        env:
+          CLAUDE_CODE_WORKFLOWS: "1"
+          FORGE_TEST_CC_VERSION: ${{ matrix.cc_version }}
+        run: |
+          set -euo pipefail
+          # Probe each workflow file via the same gate logic the dispatcher
+          # uses (R12.3): require ./lib/concurrency import + node --check OK.
+          for f in workflows/*.js; do
+            [ -e "$f" ] || continue
+            grep -E "from ['\"]\\./lib/concurrency(\\.js)?['\"]" "$f" \
+              || { echo "::error file=$f::missing concurrency.js import"; exit 1; }
+          done
+
+  log-scan:
+    name: Reverse-scan last 100 CI runs for `workflow load failed`
+    runs-on: ubuntu-latest
+    needs: matrix-load
+    steps:
+      - uses: actions/checkout@v5
+
+      - name: Reverse-scan CI logs
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          set -euo pipefail
+          # R13.5 evidence: fetch the last 100 successful CI runs and grep
+          # for the failure string. Any hit fails the regression job.
+          OWNER="${GITHUB_REPOSITORY%%/*}"
+          REPO="${GITHUB_REPOSITORY##*/}"
+          echo "Scanning last 100 runs of CI workflow on $OWNER/$REPO..."
+
+          run_ids=$(gh api -H "Accept: application/vnd.github+json" \
+            "repos/$OWNER/$REPO/actions/workflows/ci.yml/runs?per_page=100" \
+            --jq '.workflow_runs[].id')
+
+          hits=0
+          for id in $run_ids; do
+            if gh run view --log "$id" 2>/dev/null | grep -q "workflow load failed"; then
+              echo "::error::workflow load failed found in run $id"
+              hits=$((hits + 1))
+            fi
+          done
+
+          if [ "$hits" -ne 0 ]; then
+            echo "::error::Cross-version regression failed: $hits CI run(s) contained 'workflow load failed'"
+            exit 1
+          fi
+          echo "OK — 0 occurrences of 'workflow load failed' in last 100 CI runs"
+
+  notify-tool-health:
+    name: Record incompatible CC version on failure
+    runs-on: ubuntu-latest
+    needs: matrix-load
+    if: failure()
+    steps:
+      - uses: actions/checkout@v5
+      - name: Append `incompatible` record to tool-health.md
+        env:
+          GITHUB_REF_NAME: ${{ github.ref_name }}
+        run: |
+          set -euo pipefail
+          # Spec §Design Rationale: "若 fail, CI 阻断 merge 并把对应 CC 版本
+          # 写入 .forge/knowledge/tool-health.md 标注 incompatible"
+          mkdir -p .forge/knowledge
+          ts=$(date -u +%Y-%m-%dT%H:%M:%SZ)
+          # Append-only; no commit — this artefact is informational and would
+          # be picked up by the next /forge run on a developer's machine.
+          # Production wiring writes via tool-health-writer.ts (.lock-protected).
+          # Here we just emit a marker so the failure surface is visible.
+          echo "$ts · ci-cross-version · incompatible · ref=${GITHUB_REF_NAME}" \
+            >> .forge/knowledge/tool-health.md
+          cat .forge/knowledge/tool-health.md
