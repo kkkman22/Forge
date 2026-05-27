@@ -1,3 +1,5 @@
+[English Version](./INDEX.en.md) | [← INDEX (中文)](./INDEX.md)
+
 ## Getting Started
 
 - [Forge 快速入门指南](quick-start.md) / [Forge 快速入门指南 (EN)](quick-start.en.md) — getting-started — 2026-05-18
@@ -14,7 +16,7 @@
 
 - [CI UltraReview — 操作手册](ci-ultrareview-usage.md) — reference — 2026-05-12
 - [Docs Governance](docs-governance.md) — reference — 2026-05-24
-- [Docs Governance 参考手册](reference-docs-governance.md) / [Docs Governance 参考手册 (EN)](reference-docs-governance.en.md) — reference — 2026-05-24
+- [Docs Governance 参考手册](reference-docs-governance.md) / [Docs Governance 参考手册 (EN)](reference-docs-governance.en.md) — reference — 2026-05-25
 - [Forge Slimming 迁移指南](slimming-migration.md) — reference — 2026-05-17
 - [Forge — 项目宪法详细内容](forge-constitution-detail.md) — reference — 2026-05-24
 - [Forge 初次接触者引导](onboarding-beginner.md) / [Forge 初次接触者引导 (EN)](onboarding-beginner.en.md) — reference — 2026-05-24

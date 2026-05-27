@@ -182,7 +182,7 @@ describe("build-docs-index CLI integration", () => {
       "build-docs-index.ts",
     );
 
-    const result = execSync(`npx tsx "${scriptPath}" "${docsDir}"`, {
+    const _result = execSync(`npx tsx "${scriptPath}" "${docsDir}"`, {
       encoding: "utf-8",
       cwd: TMP_DIR,
       timeout: 15_000,

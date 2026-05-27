@@ -1,6 +1,6 @@
 {
   "version": 1,
-  "generated_at": "2026-05-25T00:44:28.160Z",
+  "generated_at": "2026-05-26T06:06:45.759Z",
   "subs": {
     "abort": {
       "instructions": {
@@ -189,7 +189,7 @@
     "decide": {
       "instructions": {
         "path": "decide/instructions.md",
-        "sha256": "d924ff3a796de4036fb02e52cbb5aed5211a88ab49ecd616a252997f5c2a9091"
+        "sha256": "48bd4463081c87eb61d4cb9d1fb29d994f42b425020ed55fd69ab9fd02f955ca"
       },
       "references": [
         {
@@ -308,7 +308,7 @@
     "learn": {
       "instructions": {
         "path": "learn/instructions.md",
-        "sha256": "d6ccbb54706531f77da52240c3486cf393220c3ea04b2d46697d9510ae820ace"
+        "sha256": "815be21f5ae1732f2c0cc6a239c88e9e076bc668b15389d02ed69ee176a5b75a"
       },
       "references": [
         {
@@ -487,7 +487,7 @@
     "review": {
       "instructions": {
         "path": "review/instructions.md",
-        "sha256": "25404be224f15cbb186b55f5110c700558010bcf4541d041c0ea73ae5e11b239"
+        "sha256": "1525634c6457d5fa1ebc39345a99196084d41540224f5f74344b34bf436211e4"
       },
       "references": [
         {
@@ -574,7 +574,7 @@
     "ship": {
       "instructions": {
         "path": "ship/instructions.md",
-        "sha256": "d4c26c232390d415d557cfe8994d5412e8c7ce76448a322fa5f26f0c2d3942ad"
+        "sha256": "9b39af2066c9cc747321b527f18e978e6adea30b033213994062cc3cdd8395ec"
       },
       "references": [
         {

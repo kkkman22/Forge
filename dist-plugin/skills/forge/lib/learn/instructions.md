@@ -71,6 +71,31 @@ forge-learn **不会** emit 严格会话作用域且已被 Auto_Memory 覆盖的
 
 默认严重度：warn。可通过 `severityOverride` 覆盖。
 
+### §1.6 Pre-flight: Docs Governance Check
+
+Run the three docs governance checkers to detect document health issues before knowledge extraction:
+
+```bash
+npx tsx scripts/check-docs-quota.ts --json
+npx tsx scripts/check-docs-staleness.ts --json
+npx tsx scripts/check-docs-links.ts --json
+```
+
+**Budget**: 10 seconds total. If any checker times out, treat as `needs_attention`.
+
+**Processing**:
+1. Parse NDJSON output from each checker
+2. Extract critical/error-level diagnostics
+3. If any checker returns non-zero exit code, times out, or script is missing → mark "文档增量" section as `needs_attention` but do NOT block main learn flow
+4. If all three checkers complete with zero status and no critical diagnostics → mark as `clean` with UTC ISO 8601 timestamp
+
+**Session output**: Write critical-level issues into `.forge/knowledge/sessions/<session>.md` under a `## 文档治理诊断` section, each containing:
+- Source detector name
+- Document relative path
+- Issue summary
+
+This check is informational only — it enriches the learn session with documentation health context.
+
 ---
 
 ## Goals
@@ -185,6 +210,38 @@ The full 21-step execution flow and task archival details are in references/know
 | Examples | references/examples.md |
 
 ---
+
+## Workflow Dispatch (R1)
+
+When user triggers `/forge learn`, follow this dispatch protocol:
+
+### Dispatch Protocol
+
+1. **Probe workflow eligibility** (same 5 conditions):
+   - `process.env.CLAUDE_CODE_WORKFLOWS === '1'`
+   - `mode === 'interactive'`
+   - `${CLAUDE_PLUGIN_ROOT}/workflows/learn.js` exists (future: when available)
+   - `node --check` passes
+   - Concurrency bridge reachable
+
+2. **If all 5 pass → attempt L0**:
+   ```
+   import { createAuditWriter } from './workflow-audit-factory.js';
+   const auditWriter = createAuditWriter(forgeRoot);
+   WorkflowDispatcher.dispatch(ctx, { tryL0, runFallback, auditWriter })
+   ```
+   Dispatcher auto-fills 14 fields, writes `dispatch.jsonl` + updates `status.md`.
+
+3. **If any fails → L1**: existing subagent knowledge extraction path. Dispatcher records `chosen_level: L1`.
+
+4. **Dispatch record always written** (14 fields, handled by dispatcher).
+5. **Status always updated** (3 dispatch fields in status.md, handled by dispatcher).
+6. **No confirmation prompts** between dispatch and execution.
+
+### Reference
+
+- Fallback ladder: `@.claude/rules/workflow-fallback-ladder.md`
+- Dispatcher: `src/workflow-dispatcher.ts`
 
 ## Edge Cases
 

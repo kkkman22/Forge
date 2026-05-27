@@ -8,7 +8,6 @@ import {
 import type {
   DiagnosticRecord,
   Doc,
-  DocPair,
   DocPath,
   Frontmatter,
 } from "../../../src/docs-governance/types.js";

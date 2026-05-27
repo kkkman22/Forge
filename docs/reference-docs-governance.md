@@ -2,12 +2,12 @@
 title: Docs Governance 参考手册
 category: reference
 audience: [maintainer, contributor]
-updated: 2026-05-24
+updated: 2026-05-25
 owner: forge-maintainers
 mirror_of: reference-docs-governance.en.md
 ---
 
-[← 返回索引](./INDEX.md)
+[← 返回索引](./INDEX.md) | [English Version](./reference-docs-governance.en.md)
 
 # Docs Governance 参考手册
 

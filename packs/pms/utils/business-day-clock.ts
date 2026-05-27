@@ -49,7 +49,7 @@ export class BusinessDayClock {
       hour: "2-digit",
       minute: "2-digit",
       second: "2-digit",
-      hour12: false,
+      hourCycle: "h23",
     });
 
     const parts = dtf.formatToParts(instant);
@@ -125,7 +125,7 @@ export class BusinessDayClock {
       hour: "2-digit",
       minute: "2-digit",
       second: "2-digit",
-      hour12: false,
+      hourCycle: "h23",
     });
 
     const parts = dtf.formatToParts(utcInstant);

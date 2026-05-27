@@ -1,34 +1,43 @@
 ---
-current_task: "docs-governance-system"
+current_task: "workflows-integration-resilience"
 tier: "standard"
 task_type: "feature"
 project_phase: "implementation"
-phase: "ship"
+phase: "test"
 work_nature: "feature"
-updated: "2026-05-24"
-branch: ""
-spec_path: ".kiro/specs/docs-governance-system/"
-plan_path: ".kiro/specs/docs-governance-system/tasks.md"
-hints: "docs-governance,frontmatter,index-generator,ssot,embeds,pre-commit,tdd"
+updated: "2026-05-26"
+branch: "worktree-workflows-integration-resilience"
+spec_path: ".kiro/specs/workflows-integration-resilience/"
+plan_path: ".kiro/specs/workflows-integration-resilience/tasks.md"
+hints: "resilience,stuck-timeout,backpressure,429-degrade,retry,cleanup,property-based,record-replay,tdd"
 assumptions:
   - "spec 目录含 requirements+design+tasks = decide+spec+plan 完成"
-  - "7 parent tasks / 56 subtasks / 7 waves / 5 migration phases"
-  - "src/docs-governance/ 新模块：types, config, domains, frontmatter, index-generator, staleness, updated-auditor, link-checker, quota, root-whitelist, bilingual, ssot, reporter, cli"
-  - "13 CLI scripts + pre-commit hook + CI workflow"
-  - "5 层治理：分类隔离、总目录自动生成、失修检测、数量纪律、SSOT 嵌入"
+  - "27 tasks / 8 phases / ~600 行代码 + ~400 行测试"
+  - "遵循 TDD RED→GREEN→REFACTOR 铁律"
+  - "前置依赖 workflows-integration 已合并 (b9ab08ef)"
 ---
 
 # 项目状态
 
-## 当前任务：docs-governance-system
+## 当前任务：workflows-integration-resilience — test 完成
 
-Standard-tier ship 完成（核心 library 层）。23 commits merged to main (76581bc1)。
+Standard-tier 流程。全部 27 tasks 已完成，review P1 已修复，test 通过。
 
-**已交付**：20 modules, 256 tests, 18 correctness properties (P1-P18)。
-**待后续 PR**：CLI script entries, pre-commit hook, CI workflow, frontmatter migration, SSOT embed-sync, documentation (wave 7)。
+**27 tasks / 8 phases**
+
+### Phase 结构
+- Phase 1: stuck timeout + signal chain (T1-T2)
+- Phase 2: 退出码退避重试 (T3-T6)
+- Phase 3: 背压保护 (T7-T9)
+- Phase 4: 429 降级 (T10-T13)
+- Phase 5: cleanup chain (T14-T16)
+- Phase 6: record-replay (T17-T20)
+- Phase 7: property-based 1000 次 (T21-T26)
+- Phase 8: CI 跨版本 (T27)
 
 ## 已完成
 
+workflows-integration: 17 commits on worktree-workflows-integration (保留).
 docs-governance-system core library: 23 commits merged to main (76581bc1).
 forge-single-entry-skills-collapse: 47 commits merged to main (6127feb).
 cmux-skills-collapse: merged to main.

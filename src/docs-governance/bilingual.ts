@@ -26,7 +26,7 @@ export function pairBilingual(docs: readonly Doc[]): DocPair[] {
     if (!groups.has(key)) {
       groups.set(key, {});
     }
-    const group = groups.get(key)!;
+    const group = groups.get(key) as { cn?: Doc; en?: Doc };
 
     if (isEn) {
       group.en = doc;
@@ -95,8 +95,8 @@ export function checkBilingualPairs(pairs: readonly DocPair[]): DiagnosticRecord
       }
 
       case "paired": {
-        const en = pair.en!;
-        const cn = pair.cn!;
+        const en = pair.en as Doc;
+        const cn = pair.cn as Doc;
 
         // Check mirror_of field validation
         diagnostics.push(...validateMirrorOf(en, pair));
