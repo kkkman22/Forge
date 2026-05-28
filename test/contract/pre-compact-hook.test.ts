@@ -1,13 +1,7 @@
-import { describe, it, expect, beforeEach, afterEach } from "vitest";
 import { execFileSync } from "node:child_process";
-import {
-  mkdirSync,
-  writeFileSync,
-  rmSync,
-  existsSync,
-  readFileSync,
-} from "node:fs";
-import { resolve, join } from "node:path";
+import { existsSync, mkdirSync, readFileSync, rmSync, writeFileSync } from "node:fs";
+import { join, resolve } from "node:path";
+import { afterEach, beforeEach, describe, expect, it } from "vitest";
 
 const ROOT = resolve(__dirname, "../..");
 const HOOK = resolve(ROOT, "scripts/pre-compact-hook.mjs");
@@ -194,8 +188,7 @@ describe("PreCompact hook (R13)", () => {
   // AC6: Respects forge_pre_compact_hook: off config
   it("passes silently when hook is disabled via config", () => {
     setupForgeEnv({
-      configContent:
-        "---\nforge_pre_compact_hook: off\nforge_pre_compact_threshold_tasks: 3\n---",
+      configContent: "---\nforge_pre_compact_hook: off\nforge_pre_compact_threshold_tasks: 3\n---",
       statusCurrentTask: "my-feature",
       progressContent: [
         "## Phase 1",
@@ -219,8 +212,7 @@ describe("PreCompact hook (R13)", () => {
   // AC7: Uses correct threshold from config
   it("respects custom threshold from config", () => {
     setupForgeEnv({
-      configContent:
-        "---\nforge_pre_compact_hook: on\nforge_pre_compact_threshold_tasks: 5\n---",
+      configContent: "---\nforge_pre_compact_hook: on\nforge_pre_compact_threshold_tasks: 5\n---",
       statusCurrentTask: "my-feature",
       progressContent: [
         "## Phase 1",
@@ -245,16 +237,9 @@ describe("PreCompact hook (R13)", () => {
   // AC8: Blocks at custom threshold
   it("blocks when tasks reach custom threshold", () => {
     setupForgeEnv({
-      configContent:
-        "---\nforge_pre_compact_hook: on\nforge_pre_compact_threshold_tasks: 2\n---",
+      configContent: "---\nforge_pre_compact_hook: on\nforge_pre_compact_threshold_tasks: 2\n---",
       statusCurrentTask: "my-feature",
-      progressContent: [
-        "## Phase 1",
-        "- [x] T1",
-        "- [x] T2",
-        "- [x] T3",
-        "- [ ] T4",
-      ].join("\n"),
+      progressContent: ["## Phase 1", "- [x] T1", "- [x] T2", "- [x] T3", "- [ ] T4"].join("\n"),
       lastRestatement: {
         spec: "my-feature",
         tasks_completed_count: 0,
@@ -271,12 +256,7 @@ describe("PreCompact hook (R13)", () => {
   it("passes when last-restatement.json does not exist but completed tasks below threshold", () => {
     setupForgeEnv({
       statusCurrentTask: "my-feature",
-      progressContent: [
-        "## Phase 1",
-        "- [x] T1",
-        "- [x] T2",
-        "- [ ] T3",
-      ].join("\n"),
+      progressContent: ["## Phase 1", "- [x] T1", "- [x] T2", "- [ ] T3"].join("\n"),
     });
 
     // 2 completed, no restate file => treat as 0 restated count, threshold 3 => pass
@@ -288,13 +268,7 @@ describe("PreCompact hook (R13)", () => {
   it("blocks when last-restatement.json missing and completed tasks exceed threshold", () => {
     setupForgeEnv({
       statusCurrentTask: "my-feature",
-      progressContent: [
-        "## Phase 1",
-        "- [x] T1",
-        "- [x] T2",
-        "- [x] T3",
-        "- [x] T4",
-      ].join("\n"),
+      progressContent: ["## Phase 1", "- [x] T1", "- [x] T2", "- [x] T3", "- [x] T4"].join("\n"),
     });
 
     // 4 completed, no restate => 4 - 0 = 4 >= 3 => block
@@ -332,13 +306,7 @@ describe("PreCompact hook (R13)", () => {
   it("outputs correct Chinese error message with steps on block", () => {
     setupForgeEnv({
       statusCurrentTask: "my-feature",
-      progressContent: [
-        "## Phase 1",
-        "- [x] T1",
-        "- [x] T2",
-        "- [x] T3",
-        "- [x] T4",
-      ].join("\n"),
+      progressContent: ["## Phase 1", "- [x] T1", "- [x] T2", "- [x] T3", "- [x] T4"].join("\n"),
       lastRestatement: {
         spec: "my-feature",
         tasks_completed_count: 0,
@@ -358,13 +326,7 @@ describe("PreCompact hook (R13)", () => {
   it("ignores last-restatement for a different spec and treats as 0 restated", () => {
     setupForgeEnv({
       statusCurrentTask: "my-feature",
-      progressContent: [
-        "## Phase 1",
-        "- [x] T1",
-        "- [x] T2",
-        "- [x] T3",
-        "- [x] T4",
-      ].join("\n"),
+      progressContent: ["## Phase 1", "- [x] T1", "- [x] T2", "- [x] T3", "- [x] T4"].join("\n"),
       lastRestatement: {
         spec: "other-feature", // different spec
         tasks_completed_count: 10,

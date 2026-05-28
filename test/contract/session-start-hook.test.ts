@@ -1,12 +1,7 @@
-import { describe, it, expect } from "vitest";
 import { spawn } from "node:child_process";
-import {
-  mkdtempSync,
-  mkdirSync,
-  writeFileSync,
-  rmSync,
-} from "node:fs";
+import { mkdirSync, mkdtempSync, rmSync, writeFileSync } from "node:fs";
 import { join, resolve } from "node:path";
+import { describe, expect, it } from "vitest";
 
 const ROOT = resolve(__dirname, "../..");
 const SCRIPT = resolve(ROOT, "scripts/inject-evolved-rules.mjs");

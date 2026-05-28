@@ -1,12 +1,12 @@
-import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
+import { existsSync, mkdirSync, rmSync, writeFileSync } from "node:fs";
 import { resolve } from "node:path";
-import { writeFileSync, mkdirSync, rmSync, existsSync } from "node:fs";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 // Import the functions under test — they don't exist yet, so this will fail at import
 import {
   buildGoalCondition,
-  setGoal,
   clearGoal,
+  setGoal,
   shouldClearGoal,
 } from "../../src/forge/goal-integration";
 
@@ -21,9 +21,7 @@ describe("goal-integration (R4)", () => {
 
     it("returns correct string for standard tier", () => {
       const result = buildGoalCondition("standard");
-      expect(result).toBe(
-        "完成 plan→build→review→test→ship 流程，且无 P0/P1 阻断",
-      );
+      expect(result).toBe("完成 plan→build→review→test→ship 流程，且无 P0/P1 阻断");
     });
 
     it("returns correct string for full tier", () => {

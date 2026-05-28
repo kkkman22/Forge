@@ -134,7 +134,10 @@ describe("Contract: skill disallowed-tools matrix (R3)", () => {
 
   it("matrix ADR file exists", () => {
     const adrPath = resolve(ROOT, ".forge/decisions/2026-05-28-skill-disallowed-tools-matrix.md");
-    expect(existsSync(adrPath), "Missing ADR: .forge/decisions/2026-05-28-skill-disallowed-tools-matrix.md").toBe(true);
+    expect(
+      existsSync(adrPath),
+      "Missing ADR: .forge/decisions/2026-05-28-skill-disallowed-tools-matrix.md",
+    ).toBe(true);
   });
 
   // --- Per-agent frontmatter and tool restrictions ---
