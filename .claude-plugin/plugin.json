@@ -24,6 +24,19 @@
     "code-review",
     "ci"
   ],
+  "userConfig": {
+    "max_parallel_agents": {
+      "type": "number",
+      "default": 6,
+      "description": "Max concurrent subagents (1-10, default 6)"
+    },
+    "safety_level": {
+      "type": "string",
+      "enum": ["1", "2", "3"],
+      "default": "1",
+      "description": "Safety strictness (1=strictest)"
+    }
+  },
   "hooks": {
     "SessionStart": [
       {
@@ -39,7 +52,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "node \"${CLAUDE_PLUGIN_ROOT}/scripts/inject-evolved-rules.mjs\" 2>/dev/null || node forge/scripts/inject-evolved-rules.mjs 2>/dev/null || true",
+            "args": ["node", "${CLAUDE_PLUGIN_ROOT}/scripts/inject-evolved-rules.mjs"],
             "timeout": 5
           }
         ]
