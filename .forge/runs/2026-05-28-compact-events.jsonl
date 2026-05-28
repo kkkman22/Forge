@@ -4,3 +4,30 @@
 {"timestamp":"2026-05-28T12:25:15Z","event":"postcompact_restore","detail":"slug=workflows-integration-resilience"}
 {"timestamp":"2026-05-28T12:25:16Z","event":"precompact_snapshot","detail":"slug=workflows-integration-resilience phase=test completed=36 pending=0
 0"}
+{"timestamp":"2026-05-28T13:32:57Z","event":"precompact_snapshot","detail":"slug=workflows-integration-resilience phase=test completed=36 pending=0
+0"}
+{"timestamp":"2026-05-28T13:33:29Z","event":"postcompact_restore","detail":"slug=workflows-integration-resilience"}
+{"timestamp":"2026-05-28T13:33:29Z","event":"precompact_snapshot","detail":"slug=workflows-integration-resilience phase=test completed=36 pending=0
+0"}
+{"timestamp":"2026-05-28T13:34:38Z","event":"postcompact_restore","detail":"slug=workflows-integration-resilience"}
+{"timestamp":"2026-05-28T13:34:38Z","event":"precompact_snapshot","detail":"slug=workflows-integration-resilience phase=test completed=36 pending=0
+0"}
+{"timestamp":"2026-05-28T13:35:01Z","event":"postcompact_restore","detail":"slug=workflows-integration-resilience"}
+{"timestamp":"2026-05-28T13:35:01Z","event":"precompact_snapshot","detail":"slug=workflows-integration-resilience phase=test completed=36 pending=0
+0"}
+{"timestamp":"2026-05-28T13:36:33Z","event":"postcompact_restore","detail":"slug=workflows-integration-resilience"}
+{"timestamp":"2026-05-28T13:36:33Z","event":"precompact_snapshot","detail":"slug=workflows-integration-resilience phase=test completed=36 pending=0
+0"}
+{"timestamp":"2026-05-28T13:41:06Z","event":"postcompact_restore","detail":"slug=workflows-integration-resilience"}
+{"timestamp":"2026-05-28T13:41:06Z","event":"precompact_snapshot","detail":"slug=workflows-integration-resilience phase=test completed=36 pending=0
+0"}
+{"timestamp":"2026-05-28T13:42:57Z","event":"postcompact_restore","detail":"slug=workflows-integration-resilience"}
+{"timestamp":"2026-05-28T13:42:57Z","event":"precompact_snapshot","detail":"slug=workflows-integration-resilience phase=test completed=36 pending=0
+0"}
+{"timestamp":"2026-05-28T13:44:37Z","event":"postcompact_restore","detail":"slug=workflows-integration-resilience"}
+{"timestamp":"2026-05-28T13:44:37Z","event":"precompact_snapshot","detail":"slug=workflows-integration-resilience phase=test completed=36 pending=0
+0"}
+{"timestamp":"2026-05-28T15:10:46Z","event":"postcompact_restore","detail":"slug=workflows-integration-resilience"}
+{"timestamp":"2026-05-28T15:10:46Z","event":"precompact_snapshot","detail":"slug=claude-code-uplift-21153 phase=build completed=0 pending=0"}
+{"timestamp":"2026-05-28T15:12:27Z","event":"postcompact_restore","detail":"slug=claude-code-uplift-21153"}
+{"timestamp":"2026-05-28T15:12:27Z","event":"precompact_snapshot","detail":"slug=claude-code-uplift-21153 phase=build completed=0 pending=0"}
