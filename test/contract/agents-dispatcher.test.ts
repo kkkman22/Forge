@@ -69,12 +69,12 @@ describe("agents-dispatcher (R5)", () => {
         cb(null, '{"status":"completed"}'),
     );
 
-    const opts: mod.DispatchOptions = {
+    const opts: any = {
       agentType: "spec-check",
       prompt: "Review spec completeness",
       workdir: tmpDir,
     };
-    const result: mod.DispatchResult = await mod.dispatch(opts);
+    const result = await mod.dispatch(opts);
 
     expect(result).toHaveProperty("agent");
     expect(result).toHaveProperty("status");
