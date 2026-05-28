@@ -6,10 +6,10 @@
  * binary is invoked.
  */
 
-import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
 import { mkdirSync, rmSync, writeFileSync } from "node:fs";
-import { join } from "node:path";
 import { tmpdir } from "node:os";
+import { join } from "node:path";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 // We'll import after the module exists; for RED phase we test against the
 // expected interface by dynamically importing and catching.
@@ -152,7 +152,9 @@ describe("agents-dispatcher (R5)", () => {
     expect(capturedArgs).toContain("--agent-type=security-check");
     expect(capturedArgs).toContain("--workdir=/tmp/project");
     // The prompt should be passed as well
-    const promptArg = capturedArgs.find((a) => a.startsWith("--prompt=") || a.startsWith("--prompt "));
+    const promptArg = capturedArgs.find(
+      (a) => a.startsWith("--prompt=") || a.startsWith("--prompt "),
+    );
     expect(promptArg).toBeTruthy();
   });
 
@@ -208,8 +210,18 @@ describe("agents-dispatcher (R5)", () => {
     const runDir = join(tmpDir, ".forge", "agent-results", "run-123");
     mkdirSync(runDir, { recursive: true });
 
-    const result1 = { agent: "spec-check", status: "completed", findings: ["f1"], duration_ms: 1000 };
-    const result2 = { agent: "quality-check", status: "completed", findings: ["f2"], duration_ms: 2000 };
+    const result1 = {
+      agent: "spec-check",
+      status: "completed",
+      findings: ["f1"],
+      duration_ms: 1000,
+    };
+    const result2 = {
+      agent: "quality-check",
+      status: "completed",
+      findings: ["f2"],
+      duration_ms: 2000,
+    };
 
     writeFileSync(join(runDir, "spec-check.json"), JSON.stringify(result1));
     writeFileSync(join(runDir, "quality-check.json"), JSON.stringify(result2));

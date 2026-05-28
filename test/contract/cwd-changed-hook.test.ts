@@ -1,8 +1,8 @@
-import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
 import { execFileSync } from "node:child_process";
-import { resolve, join } from "node:path";
-import { existsSync, mkdirSync, writeFileSync, rmSync } from "node:fs";
+import { existsSync, mkdirSync, rmSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
+import { join, resolve } from "node:path";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 const ROOT = resolve(__dirname, "../..");
 
@@ -82,11 +82,10 @@ describe("CwdChanged hook (R16)", () => {
         encoding: "utf-8",
         timeout: 5000,
       });
-      execFileSync(
-        "git",
-        ["-C", tmpRepo, "commit", "--allow-empty", "-m", "init"],
-        { encoding: "utf-8", timeout: 5000 },
-      );
+      execFileSync("git", ["-C", tmpRepo, "commit", "--allow-empty", "-m", "init"], {
+        encoding: "utf-8",
+        timeout: 5000,
+      });
 
       const result = runHook(
         CWD_CHANGED_HOOK,
@@ -120,11 +119,10 @@ describe("CwdChanged hook (R16)", () => {
         encoding: "utf-8",
         timeout: 5000,
       });
-      execFileSync(
-        "git",
-        ["-C", tmpRepo, "commit", "--allow-empty", "-m", "init"],
-        { encoding: "utf-8", timeout: 5000 },
-      );
+      execFileSync("git", ["-C", tmpRepo, "commit", "--allow-empty", "-m", "init"], {
+        encoding: "utf-8",
+        timeout: 5000,
+      });
 
       const result = runHook(
         CWD_CHANGED_HOOK,
@@ -157,16 +155,14 @@ describe("CwdChanged hook (R16)", () => {
         encoding: "utf-8",
         timeout: 5000,
       });
-      execFileSync(
-        "git",
-        ["-C", tmpRepo, "commit", "--allow-empty", "-m", "init"],
-        { encoding: "utf-8", timeout: 5000 },
-      );
-      execFileSync(
-        "git",
-        ["-C", tmpRepo, "checkout", "-b", "release-2.1"],
-        { encoding: "utf-8", timeout: 5000 },
-      );
+      execFileSync("git", ["-C", tmpRepo, "commit", "--allow-empty", "-m", "init"], {
+        encoding: "utf-8",
+        timeout: 5000,
+      });
+      execFileSync("git", ["-C", tmpRepo, "checkout", "-b", "release-2.1"], {
+        encoding: "utf-8",
+        timeout: 5000,
+      });
 
       const result = runHook(
         CWD_CHANGED_HOOK,
@@ -305,14 +301,9 @@ describe("FileChanged hook (R16)", () => {
       // Write status.md with current_task
       writeFileSync(
         join(forgeDir, "status.md"),
-        [
-          "---",
-          'current_task: "active-feature"',
-          "tier: standard",
-          "---",
-          "",
-          "# Status",
-        ].join("\n"),
+        ["---", 'current_task: "active-feature"', "tier: standard", "---", "", "# Status"].join(
+          "\n",
+        ),
       );
 
       // Write active progress file

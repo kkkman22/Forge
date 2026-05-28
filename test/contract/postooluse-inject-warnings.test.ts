@@ -1,12 +1,7 @@
-import { describe, it, expect, beforeEach, afterEach } from "vitest";
 import { execFileSync } from "node:child_process";
-import {
-  mkdirSync,
-  writeFileSync,
-  rmSync,
-  existsSync,
-} from "node:fs";
-import { resolve, join } from "node:path";
+import { existsSync, mkdirSync, rmSync, writeFileSync } from "node:fs";
+import { join, resolve } from "node:path";
+import { afterEach, beforeEach, describe, expect, it } from "vitest";
 
 const ROOT = resolve(__dirname, "../..");
 const SCRIPT = resolve(ROOT, "scripts/postooluse-inject-warnings.mjs");
@@ -69,23 +64,16 @@ function setupForgeEnv(opts: {
   const configPath = fixture(".forge", "config.md");
   writeFileSync(
     configPath,
-    opts.configContent ??
-      `---\npostooluse_inject_warnings: on\n---\n\n# Test config`,
+    opts.configContent ?? `---\npostooluse_inject_warnings: on\n---\n\n# Test config`,
   );
 
   if (opts.contextOwnership) {
-    writeFileSync(
-      fixture(".forge", "context-ownership.yaml"),
-      opts.contextOwnership,
-    );
+    writeFileSync(fixture(".forge", "context-ownership.yaml"), opts.contextOwnership);
   }
 
   if (opts.contextMap) {
     mkdirSync(fixture(".forge", "custom", "contexts"), { recursive: true });
-    writeFileSync(
-      fixture(".forge", "custom", "contexts", "_map.yaml"),
-      opts.contextMap,
-    );
+    writeFileSync(fixture(".forge", "custom", "contexts", "_map.yaml"), opts.contextMap);
   }
 }
 
@@ -204,8 +192,7 @@ describe("PostToolUse inject warnings hook (R15)", () => {
   // AC5: Respects postooluse_inject_warnings: off config
   it("respects postooluse_inject_warnings: off config", () => {
     setupForgeEnv({
-      configContent:
-        "---\npostooluse_inject_warnings: off\n---\n\n# Test config",
+      configContent: "---\npostooluse_inject_warnings: off\n---\n\n# Test config",
     });
 
     const input = {
@@ -225,7 +212,8 @@ describe("PostToolUse inject warnings hook (R15)", () => {
   // AC6: Handles missing frozen_paths in config (no frontmatter block listing)
   it("handles missing frozen_paths in config gracefully", () => {
     setupForgeEnv({
-      configContent: "---\npostooluse_inject_warnings: on\n---\n\n# Minimal config without frozen list",
+      configContent:
+        "---\npostooluse_inject_warnings: on\n---\n\n# Minimal config without frozen list",
     });
 
     const input = {
@@ -311,15 +299,8 @@ describe("PostToolUse inject warnings hook (R15)", () => {
   it("injects warning for context boundary violations", () => {
     setupForgeEnv({
       configContent: "---\npostooluse_inject_warnings: on\n---\n\n# Config",
-      contextOwnership: [
-        "src/billing/**: billing",
-        "src/auth/**: auth",
-      ].join("\n"),
-      contextMap: [
-        "- from: billing",
-        "  to: auth",
-        "  type: customer-supplier",
-      ].join("\n"),
+      contextOwnership: ["src/billing/**: billing", "src/auth/**: auth"].join("\n"),
+      contextMap: ["- from: billing", "  to: auth", "  type: customer-supplier"].join("\n"),
     });
 
     // Create a billing file that imports from auth (cross-context violation)

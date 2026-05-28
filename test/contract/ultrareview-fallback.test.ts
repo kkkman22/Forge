@@ -1,13 +1,8 @@
-import { describe, it, expect, beforeEach, afterEach } from "vitest";
 import { execFileSync } from "node:child_process";
-import {
-  mkdirSync,
-  writeFileSync,
-  rmSync,
-  existsSync,
-} from "node:fs";
-import { resolve, join, dirname } from "node:path";
+import { existsSync, mkdirSync, rmSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
+import { dirname, join, resolve } from "node:path";
+import { afterEach, beforeEach, describe, expect, it } from "vitest";
 
 const ROOT = resolve(__dirname, "../..");
 const SCRIPT = resolve(ROOT, "scripts/ultrareview-fallback.mjs");
@@ -322,9 +317,7 @@ describe("ultrareview-fallback.mjs (R9)", () => {
     it("handles findings with missing optional fields gracefully", () => {
       const sparseOutput = {
         summary: "Partial review.",
-        findings: [
-          { severity: "P1", message: "Something wrong" },
-        ],
+        findings: [{ severity: "P1", message: "Something wrong" }],
       };
       const mockScript = mockClaueOutputJson(sparseOutput);
 

@@ -1,6 +1,6 @@
-import { describe, it, expect } from "vitest";
 import { execFileSync } from "node:child_process";
 import { resolve } from "node:path";
+import { describe, expect, it } from "vitest";
 
 const ROOT = resolve(__dirname, "../..");
 const SCRIPT = resolve(ROOT, "scripts/message-display-hook.mjs");
