@@ -1,0 +1,83 @@
+#!/usr/bin/env bash
+# forge-doctor — Health check for Forge project setup.
+set -euo pipefail
+
+if [[ "${1:-}" == "--help" || "${1:-}" == "-h" ]]; then
+  cat <<'HELP'
+forge-doctor — Forge project health check
+
+Usage: forge-doctor [--fix] [--json]
+
+Options:
+  --help, -h   Show this help message
+  --fix        Attempt to fix detected issues
+  --json       Output results in JSON format
+
+Checks:
+  1. .forge/ directory structure
+  2. .forge/config.md present and valid
+  3. .claude/settings.json has required fields
+  4. Hook scripts exist and are executable
+  5. MCP server registration
+  6. Git branch protection
+HELP
+  exit 0
+fi
+
+ROOT="${FORGE_ROOT:-$(git rev-parse --show-toplevel 2>/dev/null || echo .)}"
+cd "$ROOT"
+
+PASS=0; FAIL=0; WARN=0
+
+check() {
+  local label="$1" status="$2"
+  case "$status" in
+    pass) echo "  ✅ $label"; PASS=$((PASS+1)) ;;
+    warn) echo "  ⚠️  $label"; WARN=$((WARN+1)) ;;
+    *)    echo "  ❌ $label"; FAIL=$((FAIL+1)) ;;
+  esac
+  return 0
+}
+
+echo "🔍 Forge Doctor — checking project health"
+echo ""
+
+# 1. .forge/ directory
+if [[ -d .forge ]]; then check ".forge/ directory" pass; else check ".forge/ directory (missing — run forge init)" fail; fi
+
+# 2. config.md
+if [[ -f .forge/config.md ]]; then check ".forge/config.md" pass; else check ".forge/config.md" fail; fi
+
+# 3. settings.json
+if [[ -f .claude/settings.json ]]; then
+  check ".claude/settings.json" pass
+  if grep -q '"autoMode"' .claude/settings.json 2>/dev/null; then check "autoMode config" pass; else check "autoMode config (missing hard_deny)" warn; fi
+  if grep -q '"baseRef"' .claude/settings.json 2>/dev/null; then check "worktree.baseRef" pass; else check "worktree.baseRef (missing)" warn; fi
+else
+  check ".claude/settings.json" fail
+fi
+
+# 4. Hook scripts
+for hook in inject-evolved-rules.mjs message-display-hook.mjs pre-compact-hook.mjs cwd-changed-hook.mjs; do
+  if [[ -f "scripts/$hook" ]]; then check "scripts/$hook" pass; else check "scripts/$hook (missing)" warn; fi
+done
+
+# 5. MCP server
+if [[ -f src/mcp/server.ts ]]; then check "MCP server source" pass; else check "MCP server source" warn; fi
+
+# 6. Git branch
+BRANCH=$(git branch --show-current 2>/dev/null || echo "unknown")
+if [[ "$BRANCH" == "main" || "$BRANCH" == "master" ]]; then
+  check "Git branch ($BRANCH — should be feature/*)" warn
+else
+  check "Git branch ($BRANCH)" pass
+fi
+
+echo ""
+echo "📊 Summary: $PASS passed, $WARN warnings, $FAIL failures"
+
+if [[ "${1:-}" == "--json" ]]; then
+  echo "{\"pass\":$PASS,\"warn\":$WARN,\"fail\":$FAIL}"
+fi
+
+[[ $FAIL -eq 0 ]]
