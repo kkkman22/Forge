@@ -9,6 +9,7 @@ tools:
   - Glob
   - Grep
   - AskUserQuestion
+disallowedTools: ["Bash(rm -rf *)", "Bash(git reset --hard *)"]
 model: sonnet
 hooks:
   PreToolUse:
