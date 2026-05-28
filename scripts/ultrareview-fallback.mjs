@@ -36,7 +36,7 @@ function parseConfigFrontmatter(configContent) {
 
   const map = new Map();
   for (const line of fmMatch[1].split("\n")) {
-    const kvMatch = line.match(/^(\S+):\s*(.+)/);
+    const kvMatch = line.match(/^(\S+):\s*(.+?)(?:\s+#.*)?$/);
     if (kvMatch) {
       map.set(kvMatch[1], kvMatch[2].trim());
     }
