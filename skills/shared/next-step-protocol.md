@@ -2,6 +2,39 @@
 
 完成当前阶段后，**必须立即自动调用下一阶段**，不得停下来等待用户确认。
 
+## 阶段切换时的 P0/P1 持久化
+
+在 decide→spec、plan→build、build→review 的切换点，以及 build 内部 wave 之间切换时，执行：
+
+1. 收集当前 context 中的 P0/P1 findings（来自 review/decide 的输出）
+2. 调用 `serializePendingFindings(findings, taskName)` 序列化为 markdown table
+3. `Write` 到 `.forge/progress/<taskName>-pending-findings.md`
+4. 写入失败 → 跳过持久化，继续推进（不阻断）
+5. 无 P0/P1 findings → 跳过此步骤
+
+## Inter-phase Auto-Compact
+
+在以下切换点检查 context 使用率：
+
+| 切换点 | 触发条件 | 动作 |
+|--------|---------|------|
+| decide 确认 → spec | context > 50% | 持久化 P0/P1 → 触发 compact |
+| plan 批准 → build | context > 50% | 持久化 P0/P1 → 触发 compact |
+| build 完成 → review | context > 50% | 持久化 P0/P1 → 触发 compact |
+
+## Intra-Build Wave-Boundary Auto-Compact
+
+当 tasks.md 含 wave 分组时，每个 wave 完成后：
+
+1. 检查 context 使用率
+2. 若 >50% 且还有后续 wave → 持久化当前 P0/P1 → 建议用户 compact
+3. Compact 是平台机制（不等同于停顿），不违反 §2.7 铁律
+4. 若 ≤50% 或无后续 wave → 跳过 compact，继续下一 wave
+
+**执行方式**：wave 完成时输出 `📊 Wave N 完成 | Context: X% | 后续 wave 存在 → 建议执行 /compact 再继续`
+
+Compact 后恢复：通过 `.forge/progress/<taskName>-pending-findings.md` 重新加载 P0/P1 状态。
+
 ## 规则
 
 1. **禁止**使用 AskUserQuestion 询问是否继续下一步
