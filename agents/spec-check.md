@@ -177,29 +177,24 @@ first_seen_commit: <current-HEAD>
 signature: <1-line issue description>
 fix_required: <fix suggestion>
 ```
+## Findings-Only Output Constraint (Context Optimization)
+
+你的最终输出**必须**是紧凑的 findings-only 格式。编排层会将完整报告写入文件，你只需返回 severity table。
+
+**禁止**：前缀散文（"Let me summarize..." / "Based on my analysis..." / "Here are the findings..."）、重复 diff 内容、冗长解释。直接以 `## Layer 1` 开头。
+
 ## Output Format
 
 ```markdown
 ## Layer 1 — Spec Alignment
 
-**Reviewer**: spec-check
+| # | Severity | Requirement/Scenario | Status | Note |
+|---|----------|---------------------|--------|------|
+| 1 | P1 | 需求 2 场景 S3 | ❌ 未实现 | 缺少异步导出逻辑 |
+| 2 | P2 | 超出 Spec | ⚠️ Scope creep | 添加了未要求的缓存层 |
+| 3 | — | 需求 1 场景 S1 | ✅ 已实现 | — |
 
-| Requirement/Scenario | Status | Note |
-|-----------|------|------|
-| 需求 1 场景 S1 | ✅ 已实现 | — |
-| 需求 1 场景 S2 | ❌ 未实现 | 缺少异步处理逻辑 |
-| 需求 2 场景 S3 | ⚠️ 部分实现 | 缺少边界条件处理 |
-
-**Scope Creep**:
-- <超出 Spec 的实现 1>：<影响评估>
-- 无
-
-**Issue List**:
-
-| # | Severity | Issue | Fix Suggestion |
-|---|--------|------|---------|
-| 1 | P1 | 需求 2 场景 S3 未实现 | 补充异步导出逻辑 |
-| 2 | P2 | 超出 Spec：添加了未要求的缓存层 | 移除或补充到 Spec |
+<!-- review-final -->
 ```
 
 ---
