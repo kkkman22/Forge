@@ -87,6 +87,13 @@ node scripts/prepare-diff-context.mjs
 
 **容错**：`Promise.allSettled` 等待。单个失败不阻断；全部失败则终止。失败 Layer 标注"评审失败"。
 
+**Findings-Only 收集（Write-and-Discard）**：每个 Subagent 返回 findings-only 格式（severity table + `<!-- review-final -->` sentinel）。编排层收到后立即：
+1. `Write` 完整 subagent 输出到 `.forge/reviews/<run-id>/<layer>.md`（L1-spec-check.md / L2-quality-check.md / L3-security-check.md）
+2. Context 中只保留 severity 分布摘要（≤50 tokens/layer）：`L1: P0:0 P1:1 P2:0 P3:0 | L2: ... | L3: ...`
+3. `run-id` 从 `git rev-parse --short HEAD` 生成
+
+写入失败 → fallback：保留 findings table 在 context 中（不阻断评审），标注 `write_failed: true`。
+
 **截断处理**：可解析部分发现 → 标注不完整并使用已解析部分；无法解析 → 重试 1 次；重试仍失败 → 标注不完整，**不得标记为"检查完成"**。
 
 **合并管线**：`filterByConfidence` → `deduplicateFindings` → `applyCrossValidation`
@@ -234,9 +241,14 @@ IF 本次执行是从 conversation summary 恢复（上下文压缩后继续）�
 
 ## 16. Context Budget Management
 
-评审者完整输出 → Write-and-discard（写入文件，context 只保留摘要）。摘要使用 Review_Summarizer 协议：severity 分布 + findings 列表 + 文件路径引用，≤400 tokens。
+评审者输出已改为 findings-only 格式（severity table only）。编排层在 §2 Findings-Only 收集步骤中 Write 到文件 + 丢弃原始输出。
 
-**函数调用**: `serializeReviewSummary(reviewOutput)` — 参数：评审者输出（先解析为 `ReviewSummary`）；返回：摘要字符串；用途：替换 context 中的评审完整输出
+**Context 预算（post findings-only）**：
+- 每个 layer 的 context 占用：≤50 tokens（severity 分布摘要）
+- 3 layers 合计：≤150 tokens（vs 原来 ~20k tokens）
+- 完整报告路径：`.forge/reviews/<run-id>/L1-spec-check.md` / `L2-quality-check.md` / `L3-security-check.md`
+
+**函数调用**: `serializeReviewSummary(reviewOutput)` — 参数：评审者 findings-only 输出（severity table）；返回：severity 分布摘要字符串（≤50 tokens）；用途：替换 context 中的 findings table
 
 → 函数签名详见 references/function-contracts.md
 
