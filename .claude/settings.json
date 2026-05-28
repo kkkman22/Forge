@@ -27,7 +27,8 @@
         "hooks": [
           {
             "type": "command",
-            "command": "head -30 .forge/plans/*.md 2>/dev/null || true"
+            "command": "node scripts/inject-plan-context.mjs 2>/dev/null || node forge/scripts/inject-plan-context.mjs 2>/dev/null || node ~/.claude/skills/forge/scripts/inject-plan-context.mjs 2>/dev/null || true",
+            "timeout": 5
           }
         ]
       },
