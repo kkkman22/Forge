@@ -65,9 +65,14 @@ Skill 启动时先展示与当前任务最相关的历史 ADR，帮助用户感�
 
 **并发控制**：并行 Subagent 数量受 `.forge/config.md` 中 `max_parallel_agents`（默认 6）限制。收到 HTTP 429 时按降级策略减少并发数。详见 CLAUDE.md §6 Session Boundaries。
 
+**Write-and-Discard（Context Optimization）**：Round 1 完成后，对每个视角输出执行：
+1. `Write` 完整输出到 `.forge/decisions/<date>-<topic>-<perspective>.md`（如 `2026-05-28-context-overhead-optimization-product.md`）
+2. Context 中只保留文件路径 + ≤100 tokens 摘要（视角名称 + 核心结论 + 风险评级）
+3. 写入失败 → fallback：保留原始输出在 context 中（不阻断决策），标注 `write_failed: true`
+
 ### Round 2 — Critic Subagent (Serial, launched after Round 1 completes)
 
-收集 Round 1 所有视角输出，启动 Critic Subagent 审查所有视角输出，寻找盲点和矛盾。
+收集 Round 1 所有视角的**摘要**（文件路径引用 + ≤100 tokens 核心结论），启动 Critic Subagent 审查。Critic 可通过 Read 工具按需读取 `.forge/decisions/` 下的完整视角输出文件。
 
 **Critic 规则**：
 - 必须在所有 Round 1 视角输出完毕后才能审查
