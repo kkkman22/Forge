@@ -125,18 +125,24 @@ first_seen_commit: <current-HEAD>
 signature: <1-line issue description>
 fix_required: <fix suggestion>
 ```
+## Findings-Only Output Constraint (Context Optimization)
+
+你的最终输出**必须**是紧凑的 findings-only 格式。编排层会将完整报告写入文件，你只需返回 severity table。
+
+**禁止**：前缀散文（"Let me summarize..." / "Based on my analysis..." / "Here are the findings..."）、重复 diff 内容、冗长解释。直接以 `## Layer 3` 开头。
+
 ## Output Format
 
 ```markdown
 ## Layer 3 — Security & Risk
 
-**Reviewer**: security-check
+| # | Severity | File:Line | Issue | Suggestion |
+|---|----------|-----------|-------|------------|
+| 1 | P0 | `src/config/db.ts:12` | 硬编码密码 | 使用环境变量 |
+| 2 | P1 | `src/routes/user.ts:45` | 缺失鉴权 | 添加 auth middleware |
+| 3 | P2 | `src/utils/log.ts:23` | 日志泄露 | 脱敏处理 |
 
-| # | Severity | File | Issue | Suggestion |
-|---|--------|------|------|------|
-| 1 | P0 | `src/config/db.ts:12` | 硬编码数据库密码 | 使用环境变量替代 |
-| 2 | P1 | `src/routes/user.ts:45` | 缺失鉴权检查 | 添加 auth middleware |
-| 3 | P2 | `src/utils/log.ts:23` | 日志打印用户邮箱 | 脱敏处理 |
+<!-- review-final -->
 ```
 
 ---
