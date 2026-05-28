@@ -6,7 +6,7 @@
  * shouldClearGoal are pure functions (file-read aside).
  */
 
-import { readFileSync, existsSync } from "node:fs";
+import { existsSync, readFileSync } from "node:fs";
 import { resolve } from "node:path";
 
 /** Forge routing tiers. */
