@@ -1,4 +1,14 @@
 {
+  "autoMode": {
+    "hard_deny": [
+      "Edit",
+      "Write",
+      "MultiEdit"
+    ]
+  },
+  "worktree": {
+    "baseRef": "fresh"
+  },
   "hooks": {
     "SessionStart": [
       {
