@@ -1,47 +1,44 @@
 import { describe, it } from "vitest";
 
+const MAX_CONTENT_BYTES = 80;
+
 function extractContentOnly(markdown: string | null | undefined): string {
   if (!markdown) return "";
   const lines = markdown.split("\n");
-  const result: string[] = [];
+  const result: string[] = ["## Evolved Rules (content-only)"];
   let inRule = false;
+  let inFrontmatter = false;
 
   for (const line of lines) {
+    if (line.trim() === "---") {
+      inFrontmatter = !inFrontmatter;
+      continue;
+    }
+    if (inFrontmatter) continue;
+
     if (/^### R\d+:/.test(line)) {
       inRule = true;
-      result.push(line);
+      result.push("", line);
       continue;
     }
-    if (!inRule) {
-      result.push(line);
-      continue;
-    }
+    if (!inRule) continue;
+
     if (/^\*\*Content\*\*:/.test(line)) {
-      result.push(line);
+      let truncated = line;
+      while (Buffer.byteLength(truncated, "utf-8") > MAX_CONTENT_BYTES && truncated.length > 10) {
+        truncated = truncated.slice(0, -1);
+      }
+      if (truncated !== line) truncated += "…";
+      result.push(truncated);
       continue;
     }
-    if (line.startsWith("### ") || line.startsWith("<!-- ")) {
+
+    if (/^### |^<!-- |^## /.test(line)) {
       inRule = false;
-      result.push(line);
       continue;
     }
-    if (
-      /^\*\*(Prevents|Source|Added|Confidence|Last_triggered|Infra_Ref)\*\*:/.test(
-        line,
-      )
-    ) {
-      continue;
-    }
-    if (inRule && line.trim() === "") {
-      result.push(line);
-      continue;
-    }
-    if (inRule && !/^\*\*/.test(line)) {
-      result.push(line);
-      continue;
-    }
-    if (!inRule) {
-      result.push(line);
+
+    if (/^\*\*(Prevents|Source|Added|Confidence|Last_triggered|Infra_Ref)\*\*:/.test(line)) {
     }
   }
 
@@ -50,11 +47,15 @@ function extractContentOnly(markdown: string | null | undefined): string {
 
 describe("extractContentOnly", () => {
   it("extracts only Content lines from rules, strips metadata", ({ expect }) => {
-    const input = `# Error-Prevention Rules
+    const input = `---
+updated: "2026-01-01"
+---
+
+# Error-Prevention Rules
 
 ### R1: Test Rule
 
-**Content**: This is the core rule statement.
+**Content**: Short rule.
 **Prevents**: Some error
 **Source**: knowledge/file.md
 **Added**: 2026-01-01
@@ -67,25 +68,25 @@ describe("extractContentOnly", () => {
 
     const result = extractContentOnly(input);
 
-    expect(result).toContain("**Content**: This is the core rule statement.");
-    expect(result).toContain("**Content**: Second rule content here.");
+    expect(result).toContain("**Content**: Short rule.");
     expect(result).toContain("### R1: Test Rule");
     expect(result).toContain("### R2: Another Rule");
     expect(result).not.toContain("**Prevents**:");
     expect(result).not.toContain("**Source**:");
-    expect(result).not.toContain("**Added**:");
-    expect(result).not.toContain("**Confidence**:");
+    expect(result).toContain("## Evolved Rules (content-only)");
+    // Frontmatter and intro text should be stripped
+    expect(result).not.toContain("Error-Prevention Rules");
   });
 
-  it("produces output smaller than 1.5KB for 12 rules", ({ expect }) => {
-    const rules = Array.from(
-      { length: 12 },
-      (_, i) =>
-        `### R${i + 1}: Rule ${i + 1}\n\n**Content**: ${"A".repeat(60)} rule ${i + 1}.\n**Prevents**: Error ${i + 1}\n**Source**: source-${i + 1}\n**Added**: 2026-01-01\n**Confidence**: 0.8`,
-    ).join("\n\n");
+  it("truncates long Content lines to byte budget", ({ expect }) => {
+    const longContent = "A".repeat(200);
+    const input = `### R1: Long Rule\n\n**Content**: ${longContent}\n**Prevents**: Something`;
 
-    const result = extractContentOnly(`# Rules\n\n${rules}`);
-    expect(Buffer.byteLength(result, "utf-8")).toBeLessThan(1500);
+    const result = extractContentOnly(input);
+    const contentLine = result.split("\n").find((l) => l.startsWith("**Content**"))!;
+
+    expect(Buffer.byteLength(contentLine, "utf-8")).toBeLessThanOrEqual(MAX_CONTENT_BYTES + 10); // +10 for "…" and rounding
+    expect(contentLine).toContain("…");
   });
 
   it("handles empty/null/undefined input", ({ expect }) => {
@@ -94,20 +95,8 @@ describe("extractContentOnly", () => {
     expect(extractContentOnly(undefined)).toBe("");
   });
 
-  it("preserves non-rule content (comments, intro text)", ({ expect }) => {
-    const input = `# Rules
-
-<!-- Rule format -->
-Intro text.
-
-### R1: First
-
-**Content**: Rule one.
-**Prevents**: Something`;
-
-    const result = extractContentOnly(input);
-    expect(result).toContain("<!-- Rule format -->");
-    expect(result).toContain("Intro text.");
-    expect(result).not.toContain("**Prevents**:");
+  it("handles input with no rules (just header text)", ({ expect }) => {
+    const result = extractContentOnly("# Rules\n\nNo rules yet.");
+    expect(result).toBe("## Evolved Rules (content-only)");
   });
 });

@@ -18,7 +18,60 @@ import { shouldSkipForSubagent } from "./lib/hook-stdin-router.mjs";
 const RULES_PATH = ".forge/knowledge/evolved-rules.md";
 const SPEC_LOCK_PATH = ".forge/state/spec-lock";
 const SPECS_DIR = ".kiro/specs";
-const MAX_BYTES = 4096;
+const MAX_BYTES = 32768; // Read full file — extraction will trim
+const MAX_CONTENT_BYTES = 80; // Byte budget per Content line (CJK = 3 bytes/char)
+
+/**
+ * Extract only rule headers + **Content** lines from evolved-rules markdown.
+ * Strips YAML frontmatter, intro text, comments, and all metadata fields.
+ * Truncates Content lines to MAX_CONTENT_CHARS. Reduces injection to <1.5KB.
+ */
+function extractContentOnly(markdown) {
+  const lines = markdown.split("\n");
+  const result = ["## Evolved Rules (content-only)"];
+  let inRule = false;
+  let inFrontmatter = false;
+
+  for (const line of lines) {
+    if (line.trim() === "---") {
+      inFrontmatter = !inFrontmatter;
+      continue;
+    }
+    if (inFrontmatter) continue;
+
+    if (/^### R\d+:/.test(line)) {
+      inRule = true;
+      result.push("", line);
+      continue;
+    }
+    if (!inRule) continue;
+
+    if (/^\*\*Content\*\*:/.test(line)) {
+      let truncated = line;
+      while (Buffer.byteLength(truncated, "utf-8") > MAX_CONTENT_BYTES && truncated.length > 10) {
+        truncated = truncated.slice(0, -1);
+      }
+      if (truncated !== line) truncated += "…";
+      result.push(truncated);
+      continue;
+    }
+
+    if (/^### |^<!-- |^## /.test(line)) {
+      inRule = false;
+      continue;
+    }
+
+    if (
+      /^\*\*(Prevents|Source|Added|Confidence|Last_triggered|Infra_Ref)\*\*:/.test(
+        line,
+      )
+    ) {
+      continue;
+    }
+  }
+
+  return result.join("\n");
+}
 
 /**
  * Read evolved-rules.md content, truncated at MAX_BYTES.
@@ -76,11 +129,20 @@ function detectSpecName(cwd) {
     if (await shouldSkipForSubagent()) process.exit(0);
 
     const cwd = process.cwd();
-    const rulesContent = readEvolvedRules(cwd);
+    const rawRules = readEvolvedRules(cwd);
 
     // No evolved-rules.md → silent exit
-    if (rulesContent === null) {
+    if (rawRules === null) {
       process.exit(0);
+    }
+
+    // Extract only Content lines to reduce injection size (~4KB → ~1KB)
+    let rulesContent;
+    try {
+      rulesContent = extractContentOnly(rawRules);
+    } catch {
+      // Fallback to raw truncation if parsing fails
+      rulesContent = rawRules;
     }
 
     const specName = detectSpecName(cwd);
