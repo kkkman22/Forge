@@ -1,0 +1,66 @@
+#!/usr/bin/env bash
+# forge-status — Show current Forge task status.
+set -euo pipefail
+
+if [[ "${1:-}" == "--help" || "${1:-}" == "-h" ]]; then
+  cat <<'HELP'
+forge-status — Show current Forge task status
+
+Usage: forge-status [--json] [--short]
+
+Options:
+  --help, -h   Show this help message
+  --json       Output in JSON format
+  --short      One-line summary only
+
+Reads .forge/status.md and .forge/progress/<task>.md to display:
+  1. Current task name and tier
+  2. Current phase
+  3. Task progress (completed/total)
+  4. Branch name
+HELP
+  exit 0
+fi
+
+ROOT="${FORGE_ROOT:-$(git rev-parse --show-toplevel 2>/dev/null || echo .)}"
+cd "$ROOT"
+
+STATUS_FILE=".forge/status.md"
+
+if [[ ! -f "$STATUS_FILE" ]]; then
+  echo "No active Forge task found. Run /forge <task-description> to start."
+  exit 0
+fi
+
+# Parse frontmatter fields
+current_task=$(grep '^current_task:' "$STATUS_FILE" | sed 's/current_task: *"\{0,1\}//;s/"\{0,1\} *$//')
+tier=$(grep '^tier:' "$STATUS_FILE" | sed 's/tier: *"\{0,1\}//;s/"\{0,1\} *$//')
+phase=$(grep '^phase:' "$STATUS_FILE" | sed 's/phase: *"\{0,1\}//;s/"\{0,1\} *$//')
+branch=$(grep '^branch:' "$STATUS_FILE" | sed 's/branch: *"\{0,1\}//;s/"\{0,1\} *$//')
+
+if [[ "${1:-}" == "--json" ]]; then
+  echo "{\"task\":\"$current_task\",\"tier\":\"$tier\",\"phase\":\"$phase\",\"branch\":\"$branch\"}"
+  exit 0
+fi
+
+if [[ "${1:-}" == "--short" ]]; then
+  echo "Task: $current_task | Tier: $tier | Phase: $phase"
+  exit 0
+fi
+
+echo "📋 Forge Task Status"
+echo ""
+echo "  Task:   $current_task"
+echo "  Tier:   $tier"
+echo "  Phase:  $phase"
+echo "  Branch: $branch"
+
+# Check progress file
+PROGRESS_FILE=".forge/progress/${current_task}.md"
+if [[ -f "$PROGRESS_FILE" ]]; then
+  total=$(grep -c '\- \[' "$PROGRESS_FILE" 2>/dev/null || echo 0)
+  done=$(grep -c '\- \[x\]' "$PROGRESS_FILE" 2>/dev/null || echo 0)
+  echo "  Tasks:  $done/$total completed"
+fi
+
+echo ""

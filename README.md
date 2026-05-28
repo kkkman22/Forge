@@ -6,8 +6,8 @@
 
 > **统一 `/forge` 入口 + <!-- ssot:begin topic=commands render=count -->21<!-- ssot:end topic=commands --> 个内部子命令覆盖完整开发生命周期，三维路由自动匹配复杂度，统一状态系统跨会话感知。**
 >
-> 前置条件：Claude Code ≥ 2.1.121 | [安装指南](docs/quick-start.md)
-> 建议 Claude Code ≥ 2.1.143（forge-context env-first 路径解析、Stop hook 安全网、PostToolUse 反馈链均依赖此版本平台特性，旧版本会自动降级到 fallback 路径）
+> 前置条件：Claude Code ≥ 2.1.153 | [安装指南](docs/quick-start.md)
+> 完整兼容性矩阵和降级策略见 [docs/claude-code-compatibility.md](docs/claude-code-compatibility.md)
 
 ---
 
@@ -54,6 +54,7 @@ claude plugin install forge
 | 安全参考 | [docs/reference-security.md](docs/reference-security.md) | 了解安全机制分层和审计 |
 | 架构参考 | [docs/reference-architecture.md](docs/reference-architecture.md) | 深入了解 .forge/ 目录结构和状态保护 |
 | 高级功能参考 | [docs/reference-advanced.md](docs/reference-advanced.md) | Forge Loop、cmux、Domain Pack、Token 效率 |
+| 兼容性参考 | [docs/claude-code-compatibility.md](docs/claude-code-compatibility.md) | Claude Code 版本兼容性和降级策略 |
 
 ---
 
@@ -96,6 +97,18 @@ bash /tmp/forge/scripts/install-dist.sh
 ```
 
 > 只含 `/forge` 命令，不含 Forge Loop。适合团队统一部署。
+
+## bin/ 命令
+
+Plugin 安装后，以下命令可直接在终端使用：
+
+| 命令 | 说明 |
+|------|------|
+| `forge-doctor` | 项目健康检查（`.forge/` 结构、配置、hooks） |
+| `forge-status` | 显示当前任务状态（tier/phase/progress） |
+| `forge-restate` | 触发 restatement checkpoint（PreCompact hook 配合） |
+
+所有命令支持 `--help`。
 
 ### 自带 forge-context MCP
 

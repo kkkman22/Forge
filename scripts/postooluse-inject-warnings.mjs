@@ -228,21 +228,17 @@ function readFileStatus(filePath) {
  * Returns { isFrozen: boolean, category: string } or null.
  */
 function checkFrozenZone(filePath, projectRoot) {
-  // Normalize the path
-  const normalized = filePath.replace(/\\/g, "/");
+  const resolved = normalisePath(resolve(filePath));
+  const projectResolved = normalisePath(resolve(projectRoot));
 
-  // Check if path is under .forge/
-  const forgeIdx = normalized.indexOf(".forge/");
-  if (forgeIdx === -1) return null;
-
-  // Get the .forge/-relative path
-  const forgeRelative = normalized.slice(forgeIdx + 7); // after ".forge/"
+  if (!resolved.startsWith(projectResolved + "/.forge/")) return null;
+  const forgeRelative = resolved.slice(projectResolved.length + 7);
+  if (!forgeRelative) return null;
 
   const frozenPaths = parseFrozenPaths(projectRoot);
 
   for (const { glob, category, qualifier } of frozenPaths) {
-    if (pathMatchesRule(forgeRelative, glob)) {
-      // Check status qualifier if present
+    if (globMatches(forgeRelative, glob)) {
       if (qualifier) {
         const actualStatus = readFileStatus(filePath);
         if (actualStatus !== qualifier) continue;
@@ -256,34 +252,10 @@ function checkFrozenZone(filePath, projectRoot) {
 
 /**
  * Check if a forge-relative path matches a rule glob.
+ * Delegates to globMatches() for consistent wildcard handling.
  */
 function pathMatchesRule(forgeRelative, glob) {
-  // Exact match (e.g. "config.md")
-  if (forgeRelative === glob) return true;
-
-  // If glob contains wildcard, extract directory prefix
-  if (glob.includes("*")) {
-    const prefix = glob.split("*")[0];
-    if (prefix && forgeRelative.startsWith(prefix)) return true;
-  }
-
-  // If glob ends with /, prefix match
-  if (glob.endsWith("/") && forgeRelative.startsWith(glob)) return true;
-
-  // If glob has a directory, prefix match on directory
-  if (glob.includes("/") && !glob.includes("*")) {
-    const dir = glob.substring(0, glob.lastIndexOf("/") + 1);
-    if (dir && forgeRelative.startsWith(dir)) {
-      // Check if the filename part matches
-      const fileName = glob.substring(glob.lastIndexOf("/") + 1);
-      const relFileName = forgeRelative.substring(
-        forgeRelative.lastIndexOf("/") + 1,
-      );
-      if (!fileName || relFileName === fileName) return true;
-    }
-  }
-
-  return false;
+  return globMatches(forgeRelative, glob);
 }
 
 // ── Context boundary check ──
