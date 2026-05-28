@@ -12,28 +12,34 @@
 4. 写入失败 → 跳过持久化，继续推进（不阻断）
 5. 无 P0/P1 findings → 跳过此步骤
 
-## Inter-phase Auto-Compact
+## Context Compact 策略
 
-在以下切换点检查 context 使用率：
+**Claude Code 平台行为**：
+- CLI 自动 compact 阈值：~95%（硬编码，不可配置）
+- VS Code 扩展自动 compact 阈值：~65%
+- AI 无法程序化触发 compact 或读取 context 使用率
+- Skill 执行不阻断自动 compact（平台后台自动处理）
+- `/compact` 命令可在 skill 执行中使用但可能打断状态
 
-| 切换点 | 触发条件 | 动作 |
-|--------|---------|------|
-| decide 确认 → spec | context > 50% | 持久化 P0/P1 → 触发 compact |
-| plan 批准 → build | context > 50% | 持久化 P0/P1 → 触发 compact |
-| build 完成 → review | context > 50% | 持久化 P0/P1 → 触发 compact |
+**Forge 策略：持久化优先，建议性 compact**
 
-## Intra-Build Wave-Boundary Auto-Compact
+Forge 不尝试自动触发 compact（技术上不可行）。而是：
+1. **持久化保护**（已实现）：在阶段切换和 wave 间将 P0/P1 写入 `.forge/progress/<task>-pending-findings.md`，确保 compact 后可恢复
+2. **建议性输出**：wave/阶段完成时，若 AI 观察到 context 较高（对话轮次多、subagent 输出多），输出建议：
+   ```
+   📊 Wave N 完成 | 建议执行 /compact 再继续（P0/P1 已持久化）
+   ```
+3. **用户决策**：用户自行决定是否 /compact。不自动阻断流程。
+4. **Compact 后恢复**：通过 `/forge resume` 从 `.forge/progress/` 和 `.forge/knowledge/sessions/` 读取状态
 
-当 tasks.md 含 wave 分组时，每个 wave 完成后：
+**Inter-phase 持久化点**：
 
-1. 检查 context 使用率
-2. 若 >50% 且还有后续 wave → 持久化当前 P0/P1 → 建议用户 compact
-3. Compact 是平台机制（不等同于停顿），不违反 §2.7 铁律
-4. 若 ≤50% 或无后续 wave → 跳过 compact，继续下一 wave
-
-**执行方式**：wave 完成时输出 `📊 Wave N 完成 | Context: X% | 后续 wave 存在 → 建议执行 /compact 再继续`
-
-Compact 后恢复：通过 `.forge/progress/<taskName>-pending-findings.md` 重新加载 P0/P1 状态。
+| 切换点 | 持久化动作 |
+|--------|-----------|
+| decide 确认 → spec | 持久化 P0/P1 findings |
+| plan 批准 → build | 持久化 P0/P1 findings |
+| build wave 完成 | 持久化 P0/P1 findings |
+| build 完成 → review | 持久化 P0/P1 findings |
 
 ## 规则
 
