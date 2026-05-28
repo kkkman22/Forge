@@ -10,6 +10,7 @@ tools:
   - Grep
   - Agent
   - AskUserQuestion
+disallowedTools: [Edit, Write, MultiEdit, "Bash(git push *)"]
 model: sonnet
 initialPrompt: |
   If a spec slug was provided by the caller (e.g. via prompt arg), read `.forge/specs/<slug>/spec.md` now.
