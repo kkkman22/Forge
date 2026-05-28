@@ -10,8 +10,9 @@
  * **Validates: Requirements R5.2, R6.2, R14.3, R14.4**
  */
 import { execSync } from "node:child_process";
-import { existsSync, globSync } from "node:fs";
+import { existsSync } from "node:fs";
 import { join } from "node:path";
+import { globSync } from "glob";
 const CMUX_SOCKET_TIMEOUT = 1000;
 /**
  * Detect if cmux is available via workspace ID env var + socket file.

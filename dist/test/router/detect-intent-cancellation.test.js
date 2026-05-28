@@ -64,7 +64,7 @@ describe("detectIntentCancellation", () => {
 });
 describe("detectIntentCancellation PBT", () => {
     it("cancelAll is true only when cancel keyword present and no intent name present", () => {
-        const cancelKeywords = [
+        const _cancelKeywords = [
             "取消",
             "忽略",
             "不要",

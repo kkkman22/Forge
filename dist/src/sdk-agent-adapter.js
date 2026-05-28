@@ -1,11 +1,11 @@
 /**
- * SDK Agent Adapter — wraps the Claude Code Agent SDK's `query()` to
- * implement the `AgentInterface` from `loop-types.ts`.
+ * SDK Agent Adapter — @deprecated
  *
- * This is the only module that imports from `@anthropic-ai/claude-agent-sdk`.
- * It translates between the SDK's message types and Forge's pure-function
- * types, handling structured output extraction, token usage mapping, and
- * output validation.
+ * Replaced by CliSubprocessDriver (src/cli-subprocess-driver.ts) in
+ * workflows-integration (T8). This file is retained for backward-compatible
+ * type imports only. Do not use for runtime agent dispatch.
+ *
+ * DEPRECATED: Use CliSubprocessDriver instead.
  *
  * Design reference: sdk-autonomous-loop § sdk-agent-adapter.ts
  * **Validates: Requirements 2.1, 2.2, 2.3, 2.4, 2.5, 2.6, 2.7**
@@ -29,6 +29,12 @@ const DEFAULT_GLOBAL_TIMEOUT_MS = 1_800_000;
  * zero-latency startup. Subsequent calls use the standalone `query()`
  * function with full options. Tracks warm query consumption via an
  * internal flag.
+ *
+ * @deprecated Slated for removal once the workflows-integration default-swap
+ *   (T11) lands. New code should use `CliSubprocessDriver` from
+ *   `cli-subprocess-driver.ts`. This adapter remains while warm-query and
+ *   startup() compatibility paths are still wired in forge-loop-cli.ts.
+ *
  * @public
  */
 export class SdkAgentAdapter {

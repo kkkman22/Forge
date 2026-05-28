@@ -54,7 +54,7 @@ export function walkMdFiles(dir, opts = {}) {
                 walk(fullPath);
             }
             else if (isFile && extensions.some((ext) => entry.name.endsWith(ext))) {
-                if (excludeFn && excludeFn(entry.name))
+                if (excludeFn?.(entry.name))
                     continue;
                 results.push(relativeTo ? relative(relativeTo, fullPath) : fullPath);
             }

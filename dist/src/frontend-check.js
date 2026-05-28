@@ -1,5 +1,6 @@
-import { globSync, readFileSync } from "node:fs";
+import { readFileSync } from "node:fs";
 import { resolve } from "node:path";
+import { globSync } from "glob";
 export function detectTierAvailability(env) {
     const reasons = {
         cmuxSocket: env.socketExists,
