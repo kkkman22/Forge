@@ -313,3 +313,63 @@ npm run docs:embeds         # 重新渲染嵌入指令
 ### 宽限期
 
 在 `.forge/config.md` 中设置 `docs.grace_period_until: YYYY-MM-DD`，宽限期内 error 降级为 warning，不阻断合并。CI 会在宽限期到期时发出通知。
+
+## §2.7 补充：No Confirmation Between Steps — 实现机制
+
+**实现机制：基于 Claude Code `/goal`**
+
+三档路由确认后，系统输出 `/goal` 命令供用户复制执行，设定跨多轮完成条件：
+- Standard: `完成 plan→build→review→test→ship 流程，且无 P0/P1 阻断`
+- Full: `完成 decide→spec→plan→build→review→test→ship→learn 流程，且无 P0/P1 阻断`
+- Light: 不设置 goal（短任务无需多轮）
+
+Three-strike 触发时（连续 3 次失败），`shouldClearGoal()` 自动清除 goal，允许人工介入。
+
+## §3.1 补充：Execution-Assessment Separation — disallowed-tools 强化
+
+**平台级约束（v2.1.152+）**
+
+`disallowed-tools` frontmatter 字段在 skill 激活期间从模型可见工具列表移除列出的工具，实现平台级执行隔离：
+
+| Skill | disallowed-tools |
+|-------|-----------------|
+| forge-review | Edit, Write, MultiEdit, NotebookEdit, Bash(git push *), Bash(git commit *), Bash(git reset *) |
+| forge-decide-* | Edit, Write, MultiEdit |
+| forge-plan | Edit, Write, MultiEdit, Bash(git push *) |
+| forge-ship | Bash(rm -rf *), Bash(git reset --hard *) |
+| forge-learn | Bash(git push *) |
+
+完整矩阵见 `.forge/decisions/2026-05-28-skill-disallowed-tools-matrix.md`。
+
+## §3.3 补充：Fallback Ladder L0 — ultrareview
+
+**L0: ultrareview（v2.1.153 新增）**
+
+当 spec-check / quality-check / security-check subagent 全部不可用时，先尝试云端 `claude ultrareview --json` 替代：
+1. 检查 `.forge/config.md` 中 `review_use_ultrareview: true`（默认 false）
+2. 调用 `claude ultrareview --json`，解析 findings 映射到 P0-P3
+3. 失败时降级到原 L1 路径
+4. 可通过 `review_use_ultrareview: false` 关闭
+
+外部化评审仍满足 §3.1 Execution-Assessment Separation：独立 subagent 由 Anthropic 后端运行，不是主 Agent 顶替。
+
+## §2.2 补充：worktree.baseRef = fresh
+
+**配置**：`.claude/settings.json` 中 `worktree.baseRef: "fresh"` 确保 worktree 从 `origin/<default>` 派生干净 base。
+
+## §2.5 补充：PreCompact hook 实现 Restatement Checkpoint
+
+**实现机制**：`scripts/pre-compact-hook.mjs` 在压缩前检查 progress 更新间隔：
+- 读取 `.forge/progress/<active>.md` 已完成任务数
+- 与 `.forge/state/last-restatement.json` 对比
+- 超过阈值（默认 3 个任务）时 exit 2 阻断压缩
+- 可通过 `forge_pre_compact_hook: off` 关闭
+
+## Claude Code 兼容性
+
+**最低版本**：v2.1.153
+**降级策略**：所有新增平台特性在旧版上优雅降级（详见 design.md 降级矩阵）。关键降级行为：
+- hard_deny 不识别 → PreToolUse hook 检查
+- /goal 不可用 → 退回 prompt 约束
+- MessageDisplay hook 不触发 → 输出原样显示
+- bin/ 不自动 PATH → 使用长路径调用
