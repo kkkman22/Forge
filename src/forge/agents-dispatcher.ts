@@ -60,7 +60,10 @@ type DispatchMode = (typeof VALID_DISPATCH_MODES)[number];
  * @returns The resolved dispatch mode.
  * @public
  */
-export function parseDispatchMode(context: "review" | "decide", configContent: string): DispatchMode {
+export function parseDispatchMode(
+  context: "review" | "decide",
+  configContent: string,
+): DispatchMode {
   const fieldName = `${context}_dispatch_mode`;
   const match = configContent.match(new RegExp(`^\\s*${fieldName}:\\s*(\\S+)`, "m"));
   if (match) {
@@ -167,7 +170,10 @@ export async function dispatch(opts: DispatchOptions): Promise<DispatchResult> {
  * @returns Array of parsed DispatchResult objects.
  * @public
  */
-export async function collectResults(runId: string, projectRoot: string): Promise<DispatchResult[]> {
+export async function collectResults(
+  runId: string,
+  projectRoot: string,
+): Promise<DispatchResult[]> {
   const resultsDir = join(projectRoot, ".forge", "agent-results", runId);
 
   let entries: string[];
