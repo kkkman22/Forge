@@ -1,6 +1,6 @@
 ---
-updated: "2026-05-23"
-rule_count: 12
+updated: "2026-05-29"
+rule_count: 13
 max_rules: 15
 ---
 
@@ -32,7 +32,7 @@ This file keeps only rules that still need top-of-session reminders.
 **Source**: 用户反馈 — spec 阶段自检完成后模型直接 idle，用户需手动触发；2026-05-28 review 发现 3P0+7P1 后仅输出报告未触发 gated_auto
 **Added**: 2026-05-09
 **Confidence**: 0.9
-**Last_triggered**: 2026-05-28
+**Last_triggered**: 2026-05-29
 **Infra_Ref**: `skills/shared/next-step-protocol.md` §三种违规形态
 
 ### R2: Review 必须对 "新增文件" 做主分支存在性验证
@@ -138,12 +138,22 @@ This file keeps only rules that still need top-of-session reminders.
 ### R12: 重命名 ≠ 合并，双实现修复必须删一边
 
 **Content**: review 报"双实现冲突"时，**禁止**只把其中一个函数改名再 export 出去就声称已修。合并双实现的最低判据：删除其中一个实现，或合并成 layered design（canonical + adapter，adapter 词典从 canonical 派生）。验证：`grep -RIn 'export.*<原函数名>\\b' src/ \| wc -l` 必须 = 1；下游所有 caller 收敛到一个函数。如果保留两个 export，文件头注释必须明确 layering 关系（"canonical 是 X / adapter 是 Y / 词典派生关系是 Z"），并有死代码标记或显式删除计划。
-**Prevents**: 把 detectSpecLeak 重命名为 detectSpecLeakFromBundle 就声明双实现已合并，实际两边的扫描逻辑（5 条硬编码正则 vs banned-patterns.yaml 注册表）依旧并存且不同步（2026-05-23 commit `5401e1c0`）
+**Prevents**: 把 detectSpecLeak 重命名为 detectSpecLeakFromBundle 就声明双实现已合并，实际两边的扫描逻辑（5 条硬编码正则 vs banned-patterns.yaml 注册表）依旧并存且不同同步（2026-05-23 commit `5401e1c0`）
 **Source**: `.forge/reviews/forge-kiro-style-spec-workflow-round3.md` (P0-11)
 **Added**: 2026-05-23
 **Confidence**: 0.85
 **Last_triggered**: 2026-05-23
 **Infra_Ref**: `.claude/agents/spec-check.md` Check Item: "rename ≠ merge for double-implementation"
+
+### R13: 平台能力声明必须先验证再写入
+
+**Content**: 声称"AI 可以 X"（读 context %、触发 compact、调用 API）写入 SKILL/instructions 之前，**必须**实际测试验证。未验证的能力声明等同于虚假文档，会误导后续所有依赖该声明的实现。验证方式：(a) 查阅 Claude Code 官方文档，(b) 实际尝试调用并检查返回值，(c) 搜索 GitHub issues 确认已知限制。如果验证失败，在文档中明确标注"当前不可用"或改为 fallback 策略。
+**Prevents**: 在 next-step-protocol.md 中写入"AI 可观察状态栏百分比"触发 compact，实际 AI 无法读取 context 使用率（2026-05-29 context-overhead-optimization ship 阶段被用户当场纠正）
+**Source**: context-overhead-optimization ship 阶段 — 用户质疑阈值方案后调研发现 AI 完全无法程序化读取 context %
+**Added**: 2026-05-29
+**Confidence**: 0.9
+**Last_triggered**: 2026-05-29
+**Infra_Ref**: `skills/shared/next-step-protocol.md` §Context Compact 策略
 
 ---
 
