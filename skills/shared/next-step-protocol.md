@@ -37,7 +37,8 @@
 | /forge plan | 自动调用 /forge build | 输出问题，停止 |
 | /forge build | 自动调用 /forge review | 输出问题，停止 |
 | /forge build-light | 自动调用 /forge review | 输出问题，停止 |
-| /forge review (通过) | 自动调用 /forge test（标准/全量）或 /forge ship（轻量） | 输出 P0/P1 清单，停止 |
+| /forge review (通过) | 自动调用 /forge test（标准/全量）或 /forge ship（轻量） | 输出报告 → gated_auto 询问 → 修复 → re-review |
+| /forge review (未通过，P0/P1) | 输出报告+清单 → 立即 gated_auto 询问（AskUserQuestion）→ 确认后自动修复 → re-review | 阻断性错误、Three-strike |
 | /forge test | 自动调用 /forge ship | 输出失败详情，停止 |
 | /forge ship | 自动调用 /forge learn（全量）或标记完成（标准） | 输出阻断原因，停止 |
 
