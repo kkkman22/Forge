@@ -202,7 +202,7 @@ IF 本次执行是从 conversation summary 恢复（上下文压缩后继续）�
 
 正常完成（status=success + sentinel 存在）→ 进入管线；缺 sentinel → fallback ladder 自动重判为 `incomplete-report:missing-sentinel` 并触发 L1 重试，主 Agent 不需要也不应该自己处理；截断 → 重试 1 次；错误 → 重试 1 次；429 → 降级等待后重试；超时(180s) → 标记 `incomplete`。**不得在 Subagent 运行中合并结果**。
 
-**Step 4 自动推进（铁律）**：通过 → **立即调用** `Skill(skill="forge", args="<next>")`，不输出确认提示。仅输出 `✅ review 通过 → 自动进入 <下一阶段>`，然后直接调用 Skill（→ 详见 shared/next-step-protocol.md）；未通过 → 输出问题清单，停止等待用户修复后重新评审。静默 idle（无输出、等待用户输入）与显式询问同罪。
+**Step 4 自动推进（铁律）**：通过 → **立即调用** `Skill(skill="forge", args="<next>")`，不输出确认提示。仅输出 `✅ review 通过 → 自动进入 <下一阶段>`，然后直接调用 Skill（→ 详见 shared/next-step-protocol.md）；未通过（存在 P0/P1）→ 输出报告和修复清单 → **立即**触发 `gated_auto` 流程（AskUserQuestion 询问用户是否自动修复全部 P0/P1）→ 用户确认后执行修复 → 修复完成自动 re-review。**禁止**输出问题清单后 idle 等待用户推动。静默 idle 与显式询问"是否继续"同罪。
 
 ## 12. Examples
 
