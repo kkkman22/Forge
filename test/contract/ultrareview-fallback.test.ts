@@ -265,6 +265,19 @@ describe("ultrareview-fallback.mjs (R9)", () => {
 
       expect(result.exitCode).toBe(1);
     });
+
+    it("handles config with inline comments (real config format)", () => {
+      const mockScript = mockClaueOutputJson(SAMPLE_ULTRAREVIEW_OUTPUT);
+
+      const result = runScript({
+        mockClaudeScript: mockScript,
+        configYaml: "---\nreview_use_ultrareview: true           # true | false\n---",
+      });
+
+      expect(result.exitCode).toBe(0);
+      const output = JSON.parse(result.stdout);
+      expect(output.findings).toHaveLength(4);
+    });
   });
 
   describe("output format matches forge-review finding structure", () => {

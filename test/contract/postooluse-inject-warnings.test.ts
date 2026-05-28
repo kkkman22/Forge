@@ -46,7 +46,7 @@ function runHook(
 /**
  * Parse stdout as JSON, returning null if not valid JSON.
  */
-function parseOutput(stdout: string): Record<string, unknown> | null {
+function parseOutput(stdout: string): any {
   const trimmed = stdout.trim();
   if (!trimmed) return null;
   try {
