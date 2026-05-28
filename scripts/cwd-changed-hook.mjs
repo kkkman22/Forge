@@ -9,20 +9,11 @@
 // Output: { systemMessage: "..." } or nothing (exit 0 silently)
 
 import { execFileSync } from "node:child_process";
+import { readStdin } from "./lib/read-stdin.mjs";
 
 // Dangerous branch patterns
 const DANGEROUS_BRANCHES = ["main", "master"];
 const RELEASE_PREFIX = "release-";
-
-function readStdin() {
-  return new Promise((resolve, reject) => {
-    const chunks = [];
-    process.stdin.setEncoding("utf-8");
-    process.stdin.on("data", (chunk) => chunks.push(chunk));
-    process.stdin.on("end", () => resolve(chunks.join("")));
-    process.stdin.on("error", reject);
-  });
-}
 
 function getCurrentBranch(cwd) {
   try {
@@ -48,11 +39,9 @@ function isDangerousBranch(branch) {
 async function main() {
   let input;
   try {
-    const raw = await readStdin();
-    if (!raw.trim()) {
-      process.exit(0);
-    }
-    input = JSON.parse(raw);
+    const buf = await readStdin();
+    if (buf.length === 0) process.exit(0);
+    input = JSON.parse(buf.toString("utf-8"));
   } catch {
     process.exit(0);
   }
@@ -64,7 +53,6 @@ async function main() {
 
   const branch = getCurrentBranch(cwd);
   if (!branch) {
-    // Not a git repo or git command failed — silent exit
     process.exit(0);
   }
 

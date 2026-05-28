@@ -11,18 +11,9 @@
 
 import { existsSync, readFileSync } from "node:fs";
 import { join } from "node:path";
+import { readStdin } from "./lib/read-stdin.mjs";
 
 const FORGE_ROOT_ENV = process.env.FORGE_ROOT;
-
-function readStdin() {
-  return new Promise((resolve, reject) => {
-    const chunks = [];
-    process.stdin.setEncoding("utf-8");
-    process.stdin.on("data", (chunk) => chunks.push(chunk));
-    process.stdin.on("end", () => resolve(chunks.join("")));
-    process.stdin.on("error", reject);
-  });
-}
 
 function findForgeRoot(cwd) {
   // Allow override via FORGE_ROOT env var (for testing)
@@ -86,11 +77,9 @@ function isActiveProgressFile(filePath, forgeRoot, activeTask) {
 async function main() {
   let input;
   try {
-    const raw = await readStdin();
-    if (!raw.trim()) {
-      process.exit(0);
-    }
-    input = JSON.parse(raw);
+    const buf = await readStdin();
+    if (buf.length === 0) process.exit(0);
+    input = JSON.parse(buf.toString("utf-8"));
   } catch {
     process.exit(0);
   }

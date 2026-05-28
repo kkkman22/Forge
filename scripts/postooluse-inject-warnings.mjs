@@ -19,6 +19,7 @@
 
 import { readFileSync, existsSync } from "node:fs";
 import { resolve, dirname, join } from "node:path";
+import { readStdin } from "./lib/read-stdin.mjs";
 
 // ── Constants ──
 
@@ -30,67 +31,7 @@ const MONITORED_TOOLS = new Set(["Edit", "Write", "MultiEdit", "NotebookEdit"]);
 
 // ── Helpers ──
 
-/**
- * Read stdin with timeout. Returns empty buffer on timeout or error.
- */
-function readStdin() {
-  return new Promise((resolve) => {
-    const chunks = [];
-    let totalLen = 0;
-    const stdin = process.stdin;
-    let settled = false;
-
-    function finish(buf) {
-      if (settled) return;
-      settled = true;
-      resolve(buf);
-    }
-
-    const timer = setTimeout(() => {
-      cleanup();
-      finish(Buffer.alloc(0));
-    }, STDIN_TIMEOUT_MS);
-
-    function cleanup() {
-      clearTimeout(timer);
-      try {
-        stdin.removeAllListeners("data");
-        stdin.removeAllListeners("end");
-        stdin.removeAllListeners("error");
-        stdin.pause();
-      } catch {
-        // best effort
-      }
-    }
-
-    stdin.on("data", (chunk) => {
-      totalLen += chunk.length;
-      if (totalLen > STDIN_MAX_BYTES) {
-        cleanup();
-        finish(Buffer.alloc(0));
-        return;
-      }
-      chunks.push(chunk);
-    });
-
-    stdin.on("end", () => {
-      cleanup();
-      finish(Buffer.concat(chunks, totalLen));
-    });
-
-    stdin.on("error", () => {
-      cleanup();
-      finish(Buffer.alloc(0));
-    });
-
-    if (stdin.isTTY) {
-      cleanup();
-      finish(Buffer.alloc(0));
-    } else {
-      stdin.resume();
-    }
-  });
-}
+// readStdin imported from ./lib/read-stdin.mjs
 
 /**
  * Find the project root by walking up from cwd looking for .forge/config.md.
