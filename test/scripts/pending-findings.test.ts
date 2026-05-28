@@ -7,10 +7,7 @@ interface Finding {
   summary: string;
 }
 
-function serializePendingFindings(
-  findings: Finding[],
-  taskName: string,
-): string {
+function serializePendingFindings(findings: Finding[], taskName: string): string {
   if (!findings || findings.length === 0) return "";
 
   const timestamp = new Date().toISOString();
@@ -43,9 +40,7 @@ function truncate(s: string, maxBytes: number): string {
 }
 
 describe("serializePendingFindings", () => {
-  it("serializes findings to markdown table with frontmatter", ({
-    expect,
-  }) => {
+  it("serializes findings to markdown table with frontmatter", ({ expect }) => {
     const findings: Finding[] = [
       {
         severity: "P0",
@@ -64,7 +59,7 @@ describe("serializePendingFindings", () => {
     const result = serializePendingFindings(findings, "my-task");
 
     expect(result).toContain('task: "my-task"');
-    expect(result).toContain("status: \"pending\"");
+    expect(result).toContain('status: "pending"');
     expect(result).toContain("| 1 | P0 | L3-security | auth.ts:42 |");
     expect(result).toContain("| 2 | P1 | L2-quality | export.ts:15 |");
     expect(result).toContain("SQL injection in query builder");
