@@ -9,6 +9,7 @@ allowed_tools:
   - Glob
   - Grep
   - Bash
+disallowedTools: ["Bash(git push *)"]
 ---
 
 # /forge learn — 知识引擎

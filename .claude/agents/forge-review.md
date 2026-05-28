@@ -8,6 +8,7 @@ tools:
   - Grep
   - Agent
   - AskUserQuestion
+disallowedTools: [Edit, Write, MultiEdit, NotebookEdit, "Bash(git push *)", "Bash(git commit *)", "Bash(git reset *)"]
 model: sonnet
 ---
 

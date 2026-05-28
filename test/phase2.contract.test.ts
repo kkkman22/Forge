@@ -192,9 +192,9 @@ describe("Contract: CC version gate", () => {
     expect(content).toMatch(/sort -V/);
   });
 
-  it("README mentions minimum CC version 2.1.121", () => {
+  it("README mentions minimum CC version 2.1.153", () => {
     const content = readFileSync(resolve(ROOT, "README.md"), "utf-8");
-    expect(content).toMatch(/2\.1\.121/);
+    expect(content).toMatch(/2\.1\.153/);
   });
 
   it("CHANGELOG has Phase 2 entry", () => {
