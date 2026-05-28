@@ -79,7 +79,7 @@ describe("check-docs-embeds logic", () => {
     });
     it("reports clean when content matches", () => {
         const reg = createRendererRegistry();
-        const echoRenderer = (input) => ({
+        const echoRenderer = (_input) => ({
             markdown: "current",
             diagnostics: [],
         });

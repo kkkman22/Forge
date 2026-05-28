@@ -12,6 +12,17 @@ import { executeSkillAwareIteration as executeSkillAwareIterationFn } from "./sd
 import { clearLoopFieldsOnShutdown, initializeLoopFields, safeReadStatusFile, } from "./sdk-status-helpers.js";
 export { validateHooksPresence } from "./sdk-hooks-validation.js";
 export { detectSkillAwareMode } from "./sdk-skill-detection.js";
+export function mapInternalToIpcEvent(internalType) {
+    const map = {
+        session_started: "forge_loop_run_started",
+        iter_started: "iteration_start",
+        iter_committed: "iteration_end",
+        iter_rolled_back: "iteration_end",
+        loop_terminated: "completion",
+        error: "error",
+    };
+    return map[internalType] ?? null;
+}
 import { writeEvent } from "./event-writer.js";
 import { executeGenericIteration as executeGenericIterationFn } from "./sdk-generic-iteration.js";
 import { validateHooksPresence } from "./sdk-hooks-validation.js";
@@ -84,9 +95,20 @@ export class SdkDriver {
     t(key, params) {
         return this.config.t ? this.config.t(key, params) : key;
     }
-    /** Append an event to the NDJSON log (cmux integration). */
+    /** Append an event to the NDJSON log (cmux integration) + optional IPC dual-write. */
     emitEvent(type, payload = {}) {
         writeEvent(this.eventsPath, type, { run_id: this.config.runId, ...payload });
+        if (this.config.ipcEmitter) {
+            const ipcEvent = mapInternalToIpcEvent(type);
+            if (ipcEvent) {
+                try {
+                    this.config.ipcEmitter.emit({ event: ipcEvent, ...payload });
+                }
+                catch {
+                    // IPC failure must not block the main loop
+                }
+            }
+        }
     }
     /** Run the autonomous loop until a termination condition is met. */
     async run() {

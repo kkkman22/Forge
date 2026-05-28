@@ -44,8 +44,8 @@ export interface SdkDriverConfig {
     runId: string;
     /** Path to the run directory. */
     runDir: string;
-    /** Pre-warmed Agent SDK query handle. */
-    warmQuery: unknown;
+    /** Pre-warmed Agent SDK query handle (optional after CliSubprocessDriver migration). */
+    warmQuery?: unknown;
     /** Base commit SHA for branch commit counting. */
     baseCommit: string;
     /** Path to the notes.md file for persistence. */
@@ -88,6 +88,8 @@ export interface SdkDriverConfig {
     sdkNativeSandbox?: boolean;
     /** Skip hooks protection validation and run without PreToolUse guards. */
     forceNoHooks?: boolean;
+    /** IPC emitter for stdout NDJSON event bridge. When provided, emitEvent dual-writes to IPC. */
+    ipcEmitter?: import("../src/ipc-emitter.js").IpcEmitter;
 }
 /**
  * Result returned when the driver loop exits.

@@ -1,6 +1,6 @@
 import { execSync } from "node:child_process";
 import { describe, expect, it } from "vitest";
-const ROOT = import.meta.dirname + "/../..";
+const ROOT = `${import.meta.dirname}/../..`;
 function runScript(script, env) {
     try {
         const result = execSync(`node ${script}`, {

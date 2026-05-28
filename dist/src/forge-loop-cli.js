@@ -17,25 +17,29 @@
 import { execFileSync, spawn } from "node:child_process";
 import { copyFileSync, existsSync, mkdirSync, readdirSync, readFileSync, renameSync, writeFileSync, } from "node:fs";
 import path from "node:path";
-import { startup } from "@anthropic-ai/claude-agent-sdk";
 import { Command } from "commander";
-import { buildAgentOutputSchema } from "./agent-output.js";
-import { createAgentRegistry, registerBuiltinAgents } from "./agent-registry.js";
+import { runCleanupChain } from "./cleanup-chain.js";
 import { CliError } from "./cli-error.js";
+import { CliSubprocessDriver } from "./cli-subprocess-driver.js";
 import { extractConfigLang, mergeLogConfig, parseLogConfig } from "./config-store.js";
 import { formatNotesDocument } from "./context-accumulator.js";
 import { EffectExecutor } from "./effect-executor.js";
+import { classifyExitCode } from "./error-handler.js";
 import { ensureGlossaryExists } from "./glossary-driver.js";
 import { parseTranslationFile, translate } from "./i18n.js";
+import { IpcEmitter } from "./ipc-emitter.js";
 import { detectLocale } from "./locale-detector.js";
 import { createDualSink, createFileWriter, createLogEntry, createLogSink, validateFileWritable, } from "./logger/index.js";
 import { cleanupOrphans, cleanupStaleSessions, countActiveSessions, deletePidFile, detectPpidOrphans, writePidFile, } from "./orphan-detector.js";
 import { ProcessRegistry } from "./process-registry.js";
+import { RateLimitDegrader } from "./rate-limit-degrader.js";
+import { runMainLoopWithRetry } from "./retry-loop.js";
 import { branchExists, RunManager } from "./run-manager.js";
 import { detectSkillAwareMode, SdkDriver } from "./sdk-driver.js";
 import { installSkill } from "./skill-loader.js";
 import { buildSleepPreventionCommand } from "./sleep-preventer.js";
 import { listActiveTasks, readTaskStatus, writeTaskStatus, } from "./status-manager.js";
+import { createAuditWriter } from "./workflow-audit-factory.js";
 import { decideWorktreeCleanup, isValidWorktreeSource } from "./worktree-manager.js";
 // Read package version for skill compatibility checks
 const PACKAGE_VERSION = JSON.parse(readFileSync(path.join(path.dirname(new URL(import.meta.url).pathname), "..", "package.json"), "utf-8")).version;
@@ -166,6 +170,7 @@ async function main() {
         .option("--force-no-hooks", "Skip hooks protection validation (use at your own risk)", false)
         .option("--skills-dir <path>", "Load external SKILL plugins from directory")
         .option("--agent <name>", "Agent to use for iterations (claude|mock)", "claude")
+        .option("--no-warmup", "Skip warm-up spawn (for sandbox/CI)", false)
         .action(async (objective, opts) => {
         const cwd = process.cwd();
         const preventSleep = opts.preventSleep !== "off";
@@ -350,25 +355,6 @@ async function main() {
             }
         }
         // ---------------------------------------------------------------
-        // Pre-warm Agent SDK
-        // ---------------------------------------------------------------
-        // Pass bypassPermissions to startup() so the warm-query subprocess
-        // is spawned with the correct permission mode from the start.
-        // Without this, the pre-warmed subprocess uses "default" mode and
-        // hangs waiting for interactive permission approval that never comes.
-        const warmQuery = await startup({
-            options: {
-                permissionMode: "bypassPermissions",
-                allowDangerouslySkipPermissions: true,
-            },
-        });
-        // ---------------------------------------------------------------
-        // Build output schema
-        // ---------------------------------------------------------------
-        const outputSchema = buildAgentOutputSchema({
-            includeStopField: !!opts.stopWhen,
-        });
-        // ---------------------------------------------------------------
         // Create AgentRegistry, register builtins, and resolve agent
         // ---------------------------------------------------------------
         // Load sandbox profile if --sandbox is specified
@@ -384,16 +370,7 @@ async function main() {
                 throw new CliError(`Error: ${message}`);
             }
         }
-        const agentRegistry = createAgentRegistry();
-        registerBuiltinAgents(agentRegistry, { warmQuery, outputSchema, sandboxProfile });
         const agentName = opts.agent ?? "claude";
-        if (!agentRegistry.has(agentName)) {
-            throw new CliError(`Error: Invalid --agent value "${agentName}". Available agents: ${agentRegistry.listAgents().join(", ")}`);
-        }
-        const agentAdapter = agentRegistry.resolve(agentName, {
-            cwd,
-            budgetUsd: opts.maxBudgetUsd,
-        });
         const loopConfig = {
             agent: agentName,
             maxConsecutiveFailures: 3,
@@ -462,30 +439,53 @@ async function main() {
             runSetup = RunManager.setupNewRun(objective, cwd);
         }
         // Emit structured run_started event for downstream consumers (desktop app, CI).
-        // biome-ignore lint/suspicious/noConsole: structured event emitted before logSink exists
-        console.log(JSON.stringify({
+        const ipcEmitter = new IpcEmitter(runSetup.runId);
+        ipcEmitter.emitVersion();
+        ipcEmitter.emit({
             event: "forge_loop_run_started",
-            run_id: runSetup.runId,
             branch_name: runSetup.branchName,
             worktree_path: worktreePath ?? null,
-        }));
+        });
         // ---------------------------------------------------------------
         // Spawn sleep prevention process
         // ---------------------------------------------------------------
         let sleepProcess = null;
-        if (preventSleep) {
-            const sleepCmd = buildSleepPreventionCommand(process.platform, process.pid);
-            if (sleepCmd) {
-                sleepProcess = spawn(sleepCmd.command, sleepCmd.args, {
-                    detached: sleepCmd.detached,
-                    stdio: "ignore",
+        // Warm-up spawn + Agent adapter (moved after runSetup is available)
+        if (!opts.noWarmup) {
+            const warmupArgs = [
+                "--print",
+                "--output-format=stream-json",
+                "--max-turns=1",
+                "--permission-mode=bypassPermissions",
+                "--dangerously-skip-permissions",
+            ];
+            const warmupEnv = { ...process.env, CLAUDE_CODE_WORKFLOWS: "1" };
+            const warmup = spawn("claude", warmupArgs, {
+                cwd: effectiveCwd,
+                env: warmupEnv,
+                stdio: ["pipe", "pipe", "pipe"],
+            });
+            warmup.stdin?.write(`${JSON.stringify({ type: "user", message: { role: "user", content: "_" } })}\n`);
+            warmup.stdin?.end();
+            const warmupExitCode = await new Promise((resolve) => {
+                const timeout = setTimeout(() => {
+                    warmup.kill("SIGKILL");
+                    resolve(1);
+                }, 30_000);
+                warmup.on("exit", (code) => {
+                    clearTimeout(timeout);
+                    resolve(code ?? 1);
                 });
-                // Unref so the sleep process doesn't keep the event loop alive.
-                sleepProcess.unref();
+            });
+            if (warmupExitCode !== 0) {
+                throw new CliError(`Warm-up failed (exit ${warmupExitCode})`);
             }
-        }
+            writeFileSync(path.join(runSetup.runDir, "warm-up.json"), JSON.stringify({ exitCode: warmupExitCode }));
+        } // end warmup gate
         // ---------------------------------------------------------------
         // Create LogSink (Req 1.1, 1.2, 1.3, 2.1, 2.2, 2.3, 8.1, 8.3)
+        // Must be created before CliSubprocessDriver so stderr can be
+        // dual-written to both file and LogSink (R4 wiring).
         // ---------------------------------------------------------------
         // Read log config from .forge/config.md frontmatter
         let fileLogConfig = {
@@ -531,6 +531,35 @@ async function main() {
         else {
             // Single sink: stdout only
             logSink = createLogSink(logSinkConfig);
+        }
+        // Agent adapter: CliSubprocessDriver replaces agent-sdk
+        // logSink is now available for stderr dual-write (R4)
+        const toolHealthPath = path.join(effectiveCwd, ".forge", "knowledge", "tool-health.md");
+        const degrader = hasForgeDir
+            ? new RateLimitDegrader(loopConfig.maxConcurrentLoops, toolHealthPath, "loop")
+            : undefined;
+        const agentAdapter = new CliSubprocessDriver({
+            cwd: effectiveCwd,
+            runId: runSetup.runId,
+            runDir: runSetup.runDir,
+            permissionMode: "bypassPermissions",
+            dangerouslySkipPermissions: true,
+            maxTurns: Math.min(opts.maxIterations ?? 30, 30),
+            // Plumb through resume flag (R5.6)
+            resumeSessionId: opts.resume,
+            logSink,
+            rateLimitDegrader: degrader,
+        });
+        if (preventSleep) {
+            const sleepCmd = buildSleepPreventionCommand(process.platform, process.pid);
+            if (sleepCmd) {
+                sleepProcess = spawn(sleepCmd.command, sleepCmd.args, {
+                    detached: sleepCmd.detached,
+                    stdio: "ignore",
+                });
+                // Unref so the sleep process doesn't keep the event loop alive.
+                sleepProcess.unref();
+            }
         }
         // ---------------------------------------------------------------
         // Process lifecycle: startup cleanup and PID file management
@@ -615,7 +644,6 @@ async function main() {
             cwd: effectiveCwd,
             runId: runSetup.runId,
             runDir: runSetup.runDir,
-            warmQuery,
             baseCommit: runSetup.baseCommit,
             notesPath: runSetup.notesPath,
             branchName: runSetup.branchName,
@@ -638,7 +666,19 @@ async function main() {
             sandboxEnabled: !!opts.sandbox,
             sdkNativeSandbox: !!sandboxProfile,
             forceNoHooks: opts.forceNoHooks === true,
+            ipcEmitter,
         }, effectExecutor, agentAdapter);
+        // ---------------------------------------------------------------
+        // Create WorkflowAuditWriter for SKILL dispatch (R2 wiring, P1-1)
+        // SKILL instructions call dispatch(ctx, { auditWriter }) — this
+        // validates the factory can be wired in the production path.
+        // The SKILL agent imports createAuditWriter directly from
+        // workflow-audit-factory.ts to build the writer at dispatch time.
+        // hookCheckPath enforces R4.8 — workflow audit writes call
+        // scripts/hook-check-frozen.sh before touching any audit zone.
+        // ---------------------------------------------------------------
+        const hookCheckPath = path.join(process.env.CLAUDE_PLUGIN_ROOT ?? cwd, "scripts/hook-check-frozen.sh");
+        createAuditWriter(forgeRoot, hookCheckPath);
         // ---------------------------------------------------------------
         // Wire signal handlers
         // ---------------------------------------------------------------
@@ -683,7 +723,45 @@ async function main() {
         // Run the driver loop
         // ---------------------------------------------------------------
         try {
-            const result = await driver.run();
+            // Top-level retry wrapper for subprocess resilience
+            // biome-ignore lint/suspicious/noExplicitAny: result type inferred from SdkDriver.run()
+            let loopRunResult = null;
+            await runMainLoopWithRetry({
+                driver: {
+                    run: async () => {
+                        try {
+                            loopRunResult = await driver.run();
+                            return { exitCode: 0 };
+                        }
+                        catch (err) {
+                            const isCliError = err instanceof CliError;
+                            const exitCode = isCliError ? 1 : 139;
+                            const classification = classifyExitCode(exitCode);
+                            ipcEmitter.emitError({
+                                code: isCliError ? "cli_error" : "unexpected_failure",
+                                message: err instanceof Error ? err.message : String(err),
+                                fatal: !classification.retryable,
+                                retryable: classification.retryable,
+                            });
+                            return { exitCode };
+                        }
+                    },
+                },
+                prompt: objective,
+                cwd: effectiveCwd,
+                runDir: runSetup.runDir,
+                maxRetries: loopConfig.maxConsecutiveFailures,
+            });
+            if (!loopRunResult) {
+                throw new CliError("Loop aborted after retries — see abort.json for details.");
+            }
+            const result = loopRunResult;
+            // Emit run_completed for downstream consumers
+            ipcEmitter.emit({
+                event: "run_completed",
+                total_iterations: result.commitCount,
+                status: "success",
+            });
             // Persist final notes.
             RunManager.persistNotes(runSetup.notesPath, result.notesDocument.entries.length > 0 ? formatNotesDocument(result.notesDocument) : "");
             // Handle worktree cleanup.
@@ -715,7 +793,30 @@ async function main() {
                 }
             }
         }
+        catch (err) {
+            // Emit error event for desktop / CI consumers (R8.3, R10)
+            const errorMessage = err instanceof Error ? err.message : String(err);
+            // Classify: CliError → user error (non-retryable); other → unexpected
+            const isCliError = err instanceof CliError;
+            const exitCode = isCliError ? 1 : 139;
+            const classification = classifyExitCode(exitCode);
+            ipcEmitter.emitError({
+                code: isCliError ? "cli_error" : "unexpected_failure",
+                message: errorMessage,
+                fatal: true,
+                retryable: classification.retryable,
+            });
+            throw err;
+        }
         finally {
+            // Structured cleanup chain
+            await runCleanupChain({
+                runId: sessionId,
+                runDir: runSetup.runDir,
+                pidFile: hasForgeDir ? path.join(pidsBaseDir, `${sessionId}.pid`) : undefined,
+                sleepProcess: sleepProcess ?? undefined,
+                worktreePath: worktreePath ?? undefined,
+            });
             // Clean up signal handlers.
             process.removeListener("SIGINT", handleSignal);
             process.removeListener("SIGTERM", handleSignal);
@@ -742,9 +843,9 @@ async function main() {
                     logSink.log(createLogEntry("sleep_kill_failed", "error", `Failed to kill sleep prevention process: ${cleanupError instanceof Error ? cleanupError.message : String(cleanupError)}`, { runId: sessionId }));
                 }
             }
-            // Close agent adapter.
+            // Close agent adapter (shutdown subprocess if still running).
             try {
-                await agentAdapter.close?.();
+                await agentAdapter.shutdown?.("SIGTERM");
             }
             catch (cleanupError) {
                 logSink.log(createLogEntry("agent_close_failed", "error", `Failed to close SDK agent adapter: ${cleanupError instanceof Error ? cleanupError.message : String(cleanupError)}`, { runId: sessionId }));

@@ -1,3 +1,4 @@
+import { dirname } from "node:path";
 export function resolveForgeRoot(input, fs) {
     const checked = [];
     if (input.pluginRoot && input.pluginRoot.length > 0) {
@@ -8,9 +9,7 @@ export function resolveForgeRoot(input, fs) {
         }
     }
     // scriptDir/../agents — resolve parent
-    const scriptParent = `${input.scriptDir.replace(/\/$/, "")}/..`;
-    // Normalize: resolve ".." by removing the last path component
-    const normalizedParent = scriptParent.replace(/\/[^/]+\/\.\.$/, "");
+    const normalizedParent = dirname(input.scriptDir.replace(/\/$/, ""));
     checked.push(normalizedParent);
     if (fs.isDir(`${normalizedParent}/agents`)) {
         return { kind: "script-relative", root: normalizedParent };

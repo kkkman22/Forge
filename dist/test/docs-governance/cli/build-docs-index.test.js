@@ -147,7 +147,7 @@ describe("build-docs-index CLI integration", () => {
         createFile(docsDir, "api.md", VALID_FM_REFERENCE);
         // Run the script via tsx
         const scriptPath = join(import.meta.dirname, "..", "..", "..", "scripts", "build-docs-index.ts");
-        const result = execSync(`npx tsx "${scriptPath}" "${docsDir}"`, {
+        const _result = execSync(`npx tsx "${scriptPath}" "${docsDir}"`, {
             encoding: "utf-8",
             cwd: TMP_DIR,
             timeout: 15_000,

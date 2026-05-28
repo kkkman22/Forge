@@ -14,6 +14,7 @@ const SCRIPT_PATH = join(process.cwd(), "scripts", "lib", "hook-stdin-router.mjs
 function callRouter(stdinStr) {
     try {
         const result = execFileSync("node", [
+            "--input-type=module",
             "-e",
             `
         import { classifyHookCaller } from "${SCRIPT_PATH}";

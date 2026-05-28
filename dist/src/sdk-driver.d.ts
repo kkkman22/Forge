@@ -4,6 +4,7 @@ import type { AgentInterface } from "./loop-types.js";
 export type { SdkDriverConfig, SdkDriverResult } from "./sdk-driver-types.js";
 export { validateHooksPresence } from "./sdk-hooks-validation.js";
 export { detectSkillAwareMode } from "./sdk-skill-detection.js";
+export declare function mapInternalToIpcEvent(internalType: string): string | null;
 import type { SdkDriverConfig, SdkDriverResult } from "./sdk-driver-types.js";
 /**
  * Core autonomous loop driver — bridges the state machine with real I/O.
@@ -41,7 +42,7 @@ export declare class SdkDriver {
     constructor(config: SdkDriverConfig, effectExecutor: EffectExecutorInterface, agentAdapter: AgentInterface);
     /** Translation helper — falls back to key when no t() is configured. */
     private t;
-    /** Append an event to the NDJSON log (cmux integration). */
+    /** Append an event to the NDJSON log (cmux integration) + optional IPC dual-write. */
     private emitEvent;
     /** Run the autonomous loop until a termination condition is met. */
     run(): Promise<SdkDriverResult>;
