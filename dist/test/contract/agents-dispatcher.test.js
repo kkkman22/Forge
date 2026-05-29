@@ -1,0 +1,300 @@
+/**
+ * Contract tests for agents-dispatcher.ts (R5).
+ *
+ * Validates the parallel subagent dispatch via `claude agents` command
+ * with inline fallback. All subprocess calls are mocked — no real `claude`
+ * binary is invoked.
+ */
+import { mkdirSync, rmSync, writeFileSync } from "node:fs";
+import { tmpdir } from "node:os";
+import { join } from "node:path";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+// We'll import after the module exists; for RED phase we test against the
+// expected interface by dynamically importing and catching.
+const MODULE_PATH = "../../src/forge/agents-dispatcher.js";
+// Reusable fixtures
+const MOCK_EXEC_FILE = vi.fn();
+// Intercept child_process.execFile
+vi.mock("node:child_process", () => ({
+    execFile: (...args) => MOCK_EXEC_FILE(...args),
+}));
+// Intercept node:fs for collectResults tests
+const MOCK_READ_FILE = vi.fn();
+const MOCK_READDIR_SYNC = vi.fn();
+vi.mock("node:fs", async (importOriginal) => {
+    const actual = await importOriginal();
+    return {
+        ...actual,
+        readFileSync: (...args) => MOCK_READ_FILE(...args),
+        readdirSync: (...args) => MOCK_READDIR_SYNC(...args),
+    };
+});
+describe("agents-dispatcher (R5)", () => {
+    let tmpDir;
+    beforeEach(() => {
+        tmpDir = join(tmpdir(), `agents-dispatcher-test-${Date.now()}`);
+        mkdirSync(tmpDir, { recursive: true });
+        MOCK_EXEC_FILE.mockReset();
+        MOCK_READ_FILE.mockRestore();
+        MOCK_READDIR_SYNC.mockRestore();
+    });
+    afterEach(() => {
+        rmSync(tmpDir, { recursive: true, force: true });
+    });
+    // -----------------------------------------------------------------------
+    // 1. Module imports and interface shape
+    // -----------------------------------------------------------------------
+    it("exports dispatch and collectResults functions", async () => {
+        const mod = await import(MODULE_PATH);
+        expect(typeof mod.dispatch).toBe("function");
+        expect(typeof mod.collectResults).toBe("function");
+    });
+    it("exports DispatchOptions and DispatchResult types (structural check)", async () => {
+        const mod = await import(MODULE_PATH);
+        // execFile("claude", args, { cwd }, callback) — callback is 4th arg
+        MOCK_EXEC_FILE.mockImplementation((_cmd, _args, _opts, cb) => cb(null, '{"status":"completed"}'));
+        const opts = {
+            agentType: "spec-check",
+            prompt: "Review spec completeness",
+            workdir: tmpDir,
+        };
+        const result = await mod.dispatch(opts);
+        expect(result).toHaveProperty("agent");
+        expect(result).toHaveProperty("status");
+    });
+    // -----------------------------------------------------------------------
+    // 2. Returns failed result when claude agents is unavailable
+    // -----------------------------------------------------------------------
+    it("returns { status: 'failed' } when claude agents command is not found", async () => {
+        const { dispatch } = await import(MODULE_PATH);
+        MOCK_EXEC_FILE.mockImplementation((_cmd, _args, _opts, cb) => {
+            const err = new Error("spawn claude ENOENT");
+            err.code = "ENOENT";
+            cb(err);
+        });
+        const result = await dispatch({
+            agentType: "spec-check",
+            prompt: "test",
+            workdir: tmpDir,
+        });
+        expect(result.status).toBe("failed");
+        expect(result.agent).toBe("spec-check");
+    });
+    it("returns { status: 'failed' } when claude agents exits with non-zero code", async () => {
+        const { dispatch } = await import(MODULE_PATH);
+        MOCK_EXEC_FILE.mockImplementation((_cmd, _args, _opts, cb) => {
+            const err = new Error("Command failed");
+            err.code = 1;
+            cb(err);
+        });
+        const result = await dispatch({
+            agentType: "quality-check",
+            prompt: "test quality",
+            workdir: tmpDir,
+        });
+        expect(result.status).toBe("failed");
+        expect(result.agent).toBe("quality-check");
+    });
+    // -----------------------------------------------------------------------
+    // 3. Builds correct command arguments from DispatchOptions
+    // -----------------------------------------------------------------------
+    it("builds correct CLI arguments with agent type and prompt", async () => {
+        const { dispatch } = await import(MODULE_PATH);
+        let capturedArgs = [];
+        MOCK_EXEC_FILE.mockImplementation((_cmd, args, _opts, cb) => {
+            capturedArgs = args;
+            cb(null, '{"status":"completed"}');
+        });
+        await dispatch({
+            agentType: "security-check",
+            prompt: "Scan for vulnerabilities",
+            workdir: "/tmp/project",
+        });
+        // Should call 'claude' with 'agents' subcommand and appropriate flags
+        expect(capturedArgs[0]).toBe("agents");
+        expect(capturedArgs).toContain("--agent-type=security-check");
+        expect(capturedArgs).toContain("--workdir=/tmp/project");
+        // The prompt should be passed as well
+        const promptArg = capturedArgs.find((a) => a.startsWith("--prompt=") || a.startsWith("--prompt "));
+        expect(promptArg).toBeTruthy();
+    });
+    it("includes --effort flag when effort is specified", async () => {
+        const { dispatch } = await import(MODULE_PATH);
+        let capturedArgs = [];
+        MOCK_EXEC_FILE.mockImplementation((_cmd, args, _opts, cb) => {
+            capturedArgs = args;
+            cb(null, '{"status":"completed"}');
+        });
+        await dispatch({
+            agentType: "architect",
+            prompt: "Design review",
+            workdir: tmpDir,
+            effort: "high",
+        });
+        expect(capturedArgs).toContain("--effort=high");
+    });
+    it("omits --effort flag when effort is not specified", async () => {
+        const { dispatch } = await import(MODULE_PATH);
+        let capturedArgs = [];
+        MOCK_EXEC_FILE.mockImplementation((_cmd, args, _opts, cb) => {
+            capturedArgs = args;
+            cb(null, '{"status":"completed"}');
+        });
+        await dispatch({
+            agentType: "architect",
+            prompt: "Design review",
+            workdir: tmpDir,
+        });
+        const effortArg = capturedArgs.find((a) => a.startsWith("--effort"));
+        expect(effortArg).toBeUndefined();
+    });
+    // -----------------------------------------------------------------------
+    // 4. Reads results from .forge/agent-results/ directory
+    // -----------------------------------------------------------------------
+    it("collectResults reads JSON files from agent-results/<runId>/", async () => {
+        const { collectResults } = await import(MODULE_PATH);
+        const runDir = join(tmpDir, ".forge", "agent-results", "run-123");
+        mkdirSync(runDir, { recursive: true });
+        const result1 = {
+            agent: "spec-check",
+            status: "completed",
+            findings: ["f1"],
+            duration_ms: 1000,
+        };
+        const result2 = {
+            agent: "quality-check",
+            status: "completed",
+            findings: ["f2"],
+            duration_ms: 2000,
+        };
+        writeFileSync(join(runDir, "spec-check.json"), JSON.stringify(result1));
+        writeFileSync(join(runDir, "quality-check.json"), JSON.stringify(result2));
+        // Use real fs for collectResults — restore actual implementations
+        const { readFileSync: realRead, readdirSync: realReaddir } = await import("node:fs");
+        MOCK_READDIR_SYNC.mockImplementation((dir) => {
+            if (dir === runDir || dir === join(tmpDir, ".forge", "agent-results", "run-123")) {
+                return ["spec-check.json", "quality-check.json"];
+            }
+            return [];
+        });
+        MOCK_READ_FILE.mockImplementation((filePath) => {
+            if (filePath.endsWith("spec-check.json"))
+                return JSON.stringify(result1);
+            if (filePath.endsWith("quality-check.json"))
+                return JSON.stringify(result2);
+            throw new Error(`Unexpected read: ${filePath}`);
+        });
+        const results = await collectResults("run-123", tmpDir);
+        expect(results).toHaveLength(2);
+        expect(results[0].agent).toBe("spec-check");
+        expect(results[0].status).toBe("completed");
+        expect(results[0].findings).toEqual(["f1"]);
+        expect(results[1].agent).toBe("quality-check");
+    });
+    it("collectResults returns empty array when run directory does not exist", async () => {
+        const { collectResults } = await import(MODULE_PATH);
+        MOCK_READDIR_SYNC.mockImplementation(() => {
+            const err = new Error("ENOENT");
+            err.code = "ENOENT";
+            throw err;
+        });
+        const results = await collectResults("nonexistent-run", tmpDir);
+        expect(results).toEqual([]);
+    });
+    it("collectResults skips malformed JSON files gracefully", async () => {
+        const { collectResults } = await import(MODULE_PATH);
+        const runDir = join(tmpDir, ".forge", "agent-results", "run-malformed");
+        MOCK_READDIR_SYNC.mockImplementation((dir) => {
+            if (dir === runDir)
+                return ["bad.json", "good.json"];
+            return [];
+        });
+        MOCK_READ_FILE.mockImplementation((filePath) => {
+            if (filePath.endsWith("bad.json"))
+                return "NOT VALID JSON{{{";
+            if (filePath.endsWith("good.json"))
+                return JSON.stringify({ agent: "security-check", status: "completed" });
+            throw new Error(`Unexpected: ${filePath}`);
+        });
+        const results = await collectResults("run-malformed", tmpDir);
+        expect(results).toHaveLength(1);
+        expect(results[0].agent).toBe("security-check");
+    });
+    // -----------------------------------------------------------------------
+    // 5. Fallback to inline mode on command failure
+    // -----------------------------------------------------------------------
+    it("dispatch returns status='failed' with no findings on ENOENT (caller handles inline)", async () => {
+        const { dispatch } = await import(MODULE_PATH);
+        MOCK_EXEC_FILE.mockImplementation((_cmd, _args, _opts, cb) => {
+            const err = new Error("command not found");
+            err.code = "ENOENT";
+            cb(err);
+        });
+        const result = await dispatch({
+            agentType: "product",
+            prompt: "Product analysis",
+            workdir: tmpDir,
+        });
+        expect(result).toEqual({
+            agent: "product",
+            status: "failed",
+            findings: undefined,
+            duration_ms: undefined,
+        });
+    });
+    // -----------------------------------------------------------------------
+    // 6. Config integration: reads dispatch_mode from config content
+    // -----------------------------------------------------------------------
+    it("parseDispatchMode returns 'inline' by default", async () => {
+        const { parseDispatchMode } = await import(MODULE_PATH);
+        expect(parseDispatchMode("review", "")).toBe("inline");
+    });
+    it("parseDispatchMode reads review_dispatch_mode from config", async () => {
+        const { parseDispatchMode } = await import(MODULE_PATH);
+        const config = "review_dispatch_mode: agents\ndecide_dispatch_mode: inline\n";
+        expect(parseDispatchMode("review", config)).toBe("agents");
+    });
+    it("parseDispatchMode reads decide_dispatch_mode from config", async () => {
+        const { parseDispatchMode } = await import(MODULE_PATH);
+        const config = "review_dispatch_mode: inline\ndecide_dispatch_mode: agents\n";
+        expect(parseDispatchMode("decide", config)).toBe("agents");
+    });
+    // -----------------------------------------------------------------------
+    // 7. Successful dispatch returns completed result
+    // -----------------------------------------------------------------------
+    it("returns completed result with findings on successful dispatch", async () => {
+        const { dispatch } = await import(MODULE_PATH);
+        const agentOutput = {
+            agent: "spec-check",
+            status: "completed",
+            findings: [{ severity: "P1", message: "Missing error handling" }],
+            duration_ms: 5000,
+        };
+        MOCK_EXEC_FILE.mockImplementation((_cmd, _args, _opts, cb) => {
+            cb(null, JSON.stringify(agentOutput));
+        });
+        const result = await dispatch({
+            agentType: "spec-check",
+            prompt: "Review spec",
+            workdir: tmpDir,
+        });
+        expect(result.status).toBe("completed");
+        expect(result.agent).toBe("spec-check");
+        expect(result.findings).toEqual(agentOutput.findings);
+        expect(result.duration_ms).toBe(5000);
+    });
+    it("records duration_ms even when not returned by agent", async () => {
+        const { dispatch } = await import(MODULE_PATH);
+        MOCK_EXEC_FILE.mockImplementation((_cmd, _args, _opts, cb) => {
+            cb(null, JSON.stringify({ agent: "critic", status: "completed" }));
+        });
+        const result = await dispatch({
+            agentType: "critic",
+            prompt: "Criticize",
+            workdir: tmpDir,
+        });
+        expect(result.status).toBe("completed");
+        expect(result.duration_ms).toBeGreaterThanOrEqual(0);
+    });
+});
+//# sourceMappingURL=agents-dispatcher.test.js.map
