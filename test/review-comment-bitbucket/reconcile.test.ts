@@ -1,7 +1,11 @@
-import { describe, it, expect } from "vitest";
-import { reconcile } from "../lib/reconcile.js";
-import { computeFindingHash } from "../lib/finding-hash.js";
-import type { Finding, TaskRecord, CommentRecord } from "../lib/types.js";
+import { describe, expect, it } from "vitest";
+import { computeFindingHash } from "../../src/review-comment-bitbucket/finding-hash.js";
+import { reconcile } from "../../src/review-comment-bitbucket/reconcile.js";
+import type {
+  CommentRecord,
+  Finding,
+  TaskRecord,
+} from "../../src/review-comment-bitbucket/types.js";
 
 describe("reconcile", () => {
   const finding: Finding = {
@@ -36,7 +40,11 @@ describe("reconcile", () => {
     message,
   });
 
-  const createTask = (hash: string, status: "OPEN" | "RESOLVED", taskId: string = "task-123"): TaskRecord => ({
+  const createTask = (
+    hash: string,
+    status: "OPEN" | "RESOLVED",
+    taskId: string = "task-123",
+  ): TaskRecord => ({
     ...taskRecord,
     task_id: taskId,
     status,
@@ -52,7 +60,9 @@ describe("reconcile", () => {
   // Property Tests
 
   describe("P6: Missing finding → done (Latest_Task OPEN only, autoReconcileResolved=true)", () => {
-    it("should generate done action when finding is missing and task is OPEN", { timeout: 30000 }, () => {
+    it("should generate done action when finding is missing and task is OPEN", {
+      timeout: 30000,
+    }, () => {
       const testFinding = createFinding("test message 1");
       const hash = computeFindingHash(testFinding);
       const result = reconcile({
@@ -83,7 +93,9 @@ describe("reconcile", () => {
       expect(result.dones).toHaveLength(0);
     });
 
-    it("should NOT generate done action when autoReconcileResolved=false", { timeout: 30000 }, () => {
+    it("should NOT generate done action when autoReconcileResolved=false", {
+      timeout: 30000,
+    }, () => {
       const testFinding = createFinding("test message 3");
       const hash = computeFindingHash(testFinding);
       const result = reconcile({
@@ -114,7 +126,9 @@ describe("reconcile", () => {
       expect(result.creates[0].kind).toBe("create");
     });
 
-    it("should create when only comment exists (no task) with pr-task strategy", { timeout: 30000 }, () => {
+    it("should create when only comment exists (no task) with pr-task strategy", {
+      timeout: 30000,
+    }, () => {
       const testFinding = createFinding("new finding 2");
       const hash = computeFindingHash(testFinding);
       const result = reconcile({
@@ -130,7 +144,9 @@ describe("reconcile", () => {
       expect(result.creates[0].kind).toBe("create");
     });
 
-    it("should skip when task exists (even if comment missing) with pr-task strategy", { timeout: 30000 }, () => {
+    it("should skip when task exists (even if comment missing) with pr-task strategy", {
+      timeout: 30000,
+    }, () => {
       const testFinding = createFinding("new finding 3");
       const hash = computeFindingHash(testFinding);
       const result = reconcile({
@@ -143,7 +159,9 @@ describe("reconcile", () => {
       });
 
       expect(result.creates).toHaveLength(0);
-      expect(result.skips).toContainEqual(expect.objectContaining({ kind: "skip-duplicate", finding_hash: hash }));
+      expect(result.skips).toContainEqual(
+        expect.objectContaining({ kind: "skip-duplicate", finding_hash: hash }),
+      );
     });
   });
 
@@ -177,14 +195,19 @@ describe("reconcile", () => {
       });
 
       expect(result.reopens).toHaveLength(0);
-      expect(result.skips).toContainEqual(expect.objectContaining({ kind: "skip-duplicate", finding_hash: hash }));
+      expect(result.skips).toContainEqual(
+        expect.objectContaining({ kind: "skip-duplicate", finding_hash: hash }),
+      );
     });
   });
 
   describe("P9: creates/dones/reopens — same hash at most once (mutual exclusivity)", () => {
     it("should not have same hash in multiple action sets", { timeout: 30000 }, () => {
       const result = reconcile({
-        currentFindings: [{ ...finding, message: "finding1" }, { ...finding, message: "finding2" }],
+        currentFindings: [
+          { ...finding, message: "finding1" },
+          { ...finding, message: "finding2" },
+        ],
         existingTasks: [
           { ...taskRecord, task_id: "task-1", status: "RESOLVED", marker_hash: "hash1" },
           { ...taskRecord, task_id: "task-2", status: "OPEN", marker_hash: "hash2" },
@@ -194,16 +217,16 @@ describe("reconcile", () => {
         autoReopenRegressed: true,
       });
 
-      const allHashes = [
-        ...result.creates.map((a) => a.kind === "create" ? "create" : "unknown"),
+      const _allHashes = [
+        ...result.creates.map((a) => (a.kind === "create" ? "create" : "unknown")),
         ...result.dones.map((a) => a.finding_hash),
-        ...result.reopens.map((a) => a.finding_hash),
+        ...result.reopens.map((a) => computeFindingHash(a.finding)),
         ...result.skips.map((a) => a.finding_hash),
       ];
 
       const createHashes = new Set(result.creates.map(() => "create"));
       const doneHashes = new Set(result.dones.map((a) => a.finding_hash));
-      const reopenHashes = new Set(result.reopens.map((a) => a.finding_hash));
+      const reopenHashes = new Set(result.reopens.map((a) => computeFindingHash(a.finding)));
 
       const hasOverlap =
         [...createHashes].some((h) => doneHashes.has(h) || reopenHashes.has(h)) ||
@@ -245,7 +268,9 @@ describe("reconcile", () => {
       });
 
       expect(result.reopens).toHaveLength(0);
-      expect(result.skips).toContainEqual(expect.objectContaining({ kind: "skip-duplicate", finding_hash: hash }));
+      expect(result.skips).toContainEqual(
+        expect.objectContaining({ kind: "skip-duplicate", finding_hash: hash }),
+      );
     });
   });
 
@@ -390,7 +415,9 @@ describe("reconcile", () => {
       });
 
       expect(result.creates).toHaveLength(0);
-      expect(result.skips).toContainEqual(expect.objectContaining({ kind: "skip-duplicate", finding_hash: hash }));
+      expect(result.skips).toContainEqual(
+        expect.objectContaining({ kind: "skip-duplicate", finding_hash: hash }),
+      );
     });
 
     it("should skip with orphan-comment when strategy is inline-only", () => {
@@ -406,7 +433,9 @@ describe("reconcile", () => {
       });
 
       expect(result.creates).toHaveLength(0);
-      expect(result.skips).toContainEqual(expect.objectContaining({ kind: "skip-duplicate", finding_hash: hash }));
+      expect(result.skips).toContainEqual(
+        expect.objectContaining({ kind: "skip-duplicate", finding_hash: hash }),
+      );
     });
   });
 
@@ -418,7 +447,11 @@ describe("reconcile", () => {
         currentFindings: [testFinding],
         existingTasks: [
           createTask(hash, "RESOLVED"),
-          { ...createTask(hash, "RESOLVED"), task_id: "task-123", parent_comment_id: "comment-789" },
+          {
+            ...createTask(hash, "RESOLVED"),
+            task_id: "task-123",
+            parent_comment_id: "comment-789",
+          },
         ],
         existingComments: [createComment(hash, "comment-789")],
         autoReconcileResolved: true,
@@ -480,7 +513,9 @@ describe("reconcile", () => {
       });
 
       expect(result.creates).toHaveLength(0);
-      expect(result.skips).toContainEqual(expect.objectContaining({ kind: "skip-duplicate", finding_hash: hash }));
+      expect(result.skips).toContainEqual(
+        expect.objectContaining({ kind: "skip-duplicate", finding_hash: hash }),
+      );
     });
 
     it("should skip-duplicate when task exists with RESOLVED and autoReopenRegressed=false", () => {
@@ -496,7 +531,9 @@ describe("reconcile", () => {
 
       expect(result.creates).toHaveLength(0);
       expect(result.reopens).toHaveLength(0);
-      expect(result.skips).toContainEqual(expect.objectContaining({ kind: "skip-duplicate", finding_hash: hash }));
+      expect(result.skips).toContainEqual(
+        expect.objectContaining({ kind: "skip-duplicate", finding_hash: hash }),
+      );
     });
 
     it("should skip-duplicate for historical tasks that are RESOLVED", () => {
@@ -511,7 +548,9 @@ describe("reconcile", () => {
       });
 
       expect(result.dones).toHaveLength(0);
-      expect(result.skips).toContainEqual(expect.objectContaining({ kind: "skip-duplicate", finding_hash: hash }));
+      expect(result.skips).toContainEqual(
+        expect.objectContaining({ kind: "skip-duplicate", finding_hash: hash }),
+      );
     });
   });
 });

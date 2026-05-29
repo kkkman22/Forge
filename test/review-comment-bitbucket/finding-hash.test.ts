@@ -101,19 +101,21 @@ describe("Property 5: hash format strictness", () => {
   });
 });
 
-describe("Unit: separator uses U+0000", () => {
-  it("two findings with concatenation ambiguity produce different hashes", () => {
+describe("Unit: separator uses U+0000 (prevents field-concatenation ambiguity)", () => {
+  it("findings that collide under a space separator stay distinct", () => {
     const base: Finding = {
       priority: "P0",
       finding_type: "type",
-      file_path: "ab",
+      file_path: "a",
       line_number: 1,
       line_type: "ADDED",
       message: "msg",
       source_layer: "spec-check",
     };
-    const a: Finding = { ...base, file_path: "a", message: "bmsg" };
-    const b: Finding = { ...base, file_path: "ab", message: "msg" };
+    // Joined with a space, both reduce to the identical key "a 1 b c d";
+    // only a non-space (U+0000) separator keeps the field boundaries distinct.
+    const a: Finding = { ...base, finding_type: "b c", message: "d" };
+    const b: Finding = { ...base, finding_type: "b", message: "c d" };
     expect(computeFindingHash(a)).not.toBe(computeFindingHash(b));
   });
 });
