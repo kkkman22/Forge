@@ -400,3 +400,152 @@ describe("resolveProfile", () => {
     expect(() => resolveProfile(config, "strict")).toThrow(/default/);
   });
 });
+
+// ---------------------------------------------------------------------------
+// Task 9: Integration tests
+// ---------------------------------------------------------------------------
+
+describe("Integration: full flow", () => {
+  let tmpDir: string;
+
+  beforeEach(() => {
+    tmpDir = makeTmpDir();
+  });
+
+  afterEach(() => {
+    rmSync(tmpDir, { recursive: true, force: true });
+  });
+
+  it("load config -> check filesystem -> deny wins", () => {
+    mkdirSync(join(tmpDir, ".forge"), { recursive: true });
+    const configData = {
+      version: 1,
+      profile: "default",
+      filesystem: {
+        read: ["src/**"],
+        write: ["src/**"],
+        deny: [".env", "**/*.key"],
+      },
+      network: { allow: ["*"], deny: [] },
+      commands: { allow: ["*"], deny: [] },
+    };
+    writeFileSync(join(tmpDir, ".forge", "sandbox.json"), JSON.stringify(configData));
+
+    const config = loadSandboxConfig(join(tmpDir, ".forge", "sandbox.json"));
+
+    // Allowed path
+    expect(checkFilesystemPolicy("src/app.ts", "write", config).allowed).toBe(true);
+    // Denied by deny list
+    expect(checkFilesystemPolicy(".env", "read", config).allowed).toBe(false);
+    // Denied by deny list (glob)
+    expect(checkFilesystemPolicy("config/private.key", "write", config).allowed).toBe(false);
+    // Default allow for non-matching path
+    expect(checkFilesystemPolicy("docs/readme.md", "read", config).allowed).toBe(true);
+  });
+
+  it("load config -> check commands -> deny wins", () => {
+    mkdirSync(join(tmpDir, ".forge"), { recursive: true });
+    const configData = {
+      version: 1,
+      profile: "default",
+      filesystem: { read: ["**"], write: ["**"], deny: [] },
+      network: { allow: ["*"], deny: [] },
+      commands: { allow: ["git", "npm", "node"], deny: ["sudo", "rm -rf /"] },
+    };
+    writeFileSync(join(tmpDir, ".forge", "sandbox.json"), JSON.stringify(configData));
+
+    const config = loadSandboxConfig(join(tmpDir, ".forge", "sandbox.json"));
+
+    expect(checkCommandPolicy("git status", config).allowed).toBe(true);
+    expect(checkCommandPolicy("npm test", config).allowed).toBe(true);
+    expect(checkCommandPolicy("sudo rm -rf /", config).allowed).toBe(false);
+    expect(checkCommandPolicy("rm -rf /etc/passwd", config).allowed).toBe(false);
+  });
+
+  it("load config -> check network -> deny wins", () => {
+    mkdirSync(join(tmpDir, ".forge"), { recursive: true });
+    const configData = {
+      version: 1,
+      profile: "default",
+      filesystem: { read: ["**"], write: ["**"], deny: [] },
+      network: { allow: ["api.anthropic.com"], deny: ["evil.com"] },
+      commands: { allow: ["*"], deny: [] },
+    };
+    writeFileSync(join(tmpDir, ".forge", "sandbox.json"), JSON.stringify(configData));
+
+    const config = loadSandboxConfig(join(tmpDir, ".forge", "sandbox.json"));
+
+    expect(checkNetworkPolicy("https://api.anthropic.com/v1/messages", config).allowed).toBe(true);
+    expect(checkNetworkPolicy("https://evil.com/steal", config).allowed).toBe(false);
+    // Default allow for non-matching host
+    expect(checkNetworkPolicy("https://github.com/repo", config).allowed).toBe(true);
+  });
+
+  it("missing config file -> full default allow", () => {
+    const config = loadSandboxConfig(join(tmpDir, "nonexistent", "sandbox.json"));
+
+    // Everything allowed with default config
+    expect(checkFilesystemPolicy("any/path", "write", config).allowed).toBe(true);
+    expect(checkCommandPolicy("any command", config).allowed).toBe(true);
+    expect(checkNetworkPolicy("https://any.host.com", config).allowed).toBe(true);
+  });
+
+  it("resolveProfile + filesystem check combined", () => {
+    const config = makeTestConfig({
+      profile: "strict",
+      filesystem: { read: ["src/**"], write: [], deny: [".env"] },
+      network: { allow: [], deny: [] },
+      commands: { allow: [], deny: [] },
+    });
+
+    const resolved = resolveProfile(config, "strict");
+    expect(checkFilesystemPolicy("src/index.ts", "read", resolved).allowed).toBe(true);
+    expect(checkFilesystemPolicy(".env", "read", resolved).allowed).toBe(false);
+  });
+
+  it("invalid config structure falls back to default", () => {
+    mkdirSync(join(tmpDir, ".forge"), { recursive: true });
+    // Valid JSON but wrong structure (missing commands section)
+    writeFileSync(join(tmpDir, ".forge", "sandbox.json"), JSON.stringify({
+      version: 1,
+      profile: "default",
+      filesystem: { read: ["src/**"], write: ["src/**"], deny: [] },
+      network: { allow: ["*"], deny: [] },
+      // missing commands section
+    }));
+
+    const config = loadSandboxConfig(join(tmpDir, ".forge", "sandbox.json"));
+    // Should fall back to default
+    expect(config.version).toBe(1);
+    expect(config.filesystem.read).toEqual(["**"]);
+  });
+
+  it("config with empty arrays behaves correctly", () => {
+    const config = makeTestConfig({
+      filesystem: { read: [], write: [], deny: [] },
+      network: { allow: [], deny: [] },
+      commands: { allow: [], deny: [] },
+    });
+
+    // Empty lists -> default allow for everything
+    expect(checkFilesystemPolicy("any/file.txt", "write", config).allowed).toBe(true);
+    expect(checkCommandPolicy("any command", config).allowed).toBe(true);
+    expect(checkNetworkPolicy("https://any.host.com", config).allowed).toBe(true);
+  });
+
+  it("strict profile denies all network", () => {
+    const config = makeTestConfig({
+      network: { allow: [], deny: ["*"] },
+    });
+
+    expect(checkNetworkPolicy("https://api.anthropic.com/v1", config).allowed).toBe(false);
+    expect(checkNetworkPolicy("https://registry.npmjs.org/pkg", config).allowed).toBe(false);
+  });
+
+  it("DEFAULT_SANDBOX_CONFIG allows everything", () => {
+    expect(checkFilesystemPolicy(".env", "write", DEFAULT_SANDBOX_CONFIG).allowed).toBe(true);
+    expect(checkFilesystemPolicy("/etc/passwd", "read", DEFAULT_SANDBOX_CONFIG).allowed).toBe(true);
+    expect(checkCommandPolicy("rm -rf /", DEFAULT_SANDBOX_CONFIG).allowed).toBe(true);
+    expect(checkNetworkPolicy("https://evil.com", DEFAULT_SANDBOX_CONFIG).allowed).toBe(true);
+  });
+});
