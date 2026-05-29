@@ -1,5 +1,5 @@
 ---
-updated: "2026-05-29"
+updated: "2026-05-30"
 rule_count: 13
 max_rules: 15
 ---
@@ -27,12 +27,12 @@ This file keeps only rules that still need top-of-session reminders.
 
 ### R1: Implicit Idle Is Also a Block
 
-**Content**: 阶段完成后不调用下一阶段、直接 idle（无输出、等待用户输入），与显式询问"是否继续"同罪。完成 SKILL.md 最后一步后，**必须立即** `Skill(skill="forge", args="<next>")`。无输出 ≠ 安全停顿，它是更隐蔽的阻断。任何 SKILL 执行流的最后一条指令必须是 auto-advance 调用或明确的用户确认点（decide/spec 阶段）。如果不确定下一步是什么，检查 `.forge/status.md` 的 `phase` 字段和 forge 入口的阶段序列表。**特别注意**：review 发现 P0/P1 后，输出报告不是终点——必须立即触发 `gated_auto` 询问（AskUserQuestion），禁止输出清单后 idle 等用户推动。
-**Prevents**: 模型完成阶段后静默 idle，用户被迫手动追问"你在等我吗？"；review 发现 P0/P1 后只写报告不触发修复流程
-**Source**: 用户反馈 — spec 阶段自检完成后模型直接 idle，用户需手动触发；2026-05-28 review 发现 3P0+7P1 后仅输出报告未触发 gated_auto
+**Content**: 阶段完成后不调用下一阶段、直接 idle（无输出、等待用户输入），与显式询问"是否继续"同罪。完成 SKILL.md 最后一步后，**必须立即** `Skill(skill="forge", args="<next>")`。无输出 ≠ 安全停顿，它是更隐蔽的阻断。任何 SKILL 执行流的最后一条指令必须是 auto-advance 调用或明确的用户确认点（decide/spec 阶段）。如果不确定下一步是什么，检查 `.forge/status.md` 的 `phase` 字段和 forge 入口的阶段序列表。**特别注意**：review 发现 P0/P1 后，输出报告不是终点——必须立即触发 `gated_auto` 询问（AskUserQuestion），禁止输出清单后 idle 等用户推动。**描述式入口不等同于一次性任务**：用户通过描述（如"先核对下再做 task #10"）而非 `/forge build` 子命令进入时，实现完成后的输出摘要表**不是终点**——它是 build 阶段的收尾，必须立即调用 `Skill(skill="forge", args="review")` 进入管线下一阶段。无论入口方式如何，只要触发了实现动作，就绑定完整的 forge 管线推进义务。
+**Prevents**: 模型完成阶段后静默 idle，用户被迫手动追问"你在等我吗？"；review 发现 P0/P1 后只写报告不触发修复流程；描述式入口实现后停在摘要表不推进管线
+**Source**: 用户反馈 — spec 阶段自检完成后模型直接 idle，用户需手动触发；2026-05-28 review 发现 3P0+7P1 后仅输出报告未触发 gated_auto；2026-05-30 ship-gate-hardening task #10 描述式入口实现后停在 commit 摘要表，用户追问"为什么流程断掉了"
 **Added**: 2026-05-09
-**Confidence**: 0.9
-**Last_triggered**: 2026-05-29
+**Confidence**: 0.95
+**Last_triggered**: 2026-05-30
 **Infra_Ref**: `skills/shared/next-step-protocol.md` §三种违规形态
 
 ### R2: Review 必须对 "新增文件" 做主分支存在性验证
