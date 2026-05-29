@@ -4,9 +4,14 @@ generated_at: 2026-05-11T13:25:17.581Z
 auto_generated: true
 stage_count: 1
 total_files: 1
+archived_at: 2026-05-29
+archived_reason: "Merged into context-optimization (three-in-one)"
+successor: context-optimization
 ---
 
 # Feature: context-bloat-control
+
+> **Archived**: 2026-05-29 -- Spec merged into [context-optimization](context-optimization.md). See `.kiro/specs/_archived/context-bloat-control/REDIRECT.md`.
 
 ## 阶段索引
 
