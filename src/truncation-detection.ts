@@ -111,3 +111,56 @@ export function detectTruncation(layer: ReviewLayer, raw: string): LayerResult {
     truncated: !hasRequiredSections,
   };
 }
+
+// ---------------------------------------------------------------------------
+// Degradation Strategy Types
+// ---------------------------------------------------------------------------
+
+/** Action to take based on truncation severity across all layers. */
+export type DegradationAction = "proceed" | "annotate" | "warn" | "degrade";
+
+/** Result of assessing truncation severity across all review layers. */
+export interface TruncationAssessment {
+  /** The action to take. */
+  action: DegradationAction;
+  /** Number of truncated layers. */
+  truncatedCount: number;
+  /** Total number of layers reviewed. */
+  totalCount: number;
+  /** Names of truncated layers. */
+  truncatedLayers: ReviewLayer[];
+}
+
+// ---------------------------------------------------------------------------
+// Degradation Strategy (stub — to be replaced in GREEN phase)
+// ---------------------------------------------------------------------------
+
+/**
+ * Assess truncation severity across all review layer results.
+ *
+ * Strategy:
+ *   - 0 layers truncated → "proceed"
+ *   - 1 layer truncated → "annotate" (output + "[数据不完整]")
+ *   - 2 layers truncated → "warn" (output warning, suggest re-run)
+ *   - All layers truncated → "degrade" (trigger L2 serial retry)
+ */
+export function assessTruncationSeverity(results: LayerResult[]): TruncationAssessment {
+  const truncatedLayers = results.filter((r) => r.truncated).map((r) => r.layer);
+  const truncatedCount = truncatedLayers.length;
+  const totalCount = results.length;
+
+  let action: DegradationAction = "proceed";
+
+  if (truncatedCount === totalCount && totalCount >= 3) {
+    // All 3 review layers truncated → trigger L2 serial retry
+    action = "degrade";
+  } else if (truncatedCount >= 2) {
+    // Majority truncated → warn, suggest re-run
+    action = "warn";
+  } else if (truncatedCount === 1) {
+    // Single layer truncated → annotate with "[数据不完整]"
+    action = "annotate";
+  }
+
+  return { action, truncatedCount, totalCount, truncatedLayers };
+}
