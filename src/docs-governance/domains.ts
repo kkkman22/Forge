@@ -9,6 +9,7 @@ export const EXCLUDED_PREFIXES = [
   "test-results/",
   "apps/forge-loop-desktop/src-tauri/target/",
   ".claude/worktrees/",
+  "api/",
 ] as const;
 
 export const DOMAIN_C_PREFIXES = [".forge/", ".kiro/"] as const;

@@ -1,4 +1,4 @@
-[English Version](./INDEX.en.md) | [← INDEX (中文)](./INDEX.md)
+[English Version](./INDEX.en.md)
 
 ## Getting Started
 
@@ -15,6 +15,7 @@
 ## Reference
 
 - [CI UltraReview — 操作手册](ci-ultrareview-usage.md) — reference — 2026-05-12
+- [Claude Code 兼容性参考](claude-code-compatibility.md) — reference — 2026-05-29
 - [Docs Governance](docs-governance.md) — reference — 2026-05-24
 - [Docs Governance 参考手册](reference-docs-governance.md) / [Docs Governance 参考手册 (EN)](reference-docs-governance.en.md) — reference — 2026-05-25
 - [Forge Slimming 迁移指南](slimming-migration.md) — reference — 2026-05-17
@@ -24,7 +25,6 @@
 - [Forge 安全与信任](reference-security.md) — reference — 2026-05-12
 - [Forge 日常开发者引导](onboarding-daily.md) / [Forge 日常开发者引导 (EN)](onboarding-daily.en.md) — reference — 2026-05-12
 - [Forge 架构与状态保护](reference-architecture.md) — reference — 2026-05-12
-- [Claude Code 兼容性参考](claude-code-compatibility.md) — reference — 2026-05-29
 - [Review 配置指南](best-practices/review-configuration.md) / [Review 配置指南 (EN)](best-practices/review-configuration.en.md) — reference — 2026-05-17
 - [Router 选择指南](best-practices/router-selection.md) / [Router 选择指南 (EN)](best-practices/router-selection.en.md) — reference — 2026-05-17
 - [SKILL 编写指南](best-practices/skill-authoring.md) / [SKILL 编写指南 (EN)](best-practices/skill-authoring.en.md) — reference — 2026-05-17

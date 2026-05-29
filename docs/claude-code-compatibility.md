@@ -1,4 +1,14 @@
-[← INDEX](./INDEX.md) | [English Version](./claude-code-compatibility.en.md)
+---
+title: 'Claude Code 兼容性参考'
+category: reference
+audience:
+  - daily-developer
+  - maintainer
+updated: '2026-05-29'
+owner: forge-maintainers
+---
+
+[← INDEX](./INDEX.md)
 
 # Claude Code Compatibility
 
