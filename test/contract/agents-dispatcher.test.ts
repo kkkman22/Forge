@@ -227,7 +227,7 @@ describe("agents-dispatcher (R5)", () => {
     writeFileSync(join(runDir, "quality-check.json"), JSON.stringify(result2));
 
     // Use real fs for collectResults — restore actual implementations
-    const { readFileSync: realRead, readdirSync: realReaddir } = await import("node:fs");
+    const { readFileSync: _realRead, readdirSync: realReaddir } = await import("node:fs");
     MOCK_READDIR_SYNC.mockImplementation((dir: string) => {
       if (dir === runDir || dir === join(tmpDir, ".forge", "agent-results", "run-123")) {
         return ["spec-check.json", "quality-check.json"];
