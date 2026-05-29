@@ -4,9 +4,14 @@ generated_at: 2026-05-11T13:25:17.599Z
 auto_generated: true
 stage_count: 1
 total_files: 1
+archived_at: 2026-05-29
+archived_reason: "Related spec audit-remediation superseded by audit-remediation-v221"
+successor: audit-remediation-v221
 ---
 
 # Feature: sprint-audit-remediation
+
+> **Archived**: 2026-05-29 -- Related spec `audit-remediation` superseded by `audit-remediation-v221`.
 
 ## 阶段索引
 
