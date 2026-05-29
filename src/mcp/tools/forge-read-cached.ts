@@ -11,9 +11,9 @@ import { readFile } from "node:fs/promises";
 import type { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { z } from "zod";
 import type { ResolvedRoot } from "../project-root.js";
-import { getFileHash } from "../read-cache-hash.js";
 import type { ReadCacheIndex } from "../read-cache.js";
 import { lookup, update } from "../read-cache.js";
+import { getFileHash } from "../read-cache-hash.js";
 
 // ---------------------------------------------------------------------------
 // Core logic (exported for testing)
@@ -61,7 +61,14 @@ export async function handleReadCached(
     }
 
     // Update cache
-    update(index, path, currentHash, currentHash, content.length, startLine && endLine ? [startLine, endLine] : undefined);
+    update(
+      index,
+      path,
+      currentHash,
+      currentHash,
+      content.length,
+      startLine && endLine ? [startLine, endLine] : undefined,
+    );
 
     return { cached: false, content };
   } catch (err) {
