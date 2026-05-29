@@ -35,6 +35,44 @@ export interface LayerResult {
 }
 
 // ---------------------------------------------------------------------------
+// Structured Report Template
+// ---------------------------------------------------------------------------
+
+/**
+ * Markdown template for the structured review report block.
+ *
+ * Subagents must wrap their findings in REPORT_START...REPORT_END markers
+ * following this exact structure. Empty sections must contain "None" rather
+ * than being omitted — this ensures the report is parseable even when clean.
+ *
+ * Estimated token cost: ~200-500 tokens.
+ */
+export const REPORT_TEMPLATE = `${REPORT_START_MARKER}
+## Layer N: <layer-name> Review
+
+### P0 Issues
+<list or "None">
+
+### P1 Issues
+<list or "None">
+
+### P2 Issues
+<list or "None">
+
+### P3 Issues
+<list or "None">
+
+### Summary
+<1-2 sentence summary>
+${REPORT_END_MARKER}`;
+
+/**
+ * Minimum sections that must appear in a valid report block.
+ * Used by detectTruncation to distinguish "complete but clean" from "truncated".
+ */
+export const REQUIRED_SECTIONS = ["P0 Issues", "Summary"] as const;
+
+// ---------------------------------------------------------------------------
 // Stub — to be replaced in GREEN phase (Task 6)
 // ---------------------------------------------------------------------------
 
