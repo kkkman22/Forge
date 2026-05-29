@@ -114,7 +114,7 @@ Phase 1 advisory: **does not block**, only warns.
 **Before executing any shell command** (git merge, git push, gh pr create, etc.), call `checkCommandPolicy(command, sandboxConfig)`:
 
 ```
-import { loadSandboxConfig, checkCommandPolicy } from "./sandbox-phased.js";
+import { loadSandboxConfig, checkCommandPolicy } from "./sandbox-policy.js";
 const sandboxConfig = loadSandboxConfig();
 const result = checkCommandPolicy(command, sandboxConfig);
 if (!result.allowed) {

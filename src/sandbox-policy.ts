@@ -25,24 +25,33 @@ export {
 } from "./sandbox-phased.js";
 
 // ---------------------------------------------------------------------------
-// Types
+// Types (legacy — used by runtime enforcement layer: check-sandbox.ts, sdk-sandbox-policy.ts)
+//
+// NOTE: These types use default-deny semantics (unmatched → denied).
+// Phase 1 types (SandboxConfig + SandboxCheckResult, re-exported above) use
+// default-allow semantics (unmatched → allowed) for advisory mode.
+// Migrating consumers must account for this behavioral difference.
 // ---------------------------------------------------------------------------
 
+/** @deprecated Use SandboxConfig (re-exported above) for Phase 1 declarative config. */
 export interface FileSystemPolicy {
   allow: string[];
   deny: string[];
 }
 
+/** @deprecated Use SandboxConfig (re-exported above) for Phase 1 declarative config. */
 export interface NetworkPolicy {
   mode: "none" | "restricted" | "open";
   allow?: string[];
 }
 
+/** @deprecated Use SandboxConfig (re-exported above) for Phase 1 declarative config. */
 export interface PermissionPolicy {
   fileSystem: FileSystemPolicy;
   network: NetworkPolicy;
 }
 
+/** @deprecated Use SandboxCheckResult (re-exported above) for Phase 1 checks. */
 export interface AccessDecision {
   allowed: boolean;
   reason: string;
@@ -57,6 +66,9 @@ export interface AccessDecision {
  *
  * Deny patterns take priority over allow patterns.
  * Returns an AccessDecision with a descriptive reason on denial.
+ *
+ * @deprecated Use checkFilesystemPolicy (re-exported above) for Phase 1 checks.
+ * Note: this function defaults to DENY on no match; checkFilesystemPolicy defaults to ALLOW.
  */
 export function checkFileAccess(filePath: string, policy: FileSystemPolicy): AccessDecision {
   // Normalize: resolve .. segments, unify separators, ensure consistent matching
@@ -96,6 +108,8 @@ export function checkFileAccess(filePath: string, policy: FileSystemPolicy): Acc
  *   - "none": deny all
  *   - "restricted": allow only whitelisted endpoints
  *   - "open": allow all
+ *
+ * @deprecated Use checkNetworkPolicy (re-exported above) for Phase 1 checks.
  */
 export function checkNetworkAccess(endpoint: string, policy: NetworkPolicy): AccessDecision {
   if (policy.mode === "open") {
@@ -152,6 +166,8 @@ export interface PolicyValidationResult {
 /**
  * Validate a sandbox policy configuration object.
  * Returns a list of validation errors (empty when valid).
+ *
+ * @deprecated Use loadSandboxConfig with isValidSandboxConfig (re-exported above) for Phase 1 validation.
  */
 export function validatePolicy(config: unknown): PolicyValidationResult {
   const errors: string[] = [];
@@ -200,6 +216,8 @@ export function validatePolicy(config: unknown): PolicyValidationResult {
  *
  * Default: allow all files under project root, deny paths outside.
  * Network mode is "open" for backward compatibility.
+ *
+ * @deprecated Use DEFAULT_SANDBOX_CONFIG (re-exported above) for Phase 1 default config.
  */
 export function buildDefaultPolicy(projectRoot: string): PermissionPolicy {
   const normalizedRoot = path.resolve(projectRoot).replace(/\\/g, "/");

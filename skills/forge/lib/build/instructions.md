@@ -169,7 +169,7 @@ Phase 1 advisory: **does not block**, only warns.
 **Before writing any source file** in GREEN/REFACTOR phase, call `checkFilesystemPolicy(targetPath, 'write', sandboxConfig)`:
 
 ```
-import { loadSandboxConfig, checkFilesystemPolicy } from "./sandbox-phased.js";
+import { loadSandboxConfig, checkFilesystemPolicy } from "./sandbox-policy.js";
 const sandboxConfig = loadSandboxConfig();
 const result = checkFilesystemPolicy(targetPath, "write", sandboxConfig);
 if (!result.allowed) {
