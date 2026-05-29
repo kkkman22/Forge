@@ -133,7 +133,20 @@ build 阶段主 Agent 必须执行周期性 Restatement Checkpoint：每完成 N
 
 每个 `/forge` 命令调用构成 Session_Boundary。阶段间上下文交接通过 `.forge/` 目录文件系统进行，而非对话历史。建议 `/forge` 命令之间开启新会话。
 
-**Subagent 隔离**：每个 Subagent 有独立上下文。**会话恢复**：`/forge resume` 从 `.forge/progress/` 和 `.forge/knowledge/sessions/` 读取。**并发控制**：`max_parallel_agents` 默认 6。HTTP 429 降级：第 1 次并发减半 → 第 2 次降至 2 → 第 3 次串行。降级记录到 `.forge/knowledge/tool-health.md`。新会话重置并发数。<important if="context exceeds 100k tokens or session runs long">上下文超 100K tokens 时，考虑 `/clear` + `/forge resume`。`.forge/` 目录在会话间传递状态。</important>
+**Subagent 隔离**：每个 Subagent 有独立上下文。**会话恢复**：`/forge resume` 从 `.forge/progress/` 和 `.forge/knowledge/sessions/` 读取。**并发控制**：`max_parallel_agents` 默认 6。HTTP 429 降级：第 1 次并发减半 → 第 2 次降至 2 → 第 3 次串行。降级记录到 `.forge/knowledge/tool-health.md`。新会话重置并发数。
+
+### 6.1 上下文预算阈值（强制）
+
+当 Read 累积超过以下阈值时，**必须**执行阶段隔离：
+
+| 阈值 | 行为 |
+|------|------|
+| >100 KB (~25K tokens) | ⚠️ 建议执行 `/clear` + `/forge resume` |
+| >150 KB (~37K tokens) | ⛔ **必须**执行 `/clear` + `/forge resume` |
+
+阈值追踪：`scripts/track-read-budget.mjs` PostToolUse hook。详见 `skills/forge/lib/build/references/context-budget.md` 五层防御体系。
+
+<important if="context exceeds 100k tokens or session runs long">上下文超 100K tokens 时，考虑 `/clear` + `/forge resume`。`.forge/` 目录在会话间传递状态。</important>
 
 ---
 
