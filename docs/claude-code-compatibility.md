@@ -1,3 +1,5 @@
+[← INDEX](./INDEX.md) | [English Version](./claude-code-compatibility.en.md)
+
 # Claude Code Compatibility
 
 Forge requires Claude Code CLI v2.1.153 or later for full functionality.
