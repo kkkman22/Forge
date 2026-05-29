@@ -4,9 +4,14 @@ generated_at: 2026-05-11T13:25:17.598Z
 auto_generated: true
 stage_count: 3
 total_files: 3
+archived_at: 2026-05-29
+archived_reason: "Work completed"
+successor: none
 ---
 
 # Feature: sprint-3-gap-remediation
+
+> **Archived**: 2026-05-29 -- Work completed and delivered. See `.kiro/specs/_archived/sprint-3-gap-remediation/REDIRECT.md`.
 
 ## 阶段索引
 
