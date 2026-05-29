@@ -556,10 +556,67 @@ export function updateFixlistWithCommits(
 // ---------------------------------------------------------------------------
 
 /**
+ * L0-L3 fallback ladder level conditions.
+ */
+export interface FallbackLadderConditions {
+  /** L0: Interactive mode */
+  isInteractive: boolean;
+  /** L0: CLAUDE_CODE_WORKFLOWS=1 */
+  workflowsEnvSet: boolean;
+  /** L0: tengu_workflows_enabled gate ON */
+  workflowsEnabled: boolean;
+  /** L0: workflow file exists */
+  workflowFileExists: boolean;
+  /** L0: node --check passes */
+  workflowSyntaxValid: boolean;
+  /** L0: concurrency bridge available */
+  concurrencyBridgeAvailable: boolean;
+  /** L1+: subagent available (for L1/L2) */
+  subagentAvailable: boolean;
+}
+
+/**
+ * Evaluate the fallback ladder and return the resulting methodology.
+ *
+ * L0: All conditions met → workflow
+ * L1: Any L0 condition fails + subagent available → subagent-parallel
+ * L2: Subagent available but serial only → subagent-serial
+ * L3: All levels unavailable → unavailable
+ */
+export function evaluateFallbackLadder(
+  conditions: FallbackLadderConditions,
+): { level: "L0" | "L1" | "L2" | "L3"; methodology: Methodology } {
+  // L0 check
+  const l0Met =
+    conditions.isInteractive &&
+    conditions.workflowsEnvSet &&
+    conditions.workflowsEnabled &&
+    conditions.workflowFileExists &&
+    conditions.workflowSyntaxValid &&
+    conditions.concurrencyBridgeAvailable;
+
+  if (l0Met) {
+    return { level: "L0", methodology: "subagent-parallel" };
+  }
+
+  // L1/L2: subagent available
+  if (conditions.subagentAvailable) {
+    // Distinguish L1 (parallel) from L2 (serial) based on concurrency
+    if (conditions.concurrencyBridgeAvailable) {
+      return { level: "L1", methodology: "subagent-parallel" };
+    }
+    return { level: "L2", methodology: "subagent-serial" };
+  }
+
+  // L3: all exhausted
+  return { level: "L3", methodology: "unavailable" };
+}
+
+/**
  * Check whether the fallback ladder state should block ship.
  *
- * L0 (workflow), L1 (subagent-parallel), L2 (subagent-serial), L2-ci (ci-evidence) → passed.
- * L3 (unavailable) → blocked with HARD-GATE message.
+ * L0 (workflow), L1 (subagent-parallel), L2 (subagent-serial), L2-ci (ci-evidence) -> passed.
+ * L3 (unavailable) -> blocked with HARD-GATE message.
  */
 export function checkFallbackLadderGate(methodology: Methodology): GateResult {
   if (methodology === "unavailable") {
@@ -645,4 +702,107 @@ export function buildSkipGateAnnotation(options: SkipGateOptions): string {
 
   const gates = options.skipGates.join(",");
   return `[skip-gate: ${gates} reason=individual-skip]`;
+}
+
+// ---------------------------------------------------------------------------
+// Task 10: Gate orchestration — runAllGates
+// ---------------------------------------------------------------------------
+
+export interface RunAllGatesInput {
+  reviewDir: string;
+  testResultsDir: string;
+  progressDir: string;
+  featureName: string;
+  latestCommitHash: string;
+  methodology?: Methodology;
+  configCICheck?: string;
+  gitLogFn?: (file: string) => string[];
+  skipOptions?: SkipGateOptions;
+}
+
+/**
+ * Run all three gates in sequence: Review -> Test -> Progress.
+ *
+ * Applies skip-gate options. Returns ShipGateReport suitable for
+ * persistence via persistGateResults.
+ *
+ * Returns early if a blocking gate fails (review or test).
+ * Progress gate is non-blocking (warnings only).
+ */
+export function runAllGates(input: RunAllGatesInput): ShipGateReport {
+  const runId = new Date().toISOString().slice(0, 16).replace(/[-T:]/g, "");
+  const timestamp = new Date().toISOString();
+  const gates: GateResult[] = [];
+  let skipGate: string | null = null;
+
+  const skipped = new Set<GateName>();
+  if (input.skipOptions) {
+    if (input.skipOptions.skipAll) {
+      skipped.add("review");
+      skipped.add("test");
+      skipped.add("progress");
+      skipGate = "all";
+    }
+    for (const g of input.skipOptions.skipGates) {
+      skipped.add(g);
+      if (!skipGate) skipGate = g;
+    }
+  }
+
+  // Review gate (includes fallback ladder check)
+  if (skipped.has("review")) {
+    gates.push({
+      gate: "review",
+      passed: true,
+      reason: "Skipped via --skip-gate=review.",
+    });
+  } else {
+    // First check methodology (fallback ladder)
+    if (input.methodology) {
+      const ladderResult = checkFallbackLadderGate(input.methodology);
+      if (!ladderResult.passed) {
+        gates.push(ladderResult);
+      } else {
+        gates.push(checkReviewGate(input.reviewDir, input.latestCommitHash, input.gitLogFn));
+      }
+    } else {
+      gates.push(checkReviewGate(input.reviewDir, input.latestCommitHash, input.gitLogFn));
+    }
+  }
+
+  // Test gate
+  if (skipped.has("test")) {
+    gates.push({
+      gate: "test",
+      passed: true,
+      reason: "Skipped via --skip-gate=test.",
+    });
+  } else {
+    gates.push(checkTestGate(input.testResultsDir, input.configCICheck));
+  }
+
+  // Progress gate (non-blocking)
+  if (skipped.has("progress")) {
+    gates.push({
+      gate: "progress",
+      passed: true,
+      reason: "Skipped via --skip-gate=progress.",
+    });
+  } else {
+    gates.push(checkProgressGate(input.progressDir, input.featureName));
+  }
+
+  const blockingGates = gates.filter(
+    (g) => !g.passed && g.gate !== "progress",
+  );
+  const allPassed = blockingGates.length === 0;
+
+  return {
+    runId,
+    feature: input.featureName,
+    timestamp,
+    gates,
+    allPassed,
+    skipGate,
+  };
 }

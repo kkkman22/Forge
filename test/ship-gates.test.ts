@@ -24,6 +24,8 @@ import {
   checkFallbackLadderGate,
   persistGateResults,
   generateP1Fixlist,
+  evaluateFallbackLadder,
+  runAllGates,
 } from "../src/ship-gates.js";
 
 // ---------------------------------------------------------------------------
@@ -492,5 +494,182 @@ describe("GateResult type contract", () => {
       reason: "failed",
     };
     expect(result.details).toBeUndefined();
+  });
+});
+
+// ---------------------------------------------------------------------------
+// Task 7: Fallback Ladder L0-L3 evaluation
+// ---------------------------------------------------------------------------
+
+describe("evaluateFallbackLadder", () => {
+  const l0AllMet = {
+    isInteractive: true,
+    workflowsEnvSet: true,
+    workflowsEnabled: true,
+    workflowFileExists: true,
+    workflowSyntaxValid: true,
+    concurrencyBridgeAvailable: true,
+    subagentAvailable: true,
+  };
+
+  it("all L0 conditions met → L0", () => {
+    const result = evaluateFallbackLadder(l0AllMet);
+    expect(result.level).toBe("L0");
+    expect(result.methodology).toBe("subagent-parallel");
+  });
+
+  it("non-interactive mode → L1", () => {
+    const result = evaluateFallbackLadder({ ...l0AllMet, isInteractive: false });
+    expect(result.level).toBe("L1");
+    expect(result.methodology).toBe("subagent-parallel");
+  });
+
+  it("workflows env not set → L1", () => {
+    const result = evaluateFallbackLadder({ ...l0AllMet, workflowsEnvSet: false });
+    expect(result.level).toBe("L1");
+  });
+
+  it("workflow file missing → L1", () => {
+    const result = evaluateFallbackLadder({ ...l0AllMet, workflowFileExists: false });
+    expect(result.level).toBe("L1");
+  });
+
+  it("subagent not available, no concurrency → L3", () => {
+    const result = evaluateFallbackLadder({
+      ...l0AllMet,
+      subagentAvailable: false,
+      concurrencyBridgeAvailable: false,
+    });
+    expect(result.level).toBe("L3");
+    expect(result.methodology).toBe("unavailable");
+  });
+
+  it("subagent available, no concurrency bridge → L2", () => {
+    const result = evaluateFallbackLadder({
+      ...l0AllMet,
+      subagentAvailable: true,
+      concurrencyBridgeAvailable: false,
+      isInteractive: false,
+    });
+    expect(result.level).toBe("L2");
+    expect(result.methodology).toBe("subagent-serial");
+  });
+});
+
+// ---------------------------------------------------------------------------
+// Task 7 E2E: L3 blocks ship
+// ---------------------------------------------------------------------------
+
+describe("E2E: L3 fallback ladder blocks ship", () => {
+  it("methodology=unavailable in runAllGates → allPassed=false", () => {
+    const report = runAllGates({
+      reviewDir: "/nonexistent/reviews",
+      testResultsDir: "/nonexistent/test-results",
+      progressDir: "/nonexistent/progress",
+      featureName: "test-feature",
+      latestCommitHash: "abc1234",
+      methodology: "unavailable",
+    });
+    expect(report.allPassed).toBe(false);
+    const reviewGate = report.gates.find((g) => g.gate === "review");
+    expect(reviewGate).toBeDefined();
+    expect(reviewGate!.passed).toBe(false);
+    expect(reviewGate!.reason).toContain("HARD-GATE");
+  });
+
+  it("methodology=subagent-parallel in runAllGates → checks review normally", () => {
+    const report = runAllGates({
+      reviewDir: "/nonexistent/reviews",
+      testResultsDir: "/nonexistent/test-results",
+      progressDir: "/nonexistent/progress",
+      featureName: "test-feature",
+      latestCommitHash: "abc1234",
+      methodology: "subagent-parallel",
+    });
+    // Review will fail because dir doesn't exist, but it's not L3
+    const reviewGate = report.gates.find((g) => g.gate === "review");
+    expect(reviewGate).toBeDefined();
+    expect(reviewGate!.reason).not.toContain("HARD-GATE");
+  });
+});
+
+// ---------------------------------------------------------------------------
+// Task 10: runAllGates orchestration
+// ---------------------------------------------------------------------------
+
+describe("runAllGates", () => {
+  it("all gates pass when dirs have valid data", () => {
+    const { mkdtempSync, writeFileSync, rmSync, mkdirSync } = require("node:fs") as typeof import("node:fs");
+    const { join } = require("node:path") as typeof import("node:path");
+    const { tmpdir } = require("node:os") as typeof import("node:os");
+
+    const tmpDir = mkdtempSync(join(tmpdir(), "forge-allgates-test-"));
+    try {
+      mkdirSync(join(tmpDir, "reviews"), { recursive: true });
+      mkdirSync(join(tmpDir, "test-results"), { recursive: true });
+      mkdirSync(join(tmpDir, "progress"), { recursive: true });
+
+      // Review: passed, no P0/P1
+      writeFileSync(
+        join(tmpDir, "reviews", "20260529-review.md"),
+        [
+          "---",
+          "p0_count: 0",
+          "p1_count: 0",
+          "methodology: subagent-parallel",
+          "result: pass",
+          "---",
+        ].join("\n"),
+      );
+
+      // Test: passed
+      writeFileSync(
+        join(tmpDir, "test-results", "20260529-tests.json"),
+        JSON.stringify({ passed: true }),
+      );
+
+      // Progress: all complete
+      writeFileSync(
+        join(tmpDir, "progress", "test-feature.md"),
+        "- [x] Task 1\n- [x] Task 2\n",
+      );
+
+      const report = runAllGates({
+        reviewDir: join(tmpDir, "reviews"),
+        testResultsDir: join(tmpDir, "test-results"),
+        progressDir: join(tmpDir, "progress"),
+        featureName: "test-feature",
+        latestCommitHash: "abc1234",
+        methodology: "subagent-parallel",
+      });
+
+      expect(report.allPassed).toBe(true);
+      expect(report.gates).toHaveLength(3);
+      expect(report.skipGate).toBeNull();
+    } finally {
+      rmSync(tmpDir, { recursive: true, force: true });
+    }
+  });
+
+  it("skip-gate=test → test gate skipped", () => {
+    const report = runAllGates({
+      reviewDir: "/nonexistent/reviews",
+      testResultsDir: "/nonexistent/test-results",
+      progressDir: "/nonexistent/progress",
+      featureName: "test-feature",
+      latestCommitHash: "abc1234",
+      skipOptions: {
+        skipGates: ["test"],
+        skipAll: false,
+        force: false,
+        isInteractive: false,
+      },
+    });
+
+    const testGate = report.gates.find((g) => g.gate === "test");
+    expect(testGate).toBeDefined();
+    expect(testGate!.passed).toBe(true);
+    expect(testGate!.reason).toContain("Skipped");
+    expect(report.skipGate).toBe("test");
   });
 });
