@@ -82,6 +82,14 @@ describe("CwdChanged hook (R16)", () => {
         encoding: "utf-8",
         timeout: 5000,
       });
+      execFileSync("git", ["-C", tmpRepo, "config", "user.email", "test@forge.dev"], {
+        encoding: "utf-8",
+        timeout: 5000,
+      });
+      execFileSync("git", ["-C", tmpRepo, "config", "user.name", "Forge Test"], {
+        encoding: "utf-8",
+        timeout: 5000,
+      });
       execFileSync("git", ["-C", tmpRepo, "commit", "--allow-empty", "-m", "init"], {
         encoding: "utf-8",
         timeout: 5000,
@@ -119,6 +127,14 @@ describe("CwdChanged hook (R16)", () => {
         encoding: "utf-8",
         timeout: 5000,
       });
+      execFileSync("git", ["-C", tmpRepo, "config", "user.email", "test@forge.dev"], {
+        encoding: "utf-8",
+        timeout: 5000,
+      });
+      execFileSync("git", ["-C", tmpRepo, "config", "user.name", "Forge Test"], {
+        encoding: "utf-8",
+        timeout: 5000,
+      });
       execFileSync("git", ["-C", tmpRepo, "commit", "--allow-empty", "-m", "init"], {
         encoding: "utf-8",
         timeout: 5000,
@@ -152,6 +168,14 @@ describe("CwdChanged hook (R16)", () => {
 
     try {
       execFileSync("git", ["init", "--initial-branch=main", tmpRepo], {
+        encoding: "utf-8",
+        timeout: 5000,
+      });
+      execFileSync("git", ["-C", tmpRepo, "config", "user.email", "test@forge.dev"], {
+        encoding: "utf-8",
+        timeout: 5000,
+      });
+      execFileSync("git", ["-C", tmpRepo, "config", "user.name", "Forge Test"], {
         encoding: "utf-8",
         timeout: 5000,
       });
