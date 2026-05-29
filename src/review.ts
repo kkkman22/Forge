@@ -496,7 +496,10 @@ export interface ReviewSubagentContext {
  * quality-check needs moderate turns (scans multiple files).
  * security-check needs fewer turns (pattern-matching focused).
  */
-const REVIEW_AGENT_MAX_TURNS: Record<string, number> = {
+/** Review agent types that have per-agent maxTurns configuration. */
+type ReviewAgentType = "spec-check" | "quality-check" | "security-check" | "frontend-check";
+
+const REVIEW_AGENT_MAX_TURNS: Record<ReviewAgentType, number> = {
   "spec-check": 15,
   "quality-check": 12,
   "security-check": 10,
@@ -570,8 +573,11 @@ export function buildReviewSubagents(context: ReviewSubagentContext): SubagentIn
 // Truncation detection integration
 // ---------------------------------------------------------------------------
 
-/** Map agentType to ReviewLayer. Unknown types return undefined. */
-const AGENT_TYPE_TO_LAYER: Record<string, ReviewLayer> = {
+/** Agent types that map to review layers (excludes frontend-check, unknown). */
+type LayerMappingAgent = "spec-check" | "quality-check" | "security-check";
+
+/** Map agentType to ReviewLayer. Unknown types return undefined via Partial. */
+const AGENT_TYPE_TO_LAYER: Record<LayerMappingAgent, ReviewLayer> = {
   "spec-check": "spec",
   "quality-check": "quality",
   "security-check": "security",
@@ -592,8 +598,8 @@ export function processReviewTruncation(
   results: Array<{ agentType: string; result: string }>,
 ): TruncationAssessment {
   const layerResults = results
-    .filter((r) => AGENT_TYPE_TO_LAYER[r.agentType] !== undefined)
-    .map((r) => detectTruncation(AGENT_TYPE_TO_LAYER[r.agentType], r.result));
+    .filter((r) => r.agentType in AGENT_TYPE_TO_LAYER)
+    .map((r) => detectTruncation(AGENT_TYPE_TO_LAYER[r.agentType as LayerMappingAgent], r.result));
 
   return assessTruncationSeverity(layerResults);
 }
@@ -1026,6 +1032,18 @@ export async function runReviewWithTruncationHandling(
 
   // Run truncation detection on successful results
   const assessment = processReviewTruncation(result.succeeded);
+
+  // Emit visible annotation/warning for partial truncation
+  if (assessment.action === "annotate") {
+    const layers = assessment.truncatedLayers.join(", ");
+    // biome-ignore lint/suspicious/noConsole: User feedback for truncation annotation
+    console.warn(`⚠ Layer ${layers} report truncated — marked as [数据不完整]`);
+  } else if (assessment.action === "warn") {
+    // biome-ignore lint/suspicious/noConsole: User feedback for truncation warning
+    console.warn(
+      `⚠ ${assessment.truncatedCount}/${assessment.totalCount} review layers truncated — consider re-running /forge review`,
+    );
+  }
 
   // Only all-3-truncated triggers serial retry
   if (assessment.action !== "degrade") {
