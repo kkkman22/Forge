@@ -63,7 +63,7 @@ Requirements:
 | PreToolUse | Gate tool execution | Yes (exit 2) |
 | PostToolUse | Post-process tool results | No |
 | MessageDisplay | Modify displayed output | No |
-| PreCompact | Gate context compression | Yes (exit 2) |
+| PreCompact | Save state snapshot before compaction | No |
 | CwdChanged | React to directory change | No |
 | FileChanged | React to file system changes | No |
 | Stop | Session cleanup | No |
@@ -72,8 +72,8 @@ Requirements:
 
 All hooks should exit 0 on error unless intentionally blocking:
 
-- **Blocking hooks** (PreToolUse, PreCompact): exit 2 to block, exit 0 to allow
-- **Non-blocking hooks** (all others): always exit 0, use stderr for diagnostics
+- **Blocking hooks** (PreToolUse): exit 2 to block, exit 0 to allow
+- **Non-blocking hooks** (all others, including PreCompact): always exit 0, use stderr for diagnostics
 
 ## Timeout Guidelines
 

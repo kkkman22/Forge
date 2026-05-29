@@ -106,7 +106,7 @@ Plugin 安装后，以下命令可直接在终端使用：
 |------|------|
 | `forge-doctor` | 项目健康检查（`.forge/` 结构、配置、hooks） |
 | `forge-status` | 显示当前任务状态（tier/phase/progress） |
-| `forge-restate` | 触发 restatement checkpoint（PreCompact hook 配合） |
+| `forge-restate` | 触发 restatement checkpoint（可选 `--check` 工具） |
 
 所有命令支持 `--help`。
 
@@ -175,7 +175,7 @@ bash scripts/build-dist.sh
 
 **技术栈**：TypeScript 5.9（strict）、196 个 TypeScript 模块、Vitest 3.2、fast-check 4.7（属性测试）、Biome 2.4（lint + format）。运行时依赖：`@anthropic-ai/claude-agent-sdk`、`commander`。
 
-**测试策略**：7597 个测试（374 个测试文件，其中 149 个为 fast-check 属性测试文件）验证不变量。覆盖率 ~89% statements。
+**测试策略**：7590 个测试（374 个测试文件，其中 149 个为 fast-check 属性测试文件）验证不变量。覆盖率 ~89% statements。
 
 ---
 

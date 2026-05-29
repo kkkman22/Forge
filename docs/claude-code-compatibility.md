@@ -12,7 +12,7 @@ Forge requires Claude Code CLI v2.1.153 or later for full functionality.
 | `autoMode.hard_deny` | v2.1.139 | R6 | Manual mode enforcement via prompt |
 | `worktree.baseRef` | v2.1.139 | R7 | Default branch used |
 | MessageDisplay hook | v2.1.139 | R2 | No output folding |
-| PreCompact hook | v2.1.139 | R13 | No compression gate |
+| PreCompact/PostCompact hooks | v2.1.139 | R13 | No snapshot/restore on compact |
 | CwdChanged/FileChanged hooks | v2.1.139 | R16 | No branch/file monitoring |
 | `disallowedTools` frontmatter | v2.1.139 | R3 | No tool restriction |
 | `userConfig` in plugin.json | v2.1.153 | R10 | Default values used |
@@ -40,6 +40,6 @@ When a feature is unavailable, Forge degrades gracefully:
 |---------|-------------|
 | `forge-doctor` | Project health check |
 | `forge-status` | Show current task status |
-| `forge-restate` | Trigger restatement checkpoint |
+| `forge-restate` | Trigger restatement checkpoint (optional `--check` tool) |
 
 All bin/ commands support `--help`.

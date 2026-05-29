@@ -357,13 +357,14 @@ Three-strike 触发时（连续 3 次失败），`shouldClearGoal()` 自动清�
 
 **配置**：`.claude/settings.json` 中 `worktree.baseRef: "fresh"` 确保 worktree 从 `origin/<default>` 派生干净 base。
 
-## §2.5 补充：PreCompact hook 实现 Restatement Checkpoint
+## §2.5 补充：PreCompact/PostCompact 快照 + 恢复 + restate 提醒
 
-**实现机制**：`scripts/pre-compact-hook.mjs` 在压缩前检查 progress 更新间隔：
-- 读取 `.forge/progress/<active>.md` 已完成任务数
-- 与 `.forge/state/last-restatement.json` 对比
-- 超过阈值（默认 3 个任务）时 exit 2 阻断压缩
-- 可通过 `forge_pre_compact_hook: off` 关闭
+**实现机制**：`scripts/hook-precompact.sh` 在压缩前保存状态快照，`scripts/hook-postcompact.sh` 在压缩后恢复：
+- PreCompact：将 phase、progress（60 行）、findings（40 行）、review status 写入 `.forge/.compact-snapshot.md`
+- PostCompact：读取快照注入新上下文，然后清理快照文件
+- restate 提醒：当 `forge_compact_restate_reminder: on` 且已完成任务 ≥ 阈值时，快照中包含醒目提醒
+- 快照总大小 < 10,000 字符（hook 输出上限）
+- 可通过 `forge_compact_restate_reminder: off` 关闭提醒
 
 ## Claude Code 兼容性
 
