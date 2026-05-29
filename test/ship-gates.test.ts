@@ -23,6 +23,7 @@ import {
   buildSkipGateAnnotation,
   checkFallbackLadderGate,
   persistGateResults,
+  generateP1Fixlist,
 } from "../src/ship-gates.js";
 
 // ---------------------------------------------------------------------------
@@ -195,6 +196,149 @@ describe("updateFixlistWithCommits", () => {
     const result = updateFixlistWithCommits(fixlist, mockGitLog);
     expect(result.p1Issues[0].fixCommit).toBe("abc1234");
     expect(result.allFixed).toBe(true);
+  });
+});
+
+// ---------------------------------------------------------------------------
+// Task 6: P1 Fix Checklist integration tests
+// ---------------------------------------------------------------------------
+
+describe("P1 Fix Checklist integration", () => {
+  it("checkReviewGate with P1 fixlist on disk and all fixed → passed", () => {
+    const { mkdtempSync, writeFileSync, rmSync, mkdirSync } = require("node:fs") as typeof import("node:fs");
+    const { join } = require("node:path") as typeof import("node:path");
+    const { tmpdir } = require("node:os") as typeof import("node:os");
+
+    const tmpDir = mkdtempSync(join(tmpdir(), "forge-fixlist-test-"));
+    try {
+      mkdirSync(join(tmpDir, "reviews"), { recursive: true });
+
+      // Write a review report with P1
+      writeFileSync(
+        join(tmpDir, "reviews", "20260529-review.md"),
+        [
+          "---",
+          "p0_count: 0",
+          "p1_count: 1",
+          "methodology: subagent-parallel",
+          "result: fail",
+          "---",
+          "# Review",
+        ].join("\n"),
+      );
+
+      // Write fixlist with allFixed=true
+      writeFileSync(
+        join(tmpDir, "reviews", "20260529-p1-fixlist.json"),
+        JSON.stringify({
+          runId: "20260529",
+          p1Issues: [
+            { id: "P1-001", title: "Error handling", file: "src/a.ts", line: 42, fixCommit: "abc1234" },
+          ],
+          allFixed: true,
+        }),
+      );
+
+      const result = checkReviewGate(join(tmpDir, "reviews"), "def5678");
+      expect(result.passed).toBe(true);
+    } finally {
+      rmSync(tmpDir, { recursive: true, force: true });
+    }
+  });
+
+  it("checkReviewGate with P1 fixlist and gitLogFn resolves unfixed → passed", () => {
+    const { mkdtempSync, writeFileSync, rmSync, mkdirSync } = require("node:fs") as typeof import("node:fs");
+    const { join } = require("node:path") as typeof import("node:path");
+    const { tmpdir } = require("node:os") as typeof import("node:os");
+
+    const tmpDir = mkdtempSync(join(tmpdir(), "forge-fixlist-test2-"));
+    try {
+      mkdirSync(join(tmpDir, "reviews"), { recursive: true });
+
+      writeFileSync(
+        join(tmpDir, "reviews", "20260529-review.md"),
+        [
+          "---",
+          "p0_count: 0",
+          "p1_count: 1",
+          "methodology: subagent-parallel",
+          "result: fail",
+          "---",
+          "# Review",
+        ].join("\n"),
+      );
+
+      writeFileSync(
+        join(tmpDir, "reviews", "20260529-p1-fixlist.json"),
+        JSON.stringify({
+          runId: "20260529",
+          p1Issues: [
+            { id: "P1-001", title: "Error handling", file: "src/a.ts", line: 42, fixCommit: null },
+          ],
+          allFixed: false,
+        }),
+      );
+
+      const mockGitLog = (file: string) => {
+        if (file === "src/a.ts") return ["abc1234 [fix P1] Error handling"];
+        return [];
+      };
+
+      const result = checkReviewGate(join(tmpDir, "reviews"), "def5678", mockGitLog);
+      expect(result.passed).toBe(true);
+    } finally {
+      rmSync(tmpDir, { recursive: true, force: true });
+    }
+  });
+
+  it("checkReviewGate with P0 → always blocked regardless of fixlist", () => {
+    const { mkdtempSync, writeFileSync, rmSync, mkdirSync } = require("node:fs") as typeof import("node:fs");
+    const { join } = require("node:path") as typeof import("node:path");
+    const { tmpdir } = require("node:os") as typeof import("node:os");
+
+    const tmpDir = mkdtempSync(join(tmpdir(), "forge-fixlist-test3-"));
+    try {
+      mkdirSync(join(tmpDir, "reviews"), { recursive: true });
+
+      writeFileSync(
+        join(tmpDir, "reviews", "20260529-review.md"),
+        [
+          "---",
+          "p0_count: 1",
+          "p1_count: 0",
+          "methodology: subagent-parallel",
+          "result: fail",
+          "---",
+          "# Review",
+        ].join("\n"),
+      );
+
+      const result = checkReviewGate(join(tmpDir, "reviews"), "def5678");
+      expect(result.passed).toBe(false);
+      expect(result.reason).toContain("P0");
+    } finally {
+      rmSync(tmpDir, { recursive: true, force: true });
+    }
+  });
+});
+
+// ---------------------------------------------------------------------------
+// Task 6: generateP1Fixlist
+// ---------------------------------------------------------------------------
+
+describe("generateP1Fixlist", () => {
+  it("creates P1Fixlist from review findings", () => {
+    const fixlist = generateP1Fixlist("20260529-143000", [
+      { severity: "P1", filePath: "src/a.ts", lineNumber: 42, description: "Error handling missing" },
+      { severity: "P0", filePath: "src/b.ts", lineNumber: 10, description: "Security issue" },
+      { severity: "P2", filePath: "src/c.ts", lineNumber: 5, description: "Style issue" },
+    ]);
+    expect(fixlist.runId).toBe("20260529-143000");
+    expect(fixlist.p1Issues).toHaveLength(1);
+    expect(fixlist.p1Issues[0].id).toBe("P1-001");
+    expect(fixlist.p1Issues[0].file).toBe("src/a.ts");
+    expect(fixlist.p1Issues[0].fixCommit).toBeNull();
+    expect(fixlist.allFixed).toBe(false);
   });
 });
 
