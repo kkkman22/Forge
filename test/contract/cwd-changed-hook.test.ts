@@ -56,19 +56,51 @@ function parseJson(stdout: string): Record<string, unknown> | null {
 
 describe("CwdChanged hook (R16)", () => {
   it("exits 0 and outputs no JSON when on a feature branch", () => {
-    // We're on a worktree branch (not main/master/release-*), should be silent
-    const result = runHook(CWD_CHANGED_HOOK, {
-      session_id: "test-123",
-      cwd: ROOT,
-      hook_event_name: "CwdChanged",
-      old_cwd: ROOT,
-      new_cwd: ROOT,
-    });
+    // Create a temp repo on a feature branch (not main/master/release-*)
+    const tmpRepo = join(tmpdir(), `forge-test-cwd-feature-${Date.now()}`);
+    mkdirSync(tmpRepo, { recursive: true });
 
-    expect(result.exitCode).toBe(0);
-    // Should not output any systemMessage for non-dangerous branches
-    const json = parseJson(result.stdout);
-    expect(json).toBeNull();
+    try {
+      execFileSync("git", ["init", "--initial-branch=main", tmpRepo], {
+        encoding: "utf-8",
+        timeout: 5000,
+      });
+      execFileSync("git", ["-C", tmpRepo, "config", "user.email", "test@forge.dev"], {
+        encoding: "utf-8",
+        timeout: 5000,
+      });
+      execFileSync("git", ["-C", tmpRepo, "config", "user.name", "Forge Test"], {
+        encoding: "utf-8",
+        timeout: 5000,
+      });
+      execFileSync("git", ["-C", tmpRepo, "commit", "--allow-empty", "-m", "init"], {
+        encoding: "utf-8",
+        timeout: 5000,
+      });
+      execFileSync("git", ["-C", tmpRepo, "checkout", "-b", "feature/test-branch"], {
+        encoding: "utf-8",
+        timeout: 5000,
+      });
+
+      const result = runHook(
+        CWD_CHANGED_HOOK,
+        {
+          session_id: "test-123",
+          cwd: tmpRepo,
+          hook_event_name: "CwdChanged",
+          old_cwd: ROOT,
+          new_cwd: tmpRepo,
+        },
+        { GIT_DIR: join(tmpRepo, ".git") },
+      );
+
+      expect(result.exitCode).toBe(0);
+      // Should not output any systemMessage for non-dangerous branches
+      const json = parseJson(result.stdout);
+      expect(json).toBeNull();
+    } finally {
+      rmSync(tmpRepo, { recursive: true, force: true });
+    }
   });
 
   it("outputs systemMessage warning when on main branch", () => {
