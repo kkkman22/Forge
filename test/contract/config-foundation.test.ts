@@ -13,8 +13,8 @@ describe("Config foundation (R6 + R7 + config fields)", () => {
       { field: "review_dispatch_mode", expected: "inline" },
       { field: "decide_dispatch_mode", expected: "inline" },
       { field: "output_conciseness_hook", expected: "on" },
-      { field: "forge_pre_compact_hook", expected: "on" },
-      { field: "forge_pre_compact_threshold_tasks", expected: "3" },
+      { field: "forge_compact_restate_reminder", expected: "on" },
+      { field: "forge_compact_restate_threshold_tasks", expected: "3" },
       { field: "postooluse_inject_warnings", expected: "on" },
       { field: "review_use_ultrareview", expected: "true" },
     ];
