@@ -173,7 +173,7 @@ function checkFrozenZone(filePath, projectRoot) {
   const projectResolved = normalisePath(resolve(projectRoot));
 
   if (!resolved.startsWith(projectResolved + "/.forge/")) return null;
-  const forgeRelative = resolved.slice(projectResolved.length + 7);
+  const forgeRelative = resolved.slice(projectResolved.length + 8);
   if (!forgeRelative) return null;
 
   const frozenPaths = parseFrozenPaths(projectRoot);
@@ -228,9 +228,15 @@ function parseImports(fileContent) {
 }
 
 /**
- * Simple glob matching: supports ** (any depth) and * (single segment).
+ * Simple glob matching: supports ** (any depth), * (single segment),
+ * and trailing / for directory prefix matching.
  */
 function globMatches(filePath, glob) {
+  // Trailing / means "any file under this directory"
+  if (glob.endsWith("/")) {
+    return filePath.startsWith(glob);
+  }
+
   const escaped = glob
     .replace(/[.+^${}()|[\]\\]/g, "\\$&")
     .replace(/\*\*/g, "{{DOUBLESTAR}}")

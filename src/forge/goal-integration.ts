@@ -32,7 +32,7 @@ export function buildGoalCondition(tier: Tier): string | null {
  * /goal has no programmatic API — this merely echoes the command.
  */
 export async function setGoal(condition: string): Promise<void> {
-  console.log(`/goal ${condition}`);
+  process.stdout.write(`/goal ${condition}\n`);
 }
 
 /**
@@ -40,7 +40,7 @@ export async function setGoal(condition: string): Promise<void> {
  * /goal has no programmatic API — this merely echoes guidance.
  */
 export async function clearGoal(): Promise<void> {
-  console.log("请使用 /goal 命令清除或重置当前目标");
+  process.stdout.write("请使用 /goal 命令清除或重置当前目标\n");
 }
 
 /**
