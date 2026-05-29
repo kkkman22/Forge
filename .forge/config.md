@@ -12,8 +12,8 @@ findings_retention_days: 30
 review_dispatch_mode: inline           # inline | agents
 decide_dispatch_mode: inline           # inline | agents
 output_conciseness_hook: on            # on | off
-forge_pre_compact_hook: on             # on | off
-forge_pre_compact_threshold_tasks: 3   # PreCompact 阻断阈值
+forge_compact_restate_reminder: on       # on | off — inject restate reminder into compact snapshot
+forge_compact_restate_threshold_tasks: 3  # restate reminder trigger threshold
 postooluse_inject_warnings: on         # on | off
 review_use_ultrareview: true           # true | false
 post_push_verify_enabled: true
