@@ -147,18 +147,24 @@ first_seen_commit: <current-HEAD>
 signature: <1-line issue description>
 fix_required: <fix suggestion>
 ```
+## Findings-Only Output Constraint (Context Optimization)
+
+你的最终输出**必须**是紧凑的 findings-only 格式。编排层会将完整报告写入文件，你只需返回 severity table。
+
+**禁止**：前缀散文（"Let me summarize..." / "Based on my analysis..." / "Here are the findings..."）、重复 diff 内容、冗长解释。直接以 `## Layer 2` 开头。
+
 ## Output Format
 
 ```markdown
 ## Layer 2 — Code Quality
 
-**Reviewer**: quality-check
+| # | Severity | File:Line | Issue | Suggestion |
+|---|----------|-----------|-------|------------|
+| 1 | P1 | `src/routes/export.ts:42` | 缺少错误处理 | 添加 try-catch |
+| 2 | P2 | `src/services/export.ts:15` | 重复逻辑 | 提取公共函数 |
+| 3 | P3 | `src/jobs/async-export.ts:8` | 缺少注释 | 添加说明 |
 
-| # | Severity | File | Issue | Suggestion |
-|---|--------|------|------|------|
-| 1 | P1 | `src/routes/export.ts` | 缺少错误处理，异常会导致 500 | 添加 try-catch 和错误响应 |
-| 2 | P2 | `src/services/export.ts` | 重复的日期校验逻辑 | 提取为公共函数 |
-| 3 | P3 | `src/jobs/async-export.ts` | 缺少 JSDoc 注释 | 添加函数说明 |
+<!-- review-final -->
 ```
 
 ---
