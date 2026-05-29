@@ -2,7 +2,7 @@
 name: quality-check
 description: 代码质量评审者。在 /forge review 的 Agent Team 中提供 Layer 2 评审，检查命名一致性、错误处理、性能、测试覆盖率、代码重复和可维护性。
 model: sonnet
-maxTurns: 10
+maxTurns: 12
 tools: Read, Glob, Grep
 permissionMode: plan
 memory: project
@@ -44,6 +44,20 @@ background: true
 如果在 turn `(maxTurns - 1)` 仍然 evidence 不足，**直接**在 final-report 中以 `Severity: P1` 列出 `Insufficient evidence — Read budget exhausted` 项，并把已观察到的部分填入表格，然后输出报告。**绝不**在最后一 turn 再发起新的 tool call。
 
 > 本约束与 Step 0 forge_git IRON-LAW 同级，违反任一条都构成评审失败。
+
+### Two-Phase Execution Model
+
+评审执行严格分为两个阶段：
+
+**Phase A: Collect (工具调用阶段)**
+- 正常执行评审，收集发现
+- 优先执行高优先级检查（P0/P1 相关）
+- 当工具调用次数达到 maxTurns - 2 时，立即停止收集
+
+**Phase B: Report (纯输出阶段)**
+- **禁止**调用任何工具
+- 将收集到的发现填入结构化报告模板
+- 输出完整的 `<!-- REPORT_START -->` ... `<!-- REPORT_END -->` 段落
 
 ---
 
@@ -164,6 +178,25 @@ fix_required: <fix suggestion>
 | 2 | P2 | `src/services/export.ts:15` | 重复逻辑 | 提取公共函数 |
 | 3 | P3 | `src/jobs/async-export.ts:8` | 缺少注释 | 添加说明 |
 
+<!-- REPORT_START -->
+## Layer 2: quality-check Review
+
+### P0 Issues
+None
+
+### P1 Issues
+None
+
+### P2 Issues
+None
+
+### P3 Issues
+None
+
+### Summary
+No code quality issues found.
+<!-- REPORT_END -->
+
 <!-- review-final -->
 ```
 
@@ -190,3 +223,36 @@ fix_required: <fix suggestion>
 本节是 Turn Budget Discipline 的 final-report 模板锚点。最后一 turn 的输出**必须**以 `## Layer 2 — Code Quality` 起头，按上方 Output Format 表格输出，禁止以 preamble（`Now let me...` / `I need to...` / `Let me check the tasks.md...`）起头。
 
 如果在最后一 turn 之前 evidence 不足，按 Turn Budget Discipline 的"预算耗尽兜底"规则在表格里追加一项 `Severity: P1, Issue: Insufficient evidence — Read budget exhausted`，然后输出报告。**绝不**在最后一 turn 再发起新的 tool call。
+
+---
+
+## Structured Report Block (Truncation Protection)
+
+除了上方的 Final Report Block（severity table + sentinel），你还**必须**在输出末尾追加以下结构化报告块。此块用于主 agent 检测截断：
+
+```markdown
+<!-- REPORT_START -->
+## Layer 2: quality-check Review
+
+### P0 Issues
+<list or "None">
+
+### P1 Issues
+<list or "None">
+
+### P2 Issues
+<list or "None">
+
+### P3 Issues
+<list or "None">
+
+### Summary
+<1-2 sentence summary>
+<!-- REPORT_END -->
+```
+
+**规则**：
+- 此块必须在 `<!-- review-final -->` sentinel **之前**输出
+- 空段落必须填 "None"，不得省略
+- 主 agent 通过检测 `REPORT_START` / `REPORT_END` 标记判断报告完整性
+- 缺失或截断的报告将被标注为 `[数据不完整]`
