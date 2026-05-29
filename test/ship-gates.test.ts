@@ -88,9 +88,7 @@ describe("checkProgressGate — failure scenarios", () => {
     // Per design: no progress file → passed + warning
     expect(result.gate).toBe("progress");
     expect(result.passed).toBe(true);
-    expect(result.reason.toLowerCase()).toContain("warning") ||
-      expect(result.reason.toLowerCase()).toContain("no progress") ||
-      true; // stub returns false; real impl will return true + warning
+    expect(result.reason.toLowerCase()).toContain("no progress");
   });
 
   it("incomplete tasks → passed with warning (non-blocking)", () => {
