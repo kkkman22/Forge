@@ -107,6 +107,24 @@ Uncommitted: !`git status --short 2>/dev/null | head -10 || echo "clean"`
 
 门禁检查全部通过后，使用 AskUserQuestion 询问用户选择：**Merge to main** / **Create PR** / **Keep branch** / **Discard**（需二次确认）。
 
+### §3.1 Sandbox Advisory Checkpoint
+
+Phase 1 advisory: **does not block**, only warns.
+
+**Before executing any shell command** (git merge, git push, gh pr create, etc.), call `checkCommandPolicy(command, sandboxConfig)`:
+
+```
+import { loadSandboxConfig, checkCommandPolicy } from "./sandbox-phased.js";
+const sandboxConfig = loadSandboxConfig();
+const result = checkCommandPolicy(command, sandboxConfig);
+if (!result.allowed) {
+  // Output warning, do NOT block the command
+  console.warn(`⚠️ 沙箱策略建议阻止此操作：${result.reason}（Phase 1 advisory，不阻断）`);
+}
+```
+
+**Trigger**: Any `Bash` tool call executing git, gh, or other commands during delivery.
+
 → 详见 references/delivery-options.md（AskUserQuestion 格式、四选项执行细节、Pending-Delivery 记录、Autonomous Mode 配置）
 
 ---
@@ -120,6 +138,25 @@ IF 本次执行是从 conversation summary 恢复（上下文压缩后继续）�
 4. 从中断点继续执行
 
 正常流程（无 compaction）忽略此段落。
+
+---
+
+## 3.5 Spec Status Summary
+
+Ship 完成后，在报告输出中包含本次 ship 涉及的 spec 状态变更摘要：
+
+1. 读取 `.kiro/specs/` 中与当前 feature branch 名称匹配的 spec
+2. 显示 spec 当前状态（`status` 字段）
+3. 如果 build 阶段已将 status 更新为 `completed`，在 ship 报告中注明
+4. 触发 `node scripts/rebuild-spec-index.mjs --incremental` 同步 INDEX.md
+
+输出格式：
+```
+📋 Spec Status:
+  <spec-name>: <status> (updated: <date>)
+```
+
+无匹配 spec 时输出 `(no spec reference)` 并跳过。
 
 ---
 

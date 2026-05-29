@@ -53,6 +53,8 @@ export { checkPlanStructure, detectPlanFormat, extractHeadingAnchors, FORBIDDEN_
 export { evaluateReviewGate, evaluateShipGate, evaluateTestGate, } from "./quality-gate.js";
 // Ship gate
 export { checkReviewFreshness, checkShipGate, checkShipGateWithChecklist, checkShipGateWithForceSkip, checkShipGateWithFreshness, recordForceSkip, } from "./ship.js";
+// Ship gates (I/O-level gate checks)
+export { buildSkipGateAnnotation, checkFallbackLadderGate, checkProgressGate, checkReviewGate, checkTestGate, evaluateFallbackLadder, generateP1Fixlist, parseP1Fixlist, persistGateResults, runAllGates, updateFixlistWithCommits, validateSkipGateOptions, } from "./ship-gates.js";
 // Spec Health (merged: type-only + value blocks)
 export { checkSpecHealth, classifyVerdict, computeAmbiguityScore, computeSpecHash, parseHealthCache, renderSpecHealthAdvisory, shouldRecompute, } from "./spec-health.js";
 // Subagent runner

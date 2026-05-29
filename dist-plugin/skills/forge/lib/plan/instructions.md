@@ -52,6 +52,29 @@ Read spec frontmatter `health` field. If spec_hash matches current content, reus
 
 搜索历史经验和项目上下文。强制步骤：读取 `knowledge/catalog.md`（全景索引，~50 行）、按需深入 `knowledge/` 相关条目、读取 `instincts.md`、读取锁定 Spec、派发 explore agent 扫描代码库。可选：`metrics.md`（偏差率 > 1.2 时预估时间乘系数）、`tool-health.md`（退化命令注入警告）。`catalog.md` 新鲜度由 hooks.json PostToolUse 自动维护（`scripts/knowledge-hook-dispatch.mjs`），plan 启动时如 catalog 过期会自动 rebuild，无需手动 `/forge learn` 刷新。
 
+**Spec Status Check（Research 阶段）**：引用 spec 时检查其 frontmatter status：
+- `archived` → 阻断，提示已被归档，显示 `replaced_by`
+- `deferred` → 警告，提示该 spec 已暂缓（显示 `deferred_reason`）
+- `draft` / `approved` → 自动更新 status 为 `in_progress`
+- `in_progress` → 正常继续
+
+#### Sandbox Advisory Checkpoint
+
+Phase 1 advisory: **does not block**, only warns.
+
+**Before reading .forge/ or project files**, call `checkFilesystemPolicy(targetPath, 'read', sandboxConfig)`:
+
+```
+import { loadSandboxConfig, checkFilesystemPolicy } from "./sandbox-phased.js";
+const sandboxConfig = loadSandboxConfig();
+const result = checkFilesystemPolicy(targetPath, "read", sandboxConfig);
+if (!result.allowed) {
+  console.warn(`⚠️ 沙箱策略建议阻止此操作：${result.reason}（Phase 1 advisory，不阻断）`);
+}
+```
+
+**Trigger**: Any `Read` tool call targeting `.forge/` or project source files during research.
+
 ### Step 2: File Mapping
 
 列出所有需创建/修改的文件。标注 `CREATE` 或 `MODIFY`，说明原因。测试文件与源文件成对。

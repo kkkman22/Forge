@@ -53,6 +53,16 @@ describe("Contract: compaction hooks", () => {
         expect(hooks.hooks?.PreCompact).toBeDefined();
         expect(hooks.hooks?.PostCompact).toBeDefined();
     });
+    it("plugin.json registers PreCompact and PostCompact with .sh scripts", () => {
+        const pluginPath = resolve(ROOT, ".claude-plugin/plugin.json");
+        const plugin = JSON.parse(readFileSync(pluginPath, "utf-8"));
+        expect(plugin.hooks?.PreCompact).toBeDefined();
+        expect(plugin.hooks?.PostCompact).toBeDefined();
+        const preCmd = JSON.stringify(plugin.hooks.PreCompact);
+        const postCmd = JSON.stringify(plugin.hooks.PostCompact);
+        expect(preCmd).toContain("hook-precompact.sh");
+        expect(postCmd).toContain("hook-postcompact.sh");
+    });
     it("precompact hook never exits 2", () => {
         const content = readFileSync(resolve(ROOT, "scripts/hook-precompact.sh"), "utf-8");
         expect(content).not.toMatch(/\bexit\s+2\b/);
@@ -168,9 +178,9 @@ describe("Contract: CC version gate", () => {
         expect(content).toMatch(/2\.1\.121/);
         expect(content).toMatch(/sort -V/);
     });
-    it("README mentions minimum CC version 2.1.121", () => {
+    it("README mentions minimum CC version 2.1.153", () => {
         const content = readFileSync(resolve(ROOT, "README.md"), "utf-8");
-        expect(content).toMatch(/2\.1\.121/);
+        expect(content).toMatch(/2\.1\.153/);
     });
     it("CHANGELOG has Phase 2 entry", () => {
         const content = readFileSync(resolve(ROOT, "CHANGELOG.md"), "utf-8");

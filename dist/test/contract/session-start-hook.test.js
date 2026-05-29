@@ -15,7 +15,7 @@ function makeEvolvedRules(dir, content) {
 function makeSpecDir(dir, specName) {
     const specsDir = join(dir, ".kiro", "specs", specName);
     mkdirSync(specsDir, { recursive: true });
-    writeFileSync(join(specsDir, "spec.md"), "# " + specName, "utf-8");
+    writeFileSync(join(specsDir, "spec.md"), `# ${specName}`, "utf-8");
 }
 function makeSpecLock(dir, specName) {
     const stateDir = join(dir, ".forge", "state");

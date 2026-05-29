@@ -53,9 +53,9 @@ describe("inject-evolved-rules.mjs", () => {
         expect(result.exitCode).toBe(0);
         expect(result.stdout.length).toBe(0);
     });
-    it("file ≤ 4KB → stdout equals header + full file content, no truncation", () => {
+    it("file ≤ 4KB → stdout equals JSON with extracted content, no truncation", () => {
         tempDir = createTempDir();
-        const content = "---\nupdated: '2026-05-16'\n---\n## Rules\nR1 content here";
+        const content = "---\nupdated: '2026-05-16'\n---\n## Rules\n### R1: Test\n**Content**: R1 content here";
         writeFileSync(join(tempDir, RULES_FILE), content);
         const mainStdin = JSON.stringify({
             session_id: "s1",
@@ -63,13 +63,16 @@ describe("inject-evolved-rules.mjs", () => {
         });
         const result = runScript(tempDir, mainStdin);
         expect(result.exitCode).toBe(0);
-        expect(result.stdout).toBe(`=== Evolved Rules ===\n${content}`);
-        expect(result.stdout).not.toContain("truncated");
+        const json = JSON.parse(result.stdout);
+        expect(json.additionalContext).toContain("R1: Test");
+        expect(json.additionalContext).toContain("R1 content here");
+        expect(json.hookSpecificOutput.reloadSkills).toBe(true);
     });
-    it("file > 4KB → stdout contains first 4096 bytes + truncation marker", () => {
+    it("file > 4KB → additionalContext is truncated", () => {
         tempDir = createTempDir();
-        // Create a file > 4KB
-        const content = "x".repeat(5000);
+        // Create a file > 4KB with proper rule format
+        const ruleHeader = "### R1: Big Rule\n**Content**: ";
+        const content = ruleHeader + "x".repeat(5000);
         writeFileSync(join(tempDir, RULES_FILE), content);
         const mainStdin = JSON.stringify({
             session_id: "s1",
@@ -77,10 +80,10 @@ describe("inject-evolved-rules.mjs", () => {
         });
         const result = runScript(tempDir, mainStdin);
         expect(result.exitCode).toBe(0);
-        expect(result.stdout).toContain("=== Evolved Rules ===\n");
-        expect(result.stdout).toContain("bytes truncated");
-        // Header + first 4096 bytes + truncation marker
-        expect(result.stdout.length).toBeLessThan(content.length + 100);
+        const json = JSON.parse(result.stdout);
+        // Script reads full file up to MAX_BYTES (32KB) but extractContentOnly trims lines
+        expect(json.additionalContext).toContain("R1: Big Rule");
+        expect(json.additionalContext.length).toBeLessThan(content.length);
     });
     it("subagent stdin (with agent_id) → exit 0, stdout zero bytes", () => {
         tempDir = createTempDir();
