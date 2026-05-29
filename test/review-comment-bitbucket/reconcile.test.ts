@@ -2,10 +2,16 @@ import { describe, expect, it } from "vitest";
 import { computeFindingHash } from "../../src/review-comment-bitbucket/finding-hash.js";
 import { reconcile } from "../../src/review-comment-bitbucket/reconcile.js";
 import type {
+  Action,
   CommentRecord,
   Finding,
   TaskRecord,
 } from "../../src/review-comment-bitbucket/types.js";
+
+// Type narrows for discriminated union access
+type DoneAction = Extract<Action, { kind: "done" }>;
+type ReopenAction = Extract<Action, { kind: "reopen" }>;
+type SkipAction = Extract<Action, { kind: "skip-duplicate" }>;
 
 describe("reconcile", () => {
   const finding: Finding = {
@@ -74,9 +80,10 @@ describe("reconcile", () => {
       });
 
       expect(result.dones).toHaveLength(1);
-      expect(result.dones[0].kind).toBe("done");
-      expect(result.dones[0].task_id).toBe("task-123");
-      expect(result.dones[0].finding_hash).toBe(hash);
+      const done = result.dones[0] as DoneAction;
+      expect(done.kind).toBe("done");
+      expect(done.task_id).toBe("task-123");
+      expect(done.finding_hash).toBe(hash);
     });
 
     it("should NOT generate done action for RESOLVED tasks", { timeout: 30000 }, () => {
@@ -178,9 +185,10 @@ describe("reconcile", () => {
       });
 
       expect(result.reopens).toHaveLength(1);
-      expect(result.reopens[0].kind).toBe("reopen");
-      expect(result.reopens[0].task_id).toBe("task-123");
-      expect(result.reopens[0].finding).toEqual(testFinding);
+      const reopen = result.reopens[0] as ReopenAction;
+      expect(reopen.kind).toBe("reopen");
+      expect(reopen.task_id).toBe("task-123");
+      expect(reopen.finding).toEqual(testFinding);
     });
 
     it("should NOT reopen when autoReopenRegressed=false", { timeout: 30000 }, () => {
@@ -219,14 +227,14 @@ describe("reconcile", () => {
 
       const _allHashes = [
         ...result.creates.map((a) => (a.kind === "create" ? "create" : "unknown")),
-        ...result.dones.map((a) => a.finding_hash),
-        ...result.reopens.map((a) => computeFindingHash(a.finding)),
-        ...result.skips.map((a) => a.finding_hash),
+        ...result.dones.map((a) => (a as DoneAction).finding_hash),
+        ...result.reopens.map((a) => computeFindingHash((a as ReopenAction).finding)),
+        ...result.skips.map((a) => (a as SkipAction).finding_hash),
       ];
 
       const createHashes = new Set(result.creates.map(() => "create"));
-      const doneHashes = new Set(result.dones.map((a) => a.finding_hash));
-      const reopenHashes = new Set(result.reopens.map((a) => computeFindingHash(a.finding)));
+      const doneHashes = new Set(result.dones.map((a) => (a as DoneAction).finding_hash));
+      const reopenHashes = new Set(result.reopens.map((a) => computeFindingHash((a as ReopenAction).finding)));
 
       const hasOverlap =
         [...createHashes].some((h) => doneHashes.has(h) || reopenHashes.has(h)) ||
@@ -380,7 +388,7 @@ describe("reconcile", () => {
 
       expect(result.dones).toHaveLength(1);
       // String comparison: "task-200" > "task-100" > "task-50"
-      expect(result.dones[0].task_id).toBe("task-200");
+      expect((result.dones[0] as DoneAction).task_id).toBe("task-200");
     });
   });
 
@@ -459,7 +467,7 @@ describe("reconcile", () => {
       });
 
       expect(result.reopens).toHaveLength(1);
-      expect(result.reopens[0].comment_id).toBe("comment-789");
+      expect((result.reopens[0] as ReopenAction).comment_id).toBe("comment-789");
     });
   });
 
@@ -478,7 +486,7 @@ describe("reconcile", () => {
       });
 
       expect(result.dones).toHaveLength(1);
-      expect(result.dones[0].comment_id).toBe("comment-789");
+      expect((result.dones[0] as DoneAction).comment_id).toBe("comment-789");
     });
   });
 

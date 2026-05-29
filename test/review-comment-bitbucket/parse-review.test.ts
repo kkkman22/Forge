@@ -2,12 +2,12 @@ import fs from "node:fs";
 import os from "node:os";
 import path from "node:path";
 import { afterEach, describe, expect, it } from "vitest";
-import type { Finding } from "../lib/types.js";
+import type { Finding } from "../../src/review-comment-bitbucket/types.js";
 import {
   ReviewMarkdownNotFoundError,
   ReviewMarkdownParseError,
   parseReviewMarkdown,
-} from "../lib/parse-review.js";
+} from "../../src/review-comment-bitbucket/parse-review.js";
 
 let tmpDir: string | undefined;
 

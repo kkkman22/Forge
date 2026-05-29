@@ -1,6 +1,6 @@
 import { describe, expect, it, vi } from "vitest";
-import type { ResolvedConfig } from "../../lib/types.js";
-import { postReviewToBitbucket } from "../../lib/post.js";
+import type { ResolvedConfig } from "../../../src/review-comment-bitbucket/types.js";
+import { postReviewToBitbucket } from "../../../src/review-comment-bitbucket/post.js";
 
 const CONFIG_AUTO: ResolvedConfig = {
   enabled: true,

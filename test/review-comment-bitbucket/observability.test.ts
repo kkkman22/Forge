@@ -2,11 +2,11 @@ import * as fs from "node:fs";
 import * as os from "node:os";
 import * as path from "node:path";
 import { describe, expect, it, beforeEach, afterEach } from "vitest";
-import type { ToolFailure } from "../lib/types.js";
+import type { ToolFailure } from "../../src/review-comment-bitbucket/types.js";
 import {
   recordPartialFailures,
   appendRunMetrics,
-} from "../lib/observability.js";
+} from "../../src/review-comment-bitbucket/observability.js";
 
 describe("Unit: partial_failures append to same-day file without overwriting", () => {
   let tmpDir: string;

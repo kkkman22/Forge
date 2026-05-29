@@ -100,6 +100,7 @@ export function parseRemoteUrl(url: string): { host: string; port: number | null
  * Case-insensitive, ignores scheme, path, query, fragment
  */
 export function isSameHost(a: string | null, b: string | null): boolean {
+  if (!a || !b) return false;
   const parsedA = parseRemoteUrl(a);
   const parsedB = parseRemoteUrl(b);
 

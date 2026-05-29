@@ -1,7 +1,7 @@
 import { describe, it, expect } from "vitest";
 import * as fc from "fast-check";
-import { formatFinding } from "../lib/format.js";
-import { computeFindingHash, buildMarker, extractMarker } from "../lib/finding-hash.js";
+import { formatFinding } from "../../src/review-comment-bitbucket/format.js";
+import { computeFindingHash, buildMarker, extractMarker } from "../../src/review-comment-bitbucket/finding-hash.js";
 
 // Test data generators
 const priorityArb = fc.constantFrom("P0", "P1", "P2", "P3");
