@@ -36,19 +36,29 @@ if [ -f "$STATUS_FILE" ]; then
   pr_number=$(grep '^pr_number:' "$STATUS_FILE" 2>/dev/null | sed 's/pr_number: *//')
 fi
 
-# --- Rich snapshot: full progress, findings, active constraints ---
+# --- Restate reminder config ---
+restate_reminder="off"
+restate_threshold=3
+if [ -f ".forge/config.md" ]; then
+  _val=$(grep '^forge_compact_restate_reminder:' ".forge/config.md" 2>/dev/null | sed 's/forge_compact_restate_reminder: *//' | tr -d '[:space:]')
+  [ -n "$_val" ] && restate_reminder="$_val"
+  _val=$(grep '^forge_compact_restate_threshold_tasks:' ".forge/config.md" 2>/dev/null | sed 's/forge_compact_restate_threshold_tasks: *//' | tr -d '[:space:]')
+  [ -n "$_val" ] && restate_threshold="$_val"
+fi
+
+# --- Rich snapshot: progress, findings, active constraints ---
 
 progress_content=""
 progress_file=".forge/progress/${slug}.md"
 if [ -f "$progress_file" ]; then
-  # Cap at 100 lines to avoid bloating the snapshot
-  progress_content=$(head -100 "$progress_file" 2>/dev/null)
+  # Cap at 60 lines to stay under 10k-char hook output limit
+  progress_content=$(head -60 "$progress_file" 2>/dev/null)
 fi
 
 findings_content=""
 findings_file=".forge/findings/${slug}.md"
 if [ -f "$findings_file" ]; then
-  findings_content=$(head -80 "$findings_file" 2>/dev/null)
+  findings_content=$(head -40 "$findings_file" 2>/dev/null)
 fi
 
 # Count completed vs pending tasks
@@ -77,6 +87,13 @@ if git rev-parse --is-inside-work-tree >/dev/null 2>&1; then
   git_last_commit=$(git log --oneline -1 2>/dev/null || echo "")
 fi
 
+# --- Build restate reminder if threshold met ---
+restate_reminder_section=""
+if [ "$restate_reminder" = "on" ] && [ "${completed:-0}" -ge "$restate_threshold" ] 2>/dev/null; then
+  restate_reminder_section="⚠️ RESTATE REMINDER: ${completed:-0} tasks completed (threshold: ${restate_threshold}).
+After compaction recovery, run restatement checkpoint first: re-read .forge/progress/ and update state."
+fi
+
 cat > "$SNAPSHOT_FILE" <<EOF
 # Forge Compact Snapshot
 # This file is auto-generated before context compaction and restored after.
@@ -92,15 +109,16 @@ tasks_completed=${completed:-0}
 tasks_pending=${pending:-0}
 review_status=${review_summary:-none}
 
-## Progress (capped at 100 lines)
+## Progress (capped at 60 lines)
 ${progress_content:-No progress file found.}
 
-## Key Findings (capped at 80 lines)
+## Key Findings (capped at 40 lines)
 ${findings_content:-No findings file found.}
 
 ## Active Constraints
 Check .forge/status.md for current phase and .forge/plans/ for remaining tasks.
 After compaction, read .forge/progress/${slug}.md for full task state.
+${restate_reminder_section:-}
 EOF
 
 log_event "precompact_snapshot" "slug=$slug phase=$phase completed=${completed:-0} pending=${pending:-0}"
