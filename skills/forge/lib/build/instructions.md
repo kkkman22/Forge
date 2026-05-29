@@ -242,6 +242,18 @@ Spec/Plan not ready → §2 rejection. Subagent timeout → block → `/forge re
 
 Mandatory token limits, structured outputs exempt. → 详见 references/context-budget.md
 
+### Phase Boundary Gate
+
+每个 task 或 phase 完成后，检查 Read 预算（`${TMPDIR}/forge-read-budget-<session>.json`）：
+
+| 累积 Read | 行为 |
+|-----------|------|
+| < 100 KB | 继续下一 task |
+| 100–150 KB | 输出 `⚠️ Context usage >60%. Execute /clear then /forge resume to continue.` 继续，但强烈建议隔离 |
+| > 150 KB | 输出 `⛔ Context usage >80%. MUST /clear + /forge resume. Continuing will cause truncation.` 并停止执行 |
+
+Phase 完成后**必须**评估 budget，即使 task 级未触发。
+
 **Trimmer 函数映射**（概念名 → 实际函数调用）：
 
 | 概念名 | 函数调用 | 参数来源 | 返回值用途 |

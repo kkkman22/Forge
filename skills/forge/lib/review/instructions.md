@@ -375,3 +375,9 @@ Retention: >100 entries triggers auto-archive to `.forge/archive/known-failures-
 当 `forge_read_cached` MCP tool 不可用时，仍须手动控制同一文件 Read ≤2 次。
 
 </IRON-LAW>
+
+### Review 后 Context Budget 检查
+
+Review 完成后，如果后续还有 test/ship 阶段且 Read 预算 >50KB（`${TMPDIR}/forge-read-budget-<session>.json`），输出：
+
+`⚠️ Read budget >50KB after review. Suggest /clear + /forge resume before test phase.`
