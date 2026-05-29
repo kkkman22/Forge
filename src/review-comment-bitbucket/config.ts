@@ -19,9 +19,7 @@ const VALID_P0_P1_STRATEGIES = new Set(["both", "pr-task", "inline-only"]);
 const VALID_P2_STRATEGIES = new Set(["inline", "none"]);
 const MARKER_PREFIX_RE = /^[\w-]+$/;
 
-export function parseCommentChannelConfig(
-  raw?: Record<string, unknown>,
-): ResolvedConfig {
+export function parseCommentChannelConfig(raw?: Record<string, unknown>): ResolvedConfig {
   const result = { ...COMMENT_CHANNEL_DEFAULTS };
 
   if (!raw) return result;

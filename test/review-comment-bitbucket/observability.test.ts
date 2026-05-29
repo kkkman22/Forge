@@ -1,12 +1,12 @@
 import * as fs from "node:fs";
 import * as os from "node:os";
 import * as path from "node:path";
-import { describe, expect, it, beforeEach, afterEach } from "vitest";
-import type { ToolFailure } from "../../src/review-comment-bitbucket/types.js";
+import { afterEach, beforeEach, describe, expect, it } from "vitest";
 import {
-  recordPartialFailures,
   appendRunMetrics,
+  recordPartialFailures,
 } from "../../src/review-comment-bitbucket/observability.js";
+import type { ToolFailure } from "../../src/review-comment-bitbucket/types.js";
 
 describe("Unit: partial_failures append to same-day file without overwriting", () => {
   let tmpDir: string;
@@ -44,7 +44,12 @@ describe("Unit: partial_failures append to same-day file without overwriting", (
     await recordPartialFailures(failures1, tmpDir);
     await recordPartialFailures(failures2, tmpDir);
 
-    const errorFilePath = path.join(tmpDir, ".forge", "findings", `comment-channel-error-${dateStr}.md`);
+    const errorFilePath = path.join(
+      tmpDir,
+      ".forge",
+      "findings",
+      `comment-channel-error-${dateStr}.md`,
+    );
     expect(fs.existsSync(errorFilePath)).toBe(true);
 
     const content = fs.readFileSync(errorFilePath, "utf-8");
@@ -239,7 +244,12 @@ describe("Unit: posted=true but all partial-failed writes metrics correctly", ()
     expect(content).toContain("gate_skipped_reason=null");
     expect(content).toContain("partial_failures=2");
 
-    const errorFilePath = path.join(tmpDir, ".forge", "findings", `comment-channel-error-${now.toISOString().split("T")[0]}.md`);
+    const errorFilePath = path.join(
+      tmpDir,
+      ".forge",
+      "findings",
+      `comment-channel-error-${now.toISOString().split("T")[0]}.md`,
+    );
     const errorContent = fs.readFileSync(errorFilePath, "utf-8");
 
     expect(errorContent).toContain("hash1");

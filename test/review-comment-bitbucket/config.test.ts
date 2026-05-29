@@ -1,10 +1,10 @@
 import * as fc from "fast-check";
 import { describe, expect, it } from "vitest";
-import type { ResolvedConfig } from "../../src/review-comment-bitbucket/types.js";
 import {
   COMMENT_CHANNEL_DEFAULTS,
   parseCommentChannelConfig,
 } from "../../src/review-comment-bitbucket/config.js";
+import type { ResolvedConfig } from "../../src/review-comment-bitbucket/types.js";
 
 describe("Property: defaults fill missing fields", () => {
   it("any partial config resolves to full defaults for missing fields", { timeout: 30000 }, () => {
@@ -40,9 +40,7 @@ describe("Property: defaults fill missing fields", () => {
     const badMsArb = fc.integer().filter((n) => n < 0 || n > 10000);
     fc.assert(
       fc.property(badMsArb, (ms) => {
-        expect(() =>
-          parseCommentChannelConfig({ rate_limit_interval_ms: ms }),
-        ).toThrow();
+        expect(() => parseCommentChannelConfig({ rate_limit_interval_ms: ms })).toThrow();
       }),
     );
   });
@@ -50,47 +48,45 @@ describe("Property: defaults fill missing fields", () => {
 
 describe("Unit: platform != bitbucket throws", () => {
   it("throws with non-bitbucket platform", () => {
-    expect(() =>
-      parseCommentChannelConfig({ platform: "github" } as any),
-    ).toThrow(/platform/);
+    expect(() => parseCommentChannelConfig({ platform: "github" } as any)).toThrow(/platform/);
   });
 });
 
 describe("Unit: p3_strategy != none throws", () => {
   it("throws with inline p3_strategy", () => {
-    expect(() =>
-      parseCommentChannelConfig({ p3_strategy: "inline" } as any),
-    ).toThrow(/p3_strategy/);
+    expect(() => parseCommentChannelConfig({ p3_strategy: "inline" } as any)).toThrow(
+      /p3_strategy/,
+    );
   });
 });
 
 describe("Unit: invalid platform_override throws", () => {
   it("throws with unknown override value", () => {
-    expect(() =>
-      parseCommentChannelConfig({ platform_override: "force" } as any),
-    ).toThrow(/platform_override/);
+    expect(() => parseCommentChannelConfig({ platform_override: "force" } as any)).toThrow(
+      /platform_override/,
+    );
   });
 });
 
 describe("Unit: invalid comment_marker_prefix throws", () => {
   it("throws with prefix containing spaces", () => {
-    expect(() =>
-      parseCommentChannelConfig({ comment_marker_prefix: "bad prefix" }),
-    ).toThrow(/comment_marker_prefix/);
+    expect(() => parseCommentChannelConfig({ comment_marker_prefix: "bad prefix" })).toThrow(
+      /comment_marker_prefix/,
+    );
   });
 });
 
 describe("Unit: rate_limit_interval_ms out of range throws", () => {
   it("negative throws", () => {
-    expect(() =>
-      parseCommentChannelConfig({ rate_limit_interval_ms: -1 }),
-    ).toThrow(/rate_limit_interval_ms/);
+    expect(() => parseCommentChannelConfig({ rate_limit_interval_ms: -1 })).toThrow(
+      /rate_limit_interval_ms/,
+    );
   });
 
   it("> 10000 throws", () => {
-    expect(() =>
-      parseCommentChannelConfig({ rate_limit_interval_ms: 10001 }),
-    ).toThrow(/rate_limit_interval_ms/);
+    expect(() => parseCommentChannelConfig({ rate_limit_interval_ms: 10001 })).toThrow(
+      /rate_limit_interval_ms/,
+    );
   });
 });
 

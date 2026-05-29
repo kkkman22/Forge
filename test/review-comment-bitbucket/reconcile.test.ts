@@ -234,7 +234,9 @@ describe("reconcile", () => {
 
       const createHashes = new Set(result.creates.map(() => "create"));
       const doneHashes = new Set(result.dones.map((a) => (a as DoneAction).finding_hash));
-      const reopenHashes = new Set(result.reopens.map((a) => computeFindingHash((a as ReopenAction).finding)));
+      const reopenHashes = new Set(
+        result.reopens.map((a) => computeFindingHash((a as ReopenAction).finding)),
+      );
 
       const hasOverlap =
         [...createHashes].some((h) => doneHashes.has(h) || reopenHashes.has(h)) ||

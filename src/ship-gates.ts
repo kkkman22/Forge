@@ -8,7 +8,7 @@
  * **Requirements: 1.1, 1.2, 1.3, 2.1, 2.2, 2.3, 2.4, 3.4, 4.1, 4.2, 4.3, 4.4**
  */
 
-import { mkdirSync, readFileSync, readdirSync, writeFileSync } from "node:fs";
+import { mkdirSync, readdirSync, readFileSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
 import type { Methodology } from "./schemas/review-report.js";
 
@@ -266,7 +266,7 @@ export function checkReviewGate(
           };
         }
 
-        if (fixlist && fixlist.allFixed) {
+        if (fixlist?.allFixed) {
           return {
             gate: "review",
             passed: true,
@@ -310,10 +310,7 @@ export function checkReviewGate(
  * @param testResultsDir - Path to .forge/test-results/
  * @param configCICheck - Optional CI check command from config.md
  */
-export function checkTestGate(
-  testResultsDir: string,
-  configCICheck?: string,
-): GateResult {
+export function checkTestGate(testResultsDir: string, configCICheck?: string): GateResult {
   // Find latest test result
   let files: string[];
   try {
@@ -361,7 +358,9 @@ export function checkTestGate(
     lower.includes('"status":"failed"') ||
     lower.includes("test failed") ||
     lower.includes("tests failed") ||
-    lower.includes("failures:") && !lower.includes("failures: 0") && !lower.includes("failures:0");
+    (lower.includes("failures:") &&
+      !lower.includes("failures: 0") &&
+      !lower.includes("failures:0"));
 
   const hasPass =
     lower.includes('"passed": true') ||
@@ -414,10 +413,7 @@ export function checkTestGate(
  * @param progressDir - Path to .forge/progress/
  * @param featureName - Name of the current feature
  */
-export function checkProgressGate(
-  progressDir: string,
-  featureName: string,
-): GateResult {
+export function checkProgressGate(progressDir: string, featureName: string): GateResult {
   const progressFile = join(progressDir, `${featureName}.md`);
 
   let content: string;
@@ -583,9 +579,10 @@ export interface FallbackLadderConditions {
  * L2: Subagent available but serial only → subagent-serial
  * L3: All levels unavailable → unavailable
  */
-export function evaluateFallbackLadder(
-  conditions: FallbackLadderConditions,
-): { level: "L0" | "L1" | "L2" | "L3"; methodology: Methodology } {
+export function evaluateFallbackLadder(conditions: FallbackLadderConditions): {
+  level: "L0" | "L1" | "L2" | "L3";
+  methodology: Methodology;
+} {
   // L0 check
   const l0Met =
     conditions.isInteractive &&
@@ -647,7 +644,7 @@ export function checkFallbackLadderGate(methodology: Methodology): GateResult {
 export function persistGateResults(report: ShipGateReport, shipDir: string): void {
   mkdirSync(shipDir, { recursive: true });
   const filePath = join(shipDir, `${report.runId}-gates.json`);
-  writeFileSync(filePath, JSON.stringify(report, null, 2) + "\n", "utf-8");
+  writeFileSync(filePath, `${JSON.stringify(report, null, 2)}\n`, "utf-8");
 }
 
 // ---------------------------------------------------------------------------
@@ -792,9 +789,7 @@ export function runAllGates(input: RunAllGatesInput): ShipGateReport {
     gates.push(checkProgressGate(input.progressDir, input.featureName));
   }
 
-  const blockingGates = gates.filter(
-    (g) => !g.passed && g.gate !== "progress",
-  );
+  const blockingGates = gates.filter((g) => !g.passed && g.gate !== "progress");
   const allPassed = blockingGates.length === 0;
 
   return {

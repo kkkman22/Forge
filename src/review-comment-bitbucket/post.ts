@@ -1,3 +1,11 @@
+import { applyCliOverrides } from "./cli.js";
+import { buildMarker, computeFindingHash, extractMarker } from "./finding-hash.js";
+import { formatFinding } from "./format.js";
+import { appendRunMetrics, recordPartialFailures } from "./observability.js";
+import { parseReviewMarkdown, ReviewMarkdownNotFoundError } from "./parse-review.js";
+import { checkPlatformGate } from "./platform-gate.js";
+import { reconcile } from "./reconcile.js";
+import { recordSkip } from "./skip-trace.js";
 import type {
   CommentRecord,
   Finding,
@@ -8,20 +16,16 @@ import type {
   TaskRecord,
   ToolFailure,
 } from "./types.js";
-import { checkPlatformGate } from "./platform-gate.js";
-import { computeFindingHash, buildMarker, extractMarker } from "./finding-hash.js";
-import { formatFinding } from "./format.js";
-import { reconcile } from "./reconcile.js";
-import { parseReviewMarkdown, ReviewMarkdownNotFoundError } from "./parse-review.js";
-import { recordSkip } from "./skip-trace.js";
-import { recordPartialFailures, appendRunMetrics } from "./observability.js";
-import { applyCliOverrides } from "./cli.js";
 
 export interface BitbucketClient {
   list_pr_tasks(params: { pull_request_id: string }): Promise<any[]>;
   get_pull_request(params: { pull_request_id: string }): Promise<any>;
   get_pull_request_diff(params: { pull_request_id: string }): Promise<string>;
-  create_pr_task(params: { pull_request_id: string; text: string; anchor?: string }): Promise<{ id: string }>;
+  create_pr_task(params: {
+    pull_request_id: string;
+    text: string;
+    anchor?: string;
+  }): Promise<{ id: string }>;
   set_pr_task_status(params: { task_id: string; done: boolean }): Promise<void>;
   add_comment(params: {
     pull_request_id: string;
@@ -66,7 +70,18 @@ export async function postReviewToBitbucket(
   if (!config.enabled) {
     const reason: PostFailureReason = "platform-disabled-by-config";
     await persistSideEffects(baseDir, () => recordSkip(reviewMarkdownPath, reason, ctx));
-    await persistMetrics(baseDir, ctx, { posted: false, post_enabled: false, gate_skipped_reason: reason, creates: 0, dones: 0, reopens: 0, skips: 0, partial_failures: 0, set_review_status_called: false, total_duration_ms: Date.now() - startTime });
+    await persistMetrics(baseDir, ctx, {
+      posted: false,
+      post_enabled: false,
+      gate_skipped_reason: reason,
+      creates: 0,
+      dones: 0,
+      reopens: 0,
+      skips: 0,
+      partial_failures: 0,
+      set_review_status_called: false,
+      total_duration_ms: Date.now() - startTime,
+    });
     return { posted: false, reason: "disabled-by-cli" as PostFailureReason };
   }
 
@@ -79,9 +94,20 @@ export async function postReviewToBitbucket(
   });
 
   if (gate.skip) {
-    const reason = gate.reason!;
+    const reason = gate.reason ?? "";
     await persistSideEffects(baseDir, () => recordSkip(reviewMarkdownPath, reason, ctx));
-    await persistMetrics(baseDir, ctx, { posted: false, post_enabled: true, gate_skipped_reason: reason, creates: 0, dones: 0, reopens: 0, skips: 0, partial_failures: 0, set_review_status_called: false, total_duration_ms: Date.now() - startTime });
+    await persistMetrics(baseDir, ctx, {
+      posted: false,
+      post_enabled: true,
+      gate_skipped_reason: reason,
+      creates: 0,
+      dones: 0,
+      reopens: 0,
+      skips: 0,
+      partial_failures: 0,
+      set_review_status_called: false,
+      total_duration_ms: Date.now() - startTime,
+    });
     return { posted: false, reason };
   }
 
@@ -93,10 +119,20 @@ export async function postReviewToBitbucket(
     try {
       allFindings = await parseReviewMarkdown(reviewMarkdownPath);
     } catch (e: unknown) {
-      const reason: PostFailureReason = e instanceof ReviewMarkdownNotFoundError
-        ? "review-markdown-not-found"
-        : "parse-error";
-      await persistMetrics(baseDir, ctx, { posted: false, post_enabled: true, gate_skipped_reason: null, creates: 0, dones: 0, reopens: 0, skips: 0, partial_failures: 0, set_review_status_called: false, total_duration_ms: Date.now() - startTime });
+      const reason: PostFailureReason =
+        e instanceof ReviewMarkdownNotFoundError ? "review-markdown-not-found" : "parse-error";
+      await persistMetrics(baseDir, ctx, {
+        posted: false,
+        post_enabled: true,
+        gate_skipped_reason: null,
+        creates: 0,
+        dones: 0,
+        reopens: 0,
+        skips: 0,
+        partial_failures: 0,
+        set_review_status_called: false,
+        total_duration_ms: Date.now() - startTime,
+      });
       return { posted: false, reason };
     }
   }
@@ -111,10 +147,20 @@ export async function postReviewToBitbucket(
   const failures: ToolFailure[] = [];
 
   if (rawTasksResult.status === "rejected") {
-    failures.push({ finding_hash: "list_pr_tasks", tool_name: "list_pr_tasks", error_message: String(rawTasksResult.reason), timestamp: Date.now() });
+    failures.push({
+      finding_hash: "list_pr_tasks",
+      tool_name: "list_pr_tasks",
+      error_message: String(rawTasksResult.reason),
+      timestamp: Date.now(),
+    });
   }
   if (rawPrResult.status === "rejected") {
-    failures.push({ finding_hash: "get_pull_request", tool_name: "get_pull_request", error_message: String(rawPrResult.reason), timestamp: Date.now() });
+    failures.push({
+      finding_hash: "get_pull_request",
+      tool_name: "get_pull_request",
+      error_message: String(rawPrResult.reason),
+      timestamp: Date.now(),
+    });
   }
 
   const rawTasks = rawTasksResult.status === "fulfilled" ? rawTasksResult.value : [];
@@ -153,7 +199,12 @@ export async function postReviewToBitbucket(
         comment: `Forge review found P0=${p0Count} P1=${p1Count} run=${ctx.runId}`,
       });
     } catch (e: any) {
-      failures.push({ finding_hash: "set_review_status", tool_name: "set_review_status", error_message: e.message, timestamp: Date.now() });
+      failures.push({
+        finding_hash: "set_review_status",
+        tool_name: "set_review_status",
+        error_message: e.message,
+        timestamp: Date.now(),
+      });
     }
   }
 
@@ -209,7 +260,12 @@ async function executeCreatesP0P1(
       try {
         await bitbucket.create_pr_task({ pull_request_id: pullRequestId, text: fmt.task_text });
       } catch (e: any) {
-        failures.push({ finding_hash: computeFindingHash(finding), tool_name: "create_pr_task", error_message: e.message, timestamp: Date.now() });
+        failures.push({
+          finding_hash: computeFindingHash(finding),
+          tool_name: "create_pr_task",
+          error_message: e.message,
+          timestamp: Date.now(),
+        });
       }
     }
 
@@ -225,7 +281,12 @@ async function executeCreatesP0P1(
           suggestion_end_line: finding.suggestion_end_line,
         });
       } catch (e: any) {
-        failures.push({ finding_hash: computeFindingHash(finding), tool_name: "add_comment", error_message: e.message, timestamp: Date.now() });
+        failures.push({
+          finding_hash: computeFindingHash(finding),
+          tool_name: "add_comment",
+          error_message: e.message,
+          timestamp: Date.now(),
+        });
       }
     }
 
@@ -248,7 +309,12 @@ async function executeReopens(
     try {
       await bitbucket.set_pr_task_status({ task_id: action.task_id, done: false });
     } catch (e: any) {
-      failures.push({ finding_hash: action.finding ? computeFindingHash(action.finding) : action.task_id, tool_name: "set_pr_task_status", error_message: e.message, timestamp: Date.now() });
+      failures.push({
+        finding_hash: action.finding ? computeFindingHash(action.finding) : action.task_id,
+        tool_name: "set_pr_task_status",
+        error_message: e.message,
+        timestamp: Date.now(),
+      });
       continue;
     }
 
@@ -264,7 +330,12 @@ async function executeReopens(
           parent_comment_id: action.comment_id,
         });
       } catch (e: any) {
-        failures.push({ finding_hash: computeFindingHash(action.finding), tool_name: "add_comment", error_message: e.message, timestamp: Date.now() });
+        failures.push({
+          finding_hash: computeFindingHash(action.finding),
+          tool_name: "add_comment",
+          error_message: e.message,
+          timestamp: Date.now(),
+        });
       }
     }
 
@@ -287,7 +358,12 @@ async function executeDones(
     try {
       await bitbucket.set_pr_task_status({ task_id: action.task_id, done: true });
     } catch (e: any) {
-      failures.push({ finding_hash: action.finding_hash, tool_name: "set_pr_task_status", error_message: e.message, timestamp: Date.now() });
+      failures.push({
+        finding_hash: action.finding_hash,
+        tool_name: "set_pr_task_status",
+        error_message: e.message,
+        timestamp: Date.now(),
+      });
       continue;
     }
 
@@ -301,7 +377,12 @@ async function executeDones(
         parent_comment_id: action.comment_id,
       });
     } catch (e: any) {
-      failures.push({ finding_hash: action.finding_hash, tool_name: "add_comment", error_message: e.message, timestamp: Date.now() });
+      failures.push({
+        finding_hash: action.finding_hash,
+        tool_name: "add_comment",
+        error_message: e.message,
+        timestamp: Date.now(),
+      });
     }
 
     if (config.rate_limit_interval_ms > 0) await sleep(config.rate_limit_interval_ms);
@@ -334,7 +415,12 @@ async function executeCreatesP2(
           suggestion_end_line: action.finding.suggestion_end_line,
         });
       } catch (e: any) {
-        failures.push({ finding_hash: computeFindingHash(action.finding), tool_name: "add_comment", error_message: e.message, timestamp: Date.now() });
+        failures.push({
+          finding_hash: computeFindingHash(action.finding),
+          tool_name: "add_comment",
+          error_message: e.message,
+          timestamp: Date.now(),
+        });
       }
     }
 
@@ -344,7 +430,10 @@ async function executeCreatesP2(
 
 // --- Helpers ---
 
-async function persistSideEffects(baseDir: string | undefined, fn: () => Promise<void>): Promise<void> {
+async function persistSideEffects(
+  baseDir: string | undefined,
+  fn: () => Promise<void>,
+): Promise<void> {
   if (!baseDir) return;
   try {
     await fn();
@@ -386,7 +475,9 @@ function extractForgeTasks(raw: any[], prefix: string): TaskRecord[] {
       return {
         task_id: String(t.id),
         text,
-        status: VALID_TASK_STATUSES.has(rawStatus) ? rawStatus as "OPEN" | "RESOLVED" : "RESOLVED",
+        status: VALID_TASK_STATUSES.has(rawStatus)
+          ? (rawStatus as "OPEN" | "RESOLVED")
+          : "RESOLVED",
         marker_hash: markerHash ?? undefined,
       };
     })

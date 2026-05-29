@@ -39,6 +39,19 @@
     },
     {
       "includes": [
+        "src/review-comment-bitbucket/**/*.ts"
+      ],
+      "linter": {
+        "rules": {
+          "suspicious": {
+            "noConsole": "off",
+            "noExplicitAny": "off"
+          }
+        }
+      }
+    },
+    {
+      "includes": [
         "src/docs-governance/index-generator/generator.ts",
         "src/docs-governance/index-generator/format.ts",
         "src/docs-governance/ssot/renderers/*.ts"

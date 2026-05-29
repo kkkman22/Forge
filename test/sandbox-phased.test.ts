@@ -506,13 +506,16 @@ describe("Integration: full flow", () => {
   it("invalid config structure falls back to default", () => {
     mkdirSync(join(tmpDir, ".forge"), { recursive: true });
     // Valid JSON but wrong structure (missing commands section)
-    writeFileSync(join(tmpDir, ".forge", "sandbox.json"), JSON.stringify({
-      version: 1,
-      profile: "default",
-      filesystem: { read: ["src/**"], write: ["src/**"], deny: [] },
-      network: { allow: ["*"], deny: [] },
-      // missing commands section
-    }));
+    writeFileSync(
+      join(tmpDir, ".forge", "sandbox.json"),
+      JSON.stringify({
+        version: 1,
+        profile: "default",
+        filesystem: { read: ["src/**"], write: ["src/**"], deny: [] },
+        network: { allow: ["*"], deny: [] },
+        // missing commands section
+      }),
+    );
 
     const config = loadSandboxConfig(join(tmpDir, ".forge", "sandbox.json"));
     // Should fall back to default

@@ -10,9 +10,9 @@
 import { describe, expect, it } from "vitest";
 import {
   parseSpecFrontmatter,
-  validateSpecFrontmatter,
   type SpecFrontmatter,
   type SpecStatus,
+  validateSpecFrontmatter,
 } from "../src/spec-lifecycle.js";
 
 // ---------------------------------------------------------------------------
@@ -23,12 +23,12 @@ describe("parseSpecFrontmatter", () => {
   it("parses a complete valid frontmatter", () => {
     const content = [
       "---",
-      'name: my-spec',
-      'status: in_progress',
+      "name: my-spec",
+      "status: in_progress",
       'created: "2026-05-29"',
       'updated: "2026-05-29"',
-      'priority: P1',
-      'tier: standard',
+      "priority: P1",
+      "tier: standard",
       "depends_on:",
       "  - other-spec",
       "replaces:",

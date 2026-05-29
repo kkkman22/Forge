@@ -1,5 +1,5 @@
 import { computeFindingHash } from "./finding-hash.js";
-import type { Finding, TaskRecord, CommentRecord, Action, ActionPlan } from "./types.js";
+import type { Action, ActionPlan, CommentRecord, Finding, TaskRecord } from "./types.js";
 
 export function reconcile(input: {
   currentFindings: Finding[];
@@ -30,7 +30,10 @@ export function reconcile(input: {
   for (const task of existingTasks) {
     if (!task.marker_hash) continue; // Skip non-Forge-marker tasks
     const existing = existingTaskByHash.get(task.marker_hash);
-    if (!existing || task.task_id.localeCompare(existing.task_id, undefined, { numeric: true }) > 0) {
+    if (
+      !existing ||
+      task.task_id.localeCompare(existing.task_id, undefined, { numeric: true }) > 0
+    ) {
       existingTaskByHash.set(task.marker_hash, task);
     }
   }
@@ -69,11 +72,21 @@ export function reconcile(input: {
           });
         } else {
           // Task exists, status RESOLVED, autoReopenRegressed=false → skip-duplicate
-          skips.push({ kind: "skip-duplicate", finding_hash: h, task_id: task.task_id, reason: "resolved-no-reopen" });
+          skips.push({
+            kind: "skip-duplicate",
+            finding_hash: h,
+            task_id: task.task_id,
+            reason: "resolved-no-reopen",
+          });
         }
       } else {
         // Task exists, status OPEN → skip-duplicate
-        skips.push({ kind: "skip-duplicate", finding_hash: h, task_id: task.task_id, reason: "already-open" });
+        skips.push({
+          kind: "skip-duplicate",
+          finding_hash: h,
+          task_id: task.task_id,
+          reason: "already-open",
+        });
       }
     } else {
       // No task but comment exists
@@ -102,7 +115,12 @@ export function reconcile(input: {
       });
     } else {
       // Otherwise → skip-duplicate
-      skips.push({ kind: "skip-duplicate", finding_hash: h, task_id: task.task_id, reason: "historical-resolved" });
+      skips.push({
+        kind: "skip-duplicate",
+        finding_hash: h,
+        task_id: task.task_id,
+        reason: "historical-resolved",
+      });
     }
   }
 

@@ -65,9 +65,7 @@ export type GateSkipReason =
   | "override-but-mcp-missing"
   | "mcp-base-url-mismatch";
 
-export type GateResult =
-  | { skip: false }
-  | { skip: true; reason: GateSkipReason };
+export type GateResult = { skip: false } | { skip: true; reason: GateSkipReason };
 
 export interface GateInput {
   remoteUrl: string | null;

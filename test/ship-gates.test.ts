@@ -9,23 +9,23 @@
  */
 
 import { describe, expect, it } from "vitest";
-import type { GateResult, GateName, P1Fixlist, SkipGateOptions } from "../src/ship-gates.js";
+import type { GateName, GateResult, P1Fixlist, SkipGateOptions } from "../src/ship-gates.js";
 
 // We import the module dynamically so the tests can be written first
 // and fail until implementations are added.
 import {
-  checkReviewGate,
-  checkTestGate,
-  checkProgressGate,
-  parseP1Fixlist,
-  updateFixlistWithCommits,
-  validateSkipGateOptions,
   buildSkipGateAnnotation,
   checkFallbackLadderGate,
-  persistGateResults,
-  generateP1Fixlist,
+  checkProgressGate,
+  checkReviewGate,
+  checkTestGate,
   evaluateFallbackLadder,
+  generateP1Fixlist,
+  parseP1Fixlist,
+  persistGateResults,
   runAllGates,
+  updateFixlistWithCommits,
+  validateSkipGateOptions,
 } from "../src/ship-gates.js";
 
 // ---------------------------------------------------------------------------
@@ -48,10 +48,7 @@ describe("checkReviewGate — failure scenarios", () => {
 
   it("review report with P0 issues → not passed", () => {
     // This test will pass once Task 3 is implemented
-    const result = checkReviewGate(
-      "/nonexistent",
-      "abc1234",
-    );
+    const result = checkReviewGate("/nonexistent", "abc1234");
     // The stub always returns not-implemented; after Task 3, real dir scanning
     // will return meaningful results
     expect(result.gate).toBe("review");
@@ -140,7 +137,13 @@ describe("parseP1Fixlist", () => {
     const content = JSON.stringify({
       runId: "20260529-143000",
       p1Issues: [
-        { id: "P1-001", title: "Missing error handling", file: "src/a.ts", line: 42, fixCommit: null },
+        {
+          id: "P1-001",
+          title: "Missing error handling",
+          file: "src/a.ts",
+          line: 42,
+          fixCommit: null,
+        },
       ],
       allFixed: false,
     });
@@ -172,9 +175,7 @@ describe("updateFixlistWithCommits", () => {
   it("no fix commits found → allFixed remains false", () => {
     const fixlist: P1Fixlist = {
       runId: "20260529-143000",
-      p1Issues: [
-        { id: "P1-001", title: "Issue", file: "src/a.ts", line: 42, fixCommit: null },
-      ],
+      p1Issues: [{ id: "P1-001", title: "Issue", file: "src/a.ts", line: 42, fixCommit: null }],
       allFixed: false,
     };
     const mockGitLog = (_file: string) => [] as string[];
@@ -186,9 +187,7 @@ describe("updateFixlistWithCommits", () => {
   it("fix commit found → fixCommit populated and allFixed=true", () => {
     const fixlist: P1Fixlist = {
       runId: "20260529-143000",
-      p1Issues: [
-        { id: "P1-001", title: "Issue", file: "src/a.ts", line: 42, fixCommit: null },
-      ],
+      p1Issues: [{ id: "P1-001", title: "Issue", file: "src/a.ts", line: 42, fixCommit: null }],
       allFixed: false,
     };
     const mockGitLog = (file: string) => {
@@ -207,7 +206,8 @@ describe("updateFixlistWithCommits", () => {
 
 describe("P1 Fix Checklist integration", () => {
   it("checkReviewGate with P1 fixlist on disk and all fixed → passed", () => {
-    const { mkdtempSync, writeFileSync, rmSync, mkdirSync } = require("node:fs") as typeof import("node:fs");
+    const { mkdtempSync, writeFileSync, rmSync, mkdirSync } =
+      require("node:fs") as typeof import("node:fs");
     const { join } = require("node:path") as typeof import("node:path");
     const { tmpdir } = require("node:os") as typeof import("node:os");
 
@@ -235,7 +235,13 @@ describe("P1 Fix Checklist integration", () => {
         JSON.stringify({
           runId: "20260529",
           p1Issues: [
-            { id: "P1-001", title: "Error handling", file: "src/a.ts", line: 42, fixCommit: "abc1234" },
+            {
+              id: "P1-001",
+              title: "Error handling",
+              file: "src/a.ts",
+              line: 42,
+              fixCommit: "abc1234",
+            },
           ],
           allFixed: true,
         }),
@@ -249,7 +255,8 @@ describe("P1 Fix Checklist integration", () => {
   });
 
   it("checkReviewGate with P1 fixlist and gitLogFn resolves unfixed → passed", () => {
-    const { mkdtempSync, writeFileSync, rmSync, mkdirSync } = require("node:fs") as typeof import("node:fs");
+    const { mkdtempSync, writeFileSync, rmSync, mkdirSync } =
+      require("node:fs") as typeof import("node:fs");
     const { join } = require("node:path") as typeof import("node:path");
     const { tmpdir } = require("node:os") as typeof import("node:os");
 
@@ -294,7 +301,8 @@ describe("P1 Fix Checklist integration", () => {
   });
 
   it("checkReviewGate with P0 → always blocked regardless of fixlist", () => {
-    const { mkdtempSync, writeFileSync, rmSync, mkdirSync } = require("node:fs") as typeof import("node:fs");
+    const { mkdtempSync, writeFileSync, rmSync, mkdirSync } =
+      require("node:fs") as typeof import("node:fs");
     const { join } = require("node:path") as typeof import("node:path");
     const { tmpdir } = require("node:os") as typeof import("node:os");
 
@@ -331,7 +339,12 @@ describe("P1 Fix Checklist integration", () => {
 describe("generateP1Fixlist", () => {
   it("creates P1Fixlist from review findings", () => {
     const fixlist = generateP1Fixlist("20260529-143000", [
-      { severity: "P1", filePath: "src/a.ts", lineNumber: 42, description: "Error handling missing" },
+      {
+        severity: "P1",
+        filePath: "src/a.ts",
+        lineNumber: 42,
+        description: "Error handling missing",
+      },
       { severity: "P0", filePath: "src/b.ts", lineNumber: 10, description: "Security issue" },
       { severity: "P2", filePath: "src/c.ts", lineNumber: 5, description: "Style issue" },
     ]);
@@ -439,7 +452,8 @@ describe("buildSkipGateAnnotation", () => {
 
 describe("persistGateResults", () => {
   it("writes JSON file to shipDir with correct structure", () => {
-    const { mkdtempSync, existsSync, readFileSync, rmSync } = require("node:fs") as typeof import("node:fs");
+    const { mkdtempSync, existsSync, readFileSync, rmSync } =
+      require("node:fs") as typeof import("node:fs");
     const { join } = require("node:path") as typeof import("node:path");
     const { tmpdir } = require("node:os") as typeof import("node:os");
 
@@ -599,7 +613,8 @@ describe("E2E: L3 fallback ladder blocks ship", () => {
 
 describe("runAllGates", () => {
   it("all gates pass when dirs have valid data", () => {
-    const { mkdtempSync, writeFileSync, rmSync, mkdirSync } = require("node:fs") as typeof import("node:fs");
+    const { mkdtempSync, writeFileSync, rmSync, mkdirSync } =
+      require("node:fs") as typeof import("node:fs");
     const { join } = require("node:path") as typeof import("node:path");
     const { tmpdir } = require("node:os") as typeof import("node:os");
 
@@ -629,10 +644,7 @@ describe("runAllGates", () => {
       );
 
       // Progress: all complete
-      writeFileSync(
-        join(tmpDir, "progress", "test-feature.md"),
-        "- [x] Task 1\n- [x] Task 2\n",
-      );
+      writeFileSync(join(tmpDir, "progress", "test-feature.md"), "- [x] Task 1\n- [x] Task 2\n");
 
       const report = runAllGates({
         reviewDir: join(tmpDir, "reviews"),

@@ -1,14 +1,10 @@
 import fs from "node:fs";
-import type { Finding, Priority, LineType } from "./types.js";
+import type { Finding, LineType, Priority } from "./types.js";
 
 const VALID_PRIORITIES = new Set<string>(["P0", "P1", "P2", "P3"]);
 const VALID_LINE_TYPES = new Set<string>(["ADDED", "REMOVED", "CONTEXT"]);
-const VALID_SOURCE_LAYERS = new Set<string>([
-  "spec-check",
-  "quality-check",
-  "security-check",
-]);
-const SAFE_FILE_PATH_RE = /^[A-Za-z0-9._/\-]+$/;
+const VALID_SOURCE_LAYERS = new Set<string>(["spec-check", "quality-check", "security-check"]);
+const SAFE_FILE_PATH_RE = /^[A-Za-z0-9._/-]+$/;
 
 export class ReviewMarkdownNotFoundError extends Error {
   constructor(public readonly filePath: string) {
@@ -27,18 +23,14 @@ export class ReviewMarkdownParseError extends Error {
   }
 }
 
-export async function parseReviewMarkdown(
-  filePath: string,
-): Promise<Finding[]> {
+export async function parseReviewMarkdown(filePath: string): Promise<Finding[]> {
   if (!fs.existsSync(filePath)) {
     throw new ReviewMarkdownNotFoundError(filePath);
   }
 
   const content = fs.readFileSync(filePath, "utf8");
 
-  const findingsBlockMatch = content.match(
-    /```findings\n([\s\S]*?)```/,
-  );
+  const findingsBlockMatch = content.match(/```findings\n([\s\S]*?)```/);
   if (!findingsBlockMatch) {
     throw new ReviewMarkdownParseError(
       "no-findings-block",
@@ -51,10 +43,7 @@ export async function parseReviewMarkdown(
     // Minimal YAML-like parsing for the findings list
     raw = parseFindingsYaml(findingsBlockMatch[1]);
   } catch {
-    throw new ReviewMarkdownParseError(
-      "yaml-parse-error",
-      "Failed to parse findings YAML block",
-    );
+    throw new ReviewMarkdownParseError("yaml-parse-error", "Failed to parse findings YAML block");
   }
 
   return raw.map((item, i) => {
@@ -72,10 +61,7 @@ export async function parseReviewMarkdown(
       );
     }
     if (!r.file_path || typeof r.file_path !== "string") {
-      throw new ReviewMarkdownParseError(
-        "invalid-file-path",
-        `Finding ${i}: missing file_path`,
-      );
+      throw new ReviewMarkdownParseError("invalid-file-path", `Finding ${i}: missing file_path`);
     }
     if (!SAFE_FILE_PATH_RE.test(r.file_path as string)) {
       throw new ReviewMarkdownParseError(
@@ -96,15 +82,9 @@ export async function parseReviewMarkdown(
       );
     }
     if (!r.message || typeof r.message !== "string") {
-      throw new ReviewMarkdownParseError(
-        "invalid-message",
-        `Finding ${i}: missing message`,
-      );
+      throw new ReviewMarkdownParseError("invalid-message", `Finding ${i}: missing message`);
     }
-    if (
-      !r.source_layer ||
-      !VALID_SOURCE_LAYERS.has(r.source_layer as string)
-    ) {
+    if (!r.source_layer || !VALID_SOURCE_LAYERS.has(r.source_layer as string)) {
       throw new ReviewMarkdownParseError(
         "invalid-source-layer",
         `Finding ${i}: invalid source_layer "${r.source_layer}"`,

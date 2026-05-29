@@ -1,7 +1,7 @@
 import { describe, expect, it, vi } from "vitest";
-import type { Finding, ResolvedConfig } from "../../../src/review-comment-bitbucket/types.js";
-import { postReviewToBitbucket } from "../../../src/review-comment-bitbucket/post.js";
 import { computeFindingHash } from "../../../src/review-comment-bitbucket/finding-hash.js";
+import { postReviewToBitbucket } from "../../../src/review-comment-bitbucket/post.js";
+import type { Finding, ResolvedConfig } from "../../../src/review-comment-bitbucket/types.js";
 
 const CONFIG: ResolvedConfig = {
   enabled: true,
@@ -68,7 +68,12 @@ describe("Integration: partial failure", () => {
       "test-fixture",
       "pr-1",
       CONFIG,
-      { remoteUrl: "https://bitbucket.org/org/repo", mcpBaseUrl: "https://bitbucket.org", mcpConfigured: true, runId: "run-pf-001" },
+      {
+        remoteUrl: "https://bitbucket.org/org/repo",
+        mcpBaseUrl: "https://bitbucket.org",
+        mcpConfigured: true,
+        runId: "run-pf-001",
+      },
       bb,
       [P0, P1, P2],
     );
@@ -104,7 +109,12 @@ describe("Integration: partial failure", () => {
       "test-fixture",
       "pr-1",
       CONFIG,
-      { remoteUrl: "https://bitbucket.org/org/repo", mcpBaseUrl: "https://bitbucket.org", mcpConfigured: true, runId: "run-429" },
+      {
+        remoteUrl: "https://bitbucket.org/org/repo",
+        mcpBaseUrl: "https://bitbucket.org",
+        mcpConfigured: true,
+        runId: "run-429",
+      },
       bb,
       [P0],
     );
@@ -129,7 +139,12 @@ describe("Integration: partial failure", () => {
       "test-fixture",
       "pr-1",
       CONFIG,
-      { remoteUrl: "https://bitbucket.org/org/repo", mcpBaseUrl: "https://bitbucket.org", mcpConfigured: true, runId: "run-all-fail" },
+      {
+        remoteUrl: "https://bitbucket.org/org/repo",
+        mcpBaseUrl: "https://bitbucket.org",
+        mcpConfigured: true,
+        runId: "run-all-fail",
+      },
       bb,
       [P0, P1],
     );

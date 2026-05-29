@@ -99,7 +99,7 @@ export async function recordSkip(
 
     lines.push(...SKIP_REASONS.map((r) => `${r} count=${counters[r]}`));
 
-    await fs.promises.writeFile(healthPath, lines.join("\n") + "\n", "utf-8");
+    await fs.promises.writeFile(healthPath, `${lines.join("\n")}\n`, "utf-8");
   } catch (e) {
     console.warn("Failed to update tool health counter:", e);
   }
