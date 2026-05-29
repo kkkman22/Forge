@@ -267,6 +267,33 @@ Build 全部任务完成且 Final Validation 通过后，**必须立即自动调
 
 → 详见 shared/next-step-protocol.md
 
+## 13. Spec Status Auto-Update
+
+Build 全部任务完成且 Final Validation 通过后，自动检查并更新对应 spec 的生命周期状态。
+
+### 13.1 Trigger
+
+仅当 Build 引用了 `.kiro/specs/<spec-name>/tasks.md` 时触发。
+
+### 13.2 Status Check
+
+1. 读取 `.kiro/specs/<spec-name>/requirements.md` 的 frontmatter
+2. 解析 `status` 字段（使用 `parseSpecFrontmatter` from `src/spec-lifecycle.ts`）
+3. 检查 `tasks.md` 中所有任务的 checkbox 状态
+4. **全部 `[x]`** → 更新 `status: completed`，更新 `updated: <today>`
+5. **部分完成** → 仅更新 `updated: <today>`（status 不变）
+
+### 13.3 Index Rebuild
+
+状态更新后，运行 `node scripts/rebuild-spec-index.mjs --incremental` 同步 INDEX.md。
+
+### 13.4 Skip Conditions
+
+- 无对应 spec 目录 → 跳过
+- Spec 无 frontmatter → 跳过
+- Spec status 已是 `completed` → 跳过
+- Spec status 是 `archived` → 跳过
+
 </IRON-LAW>
 
 ---
