@@ -1,13 +1,13 @@
 import * as fc from "fast-check";
 import { describe, it, expect } from "vitest";
-import type { GateInput } from "../lib/types.js";
+import type { GateInput } from "../../src/review-comment-bitbucket/types.js";
 import {
   checkPlatformGate,
   isBitbucketUrl,
   isSameHost,
   parseRemoteUrl,
   selectRemoteUrl,
-} from "../lib/platform-gate.js";
+} from "../../src/review-comment-bitbucket/platform-gate.js";
 
 describe("platform-gate: property tests", () => {
   // Row 1: URL has bitbucket., override=auto, MCP configured, same-host → pass
@@ -77,8 +77,8 @@ describe("platform-gate: property tests", () => {
         const input: GateInput = {
           remoteUrl,
           platformOverride: "auto",
-          mcpConfigured: fc.boolean(),
-          mcpBaseUrl: fc.oneof(fc.constant(null), fc.webUrl()),
+          mcpConfigured: false,
+          mcpBaseUrl: null,
         };
 
         const result = checkPlatformGate(input);

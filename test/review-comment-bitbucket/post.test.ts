@@ -6,9 +6,9 @@ import type {
   Finding,
   ResolvedConfig,
   TaskRecord,
-} from "../lib/types.js";
-import { postReviewToBitbucket } from "../lib/post.js";
-import { computeFindingHash } from "../lib/finding-hash.js";
+} from "../../src/review-comment-bitbucket/types.js";
+import { postReviewToBitbucket } from "../../src/review-comment-bitbucket/post.js";
+import { computeFindingHash } from "../../src/review-comment-bitbucket/finding-hash.js";
 
 const DEFAULT_CONFIG: ResolvedConfig = {
   enabled: true,

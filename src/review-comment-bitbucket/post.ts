@@ -407,7 +407,7 @@ function extractForgeComments(rawPr: any, prefix: string): CommentRecord[] {
         marker_hash: markerHash ?? undefined,
       };
     })
-    .filter((c) => c.marker_hash !== undefined);
+    .filter((c: CommentRecord) => c.marker_hash !== undefined);
 }
 
 function sleep(ms: number): Promise<void> {

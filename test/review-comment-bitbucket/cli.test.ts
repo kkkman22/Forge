@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
-import type { ResolvedConfig } from "../lib/types.js";
-import { applyCliOverrides } from "../lib/cli.js";
+import type { ResolvedConfig } from "../../src/review-comment-bitbucket/types.js";
+import { applyCliOverrides } from "../../src/review-comment-bitbucket/cli.js";
 
 const defaultConfig: ResolvedConfig = {
   enabled: false,

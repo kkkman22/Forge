@@ -16,7 +16,7 @@ import type {
   ResolvedConfig,
   TaskRecord,
   ToolFailure,
-} from "../lib/types.js";
+} from "../../src/review-comment-bitbucket/types.js";
 
 describe("types: Priority", () => {
   it("accepts valid priority values", () => {

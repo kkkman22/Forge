@@ -10,3 +10,9 @@
 {"timestamp":"2026-05-29T12:25:58Z","event":"precompact_snapshot","detail":"slug=claude-code-uplift-21153 phase=build completed=0 pending=0"}
 {"timestamp":"2026-05-29T12:27:32Z","event":"postcompact_restore","detail":"slug=claude-code-uplift-21153"}
 {"timestamp":"2026-05-29T12:27:32Z","event":"precompact_snapshot","detail":"slug=claude-code-uplift-21153 phase=build completed=0 pending=0"}
+{"timestamp":"2026-05-29T14:34:47Z","event":"postcompact_restore","detail":"slug=claude-code-uplift-21153"}
+{"timestamp":"2026-05-29T14:34:48Z","event":"precompact_snapshot","detail":"slug=claude-code-uplift-21153 phase=build completed=0 pending=0"}
+{"timestamp":"2026-05-29T14:36:52Z","event":"postcompact_restore","detail":"slug=claude-code-uplift-21153"}
+{"timestamp":"2026-05-29T14:36:52Z","event":"precompact_snapshot","detail":"slug=claude-code-uplift-21153 phase=build completed=0 pending=0"}
+{"timestamp":"2026-05-29T14:38:36Z","event":"postcompact_restore","detail":"slug=claude-code-uplift-21153"}
+{"timestamp":"2026-05-29T14:38:36Z","event":"precompact_snapshot","detail":"slug=claude-code-uplift-21153 phase=build completed=0 pending=0"}

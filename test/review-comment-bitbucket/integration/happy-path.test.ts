@@ -1,7 +1,7 @@
 import { describe, expect, it, vi } from "vitest";
-import type { Finding, ResolvedConfig } from "../../lib/types.js";
-import { postReviewToBitbucket } from "../../lib/post.js";
-import { computeFindingHash } from "../../lib/finding-hash.js";
+import type { Finding, ResolvedConfig } from "../../../src/review-comment-bitbucket/types.js";
+import { postReviewToBitbucket } from "../../../src/review-comment-bitbucket/post.js";
+import { computeFindingHash } from "../../../src/review-comment-bitbucket/finding-hash.js";
 
 const CONFIG: ResolvedConfig = {
   enabled: true,

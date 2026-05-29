@@ -1,10 +1,10 @@
 import * as fc from "fast-check";
 import { describe, expect, it } from "vitest";
-import type { ResolvedConfig } from "../lib/types.js";
+import type { ResolvedConfig } from "../../src/review-comment-bitbucket/types.js";
 import {
   COMMENT_CHANNEL_DEFAULTS,
   parseCommentChannelConfig,
-} from "../lib/config.js";
+} from "../../src/review-comment-bitbucket/config.js";
 
 describe("Property: defaults fill missing fields", () => {
   it("any partial config resolves to full defaults for missing fields", { timeout: 30000 }, () => {

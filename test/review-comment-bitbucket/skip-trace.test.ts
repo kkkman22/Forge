@@ -2,8 +2,8 @@ import * as fs from "node:fs";
 import * as os from "node:os";
 import * as path from "node:path";
 import { describe, expect, it, beforeEach, afterEach } from "vitest";
-import type { GateSkipReason, PostContext } from "../lib/types.js";
-import { recordSkip } from "../lib/skip-trace.js";
+import type { GateSkipReason, PostContext } from "../../src/review-comment-bitbucket/types.js";
+import { recordSkip } from "../../src/review-comment-bitbucket/skip-trace.js";
 
 describe("Unit: run markdown append-only", () => {
   let tmpDir: string;

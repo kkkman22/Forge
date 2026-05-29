@@ -1,11 +1,11 @@
 import * as fc from "fast-check";
 import { describe, expect, it } from "vitest";
-import type { Finding } from "../lib/types.js";
+import type { Finding } from "../../src/review-comment-bitbucket/types.js";
 import {
   buildMarker,
   computeFindingHash,
   extractMarker,
-} from "../lib/finding-hash.js";
+} from "../../src/review-comment-bitbucket/finding-hash.js";
 
 const findingArb: fc.Arbitrary<Finding> = fc.record({
   priority: fc.constantFrom("P0", "P1", "P2", "P3"),
