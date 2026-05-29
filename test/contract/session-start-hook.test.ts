@@ -19,7 +19,7 @@ function makeEvolvedRules(dir: string, content: string): void {
 function makeSpecDir(dir: string, specName: string): void {
   const specsDir = join(dir, ".kiro", "specs", specName);
   mkdirSync(specsDir, { recursive: true });
-  writeFileSync(join(specsDir, "spec.md"), "# " + specName, "utf-8");
+  writeFileSync(join(specsDir, "spec.md"), `# ${specName}`, "utf-8");
 }
 
 function makeSpecLock(dir: string, specName: string): void {
