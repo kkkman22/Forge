@@ -24,6 +24,7 @@
 - [Forge 安全与信任](reference-security.md) — reference — 2026-05-12
 - [Forge 日常开发者引导](onboarding-daily.md) / [Forge 日常开发者引导 (EN)](onboarding-daily.en.md) — reference — 2026-05-12
 - [Forge 架构与状态保护](reference-architecture.md) — reference — 2026-05-12
+- [Claude Code 兼容性参考](claude-code-compatibility.md) — reference — 2026-05-29
 - [Review 配置指南](best-practices/review-configuration.md) / [Review 配置指南 (EN)](best-practices/review-configuration.en.md) — reference — 2026-05-17
 - [Router 选择指南](best-practices/router-selection.md) / [Router 选择指南 (EN)](best-practices/router-selection.en.md) — reference — 2026-05-17
 - [SKILL 编写指南](best-practices/skill-authoring.md) / [SKILL 编写指南 (EN)](best-practices/skill-authoring.en.md) — reference — 2026-05-17
