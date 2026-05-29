@@ -167,6 +167,30 @@ export const SKILL_FUNCTION_REGISTRY: readonly SkillFunctionEntry[] = [
 
   // --- forge-ship/SKILL.md ---
   {
+    module: "ship-gates.ts",
+    functionName: "runAllGates",
+    skills: ["forge/lib/ship/instructions.md"],
+    parameterNames: ["input"],
+  },
+  {
+    module: "ship-gates.ts",
+    functionName: "persistGateResults",
+    skills: ["forge/lib/ship/instructions.md"],
+    parameterNames: ["report", "shipDir"],
+  },
+  {
+    module: "ship-gates.ts",
+    functionName: "validateSkipGateOptions",
+    skills: ["forge/lib/ship/instructions.md"],
+    parameterNames: ["options"],
+  },
+  {
+    module: "ship-gates.ts",
+    functionName: "buildSkipGateAnnotation",
+    skills: ["forge/lib/ship/instructions.md"],
+    parameterNames: ["options"],
+  },
+  {
     module: "ship.ts",
     functionName: "checkShipGate",
     skills: ["forge/lib/ship/instructions.md"],
