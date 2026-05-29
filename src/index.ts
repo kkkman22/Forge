@@ -256,6 +256,28 @@ export {
   type ShipOptions,
   type TestResult,
 } from "./ship.js";
+// Ship gates (I/O-level gate checks)
+export {
+  buildSkipGateAnnotation,
+  checkFallbackLadderGate,
+  checkProgressGate,
+  checkReviewGate,
+  checkTestGate,
+  evaluateFallbackLadder,
+  generateP1Fixlist,
+  parseP1Fixlist,
+  persistGateResults,
+  runAllGates,
+  type FallbackLadderConditions,
+  type GateName,
+  type GateResult as ShipGateResult,
+  type P1Fixlist,
+  type P1FixlistEntry,
+  type ShipGateReport,
+  type SkipGateOptions,
+  updateFixlistWithCommits,
+  validateSkipGateOptions,
+} from "./ship-gates.js";
 // Spec Health (merged: type-only + value blocks)
 export {
   checkSpecHealth,

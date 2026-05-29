@@ -190,9 +190,9 @@ describe("barrel file does not expose internal modules", () => {
   });
 
   // Verify the total number of value exports
-  it("has exactly 119 value exports", () => {
+  it("has exactly 131 value exports", () => {
     const valueExports = Object.keys(exports).filter((key) => typeof exports[key] !== "undefined");
-    expect(valueExports).toHaveLength(119);
+    expect(valueExports).toHaveLength(131);
     expect(valueExports.sort()).toEqual([
       "CLASSIFICATION_MAP",
       "CliError",
@@ -208,19 +208,24 @@ describe("barrel file does not expose internal modules", () => {
       "allEntriesVerified",
       "archiveTaskStatus",
       "buildCatalog",
+      "buildSkipGateAnnotation",
       "buildSubagentInvocations",
       "buildVerificationCriteria",
       "canParseTestOutput",
       "checkContradictions",
+      "checkFallbackLadderGate",
       "checkOrphanSolutions",
       "checkPlanStructure",
+      "checkProgressGate",
       "checkReferenceIntegrity",
       "checkReviewFreshness",
+      "checkReviewGate",
       "checkShipGate",
       "checkShipGateWithChecklist",
       "checkShipGateWithForceSkip",
       "checkShipGateWithFreshness",
       "checkSpecHealth",
+      "checkTestGate",
       "checkVersionCompatibility",
       "classifySource",
       "classifyVerdict",
@@ -238,11 +243,13 @@ describe("barrel file does not expose internal modules", () => {
       "detectPlanFormat",
       "determineVerificationStrategy",
       "dispatchKnowledgeEvent",
+      "evaluateFallbackLadder",
       "evaluateReviewGate",
       "evaluateShipGate",
       "evaluateTestGate",
       "extractHeadingAnchors",
       "formatInlineGrillInjection",
+      "generateP1Fixlist",
       "getAdvisoryPath",
       "getMostRecentActiveTask",
       "hasTaskName",
@@ -265,9 +272,11 @@ describe("barrel file does not expose internal modules", () => {
       "parseFailureSummary",
       "parseFixRecoveryGitLog",
       "parseHealthCache",
+      "parseP1Fixlist",
       "parseReviewConfig",
       "parseSolutionFrontmatter",
       "parseStatusEntries",
+      "persistGateResults",
       "readTaskStatus",
       "reconstructStateFromGit",
       "recordForceSkip",
@@ -282,6 +291,7 @@ describe("barrel file does not expose internal modules", () => {
       "renderPendingAdvisoryNotice",
       "renderSpecHealthAdvisory",
       "resolveStatusPath",
+      "runAllGates",
       "runBranchGate",
       "runGlossaryCheck",
       "runSubagentsInParallel",
@@ -302,6 +312,7 @@ describe("barrel file does not expose internal modules", () => {
       "shouldTriggerInlineGrill",
       "slugify",
       "updateEntryStatus",
+      "updateFixlistWithCommits",
       "upsertTaskEntry",
       "validateAtomicTask",
       "validateDependencies",
@@ -311,6 +322,7 @@ describe("barrel file does not expose internal modules", () => {
       "validateManifest",
       "validatePlan",
       "validatePlanTasks",
+      "validateSkipGateOptions",
       "validateSpecLocked",
       "writeTaskStatus",
     ]);
