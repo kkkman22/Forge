@@ -9,7 +9,6 @@
 
 import { describe, expect, it } from "vitest";
 import {
-  type LayerResult,
   detectTruncation,
   REPORT_END_MARKER,
   REPORT_START_MARKER,
