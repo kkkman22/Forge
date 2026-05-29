@@ -77,13 +77,42 @@ export const DEFAULT_SANDBOX_CONFIG: SandboxConfig = {
 // Task 1 stubs — will be implemented in Tasks 2-4
 // ---------------------------------------------------------------------------
 
-/** @todo Task 2: implement checkFilesystemPolicy */
+/**
+ * Check whether a file path is permitted for the given operation.
+ *
+ * Matching logic:
+ *   1. Check deny list -> hit means allowed: false (highest priority)
+ *   2. Check allow list (read or write based on operation) -> hit means allowed: true
+ *   3. No rule matched -> allowed: true (default allow)
+ */
 export function checkFilesystemPolicy(
-  _path: string,
-  _operation: "read" | "write",
-  _config: SandboxConfig,
+  filePath: string,
+  operation: "read" | "write",
+  config: SandboxConfig,
 ): SandboxCheckResult {
-  return { allowed: false, reason: "not implemented" };
+  const resolved = nodePath.posix.normalize(filePath.replace(/\\/g, "/"));
+
+  // 1. Check deny patterns first (highest priority)
+  for (const pattern of config.filesystem.deny) {
+    if (minimatch(resolved, pattern)) {
+      return {
+        allowed: false,
+        reason: `Filesystem deny: "${resolved}" matches deny pattern "${pattern}"`,
+        matchedRule: pattern,
+      };
+    }
+  }
+
+  // 2. Check operation-specific allow patterns
+  const allowPatterns = operation === "read" ? config.filesystem.read : config.filesystem.write;
+  for (const pattern of allowPatterns) {
+    if (minimatch(resolved, pattern)) {
+      return { allowed: true, reason: "" };
+    }
+  }
+
+  // 3. Default: allow if no deny matched
+  return { allowed: true, reason: "" };
 }
 
 /** @todo Task 3: implement checkCommandPolicy */

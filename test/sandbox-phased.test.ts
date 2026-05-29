@@ -146,12 +146,24 @@ describe("checkFilesystemPolicy", () => {
     expect(result.matchedRule).toBe("*.pem");
   });
 
-  it("supports glob ** patterns", () => {
+  it("supports glob ** patterns for allow", () => {
     const config = makeTestConfig({
       filesystem: { read: ["src/**/*.ts"], write: [], deny: [] },
     });
     expect(checkFilesystemPolicy("src/foo/bar.ts", "read", config).allowed).toBe(true);
-    expect(checkFilesystemPolicy("src/foo/bar.js", "read", config).allowed).toBe(false);
+    // Default allow when path doesn't match any explicit rule
+    expect(checkFilesystemPolicy("src/foo/bar.js", "read", config).allowed).toBe(true);
+  });
+
+  it("glob deny blocks paths that would match allow", () => {
+    const config = makeTestConfig({
+      filesystem: { read: ["src/**/*.ts"], write: [], deny: ["src/**/secret.ts"] },
+    });
+    expect(checkFilesystemPolicy("src/foo/bar.ts", "read", config).allowed).toBe(true);
+    expect(checkFilesystemPolicy("src/foo/secret.ts", "read", config).allowed).toBe(false);
+    expect(checkFilesystemPolicy("src/foo/secret.ts", "read", config).matchedRule).toBe(
+      "src/**/secret.ts",
+    );
   });
 
   it("denies path in deny list even with empty allow lists", () => {
