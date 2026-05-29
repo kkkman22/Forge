@@ -5,9 +5,11 @@
  * structured GateResult objects. They complement the existing
  * checkShipGate() in ship.ts which operates on already-parsed inputs.
  *
- * **Requirements: 1.1, 1.2, 1.3, 4.1, 4.2, 4.3, 4.4**
+ * **Requirements: 1.1, 1.2, 1.3, 2.1, 2.2, 2.3, 2.4, 3.4, 4.1, 4.2, 4.3, 4.4**
  */
 
+import { mkdirSync, readFileSync, readdirSync, writeFileSync } from "node:fs";
+import { join } from "node:path";
 import type { Methodology } from "./schemas/review-report.js";
 
 // ---------------------------------------------------------------------------
@@ -65,107 +67,550 @@ export interface ShipGateReport {
 }
 
 // ---------------------------------------------------------------------------
-// Signature declarations — implementations follow in Tasks 3-9
+// Internal helpers
+// ---------------------------------------------------------------------------
+
+interface ParsedReviewReport {
+  p0Count: number;
+  p1Count: number;
+  methodology: Methodology;
+  result: string;
+}
+
+/**
+ * Extract frontmatter fields from review report content.
+ */
+function parseReviewReportFrontmatter(content: string): ParsedReviewReport | null {
+  const match = content.match(/^---\r?\n([\s\S]*?)\r?\n---/);
+  if (!match) return null;
+
+  const fmText = match[1];
+  const p0Match = fmText.match(/^p0_count:\s*(\d+)/m);
+  const p1Match = fmText.match(/^p1_count:\s*(\d+)/m);
+  const methodMatch = fmText.match(/^methodology:\s*(\S+)/m);
+  const resultMatch = fmText.match(/^result:\s*(\S+)/m);
+
+  if (!p0Match && !p1Match && !methodMatch && !resultMatch) return null;
+
+  const p0Count = p0Match ? Number.parseInt(p0Match[1], 10) : 0;
+  const p1Count = p1Match ? Number.parseInt(p1Match[1], 10) : 0;
+  const methodRaw = methodMatch?.[1] ?? "subagent-parallel";
+  const methodology = isValidMethodology(methodRaw) ? methodRaw : "subagent-parallel";
+
+  return { p0Count, p1Count, methodology, result: resultMatch?.[1] ?? "incomplete" };
+}
+
+const VALID_METHODOLOGIES: readonly string[] = [
+  "subagent-parallel",
+  "subagent-serial",
+  "ci-evidence",
+  "unavailable",
+] as const;
+
+function isValidMethodology(value: string): value is Methodology {
+  return (VALID_METHODOLOGIES as readonly string[]).includes(value);
+}
+
+/**
+ * Find the most recently modified .md file in a directory.
+ */
+function findLatestFile(dir: string, suffix: string): string | null {
+  let files: string[];
+  try {
+    files = readdirSync(dir);
+  } catch {
+    return null;
+  }
+
+  const matching = files.filter((f) => f.endsWith(suffix));
+  if (matching.length === 0) return null;
+
+  // Sort by name descending (assuming ISO date prefix in filenames)
+  matching.sort().reverse();
+  return join(dir, matching[0]);
+}
+
+/**
+ * Parse P1 fixlist from JSON string.
+ */
+function safeParseP1Fixlist(content: string): P1Fixlist | null {
+  try {
+    const parsed: unknown = JSON.parse(content);
+    if (typeof parsed !== "object" || parsed === null || Array.isArray(parsed)) return null;
+    const obj = parsed as Record<string, unknown>;
+
+    if (typeof obj.runId !== "string" || obj.runId.length === 0) return null;
+    if (!Array.isArray(obj.p1Issues)) return null;
+
+    for (const issue of obj.p1Issues) {
+      if (typeof issue !== "object" || issue === null) return null;
+      const i = issue as Record<string, unknown>;
+      if (typeof i.id !== "string" || typeof i.title !== "string") return null;
+      if (typeof i.file !== "string" || typeof i.line !== "number") return null;
+      // fixCommit can be null or string
+      if (i.fixCommit !== null && typeof i.fixCommit !== "string") return null;
+    }
+
+    return {
+      runId: obj.runId,
+      p1Issues: obj.p1Issues as P1FixlistEntry[],
+      allFixed: typeof obj.allFixed === "boolean" ? obj.allFixed : false,
+    };
+  } catch {
+    return null;
+  }
+}
+
+// ---------------------------------------------------------------------------
+// Task 3: checkReviewGate (GREEN)
 // ---------------------------------------------------------------------------
 
 /**
  * Check the review gate by scanning .forge/reviews/ for the latest report.
  *
- * Returns GateResult with passed=true only when:
- *   - A review report exists
- *   - No P0/P1 issues remain (or all have fix commits per fixlist)
- *   - Methodology is not "unavailable"
+ * Flow:
+ *   1. Find latest review report in reviewDir
+ *   2. Parse P0/P1 counts from frontmatter
+ *   3. Check methodology — if "unavailable", block (HARD-GATE)
+ *   4. If P0 count > 0, block
+ *   5. If P1 count > 0, look for p1-fixlist.json
+ *   6. For each unfixed P1 in fixlist, search git log for [fix P1] commits
+ *   7. All P1 fixed (or no P1) → passed
  *
  * @param reviewDir - Path to .forge/reviews/
- * @param latestCommitHash - Current HEAD commit hash
+ * @param _latestCommitHash - Current HEAD commit hash (reserved for freshness check)
  * @param gitLogFn - Optional function to search git log for fix commits
  */
 export function checkReviewGate(
-  _reviewDir: string,
+  reviewDir: string,
   _latestCommitHash: string,
-  _gitLogFn?: (file: string) => string[],
+  gitLogFn?: (file: string) => string[],
 ): GateResult {
-  return { gate: "review", passed: false, reason: "not implemented" };
+  // Step 1: Find latest review report
+  const reportPath = findLatestFile(reviewDir, ".md");
+  if (!reportPath) {
+    return {
+      gate: "review",
+      passed: false,
+      reason: "No review report found in .forge/reviews/. Run /forge review first.",
+    };
+  }
+
+  // Step 2: Parse report
+  let content: string;
+  try {
+    content = readFileSync(reportPath, "utf-8");
+  } catch {
+    return {
+      gate: "review",
+      passed: false,
+      reason: `Failed to read review report: ${reportPath}`,
+    };
+  }
+
+  const report = parseReviewReportFrontmatter(content);
+  if (!report) {
+    return {
+      gate: "review",
+      passed: false,
+      reason: `Failed to parse review report frontmatter: ${reportPath}`,
+    };
+  }
+
+  // Step 3: Methodology check (HARD-GATE)
+  if (report.methodology === "unavailable") {
+    return {
+      gate: "review",
+      passed: false,
+      reason:
+        "Review unavailable: methodology=unavailable (L3 fallback ladder exhausted). HARD-GATE: main agent must not substitute for review.",
+      details: { p0Count: report.p0Count, p1Count: report.p1Count },
+    };
+  }
+
+  // Step 4: P0 check
+  if (report.p0Count > 0) {
+    return {
+      gate: "review",
+      passed: false,
+      reason: `Review has ${report.p0Count} P0 issue(s). P0 blocks ship.`,
+      details: { p0Count: report.p0Count, p1Count: report.p1Count },
+    };
+  }
+
+  // Step 5-6: P1 check with fixlist
+  if (report.p1Count > 0) {
+    // Look for fixlist
+    const fixlistPath = findLatestFile(reviewDir, "-p1-fixlist.json");
+    if (fixlistPath) {
+      try {
+        const fixlistContent = readFileSync(fixlistPath, "utf-8");
+        const fixlist = safeParseP1Fixlist(fixlistContent);
+
+        if (fixlist && gitLogFn) {
+          const updated = updateFixlistWithCommits(fixlist, gitLogFn);
+          if (updated.allFixed) {
+            return {
+              gate: "review",
+              passed: true,
+              reason: `All ${report.p1Count} P1 issue(s) have fix commits.`,
+              details: { p0Count: 0, p1Count: report.p1Count },
+            };
+          }
+          const unfixed = updated.p1Issues.filter((i) => i.fixCommit === null);
+          return {
+            gate: "review",
+            passed: false,
+            reason: `${unfixed.length} P1 issue(s) still unfixed: ${unfixed.map((i) => i.id).join(", ")}`,
+            details: { p0Count: 0, p1Count: unfixed.length },
+          };
+        }
+
+        if (fixlist && fixlist.allFixed) {
+          return {
+            gate: "review",
+            passed: true,
+            reason: `All ${report.p1Count} P1 issue(s) marked as fixed in fixlist.`,
+            details: { p0Count: 0, p1Count: report.p1Count },
+          };
+        }
+      } catch {
+        // fixlist unreadable — fall through to default P1 block
+      }
+    }
+
+    return {
+      gate: "review",
+      passed: false,
+      reason: `Review has ${report.p1Count} P1 issue(s). Run /forge review and fix all P1 issues before shipping.`,
+      details: { p0Count: 0, p1Count: report.p1Count },
+    };
+  }
+
+  // All clear
+  return {
+    gate: "review",
+    passed: true,
+    reason: "Review passed: no P0/P1 issues.",
+    details: { p0Count: 0, p1Count: 0 },
+  };
 }
+
+// ---------------------------------------------------------------------------
+// Task 4: checkTestGate (GREEN)
+// ---------------------------------------------------------------------------
 
 /**
  * Check the test gate by reading .forge/test-results/.
  *
- * Returns GateResult with passed=true only when:
- *   - Test results exist and show all tests passing
+ * Looks for the latest test result file. If it contains passing indicators,
+ * the gate passes. If configCICheck is provided, it is noted but the actual
+ * execution is left to the caller (to keep this function pure/synchronous).
  *
  * @param testResultsDir - Path to .forge/test-results/
  * @param configCICheck - Optional CI check command from config.md
  */
 export function checkTestGate(
-  _testResultsDir: string,
-  _configCICheck?: string,
+  testResultsDir: string,
+  configCICheck?: string,
 ): GateResult {
-  return { gate: "test", passed: false, reason: "not implemented" };
+  // Find latest test result
+  let files: string[];
+  try {
+    files = readdirSync(testResultsDir);
+  } catch {
+    return {
+      gate: "test",
+      passed: false,
+      reason: "No test results directory found. Run tests first.",
+    };
+  }
+
+  const resultFiles = files.filter(
+    (f) => f.endsWith(".json") || f.endsWith(".md") || f.endsWith(".txt"),
+  );
+  if (resultFiles.length === 0) {
+    return {
+      gate: "test",
+      passed: false,
+      reason: "No test results found in .forge/test-results/. Run tests first.",
+    };
+  }
+
+  // Sort by name descending (ISO date prefix)
+  resultFiles.sort().reverse();
+  const latestPath = join(testResultsDir, resultFiles[0]);
+
+  let content: string;
+  try {
+    content = readFileSync(latestPath, "utf-8");
+  } catch {
+    return {
+      gate: "test",
+      passed: false,
+      reason: `Failed to read test results: ${latestPath}`,
+    };
+  }
+
+  // Check for failure indicators in content
+  const lower = content.toLowerCase();
+  const hasFailure =
+    lower.includes('"passed": false') ||
+    lower.includes('"passed":false') ||
+    lower.includes('"status": "failed"') ||
+    lower.includes('"status":"failed"') ||
+    lower.includes("test failed") ||
+    lower.includes("tests failed") ||
+    lower.includes("failures:") && !lower.includes("failures: 0") && !lower.includes("failures:0");
+
+  const hasPass =
+    lower.includes('"passed": true') ||
+    lower.includes('"passed":true') ||
+    lower.includes('"status": "passed"') ||
+    lower.includes('"status":"passed"') ||
+    lower.includes("all tests passed") ||
+    (lower.includes("pass") && !hasFailure);
+
+  if (hasFailure) {
+    return {
+      gate: "test",
+      passed: false,
+      reason: "Tests failed. Fix failing tests before shipping.",
+      details: { untestedFiles: [] },
+    };
+  }
+
+  if (hasPass) {
+    const ciNote = configCICheck ? ` (CI check: ${configCICheck})` : "";
+    return {
+      gate: "test",
+      passed: true,
+      reason: `All tests passing.${ciNote}`,
+      details: { untestedFiles: [] },
+    };
+  }
+
+  // Unclear result — conservatively block
+  return {
+    gate: "test",
+    passed: false,
+    reason: `Could not determine test status from: ${latestPath}`,
+    details: { untestedFiles: [] },
+  };
 }
+
+// ---------------------------------------------------------------------------
+// Task 5: checkProgressGate (GREEN)
+// ---------------------------------------------------------------------------
 
 /**
  * Check the progress gate by reading .forge/progress/<feature>.md.
  *
- * Returns GateResult with passed=true when:
- *   - All tasks are completed
- *   - Or no progress file exists (lightweight path — warning only)
+ * Per design:
+ *   - All tasks completed → passed
+ *   - Has in_progress tasks → passed + warning (non-blocking)
+ *   - No progress file → passed + warning (lightweight path)
  *
  * @param progressDir - Path to .forge/progress/
  * @param featureName - Name of the current feature
  */
 export function checkProgressGate(
-  _progressDir: string,
-  _featureName: string,
+  progressDir: string,
+  featureName: string,
 ): GateResult {
-  return { gate: "progress", passed: false, reason: "not implemented" };
+  const progressFile = join(progressDir, `${featureName}.md`);
+
+  let content: string;
+  try {
+    content = readFileSync(progressFile, "utf-8");
+  } catch {
+    // No progress file — lightweight path, pass with warning
+    return {
+      gate: "progress",
+      passed: true,
+      reason: "No progress file found (lightweight path). Progress gate skipped.",
+    };
+  }
+
+  // Parse task status from markdown checkboxes: - [ ] / - [x]
+  const allTasks = content.match(/- \[[ x]\]/g) ?? [];
+  const incompleteTasks = content.match(/- \[ \]/g) ?? [];
+
+  if (allTasks.length === 0) {
+    return {
+      gate: "progress",
+      passed: true,
+      reason: "No tasks found in progress file.",
+    };
+  }
+
+  const incompleteNames: string[] = [];
+  const lines = content.split("\n");
+  for (let i = 0; i < lines.length; i++) {
+    const line = lines[i];
+    if (line.match(/^- \[ \]/)) {
+      // Extract task name from the checkbox line
+      const taskName = line.replace(/^- \[ \]\s*/, "").trim();
+      if (taskName.length > 0) {
+        incompleteNames.push(taskName.slice(0, 80));
+      }
+    }
+  }
+
+  if (incompleteTasks.length === 0) {
+    return {
+      gate: "progress",
+      passed: true,
+      reason: `All ${allTasks.length} tasks completed.`,
+      details: { incompleteTasks: [] },
+    };
+  }
+
+  // Incomplete tasks — warning only (non-blocking per design D2)
+  const taskList = incompleteNames.slice(0, 5).join(", ");
+  const suffix = incompleteNames.length > 5 ? ` (+${incompleteNames.length - 5} more)` : "";
+  return {
+    gate: "progress",
+    passed: true,
+    reason: `Warning: ${incompleteTasks.length}/${allTasks.length} tasks still in progress: ${taskList}${suffix}`,
+    details: { incompleteTasks: incompleteNames },
+  };
 }
+
+// ---------------------------------------------------------------------------
+// Task 6: P1 Fix Checklist functions (GREEN)
+// ---------------------------------------------------------------------------
+
+/**
+ * Parse P1 fixlist from JSON content.
+ *
+ * Validates the structure: runId (string), p1Issues (array of entries),
+ * allFixed (boolean). Returns null for invalid input.
+ */
+export function parseP1Fixlist(content: string): P1Fixlist | null {
+  return safeParseP1Fixlist(content);
+}
+
+/**
+ * Update P1 fixlist with discovered fix commits.
+ *
+ * For each P1 issue with fixCommit=null, searches git log via gitLogFn
+ * for commits matching the pattern [fix P1] in the relevant file.
+ */
+export function updateFixlistWithCommits(
+  fixlist: P1Fixlist,
+  gitLogFn: (file: string) => string[],
+): P1Fixlist {
+  const updatedIssues = fixlist.p1Issues.map((issue) => {
+    if (issue.fixCommit !== null) return issue;
+
+    const logLines = gitLogFn(issue.file);
+    for (const line of logLines) {
+      // Match pattern: <hash> [fix P1] ...
+      const m = line.match(/^([a-f0-9]+)\s+\[fix P1\]/);
+      if (m) {
+        return { ...issue, fixCommit: m[1] };
+      }
+    }
+    return issue;
+  });
+
+  const allFixed = updatedIssues.every((i) => i.fixCommit !== null);
+  return { ...fixlist, p1Issues: updatedIssues, allFixed };
+}
+
+// ---------------------------------------------------------------------------
+// Task 7: Fallback Ladder gate check (GREEN)
+// ---------------------------------------------------------------------------
+
+/**
+ * Check whether the fallback ladder state should block ship.
+ *
+ * L0 (workflow), L1 (subagent-parallel), L2 (subagent-serial), L2-ci (ci-evidence) → passed.
+ * L3 (unavailable) → blocked with HARD-GATE message.
+ */
+export function checkFallbackLadderGate(methodology: Methodology): GateResult {
+  if (methodology === "unavailable") {
+    return {
+      gate: "review",
+      passed: false,
+      reason:
+        "Review unavailable: methodology=unavailable. HARD-GATE (L3): all review paths (L0+L1+L2) exhausted. Main agent must NOT substitute for review. Ship is blocked.",
+    };
+  }
+
+  return {
+    gate: "review",
+    passed: true,
+    reason: `Review produced via ${methodology}.`,
+  };
+}
+
+// ---------------------------------------------------------------------------
+// Task 8: Gate result persistence (GREEN)
+// ---------------------------------------------------------------------------
+
+/**
+ * Persist gate results to .forge/ship/<run-id>-gates.json.
+ *
+ * Creates the directory if it does not exist.
+ */
+export function persistGateResults(report: ShipGateReport, shipDir: string): void {
+  mkdirSync(shipDir, { recursive: true });
+  const filePath = join(shipDir, `${report.runId}-gates.json`);
+  writeFileSync(filePath, JSON.stringify(report, null, 2) + "\n", "utf-8");
+}
+
+// ---------------------------------------------------------------------------
+// Task 9: --skip-gate mechanism (GREEN)
+// ---------------------------------------------------------------------------
 
 /**
  * Validate --skip-gate options.
  *
+ * Rules:
+ *   - --skip-gate=all in interactive mode → always error
+ *   - --skip-gate=all requires --force
+ *   - Specific gate skips are always valid
+ *
  * Returns an error string if invalid, or null if valid.
  */
-export function validateSkipGateOptions(_options: SkipGateOptions): string | null {
+export function validateSkipGateOptions(options: SkipGateOptions): string | null {
+  if (options.skipAll) {
+    if (options.isInteractive) {
+      return "--skip-gate=all is not allowed in interactive mode. Skip gates individually.";
+    }
+    if (!options.force) {
+      return "--skip-gate=all requires --force confirmation.";
+    }
+  }
+
+  // Validate individual gate names
+  const validGates: readonly string[] = ["review", "test", "progress"];
+  for (const gate of options.skipGates) {
+    if (!validGates.includes(gate)) {
+      return `Invalid gate name: ${gate}. Valid gates: ${validGates.join(", ")}`;
+    }
+  }
+
   return null;
 }
 
 /**
  * Build skip-gate annotation for ship commit message.
- */
-export function buildSkipGateAnnotation(_options: SkipGateOptions): string {
-  return "";
-}
-
-/**
- * Persist gate results to .forge/ship/<run-id>-gates.json.
- */
-export function persistGateResults(_report: ShipGateReport, _shipDir: string): void {
-  // Task 8 implementation
-}
-
-/**
- * Parse P1 fixlist from JSON content.
- */
-export function parseP1Fixlist(_content: string): P1Fixlist | null {
-  return null;
-}
-
-/**
- * Update P1 fixlist with discovered fix commits.
- */
-export function updateFixlistWithCommits(
-  fixlist: P1Fixlist,
-  _gitLogFn: (file: string) => string[],
-): P1Fixlist {
-  return fixlist;
-}
-
-/**
- * Check whether the fallback ladder L3 state should block ship.
  *
- * HARD-GATE: main agent must never substitute for review at L3.
+ * Format: [skip-gate: <gate-name> reason=<reason>]
+ * For all: [skip-gate: all reason=<reason>]
  */
-export function checkFallbackLadderGate(_methodology: Methodology): GateResult {
-  return { gate: "review", passed: false, reason: "not implemented" };
+export function buildSkipGateAnnotation(options: SkipGateOptions): string {
+  if (options.skipAll && options.force) {
+    return "[skip-gate: all reason=forced-by-user]";
+  }
+
+  if (options.skipGates.length === 0) {
+    return "";
+  }
+
+  const gates = options.skipGates.join(",");
+  return `[skip-gate: ${gates} reason=individual-skip]`;
 }
