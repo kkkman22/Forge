@@ -270,7 +270,7 @@ export {
   runAllGates,
   type FallbackLadderConditions,
   type GateName,
-  type GateResult as ShipGateResult,
+  type GateResult as GateResultType,
   type P1Fixlist,
   type P1FixlistEntry,
   type ShipGateReport,
