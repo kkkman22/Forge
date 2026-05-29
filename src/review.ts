@@ -475,6 +475,12 @@ export function buildReviewEvolutionArtifacts(
 import { readFileSync, renameSync, writeFileSync } from "node:fs";
 import { parse as parseYaml, stringify as stringifyYaml } from "yaml";
 import type { SubagentInvocation, SubagentResult } from "./loop-types.js";
+import {
+  assessTruncationSeverity,
+  detectTruncation,
+  type ReviewLayer,
+  type TruncationAssessment,
+} from "./truncation-detection.js";
 
 /** Context for building review subagent invocations. */
 export interface ReviewSubagentContext {
@@ -558,6 +564,38 @@ export function buildReviewSubagents(context: ReviewSubagentContext): SubagentIn
   }
 
   return invocations;
+}
+
+// ---------------------------------------------------------------------------
+// Truncation detection integration
+// ---------------------------------------------------------------------------
+
+/** Map agentType to ReviewLayer. Unknown types return undefined. */
+const AGENT_TYPE_TO_LAYER: Record<string, ReviewLayer> = {
+  "spec-check": "spec",
+  "quality-check": "quality",
+  "security-check": "security",
+};
+
+/**
+ * Run truncation detection across review subagent results.
+ *
+ * Maps each agentType to its ReviewLayer, runs detectTruncation on the raw
+ * output, then assesses overall severity via assessTruncationSeverity.
+ *
+ * Non-review agents (frontend-check, unknown) are skipped.
+ *
+ * @param results - Successfully completed subagent results from the fallback ladder.
+ * @returns TruncationAssessment indicating the degradation action to take.
+ */
+export function processReviewTruncation(
+  results: Array<{ agentType: string; result: string }>,
+): TruncationAssessment {
+  const layerResults = results
+    .filter((r) => AGENT_TYPE_TO_LAYER[r.agentType] !== undefined)
+    .map((r) => detectTruncation(AGENT_TYPE_TO_LAYER[r.agentType], r.result));
+
+  return assessTruncationSeverity(layerResults);
 }
 
 /**
