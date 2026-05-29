@@ -80,7 +80,7 @@ function longProse(targetTokens: number): string {
   let result = "";
   let i = 0;
   while (result.length < targetChars) {
-    result += sentences[i % sentences.length] + " ";
+    result += `${sentences[i % sentences.length]} `;
     i++;
   }
   return result.trim();

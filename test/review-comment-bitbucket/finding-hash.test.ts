@@ -61,10 +61,10 @@ describe("Property 3: stable field sensitivity", () => {
       fc.property(findingArb, (f) => {
         const original = computeFindingHash(f);
         const variants = [
-          { ...f, file_path: f.file_path + "_x" },
+          { ...f, file_path: `${f.file_path}_x` },
           { ...f, line_number: f.line_number + 1 },
-          { ...f, finding_type: f.finding_type + "_x" },
-          { ...f, message: "x" + f.message },
+          { ...f, finding_type: `${f.finding_type}_x` },
+          { ...f, message: `x${f.message}` },
         ];
         for (const v of variants) {
           expect(computeFindingHash(v)).not.toBe(original);
