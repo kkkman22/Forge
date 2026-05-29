@@ -25,7 +25,11 @@ import { execSync } from "node:child_process";
 // Paths
 // ---------------------------------------------------------------------------
 
-const ROOT = join(new URL(import.meta.url).pathname, "..", "..");
+const args = process.argv.slice(2);
+const rootIndex = args.indexOf("--root");
+const ROOT = rootIndex !== -1 && args[rootIndex + 1]
+  ? args[rootIndex + 1]
+  : join(new URL(import.meta.url).pathname, "..", "..");
 const KIRO_SPECS_DIR = join(ROOT, ".kiro", "specs");
 const INDEX_PATH = join(KIRO_SPECS_DIR, "INDEX.md");
 
@@ -33,7 +37,6 @@ const INDEX_PATH = join(KIRO_SPECS_DIR, "INDEX.md");
 // CLI
 // ---------------------------------------------------------------------------
 
-const args = process.argv.slice(2);
 const mode = {
   incremental: args.includes("--incremental"),
   check: args.includes("--check"),
@@ -49,6 +52,7 @@ Usage:
 Options:
   --incremental  Only update entries for specs that changed since last commit
   --check        Validate frontmatter and INDEX.md consistency (no writes)
+  --root <path>  Use <path> as project root instead of script location
   --help         Show this help message
 
 Scans .kiro/specs/ for spec directories, reads frontmatter from each
