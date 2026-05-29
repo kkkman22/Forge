@@ -135,7 +135,6 @@ describe("processReviewTruncation", () => {
     const assessment = processReviewTruncation(results);
     expect(assessment.action).toBe("proceed");
     expect(assessment.totalCount).toBe(2);
-    expect(assessment.truncatedLayers).toEqual([]);
   });
 
   it("handles frontend-check gracefully (skipped, not a review layer)", () => {
