@@ -47,6 +47,11 @@ Skill 启动时先展示与当前任务最相关的历史 ADR，帮助用户感�
 
 ### Round 1 — Perspective Subagents (Parallel Launch)
 
+**Spec Context Filter**: 当搜索 `.kiro/specs/` 中的相关 spec 时，过滤以下条目：
+- `status: archived` → 不纳入搜索结果
+- `replaced_by` 非空 → 不纳入搜索结果
+- `status: deferred` → 纳入但在输出中标注 "（暂缓）"
+
 **Default Members** (3, always participate):
 
 | Subagent Name | Definition File | Responsibility |
