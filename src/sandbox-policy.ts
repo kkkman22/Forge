@@ -5,10 +5,24 @@
  * Used by check-sandbox.ts (PreToolUse hook) and SdkDriver (startup validation).
  *
  * **Validates: Requirements 1, 2, 3, 5**
+ *
+ * Re-exports Phase 1 declarative sandbox types and functions from sandbox-phased.ts,
+ * making this module the canonical import point for all sandbox-related types.
  */
 
 import * as path from "node:path";
 import { minimatch } from "minimatch";
+
+// Phase 1: Declarative sandbox config (spec task #1 — 扩展 sandbox-policy.ts)
+export type { SandboxConfig, SandboxCheckResult } from "./sandbox-phased.js";
+export {
+  checkFilesystemPolicy,
+  checkCommandPolicy,
+  checkNetworkPolicy,
+  loadSandboxConfig,
+  resolveProfile,
+  DEFAULT_SANDBOX_CONFIG,
+} from "./sandbox-phased.js";
 
 // ---------------------------------------------------------------------------
 // Types
