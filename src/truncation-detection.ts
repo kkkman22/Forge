@@ -73,21 +73,41 @@ ${REPORT_END_MARKER}`;
 export const REQUIRED_SECTIONS = ["P0 Issues", "Summary"] as const;
 
 // ---------------------------------------------------------------------------
-// Stub — to be replaced in GREEN phase (Task 6)
+// Truncation Detection
 // ---------------------------------------------------------------------------
 
 /**
  * Detect whether a subagent's raw output contains a complete structured report.
  *
- * @param _layer - The review layer identifier.
- * @param _raw - The raw subagent output text.
+ * Uses `lastIndexOf` to find the final REPORT_START/REPORT_END pair,
+ * which handles the case of multiple report blocks (e.g. from retries).
+ * Extracts the content between markers and validates that required
+ * sections ("P0 Issues", "Summary") are present.
+ *
+ * @param layer - The review layer identifier.
+ * @param raw - The raw subagent output text.
  * @returns A LayerResult indicating whether the output is truncated.
  */
-export function detectTruncation(_layer: ReviewLayer, _raw: string): LayerResult {
+export function detectTruncation(layer: ReviewLayer, raw: string): LayerResult {
+  const startIdx = raw.lastIndexOf(REPORT_START_MARKER);
+  const endIdx = raw.lastIndexOf(REPORT_END_MARKER);
+
+  // Missing markers or inverted order → truncated
+  if (startIdx === -1 || endIdx === -1 || endIdx < startIdx) {
+    return { layer, raw, report: null, truncated: true };
+  }
+
+  const report = raw.substring(startIdx, endIdx + REPORT_END_MARKER.length);
+
+  // Check required sections are present in the extracted block
+  const hasRequiredSections = REQUIRED_SECTIONS.every((section) =>
+    report.includes(section),
+  );
+
   return {
-    layer: _layer,
-    raw: _raw,
-    report: null,
-    truncated: true,
+    layer,
+    raw,
+    report,
+    truncated: !hasRequiredSections,
   };
 }
