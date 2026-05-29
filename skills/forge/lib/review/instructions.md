@@ -113,6 +113,17 @@ if (!result.allowed) {
 
 写入失败 → fallback：保留 findings table 在 context 中（不阻断评审），标注 `write_failed: true`。
 
+### 2.1 Subagent 文件化返回处理
+
+收到 subagent 结果后，按以下流程处理：
+
+1. **解析摘要**：提取 `status` / `findings` / `p0` / `p1` / `report` 字段
+2. **P0/P1 存在** → `Read report_path` 获取完整详情
+3. **P0=0 且 P1=0** → **不读取**完整报告文件，仅基于摘要生成综合结论
+4. 综合评审报告仍输出到 `.forge/reviews/<timestamp>-combined.md`
+
+当 subagent 未遵循文件化返回协议（无 `report:` 字段）时，退化为原内联模式。
+
 **截断处理**（`src/truncation-detection.ts`）：收到 subagent 结果后调用 `detectTruncation(layer, raw)` 检测 `<!-- REPORT_START -->` / `<!-- REPORT_END -->` 标记完整性。然后调用 `assessTruncationSeverity(results)` 判定全局降级策略：
 
 | 截断层数 | 动作 | 行为 |
