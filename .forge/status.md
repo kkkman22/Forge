@@ -1,32 +1,30 @@
 ---
-current_task: "plugin-data-persistence"
-tier: "light"
+current_task: "subagent-truncation-fix"
+tier: "standard"
 task_type: "feature"
 project_phase: "implementation"
 phase: "build"
 work_nature: "feature"
 updated: "2026-05-30"
-branch: "worktree-plugin-data-persistence"
-spec_path: ".kiro/specs/plugin-data-persistence/"
-plan_path: ".kiro/specs/plugin-data-persistence/tasks.md"
-hints: "plugin-data-persistence,CLAUDE_PLUGIN_DATA,cache,migration"
+branch: "worktree-subagent-truncation-fix"
+spec_path: ".kiro/specs/subagent-truncation-fix/"
+plan_path: ".kiro/specs/subagent-truncation-fix/tasks.md"
+hints: "subagent,truncation,review,detection,fallback"
 assumptions:
   - "spec 目录含 requirements+design+tasks = decide+spec+plan 完成"
-  - "light tier: build → review"
-  - "6 tasks: path module → 3 脚本迁移 → 向后兼容 → 回归验证"
-  - "TDD：先写测试再实现"
+  - "9 tasks / 4 work packages (类型+检测 → 模板 → SKILL文档 → 集成+降级)"
+  - "TDD：task 1 先写测试，task 6 实现"
 ---
 
 # 项目状态
 
-## 当前任务：plugin-data-persistence — build 阶段
+## 当前任务：subagent-truncation-fix — build 阶段
 
-Light-tier 流程。spec/plan 已就绪，6 tasks 待实现。
+Standard-tier 流程。spec/plan 已就绪，9 tasks 待实现。
 
 ## 已完成
 
-context-explosion-defense: build 阶段进行中（被 plugin-data-persistence 替代）。
-subagent-truncation-fix: build 阶段进行中（被 context-explosion-defense 替代）。
+claude-code-uplift-2.1.153: build 完成，待 review。
 workflows-integration-resilience: merged to main (574663a6).
 workflows-integration: 17 commits on worktree-workflows-integration (保留).
 docs-governance-system core library: 23 commits merged to main (76581bc1).
