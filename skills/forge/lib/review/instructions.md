@@ -76,6 +76,25 @@ node scripts/prepare-diff-context.mjs
 
 使用 Agent tool 独立启动，无需 Agent Team。
 
+### §2.0b Sandbox Advisory Checkpoint
+
+Phase 1 advisory: **does not block**, only warns.
+
+**Before reading any source file** during subagent execution, call `checkFilesystemPolicy(targetPath, 'read', sandboxConfig)`:
+
+```
+import { loadSandboxConfig, checkFilesystemPolicy } from "./sandbox-phased.js";
+const sandboxConfig = loadSandboxConfig();
+const result = checkFilesystemPolicy(targetPath, "read", sandboxConfig);
+if (!result.allowed) {
+  // Output warning, do NOT block the read
+  console.warn(`⚠️ 沙箱策略建议阻止此操作：${result.reason}（Phase 1 advisory，不阻断）`);
+}
+```
+
+**Trigger**: Any `Read` tool call targeting `src/`, `test/`, or other project files during subagent execution.
+**Skip**: `.forge/` directory reads (reviews, specs, status) are exempt from sandbox checks.
+
 | Subagent | Definition File | Layer |
 |---------|--------------|------|
 | spec-check | `.claude/agents/spec-check.md` | 1 — Spec Alignment |
