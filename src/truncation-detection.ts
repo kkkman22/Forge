@@ -100,9 +100,7 @@ export function detectTruncation(layer: ReviewLayer, raw: string): LayerResult {
   const report = raw.substring(startIdx, endIdx + REPORT_END_MARKER.length);
 
   // Check required sections are present in the extracted block
-  const hasRequiredSections = REQUIRED_SECTIONS.every((section) =>
-    report.includes(section),
-  );
+  const hasRequiredSections = REQUIRED_SECTIONS.every((section) => report.includes(section));
 
   return {
     layer,

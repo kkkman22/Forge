@@ -6,25 +6,21 @@
  */
 
 import { describe, expect, it } from "vitest";
-import {
-  assessTruncationSeverity,
-  type DegradationAction,
-  type LayerResult,
-  type TruncationAssessment,
-} from "../src/truncation-detection.js";
+import { assessTruncationSeverity, type LayerResult } from "../src/truncation-detection.js";
 
 // ---------------------------------------------------------------------------
 // Helpers
 // ---------------------------------------------------------------------------
 
-function makeLayerResult(
-  layer: "spec" | "quality" | "security",
-  truncated: boolean,
-): LayerResult {
+function makeLayerResult(layer: "spec" | "quality" | "security", truncated: boolean): LayerResult {
   return {
     layer,
-    raw: truncated ? "some output" : "<!-- REPORT_START -->\n### P0 Issues\nNone\n### Summary\nClean\n<!-- REPORT_END -->",
-    report: truncated ? null : "<!-- REPORT_START -->\n### P0 Issues\nNone\n### Summary\nClean\n<!-- REPORT_END -->",
+    raw: truncated
+      ? "some output"
+      : "<!-- REPORT_START -->\n### P0 Issues\nNone\n### Summary\nClean\n<!-- REPORT_END -->",
+    report: truncated
+      ? null
+      : "<!-- REPORT_START -->\n### P0 Issues\nNone\n### Summary\nClean\n<!-- REPORT_END -->",
     truncated,
   };
 }
@@ -156,10 +152,7 @@ describe("assessTruncationSeverity", () => {
   });
 
   it("returns 'warn' when both quality and security are truncated (no spec)", () => {
-    const results = [
-      makeLayerResult("quality", true),
-      makeLayerResult("security", true),
-    ];
+    const results = [makeLayerResult("quality", true), makeLayerResult("security", true)];
     const assessment = assessTruncationSeverity(results);
     expect(assessment.action).toBe("warn");
     expect(assessment.truncatedCount).toBe(2);
