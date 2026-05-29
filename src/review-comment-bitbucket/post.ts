@@ -46,7 +46,7 @@ export interface BitbucketClient {
 
 const VALID_TASK_STATUSES = new Set(["OPEN", "RESOLVED"]);
 
-interface PostOptions {
+export interface PostOptions {
   baseDir?: string;
   argv?: string[];
 }
