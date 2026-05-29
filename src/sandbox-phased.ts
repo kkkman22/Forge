@@ -201,15 +201,82 @@ export function checkNetworkPolicy(
   return { allowed: true, reason: "" };
 }
 
-/** @todo Task 4: implement loadSandboxConfig */
-export function loadSandboxConfig(_configPath?: string): SandboxConfig {
+/**
+ * Load sandbox configuration from a JSON file.
+ *
+ * - File does not exist: returns DEFAULT_SANDBOX_CONFIG (everything allowed)
+ * - File is malformed JSON: returns DEFAULT_SANDBOX_CONFIG with warning to stderr
+ * - File has wrong structure: returns DEFAULT_SANDBOX_CONFIG with warning to stderr
+ */
+export function loadSandboxConfig(configPath?: string): SandboxConfig {
+  if (configPath && existsSync(configPath)) {
+    try {
+      const raw = readFileSync(configPath, "utf-8");
+      const parsed = JSON.parse(raw) as unknown;
+
+      if (isValidSandboxConfig(parsed)) {
+        return parsed;
+      }
+
+      console.warn(
+        `[sandbox-phased] Invalid sandbox config structure in ${configPath}, using default`,
+      );
+    } catch (err) {
+      console.warn(
+        `[sandbox-phased] Failed to parse ${configPath}: ${err instanceof Error ? err.message : String(err)}, using default`,
+      );
+    }
+  }
+
   return { ...DEFAULT_SANDBOX_CONFIG };
 }
 
-/** @todo Task 4: implement resolveProfile */
+/**
+ * Validate that an unknown value conforms to the SandboxConfig interface.
+ */
+function isValidSandboxConfig(value: unknown): value is SandboxConfig {
+  if (value === null || typeof value !== "object" || Array.isArray(value)) return false;
+  const cfg = value as Record<string, unknown>;
+
+  if (cfg.version !== 1) return false;
+  if (typeof cfg.profile !== "string") return false;
+
+  // filesystem
+  if (typeof cfg.filesystem !== "object" || cfg.filesystem === null) return false;
+  const fs = cfg.filesystem as Record<string, unknown>;
+  if (!Array.isArray(fs.read) || !Array.isArray(fs.write) || !Array.isArray(fs.deny)) return false;
+
+  // network
+  if (typeof cfg.network !== "object" || cfg.network === null) return false;
+  const net = cfg.network as Record<string, unknown>;
+  if (!Array.isArray(net.allow) || !Array.isArray(net.deny)) return false;
+
+  // commands
+  if (typeof cfg.commands !== "object" || cfg.commands === null) return false;
+  const cmd = cfg.commands as Record<string, unknown>;
+  if (!Array.isArray(cmd.allow) || !Array.isArray(cmd.deny)) return false;
+
+  return true;
+}
+
+/**
+ * Resolve a named profile from the configuration.
+ *
+ * In Phase 1, profile is just a label (config.profile field).
+ * If profileName is provided, it must match config.profile.
+ * Future phases may support multi-profile configs.
+ */
 export function resolveProfile(
-  _config: SandboxConfig,
-  _profileName?: string,
+  config: SandboxConfig,
+  profileName?: string,
 ): SandboxConfig {
-  return { ...DEFAULT_SANDBOX_CONFIG };
+  const targetProfile = profileName ?? config.profile;
+
+  if (targetProfile === config.profile) {
+    return config;
+  }
+
+  throw new Error(
+    `Sandbox profile "${targetProfile}" not found. Available profiles: ${config.profile}`,
+  );
 }
