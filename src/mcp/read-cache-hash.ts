@@ -8,7 +8,8 @@
  */
 
 import { execFile } from "node:child_process";
-import { createHash, readFile } from "node:fs/promises";
+import { createHash } from "node:crypto";
+import { readFile } from "node:fs/promises";
 
 // ---------------------------------------------------------------------------
 // Hash computation
