@@ -196,6 +196,12 @@ $ /forge test
 
 </IRON-LAW>
 
+### Test 后 Context Budget 检查
+
+Test 完成后，如果后续还有 ship 阶段且 Read 预算 >50KB（`${TMPDIR}/forge-read-budget-<session>.json`），输出：
+
+`⚠️ Read budget >50KB after test. Suggest /clear + /forge resume before ship phase.`
+
 ## Gotchas
 - **Test tests nothing**: Test asserts trivial condition (always true) → passes but verifies nothing → each test must assert meaningful behavior
 - **Mock overuse**: Every dependency mocked → test passes but production fails → prefer real dependencies, mock only external services
