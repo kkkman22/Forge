@@ -7,11 +7,11 @@
  * Tests the script's CLI interface and output format.
  */
 
-import { describe, expect, it } from "vitest";
 import { execSync } from "node:child_process";
-import { existsSync, readFileSync, mkdirSync, rmSync, writeFileSync } from "node:fs";
-import { join } from "node:path";
+import { existsSync, mkdirSync, readFileSync, rmSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
+import { join } from "node:path";
+import { describe, expect, it } from "vitest";
 
 const SCRIPT = "scripts/rebuild-spec-index.mjs";
 
@@ -48,53 +48,61 @@ describe("rebuild-spec-index.mjs", () => {
     const specsDir = join(tmpDir, ".kiro", "specs");
 
     // Create a spec with frontmatter
-    writeFileSyncRecursive(join(specsDir, "test-spec", "requirements.md"), [
-      "---",
-      "name: test-spec",
-      "status: in_progress",
-      'created: "2026-05-29"',
-      'updated: "2026-05-29"',
-      "priority: P1",
-      "tier: standard",
-      "depends_on:",
-      "  - other-spec",
-      "---",
-      "",
-      "# Test Spec",
-    ].join("\n"));
+    writeFileSyncRecursive(
+      join(specsDir, "test-spec", "requirements.md"),
+      [
+        "---",
+        "name: test-spec",
+        "status: in_progress",
+        'created: "2026-05-29"',
+        'updated: "2026-05-29"',
+        "priority: P1",
+        "tier: standard",
+        "depends_on:",
+        "  - other-spec",
+        "---",
+        "",
+        "# Test Spec",
+      ].join("\n"),
+    );
 
     // Create another spec with deferred status
-    writeFileSyncRecursive(join(specsDir, "deferred-spec", "requirements.md"), [
-      "---",
-      "name: deferred-spec",
-      "status: deferred",
-      'created: "2026-01-01"',
-      'updated: "2026-05-29"',
-      'deferred_reason: "Needs review"',
-      'deferred_date: "2026-05-29"',
-      "---",
-      "",
-      "# Deferred Spec",
-    ].join("\n"));
+    writeFileSyncRecursive(
+      join(specsDir, "deferred-spec", "requirements.md"),
+      [
+        "---",
+        "name: deferred-spec",
+        "status: deferred",
+        'created: "2026-01-01"',
+        'updated: "2026-05-29"',
+        'deferred_reason: "Needs review"',
+        'deferred_date: "2026-05-29"',
+        "---",
+        "",
+        "# Deferred Spec",
+      ].join("\n"),
+    );
 
     // Create an archived spec
-    writeFileSyncRecursive(join(specsDir, "_archived", "old-spec", "requirements.md"), [
-      "---",
-      "name: old-spec",
-      "status: archived",
-      "replaced_by:",
-      "  - test-spec",
-      "---",
-      "",
-      "# Old Spec",
-    ].join("\n"));
+    writeFileSyncRecursive(
+      join(specsDir, "_archived", "old-spec", "requirements.md"),
+      [
+        "---",
+        "name: old-spec",
+        "status: archived",
+        "replaced_by:",
+        "  - test-spec",
+        "---",
+        "",
+        "# Old Spec",
+      ].join("\n"),
+    );
 
     // Create a spec without frontmatter
-    writeFileSyncRecursive(join(specsDir, "no-fm-spec", "requirements.md"), [
-      "# No Frontmatter Spec",
-      "",
-      "Some content.",
-    ].join("\n"));
+    writeFileSyncRecursive(
+      join(specsDir, "no-fm-spec", "requirements.md"),
+      ["# No Frontmatter Spec", "", "Some content."].join("\n"),
+    );
 
     // Run the script from tmpDir
     const tmpScript = join(tmpDir, "scripts", "rebuild-spec-index.mjs");
@@ -139,15 +147,18 @@ describe("rebuild-spec-index.mjs", () => {
     const specsDir = join(tmpDir, ".kiro", "specs");
 
     // Create a minimal spec
-    writeFileSyncRecursive(join(specsDir, "simple", "requirements.md"), [
-      "---",
-      "name: simple",
-      "status: draft",
-      'created: "2026-01-01"',
-      'updated: "2026-01-01"',
-      "---",
-      "# Simple",
-    ].join("\n"));
+    writeFileSyncRecursive(
+      join(specsDir, "simple", "requirements.md"),
+      [
+        "---",
+        "name: simple",
+        "status: draft",
+        'created: "2026-01-01"',
+        'updated: "2026-01-01"',
+        "---",
+        "# Simple",
+      ].join("\n"),
+    );
 
     // Run full rebuild first
     const tmpScript = join(tmpDir, "scripts", "rebuild-spec-index.mjs");
@@ -168,15 +179,18 @@ describe("rebuild-spec-index.mjs", () => {
     const specsDir = join(tmpDir, ".kiro", "specs");
 
     // Create a spec
-    writeFileSyncRecursive(join(specsDir, "a", "requirements.md"), [
-      "---",
-      "name: a",
-      "status: draft",
-      'created: "2026-01-01"',
-      'updated: "2026-01-01"',
-      "---",
-      "# A",
-    ].join("\n"));
+    writeFileSyncRecursive(
+      join(specsDir, "a", "requirements.md"),
+      [
+        "---",
+        "name: a",
+        "status: draft",
+        'created: "2026-01-01"',
+        'updated: "2026-01-01"',
+        "---",
+        "# A",
+      ].join("\n"),
+    );
 
     // Write a stale INDEX.md
     writeFileSync(join(specsDir, "INDEX.md"), "# Stale\n");
@@ -199,15 +213,18 @@ describe("rebuild-spec-index.mjs", () => {
     const specsDir = join(tmpDir, ".kiro", "specs");
 
     // Create a spec with invalid status
-    writeFileSyncRecursive(join(specsDir, "bad-status", "requirements.md"), [
-      "---",
-      "name: bad-status",
-      "status: invalid_status",
-      'created: "2026-01-01"',
-      'updated: "2026-01-01"',
-      "---",
-      "# Bad",
-    ].join("\n"));
+    writeFileSyncRecursive(
+      join(specsDir, "bad-status", "requirements.md"),
+      [
+        "---",
+        "name: bad-status",
+        "status: invalid_status",
+        'created: "2026-01-01"',
+        'updated: "2026-01-01"',
+        "---",
+        "# Bad",
+      ].join("\n"),
+    );
 
     // Run -- should print error to stderr but still generate INDEX
     const tmpScript = join(tmpDir, "scripts", "rebuild-spec-index.mjs");
@@ -223,18 +240,24 @@ describe("rebuild-spec-index.mjs", () => {
     const specsDir = join(tmpDir, ".kiro", "specs");
 
     // Create a _template directory that should be skipped
-    writeFileSyncRecursive(join(specsDir, "_template", "requirements.md"), "---\nname: template\n---");
+    writeFileSyncRecursive(
+      join(specsDir, "_template", "requirements.md"),
+      "---\nname: template\n---",
+    );
 
     // Create a regular spec
-    writeFileSyncRecursive(join(specsDir, "real", "requirements.md"), [
-      "---",
-      "name: real",
-      "status: draft",
-      'created: "2026-01-01"',
-      'updated: "2026-01-01"',
-      "---",
-      "# Real",
-    ].join("\n"));
+    writeFileSyncRecursive(
+      join(specsDir, "real", "requirements.md"),
+      [
+        "---",
+        "name: real",
+        "status: draft",
+        'created: "2026-01-01"',
+        'updated: "2026-01-01"',
+        "---",
+        "# Real",
+      ].join("\n"),
+    );
 
     const tmpScript = join(tmpDir, "scripts", "rebuild-spec-index.mjs");
     const output = execSync(`node ${tmpScript}`, { encoding: "utf-8", cwd: tmpDir });

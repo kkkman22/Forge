@@ -37,7 +37,7 @@ export function parseRemoteUrl(url: string): { host: string; port: number | null
       const atIdx = url.indexOf("@");
       const colonIdx = url.indexOf(":");
       if (atIdx !== -1 && colonIdx !== -1 && colonIdx > atIdx) {
-        let hostPort = url.substring(atIdx + 1, colonIdx);
+        const hostPort = url.substring(atIdx + 1, colonIdx);
 
         // Handle IPv6: [::1] or [::1]:port
         if (hostPort.startsWith("[")) {
@@ -50,7 +50,7 @@ export function parseRemoteUrl(url: string): { host: string; port: number | null
           if (closeBracket + 1 < hostPort.length && hostPort[closeBracket + 1] === ":") {
             const portStr = hostPort.substring(closeBracket + 2);
             port = parseInt(portStr, 10);
-            if (isNaN(port) || port < 1 || port > 65535) return null;
+            if (Number.isNaN(port) || port < 1 || port > 65535) return null;
           }
 
           return { host, port };
@@ -65,7 +65,7 @@ export function parseRemoteUrl(url: string): { host: string; port: number | null
           host = hostPort.substring(0, portColonIdx).toLowerCase();
           const portStr = hostPort.substring(portColonIdx + 1);
           port = parseInt(portStr, 10);
-          if (isNaN(port) || port < 1 || port > 65535) return null;
+          if (Number.isNaN(port) || port < 1 || port > 65535) return null;
         } else {
           host = hostPort.toLowerCase();
         }
@@ -87,7 +87,7 @@ export function parseRemoteUrl(url: string): { host: string; port: number | null
     if (host.startsWith("[") && host.endsWith("]")) {
       host = host.substring(1, host.length - 1);
     }
-    let port: number | null = parsed.port ? parseInt(parsed.port, 10) : null;
+    const port: number | null = parsed.port ? parseInt(parsed.port, 10) : null;
 
     return { host, port };
   } catch {
@@ -115,21 +115,21 @@ export function isSameHost(a: string | null, b: string | null): boolean {
  */
 export function selectRemoteUrl(
   remotes: Array<{ name: string; url: string }>,
-  mcpBaseUrl: string | null
+  mcpBaseUrl: string | null,
 ): string | null {
   if (!remotes.length) return null;
 
   // Check for origin first
-  const origin = remotes.find(r => r.name === "origin");
+  const origin = remotes.find((r) => r.name === "origin");
   if (origin) return origin.url;
 
   // Check for upstream second
-  const upstream = remotes.find(r => r.name === "upstream");
+  const upstream = remotes.find((r) => r.name === "upstream");
   if (upstream) return upstream.url;
 
   // Find first remote with same host as mcpBaseUrl
   if (mcpBaseUrl) {
-    const sameHost = remotes.find(r => isSameHost(r.url, mcpBaseUrl));
+    const sameHost = remotes.find((r) => isSameHost(r.url, mcpBaseUrl));
     if (sameHost) return sameHost.url;
   }
 

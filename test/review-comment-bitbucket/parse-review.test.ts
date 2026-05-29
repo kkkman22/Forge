@@ -2,12 +2,12 @@ import fs from "node:fs";
 import os from "node:os";
 import path from "node:path";
 import { afterEach, describe, expect, it } from "vitest";
-import type { Finding } from "../../src/review-comment-bitbucket/types.js";
 import {
+  parseReviewMarkdown,
   ReviewMarkdownNotFoundError,
   ReviewMarkdownParseError,
-  parseReviewMarkdown,
 } from "../../src/review-comment-bitbucket/parse-review.js";
+import type { Finding } from "../../src/review-comment-bitbucket/types.js";
 
 let tmpDir: string | undefined;
 
@@ -77,9 +77,7 @@ methodology: subagent-parallel
 describe("Unit: file not found throws ReviewMarkdownNotFoundError", () => {
   it("non-existent path throws with path in message", async () => {
     const badPath = "/nonexistent/review-123.md";
-    await expect(parseReviewMarkdown(badPath)).rejects.toThrow(
-      ReviewMarkdownNotFoundError,
-    );
+    await expect(parseReviewMarkdown(badPath)).rejects.toThrow(ReviewMarkdownNotFoundError);
     try {
       await parseReviewMarkdown(badPath);
     } catch (e: any) {
@@ -104,9 +102,7 @@ result: "fail"
 \`\`\`
 `,
     );
-    await expect(parseReviewMarkdown(filePath)).rejects.toThrow(
-      ReviewMarkdownParseError,
-    );
+    await expect(parseReviewMarkdown(filePath)).rejects.toThrow(ReviewMarkdownParseError);
   });
 
   it("missing findings block throws parse error", async () => {
@@ -123,9 +119,7 @@ result: "fail"
 No findings here.
 `,
     );
-    await expect(parseReviewMarkdown(filePath)).rejects.toThrow(
-      ReviewMarkdownParseError,
-    );
+    await expect(parseReviewMarkdown(filePath)).rejects.toThrow(ReviewMarkdownParseError);
   });
 });
 

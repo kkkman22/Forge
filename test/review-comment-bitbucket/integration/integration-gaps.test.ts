@@ -1,10 +1,18 @@
-import { existsSync, mkdirSync, mkdtempSync, readFileSync, readdirSync, rmSync, writeFileSync } from "node:fs";
+import {
+  existsSync,
+  mkdirSync,
+  mkdtempSync,
+  readdirSync,
+  readFileSync,
+  rmSync,
+  writeFileSync,
+} from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
-import type { Finding, ResolvedConfig } from "../../../src/review-comment-bitbucket/types.js";
-import { postReviewToBitbucket } from "../../../src/review-comment-bitbucket/post.js";
 import { computeFindingHash } from "../../../src/review-comment-bitbucket/finding-hash.js";
+import { postReviewToBitbucket } from "../../../src/review-comment-bitbucket/post.js";
+import type { Finding, ResolvedConfig } from "../../../src/review-comment-bitbucket/types.js";
 
 const CONFIG: ResolvedConfig = {
   enabled: true,
@@ -66,10 +74,18 @@ describe("Integration: post.ts wires side-effect modules", () => {
     writeFileSync(reviewMd, "# Review\n", "utf-8");
 
     const result = await postReviewToBitbucket(
-      reviewMd, "pr-1",
+      reviewMd,
+      "pr-1",
       { ...CONFIG, platform_override: "none" },
-      { remoteUrl: "https://bitbucket.org/org/repo", mcpBaseUrl: "https://bitbucket.org", mcpConfigured: true, runId: "run-skip-001" },
-      bb, [], { baseDir: tmpDir },
+      {
+        remoteUrl: "https://bitbucket.org/org/repo",
+        mcpBaseUrl: "https://bitbucket.org",
+        mcpConfigured: true,
+        runId: "run-skip-001",
+      },
+      bb,
+      [],
+      { baseDir: tmpDir },
     );
 
     expect(result.posted).toBe(false);
@@ -89,10 +105,18 @@ describe("Integration: post.ts wires side-effect modules", () => {
     writeFileSync(reviewMd, "# Review\n", "utf-8");
 
     await postReviewToBitbucket(
-      reviewMd, "pr-1",
+      reviewMd,
+      "pr-1",
       { ...CONFIG, platform_override: "none" },
-      { remoteUrl: "https://bitbucket.org/org/repo", mcpBaseUrl: "https://bitbucket.org", mcpConfigured: true, runId: "run-skip-metrics" },
-      bb, [], { baseDir: tmpDir },
+      {
+        remoteUrl: "https://bitbucket.org/org/repo",
+        mcpBaseUrl: "https://bitbucket.org",
+        mcpConfigured: true,
+        runId: "run-skip-metrics",
+      },
+      bb,
+      [],
+      { baseDir: tmpDir },
     );
 
     const metricsPath = join(tmpDir, ".forge", "knowledge", "metrics.md");
@@ -107,9 +131,18 @@ describe("Integration: post.ts wires side-effect modules", () => {
     const bb = mockBitbucketClient();
 
     await postReviewToBitbucket(
-      join(tmpDir, "review.md"), "pr-1", CONFIG,
-      { remoteUrl: "https://bitbucket.org/org/repo", mcpBaseUrl: "https://bitbucket.org", mcpConfigured: true, runId: "run-metrics-001" },
-      bb, [P0], { baseDir: tmpDir },
+      join(tmpDir, "review.md"),
+      "pr-1",
+      CONFIG,
+      {
+        remoteUrl: "https://bitbucket.org/org/repo",
+        mcpBaseUrl: "https://bitbucket.org",
+        mcpConfigured: true,
+        runId: "run-metrics-001",
+      },
+      bb,
+      [P0],
+      { baseDir: tmpDir },
     );
 
     const metricsPath = join(tmpDir, ".forge", "knowledge", "metrics.md");
@@ -136,9 +169,18 @@ describe("Integration: post.ts wires side-effect modules", () => {
     });
 
     await postReviewToBitbucket(
-      join(tmpDir, "review.md"), "pr-1", CONFIG,
-      { remoteUrl: "https://bitbucket.org/org/repo", mcpBaseUrl: "https://bitbucket.org", mcpConfigured: true, runId: "run-pf-002" },
-      bb, [P0], { baseDir: tmpDir },
+      join(tmpDir, "review.md"),
+      "pr-1",
+      CONFIG,
+      {
+        remoteUrl: "https://bitbucket.org/org/repo",
+        mcpBaseUrl: "https://bitbucket.org",
+        mcpConfigured: true,
+        runId: "run-pf-002",
+      },
+      bb,
+      [P0],
+      { baseDir: tmpDir },
     );
 
     const findingsFiles = readdirSync(join(tmpDir, ".forge", "findings"));
@@ -155,10 +197,18 @@ describe("Integration: post.ts wires side-effect modules", () => {
     const bb = mockBitbucketClient();
 
     const result = await postReviewToBitbucket(
-      join(tmpDir, "nonexistent.md"), "pr-1", CONFIG,
-      { remoteUrl: "https://bitbucket.org/org/repo", mcpBaseUrl: "https://bitbucket.org", mcpConfigured: true, runId: "run-notfound" },
+      join(tmpDir, "nonexistent.md"),
+      "pr-1",
+      CONFIG,
+      {
+        remoteUrl: "https://bitbucket.org/org/repo",
+        mcpBaseUrl: "https://bitbucket.org",
+        mcpConfigured: true,
+        runId: "run-notfound",
+      },
       bb, // no _testFindings → triggers parseReviewMarkdown
-      undefined, { baseDir: tmpDir },
+      undefined,
+      { baseDir: tmpDir },
     );
 
     expect(result.posted).toBe(false);
@@ -173,9 +223,18 @@ describe("Integration: post.ts wires side-effect modules", () => {
     writeFileSync(badMd, "# Review\nNo findings block here\n", "utf-8");
 
     const result = await postReviewToBitbucket(
-      badMd, "pr-1", CONFIG,
-      { remoteUrl: "https://bitbucket.org/org/repo", mcpBaseUrl: "https://bitbucket.org", mcpConfigured: true, runId: "run-parse-err" },
-      bb, undefined, { baseDir: tmpDir },
+      badMd,
+      "pr-1",
+      CONFIG,
+      {
+        remoteUrl: "https://bitbucket.org/org/repo",
+        mcpBaseUrl: "https://bitbucket.org",
+        mcpConfigured: true,
+        runId: "run-parse-err",
+      },
+      bb,
+      undefined,
+      { baseDir: tmpDir },
     );
 
     expect(result.posted).toBe(false);
@@ -188,9 +247,18 @@ describe("Integration: post.ts wires side-effect modules", () => {
     const bb = mockBitbucketClient();
 
     await postReviewToBitbucket(
-      join(tmpDir, "nonexistent.md"), "pr-1", CONFIG,
-      { remoteUrl: "https://bitbucket.org/org/repo", mcpBaseUrl: "https://bitbucket.org", mcpConfigured: true, runId: "run-parse-metrics" },
-      bb, undefined, { baseDir: tmpDir },
+      join(tmpDir, "nonexistent.md"),
+      "pr-1",
+      CONFIG,
+      {
+        remoteUrl: "https://bitbucket.org/org/repo",
+        mcpBaseUrl: "https://bitbucket.org",
+        mcpConfigured: true,
+        runId: "run-parse-metrics",
+      },
+      bb,
+      undefined,
+      { baseDir: tmpDir },
     );
 
     const metricsPath = join(tmpDir, ".forge", "knowledge", "metrics.md");
@@ -203,9 +271,18 @@ describe("Integration: post.ts wires side-effect modules", () => {
     const bb = mockBitbucketClient();
 
     const result = await postReviewToBitbucket(
-      join(tmpDir, "review.md"), "pr-1", CONFIG,
-      { remoteUrl: "https://bitbucket.org/org/repo", mcpBaseUrl: "https://bitbucket.org", mcpConfigured: true, runId: "run-cli-001" },
-      bb, [P0], { baseDir: tmpDir, argv: ["--no-post-comments"] },
+      join(tmpDir, "review.md"),
+      "pr-1",
+      CONFIG,
+      {
+        remoteUrl: "https://bitbucket.org/org/repo",
+        mcpBaseUrl: "https://bitbucket.org",
+        mcpConfigured: true,
+        runId: "run-cli-001",
+      },
+      bb,
+      [P0],
+      { baseDir: tmpDir, argv: ["--no-post-comments"] },
     );
 
     expect(result.posted).toBe(false);
@@ -220,14 +297,27 @@ describe("Integration: post.ts wires side-effect modules", () => {
     const bb = mockBitbucketClient();
     const hash = computeFindingHash(P0);
     bb.list_pr_tasks.mockResolvedValue([
-      { id: "task-existing", content: `[Forge P0] <!-- forge-review:hash=${hash} -->`, state: "OPEN" },
+      {
+        id: "task-existing",
+        content: `[Forge P0] <!-- forge-review:hash=${hash} -->`,
+        state: "OPEN",
+      },
     ]);
     bb.get_pull_request.mockResolvedValue({ active_comments: [] });
 
     await postReviewToBitbucket(
-      join(tmpDir, "review.md"), "pr-1", CONFIG,
-      { remoteUrl: "https://bitbucket.org/org/repo", mcpBaseUrl: "https://bitbucket.org", mcpConfigured: true, runId: "run-skip-dup" },
-      bb, [P0], { baseDir: tmpDir },
+      join(tmpDir, "review.md"),
+      "pr-1",
+      CONFIG,
+      {
+        remoteUrl: "https://bitbucket.org/org/repo",
+        mcpBaseUrl: "https://bitbucket.org",
+        mcpConfigured: true,
+        runId: "run-skip-dup",
+      },
+      bb,
+      [P0],
+      { baseDir: tmpDir },
     );
 
     // Should not create new task (already exists and OPEN)

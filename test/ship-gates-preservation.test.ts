@@ -95,7 +95,12 @@ describe("Preservation: checkShipGateWithChecklist", () => {
         fixCommit: "abc1234",
       },
     ];
-    const result = checkShipGateWithChecklist(passedReview, passedTest, completeProgress, checklist);
+    const result = checkShipGateWithChecklist(
+      passedReview,
+      passedTest,
+      completeProgress,
+      checklist,
+    );
     expect(result.allowed).toBe(true);
   });
 
@@ -110,7 +115,12 @@ describe("Preservation: checkShipGateWithChecklist", () => {
         status: "unfixed",
       },
     ];
-    const result = checkShipGateWithChecklist(passedReview, passedTest, completeProgress, checklist);
+    const result = checkShipGateWithChecklist(
+      passedReview,
+      passedTest,
+      completeProgress,
+      checklist,
+    );
     expect(result.allowed).toBe(false);
     expect(result.reasons.some((r) => r.includes("Checklist"))).toBe(true);
   });
@@ -213,22 +223,18 @@ describe("Preservation: checkShipGateWithAcceptance", () => {
   const completeProgress: ProgressResult = { totalTasks: 1, completedTasks: 1 };
 
   it("acceptance not blocking → allowed", () => {
-    const result = checkShipGateWithAcceptance(
-      passedReview,
-      passedTest,
-      completeProgress,
-      { block: false, warning: undefined },
-    );
+    const result = checkShipGateWithAcceptance(passedReview, passedTest, completeProgress, {
+      block: false,
+      warning: undefined,
+    });
     expect(result.allowed).toBe(true);
   });
 
   it("acceptance blocking → not allowed", () => {
-    const result = checkShipGateWithAcceptance(
-      passedReview,
-      passedTest,
-      completeProgress,
-      { block: true, reason: "acceptance test failed" },
-    );
+    const result = checkShipGateWithAcceptance(passedReview, passedTest, completeProgress, {
+      block: true,
+      reason: "acceptance test failed",
+    });
     expect(result.allowed).toBe(false);
     expect(result.reasons.some((r) => r.includes("Forced Acceptance"))).toBe(true);
   });

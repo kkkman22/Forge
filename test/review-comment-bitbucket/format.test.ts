@@ -1,7 +1,11 @@
-import { describe, it, expect } from "vitest";
 import * as fc from "fast-check";
+import { describe, expect, it } from "vitest";
+import {
+  buildMarker,
+  computeFindingHash,
+  extractMarker,
+} from "../../src/review-comment-bitbucket/finding-hash.js";
 import { formatFinding } from "../../src/review-comment-bitbucket/format.js";
-import { computeFindingHash, buildMarker, extractMarker } from "../../src/review-comment-bitbucket/finding-hash.js";
 
 // Test data generators
 const priorityArb = fc.constantFrom("P0", "P1", "P2", "P3");
@@ -21,10 +25,14 @@ const findingArb = fc.record({
 });
 
 const runIdArb = fc.string({ minLength: 1, maxLength: 50 });
-const prefixArb = fc.string({ minLength: 1, maxLength: 20 }).filter(s => !s.includes(":") && !s.includes("="));
+const prefixArb = fc
+  .string({ minLength: 1, maxLength: 20 })
+  .filter((s) => !s.includes(":") && !s.includes("="));
 
 describe("formatFinding property tests", () => {
-  it("Property 24: comment_text ends with marker, task_text ends with marker if non-empty", { timeout: 30000 }, () => {
+  it("Property 24: comment_text ends with marker, task_text ends with marker if non-empty", {
+    timeout: 30000,
+  }, () => {
     fc.assert(
       fc.property(findingArb, runIdArb, prefixArb, (finding, runId, prefix) => {
         const result = formatFinding(finding, runId, prefix);
@@ -35,7 +43,7 @@ describe("formatFinding property tests", () => {
         if (result.task_text !== "") {
           expect(result.task_text.endsWith(result.marker)).toBe(true);
         }
-      })
+      }),
     );
   });
 
@@ -46,11 +54,13 @@ describe("formatFinding property tests", () => {
         const result = formatFinding(p2Finding, runId, prefix);
 
         expect(result.task_text).toBe("");
-      })
+      }),
     );
   });
 
-  it("Property 26: non-empty suggestion ⇒ comment_text contains suggestion fence with exact content", { timeout: 30000 }, () => {
+  it("Property 26: non-empty suggestion ⇒ comment_text contains suggestion fence with exact content", {
+    timeout: 30000,
+  }, () => {
     fc.assert(
       fc.property(findingArb, runIdArb, prefixArb, (finding, runId, prefix) => {
         if (!finding.suggestion) return true; // Skip if no suggestion
@@ -78,11 +88,13 @@ describe("formatFinding property tests", () => {
 
         expect(foundSuggestion).toBe(true);
         return true;
-      })
+      }),
     );
   });
 
-  it("Property 27: P0/P1 task_text first line has no newline and total length ≤ 200", { timeout: 30000 }, () => {
+  it("Property 27: P0/P1 task_text first line has no newline and total length ≤ 200", {
+    timeout: 30000,
+  }, () => {
     fc.assert(
       fc.property(findingArb, runIdArb, prefixArb, (finding, runId, prefix) => {
         if (finding.priority !== "P0" && finding.priority !== "P1") return true;
@@ -97,7 +109,7 @@ describe("formatFinding property tests", () => {
         expect(result.task_text.length).toBeLessThanOrEqual(200);
 
         return true;
-      })
+      }),
     );
   });
 });
@@ -125,12 +137,12 @@ describe("formatFinding unit tests", () => {
     const lines = result.comment_text.split("\n");
 
     // Find positions
-    const tagHeaderIdx = lines.findIndex(l => l.startsWith("**[Forge"));
+    const tagHeaderIdx = lines.findIndex((l) => l.startsWith("**[Forge"));
     const firstBlankAfterHeader = lines.indexOf("", tagHeaderIdx + 1);
     const messageIdx = lines.indexOf(finding.message, firstBlankAfterHeader + 1);
-    const suggestionBlockIdx = lines.findIndex(l => l.trim() === "```suggestion");
+    const suggestionBlockIdx = lines.findIndex((l) => l.trim() === "```suggestion");
     const secondBlankIdx = lines.indexOf("", suggestionBlockIdx + 2);
-    const reviewRunIdx = lines.findIndex(l => l.includes("_review run:"));
+    const reviewRunIdx = lines.findIndex((l) => l.includes("_review run:"));
     const markerIdx = lines.indexOf(marker);
 
     expect(tagHeaderIdx).toBeGreaterThanOrEqual(0);
@@ -158,7 +170,8 @@ describe("formatFinding unit tests", () => {
       file_path: "src/very/long/path/to/a/file/with/many/directories/that/goes/on/and/on.ts",
       line_number: 9999,
       line_type: "ADDED" as const,
-      message: "This is an extremely long message that should trigger truncation when combined with the file path and line number and the prefix and marker",
+      message:
+        "This is an extremely long message that should trigger truncation when combined with the file path and line number and the prefix and marker",
       source_layer: "quality-check" as const,
     };
 
@@ -203,7 +216,7 @@ describe("formatFinding unit tests", () => {
     expect(result.comment_text).toContain("````suggestion");
     // Check that no line starts with ```suggestion
     const lines = result.comment_text.split("\n");
-    const hasTripleBacktickSuggestion = lines.some(l => l.trim() === "```suggestion");
+    const hasTripleBacktickSuggestion = lines.some((l) => l.trim() === "```suggestion");
     expect(hasTripleBacktickSuggestion).toBe(false);
 
     // extractMarker should still work
@@ -229,7 +242,9 @@ describe("formatFinding unit tests", () => {
     const hash = computeFindingHash(finding);
     const marker = buildMarker(prefix, hash);
 
-    expect(result.done_comment_text).toBe(`Forge auto-resolved (no longer present in review ${runId}). ${marker}`);
+    expect(result.done_comment_text).toBe(
+      `Forge auto-resolved (no longer present in review ${runId}). ${marker}`,
+    );
   });
 
   it("Attack E regression: injected marker in message must not override real hash in task_text", () => {
@@ -275,6 +290,8 @@ describe("formatFinding unit tests", () => {
     const hash = computeFindingHash(finding);
     const marker = buildMarker(prefix, hash);
 
-    expect(result.reopen_comment_text).toBe(`Forge re-opened (still present in review ${runId}). ${marker}`);
+    expect(result.reopen_comment_text).toBe(
+      `Forge re-opened (still present in review ${runId}). ${marker}`,
+    );
   });
 });

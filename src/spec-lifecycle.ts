@@ -125,7 +125,8 @@ export function parseSpecFrontmatter(content: string): SpecFrontmatter | null {
     status,
     created,
     updated,
-    priority: priorityRaw && VALID_PRIORITIES.has(priorityRaw) ? (priorityRaw as SpecPriority) : undefined,
+    priority:
+      priorityRaw && VALID_PRIORITIES.has(priorityRaw) ? (priorityRaw as SpecPriority) : undefined,
     tier: tierRaw && VALID_TIERS.has(tierRaw) ? (tierRaw as SpecTier) : undefined,
     depends_on,
     replaces,

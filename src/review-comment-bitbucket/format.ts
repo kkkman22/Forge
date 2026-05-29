@@ -1,5 +1,5 @@
+import { buildMarker, computeFindingHash } from "./finding-hash.js";
 import type { Finding, FormatOutput } from "./types.js";
-import { computeFindingHash, buildMarker } from "./finding-hash.js";
 
 // Unicode \p{C} covers C0 (x00-x1F), DEL (x7F), C1 (x80-x9F), surrogates, U+2028/U+2029, etc.
 // Additionally strip \t \n \r for task_text where line breaks are disallowed.
@@ -32,11 +32,11 @@ export function formatFinding(finding: Finding, runId: string, prefix: string): 
 
   // Tag header: **[Forge <priority> · <source_layer>]** <finding_type>
   const tagHeader = `**[Forge ${finding.priority} · ${finding.source_layer}]** ${finding.finding_type}`;
-  comment_text += tagHeader + "\n";
+  comment_text += `${tagHeader}\n`;
   comment_text += "\n";
 
   // Message
-  comment_text += finding.message + "\n";
+  comment_text += `${finding.message}\n`;
 
   // Suggestion block (if present)
   if (finding.suggestion) {
@@ -50,7 +50,7 @@ export function formatFinding(finding: Finding, runId: string, prefix: string): 
 
     comment_text += "\n";
     comment_text += `${backticks}suggestion\n`;
-    comment_text += finding.suggestion + "\n";
+    comment_text += `${finding.suggestion}\n`;
     comment_text += `${backticks}\n`;
   }
 
@@ -66,7 +66,7 @@ export function formatFinding(finding: Finding, runId: string, prefix: string): 
     const prefixPart = `[Forge ${finding.priority}] `;
     const fileAndLine = `${finding.file_path}:${finding.line_number}`;
     const separatorPart = " — ";
-    const spaceForMarker = " " + marker;
+    const spaceForMarker = ` ${marker}`;
     const ellipsis = "...";
 
     const prefixLength = prefixPart.length;
@@ -76,7 +76,8 @@ export function formatFinding(finding: Finding, runId: string, prefix: string): 
     const ellipsisLength = ellipsis.length;
     const maxLength = 200;
 
-    const availableForMessage = maxLength - prefixLength - fileAndLineLength - separatorLength - markerLength;
+    const availableForMessage =
+      maxLength - prefixLength - fileAndLineLength - separatorLength - markerLength;
 
     let truncatedMessage = finding.message;
     if (finding.message.length > availableForMessage) {

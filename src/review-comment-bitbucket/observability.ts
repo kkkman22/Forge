@@ -12,7 +12,12 @@ export async function recordPartialFailures(
 
   try {
     const dateStr = new Date(failures[0].timestamp).toISOString().split("T")[0];
-    const errorFilePath = path.join(baseDir, ".forge", "findings", `comment-channel-error-${dateStr}.md`);
+    const errorFilePath = path.join(
+      baseDir,
+      ".forge",
+      "findings",
+      `comment-channel-error-${dateStr}.md`,
+    );
     const findingsDir = path.dirname(errorFilePath);
 
     await fs.promises.mkdir(findingsDir, { recursive: true });

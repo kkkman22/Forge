@@ -1,5 +1,7 @@
 import * as fc from "fast-check";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+import { computeFindingHash } from "../../src/review-comment-bitbucket/finding-hash.js";
+import { postReviewToBitbucket } from "../../src/review-comment-bitbucket/post.js";
 import type {
   ActionPlan,
   CommentRecord,
@@ -7,8 +9,6 @@ import type {
   ResolvedConfig,
   TaskRecord,
 } from "../../src/review-comment-bitbucket/types.js";
-import { postReviewToBitbucket } from "../../src/review-comment-bitbucket/post.js";
-import { computeFindingHash } from "../../src/review-comment-bitbucket/finding-hash.js";
 
 const DEFAULT_CONFIG: ResolvedConfig = {
   enabled: true,
@@ -88,23 +88,20 @@ describe("Property: gate skip => zero MCP calls", () => {
         async (reason) => {
           const bb = mockBitbucketClient();
           const ctx = {
-            remoteUrl: reason === "platform-not-bitbucket" ? "https://github.com/foo" : "https://bitbucket.org/foo",
+            remoteUrl:
+              reason === "platform-not-bitbucket"
+                ? "https://github.com/foo"
+                : "https://bitbucket.org/foo",
             mcpBaseUrl: "https://bitbucket.org",
             mcpConfigured: reason !== "mcp-not-configured",
             runId: "run-1",
           };
           const config = {
             ...DEFAULT_CONFIG,
-            platform_override: reason === "platform-disabled-by-config" ? "none" as const : "auto" as const,
+            platform_override:
+              reason === "platform-disabled-by-config" ? ("none" as const) : ("auto" as const),
           };
-          const result = await postReviewToBitbucket(
-            "/dev/null",
-            "pr-1",
-            config,
-            ctx,
-            bb,
-            [],
-          );
+          const result = await postReviewToBitbucket("/dev/null", "pr-1", config, ctx, bb, []);
           expect(result.posted).toBe(false);
           expect(bb.create_pr_task).not.toHaveBeenCalled();
           expect(bb.add_comment).not.toHaveBeenCalled();
@@ -139,7 +136,12 @@ describe("Property: has_p0_p1=false => set_review_status not called", () => {
             "test-fixture",
             "pr-1",
             DEFAULT_CONFIG,
-            { remoteUrl: "https://bitbucket.org/org/repo", mcpBaseUrl: "https://bitbucket.org", mcpConfigured: true, runId: "run-1" },
+            {
+              remoteUrl: "https://bitbucket.org/org/repo",
+              mcpBaseUrl: "https://bitbucket.org",
+              mcpConfigured: true,
+              runId: "run-1",
+            },
             bb,
             findings,
           );
@@ -160,7 +162,12 @@ describe("Unit: p0_p1_strategy=both creates task + comment", () => {
       "test-fixture",
       "pr-1",
       DEFAULT_CONFIG,
-      { remoteUrl: "https://bitbucket.org/org/repo", mcpBaseUrl: "https://bitbucket.org", mcpConfigured: true, runId: "run-1" },
+      {
+        remoteUrl: "https://bitbucket.org/org/repo",
+        mcpBaseUrl: "https://bitbucket.org",
+        mcpConfigured: true,
+        runId: "run-1",
+      },
       bb,
       [P0_FINDING],
     );
@@ -178,7 +185,12 @@ describe("Unit: p0_p1_strategy=pr-task creates only task", () => {
       "test-fixture",
       "pr-1",
       config,
-      { remoteUrl: "https://bitbucket.org/org/repo", mcpBaseUrl: "https://bitbucket.org", mcpConfigured: true, runId: "run-1" },
+      {
+        remoteUrl: "https://bitbucket.org/org/repo",
+        mcpBaseUrl: "https://bitbucket.org",
+        mcpConfigured: true,
+        runId: "run-1",
+      },
       bb,
       [P0_FINDING],
     );
@@ -196,7 +208,12 @@ describe("Unit: p0_p1_strategy=inline-only creates only comment", () => {
       "test-fixture",
       "pr-1",
       config,
-      { remoteUrl: "https://bitbucket.org/org/repo", mcpBaseUrl: "https://bitbucket.org", mcpConfigured: true, runId: "run-1" },
+      {
+        remoteUrl: "https://bitbucket.org/org/repo",
+        mcpBaseUrl: "https://bitbucket.org",
+        mcpConfigured: true,
+        runId: "run-1",
+      },
       bb,
       [P0_FINDING],
     );
@@ -213,7 +230,12 @@ describe("Unit: p2_strategy=inline creates only comment for P2", () => {
       "test-fixture",
       "pr-1",
       DEFAULT_CONFIG,
-      { remoteUrl: "https://bitbucket.org/org/repo", mcpBaseUrl: "https://bitbucket.org", mcpConfigured: true, runId: "run-1" },
+      {
+        remoteUrl: "https://bitbucket.org/org/repo",
+        mcpBaseUrl: "https://bitbucket.org",
+        mcpConfigured: true,
+        runId: "run-1",
+      },
       bb,
       [P2_FINDING],
     );
@@ -231,7 +253,12 @@ describe("Unit: p2_strategy=none creates nothing for P2", () => {
       "test-fixture",
       "pr-1",
       config,
-      { remoteUrl: "https://bitbucket.org/org/repo", mcpBaseUrl: "https://bitbucket.org", mcpConfigured: true, runId: "run-1" },
+      {
+        remoteUrl: "https://bitbucket.org/org/repo",
+        mcpBaseUrl: "https://bitbucket.org",
+        mcpConfigured: true,
+        runId: "run-1",
+      },
       bb,
       [P2_FINDING],
     );
@@ -248,7 +275,12 @@ describe("Unit: P3 finding creates nothing", () => {
       "test-fixture",
       "pr-1",
       DEFAULT_CONFIG,
-      { remoteUrl: "https://bitbucket.org/org/repo", mcpBaseUrl: "https://bitbucket.org", mcpConfigured: true, runId: "run-1" },
+      {
+        remoteUrl: "https://bitbucket.org/org/repo",
+        mcpBaseUrl: "https://bitbucket.org",
+        mcpConfigured: true,
+        runId: "run-1",
+      },
       bb,
       [P3_FINDING],
     );
@@ -266,7 +298,12 @@ describe("Unit: set_review_status comment format", () => {
       "test-fixture",
       "pr-1",
       DEFAULT_CONFIG,
-      { remoteUrl: "https://bitbucket.org/org/repo", mcpBaseUrl: "https://bitbucket.org", mcpConfigured: true, runId: "run-42" },
+      {
+        remoteUrl: "https://bitbucket.org/org/repo",
+        mcpBaseUrl: "https://bitbucket.org",
+        mcpConfigured: true,
+        runId: "run-42",
+      },
       bb,
       [P0_FINDING, P1_FINDING, P2_FINDING, P3_FINDING],
     );
@@ -282,15 +319,28 @@ describe("Unit: execution order P0/P1 → P2 → set_review_status", () => {
   it("tools called in correct order", async () => {
     const bb = mockBitbucketClient();
     const order: string[] = [];
-    bb.create_pr_task.mockImplementation(async () => { order.push("create_pr_task"); return { id: "t-1" }; });
-    bb.add_comment.mockImplementation(async () => { order.push("add_comment"); return { id: "c-1" }; });
-    bb.set_review_status.mockImplementation(async () => { order.push("set_review_status"); });
+    bb.create_pr_task.mockImplementation(async () => {
+      order.push("create_pr_task");
+      return { id: "t-1" };
+    });
+    bb.add_comment.mockImplementation(async () => {
+      order.push("add_comment");
+      return { id: "c-1" };
+    });
+    bb.set_review_status.mockImplementation(async () => {
+      order.push("set_review_status");
+    });
 
     await postReviewToBitbucket(
       "test-fixture",
       "pr-1",
       DEFAULT_CONFIG,
-      { remoteUrl: "https://bitbucket.org/org/repo", mcpBaseUrl: "https://bitbucket.org", mcpConfigured: true, runId: "run-1" },
+      {
+        remoteUrl: "https://bitbucket.org/org/repo",
+        mcpBaseUrl: "https://bitbucket.org",
+        mcpConfigured: true,
+        runId: "run-1",
+      },
       bb,
       [P0_FINDING, P2_FINDING],
     );
@@ -315,7 +365,12 @@ describe("Unit: reopen and done carry parent_comment_id", () => {
       "test-fixture",
       "pr-1",
       DEFAULT_CONFIG,
-      { remoteUrl: "https://bitbucket.org/org/repo", mcpBaseUrl: "https://bitbucket.org", mcpConfigured: true, runId: "run-1" },
+      {
+        remoteUrl: "https://bitbucket.org/org/repo",
+        mcpBaseUrl: "https://bitbucket.org",
+        mcpConfigured: true,
+        runId: "run-1",
+      },
       bb,
       [P0_FINDING],
     );

@@ -1,7 +1,7 @@
 import { describe, expect, it, vi } from "vitest";
-import type { Finding, ResolvedConfig } from "../../../src/review-comment-bitbucket/types.js";
-import { postReviewToBitbucket } from "../../../src/review-comment-bitbucket/post.js";
 import { computeFindingHash } from "../../../src/review-comment-bitbucket/finding-hash.js";
+import { postReviewToBitbucket } from "../../../src/review-comment-bitbucket/post.js";
+import type { Finding, ResolvedConfig } from "../../../src/review-comment-bitbucket/types.js";
 
 const CONFIG: ResolvedConfig = {
   enabled: true,
@@ -79,14 +79,12 @@ describe("Integration: happy path", () => {
       runId: "run-happy-001",
     };
 
-    const result = await postReviewToBitbucket(
-      "test-fixture",
-      "pr-1",
-      CONFIG,
-      ctx,
-      bb,
-      [P0, P1, P2, P3],
-    );
+    const result = await postReviewToBitbucket("test-fixture", "pr-1", CONFIG, ctx, bb, [
+      P0,
+      P1,
+      P2,
+      P3,
+    ]);
 
     // Result
     expect(result.posted).toBe(true);

@@ -1,11 +1,11 @@
 import * as fc from "fast-check";
 import { describe, expect, it } from "vitest";
-import type { Finding } from "../../src/review-comment-bitbucket/types.js";
 import {
   buildMarker,
   computeFindingHash,
   extractMarker,
 } from "../../src/review-comment-bitbucket/finding-hash.js";
+import type { Finding } from "../../src/review-comment-bitbucket/types.js";
 
 const findingArb: fc.Arbitrary<Finding> = fc.record({
   priority: fc.constantFrom("P0", "P1", "P2", "P3"),
@@ -43,22 +43,20 @@ describe("Property 2: message tail immunity", () => {
       source_layer: fc.constantFrom("spec-check", "quality-check", "security-check"),
     });
     fc.assert(
-      fc.property(
-        longMsgArb,
-        fc.string({ minLength: 1, maxLength: 50 }),
-        (f, suffix) => {
-          const h1 = computeFindingHash(f);
-          const modified = { ...f, message: f.message.slice(0, 100) + suffix };
-          const h2 = computeFindingHash(modified);
-          expect(h1).toBe(h2);
-        },
-      ),
+      fc.property(longMsgArb, fc.string({ minLength: 1, maxLength: 50 }), (f, suffix) => {
+        const h1 = computeFindingHash(f);
+        const modified = { ...f, message: f.message.slice(0, 100) + suffix };
+        const h2 = computeFindingHash(modified);
+        expect(h1).toBe(h2);
+      }),
     );
   });
 });
 
 describe("Property 3: stable field sensitivity", () => {
-  it("changing any stable field produces a different hash (statistical)", { timeout: 30000 }, () => {
+  it("changing any stable field produces a different hash (statistical)", {
+    timeout: 30000,
+  }, () => {
     fc.assert(
       fc.property(findingArb, (f) => {
         const original = computeFindingHash(f);

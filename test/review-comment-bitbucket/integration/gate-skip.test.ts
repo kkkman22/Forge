@@ -1,6 +1,6 @@
 import { describe, expect, it, vi } from "vitest";
-import type { ResolvedConfig } from "../../../src/review-comment-bitbucket/types.js";
 import { postReviewToBitbucket } from "../../../src/review-comment-bitbucket/post.js";
+import type { ResolvedConfig } from "../../../src/review-comment-bitbucket/types.js";
 
 const CONFIG_AUTO: ResolvedConfig = {
   enabled: true,
@@ -32,7 +32,12 @@ type Scenario = {
   name: string;
   reason: string;
   config: ResolvedConfig;
-  ctx: { remoteUrl: string | null; mcpBaseUrl: string | null; mcpConfigured: boolean; runId: string };
+  ctx: {
+    remoteUrl: string | null;
+    mcpBaseUrl: string | null;
+    mcpConfigured: boolean;
+    runId: string;
+  };
 };
 
 const SCENARIOS: Scenario[] = [
@@ -40,13 +45,23 @@ const SCENARIOS: Scenario[] = [
     name: "override=none",
     reason: "platform-disabled-by-config",
     config: { ...CONFIG_AUTO, platform_override: "none" },
-    ctx: { remoteUrl: "https://bitbucket.org/org/repo", mcpBaseUrl: "https://bitbucket.org", mcpConfigured: true, runId: "r1" },
+    ctx: {
+      remoteUrl: "https://bitbucket.org/org/repo",
+      mcpBaseUrl: "https://bitbucket.org",
+      mcpConfigured: true,
+      runId: "r1",
+    },
   },
   {
     name: "github URL + auto",
     reason: "platform-not-bitbucket",
     config: CONFIG_AUTO,
-    ctx: { remoteUrl: "https://github.com/org/repo", mcpBaseUrl: "https://bitbucket.org", mcpConfigured: true, runId: "r2" },
+    ctx: {
+      remoteUrl: "https://github.com/org/repo",
+      mcpBaseUrl: "https://bitbucket.org",
+      mcpConfigured: true,
+      runId: "r2",
+    },
   },
   {
     name: "null remoteUrl + auto",
@@ -58,25 +73,45 @@ const SCENARIOS: Scenario[] = [
     name: "bitbucket URL + auto + MCP not configured",
     reason: "mcp-not-configured",
     config: CONFIG_AUTO,
-    ctx: { remoteUrl: "https://bitbucket.org/org/repo", mcpBaseUrl: null, mcpConfigured: false, runId: "r4" },
+    ctx: {
+      remoteUrl: "https://bitbucket.org/org/repo",
+      mcpBaseUrl: null,
+      mcpConfigured: false,
+      runId: "r4",
+    },
   },
   {
     name: "bitbucket URL + auto + different host",
     reason: "mcp-base-url-mismatch",
     config: CONFIG_AUTO,
-    ctx: { remoteUrl: "https://bitbucket.org/org/repo", mcpBaseUrl: "https://bitbucket-custom.com", mcpConfigured: true, runId: "r5" },
+    ctx: {
+      remoteUrl: "https://bitbucket.org/org/repo",
+      mcpBaseUrl: "https://bitbucket-custom.com",
+      mcpConfigured: true,
+      runId: "r5",
+    },
   },
   {
     name: "override=bitbucket + MCP not configured",
     reason: "override-but-mcp-missing",
     config: { ...CONFIG_AUTO, platform_override: "bitbucket" },
-    ctx: { remoteUrl: "https://bitbucket.org/org/repo", mcpBaseUrl: null, mcpConfigured: false, runId: "r6" },
+    ctx: {
+      remoteUrl: "https://bitbucket.org/org/repo",
+      mcpBaseUrl: null,
+      mcpConfigured: false,
+      runId: "r6",
+    },
   },
   {
     name: "override=bitbucket + different host",
     reason: "mcp-base-url-mismatch",
     config: { ...CONFIG_AUTO, platform_override: "bitbucket" },
-    ctx: { remoteUrl: "https://bitbucket.org/org/repo", mcpBaseUrl: "https://bitbucket-custom.com", mcpConfigured: true, runId: "r7" },
+    ctx: {
+      remoteUrl: "https://bitbucket.org/org/repo",
+      mcpBaseUrl: "https://bitbucket-custom.com",
+      mcpConfigured: true,
+      runId: "r7",
+    },
   },
 ];
 

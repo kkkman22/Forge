@@ -123,10 +123,7 @@ export function checkFilesystemPolicy(
  *   2. Check allow list -> command starts with allow prefix => allowed: true
  *   3. No rule matched -> allowed: true (default allow)
  */
-export function checkCommandPolicy(
-  command: string,
-  config: SandboxConfig,
-): SandboxCheckResult {
+export function checkCommandPolicy(command: string, config: SandboxConfig): SandboxCheckResult {
   // 1. Check deny patterns first (highest priority)
   for (const denyPattern of config.commands.deny) {
     if (command.startsWith(denyPattern) || command === denyPattern) {
@@ -172,16 +169,16 @@ function extractHostname(url: string): string {
  * Patterns containing glob chars (*, ?, **) use minimatch on hostname.
  * Plain domain strings use substring matching on the full URL.
  */
-export function checkNetworkPolicy(
-  url: string,
-  config: SandboxConfig,
-): SandboxCheckResult {
+export function checkNetworkPolicy(url: string, config: SandboxConfig): SandboxCheckResult {
   const hostname = extractHostname(url);
   const hasGlob = (s: string) => s.includes("*") || s.includes("?");
 
   // 1. Check deny patterns first (highest priority)
   for (const denyPattern of config.network.deny) {
-    if (denyPattern === "*" || (hasGlob(denyPattern) ? minimatch(hostname, denyPattern) : url.includes(denyPattern))) {
+    if (
+      denyPattern === "*" ||
+      (hasGlob(denyPattern) ? minimatch(hostname, denyPattern) : url.includes(denyPattern))
+    ) {
       return {
         allowed: false,
         reason: `Network deny: "${url}" matches deny pattern "${denyPattern}"`,
@@ -192,7 +189,10 @@ export function checkNetworkPolicy(
 
   // 2. Check allow patterns
   for (const allowPattern of config.network.allow) {
-    if (allowPattern === "*" || (hasGlob(allowPattern) ? minimatch(hostname, allowPattern) : url.includes(allowPattern))) {
+    if (
+      allowPattern === "*" ||
+      (hasGlob(allowPattern) ? minimatch(hostname, allowPattern) : url.includes(allowPattern))
+    ) {
       return { allowed: true, reason: "" };
     }
   }
@@ -218,13 +218,9 @@ export function loadSandboxConfig(configPath?: string): SandboxConfig {
         return parsed;
       }
 
-      console.warn(
-        `[sandbox-phased] Invalid sandbox config structure in ${configPath}, using default`,
-      );
-    } catch (err) {
-      console.warn(
-        `[sandbox-phased] Failed to parse ${configPath}: ${err instanceof Error ? err.message : String(err)}, using default`,
-      );
+      // Invalid sandbox config structure — degrade to default (caller can validate separately)
+    } catch (_err) {
+      // Failed to parse sandbox config — degrade to default
     }
   }
 
@@ -266,10 +262,7 @@ function isValidSandboxConfig(value: unknown): value is SandboxConfig {
  * If profileName is provided, it must match config.profile.
  * Future phases may support multi-profile configs.
  */
-export function resolveProfile(
-  config: SandboxConfig,
-  profileName?: string,
-): SandboxConfig {
+export function resolveProfile(config: SandboxConfig, profileName?: string): SandboxConfig {
   const targetProfile = profileName ?? config.profile;
 
   if (targetProfile === config.profile) {
