@@ -130,7 +130,7 @@ export interface TruncationAssessment {
 }
 
 // ---------------------------------------------------------------------------
-// Degradation Strategy (stub — to be replaced in GREEN phase)
+// Degradation Strategy
 // ---------------------------------------------------------------------------
 
 /**
