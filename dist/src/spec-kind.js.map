@@ -1,1 +1,0 @@
-{"version":3,"file":"spec-kind.js","sourceRoot":"","sources":["../../src/spec-kind.ts"],"names":[],"mappings":"AAAA;;;;GAIG;AAIH;;;;GAIG;AACH,MAAM,UAAU,cAAc,CAAC,KAAe,EAAE,IAAY;IAC1D,IAAI,IAAI,KAAK,KAAK;QAAE,OAAO,QAAQ,CAAC;IACpC,IAAI,KAAK,CAAC,QAAQ,CAAC,WAAW,CAAC;QAAE,OAAO,QAAQ,CAAC;IACjD,OAAO,SAAS,CAAC;AACnB,CAAC"}
