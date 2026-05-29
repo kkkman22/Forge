@@ -475,6 +475,12 @@ export function buildReviewEvolutionArtifacts(
 import { readFileSync, renameSync, writeFileSync } from "node:fs";
 import { parse as parseYaml, stringify as stringifyYaml } from "yaml";
 import type { SubagentInvocation, SubagentResult } from "./loop-types.js";
+import {
+  assessTruncationSeverity,
+  detectTruncation,
+  type ReviewLayer,
+  type TruncationAssessment,
+} from "./truncation-detection.js";
 
 /** Context for building review subagent invocations. */
 export interface ReviewSubagentContext {
@@ -484,12 +490,21 @@ export interface ReviewSubagentContext {
 }
 
 /**
- * Build the list of SubagentInvocations for a review.
+ * Per-agent maxTurns configuration, matching .claude/agents/*.md frontmatter.
  *
- * Always includes quality-check and security-check.
- * Includes spec-check only when a locked Spec is available (hasSpec === true).
+ * spec-check needs more turns (reads spec + plans + tasks).
+ * quality-check needs moderate turns (scans multiple files).
+ * security-check needs fewer turns (pattern-matching focused).
  */
-const DEFAULT_REVIEW_TURNS = 10;
+/** Review agent types that have per-agent maxTurns configuration. */
+type ReviewAgentType = "spec-check" | "quality-check" | "security-check" | "frontend-check";
+
+const REVIEW_AGENT_MAX_TURNS: Record<ReviewAgentType, number> = {
+  "spec-check": 15,
+  "quality-check": 12,
+  "security-check": 10,
+  "frontend-check": 10,
+};
 
 const FINAL_REPORT_CONTRACT = `Final-Report Contract (HARD):
 Your last assistant message MUST be a Markdown report block with this exact shape:
@@ -521,7 +536,7 @@ export function buildReviewSubagents(context: ReviewSubagentContext): SubagentIn
       agentType: "spec-check",
       prompt: buildPrompt(`Review spec alignment. Spec path: ${context.specPath ?? "unknown"}.`),
       permissionMode: "default",
-      maxTurns: DEFAULT_REVIEW_TURNS,
+      maxTurns: REVIEW_AGENT_MAX_TURNS["spec-check"],
     });
   }
 
@@ -529,14 +544,14 @@ export function buildReviewSubagents(context: ReviewSubagentContext): SubagentIn
     agentType: "quality-check",
     prompt: buildPrompt("Review code quality."),
     permissionMode: "default",
-    maxTurns: DEFAULT_REVIEW_TURNS,
+    maxTurns: REVIEW_AGENT_MAX_TURNS["quality-check"],
   });
 
   invocations.push({
     agentType: "security-check",
     prompt: buildPrompt("Review security and risk."),
     permissionMode: "default",
-    maxTurns: DEFAULT_REVIEW_TURNS,
+    maxTurns: REVIEW_AGENT_MAX_TURNS["security-check"],
   });
 
   // Layer 4: Frontend accessibility check — only when Vue files are present
@@ -547,11 +562,46 @@ export function buildReviewSubagents(context: ReviewSubagentContext): SubagentIn
       agentType: "frontend-check",
       prompt: `Review frontend accessibility. Changed Vue files: ${vueFiles.join(", ")}`,
       permissionMode: "default",
-      maxTurns: DEFAULT_REVIEW_TURNS,
+      maxTurns: REVIEW_AGENT_MAX_TURNS["frontend-check"],
     });
   }
 
   return invocations;
+}
+
+// ---------------------------------------------------------------------------
+// Truncation detection integration
+// ---------------------------------------------------------------------------
+
+/** Agent types that map to review layers (excludes frontend-check, unknown). */
+type LayerMappingAgent = "spec-check" | "quality-check" | "security-check";
+
+/** Map agentType to ReviewLayer. Unknown types return undefined via Partial. */
+const AGENT_TYPE_TO_LAYER: Record<LayerMappingAgent, ReviewLayer> = {
+  "spec-check": "spec",
+  "quality-check": "quality",
+  "security-check": "security",
+};
+
+/**
+ * Run truncation detection across review subagent results.
+ *
+ * Maps each agentType to its ReviewLayer, runs detectTruncation on the raw
+ * output, then assesses overall severity via assessTruncationSeverity.
+ *
+ * Non-review agents (frontend-check, unknown) are skipped.
+ *
+ * @param results - Successfully completed subagent results from the fallback ladder.
+ * @returns TruncationAssessment indicating the degradation action to take.
+ */
+export function processReviewTruncation(
+  results: Array<{ agentType: string; result: string }>,
+): TruncationAssessment {
+  const layerResults = results
+    .filter((r) => r.agentType in AGENT_TYPE_TO_LAYER)
+    .map((r) => detectTruncation(AGENT_TYPE_TO_LAYER[r.agentType as LayerMappingAgent], r.result));
+
+  return assessTruncationSeverity(layerResults);
 }
 
 /**
@@ -935,4 +985,134 @@ function tryParseCiEvidence(
   } catch {
     return null;
   }
+}
+
+// ---------------------------------------------------------------------------
+// Truncation-triggered serial retry
+// ---------------------------------------------------------------------------
+
+/**
+ * Result of review execution with truncation handling.
+ *
+ * Extends FallbackLadderResult with optional truncation assessment
+ * when subagent results were successfully collected.
+ */
+export interface TruncationAwareResult extends FallbackLadderResult {
+  /** Truncation assessment when subagent results were collected. Undefined if execution failed. */
+  truncationAssessment?: TruncationAssessment;
+}
+
+/**
+ * Execute review with truncation-aware handling.
+ *
+ * Wraps the standard fallback ladder (L0→L1→L2→L3 for execution failures)
+ * with an additional truncation-specific degradation layer:
+ *
+ *   - After L0 succeeds, runs truncation detection on all results.
+ *   - 0-2 layers truncated → return with assessment (proceed/annotate/warn).
+ *   - All 3 layers truncated → serial retry (concurrency=1).
+ *     - Retry succeeds (not all truncated) → subagent-serial methodology.
+ *     - Retry still all truncated → methodology=unavailable (blocks ship).
+ *
+ * Execution failures (L0 all-fail, L1, L2, L3) are handled by the standard
+ * fallback ladder before truncation checking begins.
+ *
+ * @param input - Fallback ladder configuration.
+ * @returns Fallback ladder result extended with truncation assessment.
+ */
+export async function runReviewWithTruncationHandling(
+  input: FallbackLadderInput,
+): Promise<TruncationAwareResult> {
+  const result = await runReviewFallbackLadder(input);
+
+  // If execution failed completely, no truncation check needed
+  if (result.methodology === "unavailable" || result.succeeded.length === 0) {
+    return result;
+  }
+
+  // Run truncation detection on successful results
+  const assessment = processReviewTruncation(result.succeeded);
+
+  // Emit visible annotation/warning for partial truncation
+  if (assessment.action === "annotate") {
+    const layers = assessment.truncatedLayers.join(", ");
+    // biome-ignore lint/suspicious/noConsole: User feedback for truncation annotation
+    console.warn(`⚠ Layer ${layers} report truncated — marked as [数据不完整]`);
+  } else if (assessment.action === "warn") {
+    // biome-ignore lint/suspicious/noConsole: User feedback for truncation warning
+    console.warn(
+      `⚠ ${assessment.truncatedCount}/${assessment.totalCount} review layers truncated — consider re-running /forge review`,
+    );
+  }
+
+  // Only all-3-truncated triggers serial retry
+  if (assessment.action !== "degrade") {
+    return { ...result, truncationAssessment: assessment };
+  }
+
+  // ─── Truncation-triggered serial retry ───
+  // biome-ignore lint/suspicious/noConsole: User feedback for truncation retry
+  console.warn(
+    `⚠ All ${assessment.truncatedCount} review layers truncated; retrying with serial execution...`,
+  );
+
+  const retryStart = Date.now();
+  const retryRaw = await runSubagentsWithConcurrency(input.invocations, input.executor, 1);
+
+  // Also enforce final-report contract on retry results
+  const retrySucceeded: Array<{ agentType: string; result: string }> = [];
+  const retryFailed = [...result.failed];
+  for (const ok of retryRaw.succeeded) {
+    const v = validateFinalReportBlock(ok.result, ok.agentType);
+    if (v.valid) {
+      retrySucceeded.push(ok);
+    } else {
+      retryFailed.push({ agentType: ok.agentType, error: `incomplete-report:${v.reason}` });
+    }
+  }
+
+  // Check truncation on retry results
+  if (retrySucceeded.length > 0) {
+    const retryAssessment = processReviewTruncation(retrySucceeded);
+
+    if (retryAssessment.action !== "degrade") {
+      // Retry helped — use retry results
+      return {
+        methodology: "subagent-serial",
+        succeeded: retrySucceeded,
+        failed: retryFailed.length > 0 ? retryFailed : result.failed,
+        trace: [
+          ...result.trace,
+          {
+            level: "L1",
+            startedAt: retryStart,
+            finishedAt: Date.now(),
+            outcome: retryAssessment.action === "proceed" ? "all-success" : "partial-success",
+          },
+        ],
+        retryCount: result.retryCount + 1,
+        l0FailureSignature: result.l0FailureSignature,
+        truncationAssessment: retryAssessment,
+      };
+    }
+  }
+
+  // Retry still all truncated → unavailable (blocks ship)
+  return {
+    methodology: "unavailable",
+    succeeded: [],
+    failed: [...result.failed, ...retryRaw.failed],
+    trace: [
+      ...result.trace,
+      {
+        level: "L3",
+        startedAt: retryStart,
+        finishedAt: Date.now(),
+        outcome: "unavailable",
+      },
+    ],
+    retryCount: result.retryCount + 1,
+    l0FailureSignature: result.l0FailureSignature,
+    truncationAssessment: assessment,
+  };
 }

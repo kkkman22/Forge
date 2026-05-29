@@ -56,3 +56,8 @@
 {"timestamp":"2026-05-29T17:20:20Z","event":"precompact_snapshot","detail":"slug=claude-code-uplift-21153 phase=build completed=0 pending=0"}
 {"timestamp":"2026-05-29T17:21:55Z","event":"postcompact_restore","detail":"slug=claude-code-uplift-21153"}
 {"timestamp":"2026-05-29T17:21:55Z","event":"precompact_snapshot","detail":"slug=claude-code-uplift-21153 phase=build completed=0 pending=0"}
+{"timestamp":"2026-05-29T22:21:01Z","event":"precompact_snapshot","detail":"slug=subagent-truncation-fix phase=build completed=0 pending=0"}
+{"timestamp":"2026-05-29T22:25:56Z","event":"postcompact_restore","detail":"slug=subagent-truncation-fix"}
+{"timestamp":"2026-05-29T22:25:56Z","event":"precompact_snapshot","detail":"slug=subagent-truncation-fix phase=build completed=0 pending=0"}
+{"timestamp":"2026-05-29T22:27:35Z","event":"postcompact_restore","detail":"slug=subagent-truncation-fix"}
+{"timestamp":"2026-05-29T22:27:35Z","event":"precompact_snapshot","detail":"slug=subagent-truncation-fix phase=build completed=0 pending=0"}
