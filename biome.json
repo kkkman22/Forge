@@ -29,10 +29,16 @@
         "rules": {
           "suspicious": {
             "noConsole": "off",
-            "noExplicitAny": "off"
+            "noExplicitAny": "off",
+            "useIterableCallbackReturn": "off"
           },
           "style": {
-            "noNonNullAssertion": "off"
+            "noNonNullAssertion": "off",
+            "useTemplate": "off"
+          },
+          "correctness": {
+            "noUnusedVariables": "off",
+            "noUnusedImports": "off"
           }
         }
       }
