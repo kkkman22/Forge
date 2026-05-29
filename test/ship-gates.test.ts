@@ -125,9 +125,9 @@ describe("checkFallbackLadderGate", () => {
     expect(result.gate).toBe("review");
     expect(result.passed).toBe(false);
     expect(result.reason).toContain("unavailable");
-    expect(result.reason.toLowerCase()).toContain("hard") ||
-      expect(result.reason.toLowerCase()).toContain("l3") ||
-      true; // Either hard-gate or L3 mention is acceptable
+    const reasonLower = result.reason.toLowerCase();
+    const hasHardGate = reasonLower.includes("hard") || reasonLower.includes("l3");
+    expect(hasHardGate).toBe(true); // Either hard-gate or L3 mention is acceptable
   });
 });
 
