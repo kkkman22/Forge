@@ -1,3 +1,10 @@
+---
+name: forge-loop-desktop-app
+status: deferred
+deferred_reason: "Claude Code 桌面版已覆盖核心场景，独立桌面应用优先级降低"
+created: "2026-01-01"
+updated: "2026-05-30"
+---
 # Requirements Document
 
 ## Introduction

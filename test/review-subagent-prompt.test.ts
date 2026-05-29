@@ -62,6 +62,41 @@ describe("buildReviewSubagents prompt diff-context", () => {
   });
 });
 
+describe("buildReviewSubagents maxTurns per agent type", () => {
+  const ctx = {
+    hasSpec: true,
+    specPath: ".kiro/specs/example/spec.md",
+    changedFiles: ["src/x.ts"],
+  };
+  const invocations = buildReviewSubagents(ctx);
+
+  it("spec-check gets maxTurns=15 (reads spec + plans + tasks)", () => {
+    const spec = invocations.find((i) => i.agentType === "spec-check");
+    expect(spec).toBeDefined();
+    expect(spec!.maxTurns).toBe(15);
+  });
+
+  it("quality-check gets maxTurns=12 (scans multiple files)", () => {
+    const quality = invocations.find((i) => i.agentType === "quality-check");
+    expect(quality).toBeDefined();
+    expect(quality!.maxTurns).toBe(12);
+  });
+
+  it("security-check gets maxTurns=10 (pattern matching, fewer reads)", () => {
+    const security = invocations.find((i) => i.agentType === "security-check");
+    expect(security).toBeDefined();
+    expect(security!.maxTurns).toBe(10);
+  });
+
+  it("frontend-check gets maxTurns=10 (default)", () => {
+    const vueCtx = { hasSpec: false, changedFiles: ["src/App.vue"] };
+    const vueInvocations = buildReviewSubagents(vueCtx);
+    const frontend = vueInvocations.find((i) => i.agentType === "frontend-check");
+    expect(frontend).toBeDefined();
+    expect(frontend!.maxTurns).toBe(10);
+  });
+});
+
 describe("buildReviewSubagents prompt — final-report contract", () => {
   const ctx = {
     hasSpec: true,
