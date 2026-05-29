@@ -67,6 +67,12 @@ Uncommitted: !`git status --short 2>/dev/null | head -10 || echo "clean"`
 
 **三道门禁必须同时通过**。任一不通过，阻断 ship。
 
+**Gate 4 — Pending Findings Check**：检查 `.forge/progress/<task>-pending-findings.md` 是否存在且含未关闭 P0/P1：
+- 文件不存在 → 跳过检查（首次运行兼容）
+- 文件存在 + 含 P0/P1 行 → 阻断 ship，提示修复后重新 review
+- 文件存在 + 无 P0/P1 → 通过
+- 通过后删除 pending-findings 文件（已消费）
+
 **Gate 拦截自动沉淀**：门禁拦截时调用 `buildShipGateBlockArtifacts(topic, tier, reason, situation, now, seq)`（`src/ship.ts`）生成 episode + Evolution 标记（target=`forge-ship#ship_gate_blocked`）。`reason` 推导：未提交工作树 → `uncommitted` → outcome=`partial`；checklist 未验证 → `checklist_failed` → outcome=`failure`。写入失败降级为 `console.warn`。
 
 **函数调用**：`checkReviewFreshness(reviewedCommit, currentHead, changedFiles)`

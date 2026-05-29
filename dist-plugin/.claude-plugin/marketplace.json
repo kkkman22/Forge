@@ -1,7 +1,7 @@
 {
   "$schema": "https://anthropic.com/claude-code/marketplace.schema.json",
   "name": "forge-official",
-  "description": "Forge official marketplace — unified AI coding workflow framework with single /forge slash command and 22 internal subcommands",
+  "description": "Forge official marketplace — unified AI coding workflow framework with 22 internal subcommands, TDD, spec-driven planning, automated review, and three-tier task routing.",
   "owner": {
     "name": "Forge contributors",
     "url": "https://github.com/kkkman22/Forge"
@@ -9,7 +9,7 @@
   "plugins": [
     {
       "name": "forge",
-      "description": "Unified AI coding workflow framework — TDD, spec-driven planning, automated review, routed via /forge <subcommand>",
+      "description": "Unified AI coding workflow framework — single /forge slash command with TDD, spec-driven planning, and automated review.",
       "source": "./",
       "category": "development"
     }

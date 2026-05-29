@@ -119,6 +119,7 @@ Read task list → per task: **Closure-First Probes** (→ references/closure-pr
 **Wave Orchestration (Requirement 4)**：当 `tasks.md` 含 JSON wave 块时，使用 `parseWaves(jsonBlock, tasks)` 从 `src/spec-wave.ts` 解析 wave 分组。然后逐 wave 调用 `scheduleWave(wave, { maxConcurrency, executor, onHttp429 })`（`src/build.ts`）执行：
 - Wave 内任务可并行（`max_parallel_agents` 默认 6）
 - Wave 间串行（前 wave 全部完成才进入下一 wave）
+- **Wave 间持久化**：每个 wave 完成后持久化 P0/P1 findings。若 context 较高且还有后续 wave，建议用户执行 `/compact`。详见 `skills/shared/next-step-protocol.md` §Context Compact 策略
 - HTTP 429 降级阶梯：第 1 次并发减半 → 第 2 次降至 2 → 第 3 次串行（1 agent）
 - 不含 wave 块时退化为单任务串行模式
 
