@@ -89,13 +89,19 @@ const TOOL_DESCRIPTION = [
  * Register the `forge_read` tool on the given MCP server.
  */
 export function registerForgeRead(server, root) {
-    server.tool("forge_read", TOOL_DESCRIPTION, {
-        paths: z.array(z.string()).describe("File paths to analyze"),
-        script: z.string().describe("Analysis script code"),
-        language: z
-            .enum(["javascript", "shell"])
-            .default("javascript")
-            .describe("Script language (javascript or shell)"),
+    server.registerTool("forge_read", {
+        description: TOOL_DESCRIPTION,
+        inputSchema: {
+            paths: z.array(z.string()).describe("File paths to analyze"),
+            script: z.string().describe("Analysis script code"),
+            language: z
+                .enum(["javascript", "shell"])
+                .default("javascript")
+                .describe("Script language (javascript or shell)"),
+        },
+        _meta: {
+            "anthropic/maxResultSizeChars": 200_000,
+        },
     }, async ({ paths, script, language }) => {
         // Execute script with FORGE_FILES env var
         const readOpts = root ? { cwd: root.path } : undefined;

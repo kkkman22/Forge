@@ -58,11 +58,11 @@ describe("Contract: forge-review/SKILL.md context budget section", () => {
     it("contains Context Budget Management heading", () => {
         expect(content).toMatch(/#\s+.*Context Budget Management/);
     });
-    it("references Review_Summarizer", () => {
-        expect(content).toContain("Review_Summarizer");
+    it("references findings-only output format", () => {
+        expect(content).toContain("findings-only");
     });
-    it("references Write-and-discard retention", () => {
-        expect(content).toContain("Write-and-discard");
+    it("references serializeReviewSummary for context budget", () => {
+        expect(content).toContain("serializeReviewSummary");
     });
     it("preserves severity grading (P0/P1/P2/P3)", () => {
         expect(content).toContain("P0");

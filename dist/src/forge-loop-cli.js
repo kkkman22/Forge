@@ -166,7 +166,7 @@ async function main() {
         .option("--log-format <text|json>", "Log output format (text|json)", "text")
         .option("--log-level <debug|info|warn|error>", "Minimum log level", "info")
         .option("--log-file <path>", "Write JSON logs to file (dual-write mode)")
-        .option("--sandbox [profile]", "Enable sandbox mode with fine-grained access control. Optionally specify a profile name.")
+        .option("--sandbox [profile]", "Enable sandbox mode with fine-grained access control. Optionally specify a profile name. Use 'off' to disable.")
         .option("--force-no-hooks", "Skip hooks protection validation (use at your own risk)", false)
         .option("--skills-dir <path>", "Load external SKILL plugins from directory")
         .option("--agent <name>", "Agent to use for iterations (claude|mock)", "claude")
@@ -360,14 +360,20 @@ async function main() {
         // Load sandbox profile if --sandbox is specified
         let sandboxProfile;
         if (opts.sandbox) {
-            const { loadSandboxProfile: loadProfile } = await import("./sandbox-profile.js");
-            const profileName = typeof opts.sandbox === "string" ? opts.sandbox : undefined;
-            try {
-                sandboxProfile = loadProfile(cwd, profileName);
+            // --sandbox=off disables sandbox checks entirely
+            if (typeof opts.sandbox === "string" && opts.sandbox === "off") {
+                // No sandbox profile loaded, sandbox disabled
             }
-            catch (err) {
-                const message = err instanceof Error ? err.message : String(err);
-                throw new CliError(`Error: ${message}`);
+            else {
+                const { loadSandboxProfile: loadProfile } = await import("./sandbox-profile.js");
+                const profileName = typeof opts.sandbox === "string" ? opts.sandbox : undefined;
+                try {
+                    sandboxProfile = loadProfile(cwd, profileName);
+                }
+                catch (err) {
+                    const message = err instanceof Error ? err.message : String(err);
+                    throw new CliError(`Error: ${message}`);
+                }
             }
         }
         const agentName = opts.agent ?? "claude";

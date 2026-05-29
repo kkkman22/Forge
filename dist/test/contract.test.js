@@ -249,15 +249,15 @@ describe("Contract: quality-check deslop dimension", () => {
         expect(content).toContain("Deslop");
         expect(content).toContain("deslop: skipped");
     });
-    it("quality-check output schema is unchanged (Severity/File/Issue/Suggestion)", () => {
+    it("quality-check output schema is unchanged (Severity/File:Line/Issue/Suggestion)", () => {
         const content = readFileSync(qualityCheckPath, "utf-8");
         // The four-column schema must still be the only output format [R2.4]
-        expect(content).toContain("| # | Severity | File | Issue | Suggestion |");
+        expect(content).toContain("| # | Severity | File:Line | Issue | Suggestion |");
         // Verify the Output Format section still shows the standard 4 columns
         const outputFormatMatch = content.match(/## Output Format[\s\S]*?```markdown[\s\S]*?```/);
         expect(outputFormatMatch).toBeTruthy();
         expect(outputFormatMatch?.[0]).toContain("Severity");
-        expect(outputFormatMatch?.[0]).toContain("File");
+        expect(outputFormatMatch?.[0]).toContain("File:Line");
         expect(outputFormatMatch?.[0]).toContain("Issue");
         expect(outputFormatMatch?.[0]).toContain("Suggestion");
     });

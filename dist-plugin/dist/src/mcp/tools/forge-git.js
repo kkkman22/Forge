@@ -154,9 +154,15 @@ const TOOL_DESCRIPTION = [
  */
 export function registerForgeGit(server, root) {
     const execOpts = root ? { cwd: root.path } : undefined;
-    server.tool("forge_git", TOOL_DESCRIPTION, {
-        subcommand: z.enum(["diff", "diff-content", "status", "log"]).describe("Git subcommand"),
-        args: z.string().optional().describe("Additional git arguments"),
+    server.registerTool("forge_git", {
+        description: TOOL_DESCRIPTION,
+        inputSchema: {
+            subcommand: z.enum(["diff", "diff-content", "status", "log"]).describe("Git subcommand"),
+            args: z.string().optional().describe("Additional git arguments"),
+        },
+        _meta: {
+            "anthropic/maxResultSizeChars": 200_000,
+        },
     }, async ({ subcommand, args }) => {
         const extraArgs = args ? ` ${args}` : "";
         switch (subcommand) {

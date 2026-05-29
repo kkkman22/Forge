@@ -309,6 +309,18 @@ export const SKILL_FUNCTION_REGISTRY = [
         skills: ["forge/lib/review/instructions.md"],
         parameterNames: ["input", "now", "sequenceInDay"],
     },
+    {
+        module: "truncation-detection.ts",
+        functionName: "detectTruncation",
+        skills: ["forge/lib/review/instructions.md"],
+        parameterNames: ["layer", "raw"],
+    },
+    {
+        module: "truncation-detection.ts",
+        functionName: "assessTruncationSeverity",
+        skills: ["forge/lib/review/instructions.md"],
+        parameterNames: ["results"],
+    },
     // --- forge-router/SKILL.md (multi-task) ---
     {
         module: "status-manager.ts",
@@ -582,6 +594,31 @@ export const SKILL_FUNCTION_REGISTRY = [
         skills: ["forge/lib/review/instructions.md"],
         parameterNames: ["subcommand", "args"],
         mcpTool: true,
+    },
+    // --- sandbox-phased.ts ---
+    {
+        module: "sandbox-phased.ts",
+        functionName: "checkFilesystemPolicy",
+        skills: ["forge/lib/build/instructions.md", "forge/lib/plan/instructions.md"],
+        parameterNames: ["filePath", "operation", "config"],
+    },
+    {
+        module: "sandbox-phased.ts",
+        functionName: "checkCommandPolicy",
+        skills: ["forge/lib/ship/instructions.md"],
+        parameterNames: ["command", "config"],
+    },
+    {
+        module: "sandbox-phased.ts",
+        functionName: "checkNetworkPolicy",
+        skills: [],
+        parameterNames: ["url", "config"],
+    },
+    {
+        module: "sandbox-phased.ts",
+        functionName: "loadSandboxConfig",
+        skills: [],
+        parameterNames: ["configPath"],
     },
 ];
 //# sourceMappingURL=skill-function-registry.js.map
