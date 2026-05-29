@@ -492,6 +492,38 @@ export function parseP1Fixlist(content: string): P1Fixlist | null {
 }
 
 /**
+ * Generate a P1 fixlist from review findings.
+ *
+ * Filters to P1 severity only, assigns sequential IDs (P1-001, P1-002, ...),
+ * and sets all fixCommit to null (unfixed by default).
+ */
+export function generateP1Fixlist(
+  runId: string,
+  findings: Array<{
+    severity: string;
+    filePath: string;
+    lineNumber: number;
+    description: string;
+  }>,
+): P1Fixlist {
+  const p1Issues: P1FixlistEntry[] = findings
+    .filter((f) => f.severity === "P1")
+    .map((f, i) => ({
+      id: `P1-${String(i + 1).padStart(3, "0")}`,
+      title: f.description,
+      file: f.filePath,
+      line: f.lineNumber,
+      fixCommit: null,
+    }));
+
+  return {
+    runId,
+    p1Issues,
+    allFixed: p1Issues.length === 0,
+  };
+}
+
+/**
  * Update P1 fixlist with discovered fix commits.
  *
  * For each P1 issue with fixCommit=null, searches git log via gitLogFn
