@@ -27,3 +27,4 @@ scripts/check-coverage-regression.mjs
 scripts/check-public-api.mjs
 scripts/check-deps.mjs
 scripts/check-evolution-marker-zones.mjs
+scripts/add-spec-frontmatter.mjs

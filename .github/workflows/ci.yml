@@ -58,6 +58,15 @@ jobs:
               exit 1
             fi
           done
+      - name: Validate spec index script
+        run: node --check scripts/rebuild-spec-index.mjs
+      - name: Check spec index consistency
+        run: |
+          if [ -d .kiro/specs ]; then
+            node scripts/rebuild-spec-index.mjs --check
+          else
+            echo "No .kiro/specs/ directory — skipping spec index check"
+          fi
 
   security-audit:
     runs-on: ubuntu-latest
