@@ -164,7 +164,7 @@ describe("Unit: extractMarker ignores markers inside code fences", () => {
     const hash = "abc123def456";
     const prefix = "forge-review";
     const marker = buildMarker(prefix, hash);
-    const text = "```\n" + marker + "\n```";
+    const text = `\`\`\`\n${marker}\n\`\`\``;
     expect(extractMarker(text, prefix)).toBeNull();
   });
 
@@ -172,7 +172,7 @@ describe("Unit: extractMarker ignores markers inside code fences", () => {
     const hash = "abc123def456";
     const prefix = "forge-review";
     const marker = buildMarker(prefix, hash);
-    const text = "```\ncode\n```\n\nsome text\n" + marker;
+    const text = `\`\`\`\ncode\n\`\`\`\n\nsome text\n${marker}`;
     expect(extractMarker(text, prefix)).toBe(hash);
   });
 });
