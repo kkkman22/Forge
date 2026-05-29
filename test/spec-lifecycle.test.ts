@@ -236,6 +236,9 @@ describe("validateSpecFrontmatter", () => {
         depends_on: [],
         replaces: [],
         replaced_by: [],
+        ...(status === "deferred"
+          ? { deferred_reason: "test reason", deferred_date: "2026-01-01" }
+          : {}),
       };
 
       const result = validateSpecFrontmatter(fm);
