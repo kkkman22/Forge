@@ -115,20 +115,90 @@ export function checkFilesystemPolicy(
   return { allowed: true, reason: "" };
 }
 
-/** @todo Task 3: implement checkCommandPolicy */
+/**
+ * Check whether a command is permitted.
+ *
+ * Matching logic (prefix-based):
+ *   1. Check deny list -> command starts with deny prefix => allowed: false
+ *   2. Check allow list -> command starts with allow prefix => allowed: true
+ *   3. No rule matched -> allowed: true (default allow)
+ */
 export function checkCommandPolicy(
-  _command: string,
-  _config: SandboxConfig,
+  command: string,
+  config: SandboxConfig,
 ): SandboxCheckResult {
-  return { allowed: false, reason: "not implemented" };
+  // 1. Check deny patterns first (highest priority)
+  for (const denyPattern of config.commands.deny) {
+    if (command.startsWith(denyPattern) || command === denyPattern) {
+      return {
+        allowed: false,
+        reason: `Command deny: "${command}" matches deny pattern "${denyPattern}"`,
+        matchedRule: denyPattern,
+      };
+    }
+  }
+
+  // 2. Check allow patterns (prefix match, "*" matches everything)
+  for (const allowPattern of config.commands.allow) {
+    if (allowPattern === "*" || command.startsWith(allowPattern)) {
+      return { allowed: true, reason: "" };
+    }
+  }
+
+  // 3. Default: allow if no deny matched
+  return { allowed: true, reason: "" };
 }
 
-/** @todo Task 3: implement checkNetworkPolicy */
+/**
+ * Extract hostname from a URL string.
+ */
+function extractHostname(url: string): string {
+  try {
+    return new URL(url).hostname;
+  } catch {
+    // Not a valid URL, return as-is for substring matching
+    return url;
+  }
+}
+
+/**
+ * Check whether a network URL is permitted.
+ *
+ * Matching logic (domain/pattern-based):
+ *   1. Check deny list -> hostname matches deny pattern => allowed: false
+ *   2. Check allow list -> hostname matches allow pattern => allowed: true
+ *   3. No rule matched -> allowed: true (default allow)
+ *
+ * Patterns containing glob chars (*, ?, **) use minimatch on hostname.
+ * Plain domain strings use substring matching on the full URL.
+ */
 export function checkNetworkPolicy(
-  _url: string,
-  _config: SandboxConfig,
+  url: string,
+  config: SandboxConfig,
 ): SandboxCheckResult {
-  return { allowed: false, reason: "not implemented" };
+  const hostname = extractHostname(url);
+  const hasGlob = (s: string) => s.includes("*") || s.includes("?");
+
+  // 1. Check deny patterns first (highest priority)
+  for (const denyPattern of config.network.deny) {
+    if (denyPattern === "*" || (hasGlob(denyPattern) ? minimatch(hostname, denyPattern) : url.includes(denyPattern))) {
+      return {
+        allowed: false,
+        reason: `Network deny: "${url}" matches deny pattern "${denyPattern}"`,
+        matchedRule: denyPattern,
+      };
+    }
+  }
+
+  // 2. Check allow patterns
+  for (const allowPattern of config.network.allow) {
+    if (allowPattern === "*" || (hasGlob(allowPattern) ? minimatch(hostname, allowPattern) : url.includes(allowPattern))) {
+      return { allowed: true, reason: "" };
+    }
+  }
+
+  // 3. Default: allow if no deny matched
+  return { allowed: true, reason: "" };
 }
 
 /** @todo Task 4: implement loadSandboxConfig */
