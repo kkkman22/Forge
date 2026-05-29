@@ -261,7 +261,7 @@ async function main(): Promise<void> {
     .option("--log-file <path>", "Write JSON logs to file (dual-write mode)")
     .option(
       "--sandbox [profile]",
-      "Enable sandbox mode with fine-grained access control. Optionally specify a profile name.",
+      "Enable sandbox mode with fine-grained access control. Optionally specify a profile name. Use 'off' to disable.",
     )
     .option("--force-no-hooks", "Skip hooks protection validation (use at your own risk)", false)
     .option("--skills-dir <path>", "Load external SKILL plugins from directory")
@@ -505,13 +505,18 @@ async function main(): Promise<void> {
       // Load sandbox profile if --sandbox is specified
       let sandboxProfile: import("./sandbox-profile.js").SandboxProfile | undefined;
       if (opts.sandbox) {
-        const { loadSandboxProfile: loadProfile } = await import("./sandbox-profile.js");
-        const profileName = typeof opts.sandbox === "string" ? opts.sandbox : undefined;
-        try {
-          sandboxProfile = loadProfile(cwd, profileName);
-        } catch (err) {
-          const message = err instanceof Error ? err.message : String(err);
-          throw new CliError(`Error: ${message}`);
+        // --sandbox=off disables sandbox checks entirely
+        if (typeof opts.sandbox === "string" && opts.sandbox === "off") {
+          // No sandbox profile loaded, sandbox disabled
+        } else {
+          const { loadSandboxProfile: loadProfile } = await import("./sandbox-profile.js");
+          const profileName = typeof opts.sandbox === "string" ? opts.sandbox : undefined;
+          try {
+            sandboxProfile = loadProfile(cwd, profileName);
+          } catch (err) {
+            const message = err instanceof Error ? err.message : String(err);
+            throw new CliError(`Error: ${message}`);
+          }
         }
       }
 

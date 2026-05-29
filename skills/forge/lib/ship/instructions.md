@@ -107,6 +107,24 @@ Uncommitted: !`git status --short 2>/dev/null | head -10 || echo "clean"`
 
 门禁检查全部通过后，使用 AskUserQuestion 询问用户选择：**Merge to main** / **Create PR** / **Keep branch** / **Discard**（需二次确认）。
 
+### §3.1 Sandbox Advisory Checkpoint
+
+Phase 1 advisory: **does not block**, only warns.
+
+**Before executing any shell command** (git merge, git push, gh pr create, etc.), call `checkCommandPolicy(command, sandboxConfig)`:
+
+```
+import { loadSandboxConfig, checkCommandPolicy } from "./sandbox-phased.js";
+const sandboxConfig = loadSandboxConfig();
+const result = checkCommandPolicy(command, sandboxConfig);
+if (!result.allowed) {
+  // Output warning, do NOT block the command
+  console.warn(`⚠️ 沙箱策略建议阻止此操作：${result.reason}（Phase 1 advisory，不阻断）`);
+}
+```
+
+**Trigger**: Any `Bash` tool call executing git, gh, or other commands during delivery.
+
 → 详见 references/delivery-options.md（AskUserQuestion 格式、四选项执行细节、Pending-Delivery 记录、Autonomous Mode 配置）
 
 ---

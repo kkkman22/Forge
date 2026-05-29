@@ -58,6 +58,23 @@ Read spec frontmatter `health` field. If spec_hash matches current content, reus
 - `draft` / `approved` → 自动更新 status 为 `in_progress`
 - `in_progress` → 正常继续
 
+#### Sandbox Advisory Checkpoint
+
+Phase 1 advisory: **does not block**, only warns.
+
+**Before reading .forge/ or project files**, call `checkFilesystemPolicy(targetPath, 'read', sandboxConfig)`:
+
+```
+import { loadSandboxConfig, checkFilesystemPolicy } from "./sandbox-phased.js";
+const sandboxConfig = loadSandboxConfig();
+const result = checkFilesystemPolicy(targetPath, "read", sandboxConfig);
+if (!result.allowed) {
+  console.warn(`⚠️ 沙箱策略建议阻止此操作：${result.reason}（Phase 1 advisory，不阻断）`);
+}
+```
+
+**Trigger**: Any `Read` tool call targeting `.forge/` or project source files during research.
+
 ### Step 2: File Mapping
 
 列出所有需创建/修改的文件。标注 `CREATE` 或 `MODIFY`，说明原因。测试文件与源文件成对。
