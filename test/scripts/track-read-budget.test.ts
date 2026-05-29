@@ -4,12 +4,12 @@
  * @vitest-environment node
  */
 
-import { mkdir, readFile, rm, writeFile } from "node:fs/promises";
-import { join } from "node:path";
-import { tmpdir } from "node:os";
-import { afterEach, beforeEach, describe, expect, it } from "vitest";
 import { execFile } from "node:child_process";
+import { mkdir, readFile, rm, writeFile } from "node:fs/promises";
+import { tmpdir } from "node:os";
+import { join } from "node:path";
 import { promisify } from "node:util";
+import { afterEach, beforeEach, describe, expect, it } from "vitest";
 
 const execAsync = promisify(execFile);
 
@@ -25,7 +25,11 @@ describe("track-read-budget", () => {
 
   afterEach(async () => {
     await rm(tmpRoot, { recursive: true, force: true });
-    try { await rm(budgetFile, { force: true }); } catch { /* ok */ }
+    try {
+      await rm(budgetFile, { force: true });
+    } catch {
+      /* ok */
+    }
   });
 
   it("creates budget file on first read", async () => {
