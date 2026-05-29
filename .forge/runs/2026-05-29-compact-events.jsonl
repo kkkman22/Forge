@@ -1,0 +1,12 @@
+{"timestamp":"2026-05-29T12:06:15Z","event":"postcompact_restore","detail":"slug=claude-code-uplift-21153"}
+{"timestamp":"2026-05-29T12:06:15Z","event":"precompact_snapshot","detail":"slug=claude-code-uplift-21153 phase=build completed=0 pending=0"}
+{"timestamp":"2026-05-29T12:12:26Z","event":"postcompact_restore","detail":"slug=claude-code-uplift-21153"}
+{"timestamp":"2026-05-29T12:12:27Z","event":"precompact_snapshot","detail":"slug=claude-code-uplift-21153 phase=build completed=0 pending=0"}
+{"timestamp":"2026-05-29T12:14:02Z","event":"postcompact_restore","detail":"slug=claude-code-uplift-21153"}
+{"timestamp":"2026-05-29T12:14:02Z","event":"precompact_snapshot","detail":"slug=claude-code-uplift-21153 phase=build completed=0 pending=0"}
+{"timestamp":"2026-05-29T12:22:56Z","event":"postcompact_restore","detail":"slug=claude-code-uplift-21153"}
+{"timestamp":"2026-05-29T12:22:56Z","event":"precompact_snapshot","detail":"slug=claude-code-uplift-21153 phase=build completed=0 pending=0"}
+{"timestamp":"2026-05-29T12:25:58Z","event":"postcompact_restore","detail":"slug=claude-code-uplift-21153"}
+{"timestamp":"2026-05-29T12:25:58Z","event":"precompact_snapshot","detail":"slug=claude-code-uplift-21153 phase=build completed=0 pending=0"}
+{"timestamp":"2026-05-29T12:27:32Z","event":"postcompact_restore","detail":"slug=claude-code-uplift-21153"}
+{"timestamp":"2026-05-29T12:27:32Z","event":"precompact_snapshot","detail":"slug=claude-code-uplift-21153 phase=build completed=0 pending=0"}
