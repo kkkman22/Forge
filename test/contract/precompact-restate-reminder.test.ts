@@ -98,7 +98,12 @@ describe("PreCompact restate reminder", () => {
       statusCurrentTask: "my-feature",
       restateReminder: "on",
       restateThreshold: 5,
-      progressContent: ["## Phase 1", "- [x] T1: do thing", "- [x] T2: do another", "- [ ] T3: not done"].join("\n"),
+      progressContent: [
+        "## Phase 1",
+        "- [x] T1: do thing",
+        "- [x] T2: do another",
+        "- [ ] T3: not done",
+      ].join("\n"),
     });
 
     const result = runHook();
@@ -148,12 +153,18 @@ describe("PreCompact restate reminder", () => {
       statusCurrentTask: "big-feature",
       restateReminder: "on",
       restateThreshold: 1,
-      progressContent: Array.from({ length: 60 }, (_, i) => `- [x] T${i + 1}: a reasonably long task description line`).join("\n"),
+      progressContent: Array.from(
+        { length: 60 },
+        (_, i) => `- [x] T${i + 1}: a reasonably long task description line`,
+      ).join("\n"),
     });
 
     writeFileSync(
       fixture(".forge", "findings", "big-feature.md"),
-      Array.from({ length: 40 }, (_, i) => `### Finding ${i + 1}: A moderately long finding description with details`).join("\n"),
+      Array.from(
+        { length: 40 },
+        (_, i) => `### Finding ${i + 1}: A moderately long finding description with details`,
+      ).join("\n"),
     );
 
     const result = runHook();
