@@ -256,3 +256,19 @@ No code quality issues found.
 - 空段落必须填 "None"，不得省略
 - 主 agent 通过检测 `REPORT_START` / `REPORT_END` 标记判断报告完整性
 - 缺失或截断的报告将被标注为 `[数据不完整]`
+
+## 结果返回协议（MANDATORY）
+
+你的最后一步必须：
+1. Write 完整报告到 `.forge/reviews/quality-check-<YYYYMMDD-HHmmss>.md`（使用 UTC 时间戳）
+2. 最终返回文本限制在 **800 chars 以内**，格式：
+
+```
+status: <pass|fail>
+findings: <total_count>
+p0: <count>
+p1: <count>
+report: .forge/reviews/quality-check-<timestamp>.md
+```
+
+**禁止**在最终返回中包含完整报告内容。主 agent 仅在 p0>0 或 p1>0 时才会 Read 完整报告。
