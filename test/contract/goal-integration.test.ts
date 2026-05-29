@@ -85,7 +85,7 @@ describe("goal-integration (R4)", () => {
 
   describe("setGoal", () => {
     it("outputs instruction to stdout (does not throw)", async () => {
-      const spy = vi.spyOn(console, "log").mockImplementation(() => {});
+      const spy = vi.spyOn(process.stdout, "write").mockImplementation(() => true);
       await setGoal("完成 plan→build→review→test→ship 流程");
       expect(spy).toHaveBeenCalled();
       const output = spy.mock.calls.map((args) => args.join(" ")).join("\n");
@@ -96,7 +96,7 @@ describe("goal-integration (R4)", () => {
 
   describe("clearGoal", () => {
     it("outputs instruction to stdout (does not throw)", async () => {
-      const spy = vi.spyOn(console, "log").mockImplementation(() => {});
+      const spy = vi.spyOn(process.stdout, "write").mockImplementation(() => true);
       await clearGoal();
       expect(spy).toHaveBeenCalled();
       spy.mockRestore();

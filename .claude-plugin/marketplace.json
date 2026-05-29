@@ -1,18 +1,17 @@
 {
-  "id": "forge",
-  "name": "Forge",
-  "version": "2.7.0",
-  "description": "Unified AI coding workflow framework — TDD, spec-driven planning, automated review, and three-tier task routing.",
-  "author": "Forge contributors",
-  "homepage": "https://github.com/kkkman22/Forge",
-  "repository": "https://github.com/kkkman22/Forge",
-  "license": "MIT",
-  "categories": ["workflow", "code-quality", "developer-tools"],
-  "install": {
-    "type": "git",
-    "url": "https://github.com/kkkman22/Forge.git"
+  "$schema": "https://anthropic.com/claude-code/marketplace.schema.json",
+  "name": "forge-official",
+  "description": "Forge official marketplace — unified AI coding workflow framework with 22 internal subcommands, TDD, spec-driven planning, automated review, and three-tier task routing.",
+  "owner": {
+    "name": "Forge contributors",
+    "url": "https://github.com/kkkman22/Forge"
   },
-  "compatibility": {
-    "minClaudeCodeVersion": "2.1.153"
-  }
+  "plugins": [
+    {
+      "name": "forge",
+      "description": "Unified AI coding workflow framework — single /forge slash command with TDD, spec-driven planning, and automated review.",
+      "source": "./",
+      "category": "development"
+    }
+  ]
 }

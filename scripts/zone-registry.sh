@@ -213,7 +213,13 @@ classify_path() {
         local actual_status=""
         actual_status=$(_read_file_status "$forge_relative" "$input_path")
         if [[ "$actual_status" != "$required_status" ]]; then
-          continue
+          # Frozen zone paths are protected even when the file doesn't exist yet
+          # (prevents AI from creating/modifying files in frozen directories)
+          if [[ -z "$actual_status" ]] && [[ "$category" == frozen-* ]]; then
+            : # allow through — path-based frozen protection
+          else
+            continue
+          fi
         fi
       fi
 

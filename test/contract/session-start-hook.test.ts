@@ -93,7 +93,7 @@ describe("SessionStart hook (inject-evolved-rules.mjs)", () => {
     it("outputs additionalContext when evolved-rules.md exists", async () => {
       const tmpDir = makeTmp();
       try {
-        makeEvolvedRules(tmpDir, "### R1: Test Rule\nSome rule content.");
+        makeEvolvedRules(tmpDir, "### R1: Test Rule\n**Content**: Some rule content.");
 
         const { stdout } = await runScript(
           tmpDir,
