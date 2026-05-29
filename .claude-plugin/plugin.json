@@ -230,8 +230,19 @@
         "hooks": [
           {
             "type": "command",
-            "args": ["node", "${CLAUDE_PLUGIN_ROOT}/scripts/pre-compact-hook.mjs"],
-            "timeout": 3
+            "args": ["bash", "${CLAUDE_PLUGIN_ROOT}/scripts/hook-precompact.sh"],
+            "timeout": 5
+          }
+        ]
+      }
+    ],
+    "PostCompact": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "args": ["bash", "${CLAUDE_PLUGIN_ROOT}/scripts/hook-postcompact.sh"],
+            "timeout": 5
           }
         ]
       }
