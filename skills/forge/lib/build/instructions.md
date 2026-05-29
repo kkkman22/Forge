@@ -162,6 +162,25 @@ Read `ci_check_command` from `config.md` → execute as-is. Empty → `verify_co
 
 → CLAUDE.md §2.1 (RED → GREEN → REFACTOR). In-Subagent enforced. Code before tests → delete, restart.
 
+### §4.1 Sandbox Advisory Checkpoint
+
+Phase 1 advisory: **does not block**, only warns.
+
+**Before writing any source file** in GREEN/REFACTOR phase, call `checkFilesystemPolicy(targetPath, 'write', sandboxConfig)`:
+
+```
+import { loadSandboxConfig, checkFilesystemPolicy } from "./sandbox-phased.js";
+const sandboxConfig = loadSandboxConfig();
+const result = checkFilesystemPolicy(targetPath, "write", sandboxConfig);
+if (!result.allowed) {
+  // Output warning, do NOT block the write
+  console.warn(`⚠️ 沙箱策略建议阻止此操作：${result.reason}（Phase 1 advisory，不阻断）`);
+}
+```
+
+**Trigger**: Any `Write` or `Edit` tool call targeting `src/`, `test/`, `config/`, or other project files.
+**Skip**: `.forge/` directory writes (progress, reviews) are exempt from sandbox checks.
+
 GREEN 阶段的代码必须是"能让测试通过的最简单实现"。REFACTOR 完成后扫描孤儿代码（未使用的 import / 未调用的函数 / 未引用的类型 / 未使用的变量），记录到 `.forge/findings/<topic>.md`，不自行删除。
 
 → 详见 references/tdd-rules.md（Simplicity Check 示例、Rule of Three、Dead Code Hygiene 细节）

@@ -41,7 +41,7 @@
     "build": {
       "instructions": {
         "path": "build/instructions.md",
-        "sha256": "15f198baa628206bc7cc7c8c8c7ef1680d2eaacd27050cb98595f60e45f85b64"
+        "sha256": "342da9b37c4b25b8c699a555ddbd921829cfb92fd5b240a593b2a1cd76fb2576"
       },
       "references": [
         {
@@ -391,7 +391,7 @@
     "plan": {
       "instructions": {
         "path": "plan/instructions.md",
-        "sha256": "4ae6eb545d402628731ec6a6121ceb7ff58edd1b3d521da6054c1d38e48a003c"
+        "sha256": "cd5451fcff8c8a1017d27c62b2f66839bc4ad2c50a189ddf199fb39f1173d6fa"
       },
       "references": [
         {
@@ -574,7 +574,7 @@
     "ship": {
       "instructions": {
         "path": "ship/instructions.md",
-        "sha256": "49fcab172e0d7a0f5a2739065f0af392f1b587a026815a0427245680d93ec29a"
+        "sha256": "cafd958e09d5fc586184b35ee99e3bf063156bac5678d5882555e83081e39cdf"
       },
       "references": [
         {

@@ -334,6 +334,15 @@ if [[ -f "${FORGE_ROOT}/templates/adr-index.md" ]]; then
   fi
 fi
 
+# --- Copy sandbox.json template (idempotent: don't overwrite existing) ---
+if [[ -f "${FORGE_ROOT}/templates/sandbox.json" ]]; then
+  if [[ ! -f "${PROJECT_ROOT}/.forge/sandbox.json" ]]; then
+    cp "${FORGE_ROOT}/templates/sandbox.json" \
+      "${PROJECT_ROOT}/.forge/sandbox.json"
+    echo "  ✓ 已安装 .forge/sandbox.json（沙箱策略配置，默认全部允许）"
+  fi
+fi
+
 # 将技术栈转为 YAML 数组格式
 IFS=',' read -ra stack_array <<< "${tech_stack}"
 stack_yaml=""
@@ -808,6 +817,7 @@ echo -e "${GREEN}╚════════════════════
 echo ""
 echo "  已创建："
 echo "    📁 .forge/          — 统一状态目录（含所有子目录和模板）"
+echo "    📄 .forge/sandbox.json — 沙箱策略配置（Phase 1 advisory 模式）"
 echo "    📁 .claude/agents/  — 7 个 Subagent 角色文件"
 echo "    📁 .claude/commands/ — Forge Command 入口"
 echo "    📄 .claude/settings.json — Forge Hooks + MCP 配置"
