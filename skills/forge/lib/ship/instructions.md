@@ -123,6 +123,25 @@ IF 本次执行是从 conversation summary 恢复（上下文压缩后继续）�
 
 ---
 
+## 3.5 Spec Status Summary
+
+Ship 完成后，在报告输出中包含本次 ship 涉及的 spec 状态变更摘要：
+
+1. 读取 `.kiro/specs/` 中与当前 feature branch 名称匹配的 spec
+2. 显示 spec 当前状态（`status` 字段）
+3. 如果 build 阶段已将 status 更新为 `completed`，在 ship 报告中注明
+4. 触发 `node scripts/rebuild-spec-index.mjs --incremental` 同步 INDEX.md
+
+输出格式：
+```
+📋 Spec Status:
+  <spec-name>: <status> (updated: <date>)
+```
+
+无匹配 spec 时输出 `(no spec reference)` 并跳过。
+
+---
+
 ## 4. Cleanup
 
 ### 4.1 Worktree Cleanup
