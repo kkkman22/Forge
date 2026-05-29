@@ -617,4 +617,33 @@ export const SKILL_FUNCTION_REGISTRY: readonly SkillFunctionEntry[] = [
     parameterNames: ["subcommand", "args"],
     mcpTool: true,
   },
+
+  // --- sandbox-phased.ts ---
+  {
+    module: "sandbox-phased.ts",
+    functionName: "checkFilesystemPolicy",
+    skills: [
+      "forge/lib/build/instructions.md",
+      "forge/lib/plan/instructions.md",
+    ],
+    parameterNames: ["filePath", "operation", "config"],
+  },
+  {
+    module: "sandbox-phased.ts",
+    functionName: "checkCommandPolicy",
+    skills: ["forge/lib/ship/instructions.md"],
+    parameterNames: ["command", "config"],
+  },
+  {
+    module: "sandbox-phased.ts",
+    functionName: "checkNetworkPolicy",
+    skills: [],
+    parameterNames: ["url", "config"],
+  },
+  {
+    module: "sandbox-phased.ts",
+    functionName: "loadSandboxConfig",
+    skills: [],
+    parameterNames: ["configPath"],
+  },
 ] as const;
