@@ -83,7 +83,7 @@ Phase 1 advisory: **does not block**, only warns.
 **Before reading any source file** during subagent execution, call `checkFilesystemPolicy(targetPath, 'read', sandboxConfig)`:
 
 ```
-import { loadSandboxConfig, checkFilesystemPolicy } from "./sandbox-phased.js";
+import { loadSandboxConfig, checkFilesystemPolicy } from "./sandbox-policy.js";
 const sandboxConfig = loadSandboxConfig();
 const result = checkFilesystemPolicy(targetPath, "read", sandboxConfig);
 if (!result.allowed) {
