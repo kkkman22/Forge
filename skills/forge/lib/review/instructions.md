@@ -94,7 +94,16 @@ node scripts/prepare-diff-context.mjs
 
 写入失败 → fallback：保留 findings table 在 context 中（不阻断评审），标注 `write_failed: true`。
 
-**截断处理**：可解析部分发现 → 标注不完整并使用已解析部分；无法解析 → 重试 1 次；重试仍失败 → 标注不完整，**不得标记为"检查完成"**。
+**截断处理**（`src/truncation-detection.ts`）：收到 subagent 结果后调用 `detectTruncation(layer, raw)` 检测 `<!-- REPORT_START -->` / `<!-- REPORT_END -->` 标记完整性。然后调用 `assessTruncationSeverity(results)` 判定全局降级策略：
+
+| 截断层数 | 动作 | 行为 |
+|---------|------|------|
+| 0 | `proceed` | 正常流程 |
+| 1 | `annotate` | 正常输出，该 Layer 标注 `[数据不完整]` |
+| 2 | `warn` | 输出警告，建议重新运行 `/forge review` |
+| 3 (全部) | `degrade` | 触发 Fallback Ladder L2 串行重试 |
+
+`degrade` 降级时：按 L1 串行模式重试所有 truncated 层。重试结果仍经过 `detectTruncation` 验证。重试仍全部 truncated → 标记 methodology 为 `unavailable`，阻断 ship（L3）。
 
 **合并管线**：`filterByConfidence` → `deduplicateFindings` → `applyCrossValidation`
 
