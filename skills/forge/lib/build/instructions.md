@@ -317,6 +317,20 @@ Build 全部任务完成且 Final Validation 通过后，自动检查并更新�
 
 ---
 
+## Read Dedup Iron Law
+
+<IRON-LAW name="read-dedup">
+
+在同一个 session 中对同一文件的 Read 调用**不得超过 2 次**。
+
+- **第 2 次起**：必须使用 `forge_read_cached`（MCP tool）或 `Grep`（定向搜索）替代完整 Read。
+- **回顾已读文件**：使用 Grep 搜索特定片段而非全量重读。
+- **适用范围**：`/forge build`、`/forge review`、`/forge test`。
+
+当 `forge_read_cached` MCP tool 不可用时，仍须手动控制同一文件 Read ≤2 次。
+
+</IRON-LAW>
+
 ## Gotchas
 - **Skipping RED phase**: Write implementation first, then backfill tests → tests verify implementation not behavior → must write failing test first
 - **Subagent context leak**: Subagent returns full raw output → main context polluted with 50 lines of grep results → subagent must return conclusion summary only

@@ -362,3 +362,16 @@ After receiving three-layer review reports, forge-review SKILL:
 5. Outputs: `本次新增 N 条、更新 M 条 known-failures`
 
 Retention: >100 entries triggers auto-archive to `.forge/archive/known-failures-<date>.md`, keeping latest 80.
+
+## Read Dedup Iron Law
+
+<IRON-LAW name="read-dedup">
+
+在同一个 session 中对同一文件的 Read 调用**不得超过 2 次**。
+
+- **第 2 次起**：必须使用 `forge_read_cached`（MCP tool）或 `Grep`（定向搜索）替代完整 Read。
+- **回顾已读文件**：使用 Grep 搜索特定片段而非全量重读。
+
+当 `forge_read_cached` MCP tool 不可用时，仍须手动控制同一文件 Read ≤2 次。
+
+</IRON-LAW>
