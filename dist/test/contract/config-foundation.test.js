@@ -8,7 +8,7 @@ describe("Config foundation (R6 + R7 + config fields)", () => {
         const content = existsSync(configPath) ? readFileSync(configPath, "utf-8") : "";
         const requiredFields = [
             { field: "review_dispatch_mode", expected: "inline" },
-            { field: "decide_dispatch_mode", expected: "inline" },
+            { field: "decide_dispatch_mode", expected: "auto" },
             { field: "output_conciseness_hook", expected: "on" },
             { field: "forge_compact_restate_reminder", expected: "on" },
             { field: "forge_compact_restate_threshold_tasks", expected: "3" },

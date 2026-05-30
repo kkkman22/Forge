@@ -5,9 +5,13 @@
  * Used by check-sandbox.ts (PreToolUse hook) and SdkDriver (startup validation).
  *
  * **Validates: Requirements 1, 2, 3, 5**
+ *
+ * Re-exports Phase 1 declarative sandbox types and functions from sandbox-phased.ts,
+ * making this module the canonical import point for all sandbox-related types.
  */
 import * as path from "node:path";
 import { minimatch } from "minimatch";
+export { checkCommandPolicy, checkFilesystemPolicy, checkNetworkPolicy, DEFAULT_SANDBOX_CONFIG, loadSandboxConfig, resolveProfile, } from "./sandbox-phased.js";
 // ---------------------------------------------------------------------------
 // checkFileAccess (Requirement 1, 5)
 // ---------------------------------------------------------------------------
@@ -16,6 +20,9 @@ import { minimatch } from "minimatch";
  *
  * Deny patterns take priority over allow patterns.
  * Returns an AccessDecision with a descriptive reason on denial.
+ *
+ * @deprecated Use checkFilesystemPolicy (re-exported above) for Phase 1 checks.
+ * Note: this function defaults to DENY on no match; checkFilesystemPolicy defaults to ALLOW.
  */
 export function checkFileAccess(filePath, policy) {
     // Normalize: resolve .. segments, unify separators, ensure consistent matching
@@ -50,6 +57,8 @@ export function checkFileAccess(filePath, policy) {
  *   - "none": deny all
  *   - "restricted": allow only whitelisted endpoints
  *   - "open": allow all
+ *
+ * @deprecated Use checkNetworkPolicy (re-exported above) for Phase 1 checks.
  */
 export function checkNetworkAccess(endpoint, policy) {
     if (policy.mode === "open") {
@@ -91,6 +100,8 @@ function endpointMatches(endpoint, allowed) {
 /**
  * Validate a sandbox policy configuration object.
  * Returns a list of validation errors (empty when valid).
+ *
+ * @deprecated Use loadSandboxConfig with isValidSandboxConfig (re-exported above) for Phase 1 validation.
  */
 export function validatePolicy(config) {
     const errors = [];
@@ -134,6 +145,8 @@ export function validatePolicy(config) {
  *
  * Default: allow all files under project root, deny paths outside.
  * Network mode is "open" for backward compatibility.
+ *
+ * @deprecated Use DEFAULT_SANDBOX_CONFIG (re-exported above) for Phase 1 default config.
  */
 export function buildDefaultPolicy(projectRoot) {
     const normalizedRoot = path.resolve(projectRoot).replace(/\\/g, "/");

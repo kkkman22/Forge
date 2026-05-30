@@ -10,7 +10,7 @@
  * **Validates: Requirements 3.1–3.5**
  */
 import { afterEach, describe, expect, it, vi } from "vitest";
-import { formatDiffSummary, formatStatusSummary } from "../../src/mcp/tools/forge-git.js";
+import { formatDiffSummary, formatStatusSummary, truncateDiffContent, } from "../../src/mcp/tools/forge-git.js";
 // ---------------------------------------------------------------------------
 // Mock child_process.execFile (used by execCommand from forge-exec.ts)
 // ---------------------------------------------------------------------------
@@ -225,6 +225,55 @@ describe("forge_git tool behavior", () => {
             expect(result.exitCode).toBe(128);
             expect(result.stderr).toContain("fatal: bad default revision");
         });
+    });
+});
+// ---------------------------------------------------------------------------
+// truncateDiffContent tests
+// ---------------------------------------------------------------------------
+describe("truncateDiffContent", () => {
+    it("returns placeholder for empty input", () => {
+        expect(truncateDiffContent("")).toBe("（无 diff 内容）");
+        expect(truncateDiffContent("   ")).toBe("（无 diff 内容）");
+    });
+    it("returns raw diff unchanged when under line limit", () => {
+        const diff = "diff --git a/foo.ts b/foo.ts\n+hello\n-world";
+        expect(truncateDiffContent(diff)).toBe(diff);
+    });
+    it("splits multi-file diffs by priority and omits low-priority files", () => {
+        // Create 16 source files (priority 4) with 101 lines each = ~1616 total > 1500
+        // then 1 lock file (priority 0) that should be omitted
+        const lines = [];
+        for (let f = 0; f < 16; f++) {
+            lines.push(`diff --git a/src/file${f}.ts b/src/file${f}.ts`);
+            for (let i = 0; i < 100; i++)
+                lines.push(`+src${f} line ${i}`);
+        }
+        // Lock file (priority 0) — lowest priority, should be omitted
+        lines.push("diff --git a/yarn.lock b/yarn.lock");
+        for (let i = 0; i < 100; i++)
+            lines.push(`+lock line ${i}`);
+        const result = truncateDiffContent(lines.join("\n"));
+        // Source files should be present
+        expect(result).toContain("src/file0.ts");
+        // Lock file should appear in omitted list
+        expect(result).toContain("yarn.lock");
+        // Truncation notice should be present
+        expect(result).toContain("diff truncated");
+        expect(result).toContain("省略文件");
+    });
+    it("truncates individual files exceeding per-file limit", () => {
+        const lines = [];
+        lines.push("diff --git a/src/big.ts b/src/big.ts");
+        // Need total > 1500 lines to enter truncation path
+        for (let i = 0; i < 1600; i++)
+            lines.push(`+line ${i}`);
+        const result = truncateDiffContent(lines.join("\n"));
+        expect(result).toContain("[truncated:");
+        expect(result).toContain("src/big.ts");
+    });
+    it("keeps short diffs with multiple files intact", () => {
+        const diff = ["diff --git a/a.ts b/a.ts", "+a", "diff --git a/b.ts b/b.ts", "+b"].join("\n");
+        expect(truncateDiffContent(diff)).toBe(diff);
     });
 });
 // ---------------------------------------------------------------------------

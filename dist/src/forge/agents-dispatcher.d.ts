@@ -30,7 +30,7 @@ export interface DispatchResult {
     /** Wall-clock duration in milliseconds. */
     duration_ms?: number;
 }
-declare const VALID_DISPATCH_MODES: readonly ["inline", "agents"];
+declare const VALID_DISPATCH_MODES: readonly ["inline", "agents", "auto"];
 type DispatchMode = (typeof VALID_DISPATCH_MODES)[number];
 /**
  * Parse dispatch mode from `.forge/config.md` frontmatter.

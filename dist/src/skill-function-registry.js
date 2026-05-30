@@ -146,6 +146,30 @@ export const SKILL_FUNCTION_REGISTRY = [
     },
     // --- forge-ship/SKILL.md ---
     {
+        module: "ship-gates.ts",
+        functionName: "runAllGates",
+        skills: ["forge/lib/ship/instructions.md"],
+        parameterNames: ["input"],
+    },
+    {
+        module: "ship-gates.ts",
+        functionName: "persistGateResults",
+        skills: ["forge/lib/ship/instructions.md"],
+        parameterNames: ["report", "shipDir"],
+    },
+    {
+        module: "ship-gates.ts",
+        functionName: "validateSkipGateOptions",
+        skills: ["forge/lib/ship/instructions.md"],
+        parameterNames: ["options"],
+    },
+    {
+        module: "ship-gates.ts",
+        functionName: "buildSkipGateAnnotation",
+        skills: ["forge/lib/ship/instructions.md"],
+        parameterNames: ["options"],
+    },
+    {
         module: "ship.ts",
         functionName: "checkShipGate",
         skills: ["forge/lib/ship/instructions.md"],
@@ -599,7 +623,11 @@ export const SKILL_FUNCTION_REGISTRY = [
     {
         module: "sandbox-phased.ts",
         functionName: "checkFilesystemPolicy",
-        skills: ["forge/lib/build/instructions.md", "forge/lib/plan/instructions.md"],
+        skills: [
+            "forge/lib/build/instructions.md",
+            "forge/lib/plan/instructions.md",
+            "forge/lib/review/instructions.md",
+        ],
         parameterNames: ["filePath", "operation", "config"],
     },
     {

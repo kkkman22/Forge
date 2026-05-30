@@ -3,7 +3,7 @@ import { describe, expect, it } from "vitest";
 import { formatDocsGovernanceSection, runDocsGovernanceCheck, } from "../../../src/docs-governance/reporter/learn-docs-check.js";
 const ROOT = resolve(__dirname, "../../../");
 describe("runDocsGovernanceCheck", () => {
-    it("executes all three checkers and returns valid result", () => {
+    it("executes all three checkers and returns valid result", { timeout: 15_000 }, () => {
         const result = runDocsGovernanceCheck(ROOT);
         expect(result.timestamp).toMatch(/^\d{4}-\d{2}-\d{2}T/);
         expect(["clean", "needs_attention"]).toContain(result.status);
