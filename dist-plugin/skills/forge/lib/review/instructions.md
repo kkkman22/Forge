@@ -19,6 +19,16 @@ Diff stat: !`git diff --stat HEAD~1 2>/dev/null || echo "no diff"`
 > **触发**：标准路径第三步 / 全量路径第五步 / 轻量路径第二步 / 直接输入 `/forge review`
 > **输出**：`.forge/reviews/<topic>.md`
 
+## 0. 从 PR 恢复
+
+当用户以 `/forge review <pr-url-or-number>` 或 `/forge review --from-pr <value>` 调用时：
+
+1. 运行 `node scripts/resume-from-pr.mjs <value>` 恢复上下文
+2. 成功 → 基于 PR context 执行后续 review 流程
+3. 失败 → 输出错误诊断 + 建议手动恢复步骤，中止 review
+
+**复用现有实现**：`scripts/resume-from-pr.mjs` 不需要修改。
+
 ## 1. Overview
 
 三层评审（Spec 对齐 → 代码质量 → 安全与风险）独立验证 build 产出。**核心原则**：执行与评估分离，写代码的人不评审自己的代码。
@@ -75,6 +85,25 @@ node scripts/prepare-diff-context.mjs
 → 详见 references/diff-context-preparation.md（脚本契约、frontmatter 模板、`## Why Narrative Summary is Forbidden`）
 
 使用 Agent tool 独立启动，无需 Agent Team。
+
+### §2.0b Sandbox Advisory Checkpoint
+
+Phase 1 advisory: **does not block**, only warns.
+
+**Before reading any source file** during subagent execution, call `checkFilesystemPolicy(targetPath, 'read', sandboxConfig)`:
+
+```
+import { loadSandboxConfig, checkFilesystemPolicy } from "./sandbox-policy.js";
+const sandboxConfig = loadSandboxConfig();
+const result = checkFilesystemPolicy(targetPath, "read", sandboxConfig);
+if (!result.allowed) {
+  // Output warning, do NOT block the read
+  console.warn(`⚠️ 沙箱策略建议阻止此操作：${result.reason}（Phase 1 advisory，不阻断）`);
+}
+```
+
+**Trigger**: Any `Read` tool call targeting `src/`, `test/`, or other project files during subagent execution.
+**Skip**: `.forge/` directory reads (reviews, specs, status) are exempt from sandbox checks.
 
 | Subagent | Definition File | Layer |
 |---------|--------------|------|
@@ -203,6 +232,67 @@ IF 本次执行是从 conversation summary 恢复（上下文压缩后继续）�
 
 </HARD-GATE>
 
+## 8b. Post-Review Pipeline
+
+三层 review 完成后，按以下顺序执行 post-review pipeline。遵循 §2.7 No Confirmation Between Steps 铁律：步骤间不暂停询问用户。
+
+### Step 1: 三层 review（§2）
+
+执行 §2 Subagent Parallel Execution（spec-check / quality-check / security-check）。完成后收集 findings。
+
+### Step 2: P0/P1 处理
+
+当三层 review 发现 P0 或 P1 findings 时：
+
+1. **不自动 fix**：P0/P1 问题需人工审查，禁止自动执行 `/code-review --fix`
+2. **输出修复建议**：包含 file:line、问题描述、建议修复方案
+3. **标记 ship 阻断**：遵循 CLAUDE.md §3.3 P0/P1 Must Fix 铁律
+4. **生成 P1 Fix Checklist**（§9）
+
+`✅ Step 2 完成 — P0/P1 findings 输出，ship 阻断`
+
+### Step 3: P2/P3 Auto-Fix
+
+当三层 review 仅有 P2/P3 findings（无 P0/P1）时：
+
+1. **自动执行 `/code-review --fix`**：调用 `/code-review --fix` 对 P2/P3 问题进行自动修复
+2. **独立 commit**：fix 结果作为独立 commit：`fix(review): auto-fix P2/P3 findings from code-review`
+3. **验证修复**：运行 `ci_check_command`（`.forge/config.md` 中配置，默认 `npm run check`）验证修复未引入新问题
+4. **验证失败回退**：`npm run check` 失败时 → revert fix commit + 输出警告 + 保留 P2/P3 findings 不修复
+5. **无变化时跳过**：`/code-review --fix` 未产生 diff 时 → 跳过 fix commit，继续
+6. **记录**：fix 结果写入 `.forge/reviews/`
+
+`✅ Step 3 完成 — P2/P3 auto-fix`
+
+### Step 4: Post-Review Simplify
+
+当三层 review 全部通过（无 P0/P1 且 P2/P3 已修复或无 findings）时：
+
+1. **自动运行 `/simplify`**：以 cleanup-only 模式运行（不影响功能，仅做代码简化）
+2. **独立 commit**：simplify 结果作为独立 commit：`refactor: simplify code after review`
+3. **验证简化**：运行 `ci_check_command` 验证 simplify 未引入新问题
+4. **验证失败回退**：`npm run check` 失败时 → revert simplify commit
+5. **大量 diff 警告**：simplify 产生 diff 超过 50 行时 → commit 但输出 `⚠️ Simplify 产生大量 diff（<n> 行），建议人工审查。`
+6. **无 findings 且 simplify 成功**：标记为"review 通过 + 代码优化完成"
+
+`✅ Step 4 完成 — Post-review simplify`
+
+### Pipeline 执行顺序
+
+```
+Post-Review Step 1: 三层 review（spec-check / quality-check / security-check）
+    ↓
+Post-Review Step 2: P0/P1 存在？→ 输出修复建议，阻断 ship（结束）
+    ↓ (无 P0/P1)
+Post-Review Step 3: P2/P3 存在？→ 自动 /code-review --fix + commit + 验证
+    ↓ (全部通过)
+Post-Review Step 4: 自动 /simplify + commit + 验证
+    ↓
+✅ Review 通过 + 代码优化完成
+```
+
+每步骤完成后输出 `✅ <步骤> 完成`，遵循 §2.7 不暂停询问。
+
 ## 9. P1 Fix Checklist
 
 评审完成后，若存在 P0/P1 finding，则创建 `.forge/reviews/<topic>-checklist.md` 追踪修复状态。
@@ -223,7 +313,7 @@ IF 本次执行是从 conversation summary 恢复（上下文压缩后继续）�
 
 ## 11. Execution Flow
 
-1. **前置检查**（§15）→ 1.5. **Diff Context Preparation**（§2.0，写入 `.forge/reviews/.diff-context.md`）→ 2. **并行启动 Subagent**（prompt 包含 diff context 引用）→ 3. **状态确认** → 4. **合并管线** → 5. **质量门** → 6. **P0/P1 判定** → 7. **输出报告**（写入 frontmatter 时执行 `git rev-parse HEAD` 记录 `reviewed_at_commit`）→ 8. **生成 P1 Fix Checklist**（§9，存在 P0/P1 时）
+1. **前置检查**（§15）→ 1.5. **Diff Context Preparation**（§2.0，写入 `.forge/reviews/.diff-context.md`）→ 2. **并行启动 Subagent**（prompt 包含 diff context 引用）→ 3. **状态确认** → 4. **合并管线** → 5. **质量门** → 6. **P0/P1 判定** → 7. **输出报告**（写入 frontmatter 时执行 `git rev-parse HEAD` 记录 `reviewed_at_commit`）→ 8. **生成 P1 Fix Checklist**（§9，存在 P0/P1 时）→ 9. **Post-Review Pipeline**（§8b）
 
 **Step 1.1 状态确认**：主动跟踪每个 Subagent，不假设"启动即完成"。**完成判定只看两件事**：(a) 框架返回的 `status` 字段是否 `success`；(b) `output` 末尾是否带有 sentinel `<!-- review-final -->`（详见 references/final-report-contract.md）。**禁止**主 Agent 阅读或解析 subagent 的自然语言 `result` 文本来判断"是否完成"——历史事故中 subagent 把中间话（"Now let me check..."）作为 result 返回时，主 Agent 误判为"还在跑"并 idle 等待永远不来的通知。
 

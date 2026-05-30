@@ -4,6 +4,7 @@ description: Spec 对齐评审者。在 /forge review 的 Agent Team 中提供 L
 model: sonnet
 maxTurns: 15
 tools: Read, Glob, Grep
+disallowedTools: [Bash, Write, Edit, Agent]
 permissionMode: plan
 memory: project
 ---

@@ -25,6 +25,16 @@ Uncommitted: !`git status --short 2>/dev/null | head -10 || echo "clean"`
 
 ---
 
+## 0. 从 PR 恢复
+
+当用户以 `/forge ship <pr-url-or-number>` 或 `/forge ship --from-pr <value>` 调用时：
+
+1. 运行 `node scripts/resume-from-pr.mjs <value>` 恢复上下文
+2. 成功 → 基于 PR context 执行后续 ship 门禁和交付流程
+3. 失败 → 输出错误诊断 + 建议手动恢复步骤，中止 ship
+
+**复用现有实现**：`scripts/resume-from-pr.mjs` 不需要修改。
+
 ## 1. Overview
 
 `/forge ship` 是 Forge 工作流的最后一道关卡——在代码离开开发环境之前，确认所有质量门禁都已通过。它检查三个前置条件（评审通过、测试通过、任务完成），加上可选的第四道门禁（Acceptance Scenario Eval），然后提供四种交付选项供开发者选择。
@@ -55,10 +65,29 @@ Uncommitted: !`git status --short 2>/dev/null | head -10 || echo "clean"`
 
 → 详见 references/gate-checks.md（门禁表、证据格式、Review Freshness Check 完整流程）
 
+**函数调用**：`runAllGates(input)`
+- 参数：`RunAllGatesInput`（含 `reviewDir`、`testResultsDir`、`progressDir`、`featureName`、`latestCommitHash`、可选 `methodology`、`configCICheck`、`gitLogFn`、`skipOptions`）
+- 返回：`ShipGateReport`（含 `gates`、`allPassed`、`skipGate`、`runId`），按 Review → Test → Progress 顺序执行
+- 用途：从 `.forge/` 文件系统自动读取门禁数据，执行三道门禁检查。任一阻断门禁失败 → `allPassed=false`，输出 `reason` 并退出；全部通过 → `allPassed=true`，继续交付流程。这是 ship 流程的**首选门禁入口**，内部调用 `checkReviewGate`、`checkTestGate`、`checkProgressGate`
+
+**函数调用**：`persistGateResults(report, shipDir)`
+- 参数：`report` — `runAllGates` 返回的 `ShipGateReport`；`shipDir` — `.forge/ship/` 目录路径
+- 用途：将门禁结果持久化到 `.forge/ship/<run-id>-gates.json`，含每道门禁的 passed/reason/details 和 allPassed 汇总
+
 **函数调用**：`checkShipGate(review, test, progress)`
 - 参数：`review` — 从 `.forge/reviews/<topic>.md` frontmatter 解析的 `ReviewResult`（含 `result`、`p0_count`、`p1_count`）；`test` — 从 Layer 1 + Layer 3 验证结果构造的 `TestResult`（含 `passed`、`failedCount`）；`progress` — 从 `.forge/progress/<topic>.md` 解析的 `ProgressResult`（含 `totalTasks`、`completedTasks`）
 - 返回：`{ allowed: boolean, reasons: string[] }`，`allowed: false` 时 `reasons` 列出所有未通过的门禁
-- 用途：程序化执行三道门禁检查，替代手动逐条验证
+- 用途：程序化执行三道门禁检查（已有预解析数据时使用），替代 `runAllGates` 的文件系统读取
+
+**函数调用**：`validateSkipGateOptions(options)`
+- 参数：`SkipGateOptions`（含 `skipGates`、`skipAll`、`force`、`isInteractive`）
+- 返回：`string | null`，验证失败返回错误信息，通过返回 `null`
+- 用途：验证 `--skip-gate` 参数合法性。`--skip-gate=all` 在交互模式禁止、非交互模式需要 `--force`
+
+**函数调用**：`buildSkipGateAnnotation(options)`
+- 参数：`SkipGateOptions`
+- 返回：`string`，格式 `[skip-gate: <gate-name> reason=<reason>]`
+- 用途：构建跳过门禁的 commit message 标注
 
 **函数调用**：`checkShipGateWithChecklist(review, test, progress, checklist)`
 - 参数：同 `checkShipGate` 的三个参数 + `checklist` — P1 Fix Checklist 条目（`ChecklistEntry[]`，含修复项和验证状态）
@@ -114,7 +143,7 @@ Phase 1 advisory: **does not block**, only warns.
 **Before executing any shell command** (git merge, git push, gh pr create, etc.), call `checkCommandPolicy(command, sandboxConfig)`:
 
 ```
-import { loadSandboxConfig, checkCommandPolicy } from "./sandbox-phased.js";
+import { loadSandboxConfig, checkCommandPolicy } from "./sandbox-policy.js";
 const sandboxConfig = loadSandboxConfig();
 const result = checkCommandPolicy(command, sandboxConfig);
 if (!result.allowed) {
@@ -194,12 +223,13 @@ Autonomous 模式通过 `.forge/config.md` 的 `ship_default_method` 字段控�
 
 ## 6. Execution Flow
 
-1. Gate checks (three gates): Review passed? Test passed? Progress complete?
-2. Not passed → 🚫 Block, list failed items
-3. Passed → Show four delivery options
-4. Execute chosen delivery method (Merge to main 时含 conflict-resolver 自动处理，详见 references/delivery-options.md §Option 1)
-5. Cleanup Worktree + prompt `/forge learn`
-6. Post-Push Verify (see §9)
+1. Gate checks: call `runAllGates(input)` → Review → Test → Progress (in sequence)
+2. Persist results: call `persistGateResults(report, ".forge/ship")`
+3. Not passed (`allPassed=false`) → 🚫 Block, list failed items from `report.gates`
+4. Passed → Show four delivery options
+5. Execute chosen delivery method (Merge to main 时含 conflict-resolver 自动处理，详见 references/delivery-options.md §Option 1)
+6. Cleanup Worktree + prompt `/forge learn`
+7. Post-Push Verify (see §9)
 
 ## 9. Post_Push_Verify [R8.1-R8.6]
 

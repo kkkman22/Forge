@@ -189,7 +189,8 @@ done
 
 # Copy runtime .mjs scripts referenced by hooks
 for script in \
-  inject-plan-context.mjs check-context-boundary.mjs \
+  inject-plan-context.mjs inject-evolved-rules.mjs \
+  check-context-boundary.mjs \
   rebuild-feature-dossier.mjs record-evolved-rule-violation.mjs \
   flag-stale-evolved-rules.mjs; do
   if [[ -f "${FORGE_ROOT}/scripts/${script}" ]]; then
