@@ -1,2 +1,17 @@
 {"timestamp":"2026-05-30T03:08:19Z","event":"precompact_snapshot","detail":"slug=context-explosion-defense phase=build completed=17 pending=0
+{"timestamp":"2026-05-30T02:57:24Z","event":"precompact_snapshot","detail":"slug=build-goal-replace-loop phase=build completed=0 pending=0"}
+{"timestamp":"2026-05-30T03:02:49Z","event":"postcompact_restore","detail":"slug=build-goal-replace-loop"}
+{"timestamp":"2026-05-30T03:02:50Z","event":"precompact_snapshot","detail":"slug=build-goal-replace-loop phase=build completed=0 pending=0"}
+{"timestamp":"2026-05-30T03:08:21Z","event":"postcompact_restore","detail":"slug=build-goal-replace-loop"}
+{"timestamp":"2026-05-30T03:08:21Z","event":"precompact_snapshot","detail":"slug=build-goal-replace-loop phase=build completed=0 pending=0"}
+{"timestamp":"2026-05-30T03:15:50Z","event":"postcompact_restore","detail":"slug=build-goal-replace-loop"}
+{"timestamp":"2026-05-30T03:15:50Z","event":"precompact_snapshot","detail":"slug=build-goal-replace-loop phase=build completed=0 pending=0"}
+{"timestamp":"2026-05-30T03:17:30Z","event":"postcompact_restore","detail":"slug=build-goal-replace-loop"}
+{"timestamp":"2026-05-30T03:17:30Z","event":"precompact_snapshot","detail":"slug=build-goal-replace-loop phase=build completed=0 pending=0"}
+{"timestamp":"2026-05-30T03:28:19Z","event":"postcompact_restore","detail":"slug=build-goal-replace-loop"}
+{"timestamp":"2026-05-30T03:28:19Z","event":"precompact_snapshot","detail":"slug=build-goal-replace-loop phase=build completed=0 pending=0"}
+{"timestamp":"2026-05-30T03:30:32Z","event":"postcompact_restore","detail":"slug=build-goal-replace-loop"}
+{"timestamp":"2026-05-30T03:30:32Z","event":"precompact_snapshot","detail":"slug=build-goal-replace-loop phase=build completed=0 pending=0"}
+{"timestamp":"2026-05-30T03:38:07Z","event":"postcompact_restore","detail":"slug=build-goal-replace-loop"}
+{"timestamp":"2026-05-30T03:38:07Z","event":"precompact_snapshot","detail":"slug=build-goal-replace-loop phase=test completed=21 pending=0
 0"}
