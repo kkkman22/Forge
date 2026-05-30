@@ -348,6 +348,17 @@
           }
         ]
       }
+    ],
+    "ConfigChange": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "args": ["node", "${CLAUDE_PLUGIN_ROOT}/scripts/config-changed-hook.mjs"],
+            "timeout": 3
+          }
+        ]
+      }
     ]
   }
 }
