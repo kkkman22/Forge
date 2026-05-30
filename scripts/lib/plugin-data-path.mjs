@@ -8,7 +8,7 @@
  */
 
 import { existsSync, mkdirSync, readFileSync, writeFileSync } from "node:fs";
-import { join, resolve } from "node:path";
+import { basename, join, resolve } from "node:path";
 import { homedir } from "node:os";
 
 /**
@@ -24,27 +24,60 @@ import { homedir } from "node:os";
  */
 export function getPluginDataDir() {
   const envDir = process.env.CLAUDE_PLUGIN_DATA;
-  const base = envDir
-    ? join(envDir, "forge")
-    : join(homedir(), ".claude", "plugins", "data", "forge");
 
-  const abs = resolve(base);
+  // Validate env var: must be an absolute, non-empty path without traversal
+  if (envDir) {
+    if (!envDir.startsWith("/") || envDir.includes("..")) {
+      process.stderr.write(
+        `[plugin-data] Invalid CLAUDE_PLUGIN_DATA: "${envDir}" — must be absolute path without ".."\n`,
+      );
+      // Fall through to homedir fallback
+    } else {
+      const base = join(envDir, "forge");
+      const abs = resolve(base);
+      try {
+        mkdirSync(abs, { recursive: true, mode: 0o700 });
+        return abs;
+      } catch (err) {
+        process.stderr.write(
+          `[plugin-data] Cannot create ${abs}: ${err.message}\n`,
+        );
+        // Fall through to homedir fallback
+      }
+    }
+  }
 
+  // Fallback: ~/.claude/plugins/data/forge/
+  const fallback = join(homedir(), ".claude", "plugins", "data", "forge");
+  const abs = resolve(fallback);
   try {
-    mkdirSync(abs, { recursive: true });
+    mkdirSync(abs, { recursive: true, mode: 0o700 });
     return abs;
-  } catch {
+  } catch (err) {
+    process.stderr.write(
+      `[plugin-data] Cannot create fallback ${abs}: ${err.message}\n`,
+    );
     return null;
   }
 }
 
 /**
  * Return a cache file path under the plugin data directory.
+ * Validates that filename is a simple basename (no path traversal).
  *
  * @param {string} filename — Cache filename (e.g. "evolved-rules-cache.json")
  * @returns {string|null} Absolute path, or null if plugin data dir unavailable.
  */
 export function getCachePath(filename) {
+  // Sanitize: reject filenames with path separators, traversal, or empty
+  if (!filename || typeof filename !== "string" || filename.includes("..") || filename.includes("/") || filename.includes("\\")) {
+    return null;
+  }
+  // Ensure filename is a plain basename (no directory component)
+  if (basename(filename) !== filename) {
+    return null;
+  }
+
   const dir = getPluginDataDir();
   if (!dir) return null;
   return join(dir, filename);
@@ -55,10 +88,12 @@ export function getCachePath(filename) {
  * Old files are preserved (not deleted). Does not overwrite existing new cache.
  *
  * @param {string} projectDir — Absolute path to the project root.
+ * @returns {{ migrated: number, skipped: number, errors: number }} Migration summary.
  */
 export function migrateOldCache(projectDir) {
+  const result = { migrated: 0, skipped: 0, errors: 0 };
   const oldCacheDir = join(projectDir, ".forge", ".cache");
-  if (!existsSync(oldCacheDir)) return;
+  if (!existsSync(oldCacheDir)) return result;
 
   const cacheFiles = [
     "evolved-rules-cache.json",
@@ -68,21 +103,33 @@ export function migrateOldCache(projectDir) {
 
   for (const filename of cacheFiles) {
     const oldPath = join(oldCacheDir, filename);
-    if (!existsSync(oldPath)) continue;
+    if (!existsSync(oldPath)) {
+      result.skipped++;
+      continue;
+    }
 
     const newPath = getCachePath(filename);
-    if (!newPath) continue;
+    if (!newPath) {
+      result.skipped++;
+      continue;
+    }
 
     // Don't overwrite existing new cache
-    if (existsSync(newPath)) continue;
+    if (existsSync(newPath)) {
+      result.skipped++;
+      continue;
+    }
 
     try {
       const data = readFileSync(oldPath, "utf-8");
       // Validate it's parseable JSON before migrating
       JSON.parse(data);
-      writeFileSync(newPath, data, "utf-8");
+      writeFileSync(newPath, data, { mode: 0o600 });
+      result.migrated++;
     } catch {
-      // Skip corrupted old cache files
+      result.errors++;
     }
   }
+
+  return result;
 }
