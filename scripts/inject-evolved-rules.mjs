@@ -194,6 +194,7 @@ function readEvolvedRulesWithCache(cwd) {
     const output = {
       additionalContext: rulesContent,
       hookSpecificOutput: {
+        hookEventName: "SessionStart",
         reloadSkills: true,
       },
     };
