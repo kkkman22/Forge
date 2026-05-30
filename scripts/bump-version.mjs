@@ -16,6 +16,7 @@
 // ============================================================================
 
 import { readFileSync, writeFileSync, existsSync } from "node:fs";
+import { execFileSync } from "node:child_process";
 import { join, dirname } from "node:path";
 import { fileURLToPath } from "node:url";
 
@@ -107,7 +108,22 @@ function main() {
 
   if (updated > 0) {
     console.log(`\n已更新 ${updated} 个文件到 ${newVersion}`);
-    console.log("验证: npx vitest run test/plugin-manifest.test.ts");
+
+    // Auto-rebuild dist to keep bundle-sync green
+    const buildScript = join(ROOT, "scripts", "build-dist.sh");
+    if (existsSync(buildScript)) {
+      console.log("\n正在重建 dist 包...");
+      try {
+        execFileSync("bash", [buildScript], {
+          cwd: ROOT,
+          stdio: "inherit",
+          timeout: 120_000,
+        });
+        console.log("\n✅ dist 包已重建，记得 git add dist/ dist-plugin/");
+      } catch {
+        console.error("\n⚠️ dist 重建失败，请手动运行: bash scripts/build-dist.sh");
+      }
+    }
   } else {
     console.log("\n所有文件已是目标版本，无需更新");
   }
