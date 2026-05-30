@@ -62,7 +62,7 @@ updated: "2026-05-30"
     expect(existsSync(cachePath)).toBe(true);
 
     const cache = JSON.parse(readFileSync(cachePath, "utf-8"));
-    expect(cache).toHaveProperty("sourceMtimeMs");
+    expect(cache).toHaveProperty("sourceMtime");
     expect(cache).toHaveProperty("compiledAt");
     expect(cache).toHaveProperty("rules");
   });
