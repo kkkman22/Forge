@@ -11,7 +11,7 @@
 import { existsSync, readFileSync, writeFileSync } from "node:fs";
 import { resolve, join, basename } from "node:path";
 import { fileURLToPath } from "node:url";
-import { getCachePath } from "./lib/plugin-data-path.mjs";
+import { getCachePath, migrateOldCache } from "./lib/plugin-data-path.mjs";
 
 const __dirname = fileURLToPath(new URL(".", import.meta.url));
 const projectRoot = resolve(__dirname, "..");
@@ -30,6 +30,9 @@ const { dispatchKnowledgeEvent } = mod;
 const args = process.argv.slice(2);
 const forgeRoot = findForgeRoot();
 if (!forgeRoot) process.exit(2);
+
+// Migrate old .forge/.cache/ to plugin data dir on first run
+migrateOldCache(forgeRoot);
 
 // ---------------------------------------------------------------------------
 // Arg dispatch

@@ -26,7 +26,7 @@ import {
     DEFAULT_SIGNALS,
     scanForTriggers,
 } from "../dist/src/evolved-rules-violations.js";
-import { getCachePath } from "./lib/plugin-data-path.mjs";
+import { getCachePath, migrateOldCache } from "./lib/plugin-data-path.mjs";
 
 const RULES_FILE = path.join(process.cwd(), ".forge", "knowledge", "evolved-rules.md");
 const RUNS_DIR = path.join(process.cwd(), ".forge", "runs");
@@ -121,6 +121,9 @@ function persistViolations(report, today) {
 
 function main() {
   const dryRun = process.argv.includes("--dry-run");
+
+  // Migrate old .forge/.cache/ to plugin data dir on first run
+  migrateOldCache(process.cwd());
 
   if (!existsSync(RULES_FILE)) {
     console.log("[record-violation] No evolved-rules.md — nothing to update.");
