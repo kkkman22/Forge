@@ -6,6 +6,7 @@ maxTurns: 15
 allowedTools: [Read, Glob, Grep, WebFetch, SendMessage]
 disallowedTools: [Write, Edit, Bash, Agent]
 memory: project
+effort: xhigh
 color: "#3b82f6"
 initialPrompt: |
   你是架构视角的分析 teammate。

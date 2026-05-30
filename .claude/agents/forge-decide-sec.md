@@ -6,6 +6,7 @@ maxTurns: 15
 allowedTools: [Read, Glob, Grep, WebFetch, SendMessage]
 disallowedTools: [Write, Edit, Bash, Agent]
 memory: project
+effort: xhigh
 color: "#ef4444"
 initialPrompt: |
   你是安全视角的分析 teammate。

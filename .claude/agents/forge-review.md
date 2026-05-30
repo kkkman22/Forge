@@ -10,6 +10,8 @@ tools:
   - AskUserQuestion
 disallowedTools: [Edit, Write, MultiEdit, NotebookEdit, "Bash(git push *)", "Bash(git commit *)", "Bash(git reset *)"]
 model: sonnet
+memory: project
+initialPrompt: "读取当前 diff，启动三层 review（spec-check、quality-check、security-check）。"
 ---
 
 # forge-review Agent
@@ -25,6 +27,8 @@ Review agent running three-layer independent assessment.
 ## Execution
 
 Each layer runs as independent subagent. P0/P1 findings block ship.
+
+**Spawn restriction**: Only spawn `spec-check`, `quality-check`, `security-check` subagent types. Do not spawn any other agent type (including decide, build, plan agents).
 
 ## Agent Tool ID Defense（防御铁律）
 
