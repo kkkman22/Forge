@@ -6,6 +6,14 @@
  * Scans .forge/plans/*.md for active plans, extracts headers respecting token
  * budget constraints, and outputs them to stdout for UserPromptSubmit hook.
  *
+ * Supports --phase <phase> for minimal loading per stage:
+ *   build:  only active (incomplete) tasks
+ *   review: only headers + acceptance criteria
+ *   test:   only task titles
+ *   ship:   only progress summary
+ *
+ * Supports --compact: only task titles, no descriptions.
+ *
  * Fail-open: errors produce no output rather than blocking the user.
  */
 import { readdirSync, readFileSync, statSync } from "node:fs";
@@ -18,10 +26,82 @@ const MAX_LINES_PER_PLAN = 50;
 const MAX_CHARS_PER_PLAN = 2000;
 const MAX_TOTAL_CHARS = 8000; // ~2000 tokens
 
+// ---------------------------------------------------------------------------
+// CLI arg parsing
+// ---------------------------------------------------------------------------
+
+const args = process.argv.slice(2);
+const phaseIdx = args.indexOf("--phase");
+const phase = phaseIdx !== -1 ? args[phaseIdx + 1] : null;
+const compact = args.includes("--compact");
+
+// ---------------------------------------------------------------------------
+// Plan filtering
+// ---------------------------------------------------------------------------
+
 function isActive(content) {
   const fm = content.match(/^---\n([\s\S]*?)\n---/);
   if (!fm) return false;
   return /^status:\s*["']?(active|approved)["']?/m.test(fm[1]);
+}
+
+// ---------------------------------------------------------------------------
+// Phase-aware extraction
+// ---------------------------------------------------------------------------
+
+/**
+ * Extract only active (incomplete) tasks for build phase.
+ * Filters out lines starting with - [x] (completed tasks).
+ */
+function extractBuildTasks(content) {
+  const bodyStart = content.indexOf("---", 4); // skip frontmatter
+  if (bodyStart === -1) return extractHead(content);
+  const body = content.slice(bodyStart + 3);
+
+  // Keep only incomplete task lines and their section headers
+  const lines = body.split("\n");
+  const filtered = [];
+  for (const line of lines) {
+    if (line.match(/^##\s/)) {
+      filtered.push(line); // Section headers (Wave 1, Wave 2, etc.)
+    } else if (line.match(/^- \[ \]/)) {
+      filtered.push(compact ? line.replace(/\s*_.+$/, "") : line); // Incomplete tasks
+    }
+  }
+  const result = filtered.join("\n");
+  return result.length > MAX_CHARS_PER_PLAN
+    ? result.slice(0, MAX_CHARS_PER_PLAN) + "\n[... truncated]"
+    : result;
+}
+
+/**
+ * Extract headers + acceptance criteria for review phase.
+ */
+function extractReviewContext(content) {
+  const bodyStart = content.indexOf("---", 4);
+  if (bodyStart === -1) return extractHead(content);
+  const body = content.slice(bodyStart + 3);
+
+  // Keep section headers and task titles only
+  const lines = body.split("\n");
+  const filtered = lines.filter((l) => l.match(/^##\s/) || l.match(/^- \[.\]/));
+  const result = filtered.join("\n");
+  return result.length > MAX_CHARS_PER_PLAN
+    ? result.slice(0, MAX_CHARS_PER_PLAN) + "\n[... truncated]"
+    : result;
+}
+
+/**
+ * Extract only task titles for test/ship phases.
+ */
+function extractTitles(content) {
+  const bodyStart = content.indexOf("---", 4);
+  if (bodyStart === -1) return "";
+  const body = content.slice(bodyStart + 3);
+
+  const lines = body.split("\n");
+  const titles = lines.filter((l) => l.match(/^- \[.\]/));
+  return titles.join("\n");
 }
 
 function extractHead(content) {
@@ -31,6 +111,26 @@ function extractHead(content) {
     ? body.slice(0, MAX_CHARS_PER_PLAN) + "\n[... truncated]"
     : body;
 }
+
+function extractForPhase(content, phase) {
+  if (!phase) return extractHead(content);
+
+  switch (phase) {
+    case "build":
+      return extractBuildTasks(content);
+    case "review":
+      return extractReviewContext(content);
+    case "test":
+    case "ship":
+      return extractTitles(content);
+    default:
+      return extractHead(content);
+  }
+}
+
+// ---------------------------------------------------------------------------
+// Main
+// ---------------------------------------------------------------------------
 
 try {
   if (await shouldSkipForSubagent()) process.exit(0);
@@ -50,12 +150,16 @@ try {
   for (const e of entries) {
     if (active.length >= MAX_PLANS) break;
     const content = readFileSync(e.path, "utf-8");
-    if (isActive(content)) active.push({ path: e.path, body: extractHead(content) });
+    if (isActive(content)) {
+      const body = phase ? extractForPhase(content, phase) : extractHead(content);
+      if (body.length > 0) active.push({ path: e.path, body });
+    }
   }
 
   if (active.length === 0) process.exit(0);
 
   let output = "=== Forge Context ===\n";
+  if (phase) output += `[phase: ${phase}${compact ? " compact" : ""}]\n`;
   let total = output.length;
   for (let i = 0; i < active.length; i++) {
     const chunk = `\n--- ${active[i].path} ---\n${active[i].body}\n`;

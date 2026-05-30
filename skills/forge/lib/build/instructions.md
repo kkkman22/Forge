@@ -242,6 +242,18 @@ Spec/Plan not ready → §2 rejection. Subagent timeout → block → `/forge re
 
 Mandatory token limits, structured outputs exempt. → 详见 references/context-budget.md
 
+### Phase Boundary Gate
+
+每个 task 或 phase 完成后，检查 Read 预算（`${TMPDIR}/forge-read-budget-<session>.json`）：
+
+| 累积 Read | 行为 |
+|-----------|------|
+| < 100 KB | 继续下一 task |
+| 100–150 KB | 输出 `⚠️ Context usage >60%. Execute /clear then /forge resume to continue.` 继续，但强烈建议隔离 |
+| > 150 KB | 输出 `⛔ Context usage >80%. MUST /clear + /forge resume. Continuing will cause truncation.` 并停止执行 |
+
+Phase 完成后**必须**评估 budget，即使 task 级未触发。
+
 **Trimmer 函数映射**（概念名 → 实际函数调用）：
 
 | 概念名 | 函数调用 | 参数来源 | 返回值用途 |
@@ -316,6 +328,20 @@ Build 全部任务完成且 Final Validation 通过后，自动检查并更新�
 </IRON-LAW>
 
 ---
+
+## Read Dedup Iron Law
+
+<IRON-LAW name="read-dedup">
+
+在同一个 session 中对同一文件的 Read 调用**不得超过 2 次**。
+
+- **第 2 次起**：必须使用 `forge_read_cached`（MCP tool）或 `Grep`（定向搜索）替代完整 Read。
+- **回顾已读文件**：使用 Grep 搜索特定片段而非全量重读。
+- **适用范围**：`/forge build`、`/forge review`、`/forge test`。
+
+当 `forge_read_cached` MCP tool 不可用时，仍须手动控制同一文件 Read ≤2 次。
+
+</IRON-LAW>
 
 ## Gotchas
 - **Skipping RED phase**: Write implementation first, then backfill tests → tests verify implementation not behavior → must write failing test first

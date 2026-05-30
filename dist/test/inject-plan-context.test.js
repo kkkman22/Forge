@@ -20,13 +20,13 @@ function createTempPlansDir() {
 function writePlan(plansDir, name, frontmatter, body) {
     writeFileSync(join(plansDir, ".forge", "plans", name), `---\n${frontmatter}\n---\n\n${body}`);
 }
-function runScript(cwd, stdinPayload) {
+function runScript(cwd, stdinPayload, extraArgs = []) {
     try {
         const mainAgentStdin = JSON.stringify({
             session_id: "test-session",
             hook_event_name: "UserPromptSubmit",
         });
-        return execFileSync("node", [SCRIPT_PATH], {
+        return execFileSync("node", [SCRIPT_PATH, ...extraArgs], {
             cwd,
             encoding: "utf-8",
             timeout: 5000,
@@ -134,6 +134,47 @@ describe("inject-plan-context.mjs", () => {
         expect(output).toContain("=== Forge Context ===");
         expect(output).toContain("plan-a.md");
         expect(output).toContain("Main agent output");
+    });
+    it("--phase build filters to incomplete tasks only", () => {
+        tempDir = createTempPlansDir();
+        writePlan(tempDir, "build-plan.md", "status: approved", "## Wave 1\n- [x] Task 0 (done)\n- [ ] Task 1 (todo)\n- [ ] Task 2 (todo)\nSome description text\n## Wave 2\n- [x] Task 3 (done)");
+        const output = runScript(tempDir, undefined, ["--phase", "build"]);
+        expect(output).toContain("Task 1 (todo)");
+        expect(output).toContain("Task 2 (todo)");
+        expect(output).toContain("Wave 1");
+        expect(output).toContain("Wave 2");
+        expect(output).not.toContain("Task 0 (done)");
+        expect(output).not.toContain("Task 3 (done)");
+        expect(output).not.toContain("Some description text");
+    });
+    it("--phase review shows only headers and task checkboxes", () => {
+        tempDir = createTempPlansDir();
+        writePlan(tempDir, "review-plan.md", "status: approved", "## Wave 1\n- [ ] Task 1\nDetailed description here\n- [x] Task 2\nMore details");
+        const output = runScript(tempDir, undefined, ["--phase", "review"]);
+        expect(output).toContain("Wave 1");
+        expect(output).toContain("Task 1");
+        expect(output).toContain("Task 2");
+        expect(output).not.toContain("Detailed description");
+        expect(output).not.toContain("More details");
+    });
+    it("--phase test shows only task titles", () => {
+        tempDir = createTempPlansDir();
+        writePlan(tempDir, "test-plan.md", "status: approved", "## Wave 1\n- [ ] Task 1\n- [x] Task 2\n## Wave 2\n- [ ] Task 3");
+        const output = runScript(tempDir, undefined, ["--phase", "test"]);
+        expect(output).toContain("Task 1");
+        expect(output).toContain("Task 2");
+        expect(output).toContain("Task 3");
+        expect(output).not.toContain("Wave 1");
+        expect(output).not.toContain("Wave 2");
+    });
+    it("--compact strips descriptions from task lines", () => {
+        tempDir = createTempPlansDir();
+        writePlan(tempDir, "compact-plan.md", "status: approved", "- [ ] Task 1 _with emphasis description_\n- [ ] Task 2 _another desc_");
+        const output = runScript(tempDir, undefined, ["--phase", "build", "--compact"]);
+        expect(output).toContain("Task 1");
+        expect(output).toContain("Task 2");
+        expect(output).not.toContain("_with emphasis");
+        expect(output).not.toContain("_another desc");
     });
 });
 //# sourceMappingURL=inject-plan-context.test.js.map

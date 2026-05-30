@@ -183,6 +183,25 @@ $ /forge test
 | "这个改动很小，不需要测试" | 小改更容易引入意外副作用，轻量路径也要求验证 |
 | "CI 会帮我测" | CI 是最终验证不是开发反馈，本地快速验证能节省大量时间 |
 
+## Read Dedup Iron Law
+
+<IRON-LAW name="read-dedup">
+
+在同一个 session 中对同一文件的 Read 调用**不得超过 2 次**。
+
+- **第 2 次起**：必须使用 `forge_read_cached`（MCP tool）或 `Grep`（定向搜索）替代完整 Read。
+- **回顾已读文件**：使用 Grep 搜索特定片段而非全量重读。
+
+当 `forge_read_cached` MCP tool 不可用时，仍须手动控制同一文件 Read ≤2 次。
+
+</IRON-LAW>
+
+### Test 后 Context Budget 检查
+
+Test 完成后，如果后续还有 ship 阶段且 Read 预算 >50KB（`${TMPDIR}/forge-read-budget-<session>.json`），输出：
+
+`⚠️ Read budget >50KB after test. Suggest /clear + /forge resume before ship phase.`
+
 ## Gotchas
 - **Test tests nothing**: Test asserts trivial condition (always true) → passes but verifies nothing → each test must assert meaningful behavior
 - **Mock overuse**: Every dependency mocked → test passes but production fails → prefer real dependencies, mock only external services
