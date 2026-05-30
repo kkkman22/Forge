@@ -33,11 +33,6 @@ try {
     process.exit(0);
   }
 
-  // Validate path is absolute and doesn't contain null bytes
-  if (!wtPath.startsWith("/") || wtPath.includes("\0")) {
-    process.exit(0);
-  }
-
   // Auto-create .forge/progress/
   mkdirSync(PROGRESS_DIR, { recursive: true });
 
@@ -50,11 +45,6 @@ try {
       // Corrupted — start fresh
       data = { worktrees: [] };
     }
-  }
-
-  // Deduplicate: skip if already recorded
-  if (data.worktrees.some((wt) => wt.path === wtPath)) {
-    process.exit(0);
   }
 
   // Append new entry
