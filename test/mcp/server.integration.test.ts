@@ -29,7 +29,7 @@ describe("forge-context MCP server integration", () => {
     }
   });
 
-  it("starts, registers 3 tools, and executes forge_exec", { timeout: 15000 }, async () => {
+  it("starts, registers 4 tools, and executes forge_exec", { timeout: 15000 }, async () => {
     // 1. Create client transport pointing to the compiled server
     transport = new StdioClientTransport({
       command: "node",
@@ -45,12 +45,12 @@ describe("forge-context MCP server integration", () => {
     // 2. Connect — this sends initialize + initialized handshake
     await client.connect(transport);
 
-    // 3. List tools — verify exactly 3 tools registered
+    // 3. List tools — verify exactly 4 tools registered
     const toolsResult = await client.listTools();
     const toolNames = toolsResult.tools.map((t) => t.name).sort();
 
-    expect(toolNames).toEqual(["forge_exec", "forge_git", "forge_read"]);
-    expect(toolsResult.tools).toHaveLength(3);
+    expect(toolNames).toEqual(["forge_exec", "forge_git", "forge_read", "forge_read_cached"]);
+    expect(toolsResult.tools).toHaveLength(4);
 
     // 4. Call forge_exec with `echo hello`
     const callResult = await client.callTool({
