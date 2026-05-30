@@ -153,27 +153,6 @@ Forge 从第一天起把安全视为工程纪律。五层防御：工具调用 H
 
 ---
 
-## 提示与技巧
-
-### 在 Claude Code 会话中执行 Shell 命令
-
-在 Claude Code 对话中，输入 `! <command>` 可直接在会话内执行 shell 命令并查看输出。适用于交互式登录、一次性诊断等场景。
-
-```bash
-# 示例：在会话中运行测试
-! npm run test
-
-# 示例：查看当前 git 状态
-! git status
-
-# 示例：交互式认证（如 gcloud）
-! gcloud auth login
-```
-
-> `!` 前缀使命令在当前会话中执行，输出直接显示在对话中，无需切换终端。
-
----
-
 ## 开发
 
 ```bash
@@ -196,7 +175,7 @@ bash scripts/build-dist.sh
 
 **技术栈**：TypeScript 5.9（strict）、200 个 TypeScript 模块、Vitest 3.2、fast-check 4.7（属性测试）、Biome 2.4（lint + format）。运行时依赖：`@anthropic-ai/claude-agent-sdk`、`commander`。
 
-**测试策略**：7897 个测试（386 个测试文件，其中 149 个为 fast-check 属性测试文件）验证不变量。覆盖率 ~89% statements。
+**测试策略**：7896 个测试（386 个测试文件，其中 149 个为 fast-check 属性测试文件）验证不变量。覆盖率 ~89% statements。
 
 ---
 
