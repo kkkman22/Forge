@@ -370,50 +370,59 @@ if [ "$auto_fix_active" = "true" ]; then
 fi
 
 # Case 3: Build phase incomplete — inject resume command
+# When build.use_goal is true (default), /goal handles the TDD loop inside
+# build instructions, so persistent-loop skips the build-phase resume injection.
+# Phase transition (build→review) is handled in Case 6 below.
 if [ "$effective_phase" = "build" ]; then
-  progress_count=$(find "$FORGE_DIR/progress" -maxdepth 1 -name '*.md' 2>/dev/null | wc -l | tr -d ' ')
-  if [ "$progress_count" -gt 0 ]; then
-    pending=0
-    for pf in "$FORGE_DIR/progress"/*.md; do
-      [ -f "$pf" ] && pending=$(( pending + $(count_pending "$pf") ))
-    done
-    if [ "$pending" -gt 0 ]; then
-      exhaustion_flag=$(read_field "$STATUS_FILE" "exhaustion_pending")
+  # Check if /goal mode is active — skip TDD loop injection when true
+  use_goal=$(read_field "$FORGE_DIR/config.md" "use_goal")
+  use_goal="${use_goal:-true}"  # default true
+  if [ "$use_goal" = "false" ]; then
+    # Legacy mode: inject resume for TDD loop (original Case 3 behavior)
+    progress_count=$(find "$FORGE_DIR/progress" -maxdepth 1 -name '*.md' 2>/dev/null | wc -l | tr -d ' ')
+    if [ "$progress_count" -gt 0 ]; then
+      pending=0
+      for pf in "$FORGE_DIR/progress"/*.md; do
+        [ -f "$pf" ] && pending=$(( pending + $(count_pending "$pf") ))
+      done
+      if [ "$pending" -gt 0 ]; then
+        exhaustion_flag=$(read_field "$STATUS_FILE" "exhaustion_pending")
 
-      if [ "$exhaustion_flag" = "true" ]; then
-        # Context exhaustion was detected — clear flag and inject resume
-        if ! remove_field "$STATUS_FILE" "exhaustion_pending"; then
-          echo "⚠️ 无法清除 exhaustion_pending 标记。请手动编辑 $STATUS_FILE。"
+        if [ "$exhaustion_flag" = "true" ]; then
+          # Context exhaustion was detected — clear flag and inject resume
+          if ! remove_field "$STATUS_FILE" "exhaustion_pending"; then
+            echo "⚠️ 无法清除 exhaustion_pending 标记。请手动编辑 $STATUS_FILE。"
+            exit 0
+          fi
+
+          echo "🔄 [BUILD 会话延续] 检测到上下文耗尽恢复点。"
+          echo ""
+          echo "请执行以下操作："
+          echo "1. 读取 .forge/knowledge/sessions/ 中最新的 interim 文件"
+          echo "2. 读取 .forge/progress/ 中的任务进度"
+          echo "3. 从下一个未完成任务继续执行"
+          echo ""
+          echo "请立即运行 /forge resume 恢复上下文并继续构建。"
+          echo "如需中止，运行 /forge abort。"
           exit 0
         fi
 
-        echo "🔄 [BUILD 会话延续] 检测到上下文耗尽恢复点。"
-        echo ""
-        echo "请执行以下操作："
-        echo "1. 读取 .forge/knowledge/sessions/ 中最新的 interim 文件"
-        echo "2. 读取 .forge/progress/ 中的任务进度"
-        echo "3. 从下一个未完成任务继续执行"
-        echo ""
-        echo "请立即运行 /forge resume 恢复上下文并继续构建。"
-        echo "如需中止，运行 /forge abort。"
-        exit 0
-      fi
+        # No exhaustion flag — check for recent interim file as fallback evidence
+        # DoS guard: skip if multiple interim files exist in short window
+        interim_count=$(find "$FORGE_DIR/knowledge/sessions" -maxdepth 1 -name '*-interim.md' -mmin "-${STALE_THRESHOLD_MINUTES}" 2>/dev/null | wc -l | tr -d ' ')
+        if [ "${interim_count:-0}" -gt 3 ]; then
+          exit 0
+        fi
 
-      # No exhaustion flag — check for recent interim file as fallback evidence
-      # DoS guard: skip if multiple interim files exist in short window
-      interim_count=$(find "$FORGE_DIR/knowledge/sessions" -maxdepth 1 -name '*-interim.md' -mmin "-${STALE_THRESHOLD_MINUTES}" 2>/dev/null | wc -l | tr -d ' ')
-      if [ "${interim_count:-0}" -gt 3 ]; then
-        exit 0
-      fi
+        latest_interim=$(find_latest "$FORGE_DIR/knowledge/sessions" '*-interim.md')
 
-      latest_interim=$(find_latest "$FORGE_DIR/knowledge/sessions" '*-interim.md')
-
-      if [ -n "$latest_interim" ] && is_fresh "$latest_interim" "$STALE_THRESHOLD_MINUTES"; then
-        echo "🔄 [BUILD 会话延续] 检测到 interim 快照文件。"
-        echo ""
-        echo "请立即运行 /forge resume 恢复上下文并继续构建。"
-        echo "如需中止，运行 /forge abort。"
-        exit 0
+        if [ -n "$latest_interim" ] && is_fresh "$latest_interim" "$STALE_THRESHOLD_MINUTES"; then
+          echo "🔄 [BUILD 会话延续] 检测到 interim 快照文件。"
+          echo ""
+          echo "请立即运行 /forge resume 恢复上下文并继续构建。"
+          echo "如需中止，运行 /forge abort。"
+          exit 0
+        fi
       fi
     fi
   fi
