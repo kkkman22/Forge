@@ -21,7 +21,7 @@
  *   2 — block (PostToolUse violations found, message on stderr; triggers continueOnBlock)
  */
 
-import { readFileSync, existsSync, readdirSync, statSync } from "node:fs";
+import { readFileSync, existsSync, readdirSync, statSync, mkdirSync, appendFileSync } from "node:fs";
 import { resolve, join, dirname, normalize } from "node:path";
 
 // ---------------------------------------------------------------------------
@@ -461,12 +461,65 @@ function formatViolationMessage(filePath, violations, escapeHatchUsed, chineseFo
 }
 
 // ---------------------------------------------------------------------------
+// Duration tracking
+// ---------------------------------------------------------------------------
+
+/**
+ * Append tool duration data to .forge/runs/<date>/tool-durations.jsonl.
+ * Only called in PostToolUse mode when duration_ms is present in tool input.
+ */
+function trackDuration(toolInput) {
+  try {
+    const duration = toolInput.duration_ms;
+    if (duration === undefined || duration === null) return;
+
+    const toolName = toolInput.tool_name || "unknown";
+    const now = new Date();
+    const dateDir = now.toISOString().slice(0, 10);
+
+    const runsDir = resolve(PROJECT_ROOT, ".forge", "runs", dateDir);
+    mkdirSync(runsDir, { recursive: true });
+
+    const entry = {
+      tool: toolName,
+      duration_ms: duration,
+      timestamp: now.toISOString(),
+    };
+
+    const logFile = join(runsDir, "tool-durations.jsonl");
+    appendFileSync(logFile, JSON.stringify(entry) + "\n", "utf-8");
+  } catch {
+    // Duration tracking failure is non-critical
+  }
+}
+
+// ---------------------------------------------------------------------------
 // Main
 // ---------------------------------------------------------------------------
 
 function main() {
   const toolType = process.argv[2];
   const toolInputFile = process.argv[3];
+
+  // --help support
+  if (toolType === "--help" || toolType === "-h") {
+    console.log(`Usage: node scripts/check-context-boundary.mjs <mode> <tool-input-file>
+
+  mode:            "Write", "Edit", or "PostToolUse"
+  tool-input-file: path to temp file containing JSON of tool arguments
+
+  PreToolUse mode: inspects tool input content/new_string.
+  PostToolUse mode: reads file from disk after write + tracks duration_ms.
+
+  In PostToolUse mode, if the tool input contains duration_ms, it is
+  appended to .forge/runs/<date>/tool-durations.jsonl for performance analysis.
+
+  Exit codes:
+    0 — allow (no violations or file not applicable)
+    1 — block (PreToolUse violations found)
+    2 — block (PostToolUse violations found; triggers continueOnBlock)`);
+    process.exit(0);
+  }
 
   if (!toolType || !toolInputFile) {
     process.exit(0);
@@ -486,6 +539,11 @@ function main() {
   } catch {
     // Can't parse — allow
     process.exit(0);
+  }
+
+  // Track duration in PostToolUse mode
+  if (isPostToolUse) {
+    trackDuration(toolInput);
   }
 
   const filePath = (toolInput.file_path ?? toolInput.path ?? "") ;
