@@ -276,13 +276,13 @@ IF 本次执行是从 conversation summary 恢复（上下文压缩后继续）�
 ### Pipeline 执行顺序
 
 ```
-Step 1: 三层 review（spec-check / quality-check / security-check）
+Post-Review Step 1: 三层 review（spec-check / quality-check / security-check）
     ↓
-Step 2: P0/P1 存在？→ 输出修复建议，阻断 ship（结束）
+Post-Review Step 2: P0/P1 存在？→ 输出修复建议，阻断 ship（结束）
     ↓ (无 P0/P1)
-Step 3: P2/P3 存在？→ 自动 /code-review --fix + commit + 验证
+Post-Review Step 3: P2/P3 存在？→ 自动 /code-review --fix + commit + 验证
     ↓ (全部通过)
-Step 4: 自动 /simplify + commit + 验证
+Post-Review Step 4: 自动 /simplify + commit + 验证
     ↓
 ✅ Review 通过 + 代码优化完成
 ```
