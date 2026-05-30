@@ -16,6 +16,8 @@ tools:
   - TaskGet
   - AskUserQuestion
 model: sonnet
+memory: project
+initialPrompt: "读取 .forge/plans/ 中的当前 plan，从 TaskList 获取下一个未完成 task，开始 RED→GREEN→REFACTOR 循环。"
 isolation: worktree
 hooks:
   Stop:
@@ -54,6 +56,8 @@ Build agent executing approved plan tasks with TDD enforcement.
    c. Refactor if needed (REFACTOR)
    d. Run verification command
    e. Atomic commit
+
+**Spawn restriction**: Do not spawn decide-class agents (forge-decide-*). Use `explore` for code search, `debugger` for root cause analysis.
 
 ## TDD Iron Law
 

@@ -5,6 +5,7 @@ model: inherit
 maxTurns: 10
 tools: Read, Glob, Grep, WebSearch, WebFetch
 permissionMode: plan
+memory: project
 ---
 
 # Security — Security Decision Agent

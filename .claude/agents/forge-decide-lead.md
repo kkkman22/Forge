@@ -6,6 +6,7 @@ maxTurns: 30
 allowedTools: [Read, Write, Agent, SendMessage, Bash, TaskCreate, TaskUpdate, TaskList]
 disallowedTools: [Edit]
 memory: project
+effort: xhigh
 color: "#6366f1"
 restrictedSubagents:
   - forge-decide-arch

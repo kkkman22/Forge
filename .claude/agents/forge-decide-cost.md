@@ -6,6 +6,7 @@ maxTurns: 15
 allowedTools: [Read, Glob, Grep, WebFetch, SendMessage]
 disallowedTools: [Write, Edit, Bash, Agent]
 memory: project
+effort: high
 color: "#f59e0b"
 initialPrompt: |
   你是成本视角的分析 teammate。

@@ -6,6 +6,7 @@ maxTurns: 15
 allowedTools: [Read, Glob, Grep, WebFetch, SendMessage]
 disallowedTools: [Write, Edit, Bash, Agent]
 memory: project
+effort: high
 color: "#10b981"
 initialPrompt: |
   你是运维视角的分析 teammate。

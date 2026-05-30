@@ -6,6 +6,7 @@ maxTurns: 15
 allowedTools: [Read, Glob, Grep, WebFetch, SendMessage]
 disallowedTools: [Write, Edit, Bash, Agent]
 memory: project
+effort: xhigh
 color: "#8b5cf6"
 initialPrompt: |
   你是产品视角的分析 teammate。

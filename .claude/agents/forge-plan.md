@@ -12,6 +12,7 @@ tools:
   - AskUserQuestion
 disallowedTools: [Edit, Write, MultiEdit, "Bash(git push *)"]
 model: sonnet
+memory: project
 initialPrompt: |
   If a spec slug was provided by the caller (e.g. via prompt arg), read `.forge/specs/<slug>/spec.md` now.
   Summarize the understood scope as ≤5 bullet points.
