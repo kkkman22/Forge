@@ -4,7 +4,7 @@ description: 安全评审者。在 /forge review 的 Agent Team 中提供 Layer 
 model: sonnet
 maxTurns: 10
 tools: Read, Glob, Grep, WebSearch
-disallowedTools: [Bash, Write, Edit, Agent]
+disallowed-tools: [Bash, Write, Edit, Agent]
 permissionMode: plan
 memory: project
 background: true
