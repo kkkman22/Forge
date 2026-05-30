@@ -11,9 +11,10 @@
  *
  * @see https://code.claude.com/docs/en/hooks#common-input-fields
  */
-import { readFileSync, statSync, readdirSync } from "node:fs";
+import { readFileSync, statSync, readdirSync, writeFileSync } from "node:fs";
 import { resolve } from "node:path";
 import { shouldSkipForSubagent } from "./lib/hook-stdin-router.mjs";
+import { getCachePath } from "./lib/plugin-data-path.mjs";
 
 const RULES_PATH = ".forge/knowledge/evolved-rules.md";
 const SPEC_LOCK_PATH = ".forge/state/spec-lock";
@@ -124,25 +125,60 @@ function detectSpecName(cwd) {
   return null;
 }
 
+/**
+ * Read evolved-rules with caching via plugin data dir.
+ * Returns the extracted content string, or null if no rules file exists.
+ */
+function readEvolvedRulesWithCache(cwd) {
+  const rawRules = readEvolvedRules(cwd);
+  if (rawRules === null) return null;
+
+  const rulesContent = extractContentOnly(rawRules);
+  const sourcePath = resolve(cwd, RULES_PATH);
+  const sourceMtime = statSync(sourcePath).mtime.toISOString();
+
+  const cacheFilePath = getCachePath("evolved-rules-cache.json");
+
+  // Try reading cache
+  if (cacheFilePath) {
+    try {
+      const cached = JSON.parse(readFileSync(cacheFilePath, "utf-8"));
+      if (cached.sourceMtime === sourceMtime) {
+        // Cache hit — return cached compiled result
+        return cached.rules;
+      }
+    } catch {
+      // Cache miss or corrupted — rebuild below
+    }
+  }
+
+  // Cache miss / invalid — compile and write cache
+  if (cacheFilePath) {
+    try {
+      const cacheEntry = {
+        sourceMtime,
+        compiledAt: new Date().toISOString(),
+        rules: rulesContent,
+      };
+      writeFileSync(cacheFilePath, JSON.stringify(cacheEntry), "utf-8");
+    } catch {
+      // Cache write failure — degraded mode, continue without cache
+    }
+  }
+
+  return rulesContent;
+}
+
 (async () => {
   try {
     if (await shouldSkipForSubagent()) process.exit(0);
 
     const cwd = process.cwd();
-    const rawRules = readEvolvedRules(cwd);
+    const rulesContent = readEvolvedRulesWithCache(cwd);
 
     // No evolved-rules.md → silent exit
-    if (rawRules === null) {
+    if (rulesContent === null) {
       process.exit(0);
-    }
-
-    // Extract only Content lines to reduce injection size (~4KB → ~1KB)
-    let rulesContent;
-    try {
-      rulesContent = extractContentOnly(rawRules);
-    } catch {
-      // Fallback to raw truncation if parsing fails
-      rulesContent = rawRules;
     }
 
     const specName = detectSpecName(cwd);

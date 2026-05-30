@@ -8,9 +8,10 @@
 //
 // Exit codes: 0 success / 1 error / 2 no .forge/
 
-import { existsSync } from "node:fs";
+import { existsSync, readFileSync, writeFileSync, statSync } from "node:fs";
 import { resolve, join, basename } from "node:path";
 import { fileURLToPath } from "node:url";
+import { getCachePath } from "./lib/plugin-data-path.mjs";
 
 const __dirname = fileURLToPath(new URL(".", import.meta.url));
 const projectRoot = resolve(__dirname, "..");
@@ -52,12 +53,15 @@ if (args[0] === "--from-path") {
   if (!event) process.exit(0);
 
   try {
-    await dispatchKnowledgeEvent({
+    const result = await dispatchKnowledgeEvent({
       event,
       forgeRoot,
       recentHashes: new Set(),
       now: new Date(),
     });
+
+    // Cache the result for this event type
+    writeEventCache(event, result);
   } catch {
     // Fail-silent for hook mode
   }
@@ -101,6 +105,37 @@ process.exit(1);
 // ---------------------------------------------------------------------------
 // Helpers
 // ---------------------------------------------------------------------------
+
+function getKnowledgeCachePath() {
+  return getCachePath("knowledge-cache.json");
+}
+
+function readKnowledgeCache() {
+  const cachePath = getKnowledgeCachePath();
+  if (!cachePath) return {};
+  try {
+    return JSON.parse(readFileSync(cachePath, "utf-8"));
+  } catch {
+    return {};
+  }
+}
+
+function writeEventCache(event, result) {
+  const cachePath = getKnowledgeCachePath();
+  if (!cachePath) return;
+  try {
+    const cache = readKnowledgeCache();
+    const key = `${event.kind}:${event.path || event.topic || ""}`;
+    cache[key] = {
+      event,
+      result,
+      cachedAt: new Date().toISOString(),
+    };
+    writeFileSync(cachePath, JSON.stringify(cache), "utf-8");
+  } catch {
+    // Cache write failure — degraded mode
+  }
+}
 
 function deriveEventFromPath(relPath) {
   if (relPath.startsWith("decisions/ADR-") && relPath.endsWith(".md")) {
