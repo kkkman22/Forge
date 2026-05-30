@@ -127,3 +127,5 @@
 0"}
 {"timestamp":"2026-05-30T03:00:41Z","event":"postcompact_restore","detail":"slug=context-explosion-defense"}
 {"timestamp":"2026-05-30T03:00:42Z","event":"precompact_snapshot","detail":"slug=plugin-data-persistence phase=build completed=0 pending=0"}
+{"timestamp":"2026-05-30T06:09:16Z","event":"postcompact_restore","detail":"slug=decide-auto-dispatch"}
+{"timestamp":"2026-05-30T06:09:16Z","event":"precompact_snapshot","detail":"slug=subagent-truncation-fix phase=build completed=0 pending=0"}
