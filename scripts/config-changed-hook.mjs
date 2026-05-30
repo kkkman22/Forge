@@ -83,7 +83,6 @@ async function main() {
   }
 
   if (matchedMessages.length === 0) {
-    // No watched files changed — silent exit
     process.exit(0);
   }
 
@@ -95,4 +94,5 @@ async function main() {
   process.exit(0);
 }
 
+// Defensive: catch any unhandled rejection to guarantee fail-open
 main().catch(() => process.exit(0));
