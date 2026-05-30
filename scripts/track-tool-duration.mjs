@@ -14,8 +14,8 @@
  * Relates to: §74 OTEL duration_ms tracking
  */
 
-import { readFile, mkdir, appendFile } from "node:fs/promises";
-import { join } from "node:path";
+import { readFile, writeFile, mkdir, appendFile } from "node:fs/promises";
+import { join, dirname } from "node:path";
 import { existsSync } from "node:fs";
 
 // ---------------------------------------------------------------------------
@@ -86,12 +86,14 @@ async function main() {
       return;
     }
 
-    // Extract tool name (truncate to prevent log bloat)
-    const rawToolName = toolInput.tool_name || toolInput.tool || "unknown";
-    const toolName = rawToolName.length > 64 ? rawToolName.slice(0, 64) : rawToolName;
+    // Extract tool name
+    const toolName = toolInput.tool_name || toolInput.tool || "unknown";
 
     // Extract duration
     const durationMs = extractDuration(toolInput);
+    if (durationMs === null) {
+      // No timing data — still log the invocation for frequency tracking
+    }
 
     // Extract session ID
     const sessionId = process.env.CLAUDE_SESSION_ID || "unknown";
@@ -117,9 +119,8 @@ async function main() {
     const line = JSON.stringify(entry) + "\n";
 
     await appendFile(logFile, line);
-  } catch (err) {
-    // Fail-open: never block, but log for diagnosability
-    process.stderr.write(`[track-tool-duration] ${err instanceof Error ? err.message : String(err)}\n`);
+  } catch {
+    // Fail-open: never block
   }
 }
 
