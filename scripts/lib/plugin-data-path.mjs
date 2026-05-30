@@ -1,4 +1,3 @@
-#!/usr/bin/env node
 /**
  * plugin-data-path.mjs — Shared plugin data directory resolver.
  *

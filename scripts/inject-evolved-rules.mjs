@@ -148,17 +148,19 @@ function readEvolvedRulesWithCache(cwd) {
   if (cacheFilePath) {
     try {
       const cached = JSON.parse(readFileSync(cacheFilePath, "utf-8"));
-      // Compare mtimeMs as numbers for sub-millisecond precision
-      if (cached.sourceMtimeMs === sourceMtimeMs) {
+      // Schema validation: cached must have correct shape
+      if (
+        typeof cached.sourceMtimeMs === "number" &&
+        typeof cached.rules === "string" &&
+        cached.sourceMtimeMs === sourceMtimeMs
+      ) {
         return cached.rules;
       }
     } catch {
       // Cache miss or corrupted — rebuild below
     }
-  }
 
-  // Cache miss / invalid — compile and write cache
-  if (cacheFilePath) {
+    // Cache miss / invalid — compile and write cache
     try {
       const cacheEntry = {
         sourceMtimeMs,

@@ -35,6 +35,8 @@ const REVIEWS_DIR = path.join(process.cwd(), ".forge", "reviews");
 
 /** Lookback window (days) for session artifacts. Older artifacts are ignored. */
 const LOOKBACK_DAYS = 1;
+/** Max violation entries to retain (FIFO eviction). */
+const MAX_VIOLATION_ENTRIES = 1000;
 
 function isoDateToday() {
   return new Date().toISOString().slice(0, 10);
@@ -105,7 +107,13 @@ function persistViolations(report, today) {
       violations: Array.from(violationsMap.values()),
     };
 
-    writeFileSync(cachePath, JSON.stringify(updated, null, 2), "utf-8");
+    // Evict oldest entries when exceeding limit
+    if (updated.violations.length > MAX_VIOLATION_ENTRIES) {
+      updated.violations.sort((a, b) => a.lastAt.localeCompare(b.lastAt));
+      updated.violations = updated.violations.slice(-MAX_VIOLATION_ENTRIES);
+    }
+
+    writeFileSync(cachePath, JSON.stringify(updated, null, 2), { mode: 0o600 });
   } catch {
     // Cache write failure — degraded mode
   }
