@@ -44,7 +44,7 @@ jobs:
 
       # 4. Sync dist: tsc compilation + plugin bundle
       - name: Sync tsc output
-        run: rm -f tsconfig.tsbuildinfo && npx tsc
+        run: rm -rf dist/src dist/test dist/scripts && rm -f tsconfig.tsbuildinfo && npx tsc
 
       - name: Sync dist bundle
         run: bash scripts/build-dist.sh
