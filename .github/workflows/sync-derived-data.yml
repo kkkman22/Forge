@@ -1,5 +1,9 @@
 name: Sync derived data
 
+concurrency:
+  group: sync-derived-${{ github.sha }}
+  cancel-in-progress: false
+
 # Runs on push to main after a merge. Auto-updates all derived / reference data
 # that can drift when source code changes:
 #   - README test metrics
