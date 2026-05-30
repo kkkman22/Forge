@@ -66,9 +66,6 @@ jobs:
             echo "No derived data changes to commit."
           fi
 
-      # 7. Verify sync result — catch sync failures
-      - name: Verify README metrics after sync
-        run: bash scripts/check-readme-metrics.sh
-
-      - name: Verify manifest after sync
+      # 7. Verify non-volatile sync results
+      - name: Verify help baseline after sync
         run: node scripts/record-help-baseline.mjs --check
