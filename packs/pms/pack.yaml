@@ -1,4 +1,5 @@
 name: pms
+enabled: false
 display_name: "Hotel PMS Domain Pack"
 description: "酒店前台管理系统（Property Management System）领域知识包"
 forge_min_version: "2.4.0"
