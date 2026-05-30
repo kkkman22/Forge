@@ -34,8 +34,15 @@ const READ_TOOLS = new Set([
   "TaskGet",
 ]);
 
-// Write operations (Write, Edit, Bash, NotebookEdit, TaskCreate, TaskUpdate)
-// are NOT in READ_TOOLS and will fall through to default-deny (no retry).
+/** Tools that must NOT be retried (write operations). */
+const WRITE_TOOLS = new Set([
+  "Write",
+  "Edit",
+  "Bash",
+  "NotebookEdit",
+  "TaskCreate",
+  "TaskUpdate",
+]);
 
 try {
   const tool = process.env.PERMISSION_DENIED_TOOL;
