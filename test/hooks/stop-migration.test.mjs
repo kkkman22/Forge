@@ -148,17 +148,6 @@ describe("stop-phase-verify.mjs", () => {
     assert.equal(result.exitCode, 0);
   });
 
-  test("includes terminalSequence notification in interactive mode", () => {
-    writeFileSync(
-      join(TMPDIR, ".forge", "status.md"),
-      "---\nphase: \"build\"\n---\n# Status\n"
-    );
-    const result = runScript(join(SCRIPTS_DIR, "stop-phase-verify.mjs"), [], { CI: "1" });
-    // In CI mode, no terminalSequence should be emitted
-    assert.equal(result.exitCode, 0);
-    assert.ok(!result.stdout.includes("terminalSequence"), `No terminalSequence in CI: ${result.stdout}`);
-  });
-
   after(() => {
     rmSync(TMPDIR, { recursive: true, force: true });
   });

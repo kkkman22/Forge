@@ -26,9 +26,12 @@ try {
   }
 
   const content = readFileSync(RULES_FILE, "utf-8");
+  if (!content.includes("PENDING")) {
+    process.exit(0);
+  }
 
-  // Count PENDING occurrences (match "Status: PENDING" style patterns)
-  const matches = content.match(/^.*PENDING.*$/gm);
+  // Count PENDING occurrences
+  const matches = content.match(/PENDING/g);
   const count = matches ? matches.length : 0;
 
   if (count > 0) {
