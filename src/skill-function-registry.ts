@@ -658,7 +658,11 @@ export const SKILL_FUNCTION_REGISTRY: readonly SkillFunctionEntry[] = [
   {
     module: "sandbox-phased.ts",
     functionName: "checkFilesystemPolicy",
-    skills: ["forge/lib/build/instructions.md", "forge/lib/plan/instructions.md", "forge/lib/review/instructions.md"],
+    skills: [
+      "forge/lib/build/instructions.md",
+      "forge/lib/plan/instructions.md",
+      "forge/lib/review/instructions.md",
+    ],
     parameterNames: ["filePath", "operation", "config"],
   },
   {
