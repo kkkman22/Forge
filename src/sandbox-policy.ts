@@ -14,14 +14,14 @@ import * as path from "node:path";
 import { minimatch } from "minimatch";
 
 // Phase 1: Declarative sandbox config (spec task #1 — 扩展 sandbox-policy.ts)
-export type { SandboxConfig, SandboxCheckResult } from "./sandbox-phased.js";
+export type { SandboxCheckResult, SandboxConfig } from "./sandbox-phased.js";
 export {
-  checkFilesystemPolicy,
   checkCommandPolicy,
+  checkFilesystemPolicy,
   checkNetworkPolicy,
+  DEFAULT_SANDBOX_CONFIG,
   loadSandboxConfig,
   resolveProfile,
-  DEFAULT_SANDBOX_CONFIG,
 } from "./sandbox-phased.js";
 
 // ---------------------------------------------------------------------------

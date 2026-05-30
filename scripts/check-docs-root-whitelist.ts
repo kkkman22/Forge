@@ -21,6 +21,8 @@ const DEFAULT_WHITELIST = [
   "AGENTS.md",
   "CLAUDE.md",
   "LICENSE.md",
+  "claude-code-changelog-feasibility-report.md",
+  "claude-code-changelog-forge-optimization.md",
 ] as const;
 
 function loadWhitelistFromConfig(rootDir: string): readonly string[] {
