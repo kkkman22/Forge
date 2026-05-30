@@ -15,3 +15,4 @@
 {"timestamp":"2026-05-30T03:38:07Z","event":"postcompact_restore","detail":"slug=build-goal-replace-loop"}
 {"timestamp":"2026-05-30T03:38:07Z","event":"precompact_snapshot","detail":"slug=build-goal-replace-loop phase=test completed=21 pending=0
 0"}
+{"timestamp":"2026-05-30T03:35:17Z","event":"precompact_snapshot","detail":"slug=build-goal-replace-loop phase=build completed=0 pending=0"}
