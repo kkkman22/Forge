@@ -2,7 +2,9 @@
   "name": "forge",
   "description": "Unified AI coding workflow framework — single /forge slash command with 22 internal subcommands, TDD, spec-driven planning, and automated review.",
   "version": "3.1.0",
-  "workflows": ["./workflows"],
+  "workflows": [
+    "./workflows"
+  ],
   "mcpServers": {
     "forge-context": {
       "command": "node",
@@ -33,7 +35,11 @@
     },
     "safety_level": {
       "type": "string",
-      "enum": ["1", "2", "3"],
+      "enum": [
+        "1",
+        "2",
+        "3"
+      ],
       "default": "1",
       "description": "Safety strictness (1=strictest)"
     }
@@ -44,7 +50,10 @@
         "hooks": [
           {
             "type": "command",
-            "args": ["bash", "${CLAUDE_PLUGIN_ROOT}/scripts/auto-resume.sh"],
+            "args": [
+              "bash",
+              "${CLAUDE_PLUGIN_ROOT}/scripts/auto-resume.sh"
+            ],
             "timeout": 5
           }
         ]
@@ -53,7 +62,10 @@
         "hooks": [
           {
             "type": "command",
-            "args": ["node", "${CLAUDE_PLUGIN_ROOT}/scripts/inject-evolved-rules.mjs"],
+            "args": [
+              "node",
+              "${CLAUDE_PLUGIN_ROOT}/scripts/inject-evolved-rules.mjs"
+            ],
             "timeout": 5
           }
         ]
@@ -62,7 +74,10 @@
         "hooks": [
           {
             "type": "command",
-            "args": ["node", "${CLAUDE_PLUGIN_ROOT}/scripts/bootstrap-check.mjs"],
+            "args": [
+              "node",
+              "${CLAUDE_PLUGIN_ROOT}/scripts/bootstrap-check.mjs"
+            ],
             "timeout": 5
           }
         ]
@@ -73,7 +88,10 @@
         "hooks": [
           {
             "type": "command",
-            "args": ["node", "${CLAUDE_PLUGIN_ROOT}/scripts/inject-plan-context.mjs"],
+            "args": [
+              "node",
+              "${CLAUDE_PLUGIN_ROOT}/scripts/inject-plan-context.mjs"
+            ],
             "timeout": 5
           }
         ]
@@ -82,7 +100,11 @@
         "hooks": [
           {
             "type": "command",
-            "args": ["node", "${CLAUDE_PLUGIN_ROOT}/scripts/cmux-mirror/sync-once.mjs", ".forge"],
+            "args": [
+              "node",
+              "${CLAUDE_PLUGIN_ROOT}/scripts/cmux-mirror/sync-once.mjs",
+              ".forge"
+            ],
             "timeout": 2
           }
         ]
@@ -93,7 +115,10 @@
         "hooks": [
           {
             "type": "command",
-            "args": ["node", "${CLAUDE_PLUGIN_ROOT}/scripts/message-display-hook.mjs"],
+            "args": [
+              "node",
+              "${CLAUDE_PLUGIN_ROOT}/scripts/message-display-hook.mjs"
+            ],
             "timeout": 2
           }
         ]
@@ -105,7 +130,11 @@
         "hooks": [
           {
             "type": "command",
-            "args": ["head", "-30", ".forge/plans/*.md"],
+            "args": [
+              "head",
+              "-30",
+              ".forge/plans/*.md"
+            ],
             "if": "exists(.forge/plans/*.md)"
           }
         ]
@@ -115,7 +144,10 @@
         "hooks": [
           {
             "type": "command",
-            "args": ["bash", "${CLAUDE_PLUGIN_ROOT}/scripts/hook-check-frozen.sh"],
+            "args": [
+              "bash",
+              "${CLAUDE_PLUGIN_ROOT}/scripts/hook-check-frozen.sh"
+            ],
             "timeout": 5
           }
         ]
@@ -125,7 +157,10 @@
         "hooks": [
           {
             "type": "command",
-            "args": ["bash", "${CLAUDE_PLUGIN_ROOT}/scripts/hook-check-frozen.sh"],
+            "args": [
+              "bash",
+              "${CLAUDE_PLUGIN_ROOT}/scripts/hook-check-frozen.sh"
+            ],
             "if": "Bash(git commit*)",
             "timeout": 5
           }
@@ -136,7 +171,11 @@
         "hooks": [
           {
             "type": "command",
-            "args": ["node", "${CLAUDE_PLUGIN_ROOT}/dist/src/check-sandbox.js", "Write"],
+            "args": [
+              "node",
+              "${CLAUDE_PLUGIN_ROOT}/dist/src/check-sandbox.js",
+              "Write"
+            ],
             "timeout": 5
           }
         ]
@@ -146,7 +185,11 @@
         "hooks": [
           {
             "type": "command",
-            "args": ["node", "${CLAUDE_PLUGIN_ROOT}/dist/src/check-sandbox.js", "Bash"],
+            "args": [
+              "node",
+              "${CLAUDE_PLUGIN_ROOT}/dist/src/check-sandbox.js",
+              "Bash"
+            ],
             "if": "exists(.forge/.sandbox-active.json)",
             "timeout": 5
           }
@@ -157,7 +200,10 @@
         "hooks": [
           {
             "type": "command",
-            "args": ["node", "${CLAUDE_PLUGIN_ROOT}/scripts/check-context-boundary.mjs"],
+            "args": [
+              "node",
+              "${CLAUDE_PLUGIN_ROOT}/scripts/check-context-boundary.mjs"
+            ],
             "timeout": 5
           }
         ]
@@ -169,7 +215,10 @@
         "hooks": [
           {
             "type": "command",
-            "args": ["node", "${CLAUDE_PLUGIN_ROOT}/scripts/postooluse-inject-warnings.mjs"],
+            "args": [
+              "node",
+              "${CLAUDE_PLUGIN_ROOT}/scripts/postooluse-inject-warnings.mjs"
+            ],
             "timeout": 3
           }
         ]
@@ -180,7 +229,10 @@
         "hooks": [
           {
             "type": "command",
-            "args": ["node", "${CLAUDE_PLUGIN_ROOT}/scripts/posttooluse-status-reminder.mjs"],
+            "args": [
+              "node",
+              "${CLAUDE_PLUGIN_ROOT}/scripts/posttooluse-status-reminder.mjs"
+            ],
             "timeout": 3
           }
         ]
@@ -190,7 +242,11 @@
         "hooks": [
           {
             "type": "command",
-            "args": ["node", "${CLAUDE_PLUGIN_ROOT}/scripts/cmux-mirror/sync-once.mjs", ".forge"],
+            "args": [
+              "node",
+              "${CLAUDE_PLUGIN_ROOT}/scripts/cmux-mirror/sync-once.mjs",
+              ".forge"
+            ],
             "timeout": 2
           }
         ]
@@ -200,7 +256,11 @@
         "hooks": [
           {
             "type": "command",
-            "args": ["node", "${CLAUDE_PLUGIN_ROOT}/scripts/rebuild-feature-dossier.mjs", "--from-path"],
+            "args": [
+              "node",
+              "${CLAUDE_PLUGIN_ROOT}/scripts/rebuild-feature-dossier.mjs",
+              "--from-path"
+            ],
             "timeout": 5
           }
         ]
@@ -210,7 +270,11 @@
         "hooks": [
           {
             "type": "command",
-            "args": ["node", "${CLAUDE_PLUGIN_ROOT}/scripts/check-context-boundary.mjs", "PostToolUse"],
+            "args": [
+              "node",
+              "${CLAUDE_PLUGIN_ROOT}/scripts/check-context-boundary.mjs",
+              "PostToolUse"
+            ],
             "continueOnBlock": true,
             "timeout": 5
           }
@@ -221,7 +285,10 @@
         "hooks": [
           {
             "type": "command",
-            "args": ["node", "${CLAUDE_PLUGIN_ROOT}/scripts/check-diff-context-integrity.mjs"],
+            "args": [
+              "node",
+              "${CLAUDE_PLUGIN_ROOT}/scripts/check-diff-context-integrity.mjs"
+            ],
             "timeout": 5
           }
         ]
@@ -232,7 +299,10 @@
         "hooks": [
           {
             "type": "command",
-            "args": ["bash", "${CLAUDE_PLUGIN_ROOT}/scripts/hook-precompact.sh"],
+            "args": [
+              "bash",
+              "${CLAUDE_PLUGIN_ROOT}/scripts/hook-precompact.sh"
+            ],
             "timeout": 5
           }
         ]
@@ -243,7 +313,10 @@
         "hooks": [
           {
             "type": "command",
-            "args": ["bash", "${CLAUDE_PLUGIN_ROOT}/scripts/hook-postcompact.sh"],
+            "args": [
+              "bash",
+              "${CLAUDE_PLUGIN_ROOT}/scripts/hook-postcompact.sh"
+            ],
             "timeout": 5
           }
         ]
@@ -254,7 +327,10 @@
         "hooks": [
           {
             "type": "command",
-            "args": ["node", "${CLAUDE_PLUGIN_ROOT}/scripts/cwd-changed-hook.mjs"],
+            "args": [
+              "node",
+              "${CLAUDE_PLUGIN_ROOT}/scripts/cwd-changed-hook.mjs"
+            ],
             "timeout": 3
           }
         ]
@@ -265,7 +341,10 @@
         "hooks": [
           {
             "type": "command",
-            "args": ["node", "${CLAUDE_PLUGIN_ROOT}/scripts/file-changed-hook.mjs"],
+            "args": [
+              "node",
+              "${CLAUDE_PLUGIN_ROOT}/scripts/file-changed-hook.mjs"
+            ],
             "timeout": 3
           }
         ]
@@ -276,7 +355,10 @@
         "hooks": [
           {
             "type": "command",
-            "args": ["node", "${CLAUDE_PLUGIN_ROOT}/scripts/worktree-create-hook.mjs"],
+            "args": [
+              "node",
+              "${CLAUDE_PLUGIN_ROOT}/scripts/worktree-create-hook.mjs"
+            ],
             "timeout": 3
           }
         ]
@@ -287,7 +369,10 @@
         "hooks": [
           {
             "type": "command",
-            "args": ["node", "${CLAUDE_PLUGIN_ROOT}/scripts/worktree-remove-hook.mjs"],
+            "args": [
+              "node",
+              "${CLAUDE_PLUGIN_ROOT}/scripts/worktree-remove-hook.mjs"
+            ],
             "timeout": 3
           }
         ]
@@ -298,7 +383,10 @@
         "hooks": [
           {
             "type": "command",
-            "args": ["node", "${CLAUDE_PLUGIN_ROOT}/scripts/stop-failure-hook.mjs"],
+            "args": [
+              "node",
+              "${CLAUDE_PLUGIN_ROOT}/scripts/stop-failure-hook.mjs"
+            ],
             "timeout": 3
           }
         ]
@@ -309,7 +397,10 @@
         "hooks": [
           {
             "type": "command",
-            "args": ["node", "${CLAUDE_PLUGIN_ROOT}/scripts/permission-denied-hook.mjs"],
+            "args": [
+              "node",
+              "${CLAUDE_PLUGIN_ROOT}/scripts/permission-denied-hook.mjs"
+            ],
             "timeout": 3
           }
         ]
@@ -320,7 +411,10 @@
         "hooks": [
           {
             "type": "command",
-            "args": ["node", "${CLAUDE_PLUGIN_ROOT}/scripts/task-created-hook.mjs"],
+            "args": [
+              "node",
+              "${CLAUDE_PLUGIN_ROOT}/scripts/task-created-hook.mjs"
+            ],
             "timeout": 3
           }
         ]
@@ -331,12 +425,18 @@
         "hooks": [
           {
             "type": "command",
-            "args": ["node", "${CLAUDE_PLUGIN_ROOT}/scripts/stop-incomplete-tasks.mjs"],
+            "args": [
+              "node",
+              "${CLAUDE_PLUGIN_ROOT}/scripts/stop-incomplete-tasks.mjs"
+            ],
             "timeout": 5
           },
           {
             "type": "command",
-            "args": ["bash", "${CLAUDE_PLUGIN_ROOT}/scripts/persistent-loop.sh"],
+            "args": [
+              "bash",
+              "${CLAUDE_PLUGIN_ROOT}/scripts/persistent-loop.sh"
+            ],
             "timeout": 5
           }
         ]
@@ -345,7 +445,10 @@
         "hooks": [
           {
             "type": "command",
-            "args": ["node", "${CLAUDE_PLUGIN_ROOT}/scripts/stop-pending-rules.mjs"],
+            "args": [
+              "node",
+              "${CLAUDE_PLUGIN_ROOT}/scripts/stop-pending-rules.mjs"
+            ],
             "timeout": 5
           }
         ]
@@ -354,7 +457,10 @@
         "hooks": [
           {
             "type": "command",
-            "args": ["node", "${CLAUDE_PLUGIN_ROOT}/scripts/record-evolved-rule-violation.mjs"],
+            "args": [
+              "node",
+              "${CLAUDE_PLUGIN_ROOT}/scripts/record-evolved-rule-violation.mjs"
+            ],
             "timeout": 5
           }
         ]
@@ -363,7 +469,10 @@
         "hooks": [
           {
             "type": "command",
-            "args": ["node", "${CLAUDE_PLUGIN_ROOT}/scripts/flag-stale-evolved-rules.mjs"],
+            "args": [
+              "node",
+              "${CLAUDE_PLUGIN_ROOT}/scripts/flag-stale-evolved-rules.mjs"
+            ],
             "timeout": 5
           }
         ]
@@ -372,7 +481,11 @@
         "hooks": [
           {
             "type": "command",
-            "args": ["node", "${CLAUDE_PLUGIN_ROOT}/scripts/cmux-mirror/sync-once.mjs", ".forge"],
+            "args": [
+              "node",
+              "${CLAUDE_PLUGIN_ROOT}/scripts/cmux-mirror/sync-once.mjs",
+              ".forge"
+            ],
             "timeout": 2
           }
         ]
@@ -381,7 +494,10 @@
         "hooks": [
           {
             "type": "command",
-            "args": ["node", "${CLAUDE_PLUGIN_ROOT}/scripts/stop-phase-verify.mjs"],
+            "args": [
+              "node",
+              "${CLAUDE_PLUGIN_ROOT}/scripts/stop-phase-verify.mjs"
+            ],
             "timeout": 3
           }
         ]
@@ -392,7 +508,10 @@
         "hooks": [
           {
             "type": "command",
-            "args": ["node", "${CLAUDE_PLUGIN_ROOT}/scripts/teammate-idle-phase-check.mjs"],
+            "args": [
+              "node",
+              "${CLAUDE_PLUGIN_ROOT}/scripts/teammate-idle-phase-check.mjs"
+            ],
             "timeout": 3
           }
         ]
@@ -403,7 +522,10 @@
         "hooks": [
           {
             "type": "command",
-            "args": ["node", "${CLAUDE_PLUGIN_ROOT}/scripts/task-completed-notify.mjs"],
+            "args": [
+              "node",
+              "${CLAUDE_PLUGIN_ROOT}/scripts/task-completed-notify.mjs"
+            ],
             "timeout": 2
           }
         ]
@@ -414,7 +536,10 @@
         "hooks": [
           {
             "type": "command",
-            "args": ["node", "${CLAUDE_PLUGIN_ROOT}/scripts/config-changed-hook.mjs"],
+            "args": [
+              "node",
+              "${CLAUDE_PLUGIN_ROOT}/scripts/config-changed-hook.mjs"
+            ],
             "timeout": 3
           }
         ]
