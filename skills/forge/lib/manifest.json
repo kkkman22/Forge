@@ -1,6 +1,6 @@
 {
   "version": 1,
-  "generated_at": "2026-05-30T03:52:27.497Z",
+  "generated_at": "2026-05-30T09:01:36.822Z",
   "subs": {
     "abort": {
       "instructions": {
@@ -41,7 +41,7 @@
     "build": {
       "instructions": {
         "path": "build/instructions.md",
-        "sha256": "2555fc05dcb083a367f530d694b10dacac9135c824338a80d83a37c6c9fd248a"
+        "sha256": "ca5a06227d231de9928e41d61b3919c645def90ba230d0b3f99b7f306088809f"
       },
       "references": [
         {
