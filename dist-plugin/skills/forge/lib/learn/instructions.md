@@ -99,6 +99,64 @@ This check is informational only — it enriches the learn session with document
 
 ---
 
+## §0.7 Observability Data Collection (§71, §72, §74)
+
+> **Precondition**: OTEL data is available via `.forge/runs/` JSONL logs or `OTEL_EXPORTER_*` env vars.
+> If no observability data exists, **skip this entire section** with a single-line note: `⏭️ OTEL 数据不可用，跳过可观测性统计。`
+
+### Step 1: Probe OTEL availability
+
+```bash
+# Check if runs directory has tool-duration logs
+ls .forge/runs/*tool-durations*.jsonl 2>/dev/null
+# Check if OTEL exporter is configured
+echo "$OTEL_EXPORTER_OTLP_ENDPOINT"
+```
+
+If neither source exists → skip.
+
+### Step 2: Extract statistics
+
+From `.forge/runs/*tool-durations*.jsonl` (or OTEL spans if available):
+
+| Metric | Source | Calculation |
+|--------|--------|-------------|
+| `observability.agent_depth` | `parent_agent_id` chain | Max depth from root agent to deepest leaf |
+| `observability.top_tools` | `tool_name` field | Top-5 tools by invocation count |
+| `observability.avg_duration_ms` | `duration_ms` field | Mean per tool, across all invocations |
+| `observability.total_tokens` | OTEL resource or session metadata | Sum of input + output tokens (best-effort) |
+
+### Step 3: Write to knowledge metadata
+
+When generating knowledge documents under `.forge/knowledge/sessions/`, append an `## Observability` section:
+
+```yaml
+observability:
+  agent_depth: <number>
+  top_tools:
+    - tool: <name>
+      count: <number>
+  avg_duration_ms: <number>
+  total_tokens: <number|unknown>
+  performance_bottlenecks:
+    - tool: <name>
+      duration_ms: <number>
+      note: "exceeded 30s threshold"
+```
+
+### Step 4: Identify bottlenecks
+
+Any tool invocation with `duration_ms > 30000` (30 seconds) is flagged as a **performance bottleneck**. Record in the session document with tool name, duration, and a brief note.
+
+### Step 5: Skip logic
+
+- No `.forge/runs/*tool-durations*.jsonl` → skip silently
+- No `OTEL_EXPORTER_*` env vars → skip silently
+- Empty JSONL files → skip silently
+- **Never** block the main learn flow due to missing observability data
+
+---
+
 ## Goals
 
 ### G1: Execution Quality Assessment

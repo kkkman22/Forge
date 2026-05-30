@@ -709,6 +709,68 @@ else
   fi
 fi
 
+# --- Write env variables to settings.json ---
+if command -v node &>/dev/null; then
+  # Ensure settings.json exists
+  if [ ! -f "${settings_file}" ]; then
+    mkdir -p "${PROJECT_ROOT}/.claude"
+    echo '{}' > "${settings_file}"
+  fi
+
+  env_result=$(node -e "
+    const fs = require('fs');
+    const settingsPath = '${settings_file}';
+    let settings;
+    try {
+      settings = JSON.parse(fs.readFileSync(settingsPath, 'utf-8'));
+    } catch (e) {
+      settings = {};
+    }
+    if (!settings.env) settings.env = {};
+
+    const envVars = {
+      'ENABLE_PROMPT_CACHING_1H': 'true',
+      'MCP_CONNECTION_NONBLOCKING': 'true',
+      'CLAUDE_CODE_SUBPROCESS_ENV_SCRUB': 'true'
+    };
+
+    let added = 0;
+    let skipped = 0;
+    for (const [key, value] of Object.entries(envVars)) {
+      if (settings.env[key] === undefined) {
+        settings.env[key] = value;
+        added++;
+      } else {
+        skipped++;
+      }
+    }
+
+    fs.writeFileSync(settingsPath, JSON.stringify(settings, null, 2) + '\n');
+    process.stdout.write(JSON.stringify({added, skipped}));
+  " 2>&1) || true
+
+  case "${env_result}" in
+    *"added"*})
+      added=$(echo "${env_result}" | node -e "process.stdout.write(JSON.parse(require('fs').readFileSync(0,'utf-8')).added)" 2>/dev/null || echo "?")
+      skipped=$(echo "${env_result}" | node -e "process.stdout.write(JSON.parse(require('fs').readFileSync(0,'utf-8')).skipped)" 2>/dev/null || echo "?")
+      if [[ "${added}" -gt 0 ]]; then
+        skip_msg=""
+        if [[ "${skipped}" -gt 0 ]]; then
+          skip_msg="（${skipped} 项已存在，跳过）"
+        fi
+        success "${added} 项环境变量已写入 settings.json ${skip_msg}"
+      else
+        info "所有环境变量已存在于 settings.json，跳过"
+      fi
+      ;;
+    *)
+      warn "环境变量写入失败：${env_result}"
+      ;;
+  esac
+else
+  warn "未检测到 node 命令，跳过环境变量配置。建议手动添加 ENABLE_PROMPT_CACHING_1H、MCP_CONNECTION_NONBLOCKING、CLAUDE_CODE_SUBPROCESS_ENV_SCRUB 到 .claude/settings.json 的 env 部分。"
+fi
+
 # --- Install cmux workspace layout (idempotent) ---
 if [[ -f "${FORGE_ROOT}/scripts/cmux-mirror/install-template.sh" ]]; then
   bash "${FORGE_ROOT}/scripts/cmux-mirror/install-template.sh" "${PROJECT_ROOT}" 2>/dev/null || true
@@ -820,6 +882,16 @@ echo "    📁 .forge/          — 统一状态目录（含所有子目录和�
 echo "    📄 .forge/sandbox.json — 沙箱策略配置（Phase 1 advisory 模式）"
 echo "    📁 .claude/agents/  — 7 个 Subagent 角色文件"
 echo "    📁 .claude/commands/ — Forge Command 入口"
+echo ""
+echo "  ## 🔧 配置优化"
+echo ""
+echo "  | 配置项 | 值 | 用途 |"
+echo "  |--------|-----|------|"
+echo "  | alwaysLoad | true | MCP 即时加载，消除冷启动 |"
+echo "  | ENABLE_PROMPT_CACHING_1H | true | Cache TTL 1h，节省 token |"
+echo "  | MCP_CONNECTION_NONBLOCKING | true | MCP 不阻塞启动 |"
+echo "  | CLAUDE_CODE_SUBPROCESS_ENV_SCRUB | true | 清理子进程敏感环境变量 |"
+echo ""
 echo "    📄 .claude/settings.json — Forge Hooks + MCP 配置"
 echo "    📄 CLAUDE.md        — 项目宪法"
 echo "    📄 .forge/config.md — 项目配置"
@@ -827,7 +899,25 @@ echo ""
 echo "  下一步："
 echo "    输入 /forge 并描述你的任务，开始第一个开发任务。"
 echo ""
+echo "  推荐：启用 Agent Teams（Full tier 自动使用 5 视角协作决策）："
+echo "    在 .claude/settings.json 的 env 块中添加："
+echo '    {"env": {"CLAUDE_CODE_EXPERIMENTAL_AGENT_TEAMS": "1"}}'
+echo "    或运行：/forge config"
+echo ""
 echo "  建议添加到 .gitignore："
 echo "    .forge/debug/"
 echo "    .forge/archive/"
+echo ""
+echo "  ## 🔧 Worktree 高级配置"
+echo ""
+echo "  以下配置可在 .claude/settings.json 中按需启用（默认不启用）："
+echo ""
+echo "  | 配置项 | 用途 | 适用场景 |"
+echo "  |--------|------|----------|"
+echo "  | worktree.bgIsolation: \"none\" | 禁用后台 agent worktree 隔离 | git submodule 仓库、特殊 repo 结构 |"
+echo "  | worktree.sparsePaths: [\"src/\"] | Worktree 只 checkout 指定目录 | 大 monorepo（checkout >30s 或 >1GB） |"
+echo "  | CLAUDE_CODE_SIMPLE: \"true\" | 最小化模式，减少输出 | 简单场景、CI 脚本（注意：可能影响 Forge 完整功能） |"
+echo ""
+echo "  示例 .claude/settings.json 片段："
+echo '  {"worktree":{"bgIsolation":"none","sparsePaths":["src/","tests/"]}}'
 echo ""

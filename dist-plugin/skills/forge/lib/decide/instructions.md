@@ -17,6 +17,38 @@ allowed_tools:
 
 ---
 
+## 0. Mode Selection (Dispatch Mode)
+
+`/forge decide` 支持三种执行模式，由 `.forge/config.md` 的 `decide_dispatch_mode` 字段控制：
+
+| 值 | 行为 |
+|---|---|
+| `inline` | 始终使用 inline 模式（主 agent 内 3 视角分析） |
+| `agents` | 始终使用 Agent Teams 模式（`forge-decide-lead` + 5 视角 teammate） |
+| `auto` | 根据 tier 自动选择 |
+
+### auto 模式分发规则
+
+1. 读取 `.forge/config.md` 的 `decide_dispatch_mode` 字段（缺失时默认 `auto`）
+2. 如果为 `inline` → 使用 inline 模式（下方 §2 及后续章节）
+3. 如果为 `agents` → 使用 Agent Teams 模式（见 `../decide-teams/instructions.md`）
+4. 如果为 `auto`（或值非法/未识别）：
+   a. 读取 `.forge/status.md` 的 `tier` 字段（缺失时默认 `standard`）
+   b. `tier=full` → 尝试 Agent Teams 模式
+   c. `tier=standard` 或 `tier=light` → inline 模式
+   d. 非法值 → 当作 `auto` 处理
+
+### Agent Teams 降级处理
+
+当 `auto` 模式选择 Agent Teams 但环境不支持时（`CLAUDE_CODE_EXPERIMENTAL_AGENT_TEAMS` 未设置或 Agent Teams 运行时不可用）：
+
+1. 自动降级到 inline 模式
+2. 输出警告：`⚠️ Agent Teams 不可用，降级到 inline 模式。设置 CLAUDE_CODE_EXPERIMENTAL_AGENT_TEAMS=1 可启用。`
+3. 降级不阻断 decide 流程，最终决策结果仍然有效
+4. 记录降级事件到 dispatch 日志
+
+---
+
 ## 1. Overview
 
 `/forge decide` 在编码开始前，从四个独立视角对任务进行系统性评估。三个核心视角（产品、架构、安全）始终参与，设计视角仅在任务涉及 UI 变更时动态加入。
