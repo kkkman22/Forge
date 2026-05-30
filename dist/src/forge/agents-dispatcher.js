@@ -14,7 +14,7 @@ import { join } from "node:path";
 // ---------------------------------------------------------------------------
 // Config helper
 // ---------------------------------------------------------------------------
-const VALID_DISPATCH_MODES = ["inline", "agents"];
+const VALID_DISPATCH_MODES = ["inline", "agents", "auto"];
 /**
  * Parse dispatch mode from `.forge/config.md` frontmatter.
  *

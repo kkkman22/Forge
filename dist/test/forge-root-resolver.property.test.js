@@ -72,6 +72,9 @@ describe("Feature: plugin-init-experience, Property 2: Completeness", () => {
 describe("Feature: plugin-init-experience, Property 3: Fallback order", () => {
     it("When pluginRoot missing agents → won't skip script-relative to go directly to global", () => {
         fc.assert(fc.property(safePath(), safePath(), safePath(), (pluginRoot, scriptDir, homeDir) => {
+            // When pluginRoot === scriptDir, the same agents/ dir satisfies both checks,
+            // so plugin wins — exclude this case to test the fallback path.
+            fc.pre(pluginRoot !== scriptDir);
             const input = {
                 pluginRoot,
                 scriptDir: `${scriptDir}/scripts`,

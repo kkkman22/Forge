@@ -109,8 +109,8 @@ describe("context-explosion-defense integration", () => {
                 "report: .forge/reviews/quality-check-20260530-071500.md",
             ].join("\n");
             // Parse summary
-            const p0 = Number.parseInt(summary.match(/^p0: (\d+)/m)?.[1] ?? "999");
-            const p1 = Number.parseInt(summary.match(/^p1: (\d+)/m)?.[1] ?? "999");
+            const p0 = Number.parseInt(summary.match(/^p0: (\d+)/m)?.[1] ?? "999", 10);
+            const p1 = Number.parseInt(summary.match(/^p1: (\d+)/m)?.[1] ?? "999", 10);
             const shouldReadReport = p0 > 0 || p1 > 0;
             expect(shouldReadReport).toBe(false);
         });

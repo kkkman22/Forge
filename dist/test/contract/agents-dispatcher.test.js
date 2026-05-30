@@ -259,6 +259,11 @@ describe("agents-dispatcher (R5)", () => {
         const config = "review_dispatch_mode: inline\ndecide_dispatch_mode: agents\n";
         expect(parseDispatchMode("decide", config)).toBe("agents");
     });
+    it("parseDispatchMode returns 'auto' when config sets auto", async () => {
+        const { parseDispatchMode } = await import(MODULE_PATH);
+        const config = "decide_dispatch_mode: auto\n";
+        expect(parseDispatchMode("decide", config)).toBe("auto");
+    });
     // -----------------------------------------------------------------------
     // 7. Successful dispatch returns completed result
     // -----------------------------------------------------------------------
