@@ -20,3 +20,8 @@
 {"timestamp":"2026-05-30T05:58:46Z","event":"precompact_snapshot","detail":"slug=decide-auto-dispatch phase=ship completed=0
 0 pending=0
 0"}
+{"timestamp":"2026-05-30T02:59:43Z","event":"precompact_snapshot","detail":"slug=configchange-hook phase=build completed=0 pending=0"}
+{"timestamp":"2026-05-30T03:03:05Z","event":"postcompact_restore","detail":"slug=configchange-hook"}
+{"timestamp":"2026-05-30T03:03:05Z","event":"precompact_snapshot","detail":"slug=configchange-hook phase=build completed=0 pending=0"}
+{"timestamp":"2026-05-30T03:08:18Z","event":"postcompact_restore","detail":"slug=configchange-hook"}
+{"timestamp":"2026-05-30T03:08:18Z","event":"precompact_snapshot","detail":"slug=configchange-hook phase=build completed=0 pending=0"}
