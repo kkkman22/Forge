@@ -41,7 +41,7 @@
     "build": {
       "instructions": {
         "path": "build/instructions.md",
-        "sha256": "90f8539cfa4d7ccb35539b54b741ef0f7fc1bc5fcef62dc10a88bdbb32c3d40c"
+        "sha256": "2555fc05dcb083a367f530d694b10dacac9135c824338a80d83a37c6c9fd248a"
       },
       "references": [
         {
@@ -356,7 +356,7 @@
     "loop": {
       "instructions": {
         "path": "loop/instructions.md",
-        "sha256": "9acb521f6330e1742a2eb7292bd01cf8b660b96757b8d0d3f918d19b06f16b56"
+        "sha256": "6c6aac8b9228e5ae33c4a4908a7d1c2f770f2e329166e73bee93a28af559d2a5"
       },
       "references": [
         {

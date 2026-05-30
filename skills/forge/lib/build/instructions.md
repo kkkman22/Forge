@@ -112,9 +112,44 @@ Direct edit, no Subagent. Pause every 2 steps for confirmation. Verify, commit. 
 
 ### 3.2 Standard (clear requirements / has Spec)
 
-Read task list → per task: **Closure-First Probes** (→ references/closure-probes.md) → **Subagent TDD** → progress update → atomic commit → **Final Validation** (§3.5).
+Read `build.use_goal` from `.forge/config.md` (default `true`) → route to §3.2a (/goal mode) or legacy §3.2b.
 
 任务按 Plan 中 `dependsOn` 拓扑顺序执行。依赖图由 Plan Step 3.5 生成，build 遵循拓扑排序确保依赖在依赖者之前完成。
+
+#### §3.2a /goal Mode (`build.use_goal: true`)
+
+When `build.use_goal` is `true` (default), use Claude Code's `/goal` command to drive the TDD loop instead of persistent-loop.sh.
+
+**启动 /goal**：
+1. 读取 `.forge/plans/<slug>.md` 或 `.kiro/specs/<spec>/tasks.md` 获取所有 task
+2. 读取 `.forge/config.md` 获取 `ci_check_command`
+3. 启动 `/goal`，目标条件：**"所有 task 标记 completed AND `ci_check_command` 通过"**
+
+**每次迭代（/goal 自动循环）**：
+1. 读取下一个未完成 task（TaskGet）
+2. 标记为 `in_progress`（TaskUpdate）
+3. **RED** → 写失败测试
+4. **GREEN** → 最小实现通过测试
+5. **REFACTOR** → 清理代码
+6. 运行相关测试验证
+7. 标记为 `completed`（TaskUpdate）
+8. 原子 commit
+
+**Three-Strike 检测**：
+- 同一 task 连续失败 3 次 → 停止 /goal → 进入 `/forge debug`
+
+**/goal 进度追踪**（内置）：
+- Live 显示：elapsed time、turns、tokens consumed
+
+**遵守 §2.7**：/goal 循环中不暂停等待用户确认。
+
+**/goal 完成后**：
+- 运行 `ci_check_command` 全量验证（§3.5 Final Validation）
+- 输出 `✅ build 完成`
+
+#### §3.2b Legacy Mode (`build.use_goal: false`)
+
+Read task list → per task: **Closure-First Probes** (→ references/closure-probes.md) → **Subagent TDD** → progress update → atomic commit → **Final Validation** (§3.5).
 
 **Wave Orchestration (Requirement 4)**：当 `tasks.md` 含 JSON wave 块时，使用 `parseWaves(jsonBlock, tasks)` 从 `src/spec-wave.ts` 解析 wave 分组。然后逐 wave 调用 `scheduleWave(wave, { maxConcurrency, executor, onHttp429 })`（`src/build.ts`）执行：
 - Wave 内任务可并行（`max_parallel_agents` 默认 6）

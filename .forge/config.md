@@ -17,6 +17,7 @@ forge_compact_restate_threshold_tasks: 3  # restate reminder trigger threshold
 postooluse_inject_warnings: on         # on | off
 review_use_ultrareview: true           # true | false
 post_push_verify_enabled: true
+build.use_goal: true    # true=使用 /goal 循环（推荐），false=旧 persistent-loop TDD 循环
 ci_check_command: "npm run check"
 docs.grace_period_until: "2026-06-01"
 docs.ssot_sources:
