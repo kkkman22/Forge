@@ -143,7 +143,7 @@ build 阶段主 Agent 必须执行周期性 Restatement Checkpoint：每完成 N
 
 ## Subagent 并行执行配置
 
-`/forge decide` 和 `/forge review` 使用独立 Subagent（Agent tool），不使用 Agent Teams。Subagent 类型引用 `.claude/agents/`。
+`/forge decide` 和 `/forge review` **默认**使用独立 Subagent（Agent tool）。Agent Teams 为可选 Tier-1 模式——仅当 `decide_dispatch_mode: auto` + tier=full + `CLAUDE_CODE_EXPERIMENTAL_AGENT_TEAMS=1` 全部满足时启用。Subagent 类型引用 `.claude/agents/`。
 
-- **decide**: product、architect、security（+ designer UI 时）。两轮：Round 1 并行输出，Round 2 Critic 交叉审视。
+- **decide**: product、architect、security（+ designer UI 时）。两轮：Round 1 并行输出，Round 2 Critic 交叉审视。Agent Teams 模式增加 cost、ops 视角 + critic 交叉审视。
 - **review**: spec-check、quality-check、security-check 并行。轻量模式省略 spec-check。
