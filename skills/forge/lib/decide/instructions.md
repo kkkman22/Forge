@@ -30,7 +30,7 @@ allowed_tools:
 ### auto 模式分发规则
 
 1. 读取 `.forge/config.md` 的 `decide_dispatch_mode` 字段（缺失时默认 `auto`）
-2. 如果为 `inline` → 使用 inline 模式（下方 §2 Two-Round Subagent Execution）
+2. 如果为 `inline` → 使用 inline 模式（下方 §2 及后续章节）
 3. 如果为 `agents` → 使用 Agent Teams 模式（见 `../decide-teams/instructions.md`）
 4. 如果为 `auto`（或值非法/未识别）：
    a. 读取 `.forge/status.md` 的 `tier` 字段（缺失时默认 `standard`）
