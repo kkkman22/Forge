@@ -12,6 +12,15 @@
 #   1       P0 findings detected
 #   2       Claude Code not installed / usage error (invalid args)
 #   other   Propagated from claude ultrareview (STRICT mode only)
+#
+# CI flags evaluated (2026-05-30):
+#   --bare: NOT RECOMMENDED. Ultrareview requires SKILL context (system prompt)
+#          to produce meaningful reviews. --bare strips this context, producing
+#          shallow or broken output. Do not add.
+#   --exclude-dynamic-system-prompt-sections: NOT RECOMMENDED. Dynamic sections
+#          contain project-specific conventions (CLAUDE.md, rules/) that improve
+#          review accuracy. Excluding them reduces finding quality for marginal
+#          token savings (~5-10% context). Do not add.
 
 set -euo pipefail
 
