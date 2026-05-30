@@ -34,6 +34,12 @@ if [[ -z "${task}" ]]; then
   exit 0
 fi
 
+# Sanitize task name: only allow alphanumeric, hyphens, underscores (prevent path traversal)
+if [[ ! "${task}" =~ ^[a-zA-Z0-9_-]+$ ]]; then
+  echo "Forge: idle"
+  exit 0
+fi
+
 # Count progress from .forge/progress/
 completed=0
 total=0
