@@ -293,6 +293,17 @@
         ]
       }
     ],
+    "StopFailure": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "args": ["node", "${CLAUDE_PLUGIN_ROOT}/scripts/stop-failure-hook.mjs"],
+            "timeout": 3
+          }
+        ]
+      }
+    ],
     "TaskCreated": [
       {
         "hooks": [
