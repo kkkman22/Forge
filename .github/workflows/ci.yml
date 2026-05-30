@@ -1,5 +1,9 @@
 name: CI
 
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
 on:
   push:
     branches: [main]
@@ -40,13 +44,10 @@ jobs:
         run: node scripts/check-dist-sync.mjs
       - name: Verify bundle sync
         run: node scripts/check-bundle-sync.mjs
+      - name: Install shellcheck
+        run: sudo apt-get update -qq && sudo apt-get install -y -qq shellcheck
       - name: Shellcheck scripts
-        run: |
-          if command -v shellcheck &>/dev/null; then
-            shellcheck -x -S warning scripts/*.sh
-          else
-            echo "::warning::shellcheck not installed, skipping"
-          fi
+        run: shellcheck -x -S warning scripts/*.sh
       - name: Validate hooks.json
         run: node -e "JSON.parse(require('fs').readFileSync('hooks/hooks.json','utf-8'))"
       - name: Validate SKILL.md frontmatter
@@ -157,33 +158,6 @@ jobs:
           name: e2e-temp-dirs
           path: /tmp/forge-e2e-*
           retention-days: 3
-
-  verify-dist:
-    needs: check
-    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v5
-      - uses: actions/setup-node@v6
-        with:
-          node-version: 22
-          cache: npm
-      - run: npm ci
-      - name: Build dist bundle
-        run: bash scripts/build-dist.sh
-      - name: Check for dist changes
-        run: |
-          if [ ! -f dist/claude-code/bundles/.manifest.sha256 ]; then
-            echo "::error::dist manifest not found. Run 'bash scripts/build-dist.sh' locally and commit dist/claude-code/bundles/.manifest.sha256."
-            exit 1
-          fi
-          cp dist/claude-code/bundles/.manifest.sha256 /tmp/old-manifest.sha256
-          bash scripts/build-dist.sh
-          if ! diff -q /tmp/old-manifest.sha256 dist/claude-code/bundles/.manifest.sha256 >/dev/null 2>&1; then
-            echo "::error::dist is out of sync with source. Run 'bash scripts/build-dist.sh' locally and commit the updated .manifest.sha256."
-            diff /tmp/old-manifest.sha256 dist/claude-code/bundles/.manifest.sha256 || true
-            exit 1
-          fi
 
   publish:
     if: startsWith(github.ref, 'refs/tags/v')
