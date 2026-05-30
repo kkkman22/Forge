@@ -149,7 +149,10 @@
     ]
   },
   "env": {
-    "CLAUDE_CODE_EXPERIMENTAL_AGENT_TEAMS": "1"
+    "CLAUDE_CODE_EXPERIMENTAL_AGENT_TEAMS": "1",
+    "ENABLE_PROMPT_CACHING_1H": "false",
+    "MCP_CONNECTION_NONBLOCKING": "true",
+    "CLAUDE_CODE_SUBPROCESS_ENV_SCRUB": "true"
   },
   "statusLine": {
     "type": "command",
