@@ -271,6 +271,28 @@
         ]
       }
     ],
+    "WorktreeCreate": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "args": ["node", "${CLAUDE_PLUGIN_ROOT}/scripts/worktree-create-hook.mjs"],
+            "timeout": 3
+          }
+        ]
+      }
+    ],
+    "WorktreeRemove": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "args": ["node", "${CLAUDE_PLUGIN_ROOT}/scripts/worktree-remove-hook.mjs"],
+            "timeout": 3
+          }
+        ]
+      }
+    ],
     "TaskCreated": [
       {
         "hooks": [
