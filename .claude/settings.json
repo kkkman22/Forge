@@ -153,10 +153,5 @@
     "ENABLE_PROMPT_CACHING_1H": "false",
     "MCP_CONNECTION_NONBLOCKING": "true",
     "CLAUDE_CODE_SUBPROCESS_ENV_SCRUB": "true"
-  },
-  "statusLine": {
-    "type": "command",
-    "command": "bash scripts/forge-statusline.sh 2>/dev/null || bash forge/scripts/forge-statusline.sh 2>/dev/null || bash ~/.claude/skills/forge/scripts/forge-statusline.sh 2>/dev/null || echo Forge: idle",
-    "refreshInterval": 30
   }
 }
