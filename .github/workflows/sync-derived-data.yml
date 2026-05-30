@@ -1,0 +1,67 @@
+name: Sync derived data
+
+# Runs on push to main after a merge. Auto-updates all derived / reference data
+# that can drift when source code changes:
+#   - README test metrics
+#   - lib manifest sha256
+#   - CLI help baseline
+#   - dist bundle manifest
+#   - performance benchmark baseline
+#
+# Uses [skip ci] in the auto-commit message to prevent infinite trigger loops.
+# Replaces the former update-baseline.yml (benchmark baseline now lives here).
+
+on:
+  push:
+    branches: [main]
+
+jobs:
+  sync:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v5
+        with:
+          fetch-depth: 1
+      - uses: actions/setup-node@v6
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+
+      # 1. Sync README test metrics
+      - name: Sync README metrics
+        run: bash scripts/sync-readme-metrics.sh
+
+      # 2. Sync lib manifest sha256
+      - name: Sync lib manifest
+        run: node scripts/build-lib-manifest.mjs
+
+      # 3. Sync CLI help baseline
+      - name: Sync help baseline
+        run: node scripts/record-help-baseline.mjs
+
+      # 4. Sync dist bundle manifest
+      - name: Sync dist manifest
+        run: bash scripts/build-dist.sh
+
+      # 5. Run benchmarks and append to metrics.md
+      - name: Run benchmarks
+        run: npx vitest bench --run --outputJson=bench-result.json
+
+      - name: Append baseline to metrics.md
+        run: node scripts/append-baseline.mjs bench-result.json --keep=30
+
+      # 6. Commit all changes (if any)
+      - name: Commit derived data updates
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          if ! git diff --quiet; then
+            git add -A
+            git commit -m "ci: sync derived data [skip ci]"
+            git push
+          else
+            echo "No derived data changes to commit."
+          fi
