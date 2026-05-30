@@ -3,6 +3,7 @@
 > 基于 Forge 项目代码库全量扫描，逐条交叉验证 `claude-code-changelog-forge-optimization.md` 中 90 个优化点的落地可行性。
 > **关键区分**：`plugin.json`（分发给用户的出厂配置）vs `.claude/settings.json`（Forge 项目自身开发配置）。
 > 生成时间：2026-05-30 | v2（修正版，基于 plugin.json 重新评估）
+> v3 更新：用户决策已确认，11 项进入实施阶段
 
 ---
 
@@ -542,4 +543,66 @@ effort: high          # A5: 深度分析
 
 ---
 
-*报告生成时间：2026-05-30 | v2 修正版 | 基于 Claude Code CHANGELOG 2.1.0–2.1.157 + Forge plugin.json + settings.json 对比分析*
+## 八、用户决策确认（v3 更新）
+
+以下 11 项从"需架构评估"升级为"确认实施"，并记录了关键设计决策。
+
+### 8.1 确认实施的 11 项
+
+| # | 优化项 | 原状态 | 确认决策 |
+|---|--------|--------|----------|
+| §11 | ConfigChange hook | 需架构评估 | ✅ 实施。新建脚本 + 注册 plugin.json |
+| §33 | Dynamic Workflows POC | 需架构评估 | ✅ 实施。产出 POC + ADR |
+| §34 | ultrareview `--json` 增强 | 需架构评估 | ✅ 实施。增强 run-ci-ultrareview.sh |
+| §38 | Agent Teams 双模式并行 | 需架构评估 | ✅ 实施。Full→Teams，Standard/Light→inline |
+| §43 | `${CLAUDE_PLUGIN_DATA}` 持久化 | 需架构评估 | ✅ 实施。迁移知识库缓存 |
+| §60 | `/code-review --fix` 集成 | 需架构评估 | ✅ 实施。**自动执行** P2/P3 修复 |
+| §61 | `/simplify` post-review | 需架构评估 | ✅ 实施。**自动执行** review 通过后 |
+| §62 | `/usage` 成本收集 | 需架构评估 | ✅ 实施。集成到 `/forge learn` |
+| §69 | `sandbox.failIfUnavailable` CI | 需架构评估 | ✅ 实施。修改 ci.yml |
+| §84 | `/goal` 命令集成 | 需架构评估 | ✅ 实施。**替代 persistent-loop.sh** |
+| §88 | `--from-pr` PR 恢复 | 需架构评估 | ✅ 实施。集成到 review + ship |
+
+### 8.2 关键设计决策
+
+| 决策点 | 用户选择 | 影响 |
+|--------|---------|------|
+| **§38 Agent Teams 模式** | 双模式并行（auto） | Full tier 自动用 Agent Teams，Standard/Light 用 inline。`decide_dispatch_mode` 新增 `auto` 值 |
+| **§60/§61 Review 增强** | 自动执行 | P2/P3 自动 `/code-review --fix` + 独立 commit；review 通过后自动 `/simplify` + commit |
+| **§84 /goal 集成方式** | 替代 persistent-loop.sh | `/goal` 接管 build 内 TDD 循环，persistent-loop.sh 仅保留 phase transition 职责 |
+
+### 8.3 文件变更计划
+
+| 操作 | 文件 | 涉及优化项 |
+|------|------|-----------|
+| **新建** | `.claude/workflows/dynamic-review-poc.js` | §33 |
+| **新建** | `scripts/config-changed-hook.mjs` | §11 |
+| **新建** | `.forge/decisions/2026-05-30-dynamic-workflow-poc.md` | §33 |
+| **修改** | `.claude-plugin/plugin.json` | §11, §84 |
+| **修改** | `skills/forge/lib/decide/instructions.md` | §38 |
+| **修改** | `skills/forge/lib/router/instructions.md` | §38 |
+| **修改** | `skills/forge/lib/review/instructions.md` | §60, §61, §88 |
+| **修改** | `skills/forge/lib/learn/instructions.md` | §62 |
+| **修改** | `skills/forge/lib/build/instructions.md` | §84 |
+| **修改** | `skills/forge/lib/loop/instructions.md` | §84 |
+| **修改** | `skills/forge/lib/ship/instructions.md` | §88 |
+| **修改** | `scripts/run-ci-ultrareview.sh` | §34 |
+| **修改** | `scripts/knowledge-hook-dispatch.mjs` | §43 |
+| **修改** | `scripts/inject-evolved-rules.mjs` | §43 |
+| **修改** | `scripts/record-evolved-rule-violation.mjs` | §43 |
+| **修改** | `.github/workflows/ci.yml` | §69 |
+| **修改** | `.forge/config.md` | §38, §84 |
+| **修改** | `.claude/rules/workflow-fallback-ladder.md` | §38 |
+
+### 8.4 实施优先级
+
+| 批次 | 优化项 | 理由 |
+|------|--------|------|
+| **Batch 1**（独立，无依赖） | §11, §34, §69 | 新脚本/CI 配置，不影响现有 skill |
+| **Batch 2**（skill 指令修改） | §60/§61/§88, §62, §84 | 修改 skill instructions，互相独立 |
+| **Batch 3**（配置+多文件） | §38, §43 | 涉及 config.md + 多个脚本联动 |
+| **Batch 4**（POC） | §33 | 需要前 3 批完成后再评估 |
+
+---
+
+*报告生成时间：2026-05-30 | v3 用户决策版 | 基于 Claude Code CHANGELOG 2.1.0–2.1.157 + Forge plugin.json + settings.json 对比分析*
