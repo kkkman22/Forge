@@ -6,10 +6,10 @@ export default defineConfig({
     environment: "node",
     include: ["test/**/*.test.ts", "packs/**/*.test.ts", "skills/**/*.test.ts"],
     testTimeout: 5000,
-    pool: "forks",
+    pool: "threads",
     poolOptions: {
-      forks: {
-        maxForks: 2,
+      threads: {
+        maxThreads: 2,
       },
     },
     fileParallelism: true,
