@@ -750,7 +750,7 @@ if command -v node &>/dev/null; then
   " 2>&1) || true
 
   case "${env_result}" in
-    *"added"*})
+    *"added"*)
       added=$(echo "${env_result}" | node -e "process.stdout.write(JSON.parse(require('fs').readFileSync(0,'utf-8')).added)" 2>/dev/null || echo "?")
       skipped=$(echo "${env_result}" | node -e "process.stdout.write(JSON.parse(require('fs').readFileSync(0,'utf-8')).skipped)" 2>/dev/null || echo "?")
       if [[ "${added}" -gt 0 ]]; then
