@@ -18,35 +18,12 @@
  * Exit codes: 0 (always — fail-open)
  */
 
-import { mkdirSync, appendFileSync } from "node:fs";
+import { existsSync, mkdirSync, appendFileSync } from "node:fs";
 import { join } from "node:path";
 
 const CWD = process.cwd();
 const DEBUG_DIR = join(CWD, ".forge", "debug");
 const FAILURES_FILE = join(DEBUG_DIR, "failures.jsonl");
-
-/** Max message length to prevent unbounded JSONL entries. */
-const MAX_MESSAGE_LENGTH = 500;
-
-/** Patterns that may contain credentials or tokens. */
-const SECRET_PATTERNS = [
-  /sk-[a-zA-Z0-9]{20,}/g,          // OpenAI-style keys
-  /key[a-zA-Z0-9]{20,}/gi,         // Generic API keys
-  /token[a-zA-Z0-9]{20,}/gi,       // Generic tokens
-  /Bearer\s+[a-zA-Z0-9._-]+/gi,    // Bearer tokens
-  /[a-zA-Z0-9]{40,}/g,             // Long hex/base64 strings (likely secrets)
-];
-
-/**
- * Sanitize error message: truncate and redact potential secrets.
- */
-function sanitizeMessage(msg) {
-  let sanitized = msg.slice(0, MAX_MESSAGE_LENGTH);
-  for (const pattern of SECRET_PATTERNS) {
-    sanitized = sanitized.replace(pattern, "[REDACTED]");
-  }
-  return sanitized;
-}
 
 try {
   const errorType = process.env.STOP_ERROR_TYPE;
@@ -62,7 +39,7 @@ try {
   const entry = {
     error_type: errorType,
     timestamp: new Date().toISOString(),
-    details: sanitizeMessage(errorMessage || "No details provided"),
+    details: errorMessage || "No details provided",
   };
 
   appendFileSync(FAILURES_FILE, JSON.stringify(entry) + "\n", "utf-8");
