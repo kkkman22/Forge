@@ -24,6 +24,15 @@
         "hooks": [
           {
             "type": "command",
+            "command": "rm -f ${TMPDIR}/forge-read-budget-*.json 2>/dev/null || true",
+            "timeout": 1
+          }
+        ]
+      },
+      {
+        "hooks": [
+          {
+            "type": "command",
             "command": "node scripts/inject-evolved-rules.mjs 2>/dev/null || node forge/scripts/inject-evolved-rules.mjs 2>/dev/null || node ~/.claude/skills/forge/scripts/inject-evolved-rules.mjs 2>/dev/null || true",
             "timeout": 5
           }
@@ -70,6 +79,16 @@
           {
             "type": "command",
             "command": "if [ -f .forge/status.md ]; then echo '📝 代码已修改。请记得更新 .forge/progress/ 中的任务状态。'; fi"
+          }
+        ]
+      },
+      {
+        "matcher": "Read",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "node scripts/track-read-budget.mjs \"$TOOL_INPUT_FILE\" 2>/dev/null || true",
+            "timeout": 2
           }
         ]
       }

@@ -14,6 +14,7 @@ import { logResolvedRoot, resolveProjectRoot } from "./project-root.js";
 import { registerForgeExec } from "./tools/forge-exec.js";
 import { registerForgeGit } from "./tools/forge-git.js";
 import { registerForgeRead } from "./tools/forge-read.js";
+import { registerForgeReadCached } from "./tools/forge-read-cached.js";
 
 // ---------------------------------------------------------------------------
 // Error handling — log to stderr (stdout is reserved for MCP protocol)
@@ -46,6 +47,7 @@ logResolvedRoot(root);
 registerForgeExec(server, root);
 registerForgeGit(server, root);
 registerForgeRead(server, root);
+registerForgeReadCached(server, root);
 
 // Connect via stdio transport
 const transport = new StdioServerTransport();
