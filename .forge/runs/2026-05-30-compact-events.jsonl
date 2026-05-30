@@ -129,3 +129,5 @@
 {"timestamp":"2026-05-30T03:00:42Z","event":"precompact_snapshot","detail":"slug=plugin-data-persistence phase=build completed=0 pending=0"}
 {"timestamp":"2026-05-30T06:09:16Z","event":"postcompact_restore","detail":"slug=decide-auto-dispatch"}
 {"timestamp":"2026-05-30T06:09:16Z","event":"precompact_snapshot","detail":"slug=subagent-truncation-fix phase=build completed=0 pending=0"}
+{"timestamp":"2026-05-30T09:55:36Z","event":"precompact_skip","detail":"no current_task in status.md"}
+{"timestamp":"2026-05-30T09:56:26Z","event":"precompact_skip","detail":"no current_task in status.md"}
