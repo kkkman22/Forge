@@ -1,27 +1,30 @@
 ---
-current_task: "hook-system-enhancement"
+current_task: "observability-enhancement"
 tier: "standard"
 task_type: "feature"
 project_phase: "implementation"
 phase: "build"
 work_nature: "feature"
 updated: "2026-05-30"
-branch: "worktree-hook-system-enhancement"
-spec_path: ".kiro/specs/hook-system-enhancement/"
-plan_path: ".kiro/specs/hook-system-enhancement/tasks.md"
-hints: "hook,migration,mcp-tool,terminalSequence,duration_ms,fail-open"
+branch: "worktree-observability-enhancement"
+spec_path: ".kiro/specs/observability-enhancement/"
+plan_path: ".kiro/specs/observability-enhancement/tasks.md"
+hints: "OTEL,agent-tracing,statusline,duration-ms,learn-observability"
 assumptions:
   - "spec 目录含 requirements+design+tasks = decide+spec+plan 完成"
-  - "9 tasks: command→args(1) + mcp_tool(2) + TaskCreated(3) + Worktree(4) + StopFailure(5) + PermissionDenied(6) + terminalSequence(7) + duration_ms(8) + regression(9)"
-  - "TDD: hook 脚本可用单元测试验证核心逻辑，plugin.json 变更用 grep 验证"
+  - "4 tasks: Status Line config / learn OTEL analysis / hook duration_ms / regression"
+  - "TDD: 文档/配置类 task 无单元测试，verify-by manual/bash"
 ---
 
 # 项目状态
 
-## 当前任务：hook-system-enhancement — build 阶段
+## 当前任务：observability-enhancement — build 阶段
 
-Standard-tier 流程。spec/plan 已就绪，9 tasks 待实现。
+Standard-tier 流程。spec/plan 已就绪，4 tasks 待实现。
 
 ## 已完成
 
 build-goal-replace-loop: build 阶段进行中（独立 worktree）。
+context-explosion-defense: build 阶段进行中（独立 worktree）。
+subagent-truncation-fix: build 阶段进行中（被 context-explosion-defense 替代）。
+workflows-integration-resilience: merged to main (574663a6).
