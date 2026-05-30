@@ -45,7 +45,7 @@ export interface DispatchResult {
 // Config helper
 // ---------------------------------------------------------------------------
 
-const VALID_DISPATCH_MODES = ["inline", "agents"] as const;
+const VALID_DISPATCH_MODES = ["inline", "agents", "auto"] as const;
 type DispatchMode = (typeof VALID_DISPATCH_MODES)[number];
 
 /**
