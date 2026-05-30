@@ -236,10 +236,6 @@ IF 本次执行是从 conversation summary 恢复（上下文压缩后继续）�
 
 三层 review 完成后，按以下顺序执行 post-review pipeline。遵循 §2.7 No Confirmation Between Steps 铁律：步骤间不暂停询问用户。
 
-### Step 1: 三层 review（§2）
-
-执行 §2 Subagent Parallel Execution（spec-check / quality-check / security-check）。完成后收集 findings。
-
 ### Step 2: P0/P1 处理
 
 当三层 review 发现 P0 或 P1 findings 时：
@@ -280,13 +276,13 @@ IF 本次执行是从 conversation summary 恢复（上下文压缩后继续）�
 ### Pipeline 执行顺序
 
 ```
-Post-Review Step 1: 三层 review（spec-check / quality-check / security-check）
+Step 1: 三层 review（spec-check / quality-check / security-check）
     ↓
-Post-Review Step 2: P0/P1 存在？→ 输出修复建议，阻断 ship（结束）
+Step 2: P0/P1 存在？→ 输出修复建议，阻断 ship（结束）
     ↓ (无 P0/P1)
-Post-Review Step 3: P2/P3 存在？→ 自动 /code-review --fix + commit + 验证
+Step 3: P2/P3 存在？→ 自动 /code-review --fix + commit + 验证
     ↓ (全部通过)
-Post-Review Step 4: 自动 /simplify + commit + 验证
+Step 4: 自动 /simplify + commit + 验证
     ↓
 ✅ Review 通过 + 代码优化完成
 ```
