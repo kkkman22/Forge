@@ -1143,53 +1143,25 @@ describe("Contract: stop hooks should not block", () => {
     });
   }
 
-  // Extract inline bash hooks from plugin.json Stop section.
-  // An "inline" command is one that does NOT delegate to an external script
-  // via ${CLAUDE_PLUGIN_ROOT} (those are covered by the script-level cases above).
-  function getInlineStopCommands(): string[] {
+  // All Stop hooks should use args (no inline shell commands).
+  // After the §6 migration, all hooks delegate to external scripts.
+  it("plugin.json Stop section has no inline bash commands", () => {
     const pluginPath = resolve(ROOT, ".claude-plugin/plugin.json");
     const plugin = JSON.parse(readFileSync(pluginPath, "utf-8"));
     const stopGroups = (plugin.hooks?.Stop ?? []) as Array<{
-      hooks?: Array<{ type?: string; command?: string }>;
+      hooks?: Array<{ type?: string; command?: string; args?: string[] }>;
     }>;
-    const commands: string[] = [];
+    const inlineCommands: string[] = [];
     for (const group of stopGroups) {
       for (const hook of group.hooks ?? []) {
         if (hook.type !== "command" || !hook.command) continue;
         // biome-ignore lint/suspicious/noTemplateCurlyInString: literal shell variable check
         if (hook.command.includes("${CLAUDE_PLUGIN_ROOT}")) continue;
-        commands.push(hook.command);
+        inlineCommands.push(hook.command);
       }
     }
-    return commands;
-  }
-
-  const INLINE_STOP_COMMANDS = getInlineStopCommands();
-
-  it("plugin.json Stop section contains inline bash hooks", () => {
-    // Sanity check: ensure we actually extracted some inline hooks so the
-    // suite below is meaningful. If this fails, plugin.json structure changed.
-    expect(INLINE_STOP_COMMANDS.length).toBeGreaterThan(0);
+    expect(inlineCommands.length).toBe(0);
   });
-
-  for (let i = 0; i < INLINE_STOP_COMMANDS.length; i++) {
-    const command = INLINE_STOP_COMMANDS[i];
-    it(`inline Stop hook #${i + 1} exits 0 and emits no block JSON`, () => {
-      const tmp = mkdtempSync(join(tmpdir(), "forge-stop-inline-"));
-      try {
-        const result = spawnSync("bash", ["-c", command], {
-          cwd: tmp,
-          encoding: "utf-8",
-          timeout: 10000,
-        });
-        expect(result.status).toBe(0);
-        expect(result.stdout).not.toMatch(/"continue"\s*:\s*false/);
-        expect(result.stdout).not.toMatch(/"decision"\s*:\s*"block"/);
-      } finally {
-        rmSync(tmp, { recursive: true, force: true });
-      }
-    });
-  }
 });
 
 // ---------------------------------------------------------------------------
