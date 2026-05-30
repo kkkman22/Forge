@@ -13,11 +13,22 @@
  * - R3 AC3: Adding to list works without core logic changes
  * - T1.5: --help output
  */
+import type { ExecException } from "node:child_process";
 import { execFileSync } from "node:child_process";
 import { join } from "node:path";
 import { describe, expect, it } from "vitest";
 
 const SCRIPT_PATH = join(process.cwd(), "scripts", "config-changed-hook.mjs");
+
+interface ExecError {
+  stdout?: string;
+  stderr?: string;
+  status?: number;
+}
+
+function isExecError(e: unknown): e is ExecException & ExecError {
+  return e instanceof Error && "status" in e;
+}
 
 function runHook(
   changedFiles: string[],
@@ -38,11 +49,11 @@ function runHook(
     });
     return { stdout: result.trim(), stderr: "", exitCode: 0 };
   } catch (e: unknown) {
-    const err = e as { stdout?: string; stderr?: string; status?: number };
+    if (!isExecError(e)) return { stdout: "", stderr: "", exitCode: 1 };
     return {
-      stdout: (err.stdout ?? "").trim(),
-      stderr: (err.stderr ?? "").trim(),
-      exitCode: err.status ?? 1,
+      stdout: (e.stdout ?? "").trim(),
+      stderr: (e.stderr ?? "").trim(),
+      exitCode: e.status ?? 1,
     };
   }
 }
@@ -53,6 +64,21 @@ function parseOutput(stdout: string): Record<string, string> | null {
     return JSON.parse(stdout);
   } catch {
     return null;
+  }
+}
+
+/** Run hook with arbitrary input JSON (no changed_files field) */
+function runHookMissingField(input: Record<string, unknown>): { stdout: string; exitCode: number } {
+  try {
+    const result = execFileSync("node", [SCRIPT_PATH], {
+      encoding: "utf-8",
+      timeout: 5000,
+      input: JSON.stringify(input),
+    });
+    return { stdout: result.trim(), exitCode: 0 };
+  } catch (e: unknown) {
+    if (!isExecError(e)) return { stdout: "", exitCode: 1 };
+    return { stdout: (e.stdout ?? "").trim(), exitCode: e.status ?? 1 };
   }
 }
 
@@ -109,8 +135,8 @@ describe("config-changed-hook.mjs", () => {
       expect(true).toBe(true);
     } catch (e: unknown) {
       // Fail-open: should not throw (exit code should be 0)
-      const err = e as { status?: number };
-      expect(err.status).toBe(0);
+      if (!isExecError(e)) throw e;
+      expect(e.status).toBe(0);
     }
   });
 
@@ -123,9 +149,15 @@ describe("config-changed-hook.mjs", () => {
       });
       expect(true).toBe(true);
     } catch (e: unknown) {
-      const err = e as { status?: number };
-      expect(err.status).toBe(0);
+      if (!isExecError(e)) throw e;
+      expect(e.status).toBe(0);
     }
+  });
+
+  it("exits silently when input JSON lacks changed_files field", () => {
+    const result = runHookMissingField({ session_id: "test" });
+    expect(result.exitCode).toBe(0);
+    expect(result.stdout).toBe("");
   });
 
   it("completes within 3 seconds", () => {
@@ -144,10 +176,9 @@ describe("config-changed-hook.mjs", () => {
       expect(result).toContain("config-changed-hook");
       expect(result).toContain("用法");
     } catch (e: unknown) {
-      // --help may exit with 0, that's fine
-      const err = e as { stdout?: string; status?: number };
-      expect(err.status).toBe(0);
-      expect(err.stdout ?? "").toContain("config-changed-hook");
+      if (!isExecError(e)) throw e;
+      expect(e.status).toBe(0);
+      expect(e.stdout ?? "").toContain("config-changed-hook");
     }
   });
 
