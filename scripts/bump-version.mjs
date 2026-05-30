@@ -27,6 +27,8 @@ const VERSION_FILES = [
   "dist-plugin/.claude-plugin/plugin.json",
 ];
 
+const BUMP_LEVELS = ["patch", "minor", "major"];
+
 function readJSON(filePath) {
   return JSON.parse(readFileSync(filePath, "utf-8"));
 }
@@ -35,12 +37,47 @@ function writeJSON(filePath, data) {
   writeFileSync(filePath, JSON.stringify(data, null, 2) + "\n");
 }
 
-function main() {
-  const newVersion = process.argv[2];
+function resolveNewVersion(currentVersion, input) {
+  // Direct version number: 3.2.0
+  if (/^\d+\.\d+\.\d+(-[\w.]+)?$/.test(input)) {
+    return input;
+  }
 
-  if (!newVersion || !/^\d+\.\d+\.\d+(-[\w.]+)?$/.test(newVersion)) {
-    console.error("用法: node scripts/bump-version.mjs <version>");
-    console.error("示例: node scripts/bump-version.mjs 3.2.0");
+  // Bump level: patch / minor / major
+  if (BUMP_LEVELS.includes(input)) {
+    const parts = currentVersion.split("-")[0].split(".").map(Number);
+    if (parts.length !== 3 || parts.some(isNaN)) {
+      console.error(`当前版本格式异常: ${currentVersion}`);
+      process.exit(1);
+    }
+    if (input === "patch") parts[2]++;
+    if (input === "minor") { parts[1]++; parts[2] = 0; }
+    if (input === "major") { parts[0]++; parts[1] = 0; parts[2] = 0; }
+    return parts.join(".");
+  }
+
+  return null;
+}
+
+function main() {
+  const input = process.argv[2];
+
+  if (!input) {
+    console.error("用法: node scripts/bump-version.mjs <version | patch | minor | major>");
+    console.error("示例:");
+    console.error("  node scripts/bump-version.mjs 3.2.0    # 指定版本号");
+    console.error("  node scripts/bump-version.mjs patch     # 3.1.0 → 3.1.1");
+    console.error("  node scripts/bump-version.mjs minor     # 3.1.0 → 3.2.0");
+    console.error("  node scripts/bump-version.mjs major     # 3.1.0 → 4.0.0");
+    process.exit(1);
+  }
+
+  const currentVersion = readJSON(join(ROOT, "package.json")).version;
+  const newVersion = resolveNewVersion(currentVersion, input);
+
+  if (!newVersion) {
+    console.error(`无效参数: ${input}`);
+    console.error("支持: 具体版本号 (x.y.z) 或 patch / minor / major");
     process.exit(1);
   }
 
