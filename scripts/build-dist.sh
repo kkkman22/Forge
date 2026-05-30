@@ -189,6 +189,21 @@ mkdir -p "${PLUGIN_DIST}"
 # Copy plugin manifest
 cp -r "${FORGE_ROOT}/.claude-plugin" "${PLUGIN_DIST}/.claude-plugin"
 
+# Sync version from package.json into plugin.json (safety net against drift)
+DIST_PLUGIN_JSON="${PLUGIN_DIST}/.claude-plugin/plugin.json"
+if [[ -f "${DIST_PLUGIN_JSON}" ]]; then
+  node -e "
+    const fs = require('fs');
+    const pkg = JSON.parse(fs.readFileSync('${FORGE_ROOT}/package.json', 'utf8'));
+    const plugin = JSON.parse(fs.readFileSync('${DIST_PLUGIN_JSON}', 'utf8'));
+    if (plugin.version !== pkg.version) {
+      plugin.version = pkg.version;
+      fs.writeFileSync('${DIST_PLUGIN_JSON}', JSON.stringify(plugin, null, 2) + '\n');
+      console.log('  ↳ synced plugin.json version → ' + pkg.version);
+    }
+  "
+fi
+
 # Copy plugin assets (same as CC bundle but with plugin layout)
 cp -r "${FORGE_ROOT}/skills" "${PLUGIN_DIST}/skills"
 cp -r "${FORGE_ROOT}/agents" "${PLUGIN_DIST}/agents"
