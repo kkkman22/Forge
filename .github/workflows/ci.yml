@@ -216,6 +216,9 @@ jobs:
       - name: Install Claude Code
         run: curl -fsSL https://claude.ai/install.sh | bash
       - name: Validate plugin manifest
+        # Security: fail if sandbox is unavailable to prevent bypassing security boundaries
+        env:
+          SANDBOX_FAIL_IF_UNAVAILABLE: "1"
         run: claude plugin validate .
       - name: Validate plugin manifest schema
         run: node -e "JSON.parse(require('fs').readFileSync('.claude-plugin/plugin.json','utf-8'))"
