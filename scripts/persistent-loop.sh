@@ -375,7 +375,7 @@ fi
 # Phase transition (build→review) is handled in Case 6 below.
 if [ "$effective_phase" = "build" ]; then
   # Check if /goal mode is active — skip TDD loop injection when true
-  use_goal=$(read_field "$FORGE_DIR/config.md" "use_goal")
+  use_goal=$(read_field "$FORGE_DIR/config.md" "build.use_goal")
   use_goal="${use_goal:-true}"  # default true
   if [ "$use_goal" = "false" ]; then
     # Legacy mode: inject resume for TDD loop (original Case 3 behavior)
