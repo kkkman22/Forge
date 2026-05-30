@@ -193,6 +193,7 @@ export interface ReviewEvolutionArtifacts {
  */
 export declare function buildReviewEvolutionArtifacts(input: ReviewEvolutionInput, now: Date, sequenceInDay: number): ReviewEvolutionArtifacts;
 import type { SubagentInvocation, SubagentResult } from "./loop-types.js";
+import { type TruncationAssessment } from "./truncation-detection.js";
 /** Context for building review subagent invocations. */
 export interface ReviewSubagentContext {
     hasSpec: boolean;
@@ -200,6 +201,21 @@ export interface ReviewSubagentContext {
     changedFiles: string[];
 }
 export declare function buildReviewSubagents(context: ReviewSubagentContext): SubagentInvocation[];
+/**
+ * Run truncation detection across review subagent results.
+ *
+ * Maps each agentType to its ReviewLayer, runs detectTruncation on the raw
+ * output, then assesses overall severity via assessTruncationSeverity.
+ *
+ * Non-review agents (frontend-check, unknown) are skipped.
+ *
+ * @param results - Successfully completed subagent results from the fallback ladder.
+ * @returns TruncationAssessment indicating the degradation action to take.
+ */
+export declare function processReviewTruncation(results: Array<{
+    agentType: string;
+    result: string;
+}>): TruncationAssessment;
 export declare function mergeReviewResults(results: SubagentResult[]): MergedFinding[];
 /**
  * Initialize a review progress file with frontmatter (R15.1).
@@ -276,3 +292,32 @@ export interface FallbackLadderTrace {
  * @returns Fallback ladder result with methodology and trace
  */
 export declare function runReviewFallbackLadder(input: FallbackLadderInput): Promise<FallbackLadderResult>;
+/**
+ * Result of review execution with truncation handling.
+ *
+ * Extends FallbackLadderResult with optional truncation assessment
+ * when subagent results were successfully collected.
+ */
+export interface TruncationAwareResult extends FallbackLadderResult {
+    /** Truncation assessment when subagent results were collected. Undefined if execution failed. */
+    truncationAssessment?: TruncationAssessment;
+}
+/**
+ * Execute review with truncation-aware handling.
+ *
+ * Wraps the standard fallback ladder (L0→L1→L2→L3 for execution failures)
+ * with an additional truncation-specific degradation layer:
+ *
+ *   - After L0 succeeds, runs truncation detection on all results.
+ *   - 0-2 layers truncated → return with assessment (proceed/annotate/warn).
+ *   - All 3 layers truncated → serial retry (concurrency=1).
+ *     - Retry succeeds (not all truncated) → subagent-serial methodology.
+ *     - Retry still all truncated → methodology=unavailable (blocks ship).
+ *
+ * Execution failures (L0 all-fail, L1, L2, L3) are handled by the standard
+ * fallback ladder before truncation checking begins.
+ *
+ * @param input - Fallback ladder configuration.
+ * @returns Fallback ladder result extended with truncation assessment.
+ */
+export declare function runReviewWithTruncationHandling(input: FallbackLadderInput): Promise<TruncationAwareResult>;
