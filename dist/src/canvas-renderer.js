@@ -49,11 +49,11 @@ export async function renderCanvas(options) {
         jsonData.footerNotice = "Bitbucket MCP enrichment skipped (not available)";
     }
     const jsonIsland = escapeHtml(JSON.stringify(jsonData));
-    // Build HTML
+    // Build HTML — use function-form replace() to avoid $' / $` special patterns
     const html = baseHtml
-        .replace("{{topic}}", escapeHtml(topic))
-        .replace("{{json_island}}", jsonIsland)
-        .replace("{{renderer_js}}", rendererJs);
+        .replace("{{topic}}", () => escapeHtml(topic))
+        .replace("{{json_island}}", () => jsonIsland)
+        .replace("{{renderer_js}}", () => rendererJs);
     // Write output
     const outputDir = join(forgeDir, "reviews");
     const outputPath = join(outputDir, `${topic}.canvas.html`);
