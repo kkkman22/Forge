@@ -776,6 +776,39 @@ if [[ -f "${FORGE_ROOT}/scripts/cmux-mirror/install-template.sh" ]]; then
   bash "${FORGE_ROOT}/scripts/cmux-mirror/install-template.sh" "${PROJECT_ROOT}" 2>/dev/null || true
 fi
 
+# --- Configure Status Line (idempotent) ---
+if command -v node &>/dev/null; then
+  if [[ -f "${settings_file}" ]]; then
+    statusline_result=$(node -e "
+      const fs = require('fs');
+      const settingsPath = '${settings_file}';
+      let settings;
+      try {
+        settings = JSON.parse(fs.readFileSync(settingsPath, 'utf-8'));
+      } catch (e) {
+        settings = {};
+      }
+      if (settings.statusLine) {
+        process.stdout.write('SKIP');
+      } else {
+        settings.statusLine = {
+          type: 'command',
+          command: 'bash scripts/forge-statusline.sh 2>/dev/null || bash forge/scripts/forge-statusline.sh 2>/dev/null || bash ~/.claude/skills/forge/scripts/forge-statusline.sh 2>/dev/null || echo Forge: idle',
+          refreshInterval: 30
+        };
+        fs.writeFileSync(settingsPath, JSON.stringify(settings, null, 2) + '\\n');
+        process.stdout.write('OK');
+      }
+    " 2>&1) || true
+
+    case "${statusline_result}" in
+      SKIP) info "Status Line 配置已存在，跳过" ;;
+      OK)   success "Status Line 已配置到 settings.json" ;;
+      *)    warn "Status Line 配置写入失败：${statusline_result}" ;;
+    esac
+  fi
+fi
+
 # ============================================================================
 # Step 7：安装可选工具（code-review-graph）
 # ============================================================================

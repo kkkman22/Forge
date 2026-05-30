@@ -140,5 +140,10 @@
   },
   "env": {
     "CLAUDE_CODE_EXPERIMENTAL_AGENT_TEAMS": "1"
+  },
+  "statusLine": {
+    "type": "command",
+    "command": "bash scripts/forge-statusline.sh 2>/dev/null || bash forge/scripts/forge-statusline.sh 2>/dev/null || bash ~/.claude/skills/forge/scripts/forge-statusline.sh 2>/dev/null || echo Forge: idle",
+    "refreshInterval": 30
   }
 }
