@@ -11,6 +11,149 @@ Entries follow [Keep a Changelog](https://keepachangelog.com/) with Forge-specif
 
 ## [Unreleased]
 
+## [3.1.0] - 2026-05-30
+
+### Added
+
+- **Multi-Agent Workflow System** — 完整的多 Agent 编排基础设施
+  - `WorkflowDispatcher`：L0/L1 状态机，自动降级到 subagent 串行模式
+  - `StreamJsonAdapter`：stream-json 协议适配，含部分消息合并、反压监控、`LineTooLargeError`
+  - `CliSubprocessDriver`：claude CLI 子进程驱动，`--resume` 支持、stuck 超时检测、signal chain 记录
+  - `IpcEmitter`：stdout NDJSON 协议 + IPC schema diff 兼容性工具
+  - `WorkflowAuditWriter`：双写审计到 Forge audit zones
+  - 退出码分类、指数退避、重试逻辑（`classifyExitCode`）
+  - 并发桥接 `chunkedParallel` + 插件级 `workflows/` 目录和 manifest 字段
+  - `multi-agent-review.js` workflow body 实现
+
+- **Resilience Layer** — 生产级弹性保障
+  - `RateLimitDegrader` 状态机 + HTTP 429 检测
+  - `CleanupChain` 5 步清理 + 错误日志
+  - IPC record-replay baseline + diff schema 增强
+  - 25 个属性测试（每次 1000 轮）覆盖 dispatcher/audit-writer/stream-adapter/frozen-zone
+  - CI 跨版本 workflow + `scan-recent-ci-logs` 脚本（21 个测试）
+
+- **Sandbox Policy System** — 沙箱策略引擎
+  - `checkFilesystemPolicy`：deny-priority glob 匹配
+  - `checkCommandPolicy` + `checkNetworkPolicy`
+  - `loadSandboxConfig` + `resolveProfile`
+  - `sandbox.json` 模板 + `forge init` 集成生成
+  - `--sandbox=off` 禁用开关
+
+- **Ship Gates** — 发布门禁系统
+  - 门禁类型定义 + 纯函数签名（TDD RED 阶段）
+  - `checkReviewGate`、`checkTestGate`、`checkProgressGate` 实现
+  - Fallback ladder、持久化、skip-gate 编排
+  - P1 Fix Checklist 集成
+  - `pending-findings` gate：未解决 P0/P1 时阻断 ship
+  - `runAllGates` 集成到 `/forge ship` 流程
+
+- **Spec Lifecycle Management** — 规格生命周期管理
+  - `SpecStatus`、`SpecFrontmatter`、解析和校验
+  - `rebuild-spec-index.mjs` CLI + 测试
+  - 批量为 72 个 spec 添加 frontmatter，标记 12 个 deferred
+  - Spec 模板 + frontmatter 生成
+  - `--root` 标志 + 全量 `INDEX.md` 生成
+  - CI spec index 一致性检查
+
+- **Context Explosion Defense** — 五层上下文爆炸防御
+  - Layer 1：Read cache index + hash/diff 计算 + `forge_read_cached` MCP 工具
+  - Layer 2：`track-read-budget` PostToolUse hook + SessionStart 重置
+  - Layer 3：Phase Boundary Gate（build/review/test 指令）
+  - Layer 4：`inject-plan-context` 支持 `--phase` 和 `--compact`
+  - Layer 5：Review subagent 结果返回协议
+
+- **Review Pipeline Enhancements** — 评审流水线增强
+  - Post-review pipeline：auto-fix、simplify、from-pr 三种模式
+  - 截断检测（`detectTruncation` 纯函数）+ 截断触发的串行重试
+  - Per-agent `maxTurns` 匹配 agent 定义
+  - 结构化报告模板（spec-check / quality-check / security-check）
+  - Ultrareview per-file findings + `--strict` 模式
+
+- **Hooks v2.1.153** — 全套生命周期 hook 支持
+  - 新增生命周期事件：`SessionStart`、`MessageDisplay`、`PreCompact`、`CwdChanged`、`FileChanged`
+  - `ConfigChange` hook：配置文件变更感知
+  - `PermissionDenied`、`StopFailure` 生命周期 hook
+  - `WorktreeCreate`/`WorktreeRemove` 生命周期 hook
+  - `TaskCreated` 生命周期 hook
+  - `terminalSequence` 桌面通知
+  - 6 个命令 hook 迁移到 exec form（args[]）
+  - `duration_ms` 追踪集成到 check-context-boundary
+
+- **Observability** — 可观测性
+  - OTEL 数据分析集成到 `/forge learn`
+  - PostToolUse `duration_ms` 追踪 hook
+
+- **Decide Auto Dispatch** — 基于 tier 的自动分发模式
+  - `decide_dispatch_mode: auto` 根据 tier 自动选择执行策略
+  - init 模板更新支持 auto dispatch
+
+- **`/goal` Mode** — TDD 目标循环模式
+  - `/forge build` 新增 `/goal` 模式，支持 TDD 循环
+  - `build.use_goal` 配置选项
+
+- **Compact Strategy** — 上下文压缩策略优化
+  - Restate reminder：snapshot + 10k-char 上限
+  - Inter-phase + intra-build wave-boundary auto-compact
+  - `serializePendingFindings`：压缩前持久化 P0/P1
+
+- **Context Optimization** — 上下文优化
+  - Lean evolved-rules injection：~16KB → ~1.7KB（仅注入 Content 行）
+  - Findings-only subagent output：review subagent 仅返回发现
+  - Decide Round 1 perspective 输出到文件，上下文仅保留摘要
+
+- **cmux Integration** — tmux 多窗口集成增强
+  - `--window` 注入 + `hook-notify.sh` jump-to-unread
+  - Config doctor 集成到 bootstrap-check
+  - Conditional Availability Gate（cmux-gate 模块）
+  - 3 个 skills 迁移到 collapsed path + dispatcher allowlist 扩展（29→32）
+
+- **Plugin Marketplace Preparation** — 市场发布准备
+  - `userConfig`、`marketplace.json`、exec form hooks
+  - `forge-doctor` 健康检查脚本
+  - MCP `maxResultSizeChars` 元数据
+  - Persistence：plugin 缓存迁移到 `CLAUDE_PLUGIN_DATA`
+  - Bundle sync guard：completeness + freshness 检查
+
+- **Agent Hardening** — Subagent 安全加固
+  - Frontmatter 新增 `disallowed-tools`、`memory`、`initialPrompt`、`effort`
+
+- **CI Improvements** — CI 改进
+  - `SANDBOX_FAIL_IF_UNAVAILABLE` 环境变量控制 plugin-validate
+  - Node 18/22 跨版本兼容性修复
+  - Workflow Dispatch sections 嵌入到 review/decide/learn/ship 指令
+
+### Changed
+
+- Constitution 新增 §2.7 No Confirmation Between Steps（铁律）、§2.8 Scripts as Black Box（铁律）
+- Constitution §3.1 Execution-Assessment Separation 新增 L0→L1→L2→L3 fallback ladder + L3 阻断 ship
+- Agent Teams 在 decide/review 中定位为可选 Tier-1 模式（非默认，非替换 Subagent）
+- Hooks `if:` 条件过滤减少不必要进程启动
+- Compact hook 语义从 blocking 改为 snapshot+restore+reminder
+- 9 项 Claude Code 平台优化收集到 docs
+
+### Fixed
+
+- **[SECURITY]** `execSync` → `execFileSync` 防止命令注入（docs-governance、hooks）
+- **[SECURITY]** MCP cache path traversal 漏洞修复
+- Node 18/22 跨版本兼容性（contract scripts、tool-health tests、baseline fixtures）
+- `/forge loop` 中 `build.use_goal` 配置键名修正
+- `/goal` 模式在 persistent-loop 中正确跳过 TDD 注入
+- 25 个失败测试 + 2 个 lint 错误修复
+- 10 项 P0/P1 review 发现修复（3-layer review）
+- `disallowed-tools` → `disallowedTools` camelCase 修正
+- PreCompact hook 对齐 snapshot+restore 语义
+- Spec index 重建 `--check` 模式缺失 INDEX.md 时自动生成
+
+### Removed
+
+- Project-level Status Line feature（§73，平台限制不可靠）
+
+## [3.0.0] - 2026-05-26
+
+### Changed
+
+- Major version bump reflecting multi-agent workflow architecture and sandbox policy system introduction.
+
 ## [2.7.0] - 2026-05-25
 
 ### Added
