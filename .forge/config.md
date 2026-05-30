@@ -10,7 +10,7 @@ max_parallel_agents: 6    # Range: 1-10, default 6
 review.subagent_concurrency: 3  # Range: 1-10; default 3; env FORGE_REVIEW_CONCURRENCY overrides
 findings_retention_days: 30
 review_dispatch_mode: inline           # inline | agents
-decide_dispatch_mode: inline           # inline | agents
+decide_dispatch_mode: auto              # inline | agents | auto — auto: full tier→agents, standard/light→inline
 output_conciseness_hook: on            # on | off
 forge_compact_restate_reminder: on       # on | off — inject restate reminder into compact snapshot
 forge_compact_restate_threshold_tasks: 3  # restate reminder trigger threshold
