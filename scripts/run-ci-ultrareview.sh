@@ -16,14 +16,50 @@
 set -euo pipefail
 
 # --- Argument validation ---
-if [ $# -lt 1 ]; then
-  echo "Usage: $0 <pr-number-or-url>" >&2
+STRICT_FLAG=false
+PR_INPUT=""
+
+while [ $# -gt 0 ]; do
+  case "$1" in
+    --strict)
+      STRICT_FLAG=true
+      shift
+      ;;
+    --help|-h)
+      echo "Usage: $0 [--strict] <pr-number-or-url>" >&2
+      echo "" >&2
+      echo "Options:" >&2
+      echo "  --strict   P1 findings also block CI (default: only P0 blocks)" >&2
+      echo "" >&2
+      echo "Environment:" >&2
+      echo "  CI_ULTRAREVIEW_STRICT=1    Equivalent to --strict" >&2
+      echo "  CI_ULTRAREVIEW_TIMEOUT=N   Timeout in seconds (default: 900)" >&2
+      echo "" >&2
+      echo "Examples:" >&2
+      echo "  $0 42" >&2
+      echo "  $0 --strict 42" >&2
+      echo "  $0 https://github.com/org/repo/pull/42" >&2
+      exit 0
+      ;;
+    *)
+      if [ -n "$PR_INPUT" ]; then
+        echo "Error: Unexpected argument: $1" >&2
+        echo "Usage: $0 [--strict] <pr-number-or-url>" >&2
+        exit 2
+      fi
+      PR_INPUT="$1"
+      shift
+      ;;
+  esac
+done
+
+if [ -z "$PR_INPUT" ]; then
+  echo "Usage: $0 [--strict] <pr-number-or-url>" >&2
   echo "  Example: $0 42" >&2
+  echo "  Example: $0 --strict 42" >&2
   echo "  Example: $0 https://github.com/org/repo/pull/42" >&2
   exit 2
 fi
-
-PR_INPUT="$1"
 
 # Extract numeric PR number from URL or bare number
 if [[ "$PR_INPUT" =~ ^[0-9]+$ ]]; then
@@ -47,7 +83,12 @@ fi
 OUT_DIR=".forge/reviews"
 OUT_FILE="$OUT_DIR/${PR_NUMBER}-ci.md"
 TIMEOUT="${CI_ULTRAREVIEW_TIMEOUT:-900}"
-STRICT="${CI_ULTRAREVIEW_STRICT:-0}"
+# Merge env var and CLI flag (CLI flag takes precedence)
+if [ "$STRICT_FLAG" = true ] || [ "${CI_ULTRAREVIEW_STRICT:-0}" = "1" ]; then
+  STRICT=1
+else
+  STRICT=0
+fi
 SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
 TEMPLATE="$SCRIPT_DIR/../templates/review-ci.md.tmpl"
 
@@ -141,6 +182,27 @@ P1_FINDINGS="$(generate_findings_section P1 "$P1_COUNT")"
 P2_FINDINGS="$(generate_findings_section P2 "$P2_COUNT")"
 P3_FINDINGS="$(generate_findings_section P3 "$P3_COUNT")"
 
+# --- Per-file findings table ---
+generate_per_file_table() {
+  local total=$((P0_COUNT + P1_COUNT + P2_COUNT + P3_COUNT))
+  if [ "$total" -eq 0 ] || [ "$PARSE_OK" = false ]; then
+    echo "_无 findings_"
+    return
+  fi
+
+  echo "| File | Line | Severity | Category | Description |"
+  echo "|------|------|----------|----------|-------------|"
+  jq -r '
+    .findings
+    | sort_by(.file_path // "unknown", .severity)
+    | .[]
+    | "| \(.file_path // "unknown"):\(.line // 0) | \(.line // 0) | \(.severity // "P3") | \(.category // "general") | \(.message // "no description") |"
+  ' "$TMP_JSON"
+}
+
+PER_FILE_TABLE="$(generate_per_file_table)"
+TOTAL_FINDINGS=$((P0_COUNT + P1_COUNT + P2_COUNT + P3_COUNT))
+
 # --- Optional frontmatter fields ---
 TIMEOUT_FIELD=""
 PARTIAL_FIELD=""
@@ -176,14 +238,16 @@ if [ -f "$TEMPLATE" ]; then
     -e "s|{{SUMMARY}}|${SUMMARY}|g" \
     -e "s|{{TIMEOUT_FIELD}}|${TIMEOUT_FIELD}|g" \
     -e "s|{{PARTIAL_FIELD}}|${PARTIAL_FIELD}|g" \
+    -e "s|{{TOTAL_FINDINGS}}|${TOTAL_FINDINGS}|g" \
     "$TEMPLATE")"
 
-  # Replace finding sections and raw JSON using awk for multi-line content
-  artifact="$(echo "$artifact" | awk -v p0="$P0_FINDINGS" -v p1="$P1_FINDINGS" -v p2="$P2_FINDINGS" -v p3="$P3_FINDINGS" -v raw="$RAW_JSON" '
+  # Replace finding sections, per-file table, and raw JSON using awk for multi-line content
+  artifact="$(echo "$artifact" | awk -v p0="$P0_FINDINGS" -v p1="$P1_FINDINGS" -v p2="$P2_FINDINGS" -v p3="$P3_FINDINGS" -v pft="$PER_FILE_TABLE" -v raw="$RAW_JSON" '
     /^{{P0_FINDINGS}}$/ { print p0; next }
     /^{{P1_FINDINGS}}$/ { print p1; next }
     /^{{P2_FINDINGS}}$/ { print p2; next }
     /^{{P3_FINDINGS}}$/ { print p3; next }
+    /^{{PER_FILE_TABLE}}$/ { print pft; next }
     /^{{RAW_JSON}}$/ { print raw; next }
     { print }
   ')"
@@ -204,6 +268,7 @@ severity_counts:
   P1: ${P1_COUNT}
   P2: ${P2_COUNT}
   P3: ${P3_COUNT}
+strict: ${STRICT}
 ${TIMEOUT_FIELD}
 ${PARTIAL_FIELD}
 ---
@@ -214,7 +279,15 @@ ${PARTIAL_FIELD}
 
 ${SUMMARY}
 
-## Findings
+## Per-File Findings
+
+${PER_FILE_TABLE}
+
+## Summary Counts
+- Total findings: ${TOTAL_FINDINGS}
+- P0: ${P0_COUNT} | P1: ${P1_COUNT} | P2: ${P2_COUNT} | P3: ${P3_COUNT}
+
+## Findings by Severity
 
 ### P0 (${P0_COUNT})
 
@@ -245,6 +318,11 @@ echo "Review artifact written to ${OUT_FILE}"
 # --- Exit policy ---
 if [ "$P0_COUNT" -gt 0 ]; then
   echo "P0 findings detected (${P0_COUNT}). Failing CI."
+  exit 1
+fi
+
+if [ "$STRICT" = "1" ] && [ "$P1_COUNT" -gt 0 ]; then
+  echo "P1 findings detected (${P1_COUNT}). Failing CI (--strict mode)."
   exit 1
 fi
 
