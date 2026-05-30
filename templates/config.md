@@ -2,6 +2,7 @@
 project: "<项目名称>"
 stack: ["TypeScript", "React", "Node.js"]
 security_level: 1  # 1=标准, 2=高, 3=最高
+decide_dispatch_mode: auto  # inline | agents | auto — auto: full tier→agents, standard/light→inline
 knowledge_limit: 20
 restatement_interval: 3  # Range: 2–10, default: 3. Triggers Restatement Checkpoint every N tasks
 verify_commands:            # Ralph Loop: Build 完成后自动运行的验证命令列表
