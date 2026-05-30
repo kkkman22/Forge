@@ -1,8 +1,15 @@
 ---
-title: "Agent 自包含 MCP/Hooks 评估"
-date: "2026-05-30"
+id: "eval-001"
+title: "Agent 自包含 MCP/Hooks 评估（§22）"
 status: proposed
+date: "2026-05-30"
+deciders:
+  - "@maintainer"
+related_adrs:
+  - "ADR-0004-skills-collapse-and-dispatcher.md"
 ---
+
+> §22 源自 Claude Code CHANGELOG 优化建议收集（spec: misc-forge-optimization）。
 
 # Agent 自包含 MCP/Hooks 评估（§22）
 

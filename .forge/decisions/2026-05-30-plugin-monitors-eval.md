@@ -1,8 +1,15 @@
 ---
-title: "Plugin Monitors 持续监控评估"
-date: "2026-05-30"
+id: "eval-002"
+title: "Plugin Monitors 持续监控评估（§39）"
 status: proposed
+date: "2026-05-30"
+deciders:
+  - "@maintainer"
+related_adrs:
+  - "2026-05-28-claude-code-uplift-2.1.153.md"
 ---
+
+> §39 源自 Claude Code CHANGELOG 优化建议收集（spec: misc-forge-optimization）。
 
 # Plugin Monitors 持续监控评估（§39）
 
