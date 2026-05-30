@@ -24,6 +24,16 @@ allowed_tools:
 
 **与 `forge-loop` CLI 的关系**：`/forge loop` 是分发包环境下的入口，以 SKILL 内置的迭代控制逻辑驱动执行。`forge-loop` CLI 是 SDK 环境下的入口，通过 Agent SDK 启动独立会话驱动执行。两者共享相同的状态文件格式、质量门禁和命令序列，只是驱动方式不同。
 
+### 1.1 Build 内循环机制
+
+Build 阶段的 TDD 循环由 **`/goal` 命令**驱动（当 `build.use_goal: true`，默认启用）：
+- `/goal` 在 build instructions 内部启动，自动迭代 RED→GREEN→REFACTOR 循环
+- 目标条件："所有 plan task 完成 AND `ci_check_command` 通过"
+- Live 进度追踪：elapsed time、turns、tokens consumed（/goal 内置）
+- Three-Strike 检测：同一 task 连续失败 3 次 → 停止 → 进入 `/forge debug`
+
+`persistent-loop.sh`（Stop hook）**仅负责 phase transition**（plan→build→review→test→ship 的自动阶段切换），不再负责 build 内的 TDD 循环。当 `build.use_goal: false` 时，回退到旧的 persistent-loop TDD 循环机制。
+
 ---
 
 **Not For**：
