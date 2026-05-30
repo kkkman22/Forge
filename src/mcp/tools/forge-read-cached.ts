@@ -8,11 +8,12 @@
  */
 
 import { readFile } from "node:fs/promises";
+import { resolve as resolvePath } from "node:path";
 import type { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { z } from "zod";
 import type { ResolvedRoot } from "../project-root.js";
 import type { ReadCacheIndex } from "../read-cache.js";
-import { lookup, update } from "../read-cache.js";
+import { loadOrCreateIndex, lookup, persistIndex, update } from "../read-cache.js";
 import { getFileHash } from "../read-cache-hash.js";
 
 // ---------------------------------------------------------------------------
@@ -67,8 +68,11 @@ export async function handleReadCached(
       currentHash,
       currentHash,
       content.length,
-      startLine && endLine ? [startLine, endLine] : undefined,
+      startLine !== undefined && endLine !== undefined ? [startLine, endLine] : undefined,
     );
+
+    // Persist cache to disk (fail-open)
+    await persistIndex(index);
 
     return { cached: false, content };
   } catch (err) {
@@ -100,8 +104,8 @@ export function registerForgeReadCached(
   root?: ResolvedRoot,
   index?: ReadCacheIndex,
 ): void {
-  // Use provided index or create a session-scoped one
-  const cacheIndex = index ?? { sessionId: "mcp-default", entries: {} };
+  // Track whether an external index was provided (for testing)
+  const externalIndex = index;
 
   server.tool(
     "forge_read_cached",
@@ -111,8 +115,25 @@ export function registerForgeReadCached(
       start_line: z.number().optional().describe("Start line (1-indexed)"),
       end_line: z.number().optional().describe("End line (inclusive)"),
     },
-    async ({ path, start_line, end_line }) => {
-      const resolvedPath = root ? `${root.path}/${path}` : path;
+    async ({ path: filePath, start_line, end_line }) => {
+      let resolvedPath: string;
+      if (root) {
+        resolvedPath = resolvePath(root.path, filePath);
+        // Prevent path traversal — resolved path must be under root
+        if (!resolvedPath.startsWith(root.path)) {
+          return {
+            content: [
+              { type: "text" as const, text: `Error: path traversal blocked: ${filePath}` },
+            ],
+            isError: true,
+          };
+        }
+      } else {
+        resolvedPath = filePath;
+      }
+
+      // Load persisted index or use external index (for testing)
+      const cacheIndex = externalIndex ?? (await loadOrCreateIndex("mcp-default"));
       const result = await handleReadCached(cacheIndex, resolvedPath, start_line, end_line);
 
       return {

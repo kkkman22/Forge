@@ -3,10 +3,14 @@
  *
  * Maintains a session-level index of previously-read files (path → git hash +
  * content hash + line range) to avoid re-reading unchanged content into the
- * context window.
+ * context window. Persists to ${TMPDIR}/forge-read-cache-<session>.json.
  *
  * Layer 1 of the five-layer context explosion defense.
  */
+
+import { readFile, writeFile } from "node:fs/promises";
+import { tmpdir } from "node:os";
+import { join } from "node:path";
 
 // ---------------------------------------------------------------------------
 // Types
@@ -24,6 +28,43 @@ export interface CacheEntry {
 export interface ReadCacheIndex {
   sessionId: string;
   entries: Record<string, CacheEntry>;
+}
+
+// ---------------------------------------------------------------------------
+// Persistence
+// ---------------------------------------------------------------------------
+
+function cacheFilePath(sessionId: string): string {
+  return join(tmpdir(), `forge-read-cache-${sessionId}.json`);
+}
+
+/**
+ * Load a cache index from disk, or create empty if not found.
+ */
+export async function loadOrCreateIndex(sessionId: string): Promise<ReadCacheIndex> {
+  const filePath = cacheFilePath(sessionId);
+  try {
+    const raw = await readFile(filePath, "utf-8");
+    const parsed = JSON.parse(raw) as ReadCacheIndex;
+    if (parsed.sessionId === sessionId && typeof parsed.entries === "object") {
+      return parsed;
+    }
+  } catch {
+    // File missing or corrupted — create fresh
+  }
+  return { sessionId, entries: {} };
+}
+
+/**
+ * Persist the cache index to disk. Fail-open: errors are logged, not thrown.
+ */
+export async function persistIndex(index: ReadCacheIndex): Promise<void> {
+  try {
+    const filePath = cacheFilePath(index.sessionId);
+    await writeFile(filePath, JSON.stringify(index));
+  } catch {
+    // Fail-open: cache persistence failure should not block reads
+  }
 }
 
 // ---------------------------------------------------------------------------
