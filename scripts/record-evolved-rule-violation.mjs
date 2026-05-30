@@ -26,6 +26,7 @@ import {
     DEFAULT_SIGNALS,
     scanForTriggers,
 } from "../dist/src/evolved-rules-violations.js";
+import { getCachePath } from "./lib/plugin-data-path.mjs";
 
 const RULES_FILE = path.join(process.cwd(), ".forge", "knowledge", "evolved-rules.md");
 const RUNS_DIR = path.join(process.cwd(), ".forge", "runs");
@@ -65,6 +66,51 @@ function readRecentFiles(dir, lookbackMs) {
   return texts;
 }
 
+/**
+ * Persist violation records to plugin data cache for cross-update durability.
+ */
+function persistViolations(report, today) {
+  const cachePath = getCachePath("rule-violations.json");
+  if (!cachePath) return;
+
+  try {
+    let existing = { violations: [] };
+    try {
+      existing = JSON.parse(readFileSync(cachePath, "utf-8"));
+    } catch {
+      // No existing cache — start fresh
+    }
+
+    const violationsMap = new Map(
+      existing.violations.map((v) => [v.ruleId, v]),
+    );
+
+    for (const [id, date] of report.triggers) {
+      const c = report.counts.get(id) ?? { violations: 0, guards: 0 };
+      const existing2 = violationsMap.get(id);
+      if (existing2) {
+        existing2.count += c.violations;
+        existing2.lastAt = `${today}T${new Date().toTimeString().slice(0, 8)}`;
+      } else {
+        violationsMap.set(id, {
+          ruleId: id,
+          count: c.violations,
+          lastAt: `${today}T${new Date().toTimeString().slice(0, 8)}`,
+          sessions: [],
+        });
+      }
+    }
+
+    const updated = {
+      violations: Array.from(violationsMap.values()),
+    };
+
+    writeFileSync(cachePath, JSON.stringify(updated, null, 2), "utf-8");
+  } catch {
+    // Cache write failure — degraded mode
+  }
+}
+
 function main() {
   const dryRun = process.argv.includes("--dry-run");
 
@@ -99,6 +145,9 @@ function main() {
     const c = report.counts.get(id) ?? { violations: 0, guards: 0 };
     console.log(`  - ${id} → ${date} (violations: ${c.violations}, guards: ${c.guards})`);
   }
+
+  // Persist violations to plugin data cache
+  persistViolations(report, today);
 
   const content = readFileSync(RULES_FILE, "utf-8");
   const frontmatterMatch = content.match(/^---\n[\s\S]*?\n---\n/);
