@@ -19,19 +19,6 @@ import { join } from "node:path";
 const CWD = process.cwd();
 
 try {
-  // --help support
-  if (process.argv.includes("--help") || process.argv.includes("-h")) {
-    console.log(`Usage: node scripts/posttooluse-status-reminder.mjs
-
-  PostToolUse hook: reminds to update .forge/progress/ after code changes.
-
-  Checks if .forge/status.md (or .forge/status/ directory) exists.
-  If so, outputs a reminder to update task status.
-
-  Exit codes: 0 (always — fail-open)`);
-    process.exit(0);
-  }
-
   const statusFile = join(CWD, ".forge", "status.md");
   const statusDir = join(CWD, ".forge", "status");
 
