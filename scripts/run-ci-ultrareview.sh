@@ -83,7 +83,7 @@ fi
 OUT_DIR=".forge/reviews"
 OUT_FILE="$OUT_DIR/${PR_NUMBER}-ci.md"
 TIMEOUT="${CI_ULTRAREVIEW_TIMEOUT:-900}"
-# Merge env var and CLI flag (CLI flag takes precedence)
+# Merge env var and CLI flag (either enables strict mode)
 if [ "$STRICT_FLAG" = true ] || [ "${CI_ULTRAREVIEW_STRICT:-0}" = "1" ]; then
   STRICT=1
 else
@@ -141,11 +141,18 @@ if command -v jq >/dev/null 2>&1 && [ -s "$TMP_JSON" ]; then
   # Validate JSON
   if jq empty "$TMP_JSON" 2>/dev/null; then
     PARSE_OK=true
-    P0_COUNT=$(jq '[.findings[] | select(.severity == "P0")] | length' "$TMP_JSON" 2>/dev/null || echo 0)
-    P1_COUNT=$(jq '[.findings[] | select(.severity == "P1")] | length' "$TMP_JSON" 2>/dev/null || echo 0)
-    P2_COUNT=$(jq '[.findings[] | select(.severity == "P2")] | length' "$TMP_JSON" 2>/dev/null || echo 0)
-    P3_COUNT=$(jq '[.findings[] | select(.severity == "P3")] | length' "$TMP_JSON" 2>/dev/null || echo 0)
-    SUMMARY=$(jq -r '.summary // "UltraReview completed."' "$TMP_JSON" 2>/dev/null || echo "UltraReview completed.")
+    # Single jq pass: extract all severity counts + summary in one invocation
+    read -r P0_COUNT P1_COUNT P2_COUNT P3_COUNT SUMMARY < <(
+      jq -r '@sh "\([.findings[] | select(.severity == "P0")] | length) \([.findings[] | select(.severity == "P1")] | length) \([.findings[] | select(.severity == "P2")] | length) \([.findings[] | select(.severity == "P3")] | length) \(.summary // "UltraReview completed.")"' "$TMP_JSON" 2>/dev/null
+    )
+    P0_COUNT="${P0_COUNT:-0}"
+    P1_COUNT="${P1_COUNT:-0}"
+    P2_COUNT="${P2_COUNT:-0}"
+    P3_COUNT="${P3_COUNT:-0}"
+    SUMMARY="${SUMMARY:-UltraReview completed.}"
+    # Strip surrounding quotes from jq @sh output
+    SUMMARY="${SUMMARY#\'}"
+    SUMMARY="${SUMMARY%\'}"
   fi
 fi
 
