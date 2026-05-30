@@ -36,3 +36,64 @@
 {"timestamp":"2026-05-30T03:53:12Z","event":"precompact_snapshot","detail":"slug=observability-enhancement phase=build completed=0 pending=0"}
 {"timestamp":"2026-05-30T03:55:46Z","event":"postcompact_restore","detail":"slug=observability-enhancement"}
 {"timestamp":"2026-05-30T03:55:46Z","event":"precompact_snapshot","detail":"slug=observability-enhancement phase=build completed=0 pending=0"}
+{"timestamp":"2026-05-30T03:01:07Z","event":"precompact_snapshot","detail":"slug=context-explosion-defense phase=build completed=17 pending=0
+0"}
+{"timestamp":"2026-05-30T03:10:49Z","event":"postcompact_restore","detail":"slug=context-explosion-defense"}
+{"timestamp":"2026-05-30T03:10:49Z","event":"precompact_snapshot","detail":"slug=context-explosion-defense phase=build completed=17 pending=0
+0"}
+{"timestamp":"2026-05-30T03:32:41Z","event":"postcompact_restore","detail":"slug=context-explosion-defense"}
+{"timestamp":"2026-05-30T03:32:41Z","event":"precompact_snapshot","detail":"slug=review-pipeline-enhancement phase=build completed=0
+0 pending=0
+0"}
+{"timestamp":"2026-05-30T03:35:41Z","event":"postcompact_restore","detail":"slug=review-pipeline-enhancement"}
+{"timestamp":"2026-05-30T03:35:41Z","event":"precompact_snapshot","detail":"slug=review-pipeline-enhancement phase=build completed=0
+0 pending=0
+0"}
+{"timestamp":"2026-05-30T03:38:07Z","event":"postcompact_restore","detail":"slug=review-pipeline-enhancement"}
+{"timestamp":"2026-05-30T03:38:07Z","event":"precompact_snapshot","detail":"slug=review-pipeline-enhancement phase=build completed=0
+0 pending=0
+0"}
+{"timestamp":"2026-05-30T03:43:27Z","event":"postcompact_restore","detail":"slug=review-pipeline-enhancement"}
+{"timestamp":"2026-05-30T03:43:27Z","event":"precompact_snapshot","detail":"slug=review-pipeline-enhancement phase=build completed=0
+0 pending=0
+0"}
+{"timestamp":"2026-05-30T03:45:10Z","event":"postcompact_restore","detail":"slug=review-pipeline-enhancement"}
+{"timestamp":"2026-05-30T03:45:10Z","event":"precompact_snapshot","detail":"slug=review-pipeline-enhancement phase=build completed=0
+0 pending=0
+0"}
+{"timestamp":"2026-05-30T03:50:25Z","event":"postcompact_restore","detail":"slug=review-pipeline-enhancement"}
+{"timestamp":"2026-05-30T03:50:25Z","event":"precompact_snapshot","detail":"slug=review-pipeline-enhancement phase=build completed=0
+0 pending=0
+0"}
+{"timestamp":"2026-05-30T03:52:55Z","event":"postcompact_restore","detail":"slug=review-pipeline-enhancement"}
+{"timestamp":"2026-05-30T03:52:55Z","event":"precompact_snapshot","detail":"slug=review-pipeline-enhancement phase=build completed=0
+0 pending=0
+0"}
+{"timestamp":"2026-05-30T03:55:38Z","event":"postcompact_restore","detail":"slug=review-pipeline-enhancement"}
+{"timestamp":"2026-05-30T03:55:38Z","event":"precompact_snapshot","detail":"slug=review-pipeline-enhancement phase=build completed=0
+0 pending=0
+0"}
+{"timestamp":"2026-05-30T03:59:00Z","event":"postcompact_restore","detail":"slug=review-pipeline-enhancement"}
+{"timestamp":"2026-05-30T03:59:00Z","event":"precompact_snapshot","detail":"slug=review-pipeline-enhancement phase=build completed=0
+0 pending=0
+0"}
+{"timestamp":"2026-05-30T04:00:44Z","event":"postcompact_restore","detail":"slug=review-pipeline-enhancement"}
+{"timestamp":"2026-05-30T04:00:44Z","event":"precompact_snapshot","detail":"slug=review-pipeline-enhancement phase=build completed=0
+0 pending=0
+0"}
+{"timestamp":"2026-05-30T04:02:51Z","event":"postcompact_restore","detail":"slug=review-pipeline-enhancement"}
+{"timestamp":"2026-05-30T04:02:51Z","event":"precompact_snapshot","detail":"slug=review-pipeline-enhancement phase=build completed=0
+0 pending=0
+0"}
+{"timestamp":"2026-05-30T04:04:37Z","event":"postcompact_restore","detail":"slug=review-pipeline-enhancement"}
+{"timestamp":"2026-05-30T04:04:37Z","event":"precompact_snapshot","detail":"slug=review-pipeline-enhancement phase=build completed=0
+0 pending=0
+0"}
+{"timestamp":"2026-05-30T04:06:52Z","event":"postcompact_restore","detail":"slug=review-pipeline-enhancement"}
+{"timestamp":"2026-05-30T04:06:52Z","event":"precompact_snapshot","detail":"slug=review-pipeline-enhancement phase=build completed=0
+0 pending=0
+0"}
+{"timestamp":"2026-05-30T04:10:35Z","event":"postcompact_restore","detail":"slug=review-pipeline-enhancement"}
+{"timestamp":"2026-05-30T04:10:35Z","event":"precompact_snapshot","detail":"slug=review-pipeline-enhancement phase=build completed=0
+0 pending=0
+0"}
