@@ -189,7 +189,7 @@
     "decide": {
       "instructions": {
         "path": "decide/instructions.md",
-        "sha256": "b208595b22e4337e52c9a740bdc215996a904a1efb43e4ecdf8ac97be4f940a1"
+        "sha256": "b46592232a7eb11d4f4afcd9ef73294ddcd4256e1d389b8ab931ed16b603b99d"
       },
       "references": [
         {
