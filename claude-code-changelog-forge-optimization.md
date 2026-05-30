@@ -610,25 +610,38 @@ Forge 可以在 decide 阶段切换到 Opus 4.8，设为默认后后续 build �
 | # | 优化项 | 版本要求 | 影响域 | 工作量 | 状态 |
 |---|--------|----------|--------|--------|------|
 | **1** | `disallowed-tools` 限制 review agent 工具集 | ≥2.1.152 | §3.1 隔离 | 改 3 个 agent 文件 | 🔴 待做 |
-| **2** | `PreCompact` hook 保护 Forge 进度状态 | ≥2.1.105 | §6 上下文不丢失 | 1 个新 hook 脚本 | 🔴 待做 |
-| **3** | `PostCompact` hook 重新注入配置 | ≥2.1.76 | §2.5 context refresh | 1 个新 hook 脚本 | 🔴 待做 |
-| **4** | `continueOnBlock` 引导式修复 | ≥2.1.139 | §2.2 门禁 | 改 frozen-zone hook | 🔴 待做 |
+| **2** | `PreCompact` hook 保护 Forge 进度状态 | ≥2.1.105 | §6 上下文不丢失 | 1 个新 hook 脚本 | ✅ plugin.json 已注册 |
+| **3** | `PostCompact` hook 重新注入配置 | ≥2.1.76 | §2.5 context refresh | 1 个新 hook 脚本 | ✅ plugin.json 已注册 |
+| **4** | `continueOnBlock` 引导式修复 | ≥2.1.139 | §2.2 门禁 | 改 frozen-zone hook | ✅ plugin.json 已使用 |
 | **5** | `ENABLE_PROMPT_CACHING_1H` 省钱 | ≥2.1.108 | 成本 | 1 行 env | 🟢 1 行配置 |
 | **6** | `worktree.baseRef: "fresh"` 保持纯净起点 | ≥2.1.133 | §2.2 分支隔离 | 0（当前已是 fresh） | ✅ 已是最佳配置 |
-| **7** | Dynamic Workflows 评估 POC | ≥2.1.154 | L0 fallback | 调研+POC | 🟡 需调研 |
-| **8** | Hook exec form 迁移 | ≥2.1.139 | 安全+性能 | 中（改 settings.json） | 🟡 中等工作量 |
+| **7** | Dynamic Workflows 评估 POC | ≥2.1.154 | L0 fallback | 调研+POC | 🟠 **确认实施** §33 |
+| **8** | Hook exec form 迁移 | ≥2.1.139 | 安全+性能 | 中（改 settings.json） | 🟡 plugin.json 大部分已完成 |
 | **9** | MCP `alwaysLoad: true` | ≥2.1.121 | 工具可用性 | 1 行配置 | 🟢 1 行配置 |
-| **10** | `.claude/skills` 自动加载 | ≥2.1.157 | 安装简化 | 中（迁移目录结构） | 🟡 中等工作量 |
-| **11** | `settings.json` agent 字段 | ≥2.1.157 | §2.2 门禁 | 1 行配置 | 🟢 1 行配置 |
+| **10** | `.claude/skills` 自动加载 | ≥2.1.157 | 安装简化 | 中（迁移目录结构） | ❌ 不推荐迁移 |
+| **11** | `settings.json` agent 字段 | ≥2.1.157 | §2.2 门禁 | 1 行配置 | ❌ 不推荐全局默认 |
 | **12** | `TaskList` 排序修复 | ≥2.1.119 | §2.3 验证 | 0（升级即可） | ⚪ 升级解决 |
 | **13** | Subagent MCP 策略修复 | ≥2.1.153 | §3.3 安全 | 0（升级即可） | ⚪ 升级解决 |
-| **14** | `defaultEnabled: false` Agent Teams | ≥2.1.154 | Agent Teams opt-in | 封装 plugin | 🔴 待做 |
+| **14** | Agent Teams 双模式并行（auto） | ≥2.1.154 | Agent Teams | decide+router+config | 🟠 **确认实施** §38 |
 | **15** | `initialPrompt` 自动启动 agent | ≥2.1.83 | DX 优化 | 改 agent frontmatter | 🟢 极小 |
 | **16** | `memory` frontmatter agent 持久记忆 | ≥2.1.33 | §4 knowledge | 改 agent frontmatter | 🟢 极小 |
-| **17** | `CLAUDE_CODE_SUBAGENT_MODEL` 成本控制 | ≥2.1.147 | 成本 | 1 行 env | 🟢 1 行配置 |
-| **18** | `sandbox.failIfUnavailable` CI 安全 | ≥2.1.83 | CI 集成 | 1 行 env | 🟢 1 行配置 |
-| **19** | `ConfigChange` + `FileChanged` hook | ≥2.1.83, 2.1.49 | 热配置 | 2 个新 hook 脚本 | 🔴 待做 |
-| **20** | `CwdChanged` hook 环境管理 | ≥2.1.83 | DX 优化 | 1 个新 hook 脚本 | 🔴 待做 |
+| **17** | `CLAUDE_CODE_SUBAGENT_MODEL` 成本控制 | ≥2.1.147 | 成本 | 1 行 env | ❌ 不推荐全局 |
+| **18** | `sandbox.failIfUnavailable` CI 安全 | ≥2.1.83 | CI 集成 | 1 行 env | 🟠 **确认实施** §69 |
+| **19** | `ConfigChange` hook | ≥2.1.49 | 热配置 | 1 个新 hook 脚本 | 🟠 **确认实施** §11 |
+| **20** | `CwdChanged` + `FileChanged` hook | ≥2.1.83, 2.1.49 | DX 优化 | 已有脚本 | ✅ plugin.json 已注册 |
+
+### 额外确认实施的优化项（超出 Top 20）
+
+| # | 优化项 | 版本要求 | 设计决策 |
+|---|--------|----------|----------|
+| §33 | Dynamic Workflows POC | ≥2.1.154 | 产出 POC 脚本 + ADR |
+| §34 | ultrareview `--json` 增强 | ≥2.1.120 | 增强 per-file findings + `--strict` 模式 |
+| §43 | `${CLAUDE_PLUGIN_DATA}` 持久化 | ≥2.1.78 | 知识库缓存迁移到 plugin data 目录 |
+| §60 | `/code-review --fix` 自动执行 | ≥2.1.152 | P2/P3 自动修复 + 独立 commit |
+| §61 | `/simplify` 自动执行 | ≥2.1.154 | review 通过后自动运行 + 独立 commit |
+| §62 | `/usage` 成本收集 | ≥2.1.149 | 集成到 `/forge learn`，写入 knowledge metadata |
+| §84 | `/goal` 替代 persistent-loop | ≥2.1.139 | `/goal` 接管 build 内 TDD 循环 |
+| §88 | `--from-pr` PR 恢复 | ≥2.1.27 | 集成到 review + ship，使用已有 resume-from-pr.mjs |
 
 ### 术语说明
 
