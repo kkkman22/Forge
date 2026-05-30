@@ -354,12 +354,7 @@ describe("truncateDiffContent", () => {
   });
 
   it("keeps short diffs with multiple files intact", () => {
-    const diff = [
-      "diff --git a/a.ts b/a.ts",
-      "+a",
-      "diff --git a/b.ts b/b.ts",
-      "+b",
-    ].join("\n");
+    const diff = ["diff --git a/a.ts b/a.ts", "+a", "diff --git a/b.ts b/b.ts", "+b"].join("\n");
 
     expect(truncateDiffContent(diff)).toBe(diff);
   });
