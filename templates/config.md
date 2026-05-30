@@ -13,6 +13,7 @@ verify_max_attempts: 3      # 验证失败后最大重试次数，默认 3，超
 ci_check_command: ""        # 项目的完整 CI 检查命令（如 "npm run check"），build 全量测试、test 验证清单和 ship Test 门禁必须使用此命令
 findings_retention_days: 30  # .forge/findings/ 研究产物 retention，默认 30 天
 post_push_verify_enabled: true  # ship 后跑一次 ci_check_command 并可选留痕
+build.use_goal: true    # true=使用 /goal 循环（推荐），false=旧 persistent-loop TDD 循环
 # cmux 可选集成（全部 optional，不影响 Forge 核心行为）
 # cmux_integration: auto    # auto | on | off; auto=检测到 cmux 则启用，默认 auto
 # cmux_notification_budget: 5  # 每个会话的桌面通知上限，正整数或 0，默认 5
