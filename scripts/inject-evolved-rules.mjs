@@ -14,7 +14,7 @@
 import { readFileSync, statSync, readdirSync, writeFileSync } from "node:fs";
 import { resolve } from "node:path";
 import { shouldSkipForSubagent } from "./lib/hook-stdin-router.mjs";
-import { getCachePath } from "./lib/plugin-data-path.mjs";
+import { getCachePath, migrateOldCache } from "./lib/plugin-data-path.mjs";
 
 const RULES_PATH = ".forge/knowledge/evolved-rules.md";
 const SPEC_LOCK_PATH = ".forge/state/spec-lock";
@@ -181,6 +181,7 @@ function readEvolvedRulesWithCache(cwd) {
     if (await shouldSkipForSubagent()) process.exit(0);
 
     const cwd = process.cwd();
+    migrateOldCache(cwd);
     const rulesContent = readEvolvedRulesWithCache(cwd);
 
     // No evolved-rules.md → silent exit
