@@ -1,6 +1,6 @@
 {
   "version": 1,
-  "generated_at": "2026-05-30T03:52:27.497Z",
+  "generated_at": "2026-05-30T01:09:05.512Z",
   "subs": {
     "abort": {
       "instructions": {
@@ -41,7 +41,7 @@
     "build": {
       "instructions": {
         "path": "build/instructions.md",
-        "sha256": "ca5a06227d231de9928e41d61b3919c645def90ba230d0b3f99b7f306088809f"
+        "sha256": "2555fc05dcb083a367f530d694b10dacac9135c824338a80d83a37c6c9fd248a"
       },
       "references": [
         {
@@ -308,7 +308,7 @@
     "learn": {
       "instructions": {
         "path": "learn/instructions.md",
-        "sha256": "8600b4838a6141524ca49b824991911d197bf9f81b065082483e27dd9a04c163"
+        "sha256": "966e35c9ac7f3848497f9e455161ee69915dd6ed5e6cf5fa4ac135d8bf3469dd"
       },
       "references": [
         {
@@ -487,7 +487,7 @@
     "review": {
       "instructions": {
         "path": "review/instructions.md",
-        "sha256": "0d8d915776b61ad3b030aa24a128c77ca1fa07fcb725b6f0a8e3f0559193615e"
+        "sha256": "75aa0b829f5ca1f1ab8d87b5d02888e1ef81d99c14fd7af5954d6da2d8914bbe"
       },
       "references": [
         {
