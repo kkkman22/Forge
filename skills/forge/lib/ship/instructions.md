@@ -25,6 +25,16 @@ Uncommitted: !`git status --short 2>/dev/null | head -10 || echo "clean"`
 
 ---
 
+## 0. 从 PR 恢复
+
+当用户以 `/forge ship <pr-url-or-number>` 或 `/forge ship --from-pr <value>` 调用时：
+
+1. 运行 `node scripts/resume-from-pr.mjs <value>` 恢复上下文
+2. 成功 → 基于 PR context 执行后续 ship 门禁和交付流程
+3. 失败 → 输出错误诊断 + 建议手动恢复步骤，中止 ship
+
+**复用现有实现**：`scripts/resume-from-pr.mjs` 不需要修改。
+
 ## 1. Overview
 
 `/forge ship` 是 Forge 工作流的最后一道关卡——在代码离开开发环境之前，确认所有质量门禁都已通过。它检查三个前置条件（评审通过、测试通过、任务完成），加上可选的第四道门禁（Acceptance Scenario Eval），然后提供四种交付选项供开发者选择。
