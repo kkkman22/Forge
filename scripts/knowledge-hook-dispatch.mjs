@@ -74,7 +74,13 @@ if (args[0] === "--event") {
     console.error("Usage: --event '<json>'");
     process.exit(1);
   }
-  const event = JSON.parse(json);
+  let event;
+  try {
+    event = JSON.parse(json);
+  } catch {
+    console.error("Invalid JSON in --event argument");
+    process.exit(1);
+  }
   const result = await dispatchKnowledgeEvent({
     event,
     forgeRoot,
