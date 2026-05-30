@@ -42,12 +42,9 @@ jobs:
       - name: Sync help baseline
         run: node scripts/record-help-baseline.mjs
 
-      # 4. Sync dist: tsc compilation + plugin bundle
+      # 4. Sync dist: tsc compilation
       - name: Sync tsc output
         run: rm -rf dist/src dist/test dist/scripts && rm -f tsconfig.tsbuildinfo && npx tsc
-
-      - name: Sync dist bundle
-        run: bash scripts/build-dist.sh
 
       - name: Sync command count declarations
         run: node scripts/gen-plugin-commands.mjs --stamp-count --allow-stamp
@@ -59,7 +56,11 @@ jobs:
       - name: Append baseline to metrics.md
         run: node scripts/append-baseline.mjs bench-result.json --keep=30
 
-      # 6. Commit all changes (if any)
+      # 6. Rebuild dist bundle LAST (after all other syncs, so zip includes final state)
+      - name: Sync dist bundle
+        run: bash scripts/build-dist.sh
+
+      # 7. Commit all changes (if any)
       - name: Commit derived data updates
         run: |
           git config user.name "github-actions[bot]"
@@ -72,6 +73,6 @@ jobs:
             echo "No derived data changes to commit."
           fi
 
-      # 7. Verify non-volatile sync results
+      # 8. Verify non-volatile sync results
       - name: Verify help baseline after sync
         run: node scripts/record-help-baseline.mjs --check
