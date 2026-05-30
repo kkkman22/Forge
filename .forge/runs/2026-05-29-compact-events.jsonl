@@ -61,3 +61,9 @@
 {"timestamp":"2026-05-29T22:25:56Z","event":"precompact_snapshot","detail":"slug=subagent-truncation-fix phase=build completed=0 pending=0"}
 {"timestamp":"2026-05-29T22:27:35Z","event":"postcompact_restore","detail":"slug=subagent-truncation-fix"}
 {"timestamp":"2026-05-29T22:27:35Z","event":"precompact_snapshot","detail":"slug=subagent-truncation-fix phase=build completed=0 pending=0"}
+{"timestamp":"2026-05-29T23:09:45Z","event":"postcompact_restore","detail":"slug=claude-code-uplift-21153"}
+{"timestamp":"2026-05-29T23:09:45Z","event":"precompact_snapshot","detail":"slug=subagent-truncation-fix phase=build completed=0 pending=0"}
+{"timestamp":"2026-05-29T23:11:32Z","event":"postcompact_restore","detail":"slug=subagent-truncation-fix"}
+{"timestamp":"2026-05-29T23:11:32Z","event":"precompact_snapshot","detail":"slug=subagent-truncation-fix phase=build completed=0 pending=0"}
+{"timestamp":"2026-05-29T23:13:22Z","event":"postcompact_restore","detail":"slug=subagent-truncation-fix"}
+{"timestamp":"2026-05-29T23:13:22Z","event":"precompact_snapshot","detail":"slug=context-explosion-defense phase=build completed=0 pending=0"}
