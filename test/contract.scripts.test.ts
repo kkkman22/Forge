@@ -78,6 +78,7 @@ describe("Contract: scripts/ smoke tests (no-arg invocation)", () => {
     "build-dmg.sh", // Requires network (curl), Node.js download, and frontend build toolchain
     "bundle-node.sh", // Requires network (curl) to download Node.js binary
     "bundle-forge-loop.sh", // Triggers full `npm run build` on missing dist; far exceeds 10s smoke budget
+    "sync-readme-metrics.sh", // Runs full vitest suite to count tests; far exceeds 10s smoke budget
   ]);
 
   for (const { name, path: scriptPath } of scriptFiles) {
@@ -88,7 +89,9 @@ describe("Contract: scripts/ smoke tests (no-arg invocation)", () => {
       continue;
     }
 
-    it(`scripts/${name} no-arg invocation does not crash with unexpected error`, () => {
+    it(`scripts/${name} no-arg invocation does not crash with unexpected error`, {
+      timeout: 15_000,
+    }, () => {
       try {
         // Run with a short timeout to prevent hanging scripts
         execSync(`bash "${scriptPath}"`, {
