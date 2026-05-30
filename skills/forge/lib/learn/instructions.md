@@ -110,7 +110,7 @@ This check is informational only — it enriches the learn session with document
 # Check if runs directory has tool-duration logs
 ls .forge/runs/*tool-durations*.jsonl 2>/dev/null
 # Check if OTEL exporter is configured
-echo "$OTEL_EXPORTER_OTLP_ENDPOINT"
+echo $OTEL_EXPORTER_OTLP_ENDPOINT
 ```
 
 If neither source exists → skip.
