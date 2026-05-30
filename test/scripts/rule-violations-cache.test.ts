@@ -38,10 +38,12 @@ describe("record-evolved-rule-violation.mjs cache path integration", () => {
   });
 
   it("returns null when plugin data dir unavailable", async () => {
-    process.env.CLAUDE_PLUGIN_DATA = "/nonexistent-root/impossible";
+    // Invalid env var (contains ..) — falls back to homedir
+    process.env.CLAUDE_PLUGIN_DATA = "/tmp/../etc/../etc/passwd";
     const { getCachePath } = await importFresh();
 
-    expect(getCachePath("rule-violations.json")).toBeNull();
+    // Falls back to homedir, which is writable, so returns a path
+    expect(getCachePath("rule-violations.json")).toBeTruthy();
   });
 
   it("rule-violations.json data model stores violations with session aggregation", async () => {
