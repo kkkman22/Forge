@@ -4,7 +4,7 @@ description: 代码质量评审者。在 /forge review 的 Agent Team 中提供 
 model: sonnet
 maxTurns: 12
 tools: Read, Glob, Grep
-disallowed-tools: [Bash, Write, Edit, Agent]
+disallowedTools: [Bash, Write, Edit, Agent]
 permissionMode: plan
 memory: project
 background: true
