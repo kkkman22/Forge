@@ -21,7 +21,11 @@ L3 禁止主 agent 顶替评审/决策。Ship 阻断。
 
 ## L1 Trigger Reasons
 
-`gate_disabled` | `env_unset` | `non_interactive` | `workflow_missing` | `workflow_syntax_error` | `concurrency_uncontrolled` | `unmatched_state`
+`gate_disabled` | `env_unset` | `non_interactive` | `workflow_missing` | `workflow_syntax_error` | `concurrency_uncontrolled` | `unmatched_state` | `agents_unavailable`
+
+### `agents_unavailable` Detail
+
+`decide_dispatch_mode: auto` 选择 Agent Teams（tier=full）但 `CLAUDE_CODE_EXPERIMENTAL_AGENT_TEAMS` 未设置或 Agent Teams 运行时不可用 → 降级到 inline 模式 + 警告输出。降级不阻断 decide 流程，最终决策结果仍然有效。
 
 ## L0 Failure Signatures
 
