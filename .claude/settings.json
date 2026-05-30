@@ -91,6 +91,15 @@
             "timeout": 2
           }
         ]
+      },
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "node scripts/track-tool-duration.mjs \"$TOOL_INPUT_FILE\" 2>/dev/null || true",
+            "timeout": 3
+          }
+        ]
       }
     ],
     "Stop": [
