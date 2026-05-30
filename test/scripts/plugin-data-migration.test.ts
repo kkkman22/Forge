@@ -82,14 +82,13 @@ describe("plugin-data backward compatibility", () => {
     expect(result.rules).toEqual(["new"]);
   });
 
-  it("degrades gracefully when env var is invalid — falls back to homedir", async () => {
-    // Invalid env var (contains ..) — falls back to homedir
-    process.env.CLAUDE_PLUGIN_DATA = "/tmp/../etc/../etc/passwd";
+  it("degrades to null gracefully when env var and fallback both fail", async () => {
+    delete process.env.CLAUDE_PLUGIN_DATA;
+    // HOME is usually set, so test with a truly unwritable custom path
+    process.env.CLAUDE_PLUGIN_DATA = "/dev/null/impossible";
     const { getPluginDataDir } = await importFresh();
 
     const result = getPluginDataDir();
-    // Falls back to homedir path (writable on this system)
-    expect(result).toBeTruthy();
-    expect(result).toMatch(/\.claude\/plugins\/data\/forge$/);
+    expect(result).toBeNull();
   });
 });

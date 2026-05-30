@@ -19,10 +19,8 @@ import { getCachePath } from "./lib/plugin-data-path.mjs";
 const RULES_PATH = ".forge/knowledge/evolved-rules.md";
 const SPEC_LOCK_PATH = ".forge/state/spec-lock";
 const SPECS_DIR = ".kiro/specs";
-// Max source file read size (32KB — full file, extraction will trim)
-const MAX_BYTES = 32768;
-// Max byte budget per Content line (80 bytes — CJK uses 3 bytes/char)
-const MAX_CONTENT_BYTES = 80;
+const MAX_BYTES = 32768; // Read full file — extraction will trim
+const MAX_CONTENT_BYTES = 80; // Byte budget per Content line (CJK = 3 bytes/char)
 
 /**
  * Extract only rule headers + **Content** lines from evolved-rules markdown.
@@ -78,23 +76,20 @@ function extractContentOnly(markdown) {
 
 /**
  * Read evolved-rules.md content, truncated at MAX_BYTES.
- * Returns { content, mtimeMs } or null when file doesn't exist.
+ * Returns null when file doesn't exist.
  */
 function readEvolvedRules(cwd) {
   const fullPath = resolve(cwd, RULES_PATH);
   try {
-    const stat = statSync(fullPath);
+    statSync(fullPath);
     const buf = readFileSync(fullPath);
-    let content;
     if (buf.length <= MAX_BYTES) {
-      content = buf.toString("utf-8");
-    } else {
-      let end = MAX_BYTES;
-      const nl = buf.subarray(0, MAX_BYTES).lastIndexOf(0x0a);
-      if (nl > 0) end = nl + 1;
-      content = buf.subarray(0, end).toString("utf-8");
+      return buf.toString("utf-8");
     }
-    return { content, mtimeMs: stat.mtimeMs };
+    let end = MAX_BYTES;
+    const nl = buf.subarray(0, MAX_BYTES).lastIndexOf(0x0a);
+    if (nl > 0) end = nl + 1;
+    return buf.subarray(0, end).toString("utf-8");
   } catch {
     return null;
   }
@@ -132,15 +127,15 @@ function detectSpecName(cwd) {
 
 /**
  * Read evolved-rules with caching via plugin data dir.
- * Uses mtimeMs (number) for precise cache invalidation.
  * Returns the extracted content string, or null if no rules file exists.
  */
 function readEvolvedRulesWithCache(cwd) {
-  const result = readEvolvedRules(cwd);
-  if (result === null) return null;
+  const rawRules = readEvolvedRules(cwd);
+  if (rawRules === null) return null;
 
-  const rulesContent = extractContentOnly(result.content);
-  const sourceMtimeMs = result.mtimeMs;
+  const rulesContent = extractContentOnly(rawRules);
+  const sourcePath = resolve(cwd, RULES_PATH);
+  const sourceMtime = statSync(sourcePath).mtime.toISOString();
 
   const cacheFilePath = getCachePath("evolved-rules-cache.json");
 
@@ -148,8 +143,8 @@ function readEvolvedRulesWithCache(cwd) {
   if (cacheFilePath) {
     try {
       const cached = JSON.parse(readFileSync(cacheFilePath, "utf-8"));
-      // Compare mtimeMs as numbers for sub-millisecond precision
-      if (cached.sourceMtimeMs === sourceMtimeMs) {
+      if (cached.sourceMtime === sourceMtime) {
+        // Cache hit — return cached compiled result
         return cached.rules;
       }
     } catch {
@@ -161,11 +156,11 @@ function readEvolvedRulesWithCache(cwd) {
   if (cacheFilePath) {
     try {
       const cacheEntry = {
-        sourceMtimeMs,
+        sourceMtime,
         compiledAt: new Date().toISOString(),
         rules: rulesContent,
       };
-      writeFileSync(cacheFilePath, JSON.stringify(cacheEntry), { mode: 0o600 });
+      writeFileSync(cacheFilePath, JSON.stringify(cacheEntry), "utf-8");
     } catch {
       // Cache write failure — degraded mode, continue without cache
     }

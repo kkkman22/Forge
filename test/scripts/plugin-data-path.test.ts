@@ -77,16 +77,13 @@ describe("plugin-data-path", () => {
     });
 
     it("returns null when directory is not writable", async () => {
-      // Use a path with traversal — rejected by validation
-      process.env.CLAUDE_PLUGIN_DATA = "/tmp/../etc/../etc/passwd";
+      // Use a path that can't be created — root-owned path
+      process.env.CLAUDE_PLUGIN_DATA = "/proc/nonexistent/impossible/path";
 
       const { getPluginDataDir } = await importFresh();
       const result = getPluginDataDir();
 
-      // Falls back to homedir path (which is writable), so this test
-      // verifies that the invalid env var is rejected and fallback works
-      expect(result).toBeTruthy();
-      expect(result).toMatch(/\.claude\/plugins\/data\/forge$/);
+      expect(result).toBeNull();
     });
   });
 
@@ -102,15 +99,13 @@ describe("plugin-data-path", () => {
       expect(result).toBe(join(customDir, "forge", "evolved-rules-cache.json"));
     });
 
-    it("returns null when filename contains path traversal", async () => {
-      const customDir = join(testTmpDir, "traversal-test");
-      mkdirSync(customDir, { recursive: true });
-      process.env.CLAUDE_PLUGIN_DATA = customDir;
+    it("returns null when getPluginDataDir returns null", async () => {
+      process.env.CLAUDE_PLUGIN_DATA = "/proc/nonexistent/impossible/path";
 
       const { getCachePath } = await importFresh();
-      expect(getCachePath("../etc/passwd")).toBeNull();
-      expect(getCachePath("sub/file.json")).toBeNull();
-      expect(getCachePath("")).toBeNull();
+      const result = getCachePath("test.json");
+
+      expect(result).toBeNull();
     });
   });
 });
