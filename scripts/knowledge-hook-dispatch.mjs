@@ -8,7 +8,7 @@
 //
 // Exit codes: 0 success / 1 error / 2 no .forge/
 
-import { existsSync, readFileSync, writeFileSync, statSync } from "node:fs";
+import { existsSync, readFileSync, writeFileSync } from "node:fs";
 import { resolve, join, basename } from "node:path";
 import { fileURLToPath } from "node:url";
 import { getCachePath } from "./lib/plugin-data-path.mjs";
@@ -74,6 +74,11 @@ if (args[0] === "--event") {
     console.error("Usage: --event '<json>'");
     process.exit(1);
   }
+  // Max input size: 64KB (JSON bomb defense)
+  if (json.length > 65536) {
+    console.error("--event argument too large (max 64KB)");
+    process.exit(1);
+  }
   let event;
   try {
     event = JSON.parse(json);
@@ -112,22 +117,22 @@ process.exit(1);
 // Helpers
 // ---------------------------------------------------------------------------
 
-function getKnowledgeCachePath() {
-  return getCachePath("knowledge-cache.json");
-}
+const MAX_CACHE_KEYS = 500;
 
 function readKnowledgeCache() {
-  const cachePath = getKnowledgeCachePath();
+  const cachePath = getCachePath("knowledge-cache.json");
   if (!cachePath) return {};
   try {
-    return JSON.parse(readFileSync(cachePath, "utf-8"));
+    const parsed = JSON.parse(readFileSync(cachePath, "utf-8"));
+    if (parsed && typeof parsed === "object" && !Array.isArray(parsed)) return parsed;
+    return {};
   } catch {
     return {};
   }
 }
 
 function writeEventCache(event, result) {
-  const cachePath = getKnowledgeCachePath();
+  const cachePath = getCachePath("knowledge-cache.json");
   if (!cachePath) return;
   try {
     const cache = readKnowledgeCache();
@@ -137,7 +142,16 @@ function writeEventCache(event, result) {
       result,
       cachedAt: new Date().toISOString(),
     };
-    writeFileSync(cachePath, JSON.stringify(cache), "utf-8");
+    // Evict oldest entries when cache exceeds limit
+    const entries = Object.keys(cache);
+    if (entries.length > MAX_CACHE_KEYS) {
+      const sorted = entries.sort((a, b) =>
+        (cache[a].cachedAt || "").localeCompare(cache[b].cachedAt || ""),
+      );
+      const evictCount = entries.length - MAX_CACHE_KEYS;
+      for (let i = 0; i < evictCount; i++) delete cache[sorted[i]];
+    }
+    writeFileSync(cachePath, JSON.stringify(cache), { mode: 0o600 });
   } catch {
     // Cache write failure — degraded mode
   }
