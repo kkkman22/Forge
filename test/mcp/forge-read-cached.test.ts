@@ -87,4 +87,26 @@ describe("forge_read_cached tool", () => {
     expect(result.content).toContain("line2");
     expect(result.content).toContain("line4");
   });
+
+  it("respects start_line only (no end_line)", async () => {
+    const filePath = join(tmpRoot, "partial.txt");
+    await writeFile(filePath, "a\nb\nc\nd\n");
+
+    const result = await handleReadCached(index, filePath, 3);
+    expect(result.cached).toBe(false);
+    expect(result.content).toContain("c");
+    expect(result.content).toContain("d");
+    expect(result.content).not.toContain("a");
+  });
+
+  it("respects end_line only (no start_line)", async () => {
+    const filePath = join(tmpRoot, "partial2.txt");
+    await writeFile(filePath, "x\ny\nz\n");
+
+    const result = await handleReadCached(index, filePath, undefined, 2);
+    expect(result.cached).toBe(false);
+    expect(result.content).toContain("x");
+    expect(result.content).toContain("y");
+    expect(result.content).not.toContain("z");
+  });
 });
