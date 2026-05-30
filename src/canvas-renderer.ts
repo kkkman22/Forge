@@ -87,11 +87,11 @@ export async function renderCanvas(options: CanvasOptions): Promise<CanvasResult
 
   const jsonIsland = escapeHtml(JSON.stringify(jsonData));
 
-  // Build HTML
+  // Build HTML — use function-form replace() to avoid $' / $` special patterns
   const html = baseHtml
-    .replace("{{topic}}", escapeHtml(topic))
-    .replace("{{json_island}}", jsonIsland)
-    .replace("{{renderer_js}}", rendererJs);
+    .replace("{{topic}}", () => escapeHtml(topic))
+    .replace("{{json_island}}", () => jsonIsland)
+    .replace("{{renderer_js}}", () => rendererJs);
 
   // Write output
   const outputDir = join(forgeDir, "reviews");
