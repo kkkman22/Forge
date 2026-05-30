@@ -130,6 +130,11 @@ function checkCompleteness(scripts) {
 
 // ── Layer 2: Freshness ───────────────────────────────────────────────
 function checkFreshness() {
+  // In CI, build-dist.sh just ran — freshness check is meaningless (zip is non-deterministic)
+  if (process.env.CI === "true") {
+    log("bundle-sync: freshness check SKIPPED (CI environment — dist just rebuilt)");
+    return null;
+  }
   try {
     execSync("git diff --exit-code -- dist/ dist-plugin/", {
       encoding: "utf-8",
