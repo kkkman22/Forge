@@ -64,12 +64,32 @@ chmod +x "${CC_BUNDLE}/scripts/init.sh"
 cp "${FORGE_ROOT}/scripts/validate-knowledge.sh" "${CC_BUNDLE}/scripts/validate-knowledge.sh"
 chmod +x "${CC_BUNDLE}/scripts/validate-knowledge.sh"
 # Copy all runtime scripts (exclude build/install scripts which are dev-only)
-for script in check-frozen.sh auto-resume.sh persistent-loop.sh; do
+for script in \
+  check-frozen.sh auto-resume.sh persistent-loop.sh \
+  hook-check-frozen.sh hook-check-frozen-post.sh \
+  hook-precompact.sh hook-postcompact.sh hook-task-completed.sh; do
   if [[ -f "${FORGE_ROOT}/scripts/${script}" ]]; then
     cp "${FORGE_ROOT}/scripts/${script}" "${CC_BUNDLE}/scripts/${script}"
     chmod +x "${CC_BUNDLE}/scripts/${script}"
   fi
 done
+
+# Copy runtime .mjs scripts referenced by hooks
+for script in \
+  inject-plan-context.mjs inject-evolved-rules.mjs \
+  check-context-boundary.mjs check-diff-context-integrity.mjs \
+  rebuild-feature-dossier.mjs record-evolved-rule-violation.mjs \
+  flag-stale-evolved-rules.mjs knowledge-hook-dispatch.mjs; do
+  if [[ -f "${FORGE_ROOT}/scripts/${script}" ]]; then
+    cp "${FORGE_ROOT}/scripts/${script}" "${CC_BUNDLE}/scripts/${script}"
+  fi
+done
+
+# Copy cmux-mirror subdirectory if exists
+if [[ -d "${FORGE_ROOT}/scripts/cmux-mirror" ]]; then
+  cp -r "${FORGE_ROOT}/scripts/cmux-mirror" "${CC_BUNDLE}/scripts/cmux-mirror"
+fi
+
 cp "${FORGE_ROOT}/README.md" "${CC_BUNDLE}/README.md"
 
 # Copy compiled check-frozen.js and its dependencies so that the
@@ -179,8 +199,9 @@ mkdir -p "${PLUGIN_DIST}/scripts"
 
 # Copy runtime scripts referenced by hooks
 for script in \
-  auto-resume.sh persistent-loop.sh hook-check-frozen.sh check-frozen.sh \
-  init.sh validate-knowledge.sh; do
+  auto-resume.sh persistent-loop.sh hook-check-frozen.sh hook-check-frozen-post.sh \
+  hook-precompact.sh hook-postcompact.sh hook-task-completed.sh \
+  check-frozen.sh init.sh validate-knowledge.sh; do
   if [[ -f "${FORGE_ROOT}/scripts/${script}" ]]; then
     cp "${FORGE_ROOT}/scripts/${script}" "${PLUGIN_DIST}/scripts/${script}"
     chmod +x "${PLUGIN_DIST}/scripts/${script}"
@@ -190,9 +211,9 @@ done
 # Copy runtime .mjs scripts referenced by hooks
 for script in \
   inject-plan-context.mjs inject-evolved-rules.mjs \
-  check-context-boundary.mjs \
+  check-context-boundary.mjs check-diff-context-integrity.mjs \
   rebuild-feature-dossier.mjs record-evolved-rule-violation.mjs \
-  flag-stale-evolved-rules.mjs; do
+  flag-stale-evolved-rules.mjs knowledge-hook-dispatch.mjs; do
   if [[ -f "${FORGE_ROOT}/scripts/${script}" ]]; then
     cp "${FORGE_ROOT}/scripts/${script}" "${PLUGIN_DIST}/scripts/${script}"
   fi
