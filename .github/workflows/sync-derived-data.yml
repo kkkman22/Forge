@@ -49,6 +49,9 @@ jobs:
       - name: Sync dist bundle
         run: bash scripts/build-dist.sh
 
+      - name: Sync command count declarations
+        run: node scripts/gen-plugin-commands.mjs --stamp-count --allow-stamp
+
       # 5. Run benchmarks and append to metrics.md
       - name: Run benchmarks
         run: npx vitest bench --run --outputJson=bench-result.json
