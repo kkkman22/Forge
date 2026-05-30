@@ -96,4 +96,32 @@
 {"timestamp":"2026-05-30T04:10:35Z","event":"postcompact_restore","detail":"slug=review-pipeline-enhancement"}
 {"timestamp":"2026-05-30T04:10:35Z","event":"precompact_snapshot","detail":"slug=review-pipeline-enhancement phase=build completed=0
 0 pending=0
+{"timestamp":"2026-05-30T02:19:04Z","event":"precompact_snapshot","detail":"slug=context-explosion-defense phase=build completed=17 pending=0
+0"}
+{"timestamp":"2026-05-30T02:20:34Z","event":"postcompact_restore","detail":"slug=context-explosion-defense"}
+{"timestamp":"2026-05-30T02:20:34Z","event":"precompact_snapshot","detail":"slug=context-explosion-defense phase=build completed=17 pending=0
+0"}
+{"timestamp":"2026-05-30T02:23:10Z","event":"postcompact_restore","detail":"slug=context-explosion-defense"}
+{"timestamp":"2026-05-30T02:23:10Z","event":"precompact_snapshot","detail":"slug=context-explosion-defense phase=build completed=17 pending=0
+0"}
+{"timestamp":"2026-05-30T02:24:53Z","event":"postcompact_restore","detail":"slug=context-explosion-defense"}
+{"timestamp":"2026-05-30T02:24:53Z","event":"precompact_snapshot","detail":"slug=context-explosion-defense phase=build completed=17 pending=0
+0"}
+{"timestamp":"2026-05-30T02:27:01Z","event":"postcompact_restore","detail":"slug=context-explosion-defense"}
+{"timestamp":"2026-05-30T02:27:01Z","event":"precompact_snapshot","detail":"slug=context-explosion-defense phase=build completed=17 pending=0
+0"}
+{"timestamp":"2026-05-30T02:28:40Z","event":"postcompact_restore","detail":"slug=context-explosion-defense"}
+{"timestamp":"2026-05-30T02:28:40Z","event":"precompact_snapshot","detail":"slug=context-explosion-defense phase=build completed=17 pending=0
+0"}
+{"timestamp":"2026-05-30T02:30:59Z","event":"postcompact_restore","detail":"slug=context-explosion-defense"}
+{"timestamp":"2026-05-30T02:31:00Z","event":"precompact_snapshot","detail":"slug=context-explosion-defense phase=build completed=17 pending=0
+0"}
+{"timestamp":"2026-05-30T02:32:42Z","event":"postcompact_restore","detail":"slug=context-explosion-defense"}
+{"timestamp":"2026-05-30T02:32:43Z","event":"precompact_snapshot","detail":"slug=context-explosion-defense phase=build completed=17 pending=0
+0"}
+{"timestamp":"2026-05-30T02:34:20Z","event":"postcompact_restore","detail":"slug=context-explosion-defense"}
+{"timestamp":"2026-05-30T02:34:20Z","event":"precompact_snapshot","detail":"slug=context-explosion-defense phase=build completed=17 pending=0
+0"}
+{"timestamp":"2026-05-30T02:35:53Z","event":"postcompact_restore","detail":"slug=context-explosion-defense"}
+{"timestamp":"2026-05-30T02:35:53Z","event":"precompact_snapshot","detail":"slug=context-explosion-defense phase=build completed=17 pending=0
 0"}
