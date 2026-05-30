@@ -271,6 +271,17 @@
         ]
       }
     ],
+    "TaskCreated": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "args": ["node", "${CLAUDE_PLUGIN_ROOT}/scripts/task-created-hook.mjs"],
+            "timeout": 3
+          }
+        ]
+      }
+    ],
     "Stop": [
       {
         "hooks": [
