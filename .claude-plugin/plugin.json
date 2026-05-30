@@ -271,50 +271,6 @@
         ]
       }
     ],
-    "WorktreeCreate": [
-      {
-        "hooks": [
-          {
-            "type": "command",
-            "args": ["node", "${CLAUDE_PLUGIN_ROOT}/scripts/worktree-create-hook.mjs"],
-            "timeout": 3
-          }
-        ]
-      }
-    ],
-    "WorktreeRemove": [
-      {
-        "hooks": [
-          {
-            "type": "command",
-            "args": ["node", "${CLAUDE_PLUGIN_ROOT}/scripts/worktree-remove-hook.mjs"],
-            "timeout": 3
-          }
-        ]
-      }
-    ],
-    "StopFailure": [
-      {
-        "hooks": [
-          {
-            "type": "command",
-            "args": ["node", "${CLAUDE_PLUGIN_ROOT}/scripts/stop-failure-hook.mjs"],
-            "timeout": 3
-          }
-        ]
-      }
-    ],
-    "PermissionDenied": [
-      {
-        "hooks": [
-          {
-            "type": "command",
-            "args": ["node", "${CLAUDE_PLUGIN_ROOT}/scripts/permission-denied-hook.mjs"],
-            "timeout": 3
-          }
-        ]
-      }
-    ],
     "TaskCreated": [
       {
         "hooks": [
