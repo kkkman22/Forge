@@ -48,9 +48,9 @@ Last commit: !`git log --oneline -1 2>/dev/null || echo "no commits"`
 
 当 build 检测到需要 worktree 隔离（如多 agent 并行修改同一文件），可通过 `EnterWorktree` 工具在已有会话中切换到隔离 worktree，无需重启会话：
 
-1. 调用 `EnterWorktree({ name: "<task-slug>" })` → 创建隔离分支 + 目录
+1. 使用 `EnterWorktree` 工具（参数 `{ name: "<task-slug>" }`）→ 创建隔离分支 + 目录
 2. 在 worktree 中执行 build 任务
-3. 完成后调用 `ExitWorktree({ action: "keep" })` → 保留变更回主目录
+3. 完成后使用 `ExitWorktree` 工具（参数 `{ action: "keep" }`）→ 保留变更回主目录
 
 **适用场景**：Full tier Phase 2 多模块并行开发、需要隔离试验性变更时。
 
