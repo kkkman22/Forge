@@ -16,7 +16,7 @@ export declare function isRtkAvailable(): Promise<boolean>;
 /**
  * Trim command output based on exit code and line count.
  *
- * @fallback This is the fallback compression engine when RTK is unavailable.
+ * Fallback compression engine when RTK is unavailable.
  *
  * @param stdout - Standard output from the command
  * @param stderr - Standard error from the command

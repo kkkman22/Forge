@@ -728,14 +728,14 @@ describe("Contract: review artifact template", () => {
 // ---------------------------------------------------------------------------
 // 20. plugin.json mcpServers field (forge-context MCP)
 // ---------------------------------------------------------------------------
-describe("Contract: plugin.json declares forge-context MCP server", () => {
-    const pluginPath = resolve(ROOT, ".claude-plugin", "plugin.json");
-    const content = readFileSync(pluginPath, "utf-8");
+describe("Contract: forge-context MCP server declared in .mcp.json", () => {
+    const mcpPath = resolve(ROOT, ".mcp.json");
+    const content = readFileSync(mcpPath, "utf-8");
     const json = JSON.parse(content);
-    it("plugin.json contains mcpServers field", () => {
+    it(".mcp.json contains mcpServers field", () => {
         expect(json.mcpServers).toBeDefined();
     });
-    it("plugin.json contains forge-context entry", () => {
+    it(".mcp.json contains forge-context entry", () => {
         expect(json.mcpServers["forge-context"]).toBeDefined();
     });
     it("forge-context uses node as command", () => {
@@ -943,10 +943,10 @@ describe("Contract: PostToolUse boundary feedback", () => {
             rmSync(tmp, { recursive: true, force: true });
         }
     });
-    it("plugin.json has at least one PostToolUse hook with continueOnBlock", () => {
-        const pluginPath = resolve(ROOT, ".claude-plugin/plugin.json");
-        const plugin = JSON.parse(readFileSync(pluginPath, "utf-8"));
-        const postGroups = plugin.hooks?.PostToolUse;
+    it("hooks/hooks.json has at least one PostToolUse hook with continueOnBlock", () => {
+        const hooksPath = resolve(ROOT, "hooks", "hooks.json");
+        const hooks = JSON.parse(readFileSync(hooksPath, "utf-8"));
+        const postGroups = hooks.hooks?.PostToolUse;
         const hasContinueOnBlock = postGroups?.some((group) => group.hooks?.some((hook) => hook.continueOnBlock === true)) ??
             false;
         expect(hasContinueOnBlock).toBe(true);
