@@ -115,7 +115,7 @@ export function trimCommandOutput(stdout: string, stderr: string, exitCode: numb
  * Returns compressed output or null if compression fails.
  * Includes JS-level timeout safety net in case spawn events don't fire.
  */
-async function rtkCompress(stdout: string): Promise<string | null> {
+async function rtkCompress(_stdout: string): Promise<string | null> {
   return new Promise((resolve) => {
     // JS-level timeout safety net — if spawn events never fire, resolve null
     const safetyTimer = setTimeout(() => {
