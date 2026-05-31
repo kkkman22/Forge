@@ -21,13 +21,12 @@ describe("Plugin Manifest", () => {
         const pkg = JSON.parse(readFileSync(packagePath, "utf-8"));
         expect(plugin.version).toBe(pkg.version);
     });
-    it("plugin.json hooks use CLAUDE_PLUGIN_ROOT", () => {
-        const plugin = JSON.parse(readFileSync(pluginPath, "utf-8"));
-        const hooks = plugin.hooks;
-        expect(hooks).toBeDefined();
-        const hookJson = JSON.stringify(hooks);
-        const pluginRootRefs = (hookJson.match(/\$\{CLAUDE_PLUGIN_ROOT\}/g) || []).length;
-        expect(pluginRootRefs).toBeGreaterThan(0);
+    it("hooks/hooks.json exists and has valid hook entries", () => {
+        const hooksPath = join(ROOT, "hooks", "hooks.json");
+        expect(existsSync(hooksPath)).toBe(true);
+        const hooks = JSON.parse(readFileSync(hooksPath, "utf-8"));
+        expect(hooks.hooks).toBeDefined();
+        expect(Object.keys(hooks.hooks).length).toBeGreaterThan(0);
     });
     it("plugin.json has no hardcoded ~/.claude/skills/forge paths", () => {
         const content = readFileSync(pluginPath, "utf-8");
@@ -86,18 +85,21 @@ describe("Plugin Workflows Field (R1: workflows-integration)", () => {
         expect(() => execFileSync("node", ["--check", multiAgentReview], { stdio: "pipe" })).not.toThrow();
     });
     it("AC 1.4: existing workflows field does not break mcpServers/hooks paths", () => {
-        const manifest = JSON.parse(readFileSync(pluginPath, "utf-8"));
-        expect(manifest.mcpServers).toBeDefined();
-        expect(manifest.mcpServers["forge-context"]).toBeDefined();
-        expect(manifest.hooks).toBeDefined();
-        expect(manifest.hooks.SessionStart).toBeDefined();
-        expect(manifest.hooks.UserPromptSubmit).toBeDefined();
-        expect(manifest.hooks.PreToolUse).toBeDefined();
-        expect(manifest.hooks.PostToolUse).toBeDefined();
-        expect(manifest.hooks.Stop).toBeDefined();
-        const hookJson = JSON.stringify(manifest.hooks);
-        // biome-ignore lint/suspicious/noTemplateCurlyInString: literal shell variable check
-        expect(hookJson).toContain("${CLAUDE_PLUGIN_ROOT}");
+        // mcpServers moved to .mcp.json, hooks moved to hooks/hooks.json (refactor: zero global side effects)
+        const mcpPath = join(ROOT, ".mcp.json");
+        expect(existsSync(mcpPath)).toBe(true);
+        const mcp = JSON.parse(readFileSync(mcpPath, "utf-8"));
+        expect(mcp.mcpServers).toBeDefined();
+        expect(mcp.mcpServers["forge-context"]).toBeDefined();
+        const hooksPath = join(ROOT, "hooks", "hooks.json");
+        expect(existsSync(hooksPath)).toBe(true);
+        const hooks = JSON.parse(readFileSync(hooksPath, "utf-8"));
+        expect(hooks.hooks).toBeDefined();
+        expect(hooks.hooks.SessionStart).toBeDefined();
+        expect(hooks.hooks.UserPromptSubmit).toBeDefined();
+        expect(hooks.hooks.PreToolUse).toBeDefined();
+        expect(hooks.hooks.PostToolUse).toBeDefined();
+        expect(hooks.hooks.Stop).toBeDefined();
     });
     it("AC 13.1: every workflows[] path is relative (does not start with / or ~)", () => {
         const manifest = JSON.parse(readFileSync(pluginPath, "utf-8"));
