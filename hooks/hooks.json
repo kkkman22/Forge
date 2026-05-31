@@ -18,6 +18,24 @@
             "timeout": 5
           }
         ]
+      },
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "node scripts/bootstrap-check.mjs 2>/dev/null || node forge/scripts/bootstrap-check.mjs 2>/dev/null || node ~/.claude/skills/forge/scripts/bootstrap-check.mjs 2>/dev/null || true",
+            "timeout": 5
+          }
+        ]
+      },
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "node scripts/check-companions.mjs 2>/dev/null || node forge/scripts/check-companions.mjs 2>/dev/null || node ~/.claude/skills/forge/scripts/check-companions.mjs 2>/dev/null || true",
+            "timeout": 3
+          }
+        ]
       }
     ],
     "UserPromptSubmit": [
@@ -100,6 +118,16 @@
             "type": "command",
             "command": "node scripts/check-context-boundary.mjs \"$TOOL_NAME\" \"$TOOL_INPUT_FILE\" 2>/dev/null || node forge/scripts/check-context-boundary.mjs \"$TOOL_NAME\" \"$TOOL_INPUT_FILE\" 2>/dev/null || true",
             "timeout": 5
+          }
+        ]
+      },
+      {
+        "matcher": "Bash",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "node scripts/bash-ban-raw.mjs 2>/dev/null || node forge/scripts/bash-ban-raw.mjs 2>/dev/null || node ~/.claude/skills/forge/scripts/bash-ban-raw.mjs 2>/dev/null || true",
+            "timeout": 2
           }
         ]
       }
@@ -283,5 +311,10 @@
         ]
       }
     ]
+  },
+  "env": {
+    "CLAUDE_AUTOCOMPACT_PCT_OVERRIDE": "60",
+    "MCP_CONNECTION_NONBLOCKING": "true",
+    "CLAUDE_CODE_SUBPROCESS_ENV_SCRUB": "true"
   }
 }

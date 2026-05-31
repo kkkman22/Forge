@@ -583,6 +583,10 @@ if [[ -f "${hooks_source}" ]]; then
           const settings = JSON.parse(fs.readFileSync('${settings_file}', 'utf-8'));
           const hooks = JSON.parse(fs.readFileSync('${hooks_source}', 'utf-8'));
           settings.hooks = hooks.hooks;
+          // Merge env from hooks.json (don't overwrite existing values)
+          if (hooks.env) {
+            settings.env = { ...hooks.env, ...(settings.env || {}) };
+          }
           fs.writeFileSync('${settings_file}', JSON.stringify(settings, null, 2) + '\n');
         " 2>/dev/null; then
           success "Forge Hooks 已合并到 .claude/settings.json"
@@ -633,11 +637,7 @@ fi
 # ============================================================================
 info "Step 6/7：forge-context MCP（智能 diff 截断）"
 echo ""
-echo "📦 Plugin 用户（marketplace 安装）：已通过 plugin 自动启用，可跳过此步。"
-echo "   验证：claude mcp list | grep forge-context"
-echo ""
-echo "🛠 源仓库 / 全局安装 / --plugin-dir 用户：init.sh 会把 forge-context"
-echo "   写入项目的 .claude/settings.json，绕过 plugin 配置。"
+echo "forge-context MCP Server 配置到项目的 .mcp.json（项目级，不影响其他项目）。"
 echo ""
 echo "为什么需要："
 echo "  • Token 消耗：spec-check 单次评审 700K+ → <200K（19 文件变更实测）"
@@ -653,60 +653,50 @@ echo ""
 
 mcp_server_path="${FORGE_ROOT}/dist/src/mcp/server.js"
 
-# Plugin context detection — if plugin already provides forge-context, skip
-if [[ -n "${CLAUDE_PLUGIN_ROOT:-}" ]] && [[ -f "${CLAUDE_PLUGIN_ROOT}/dist/src/mcp/server.js" ]]; then
-  success "forge-context 已通过 plugin 自动启用，跳过 settings.json 配置"
-else
-  if [ -f "$mcp_server_path" ]; then
-    if command -v node &>/dev/null; then
-      # Ensure settings.json exists (may not exist if hooks step was skipped)
-      if [ ! -f "${settings_file}" ]; then
-        mkdir -p "${PROJECT_ROOT}/.claude"
-        echo '{}' > "${settings_file}"
-        info "创建了空的 .claude/settings.json"
-      fi
+if [ -f "$mcp_server_path" ]; then
+  if command -v node &>/dev/null; then
+    mcp_file="${PROJECT_ROOT}/.mcp.json"
 
-      # Merge forge-context into mcpServers section
-      mcp_result=$(node -e "
-        const fs = require('fs');
-        const settingsPath = '${settings_file}';
-        const serverPath = '${mcp_server_path}';
-        let settings;
-        try {
-          settings = JSON.parse(fs.readFileSync(settingsPath, 'utf-8'));
-        } catch (e) {
-          settings = {};
-        }
-        if (!settings.mcpServers) settings.mcpServers = {};
-        if (settings.mcpServers['forge-context']) {
-          process.stdout.write('SKIP');
-        } else {
-          settings.mcpServers['forge-context'] = {
-            command: 'node',
-            args: [serverPath]
-          };
-          fs.writeFileSync(settingsPath, JSON.stringify(settings, null, 2) + '\n');
-          process.stdout.write('OK');
-        }
-      " 2>&1) || true
+    # Merge forge-context into .mcp.json
+    mcp_result=$(node -e "
+      const fs = require('fs');
+      const mcpPath = '${mcp_file}';
+      const serverPath = '${mcp_server_path}';
+      let mcp;
+      try {
+        mcp = JSON.parse(fs.readFileSync(mcpPath, 'utf-8'));
+      } catch (e) {
+        mcp = {};
+      }
+      if (!mcp.mcpServers) mcp.mcpServers = {};
+      if (mcp.mcpServers['forge-context']) {
+        process.stdout.write('SKIP');
+      } else {
+        mcp.mcpServers['forge-context'] = {
+          command: 'node',
+          args: [serverPath]
+        };
+        fs.writeFileSync(mcpPath, JSON.stringify(mcp, null, 2) + '\n');
+        process.stdout.write('OK');
+      }
+    " 2>&1) || true
 
-      case "${mcp_result}" in
-        SKIP)
-          warn "forge-context MCP 配置已存在，跳过（避免覆盖）"
-          ;;
-        OK)
-          success "forge-context MCP Server 已配置到 .claude/settings.json"
-          ;;
-        *)
-          warn "MCP 配置写入失败：${mcp_result}"
-          ;;
-      esac
-    else
-      warn "未检测到 node 命令，跳过 MCP Server 配置。forge-context 为推荐组件（/forge review 大变更集评审依赖智能截断）。请安装 node 后重新运行 init，或手动添加 forge-context 到 .claude/settings.json 的 mcpServers 中。"
-    fi
+    case "${mcp_result}" in
+      SKIP)
+        warn "forge-context MCP 配置已存在，跳过（避免覆盖）"
+        ;;
+      OK)
+        success "forge-context MCP Server 已配置到 .mcp.json"
+        ;;
+      *)
+        warn "MCP 配置写入失败：${mcp_result}"
+        ;;
+    esac
   else
-    info "未找到 MCP server（${mcp_server_path}），跳过 MCP 配置（运行 npm run build 后重新初始化可启用）"
+    warn "未检测到 node 命令，跳过 MCP Server 配置。请手动创建 .mcp.json 配置 forge-context。"
   fi
+else
+  info "未找到 MCP server（${mcp_server_path}），跳过 MCP 配置（运行 npm run build 后重新初始化可启用）"
 fi
 
 # --- Write env variables to settings.json ---
