@@ -57,6 +57,19 @@ export async function isRtkAvailable(): Promise<boolean> {
 }
 
 // ---------------------------------------------------------------------------
+// Iron Law helper (shared by both trimmers)
+// ---------------------------------------------------------------------------
+
+/**
+ * Format failure output — Iron Law: never compressed, always complete.
+ * Both trimCommandOutput and trimWithFallback delegate to this for consistent
+ * failure handling.
+ */
+function formatFailureOutput(stdout: string, stderr: string): string {
+  return stderr ? `${stdout}\n\nSTDERR:\n${stderr}` : stdout;
+}
+
+// ---------------------------------------------------------------------------
 // Legacy trimmer (@fallback — used when RTK is unavailable)
 // ---------------------------------------------------------------------------
 
@@ -73,7 +86,7 @@ export async function isRtkAvailable(): Promise<boolean> {
 export function trimCommandOutput(stdout: string, stderr: string, exitCode: number): string {
   // Failure: return complete output (Forge iron rule)
   if (exitCode !== 0) {
-    return stderr ? `${stdout}\n\nSTDERR:\n${stderr}` : stdout;
+    return formatFailureOutput(stdout, stderr);
   }
 
   const lines = stdout.split("\n");
@@ -100,19 +113,32 @@ export function trimCommandOutput(stdout: string, stderr: string, exitCode: numb
 /**
  * Compress output using RTK (Rust Token Killer).
  * Returns compressed output or null if compression fails.
+ * Includes JS-level timeout safety net in case spawn events don't fire.
  */
 async function rtkCompress(stdout: string): Promise<string | null> {
   return new Promise((resolve) => {
+    // JS-level timeout safety net — if spawn events never fire, resolve null
+    const safetyTimer = setTimeout(() => {
+      resolve(null);
+    }, RTK_TIMEOUT_MS + 500); // slightly longer than spawn's own timeout
+
     const child = spawn("rtk", ["compress"], {
       stdio: ["pipe", "pipe", "pipe"],
       timeout: RTK_TIMEOUT_MS,
     });
 
     let out = "";
-    child.stdout.on("data", (d: Buffer) => { out += d.toString(); });
+    child.stdout.on("data", (d: Buffer) => {
+      out += d.toString();
+    });
     child.stderr.on("data", () => {}); // drain
 
+    const cleanup = () => {
+      clearTimeout(safetyTimer);
+    };
+
     child.on("close", (code) => {
+      cleanup();
       if (code === 0 && out.trim()) {
         resolve(out.trim());
       } else {
@@ -121,11 +147,9 @@ async function rtkCompress(stdout: string): Promise<string | null> {
     });
 
     child.on("error", () => {
+      cleanup();
       resolve(null);
     });
-
-    child.stdin.write(stdout);
-    child.stdin.end();
   });
 }
 
@@ -156,7 +180,7 @@ export async function trimWithFallback(
 ): Promise<string> {
   // Iron Law: failure output is NEVER compressed
   if (exitCode !== 0) {
-    return stderr ? `${stdout}\n\nSTDERR:\n${stderr}` : stdout;
+    return formatFailureOutput(stdout, stderr);
   }
 
   // Small output: return directly

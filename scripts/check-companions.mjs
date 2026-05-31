@@ -59,6 +59,10 @@ const COMPANIONS = [
 /**
  * Check if a tool is available by running its detection command.
  * Timeout: 3 seconds per tool.
+ *
+ * @param {string} executable - Command name to run (e.g. "rtk")
+ * @param {string[]} args - Arguments for the detection command
+ * @returns {Promise<boolean>} true if tool responded successfully
  */
 async function isAvailable(executable, args) {
   try {
@@ -74,17 +78,17 @@ async function isAvailable(executable, args) {
 // ---------------------------------------------------------------------------
 
 async function main() {
-  const results = [];
+  // Detect all companions concurrently (not sequential) — 3s max vs 12s worst case
+  const availability = await Promise.allSettled(
+    COMPANIONS.map((tool) => isAvailable(tool.detectCommand[0], tool.detectCommand[1])),
+  );
 
-  for (const tool of COMPANIONS) {
-    const available = await isAvailable(tool.detectCommand[0], tool.detectCommand[1]);
-    results.push({
-      name: tool.name,
-      label: tool.label,
-      available,
-      description: tool.description,
-    });
-  }
+  const results = COMPANIONS.map((tool, i) => ({
+    name: tool.name,
+    label: tool.label,
+    available: availability[i].status === "fulfilled" && availability[i].value === true,
+    description: tool.description,
+  }));
 
   // Output as structured text for SessionStart injection
   const lines = results.map((r) =>
