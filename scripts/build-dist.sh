@@ -79,7 +79,8 @@ for script in \
   inject-plan-context.mjs inject-evolved-rules.mjs \
   check-context-boundary.mjs check-diff-context-integrity.mjs \
   rebuild-feature-dossier.mjs record-evolved-rule-violation.mjs \
-  flag-stale-evolved-rules.mjs knowledge-hook-dispatch.mjs; do
+  flag-stale-evolved-rules.mjs knowledge-hook-dispatch.mjs \
+  bootstrap-check.mjs check-companions.mjs bash-ban-raw.mjs; do
   if [[ -f "${FORGE_ROOT}/scripts/${script}" ]]; then
     cp "${FORGE_ROOT}/scripts/${script}" "${CC_BUNDLE}/scripts/${script}"
   fi
@@ -228,7 +229,8 @@ for script in \
   inject-plan-context.mjs inject-evolved-rules.mjs \
   check-context-boundary.mjs check-diff-context-integrity.mjs \
   rebuild-feature-dossier.mjs record-evolved-rule-violation.mjs \
-  flag-stale-evolved-rules.mjs knowledge-hook-dispatch.mjs; do
+  flag-stale-evolved-rules.mjs knowledge-hook-dispatch.mjs \
+  bootstrap-check.mjs check-companions.mjs bash-ban-raw.mjs; do
   if [[ -f "${FORGE_ROOT}/scripts/${script}" ]]; then
     cp "${FORGE_ROOT}/scripts/${script}" "${PLUGIN_DIST}/scripts/${script}"
   fi

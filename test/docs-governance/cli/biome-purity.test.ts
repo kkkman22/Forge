@@ -39,7 +39,11 @@ describe("Biome purity rules for generators/renderers", () => {
       const stderr = (err as { stderr?: string }).stderr ?? "";
       expect(stderr).toContain("noRestrictedImports");
     } finally {
-      unlinkSync(tmpFile);
+      try {
+        unlinkSync(tmpFile);
+      } catch {
+        /* already cleaned up */
+      }
     }
   });
 
