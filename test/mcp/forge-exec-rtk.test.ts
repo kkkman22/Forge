@@ -9,8 +9,12 @@
  *   - RTK crash → fallback to trimCommandOutput
  */
 
-import { describe, it, expect } from "vitest";
-import { trimWithFallback, trimCommandOutput, isRtkAvailable } from "../../src/mcp/trimmers/output.js";
+import { describe, expect, it } from "vitest";
+import {
+  isRtkAvailable,
+  trimCommandOutput,
+  trimWithFallback,
+} from "../../src/mcp/trimmers/output.js";
 
 // ---------------------------------------------------------------------------
 // Helpers
@@ -18,7 +22,9 @@ import { trimWithFallback, trimCommandOutput, isRtkAvailable } from "../../src/m
 
 /** Generate a multi-line success output for compression testing. */
 function makeSuccessOutput(lines: number): string {
-  return Array.from({ length: lines }, (_, i) => `Line ${i + 1}: some output content here`).join("\n");
+  return Array.from({ length: lines }, (_, i) => `Line ${i + 1}: some output content here`).join(
+    "\n",
+  );
 }
 
 const SHORT_OUTPUT = makeSuccessOutput(10);
