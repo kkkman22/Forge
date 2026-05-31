@@ -164,6 +164,16 @@
             "timeout": 5
           }
         ]
+      },
+      {
+        "matcher": "Bash",
+        "hooks": [
+          {
+            "type": "command",
+            "args": ["node", "${CLAUDE_PLUGIN_ROOT}/scripts/bash-ban-raw.mjs"],
+            "timeout": 2
+          }
+        ]
       }
     ],
     "PostToolUse": [
