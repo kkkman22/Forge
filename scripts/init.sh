@@ -777,30 +777,103 @@ if [[ -f "${FORGE_ROOT}/scripts/cmux-mirror/install-template.sh" ]]; then
 fi
 
 # ============================================================================
-# Step 7：安装可选工具（code-review-graph）
+# Step 7：安装 Token 优化工具（companion tools）
 # ============================================================================
-info "Step 7/7：安装可选工具"
+info "Step 7/7：安装 Token 优化工具"
 
-if command -v pip &>/dev/null || command -v pip3 &>/dev/null; then
-  pip_cmd=""
-  if command -v pip &>/dev/null; then
-    pip_cmd="pip"
-  elif command -v pip3 &>/dev/null; then
-    pip_cmd="pip3"
+# Helper: detect pip command
+detect_pip() {
+  if command -v pip &>/dev/null; then echo "pip"
+  elif command -v pip3 &>/dev/null; then echo "pip3"
+  else echo ""
   fi
+}
 
-  if [[ -n "${pip_cmd}" ]]; then
-    info "正在安装 code-review-graph（Closure-First 探针优化）..."
-    if install_output=$(${pip_cmd} install code-review-graph 2>&1); then
-      success "code-review-graph 已安装"
-    else
-      warn "code-review-graph 安装失败，Closure-First 探针将使用 grep 回退方案"
-      echo "    安装日志: ${install_output}" | head -3
-    fi
+# Helper: install a companion tool with graceful failure
+# Usage: install_companion <name> <description> <install_command> [fallback_msg]
+install_companion() {
+  local name="$1"
+  local desc="$2"
+  local install_cmd="$3"
+  local fallback="${4:-Fallback 方案可用}"
+
+  info "正在安装 ${name}（${desc}）..."
+  if eval "${install_cmd}" 2>&1; then
+    success "${name} 已安装"
+    return 0
+  else
+    warn "${name} 安装失败。${fallback}"
+    return 1
+  fi
+}
+
+# --- a. code-review-graph（代码知识图谱）---
+pip_cmd=$(detect_pip)
+if [[ -n "${pip_cmd}" ]]; then
+  install_companion "code-review-graph" \
+    "代码知识图谱" \
+    "${pip_cmd} install code-review-graph" \
+    "Explore agent 将使用 grep 回退方案"
+  # Initialize CRG if installed
+  if command -v code-review-graph &>/dev/null; then
+    code-review-graph install --platform claude-code 2>/dev/null || true
+    code-review-graph build 2>/dev/null || true
   fi
 else
-  info "未检测到 pip/pip3，跳过 code-review-graph 安装（grep 回退方案可用）"
+  info "未检测到 pip/pip3，跳过 code-review-graph（grep 回退方案可用）"
 fi
+
+# --- b. Headroom + RTK（API 压缩 + Shell 压缩）---
+if [[ -n "${pip_cmd}" ]]; then
+  install_companion "Headroom + RTK" \
+    "API 级全量压缩 + Shell 输出压缩" \
+    "${pip_cmd} install 'headroom-ai[all]'" \
+    "forge_exec 将使用内置 trimmer 回退方案"
+else
+  info "未检测到 pip/pip3，跳过 Headroom + RTK（内置 trimmer 回退方案可用）"
+fi
+
+# --- c. context-mode（大输出沙箱）---
+if command -v npm &>/dev/null; then
+  # Try claude plugin marketplace (non-blocking)
+  if command -v claude &>/dev/null; then
+    claude plugin marketplace add mksglu/context-mode 2>/dev/null || true
+  fi
+  install_companion "context-mode" \
+    "大输出沙箱（BM25 索引）" \
+    "npm install -g context-mode" \
+    "大输出由 forge_exec + RTK/trimmer 处理"
+else
+  info "未检测到 npm，跳过 context-mode（forge_exec 回退方案可用）"
+fi
+
+# --- d. Caveman（回复压缩）---
+if command -v claude &>/dev/null; then
+  install_companion "Caveman" \
+    "回复压缩（去除客套话）" \
+    "claude plugin marketplace add JuliusBrussee/caveman" \
+    "§2.6 Output Conciseness 规则继续生效"
+else
+  info "未检测到 claude 命令，跳过 Caveman（§2.6 Output Conciseness 规则继续生效）"
+fi
+
+# --- Installation summary ---
+echo ""
+info "Token 优化工具安装完成："
+echo "  工具                  | 状态"
+echo "  --------------------- | ------"
+for tool in "code-review-graph" "rtk" "headroom" "context-mode"; do
+  if command -v "${tool}" &>/dev/null; then
+    echo "  ${tool}          | ✅ 已安装"
+  else
+    echo "  ${tool}          | ⚠️ 未安装（fallback 可用）"
+  fi
+done
+echo ""
+info "Headroom 使用说明："
+echo "  用 'headroom wrap claude' 替代 'claude' 启动 Claude Code"
+echo "  Headroom 会自动压缩 API 请求中的 prompt（47-92%↓ token）"
+echo "  不使用 headroom wrap 时 Forge 正常运行（直连 API）"
 
 # ============================================================================
 # Step 8：Pack 配置（--pack 参数）
