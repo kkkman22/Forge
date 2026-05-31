@@ -63,12 +63,12 @@ describe("Contract: compaction hooks", () => {
   });
 
   it("plugin.json registers PreCompact and PostCompact with .sh scripts", () => {
-    const pluginPath = resolve(ROOT, ".claude-plugin/plugin.json");
-    const plugin = JSON.parse(readFileSync(pluginPath, "utf-8"));
-    expect(plugin.hooks?.PreCompact).toBeDefined();
-    expect(plugin.hooks?.PostCompact).toBeDefined();
-    const preCmd = JSON.stringify(plugin.hooks.PreCompact);
-    const postCmd = JSON.stringify(plugin.hooks.PostCompact);
+    const hooksPath = resolve(ROOT, "hooks", "hooks.json");
+    const hooks = JSON.parse(readFileSync(hooksPath, "utf-8"));
+    expect(hooks.hooks?.PreCompact).toBeDefined();
+    expect(hooks.hooks?.PostCompact).toBeDefined();
+    const preCmd = JSON.stringify(hooks.hooks.PreCompact);
+    const postCmd = JSON.stringify(hooks.hooks.PostCompact);
     expect(preCmd).toContain("hook-precompact.sh");
     expect(postCmd).toContain("hook-postcompact.sh");
   });

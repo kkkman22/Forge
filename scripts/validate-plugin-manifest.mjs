@@ -58,8 +58,20 @@ try {
 
   // Existing fields still valid
   if (!plugin.name) fail("plugin.json missing 'name'");
-  if (!plugin.hooks) fail("plugin.json missing 'hooks'");
-  if (!plugin.mcpServers) fail("plugin.json missing 'mcpServers'");
+  // hooks and mcpServers moved to project-level files (hooks/hooks.json, .mcp.json)
+  const hooksPath = join(ROOT, "hooks", "hooks.json");
+  const mcpPath = join(ROOT, ".mcp.json");
+  if (!existsSync(hooksPath)) fail("hooks/hooks.json not found");
+  if (!existsSync(mcpPath)) fail(".mcp.json not found");
+  if (existsSync(hooksPath)) {
+    const hooks = JSON.parse(readFileSync(hooksPath, "utf-8"));
+    if (!hooks.hooks) fail("hooks/hooks.json missing 'hooks' field");
+  }
+  if (existsSync(mcpPath)) {
+    const mcp = JSON.parse(readFileSync(mcpPath, "utf-8"));
+    if (!mcp.mcpServers) fail(".mcp.json missing 'mcpServers' field");
+    if (!mcp.mcpServers["forge-context"]) fail(".mcp.json missing 'forge-context' entry");
+  }
 } catch (err) {
   fail(`failed to parse plugin.json: ${err.message}`);
 }
