@@ -173,6 +173,38 @@ npm run test:coverage # 测试 + 覆盖率报告
 bash scripts/build-dist.sh
 ```
 
+### 发版流程
+
+Forge 提供一键发版命令，自动完成版本更新 → dist 重建 → git commit → tag 创建：
+
+```bash
+# 一键发版（推荐）
+node scripts/bump-version.mjs minor --commit --tag
+git push origin main --follow-tags
+
+# 分步操作
+node scripts/bump-version.mjs minor             # 仅更新版本 + 重建 dist
+node scripts/bump-version.mjs minor --commit     # + git commit
+node scripts/bump-version.mjs minor --commit --tag  # + 创建 tag
+
+# 指定具体版本号
+node scripts/bump-version.mjs 3.2.0 --commit --tag
+
+# 推送前本地验证
+bash scripts/pre-push-ci-check.sh
+```
+
+| 参数 | 说明 |
+|------|------|
+| `patch` | 3.1.0 → 3.1.1（bug fix） |
+| `minor` | 3.1.0 → 3.2.0（新功能） |
+| `major` | 3.1.0 → 4.0.0（破坏性变更） |
+| `x.y.z` | 指定具体版本号 |
+| `--commit` | 自动 git add + commit（含 dist/） |
+| `--tag` | 创建 annotated tag（需配合 `--commit`） |
+
+`bump-version.mjs` 会自动同步 `package.json`、`.claude-plugin/plugin.json`、`dist-plugin/` 三个位置的版本号，并重建 dist 包。`pre-push-ci-check.sh` 在推送前检查版本一致性、shell 脚本、JSON 有效性和 bundle 完整性。
+
 **技术栈**：TypeScript 5.9（strict）、200 个 TypeScript 模块、Vitest 3.2、fast-check 4.7（属性测试）、Biome 2.4（lint + format）。运行时依赖：`@anthropic-ai/claude-agent-sdk`、`commander`。
 
 **测试策略**：7919 个测试（386 个测试文件，其中 149 个为 fast-check 属性测试文件）验证不变量。覆盖率 ~89% statements。
