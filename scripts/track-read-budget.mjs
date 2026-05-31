@@ -1,6 +1,10 @@
 #!/usr/bin/env node
 
 /**
+ * @deprecated Superseded by CLAUDE_AUTOCOMPACT_PCT_OVERRIDE=60 (global auto-compact).
+ * This script is retained for backward compatibility but the primary budget
+ * management is now handled by Claude Code's built-in auto-compact mechanism.
+ *
  * track-read-budget.mjs — PostToolUse hook for Read tool.
  *
  * Maintains a session-level cumulative Read budget in TMPDIR.
