@@ -18,7 +18,7 @@ import { join } from "node:path";
 import type { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { z } from "zod";
 import type { ResolvedRoot } from "../project-root.js";
-import { trimCommandOutput, trimWithFallback, isRtkAvailable } from "../trimmers/output.js";
+import { isRtkAvailable, trimCommandOutput, trimWithFallback } from "../trimmers/output.js";
 
 // ---------------------------------------------------------------------------
 // Deny-rule helpers
