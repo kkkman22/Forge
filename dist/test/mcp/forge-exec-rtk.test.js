@@ -8,8 +8,8 @@
  *   - RTK timeout → fallback to trimCommandOutput
  *   - RTK crash → fallback to trimCommandOutput
  */
-import { describe, it, expect } from "vitest";
-import { trimWithFallback, trimCommandOutput, isRtkAvailable } from "../../src/mcp/trimmers/output.js";
+import { describe, expect, it } from "vitest";
+import { isRtkAvailable, trimCommandOutput, trimWithFallback, } from "../../src/mcp/trimmers/output.js";
 // ---------------------------------------------------------------------------
 // Helpers
 // ---------------------------------------------------------------------------
