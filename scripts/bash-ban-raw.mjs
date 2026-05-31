@@ -27,6 +27,8 @@ import { join } from "node:path";
 /**
  * Extract the command string from the tool input JSON passed via stdin.
  * Claude Code passes the tool input as JSON on stdin for PreToolUse hooks.
+ *
+ * @returns {Promise<string|null>} The command string, or null if parsing fails
  */
 async function readCommandFromStdin() {
   try {
@@ -75,6 +77,9 @@ function isEscapeHatchActive() {
  *   3. If command starts with grep/rg/ag but has NO pipe, BLOCK
  *   4. If command starts with wc followed by a file arg, BLOCK
  *   5. Everything else: ALLOW
+ *
+ * @param {string} command - The shell command to classify
+ * @returns {boolean} true if the command should be blocked
  */
 function shouldBlock(command) {
   const trimmed = command.trim();
