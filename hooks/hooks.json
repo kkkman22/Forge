@@ -188,6 +188,17 @@
       },
       {
         "matcher": "Write|Edit",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "node scripts/check-context-boundary.mjs PostToolUse \"$TOOL_INPUT_FILE\" 2>/dev/null || node forge/scripts/check-context-boundary.mjs PostToolUse \"$TOOL_INPUT_FILE\" 2>/dev/null || true",
+            "continueOnBlock": true,
+            "timeout": 5
+          }
+        ]
+      },
+      {
+        "matcher": "Write|Edit",
         "if": "Write(.forge/reviews/.diff-context.md)|Edit(.forge/reviews/.diff-context.md)",
         "hooks": [
           {
