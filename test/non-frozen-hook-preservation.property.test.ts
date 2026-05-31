@@ -26,6 +26,7 @@ interface HookEntry {
   type: string;
   command: string;
   timeout?: number;
+  continueOnBlock?: boolean;
 }
 
 interface HookMatcher {
@@ -70,11 +71,27 @@ const EXPECTED_SESSION_START_HOOKS: HookMatcher[] = [
         type: "command",
         command:
           "node scripts/inject-evolved-rules.mjs 2>/dev/null || node forge/scripts/inject-evolved-rules.mjs 2>/dev/null || node ~/.claude/skills/forge/scripts/inject-evolved-rules.mjs 2>/dev/null || true",
-        // Baseline migrated by spec subagent-hook-context-budget task 18.
-        // Old inline `cat` retired in Step 3 — replaced by capped injector script.
-        // Path order updated 2026-05-23: project-relative `scripts/` added as primary
-        // to fix node loader resolution errors when forge/ does not exist in repo root.
         timeout: 5,
+      },
+    ],
+  },
+  {
+    hooks: [
+      {
+        type: "command",
+        command:
+          "node scripts/bootstrap-check.mjs 2>/dev/null || node forge/scripts/bootstrap-check.mjs 2>/dev/null || node ~/.claude/skills/forge/scripts/bootstrap-check.mjs 2>/dev/null || true",
+        timeout: 5,
+      },
+    ],
+  },
+  {
+    hooks: [
+      {
+        type: "command",
+        command:
+          "node scripts/check-companions.mjs 2>/dev/null || node forge/scripts/check-companions.mjs 2>/dev/null || node ~/.claude/skills/forge/scripts/check-companions.mjs 2>/dev/null || true",
+        timeout: 3,
       },
     ],
   },
@@ -155,6 +172,18 @@ const EXPECTED_POST_TOOL_USE_HOOKS: HookMatcher[] = [
         type: "command",
         command:
           'node scripts/knowledge-hook-dispatch.mjs --from-path "$TOOL_INPUT_FILE" 2>/dev/null || true',
+        timeout: 5,
+      },
+    ],
+  },
+  {
+    matcher: "Write|Edit",
+    hooks: [
+      {
+        type: "command",
+        command:
+          'node scripts/check-context-boundary.mjs PostToolUse "$TOOL_INPUT_FILE" 2>/dev/null || node forge/scripts/check-context-boundary.mjs PostToolUse "$TOOL_INPUT_FILE" 2>/dev/null || true',
+        continueOnBlock: true,
         timeout: 5,
       },
     ],
