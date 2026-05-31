@@ -18,7 +18,7 @@ import { join } from "node:path";
 import type { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { z } from "zod";
 import type { ResolvedRoot } from "../project-root.js";
-import { trimCommandOutput } from "../trimmers/output.js";
+import { trimCommandOutput, trimWithFallback, isRtkAvailable } from "../trimmers/output.js";
 
 // ---------------------------------------------------------------------------
 // Deny-rule helpers
@@ -178,8 +178,11 @@ export function registerForgeExec(server: McpServer, root?: ResolvedRoot): void 
         };
       }
 
-      // 4. Trim output and return
-      const trimmed = trimCommandOutput(result.stdout, result.stderr, result.exitCode);
+      // 4. Trim output — RTK-first with fallback to legacy trimmer
+      const rtkAvailable = await isRtkAvailable();
+      const trimmed = rtkAvailable
+        ? await trimWithFallback(result.stdout, result.stderr, result.exitCode, rtkAvailable)
+        : trimCommandOutput(result.stdout, result.stderr, result.exitCode);
       return {
         content: [{ type: "text" as const, text: trimmed }],
         isError: result.exitCode !== 0,
