@@ -1,4 +1,7 @@
 /**
+ * @deprecated Superseded by code-review-graph (CRG) code knowledge graph.
+ * This module is retained for backward compatibility.
+ *
  * File hash and diff computation for forge_read_cached.
  *
  * Uses `git hash-object` for tracked files, falls back to SHA-256

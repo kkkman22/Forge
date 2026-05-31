@@ -15,7 +15,7 @@ import { execFile } from "node:child_process";
 import { readFile } from "node:fs/promises";
 import { join } from "node:path";
 import { z } from "zod";
-import { trimCommandOutput } from "../trimmers/output.js";
+import { isRtkAvailable, trimCommandOutput, trimWithFallback } from "../trimmers/output.js";
 // ---------------------------------------------------------------------------
 // Deny-rule helpers
 // ---------------------------------------------------------------------------
@@ -142,8 +142,11 @@ export function registerForgeExec(server, root) {
                 isError: true,
             };
         }
-        // 4. Trim output and return
-        const trimmed = trimCommandOutput(result.stdout, result.stderr, result.exitCode);
+        // 4. Trim output — RTK-first with fallback to legacy trimmer
+        const rtkAvailable = await isRtkAvailable();
+        const trimmed = rtkAvailable
+            ? await trimWithFallback(result.stdout, result.stderr, result.exitCode, rtkAvailable)
+            : trimCommandOutput(result.stdout, result.stderr, result.exitCode);
         return {
             content: [{ type: "text", text: trimmed }],
             isError: result.exitCode !== 0,

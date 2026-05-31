@@ -1,4 +1,7 @@
 /**
+ * @deprecated Superseded by code-review-graph (CRG) code knowledge graph.
+ * This module is retained for backward compatibility.
+ *
  * Read cache index for forge_read_cached MCP tool.
  *
  * Maintains a session-level index of previously-read files (path → git hash +

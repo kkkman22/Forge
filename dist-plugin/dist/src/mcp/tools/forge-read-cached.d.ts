@@ -1,4 +1,8 @@
 /**
+ * @deprecated Superseded by code-review-graph (CRG) code knowledge graph.
+ * CRG provides AST-level queries at ~100 tokens vs ~3K for batch scripts.
+ * This module is retained for backward compatibility; prefer CRG when available.
+ *
  * forge_read_cached — read file with cache-based deduplication.
  *
  * Returns full content on first read, cached message on subsequent reads
