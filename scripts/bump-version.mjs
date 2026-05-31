@@ -9,14 +9,22 @@
 // 示例:
 //   node scripts/bump-version.mjs minor                    # 仅更新版本文件 + 重建 dist
 //   node scripts/bump-version.mjs minor --commit           # + git commit
-//   node scripts/bump-version.mjs minor --commit --tag     # + git commit + annotated tag
+//   node scripts/bump-version.mjs minor --commit --tag     # + commit + tag + push + GitHub Release
 //   node scripts/bump-version.mjs 3.2.0 --commit --tag     # 指定版本号，一键发版
+//
+// --tag 触发的完整流程:
+//   1. 更新版本文件 + rebuild dist
+//   2. git commit
+//   3. git tag (annotated)
+//   4. git push + push tag
+//   5. gh release create (需要 gh CLI 已登录)
 //
 // 更新文件:
 //   - package.json
 //   - .claude-plugin/plugin.json
 //   - dist-plugin/.claude-plugin/plugin.json (如存在)
 //   - dist/ dist-plugin/ (自动 rebuild)
+//   - CHANGELOG.md (自动将 [Unreleased] 升级为版本条目)
 // ============================================================================
 
 import { readFileSync, writeFileSync, existsSync } from "node:fs";
@@ -81,7 +89,7 @@ function main() {
     console.error("示例:");
     console.error("  node scripts/bump-version.mjs minor                    # 更新 + 重建 dist");
     console.error("  node scripts/bump-version.mjs minor --commit           # + git commit");
-    console.error("  node scripts/bump-version.mjs minor --commit --tag     # + git commit + tag");
+    console.error("  node scripts/bump-version.mjs minor --commit --tag     # + commit + tag + push + release");
     console.error("  node scripts/bump-version.mjs 3.2.0 --commit --tag     # 指定版本，一键发版");
     process.exit(1);
   }
@@ -149,6 +157,40 @@ function main() {
     }
   }
 
+  // Step 2b: Update CHANGELOG.md (if --commit)
+  if (doCommit) {
+    const changelogPath = join(ROOT, "CHANGELOG.md");
+    if (existsSync(changelogPath)) {
+      const content = readFileSync(changelogPath, "utf-8");
+      const unreleasedHeader = "## [Unreleased]";
+
+      if (content.includes(unreleasedHeader)) {
+        // Check if there's actual content under [Unreleased] (any ### section)
+        const unreleasedBlock = content.slice(
+          content.indexOf(unreleasedHeader) + unreleasedHeader.length,
+          content.indexOf("\n## [", content.indexOf(unreleasedHeader) + unreleasedHeader.length),
+        );
+        const hasContent = unreleasedBlock.trim().length > 0;
+
+        if (!hasContent) {
+          console.log("\n  ⚠️ CHANGELOG.md [Unreleased] 为空 — 请先补充变更条目");
+          console.log("  提示: 在 ## [Unreleased] 下添加 ### Added / ### Fixed / ... 章节");
+          process.exit(1);
+        }
+
+        const today = new Date().toISOString().slice(0, 10);
+        const updated = content.replace(
+          unreleasedHeader,
+          `${unreleasedHeader}\n\n## [${newVersion}] - ${today}`,
+        );
+        writeFileSync(changelogPath, updated);
+        console.log(`  ↑ CHANGELOG.md — [Unreleased] → [${newVersion}] - ${today}`);
+      } else {
+        console.log("  ⊘ CHANGELOG.md — 未找到 ## [Unreleased]，跳过");
+      }
+    }
+  }
+
   // Step 3: Git commit (if --commit)
   if (doCommit) {
     console.log("\n正在提交...");
@@ -176,12 +218,45 @@ function main() {
     }
   }
 
+  // Step 5: Push commit + tag (if --tag)
+  if (doTag) {
+    const tagName = `v${newVersion}`;
+    console.log("\n正在推送到 remote...");
+    try {
+      gitExec("push");
+      gitExec(`push origin ${tagName}`);
+      console.log(`  ✓ commit + tag ${tagName} 已推送`);
+    } catch (e) {
+      console.error(`  ⚠️ push 失败: ${e.message}`);
+      process.exit(1);
+    }
+
+    // Step 6: Create GitHub Release (if gh available)
+    console.log(`\n正在创建 GitHub Release ${tagName}...`);
+    try {
+      const repoUrl = gitExec("remote get-url origin");
+      const compareUrl = repoUrl
+        .replace(/\.git$/, "")
+        .replace(/^git@github\.com:/, "https://github.com/");
+      execSync(
+        `gh release create ${tagName} --title "${tagName}" --notes "See [CHANGELOG](${compareUrl}/compare/v${currentVersion}...${tagName}) for details."`,
+        { encoding: "utf-8", cwd: ROOT, stdio: "inherit" },
+      );
+      console.log(`  ✓ GitHub Release ${tagName} 已创建`);
+    } catch (e) {
+      console.error(`  ⚠️ GitHub Release 创建失败: ${e.message}`);
+      console.error(`  可手动创建: gh release create ${tagName} --title "${tagName}"`);
+      // 不 exit — release 失败不阻断，tag 已推送
+    }
+  }
+
   // Summary
   console.log(`\n=== 完成 ===`);
   console.log(`  版本: ${currentVersion} → ${newVersion}`);
   if (doCommit) console.log("  commit: ✅");
   if (doTag) console.log(`  tag: v${newVersion} ✅`);
-  if (!doCommit) console.log("  提示: 加 --commit 自动提交，加 --tag 创建 tag");
+  if (doTag) console.log("  GitHub Release: ✅");
+  if (!doCommit) console.log("  提示: 加 --commit 自动提交，加 --tag 创建 tag + push + release");
 }
 
 main();
