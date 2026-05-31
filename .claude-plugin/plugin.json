@@ -38,6 +38,9 @@
       "description": "Safety strictness (1=strictest)"
     }
   },
+  "env": {
+    "CLAUDE_AUTOCOMPACT_PCT_OVERRIDE": "60"
+  },
   "hooks": {
     "SessionStart": [
       {
