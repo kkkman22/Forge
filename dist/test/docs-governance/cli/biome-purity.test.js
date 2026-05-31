@@ -37,7 +37,12 @@ describe("Biome purity rules for generators/renderers", () => {
             expect(stderr).toContain("noRestrictedImports");
         }
         finally {
-            unlinkSync(tmpFile);
+            try {
+                unlinkSync(tmpFile);
+            }
+            catch {
+                /* already cleaned up */
+            }
         }
     });
     it("generator and renderer files do not import child_process", () => {
