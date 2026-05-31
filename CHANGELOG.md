@@ -11,6 +11,41 @@ Entries follow [Keep a Changelog](https://keepachangelog.com/) with Forge-specif
 
 ## [Unreleased]
 
+## [3.2.0] - 2026-05-31
+
+### Added
+
+- **Release Automation** — `bump-version.mjs` 完整自动化发版流程
+  - 支持 `patch` / `minor` / `major` 自动计算版本号
+  - `--commit --tag` 一键完成：版本更新 → dist 重建 → commit → tag → push → GitHub Release
+  - 自动调用 `gh release create` 创建带 compare link 的 Release
+- **RTK Compression Engine Integration** — `forge-exec` 集成 RTK 压缩引擎，含 fallback ladder
+- **bash-ban-raw Hook** — PreToolUse hook 拦截原始文件读取，引导使用 MCP 工具
+- **Companion Tool Detection** — `scripts/` 新增 companion tool 可用性检测脚本
+- **init Step 7 扩展** — 安装所有 token optimization companions
+- **AUTOCOMPACT 阈值** — 设为 60%，优化上下文压缩触发时机
+- **CI Pipeline Reliability Overhaul** — CI 流水线可靠性全面优化
+
+### Changed
+
+- **Plugin Config to Project-Level** — 所有配置迁移到项目级别，零全局副作用（`42fce2bb`）
+- **Release Workflow Guide** — README 新增发版工作流指南
+
+### Deprecated
+
+- `forge_read_cached` MCP 工具和 cache 模块标记为 deprecated（Context Explosion Defense Layer 1 由平台内置能力替代）
+
+### Fixed
+
+- **[SECURITY]** Canvas HTML `$'` / `` $` `` 注入防护 via `replace()`（`9c198973`）
+- Three-layer review P2 findings 修复（`7228a043`）
+- CI 合约测试对齐项目级配置重构（#39, #40）
+- CI `build-dist.sh` 排序修复 — 移至所有 sync 步骤之后
+- CI `bundle-sync` freshness check 在 CI 中跳过（dist 刚重建）
+- biome-purity 测试清理 + dist bundle 缺失脚本补全
+- `init.sh` SC1083 lint 修复
+- import 排序和 README 测试计数同步
+
 ## [3.1.0] - 2026-05-30
 
 ### Added
