@@ -24,10 +24,10 @@
 //   - .claude-plugin/plugin.json
 //   - dist-plugin/.claude-plugin/plugin.json (如存在)
 //   - dist/ dist-plugin/ (自动 rebuild)
-//   - CHANGELOG.md (自动将 [Unreleased] 升级为版本条目)
+//   - CHANGELOG.md (自动从 conventional commits 生成变更条目)
 // ============================================================================
 
-import { readFileSync, writeFileSync, existsSync } from "node:fs";
+import { readFileSync, writeFileSync, existsSync, unlinkSync } from "node:fs";
 import { execFileSync, execSync } from "node:child_process";
 import { join, dirname } from "node:path";
 import { fileURLToPath } from "node:url";
@@ -72,6 +72,98 @@ function resolveNewVersion(currentVersion, input) {
 
 function gitExec(cmd) {
   return execSync(`git ${cmd}`, { encoding: "utf-8", cwd: ROOT }).trim();
+}
+
+/**
+ * Generate changelog body from conventional commits between two refs.
+ * Groups: feat → Added, fix(security) → Fixed [SECURITY], fix → Fixed,
+ * refactor/perf → Changed, docs → Changed, style/chore/ci → omitted.
+ */
+function generateChangelogFromCommits(fromRef, toRef = "HEAD") {
+  const log = execSync(
+    `git log ${fromRef}..${toRef} --oneline --no-merges --format="%s"`,
+    { encoding: "utf-8", cwd: ROOT },
+  ).trim();
+
+  if (!log) return null;
+
+  const groups = {
+    added: [],
+    fixed: [],
+    security: [],
+    changed: [],
+    deprecated: [],
+  };
+
+  // Conventional commit: type(scope)!: description
+  const CC_RE = /^(\w+)(?:\(([^)]*)\))?(!)?:\s*(.*)/;
+
+  for (const line of log.split("\n")) {
+    const match = line.match(CC_RE);
+    if (!match) continue;
+    const [, type, scope, breaking, desc] = match;
+    const entry = scope ? `**${scope}**: ${desc}` : desc;
+
+    if (type === "feat") {
+      groups.added.push(entry);
+    } else if (type === "fix" && scope === "security") {
+      groups.security.push(entry);
+    } else if (type === "fix") {
+      groups.fixed.push(entry);
+    } else if (type === "refactor" || type === "perf") {
+      groups.changed.push(entry);
+    } else if (type === "docs" && scope !== "spec") {
+      // Only include non-spec docs changes
+      groups.changed.push(entry);
+    } else if (type === "deprecate" || type === "chore" && desc.toLowerCase().includes("deprecat")) {
+      groups.deprecated.push(entry);
+    }
+    // style, ci, chore (non-deprecated) → skipped
+  }
+
+  const sections = [];
+  if (groups.security.length) {
+    sections.push("### Fixed\n\n" + groups.security.map((e) => `- **[SECURITY]** ${e}`).join("\n"));
+  }
+  if (groups.added.length) {
+    sections.push("### Added\n\n" + groups.added.map((e) => `- ${e}`).join("\n"));
+  }
+  if (groups.changed.length) {
+    sections.push("### Changed\n\n" + groups.changed.map((e) => `- ${e}`).join("\n"));
+  }
+  if (groups.deprecated.length) {
+    sections.push("### Deprecated\n\n" + groups.deprecated.map((e) => `- ${e}`).join("\n"));
+  }
+  if (groups.fixed.length) {
+    sections.push("### Fixed\n\n" + groups.fixed.map((e) => `- ${e}`).join("\n"));
+  }
+
+  return sections.length > 0 ? sections.join("\n\n") : null;
+}
+
+/**
+ * Extract the changelog body for a given version from CHANGELOG.md.
+ * Returns the content between ## [version] and the next ## [ header.
+ */
+function extractChangelogSection(version) {
+  const changelogPath = join(ROOT, "CHANGELOG.md");
+  if (!existsSync(changelogPath)) return null;
+
+  const content = readFileSync(changelogPath, "utf-8");
+  const header = `## [${version}]`;
+  const start = content.indexOf(header);
+  if (start === -1) return null;
+
+  // Find end of first line (the header line)
+  const bodyStart = content.indexOf("\n", start) + 1;
+
+  // Find next ## [ header
+  const nextHeader = content.indexOf("\n## [", bodyStart);
+  const body = nextHeader === -1
+    ? content.slice(bodyStart)
+    : content.slice(bodyStart, nextHeader);
+
+  return body.trim() || null;
 }
 
 function main() {
@@ -157,36 +249,46 @@ function main() {
     }
   }
 
-  // Step 2b: Update CHANGELOG.md (if --commit)
+  // Step 2b: Update CHANGELOG.md — auto-generate from commits (if --commit)
   if (doCommit) {
     const changelogPath = join(ROOT, "CHANGELOG.md");
     if (existsSync(changelogPath)) {
       const content = readFileSync(changelogPath, "utf-8");
       const unreleasedHeader = "## [Unreleased]";
 
-      if (content.includes(unreleasedHeader)) {
-        // Check if there's actual content under [Unreleased] (any ### section)
-        const unreleasedBlock = content.slice(
-          content.indexOf(unreleasedHeader) + unreleasedHeader.length,
-          content.indexOf("\n## [", content.indexOf(unreleasedHeader) + unreleasedHeader.length),
-        );
-        const hasContent = unreleasedBlock.trim().length > 0;
+      if (!content.includes(unreleasedHeader)) {
+        console.log("  ⊘ CHANGELOG.md — 未找到 ## [Unreleased]，跳过");
+      } else {
+        // Extract any manual entries under [Unreleased]
+        const afterHeader = content.indexOf(unreleasedHeader) + unreleasedHeader.length;
+        const nextSection = content.indexOf("\n## [", afterHeader);
+        const manualEntries = content.slice(afterHeader, nextSection).trim();
 
-        if (!hasContent) {
-          console.log("\n  ⚠️ CHANGELOG.md [Unreleased] 为空 — 请先补充变更条目");
-          console.log("  提示: 在 ## [Unreleased] 下添加 ### Added / ### Fixed / ... 章节");
-          process.exit(1);
+        // Auto-generate from conventional commits since last tag
+        const lastTag = `v${currentVersion}`;
+        const autoEntries = generateChangelogFromCommits(lastTag);
+
+        // Merge: auto-generated as base, manual entries appended if present
+        let changelogBody;
+        if (autoEntries && manualEntries) {
+          changelogBody = autoEntries + "\n\n" + manualEntries;
+        } else if (autoEntries) {
+          changelogBody = autoEntries;
+        } else if (manualEntries) {
+          changelogBody = manualEntries;
+        } else {
+          console.log("\n  ⚠️ CHANGELOG.md [Unreleased] 为空且无新提交 — 跳过 changelog 更新");
         }
 
-        const today = new Date().toISOString().slice(0, 10);
-        const updated = content.replace(
-          unreleasedHeader,
-          `${unreleasedHeader}\n\n## [${newVersion}] - ${today}`,
-        );
-        writeFileSync(changelogPath, updated);
-        console.log(`  ↑ CHANGELOG.md — [Unreleased] → [${newVersion}] - ${today}`);
-      } else {
-        console.log("  ⊘ CHANGELOG.md — 未找到 ## [Unreleased]，跳过");
+        if (changelogBody) {
+          const today = new Date().toISOString().slice(0, 10);
+          const updated = content.replace(
+            unreleasedHeader,
+            `${unreleasedHeader}\n\n## [${newVersion}] - ${today}\n\n${changelogBody}`,
+          );
+          writeFileSync(changelogPath, updated);
+          console.log(`  ↑ CHANGELOG.md — 自动生成 [${newVersion}] 条目 (${changelogBody.split('\n').length} 行)`);
+        }
       }
     }
   }
@@ -238,10 +340,26 @@ function main() {
       const compareUrl = repoUrl
         .replace(/\.git$/, "")
         .replace(/^git@github\.com:/, "https://github.com/");
+
+      // Extract changelog section for this version
+      const changelogBody = extractChangelogSection(newVersion);
+      const footer = `\n\n---\n\n**Full Changelog**: ${compareUrl}/compare/v${currentVersion}...${tagName}`;
+      const releaseNotes = changangelogBody
+        ? changelogBody + footer
+        : `See [CHANGELOG](${compareUrl}/compare/v${currentVersion}...${tagName}) for details.`;
+
+      // Write notes to temp file to avoid shell escaping issues
+      const notesFile = join(ROOT, ".tmp-release-notes.md");
+      writeFileSync(notesFile, releaseNotes);
+
       execSync(
-        `gh release create ${tagName} --title "${tagName}" --notes "See [CHANGELOG](${compareUrl}/compare/v${currentVersion}...${tagName}) for details."`,
+        `gh release create ${tagName} --title "${tagName}" --notes-file "${notesFile}"`,
         { encoding: "utf-8", cwd: ROOT, stdio: "inherit" },
       );
+
+      // Cleanup temp file
+      try { unlinkSync(notesFile); } catch {}
+
       console.log(`  ✓ GitHub Release ${tagName} 已创建`);
     } catch (e) {
       console.error(`  ⚠️ GitHub Release 创建失败: ${e.message}`);
