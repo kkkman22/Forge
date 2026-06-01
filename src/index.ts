@@ -194,21 +194,25 @@ export {
   type IntegrityInput,
   lintKnowledgeIntegrity,
 } from "./knowledge-integrity.js";
-// Core types (from loop-types.js)
+// Core types (migrated from loop-types.js to types.js)
+export type {
+  BranchTopicGateResult,
+  CommitTopicCheckResult,
+  ParallelExecutionResult,
+  PendingDeliveryRecord,
+  SubagentInvocation,
+  SubagentResult,
+  TokenUsage,
+  WorktreeDecision,
+} from "./types.js";
+// Loop-specific types (remain in loop-types.js until Wave 3 retirement)
 export type {
   AgentInterface,
   AgentOutput,
   AgentResult,
   AgentRunOptions,
-  BranchTopicGateResult,
-  CommitTopicCheckResult,
   LoopConfig,
-  ParallelExecutionResult,
-  PendingDeliveryRecord,
   RunLimits,
-  SubagentInvocation,
-  SubagentResult,
-  TokenUsage,
   UnshippedBranchWarning,
 } from "./loop-types.js";
 // Plan engine

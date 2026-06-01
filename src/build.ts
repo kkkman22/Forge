@@ -202,7 +202,7 @@ export function buildThreeStrikeFailureArtifacts(
 // Subagent orchestration (Agent Team Migration — R3, R7)
 // ---------------------------------------------------------------------------
 
-import type { SubagentInvocation, SubagentResult } from "./loop-types.js";
+import type { SubagentInvocation, SubagentResult } from "./types.js";
 
 /**
  * Build one SubagentInvocation per research topic.

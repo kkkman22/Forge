@@ -13,7 +13,7 @@ import {
   detectUnshippedBranches,
   extractBranchTopic,
 } from "./branch-lifecycle.js";
-import type { PendingDeliveryRecord } from "./loop-types.js";
+import type { PendingDeliveryRecord } from "./types.js";
 
 // ---------------------------------------------------------------------------
 // Types
