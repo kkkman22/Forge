@@ -47,7 +47,7 @@ fi
 # ---------- 5. Extract README claims ----------
 readme_modules=$(grep -oE '[0-9]+ 个 TypeScript 模块' README.md | head -1 | grep -oE '^[0-9]+' || true)
 readme_test_files=$(grep -oE '[0-9]+ 个测试文件' README.md | head -1 | grep -oE '^[0-9]+' || true)
-readme_pbt_files=$(grep -oE '[0-9]+ 个为 fast-check' README.md | head -1 | grep -oE '^[0-9]+' || true)
+readme_pbt_files=$(grep -oE '[0-9]+ (个为 fast-check|property-based)' README.md | head -1 | grep -oE '^[0-9]+' || true)
 readme_tests=$(grep -oE '[0-9]+ 个测试（' README.md | head -1 | grep -oE '^[0-9]+' || true)
 
 # Validate that all README claims were extracted
