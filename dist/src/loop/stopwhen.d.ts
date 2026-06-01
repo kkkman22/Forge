@@ -1,10 +1,8 @@
 /**
- * @file stopWhen conditional termination for the Forge Loop engine.
  *
  * Evaluates structured stop conditions against current loop state.
  * Supports: max-iterations, phase-reached, commit-count.
  *
- * @module loop-stopwhen
  */
 /** Minimal loop state slice for stopWhen evaluation. */
 export interface StopWhenState {

@@ -1,12 +1,10 @@
 /**
- * @file Three-strike failure detection and Git rollback decisions.
  *
  * Provides pure decision functions for failure tracking, halt detection,
  * and rollback target resolution. Actual Git operations (reset, commit)
  * are performed at the skill layer (instructions.md §6, §9), not here.
  * This separation keeps the module testable without filesystem/git side effects.
  *
- * @module loop-three-strike
  */
 // ---------------------------------------------------------------------------
 // Constants

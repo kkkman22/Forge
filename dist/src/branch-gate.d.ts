@@ -13,7 +13,7 @@ import type { BranchTopicGateResult, PendingDeliveryRecord } from "./types.js";
 export declare function extractBranchTopic(branchName: string): string | null;
 /** Check whether the branch topic matches the task topic. */
 export declare function checkBranchTopicGate(branchName: string, taskTopic: string): BranchTopicGateResult;
-interface UnshippedBranchWarning {
+export interface UnshippedBranchWarning {
     branchName: string;
     topic: string;
     timestamp: number;
@@ -56,4 +56,3 @@ export declare const DEFAULT_SEVERITY: Record<BranchGateSkill, BranchGateSeverit
 export declare function runBranchGate(input: BranchGateInput): BranchGateResult;
 export declare function renderBranchGatePrompt(result: BranchGateResult): string;
 export declare function renderBranchGateAdvisory(result: BranchGateResult): string;
-export {};
