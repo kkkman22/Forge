@@ -42,7 +42,7 @@ export function checkBranchTopicGate(branchName: string, taskTopic: string): Bra
   return { allowed: true, reasons: [] };
 }
 
-interface UnshippedBranchWarning {
+export interface UnshippedBranchWarning {
   branchName: string;
   topic: string;
   timestamp: number;

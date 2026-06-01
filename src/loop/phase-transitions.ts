@@ -1,11 +1,9 @@
 /**
- * @file Phase transition table for the Forge Loop engine.
  *
  * Defines the deterministic next-phase logic for all tier × phase
  * combinations.  Review results (passed / failed-p0 / failed-p1) drive
  * the rollback-to-build path for P0/P1 findings.
  *
- * @module loop-phase-transitions
  */
 
 // ---------------------------------------------------------------------------

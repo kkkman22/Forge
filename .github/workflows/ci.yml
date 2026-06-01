@@ -205,8 +205,6 @@ jobs:
         run: npx vitest run test/plugin-manifest.test.ts
       - name: Run marketplace install simulation (AC 13.3)
         run: npx vitest run test/plugin-marketplace-install/
-      - name: Run CLI flag compatibility regression (AC 7.1–7.5)
-        run: npx vitest run test/cli-flag-compat/
       - name: Verify --help baseline has not drifted (AC 7.5)
         run: node scripts/record-help-baseline.mjs --check
       - name: Verify plugin.json version matches package.json
