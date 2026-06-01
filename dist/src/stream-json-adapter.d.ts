@@ -1,6 +1,6 @@
 import type { Readable, Writable } from "node:stream";
-import type { TokenUsage } from "./loop-types.js";
 import type { RateLimitDegrader } from "./rate-limit-degrader.js";
+import type { TokenUsage } from "./types.js";
 export declare class BackpressureUnrelievedError extends Error {
     readonly elapsedMs: number;
     constructor(elapsedMs: number);

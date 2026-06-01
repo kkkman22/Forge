@@ -18,8 +18,7 @@
 // ---------------------------------------------------------------------------
 import { CliError } from "./cli-error.js";
 import { ForgeError } from "./forge-error.js";
-import { SdkAgentAdapter } from "./sdk-agent-adapter.js";
-import { SdkDriver } from "./sdk-driver.js";
+// SDK modules removed in Wave 3 (loop-native-fusion)
 import { installSkill, loadSkillsFromDir, mergeSkillLists, } from "./skill-loader.js";
 import { checkVersionCompatibility, validateManifest, } from "./skill-validator.js";
 import { hasTaskName, parseStatusEntries, removeTaskEntry, serializeStatusEntries, upsertTaskEntry, } from "./state.js";
@@ -63,5 +62,5 @@ export { buildSubagentInvocations, runSubagentsInParallel, runSubagentsWithConcu
 // SDK (consolidated: sdk-agent-adapter + sdk-driver)
 // SKILL plugin mechanism (consolidated: skill-loader + skill-validator)
 // Status (consolidated: state + status-manager + status-resolver)
-export { archiveTaskStatus, CliError, checkVersionCompatibility, ForgeError, getMostRecentActiveTask, hasTaskName, installSkill, isMultiTaskMode, listActiveTasks, loadSkillsFromDir, mergeSkillLists, migrateToMultiTask, parseStatusEntries, readTaskStatus, reconstructStateFromGit, removeTaskEntry, resolveStatusPath, SdkAgentAdapter, SdkDriver, serializeStatusEntries, slugify, upsertTaskEntry, validateManifest, writeTaskStatus, };
+export { archiveTaskStatus, CliError, checkVersionCompatibility, ForgeError, getMostRecentActiveTask, hasTaskName, installSkill, isMultiTaskMode, listActiveTasks, loadSkillsFromDir, mergeSkillLists, migrateToMultiTask, parseStatusEntries, readTaskStatus, reconstructStateFromGit, removeTaskEntry, resolveStatusPath, serializeStatusEntries, slugify, upsertTaskEntry, validateManifest, writeTaskStatus, };
 //# sourceMappingURL=index.js.map
