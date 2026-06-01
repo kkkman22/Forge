@@ -34,7 +34,9 @@
     "@prop",
     "@property",
     "@visibleForTesting",
-    "@context"
+    "@context",
+    "@file",
+    "@module"
   ],
   "ignoredHighlightLanguages": ["gitignore", "markdown"],
   "externalSymbolLinkMappings": {
