@@ -1,4 +1,7 @@
 node_modules/
+dist/src/
+dist/scripts/
+dist/locales/
 dist/claude-code/bundles/
 .DS_Store
 *.tsbuildinfo
@@ -28,4 +31,4 @@ reports/mutation/
 # Generated API documentation
 docs/api/
 
-apps/forge-loop-desktop/src-tauri/resources/node/bin/node
+apps/forge-loop-desktop/src-tauri/resources/node/bin/nodedist/

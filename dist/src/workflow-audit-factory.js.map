@@ -1,1 +1,0 @@
-{"version":3,"file":"workflow-audit-factory.js","sourceRoot":"","sources":["../../src/workflow-audit-factory.ts"],"names":[],"mappings":"AAAA,OAAO,EAAE,gBAAgB,EAAE,MAAM,mBAAmB,CAAC;AACrD,OAAO,EAAE,mBAAmB,EAAE,MAAM,4BAA4B,CAAC;AAEjE;;;;;;;GAOG;AACH,MAAM,UAAU,iBAAiB,CAAC,SAAiB,EAAE,aAAsB;IACzE,OAAO,IAAI,mBAAmB,CAAC,SAAS,EAAE,gBAAgB,EAAE,aAAa,CAAC,CAAC;AAC7E,CAAC"}
