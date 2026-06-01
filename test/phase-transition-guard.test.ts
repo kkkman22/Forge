@@ -8,7 +8,7 @@
  * AC: AC-1 through AC-8
  */
 import { execSync } from "node:child_process";
-import { existsSync, mkdirSync, rmSync, writeFileSync, readFileSync } from "node:fs";
+import { existsSync, mkdirSync, readFileSync, rmSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
 
