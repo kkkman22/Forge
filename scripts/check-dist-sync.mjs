@@ -5,8 +5,9 @@
  * Detects three categories of drift between src/ and dist/:
  *   A) src file with no corresponding dist (missing in dist)
  *   B) dist file with no corresponding src (orphan in dist)
- *   C) compilation mismatch (tsc output differs from tracked dist)
+ *   C) compilation mismatch (tsc output differs from on-disk dist)
  *
+ * Scans on-disk files (not git index) since compiled output is no longer tracked.
  * Exit 0 if clean, exit 1 if drift found.
  * Skippable via FORGE_SKIP_DIST_SYNC=1 or [dist-sync-skip] in commit message.
  */
@@ -40,6 +41,34 @@ function getTrackedFiles(patterns) {
     .trim()
     .split("\n")
     .filter(Boolean);
+}
+
+/**
+ * Walk a directory and collect file paths matching extensions.
+ */
+function walkDir(dir, extensions) {
+  const files = [];
+  function walk(d) {
+    for (const entry of fs.readdirSync(d, { withFileTypes: true })) {
+      const full = path.join(d, entry.name);
+      if (entry.isDirectory()) {
+        walk(full);
+      } else if (extensions.some((ext) => entry.name.endsWith(ext))) {
+        files.push(path.relative(process.cwd(), full));
+      }
+    }
+  }
+  if (fs.existsSync(dir)) walk(dir);
+  return files;
+}
+
+/**
+ * Collect on-disk dist files (replaces getTrackedFiles for dist/).
+ */
+function getDiskDistFiles() {
+  return walkDir(path.resolve("dist/src"), [".js", ".d.ts"])
+    .filter((f) => !f.endsWith(".map"))
+    .map((f) => f.replace(/\\/g, "/"));
 }
 
 function srcToExpectedDist(srcPath) {
@@ -79,9 +108,9 @@ function checkSkip() {
 }
 
 function collectFileList() {
-  const srcFiles = getTrackedFiles(["src/**/*.ts"])
-    .filter((f) => !f.endsWith(".d.ts"));
-  const distFiles = getTrackedFiles(["dist/src/**/*.js", "dist/src/**/*.d.ts"]);
+  const srcFiles = getTrackedFiles(["src/"])
+    .filter((f) => f.endsWith(".ts") && !f.endsWith(".d.ts"));
+  const distFiles = getDiskDistFiles();
   return { srcFiles, distFiles };
 }
 
@@ -136,12 +165,12 @@ function detectCompilationMismatch(_srcFiles, distSet) {
 
     // Collect fresh dist files from temp dir
     const freshFiles = new Map();
-    function walkDir(dir, base) {
+    function walkTmp(dir, base) {
       for (const entry of fs.readdirSync(dir, { withFileTypes: true })) {
         const fullPath = path.join(dir, entry.name);
         const relPath = path.join(base, entry.name);
         if (entry.isDirectory()) {
-          walkDir(fullPath, relPath);
+          walkTmp(fullPath, relPath);
         } else if (relPath.endsWith(".js") || relPath.endsWith(".d.ts")) {
           freshFiles.set(relPath, {
             sha256: sha256File(fullPath),
@@ -150,34 +179,27 @@ function detectCompilationMismatch(_srcFiles, distSet) {
         }
       }
     }
-    walkDir(tmpDir, "");
+    walkTmp(tmpDir, "");
 
-    // Compare with tracked dist
+    // Compare with on-disk dist
     for (const [freshPath, fresh] of freshFiles) {
-      // Only check files under dist/src/ subtree
-      if (!freshPath.startsWith("dist/src/") && !freshPath.startsWith("src/")) continue;
-
-      // Normalize: tsc with rootDir "." outputs to outDir/dist/src/ or outDir/src/
-      // We need to map freshPath to the corresponding tracked dist path
-      let trackedDistPath = freshPath;
-      // With rootDir "." and outDir tmpDir, src/foo.ts → tmpDir/src/foo.js
-      // But tracked dist is dist/src/foo.js
+      // Normalize: tsc outputs src/foo.js, on-disk is dist/src/foo.js
+      let diskDistPath = freshPath;
       if (freshPath.startsWith("src/")) {
-        trackedDistPath = `dist/${freshPath}`;
+        diskDistPath = `dist/${freshPath}`;
       }
 
-      if (!distSet.has(trackedDistPath)) continue;
+      if (!distSet.has(diskDistPath)) continue;
 
-      const trackedContent = execSync(`git show :${trackedDistPath}`, {
-        encoding: "utf-8",
-        maxBuffer: 50 * 1024 * 1024,
-      });
-      const trackedSha = createHash("sha256").update(trackedContent).digest("hex");
+      const onDiskPath = path.resolve(diskDistPath);
+      if (!fs.existsSync(onDiskPath)) continue;
 
-      if (fresh.sha256 !== trackedSha) {
+      const diskSha = sha256File(onDiskPath);
+
+      if (fresh.sha256 !== diskSha) {
         mismatch.push({
-          distPath: trackedDistPath,
-          srcPath: distToExpectedSrc(trackedDistPath) ?? "",
+          distPath: diskDistPath,
+          srcPath: distToExpectedSrc(diskDistPath) ?? "",
           diff: "content-differs",
         });
       }
@@ -242,7 +264,7 @@ function main() {
       log("");
     }
 
-    log(`Fix: npm run dist:resync && git add dist/ && git commit -m "chore(dist): resync"`);
+    log(`Fix: npm run dist:resync`);
     process.exit(1);
   }
 
