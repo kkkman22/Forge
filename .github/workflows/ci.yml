@@ -28,6 +28,8 @@ jobs:
       - run: npm run lint
       - name: Verify docs generation
         run: npm run docs
+      - name: Compile TypeScript
+        run: npx tsc
       - name: Build dist bundle
         run: bash scripts/build-dist.sh
       - run: npm run test:coverage
@@ -224,6 +226,8 @@ jobs:
             exit 1
           fi
           echo "Commands check passed: $count commands"
+      - name: Compile TypeScript
+        run: npx tsc
       - name: Build plugin dist package
         run: bash scripts/build-dist.sh
       - name: Verify command count in docs
