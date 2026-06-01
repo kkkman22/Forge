@@ -1,11 +1,11 @@
 /**
  * @file stopWhen conditional termination tests.
  *
- * Validates evaluation of stop conditions against loop state:
+ * Validates evaluation of structured stop conditions against loop state:
  * - max-iterations boundary
+ * - phase-reached targets
  * - commit-count targets
- * - Free-form natural language matching patterns
- * - Compound conditions (AND/OR)
+ * - parseStopCondition parsing
  *
  * RED: Will fail until src/loop/stopwhen.ts is created.
  */
