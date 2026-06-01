@@ -101,6 +101,16 @@
             "timeout": 3
           }
         ]
+      },
+      {
+        "matcher": "Write|Edit",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "bash scripts/phase-transition-guard.sh 2>/dev/null || true",
+            "timeout": 3
+          }
+        ]
       }
     ],
     "Stop": [
