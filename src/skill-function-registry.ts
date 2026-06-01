@@ -71,7 +71,7 @@ export const SKILL_FUNCTION_REGISTRY: readonly SkillFunctionEntry[] = [
     parameterNames: ["topic", "tier", "situation", "rootCause", "now", "sequenceInDay"],
   },
   {
-    module: "branch-lifecycle.ts",
+    module: "branch-gate.ts",
     functionName: "checkBranchTopicGate",
     skills: ["forge/lib/build/instructions.md"],
     parameterNames: ["branchName", "taskTopic"],
@@ -91,22 +91,10 @@ export const SKILL_FUNCTION_REGISTRY: readonly SkillFunctionEntry[] = [
     parameterNames: ["input"],
   },
   {
-    module: "branch-lifecycle.ts",
+    module: "branch-gate.ts",
     functionName: "detectUnshippedBranches",
     skills: ["forge/lib/build/instructions.md"],
     parameterNames: ["pendingDeliveries", "currentTopic"],
-  },
-  {
-    module: "branch-lifecycle.ts",
-    functionName: "detectStaleBranches",
-    skills: ["forge/lib/build/instructions.md"],
-    parameterNames: ["pendingDeliveries", "currentTopic"],
-  },
-  {
-    module: "branch-lifecycle.ts",
-    functionName: "checkCommitTopicMatch",
-    skills: ["forge/lib/build/instructions.md"],
-    parameterNames: ["branchName", "commitTopic"],
   },
   {
     module: "context-budget.ts",
@@ -231,12 +219,6 @@ export const SKILL_FUNCTION_REGISTRY: readonly SkillFunctionEntry[] = [
     functionName: "buildShipGateBlockArtifacts",
     skills: ["forge/lib/ship/instructions.md"],
     parameterNames: ["topic", "tier", "reason", "situation", "now", "sequenceInDay"],
-  },
-  {
-    module: "branch-lifecycle.ts",
-    functionName: "recordPendingDelivery",
-    skills: ["forge/lib/ship/instructions.md"],
-    parameterNames: ["branchName", "topic", "timestamp"],
   },
 
   // --- forge-learn/SKILL.md ---
@@ -373,7 +355,7 @@ export const SKILL_FUNCTION_REGISTRY: readonly SkillFunctionEntry[] = [
   {
     module: "status-manager.ts",
     functionName: "writeTaskStatus",
-    skills: ["forge/lib/router/instructions.md", "forge/lib/loop/instructions.md"],
+    skills: ["forge/lib/router/instructions.md"],
     parameterNames: ["io", "forgeRoot", "taskName", "content"],
   },
 
@@ -383,7 +365,6 @@ export const SKILL_FUNCTION_REGISTRY: readonly SkillFunctionEntry[] = [
     functionName: "listActiveTasks",
     skills: [
       "forge/lib/abort/instructions.md",
-      "forge/lib/loop/instructions.md",
       "forge/lib/resume/instructions.md",
       "forge/lib/status/instructions.md",
     ],

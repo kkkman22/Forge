@@ -7,14 +7,12 @@
  *
  * RED: Will fail if frontmatter doesn't match expected contract.
  */
-import { describe, it, expect } from "vitest";
+
 import { readFileSync } from "node:fs";
 import { resolve } from "node:path";
+import { describe, expect, it } from "vitest";
 
-const INSTRUCTIONS_PATH = resolve(
-  __dirname,
-  "../../skills/forge/lib/loop/instructions.md",
-);
+const INSTRUCTIONS_PATH = resolve(__dirname, "../../skills/forge/lib/loop/instructions.md");
 
 function readInstructions(): string {
   return readFileSync(INSTRUCTIONS_PATH, "utf-8");
@@ -110,12 +108,12 @@ describe("Loop Skill tier sequences", () => {
   const content = readInstructions();
 
   it("documents light tier sequence", () => {
-    expect(content).toMatch(/light.*build.*review|build.*review.*light/si);
+    expect(content).toMatch(/light.*build.*review|build.*review.*light/is);
   });
 
   it("documents standard tier sequence", () => {
     expect(content).toMatch(
-      /standard.*plan.*build.*review.*test.*ship|plan.*build.*review.*test.*ship.*standard/si,
+      /standard.*plan.*build.*review.*test.*ship|plan.*build.*review.*test.*ship.*standard/is,
     );
   });
 

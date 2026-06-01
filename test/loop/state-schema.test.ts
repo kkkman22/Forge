@@ -5,14 +5,12 @@
  *
  * RED: This test will fail until .forge/templates/loop-state.json is created.
  */
-import { describe, it, expect } from "vitest";
+
 import { readFileSync } from "node:fs";
 import { resolve } from "node:path";
+import { describe, expect, it } from "vitest";
 
-const TEMPLATE_PATH = resolve(
-  __dirname,
-  "../../.forge/templates/loop-state.json",
-);
+const TEMPLATE_PATH = resolve(__dirname, "../../.forge/templates/loop-state.json");
 
 /** All required top-level fields in loop state. */
 const REQUIRED_FIELDS = [
@@ -49,12 +47,7 @@ const VALID_PHASES = [
 const VALID_TIERS = ["light", "standard", "full"] as const;
 
 /** Valid review result values. */
-const VALID_REVIEW_RESULTS = [
-  "passed",
-  "failed-p0",
-  "failed-p1",
-  "not-run",
-] as const;
+const VALID_REVIEW_RESULTS = ["passed", "failed-p0", "failed-p1", "not-run"] as const;
 
 type Phase = (typeof VALID_PHASES)[number];
 type Tier = (typeof VALID_TIERS)[number];

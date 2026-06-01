@@ -1,198 +1,172 @@
 ---
-description: "Orchestrate an approved plan end-to-end without interactive prompts across all queued tasks. Use when user runs `/forge loop`, wants unattended execution of an approved plan, or needs background completion of queued tasks."
+description: "Orchestrate an approved plan end-to-end without interactive prompts using native Claude Code scheduling. Use when user runs /forge loop, wants unattended execution, or needs background completion of queued tasks."
 
 dispatch_mode: fork
 allowed_tools:
   - Read
-  - Agent
   - Bash
+  - ScheduleWakeup
+  - CronCreate
+  - CronDelete
+  - CronList
 ---
 
-# /forge loop — 自主执行引擎
+## Current Context
 
-> **触发方式**：用户输入 `/forge loop "目标描述"`
-> **职责**：以自主模式驱动 Skills 完整命令序列，自动跳过所有人工确认点，按迭代推进直到目标完成或触发熔断
-> **输出路径**：项目代码变更 + `.forge/status.md`（执行状态）+ `.forge/progress/<topic>.md`（进度）
+Branch: !`git branch --show-current`
+Status: !`head -8 .forge/status.md 2>/dev/null || echo "no status"`
+Last commit: !`git log --oneline -1 2>/dev/null || echo "no commits"`
 
----
+# /forge loop — Native Fusion Loop Engine
 
-## 1. Overview
-
-`/forge loop` 是 Forge 工作流的自主执行模式——把一个目标描述交给它，它会自动驱动整个 Skills 命令序列（router → plan → build → review → test → ship），无需人工介入。每轮迭代对应一个 SKILL 阶段的执行，通过状态文件跟踪进度，通过质量门禁保障质量，通过熔断器防止无限循环。
-
-**核心原则**：Loop 驱动 Skills，Skills 保障质量。自主模式不降低质量标准——所有门禁、TDD 铁律、评审流程照常执行，只是跳过人工确认点，用预设策略自动决策。
-
-**与 `forge-loop` CLI 的关系**：`/forge loop` 是分发包环境下的入口，以 SKILL 内置的迭代控制逻辑驱动执行。`forge-loop` CLI 是 SDK 环境下的入口，通过 Agent SDK 启动独立会话驱动执行。两者共享相同的状态文件格式、质量门禁和命令序列，只是驱动方式不同。
-
-### 1.1 Build 内循环机制
-
-Build 阶段的 TDD 循环由 **`/goal` 命令**驱动（当 `build.use_goal: true`，默认启用）：
-- `/goal` 在 build instructions 内部启动，自动迭代 RED→GREEN→REFACTOR 循环
-- 目标条件："所有 plan task 完成 AND `ci_check_command` 通过"
-- Live 进度追踪：elapsed time、turns、tokens consumed（/goal 内置）
-- Three-Strike 检测：同一 task 连续失败 3 次 → 停止 → 进入 `/forge debug`
-
-`persistent-loop.sh`（Stop hook）**仅负责 phase transition**（plan→build→review→test→ship 的自动阶段切换），不再负责 build 内的 TDD 循环。当 `build.use_goal: false` 时，回退到旧的 persistent-loop TDD 循环机制。
+> **Trigger**: `/forge loop "goal"` | `/forge loop continue <id>` | `/forge loop status` | `/forge loop abort`
+> **Purpose**: Drive Skills end-to-end autonomously, using native Claude Code scheduling (ScheduleWakeup / CronCreate) instead of external CLI scripts.
+> **State**: `.forge/loop-state.json` (created from `.forge/templates/loop-state.json`)
 
 ---
 
-**Not For**：
-- 需求不明确需要人工讨论的任务
-- 涉及不可逆操作需要人工确认的场景
+## 1. Entry Routing
 
-## 2. Trigger
+| Command | Action |
+|---------|--------|
+| `/forge loop "goal" [options]` | Initialize new loop run |
+| `/forge loop continue <id>` | Resume existing run after wake-up |
+| `/forge loop status` | Display current loop state |
+| `/forge loop abort` | Halt active run, output summary |
 
-### Basic Usage
+## 2. Initialization (`/forge loop "goal"`)
+
+1. **Pre-flight**: git repo check · clean tree (skip with `--worktree`/`--resume`) · `.forge/` exists · no active `loop_run_id` in status.md (warn + cleanup if found)
+2. **Create state**: Copy `.forge/templates/loop-state.json` → `.forge/loop-state.json`. Fill: `id` (UUID), `goal` (user input), `createdAt` (ISO now), `tier` (from `--tier` or auto-detect)
+3. **Branch**: Create `forge/loop-<slug>` from current branch (or reuse with `--resume`)
+4. **Update status.md**: Set `mode: "autonomous"`, `loop_run_id: <id>`, `phase: "build"`
+5. **Enter iteration loop** (§4)
+
+## 3. Tier Command Sequences
+
+| Tier | Sequence |
+|------|----------|
+| **light** | `build → review → completed` |
+| **standard** | `plan → build → review → test → ship → completed` |
+| **full** | `plan → build → review → test → ship → learn → completed` |
+
+Phase transitions are deterministic — see `src/loop/phase-transitions.ts` (`getNextPhase`).
+
+## 4. Iteration Decision Loop
+
+Each iteration follows this 8-step cycle:
 
 ```
-/forge loop "为用户 API 添加分页功能"
+1. Read .forge/loop-state.json → current phase
+2. Evaluate stopWhen (§7) → if true, halt
+3. Call Skill(skill="forge", args="<phase>") via fresh-context subsession
+4. Parse result: success / failure / blocked
+5. On success: recordSuccess from three-strike module → commit
+6. On failure: recordFailure → check shouldHalt (§6)
+7. Compute next phase via phase-transitions module
+8. Schedule next iteration (§5) → update state → loop
 ```
 
-### CLI Options
+**Fresh-context discipline**: Each Skill call starts a new context. State passes through files only (status.md, loop-state.json, progress/*.md). Never rely on conversation history.
 
-| Option | Description | Values |
-|--------|-------------|--------|
-| `--tier` | Preset routing tier | `light` / `standard` / `full` |
-| `--type` | Task type | `frontend` / `backend` / `fullstack` / `data` / `infra` / `docs` |
-| `--phase` | Project phase | `greenfield` / `iteration` / `refactor` / `bugfix` |
-| `--nature` | Work nature | `feature` / `refactor` / `bugfix` |
-| `--max-iterations` | Max iteration count | positive integer |
-| `--max-tokens` | Token limit | positive integer |
-| `--max-budget-usd` | USD budget | float |
-| `--stop-when` | Stop condition (natural language) | string |
-| `--worktree` | Isolated Git worktree | flag |
-| `--resume` | Resume on existing branch | branch name |
-| `--prevent-sleep` | System sleep control | `on` / `off` |
-| `--pua` | PUA quality engine | flag |
-| `--pua-task-type` | PUA task type | `debug`/`build`/`research`/`architecture`/`performance`/`review`/`deploy`/`general` |
+## 5. Scheduling
 
-`--tier` 仅接受 light/standard/full。未指定时第一轮执行路由分析。
+Use `src/loop/scheduling-strategy.ts` to decide how to schedule the next iteration:
 
----
+1. `computeDelay(tier, consecutiveFailures)` → delay in seconds
+2. `selectScheduler(delay)` → `ScheduleWakeup` (≤300s, cache-warm) or `CronCreate` (>300s, cache-cold)
+3. Call the selected tool with prompt: `/forge loop continue <id>`
 
-## 3. Startup Sequence
-
-### Step 1: Pre-flight Checks
-
-1. Git repository check 2. Working tree clean (skip with `--worktree`/`--resume`) 3. `.forge/` exists (must when using preset options) 4. Active task detection via `listActiveTasks` 5. `--tier` value validation 6. hooks.json check (warn, don't block) 7. Worktree source branch check
-
-### Step 2: Write Execution Mode
-
-调用 `writeTaskStatus` 写入 StatusFile：`mode: "autonomous"`, `loop_run_id: <uuid>`, `loop_iteration: 0`, `skill_sequence: <tier命令序列>`。残留 `loop_run_id` → 清理后从当前 phase 继续。
-
-### Step 3: Command Sequence
-
-light: build→review · standard: plan→build→review→test→ship · full: +learn · refactor_light: refactor-apply→review · refactor_standard: refactor-scan→refactor-apply→review→test→ship · fix_light: fix-apply→review · fix_standard: fix-analyze→fix-apply→review→test→ship
-
-### Step 4: Enter Iteration Loop
-
-启动迭代循环，每轮迭代执行一个 SKILL 阶段。
-
----
-
-## 4. Iteration Control Logic
-
-8 步迭代流程、SKILL 调度状态机、质量门禁评估、自主模式预设：
-
-→ 详见 references/iteration-control.md
-
-## 5-7. Commit/Rollback · Fix Loop · Shutdown
-
-提交/回滚决策表、修复循环与熔断器、关机序列：
-
-→ 详见 references/iteration-control.md §5-§7
-
----
-
-## 8. Reuse Existing Skills
-
-Loop 驱动现有 Skills 执行，不重新实现：router→plan→build→review→test→ship→learn→refactor→fix。每个 SKILL 读取 `mode: autonomous` 自动跳过确认点。
-
----
-
-## 9. Distribution Package Environment
-
-分发包（无 Agent SDK）以 SKILL 内置状态机替代 SDK 循环。共享状态文件格式、质量门禁和命令序列。差异：SDK 用 `effect-executor.ts` 做 Git 事务，分发包由 Agent 直接执行。
-
----
-
-## 10. Status File Format
-
-Loop 字段（写入 §3 Step 2）：`mode`, `loop_run_id`, `loop_iteration`, `skill_sequence`。正常结束全清除；Error 保留 `phase`/`skill_sequence` 用于 resume。
-
-## Common Rationalizations
-
-| 合理化 | 反驳 |
-|--------|------|
-| "手动更可控" | 明确需求下，门禁保障相同但效率更高 |
-| "会跳过重要检查" | 质量标准不变，只跳过人工确认点 |
-| "出问题不好排查" | 每轮 commit/rollback + 熔断器 + 完整状态轨迹 |
-
----
-
-## 11. Edge Cases
-
-无 `.forge/` → /forge init · Active task → warn · Residual `loop_run_id` → cleanup + continue · Empty objective → auto-reject · Invalid `--tier` → error + valid list · No hooks.json → warn · Invalid worktree branch → error · Resume branch missing → error
-
----
-
-## 12. Examples
-
+**ScheduleWakeup** (preferred for short delays):
 ```
-$ /forge loop "为用户 API 添加分页功能"
-🚀 目标：为用户 API 添加分页功能 | 模式：autonomous
-━━━ 迭代 1：路由 → standard ━━━
-━━━ 迭代 2：规划 → 5 原子任务 ✅ ━━━
-━━━ 迭代 3-7：构建 → Task 1-5 逐一 commit ✅ ━━━
-━━━ 迭代 8：评审 → 通过 (0 P0, 0 P1) ━━━
-━━━ 迭代 9：测试 → 42/42 ✅ ━━━
-━━━ 迭代 10：交付 → keep branch ━━━
-✅ Loop completed (10 iterations)
+ScheduleWakeup({ delaySeconds: <delay>, prompt: "/forge loop continue <id>" })
 ```
 
-**Variants**: Fix loop: review blocked → fix → re-review pass · Circuit breaker: 3 fails → abort → /forge resume · Worktree: `--worktree` 隔离 · Resume: `--resume <branch>` 继续
+**CronCreate** (fallback for long delays):
+```
+CronCreate({ cron: "<interval>", prompt: "/forge loop continue <id>", recurring: false })
+```
+
+On resume (`/forge loop continue <id>`): read state → determine phase → re-enter §4.
+
+## 6. Three-Strike Circuit Breaker
+
+Uses `src/loop/three-strike.ts`:
+
+| Step | Action |
+|------|--------|
+| Failure | `recordFailure(state)` → increment `consecutiveFailures` |
+| Check | `shouldHalt(state)` → true when `consecutiveFailures ≥ 3` |
+| Halt | Set `phase: "halted"`, `haltReason: computeHaltReason(...)` |
+| Rollback | If `shouldRollback(state)` → `git reset --hard <lastSuccessCommit>` |
+| Success | `recordSuccess(state, commitHash)` → reset to 0, update `lastSuccessCommit` |
+
+On halt: output summary → stop. User can `/forge loop continue <id>` after manual fix.
+
+## 7. stopWhen Conditional Termination
+
+Uses `src/loop/stopwhen.ts`:
+
+| Condition | Format | Example |
+|-----------|--------|---------|
+| Max iterations | `max-iterations:N` | `--stop-when "max-iterations:20"` |
+| Phase reached | `phase-reached:<phase>` | `--stop-when "phase-reached:ship"` |
+| Commit count | `commit-count:N` | `--stop-when "commit-count:1"` |
+
+Evaluate via `evaluateStopWhen(condition, state)` before each iteration.
+
+## 8. Autonomous Mode Presets
+
+All confirmation points use presets — no human prompts:
+
+| Decision Point | Preset |
+|---------------|--------|
+| Router tier | `auto-detect` |
+| Plan approval | `auto-approve` |
+| Review P0/P1 | `auto-fix` (rollback to build) |
+| Ship delivery | `keep branch` |
+
+## 9. Commit / Rollback
+
+| Phase | On Success | On Failure |
+|-------|-----------|-----------|
+| plan | commit | no commit |
+| build | commit + update lastSuccessCommit | rollback to lastSuccessCommit |
+| review/test | no commit | no commit |
+| ship | no commit | no commit |
+
+Commit format: `forge(<phase>): <summary>`
+
+## 10. Shutdown
+
+| Outcome | Cleanup |
+|---------|---------|
+| **Completed** | Clear loop fields from status.md. Set `phase: "idle"`. Delete `.forge/loop-state.json`. Output Mission Summary. |
+| **Halted** (three-strike) | Keep state files for resume. Output failure summary. |
+| **Aborted** (user) | Keep state files. Restore status.md to `phase: "idle"`. |
+| **Error** | Keep `loop_run_id` + `phase` for resume. Clear other loop fields. |
+
+**Mission Summary** (on any shutdown): total wall-clock · total iterations · phases completed · token budget used · known-failures matched.
+
+## 11. Platform Compatibility
+
+| Platform | Scheduling | Notes |
+|----------|-----------|-------|
+| Claude Code CLI | ScheduleWakeup / CronCreate | Full native support |
+| Claude Code Desktop | ScheduleWakeup / CronCreate | Same as CLI |
+| Claude.ai web | ScheduleWakeup only | No persistent cron; single-session only |
+
+## 12. Edge Cases
+
+- No `.forge/` → `/forge init`
+- Active `loop_run_id` found → warn, cleanup, option to resume
+- `--tier` invalid → error + list valid values
+- Empty goal → reject
+- Context exhaustion → write interim to `.forge/knowledge/sessions/` → `/clear` + `/forge loop continue <id>`
 
 ## Gotchas
-- **Infinite loop**: Task never completes → loop runs forever → set max iterations, stop on repeated failures
-- **State drift**: Long loop session → .forge/ files diverge from git reality → periodic state reconciliation every N iterations
-- **Context rot**: Loop runs 300k+ tokens → degraded intelligence → break loop, /clear, resume with fresh context
-- **Persistent loop orphan**: Session ends but persistent loop script keeps running → zombie processes → cleanup on SessionStart
 
-## 13. Fresh-Context Subsession Discipline（R4 — Mission-grade Loop）
-
-forge-loop 调度下一个 SKILL 阶段时，**必须**通过 `Skill(skill="forge", args="<phase>")` 触发新 fresh-context 子会话。**禁止**在同一会话内串联多个 SKILL 实例。
-
-**理由**：每次 SKILL 调用都从状态文件读取上下文，避免单一会话因长度膨胀超时。Factory Missions 实战验证：单 agent run 短（实现 51 turns / 验证 30 turns），靠 fresh-context 重启撑长周期。
-
-**状态文件白名单**（交接仅通过这些文件）：
-- `.forge/status.md`
-- `.forge/specs/<topic>/spec.md`
-- `.forge/plans/<topic>.md`
-- `.forge/progress/<topic>.md`
-- `.forge/findings/<topic>.md`
-- `.forge/knowledge/known-failures.md`
-- `.forge/runs/<run-id>/events.ndjson`
-
-**禁止依赖**：上一阶段会话的对话历史、agent 的"记忆"、任何不在白名单中的内存变量。
-
-**events.ndjson 增强字段**：phase_start / phase_end 事件必须包含 `session_id`、`wall_clock_elapsed_seconds`、`token_budget_used`。phase_end 额外含 `exit_code`。完整 schema 范例：
-
-```json
-{"type":"phase_start","ts":"2026-05-16T10:00:00Z","phase":"build",
- "iteration":3,"session_id":"<uuid>","wall_clock_elapsed_seconds":1234,
- "token_budget_used":234500}
-
-{"type":"phase_end","ts":"2026-05-16T10:42:31Z","phase":"build",
- "iteration":3,"session_id":"<uuid>","exit_code":0,
- "wall_clock_elapsed_seconds":3785,"token_budget_used":456789}
-```
-
-> **文档定位说明**：此章节承担 design.md 中"Section 9 events.ndjson schema"的全部职责。原 §9 名 `Distribution Package Environment` 保留不动；本 §13 是 R4 完整入口（fresh-context discipline + events schema + Mission Summary）。
-
-**Mission Summary（关机序列增量）**：forge-loop 正常或异常结束时输出：
-- Total wall-clock
-- Total skill invocations
-- Total iterations
-- Token budget used
-- Milestones completed
-- Known-failures matched / new
+- **Infinite loop**: Always set `max-iterations` or `stopWhen` for long tasks
+- **Context rot**: Break loop every ~100k tokens; resume with fresh context
+- **State drift**: Re-read loop-state.json before each decision, never cache in memory
+- **Orphan cron**: On abort, call `CronList` + `CronDelete` for any pending jobs

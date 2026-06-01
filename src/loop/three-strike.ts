@@ -65,19 +65,14 @@ export function recordSuccess(
 /**
  * Whether the loop should halt due to too many consecutive failures.
  */
-export function shouldHalt(
-  state: Pick<StrikeState, "consecutiveFailures">,
-): boolean {
+export function shouldHalt(state: Pick<StrikeState, "consecutiveFailures">): boolean {
   return state.consecutiveFailures >= MAX_CONSECUTIVE_FAILURES;
 }
 
 /**
  * Compute a human-readable halt reason.
  */
-export function computeHaltReason(
-  consecutiveFailures: number,
-  lastPhase: string,
-): string {
+export function computeHaltReason(consecutiveFailures: number, lastPhase: string): string {
   return `Three-strike triggered after ${consecutiveFailures} consecutive failures in ${lastPhase} phase`;
 }
 
@@ -92,8 +87,6 @@ export function shouldRollback(state: RollbackState): boolean {
 /**
  * Get the commit hash to roll back to.
  */
-export function getRollbackTarget(
-  state: Pick<StrikeState, "lastSuccessCommit">,
-): string {
+export function getRollbackTarget(state: Pick<StrikeState, "lastSuccessCommit">): string {
   return state.lastSuccessCommit;
 }

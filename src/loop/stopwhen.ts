@@ -44,9 +44,7 @@ export interface StopWhenResult {
  * - `phase-reached:<phase>` — stop when entering the named phase
  * - `commit-count:N` — stop after at least N success commits
  */
-export function parseStopCondition(
-  condition: string,
-): ParsedCondition | null {
+export function parseStopCondition(condition: string): ParsedCondition | null {
   if (!condition) return null;
 
   const iterMatch = condition.match(/^max-iterations:(\d+)$/);
@@ -70,10 +68,7 @@ export function parseStopCondition(
 /**
  * Evaluate a stop condition against current loop state.
  */
-export function evaluateStopWhen(
-  condition: string,
-  state: StopWhenState,
-): StopWhenResult {
+export function evaluateStopWhen(condition: string, state: StopWhenState): StopWhenResult {
   if (!condition) {
     return { shouldStop: false, reason: "" };
   }

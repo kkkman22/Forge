@@ -19,8 +19,7 @@
 // ---------------------------------------------------------------------------
 import { CliError } from "./cli-error.js";
 import { ForgeError } from "./forge-error.js";
-import { SdkAgentAdapter, type SdkAgentAdapterConfig } from "./sdk-agent-adapter.js";
-import { SdkDriver, type SdkDriverConfig, type SdkDriverResult } from "./sdk-driver.js";
+// SDK modules removed in Wave 3 (loop-native-fusion)
 import {
   installSkill,
   loadSkillsFromDir,
@@ -194,27 +193,6 @@ export {
   type IntegrityInput,
   lintKnowledgeIntegrity,
 } from "./knowledge-integrity.js";
-// Core types (migrated from loop-types.js to types.js)
-export type {
-  BranchTopicGateResult,
-  CommitTopicCheckResult,
-  ParallelExecutionResult,
-  PendingDeliveryRecord,
-  SubagentInvocation,
-  SubagentResult,
-  TokenUsage,
-  WorktreeDecision,
-} from "./types.js";
-// Loop-specific types (remain in loop-types.js until Wave 3 retirement)
-export type {
-  AgentInterface,
-  AgentOutput,
-  AgentResult,
-  AgentRunOptions,
-  LoopConfig,
-  RunLimits,
-  UnshippedBranchWarning,
-} from "./loop-types.js";
 // Plan engine
 export {
   type AtomicTask,
@@ -305,6 +283,17 @@ export {
   runSubagentsInParallel,
   runSubagentsWithConcurrency,
 } from "./subagent-runner.js";
+// Core types (migrated from loop-types.js to types.js)
+export type {
+  BranchTopicGateResult,
+  CommitTopicCheckResult,
+  ParallelExecutionResult,
+  PendingDeliveryRecord,
+  SubagentInvocation,
+  SubagentResult,
+  TokenUsage,
+  WorktreeDecision,
+} from "./types.js";
 // Error hierarchy (consolidated: cli-error + forge-error)
 // SDK (consolidated: sdk-agent-adapter + sdk-driver)
 // SKILL plugin mechanism (consolidated: skill-loader + skill-validator)
@@ -331,11 +320,6 @@ export {
   reconstructStateFromGit,
   removeTaskEntry,
   resolveStatusPath,
-  SdkAgentAdapter,
-  type SdkAgentAdapterConfig,
-  SdkDriver,
-  type SdkDriverConfig,
-  type SdkDriverResult,
   type SkillManifest,
   type SkillPhase,
   type SkillValidationResult,

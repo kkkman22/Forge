@@ -1,7 +1,6 @@
 import { describe, expect, it } from "vitest";
-
-import type { SubagentInvocation, SubagentResult } from "../../src/loop-types.js";
 import { runSubagentsInParallel, runSubagentsWithConcurrency } from "../../src/subagent-runner.js";
+import type { SubagentInvocation, SubagentResult } from "../../src/types.js";
 
 function makeInvocation(i: number): SubagentInvocation {
   return {
