@@ -2,7 +2,10 @@
  * @file Shared test utilities for loop module tests.
  * Eliminates duplicated dynamic-import patterns across test files.
  */
-import type { Vitest } from "vitest";
+/**
+ * @file Shared test utilities for loop module tests.
+ * Eliminates duplicated dynamic-import patterns across test files.
+ */
 
 /**
  * Dynamically import a module from src/loop/.
