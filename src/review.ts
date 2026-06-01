@@ -474,7 +474,7 @@ export function buildReviewEvolutionArtifacts(
 
 import { readFileSync, renameSync, writeFileSync } from "node:fs";
 import { parse as parseYaml, stringify as stringifyYaml } from "yaml";
-import type { SubagentInvocation, SubagentResult } from "./loop-types.js";
+import type { SubagentInvocation, SubagentResult } from "./types.js";
 import {
   assessTruncationSeverity,
   detectTruncation,

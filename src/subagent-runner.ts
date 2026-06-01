@@ -5,7 +5,7 @@
  * from parallel execution using Promise.allSettled.
  */
 
-import type { ParallelExecutionResult, SubagentInvocation, SubagentResult } from "./loop-types.js";
+import type { ParallelExecutionResult, SubagentInvocation, SubagentResult } from "./types.js";
 
 /** Agent types defined in .claude/agents/ that may be used as subagent_type. @public */
 export const VALID_AGENT_TYPES = [
