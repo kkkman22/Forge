@@ -12,7 +12,7 @@
 
 import path from "node:path";
 import type { ShipDeliveryOption } from "./execution-mode.js";
-import type { WorktreeDecision } from "./loop-types.js";
+import type { WorktreeDecision } from "./types.js";
 
 // ---------------------------------------------------------------------------
 // Constants

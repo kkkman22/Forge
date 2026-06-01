@@ -8,7 +8,7 @@ import {
   DEFAULT_SEVERITY,
   runBranchGate,
 } from "../src/branch-gate.js";
-import type { PendingDeliveryRecord } from "../src/loop-types.js";
+import type { PendingDeliveryRecord } from "../src/types.js";
 
 const baseInput = (overrides: Partial<BranchGateInput> = {}): BranchGateInput => ({
   skill: "build",

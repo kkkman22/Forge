@@ -1,11 +1,10 @@
 import { describe, expect, it } from "vitest";
-
-import type { SubagentResult } from "../../src/loop-types.js";
 import {
   enforceFinalReportContract,
   FINAL_REPORT_SENTINEL,
   validateFinalReportBlock,
 } from "../../src/review-final-block.js";
+import type { SubagentResult } from "../../src/types.js";
 
 const VALID_LAYER1 = `
 Some thinking text...

@@ -2,7 +2,7 @@ import { mkdirSync, rmSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
-import type { SubagentInvocation, SubagentResult } from "../../src/loop-types.js";
+import type { SubagentInvocation, SubagentResult } from "../../src/types.js";
 
 // Mock the subagent-runner module
 vi.mock("../../src/subagent-runner.js", () => ({

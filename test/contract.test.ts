@@ -1118,7 +1118,6 @@ import { join } from "node:path";
 
 describe("Contract: stop hooks should not block", () => {
   const STOP_HOOK_SCRIPTS = [
-    "scripts/persistent-loop.sh",
     "scripts/record-evolved-rule-violation.mjs",
     "scripts/flag-stale-evolved-rules.mjs",
     "scripts/cmux-mirror/sync-once.mjs",

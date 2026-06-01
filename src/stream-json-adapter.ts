@@ -2,8 +2,8 @@ import { appendFileSync, mkdirSync } from "node:fs";
 import { join } from "node:path";
 import { createInterface } from "node:readline";
 import type { Readable, Writable } from "node:stream";
-import type { TokenUsage } from "./loop-types.js";
 import type { RateLimitDegrader } from "./rate-limit-degrader.js";
+import type { TokenUsage } from "./types.js";
 
 // ---------------------------------------------------------------------------
 // Error classes

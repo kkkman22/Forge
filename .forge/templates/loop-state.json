@@ -1,0 +1,17 @@
+{
+  "id": "{{LOOP_ID}}",
+  "goal": "{{LOOP_GOAL}}",
+  "phase": "init",
+  "consecutiveFailures": 0,
+  "totalIterations": 0,
+  "tier": "standard",
+  "lastSuccessCommit": "",
+  "branch": "",
+  "stopWhen": "",
+  "lastScheduledAt": "",
+  "nextScheduledReason": "",
+  "createdAt": "2026-01-01T00:00:00.000Z",
+  "phaseHistory": [],
+  "lastReviewResult": "not-run",
+  "haltReason": ""
+}

@@ -1,19 +1,68 @@
 /**
  * Branch gate — unified dispatch layer for branch-topic consistency checks.
  *
- * Wraps pure functions from branch-lifecycle.ts into a single entry point
- * used by all forge skills at their §1.5 Pre-flight step.
+ * Self-contained pure functions for branch topic extraction, gate checking,
+ * and unshipped branch detection. Used by all forge skills at their §1.5
+ * Pre-flight step.
  *
  * Pure function — no side effects. The SKILL layer handles I/O
  * (reading git state, running checkout, persisting findings).
  */
 
-import {
-  checkBranchTopicGate,
-  detectUnshippedBranches,
-  extractBranchTopic,
-} from "./branch-lifecycle.js";
-import type { PendingDeliveryRecord } from "./loop-types.js";
+import type { BranchTopicGateResult, PendingDeliveryRecord } from "./types.js";
+
+// ---------------------------------------------------------------------------
+// Inlined pure functions (originally from branch-lifecycle.ts, Wave 3 merge)
+// ---------------------------------------------------------------------------
+
+/** Extract topic from a feature/forge branch name. */
+export function extractBranchTopic(branchName: string): string | null {
+  const match = branchName.match(/^(?:feature|forge)\/(.+)$/);
+  return match ? match[1] : null;
+}
+
+/** Check whether the branch topic matches the task topic. */
+export function checkBranchTopicGate(branchName: string, taskTopic: string): BranchTopicGateResult {
+  const branchTopic = extractBranchTopic(branchName);
+
+  if (branchTopic === null) {
+    return {
+      allowed: false,
+      reasons: [`分支 "${branchName}" 不符合 feature/<topic> 或 forge/<topic> 格式`],
+    };
+  }
+
+  if (branchTopic !== taskTopic) {
+    return {
+      allowed: false,
+      reasons: [`分支 topic "${branchTopic}" 与任务 topic "${taskTopic}" 不匹配`],
+    };
+  }
+
+  return { allowed: true, reasons: [] };
+}
+
+interface UnshippedBranchWarning {
+  branchName: string;
+  topic: string;
+  timestamp: number;
+  message: string;
+}
+
+/** Detect pending deliveries for topics other than the current one. */
+export function detectUnshippedBranches(
+  pendingDeliveries: PendingDeliveryRecord[],
+  currentTopic: string,
+): UnshippedBranchWarning[] {
+  return pendingDeliveries
+    .filter((d) => d.topic !== currentTopic)
+    .map((d) => ({
+      branchName: d.branchName,
+      topic: d.topic,
+      timestamp: d.timestamp,
+      message: `分支 "${d.branchName}" (topic: ${d.topic}) 有未完成的交付记录，建议完成生命周期（merge/PR/discard）`,
+    }));
+}
 
 // ---------------------------------------------------------------------------
 // Types

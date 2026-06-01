@@ -10,7 +10,7 @@
 import fc from "fast-check";
 import { describe, expect, it } from "vitest";
 import { buildResearchSubagents, mergeResearchFindings } from "../src/build.js";
-import type { SubagentResult } from "../src/loop-types.js";
+import type { SubagentResult } from "../src/types.js";
 
 // ---------------------------------------------------------------------------
 // Generators
