@@ -4,7 +4,7 @@
 [![Security Audit](https://img.shields.io/badge/security--audit-npm%20audit%20%2B%20deps-blue)](./.github/workflows/ci.yml)
 [![License: MIT](https://img.shields.io/badge/License-MIT-green.svg)](./LICENSE)
 
-> **统一 `/forge` 入口 + <!-- ssot:begin topic=commands render=count -->21<!-- ssot:end topic=commands --> 个内部子命令覆盖完整开发生命周期，三维路由自动匹配复杂度，统一状态系统跨会话感知。**
+> **统一 `/forge` 入口 + <!-- ssot:begin topic=commands render=count -->32<!-- ssot:end topic=commands --> 个内部子命令覆盖完整开发生命周期，三维路由自动匹配复杂度，统一状态系统跨会话感知。**
 >
 > 前置条件：Claude Code ≥ 2.1.153 | [安装指南](docs/quick-start.md)
 > 完整兼容性矩阵和降级策略见 [docs/claude-code-compatibility.md](docs/claude-code-compatibility.md)
@@ -13,7 +13,7 @@
 
 ## 核心价值
 
-- **<!-- ssot:begin topic=commands render=count -->21<!-- ssot:end topic=commands --> 个命令**覆盖从需求分析到代码交付的完整周期
+- **<!-- ssot:begin topic=commands render=count -->32<!-- ssot:end topic=commands --> 个命令**覆盖从需求分析到代码交付的完整周期
 - **三维路由**自动匹配任务复杂度（轻量/标准/全量）
 - **统一状态**目录 `.forge/`，跨命令状态感知和会话恢复
 - **按需加载**，单次会话约 10K tokens
@@ -50,7 +50,7 @@ claude plugin install forge
 | 初次接触者引导 | [docs/onboarding-beginner.md](docs/onboarding-beginner.md) | 了解基本概念和常用命令 |
 | 日常开发者引导 | [docs/onboarding-daily.md](docs/onboarding-daily.md) | 掌握标准工作流各阶段 |
 | 高级用户引导 | [docs/onboarding-advanced.md](docs/onboarding-advanced.md) | 深入全量路径、知识系统、贡献指南 |
-| 命令速查 | [docs/reference-commands.md](docs/reference-commands.md) | 查看全部 <!-- ssot:begin topic=commands render=count -->21<!-- ssot:end topic=commands --> 个命令和路由详解 |
+| 命令速查 | [docs/reference-commands.md](docs/reference-commands.md) | 查看全部 <!-- ssot:begin topic=commands render=count -->32<!-- ssot:end topic=commands --> 个命令和路由详解 |
 | 安全参考 | [docs/reference-security.md](docs/reference-security.md) | 了解安全机制分层和审计 |
 | 架构参考 | [docs/reference-architecture.md](docs/reference-architecture.md) | 深入了解 .forge/ 目录结构和状态保护 |
 | 高级功能参考 | [docs/reference-advanced.md](docs/reference-advanced.md) | Forge Loop、cmux、Domain Pack、Token 效率 |
@@ -134,6 +134,16 @@ Forge plugin 自带 `forge-context` first-party MCP server，为 `/forge review`
 | `/forge ship` | 门禁检查 + 交付 | 标准、全量 |
 | `/forge decide` | 四视角前置决策 | 全量 |
 | `/forge learn` | 五维度经验沉淀 | 全量 |
+| `/forge spec` | 将需求固化为可锁定规格 | 全量 |
+| `/forge verify` | 证据化三态验证 | 所有 |
+| `/forge accept` | 场景验收执行 | 所有 |
+| `/forge debug` | 四阶段结构化根因分析 | 所有 |
+| `/forge status` | 查看当前任务状态 | 所有 |
+| `/forge resume` | 会话恢复 | 所有 |
+| `/forge grill` | 苏格拉底式需求澄清 | 所有 |
+| `/forge storm` | 头脑风暴 | 所有 |
+| `/forge recap` | 会话摘要与上下文回顾 | 所有 |
+| `/forge loop` | 带工程纪律的自主循环 | 所有 |
 
 > 完整子命令速查表和三维路由详解 → [docs/reference-commands.md](docs/reference-commands.md)
 
@@ -205,9 +215,9 @@ bash scripts/pre-push-ci-check.sh
 
 `bump-version.mjs` 会自动同步 `package.json`、`.claude-plugin/plugin.json`、`dist-plugin/` 三个位置的版本号，并重建 dist 包。`pre-push-ci-check.sh` 在推送前检查版本一致性、shell 脚本、JSON 有效性和 bundle 完整性。
 
-**技术栈**：TypeScript 5.9（strict）、200 个 TypeScript 模块、Vitest 3.2、fast-check 4.7（属性测试）、Biome 2.4（lint + format）。运行时依赖：`@anthropic-ai/claude-agent-sdk`、`commander`。
+**技术栈**：TypeScript 5.9（strict）、292 个 TypeScript 模块、Vitest 3.2、fast-check 4.7（属性测试）、Biome 2.4（lint + format）。运行时依赖：`@anthropic-ai/claude-agent-sdk`、`@modelcontextprotocol/sdk`、`commander`、`minimatch`、`yaml`、`zod`。
 
-**测试策略**：7944 个测试（386 个测试文件，其中 149 个为 fast-check 属性测试文件）验证不变量。覆盖率 ~89% statements。
+**测试策略**：7959 个测试（652 个测试文件，其中 176 个为 fast-check 属性测试文件）验证不变量。覆盖率 ~89% statements。
 
 ---
 

@@ -2,7 +2,7 @@
 
 ## Getting Started
 
-- [Forge 快速入门指南](quick-start.md) / [Forge 快速入门指南 (EN)](quick-start.en.md) — getting-started — 2026-05-18
+- [Forge 快速入门指南](quick-start.md) / [Forge 快速入门指南 (EN)](quick-start.en.md) — getting-started — 2026-06-01
 
 ## Advanced
 
@@ -21,7 +21,7 @@
 - [Forge Slimming 迁移指南](slimming-migration.md) — reference — 2026-05-17
 - [Forge — 项目宪法详细内容](forge-constitution-detail.md) — reference — 2026-05-24
 - [Forge 初次接触者引导](onboarding-beginner.md) / [Forge 初次接触者引导 (EN)](onboarding-beginner.en.md) — reference — 2026-05-24
-- [Forge 命令速查与路由详解](reference-commands.md) — reference — 2026-05-16
+- [Forge 命令速查与路由详解](reference-commands.md) — reference — 2026-06-01
 - [Forge 安全与信任](reference-security.md) — reference — 2026-05-12
 - [Forge 日常开发者引导](onboarding-daily.md) / [Forge 日常开发者引导 (EN)](onboarding-daily.en.md) — reference — 2026-05-12
 - [Forge 架构与状态保护](reference-architecture.md) — reference — 2026-05-12
