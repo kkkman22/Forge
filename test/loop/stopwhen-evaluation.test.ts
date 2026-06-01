@@ -165,5 +165,20 @@ describe("stopWhen Evaluation", () => {
       const parsed = parseStopCondition("");
       expect(parsed).toBeNull();
     });
+
+    it("rejects zero value for max-iterations", async () => {
+      const { parseStopCondition } = await loadModule();
+      expect(parseStopCondition("max-iterations:0")).toBeNull();
+    });
+
+    it("rejects zero value for commit-count", async () => {
+      const { parseStopCondition } = await loadModule();
+      expect(parseStopCondition("commit-count:0")).toBeNull();
+    });
+
+    it("rejects negative value patterns (no match)", async () => {
+      const { parseStopCondition } = await loadModule();
+      expect(parseStopCondition("max-iterations:-1")).toBeNull();
+    });
   });
 });

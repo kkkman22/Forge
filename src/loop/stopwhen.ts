@@ -49,7 +49,9 @@ export function parseStopCondition(condition: string): ParsedCondition | null {
 
   const iterMatch = condition.match(/^max-iterations:(\d+)$/);
   if (iterMatch) {
-    return { type: "max-iterations", value: Number(iterMatch[1]) };
+    const n = Number(iterMatch[1]);
+    if (n <= 0) return null;
+    return { type: "max-iterations", value: n };
   }
 
   const phaseMatch = condition.match(/^phase-reached:([a-z-]+)$/);
@@ -59,7 +61,9 @@ export function parseStopCondition(condition: string): ParsedCondition | null {
 
   const commitMatch = condition.match(/^commit-count:(\d+)$/);
   if (commitMatch) {
-    return { type: "commit-count", value: Number(commitMatch[1]) };
+    const n = Number(commitMatch[1]);
+    if (n <= 0) return null;
+    return { type: "commit-count", value: n };
   }
 
   return null;
@@ -103,7 +107,7 @@ export function evaluateStopWhen(condition: string, state: StopWhenState): StopW
 
     case "commit-count": {
       const target = parsed.value as number;
-      const current = state.lastSuccessCommit ? 1 : 0;
+      const current = state.lastSuccessCommit !== "" ? 1 : 0;
       if (current >= target) {
         return {
           shouldStop: true,
