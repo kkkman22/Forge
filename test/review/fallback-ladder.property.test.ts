@@ -1,6 +1,6 @@
 import * as fc from "fast-check";
 import { describe, expect, it, vi } from "vitest";
-import type { SubagentInvocation, SubagentResult } from "../../src/loop-types.js";
+import type { SubagentInvocation, SubagentResult } from "../../src/types.js";
 
 vi.mock("../../src/subagent-runner.js", () => ({
   runSubagentsWithConcurrency: vi.fn(),

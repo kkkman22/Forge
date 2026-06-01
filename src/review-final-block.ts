@@ -27,7 +27,7 @@
  * orchestration code.
  */
 
-import type { SubagentResult } from "./loop-types.js";
+import type { SubagentResult } from "./types.js";
 
 /** Closing marker every review subagent must emit at the very end of its output. @public */
 export const FINAL_REPORT_SENTINEL = "<!-- review-final -->";

@@ -300,7 +300,7 @@ export function getDecideSubagents(context: DecideContext): SubagentConfig[] {
 // Subagent orchestration (Agent Team Migration — R2, R7)
 // ---------------------------------------------------------------------------
 
-import type { SubagentInvocation } from "./loop-types.js";
+import type { SubagentInvocation } from "./types.js";
 
 const MAX_PERSPECTIVE_TOKENS = 500;
 

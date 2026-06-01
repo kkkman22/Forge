@@ -13,9 +13,7 @@
   "engines": {
     "node": ">=20"
   },
-  "bin": {
-    "forge-loop": "dist/src/forge-loop-cli.js"
-  },
+  "bin": {},
   "scripts": {
     "test": "vitest run",
     "test:e2e": "vitest run test/e2e/",

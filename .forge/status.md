@@ -1,7 +1,7 @@
 ---
-current_task: ""
-phase: "idle"
-updated: "2026-05-30"
+current_task: "forge-loop-native-fusion"
+phase: "build"
+updated: "2026-06-01"
 ---
 
 # 项目状态
