@@ -13,6 +13,7 @@
 //   node scripts/bump-version.mjs 3.2.0 --commit --tag     # 指定版本号，一键发版
 //
 // --tag 触发的完整流程:
+//   0. 预检 (工作树干净、tag 不存在、无跟踪的编译产物、tsc 编译通过)
 //   1. 更新版本文件 + rebuild dist
 //   2. git commit
 //   3. git tag (annotated)
@@ -166,6 +167,71 @@ function extractChangelogSection(version) {
   return body.trim() || null;
 }
 
+/**
+ * Preflight checks before bumping version.
+ * Collects all failures and reports them at once.
+ */
+function preflightChecks(newVersion, doTag) {
+  const errors = [];
+
+  // 1. Working tree must be clean
+  try {
+    const dirty = execSync("git status --porcelain", { encoding: "utf-8", cwd: ROOT, stdio: ["pipe", "pipe", "pipe"] }).trim();
+    if (dirty) {
+      const fileCount = dirty.split("\n").length;
+      errors.push(`工作树不干净 (${fileCount} 个文件) — 请先 stash 或 commit`);
+    }
+  } catch {
+    errors.push("无法检查工作树状态");
+  }
+
+  // 2. Tag must not already exist
+  try {
+    const tagName = `v${newVersion}`;
+    execSync(`git rev-parse "${tagName}" --verify`, { encoding: "utf-8", cwd: ROOT, stdio: ["pipe", "pipe", "pipe"] });
+    errors.push(`tag ${tagName} 已存在 — 使用 git tag -d ${tagName} 删除后重试`);
+  } catch {
+    // tag doesn't exist — good
+  }
+
+  // 3. No tracked build artifacts in dist/
+  const trackedPaths = ["dist/src/", "dist/scripts/", "dist/locales/"];
+  try {
+    const tracked = execSync(`git ls-files ${trackedPaths.join(" ")}`, { encoding: "utf-8", cwd: ROOT, stdio: ["pipe", "pipe", "pipe"] }).trim();
+    if (tracked) {
+      const fileCount = tracked.split("\n").filter(Boolean).length;
+      errors.push(
+        `${trackedPaths.join(", ")} 下有 ${fileCount} 个文件被 git 跟踪 — 请先 git rm --cached 并更新 .gitignore`,
+      );
+    }
+  } catch {
+    // git ls-files failed — skip check
+  }
+
+  // 4. TypeScript must compile (only when --tag)
+  if (doTag) {
+    try {
+      console.log("  ⏳ 正在验证 TypeScript 编译...");
+      execSync("npx tsc --noEmit", { encoding: "utf-8", cwd: ROOT, stdio: ["pipe", "pipe", "pipe"], timeout: 120_000 });
+    } catch (e) {
+      const output = (e.stdout || "") + (e.stderr || "");
+      const lines = output.split("\n").filter((l) => l.startsWith("error TS"));
+      const detail = lines.length > 0 ? ` (${lines[0]})` : "";
+      errors.push(`TypeScript 编译失败${detail} — 请先修复 tsc 错误`);
+    }
+  }
+
+  if (errors.length > 0) {
+    console.error("\n❌ 预检失败:");
+    for (const err of errors) {
+      console.error(`  • ${err}`);
+    }
+    process.exit(1);
+  }
+
+  console.log("\n✅ 预检通过");
+}
+
 function main() {
   const args = process.argv.slice(2);
   const flags = args.filter((a) => a.startsWith("--"));
@@ -199,6 +265,9 @@ function main() {
     console.error("支持: 具体版本号 (x.y.z) 或 patch / minor / major");
     process.exit(1);
   }
+
+  // Preflight checks
+  preflightChecks(newVersion, doTag);
 
   // Step 1: Update version files
   let updated = 0;
@@ -297,7 +366,7 @@ function main() {
   if (doCommit) {
     console.log("\n正在提交...");
     try {
-      gitExec("add package.json .claude-plugin/plugin.json dist/ dist-plugin/ CHANGELOG.md");
+      gitExec("add package.json .claude-plugin/plugin.json dist/claude-code/bundles/forge/ dist/claude-code/bundles/.manifest.sha256 dist-plugin/ CHANGELOG.md");
       gitExec(`commit -m "chore: bump version to ${newVersion}\n\nCo-Authored-By: Claude Opus 4.8 <noreply@anthropic.com>"`);
       const sha = gitExec("rev-parse --short HEAD");
       console.log(`  ✓ committed as ${sha}`);
