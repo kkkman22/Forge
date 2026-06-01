@@ -23,14 +23,6 @@ describe("barrel file exports expected public values", () => {
         expect(barrel.CliError).toBeDefined();
         expect(typeof barrel.CliError).toBe("function");
     });
-    it("exports SdkDriver as a function (class)", () => {
-        expect(barrel.SdkDriver).toBeDefined();
-        expect(typeof barrel.SdkDriver).toBe("function");
-    });
-    it("exports SdkAgentAdapter as a function (class)", () => {
-        expect(barrel.SdkAgentAdapter).toBeDefined();
-        expect(typeof barrel.SdkAgentAdapter).toBe("function");
-    });
     it("exports evaluateReviewGate as a function", () => {
         expect(barrel.evaluateReviewGate).toBeDefined();
         expect(typeof barrel.evaluateReviewGate).toBe("function");
@@ -145,13 +137,13 @@ describe("barrel file does not expose internal modules", () => {
     it("does not export renderEpisode (episode internal)", () => {
         expect(exports.renderEpisode).toBeUndefined();
     });
-    it("does not export checkBranchTopicGate (branch-lifecycle internal)", () => {
+    it("does not export checkBranchTopicGate (branch-lifecycle retired)", () => {
         expect(exports.checkBranchTopicGate).toBeUndefined();
     });
     // Verify the total number of value exports
-    it("has exactly 131 value exports", () => {
+    it("has exactly 129 value exports", () => {
         const valueExports = Object.keys(exports).filter((key) => typeof exports[key] !== "undefined");
-        expect(valueExports).toHaveLength(131);
+        expect(valueExports).toHaveLength(129);
         expect(valueExports.sort()).toEqual([
             "CLASSIFICATION_MAP",
             "CliError",
@@ -160,8 +152,6 @@ describe("barrel file does not expose internal modules", () => {
             "ForgeError",
             "GLOSSARY_BLOCK_POLICY",
             "INCREMENTAL_THRESHOLD",
-            "SdkAgentAdapter",
-            "SdkDriver",
             "THRESHOLD_MILESTONES",
             "VALID_TRANSITIONS",
             "allEntriesVerified",
@@ -312,9 +302,8 @@ describe("deprecated re-exports provide backward compatibility", () => {
         expect(dep.renderEpisode).toBeDefined();
         expect(typeof dep.renderEpisode).toBe("function");
     });
-    it("re-exports checkBranchTopicGate from branch-lifecycle", () => {
-        expect(dep.checkBranchTopicGate).toBeDefined();
-        expect(typeof dep.checkBranchTopicGate).toBe("function");
+    it("branch-lifecycle exports retired (Wave 3)", () => {
+        expect(dep.checkBranchTopicGate).toBeUndefined();
     });
 });
 //# sourceMappingURL=barrel-file.test.js.map

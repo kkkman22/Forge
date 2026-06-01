@@ -192,8 +192,8 @@ export interface ReviewEvolutionArtifacts {
  * The function is deterministic: same `(input, now, sequenceInDay)` → same output.
  */
 export declare function buildReviewEvolutionArtifacts(input: ReviewEvolutionInput, now: Date, sequenceInDay: number): ReviewEvolutionArtifacts;
-import type { SubagentInvocation, SubagentResult } from "./loop-types.js";
 import { type TruncationAssessment } from "./truncation-detection.js";
+import type { SubagentInvocation, SubagentResult } from "./types.js";
 /** Context for building review subagent invocations. */
 export interface ReviewSubagentContext {
     hasSpec: boolean;

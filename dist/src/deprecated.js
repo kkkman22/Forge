@@ -25,8 +25,7 @@ export { buildFailureEpisode, buildFailureEvolutionMarker } from "./failure-sink
 /** @deprecated Import from forge-loop/pattern-stats instead */
 export { findStaleOrDecayedPatterns, findUpgradableEpisodes, parseInstinct, renderInstincts, updatePatternStats, } from "./pattern-stats.js";
 // ---------------------------------------------------------------------------
-// Branch lifecycle enforcement (internal)
+// Branch lifecycle enforcement (removed in Wave 3 — loop-native-fusion)
+// Functions inlined into branch-gate.ts. Other functions retired with SDK.
 // ---------------------------------------------------------------------------
-/** @deprecated Import from forge-loop/branch-lifecycle instead */
-export { checkBranchTopicGate, checkCommitTopicMatch, detectStaleBranches, detectUnshippedBranches, extractBranchTopic, recordPendingDelivery, } from "./branch-lifecycle.js";
 //# sourceMappingURL=deprecated.js.map

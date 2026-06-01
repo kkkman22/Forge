@@ -95,7 +95,7 @@ export interface ThreeStrikeFailureArtifacts {
  * always yields identical artefacts.
  */
 export declare function buildThreeStrikeFailureArtifacts(topic: string, tier: EpisodeTier, situation: string, rootCause: string | undefined, now: Date, sequenceInDay: number): ThreeStrikeFailureArtifacts;
-import type { SubagentInvocation, SubagentResult } from "./loop-types.js";
+import type { SubagentInvocation, SubagentResult } from "./types.js";
 /**
  * Build one SubagentInvocation per research topic.
  *

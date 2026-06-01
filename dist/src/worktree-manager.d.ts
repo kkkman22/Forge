@@ -10,7 +10,7 @@
  * **Validates: Requirements 7.1–7.7**
  */
 import type { ShipDeliveryOption } from "./execution-mode.js";
-import type { WorktreeDecision } from "./loop-types.js";
+import type { WorktreeDecision } from "./types.js";
 /**
  * Compute the root directory that holds all worktrees for a given repo.
  *

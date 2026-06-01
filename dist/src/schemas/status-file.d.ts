@@ -17,16 +17,16 @@
 import { z } from "zod";
 export declare const PhaseSchema: z.ZodEnum<{
     spec: "spec";
-    decide: "decide";
     plan: "plan";
     build: "build";
-    "build-light": "build-light";
     review: "review";
     test: "test";
     ship: "ship";
-    learn: "learn";
     debug: "debug";
+    learn: "learn";
+    decide: "decide";
     fix: "fix";
+    "build-light": "build-light";
     refactor: "refactor";
 }>;
 export declare const TierSchema: z.ZodEnum<{
@@ -36,8 +36,8 @@ export declare const TierSchema: z.ZodEnum<{
 }>;
 export declare const LoopFieldsSchema: z.ZodObject<{
     mode: z.ZodEnum<{
-        interactive: "interactive";
         autonomous: "autonomous";
+        interactive: "interactive";
     }>;
     loop_run_id: z.ZodString;
     loop_iteration: z.ZodNumber;
@@ -54,16 +54,16 @@ export declare const StatusFileSchema: z.ZodObject<{
     project_phase: z.ZodOptional<z.ZodString>;
     phase: z.ZodOptional<z.ZodEnum<{
         spec: "spec";
-        decide: "decide";
         plan: "plan";
         build: "build";
-        "build-light": "build-light";
         review: "review";
         test: "test";
         ship: "ship";
-        learn: "learn";
         debug: "debug";
+        learn: "learn";
+        decide: "decide";
         fix: "fix";
+        "build-light": "build-light";
         refactor: "refactor";
     }>>;
     hints: z.ZodOptional<z.ZodString>;
@@ -71,8 +71,8 @@ export declare const StatusFileSchema: z.ZodObject<{
     updated: z.ZodOptional<z.ZodString>;
     loop_fields: z.ZodOptional<z.ZodObject<{
         mode: z.ZodEnum<{
-            interactive: "interactive";
             autonomous: "autonomous";
+            interactive: "interactive";
         }>;
         loop_run_id: z.ZodString;
         loop_iteration: z.ZodNumber;

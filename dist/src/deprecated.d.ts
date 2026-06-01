@@ -42,5 +42,3 @@ export { buildFailureEpisode, buildFailureEvolutionMarker } from "./failure-sink
 export type { Pattern, UpgradeSuggestion } from "./pattern-stats.js";
 /** @deprecated Import from forge-loop/pattern-stats instead */
 export { findStaleOrDecayedPatterns, findUpgradableEpisodes, parseInstinct, renderInstincts, updatePatternStats, } from "./pattern-stats.js";
-/** @deprecated Import from forge-loop/branch-lifecycle instead */
-export { checkBranchTopicGate, checkCommitTopicMatch, detectStaleBranches, detectUnshippedBranches, extractBranchTopic, recordPendingDelivery, } from "./branch-lifecycle.js";

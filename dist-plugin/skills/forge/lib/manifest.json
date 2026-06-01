@@ -1,6 +1,6 @@
 {
   "version": 1,
-  "generated_at": "2026-05-31T15:21:47.365Z",
+  "generated_at": "2026-06-01T05:48:53.010Z",
   "subs": {
     "abort": {
       "instructions": {
@@ -356,18 +356,9 @@
     "loop": {
       "instructions": {
         "path": "loop/instructions.md",
-        "sha256": "6c6aac8b9228e5ae33c4a4908a7d1c2f770f2e329166e73bee93a28af559d2a5"
+        "sha256": "3aaf2e9ff1533c00c8044a3bc6106d2685897026fc08710e8f89544b61ff92ab"
       },
-      "references": [
-        {
-          "path": "loop/references/function-contracts.md",
-          "sha256": "57a9bbf0686a432041f4b91a10c63c2c730301efd4b8df80ea523304927a772d"
-        },
-        {
-          "path": "loop/references/iteration-control.md",
-          "sha256": "1b09a5194a1d4e2f830d23cd22e61af5984018af04aa3b434d5dbec99ef046b3"
-        }
-      ]
+      "references": []
     },
     "mutate": {
       "instructions": {

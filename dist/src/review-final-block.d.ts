@@ -26,7 +26,7 @@
  * renders invisibly in Markdown but is trivially grep-able from
  * orchestration code.
  */
-import type { SubagentResult } from "./loop-types.js";
+import type { SubagentResult } from "./types.js";
 /** Closing marker every review subagent must emit at the very end of its output. @public */
 export declare const FINAL_REPORT_SENTINEL = "<!-- review-final -->";
 /** Reasons a final-report block can be invalid. @public */

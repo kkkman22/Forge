@@ -84,7 +84,7 @@ export declare function generateDecisionPath(date: string, topic: string): strin
 export declare function getDecideTeamMembers(context: DecideContext): TeamMember[];
 /** Alias for the Subagent migration — returns the same members. */
 export declare function getDecideSubagents(context: DecideContext): SubagentConfig[];
-import type { SubagentInvocation } from "./loop-types.js";
+import type { SubagentInvocation } from "./types.js";
 /**
  * Build Round 1 SubagentInvocations for the decide phase.
  *
