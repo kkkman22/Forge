@@ -9,7 +9,7 @@
  *
  * RED: Will fail until src/loop/stopwhen.ts is created.
  */
-import { describe, it, expect } from "vitest";
+import { describe, expect, it } from "vitest";
 
 async function loadModule() {
   return import("../../src/loop/stopwhen.js");

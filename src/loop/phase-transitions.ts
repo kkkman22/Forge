@@ -104,11 +104,7 @@ const REVIEW_DISPATCH: Record<Tier, Record<ReviewResult, Phase>> = {
  * @returns The next phase.
  * @throws {Error} If the combination is invalid or review result is missing.
  */
-export function getNextPhase(
-  currentPhase: Phase,
-  tier: Tier,
-  reviewResult?: ReviewResult,
-): Phase {
+export function getNextPhase(currentPhase: Phase, tier: Tier, reviewResult?: ReviewResult): Phase {
   // Terminal phases are idempotent
   if (currentPhase === "completed" || currentPhase === "halted") {
     return currentPhase;
@@ -117,9 +113,7 @@ export function getNextPhase(
   // Review phase requires a review result
   if (currentPhase === "review") {
     if (!reviewResult || reviewResult === "not-run") {
-      throw new Error(
-        "review phase requires a reviewResult (passed | failed-p0 | failed-p1)",
-      );
+      throw new Error("review phase requires a reviewResult (passed | failed-p0 | failed-p1)");
     }
     return REVIEW_DISPATCH[tier][reviewResult];
   }
@@ -129,9 +123,7 @@ export function getNextPhase(
   const next = tierTable[currentPhase];
 
   if (!next) {
-    throw new Error(
-      `No transition defined for phase="${currentPhase}" tier="${tier}"`,
-    );
+    throw new Error(`No transition defined for phase="${currentPhase}" tier="${tier}"`);
   }
 
   return next;

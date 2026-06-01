@@ -1,8 +1,7 @@
 import * as fc from "fast-check";
 import { describe, expect, it } from "vitest";
-
-import type { SubagentInvocation, SubagentResult } from "../../src/loop-types.js";
 import { runSubagentsInParallel, runSubagentsWithConcurrency } from "../../src/subagent-runner.js";
+import type { SubagentInvocation, SubagentResult } from "../../src/types.js";
 
 function makeInvocations(n: number): SubagentInvocation[] {
   return Array.from({ length: n }, (_, i) => ({

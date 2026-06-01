@@ -6,7 +6,7 @@
  *
  * RED: This test will fail until src/loop/phase-transitions.ts is created.
  */
-import { describe, it, expect } from "vitest";
+import { describe, expect, it } from "vitest";
 
 type Tier = "light" | "standard" | "full";
 type Phase =

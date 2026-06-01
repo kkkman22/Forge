@@ -7,7 +7,7 @@
 
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
-import type { SubagentInvocation, SubagentResult } from "../src/loop-types.js";
+import type { SubagentInvocation, SubagentResult } from "../src/types.js";
 
 // Mock the subagent-runner module
 vi.mock("../src/subagent-runner.js", () => ({
