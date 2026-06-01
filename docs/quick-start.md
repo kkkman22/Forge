@@ -3,7 +3,7 @@ title: 'Forge 快速入门指南'
 category: getting-started
 audience:
 - maintainer
-updated: '2026-05-18'
+updated: '2026-06-01'
 owner: forge-maintainers
 ---
 
@@ -13,7 +13,7 @@ owner: forge-maintainers
 
 ## 前置条件
 
-- **Claude Code** ≥ 2.1.121（推荐 ≥2.1.138）
+- **Claude Code** ≥ 2.1.153
   - 检查：`claude --version`
 - **Node.js** ≥ 20（仅 Forge Loop 需要）
   - 检查：`node --version`

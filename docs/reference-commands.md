@@ -3,7 +3,7 @@ title: 'Forge 命令速查与路由详解'
 category: reference
 audience:
 - maintainer
-updated: '2026-05-16'
+updated: '2026-06-01'
 owner: forge-maintainers
 ---
 
@@ -30,11 +30,24 @@ owner: forge-maintainers
 | `/forge resume` | 辅助 | 五问题恢复上次会话上下文，支持 `--from-pr` 跨会话恢复 | 所有 |
 | `/forge debug` | 辅助 | 四阶段结构化根因分析 | 所有 |
 | `/forge verify` | 验证 | 证据化三态验证（VERIFIED/NOT_VERIFIED/INCONCLUSIVE） | 所有 |
-| `/forge control-cli` | 辅助 | CLI 控制面板交互 | 所有 |
-| `/forge control-ui` | 辅助 | Web UI 控制面板交互 | 所有 |
-| `/forge fix-conflicts` | 辅助 | 结构化冲突修复 | 所有 |
+| `/forge accept` | 验收 | 运行场景脚本并记录验收结果 | 所有 |
+| `/forge grill` | 需求 | 苏格拉底式需求澄清，生成决策树 | 所有 |
+| `/forge storm` | 探索 | 头脑风暴，多视角发散思考 | 所有 |
 | `/forge recap` | 辅助 | 会话摘要与上下文回顾 | 所有 |
 | `/forge abort` | 辅助 | 安全中止当前任务，归档状态并重置 | 所有 |
+| `/forge zoom-out` | 辅助 | 宏观视角回顾当前任务全局 | 所有 |
+| `/forge mutate` | 辅助 | 变异测试分析 | 所有 |
+| `/forge pack` | 辅助 | Domain Pack 管理 | 所有 |
+| `/forge refactor` | 辅助 | 结构化重构 | 所有 |
+| `/forge fix` | 辅助 | 定向修复 | 所有 |
+| `/forge build-light` | 辅助 | 轻量路径构建（≤1 文件，≤20 行） | 轻量 |
+| `/forge decide-teams` | 决策 | Agent Teams 模式决策（高 token / 高质量补充） | 全量 |
+| `/forge fix-conflicts` | 辅助 | 结构化冲突修复 | 所有 |
+| `/forge control-cli` | 辅助 | CLI 控制面板交互 | 所有 |
+| `/forge control-ui` | 辅助 | Web UI 控制面板交互 | 所有 |
+| `/forge review-comment-bitbucket` | 评审 | Bitbucket PR 评论发布 | 所有 |
+| `/forge loop` | 执行 | 带工程纪律的自主循环执行 | 所有 |
+| `/forge router` | 辅助 | 路由器行为调试 | 所有 |
 
 ## 三维路由
 

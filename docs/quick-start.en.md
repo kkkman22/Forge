@@ -3,7 +3,7 @@ title: Forge Quick Start Guide
 category: getting-started
 audience:
 - maintainer
-updated: '2026-05-12'
+updated: '2026-06-01'
 owner: forge-maintainers
 ---
 
@@ -15,7 +15,7 @@ owner: forge-maintainers
 
 ## Prerequisites
 
-- **Claude Code** ≥ 2.1.121 (recommended ≥2.1.138)
+- **Claude Code** ≥ 2.1.153
   - Check: `claude --version`
 - **Node.js** ≥ 20 (only needed for Forge Loop)
   - Check: `node --version`
@@ -129,7 +129,7 @@ bash /tmp/forge/scripts/install-dist.sh
 
 **Symptom**: `/forge` returns "Unknown skill" or error.
 
-**Cause**: Claude Code version below 2.1.121, Skill system not supported.
+**Cause**: Claude Code version below 2.1.153, Skill system not supported.
 
 **Fix**:
 
