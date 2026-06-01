@@ -11,6 +11,40 @@ Entries follow [Keep a Changelog](https://keepachangelog.com/) with Forge-specif
 
 ## [Unreleased]
 
+## [3.3.0] - 2026-06-01
+
+### Added
+
+- **hooks**: register phase transition guard in settings.json
+- **hooks**: add phase transition guard and next-step protocol
+- **loop**: retire legacy loop/SDK system (Wave 3 - Tasks 3.1-3.5)
+- **loop**: rewrite loop skill instructions with native scheduling (Task 2.6)
+- **loop**: add stopWhen conditional termination (Task 2.5)
+- **loop**: add scheduling strategy with cache-aware scheduler selection (Task 2.4)
+- **loop**: add three-strike failure detection and git rollback (Task 2.3)
+- **loop**: add phase transition table with 26 tests (Task 2.2)
+- **loop**: add loop state JSON schema with validation tests (Task 2.1)
+
+### Changed
+
+- **loop**: complete loop-native-fusion spec — spike findings, smoke tests, tasks.md
+- add spec and decision docs, fix executable bit and README metrics
+- regenerate SSoT embeds after loop-native-fusion merge
+- regenerate SSoT embeds after loop-native-fusion merge
+- correct README test file count 581→580
+- sync README metrics after loop-native-fusion cleanup
+- **types**: extract core shared types from loop-types.ts to src/types.ts
+- sync README, docs/ metrics and subcommand table to project reality
+
+### Fixed
+
+- **test**: remove persistent-loop.sh from hook preservation snapshot
+- **ci**: remove stale persistent-loop.sh hook reference + rebuild dist bundles
+- **ci**: resolve typedoc warnings and remove deleted cli-flag-compat step
+- **docs**: add @file and @module to typedoc blockTags
+- **loop**: address all review P2/P3 findings
+- **loop**: correct stopWhen test file header (review P1 fix)
+
 ## [3.2.0] - 2026-05-31
 
 ### Added
