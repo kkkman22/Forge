@@ -22,3 +22,5 @@
 {"timestamp":"2026-06-01T03:52:37Z","event":"precompact_snapshot","detail":"slug=forge-loop-native-fusion phase=build completed=0 pending=0"}
 {"timestamp":"2026-06-01T05:47:32Z","event":"precompact_snapshot","detail":"slug=forge-loop-native-fusion phase=build completed=0 pending=0"}
 {"timestamp":"2026-06-01T06:02:48Z","event":"precompact_snapshot","detail":"slug=forge-loop-native-fusion phase=build completed=0 pending=0"}
+{"timestamp":"2026-06-01T06:13:23Z","event":"postcompact_restore","detail":"slug=phase-auto-advance-enforcement"}
+{"timestamp":"2026-06-01T06:13:23Z","event":"precompact_snapshot","detail":"slug=forge-loop-native-fusion phase=build completed=0 pending=0"}
