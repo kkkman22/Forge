@@ -176,11 +176,6 @@ const EXPECTED_STOP_HOOKS = [
                 type: "command",
                 command: "if [ -f .forge/progress/*.md ] 2>/dev/null; then incomplete=$(grep -c '\\- \\[ \\]' .forge/progress/*.md 2>/dev/null || echo 0); if [ \"$incomplete\" -gt 0 ]; then echo '⚠️ 仍有未完成的任务。下次会话可使用 /forge resume 恢复上下文。'; else echo '✅ 任务已完成。建议运行 /forge learn 沉淀本次开发经验。'; fi; fi",
             },
-            {
-                type: "command",
-                command: "bash scripts/persistent-loop.sh 2>/dev/null || bash forge/scripts/persistent-loop.sh 2>/dev/null || bash ~/.claude/skills/forge/scripts/persistent-loop.sh 2>/dev/null || true",
-                timeout: 5,
-            },
         ],
     },
     {
@@ -394,7 +389,6 @@ describe("Preservation: Hook structure for non-frozen hooks (property-based)", (
             "auto-resume.sh": 5,
             "evolved-rules.md": 5,
             "inject-plan-context": 5,
-            "persistent-loop.sh": 5,
             PENDING: 5,
             "sync-once.mjs": 2,
         };
@@ -420,7 +414,7 @@ describe("Preservation: Hook structure for non-frozen hooks (property-based)", (
     it("non-frozen hooks with || true fallback retain it (property-based)", () => {
         // These hooks are expected to have || true — they are non-protection hooks
         const hooksWithOrTrue = nonFrozenEntries.filter((e) => e.hook.command.trim().endsWith("|| true"));
-        // We expect at least: SessionStart auto-resume, Stop persistent-loop, plan context
+        // We expect at least: SessionStart auto-resume, Stop progress-check, plan context
         expect(hooksWithOrTrue.length).toBeGreaterThanOrEqual(3);
         const orTrueArb = fc.constantFrom(...hooksWithOrTrue);
         fc.assert(fc.property(orTrueArb, (entry) => {
