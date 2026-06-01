@@ -1,11 +1,9 @@
 /**
- * @file Scheduling strategy for the Forge Loop engine.
  *
  * Computes delay seconds based on tier and failure count, selects
  * between ScheduleWakeup (cache-warm) and CronCreate (cache-cold)
  * based on the Anthropic prompt cache 5-minute TTL boundary.
  *
- * @module loop-scheduling-strategy
  */
 import type { Tier } from "./phase-transitions.js";
 /** Scheduler method selection. */

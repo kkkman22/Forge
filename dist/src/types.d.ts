@@ -6,7 +6,6 @@
  * subagent-runner, etc.) and must be independently available regardless of the
  * loop subsystem's lifecycle.
  *
- * @module forge-types
  */
 /**
  * Cumulative token counts for a single agent invocation.
