@@ -234,6 +234,20 @@ function preflightChecks(newVersion, doTag) {
 
 function main() {
   const args = process.argv.slice(2);
+
+  if (args.includes("--help") || args.includes("-h")) {
+    console.log("Usage: node scripts/bump-version.mjs <version | patch | minor | major> [--commit] [--tag]");
+    console.log("");
+    console.log("Bump version across package.json / plugin.json, rebuild dist, optionally commit + tag + GitHub Release.");
+    console.log("");
+    console.log("Examples:");
+    console.log("  node scripts/bump-version.mjs minor                    # update version files + rebuild dist");
+    console.log("  node scripts/bump-version.mjs minor --commit           # + git commit");
+    console.log("  node scripts/bump-version.mjs minor --commit --tag     # + commit + tag + push + GitHub Release");
+    console.log("  node scripts/bump-version.mjs 3.2.0 --commit --tag     # pin exact version, one-shot release");
+    process.exit(0);
+  }
+
   const flags = args.filter((a) => a.startsWith("--"));
   const positional = args.filter((a) => !a.startsWith("--"));
 
