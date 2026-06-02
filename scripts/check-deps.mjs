@@ -54,6 +54,8 @@ const NAME_ALLOWLIST = new Set([
   "@stryker-mutator/core",
   "@stryker-mutator/vitest-runner",
   "fast-check",
+  "esbuild",
+  "glob",
   "typedoc",
   "typescript",
   "vitest",
