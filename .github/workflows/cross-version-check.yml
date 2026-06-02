@@ -25,8 +25,8 @@ jobs:
           node-version: ${{ matrix.node-version }}
           cache: npm
       - run: npm ci
-      - name: Build
-        run: npm run build 2>/dev/null || true
+      - name: Compile TypeScript
+        run: npx tsc
       - run: npm test
 
   scan-ci-logs:
