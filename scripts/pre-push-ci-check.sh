@@ -18,6 +18,25 @@
 
 set -euo pipefail
 
+case "${1:-}" in
+  -h|--help)
+    cat <<'EOF'
+Usage: bash scripts/pre-push-ci-check.sh
+
+本地 pre-push 快速检查 — 模拟 CI check job 的关键步骤，在推送前发现常见问题。
+
+检查项:
+  1. 版本一致性 (package.json vs plugin.json)
+  2. shellcheck (如可用)
+  3. JSON 有效性 (hooks.json, plugin.json, marketplace.json)
+  4. bundle completeness (hooks.json 引用的脚本在 dist 中存在)
+
+退出码: 0 = 全部通过, 1 = 有问题
+EOF
+    exit 0
+    ;;
+esac
+
 SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
 ROOT="$(cd "${SCRIPT_DIR}/.." && pwd)"
 ISSUES=0
