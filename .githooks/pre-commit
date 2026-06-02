@@ -27,10 +27,10 @@ if [ -z "$STAGED" ]; then
 fi
 
 # ── Lightweight path: no docs/ changes ──
-DOCS_CHANGED=$(echo "$STAGED" | grep -c "^docs/" || echo "0")
-CONFIG_CHANGED=$(echo "$STAGED" | grep -c "^\.forge/config\.md$" || echo "0")
-ROOT_MD_CHANGED=$(echo "$STAGED" | grep -c "^[A-Z][^.]*\.md$" || echo "0")
-SSOT_CHANGED=$(echo "$STAGED" | grep -c "^docs/_ssot/" || echo "0")
+DOCS_CHANGED=$(echo "$STAGED" | grep -c "^docs/" || true)
+CONFIG_CHANGED=$(echo "$STAGED" | grep -c "^\.forge/config\.md$" || true)
+ROOT_MD_CHANGED=$(echo "$STAGED" | grep -c "^[A-Z][^.]*\.md$" || true)
+SSOT_CHANGED=$(echo "$STAGED" | grep -c "^docs/_ssot/" || true)
 
 if [ "$DOCS_CHANGED" -eq 0 ] && [ "$CONFIG_CHANGED" -eq 0 ] && [ "$ROOT_MD_CHANGED" -eq 0 ] && [ "$SSOT_CHANGED" -eq 0 ]; then
   # Lightweight path — no docs-related changes
