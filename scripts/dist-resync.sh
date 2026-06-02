@@ -30,7 +30,8 @@ for arg in "$@"; do
   esac
 done
 
-echo "==> Cleaning .tsbuildinfo cache..."
+echo "==> Cleaning stale compiled output + .tsbuildinfo cache..."
+rm -rf dist/src dist/test dist/scripts
 rm -f .tsbuildinfo tsconfig.tsbuildinfo
 
 echo "==> Running tsc..."
