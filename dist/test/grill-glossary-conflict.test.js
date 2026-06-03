@@ -99,7 +99,11 @@ describe("checkGrillGlossaryConflicts", () => {
 // ---------------------------------------------------------------------------
 describe("renderGrillConflictPrompt", () => {
     it("returns an empty string when there are no conflicts", () => {
-        expect(renderGrillConflictPrompt({ hasConflict: false, conflictingTerms: [] })).toBe("");
+        expect(renderGrillConflictPrompt({
+            hasConflict: false,
+            conflictingTerms: [],
+            extendedConflicts: [],
+        })).toBe("");
     });
     it("renders a non-empty clarification prompt when conflicts are present", () => {
         const base = generateDecisionTree("Rework the audit pipeline to use Event Sourcing.", GLOSSARY_WITH_EVENT_SOURCING, FIXED_NOW);
@@ -126,6 +130,7 @@ describe("renderGrillConflictPrompt", () => {
                     reason: "same_term_different_definition",
                 },
             ],
+            extendedConflicts: [],
         });
         const lines = prompt.split("\n");
         expect(lines[0]).toBe("⚠️ Grill glossary conflict detected (2):");

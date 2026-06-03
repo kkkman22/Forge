@@ -77,6 +77,39 @@ Skill 启动时先展示与当前任务最相关的历史 ADR，帮助用户感�
 
 使用 Agent tool 独立启动视角 Subagent，无需创建 Agent Team。
 
+### Round 0 — Proactive Grill (条件触发)
+
+在 Round 1 之前，根据条件判断是否主动触发一轮轻量 inline grill，帮助用户澄清模糊需求。
+
+**触发条件**（满足任一即触发）：
+1. `tier === "full"` 且用户任务描述 ≤ 50 字（模糊描述）
+2. 用户任务描述中存在 3+ 个 glossary 未定义的术语
+3. 用户主动说 "grill me" / "帮我理清思路" / "再挖深点"
+4. decide 首次运行（无历史 decision 文档）
+
+**不触发**（跳过 Round 0，直接进入 Round 1）：
+- `tier === "standard"` 或 `tier === "light"`
+- 用户任务描述 ≥ 50 字且术语清晰
+- 已有完整 grill findings（`.forge/findings/grill-<topic>.md` 存在且 `isComplete` 为 true）
+
+**触发后的行为**：
+
+调用 `/forge grill` 的 inline mode（不 spawn 独立 skill），限制为 3-5 个核心问题（而非完整 5 类决策树），聚焦：
+1. 要解决什么问题（functionality 类）
+2. 边界在哪（boundary 类）
+3. 有什么假设（assumption 类）
+
+Round 0 完成后，将 grill findings 注入 Round 1 所有 subagent 的上下文，避免视角重复提问。
+
+**用户控制**：Round 0 触发时输出：
+```
+🔍 需求描述较为模糊，建议先做 3-5 个快速澄清问题。跳过？[y/N]
+```
+
+**约束**：Round 0 每个问题限时 30 秒（interactive 模式），超时自动采用 AI 推荐答案。总 Round 0 时长 ≤ 5 分钟。
+
+**与 §2.7 No Confirmation Between Steps 的关系**：Round 0 的 "跳过？[y/N]" 是 Round 0 唯一的用户交互点。一旦用户选择不跳过，后续 3-5 个问题连续执行不停顿。这符合 §2.7（"唯一可停"包括用户控制入口）。
+
 ### Round 1 — Perspective Subagents (Parallel Launch)
 
 **Spec Context Filter**: 当搜索 `.kiro/specs/` 中的相关 spec 时，过滤以下条目：
@@ -138,14 +171,24 @@ Skill 启动时先展示与当前任务最相关的历史 ADR，帮助用户感�
 
 After Round 2 Critic output:
 
-1. If Critic flags `disagreement_kind: "requirement_side"`:
+**增强后的触发条件**（满足任一即触发）：
+
+1. （现有）Critic 标记 `disagreement_kind: "requirement_side"`：
    - Call `shouldTriggerInlineGrill({ mode, reason: "decide_requirement_disagreement", alreadyTriggered })`
    - `trigger: true` (interactive): Render `renderInlineGrillConfirmPrompt("decide_requirement_disagreement")`, await user confirmation, run inline grill loop with subset of decision categories (functionality / boundary / non_goal only), inject via `formatInlineGrillInjection(result, "decide")` → re-run Round 1 for affected perspectives only
    - `trigger: false` (autonomous): Render `renderInlineGrillAdvisory("decide_requirement_disagreement")`, write advisory to decision document §否决记录
-2. If user expresses hesitation 3 consecutive times + requirement_side disagreement detected:
-   - **grill takes priority over zoom-out** (grill resolves root cause: unclear requirements)
-3. If user expresses hesitation 3 consecutive times + only technical_side disagreement:
-   - **zoom-out takes priority** (positional issue, not requirements)
+2. （新增）Round 1 所有视角输出中，术语使用不一致（≥2 个视角对同一概念用了不同术语）：
+   - 聚焦术语对齐，inline grill 仅使用 terminology 类问题
+   - 澄清后注入 Round 1 重新评估受影响视角
+3. （新增）Round 1 视角输出的核心结论存在直接矛盾（如 product 说 "必须支持离线" 但 architect 说 "需要实时网络"）：
+   - 聚焦矛盾点，inline grill 使用 functionality + boundary 类问题
+   - 解决后注入 Round 1 重新评估矛盾相关视角
+
+**Hesitation 交互优先级**（不变）：
+- If user expresses hesitation 3 consecutive times + requirement_side disagreement detected:
+  - **grill takes priority over zoom-out** (grill resolves root cause: unclear requirements)
+- If user expresses hesitation 3 consecutive times + only technical_side disagreement:
+  - **zoom-out takes priority** (positional issue, not requirements)
 
 **Constraints**:
 - Technical-side disagreement does NOT trigger inline grill (handled by critic needs_revision)
@@ -155,7 +198,7 @@ After Round 2 Critic output:
 
 ## 3. Four-Perspective Evaluation
 
-四视角输出格式（product / architect / security / designer）、Glossary alignment check（内部使用 `runGlossaryCheck({ phase: 'decide' })`）、UI 触发判定信号：
+四视角输出格式（product / architect / security / designer）、Glossary alignment check（内部使用 `runGlossaryCheck({ phase: 'decide' })`，检测同义词、禁用词、语义矛盾、关系验证 4 种冲突类型）、UI 触发判定信号：
 
 → 详见 references/perspective-formats.md
 
@@ -201,6 +244,8 @@ Output path: `.forge/decisions/<YYYY-MM-DD>-<topic>.md`。YAML frontmatter + 六
 ## 6. Token Control
 
 每个角色的输出**严格限制在 500 tokens 以内**。超出时截断并提示精简。
+
+**例外**：architect 视角触发 Design It Twice（多方案并行设计）时，输出限制提升至 **800 tokens**。详见 `.claude/agents/architect.md` §Design It Twice。
 
 ## Workflow Dispatch (R1)
 

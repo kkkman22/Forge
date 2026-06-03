@@ -102,3 +102,83 @@ RED Evidence:
 |------|------|
 | "这个功能后续会大改，现在写测试以后也要改" | 测试是规格不是实现。好的测试描述行为，实现变更时测试不应大改——如果你的测试和实现耦合太紧，说明测试写错了层面 |
 | "这只是临时方案，不值得写测试" | 临时方案有三个问题：它不会临时、它会变成基础、后来者不知道它是临时的。测试至少能让"临时"的行为显式化 |
+
+## 5. Anti-Pattern: Horizontal Slicing
+
+**定义**：先写多个/全部测试（全 RED），再写多个/全部实现（全 GREEN）。
+
+**为什么是垃圾**：
+1. 测试写在没有实现的时候，测的是**你猜的行为**不是**实际的行为**
+2. 你会测数据结构和函数签名的"形状"，而不是用户可观察的行为
+3. 测试与实现耦合——重构时测试会挂，但行为没变
+4. 你在理解实现之前就锁定了测试结构——outrun your headlights
+
+**正确做法**：Vertical Slice（Tracer Bullet）。一个测试 → 一个实现 → 重复。
+每个测试响应上一轮你从实现中学到的东西。
+
+**检测信号**（build agent 自检）：
+- RED 阶段写了 2+ 个测试文件而 GREEN 阶段还没开始 → 🚫 Horizontal
+- 测试名称描述的是实现（"calls paymentService.process"）而非行为
+  （"user can checkout"）→ 🚫 Implementation-coupled
+- GREEN 阶段写的代码没有被任何 RED 测试覆盖 → 🚫 Test-after
+
+## 6. Good vs Bad Tests
+
+### Good Tests — 集成风格
+
+- 通过 **public interface** 测试 **observable behavior**
+- 描述 WHAT 系统做什么，不描述 HOW
+- 重构内部结构时测试不需要改
+- 一个测试 = 一个逻辑断言
+- 测试名读起来像规格："user can checkout with valid cart"
+
+```typescript
+// GOOD: 测试可观察的行为
+test("user can checkout with valid cart", async () => {
+  const cart = createCart();
+  cart.add(product);
+  const result = await checkout(cart, paymentMethod);
+  expect(result.status).toBe("confirmed");
+});
+```
+
+### Bad Tests — 实现细节耦合
+
+- Mock 内部协作方
+- 测试私有方法
+- 断言调用次数/顺序
+- 重构时测试挂但行为没变
+- 测试名描述 HOW 不是 WHAT
+- 绕过 interface 直接验证（如查 DB 而非用 getUser）
+
+```typescript
+// BAD: 测试实现细节
+test("checkout calls paymentService.process", async () => {
+  const mockPayment = jest.mock(paymentService);
+  await checkout(cart, payment);
+  expect(mockPayment.process).toHaveBeenCalledWith(cart.total);
+});
+
+// BAD: 绕过 interface 验证
+test("createUser saves to database", async () => {
+  await createUser({ name: "Alice" });
+  const row = await db.query("SELECT * FROM users WHERE name = ?", ["Alice"]);
+  expect(row).toBeDefined();
+});
+
+// GOOD: 通过 interface 验证
+test("createUser makes user retrievable", async () => {
+  const user = await createUser({ name: "Alice" });
+  const retrieved = await getUser(user.id);
+  expect(retrieved.name).toBe("Alice");
+});
+```
+
+### 判断规则
+
+| 信号 | 判定 |
+|------|------|
+| 重构后测试挂了但行为没变 | 🚫 测试耦合了实现 |
+| 测试名有 "calls"、"invokes"、"mocks" | 🚫 测的是调用而非结果 |
+| 测试直接查 DB/文件系统而非用 public API | 🚫 绕过 interface |
+| 改了一个内部函数名测试就挂 | 🚫 测了私有实现 |

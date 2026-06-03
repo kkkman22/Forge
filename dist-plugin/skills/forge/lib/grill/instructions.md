@@ -48,6 +48,14 @@ allowed_tools:
 - Questions answerable from the codebase must be resolved via explore subagent rather than asked of the user
 - Every answer application must produce a new tree (immutable, original unchanged)
 - Glossary conflicts must be detected after each answer and surfaced to the user for clarification before continuing（内部使用 `runGlossaryCheck({ phase: 'grill' })`）
+- 术语澄清时**立即更新** `.forge/glossary.md`，不要批量累积。
+  当 grill 过程中：
+  - 用户使用了一个不在 glossary 中的新术语 → 追加新条目（来源: grill）
+  - 用户澄清了一个模糊术语 → 更新该条目的定义
+  - 用户否定了某个同义词 → 追加 **避免** 字段
+  - 发现两个术语的边界不清晰 → 追加 **歧义记录**
+  - 揭示了术语间的新关系 → 追加 **关系** 字段
+  不要耦合到实现细节——只包含对领域专家有意义的术语。
 - Loop terminates only when all nodes are non-pending
 - User may accept AI suggestions, override answers, request deeper probing, or skip nodes
 
@@ -78,7 +86,10 @@ Four fixed sections produced by `renderGrillFindings`:
 2. `## Decision Tree` — 嵌套列表，每行 `- [STATUS] <category>/<id>: <question>`，`userAnswer` 缩进为 `Answer: ...`
 3. `## Q&A Pairs` — 仅 `resolved` 节点，`- Q: <question>` / `  A: <userAnswer>`；无则 `none`
 4. `## Alignment Summary` — 调用方产出的对齐摘要；空则 `none`
-5. `## New Glossary Candidates` — `- <term> (<frequency>)`；无则 `none`（供 forge-learn 阶段回写 glossary）
+5. `## Glossary Updates` — 本次 grill 期间对 glossary 的变更列表
+   - `+ <新术语>` / `~ <更新术语>` / `! <歧义记录>`
+   无变更则 `none`
+6. `## New Glossary Candidates` — `- <term> (<frequency>)`；无则 `none`（供 forge-learn 阶段回写 glossary）
 
 → 决策树格式规范详见 references/decision-tree-format.md
 → 问题生成策略详见 references/question-strategies.md
