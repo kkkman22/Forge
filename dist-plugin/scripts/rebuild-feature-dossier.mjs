@@ -163,9 +163,9 @@ function findForgeRoot() {
 // Main dispatch
 // ---------------------------------------------------------------------------
 
-if (args[0] === "--from-path") {
+if (args[0] === "--from-path" || process.env.TOOL_INPUT_FILE) {
 	// Hook mode: derive topic from path, rebuild silently
-	const inputPath = args[1];
+	const inputPath = process.env.TOOL_INPUT_FILE || args[1];
 	if (!inputPath) {
 		process.exit(0);
 	}

@@ -45,14 +45,12 @@ describe("Contract: hooks.json structural completeness", () => {
                 });
                 for (let hi = 0; hi < group.hooks.length; hi++) {
                     const handler = group.hooks[hi];
-                    it(`matcher group [${gi}] hook [${hi}] has required 'type' field`, () => {
-                        expect(handler.type, `${eventName}[${gi}].hooks[${hi}] missing 'type' field`).toBeDefined();
-                        expect(typeof handler.type).toBe("string");
-                    });
-                    it(`matcher group [${gi}] hook [${hi}] has required 'command' field`, () => {
-                        expect(handler.command, `${eventName}[${gi}].hooks[${hi}] missing 'command' field`).toBeDefined();
-                        expect(typeof handler.command).toBe("string");
-                        expect(handler.command?.length).toBeGreaterThan(0);
+                    it(`matcher group [${gi}] hook [${hi}] has valid format (command or args)`, () => {
+                        const isCommand = handler.type === "command" &&
+                            typeof handler.command === "string" &&
+                            handler.command.length > 0;
+                        const isArgs = Array.isArray(handler.args) && handler.args.length > 0;
+                        expect(isCommand || isArgs, `${eventName}[${gi}].hooks[${hi}] must have either {type:"command", command} or {args[]}`).toBe(true);
                     });
                 }
             }
