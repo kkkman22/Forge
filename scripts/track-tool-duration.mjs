@@ -60,6 +60,27 @@ function extractDuration(toolInput) {
   return null;
 }
 
+/**
+ * Parse OTEL_RESOURCE_ATTRIBUTES (W3C Baggage-style "k=v,k=v") into an object,
+ * so local duration metrics can be sliced by custom dimensions (e.g. forge.tier,
+ * forge.phase, forge.command) — mirrors Claude Code 2.1.161 attaching these
+ * values as labels on metric datapoints. Returns null when unset/empty.
+ * Fail-open: malformed pairs are skipped.
+ */
+function parseResourceAttributes() {
+  const raw = process.env.OTEL_RESOURCE_ATTRIBUTES;
+  if (!raw) return null;
+  const out = {};
+  for (const pair of raw.split(",")) {
+    const eq = pair.indexOf("=");
+    if (eq <= 0) continue;
+    const key = pair.slice(0, eq).trim();
+    const value = pair.slice(eq + 1).trim();
+    if (key) out[key] = value;
+  }
+  return Object.keys(out).length > 0 ? out : null;
+}
+
 // ---------------------------------------------------------------------------
 // Main
 // ---------------------------------------------------------------------------
@@ -104,6 +125,7 @@ async function main() {
       duration_ms: durationMs,
       agent_id: toolInput.agent_id || null,
       parent_agent_id: toolInput.parent_agent_id || null,
+      resource_attributes: parseResourceAttributes(),
     };
 
     // Ensure .forge/runs/ exists
