@@ -17,7 +17,7 @@ const hooksFile = JSON.parse(readFileSync(hooksPath, "utf-8"));
 // The hooks structure: { hooks: { EventName: [ { matcher?: string, hooks: [ { type, command?, timeout? } ] } ] } }
 const hooksMap = hooksFile.hooks as Record<
   string,
-  Array<{ matcher?: string; hooks: Array<{ type: string; command?: string; timeout?: number }> }>
+  Array<{ matcher?: string; hooks: Array<{ type: string; command?: string; args?: string[]; timeout?: number }> }>
 >;
 
 /** Known Claude Code tool names that can appear in matcher fields */
