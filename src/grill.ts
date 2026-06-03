@@ -608,6 +608,24 @@ function renderQAPairs(nodes: DecisionTreeNode[]): string[] {
  * shared glossary.
  *
  * Fields:
+ *   - `type`:      conflict category — one of `synonym` (existing),
+ *                  `avoided_term`, `semantic_mismatch`, or `relation_violation`
+ *   - `term`:      the surface term that triggered the conflict
+ *   - `detail`:    human-readable explanation of why this is a conflict
+ *   - `suggestion`: recommended action for the user
+ */
+export interface GlossaryConflict {
+  type: "synonym" | "avoided_term" | "semantic_mismatch" | "relation_violation";
+  term: string;
+  detail: string;
+  suggestion: string;
+}
+
+/**
+ * A single conflict surfaced while checking grill answers against the
+ * shared glossary.
+ *
+ * Fields:
  *   - `candidate`: the surface term extracted from grill text (tree
  *                  description, questions, or `userAnswer`)
  *   - `existing`:  the glossary entry that clashes with the candidate
@@ -622,6 +640,8 @@ export interface GrillConflictCheckResult {
     existing: GlossaryTerm;
     reason: "same_term_different_definition" | "same_alias_different_term";
   }>;
+  /** Extended conflicts from avoided-term, semantic-mismatch, and relation-violation checks */
+  extendedConflicts: GlossaryConflict[];
 }
 
 /**
@@ -669,18 +689,138 @@ export function checkGrillGlossaryConflicts(
     now,
     alreadyChecked: new Set(),
   });
+
+  const baseConflicts = result.conflicts
+    .filter((c): c is typeof c & { reason: NonNullable<typeof c.reason> } => c.reason !== undefined)
+    .map((c) => ({
+      candidate: c.candidate,
+      existing: c.existing,
+      reason: c.reason,
+    }));
+
+  // --- Extended conflict detection (Task 3.2) ---
+  const extendedConflicts: GlossaryConflict[] = [];
+  const treeText = collectTreeText(tree).toLowerCase();
+
+  // 1. Avoided-term detection: check if user/agent output uses terms in
+  //    the **避免** (avoided_terms) field of any glossary entry.
+  for (const term of glossary.terms) {
+    if (term.avoided_terms === undefined) continue;
+    for (const avoided of term.avoided_terms) {
+      // Extract the avoided synonym: the text before any parenthetical explanation
+      const synonymPart = avoided.split(/[（(]/)[0].trim().toLowerCase();
+      if (synonymPart.length > 0 && treeText.includes(synonymPart)) {
+        extendedConflicts.push({
+          type: "avoided_term",
+          term: synonymPart,
+          detail: `"${synonymPart}" is listed as an avoided term for "${term.term}": ${avoided}`,
+          suggestion: `Use "${term.term}" instead of "${synonymPart}".`,
+        });
+      }
+    }
+  }
+
+  // 2. Semantic mismatch detection: if user's description of a term
+  //    significantly differs from its glossary definition.
+  for (const term of glossary.terms) {
+    const canonicalLower = term.term.toLowerCase();
+    // Look for the canonical term name in user answers
+    if (!treeText.includes(canonicalLower)) continue;
+    // Collect resolved user answers that mention this term
+    const relevantAnswers = collectAnswersMentioningTerm(tree, canonicalLower);
+    for (const answer of relevantAnswers) {
+      const answerLower = answer.toLowerCase();
+      // Heuristic: if the answer contains the term but contradicts the definition
+      // by describing a fundamentally different concept
+      const defKeywords = term.definition
+        .split(/[，,。.、：:；;（(）)\s]+/)
+        .filter((w) => w.length >= 2)
+        .map((w) => w.toLowerCase());
+      const answerWords = answerLower.split(/\s+/);
+      const hasDefOverlap = answerWords.some((w) => defKeywords.includes(w));
+      // If the answer mentions the term but has zero overlap with definition keywords,
+      // it may be a semantic mismatch
+      if (!hasDefOverlap && answerLower.length > canonicalLower.length + 5) {
+        // Check if the answer seems to be *about* the term (not just mentioning it)
+        const aboutPatterns = [
+          `${canonicalLower} is`,
+          `${canonicalLower}是`,
+          `${canonicalLower} means`,
+        ];
+        const isAboutTerm = aboutPatterns.some((p) => answerLower.includes(p));
+        if (isAboutTerm) {
+          extendedConflicts.push({
+            type: "semantic_mismatch",
+            term: term.term,
+            detail: `Your glossary defines "${term.term}" as "${term.definition}", but the answer seems to describe something different: "${answer.slice(0, 100)}"`,
+            suggestion: `Clarify: does your answer match the glossary definition of "${term.term}"? If not, consider updating the glossary.`,
+          });
+        }
+      }
+    }
+  }
+
+  // 3. Relation violation detection: if user describes term relationships
+  //    that contradict the **关系** field.
+  for (const term of glossary.terms) {
+    if (term.relations === undefined) continue;
+    const canonicalLower = term.term.toLowerCase();
+    if (!treeText.includes(canonicalLower)) continue;
+    // Check if user answers describe a contradictory relationship
+    const relevantAnswers = collectAnswersMentioningTerm(tree, canonicalLower);
+    for (const answer of relevantAnswers) {
+      const answerLower = answer.toLowerCase();
+      for (const relation of term.relations) {
+        // Extract the target term from relation: "→ <term>: <desc>"
+        const relationMatch = relation.match(/[→>]\s*(\S+)/);
+        if (relationMatch === null) continue;
+        const targetTerm = relationMatch[1].replace(/:$/, "").toLowerCase();
+        // If the answer mentions the target term with a contradictory
+        // direction (e.g., "B is parent of A" when relation says "A → B")
+        const contradictionPattern = `${targetTerm}.*${canonicalLower}`;
+        const relationSays = `${canonicalLower}.*${targetTerm}`;
+        if (
+          answerLower.includes(targetTerm) &&
+          new RegExp(contradictionPattern).test(answerLower) &&
+          !new RegExp(relationSays).test(answerLower)
+        ) {
+          extendedConflicts.push({
+            type: "relation_violation",
+            term: term.term,
+            detail: `Glossary says "${relation}", but the answer suggests the reverse: "${answer.slice(0, 100)}"`,
+            suggestion: `Verify the relationship between "${term.term}" and "${targetTerm}" matches the glossary.`,
+          });
+        }
+      }
+    }
+  }
+
   return {
-    hasConflict: result.hasConflict,
-    conflictingTerms: result.conflicts
-      .filter(
-        (c): c is typeof c & { reason: NonNullable<typeof c.reason> } => c.reason !== undefined,
-      )
-      .map((c) => ({
-        candidate: c.candidate,
-        existing: c.existing,
-        reason: c.reason,
-      })),
+    hasConflict: result.hasConflict || extendedConflicts.length > 0,
+    conflictingTerms: baseConflicts,
+    extendedConflicts,
   };
+}
+
+/**
+ * Collect all resolved user answers from a decision tree that mention the
+ * given term (case-insensitive). Returns the raw answer strings for
+ * downstream heuristic analysis.
+ */
+function collectAnswersMentioningTerm(tree: DecisionTree, termLower: string): string[] {
+  const answers: string[] = [];
+  const visit = (node: DecisionTreeNode): void => {
+    if (
+      node.status === "resolved" &&
+      node.userAnswer !== undefined &&
+      node.userAnswer.toLowerCase().includes(termLower)
+    ) {
+      answers.push(node.userAnswer);
+    }
+    for (const child of node.children) visit(child);
+  };
+  for (const root of tree.nodes) visit(root);
+  return answers;
 }
 
 /**
@@ -699,16 +839,42 @@ export function checkGrillGlossaryConflicts(
  *   请澄清：保留现有 / 替换现有 / 新增别名
  */
 export function renderGrillConflictPrompt(result: GrillConflictCheckResult): string {
-  if (!result.hasConflict || result.conflictingTerms.length === 0) return "";
+  if (!result.hasConflict) return "";
+  if (result.conflictingTerms.length === 0 && result.extendedConflicts.length === 0) return "";
 
   const lines: string[] = [];
-  lines.push(`⚠️ Grill glossary conflict detected (${result.conflictingTerms.length}):`);
+  const totalConflicts = result.conflictingTerms.length + result.extendedConflicts.length;
+  lines.push(`⚠️ Grill glossary conflict detected (${totalConflicts}):`);
+
+  // Render synonym conflicts (original)
   for (const conflict of result.conflictingTerms) {
     lines.push(
       `  - "${conflict.candidate}" vs "${conflict.existing.term}": ${conflict.existing.definition}`,
     );
   }
-  lines.push("请澄清：保留现有 / 替换现有 / 新增别名");
+
+  // Render extended conflicts by type
+  for (const conflict of result.extendedConflicts) {
+    switch (conflict.type) {
+      case "avoided_term":
+        lines.push(`  - 🚫 Avoided term: ${conflict.detail}`);
+        lines.push(`    → ${conflict.suggestion}`);
+        break;
+      case "semantic_mismatch":
+        lines.push(`  - ⚡ Semantic mismatch: ${conflict.detail}`);
+        lines.push(`    → ${conflict.suggestion}`);
+        break;
+      case "relation_violation":
+        lines.push(`  - 🔗 Relation violation: ${conflict.detail}`);
+        lines.push(`    → ${conflict.suggestion}`);
+        break;
+    }
+  }
+
+  if (result.conflictingTerms.length > 0) {
+    lines.push("请澄清：保留现有 / 替换现有 / 新增别名");
+  }
+
   return lines.join("\n");
 }
 

@@ -29,13 +29,15 @@
 
 <important if="executing /forge build or /forge plan">
 <IRON-LAW name="tdd-delete-and-restart">所有实现任务必须遵循 **RED → GREEN → REFACTOR** 循环。**铁律**：如果发现代码先于测试编写——删除代码，从测试开始。</IRON-LAW> → 详见 docs/forge-constitution-detail.md §2.1
+
+### 2.1.1 Vertical Slice Only（铁律）
+每个 TDD 周期必须是一个 **Vertical Slice**：一条测试 → 一段实现 → 重复。禁止 Horizontal Slicing（先写全部测试再写全部实现）。垂直切片让每个测试响应上一轮的实际实现，测试描述的是"代码做了什么"而非"我想让它做什么"。详见 `.forge/glossary.md`。
 </important>
 
 ### 2.2 Pre-build Checks
 
 标准和全量路径下，`/forge build` 启动前必须通过三道门禁：Spec 锁定、Plan 批准、分支隔离。分支隔离门禁：每个功能在其对应的 feature 分支上开发，工作树不干净时阻断。
 → 详见 docs/forge-constitution-detail.md §2.2
-
 ### 2.3 Verification Iron Law
 
 <important if="completing any implementation task">
@@ -66,15 +68,14 @@ build 阶段主 Agent 必须执行周期性 Restatement Checkpoint：每完成 N
 禁止操作预告、自我对话、逐步解说。保留所有 Forge 结构化输出。Decision_Point 允许 `[原因] → [选择] → [依据]`。非决策点散文 ≤200 tokens。结构化输出豁免清单、禁止模式表、详细示例 → 详见 docs/forge-constitution-detail.md §2.6
 
 ### 2.8 Scripts as Black Box（铁律）
-> **原则**：scripts/ 中 user-facing 脚本必须先 `--help` 再调用。未尝试 `--help` 前不得 cat 源码。internal-only / one-off（记录在 `scripts/.help-exempt`）无此约束。需修改时允许读源码。→ 详见 docs/forge-constitution-detail.md §2.8
+> scripts/ 中 user-facing 脚本必须先 `--help` 再调用。未尝试 `--help` 前不得 cat 源码。internal-only（记录在 `scripts/.help-exempt`）无此约束。需修改时允许读源码。→ 详见 docs/forge-constitution-detail.md §2.8
 
 ---
 
 ## 3. Review Discipline
 
 ### 3.1 Execution-Assessment Separation
-
-写代码的 Agent 不评审自己的代码。`/forge review` 使用独立 Subagent（spec-check、quality-check、security-check）。评审者只对照 Spec 和代码质量标准。且**不允许**主 Agent 在 subagent 全部失败后自行顶替评审。Subagent 不可用时按 `forge-review` SKILL §2.5 fallback ladder 处理（L0→L1→L2→L3），L3 阻断 ship。详见 ADR `.forge/decisions/2026-05-18-review-fallback-ladder.md`。
+写代码的 Agent 不评审自己的代码。`/forge review` 使用独立 Subagent。评审者只对照 Spec 和代码质量标准。**不允许**主 Agent 顶替评审。Subagent 不可用时按 fallback ladder 处理（L0→L1→L2→L3），L3 阻断 ship。详见 `.forge/decisions/2026-05-18-review-fallback-ladder.md`。
 
 ### 3.2 Three-Layer Review
 
@@ -133,7 +134,7 @@ build 阶段主 Agent 必须执行周期性 Restatement Checkpoint：每完成 N
 
 每个 `/forge` 命令调用构成 Session_Boundary。阶段间上下文交接通过 `.forge/` 目录文件系统进行，而非对话历史。建议 `/forge` 命令之间开启新会话。
 
-**Subagent 隔离**：每个 Subagent 有独立上下文。**会话恢复**：`/forge resume` 从 `.forge/progress/` 和 `.forge/knowledge/sessions/` 读取。**并发控制**：`max_parallel_agents` 默认 6。HTTP 429 降级：第 1 次并发减半 → 第 2 次降至 2 → 第 3 次串行。降级记录到 `.forge/knowledge/tool-health.md`。新会话重置并发数。**上下文预算阈值（强制）**：Read 累积 >100KB → ⚠️ 建议 `/clear`；>150KB → ⛔ **必须** `/clear + /forge resume`。追踪：`track-read-budget.mjs`。详见 `references/context-budget.md`。<important if="context exceeds 100k tokens or session runs long">上下文超 100K tokens 时，考虑 `/clear` + `/forge resume`。`.forge/` 目录在会话间传递状态。</important>
+**Subagent 隔离**：每个 Subagent 有独立上下文。**会话恢复**：`/forge resume` 从 `.forge/progress/` 和 `.forge/knowledge/sessions/` 读取。**并发控制**：`max_parallel_agents` 默认 6。HTTP 429 降级：减半 → 降至 2 → 串行。**上下文预算（强制）**：Read >100KB → ⚠️ `/clear`；>150KB → ⛔ `/clear + /forge resume`。<important if="context exceeds 100k tokens or session runs long">上下文超 100K tokens 时，考虑 `/clear` + `/forge resume`。`.forge/` 目录在会话间传递状态。</important>
 
 ---
 
@@ -143,7 +144,7 @@ build 阶段主 Agent 必须执行周期性 Restatement Checkpoint：每完成 N
 
 ## Subagent 并行执行配置
 
-`/forge decide` 和 `/forge review` **默认**使用独立 Subagent（Agent tool）。Agent Teams 为 ROADMAP「Agent Teams 分层 adoption」定义的**可选 Tier-1 模式**——仅当终端支持 split-pane、任务为 full-tier、单会话可在 20 分钟内完成、token 预算允许 5x 等约束**全部满足**时，作为 `/forge decide` 的高 token / 高质量补充启用（非默认、不替换 Subagent；对应 `decide-teams` 子命令）。Subagent 类型引用 `.claude/agents/`。
+`/forge decide` 和 `/forge review` **默认**使用独立 Subagent（Agent tool）。Agent Teams 为可选 Tier-1 模式（`decide-teams` 子命令）。Subagent 类型引用 `.claude/agents/`。详见 `.claude/rules/workflow-fallback-ladder.md`。
 
-- **decide**: product、architect、security（+ designer UI 时）。两轮：Round 1 并行输出，Round 2 Critic 交叉审视。
-- **review**: spec-check、quality-check、security-check 并行。轻量模式省略 spec-check。
+- **decide**: product、architect、security（+ designer UI 时）。两轮：Round 1 并行，Round 2 Critic 交叉审视。
+- **review**: spec-check、quality-check、security-check 并行。轻量模式省略 spec-check。# test

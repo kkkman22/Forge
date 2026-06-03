@@ -151,7 +151,13 @@ describe("checkGrillGlossaryConflicts", () => {
 
 describe("renderGrillConflictPrompt", () => {
   it("returns an empty string when there are no conflicts", () => {
-    expect(renderGrillConflictPrompt({ hasConflict: false, conflictingTerms: [] })).toBe("");
+    expect(
+      renderGrillConflictPrompt({
+        hasConflict: false,
+        conflictingTerms: [],
+        extendedConflicts: [],
+      }),
+    ).toBe("");
   });
 
   it("renders a non-empty clarification prompt when conflicts are present", () => {
@@ -191,6 +197,7 @@ describe("renderGrillConflictPrompt", () => {
           reason: "same_term_different_definition",
         },
       ],
+      extendedConflicts: [],
     });
 
     const lines = prompt.split("\n");

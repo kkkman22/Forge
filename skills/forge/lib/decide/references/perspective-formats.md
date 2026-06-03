@@ -4,7 +4,7 @@
 
 ## 3.0 Glossary alignment check
 
-Round 1 启动前，如用户提案中含新术语，调用 `checkDecideGlossaryConflicts(candidateTerms, glossary)`。如返回非空冲突，暂停 Round 1 并用 `renderDecideGlossaryConflictPrompt` 输出澄清提示。用户选择保留/替换/新增别名后继续。
+Round 1 启动前，如用户提案中含新术语，调用 `checkDecideGlossaryConflicts(candidateTerms, glossary)`。如返回非空冲突（含同义词、禁用词、语义矛盾、关系验证 4 种类型），暂停 Round 1 并用 `renderDecideGlossaryConflictPrompt` 输出澄清提示。用户选择保留/替换/新增别名后继续。
 
 ## 3.1 Product Perspective (product.md)
 

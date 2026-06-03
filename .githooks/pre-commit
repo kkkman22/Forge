@@ -46,23 +46,45 @@ run_checker() {
   label="$1"
   shift
   timeout_s="${CHECKER_TIMEOUT:-30}"
+
+  # macOS compatibility: use gtimeout (coreutils) or plain exec if no timeout available
+  if command -v timeout >/dev/null 2>&1; then
+    run_cmd="timeout $timeout_s"
+  elif command -v gtimeout >/dev/null 2>&1; then
+    run_cmd="gtimeout $timeout_s"
+  else
+    run_cmd=""
+  fi
+
   if [ -n "$IN_GRACE" ]; then
     # Grace period: downgrade errors to warnings
-    output=$(timeout "$timeout_s" "$@" 2>&1) && rc=$? || rc=$?
-    if [ "$rc" -eq 124 ]; then
-      echo "  ⚠️  $label: timed out after ${timeout_s}s (grace period — not blocking)"
-    elif [ "$rc" -ne 0 ]; then
+    if [ -n "$run_cmd" ]; then
+      output=$($run_cmd "$@" 2>&1) && rc=$? || rc=$?
+      if [ "$rc" -eq 124 ]; then
+        echo "  ⚠️  $label: timed out after ${timeout_s}s (grace period — not blocking)"
+        return 0
+      fi
+    else
+      output=$("$@" 2>&1) && rc=$? || rc=$?
+    fi
+    if [ "$rc" -ne 0 ]; then
       echo "  ⚠️  $label: issues found (grace period — not blocking)"
       echo "$output" | head -5
     else
       echo "  ✅ $label: clean"
     fi
   else
-    output=$(timeout "$timeout_s" "$@" 2>&1) && rc=$? || rc=$?
-    if [ "$rc" -eq 124 ]; then
-      echo "  ❌ $label: timed out after ${timeout_s}s"
-      FAILED=1
-    elif [ "$rc" -ne 0 ]; then
+    if [ -n "$run_cmd" ]; then
+      output=$($run_cmd "$@" 2>&1) && rc=$? || rc=$?
+      if [ "$rc" -eq 124 ]; then
+        echo "  ❌ $label: timed out after ${timeout_s}s"
+        FAILED=1
+        return 0
+      fi
+    else
+      output=$("$@" 2>&1) && rc=$? || rc=$?
+    fi
+    if [ "$rc" -ne 0 ]; then
       echo "  ❌ $label: failed"
       echo "$output"
       FAILED=1
