@@ -5,6 +5,10 @@ dispatch_mode: fork
 allowed_tools:
   - Read
   - Bash
+  - Glob
+  - Grep
+  - Skill
+  - Agent
   - ScheduleWakeup
   - CronCreate
   - CronDelete
