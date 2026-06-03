@@ -50,9 +50,12 @@
       {
         "hooks": [
           {
-            "type": "command",
-            "command": "node scripts/cmux-mirror/sync-once.mjs .forge 2>/dev/null || true",
-            "timeout": 2
+            "timeout": 5,
+            "args": [
+              "node",
+              "scripts/cmux-mirror/sync-once.mjs",
+              ".forge"
+            ]
           }
         ]
       }
@@ -158,9 +161,12 @@
         "if": "Write(.forge/**)|Edit(.forge/**)",
         "hooks": [
           {
-            "type": "command",
-            "command": "node scripts/cmux-mirror/sync-once.mjs .forge 2>/dev/null || true",
-            "timeout": 2
+            "timeout": 5,
+            "args": [
+              "node",
+              "scripts/cmux-mirror/sync-once.mjs",
+              ".forge"
+            ]
           }
         ]
       },
@@ -230,27 +236,34 @@
       {
         "hooks": [
           {
-            "type": "command",
-            "command": "node scripts/record-evolved-rule-violation.mjs 2>/dev/null || true",
-            "timeout": 5
+            "timeout": 5,
+            "args": [
+              "node",
+              "scripts/record-evolved-rule-violation.mjs"
+            ]
           }
         ]
       },
       {
         "hooks": [
           {
-            "type": "command",
-            "command": "node scripts/flag-stale-evolved-rules.mjs 2>/dev/null || true",
-            "timeout": 5
+            "timeout": 5,
+            "args": [
+              "node",
+              "scripts/flag-stale-evolved-rules.mjs"
+            ]
           }
         ]
       },
       {
         "hooks": [
           {
-            "type": "command",
-            "command": "node scripts/cmux-mirror/sync-once.mjs .forge 2>/dev/null || true",
-            "timeout": 2
+            "timeout": 5,
+            "args": [
+              "node",
+              "scripts/cmux-mirror/sync-once.mjs",
+              ".forge"
+            ]
           }
         ]
       },
@@ -278,9 +291,11 @@
       {
         "hooks": [
           {
-            "type": "command",
-            "command": "bash scripts/hook-precompact.sh",
-            "timeout": 5
+            "timeout": 5,
+            "args": [
+              "bash",
+              "scripts/hook-precompact.sh"
+            ]
           }
         ]
       }
@@ -289,9 +304,11 @@
       {
         "hooks": [
           {
-            "type": "command",
-            "command": "bash scripts/hook-postcompact.sh",
-            "timeout": 5
+            "timeout": 5,
+            "args": [
+              "bash",
+              "scripts/hook-postcompact.sh"
+            ]
           }
         ]
       }
@@ -319,9 +336,11 @@
       {
         "hooks": [
           {
-            "type": "command",
-            "command": "node scripts/task-created-hook.mjs 2>/dev/null || node forge/scripts/task-created-hook.mjs 2>/dev/null || node ~/.claude/skills/forge/scripts/task-created-hook.mjs 2>/dev/null || true",
-            "timeout": 3
+            "timeout": 3,
+            "args": [
+              "node",
+              "scripts/task-created-hook.mjs"
+            ]
           }
         ]
       }
@@ -330,9 +349,11 @@
       {
         "hooks": [
           {
-            "type": "command",
-            "command": "node scripts/config-changed-hook.mjs 2>/dev/null || node forge/scripts/config-changed-hook.mjs 2>/dev/null || node ~/.claude/skills/forge/scripts/config-changed-hook.mjs 2>/dev/null || true",
-            "timeout": 3
+            "timeout": 3,
+            "args": [
+              "node",
+              "scripts/config-changed-hook.mjs"
+            ]
           }
         ]
       }
@@ -341,9 +362,11 @@
       {
         "hooks": [
           {
-            "type": "command",
-            "command": "node scripts/worktree-create-hook.mjs 2>/dev/null || node forge/scripts/worktree-create-hook.mjs 2>/dev/null || node ~/.claude/skills/forge/scripts/worktree-create-hook.mjs 2>/dev/null || true",
-            "timeout": 3
+            "timeout": 3,
+            "args": [
+              "node",
+              "scripts/worktree-create-hook.mjs"
+            ]
           }
         ]
       }
@@ -352,9 +375,11 @@
       {
         "hooks": [
           {
-            "type": "command",
-            "command": "node scripts/worktree-remove-hook.mjs 2>/dev/null || node forge/scripts/worktree-remove-hook.mjs 2>/dev/null || node ~/.claude/skills/forge/scripts/worktree-remove-hook.mjs 2>/dev/null || true",
-            "timeout": 3
+            "timeout": 3,
+            "args": [
+              "node",
+              "scripts/worktree-remove-hook.mjs"
+            ]
           }
         ]
       }
@@ -363,9 +388,11 @@
       {
         "hooks": [
           {
-            "type": "command",
-            "command": "node scripts/stop-failure-hook.mjs 2>/dev/null || node forge/scripts/stop-failure-hook.mjs 2>/dev/null || node ~/.claude/skills/forge/scripts/stop-failure-hook.mjs 2>/dev/null || true",
-            "timeout": 3
+            "timeout": 3,
+            "args": [
+              "node",
+              "scripts/stop-failure-hook.mjs"
+            ]
           }
         ]
       }
@@ -374,9 +401,11 @@
       {
         "hooks": [
           {
-            "type": "command",
-            "command": "node scripts/permission-denied-hook.mjs 2>/dev/null || node forge/scripts/permission-denied-hook.mjs 2>/dev/null || node ~/.claude/skills/forge/scripts/permission-denied-hook.mjs 2>/dev/null || true",
-            "timeout": 3
+            "timeout": 3,
+            "args": [
+              "node",
+              "scripts/permission-denied-hook.mjs"
+            ]
           }
         ]
       }
