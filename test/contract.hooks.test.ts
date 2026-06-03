@@ -21,6 +21,7 @@ const hooksMap = hooksFile.hooks as Record<
     matcher?: string;
     hooks: Array<{ type: string; command?: string; args?: string[]; timeout?: number }>;
   }>
+
 >;
 
 /** Known Claude Code tool names that can appear in matcher fields */
