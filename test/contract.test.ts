@@ -571,12 +571,14 @@ describe("Contract: hooks.json structure validation", () => {
         for (const [hi, handler] of (
           group.hooks as Array<{ type?: string; command?: string; args?: string[] }>
         ).entries()) {
+
           // Accept two formats: command string (type+command) or args[] exec form
           const isCommand = handler.type === "command" && typeof handler.command === "string";
           const isArgs = Array.isArray(handler.args) && handler.args.length > 0;
           expect(
             isCommand || isArgs,
             `${eventName} matcher group [${gi}] hook [${hi}] must have either {type:"command", command} or {args[]}`,
+
           ).toBe(true);
         }
       }
