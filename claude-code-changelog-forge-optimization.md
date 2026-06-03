@@ -587,17 +587,17 @@ effort: high
 
 **优化**：2.1.161 起，**同一批次内一条 Bash 失败不再取消其它调用，各自独立返回**。影响：(1) 可安全地一次性批量跑多条独立验证命令，单条失败不连坐；(2) 降低并行批次因单条失败而整批失败 → ladder 误降级到 L1 的概率。建议：批量验证时无需再为「避免连坐」而拆成串行或加防御性 `|| true`。
 
-**状态**：🟠 语义记录于此；具体的 `|| true` 清理留作独立 PR（避免一次性大改）。
+**状态**：🟢 已审计（2026-06-03）：`skills/` 无 `|| true`；`scripts/` 的 21 处均为 fail-open 钩子（必须保留，与并行批处理无关）；build instructions 无「为避免批次取消而串行化」的指引。结论：Forge 从未引入「避免连坐」的 `|| true` 变通，无需清理——2.1.161 的失败隔离收益自动到账。
 
 ### 94. `OTEL_RESOURCE_ATTRIBUTES` 作为指标标签 `[2.1.161]` 🟢 本地 JSONL 已落地
 
 **现状**：Forge 可观测性有两条路径——`scripts/track-tool-duration.mjs`（PostToolUse 写本地 `.forge/runs/<date>-tool-durations.jsonl`）与 `scripts/resume-from-pr.mjs` 的 `emitOTel`（stderr 桥接，gated on `OTEL_EXPORTER_OTLP_*`）。两者都未携带 resource 级维度，`/forge learn` 只能聚合、无法按档位/阶段切片。
 
 **优化**：2.1.161 让 `OTEL_RESOURCE_ATTRIBUTES` 的值作为标签附加到指标数据点，可按 team/repo 等自定义维度切片。Forge 借鉴两步：
-- **已落地**：`track-tool-duration.mjs` 解析 `OTEL_RESOURCE_ATTRIBUTES`（`k=v,k=v`）并写入每条 JSONL 的 `resource_attributes` 字段，使本地 learn 分析获得同等切片能力。
-- **待办**：由 phase/tier 转换处注入 `forge.tier` / `forge.phase` / `forge.command`（OTLP 导出路径在 2.1.161 后可原生切片，无需 Forge 改动；本地 JSONL 路径需此 env 注入侧配合）。
+- **消费侧（已落地）**：`track-tool-duration.mjs` 解析 `OTEL_RESOURCE_ATTRIBUTES`（`k=v,k=v`）并写入每条 JSONL 的 `resource_attributes` 字段。
+- **生产侧（已落地）**：PostToolUse 钩子子进程无法回写父会话 env，故改为在钩子内读取 `.forge/status.md` frontmatter 的 `phase`/`tier`/`current_task`，产出 `forge.phase`/`forge.tier`/`forge.task`（与 env 合并，env 优先）。`command` 即活跃 forge 子命令，等同 `phase`，不另设维度。OTLP 导出路径在 2.1.161 后亦可原生按这些维度切片。
 
-**状态**：🟢 `track-tool-duration.mjs` 已写入 `resource_attributes`；env 注入侧（forge.tier/phase）留作下一步。
+**状态**：🟢 消费侧 + 生产侧均已落地并通过功能验证（status.md→forge.*、env 覆盖优先、无状态且无 env 时 fail-open=null）。
 
 ### 95. worktree 隔离的后台编辑修复 `[2.1.161]` 🟢 自动受益
 
@@ -629,7 +629,7 @@ effort: high
 
 **优化**：误判类型正是 Forge 分支隔离门禁要处理的——在 linked worktree 内判定 default branch。建议扫 `src/worktree-manager.ts` 与分支隔离门禁，确认 linked worktree 内用 `git rev-parse --abbrev-ref HEAD` 判定不会误伤。
 
-**状态**：🔍 待自查（非本次改动范围）。
+**状态**：🟢 已自查（2026-06-03）：Forge 所有分支判定均用 `git branch --show-current` / `git rev-parse --abbrev-ref HEAD`（`cwd-changed-hook.mjs`、ship、`branch-gate.md`），二者在 linked worktree 内均正确返回该 worktree 自身分支；`isValidWorktreeSource` 仅判断是否 `forge/` 前缀；全仓无 `origin/HEAD` / `symbolic-ref` 之类 default-branch 启发式。结论：Forge 不存在 `/autofix-pr` 那类「worktree 内误判 default branch」缺陷，无需改动。
 
 ### 其余（2.1.158–161，不相关，已过滤）
 
