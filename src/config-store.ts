@@ -16,8 +16,9 @@ import {
   extractStringField,
   parseFrontmatter,
 } from "./frontmatter.js";
-import type { LogLevel } from "./logger/types.js";
 import { safeParseConfigFile } from "./schemas/config-file.js";
+
+export type LogLevel = "debug" | "info" | "warn" | "error";
 
 // ---------------------------------------------------------------------------
 // Constants
