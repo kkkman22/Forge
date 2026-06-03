@@ -99,11 +99,11 @@
 
 | 名称 | 原状态 | 替代者 |
 |------|--------|--------|
-| multi-platform-support | completed | 原生 Agent Teams |
+| multi-platform-support | completed | **wontfix** — 新架构不走自建 SDK driver，AgentRegistry 无消费方 |
 | sdk-driver-decomposition | completed | ScheduleWakeup/Cron 原生调度 |
 | audit-remediation-v221 | completed | 部分项随模块删除而废弃 |
 | branch-lifecycle-enforcement | completed | branch-gate.ts 保留 topic gate |
-| ship-delivery-unification | completed | forge-ship Skill 内联处理 |
+| ship-delivery-unification | completed | **wontfix** — forge-ship Skill 内联处理已覆盖需求，git-transaction 抽象层无必要 |
 | loop-skills-fusion | completed | 纯函数保留，驱动层删除 |
 | build-goal-replace-loop | draft | phase-transition-guard.sh |
 | phase-advance-hardening | completed | phase-transition-guard.sh |
