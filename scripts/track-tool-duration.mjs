@@ -16,7 +16,7 @@
 
 import { readFile, mkdir, appendFile } from "node:fs/promises";
 import { join } from "node:path";
-import { existsSync } from "node:fs";
+import { existsSync, readFileSync } from "node:fs";
 
 // ---------------------------------------------------------------------------
 // Constants
@@ -24,6 +24,7 @@ import { existsSync } from "node:fs";
 
 const PROJECT_ROOT = process.cwd();
 const RUNS_DIR = join(PROJECT_ROOT, ".forge", "runs");
+const STATUS_FILE = join(PROJECT_ROOT, ".forge", "status.md");
 
 // ---------------------------------------------------------------------------
 // Helpers
@@ -81,6 +82,35 @@ function parseResourceAttributes() {
   return Object.keys(out).length > 0 ? out : null;
 }
 
+/**
+ * Read Forge phase/tier/task from `.forge/status.md` frontmatter so duration
+ * metrics can be sliced by Forge dimensions in `/forge learn`. A PostToolUse
+ * hook cannot mutate the parent session env, so we read the live status file
+ * here instead of relying on env injection at phase/tier transitions.
+ * Returns {} when the file is absent or unreadable (fail-open).
+ */
+function readForgeContext() {
+  try {
+    const raw = readFileSync(STATUS_FILE, "utf-8");
+    const fm = raw.match(/^---\n([\s\S]*?)\n---/);
+    if (!fm) return {};
+    const grab = (key) => {
+      const m = fm[1].match(new RegExp(`^${key}:\\s*"?([^"\\n]+?)"?\\s*$`, "m"));
+      return m ? m[1].trim() : null;
+    };
+    const out = {};
+    const phase = grab("phase");
+    const tier = grab("tier");
+    const task = grab("current_task");
+    if (phase) out["forge.phase"] = phase;
+    if (tier) out["forge.tier"] = tier;
+    if (task) out["forge.task"] = task;
+    return out;
+  } catch {
+    return {};
+  }
+}
+
 // ---------------------------------------------------------------------------
 // Main
 // ---------------------------------------------------------------------------
@@ -117,6 +147,12 @@ async function main() {
     // Extract session ID
     const sessionId = process.env.CLAUDE_SESSION_ID || "unknown";
 
+    // Resource attributes: .forge/status.md (phase/tier/task) merged with
+    // OTEL_RESOURCE_ATTRIBUTES env (env wins on conflict).
+    const envAttrs = parseResourceAttributes() || {};
+    const merged = { ...readForgeContext(), ...envAttrs };
+    const resourceAttributes = Object.keys(merged).length > 0 ? merged : null;
+
     // Build JSONL entry
     const entry = {
       timestamp: new Date().toISOString(),
@@ -125,7 +161,7 @@ async function main() {
       duration_ms: durationMs,
       agent_id: toolInput.agent_id || null,
       parent_agent_id: toolInput.parent_agent_id || null,
-      resource_attributes: parseResourceAttributes(),
+      resource_attributes: resourceAttributes,
     };
 
     // Ensure .forge/runs/ exists
