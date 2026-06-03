@@ -201,7 +201,7 @@ export function parseHandoff(content: string): HandoffDocument | null {
 
   // Parse body sections
   const parseSection = (sectionName: string): string[] => {
-    const regex = new RegExp(`### ${sectionName}\\n([\\s\\S]*?)(?=###|$)`);
+    const regex = new RegExp(`### ${sectionName}\\n([\\s\\S]*?)(?=\\n### |$)`);
     const match = body.match(regex);
     if (!match) return [];
     const sectionContent = match[1].trim();
