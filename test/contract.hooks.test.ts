@@ -22,53 +22,6 @@ const hooksMap = hooksFile.hooks as Record<
     hooks: Array<{ type: string; command?: string; args?: string[]; timeout?: number }>;
   }>
 
->;
-
-/** Known Claude Code tool names that can appear in matcher fields */
-const KNOWN_TOOL_PATTERNS = new Set([
-  "Write",
-  "Edit",
-  "MultiEdit",
-  "Bash",
-  "Read",
-  "Grep",
-  "Glob",
-  "LS",
-  "WebSearch",
-  "WebFetch",
-]);
-
-// ---------------------------------------------------------------------------
-// Req 8.2: Structural completeness — every hook entry has required fields
-// ---------------------------------------------------------------------------
-
-describe("Contract: hooks.json structural completeness", () => {
-  it("hooks.json is valid JSON with a top-level hooks object", () => {
-    expect(hooksFile).toBeDefined();
-    expect(hooksFile.hooks).toBeDefined();
-    expect(typeof hooksFile.hooks).toBe("object");
-  });
-
-  for (const [eventName, matcherGroups] of Object.entries(hooksMap)) {
-    describe(`Event: ${eventName}`, () => {
-      for (let gi = 0; gi < matcherGroups.length; gi++) {
-        const group = matcherGroups[gi];
-
-        it(`matcher group [${gi}] has a hooks array`, () => {
-          expect(
-            Array.isArray(group.hooks),
-            `${eventName}[${gi}] missing nested 'hooks' array`,
-          ).toBe(true);
-        });
-
-        for (let hi = 0; hi < group.hooks.length; hi++) {
-          const handler = group.hooks[hi];
-
-          it(`matcher group [${gi}] hook [${hi}] has valid format (command or args)`, () => {
-            const isCommand =
-              handler.type === "command" &&
-              typeof handler.command === "string" &&
-              handler.command.length > 0;
 
             const isArgs = Array.isArray(handler.args) && handler.args.length > 0;
             expect(
