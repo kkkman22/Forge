@@ -38,8 +38,8 @@ migrateOldCache(forgeRoot);
 // Arg dispatch
 // ---------------------------------------------------------------------------
 
-if (args[0] === "--from-path") {
-  const inputPath = args[1];
+if (args[0] === "--from-path" || process.env.TOOL_INPUT_FILE) {
+  const inputPath = process.env.TOOL_INPUT_FILE || args[1];
   if (!inputPath) process.exit(0);
 
   // Path traversal defense: reject absolute paths and parent references
