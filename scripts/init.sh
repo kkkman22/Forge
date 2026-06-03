@@ -674,7 +674,8 @@ if [ -f "$mcp_server_path" ]; then
       } else {
         mcp.mcpServers['forge-context'] = {
           command: 'node',
-          args: [serverPath]
+          args: [serverPath],
+          alwaysLoad: true
         };
         fs.writeFileSync(mcpPath, JSON.stringify(mcp, null, 2) + '\n');
         process.stdout.write('OK');

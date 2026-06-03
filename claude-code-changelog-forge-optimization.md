@@ -1,6 +1,7 @@
-# Claude Code CHANGELOG (2.1.0–2.1.157) — Forge 优化建议与落地可行性报告
+# Claude Code CHANGELOG (2.1.0–2.1.161) — Forge 优化建议与落地可行性报告
 
-> 基于 Claude Code CHANGELOG 全量分析（2.1.0 → 2.1.157，约 4100 行），结合 Forge 项目代码库结构，按影响域分类的 90 个优化点。
+> 基于 Claude Code CHANGELOG 全量分析（2.1.0 → 2.1.161），结合 Forge 项目代码库结构，按影响域分类的 98 个优化点。
+> 2.1.158–161 增补见文末「十五、2.1.158–161 增补分析」。
 > **关键区分**：`plugin.json`（分发给用户的出厂配置）vs `.claude/settings.json`（Forge 项目自身开发配置）。
 > 生成时间：2026-05-30 | v3 用户决策版
 
@@ -22,6 +23,7 @@
 - [十二、落地可行性分析](#十二落地可行性分析)
 - [十三、优先级排序与用户决策](#十三优先级排序与用户决策)
 - [十四、风险评估与实施计划](#十四风险评估与实施计划)
+- [十五、2.1.158–161 增补分析](#十五21158161-增补分析2026-06-03)
 
 ---
 
@@ -558,4 +560,81 @@ effort: high
 
 ---
 
-*文档生成时间：2026-05-30 | v3 用户决策版 | 基于 Claude Code CHANGELOG 2.1.0–2.1.157 全量分析 + Forge plugin.json/settings.json 对比 + 可行性验证*
+## 十五、2.1.158–161 增补分析（2026-06-03）
+
+> 承接上文（原覆盖至 2.1.157）。本节补齐 2.1.158 → 2.1.161 的相关条目。
+> **结论**：2.1.161 以 bug 修复为主，但「配置文件安全」主题（2.1.160–161）与 Forge 最新的 security-check 维度#6（commit `0f19c1f6`）直接呼应；并行失败隔离与 OTEL 资源属性两条有实际落地价值。其余多为 Forge 自动受益的修复。
+
+### 91. `claude mcp` 密钥脱敏 + `${VAR}` 不再展开 `[2.1.161]` 🟢 已落地
+
+**现状**：security-check 维度 1（硬编码密钥）覆盖代码与配置文件明文密钥，但未显式覆盖 **MCP 配置文件**这一面——`.mcp.json` / `plugin.json` 的 `mcpServers` / `settings.json` 中内联 token、`Authorization` header、带密钥的 URL，以及把 MCP 配置回显到日志的脚本。
+
+**优化**：2.1.161 已在 harness 层对 `claude mcp list/get/add` 做脱敏（`${VAR}` 不展开、credential header 与 URL 密钥打码）。Forge 据此在 review 层做同源加固：维度 1 增补「MCP 配置必须用 `${VAR}` 引用密钥、禁止内联字面量」，维度 5 增补「展示/记录 MCP 配置的脚本不得回显密钥」。
+
+**状态**：🟢 已写入 `agents/security-check.md` 维度 1/5。
+
+### 92. 配置文件写入确认（shell 启动文件 / 构建工具配置）`[2.1.160]` 🟢 已对齐
+
+**现状**：Forge 刚在 security-check 维度 6 加入「可执行配置文件变更」清单（`.npmrc/.yarnrc/bunfig.toml/.bazelrc/.pre-commit-config.yaml/.devcontainer/`、shell 启动文件、git 配置）。
+
+**优化**：2.1.160 在 harness 层为**同一组文件**加了写入确认——`acceptEdits` 模式写 `.npmrc/.yarnrc*/bunfig.toml/.bazelrc/.pre-commit-config.yaml/.devcontainer/` 前弹确认；写 `.zshenv/.zlogin/.bash_login`、`~/.config/git/` 前弹确认。这构成 **harness 写入确认 + Forge review 时标记** 的纵深防御。对齐点：Claude 官方清单含 `.zlogin`，Forge 维度 6 原清单缺此项，已补入。
+
+**状态**：🟢 `.zlogin` 已补入维度 6；纵深防御关系已在维度 6 注明。
+
+### 93. 并行工具调用失败隔离 `[2.1.161]` 🟠 语义已记录
+
+**现状**：Forge 的 fallback ladder L0 失败签名含 `subprocess_crash`；并行 fan-out（decide 三视角 / review 三层）与批量验证命令依赖并行工具调用。
+
+**优化**：2.1.161 起，**同一批次内一条 Bash 失败不再取消其它调用，各自独立返回**。影响：(1) 可安全地一次性批量跑多条独立验证命令，单条失败不连坐；(2) 降低并行批次因单条失败而整批失败 → ladder 误降级到 L1 的概率。建议：批量验证时无需再为「避免连坐」而拆成串行或加防御性 `|| true`。
+
+**状态**：🟢 已审计（2026-06-03）：`skills/` 无 `|| true`；`scripts/` 的 21 处均为 fail-open 钩子（必须保留，与并行批处理无关）；build instructions 无「为避免批次取消而串行化」的指引。结论：Forge 从未引入「避免连坐」的 `|| true` 变通，无需清理——2.1.161 的失败隔离收益自动到账。
+
+### 94. `OTEL_RESOURCE_ATTRIBUTES` 作为指标标签 `[2.1.161]` 🟢 本地 JSONL 已落地
+
+**现状**：Forge 可观测性有两条路径——`scripts/track-tool-duration.mjs`（PostToolUse 写本地 `.forge/runs/<date>-tool-durations.jsonl`）与 `scripts/resume-from-pr.mjs` 的 `emitOTel`（stderr 桥接，gated on `OTEL_EXPORTER_OTLP_*`）。两者都未携带 resource 级维度，`/forge learn` 只能聚合、无法按档位/阶段切片。
+
+**优化**：2.1.161 让 `OTEL_RESOURCE_ATTRIBUTES` 的值作为标签附加到指标数据点，可按 team/repo 等自定义维度切片。Forge 借鉴两步：
+- **消费侧（已落地）**：`track-tool-duration.mjs` 解析 `OTEL_RESOURCE_ATTRIBUTES`（`k=v,k=v`）并写入每条 JSONL 的 `resource_attributes` 字段。
+- **生产侧（已落地）**：PostToolUse 钩子子进程无法回写父会话 env，故改为在钩子内读取 `.forge/status.md` frontmatter 的 `phase`/`tier`/`current_task`，产出 `forge.phase`/`forge.tier`/`forge.task`（与 env 合并，env 优先）。`command` 即活跃 forge 子命令，等同 `phase`，不另设维度。OTLP 导出路径在 2.1.161 后亦可原生按这些维度切片。
+
+**状态**：🟢 消费侧 + 生产侧均已落地并通过功能验证（status.md→forge.*、env 覆盖优先、无状态且无 env 时 fail-open=null）。
+
+### 95. worktree 隔离的后台编辑修复 `[2.1.161]` 🟢 自动受益
+
+**现状**：`agents/forge-build.md` 是唯一带 `isolation: worktree` 的 agent。
+
+**优化**：2.1.161 修复了「`isolation:"worktree"` 的后台 agent 被阻止编辑自己 worktree 内文件」的 bug。影响：若此前因该 bug 规避过「后台 dispatch forge-build」，现可重新启用——属解锁一个被堵的模式，无需 Forge 改代码。
+
+**状态**：🟢 自动受益。
+
+### 96. `grep` 后免 Read 直接 Edit `[2.1.160]` 🟢 自动受益
+
+**现状**：Forge 子代理常「先 grep 定位、再 Edit」，2.1.160 前需在 Edit 前补一次 Read。
+
+**优化**：2.1.160 起，单文件 `grep`/`egrep`/`fgrep` 即满足 read-before-edit 检查。对 explore/build 子代理是一次省 Read 的小便利。
+
+**状态**：🟢 自动受益（无需改动）。
+
+### 97. 自动受益 bug 修复合集 `[2.1.161]` 🟢 自动受益
+
+直接惠及 Forge、无需改动：
+- **子代理 finalize 出错卡在 "running" 的修复** → review/decide 的假 stuck 减少，ladder L0→L1 误降级更少（关联 `stuck_timeout` 签名）。
+- **OTEL 事件在 telemetry 初始化前被静默丢弃的修复** → `/forge learn` 早期 OTEL probe 更可靠。
+- **后台子代理污染 `claude -p` stdout（`--output-format text`/`json`）的修复** → Forge 用 `stream-json`（行分隔），基本不踩坑；PoC/loop 的 JSONL 解析更稳。
+- **resume 后渲染 Write 结果崩溃、后台会话用 daemon 旧 model** → Forge 重度依赖 `/forge resume` 与 settings.json model，属稳定性白拿。
+
+### 98. 自查项：`/autofix-pr` 在 worktree 内误判 default branch `[2.1.161]` 🔍 待自查
+
+**现状**：2.1.161 修复了 Claude 自身 `/autofix-pr` 在 linked worktree / 另一 repo 内误报「cannot run on default branch」。
+
+**优化**：误判类型正是 Forge 分支隔离门禁要处理的——在 linked worktree 内判定 default branch。建议扫 `src/worktree-manager.ts` 与分支隔离门禁，确认 linked worktree 内用 `git rev-parse --abbrev-ref HEAD` 判定不会误伤。
+
+**状态**：🟢 已自查（2026-06-03）：Forge 所有分支判定均用 `git branch --show-current` / `git rev-parse --abbrev-ref HEAD`（`cwd-changed-hook.mjs`、ship、`branch-gate.md`），二者在 linked worktree 内均正确返回该 worktree 自身分支；`isValidWorktreeSource` 仅判断是否 `forge/` 前缀；全仓无 `origin/HEAD` / `symbolic-ref` 之类 default-branch 启发式。结论：Forge 不存在 `/autofix-pr` 那类「worktree 内误判 default branch」缺陷，无需改动。
+
+### 其余（2.1.158–161，不相关，已过滤）
+
+`/mcp` 折叠未用 connector、Linux 剪贴板、reduce-motion、`/usage-credits`、`forceLogin*` 第三方 provider、jj workspaces resume、`EADDRINUSE`/`CLAUDE_CODE_TMPDIR`、渲染性能、VSCode GPU 提示、2.1.158 Bedrock/Vertex auto mode、2.1.159 内部改动。
+
+---
+
+*文档生成时间：2026-05-30（初版） / 2026-06-03（2.1.158–161 增补） | v3.1 | 基于 Claude Code CHANGELOG 2.1.0–2.1.161 全量分析 + Forge plugin.json/settings.json 对比 + 可行性验证*
