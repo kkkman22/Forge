@@ -41,7 +41,7 @@
     "build": {
       "instructions": {
         "path": "build/instructions.md",
-        "sha256": "ca5a06227d231de9928e41d61b3919c645def90ba230d0b3f99b7f306088809f"
+        "sha256": "97d5225541b5a2b1129aebc2564c22d1b12db248eadc313e3440dddbe4beb538"
       },
       "references": [
         {
