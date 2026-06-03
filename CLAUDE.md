@@ -147,4 +147,4 @@ build 阶段主 Agent 必须执行周期性 Restatement Checkpoint：每完成 N
 `/forge decide` 和 `/forge review` **默认**使用独立 Subagent（Agent tool）。Agent Teams 为可选 Tier-1 模式（`decide-teams` 子命令）。Subagent 类型引用 `.claude/agents/`。详见 `.claude/rules/workflow-fallback-ladder.md`。
 
 - **decide**: product、architect、security（+ designer UI 时）。两轮：Round 1 并行，Round 2 Critic 交叉审视。
-- **review**: spec-check、quality-check、security-check 并行。轻量模式省略 spec-check。
+- **review**: spec-check、quality-check、security-check 并行。轻量模式省略 spec-check。# test
