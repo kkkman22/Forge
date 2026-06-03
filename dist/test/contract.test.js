@@ -280,6 +280,11 @@ describe("Contract: hooks.json semantic validation", () => {
         "PostCompact",
         "TaskCompleted",
         "TaskCreated",
+        "ConfigChange",
+        "WorktreeCreate",
+        "WorktreeRemove",
+        "StopFailure",
+        "PermissionDenied",
     ]);
     const VALID_TOOL_NAMES = new Set([
         "Write",
@@ -439,11 +444,14 @@ describe("Contract: hooks.json structure validation", () => {
     });
     it("all hook entries use the official nested hooks array structure", () => {
         for (const [eventName, matcherGroups] of Object.entries(hooks.hooks)) {
-            for (const group of matcherGroups) {
+            for (const [gi, group] of matcherGroups.entries()) {
                 expect(group.hooks, `${eventName} hook entry missing nested 'hooks' array`).toBeDefined();
                 expect(Array.isArray(group.hooks)).toBe(true);
-                for (const handler of group.hooks) {
-                    expect(handler.type, `${eventName} hook handler missing 'type' field`).toBeDefined();
+                for (const [hi, handler] of group.hooks.entries()) {
+                    // Accept two formats: command string (type+command) or args[] exec form
+                    const isCommand = handler.type === "command" && typeof handler.command === "string";
+                    const isArgs = Array.isArray(handler.args) && handler.args.length > 0;
+                    expect(isCommand || isArgs, `${eventName} matcher group [${gi}] hook [${hi}] must have either {type:"command", command} or {args[]}`).toBe(true);
                 }
             }
         }
@@ -894,6 +902,8 @@ describe("Contract: stop hooks should not block", () => {
         const inlineCommands = [];
         for (const group of stopGroups) {
             for (const hook of group.hooks ?? []) {
+                if (hook.args)
+                    continue; // args[] exec form — no inline command to check
                 if (hook.type !== "command" || !hook.command)
                     continue;
                 // biome-ignore lint/suspicious/noTemplateCurlyInString: literal shell variable check
