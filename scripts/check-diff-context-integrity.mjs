@@ -56,7 +56,7 @@ function extractPatchSection(body) {
 }
 
 function main() {
-  const targetPath = process.argv[2];
+  const targetPath = process.env.TOOL_INPUT_FILE || process.argv[2];
 
   // Silent skip: not invoked with a path, or path is for a different file.
   if (!targetPath || !targetPath.endsWith(TARGET_BASENAME_SUFFIX)) {

@@ -50,9 +50,12 @@
       {
         "hooks": [
           {
-            "type": "command",
-            "command": "node scripts/cmux-mirror/sync-once.mjs .forge 2>/dev/null || true",
-            "timeout": 2
+            "timeout": 5,
+            "args": [
+              "node",
+              "scripts/cmux-mirror/sync-once.mjs",
+              ".forge"
+            ]
           }
         ]
       }
@@ -115,9 +118,11 @@
         "matcher": "Write|Edit",
         "hooks": [
           {
-            "type": "command",
-            "command": "node scripts/check-context-boundary.mjs \"$TOOL_NAME\" \"$TOOL_INPUT_FILE\" 2>/dev/null || node forge/scripts/check-context-boundary.mjs \"$TOOL_NAME\" \"$TOOL_INPUT_FILE\" 2>/dev/null || true",
-            "timeout": 5
+            "timeout": 5,
+            "args": [
+              "node",
+              "scripts/check-context-boundary.mjs"
+            ]
           }
         ]
       },
@@ -158,9 +163,12 @@
         "if": "Write(.forge/**)|Edit(.forge/**)",
         "hooks": [
           {
-            "type": "command",
-            "command": "node scripts/cmux-mirror/sync-once.mjs .forge 2>/dev/null || true",
-            "timeout": 2
+            "timeout": 5,
+            "args": [
+              "node",
+              "scripts/cmux-mirror/sync-once.mjs",
+              ".forge"
+            ]
           }
         ]
       },
@@ -169,9 +177,11 @@
         "if": "Write(.forge/**)|Edit(.forge/**)",
         "hooks": [
           {
-            "type": "command",
-            "command": "node scripts/rebuild-feature-dossier.mjs --from-path \"$TOOL_INPUT_FILE\" 2>/dev/null || true",
-            "timeout": 5
+            "timeout": 5,
+            "args": [
+              "node",
+              "scripts/rebuild-feature-dossier.mjs"
+            ]
           }
         ]
       },
@@ -180,9 +190,11 @@
         "if": "Write(.forge/**)|Edit(.forge/**)",
         "hooks": [
           {
-            "type": "command",
-            "command": "node scripts/knowledge-hook-dispatch.mjs --from-path \"$TOOL_INPUT_FILE\" 2>/dev/null || true",
-            "timeout": 5
+            "timeout": 5,
+            "args": [
+              "node",
+              "scripts/knowledge-hook-dispatch.mjs"
+            ]
           }
         ]
       },
@@ -202,9 +214,11 @@
         "if": "Write(.forge/reviews/.diff-context.md)|Edit(.forge/reviews/.diff-context.md)",
         "hooks": [
           {
-            "type": "command",
-            "command": "node scripts/check-diff-context-integrity.mjs \"$TOOL_INPUT_FILE\" 2>/dev/null || node forge/scripts/check-diff-context-integrity.mjs \"$TOOL_INPUT_FILE\" 2>/dev/null || node ~/.claude/skills/forge/scripts/check-diff-context-integrity.mjs \"$TOOL_INPUT_FILE\" 2>/dev/null",
-            "timeout": 5
+            "timeout": 5,
+            "args": [
+              "node",
+              "scripts/check-diff-context-integrity.mjs"
+            ]
           }
         ]
       }
@@ -230,27 +244,34 @@
       {
         "hooks": [
           {
-            "type": "command",
-            "command": "node scripts/record-evolved-rule-violation.mjs 2>/dev/null || true",
-            "timeout": 5
+            "timeout": 5,
+            "args": [
+              "node",
+              "scripts/record-evolved-rule-violation.mjs"
+            ]
           }
         ]
       },
       {
         "hooks": [
           {
-            "type": "command",
-            "command": "node scripts/flag-stale-evolved-rules.mjs 2>/dev/null || true",
-            "timeout": 5
+            "timeout": 5,
+            "args": [
+              "node",
+              "scripts/flag-stale-evolved-rules.mjs"
+            ]
           }
         ]
       },
       {
         "hooks": [
           {
-            "type": "command",
-            "command": "node scripts/cmux-mirror/sync-once.mjs .forge 2>/dev/null || true",
-            "timeout": 2
+            "timeout": 5,
+            "args": [
+              "node",
+              "scripts/cmux-mirror/sync-once.mjs",
+              ".forge"
+            ]
           }
         ]
       },
@@ -278,9 +299,11 @@
       {
         "hooks": [
           {
-            "type": "command",
-            "command": "bash scripts/hook-precompact.sh",
-            "timeout": 5
+            "timeout": 5,
+            "args": [
+              "bash",
+              "scripts/hook-precompact.sh"
+            ]
           }
         ]
       }
@@ -289,9 +312,11 @@
       {
         "hooks": [
           {
-            "type": "command",
-            "command": "bash scripts/hook-postcompact.sh",
-            "timeout": 5
+            "timeout": 5,
+            "args": [
+              "bash",
+              "scripts/hook-postcompact.sh"
+            ]
           }
         ]
       }
@@ -313,6 +338,82 @@
           {
             "type": "command",
             "command": "if [ -f .forge/status.md ]; then phase=$(grep '^phase:' .forge/status.md 2>/dev/null | sed 's/phase: *\"\\{0,1\\}//;s/\"\\{0,1\\} *$//'); if [ \"$phase\" = 'build' ]; then plan_file=$(ls -t .forge/plans/*.md 2>/dev/null | head -1); if [ -n \"$plan_file\" ]; then plan_status=$(grep '^status:' \"$plan_file\" 2>/dev/null | head -1 | sed 's/status: *\"\\{0,1\\}//;s/\"\\{0,1\\} *$//' | tr -d '[:space:]'); if [ \"$plan_status\" != 'approved' ]; then echo \"⚠️ build 阶段：plan 状态为 $plan_status（非 approved），队友任务建议等 plan 锁定后再创建\" >&2; fi; fi; fi; fi"
+          }
+        ]
+      },
+      {
+        "hooks": [
+          {
+            "timeout": 3,
+            "args": [
+              "node",
+              "scripts/task-created-hook.mjs"
+            ]
+          }
+        ]
+      }
+    ],
+    "ConfigChange": [
+      {
+        "hooks": [
+          {
+            "timeout": 3,
+            "args": [
+              "node",
+              "scripts/config-changed-hook.mjs"
+            ]
+          }
+        ]
+      }
+    ],
+    "WorktreeCreate": [
+      {
+        "hooks": [
+          {
+            "timeout": 3,
+            "args": [
+              "node",
+              "scripts/worktree-create-hook.mjs"
+            ]
+          }
+        ]
+      }
+    ],
+    "WorktreeRemove": [
+      {
+        "hooks": [
+          {
+            "timeout": 3,
+            "args": [
+              "node",
+              "scripts/worktree-remove-hook.mjs"
+            ]
+          }
+        ]
+      }
+    ],
+    "StopFailure": [
+      {
+        "hooks": [
+          {
+            "timeout": 3,
+            "args": [
+              "node",
+              "scripts/stop-failure-hook.mjs"
+            ]
+          }
+        ]
+      }
+    ],
+    "PermissionDenied": [
+      {
+        "hooks": [
+          {
+            "timeout": 3,
+            "args": [
+              "node",
+              "scripts/permission-denied-hook.mjs"
+            ]
           }
         ]
       }

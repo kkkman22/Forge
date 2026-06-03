@@ -498,8 +498,8 @@ function trackDuration(toolInput) {
 // ---------------------------------------------------------------------------
 
 function main() {
-  const toolType = process.argv[2];
-  const toolInputFile = process.argv[3];
+  const toolType = process.env.TOOL_NAME || process.argv[2];
+  const toolInputFile = process.env.TOOL_INPUT_FILE || process.argv[3];
 
   // --help support
   if (toolType === "--help" || toolType === "-h") {

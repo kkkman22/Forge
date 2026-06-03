@@ -31,8 +31,9 @@ import { describe, expect, it } from "vitest";
 // ---------------------------------------------------------------------------
 
 interface HookEntry {
-  type: string;
-  command: string;
+  type?: string;
+  command?: string;
+  args?: string[];
   timeout?: number;
 }
 
@@ -73,8 +74,10 @@ function extractFrozenCheckHooks(config: HooksConfig): FrozenCheckHook[] {
 
     for (const hook of hookGroup.hooks) {
       // Match both check-frozen.sh (legacy) and check-frozen.js (TypeScript rewrite)
-      if (hook.command.includes("check-frozen.sh") || hook.command.includes("check-frozen.js")) {
-        frozenChecks.push({ matcher, command: hook.command });
+      // Hooks may use command string or args[] exec form
+      const cmd = hook.command ?? hook.args?.join(" ") ?? "";
+      if (cmd.includes("check-frozen.sh") || cmd.includes("check-frozen.js")) {
+        frozenChecks.push({ matcher, command: cmd });
       }
     }
   }
