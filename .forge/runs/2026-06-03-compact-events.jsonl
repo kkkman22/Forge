@@ -1,2 +1,32 @@
 {"timestamp":"2026-06-03T06:42:17Z","event":"precompact_snapshot","detail":"slug=forge-loop-native-fusion phase=build completed=0 pending=0"}
 {"timestamp":"2026-06-03T12:04:52Z","event":"precompact_snapshot","detail":"slug=forge-loop-native-fusion phase=build completed=0 pending=0"}
+{"timestamp":"2026-06-03T15:57:08Z","event":"postcompact_restore","detail":"slug=forge-loop-native-fusion"}
+{"timestamp":"2026-06-03T15:57:09Z","event":"precompact_snapshot","detail":"slug=forge-loop-native-fusion phase=build completed=0 pending=0"}
+{"timestamp":"2026-06-03T15:58:19Z","event":"postcompact_restore","detail":"slug=forge-loop-native-fusion"}
+{"timestamp":"2026-06-03T15:58:19Z","event":"precompact_snapshot","detail":"slug=forge-loop-native-fusion phase=build completed=0 pending=0"}
+{"timestamp":"2026-06-03T15:59:48Z","event":"postcompact_restore","detail":"slug=forge-loop-native-fusion"}
+{"timestamp":"2026-06-03T15:59:48Z","event":"precompact_snapshot","detail":"slug=forge-loop-native-fusion phase=build completed=0 pending=0"}
+{"timestamp":"2026-06-03T22:57:17Z","event":"postcompact_restore","detail":"slug=forge-loop-native-fusion"}
+{"timestamp":"2026-06-03T22:57:17Z","event":"precompact_snapshot","detail":"slug=forge-loop-native-fusion phase=build completed=0 pending=0"}
+{"timestamp":"2026-06-03T22:58:36Z","event":"postcompact_restore","detail":"slug=forge-loop-native-fusion"}
+{"timestamp":"2026-06-03T22:58:36Z","event":"precompact_snapshot","detail":"slug=forge-loop-native-fusion phase=build completed=0 pending=0"}
+{"timestamp":"2026-06-03T22:59:58Z","event":"postcompact_restore","detail":"slug=forge-loop-native-fusion"}
+{"timestamp":"2026-06-03T22:59:58Z","event":"precompact_snapshot","detail":"slug=forge-loop-native-fusion phase=build completed=0 pending=0"}
+{"timestamp":"2026-06-03T23:01:34Z","event":"postcompact_restore","detail":"slug=forge-loop-native-fusion"}
+{"timestamp":"2026-06-03T23:01:34Z","event":"precompact_snapshot","detail":"slug=forge-loop-native-fusion phase=build completed=0 pending=0"}
+{"timestamp":"2026-06-03T23:02:53Z","event":"postcompact_restore","detail":"slug=forge-loop-native-fusion"}
+{"timestamp":"2026-06-03T23:02:53Z","event":"precompact_snapshot","detail":"slug=forge-loop-native-fusion phase=build completed=0 pending=0"}
+{"timestamp":"2026-06-03T23:07:53Z","event":"postcompact_restore","detail":"slug=forge-loop-native-fusion"}
+{"timestamp":"2026-06-03T23:07:53Z","event":"precompact_snapshot","detail":"slug=forge-loop-native-fusion phase=build completed=0 pending=0"}
+{"timestamp":"2026-06-03T23:09:09Z","event":"postcompact_restore","detail":"slug=forge-loop-native-fusion"}
+{"timestamp":"2026-06-03T23:09:09Z","event":"precompact_snapshot","detail":"slug=forge-loop-native-fusion phase=build completed=0 pending=0"}
+{"timestamp":"2026-06-03T23:10:35Z","event":"postcompact_restore","detail":"slug=forge-loop-native-fusion"}
+{"timestamp":"2026-06-03T23:10:35Z","event":"precompact_snapshot","detail":"slug=forge-loop-native-fusion phase=build completed=0 pending=0"}
+{"timestamp":"2026-06-03T23:12:11Z","event":"postcompact_restore","detail":"slug=forge-loop-native-fusion"}
+{"timestamp":"2026-06-03T23:12:11Z","event":"precompact_snapshot","detail":"slug=forge-loop-native-fusion phase=build completed=0 pending=0"}
+{"timestamp":"2026-06-03T23:13:21Z","event":"postcompact_restore","detail":"slug=forge-loop-native-fusion"}
+{"timestamp":"2026-06-03T23:13:21Z","event":"precompact_snapshot","detail":"slug=forge-loop-native-fusion phase=build completed=0 pending=0"}
+{"timestamp":"2026-06-03T23:14:51Z","event":"postcompact_restore","detail":"slug=forge-loop-native-fusion"}
+{"timestamp":"2026-06-03T23:14:51Z","event":"precompact_snapshot","detail":"slug=forge-loop-native-fusion phase=build completed=0 pending=0"}
+{"timestamp":"2026-06-03T23:16:11Z","event":"postcompact_restore","detail":"slug=forge-loop-native-fusion"}
+{"timestamp":"2026-06-03T23:16:11Z","event":"precompact_snapshot","detail":"slug=forge-loop-native-fusion phase=build completed=0 pending=0"}

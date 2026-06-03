@@ -24,6 +24,9 @@
  * ## Tier
  * **定义**: Forge 三维路由中的复杂度维度。
  * **别名**: 档位, 复杂度档位
+ * **避免**: PRD（PRD 是产品需求文档...）
+ * **关系**: → Plan: Tier 决定运行的命令序列
+ * **歧义记录**: 无
  * **更新**: 2026-05-05
  * **来源**: 初始预置
  *
@@ -58,6 +61,12 @@ export interface GlossaryTerm {
   term: string;
   definition: string;
   aliases?: string[];
+  /** 禁用的同义词列表及原因。Agent 输出中使用这些词时应警告 */
+  avoided_terms?: string[];
+  /** 与其他术语的关系。格式：`→ <术语>: <关系描述>` */
+  relations?: string[];
+  /** 曾经有过的术语争论和结论。防止未来重新争论 */
+  ambiguity_notes?: string[];
   last_updated: string;
   source_session?: string;
 }
@@ -109,6 +118,9 @@ const COLON_CLASS = "[:：]";
 const H2_HEADING_REGEX = /^##\s+(.+?)\s*$/;
 const FIELD_DEFINITION_REGEX = new RegExp(`^\\*\\*定义\\*\\*${COLON_CLASS}\\s*(.*)$`);
 const FIELD_ALIASES_REGEX = new RegExp(`^\\*\\*别名\\*\\*${COLON_CLASS}\\s*(.*)$`);
+const FIELD_AVOIDED_REGEX = new RegExp(`^\\*\\*避免\\*\\*${COLON_CLASS}\\s*(.*)$`);
+const FIELD_RELATIONS_REGEX = new RegExp(`^\\*\\*关系\\*\\*${COLON_CLASS}\\s*(.*)$`);
+const FIELD_AMBIGUITY_REGEX = new RegExp(`^\\*\\*歧义记录\\*\\*${COLON_CLASS}\\s*(.*)$`);
 const FIELD_UPDATED_REGEX = new RegExp(`^\\*\\*更新\\*\\*${COLON_CLASS}\\s*(.*)$`);
 const FIELD_SOURCE_REGEX = new RegExp(`^\\*\\*来源\\*\\*${COLON_CLASS}\\s*(.*)$`);
 
@@ -204,6 +216,15 @@ function appendTermLines(lines: string[], term: GlossaryTerm): void {
   if (term.aliases && term.aliases.length > 0) {
     lines.push(`**别名**: ${term.aliases.join(", ")}`);
   }
+  if (term.avoided_terms && term.avoided_terms.length > 0) {
+    lines.push(`**避免**: ${term.avoided_terms.join("; ")}`);
+  }
+  if (term.relations && term.relations.length > 0) {
+    lines.push(`**关系**: ${term.relations.join("; ")}`);
+  }
+  if (term.ambiguity_notes && term.ambiguity_notes.length > 0) {
+    lines.push(`**歧义记录**: ${term.ambiguity_notes.join("; ")}`);
+  }
   lines.push(`**更新**: ${term.last_updated}`);
   if (term.source_session && term.source_session.length > 0) {
     lines.push(`**来源**: ${term.source_session}`);
@@ -220,6 +241,9 @@ interface TermAccumulator {
   term: string;
   definition: string;
   aliases?: string[];
+  avoided_terms?: string[];
+  relations?: string[];
+  ambiguity_notes?: string[];
   last_updated: string;
   source_session?: string;
 }
@@ -245,6 +269,15 @@ function parseTerms(body: string): GlossaryTerm[] {
       };
       if (current.aliases !== undefined) {
         entry.aliases = current.aliases;
+      }
+      if (current.avoided_terms !== undefined) {
+        entry.avoided_terms = current.avoided_terms;
+      }
+      if (current.relations !== undefined) {
+        entry.relations = current.relations;
+      }
+      if (current.ambiguity_notes !== undefined) {
+        entry.ambiguity_notes = current.ambiguity_notes;
       }
       if (current.source_session !== undefined) {
         entry.source_session = current.source_session;
@@ -281,6 +314,48 @@ function parseTerms(body: string): GlossaryTerm[] {
         if (items.length > 0) {
           current.aliases = items;
         }
+      }
+      continue;
+    }
+
+    const avoidedMatch = line.match(FIELD_AVOIDED_REGEX);
+    if (avoidedMatch !== null) {
+      const raw = avoidedMatch[1].trim();
+      if (raw.length > 0) {
+        // 避免 field: extract the avoided synonym(s) before the parenthetical reason
+        // e.g. "PRD（PRD 是产品需求文档...）" → ["PRD"]
+        const items = raw
+          .split(/[;；]/)
+          .map((s) => s.trim())
+          .filter((s) => s.length > 0);
+        if (items.length > 0) {
+          current.avoided_terms = items;
+        }
+      }
+      continue;
+    }
+
+    const relationsMatch = line.match(FIELD_RELATIONS_REGEX);
+    if (relationsMatch !== null) {
+      const raw = relationsMatch[1].trim();
+      if (raw.length > 0) {
+        // 关系 field: semicolon-separated relations
+        const items = raw
+          .split(/[;；]/)
+          .map((s) => s.trim())
+          .filter((s) => s.length > 0);
+        if (items.length > 0) {
+          current.relations = items;
+        }
+      }
+      continue;
+    }
+
+    const ambiguityMatch = line.match(FIELD_AMBIGUITY_REGEX);
+    if (ambiguityMatch !== null) {
+      const raw = ambiguityMatch[1].trim();
+      if (raw.length > 0) {
+        current.ambiguity_notes = [raw];
       }
       continue;
     }

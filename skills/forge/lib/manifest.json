@@ -1,6 +1,6 @@
 {
   "version": 1,
-  "generated_at": "2026-06-03T12:05:56.886Z",
+  "generated_at": "2026-06-03T23:01:01.769Z",
   "subs": {
     "abort": {
       "instructions": {
@@ -118,7 +118,7 @@
         },
         {
           "path": "build/references/tdd-rules.md",
-          "sha256": "44ea25b181a0f5e15452dd1f90563e986d8defad6bb4be54427656a3321b7610"
+          "sha256": "ce4ccebf7baae11e154bbf286c32ecfd47616ee089e95fd5446c1a99ef461359"
         }
       ]
     },
@@ -189,7 +189,7 @@
     "decide": {
       "instructions": {
         "path": "decide/instructions.md",
-        "sha256": "b46592232a7eb11d4f4afcd9ef73294ddcd4256e1d389b8ab931ed16b603b99d"
+        "sha256": "6710c8fc59d97a4d51eb698626acf3900eb0fc57603860f7c1e3e16c5e5b1e78"
       },
       "references": [
         {
@@ -210,7 +210,7 @@
         },
         {
           "path": "decide/references/perspective-formats.md",
-          "sha256": "e1d52b2ad1846061d1e43d2e617f13ec61b2e57c75d1ef32dba9100751d3c51a"
+          "sha256": "f8c6a9f38329f57c57298a9358f37b960688ca236b37435a107fa16e7bae379e"
         }
       ]
     },
@@ -277,7 +277,7 @@
     "grill": {
       "instructions": {
         "path": "grill/instructions.md",
-        "sha256": "a15d8a297727fd49d14b03bc0fc6c0a00b9a7790c8a584970e2b8739588aef7d"
+        "sha256": "c468b6cb1da8f645e3cba59ad91d3a48aa576638b2fb05b34d6bac0d73a4440e"
       },
       "references": [
         {
@@ -382,12 +382,12 @@
     "plan": {
       "instructions": {
         "path": "plan/instructions.md",
-        "sha256": "306a6aadc9ab90d97d52c28769eb5cbb70baaae5dd64590c00dd3275d372547c"
+        "sha256": "d6c40e6ce825badc5713f37cf6e1914a57b8d2504e6e33f02f93bb149c94c820"
       },
       "references": [
         {
           "path": "plan/references/atomic-task-format.md",
-          "sha256": "d2d0f21d3bdd079b6de70c54610501d279b47d1c3076f0101b11a033a14403dd"
+          "sha256": "eae926c9e727be2f723d6202b883ba9f9b7c7317274f57d60bf5775e19f5dacd"
         },
         {
           "path": "plan/references/dependency-rules.md",
