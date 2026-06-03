@@ -53,11 +53,15 @@
 
 ## recordPendingDelivery
 
-**Signature**: `recordPendingDelivery(branchName, topic, timestamp)` (from `src/branch-lifecycle.ts`)
+> ⚠️ Superseded: The original `src/branch-lifecycle.ts` module was removed in the loop/SDK architecture refactoring.
+> Pending delivery state is now tracked via `.forge/status.md` directly by the build/ship skills.
+> `detectUnshippedBranches` in `src/branch-gate.ts` reads `.forge/status.md` for unshipped detection.
+
+**Legacy Signature**: `recordPendingDelivery(branchName, topic, timestamp)` (from deleted `src/branch-lifecycle.ts`)
 
 - **Parameters**:
   - `branchName` source: `git branch --show-current` output
   - `topic` source: `current_task` field in `.forge/status.md`
   - `timestamp` source: `Date.now()`
-- **Returns**: `PendingDeliveryRecord` appended to `.forge/status.md` (or the configured persistence location)
-- **Purpose**: Persist pending-delivery state when the user picks "Keep branch"; later consumed by `detectUnshippedBranches` / `detectStaleBranches` at the next `/forge build` startup
+- **Returns**: `PendingDeliveryRecord` appended to `.forge/status.md`
+- **Purpose**: Persist pending-delivery state when the user picks "Keep branch"; later consumed by `detectUnshippedBranches` at the next `/forge build` startup
