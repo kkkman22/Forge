@@ -23,8 +23,9 @@ import { describe, expect, it } from "vitest";
 // ---------------------------------------------------------------------------
 
 interface HookEntry {
-  type: string;
-  command: string;
+  type?: string;
+  command?: string;
+  args?: string[];
   timeout?: number;
   continueOnBlock?: boolean;
 }
@@ -110,9 +111,8 @@ const EXPECTED_USER_PROMPT_SUBMIT_HOOKS: HookMatcher[] = [
   {
     hooks: [
       {
-        type: "command",
-        command: "node scripts/cmux-mirror/sync-once.mjs .forge 2>/dev/null || true",
-        timeout: 2,
+        timeout: 5,
+        args: ["node", "scripts/cmux-mirror/sync-once.mjs", ".forge"],
       },
     ],
   },
@@ -146,9 +146,8 @@ const EXPECTED_POST_TOOL_USE_HOOKS: HookMatcher[] = [
     if: "Write(.forge/**)|Edit(.forge/**)",
     hooks: [
       {
-        type: "command",
-        command: "node scripts/cmux-mirror/sync-once.mjs .forge 2>/dev/null || true",
-        timeout: 2,
+        timeout: 5,
+        args: ["node", "scripts/cmux-mirror/sync-once.mjs", ".forge"],
       },
     ],
   },
@@ -157,10 +156,8 @@ const EXPECTED_POST_TOOL_USE_HOOKS: HookMatcher[] = [
     if: "Write(.forge/**)|Edit(.forge/**)",
     hooks: [
       {
-        type: "command",
-        command:
-          'node scripts/rebuild-feature-dossier.mjs --from-path "$TOOL_INPUT_FILE" 2>/dev/null || true',
         timeout: 5,
+        args: ["node", "scripts/rebuild-feature-dossier.mjs"],
       },
     ],
   },
@@ -169,10 +166,8 @@ const EXPECTED_POST_TOOL_USE_HOOKS: HookMatcher[] = [
     if: "Write(.forge/**)|Edit(.forge/**)",
     hooks: [
       {
-        type: "command",
-        command:
-          'node scripts/knowledge-hook-dispatch.mjs --from-path "$TOOL_INPUT_FILE" 2>/dev/null || true',
         timeout: 5,
+        args: ["node", "scripts/knowledge-hook-dispatch.mjs"],
       },
     ],
   },
@@ -200,10 +195,8 @@ const EXPECTED_POST_TOOL_USE_HOOKS: HookMatcher[] = [
     if: "Write(.forge/reviews/.diff-context.md)|Edit(.forge/reviews/.diff-context.md)",
     hooks: [
       {
-        type: "command",
-        command:
-          'node scripts/check-diff-context-integrity.mjs "$TOOL_INPUT_FILE" 2>/dev/null || node forge/scripts/check-diff-context-integrity.mjs "$TOOL_INPUT_FILE" 2>/dev/null || node ~/.claude/skills/forge/scripts/check-diff-context-integrity.mjs "$TOOL_INPUT_FILE" 2>/dev/null',
         timeout: 5,
+        args: ["node", "scripts/check-diff-context-integrity.mjs"],
       },
     ],
   },
@@ -232,27 +225,24 @@ const EXPECTED_STOP_HOOKS: HookMatcher[] = [
   {
     hooks: [
       {
-        type: "command",
-        command: "node scripts/record-evolved-rule-violation.mjs 2>/dev/null || true",
         timeout: 5,
+        args: ["node", "scripts/record-evolved-rule-violation.mjs"],
       },
     ],
   },
   {
     hooks: [
       {
-        type: "command",
-        command: "node scripts/flag-stale-evolved-rules.mjs 2>/dev/null || true",
         timeout: 5,
+        args: ["node", "scripts/flag-stale-evolved-rules.mjs"],
       },
     ],
   },
   {
     hooks: [
       {
-        type: "command",
-        command: "node scripts/cmux-mirror/sync-once.mjs .forge 2>/dev/null || true",
-        timeout: 2,
+        timeout: 5,
+        args: ["node", "scripts/cmux-mirror/sync-once.mjs", ".forge"],
       },
     ],
   },
@@ -322,21 +312,29 @@ const NON_FROZEN_EVENT_TYPES = [
 // Helpers
 // ---------------------------------------------------------------------------
 
+function hookCmd(h: HookEntry): string {
+  return h.command ?? h.args?.join(" ") ?? "";
+}
+
 function _isFrozenCheckHook(_matcher: string | undefined, hook: HookEntry): boolean {
-  return hook.command.includes("check-frozen.sh") || hook.command.includes("check-frozen-post.sh");
+  const cmd = hook.command ?? hook.args?.join(" ") ?? "";
+  return cmd.includes("check-frozen.sh") || cmd.includes("check-frozen-post.sh");
 }
 
 function getPlanContextHook(config: HooksConfig): HookMatcher | undefined {
   const preToolUseHooks = config.hooks.PreToolUse ?? [];
   return preToolUseHooks.find((group) =>
-    group.hooks.some((h) => h.command.includes("head -30 .forge/plans/")),
+    group.hooks.some((h) =>
+      (h.command ?? h.args?.join(" ") ?? "").includes("head -30 .forge/plans/"),
+    ),
   );
 }
 
 function getNonFrozenPreToolUseHooks(config: HooksConfig): HookMatcher[] {
   const preToolUseHooks = config.hooks.PreToolUse ?? [];
   return preToolUseHooks.filter(
-    (group) => !group.hooks.some((h) => h.command.includes("check-frozen.sh")),
+    (group) =>
+      !group.hooks.some((h) => (h.command ?? h.args?.join(" ") ?? "").includes("check-frozen.sh")),
   );
 }
 
@@ -389,7 +387,7 @@ describe("Preservation: Plan context injection hook retains || true fallback", (
   it("plan context hook command ends with || true", () => {
     const planHook = getPlanContextHook(config);
     expect(planHook).toBeDefined();
-    const command = planHook?.hooks[0].command.trim();
+    const command = hookCmd(planHook!.hooks[0]).trim();
     expect(command).toMatch(/\|\|\s*true$/);
   });
 });
@@ -435,13 +433,15 @@ describe("Preservation: Hook structure for non-frozen hooks (property-based)", (
     }
   }
 
-  it("all non-frozen hooks have type 'command' (property-based)", () => {
+  it("all non-frozen hooks have valid format (command or args) (property-based)", () => {
     const entryArb = fc.constantFrom(...nonFrozenEntries);
 
     fc.assert(
       fc.property(entryArb, (entry) => {
-        expect(entry.hook.type).toBe("command");
-        return entry.hook.type === "command";
+        const isCommand = entry.hook.type === "command" && typeof entry.hook.command === "string";
+        const isArgs = Array.isArray(entry.hook.args) && entry.hook.args.length > 0;
+        expect(isCommand || isArgs).toBe(true);
+        return isCommand || isArgs;
       }),
       { numRuns: nonFrozenEntries.length * 10 },
     );
@@ -452,8 +452,9 @@ describe("Preservation: Hook structure for non-frozen hooks (property-based)", (
 
     fc.assert(
       fc.property(entryArb, (entry) => {
-        expect(entry.hook.command.length).toBeGreaterThan(0);
-        return entry.hook.command.length > 0;
+        const cmd = hookCmd(entry.hook);
+        expect(cmd.length).toBeGreaterThan(0);
+        return cmd.length > 0;
       }),
       { numRuns: nonFrozenEntries.length * 10 },
     );
@@ -464,7 +465,7 @@ describe("Preservation: Hook structure for non-frozen hooks (property-based)", (
 
     fc.assert(
       fc.property(entryArb, (entry) => {
-        const containsFrozenCheck = entry.hook.command.includes("check-frozen.sh");
+        const containsFrozenCheck = hookCmd(entry.hook).includes("check-frozen.sh");
         expect(containsFrozenCheck).toBe(false);
         return !containsFrozenCheck;
       }),
@@ -488,13 +489,13 @@ describe("Preservation: Hook structure for non-frozen hooks (property-based)", (
       "evolved-rules.md": 5,
       "inject-plan-context": 5,
       PENDING: 5,
-      "sync-once.mjs": 2,
+      "sync-once.mjs": 5,
     };
 
     fc.assert(
       fc.property(timedArb, (entry) => {
         for (const [pattern, timeout] of Object.entries(expectedTimeouts)) {
-          if (entry.hook.command.includes(pattern)) {
+          if (hookCmd(entry.hook).includes(pattern)) {
             expect(entry.hook.timeout).toBe(timeout);
             return entry.hook.timeout === timeout;
           }
@@ -522,7 +523,7 @@ describe("Preservation: Hook structure for non-frozen hooks (property-based)", (
   it("non-frozen hooks with || true fallback retain it (property-based)", () => {
     // These hooks are expected to have || true — they are non-protection hooks
     const hooksWithOrTrue = nonFrozenEntries.filter((e) =>
-      e.hook.command.trim().endsWith("|| true"),
+      hookCmd(e.hook).trim().endsWith("|| true"),
     );
 
     // We expect at least: SessionStart auto-resume, Stop progress-check, plan context
@@ -532,7 +533,7 @@ describe("Preservation: Hook structure for non-frozen hooks (property-based)", (
 
     fc.assert(
       fc.property(orTrueArb, (entry) => {
-        const trimmed = entry.hook.command.trim();
+        const trimmed = hookCmd(entry.hook).trim();
         expect(trimmed).toMatch(/\|\|\s*true$/);
         return /\|\|\s*true$/.test(trimmed);
       }),
