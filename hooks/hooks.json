@@ -118,9 +118,11 @@
         "matcher": "Write|Edit",
         "hooks": [
           {
-            "type": "command",
-            "command": "node scripts/check-context-boundary.mjs \"$TOOL_NAME\" \"$TOOL_INPUT_FILE\" 2>/dev/null || node forge/scripts/check-context-boundary.mjs \"$TOOL_NAME\" \"$TOOL_INPUT_FILE\" 2>/dev/null || true",
-            "timeout": 5
+            "timeout": 5,
+            "args": [
+              "node",
+              "scripts/check-context-boundary.mjs"
+            ]
           }
         ]
       },
@@ -175,9 +177,11 @@
         "if": "Write(.forge/**)|Edit(.forge/**)",
         "hooks": [
           {
-            "type": "command",
-            "command": "node scripts/rebuild-feature-dossier.mjs --from-path \"$TOOL_INPUT_FILE\" 2>/dev/null || true",
-            "timeout": 5
+            "timeout": 5,
+            "args": [
+              "node",
+              "scripts/rebuild-feature-dossier.mjs"
+            ]
           }
         ]
       },
@@ -186,9 +190,11 @@
         "if": "Write(.forge/**)|Edit(.forge/**)",
         "hooks": [
           {
-            "type": "command",
-            "command": "node scripts/knowledge-hook-dispatch.mjs --from-path \"$TOOL_INPUT_FILE\" 2>/dev/null || true",
-            "timeout": 5
+            "timeout": 5,
+            "args": [
+              "node",
+              "scripts/knowledge-hook-dispatch.mjs"
+            ]
           }
         ]
       },
@@ -208,9 +214,11 @@
         "if": "Write(.forge/reviews/.diff-context.md)|Edit(.forge/reviews/.diff-context.md)",
         "hooks": [
           {
-            "type": "command",
-            "command": "node scripts/check-diff-context-integrity.mjs \"$TOOL_INPUT_FILE\" 2>/dev/null || node forge/scripts/check-diff-context-integrity.mjs \"$TOOL_INPUT_FILE\" 2>/dev/null || node ~/.claude/skills/forge/scripts/check-diff-context-integrity.mjs \"$TOOL_INPUT_FILE\" 2>/dev/null",
-            "timeout": 5
+            "timeout": 5,
+            "args": [
+              "node",
+              "scripts/check-diff-context-integrity.mjs"
+            ]
           }
         ]
       }
