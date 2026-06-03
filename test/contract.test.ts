@@ -345,6 +345,11 @@ describe("Contract: hooks.json semantic validation", () => {
     "PostCompact",
     "TaskCompleted",
     "TaskCreated",
+    "ConfigChange",
+    "WorktreeCreate",
+    "WorktreeRemove",
+    "StopFailure",
+    "PermissionDenied",
   ]);
 
   const VALID_TOOL_NAMES = new Set([
