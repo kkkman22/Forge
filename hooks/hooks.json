@@ -315,6 +315,70 @@
             "command": "if [ -f .forge/status.md ]; then phase=$(grep '^phase:' .forge/status.md 2>/dev/null | sed 's/phase: *\"\\{0,1\\}//;s/\"\\{0,1\\} *$//'); if [ \"$phase\" = 'build' ]; then plan_file=$(ls -t .forge/plans/*.md 2>/dev/null | head -1); if [ -n \"$plan_file\" ]; then plan_status=$(grep '^status:' \"$plan_file\" 2>/dev/null | head -1 | sed 's/status: *\"\\{0,1\\}//;s/\"\\{0,1\\} *$//' | tr -d '[:space:]'); if [ \"$plan_status\" != 'approved' ]; then echo \"⚠️ build 阶段：plan 状态为 $plan_status（非 approved），队友任务建议等 plan 锁定后再创建\" >&2; fi; fi; fi; fi"
           }
         ]
+      },
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "node scripts/task-created-hook.mjs 2>/dev/null || node forge/scripts/task-created-hook.mjs 2>/dev/null || node ~/.claude/skills/forge/scripts/task-created-hook.mjs 2>/dev/null || true",
+            "timeout": 3
+          }
+        ]
+      }
+    ],
+    "ConfigChange": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "node scripts/config-changed-hook.mjs 2>/dev/null || node forge/scripts/config-changed-hook.mjs 2>/dev/null || node ~/.claude/skills/forge/scripts/config-changed-hook.mjs 2>/dev/null || true",
+            "timeout": 3
+          }
+        ]
+      }
+    ],
+    "WorktreeCreate": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "node scripts/worktree-create-hook.mjs 2>/dev/null || node forge/scripts/worktree-create-hook.mjs 2>/dev/null || node ~/.claude/skills/forge/scripts/worktree-create-hook.mjs 2>/dev/null || true",
+            "timeout": 3
+          }
+        ]
+      }
+    ],
+    "WorktreeRemove": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "node scripts/worktree-remove-hook.mjs 2>/dev/null || node forge/scripts/worktree-remove-hook.mjs 2>/dev/null || node ~/.claude/skills/forge/scripts/worktree-remove-hook.mjs 2>/dev/null || true",
+            "timeout": 3
+          }
+        ]
+      }
+    ],
+    "StopFailure": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "node scripts/stop-failure-hook.mjs 2>/dev/null || node forge/scripts/stop-failure-hook.mjs 2>/dev/null || node ~/.claude/skills/forge/scripts/stop-failure-hook.mjs 2>/dev/null || true",
+            "timeout": 3
+          }
+        ]
+      }
+    ],
+    "PermissionDenied": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "node scripts/permission-denied-hook.mjs 2>/dev/null || node forge/scripts/permission-denied-hook.mjs 2>/dev/null || node ~/.claude/skills/forge/scripts/permission-denied-hook.mjs 2>/dev/null || true",
+            "timeout": 3
+          }
+        ]
       }
     ]
   },
