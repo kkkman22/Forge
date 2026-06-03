@@ -68,6 +68,7 @@ describe("Contract: hooks.json structural completeness", () => {
               handler.type === "command" &&
               typeof handler.command === "string" &&
               handler.command.length > 0;
+
             const isArgs = Array.isArray(handler.args) && handler.args.length > 0;
             expect(
               isCommand || isArgs,

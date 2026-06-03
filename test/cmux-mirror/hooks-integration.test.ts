@@ -48,6 +48,7 @@ describe("hooks.json: sync-once entries (R2.7)", () => {
     // Check it has matcher for Write|Edit
     const withMatcher = entries.find(
       (e) => (e as { matcher?: string }).matcher === "Write|Edit" && e.hooks?.some(isSyncOnce),
+
     );
     expect(withMatcher).toBeDefined();
   });
