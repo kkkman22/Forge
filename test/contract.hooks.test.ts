@@ -17,7 +17,10 @@ const hooksFile = JSON.parse(readFileSync(hooksPath, "utf-8"));
 // The hooks structure: { hooks: { EventName: [ { matcher?: string, hooks: [ { type, command?, timeout? } ] } ] } }
 const hooksMap = hooksFile.hooks as Record<
   string,
-  Array<{ matcher?: string; hooks: Array<{ type: string; command?: string; args?: string[]; timeout?: number }> }>
+  Array<{
+    matcher?: string;
+    hooks: Array<{ type: string; command?: string; args?: string[]; timeout?: number }>;
+  }>
 >;
 
 /** Known Claude Code tool names that can appear in matcher fields */
@@ -61,7 +64,10 @@ describe("Contract: hooks.json structural completeness", () => {
           const handler = group.hooks[hi];
 
           it(`matcher group [${gi}] hook [${hi}] has valid format (command or args)`, () => {
-            const isCommand = handler.type === "command" && typeof handler.command === "string" && handler.command.length > 0;
+            const isCommand =
+              handler.type === "command" &&
+              typeof handler.command === "string" &&
+              handler.command.length > 0;
             const isArgs = Array.isArray(handler.args) && handler.args.length > 0;
             expect(
               isCommand || isArgs,
