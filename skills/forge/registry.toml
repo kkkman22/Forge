@@ -90,7 +90,7 @@ description = "Capture reusable lessons across five dimensions from completed se
 
 [loop]
 dispatch_mode = "fork"
-allowed_tools = ["Read", "Bash", "ScheduleWakeup", "CronCreate", "CronDelete", "CronList"]
+allowed_tools = ["Read", "Bash", "Glob", "Grep", "Skill", "Agent", "ScheduleWakeup", "CronCreate", "CronDelete", "CronList"]
 description = "Orchestrate an approved plan end-to-end without interactive prompts using native Claude Code scheduling. Use when user runs /forge loop, wants unattended execution, or needs background completion of queued tasks."
 
 [mutate]
