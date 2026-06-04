@@ -1,6 +1,6 @@
 ---
 feature: forge-single-entry-skills-collapse
-status: locked
+status: approved
 date: 2026-05-17
 runtime: kiro
 import_source: ".kiro/specs/forge-single-entry-skills-collapse/decide.md"
