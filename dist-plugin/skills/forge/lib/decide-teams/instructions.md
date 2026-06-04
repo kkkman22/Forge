@@ -15,7 +15,7 @@ allowed_tools:
 
 - `CLAUDE_CODE_EXPERIMENTAL_AGENT_TEAMS=1` 环境变量已设置
 - tmux 已安装且可用（cmux 用户：`cmux claude-teams` 自动注入 tmux shim，无需独立安装 tmux）
-- Claude Code >= 2.1.32
+- Claude Code >= 2.1.162（覆盖 SendMessage 深路径修复、Emoji 截断修复、中断信号修复、后台连接修复）
 
 > **cmux 优先**：在 cmux 终端中（`$CMUX_WORKSPACE_ID` 存在）建议用户使用 `cmux claude-teams` 一键启动——自动设置环境变量、注入 tmux shim、把 teammate 渲染为原生分屏（带 sidebar 元数据 + 注意力提醒环 + macOS 桌面通知）。详见 `reference-advanced.md` 的「cmux 集成」章节。
 
@@ -51,7 +51,7 @@ Agent Teams 版 `/forge decide` 的 PoC 实现。使用 Claude Code 原生 Agent
    然后退出（exit code 2）。
 2. 检查 `CLAUDE_CODE_EXPERIMENTAL_AGENT_TEAMS` 环境变量是否设置为 `1`
 3. 检查 tmux 是否可用（`which tmux`；cmux 终端下检测到 tmux shim 即视为通过）
-4. 检查 Claude Code 版本 ≥ 2.1.32（`claude --version`）
+4. 检查 Claude Code 版本 ≥ 2.1.162（`claude --version`）
 
 任一检查失败 → 输出诊断信息并退出（exit code 2）：
 ```
@@ -119,7 +119,7 @@ adr_path: ".forge/decisions/<date>-<slug>.md"
 | 合理化 | 反驳 |
 |--------|------|
 | "没有 env var 也能跑" | PoC 必须验证 Agent Teams 能力存在，退化到 DAG 不是本 skill 的职责 |
-| "跳过版本检查" | 版本 <2.1.32 的 Agent Teams API 不稳定，检查是必要防御 |
+| "跳过版本检查" | 版本 <2.1.162 存在 SendMessage 深路径断裂、Emoji 截断 400 等已知 bug，检查是必要防御 |
 | "超时不需要提示用户" | 20 分钟是合理的注意力窗口，超时后用户应有权决定是否继续 |
 
 ## 2. Deliverable
