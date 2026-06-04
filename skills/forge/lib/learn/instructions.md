@@ -196,6 +196,87 @@ Distill error-prevention rules from accumulated knowledge entries when confidenc
 - Output path: `.forge/knowledge/solutions/<topic>.md` (kebab-case)
 - Tags overlap ≥ 50% with existing document → merge, do not create new
 
+## Dual-Track Knowledge System
+
+Knowledge documents follow one of two tracks based on the trigger source. The track is automatically selected:
+
+### Track Selection Logic
+
+| Trigger Source | Track |
+|----------------|-------|
+| `/forge debug` fix OR review P0/P1 bug finding | **Bug Track** |
+| Architecture decision, design pattern, tooling choice | **Knowledge Track** |
+| Cannot determine | **Knowledge Track** (default) |
+
+### Bug Track Template
+
+For bug-fixing knowledge. Frontmatter includes `track: bug` and `problem_type` enum.
+
+**Frontmatter fields**:
+```yaml
+---
+name: <kebab-case-slug>
+track: bug
+problem_type: build_error | test_failure | runtime_error | performance_issue | security_issue | logic_error
+component: <string>
+root_cause: logic_error | race_condition | off_by_one | null_propagation | state_corruption | assumption_violation | external_dependency
+confidence: 0.3-0.9
+created: YYYY-MM-DD
+updated: YYYY-MM-DD
+changelog:
+  - date: YYYY-MM-DD
+    action: created
+    summary: <string>
+---
+```
+
+**Body sections**:
+1. `## Problem` — 1–3 sentence description
+2. `## Symptoms` — Observable symptoms list
+3. `## What Didn't Work` — Approaches tried but failed
+4. `## Solution` — Final working solution
+5. `## Why This Works` — Why this solution is effective
+6. `## Prevention` — Rules to prevent recurrence
+
+### Knowledge Track Template
+
+For architecture/design/tooling decisions. Frontmatter includes `track: knowledge` and `problem_type` enum.
+
+**Frontmatter fields**:
+```yaml
+---
+name: <kebab-case-slug>
+track: knowledge
+problem_type: architecture_pattern | design_pattern | tooling_decision | convention | best_practice
+component: <string>
+confidence: 0.3-0.9
+created: YYYY-MM-DD
+updated: YYYY-MM-DD
+changelog:
+  - date: YYYY-MM-DD
+    action: created
+    summary: <string>
+---
+```
+
+**Body sections**:
+1. `## Context` — Decision background (why needed)
+2. `## Guidance` — Specific instructions (what to do, how)
+3. `## Why This Matters` — Importance explanation
+4. `## When to Apply` — Applicable scenarios
+5. `## Examples` — Code examples or references
+
+### Compatibility
+
+Dual-track templates are a **structured superset** of the existing 5-dimension extraction. The five dimensions (Problem Pattern, Solution, Pitfall Record, Decision Rationale, Reusable Pattern) map to dual-track fields:
+- Problem Pattern → Bug: Problem + Symptoms | Knowledge: Context
+- Solution → Bug: Solution | Knowledge: Guidance
+- Pitfall Record → Bug: What Didn't Work | Knowledge: Why This Matters
+- Decision Rationale → Bug: Why This Works | Knowledge: When to Apply
+- Reusable Pattern → Bug: Prevention | Knowledge: Examples
+
+Existing 5-dimension documents remain valid. Only newly created documents use dual-track format.
+
 ### instincts.md
 - Pattern must appear in 2+ knowledge documents with confidence ≥ 0.5 to be promoted
 - Every pattern entry must include Confidence_Score in 0.3–0.9 range

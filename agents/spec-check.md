@@ -1,7 +1,7 @@
 ---
 name: spec-check
 description: Spec 对齐评审者。在 /forge review 的 Agent Team 中提供 Layer 1 评审，逐条对照规格检查实现完整性和 scope creep。
-model: sonnet
+model: inherit
 maxTurns: 15
 tools: Read, Glob, Grep
 disallowedTools: [Bash, Write, Edit, Agent]
@@ -62,6 +62,29 @@ memory: project
 ---
 
 ## Check Items
+
+## Confidence Calibration
+
+每个 finding 必须携带 `confidence` 字段（Confidence_Anchor 枚举）。对于 spec-check 视角：
+
+| Anchor | 含义 | 示例 |
+|--------|------|------|
+| 100 | 需求文档中的验收标准可以**机械匹配**到代码变更 | 该加的 API 加了，该有的参数有了 |
+| 75 | 验收标准的覆盖可以从 diff 和上下文代码**直接推断** | diff 中可见对应逻辑，不需要额外假设 |
+| 50 | 需求可能被覆盖，但需要**推断**跨文件的影响链 | 如"这个需求可能影响 middleware" |
+| 25 | 纯推测性的 scope creep 或遗漏 | → **抑制** |
+| 0 | 与需求无关的发现 | → **抑制** |
+
+**Rule**: confidence≤25 的 finding 标记为 `suppressed`，不出现在最终报告中。
+
+## Autofix Classification
+
+| autofix_class | 适用场景 |
+|---------------|---------|
+| `manual` | 需求遗漏、场景未覆盖（需人工判断实现方向） |
+| `advisory` | scope creep 建议、P3 提醒 |
+
+spec-check 的大部分 finding 为 `manual`（需求类问题无法自动修复）。`owner` 始终为 `human`。
 
 ### 1. Requirement Coverage
 
@@ -199,6 +222,37 @@ fix_required: <fix suggestion>
 **禁止**：前缀散文（"Let me summarize..." / "Based on my analysis..." / "Here are the findings..."）、重复 diff 内容、冗长解释。直接以 `## Layer 1` 开头。
 
 ## Output Format
+
+### Structured JSON Output (REQUIRED)
+
+每个 finding 必须在输出中包含以下 JSON code block（merge 阶段解析此 block）：
+
+```json
+{
+  "reviewer": "spec-check",
+  "findings": [
+    {
+      "id": null,
+      "title": "Requirement X scenario Y not implemented",
+      "severity": "P1",
+      "confidence": 75,
+      "file": "src/module.ts",
+      "line": 42,
+      "evidence": ["Diff shows no async export logic for scenario S3"],
+      "suggested_fix": "Add async export handler per spec requirement 2",
+      "autofix_class": "manual",
+      "owner": "human"
+    }
+  ]
+}
+```
+
+**字段说明**：
+- `confidence`: Confidence_Anchor 枚举值（0, 25, 50, 75, 100）
+- `autofix_class`: `manual`（需求类）或 `advisory`（scope creep 建议）
+- `owner`: 始终 `human`
+
+### Markdown Report Format
 
 ```markdown
 ## Layer 1 — Spec Alignment
