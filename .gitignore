@@ -8,6 +8,7 @@ dist/claude-code/bundles/
 coverage/
 reports/mutation/
 .kiro/
+!.kiro/specs/INDEX.md
 .claude/
 .forge/debug/
 .forge/archive/
