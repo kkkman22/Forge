@@ -87,6 +87,48 @@ if (!result.allowed) {
 
 拆解规则：Granularity（2-5 min）、Independence（独立可验证）、Ordering（按依赖排序）、Completeness（不留空白）。
 
+#### Vertical Slice 约束
+
+每个 task 必须是一个 **Tracer Bullet**：贯穿所有相关层的端到端垂直切片。
+参考 `.forge/glossary.md` 中 `Vertical Slice` 的定义。
+
+WRONG（水平切片）:
+  Task 1: 设计数据库 schema
+  Task 2: 实现 API 端点
+  Task 3: 写前端页面
+  Task 4: 写测试
+
+RIGHT（垂直切片）:
+  Task 1: 用户可通过 API 创建 Order，数据持久化到 DB，有测试覆盖
+  Task 2: 用户可在前端创建 Order，调用 API，有 E2E 测试
+  Task 3: 用户可取消 Order，从 API 到 DB 到 UI 端到端
+
+**判断标准**：
+- 每个 task 完成后可以**独立演示或验证**
+- task 不是按技术层拆分，而是按用户行为/功能切片
+- 如果一个 task 只涉及一层（只有 schema / 只有 API / 只有 UI），
+  考虑与相邻层合并为端到端切片
+
+**例外**：纯基础设施 task（数据库迁移、配置变更、依赖安装）可以按层拆分，
+但必须标记 `nature: infrastructure`。
+
+#### HITL/AFK 标记
+
+每个 task 必须标记交互类型：
+
+| 标记 | 含义 | build 行为 |
+|------|------|-----------|
+| `AFK` | 可自主完成，无需人工 | 连续执行，不中断 |
+| `HITL` | 需要人工决策/验证/设计评审 | 执行前暂停，等待用户确认 |
+
+**HITL 触发条件**：
+- 需要选择设计方向（多个合理方案）
+- 需要用户提供外部信息（API key、第三方配置）
+- 需要人工视觉验证（UI 布局确认）
+- 涉及不可逆操作（数据库迁移、破坏性重构）
+
+**默认**：`AFK`。仅在明确满足 HITL 触发条件时标记 `HITL`。
+
 任务命名优先使用 `.forge/glossary.md` 定义的规范术语；如发现同义词/别名，自动替换为 canonical term，保持跨 skill 命名一致。
 
 Glossary Hook: Task Breakdown 后调用 `runGlossaryCheck({ phase: 'plan' })` 检查 task title 术语一致性。启动时如 spec frontmatter 含 `pending_glossary_advisories`，调用 `renderPendingAdvisoryNotice(paths)` 显示 advisory 列表。
