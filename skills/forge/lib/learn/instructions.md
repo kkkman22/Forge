@@ -273,6 +273,7 @@ Analyze Reframing Gate and Clarification Gate feedback logs (`.forge/progress/*-
 - Body must contain five sections: Problem Pattern, Solution, Pitfall Record, Decision Rationale, Reusable Pattern
 - Output path: `.forge/knowledge/solutions/<topic>.md` (kebab-case)
 - Tags overlap ≥ 50% with existing document → merge, do not create new
+- When `.forge/charter.md` exists AND `status: active`: check if new knowledge relates to charter boundary or invariant. If so, add `charter_refs: [INV-NNN]` to frontmatter
 
 ## Dual-Track Knowledge System
 
