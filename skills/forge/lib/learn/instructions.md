@@ -157,6 +157,81 @@ Any tool invocation with `duration_ms > 30000` (30 seconds) is flagged as a **pe
 
 ---
 
+## §0.8 Gate Feedback Analysis (Reframing / Clarification Logs)
+
+> **Precondition**: Gate logs exist in `.forge/progress/` as `*-reframing.jsonl` or `*-clarification.jsonl`.
+> If no gate logs exist, **skip this entire section** with a single-line note: `⏭️ 无 Gate 反馈日志，跳过 Gate 分析。`
+
+### Step 1: Scan Gate logs
+
+```bash
+# Find all gate log files
+ls .forge/progress/*-reframing.jsonl .forge/progress/*-clarification.jsonl 2>/dev/null
+```
+
+If no files found → skip.
+
+### Step 2: Aggregate statistics per question dimension
+
+For each gate log entry (NDJSON, one JSON object per line), aggregate by question dimension:
+
+| Field | Source | Calculation |
+|-------|--------|-------------|
+| `questions_asked` | `questions_asked` field | Sum across all entries |
+| `questions_answered` | `questions_answered` field | Sum across all entries |
+| `questions_skipped` | `questions_skipped` field | Sum across all entries |
+| `outcome_changed_ratio` | `outcome_changed` field | Count of `true` / total entries |
+
+### Step 3: Identify high-impact dimensions
+
+WHEN a question dimension meets **both** conditions:
+- `outcome_changed=true` ratio > 50%
+- Sample count ≥ 3
+
+Output a suggestion:
+```
+💡 问题维度 '{dimension}' 在 {N} 次使用中 {P}% 改变了结果。建议提升为 evolved-rule。
+```
+
+### Step 4: Propose evolved-rule
+
+For each high-impact dimension:
+1. Follow §5.2 Self-Evolution Protocol (Propose → Declare → Approve → Log)
+2. Proposed rule format: `gate-dimension-{dimension}-high-impact`
+3. Rule content: trigger condition and recommended question for that dimension
+4. WHEN user rejects → record rejection reason in session log
+
+### Step 5: Write statistics summary
+
+Write aggregated stats to `.forge/knowledge/sessions/<date>-gate-stats.md`:
+
+```yaml
+---
+title: "Gate Feedback Statistics"
+date: "YYYY-MM-DD"
+type: gate-analysis
+---
+## Summary
+- Total gate sessions: <count>
+- Total questions asked: <count>
+- Total questions answered: <count>
+- Total questions skipped: <count>
+- Overall outcome_changed rate: <percentage>%
+
+## Per-Dimension Breakdown
+| Dimension | Asked | Answered | Skipped | Outcome Changed % |
+|-----------|-------|----------|---------|-------------------|
+| ... | ... | ... | ... | ... |
+```
+
+### Step 6: Skip logic
+
+- No `*-reframing.jsonl` or `*-clarification.jsonl` → skip silently
+- Empty JSONL files → skip silently
+- **Never** block the main learn flow due to missing gate logs
+
+---
+
 ## Goals
 
 ### G1: Execution Quality Assessment
@@ -185,6 +260,9 @@ Produce a session episode, run evolution aggregation, archive task artifacts, an
 
 ### G9: 规则蒸馏 (Rule Distillation)
 Distill error-prevention rules from accumulated knowledge entries when confidence and frequency thresholds are met. Proposed rules follow the Evolved Rules protocol (`.forge/knowledge/evolved-rules.md`). 内部使用 `runGlossaryCheck({ phase: 'learn' })` 检测术语冲突。
+
+### G10: Gate Feedback Analysis
+Analyze Reframing Gate and Clarification Gate feedback logs (`.forge/progress/*-reframing.jsonl` and `*-clarification.jsonl`) to identify high-value question patterns. When a question dimension shows `outcome_changed=true` in > 50% of cases with ≥ 3 samples, propose it as an evolved-rule via §5.2 Self-Evolution Protocol.
 
 ---
 
@@ -310,6 +388,8 @@ When user triggers `/forge learn`, follow this dispatch protocol:
 | 无可提取知识 | 提示本次较简单，未识别到新知识 |
 | 知识库已满 | 新文档 confidence 高于最低文档时提示替换确认 |
 | 无 `.forge/` 目录 | 提示先运行 `/forge init` |
+| 无 Gate 日志 | 跳过 Gate 分析，不影响主流程 |
+| Gate 日志格式异常 | 跳过异常条目，记录警告到 session 日志 |
 
 ## Common Rationalizations
 
