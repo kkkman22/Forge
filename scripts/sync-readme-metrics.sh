@@ -13,13 +13,13 @@
 set -euo pipefail
 
 # ---------- 1. Count TypeScript modules in src/ ----------
-actual_modules=$(find src -maxdepth 1 -name '*.ts' | wc -l | tr -d ' ')
+actual_modules=$(find src -name '*.ts' | wc -l | tr -d ' ')
 
 # ---------- 2. Count test files in test/ ----------
-actual_test_files=$(find test -maxdepth 1 -name '*.test.ts' | wc -l | tr -d ' ')
+actual_test_files=$(find test -name '*.test.ts' | wc -l | tr -d ' ')
 
 # ---------- 3. Count property test files in test/ ----------
-actual_pbt_files=$(find test -maxdepth 1 -name '*.property.test.ts' | wc -l | tr -d ' ')
+actual_pbt_files=$(find test -name '*.property.test.ts' | wc -l | tr -d ' ')
 
 # ---------- 4. Extract total test count from vitest JSON output ----------
 actual_tests=$(npx vitest run --reporter=json 2>/dev/null | node -e "
