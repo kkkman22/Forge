@@ -33,3 +33,4 @@ reports/mutation/
 docs/api/
 
 apps/forge-loop-desktop/src-tauri/resources/node/bin/nodedist/
+.forge/specs/
