@@ -110,6 +110,53 @@ Round 0 完成后，将 grill findings 注入 Round 1 所有 subagent 的上下�
 
 **与 §2.7 No Confirmation Between Steps 的关系**：Round 0 的 "跳过？[y/N]" 是 Round 0 唯一的用户交互点。一旦用户选择不跳过，后续 3-5 个问题连续执行不停顿。这符合 §2.7（"唯一可停"包括用户控制入口）。
 
+### Round 0.5 — Reframing Gate (问题重构门控)
+
+在 Round 1 之前，根据 tier 和决策内容执行问题重构，帮助用户确认正在解决正确的问题。
+
+#### Tier 路由
+
+| Tier | 行为 |
+|------|------|
+| `light` | **完全跳过**，直接进入 Round 1 |
+| `standard` | 默认启用，`--no-gate` flag 可跳过 |
+| `full` | **强制启用**，不可跳过（Full tier 本身就是"需求模糊"的信号） |
+
+#### 问题选择算法
+
+分析用户决策 topic，按优先级从以下维度选择最多 3 个问题：
+
+1. **问题替代**（最高优先级）：当决策题包含方案关键词（"引入"、"迁移"、"切换"、"使用 X"）且不包含问题关键词（"太慢"、"出错"、"不够"）时触发 → "你确定这是正确的问题吗？有没有更根本的痛点？"
+2. **约束揭示**：当决策涉及 ≥3 个文件或新依赖时触发 → "有什么隐藏的约束我没看到？（时间、团队、合规、预算）"
+3. **代价校准**：当决策有明显的成本选项（如"自建 vs SaaS"、"重写 vs 迁移"）时触发 → "这个决策的代价你愿意承受多少？如果 cost 是 2x，你还做吗？"
+
+**规则**：最多 3 个问题，按优先级选取，已触发维度不重复。用户跳过所有问题时不延迟。
+
+#### 提问方式
+
+使用 `AskUserQuestion` 以非阻断方式提问。每个问题提供一个 `跳过，直接分析` 选项。总耗时不超过 1 分钟。超时处理：单个问题超过 20 秒未响应自动采用默认答案（"跳过"），继续下一问题。
+
+#### 回答注入
+
+当用户回答了至少一个重构问题，将回答格式化为 **Reframing_Context** 注入 Round 1 所有 subagent 的上下文中：
+
+```
+[Reframing Context]
+用户对决策问题 "{topic}" 的重构回答：
+- Q: {question} → A: {answer}
+...
+```
+
+Round 1 subagent 应参考这些回答调整分析深度或方向。
+
+**Answer Sanitization**：注入前对用户回答执行 sanitize — 截断至 200 字符、剥离指令模式（"ignore previous"、"system:"等）、用中性框架包裹。防止 prompt injection 通过用户回答注入 subagent 上下文。
+
+#### 反馈记录
+
+Gate 执行后记录到 `.forge/progress/<slug>-reframing.jsonl`（slug 限 `[a-z0-9-]+`，防路径遍历）：
+- `timestamp`、`skill: "decide"`、`questions_asked`、`questions_answered`、`questions_skipped`、`outcome_changed`（decide 完成后回填）
+- 即使全部跳过（questions_answered=0）仍写记录，保持审计完整
+
 ### Round 1 — Perspective Subagents (Parallel Launch)
 
 **Spec Context Filter**: 当搜索 `.kiro/specs/` 中的相关 spec 时，过滤以下条目：
