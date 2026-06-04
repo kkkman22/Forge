@@ -6,7 +6,7 @@
 - [x] 1.2 实现 `.forge/config.md` YAML frontmatter 解析（使用 awk 或 yq，避免重依赖）
 - [x] 1.3 实现 `<HARD-GATE name="frozen-zone-protection">` 块的 body 解析
 - [x] 1.4 实现"受保护区"章节解析，支持 `append-only`/`no-overwrite`/`no-delete` 修饰符
-- [x] 1.5 实现 `status: locked`、`status: approved` 限定符的 spec frontmatter 读取（100ms cap）
+- [x] 1.5 实现 `status: approved`、`status: approved` 限定符的 spec frontmatter 读取（100ms cap）
 - [x] 1.6 实现进程内缓存（env var ZONE_REGISTRY_CACHE_*），单会话多次调用只解析一次
 - [x] 1.7 实现 `emit_frozen_diagnostic` 输出 JSON 对象（含 message_md 渲染）
 - [x] 1.8 新增 `scripts/print-zone-registry.sh` 调试工具

@@ -65,7 +65,7 @@ cp "${FORGE_ROOT}/scripts/validate-knowledge.sh" "${CC_BUNDLE}/scripts/validate-
 chmod +x "${CC_BUNDLE}/scripts/validate-knowledge.sh"
 # Copy all runtime scripts (exclude build/install scripts which are dev-only)
 for script in \
-  check-frozen.sh auto-resume.sh persistent-loop.sh \
+  check-frozen.sh auto-resume.sh \
   hook-check-frozen.sh hook-check-frozen-post.sh \
   hook-precompact.sh hook-postcompact.sh hook-task-completed.sh; do
   if [[ -f "${FORGE_ROOT}/scripts/${script}" ]]; then
@@ -215,7 +215,7 @@ mkdir -p "${PLUGIN_DIST}/scripts"
 
 # Copy runtime scripts referenced by hooks
 for script in \
-  auto-resume.sh persistent-loop.sh hook-check-frozen.sh hook-check-frozen-post.sh \
+  auto-resume.sh hook-check-frozen.sh hook-check-frozen-post.sh \
   hook-precompact.sh hook-postcompact.sh hook-task-completed.sh \
   check-frozen.sh init.sh validate-knowledge.sh; do
   if [[ -f "${FORGE_ROOT}/scripts/${script}" ]]; then

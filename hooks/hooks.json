@@ -349,6 +349,7 @@
               "node",
               "scripts/task-created-hook.mjs"
             ]
+
           }
         ]
       }
@@ -362,6 +363,7 @@
               "node",
               "scripts/config-changed-hook.mjs"
             ]
+
           }
         ]
       }
@@ -375,6 +377,7 @@
               "node",
               "scripts/worktree-create-hook.mjs"
             ]
+
           }
         ]
       }
@@ -388,6 +391,7 @@
               "node",
               "scripts/worktree-remove-hook.mjs"
             ]
+
           }
         ]
       }
@@ -401,6 +405,7 @@
               "node",
               "scripts/stop-failure-hook.mjs"
             ]
+
           }
         ]
       }
@@ -414,6 +419,7 @@
               "node",
               "scripts/permission-denied-hook.mjs"
             ]
+
           }
         ]
       }

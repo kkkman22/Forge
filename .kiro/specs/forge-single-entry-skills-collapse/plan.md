@@ -10,7 +10,7 @@ monolith_acknowledged: true
 
 # Plan: Forge Single-Entry Skills Collapse
 
-> 来源：`.kiro/specs/forge-single-entry-skills-collapse/spec.md` (status: locked)
+> 来源：`.kiro/specs/forge-single-entry-skills-collapse/spec.md` (status: approved)
 > 上游决策：`.kiro/specs/forge-single-entry-skills-collapse/decide.md`
 > PoC 证据：`.forge/poc/single-entry-dispatch/RESULTS.md`
 
