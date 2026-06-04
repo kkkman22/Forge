@@ -21,22 +21,22 @@ const hooksMap = hooksFile.hooks as Record<
     matcher?: string;
     hooks: Array<{ type: string; command?: string; args?: string[]; timeout?: number }>;
   }>
+>;
 
+/** Known Claude Code tool names that can appear in matcher fields */
+const KNOWN_TOOL_PATTERNS = new Set([
+  "Write",
+  "Edit",
+  "MultiEdit",
+  "Bash",
+  "Read",
+  "Grep",
+  "Glob",
+  "LS",
+  "WebSearch",
+  "WebFetch",
+]);
 
-            const isArgs = Array.isArray(handler.args) && handler.args.length > 0;
-            expect(
-              isCommand || isArgs,
-              `${eventName}[${gi}].hooks[${hi}] must have either {type:"command", command} or {args[]}`,
-            ).toBe(true);
-          });
-        }
-      }
-    });
-  }
-});
-
-// ---------------------------------------------------------------------------
-// Req 8.1: matcher fields reference known tool patterns
 // ---------------------------------------------------------------------------
 
 describe("Contract: hooks.json matcher fields reference known tools", () => {

@@ -16,11 +16,7 @@ import {
   extractStringField,
   parseFrontmatter,
 } from "./frontmatter.js";
-<<<<<<< HEAD
 
-
-=======
->>>>>>> 741fe9a2 (fix(docs): export LogLevel type for TypeDoc and fix import ordering)
 import { safeParseConfigFile } from "./schemas/config-file.js";
 
 export type LogLevel = "debug" | "info" | "warn" | "error";
