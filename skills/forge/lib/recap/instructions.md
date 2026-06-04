@@ -1,5 +1,5 @@
 ---
-description: "Capture git history, sessions, and runs into a time-window categorized summary. Use when running /forge recap to review recent activity."
+description: "Use when running /forge recap to review recent activity"
 context: fork
 
 dispatch_mode: fork

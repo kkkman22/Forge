@@ -1,6 +1,6 @@
 ---
 name: forge-plan
-description: "Plan a locked Spec into atomic TDD-ready tasks with research, file mapping, and self-check. Use when running /forge plan."
+description: "Use when running /forge plan or a locked spec needs task breakdown"
 tools:
   - Read
   - Write

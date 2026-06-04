@@ -1,5 +1,5 @@
 ---
-description: "Initialize a Forge project by creating .forge/ directory, config, agents, and CLAUDE.md. Use when user runs `/forge init`, project has no .forge/ directory, or plugin is installed but project not yet initialized."
+description: "Use when user runs `/forge init`, project has no .forge/ directory, or plugin is installed but project not yet initialized"
 dispatch_mode: inline
 allowed_tools:
   - Bash

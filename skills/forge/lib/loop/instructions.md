@@ -1,5 +1,5 @@
 ---
-description: "Orchestrate an approved plan end-to-end without interactive prompts using native Claude Code scheduling. Use when user runs /forge loop, wants unattended execution, or needs background completion of queued tasks."
+description: "Use when user runs /forge loop, wants unattended execution, or needs background completion of queued tasks"
 
 dispatch_mode: fork
 allowed_tools:

@@ -1,6 +1,6 @@
 ---
 name: security
-description: 安全视角评估者。在 /forge decide 的 Agent Team 中提供安全视角，基于 OWASP Top 10 和 STRIDE 威胁建模进行安全评估。此视角不可跳过。
+description: Use when assessing threat models, permission boundaries, or data flow security
 memory: project
 model: inherit
 maxTurns: 10
