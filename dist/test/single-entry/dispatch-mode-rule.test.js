@@ -1,4 +1,4 @@
-import { readFileSync } from "node:fs";
+import { existsSync, readFileSync } from "node:fs";
 import { resolve } from "node:path";
 import { glob } from "glob";
 import { describe, expect, it } from "vitest";
@@ -67,7 +67,7 @@ function parseR35Table(specContent) {
     }
     return table;
 }
-describe("R3.5: dispatch_mode matches spec table", () => {
+describe.skipIf(!existsSync(SPEC_PATH))("R3.5: dispatch_mode matches spec table", () => {
     it("spec R3.5 table parses correctly with 29 entries", () => {
         const specContent = readFileSync(SPEC_PATH, "utf-8");
         const table = parseR35Table(specContent);

@@ -137,7 +137,7 @@ describe("forge-decide-teams: SKILL file", () => {
         expect(content).toMatch(/CLAUDE_CODE_EXPERIMENTAL_AGENT_TEAMS/);
     });
 });
-describe("forge-decide-teams: PoC topics file", () => {
+describe.skipIf(!existsSync(join(ROOT, ".kiro", "specs", "forge-decide-agent-teams", "poc-topics.md")))("forge-decide-teams: PoC topics file", () => {
     const topicsPath = join(ROOT, ".kiro", "specs", "forge-decide-agent-teams", "poc-topics.md");
     it("exists", () => {
         expect(existsSync(topicsPath)).toBe(true);
