@@ -217,7 +217,7 @@
     "decide-teams": {
       "instructions": {
         "path": "decide-teams/instructions.md",
-        "sha256": "30b076beb0426ac2c097c959f33c840652ba077a964b573e398246105f9698d9"
+        "sha256": "eb54998d292643f05ba9564dd2c05862d014d034c35cb440d401da7abf3a79de"
       },
       "references": []
     },
