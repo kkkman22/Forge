@@ -2,8 +2,11 @@
 /**
  * forge-context MCP Server entry point.
  *
- * Registers three tools (forge_exec, forge_git, forge_read) and connects
- * via StdioServerTransport for communication with Claude Code.
+ * Registers four tools (forge_exec, forge_git, forge_read, forge_read_cached)
+ * and connects via StdioServerTransport for communication with Claude Code.
+ *
+ * Includes graceful shutdown handling (SIGTERM, SIGINT, stdin EOF) to prevent
+ * orphan processes when the parent (Claude Code) exits.
  *
  * **Validates: Requirement 1**
  */

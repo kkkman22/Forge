@@ -14,8 +14,15 @@
 | **TDD Steps** | RED → GREEN → REFACTOR | — |
 | **Verify Command** | Command to verify task completion | `npm test -- --grep "notification"` |
 | **Commit Message** | Atomic commit message | `feat(notification): add core service interface` |
+| **Interaction** | `AFK` or `HITL` | `AFK` |
+| **Nature** | `feature` / `infrastructure` / `bugfix` | `feature` |
 
 ## TDD Step Format
+
+**Vertical Slice Constraint**: 每个 Task 就是一个 Tracer Bullet——
+它包含一条测试（RED）和让那条测试通过的最小实现（GREEN）。
+一个 Task 禁止包含多条独立的测试-实现对。
+如果需要多对，拆成多个 Task，每个一对。
 
 Each task's TDD steps must include three phases:
 
@@ -104,6 +111,8 @@ Expected: <expected output specification>
 ### Task 3: Pack type definitions
 
 **Depends On**: [1, 2]
+**Interaction**: AFK
+**Nature**: feature
 
 **RED** -- write failing test
 File: `test/pack/types.test.ts`

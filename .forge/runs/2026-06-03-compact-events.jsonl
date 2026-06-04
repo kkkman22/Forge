@@ -30,3 +30,4 @@
 {"timestamp":"2026-06-03T23:14:51Z","event":"precompact_snapshot","detail":"slug=forge-loop-native-fusion phase=build completed=0 pending=0"}
 {"timestamp":"2026-06-03T23:16:11Z","event":"postcompact_restore","detail":"slug=forge-loop-native-fusion"}
 {"timestamp":"2026-06-03T23:16:11Z","event":"precompact_snapshot","detail":"slug=forge-loop-native-fusion phase=build completed=0 pending=0"}
+{"timestamp":"2026-06-03T23:36:33Z","event":"precompact_snapshot","detail":"slug=forge-loop-native-fusion phase=build completed=0 pending=0"}
