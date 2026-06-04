@@ -1,174 +1,122 @@
 #!/usr/bin/env node
 /**
- * forge-read-injection-scanner.js — PostToolUse hook for Read
- *
- * Scans Read tool results for prompt injection patterns.
+ * forge-read-injection-scanner.js — PostToolUse hook for Read tool
+ * Also detects compression-survival patterns and markdown link dangers.
  * Fail-open design: always exits 0, outputs warnings to stderr as JSON.
- *
- * Trigger: PostToolUse matcher "Read"
- * Excludes: .forge/reviews/, .forge/knowledge/, hook source files, SECURITY.md
  */
-
 "use strict";
 
-const INJECTION_PATTERNS = [
-  // Instruction override
-  { name: "instruction-override", re: /ignore\s+(previous|all|above|earlier)\s+instructions?/i },
-  { name: "disregard-instructions", re: /disregard\s+(previous|above)\s+(instructions?|rules)/i },
-  { name: "forget-all", re: /forget\s+(everything|all)/i },
+var fs = require("fs");
+var path = require("path");
 
-  // Role manipulation
-  { name: "role-manipulation", re: /you\s+are\s+now\s+a/i },
-  { name: "new-instructions", re: /new\s+instructions?:/i },
-  { name: "your-role", re: /your\s+(new\s+)?role\s+(is|should\s+be)/i },
+// Load shared injection patterns
+var PATTERNS_FILE = path.join(__dirname, "injection-patterns.json");
+var INJECTION_PATTERNS = JSON.parse(fs.readFileSync(PATTERNS_FILE, "utf8")).map(function(p) {
+  return { name: p.name, re: new RegExp(p.pattern, "i") };
+});
 
-  // System tag injection
-  { name: "system-tag", re: /<system>|<assistant>|<human>|<user>|\[SYSTEM\]|\[INST\]|<<SYS>>|<\|im_start\|>/i },
-  { name: "html-comment-tag", re: /<!--\s*(system|assistant)/i },
-
-  // Tool call injection
-  { name: "tool-call-injection", re: /use\s+(the\s+)?(Read|Write|Edit|Bash)\s+tool/i },
-  { name: "call-function", re: /call\s+(the\s+)?function/i },
-  { name: "execute-command", re: /execute\s+(the\s+)?(following\s+)?command/i },
-
-  // Jailbreak/DAN
-  { name: "dan-mode", re: /DAN\s+(mode|jailbreak)/i },
-  { name: "developer-mode", re: /developer\s+mode/i },
-  { name: "bypass-restrictions", re: /bypass\s+(your|the)\s+(restrictions|rules|guidelines)/i },
+// Read-specific: compression-survival patterns
+// These target instructions designed to survive context summarization
+var COMPRESSION_SURVIVAL_PATTERNS = [
+  { name: "cs-retain-when", re: /when\s+(summariz|compress|condens|abbreviat)/i },
+  { name: "cs-retain-this", re: /retain\s+(this|the)\s+(when|if|during)/i },
+  { name: "cs-do-not-remove", re: /do\s+not\s+(remove|omit|exclude|delete|summarize)/i },
+  { name: "cs-always-include", re: /always\s+include\s+(this|the)/i },
+  { name: "cs-preserve", re: /preserve\s+(this|the\s+following|above)/i },
+  { name: "cs-important-must", re: /important:\s+(do\s+not|never|always|must)/i },
+  { name: "cs-this-critical", re: /this\s+(is|must\s+be)\s+(critical|essential|required|mandatory)/i },
 ];
 
-const COMPRESSION_SURVIVAL_PATTERNS = [
-  { name: "compression-when", re: /when\s+(summariz|compress|condens|abbreviat)/i },
-  { name: "retain-when", re: /retain\s+(this|the\s+following|above)\s+(when|if|during)/i },
-  { name: "do-not-remove", re: /do\s+not\s+(remove|omit|exclude|delete|summarize)/i },
-  { name: "always-include", re: /always\s+include\s+(this|the|in)/i },
-  { name: "preserve-this", re: /preserve\s+(this|the\s+following|above)/i },
-  { name: "important-directive", re: /important:\s+(do\s+not|never|always|must)/i },
-  { name: "critical-essential", re: /this\s+(is|must\s+be)\s+(critical|essential|required|mandatory)/i },
+// Read-specific: markdown link dangers
+var MD_LINK_DANGERS = [
+  { name: "md-javascript-uri", re: /javascript:/i },
+  { name: "md-data-uri-unsafe", re: /data:(?!image\/)/i },
+  { name: "md-url-credentials", re: /https?:\/\/[^/\s]+:[^/\s]+@/i },
+  { name: "md-query-secret", re: /[?&](token|key|secret|password)=/i },
 ];
 
-// Invisible Unicode detection using \\u escapes to avoid literal range issues.
-// Ranges: U+200B-200F (ZW/direction), U+202A-202E (RTL override), U+FEFF (BOM),
-// U+00AD (soft hyphen), U+2060 (word joiner), U+E0000-E007F (tag block via surrogate pair)
+// Exclusion paths (read-path-specific)
+var EXCLUDE_PATHS = [".forge/reviews/", ".forge/knowledge/", "SECURITY.md"];
+
+var HIGH_SEVERITY_THRESHOLD = 3;
+
+// Invisible Unicode (shared with prompt-guard)
 var INVISIBLE_UNICODE_BMP_RE = new RegExp("[\\u200B-\\u200F\\u202A-\\u202E\\uFEFF\\u00AD\\u2060]");
 var TAG_BLOCK_RE = new RegExp("\\uDB40[\\uDC00-\\uDC7F]");
 function hasInvisibleUnicode(s) {
   return INVISIBLE_UNICODE_BMP_RE.test(s) || TAG_BLOCK_RE.test(s);
 }
 
-// Markdown link danger patterns
-const MD_LINK_DANGERS = [
-  { name: "javascript-uri", re: /\[.*?\]\(\s*javascript\s*:/i },
-  { name: "data-uri-non-image", re: /\[.*?\]\(\s*data:(?!image\/)/i },
-  { name: "credentials-in-url", re: /https?:\/\/[^/\s]+:[^/\s]+@/i },
-  { name: "token-in-query", re: /[?&](token|key|secret|password|api_key|apikey)=\S+/i },
-];
-
-// Exclusion paths — do not scan
-const EXCLUDED_PATHS = [
-  ".forge/reviews/",
-  ".forge/knowledge/",
-  "SECURITY.md",
-];
-
-// Exclude hook source files by name
-const EXCLUDED_FILES = [
-  "forge-prompt-guard.js",
-  "forge-read-injection-scanner.js",
-];
-
 function readStdin() {
-  return new Promise((resolve, reject) => {
-    const chunks = [];
+  return new Promise(function(resolve, reject) {
+    var chunks = [];
     process.stdin.setEncoding("utf8");
-    process.stdin.on("data", (chunk) => chunks.push(chunk));
-    process.stdin.on("end", () => resolve(chunks.join("")));
+    process.stdin.on("data", function(chunk) { chunks.push(chunk); });
+    process.stdin.on("end", function() { resolve(chunks.join("")); });
     process.stdin.on("error", reject);
   });
 }
 
-function isExcluded(filePath) {
-  if (!filePath) return false;
-  for (const excluded of EXCLUDED_PATHS) {
-    if (filePath.includes(excluded)) return true;
+function scanContent(content) {
+  var matches = [];
+  for (var i = 0; i < INJECTION_PATTERNS.length; i++) {
+    if (INJECTION_PATTERNS[i].re.test(content)) matches.push(INJECTION_PATTERNS[i].name);
   }
-  const basename = filePath.split("/").pop() || "";
-  for (const name of EXCLUDED_FILES) {
-    if (basename === name) return true;
+  for (var i = 0; i < COMPRESSION_SURVIVAL_PATTERNS.length; i++) {
+    if (COMPRESSION_SURVIVAL_PATTERNS[i].re.test(content)) matches.push(COMPRESSION_SURVIVAL_PATTERNS[i].name);
+  }
+  for (var i = 0; i < MD_LINK_DANGERS.length; i++) {
+    if (MD_LINK_DANGERS[i].re.test(content)) matches.push(MD_LINK_DANGERS[i].name);
+  }
+  return matches;
+}
+
+function isExcluded(filePath) {
+  for (var i = 0; i < EXCLUDE_PATHS.length; i++) {
+    if (filePath.includes(EXCLUDE_PATHS[i])) return true;
   }
   return false;
 }
 
-function scanContent(content) {
-  const matched = [];
-
-  // Standard injection patterns
-  for (const pattern of INJECTION_PATTERNS) {
-    if (pattern.re.test(content)) {
-      matched.push(pattern.name);
-    }
-  }
-
-  // Compression survival patterns
-  for (const pattern of COMPRESSION_SURVIVAL_PATTERNS) {
-    if (pattern.re.test(content)) {
-      matched.push(pattern.name);
-    }
-  }
-
-  // Invisible Unicode
-  if (hasInvisibleUnicode(content)) {
-    matched.push("invisible-unicode");
-  }
-
-  // Markdown link dangers
-  for (const pattern of MD_LINK_DANGERS) {
-    if (pattern.re.test(content)) {
-      matched.push(pattern.name);
-    }
-  }
-
-  return matched;
-}
-
 function classifySeverity(matchCount) {
-  return matchCount >= 3 ? "HIGH" : "LOW";
+  return matchCount >= HIGH_SEVERITY_THRESHOLD ? "HIGH" : "LOW";
 }
 
 async function main() {
   try {
-    const input = await readStdin();
-    if (!input) process.exit(0);
+    var input = JSON.parse(await readStdin());
+    var toolName = input.tool_name || input.tool || "";
 
-    const data = JSON.parse(input);
-    const toolName = data.tool_name || "";
+    if (toolName !== "Read") { process.exit(0); return; }
 
-    // Only activate for Read
-    if (toolName !== "Read") {
-      process.exit(0);
+    var filePath = "";
+    var toolInput = input.tool_input || input.params || {};
+    if (typeof toolInput === "string") { filePath = toolInput; }
+    else { filePath = toolInput.file_path || toolInput.path || ""; }
+
+    if (isExcluded(filePath)) { process.exit(0); return; }
+
+    var content = input.tool_result || input.result || "";
+    if (typeof content !== "string") { content = JSON.stringify(content); }
+    if (!content) { process.exit(0); return; }
+
+    var matches = scanContent(content);
+    var hasInvisible = hasInvisibleUnicode(content);
+
+    if (matches.length > 0 || hasInvisible) {
+      var severity = classifySeverity(matches.length + (hasInvisible ? 1 : 0));
+      var result = {
+        severity: severity,
+        patterns: matches,
+        invisible_unicode: hasInvisible,
+        file: filePath,
+        hook: "forge-read-injection-scanner"
+      };
+      process.stderr.write(JSON.stringify(result) + "\n");
     }
-
-    // Check exclusion by file path (from tool_input if available)
-    const filePath = (data.tool_input && data.tool_input.file_path) || "";
-    if (isExcluded(filePath)) {
-      process.exit(0);
-    }
-
-    // Get content from tool_result
-    const toolResult = data.tool_result || "";
-    if (!toolResult || typeof toolResult !== "string") process.exit(0);
-
-    const patterns = scanContent(toolResult);
-    if (patterns.length === 0) process.exit(0);
-
-    const severity = classifySeverity(patterns.length);
-    const result = { severity, patterns, file: filePath };
-
-    process.stderr.write(JSON.stringify(result) + "\n");
-  } catch {
-    // Fail-open: any error exits 0
+  } catch (e) {
+    // Fail-open: never block on errors
   }
-
   process.exit(0);
 }
 
