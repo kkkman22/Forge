@@ -64,7 +64,15 @@ See `skills/forge/lib/router/instructions.md` for full routing logic. Summary:
 
 User override takes precedence. No tier-skipping within a sequence.
 
-## 6. Configuration
+## 6. Flags
+
+### `--no-gate`
+
+Skips Reframing Gate (decide) and Clarification Gate (spec). Applicable to Standard tier only; Light tier already skips gates; Full tier ignores this flag (gates are mandatory).
+
+Usage: `/forge decide --no-gate <topic>` or `/forge spec --no-gate <topic>`.
+
+## 7. Configuration
 
 `.forge/config.md` → `skills.dispatcher_mode`:
 
@@ -73,11 +81,11 @@ User override takes precedence. No tier-skipping within a sequence.
 | `collapsed` (default) | Reads `skills/forge/lib/<sub>/instructions.md` |
 | `legacy` | v2.4 compatibility (migration-period only) |
 
-## 7. Audit Log
+## 8. Audit Log
 
 Every dispatch appends a tamper-evident HMAC-chained NDJSON entry to `${CLAUDE_PLUGIN_DATA}/forge/audit/dispatch.log` (outside workspace). See `src/forge-dispatcher/audit-log.ts`.
 
-## 8. Related References
+## 9. Related References
 
 - ADR-0003 (skill registration model)
 - ADR-0004 (skills collapse, this spec)

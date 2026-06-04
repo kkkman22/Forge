@@ -1,14 +1,16 @@
 ---
-current_task: "mcp-server-lifecycle"
+current_task: "forge-learn-reframing-integration"
 phase: "build"
 updated: "2026-06-04"
-branch: "forge/mcp-server-lifecycle"
+branch: "worktree-forge-learn-reframing-integration"
 ---
 
 # 项目状态
 
-## 当前任务：mcp-server-lifecycle
+## 当前任务：forge-learn-reframing-integration
 
-MCP server 进程生命周期管理，防止孤儿进程（Layer 1 信号处理 + Layer 2 stdin EOF 检测）。
+`/forge learn` 读取 Gate 日志（reframing/clarification JSONL），提炼高价值问题模式，可选提升为 evolved-rule。
 
-- Spec: `.forge/specs/mcp-server-lifecycle/` (draft)
+- Spec: `.kiro/specs/forge-learn-reframing-integration/`
+- Tier: light
+- Sequence: build → review
