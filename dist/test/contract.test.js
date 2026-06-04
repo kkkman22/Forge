@@ -486,8 +486,8 @@ describe("Contract: evolved rules templates", () => {
 describe("Contract: CLAUDE.md self-evolution section", () => {
     const templatePath = resolve(ROOT, "templates/CLAUDE.md");
     const template = readFileSync(templatePath, "utf-8");
-    it("CLAUDE.md template contains a Self-Evolution heading (Section 5)", () => {
-        expect(template).toMatch(/##\s+5\.\s+Self-Evolution/);
+    it("CLAUDE.md template contains a Self-Evolution heading (Section 6)", () => {
+        expect(template).toMatch(/##\s+6\.\s+Self-Evolution/);
     });
     it("Section references evolved-rules.md", () => {
         expect(template).toContain("evolved-rules.md");

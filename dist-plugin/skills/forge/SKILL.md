@@ -11,7 +11,7 @@ skeleton_exempt_legacy: true
 
 ## 1. Overview
 
-Forge's sole registered skill. All 32 sub-skills live under `skills/forge/lib/<sub>/instructions.md` and are dispatched through the 10-step chokepoint in `src/forge-dispatcher.ts`. Users invoke via `/forge <sub>` (direct) or `/forge <description>` (router-analyzed).
+Forge's sole registered skill. All 33 sub-skills live under `skills/forge/lib/<sub>/instructions.md` and are dispatched through the 10-step chokepoint in `src/forge-dispatcher.ts`. Users invoke via `/forge <sub>` (direct) or `/forge <description>` (router-analyzed).
 
 ## 2. Subcommand Listing
 
@@ -25,7 +25,7 @@ Forge's sole registered skill. All 32 sub-skills live under `skills/forge/lib/<s
 `decide` `spec` `plan` `build` `review` `test` `ship` `learn`
 
 ### Auxiliary
-`debug` `loop` `status` `resume` `abort` `zoom-out` `recap` `grill` `storm` `mutate` `router` `verify` `accept` `refactor` `fix` `pack` `decide-teams` `build-light` `fix-conflicts` `control-cli` `control-ui` `forge-cmux-browser-qa` `forge-cmux-loop-signals` `forge-cmux-sidebar-sync`
+`debug` `loop` `status` `resume` `abort` `zoom-out` `recap` `grill` `storm` `mutate` `router` `verify` `accept` `refactor` `fix` `pack` `decide-teams` `charter` `build-light` `fix-conflicts` `control-cli` `control-ui` `forge-cmux-browser-qa` `forge-cmux-loop-signals` `forge-cmux-sidebar-sync`
 
 Tier is logical, not physical — a sub can appear in multiple tiers. Routing logic in `skills/forge/lib/router/instructions.md`.
 
@@ -34,7 +34,7 @@ Tier is logical, not physical — a sub can appear in multiple tiers. Routing lo
 Every `/forge <topic>` invocation follows this sequence (implemented in `src/forge-dispatcher.ts`,不可绕过):
 
 1. **resolveDispatcherMode** — `.forge/config.md` `skills.dispatcher_mode` (default: `collapsed`)
-2. **validateTopic** — 29-sub allowlist (R2.1)
+2. **validateTopic** — 30-sub allowlist (R2.1)
 3. **resolveLibPath** — `${CLAUDE_PLUGIN_ROOT} ?? cwd` dual-mode (R2.2)
 4. **checkIntegrity** — `manifest.json` sha256 (R2.6)
 5. **resolveAllowedTools** — lib frontmatter `allowed_tools` (R2.3)
@@ -47,7 +47,7 @@ Every `/forge <topic>` invocation follows this sequence (implemented in `src/for
 
 Each sub's `dispatch_mode` is declared in `skills/forge/lib/<sub>/instructions.md` frontmatter. `registry.toml` is the derived index verified by CI.
 
-- **fork** (18 subs): `Agent` tool spawns fresh subagent. For: learn, decide, decide-teams, debug, grill, storm, recap, mutate, zoom-out, review, build, plan, spec, ship, test, loop, accept, pack.
+- **fork** (19 subs): `Agent` tool spawns fresh subagent. For: learn, decide, decide-teams, debug, grill, storm, recap, mutate, zoom-out, review, build, plan, spec, ship, test, loop, accept, pack, charter.
 - **inline** (11 subs): main agent `Read`s instructions then executes. For: build-light, router, status, resume, abort, verify, refactor, fix, fix-conflicts, control-cli, control-ui.
 
 Complete allocation: spec R3.5 table.

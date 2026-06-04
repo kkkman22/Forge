@@ -1,6 +1,6 @@
 {
   "version": 1,
-  "generated_at": "2026-06-04T14:56:13.187Z",
+  "generated_at": "2026-06-04T22:47:02.530Z",
   "subs": {
     "abort": {
       "instructions": {
@@ -131,6 +131,18 @@
         {
           "path": "build-light/references/function-contracts.md",
           "sha256": "08c00e7e465f6c1c74cc569db68db65bcb80c3b1c40c874cfada4a3a33ac2d97"
+        }
+      ]
+    },
+    "charter": {
+      "instructions": {
+        "path": "charter/instructions.md",
+        "sha256": "992ef791310e9c7f49d82852c7b490363c69ba776228f7d3560088fca3d5cc78"
+      },
+      "references": [
+        {
+          "path": "charter/references/subcommands.md",
+          "sha256": "fbd9accd6322f38f32588d91054ec78e61d9b1dea5aec355d6cd93d5bc2038a7"
         }
       ]
     },
@@ -695,18 +707,6 @@
         {
           "path": "zoom-out/references/function-contracts.md",
           "sha256": "45ee1ff09884433b4dffcb001df547e0319c418025298554dd665382aef73113"
-        }
-      ]
-    },
-    "charter": {
-      "instructions": {
-        "path": "charter/instructions.md",
-        "sha256": "992ef791310e9c7f49d82852c7b490363c69ba776228f7d3560088fca3d5cc78"
-      },
-      "references": [
-        {
-          "path": "charter/references/subcommands.md",
-          "sha256": "fbd9accd6322f38f32588d91054ec78e61d9b1dea5aec355d6cd93d5bc2038a7"
         }
       ]
     }

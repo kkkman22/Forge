@@ -157,6 +157,7 @@ Glossary Hook: Task Breakdown 后调用 `runGlossaryCheck({ phase: 'plan' })` �
 | Dependencies | 无循环依赖，拓扑排序正确 |
 | Dependency Graph Validity | `validateGraph(toTaskGraph(tasks))` 通过；循环依赖自动修正 |
 | Plan Structure | Split_Trigger 任一命中 → 警告 + 等待用户选择 → 详见 references/plan-split-wizard.md |
+| Charter Boundary | 当 `.forge/charter.md` 存在且 `status: active` 时，验证 plan 中的文件变更不违反 charter boundaries（模块间通信约束、层级访问限制）。违规任务标注 `⚠ Charter boundary conflict: <invariant-id>` |
 
 未通过则自动修正并重新自检。
 
