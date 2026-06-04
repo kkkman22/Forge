@@ -12,4 +12,11 @@
 {"timestamp":"2026-06-04T06:19:26Z","event":"precompact_snapshot","detail":"slug=mcp-server-lifecycle phase=build completed=0 pending=0"}
 {"timestamp":"2026-06-04T06:20:31Z","event":"postcompact_restore","detail":"slug=mcp-server-lifecycle"}
 {"timestamp":"2026-06-04T06:20:32Z","event":"precompact_snapshot","detail":"slug=mcp-server-lifecycle phase=build completed=0 pending=0"}
-{"timestamp":"2026-06-04T06:26:18Z","event":"precompact_snapshot","detail":"slug=mcp-server-lifecycle phase=build completed=0 pending=0"}
+{"timestamp":"2026-06-04T06:23:06Z","event":"postcompact_restore","detail":"slug=mcp-server-lifecycle"}
+{"timestamp":"2026-06-04T06:23:06Z","event":"precompact_snapshot","detail":"slug=mcp-server-lifecycle phase=build completed=0 pending=0"}
+{"timestamp":"2026-06-04T06:24:15Z","event":"postcompact_restore","detail":"slug=mcp-server-lifecycle"}
+{"timestamp":"2026-06-04T06:24:15Z","event":"precompact_snapshot","detail":"slug=mcp-server-lifecycle phase=build completed=0 pending=0"}
+{"timestamp":"2026-06-04T06:38:01Z","event":"postcompact_restore","detail":"slug=mcp-server-lifecycle"}
+{"timestamp":"2026-06-04T06:38:01Z","event":"precompact_snapshot","detail":"slug=mcp-server-lifecycle phase=build completed=0 pending=0"}
+{"timestamp":"2026-06-04T06:39:10Z","event":"postcompact_restore","detail":"slug=mcp-server-lifecycle"}
+{"timestamp":"2026-06-04T06:39:10Z","event":"precompact_snapshot","detail":"slug=mcp-server-lifecycle phase=build completed=0 pending=0"}
