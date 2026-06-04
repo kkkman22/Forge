@@ -154,6 +154,34 @@ Assign IDs in format `R-NNN` (R-001, R-002, ...) after sorting.
 - Re-review rounds: preserve all previous IDs, new findings get max+1
 - Commit messages reference findings as `fix(R-003): description`
 
+### Step 4.5: Validation Pass (Optional, Full tier only)
+
+After assigning stable IDs, optionally run independent validation for each surviving finding.
+
+**Tier conditions**:
+- **Full tier**: Default enabled
+- **Standard / Light tier**: Skipped
+- **Override**: `--no-validation` flag manually skips; `review_enable_validation: false` in config disables
+
+**Execution**:
+```
+For each surviving finding:
+  1. Spawn validation-pass subagent with finding data
+     - P0/P1 findings → model: inherit (Opus)
+     - P2/P3 findings → model: sonnet
+  2. validation-pass receives: title, severity, file, line, evidence
+     - Does NOT receive: reviewer identity, analysis process
+  3. validation-pass returns: {confirmed, reason, adjusted_confidence}
+  4. Apply downgrade rules:
+     - P0 not confirmed → P1 + "↓ validation: <reason>"
+     - P1 not confirmed → P2 + "↓ validation: <reason>"
+  5. Log result to .forge/progress/<slug>-review-validation.jsonl
+```
+
+**Spawn restriction**: Add `validation-pass` to allowed subagent types. Validation agents are independent from reviewers — they verify findings, not code.
+
+**Concurrency**: Validation agents run in parallel (one per finding), subject to `max_parallel_agents` limit.
+
 ### Step 5: Generate Report
 
 #### Report Format (v2, default)
@@ -196,6 +224,39 @@ P1: [security] Missing auth check in route.ts:45
 v2 is a strict superset of v1 — severity prefix (P0/P1/P2/P3) is still grep-able.
 
 **`--output-format=v1|v2`** parameter: default v2. v2 contains all v1 information plus confidence + IDs.
+
+### Step 7: Autofix Routing (Optional, `--autofix` flag only)
+
+When user runs `/forge review --autofix`, apply automated fixes based on `autofix_class`:
+
+**Four autofix classes**:
+
+| Class | Behavior | Example |
+|-------|----------|---------|
+| `safe_auto` | Auto-apply **one at a time** with per-fix CI verification | Missing import, trivial naming fix, null check |
+| `gated_auto` | Present to user individually for accept/reject/edit | Error handling change, non-trivial refactor |
+| `manual` | Skip — requires human judgment | Architecture decision, API design |
+| `advisory` | Skip — informational only | Adversarial findings, performance suggestions |
+
+**Execution flow** (`--autofix` mode):
+```
+1. For each safe_auto finding (one at a time):
+   a. Apply the suggested_fix
+   b. Run ci_check_command from .forge/config.md
+   c. If CI passes → keep fix, commit "fix(R-NNN): <title>"
+   d. If CI fails → git checkout affected files, report rollback
+
+2. For each gated_auto finding:
+   a. Present finding + suggested_fix to user
+   b. User chooses: accept / reject / edit
+   c. If accepted → apply + verify as above
+
+3. Skip manual and advisory findings entirely
+```
+
+**Rollback**: When CI fails after a safe_auto fix, `git checkout` the affected files and report which finding was rolled back. Do NOT batch-apply safe_auto fixes — apply one at a time to isolate failures.
+
+**Verification iron law** (§2.3): No verification run = cannot declare pass. Every autofix must be verified.
 
 ### Step 6: Output Result
 
