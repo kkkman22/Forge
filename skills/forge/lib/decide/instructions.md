@@ -218,18 +218,20 @@ Gate 执行后记录到 `.forge/progress/<slug>-reframing.jsonl`（slug 限 `[a-
 
 After Round 2 Critic output:
 
-**增强后的触发条件**（满足任一即触发）：
+→ 执行协议详见 `shared/references/gate-protocol.md`（参数：gate_name=Reframing Gate, max_questions=3, time_budget=1 min, injection_label=Reframing Context, log_filename=\*-reframing.jsonl, skip_option_text=跳过，直接分析）
 
-1. （现有）Critic 标记 `disagreement_kind: "requirement_side"`：
-   - Call `shouldTriggerInlineGrill({ mode, reason: "decide_requirement_disagreement", alreadyTriggered })`
-   - `trigger: true` (interactive): Render `renderInlineGrillConfirmPrompt("decide_requirement_disagreement")`, await user confirmation, run inline grill loop with subset of decision categories (functionality / boundary / non_goal only), inject via `formatInlineGrillInjection(result, "decide")` → re-run Round 1 for affected perspectives only
-   - `trigger: false` (autonomous): Render `renderInlineGrillAdvisory("decide_requirement_disagreement")`, write advisory to decision document §否决记录
-2. （新增）Round 1 所有视角输出中，术语使用不一致（≥2 个视角对同一概念用了不同术语）：
-   - 聚焦术语对齐，inline grill 仅使用 terminology 类问题
-   - 澄清后注入 Round 1 重新评估受影响视角
-3. （新增）Round 1 视角输出的核心结论存在直接矛盾（如 product 说 "必须支持离线" 但 architect 说 "需要实时网络"）：
-   - 聚焦矛盾点，inline grill 使用 functionality + boundary 类问题
-   - 解决后注入 Round 1 重新评估矛盾相关视角
+**触发条件**（满足任一即触发，这是 decide 唯一不同的部分）：
+
+1. Critic 标记 `disagreement_kind: "requirement_side"`：
+   - reason: `"decide_requirement_disagreement"`
+   - 问题选择：functionality / boundary / non_goal 子集
+   - 注入后重新执行：Round 1（受影响视角）
+2. 术语使用不一致（≥2 个视角对同一概念用了不同术语）：
+   - 问题选择：terminology 类问题
+   - 注入后重新执行：Round 1（受影响视角）
+3. 核心结论直接矛盾（如 product 说 "必须支持离线" 但 architect 说 "需要实时网络"）：
+   - 问题选择：functionality + boundary 类问题
+   - 注入后重新执行：Round 1（矛盾相关视角）
 
 **Hesitation 交互优先级**（不变）：
 - If user expresses hesitation 3 consecutive times + requirement_side disagreement detected:
@@ -239,7 +241,6 @@ After Round 2 Critic output:
 
 **Constraints**:
 - Technical-side disagreement does NOT trigger inline grill (handled by critic needs_revision)
-- Frequency: at most once per session per reason
 
 ---
 
