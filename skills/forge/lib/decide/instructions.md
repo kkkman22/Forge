@@ -134,7 +134,7 @@ Round 0 完成后，将 grill findings 注入 Round 1 所有 subagent 的上下�
 
 #### 提问方式
 
-使用 `AskUserQuestion` 以非阻断方式提问。每个问题提供一个 `跳过，直接分析` 选项。总耗时不超过 1 分钟。
+使用 `AskUserQuestion` 以非阻断方式提问。每个问题提供一个 `跳过，直接分析` 选项。总耗时不超过 1 分钟。超时处理：单个问题超过 20 秒未响应自动采用默认答案（"跳过"），继续下一问题。
 
 #### 回答注入
 
@@ -153,8 +153,9 @@ Round 1 subagent 应参考这些回答调整分析深度或方向。
 
 #### 反馈记录
 
-Gate 执行后记录到 `.forge/progress/<slug>-reframing.jsonl`：
+Gate 执行后记录到 `.forge/progress/<slug>-reframing.jsonl`（slug 限 `[a-z0-9-]+`，防路径遍历）：
 - `timestamp`、`skill: "decide"`、`questions_asked`、`questions_answered`、`questions_skipped`、`outcome_changed`（decide 完成后回填）
+- 即使全部跳过（questions_answered=0）仍写记录，保持审计完整
 
 ### Round 1 — Perspective Subagents (Parallel Launch)
 

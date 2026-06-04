@@ -70,7 +70,9 @@ allowed_tools:
 
 #### Charter 感知
 
-读取 `.forge/charter.md`（如果存在），避免提出 charter 已回答的问题（如技术选型、团队规模等已记录信息）。
+读取 `.forge/charter.md`（如果存在），避免提出 charter 已回答的问题（如技术选型、团队规模等已记录信息）。Charter 不可读或格式异常时输出警告并跳过 charter 感知（不影响 Gate 执行）。
+
+**维度覆盖检测**：通过 charter 的 section header 匹配判断已覆盖维度（如存在 `## 技术选型` section → 跳过"依赖关系"问题；存在 `## 目标用户` → 跳过"用户价值"问题）。无对应 section header 的维度正常提问。
 
 #### 问题选择算法
 
@@ -86,7 +88,7 @@ allowed_tools:
 
 #### 提问方式
 
-使用 `AskUserQuestion` 提问。每个问题提供 `跳过` 选项。总耗时不超过 2 分钟。
+使用 `AskUserQuestion` 提问。每个问题提供 `跳过` 选项。总耗时不超过 2 分钟。超时处理：单个问题超过 20 秒未响应自动采用"跳过"。
 
 #### 回答整合
 
@@ -105,8 +107,9 @@ Step 1 应将这些回答直接反映到需求文档的对应章节中。
 
 #### 反馈记录
 
-Gate 执行后记录到 `.forge/progress/<slug>-clarification.jsonl`：
+Gate 执行后记录到 `.forge/progress/<slug>-clarification.jsonl`（slug 限 `[a-z0-9-]+`，防路径遍历）：
 - `timestamp`、`skill: "spec"`、`questions_asked`、`questions_answered`、`questions_skipped`、`outcome_changed`（spec 完成后回填）
+- 即使全部跳过（questions_answered=0）仍写记录，保持审计完整
 
 ### Step 1: Propose (Generate Draft)
 
