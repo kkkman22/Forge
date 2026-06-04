@@ -1319,24 +1319,36 @@ describe("CE-Inspired Review Enhancement - Phase 1", () => {
   });
 
   it("forge-review.md has Confidence Anchor definition (5 levels)", () => {
-    const content = readFileSync(resolve(__dirname, "..", ".claude/agents/forge-review.md"), "utf-8");
+    const content = readFileSync(
+      resolve(__dirname, "..", ".claude/agents/forge-review.md"),
+      "utf-8",
+    );
     expect(content).toMatch(/## Confidence Anchor/);
     expect(content).toMatch(/\b100\b.*\b75\b.*\b50\b.*\b25\b.*\b0\b/s);
   });
 
   it("forge-review.md implements confidence gate with P0@50 exception", () => {
-    const content = readFileSync(resolve(__dirname, "..", ".claude/agents/forge-review.md"), "utf-8");
+    const content = readFileSync(
+      resolve(__dirname, "..", ".claude/agents/forge-review.md"),
+      "utf-8",
+    );
     expect(content).toMatch(/## Confidence Gate|Confidence Gate/);
     expect(content).toMatch(/P0.*50|severity\s*=\s*P0.*confidence.*50/s);
   });
 
   it("forge-review.md implements Stable Finding IDs (R-NNN)", () => {
-    const content = readFileSync(resolve(__dirname, "..", ".claude/agents/forge-review.md"), "utf-8");
+    const content = readFileSync(
+      resolve(__dirname, "..", ".claude/agents/forge-review.md"),
+      "utf-8",
+    );
     expect(content).toMatch(/R-NNN|Stable Finding ID/);
   });
 
   it("forge-review.md supports --output-format=v1|v2 (backward compat)", () => {
-    const content = readFileSync(resolve(__dirname, "..", ".claude/agents/forge-review.md"), "utf-8");
+    const content = readFileSync(
+      resolve(__dirname, "..", ".claude/agents/forge-review.md"),
+      "utf-8",
+    );
     expect(content).toMatch(/--output-format=v1\|v2|output-format/);
   });
 
@@ -1390,20 +1402,29 @@ describe("CE-Inspired Review Enhancement - Phase 2", () => {
   });
 
   it("forge-review.md has dedup algorithm (normalize + line_bucket)", () => {
-    const content = readFileSync(resolve(__dirname, "..", ".claude/agents/forge-review.md"), "utf-8");
+    const content = readFileSync(
+      resolve(__dirname, "..", ".claude/agents/forge-review.md"),
+      "utf-8",
+    );
     expect(content).toMatch(/normalize\(file\)/);
     expect(content).toMatch(/normalize\(title\)/);
     expect(content).toMatch(/line_bucket/);
   });
 
   it("forge-review.md has cross-reviewer promotion", () => {
-    const content = readFileSync(resolve(__dirname, "..", ".claude/agents/forge-review.md"), "utf-8");
+    const content = readFileSync(
+      resolve(__dirname, "..", ".claude/agents/forge-review.md"),
+      "utf-8",
+    );
     expect(content).toMatch(/Cross-Reviewer Promotion/i);
     expect(content).toMatch(/cross-validated/i);
   });
 
   it("forge-review.md has adversarial-check dispatch tier conditions", () => {
-    const content = readFileSync(resolve(__dirname, "..", ".claude/agents/forge-review.md"), "utf-8");
+    const content = readFileSync(
+      resolve(__dirname, "..", ".claude/agents/forge-review.md"),
+      "utf-8",
+    );
     expect(content).toMatch(/adversarial-check/);
     expect(content).toMatch(/Full/);
     expect(content).toMatch(/Standard/);
@@ -1438,14 +1459,20 @@ describe("CE-Inspired Review Enhancement - Phase 3", () => {
   });
 
   it("forge-review.md has Validation Pass integration", () => {
-    const content = readFileSync(resolve(__dirname, "..", ".claude/agents/forge-review.md"), "utf-8");
+    const content = readFileSync(
+      resolve(__dirname, "..", ".claude/agents/forge-review.md"),
+      "utf-8",
+    );
     expect(content).toMatch(/Validation Pass/i);
     expect(content).toMatch(/--no-validation/);
     expect(content).toMatch(/review-validation\.jsonl/);
   });
 
   it("forge-review.md has Autofix routing (4 classes)", () => {
-    const content = readFileSync(resolve(__dirname, "..", ".claude/agents/forge-review.md"), "utf-8");
+    const content = readFileSync(
+      resolve(__dirname, "..", ".claude/agents/forge-review.md"),
+      "utf-8",
+    );
     expect(content).toMatch(/safe_auto/);
     expect(content).toMatch(/gated_auto/);
     expect(content).toMatch(/\bmanual\b/);
@@ -1454,7 +1481,10 @@ describe("CE-Inspired Review Enhancement - Phase 3", () => {
   });
 
   it("forge-review.md applies safe_auto one at a time (Critic S-003 fix)", () => {
-    const content = readFileSync(resolve(__dirname, "..", ".claude/agents/forge-review.md"), "utf-8");
+    const content = readFileSync(
+      resolve(__dirname, "..", ".claude/agents/forge-review.md"),
+      "utf-8",
+    );
     expect(content).toMatch(/one at a time/i);
     expect(content).toMatch(/per-fix CI/);
   });
@@ -1470,4 +1500,3 @@ describe("CE-Inspired Review Enhancement - Phase 3", () => {
     expect(content).toMatch(/--output-format=v1\|v2|output-format/);
   });
 });
-
