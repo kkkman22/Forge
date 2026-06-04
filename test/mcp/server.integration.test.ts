@@ -10,12 +10,28 @@
  * **Validates: Requirements 1.1–1.4, 1.6**
  */
 
+import { type ChildProcess, spawn } from "node:child_process";
 import { resolve } from "node:path";
 import { Client } from "@modelcontextprotocol/sdk/client/index.js";
 import { StdioClientTransport } from "@modelcontextprotocol/sdk/client/stdio.js";
 import { afterEach, describe, expect, it } from "vitest";
 
 const SERVER_PATH = resolve("dist/src/mcp/server.js");
+
+/** Wait for a child process to exit, returning its exit code. */
+function waitForExit(child: ChildProcess, timeoutMs = 5000): Promise<number | null> {
+  return new Promise((resolve, reject) => {
+    const timer = setTimeout(() => {
+      child.kill("SIGKILL");
+      reject(new Error("Process did not exit within timeout"));
+    }, timeoutMs);
+
+    child.on("exit", (code) => {
+      clearTimeout(timer);
+      resolve(code);
+    });
+  });
+}
 
 describe("forge-context MCP server integration", () => {
   let client: Client;
@@ -63,5 +79,34 @@ describe("forge-context MCP server integration", () => {
     expect(content).toHaveLength(1);
     expect(content[0].type).toBe("text");
     expect(content[0].text).toContain("hello");
+  });
+
+  it("exits gracefully on SIGTERM", { timeout: 10000 }, async () => {
+    const child = spawn("node", [SERVER_PATH], {
+      stdio: ["pipe", "pipe", "pipe"],
+    });
+
+    // Wait for server to start (it writes to stderr on startup)
+    await new Promise((resolve) => setTimeout(resolve, 500));
+
+    child.kill("SIGTERM");
+
+    const exitCode = await waitForExit(child);
+    expect(exitCode).toBe(0);
+  });
+
+  it("exits when stdin is closed (parent process gone)", { timeout: 10000 }, async () => {
+    const child = spawn("node", [SERVER_PATH], {
+      stdio: ["pipe", "pipe", "pipe"],
+    });
+
+    // Wait for server to start
+    await new Promise((resolve) => setTimeout(resolve, 500));
+
+    // Close stdin — simulates parent process exit
+    child.stdin!.end();
+
+    const exitCode = await waitForExit(child);
+    expect(exitCode).toBe(0);
   });
 });

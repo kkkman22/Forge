@@ -2,8 +2,11 @@
 /**
  * forge-context MCP Server entry point.
  *
- * Registers three tools (forge_exec, forge_git, forge_read) and connects
- * via StdioServerTransport for communication with Claude Code.
+ * Registers four tools (forge_exec, forge_git, forge_read, forge_read_cached)
+ * and connects via StdioServerTransport for communication with Claude Code.
+ *
+ * Includes graceful shutdown handling (SIGTERM, SIGINT, stdin EOF) to prevent
+ * orphan processes when the parent (Claude Code) exits.
  *
  * **Validates: Requirement 1**
  */
@@ -49,6 +52,45 @@ registerForgeGit(server, root);
 registerForgeRead(server, root);
 registerForgeReadCached(server, root);
 
+// ---------------------------------------------------------------------------
+// Graceful shutdown — prevents orphan processes when Claude Code exits
+// ---------------------------------------------------------------------------
+
+const FORCE_EXIT_TIMEOUT_MS = 5000;
+let isShuttingDown = false;
+
+async function gracefulShutdown(signal: string): Promise<void> {
+  if (isShuttingDown) return;
+  isShuttingDown = true;
+
+  const forceTimer = setTimeout(() => {
+    // biome-ignore lint/suspicious/noConsole: shutdown timeout
+    console.error(
+      `[forge-context] Forced exit: shutdown timed out after ${FORCE_EXIT_TIMEOUT_MS}ms (${signal})`,
+    );
+    process.exit(1);
+  }, FORCE_EXIT_TIMEOUT_MS);
+
+  try {
+    await server.close();
+    clearTimeout(forceTimer);
+    process.exit(0);
+  } catch (err) {
+    clearTimeout(forceTimer);
+    // biome-ignore lint/suspicious/noConsole: shutdown error
+    console.error(`[forge-context] Error during shutdown (${signal}):`, err);
+    process.exit(1);
+  }
+}
+
+process.on("SIGTERM", () => gracefulShutdown("SIGTERM"));
+process.on("SIGINT", () => gracefulShutdown("SIGINT"));
+process.stdin.on("end", () => gracefulShutdown("stdin EOF"));
+process.stdin.on("error", () => gracefulShutdown("stdin error"));
+
+// ---------------------------------------------------------------------------
 // Connect via stdio transport
+// ---------------------------------------------------------------------------
+
 const transport = new StdioServerTransport();
 await server.connect(transport);
