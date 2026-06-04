@@ -159,18 +159,19 @@ After Step 2 Review completes, call `checkSpecHealth(input)` and write result to
 
 After Step 2 Review completes:
 
+→ 执行协议详见 `shared/references/gate-protocol.md`（参数：gate_name=Clarification Gate, max_questions=5, time_budget=2 min, injection_label=Clarification Context, log_filename=\*-clarification.jsonl, skip_option_text=跳过）
+
+**触发条件**（这是 spec 唯一不同的部分）：
+
 1. If `ambiguity_score >= threshold`:
-   - Call `shouldTriggerInlineGrill({ mode, reason: "spec_high_ambiguity", alreadyTriggered })`
-   - `trigger: true` (interactive): Render `renderInlineGrillConfirmPrompt("spec_high_ambiguity")`, await user confirmation
-     - User confirms: Run inline grill loop using `generateDecisionTree` / `selectNextQuestion` / `applyAnswer`, then `formatInlineGrillInjection` → re-generate draft → re-run Step 2 Review
-     - User declines: Continue to Step 3 Lock with ambiguity warning preserved
-   - `trigger: false` (autonomous): Render `renderInlineGrillAdvisory("spec_high_ambiguity")`, write to `.forge/findings/spec-ambiguity-advisory-<topic>.md`, continue to Step 3
+   - reason: `"spec_high_ambiguity"`
+   - 问题选择：全类别（`generateDecisionTree` / `selectNextQuestion` / `applyAnswer`）
+   - 注入后重新执行：re-generate draft → re-run Step 2 Review
 2. If `ambiguity_score < threshold`: Skip directly to Step 3 Lock
 
 **Constraints**:
 - Inline grill does NOT write `findings/grill-<topic>.md`
 - Spec frontmatter: set `inline_grill_applied: true` when grill completed
-- Frequency: at most once per session per reason
 
 → 每项检查的合格标准与反例详见 references/quality-standards.md
 
