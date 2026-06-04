@@ -6,3 +6,9 @@
 {"timestamp":"2026-06-04T04:53:41Z","event":"precompact_snapshot","detail":"slug=mcp-server-lifecycle phase=build completed=0 pending=0"}
 {"timestamp":"2026-06-04T05:47:17Z","event":"precompact_snapshot","detail":"slug=mcp-server-lifecycle phase=build completed=0 pending=0"}
 {"timestamp":"2026-06-04T05:56:35Z","event":"precompact_snapshot","detail":"slug=mcp-server-lifecycle phase=build completed=0 pending=0"}
+{"timestamp":"2026-06-04T06:15:58Z","event":"postcompact_restore","detail":"slug=mcp-server-lifecycle"}
+{"timestamp":"2026-06-04T06:15:58Z","event":"precompact_snapshot","detail":"slug=mcp-server-lifecycle phase=build completed=0 pending=0"}
+{"timestamp":"2026-06-04T06:19:26Z","event":"postcompact_restore","detail":"slug=mcp-server-lifecycle"}
+{"timestamp":"2026-06-04T06:19:26Z","event":"precompact_snapshot","detail":"slug=mcp-server-lifecycle phase=build completed=0 pending=0"}
+{"timestamp":"2026-06-04T06:20:31Z","event":"postcompact_restore","detail":"slug=mcp-server-lifecycle"}
+{"timestamp":"2026-06-04T06:20:32Z","event":"precompact_snapshot","detail":"slug=mcp-server-lifecycle phase=build completed=0 pending=0"}
