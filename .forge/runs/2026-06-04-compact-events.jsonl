@@ -4,3 +4,4 @@
 {"timestamp":"2026-06-04T04:52:14Z","event":"precompact_snapshot","detail":"slug=mcp-server-lifecycle phase=build completed=0 pending=0"}
 {"timestamp":"2026-06-04T04:53:41Z","event":"postcompact_restore","detail":"slug=mcp-server-lifecycle"}
 {"timestamp":"2026-06-04T04:53:41Z","event":"precompact_snapshot","detail":"slug=mcp-server-lifecycle phase=build completed=0 pending=0"}
+{"timestamp":"2026-06-04T05:47:17Z","event":"precompact_snapshot","detail":"slug=mcp-server-lifecycle phase=build completed=0 pending=0"}

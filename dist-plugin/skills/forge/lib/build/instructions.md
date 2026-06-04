@@ -130,7 +130,7 @@ Read `build.use_goal` from `.forge/config.md` (default `true`) → route to §3.
 
 #### §3.2a /goal Mode (`build.use_goal: true`)
 
-When `build.use_goal` is `true` (default), use Claude Code's `/goal` command to drive the TDD loop instead of persistent-loop.sh.
+When `build.use_goal` is `true` (default), use Claude Code's `/goal` command to drive the TDD loop natively.
 
 **启动 /goal**：
 1. 读取 `.forge/plans/<slug>.md` 或 `.kiro/specs/<spec>/tasks.md` 获取所有 task

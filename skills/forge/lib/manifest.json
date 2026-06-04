@@ -1,6 +1,6 @@
 {
   "version": 1,
-  "generated_at": "2026-06-04T04:44:01.488Z",
+  "generated_at": "2026-06-04T05:48:13.020Z",
   "subs": {
     "abort": {
       "instructions": {
@@ -50,7 +50,7 @@
         },
         {
           "path": "build/references/branch-gate.md",
-          "sha256": "9d23f52d6cef4a3e703307c570188ad06359eeb13070ea7eb45f16ca6ac36014"
+          "sha256": "04dcd0b32502cf17b7b7e990fd4571c10b6e93881b232f780ee4e915c6df6b2c"
         },
         {
           "path": "build/references/bugfix-method-library.md",
@@ -582,7 +582,7 @@
         },
         {
           "path": "ship/references/function-contracts.md",
-          "sha256": "bcf316d0369b04f278c18cee17716b28fbad4dfa4f79eb5cf42afbbf4937933d"
+          "sha256": "bd8c20ec933139c92c3dfea7f143180b66cc244bd7f4d2ec70784e5fa6a094ad"
         },
         {
           "path": "ship/references/gate-checks.md",
