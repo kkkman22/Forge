@@ -77,13 +77,14 @@ build 阶段主 Agent 必须执行周期性 Restatement Checkpoint：每完成 N
 ### 3.1 Execution-Assessment Separation
 写代码的 Agent 不评审自己的代码。`/forge review` 使用独立 Subagent。评审者只对照 Spec 和代码质量标准。**不允许**主 Agent 顶替评审。Subagent 不可用时按 fallback ladder 处理（L0→L1→L2→L3），L3 阻断 ship。详见 `.forge/decisions/2026-05-18-review-fallback-ladder.md`。
 
-### 3.2 Three-Layer Review
+### 3.2 Multi-Layer Review
 
 | Layer | Reviewer | Check Content |
 |-------|----------|--------------|
 | **Layer 1** | spec-check | 需求实现、场景覆盖、scope creep |
 | **Layer 2** | quality-check | 命名、错误处理、性能、测试覆盖率、代码重复、可维护性 |
 | **Layer 3** | security-check | 硬编码密钥、注入风险、不安全依赖、权限边界、敏感数据 |
+| **Layer 4** | adversarial-check | 失败场景构造（假设违反/组合失败/级联/滥用），Full tier 默认，Standard 条件启用 |
 
 ### 3.3 P0/P1 Must Fix
 
@@ -140,11 +141,10 @@ build 阶段主 Agent 必须执行周期性 Restatement Checkpoint：每完成 N
 
 ## 项目信息
 
-**Forge** | TypeScript/JS/Shell | 安全级别 1 | 2026-04-28
-
+**Forge** | TypeScript/JS/Shell | 安全级别 1 | 2026-04-28 | Subagent 配置详见 `.claude/rules/workflow-fallback-ladder.md`。
 ## Subagent 并行执行配置
 
 `/forge decide` 和 `/forge review` **默认**使用独立 Subagent（Agent tool）。Agent Teams 为可选 Tier-1 模式（`decide-teams` 子命令）。Subagent 类型引用 `.claude/agents/`。详见 `.claude/rules/workflow-fallback-ladder.md`。
 
 - **decide**: product、architect、security（+ designer UI 时）。两轮：Round 1 并行，Round 2 Critic 交叉审视。
-- **review**: spec-check、quality-check、security-check 并行。轻量模式省略 spec-check。# test
+- **review**: spec-check、quality-check、security-check、adversarial-check（Full tier）并行。轻量模式省略 spec-check。
