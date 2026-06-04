@@ -64,6 +64,30 @@ background: true
 
 ## Six-Dimension Check
 
+## Confidence Calibration
+
+每个 finding 必须携带 `confidence` 字段（Confidence_Anchor 枚举）。quality-check 使用**高阈值**——判断型 finding 默认抑制：
+
+| Anchor | 含义 | 示例 |
+|--------|------|------|
+| 100 | **机械可验证**：dead code on unreachable branch、explicit `any` in new code、file crosses 1K lines | 可 grep/AST 验证 |
+| 75 | **diff 中直接可见**：新 wrapper 无新增行为、special-case branch in shared function | 无需跨文件推断 |
+| 50 | **判断型**（命名、边界放置）| → **默认抑制**（仅 P1 structural regression 可保留） |
+| 25 | **纯风格偏好** | → **抑制** |
+
+**Rule**: confidence≤50 的 P2/P3 finding 标记为 `suppressed`，不出现在最终报告中。
+
+## Autofix Classification
+
+| autofix_class | 适用场景 |
+|---------------|---------|
+| `safe_auto` | 机械可修复：missing import、trivial naming fix、explicit type annotation |
+| `gated_auto` | 需确认：error handling change、non-trivial refactor |
+| `manual` | 需人工判断：架构决策、API 设计 |
+| `advisory` | 仅建议：性能优化建议、风格建议 |
+
+`owner` 默认为 `review-fixer`（safe_auto/gated_auto）或 `human`（manual/advisory）。
+
 ### 1. Naming Consistency
 
 - 变量、函数、类的命名是否遵循项目约定（camelCase / snake_case / PascalCase）？
@@ -169,6 +193,37 @@ fix_required: <fix suggestion>
 **禁止**：前缀散文（"Let me summarize..." / "Based on my analysis..." / "Here are the findings..."）、重复 diff 内容、冗长解释。直接以 `## Layer 2` 开头。
 
 ## Output Format
+
+### Structured JSON Output (REQUIRED)
+
+每个 finding 必须在输出中包含以下 JSON code block（merge 阶段解析此 block）：
+
+```json
+{
+  "reviewer": "quality-check",
+  "findings": [
+    {
+      "id": null,
+      "title": "Missing error handling in export route",
+      "severity": "P1",
+      "confidence": 75,
+      "file": "src/routes/export.ts",
+      "line": 42,
+      "evidence": ["No try-catch around db.query() call"],
+      "suggested_fix": "Add try-catch with proper error response",
+      "autofix_class": "gated_auto",
+      "owner": "review-fixer"
+    }
+  ]
+}
+```
+
+**字段说明**：
+- `confidence`: Confidence_Anchor（0, 25, 50, 75, 100）。≤50 的 P2/P3 → suppressed
+- `autofix_class`: `safe_auto` / `gated_auto` / `manual` / `advisory`
+- `owner`: `review-fixer`（auto）或 `human`（manual/advisory）
+
+### Markdown Report Format
 
 ```markdown
 ## Layer 2 — Code Quality
