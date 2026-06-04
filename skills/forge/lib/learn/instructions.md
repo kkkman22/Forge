@@ -9,6 +9,9 @@ allowed_tools:
   - Glob
   - Grep
   - Bash
+  - Write
+  - Edit
+  - WebSearch
 disallowedTools: ["Bash(git push *)"]
 ---
 

@@ -41,7 +41,7 @@
     "build": {
       "instructions": {
         "path": "build/instructions.md",
-        "sha256": "97d5225541b5a2b1129aebc2564c22d1b12db248eadc313e3440dddbe4beb538"
+        "sha256": "09e43fc039380ca6a45a30a6fbe864e3b400b46028a041030b14ecaf72a0f40b"
       },
       "references": [
         {
@@ -177,7 +177,7 @@
     "debug": {
       "instructions": {
         "path": "debug/instructions.md",
-        "sha256": "c7f81a26c76a05eabb96d03f3aa61e79af0b40d66b06435b1525a344a5ac326c"
+        "sha256": "bd045ccfdfb99bc4896df9210e27ea2eec042ab037cc04da331365aa5847b74c"
       },
       "references": [
         {
@@ -308,7 +308,7 @@
     "learn": {
       "instructions": {
         "path": "learn/instructions.md",
-        "sha256": "0a4f3f63806d1bb9ffc6e421f6e88a2129e60a2593dffbfa5e1499d7cb702baf"
+        "sha256": "02dccf1751fca56c93ec7045fcf924f14bf59a272bfccad2f90e15a1a43d68a8"
       },
       "references": [
         {
@@ -382,7 +382,7 @@
     "plan": {
       "instructions": {
         "path": "plan/instructions.md",
-        "sha256": "d6c40e6ce825badc5713f37cf6e1914a57b8d2504e6e33f02f93bb149c94c820"
+        "sha256": "b146048bd77d9187916cb822e46a6a226e502b8f264d69799176ce4a3f42f848"
       },
       "references": [
         {
@@ -478,7 +478,7 @@
     "review": {
       "instructions": {
         "path": "review/instructions.md",
-        "sha256": "0d8d915776b61ad3b030aa24a128c77ca1fa07fcb725b6f0a8e3f0559193615e"
+        "sha256": "dd43e7af1d0d65d9a71a596a29218e606fe7c76bb31819dfe87aa1685dd348ce"
       },
       "references": [
         {
@@ -553,7 +553,7 @@
     "router": {
       "instructions": {
         "path": "router/instructions.md",
-        "sha256": "8bd174aa9c72416aca8cdec1f6a0eba09967a04aada3fa2bfc8d769794ef460a"
+        "sha256": "f1afff9df7de893158b02d9da0ab2b83286f4ab08aa2e4cce38cf26efd08c6f4"
       },
       "references": [
         {
