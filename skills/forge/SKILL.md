@@ -66,11 +66,11 @@ User override takes precedence. No tier-skipping within a sequence.
 
 ## 6. Flags
 
-### `--no-reframe`
+### `--no-gate`
 
 Skips Reframing Gate (decide) and Clarification Gate (spec). Applicable to Standard tier only; Light tier already skips gates; Full tier ignores this flag (gates are mandatory).
 
-Usage: `/forge decide --no-reframe <topic>` or `/forge spec --no-reframe <topic>`.
+Usage: `/forge decide --no-gate <topic>` or `/forge spec --no-gate <topic>`.
 
 ## 7. Configuration
 

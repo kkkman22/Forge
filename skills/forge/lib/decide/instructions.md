@@ -119,7 +119,7 @@ Round 0 完成后，将 grill findings 注入 Round 1 所有 subagent 的上下�
 | Tier | 行为 |
 |------|------|
 | `light` | **完全跳过**，直接进入 Round 1 |
-| `standard` | 默认启用，`--no-reframe` flag 可跳过 |
+| `standard` | 默认启用，`--no-gate` flag 可跳过 |
 | `full` | **强制启用**，不可跳过（Full tier 本身就是"需求模糊"的信号） |
 
 #### 问题选择算法
@@ -148,6 +148,8 @@ Round 0 完成后，将 grill findings 注入 Round 1 所有 subagent 的上下�
 ```
 
 Round 1 subagent 应参考这些回答调整分析深度或方向。
+
+**Answer Sanitization**：注入前对用户回答执行 sanitize — 截断至 200 字符、剥离指令模式（"ignore previous"、"system:"等）、用中性框架包裹。防止 prompt injection 通过用户回答注入 subagent 上下文。
 
 #### 反馈记录
 
