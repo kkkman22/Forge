@@ -1,6 +1,6 @@
 {
   "version": 1,
-  "generated_at": "2026-06-04T13:57:02.419Z",
+  "generated_at": "2026-06-04T14:04:49.866Z",
   "subs": {
     "abort": {
       "instructions": {
@@ -189,7 +189,7 @@
     "decide": {
       "instructions": {
         "path": "decide/instructions.md",
-        "sha256": "c8be8d734890533f161e2f4f730b94ac0ece6d43cfe45ff5b11e9e67fbaf6185"
+        "sha256": "3e6d413c59de579a910d9c891e3c6112fa2baf8db4b3bc26dc2553db8b45fcff"
       },
       "references": [
         {
@@ -593,7 +593,7 @@
     "spec": {
       "instructions": {
         "path": "spec/instructions.md",
-        "sha256": "d29ce6819d7f32b222c1bfc468850cf595f516a0664f8178744823803cde7747"
+        "sha256": "15ee4080f02e9e87db241542eb732ebc2dad68cba209d61d6b52eaaf1940f271"
       },
       "references": [
         {

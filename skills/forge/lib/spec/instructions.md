@@ -60,7 +60,7 @@ allowed_tools:
 
 在 Step 1 正式编写需求前，根据 tier 和 spec 主题执行需求澄清，暴露隐藏要求和约束。
 
-→ 执行协议详见 `shared/references/gate-protocol.md`（参数：gate_name=Clarification Gate, max_questions=5, time_budget=2 min, injection_label=Clarification Context, log_filename=\*-clarification.jsonl, skip_option_text=跳过）
+→ 执行协议详见 `shared/gate-protocol.md`（参数：gate_name=Clarification Gate, max_questions=5, time_budget=2 min, injection_label=Clarification Context, log_filename=\*-clarification.jsonl, skip_option_text=跳过）。协议内含 `shouldTriggerInlineGrill`、`renderInlineGrillConfirmPrompt`、`renderInlineGrillAdvisory`、`formatInlineGrillInjection` 调用流程。
 
 #### Charter 感知
 
@@ -128,7 +128,7 @@ After Step 2 Review completes, call `checkSpecHealth(input)` and write result to
 
 After Step 2 Review completes:
 
-→ 执行协议详见 `shared/references/gate-protocol.md`（参数：gate_name=Clarification Gate, max_questions=5, time_budget=2 min, injection_label=Clarification Context, log_filename=\*-clarification.jsonl, skip_option_text=跳过）
+→ 执行协议详见 `shared/gate-protocol.md`（参数：gate_name=Clarification Gate, max_questions=5, time_budget=2 min, injection_label=Clarification Context, log_filename=\*-clarification.jsonl, skip_option_text=跳过）。协议内含 `shouldTriggerInlineGrill`、`renderInlineGrillConfirmPrompt`、`renderInlineGrillAdvisory`、`formatInlineGrillInjection` 调用流程。
 
 **触发条件**（这是 spec 唯一不同的部分）：
 

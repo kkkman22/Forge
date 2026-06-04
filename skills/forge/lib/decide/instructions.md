@@ -114,7 +114,7 @@ Round 0 完成后，将 grill findings 注入 Round 1 所有 subagent 的上下�
 
 在 Round 1 之前，根据 tier 和决策内容执行问题重构，帮助用户确认正在解决正确的问题。
 
-→ 执行协议详见 `shared/references/gate-protocol.md`（参数：gate_name=Reframing Gate, max_questions=3, time_budget=1 min, injection_label=Reframing Context, log_filename=\*-reframing.jsonl, skip_option_text=跳过，直接分析）
+→ 执行协议详见 `shared/gate-protocol.md`（参数：gate_name=Reframing Gate, max_questions=3, time_budget=1 min, injection_label=Reframing Context, log_filename=\*-reframing.jsonl, skip_option_text=跳过，直接分析）。协议内含 `shouldTriggerInlineGrill`、`renderInlineGrillConfirmPrompt`、`renderInlineGrillAdvisory`、`formatInlineGrillInjection` 调用流程。
 
 #### 问题选择算法
 
@@ -187,7 +187,7 @@ Round 0 完成后，将 grill findings 注入 Round 1 所有 subagent 的上下�
 
 After Round 2 Critic output:
 
-→ 执行协议详见 `shared/references/gate-protocol.md`（参数：gate_name=Reframing Gate, max_questions=3, time_budget=1 min, injection_label=Reframing Context, log_filename=\*-reframing.jsonl, skip_option_text=跳过，直接分析）
+→ 执行协议详见 `shared/gate-protocol.md`（参数：gate_name=Reframing Gate, max_questions=3, time_budget=1 min, injection_label=Reframing Context, log_filename=\*-reframing.jsonl, skip_option_text=跳过，直接分析）。协议内含 `shouldTriggerInlineGrill`、`renderInlineGrillConfirmPrompt`、`renderInlineGrillAdvisory`、`formatInlineGrillInjection` 调用流程。
 
 **触发条件**（满足任一即触发，这是 decide 唯一不同的部分）：
 
