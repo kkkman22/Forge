@@ -1,18 +1,14 @@
 ---
-current_task: "forge-loop-native-fusion"
+current_task: "mcp-server-lifecycle"
 phase: "build"
-updated: "2026-06-01"
+updated: "2026-06-04"
+branch: "forge/mcp-server-lifecycle"
 ---
 
 # 项目状态
 
-## 当前无活跃任务
+## 当前任务：mcp-server-lifecycle
 
-## 已完成
+MCP server 进程生命周期管理，防止孤儿进程（Layer 1 信号处理 + Layer 2 stdin EOF 检测）。
 
-claude-code-uplift-2.1.153: build 完成，待 review。
-workflows-integration-resilience: merged to main (574663a6).
-workflows-integration: 17 commits on worktree-workflows-integration (保留).
-docs-governance-system core library: 23 commits merged to main (76581bc1).
-forge-single-entry-skills-collapse: 47 commits merged to main (6127feb).
-cmux-skills-collapse: merged to main.
+- Spec: `.forge/specs/mcp-server-lifecycle/` (draft)
