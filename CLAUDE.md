@@ -35,13 +35,8 @@
 </important>
 
 ### 2.2 Pre-build Checks
-
-标准和全量路径下，`/forge build` 启动前必须通过三道门禁：Spec 锁定、Plan 批准、分支隔离。分支隔离门禁：每个功能在其对应的 feature 分支上开发，工作树不干净时阻断。
+标准和全量路径下，`/forge build` 启动前必须通过三道门禁：Spec 锁定、Plan 批准、分支隔离。分支隔离门禁：每个功能在其对应的 feature 分支上开发，工作树不干净时阻断。**Reframing/Clarification Gates**：decide Round 1 前 Reframing Gate（1–3 问）+ spec Step 1 前 Clarification Gate（2–5 问）；Light 跳过 / Standard 默认（`--no-reframe` 跳过）/ Full 强制；反馈 → `.forge/progress/<slug>-reframing.jsonl`。
 → 详见 docs/forge-constitution-detail.md §2.2
-
-### 2.2.1 Reframing/Clarification Gates
-
-`/forge decide` 在 Round 1 前执行 **Reframing Gate**（1–3 个问题重构决策）；`/forge spec` 在 Step 1 前执行 **Clarification Gate**（2–5 个需求澄清问题）。Light tier 跳过、Standard 默认启用（`--no-reframe` 可跳过）、Full 强制启用。回答注入到后续分析/草案中。反馈记录到 `.forge/progress/<slug>-reframing.jsonl`。
 
 ### 2.3 Verification Iron Law
 
