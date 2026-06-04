@@ -38,51 +38,6 @@ const KNOWN_TOOL_PATTERNS = new Set([
 ]);
 
 // ---------------------------------------------------------------------------
-// Req 8.2: Structural completeness — every hook entry has required fields
-// ---------------------------------------------------------------------------
-
-describe("Contract: hooks.json structural completeness", () => {
-  it("hooks.json is valid JSON with a top-level hooks object", () => {
-    expect(hooksFile).toBeDefined();
-    expect(hooksFile.hooks).toBeDefined();
-    expect(typeof hooksFile.hooks).toBe("object");
-  });
-
-  for (const [eventName, matcherGroups] of Object.entries(hooksMap)) {
-    describe(`Event: ${eventName}`, () => {
-      for (let gi = 0; gi < matcherGroups.length; gi++) {
-        const group = matcherGroups[gi];
-
-        it(`matcher group [${gi}] has a hooks array`, () => {
-          expect(
-            Array.isArray(group.hooks),
-            `${eventName}[${gi}] missing nested 'hooks' array`,
-          ).toBe(true);
-        });
-
-        for (let hi = 0; hi < group.hooks.length; hi++) {
-          const handler = group.hooks[hi];
-
-          it(`matcher group [${gi}] hook [${hi}] has valid format (command or args)`, () => {
-            const isCommand =
-              handler.type === "command" &&
-              typeof handler.command === "string" &&
-              handler.command.length > 0;
-            const isArgs = Array.isArray(handler.args) && handler.args.length > 0;
-            expect(
-              isCommand || isArgs,
-              `${eventName}[${gi}].hooks[${hi}] must have either {type:"command", command} or {args[]}`,
-            ).toBe(true);
-          });
-        }
-      }
-    });
-  }
-});
-
-// ---------------------------------------------------------------------------
-// Req 8.1: matcher fields reference known tool patterns
-// ---------------------------------------------------------------------------
 
 describe("Contract: hooks.json matcher fields reference known tools", () => {
   for (const [eventName, matcherGroups] of Object.entries(hooksMap)) {

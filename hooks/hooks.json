@@ -350,19 +350,6 @@
               "scripts/task-created-hook.mjs"
             ]
 
-          }
-        ]
-      }
-    ],
-    "ConfigChange": [
-      {
-        "hooks": [
-          {
-            "timeout": 3,
-            "args": [
-              "node",
-              "scripts/config-changed-hook.mjs"
-            ]
 
           }
         ]
@@ -378,19 +365,6 @@
               "scripts/worktree-create-hook.mjs"
             ]
 
-          }
-        ]
-      }
-    ],
-    "WorktreeRemove": [
-      {
-        "hooks": [
-          {
-            "timeout": 3,
-            "args": [
-              "node",
-              "scripts/worktree-remove-hook.mjs"
-            ]
 
           }
         ]
@@ -406,19 +380,6 @@
               "scripts/stop-failure-hook.mjs"
             ]
 
-          }
-        ]
-      }
-    ],
-    "PermissionDenied": [
-      {
-        "hooks": [
-          {
-            "timeout": 3,
-            "args": [
-              "node",
-              "scripts/permission-denied-hook.mjs"
-            ]
 
           }
         ]
