@@ -5,7 +5,7 @@
   },
   {
     "tier": "cmux-browser",
-    "reason": "cmux not available"
+    "reason": "cmux browser CLI not available (requires cmux runtime)"
   },
   {
     "tier": "playwright",
@@ -13,6 +13,6 @@
   },
   {
     "tier": "cdp",
-    "reason": "CDP connection failed: fetch failed"
+    "reason": "CDP endpoint returned 404"
   }
 ]
