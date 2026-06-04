@@ -1,6 +1,6 @@
 {
   "version": 1,
-  "generated_at": "2026-06-04T07:52:52.347Z",
+  "generated_at": "2026-06-04T12:55:23.439Z",
   "subs": {
     "abort": {
       "instructions": {
@@ -308,7 +308,7 @@
     "learn": {
       "instructions": {
         "path": "learn/instructions.md",
-        "sha256": "8600b4838a6141524ca49b824991911d197bf9f81b065082483e27dd9a04c163"
+        "sha256": "ce50be2c5b5417da6c29e8b4b30b40c791519fd2fabada7497238b25a37f4776"
       },
       "references": [
         {
@@ -478,7 +478,7 @@
     "review": {
       "instructions": {
         "path": "review/instructions.md",
-        "sha256": "0d8d915776b61ad3b030aa24a128c77ca1fa07fcb725b6f0a8e3f0559193615e"
+        "sha256": "79d654ca1175a9c7c991de6450743d4f6c071007f81a2746ca5609350b524424"
       },
       "references": [
         {
