@@ -57,3 +57,7 @@
 {"timestamp":"2026-06-04T16:00:44Z","event":"precompact_snapshot","detail":"slug=project-charter phase=build completed=0 pending=0"}
 {"timestamp":"2026-06-04T16:02:13Z","event":"postcompact_restore","detail":"slug=project-charter"}
 {"timestamp":"2026-06-04T16:02:13Z","event":"precompact_snapshot","detail":"slug=project-charter phase=build completed=0 pending=0"}
+{"timestamp":"2026-06-04T16:05:12Z","event":"postcompact_restore","detail":"slug=project-charter"}
+{"timestamp":"2026-06-04T16:05:12Z","event":"precompact_snapshot","detail":"slug=project-charter phase=build completed=0 pending=0"}
+{"timestamp":"2026-06-04T16:06:36Z","event":"postcompact_restore","detail":"slug=project-charter"}
+{"timestamp":"2026-06-04T16:06:36Z","event":"precompact_snapshot","detail":"slug=project-charter phase=build completed=0 pending=0"}
