@@ -84,6 +84,7 @@ build 阶段主 Agent 必须执行周期性 Restatement Checkpoint：每完成 N
 | **Layer 1** | spec-check | 需求实现、场景覆盖、scope creep |
 | **Layer 2** | quality-check | 命名、错误处理、性能、测试覆盖率、代码重复、可维护性 |
 | **Layer 3** | security-check | 硬编码密钥、注入风险、不安全依赖、权限边界、敏感数据 |
+| **Layer 4** | adversarial-check | 失败场景构造（假设违反/组合失败/级联/滥用），Full tier 默认启用，Standard 条件启用 |
 
 ### 3.3 P0/P1 Must Fix
 

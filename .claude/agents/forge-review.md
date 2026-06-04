@@ -37,21 +37,33 @@ Review agent running multi-layer independent assessment with confidence anchorin
 1. **spec-check** (`model: inherit`): Requirements coverage, scenario completeness, scope creep
 2. **quality-check** (`model: sonnet`): Naming, error handling, performance, test coverage
 3. **security-check** (`model: inherit`): Hardcoded secrets, injection risks, unsafe dependencies
+4. **adversarial-check** (`model: sonnet`): Failure scenario construction — assumption violation, composition failure, cascade, abuse case
 
 ## Execution
 
 ### Step 1: Dispatch Reviewers
 
-Spawn 3 independent subagents in parallel (spec-check, quality-check, security-check).
+Spawn independent subagents in parallel.
 
-**Spawn restriction**: Only spawn `spec-check`, `quality-check`, `security-check` subagent types. Do not spawn any other agent type.
+**Always spawned**: spec-check, quality-check, security-check
 
-**Model tiering**: Each reviewer declares its model in frontmatter. The Agent tool `model` parameter routes accordingly:
-- `spec-check`: `inherit` (session model, e.g. Opus)
-- `quality-check`: `sonnet`
-- `security-check`: `inherit` (session model)
+**Conditionally spawned — adversarial-check**:
 
-**Override**: If `.forge/config.md` sets `review_force_model`, all reviewers use that model instead.
+| Tier | Condition | Adversarial-check |
+|------|-----------|-------------------|
+| **Full** | Always | ✅ Enabled |
+| **Standard** | diff ≥ 50 changed lines OR high-risk domain | ✅ Enabled |
+| **Standard** | diff < 50 lines AND no risk signals | ❌ Skipped |
+| **Light** | Always | ❌ Skipped |
+
+**High-risk domain keywords** (any match enables adversarial for Standard tier):
+`auth`, `payment`, `data mutation`, `external API`, `webhook`, `migration`, `login`, `session`, `token`, `credential`, `billing`, `charge`, `refund`, `database`, `schema`
+
+**Spawn restriction**: Only spawn `spec-check`, `quality-check`, `security-check`, `adversarial-check` subagent types.
+
+**Override**:
+- If `.forge/config.md` sets `review_force_model`, all reviewers use that model.
+- If `.forge/config.md` sets `review_enable_adversarial: false`, skip adversarial-check regardless of tier.
 
 ### Step 2: Parse JSON Output
 
@@ -86,6 +98,46 @@ Special: security-check findings
 ```
 
 Suppressed findings get `suppressed: true` and `suppression_reason: "confidence gate (< threshold)"`.
+
+### Step 3.5: Finding Deduplication
+
+Before confidence gate, deduplicate findings from different reviewers that refer to the same issue.
+
+**Dedup algorithm**:
+```
+normalize(file):
+  - Strip leading "./"
+  - Trim trailing whitespace
+
+normalize(title):
+  - Convert to lowercase
+  - Remove punctuation (.,;:!?()-[])
+  - Collapse multiple whitespace to single space
+  - Trim
+
+line_bucket(line, ±3):
+  - Two findings match if their line numbers differ by ≤ 3
+
+Match rule: findings are "same issue" when ALL three match:
+  normalize(file_A) == normalize(file_B)
+  AND line_bucket(line_A, line_B)
+  AND normalize(title_A) == normalize(title_B)
+```
+
+When dedup produces a match, merge into single finding with combined evidence.
+
+### Step 3.6: Cross-Reviewer Promotion
+
+When 2+ independent reviewers report the same finding (after dedup):
+
+1. **Confidence boost**: confidence promoted one tier (50→75, 75→100). Already at 100 stays at 100.
+2. **Severity**: take most conservative value (P0 > P1 > P2 > P3)
+3. **Evidence**: merge all reviewer evidence arrays, tag by source
+4. **Report label**: `↑ cross-validated by N reviewers`
+5. **Disagreement display**: when reviewers disagree on severity:
+   `security(P0), quality(P1) → kept P0`
+
+Cross-validated findings **always** survive the confidence gate regardless of threshold.
 
 ### Step 4: Assign Stable Finding IDs (R8)
 
