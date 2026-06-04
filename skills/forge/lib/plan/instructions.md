@@ -1,5 +1,5 @@
 ---
-description: "Plan a locked Spec into atomic TDD-ready tasks with full research, file mapping, and self-check validation. Use when running `/forge plan`, a spec is locked, or an actionable task breakdown is needed before build."
+description: "Use when running `/forge plan`, a spec is locked, or an actionable task breakdown is needed before build"
 
 dispatch_mode: fork
 allowed_tools:
@@ -25,6 +25,8 @@ allowed_tools:
 **三文件单源**：plan 阶段不再向 `.forge/plans/<topic>.md` 写入独立文件。而是直接读取并就地升级 `.forge/specs/<topic>/tasks.md`（draft → locked），补全任务编号、JSON wave 块、估时、status 字段、DoD。运行时调用 `lockPlan(doc)`（`src/plan.ts`），传入解析得到的 `TasksSeedDocument`；它内部会调用 `upgradeTasksSeed` 补 wave/status，最终 frontmatter `status` 从 draft 切到 locked。当 `tasks.md` 不存在但 `plans/<topic>.md` 存在时，作为兼容回退以 plans 文件为只读种子合成 tasks.md。
 
 **核心原则**：计划中不允许任何模糊内容。写不出完整代码说明还没想清楚，回去重新研究。
+
+**Zero Context 原则**：假设执行者对代码库零了解、品味存疑。每个 step 必须包含执行者需要的全部信息——不能假设他们知道项目约定、文件结构或已有代码模式。如果需要他们知道什么，写在 step 的上下文中。
 
 **Not For**：轻量路径任务（≤1 文件 ≤20 行）、Spec 已包含完整任务拆解的情况。
 
@@ -147,6 +149,40 @@ Glossary Hook: Task Breakdown 后调用 `runGlossaryCheck({ phase: 'plan' })` �
 
 → 识别规则详见 references/dependency-rules.md
 
+### Plan 质量门禁：No-Placeholders 铁律
+
+每个 task step 必须包含执行者需要的**全部实际内容**。以下模式属于**计划失败**：
+
+| 模式 | 示例 | 为什么失败 |
+|------|------|-----------|
+| 模糊待办 | "TBD"、"TODO"、"后续补充"、"待确认" | 执行者无法行动 |
+| 空泛指令 | "添加适当的错误处理"、"处理边界情况"、"添加验证" | 什么是"适当"？"哪些"边界？ |
+| 无代码测试 | "为以上逻辑编写测试"（不含实际测试代码） | 执行者不知测什么、怎么断言 |
+| 跨任务引用 | "参考 Task 3 的模式"、"与 Task 1 类似" | 执行者可能不按顺序读 task |
+| 描述性步骤 | "实现导出功能"（无代码、无文件路径、无验证命令） | "做什么"≠"怎么做" |
+| 未定义引用 | 引用前面 task 中未定义的类型、函数或方法 | 类型/函数在引用点不存在 |
+| 空验证 | "验证功能正常"（无具体命令、无预期输出） | 无法判断是否真的验证了 |
+
+#### 正确的 Step 格式
+
+每个 code step 必须包含：
+
+- **Step N: {动词} {具体对象}**
+  **文件**: `exact/path/to/file.ts:{行号范围}`
+  **代码**: 完整的、可复制的代码块
+  **验证**: 具体命令
+  **预期**: 具体输出/exit code
+
+每个 test step 必须包含完整的测试代码（包括断言）。
+
+#### 自审清单
+
+1. **Placeholder 扫描**：搜索黑名单中所有模式。发现 → 修复。
+2. **引用一致性**：Task N 定义的函数名/类型名是否与 Task M 中的引用一致？
+3. **路径完整性**：每个 step 是否都包含精确文件路径？
+4. **代码完整性**：每个 code step 是否都有完整代码（不是描述）？
+5. **验证可执行性**：每个 verify step 是否都有具体命令和预期输出？
+
 ### Step 4: Self-Check
 
 | Check | Criteria |
@@ -159,6 +195,27 @@ Glossary Hook: Task Breakdown 后调用 `runGlossaryCheck({ phase: 'plan' })` �
 | Plan Structure | Split_Trigger 任一命中 → 警告 + 等待用户选择 → 详见 references/plan-split-wizard.md |
 
 未通过则自动修正并重新自检。
+
+#### Placeholder Scan（自审子步骤）
+
+对生成的 tasks.md 执行以下 grep 扫描：
+
+```
+grep -nE '(TBD|TODO|待确认|待补|后续补充|implement later|fill in)' .forge/specs/<topic>/tasks.md
+grep -nE '(适当|appropriate|合理|properly)' .forge/specs/<topic>/tasks.md
+grep -nE '(参考 Task|类似 Task|同 Task|similar to Task)' .forge/specs/<topic>/tasks.md
+grep -nE '编写测试|write tests|add tests' .forge/specs/<topic>/tasks.md
+```
+
+任何命中 → 修复后重新扫描，直到零命中。
+
+#### Type Consistency Check（自审子步骤）
+
+从 tasks.md 中提取所有函数签名、类型定义、属性名：
+1. Task 3 定义了 `clearLayers()` → Task 7 调用时是否也叫 `clearLayers()`（不是 `clearFullLayers()`）
+2. Task 1 定义了 `export interface Config { items: Item[] }` → Task 5 是否用了 `items`（不是 `entries`）
+
+类型不一致 → 修复。
 
 ### Step 4a: Plan Structure Check
 
@@ -280,3 +337,46 @@ Frontmatter 字段：`topic`, `status` (draft/approved), `date`, `spec_ref`, `fo
 - **Missing file mapping**: Plan lists tasks without specifying which files → agent searches mid-build → map files upfront in plan
 - **Plan drift**: Implementation deviates from plan → scope creep → re-read plan every 3 tasks, flag deviations
 - **Dependency ordering**: Task B depends on Task A, but B listed first → B fails → validate dependency ordering in self-check
+
+## Context Budget
+
+Follow the rules in .claude/rules/context-budget.md. Key points:
+- Classify context: PEAK (<30%), GOOD (30-50%), WARNING (50-70%), CRITICAL (>70%)
+- Use raw ratio, not rounded percent
+- When WARNING/CRITICAL: trim in priority order (drop context files first → drop research → trim project context → keep spec/requirements last)
+- Token estimation: chars ÷ 4 (ceiling)
+- After trimming, inject a note describing what was omitted
+
+### Context State Classification
+When preparing context for this phase, classify the current context state:
+- PEAK (ratio < 0.30): Best state, no restrictions
+- GOOD (0.30 ≤ ratio < 0.50): Normal, all operations allowed
+- WARNING (0.50 ≤ ratio < 0.70): Begin trimming low-priority content
+- CRITICAL (ratio ≥ 0.70): Aggressive trimming + suggest checkpoint
+
+Important: Use the raw ratio (tokensUsed / contextWindow), NOT the rounded percentage. 59.999% is still WARNING, not CRITICAL.
+
+### Trimming Priority Chain
+When context enters WARNING or CRITICAL state, trim content in this priority order (drop lowest first):
+
+1. **Drop First**: Context files (code file contents, explore results)
+2. **Drop Second**: Research findings (external docs, web search results)
+3. **Keep High**: Project context (CLAUDE.md, config.md) — trim from tail
+4. **Keep Highest**: Spec locked requirements, system instructions — never trim
+5. **Proportional Keep**: Plan files — each plan gets proportional share, minimum 1024 bytes, truncate from tail
+6. **Last to Drop**: Requirements and acceptance criteria
+
+### Token Estimation
+Use chars ÷ 4 (ceiling) for token estimation. Consistency > precision.
+
+### Trim Transparency
+After any trimming, inject:
+```
+<note type="context-trim">
+Budget: {budget} tokens | Omitted: {omittedList} | Plan truncation: {pct}%
+Full content available in .forge/ directory.
+</note>
+```
+
+### Pressure-Aware Note Reserve
+Only reserve 80 tokens for the trim note when in WARNING or CRITICAL state. Do not reserve in PEAK/GOOD.

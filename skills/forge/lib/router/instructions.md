@@ -1,5 +1,5 @@
 ---
-description: "Orchestrate three-tier routing that selects the right skill based on task complexity and project phase. Use when user runs `/forge <task>`, starts a new task, or needs skill dispatch across light, standard, or full workflow tiers."
+description: "Use when user runs `/forge <task>`, starts a new task, or needs skill dispatch across light, standard, or full workflow tiers"
 
 dispatch_mode: inline
 allowed_tools:
@@ -164,6 +164,47 @@ Forge 路由器从三个维度分析任务：
 | "用户没说档位，默认轻量吧" | 宁重勿轻原则。无法判定时选更重的档位，轻量误判成本远高于过重 |
 | "需求听起来简单，直接 standard" | 缺少锁定 Spec 或明确需求信号时不能假设。无 Spec 的全量任务是常见盲区 |
 | "假设差不多就行，用户会纠正的" | 假设必须基于实际项目扫描，至少覆盖技术栈和影响范围。空假设会导致下游 skill 行为偏差 |
+
+## ForgeResult — Unified Command Result Model
+
+All `/forge` subcommands must return one of these result kinds:
+
+### Result Types
+```
+ForgeResult =
+  | { kind: "ok",        value: CommandOutput,  command: string }
+  | { kind: "blocked",   reason: string,         command: string, detail: string }
+  | { kind: "refused",   reason: string,         command: string, suggestion: string }
+  | { kind: "failed",    error: string,          command: string, exitCode: number }
+```
+
+### Kind Semantics
+- **ok**: Command fully succeeded. `value` contains structured output.
+- **blocked**: Preconditions not met (spec not locked, plan not approved, dirty worktree). `reason` is UPPER_SNAKE_CASE code.
+- **refused**: Command declined to execute (already done, plan exists). `suggestion` gives alternative.
+- **failed**: Execution error (compile error, test failure, 3-strike triggered).
+
+### Dispatcher Three Iron Laws
+1. **No-throw**: Never propagate exceptions. Catch all → `{ kind: "failed" }`.
+2. **No-print**: Never write directly to stdout. Return structured result, let caller decide display.
+3. **No-exit**: Never call `process.exit()`. Let caller control exit.
+
+### Blocked Reason Codes
+- `SPEC_NOT_LOCKED`: "Current spec status is {status}, needs 'locked'"
+- `PLAN_NOT_APPROVED`: "Plan {id} status is {status}, needs 'approved'"
+- `DIRTY_WORKTREE`: "Working tree has uncommitted changes: {files}"
+- `P0_FOUND`: "Review found P0 issues that block ship"
+- `NO_CHANGES`: "No code changes to review"
+
+### Refused Reason Codes
+- `ALREADY_DONE`: "Task {id} already completed in commit {hash}"
+- `PLAN_EXISTS`: "Phase already has approved plan (use --force to replan)"
+
+### Automation Rules
+- `kind=ok` after build → auto-enter review (No-Confirmation)
+- `kind=ok` after review with no P0/P1 → eligible for ship
+- `kind=blocked` → output reason + fix suggestion, no retry
+- `kind=failed` → increment 3-strike counter → `/forge debug` at 3
 
 ## Gotchas
 - **Under-routing**: Complex task routed to light → skips planning → analysis paralysis → when unsure, route to heavier tier

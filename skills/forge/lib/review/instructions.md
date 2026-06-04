@@ -1,5 +1,5 @@
 ---
-description: "Review build output through parallel subagents covering spec alignment, code quality, and security with P0/P1 ship-blocking severity classification. Use when running `/forge review`, build completes, or a multi-perspective code quality gate is needed before ship."
+description: "Use when running `/forge review`, build completes, or code changes need quality gate before ship"
 
 dispatch_mode: fork
 allowed_tools:
@@ -371,6 +371,17 @@ Post-Review Step 4: 自动 /simplify + commit + 验证
 | 3 | 模板未填充 | 每行基于实际代码，路径/行号/描述必须真实 |
 | 4 | 不读 Spec 就评审 | 先读 Spec 逐条对照；轻量路径标注"已跳过" |
 
+## Independent Verification（铁律）
+
+收到三层 review 结果后，controller 必须：
+
+1. **不信任任何单层结论**：三层独立，一层 pass 不代表其他层也 pass
+2. **验证 reviewer 的证据**：reviewer 报 P0/P1 时，检查其 `file:line` 引用是否指向实际存在的代码
+3. **交叉比对**：spec-check 报"已实现" + quality-check 报"测试充分" ≠ 安全无虞
+4. **盲点感知**：如果三层都报"无问题"但变更涉及安全相关代码（权限、认证、文件操作），主动触发深度安全审查
+
+**特别注意**：reviewer 全绿 + 变更 > 200 行 = 高风险信号。大规模变更零问题通常意味着 review 不够深入。
+
 ## Common Rationalizations
 
 | 合理化 | 反驳 |
@@ -387,6 +398,17 @@ quality-check and security-check run as `background: true` agents [R11.1]. spec-
 - **Ctrl+B fallback**: if background mode unavailable, agents fall back to foreground
 - **Legacy compat**: older Claude Code versions ignore `background` field gracefully
 - **Failure handling**: background agent failure marked as `failed`, not abort. Markdown output schema unchanged [R11.6]
+
+## Sycophancy Detection（Re-review 检查项）
+
+| 模式 | 判定 |
+|------|------|
+| 纯赞同无技术描述（"你说得对"） | P3 — 无效沟通 |
+| 口头同意但修复不匹配 review 要求 | P1 — 修复偏题 |
+| 口头同意但修复不完整 | P1 — 修复不完整 |
+| 技术回应 + 实际修复 | ✅ 正确 |
+
+判断方法：比较 reviewer 要求的修复点 vs implementer 实际代码 diff。忽略口头声明。
 
 ## Gotchas
 - **Self-review**: Agent reviews own code → blind spots → review uses independent subagents, never same agent that wrote code
@@ -463,3 +485,46 @@ Retention: >100 entries triggers auto-archive to `.forge/archive/known-failures-
 Review 完成后，如果后续还有 test/ship 阶段且 Read 预算 >50KB（`${TMPDIR}/forge-read-budget-<session>.json`），输出：
 
 `⚠️ Read budget >50KB after review. Suggest /clear + /forge resume before test phase.`
+
+## Context Budget
+
+Follow the rules in .claude/rules/context-budget.md. Key points:
+- Classify context: PEAK (<30%), GOOD (30-50%), WARNING (50-70%), CRITICAL (>70%)
+- Use raw ratio, not rounded percent
+- When WARNING/CRITICAL: trim in priority order (drop context files first → drop research → trim project context → keep spec/requirements last)
+- Token estimation: chars ÷ 4 (ceiling)
+- After trimming, inject a note describing what was omitted
+
+### Context State Classification
+When preparing context for this phase, classify the current context state:
+- PEAK (ratio < 0.30): Best state, no restrictions
+- GOOD (0.30 ≤ ratio < 0.50): Normal, all operations allowed
+- WARNING (0.50 ≤ ratio < 0.70): Begin trimming low-priority content
+- CRITICAL (ratio ≥ 0.70): Aggressive trimming + suggest checkpoint
+
+Important: Use the raw ratio (tokensUsed / contextWindow), NOT the rounded percentage. 59.999% is still WARNING, not CRITICAL.
+
+### Trimming Priority Chain
+When context enters WARNING or CRITICAL state, trim content in this priority order (drop lowest first):
+
+1. **Drop First**: Context files (code file contents, explore results)
+2. **Drop Second**: Research findings (external docs, web search results)
+3. **Keep High**: Project context (CLAUDE.md, config.md) — trim from tail
+4. **Keep Highest**: Spec locked requirements, system instructions — never trim
+5. **Proportional Keep**: Plan files — each plan gets proportional share, minimum 1024 bytes, truncate from tail
+6. **Last to Drop**: Requirements and acceptance criteria
+
+### Token Estimation
+Use chars ÷ 4 (ceiling) for token estimation. Consistency > precision.
+
+### Trim Transparency
+After any trimming, inject:
+```
+<note type="context-trim">
+Budget: {budget} tokens | Omitted: {omittedList} | Plan truncation: {pct}%
+Full content available in .forge/ directory.
+</note>
+```
+
+### Pressure-Aware Note Reserve
+Only reserve 80 tokens for the trim note when in WARNING or CRITICAL state. Do not reserve in PEAK/GOOD.
