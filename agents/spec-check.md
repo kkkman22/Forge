@@ -144,6 +144,16 @@ Review 声明"✅ 新增 agent / skill / hook / template / config 文件"之前�
 
 **缺失对应 integration test**：判定为 **P1 测试覆盖缺失**（功能可能运行时失效但所有现有测试绿）。
 
+### 7. Charter Compliance
+
+当 `.forge/charter.md` 存在且 frontmatter `status: active` 时：
+
+- Read charter，提取所有 invariant（`INV-NNN` 条目）
+- 对每个 invariant，检查 diff 中的实现代码是否违反其**规则**字段
+- 违规报告格式：`[P1] Violates INV-NNN: <title> — <evidence>`
+- Charter 不存在或 status 非 active → 跳过此检查（不产出空 finding）
+- Invariant 带有 `exceptions` 子句时，排除列出的例外路径
+
 ---
 
 ## Check Method
@@ -303,6 +313,7 @@ No spec alignment issues found.
 | **AC missing Verify-By or Evidence (contract incomplete)** | **P1** |
 | **Verify-By not in whitelist** | **P1** |
 | **Evidence is placeholder (TBD/待补)** | **P1** |
+| **Charter invariant violated** (Charter Compliance, §7) | **P1** |
 | **Verify-By: vitest but test has empty assertion** | **P0** |
 
 ---
