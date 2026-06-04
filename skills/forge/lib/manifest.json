@@ -308,7 +308,7 @@
     "learn": {
       "instructions": {
         "path": "learn/instructions.md",
-        "sha256": "6c6032bb04f963e92264dd7510bb6dfce051196c338a927c590f50f0b7e3f3dd"
+        "sha256": "b6d44cfd588ec920e8ef1b968b4678905b4e8b6fe7593f8a062ab11c54c085d0"
       },
       "references": [
         {
@@ -478,7 +478,7 @@
     "review": {
       "instructions": {
         "path": "review/instructions.md",
-        "sha256": "0d8d915776b61ad3b030aa24a128c77ca1fa07fcb725b6f0a8e3f0559193615e"
+        "sha256": "79d654ca1175a9c7c991de6450743d4f6c071007f81a2746ca5609350b524424"
       },
       "references": [
         {
@@ -706,7 +706,7 @@
       "references": [
         {
           "path": "charter/references/subcommands.md",
-          "sha256": "3eb1b84c8da5ca3fa6ab55fe42fee13ef1ddad7bc07e4a23740d6f608fb026d2"
+          "sha256": "fbd9accd6322f38f32588d91054ec78e61d9b1dea5aec355d6cd93d5bc2038a7"
         }
       ]
     }
