@@ -637,4 +637,139 @@ effort: high
 
 ---
 
-*文档生成时间：2026-05-30（初版） / 2026-06-03（2.1.158–161 增补） | v3.1 | 基于 Claude Code CHANGELOG 2.1.0–2.1.161 全量分析 + Forge plugin.json/settings.json 对比 + 可行性验证*
+---
+
+## 十六、2.1.162 增补分析（2026-06-04）
+
+> 承接上文（原覆盖至 2.1.161）。本节补齐 2.1.162 的相关条目。
+> **结论**：2.1.162 以可靠性修复为主。Grep/Glob 工具声明生效、SendMessage + TMPDIR 深路径修复、Emoji 截断 API 400 修复三项与 Forge 直接相关；决定提高 decide-teams 最低 CLI 版本到 `>= 2.1.162` 一次性覆盖所有修复。
+
+### 99. Grep/Glob 工具声明现在生效 `[2.1.162]` 🟠 待验证
+
+**Changelog**: `--tools: explicitly listing Grep/Glob` now provides the dedicated search tools on native builds with embedded search (previously these names were **silently ignored**)
+
+**Forge 影响**: 15 个 agent 定义声明了 Grep/Glob（product、architect、critic、security、所有 decide-* 和 review 子代理）。之前这些声明被**静默忽略**，agent 未获得专用搜索工具。现在声明生效，原生构建搜索性能可能提升。
+
+**涉及文件**:
+- `.claude/agents/product.md` — `tools: Read, Glob, Grep`
+- `.claude/agents/architect.md` — `tools: Read, Glob, Grep, WebSearch, WebFetch`
+- `.claude/agents/critic.md` — `tools: Read, Glob, Grep`
+- `.claude/agents/security.md` — `tools: Read, Glob, Grep, WebSearch, WebFetch`
+- `.claude/agents/designer.md` — `tools: Read, Glob, Grep`
+- `.claude/agents/forge-decide-arch.md` — `allowedTools: [Read, Glob, Grep, ...]`
+- `.claude/agents/forge-decide-product.md` — `allowedTools: [Read, Glob, Grep, ...]`
+- `.claude/agents/forge-decide-sec.md` — `allowedTools: [Read, Glob, Grep, ...]`
+- `.claude/agents/forge-decide-cost.md` — `allowedTools: [Read, Glob, Grep, ...]`
+- `.claude/agents/forge-decide-ops.md` — `allowedTools: [Read, Glob, Grep, ...]`
+- `.claude/agents/forge-plan.md` — 列出 Glob 和 Grep
+- `.claude/agents/forge-build.md` — 列出 Glob 和 Grep
+- `.claude/agents/forge-review.md` — 列出 Glob 和 Grep
+- `.claude/agents/forge-ship.md` — 列出 Glob 和 Grep
+
+**行动**: 无需修改声明（本身正确）。确认行为一致即可。
+
+---
+
+### 100. SendMessage + TMPDIR 深路径修复 `[2.1.162]` 🟠 版本门控
+
+**Changelog**: Fixed cross-session messaging (SendMessage) silently breaking when `CLAUDE_CODE_TMPDIR` or `$TMPDIR` points at a deep directory
+
+**Forge 影响**: Agent Teams 模式（decide-teams）重度依赖 SendMessage 进行 teammate 通信。Forge 在 SessionStart hook 中使用 `${TMPDIR}/forge-read-budget-*.json`（`.claude/settings.json:27`），read-cache 也写入 `${TMPDIR}/`（`read-cache.d.ts`）。深 TMPDIR 路径会导致 SendMessage 静默失败，Agent Teams 模式下 teammate 间消息丢失。
+
+**涉及文件**:
+- `.claude/settings.json:27` — TMPDIR cleanup hook
+- `dist-plugin/dist/src/mcp/read-cache.d.ts` — `${TMPDIR}/forge-read-cache-<session>.json`
+- `ROADMAP.md` — 记录了 SendMessage 运行时不可用 bug（#47021, #50622）
+
+**行动**: 提高 decide-teams 最低 CLI 版本要求到 `>= 2.1.162`，确保修复生效。
+
+---
+
+### 101. Emoji 截断导致 API 400 修复 `[2.1.162]` 🟠 版本门控
+
+**Changelog**: Fixed API 400 no low surrogate in string errors for classifier side-queries and MCP server descriptions containing emoji near a truncation boundary
+
+**Forge 影响**: 技能指令文件中大量使用 emoji。高风险位置：
+
+| 文件 | 行号 | 模式 | 风险等级 |
+|------|------|------|----------|
+| `build/instructions.md` | 188 | `🔍 探针...✅/❌` 50+ 字符含多 emoji | 🔴 高 |
+| `build/references/closure-probes.md` | 30 | 同上 | 🔴 高 |
+| `resume/references/output-format.md` | 6, 43 | `🔄` 在长格式串中 | 🟡 中 |
+| `decide/instructions.md` | 219, 220 | `✅` `🔄` | 🟡 中 |
+| `status/instructions.md` | 65, 174 | `🔄` | 🟡 中 |
+| `debug/instructions.md` | 40, 109-111 | `✅` | 🟢 低 |
+
+**行动**: 通过提高最低 CLI 版本要求覆盖此修复，无需修改 Forge 代码。
+
+---
+
+### 102. MCP Timeout 配置修复 `[2.1.162]` 🟠 添加显式配置
+
+**Changelog**: MCP per-server timeout config values below 1000 ms being floored to a 1-second watchdog that aborted every tool call; sub-1000 ms values are now ignored
+
+**Forge 影响**: `.mcp.json` 无 timeout 配置。forge-context MCP server 的 `forge_exec` 默认 30s，hooks 超时 1-5s。如果用户在 settings 中为 forge-context 配置了 <1000ms 的 timeout，之前所有工具调用都会被 1 秒 watchdog 中断。
+
+**行动**: 为 `.mcp.json` 添加显式 `timeout: 15000`（15s）配置，避免依赖默认值。
+
+---
+
+### 103. 中断信号丢失修复 `[2.1.162]` 🟢 自动受益
+
+**Changelog**: Fixed an interrupt (Esc) sent at the very start of a turn being silently dropped in stream-json/SDK sessions
+
+**Forge 影响**: build/review 流程可能很长，用户需要可靠的中断能力。之前中断被静默丢弃意味着用户以为已停止但实际继续运行。此修复让 Esc 中断可靠生效。
+
+**行动**: 无需代码修改。通过最低 CLI 版本要求覆盖。
+
+---
+
+### 104. 后台代理连接改善 `[2.1.162]` 🟢 自动受益
+
+**Changelog**: Fixed `claude agents attach` bouncing back on first try after background-service restart; Fixed stalling 5 seconds before attaching
+
+**Forge 影响**: Agent Teams 模式下用户通过 `claude agents` 管理 teammate session。之前 attach 会弹回或卡顿 5 秒，现在流畅连接。
+
+**行动**: 无需代码修改。通过最低 CLI 版本要求覆盖。
+
+---
+
+### 105. 安静启动 `[2.1.162]` 🟢 自动受益
+
+**Changelog**: Notices group by severity, shorter warnings with concrete fixes
+
+**Forge 影响**: Forge 有 3 个 SessionStart hooks（auto-resume 5s、TMPDIR cleanup 1s、evolved-rules 5s），总超时 11s。新的分组通知格式让这些输出更整洁。
+
+**行动**: 无需代码修改。自动受益。
+
+---
+
+### 106. 其余（2.1.162，不相关，已过滤）
+
+- `claude agents --json waitingFor` — 监控增强，Forge 不消费 `--json` 输出
+- `/effort` 持久化确认 — UX 改善，无功能影响
+- Remote Control footer pill — UI 改善，无功能影响
+- Slash command autocomplete 填入而非立即执行 — UX 改善
+- Windows 路径修复 — Forge 未针对 Windows 做特殊处理
+- WebFetch 权限规则修复 — Forge 未配置 WebFetch 权限
+- LSP workspaceSymbol 修复 — Forge 未使用此操作
+- `claude agents` 状态文本截断修复 — UX 改善
+- Windsurf → Devin Desktop 重命名 — 品牌更名
+- 启动错误处理改善 — 稳定性提升
+- 后台服务启动改善 — 稳定性提升
+- 删除冗余启动消息 — 更安静
+
+---
+
+### 2.1.162 行动清单
+
+| # | 行动 | 优先级 | 复杂度 | 涉及文件 |
+|---|------|--------|--------|----------|
+| **A** | 提高 decide-teams 最低 CLI 版本到 `>= 2.1.162` | 🔴 高 | 低 | `dist-plugin/skills/forge/lib/decide-teams/instructions.md` |
+| **B** | 为 `.mcp.json` 添加显式 timeout 配置 | 🟡 中 | 低 | `.mcp.json` |
+| **C** | 更新 §80 最低版本建议为 `>= 2.1.162` | 🟡 中 | 低 | 本文档 §十 |
+| **D** | 验证 Grep/Glob 声明生效后 agent 行为一致 | 🟢 低 | 低 | 无需修改（验证性） |
+
+**版本门控决策**：decide-teams 最低版本从 `>= 2.1.32` → `>= 2.1.162`，一次性覆盖 SendMessage 修复、Emoji 修复、中断修复、后台连接修复（§100–104）。
+
+*文档生成时间：2026-05-30（初版） / 2026-06-03（2.1.158–161 增补） / 2026-06-04（2.1.162 增补） | v3.2 | 基于 Claude Code CHANGELOG 2.1.0–2.1.162 全量分析 + Forge plugin.json/settings.json 对比 + 可行性验证*
