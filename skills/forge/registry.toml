@@ -1,7 +1,7 @@
 # AUTO-GENERATED — DO NOT EDIT
 # Source: skills/forge/lib/<sub>/instructions.md frontmatter
 # Regen: node scripts/regen-skill-registry.mjs
-# Last regen: 2026-05-24T06:38:17.208Z
+# Last regen: 2026-06-04T15:52:19.202Z
 
 [abort]
 dispatch_mode = "inline"
@@ -22,6 +22,11 @@ description = "Execute an approved plan through TDD with subagent isolation, ato
 dispatch_mode = "inline"
 allowed_tools = ["Read", "Edit", "Write", "Bash"]
 description = "Build tiny single-file changes that skip the full plan and TDD ceremony. Use when user runs `/forge build` on a light-tier task, change touches 1 file and 20 lines or less, or has no spec or plan document."
+
+[charter]
+dispatch_mode = "fork"
+allowed_tools = ["Read", "Write", "Glob", "Grep", "Bash"]
+description = "Create, update, check, and display the project charter (.forge/charter.md). Use when user runs /forge charter <sub>."
 
 [control-cli]
 dispatch_mode = "inline"

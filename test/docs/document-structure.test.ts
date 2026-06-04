@@ -45,7 +45,17 @@ describe("CLAUDE.md structure", () => {
     // The slimmed CLAUDE.md preserves section identifiers that appear as
     // inline references.  Top-level sections (§3, §4, §5) are referenced
     // without subsections because the detail lives in the reference doc.
-    const expectedSubsections = ["§2.1", "§2.2", "§2.3", "§2.4", "§2.5", "§2.6", "§3", "§4", "§5"];
+    const expectedSubsections = [
+      "§2.1",
+      "§2.2",
+      "§2.3",
+      "§2.4",
+      "§2.5",
+      "§2.6",
+      "§3",
+      "§4",
+      "§5",
+    ];
 
     for (const subsection of expectedSubsections) {
       expect(content).toContain(subsection);

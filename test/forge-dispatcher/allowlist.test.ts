@@ -1,5 +1,5 @@
-import { describe, it, expect } from "vitest";
-import { validateTopic, ALLOW_LIST } from "../../src/forge-dispatcher/allowlist.js";
+import { describe, expect, it } from "vitest";
+import { ALLOW_LIST, validateTopic } from "../../src/forge-dispatcher/allowlist.js";
 
 describe("allowlist", () => {
   it("should contain all expected subcommands", () => {

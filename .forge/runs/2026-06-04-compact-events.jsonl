@@ -34,4 +34,26 @@
 {"timestamp":"2026-06-04T13:23:35Z","event":"precompact_snapshot","detail":"slug=mcp-server-lifecycle phase=build completed=0 pending=0"}
 {"timestamp":"2026-06-04T13:51:05Z","event":"precompact_snapshot","detail":"slug=forge-learn-reframing-integration phase=build completed=0 pending=0"}
 {"timestamp":"2026-06-04T14:55:06Z","event":"precompact_snapshot","detail":"slug=forge-gate-shared-protocol phase=build completed=0 pending=0"}
-{"timestamp":"2026-06-04T15:11:14Z","event":"precompact_snapshot","detail":"slug=forge-gate-shared-protocol phase=build completed=0 pending=0"}
+{"timestamp":"2026-06-04T15:36:51Z","event":"precompact_snapshot","detail":"slug=project-charter phase=build completed=0 pending=0"}
+{"timestamp":"2026-06-04T15:37:14Z","event":"postcompact_restore","detail":"slug=project-charter"}
+{"timestamp":"2026-06-04T15:37:14Z","event":"precompact_snapshot","detail":"slug=project-charter phase=build completed=0 pending=0"}
+{"timestamp":"2026-06-04T15:38:48Z","event":"postcompact_restore","detail":"slug=project-charter"}
+{"timestamp":"2026-06-04T15:38:48Z","event":"precompact_snapshot","detail":"slug=project-charter phase=build completed=0 pending=0"}
+{"timestamp":"2026-06-04T15:43:45Z","event":"postcompact_restore","detail":"slug=project-charter"}
+{"timestamp":"2026-06-04T15:43:45Z","event":"precompact_snapshot","detail":"slug=project-charter phase=build completed=0 pending=0"}
+{"timestamp":"2026-06-04T15:45:12Z","event":"postcompact_restore","detail":"slug=project-charter"}
+{"timestamp":"2026-06-04T15:45:12Z","event":"precompact_snapshot","detail":"slug=project-charter phase=build completed=0 pending=0"}
+{"timestamp":"2026-06-04T15:46:41Z","event":"postcompact_restore","detail":"slug=project-charter"}
+{"timestamp":"2026-06-04T15:46:41Z","event":"precompact_snapshot","detail":"slug=project-charter phase=build completed=0 pending=0"}
+{"timestamp":"2026-06-04T15:49:14Z","event":"postcompact_restore","detail":"slug=project-charter"}
+{"timestamp":"2026-06-04T15:49:14Z","event":"precompact_snapshot","detail":"slug=project-charter phase=build completed=0 pending=0"}
+{"timestamp":"2026-06-04T15:50:43Z","event":"postcompact_restore","detail":"slug=project-charter"}
+{"timestamp":"2026-06-04T15:50:43Z","event":"precompact_snapshot","detail":"slug=project-charter phase=build completed=0 pending=0"}
+{"timestamp":"2026-06-04T15:56:01Z","event":"postcompact_restore","detail":"slug=project-charter"}
+{"timestamp":"2026-06-04T15:56:02Z","event":"precompact_snapshot","detail":"slug=project-charter phase=build completed=0 pending=0"}
+{"timestamp":"2026-06-04T15:57:35Z","event":"postcompact_restore","detail":"slug=project-charter"}
+{"timestamp":"2026-06-04T15:57:35Z","event":"precompact_snapshot","detail":"slug=project-charter phase=build completed=0 pending=0"}
+{"timestamp":"2026-06-04T16:00:44Z","event":"postcompact_restore","detail":"slug=project-charter"}
+{"timestamp":"2026-06-04T16:00:44Z","event":"precompact_snapshot","detail":"slug=project-charter phase=build completed=0 pending=0"}
+{"timestamp":"2026-06-04T16:02:13Z","event":"postcompact_restore","detail":"slug=project-charter"}
+{"timestamp":"2026-06-04T16:02:13Z","event":"precompact_snapshot","detail":"slug=project-charter phase=build completed=0 pending=0"}

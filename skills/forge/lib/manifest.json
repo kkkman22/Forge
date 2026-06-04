@@ -1,6 +1,6 @@
 {
   "version": 1,
-  "generated_at": "2026-06-04T15:12:22.251Z",
+  "generated_at": "2026-06-04T14:56:13.187Z",
   "subs": {
     "abort": {
       "instructions": {
@@ -301,14 +301,14 @@
     "init": {
       "instructions": {
         "path": "init/instructions.md",
-        "sha256": "e7bc628de7cd062f2af296861937795db2625850c43be885df4917decc55c9ea"
+        "sha256": "6ae0f6863e13b2fb920339a87d5929fef510d861606b86a648e9ae27be2cfed0"
       },
       "references": []
     },
     "learn": {
       "instructions": {
         "path": "learn/instructions.md",
-        "sha256": "1115262d4f162dbb4a0033478f54a1d11e563bbc11915c422f071084aeeaa9ca"
+        "sha256": "6c6032bb04f963e92264dd7510bb6dfce051196c338a927c590f50f0b7e3f3dd"
       },
       "references": [
         {
@@ -382,7 +382,7 @@
     "plan": {
       "instructions": {
         "path": "plan/instructions.md",
-        "sha256": "d6c40e6ce825badc5713f37cf6e1914a57b8d2504e6e33f02f93bb149c94c820"
+        "sha256": "bef604a6771d0516f0e0cad6bb876daf23679ad844a7d165c6e0dc60ddba9414"
       },
       "references": [
         {
@@ -478,7 +478,7 @@
     "review": {
       "instructions": {
         "path": "review/instructions.md",
-        "sha256": "79d654ca1175a9c7c991de6450743d4f6c071007f81a2746ca5609350b524424"
+        "sha256": "0d8d915776b61ad3b030aa24a128c77ca1fa07fcb725b6f0a8e3f0559193615e"
       },
       "references": [
         {
@@ -593,7 +593,7 @@
     "spec": {
       "instructions": {
         "path": "spec/instructions.md",
-        "sha256": "15ee4080f02e9e87db241542eb732ebc2dad68cba209d61d6b52eaaf1940f271"
+        "sha256": "766df69e5a3ef55bbbc5d72b977115498aac91411bd7408df0ffa6352d65f748"
       },
       "references": [
         {
@@ -695,6 +695,18 @@
         {
           "path": "zoom-out/references/function-contracts.md",
           "sha256": "45ee1ff09884433b4dffcb001df547e0319c418025298554dd665382aef73113"
+        }
+      ]
+    },
+    "charter": {
+      "instructions": {
+        "path": "charter/instructions.md",
+        "sha256": "992ef791310e9c7f49d82852c7b490363c69ba776228f7d3560088fca3d5cc78"
+      },
+      "references": [
+        {
+          "path": "charter/references/subcommands.md",
+          "sha256": "3eb1b84c8da5ca3fa6ab55fe42fee13ef1ddad7bc07e4a23740d6f608fb026d2"
         }
       ]
     }

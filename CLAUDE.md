@@ -120,12 +120,7 @@ build 阶段主 Agent 必须执行周期性 Restatement Checkpoint：每完成 N
 
 ## 5. Charter（项目宪章）
 
-- `.forge/charter.md` 记录工程策略锚定（架构边界、技术基线、不可变量）
-- `/forge charter init/update/check/show` 管理 charter 生命周期
-- Charter 不存在或 `status: draft` 时，下游 skill（decide/spec/plan/review）正常执行，不阻断
-- Charter `status: active` 时，下游 skill 自动读取 charter 摘要（≤500 tokens）作为 grounding 约束
-
----
+`.forge/charter.md` 工程策略锚定（架构边界、技术基线、不可变量）。`/forge charter init/update/check/show` 管理生命周期。`status: active` 时下游 skill（decide/spec/plan/review）自动读取摘要（≤500 tokens）作为 grounding 约束；不存在或 `draft` 时正常执行不阻断。
 
 ## 6. Self-Evolution Protocol
 
@@ -135,10 +130,7 @@ build 阶段主 Agent 必须执行周期性 Restatement Checkpoint：每完成 N
 
 ### 6.2-6.6
 
-**Categories**：Project traps、correction patterns、tool quirks、behavior corrections、friction adjustments。**Trigger**：Knowledge entries 达阈值时提出。**Protocol**：Propose → Declare → Approve → Log。**Constraints**：15-rule cap、staleness (5 sessions)、Sections 1–4 immutable。
-→ 详见 docs/forge-constitution-detail.md §5
-
----
+**Categories**：Project traps、correction patterns、tool quirks、behavior corrections、friction adjustments。**Trigger**：Knowledge entries 达阈值时提出。**Protocol**：Propose → Declare → Approve → Log。**Constraints**：15-rule cap、staleness (5 sessions)、Sections 1–4 immutable。→ 详见 docs/forge-constitution-detail.md §5
 
 ## 7. Session Boundaries
 
@@ -147,7 +139,6 @@ build 阶段主 Agent 必须执行周期性 Restatement Checkpoint：每完成 N
 **Subagent 隔离**：每个 Subagent 有独立上下文。**会话恢复**：`/forge resume` 从 `.forge/progress/` 和 `.forge/knowledge/sessions/` 读取。**并发控制**：`max_parallel_agents` 默认 6。HTTP 429 降级：减半 → 降至 2 → 串行。**上下文预算（强制）**：Read >100KB → ⚠️ `/clear`；>150KB → ⛔ `/clear + /forge resume`。<important if="context exceeds 100k tokens or session runs long">上下文超 100K tokens 时，考虑 `/clear` + `/forge resume`。`.forge/` 目录在会话间传递状态。</important>
 
 ---
-
 ## 项目信息
 
 **Forge** | TypeScript/JS/Shell | 安全级别 1 | 2026-04-28 | Subagent 配置详见 `.claude/rules/workflow-fallback-ladder.md`。

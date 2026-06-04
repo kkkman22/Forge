@@ -1,6 +1,6 @@
-import { describe, it, expect } from "vitest";
-import { existsSync, readFileSync } from "fs";
-import { resolve } from "path";
+import { existsSync, readFileSync } from "node:fs";
+import { resolve } from "node:path";
+import { describe, expect, it } from "vitest";
 import { validateTopic } from "../../src/forge-dispatcher/allowlist.js";
 
 const ROOT = resolve(__dirname, "../..");
@@ -15,13 +15,7 @@ describe("Charter Contract", () => {
     const path = resolve(ROOT, "templates/charter-template.md");
     expect(existsSync(path)).toBe(true);
     const content = readFileSync(path, "utf-8");
-    const requiredSections = [
-      "核心问题",
-      "架构边界",
-      "技术选型基线",
-      "不可变量",
-      "变更日志",
-    ];
+    const requiredSections = ["核心问题", "架构边界", "技术选型基线", "不可变量", "变更日志"];
     for (const section of requiredSections) {
       expect(content, `missing section: ${section}`).toContain(section);
     }
