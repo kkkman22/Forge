@@ -32,3 +32,4 @@
 {"timestamp":"2026-06-04T07:51:43Z","event":"precompact_snapshot","detail":"slug=mcp-server-lifecycle phase=build completed=0 pending=0"}
 {"timestamp":"2026-06-04T12:10:24Z","event":"precompact_snapshot","detail":"slug=mcp-server-lifecycle phase=build completed=0 pending=0"}
 {"timestamp":"2026-06-04T13:23:35Z","event":"precompact_snapshot","detail":"slug=mcp-server-lifecycle phase=build completed=0 pending=0"}
+{"timestamp":"2026-06-04T13:51:05Z","event":"precompact_snapshot","detail":"slug=forge-learn-reframing-integration phase=build completed=0 pending=0"}
