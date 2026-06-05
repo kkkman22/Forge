@@ -45,7 +45,8 @@ function listInstructionFiles(dirPath) {
       try {
         statSync(instr);
         results.push(instr);
-      } catch {
+      } catch (err) {
+        if (err.code !== "ENOENT") throw err;
         // no instructions.md — skip
       }
     }
@@ -90,7 +91,7 @@ function extractRules(filePath) {
 function parseRegistry() {
   const registryPath = join(ROOT, "src/skill-function-registry.ts");
   const content = readFileSync(registryPath, "utf-8");
-  const skillMap = new Map();
+  const skillSet = new Set();
 
   // Match entries: skills: ["forge/lib/xxx/instructions.md", ...]
   const entryRegex = /skills:\s*\[([^\]]+)\]/g;
@@ -99,14 +100,11 @@ function parseRegistry() {
     const skillsStr = entryMatch[1];
     const skillRefs = [...skillsStr.matchAll(/"([^"]+)"/g)].map((m) => m[1]);
     for (const ref of skillRefs) {
-      if (!skillMap.has(ref)) {
-        skillMap.set(ref, []);
-      }
-      skillMap.get(ref).push(ref);
+      skillSet.add(ref);
     }
   }
 
-  return skillMap;
+  return skillSet;
 }
 
 // ---------------------------------------------------------------------------
@@ -124,7 +122,7 @@ function main() {
   }
 
   // Check coverage: a skill file is "covered" if it has registry entries
-  const coveredSkills = new Set(registry.keys());
+  const coveredSkills = registry;
   const ruleFiles = new Set(allRules.map((r) => r.file));
   const uncoveredRuleFiles = [...ruleFiles].filter((f) => !coveredSkills.has(f));
 
