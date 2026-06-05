@@ -19,6 +19,7 @@ import type { ResolvedRoot } from "../project-root.js";
 import type { ReadCacheIndex } from "../read-cache.js";
 import { loadOrCreateIndex, lookup, persistIndex, update } from "../read-cache.js";
 import { getFileHash } from "../read-cache-hash.js";
+import { validateSinglePath } from "./path-validator.js";
 
 // ---------------------------------------------------------------------------
 // Core logic (exported for testing)
@@ -123,8 +124,8 @@ export function registerForgeReadCached(
       let resolvedPath: string;
       if (root) {
         resolvedPath = resolvePath(root.path, filePath);
-        // Prevent path traversal — resolved path must be under root
-        if (!resolvedPath.startsWith(root.path)) {
+        // Prevent path traversal using shared validator (handles prefix attacks)
+        if (!validateSinglePath(filePath, root.path)) {
           return {
             content: [
               { type: "text" as const, text: `Error: path traversal blocked: ${filePath}` },

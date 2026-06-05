@@ -13,10 +13,13 @@
  */
 
 import { execFile } from "node:child_process";
-import { relative, resolve } from "node:path";
 import type { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { z } from "zod";
 import type { ResolvedRoot } from "../project-root.js";
+import { validatePaths } from "./path-validator.js";
+
+// Re-export for backward compatibility with existing imports
+export { validatePaths } from "./path-validator.js";
 
 // ---------------------------------------------------------------------------
 // Constants
@@ -26,24 +29,8 @@ import type { ResolvedRoot } from "../project-root.js";
 const DEFAULT_TIMEOUT_MS = 30_000;
 
 // ---------------------------------------------------------------------------
-// Security: path and script validation
+// Security: script validation
 // ---------------------------------------------------------------------------
-
-/**
- * Validate that all paths resolve within the project root.
- * Returns an error message if any path escapes, or null if all are safe.
- */
-export function validatePaths(paths: string[], projectRoot: string): string | null {
-  const resolvedRoot = resolve(projectRoot);
-  for (const p of paths) {
-    const resolved = resolve(projectRoot, p);
-    const rel = relative(resolvedRoot, resolved);
-    if (rel.startsWith("..") || (rel.length > 0 && !resolved.startsWith(resolvedRoot))) {
-      return `Path escapes project root: ${p}`;
-    }
-  }
-  return null;
-}
 
 /** Dangerous Node.js API patterns that should not appear in user scripts. */
 const DANGEROUS_SCRIPT_PATTERNS: Array<{ pattern: RegExp; label: string }> = [

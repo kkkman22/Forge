@@ -1,24 +1,23 @@
 ---
-current_task: "audit-phase1-security-quality"
+current_task: "audit-phase2-quality-perf"
 tier: "standard"
 phase: "build"
 updated: "2026-06-05"
-branch: "forge/audit-phase1-security-quality"
+branch: "forge/audit-phase2-quality-perf"
 ---
 
 # 项目状态
 
-## 当前任务：audit-phase1-security-quality
+## 当前任务：audit-phase2-quality-perf
 
-基于 PROJECT_AUDIT_REPORT.md Phase 1 的安全加固与代码质量修复。
+基于 PROJECT_AUDIT_REPORT.md Phase 2 的质量与性能改进（4 项）。
 
-### 范围（5 项）
+### 范围
 
-1. **P0 — forge-exec.ts 命令注入修复** (`src/mcp/tools/forge-exec.ts`)
-2. **P0 — forge-read.ts 任意代码执行修复** (`src/mcp/tools/forge-read.ts`)
-3. **P0 — isCommandDenied 黑名单绕过修复** (`src/mcp/tools/forge-exec.ts`)
-4. **P1 — post.ts 8 处 catch(e: any) 类型安全修复** (`src/review-comment-bitbucket/post.ts`)
-5. **P1 — 11 处 Biome noUnusedVariables 修复** (`feature-dossier.ts` 等)
+1. **T2 — Path traversal 扩展加固** (forge-read-cached.ts + shared validator)
+2. **T4 — 算法复杂度优化** (`detectDrifts`, `checkContradictions`, `findMentionedTerms`)
+3. **T3 — 配置管理统一** (Zod schema default, remove env var gate)
+4. **T1 — Sync I/O 核心路径改造** (`knowledge-hooks.ts`, `spec-bundle-io.ts`)
 
 - Tier: standard
 - Sequence: plan → build → review → test → ship
