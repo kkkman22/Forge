@@ -76,7 +76,9 @@ describe("Direction 1: Registry functions exist in source modules", () => {
         `server\\.(?:tool|registerTool)\\s*\\(\\s*["']${entry.functionName}["']`,
       );
       const found = entry.mcpTool
-        ? mcpToolPattern.test(content) || exportPattern.test(content) || reExportPattern.test(content)
+        ? mcpToolPattern.test(content) ||
+          exportPattern.test(content) ||
+          reExportPattern.test(content)
         : exportPattern.test(content) || reExportPattern.test(content);
       expect(
         found,
