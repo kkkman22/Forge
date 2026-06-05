@@ -118,7 +118,7 @@ function findLatestFile(dir: string, suffix: string): string | null {
   let files: string[];
   try {
     files = readdirSync(dir);
-  } catch {
+  } catch (_err: unknown) {
     return null;
   }
 
@@ -156,7 +156,7 @@ function safeParseP1Fixlist(content: string): P1Fixlist | null {
       p1Issues: obj.p1Issues as P1FixlistEntry[],
       allFixed: typeof obj.allFixed === "boolean" ? obj.allFixed : false,
     };
-  } catch {
+  } catch (_err: unknown) {
     return null;
   }
 }
@@ -200,7 +200,7 @@ export function checkReviewGate(
   let content: string;
   try {
     content = readFileSync(reportPath, "utf-8");
-  } catch {
+  } catch (_err: unknown) {
     return {
       gate: "review",
       passed: false,
@@ -274,7 +274,7 @@ export function checkReviewGate(
             details: { p0Count: 0, p1Count: report.p1Count },
           };
         }
-      } catch {
+      }         catch (_err: unknown) {
         // fixlist unreadable — fall through to default P1 block
       }
     }
@@ -315,7 +315,7 @@ export function checkTestGate(testResultsDir: string, configCICheck?: string): G
   let files: string[];
   try {
     files = readdirSync(testResultsDir);
-  } catch {
+  } catch (_err: unknown) {
     return {
       gate: "test",
       passed: false,
@@ -341,7 +341,7 @@ export function checkTestGate(testResultsDir: string, configCICheck?: string): G
   let content: string;
   try {
     content = readFileSync(latestPath, "utf-8");
-  } catch {
+  } catch (_err: unknown) {
     return {
       gate: "test",
       passed: false,
@@ -419,7 +419,7 @@ export function checkProgressGate(progressDir: string, featureName: string): Gat
   let content: string;
   try {
     content = readFileSync(progressFile, "utf-8");
-  } catch {
+  } catch (_err: unknown) {
     // No progress file — lightweight path, pass with warning
     return {
       gate: "progress",

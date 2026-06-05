@@ -32,13 +32,13 @@ export async function detectCmuxAvailable(): Promise<boolean> {
       const timer = setTimeout(() => resolve(false), CMUX_SOCKET_TIMEOUT);
       try {
         resolve(existsSync(socketPath));
-      } catch {
+      } catch (err: unknown) {
         resolve(false);
       } finally {
         clearTimeout(timer);
       }
     });
-  } catch {
+  } catch (_err: unknown) {
     return false;
   }
 }
@@ -50,7 +50,7 @@ export function detectTmuxAvailable(): boolean {
   try {
     execSync("which tmux 2>/dev/null", { encoding: "utf-8", timeout: 3000 });
     return true;
-  } catch {
+  } catch (_err: unknown) {
     return false;
   }
 }
@@ -96,7 +96,7 @@ export async function detectProjectHarness(
     }
 
     return null;
-  } catch {
+  } catch (_err: unknown) {
     return null;
   }
 }

@@ -66,7 +66,7 @@ export function readTaskStatus(io: StatusManagerIO, forgeRoot: string, taskName:
     }
 
     return "";
-  } catch {
+  } catch (_err: unknown) {
     return "";
   }
 }
@@ -119,7 +119,7 @@ export function writeTaskStatus(
       }
       io.write(`${forgeRoot}/status.md`, content);
     }
-  } catch {
+  } catch (_err: unknown) {
     // Graceful degradation — spec R2.5: log warning and continue without crashing
     // TODO: integrate with logging when available
   }
@@ -249,7 +249,7 @@ export function archiveTaskStatus(
     const archiveDir = `${forgeRoot}/archive/${date}-${taskId}`;
     io.mkdirp(archiveDir);
     io.move(srcPath, `${archiveDir}/status.md`);
-  } catch {
+  } catch (_err: unknown) {
     // Graceful degradation — spec R2.5: log warning and continue without crashing
     // TODO: integrate with logging when available
   }

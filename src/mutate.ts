@@ -168,7 +168,7 @@ export function computeMutationScore(
   let report: StrykerReport;
   try {
     report = JSON.parse(strykerJsonOutput) as StrykerReport;
-  } catch {
+  } catch (_err: unknown) {
     return {
       total: 0,
       killed: 0,
@@ -299,7 +299,7 @@ export async function runMutation(
       encoding: "utf-8",
       stdio: "pipe",
     });
-  } catch {
+  } catch (_err: unknown) {
     // Stryker may exit non-zero when mutants survive — that's expected.
     // We read the report regardless.
   }
@@ -309,7 +309,7 @@ export async function runMutation(
   let strykerOutput: string;
   try {
     strykerOutput = readFileSync(reportPath, "utf-8");
-  } catch {
+  } catch (_err: unknown) {
     // Report file not found — return warn
     const durationMs = Date.now() - startTime;
     const packSource = enabled.order.join(", ");

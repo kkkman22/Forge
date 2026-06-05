@@ -198,7 +198,7 @@ export function checkCommandPolicy(
 function extractHostname(url: string): string {
   try {
     return new URL(url).hostname;
-  } catch {
+  } catch (_err: unknown) {
     // Not a valid URL, return as-is for substring matching
     return url;
   }

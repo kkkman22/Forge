@@ -54,7 +54,7 @@ export function parseEventsNdjson(content: string): PhaseEvent[] {
     let parsed: unknown;
     try {
       parsed = JSON.parse(line);
-    } catch {
+    } catch (_err: unknown) {
       continue;
     }
 

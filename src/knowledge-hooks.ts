@@ -234,7 +234,7 @@ function dispatchCatalogFreshnessCheck(knowledgeDir: string, now: Date): Knowled
     }
 
     return { kind: "skipped", reason: "cache_fresh" };
-  } catch {
+  } catch (_err: unknown) {
     return { kind: "skipped", reason: "cache_fresh" };
   }
 }

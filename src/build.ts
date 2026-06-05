@@ -353,7 +353,7 @@ export function buildThreeStrikeDebugReroute(
 (Pending)
 `;
       writeFileSync(debugFilePath, template, "utf-8");
-    } catch {
+    }       catch (_err: unknown) {
       // Best-effort write — never block reroute
     }
   }

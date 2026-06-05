@@ -628,7 +628,7 @@ export function deserializeSubagentSummary(text: string): SubagentSummary {
     if (m) {
       try {
         result.concerns = JSON.parse(m[1]);
-      } catch {
+      }         catch (_err: unknown) {
         // Fallback for legacy format (semicolon-separated)
         result.concerns = m[1].split("; ");
       }

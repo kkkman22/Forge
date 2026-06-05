@@ -330,7 +330,7 @@ export function applyLintRulesToFile(
       let regex: RegExp;
       try {
         regex = new RegExp(pattern.expression);
-      } catch {
+      } catch (err: unknown) {
         continue;
       }
 
@@ -380,7 +380,7 @@ function matchesGlob(filePath: string, glob: string): boolean {
   try {
     const re = new RegExp(`^${regexStr}$`);
     return re.test(normFile);
-  } catch {
+  } catch (_err: unknown) {
     return false;
   }
 }

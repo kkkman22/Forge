@@ -42,7 +42,7 @@ export async function parseReviewMarkdown(filePath: string): Promise<Finding[]> 
   try {
     // Minimal YAML-like parsing for the findings list
     raw = parseFindingsYaml(findingsBlockMatch[1]);
-  } catch {
+  } catch (_err: unknown) {
     throw new ReviewMarkdownParseError("yaml-parse-error", "Failed to parse findings YAML block");
   }
 

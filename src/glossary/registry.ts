@@ -410,7 +410,7 @@ async function listMdFiles(dir: string, fs: FileSystem): Promise<string[]> {
   let names: string[];
   try {
     names = await fs.readdir(dir);
-  } catch {
+  } catch (_err: unknown) {
     return [];
   }
   return names.filter((n) => n.endsWith(".md"));

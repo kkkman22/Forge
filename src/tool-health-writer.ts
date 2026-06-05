@@ -124,12 +124,12 @@ function acquireLockSync(lockPath: string, opts: AppendOptions): void {
         if (age > staleLockMs) {
           try {
             unlinkSync(lockPath);
-          } catch {
+          }             catch (_err: unknown) {
             // Race: peer removed it; loop and retry.
           }
           continue;
         }
-      } catch {
+      }         catch (_err: unknown) {
         // Race: peer removed it; loop and retry.
       }
       if (Date.now() >= deadline) {
@@ -145,7 +145,7 @@ function acquireLockSync(lockPath: string, opts: AppendOptions): void {
 function releaseLockSync(lockPath: string): void {
   try {
     unlinkSync(lockPath);
-  } catch {
+  } catch (_err: unknown) {
     // Already gone (process killed mid-write?) — nothing to do.
   }
 }

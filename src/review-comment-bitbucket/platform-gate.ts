@@ -19,7 +19,7 @@ export function isBitbucketUrl(url: string | null): boolean {
     // Handle HTTP/HTTPS URLs
     const parsed = new URL(url.startsWith("http") ? url : `https://${url}`);
     return parsed.hostname.toLowerCase().includes("bitbucket.");
-  } catch {
+  } catch (_err: unknown) {
     return false;
   }
 }
@@ -90,7 +90,7 @@ export function parseRemoteUrl(url: string): { host: string; port: number | null
     const port: number | null = parsed.port ? parseInt(parsed.port, 10) : null;
 
     return { host, port };
-  } catch {
+  } catch (_err: unknown) {
     return null;
   }
 }

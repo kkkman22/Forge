@@ -198,7 +198,7 @@ function listFiles(dir: string): readonly string[] {
   if (!existsSync(dir)) return [];
   try {
     return readdirSync(dir);
-  } catch {
+  } catch (_err: unknown) {
     return [];
   }
 }

@@ -56,7 +56,7 @@ async function readMapFile(
         type: e.type as ContextMapType,
         sourceLayer: layer,
       }));
-  } catch {
+  } catch (_err: unknown) {
     return [];
   }
 }

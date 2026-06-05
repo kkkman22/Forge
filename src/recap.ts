@@ -109,7 +109,7 @@ function parseGitLog(since: string): RecapEntry[] {
           category: "uncategorized",
         };
       });
-  } catch {
+  } catch (_err: unknown) {
     return [];
   }
 }
@@ -127,7 +127,7 @@ function parseSessions(forgeDir: string, since: string): RecapEntry[] {
         date: since,
         category: "uncategorized",
       }));
-  } catch {
+  } catch (_err: unknown) {
     return [];
   }
 }
@@ -145,7 +145,7 @@ function parseProgress(forgeDir: string, since: string): RecapEntry[] {
         date: since,
         category: "uncategorized",
       }));
-  } catch {
+  } catch (_err: unknown) {
     return [];
   }
 }
@@ -197,7 +197,7 @@ function findStaleRules(forgeDir: string): string[] {
     }
 
     return staleRules;
-  } catch {
+  } catch (_err: unknown) {
     return [];
   }
 }

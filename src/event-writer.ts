@@ -20,7 +20,7 @@ export function writeEvent(
       ...redactSensitive(payload),
     };
     appendFileSync(eventsPath, `${JSON.stringify(entry)}\n`, "utf-8");
-  } catch {
+  } catch (_err: unknown) {
     // Best-effort — never block the driver on event write failure (R11.2)
   }
 }

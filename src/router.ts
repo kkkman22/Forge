@@ -148,7 +148,7 @@ function loadIntentDictionary(): import("./router-intents.js").IntentDefinition[
     const dictPath = path.resolve(__dirname, "../templates/router-intents.md");
     const content = fs.readFileSync(dictPath, "utf-8");
     _intentDictCache = parseIntentDictionary(content);
-  } catch {
+  } catch (err: unknown) {
     _intentDictCache = [];
   }
   return _intentDictCache;
@@ -809,7 +809,7 @@ export function classifyTask(
           );
         }
       }
-    } catch {
+    }       catch (_err: unknown) {
       // R2-4: Dictionary load failure → skip intent step, no blocking
     }
   }

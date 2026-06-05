@@ -9,7 +9,7 @@ export function loadSsotData(rootDir: string): Map<string, unknown> {
   let raw = "";
   try {
     raw = readFileSync(configPath, "utf-8");
-  } catch {
+  } catch (_err: unknown) {
     return new Map();
   }
 
@@ -25,14 +25,14 @@ export function loadSsotData(rootDir: string): Map<string, unknown> {
         if (sourcePath.endsWith(".json")) {
           try {
             ssotData.set(entry.topic, JSON.parse(content));
-          } catch {
+          } catch (_err: unknown) {
             ssotData.set(entry.topic, content);
           }
         } else {
           ssotData.set(entry.topic, content);
         }
       }
-    } catch {
+    }       catch (_err: unknown) {
       // Source file missing — renderer will handle null source
     }
   }

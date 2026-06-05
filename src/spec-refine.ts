@@ -142,7 +142,7 @@ function readFrontmatterStatus(filePath: string): string | undefined {
     const content = readFileSync(filePath, "utf-8");
     const match = content.match(/^---\n[\s\S]*?status:\s*(\w+)/);
     return match?.[1];
-  } catch {
+  } catch (_err: unknown) {
     return undefined;
   }
 }

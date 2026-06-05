@@ -21,7 +21,7 @@ export function checkRootWhitelist(
 
   try {
     entries = readdirSync(rootDir);
-  } catch {
+  } catch (_err: unknown) {
     diagnostics.push({
       script: SCRIPT_NAME,
       severity: "critical",

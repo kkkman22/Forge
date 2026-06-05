@@ -80,7 +80,7 @@ export async function loadPackRegistry(reposRoot: string, fs: FileSystem): Promi
   let subdirs: string[];
   try {
     subdirs = (await fs.readdir(packsDir)).sort();
-  } catch {
+  } catch (_err: unknown) {
     return { packs, warnings };
   }
 
@@ -91,7 +91,7 @@ export async function loadPackRegistry(reposRoot: string, fs: FileSystem): Promi
     let content: string;
     try {
       content = await fs.readFile(manifestPath);
-    } catch {
+    } catch (err: unknown) {
       continue;
     }
 

@@ -167,7 +167,7 @@ export function scanStagesForTopic(topic: string, forgeRoot: string): StageScanR
     let entries: string[];
     try {
       entries = fs.readdirSync(stageDir);
-    } catch {
+    } catch (err: unknown) {
       continue;
     }
 
@@ -180,7 +180,7 @@ export function scanStagesForTopic(topic: string, forgeRoot: string): StageScanR
         for (const name of matched) {
           stages.specs.push(readStageFile(stageDir, `${topic}/${name}`, stage));
         }
-      } catch {
+      }         catch (_err: unknown) {
         // directory doesn't exist, skip
       }
       continue;
@@ -202,7 +202,7 @@ function readStageFile(stageDir: string, relativeName: string, stage: StageName)
   try {
     content = fs.readFileSync(fullPath, "utf-8");
     mtime = fs.statSync(fullPath).mtime.toISOString();
-  } catch {
+  } catch (_err: unknown) {
     return {
       path: path.join(path.basename(stageDir), relativeName),
       mtime: "",
@@ -380,7 +380,7 @@ export function discoverTopics(forgeRoot: string): TopicDiscoveryResult {
     let entries: string[];
     try {
       entries = fs.readdirSync(stageDir);
-    } catch {
+    } catch (err: unknown) {
       continue;
     }
 
@@ -390,7 +390,7 @@ export function discoverTopics(forgeRoot: string): TopicDiscoveryResult {
         let stat: fs.Stats;
         try {
           stat = fs.statSync(entryPath);
-        } catch {
+        } catch (err: unknown) {
           continue;
         }
         if (!stat.isDirectory()) continue;

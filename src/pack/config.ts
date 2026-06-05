@@ -24,7 +24,7 @@ function extractFrontmatter(content: string): Record<string, unknown> {
     const parsed = parseYaml(match[1]);
     if (parsed && typeof parsed === "object") return parsed as Record<string, unknown>;
     return {};
-  } catch {
+  } catch (_err: unknown) {
     return {};
   }
 }

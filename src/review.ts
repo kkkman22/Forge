@@ -641,7 +641,7 @@ export function mergeReviewResults(results: SubagentResult[]): MergedFinding[] {
             }
           }
         }
-      } catch {
+      }         catch (_err: unknown) {
         // Output is not JSON — skip this result
       }
     }
@@ -982,7 +982,7 @@ function tryParseCiEvidence(
     }
 
     return { severity_counts, raw: content };
-  } catch {
+  } catch (_err: unknown) {
     return null;
   }
 }

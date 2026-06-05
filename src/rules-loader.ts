@@ -39,7 +39,7 @@ export async function loadAllRules(rulesDir?: string): Promise<AtomicRule[]> {
 
   try {
     entries = readdirSync(dir).filter((f) => f.endsWith(".md"));
-  } catch {
+  } catch (_err: unknown) {
     return [];
   }
 

@@ -28,7 +28,7 @@ export function runTmuxHarness(opts: TmuxHarnessOptions): TmuxHarnessResult {
     // Check if tmux is available
     try {
       execSync("which tmux 2>/dev/null", { encoding: "utf-8", timeout: 3000 });
-    } catch {
+    }       catch (_err: unknown) {
       return { ok: false, reason: "tmux not found on system" };
     }
 
@@ -104,7 +104,7 @@ function cleanupSession(sessionId: string): void {
       encoding: "utf-8",
       timeout: 3000,
     });
-  } catch {
+  } catch (_err: unknown) {
     // Best-effort cleanup
   }
 }
