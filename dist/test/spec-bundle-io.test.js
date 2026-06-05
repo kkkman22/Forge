@@ -123,12 +123,12 @@ Test purpose.
 // loadSpecBundle
 // ---------------------------------------------------------------------------
 describe("loadSpecBundle", () => {
-    it("returns layout=three-file when all three files exist", () => {
+    it("returns layout=three-file when all three files exist", async () => {
         const dir = createTestDir();
         try {
             const featureDir = join(dir, "my-feature");
             writeThreeFileFeature(featureDir, "my-feature");
-            const bundle = loadSpecBundle(featureDir);
+            const bundle = await loadSpecBundle(featureDir);
             expect(bundle.layout).toBe("three-file");
             expect(bundle.kind).toBe("feature");
             expect(bundle.feature).toBe("my-feature");
@@ -140,12 +140,12 @@ describe("loadSpecBundle", () => {
             cleanup();
         }
     });
-    it("returns layout=legacy-single when only spec.md exists", () => {
+    it("returns layout=legacy-single when only spec.md exists", async () => {
         const dir = createTestDir();
         try {
             const featureDir = join(dir, "legacy-feature");
             writeLegacySpec(featureDir, "legacy-feature");
-            const bundle = loadSpecBundle(featureDir);
+            const bundle = await loadSpecBundle(featureDir);
             expect(bundle.layout).toBe("legacy-single");
             expect(bundle.kind).toBe("feature");
             expect(bundle.feature).toBe("legacy-feature");
@@ -156,13 +156,13 @@ describe("loadSpecBundle", () => {
             cleanup();
         }
     });
-    it("returns layout=three-file with migrationHint=true when both layouts exist", () => {
+    it("returns layout=three-file with migrationHint=true when both layouts exist", async () => {
         const dir = createTestDir();
         try {
             const featureDir = join(dir, "dual-feature");
             writeThreeFileFeature(featureDir, "dual-feature");
             writeLegacySpec(featureDir, "dual-feature");
-            const bundle = loadSpecBundle(featureDir);
+            const bundle = await loadSpecBundle(featureDir);
             expect(bundle.layout).toBe("three-file");
             expect(bundle.migrationHint).toBe(true);
         }
@@ -170,23 +170,23 @@ describe("loadSpecBundle", () => {
             cleanup();
         }
     });
-    it("throws when no spec files exist", () => {
+    it("throws when no spec files exist", async () => {
         const dir = createTestDir();
         try {
             const featureDir = join(dir, "empty-feature");
             mkdirSync(featureDir, { recursive: true });
-            expect(() => loadSpecBundle(featureDir)).toThrow();
+            await expect(loadSpecBundle(featureDir)).rejects.toThrow();
         }
         finally {
             cleanup();
         }
     });
-    it("parses EARS clauses from three-file requirements", () => {
+    it("parses EARS clauses from three-file requirements", async () => {
         const dir = createTestDir();
         try {
             const featureDir = join(dir, "ears-test");
             writeThreeFileFeature(featureDir, "ears-test");
-            const bundle = loadSpecBundle(featureDir);
+            const bundle = await loadSpecBundle(featureDir);
             // The adapter should have parsed the EARS from requirements.md
             const reqDoc = bundle.primary;
             expect(reqDoc.earsCriteria).toBeDefined();
@@ -200,12 +200,12 @@ describe("loadSpecBundle", () => {
 // writeSpecBundle
 // ---------------------------------------------------------------------------
 describe("writeSpecBundle", () => {
-    it("writes three files for layout=three-file", () => {
+    it("writes three files for layout=three-file", async () => {
         const dir = createTestDir();
         try {
             const featureDir = join(dir, "write-test");
             mkdirSync(featureDir, { recursive: true });
-            writeSpecBundle({
+            await writeSpecBundle({
                 feature: "write-test",
                 kind: "feature",
                 layout: "three-file",
@@ -270,16 +270,16 @@ describe("writeSpecBundle", () => {
             cleanup();
         }
     });
-    it("round-trips: load then write preserves content", () => {
+    it("round-trips: load then write preserves content", async () => {
         const dir = createTestDir();
         try {
             const featureDir = join(dir, "roundtrip");
             writeThreeFileFeature(featureDir, "roundtrip");
-            const bundle = loadSpecBundle(featureDir);
+            const bundle = await loadSpecBundle(featureDir);
             const outDir = join(dir, "roundtrip-out");
             mkdirSync(outDir, { recursive: true });
-            writeSpecBundle(bundle, outDir);
-            const bundle2 = loadSpecBundle(outDir);
+            await writeSpecBundle(bundle, outDir);
+            const bundle2 = await loadSpecBundle(outDir);
             expect(bundle2.feature).toBe(bundle.feature);
             expect(bundle2.layout).toBe(bundle.layout);
             expect(bundle2.kind).toBe(bundle.kind);

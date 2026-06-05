@@ -14,3 +14,4 @@
 {"timestamp":"2026-06-05T13:47:16Z","event":"precompact_snapshot","detail":"slug=project-charter phase=build completed=0 pending=0"}
 {"timestamp":"2026-06-05T14:09:41Z","event":"postcompact_restore","detail":"slug=audit-pr1-test-stability"}
 {"timestamp":"2026-06-05T14:09:41Z","event":"precompact_snapshot","detail":"slug=project-charter phase=build completed=0 pending=0"}
+{"timestamp":"2026-06-05T22:58:06Z","event":"precompact_snapshot","detail":"slug=audit-phase3-infra phase=build completed=0 pending=0"}

@@ -13,11 +13,53 @@
  */
 import { execFile } from "node:child_process";
 import { z } from "zod";
+import { validatePaths } from "./path-validator.js";
+// Re-export for backward compatibility with existing imports
+export { validatePaths } from "./path-validator.js";
 // ---------------------------------------------------------------------------
 // Constants
 // ---------------------------------------------------------------------------
 /** Default timeout for script execution (30 seconds). */
 const DEFAULT_TIMEOUT_MS = 30_000;
+// ---------------------------------------------------------------------------
+// Security: script validation
+// ---------------------------------------------------------------------------
+/** Dangerous Node.js API patterns that should not appear in user scripts. */
+const DANGEROUS_SCRIPT_PATTERNS = [
+    { pattern: /child_process/, label: "child_process" },
+    { pattern: /process\.exit/, label: "process.exit" },
+    { pattern: /eval\s*\(/, label: "eval()" },
+    { pattern: /Function\s*\(/, label: "Function()" },
+    { pattern: /writeFileSync/, label: "writeFileSync" },
+    { pattern: /writeFile\b/, label: "writeFile" },
+    { pattern: /appendFileSync/, label: "appendFileSync" },
+    { pattern: /appendFile\b/, label: "appendFile" },
+    { pattern: /unlinkSync/, label: "unlinkSync" },
+    { pattern: /unlink\b/, label: "unlink" },
+    { pattern: /rmSync/, label: "rmSync" },
+    { pattern: /rmdir\b/, label: "rmdir" },
+    { pattern: /renameSync/, label: "renameSync" },
+    { pattern: /rename\b/, label: "rename" },
+    { pattern: /chmodSync/, label: "chmodSync" },
+    { pattern: /chownSync/, label: "chownSync" },
+    { pattern: /execSync/, label: "execSync" },
+    { pattern: /spawnSync/, label: "spawnSync" },
+    { pattern: /execFileSync/, label: "execFileSync" },
+    { pattern: /mkdirSync/, label: "mkdirSync" },
+    { pattern: /mkdir\b/, label: "mkdir" },
+];
+/**
+ * Validate that a script does not contain dangerous patterns.
+ * Returns an error message if dangerous, or null if safe.
+ */
+export function validateScript(script) {
+    for (const { pattern, label } of DANGEROUS_SCRIPT_PATTERNS) {
+        if (pattern.test(script)) {
+            return `Script contains dangerous pattern: ${label}`;
+        }
+    }
+    return null;
+}
 /**
  * Execute a script in a child subprocess with FORGE_FILES env var injection.
  *
@@ -103,6 +145,26 @@ export function registerForgeRead(server, root) {
             "anthropic/maxResultSizeChars": 200_000,
         },
     }, async ({ paths, script, language }) => {
+        // Security: validate paths stay within project root
+        if (root) {
+            const pathError = validatePaths(paths, root.path);
+            if (pathError) {
+                return {
+                    content: [{ type: "text", text: pathError }],
+                    isError: true,
+                };
+            }
+        }
+        // Security: validate script for dangerous patterns (javascript only)
+        if (language === "javascript") {
+            const scriptError = validateScript(script);
+            if (scriptError) {
+                return {
+                    content: [{ type: "text", text: scriptError }],
+                    isError: true,
+                };
+            }
+        }
         // Execute script with FORGE_FILES env var
         const readOpts = root ? { cwd: root.path } : undefined;
         const result = await execReadScript(script, language, paths, DEFAULT_TIMEOUT_MS, readOpts);

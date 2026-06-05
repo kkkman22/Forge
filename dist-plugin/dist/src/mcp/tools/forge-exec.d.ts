@@ -21,6 +21,16 @@ import type { ResolvedRoot } from "../project-root.js";
  */
 export declare function readDenyPatterns(settingsPath?: string): Promise<string[]>;
 export declare function isCommandDenied(command: string, denyPatterns: string[]): string | null;
+/**
+ * Detect shell metacharacters that could enable command injection.
+ * Returns the metachar label if found, or null if the command appears safe.
+ *
+ * Defense-in-depth: flags command substitution ($() and ``) and control
+ * characters that allow opaque embedding of subcommands. Standard shell
+ * operators (;, &, |, >, <) are NOT flagged because forge_exec already
+ * invokes via `sh -c` — these operators are part of normal shell usage.
+ */
+export declare function containsShellMetachars(command: string): string | null;
 export interface ExecResult {
     stdout: string;
     stderr: string;

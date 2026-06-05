@@ -13,6 +13,12 @@
  */
 import type { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import type { ResolvedRoot } from "../project-root.js";
+export { validatePaths } from "./path-validator.js";
+/**
+ * Validate that a script does not contain dangerous patterns.
+ * Returns an error message if dangerous, or null if safe.
+ */
+export declare function validateScript(script: string): string | null;
 export interface ReadExecResult {
     stdout: string;
     stderr: string;

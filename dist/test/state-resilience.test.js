@@ -124,8 +124,8 @@ tier: broken yaml here
 Body`;
         const { parsed, warnings } = parseStatusFileGraceful(content);
         expect(parsed.current_task).toBe("task");
-        // tier is still parseable as string since extractStringField handles it
-        expect(parsed.tier).toBe("broken yaml here");
+        // Zod schema validates tier against enum; invalid value falls back to default
+        expect(parsed.tier).toBe("standard");
         expect(warnings.length).toBeGreaterThan(0);
     });
 });

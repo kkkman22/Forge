@@ -15,6 +15,7 @@ import { resolve as resolvePath } from "node:path";
 import { z } from "zod";
 import { loadOrCreateIndex, lookup, persistIndex, update } from "../read-cache.js";
 import { getFileHash } from "../read-cache-hash.js";
+import { validateSinglePath } from "./path-validator.js";
 /**
  * Handle a cached read request. Pure logic — no MCP dependencies.
  */
@@ -79,8 +80,8 @@ export function registerForgeReadCached(server, root, index) {
         let resolvedPath;
         if (root) {
             resolvedPath = resolvePath(root.path, filePath);
-            // Prevent path traversal — resolved path must be under root
-            if (!resolvedPath.startsWith(root.path)) {
+            // Prevent path traversal using shared validator (handles prefix attacks)
+            if (!validateSinglePath(filePath, root.path)) {
                 return {
                     content: [
                         { type: "text", text: `Error: path traversal blocked: ${filePath}` },

@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { parseReviewReportGraceful } from "../../src/state.js";
-describe("parseReviewReportLegacy — methodology field", () => {
+describe("parseReviewReportGraceful — methodology field", () => {
     it("fills methodology default for old reports without field", () => {
         const content = `---
 topic: "test"
@@ -59,4 +59,4 @@ Body`;
         expect(warnings.some((w) => w.includes("methodology=unavailable forces"))).toBe(true);
     });
 });
-//# sourceMappingURL=parse-review-report-legacy.test.js.map
+//# sourceMappingURL=parse-review-report-methodology.test.js.map

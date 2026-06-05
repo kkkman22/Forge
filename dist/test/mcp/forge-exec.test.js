@@ -11,7 +11,7 @@
  * **Validates: Requirements 2.1–2.7**
  */
 import { afterEach, describe, expect, it, vi } from "vitest";
-import { execCommand, isCommandDenied, readDenyPatterns } from "../../src/mcp/tools/forge-exec.js";
+import { containsShellMetachars, execCommand, isCommandDenied, readDenyPatterns, } from "../../src/mcp/tools/forge-exec.js";
 import { trimCommandOutput } from "../../src/mcp/trimmers/output.js";
 // ---------------------------------------------------------------------------
 // Mock child_process.execFile
@@ -140,6 +140,16 @@ describe("isCommandDenied", () => {
         ]);
         expect(result).toBe("Command denied by pattern: Bash(npm publish)");
     });
+    // --- Security hardening tests ---
+    it("blocks commands matching glob with ?", () => {
+        const result = isCommandDenied("rm -rf /", ["Bash(rm -?? *)"]);
+        expect(result).toBe("Command denied by pattern: Bash(rm -?? *)");
+    });
+    it("does not match single-char glob when two ? are required", () => {
+        // "rm -r" has single char after dash, pattern requires two
+        const result = isCommandDenied("rm -r /tmp", ["Bash(rm -?? *)"]);
+        expect(result).toBeNull();
+    });
 });
 // ---------------------------------------------------------------------------
 // readDenyPatterns tests
@@ -259,6 +269,41 @@ describe("forge_exec output trimming integration", () => {
         expect(result).toContain("STDERR:");
         expect(result).toContain(stderr);
         expect(result).not.toContain("✅ exit:0");
+    });
+});
+// ---------------------------------------------------------------------------
+// containsShellMetachars tests — defense-in-depth
+// ---------------------------------------------------------------------------
+describe("containsShellMetachars", () => {
+    it("detects command substitution $()", () => {
+        expect(containsShellMetachars("$(cat /etc/passwd)")).toMatch(/\$\(\)/);
+    });
+    it("detects backtick injection", () => {
+        expect(containsShellMetachars("`rm -rf /`")).toMatch(/`/);
+    });
+    it("allows safe commands with no metacharacters", () => {
+        expect(containsShellMetachars("npm test")).toBeNull();
+        expect(containsShellMetachars("npx vitest run test/foo.test.ts")).toBeNull();
+    });
+    it("allows git status style commands", () => {
+        expect(containsShellMetachars("git status --short")).toBeNull();
+    });
+    it("allows shell operators (sh -c context)", () => {
+        // Shell operators (;, &, |, >, <) are permitted because forge_exec
+        // invokes via `sh -c` — these are part of normal shell usage.
+        expect(containsShellMetachars("echo hello; rm -rf /")).toBeNull();
+        expect(containsShellMetachars("echo hello && rm -rf /")).toBeNull();
+        expect(containsShellMetachars("echo hello || rm -rf /")).toBeNull();
+        expect(containsShellMetachars("echo hello | rm -rf /")).toBeNull();
+        expect(containsShellMetachars("echo data > /tmp/out")).toBeNull();
+        expect(containsShellMetachars("sort < /tmp/in")).toBeNull();
+        expect(containsShellMetachars("sleep 30 & echo bg")).toBeNull();
+    });
+    it("detects newline injection", () => {
+        expect(containsShellMetachars("echo hello\nrm -rf /")).toMatch(/newline/);
+    });
+    it("detects carriage return injection", () => {
+        expect(containsShellMetachars("echo hello\rnpm install")).toMatch(/carriage-return/);
     });
 });
 //# sourceMappingURL=forge-exec.test.js.map
