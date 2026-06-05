@@ -2,3 +2,4 @@
 {"timestamp":"2026-06-05T01:15:41Z","event":"postcompact_restore","detail":"slug=forge-gate-shared-protocol"}
 {"timestamp":"2026-06-05T01:15:41Z","event":"precompact_snapshot","detail":"slug=project-charter phase=build completed=0 pending=0"}
 {"timestamp":"2026-06-05T01:30:20Z","event":"precompact_snapshot","detail":"slug=project-charter phase=build completed=0 pending=0"}
+{"timestamp":"2026-06-05T01:56:18Z","event":"precompact_snapshot","detail":"slug=project-charter phase=build completed=0 pending=0"}
