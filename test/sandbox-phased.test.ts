@@ -552,3 +552,69 @@ describe("Integration: full flow", () => {
     expect(checkNetworkPolicy("https://evil.com", DEFAULT_SANDBOX_CONFIG).allowed).toBe(true);
   });
 });
+
+// ---------------------------------------------------------------------------
+// Path equivalence integration (Req 5.3, 5.4, 5.7)
+// ---------------------------------------------------------------------------
+
+describe("path equivalence integration in sandbox policy", () => {
+  const frozenConfig = makeTestConfig({
+    filesystem: {
+      read: ["**"],
+      write: ["**"],
+      deny: ["**/.forge/config.md", "**/.forge/specs/**", "**/.forge/plans/**"],
+    },
+  });
+
+  const commandDenyConfig = makeTestConfig({
+    filesystem: {
+      read: ["**"],
+      write: ["**"],
+      deny: ["**/.forge/config.md"],
+    },
+    commands: {
+      allow: ["*"],
+      deny: [],
+    },
+  });
+
+  it("blocks ~/.forge/config.md write via tilde expansion", () => {
+    const result = checkFilesystemPolicy("~/.forge/config.md", "write", frozenConfig, {
+      cwd: "/project",
+      homeDir: "/Users/x",
+    });
+    expect(result.allowed).toBe(false);
+  });
+
+  it("blocks $HOME/.forge/config.md write via variable expansion", () => {
+    const result = checkFilesystemPolicy("$HOME/.forge/config.md", "write", frozenConfig, {
+      cwd: "/project",
+      homeDir: "/Users/x",
+    });
+    expect(result.allowed).toBe(false);
+  });
+
+  it("blocks ${HOME}/.forge/config.md write via braced variable", () => {
+    const result = checkFilesystemPolicy("${HOME}/.forge/config.md", "write", frozenConfig, {
+      cwd: "/project",
+      homeDir: "/Users/x",
+    });
+    expect(result.allowed).toBe(false);
+  });
+
+  it("blocks command accessing .forge/config.md via $HOME path", () => {
+    const result = checkCommandPolicy("cat ${HOME}/.forge/config.md", commandDenyConfig, {
+      cwd: "/project",
+      homeDir: "/Users/x",
+    });
+    expect(result.allowed).toBe(false);
+  });
+
+  it("blocks command accessing .forge/config.md via tilde path", () => {
+    const result = checkCommandPolicy("cat ~/.forge/config.md", commandDenyConfig, {
+      cwd: "/project",
+      homeDir: "/Users/x",
+    });
+    expect(result.allowed).toBe(false);
+  });
+});
