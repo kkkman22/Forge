@@ -1,23 +1,24 @@
 ---
-current_task: "audit-phase2-quality-perf"
+current_task: "audit-phase3-infra"
 tier: "standard"
 phase: "build"
-updated: "2026-06-05"
-branch: "forge/audit-phase2-quality-perf"
+updated: "2026-06-06"
+branch: "forge/audit-phase3-infra"
 ---
 
 # 项目状态
 
-## 当前任务：audit-phase2-quality-perf
+## 当前任务：audit-phase3-infra
 
-基于 PROJECT_AUDIT_REPORT.md Phase 2 的质量与性能改进（4 项）。
+基于 PROJECT_AUDIT_REPORT.md Phase 3 的基础设施改进（5 项，不含 Tracing）。
 
 ### 范围
 
-1. **T2 — Path traversal 扩展加固** (forge-read-cached.ts + shared validator)
-2. **T4 — 算法复杂度优化** (`detectDrifts`, `checkContradictions`, `findMentionedTerms`)
-3. **T3 — 配置管理统一** (Zod schema default, remove env var gate)
-4. **T1 — Sync I/O 核心路径改造** (`knowledge-hooks.ts`, `spec-bundle-io.ts`)
+1. **T1 — Shadow Migration 清理** (移除 legacy parse 路径，state.ts + config-store.ts)
+2. **T2 — Token 估算 CJK 优化** (新建 src/token-estimate.ts)
+3. **T3 — findMentionedTerms 测试** (grill.ts export + tests)
+4. **T4 — SKILL-src parity 校验脚本** (scripts/skill-parity-check.mjs)
+5. **T5 — Metrics 聚合扩展** (dispatch-record.ts + event-writer.ts)
 
 - Tier: standard
 - Sequence: plan → build → review → test → ship

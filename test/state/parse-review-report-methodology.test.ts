@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 import { parseReviewReportGraceful } from "../../src/state.js";
 
-describe("parseReviewReportLegacy — methodology field", () => {
+describe("parseReviewReportGraceful — methodology field", () => {
   it("fills methodology default for old reports without field", () => {
     const content = `---
 topic: "test"
