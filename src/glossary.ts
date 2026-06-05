@@ -474,22 +474,36 @@ export function detectConflict(glossary: Glossary, candidate: GlossaryTerm): Con
   const candidateTerm = normalize(candidate.term);
   const candidateDefinition = candidate.definition.trim();
 
-  // 1. Same-term / different-definition check first: this is the higher
-  //    severity conflict and should dominate the alias check.
+  // Build inverted index: normalized name/alias → existing term
+  // This converts the O(n³) nested loop into O(n) index build + O(1) lookups
+  const termByName = new Map<string, GlossaryTerm>();
+  const aliasMap = new Map<string, GlossaryTerm>();
   for (const existing of glossary.terms) {
-    if (normalize(existing.term) === candidateTerm) {
-      if (existing.definition.trim() !== candidateDefinition) {
-        return {
-          hasConflict: true,
-          conflictingTerm: existing,
-          reason: "same_term_different_definition",
-        };
+    termByName.set(normalize(existing.term), existing);
+    if (existing.aliases !== undefined) {
+      for (const alias of existing.aliases) {
+        const norm = normalize(alias);
+        if (norm.length > 0) {
+          aliasMap.set(norm, existing);
+        }
       }
     }
   }
 
+  // 1. Same-term / different-definition check
+  const existingMatch = termByName.get(candidateTerm);
+  if (existingMatch !== undefined) {
+    if (existingMatch.definition.trim() !== candidateDefinition) {
+      return {
+        hasConflict: true,
+        conflictingTerm: existingMatch,
+        reason: "same_term_different_definition",
+      };
+    }
+  }
+
   // 2. Alias collision check: any candidate alias matching another term's
-  //    canonical name or alias.
+  //    canonical name or alias (O(1) per alias via inverted index).
   if (candidate.aliases !== undefined) {
     for (const alias of candidate.aliases) {
       const needle = normalize(alias);
@@ -497,26 +511,24 @@ export function detectConflict(glossary: Glossary, candidate: GlossaryTerm): Con
       // An alias that equals the candidate's own term is not a collision.
       if (needle === candidateTerm) continue;
 
-      for (const existing of glossary.terms) {
-        if (normalize(existing.term) === candidateTerm) continue; // same entry
-        if (normalize(existing.term) === needle) {
-          return {
-            hasConflict: true,
-            conflictingTerm: existing,
-            reason: "same_alias_different_term",
-          };
-        }
-        if (existing.aliases !== undefined) {
-          for (const existingAlias of existing.aliases) {
-            if (normalize(existingAlias) === needle) {
-              return {
-                hasConflict: true,
-                conflictingTerm: existing,
-                reason: "same_alias_different_term",
-              };
-            }
-          }
-        }
+      // Check if alias matches another term's canonical name
+      const termHit = termByName.get(needle);
+      if (termHit !== undefined && normalize(termHit.term) !== candidateTerm) {
+        return {
+          hasConflict: true,
+          conflictingTerm: termHit,
+          reason: "same_alias_different_term",
+        };
+      }
+
+      // Check if alias matches another term's alias
+      const aliasHit = aliasMap.get(needle);
+      if (aliasHit !== undefined && normalize(aliasHit.term) !== candidateTerm) {
+        return {
+          hasConflict: true,
+          conflictingTerm: aliasHit,
+          reason: "same_alias_different_term",
+        };
       }
     }
   }
