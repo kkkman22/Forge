@@ -28,13 +28,8 @@
     "safety_level": {
       "title": "Safety Level",
       "type": "string",
-      "options": [
-        "1",
-        "2",
-        "3"
-      ],
       "default": "1",
-      "description": "Safety strictness (1=strictest)"
+      "description": "Safety strictness (1=strictest, 3=most relaxed)"
     }
   }
 }
