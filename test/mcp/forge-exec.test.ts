@@ -384,22 +384,6 @@ describe("forge_exec output trimming integration", () => {
 // ---------------------------------------------------------------------------
 
 describe("containsShellMetachars", () => {
-  it("detects semicolon injection", () => {
-    expect(containsShellMetachars("echo hello; rm -rf /")).toMatch(/;/);
-  });
-
-  it("detects && injection", () => {
-    expect(containsShellMetachars("echo hello && rm -rf /")).toMatch(/&&/);
-  });
-
-  it("detects || injection", () => {
-    expect(containsShellMetachars("echo hello || rm -rf /")).toMatch(/\|\|/);
-  });
-
-  it("detects pipe injection", () => {
-    expect(containsShellMetachars("echo hello | rm -rf /")).toMatch(/\|/);
-  });
-
   it("detects command substitution $()", () => {
     expect(containsShellMetachars("$(cat /etc/passwd)")).toMatch(/\$\(\)/);
   });
@@ -417,23 +401,23 @@ describe("containsShellMetachars", () => {
     expect(containsShellMetachars("git status --short")).toBeNull();
   });
 
+  it("allows shell operators (sh -c context)", () => {
+    // Shell operators (;, &, |, >, <) are permitted because forge_exec
+    // invokes via `sh -c` — these are part of normal shell usage.
+    expect(containsShellMetachars("echo hello; rm -rf /")).toBeNull();
+    expect(containsShellMetachars("echo hello && rm -rf /")).toBeNull();
+    expect(containsShellMetachars("echo hello || rm -rf /")).toBeNull();
+    expect(containsShellMetachars("echo hello | rm -rf /")).toBeNull();
+    expect(containsShellMetachars("echo data > /tmp/out")).toBeNull();
+    expect(containsShellMetachars("sort < /tmp/in")).toBeNull();
+    expect(containsShellMetachars("sleep 30 & echo bg")).toBeNull();
+  });
+
   it("detects newline injection", () => {
     expect(containsShellMetachars("echo hello\nrm -rf /")).toMatch(/newline/);
   });
 
   it("detects carriage return injection", () => {
     expect(containsShellMetachars("echo hello\rnpm install")).toMatch(/carriage-return/);
-  });
-
-  it("detects redirect operator", () => {
-    expect(containsShellMetachars("echo data > /etc/passwd")).toMatch(/>/);
-  });
-
-  it("detects input redirect operator", () => {
-    expect(containsShellMetachars("sort < /etc/passwd")).toMatch(/</);
-  });
-
-  it("detects background operator", () => {
-    expect(containsShellMetachars("sleep 999 & rm -rf /")).toMatch(/&/);
   });
 });

@@ -93,15 +93,8 @@ export function isCommandDenied(command: string, denyPatterns: string[]): string
 // ---------------------------------------------------------------------------
 
 const SHELL_METACHAR_PATTERNS: Array<{ pattern: RegExp; label: string }> = [
-  { pattern: /;/, label: ";" },
-  { pattern: /&&/, label: "&&" },
-  { pattern: /\|\|/, label: "||" },
-  { pattern: /&/, label: "&" },
-  { pattern: /\|/, label: "|" },
   { pattern: /\$\(/, label: "$()" },
   { pattern: /`/, label: "`" },
-  { pattern: />/, label: ">" },
-  { pattern: /</, label: "<" },
   { pattern: /\n/, label: "newline" },
   { pattern: /\r/, label: "carriage-return" },
 ];
@@ -110,8 +103,10 @@ const SHELL_METACHAR_PATTERNS: Array<{ pattern: RegExp; label: string }> = [
  * Detect shell metacharacters that could enable command injection.
  * Returns the metachar label if found, or null if the command appears safe.
  *
- * Defense-in-depth: commands with metacharacters that allow chaining
- * multiple commands are flagged regardless of deny-pattern matching.
+ * Defense-in-depth: flags command substitution ($() and ``) and control
+ * characters that allow opaque embedding of subcommands. Standard shell
+ * operators (;, &, |, >, <) are NOT flagged because forge_exec already
+ * invokes via `sh -c` — these operators are part of normal shell usage.
  */
 export function containsShellMetachars(command: string): string | null {
   for (const { pattern, label } of SHELL_METACHAR_PATTERNS) {
