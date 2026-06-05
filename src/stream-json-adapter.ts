@@ -189,7 +189,7 @@ export class StreamJsonAdapter {
         let event: Record<string, unknown>;
         try {
           event = JSON.parse(line) as Record<string, unknown>;
-        } catch (err: unknown) {
+        } catch (_: unknown) {
           this.logParseError(line);
           bufferedBytes -= line.length + 1;
           checkBackpressure();

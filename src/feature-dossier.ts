@@ -167,7 +167,7 @@ export function scanStagesForTopic(topic: string, forgeRoot: string): StageScanR
     let entries: string[];
     try {
       entries = fs.readdirSync(stageDir);
-    } catch (err: unknown) {
+    } catch (_: unknown) {
       continue;
     }
 
@@ -380,7 +380,7 @@ export function discoverTopics(forgeRoot: string): TopicDiscoveryResult {
     let entries: string[];
     try {
       entries = fs.readdirSync(stageDir);
-    } catch (err: unknown) {
+    } catch (_: unknown) {
       continue;
     }
 
@@ -390,7 +390,7 @@ export function discoverTopics(forgeRoot: string): TopicDiscoveryResult {
         let stat: fs.Stats;
         try {
           stat = fs.statSync(entryPath);
-        } catch (err: unknown) {
+        } catch (_: unknown) {
           continue;
         }
         if (!stat.isDirectory()) continue;

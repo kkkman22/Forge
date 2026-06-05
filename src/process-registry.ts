@@ -160,7 +160,7 @@ export class ProcessRegistry {
               try {
                 process.kill(pid, 0);
                 allGone = false;
-              } catch (err: unknown) {
+              } catch (_: unknown) {
                 state.exited = true;
                 result.terminated++;
               }
