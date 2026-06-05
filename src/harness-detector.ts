@@ -10,7 +10,7 @@
  * **Validates: Requirements R5.2, R6.2, R14.3, R14.4**
  */
 
-import { execSync } from "node:child_process";
+import { execFileSync } from "node:child_process";
 import { existsSync } from "node:fs";
 import { join } from "node:path";
 import { globSync } from "glob";
@@ -48,7 +48,7 @@ export async function detectCmuxAvailable(): Promise<boolean> {
  */
 export function detectTmuxAvailable(): boolean {
   try {
-    execSync("which tmux 2>/dev/null", { encoding: "utf-8", timeout: 3000 });
+    execFileSync("which", ["tmux"], { encoding: "utf-8", timeout: 3000 });
     return true;
   } catch (_err: unknown) {
     return false;

@@ -7,7 +7,7 @@
  * **Validates: Requirement R5.2**
  */
 
-import { execSync, spawnSync } from "node:child_process";
+import { execFileSync, spawnSync } from "node:child_process";
 
 export interface TmuxHarnessOptions {
   targetCommand: string;
@@ -27,7 +27,7 @@ export function runTmuxHarness(opts: TmuxHarnessOptions): TmuxHarnessResult {
   try {
     // Check if tmux is available
     try {
-      execSync("which tmux 2>/dev/null", { encoding: "utf-8", timeout: 3000 });
+      execFileSync("which", ["tmux"], { encoding: "utf-8", timeout: 3000 });
     } catch (_err: unknown) {
       return { ok: false, reason: "tmux not found on system" };
     }

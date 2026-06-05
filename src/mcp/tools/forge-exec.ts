@@ -60,6 +60,9 @@ function escapeRegexChar(ch: string): string {
  * The glob inside the parentheses is matched against the command string.
  * A simple wildcard match is used (supports `*` as any-chars wildcard).
  */
+/** Cache compiled glob → RegExp to avoid recompilation on every deny check. */
+const globRegexCache = new Map<string, RegExp>();
+
 export function isCommandDenied(command: string, denyPatterns: string[]): string | null {
   for (const pattern of denyPatterns) {
     // Extract glob from Bash(...) wrapper
@@ -67,9 +70,13 @@ export function isCommandDenied(command: string, denyPatterns: string[]): string
     if (!match) continue;
 
     const glob = match[1];
-    // Convert simple glob to regex: escape special chars, replace * with .*
-    const escaped = glob.replace(/[.+^${}()|[\]\\]/g, escapeRegexChar).replace(/\*/g, ".*");
-    const re = new RegExp(`^${escaped}$`);
+    let re = globRegexCache.get(glob);
+    if (re === undefined) {
+      // Convert simple glob to regex: escape special chars, replace * with .*
+      const escaped = glob.replace(/[.+^${}()|[\]\\]/g, escapeRegexChar).replace(/\*/g, ".*");
+      re = new RegExp(`^${escaped}$`);
+      globRegexCache.set(glob, re);
+    }
     if (re.test(command)) {
       return `Command denied by pattern: ${pattern}`;
     }
