@@ -1,5 +1,6 @@
 ---
 description: "Use when running `/forge build`, an approved plan exists, or the implementation phase of a standard or full tier task begins"
+updated: 2026-06-05
 
 dispatch_mode: fork
 allowed_tools:

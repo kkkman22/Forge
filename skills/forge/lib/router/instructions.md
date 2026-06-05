@@ -1,5 +1,6 @@
 ---
 description: "Use when user runs `/forge <task>`, starts a new task, or needs skill dispatch across light, standard, or full workflow tiers"
+updated: 2026-06-05
 
 dispatch_mode: inline
 allowed_tools:

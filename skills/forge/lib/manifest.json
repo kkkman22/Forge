@@ -1,11 +1,11 @@
 {
   "version": 1,
-  "generated_at": "2026-06-04T14:56:13.187Z",
+  "generated_at": "2026-06-05T02:15:20.926Z",
   "subs": {
     "abort": {
       "instructions": {
         "path": "abort/instructions.md",
-        "sha256": "934d8694b761ae709bf1577bbd7674af98d8c52db49d150dea1076fa2c7272c1"
+        "sha256": "34e702573c9be4feafda8dea8e2bb0a2bcbb41723db86ed7494c0e94cedb817b"
       },
       "references": [
         {
@@ -21,7 +21,7 @@
     "accept": {
       "instructions": {
         "path": "accept/instructions.md",
-        "sha256": "d10a2120da601120509c347f5d55668d16f8c2f42b48c2b80c13d13bbd29f20a"
+        "sha256": "e78e4cf5f474fe36262d87decacc5857120a0549a43091796358c1b9f39203d6"
       },
       "references": [
         {
@@ -125,7 +125,7 @@
     "build-light": {
       "instructions": {
         "path": "build-light/instructions.md",
-        "sha256": "fba2613d2005b1dccbf9a69a76094ce556bf145e136dad023ab11f82f11f2ae8"
+        "sha256": "81e113dfdf45defd4ce8d3b0ded6887b7d7c35276c5196f8ef971cf250dced52"
       },
       "references": [
         {
@@ -134,10 +134,22 @@
         }
       ]
     },
+    "charter": {
+      "instructions": {
+        "path": "charter/instructions.md",
+        "sha256": "908c49a48df568beacffc288e4d42eeb6e03dbcc507ce47f45761a5454a691c7"
+      },
+      "references": [
+        {
+          "path": "charter/references/subcommands.md",
+          "sha256": "fbd9accd6322f38f32588d91054ec78e61d9b1dea5aec355d6cd93d5bc2038a7"
+        }
+      ]
+    },
     "control-cli": {
       "instructions": {
         "path": "control-cli/instructions.md",
-        "sha256": "35fa37e57152641dfcc11768d41df4954730c72b5ae6bc1e4f1d7553f5b91300"
+        "sha256": "50b3dad7488726f1e6bfdcffcf75d1b33a3fe02886340d0b82209bdd17463b5d"
       },
       "references": [
         {
@@ -157,7 +169,7 @@
     "control-ui": {
       "instructions": {
         "path": "control-ui/instructions.md",
-        "sha256": "1c198bc725bb1164c84e4dcba3e6c75e0bb142336223add4a006c12fd26e72e6"
+        "sha256": "839170f7f7a1d27371c46bc15a05875520da1b143c5e6b9d66ec07b0814ceba5"
       },
       "references": [
         {
@@ -183,13 +195,17 @@
         {
           "path": "debug/references/function-contracts.md",
           "sha256": "1c80eb69d95ae6860ba925a4ed7ce7de12af8311246817440c5bab8f2fa02810"
+        },
+        {
+          "path": "debug/references/scientific-method.md",
+          "sha256": "cd0b85053a369de10c7b329c573c49118b40de418efb9515dd71ad467eb524c4"
         }
       ]
     },
     "decide": {
       "instructions": {
         "path": "decide/instructions.md",
-        "sha256": "3e6d413c59de579a910d9c891e3c6112fa2baf8db4b3bc26dc2553db8b45fcff"
+        "sha256": "242eb345908fec9c035a7f81f61d9dde7a8721da42cb657c61be799848188443"
       },
       "references": [
         {
@@ -217,14 +233,14 @@
     "decide-teams": {
       "instructions": {
         "path": "decide-teams/instructions.md",
-        "sha256": "eb54998d292643f05ba9564dd2c05862d014d034c35cb440d401da7abf3a79de"
+        "sha256": "3607b17ed5bd836811cfff717e26724dafeec156dc6d6f380eb75c665f18968e"
       },
       "references": []
     },
     "fix": {
       "instructions": {
         "path": "fix/instructions.md",
-        "sha256": "2b0fc9ab99c213fdbe906e4bc8af3418a8518c014d7acbf41b41d4d36ad26f1c"
+        "sha256": "a5a58e38274aba4e4c799b23c3ae5ebccf8da70bf7122077503538b9c23ea31b"
       },
       "references": [
         {
@@ -236,7 +252,7 @@
     "fix-conflicts": {
       "instructions": {
         "path": "fix-conflicts/instructions.md",
-        "sha256": "01644d32483d37ada92f82d942c33d308d4e2d0c15fa715105c36bf6ae0d6921"
+        "sha256": "b859a1c3dc0bbea0428732682a33ea0df9317bbe266cfc065de49d4174059196"
       },
       "references": [
         {
@@ -256,28 +272,28 @@
     "forge-cmux-browser-qa": {
       "instructions": {
         "path": "forge-cmux-browser-qa/instructions.md",
-        "sha256": "4ae68be01ed32d1b7d6909e2efb3e2404fa3cbb8f8b6d6929021afaaff69532b"
+        "sha256": "accaad4603f1f5d1bbf25a7c62dab136ee57b6388d9808ce0b30a43ce633ad40"
       },
       "references": []
     },
     "forge-cmux-loop-signals": {
       "instructions": {
         "path": "forge-cmux-loop-signals/instructions.md",
-        "sha256": "4796c74b7f0a481d3f67b0b744adf6a0bc90ab961095a5a90b40062228d7b2cd"
+        "sha256": "fa8ce5037b50e3194ace6a019e01ba9c335e83fd4199d828f10381a0e55ee8bb"
       },
       "references": []
     },
     "forge-cmux-sidebar-sync": {
       "instructions": {
         "path": "forge-cmux-sidebar-sync/instructions.md",
-        "sha256": "49cc05acdc7db05c96ab424f4b116873dae6d81fbcb79cc196aef3acc6c06ffd"
+        "sha256": "a11f5398dd37540438a27d5b48fcc58f057230cbbd7846e0282ee9596d82bf8b"
       },
       "references": []
     },
     "grill": {
       "instructions": {
         "path": "grill/instructions.md",
-        "sha256": "c468b6cb1da8f645e3cba59ad91d3a48aa576638b2fb05b34d6bac0d73a4440e"
+        "sha256": "5b3ab52b16a980466e910a1b32ad749adb0d09d15d8145447bf060eb656473b4"
       },
       "references": [
         {
@@ -301,14 +317,14 @@
     "init": {
       "instructions": {
         "path": "init/instructions.md",
-        "sha256": "e7bc628de7cd062f2af296861937795db2625850c43be885df4917decc55c9ea"
+        "sha256": "8d3491a3ad36db3e30ea8373fc085c6e65844f316cb8c88389387d8932d0bf3e"
       },
       "references": []
     },
     "learn": {
       "instructions": {
         "path": "learn/instructions.md",
-        "sha256": "02dccf1751fca56c93ec7045fcf924f14bf59a272bfccad2f90e15a1a43d68a8"
+        "sha256": "a3cec83e616746aab668626dfd155ce451b6fc4e8573957c088a860a027a7b62"
       },
       "references": [
         {
@@ -356,14 +372,14 @@
     "loop": {
       "instructions": {
         "path": "loop/instructions.md",
-        "sha256": "d9b26287496840727ba7ecc4313c157ff0d12d40071c4228f56b6dccb1eb9498"
+        "sha256": "7dd14f10e25dfcd679bb159fcb5b0f31b6005ad21094714e4bdf504f51c4c400"
       },
       "references": []
     },
     "mutate": {
       "instructions": {
         "path": "mutate/instructions.md",
-        "sha256": "a5e55ce16f63d1fd35b7756fce014313eb0ee2192f0ab8f0b4ac7018ffe8668a"
+        "sha256": "d284c7b92e8b3e6611910a3310140b7421c32b49bfaabc9c5db1b0394da5cdb9"
       },
       "references": [
         {
@@ -375,14 +391,14 @@
     "pack": {
       "instructions": {
         "path": "pack/instructions.md",
-        "sha256": "22191dc38fb299fe6fb14327ff033394c6c4fdbed869265af74a44d63018f178"
+        "sha256": "6d10ceec861cf250f82a37e765ad3b9dcc2c527bc9b817bf2d0dbdac1189729e"
       },
       "references": []
     },
     "plan": {
       "instructions": {
         "path": "plan/instructions.md",
-        "sha256": "b146048bd77d9187916cb822e46a6a226e502b8f264d69799176ce4a3f42f848"
+        "sha256": "3c015bc63520fcb4204e598dc20be6bd14ec929137075717117c44cdc371224d"
       },
       "references": [
         {
@@ -422,7 +438,7 @@
     "recap": {
       "instructions": {
         "path": "recap/instructions.md",
-        "sha256": "da00a31301a194d3ce91cef833041225a8b6b4549c2b452647554c0490259439"
+        "sha256": "de77952a809d6121494d86504b04c62368c8aa86af57e993078901ecb05066dd"
       },
       "references": [
         {
@@ -438,7 +454,7 @@
     "refactor": {
       "instructions": {
         "path": "refactor/instructions.md",
-        "sha256": "f01448aec26e1ad0b472e0cecdcf02949a760cf2cc8f1aa3c299c04e7bbdf823"
+        "sha256": "7c225ad9e51199697d8953829760234ff944d431a89790a673f8fd450e7b6654"
       },
       "references": [
         {
@@ -454,7 +470,7 @@
     "resume": {
       "instructions": {
         "path": "resume/instructions.md",
-        "sha256": "6c82e3d0c5e4462fb9a36075afad133fc92ba14457079ecba6605136c7272c3d"
+        "sha256": "5c110a9d4bc1e82366367e62bdccd75597c2933244055952940efa6a730fa5d4"
       },
       "references": [
         {
@@ -478,7 +494,7 @@
     "review": {
       "instructions": {
         "path": "review/instructions.md",
-        "sha256": "dd43e7af1d0d65d9a71a596a29218e606fe7c76bb31819dfe87aa1685dd348ce"
+        "sha256": "d44af2ee9bcfd6f0d80bae87836b43292e0e6d6833ad6fb8ceeeaf1b548b5bab"
       },
       "references": [
         {
@@ -546,7 +562,7 @@
     "review-comment-bitbucket": {
       "instructions": {
         "path": "review-comment-bitbucket/instructions.md",
-        "sha256": "8c7cf4d7b81da94ebb738abcd1ff5c5cc5de8fe6300455e85dfca12a32c9f1ea"
+        "sha256": "2260d31f8a589cb35ed94d068bb6f9483aa377b8b6154d6786c9d34d403b4d71"
       },
       "references": []
     },
@@ -569,7 +585,7 @@
     "ship": {
       "instructions": {
         "path": "ship/instructions.md",
-        "sha256": "b81ca73afb06b6078f2cdc973ba4bae4dcdff60dedfbd3d4e17fb589d9f69540"
+        "sha256": "d18919d8d122ad9f36ebed05bbdbefa36e4d84bb823e3c7fcbef6f390c7b45e3"
       },
       "references": [
         {
@@ -593,7 +609,7 @@
     "spec": {
       "instructions": {
         "path": "spec/instructions.md",
-        "sha256": "15ee4080f02e9e87db241542eb732ebc2dad68cba209d61d6b52eaaf1940f271"
+        "sha256": "90776abf394e7981e07a1ff283dbff61c5dbb29aba943b83883a2330110dc3ac"
       },
       "references": [
         {
@@ -629,7 +645,7 @@
     "status": {
       "instructions": {
         "path": "status/instructions.md",
-        "sha256": "c8735e8bba079cc5d99062177a6f5842528e763a65b0a74c7b87a1c74b98964b"
+        "sha256": "93cb27100e6a5d9b72ad509df13c1620e3c6541c77b100d257b48d273b7739bf"
       },
       "references": [
         {
@@ -641,7 +657,7 @@
     "storm": {
       "instructions": {
         "path": "storm/instructions.md",
-        "sha256": "da12c3bf38818110ae62d260b373326cbccb2ec92ff0752673dd7d972ace249c"
+        "sha256": "b0a1a2500aaa21e7725e63ca5a3f113fdde7ac1dd9eb8e1fba59837eacd3edb0"
       },
       "references": [
         {
@@ -653,7 +669,7 @@
     "test": {
       "instructions": {
         "path": "test/instructions.md",
-        "sha256": "e61cc60c7c220c6e1982c8ebfa96d75db2758abeb9c88091fad4269943a70fb3"
+        "sha256": "c3992d83ced1d48d4ffc6375d571d915ed07eb9b6fb9f58f00aca69300f698ef"
       },
       "references": [
         {
@@ -669,7 +685,7 @@
     "verify": {
       "instructions": {
         "path": "verify/instructions.md",
-        "sha256": "c6a4ed6e75af189dfdd51bc4b3a3093921cc91d03ebfcba48dcf397809e8c20b"
+        "sha256": "045d92b17feffb2af38f4498ab507ee69d5db6b77aef4e77f3e9d821ecbfa0d9"
       },
       "references": [
         {
@@ -689,7 +705,7 @@
     "zoom-out": {
       "instructions": {
         "path": "zoom-out/instructions.md",
-        "sha256": "e763c0e140aca5e0027bb1f621e71a69ba8cbb2f31dec4ef625ae005524fb63b"
+        "sha256": "9252e98b8cfc31c6af527f97e6a7c1e7ec0d462c7c97fa4e5a93fbb831c6b5d9"
       },
       "references": [
         {

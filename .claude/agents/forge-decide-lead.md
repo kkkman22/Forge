@@ -1,6 +1,7 @@
 ---
 name: forge-decide-lead
-description: "Agent Teams 模式下 /forge decide 的协调 agent — 派发 5 视角 teammate、合成 ADR"
+updated: 2026-06-05
+description: "Use when /forge decide runs in Agent Teams mode"
 model: sonnet
 maxTurns: 30
 allowedTools: [Read, Write, Agent, SendMessage, Bash, TaskCreate, TaskUpdate, TaskList]
@@ -29,6 +30,17 @@ initialPrompt: |
 ### Step 1: 解析 Topic
 
 从调用方传入的参数提取决策 topic。确认 topic 可被 5 个视角独立分析。
+
+### Step 1.5: Charter Grounding Read
+
+1. Check `.forge/charter.md` exists AND frontmatter `status: active`
+2. If yes:
+   - Read charter, extract摘要：核心问题（1 句话）+ 架构边界（模块列表）+ Invariants（ID + 标题）
+   - Inject summary (≤500 tokens) into each teammate's initial prompt as "项目宪章约束"
+   - If any teammate's analysis conflicts with charter invariant → explicit drift annotation
+3. If no (charter missing or status != active):
+   - Normal execution, prefix output with `ℹ No active charter — decisions not grounded`
+4. When drift detected: ask user (A) update charter (B) revise decision (C) mark exception
 
 ### Step 2: 并行派发 Teammates
 

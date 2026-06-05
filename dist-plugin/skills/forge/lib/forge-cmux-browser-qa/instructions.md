@@ -1,5 +1,5 @@
 ---
-description: "Browser-based QA verification using cmux browser commands during /forge test. Requires cmux installed."
+description: "Use when running /forge test with browser-based QA via cmux (requires cmux installed)"
 dispatch_mode: inline
 allowed_tools:
   - Read

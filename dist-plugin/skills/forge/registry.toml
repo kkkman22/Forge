@@ -1,7 +1,7 @@
 # AUTO-GENERATED — DO NOT EDIT
 # Source: skills/forge/lib/<sub>/instructions.md frontmatter
 # Regen: node scripts/regen-skill-registry.mjs
-# Last regen: 2026-05-24T06:38:17.208Z
+# Last regen: 2026-06-04T16:21:56.868Z
 
 [abort]
 dispatch_mode = "inline"
@@ -23,6 +23,11 @@ dispatch_mode = "inline"
 allowed_tools = ["Read", "Edit", "Write", "Bash"]
 description = "Build tiny single-file changes that skip the full plan and TDD ceremony. Use when user runs `/forge build` on a light-tier task, change touches 1 file and 20 lines or less, or has no spec or plan document."
 
+[charter]
+dispatch_mode = "fork"
+allowed_tools = ["Read", "Write", "Glob", "Grep", "Bash"]
+description = "Create, update, check, and display the project charter (.forge/charter.md). Use when user runs /forge charter <sub>."
+
 [control-cli]
 dispatch_mode = "inline"
 allowed_tools = ["Read", "Bash"]
@@ -35,8 +40,8 @@ description = "Verify Web/Electron UI through external harness execution. Use wh
 
 [debug]
 dispatch_mode = "fork"
-allowed_tools = ["Read", "Agent", "Glob", "Grep", "Bash"]
-description = "Diagnose root causes through four-phase hypothesis verification with minimal-change repair. Use when user says debug this, reports a regression, or after three consecutive build failures trigger the three-strike reroute."
+allowed_tools = ["Read", "Agent", "Glob", "Grep", "Bash", "Write", "Edit", "WebSearch"]
+description = "Use when user says debug this, reports a regression, or after three consecutive build failures trigger the three-strike reroute"
 
 [decide]
 dispatch_mode = "fork"
@@ -85,7 +90,7 @@ description = "Initialize a Forge project by creating .forge/ directory, config,
 
 [learn]
 dispatch_mode = "fork"
-allowed_tools = ["Read", "Agent", "Glob", "Grep", "Bash"]
+allowed_tools = ["Read", "Agent", "Glob", "Grep", "Bash", "Write", "Edit", "WebSearch"]
 description = "Capture reusable lessons across five dimensions from completed session experience. Use when user runs `/forge learn`, task completes, or needs to convert session experience into persistent knowledge assets."
 
 [loop]

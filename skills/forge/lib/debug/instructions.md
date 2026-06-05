@@ -1,5 +1,6 @@
 ---
 description: "Use when user says debug this, reports a regression, or after three consecutive build failures trigger the three-strike reroute"
+updated: 2026-06-05
 context: fork
 
 dispatch_mode: fork
