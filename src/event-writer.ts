@@ -10,6 +10,7 @@ export function writeEvent(
   eventsPath: string,
   type: string,
   payload: Record<string, unknown> = {},
+  options?: { trace_id?: string },
 ): void {
   try {
     mkdirSync(path.dirname(eventsPath), { recursive: true });
@@ -18,6 +19,7 @@ export function writeEvent(
       ts: new Date().toISOString(),
       type,
       ...redactSensitive(payload),
+      ...(options?.trace_id ? { trace_id: options.trace_id } : {}),
     };
     appendFileSync(eventsPath, `${JSON.stringify(entry)}\n`, "utf-8");
   } catch (_err: unknown) {

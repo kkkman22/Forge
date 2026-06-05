@@ -56,6 +56,7 @@ describe("R2.5: dispatch JSONL schema property", () => {
       mode: "interactive",
       forgeRoot: join(tmpDir, ".forge"),
       pluginRoot: tmpDir,
+      traceId: "trace_20260606T1437_prop",
       ...overrides,
     };
   }
@@ -157,5 +158,46 @@ describe("R2.5: dispatch JSONL schema property", () => {
       ),
       { numRuns: NUM_RUNS },
     );
+  });
+
+  it("dispatch() includes trace_id in record when context has traceId", async () => {
+    await fc.assert(
+      fc.asyncProperty(
+        fc.record({
+          subcommand: fc.constantFrom("review", "decide", "learn"),
+          mode: fc.constantFrom("interactive", "loop"),
+          trace_id: fc.stringMatching(/^trace_\d{8}T\d{4}_[0-9a-f]{6}$/),
+        }),
+        async ({ subcommand, mode, trace_id }) => {
+          delete process.env.CLAUDE_CODE_WORKFLOWS;
+
+          const runId = `run-${Date.now()}-${Math.random().toString(36).slice(2)}`;
+          const ctx = makeCtx({ subcommand, mode, runId, traceId: trace_id });
+
+          const result = await dispatch(ctx, {
+            runFallback: async () => ({ output: "fb", methodology: "subagent-parallel" }),
+          });
+
+          expect(result.record.trace_id).toBe(trace_id);
+        },
+      ),
+      { numRuns: 50 },
+    );
+  });
+
+  it("dispatch() record is valid without trace_id when context has empty traceId", async () => {
+    delete process.env.CLAUDE_CODE_WORKFLOWS;
+
+    const runId = `run-${Date.now()}-${Math.random().toString(36).slice(2)}`;
+    const ctx = makeCtx({ runId, traceId: "" });
+
+    const result = await dispatch(ctx, {
+      runFallback: async () => ({ output: "fb", methodology: "subagent-parallel" }),
+    });
+
+    expect(result.record.trace_id).toBeUndefined();
+    for (const field of REQUIRED_FIELDS) {
+      expect(result.record).toHaveProperty(field);
+    }
   });
 });

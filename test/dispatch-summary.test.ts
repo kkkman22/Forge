@@ -5,7 +5,7 @@
  */
 import { describe, expect, it } from "vitest";
 import type { DispatchRecord } from "../src/dispatch-record.js";
-import { summarizeDispatches } from "../src/dispatch-record.js";
+import { frozenZoneRecord, summarizeDispatches } from "../src/dispatch-record.js";
 
 function makeRecord(overrides: Partial<DispatchRecord> = {}): DispatchRecord {
   return {
@@ -22,6 +22,7 @@ function makeRecord(overrides: Partial<DispatchRecord> = {}): DispatchRecord {
     duration_ms: 100,
     timestamp: "2026-06-06T00:00:00Z",
     frozen_zone_blocked: false,
+    trace_id: "trace_20260606T1437_abcdef",
     ...overrides,
   };
 }
@@ -73,5 +74,28 @@ describe("summarizeDispatches", () => {
     ];
     const summary = summarizeDispatches(records);
     expect(summary.bySubcommand).toEqual({ review: 2, decide: 1 });
+  });
+
+  it("ignores trace_id in aggregation", () => {
+    const records = [
+      makeRecord({ trace_id: "trace_20260606T1437_abc123" }),
+      makeRecord({ trace_id: undefined }),
+    ];
+    const summary = summarizeDispatches(records);
+    expect(summary.total).toBe(2);
+  });
+});
+
+describe("frozenZoneRecord", () => {
+  it("creates record without trace_id by default", () => {
+    const record = frozenZoneRecord("review", "run-1");
+    expect(record.frozen_zone_blocked).toBe(true);
+    expect(record.trace_id).toBeUndefined();
+  });
+
+  it("includes trace_id when provided", () => {
+    const record = frozenZoneRecord("review", "run-1", "sess-1", "trace_20260606T1437_abc123");
+    expect(record.trace_id).toBe("trace_20260606T1437_abc123");
+    expect(record.frozen_zone_blocked).toBe(true);
   });
 });

@@ -97,4 +97,28 @@ describe("writeEvent: Events_NDJSON writer (R14.1, R14.2, R14.8)", () => {
     const events = JSON.parse(readFileSync(deepPath, "utf-8"));
     expect(events.type).toBe("test");
   });
+
+  it("includes trace_id as top-level field when options.trace_id is provided", () => {
+    writeEvent(
+      eventsPath,
+      "session_started",
+      { run_id: "r1" },
+      { trace_id: "trace_20260606T1437_abc123" },
+    );
+    const events = readEvents();
+    expect(events).toHaveLength(1);
+    expect(events[0]).toMatchObject({
+      schema_version: 1,
+      type: "session_started",
+      trace_id: "trace_20260606T1437_abc123",
+      run_id: "r1",
+    });
+  });
+
+  it("does not include trace_id when options is omitted", () => {
+    writeEvent(eventsPath, "session_started", { run_id: "r1" });
+    const events = readEvents();
+    expect(events).toHaveLength(1);
+    expect(events[0]).not.toHaveProperty("trace_id");
+  });
 });

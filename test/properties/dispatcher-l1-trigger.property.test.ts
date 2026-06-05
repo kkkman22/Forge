@@ -32,6 +32,7 @@ function makeCtx(tmpDir: string, overrides: Partial<DispatchContext> = {}): Disp
     mode: "interactive",
     forgeRoot: join(tmpDir, ".forge"),
     pluginRoot: tmpDir,
+    traceId: "trace_20260606T1437_prop",
     ...overrides,
   };
 }

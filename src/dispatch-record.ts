@@ -57,6 +57,8 @@ export interface DispatchRecord {
   /** ISO-8601 timestamp. */
   timestamp: string;
   frozen_zone_blocked: boolean;
+  /** Cross-phase correlation ID for `/forge` command lifecycle. */
+  trace_id?: string;
 }
 
 const REQUIRED_FIELDS = [
@@ -125,6 +127,7 @@ export function frozenZoneRecord(
   subcommand: Subcommand,
   runId: string,
   sessionId = "n/a",
+  traceId?: string,
 ): DispatchRecord {
   return {
     subcommand,
@@ -141,6 +144,7 @@ export function frozenZoneRecord(
     duration_ms: 0,
     timestamp: new Date().toISOString(),
     frozen_zone_blocked: true,
+    ...(traceId ? { trace_id: traceId } : {}),
   };
 }
 
