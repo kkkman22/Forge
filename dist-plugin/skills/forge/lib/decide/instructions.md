@@ -1,6 +1,7 @@
 ---
 description: "Use when starting a full-tier task, facing irreversible technical choices, or needing threat modeling before implementation"
 context: fork
+updated: 2026-06-05
 
 dispatch_mode: fork
 allowed_tools:
