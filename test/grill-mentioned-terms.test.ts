@@ -9,6 +9,8 @@ import { findMentionedTerms } from "../src/grill.js";
 
 function makeGlossary(terms: Array<{ term: string; aliases?: string[] }>): Glossary {
   return {
+    schema_version: 1,
+    updated: "2026-06-06",
     terms: terms.map((t) => ({ term: t.term, aliases: t.aliases })) as GlossaryTerm[],
   };
 }
