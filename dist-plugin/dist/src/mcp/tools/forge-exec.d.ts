@@ -20,13 +20,6 @@ import type { ResolvedRoot } from "../project-root.js";
  * Returns the raw pattern strings from `permissions.deny`.
  */
 export declare function readDenyPatterns(settingsPath?: string): Promise<string[]>;
-/**
- * Check whether a command is blocked by any deny pattern.
- *
- * Deny patterns use the Claude Code format `Bash(glob)`.
- * The glob inside the parentheses is matched against the command string.
- * A simple wildcard match is used (supports `*` as any-chars wildcard).
- */
 export declare function isCommandDenied(command: string, denyPatterns: string[]): string | null;
 export interface ExecResult {
     stdout: string;

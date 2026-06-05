@@ -24,6 +24,18 @@ function escapeRegExp(str) {
     return str.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
 }
 // ---------------------------------------------------------------------------
+// Regex cache — avoids recompiling the same pattern per fieldName
+// ---------------------------------------------------------------------------
+const regexCache = new Map();
+function getCachedRegex(key, build) {
+    let re = regexCache.get(key);
+    if (re === undefined) {
+        re = build();
+        regexCache.set(key, re);
+    }
+    return re;
+}
+// ---------------------------------------------------------------------------
 // Public API
 // ---------------------------------------------------------------------------
 /**
@@ -60,7 +72,7 @@ export function parseFrontmatter(content) {
  */
 export function extractStringField(frontmatter, fieldName) {
     const escaped = escapeRegExp(fieldName);
-    const regex = new RegExp(`^${escaped}:\\s*"?([^"\\n]*)"?\\s*$`, "m");
+    const regex = getCachedRegex(`str:${fieldName}`, () => new RegExp(`^${escaped}:\\s*"?([^"\\n]*)"?\\s*$`, "m"));
     const match = frontmatter.match(regex);
     return match ? match[1].trim() : null;
 }
@@ -82,16 +94,17 @@ export function extractListField(frontmatter, fieldName) {
     const lines = frontmatter.split("\n");
     let collecting = false;
     const items = [];
+    const escaped = escapeRegExp(fieldName);
+    const headerPattern = getCachedRegex(`list:hdr:${fieldName}`, () => new RegExp(`^${escaped}:\\s*$`));
+    const emptyArrayPattern = getCachedRegex(`list:empty:${fieldName}`, () => new RegExp(`^${escaped}:\\s*\\[\\]\\s*$`));
     for (const line of lines) {
         // Match the field header line (e.g. "context_files:")
         if (!collecting) {
-            const headerPattern = new RegExp(`^${escapeRegExp(fieldName)}:\\s*$`);
             if (headerPattern.test(line)) {
                 collecting = true;
                 continue;
             }
             // Also handle inline empty array: "context_files: []"
-            const emptyArrayPattern = new RegExp(`^${escapeRegExp(fieldName)}:\\s*\\[\\]\\s*$`);
             if (emptyArrayPattern.test(line)) {
                 return [];
             }
@@ -117,7 +130,7 @@ export function extractListField(frontmatter, fieldName) {
  */
 export function extractNumericField(frontmatter, fieldName) {
     const escaped = escapeRegExp(fieldName);
-    const regex = new RegExp(`^${escaped}:\\s*(.+)$`, "m");
+    const regex = getCachedRegex(`num:${fieldName}`, () => new RegExp(`^${escaped}:\\s*(.+)$`, "m"));
     const match = frontmatter.match(regex);
     if (!match) {
         return null;
