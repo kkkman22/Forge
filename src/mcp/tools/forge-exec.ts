@@ -12,12 +12,13 @@
  * **Validates: Requirement 2**
  */
 
-import { execFile } from "node:child_process";
+import { execFile, spawn } from "node:child_process";
 import { readFile } from "node:fs/promises";
 import { join } from "node:path";
 import type { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { z } from "zod";
 import type { ResolvedRoot } from "../project-root.js";
+import { getDescendants, killProcessTree } from "../../process-tree-cleaner.js";
 import { isRtkAvailable, trimCommandOutput, trimWithFallback } from "../trimmers/output.js";
 
 // ---------------------------------------------------------------------------
@@ -119,6 +120,160 @@ export function execCommand(
       resolve({ stdout: "", stderr: "Failed to spawn subprocess", exitCode: 1, timedOut: false });
     }
   });
+}
+
+// ---------------------------------------------------------------------------
+// Tracked execution with process group reaping
+// ---------------------------------------------------------------------------
+
+export interface ExecTrackedOptions {
+  cwd?: string;
+  timeoutMs: number;
+  reapGraceMs: number;
+}
+
+export interface ExecTrackedResult extends ExecResult {
+  reapedPids: number[];
+  reapErrors: string[];
+}
+
+/**
+ * Execute a shell command in a detached process group with background
+ * process reaping. Uses existing process-tree-cleaner for cleanup.
+ *
+ * **Validates: Requirements 6.1, 6.2, 6.3, 6.5, 6.7, 6.8**
+ */
+export function execCommandTracked(
+  command: string,
+  options: ExecTrackedOptions,
+): Promise<ExecTrackedResult> {
+  return new Promise((resolve) => {
+    const reapedPids: number[] = [];
+    const reapErrors: string[] = [];
+
+    let settled = false;
+    const child = spawn("/bin/sh", ["-c", command], {
+      detached: true,
+      stdio: ["pipe", "pipe", "pipe"],
+      ...(options.cwd ? { cwd: options.cwd } : {}),
+    });
+
+    const rootPid = child.pid ?? 0;
+    let stdout = "";
+    let stderr = "";
+
+    child.stdout?.on("data", (data: Buffer) => {
+      stdout += data.toString();
+    });
+    child.stderr?.on("data", (data: Buffer) => {
+      stderr += data.toString();
+    });
+
+    // Timeout handler
+    const timer = setTimeout(() => {
+      if (settled) return;
+      settled = true;
+
+      // Kill the entire process group
+      try {
+        if (rootPid > 0) process.kill(-rootPid, "SIGTERM");
+      } catch {
+        // Process may have already exited
+      }
+
+      // Reap after grace period
+      setTimeout(async () => {
+        await reapProcessTree(rootPid, reapedPids, reapErrors);
+        try {
+          if (rootPid > 0) process.kill(-rootPid, "SIGKILL");
+        } catch {
+          // Already dead
+        }
+        resolve({
+          stdout,
+          stderr,
+          exitCode: 1,
+          timedOut: true,
+          reapedPids,
+          reapErrors,
+        });
+      }, 500);
+    }, options.timeoutMs);
+
+    // Normal exit handler
+    child.on("exit", (code) => {
+      if (settled) return;
+      settled = true;
+      clearTimeout(timer);
+
+      const exitCode = code ?? 1;
+
+      // Check for and reap background processes
+      setTimeout(async () => {
+        await reapProcessTree(rootPid, reapedPids, reapErrors);
+        resolve({
+          stdout,
+          stderr,
+          exitCode,
+          timedOut: false,
+          reapedPids,
+          reapErrors,
+        });
+      }, options.reapGraceMs);
+    });
+
+    child.on("error", (err) => {
+      if (settled) return;
+      settled = true;
+      clearTimeout(timer);
+      reapErrors.push(err.message);
+      resolve({
+        stdout,
+        stderr,
+        exitCode: 1,
+        timedOut: false,
+        reapedPids,
+        reapErrors,
+      });
+    });
+
+    // Safety: if the child is somehow null
+    if (!child.pid) {
+      settled = true;
+      clearTimeout(timer);
+      resolve({
+        stdout: "",
+        stderr: "Failed to spawn subprocess",
+        exitCode: 1,
+        timedOut: false,
+        reapedPids,
+        reapErrors,
+      });
+    }
+  });
+}
+
+/**
+ * Reap any remaining descendant processes of the given root PID.
+ * Uses the existing process-tree-cleaner infrastructure.
+ */
+async function reapProcessTree(
+  rootPid: number,
+  reapedPids: number[],
+  reapErrors: string[],
+): Promise<void> {
+  if (rootPid <= 0) return;
+
+  try {
+    const descendants = await getDescendants(rootPid);
+    if (descendants.length === 0) return;
+
+    const result = await killProcessTree(rootPid, "SIGTERM", 1000);
+    reapedPids.push(...result.killed);
+    reapErrors.push(...result.failed.map((pid) => `Failed to kill PID ${pid}`));
+  } catch (err) {
+    reapErrors.push(`Reap error: ${(err as Error).message}`);
+  }
 }
 
 // ---------------------------------------------------------------------------
