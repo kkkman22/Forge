@@ -1,5 +1,6 @@
 ---
 name: forge
+updated: 2026-06-05
 description: "Use when the user types /forge <subcommand> or /forge <task description>. Unified dispatcher entry point that routes to 32 sub-skills via lib instructions.md. Handles tier routing, branch protection, and phase auto-advance."
 allowed-tools: Read, Agent, Glob, Grep, Bash, Skill
 skeleton_exempt_legacy: true

@@ -1,6 +1,6 @@
 ---
 description: "Use when user runs `/forge learn`, task completes, or needs to convert session experience into persistent knowledge assets"
-updated: 2026-06-04
+updated: 2026-06-05
 context: fork
 
 dispatch_mode: fork

@@ -1,5 +1,6 @@
 ---
 name: forge-decide-lead
+updated: 2026-06-05
 description: "Use when /forge decide runs in Agent Teams mode"
 model: sonnet
 maxTurns: 30

@@ -1,5 +1,6 @@
 ---
 description: "Create, update, check, and display the project charter (.forge/charter.md). Use when user runs /forge charter <sub>."
+updated: 2026-06-05
 context: fork
 dispatch_mode: fork
 allowed_tools: [Read, Write, Glob, Grep, Bash]

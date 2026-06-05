@@ -1,6 +1,6 @@
 ---
 name: business-analyst
-updated: 2026-06-04
+updated: 2026-06-05
 description: Use when business rules, compliance boundaries, or edge cases need analysis
 ---
 

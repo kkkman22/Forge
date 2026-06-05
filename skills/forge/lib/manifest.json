@@ -1,6 +1,6 @@
 {
   "version": 1,
-  "generated_at": "2026-06-05T00:51:31.456Z",
+  "generated_at": "2026-06-05T01:15:00.088Z",
   "subs": {
     "abort": {
       "instructions": {
@@ -137,7 +137,7 @@
     "charter": {
       "instructions": {
         "path": "charter/instructions.md",
-        "sha256": "992ef791310e9c7f49d82852c7b490363c69ba776228f7d3560088fca3d5cc78"
+        "sha256": "908c49a48df568beacffc288e4d42eeb6e03dbcc507ce47f45761a5454a691c7"
       },
       "references": [
         {
@@ -313,14 +313,14 @@
     "init": {
       "instructions": {
         "path": "init/instructions.md",
-        "sha256": "7c8b195fc68e51c41adb6ad4d79cb5ed128fc9ce907ae1e7aeadb9a8aece5d11"
+        "sha256": "8d3491a3ad36db3e30ea8373fc085c6e65844f316cb8c88389387d8932d0bf3e"
       },
       "references": []
     },
     "learn": {
       "instructions": {
         "path": "learn/instructions.md",
-        "sha256": "3ce5f446dfb58c94175156f415bfddb44fbd19edbcf640ae744e807ec42435aa"
+        "sha256": "cfc4890ef596b54ba13a4532656da598b60d9189c65564aed9f11aa0c619f5a3"
       },
       "references": [
         {
@@ -394,7 +394,7 @@
     "plan": {
       "instructions": {
         "path": "plan/instructions.md",
-        "sha256": "46ba9bb2ef48eab079e422f17e1fbabb162f454ab83b71eaf62c5e51300cb82a"
+        "sha256": "d64e30f6dcea499b6d60b8aa58ee22441fa5654092ea1bd3596b5cb6a1c1efd3"
       },
       "references": [
         {
@@ -490,7 +490,7 @@
     "review": {
       "instructions": {
         "path": "review/instructions.md",
-        "sha256": "592c3ebf50711fcd08140592f33365bbb7b28451eecabb05c903064af707b81b"
+        "sha256": "589f8c717223fe29f1d45dd9479e2c743619fa886f78ef13ed9de72c5c9dab7c"
       },
       "references": [
         {
@@ -605,7 +605,7 @@
     "spec": {
       "instructions": {
         "path": "spec/instructions.md",
-        "sha256": "e7f320f738ec2e87d360b634dc718068534577c9d9d2ccfc6d8e32934d0cc972"
+        "sha256": "90776abf394e7981e07a1ff283dbff61c5dbb29aba943b83883a2330110dc3ac"
       },
       "references": [
         {

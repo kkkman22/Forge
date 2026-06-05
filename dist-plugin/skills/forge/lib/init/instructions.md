@@ -1,5 +1,6 @@
 ---
 description: "Use when user runs `/forge init`, project has no .forge/ directory, or plugin is installed but project not yet initialized"
+updated: 2026-06-05
 dispatch_mode: inline
 allowed_tools:
   - Bash

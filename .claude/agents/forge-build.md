@@ -1,6 +1,6 @@
 ---
 name: forge-build
-updated: 2026-06-04
+updated: 2026-06-05
 description: "Use when running /forge build or implementing planned tasks"
 tools:
   - Read

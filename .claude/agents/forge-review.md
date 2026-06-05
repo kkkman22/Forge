@@ -1,5 +1,6 @@
 ---
 name: forge-review
+updated: 2026-06-05
 description: "Use when running /forge review or code changes need quality gate before ship"
 tools:
   - Read

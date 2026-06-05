@@ -1,5 +1,5 @@
 ---
-updated: 2026-06-04
+updated: 2026-06-05
 rule_count: 13
 max_rules: 15
 ---

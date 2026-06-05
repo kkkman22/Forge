@@ -3,7 +3,7 @@ title: 'Forge — 项目宪法详细内容'
 category: reference
 audience:
 - maintainer
-updated: 2026-06-04
+updated: 2026-06-05
 owner: forge-maintainers
 ---
 

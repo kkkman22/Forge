@@ -1,5 +1,6 @@
 ---
 name: validation-pass
+updated: 2026-06-05
 description: "独立验证 agent — 为每个存活 finding 提供无承诺效应的独立验证。在 /forge review 的 Validation Pass 阶段使用。"
 model: sonnet
 maxTurns: 8

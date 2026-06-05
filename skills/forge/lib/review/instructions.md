@@ -1,5 +1,6 @@
 ---
 description: "Use when running `/forge review`, build completes, or code changes need quality gate before ship"
+updated: 2026-06-05
 
 dispatch_mode: fork
 allowed_tools:

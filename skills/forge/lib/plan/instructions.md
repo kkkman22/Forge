@@ -1,6 +1,6 @@
 ---
 description: "Use when running `/forge plan`, a spec is locked, or an actionable task breakdown is needed before build"
-updated: 2026-06-04
+updated: 2026-06-05
 
 dispatch_mode: fork
 allowed_tools:
