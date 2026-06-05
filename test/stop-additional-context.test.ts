@@ -197,21 +197,21 @@ describe("hooks.json contract: Stop/SubagentStop additionalContext", () => {
     expect(hasAdditionalContextHook).toBe(true);
   });
 
-  it("hooks.json has SubagentStop event with additionalContext hook", async () => {
+  it("hooks.json has StopFailure event with additionalContext hook (SubagentStop proxy)", async () => {
     const { readFileSync } = await import("node:fs");
     const { resolve } = await import("node:path");
     const hooksPath = resolve(import.meta.dirname ?? ".", "..", "hooks", "hooks.json");
     const raw = readFileSync(hooksPath, "utf-8");
     const config = JSON.parse(raw);
     expect(config.hooks).toBeDefined();
-    expect(config.hooks.SubagentStop).toBeDefined();
-    expect(Array.isArray(config.hooks.SubagentStop)).toBe(true);
+    expect(config.hooks.StopFailure).toBeDefined();
+    expect(Array.isArray(config.hooks.StopFailure)).toBe(true);
 
-    const subStopHookArgs = config.hooks.SubagentStop.flatMap(
+    const stopFailureHookArgs = config.hooks.StopFailure.flatMap(
       (group: { hooks?: Array<{ args?: string[] }> }) =>
         (group.hooks ?? []).map((h: { args?: string[] }) => h.args ?? []),
     );
-    const hasAdditionalContextHook = subStopHookArgs.some(
+    const hasAdditionalContextHook = stopFailureHookArgs.some(
       (args: string[]) =>
         Array.isArray(args) &&
         args.some((a: unknown) => typeof a === "string" && a.includes("stop-additional-context")),
