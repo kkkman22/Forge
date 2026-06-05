@@ -5,7 +5,7 @@
 //
 // Validates: Requirements R9.1-R9.5, R13.6
 
-import { execSync } from "node:child_process";
+import { execFileSync } from "node:child_process";
 import { existsSync, readdirSync, readFileSync } from "node:fs";
 import { join } from "node:path";
 
@@ -90,8 +90,9 @@ function parseWindow(window: string): { since: string; until: string } {
 
 function parseGitLog(since: string): RecapEntry[] {
   try {
-    const output = execSync(
-      `git log --since="${since}" --pretty=format:"%H|%an|%aI|%s" --no-merges`,
+    const output = execFileSync(
+      "git",
+      ["log", `--since=${since}`, "--pretty=format:%H|%an|%aI|%s", "--no-merges"],
       { encoding: "utf-8", timeout: 10000, stdio: ["pipe", "pipe", "pipe"] },
     );
 
