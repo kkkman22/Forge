@@ -1,11 +1,14 @@
-import { describe, expect, it } from "vitest";
 import { readFileSync } from "node:fs";
 import { resolve } from "node:path";
+import { describe, expect, it } from "vitest";
 
 const ROOT = resolve(__dirname, "../..");
 const PATTERNS_FILE = resolve(ROOT, "scripts/injection-patterns.json");
 
-interface PatternEntry { name: string; pattern: string }
+interface PatternEntry {
+  name: string;
+  pattern: string;
+}
 
 const patterns: PatternEntry[] = JSON.parse(readFileSync(PATTERNS_FILE, "utf8"));
 
@@ -45,7 +48,7 @@ describe("Injection patterns: correctness", () => {
 
   for (const [name, text, shouldMatch] of spotChecks) {
     it(`${name} ${shouldMatch ? "matches" : "rejects"}: "${text.slice(0, 50)}"`, () => {
-      const entry = patterns.find(p => p.name === name);
+      const entry = patterns.find((p) => p.name === name);
       expect(entry).toBeDefined();
       const re = new RegExp(entry!.pattern, "i");
       expect(re.test(text)).toBe(shouldMatch);
