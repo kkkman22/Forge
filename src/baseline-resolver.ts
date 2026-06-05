@@ -11,7 +11,7 @@
  * **Validates: Requirement R1.10**
  */
 
-import { execSync } from "node:child_process";
+import { execFileSync } from "node:child_process";
 import { existsSync, readdirSync } from "node:fs";
 import { join } from "node:path";
 
@@ -71,8 +71,10 @@ export async function resolveBaseline(
 }
 
 function tryGitResolve(ref: string, cwd: string): string | null {
+  // Validate ref to prevent injection via execFileSync args
+  if (!/^[\w./^-]+$/.test(ref)) return null;
   try {
-    const result = execSync(`git rev-parse "${ref}"`, {
+    const result = execFileSync("git", ["rev-parse", ref], {
       cwd,
       timeout: GIT_TIMEOUT_MS,
       encoding: "utf-8",
@@ -87,14 +89,14 @@ function tryGitResolve(ref: string, cwd: string): string | null {
 function tryMergeBase(cwd: string): string | null {
   try {
     // Check if remote origin exists
-    execSync("git remote get-url origin", {
+    execFileSync("git", ["remote", "get-url", "origin"], {
       cwd,
       timeout: GIT_TIMEOUT_MS,
       encoding: "utf-8",
       stdio: ["pipe", "pipe", "pipe"],
     });
 
-    const result = execSync("git merge-base HEAD origin/main", {
+    const result = execFileSync("git", ["merge-base", "HEAD", "origin/main"], {
       cwd,
       timeout: GIT_TIMEOUT_MS,
       encoding: "utf-8",
@@ -108,7 +110,7 @@ function tryMergeBase(cwd: string): string | null {
 
 function tryParent(cwd: string): string | null {
   try {
-    const result = execSync("git rev-parse HEAD^", {
+    const result = execFileSync("git", ["rev-parse", "HEAD^"], {
       cwd,
       timeout: GIT_TIMEOUT_MS,
       encoding: "utf-8",
