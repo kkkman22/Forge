@@ -151,42 +151,48 @@ async function fetchGitLab(target, execFn, timeout) {
   };
 }
 
-async function fetchBitbucket(target, execFn, timeout) {
+async function fetchBitbucket(target, _execFn, timeout) {
   if (!process.env.BITBUCKET_TOKEN) {
     return { ...emptyMeta(target, "bitbucket"), fetcherUsed: "none", warning: "BITBUCKET_TOKEN not set" };
   }
-  const repo = target.repo ?? await inferRepoSlug(execFn);
+  const repo = target.repo ?? await inferRepoSlug(_execFn);
   if (!repo) {
     return { ...emptyMeta(target, "bitbucket"), fetcherUsed: "none", warning: "cannot determine repo slug" };
   }
-  // Validate repo format to prevent command injection
+  // Validate repo format to prevent injection
   if (!/^[a-zA-Z0-9._-]+\/[a-zA-Z0-9._-]+$/.test(repo)) {
     return { ...emptyMeta(target, "bitbucket"), fetcherUsed: "none", warning: "invalid repo slug format" };
   }
   const safeNum = Math.max(1, Math.min(target.number, 999999));
-  // Pass token via env instead of CLI to avoid process listing exposure
   const token = process.env.BITBUCKET_TOKEN;
-  const out = await new Promise((resolve, reject) => {
-    const cmd = `curl -s -H "Authorization: Bearer ${token}" "https://api.bitbucket.org/2.0/repositories/${repo}/pullrequests/${safeNum}"`;
-    const timer = setTimeout(() => reject(new Error(`timeout (${timeout}ms)`)), timeout);
-    execFn(cmd, { timeout, env: { ...process.env } }, (err, stdout) => {
-      clearTimeout(timer);
-      if (err) reject(err);
-      else resolve(stdout);
+  const url = `https://api.bitbucket.org/2.0/repositories/${repo}/pullrequests/${safeNum}`;
+  const controller = new AbortController();
+  const timer = setTimeout(() => controller.abort(), timeout);
+  try {
+    const res = await fetch(url, {
+      headers: { Authorization: `Bearer ${token}` },
+      signal: controller.signal,
     });
-  });
-  const d = JSON.parse(out);
-  return {
-    host: "bitbucket",
-    number: target.number,
-    title: d.title ?? "",
-    branch: d.source?.branch?.name ?? "",
-    baseBranch: d.destination?.branch?.name ?? "",
-    description: d.description ?? "",
-    commit: d.source?.commit?.hash ?? "",
-    url: d.links?.html?.href ?? target.url ?? "",
-    fetcherUsed: "git-bitbucket",
-  };
+    if (!res.ok) {
+      return { ...emptyMeta(target, "bitbucket"), fetcherUsed: "none", warning: `Bitbucket API ${res.status}` };
+    }
+    const d = await res.json();
+    return {
+      host: "bitbucket",
+      number: target.number,
+      title: d.title ?? "",
+      branch: d.source?.branch?.name ?? "",
+      baseBranch: d.destination?.branch?.name ?? "",
+      description: d.description ?? "",
+      commit: d.source?.commit?.hash ?? "",
+      url: d.links?.html?.href ?? target.url ?? "",
+      fetcherUsed: "fetch-bitbucket",
+    };
+  } catch (err) {
+    return { ...emptyMeta(target, "bitbucket"), fetcherUsed: "none", warning: err.message };
+  } finally {
+    clearTimeout(timer);
+  }
 }
 
 async function inferHostFromRemote(execFn) {
