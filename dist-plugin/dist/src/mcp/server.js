@@ -1,0 +1,81 @@
+#!/usr/bin/env node
+/**
+ * forge-context MCP Server entry point.
+ *
+ * Registers four tools (forge_exec, forge_git, forge_read, forge_read_cached)
+ * and connects via StdioServerTransport for communication with Claude Code.
+ *
+ * Includes graceful shutdown handling (SIGTERM, SIGINT, stdin EOF) to prevent
+ * orphan processes when the parent (Claude Code) exits.
+ *
+ * **Validates: Requirement 1**
+ */
+import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
+import { StdioServerTransport } from "@modelcontextprotocol/sdk/server/stdio.js";
+import { logResolvedRoot, resolveProjectRoot } from "./project-root.js";
+import { registerForgeExec } from "./tools/forge-exec.js";
+import { registerForgeGit } from "./tools/forge-git.js";
+import { registerForgeRead } from "./tools/forge-read.js";
+import { registerForgeReadCached } from "./tools/forge-read-cached.js";
+// ---------------------------------------------------------------------------
+// Error handling — log to stderr (stdout is reserved for MCP protocol)
+// ---------------------------------------------------------------------------
+process.on("unhandledRejection", (reason) => {
+    // biome-ignore lint/suspicious/noConsole: top-level process error handler
+    console.error("[forge-context] Unhandled rejection:", reason);
+});
+process.on("uncaughtException", (error) => {
+    // biome-ignore lint/suspicious/noConsole: top-level process error handler
+    console.error("[forge-context] Uncaught exception:", error);
+});
+// ---------------------------------------------------------------------------
+// Server setup
+// ---------------------------------------------------------------------------
+const server = new McpServer({
+    name: "forge-context",
+    version: "1.0.0",
+});
+// Resolve project root from CLAUDE_PROJECT_DIR or cwd
+const root = resolveProjectRoot();
+logResolvedRoot(root);
+// Register tools with resolved root
+registerForgeExec(server, root);
+registerForgeGit(server, root);
+registerForgeRead(server, root);
+registerForgeReadCached(server, root);
+// ---------------------------------------------------------------------------
+// Graceful shutdown — prevents orphan processes when Claude Code exits
+// ---------------------------------------------------------------------------
+const FORCE_EXIT_TIMEOUT_MS = 5000;
+let isShuttingDown = false;
+async function gracefulShutdown(signal) {
+    if (isShuttingDown)
+        return;
+    isShuttingDown = true;
+    const forceTimer = setTimeout(() => {
+        // biome-ignore lint/suspicious/noConsole: shutdown timeout
+        console.error(`[forge-context] Forced exit: shutdown timed out after ${FORCE_EXIT_TIMEOUT_MS}ms (${signal})`);
+        process.exit(1);
+    }, FORCE_EXIT_TIMEOUT_MS);
+    try {
+        await server.close();
+        clearTimeout(forceTimer);
+        process.exit(0);
+    }
+    catch (err) {
+        clearTimeout(forceTimer);
+        // biome-ignore lint/suspicious/noConsole: shutdown error
+        console.error(`[forge-context] Error during shutdown (${signal}):`, err);
+        process.exit(1);
+    }
+}
+process.on("SIGTERM", () => gracefulShutdown("SIGTERM"));
+process.on("SIGINT", () => gracefulShutdown("SIGINT"));
+process.stdin.on("end", () => gracefulShutdown("stdin EOF"));
+process.stdin.on("error", () => gracefulShutdown("stdin error"));
+// ---------------------------------------------------------------------------
+// Connect via stdio transport
+// ---------------------------------------------------------------------------
+const transport = new StdioServerTransport();
+await server.connect(transport);
+//# sourceMappingURL=server.js.map
