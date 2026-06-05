@@ -8,7 +8,7 @@
  * Validates: Requirements 1, 6
  */
 
-import { existsSync, mkdirSync, readFileSync, writeFileSync } from "node:fs";
+import { mkdir, readFile, writeFile } from "node:fs/promises";
 import { join } from "node:path";
 import type { Requirement, SpecDocument, SpecFrontmatter } from "./spec.js";
 import type {
@@ -24,6 +24,20 @@ import {
   parseRequirementsMarkdown,
   parseTasksMarkdown,
 } from "./spec-parser.js";
+
+// ---------------------------------------------------------------------------
+// Helpers
+// ---------------------------------------------------------------------------
+
+/** Async file existence check — resolves true/false, never rejects. */
+async function pathExists(path: string): Promise<boolean> {
+  try {
+    await readFile(path, { encoding: null, flag: "r" });
+    return true;
+  } catch {
+    return false;
+  }
+}
 
 // ---------------------------------------------------------------------------
 // Internal: legacy spec.md parser
@@ -121,21 +135,21 @@ export interface LoadSpecBundleOptions {
   migrationHint?: boolean;
 }
 
-export function loadSpecBundle(
+export async function loadSpecBundle(
   featureDir: string,
   _options?: LoadSpecBundleOptions,
-): SpecBundle & { migrationHint?: boolean } {
+): Promise<SpecBundle & { migrationHint?: boolean }> {
   const reqPath = join(featureDir, "requirements.md");
   const designPath = join(featureDir, "design.md");
   const tasksPath = join(featureDir, "tasks.md");
   const specPath = join(featureDir, "spec.md");
 
-  const hasThreeFile = existsSync(reqPath);
-  const hasLegacy = existsSync(specPath);
+  const hasThreeFile = await pathExists(reqPath);
+  const hasLegacy = await pathExists(specPath);
 
   // Three-file takes priority
   if (hasThreeFile) {
-    const reqResult = parseRequirementsMarkdown(readFileSync(reqPath, "utf-8"));
+    const reqResult = parseRequirementsMarkdown(await readFile(reqPath, "utf-8"));
     if (reqResult.errors) {
       throw new Error(
         `Parse error in requirements.md: ${reqResult.errors.map((e) => e.message).join(", ")}`,
@@ -143,8 +157,8 @@ export function loadSpecBundle(
     }
 
     let design: DesignDocument | undefined;
-    if (existsSync(designPath)) {
-      const designResult = parseDesignMarkdown(readFileSync(designPath, "utf-8"));
+    if (await pathExists(designPath)) {
+      const designResult = parseDesignMarkdown(await readFile(designPath, "utf-8"));
       if (designResult.errors) {
         throw new Error(
           `Parse error in design.md: ${designResult.errors.map((e) => e.message).join(", ")}`,
@@ -154,8 +168,8 @@ export function loadSpecBundle(
     }
 
     let tasks: TasksSeedDocument | undefined;
-    if (existsSync(tasksPath)) {
-      const tasksResult = parseTasksMarkdown(readFileSync(tasksPath, "utf-8"));
+    if (await pathExists(tasksPath)) {
+      const tasksResult = parseTasksMarkdown(await readFile(tasksPath, "utf-8"));
       if (tasksResult.errors) {
         throw new Error(
           `Parse error in tasks.md: ${tasksResult.errors.map((e) => e.message).join(", ")}`,
@@ -184,7 +198,7 @@ export function loadSpecBundle(
 
   // Legacy single-file fallback
   if (hasLegacy) {
-    const specText = readFileSync(specPath, "utf-8");
+    const specText = await readFile(specPath, "utf-8");
     const spec = parseLegacySpec(specText);
     const bundle = specDocumentToBundle(spec);
 
@@ -399,24 +413,24 @@ function renderTasksMarkdown(doc: TasksSeedDocument): string {
   return parts.join("\n");
 }
 
-export function writeSpecBundle(bundle: SpecBundle, featureDir: string): void {
-  mkdirSync(featureDir, { recursive: true });
+export async function writeSpecBundle(bundle: SpecBundle, featureDir: string): Promise<void> {
+  await mkdir(featureDir, { recursive: true });
 
   if (bundle.layout === "three-file") {
-    writeFileSync(
+    await writeFile(
       join(featureDir, "requirements.md"),
       renderRequirementsMarkdown(bundle.primary as RequirementsDocument),
     );
 
     if (bundle.design) {
-      writeFileSync(
+      await writeFile(
         join(featureDir, "design.md"),
         renderDesignMarkdown(bundle.design as DesignDocument),
       );
     }
 
     if (bundle.tasks) {
-      writeFileSync(join(featureDir, "tasks.md"), renderTasksMarkdown(bundle.tasks));
+      await writeFile(join(featureDir, "tasks.md"), renderTasksMarkdown(bundle.tasks));
     }
   }
 
