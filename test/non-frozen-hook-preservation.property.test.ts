@@ -256,6 +256,14 @@ const EXPECTED_STOP_HOOKS: HookMatcher[] = [
       },
     ],
   },
+  {
+    hooks: [
+      {
+        timeout: 5,
+        args: ["node", "scripts/stop-additional-context.mjs"],
+      },
+    ],
+  },
 ];
 
 const EXPECTED_TEAMMATE_IDLE_HOOKS: HookMatcher[] = [

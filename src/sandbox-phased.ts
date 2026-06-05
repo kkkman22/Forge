@@ -10,6 +10,7 @@
 import { existsSync, readFileSync } from "node:fs";
 import * as nodePath from "node:path";
 import { minimatch } from "minimatch";
+import { canonicalizePathExpression, extractPathExpressionsFromBash } from "./path-equivalence.js";
 
 // ---------------------------------------------------------------------------
 // Types
@@ -77,20 +78,43 @@ export const DEFAULT_SANDBOX_CONFIG: SandboxConfig = {
 // Task 1 stubs — will be implemented in Tasks 2-4
 // ---------------------------------------------------------------------------
 
+/** Options for path-equivalence-aware policy checks. */
+export interface PathPolicyOptions {
+  cwd: string;
+  homeDir: string;
+}
+
 /**
  * Check whether a file path is permitted for the given operation.
  *
  * Matching logic:
- *   1. Check deny list -> hit means allowed: false (highest priority)
- *   2. Check allow list (read or write based on operation) -> hit means allowed: true
- *   3. No rule matched -> allowed: true (default allow)
+ *   1. Canonicalize path (expand ~, $HOME, normalize ..)
+ *   2. Check deny list -> hit means allowed: false (highest priority)
+ *   3. Check allow list (read or write based on operation) -> hit means allowed: true
+ *   4. No rule matched -> allowed: true (default allow)
  */
 export function checkFilesystemPolicy(
   filePath: string,
   operation: "read" | "write",
   config: SandboxConfig,
+  pathOpts?: PathPolicyOptions,
 ): SandboxCheckResult {
-  const resolved = nodePath.posix.normalize(filePath.replace(/\\/g, "/"));
+  // Canonicalize if path options provided
+  let resolved: string;
+  if (pathOpts) {
+    const canonical = canonicalizePathExpression(filePath, pathOpts);
+    resolved = canonical.normalized;
+    // Fail closed for high-risk unresolved frozen-zone paths
+    if (canonical.highRiskUnresolved) {
+      return {
+        allowed: false,
+        reason: `Filesystem deny: path "${filePath}" contains frozen-zone signal but cannot be reliably resolved (fail-closed)`,
+        matchedRule: "fail-closed:unresolved-frozen-zone",
+      };
+    }
+  } else {
+    resolved = nodePath.posix.normalize(filePath.replace(/\\/g, "/"));
+  }
 
   // 1. Check deny patterns first (highest priority)
   for (const pattern of config.filesystem.deny) {
@@ -118,12 +142,17 @@ export function checkFilesystemPolicy(
 /**
  * Check whether a command is permitted.
  *
- * Matching logic (prefix-based):
+ * Matching logic (prefix-based + path extraction):
  *   1. Check deny list -> command starts with deny prefix => allowed: false
- *   2. Check allow list -> command starts with allow prefix => allowed: true
- *   3. No rule matched -> allowed: true (default allow)
+ *   2. Extract path expressions from command, canonicalize, check deny rules
+ *   3. Check allow list -> command starts with allow prefix => allowed: true
+ *   4. No rule matched -> allowed: true (default allow)
  */
-export function checkCommandPolicy(command: string, config: SandboxConfig): SandboxCheckResult {
+export function checkCommandPolicy(
+  command: string,
+  config: SandboxConfig,
+  pathOpts?: PathPolicyOptions,
+): SandboxCheckResult {
   // 1. Check deny patterns first (highest priority)
   for (const denyPattern of config.commands.deny) {
     if (command.startsWith(denyPattern) || command === denyPattern) {
@@ -135,14 +164,31 @@ export function checkCommandPolicy(command: string, config: SandboxConfig): Sand
     }
   }
 
-  // 2. Check allow patterns (prefix match, "*" matches everything)
+  // 2. Path-equivalence-aware deny check
+  if (pathOpts && config.filesystem.deny.length > 0) {
+    const extractedPaths = extractPathExpressionsFromBash(command);
+    for (const rawPath of extractedPaths) {
+      const canonical = canonicalizePathExpression(rawPath, pathOpts);
+      for (const pattern of config.filesystem.deny) {
+        if (minimatch(canonical.normalized, pattern)) {
+          return {
+            allowed: false,
+            reason: `Command deny: extracted path "${rawPath}" → "${canonical.normalized}" matches filesystem deny pattern "${pattern}"`,
+            matchedRule: pattern,
+          };
+        }
+      }
+    }
+  }
+
+  // 3. Check allow patterns (prefix match, "*" matches everything)
   for (const allowPattern of config.commands.allow) {
     if (allowPattern === "*" || command.startsWith(allowPattern)) {
       return { allowed: true, reason: "" };
     }
   }
 
-  // 3. Default: allow if no deny matched
+  // 4. Default: allow if no deny matched
   return { allowed: true, reason: "" };
 }
 
