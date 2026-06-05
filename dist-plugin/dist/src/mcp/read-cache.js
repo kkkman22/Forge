@@ -31,7 +31,7 @@ export async function loadOrCreateIndex(sessionId) {
             return parsed;
         }
     }
-    catch {
+    catch (_err) {
         // File missing or corrupted — create fresh
     }
     return { sessionId, entries: {} };
@@ -44,7 +44,7 @@ export async function persistIndex(index) {
         const filePath = cacheFilePath(index.sessionId);
         await writeFile(filePath, JSON.stringify(index));
     }
-    catch {
+    catch (_err) {
         // Fail-open: cache persistence failure should not block reads
     }
 }

@@ -38,7 +38,7 @@ export async function readDenyPatterns(settingsPath = ".claude/settings.json") {
             return [];
         return deny.filter((p) => typeof p === "string");
     }
-    catch {
+    catch (_err) {
         // File missing or unparseable — no deny rules
         return [];
     }
@@ -136,7 +136,7 @@ export function execCommandTracked(command, options) {
                 if (rootPid > 0)
                     process.kill(-rootPid, "SIGTERM");
             }
-            catch {
+            catch (_err) {
                 // Process may have already exited
             }
             // Reap after grace period
@@ -146,7 +146,7 @@ export function execCommandTracked(command, options) {
                     if (rootPid > 0)
                         process.kill(-rootPid, "SIGKILL");
                 }
-                catch {
+                catch (_err) {
                     // Already dead
                 }
                 resolve({
@@ -172,7 +172,7 @@ export function execCommandTracked(command, options) {
                 if (rootPid > 0)
                     process.kill(-rootPid, "SIGTERM");
             }
-            catch {
+            catch (_err) {
                 // Process group may have already exited
             }
             // Wait for SIGTERM + reap grace, then verify cleanup
@@ -182,7 +182,7 @@ export function execCommandTracked(command, options) {
                     if (rootPid > 0)
                         process.kill(-rootPid, "SIGKILL");
                 }
-                catch {
+                catch (_err) {
                     // Already dead
                 }
                 // Also reap via process tree as backup

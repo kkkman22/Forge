@@ -41,7 +41,7 @@ export async function isRtkAvailable() {
         await execFileAsync(cmd, ["rtk"], { timeout: 3000 });
         rtkCache = true;
     }
-    catch {
+    catch (err) {
         rtkCache = false;
     }
     return rtkCache;

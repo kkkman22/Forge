@@ -27,7 +27,7 @@ function notifyFrozen(targetFile) {
         });
         child.unref();
     }
-    catch {
+    catch (_err) {
         // Best-effort — never affect exit code (R6.1)
     }
 }

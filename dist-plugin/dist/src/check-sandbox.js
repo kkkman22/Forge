@@ -77,7 +77,7 @@ export function checkSandboxAccess(toolType, toolInput, configPath) {
     try {
         config = JSON.parse(readFileSync(configPath, "utf-8"));
     }
-    catch {
+    catch (_err) {
         return { allowed: false, reason: "Sandbox: failed to parse policy config" };
     }
     if (toolType === "Write" || toolType === "Edit") {
@@ -85,7 +85,7 @@ export function checkSandboxAccess(toolType, toolInput, configPath) {
         try {
             parsed = JSON.parse(toolInput);
         }
-        catch {
+        catch (_err) {
             return { allowed: false, reason: "Sandbox: failed to parse tool input" };
         }
         const filePath = (parsed.file_path ?? parsed.path ?? "");
@@ -98,7 +98,7 @@ export function checkSandboxAccess(toolType, toolInput, configPath) {
         try {
             parsed = JSON.parse(toolInput);
         }
-        catch {
+        catch (_err) {
             return { allowed: false, reason: "Sandbox: failed to parse tool input" };
         }
         const command = (parsed.command ?? "");

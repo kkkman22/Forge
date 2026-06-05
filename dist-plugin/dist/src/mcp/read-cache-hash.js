@@ -30,7 +30,7 @@ export async function getFileHash(filePath) {
         if (gitHash)
             return gitHash;
     }
-    catch {
+    catch (_err) {
         // Git not available or file not in repo — fall through
     }
     // Fallback: SHA-256 of file content
