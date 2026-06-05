@@ -159,7 +159,7 @@ Forge plugin 自带 `forge-context` first-party MCP server，为 `/forge review`
 
 ## 安全
 
-Forge 从第一天起把安全视为工程纪律。五层防御：工具调用 Hook 冻结区硬阻断、Shell 注入预防、输入威胁检测、依赖供应链审计、142 property-based 不变量测试。敏感区域按"冻结/受保护/开放"分级保护。详见 [docs/reference-security.md](docs/reference-security.md)。
+Forge 从第一天起把安全视为工程纪律。五层防御：工具调用 Hook 冻结区硬阻断、Shell 注入预防、输入威胁检测、依赖供应链审计、145 property-based 不变量测试。敏感区域按"冻结/受保护/开放"分级保护。详见 [docs/reference-security.md](docs/reference-security.md)。
 
 ---
 
