@@ -193,7 +193,8 @@ export function generateDecisionTree(
  * Terms whose canonical name and all aliases are blank are skipped
  * (defensive: the glossary parser tolerates malformed fragments).
  */
-function findMentionedTerms(description: string, glossary: Glossary): GlossaryTerm[] {
+/** @internal Exported for testing. */
+export function findMentionedTerms(description: string, glossary: Glossary): GlossaryTerm[] {
   if (description.length === 0) return [];
   const haystack = description.toLowerCase();
 
