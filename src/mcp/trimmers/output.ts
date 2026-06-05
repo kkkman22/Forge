@@ -50,7 +50,7 @@ export async function isRtkAvailable(): Promise<boolean> {
     const cmd = process.platform === "win32" ? "where" : "which";
     await execFileAsync(cmd, ["rtk"], { timeout: 3000 });
     rtkCache = true;
-  } catch (err: unknown) {
+  } catch (_: unknown) {
     rtkCache = false;
   }
   return rtkCache;

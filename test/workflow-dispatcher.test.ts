@@ -50,6 +50,7 @@ describe("WorkflowDispatcher", () => {
       mode: "interactive",
       forgeRoot: join(tmpDir, ".forge"),
       pluginRoot: tmpDir,
+      traceId: "trace_20260606T1437_default",
       ...overrides,
     };
   }
@@ -549,6 +550,70 @@ describe("WorkflowDispatcher", () => {
       });
 
       expect(auditWriter.write).not.toHaveBeenCalled();
+    });
+  });
+
+  // ---------------------------------------------------------------------------
+  // T3: trace_id propagation
+  // ---------------------------------------------------------------------------
+
+  describe("trace_id propagation", () => {
+    it("includes trace_id in DispatchRecord when provided via context", async () => {
+      delete process.env.CLAUDE_CODE_WORKFLOWS;
+      const result = await dispatch(makeCtx({ traceId: "trace_20260606T1437_abc123" }), {
+        runFallback: vi.fn().mockResolvedValue({ output: "ok" }),
+      });
+      expect(result.record.trace_id).toBe("trace_20260606T1437_abc123");
+    });
+
+    it("writes trace_id to dispatch.jsonl", async () => {
+      delete process.env.CLAUDE_CODE_WORKFLOWS;
+      const ctx = makeCtx({
+        traceId: "trace_20260606T1437_def456",
+        runId: "run-trace-test",
+      });
+      await dispatch(ctx, { runFallback: vi.fn().mockResolvedValue({ output: "ok" }) });
+
+      const jsonlPath = join(tmpDir, ".forge", "runs", "run-trace-test", "dispatch.jsonl");
+      const content = readFileSync(jsonlPath, "utf-8").trim();
+      const parsed = JSON.parse(content);
+      expect(parsed.trace_id).toBe("trace_20260606T1437_def456");
+    });
+
+    it("writes dispatch_trace_id to status.md", () => {
+      const statusPath = join(tmpDir, ".forge", "status.md");
+      writeFileSync(statusPath, "---\ncurrent_task: test\nphase: build\n---\n# Status\n");
+
+      updateStatusMd(statusPath, {
+        dispatch_chosen_level: "L0",
+        dispatch_subcommand: "review",
+        dispatch_run_id: "run-001",
+        dispatch_trace_id: "trace_20260606T1437_abc123",
+      });
+
+      const updated = readFileSync(statusPath, "utf-8");
+      expect(updated).toContain("dispatch_trace_id: trace_20260606T1437_abc123");
+    });
+
+    it("record is valid without trace_id when context has empty traceId", async () => {
+      delete process.env.CLAUDE_CODE_WORKFLOWS;
+      const result = await dispatch(makeCtx({ traceId: "" }), {
+        runFallback: vi.fn().mockResolvedValue({ output: "ok" }),
+      });
+      // Empty traceId → field omitted (backward compat)
+      expect(result.record.trace_id).toBeUndefined();
+      // Record still has all required fields
+      expect(result.record).toHaveProperty("subcommand");
+      expect(result.record).toHaveProperty("run_id");
+    });
+
+    it("trace_id survives L3 blocked path", async () => {
+      delete process.env.CLAUDE_CODE_WORKFLOWS;
+      const result = await dispatch(makeCtx({ traceId: "trace_20260606T1437_blocked" }), {
+        runFallback: vi.fn().mockResolvedValue(null),
+        allFallbacksFailed: true,
+      });
+      expect(result.record.trace_id).toBe("trace_20260606T1437_blocked");
     });
   });
 });

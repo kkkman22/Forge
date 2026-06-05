@@ -74,7 +74,7 @@ export class RateLimitDegrader {
     const line = `${new Date().toISOString()} · ${this.subcommand} · 429-degrade · old=${oldLimit} new=${newLimit} probe=none\n`;
     try {
       mkdirSync(dirname(this.toolHealthPath), { recursive: true });
-    } catch (err: unknown) {
+    } catch (_: unknown) {
       return; // mkdir failure → silently skip
     }
 

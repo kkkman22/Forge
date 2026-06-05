@@ -193,7 +193,8 @@ export function generateDecisionTree(
  * Terms whose canonical name and all aliases are blank are skipped
  * (defensive: the glossary parser tolerates malformed fragments).
  */
-function findMentionedTerms(description: string, glossary: Glossary): GlossaryTerm[] {
+/** @internal Exported for testing. */
+export function findMentionedTerms(description: string, glossary: Glossary): GlossaryTerm[] {
   if (description.length === 0) return [];
   const haystack = description.toLowerCase();
 
@@ -777,13 +778,10 @@ export function checkGrillGlossaryConflicts(
         const targetTerm = relationMatch[1].replace(/:$/, "").toLowerCase();
         // If the answer mentions the target term with a contradictory
         // direction (e.g., "B is parent of A" when relation says "A → B")
-        const contradictionPattern = `${targetTerm}.*${canonicalLower}`;
-        const relationSays = `${canonicalLower}.*${targetTerm}`;
-        if (
-          answerLower.includes(targetTerm) &&
-          new RegExp(contradictionPattern).test(answerLower) &&
-          !new RegExp(relationSays).test(answerLower)
-        ) {
+        // Use indexOf instead of dynamic RegExp to avoid ReDoS risk
+        const targetIdx = answerLower.indexOf(targetTerm);
+        const canonicalIdx = answerLower.indexOf(canonicalLower);
+        if (targetIdx !== -1 && canonicalIdx !== -1 && targetIdx < canonicalIdx) {
           extendedConflicts.push({
             type: "relation_violation",
             term: term.term,

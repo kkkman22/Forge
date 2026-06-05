@@ -10,7 +10,7 @@
  * IO:    dispatchKnowledgeEvent reads knowledge files and writes results.
  */
 
-import { existsSync, mkdirSync, readdirSync, readFileSync, statSync, writeFileSync } from "node:fs";
+import { mkdir, readdir, readFile, stat, writeFile } from "node:fs/promises";
 import { join } from "node:path";
 import type { SolutionSummary } from "./knowledge-catalog.js";
 import {
@@ -23,6 +23,7 @@ import type { IntegrityFinding, IntegrityInput } from "./knowledge-integrity.js"
 import { lintKnowledgeIntegrity } from "./knowledge-integrity.js";
 import type { Pattern, UpgradeSuggestion } from "./pattern-stats.js";
 import { parseInstinct } from "./pattern-stats.js";
+import { pathExists } from "./utils/fs.js";
 
 // ---------------------------------------------------------------------------
 // Types
@@ -93,7 +94,7 @@ export function shouldTriggerEpisodeThreshold(
   return null;
 }
 
-export function computeInputFilePaths(knowledgeDir: string): string[] {
+export async function computeInputFilePaths(knowledgeDir: string): Promise<string[]> {
   const paths: string[] = [
     join(knowledgeDir, "instincts.md"),
     join(knowledgeDir, "known-failures.md"),
@@ -101,16 +102,16 @@ export function computeInputFilePaths(knowledgeDir: string): string[] {
     join(knowledgeDir, "..", "glossary.md"),
   ];
   const decisionsDir = join(knowledgeDir, "..", "decisions");
-  if (existsSync(decisionsDir)) {
-    for (const f of readdirSync(decisionsDir)) {
+  if (await pathExists(decisionsDir)) {
+    for (const f of await readdir(decisionsDir)) {
       if (f.startsWith("ADR-") && f.endsWith(".md")) {
         paths.push(join(decisionsDir, f));
       }
     }
   }
   const solutionsDir = join(knowledgeDir, "solutions");
-  if (existsSync(solutionsDir)) {
-    for (const f of readdirSync(solutionsDir)) {
+  if (await pathExists(solutionsDir)) {
+    for (const f of await readdir(solutionsDir)) {
       if (f.endsWith(".md")) {
         paths.push(join(solutionsDir, f));
       }
@@ -152,14 +153,17 @@ export async function dispatchKnowledgeEvent(
 // Internal dispatchers
 // ---------------------------------------------------------------------------
 
-function dispatchCatalogRebuild(knowledgeDir: string, now: Date): KnowledgeHookResult {
+async function dispatchCatalogRebuild(
+  knowledgeDir: string,
+  now: Date,
+): Promise<KnowledgeHookResult> {
   const start = Date.now();
   try {
     const catalogPath = join(knowledgeDir, "catalog.md");
-    const patterns = readPatterns(knowledgeDir);
-    const solutions = readSolutions(knowledgeDir);
-    const failures = readFailures(knowledgeDir);
-    const rules = readRules(knowledgeDir);
+    const patterns = await readPatterns(knowledgeDir);
+    const solutions = await readSolutions(knowledgeDir);
+    const failures = await readFailures(knowledgeDir);
+    const rules = await readRules(knowledgeDir);
 
     const catalogContent = buildCatalog({
       patterns,
@@ -169,38 +173,42 @@ function dispatchCatalogRebuild(knowledgeDir: string, now: Date): KnowledgeHookR
       generatedAt: now,
     });
 
-    mkdirSync(knowledgeDir, { recursive: true });
-    writeFileSync(catalogPath, catalogContent, "utf-8");
+    await mkdir(knowledgeDir, { recursive: true });
+    await writeFile(catalogPath, catalogContent, "utf-8");
 
     return {
       kind: "rebuilt",
       affectedFiles: [catalogPath],
       durationMs: Date.now() - start,
     };
-  } catch (e) {
+  } catch (e: unknown) {
     // biome-ignore lint/suspicious/noConsole: hook-sidecar diagnostic, not app output
-    console.warn(`knowledge-hooks: catalog rebuild failed: ${(e as Error).message}`);
+    console.warn(
+      `knowledge-hooks: catalog rebuild failed: ${e instanceof Error ? e.message : String(e)}`,
+    );
     return { kind: "skipped", reason: "no_change_detected" as const };
   }
 }
 
-function dispatchIntegrityLint(knowledgeDir: string): KnowledgeHookResult {
+async function dispatchIntegrityLint(knowledgeDir: string): Promise<KnowledgeHookResult> {
   try {
-    const integrityInput = buildIntegrityInput(knowledgeDir);
+    const integrityInput = await buildIntegrityInput(knowledgeDir);
     const findings = lintKnowledgeIntegrity(integrityInput);
 
     if (findings.length > 0) {
       const findingsDir = join(knowledgeDir, "..", "findings");
-      mkdirSync(findingsDir, { recursive: true });
+      await mkdir(findingsDir, { recursive: true });
       const findingsPath = join(findingsDir, `integrity-${Date.now()}.md`);
       const content = renderFindingsReport(findings);
-      writeFileSync(findingsPath, content, "utf-8");
+      await writeFile(findingsPath, content, "utf-8");
     }
 
     return { kind: "linted", findings };
-  } catch (e) {
+  } catch (e: unknown) {
     // biome-ignore lint/suspicious/noConsole: hook-sidecar diagnostic, not app output
-    console.warn(`knowledge-hooks: integrity lint failed: ${(e as Error).message}`);
+    console.warn(
+      `knowledge-hooks: integrity lint failed: ${e instanceof Error ? e.message : String(e)}`,
+    );
     return { kind: "linted", findings: [] };
   }
 }
@@ -211,23 +219,34 @@ function dispatchInstinctsProposals(_knowledgeDir: string, _now: Date): Knowledg
     // until episode threshold driver integration (post-build hook)
     const proposals: UpgradeSuggestion[] = [];
     return { kind: "instincts_proposals", proposals };
-  } catch (e) {
+  } catch (e: unknown) {
     // biome-ignore lint/suspicious/noConsole: hook-sidecar diagnostic, not app output
-    console.warn(`knowledge-hooks: instincts proposals failed: ${(e as Error).message}`);
+    console.warn(
+      `knowledge-hooks: instincts proposals failed: ${e instanceof Error ? e.message : String(e)}`,
+    );
     return { kind: "instincts_proposals", proposals: [] };
   }
 }
 
-function dispatchCatalogFreshnessCheck(knowledgeDir: string, now: Date): KnowledgeHookResult {
+async function dispatchCatalogFreshnessCheck(
+  knowledgeDir: string,
+  now: Date,
+): Promise<KnowledgeHookResult> {
   try {
     const catalogPath = join(knowledgeDir, "catalog.md");
-    if (!existsSync(catalogPath)) {
+    if (!(await pathExists(catalogPath))) {
       return dispatchCatalogRebuild(knowledgeDir, now);
     }
 
-    const catalogMtime = statSync(catalogPath).mtimeMs;
-    const inputPaths = computeInputFilePaths(knowledgeDir);
-    const inputMtimes = inputPaths.filter((p) => existsSync(p)).map((p) => statSync(p).mtimeMs);
+    const catalogMtime = (await stat(catalogPath)).mtimeMs;
+    const inputPaths = await computeInputFilePaths(knowledgeDir);
+
+    const inputMtimes: number[] = [];
+    for (const p of inputPaths) {
+      if (await pathExists(p)) {
+        inputMtimes.push((await stat(p)).mtimeMs);
+      }
+    }
 
     if (isCatalogStale(catalogMtime, inputMtimes)) {
       return dispatchCatalogRebuild(knowledgeDir, now);
@@ -243,67 +262,67 @@ function dispatchCatalogFreshnessCheck(knowledgeDir: string, now: Date): Knowled
 // File readers
 // ---------------------------------------------------------------------------
 
-function readPatterns(knowledgeDir: string): Pattern[] {
+async function readPatterns(knowledgeDir: string): Promise<Pattern[]> {
   const path = join(knowledgeDir, "instincts.md");
-  if (!existsSync(path)) return [];
-  return parseInstinct(readFileSync(path, "utf-8"));
+  if (!(await pathExists(path))) return [];
+  return parseInstinct(await readFile(path, "utf-8"));
 }
 
-function readSolutions(knowledgeDir: string): SolutionSummary[] {
+async function readSolutions(knowledgeDir: string): Promise<SolutionSummary[]> {
   const solutionsDir = join(knowledgeDir, "solutions");
-  if (!existsSync(solutionsDir)) return [];
+  if (!(await pathExists(solutionsDir))) return [];
   const results: SolutionSummary[] = [];
-  for (const f of readdirSync(solutionsDir)) {
+  for (const f of await readdir(solutionsDir)) {
     if (!f.endsWith(".md")) continue;
     const topic = f.replace(/\.md$/, "");
-    const content = readFileSync(join(solutionsDir, f), "utf-8");
+    const content = await readFile(join(solutionsDir, f), "utf-8");
     const summary = parseSolutionFrontmatter(topic, content);
     if (summary) results.push(summary);
   }
   return results;
 }
 
-function readFailures(knowledgeDir: string) {
+async function readFailures(knowledgeDir: string) {
   const path = join(knowledgeDir, "known-failures.md");
-  if (!existsSync(path)) return null;
-  return parseFailureSummary(readFileSync(path, "utf-8"));
+  if (!(await pathExists(path))) return null;
+  return parseFailureSummary(await readFile(path, "utf-8"));
 }
 
-function readRules(knowledgeDir: string) {
+async function readRules(knowledgeDir: string) {
   const path = join(knowledgeDir, "evolved-rules.md");
-  if (!existsSync(path)) return null;
-  return parseEvolvedRulesSummary(readFileSync(path, "utf-8"));
+  if (!(await pathExists(path))) return null;
+  return parseEvolvedRulesSummary(await readFile(path, "utf-8"));
 }
 
-function buildIntegrityInput(knowledgeDir: string): IntegrityInput {
+async function buildIntegrityInput(knowledgeDir: string): Promise<IntegrityInput> {
   const solutionsDir = join(knowledgeDir, "solutions");
   const solutions = new Map<string, string>();
-  if (existsSync(solutionsDir)) {
-    for (const f of readdirSync(solutionsDir)) {
+  if (await pathExists(solutionsDir)) {
+    for (const f of await readdir(solutionsDir)) {
       if (!f.endsWith(".md")) continue;
-      solutions.set(f.replace(/\.md$/, ""), readFileSync(join(solutionsDir, f), "utf-8"));
+      solutions.set(f.replace(/\.md$/, ""), await readFile(join(solutionsDir, f), "utf-8"));
     }
   }
 
   const sessionsDir = join(knowledgeDir, "sessions");
   const sessionFiles: string[] = [];
-  if (existsSync(sessionsDir)) {
-    for (const f of readdirSync(sessionsDir)) {
+  if (await pathExists(sessionsDir)) {
+    for (const f of await readdir(sessionsDir)) {
       if (f.endsWith(".md")) sessionFiles.push(f);
     }
   }
 
   return {
-    instinctsContent: tryRead(join(knowledgeDir, "instincts.md")),
-    evolvedRulesContent: tryRead(join(knowledgeDir, "evolved-rules.md")),
-    knownFailuresContent: tryRead(join(knowledgeDir, "known-failures.md")),
+    instinctsContent: await tryRead(join(knowledgeDir, "instincts.md")),
+    evolvedRulesContent: await tryRead(join(knowledgeDir, "evolved-rules.md")),
+    knownFailuresContent: await tryRead(join(knowledgeDir, "known-failures.md")),
     solutions,
     sessionFiles,
   };
 }
 
-function tryRead(path: string): string {
-  return existsSync(path) ? readFileSync(path, "utf-8") : "";
+async function tryRead(path: string): Promise<string> {
+  return (await pathExists(path)) ? await readFile(path, "utf-8") : "";
 }
 
 // ---------------------------------------------------------------------------

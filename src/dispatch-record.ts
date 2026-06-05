@@ -57,6 +57,8 @@ export interface DispatchRecord {
   /** ISO-8601 timestamp. */
   timestamp: string;
   frozen_zone_blocked: boolean;
+  /** Cross-phase correlation ID for `/forge` command lifecycle. */
+  trace_id?: string;
 }
 
 const REQUIRED_FIELDS = [
@@ -125,6 +127,7 @@ export function frozenZoneRecord(
   subcommand: Subcommand,
   runId: string,
   sessionId = "n/a",
+  traceId?: string,
 ): DispatchRecord {
   return {
     subcommand,
@@ -141,5 +144,45 @@ export function frozenZoneRecord(
     duration_ms: 0,
     timestamp: new Date().toISOString(),
     frozen_zone_blocked: true,
+    ...(traceId ? { trace_id: traceId } : {}),
+  };
+}
+
+// ---------------------------------------------------------------------------
+// Aggregation
+// ---------------------------------------------------------------------------
+
+export interface DispatchSummary {
+  total: number;
+  avgDurationMs: number;
+  errorRate: number;
+  bySubcommand: Record<string, number>;
+}
+
+/**
+ * Summarize an array of DispatchRecords into aggregate metrics.
+ *
+ * Pure function — no IO. Used for run reports and diagnostics.
+ */
+export function summarizeDispatches(records: DispatchRecord[]): DispatchSummary {
+  if (records.length === 0) {
+    return { total: 0, avgDurationMs: 0, errorRate: 0, bySubcommand: {} };
+  }
+
+  let totalDuration = 0;
+  let errorCount = 0;
+  const bySubcommand: Record<string, number> = {};
+
+  for (const r of records) {
+    totalDuration += r.duration_ms;
+    if (r.exit_code !== 0) errorCount++;
+    bySubcommand[r.subcommand] = (bySubcommand[r.subcommand] ?? 0) + 1;
+  }
+
+  return {
+    total: records.length,
+    avgDurationMs: Math.round(totalDuration / records.length),
+    errorRate: errorCount / records.length,
+    bySubcommand,
   };
 }

@@ -330,7 +330,7 @@ export function applyLintRulesToFile(
       let regex: RegExp;
       try {
         regex = new RegExp(pattern.expression);
-      } catch (err: unknown) {
+      } catch (_: unknown) {
         continue;
       }
 

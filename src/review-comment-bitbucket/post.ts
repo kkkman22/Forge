@@ -7,6 +7,8 @@ import { checkPlatformGate } from "./platform-gate.js";
 import { reconcile } from "./reconcile.js";
 import { recordSkip } from "./skip-trace.js";
 import type {
+  BitbucketPrResponse,
+  BitbucketTaskResponse,
   CommentRecord,
   Finding,
   PostContext,
@@ -18,8 +20,8 @@ import type {
 } from "./types.js";
 
 export interface BitbucketClient {
-  list_pr_tasks(params: { pull_request_id: string }): Promise<any[]>;
-  get_pull_request(params: { pull_request_id: string }): Promise<any>;
+  list_pr_tasks(params: { pull_request_id: string }): Promise<BitbucketTaskResponse[]>;
+  get_pull_request(params: { pull_request_id: string }): Promise<BitbucketPrResponse>;
   get_pull_request_diff(params: { pull_request_id: string }): Promise<string>;
   create_pr_task(params: {
     pull_request_id: string;
@@ -198,11 +200,11 @@ export async function postReviewToBitbucket(
         request_changes: true,
         comment: `Forge review found P0=${p0Count} P1=${p1Count} run=${ctx.runId}`,
       });
-    } catch (e: any) {
+    } catch (e: unknown) {
       failures.push({
         finding_hash: "set_review_status",
         tool_name: "set_review_status",
-        error_message: e.message,
+        error_message: e instanceof Error ? e.message : String(e),
         timestamp: Date.now(),
       });
     }
@@ -259,11 +261,11 @@ async function executeCreatesP0P1(
     if (config.p0_p1_strategy === "both" || config.p0_p1_strategy === "pr-task") {
       try {
         await bitbucket.create_pr_task({ pull_request_id: pullRequestId, text: fmt.task_text });
-      } catch (e: any) {
+      } catch (e: unknown) {
         failures.push({
           finding_hash: computeFindingHash(finding),
           tool_name: "create_pr_task",
-          error_message: e.message,
+          error_message: e instanceof Error ? e.message : String(e),
           timestamp: Date.now(),
         });
       }
@@ -280,11 +282,11 @@ async function executeCreatesP0P1(
           suggestion: finding.suggestion,
           suggestion_end_line: finding.suggestion_end_line,
         });
-      } catch (e: any) {
+      } catch (e: unknown) {
         failures.push({
           finding_hash: computeFindingHash(finding),
           tool_name: "add_comment",
-          error_message: e.message,
+          error_message: e instanceof Error ? e.message : String(e),
           timestamp: Date.now(),
         });
       }
@@ -308,11 +310,11 @@ async function executeReopens(
 
     try {
       await bitbucket.set_pr_task_status({ task_id: action.task_id, done: false });
-    } catch (e: any) {
+    } catch (e: unknown) {
       failures.push({
         finding_hash: action.finding ? computeFindingHash(action.finding) : action.task_id,
         tool_name: "set_pr_task_status",
-        error_message: e.message,
+        error_message: e instanceof Error ? e.message : String(e),
         timestamp: Date.now(),
       });
       continue;
@@ -329,11 +331,11 @@ async function executeReopens(
           comment_text: fmt.reopen_comment_text,
           parent_comment_id: action.comment_id,
         });
-      } catch (e: any) {
+      } catch (e: unknown) {
         failures.push({
           finding_hash: computeFindingHash(action.finding),
           tool_name: "add_comment",
-          error_message: e.message,
+          error_message: e instanceof Error ? e.message : String(e),
           timestamp: Date.now(),
         });
       }
@@ -357,11 +359,11 @@ async function executeDones(
 
     try {
       await bitbucket.set_pr_task_status({ task_id: action.task_id, done: true });
-    } catch (e: any) {
+    } catch (e: unknown) {
       failures.push({
         finding_hash: action.finding_hash,
         tool_name: "set_pr_task_status",
-        error_message: e.message,
+        error_message: e instanceof Error ? e.message : String(e),
         timestamp: Date.now(),
       });
       continue;
@@ -376,11 +378,11 @@ async function executeDones(
         comment_text: `Forge auto-resolved (no longer present in review ${ctx.runId}). ${buildMarker(prefix, action.finding_hash)}`,
         parent_comment_id: action.comment_id,
       });
-    } catch (e: any) {
+    } catch (e: unknown) {
       failures.push({
         finding_hash: action.finding_hash,
         tool_name: "add_comment",
-        error_message: e.message,
+        error_message: e instanceof Error ? e.message : String(e),
         timestamp: Date.now(),
       });
     }
@@ -414,11 +416,11 @@ async function executeCreatesP2(
           suggestion: action.finding.suggestion,
           suggestion_end_line: action.finding.suggestion_end_line,
         });
-      } catch (e: any) {
+      } catch (e: unknown) {
         failures.push({
           finding_hash: computeFindingHash(action.finding),
           tool_name: "add_comment",
-          error_message: e.message,
+          error_message: e instanceof Error ? e.message : String(e),
           timestamp: Date.now(),
         });
       }
@@ -437,8 +439,8 @@ async function persistSideEffects(
   if (!baseDir) return;
   try {
     await fn();
-  } catch (e) {
-    console.warn("Side-effect persistence failed:", e);
+  } catch (e: unknown) {
+    console.warn("Side-effect persistence failed:", e instanceof Error ? e.message : String(e));
   }
 }
 
@@ -461,14 +463,14 @@ async function persistMetrics(
   if (!baseDir) return;
   try {
     await appendRunMetrics({ run_id: ctx.runId, ...params }, baseDir);
-  } catch (e) {
-    console.warn("Metrics persistence failed:", e);
+  } catch (e: unknown) {
+    console.warn("Metrics persistence failed:", e instanceof Error ? e.message : String(e));
   }
 }
 
-function extractForgeTasks(raw: any[], prefix: string): TaskRecord[] {
+function extractForgeTasks(raw: BitbucketTaskResponse[], prefix: string): TaskRecord[] {
   return raw
-    .map((t: any) => {
+    .map((t) => {
       const text = t.content || t.text || "";
       const markerHash = extractMarker(text, prefix);
       const rawStatus = (t.state || t.status || "OPEN").toUpperCase();
@@ -484,10 +486,10 @@ function extractForgeTasks(raw: any[], prefix: string): TaskRecord[] {
     .filter((t) => t.marker_hash !== undefined);
 }
 
-function extractForgeComments(rawPr: any, prefix: string): CommentRecord[] {
+function extractForgeComments(rawPr: BitbucketPrResponse, prefix: string): CommentRecord[] {
   const comments = rawPr?.active_comments ?? rawPr?.comments ?? [];
   return comments
-    .map((c: any) => {
+    .map((c) => {
       const text = c.content?.raw || c.text || "";
       const markerHash = extractMarker(text, prefix);
       return {

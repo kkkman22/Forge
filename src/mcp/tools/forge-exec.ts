@@ -72,13 +72,46 @@ export function isCommandDenied(command: string, denyPatterns: string[]): string
     const glob = match[1];
     let re = globRegexCache.get(glob);
     if (re === undefined) {
-      // Convert simple glob to regex: escape special chars, replace * with .*
-      const escaped = glob.replace(/[.+^${}()|[\]\\]/g, escapeRegexChar).replace(/\*/g, ".*");
+      // Convert simple glob to regex: escape special chars (excluding ? and *),
+      // then replace * → .* and ? → . for glob semantics
+      const escaped = glob
+        .replace(/[.+^${}()|[\]\\]/g, escapeRegexChar)
+        .replace(/\*/g, ".*")
+        .replace(/\?/g, ".");
       re = new RegExp(`^${escaped}$`);
       globRegexCache.set(glob, re);
     }
     if (re.test(command)) {
       return `Command denied by pattern: ${pattern}`;
+    }
+  }
+  return null;
+}
+
+// ---------------------------------------------------------------------------
+// Shell metachar detection (defense-in-depth)
+// ---------------------------------------------------------------------------
+
+const SHELL_METACHAR_PATTERNS: Array<{ pattern: RegExp; label: string }> = [
+  { pattern: /\$\(/, label: "$()" },
+  { pattern: /`/, label: "`" },
+  { pattern: /\n/, label: "newline" },
+  { pattern: /\r/, label: "carriage-return" },
+];
+
+/**
+ * Detect shell metacharacters that could enable command injection.
+ * Returns the metachar label if found, or null if the command appears safe.
+ *
+ * Defense-in-depth: flags command substitution ($() and ``) and control
+ * characters that allow opaque embedding of subcommands. Standard shell
+ * operators (;, &, |, >, <) are NOT flagged because forge_exec already
+ * invokes via `sh -c` — these operators are part of normal shell usage.
+ */
+export function containsShellMetachars(command: string): string | null {
+  for (const { pattern, label } of SHELL_METACHAR_PATTERNS) {
+    if (pattern.test(command)) {
+      return `Command contains shell metacharacters: ${label}`;
     }
   }
   return null;
@@ -296,7 +329,7 @@ async function reapProcessTree(
     reapedPids.push(...result.killed);
     reapErrors.push(...result.failed.map((pid) => `Failed to kill PID ${pid}`));
   } catch (err) {
-    reapErrors.push(`Reap error: ${(err as Error).message}`);
+    reapErrors.push(`Reap error: ${err instanceof Error ? err.message : String(err)}`);
   }
 }
 
@@ -336,6 +369,15 @@ export function registerForgeExec(server: McpServer, root?: ResolvedRoot): void 
       if (denyReason) {
         return {
           content: [{ type: "text" as const, text: denyReason }],
+          isError: true,
+        };
+      }
+
+      // 1b. Defense-in-depth: shell metachar detection
+      const metacharReason = containsShellMetachars(command);
+      if (metacharReason) {
+        return {
+          content: [{ type: "text" as const, text: metacharReason }],
           isError: true,
         };
       }

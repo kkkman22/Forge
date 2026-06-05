@@ -91,7 +91,7 @@ export async function loadPackRegistry(reposRoot: string, fs: FileSystem): Promi
     let content: string;
     try {
       content = await fs.readFile(manifestPath);
-    } catch (err: unknown) {
+    } catch (_: unknown) {
       continue;
     }
 

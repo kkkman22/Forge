@@ -148,7 +148,7 @@ function loadIntentDictionary(): import("./router-intents.js").IntentDefinition[
     const dictPath = path.resolve(__dirname, "../templates/router-intents.md");
     const content = fs.readFileSync(dictPath, "utf-8");
     _intentDictCache = parseIntentDictionary(content);
-  } catch (err: unknown) {
+  } catch (_: unknown) {
     _intentDictCache = [];
   }
   return _intentDictCache;

@@ -33,6 +33,8 @@ export interface DispatchContext {
   mode: DispatchMode;
   forgeRoot: string;
   pluginRoot: string;
+  /** Cross-phase correlation ID for `/forge` command lifecycle. */
+  traceId: string;
 }
 
 export interface DispatchRecord {
@@ -51,6 +53,8 @@ export interface DispatchRecord {
   duration_ms: number;
   timestamp: string;
   frozen_zone_blocked: boolean;
+  /** Cross-phase correlation ID for `/forge` command lifecycle. */
+  trace_id?: string;
 }
 
 export interface DispatchResult {
@@ -307,6 +311,7 @@ export async function dispatch(
     duration_ms: Date.now() - startTime,
     timestamp: new Date().toISOString(),
     frozen_zone_blocked: frozenZoneBlocked,
+    ...(ctx.traceId ? { trace_id: ctx.traceId } : {}),
   };
 
   const runDir = join(ctx.forgeRoot, "runs", ctx.runId);
@@ -315,6 +320,7 @@ export async function dispatch(
     dispatch_chosen_level: result.chosenLevel,
     dispatch_subcommand: ctx.subcommand,
     dispatch_run_id: ctx.runId,
+    ...(ctx.traceId ? { dispatch_trace_id: ctx.traceId } : {}),
     // R2.6: blocked phase only on L3 (do not overwrite phase on success paths)
     phase: result.chosenLevel === "L3" ? `${ctx.subcommand}-blocked` : undefined,
   });
@@ -342,6 +348,7 @@ export function updateStatusMd(
     dispatch_chosen_level: string;
     dispatch_subcommand: string;
     dispatch_run_id: string;
+    dispatch_trace_id?: string;
     phase?: string;
   },
 ): void {
@@ -361,19 +368,27 @@ export function updateStatusMd(
     fm = fm.replace(/^dispatch_chosen_level:.*\n?/m, "");
     fm = fm.replace(/^dispatch_subcommand:.*\n?/m, "");
     fm = fm.replace(/^dispatch_run_id:.*\n?/m, "");
+    fm = fm.replace(/^dispatch_trace_id:.*\n?/m, "");
     if (fields.phase !== undefined) {
       fm = fm.replace(/^phase:.*\n?/m, "");
     }
     fm += `\ndispatch_chosen_level: ${fields.dispatch_chosen_level}`;
     fm += `\ndispatch_subcommand: ${fields.dispatch_subcommand}`;
     fm += `\ndispatch_run_id: ${fields.dispatch_run_id}`;
+    if (fields.dispatch_trace_id !== undefined) {
+      fm += `\ndispatch_trace_id: ${fields.dispatch_trace_id}`;
+    }
     if (fields.phase !== undefined) {
       fm += `\nphase: ${fields.phase}`;
     }
     content = content.replace(fmMatch[0], `---\n${fm}\n---`);
   } else {
+    const traceIdLine =
+      fields.dispatch_trace_id !== undefined
+        ? `\ndispatch_trace_id: ${fields.dispatch_trace_id}`
+        : "";
     const phaseLine = fields.phase !== undefined ? `\nphase: ${fields.phase}` : "";
-    content = `---\ndispatch_chosen_level: ${fields.dispatch_chosen_level}\ndispatch_subcommand: ${fields.dispatch_subcommand}\ndispatch_run_id: ${fields.dispatch_run_id}${phaseLine}\n---\n${content}`;
+    content = `---\ndispatch_chosen_level: ${fields.dispatch_chosen_level}\ndispatch_subcommand: ${fields.dispatch_subcommand}\ndispatch_run_id: ${fields.dispatch_run_id}${traceIdLine}${phaseLine}\n---\n${content}`;
   }
 
   writeFileSync(statusPath, content, "utf-8");

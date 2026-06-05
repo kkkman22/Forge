@@ -32,7 +32,7 @@ export async function detectCmuxAvailable(): Promise<boolean> {
       const timer = setTimeout(() => resolve(false), CMUX_SOCKET_TIMEOUT);
       try {
         resolve(existsSync(socketPath));
-      } catch (err: unknown) {
+      } catch (_: unknown) {
         resolve(false);
       } finally {
         clearTimeout(timer);

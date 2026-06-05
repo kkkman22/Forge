@@ -180,9 +180,9 @@ describe("barrel file does not expose internal modules", () => {
   });
 
   // Verify the total number of value exports
-  it("has exactly 129 value exports", () => {
+  it("has exactly 132 value exports", () => {
     const valueExports = Object.keys(exports).filter((key) => typeof exports[key] !== "undefined");
-    expect(valueExports).toHaveLength(129);
+    expect(valueExports).toHaveLength(132);
     expect(valueExports.sort()).toEqual([
       "CLASSIFICATION_MAP",
       "CliError",
@@ -192,6 +192,7 @@ describe("barrel file does not expose internal modules", () => {
       "GLOSSARY_BLOCK_POLICY",
       "INCREMENTAL_THRESHOLD",
       "THRESHOLD_MILESTONES",
+      "TRACE_ID_PATTERN",
       "VALID_TRANSITIONS",
       "allEntriesVerified",
       "archiveTaskStatus",
@@ -238,6 +239,7 @@ describe("barrel file does not expose internal modules", () => {
       "extractHeadingAnchors",
       "formatInlineGrillInjection",
       "generateP1Fixlist",
+      "generateTraceId",
       "getAdvisoryPath",
       "getMostRecentActiveTask",
       "hasTaskName",
@@ -248,6 +250,7 @@ describe("barrel file does not expose internal modules", () => {
       "isFixCandidate",
       "isMultiTaskMode",
       "isThrottled",
+      "isValidTraceId",
       "isValidTransition",
       "lintKnowledgeIntegrity",
       "listActiveTasks",
