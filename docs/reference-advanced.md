@@ -3,7 +3,7 @@ title: 'Forge 高级功能参考'
 category: advanced
 audience:
 - maintainer
-updated: '2026-05-24'
+updated: 2026-06-05
 owner: forge-maintainers
 ---
 
@@ -36,7 +36,7 @@ Forge Loop 是基于 [Claude Agent SDK](https://docs.anthropic.com/en/docs/claud
 ### 核心架构
 
 ```
-forge-loop <objective>
+/forge loop <objective>
     │
     ├── SdkDriver          迭代循环驱动器
     │     ├── Orchestrator  纯函数状态机（idle → running → waiting → aborted/stopped）
@@ -69,27 +69,29 @@ forge-loop <objective>
 
 ### 使用方式
 
-```bash
+Forge Loop 通过 `/forge loop` 命令在 Claude Code 对话中启动：
+
+```
 # 基本用法
-forge-loop "为用户 API 添加分页功能"
+/forge loop 为用户 API 添加分页功能
 
 # 设置迭代上限
-forge-loop "重构认证模块" --max-iterations 10
+/forge loop 重构认证模块 --max-iterations 10
 
 # 设置 token 上限
-forge-loop "优化数据库查询" --max-tokens 500000
+/forge loop 优化数据库查询 --max-tokens 500000
 
 # 自然语言停止条件
-forge-loop "修复所有 lint 错误" --stop-when "所有 lint 检查通过"
+/forge loop 修复所有 lint 错误 --stop-when "所有 lint 检查通过"
 
 # 在独立 worktree 中执行
-forge-loop "添加单元测试" --worktree
+/forge loop 添加单元测试 --worktree
 
 # 设置预算上限
-forge-loop "实现搜索功能" --max-budget-usd 5.00
+/forge loop 实现搜索功能 --max-budget-usd 5.00
 
 # 关闭防休眠
-forge-loop "快速修复" --prevent-sleep off
+/forge loop 快速修复 --prevent-sleep off
 ```
 
 ### 构建与运行
@@ -101,13 +103,11 @@ npm install
 # 2. 编译 TypeScript
 npx tsc
 
-# 3. 运行（以下三种方式任选）
-npx forge-loop "你的目标"                    # 通过 npx
-node dist/src/forge-loop-cli.js "你的目标"   # 直接调用
-npm link && forge-loop "你的目标"            # 全局链接后直接使用
+# 3. 在 Claude Code 中运行
+/forge loop "你的目标"
 ```
 
-> `/forge` 是在 Claude Code 对话中使用的交互式命令，`forge-loop` 是在系统终端中运行的自主循环程序。两者互补：前者适合人机协作，后者适合无人值守的批量任务。未来计划让 Forge Loop 的每轮迭代内部调用 Forge Skills，实现结构化流程 + 自主循环的深度融合（参见 [ROADMAP](../ROADMAP.md)）。
+> `/forge loop` 是在 Claude Code 对话中使用的自主循环命令。每轮迭代内部调用 Forge Skills，实现结构化流程 + 自主循环的深度融合（参见 [ROADMAP](../ROADMAP.md)）。
 
 ---
 

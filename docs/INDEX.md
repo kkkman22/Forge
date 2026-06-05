@@ -6,7 +6,7 @@
 
 ## Advanced
 
-- [Forge 高级功能参考](reference-advanced.md) — advanced — 2026-05-24
+- [Forge 高级功能参考](reference-advanced.md) — advanced — 2026-06-05
 
 ## Contributing
 
