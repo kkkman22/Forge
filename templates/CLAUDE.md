@@ -117,27 +117,27 @@ build 阶段主 Agent 必须执行周期性 Restatement Checkpoint：每完成 N
 
 ---
 
-## 5. Self-Evolution Protocol
+## 5. Charter（项目宪章）
 
-### 5.1 Evolved Rules
+`.forge/charter.md` 工程策略锚定（架构边界、技术基线、不可变量）。`/forge charter init/update/check/show` 管理生命周期。`status: active` 时下游 skill（decide/spec/plan/review）自动读取摘要（≤500 tokens）作为 grounding 约束；不存在或 `draft` 时正常执行不阻断。
+
+## 6. Self-Evolution Protocol
+
+### 6.1 Evolved Rules
 
 会话开始时读取 `.forge/knowledge/evolved-rules.md`，将其规则视为项目特定的错误预防指令。
 
-### 5.2-5.6
+### 6.2-6.6
 
-**Categories**：Project traps、correction patterns、tool quirks、behavior corrections、friction adjustments。**Trigger**：Knowledge entries 达阈值时提出。**Protocol**：Propose → Declare → Approve → Log。**Constraints**：15-rule cap、staleness (5 sessions)、Sections 1–4 immutable。**Exclusions**：Architecture descriptions、file path lists、general best practices、raw knowledge data、tool-enforced standards。
-→ 详见 docs/forge-constitution-detail.md §5
+**Categories**：Project traps、correction patterns、tool quirks、behavior corrections、friction adjustments。**Trigger**：Knowledge entries 达阈值时提出。**Protocol**：Propose → Declare → Approve → Log。**Constraints**：15-rule cap、staleness (5 sessions)、Sections 1–4 immutable。**Exclusions**：Architecture descriptions、file path lists、general best practices、raw knowledge data、tool-enforced standards。→ 详见 docs/forge-constitution-detail.md §5
 
----
-
-## 6. Session Boundaries
+## 7. Session Boundaries
 
 每个 `/forge` 命令调用构成 Session_Boundary。阶段间上下文交接通过 `.forge/` 目录文件系统进行，而非对话历史。建议 `/forge` 命令之间开启新会话。
 
 **Subagent 隔离**：每个 Subagent 有独立上下文。**会话恢复**：`/forge resume` 从 `.forge/progress/` 和 `.forge/knowledge/sessions/` 读取。**并发控制**：`max_parallel_agents` 默认 6。HTTP 429 降级：减半 → 降至 2 → 串行。**上下文预算（强制）**：Read >100KB → ⚠️ `/clear`；>150KB → ⛔ `/clear + /forge resume`。<important if="context exceeds 100k tokens or session runs long">上下文超 100K tokens 时，考虑 `/clear` + `/forge resume`。`.forge/` 目录在会话间传递状态。</important>
 
 ---
-
 ## 项目信息
 
 **{{project_name}}** | {{tech_stack}} | 安全级别 {{security_level}} | {{init_date}}

@@ -1,6 +1,6 @@
 ---
 name: forge-ship
-description: "Ship completed work with branch validation, push workflow, and post-push verification. Use when running /forge ship."
+description: "Use when running /forge ship or completed work needs branch validation and push"
 tools:
   - Read
   - Write

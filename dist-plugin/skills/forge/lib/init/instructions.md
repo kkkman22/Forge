@@ -1,5 +1,6 @@
 ---
-description: "Initialize a Forge project by creating .forge/ directory, config, agents, and CLAUDE.md. Use when user runs `/forge init`, project has no .forge/ directory, or plugin is installed but project not yet initialized."
+description: "Use when user runs `/forge init`, project has no .forge/ directory, or plugin is installed but project not yet initialized"
+updated: 2026-06-05
 dispatch_mode: inline
 allowed_tools:
   - Bash
@@ -74,3 +75,10 @@ bash forge/scripts/init.sh <args>
   - Plugin 用户：`bash "${CLAUDE_PLUGIN_ROOT}/scripts/init.sh"`
   - Clone 用户：`bash forge/scripts/init.sh`
 - 本 SKILL 不修改任何文件，所有文件操作由 init.sh 完成
+
+## 5. Charter 创建选项
+
+init.sh 完成后，询问用户是否创建项目宪章（默认 Yes）：
+- **选择创建**：调用 `/forge charter init` 的精简版，只问 3 个问题（核心问题、主要技术选型、1–3 条 invariants），生成 `.forge/charter.md`，`status: draft`
+- **选择跳过**：正常完成，不阻断
+- 提示用户后续可通过 `/forge charter update` 将 charter 激活为 `status: active`

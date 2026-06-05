@@ -1,6 +1,6 @@
 ---
 name: forge-decide-sec
-description: "安全视角决策分析 teammate — 评估威胁模型、权限模型、数据流保密性"
+description: "Use when /forge decide needs threat model and data flow analysis"
 model: sonnet
 maxTurns: 15
 allowedTools: [Read, Glob, Grep, WebFetch, SendMessage]

@@ -1,5 +1,5 @@
 ---
-updated: "2026-05-30"
+updated: 2026-06-05
 rule_count: 13
 max_rules: 15
 ---
@@ -22,6 +22,8 @@ This file keeps only rules that still need top-of-session reminders.
 **Added**: {YYYY-MM-DD}
 **Confidence**: {0.3-0.9}
 **Last_triggered**: {YYYY-MM-DD}
+**Verified_via**: {TDD-phase-1: <scenario-desc> | threshold-only}
+**Baseline_violation**: {subagent RED 阶段违反摘要 | N/A}
 **Infra_Ref**: {path(s) to infrastructure that enforces this rule, if any}
 -->
 

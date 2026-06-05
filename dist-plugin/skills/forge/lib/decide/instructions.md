@@ -1,6 +1,7 @@
 ---
-description: "Decide through four-perspective Subagent deliberation covering product, architect, security, and designer viewpoints. Use when starting a full-tier task, facing irreversible technical choices, or needing threat modeling before implementation."
+description: "Use when starting a full-tier task, facing irreversible technical choices, or needing threat modeling before implementation"
 context: fork
+updated: 2026-06-05
 
 dispatch_mode: fork
 allowed_tools:
@@ -110,6 +111,22 @@ Round 0 完成后，将 grill findings 注入 Round 1 所有 subagent 的上下�
 
 **与 §2.7 No Confirmation Between Steps 的关系**：Round 0 的 "跳过？[y/N]" 是 Round 0 唯一的用户交互点。一旦用户选择不跳过，后续 3-5 个问题连续执行不停顿。这符合 §2.7（"唯一可停"包括用户控制入口）。
 
+### Round 0.5 — Reframing Gate (问题重构门控)
+
+在 Round 1 之前，根据 tier 和决策内容执行问题重构，帮助用户确认正在解决正确的问题。
+
+→ 执行协议详见 `shared/gate-protocol.md`（参数：gate_name=Reframing Gate, max_questions=3, time_budget=1 min, injection_label=Reframing Context, log_filename=\*-reframing.jsonl, skip_option_text=跳过，直接分析）。协议内含 `shouldTriggerInlineGrill`、`renderInlineGrillConfirmPrompt`、`renderInlineGrillAdvisory`、`formatInlineGrillInjection` 调用流程。
+
+#### 问题选择算法
+
+分析用户决策 topic，按优先级从以下维度选择最多 3 个问题：
+
+1. **问题替代**（最高优先级）：当决策题包含方案关键词（"引入"、"迁移"、"切换"、"使用 X"）且不包含问题关键词（"太慢"、"出错"、"不够"）时触发 → "你确定这是正确的问题吗？有没有更根本的痛点？"
+2. **约束揭示**：当决策涉及 ≥3 个文件或新依赖时触发 → "有什么隐藏的约束我没看到？（时间、团队、合规、预算）"
+3. **代价校准**：当决策有明显的成本选项（如"自建 vs SaaS"、"重写 vs 迁移"）时触发 → "这个决策的代价你愿意承受多少？如果 cost 是 2x，你还做吗？"
+
+**规则**：最多 3 个问题，按优先级选取，已触发维度不重复。用户跳过所有问题时不延迟。
+
 ### Round 1 — Perspective Subagents (Parallel Launch)
 
 **Spec Context Filter**: 当搜索 `.kiro/specs/` 中的相关 spec 时，过滤以下条目：
@@ -171,18 +188,20 @@ Round 0 完成后，将 grill findings 注入 Round 1 所有 subagent 的上下�
 
 After Round 2 Critic output:
 
-**增强后的触发条件**（满足任一即触发）：
+→ 执行协议详见 `shared/gate-protocol.md`（参数：gate_name=Reframing Gate, max_questions=3, time_budget=1 min, injection_label=Reframing Context, log_filename=\*-reframing.jsonl, skip_option_text=跳过，直接分析）。协议内含 `shouldTriggerInlineGrill`、`renderInlineGrillConfirmPrompt`、`renderInlineGrillAdvisory`、`formatInlineGrillInjection` 调用流程。
 
-1. （现有）Critic 标记 `disagreement_kind: "requirement_side"`：
-   - Call `shouldTriggerInlineGrill({ mode, reason: "decide_requirement_disagreement", alreadyTriggered })`
-   - `trigger: true` (interactive): Render `renderInlineGrillConfirmPrompt("decide_requirement_disagreement")`, await user confirmation, run inline grill loop with subset of decision categories (functionality / boundary / non_goal only), inject via `formatInlineGrillInjection(result, "decide")` → re-run Round 1 for affected perspectives only
-   - `trigger: false` (autonomous): Render `renderInlineGrillAdvisory("decide_requirement_disagreement")`, write advisory to decision document §否决记录
-2. （新增）Round 1 所有视角输出中，术语使用不一致（≥2 个视角对同一概念用了不同术语）：
-   - 聚焦术语对齐，inline grill 仅使用 terminology 类问题
-   - 澄清后注入 Round 1 重新评估受影响视角
-3. （新增）Round 1 视角输出的核心结论存在直接矛盾（如 product 说 "必须支持离线" 但 architect 说 "需要实时网络"）：
-   - 聚焦矛盾点，inline grill 使用 functionality + boundary 类问题
-   - 解决后注入 Round 1 重新评估矛盾相关视角
+**触发条件**（满足任一即触发，这是 decide 唯一不同的部分）：
+
+1. Critic 标记 `disagreement_kind: "requirement_side"`：
+   - reason: `"decide_requirement_disagreement"`
+   - 问题选择：functionality / boundary / non_goal 子集
+   - 注入后重新执行：Round 1（受影响视角）
+2. 术语使用不一致（≥2 个视角对同一概念用了不同术语）：
+   - 问题选择：terminology 类问题
+   - 注入后重新执行：Round 1（受影响视角）
+3. 核心结论直接矛盾（如 product 说 "必须支持离线" 但 architect 说 "需要实时网络"）：
+   - 问题选择：functionality + boundary 类问题
+   - 注入后重新执行：Round 1（矛盾相关视角）
 
 **Hesitation 交互优先级**（不变）：
 - If user expresses hesitation 3 consecutive times + requirement_side disagreement detected:
@@ -192,7 +211,6 @@ After Round 2 Critic output:
 
 **Constraints**:
 - Technical-side disagreement does NOT trigger inline grill (handled by critic needs_revision)
-- Frequency: at most once per session per reason
 
 ---
 

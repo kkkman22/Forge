@@ -1,5 +1,5 @@
 ---
-description: "Visual signals for Forge Loop long-running iterations in cmux sidebar. Requires cmux installed."
+description: "Use when Forge Loop iterations are running and cmux sidebar signals are needed (requires cmux)"
 dispatch_mode: inline
 allowed_tools:
   - Read

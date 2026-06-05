@@ -64,7 +64,7 @@ describe("Integration: cmux gate with real manifest and paths", () => {
   it("manifest includes all 3 cmux subs", () => {
     const manifest = JSON.parse(readFileSync(resolve(LIB_ROOT, "manifest.json"), "utf-8"));
     const subs = Object.keys(manifest.subs);
-    expect(subs.length).toBe(34);
+    expect(subs.length).toBe(35);
     for (const sub of CMUX_SUBS) {
       expect(manifest.subs[sub]).toBeDefined();
       expect(manifest.subs[sub].instructions.sha256).toBeTruthy();

@@ -1,5 +1,5 @@
 ---
-description: "Verify Web/Electron UI through external harness execution. Use when running /forge test --ui or when forge-test detects a UI target with designer specs."
+description: "Use when running /forge test --ui or when forge-test detects a UI target with designer specs"
 
 dispatch_mode: inline
 allowed_tools:

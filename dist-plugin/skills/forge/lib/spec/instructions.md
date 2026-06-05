@@ -1,5 +1,6 @@
 ---
-description: "Specify requirements as reviewable, testable, lockable spec documents before planning. Use when user runs `/forge spec`, imports external PM spec, or building a new feature and lacks a locked spec."
+description: "Use when user runs `/forge spec`, imports external PM spec, or building a new feature and lacks a locked spec"
+updated: 2026-06-05
 
 dispatch_mode: fork
 allowed_tools:
@@ -56,6 +57,30 @@ allowed_tools:
 3. 聊天层覆盖：用户输入"切换到 design-first"等自然语言时，`parseVariantOverride(text)` 捕获并覆盖变体选择
 4. Bugfix 模式：`/forge fix` 入口直接走 bugfix 流程，跳过变体判定和 brownfield 检测
 
+### Step 0.5: Clarification Gate (需求澄清门控)
+
+在 Step 1 正式编写需求前，根据 tier 和 spec 主题执行需求澄清，暴露隐藏要求和约束。
+
+→ 执行协议详见 `shared/gate-protocol.md`（参数：gate_name=Clarification Gate, max_questions=5, time_budget=2 min, injection_label=Clarification Context, log_filename=\*-clarification.jsonl, skip_option_text=跳过）。协议内含 `shouldTriggerInlineGrill`、`renderInlineGrillConfirmPrompt`、`renderInlineGrillAdvisory`、`formatInlineGrillInjection` 调用流程。
+
+#### Charter 感知
+
+读取 `.forge/charter.md`（如果存在），避免提出 charter 已回答的问题（如技术选型、团队规模等已记录信息）。Charter 不可读或格式异常时输出警告并跳过 charter 感知（不影响 Gate 执行）。
+
+**维度覆盖检测**：通过 charter 的 section header 匹配判断已覆盖维度（如存在 `## 技术选型` section → 跳过"依赖关系"问题；存在 `## 目标用户` → 跳过"用户价值"问题）。无对应 section header 的维度正常提问。
+
+#### 问题选择算法
+
+分析 spec 主题，按以下维度选择 2–5 个问题：
+
+1. **用户价值**（必问）：当 spec 主题包含"功能"、"特性"、"新增" → "这个功能的核心用户价值是什么？如果只保留一个场景，是哪个？"
+2. **边界条件**：当 charter 不存在或无排除范围章节 → "什么情况下这个功能不应该工作？"
+3. **依赖关系**：当 spec 主题涉及外部交互（API、服务、数据库） → "这个功能依赖什么已有功能或外部服务？它们准备好了吗？"
+4. **成功标准**：兜底 → "你怎么知道这个功能成功了？可衡量的指标是什么？"
+5. **替代方案**：兜底 → "有没有更简单的方式达到同样的目标？"
+
+**规则**：2–5 个问题，已回答维度不重复，charter 已覆盖维度跳过。
+
 ### Step 1: Propose (Generate Draft)
 
 读取以下上下文，生成规格草案：
@@ -104,18 +129,19 @@ After Step 2 Review completes, call `checkSpecHealth(input)` and write result to
 
 After Step 2 Review completes:
 
+→ 执行协议详见 `shared/gate-protocol.md`（参数：gate_name=Clarification Gate, max_questions=5, time_budget=2 min, injection_label=Clarification Context, log_filename=\*-clarification.jsonl, skip_option_text=跳过）。协议内含 `shouldTriggerInlineGrill`、`renderInlineGrillConfirmPrompt`、`renderInlineGrillAdvisory`、`formatInlineGrillInjection` 调用流程。
+
+**触发条件**（这是 spec 唯一不同的部分）：
+
 1. If `ambiguity_score >= threshold`:
-   - Call `shouldTriggerInlineGrill({ mode, reason: "spec_high_ambiguity", alreadyTriggered })`
-   - `trigger: true` (interactive): Render `renderInlineGrillConfirmPrompt("spec_high_ambiguity")`, await user confirmation
-     - User confirms: Run inline grill loop using `generateDecisionTree` / `selectNextQuestion` / `applyAnswer`, then `formatInlineGrillInjection` → re-generate draft → re-run Step 2 Review
-     - User declines: Continue to Step 3 Lock with ambiguity warning preserved
-   - `trigger: false` (autonomous): Render `renderInlineGrillAdvisory("spec_high_ambiguity")`, write to `.forge/findings/spec-ambiguity-advisory-<topic>.md`, continue to Step 3
+   - reason: `"spec_high_ambiguity"`
+   - 问题选择：全类别（`generateDecisionTree` / `selectNextQuestion` / `applyAnswer`）
+   - 注入后重新执行：re-generate draft → re-run Step 2 Review
 2. If `ambiguity_score < threshold`: Skip directly to Step 3 Lock
 
 **Constraints**:
 - Inline grill does NOT write `findings/grill-<topic>.md`
 - Spec frontmatter: set `inline_grill_applied: true` when grill completed
-- Frequency: at most once per session per reason
 
 → 每项检查的合格标准与反例详见 references/quality-standards.md
 
@@ -169,6 +195,7 @@ Testability / Behavior-not-Implementation / Brownfield Delta / Two-part Structur
 7. **用户确认或修改**：确认 → 进入 Lock；修改意见 → 更新草案回到 Review；拒绝 → 保持 draft
 8. **Lock**：锁定规格（详见 §2 Step 3）。三文件各自独立 lock，写入 `requirements.md` + `design.md` + `tasks.md`
 9. **Glossary-miss 扫描**：读取 `.forge/glossary.md` 的术语表，对生成/导入的 spec 文本调用 `detectGlossaryMiss`。如发现未定义术语，输出 `[glossary-miss] 未定义术语：[...]` 提示用户在 learn 阶段回写。不阻断 lock 流程。Step 7 调用 `runGlossaryCheck({ phase: 'spec' })` 进行术语漂移检测。Autonomous 模式下，冲突写入 `getAdvisoryPath('spec', topic)` 指定路径，并将路径添加到 spec frontmatter `pending_glossary_advisories: [...]` 字段。
+9.5. **Charter 合规性章节**：当 `.forge/charter.md` 存在且 `status: active` 时，在 `requirements.md` 中增加 `## Charter 合规性` 章节，每个需求标注对应的 charter invariant ID（如 `R1 → INV-002, INV-005`）。需求与 invariant 有潜在冲突时标注 `⚠ 需通过 <boundary>`。Charter 不存在时跳过此章节。
 10. **自动推进（铁律）**：Lock 成功后，输出 `✅ spec 完成 → 自动进入 plan`，然后**立即调用** `Skill(skill="forge", args="plan")`。不输出"是否继续？"等确认文本。静默 idle（无输出、等待用户输入）与显式询问同罪。（→ 详见 shared/next-step-protocol.md）
 
 ---
