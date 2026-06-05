@@ -435,8 +435,9 @@ export async function executePostPushVerify(
   const start = Date.now();
 
   try {
-    const { execSync } = await import("node:child_process");
-    const output = execSync(command, { encoding: "utf-8", timeout: 600_000, stdio: "pipe" });
+    const { execFileSync } = await import("node:child_process");
+    const [bin, ...args] = command.split(/\s+/);
+    const output = execFileSync(bin, args, { encoding: "utf-8", timeout: 600_000, stdio: "pipe" });
     return { passed: true, command, output, exitCode: 0, durationMs: Date.now() - start };
   } catch (error: unknown) {
     const execError = error as { stdout?: string; status?: number };
