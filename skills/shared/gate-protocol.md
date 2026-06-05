@@ -65,7 +65,7 @@ Gate 完成后，将用户回答注入后续流程的 context：
 
 Gate 执行过程记录到 JSONL 日志：
 
-**路径**：`.forge/logs/{log_filename}`
+**路径**：`.forge/progress/{log_filename}`
 
 **格式**：每行一条 JSON 记录：
 
@@ -75,7 +75,8 @@ Gate 执行过程记录到 JSONL 日志：
 
 **规则**：
 
-- slug 校验：`gate_name` 必须匹配 `^[a-z][a-z0-9-]*$`
+- `gate_name` 为显示名称（如 "Reframing Gate"），不做格式校验
+- `log_filename` 中的 slug 部分必须匹配 `^[a-z][a-z0-9-]*`（如 `reframing`、`clarification`）
 - 全跳过仍记录：即使所有问题都被跳过，也写入日志（`skipped: true`）
 - 每个问题一行，不批量写入
 

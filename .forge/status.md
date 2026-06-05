@@ -1,7 +1,7 @@
 ---
 current_task: "project-charter"
 phase: "build"
-updated: "2026-06-04"
+updated: 2026-06-05
 branch: "forge/project-charter"
 ---
 

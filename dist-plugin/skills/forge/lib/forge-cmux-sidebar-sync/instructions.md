@@ -1,5 +1,5 @@
 ---
-description: "Keep cmux sidebar in sync with Forge lifecycle state changes. Requires cmux installed."
+description: "Use when Forge lifecycle state changes and cmux sidebar needs syncing (requires cmux)"
 dispatch_mode: inline
 allowed_tools:
   - Read

@@ -1,6 +1,6 @@
 ---
 name: forge-decide-ops
-description: "运维视角决策分析 teammate — 评估可观测性、故障恢复、部署复杂度"
+description: "Use when /forge decide needs observability and deployment analysis"
 model: sonnet
 maxTurns: 15
 allowedTools: [Read, Glob, Grep, WebFetch, SendMessage]

@@ -1,5 +1,6 @@
 ---
 name: adversarial-check
+updated: 2026-06-05
 description: "对抗性审查 agent — 构造失败场景捕获系统级组合失败。在 /forge review 的 Agent Team 中提供 Layer 4 评审。"
 model: sonnet
 maxTurns: 15

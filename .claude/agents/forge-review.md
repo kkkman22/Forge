@@ -1,6 +1,7 @@
 ---
 name: forge-review
-description: "Three-layer code review against spec, quality, and security standards with confidence anchoring, stable IDs, and structured output. Use when running /forge review."
+updated: 2026-06-05
+description: "Use when running /forge review or code changes need quality gate before ship"
 tools:
   - Read
   - Bash

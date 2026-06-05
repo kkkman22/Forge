@@ -1,5 +1,5 @@
 ---
-description: "Verify CLI/TUI applications through external harness execution. Use when running /forge test --cli or when forge-test detects a CLI target."
+description: "Use when running /forge test --cli or when forge-test detects a CLI target"
 
 dispatch_mode: inline
 allowed_tools:
