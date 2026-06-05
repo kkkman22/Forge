@@ -23,6 +23,7 @@ import type { IntegrityFinding, IntegrityInput } from "./knowledge-integrity.js"
 import { lintKnowledgeIntegrity } from "./knowledge-integrity.js";
 import type { Pattern, UpgradeSuggestion } from "./pattern-stats.js";
 import { parseInstinct } from "./pattern-stats.js";
+import { pathExists } from "./utils/fs.js";
 
 // ---------------------------------------------------------------------------
 // Types
@@ -56,20 +57,6 @@ export interface KnowledgeHookInput {
 
 export const THRESHOLD_MILESTONES = [5, 10, 25, 50, 100, 250] as const;
 const THROTTLE_MS = 5000;
-
-// ---------------------------------------------------------------------------
-// Helpers
-// ---------------------------------------------------------------------------
-
-/** Async file existence check — resolves true/false, never rejects. */
-async function pathExists(path: string): Promise<boolean> {
-  try {
-    await stat(path);
-    return true;
-  } catch {
-    return false;
-  }
-}
 
 // ---------------------------------------------------------------------------
 // Pure scheduling functions

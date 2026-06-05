@@ -32,11 +32,13 @@ describe("tokenEstimate", () => {
     expect(tokenEstimate("안녕하세요")).toBe(4);
   });
 
-  it("handles long mixed content accurately", () => {
+  it("handles long mixed content — CJK estimate differs from naive", () => {
     const text = "This is a test. 这是一个测试。テストです。";
     const estimate = tokenEstimate(text);
-    // Must be positive and reasonable (< 2x naive length/4)
-    expect(estimate).toBeGreaterThan(0);
+    const naive = Math.ceil(text.length / 4);
+    // CJK-aware estimate must be higher than naive (CJK needs more tokens)
+    expect(estimate).toBeGreaterThan(naive);
+    // And within reasonable bounds
     expect(estimate).toBeLessThan(text.length);
   });
 });

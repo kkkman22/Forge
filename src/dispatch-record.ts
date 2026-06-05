@@ -150,9 +150,9 @@ export function frozenZoneRecord(
 
 export interface DispatchSummary {
   total: number;
-  avg_duration_ms: number;
-  error_rate: number;
-  by_subcommand: Record<string, number>;
+  avgDurationMs: number;
+  errorRate: number;
+  bySubcommand: Record<string, number>;
 }
 
 /**
@@ -162,7 +162,7 @@ export interface DispatchSummary {
  */
 export function summarizeDispatches(records: DispatchRecord[]): DispatchSummary {
   if (records.length === 0) {
-    return { total: 0, avg_duration_ms: 0, error_rate: 0, by_subcommand: {} };
+    return { total: 0, avgDurationMs: 0, errorRate: 0, bySubcommand: {} };
   }
 
   let totalDuration = 0;
@@ -177,8 +177,8 @@ export function summarizeDispatches(records: DispatchRecord[]): DispatchSummary 
 
   return {
     total: records.length,
-    avg_duration_ms: Math.round(totalDuration / records.length),
-    error_rate: errorCount / records.length,
-    by_subcommand: bySubcommand,
+    avgDurationMs: Math.round(totalDuration / records.length),
+    errorRate: errorCount / records.length,
+    bySubcommand,
   };
 }

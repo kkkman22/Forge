@@ -30,17 +30,17 @@ describe("summarizeDispatches", () => {
   it("returns empty summary for empty array", () => {
     const summary = summarizeDispatches([]);
     expect(summary.total).toBe(0);
-    expect(summary.avg_duration_ms).toBe(0);
-    expect(summary.error_rate).toBe(0);
-    expect(summary.by_subcommand).toEqual({});
+    expect(summary.avgDurationMs).toBe(0);
+    expect(summary.errorRate).toBe(0);
+    expect(summary.bySubcommand).toEqual({});
   });
 
   it("aggregates single record correctly", () => {
     const summary = summarizeDispatches([makeRecord({ duration_ms: 200 })]);
     expect(summary.total).toBe(1);
-    expect(summary.avg_duration_ms).toBe(200);
-    expect(summary.error_rate).toBe(0);
-    expect(summary.by_subcommand).toEqual({ review: 1 });
+    expect(summary.avgDurationMs).toBe(200);
+    expect(summary.errorRate).toBe(0);
+    expect(summary.bySubcommand).toEqual({ review: 1 });
   });
 
   it("computes average duration across multiple records", () => {
@@ -51,7 +51,7 @@ describe("summarizeDispatches", () => {
     ];
     const summary = summarizeDispatches(records);
     expect(summary.total).toBe(3);
-    expect(summary.avg_duration_ms).toBe(200);
+    expect(summary.avgDurationMs).toBe(200);
   });
 
   it("computes error rate from non-zero exit codes", () => {
@@ -62,7 +62,7 @@ describe("summarizeDispatches", () => {
       makeRecord({ exit_code: 1 }),
     ];
     const summary = summarizeDispatches(records);
-    expect(summary.error_rate).toBe(0.5);
+    expect(summary.errorRate).toBe(0.5);
   });
 
   it("groups by subcommand", () => {
@@ -72,6 +72,6 @@ describe("summarizeDispatches", () => {
       makeRecord({ subcommand: "decide" }),
     ];
     const summary = summarizeDispatches(records);
-    expect(summary.by_subcommand).toEqual({ review: 2, decide: 1 });
+    expect(summary.bySubcommand).toEqual({ review: 2, decide: 1 });
   });
 });

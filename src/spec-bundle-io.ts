@@ -24,20 +24,7 @@ import {
   parseRequirementsMarkdown,
   parseTasksMarkdown,
 } from "./spec-parser.js";
-
-// ---------------------------------------------------------------------------
-// Helpers
-// ---------------------------------------------------------------------------
-
-/** Async file existence check — resolves true/false, never rejects. */
-async function pathExists(path: string): Promise<boolean> {
-  try {
-    await readFile(path, { encoding: null, flag: "r" });
-    return true;
-  } catch {
-    return false;
-  }
-}
+import { pathReadable } from "./utils/fs.js";
 
 // ---------------------------------------------------------------------------
 // Internal: legacy spec.md parser
@@ -144,8 +131,8 @@ export async function loadSpecBundle(
   const tasksPath = join(featureDir, "tasks.md");
   const specPath = join(featureDir, "spec.md");
 
-  const hasThreeFile = await pathExists(reqPath);
-  const hasLegacy = await pathExists(specPath);
+  const hasThreeFile = await pathReadable(reqPath);
+  const hasLegacy = await pathReadable(specPath);
 
   // Three-file takes priority
   if (hasThreeFile) {
@@ -157,7 +144,7 @@ export async function loadSpecBundle(
     }
 
     let design: DesignDocument | undefined;
-    if (await pathExists(designPath)) {
+    if (await pathReadable(designPath)) {
       const designResult = parseDesignMarkdown(await readFile(designPath, "utf-8"));
       if (designResult.errors) {
         throw new Error(
@@ -168,7 +155,7 @@ export async function loadSpecBundle(
     }
 
     let tasks: TasksSeedDocument | undefined;
-    if (await pathExists(tasksPath)) {
+    if (await pathReadable(tasksPath)) {
       const tasksResult = parseTasksMarkdown(await readFile(tasksPath, "utf-8"));
       if (tasksResult.errors) {
         throw new Error(
