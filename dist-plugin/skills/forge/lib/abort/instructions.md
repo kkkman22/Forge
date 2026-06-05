@@ -1,5 +1,5 @@
 ---
-description: "Abort the active task by archiving its status file and freeing the task slot. Use when user runs `/forge abort`, decides to abandon the current task, or needs to clear an active task slot before starting a new one."
+description: "Use when user runs `/forge abort`, decides to abandon the current task, or needs to clear an active task slot before starting a new one"
 
 dispatch_mode: inline
 allowed_tools:

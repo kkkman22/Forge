@@ -1,5 +1,5 @@
 ---
-description: "Post review findings to Bitbucket PR as tasks and inline comments with stable idempotent markers, cross-run reconciliation, and platform gate."
+description: "Use when posting /forge review findings to Bitbucket PR as tasks and inline comments"
 dispatch_mode: inline
 allowed_tools:
   - Read
