@@ -1,5 +1,6 @@
 ---
 description: "Use when user says debug this, reports a regression, or after three consecutive build failures trigger the three-strike reroute"
+updated: 2026-06-05
 context: fork
 
 dispatch_mode: fork
@@ -9,106 +10,322 @@ allowed_tools:
   - Glob
   - Grep
   - Bash
+  - Write
+  - Edit
+  - WebSearch
 ---
 
-# /forge debug — 调试引擎
+# /forge debug — Scientific Debugging Engine
 
-> **触发方式**：`/forge build` 连续失败 3 次自动触发，或用户直接输入 `/forge debug`
-> **职责**：结构化的四阶段根因分析，避免"试试改改"的低效调试方式
-> **输出路径**：`.forge/debug/<topic>.md`
+> **Trigger**: `/forge build` fails 3 consecutive times (Three-Strike reroute), or user enters `/forge debug`
+> **Responsibility**: Structured 5-phase scientific debugging with falsifiable hypothesis testing
+> **Output path**: `.forge/debug/{slug}.md`
 
 ---
 
 ## 1. Overview
 
-`/forge debug` 以 **Subagent 模式**启动四阶段调试流程，强制按照"调查 → 分析 → 验证 → 修复"的顺序推进。每个阶段有明确的准入和准出条件，阶段之间不可跳跃。
+`/forge debug` uses the **Scientific Method** for debugging: falsifiable hypothesis testing + persistent debug files + append-only knowledge base. Each phase has clear entry/exit criteria. No phase may be skipped.
 
-**核心原则**：先理解问题，再解决问题。没有完成根因调查就提出修复方案 = 在黑暗中开枪。
+**Core Principle**: Understand the problem before solving it. Proposing a fix before root cause is confirmed = shooting in the dark.
 
-**铁律**：Phase 1 未完成 → 不能提出修复方案。这是不可协商的硬性约束。
+**Iron Laws**:
+1. Phase 1 incomplete → no fix proposals allowed. Non-negotiable.
+2. No Structured Reasoning Checkpoint → no fix applied. Violates Three-Strike rule.
+3. Same hypothesis fails 3 times consecutively → stop, question architecture.
 
----
-
-**Not For**：
-- 已知根因的简单修复
-- 非代码问题（环境配置、权限等）
+**Not For**:
+- Known root-cause simple fixes (use `/forge fix`)
+- Non-code issues (environment config, permissions)
 
 ### §1.5 Pre-flight: Branch Gate
 
-调用 `runBranchGate({ skill: "debug", mode, currentBranch, currentTask, pendingDeliveries, alreadyCheckedThisPhase, isCleanTree })`：
-- `passed` / `skipped` → 继续后续 §
-- `auto_fixed` → 输出 `✅ 已自动切换到 <newBranch>` 后继续
-- `blocked` → 中止 skill，按 mode 输出对应提示
-- `warned` → 输出警告但继续
+Call `runBranchGate({ skill: "debug", mode, currentBranch, currentTask, pendingDeliveries, alreadyCheckedThisPhase, isCleanTree })`:
+- `passed` / `skipped` → continue
+- `auto_fixed` → output `✅ Switched to <newBranch>` then continue
+- `blocked` → abort skill, output corresponding prompt
+- `warned` → output warning but continue
 
-默认严重度：warn。`--cross-branch` 时 `severityOverride: warn` 允许跨分支调试。
+Default severity: warn. `--cross-branch` sets `severityOverride: warn` for cross-branch debugging.
 
-## 2. Four-Phase Process
+### §1.6 Debug Modes
 
-### Phase 1 — Root Cause Investigation (Fix Proposals Prohibited)
-
-完整理解问题：1. 完整阅读错误栈+日志 2. 稳定复现 3. 检查最近 Git 变更 4. 追踪数据流 5. Read spec health verdict — if marginal/degraded, include "problem may stem from ambiguous spec" as hypothesis. If recommendations contain `trigger_grill`, optionally trigger grill-inline. **铁律**：Phase 1 未完成不能提出修复。产出：`.forge/debug/<topic>.md` (status: "investigating")。
-
-### Phase 2 — Pattern Analysis
-
-1. 对比正常代码 2. 搜索 `known-failures.md` 3. 搜索 `solutions/` 4. 模式匹配缩小假设。
-
-### Phase 3 — Hypothesis Verification
-
-每次单一假设 + 最小改动。同一假设连续 3 次失败 → 停止修复，质疑架构。
-
-### Phase 4 — Fix Verification
-
-RED（复现测试）→ GREEN（最小修复）→ 全量测试确认无新问题。→ TDD 规则详见 ../build/references/tdd-rules.md。完成后 status: "resolved"。Interactive 提示 `/forge learn`；autonomous 跳过。Solutions 写入完成后，hooks.json PostToolUse 自动触发 integrity lint（同 forge-learn）。
+| Mode | Trigger | Behavior |
+|------|---------|----------|
+| `find_root_cause_only` | User wants diagnosis only | Phases 1-3, no fix |
+| `find_and_fix` | Default | Full Phases 1-5 |
+| `tdd_mode` | TDD fix needed | Phase 4 uses RED→GREEN→REFACTOR |
+| `symptoms_prefilled` | Three-Strike triggered | Skip Phase 1 (symptoms already in context) |
 
 ---
 
-## 3. Red Flag Checklist
+## 2. Five-Phase Scientific Process
+
+### Phase 1 — Symptom Gathering (Fix Proposals Prohibited)
+
+Gather all observable error behavior:
+1. Read error messages, stack traces, logs completely
+2. Determine reproduction conditions (stable vs intermittent)
+3. Check recent Git changes (`git log --oneline -20`, `git diff`)
+4. Read spec health verdict — if marginal/degraded, include "problem may stem from ambiguous spec" as hypothesis
+5. If recommendations contain `trigger_grill`, optionally trigger grill-inline
+
+**Output**: Write `.forge/debug/{slug}.md` with the Symptoms section. Set status to `"investigating"`.
+
+**Write Rule**: Symptoms are **IMMUTABLE** after Phase 1. No modifications allowed in later phases.
+
+**Iron Law**: Phase 1 incomplete → cannot propose fixes. This is non-negotiable.
+
+### Phase 2 — Hypothesis Generation
+
+For each symptom, propose at least **2 falsifiable hypotheses**. Each hypothesis must include:
+- **Hypothesis**: "If X, then we should observe Y"
+- **Predicted observable result**
+- **Falsification test**: what specific test would disprove this
+
+Steps:
+1. Compare with working/normal code paths
+2. Search `.forge/debug/knowledge-base.md` for keyword matches (rank by overlap)
+3. Search `known-failures.md` and `solutions/` directories
+4. Pattern-match to narrow hypothesis space
+5. Eliminate obviously unreasonable hypotheses (record in Eliminated section)
+
+**Output**: Append Hypotheses section to debug file.
+
+**Write Rule**: Hypotheses section is **append-only** — can add new hypotheses later but never delete existing ones.
+
+### Phase 3 — Hypothesis Testing
+
+Test **one hypothesis at a time**. Testing methods (priority order):
+1. **Binary search** (git bisect, comment-out halves)
+2. **Log/trace inspection** (add logging, inspect output)
+3. **Minimal reproduction** (isolate the failing case)
+4. **Code tracing** (follow indirection, map data flow)
+
+For each test:
+- Record: confirmed or excluded + evidence with timestamp
+- If confirmed → proceed to Phase 4
+- If excluded → move to next hypothesis (append to Eliminated section)
+- If all hypotheses exhausted → go back to Phase 2 (generate new hypotheses)
+
+**Three-Strike Rule**: Same hypothesis direction fails 3 times consecutively → stop fixing, question the architecture. Enter `/forge debug` with fresh perspective.
+
+**Output**: Append to Evidence and Eliminated sections (both append-only).
+
+### Phase 4 — Fix (only after root cause found)
+
+**MUST fill Structured Reasoning Checkpoint before any fix**:
+
+```markdown
+## Structured Reasoning Checkpoint
+
+Hypothesis: [the confirmed hypothesis]
+Confirming Evidence: [what proved it]
+Falsification Test: [what would disprove it]
+Fix Rationale: [why this fix addresses the root cause]
+Blind Spots: [what might we be missing]
+```
+
+**Iron Law**: No checkpoint = no fix. Violation of Three-Strike rule.
+
+Then apply fix:
+- **TDD mode** (`tdd_mode`): RED (failing test reproducing the bug) → GREEN (minimal fix) → REFACTOR
+- **Normal mode**: Apply minimal fix addressing root cause
+- TDD rules: see `../build/references/tdd-rules.md`
+
+**Output**: Fix code + passing tests. Update debug file Resolution section.
+
+### Phase 5 — Verification
+
+1. Run full test suite
+2. Confirm original symptom no longer reproduces
+3. Confirm no regression (all previously passing tests still pass)
+4. Set debug file status to `"resolved"`
+5. Interactive mode: prompt `/forge learn`
+6. Autonomous mode: skip prompt
+
+After resolution, hooks.json PostToolUse automatically triggers integrity lint (same as forge-learn).
+
+---
+
+## 3. Debug Session File Format
+
+Create `.forge/debug/{slug}.md` with this structure:
+
+```markdown
+---
+slug: "auth-login-null-pointer"
+created: "2026-06-05T10:30:00Z"
+status: "in-progress"  # in-progress | resolved | abandoned
+root_cause: ""  # fill when root cause found
+resolution: ""  # fill when fix applied
+---
+
+# Current Focus
+<!-- OVERWRITE on each update — always reflects what is being done right now -->
+Testing hypothesis H2: bcrypt.compare parameter order
+
+# Symptoms
+<!-- IMMUTABLE after Phase 1 — only written during Phase 1 -->
+- POST /api/auth/login returns 500
+- error.message: "Cannot read property 'hash' of undefined"
+- Reproduction: any username + password
+
+# Hypotheses
+<!-- Phase 2 writes, append-only afterward -->
+## H1: User record missing passwordHash field
+  - Prediction: console.log(user) shows no passwordHash
+  - Falsification test: print user object
+  - Status: ✅ Confirmed → but not root cause
+
+## H2: bcrypt.compare parameter order reversed
+  - Prediction: currently bcrypt.compare(hash, plaintext), should be bcrypt.compare(plaintext, hash)
+  - Falsification test: swap parameters
+  - Status: 🔍 Testing
+
+# Evidence
+<!-- Append-only — each entry with timestamp -->
+- [10:32] H1 test: user object = { id: 1, name: "test", passwordHash: undefined }
+  → User record exists but passwordHash is undefined
+- [10:35] Trace: seed script uses `password` field instead of `passwordHash`
+  → Database schema mismatch
+
+# Eliminated
+<!-- Append-only — records excluded hypotheses -->
+- [10:33] H1 eliminated: passwordHash undefined is result, not cause
+
+# Resolution
+<!-- Fill when root cause found -->
+(to be filled)
+```
+
+### Write Rules Summary
+
+| Section | Write Rule | Rationale |
+|---------|-----------|-----------|
+| Current Focus | **Overwrite** | Always reflects current activity |
+| Symptoms | **Immutable** after Phase 1 | Prevents post-hoc rationalization |
+| Hypotheses | **Append-only** | Never delete — may revisit |
+| Evidence | **Append-only** with timestamps | Audit trail |
+| Eliminated | **Append-only** | Avoid re-testing |
+| Resolution | **Fill once** when root cause found | Closure |
+
+---
+
+## 4. Debug Knowledge Base
+
+Maintain `.forge/debug/knowledge-base.md` (append-only):
+
+```markdown
+# Debug Knowledge Base
+<!-- Append-only — never delete existing entries -->
+
+## [2026-06-05] bcrypt Parameter Order
+Keywords: bcrypt, compare, auth, login, parameter order
+Pattern: bcrypt.compare(plaintext, hash) not bcrypt.compare(hash, plaintext)
+Applicable: any code using bcrypt for authentication
+
+## [2026-06-05] Database Field Name Mismatch
+Keywords: seed, schema, field name, undefined
+Pattern: seed script and model schema using different field names causes read operations to return undefined
+Applicable: any database seed + ORM combination
+```
+
+**Matching**: At debug start, scan knowledge base, rank by keyword overlap, display most relevant historical experience.
+
+**Maintenance**: After debug resolution, prompt to add new pattern. Semi-automatic: suggest entry, user confirms.
+
+---
+
+## 5. Research vs Reasoning Decision Tree
+
+During debugging, choose investigation method based on problem type:
+
+```
+if problem is framework/API usage issue:
+  → Search external docs (WebSearch)
+elif problem is project code logic:
+  → Trace code (Read, Grep)
+elif problem is environment/config:
+  → Check environment (Bash, env vars)
+elif 3 internal trace attempts with no progress:
+  → Switch to external search (WebSearch)
+```
+
+---
+
+## 6. Red Flag Checklist
 
 | Red Flag | Action |
 |---------|--------|
-| 修复引入两个新问题 | 回到 Phase 1 |
-| 同一假设连续失败 3 次 | 停止修复，质疑架构 |
-| 修复代码越来越复杂 | 考虑更高层架构变更 |
-| 无法稳定复现 | 增加日志，收集数据 |
-| 错误信息与逻辑不匹配 | 重新追踪数据流 |
-| 测试通过但行为异常 | 补充更多测试场景 |
+| Fix introduces two new problems | Back to Phase 1 |
+| Same hypothesis fails 3 times consecutively | Stop fixing, question architecture |
+| Fix code getting increasingly complex | Consider higher-level architecture change |
+| Cannot reproduce reliably | Add logging, collect data (likely race condition) |
+| Error message contradicts logic | Re-trace data flow from scratch |
+| Tests pass but behavior abnormal | Add more test scenarios |
+| All hypotheses exhausted | Back to Phase 2, generate fresh hypotheses |
+| Fixing symptoms, not root cause | Stop. Re-trace to root cause. Bug will recur otherwise. |
 
 ---
 
-## 4. Execution Flow
+## 7. Execution Flow
 
-1. **Phase 1**：根因调查（禁止提出修复方案）— 完整阅读错误 → 稳定复现 → 检查最近变更 → 追踪数据流
-2. **Phase 2**：模式分析 — 对比正常代码 → 搜索历史踩坑 → 缩小假设范围
-3. **Phase 3**：假设验证 — 单一假设 + 最小改动，3 次失败 → 停止修复，质疑架构
-4. **Phase 4**：修复验证 — RED 回归测试 → GREEN 实施修复 → 确认无新问题
-5. 修复完成后：status: "resolved"，提示 `/forge learn`
+1. **Pre-flight**: Branch gate check
+2. **Phase 1**: Symptom gathering (no fix proposals) → write Symptoms (immutable)
+3. **Phase 2**: Generate ≥2 falsifiable hypotheses → write Hypotheses (append-only)
+4. **Phase 3**: Test one hypothesis at a time → write Evidence/Eliminated (append-only)
+5. **Phase 4**: Fill Structured Reasoning Checkpoint → apply minimal fix (TDD optional)
+6. **Phase 5**: Full test suite → confirm no reproduction → confirm no regression → status: "resolved"
 
 ## Common Rationalizations
 
-| 合理化 | 反驳 |
-|--------|------|
-| "我知道 bug 在哪直接修" | 你可能 70% 的时候是对的。另外 30% 会浪费数小时。先复现再修 |
-| "这个失败的测试可能是测试本身的问题" | 验证这个假设。如果测试有问题就修测试，不要跳过它 |
-| "在我机器上是好的" | 环境不同。检查 CI、检查配置、检查依赖版本 |
+| Rationalization | Rebuttal |
+|----------------|----------|
+| "I know where the bug is, let me just fix it" | You may be right 70% of the time. The other 30% wastes hours. Reproduce first. |
+| "This failing test is probably a test bug" | Verify this hypothesis. If the test is wrong, fix the test. Don't skip it. |
+| "Works on my machine" | Different environment. Check CI, config, dependency versions. |
+| "Let me try this quick fix" | No. Phase 1 first. Quick fixes create harder-to-find bugs. |
+| "The error message is obvious" | Obvious symptoms can have non-obvious causes. Verify with evidence. |
 
 ---
 
-## 5. Edge Cases
+## 8. Edge Cases
 
-无法复现 → 竞态/环境问题，增日志查并发 · Phase 1 提修复 → 🚫 禁止 · 所有假设失败 → 回 Phase 1 扩大范围 · 无 `.forge/` → /forge init
+- **Cannot reproduce** → Likely race condition / environment issue. Add logging, check concurrency.
+- **Fix proposed in Phase 1** → Prohibited. Always.
+- **All hypotheses fail** → Back to Phase 2 with expanded scope. Consider architecture-level hypotheses.
+- **No `.forge/` directory** → Run `/forge init` first.
+- **Context overflow** → Debug reads too many files, context fills up. Use subagent for exploration, return only findings.
+- **symptoms_prefilled mode** → Skip Phase 1, go directly to Phase 2. Symptoms from Three-Strike context are pre-filled.
 
 ---
 
-## 6. Examples
+## 9. Integration with Three-Strike
+
+Three-Strike (§2.4 of CLAUDE.md) is the **trigger mechanism**; Scientific Method is the **methodology**. Relationship:
+
+- Three-Strike fires after 3 consecutive same-direction failures → enters `/forge debug` with `symptoms_prefilled` mode
+- Within debug, same hypothesis tested 3 times → stops that direction (inner Three-Strike)
+- Inner Three-Strike fires → question architecture, generate fundamentally different hypotheses
+- Both levels share the same `.forge/debug/{slug}.md` session file
+
+---
+
+## 10. Examples
 
 ```
 $ /forge debug
-━━━ Phase 1 ━━━  TypeError at export.ts:42 · 复现率100%(status=null) · 新增过滤未处理null · db.query→undefined
-━━━ Phase 2 ━━━  匹配 null-parameter-handling.md (0.7) · 假设A: db.query(null)→undefined
-━━━ Phase 3 ━━━  验证假设A: null检查 → ✅消失
-━━━ Phase 4 ━━━  🔴 RED FAIL ✅ → 🟢 GREEN PASS ✅ → 42/42 ✅
-✅ 根因: db.query未处理null · 修复: 查询层统一过滤null
+━━━ Phase 1 ━━━  TypeError at export.ts:42 · Reproduction: 100%
+                   Symptoms: null passed to filter, db.query returns undefined
+━━━ Phase 2 ━━━  H1: db.query(null)→undefined (predict: null check fails)
+                   H2: upstream passes null for empty result (predict: caller sends null)
+                   Knowledge match: null-parameter-handling.md (0.7 overlap)
+━━━ Phase 3 ━━━  Testing H1: null check → ✅ Confirmed. db.query(null) returns undefined.
+━━━ Phase 4 ━━━  Checkpoint filled. Fix: query-layer null filter
+                   🔴 RED (repro test) ✅ → 🟢 GREEN (fix) ✅
+━━━ Phase 5 ━━━  Full suite 42/42 ✅ · Symptom gone ✅ · No regression ✅
+✅ Root cause: db.query unhandled null · Fix: unified null filtering at query layer
 ```
 
 ## Gotchas
@@ -116,3 +333,5 @@ $ /forge debug
 - **Symptom vs cause**: Fix symptom, not root cause → bug recurs in different form → trace to root cause before fixing
 - **Three-strike loop**: Same hypothesis tested 3 times → confirms approach is wrong → question architecture, not implementation
 - **Context overflow**: Debug reads too many files → main context fills up → use subagent for exploration, return only findings
+- **Immutable symptoms**: Never modify Symptoms section after Phase 1 → prevents post-hoc rationalization
+- **Checkpoint bypass**: Skipping Structured Reasoning Checkpoint → violates Three-Strike → must fill before any fix

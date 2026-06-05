@@ -1,6 +1,6 @@
 {
   "version": 1,
-  "generated_at": "2026-06-05T02:17:09.797Z",
+  "generated_at": "2026-06-05T02:36:22.760Z",
   "subs": {
     "abort": {
       "instructions": {
@@ -41,7 +41,7 @@
     "build": {
       "instructions": {
         "path": "build/instructions.md",
-        "sha256": "21a6518eb3e21c5dfc2717a98df8c3531457f281535d860dd9aa7712f2fb58fa"
+        "sha256": "886a9faafff0270f0d266b4012a81903795bc71d7b13ed41f3b9bd1dc7b3c5b0"
       },
       "references": [
         {
@@ -189,12 +189,16 @@
     "debug": {
       "instructions": {
         "path": "debug/instructions.md",
-        "sha256": "48da8fc9517e727de5c1bb17a64e13de9bfbbaef9e1da54edd393eb5a18442cf"
+        "sha256": "edcfb5f300f76ba3a3962df63e211ad9a3a6538799f225ec36227ea4197e24a0"
       },
       "references": [
         {
           "path": "debug/references/function-contracts.md",
           "sha256": "1c80eb69d95ae6860ba925a4ed7ce7de12af8311246817440c5bab8f2fa02810"
+        },
+        {
+          "path": "debug/references/scientific-method.md",
+          "sha256": "cd0b85053a369de10c7b329c573c49118b40de418efb9515dd71ad467eb524c4"
         }
       ]
     },
@@ -320,7 +324,7 @@
     "learn": {
       "instructions": {
         "path": "learn/instructions.md",
-        "sha256": "cfc4890ef596b54ba13a4532656da598b60d9189c65564aed9f11aa0c619f5a3"
+        "sha256": "911d7599c2fc482347695da27952173e317c8c2e6161737ac1aef04da2ca5089"
       },
       "references": [
         {
@@ -565,7 +569,7 @@
     "router": {
       "instructions": {
         "path": "router/instructions.md",
-        "sha256": "5186c13428623496229560427ef0611ed010b67f4e5dea96338b0f17ba21e5f8"
+        "sha256": "cf56224c97f5af7edfe3ec6d5b2698f546833ad92d09709c14fc709f87bfcd3a"
       },
       "references": [
         {

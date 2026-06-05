@@ -40,8 +40,8 @@ description = "Verify Web/Electron UI through external harness execution. Use wh
 
 [debug]
 dispatch_mode = "fork"
-allowed_tools = ["Read", "Agent", "Glob", "Grep", "Bash"]
-description = "Diagnose root causes through four-phase hypothesis verification with minimal-change repair. Use when user says debug this, reports a regression, or after three consecutive build failures trigger the three-strike reroute."
+allowed_tools = ["Read", "Agent", "Glob", "Grep", "Bash", "Write", "Edit", "WebSearch"]
+description = "Use when user says debug this, reports a regression, or after three consecutive build failures trigger the three-strike reroute"
 
 [decide]
 dispatch_mode = "fork"
@@ -90,7 +90,7 @@ description = "Initialize a Forge project by creating .forge/ directory, config,
 
 [learn]
 dispatch_mode = "fork"
-allowed_tools = ["Read", "Agent", "Glob", "Grep", "Bash"]
+allowed_tools = ["Read", "Agent", "Glob", "Grep", "Bash", "Write", "Edit", "WebSearch"]
 description = "Capture reusable lessons across five dimensions from completed session experience. Use when user runs `/forge learn`, task completes, or needs to convert session experience into persistent knowledge assets."
 
 [loop]

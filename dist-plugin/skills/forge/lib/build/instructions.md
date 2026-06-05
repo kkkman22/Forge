@@ -1,5 +1,6 @@
 ---
 description: "Use when running `/forge build`, an approved plan exists, or the implementation phase of a standard or full tier task begins"
+updated: 2026-06-05
 
 dispatch_mode: fork
 allowed_tools:
@@ -247,6 +248,80 @@ GREEN 阶段的代码必须是"能让测试通过的最简单实现"。REFACTOR 
 
 ---
 
+## 5a. Deviation Tier Rules
+
+When executing plan tasks and encountering situations that deviate from the plan, follow this 4-tier system:
+
+### Rule 1: Auto-Fix Bugs
+**Trigger**: Obvious logic errors, typos, missing null checks
+**Condition**: Fix doesn't change overall architecture or affect other tasks
+**Action**: Auto-fix, annotate commit with [deviation]
+**Example**: Plan requires input validation, existing code lacks null check → add it
+
+### Rule 2: Auto-Add Missing Critical Functionality
+**Trigger**: Missing critical dependency or call needed for task success
+**Condition**: Addition is necessary for task to work, doesn't affect architecture
+**Action**: Auto-add, record in SUMMARY deviations section
+**Example**: Plan says "add user registration API", implementation needs password hashing → add it
+
+### Rule 3: Auto-Fix Blocking Issues
+**Trigger**: Compilation errors, test failures blocking progress
+**Condition**: Fix doesn't exceed task scope
+**Action**: Auto-fix, record in SUMMARY deviations section
+**Example**: Missing import causing compile error → add import
+
+### Rule 4: STOP for Architectural Changes
+**Trigger**: Any change to architecture, new dependencies, or beyond task scope
+**Condition**: NONE — always stop
+**Action**: STOP + output structured checkpoint with:
+- What was encountered
+- Why it exceeds scope
+- Suggested resolution
+**Example**: Implementation needs new state management library → stop and report
+
+### Package Install Safety Gate
+**NEVER auto-install new packages.** Return checkpoint with:
+- Package name + version
+- Install rationale
+- Alternative approaches
+- npm download count + maintenance status
+
+Purpose: prevent slopsquatting attacks.
+
+### Deviation Recording
+All deviations must be recorded in commit messages or SUMMARY:
+```
+## Deviations
+
+### Auto-Fixed (Rule N)
+- [description of what was fixed and why]
+- Impact: [scope of change]
+
+### Stopped (Rule 4)
+- [what was encountered and why it exceeds scope]
+- Suggestion: [recommended resolution]
+```
+
+### Deviation Decision Tree
+1. New package needed? → Package Safety Gate (stop)
+2. Changes architecture/data model? → Rule 4 (stop)
+3. Exceeds current task scope? → Rule 4 (stop)
+4. Obvious bug/error? → Rule 1 (auto-fix)
+5. Necessary for task success? → Rule 2 (auto-add)
+6. Blocking issue (compile/test fail)? → Rule 3 (auto-fix)
+7. Anything else? → Rule 4 (stop, conservative)
+
+### Interaction with Three-Strike
+- Rule 1-3 auto-fixes do NOT count toward Three-Strike
+- Rule 4 stops do NOT count toward Three-Strike
+- Only actual failures (fix didn't work) count toward Three-Strike
+- 3 failures → /forge debug
+
+### Compatibility with No-Confirmation Iron Law
+Deviation stops do NOT violate the No-Confirmation iron law (§2.7 / §6.0.1). No-Confirmation prohibits *phase-between* confirmations. Deviation checks are *within-phase* safety valves.
+
+---
+
 ## 6. Execution Discipline
 
 **6.0 Anti-drift**: 6 prohibited behaviors (proxy metrics / absorb verification / relabel fixes / silent degrade / pseudo-success / modify frozen). → 详见 references/anti-drift.md
@@ -390,9 +465,79 @@ Build 全部任务完成且 Final Validation 通过后，自动检查并更新�
 
 </IRON-LAW>
 
+## Subagent Status Handling
+
+### STATUS: DONE → 正常进入下一 task 或触发 review
+
+### STATUS: DONE_WITH_CONCERNS
+1. 读取 concerns 列表
+2. 正确性/范围疑虑 → 先修复再 review；观察性疑虑 → 记录，继续 review
+3. 判断结果写入 `.forge/status.md`
+
+### STATUS: BLOCKED
+1. 评估：上下文不足 → 补充重派 / 需更强推理 → 升级模型 / 任务过大 → 拆分 / 计划有问题 → 升级用户
+2. 同一任务连续 BLOCKED 3 次 → 触发 Three-Strike Reroute（CLAUDE.md §2.4）
+
+### STATUS: NEEDS_CONTEXT
+1. 从 plan/spec/codebase 中获取缺失信息
+2. 附加到 prompt 重新派发
+3. 同一任务连续 NEEDS_CONTEXT 2 次 → 升级为 BLOCKED 处理
+
+## TDD Red Flags — 出现以下想法时 STOP
+
+- 代码先于测试编写
+- "我先探索实现，测试后面补"
+- 测试立刻通过（没有先看到失败）
+- 无法解释为什么测试失败
+- 测试是"后来加的"
+- "这次例外"
+- "我已经手动测过了"
+- "保留代码当参考"
+- "花了好几个小时，删掉太浪费"
+- "TDD 太教条了"
+- "这个不一样因为..."
+
+**以上任何一条 = 删除代码，从测试开始。**
+
 ## Gotchas
 - **Skipping RED phase**: Write implementation first, then backfill tests → tests verify implementation not behavior → must write failing test first
 - **Subagent context leak**: Subagent returns full raw output → main context polluted with 50 lines of grep results → subagent must return conclusion summary only
 - **Atomic commit omission**: Change 3 files, commit only 1 → inconsistent state → commit all files for each subtask immediately
 - **Three-strike ignored**: Same fix attempted 4th time → wasted context → stop at 3, enter debug
 - **Plan drift**: Build deviates from approved plan → scope creep → re-read plan after every 3 tasks
+
+## Context State Classification (Layered Trimming)
+
+### Context State Classification
+When preparing context for this phase, classify the current context state:
+- PEAK (ratio < 0.30): Best state, no restrictions
+- GOOD (0.30 ≤ ratio < 0.50): Normal, all operations allowed
+- WARNING (0.50 ≤ ratio < 0.70): Begin trimming low-priority content
+- CRITICAL (ratio ≥ 0.70): Aggressive trimming + suggest checkpoint
+
+Important: Use the raw ratio (tokensUsed / contextWindow), NOT the rounded percentage. 59.999% is still WARNING, not CRITICAL.
+
+### Trimming Priority Chain
+When context enters WARNING or CRITICAL state, trim content in this priority order (drop lowest first):
+
+1. **Drop First**: Context files (code file contents, explore results)
+2. **Drop Second**: Research findings (external docs, web search results)
+3. **Keep High**: Project context (CLAUDE.md, config.md) — trim from tail
+4. **Keep Highest**: Spec locked requirements, system instructions — never trim
+5. **Proportional Keep**: Plan files — each plan gets proportional share, minimum 1024 bytes, truncate from tail
+6. **Last to Drop**: Requirements and acceptance criteria
+
+### Token Estimation
+Use chars ÷ 4 (ceiling) for token estimation. Consistency > precision.
+
+### Trim Transparency
+After any trimming, inject:
+```
+<note type="context-trim">
+Budget: {budget} tokens | Omitted: {omittedList} | Plan truncation: {pct}%
+Full content available in .forge/ directory.
+</note>
+```
+
+### Pressure-Aware Note Reserve
+Only reserve 80 tokens for the trim note when in WARNING or CRITICAL state. Do not reserve in PEAK/GOOD.
