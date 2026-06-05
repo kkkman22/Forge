@@ -1,0 +1,16 @@
+[
+  {"name": "instruction-override", "pattern": "ignore\\s+(previous|all|above|earlier)\\s+instructions?"},
+  {"name": "disregard-instructions", "pattern": "disregard\\s+(previous|above)\\s+(instructions?|rules)"},
+  {"name": "forget-all", "pattern": "forget\\s+(everything|all)"},
+  {"name": "role-manipulation", "pattern": "you\\s+are\\s+now\\s+a"},
+  {"name": "new-instructions", "pattern": "new\\s+instructions?:"},
+  {"name": "your-role", "pattern": "your\\s+(new\\s+)?role\\s+(is|should\\s+be)"},
+  {"name": "system-tag", "pattern": "<(system|assistant|human|user)>|\\[SYSTEM\\]|\\[INST\\]|<<SYS>>|<\\|im_start\\|>"},
+  {"name": "html-comment-tag", "pattern": "<!--\\s*(system|assistant)"},
+  {"name": "tool-call-injection", "pattern": "use\\s+(the\\s+)?(Read|Write|Edit|Bash)\\s+tool"},
+  {"name": "call-function", "pattern": "call\\s+(the\\s+)?function"},
+  {"name": "execute-command", "pattern": "execute\\s+(the\\s+)?(following\\s+)?command"},
+  {"name": "dan-mode", "pattern": "DAN\\s+(mode|jailbreak)"},
+  {"name": "developer-mode", "pattern": "developer\\s+mode"},
+  {"name": "bypass-restrictions", "pattern": "bypass\\s+(your|the)\\s+(restrictions|rules|guidelines)"}
+]

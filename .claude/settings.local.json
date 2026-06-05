@@ -1,0 +1,132 @@
+{
+  "hooks": {
+    "PreToolUse": [
+      {
+        "matcher": "Write|Edit",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "node",
+            "args": ["scripts/forge-prompt-guard.js"],
+            "timeout": 5
+          }
+        ]
+      }
+    ],
+    "PostToolUse": [
+      {
+        "matcher": "Read",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "node",
+            "args": ["scripts/forge-read-injection-scanner.js"],
+            "timeout": 5
+          }
+        ]
+      }
+    ]
+  },
+  "permissions": {
+    "allow": [
+      "Bash(git checkout *)",
+      "Bash(npm run *)",
+      "Bash(git add *)",
+      "Bash(git commit -m ' *)",
+      "Bash(git merge *)",
+      "Bash(git branch *)",
+      "WebSearch",
+      "Bash(curl -sL https://raw.githubusercontent.com/rtk-ai/rtk/master/src/init.rs)",
+      "Bash(curl -sL \"https://api.github.com/repos/rtk-ai/rtk/contents/src/init.rs\")",
+      "Bash(python3 -c \"import sys,json,base64; d=json.load\\(sys.stdin\\); print\\(base64.b64decode\\(d['content']\\).decode\\(\\)\\)\")",
+      "Bash(curl -sL \"https://raw.githubusercontent.com/rtk-ai/rtk/refs/heads/master/src/init.rs\")",
+      "Bash(rtk --version)",
+      "Bash(curl -fsSL https://raw.githubusercontent.com/rtk-ai/rtk/refs/heads/master/install.sh)",
+      "Bash(sh)",
+      "Bash(brew install *)",
+      "Bash(HOMEBREW_NO_AUTO_UPDATE=1 brew install rtk)",
+      "Bash(rtk init *)",
+      "Bash(bash scripts/build-dist.sh)",
+      "Bash(npx vitest *)",
+      "Bash(npx tsc *)",
+      "Bash(npx biome *)",
+      "Bash(npm install *)",
+      "Bash(git push *)",
+      "Bash(gh pr create --title 'feat\\(sandbox\\): sandbox execution environment' --body ' *)",
+      "Bash(gh pr *)",
+      "Bash(gh run *)",
+      "Bash(git stash *)",
+      "Read(//Users/king/.claude/**)",
+      "Read(//Users/king/.claude/tasks/**)",
+      "Bash(git pull *)",
+      "Bash(git remote *)",
+      "Bash(git worktree *)",
+      "Bash(grep -v 'main$')",
+      "Bash(bash scripts/check-readme-metrics.sh)",
+      "Bash(npm ci *)",
+      "Bash(command -v shellcheck)",
+      "Bash(shellcheck scripts/*.sh)",
+      "Bash(node -e \"JSON.parse\\(require\\('fs'\\).readFileSync\\('hooks/hooks.json','utf-8'\\)\\)\")",
+      "Bash(npm test *)",
+      "Bash(git status *)",
+      "Bash(git fetch *)",
+      "Skill(forge)",
+      "Skill(forge:*)",
+      "Bash(node -e \"const b = require\\('./src/index.ts'\\); console.log\\(Object.keys\\(b\\).filter\\(k => typeof b[k] !== 'undefined'\\).sort\\(\\).join\\('\\\\n'\\)\\)\")",
+      "Bash(npx tsx *)",
+      "Bash(node -e \"const e = require\\('./src/index.ts'\\); console.log\\(Object.keys\\(e\\).filter\\(k => typeof e[k] !== 'undefined'\\).length\\)\")",
+      "Bash(git show *)",
+      "Read(//tmp/**)",
+      "Bash(cp /tmp/gt_good.ts src/git-transaction.ts)",
+      "Bash(cp /tmp/lt_good.ts src/loop-types.ts)",
+      "Bash(cp /tmp/ee_good.ts src/effect-executor.ts)",
+      "Bash(cp /tmp/li_good.ts src/loop-index.ts)",
+      "Bash(git reset *)",
+      "Bash(git cherry-pick *)",
+      "Bash(sed -i '' '534,538d' README.md)",
+      "Bash(sed -i *)",
+      "Bash(git config *)",
+      "Bash(git ls-tree *)",
+      "Bash(git rm *)",
+      "Bash(python3)",
+      "Bash(cp -r .forge/specs/ship-delivery-unification/ .forge/archive/2026-04-29-ship-delivery-unification/specs/)",
+      "Bash(cp -r .forge/specs/agent-team-migration/ .forge/archive/2026-04-29-ship-delivery-unification/specs/)",
+      "Bash(git commit *)",
+      "Bash(gtimeout 30 npx vitest run test/fix-checklist.property.test.ts --reporter=verbose)",
+      "Bash(node -e \"const fc = require\\('fast-check'\\); console.log\\('version:', fc.version\\); console.log\\('has stringOf:', typeof fc.stringOf\\); console.log\\('has string:', typeof fc.string\\); console.log\\('has lorem:', typeof fc.lorem\\);\")",
+      "Bash(node -e \"const fc = require\\('fast-check'\\); const arb = fc.string\\({minLength: 2, maxLength: 5}\\).filter\\(s => s.trim\\(\\).length > 0\\); fc.sample\\(arb, 5\\).forEach\\(s => console.log\\(JSON.stringify\\(s\\)\\)\\);\")",
+      "Bash(xxd /Users/king/code/Forge/src/process-registry.ts)",
+      "Bash(node -e \"const b = require\\('./src/index.ts'\\); console.log\\(Object.keys\\(b\\).filter\\(k => typeof b[k] !== 'undefined'\\).length\\)\")",
+      "Bash(grep -v '^$')",
+      "Bash(node -e ' *)",
+      "Bash(echo \"EXIT: $?\")",
+      "Bash(git log *)",
+      "Bash(git reflog *)",
+      "Bash(echo \"EXIT=$?\")",
+      "Bash(node *)",
+      "Bash(biome check *)",
+      "Bash(chmod +x /Users/king/code/Forge/scripts/run-with-trim.sh)",
+      "Bash(cp agents/explore.md .claude/agents/explore.md)",
+      "Bash(cp agents/debugger.md .claude/agents/debugger.md)",
+      "Bash(cp agents/critic.md .claude/agents/critic.md)",
+      "Bash(cp .claude/agents/spec-check.md agents/spec-check.md)",
+      "Bash(cp .claude/agents/quality-check.md agents/quality-check.md)",
+      "Bash(cp .claude/agents/security-check.md agents/security-check.md)",
+      "Bash(git -C /Users/king/code/Forge/.claude/worktrees/skill-composability fetch origin main)",
+      "Bash(git -C /Users/king/code/Forge/.claude/worktrees/skill-composability merge origin/main)",
+      "Bash(git -C /Users/king/code/Forge/.claude/worktrees/skill-composability stash)",
+      "Bash(git *)",
+      "Bash(/forge\" skills/*/SKILL.md | grep -v \"^Binary\")",
+      "Bash(grep -n \"下一步\\\\|→ /forge\\\\|Next Step\\\\|→  `/forge\" skills/*/SKILL.md | grep -v \"^Binary\")",
+      "Bash(awk *)",
+      "Bash([ -d \"skills/$skill/references\" ])",
+      "Bash([ -f \"/Users/king/code/Forge/$f\" ])",
+      "Bash(npm audit *)",
+      "Bash(npm ls *)",
+      "Bash(npm view *)",
+      "Bash(grep -rn '\\\\b[0-9]\\\\{1,3\\\\}\\\\b' src/ --include=\"*.ts\")",
+      "Bash(echo \"Exit code: $?\")",
+      "Bash(grep -n \"--agent\" /Users/king/code/Forge/src/forge-loop-cli.ts)"
+    ]
+  }
+}
