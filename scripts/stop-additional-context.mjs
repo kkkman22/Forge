@@ -30,7 +30,7 @@ export const MAX_ADDITIONAL_CONTEXT_LENGTH = 4096;
  * @typedef {Object} StopContextInput
  * @property {string} cwd
  * @property {string} [session_id]
- * @property {"Stop"|"SubagentStop"} hook_event_name
+ * @property {"Stop"|"SubagentStop"|"StopFailure"} hook_event_name
  * @property {string} [agent_id]
  * @property {string} [agent_type]
  */
