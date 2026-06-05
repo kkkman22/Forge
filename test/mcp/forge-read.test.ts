@@ -11,6 +11,7 @@
  */
 import { afterEach, describe, expect, it, type MockInstance, vi } from "vitest";
 import { execReadScript } from "../../src/mcp/tools/forge-read.js";
+import { validatePaths, validateScript } from "../../src/mcp/tools/forge-read.js";
 
 // ---------------------------------------------------------------------------
 // Mock child_process.execFile
@@ -312,5 +313,91 @@ describe("execReadScript with cwd", () => {
     });
     expect(capturedOpts.cwd).toBe("/custom/root");
     expect(result.exitCode).toBe(0);
+  });
+});
+
+// ---------------------------------------------------------------------------
+// validatePaths — path traversal prevention
+// ---------------------------------------------------------------------------
+
+describe("validatePaths", () => {
+  it("allows paths within project root", () => {
+    expect(validatePaths(["/home/user/project/src/index.ts"], "/home/user/project")).toBeNull();
+  });
+
+  it("allows relative paths within project root", () => {
+    expect(validatePaths(["src/index.ts"], "/home/user/project")).toBeNull();
+  });
+
+  it("rejects absolute paths escaping project root", () => {
+    const result = validatePaths(["/etc/passwd"], "/home/user/project");
+    expect(result).toMatch(/escapes project root/);
+  });
+
+  it("rejects relative paths with .. traversal", () => {
+    const result = validatePaths(["../../../etc/passwd"], "/home/user/project");
+    expect(result).toMatch(/escapes project root/);
+  });
+
+  it("rejects mixed valid and invalid paths", () => {
+    const result = validatePaths(["src/a.ts", "/tmp/evil"], "/home/user/project");
+    expect(result).toMatch(/escapes project root/);
+  });
+
+  it("allows multiple valid paths", () => {
+    expect(validatePaths(["src/a.ts", "src/b.ts", "test/c.test.ts"], "/home/user/project")).toBeNull();
+  });
+});
+
+// ---------------------------------------------------------------------------
+// validateScript — dangerous pattern detection
+// ---------------------------------------------------------------------------
+
+describe("validateScript", () => {
+  it("allows legitimate analysis scripts", () => {
+    const script = `
+      const files = JSON.parse(process.env.FORGE_FILES);
+      const fs = require('fs');
+      files.forEach(f => {
+        const content = fs.readFileSync(f, 'utf-8');
+        console.log(f, content.split('\\n').length);
+      });
+    `;
+    expect(validateScript(script)).toBeNull();
+  });
+
+  it("rejects child_process require", () => {
+    expect(validateScript("require('child_process').exec('rm -rf /')")).toMatch(/child_process/);
+  });
+
+  it("rejects process.exit", () => {
+    expect(validateScript("process.exit(1)")).toMatch(/process\.exit/);
+  });
+
+  it("rejects eval usage", () => {
+    expect(validateScript("eval('malicious code')")).toMatch(/eval/);
+  });
+
+  it("rejects Function constructor", () => {
+    expect(validateScript("Function('return process')()")).toMatch(/Function/);
+  });
+
+  it("rejects writeFileSync", () => {
+    expect(validateScript("require('fs').writeFileSync('/tmp/x','')")).toMatch(/writeFileSync/);
+  });
+
+  it("rejects writeFile", () => {
+    expect(validateScript("require('fs').writeFile('/tmp/x','')")).toMatch(/writeFile/);
+  });
+
+  it("rejects execSync", () => {
+    // child_process appears first in the pattern list, so either match is valid
+    const result = validateScript("require('child_process').execSync('id')");
+    expect(result).toMatch(/child_process|execSync/);
+  });
+
+  it("allows reading with require('fs')", () => {
+    // readFileSync is not in the dangerous patterns — read-only is safe
+    expect(validateScript("require('fs').readFileSync('a.ts','utf-8')")).toBeNull();
   });
 });

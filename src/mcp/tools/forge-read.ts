@@ -13,6 +13,7 @@
  */
 
 import { execFile } from "node:child_process";
+import { resolve, relative } from "node:path";
 import type { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { z } from "zod";
 import type { ResolvedRoot } from "../project-root.js";
@@ -23,6 +24,64 @@ import type { ResolvedRoot } from "../project-root.js";
 
 /** Default timeout for script execution (30 seconds). */
 const DEFAULT_TIMEOUT_MS = 30_000;
+
+// ---------------------------------------------------------------------------
+// Security: path and script validation
+// ---------------------------------------------------------------------------
+
+/**
+ * Validate that all paths resolve within the project root.
+ * Returns an error message if any path escapes, or null if all are safe.
+ */
+export function validatePaths(paths: string[], projectRoot: string): string | null {
+  const resolvedRoot = resolve(projectRoot);
+  for (const p of paths) {
+    const resolved = resolve(projectRoot, p);
+    const rel = relative(resolvedRoot, resolved);
+    if (rel.startsWith("..") || (rel.length > 0 && !resolved.startsWith(resolvedRoot))) {
+      return `Path escapes project root: ${p}`;
+    }
+  }
+  return null;
+}
+
+/** Dangerous Node.js API patterns that should not appear in user scripts. */
+const DANGEROUS_SCRIPT_PATTERNS: Array<{ pattern: RegExp; label: string }> = [
+  { pattern: /child_process/, label: "child_process" },
+  { pattern: /process\.exit/, label: "process.exit" },
+  { pattern: /eval\s*\(/, label: "eval()" },
+  { pattern: /Function\s*\(/, label: "Function()" },
+  { pattern: /writeFileSync/, label: "writeFileSync" },
+  { pattern: /writeFile\b/, label: "writeFile" },
+  { pattern: /appendFileSync/, label: "appendFileSync" },
+  { pattern: /appendFile\b/, label: "appendFile" },
+  { pattern: /unlinkSync/, label: "unlinkSync" },
+  { pattern: /unlink\b/, label: "unlink" },
+  { pattern: /rmSync/, label: "rmSync" },
+  { pattern: /rmdir\b/, label: "rmdir" },
+  { pattern: /renameSync/, label: "renameSync" },
+  { pattern: /rename\b/, label: "rename" },
+  { pattern: /chmodSync/, label: "chmodSync" },
+  { pattern: /chownSync/, label: "chownSync" },
+  { pattern: /execSync/, label: "execSync" },
+  { pattern: /spawnSync/, label: "spawnSync" },
+  { pattern: /execFileSync/, label: "execFileSync" },
+  { pattern: /mkdirSync/, label: "mkdirSync" },
+  { pattern: /mkdir\b/, label: "mkdir" },
+];
+
+/**
+ * Validate that a script does not contain dangerous patterns.
+ * Returns an error message if dangerous, or null if safe.
+ */
+export function validateScript(script: string): string | null {
+  for (const { pattern, label } of DANGEROUS_SCRIPT_PATTERNS) {
+    if (pattern.test(script)) {
+      return `Script contains dangerous pattern: ${label}`;
+    }
+  }
+  return null;
+}
 
 // ---------------------------------------------------------------------------
 // Subprocess execution
@@ -140,6 +199,28 @@ export function registerForgeRead(server: McpServer, root?: ResolvedRoot): void 
       },
     },
     async ({ paths, script, language }) => {
+      // Security: validate paths stay within project root
+      if (root) {
+        const pathError = validatePaths(paths, root.path);
+        if (pathError) {
+          return {
+            content: [{ type: "text" as const, text: pathError }],
+            isError: true,
+          };
+        }
+      }
+
+      // Security: validate script for dangerous patterns (javascript only)
+      if (language === "javascript") {
+        const scriptError = validateScript(script);
+        if (scriptError) {
+          return {
+            content: [{ type: "text" as const, text: scriptError }],
+            isError: true,
+          };
+        }
+      }
+
       // Execute script with FORGE_FILES env var
       const readOpts = root ? { cwd: root.path } : undefined;
       const result = await execReadScript(script, language, paths, DEFAULT_TIMEOUT_MS, readOpts);
