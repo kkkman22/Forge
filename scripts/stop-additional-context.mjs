@@ -64,8 +64,8 @@ export const MAX_ADDITIONAL_CONTEXT_LENGTH = 4096;
  * @returns {import('./stop-additional-context.mjs').StopContextDecision}
  */
 export function buildStopContext(input, state) {
-  // Priority 1: Subagent failure
-  if (input.hook_event_name === "SubagentStop" && state.subagentFailure) {
+  // Priority 1: Subagent failure (StopFailure is the proxy event for SubagentStop)
+  if ((input.hook_event_name === "SubagentStop" || input.hook_event_name === "StopFailure") && state.subagentFailure) {
     const ctx = `Forge subagent (${state.subagentFailure.agentType}) failed: ${state.subagentFailure.category} — ${state.subagentFailure.summary}. Consider retry or check fallback ladder entry point.`;
     return {
       shouldEmit: true,
@@ -192,12 +192,39 @@ function readForgeState(cwd) {
 
 /**
  * Check if there's evidence of recent verification (test run, lint, etc.).
- * Simple heuristic: check if .forge/progress/ has recently updated tasks.
+ * Heuristic: check if .forge/progress/ has recently-modified task files,
+ * or if recent git commits contain test/verify patterns.
  */
 function checkVerificationEvidence(cwd) {
-  // For now, always return false to trigger the diagnostic.
-  // A more sophisticated check could look at git log for recent test commits.
-  return false;
+  try {
+    const { execSync } = require("node:child_process");
+    // Check last 3 commits for test/verify evidence
+    const log = execSync(
+      'git log --oneline -3 --format="%s" 2>/dev/null',
+      { cwd, encoding: "utf-8", timeout: 3000 },
+    );
+    const testPatterns = /\btest\b|\bverify\b|\bcheck\b|\bvitest\b|\bnpm run\b|\bci\b/i;
+    if (testPatterns.test(log)) return true;
+
+    // Check if any progress file was modified in the last 5 minutes
+    const { readdirSync, statSync } = require("node:fs");
+    const { join } = require("node:path");
+    const progressDir = join(cwd, ".forge", "progress");
+    const fiveMinAgo = Date.now() - 5 * 60 * 1000;
+    try {
+      for (const f of readdirSync(progressDir)) {
+        if (f.endsWith(".md")) {
+          const st = statSync(join(progressDir, f));
+          if (st.mtimeMs > fiveMinAgo) return true;
+        }
+      }
+    } catch { /* progress dir not found, skip */ }
+
+    return false;
+  } catch {
+    // Cannot determine — assume no evidence (safe: triggers diagnostic)
+    return false;
+  }
 }
 
 /**

@@ -103,6 +103,36 @@ describe("buildStopContext", () => {
     const result = buildStopContext(input, state);
     expect(result.shouldEmit).toBe(true);
     expect(result.reason).toBe("subagent_failure");
+    expect(result.additionalContext).toContain("spec-check");
+    expect(result.additionalContext).toContain("timeout");
+    expect(result.additionalContext).toContain("fallback");
+  });
+
+  it("StopFailure (SubagentStop proxy) with failure summary → subagent_failure", () => {
+    const input = {
+      cwd: "/project",
+      hook_event_name: "StopFailure" as const,
+      agent_id: "spec-check-abc",
+      agent_type: "spec-check",
+    };
+    const state = {
+      phase: "review",
+      task: null,
+      hasVerificationEvidence: false,
+      incompleteTasks: [],
+      isAutoAdvanceGap: false,
+      subagentFailure: {
+        agentType: "spec-check",
+        category: "crash",
+        summary: "Agent crashed during review",
+      },
+    };
+    const result = buildStopContext(input, state);
+    expect(result.shouldEmit).toBe(true);
+    expect(result.reason).toBe("subagent_failure");
+    expect(result.additionalContext).toContain("spec-check");
+    expect(result.additionalContext).toContain("crash");
+    expect(result.reason).toBe("subagent_failure");
     expect(result.additionalContext!).toContain("spec-check");
     expect(result.additionalContext!).toContain("fallback");
   });
