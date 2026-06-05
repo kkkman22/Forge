@@ -77,9 +77,6 @@ export function validateScript(script: string): string | null {
 /** Maximum heap size (MB) for forge_read script execution. */
 const SANDBOX_MAX_HEAP_MB = 256;
 
-/** CPU time limit (ms) for forge_read script execution — guards against infinite loops. */
-const SANDBOX_TIMEOUT_MS = 15_000;
-
 /**
  * Build the environment variables for sandboxed script execution.
  * For JavaScript, adds `NODE_OPTIONS` with resource limits (max heap, etc.)

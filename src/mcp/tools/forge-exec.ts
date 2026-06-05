@@ -178,7 +178,12 @@ export function execCommand(
         },
         (error, stdout, stderr) => {
           if (error && "killed" in error && error.killed) {
-            resolve({ stdout: String(stdout), stderr: String(stderr), exitCode: 1, timedOut: true });
+            resolve({
+              stdout: String(stdout),
+              stderr: String(stderr),
+              exitCode: 1,
+              timedOut: true,
+            });
             return;
           }
           const exitCode = error && "code" in error ? ((error.code as number) ?? 1) : 0;
@@ -200,7 +205,12 @@ export function execCommand(
         },
         (error, stdout, stderr) => {
           if (error && "killed" in error && error.killed) {
-            resolve({ stdout: String(stdout), stderr: String(stderr), exitCode: 1, timedOut: true });
+            resolve({
+              stdout: String(stdout),
+              stderr: String(stderr),
+              exitCode: 1,
+              timedOut: true,
+            });
             return;
           }
           const exitCode = error && "code" in error ? ((error.code as number) ?? 1) : 0;
