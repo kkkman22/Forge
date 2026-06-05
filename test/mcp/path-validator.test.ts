@@ -48,8 +48,6 @@ describe("validateSinglePath", () => {
   });
 
   it("handles deeply nested valid paths", () => {
-    expect(
-      validateSinglePath("src/mcp/tools/forge-read.ts", "/home/user/project"),
-    ).toBe(true);
+    expect(validateSinglePath("src/mcp/tools/forge-read.ts", "/home/user/project")).toBe(true);
   });
 });
