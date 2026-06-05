@@ -4,7 +4,9 @@ import { buildCurlCommand } from "../src/accept-driver.js";
 describe("buildCurlCommand — shell injection protection", () => {
   it("produces valid command for normal URL", () => {
     const cmd = buildCurlCommand("GET", "https://api.example.com/v1/status");
-    expect(cmd).toBe('curl -s -o /dev/null -w "%{http_code}" -X GET \'https://api.example.com/v1/status\'');
+    expect(cmd).toBe(
+      "curl -s -o /dev/null -w \"%{http_code}\" -X GET 'https://api.example.com/v1/status'",
+    );
   });
 
   it("escapes URL containing shell metacharacters", () => {

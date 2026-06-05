@@ -72,8 +72,7 @@ describe("findMentionedTerms", () => {
     const glossary = makeGlossary(terms);
 
     // Build a description that mentions only a few
-    const description =
-      "we need term42 and alias99 for this feature, also term250 is important";
+    const description = "we need term42 and alias99 for this feature, also term250 is important";
 
     const start = Date.now();
     const result = findMentionedTerms(description, glossary);
@@ -84,11 +83,7 @@ describe("findMentionedTerms", () => {
   });
 
   it("handles long description efficiently", () => {
-    const glossary = makeGlossary([
-      { term: "alpha" },
-      { term: "beta" },
-      { term: "gamma" },
-    ]);
+    const glossary = makeGlossary([{ term: "alpha" }, { term: "beta" }, { term: "gamma" }]);
     const description = "filler ".repeat(50_000) + "alpha and beta appear here";
 
     const start = Date.now();

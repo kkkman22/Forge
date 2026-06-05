@@ -53,9 +53,9 @@ describe("canonicalizePathExpression", () => {
     expect(result.normalized).toBe("/Users/x/.forge/config.md");
   });
 
-  it("${HOME}/.forge/config.md normalizes with homeDir", async () => {
+  it("${" + "HOME}/.forge/config.md normalizes with homeDir", async () => {
     const { canonicalizePathExpression } = await import("../src/path-equivalence.js");
-    const result = canonicalizePathExpression("${HOME}/.forge/config.md", OPTS);
+    const result = canonicalizePathExpression("${" + "HOME}/.forge/config.md", OPTS);
     expect(result.normalized).toBe("/Users/x/.forge/config.md");
   });
 

@@ -1,7 +1,11 @@
 import { mkdirSync, readFileSync, rmSync } from "node:fs";
 import { resolve } from "node:path";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
-import { computeHmac, appendAuditLog, type GateBlockReason } from "../../src/forge-dispatcher/audit-log.js";
+import {
+  appendAuditLog,
+  computeHmac,
+  type GateBlockReason,
+} from "../../src/forge-dispatcher/audit-log.js";
 
 const TMP_DIR = resolve(import.meta.dirname, "..", "__audit_hmac_tmp__");
 
@@ -74,7 +78,10 @@ describe("appendAuditLog uses async I/O", () => {
 
   it("writes entry with HMAC computed via createHmac", async () => {
     vi.stubEnv("FORGE_AUDIT_SECRET", "test-secret");
-    const entry = { ...baseEntry, hmac: "placeholder" } as import("../../src/forge-dispatcher/audit-log.js").AuditEntry;
+    const entry = {
+      ...baseEntry,
+      hmac: "placeholder",
+    } as import("../../src/forge-dispatcher/audit-log.js").AuditEntry;
     // computeHmac should be used to compute hmac before writing
     const expectedHmac = computeHmac(entry.prev_hmac, entry);
     entry.hmac = expectedHmac;
