@@ -123,7 +123,7 @@ export function checkSandboxAccess(
   let config: SandboxRuntimeConfig;
   try {
     config = JSON.parse(readFileSync(configPath, "utf-8"));
-  } catch {
+  } catch (_err: unknown) {
     return { allowed: false, reason: "Sandbox: failed to parse policy config" };
   }
 
@@ -131,7 +131,7 @@ export function checkSandboxAccess(
     let parsed: Record<string, unknown>;
     try {
       parsed = JSON.parse(toolInput);
-    } catch {
+    } catch (_err: unknown) {
       return { allowed: false, reason: "Sandbox: failed to parse tool input" };
     }
     const filePath = (parsed.file_path ?? parsed.path ?? "") as string;
@@ -144,7 +144,7 @@ export function checkSandboxAccess(
     let parsed: Record<string, unknown>;
     try {
       parsed = JSON.parse(toolInput);
-    } catch {
+    } catch (_err: unknown) {
       return { allowed: false, reason: "Sandbox: failed to parse tool input" };
     }
     const command = (parsed.command ?? "") as string;

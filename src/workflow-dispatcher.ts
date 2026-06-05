@@ -115,7 +115,7 @@ export function probeL0Eligibility(ctx: DispatchContext): ProbeResult {
   }
   try {
     execFileSync("node", ["--check", workflowFile], { stdio: "pipe" });
-  } catch {
+  } catch (_err: unknown) {
     return { eligible: false, reason: "workflow_syntax_error" };
   }
 
@@ -126,7 +126,7 @@ export function probeL0Eligibility(ctx: DispatchContext): ProbeResult {
   }
   try {
     execFileSync("node", ["--check", concurrencyFile], { stdio: "pipe" });
-  } catch {
+  } catch (_err: unknown) {
     return { eligible: false, reason: "concurrency_uncontrolled" };
   }
 
@@ -165,7 +165,7 @@ export function readWorkflowVersion(ctx: DispatchContext): string {
     const src = readFileSync(workflowFile, "utf-8");
     const match = src.match(/version\s*:\s*['"]([^'"]+)['"]/);
     return match?.[1] ?? "unknown";
-  } catch {
+  } catch (_err: unknown) {
     return "unknown";
   }
 }
@@ -282,7 +282,7 @@ export async function dispatch(
   if (result.chosenLevel === "L3" && deps.topic) {
     try {
       writeBlockedAuditRecord(ctx.forgeRoot, ctx.subcommand, deps.topic, ctx.runId);
-    } catch {
+    } catch (_err: unknown) {
       // Audit-write failure must not mask the L3 blocked state itself
     }
   }

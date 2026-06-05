@@ -16,7 +16,7 @@ export function parseWaves(jsonBlock: string, tasks: TaskSeed[]): Wave[] {
   let parsed: { waves: Wave[] };
   try {
     parsed = JSON.parse(jsonBlock);
-  } catch {
+  } catch (_err: unknown) {
     throw new Error("Invalid JSON in wave block");
   }
 

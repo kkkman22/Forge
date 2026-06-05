@@ -60,7 +60,7 @@ export async function tryFetchEnrichment(
     // Simulate MCP check — if MCP tools are not available, return null
     // This will be connected to actual MCP runtime when available
     return null;
-  } catch {
+  } catch (_err: unknown) {
     // All errors → null, caller treats as missing enrichment
     return null;
   }
@@ -80,7 +80,7 @@ export async function postPRComment(
   try {
     // Stub — would call Bitbucket MCP add_comment
     return false;
-  } catch {
+  } catch (_err: unknown) {
     return false;
   }
 }

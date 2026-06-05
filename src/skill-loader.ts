@@ -92,7 +92,7 @@ export function loadSkillsFromDir(
       if (isSkillManifest(parsed)) {
         manifests.push(parsed);
       }
-    } catch {
+    } catch (_err: unknown) {
       // Not valid JSON — skip
     }
   }
@@ -164,7 +164,7 @@ export function installSkill(
   let manifest: unknown;
   try {
     manifest = JSON.parse(readFileSync(manifestPath, "utf-8"));
-  } catch {
+  } catch (_err: unknown) {
     return { success: false, message: `Invalid JSON in skill.json` };
   }
 

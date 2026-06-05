@@ -52,7 +52,7 @@ export async function loadOrCreateIndex(sessionId: string): Promise<ReadCacheInd
     if (parsed.sessionId === sessionId && typeof parsed.entries === "object") {
       return parsed;
     }
-  } catch {
+  } catch (_err: unknown) {
     // File missing or corrupted — create fresh
   }
   return { sessionId, entries: {} };
@@ -65,7 +65,7 @@ export async function persistIndex(index: ReadCacheIndex): Promise<void> {
   try {
     const filePath = cacheFilePath(index.sessionId);
     await writeFile(filePath, JSON.stringify(index));
-  } catch {
+  } catch (_err: unknown) {
     // Fail-open: cache persistence failure should not block reads
   }
 }

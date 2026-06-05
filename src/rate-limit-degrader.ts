@@ -74,7 +74,7 @@ export class RateLimitDegrader {
     const line = `${new Date().toISOString()} · ${this.subcommand} · 429-degrade · old=${oldLimit} new=${newLimit} probe=none\n`;
     try {
       mkdirSync(dirname(this.toolHealthPath), { recursive: true });
-    } catch {
+    } catch (err: unknown) {
       return; // mkdir failure → silently skip
     }
 
@@ -97,14 +97,14 @@ export class RateLimitDegrader {
 
     try {
       appendFileSync(this.toolHealthPath, line, "utf-8");
-    } catch {
+    } catch (_err: unknown) {
       // Silently skip — don't block main flow on tool-health write failure
     } finally {
       if (lockFd !== null) {
         try {
           closeSync(lockFd);
           unlinkSync(lockPath);
-        } catch {
+        } catch (_err: unknown) {
           // Stale lock will be cleaned by next O_EXCL attempt timing out + falling through
         }
       }

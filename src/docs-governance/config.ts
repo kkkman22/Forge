@@ -144,7 +144,7 @@ export function loadConfigWithDefaults(raw: string): Config {
       }
     }
     parsed = yaml.parse(content) ?? {};
-  } catch {
+  } catch (_err: unknown) {
     diags.push(makeWarning("config", "failed to parse YAML", "all defaults"));
     return {
       docs: { ...DEFAULTS.docs },

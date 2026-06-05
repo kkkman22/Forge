@@ -59,7 +59,7 @@ export async function shouldClearGoal(stateRoot?: string): Promise<boolean> {
     const raw = readFileSync(statePath, "utf-8");
     const data = JSON.parse(raw);
     return typeof data.count === "number" && data.count >= 3;
-  } catch {
+  } catch (_err: unknown) {
     return false;
   }
 }

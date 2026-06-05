@@ -81,7 +81,7 @@ function tryGitResolve(ref: string, cwd: string): string | null {
       stdio: ["pipe", "pipe", "pipe"],
     }).trim();
     return result.length > 0 ? result : null;
-  } catch {
+  } catch (_err: unknown) {
     return null;
   }
 }
@@ -103,7 +103,7 @@ function tryMergeBase(cwd: string): string | null {
       stdio: ["pipe", "pipe", "pipe"],
     }).trim();
     return result.length > 0 ? result : null;
-  } catch {
+  } catch (_err: unknown) {
     return null;
   }
 }
@@ -117,7 +117,7 @@ function tryParent(cwd: string): string | null {
       stdio: ["pipe", "pipe", "pipe"],
     }).trim();
     return result.length > 0 ? result : null;
-  } catch {
+  } catch (_err: unknown) {
     return null;
   }
 }
@@ -129,7 +129,7 @@ function tryLastSnapshot(topic: string, forgeDir: string): string | null {
   try {
     const files = readdirSync(treatmentDir);
     return files.length > 0 ? treatmentDir : null;
-  } catch {
+  } catch (_err: unknown) {
     return null;
   }
 }

@@ -28,14 +28,14 @@ export async function getDescendants(pid: number): Promise<ProcessTreeNode[]> {
         command = execFileSync("ps", ["-p", String(childPid), "-o", "comm="], {
           encoding: "utf-8",
         }).trim();
-      } catch {
+      } catch (_err: unknown) {
         // Process may have exited
       }
       const children = await getDescendants(childPid);
       nodes.push({ pid: childPid, command, children });
     }
     return nodes;
-  } catch {
+  } catch (_err: unknown) {
     return [];
   }
 }
@@ -74,7 +74,7 @@ export async function killProcessTree(
       try {
         process.kill(p, 0); // Check if still alive
         process.kill(p, "SIGKILL");
-      } catch {
+      } catch (_err: unknown) {
         // Already exited
       }
     }
@@ -104,7 +104,7 @@ export function killProcessGroup(pgid: number, signal: NodeJS.Signals = "SIGTERM
   try {
     process.kill(-pgid, signal);
     return true;
-  } catch {
+  } catch (_err: unknown) {
     return false;
   }
 }

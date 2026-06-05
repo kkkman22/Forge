@@ -31,7 +31,7 @@ export async function getFileHash(filePath: string): Promise<string> {
   try {
     const gitHash = await gitHashObject(filePath);
     if (gitHash) return gitHash;
-  } catch {
+  } catch (_err: unknown) {
     // Git not available or file not in repo — fall through
   }
 

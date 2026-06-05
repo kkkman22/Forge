@@ -63,7 +63,7 @@ function cmuxAvailableShim(env: NodeJS.ProcessEnv, statSync: typeof StatSyncFn):
     const st = statSync(socketPath);
     if (!st.isSocket()) return blocked("socket_not_socket");
     return { ok: true, gate_result: "go", cmux_available: true };
-  } catch {
+  } catch (_err: unknown) {
     return blocked("socket_missing");
   }
 }

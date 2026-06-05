@@ -230,7 +230,7 @@ export function migrateLegacySpec(featureDir: string, eventsPath?: string): Migr
           writeEvent: typeof import("./event-writer.js").writeEvent;
         };
         writeEvent(eventsPath, "spec_migration_failed", { error: String(err) });
-      } catch {
+      } catch (_err: unknown) {
         /* best effort */
       }
     }
@@ -238,7 +238,7 @@ export function migrateLegacySpec(featureDir: string, eventsPath?: string): Migr
     for (const f of writtenFiles) {
       try {
         unlinkSync(f);
-      } catch {
+      } catch (_err: unknown) {
         /* best effort */
       }
     }
@@ -246,7 +246,7 @@ export function migrateLegacySpec(featureDir: string, eventsPath?: string): Migr
     if (!existsSync(specPath) && existsSync(legacyPath)) {
       try {
         renameSync(legacyPath, specPath);
-      } catch {
+      } catch (_err: unknown) {
         /* best effort */
       }
     }
@@ -256,7 +256,7 @@ export function migrateLegacySpec(featureDir: string, eventsPath?: string): Migr
     if (plansLegacyRenamed && existsSync(plansLegacyRenamed)) {
       try {
         renameSync(plansLegacyRenamed, plansLegacyRenamed.replace(/\.legacy$/, ""));
-      } catch {
+      } catch (_err: unknown) {
         /* best effort */
       }
     }

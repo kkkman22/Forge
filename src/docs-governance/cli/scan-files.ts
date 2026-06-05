@@ -36,7 +36,7 @@ export function walkMdFiles(dir: string, opts: WalkOptions = {}): string[] {
     let entries: Dirent<string>[];
     try {
       entries = readdirSync(current, { withFileTypes: true }) as Dirent<string>[];
-    } catch {
+    } catch (_err: unknown) {
       return;
     }
 
@@ -68,7 +68,7 @@ export function walkMdFiles(dir: string, opts: WalkOptions = {}): string[] {
           const stat = statSync(fullPath);
           isDir = stat.isDirectory();
           isFile = stat.isFile();
-        } catch {
+        } catch (_err: unknown) {
           continue;
         }
       }

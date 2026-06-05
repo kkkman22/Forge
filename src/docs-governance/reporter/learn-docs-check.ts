@@ -15,7 +15,7 @@ function parseNdjsonLines(output: string, diags: DiagnosticRecord[]): void {
     if (!line.trim()) continue;
     try {
       diags.push(JSON.parse(line) as DiagnosticRecord);
-    } catch {
+    } catch (_err: unknown) {
       // Skip non-JSON lines
     }
   }

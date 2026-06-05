@@ -160,7 +160,7 @@ export class ProcessRegistry {
               try {
                 process.kill(pid, 0);
                 allGone = false;
-              } catch {
+              } catch (err: unknown) {
                 state.exited = true;
                 result.terminated++;
               }
@@ -196,7 +196,7 @@ export class ProcessRegistry {
     let parsed: unknown;
     try {
       parsed = JSON.parse(json);
-    } catch {
+    } catch (_err: unknown) {
       throw new Error(`Invalid JSON in ProcessRegistry deserialize: ${json.slice(0, 50)}`);
     }
 

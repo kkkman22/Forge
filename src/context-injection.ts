@@ -63,7 +63,7 @@ export function readContextEntries(filePath: string): ContextEntry[] {
   let content: string;
   try {
     content = readFileSync(filePath, "utf-8");
-  } catch {
+  } catch (_err: unknown) {
     // File does not exist or is unreadable — return empty
     return [];
   }
@@ -86,7 +86,7 @@ export function readContextEntries(filePath: string): ContextEntry[] {
       ) {
         entries.push(parsed);
       }
-    } catch {
+    } catch (_err: unknown) {
       // Skip malformed lines
     }
   }

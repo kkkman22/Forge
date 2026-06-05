@@ -47,7 +47,7 @@ export function resolveLibPath(sub: string, opts?: PathResolveOpts): PathResolve
     if (!real.startsWith(`${realRoot}/`) && real !== realRoot) {
       return { ok: false, code: "E_PATH_INVALID", reason: "symlink escapes root" };
     }
-  } catch {
+  } catch (_err: unknown) {
     // File doesn't exist yet (pre-migration) — accept the path, integrity check later
   }
 

@@ -29,7 +29,7 @@ function notifyFrozen(targetFile: string): void {
       env: { PATH: process.env.PATH ?? "", FORGE_TASK: targetFile },
     });
     child.unref();
-  } catch {
+  } catch (_err: unknown) {
     // Best-effort — never affect exit code (R6.1)
   }
 }

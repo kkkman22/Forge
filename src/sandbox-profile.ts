@@ -100,7 +100,7 @@ export function loadSandboxProfile(cwd: string, profileName?: string): SandboxPr
   let raw: unknown;
   try {
     raw = JSON.parse(readFileSync(configPath, "utf-8"));
-  } catch {
+  } catch (_err: unknown) {
     return { ...DEFAULT_BUILDER_PROFILE };
   }
 

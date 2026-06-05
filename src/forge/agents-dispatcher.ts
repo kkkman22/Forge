@@ -142,7 +142,7 @@ export async function dispatch(opts: DispatchOptions): Promise<DispatchResult> {
           findings: Array.isArray(parsed.findings) ? parsed.findings : undefined,
           duration_ms: typeof parsed.duration_ms === "number" ? parsed.duration_ms : elapsed,
         });
-      } catch {
+      } catch (_err: unknown) {
         // JSON parse failure — treat as failed dispatch.
         resolve({
           agent: opts.agentType,
@@ -179,7 +179,7 @@ export async function collectResults(
   let entries: string[];
   try {
     entries = readdirSync(resultsDir);
-  } catch {
+  } catch (_err: unknown) {
     // Directory doesn't exist — no results to collect.
     return [];
   }
@@ -200,7 +200,7 @@ export async function collectResults(
         findings: Array.isArray(parsed.findings) ? parsed.findings : undefined,
         duration_ms: typeof parsed.duration_ms === "number" ? parsed.duration_ms : undefined,
       });
-    } catch {
+    } catch (_err: unknown) {
       // Skip malformed JSON files gracefully.
     }
   }

@@ -44,7 +44,7 @@ export async function appendAuditLog(entry: AuditEntry, opts?: AuditOpts): Promi
 
   try {
     mkdirSync(dir, { recursive: true });
-  } catch {
+  } catch (_err: unknown) {
     // biome-ignore lint/suspicious/noConsole: audit degradation warning is intentional
     console.warn(`[forge-audit] cannot create audit dir: ${dir}`);
     return;
@@ -55,7 +55,7 @@ export async function appendAuditLog(entry: AuditEntry, opts?: AuditOpts): Promi
 
   try {
     appendFileSync(logPath, `${line}\n`);
-  } catch {
+  } catch (_err: unknown) {
     // biome-ignore lint/suspicious/noConsole: audit degradation warning is intentional
     console.warn(`[forge-audit] cannot write audit log: ${logPath}`);
   }

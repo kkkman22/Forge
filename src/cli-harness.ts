@@ -136,7 +136,7 @@ function writeResult(artifactsDir: string, verdict: HarnessVerdict): HarnessVerd
       join(artifactsDir, "verdict.md"),
       `---\nverdict: ${verdict.verdict}\ncontroller: ${verdict.controllerUsed ?? "none"}\n---\n`,
     );
-  } catch {
+  } catch (_err: unknown) {
     // Artifact write failure is non-fatal
   }
   return verdict;

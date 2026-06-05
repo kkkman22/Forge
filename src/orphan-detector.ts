@@ -23,7 +23,7 @@ export function writePidFile(sessionId: string, content: PidFileContent, baseDir
   const dir = join(baseDir, ".pids");
   try {
     mkdirSync(dir, { recursive: true });
-  } catch {
+  } catch (_err: unknown) {
     // Directory may already exist
   }
   const filePath = join(dir, `session-${sessionId}.pid`);
@@ -49,7 +49,7 @@ export function readPidFile(filePath: string): PidFileContent | null {
       return parsed as PidFileContent;
     }
     return null;
-  } catch {
+  } catch (_err: unknown) {
     return null;
   }
 }
@@ -59,7 +59,7 @@ export function deletePidFile(sessionId: string, baseDir: string): void {
   const filePath = join(baseDir, ".pids", `session-${sessionId}.pid`);
   try {
     unlinkSync(filePath);
-  } catch {
+  } catch (_err: unknown) {
     // File may not exist
   }
 }
@@ -75,7 +75,7 @@ export function countActiveSessions(baseDir: string): number {
   let files: string[];
   try {
     files = readdirSync(dir).filter((f) => f.startsWith("session-") && f.endsWith(".pid"));
-  } catch {
+  } catch (_err: unknown) {
     return 0;
   }
 
@@ -86,7 +86,7 @@ export function countActiveSessions(baseDir: string): number {
     if (!content) {
       try {
         unlinkSync(filePath);
-      } catch {
+      } catch (_err: unknown) {
         // Ignore
       }
       continue;
@@ -95,11 +95,11 @@ export function countActiveSessions(baseDir: string): number {
     try {
       process.kill(content.sessionPid, 0);
       activeCount++; // Session still running
-    } catch {
+    } catch (_err: unknown) {
       // Session is dead — clean up stale PID file
       try {
         unlinkSync(filePath);
-      } catch {
+      } catch (_err: unknown) {
         // Ignore
       }
     }
@@ -116,7 +116,7 @@ export async function cleanupStaleSessions(baseDir: string): Promise<OrphanProce
   let files: string[];
   try {
     files = readdirSync(dir).filter((f) => f.startsWith("session-") && f.endsWith(".pid"));
-  } catch {
+  } catch (_err: unknown) {
     return orphans;
   }
 
@@ -126,7 +126,7 @@ export async function cleanupStaleSessions(baseDir: string): Promise<OrphanProce
     if (!content) {
       try {
         unlinkSync(filePath);
-      } catch {
+      } catch (_err: unknown) {
         // Ignore
       }
       continue;
@@ -136,7 +136,7 @@ export async function cleanupStaleSessions(baseDir: string): Promise<OrphanProce
     try {
       process.kill(content.sessionPid, 0);
       continue; // Session still running
-    } catch {
+    } catch (_err: unknown) {
       // Session is dead — check child processes
     }
 
@@ -150,14 +150,14 @@ export async function cleanupStaleSessions(baseDir: string): Promise<OrphanProce
           elapsedSeconds: Math.floor((Date.now() - content.sessionStartTime) / 1000),
           source: "pid-file",
         });
-      } catch {
+      } catch (_err: unknown) {
         // Already exited
       }
     }
 
     try {
       unlinkSync(filePath);
-    } catch {
+    } catch (_err: unknown) {
       // Ignore
     }
   }
@@ -181,7 +181,7 @@ export async function detectPpidOrphans(
       encoding: "utf-8",
       timeout: 5000,
     });
-  } catch {
+  } catch (_err: unknown) {
     return orphans;
   }
 
@@ -221,7 +221,7 @@ export function cleanupOrphans(
       try {
         process.kill(orphan.pid, "SIGTERM");
         killed.push(orphan.pid);
-      } catch {
+      } catch (_err: unknown) {
         // Already exited
       }
     } else {

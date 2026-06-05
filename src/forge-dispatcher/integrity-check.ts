@@ -19,14 +19,14 @@ export function checkIntegrity(libPath: string, opts?: IntegrityOpts): Integrity
   let manifestText: string;
   try {
     manifestText = readFileSync(manifestPath, "utf-8");
-  } catch {
+  } catch (_err: unknown) {
     return { ok: false, code: "E_MANIFEST_MISSING" };
   }
 
   let manifest: { subs?: Record<string, { instructions?: { sha256?: string } }> };
   try {
     manifest = JSON.parse(manifestText);
-  } catch {
+  } catch (_err: unknown) {
     return { ok: false, code: "E_MANIFEST_MISSING" };
   }
 

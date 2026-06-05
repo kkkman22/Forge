@@ -40,7 +40,7 @@ export async function readDenyPatterns(settingsPath = ".claude/settings.json"): 
     const deny = permissions.deny;
     if (!Array.isArray(deny)) return [];
     return deny.filter((p): p is string => typeof p === "string");
-  } catch {
+  } catch (_err: unknown) {
     // File missing or unparseable — no deny rules
     return [];
   }
@@ -184,7 +184,7 @@ export function execCommandTracked(
       // Kill the entire process group
       try {
         if (rootPid > 0) process.kill(-rootPid, "SIGTERM");
-      } catch {
+      } catch (_err: unknown) {
         // Process may have already exited
       }
 
@@ -193,7 +193,7 @@ export function execCommandTracked(
         await reapProcessTree(rootPid, reapedPids, reapErrors);
         try {
           if (rootPid > 0) process.kill(-rootPid, "SIGKILL");
-        } catch {
+        } catch (_err: unknown) {
           // Already dead
         }
         resolve({
@@ -219,7 +219,7 @@ export function execCommandTracked(
       // Must happen quickly before the OS reparents orphans
       try {
         if (rootPid > 0) process.kill(-rootPid, "SIGTERM");
-      } catch {
+      } catch (_err: unknown) {
         // Process group may have already exited
       }
 
@@ -228,7 +228,7 @@ export function execCommandTracked(
         // Force kill anything still alive in the process group
         try {
           if (rootPid > 0) process.kill(-rootPid, "SIGKILL");
-        } catch {
+        } catch (_err: unknown) {
           // Already dead
         }
 
