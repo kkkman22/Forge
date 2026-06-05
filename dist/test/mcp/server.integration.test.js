@@ -113,20 +113,25 @@ describe("forge-context MCP server integration", () => {
         expect(content[0].text).toContain("bg-started");
         // Close the client — this closes stdin, triggering server shutdown
         await client.close();
-        // Give the server time to shut down and clean up (grace + reap + shutdown)
-        await new Promise((resolve) => setTimeout(resolve, 4000));
-        // Verify no orphan sleep processes from our command
-        // (The server should have cleaned them up via ProcessRegistry)
+        // Poll for cleanup completion (ProcessRegistry reap + shutdown)
+        // Retry loop avoids race condition between server shutdown and pgrep check
         const { execFileSync } = await import("node:child_process");
-        let psOutput = "";
-        try {
-            psOutput = execFileSync("pgrep", ["-f", "sleep 30"], { encoding: "utf-8" });
+        const maxAttempts = 8;
+        const intervalMs = 500;
+        let cleanedUp = false;
+        for (let attempt = 0; attempt < maxAttempts; attempt++) {
+            await new Promise((resolve) => setTimeout(resolve, intervalMs));
+            try {
+                execFileSync("pgrep", ["-f", "sleep 30"], { encoding: "utf-8" });
+                // pgrep found a match — cleanup not done yet
+            }
+            catch {
+                // pgrep returns non-zero when no processes match — cleanup complete
+                cleanedUp = true;
+                break;
+            }
         }
-        catch {
-            // pgrep returns non-zero when no processes match — expected
-        }
-        // No sleep 30 processes should remain
-        expect(psOutput.trim()).toBe("");
+        expect(cleanedUp).toBe(true);
     });
 });
 //# sourceMappingURL=server.integration.test.js.map
