@@ -16,14 +16,21 @@ export interface TemplateRenderResult {
 
 const SAFE_KEY_RE = /^\w+$/;
 
+/** Maximum total key length for a placeholder path */
+const MAX_KEY_LENGTH = 128;
+/** Maximum length per dot-separated segment */
+const MAX_SEGMENT_LENGTH = 64;
+
 /**
  * Resolve a dot-notated path against a value, e.g. "this.name" on { name: "A" } => "A".
- * Validates each path segment to prevent prototype pollution.
+ * Validates each path segment to prevent prototype pollution and enforces length limits.
  */
 function resolvePath(value: unknown, path: string): unknown {
+  if (path.length > MAX_KEY_LENGTH) return undefined;
   const parts = path.split(".");
   let current: unknown = value;
   for (const part of parts) {
+    if (part.length > MAX_SEGMENT_LENGTH) return undefined;
     if (!SAFE_KEY_RE.test(part)) return undefined;
     if (current == null || typeof current !== "object") return undefined;
     current = (current as Record<string, unknown>)[part];

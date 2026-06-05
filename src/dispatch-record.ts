@@ -17,7 +17,7 @@
  *   - .claude/rules/workflow-fallback-ladder.md §5 field consistency
  */
 
-import { appendFileSync, mkdirSync } from "node:fs";
+import { appendFile, mkdir } from "node:fs/promises";
 import { join } from "node:path";
 
 export type Subcommand = "review" | "decide" | "learn";
@@ -101,16 +101,16 @@ export function assertValidDispatchRecord(record: unknown): asserts record is Di
  * shapes regardless of which call site (dispatcher vs audit-writer)
  * produced it.
  */
-export function appendDispatchRecord(
+export async function appendDispatchRecord(
   forgeRoot: string,
   runId: string,
   record: DispatchRecord,
-): string {
+): Promise<string> {
   assertValidDispatchRecord(record);
   const runDir = join(forgeRoot, "runs", runId);
-  mkdirSync(runDir, { recursive: true });
+  await mkdir(runDir, { recursive: true });
   const path = join(runDir, "dispatch.jsonl");
-  appendFileSync(path, `${JSON.stringify(record)}\n`);
+  await appendFile(path, `${JSON.stringify(record)}\n`);
   return path;
 }
 

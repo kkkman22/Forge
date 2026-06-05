@@ -198,28 +198,39 @@ export function findMentionedTerms(description: string, glossary: Glossary): Glo
   if (description.length === 0) return [];
   const haystack = description.toLowerCase();
 
-  const seen = new Set<string>();
-  const hits: Array<{ term: GlossaryTerm; firstAt: number }> = [];
+  // Build a flat map: lowercased needle → { term, candidateCount }
+  // and a regex alternation for single-pass matching (O(n+m) overall)
+  const needleToTerm = new Map<string, GlossaryTerm>();
+  const escapedNeedles: string[] = [];
 
   for (const term of glossary.terms) {
     const candidates: string[] = [term.term];
     if (term.aliases !== undefined) candidates.push(...term.aliases);
 
-    let firstAt = -1;
     for (const candidate of candidates) {
       const needle = candidate.trim().toLowerCase();
       if (needle.length === 0) continue;
-      const at = haystack.indexOf(needle);
-      if (at !== -1 && (firstAt === -1 || at < firstAt)) {
-        firstAt = at;
-      }
+      needleToTerm.set(needle, term);
+      escapedNeedles.push(needle.replace(/[.*+?^${}()|[\]\\]/g, "\\$&"));
     }
+  }
+
+  if (escapedNeedles.length === 0) return [];
+
+  // Single-pass regex search: match any needle in one scan of the haystack
+  const pattern = new RegExp(escapedNeedles.join("|"), "gi");
+  const seen = new Set<string>();
+  const hits: Array<{ term: GlossaryTerm; firstAt: number }> = [];
+
+  for (const match of haystack.matchAll(pattern)) {
+    const needle = match[0].toLowerCase();
+    const term = needleToTerm.get(needle);
+    if (!term) continue;
 
     const key = term.term.trim().toLowerCase();
-    if (firstAt !== -1 && key.length > 0 && !seen.has(key)) {
-      seen.add(key);
-      hits.push({ term, firstAt });
-    }
+    if (key.length === 0 || seen.has(key)) continue;
+    seen.add(key);
+    hits.push({ term, firstAt: match.index });
   }
 
   hits.sort((a, b) => a.firstAt - b.firstAt);

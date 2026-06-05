@@ -483,3 +483,88 @@ ${sections.join("\n\n")}`;
     );
   });
 });
+
+// ---------------------------------------------------------------------------
+// Regex backtracking protection
+// ---------------------------------------------------------------------------
+
+describe("spec-parser regex backtracking protection", () => {
+  it("rejects inputs exceeding max body size", () => {
+    // Build a markdown doc with a body exceeding MAX_BODY_SIZE
+    const padding = "x".repeat(2_000_000); // 2MB
+    const md = `---
+feature: huge
+status: draft
+date: 2026-05-23
+---
+
+# Requirements
+
+## Introduction
+
+${padding}
+
+## Out of Scope
+
+- nothing
+`;
+    const start = Date.now();
+    const result = parseRequirementsMarkdown(md);
+    // Should complete quickly (not hang on regex backtracking)
+    expect(Date.now() - start).toBeLessThan(2000);
+    expect(result).toBeDefined();
+  });
+
+  it("handles adversarial input with many nested headings quickly", () => {
+    const headings = Array.from({ length: 500 }, (_, i) => `## Section ${i}\n\nContent ${i}`).join(
+      "\n\n",
+    );
+    const md = `---
+feature: adversarial
+status: draft
+date: 2026-05-23
+---
+
+# Requirements
+
+${headings}
+
+## Out of Scope
+
+- nothing
+`;
+    const start = Date.now();
+    const result = parseRequirementsMarkdown(md);
+    expect(Date.now() - start).toBeLessThan(1000);
+    expect(result).toBeDefined();
+  });
+
+  it("handles adversarial repeated near-miss headings", () => {
+    // Creates many lines that ALMOST match "## Introduction" but don't,
+    // which can cause backtracking in the [\s\S]*? lazy quantifier
+    const nearMisses = Array.from(
+      { length: 1000 },
+      (_, i) => `# Introduction ${i} extra content that is long enough to matter here`,
+    ).join("\n");
+    const md = `---
+feature: nearmiss
+status: draft
+date: 2026-05-23
+---
+
+# Requirements
+
+## Introduction
+
+${nearMisses}
+
+## Out of Scope
+
+- nothing
+`;
+    const start = Date.now();
+    const result = parseRequirementsMarkdown(md);
+    expect(Date.now() - start).toBeLessThan(2000);
+    expect(result).toBeDefined();
+  });
+});

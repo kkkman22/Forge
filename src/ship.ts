@@ -20,6 +20,78 @@ import { allEntriesVerified } from "./fix-checklist.js";
 import type { Methodology } from "./schemas/review-report.js";
 
 // ---------------------------------------------------------------------------
+// Command parsing (respects quoted arguments)
+// ---------------------------------------------------------------------------
+
+/**
+ * Parse a command string into `[bin, ...args]`, respecting single and double
+ * quotes so that `echo "hello world"` yields `["echo", "hello world"]`.
+ */
+export function parseCommandArgs(command: string): string[] {
+  if (!command.trim()) return [];
+
+  const tokens: string[] = [];
+  let current = "";
+  let i = 0;
+
+  while (i < command.length) {
+    const ch = command[i];
+
+    // Skip whitespace (token boundary)
+    if (ch === " " || ch === "\t") {
+      if (current.length > 0) {
+        tokens.push(current);
+        current = "";
+      }
+      i++;
+      continue;
+    }
+
+    // Double-quoted segment
+    if (ch === '"') {
+      i++; // skip opening quote
+      while (i < command.length && command[i] !== '"') {
+        if (command[i] === "\\" && i + 1 < command.length) {
+          current += command[i + 1];
+          i += 2;
+        } else {
+          current += command[i];
+          i++;
+        }
+      }
+      i++; // skip closing quote
+      continue;
+    }
+
+    // Single-quoted segment
+    if (ch === "'") {
+      i++; // skip opening quote
+      while (i < command.length && command[i] !== "'") {
+        current += command[i];
+        i++;
+      }
+      i++; // skip closing quote
+      continue;
+    }
+
+    // Unquoted character
+    if (ch === "\\" && i + 1 < command.length) {
+      current += command[i + 1];
+      i += 2;
+    } else {
+      current += ch;
+      i++;
+    }
+  }
+
+  if (current.length > 0) {
+    tokens.push(current);
+  }
+
+  return tokens;
+}
+
+// ---------------------------------------------------------------------------
 // Types
 // ---------------------------------------------------------------------------
 
@@ -436,7 +508,7 @@ export async function executePostPushVerify(
 
   try {
     const { execFileSync } = await import("node:child_process");
-    const [bin, ...args] = command.split(/\s+/);
+    const [bin, ...args] = parseCommandArgs(command);
     const output = execFileSync(bin, args, { encoding: "utf-8", timeout: 600_000, stdio: "pipe" });
     return { passed: true, command, output, exitCode: 0, durationMs: Date.now() - start };
   } catch (error: unknown) {

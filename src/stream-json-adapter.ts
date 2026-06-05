@@ -1,4 +1,5 @@
-import { appendFileSync, mkdirSync } from "node:fs";
+import { appendFile, mkdir } from "node:fs/promises";
+import { existsSync, mkdirSync } from "node:fs";
 import { join } from "node:path";
 import { createInterface } from "node:readline";
 import type { Readable, Writable } from "node:stream";
@@ -68,11 +69,26 @@ export interface StreamJsonAdapterOptions {
 export class StreamJsonAdapter {
   private runDir: string;
   private degrader?: RateLimitDegrader;
+  /** Track pending fire-and-forget writes so tests can wait for completion. */
+  private pendingWrites: Promise<void>[] = [];
 
   constructor(runDir: string, options?: StreamJsonAdapterOptions) {
     this.runDir = runDir;
     this.degrader = options?.degrader;
-    mkdirSync(runDir, { recursive: true });
+    // Sync mkdir only at construction — one-time setup, acceptable
+    if (!existsSync(runDir)) {
+      mkdirSync(runDir, { recursive: true });
+    }
+  }
+
+  /** Wait for all pending log writes to complete. */
+  async flush(): Promise<void> {
+    await Promise.all(this.pendingWrites);
+    this.pendingWrites = [];
+  }
+
+  private fireAndForget(promise: Promise<void>): void {
+    this.pendingWrites.push(promise.catch(() => { /* swallow — logging best-effort */ }));
   }
 
   async consume(
@@ -130,11 +146,11 @@ export class StreamJsonAdapter {
               elapsed_ms: elapsed,
               timestamp: new Date().toISOString(),
             };
-            appendFileSync(
+            this.fireAndForget(appendFile(
               join(this.runDir, "backpressure.jsonl"),
               `${JSON.stringify(entry)}\n`,
               "utf-8",
-            );
+            ));
             lastWarningLoggedAt = now;
           }
         }
@@ -351,19 +367,19 @@ export class StreamJsonAdapter {
       error_message: "JSON parse failed",
       timestamp: new Date().toISOString(),
     };
-    appendFileSync(join(this.runDir, "parse-errors.jsonl"), `${JSON.stringify(entry)}\n`, "utf-8");
+    this.fireAndForget(appendFile(join(this.runDir, "parse-errors.jsonl"), `${JSON.stringify(entry)}\n`, "utf-8"));
   }
 
   private logApiError(event: Record<string, unknown>): void {
-    appendFileSync(join(this.runDir, "api-errors.jsonl"), `${JSON.stringify(event)}\n`, "utf-8");
+    this.fireAndForget(appendFile(join(this.runDir, "api-errors.jsonl"), `${JSON.stringify(event)}\n`, "utf-8"));
   }
 
   private logUnknownEvent(event: Record<string, unknown>): void {
-    appendFileSync(
+    this.fireAndForget(appendFile(
       join(this.runDir, "unknown-events.jsonl"),
       `${JSON.stringify(event)}\n`,
       "utf-8",
-    );
+    ));
   }
 
   private logDedup(messageId: string, event: Record<string, unknown>): void {
@@ -372,6 +388,6 @@ export class StreamJsonAdapter {
       event_type: event.type,
       timestamp: new Date().toISOString(),
     };
-    appendFileSync(join(this.runDir, "dedup.jsonl"), `${JSON.stringify(entry)}\n`, "utf-8");
+    this.fireAndForget(appendFile(join(this.runDir, "dedup.jsonl"), `${JSON.stringify(entry)}\n`, "utf-8"));
   }
 }

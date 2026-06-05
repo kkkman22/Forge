@@ -1,5 +1,5 @@
-import { createHash } from "node:crypto";
-import { appendFileSync, mkdirSync } from "node:fs";
+import { createHmac, createHash } from "node:crypto";
+import { appendFile, mkdir } from "node:fs/promises";
 import { homedir } from "node:os";
 import { resolve } from "node:path";
 import type { GateBlockReason } from "./cmux-gate.js";
@@ -25,9 +25,17 @@ export interface AuditOpts {
   auditDir?: string;
 }
 
+function resolveAuditSecret(): string {
+  const env = process.env.FORGE_AUDIT_SECRET?.trim();
+  if (env) return env;
+  // Derive a stable key from homedir so chains verify across restarts
+  return createHash("sha256").update(homedir()).digest("hex");
+}
+
 export function computeHmac(prevHmac: string, entry: Omit<AuditEntry, "hmac">): string {
+  const key = resolveAuditSecret();
   const data = prevHmac + JSON.stringify(entry);
-  return createHash("sha256").update(data).digest("hex");
+  return createHmac("sha256", key).update(data).digest("hex");
 }
 
 function resolveAuditDir(opts?: AuditOpts): string {
@@ -43,7 +51,7 @@ export async function appendAuditLog(entry: AuditEntry, opts?: AuditOpts): Promi
   const dir = resolveAuditDir(opts);
 
   try {
-    mkdirSync(dir, { recursive: true });
+    await mkdir(dir, { recursive: true });
   } catch (_err: unknown) {
     // biome-ignore lint/suspicious/noConsole: audit degradation warning is intentional
     console.warn(`[forge-audit] cannot create audit dir: ${dir}`);
@@ -54,7 +62,7 @@ export async function appendAuditLog(entry: AuditEntry, opts?: AuditOpts): Promi
   const line = JSON.stringify(entry);
 
   try {
-    appendFileSync(logPath, `${line}\n`);
+    await appendFile(logPath, `${line}\n`);
   } catch (_err: unknown) {
     // biome-ignore lint/suspicious/noConsole: audit degradation warning is intentional
     console.warn(`[forge-audit] cannot write audit log: ${logPath}`);

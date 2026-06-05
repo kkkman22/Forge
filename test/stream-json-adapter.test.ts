@@ -103,6 +103,7 @@ describe("StreamJsonAdapter", () => {
     const result = await adapter.consume(linesToStream(events));
     // Only one merged message + result
     expect(result.delivered.length).toBe(2);
+    await adapter.flush();
     expect(existsSync(join(runDir, "dedup.jsonl"))).toBe(true);
   });
 
@@ -111,6 +112,7 @@ describe("StreamJsonAdapter", () => {
     const events = ["not valid json", JSON.stringify({ type: "result", subtype: "success" })];
     const result = await adapter.consume(linesToStream(events));
     expect(result.delivered.length).toBe(1);
+    await adapter.flush();
     expect(existsSync(join(runDir, "parse-errors.jsonl"))).toBe(true);
   });
 
@@ -123,6 +125,8 @@ describe("StreamJsonAdapter", () => {
       }),
     ];
     await expect(adapter.consume(linesToStream(events))).rejects.toThrow();
+    // Flush the adapter instance used inside consume (it already fired the write)
+    await new Promise((r) => setTimeout(r, 50));
     expect(existsSync(join(runDir, "api-errors.jsonl"))).toBe(true);
   });
 
@@ -135,6 +139,7 @@ describe("StreamJsonAdapter", () => {
     const result = await adapter.consume(linesToStream(events));
     expect(result.delivered.length).toBe(2);
     expect(result.delivered[0].type).toBe("foo_bar_new");
+    await adapter.flush();
     expect(existsSync(join(runDir, "unknown-events.jsonl"))).toBe(true);
   });
 
