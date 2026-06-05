@@ -1,5 +1,5 @@
 ---
-description: "Bugfix three-file workflow — uses runBugfixOrchestration with bugfix.md + design.md + tasks.md."
+description: "Use when running /forge fix with bugfix.md + design.md + tasks.md workflow"
 dispatch_mode: inline
 allowed_tools:
   - Read

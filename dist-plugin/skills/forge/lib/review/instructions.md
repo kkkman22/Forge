@@ -1,5 +1,6 @@
 ---
-description: "Review build output through parallel subagents covering spec alignment, code quality, and security with P0/P1 ship-blocking severity classification. Use when running `/forge review`, build completes, or a multi-perspective code quality gate is needed before ship."
+description: "Use when running `/forge review`, build completes, or code changes need quality gate before ship"
+updated: 2026-06-05
 
 dispatch_mode: fork
 allowed_tools:
@@ -18,6 +19,16 @@ Diff stat: !`git diff --stat HEAD~1 2>/dev/null || echo "no diff"`
 
 > **触发**：标准路径第三步 / 全量路径第五步 / 轻量路径第二步 / 直接输入 `/forge review`
 > **输出**：`.forge/reviews/<topic>.md`
+
+## CLI Parameters
+
+| Flag | Description | Default |
+|------|-------------|---------|
+| `--autofix` | Enable auto-fix mode: apply safe_auto fixes one at a time with CI verification, gated_auto fixes with user confirmation | Disabled |
+| `--no-validation` | Skip Validation Pass even in Full tier | Validation enabled for Full tier |
+| `--compact-safe` | Force compact-safe mode: skip quality-check + adversarial-check, simplified dedup, reduced report format | Auto-detected from context budget |
+| `--output-format=v1\|v2` | Report format. v2 includes `[severity\|confidence] R-NNN:` labels; v1 is legacy `P0:` prefix | v2 |
+| `--from-pr <value>` | Resume review from PR context | — |
 
 ## 0. 从 PR 恢复
 

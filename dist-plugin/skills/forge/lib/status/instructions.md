@@ -1,5 +1,5 @@
 ---
-description: "Verify active Forge tasks, current phase, and pending gates at a glance. Use when user runs `/forge status`, wants to see what tasks are in flight, or needs to know which phase a task currently sits in."
+description: "Use when user runs `/forge status`, wants to see what tasks are in flight, or needs to know which phase a task currently sits in"
 
 dispatch_mode: inline
 allowed_tools:

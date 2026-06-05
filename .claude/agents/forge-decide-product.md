@@ -1,6 +1,6 @@
 ---
 name: forge-decide-product
-description: "产品视角决策分析 teammate — 评估用户价值、DX、竞品对比"
+description: "Use when /forge decide needs user value and DX analysis"
 model: sonnet
 maxTurns: 15
 allowedTools: [Read, Glob, Grep, WebFetch, SendMessage]

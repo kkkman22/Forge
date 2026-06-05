@@ -1,6 +1,6 @@
 ---
 name: forge-decide-arch
-description: "架构视角决策分析 teammate — 评估架构一致性、技术债、可扩展性"
+description: "Use when /forge decide needs architecture consistency analysis"
 model: sonnet
 maxTurns: 15
 allowedTools: [Read, Glob, Grep, WebFetch, SendMessage]

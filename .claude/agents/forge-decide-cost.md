@@ -1,6 +1,6 @@
 ---
 name: forge-decide-cost
-description: "成本视角决策分析 teammate — 评估一次性成本、维护成本、机会成本"
+description: "Use when /forge decide needs cost impact analysis"
 model: sonnet
 maxTurns: 15
 allowedTools: [Read, Glob, Grep, WebFetch, SendMessage]

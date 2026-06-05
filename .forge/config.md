@@ -16,6 +16,11 @@ forge_compact_restate_reminder: on       # on | off — inject restate reminder 
 forge_compact_restate_threshold_tasks: 3  # restate reminder trigger threshold
 postooluse_inject_warnings: on         # on | off
 review_use_ultrareview: true           # true | false
+review_force_model: ""                  # Optional: override all reviewers to use this model (empty = per-agent)
+review_confidence_threshold: 75         # Confidence gate threshold (0-100). Findings below this suppressed unless P0@50+
+review_enable_adversarial: true         # Enable adversarial-check agent (Full tier default, Standard conditional)
+review_enable_validation: true          # Enable validation pass (Full tier only)
+context_budget: 100000                  # Context token budget for compact-safe mode threshold
 post_push_verify_enabled: true
 build.use_goal: true    # true=使用 /goal 循环（推荐），false=旧 persistent-loop TDD 循环
 ci_check_command: "npm run check"

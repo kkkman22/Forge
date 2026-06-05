@@ -20,19 +20,16 @@
   ],
   "userConfig": {
     "max_parallel_agents": {
+      "title": "Max Parallel Agents",
       "type": "number",
       "default": 6,
       "description": "Max concurrent subagents (1-10, default 6)"
     },
     "safety_level": {
+      "title": "Safety Level",
       "type": "string",
-      "enum": [
-        "1",
-        "2",
-        "3"
-      ],
       "default": "1",
-      "description": "Safety strictness (1=strictest)"
+      "description": "Safety strictness (1=strictest, 3=most relaxed)"
     }
   }
 }

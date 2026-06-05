@@ -620,8 +620,8 @@ describe("Contract: CLAUDE.md self-evolution section", () => {
   const templatePath = resolve(ROOT, "templates/CLAUDE.md");
   const template = readFileSync(templatePath, "utf-8");
 
-  it("CLAUDE.md template contains a Self-Evolution heading (Section 5)", () => {
-    expect(template).toMatch(/##\s+5\.\s+Self-Evolution/);
+  it("CLAUDE.md template contains a Self-Evolution heading (Section 6)", () => {
+    expect(template).toMatch(/##\s+6\.\s+Self-Evolution/);
   });
 
   it("Section references evolved-rules.md", () => {
@@ -1258,5 +1258,245 @@ describe("Contract: PostToolUse boundary feedback", () => {
     expect(existsSync(hookPath)).toBe(true);
     const mode = statSync(hookPath).mode & 0o777;
     expect(mode & 0o111).not.toBe(0); // at least one execute bit
+  });
+});
+
+describe("CE-Inspired Review Enhancement - Phase 1", () => {
+  const AGENTS_DIR = resolve(__dirname, "..", "agents");
+
+  it("spec-check.md has model: inherit", () => {
+    const content = readFileSync(resolve(AGENTS_DIR, "spec-check.md"), "utf-8");
+    expect(content).toMatch(/^model:\s*inherit\b/m);
+  });
+
+  it("spec-check.md has Confidence Calibration section", () => {
+    const content = readFileSync(resolve(AGENTS_DIR, "spec-check.md"), "utf-8");
+    expect(content).toMatch(/## Confidence Calibration/);
+    expect(content).toMatch(/Anchor/);
+  });
+
+  it("spec-check.md has JSON output protocol", () => {
+    const content = readFileSync(resolve(AGENTS_DIR, "spec-check.md"), "utf-8");
+    expect(content).toMatch(/"reviewer":\s*"spec-check"/);
+    expect(content).toMatch(/"confidence":\s*\d+/);
+    expect(content).toMatch(/"autofix_class":\s*"(manual|advisory|safe_auto|gated_auto)"/);
+  });
+
+  it("quality-check.md has model: sonnet", () => {
+    const content = readFileSync(resolve(AGENTS_DIR, "quality-check.md"), "utf-8");
+    expect(content).toMatch(/^model:\s*sonnet\b/m);
+  });
+
+  it("quality-check.md has high-threshold confidence calibration (≤50 P2/P3 suppressed)", () => {
+    const content = readFileSync(resolve(AGENTS_DIR, "quality-check.md"), "utf-8");
+    expect(content).toMatch(/## Confidence Calibration/);
+    expect(content).toMatch(/suppress/i);
+  });
+
+  it("quality-check.md has JSON output protocol", () => {
+    const content = readFileSync(resolve(AGENTS_DIR, "quality-check.md"), "utf-8");
+    expect(content).toMatch(/"reviewer":\s*"quality-check"/);
+  });
+
+  it("security-check.md has model: inherit", () => {
+    const content = readFileSync(resolve(AGENTS_DIR, "security-check.md"), "utf-8");
+    expect(content).toMatch(/^model:\s*inherit\b/m);
+  });
+
+  it("security-check.md preserves P0 at confidence=50 (low threshold)", () => {
+    const content = readFileSync(resolve(AGENTS_DIR, "security-check.md"), "utf-8");
+    expect(content).toMatch(/P0.*50|50.*P0/);
+  });
+
+  it("security-check.md emits security-specific suppression warning", () => {
+    const content = readFileSync(resolve(AGENTS_DIR, "security-check.md"), "utf-8");
+    expect(content).toMatch(/suppression warning|Suppression Warning/i);
+  });
+
+  it("security-check.md has JSON output protocol", () => {
+    const content = readFileSync(resolve(AGENTS_DIR, "security-check.md"), "utf-8");
+    expect(content).toMatch(/"reviewer":\s*"security-check"/);
+  });
+
+  it("forge-review.md has Confidence Anchor definition (5 levels)", () => {
+    const content = readFileSync(
+      resolve(__dirname, "..", ".claude/agents/forge-review.md"),
+      "utf-8",
+    );
+    expect(content).toMatch(/## Confidence Anchor/);
+    expect(content).toMatch(/\b100\b.*\b75\b.*\b50\b.*\b25\b.*\b0\b/s);
+  });
+
+  it("forge-review.md implements confidence gate with P0@50 exception", () => {
+    const content = readFileSync(
+      resolve(__dirname, "..", ".claude/agents/forge-review.md"),
+      "utf-8",
+    );
+    expect(content).toMatch(/## Confidence Gate|Confidence Gate/);
+    expect(content).toMatch(/P0.*50|severity\s*=\s*P0.*confidence.*50/s);
+  });
+
+  it("forge-review.md implements Stable Finding IDs (R-NNN)", () => {
+    const content = readFileSync(
+      resolve(__dirname, "..", ".claude/agents/forge-review.md"),
+      "utf-8",
+    );
+    expect(content).toMatch(/R-NNN|Stable Finding ID/);
+  });
+
+  it("forge-review.md supports --output-format=v1|v2 (backward compat)", () => {
+    const content = readFileSync(
+      resolve(__dirname, "..", ".claude/agents/forge-review.md"),
+      "utf-8",
+    );
+    expect(content).toMatch(/--output-format=v1\|v2|output-format/);
+  });
+
+  it(".forge/config.md has review_* settings", () => {
+    const content = readFileSync(resolve(__dirname, "..", ".forge/config.md"), "utf-8");
+    expect(content).toMatch(/review_force_model/);
+    expect(content).toMatch(/review_confidence_threshold/);
+    expect(content).toMatch(/review_enable_adversarial/);
+    expect(content).toMatch(/review_enable_validation/);
+    expect(content).toMatch(/context_budget/);
+  });
+
+  it("forge-learn SKILL has dual-track templates", () => {
+    const content = readFileSync(
+      resolve(__dirname, "..", "skills/forge/lib/learn/instructions.md"),
+      "utf-8",
+    );
+    expect(content).toMatch(/Dual-Track Knowledge System/);
+    expect(content).toMatch(/Bug Track/);
+    expect(content).toMatch(/Knowledge Track/);
+    expect(content).toMatch(/track:\s*bug/);
+    expect(content).toMatch(/track:\s*knowledge/);
+  });
+});
+
+describe("CE-Inspired Review Enhancement - Phase 2", () => {
+  const AGENTS_DIR = resolve(__dirname, "..", "agents");
+
+  it("adversarial-check.md exists", () => {
+    expect(existsSync(resolve(AGENTS_DIR, "adversarial-check.md"))).toBe(true);
+  });
+
+  it("adversarial-check.md has model: sonnet", () => {
+    const content = readFileSync(resolve(AGENTS_DIR, "adversarial-check.md"), "utf-8");
+    expect(content).toMatch(/^model:\s*sonnet\b/m);
+  });
+
+  it("adversarial-check.md has all 4 techniques", () => {
+    const content = readFileSync(resolve(AGENTS_DIR, "adversarial-check.md"), "utf-8");
+    expect(content).toMatch(/Assumption Violation/i);
+    expect(content).toMatch(/Composition Failure/i);
+    expect(content).toMatch(/Cascade Construction/i);
+    expect(content).toMatch(/Abuse Case/i);
+  });
+
+  it("adversarial-check.md has depth calibration (Quick/Standard/Deep)", () => {
+    const content = readFileSync(resolve(AGENTS_DIR, "adversarial-check.md"), "utf-8");
+    expect(content).toMatch(/\bQuick\b/);
+    expect(content).toMatch(/\bStandard\b/);
+    expect(content).toMatch(/\bDeep\b/);
+  });
+
+  it("forge-review.md has dedup algorithm (normalize + line_bucket)", () => {
+    const content = readFileSync(
+      resolve(__dirname, "..", ".claude/agents/forge-review.md"),
+      "utf-8",
+    );
+    expect(content).toMatch(/normalize\(file\)/);
+    expect(content).toMatch(/normalize\(title\)/);
+    expect(content).toMatch(/line_bucket/);
+  });
+
+  it("forge-review.md has cross-reviewer promotion", () => {
+    const content = readFileSync(
+      resolve(__dirname, "..", ".claude/agents/forge-review.md"),
+      "utf-8",
+    );
+    expect(content).toMatch(/Cross-Reviewer Promotion/i);
+    expect(content).toMatch(/cross-validated/i);
+  });
+
+  it("forge-review.md has adversarial-check dispatch tier conditions", () => {
+    const content = readFileSync(
+      resolve(__dirname, "..", ".claude/agents/forge-review.md"),
+      "utf-8",
+    );
+    expect(content).toMatch(/adversarial-check/);
+    expect(content).toMatch(/Full/);
+    expect(content).toMatch(/Standard/);
+    expect(content).toMatch(/Light/);
+  });
+
+  it("CLAUDE.md §3.2 contains adversarial-check row", () => {
+    const content = readFileSync(resolve(__dirname, "..", "CLAUDE.md"), "utf-8");
+    expect(content).toMatch(/adversarial-check/);
+  });
+});
+
+describe("CE-Inspired Review Enhancement - Phase 3", () => {
+  const AGENTS_DIR = resolve(__dirname, "..", "agents");
+
+  it("validation-pass.md exists", () => {
+    expect(existsSync(resolve(AGENTS_DIR, "validation-pass.md"))).toBe(true);
+  });
+
+  it("validation-pass.md has tiered model strategy (P0/P1 inherit, P2/P3 sonnet)", () => {
+    const content = readFileSync(resolve(AGENTS_DIR, "validation-pass.md"), "utf-8");
+    expect(content).toMatch(/inherit|Opus/);
+    expect(content).toMatch(/sonnet/);
+    expect(content).toMatch(/P0\s*\/\s*P1/);
+    expect(content).toMatch(/P2\s*\/\s*P3/);
+  });
+
+  it("validation-pass.md has no-commitment-effect protocol", () => {
+    const content = readFileSync(resolve(AGENTS_DIR, "validation-pass.md"), "utf-8");
+    expect(content).toMatch(/No Commitment Effect|无承诺效应/);
+    expect(content).toMatch(/confirmed/);
+  });
+
+  it("forge-review.md has Validation Pass integration", () => {
+    const content = readFileSync(
+      resolve(__dirname, "..", ".claude/agents/forge-review.md"),
+      "utf-8",
+    );
+    expect(content).toMatch(/Validation Pass/i);
+    expect(content).toMatch(/--no-validation/);
+    expect(content).toMatch(/review-validation\.jsonl/);
+  });
+
+  it("forge-review.md has Autofix routing (4 classes)", () => {
+    const content = readFileSync(
+      resolve(__dirname, "..", ".claude/agents/forge-review.md"),
+      "utf-8",
+    );
+    expect(content).toMatch(/safe_auto/);
+    expect(content).toMatch(/gated_auto/);
+    expect(content).toMatch(/\bmanual\b/);
+    expect(content).toMatch(/advisory/);
+    expect(content).toMatch(/Autofix Routing/i);
+  });
+
+  it("forge-review.md applies safe_auto one at a time (Critic S-003 fix)", () => {
+    const content = readFileSync(
+      resolve(__dirname, "..", ".claude/agents/forge-review.md"),
+      "utf-8",
+    );
+    expect(content).toMatch(/one at a time/i);
+    expect(content).toMatch(/per-fix CI/);
+  });
+
+  it("review skill has new CLI parameters", () => {
+    const content = readFileSync(
+      resolve(__dirname, "..", "skills/forge/lib/review/instructions.md"),
+      "utf-8",
+    );
+    expect(content).toMatch(/--autofix/);
+    expect(content).toMatch(/--no-validation/);
+    expect(content).toMatch(/--compact-safe/);
+    expect(content).toMatch(/--output-format=v1\|v2|output-format/);
   });
 });

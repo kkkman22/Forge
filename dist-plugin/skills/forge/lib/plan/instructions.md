@@ -1,5 +1,6 @@
 ---
-description: "Plan a locked Spec into atomic TDD-ready tasks with full research, file mapping, and self-check validation. Use when running `/forge plan`, a spec is locked, or an actionable task breakdown is needed before build."
+description: "Use when running `/forge plan`, a spec is locked, or an actionable task breakdown is needed before build"
+updated: 2026-06-05
 
 dispatch_mode: fork
 allowed_tools:
@@ -25,6 +26,8 @@ allowed_tools:
 **三文件单源**：plan 阶段不再向 `.forge/plans/<topic>.md` 写入独立文件。而是直接读取并就地升级 `.forge/specs/<topic>/tasks.md`（draft → locked），补全任务编号、JSON wave 块、估时、status 字段、DoD。运行时调用 `lockPlan(doc)`（`src/plan.ts`），传入解析得到的 `TasksSeedDocument`；它内部会调用 `upgradeTasksSeed` 补 wave/status，最终 frontmatter `status` 从 draft 切到 locked。当 `tasks.md` 不存在但 `plans/<topic>.md` 存在时，作为兼容回退以 plans 文件为只读种子合成 tasks.md。
 
 **核心原则**：计划中不允许任何模糊内容。写不出完整代码说明还没想清楚，回去重新研究。
+
+**Zero Context 原则**：假设执行者对代码库零了解、品味存疑。每个 step 必须包含执行者需要的全部信息——不能假设他们知道项目约定、文件结构或已有代码模式。如果需要他们知道什么，写在 step 的上下文中。
 
 **Not For**：轻量路径任务（≤1 文件 ≤20 行）、Spec 已包含完整任务拆解的情况。
 
@@ -149,14 +152,31 @@ Glossary Hook: Task Breakdown 后调用 `runGlossaryCheck({ phase: 'plan' })` �
 
 ### Step 4: Self-Check
 
+#### No-Placeholders 铁律
+
+每个 task step 必须包含执行者需要的**全部实际内容**。以下模式属于**计划失败**：
+
+| 模式 | 示例 | 为什么失败 |
+|------|------|-----------|
+| 模糊待办 | "TBD"、"TODO"、"后续补充"、"待确认" | 执行者无法行动 |
+| 空泛指令 | "添加适当的错误处理"、"处理边界情况"、"添加验证" | 什么是"适当"？"哪些"边界？ |
+| 无代码测试 | "为以上逻辑编写测试"（不含实际测试代码） | 执行者不知测什么、怎么断言 |
+| 跨任务引用 | "参考 Task 3 的模式"、"与 Task 1 类似" | 执行者可能不按顺序读 task |
+| 描述性步骤 | "实现导出功能"（无代码、无文件路径、无验证命令） | "做什么"≠"怎么做" |
+| 未定义引用 | 引用前面 task 中未定义的类型、函数或方法 | 类型/函数在引用点不存在 |
+| 空验证 | "验证功能正常"（无具体命令、无预期输出） | 无法判断是否真的验证了 |
+
+正确的 Step 格式必须包含四要素：**文件路径** + **完整代码** + **验证命令** + **预期输出**。
+
 | Check | Criteria |
 |-------|----------|
 | Spec Coverage | 每个需求至少被一个任务覆盖 |
-| Placeholder Scan | 零占位符 → 详见 references/prohibited-content.md |
+| Placeholder Scan | 零占位符 → grep: `TBD\|TODO\|待确认\|适当\|参考 Task` |
 | Type Consistency | 所有引用有定义（full）/ Design Reference 有效（lightweight） |
 | Dependencies | 无循环依赖，拓扑排序正确 |
 | Dependency Graph Validity | `validateGraph(toTaskGraph(tasks))` 通过；循环依赖自动修正 |
 | Plan Structure | Split_Trigger 任一命中 → 警告 + 等待用户选择 → 详见 references/plan-split-wizard.md |
+| Charter Boundary | 当 `.forge/charter.md` 存在且 `status: active` 时，验证 plan 中的文件变更不违反 charter boundaries（模块间通信约束、层级访问限制）。违规任务标注 `⚠ Charter boundary conflict: <invariant-id>` |
 
 未通过则自动修正并重新自检。
 
