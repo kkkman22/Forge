@@ -40,6 +40,22 @@ export interface ExecResult {
 export declare function execCommand(command: string, timeoutMs: number, options?: {
     cwd?: string;
 }): Promise<ExecResult>;
+export interface ExecTrackedOptions {
+    cwd?: string;
+    timeoutMs: number;
+    reapGraceMs: number;
+}
+export interface ExecTrackedResult extends ExecResult {
+    reapedPids: number[];
+    reapErrors: string[];
+}
+/**
+ * Execute a shell command in a detached process group with background
+ * process reaping. Uses existing process-tree-cleaner for cleanup.
+ *
+ * **Validates: Requirements 6.1, 6.2, 6.3, 6.5, 6.7, 6.8**
+ */
+export declare function execCommandTracked(command: string, options: ExecTrackedOptions): Promise<ExecTrackedResult>;
 /**
  * Register the `forge_exec` tool on the given MCP server.
  */

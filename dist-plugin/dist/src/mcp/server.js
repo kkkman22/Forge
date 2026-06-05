@@ -12,6 +12,7 @@
  */
 import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { StdioServerTransport } from "@modelcontextprotocol/sdk/server/stdio.js";
+import { ProcessRegistry } from "../process-registry.js";
 import { logResolvedRoot, resolveProjectRoot } from "./project-root.js";
 import { registerForgeExec } from "./tools/forge-exec.js";
 import { registerForgeGit } from "./tools/forge-git.js";
@@ -46,7 +47,7 @@ registerForgeReadCached(server, root);
 // ---------------------------------------------------------------------------
 // Graceful shutdown — prevents orphan processes when Claude Code exits
 // ---------------------------------------------------------------------------
-const FORCE_EXIT_TIMEOUT_MS = 5000;
+const FORCE_EXIT_TIMEOUT_MS = 8000;
 let isShuttingDown = false;
 async function gracefulShutdown(signal) {
     if (isShuttingDown)
@@ -58,6 +59,13 @@ async function gracefulShutdown(signal) {
         process.exit(1);
     }, FORCE_EXIT_TIMEOUT_MS);
     try {
+        // Clean up tracked processes first
+        const registry = ProcessRegistry.getInstance();
+        if (registry.size() > 0) {
+            const cleanupResult = await registry.shutdownAll(3000);
+            // biome-ignore lint/suspicious/noConsole: shutdown diagnostic
+            console.error(`[forge-context] Process registry cleanup: terminated=${cleanupResult.terminated} forcedKill=${cleanupResult.forcedKill} alreadyExited=${cleanupResult.alreadyExited} errors=${cleanupResult.errors.length}`);
+        }
         await server.close();
         clearTimeout(forceTimer);
         process.exit(0);

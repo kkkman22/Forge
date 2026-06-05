@@ -11,10 +11,11 @@
  *
  * **Validates: Requirement 2**
  */
-import { execFile } from "node:child_process";
+import { execFile, spawn } from "node:child_process";
 import { readFile } from "node:fs/promises";
 import { join } from "node:path";
 import { z } from "zod";
+import { getDescendants, killProcessTree } from "../../process-tree-cleaner.js";
 import { isRtkAvailable, trimCommandOutput, trimWithFallback } from "../trimmers/output.js";
 // ---------------------------------------------------------------------------
 // Deny-rule helpers
@@ -94,6 +95,151 @@ export function execCommand(command, timeoutMs, options) {
         }
     });
 }
+/**
+ * Execute a shell command in a detached process group with background
+ * process reaping. Uses existing process-tree-cleaner for cleanup.
+ *
+ * **Validates: Requirements 6.1, 6.2, 6.3, 6.5, 6.7, 6.8**
+ */
+export function execCommandTracked(command, options) {
+    return new Promise((resolve) => {
+        const reapedPids = [];
+        const reapErrors = [];
+        let settled = false;
+        const child = spawn("/bin/sh", ["-c", command], {
+            detached: true,
+            stdio: ["pipe", "pipe", "pipe"],
+            ...(options.cwd ? { cwd: options.cwd } : {}),
+        });
+        const rootPid = child.pid ?? 0;
+        let stdout = "";
+        let stderr = "";
+        child.stdout?.on("data", (data) => {
+            stdout += data.toString();
+        });
+        child.stderr?.on("data", (data) => {
+            stderr += data.toString();
+        });
+        // Timeout handler
+        const timer = setTimeout(() => {
+            if (settled)
+                return;
+            settled = true;
+            // Kill the entire process group
+            try {
+                if (rootPid > 0)
+                    process.kill(-rootPid, "SIGTERM");
+            }
+            catch {
+                // Process may have already exited
+            }
+            // Reap after grace period
+            setTimeout(async () => {
+                await reapProcessTree(rootPid, reapedPids, reapErrors);
+                try {
+                    if (rootPid > 0)
+                        process.kill(-rootPid, "SIGKILL");
+                }
+                catch {
+                    // Already dead
+                }
+                resolve({
+                    stdout,
+                    stderr,
+                    exitCode: 1,
+                    timedOut: true,
+                    reapedPids,
+                    reapErrors,
+                });
+            }, 500);
+        }, options.timeoutMs);
+        // Normal exit handler
+        child.on("exit", (code) => {
+            if (settled)
+                return;
+            settled = true;
+            clearTimeout(timer);
+            const exitCode = code ?? 1;
+            // Immediately kill the entire process group to catch background children
+            // Must happen quickly before the OS reparents orphans
+            try {
+                if (rootPid > 0)
+                    process.kill(-rootPid, "SIGTERM");
+            }
+            catch {
+                // Process group may have already exited
+            }
+            // Wait for SIGTERM + reap grace, then verify cleanup
+            setTimeout(async () => {
+                // Force kill anything still alive in the process group
+                try {
+                    if (rootPid > 0)
+                        process.kill(-rootPid, "SIGKILL");
+                }
+                catch {
+                    // Already dead
+                }
+                // Also reap via process tree as backup
+                await reapProcessTree(rootPid, reapedPids, reapErrors);
+                resolve({
+                    stdout,
+                    stderr,
+                    exitCode,
+                    timedOut: false,
+                    reapedPids,
+                    reapErrors,
+                });
+            }, options.reapGraceMs);
+        });
+        child.on("error", (err) => {
+            if (settled)
+                return;
+            settled = true;
+            clearTimeout(timer);
+            reapErrors.push(err.message);
+            resolve({
+                stdout,
+                stderr,
+                exitCode: 1,
+                timedOut: false,
+                reapedPids,
+                reapErrors,
+            });
+        });
+        // Safety: if the child is somehow null
+        if (!child.pid) {
+            settled = true;
+            clearTimeout(timer);
+            resolve({
+                stdout: "",
+                stderr: "Failed to spawn subprocess",
+                exitCode: 1,
+                timedOut: false,
+                reapedPids,
+                reapErrors,
+            });
+        }
+    });
+}
+/**
+ * Reap any remaining descendant processes of the given root PID.
+ * Uses the existing process-tree-cleaner infrastructure.
+ */
+async function reapProcessTree(rootPid, reapedPids, reapErrors) {
+    if (rootPid <= 0)
+        return;
+    try {
+        const descendants = await getDescendants(rootPid);
+        if (descendants.length === 0)
+            return;
+        const result = await killProcessTree(rootPid, "SIGTERM", 1000);
+        reapedPids.push(...result.killed);
+        reapErrors.push(...result.failed.map((pid) => `Failed to kill PID ${pid}`));
+    }
+    catch (err) {
+        reapErrors.push(`Reap error: ${err.message}`);
+    }
+}
 // ---------------------------------------------------------------------------
 // Tool registration
 // ---------------------------------------------------------------------------
@@ -127,11 +273,15 @@ export function registerForgeExec(server, root) {
                 isError: true,
             };
         }
-        // 2. Execute command
+        // 2. Execute command with process tracking
         const execOpts = root ? { cwd: root.path } : undefined;
-        const result = await execCommand(command, timeout, execOpts);
+        const trackedResult = await execCommandTracked(command, {
+            timeoutMs: timeout,
+            reapGraceMs: 2000,
+            ...execOpts,
+        });
         // 3. Handle timeout
-        if (result.timedOut) {
+        if (trackedResult.timedOut) {
             return {
                 content: [
                     {
@@ -145,11 +295,11 @@ export function registerForgeExec(server, root) {
         // 4. Trim output — RTK-first with fallback to legacy trimmer
         const rtkAvailable = await isRtkAvailable();
         const trimmed = rtkAvailable
-            ? await trimWithFallback(result.stdout, result.stderr, result.exitCode, rtkAvailable)
-            : trimCommandOutput(result.stdout, result.stderr, result.exitCode);
+            ? await trimWithFallback(trackedResult.stdout, trackedResult.stderr, trackedResult.exitCode, rtkAvailable)
+            : trimCommandOutput(trackedResult.stdout, trackedResult.stderr, trackedResult.exitCode);
         return {
             content: [{ type: "text", text: trimmed }],
-            isError: result.exitCode !== 0,
+            isError: trackedResult.exitCode !== 0,
         };
     });
 }

@@ -89,5 +89,44 @@ describe("forge-context MCP server integration", () => {
         const exitCode = await waitForExit(child);
         expect(exitCode).toBe(0);
     });
+    it("cleans up tracked processes on stdin EOF", { timeout: 30000 }, async () => {
+        // This test verifies that the ProcessRegistry cleanup runs during shutdown.
+        // We spawn the server, start a long-running command via forge_exec, then close stdin.
+        transport = new StdioClientTransport({
+            command: "node",
+            args: [SERVER_PATH],
+            stderr: "pipe",
+        });
+        client = new Client({
+            name: "forge-test-cleanup-client",
+            version: "1.0.0",
+        });
+        await client.connect(transport);
+        // Start a background sleep that will outlive the shell
+        // Use a short timeout since the shell exits immediately (echo bg-started)
+        // The background sleep 30 & will be cleaned up by execCommandTracked
+        const callResult = await client.callTool({
+            name: "forge_exec",
+            arguments: { command: "sh -c 'sleep 30 & echo bg-started'", timeout: 10000 },
+        });
+        const content = callResult.content;
+        expect(content[0].text).toContain("bg-started");
+        // Close the client — this closes stdin, triggering server shutdown
+        await client.close();
+        // Give the server time to shut down and clean up (grace + reap + shutdown)
+        await new Promise((resolve) => setTimeout(resolve, 4000));
+        // Verify no orphan sleep processes from our command
+        // (The server should have cleaned them up via ProcessRegistry)
+        const { execFileSync } = await import("node:child_process");
+        let psOutput = "";
+        try {
+            psOutput = execFileSync("pgrep", ["-f", "sleep 30"], { encoding: "utf-8" });
+        }
+        catch {
+            // pgrep returns non-zero when no processes match — expected
+        }
+        // No sleep 30 processes should remain
+        expect(psOutput.trim()).toBe("");
+    });
 });
 //# sourceMappingURL=server.integration.test.js.map
