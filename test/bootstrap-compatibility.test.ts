@@ -6,9 +6,10 @@
  * - Unparseable → no version diagnostic (fail-open)
  * - High version with max → soft warn with "forge-doctor"
  */
-import { describe, expect, it } from "vitest";
+
 import { execFile } from "node:child_process";
 import { promisify } from "node:util";
+import { describe, expect, it } from "vitest";
 
 const execFileAsync = promisify(execFile);
 

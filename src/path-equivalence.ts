@@ -43,11 +43,7 @@ export interface CanonicalPathResult {
 // Frozen-zone signal patterns
 // ---------------------------------------------------------------------------
 
-const HIGH_RISK_PATTERNS = [
-  ".forge/config.md",
-  ".forge/specs/",
-  ".forge/plans/",
-];
+const HIGH_RISK_PATTERNS = [".forge/config.md", ".forge/specs/", ".forge/plans/"];
 
 function containsHighRiskSignal(path: string): boolean {
   return HIGH_RISK_PATTERNS.some((pattern) => path.includes(pattern));
@@ -87,8 +83,7 @@ export function canonicalizePathExpression(
 
   // 3. Detect high-risk unresolved paths
   // If the path still contains variable-like syntax ($...) and a frozen-zone signal
-  const hasUnresolvedVar = /\$\{?[A-Za-z_][A-Za-z0-9_]*\}?/.test(expanded) &&
-    expanded !== raw; // Only if we did some expansion but vars remain
+  const hasUnresolvedVar = /\$\{?[A-Za-z_][A-Za-z0-9_]*\}?/.test(expanded) && expanded !== raw; // Only if we did some expansion but vars remain
   const hasHighRisk = containsHighRiskSignal(raw);
   const highRiskUnresolved = hasUnresolvedVar && hasHighRisk;
 

@@ -11,7 +11,10 @@ import { describe, expect, it } from "vitest";
 
 // Import the pure decision function from the script
 // The script will export buildStopContext for testability
-import { buildStopContext, MAX_ADDITIONAL_CONTEXT_LENGTH } from "../scripts/stop-additional-context.mjs";
+import {
+  buildStopContext,
+  MAX_ADDITIONAL_CONTEXT_LENGTH,
+} from "../scripts/stop-additional-context.mjs";
 
 describe("buildStopContext", () => {
   it("active phase build + no verification evidence → missing_verification", () => {
@@ -72,9 +75,9 @@ describe("buildStopContext", () => {
     // Should mention no-idle iron law or auto-advance
     expect(
       result.additionalContext!.toLowerCase().includes("no-idle") ||
-      result.additionalContext!.includes("铁律") ||
-      result.additionalContext!.includes("auto") ||
-      result.additionalContext!.includes("review"),
+        result.additionalContext!.includes("铁律") ||
+        result.additionalContext!.includes("auto") ||
+        result.additionalContext!.includes("review"),
     ).toBe(true);
   });
 
@@ -182,11 +185,14 @@ describe("hooks.json contract: Stop/SubagentStop additionalContext", () => {
     expect(config.hooks.Stop).toBeDefined();
     expect(Array.isArray(config.hooks.Stop)).toBe(true);
 
-    const stopHookArgs = config.hooks.Stop.flatMap((group: { hooks?: Array<{ args?: string[] }> }) =>
-      (group.hooks ?? []).map((h: { args?: string[] }) => h.args ?? []),
+    const stopHookArgs = config.hooks.Stop.flatMap(
+      (group: { hooks?: Array<{ args?: string[] }> }) =>
+        (group.hooks ?? []).map((h: { args?: string[] }) => h.args ?? []),
     );
     const hasAdditionalContextHook = stopHookArgs.some(
-      (args: string[]) => Array.isArray(args) && args.some((a: unknown) => typeof a === "string" && a.includes("stop-additional-context")),
+      (args: string[]) =>
+        Array.isArray(args) &&
+        args.some((a: unknown) => typeof a === "string" && a.includes("stop-additional-context")),
     );
     expect(hasAdditionalContextHook).toBe(true);
   });
@@ -201,11 +207,14 @@ describe("hooks.json contract: Stop/SubagentStop additionalContext", () => {
     expect(config.hooks.SubagentStop).toBeDefined();
     expect(Array.isArray(config.hooks.SubagentStop)).toBe(true);
 
-    const subStopHookArgs = config.hooks.SubagentStop.flatMap((group: { hooks?: Array<{ args?: string[] }> }) =>
-      (group.hooks ?? []).map((h: { args?: string[] }) => h.args ?? []),
+    const subStopHookArgs = config.hooks.SubagentStop.flatMap(
+      (group: { hooks?: Array<{ args?: string[] }> }) =>
+        (group.hooks ?? []).map((h: { args?: string[] }) => h.args ?? []),
     );
     const hasAdditionalContextHook = subStopHookArgs.some(
-      (args: string[]) => Array.isArray(args) && args.some((a: unknown) => typeof a === "string" && a.includes("stop-additional-context")),
+      (args: string[]) =>
+        Array.isArray(args) &&
+        args.some((a: unknown) => typeof a === "string" && a.includes("stop-additional-context")),
     );
     expect(hasAdditionalContextHook).toBe(true);
   });

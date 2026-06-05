@@ -53,10 +53,13 @@ describe("execCommandTracked", () => {
 
   it("failure output preserved, not truncated by cleanup", async () => {
     const { execCommandTracked } = await import("../../src/mcp/tools/forge-exec.js");
-    const result = await execCommandTracked("echo 'error line 1' && echo 'error line 2' >&2 && exit 1", {
-      timeoutMs: 5000,
-      reapGraceMs: 1000,
-    });
+    const result = await execCommandTracked(
+      "echo 'error line 1' && echo 'error line 2' >&2 && exit 1",
+      {
+        timeoutMs: 5000,
+        reapGraceMs: 1000,
+      },
+    );
     expect(result.exitCode).toBe(1);
     expect(result.stderr).toContain("error line 2");
     expect(result.stdout).toContain("error line 1");

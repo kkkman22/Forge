@@ -13,8 +13,8 @@
 
 import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { StdioServerTransport } from "@modelcontextprotocol/sdk/server/stdio.js";
-import { logResolvedRoot, resolveProjectRoot } from "./project-root.js";
 import { ProcessRegistry } from "../process-registry.js";
+import { logResolvedRoot, resolveProjectRoot } from "./project-root.js";
 import { registerForgeExec } from "./tools/forge-exec.js";
 import { registerForgeGit } from "./tools/forge-git.js";
 import { registerForgeRead } from "./tools/forge-read.js";

@@ -81,14 +81,18 @@ describe("canonicalizePathExpression", () => {
 
 describe("pathsEquivalent", () => {
   it("same normalized paths → equivalent", async () => {
-    const { canonicalizePathExpression, pathsEquivalent } = await import("../src/path-equivalence.js");
+    const { canonicalizePathExpression, pathsEquivalent } = await import(
+      "../src/path-equivalence.js"
+    );
     const a = canonicalizePathExpression("~/.forge/config.md", OPTS);
     const b = canonicalizePathExpression("/Users/x/.forge/config.md", OPTS);
     expect(pathsEquivalent(a, b)).toBe(true);
   });
 
   it("different paths → not equivalent", async () => {
-    const { canonicalizePathExpression, pathsEquivalent } = await import("../src/path-equivalence.js");
+    const { canonicalizePathExpression, pathsEquivalent } = await import(
+      "../src/path-equivalence.js"
+    );
     const a = canonicalizePathExpression("/foo/bar", OPTS);
     const b = canonicalizePathExpression("/baz/qux", OPTS);
     expect(pathsEquivalent(a, b)).toBe(false);

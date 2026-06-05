@@ -17,8 +17,8 @@ import { readFile } from "node:fs/promises";
 import { join } from "node:path";
 import type { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { z } from "zod";
-import type { ResolvedRoot } from "../project-root.js";
 import { getDescendants, killProcessTree } from "../../process-tree-cleaner.js";
+import type { ResolvedRoot } from "../project-root.js";
 import { isRtkAvailable, trimCommandOutput, trimWithFallback } from "../trimmers/output.js";
 
 // ---------------------------------------------------------------------------
@@ -357,7 +357,12 @@ export function registerForgeExec(server: McpServer, root?: ResolvedRoot): void 
       // 4. Trim output — RTK-first with fallback to legacy trimmer
       const rtkAvailable = await isRtkAvailable();
       const trimmed = rtkAvailable
-        ? await trimWithFallback(trackedResult.stdout, trackedResult.stderr, trackedResult.exitCode, rtkAvailable)
+        ? await trimWithFallback(
+            trackedResult.stdout,
+            trackedResult.stderr,
+            trackedResult.exitCode,
+            rtkAvailable,
+          )
         : trimCommandOutput(trackedResult.stdout, trackedResult.stderr, trackedResult.exitCode);
       return {
         content: [{ type: "text" as const, text: trimmed }],

@@ -20,7 +20,11 @@ describe("session-id property tests", () => {
     it("always returns non-empty value for any input combination", async () => {
       const { resolveSessionId } = await import("../src/session-id.js");
       fc.assert(
-        fc.property(sessionIdArb, sessionIdArb, sessionIdArb, pidArb,
+        fc.property(
+          sessionIdArb,
+          sessionIdArb,
+          sessionIdArb,
+          pidArb,
           (hookId, ccId, legacyId, pid) => {
             const result = resolveSessionId({
               hookSessionId: hookId,

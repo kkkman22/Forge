@@ -11,6 +11,24 @@ Entries follow [Keep a Changelog](https://keepachangelog.com/) with Forge-specif
 
 ## [Unreleased]
 
+## [3.3.1] - 2026-06-05
+
+### Added
+
+- **compatibility**: Claude Code version gate with semver parsing (`src/compatibility.ts`)
+- **compatibility**: SessionStart bootstrap version diagnostic in `scripts/bootstrap-check.mjs`
+- **compatibility**: Managed version setting `requiredMinimumVersion: "2.1.163"` in plugin.json
+- **doctor**: Expanded `forge-doctor` with plugin health, hooks, commands, bin, and MCP checks
+- **doctor**: Structured `--json` output with per-check id/status/message/fixHint
+- **hooks**: Stop/SubagentStop `additionalContext` feedback (`scripts/stop-additional-context.mjs`)
+- **hooks**: Registered SubagentStop event in `hooks/hooks.json`
+- **session**: Session ID resolver with consistency checking (`src/session-id.ts`)
+- **security**: Path equivalence guard with canonicalization (`src/path-equivalence.ts`)
+- **security**: Sandbox/frozen-zone integration blocking `~`/`$HOME`/`${HOME}` bypass
+- **mcp**: Process group reaping in `forge_exec` via `execCommandTracked()`
+- **mcp**: ProcessRegistry cleanup on MCP server shutdown
+- **docs**: Updated `docs/claude-code-compatibility.md` with v2.1.163 capability matrix
+
 ## [3.3.0] - 2026-06-01
 
 ### Added

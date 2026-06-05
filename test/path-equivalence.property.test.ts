@@ -27,7 +27,7 @@ describe("path-equivalence property tests", () => {
       );
     });
 
-    it("\$HOME/subpath ≡ homeDir/subpath", async () => {
+    it("$HOME/subpath ≡ homeDir/subpath", async () => {
       const { canonicalizePathExpression } = await import("../src/path-equivalence.js");
       fc.assert(
         fc.property(homeDirArb, subpathArb, (homeDir, subpath) => {
@@ -39,7 +39,7 @@ describe("path-equivalence property tests", () => {
       );
     });
 
-    it("\${HOME}/subpath ≡ homeDir/subpath", async () => {
+    it("${HOME}/subpath ≡ homeDir/subpath", async () => {
       const { canonicalizePathExpression } = await import("../src/path-equivalence.js");
       fc.assert(
         fc.property(homeDirArb, subpathArb, (homeDir, subpath) => {
@@ -59,7 +59,9 @@ describe("path-equivalence property tests", () => {
     });
 
     it("pathsEquivalent is transitive for equivalent forms", async () => {
-      const { canonicalizePathExpression, pathsEquivalent } = await import("../src/path-equivalence.js");
+      const { canonicalizePathExpression, pathsEquivalent } = await import(
+        "../src/path-equivalence.js"
+      );
       fc.assert(
         fc.property(homeDirArb, subpathArb, (homeDir, subpath) => {
           const cwd = "/project";

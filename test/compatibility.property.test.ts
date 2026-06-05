@@ -10,26 +10,39 @@ import * as fc from "fast-check";
 import { describe, expect, it } from "vitest";
 
 // We'll import from the implementation once it exists
-import type { ClaudeVersionCheck, ClaudeVersionRange, VersionVerdict } from "../src/compatibility.js";
+import type {
+  ClaudeVersionCheck,
+  ClaudeVersionRange,
+  VersionVerdict,
+} from "../src/compatibility.js";
 
 // Re-import functions — will fail until implementation exists
 // Using dynamic import pattern so the test file compiles but tests fail
 describe("compatibility property tests", () => {
   // Helper: arbitrary valid semver string
-  const semverArb = fc.tuple(fc.integer({ min: 0, max: 99 }), fc.integer({ min: 0, max: 99 }), fc.integer({ min: 0, max: 99 }))
+  const semverArb = fc
+    .tuple(
+      fc.integer({ min: 0, max: 99 }),
+      fc.integer({ min: 0, max: 99 }),
+      fc.integer({ min: 0, max: 99 }),
+    )
     .map(([major, minor, patch]) => `${major}.${minor}.${patch}`);
 
   // Helper: arbitrary claude --version output format
-  const versionOutputArb = fc.oneof(
-    fc.constantFrom("claude", "Claude Code", "Claude Code CLI", "anthropic/claude"),
-    fc.stringMatching(/^[a-zA-Z ]{0,20}/),
-  ).chain((prefix) =>
-    fc.tuple(
-      fc.constant(prefix),
-      semverArb,
-      fc.oneof(fc.constant(""), fc.stringMatching(/^[a-z ]{0,30}/)),
-    ).map(([p, v, suffix]) => `${p} ${v}${suffix}`),
-  );
+  const versionOutputArb = fc
+    .oneof(
+      fc.constantFrom("claude", "Claude Code", "Claude Code CLI", "anthropic/claude"),
+      fc.stringMatching(/^[a-zA-Z ]{0,20}/),
+    )
+    .chain((prefix) =>
+      fc
+        .tuple(
+          fc.constant(prefix),
+          semverArb,
+          fc.oneof(fc.constant(""), fc.stringMatching(/^[a-z ]{0,30}/)),
+        )
+        .map(([p, v, suffix]) => `${p} ${v}${suffix}`),
+    );
 
   describe("compareSemver", () => {
     it("satisfies anti-symmetry: compare(a,b) === -compare(b,a)", async () => {
@@ -112,14 +125,11 @@ describe("compatibility property tests", () => {
     it("returns non-empty verdict for any input", async () => {
       const { checkClaudeVersion } = await import("../src/compatibility.js");
       fc.assert(
-        fc.property(
-          fc.oneof(semverArb, fc.constant(null as string | null)),
-          (current) => {
-            const result = checkClaudeVersion(current, defaultRange);
-            expect(["pass", "warn", "fail", "unknown"]).toContain(result.verdict);
-            expect(result.reason).toBeDefined();
-          },
-        ),
+        fc.property(fc.oneof(semverArb, fc.constant(null as string | null)), (current) => {
+          const result = checkClaudeVersion(current, defaultRange);
+          expect(["pass", "warn", "fail", "unknown"]).toContain(result.verdict);
+          expect(result.reason).toBeDefined();
+        }),
       );
     });
 

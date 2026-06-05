@@ -6,9 +6,10 @@
  * - --json output is valid JSON with version block
  * - Each check item has id, status, message, and optional fixHint
  */
-import { describe, expect, it } from "vitest";
+
 import { execFile } from "node:child_process";
 import { promisify } from "node:util";
+import { describe, expect, it } from "vitest";
 
 const execFileAsync = promisify(execFile);
 const DOCTOR = ".claude-plugin/bin/forge-doctor";

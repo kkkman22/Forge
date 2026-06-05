@@ -10,10 +10,7 @@
 import { existsSync, readFileSync } from "node:fs";
 import * as nodePath from "node:path";
 import { minimatch } from "minimatch";
-import {
-  canonicalizePathExpression,
-  extractPathExpressionsFromBash,
-} from "./path-equivalence.js";
+import { canonicalizePathExpression, extractPathExpressionsFromBash } from "./path-equivalence.js";
 
 // ---------------------------------------------------------------------------
 // Types
