@@ -425,50 +425,117 @@ export function discoverTopics(forgeRoot: string): TopicDiscoveryResult {
   return { topics, drifts, emptySpecDirs };
 }
 
-function detectDrifts(topics: string[]): TopicDiscoveryResult["drifts"] {
+/** @internal — exported for testing */
+export function detectDrifts(topics: string[]): TopicDiscoveryResult["drifts"] {
   const drifts: TopicDiscoveryResult["drifts"] = [];
 
-  for (let i = 0; i < topics.length; i++) {
-    for (let j = i + 1; j < topics.length; j++) {
-      const a = topics[i];
-      const b = topics[j];
-      const reason = classifyDrift(a, b);
-      if (reason) {
-        drifts.push({ topicA: a, topicB: b, reason });
+  // Group topics by their normalized forms for O(n) matching
+  // instead of O(n²) pairwise comparison
+  const trailingGroups = new Map<string, string[]>();
+  const pluralGroups = new Map<string, string[]>();
+  const separatorGroups = new Map<string, string[]>();
+
+  const stripTrailing = (s: string) => s.replace(/[-.]?v?\d+$/, "");
+  const stripPlural = (s: string) => s.replace(/s$/, "");
+  const normSep = (s: string) => s.replace(/_/g, "-");
+
+  for (const topic of topics) {
+    // Group by trailing-digit-stripped form
+    const tk = stripTrailing(topic);
+    let g1 = trailingGroups.get(tk);
+    if (!g1) {
+      g1 = [];
+      trailingGroups.set(tk, g1);
+    }
+    g1.push(topic);
+
+    // Group by plural-stripped form
+    const pk = stripPlural(topic);
+    let g2 = pluralGroups.get(pk);
+    if (!g2) {
+      g2 = [];
+      pluralGroups.set(pk, g2);
+    }
+    g2.push(topic);
+
+    // Group by separator-normalized form
+    const sk = normSep(topic);
+    let g3 = separatorGroups.get(sk);
+    if (!g3) {
+      g3 = [];
+      separatorGroups.set(sk, g3);
+    }
+    g3.push(topic);
+  }
+
+  // Collect drifts from each group (pairs within same group)
+  const seen = new Set<string>();
+
+  const addDrift = (
+    a: string,
+    b: string,
+    reason: TopicDiscoveryResult["drifts"][number]["reason"],
+  ) => {
+    const key = `${a}::${b}`;
+    if (!seen.has(key)) {
+      seen.add(key);
+      drifts.push({ topicA: a, topicB: b, reason });
+    }
+  };
+
+  for (const group of trailingGroups.values()) {
+    if (group.length < 2) continue;
+    for (let i = 0; i < group.length; i++) {
+      for (let j = i + 1; j < group.length; j++) {
+        if (group[i] !== group[j]) {
+          addDrift(group[i], group[j], "trailing-digit");
+        }
+      }
+    }
+  }
+
+  for (const group of pluralGroups.values()) {
+    if (group.length < 2) continue;
+    for (let i = 0; i < group.length; i++) {
+      for (let j = i + 1; j < group.length; j++) {
+        if (group[i] !== group[j]) {
+          addDrift(group[i], group[j], "plural-form");
+        }
+      }
+    }
+  }
+
+  for (const group of separatorGroups.values()) {
+    if (group.length < 2) continue;
+    for (let i = 0; i < group.length; i++) {
+      for (let j = i + 1; j < group.length; j++) {
+        if (group[i] !== group[j]) {
+          addDrift(group[i], group[j], "separator");
+        }
+      }
+    }
+  }
+
+  // Substring drift: sort topics and check neighbors
+  // Two topics with a prefix/suffix relationship and length diff <= 5
+  const sorted = [...topics].sort();
+  for (let i = 0; i < sorted.length; i++) {
+    for (let j = i + 1; j < sorted.length; j++) {
+      const a = sorted[i];
+      const b = sorted[j];
+      if (a === b) continue;
+      // Since sorted, if b doesn't start with a, no further j will either
+      if (!b.startsWith(a)) break;
+      if (Math.abs(a.length - b.length) <= 5) {
+        // Only add if not already detected by another drift type
+        const key = `${a}::${b}`;
+        if (!seen.has(key)) {
+          seen.add(key);
+          drifts.push({ topicA: a, topicB: b, reason: "substring" });
+        }
       }
     }
   }
 
   return drifts;
-}
-
-function classifyDrift(
-  a: string,
-  b: string,
-): TopicDiscoveryResult["drifts"][number]["reason"] | null {
-  // trailing-digit: strip trailing digits/version suffixes
-  const stripTrailing = (s: string) => s.replace(/[-.]?v?\d+$/, "");
-  if (stripTrailing(a) === stripTrailing(b) && a !== b) {
-    return "trailing-digit";
-  }
-
-  // plural-form: strip trailing 's'
-  const stripPlural = (s: string) => s.replace(/s$/, "");
-  if (stripPlural(a) === stripPlural(b) && a !== b) {
-    return "plural-form";
-  }
-
-  // separator: replace _ with -
-  if (a.replace(/_/g, "-") === b.replace(/_/g, "-") && a !== b) {
-    return "separator";
-  }
-
-  // substring: one is strict prefix/suffix, length diff <= 5
-  if (a !== b) {
-    if ((b.startsWith(a) || a.startsWith(b)) && Math.abs(a.length - b.length) <= 5) {
-      return "substring";
-    }
-  }
-
-  return null;
 }

@@ -3,6 +3,7 @@ import { describe, expect, it } from "vitest";
 import {
   buildDossier,
   deriveTopicFromPath,
+  detectDrifts,
   discoverTopics,
   matchStageFiles,
   scanStagesForTopic,
@@ -347,5 +348,72 @@ describe("discoverTopics", () => {
     const start = Date.now();
     discoverTopics(FIXTURE_ROOT);
     expect(Date.now() - start).toBeLessThan(1000);
+  });
+});
+
+// ---------------------------------------------------------------------------
+// detectDrifts (unit tests for algorithm optimization)
+// ---------------------------------------------------------------------------
+
+describe("detectDrifts", () => {
+  it("detects trailing-digit drift", () => {
+    const drifts = detectDrifts(["auth-v1", "auth-v2"]);
+    expect(drifts).toHaveLength(1);
+    expect(drifts[0].reason).toBe("trailing-digit");
+    expect(drifts[0].topicA).toBe("auth-v1");
+    expect(drifts[0].topicB).toBe("auth-v2");
+  });
+
+  it("detects plural-form drift", () => {
+    const drifts = detectDrifts(["review", "reviews"]);
+    expect(drifts).toHaveLength(1);
+    expect(drifts[0].reason).toBe("plural-form");
+  });
+
+  it("detects separator drift", () => {
+    const drifts = detectDrifts(["code_review", "code-review"]);
+    expect(drifts).toHaveLength(1);
+    expect(drifts[0].reason).toBe("separator");
+  });
+
+  it("detects substring drift", () => {
+    // Length diff must be <= 5: "auth" (4) vs "auth-login" (11) diff=7 won't work
+    const drifts = detectDrifts(["auth", "auth-api"]);
+    expect(drifts).toHaveLength(1);
+    expect(drifts[0].reason).toBe("substring");
+  });
+
+  it("returns empty for unrelated topics", () => {
+    const drifts = detectDrifts(["auth", "database", "logging"]);
+    expect(drifts).toHaveLength(0);
+  });
+
+  it("handles multiple drift types simultaneously", () => {
+    const drifts = detectDrifts(["review", "reviews", "review-v2", "review-api"]);
+    // plural: review↔reviews, trailing-digit: review↔review-v2, substring: review↔review-api
+    expect(drifts.length).toBeGreaterThanOrEqual(3);
+  });
+
+  it("returns empty for empty or single-element arrays", () => {
+    expect(detectDrifts([])).toHaveLength(0);
+    expect(detectDrifts(["solo"])).toHaveLength(0);
+  });
+
+  it("performance: handles 1000 diverse topics efficiently", () => {
+    // 200 groups × 5 variants each = 1000 topics
+    // O(n²) original: C(1000,2) ≈ 500K comparisons
+    // Optimized: 200 groups × C(5,2) = 2K comparisons
+    const topics: string[] = [];
+    for (let g = 0; g < 200; g++) {
+      topics.push(`group${g}-v1`, `group${g}-v2`, `group${g}-v3`, `group${g}s`, `group${g}_alt`);
+    }
+
+    const start = Date.now();
+    const drifts = detectDrifts(topics);
+    const elapsed = Date.now() - start;
+
+    // Each group has 3 trailing-digit drifts + 1 plural drift + some separator drifts
+    expect(drifts.length).toBeGreaterThan(200);
+    expect(elapsed).toBeLessThan(100);
   });
 });

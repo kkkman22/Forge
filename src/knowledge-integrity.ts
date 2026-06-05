@@ -197,27 +197,57 @@ export function checkContradictions(input: IntegrityInput): IntegrityFinding[] {
   const findings: IntegrityFinding[] = [];
   const patterns = parsePatternBlocks(input.instinctsContent);
 
+  // Pre-compute polarity for all patterns (avoids redundant computation)
+  const polarities = patterns.map((p) => detectPolarity(p.body));
+
+  // Build inverted index: tag → pattern indices
+  // Only compare patterns that share at least one tag
+  const tagIndex = new Map<string, number[]>();
   for (let i = 0; i < patterns.length; i++) {
-    for (let j = i + 1; j < patterns.length; j++) {
-      const a = patterns[i];
-      const b = patterns[j];
+    for (const tag of patterns[i].tags) {
+      let indices = tagIndex.get(tag);
+      if (!indices) {
+        indices = [];
+        tagIndex.set(tag, indices);
+      }
+      indices.push(i);
+    }
+  }
 
-      const overlap = tagOverlap(a.tags, b.tags);
-      if (overlap < 0.5) continue;
-
-      const aPol = detectPolarity(a.body);
-      const bPol = detectPolarity(b.body);
-
-      if (aPol !== "neutral" && bPol !== "neutral" && aPol !== bPol) {
-        findings.push({
-          severity: "warning",
-          category: "contradiction",
-          file: "instincts.md",
-          message: `Potential contradiction: "${a.name}" (${aPol}) vs "${b.name}" (${bPol}) — tags overlap ${(overlap * 100).toFixed(0)}%.`,
-          detail: `${a.name} ↔ ${b.name}`,
-        });
+  // Collect candidate pairs that share tags
+  const candidatePairs = new Map<string, [number, number]>();
+  for (const indices of tagIndex.values()) {
+    for (let i = 0; i < indices.length; i++) {
+      for (let j = i + 1; j < indices.length; j++) {
+        const a = Math.min(indices[i], indices[j]);
+        const b = Math.max(indices[i], indices[j]);
+        const key = `${a}::${b}`;
+        if (!candidatePairs.has(key)) {
+          candidatePairs.set(key, [a, b]);
+        }
       }
     }
+  }
+
+  // Check only candidate pairs
+  for (const [aIdx, bIdx] of candidatePairs.values()) {
+    const a = patterns[aIdx];
+    const b = patterns[bIdx];
+    const aPol = polarities[aIdx];
+    const bPol = polarities[bIdx];
+
+    if (aPol === "neutral" || bPol === "neutral" || aPol === bPol) continue;
+
+    const overlap = tagOverlap(a.tags, b.tags);
+    if (overlap < 0.5) continue;
+
+    findings.push({
+      severity: "warning",
+      category: "contradiction",
+      file: "instincts.md",
+      message: `Potential contradiction: "${a.name}" (${aPol}) vs "${b.name}" (${bPol}) — tags overlap ${(overlap * 100).toFixed(0)}%.`,
+      detail: `${a.name} ↔ ${b.name}`,
+    });
   }
 
   return findings;
