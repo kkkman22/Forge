@@ -151,7 +151,7 @@ export function parseConfigGraceful(content: string | undefined): {
   parsed: ConfigFields;
   warnings: string[];
 } {
-  if (process.env.FORGE_USE_ZOD_PARSER === "1") {
+  if (process.env.FORGE_USE_ZOD_PARSER !== "0") {
     return parseConfigViaSchema(content);
   }
   return parseConfigLegacy(content);
@@ -159,7 +159,8 @@ export function parseConfigGraceful(content: string | undefined): {
 
 /**
  * Shadow-migration path for `parseConfigGraceful` that delegates to
- * `safeParseConfigFile` from `src/schemas/config-file.ts`. Opt-in via
+ * `safeParseConfigFile` from `src/schemas/config-file.ts`. Now the default;
+ * legacy path available via `FORGE_USE_ZOD_PARSER=0`.
  * `FORGE_USE_ZOD_PARSER=1`. Output shape and defaults match the legacy
  * path so callers are unaffected.
  */

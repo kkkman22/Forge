@@ -113,20 +113,17 @@ export function parseStatusFileGraceful(content: string | undefined): {
   parsed: StatusFields;
   warnings: string[];
 } {
-  if (process.env.FORGE_USE_ZOD_PARSER === "1") {
+  if (process.env.FORGE_USE_ZOD_PARSER !== "0") {
     return parseStatusFileViaSchema(content);
   }
   return parseStatusFileLegacy(content);
 }
 
 /**
- * Alternate schema-driven implementation of `parseStatusFileGraceful`,
- * opt-in behind the `FORGE_USE_ZOD_PARSER=1` env var.
+ * Schema-driven implementation of `parseStatusFileGraceful`, now the default.
  *
  * Shape is identical to the legacy path so callers are unaffected. The
- * schema path is the long-term replacement (Requirement 2.8); keeping
- * both behind a flag allows us to run them side-by-side in tests and
- * compare outputs before flipping the default.
+ * legacy path is available via `FORGE_USE_ZOD_PARSER=0` for rollback.
  */
 function parseStatusFileViaSchema(content: string | undefined): {
   parsed: StatusFields;
@@ -271,17 +268,16 @@ export function parseReviewReportGraceful(content: string | undefined): {
   parsed: ReviewReportFields;
   warnings: string[];
 } {
-  if (process.env.FORGE_USE_ZOD_PARSER === "1") {
+  if (process.env.FORGE_USE_ZOD_PARSER !== "0") {
     return parseReviewReportViaSchema(content);
   }
   return parseReviewReportLegacy(content);
 }
 
 /**
- * Shadow-migration path for `parseReviewReportGraceful` that delegates
- * to `safeParseReviewReport` from `src/schemas/review-report.ts`. Opt-in
- * via `FORGE_USE_ZOD_PARSER=1`. Shape and defaults match the legacy path
- * so callers are unaffected.
+ * Schema-driven implementation of `parseReviewReportGraceful`, now the default.
+ * Legacy path available via `FORGE_USE_ZOD_PARSER=0`. Shape and defaults
+ * match the legacy path so callers are unaffected.
  *
  * **Validates: Requirement 2.8**
  */
