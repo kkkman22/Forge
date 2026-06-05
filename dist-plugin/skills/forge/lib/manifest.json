@@ -1,6 +1,6 @@
 {
   "version": 1,
-  "generated_at": "2026-06-05T02:15:20.926Z",
+  "generated_at": "2026-06-05T02:23:40.116Z",
   "subs": {
     "abort": {
       "instructions": {
@@ -41,7 +41,7 @@
     "build": {
       "instructions": {
         "path": "build/instructions.md",
-        "sha256": "09e43fc039380ca6a45a30a6fbe864e3b400b46028a041030b14ecaf72a0f40b"
+        "sha256": "886a9faafff0270f0d266b4012a81903795bc71d7b13ed41f3b9bd1dc7b3c5b0"
       },
       "references": [
         {
@@ -189,7 +189,7 @@
     "debug": {
       "instructions": {
         "path": "debug/instructions.md",
-        "sha256": "bd045ccfdfb99bc4896df9210e27ea2eec042ab037cc04da331365aa5847b74c"
+        "sha256": "edcfb5f300f76ba3a3962df63e211ad9a3a6538799f225ec36227ea4197e24a0"
       },
       "references": [
         {
@@ -324,7 +324,7 @@
     "learn": {
       "instructions": {
         "path": "learn/instructions.md",
-        "sha256": "a3cec83e616746aab668626dfd155ce451b6fc4e8573957c088a860a027a7b62"
+        "sha256": "911d7599c2fc482347695da27952173e317c8c2e6161737ac1aef04da2ca5089"
       },
       "references": [
         {
@@ -398,7 +398,7 @@
     "plan": {
       "instructions": {
         "path": "plan/instructions.md",
-        "sha256": "3c015bc63520fcb4204e598dc20be6bd14ec929137075717117c44cdc371224d"
+        "sha256": "d64e30f6dcea499b6d60b8aa58ee22441fa5654092ea1bd3596b5cb6a1c1efd3"
       },
       "references": [
         {
@@ -494,7 +494,7 @@
     "review": {
       "instructions": {
         "path": "review/instructions.md",
-        "sha256": "d44af2ee9bcfd6f0d80bae87836b43292e0e6d6833ad6fb8ceeeaf1b548b5bab"
+        "sha256": "589f8c717223fe29f1d45dd9479e2c743619fa886f78ef13ed9de72c5c9dab7c"
       },
       "references": [
         {
@@ -569,7 +569,7 @@
     "router": {
       "instructions": {
         "path": "router/instructions.md",
-        "sha256": "f1afff9df7de893158b02d9da0ab2b83286f4ab08aa2e4cce38cf26efd08c6f4"
+        "sha256": "cf56224c97f5af7edfe3ec6d5b2698f546833ad92d09709c14fc709f87bfcd3a"
       },
       "references": [
         {
