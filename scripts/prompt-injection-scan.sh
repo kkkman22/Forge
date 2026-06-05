@@ -38,13 +38,9 @@ if [[ -z "$COMBINED_RE" ]]; then
   exit 0  # Fail-open
 fi
 
-# Allowlist file
+# Allowlist file (reserved for future --exclude-from support)
+# shellcheck disable=SC2034
 IGNORE_FILE=".prompt-scan-ignore"
-if [[ -f "$IGNORE_FILE" ]]; then
-  IGNORE_ARGS="--exclude-from=$IGNORE_FILE"
-else
-  IGNORE_ARGS=""
-fi
 
 # Find matching files
 FILES=$(find . -type f \( -name "*.md" -o -name "*.js" -o -name "*.ts" -o -name "*.sh" -o -name "*.json" -o -name "*.yml" -o -name "*.yaml" \) \
