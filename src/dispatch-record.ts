@@ -143,3 +143,42 @@ export function frozenZoneRecord(
     frozen_zone_blocked: true,
   };
 }
+
+// ---------------------------------------------------------------------------
+// Aggregation
+// ---------------------------------------------------------------------------
+
+export interface DispatchSummary {
+  total: number;
+  avg_duration_ms: number;
+  error_rate: number;
+  by_subcommand: Record<string, number>;
+}
+
+/**
+ * Summarize an array of DispatchRecords into aggregate metrics.
+ *
+ * Pure function — no IO. Used for run reports and diagnostics.
+ */
+export function summarizeDispatches(records: DispatchRecord[]): DispatchSummary {
+  if (records.length === 0) {
+    return { total: 0, avg_duration_ms: 0, error_rate: 0, by_subcommand: {} };
+  }
+
+  let totalDuration = 0;
+  let errorCount = 0;
+  const bySubcommand: Record<string, number> = {};
+
+  for (const r of records) {
+    totalDuration += r.duration_ms;
+    if (r.exit_code !== 0) errorCount++;
+    bySubcommand[r.subcommand] = (bySubcommand[r.subcommand] ?? 0) + 1;
+  }
+
+  return {
+    total: records.length,
+    avg_duration_ms: Math.round(totalDuration / records.length),
+    error_rate: errorCount / records.length,
+    by_subcommand: bySubcommand,
+  };
+}
