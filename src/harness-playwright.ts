@@ -29,7 +29,7 @@ export async function runPlaywrightHarness(
     try {
       // @ts-expect-error — playwright is an optional peer; not installed in Forge itself [R6.5]
       pw = await import("playwright");
-    }       catch (_err: unknown) {
+    } catch (_err: unknown) {
       return { ok: false, reason: "Playwright not installed in user project" };
     }
 

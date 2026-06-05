@@ -142,7 +142,7 @@ export async function dispatch(opts: DispatchOptions): Promise<DispatchResult> {
           findings: Array.isArray(parsed.findings) ? parsed.findings : undefined,
           duration_ms: typeof parsed.duration_ms === "number" ? parsed.duration_ms : elapsed,
         });
-      }         catch (_err: unknown) {
+      } catch (_err: unknown) {
         // JSON parse failure — treat as failed dispatch.
         resolve({
           agent: opts.agentType,
@@ -200,7 +200,7 @@ export async function collectResults(
         findings: Array.isArray(parsed.findings) ? parsed.findings : undefined,
         duration_ms: typeof parsed.duration_ms === "number" ? parsed.duration_ms : undefined,
       });
-    }       catch (_err: unknown) {
+    } catch (_err: unknown) {
       // Skip malformed JSON files gracefully.
     }
   }

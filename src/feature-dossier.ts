@@ -180,7 +180,7 @@ export function scanStagesForTopic(topic: string, forgeRoot: string): StageScanR
         for (const name of matched) {
           stages.specs.push(readStageFile(stageDir, `${topic}/${name}`, stage));
         }
-      }         catch (_err: unknown) {
+      } catch (_err: unknown) {
         // directory doesn't exist, skip
       }
       continue;

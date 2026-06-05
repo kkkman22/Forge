@@ -92,7 +92,7 @@ export function loadSkillsFromDir(
       if (isSkillManifest(parsed)) {
         manifests.push(parsed);
       }
-    }       catch (_err: unknown) {
+    } catch (_err: unknown) {
       // Not valid JSON — skip
     }
   }

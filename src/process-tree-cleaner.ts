@@ -28,7 +28,7 @@ export async function getDescendants(pid: number): Promise<ProcessTreeNode[]> {
         command = execFileSync("ps", ["-p", String(childPid), "-o", "comm="], {
           encoding: "utf-8",
         }).trim();
-      }         catch (_err: unknown) {
+      } catch (_err: unknown) {
         // Process may have exited
       }
       const children = await getDescendants(childPid);
@@ -74,7 +74,7 @@ export async function killProcessTree(
       try {
         process.kill(p, 0); // Check if still alive
         process.kill(p, "SIGKILL");
-      }         catch (_err: unknown) {
+      } catch (_err: unknown) {
         // Already exited
       }
     }

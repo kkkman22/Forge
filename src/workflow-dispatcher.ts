@@ -282,7 +282,7 @@ export async function dispatch(
   if (result.chosenLevel === "L3" && deps.topic) {
     try {
       writeBlockedAuditRecord(ctx.forgeRoot, ctx.subcommand, deps.topic, ctx.runId);
-    }       catch (_err: unknown) {
+    } catch (_err: unknown) {
       // Audit-write failure must not mask the L3 blocked state itself
     }
   }

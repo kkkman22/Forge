@@ -28,7 +28,7 @@ export function runTmuxHarness(opts: TmuxHarnessOptions): TmuxHarnessResult {
     // Check if tmux is available
     try {
       execSync("which tmux 2>/dev/null", { encoding: "utf-8", timeout: 3000 });
-    }       catch (_err: unknown) {
+    } catch (_err: unknown) {
       return { ok: false, reason: "tmux not found on system" };
     }
 

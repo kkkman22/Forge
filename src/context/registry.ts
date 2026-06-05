@@ -60,7 +60,7 @@ async function readContextFiles(
       const content = await fs.readFile(filePath);
       const entry = parseContextFile(content, filePath, layer);
       if (entry) results.push(entry);
-    }       catch (_err: unknown) {
+    } catch (_err: unknown) {
       // Skip unreadable files
     }
   }

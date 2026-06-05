@@ -1032,7 +1032,7 @@ export function generateEvolutionReport(
       let content: string;
       try {
         content = fs.readFile(file);
-      }         catch (_err: unknown) {
+      } catch (_err: unknown) {
         // Deliberately swallow read errors so a single unreadable
         // file never aborts the aggregation (Requirement 8.12: write
         // failures degrade to warnings; by symmetry, read failures

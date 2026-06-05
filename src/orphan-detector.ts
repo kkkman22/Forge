@@ -86,7 +86,7 @@ export function countActiveSessions(baseDir: string): number {
     if (!content) {
       try {
         unlinkSync(filePath);
-      }         catch (_err: unknown) {
+      } catch (_err: unknown) {
         // Ignore
       }
       continue;
@@ -95,11 +95,11 @@ export function countActiveSessions(baseDir: string): number {
     try {
       process.kill(content.sessionPid, 0);
       activeCount++; // Session still running
-    }       catch (_err: unknown) {
+    } catch (_err: unknown) {
       // Session is dead — clean up stale PID file
       try {
         unlinkSync(filePath);
-      }         catch (_err: unknown) {
+      } catch (_err: unknown) {
         // Ignore
       }
     }
@@ -126,7 +126,7 @@ export async function cleanupStaleSessions(baseDir: string): Promise<OrphanProce
     if (!content) {
       try {
         unlinkSync(filePath);
-      }         catch (_err: unknown) {
+      } catch (_err: unknown) {
         // Ignore
       }
       continue;
@@ -136,7 +136,7 @@ export async function cleanupStaleSessions(baseDir: string): Promise<OrphanProce
     try {
       process.kill(content.sessionPid, 0);
       continue; // Session still running
-    }       catch (_err: unknown) {
+    } catch (_err: unknown) {
       // Session is dead — check child processes
     }
 
@@ -150,14 +150,14 @@ export async function cleanupStaleSessions(baseDir: string): Promise<OrphanProce
           elapsedSeconds: Math.floor((Date.now() - content.sessionStartTime) / 1000),
           source: "pid-file",
         });
-      }         catch (_err: unknown) {
+      } catch (_err: unknown) {
         // Already exited
       }
     }
 
     try {
       unlinkSync(filePath);
-    }       catch (_err: unknown) {
+    } catch (_err: unknown) {
       // Ignore
     }
   }
@@ -221,7 +221,7 @@ export function cleanupOrphans(
       try {
         process.kill(orphan.pid, "SIGTERM");
         killed.push(orphan.pid);
-      }         catch (_err: unknown) {
+      } catch (_err: unknown) {
         // Already exited
       }
     } else {

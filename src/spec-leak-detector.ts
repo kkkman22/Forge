@@ -104,7 +104,7 @@ function buildRegex(pattern: string): { regex: RegExp; matchedLiteral: string | 
       // Quick safety check: test against a medium string to catch catastrophic backtracking
       regex.test("a".repeat(100));
       return { regex, matchedLiteral: null };
-    }       catch (_err: unknown) {
+    } catch (_err: unknown) {
       return null;
     }
   }

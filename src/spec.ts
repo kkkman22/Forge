@@ -397,7 +397,7 @@ export function routeSpecEntry(
         const result = runBugfixOrchestration(existingBundle);
         return { mode: "bugfix", bundle: existingBundle, result };
       }
-    }       catch (_err: unknown) {
+    } catch (_err: unknown) {
       // Directory doesn't exist yet — feature mode
     }
     return { mode: "feature", feature: parsed.feature };

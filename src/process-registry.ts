@@ -196,7 +196,7 @@ export class ProcessRegistry {
     let parsed: unknown;
     try {
       parsed = JSON.parse(json);
-    }       catch (_err: unknown) {
+    } catch (_err: unknown) {
       throw new Error(`Invalid JSON in ProcessRegistry deserialize: ${json.slice(0, 50)}`);
     }
 

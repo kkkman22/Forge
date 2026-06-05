@@ -364,7 +364,7 @@ export function parseTasksMarkdown(text: string): ParseResult<TasksSeedDocument>
       if (parsed.waves && Array.isArray(parsed.waves)) {
         waves = parsed.waves as Wave[];
       }
-    }       catch (_err: unknown) {
+    } catch (_err: unknown) {
       // Invalid JSON — waves remain undefined
     }
   }

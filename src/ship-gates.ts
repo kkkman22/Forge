@@ -274,7 +274,7 @@ export function checkReviewGate(
             details: { p0Count: 0, p1Count: report.p1Count },
           };
         }
-      }         catch (_err: unknown) {
+      } catch (_err: unknown) {
         // fixlist unreadable — fall through to default P1 block
       }
     }

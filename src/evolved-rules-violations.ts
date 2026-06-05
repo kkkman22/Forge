@@ -98,7 +98,7 @@ export function scanForTriggers(
     let re: RegExp;
     try {
       re = new RegExp(signal.pattern, "gi");
-    }       catch (_err: unknown) {
+    } catch (_err: unknown) {
       // Invalid pattern — skip silently (upstream catalogue is trusted)
       continue;
     }

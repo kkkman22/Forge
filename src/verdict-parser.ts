@@ -128,7 +128,7 @@ function parseYamlValue(value: string): unknown {
   if (value.startsWith("[") && value.endsWith("]")) {
     try {
       return JSON.parse(value.replace(/'/g, '"'));
-    }       catch (_err: unknown) {
+    } catch (_err: unknown) {
       return value;
     }
   }

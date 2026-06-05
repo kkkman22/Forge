@@ -32,7 +32,7 @@ export function loadSsotData(rootDir: string): Map<string, unknown> {
           ssotData.set(entry.topic, content);
         }
       }
-    }       catch (_err: unknown) {
+    } catch (_err: unknown) {
       // Source file missing — renderer will handle null source
     }
   }

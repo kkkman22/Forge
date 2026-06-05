@@ -161,7 +161,7 @@ export class StreamJsonAdapter {
     const monitorInterval = setInterval(() => {
       try {
         checkBackpressure();
-      }         catch (_err: unknown) {
+      } catch (_err: unknown) {
         // Errors from setInterval are logged but not propagated to the for-await loop.
         // The inline check will catch the same condition on the next line.
         // For BackpressureUnrelievedError, we destroy the stream to unblock the for-await.

@@ -91,7 +91,7 @@ export function scanVueTemplate(
           snippet: line.trim(),
         });
       }
-    }       catch (_err: unknown) {
+    } catch (_err: unknown) {
       // Invalid regex — skip this rule
     }
   }

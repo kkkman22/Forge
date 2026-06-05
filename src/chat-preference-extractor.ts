@@ -109,7 +109,7 @@ function scanTranscripts(
       try {
         const content = readFileSync(filePath, "utf-8");
         results.push({ path: filePath, content });
-      }         catch (_err: unknown) {
+      } catch (_err: unknown) {
         // Skip unreadable files
       }
     }

@@ -809,7 +809,7 @@ export function classifyTask(
           );
         }
       }
-    }       catch (_err: unknown) {
+    } catch (_err: unknown) {
       // R2-4: Dictionary load failure → skip intent step, no blocking
     }
   }

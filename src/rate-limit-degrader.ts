@@ -97,14 +97,14 @@ export class RateLimitDegrader {
 
     try {
       appendFileSync(this.toolHealthPath, line, "utf-8");
-    }       catch (_err: unknown) {
+    } catch (_err: unknown) {
       // Silently skip — don't block main flow on tool-health write failure
     } finally {
       if (lockFd !== null) {
         try {
           closeSync(lockFd);
           unlinkSync(lockPath);
-        }           catch (_err: unknown) {
+        } catch (_err: unknown) {
           // Stale lock will be cleaned by next O_EXCL attempt timing out + falling through
         }
       }

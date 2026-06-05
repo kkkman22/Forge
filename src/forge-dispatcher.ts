@@ -99,7 +99,7 @@ export async function dispatchForgeSubcommand(
   } else {
     try {
       libContent = readFileSync(pathResult.path, "utf-8");
-    }       catch (_err: unknown) {
+    } catch (_err: unknown) {
       return { code: "E_LIB_READ_FAILED" };
     }
   }

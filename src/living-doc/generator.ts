@@ -235,7 +235,7 @@ export function generateLivingDoc(specsDir: string, acceptanceDir: string | null
         const threeFile = ["requirements.md", "spec.md"].find((f) => {
           try {
             return fs.statSync(path.join(topicDir, f)).isFile();
-          }             catch (_err: unknown) {
+          } catch (_err: unknown) {
             return false;
           }
         });

@@ -177,7 +177,7 @@ export function execCommandTracked(
       // Kill the entire process group
       try {
         if (rootPid > 0) process.kill(-rootPid, "SIGTERM");
-      }         catch (_err: unknown) {
+      } catch (_err: unknown) {
         // Process may have already exited
       }
 
@@ -186,7 +186,7 @@ export function execCommandTracked(
         await reapProcessTree(rootPid, reapedPids, reapErrors);
         try {
           if (rootPid > 0) process.kill(-rootPid, "SIGKILL");
-        }           catch (_err: unknown) {
+        } catch (_err: unknown) {
           // Already dead
         }
         resolve({
@@ -212,7 +212,7 @@ export function execCommandTracked(
       // Must happen quickly before the OS reparents orphans
       try {
         if (rootPid > 0) process.kill(-rootPid, "SIGTERM");
-      }         catch (_err: unknown) {
+      } catch (_err: unknown) {
         // Process group may have already exited
       }
 
@@ -221,7 +221,7 @@ export function execCommandTracked(
         // Force kill anything still alive in the process group
         try {
           if (rootPid > 0) process.kill(-rootPid, "SIGKILL");
-        }           catch (_err: unknown) {
+        } catch (_err: unknown) {
           // Already dead
         }
 

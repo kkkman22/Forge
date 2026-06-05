@@ -465,7 +465,7 @@ export async function executePostPushVerify(
             "```",
           ].join("\n"),
         );
-      }         catch (_err: unknown) {
+      } catch (_err: unknown) {
         /* non-fatal */
       }
     }

@@ -30,7 +30,7 @@ export function loadSandboxPolicy(cwd: string): PermissionPolicy {
         return raw as PermissionPolicy;
       }
       // Log validation errors but continue with default
-    }       catch (_err: unknown) {
+    } catch (_err: unknown) {
       // Parse error — fall back to default
     }
   }

@@ -86,7 +86,7 @@ export function readContextEntries(filePath: string): ContextEntry[] {
       ) {
         entries.push(parsed);
       }
-    }       catch (_err: unknown) {
+    } catch (_err: unknown) {
       // Skip malformed lines
     }
   }

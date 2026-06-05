@@ -641,7 +641,7 @@ export function mergeReviewResults(results: SubagentResult[]): MergedFinding[] {
             }
           }
         }
-      }         catch (_err: unknown) {
+      } catch (_err: unknown) {
         // Output is not JSON — skip this result
       }
     }
