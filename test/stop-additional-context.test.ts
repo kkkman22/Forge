@@ -17,7 +17,7 @@ describe("buildStopContext", () => {
   it("active phase build + no verification evidence → missing_verification", () => {
     const input = {
       cwd: "/project",
-      hook_event_name: "Stop",
+      hook_event_name: "Stop" as const,
     };
     const state = {
       phase: "build",
@@ -30,14 +30,14 @@ describe("buildStopContext", () => {
     const result = buildStopContext(input, state);
     expect(result.shouldEmit).toBe(true);
     expect(result.reason).toBe("missing_verification");
-    expect(result.additionalContext).toContain("build");
-    expect(result.additionalContext).toContain("npm run check");
+    expect(result.additionalContext!).toContain("build");
+    expect(result.additionalContext!).toContain("npm run check");
   });
 
   it("incomplete progress tasks → incomplete_tasks", () => {
     const input = {
       cwd: "/project",
-      hook_event_name: "Stop",
+      hook_event_name: "Stop" as const,
     };
     const state = {
       phase: "build",
@@ -56,7 +56,7 @@ describe("buildStopContext", () => {
   it("auto-advance gap (build done, review should follow) → auto_advance_gap", () => {
     const input = {
       cwd: "/project",
-      hook_event_name: "Stop",
+      hook_event_name: "Stop" as const,
     };
     const state = {
       phase: "build",
@@ -71,17 +71,17 @@ describe("buildStopContext", () => {
     expect(result.reason).toBe("auto_advance_gap");
     // Should mention no-idle iron law or auto-advance
     expect(
-      result.additionalContext.toLowerCase().includes("no-idle") ||
-      result.additionalContext.includes("铁律") ||
-      result.additionalContext.includes("auto") ||
-      result.additionalContext.includes("review"),
+      result.additionalContext!.toLowerCase().includes("no-idle") ||
+      result.additionalContext!.includes("铁律") ||
+      result.additionalContext!.includes("auto") ||
+      result.additionalContext!.includes("review"),
     ).toBe(true);
   });
 
   it("SubagentStop with failure summary → subagent_failure", () => {
     const input = {
       cwd: "/project",
-      hook_event_name: "SubagentStop",
+      hook_event_name: "SubagentStop" as const,
       agent_id: "spec-check-abc",
       agent_type: "spec-check",
     };
@@ -100,14 +100,14 @@ describe("buildStopContext", () => {
     const result = buildStopContext(input, state);
     expect(result.shouldEmit).toBe(true);
     expect(result.reason).toBe("subagent_failure");
-    expect(result.additionalContext).toContain("spec-check");
-    expect(result.additionalContext).toContain("fallback");
+    expect(result.additionalContext!).toContain("spec-check");
+    expect(result.additionalContext!).toContain("fallback");
   });
 
   it("no active phase → shouldEmit false, reason none", () => {
     const input = {
       cwd: "/project",
-      hook_event_name: "Stop",
+      hook_event_name: "Stop" as const,
     };
     const state = {
       phase: null,
@@ -126,7 +126,7 @@ describe("buildStopContext", () => {
   it("additionalContext length is capped at 4096 chars", () => {
     const input = {
       cwd: "/project",
-      hook_event_name: "Stop",
+      hook_event_name: "Stop" as const,
     };
     const state = {
       phase: "build",
@@ -145,7 +145,7 @@ describe("buildStopContext", () => {
   it("output JSON schema is valid when shouldEmit is true", () => {
     const input = {
       cwd: "/project",
-      hook_event_name: "Stop",
+      hook_event_name: "Stop" as const,
     };
     const state = {
       phase: "build",
@@ -182,11 +182,11 @@ describe("hooks.json contract: Stop/SubagentStop additionalContext", () => {
     expect(config.hooks.Stop).toBeDefined();
     expect(Array.isArray(config.hooks.Stop)).toBe(true);
 
-    const stopHookArgs = config.hooks.Stop.flatMap((group) =>
-      (group.hooks ?? []).map((h) => h.args ?? []),
+    const stopHookArgs = config.hooks.Stop.flatMap((group: { hooks?: Array<{ args?: string[] }> }) =>
+      (group.hooks ?? []).map((h: { args?: string[] }) => h.args ?? []),
     );
     const hasAdditionalContextHook = stopHookArgs.some(
-      (args) => Array.isArray(args) && args.some((a) => typeof a === "string" && a.includes("stop-additional-context")),
+      (args: string[]) => Array.isArray(args) && args.some((a: unknown) => typeof a === "string" && a.includes("stop-additional-context")),
     );
     expect(hasAdditionalContextHook).toBe(true);
   });
@@ -201,11 +201,11 @@ describe("hooks.json contract: Stop/SubagentStop additionalContext", () => {
     expect(config.hooks.SubagentStop).toBeDefined();
     expect(Array.isArray(config.hooks.SubagentStop)).toBe(true);
 
-    const subStopHookArgs = config.hooks.SubagentStop.flatMap((group) =>
-      (group.hooks ?? []).map((h) => h.args ?? []),
+    const subStopHookArgs = config.hooks.SubagentStop.flatMap((group: { hooks?: Array<{ args?: string[] }> }) =>
+      (group.hooks ?? []).map((h: { args?: string[] }) => h.args ?? []),
     );
     const hasAdditionalContextHook = subStopHookArgs.some(
-      (args) => Array.isArray(args) && args.some((a) => typeof a === "string" && a.includes("stop-additional-context")),
+      (args: string[]) => Array.isArray(args) && args.some((a: unknown) => typeof a === "string" && a.includes("stop-additional-context")),
     );
     expect(hasAdditionalContextHook).toBe(true);
   });

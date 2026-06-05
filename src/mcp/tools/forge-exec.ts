@@ -208,9 +208,26 @@ export function execCommandTracked(
 
       const exitCode = code ?? 1;
 
-      // Check for and reap background processes
+      // Immediately kill the entire process group to catch background children
+      // Must happen quickly before the OS reparents orphans
+      try {
+        if (rootPid > 0) process.kill(-rootPid, "SIGTERM");
+      } catch {
+        // Process group may have already exited
+      }
+
+      // Wait for SIGTERM + reap grace, then verify cleanup
       setTimeout(async () => {
+        // Force kill anything still alive in the process group
+        try {
+          if (rootPid > 0) process.kill(-rootPid, "SIGKILL");
+        } catch {
+          // Already dead
+        }
+
+        // Also reap via process tree as backup
         await reapProcessTree(rootPid, reapedPids, reapErrors);
+
         resolve({
           stdout,
           stderr,
@@ -316,12 +333,16 @@ export function registerForgeExec(server: McpServer, root?: ResolvedRoot): void 
         };
       }
 
-      // 2. Execute command
+      // 2. Execute command with process tracking
       const execOpts = root ? { cwd: root.path } : undefined;
-      const result = await execCommand(command, timeout, execOpts);
+      const trackedResult = await execCommandTracked(command, {
+        timeoutMs: timeout,
+        reapGraceMs: 2000,
+        ...execOpts,
+      });
 
       // 3. Handle timeout
-      if (result.timedOut) {
+      if (trackedResult.timedOut) {
         return {
           content: [
             {
@@ -336,11 +357,11 @@ export function registerForgeExec(server: McpServer, root?: ResolvedRoot): void 
       // 4. Trim output — RTK-first with fallback to legacy trimmer
       const rtkAvailable = await isRtkAvailable();
       const trimmed = rtkAvailable
-        ? await trimWithFallback(result.stdout, result.stderr, result.exitCode, rtkAvailable)
-        : trimCommandOutput(result.stdout, result.stderr, result.exitCode);
+        ? await trimWithFallback(trackedResult.stdout, trackedResult.stderr, trackedResult.exitCode, rtkAvailable)
+        : trimCommandOutput(trackedResult.stdout, trackedResult.stderr, trackedResult.exitCode);
       return {
         content: [{ type: "text" as const, text: trimmed }],
-        isError: result.exitCode !== 0,
+        isError: trackedResult.exitCode !== 0,
       };
     },
   );
