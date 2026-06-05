@@ -113,3 +113,33 @@ export interface FormatOutput {
   done_comment_text: string;
   reopen_comment_text: string;
 }
+
+// ---------------------------------------------------------------------------
+// Bitbucket API response types (replaces `any`)
+// ---------------------------------------------------------------------------
+
+/** Shape of a PR task returned by the Bitbucket API. */
+export interface BitbucketTaskResponse {
+  id: number | string;
+  content?: string;
+  text?: string;
+  state?: string;
+  status?: string;
+}
+
+/** Shape of a PR comment returned by the Bitbucket API. */
+export interface BitbucketCommentResponse {
+  id: number | string;
+  content?: { raw?: string };
+  text?: string;
+  path?: string;
+  file_path?: string;
+  line?: number;
+  line_number?: number;
+}
+
+/** Shape of a PR response from the Bitbucket API. */
+export interface BitbucketPrResponse {
+  active_comments?: BitbucketCommentResponse[];
+  comments?: BitbucketCommentResponse[];
+}
