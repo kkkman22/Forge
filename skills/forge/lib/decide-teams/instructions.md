@@ -1,5 +1,5 @@
 ---
-description: "Execute multi-perspective decision analysis using parallel agent teams for complex architectural or product choices. Use when `/forge decide` is invoked and the topic involves architecture, security, cost, or product trade-offs requiring multiple viewpoints."
+description: "Use when `/forge decide` is invoked and the topic involves architecture, security, cost, or product trade-offs requiring multiple viewpoints"
 allowed-tools: Read, Write, Bash, Agent
 dispatch_mode: fork
 allowed_tools:

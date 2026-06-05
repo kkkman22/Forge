@@ -1,16 +1,16 @@
 ---
-current_task: "forge-gate-shared-protocol"
+current_task: "project-charter"
 phase: "build"
-updated: "2026-06-04"
-branch: "forge/forge-gate-shared-protocol"
+updated: 2026-06-05
+branch: "forge/project-charter"
 ---
 
 # 项目状态
 
-## 当前任务：forge-gate-shared-protocol
+## 当前任务：project-charter
 
-提取 Reframing Gate (decide) 和 Clarification Gate (spec) 的共享协议到独立 reference 文档，消除漂移风险。
+实现 `.forge/charter.md`（项目宪章）机制——跨 spec 的工程一致性锚定。
 
-- Spec: `.kiro/specs/forge-gate-shared-protocol/` (draft)
-- Tier: light
-- Sequence: build → review
+- Spec: `.forge/specs/project-charter/` (requirements + design + tasks)
+- Tier: standard
+- Sequence: plan → build → review → test → ship

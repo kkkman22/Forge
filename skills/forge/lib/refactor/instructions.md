@@ -1,5 +1,5 @@
 ---
-description: "DEPRECATED — use /forge build with work_nature=refactor instead. Refactor code without changing external behavior while tests remain green."
+description: "Use when running /forge refactor (DEPRECATED — use /forge build with work_nature=refactor instead)"
 deprecated: true
 dispatch_mode: inline
 allowed_tools:
