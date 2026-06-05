@@ -74,7 +74,10 @@ export function isCommandDenied(command: string, denyPatterns: string[]): string
     if (re === undefined) {
       // Convert simple glob to regex: escape special chars (excluding ? and *),
       // then replace * → .* and ? → . for glob semantics
-      const escaped = glob.replace(/[.+^${}()|[\]\\]/g, escapeRegexChar).replace(/\*/g, ".*").replace(/\?/g, ".");
+      const escaped = glob
+        .replace(/[.+^${}()|[\]\\]/g, escapeRegexChar)
+        .replace(/\*/g, ".*")
+        .replace(/\?/g, ".");
       re = new RegExp(`^${escaped}$`);
       globRegexCache.set(glob, re);
     }

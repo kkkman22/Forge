@@ -13,7 +13,7 @@
  */
 
 import { execFile } from "node:child_process";
-import { resolve, relative } from "node:path";
+import { relative, resolve } from "node:path";
 import type { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { z } from "zod";
 import type { ResolvedRoot } from "../project-root.js";

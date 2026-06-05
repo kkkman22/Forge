@@ -7,7 +7,6 @@ import { checkPlatformGate } from "./platform-gate.js";
 import { reconcile } from "./reconcile.js";
 import { recordSkip } from "./skip-trace.js";
 import type {
-  BitbucketCommentResponse,
   BitbucketPrResponse,
   BitbucketTaskResponse,
   CommentRecord,

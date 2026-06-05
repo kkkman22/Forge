@@ -10,8 +10,7 @@
  * **Validates: Requirements 4.1–4.5**
  */
 import { afterEach, describe, expect, it, type MockInstance, vi } from "vitest";
-import { execReadScript } from "../../src/mcp/tools/forge-read.js";
-import { validatePaths, validateScript } from "../../src/mcp/tools/forge-read.js";
+import { execReadScript, validatePaths, validateScript } from "../../src/mcp/tools/forge-read.js";
 
 // ---------------------------------------------------------------------------
 // Mock child_process.execFile
@@ -345,7 +344,9 @@ describe("validatePaths", () => {
   });
 
   it("allows multiple valid paths", () => {
-    expect(validatePaths(["src/a.ts", "src/b.ts", "test/c.test.ts"], "/home/user/project")).toBeNull();
+    expect(
+      validatePaths(["src/a.ts", "src/b.ts", "test/c.test.ts"], "/home/user/project"),
+    ).toBeNull();
   });
 });
 

@@ -11,7 +11,12 @@
  * **Validates: Requirements 2.1–2.7**
  */
 import { afterEach, describe, expect, it, type MockInstance, vi } from "vitest";
-import { containsShellMetachars, execCommand, isCommandDenied, readDenyPatterns } from "../../src/mcp/tools/forge-exec.js";
+import {
+  containsShellMetachars,
+  execCommand,
+  isCommandDenied,
+  readDenyPatterns,
+} from "../../src/mcp/tools/forge-exec.js";
 import { trimCommandOutput } from "../../src/mcp/trimmers/output.js";
 
 // ---------------------------------------------------------------------------
