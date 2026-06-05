@@ -166,3 +166,47 @@ describe("buildStopContext", () => {
     expect(parsed.hookSpecificOutput.additionalContext.length).toBeGreaterThan(0);
   });
 });
+
+// ---------------------------------------------------------------------------
+// Contract tests: hooks.json contains Stop/SubagentStop additionalContext hooks
+// ---------------------------------------------------------------------------
+
+describe("hooks.json contract: Stop/SubagentStop additionalContext", () => {
+  it("Stop hooks include stop-additional-context.mjs", async () => {
+    const { readFileSync } = await import("node:fs");
+    const { resolve } = await import("node:path");
+    const hooksPath = resolve(import.meta.dirname ?? ".", "..", "hooks", "hooks.json");
+    const raw = readFileSync(hooksPath, "utf-8");
+    const config = JSON.parse(raw);
+    expect(config.hooks).toBeDefined();
+    expect(config.hooks.Stop).toBeDefined();
+    expect(Array.isArray(config.hooks.Stop)).toBe(true);
+
+    const stopHookArgs = config.hooks.Stop.flatMap((group) =>
+      (group.hooks ?? []).map((h) => h.args ?? []),
+    );
+    const hasAdditionalContextHook = stopHookArgs.some(
+      (args) => Array.isArray(args) && args.some((a) => typeof a === "string" && a.includes("stop-additional-context")),
+    );
+    expect(hasAdditionalContextHook).toBe(true);
+  });
+
+  it("hooks.json has SubagentStop event with additionalContext hook", async () => {
+    const { readFileSync } = await import("node:fs");
+    const { resolve } = await import("node:path");
+    const hooksPath = resolve(import.meta.dirname ?? ".", "..", "hooks", "hooks.json");
+    const raw = readFileSync(hooksPath, "utf-8");
+    const config = JSON.parse(raw);
+    expect(config.hooks).toBeDefined();
+    expect(config.hooks.SubagentStop).toBeDefined();
+    expect(Array.isArray(config.hooks.SubagentStop)).toBe(true);
+
+    const subStopHookArgs = config.hooks.SubagentStop.flatMap((group) =>
+      (group.hooks ?? []).map((h) => h.args ?? []),
+    );
+    const hasAdditionalContextHook = subStopHookArgs.some(
+      (args) => Array.isArray(args) && args.some((a) => typeof a === "string" && a.includes("stop-additional-context")),
+    );
+    expect(hasAdditionalContextHook).toBe(true);
+  });
+});

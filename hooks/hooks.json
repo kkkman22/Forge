@@ -283,6 +283,30 @@
             "timeout": 3
           }
         ]
+      },
+      {
+        "hooks": [
+          {
+            "timeout": 5,
+            "args": [
+              "node",
+              "scripts/stop-additional-context.mjs"
+            ]
+          }
+        ]
+      }
+    ],
+    "SubagentStop": [
+      {
+        "hooks": [
+          {
+            "timeout": 5,
+            "args": [
+              "node",
+              "scripts/stop-additional-context.mjs"
+            ]
+          }
+        ]
       }
     ],
     "TeammateIdle": [
