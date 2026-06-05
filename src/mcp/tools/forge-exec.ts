@@ -96,9 +96,14 @@ const SHELL_METACHAR_PATTERNS: Array<{ pattern: RegExp; label: string }> = [
   { pattern: /;/, label: ";" },
   { pattern: /&&/, label: "&&" },
   { pattern: /\|\|/, label: "||" },
+  { pattern: /&/, label: "&" },
   { pattern: /\|/, label: "|" },
   { pattern: /\$\(/, label: "$()" },
   { pattern: /`/, label: "`" },
+  { pattern: />/, label: ">" },
+  { pattern: /</, label: "<" },
+  { pattern: /\n/, label: "newline" },
+  { pattern: /\r/, label: "carriage-return" },
 ];
 
 /**
@@ -329,7 +334,7 @@ async function reapProcessTree(
     reapedPids.push(...result.killed);
     reapErrors.push(...result.failed.map((pid) => `Failed to kill PID ${pid}`));
   } catch (err) {
-    reapErrors.push(`Reap error: ${(err as Error).message}`);
+    reapErrors.push(`Reap error: ${err instanceof Error ? err.message : String(err)}`);
   }
 }
 

@@ -439,8 +439,8 @@ async function persistSideEffects(
   if (!baseDir) return;
   try {
     await fn();
-  } catch (e) {
-    console.warn("Side-effect persistence failed:", e);
+  } catch (e: unknown) {
+    console.warn("Side-effect persistence failed:", e instanceof Error ? e.message : String(e));
   }
 }
 
@@ -463,8 +463,8 @@ async function persistMetrics(
   if (!baseDir) return;
   try {
     await appendRunMetrics({ run_id: ctx.runId, ...params }, baseDir);
-  } catch (e) {
-    console.warn("Metrics persistence failed:", e);
+  } catch (e: unknown) {
+    console.warn("Metrics persistence failed:", e instanceof Error ? e.message : String(e));
   }
 }
 

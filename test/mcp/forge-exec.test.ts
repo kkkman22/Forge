@@ -416,4 +416,24 @@ describe("containsShellMetachars", () => {
   it("allows git status style commands", () => {
     expect(containsShellMetachars("git status --short")).toBeNull();
   });
+
+  it("detects newline injection", () => {
+    expect(containsShellMetachars("echo hello\nrm -rf /")).toMatch(/newline/);
+  });
+
+  it("detects carriage return injection", () => {
+    expect(containsShellMetachars("echo hello\rnpm install")).toMatch(/carriage-return/);
+  });
+
+  it("detects redirect operator", () => {
+    expect(containsShellMetachars("echo data > /etc/passwd")).toMatch(/>/);
+  });
+
+  it("detects input redirect operator", () => {
+    expect(containsShellMetachars("sort < /etc/passwd")).toMatch(/</);
+  });
+
+  it("detects background operator", () => {
+    expect(containsShellMetachars("sleep 999 & rm -rf /")).toMatch(/&/);
+  });
 });
