@@ -59,6 +59,7 @@ const NAME_ALLOWLIST = new Set([
   "typedoc",
   "typescript",
   "vitest",
+  "tsx", // Dev dep — pinned for test runner stability (ADR in PR #66)
 ]);
 
 /**
