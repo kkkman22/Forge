@@ -1,6 +1,7 @@
 ---
 name: business-analyst
-description: 业务分析师视角 — 专注业务规则、边界、反例、合规性
+updated: 2026-06-04
+description: Use when business rules, compliance boundaries, or edge cases need analysis
 ---
 
 # Business Analyst Agent

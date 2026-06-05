@@ -1,6 +1,6 @@
 ---
 name: forge-decide-lead
-description: "Agent Teams 模式下 /forge decide 的协调 agent — 派发 5 视角 teammate、合成 ADR"
+description: "Use when /forge decide runs in Agent Teams mode"
 model: sonnet
 maxTurns: 30
 allowedTools: [Read, Write, Agent, SendMessage, Bash, TaskCreate, TaskUpdate, TaskList]
