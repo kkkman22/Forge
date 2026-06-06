@@ -169,7 +169,7 @@ const EXPECTED_STOP_HOOKS = [
         hooks: [
             {
                 type: "command",
-                command: "if [ -f .forge/progress/*.md ] 2>/dev/null; then incomplete=$(grep -c '\\- \\[ \\]' .forge/progress/*.md 2>/dev/null || echo 0); if [ \"$incomplete\" -gt 0 ]; then echo '⚠️ 仍有未完成的任务。下次会话可使用 /forge resume 恢复上下文。'; else echo '✅ 任务已完成。建议运行 /forge learn 沉淀本次开发经验。'; fi; fi",
+                command: "node scripts/stop-incomplete-tasks.mjs",
             },
         ],
     },
@@ -177,32 +177,8 @@ const EXPECTED_STOP_HOOKS = [
         hooks: [
             {
                 type: "command",
-                command: "if [ -f .forge/knowledge/evolved-rules.md ] && grep -q 'PENDING' .forge/knowledge/evolved-rules.md 2>/dev/null; then count=$(grep -c 'PENDING' .forge/knowledge/evolved-rules.md 2>/dev/null || echo 0); echo \"⚠️ 有 $count 条待审核的规则提案。运行 /forge learn 查看并审批。\"; fi",
+                command: "node scripts/stop-pending-rules.mjs",
                 timeout: 5,
-            },
-        ],
-    },
-    {
-        hooks: [
-            {
-                timeout: 5,
-                args: ["node", "scripts/record-evolved-rule-violation.mjs"],
-            },
-        ],
-    },
-    {
-        hooks: [
-            {
-                timeout: 5,
-                args: ["node", "scripts/flag-stale-evolved-rules.mjs"],
-            },
-        ],
-    },
-    {
-        hooks: [
-            {
-                timeout: 5,
-                args: ["node", "scripts/cmux-mirror/sync-once.mjs", ".forge"],
             },
         ],
     },
@@ -210,7 +186,34 @@ const EXPECTED_STOP_HOOKS = [
         hooks: [
             {
                 type: "command",
-                command: 'if [ -f .forge/status.md ]; then phase=$(grep \'^phase:\' .forge/status.md 2>/dev/null | sed \'s/phase: *"\\{0,1\\}//;s/"\\{0,1\\} *$//\'); if [ -n "$phase" ] && [ "$phase" != \'completed\' ] && [ "$phase" != \'\' ]; then echo "⚠️ Phase: $phase — did you verify your last change? Run the relevant test/lint command before stopping."; fi; fi',
+                command: "node scripts/record-evolved-rule-violation.mjs",
+                timeout: 5,
+            },
+        ],
+    },
+    {
+        hooks: [
+            {
+                type: "command",
+                command: "node scripts/flag-stale-evolved-rules.mjs",
+                timeout: 5,
+            },
+        ],
+    },
+    {
+        hooks: [
+            {
+                type: "command",
+                command: "node scripts/cmux-mirror/sync-once.mjs .forge",
+                timeout: 5,
+            },
+        ],
+    },
+    {
+        hooks: [
+            {
+                type: "command",
+                command: "node scripts/stop-phase-verify.mjs",
                 timeout: 3,
             },
         ],
@@ -218,8 +221,9 @@ const EXPECTED_STOP_HOOKS = [
     {
         hooks: [
             {
+                type: "command",
+                command: "node scripts/stop-additional-context.mjs",
                 timeout: 5,
-                args: ["node", "scripts/stop-additional-context.mjs"],
             },
         ],
     },

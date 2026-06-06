@@ -5,7 +5,7 @@
  *   - Script execution with file paths via FORGE_FILES env var
  *   - stdout-only return (output isolation)
  *   - Error handling (non-zero exit, timeout)
- *   - JavaScript and shell language support
+ *   - JavaScript execution only; shell mode is rejected at runtime
  *
  * **Validates: Requirements 4.1–4.5**
  */
@@ -78,18 +78,23 @@ describe("execReadScript", () => {
         });
         it("passes empty array when no paths provided", async () => {
             const capture = captureExecCall();
-            await execReadScript("echo test", "shell", [], 30000);
+            await execReadScript("console.log('test')", "javascript", [], 30000);
             const env = capture.getEnv();
             expect(env.FORGE_FILES).toBe("[]");
         });
     });
     describe("JavaScript language execution", () => {
-        it("executes script via node -e for javascript language", async () => {
+        it("executes javascript through a sandbox wrapper", async () => {
             const capture = captureExecCall();
-            const script = "console.log(JSON.parse(process.env.FORGE_FILES).length)";
+            const script = "console.log(FORGE_FILES.length)";
             await execReadScript(script, "javascript", ["a.ts"], 30000);
-            expect(capture.getCmd()).toBe("node");
-            expect(capture.getArgs()).toEqual(["-e", script]);
+            expect(capture.getCmd()).toBe(process.execPath);
+            expect(capture.getArgs()).toContain("--no-addons");
+            expect(capture.getArgs()).toContain("--disable-proto=throw");
+            expect(capture.getArgs()).toContain("-e");
+            const wrapper = capture.getArgs().at(-1) ?? "";
+            expect(wrapper).toContain("createContext");
+            expect(wrapper).toContain(JSON.stringify(script));
         });
         it("returns stdout from successful javascript execution", async () => {
             mockScriptSuccess("3 files analyzed\n2 exports found\n");
@@ -100,19 +105,13 @@ describe("execReadScript", () => {
             expect(result.timedOut).toBe(false);
         });
     });
-    describe("Shell language execution", () => {
-        it("executes script via /bin/sh -c for shell language", async () => {
-            const capture = captureExecCall();
-            const script = "echo $FORGE_FILES | jq length";
-            await execReadScript(script, "shell", ["a.ts"], 30000);
-            expect(capture.getCmd()).toBe("/bin/sh");
-            expect(capture.getArgs()).toEqual(["-c", script]);
-        });
-        it("returns stdout from successful shell execution", async () => {
-            mockScriptSuccess("file count: 2\n");
-            const result = await execReadScript("echo file count: 2", "shell", ["a.ts", "b.ts"], 30000);
-            expect(result.stdout).toBe("file count: 2\n");
-            expect(result.exitCode).toBe(0);
+    describe("Shell language rejection", () => {
+        it("rejects shell mode without spawning /bin/sh", async () => {
+            mockedExecFile.mockClear();
+            const result = await execReadScript("echo $FORGE_FILES", "shell", ["a.ts"], 30000);
+            expect(mockedExecFile).not.toHaveBeenCalled();
+            expect(result.exitCode).toBe(1);
+            expect(result.stderr).toMatch(/shell mode is disabled/i);
         });
     });
     describe("output isolation", () => {
@@ -143,7 +142,7 @@ describe("execReadScript", () => {
         });
         it("handles null child process gracefully", async () => {
             mockedExecFile.mockReturnValue(null);
-            const result = await execReadScript("echo test", "shell", [], 30000);
+            const result = await execReadScript("console.log('test')", "javascript", [], 30000);
             expect(result.exitCode).toBe(1);
             expect(result.stderr).toBe("Failed to spawn subprocess");
         });
@@ -244,8 +243,7 @@ describe("validateScript", () => {
         expect(validateScript(script)).toMatch(/process\.env/);
     });
     it("allows safe scripts without fs/process access", () => {
-        // P0-1 fix: scripts using only pure computation are still allowed
-        // process.env and require('fs') are blocked; shell mode should be used for file access
+        // P0-1 fix: scripts using only pure computation are still allowed.
         const script = `
       const x = 1 + 1;
       console.log(x);
@@ -318,7 +316,7 @@ describe("sandboxOptions — resource limits for script execution", () => {
         // Must include --max-old-space-size to prevent memory exhaustion
         expect(opts.NODE_OPTIONS).toContain("--max-old-space-size");
     });
-    it("does not set NODE_OPTIONS for shell language", () => {
+    it("does not set NODE_OPTIONS for rejected shell language", () => {
         const opts = buildSandboxEnv("shell", ["a.ts"]);
         expect(opts.NODE_OPTIONS).toBeUndefined();
     });

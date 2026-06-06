@@ -198,9 +198,8 @@ describe("hooks.json contract: Stop/SubagentStop additionalContext", () => {
         expect(config.hooks).toBeDefined();
         expect(config.hooks.Stop).toBeDefined();
         expect(Array.isArray(config.hooks.Stop)).toBe(true);
-        const stopHookArgs = config.hooks.Stop.flatMap((group) => (group.hooks ?? []).map((h) => h.args ?? []));
-        const hasAdditionalContextHook = stopHookArgs.some((args) => Array.isArray(args) &&
-            args.some((a) => typeof a === "string" && a.includes("stop-additional-context")));
+        const stopHookCommands = config.hooks.Stop.flatMap((group) => (group.hooks ?? []).map((h) => h.command ?? (h.args ?? []).join(" ")));
+        const hasAdditionalContextHook = stopHookCommands.some((cmd) => typeof cmd === "string" && cmd.includes("stop-additional-context"));
         expect(hasAdditionalContextHook).toBe(true);
     });
     it("hooks.json has StopFailure event with additionalContext hook (SubagentStop proxy)", async () => {

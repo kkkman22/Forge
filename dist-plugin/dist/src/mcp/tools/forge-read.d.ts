@@ -1,13 +1,12 @@
 /**
  * forge_read — batch file analysis via sandboxed script execution.
  *
- * Executes a user-provided script in a child subprocess with file paths
- * injected via the `FORGE_FILES` environment variable (JSON array).
+ * Executes a user-provided JavaScript script in a child subprocess with file paths
+ * injected as a sandbox global `FORGE_FILES` array.
  * Only the script's stdout is returned — file contents never enter the context.
  *
  * Supported languages:
- *   - javascript: `node -e "<script>"` with FORGE_FILES env var
- *   - shell: `/bin/sh -c "<script>"` with FORGE_FILES env var
+ *   - javascript: sandboxed `node -e` wrapper with FORGE_FILES + readFile(path)
  *
  * **Validates: Requirement 4**
  */
@@ -32,7 +31,7 @@ export interface ReadExecResult {
     timedOut: boolean;
 }
 /**
- * Execute a script in a child subprocess with FORGE_FILES env var injection.
+ * Execute a script in a child subprocess with FORGE_FILES/readFile sandbox globals.
  *
  * @param script - The script code to execute
  * @param language - "javascript" or "shell"

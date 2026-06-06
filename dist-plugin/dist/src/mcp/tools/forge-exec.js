@@ -85,95 +85,80 @@ export function isCommandDenied(command, denyPatterns) {
 // ---------------------------------------------------------------------------
 // Readonly command allowlist (P0-2 primary security boundary)
 // ---------------------------------------------------------------------------
-/**
- * Hardcoded allowlist of read-only / verification commands.
- * Commands not in this list are rejected regardless of settings.json.
- */
-const READONLY_COMMAND_ALLOWLIST = new Set([
-    // Package managers (read-only operations)
-    "npm",
-    "npx",
-    "yarn",
-    "pnpm",
-    "bun",
-    // TypeScript / JavaScript tools
-    "vitest",
-    "tsc",
-    "biome",
-    "eslint",
-    "prettier",
-    "jest",
-    // Git read-only
-    "git",
-    // Unix read-only utilities
-    "echo",
-    "cat",
-    "ls",
-    "find",
-    "wc",
-    "head",
-    "tail",
-    "grep",
-    "sort",
+const EXACT_ALLOWED_COMMANDS = new Set([
+    "npm test",
+    "npm run test",
+    "npm run test:e2e",
+    "npm run test:coverage",
+    "npm run typecheck",
+    "npm run lint",
+    "npm run check",
+    "vitest run",
+    "tsc --noEmit",
+    "biome check src/ test/",
+    "echo hello",
+]);
+const ALLOWED_NPM_RUN_SCRIPTS = new Set([
+    "test",
+    "test:e2e",
+    "test:coverage",
+    "typecheck",
+    "lint",
+    "check",
+]);
+const ALLOWED_GIT_SUBCOMMANDS = new Set([
+    "status",
     "diff",
-    "file",
-    "which",
-    "type",
-    "env",
-    "printenv",
-    // Node.js (only safe subcommands)
-    "node",
+    "log",
+    "show",
+    "rev-parse",
+    "ls-files",
+    "ls-tree",
 ]);
-/**
- * Subcommands that should ALWAYS be rejected even if the binary is in the allowlist.
- */
-const ALWAYS_DENIED_SUBCOMMANDS = new Map([
-    [
-        "git",
-        new Set([
-            "commit",
-            "push",
-            "merge",
-            "rebase",
-            "reset",
-            "checkout",
-            "switch",
-            "stash",
-            "add",
-            "rm",
-            "mv",
-            "clean",
-        ]),
-    ],
-    ["npm", new Set(["publish", "install", "ci", "uninstall", "update", "link"])],
-]);
+function normalizeCommand(command) {
+    return command.trim().replace(/\s+/g, " ");
+}
 /**
  * Check if a command is in the readonly allowlist.
  * This is the primary security boundary — settings.json deny is supplementary.
  */
 export function isCommandAllowed(command) {
-    const trimmed = command.trim();
+    const trimmed = normalizeCommand(command);
     if (trimmed.length === 0)
         return false;
     const parts = trimmed.split(/\s+/);
     const bin = parts[0];
-    if (!READONLY_COMMAND_ALLOWLIST.has(bin))
-        return false;
-    // Check denied subcommands
-    const denied = ALWAYS_DENIED_SUBCOMMANDS.get(bin);
-    if (denied && denied.size > 0 && parts.length > 1) {
-        // Skip flags (start with -) to find the actual subcommand
-        let sub = parts[1];
-        for (let i = 1; i < parts.length; i++) {
-            if (!parts[i].startsWith("-")) {
-                sub = parts[i];
-                break;
-            }
+    if (EXACT_ALLOWED_COMMANDS.has(trimmed))
+        return true;
+    if (bin === "npm") {
+        if (parts.length === 2 && parts[1] === "test")
+            return true;
+        if (parts.length === 3 && parts[1] === "run") {
+            return ALLOWED_NPM_RUN_SCRIPTS.has(parts[2]);
         }
-        if (denied.has(sub))
-            return false;
+        return false;
     }
-    return true;
+    if (bin === "npx") {
+        return parts.length >= 3 && parts[1] === "vitest" && parts[2] === "run";
+    }
+    if (bin === "vitest") {
+        return parts.length >= 2 && parts[1] === "run";
+    }
+    if (bin === "tsc") {
+        return parts.length === 2 && parts[1] === "--noEmit";
+    }
+    if (bin === "biome") {
+        return parts.length >= 2 && parts[1] === "check" && !parts.includes("--write");
+    }
+    if (bin === "git") {
+        if (parts.length < 2)
+            return false;
+        const sub = parts[1];
+        if (!ALLOWED_GIT_SUBCOMMANDS.has(sub))
+            return false;
+        return !parts.some((part) => part === "--output" || part.startsWith("--output="));
+    }
+    return false;
 }
 // ---------------------------------------------------------------------------
 // Shell metachar detection (defense-in-depth)
@@ -181,6 +166,7 @@ export function isCommandAllowed(command) {
 const SHELL_METACHAR_PATTERNS = [
     { pattern: /\$\(/, label: "$()" },
     { pattern: /`/, label: "`" },
+    { pattern: /\$/, label: "$" },
     { pattern: /\n/, label: "newline" },
     { pattern: /\r/, label: "carriage-return" },
     // P0-2 fix: expanded to cover all shell operators
@@ -228,6 +214,10 @@ export function isSimpleCommand(command) {
     if (trimmed.length === 0)
         return false;
     return !SHELL_OPERATOR_RE.test(trimmed);
+}
+function splitSimpleCommand(command) {
+    const parts = command.trim().split(/\s+/);
+    return { bin: parts[0], args: parts.slice(1) };
 }
 /**
  * Execute a shell command in a child subprocess with timeout support.
@@ -300,7 +290,10 @@ export function execCommandTracked(command, options) {
         const reapedPids = [];
         const reapErrors = [];
         let settled = false;
-        const child = spawn("/bin/sh", ["-c", command], {
+        const spawnTarget = isSimpleCommand(command)
+            ? splitSimpleCommand(command)
+            : { bin: "/bin/sh", args: ["-c", command] };
+        const child = spawn(spawnTarget.bin, spawnTarget.args, {
             detached: true,
             stdio: ["pipe", "pipe", "pipe"],
             ...(options.cwd ? { cwd: options.cwd } : {}),

@@ -4,7 +4,7 @@
 [![Security Audit](https://img.shields.io/badge/security--audit-npm%20audit%20%2B%20deps-blue)](./.github/workflows/ci.yml)
 [![License: MIT](https://img.shields.io/badge/License-MIT-green.svg)](./LICENSE)
 
-> **统一 `/forge` 入口 + <!-- ssot:begin topic=commands render=count -->21<!-- ssot:end topic=commands --> 个内部子命令覆盖完整开发生命周期，三维路由自动匹配复杂度，统一状态系统跨会话感知。**
+> **统一 `/forge` 入口 + <!-- ssot:begin topic=commands render=count -->35<!-- ssot:end topic=commands --> 个内部子命令覆盖完整开发生命周期，三维路由自动匹配复杂度，统一状态系统跨会话感知。**
 >
 > 前置条件：Claude Code ≥ 2.1.153 | [安装指南](docs/quick-start.md)
 > 完整兼容性矩阵和降级策略见 [docs/claude-code-compatibility.md](docs/claude-code-compatibility.md)
@@ -13,7 +13,7 @@
 
 ## 核心价值
 
-- **<!-- ssot:begin topic=commands render=count -->21<!-- ssot:end topic=commands --> 个命令**覆盖从需求分析到代码交付的完整周期
+- **<!-- ssot:begin topic=commands render=count -->35<!-- ssot:end topic=commands --> 个命令**覆盖从需求分析到代码交付的完整周期
 - **三维路由**自动匹配任务复杂度（轻量/标准/全量）
 - **统一状态**目录 `.forge/`，跨命令状态感知和会话恢复
 - **按需加载**，单次会话约 10K tokens
@@ -50,7 +50,7 @@ claude plugin install forge
 | 初次接触者引导 | [docs/onboarding-beginner.md](docs/onboarding-beginner.md) | 了解基本概念和常用命令 |
 | 日常开发者引导 | [docs/onboarding-daily.md](docs/onboarding-daily.md) | 掌握标准工作流各阶段 |
 | 高级用户引导 | [docs/onboarding-advanced.md](docs/onboarding-advanced.md) | 深入全量路径、知识系统、贡献指南 |
-| 命令速查 | [docs/reference-commands.md](docs/reference-commands.md) | 查看全部 <!-- ssot:begin topic=commands render=count -->21<!-- ssot:end topic=commands --> 个命令和路由详解 |
+| 命令速查 | [docs/reference-commands.md](docs/reference-commands.md) | 查看全部 <!-- ssot:begin topic=commands render=count -->35<!-- ssot:end topic=commands --> 个命令和路由详解 |
 | 安全参考 | [docs/reference-security.md](docs/reference-security.md) | 了解安全机制分层和审计 |
 | 架构参考 | [docs/reference-architecture.md](docs/reference-architecture.md) | 深入了解 .forge/ 目录结构和状态保护 |
 | 高级功能参考 | [docs/reference-advanced.md](docs/reference-advanced.md) | Forge Loop、cmux、Domain Pack、Token 效率 |
@@ -217,7 +217,7 @@ bash scripts/pre-push-ci-check.sh
 
 **技术栈**：TypeScript 5.9（strict）、297 个 TypeScript 模块、Vitest 4.1、fast-check 4.7（属性测试）、Biome 2.4（lint + format）。运行时依赖：`@anthropic-ai/claude-agent-sdk`、`@modelcontextprotocol/sdk`、`commander`、`minimatch`、`yaml`、`zod`。
 
-**测试策略**：7301 个测试（599 个测试文件）验证不变量。覆盖率 ~89% statements。
+**测试策略**：7327 个测试（600 个测试文件）验证不变量。覆盖率 ~89% statements。
 
 
 ---

@@ -25,6 +25,17 @@ describe("plugin dist structure smoke tests", () => {
         const totalHooks = hookArrays.reduce((sum, arr) => sum + arr.length, 0);
         expect(totalHooks).toBeGreaterThan(0);
     });
+    it("all hook-referenced scripts are packaged in dist-plugin", () => {
+        const content = readFileSync(join(DIST_PLUGIN, "hooks/hooks.json"), "utf-8");
+        const missingScripts = [];
+        for (const match of content.matchAll(/scripts\/([A-Za-z0-9_./-]+)/g)) {
+            const scriptPath = join(DIST_PLUGIN, "scripts", match[1]);
+            if (!existsSync(scriptPath)) {
+                missingScripts.push(`scripts/${match[1]}`);
+            }
+        }
+        expect(missingScripts).toEqual([]);
+    });
     it("dist/src/mcp/server.js exists in plugin package", () => {
         expect(existsSync(join(DIST_PLUGIN, "dist/src/mcp/server.js"))).toBe(true);
     });

@@ -1,17 +1,18 @@
 /**
  * forge_read — batch file analysis via sandboxed script execution.
  *
- * Executes a user-provided script in a child subprocess with file paths
- * injected via the `FORGE_FILES` environment variable (JSON array).
+ * Executes a user-provided JavaScript script in a child subprocess with file paths
+ * injected as a sandbox global `FORGE_FILES` array.
  * Only the script's stdout is returned — file contents never enter the context.
  *
  * Supported languages:
- *   - javascript: `node -e "<script>"` with FORGE_FILES env var
- *   - shell: `/bin/sh -c "<script>"` with FORGE_FILES env var
+ *   - javascript: sandboxed `node -e` wrapper with FORGE_FILES + readFile(path)
  *
  * **Validates: Requirement 4**
  */
 import { execFile } from "node:child_process";
+import { realpathSync } from "node:fs";
+import { resolve } from "node:path";
 import { z } from "zod";
 import { validatePaths } from "./path-validator.js";
 // Re-export for backward compatibility with existing imports
@@ -80,7 +81,8 @@ const SANDBOX_MAX_HEAP_MB = 256;
  */
 export function buildSandboxEnv(language, paths) {
     const base = {
-        ...process.env,
+        PATH: process.env.PATH,
+        NODE_ENV: process.env.NODE_ENV,
         FORGE_FILES: JSON.stringify(paths),
     };
     if (language === "javascript") {
@@ -92,8 +94,112 @@ export function buildSandboxEnv(language, paths) {
     }
     return base;
 }
+function buildPermissionArgs(allowedPaths) {
+    const flags = process.allowedNodeEnvironmentFlags;
+    const permissionFlag = flags.has("--permission")
+        ? "--permission"
+        : flags.has("--experimental-permission")
+            ? "--experimental-permission"
+            : null;
+    if (!permissionFlag || !flags.has("--allow-fs-read"))
+        return [];
+    return [permissionFlag, ...allowedPaths.map((p) => `--allow-fs-read=${p}`)];
+}
+function resolveAllowedReadFiles(paths, cwd) {
+    const root = cwd ? resolve(cwd) : process.cwd();
+    return paths.map((p) => {
+        const resolved = resolve(root, p);
+        let realPath = resolved;
+        try {
+            realPath = realpathSync(resolved);
+        }
+        catch {
+            // Nonexistent paths will fail visibly when readFile() is called.
+        }
+        return { inputPath: p, resolvedPath: resolved, realPath };
+    });
+}
+function buildJavascriptSandboxScript(script, allowedFiles) {
+    const fileAliases = allowedFiles.flatMap((file) => [
+        { alias: file.inputPath, realPath: file.realPath },
+        { alias: file.resolvedPath, realPath: file.realPath },
+        { alias: file.realPath, realPath: file.realPath },
+    ]);
+    return `
+const { readFileSync } = require("node:fs");
+const { Script, createContext } = require("node:vm");
+
+const userScript = ${JSON.stringify(script)};
+const fileAliases = ${JSON.stringify(fileAliases)};
+const fileContentsByRealPath = Object.create(null);
+for (const entry of fileAliases) {
+  if (!Object.prototype.hasOwnProperty.call(fileContentsByRealPath, entry.realPath)) {
+    fileContentsByRealPath[entry.realPath] = readFileSync(entry.realPath, "utf-8");
+  }
+}
+const fileMap = Object.create(null);
+for (const entry of fileAliases) {
+  fileMap[entry.alias] = fileContentsByRealPath[entry.realPath];
+}
+
+const setupScript = \`
+const __forge_file_map = Object.freeze(${JSON.stringify("__FORGE_FILE_MAP__")});
+const __forge_files = Object.freeze(${JSON.stringify(allowedFiles.map((file) => file.inputPath))});
+globalThis.__forge_stdout = [];
+globalThis.__forge_stderr = [];
+function __forge_format(value) {
+  if (typeof value === "string") return value;
+  if (typeof value === "undefined") return "undefined";
+  try { return JSON.stringify(value); } catch { return String(value); }
+}
+function __forge_readFile(inputPath, encoding = "utf-8") {
+  if (encoding !== "utf-8" && encoding !== "utf8") {
+    throw new Error("Unsupported encoding for forge_read readFile(): " + String(encoding));
+  }
+  const key = String(inputPath);
+  if (!Object.prototype.hasOwnProperty.call(__forge_file_map, key)) {
+    throw new Error("Path not listed in FORGE_FILES: " + key);
+  }
+  return __forge_file_map[key];
+}
+globalThis.FORGE_FILES = __forge_files;
+globalThis.readFile = __forge_readFile;
+globalThis.console = Object.freeze({
+  log(...args) { globalThis.__forge_stdout.push(args.map(__forge_format).join(" ") + "\\\\n"); },
+  error(...args) { globalThis.__forge_stderr.push(args.map(__forge_format).join(" ") + "\\\\n"); },
+  warn(...args) { globalThis.__forge_stderr.push(args.map(__forge_format).join(" ") + "\\\\n"); }
+});
+Object.freeze(globalThis.FORGE_FILES);
+Object.freeze(globalThis.readFile);
+Object.freeze(globalThis.console);
+\`;
+
+const context = createContext(Object.create(null), { codeGeneration: { strings: false, wasm: false } });
+new Script(setupScript.replace(${JSON.stringify(JSON.stringify("__FORGE_FILE_MAP__"))}, JSON.stringify(fileMap)), {
+  filename: "forge-read-setup.js",
+}).runInContext(context, { timeout: 1000 });
+
+let thrown = null;
+try {
+  new Script(userScript, { filename: "forge-read-user-script.js" }).runInContext(context, { timeout: 1000 });
+} catch (err) {
+  thrown = err;
+}
+
+const serialized = new Script(
+  "JSON.stringify({ stdout: globalThis.__forge_stdout.join(''), stderr: globalThis.__forge_stderr.join('') })",
+).runInContext(context, { timeout: 1000 });
+const output = JSON.parse(serialized);
+if (output.stdout) process.stdout.write(output.stdout);
+if (output.stderr) process.stderr.write(output.stderr);
+if (thrown) {
+  console.error(thrown && thrown.stack ? thrown.stack : String(thrown));
+  process.exitCode = 1;
+}
+`;
+}
 /**
- * Execute a script in a child subprocess with FORGE_FILES env var injection.
+ * Execute a script in a child subprocess with FORGE_FILES/readFile sandbox globals.
  *
  * @param script - The script code to execute
  * @param language - "javascript" or "shell"
@@ -101,10 +207,39 @@ export function buildSandboxEnv(language, paths) {
  * @param timeoutMs - Timeout in milliseconds
  */
 export function execReadScript(script, language, paths, timeoutMs, options) {
-    return new Promise((resolve) => {
+    return new Promise((finish) => {
+        if (language === "shell") {
+            finish({
+                stdout: "",
+                stderr: "forge_read shell mode is disabled; use javascript mode only",
+                exitCode: 1,
+                timedOut: false,
+            });
+            return;
+        }
+        const rootPath = options?.cwd ? resolve(options.cwd) : process.cwd();
+        const pathError = validatePaths(paths, rootPath);
+        if (pathError) {
+            finish({
+                stdout: "",
+                stderr: pathError,
+                exitCode: 1,
+                timedOut: false,
+            });
+            return;
+        }
         const env = buildSandboxEnv(language, paths);
-        const cmd = language === "javascript" ? "node" : "/bin/sh";
-        const args = language === "javascript" ? ["-e", script] : ["-c", script];
+        const allowedFiles = resolveAllowedReadFiles(paths, rootPath);
+        const allowedPaths = allowedFiles.map((file) => file.realPath);
+        const sandboxScript = buildJavascriptSandboxScript(script, allowedFiles);
+        const cmd = process.execPath;
+        const args = [
+            ...buildPermissionArgs(allowedPaths),
+            "--no-addons",
+            "--disable-proto=throw",
+            "-e",
+            sandboxScript,
+        ];
         const child = execFile(cmd, args, {
             timeout: timeoutMs,
             maxBuffer: 10 * 1024 * 1024,
@@ -112,7 +247,7 @@ export function execReadScript(script, language, paths, timeoutMs, options) {
             ...(options?.cwd ? { cwd: options.cwd } : {}),
         }, (error, stdout, stderr) => {
             if (error && "killed" in error && error.killed) {
-                resolve({
+                finish({
                     stdout: String(stdout),
                     stderr: String(stderr),
                     exitCode: 1,
@@ -120,8 +255,8 @@ export function execReadScript(script, language, paths, timeoutMs, options) {
                 });
                 return;
             }
-            const exitCode = error && "code" in error ? (error.code ?? 1) : 0;
-            resolve({
+            const exitCode = error ? Number(error.code) || 1 : 0;
+            finish({
                 stdout: String(stdout),
                 stderr: String(stderr),
                 exitCode,
@@ -130,7 +265,7 @@ export function execReadScript(script, language, paths, timeoutMs, options) {
         });
         // Safety: if the child is somehow null, resolve immediately
         if (!child) {
-            resolve({
+            finish({
                 stdout: "",
                 stderr: "Failed to spawn subprocess",
                 exitCode: 1,
@@ -145,13 +280,12 @@ export function execReadScript(script, language, paths, timeoutMs, options) {
 const TOOL_DESCRIPTION = [
     "Analyze multiple files through a sandboxed script execution.",
     "",
-    "File paths are injected via the FORGE_FILES environment variable (JSON array).",
-    "The script reads files and outputs analysis results to stdout.",
+    "File paths are injected as a sandbox global FORGE_FILES array.",
+    "Read those files with readFile(path); only paths listed in FORGE_FILES are readable.",
     "Only stdout is returned — file contents never enter the context window.",
     "",
     "Languages:",
-    "- javascript: runs via `node -e`, access paths via JSON.parse(process.env.FORGE_FILES)",
-    "- shell: runs via `/bin/sh -c`, access paths via $FORGE_FILES",
+    "- javascript: runs in a restricted VM, access paths via FORGE_FILES and readFile(path)",
     "",
     "Use for: batch structural analysis, dependency graphs, code metrics.",
     "NOT for: file mutations or interactive commands.",
@@ -166,9 +300,9 @@ export function registerForgeRead(server, root) {
             paths: z.array(z.string()).describe("File paths to analyze"),
             script: z.string().describe("Analysis script code"),
             language: z
-                .enum(["javascript", "shell"])
+                .enum(["javascript"])
                 .default("javascript")
-                .describe("Script language (javascript or shell)"),
+                .describe("Script language (javascript only; shell mode is disabled)"),
         },
         _meta: {
             "anthropic/maxResultSizeChars": 200_000,

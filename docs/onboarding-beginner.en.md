@@ -3,13 +3,13 @@ title: Forge Beginner Onboarding
 category: reference
 audience:
 - maintainer
-updated: '2026-05-12'
+updated: 2026-06-06
 owner: forge-maintainers
 ---
 
 [← Back to Index](./INDEX.en.md) | [中文版](./onboarding-beginner.md)
 
-> ⚠️ This translation may be behind the Chinese version. Chinese last updated: 2026-05-12
+> ⚠️ This translation may be behind the Chinese version. Chinese last updated: 2026-06-06
 
 # Forge Beginner Onboarding
 
@@ -181,4 +181,4 @@ Use Forge's lightweight path to fix a typo.
 Mastering these 3 commands enables you to handle daily small tasks with Forge. Next steps:
 
 - **[Daily Developer Path → onboarding-daily.en.md](./onboarding-daily.en.md)** — Learn the complete standard workflow stages
-- **[Command Reference → reference-commands.md](./reference-commands.md)** — View all <!-- ssot:begin topic=commands render=count -->21<!-- ssot:end topic=commands --> commands
+- **[Command Reference → reference-commands.md](./reference-commands.md)** — View all <!-- ssot:begin topic=commands render=count -->35<!-- ssot:end topic=commands --> commands
