@@ -1,0 +1,68 @@
+{
+  "$schema": "dist-manifest.json",
+  "description": "Single source of truth for all file lists in build-dist.sh. P3-3: manifest-driven packaging.",
+  "cc_runtime_scripts": [
+    "check-frozen.sh",
+    "auto-resume.sh",
+    "hook-check-frozen.sh",
+    "hook-check-frozen-post.sh",
+    "hook-precompact.sh",
+    "hook-postcompact.sh",
+    "hook-task-completed.sh"
+  ],
+  "cc_runtime_mjs": [
+    "inject-plan-context.mjs",
+    "inject-evolved-rules.mjs",
+    "check-context-boundary.mjs",
+    "check-diff-context-integrity.mjs",
+    "rebuild-feature-dossier.mjs",
+    "record-evolved-rule-violation.mjs",
+    "flag-stale-evolved-rules.mjs",
+    "knowledge-hook-dispatch.mjs",
+    "bootstrap-check.mjs",
+    "check-companions.mjs",
+    "bash-ban-raw.mjs",
+    "stop-additional-context.mjs",
+    "stop-failure-hook.mjs",
+    "task-created-hook.mjs",
+    "worktree-create-hook.mjs"
+  ],
+  "cc_compiled_js": [
+    "state.js",
+    "frontmatter.js"
+  ],
+  "plugin_runtime_scripts": [
+    "auto-resume.sh",
+    "hook-check-frozen.sh",
+    "hook-check-frozen-post.sh",
+    "hook-precompact.sh",
+    "hook-postcompact.sh",
+    "hook-task-completed.sh",
+    "check-frozen.sh",
+    "init.sh",
+    "validate-knowledge.sh"
+  ],
+  "plugin_runtime_mjs": [
+    "inject-plan-context.mjs",
+    "inject-evolved-rules.mjs",
+    "check-context-boundary.mjs",
+    "check-diff-context-integrity.mjs",
+    "rebuild-feature-dossier.mjs",
+    "record-evolved-rule-violation.mjs",
+    "flag-stale-evolved-rules.mjs",
+    "knowledge-hook-dispatch.mjs",
+    "bootstrap-check.mjs",
+    "check-companions.mjs",
+    "bash-ban-raw.mjs",
+    "stop-additional-context.mjs",
+    "stop-failure-hook.mjs",
+    "task-created-hook.mjs",
+    "worktree-create-hook.mjs"
+  ],
+  "plugin_compiled_js": [
+    "check-sandbox.js",
+    "check-frozen.js",
+    "state.js",
+    "frontmatter.js"
+  ]
+}
