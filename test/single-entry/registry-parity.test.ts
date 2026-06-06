@@ -2,41 +2,10 @@ import { existsSync, readFileSync } from "node:fs";
 import { resolve } from "node:path";
 import { glob } from "glob";
 import { describe, expect, it } from "vitest";
+import { ALLOW_LIST } from "../../src/forge-dispatcher/allowlist.js";
 
 const ROOT = resolve(import.meta.dirname, "..", "..");
 const REGISTRY_PATH = resolve(ROOT, "skills/forge/registry.toml");
-
-const SUBS = [
-  "abort",
-  "accept",
-  "build",
-  "build-light",
-  "control-cli",
-  "control-ui",
-  "debug",
-  "decide",
-  "decide-teams",
-  "fix",
-  "fix-conflicts",
-  "grill",
-  "learn",
-  "loop",
-  "mutate",
-  "pack",
-  "plan",
-  "recap",
-  "refactor",
-  "resume",
-  "review",
-  "router",
-  "ship",
-  "spec",
-  "status",
-  "storm",
-  "test",
-  "verify",
-  "zoom-out",
-];
 
 function parseSection(content: string, sub: string): Record<string, string> {
   const result: Record<string, string> = {};
@@ -112,9 +81,9 @@ describe("R2.5: registry as derived index", () => {
     expect(content).toContain("# AUTO-GENERATED");
   });
 
-  it("registry.toml contains all 29 subs", () => {
+  it("registry.toml contains every allowlisted sub", () => {
     const content = readFileSync(REGISTRY_PATH, "utf-8");
-    for (const sub of SUBS) {
+    for (const sub of ALLOW_LIST) {
       expect(content, `registry missing sub: ${sub}`).toMatch(new RegExp(`\\[${sub}\\]`));
     }
   });

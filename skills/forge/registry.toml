@@ -1,179 +1,283 @@
-# AUTO-GENERATED — DO NOT EDIT
+# AUTO-GENERATED - DO NOT EDIT
 # Source: skills/forge/lib/<sub>/instructions.md frontmatter
-# Regen: node scripts/regen-skill-registry.mjs
-# Last regen: 2026-06-04T16:21:56.868Z
+# Regen: node scripts/sync-command-registry.mjs
 
 [abort]
 dispatch_mode = "inline"
+tier = "all"
+stage = "auxiliary"
 allowed_tools = ["Read", "Bash", "Write"]
-description = "Abort the active task by archiving its status file and freeing the task slot. Use when user runs `/forge abort`, decides to abandon the current task, or needs to clear an active task slot before starting a new one."
+description = "Use when user runs `/forge abort`, decides to abandon the current task, or needs to clear an active task slot before starting a new one"
+summary = "Use when user runs `/forge abort`, decides to abandon the current task, or needs to clear an active task slot before starting a new one."
 
 [accept]
 dispatch_mode = "fork"
+tier = "all"
+stage = "acceptance"
 allowed_tools = ["Read", "Bash", "Write"]
-description = "Execute spec Scenarios end-to-end against real runtime and produce pass/fail verdicts with evidence. Use when /forge ship runs on a spec with acceptance_eval true, when user runs /forge accept explicitly, or when /forge ship --with-acceptance flag is provided."
+description = "Use when /forge ship runs on a spec with acceptance_eval true, user runs /forge accept explicitly, or /forge ship --with-acceptance flag is provided"
+summary = "Use when /forge ship runs on a spec with acceptance_eval true, user runs /forge accept explicitly, or /forge ship --with-acceptance flag is provided."
 
 [build]
 dispatch_mode = "fork"
+tier = "all"
+stage = "implementation"
 allowed_tools = ["Read", "Edit", "Write", "Bash", "Agent", "Glob", "Grep"]
-description = "Execute an approved plan through TDD with subagent isolation, atomic commits, and three-strike failure safety. Use when running `/forge build`, an approved plan exists, or the implementation phase of a standard or full tier task begins."
+description = "Use when running `/forge build`, an approved plan exists, or the implementation phase of a standard or full tier task begins"
+summary = "Use when running `/forge build`, an approved plan exists, or the implementation phase of a standard or full tier task begins."
 
 [build-light]
 dispatch_mode = "inline"
+tier = "light"
+stage = "implementation"
 allowed_tools = ["Read", "Edit", "Write", "Bash"]
-description = "Build tiny single-file changes that skip the full plan and TDD ceremony. Use when user runs `/forge build` on a light-tier task, change touches 1 file and 20 lines or less, or has no spec or plan document."
+description = "Use when user runs `/forge build` on a light-tier task, change touches 1 file and 20 lines or less, or has no spec or plan document"
+summary = "Use when user runs `/forge build` on a light-tier task, change touches 1 file and 20 lines or less, or has no spec or plan document."
 
 [charter]
 dispatch_mode = "fork"
+tier = "all"
+stage = "auxiliary"
 allowed_tools = ["Read", "Write", "Glob", "Grep", "Bash"]
 description = "Create, update, check, and display the project charter (.forge/charter.md). Use when user runs /forge charter <sub>."
+summary = "Create, update, check, and display the project charter (.forge/charter.md). Use when user runs /forge charter <sub>."
 
 [control-cli]
 dispatch_mode = "inline"
+tier = "all"
+stage = "auxiliary"
 allowed_tools = ["Read", "Bash"]
-description = "Verify CLI/TUI applications through external harness execution. Use when running /forge test --cli or when forge-test detects a CLI target."
+description = "Use when running /forge test --cli or when forge-test detects a CLI target"
+summary = "Use when running /forge test --cli or when forge-test detects a CLI target."
 
 [control-ui]
 dispatch_mode = "inline"
+tier = "all"
+stage = "auxiliary"
 allowed_tools = ["Read", "Bash"]
-description = "Verify Web/Electron UI through external harness execution. Use when running /forge test --ui or when forge-test detects a UI target with designer specs."
+description = "Use when running /forge test --ui or when forge-test detects a UI target with designer specs"
+summary = "Use when running /forge test --ui or when forge-test detects a UI target with designer specs."
 
 [debug]
 dispatch_mode = "fork"
+tier = "all"
+stage = "debugging"
 allowed_tools = ["Read", "Agent", "Glob", "Grep", "Bash", "Write", "Edit", "WebSearch"]
 description = "Use when user says debug this, reports a regression, or after three consecutive build failures trigger the three-strike reroute"
+summary = "Use when user says debug this, reports a regression, or after three consecutive build failures trigger the three-strike reroute."
 
 [decide]
 dispatch_mode = "fork"
+tier = "full"
+stage = "decision"
 allowed_tools = ["Read", "Agent", "Bash"]
-description = "Decide through four-perspective Subagent deliberation covering product, architect, security, and designer viewpoints. Use when starting a full-tier task, facing irreversible technical choices, or needing threat modeling before implementation."
+description = "Use when starting a full-tier task, facing irreversible technical choices, or needing threat modeling before implementation"
+summary = "Use when starting a full-tier task, facing irreversible technical choices, or needing threat modeling before implementation."
 
 [decide-teams]
 dispatch_mode = "fork"
+tier = "all"
+stage = "decision"
 allowed_tools = ["Read", "Write", "Bash", "Agent"]
-description = "Execute multi-perspective decision analysis using parallel agent teams for complex architectural or product choices. Use when `/forge decide` is invoked and the topic involves architecture, security, cost, or product trade-offs requiring multiple viewpoints."
+description = "Use when `/forge decide` is invoked and the topic involves architecture, security, cost, or product trade-offs requiring multiple viewpoints"
+summary = "Use when `/forge decide` is invoked and the topic involves architecture, security, cost, or product trade-offs requiring multiple viewpoints."
 
 [fix]
 dispatch_mode = "inline"
+tier = "all"
+stage = "auxiliary"
 allowed_tools = ["Read", "Write", "Bash"]
-description = "Bugfix three-file workflow — uses runBugfixOrchestration with bugfix.md + design.md + tasks.md."
+description = "Use when running /forge fix with bugfix.md + design.md + tasks.md workflow"
+summary = "Use when running /forge fix with bugfix.md + design.md + tasks.md workflow."
 
 [fix-conflicts]
 dispatch_mode = "inline"
+tier = "all"
+stage = "auxiliary"
 allowed_tools = ["Read", "Edit", "Bash"]
-description = "Fix merge conflicts using three-zone forge directory classification. Use when git merge or rebase produces conflicts inside the forge config tree."
+description = "Use when git merge or rebase produces conflicts inside the forge config tree"
+summary = "Use when git merge or rebase produces conflicts inside the forge config tree."
 
 [forge-cmux-browser-qa]
 dispatch_mode = "inline"
+tier = "all"
+stage = "auxiliary"
 allowed_tools = ["Read", "Bash"]
-description = "Browser-based QA verification using cmux browser commands during /forge test. Requires cmux installed."
+description = "Use when running /forge test with browser-based QA via cmux (requires cmux installed)"
+summary = "Use when running /forge test with browser-based QA via cmux (requires cmux installed)."
 
 [forge-cmux-loop-signals]
 dispatch_mode = "inline"
+tier = "all"
+stage = "auxiliary"
 allowed_tools = ["Read", "Bash"]
-description = "Visual signals for Forge Loop long-running iterations in cmux sidebar. Requires cmux installed."
+description = "Use when Forge Loop iterations are running and cmux sidebar signals are needed (requires cmux)"
+summary = "Use when Forge Loop iterations are running and cmux sidebar signals are needed (requires cmux)."
 
 [forge-cmux-sidebar-sync]
 dispatch_mode = "inline"
+tier = "all"
+stage = "auxiliary"
 allowed_tools = ["Read", "Bash"]
-description = "Keep cmux sidebar in sync with Forge lifecycle state changes. Requires cmux installed."
+description = "Use when Forge lifecycle state changes and cmux sidebar needs syncing (requires cmux)"
+summary = "Use when Forge lifecycle state changes and cmux sidebar needs syncing (requires cmux)."
 
 [grill]
 dispatch_mode = "fork"
+tier = "all"
+stage = "auxiliary"
 allowed_tools = ["Read", "Agent"]
-description = "Grill the user with one-question-at-a-time Socratic decision tree resolution. Use when user starts full-tier task, says grill me, replies dig deeper during decide phase, or before locking an ambiguous spec."
+description = "Use when user starts full-tier task, says grill me, replies dig deeper during decide phase, or before locking an ambiguous spec"
+summary = "Use when user starts full-tier task, says grill me, replies dig deeper during decide phase, or before locking an ambiguous spec."
 
 [init]
 dispatch_mode = "inline"
+tier = "all"
+stage = "auxiliary"
 allowed_tools = ["Bash", "Read"]
-description = "Initialize a Forge project by creating .forge/ directory, config, agents, and CLAUDE.md. Use when user runs `/forge init`, project has no .forge/ directory, or plugin is installed but project not yet initialized."
+description = "Use when user runs `/forge init`, project has no .forge/ directory, or plugin is installed but project not yet initialized"
+summary = "Use when user runs `/forge init`, project has no .forge/ directory, or plugin is installed but project not yet initialized."
 
 [learn]
 dispatch_mode = "fork"
+tier = "full"
+stage = "knowledge"
 allowed_tools = ["Read", "Agent", "Glob", "Grep", "Bash", "Write", "Edit", "WebSearch"]
-description = "Capture reusable lessons across five dimensions from completed session experience. Use when user runs `/forge learn`, task completes, or needs to convert session experience into persistent knowledge assets."
+description = "Use when user runs `/forge learn`, task completes, or needs to convert session experience into persistent knowledge assets"
+summary = "Use when user runs `/forge learn`, task completes, or needs to convert session experience into persistent knowledge assets."
 
 [loop]
 dispatch_mode = "fork"
+tier = "all"
+stage = "auxiliary"
 allowed_tools = ["Read", "Bash", "Glob", "Grep", "Skill", "Agent", "ScheduleWakeup", "CronCreate", "CronDelete", "CronList"]
-description = "Orchestrate an approved plan end-to-end without interactive prompts using native Claude Code scheduling. Use when user runs /forge loop, wants unattended execution, or needs background completion of queued tasks."
+description = "Use when user runs /forge loop, wants unattended execution, or needs background completion of queued tasks"
+summary = "Use when user runs /forge loop, wants unattended execution, or needs background completion of queued tasks."
 
 [mutate]
 dispatch_mode = "fork"
+tier = "all"
+stage = "auxiliary"
 allowed_tools = ["Read", "Bash"]
-description = "Audit test suite effectiveness with Stryker mutation testing against pack-declared critical modules. Use when running `/forge mutate`, verifying test quality after a build, or checking mutation score against the threshold declared by an enabled pack."
+description = "Use when running `/forge mutate`, verifying test quality after a build, or checking mutation score against threshold"
+summary = "Use when running `/forge mutate`, verifying test quality after a build, or checking mutation score against threshold."
 
 [pack]
 dispatch_mode = "fork"
+tier = "all"
+stage = "auxiliary"
 allowed_tools = ["Read", "Bash", "Write"]
-description = "Orchestrate Forge Domain Pack lifecycle via list, enable, disable, inspect, override, validate, and scaffold subcommands. Use when running `/forge pack <subcommand>`, enabling a domain pack in a project, or creating a new pack skeleton."
+description = "Use when running `/forge pack <subcommand>`, enabling a domain pack in a project, or creating a new pack skeleton"
+summary = "Use when running `/forge pack <subcommand>`, enabling a domain pack in a project, or creating a new pack skeleton."
 
 [plan]
 dispatch_mode = "fork"
+tier = "standard/full"
+stage = "planning"
 allowed_tools = ["Read", "Glob", "Grep", "Bash", "Write"]
-description = "Plan a locked Spec into atomic TDD-ready tasks with full research, file mapping, and self-check validation. Use when running `/forge plan`, a spec is locked, or an actionable task breakdown is needed before build."
+description = "Use when running `/forge plan`, a spec is locked, or an actionable task breakdown is needed before build"
+summary = "Use when running `/forge plan`, a spec is locked, or an actionable task breakdown is needed before build."
 
 [recap]
 dispatch_mode = "fork"
+tier = "all"
+stage = "auxiliary"
 allowed_tools = ["Read", "Glob", "Grep", "Bash"]
-description = "Capture git history, sessions, and runs into a time-window categorized summary. Use when running /forge recap to review recent activity."
+description = "Use when running /forge recap to review recent activity"
+summary = "Use when running /forge recap to review recent activity."
 
 [refactor]
 dispatch_mode = "inline"
+tier = "all"
+stage = "auxiliary"
 allowed_tools = ["Read", "Write"]
-description = "DEPRECATED — use /forge build with work_nature=refactor instead. Refactor code without changing external behavior while tests remain green."
+description = "Use when running /forge refactor (DEPRECATED — use /forge build with work_nature=refactor instead)"
+summary = "Use when running /forge refactor (DEPRECATED — use /forge build with work_nature=refactor instead)."
 
 [resume]
 dispatch_mode = "inline"
+tier = "all"
+stage = "auxiliary"
 allowed_tools = ["Read", "Bash"]
-description = "Resume an interrupted task by reconstructing state from status file, knowledge sessions, or a PR context via --from-pr. Use when user runs `/forge resume`, a new session begins with prior work incomplete, or picking up interrupted work."
+description = "Use when user runs `/forge resume`, a new session begins with prior work incomplete, or picking up interrupted work"
+summary = "Use when user runs `/forge resume`, a new session begins with prior work incomplete, or picking up interrupted work."
 
 [review]
 dispatch_mode = "fork"
+tier = "all"
+stage = "review"
 allowed_tools = ["Read", "Agent", "Bash"]
-description = "Review build output through parallel subagents covering spec alignment, code quality, and security with P0/P1 ship-blocking severity classification. Use when running `/forge review`, build completes, or a multi-perspective code quality gate is needed before ship."
+description = "Use when running `/forge review`, build completes, or code changes need quality gate before ship"
+summary = "Use when running `/forge review`, build completes, or code changes need quality gate before ship."
 
 [review-comment-bitbucket]
 dispatch_mode = "inline"
+tier = "all"
+stage = "review"
 allowed_tools = ["Read", "Bash", "Write"]
-description = "Post review findings to Bitbucket PR as tasks and inline comments with stable idempotent markers, cross-run reconciliation, and platform gate."
+description = "Use when posting /forge review findings to Bitbucket PR as tasks and inline comments"
+summary = "Use when posting /forge review findings to Bitbucket PR as tasks and inline comments."
 
 [router]
 dispatch_mode = "inline"
+tier = "all"
+stage = "auxiliary"
 allowed_tools = ["Read", "Glob", "Grep"]
-description = "Orchestrate three-tier routing that selects the right skill based on task complexity and project phase. Use when user runs `/forge <task>`, starts a new task, or needs skill dispatch across light, standard, or full workflow tiers."
+description = "Use when user runs `/forge <task>`, starts a new task, or needs skill dispatch across light, standard, or full workflow tiers"
+summary = "Use when user runs `/forge <task>`, starts a new task, or needs skill dispatch across light, standard, or full workflow tiers."
 
 [ship]
 dispatch_mode = "fork"
+tier = "standard/full"
+stage = "shipping"
 allowed_tools = ["Read", "Bash", "Write"]
-description = "Ship changes after enforcing the review gate, test gate, progress gate, and review freshness check. Use when running `/forge ship`, all review and test gates have passed, or a branch or pull request is ready to push."
+description = "Use when running `/forge ship`, all review and test gates have passed, or a branch or pull request is ready to push"
+summary = "Use when running `/forge ship`, all review and test gates have passed, or a branch or pull request is ready to push."
 
 [spec]
 dispatch_mode = "fork"
+tier = "full"
+stage = "specification"
 allowed_tools = ["Read", "Glob", "Grep", "Bash", "Write"]
-description = "Specify requirements as reviewable, testable, lockable spec documents before planning. Use when user runs `/forge spec`, imports external PM spec, or building a new feature and lacks a locked spec."
+description = "Use when user runs `/forge spec`, imports external PM spec, or building a new feature and lacks a locked spec"
+summary = "Use when user runs `/forge spec`, imports external PM spec, or building a new feature and lacks a locked spec."
 
 [status]
 dispatch_mode = "inline"
+tier = "all"
+stage = "auxiliary"
 allowed_tools = ["Read", "Bash"]
-description = "Verify active Forge tasks, current phase, and pending gates at a glance. Use when user runs `/forge status`, wants to see what tasks are in flight, or needs to know which phase a task currently sits in."
+description = "Use when user runs `/forge status`, wants to see what tasks are in flight, or needs to know which phase a task currently sits in"
+summary = "Use when user runs `/forge status`, wants to see what tasks are in flight, or needs to know which phase a task currently sits in."
 
 [storm]
 dispatch_mode = "fork"
+tier = "all"
+stage = "auxiliary"
 allowed_tools = ["Read", "Write", "Agent"]
-description = "Capture domain events, commands, aggregates, policies, and read models through Socratic event-storming prompts into a structured output file. Use when running `/forge storm <context>`, exploring a new Bounded Context, or building a domain model before writing specs."
+description = "Use when running `/forge storm <context>`, exploring a new Bounded Context, or building a domain model before writing specs"
+summary = "Use when running `/forge storm <context>`, exploring a new Bounded Context, or building a domain model before writing specs."
 
 [test]
 dispatch_mode = "fork"
+tier = "standard/full"
+stage = "verification"
 allowed_tools = ["Read", "Bash", "Write"]
-description = "Test behavior against the locked spec through property tests, unit tests, and integration smoke tests. Use when user runs `/forge test`, after build completes, or needs verification that behavior matches the locked spec."
+description = "Use when user runs `/forge test`, after build completes, or needs verification that behavior matches the locked spec"
+summary = "Use when user runs `/forge test`, after build completes, or needs verification that behavior matches the locked spec."
 
 [verify]
 dispatch_mode = "inline"
+tier = "all"
+stage = "verification"
 allowed_tools = ["Read", "Bash"]
-description = "Verify deliverables with evidence-based three-state verdicts and falsifiable claims. Use when user runs `/forge verify <topic>` or during bugfix auto / debug Phase 4."
+description = "Use when user runs `/forge verify <topic>` or during bugfix auto / debug Phase 4"
+summary = "Use when user runs `/forge verify <topic>` or during bugfix auto / debug Phase 4."
 
 [zoom-out]
 dispatch_mode = "fork"
+tier = "all"
+stage = "auxiliary"
 allowed_tools = ["Read", "Glob", "Grep"]
-description = "Audit the current focus with a three-section architecture overview covering position, responsibilities, and boundaries. Use when user says zoom out, gets lost in details during skill execution, or runs `/forge zoom-out`."
+description = "Use when user says zoom out, gets lost in details during skill execution, or runs `/forge zoom-out`"
+summary = "Use when user says zoom out, gets lost in details during skill execution, or runs `/forge zoom-out`."

@@ -27,6 +27,8 @@ jobs:
       - run: npm ci
       - run: npm run typecheck
       - run: npm run lint
+      - name: Verify command registry generation chain
+        run: node scripts/sync-command-registry.mjs --check
       - name: Verify docs generation
         run: npm run docs
       - name: Compile TypeScript
@@ -203,6 +205,14 @@ jobs:
           bash scripts/build-dist.sh
           node scripts/check-dist-sync.mjs
           node scripts/check-bundle-sync.mjs
+      - name: Generate release checklist
+        run: node scripts/generate-release-checklist.mjs --output release-checklist.json
+      - name: Upload release checklist
+        uses: actions/upload-artifact@v4
+        with:
+          name: release-checklist
+          path: release-checklist.json
+          retention-days: 90
       - name: Publish to npm
         run: npm publish
         env:

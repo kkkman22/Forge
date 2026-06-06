@@ -12,7 +12,7 @@
  */
 import type { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import type { ResolvedRoot } from "../project-root.js";
-export { validatePaths } from "./path-validator.js";
+export { validatePaths, validateSinglePath } from "./path-validator.js";
 /**
  * Validate that a script does not contain dangerous patterns.
  * Returns an error message if dangerous, or null if safe.
@@ -41,6 +41,19 @@ export interface ReadExecResult {
 export declare function execReadScript(script: string, language: "javascript" | "shell", paths: string[], timeoutMs: number, options?: {
     cwd?: string;
 }): Promise<ReadExecResult>;
+export type StructuredReadOperation = "imports" | "contains" | "line_count" | "json_keys";
+export interface StructuredReadInput {
+    operation: StructuredReadOperation;
+    paths: string[];
+    query?: string;
+}
+export interface StructuredReadResult {
+    ok: boolean;
+    output: string;
+}
+export declare function runStructuredReadOperation(input: StructuredReadInput, options?: {
+    cwd?: string;
+}): Promise<StructuredReadResult>;
 /**
  * Register the `forge_read` tool on the given MCP server.
  */

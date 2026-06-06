@@ -1,3 +1,7 @@
+// AUTO-GENERATED - DO NOT EDIT
+// Source: skills/forge/registry.toml
+// Regen: node scripts/sync-command-registry.mjs
+
 const ALLOW_LIST: ReadonlyArray<string> = [
   "abort",
   "accept",

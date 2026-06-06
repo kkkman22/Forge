@@ -1,37 +1,247 @@
 [
-  { "name": "/forge abort", "tier": "all", "summary": "安全中止当前任务" },
-  { "name": "/forge accept", "tier": "all", "summary": "运行场景脚本并记录验收结果" },
-  { "name": "/forge build", "tier": "all", "summary": "按计划以 TDD 方式逐任务实现" },
-  { "name": "/forge build-light", "tier": "light", "summary": "轻量路径构建" },
-  { "name": "/forge charter", "tier": "all", "summary": "项目宪法与工作流约束维护" },
-  { "name": "/forge control-cli", "tier": "all", "summary": "CLI 控制面板交互" },
-  { "name": "/forge control-ui", "tier": "all", "summary": "Web UI 控制面板交互" },
-  { "name": "/forge debug", "tier": "all", "summary": "四阶段结构化根因分析" },
-  { "name": "/forge decide", "tier": "full", "summary": "四视角前置决策" },
-  { "name": "/forge decide-teams", "tier": "full", "summary": "Agent Teams 模式决策" },
-  { "name": "/forge fix", "tier": "all", "summary": "Bugfix 模式" },
-  { "name": "/forge fix-conflicts", "tier": "all", "summary": "结构化冲突修复" },
-  { "name": "/forge forge-cmux-browser-qa", "tier": "all", "summary": "cmux 浏览器 QA 集成" },
-  { "name": "/forge forge-cmux-loop-signals", "tier": "all", "summary": "cmux loop 信号集成" },
-  { "name": "/forge forge-cmux-sidebar-sync", "tier": "all", "summary": "cmux sidebar 同步" },
-  { "name": "/forge grill", "tier": "all", "summary": "苏格拉底式需求澄清" },
-  { "name": "/forge init", "tier": "all", "summary": "初始化 Forge 项目配置" },
-  { "name": "/forge learn", "tier": "full", "summary": "五维度经验提取和沉淀" },
-  { "name": "/forge loop", "tier": "all", "summary": "自主执行引擎" },
-  { "name": "/forge mutate", "tier": "all", "summary": "变异测试分析" },
-  { "name": "/forge pack", "tier": "all", "summary": "Domain Pack 管理" },
-  { "name": "/forge plan", "tier": "standard", "summary": "将 Spec 拆解为含 TDD 步骤的原子任务" },
-  { "name": "/forge recap", "tier": "all", "summary": "会话摘要与上下文回顾" },
-  { "name": "/forge refactor", "tier": "all", "summary": "结构化重构" },
-  { "name": "/forge resume", "tier": "all", "summary": "五问题恢复上次会话上下文" },
-  { "name": "/forge review", "tier": "all", "summary": "三层独立评审" },
-  { "name": "/forge review-comment-bitbucket", "tier": "all", "summary": "Bitbucket PR 评论发布" },
-  { "name": "/forge router", "tier": "all", "summary": "路由器行为调试" },
-  { "name": "/forge ship", "tier": "standard", "summary": "门禁检查与交付" },
-  { "name": "/forge spec", "tier": "full", "summary": "将需求固化为可锁定的规格文档" },
-  { "name": "/forge status", "tier": "all", "summary": "查看当前任务状态" },
-  { "name": "/forge storm", "tier": "all", "summary": "多视角发散探索" },
-  { "name": "/forge test", "tier": "standard", "summary": "三层验证" },
-  { "name": "/forge verify", "tier": "all", "summary": "证据化三态验证" },
-  { "name": "/forge zoom-out", "tier": "all", "summary": "宏观视角回顾当前任务全局" }
+  {
+    "name": "/forge abort",
+    "tier": "all",
+    "stage": "auxiliary",
+    "dispatch_mode": "inline",
+    "summary": "Use when user runs `/forge abort`, decides to abandon the current task, or needs to clear an active task slot before starting a new one."
+  },
+  {
+    "name": "/forge accept",
+    "tier": "all",
+    "stage": "acceptance",
+    "dispatch_mode": "fork",
+    "summary": "Use when /forge ship runs on a spec with acceptance_eval true, user runs /forge accept explicitly, or /forge ship --with-acceptance flag is provided."
+  },
+  {
+    "name": "/forge build",
+    "tier": "all",
+    "stage": "implementation",
+    "dispatch_mode": "fork",
+    "summary": "Use when running `/forge build`, an approved plan exists, or the implementation phase of a standard or full tier task begins."
+  },
+  {
+    "name": "/forge build-light",
+    "tier": "light",
+    "stage": "implementation",
+    "dispatch_mode": "inline",
+    "summary": "Use when user runs `/forge build` on a light-tier task, change touches 1 file and 20 lines or less, or has no spec or plan document."
+  },
+  {
+    "name": "/forge charter",
+    "tier": "all",
+    "stage": "auxiliary",
+    "dispatch_mode": "fork",
+    "summary": "Create, update, check, and display the project charter (.forge/charter.md). Use when user runs /forge charter <sub>."
+  },
+  {
+    "name": "/forge control-cli",
+    "tier": "all",
+    "stage": "auxiliary",
+    "dispatch_mode": "inline",
+    "summary": "Use when running /forge test --cli or when forge-test detects a CLI target."
+  },
+  {
+    "name": "/forge control-ui",
+    "tier": "all",
+    "stage": "auxiliary",
+    "dispatch_mode": "inline",
+    "summary": "Use when running /forge test --ui or when forge-test detects a UI target with designer specs."
+  },
+  {
+    "name": "/forge debug",
+    "tier": "all",
+    "stage": "debugging",
+    "dispatch_mode": "fork",
+    "summary": "Use when user says debug this, reports a regression, or after three consecutive build failures trigger the three-strike reroute."
+  },
+  {
+    "name": "/forge decide",
+    "tier": "full",
+    "stage": "decision",
+    "dispatch_mode": "fork",
+    "summary": "Use when starting a full-tier task, facing irreversible technical choices, or needing threat modeling before implementation."
+  },
+  {
+    "name": "/forge decide-teams",
+    "tier": "all",
+    "stage": "decision",
+    "dispatch_mode": "fork",
+    "summary": "Use when `/forge decide` is invoked and the topic involves architecture, security, cost, or product trade-offs requiring multiple viewpoints."
+  },
+  {
+    "name": "/forge fix",
+    "tier": "all",
+    "stage": "auxiliary",
+    "dispatch_mode": "inline",
+    "summary": "Use when running /forge fix with bugfix.md + design.md + tasks.md workflow."
+  },
+  {
+    "name": "/forge fix-conflicts",
+    "tier": "all",
+    "stage": "auxiliary",
+    "dispatch_mode": "inline",
+    "summary": "Use when git merge or rebase produces conflicts inside the forge config tree."
+  },
+  {
+    "name": "/forge forge-cmux-browser-qa",
+    "tier": "all",
+    "stage": "auxiliary",
+    "dispatch_mode": "inline",
+    "summary": "Use when running /forge test with browser-based QA via cmux (requires cmux installed)."
+  },
+  {
+    "name": "/forge forge-cmux-loop-signals",
+    "tier": "all",
+    "stage": "auxiliary",
+    "dispatch_mode": "inline",
+    "summary": "Use when Forge Loop iterations are running and cmux sidebar signals are needed (requires cmux)."
+  },
+  {
+    "name": "/forge forge-cmux-sidebar-sync",
+    "tier": "all",
+    "stage": "auxiliary",
+    "dispatch_mode": "inline",
+    "summary": "Use when Forge lifecycle state changes and cmux sidebar needs syncing (requires cmux)."
+  },
+  {
+    "name": "/forge grill",
+    "tier": "all",
+    "stage": "auxiliary",
+    "dispatch_mode": "fork",
+    "summary": "Use when user starts full-tier task, says grill me, replies dig deeper during decide phase, or before locking an ambiguous spec."
+  },
+  {
+    "name": "/forge init",
+    "tier": "all",
+    "stage": "auxiliary",
+    "dispatch_mode": "inline",
+    "summary": "Use when user runs `/forge init`, project has no .forge/ directory, or plugin is installed but project not yet initialized."
+  },
+  {
+    "name": "/forge learn",
+    "tier": "full",
+    "stage": "knowledge",
+    "dispatch_mode": "fork",
+    "summary": "Use when user runs `/forge learn`, task completes, or needs to convert session experience into persistent knowledge assets."
+  },
+  {
+    "name": "/forge loop",
+    "tier": "all",
+    "stage": "auxiliary",
+    "dispatch_mode": "fork",
+    "summary": "Use when user runs /forge loop, wants unattended execution, or needs background completion of queued tasks."
+  },
+  {
+    "name": "/forge mutate",
+    "tier": "all",
+    "stage": "auxiliary",
+    "dispatch_mode": "fork",
+    "summary": "Use when running `/forge mutate`, verifying test quality after a build, or checking mutation score against threshold."
+  },
+  {
+    "name": "/forge pack",
+    "tier": "all",
+    "stage": "auxiliary",
+    "dispatch_mode": "fork",
+    "summary": "Use when running `/forge pack <subcommand>`, enabling a domain pack in a project, or creating a new pack skeleton."
+  },
+  {
+    "name": "/forge plan",
+    "tier": "standard/full",
+    "stage": "planning",
+    "dispatch_mode": "fork",
+    "summary": "Use when running `/forge plan`, a spec is locked, or an actionable task breakdown is needed before build."
+  },
+  {
+    "name": "/forge recap",
+    "tier": "all",
+    "stage": "auxiliary",
+    "dispatch_mode": "fork",
+    "summary": "Use when running /forge recap to review recent activity."
+  },
+  {
+    "name": "/forge refactor",
+    "tier": "all",
+    "stage": "auxiliary",
+    "dispatch_mode": "inline",
+    "summary": "Use when running /forge refactor (DEPRECATED — use /forge build with work_nature=refactor instead)."
+  },
+  {
+    "name": "/forge resume",
+    "tier": "all",
+    "stage": "auxiliary",
+    "dispatch_mode": "inline",
+    "summary": "Use when user runs `/forge resume`, a new session begins with prior work incomplete, or picking up interrupted work."
+  },
+  {
+    "name": "/forge review",
+    "tier": "all",
+    "stage": "review",
+    "dispatch_mode": "fork",
+    "summary": "Use when running `/forge review`, build completes, or code changes need quality gate before ship."
+  },
+  {
+    "name": "/forge review-comment-bitbucket",
+    "tier": "all",
+    "stage": "review",
+    "dispatch_mode": "inline",
+    "summary": "Use when posting /forge review findings to Bitbucket PR as tasks and inline comments."
+  },
+  {
+    "name": "/forge router",
+    "tier": "all",
+    "stage": "auxiliary",
+    "dispatch_mode": "inline",
+    "summary": "Use when user runs `/forge <task>`, starts a new task, or needs skill dispatch across light, standard, or full workflow tiers."
+  },
+  {
+    "name": "/forge ship",
+    "tier": "standard/full",
+    "stage": "shipping",
+    "dispatch_mode": "fork",
+    "summary": "Use when running `/forge ship`, all review and test gates have passed, or a branch or pull request is ready to push."
+  },
+  {
+    "name": "/forge spec",
+    "tier": "full",
+    "stage": "specification",
+    "dispatch_mode": "fork",
+    "summary": "Use when user runs `/forge spec`, imports external PM spec, or building a new feature and lacks a locked spec."
+  },
+  {
+    "name": "/forge status",
+    "tier": "all",
+    "stage": "auxiliary",
+    "dispatch_mode": "inline",
+    "summary": "Use when user runs `/forge status`, wants to see what tasks are in flight, or needs to know which phase a task currently sits in."
+  },
+  {
+    "name": "/forge storm",
+    "tier": "all",
+    "stage": "auxiliary",
+    "dispatch_mode": "fork",
+    "summary": "Use when running `/forge storm <context>`, exploring a new Bounded Context, or building a domain model before writing specs."
+  },
+  {
+    "name": "/forge test",
+    "tier": "standard/full",
+    "stage": "verification",
+    "dispatch_mode": "fork",
+    "summary": "Use when user runs `/forge test`, after build completes, or needs verification that behavior matches the locked spec."
+  },
+  {
+    "name": "/forge verify",
+    "tier": "all",
+    "stage": "verification",
+    "dispatch_mode": "inline",
+    "summary": "Use when user runs `/forge verify <topic>` or during bugfix auto / debug Phase 4."
+  },
+  {
+    "name": "/forge zoom-out",
+    "tier": "all",
+    "stage": "auxiliary",
+    "dispatch_mode": "fork",
+    "summary": "Use when user says zoom out, gets lost in details during skill execution, or runs `/forge zoom-out`."
+  }
 ]
