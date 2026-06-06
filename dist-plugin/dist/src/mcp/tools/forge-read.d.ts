@@ -19,6 +19,12 @@ export { validatePaths } from "./path-validator.js";
  * Returns an error message if dangerous, or null if safe.
  */
 export declare function validateScript(script: string): string | null;
+/**
+ * Build the environment variables for sandboxed script execution.
+ * For JavaScript, adds `NODE_OPTIONS` with resource limits (max heap, etc.)
+ * to prevent resource exhaustion from malicious or buggy scripts.
+ */
+export declare function buildSandboxEnv(language: "javascript" | "shell", paths: string[]): Record<string, string | undefined>;
 export interface ReadExecResult {
     stdout: string;
     stderr: string;

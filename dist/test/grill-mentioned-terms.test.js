@@ -50,5 +50,29 @@ describe("findMentionedTerms", () => {
         expect(result).toHaveLength(1);
         expect(result[0].term).toBe("test");
     });
+    it("handles large glossary efficiently (O(n+m) not O(n*m))", () => {
+        // Build a glossary with 500 terms
+        const terms = Array.from({ length: 500 }, (_, i) => ({
+            term: `term${i}`,
+            aliases: [`alias${i}`],
+        }));
+        const glossary = makeGlossary(terms);
+        // Build a description that mentions only a few
+        const description = "we need term42 and alias99 for this feature, also term250 is important";
+        const start = Date.now();
+        const result = findMentionedTerms(description, glossary);
+        const elapsed = Date.now() - start;
+        expect(result.length).toBeGreaterThanOrEqual(3);
+        expect(elapsed).toBeLessThan(100); // Should be fast, not O(n*m)
+    });
+    it("handles long description efficiently", () => {
+        const glossary = makeGlossary([{ term: "alpha" }, { term: "beta" }, { term: "gamma" }]);
+        const description = "filler ".repeat(50_000) + "alpha and beta appear here";
+        const start = Date.now();
+        const result = findMentionedTerms(description, glossary);
+        const elapsed = Date.now() - start;
+        expect(result.map((t) => t.term).sort()).toEqual(["alpha", "beta"]);
+        expect(elapsed).toBeLessThan(200);
+    });
 });
 //# sourceMappingURL=grill-mentioned-terms.test.js.map

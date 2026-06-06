@@ -31,6 +31,12 @@ export declare function isCommandDenied(command: string, denyPatterns: string[])
  * invokes via `sh -c` — these operators are part of normal shell usage.
  */
 export declare function containsShellMetachars(command: string): string | null;
+/**
+ * Check if a command is a "simple" command — a single binary with arguments,
+ * no shell operators. Simple commands can be executed via `execFile(bin, args)`
+ * without going through `/bin/sh -c`, eliminating shell injection risk.
+ */
+export declare function isSimpleCommand(command: string): boolean;
 export interface ExecResult {
     stdout: string;
     stderr: string;
@@ -39,6 +45,10 @@ export interface ExecResult {
 }
 /**
  * Execute a shell command in a child subprocess with timeout support.
+ *
+ * For simple commands (no shell operators), uses `execFile` directly with
+ * array arguments — no shell interpretation, no injection risk.
+ * For complex commands (pipes, redirects, etc.), falls back to `/bin/sh -c`.
  */
 export declare function execCommand(command: string, timeoutMs: number, options?: {
     cwd?: string;

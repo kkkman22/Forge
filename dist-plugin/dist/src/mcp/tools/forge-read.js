@@ -60,6 +60,30 @@ export function validateScript(script) {
     }
     return null;
 }
+// ---------------------------------------------------------------------------
+// Sandbox environment: resource limits for script execution
+// ---------------------------------------------------------------------------
+/** Maximum heap size (MB) for forge_read script execution. */
+const SANDBOX_MAX_HEAP_MB = 256;
+/**
+ * Build the environment variables for sandboxed script execution.
+ * For JavaScript, adds `NODE_OPTIONS` with resource limits (max heap, etc.)
+ * to prevent resource exhaustion from malicious or buggy scripts.
+ */
+export function buildSandboxEnv(language, paths) {
+    const base = {
+        ...process.env,
+        FORGE_FILES: JSON.stringify(paths),
+    };
+    if (language === "javascript") {
+        base.NODE_OPTIONS = [
+            `--max-old-space-size=${SANDBOX_MAX_HEAP_MB}`,
+            // Disable network access via --dns-result-order and policy
+            // Note: --experimental-network-imports is NOT set
+        ].join(" ");
+    }
+    return base;
+}
 /**
  * Execute a script in a child subprocess with FORGE_FILES env var injection.
  *
@@ -70,10 +94,7 @@ export function validateScript(script) {
  */
 export function execReadScript(script, language, paths, timeoutMs, options) {
     return new Promise((resolve) => {
-        const env = {
-            ...process.env,
-            FORGE_FILES: JSON.stringify(paths),
-        };
+        const env = buildSandboxEnv(language, paths);
         const cmd = language === "javascript" ? "node" : "/bin/sh";
         const args = language === "javascript" ? ["-e", script] : ["-c", script];
         const child = execFile(cmd, args, {

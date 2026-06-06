@@ -306,4 +306,35 @@ describe("containsShellMetachars", () => {
         expect(containsShellMetachars("echo hello\rnpm install")).toMatch(/carriage-return/);
     });
 });
+// ---------------------------------------------------------------------------
+// Safe exec path: array-mode for simple commands
+// ---------------------------------------------------------------------------
+describe("isSimpleCommand", () => {
+    // Import after module setup
+    let isSimpleCommand;
+    beforeAll(async () => {
+        const mod = await import("../../src/mcp/tools/forge-exec.js");
+        isSimpleCommand = mod.isSimpleCommand;
+    });
+    it("identifies simple commands (single binary + args)", () => {
+        expect(isSimpleCommand("npm test")).toBe(true);
+        expect(isSimpleCommand("npx vitest run test/foo.test.ts")).toBe(true);
+        expect(isSimpleCommand("echo hello world")).toBe(true);
+    });
+    it("rejects commands with shell operators", () => {
+        expect(isSimpleCommand("echo hello && rm -rf /")).toBe(false);
+        expect(isSimpleCommand("echo hello | grep foo")).toBe(false);
+        expect(isSimpleCommand("echo hello > /tmp/out")).toBe(false);
+        expect(isSimpleCommand("echo hello; rm -rf /")).toBe(false);
+    });
+    it("rejects commands with shell operators that look like args", () => {
+        // These contain |, >, <, ;, & which are shell operators
+        expect(isSimpleCommand("cat file | sort")).toBe(false);
+        expect(isSimpleCommand("node -e 'code'")).toBe(true); // -e is a flag, not operator
+    });
+    it("rejects empty command", () => {
+        expect(isSimpleCommand("")).toBe(false);
+        expect(isSimpleCommand("  ")).toBe(false);
+    });
+});
 //# sourceMappingURL=forge-exec.test.js.map

@@ -108,26 +108,83 @@ export function containsShellMetachars(command) {
     }
     return null;
 }
+// ---------------------------------------------------------------------------
+// Simple command detection (array-mode vs sh -c)
+// ---------------------------------------------------------------------------
+/**
+ * Shell operator characters that indicate a command needs shell interpretation.
+ * If none of these are present (outside of quoted strings), the command can be
+ * split into [bin, ...args] and executed directly without `/bin/sh -c`.
+ */
+const SHELL_OPERATOR_RE = /[|;&><`\n\r]/;
+/**
+ * Check if a command is a "simple" command — a single binary with arguments,
+ * no shell operators. Simple commands can be executed via `execFile(bin, args)`
+ * without going through `/bin/sh -c`, eliminating shell injection risk.
+ */
+export function isSimpleCommand(command) {
+    const trimmed = command.trim();
+    if (trimmed.length === 0)
+        return false;
+    return !SHELL_OPERATOR_RE.test(trimmed);
+}
 /**
  * Execute a shell command in a child subprocess with timeout support.
+ *
+ * For simple commands (no shell operators), uses `execFile` directly with
+ * array arguments — no shell interpretation, no injection risk.
+ * For complex commands (pipes, redirects, etc.), falls back to `/bin/sh -c`.
  */
 export function execCommand(command, timeoutMs, options) {
     return new Promise((resolve) => {
-        const child = execFile("/bin/sh", ["-c", command], {
-            timeout: timeoutMs,
-            maxBuffer: 10 * 1024 * 1024,
-            ...(options?.cwd ? { cwd: options.cwd } : {}),
-        }, (error, stdout, stderr) => {
-            if (error && "killed" in error && error.killed) {
-                resolve({ stdout: String(stdout), stderr: String(stderr), exitCode: 1, timedOut: true });
-                return;
+        if (isSimpleCommand(command)) {
+            // Safe path: split into [bin, ...args] and exec directly
+            const parts = command.trim().split(/\s+/);
+            const bin = parts[0];
+            const args = parts.slice(1);
+            const child = execFile(bin, args, {
+                timeout: timeoutMs,
+                maxBuffer: 10 * 1024 * 1024,
+                ...(options?.cwd ? { cwd: options.cwd } : {}),
+            }, (error, stdout, stderr) => {
+                if (error && "killed" in error && error.killed) {
+                    resolve({
+                        stdout: String(stdout),
+                        stderr: String(stderr),
+                        exitCode: 1,
+                        timedOut: true,
+                    });
+                    return;
+                }
+                const exitCode = error && "code" in error ? (error.code ?? 1) : 0;
+                resolve({ stdout: String(stdout), stderr: String(stderr), exitCode, timedOut: false });
+            });
+            if (!child) {
+                resolve({ stdout: "", stderr: "Failed to spawn subprocess", exitCode: 1, timedOut: false });
             }
-            const exitCode = error && "code" in error ? (error.code ?? 1) : 0;
-            resolve({ stdout: String(stdout), stderr: String(stderr), exitCode, timedOut: false });
-        });
-        // Safety: if the child is somehow null, resolve immediately
-        if (!child) {
-            resolve({ stdout: "", stderr: "Failed to spawn subprocess", exitCode: 1, timedOut: false });
+        }
+        else {
+            // Complex command: needs shell interpretation
+            const child = execFile("/bin/sh", ["-c", command], {
+                timeout: timeoutMs,
+                maxBuffer: 10 * 1024 * 1024,
+                ...(options?.cwd ? { cwd: options.cwd } : {}),
+            }, (error, stdout, stderr) => {
+                if (error && "killed" in error && error.killed) {
+                    resolve({
+                        stdout: String(stdout),
+                        stderr: String(stderr),
+                        exitCode: 1,
+                        timedOut: true,
+                    });
+                    return;
+                }
+                const exitCode = error && "code" in error ? (error.code ?? 1) : 0;
+                resolve({ stdout: String(stdout), stderr: String(stderr), exitCode, timedOut: false });
+            });
+            if (!child) {
+                resolve({ stdout: "", stderr: "Failed to spawn subprocess", exitCode: 1, timedOut: false });
+            }
         }
     });
 }

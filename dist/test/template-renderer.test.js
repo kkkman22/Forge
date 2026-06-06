@@ -77,6 +77,30 @@ describe("renderTemplate", () => {
         const result = renderTemplate(template, { name: "World" });
         expect(result.outputSuggestedPath).toBe("");
     });
+    // 11. Key length limit
+    it("rejects placeholder keys exceeding total max length (128 chars)", () => {
+        // Two segments, each 64 chars → total 128+1(dot) = 129 > 128
+        const seg = "a".repeat(64);
+        const longKey = `${seg}.${seg}`; // 64 + 1 + 64 = 129
+        const template = `Hello {{${longKey}}}`;
+        const result = renderTemplate(template, {});
+        expect(result.content).toBe("Hello ");
+        expect(result.unresolvedPlaceholders).toEqual([longKey]);
+    });
+    it("resolves placeholder keys within total max length", () => {
+        const okKey = "a".repeat(60);
+        const template = `Hello {{${okKey}}}`;
+        const result = renderTemplate(template, { [okKey]: "World" });
+        expect(result.content).toBe("Hello World");
+        expect(result.unresolvedPlaceholders).toEqual([]);
+    });
+    it("rejects dot-path where any segment exceeds max segment length (64 chars)", () => {
+        const longSegment = "b".repeat(66);
+        const template = `Hello {{${longSegment}.name}}`;
+        const result = renderTemplate(template, { [longSegment]: { name: "World" } });
+        expect(result.content).toBe("Hello ");
+        expect(result.unresolvedPlaceholders).toEqual([`${longSegment}.name`]);
+    });
     // 10. Mixed each/if/simple placeholders
     it("handles mixed each, if, and simple placeholders", () => {
         const template = [
