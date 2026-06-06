@@ -14,7 +14,6 @@ import type {
   StatusFileContext,
 } from "./types.js";
 
-
 /**
  * Check every candidate term introduced in the decide phase against the
  * current glossary and return the full list of conflicts found.

@@ -5,7 +5,7 @@
  */
 
 import type { Glossary, GlossaryTerm } from "../glossary.js";
-import type { DecisionCategory, DecisionTreeNode, DecisionTree } from "./types.js";
+import type { DecisionTree, DecisionTreeNode } from "./types.js";
 import { CATEGORY_ORDER, DEFAULT_QUESTIONS, GLOSSARY_FOLLOWUP_PARENT } from "./types.js";
 
 /**

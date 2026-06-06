@@ -8,6 +8,42 @@
  * **Validates: Requirements 1.1–11.4**
  */
 
+// Uncommitted Change Detector
+export { matchChangesToTask, parseGitStatus } from "./change-detector.js";
+// Interruption Classifier
+export {
+  classifyInterruption,
+  inferTDDPhase,
+  isTestFile,
+} from "./classifier.js";
+// Recovery Engine
+export { buildRecoveryReport, calculateSegmentation } from "./engine.js";
+// Git State Scanner
+export {
+  extractCommitPatterns,
+  filterCommitsSince,
+  matchCommitsToTasks,
+  parseGitLog,
+} from "./git-scanner.js";
+
+// Progress & Phase Reconciler
+export {
+  buildReconciliationPatch,
+  findDependencyGaps,
+  findPhaseInconsistencies,
+  findProgressInconsistencies,
+  getNextPhase,
+  getPhaseSequence,
+} from "./reconciler.js";
+// Serialization
+export {
+  deserializeCheckpointMarker,
+  deserializeClassification,
+  deserializeRecoveryReport,
+  serializeCheckpointMarker,
+  serializeClassification,
+  serializeRecoveryReport,
+} from "./serde.js";
 // Types and constants
 export type {
   CheckpointMarker,
@@ -33,44 +69,3 @@ export type {
   UncommittedChangeResult,
 } from "./types.js";
 export { PHASE_SEQUENCES, TEST_FILE_PATTERNS } from "./types.js";
-
-// Git State Scanner
-export {
-  extractCommitPatterns,
-  filterCommitsSince,
-  matchCommitsToTasks,
-  parseGitLog,
-} from "./git-scanner.js";
-
-// Uncommitted Change Detector
-export { matchChangesToTask, parseGitStatus } from "./change-detector.js";
-
-// Progress & Phase Reconciler
-export {
-  buildReconciliationPatch,
-  findDependencyGaps,
-  findPhaseInconsistencies,
-  findProgressInconsistencies,
-  getNextPhase,
-  getPhaseSequence,
-} from "./reconciler.js";
-
-// Interruption Classifier
-export {
-  classifyInterruption,
-  inferTDDPhase,
-  isTestFile,
-} from "./classifier.js";
-
-// Recovery Engine
-export { buildRecoveryReport, calculateSegmentation } from "./engine.js";
-
-// Serialization
-export {
-  deserializeCheckpointMarker,
-  deserializeClassification,
-  deserializeRecoveryReport,
-  serializeCheckpointMarker,
-  serializeClassification,
-  serializeRecoveryReport,
-} from "./serde.js";

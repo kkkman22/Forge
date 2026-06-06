@@ -48,7 +48,9 @@ describe("dist-manifest.json contract tests (P3-3)", () => {
     ];
     for (const key of requiredKeys) {
       expect(manifest[key as keyof DistManifest], `Missing key: ${key}`).toBeDefined();
-      expect(Array.isArray(manifest[key as keyof DistManifest]), `Key ${key} should be array`).toBe(true);
+      expect(Array.isArray(manifest[key as keyof DistManifest]), `Key ${key} should be array`).toBe(
+        true,
+      );
     }
   });
 
@@ -86,9 +88,7 @@ describe("dist-manifest.json contract tests (P3-3)", () => {
 
   it("cc_runtime_mjs and plugin_runtime_mjs have identical entries", () => {
     const manifest = loadManifest();
-    expect([...manifest.cc_runtime_mjs].sort()).toEqual(
-      [...manifest.plugin_runtime_mjs].sort(),
-    );
+    expect([...manifest.cc_runtime_mjs].sort()).toEqual([...manifest.plugin_runtime_mjs].sort());
   });
 
   it("no duplicate entries in any manifest array", () => {
@@ -102,10 +102,7 @@ describe("dist-manifest.json contract tests (P3-3)", () => {
 
   it("manifest includes all hook-referenced runtime .mjs files", () => {
     const manifest = loadManifest();
-    const allMjs = new Set([
-      ...manifest.cc_runtime_mjs,
-      ...manifest.plugin_runtime_mjs,
-    ]);
+    const allMjs = new Set([...manifest.cc_runtime_mjs, ...manifest.plugin_runtime_mjs]);
 
     // These are the .mjs files referenced by hooks/hooks.json — must all be in the manifest
     const hooksJsonPath = join(ROOT, "hooks/hooks.json");
@@ -113,10 +110,7 @@ describe("dist-manifest.json contract tests (P3-3)", () => {
       const hooksContent = readFileSync(hooksJsonPath, "utf-8");
       const hookMatch = hooksContent.matchAll(/scripts\/([a-z0-9-]+\.mjs)/g);
       for (const m of hookMatch) {
-        expect(
-          allMjs.has(m[1]),
-          `Hook-referenced scripts/${m[1]} not in manifest`,
-        ).toBe(true);
+        expect(allMjs.has(m[1]), `Hook-referenced scripts/${m[1]} not in manifest`).toBe(true);
       }
     }
   });

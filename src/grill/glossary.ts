@@ -4,7 +4,7 @@
  * @module grill/glossary
  */
 
-import type { Glossary, GlossaryTerm } from "../glossary.js";
+import type { Glossary } from "../glossary.js";
 import {
   DEFAULT_EXTRACTION_RULES,
   extractCandidates,
@@ -13,10 +13,8 @@ import {
 } from "../glossary-extractor.js";
 import { runGlossaryCheck } from "../glossary-hook.js";
 import type {
-  DecisionCategory,
-  DecisionNodeStatus,
-  DecisionTreeNode,
   DecisionTree,
+  DecisionTreeNode,
   GlossaryConflict,
   GrillConflictCheckResult,
 } from "./types.js";

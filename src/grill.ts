@@ -15,8 +15,8 @@
 export type {
   DecisionCategory,
   DecisionNodeStatus,
-  DecisionTreeNode,
   DecisionTree,
+  DecisionTreeNode,
   GlossaryConflict,
   GrillAbandonedInput,
   GrillConflictCheckResult,

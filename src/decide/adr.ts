@@ -4,20 +4,9 @@
  * @module decide/adr
  */
 
-import {
-  type AdrEntry,
-  type AdrStatus,
-  applySupersession,
-  nextAdrId,
-  renderAdrIndex,
-} from "../adr-registry.js";
+import { type AdrEntry, applySupersession, nextAdrId, renderAdrIndex } from "../adr-registry.js";
 import { parseFrontmatter } from "../frontmatter.js";
-import type {
-  AdrSupersessionUpdate,
-  FinalizeAdrInput,
-  FinalizeAdrOutput,
-} from "./types.js";
-
+import type { AdrSupersessionUpdate, FinalizeAdrInput, FinalizeAdrOutput } from "./types.js";
 
 /** Canonical path of the ADR index file. */
 const ADR_INDEX_PATH = ".forge/knowledge/adr-index.md";

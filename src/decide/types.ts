@@ -4,9 +4,8 @@
  * @module decide/types
  */
 
-import type { AdrCriteriaResult } from "../adr-criteria.js";
+import type { AdrCriteriaResult, DecisionCandidate, DecisionSignals } from "../adr-criteria.js";
 import type { AdrEntry, AdrStatus } from "../adr-registry.js";
-import type { DecisionCandidate, DecisionSignals } from "../adr-criteria.js";
 import type { GlossaryTerm } from "../glossary.js";
 
 export interface DecideContext {

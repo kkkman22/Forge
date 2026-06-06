@@ -5,6 +5,33 @@
  * `import { ... } from "./decide.js"` continues to work unchanged.
  */
 
+// ADR lifecycle
+export {
+  finalizeAdr,
+  generateDecisionPath,
+  renderAdrFileContent,
+  toKebabCase,
+} from "./adr.js";
+// Glossary + overrides
+export {
+  appendInlineNote,
+  applyAdrOverride,
+  checkDecideGlossaryConflicts,
+  parseAdrOverride,
+  renderDecideGlossaryConflictPrompt,
+  renderInlineDecisionNote,
+  resolveUpstreamFile,
+} from "./glossary-override.js";
+
+// Orchestration
+export {
+  buildDecideCriticInvocation,
+  buildDecideRound1Subagents,
+  getDecideSubagents,
+  getDecideTeamMembers,
+  resolveDecideStatus,
+  runCriteriaScreen,
+} from "./orchestration.js";
 // Types
 export type {
   AdrOverride,
@@ -20,7 +47,6 @@ export type {
   SubagentConfig,
   TeamMember,
 } from "./types.js";
-
 // UI detection
 export {
   descriptionHasInteractionFlows,
@@ -28,32 +54,3 @@ export {
   filesHaveUIExtensions,
   involvesUIChanges,
 } from "./ui-detection.js";
-
-// Orchestration
-export {
-  buildDecideCriticInvocation,
-  buildDecideRound1Subagents,
-  getDecideSubagents,
-  getDecideTeamMembers,
-  resolveDecideStatus,
-  runCriteriaScreen,
-} from "./orchestration.js";
-
-// ADR lifecycle
-export {
-  finalizeAdr,
-  generateDecisionPath,
-  renderAdrFileContent,
-  toKebabCase,
-} from "./adr.js";
-
-// Glossary + overrides
-export {
-  appendInlineNote,
-  applyAdrOverride,
-  checkDecideGlossaryConflicts,
-  parseAdrOverride,
-  renderDecideGlossaryConflictPrompt,
-  renderInlineDecisionNote,
-  resolveUpstreamFile,
-} from "./glossary-override.js";

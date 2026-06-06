@@ -81,10 +81,7 @@ describe("dist-manifest.json contract tests (P3-3)", () => {
     });
     it("manifest includes all hook-referenced runtime .mjs files", () => {
         const manifest = loadManifest();
-        const allMjs = new Set([
-            ...manifest.cc_runtime_mjs,
-            ...manifest.plugin_runtime_mjs,
-        ]);
+        const allMjs = new Set([...manifest.cc_runtime_mjs, ...manifest.plugin_runtime_mjs]);
         // These are the .mjs files referenced by hooks/hooks.json — must all be in the manifest
         const hooksJsonPath = join(ROOT, "hooks/hooks.json");
         if (existsSync(hooksJsonPath)) {

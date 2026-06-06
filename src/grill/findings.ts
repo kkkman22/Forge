@@ -4,23 +4,18 @@
  * @module grill/findings
  */
 
+import type { FailureContext } from "../failure-sink.js";
 import type { Glossary } from "../glossary.js";
-import {
-  DEFAULT_EXTRACTION_RULES,
-  extractCandidates,
-  filterCandidates,
-  type TermCandidate,
-} from "../glossary-extractor.js";
+import type { TermCandidate } from "../glossary-extractor.js";
+import { extractNewGlossaryCandidates } from "./glossary.js";
+import { selectNextQuestion } from "./tree.js";
 import type {
   DecisionCategory,
   DecisionNodeStatus,
-  DecisionTreeNode,
   DecisionTree,
+  DecisionTreeNode,
+  GrillAbandonedInput,
 } from "./types.js";
-import { selectNextQuestion } from "./tree.js";
-import { extractNewGlossaryCandidates } from "./glossary.js";
-import type { FailureContext } from "../failure-sink.js";
-import type { GrillAbandonedInput } from "./types.js";
 
 /**
  * Render the `findings/grill-<topic>.md` body for a completed grill session.

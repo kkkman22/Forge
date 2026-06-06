@@ -4,17 +4,17 @@
  * @module decide/orchestration
  */
 
-import { involvesUIChanges } from "./ui-detection.js";
-import type { DecideContext, SubagentConfig, TeamMember } from "./types.js";
+import type { DecisionCandidate, DecisionSignals } from "../adr-criteria.js";
+import { evaluateAdrCriteria } from "../adr-criteria.js";
 import type { SubagentInvocation } from "../types.js";
 import type {
-  AdrCriteriaResult,
-  DecisionCandidate,
-  DecisionSignals,
-} from "../adr-criteria.js";
-import { evaluateAdrCriteria } from "../adr-criteria.js";
-import type { CriticOutput, CriteriaScreenItem } from "./types.js";
-
+  CriteriaScreenItem,
+  CriticOutput,
+  DecideContext,
+  SubagentConfig,
+  TeamMember,
+} from "./types.js";
+import { involvesUIChanges } from "./ui-detection.js";
 
 /** Default team members that are always present in the decide Agent Team. */
 const DEFAULT_MEMBERS: TeamMember[] = [

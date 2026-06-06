@@ -11,8 +11,8 @@ import {
   type TruncationAssessment,
 } from "../truncation-detection.js";
 import type { SubagentInvocation, SubagentResult } from "../types.js";
-import type { MergedFinding, ReviewFinding } from "./types.js";
 import { applyCrossValidation, deduplicateFindings, filterByConfidence } from "./core.js";
+import type { MergedFinding, ReviewFinding } from "./types.js";
 
 /** Context for building review subagent invocations. */
 export interface ReviewSubagentContext {

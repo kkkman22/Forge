@@ -7,7 +7,6 @@
 import type {
   FileChange,
   GitScanResult,
-  InterruptionCategory,
   InterruptionClassification,
   PhaseInconsistency,
   ProgressInconsistency,

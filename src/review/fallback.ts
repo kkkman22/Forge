@@ -9,8 +9,8 @@ import { enforceFinalReportContract, validateFinalReportBlock } from "../review-
 import type { Methodology } from "../schemas/review-report.js";
 import { runSubagentsWithConcurrency } from "../subagent-runner.js";
 import type { SubagentInvocation, SubagentResult } from "../types.js";
-import { processReviewTruncation } from "./subagent.js";
 import { splitFrontmatterAndBody } from "./frontmatter.js";
+import { processReviewTruncation } from "./subagent.js";
 
 export interface FallbackLadderInput {
   /** Subagent invocations to execute. */
@@ -85,11 +85,7 @@ export async function runReviewFallbackLadder(
 
   // ─── L0: Default parallel path ───
   const l0Start = Date.now();
-  const l0Raw = await runSubagentsWithConcurrency(
-    input.invocations,
-    guardedExecutor,
-    3,
-  );
+  const l0Raw = await runSubagentsWithConcurrency(input.invocations, guardedExecutor, 3);
   const l0 = reclassifyResult(l0Raw);
   const l0AllFail = l0.succeeded.length === 0;
   trace.push({

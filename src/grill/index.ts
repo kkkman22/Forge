@@ -5,17 +5,19 @@
  * `import { ... } from "./grill.js"` continues to work unchanged.
  */
 
-// Types
-export type {
-  DecisionCategory,
-  DecisionNodeStatus,
-  DecisionTreeNode,
-  DecisionTree,
-  GlossaryConflict,
-  GrillAbandonedInput,
-  GrillConflictCheckResult,
-} from "./types.js";
-
+// Findings rendering and parsing
+export {
+  buildGrillAbandonedContext,
+  parseGrillFindings,
+  renderGrillFindings,
+  resumeGrillFromFindings,
+} from "./findings.js";
+// Glossary integration
+export {
+  checkGrillGlossaryConflicts,
+  extractNewGlossaryCandidates,
+  renderGrillConflictPrompt,
+} from "./glossary.js";
 // Tree generation and operations
 export {
   applyAnswer,
@@ -24,18 +26,13 @@ export {
   isComplete,
   selectNextQuestion,
 } from "./tree.js";
-
-// Glossary integration
-export {
-  checkGrillGlossaryConflicts,
-  extractNewGlossaryCandidates,
-  renderGrillConflictPrompt,
-} from "./glossary.js";
-
-// Findings rendering and parsing
-export {
-  buildGrillAbandonedContext,
-  parseGrillFindings,
-  renderGrillFindings,
-  resumeGrillFromFindings,
-} from "./findings.js";
+// Types
+export type {
+  DecisionCategory,
+  DecisionNodeStatus,
+  DecisionTree,
+  DecisionTreeNode,
+  GlossaryConflict,
+  GrillAbandonedInput,
+  GrillConflictCheckResult,
+} from "./types.js";

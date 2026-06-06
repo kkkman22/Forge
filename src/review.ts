@@ -33,34 +33,30 @@ export type {
   Severity,
   TruncationAwareResult,
 } from "./review/index.js";
-
 // Constants
-export {
-  CONFIDENCE_THRESHOLD,
-  CROSS_VALIDATION_BOOST,
-  DEFAULT_LINTER_KEYWORDS,
-  DEFAULT_STYLE_KEYWORDS,
-  DEFAULT_VAGUE_PATTERNS,
-  FIX_ROUTE_CONSERVATISM,
-  LINE_TOLERANCE,
-  LOW_CONFIDENCE_MIN,
-  MAX_CONFIDENCE,
-  SEVERITY_RANK,
-} from "./review/index.js";
-
 // Functions — named re-exports for contract test discoverability
 export {
   applyCrossValidation,
   atomicUpdateFrontmatter,
   buildReviewEvolutionArtifacts,
   buildReviewSubagents,
+  CONFIDENCE_THRESHOLD,
+  CROSS_VALIDATION_BOOST,
+  DEFAULT_LINTER_KEYWORDS,
+  DEFAULT_STYLE_KEYWORDS,
+  DEFAULT_VAGUE_PATTERNS,
   deduplicateFindings,
+  FIX_ROUTE_CONSERVATISM,
   filterByConfidence,
   initReviewFrontmatter,
+  LINE_TOLERANCE,
+  LOW_CONFIDENCE_MIN,
+  MAX_CONFIDENCE,
   markLayerStatus,
   mergeReviewResults,
   processReviewTruncation,
   runReportQualityGate,
   runReviewFallbackLadder,
   runReviewWithTruncationHandling,
+  SEVERITY_RANK,
 } from "./review/index.js";
