@@ -24,6 +24,7 @@
  *   - Brownfield projects boost light → standard when touching existing modules
  */
 
+import { readFileSync } from "node:fs";
 import { PromptDefenseError } from "./forge-error.js";
 import { scanInput } from "./prompt-defense.js";
 import { intentsToHints, matchIntents, parseIntentDictionary } from "./router-intents.js";
@@ -143,12 +144,12 @@ let _intentDictCache: import("./router-intents.js").IntentDefinition[] | null = 
 function loadIntentDictionary(): import("./router-intents.js").IntentDefinition[] {
   if (_intentDictCache !== null) return _intentDictCache;
   try {
-    const fs = require("node:fs");
-    const path = require("node:path");
-    const dictPath = path.resolve(__dirname, "../templates/router-intents.md");
-    const content = fs.readFileSync(dictPath, "utf-8");
+    const dictUrl = new URL("../templates/router-intents.md", import.meta.url);
+    const content = readFileSync(dictUrl, "utf-8");
     _intentDictCache = parseIntentDictionary(content);
-  } catch (_: unknown) {
+  } catch (err: unknown) {
+    // Structured diagnostic instead of silent swallow
+    console.error("[router] Failed to load intent dictionary:", err instanceof Error ? err.message : String(err));
     _intentDictCache = [];
   }
   return _intentDictCache;
