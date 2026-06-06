@@ -9,10 +9,9 @@
  *
  * **Validates: T2 — Path traversal hardening**
  */
-import { mkdirSync, rmSync, symlinkSync, writeFileSync } from "node:fs";
-import { mkdtempSync } from "node:fs";
-import { join } from "node:path";
+import { mkdirSync, mkdtempSync, rmSync, symlinkSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
+import { join } from "node:path";
 import { afterEach, describe, expect, it } from "vitest";
 
 // Import from the shared path-validator module (T2 GREEN target)
@@ -74,7 +73,11 @@ describe("validateSinglePath — realpath branches", () => {
 
   afterEach(() => {
     // Clean up any symlinks created during tests
-    try { rmSync(join(tmpRoot, "evil-link"), { force: true }); } catch { /* ok */ }
+    try {
+      rmSync(join(tmpRoot, "evil-link"), { force: true });
+    } catch {
+      /* ok */
+    }
   });
 
   it.afterAll(() => {

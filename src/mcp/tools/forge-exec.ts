@@ -98,14 +98,36 @@ export function isCommandDenied(command: string, denyPatterns: string[]): string
  */
 const READONLY_COMMAND_ALLOWLIST: ReadonlySet<string> = new Set([
   // Package managers (read-only operations)
-  "npm", "npx", "yarn", "pnpm", "bun",
+  "npm",
+  "npx",
+  "yarn",
+  "pnpm",
+  "bun",
   // TypeScript / JavaScript tools
-  "vitest", "tsc", "biome", "eslint", "prettier", "jest",
+  "vitest",
+  "tsc",
+  "biome",
+  "eslint",
+  "prettier",
+  "jest",
   // Git read-only
   "git",
   // Unix read-only utilities
-  "echo", "cat", "ls", "find", "wc", "head", "tail", "grep", "sort",
-  "diff", "file", "which", "type", "env", "printenv",
+  "echo",
+  "cat",
+  "ls",
+  "find",
+  "wc",
+  "head",
+  "tail",
+  "grep",
+  "sort",
+  "diff",
+  "file",
+  "which",
+  "type",
+  "env",
+  "printenv",
   // Node.js (only safe subcommands)
   "node",
 ]);
@@ -114,7 +136,23 @@ const READONLY_COMMAND_ALLOWLIST: ReadonlySet<string> = new Set([
  * Subcommands that should ALWAYS be rejected even if the binary is in the allowlist.
  */
 const ALWAYS_DENIED_SUBCOMMANDS: ReadonlyMap<string, ReadonlySet<string>> = new Map([
-  ["git", new Set(["commit", "push", "merge", "rebase", "reset", "checkout", "switch", "stash", "add", "rm", "mv", "clean"])],
+  [
+    "git",
+    new Set([
+      "commit",
+      "push",
+      "merge",
+      "rebase",
+      "reset",
+      "checkout",
+      "switch",
+      "stash",
+      "add",
+      "rm",
+      "mv",
+      "clean",
+    ]),
+  ],
   ["npm", new Set(["publish", "install", "ci", "uninstall", "update", "link"])],
 ]);
 
@@ -495,7 +533,12 @@ export function registerForgeExec(server: McpServer, root?: ResolvedRoot): void 
       // 1a. Primary security: hardcoded allowlist
       if (!isCommandAllowed(command)) {
         return {
-          content: [{ type: "text" as const, text: `Command not in allowlist: ${command.trim().split(/\s+/)[0]}` }],
+          content: [
+            {
+              type: "text" as const,
+              text: `Command not in allowlist: ${command.trim().split(/\s+/)[0]}`,
+            },
+          ],
           isError: true,
         };
       }

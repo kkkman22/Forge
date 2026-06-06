@@ -430,7 +430,9 @@ describe("validateScript", () => {
   });
 
   it("rejects dynamic import()", () => {
-    expect(validateScript("import('fs').then(m => m.readFileSync('/etc/passwd'))")).toMatch(/import\(\)/);
+    expect(validateScript("import('fs').then(m => m.readFileSync('/etc/passwd'))")).toMatch(
+      /import\(\)/,
+    );
   });
 
   it("rejects Buffer.from", () => {

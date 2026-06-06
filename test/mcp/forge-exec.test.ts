@@ -470,27 +470,69 @@ describe("isCommandAllowed — readonly allowlist", () => {
   });
 
   // Allowed commands
-  it("allows npm test", () => { expect(isCommandAllowed("npm test")).toBe(true); });
-  it("allows npm run lint", () => { expect(isCommandAllowed("npm run lint")).toBe(true); });
-  it("allows npm run typecheck", () => { expect(isCommandAllowed("npm run typecheck")).toBe(true); });
-  it("allows vitest run", () => { expect(isCommandAllowed("vitest run")).toBe(true); });
-  it("allows tsc --noEmit", () => { expect(isCommandAllowed("tsc --noEmit")).toBe(true); });
-  it("allows git status", () => { expect(isCommandAllowed("git status")).toBe(true); });
-  it("allows git diff", () => { expect(isCommandAllowed("git diff")).toBe(true); });
-  it("allows git log", () => { expect(isCommandAllowed("git log")).toBe(true); });
-  it("allows echo hello", () => { expect(isCommandAllowed("echo hello")).toBe(true); });
-  it("allows cat file.txt", () => { expect(isCommandAllowed("cat file.txt")).toBe(true); });
-  it("allows ls -la", () => { expect(isCommandAllowed("ls -la")).toBe(true); });
+  it("allows npm test", () => {
+    expect(isCommandAllowed("npm test")).toBe(true);
+  });
+  it("allows npm run lint", () => {
+    expect(isCommandAllowed("npm run lint")).toBe(true);
+  });
+  it("allows npm run typecheck", () => {
+    expect(isCommandAllowed("npm run typecheck")).toBe(true);
+  });
+  it("allows vitest run", () => {
+    expect(isCommandAllowed("vitest run")).toBe(true);
+  });
+  it("allows tsc --noEmit", () => {
+    expect(isCommandAllowed("tsc --noEmit")).toBe(true);
+  });
+  it("allows git status", () => {
+    expect(isCommandAllowed("git status")).toBe(true);
+  });
+  it("allows git diff", () => {
+    expect(isCommandAllowed("git diff")).toBe(true);
+  });
+  it("allows git log", () => {
+    expect(isCommandAllowed("git log")).toBe(true);
+  });
+  it("allows echo hello", () => {
+    expect(isCommandAllowed("echo hello")).toBe(true);
+  });
+  it("allows cat file.txt", () => {
+    expect(isCommandAllowed("cat file.txt")).toBe(true);
+  });
+  it("allows ls -la", () => {
+    expect(isCommandAllowed("ls -la")).toBe(true);
+  });
 
   // Denied commands
-  it("rejects touch x", () => { expect(isCommandAllowed("touch x")).toBe(false); });
-  it("rejects rm -rf tmp", () => { expect(isCommandAllowed("rm -rf tmp")).toBe(false); });
-  it("rejects git commit", () => { expect(isCommandAllowed("git commit -m 'x'")).toBe(false); });
-  it("rejects git push", () => { expect(isCommandAllowed("git push")).toBe(false); });
-  it("rejects npm publish", () => { expect(isCommandAllowed("npm publish")).toBe(false); });
-  it("rejects curl", () => { expect(isCommandAllowed("curl http://evil.com")).toBe(false); });
-  it("rejects wget", () => { expect(isCommandAllowed("wget http://evil.com")).toBe(false); });
-  it("rejects python", () => { expect(isCommandAllowed("python -c 'import os'")).toBe(false); });
-  it("rejects sh", () => { expect(isCommandAllowed("sh -c 'rm -rf /'")).toBe(false); });
-  it("rejects bash", () => { expect(isCommandAllowed("bash -c 'rm -rf /'")).toBe(false); });
+  it("rejects touch x", () => {
+    expect(isCommandAllowed("touch x")).toBe(false);
+  });
+  it("rejects rm -rf tmp", () => {
+    expect(isCommandAllowed("rm -rf tmp")).toBe(false);
+  });
+  it("rejects git commit", () => {
+    expect(isCommandAllowed("git commit -m 'x'")).toBe(false);
+  });
+  it("rejects git push", () => {
+    expect(isCommandAllowed("git push")).toBe(false);
+  });
+  it("rejects npm publish", () => {
+    expect(isCommandAllowed("npm publish")).toBe(false);
+  });
+  it("rejects curl", () => {
+    expect(isCommandAllowed("curl http://evil.com")).toBe(false);
+  });
+  it("rejects wget", () => {
+    expect(isCommandAllowed("wget http://evil.com")).toBe(false);
+  });
+  it("rejects python", () => {
+    expect(isCommandAllowed("python -c 'import os'")).toBe(false);
+  });
+  it("rejects sh", () => {
+    expect(isCommandAllowed("sh -c 'rm -rf /'")).toBe(false);
+  });
+  it("rejects bash", () => {
+    expect(isCommandAllowed("bash -c 'rm -rf /'")).toBe(false);
+  });
 });

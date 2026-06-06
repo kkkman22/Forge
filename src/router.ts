@@ -149,7 +149,11 @@ function loadIntentDictionary(): import("./router-intents.js").IntentDefinition[
     _intentDictCache = parseIntentDictionary(content);
   } catch (err: unknown) {
     // Structured diagnostic instead of silent swallow
-    console.error("[router] Failed to load intent dictionary:", err instanceof Error ? err.message : String(err));
+    // biome-ignore lint/suspicious/noConsole: structured diagnostic for intent dictionary load failure
+    console.error(
+      "[router] Failed to load intent dictionary:",
+      err instanceof Error ? err.message : String(err),
+    );
     _intentDictCache = [];
   }
   return _intentDictCache;

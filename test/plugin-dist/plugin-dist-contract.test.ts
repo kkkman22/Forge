@@ -1,6 +1,6 @@
-import { describe, it, expect } from "vitest";
 import { existsSync } from "node:fs";
 import { join } from "node:path";
+import { describe, expect, it } from "vitest";
 
 const FORGE_ROOT = join(import.meta.dirname, "../..");
 const PLUGIN_DIST = join(FORGE_ROOT, "dist-plugin");
@@ -20,7 +20,9 @@ describe("plugin dist contract", () => {
   it("hooks.json contains at least one hook", async () => {
     const fs = await import("node:fs/promises");
     const content = await fs.readFile(join(PLUGIN_DIST, "hooks/hooks.json"), "utf-8");
-    const parsed = JSON.parse(content) as { hooks: Record<string, Array<{ hooks: Array<unknown> }>> };
+    const parsed = JSON.parse(content) as {
+      hooks: Record<string, Array<{ hooks: Array<unknown> }>>;
+    };
     const hooksSection = parsed.hooks;
     expect(hooksSection).toBeDefined();
     const hookCount = Object.values(hooksSection)

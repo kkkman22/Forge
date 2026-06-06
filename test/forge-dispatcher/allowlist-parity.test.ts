@@ -1,6 +1,6 @@
-import { describe, it, expect } from "vitest";
 import { readFileSync } from "node:fs";
 import { join } from "node:path";
+import { describe, expect, it } from "vitest";
 import { ALLOW_LIST, validateTopic } from "../../src/forge-dispatcher/allowlist.js";
 
 const FORGE_ROOT = join(import.meta.dirname, "../..");

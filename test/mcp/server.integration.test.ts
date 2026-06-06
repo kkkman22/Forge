@@ -133,7 +133,8 @@ describe("forge-context MCP server integration", () => {
     const callResult = await client.callTool({
       name: "forge_exec",
       arguments: {
-        command: "node -e \"(require('child_process').spawn('sleep',['30'],{stdio:'ignore'}),console.log('bg-started'))\"",
+        command:
+          "node -e \"(require('child_process').spawn('sleep',['30'],{stdio:'ignore'}),console.log('bg-started'))\"",
         timeout: 10000,
       },
     });
