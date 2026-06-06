@@ -8,6 +8,7 @@
  * that `startsWith()` alone cannot catch (prefix attack).
  */
 
+import { realpathSync } from "node:fs";
 import { relative, resolve } from "node:path";
 
 /**
@@ -30,10 +31,23 @@ import { relative, resolve } from "node:path";
 export function validateSinglePath(inputPath: string, projectRoot: string): boolean {
   const resolvedRoot = resolve(projectRoot);
   const resolved = resolve(projectRoot, inputPath);
+
+  // P0-1 fix: realpath check catches symlinks that escape project root.
+  // Only check for paths that already exist on disk.
+  try {
+    const realResolved = realpathSync(resolved);
+    const realRoot = realpathSync(resolvedRoot);
+    const realRel = relative(realRoot, realResolved);
+    if (realRel.startsWith("..")) return false;
+    if (realRel === "") return true;
+    if (!realResolved.startsWith(`${realRoot}/`) && realResolved !== realRoot) return false;
+  } catch {
+    // Path doesn't exist yet — fall through to lexical check
+  }
+
   const rel = relative(resolvedRoot, resolved);
 
   // Path escapes if relative path goes up (starts with ..)
-  // or if resolved doesn't start with the resolved root (handles edge cases)
   if (rel.startsWith("..")) {
     return false;
   }
