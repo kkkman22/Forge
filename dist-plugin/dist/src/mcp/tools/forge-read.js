@@ -47,6 +47,14 @@ const DANGEROUS_SCRIPT_PATTERNS = [
     { pattern: /execFileSync/, label: "execFileSync" },
     { pattern: /mkdirSync/, label: "mkdirSync" },
     { pattern: /mkdir\b/, label: "mkdir" },
+    // P0-1 fix: block ALL filesystem access, dynamic imports, and runtime reflection
+    { pattern: /require\s*\(\s*['"]fs/, label: "require('fs')" },
+    { pattern: /require\s*\(\s*['"]node:fs/, label: "require('node:fs')" },
+    { pattern: /import\s*\(/, label: "import()" },
+    { pattern: /Buffer\b/, label: "Buffer" },
+    { pattern: /WebAssembly\b/, label: "WebAssembly" },
+    { pattern: /process\.binding/, label: "process.binding" },
+    { pattern: /process\.env/, label: "process.env" },
 ];
 /**
  * Validate that a script does not contain dangerous patterns.

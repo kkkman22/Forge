@@ -83,6 +83,61 @@ export function isCommandDenied(command, denyPatterns) {
     return null;
 }
 // ---------------------------------------------------------------------------
+// Readonly command allowlist (P0-2 primary security boundary)
+// ---------------------------------------------------------------------------
+/**
+ * Hardcoded allowlist of read-only / verification commands.
+ * Commands not in this list are rejected regardless of settings.json.
+ */
+const READONLY_COMMAND_ALLOWLIST = new Set([
+    // Package managers (read-only operations)
+    "npm", "npx", "yarn", "pnpm", "bun",
+    // TypeScript / JavaScript tools
+    "vitest", "tsc", "biome", "eslint", "prettier", "jest",
+    // Git read-only
+    "git",
+    // Unix read-only utilities
+    "echo", "cat", "ls", "find", "wc", "head", "tail", "grep", "sort",
+    "diff", "file", "which", "type", "env", "printenv",
+    // Node.js (only safe subcommands)
+    "node",
+]);
+/**
+ * Subcommands that should ALWAYS be rejected even if the binary is in the allowlist.
+ */
+const ALWAYS_DENIED_SUBCOMMANDS = new Map([
+    ["git", new Set(["commit", "push", "merge", "rebase", "reset", "checkout", "switch", "stash", "add", "rm", "mv", "clean"])],
+    ["npm", new Set(["publish", "install", "ci", "uninstall", "update", "link"])],
+]);
+/**
+ * Check if a command is in the readonly allowlist.
+ * This is the primary security boundary — settings.json deny is supplementary.
+ */
+export function isCommandAllowed(command) {
+    const trimmed = command.trim();
+    if (trimmed.length === 0)
+        return false;
+    const parts = trimmed.split(/\s+/);
+    const bin = parts[0];
+    if (!READONLY_COMMAND_ALLOWLIST.has(bin))
+        return false;
+    // Check denied subcommands
+    const denied = ALWAYS_DENIED_SUBCOMMANDS.get(bin);
+    if (denied && denied.size > 0 && parts.length > 1) {
+        // Skip flags (start with -) to find the actual subcommand
+        let sub = parts[1];
+        for (let i = 1; i < parts.length; i++) {
+            if (!parts[i].startsWith("-")) {
+                sub = parts[i];
+                break;
+            }
+        }
+        if (denied.has(sub))
+            return false;
+    }
+    return true;
+}
+// ---------------------------------------------------------------------------
 // Shell metachar detection (defense-in-depth)
 // ---------------------------------------------------------------------------
 const SHELL_METACHAR_PATTERNS = [
@@ -90,6 +145,14 @@ const SHELL_METACHAR_PATTERNS = [
     { pattern: /`/, label: "`" },
     { pattern: /\n/, label: "newline" },
     { pattern: /\r/, label: "carriage-return" },
+    // P0-2 fix: expanded to cover all shell operators
+    { pattern: /;/, label: ";" },
+    { pattern: /&&/, label: "&&" },
+    { pattern: /\|\|/, label: "||" },
+    { pattern: /\|/, label: "|" },
+    { pattern: />/, label: ">" },
+    { pattern: /</, label: "<" },
+    { pattern: /&/, label: "&" },
 ];
 /**
  * Detect shell metacharacters that could enable command injection.
@@ -357,7 +420,14 @@ export function registerForgeExec(server, root) {
         command: z.string().describe("Shell command to execute"),
         timeout: z.number().optional().default(30000).describe("Timeout in ms"),
     }, async ({ command, timeout }) => {
-        // 1. Check deny rules
+        // 1a. Primary security: hardcoded allowlist
+        if (!isCommandAllowed(command)) {
+            return {
+                content: [{ type: "text", text: `Command not in allowlist: ${command.trim().split(/\s+/)[0]}` }],
+                isError: true,
+            };
+        }
+        // 1. Check deny rules (supplementary layer)
         const denyPatterns = await readDenyPatterns(settingsPath);
         const denyReason = isCommandDenied(command, denyPatterns);
         if (denyReason) {

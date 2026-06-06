@@ -22,6 +22,11 @@ import type { ResolvedRoot } from "../project-root.js";
 export declare function readDenyPatterns(settingsPath?: string): Promise<string[]>;
 export declare function isCommandDenied(command: string, denyPatterns: string[]): string | null;
 /**
+ * Check if a command is in the readonly allowlist.
+ * This is the primary security boundary — settings.json deny is supplementary.
+ */
+export declare function isCommandAllowed(command: string): boolean;
+/**
  * Detect shell metacharacters that could enable command injection.
  * Returns the metachar label if found, or null if the command appears safe.
  *
