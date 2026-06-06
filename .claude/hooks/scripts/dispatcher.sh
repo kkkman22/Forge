@@ -98,10 +98,6 @@ handle_stop() {
     fi
   fi
 
-  # Persistent loop
-  bash forge/scripts/persistent-loop.sh 2>/dev/null || \
-    bash ~/.claude/skills/forge/scripts/persistent-loop.sh 2>/dev/null || true
-
   # Pending evolved rules
   if [ -f .forge/knowledge/evolved-rules.md ] && grep -q 'PENDING' .forge/knowledge/evolved-rules.md 2>/dev/null; then
     local count
