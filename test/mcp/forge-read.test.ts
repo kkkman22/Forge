@@ -355,16 +355,39 @@ describe("validatePaths", () => {
 // ---------------------------------------------------------------------------
 
 describe("validateScript", () => {
-  it("allows legitimate analysis scripts", () => {
+  it("rejects scripts using process.env (blocked by P0-1 fix)", () => {
+    // P0-1 fix: scripts can no longer access process.env or require('fs')
+    // Legitimate scripts must use only the FORGE_FILES env var via
+    // the safe accessor provided by the tool infrastructure
     const script = `
       const files = JSON.parse(process.env.FORGE_FILES);
+      files.forEach(f => {
+        console.log(f, "analyzed");
+      });
+    `;
+    // This script uses process.env which is now blocked — this is expected
+    expect(validateScript(script)).toMatch(/process\.env/);
+  });
+
+  it("allows safe scripts without fs/process access", () => {
+    // P0-1 fix: scripts using only pure computation are still allowed
+    // process.env and require('fs') are blocked; shell mode should be used for file access
+    const script = `
+      const x = 1 + 1;
+      console.log(x);
+    `;
+    expect(validateScript(script)).toBeNull();
+  });
+
+  it("rejects scripts requiring fs for read operations", () => {
+    const script = `
       const fs = require('fs');
       files.forEach(f => {
         const content = fs.readFileSync(f, 'utf-8');
         console.log(f, content.split('\\n').length);
       });
     `;
-    expect(validateScript(script)).toBeNull();
+    expect(validateScript(script)).toMatch(/require.*fs/);
   });
 
   it("rejects child_process require", () => {
@@ -397,9 +420,35 @@ describe("validateScript", () => {
     expect(result).toMatch(/child_process|execSync/);
   });
 
-  it("allows reading with require('fs')", () => {
-    // readFileSync is not in the dangerous patterns — read-only is safe
-    expect(validateScript("require('fs').readFileSync('a.ts','utf-8')")).toBeNull();
+  it("rejects require('fs') as filesystem access", () => {
+    // P0-1 fix: ALL fs access is blocked, including read-only
+    expect(validateScript("require('fs').readFileSync('a.ts','utf-8')")).toMatch(/require.*fs/);
+  });
+
+  it("rejects require('node:fs')", () => {
+    expect(validateScript("require('node:fs').readFileSync('a.ts','utf-8')")).toMatch(/node:fs/);
+  });
+
+  it("rejects dynamic import()", () => {
+    expect(validateScript("import('fs').then(m => m.readFileSync('/etc/passwd'))")).toMatch(
+      /import\(\)/,
+    );
+  });
+
+  it("rejects Buffer.from", () => {
+    expect(validateScript("Buffer.from('data')")).toMatch(/Buffer/);
+  });
+
+  it("rejects WebAssembly", () => {
+    expect(validateScript("WebAssembly.instantiate({})")).toMatch(/WebAssembly/);
+  });
+
+  it("rejects process.binding", () => {
+    expect(validateScript("process.binding('fs')")).toMatch(/process\.binding/);
+  });
+
+  it("rejects process.env access", () => {
+    expect(validateScript("const x = process.env.SECRET")).toMatch(/process\.env/);
   });
 });
 

@@ -89,6 +89,103 @@ export function isCommandDenied(command: string, denyPatterns: string[]): string
 }
 
 // ---------------------------------------------------------------------------
+// Readonly command allowlist (P0-2 primary security boundary)
+// ---------------------------------------------------------------------------
+
+/**
+ * Hardcoded allowlist of read-only / verification commands.
+ * Commands not in this list are rejected regardless of settings.json.
+ */
+const READONLY_COMMAND_ALLOWLIST: ReadonlySet<string> = new Set([
+  // Package managers (read-only operations)
+  "npm",
+  "npx",
+  "yarn",
+  "pnpm",
+  "bun",
+  // TypeScript / JavaScript tools
+  "vitest",
+  "tsc",
+  "biome",
+  "eslint",
+  "prettier",
+  "jest",
+  // Git read-only
+  "git",
+  // Unix read-only utilities
+  "echo",
+  "cat",
+  "ls",
+  "find",
+  "wc",
+  "head",
+  "tail",
+  "grep",
+  "sort",
+  "diff",
+  "file",
+  "which",
+  "type",
+  "env",
+  "printenv",
+  // Node.js (only safe subcommands)
+  "node",
+]);
+
+/**
+ * Subcommands that should ALWAYS be rejected even if the binary is in the allowlist.
+ */
+const ALWAYS_DENIED_SUBCOMMANDS: ReadonlyMap<string, ReadonlySet<string>> = new Map([
+  [
+    "git",
+    new Set([
+      "commit",
+      "push",
+      "merge",
+      "rebase",
+      "reset",
+      "checkout",
+      "switch",
+      "stash",
+      "add",
+      "rm",
+      "mv",
+      "clean",
+    ]),
+  ],
+  ["npm", new Set(["publish", "install", "ci", "uninstall", "update", "link"])],
+]);
+
+/**
+ * Check if a command is in the readonly allowlist.
+ * This is the primary security boundary — settings.json deny is supplementary.
+ */
+export function isCommandAllowed(command: string): boolean {
+  const trimmed = command.trim();
+  if (trimmed.length === 0) return false;
+  const parts = trimmed.split(/\s+/);
+  const bin = parts[0];
+
+  if (!READONLY_COMMAND_ALLOWLIST.has(bin)) return false;
+
+  // Check denied subcommands
+  const denied = ALWAYS_DENIED_SUBCOMMANDS.get(bin);
+  if (denied && denied.size > 0 && parts.length > 1) {
+    // Skip flags (start with -) to find the actual subcommand
+    let sub = parts[1];
+    for (let i = 1; i < parts.length; i++) {
+      if (!parts[i].startsWith("-")) {
+        sub = parts[i];
+        break;
+      }
+    }
+    if (denied.has(sub)) return false;
+  }
+
+  return true;
+}
+
+// ---------------------------------------------------------------------------
 // Shell metachar detection (defense-in-depth)
 // ---------------------------------------------------------------------------
 
@@ -97,16 +194,24 @@ const SHELL_METACHAR_PATTERNS: Array<{ pattern: RegExp; label: string }> = [
   { pattern: /`/, label: "`" },
   { pattern: /\n/, label: "newline" },
   { pattern: /\r/, label: "carriage-return" },
+  // P0-2 fix: expanded to cover all shell operators
+  { pattern: /;/, label: ";" },
+  { pattern: /&&/, label: "&&" },
+  { pattern: /\|\|/, label: "||" },
+  { pattern: /\|/, label: "|" },
+  { pattern: />/, label: ">" },
+  { pattern: /</, label: "<" },
+  { pattern: /&/, label: "&" },
 ];
 
 /**
  * Detect shell metacharacters that could enable command injection.
  * Returns the metachar label if found, or null if the command appears safe.
  *
- * Defense-in-depth: flags command substitution ($() and ``) and control
- * characters that allow opaque embedding of subcommands. Standard shell
- * operators (;, &, |, >, <) are NOT flagged because forge_exec already
- * invokes via `sh -c` — these operators are part of normal shell usage.
+ * P0-2 fix: now flags ALL shell operators (;, &, |, >, <, &&, ||, >>) and
+ * command substitution ($() and ``) as defense-in-depth. Even though
+ * forge_exec invokes via `sh -c`, these operators enable chaining arbitrary
+ * commands which is unsafe for a readonly tool.
  */
 export function containsShellMetachars(command: string): string | null {
   for (const { pattern, label } of SHELL_METACHAR_PATTERNS) {
@@ -425,7 +530,20 @@ export function registerForgeExec(server: McpServer, root?: ResolvedRoot): void 
       timeout: z.number().optional().default(30000).describe("Timeout in ms"),
     },
     async ({ command, timeout }) => {
-      // 1. Check deny rules
+      // 1a. Primary security: hardcoded allowlist
+      if (!isCommandAllowed(command)) {
+        return {
+          content: [
+            {
+              type: "text" as const,
+              text: `Command not in allowlist: ${command.trim().split(/\s+/)[0]}`,
+            },
+          ],
+          isError: true,
+        };
+      }
+
+      // 1. Check deny rules (supplementary layer)
       const denyPatterns = await readDenyPatterns(settingsPath);
       const denyReason = isCommandDenied(command, denyPatterns);
       if (denyReason) {
