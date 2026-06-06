@@ -401,16 +401,15 @@ describe("containsShellMetachars", () => {
     expect(containsShellMetachars("git status --short")).toBeNull();
   });
 
-  it("allows shell operators (sh -c context)", () => {
-    // Shell operators (;, &, |, >, <) are permitted because forge_exec
-    // invokes via `sh -c` — these are part of normal shell usage.
-    expect(containsShellMetachars("echo hello; rm -rf /")).toBeNull();
-    expect(containsShellMetachars("echo hello && rm -rf /")).toBeNull();
-    expect(containsShellMetachars("echo hello || rm -rf /")).toBeNull();
-    expect(containsShellMetachars("echo hello | rm -rf /")).toBeNull();
-    expect(containsShellMetachars("echo data > /tmp/out")).toBeNull();
-    expect(containsShellMetachars("sort < /tmp/in")).toBeNull();
-    expect(containsShellMetachars("sleep 30 & echo bg")).toBeNull();
+  it("rejects shell operators for safety", () => {
+    // P0-2 fix: shell operators now blocked as defense-in-depth
+    expect(containsShellMetachars("echo hello; rm -rf /")).toMatch(/;/);
+    expect(containsShellMetachars("echo hello && rm -rf /")).toMatch(/&&/);
+    expect(containsShellMetachars("echo hello || rm -rf /")).toMatch(/\|\|/);
+    expect(containsShellMetachars("echo hello | rm -rf /")).toMatch(/\|/);
+    expect(containsShellMetachars("echo data > /tmp/out")).toMatch(/>/);
+    expect(containsShellMetachars("sort < /tmp/in")).toMatch(/</);
+    expect(containsShellMetachars("sleep 30 & echo bg")).toMatch(/&/);
   });
 
   it("detects newline injection", () => {
@@ -457,4 +456,41 @@ describe("isSimpleCommand", () => {
     expect(isSimpleCommand("")).toBe(false);
     expect(isSimpleCommand("  ")).toBe(false);
   });
+});
+
+// ---------------------------------------------------------------------------
+// P0-2: isCommandAllowed — readonly allowlist
+// ---------------------------------------------------------------------------
+
+describe("isCommandAllowed — readonly allowlist", () => {
+  let isCommandAllowed: (cmd: string) => boolean;
+  beforeAll(async () => {
+    const mod = await import("../../src/mcp/tools/forge-exec.js");
+    isCommandAllowed = mod.isCommandAllowed;
+  });
+
+  // Allowed commands
+  it("allows npm test", () => { expect(isCommandAllowed("npm test")).toBe(true); });
+  it("allows npm run lint", () => { expect(isCommandAllowed("npm run lint")).toBe(true); });
+  it("allows npm run typecheck", () => { expect(isCommandAllowed("npm run typecheck")).toBe(true); });
+  it("allows vitest run", () => { expect(isCommandAllowed("vitest run")).toBe(true); });
+  it("allows tsc --noEmit", () => { expect(isCommandAllowed("tsc --noEmit")).toBe(true); });
+  it("allows git status", () => { expect(isCommandAllowed("git status")).toBe(true); });
+  it("allows git diff", () => { expect(isCommandAllowed("git diff")).toBe(true); });
+  it("allows git log", () => { expect(isCommandAllowed("git log")).toBe(true); });
+  it("allows echo hello", () => { expect(isCommandAllowed("echo hello")).toBe(true); });
+  it("allows cat file.txt", () => { expect(isCommandAllowed("cat file.txt")).toBe(true); });
+  it("allows ls -la", () => { expect(isCommandAllowed("ls -la")).toBe(true); });
+
+  // Denied commands
+  it("rejects touch x", () => { expect(isCommandAllowed("touch x")).toBe(false); });
+  it("rejects rm -rf tmp", () => { expect(isCommandAllowed("rm -rf tmp")).toBe(false); });
+  it("rejects git commit", () => { expect(isCommandAllowed("git commit -m 'x'")).toBe(false); });
+  it("rejects git push", () => { expect(isCommandAllowed("git push")).toBe(false); });
+  it("rejects npm publish", () => { expect(isCommandAllowed("npm publish")).toBe(false); });
+  it("rejects curl", () => { expect(isCommandAllowed("curl http://evil.com")).toBe(false); });
+  it("rejects wget", () => { expect(isCommandAllowed("wget http://evil.com")).toBe(false); });
+  it("rejects python", () => { expect(isCommandAllowed("python -c 'import os'")).toBe(false); });
+  it("rejects sh", () => { expect(isCommandAllowed("sh -c 'rm -rf /'")).toBe(false); });
+  it("rejects bash", () => { expect(isCommandAllowed("bash -c 'rm -rf /'")).toBe(false); });
 });
