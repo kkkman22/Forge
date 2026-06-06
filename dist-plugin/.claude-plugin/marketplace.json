@@ -1,7 +1,7 @@
 {
   "$schema": "https://anthropic.com/claude-code/marketplace.schema.json",
   "name": "forge-official",
-  "description": "Forge official marketplace — unified AI coding workflow framework with 22 internal subcommands, TDD, spec-driven planning, automated review, and three-tier task routing.",
+  "description": "Forge official marketplace — unified AI coding workflow framework with 35 internal subcommands, TDD, spec-driven planning, automated review, and three-tier task routing.",
   "owner": {
     "name": "Forge contributors",
     "url": "https://github.com/kkkman22/Forge"
