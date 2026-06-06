@@ -44,8 +44,7 @@
     "docs:embeds": "tsx scripts/build-docs-embeds.ts",
     "docs:migrate": "tsx scripts/migrate-docs-frontmatter.ts",
     "docs:scan-literals": "tsx scripts/scan-literal-mismatches.ts",
-    "docs:install-hooks": "tsx scripts/install-hooks.ts",
-    "postinstall": "tsx scripts/install-hooks.ts"
+    "docs:install-hooks": "tsx scripts/install-hooks.ts"
   },
   "devDependencies": {
     "@biomejs/biome": "2.4.12",
