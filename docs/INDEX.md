@@ -35,4 +35,8 @@
 - [工作流示例：复杂需求（全量路径）](workflow-complex.md) — reference — 2026-05-12
 - [工作流示例：新功能开发（标准路径）](workflow-feature.md) — reference — 2026-05-12
 
+## Audits
+
+- [Forge 审计整改验收报告](forge-audit-remediation-acceptance-2026-06-06.md) — audits — 2026-06-06
+
 由 `scripts/build-docs-index.ts` 生成；请勿手动编辑
