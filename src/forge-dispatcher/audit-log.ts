@@ -1,4 +1,5 @@
-import { createHash, createHmac } from "node:crypto";
+import { createHmac, randomBytes } from "node:crypto";
+import { chmodSync, existsSync, mkdirSync, readFileSync, writeFileSync } from "node:fs";
 import { appendFile, mkdir } from "node:fs/promises";
 import { homedir } from "node:os";
 import { resolve } from "node:path";
@@ -25,15 +26,71 @@ export interface AuditOpts {
   auditDir?: string;
 }
 
-function resolveAuditSecret(): string {
-  const env = process.env.FORGE_AUDIT_SECRET?.trim();
-  if (env) return env;
-  // Derive a stable key from homedir so chains verify across restarts
-  return createHash("sha256").update(homedir()).digest("hex");
+export interface SecretOpts {
+  secretDir?: string;
 }
 
-export function computeHmac(prevHmac: string, entry: Omit<AuditEntry, "hmac">): string {
-  const key = resolveAuditSecret();
+const SECRET_FILE_NAME = ".audit-secret";
+
+/**
+ * Resolve the default directory for the audit secret file.
+ * Uses CLAUDE_PLUGIN_DATA if set, otherwise falls back to ~/.claude/plugins/data/forge/.
+ */
+function resolveDefaultSecretDir(): string {
+  const pluginData = process.env.CLAUDE_PLUGIN_DATA;
+  if (pluginData) return resolve(pluginData, "forge");
+  return resolve(homedir(), ".claude", "plugins", "data", "forge");
+}
+
+/**
+ * Get or create a random secret file for HMAC key derivation.
+ *
+ * P2-2 fix: replaces the old sha256(homedir()) fallback with a per-installation
+ * random secret stored at 0600 permissions. The secret is a 32-byte random value
+ * encoded as hex (64 chars).
+ */
+export function getOrCreateSecretFile(dir: string): string {
+  const secretPath = resolve(dir, SECRET_FILE_NAME);
+
+  if (existsSync(secretPath)) {
+    try {
+      const existing = readFileSync(secretPath, "utf-8").trim();
+      if (existing.length >= 32) return existing;
+    } catch {
+      // Fall through to regenerate
+    }
+  }
+
+  // Generate new random secret
+  const secret = randomBytes(32).toString("hex");
+  mkdirSync(dir, { recursive: true });
+  writeFileSync(secretPath, secret, { mode: 0o600 });
+  chmodSync(secretPath, 0o600);
+  return secret;
+}
+
+/**
+ * Resolve the HMAC secret key.
+ *
+ * Priority:
+ * 1. FORGE_AUDIT_SECRET env var (explicit override)
+ * 2. Random secret file at <dir>/.audit-secret
+ * 3. Auto-generate a new random secret file
+ */
+export function resolveAuditSecret(opts?: SecretOpts): string {
+  const env = process.env.FORGE_AUDIT_SECRET?.trim();
+  if (env) return env;
+
+  const dir = opts?.secretDir ?? resolveDefaultSecretDir();
+  return getOrCreateSecretFile(dir);
+}
+
+export function computeHmac(
+  prevHmac: string,
+  entry: Omit<AuditEntry, "hmac">,
+  opts?: SecretOpts,
+): string {
+  const key = resolveAuditSecret(opts);
   const data = prevHmac + JSON.stringify(entry);
   return createHmac("sha256", key).update(data).digest("hex");
 }
