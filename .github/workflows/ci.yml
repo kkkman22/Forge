@@ -13,6 +13,7 @@ on:
   schedule:
     # Daily at 04:00 UTC — re-scan main for new npm audit advisories
     - cron: "0 4 * * *"
+  workflow_dispatch:
 
 jobs:
   check:
@@ -104,6 +105,22 @@ jobs:
         run: npm audit --audit-level=high
       - name: Check dependency hygiene
         run: node scripts/check-deps.mjs
+
+  type-strict:
+    if: github.event_name == 'schedule' || github.event_name == 'workflow_dispatch'
+    runs-on: ubuntu-latest
+    continue-on-error: true
+    steps:
+      - uses: actions/checkout@v5
+        with:
+          ref: main
+      - uses: actions/setup-node@v6
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - name: Typecheck with skipLibCheck=false
+        run: npx tsc --noEmit --skipLibCheck false
 
   bench:
     if: github.event_name == 'pull_request'
