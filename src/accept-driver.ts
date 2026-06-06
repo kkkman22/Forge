@@ -233,8 +233,20 @@ function extractCommand(text: string): string | null {
   return match ? match[1] : null;
 }
 
-function buildCurlCommand(method: string, url: string): string {
-  return `curl -s -o /dev/null -w "%{http_code}" -X ${method} ${url}`;
+/**
+ * Shell-escape a string by wrapping in single quotes and escaping any
+ * embedded single quotes using the standard `'\''` idiom.
+ * Strips newlines to prevent multi-command injection.
+ */
+function shellEscape(s: string): string {
+  const sanitized = s.replace(/[\r\n]/g, "");
+  // Replace embedded single quotes with '\'' (end quote, escaped quote, reopen quote)
+  return `'${sanitized.replace(/'/g, "'\\''")}'`;
+}
+
+export function buildCurlCommand(method: string, url: string): string {
+  const safeMethod = /^[A-Z]+$/i.test(method) ? method.toUpperCase() : "GET";
+  return `curl -s -o /dev/null -w "%{http_code}" -X ${safeMethod} ${shellEscape(url)}`;
 }
 
 function evaluateApiVerdict(

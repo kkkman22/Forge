@@ -39,7 +39,8 @@ describe("path-equivalence property tests", () => {
       );
     });
 
-    it("${HOME}/subpath ≡ homeDir/subpath", async () => {
+    // biome-ignore lint/suspicious/noTemplateCurlyInString: literal ${HOME} is the test subject
+    it("${HOME}/subpath" + " ≡ homeDir/subpath", async () => {
       const { canonicalizePathExpression } = await import("../src/path-equivalence.js");
       fc.assert(
         fc.property(homeDirArb, subpathArb, (homeDir, subpath) => {

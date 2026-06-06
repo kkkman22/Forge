@@ -38,6 +38,36 @@ describe("resolveProjectRoot", () => {
     expect(result.path).toBe(process.cwd());
     expect(result.source).toBe("cwd");
   });
+
+  it("rejects CLAUDE_PROJECT_DIR with '..' path traversal", () => {
+    const result = resolveProjectRoot({ CLAUDE_PROJECT_DIR: "/abs/project/../../../etc" });
+    expect(result.path).toBe(process.cwd());
+    expect(result.source).toBe("cwd");
+  });
+
+  it("rejects CLAUDE_PROJECT_DIR with embedded '..' segment", () => {
+    const result = resolveProjectRoot({ CLAUDE_PROJECT_DIR: "/home/user/../other" });
+    expect(result.path).toBe(process.cwd());
+    expect(result.source).toBe("cwd");
+  });
+
+  it("allows paths without '..' components", () => {
+    const result = resolveProjectRoot({ CLAUDE_PROJECT_DIR: "/abs/project/deep/path" });
+    expect(result.path).toBe("/abs/project/deep/path");
+    expect(result.source).toBe("env");
+  });
+
+  it("rejects relative '..' only path", () => {
+    const result = resolveProjectRoot({ CLAUDE_PROJECT_DIR: ".." });
+    expect(result.path).toBe(process.cwd());
+    expect(result.source).toBe("cwd");
+  });
+
+  it("allows path with dots in directory names (not '..')", () => {
+    const result = resolveProjectRoot({ CLAUDE_PROJECT_DIR: "/abs/my.project/dir" });
+    expect(result.path).toBe("/abs/my.project/dir");
+    expect(result.source).toBe("env");
+  });
 });
 
 describe("logResolvedRoot", () => {

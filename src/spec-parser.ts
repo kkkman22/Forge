@@ -21,6 +21,13 @@ import type {
 } from "./spec-bundle.js";
 
 // ---------------------------------------------------------------------------
+// Constants
+// ---------------------------------------------------------------------------
+
+/** Maximum body size in characters before truncation to prevent regex backtracking. */
+const MAX_BODY_SIZE = 1_000_000; // ~1MB
+
+// ---------------------------------------------------------------------------
 // Result types
 // ---------------------------------------------------------------------------
 
@@ -215,13 +222,14 @@ export function parseRequirementsMarkdown(text: string): ParseResult<Requirement
     return { errors: [{ message: "Empty input" }] };
   }
 
-  const fmResult = parseFrontmatter(text);
+  const truncated = text.length > MAX_BODY_SIZE ? text.slice(0, MAX_BODY_SIZE) : text;
+  const fmResult = parseFrontmatter(truncated);
   if (Array.isArray(fmResult)) {
     return { errors: fmResult };
   }
   const frontmatter = fmResult as SpecFileFrontmatter;
 
-  const body = text.replace(/^---[\s\S]*?---\n*/, "");
+  const body = truncated.replace(/^---[\s\S]*?---\n*/, "");
   const intro = extractSection(body, "Introduction");
   const glossaryText = extractSection(body, "Glossary");
   const glossary = extractGlossary(glossaryText);
@@ -293,13 +301,14 @@ export function parseDesignMarkdown(text: string): ParseResult<DesignDocument> {
     return { errors: [{ message: "Empty input" }] };
   }
 
-  const fmResult = parseFrontmatter(text);
+  const truncated = text.length > MAX_BODY_SIZE ? text.slice(0, MAX_BODY_SIZE) : text;
+  const fmResult = parseFrontmatter(truncated);
   if (Array.isArray(fmResult)) {
     return { errors: fmResult };
   }
   const frontmatter = fmResult as SpecFileFrontmatter;
 
-  const body = text.replace(/^---[\s\S]*?---\n*/, "");
+  const body = truncated.replace(/^---[\s\S]*?---\n*/, "");
   const overview = extractSection(body, "Overview");
   const architecture = extractSection(body, "Architecture");
   const ciText = extractSection(body, "Components and Interfaces");
@@ -347,13 +356,14 @@ export function parseTasksMarkdown(text: string): ParseResult<TasksSeedDocument>
     return { errors: [{ message: "Empty input" }] };
   }
 
-  const fmResult = parseFrontmatter(text);
+  const truncated = text.length > MAX_BODY_SIZE ? text.slice(0, MAX_BODY_SIZE) : text;
+  const fmResult = parseFrontmatter(truncated);
   if (Array.isArray(fmResult)) {
     return { errors: fmResult };
   }
   const frontmatter = fmResult as SpecFileFrontmatter;
 
-  const body = text.replace(/^---[\s\S]*?---\n*/, "");
+  const body = truncated.replace(/^---[\s\S]*?---\n*/, "");
 
   // Extract waves from JSON code fence
   let waves: Wave[] | undefined;

@@ -594,8 +594,8 @@ describe("path equivalence integration in sandbox policy", () => {
     expect(result.allowed).toBe(false);
   });
 
-  it("blocks ${HOME}/.forge/config.md write via braced variable", () => {
-    const result = checkFilesystemPolicy("${HOME}/.forge/config.md", "write", frozenConfig, {
+  it("blocks ${" + "HOME}/.forge/config.md write via braced variable", () => {
+    const result = checkFilesystemPolicy("${" + "HOME}/.forge/config.md", "write", frozenConfig, {
       cwd: "/project",
       homeDir: "/Users/x",
     });
@@ -603,7 +603,7 @@ describe("path equivalence integration in sandbox policy", () => {
   });
 
   it("blocks command accessing .forge/config.md via $HOME path", () => {
-    const result = checkCommandPolicy("cat ${HOME}/.forge/config.md", commandDenyConfig, {
+    const result = checkCommandPolicy("cat ${" + "HOME}/.forge/config.md", commandDenyConfig, {
       cwd: "/project",
       homeDir: "/Users/x",
     });

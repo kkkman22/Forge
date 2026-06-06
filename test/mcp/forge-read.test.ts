@@ -402,3 +402,24 @@ describe("validateScript", () => {
     expect(validateScript("require('fs').readFileSync('a.ts','utf-8')")).toBeNull();
   });
 });
+
+// ---------------------------------------------------------------------------
+// VM sandbox — script resource limits
+// ---------------------------------------------------------------------------
+
+describe("sandboxOptions — resource limits for script execution", () => {
+  it("provides NODE_OPTIONS with resource limits for javascript language", () => {
+    const opts = buildSandboxEnv("javascript", ["a.ts"]);
+    expect(opts.FORGE_FILES).toBe(JSON.stringify(["a.ts"]));
+    // Must include --max-old-space-size to prevent memory exhaustion
+    expect(opts.NODE_OPTIONS).toContain("--max-old-space-size");
+  });
+
+  it("does not set NODE_OPTIONS for shell language", () => {
+    const opts = buildSandboxEnv("shell", ["a.ts"]);
+    expect(opts.NODE_OPTIONS).toBeUndefined();
+  });
+});
+
+// Import for sandbox tests
+import { buildSandboxEnv } from "../../src/mcp/tools/forge-read.js";
