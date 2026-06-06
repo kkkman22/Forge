@@ -9,7 +9,11 @@
  *
  * **Validates: T2 — Path traversal hardening**
  */
-import { describe, expect, it } from "vitest";
+import { mkdirSync, rmSync, symlinkSync, writeFileSync } from "node:fs";
+import { mkdtempSync } from "node:fs";
+import { join } from "node:path";
+import { tmpdir } from "node:os";
+import { afterEach, describe, expect, it } from "vitest";
 
 // Import from the shared path-validator module (T2 GREEN target)
 import { validateSinglePath } from "../../src/mcp/tools/path-validator.js";
@@ -49,5 +53,64 @@ describe("validateSinglePath", () => {
 
   it("handles deeply nested valid paths", () => {
     expect(validateSinglePath("src/mcp/tools/forge-read.ts", "/home/user/project")).toBe(true);
+  });
+});
+
+// ---------------------------------------------------------------------------
+// realpath branches — use real filesystem paths so realpathSync succeeds
+// ---------------------------------------------------------------------------
+
+describe("validateSinglePath — realpath branches", () => {
+  let tmpRoot: string;
+  let outsideDir: string;
+
+  // Create temp dirs for realpath tests
+  it.beforeAll(() => {
+    tmpRoot = mkdtempSync(join(tmpdir(), "forge-pv-"));
+    outsideDir = mkdtempSync(join(tmpdir(), "forge-pv-out-"));
+    // Create a file inside tmpRoot
+    writeFileSync(join(tmpRoot, "real.ts"), "export {}");
+  });
+
+  afterEach(() => {
+    // Clean up any symlinks created during tests
+    try { rmSync(join(tmpRoot, "evil-link"), { force: true }); } catch { /* ok */ }
+  });
+
+  it.afterAll(() => {
+    rmSync(tmpRoot, { recursive: true, force: true });
+    rmSync(outsideDir, { recursive: true, force: true });
+  });
+
+  it("allows real existing paths within project root (realpath branch)", () => {
+    // Path exists → realpathSync succeeds → realRel doesn't start with ".."
+    expect(validateSinglePath(join(tmpRoot, "real.ts"), tmpRoot)).toBe(true);
+  });
+
+  it("rejects symlink that escapes project root (realpath .. branch)", () => {
+    // Create symlink: tmpRoot/evil-link → outsideDir
+    symlinkSync(outsideDir, join(tmpRoot, "evil-link"));
+    // realpath of evil-link → outsideDir → relative from tmpRoot starts with ".."
+    expect(validateSinglePath(join(tmpRoot, "evil-link"), tmpRoot)).toBe(false);
+  });
+
+  it("allows path exactly at root (realpath empty rel branch)", () => {
+    // Path == root → realRel === "" → return true
+    expect(validateSinglePath(tmpRoot, tmpRoot)).toBe(true);
+  });
+
+  it("rejects realpath prefix attack via startsWith check", () => {
+    // Create a dir whose realpath is outside root but whose lexical path
+    // appears inside. We use a symlink that resolves outside.
+    const escapeTarget = mkdtempSync(join(tmpdir(), "forge-escape-"));
+    try {
+      // Symlink inside root pointing outside — the symlink itself is the test path
+      symlinkSync(escapeTarget, join(tmpRoot, "escape-link"));
+      // The realpath of "escape-link" → escapeTarget which doesn't start with tmpRoot/
+      // and isn't equal to tmpRoot
+      expect(validateSinglePath(join(tmpRoot, "escape-link"), tmpRoot)).toBe(false);
+    } finally {
+      rmSync(escapeTarget, { recursive: true, force: true });
+    }
   });
 });

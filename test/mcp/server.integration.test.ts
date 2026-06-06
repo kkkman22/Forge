@@ -126,11 +126,16 @@ describe("forge-context MCP server integration", () => {
     await client.connect(transport);
 
     // Start a background sleep that will outlive the shell
-    // Use a short timeout since the shell exits immediately (echo bg-started)
-    // The background sleep 30 & will be cleaned up by execCommandTracked
+    // Use node to spawn a long-lived child process, then exit quickly.
+    // The orphaned child will be cleaned up by execCommandTracked.
+    // Note: sh/bash/semicolons blocked by P0-2 allowlist; use comma operator instead.
+    // No detached:true — child stays in parent's process group for reaping.
     const callResult = await client.callTool({
       name: "forge_exec",
-      arguments: { command: "sh -c 'sleep 30 & echo bg-started'", timeout: 10000 },
+      arguments: {
+        command: "node -e \"(require('child_process').spawn('sleep',['30'],{stdio:'ignore'}),console.log('bg-started'))\"",
+        timeout: 10000,
+      },
     });
     const content = callResult.content as Array<{ type: string; text: string }>;
     expect(content[0].text).toContain("bg-started");
