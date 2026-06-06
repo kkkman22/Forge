@@ -56,3 +56,4 @@
 {"timestamp":"2026-06-06T09:52:11Z","event":"precompact_snapshot","detail":"slug=audit-remediate-p0p1 phase=decide completed=0 pending=0"}
 {"timestamp":"2026-06-06T09:53:29Z","event":"postcompact_restore","detail":"slug=audit-remediate-p0p1"}
 {"timestamp":"2026-06-06T09:53:29Z","event":"precompact_snapshot","detail":"slug=audit-remediate-p0p1 phase=decide completed=0 pending=0"}
+{"timestamp":"2026-06-06T10:35:27Z","event":"precompact_snapshot","detail":"slug=audit-remediate-p0p1 phase=decide completed=0 pending=0"}

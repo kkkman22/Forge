@@ -91,14 +91,36 @@ export function isCommandDenied(command, denyPatterns) {
  */
 const READONLY_COMMAND_ALLOWLIST = new Set([
     // Package managers (read-only operations)
-    "npm", "npx", "yarn", "pnpm", "bun",
+    "npm",
+    "npx",
+    "yarn",
+    "pnpm",
+    "bun",
     // TypeScript / JavaScript tools
-    "vitest", "tsc", "biome", "eslint", "prettier", "jest",
+    "vitest",
+    "tsc",
+    "biome",
+    "eslint",
+    "prettier",
+    "jest",
     // Git read-only
     "git",
     // Unix read-only utilities
-    "echo", "cat", "ls", "find", "wc", "head", "tail", "grep", "sort",
-    "diff", "file", "which", "type", "env", "printenv",
+    "echo",
+    "cat",
+    "ls",
+    "find",
+    "wc",
+    "head",
+    "tail",
+    "grep",
+    "sort",
+    "diff",
+    "file",
+    "which",
+    "type",
+    "env",
+    "printenv",
     // Node.js (only safe subcommands)
     "node",
 ]);
@@ -106,7 +128,23 @@ const READONLY_COMMAND_ALLOWLIST = new Set([
  * Subcommands that should ALWAYS be rejected even if the binary is in the allowlist.
  */
 const ALWAYS_DENIED_SUBCOMMANDS = new Map([
-    ["git", new Set(["commit", "push", "merge", "rebase", "reset", "checkout", "switch", "stash", "add", "rm", "mv", "clean"])],
+    [
+        "git",
+        new Set([
+            "commit",
+            "push",
+            "merge",
+            "rebase",
+            "reset",
+            "checkout",
+            "switch",
+            "stash",
+            "add",
+            "rm",
+            "mv",
+            "clean",
+        ]),
+    ],
     ["npm", new Set(["publish", "install", "ci", "uninstall", "update", "link"])],
 ]);
 /**
@@ -158,10 +196,10 @@ const SHELL_METACHAR_PATTERNS = [
  * Detect shell metacharacters that could enable command injection.
  * Returns the metachar label if found, or null if the command appears safe.
  *
- * Defense-in-depth: flags command substitution ($() and ``) and control
- * characters that allow opaque embedding of subcommands. Standard shell
- * operators (;, &, |, >, <) are NOT flagged because forge_exec already
- * invokes via `sh -c` — these operators are part of normal shell usage.
+ * P0-2 fix: now flags ALL shell operators (;, &, |, >, <, &&, ||, >>) and
+ * command substitution ($() and ``) as defense-in-depth. Even though
+ * forge_exec invokes via `sh -c`, these operators enable chaining arbitrary
+ * commands which is unsafe for a readonly tool.
  */
 export function containsShellMetachars(command) {
     for (const { pattern, label } of SHELL_METACHAR_PATTERNS) {
@@ -423,7 +461,12 @@ export function registerForgeExec(server, root) {
         // 1a. Primary security: hardcoded allowlist
         if (!isCommandAllowed(command)) {
             return {
-                content: [{ type: "text", text: `Command not in allowlist: ${command.trim().split(/\s+/)[0]}` }],
+                content: [
+                    {
+                        type: "text",
+                        text: `Command not in allowlist: ${command.trim().split(/\s+/)[0]}`,
+                    },
+                ],
                 isError: true,
             };
         }
