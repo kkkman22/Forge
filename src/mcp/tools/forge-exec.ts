@@ -208,10 +208,10 @@ const SHELL_METACHAR_PATTERNS: Array<{ pattern: RegExp; label: string }> = [
  * Detect shell metacharacters that could enable command injection.
  * Returns the metachar label if found, or null if the command appears safe.
  *
- * Defense-in-depth: flags command substitution ($() and ``) and control
- * characters that allow opaque embedding of subcommands. Standard shell
- * operators (;, &, |, >, <) are NOT flagged because forge_exec already
- * invokes via `sh -c` — these operators are part of normal shell usage.
+ * P0-2 fix: now flags ALL shell operators (;, &, |, >, <, &&, ||, >>) and
+ * command substitution ($() and ``) as defense-in-depth. Even though
+ * forge_exec invokes via `sh -c`, these operators enable chaining arbitrary
+ * commands which is unsafe for a readonly tool.
  */
 export function containsShellMetachars(command: string): string | null {
   for (const { pattern, label } of SHELL_METACHAR_PATTERNS) {

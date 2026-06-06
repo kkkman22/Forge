@@ -230,7 +230,7 @@ describe("validatePaths", () => {
 // validateScript — dangerous pattern detection
 // ---------------------------------------------------------------------------
 describe("validateScript", () => {
-    it("allows legitimate analysis scripts (no fs/process access)", () => {
+    it("rejects scripts using process.env (blocked by P0-1 fix)", () => {
         // P0-1 fix: scripts can no longer access process.env or require('fs')
         // Legitimate scripts must use only the FORGE_FILES env var via
         // the safe accessor provided by the tool infrastructure
