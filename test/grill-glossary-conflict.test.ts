@@ -53,6 +53,34 @@ const GLOSSARY_WITH_EVENT_SOURCING: Glossary = {
   ],
 };
 
+/** Glossary with avoided_terms to test extended conflict detection. */
+const GLOSSARY_WITH_AVOIDED: Glossary = {
+  schema_version: 1,
+  updated: "2026-05-05",
+  terms: [
+    {
+      term: "Command",
+      definition: "An immutable instruction object in CQRS.",
+      avoided_terms: ["Action（已废弃）"],
+      last_updated: "2026-05-05",
+    },
+  ],
+};
+
+/** Glossary with relations to test relation violation detection. */
+const GLOSSARY_WITH_RELATIONS: Glossary = {
+  schema_version: 1,
+  updated: "2026-05-05",
+  terms: [
+    {
+      term: "Event",
+      definition: "Something that happened in the domain.",
+      relations: ["Event → Handler"],
+      last_updated: "2026-05-05",
+    },
+  ],
+};
+
 const EMPTY_GLOSSARY: Glossary = {
   schema_version: 1,
   updated: "2026-05-05",
@@ -142,6 +170,59 @@ describe("checkGrillGlossaryConflicts", () => {
 
     expect(JSON.stringify(tree)).toBe(treeSnapshot);
     expect(JSON.stringify(GLOSSARY_WITH_EVENT_SOURCING)).toBe(glossarySnapshot);
+  });
+
+  it("flags avoided_term when tree text contains a glossary-avoided synonym", () => {
+    const tree = applyAnswer(
+      generateDecisionTree("Use Action pattern for commands.", GLOSSARY_WITH_AVOIDED, FIXED_NOW),
+      "functionality-1",
+      "We dispatch an Action to mutate state. Action is dispatched synchronously.",
+      FIXED_NOW,
+    );
+    const result = checkGrillGlossaryConflicts(tree, GLOSSARY_WITH_AVOIDED, FIXED_NOW);
+    expect(result.extendedConflicts.length).toBeGreaterThan(0);
+    const avoided = result.extendedConflicts.find((c) => c.type === "avoided_term");
+    expect(avoided).toBeDefined();
+    expect(avoided!.detail).toContain("action");
+    expect(avoided!.suggestion).toContain("Command");
+  });
+
+  it("flags relation_violation when answer reverses the glossary-defined relation", () => {
+    const tree = applyAnswer(
+      generateDecisionTree("Handle Event in the system.", GLOSSARY_WITH_RELATIONS, FIXED_NOW),
+      "functionality-1",
+      "The Handler dispatches an Event to the queue. Handler triggers Event processing.",
+      FIXED_NOW,
+    );
+    const result = checkGrillGlossaryConflicts(tree, GLOSSARY_WITH_RELATIONS, FIXED_NOW);
+    const violation = result.extendedConflicts.find((c) => c.type === "relation_violation");
+    expect(violation).toBeDefined();
+    expect(violation!.detail).toContain("Event");
+    expect(violation!.detail).toContain("Handler");
+  });
+
+  it("skips relation entries that do not match the → pattern", () => {
+    const glossaryNoArrow: Glossary = {
+      schema_version: 1,
+      updated: "2026-05-05",
+      terms: [
+        {
+          term: "Event",
+          definition: "Something that happened.",
+          relations: ["Event related to Handler"],
+          last_updated: "2026-05-05",
+        },
+      ],
+    };
+    const tree = applyAnswer(
+      generateDecisionTree("Handle Event flow.", glossaryNoArrow, FIXED_NOW),
+      "functionality-1",
+      "Handler triggers Event in the pipeline. Handler sends Event downstream.",
+      FIXED_NOW,
+    );
+    const result = checkGrillGlossaryConflicts(tree, glossaryNoArrow, FIXED_NOW);
+    const violation = result.extendedConflicts.find((c) => c.type === "relation_violation");
+    expect(violation).toBeUndefined();
   });
 });
 
