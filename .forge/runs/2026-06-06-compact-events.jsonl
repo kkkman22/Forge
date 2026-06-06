@@ -57,3 +57,17 @@
 {"timestamp":"2026-06-06T09:53:29Z","event":"postcompact_restore","detail":"slug=audit-remediate-p0p1"}
 {"timestamp":"2026-06-06T09:53:29Z","event":"precompact_snapshot","detail":"slug=audit-remediate-p0p1 phase=decide completed=0 pending=0"}
 {"timestamp":"2026-06-06T10:35:27Z","event":"precompact_snapshot","detail":"slug=audit-remediate-p0p1 phase=decide completed=0 pending=0"}
+{"timestamp":"2026-06-06T10:53:21Z","event":"postcompact_restore","detail":"slug=audit-remediate-p0p1"}
+{"timestamp":"2026-06-06T10:53:21Z","event":"precompact_snapshot","detail":"slug=audit-remediate-p0p1 phase=decide completed=0 pending=0"}
+{"timestamp":"2026-06-06T10:54:35Z","event":"postcompact_restore","detail":"slug=audit-remediate-p0p1"}
+{"timestamp":"2026-06-06T10:54:35Z","event":"precompact_snapshot","detail":"slug=audit-remediate-p0p1 phase=decide completed=0 pending=0"}
+{"timestamp":"2026-06-06T10:56:54Z","event":"postcompact_restore","detail":"slug=audit-remediate-p0p1"}
+{"timestamp":"2026-06-06T10:56:54Z","event":"precompact_snapshot","detail":"slug=audit-remediate-p0p1 phase=decide completed=0 pending=0"}
+{"timestamp":"2026-06-06T10:58:13Z","event":"postcompact_restore","detail":"slug=audit-remediate-p0p1"}
+{"timestamp":"2026-06-06T10:58:13Z","event":"precompact_snapshot","detail":"slug=audit-remediate-p0p1 phase=decide completed=0 pending=0"}
+{"timestamp":"2026-06-06T11:00:00Z","event":"postcompact_restore","detail":"slug=audit-remediate-p0p1"}
+{"timestamp":"2026-06-06T11:00:00Z","event":"precompact_snapshot","detail":"slug=audit-remediate-p0p1 phase=decide completed=0 pending=0"}
+{"timestamp":"2026-06-06T11:01:32Z","event":"postcompact_restore","detail":"slug=audit-remediate-p0p1"}
+{"timestamp":"2026-06-06T11:01:32Z","event":"precompact_snapshot","detail":"slug=audit-remediate-p0p1 phase=decide completed=0 pending=0"}
+{"timestamp":"2026-06-06T11:02:48Z","event":"postcompact_restore","detail":"slug=audit-remediate-p0p1"}
+{"timestamp":"2026-06-06T11:02:48Z","event":"precompact_snapshot","detail":"slug=audit-remediate-p0p1 phase=decide completed=0 pending=0"}
