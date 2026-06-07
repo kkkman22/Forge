@@ -58,7 +58,7 @@ jobs:
           done
 
       - name: Marketplace install regression
-        run: npx vitest run test/plugin-marketplace-install.test.ts
+        run: npx vitest run test/plugin-marketplace-install/plugin-marketplace-install.test.ts
 
       - name: Plugin manifest contract (≥13 cases)
         run: npx vitest run test/plugin-manifest.test.ts
