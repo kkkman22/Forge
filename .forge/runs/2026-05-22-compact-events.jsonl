@@ -1,2 +1,0 @@
-{"timestamp":"2026-05-22T06:58:12Z","event":"precompact_snapshot","detail":"slug=forge-loop-desktop-app phase=build"}
-{"timestamp":"2026-05-22T06:59:47Z","event":"postcompact_restore","detail":"slug=forge-loop-desktop-app"}
