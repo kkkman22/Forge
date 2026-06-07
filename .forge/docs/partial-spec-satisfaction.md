@@ -156,6 +156,16 @@ updated: 2026-06-07
 
 ---
 
+## 不恢复声明
+
+本 remediation **不恢复**以下已删除模块：
+
+- `src/sdk-driver.ts`（旧 loop driver，已被 hooks/mirror 替代）
+- `forge-loop-cli.ts`（旧 CLI 入口，已被 `/forge` skill 替代）
+- `src/git-transaction.ts`（旧 delivery effect 层，已被 ship 阶段直接 git 操作替代）
+
+如需等价功能，应基于当前架构另开 spec，不应按旧审计直接恢复上述文件。
+
 ## 后续 Spec
 
 本复核产生新的执行 spec：
@@ -165,3 +175,8 @@ updated: 2026-06-07
 - `.forge/specs/partial-spec-backlog-remediation/tasks.md`
 
 范围只覆盖 A/P1 中仍值得做的确定性缺口，并显式排除旧架构恢复。
+
+## 实现后指标
+
+- `hooks/hooks.json` 生命周期事件：`ConfigChange`、`PermissionDenied`、`WorktreeRemove` 已注册（`args` exec form）。
+- Hook manifest 格式统计：`command` 24 个，`args` 15 个（实现后），`mcp_tool` 0 个。
