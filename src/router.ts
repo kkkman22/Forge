@@ -144,8 +144,24 @@ let _intentDictCache: import("./router-intents.js").IntentDefinition[] | null = 
 function loadIntentDictionary(): import("./router-intents.js").IntentDefinition[] {
   if (_intentDictCache !== null) return _intentDictCache;
   try {
-    const dictUrl = new URL("../templates/router-intents.md", import.meta.url);
-    const content = readFileSync(dictUrl, "utf-8");
+    const dictUrls = [
+      new URL("../templates/router-intents.md", import.meta.url),
+      new URL("../../templates/router-intents.md", import.meta.url),
+    ];
+    let content: string | null = null;
+    for (const dictUrl of dictUrls) {
+      try {
+        content = readFileSync(dictUrl, "utf-8");
+        break;
+      } catch {
+        // Try the next known runtime layout: src/, dist/src/, dist-plugin/dist/src/.
+      }
+    }
+    if (content === null) {
+      throw new Error(
+        `router-intents.md not found in: ${dictUrls.map((u) => u.pathname).join(", ")}`,
+      );
+    }
     _intentDictCache = parseIntentDictionary(content);
   } catch (err: unknown) {
     // Structured diagnostic instead of silent swallow

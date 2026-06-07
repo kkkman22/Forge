@@ -1,19 +1,18 @@
 /**
  * forge_read — batch file analysis via sandboxed script execution.
  *
- * Executes a user-provided script in a child subprocess with file paths
- * injected via the `FORGE_FILES` environment variable (JSON array).
+ * Executes a user-provided JavaScript script in a child subprocess with file paths
+ * injected as a sandbox global `FORGE_FILES` array.
  * Only the script's stdout is returned — file contents never enter the context.
  *
  * Supported languages:
- *   - javascript: `node -e "<script>"` with FORGE_FILES env var
- *   - shell: `/bin/sh -c "<script>"` with FORGE_FILES env var
+ *   - javascript: sandboxed `node -e` wrapper with FORGE_FILES + readFile(path)
  *
  * **Validates: Requirement 4**
  */
 import type { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import type { ResolvedRoot } from "../project-root.js";
-export { validatePaths } from "./path-validator.js";
+export { validatePaths, validateSinglePath } from "./path-validator.js";
 /**
  * Validate that a script does not contain dangerous patterns.
  * Returns an error message if dangerous, or null if safe.
@@ -32,7 +31,7 @@ export interface ReadExecResult {
     timedOut: boolean;
 }
 /**
- * Execute a script in a child subprocess with FORGE_FILES env var injection.
+ * Execute a script in a child subprocess with FORGE_FILES/readFile sandbox globals.
  *
  * @param script - The script code to execute
  * @param language - "javascript" or "shell"
@@ -42,6 +41,19 @@ export interface ReadExecResult {
 export declare function execReadScript(script: string, language: "javascript" | "shell", paths: string[], timeoutMs: number, options?: {
     cwd?: string;
 }): Promise<ReadExecResult>;
+export type StructuredReadOperation = "imports" | "contains" | "line_count" | "json_keys";
+export interface StructuredReadInput {
+    operation: StructuredReadOperation;
+    paths: string[];
+    query?: string;
+}
+export interface StructuredReadResult {
+    ok: boolean;
+    output: string;
+}
+export declare function runStructuredReadOperation(input: StructuredReadInput, options?: {
+    cwd?: string;
+}): Promise<StructuredReadResult>;
 /**
  * Register the `forge_read` tool on the given MCP server.
  */

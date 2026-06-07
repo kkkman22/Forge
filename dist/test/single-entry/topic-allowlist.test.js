@@ -1,39 +1,7 @@
 import { describe, expect, it } from "vitest";
+import { ALLOW_LIST } from "../../src/forge-dispatcher/allowlist.js";
 import { dispatchForgeSubcommand } from "../../src/forge-dispatcher.js";
-const VALID = [
-    "build",
-    "review",
-    "plan",
-    "ship",
-    "learn",
-    "decide",
-    "spec",
-    "test",
-    "debug",
-    "loop",
-    "status",
-    "resume",
-    "abort",
-    "fix",
-    "refactor",
-    "router",
-    "verify",
-    "accept",
-    "recap",
-    "zoom-out",
-    "mutate",
-    "grill",
-    "storm",
-    "control-cli",
-    "control-ui",
-    "decide-teams",
-    "build-light",
-    "fix-conflicts",
-    "pack",
-    "forge-cmux-browser-qa",
-    "forge-cmux-loop-signals",
-    "forge-cmux-sidebar-sync",
-];
+const VALID = [...ALLOW_LIST];
 const ATTACKS = [
     "../../../etc/passwd",
     "forge-build",
@@ -48,7 +16,7 @@ const ATTACKS = [
     "build\x00",
     "build\nextra",
 ];
-describe("R2.1: topic allowlist enforces 32 sub names", () => {
+describe("R2.1: topic allowlist enforces registry-derived sub names", () => {
     it.each(VALID)("accepts valid sub: %s", async (sub) => {
         const r = await dispatchForgeSubcommand(sub, { mode: "test" });
         expect(r.code).not.toBe("E_UNKNOWN_SUB");
@@ -67,8 +35,8 @@ describe("R2.1: topic allowlist enforces 32 sub names", () => {
             expect(VALID).toContain(s);
         }
     });
-    it("valid list has 32 items", () => {
-        expect(VALID.length).toBe(32);
+    it("valid list is registry-derived", () => {
+        expect(VALID).toEqual(ALLOW_LIST);
     });
 });
 //# sourceMappingURL=topic-allowlist.test.js.map

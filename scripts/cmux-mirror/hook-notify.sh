@@ -11,6 +11,12 @@ if [[ "$forge_dir" =~ \.\. || "$forge_dir" =~ [\;\|\`\$\(] ]]; then
   exit 0
 fi
 
+# Zero-impact fallback: if the target Forge directory does not exist, there is
+# no state to mirror and no dedupe file to update. Exit before any cmux call.
+if [[ ! -d "$forge_dir" ]]; then
+  exit 0
+fi
+
 dedupe_dir="${forge_dir}/.cmux-dedupe"
 dedupe_window_ms="${HOOK_NOTIFY_DEDUPE_WINDOW_MS:-30000}"
 
@@ -54,11 +60,36 @@ if [[ -n "${CMUX_WINDOW_ID:-}" ]]; then
   fi
 fi
 
-cmux ${window_args[@]+"${window_args[@]}"} notify "Forge Frozen" "Branch frozen for: ${task_name}" 2>/dev/null || true
-cmux ${window_args[@]+"${window_args[@]}"} log "hook-notify: frozen interception for ${task_name}" 2>/dev/null || true
+run_cmux_best_effort() {
+  command -v cmux >/dev/null 2>&1 || return 0
+
+  local timeout_ms="${HOOK_NOTIFY_CMUX_TIMEOUT_MS:-500}"
+  if [[ ! "$timeout_ms" =~ ^[0-9]+$ ]]; then
+    timeout_ms=500
+  fi
+
+  cmux "${window_args[@]}" "$@" >/dev/null 2>&1 &
+  local pid=$!
+  local waited_ms=0
+
+  while kill -0 "$pid" 2>/dev/null; do
+    if (( waited_ms >= timeout_ms )); then
+      kill "$pid" 2>/dev/null || true
+      wait "$pid" 2>/dev/null || true
+      return 0
+    fi
+    sleep 0.05
+    waited_ms=$(( waited_ms + 50 ))
+  done
+
+  wait "$pid" 2>/dev/null || true
+}
+
+run_cmux_best_effort notify "Forge Frozen" "Branch frozen for: ${task_name}"
+run_cmux_best_effort log "hook-notify: frozen interception for ${task_name}"
 
 # R3.1: Trigger jump to unread workspace (cmux 0.64.5+; || true for older versions)
-cmux ${window_args[@]+"${window_args[@]}"} notification jump-to-unread 2>/dev/null || true
+run_cmux_best_effort notification jump-to-unread
 
 # Step 3: Always exit 0 (R6.1, R12.7)
 exit 0

@@ -110,9 +110,9 @@ describe("forge-context MCP server integration", () => {
     expect(exitCode).toBe(0);
   });
 
-  it("cleans up tracked processes on stdin EOF", { timeout: 30000 }, async () => {
-    // This test verifies that the ProcessRegistry cleanup runs during shutdown.
-    // We spawn the server, start a long-running command via forge_exec, then close stdin.
+  it("rejects generic node execution through forge_exec", { timeout: 15000 }, async () => {
+    // Process cleanup is covered by forge-exec-cleanup.test.ts. The MCP layer
+    // must not expose generic node execution after P0-2 hardening.
     transport = new StdioClientTransport({
       command: "node",
       args: [SERVER_PATH],
@@ -125,11 +125,6 @@ describe("forge-context MCP server integration", () => {
     });
     await client.connect(transport);
 
-    // Start a background sleep that will outlive the shell
-    // Use node to spawn a long-lived child process, then exit quickly.
-    // The orphaned child will be cleaned up by execCommandTracked.
-    // Note: sh/bash/semicolons blocked by P0-2 allowlist; use comma operator instead.
-    // No detached:true — child stays in parent's process group for reaping.
     const callResult = await client.callTool({
       name: "forge_exec",
       arguments: {
@@ -139,30 +134,7 @@ describe("forge-context MCP server integration", () => {
       },
     });
     const content = callResult.content as Array<{ type: string; text: string }>;
-    expect(content[0].text).toContain("bg-started");
-
-    // Close the client — this closes stdin, triggering server shutdown
-    await client.close();
-
-    // Poll for cleanup completion (ProcessRegistry reap + shutdown)
-    // Retry loop avoids race condition between server shutdown and pgrep check
-    const { execFileSync } = await import("node:child_process");
-    const maxAttempts = 8;
-    const intervalMs = 500;
-    let cleanedUp = false;
-
-    for (let attempt = 0; attempt < maxAttempts; attempt++) {
-      await new Promise((resolve) => setTimeout(resolve, intervalMs));
-      try {
-        execFileSync("pgrep", ["-f", "sleep 30"], { encoding: "utf-8" });
-        // pgrep found a match — cleanup not done yet
-      } catch {
-        // pgrep returns non-zero when no processes match — cleanup complete
-        cleanedUp = true;
-        break;
-      }
-    }
-
-    expect(cleanedUp).toBe(true);
+    expect(callResult.isError).toBe(true);
+    expect(content[0].text).toContain("Command not in allowlist");
   });
 });

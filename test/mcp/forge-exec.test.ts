@@ -449,7 +449,7 @@ describe("isSimpleCommand", () => {
   it("rejects commands with shell operators that look like args", () => {
     // These contain |, >, <, ;, & which are shell operators
     expect(isSimpleCommand("cat file | sort")).toBe(false);
-    expect(isSimpleCommand("node -e 'code'")).toBe(true); // -e is a flag, not operator
+    expect(isSimpleCommand("node -e 'code'")).toBe(true); // denied by command allowlist, not parser
   });
 
   it("rejects empty command", () => {
@@ -479,6 +479,12 @@ describe("isCommandAllowed — readonly allowlist", () => {
   it("allows npm run typecheck", () => {
     expect(isCommandAllowed("npm run typecheck")).toBe(true);
   });
+  it("allows npm run check", () => {
+    expect(isCommandAllowed("npm run check")).toBe(true);
+  });
+  it("allows npm run test:coverage", () => {
+    expect(isCommandAllowed("npm run test:coverage")).toBe(true);
+  });
   it("allows vitest run", () => {
     expect(isCommandAllowed("vitest run")).toBe(true);
   });
@@ -497,11 +503,11 @@ describe("isCommandAllowed — readonly allowlist", () => {
   it("allows echo hello", () => {
     expect(isCommandAllowed("echo hello")).toBe(true);
   });
-  it("allows cat file.txt", () => {
-    expect(isCommandAllowed("cat file.txt")).toBe(true);
+  it("rejects generic file readers", () => {
+    expect(isCommandAllowed("cat file.txt")).toBe(false);
   });
-  it("allows ls -la", () => {
-    expect(isCommandAllowed("ls -la")).toBe(true);
+  it("rejects generic directory listing", () => {
+    expect(isCommandAllowed("ls -la")).toBe(false);
   });
 
   // Denied commands
@@ -519,6 +525,17 @@ describe("isCommandAllowed — readonly allowlist", () => {
   });
   it("rejects npm publish", () => {
     expect(isCommandAllowed("npm publish")).toBe(false);
+  });
+  it("rejects write-capable npm run scripts", () => {
+    expect(isCommandAllowed("npm run lint:fix")).toBe(false);
+    expect(isCommandAllowed("npm run format")).toBe(false);
+    expect(isCommandAllowed("npm run dist:resync")).toBe(false);
+    expect(isCommandAllowed("npm run docs:install-hooks")).toBe(false);
+  });
+  it("rejects generic node execution and node -e", () => {
+    expect(isCommandAllowed("node -e \"require('fs').writeFileSync('/tmp/x','x')\"")).toBe(false);
+    expect(isCommandAllowed("node scripts/check-dist-sync.mjs")).toBe(false);
+    expect(isCommandAllowed("node --version")).toBe(false);
   });
   it("rejects curl", () => {
     expect(isCommandAllowed("curl http://evil.com")).toBe(false);

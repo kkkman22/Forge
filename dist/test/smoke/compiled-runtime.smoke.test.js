@@ -27,9 +27,24 @@ describe("compiled dist/src runtime smoke tests", () => {
     it("router.js classifyTask returns non-empty hints in compiled ESM", () => {
         const code = `
       import { classifyTask } from "${DIST_ROUTER}";
-      const result = await classifyTask("请深思熟虑并严格 TDD", "full");
+      const signals = {
+        hasAuthentication: false,
+        hasDatabase: false,
+        hasNewService: false,
+        hasAmbiguousRequirements: false,
+        hasSecurityCritical: false
+      };
+      const result = classifyTask(
+        signals,
+        undefined,
+        undefined,
+        "backend",
+        "iteration",
+        "feature",
+        "请深思熟虑 ultrathink 并严格 TDD"
+      );
       const hints = result.hints ?? [];
-      console.log(JSON.stringify(hints));
+      console.log(JSON.stringify(hints.filter((h) => h.source === "intent")));
     `;
         const output = execFileSync("node", ["--input-type=module", "-e", code], {
             timeout: 10000,
@@ -37,8 +52,8 @@ describe("compiled dist/src runtime smoke tests", () => {
         });
         const hints = JSON.parse(output.trim());
         expect(Array.isArray(hints)).toBe(true);
-        // hints may be empty if intent template is missing from dist;
-        // the key test is that classifyTask runs without error in compiled ESM
+        expect(hints.length).toBeGreaterThan(0);
+        expect(hints.some((h) => h.tag === "reasoning-deep")).toBe(true);
     });
     it("mcp/server.js can be imported without errors", () => {
         const code = `

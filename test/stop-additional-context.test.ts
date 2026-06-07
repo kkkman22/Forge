@@ -215,14 +215,14 @@ describe("hooks.json contract: Stop/SubagentStop additionalContext", () => {
     expect(config.hooks.Stop).toBeDefined();
     expect(Array.isArray(config.hooks.Stop)).toBe(true);
 
-    const stopHookArgs = config.hooks.Stop.flatMap(
-      (group: { hooks?: Array<{ args?: string[] }> }) =>
-        (group.hooks ?? []).map((h: { args?: string[] }) => h.args ?? []),
+    const stopHookCommands = config.hooks.Stop.flatMap(
+      (group: { hooks?: Array<{ args?: string[]; command?: string }> }) =>
+        (group.hooks ?? []).map(
+          (h: { args?: string[]; command?: string }) => h.command ?? (h.args ?? []).join(" "),
+        ),
     );
-    const hasAdditionalContextHook = stopHookArgs.some(
-      (args: string[]) =>
-        Array.isArray(args) &&
-        args.some((a: unknown) => typeof a === "string" && a.includes("stop-additional-context")),
+    const hasAdditionalContextHook = stopHookCommands.some(
+      (cmd: string) => typeof cmd === "string" && cmd.includes("stop-additional-context"),
     );
     expect(hasAdditionalContextHook).toBe(true);
   });

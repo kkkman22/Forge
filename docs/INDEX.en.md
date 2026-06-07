@@ -17,10 +17,10 @@
 - [CI UltraReview — 操作手册](ci-ultrareview-usage.md) — 2026-05-12
 - [Claude Code 兼容性参考](claude-code-compatibility.md) — 2026-06-05
 - [Docs Governance](docs-governance.md) — 2026-05-24
-- [Docs Governance 参考手册 (EN)](reference-docs-governance.en.md) / [Docs Governance 参考手册 (中)](reference-docs-governance.md) — 2026-05-25
+- [Docs Governance 参考手册 (EN)](reference-docs-governance.en.md) / [Docs Governance 参考手册 (中)](reference-docs-governance.md) — 2026-06-06
 - [Forge Slimming 迁移指南](slimming-migration.md) — 2026-05-17
 - [Forge — 项目宪法详细内容](forge-constitution-detail.md) — 2026-06-05
-- [Forge 初次接触者引导 (EN)](onboarding-beginner.en.md) / [Forge 初次接触者引导 (中)](onboarding-beginner.md) — 2026-05-24
+- [Forge 初次接触者引导 (EN)](onboarding-beginner.en.md) / [Forge 初次接触者引导 (中)](onboarding-beginner.md) — 2026-06-06
 - [Forge 命令速查与路由详解](reference-commands.md) — 2026-06-01
 - [Forge 安全与信任](reference-security.md) — 2026-05-12
 - [Forge 日常开发者引导 (EN)](onboarding-daily.en.md) / [Forge 日常开发者引导 (中)](onboarding-daily.md) — 2026-05-12
@@ -34,5 +34,9 @@
 - [工作流示例：会话恢复与团队协作](workflow-resume.md) — 2026-05-12
 - [工作流示例：复杂需求（全量路径）](workflow-complex.md) — 2026-05-12
 - [工作流示例：新功能开发（标准路径）](workflow-feature.md) — 2026-05-12
+
+## Audits
+
+- [Forge 审计整改验收报告](forge-audit-remediation-acceptance-2026-06-06.md) — 2026-06-06
 
 由 `scripts/build-docs-index.ts` 生成；请勿手动编辑

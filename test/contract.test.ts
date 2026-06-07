@@ -696,7 +696,10 @@ describe("Contract: hooks.json evolved rules integration", () => {
     }>;
     const hasPendingProposalsHook = stopGroups.some((group) =>
       group.hooks.some(
-        (h) => h.command?.includes("PENDING") || h.command?.includes("evolved-rules.md"),
+        (h) =>
+          h.command?.includes("stop-pending-rules.mjs") ||
+          h.command?.includes("PENDING") ||
+          h.command?.includes("evolved-rules.md"),
       ),
     );
     expect(hasPendingProposalsHook, "Stop missing hook for pending proposals").toBe(true);
@@ -1131,9 +1134,12 @@ import { join } from "node:path";
 
 describe("Contract: stop hooks should not block", () => {
   const STOP_HOOK_SCRIPTS = [
+    "scripts/stop-incomplete-tasks.mjs",
+    "scripts/stop-pending-rules.mjs",
     "scripts/record-evolved-rule-violation.mjs",
     "scripts/flag-stale-evolved-rules.mjs",
     "scripts/cmux-mirror/sync-once.mjs",
+    "scripts/stop-phase-verify.mjs",
   ];
 
   for (const script of STOP_HOOK_SCRIPTS) {
@@ -1155,25 +1161,39 @@ describe("Contract: stop hooks should not block", () => {
     });
   }
 
-  // All Stop hooks should use args (no inline shell commands).
-  // After the §6 migration, all hooks delegate to external scripts.
-  it("plugin.json Stop section has no inline bash commands", () => {
-    const pluginPath = resolve(ROOT, ".claude-plugin/plugin.json");
-    const plugin = JSON.parse(readFileSync(pluginPath, "utf-8"));
-    const stopGroups = (plugin.hooks?.Stop ?? []) as Array<{
+  it("hooks/hooks.json Stop section delegates to concrete script commands only", () => {
+    const hooksPath = resolve(ROOT, "hooks/hooks.json");
+    const hooksFile = JSON.parse(readFileSync(hooksPath, "utf-8"));
+    const stopGroups = (hooksFile.hooks?.Stop ?? []) as Array<{
       hooks?: Array<{ type?: string; command?: string; args?: string[] }>;
     }>;
-    const inlineCommands: string[] = [];
+    const invalidHooks: string[] = [];
     for (const group of stopGroups) {
       for (const hook of group.hooks ?? []) {
-        if (hook.args) continue; // args[] exec form — no inline command to check
-        if (hook.type !== "command" || !hook.command) continue;
-        // biome-ignore lint/suspicious/noTemplateCurlyInString: literal shell variable check
-        if (hook.command.includes("${CLAUDE_PLUGIN_ROOT}")) continue;
-        inlineCommands.push(hook.command);
+        if (hook.args) {
+          invalidHooks.push(`args-only:${hook.args.join(" ")}`);
+          continue;
+        }
+        if (hook.type !== "command" || !hook.command) {
+          invalidHooks.push(`missing-command:${JSON.stringify(hook)}`);
+          continue;
+        }
+        if (hook.command.includes("persistent-loop.sh")) {
+          invalidHooks.push(`stale-persistent-loop:${hook.command}`);
+          continue;
+        }
+        const match = hook.command.match(/^(node|bash) (scripts\/[A-Za-z0-9_./-]+)(?:\s.*)?$/);
+        if (!match) {
+          invalidHooks.push(`inline-shell:${hook.command}`);
+          continue;
+        }
+        const scriptPath = resolve(ROOT, match[2]);
+        if (!existsSync(scriptPath)) {
+          invalidHooks.push(`missing-script:${match[2]}`);
+        }
       }
     }
-    expect(inlineCommands.length).toBe(0);
+    expect(invalidHooks).toEqual([]);
   });
 });
 
