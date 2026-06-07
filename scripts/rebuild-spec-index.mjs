@@ -3,8 +3,10 @@
 /**
  * rebuild-spec-index.mjs
  *
- * Scans `.kiro/specs/` directory, reads frontmatter from each spec's
- * requirements.md, validates it, and generates `.kiro/specs/INDEX.md`.
+ * Scans `.forge/specs/` directory, reads frontmatter from each spec's
+ * requirements.md, validates it, and generates `.forge/specs/INDEX.md`.
+ *
+ * Backward compatibility: also scans `.kiro/specs/` if `.forge/specs/` is empty.
  *
  * Usage:
  *   node scripts/rebuild-spec-index.mjs [--incremental] [--check] [--help]
@@ -30,8 +32,9 @@ const rootIndex = args.indexOf("--root");
 const ROOT = rootIndex !== -1 && args[rootIndex + 1]
   ? args[rootIndex + 1]
   : join(new URL(import.meta.url).pathname, "..", "..");
+const FORGE_SPECS_DIR = join(ROOT, ".forge", "specs");
 const KIRO_SPECS_DIR = join(ROOT, ".kiro", "specs");
-const INDEX_PATH = join(KIRO_SPECS_DIR, "INDEX.md");
+const FORGE_ARCHIVE_DIR = join(ROOT, ".forge", "archive");
 
 // ---------------------------------------------------------------------------
 // CLI
@@ -44,7 +47,7 @@ const mode = {
 };
 
 if (mode.help) {
-  console.log(`rebuild-spec-index.mjs — Rebuild .kiro/specs/INDEX.md
+  console.log(`rebuild-spec-index.mjs — Rebuild .forge/specs/INDEX.md
 
 Usage:
   node scripts/rebuild-spec-index.mjs [options]
@@ -55,7 +58,7 @@ Options:
   --root <path>  Use <path> as project root instead of script location
   --help         Show this help message
 
-Scans .kiro/specs/ for spec directories, reads frontmatter from each
+Scans .forge/specs/ for spec directories, reads frontmatter from each
 requirements.md, validates it, and generates an INDEX.md with tables
 grouped by status (active, deferred, completed, archived).`);
   process.exit(0);
@@ -66,7 +69,7 @@ grouped by status (active, deferred, completed, archived).`);
 // ---------------------------------------------------------------------------
 
 const VALID_STATUSES = new Set([
-  "draft", "approved", "in_progress", "completed", "deferred", "archived",
+  "draft", "approved", "in_progress", "completed", "deferred", "archived", "locked",
 ]);
 
 const ISO_DATE_RE = /^\d{4}-\d{2}-\d{2}$/;
@@ -129,6 +132,7 @@ function extractListField(raw, fieldName) {
 // ---------------------------------------------------------------------------
 
 async function scanSpecs(specsDir, skipDirs) {
+  if (!existsSync(specsDir)) return [];
   const entries = await readdir(specsDir, { withFileTypes: true });
   const specs = [];
 
@@ -187,8 +191,36 @@ async function scanSpecs(specsDir, skipDirs) {
 }
 
 async function scanArchivedSpecs(specsDir) {
+  // Also scan .forge/archive/ for archived specs migrated from .kiro
+  const forgeArchiveDir = join(ROOT, ".forge", "archive");
+  const archiveSpecs = [];
+  
+  if (existsSync(forgeArchiveDir)) {
+    const archiveEntries = await readdir(forgeArchiveDir, { withFileTypes: true });
+    for (const entry of archiveEntries) {
+      if (!entry.isDirectory()) continue;
+      const reqPath = join(forgeArchiveDir, entry.name, "requirements.md");
+      let raw = null;
+      if (existsSync(reqPath)) {
+        const content = await readFile(reqPath, "utf-8");
+        raw = parseYamlFrontmatter(content);
+      }
+      const name = raw ? (extractStringField(raw, "name") || entry.name) : entry.name;
+      const replaced_by = raw ? extractListField(raw, "replaced_by") : [];
+      const deferred_reason = raw ? (extractStringField(raw, "deferred_reason") || "") : "";
+      archiveSpecs.push({
+        name,
+        status: "archived",
+        replaced_by,
+        deferred_reason: deferred_reason || "archived",
+        source: entry.name,
+      });
+    }
+  }
+
+  // Original _archived scan (for backward compat with .kiro)
   const archivedDir = join(specsDir, "_archived");
-  if (!existsSync(archivedDir)) return [];
+  if (!existsSync(archivedDir)) return archiveSpecs;
 
   const entries = await readdir(archivedDir, { withFileTypes: true });
   const specs = [];
@@ -216,7 +248,7 @@ async function scanArchivedSpecs(specsDir) {
     });
   }
 
-  return specs;
+  return [...archiveSpecs, ...specs];
 }
 
 // ---------------------------------------------------------------------------
@@ -259,11 +291,14 @@ function generateIndex(specs, archivedSpecs) {
   const deferred = specs.filter((s) => s.status === "deferred")
     .sort((a, b) => a.name.localeCompare(b.name));
 
+  const locked = specs.filter((s) => s.status === "locked")
+    .sort((a, b) => a.name.localeCompare(b.name));
+
   const completed = specs.filter((s) => s.status === "completed")
     .sort((a, b) => a.name.localeCompare(b.name));
 
   const other = specs.filter((s) =>
-    !["draft", "approved", "in_progress", "deferred", "completed"].includes(s.status)
+    !["draft", "approved", "in_progress", "deferred", "completed", "locked"].includes(s.status)
   ).sort((a, b) => a.name.localeCompare(b.name));
 
   // Stats
@@ -271,6 +306,7 @@ function generateIndex(specs, archivedSpecs) {
     draft: specs.filter((s) => s.status === "draft").length,
     approved: specs.filter((s) => s.status === "approved").length,
     in_progress: specs.filter((s) => s.status === "in_progress").length,
+    locked: locked.length,
     completed: completed.length,
     deferred: deferred.length,
     archived: archivedSpecs.length,
@@ -292,6 +328,7 @@ function generateIndex(specs, archivedSpecs) {
   lines.push(`| draft | ${stats.draft} |`);
   lines.push(`| approved | ${stats.approved} |`);
   lines.push(`| in_progress | ${stats.in_progress} |`);
+  lines.push(`| locked | ${stats.locked} |`);
   lines.push(`| completed | ${stats.completed} |`);
   lines.push(`| deferred | ${stats.deferred} |`);
   lines.push(`| archived | ${stats.archived} |`);
@@ -312,6 +349,19 @@ function generateIndex(specs, archivedSpecs) {
     lines.push("| (无) | | | | | |");
   }
   lines.push("");
+
+  // Locked specs
+  if (locked.length > 0) {
+    lines.push("## 已锁定 Spec (Locked)");
+    lines.push("");
+    lines.push("| 名称 | 状态 | 最后更新 |");
+    lines.push("|------|------|---------|");
+
+    for (const s of locked) {
+      lines.push(`| ${s.name} | ${s.status} | ${s.updated || ""} |`);
+    }
+    lines.push("");
+  }
 
   // Completed specs
   if (completed.length > 0 || other.length > 0) {
@@ -366,13 +416,13 @@ function generateIndex(specs, archivedSpecs) {
 function getChangedSpecDirs() {
   try {
     const output = execSync(
-      "git diff --name-only HEAD~1 HEAD -- .kiro/specs/",
+      "git diff --name-only HEAD~1 HEAD -- .forge/specs/",
       { encoding: "utf-8", cwd: ROOT }
     );
     const changedDirs = new Set();
     for (const line of output.trim().split("\n")) {
       if (!line) continue;
-      const match = line.match(/^\.kiro\/specs\/([^/]+)\//);
+      const match = line.match(/^\.forge\/specs\/([^/]+)\//);
       if (match) changedDirs.add(match[1]);
     }
     return changedDirs;
@@ -450,8 +500,20 @@ function parseIndexTables(indexContent) {
 async function main() {
   const skipDirs = new Set(["_archived", "_template"]);
 
-  const specs = await scanSpecs(KIRO_SPECS_DIR, skipDirs);
-  const archivedSpecs = await scanArchivedSpecs(KIRO_SPECS_DIR);
+  // Prefer .forge/specs/, fall back to .kiro/specs/ for backward compatibility
+  let specsDir = FORGE_SPECS_DIR;
+  let archiveDir = FORGE_SPECS_DIR;
+  if (!existsSync(FORGE_SPECS_DIR)) {
+    if (existsSync(KIRO_SPECS_DIR)) {
+      specsDir = KIRO_SPECS_DIR;
+      archiveDir = KIRO_SPECS_DIR;
+    }
+  }
+
+  const INDEX_PATH = join(specsDir, "INDEX.md");
+
+  const specs = await scanSpecs(specsDir, skipDirs);
+  const archivedSpecs = await scanArchivedSpecs(archiveDir);
 
   // Validation
   let hasErrors = false;
