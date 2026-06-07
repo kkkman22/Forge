@@ -9,7 +9,6 @@
 // Output: { additionalContext: "..." } or nothing (silent exit)
 // Exit code: always 0 (fail-open)
 
-import { resolve } from "node:path";
 import { readStdin } from "./lib/read-stdin.mjs";
 
 /**
@@ -67,32 +66,18 @@ async function main() {
     process.exit(0);
   }
 
-  /**
-   * Safe path matcher: resolves the path (eliminates "..") and checks
-   * if it ends with the watched pattern. Rejects null bytes.
-   */
-  function safeMatches(f, pattern) {
-    if (typeof f !== "string") return false;
-    if (f.includes("\0")) return false;
-    const resolved = resolve(f);
-    return resolved.endsWith(pattern);
-  }
-
-  /** Sanitize filenames for display in additionalContext. */
-  function sanitizeFilename(f) {
-    // Strip control characters and normalize whitespace
-    return f.replace(/[\x00-\x1f\x7f]/g, "").trim();
-  }
-
   // Match changed files against watched patterns
   const matchedMessages = [];
+  const matchedFiles = [];
 
   for (const watched of WATCHED_FILES) {
-    const matches = changedFiles.filter((f) => safeMatches(f, watched.pattern));
+    const matches = changedFiles.filter((f) =>
+      typeof f === "string" && f.endsWith(watched.pattern),
+    );
     if (matches.length > 0) {
-      const safeMatches = matches.map(sanitizeFilename);
+      matchedFiles.push(...matches);
       matchedMessages.push(
-        watched.message.replace("{files}", safeMatches.join(", ")),
+        watched.message.replace("{files}", matches.join(", ")),
       );
     }
   }

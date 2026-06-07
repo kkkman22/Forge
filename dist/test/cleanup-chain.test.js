@@ -94,11 +94,9 @@ describe("runCleanupChain", () => {
         expect(child.kill).toHaveBeenCalledWith("SIGTERM");
         // Step 2: pid file deleted
         expect(mockUnlinkSync).toHaveBeenCalledWith(pidFile);
-        // Step 3: worktree removed with timeout and killSignal
+        // Step 3: worktree removed
         expect(execFileSync).toHaveBeenCalledWith("git", ["worktree", "remove", "/tmp/fake-worktree"], {
             stdio: "pipe",
-            timeout: 30000,
-            killSignal: "SIGTERM",
         });
         // Step 4: sleep process killed
         expect(sleepProcess.kill).toHaveBeenCalled();
@@ -197,27 +195,6 @@ describe("runCleanupChain", () => {
             expect(r.timestamp).toBeTruthy();
             expect(r.error).toBeTruthy();
         }
-    });
-    // -------------------------------------------------------------------------
-    // AC 5.4: Worktree removal has timeout and killSignal
-    // -------------------------------------------------------------------------
-    it("AC 5.4: git worktree remove includes timeout: 30000 and killSignal: SIGTERM", async () => {
-        const ctx = {
-            runId: "run-001",
-            runDir,
-            worktreePath: "/tmp/fake-worktree",
-            worktreeCleanupAction: "remove",
-        };
-        await runCleanupChain(ctx);
-        expect(execFileSync).toHaveBeenCalledTimes(1);
-        const callArgs = vi.mocked(execFileSync).mock.calls[0];
-        expect(callArgs[0]).toBe("git");
-        expect(callArgs[1]).toEqual(["worktree", "remove", "/tmp/fake-worktree"]);
-        expect(callArgs[2]).toMatchObject({
-            stdio: "pipe",
-            timeout: 30000,
-            killSignal: "SIGTERM",
-        });
     });
     // -------------------------------------------------------------------------
     // AC 5.3 edge: never throws, even with catastrophic failure

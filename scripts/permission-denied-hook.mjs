@@ -29,9 +29,9 @@ const READ_TOOLS = new Set([
   "WebFetch",
   "ListMcpResourcesTool",
   "ReadMcpResourceTool",
-  "Agent",          // Agent tool is read-only in this context (spawns sub-agents for research/explore)
-  "TaskList",        // Read-only task queries
-  "TaskGet",         // Read-only task queries
+  "Agent",
+  "TaskList",
+  "TaskGet",
 ]);
 
 // Write operations (Write, Edit, Bash, NotebookEdit, TaskCreate, TaskUpdate)
