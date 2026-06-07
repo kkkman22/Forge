@@ -25,7 +25,8 @@ actual_pbt_files=$(find test -name '*.property.test.ts' | wc -l | tr -d ' ')
 
 # ---------- 4. Extract total test count from vitest JSON output ----------
 # Use --outputFile to avoid stdout pollution from other reporters / hooks.
-export VITEST_OUTPUT=$(mktemp)
+VITEST_OUTPUT=$(mktemp)
+export VITEST_OUTPUT
 npx vitest run --reporter=json --outputFile="${VITEST_OUTPUT}" >/dev/null 2>&1 || true
 
 actual_tests=$(node -e "
