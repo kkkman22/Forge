@@ -541,3 +541,11 @@ Full content available in .forge/ directory.
 
 ### Pressure-Aware Note Reserve
 Only reserve 80 tokens for the trim note when in WARNING or CRITICAL state. Do not reserve in PEAK/GOOD.
+
+## Package-Aware Build Execution
+
+When the approved plan/tasks document contains `execution_packages`, `/forge build` MUST execute one package at a time. If `--package <id>` is omitted, infer the next incomplete package from `.forge/status.md` and `.forge/progress/`.
+
+Package build loads only the current package, direct dependency summaries, status/config, and required task details. It MUST NOT load full completed task history unless failure diagnosis requires it. After package success: write the package summary, run package `verify_command`, update `current_package` / `completed_packages` / `next_package`, and create an atomic commit or record why commit was intentionally skipped.
+
+`build.use_goal: true` MUST NOT hand all tasks to one `/goal` run when execution packages exist. Use one package as the goal boundary.

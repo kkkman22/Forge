@@ -213,6 +213,15 @@ export function renderTasksMarkdown(doc: TasksSeedDocument): string {
     parts.push("");
   }
 
+  if (doc.execution_packages && doc.execution_packages.length > 0) {
+    parts.push("## Execution Packages");
+    parts.push("");
+    parts.push("```json");
+    parts.push(JSON.stringify({ execution_packages: doc.execution_packages }, null, 2));
+    parts.push("```");
+    parts.push("");
+  }
+
   parts.push("## Tasks");
   parts.push("");
 

@@ -174,3 +174,7 @@ Commit format: `forge(<phase>): <summary>`
 - **Context rot**: Break loop every ~100k tokens; resume with fresh context
 - **State drift**: Re-read loop-state.json before each decision, never cache in memory
 - **Orphan cron**: On abort, call `CronList` + `CronDelete` for any pending jobs
+
+## Package Iteration
+
+When `/forge loop` runs build with `execution_packages`, each loop iteration targets at most one package. After a package succeeds, update package fields in Forge state and schedule the next iteration with native scheduling. The loop MUST NOT depend on legacy `forge-loop-cli` or `persistent-loop.sh` as the primary orchestrator.

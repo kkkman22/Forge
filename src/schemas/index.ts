@@ -15,6 +15,7 @@
  */
 
 export * from "./config-file.js";
+export * from "./package-summary.js";
 export * from "./plan-file.js";
 export * from "./review-report.js";
 export * from "./spec-file.js";

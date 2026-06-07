@@ -128,6 +128,19 @@ export interface Wave {
   tasks: string[];
 }
 
+export interface ExecutionPackageMetadata {
+  id: string;
+  name: string;
+  tasks: string[];
+  depends_on_packages: string[];
+  boundary_reason: string;
+  estimated_loc: number;
+  files_touched: number;
+  verify_command: string;
+  handoff_path: string;
+  risk?: string;
+}
+
 // ---------------------------------------------------------------------------
 // TasksSeedDocument — third file
 // ---------------------------------------------------------------------------
@@ -136,6 +149,7 @@ export interface TasksSeedDocument {
   frontmatter: SpecFileFrontmatter;
   tasks: TaskSeed[];
   waves?: Wave[];
+  execution_packages?: ExecutionPackageMetadata[];
 }
 
 // ---------------------------------------------------------------------------

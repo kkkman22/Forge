@@ -38,6 +38,11 @@ export interface TaskGraph {
   tasks: TaskNode[];
 }
 
+export interface SplitRewriteOptions {
+  /** Child task that downstream dependents should depend on. Defaults to the last child. */
+  outgoingDependencyChildId?: string;
+}
+
 // ---------------------------------------------------------------------------
 // Validation
 // ---------------------------------------------------------------------------
@@ -91,6 +96,67 @@ export function validateGraph(graph: TaskGraph): GraphValidation {
   }
 
   return { valid: errors.length === 0, errors };
+}
+
+/**
+ * Replace one task in a graph with child tasks while preserving dependency
+ * correctness.
+ *
+ * Incoming dependencies of the original task attach to the first child.
+ * Child tasks are chained in their provided order unless they already declare
+ * dependencies. Downstream dependents of the original task are redirected to
+ * the artifact child, defaulting to the last child.
+ */
+export function rewriteGraphForSplit(
+  graph: TaskGraph,
+  originalTaskId: string,
+  childTasks: TaskNode[],
+  options: SplitRewriteOptions = {},
+): TaskGraph {
+  const original = graph.tasks.find((task) => task.id === originalTaskId);
+  if (!original || childTasks.length === 0) {
+    return { tasks: graph.tasks.map((task) => ({ ...task, dependsOn: [...task.dependsOn] })) };
+  }
+
+  const outgoingChildId =
+    options.outgoingDependencyChildId &&
+    childTasks.some((task) => task.id === options.outgoingDependencyChildId)
+      ? options.outgoingDependencyChildId
+      : childTasks[childTasks.length - 1].id;
+
+  const rewrittenChildren = childTasks.map((task, index) => {
+    const declared = task.dependsOn.filter((dep) => dep !== originalTaskId);
+    const dependsOn =
+      declared.length > 0
+        ? declared
+        : index === 0
+          ? [...original.dependsOn]
+          : [childTasks[index - 1].id];
+    return { ...task, dependsOn };
+  });
+
+  const rewrittenTasks: TaskNode[] = [];
+  for (const task of graph.tasks) {
+    if (task.id === originalTaskId) {
+      rewrittenTasks.push(...rewrittenChildren);
+      continue;
+    }
+    const dependsOn = task.dependsOn.map((dep) => (dep === originalTaskId ? outgoingChildId : dep));
+    rewrittenTasks.push({ ...task, dependsOn });
+  }
+
+  if (!graph.tasks.some((task) => task.id === originalTaskId)) {
+    rewrittenTasks.push(...rewrittenChildren);
+  }
+
+  const seen = new Set<string>();
+  return {
+    tasks: rewrittenTasks.filter((task) => {
+      if (seen.has(task.id)) return false;
+      seen.add(task.id);
+      return true;
+    }),
+  };
 }
 
 /**

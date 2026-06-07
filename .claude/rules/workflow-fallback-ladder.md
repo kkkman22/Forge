@@ -30,3 +30,7 @@ L3 禁止主 agent 顶替评审/决策。Ship 阻断。
 ## L0 Failure Signatures
 
 `bp_exception` | `schema_validation_failed` | `subprocess_crash` | `stuck_timeout` | `frozen_zone_blocked`
+
+## Saved Workflow Naming
+
+Production Forge workflow dispatch targets MUST use stable Forge-derived names, for example `forge-review.js`, `forge-decide.js`, `forge-plan-package.js`, `forge-package-build.js`, `forge-test-gates.js`, and `forge-learn.js`. Generic names such as `multi-agent-review.js` are experimental only and MUST NOT be production dispatch targets.

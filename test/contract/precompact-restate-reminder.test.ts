@@ -145,6 +145,27 @@ describe("PreCompact restate reminder", () => {
     expect(result.exitCode).toBe(0);
   });
 
+  it("snapshot includes package fields when present", () => {
+    setupForgeEnv({
+      statusCurrentTask: "my-feature",
+      restateReminder: "off",
+      progressContent: "- [ ] T1",
+    });
+    writeFileSync(
+      fixture(".forge", "status.md"),
+      '---\ncurrent_task: "my-feature"\nphase: "build"\ncurrent_package: "P2"\ncompleted_packages: "P1"\nnext_package: "P3"\npackage_count: 3\n---',
+    );
+
+    const result = runHook();
+    expect(result.exitCode).toBe(0);
+
+    const snapshot = readFileSync(fixture(".forge", ".compact-snapshot.md"), "utf-8");
+    expect(snapshot).toContain("current_package=P2");
+    expect(snapshot).toContain("completed_packages=P1");
+    expect(snapshot).toContain("next_package=P3");
+    expect(snapshot).toContain("package_count=3");
+  });
+
   it("snapshot stays under 10000 characters with max caps", () => {
     // Simulate worst-case: 60-line progress + 40-line findings
     mkdirSync(fixture(".forge", "findings"), { recursive: true });
