@@ -101,6 +101,7 @@ function parseReviewReportFrontmatter(content: string): ParsedReviewReport | nul
 }
 
 const VALID_METHODOLOGIES: readonly string[] = [
+  "saved-workflow",
   "subagent-parallel",
   "subagent-serial",
   "ci-evidence",
@@ -593,7 +594,7 @@ export function evaluateFallbackLadder(conditions: FallbackLadderConditions): {
     conditions.concurrencyBridgeAvailable;
 
   if (l0Met) {
-    return { level: "L0", methodology: "subagent-parallel" };
+    return { level: "L0", methodology: "saved-workflow" };
   }
 
   // L1/L2: subagent available

@@ -6,8 +6,14 @@ import {
 } from "../../src/schemas/review-report.js";
 
 describe("ReviewReportSchema — methodology field", () => {
-  it("accepts all 4 methodology values", () => {
-    for (const value of ["subagent-parallel", "subagent-serial", "ci-evidence", "unavailable"]) {
+  it("accepts all review methodology values", () => {
+    for (const value of [
+      "saved-workflow",
+      "subagent-parallel",
+      "subagent-serial",
+      "ci-evidence",
+      "unavailable",
+    ]) {
       const result = ReviewReportSchema.safeParse({ methodology: value });
       expect(result.success, `methodology="${value}" should parse`).toBe(true);
       if (result.success) {

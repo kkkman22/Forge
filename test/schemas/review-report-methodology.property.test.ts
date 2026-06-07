@@ -4,6 +4,7 @@ import { safeParseReviewReport } from "../../src/schemas/review-report.js";
 import { parseReviewReportGraceful } from "../../src/state.js";
 
 const VALID_METHODOLOGIES = [
+  "saved-workflow",
   "subagent-parallel",
   "subagent-serial",
   "ci-evidence",

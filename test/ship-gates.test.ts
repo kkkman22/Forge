@@ -105,6 +105,12 @@ describe("checkFallbackLadderGate", () => {
     expect(result.passed).toBe(true);
   });
 
+  it("methodology=saved-workflow → passed", () => {
+    const result = checkFallbackLadderGate("saved-workflow");
+    expect(result.gate).toBe("review");
+    expect(result.passed).toBe(true);
+  });
+
   it("methodology=subagent-serial → passed", () => {
     const result = checkFallbackLadderGate("subagent-serial");
     expect(result.gate).toBe("review");
@@ -529,7 +535,7 @@ describe("evaluateFallbackLadder", () => {
   it("all L0 conditions met → L0", () => {
     const result = evaluateFallbackLadder(l0AllMet);
     expect(result.level).toBe("L0");
-    expect(result.methodology).toBe("subagent-parallel");
+    expect(result.methodology).toBe("saved-workflow");
   });
 
   it("non-interactive mode → L1", () => {

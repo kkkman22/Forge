@@ -2,8 +2,9 @@ export const meta = {
   name: "forge-review",
   version: "1.0.0",
   description:
-    "Forge saved workflow for multi-layer review: scan changed files, run independent spec/quality/security review, then synthesize bounded findings.",
-  whenToUse: "Use as the L0 backend for /forge review when saved workflows are enabled.",
+    "Forge saved workflow for package-scoped multi-layer review: scan changed files, run independent spec/quality/security review, then synthesize bounded findings.",
+  whenToUse:
+    "Use as the L0 saved-workflow backend for /forge review when saved workflows are enabled.",
   phases: [
     { title: "Scan", detail: "Detect changed files and review scope" },
     { title: "Review", detail: "Run spec, quality, and security reviewers in parallel" },

@@ -549,3 +549,9 @@ When the approved plan/tasks document contains `execution_packages`, `/forge bui
 Package build loads only the current package, direct dependency summaries, status/config, and required task details. It MUST NOT load full completed task history unless failure diagnosis requires it. After package success: write the package summary, run package `verify_command`, update `current_package` / `completed_packages` / `next_package`, and create an atomic commit or record why commit was intentionally skipped.
 
 `build.use_goal: true` MUST NOT hand all tasks to one `/goal` run when execution packages exist. Use one package as the goal boundary.
+
+Package boundary decisions that are not automatic MUST use Claude Code `AskUserQuestion`
+(package boundary prompt discipline).
+Use it for package-boundary resume choices, unresolved dependency boundary conflicts, and any
+HITL package gate. Normal package-to-package advancement in `/forge loop` remains automatic and
+must not ask "是否继续".

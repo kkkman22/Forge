@@ -479,4 +479,4 @@ Review 完成后，如果后续还有 test/ship 阶段且 Read 预算 >50KB（`$
 
 When execution packages exist, review MUST distinguish package-scoped and feature-scoped verdicts. A package-level review may pass only that package. A full-feature pass requires all execution packages to be completed.
 
-Saved workflow backend: if `.claude/workflows/forge-review.js` is enabled and available, it MAY be used as L0 review orchestration. Fallback remains subagent-parallel, then subagent-serial, then unavailable/L3. Generic workflow names such as `multi-agent-review.js` are not production dispatch targets.
+Saved workflow backend: if `.claude/workflows/forge-review.js` is enabled and available, it MAY be used as L0 package-scoped review orchestration and MUST report `methodology: saved-workflow`. Fallback remains subagent-parallel, then subagent-serial, then unavailable/L3. Generic workflow names such as `multi-agent-review.js` are not production dispatch targets.

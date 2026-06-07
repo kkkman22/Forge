@@ -44,6 +44,12 @@ export interface ProjectState {
   plan: PlanContext;
   progress: ProgressContext;
   findings: FindingsContext;
+  packages?: {
+    currentPackage?: string;
+    completedPackages?: string[];
+    nextPackage?: string;
+    packageCount?: number;
+  };
 }
 
 export interface ResumeQuestion {
@@ -55,6 +61,8 @@ export interface ResumeOutput {
   questions: ResumeQuestion[];
   /** The task to auto-locate to (if any). */
   autoLocateTask: string | null;
+  /** The execution package to auto-locate to (if any). */
+  autoLocatePackage: string | null;
 }
 
 // ---------------------------------------------------------------------------
@@ -90,10 +98,12 @@ export function generateResumeOutput(state: ProjectState): ResumeOutput {
   const q1Answer = state.plan.objective || "未找到计划目标";
 
   // Q2: Where are we now?
-  const q2Answer =
+  const q2Base =
     state.progress.inProgressTasks.length > 0
       ? state.progress.inProgressTasks.join("、")
       : "未找到进行中的任务";
+  const packageSummary = formatPackageSummary(state.packages);
+  const q2Answer = packageSummary ? `${q2Base}\n${packageSummary}` : q2Base;
 
   // Q3: What do we know?
   const q3Answer =
@@ -122,7 +132,20 @@ export function generateResumeOutput(state: ProjectState): ResumeOutput {
   return {
     questions,
     autoLocateTask,
+    autoLocatePackage: state.packages?.currentPackage ?? state.packages?.nextPackage ?? null,
   };
+}
+
+function formatPackageSummary(packages: ProjectState["packages"]): string {
+  if (!packages) return "";
+  const parts: string[] = [];
+  if (packages.currentPackage) parts.push(`current_package=${packages.currentPackage}`);
+  if (packages.completedPackages && packages.completedPackages.length > 0) {
+    parts.push(`completed_packages=${packages.completedPackages.join(",")}`);
+  }
+  if (packages.nextPackage) parts.push(`next_package=${packages.nextPackage}`);
+  if (packages.packageCount !== undefined) parts.push(`package_count=${packages.packageCount}`);
+  return parts.join("; ");
 }
 
 /**

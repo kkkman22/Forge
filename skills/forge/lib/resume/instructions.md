@@ -11,6 +11,7 @@ allowed_tools:
 
 Phase: !`grep '^phase:' .forge/status.md 2>/dev/null || echo "no status"`
 Task: !`grep '^current_task:' .forge/status.md 2>/dev/null || echo "no task"`
+Package: !`grep '^current_package:' .forge/status.md 2>/dev/null || echo "no package"`
 Last session: !`ls -t .forge/knowledge/sessions/*.md 2>/dev/null | head -1 || echo "no sessions"`
 Branch: !`git branch --show-current`
 
@@ -22,7 +23,6 @@ Branch: !`git branch --show-current`
 ---
 
 ## 1. Overview
-
 `/forge resume` 通过五个问题快速重建工作上下文——正在解决什么问题、当前在哪一步、已知发现、下一步是什么、有什么阻塞。它从 `.forge/` 状态文件中自动提取答案，让开发者在新会话中无缝继续之前的工作。
 
 **核心原则**：恢复上下文的成本应该接近零。
@@ -52,20 +52,19 @@ Branch: !`git branch --show-current`
 | `current_task` | 确定当前任务主题，定位对应的 plan/progress/findings 文件 |
 | `tier` | 确定当前档位，判断下一步应执行哪个命令 |
 | `phase` | 确定当前阶段 |
+| `current_package` / `completed_packages` / `next_package` / `package_count` | 恢复 execution package 边界，避免重新加载全量 tasks |
 | `updated` | 上次更新时间 |
 
 **Session-level recovery**:
-
 1. 检查 `.forge/knowledge/sessions/` 中是否存在 `*-interim.md` 文件（上次会话中途中断的执行上下文）。
 2. 如果存在 interim 文件：读取"进度快照"→ 问题 2；"关键发现"→ 问题 3；"异常记录"→ 问题 5；"活跃约束"→ 恢复后首次 Restatement 重新注入。
 3. 如果不存在 interim 文件，读取正式会话日志作为补充信息。
 
-**恢复后的首次 Restatement**：确认继续 build 后，派发第一个 Subagent 前**立即执行 Restatement Checkpoint**。
+**恢复后的首次 Restatement**：通过 AskUserQuestion 选择继续 build 后，派发第一个 Subagent 前**立即执行 Restatement Checkpoint**。
 
 **SKILL Reload（必读）**：恢复后执行任何阶段前：读 `status.md` phase → 读 `skills/forge-{phase}/SKILL.md` → 按步骤执行。适用于所有阶段。Restatement 仅限 build。
 
 ### Five-Question Mapping
-
 | Question | Data Source |
 |------|---------|
 | 1. 正在解决什么问题？ | `.forge/plans/<topic>.md` 的 Objective 章节 |
@@ -73,6 +72,8 @@ Branch: !`git branch --show-current`
 | 3. 已知发现是什么？ | `.forge/findings/<topic>.md` |
 | 4. 下一步是什么？ | `.forge/plans/<topic>.md` 的 Task Breakdown 中的下一个任务 |
 | 5. 有什么阻塞？ | `.forge/progress/<topic>.md` 中的"阻塞"章节 |
+
+当 status 含 package 字段时，问题 2 必须展示 `current_package`、`completed_packages`、`next_package`、`package_count`。恢复上下文只读取当前 package 和直接依赖 package summary，不重新注入已完成 package 的完整 task 历史。
 
 ---
 
@@ -91,12 +92,11 @@ Branch: !`git branch --show-current`
 2. 无进行中任务 → 找到第一个未完成的任务
 3. 所有任务已完成 → 提示进入下一阶段（review/test/ship）
 
-定位后：读取定位阶段对应的 SKILL.md，确认当前应执行的步骤编号/名称，从该步骤继续。等待用户确认：确认 → 从定位的任务继续 `/forge build`；拒绝 → 等待用户指示。
+定位后：读取定位阶段对应的 SKILL.md，确认当前应执行的步骤编号/名称，从该步骤继续。需要人工选择时必须调用 Claude Code `AskUserQuestion`，提供继续当前定位、重新选择活跃 package、暂停恢复三个选项。用户选择继续后自动从定位任务/package 进入对应阶段；不要要求用户自己输入 `/forge build`。
 
 ### 4.1 Auto-triggered Resume
 
 Context Exhaustion Protocol 触发时（`exhaustion_pending: true` 或新鲜 interim 文件）：
-
 1. **跳过确认** — 耗尽协议已决定继续
 2. **先读 interim 文件** — `.forge/knowledge/sessions/` 中 `-interim.md` 含最准确状态
 3. **立即 Restatement** — 派发第一个 Subagent 前
@@ -133,7 +133,7 @@ Context Exhaustion Protocol 触发时（`exhaustion_pending: true` 或新鲜 int
 | 无 Plan 文件 | ℹ️ 未找到计划文件。运行 /forge 开始新任务 |
 | 无 Progress 文件 | 展示全局状态 + Plan Objective，提示"建议从 Task 1 开始执行" |
 | 所有任务已完成 | 提示"Build 阶段已完成。建议运行 /forge review" |
-| StatusFile 缺失或不一致 | 调用 `recoverPhase()` → 从 .forge/ 文件结构推断当前阶段（plans/ → plan, progress/ → build, reviews/ → review），展示推断结果和置信度，等待用户确认。**不自动写入磁盘** |
+| StatusFile 缺失或不一致 | 调用 `recoverPhase()` → 从 .forge/ 文件结构推断当前阶段（plans/ → plan, progress/ → build, reviews/ → review），展示推断结果和置信度，通过 AskUserQuestion 让用户确认/调整/取消。**不自动写入磁盘** |
 
 ---
 

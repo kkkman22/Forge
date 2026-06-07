@@ -10,8 +10,8 @@ Applies to: `forge-review`, `forge-decide`, `forge-learn`.
 
 | Level | Trigger Condition | methodology Field | Blocks Ship |
 |-------|-------------------|-------------------|-------------|
-| L0 | Interactive mode + `CLAUDE_CODE_WORKFLOWS=1` + `tengu_workflows_enabled` gate ON + workflow file exists + `node --check` passes + concurrency bridge probe passes | `workflow` | No |
-| L1 | Any L0 condition fails OR L0 runtime failure (`bp_exception`, `schema_validation_failed`, `subprocess_crash`, `stuck_timeout`, `frozen_zone_blocked`) | `subagent-parallel` / `workflow-then-subagent` | No |
+| L0 | Interactive mode + `CLAUDE_CODE_WORKFLOWS=1` + `tengu_workflows_enabled` gate ON + workflow file exists + `node --check` passes + concurrency bridge probe passes | `saved-workflow` | No |
+| L1 | Any L0 condition fails OR L0 runtime failure (`bp_exception`, `schema_validation_failed`, `subprocess_crash`, `stuck_timeout`, `frozen_zone_blocked`) | `subagent-parallel` | No |
 | L2 | Subagent teams unavailable → serial single-agent fallback | `subagent-serial` | No |
 | L3 | All levels unavailable | `unavailable` | **Yes** |
 
@@ -34,3 +34,7 @@ L3 禁止主 agent 顶替评审/决策。Ship 阻断。
 ## Saved Workflow Naming
 
 Production Forge workflow dispatch targets MUST use stable Forge-derived names, for example `forge-review.js`, `forge-decide.js`, `forge-plan-package.js`, `forge-package-build.js`, `forge-test-gates.js`, and `forge-learn.js`. Generic names such as `multi-agent-review.js` are experimental only and MUST NOT be production dispatch targets.
+
+Saved workflows are optional L0 phase/package-scoped backends. They may parallelize work inside a
+Forge phase, but they do not replace Forge gates, package completion checks, status updates, or
+fallback to subagent/single-agent paths.
