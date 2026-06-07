@@ -1117,6 +1117,63 @@ describe("CE-Inspired Review Enhancement - Phase 2", () => {
         expect(content).toMatch(/adversarial-check/);
     });
 });
+// ---------------------------------------------------------------------------
+// 22. Hook lifecycle events registration
+// ---------------------------------------------------------------------------
+describe("Contract: hook lifecycle events are registered", () => {
+    const srcHooksPath = resolve(ROOT, "hooks/hooks.json");
+    const distHooksPath = resolve(ROOT, "dist-plugin/hooks/hooks.json");
+    const srcHooks = JSON.parse(readFileSync(srcHooksPath, "utf-8"));
+    const distHooks = JSON.parse(readFileSync(distHooksPath, "utf-8"));
+    const REQUIRED_LIFECYCLE_EVENTS = [
+        "TaskCreated",
+        "WorktreeCreate",
+        "StopFailure",
+        "ConfigChange",
+        "PermissionDenied",
+        "WorktreeRemove",
+    ];
+    for (const event of REQUIRED_LIFECYCLE_EVENTS) {
+        it(`src hooks.json contains ${event} hook`, () => {
+            expect(srcHooks.hooks[event]).toBeDefined();
+            expect(srcHooks.hooks[event].length).toBeGreaterThan(0);
+        });
+        it(`dist-plugin hooks.json contains ${event} hook`, () => {
+            expect(distHooks.hooks[event]).toBeDefined();
+            expect(distHooks.hooks[event].length).toBeGreaterThan(0);
+        });
+    }
+    it("ConfigChange points to scripts/config-changed-hook.mjs using args", () => {
+        const groups = srcHooks.hooks.ConfigChange;
+        const hasCorrectScript = groups.some((group) => group.hooks.some((h) => (h.args?.includes("scripts/config-changed-hook.mjs") ?? false) ||
+            (h.command?.includes("scripts/config-changed-hook.mjs") ?? false)));
+        expect(hasCorrectScript, "ConfigChange must reference scripts/config-changed-hook.mjs").toBe(true);
+    });
+    it("PermissionDenied points to scripts/permission-denied-hook.mjs using args", () => {
+        const groups = srcHooks.hooks.PermissionDenied;
+        const hasCorrectScript = groups.some((group) => group.hooks.some((h) => (h.args?.includes("scripts/permission-denied-hook.mjs") ?? false) ||
+            (h.command?.includes("scripts/permission-denied-hook.mjs") ?? false)));
+        expect(hasCorrectScript, "PermissionDenied must reference scripts/permission-denied-hook.mjs").toBe(true);
+    });
+    it("WorktreeRemove points to scripts/worktree-remove-hook.mjs using args", () => {
+        const groups = srcHooks.hooks.WorktreeRemove;
+        const hasCorrectScript = groups.some((group) => group.hooks.some((h) => (h.args?.includes("scripts/worktree-remove-hook.mjs") ?? false) ||
+            (h.command?.includes("scripts/worktree-remove-hook.mjs") ?? false)));
+        expect(hasCorrectScript, "WorktreeRemove must reference scripts/worktree-remove-hook.mjs").toBe(true);
+    });
+    it("new lifecycle hooks use args array (not command string)", () => {
+        const newEvents = ["ConfigChange", "PermissionDenied", "WorktreeRemove"];
+        for (const event of newEvents) {
+            const groups = srcHooks.hooks[event];
+            for (const group of groups) {
+                for (const handler of group.hooks) {
+                    expect(handler.args, `${event} hook should use args array, not command string`).toBeDefined();
+                    expect(Array.isArray(handler.args), `${event} hook args must be an array`).toBe(true);
+                }
+            }
+        }
+    });
+});
 describe("CE-Inspired Review Enhancement - Phase 3", () => {
     const AGENTS_DIR = resolve(__dirname, "..", "agents");
     it("validation-pass.md exists", () => {
