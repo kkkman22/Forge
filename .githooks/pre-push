@@ -4,6 +4,9 @@
 # Skip: git push --no-verify (built-in git)
 set -euo pipefail
 
+# Git hooks may run with a restricted PATH; ensure core binaries are available.
+export PATH="/usr/local/bin:/opt/homebrew/bin:/usr/bin:/bin:/usr/sbin:/sbin:${PATH}"
+
 remote="${1:-}"
 url="${2:-}"
 guard_branch="${FORGE_PRE_PUSH_BRANCH:-refs/heads/main}"

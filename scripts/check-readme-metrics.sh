@@ -24,19 +24,24 @@ actual_test_files=$(find test -name '*.test.ts' | wc -l | tr -d ' ')
 actual_pbt_files=$(find test -name '*.property.test.ts' | wc -l | tr -d ' ')
 
 # ---------- 4. Extract total test count from vitest JSON output ----------
-actual_tests=$(npx vitest run --reporter=json 2>/dev/null | node -e "
-  let data='';
-  process.stdin.on('data', c => data += c);
-  process.stdin.on('end', () => {
-    try {
-      const j = JSON.parse(data);
-      console.log(j.numTotalTests);
-    } catch(e) {
-      console.error('Failed to parse vitest JSON output');
-      process.exit(1);
-    }
-  });
+# Use --outputFile to avoid stdout pollution from other reporters / hooks.
+export VITEST_OUTPUT=$(mktemp)
+npx vitest run --reporter=json --outputFile="${VITEST_OUTPUT}" >/dev/null 2>&1 || true
+
+actual_tests=$(node -e "
+  const fs = require('fs');
+  try {
+    const raw = fs.readFileSync(process.env.VITEST_OUTPUT, 'utf-8');
+    const j = JSON.parse(raw);
+    console.log(j.numTotalTests);
+  } catch(e) {
+    console.error('Failed to parse vitest JSON output:', e.message);
+    process.exit(1);
+  }
 " 2>&1) || true
+
+rm -f "${VITEST_OUTPUT}"
+unset VITEST_OUTPUT
 
 if [[ -z "${actual_tests}" ]] || ! [[ "${actual_tests}" =~ ^[0-9]+$ ]]; then
   echo "ERROR: Could not extract total test count from vitest JSON output."
