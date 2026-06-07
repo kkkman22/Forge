@@ -1,7 +1,7 @@
 ---
 current_task: "partial-spec-backlog-remediation"
 tier: "standard"
-phase: "build"
+phase: "review"
 updated: "2026-06-07"
 branch: "forge/partial-spec-backlog-remediation"
 spec: ".forge/specs/partial-spec-backlog-remediation/requirements.md"
