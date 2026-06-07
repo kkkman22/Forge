@@ -54,7 +54,7 @@ Last commit: !`git log --oneline -1 2>/dev/null || echo "no commits"`
 | **standard** | `plan → build → review → test → ship → completed` |
 | **full** | `plan → build → review → test → ship → learn → completed` |
 
-Phase transitions are deterministic — see `src/loop/phase-transitions.ts` (`getNextPhase`).
+Phase transitions are deterministic — see `src/loop/phase-transitions.ts` (`getNextPhase`) and `src/loop/package-runtime.ts` (`advanceLoopAfterPhaseSuccess`) for execution package state.
 
 ## 4. Iteration Decision Loop
 
@@ -67,7 +67,7 @@ Each iteration follows this 8-step cycle:
 4. Parse result: success / failure / blocked
 5. On success: recordSuccess from three-strike module → commit
 6. On failure: recordFailure → check shouldHalt (§6)
-7. Compute next phase via phase-transitions module
+7. Compute next phase via `advanceLoopAfterPhaseSuccess` when `execution_packages` exist; otherwise use phase-transitions module
 8. Schedule next iteration (§5) → update state → loop
 ```
 
@@ -177,4 +177,4 @@ Commit format: `forge(<phase>): <summary>`
 
 ## Package Iteration
 
-When `/forge loop` runs build with `execution_packages`, each loop iteration targets at most one package. After a package succeeds, update package fields in Forge state and schedule the next iteration with native scheduling. The loop MUST NOT depend on legacy `forge-loop-cli` or `persistent-loop.sh` as the primary orchestrator.
+When `/forge loop` runs with `execution_packages`, each loop iteration targets at most one package. Use `advanceLoopAfterPhaseSuccess({ loopState, statusContent, executionPackages, reviewResult })` after each successful phase to update `.forge/loop-state.json`, `.forge/status.md`, and the next `/forge` args (`build --package <id>`, `review --package <id>`, `test --package <id>`, then feature-scoped `ship`). The loop MUST NOT depend on legacy `forge-loop-cli` or `persistent-loop.sh` as the primary orchestrator.
