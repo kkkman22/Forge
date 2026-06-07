@@ -28,7 +28,10 @@
     "stop-additional-context.mjs",
     "stop-failure-hook.mjs",
     "task-created-hook.mjs",
-    "worktree-create-hook.mjs"
+    "worktree-create-hook.mjs",
+    "config-changed-hook.mjs",
+    "permission-denied-hook.mjs",
+    "worktree-remove-hook.mjs"
   ],
   "cc_compiled_js": [
     "state.js",
@@ -63,7 +66,10 @@
     "stop-additional-context.mjs",
     "stop-failure-hook.mjs",
     "task-created-hook.mjs",
-    "worktree-create-hook.mjs"
+    "worktree-create-hook.mjs",
+    "config-changed-hook.mjs",
+    "permission-denied-hook.mjs",
+    "worktree-remove-hook.mjs"
   ],
   "plugin_compiled_js": [
     "check-sandbox.js",

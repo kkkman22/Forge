@@ -54,10 +54,8 @@ describe("resume instructions phase coverage", () => {
     const phaseRefs = content.match(/review|test|ship/g);
     expect(phaseRefs).toBeTruthy();
     // Must reference all three in a way that implies continuation, not restart
-    const hasReviewContinue =
-      content.includes("review") && content.includes("下一阶段");
-    const hasShipContinue =
-      content.includes("ship") || content.includes("交付");
+    const hasReviewContinue = content.includes("review") && content.includes("下一阶段");
+    const hasShipContinue = content.includes("ship") || content.includes("交付");
     expect(
       hasReviewContinue || hasShipContinue || content.includes("phase"),
       "instructions should describe how to resume from review/test/ship phases",

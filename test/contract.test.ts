@@ -1499,7 +1499,9 @@ describe("Contract: hook lifecycle events are registered", () => {
           (h.command?.includes("scripts/config-changed-hook.mjs") ?? false),
       ),
     );
-    expect(hasCorrectScript, "ConfigChange must reference scripts/config-changed-hook.mjs").toBe(true);
+    expect(hasCorrectScript, "ConfigChange must reference scripts/config-changed-hook.mjs").toBe(
+      true,
+    );
   });
 
   it("PermissionDenied points to scripts/permission-denied-hook.mjs using args", () => {
@@ -1513,9 +1515,10 @@ describe("Contract: hook lifecycle events are registered", () => {
           (h.command?.includes("scripts/permission-denied-hook.mjs") ?? false),
       ),
     );
-    expect(hasCorrectScript, "PermissionDenied must reference scripts/permission-denied-hook.mjs").toBe(
-      true,
-    );
+    expect(
+      hasCorrectScript,
+      "PermissionDenied must reference scripts/permission-denied-hook.mjs",
+    ).toBe(true);
   });
 
   it("WorktreeRemove points to scripts/worktree-remove-hook.mjs using args", () => {
