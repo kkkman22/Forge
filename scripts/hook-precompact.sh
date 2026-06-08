@@ -32,8 +32,16 @@ if [ -z "$slug" ]; then
 fi
 
 pr_number=""
+current_package=""
+completed_packages=""
+next_package=""
+package_count=""
 if [ -f "$STATUS_FILE" ]; then
   pr_number=$(grep '^pr_number:' "$STATUS_FILE" 2>/dev/null | sed 's/pr_number: *//')
+  current_package=$(grep '^current_package:' "$STATUS_FILE" 2>/dev/null | sed 's/current_package: *"\{0,1\}//;s/"\{0,1\} *$//')
+  completed_packages=$(grep '^completed_packages:' "$STATUS_FILE" 2>/dev/null | sed 's/completed_packages: *"\{0,1\}//;s/"\{0,1\} *$//')
+  next_package=$(grep '^next_package:' "$STATUS_FILE" 2>/dev/null | sed 's/next_package: *"\{0,1\}//;s/"\{0,1\} *$//')
+  package_count=$(grep '^package_count:' "$STATUS_FILE" 2>/dev/null | sed 's/package_count: *//')
 fi
 
 # --- Restate reminder config ---
@@ -108,6 +116,10 @@ git_last_commit=${git_last_commit:-none}
 tasks_completed=${completed:-0}
 tasks_pending=${pending:-0}
 review_status=${review_summary:-none}
+current_package=${current_package:-none}
+completed_packages=${completed_packages:-none}
+next_package=${next_package:-none}
+package_count=${package_count:-none}
 
 ## Progress (capped at 60 lines)
 ${progress_content:-No progress file found.}

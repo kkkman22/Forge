@@ -321,3 +321,7 @@ Before running ship gates (§2), read `.forge/status.md` frontmatter to check di
 - **Branch protection**: Ship on main → direct commit to protected branch → verify on feature branch
 - **Test gate skip**: Ship passes review but tests not run → runtime failures → verify test gate passed
 - **Dispatch L3**: Ship blocked when review/decide/learn all unavailable → fix subagent infrastructure first
+
+## Package Completion Gate
+
+When execution packages exist, `/forge ship` MUST include a package completion table. Incomplete packages block or warn according to configured severity. A full-feature ship must not treat package-scoped review/test evidence as complete feature evidence.

@@ -29,6 +29,7 @@ const REQUIRED_FIELDS = [
   "phaseHistory",
   "lastReviewResult",
   "haltReason",
+  "packageState",
 ] as const;
 
 /** Valid phase values. */
@@ -75,6 +76,12 @@ interface LoopState {
   phaseHistory: PhaseHistoryEntry[];
   lastReviewResult: (typeof VALID_REVIEW_RESULTS)[number];
   haltReason: string;
+  packageState: {
+    currentPackage: string;
+    completedPackages: string[];
+    nextPackage: string;
+    packageCount: number;
+  };
 }
 
 function loadTemplate(): LoopState {
@@ -181,6 +188,16 @@ describe("Loop State JSON Schema", () => {
     expect(typeof haltReason).toBe("string");
   });
 
+  it("packageState is initialized for package-aware loop resume", () => {
+    const { packageState } = loadTemplate();
+    expect(packageState).toEqual({
+      currentPackage: "",
+      completedPackages: [],
+      nextPackage: "",
+      packageCount: 0,
+    });
+  });
+
   it("default template represents a valid initial state", () => {
     const state = loadTemplate();
     expect(state.phase).toBe("init");
@@ -190,5 +207,6 @@ describe("Loop State JSON Schema", () => {
     expect(state.phaseHistory).toEqual([]);
     expect(state.lastReviewResult).toBe("not-run");
     expect(state.haltReason).toBe("");
+    expect(state.packageState.completedPackages).toEqual([]);
   });
 });

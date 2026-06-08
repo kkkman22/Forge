@@ -207,3 +207,7 @@ Test 完成后，如果后续还有 ship 阶段且 Read 预算 >50KB（`${TMPDIR
 - **Mock overuse**: Every dependency mocked → test passes but production fails → prefer real dependencies, mock only external services
 - **Flaky by design**: Test depends on timing or order → intermittent failures → tests must be deterministic
 - **Rationalization excuses**: Agent skips test with "this is trivial" → untested code → follow anti-rationalization table strictly
+
+## Package Verification Evidence
+
+When execution packages exist, `/forge test` MUST include package verification evidence in its input summary and final report. Independent verification checks may use a saved workflow backend, but the final Layer 1 and Layer 3 gate verdict remains owned by Forge test.

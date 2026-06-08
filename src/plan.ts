@@ -25,7 +25,7 @@ import type { Glossary, GlossaryTerm } from "./glossary.js";
 import type { TasksSeedDocument } from "./spec-bundle.js";
 
 import { upgradeTasksSeed } from "./spec-plan-upgrade.js";
-import type { TaskGraph } from "./task-graph.js";
+import { type TaskGraph, topologicalOrder, validateGraph } from "./task-graph.js";
 
 export type { TasksSeedDocument } from "./spec-bundle.js";
 export { upgradeTasksSeed } from "./spec-plan-upgrade.js";
@@ -51,6 +51,249 @@ export interface AtomicTask {
   verifyCommand: string;
   commitMessage: string;
   dependsOn?: number[];
+}
+
+// ---------------------------------------------------------------------------
+// Execution package context control
+// ---------------------------------------------------------------------------
+
+export type TaskTestScope = "unit" | "integration" | "e2e" | "migration";
+export type TaskRisk = "low" | "medium" | "high";
+
+export interface TaskWeight {
+  files_touched: number;
+  estimated_loc: number;
+  layers: string[];
+  new_dependencies: number;
+  test_scope: TaskTestScope;
+  risk: TaskRisk;
+  estimated_minutes: number;
+  narrow_vertical_slice?: boolean;
+}
+
+export interface TaskWeightClassification {
+  overweight: boolean;
+  highRisk: boolean;
+  reasons: string[];
+}
+
+export interface WeightedPlanTask {
+  id: string;
+  title: string;
+  task_weight: TaskWeight;
+  split_into?: string[];
+}
+
+export interface OverweightSplitValidation {
+  valid: boolean;
+  errors: string[];
+}
+
+export interface ExecutionPackage {
+  id: string;
+  name: string;
+  tasks: string[];
+  depends_on_packages: string[];
+  boundary_reason: string;
+  estimated_loc: number;
+  files_touched: number;
+  verify_command: string;
+  handoff_path: string;
+  risk?: string;
+}
+
+export interface GenerateExecutionPackagesOptions {
+  taskWeights?: Record<string, TaskWeight>;
+  packageTaskTarget?: number;
+  packageLocLimit?: number;
+  packageFileLimit?: number;
+  runId?: string;
+}
+
+export interface ExecutionPackageGenerationResult {
+  packages: ExecutionPackage[];
+  warnings: string[];
+}
+
+export const TASK_WEIGHT_THRESHOLDS = {
+  filesTouched: 5,
+  estimatedLoc: 150,
+  layers: 3,
+} as const;
+
+const DEFAULT_PACKAGE_TASK_TARGET = 5;
+const DEFAULT_PACKAGE_LOC_LIMIT = 300;
+const DEFAULT_PACKAGE_FILE_LIMIT = 8;
+
+/** @public */
+export function classifyTaskWeight(weight: TaskWeight): TaskWeightClassification {
+  const reasons: string[] = [];
+
+  if (weight.files_touched >= TASK_WEIGHT_THRESHOLDS.filesTouched) {
+    reasons.push("files_touched >= 5");
+  }
+  if (weight.estimated_loc >= TASK_WEIGHT_THRESHOLDS.estimatedLoc) {
+    reasons.push("estimated_loc >= 150");
+  }
+  if (weight.layers.length >= TASK_WEIGHT_THRESHOLDS.layers && !weight.narrow_vertical_slice) {
+    reasons.push("layers >= 3");
+  }
+  if (weight.new_dependencies > 0) {
+    reasons.push("new_dependencies > 0");
+  }
+
+  const highRisk = ["integration", "e2e", "migration"].includes(weight.test_scope);
+  if (highRisk) {
+    reasons.push(`test_scope ${weight.test_scope}`);
+  }
+
+  return {
+    overweight: reasons.length > 0,
+    highRisk,
+    reasons,
+  };
+}
+
+/** @public */
+export function validateOverweightTaskSplits(
+  tasks: WeightedPlanTask[],
+  _options: { monolith_acknowledged?: boolean } = {},
+): OverweightSplitValidation {
+  const errors: string[] = [];
+
+  for (const task of tasks) {
+    const classification = classifyTaskWeight(task.task_weight);
+    if (classification.overweight && (!task.split_into || task.split_into.length === 0)) {
+      errors.push(`Task ${task.id} requires split: ${classification.reasons.join(", ")}`);
+    }
+  }
+
+  return { valid: errors.length === 0, errors };
+}
+
+function emptyWeight(): TaskWeight {
+  return {
+    files_touched: 1,
+    estimated_loc: 0,
+    layers: [],
+    new_dependencies: 0,
+    test_scope: "unit",
+    risk: "low",
+    estimated_minutes: 0,
+  };
+}
+
+function combinePackageDependencies(
+  packageTasks: string[],
+  taskToPackage: Map<string, string>,
+  graph: TaskGraph,
+): string[] {
+  const taskSet = new Set(packageTasks);
+  const deps = new Set<string>();
+
+  for (const taskId of packageTasks) {
+    const task = graph.tasks.find((candidate) => candidate.id === taskId);
+    for (const dep of task?.dependsOn ?? []) {
+      if (taskSet.has(dep)) continue;
+      const depPackage = taskToPackage.get(dep);
+      if (depPackage) deps.add(depPackage);
+    }
+  }
+
+  return [...deps].sort();
+}
+
+/** @public */
+export function generateExecutionPackages(
+  graph: TaskGraph,
+  options: GenerateExecutionPackagesOptions = {},
+): ExecutionPackageGenerationResult {
+  const validation = validateGraph(graph);
+  if (!validation.valid) {
+    return { packages: [], warnings: validation.errors };
+  }
+
+  const order = topologicalOrder(graph) ?? graph.tasks.map((task) => task.id);
+  const packageTaskTarget = options.packageTaskTarget ?? DEFAULT_PACKAGE_TASK_TARGET;
+  const packageLocLimit = options.packageLocLimit ?? DEFAULT_PACKAGE_LOC_LIMIT;
+  const packageFileLimit = options.packageFileLimit ?? DEFAULT_PACKAGE_FILE_LIMIT;
+  const runId = options.runId ?? "<run-id>";
+  const packages: ExecutionPackage[] = [];
+  const taskToPackage = new Map<string, string>();
+  const warnings: string[] = [];
+
+  let current: string[] = [];
+  let currentLoc = 0;
+  let currentFiles = 0;
+
+  function flush(reason: string): void {
+    if (current.length === 0) return;
+    const id = `P${packages.length + 1}`;
+    const pkg: ExecutionPackage = {
+      id,
+      name: `Package ${packages.length + 1}`,
+      tasks: current,
+      depends_on_packages: [],
+      boundary_reason: reason,
+      estimated_loc: currentLoc,
+      files_touched: currentFiles,
+      verify_command: `npm run check`,
+      handoff_path: `.forge/runs/${runId}/packages/${id}.md`,
+    };
+    packages.push(pkg);
+    for (const taskId of current) taskToPackage.set(taskId, id);
+    current = [];
+    currentLoc = 0;
+    currentFiles = 0;
+  }
+
+  for (const taskId of order) {
+    const weight = options.taskWeights?.[taskId] ?? emptyWeight();
+    const classification = classifyTaskWeight(weight);
+    const isolate = classification.highRisk;
+
+    if (isolate && current.length > 0) {
+      flush("before high-risk isolated task");
+    }
+
+    const wouldExceedTaskCount = current.length >= packageTaskTarget;
+    const wouldExceedLoc =
+      current.length > 0 && currentLoc + weight.estimated_loc > packageLocLimit;
+    const wouldExceedFiles =
+      current.length > 0 && currentFiles + weight.files_touched > packageFileLimit;
+
+    if (wouldExceedTaskCount || wouldExceedLoc || wouldExceedFiles) {
+      flush(
+        wouldExceedTaskCount
+          ? "task count boundary"
+          : wouldExceedLoc
+            ? "estimated LOC boundary"
+            : "files touched boundary",
+      );
+    }
+
+    current.push(taskId);
+    currentLoc += weight.estimated_loc;
+    currentFiles += weight.files_touched;
+
+    if (isolate) {
+      flush("high-risk isolated task");
+    }
+  }
+
+  flush("final package");
+
+  for (const pkg of packages) {
+    pkg.depends_on_packages = combinePackageDependencies(pkg.tasks, taskToPackage, graph).filter(
+      (dep) => dep !== pkg.id,
+    );
+    if (pkg.estimated_loc > packageLocLimit || pkg.files_touched > packageFileLimit) {
+      pkg.risk = "exceeds recommended package limits";
+      warnings.push(`${pkg.id} exceeds recommended package limits`);
+    }
+  }
+
+  return { packages, warnings };
 }
 
 // ---------------------------------------------------------------------------

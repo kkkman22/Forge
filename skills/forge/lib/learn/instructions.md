@@ -610,3 +610,7 @@ When user triggers `/forge learn`, follow this dispatch protocol:
 - **Generic lessons**: "Be careful with types" → not actionable → lessons must include specific code pattern and trigger condition
 - **Duplicate knowledge**: Same lesson recorded across sessions → knowledge base bloat → check existing entries before adding
 - **Missing context**: Lesson recorded without the "why" → future sessions can't judge applicability → always include trigger condition and confidence score
+
+## Saved Workflow Backend
+
+Forge learn may use a saved workflow backend for parallel five-dimension extraction when workflows are enabled. The saved workflow is an optional L0 backend; fallback remains the existing subagent/single-agent learn flow.

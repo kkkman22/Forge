@@ -33,6 +33,7 @@ const reviewReportArb = fc.record(
     p2_count: fc.integer({ min: 0, max: 100 }),
     p3_count: fc.integer({ min: 0, max: 200 }),
     methodology: fc.constantFrom(
+      "saved-workflow",
       "subagent-parallel",
       "subagent-serial",
       "ci-evidence",
