@@ -23,6 +23,7 @@ import { safeParseStatusFile } from "./schemas/status-file.js";
 export const STATUS_DEFAULTS = {
     current_task: "",
     tier: "standard",
+    work_nature: "feature",
     phase: "router",
     task_type: "fullstack",
     project_phase: "iteration",
@@ -66,6 +67,7 @@ export function parseStatusFileGraceful(content) {
     const keys = [
         "current_task",
         "tier",
+        "work_nature",
         "phase",
         "task_type",
         "project_phase",
@@ -85,6 +87,7 @@ export function parseStatusFileGraceful(content) {
     const parsed = {
         current_task: schemaValue.current_task ?? STATUS_DEFAULTS.current_task,
         tier: schemaValue.tier ?? STATUS_DEFAULTS.tier,
+        work_nature: schemaValue.work_nature ?? STATUS_DEFAULTS.work_nature,
         phase: schemaValue.phase ?? STATUS_DEFAULTS.phase,
         task_type: schemaValue.task_type ?? STATUS_DEFAULTS.task_type,
         project_phase: schemaValue.project_phase ?? STATUS_DEFAULTS.project_phase,
@@ -97,6 +100,7 @@ export function parseStatusFileGraceful(content) {
     const missingFields = [
         "current_task",
         "tier",
+        "work_nature",
         "phase",
         "task_type",
         "project_phase",

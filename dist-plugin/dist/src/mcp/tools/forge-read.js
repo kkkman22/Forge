@@ -25,6 +25,7 @@ const DEFAULT_TIMEOUT_MS = 30_000;
 // ---------------------------------------------------------------------------
 // Security: script validation
 // ---------------------------------------------------------------------------
+/** @deprecated since 2026-06. Script mode will be removed in a future version. */
 /** Dangerous Node.js API patterns that should not appear in user scripts. */
 const DANGEROUS_SCRIPT_PATTERNS = [
     { pattern: /child_process/, label: "child_process" },
@@ -452,8 +453,15 @@ export function registerForgeRead(server, root) {
             };
         }
         // Return only stdout — output isolation
+        // @deprecated: Script mode is deprecated, include deprecation warning
         return {
-            content: [{ type: "text", text: result.stdout }],
+            content: [
+                { type: "text", text: result.stdout },
+                {
+                    type: "text",
+                    text: "⚠️ Script mode is deprecated. Use structured operations (imports/contains/line_count/json_keys) instead.",
+                },
+            ],
         };
     });
 }
