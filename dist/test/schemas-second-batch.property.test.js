@@ -21,7 +21,7 @@ const reviewReportArb = fc.record({
     p1_count: fc.integer({ min: 0, max: 50 }),
     p2_count: fc.integer({ min: 0, max: 100 }),
     p3_count: fc.integer({ min: 0, max: 200 }),
-    methodology: fc.constantFrom("subagent-parallel", "subagent-serial", "ci-evidence", "unavailable"),
+    methodology: fc.constantFrom("saved-workflow", "subagent-parallel", "subagent-serial", "ci-evidence", "unavailable"),
 }, { requiredKeys: [] });
 const planFileArb = fc.record({
     format: fc.constantFrom("full", "lightweight"),

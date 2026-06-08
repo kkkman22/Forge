@@ -70,6 +70,10 @@ describe("Loop Skill module references", () => {
     it("references stopwhen module", () => {
         expect(content).toContain("stopwhen");
     });
+    it("references package-runtime for execution package state", () => {
+        expect(content).toContain("package-runtime");
+        expect(content).toContain("advanceLoopAfterPhaseSuccess");
+    });
 });
 describe("Loop Skill entry routing", () => {
     const content = readInstructions();

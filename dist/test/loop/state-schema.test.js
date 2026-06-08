@@ -26,6 +26,7 @@ const REQUIRED_FIELDS = [
     "phaseHistory",
     "lastReviewResult",
     "haltReason",
+    "packageState",
 ];
 /** Valid phase values. */
 const VALID_PHASES = [
@@ -128,6 +129,15 @@ describe("Loop State JSON Schema", () => {
         const { haltReason } = loadTemplate();
         expect(typeof haltReason).toBe("string");
     });
+    it("packageState is initialized for package-aware loop resume", () => {
+        const { packageState } = loadTemplate();
+        expect(packageState).toEqual({
+            currentPackage: "",
+            completedPackages: [],
+            nextPackage: "",
+            packageCount: 0,
+        });
+    });
     it("default template represents a valid initial state", () => {
         const state = loadTemplate();
         expect(state.phase).toBe("init");
@@ -137,6 +147,7 @@ describe("Loop State JSON Schema", () => {
         expect(state.phaseHistory).toEqual([]);
         expect(state.lastReviewResult).toBe("not-run");
         expect(state.haltReason).toBe("");
+        expect(state.packageState.completedPackages).toEqual([]);
     });
 });
 //# sourceMappingURL=state-schema.test.js.map

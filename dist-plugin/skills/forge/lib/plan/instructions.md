@@ -300,3 +300,25 @@ Frontmatter 字段：`topic`, `status` (draft/approved), `date`, `spec_ref`, `fo
 - **Missing file mapping**: Plan lists tasks without specifying which files → agent searches mid-build → map files upfront in plan
 - **Plan drift**: Implementation deviates from plan → scope creep → re-read plan every 3 tasks, flag deviations
 - **Dependency ordering**: Task B depends on Task A, but B listed first → B fails → validate dependency ordering in self-check
+
+## Atomic Task Gate and Execution Package Gate
+
+Before Step 5 User Approval, `/forge plan` MUST run the Atomic Task Gate:
+
+- compute `task_weight` for every task (`files_touched`, `estimated_loc`, `layers`, `new_dependencies`, `test_scope`, `risk`, `estimated_minutes`)
+- split any overweight task before approval
+- `monolith_acknowledged` MUST NOT bypass overweight task splitting
+
+Then run the Execution Package Gate:
+
+- generate `execution_packages` when atomic task count is >= 10
+- SHOULD generate packages for 6-9 tasks using dependency, wave, or sprint boundaries
+- keep packages at 3-5 atomic tasks when dependencies and risk allow
+- preserve the Task DAG and declare `depends_on_packages`
+- `monolith_acknowledged` MAY keep one plan, but MUST NOT bypass execution package generation
+
+Package decisions that require user input MUST use Claude Code `AskUserQuestion`.
+Required prompts include package split approval, explicit monolith acceptance after package
+warnings, and any package split option that changes task boundaries. Do not ask the user to type
+commands such as `split` or `acknowledge-monolith`; present choices through AskUserQuestion and
+continue automatically after the user chooses.
