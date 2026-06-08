@@ -48,6 +48,7 @@ export interface StateFileValidation {
 export interface StatusFields {
   current_task: string;
   tier: string;
+  work_nature: string;
   phase: string;
   task_type: string;
   project_phase: string;
@@ -77,6 +78,7 @@ export interface ReviewReportFields {
 export const STATUS_DEFAULTS: StatusFields = {
   current_task: "",
   tier: "standard",
+  work_nature: "feature",
   phase: "router",
   task_type: "fullstack",
   project_phase: "iteration",
@@ -127,6 +129,7 @@ export function parseStatusFileGraceful(content: string | undefined): {
   const keys = [
     "current_task",
     "tier",
+    "work_nature",
     "phase",
     "task_type",
     "project_phase",
@@ -146,6 +149,8 @@ export function parseStatusFileGraceful(content: string | undefined): {
   const parsed: StatusFields = {
     current_task: (schemaValue.current_task as string | undefined) ?? STATUS_DEFAULTS.current_task,
     tier: (schemaValue.tier as string | undefined) ?? STATUS_DEFAULTS.tier,
+    work_nature:
+      (schemaValue.work_nature as string | undefined) ?? STATUS_DEFAULTS.work_nature,
     phase: (schemaValue.phase as string | undefined) ?? STATUS_DEFAULTS.phase,
     task_type: (schemaValue.task_type as string | undefined) ?? STATUS_DEFAULTS.task_type,
     project_phase:
@@ -161,6 +166,7 @@ export function parseStatusFileGraceful(content: string | undefined): {
     [
       "current_task",
       "tier",
+      "work_nature",
       "phase",
       "task_type",
       "project_phase",
