@@ -14,6 +14,7 @@
  */
 
 import { getCommandSequence } from "./skill-scheduler.js";
+import { getWorkNatureSequenceKey, type Tier, type WorkNature } from "./router.js";
 import {
   clearLoopFields,
   extractLoopFields,
@@ -104,6 +105,17 @@ export function getTierFromStatus(content: string): string | undefined {
   return match ? match[1].trim() : undefined;
 }
 
+/**
+ * Extract the `work_nature` field from StatusFile content.
+ *
+ * @param content - Raw StatusFile content string.
+ * @returns The work_nature string, or undefined if not found.
+ */
+export function getWorkNatureFromStatus(content: string): string | undefined {
+  const match = content.match(/^work_nature:\s*"?([^"\n]*)"?\s*$/m);
+  return match ? match[1].trim() : undefined;
+}
+
 // ---------------------------------------------------------------------------
 // Compound operations
 // ---------------------------------------------------------------------------
@@ -143,16 +155,20 @@ export function safeUpdateIterationStatus(
  * previous abnormal exit is detected (existing `loop_run_id`), clears
  * it first before writing fresh fields.
  *
- * The skill sequence is computed from the tier via `getCommandSequence`.
+ * The skill sequence is computed from the tier and optional workNature
+ * via `getWorkNatureSequenceKey` + `getCommandSequence`.
  *
  * @param io - StatusFile IO callbacks, or undefined.
  * @param runId - Unique identifier for this run.
  * @param tier - Routing tier (e.g. "standard").
+ * @param workNature - Optional work nature (feature, refactor, bugfix).
+ *   When provided, selects WorkNature-aware command sequences.
  */
 export function initializeLoopFields(
   io: StatusFileIO | undefined,
   runId: string,
   tier: string,
+  workNature?: string,
 ): void {
   let currentContent = safeReadStatusFile(io);
 
@@ -163,8 +179,11 @@ export function initializeLoopFields(
     currentContent = clearLoopFields(currentContent);
   }
 
-  // Determine skill sequence from the tier.
-  const skillSequence = getCommandSequence(tier).map(String);
+  // Determine skill sequence from tier + workNature.
+  const sequenceKey = workNature
+    ? getWorkNatureSequenceKey(workNature as WorkNature, tier as Tier)
+    : tier;
+  const skillSequence = getCommandSequence(sequenceKey).map(String);
 
   // Write fresh Loop fields (Req 6.1, 6.6).
   const updatedContent = writeLoopFields(currentContent, {
@@ -172,6 +191,7 @@ export function initializeLoopFields(
     loopRunId: runId,
     loopIteration: 0,
     skillSequence,
+    workNature,
   });
 
   safeWriteStatusFile(io, updatedContent);
