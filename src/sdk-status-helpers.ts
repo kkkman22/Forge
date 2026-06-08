@@ -13,8 +13,8 @@
  * **Validates: Requirements 6.1, 6.2, 6.5**
  */
 
-import { getCommandSequence } from "./skill-scheduler.js";
 import { getWorkNatureSequenceKey, type Tier, type WorkNature } from "./router.js";
+import { getCommandSequence } from "./skill-scheduler.js";
 import {
   clearLoopFields,
   extractLoopFields,

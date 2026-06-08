@@ -149,8 +149,7 @@ export function parseStatusFileGraceful(content: string | undefined): {
   const parsed: StatusFields = {
     current_task: (schemaValue.current_task as string | undefined) ?? STATUS_DEFAULTS.current_task,
     tier: (schemaValue.tier as string | undefined) ?? STATUS_DEFAULTS.tier,
-    work_nature:
-      (schemaValue.work_nature as string | undefined) ?? STATUS_DEFAULTS.work_nature,
+    work_nature: (schemaValue.work_nature as string | undefined) ?? STATUS_DEFAULTS.work_nature,
     phase: (schemaValue.phase as string | undefined) ?? STATUS_DEFAULTS.phase,
     task_type: (schemaValue.task_type as string | undefined) ?? STATUS_DEFAULTS.task_type,
     project_phase:

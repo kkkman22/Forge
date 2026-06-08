@@ -1,32 +1,4 @@
 {
-  "hooks": {
-    "PreToolUse": [
-      {
-        "matcher": "Write|Edit",
-        "hooks": [
-          {
-            "type": "command",
-            "command": "node",
-            "args": ["scripts/forge-prompt-guard.js"],
-            "timeout": 5
-          }
-        ]
-      }
-    ],
-    "PostToolUse": [
-      {
-        "matcher": "Read",
-        "hooks": [
-          {
-            "type": "command",
-            "command": "node",
-            "args": ["scripts/forge-read-injection-scanner.js"],
-            "timeout": 5
-          }
-        ]
-      }
-    ]
-  },
   "permissions": {
     "allow": [
       "Bash(git checkout *)",
@@ -126,7 +98,40 @@
       "Bash(npm view *)",
       "Bash(grep -rn '\\\\b[0-9]\\\\{1,3\\\\}\\\\b' src/ --include=\"*.ts\")",
       "Bash(echo \"Exit code: $?\")",
-      "Bash(grep -n \"--agent\" /Users/king/code/Forge/src/forge-loop-cli.ts)"
+      "Bash(grep -n \"--agent\" /Users/king/code/Forge/src/forge-loop-cli.ts)",
+      "mcp__forge-context__forge_exec"
+    ]
+  },
+  "hooks": {
+    "PreToolUse": [
+      {
+        "matcher": "Write|Edit",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "node",
+            "args": [
+              "scripts/forge-prompt-guard.js"
+            ],
+            "timeout": 5
+          }
+        ]
+      }
+    ],
+    "PostToolUse": [
+      {
+        "matcher": "Read",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "node",
+            "args": [
+              "scripts/forge-read-injection-scanner.js"
+            ],
+            "timeout": 5
+          }
+        ]
+      }
     ]
   }
 }
