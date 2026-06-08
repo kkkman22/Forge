@@ -442,6 +442,20 @@ describe("Contract: hooks.json structure validation", () => {
         expect(hooks.hooks.TaskCompleted).toBeDefined();
         expect(hooks.hooks.TaskCompleted.length).toBeGreaterThan(0);
     });
+    const requiredLifecycleHooks = [
+        ["ConfigChange", "scripts/config-changed-hook.mjs"],
+        ["PermissionDenied", "scripts/permission-denied-hook.mjs"],
+        ["WorktreeRemove", "scripts/worktree-remove-hook.mjs"],
+    ];
+    for (const [eventName, scriptPath] of requiredLifecycleHooks) {
+        it(`hooks.json contains ${eventName} lifecycle hook using args`, () => {
+            const groups = hooks.hooks[eventName];
+            expect(groups, `${eventName} hook is not registered`).toBeDefined();
+            expect(groups.length, `${eventName} hook has no handlers`).toBeGreaterThan(0);
+            const hasArgsHandler = groups.some((group) => group.hooks?.some((handler) => Array.isArray(handler.args) && handler.args.includes(scriptPath)));
+            expect(hasArgsHandler, `${eventName} must reference ${scriptPath} via args`).toBe(true);
+        });
+    }
     it("all hook entries use the official nested hooks array structure", () => {
         for (const [eventName, matcherGroups] of Object.entries(hooks.hooks)) {
             for (const [gi, group] of matcherGroups.entries()) {
