@@ -1,4 +1,4 @@
-import { describe, it, expect } from "vitest";
+import { describe, expect, it } from "vitest";
 
 describe("forge_read script mode deprecation", () => {
   it("source file contains deprecation warning for script mode", async () => {

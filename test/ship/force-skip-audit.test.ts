@@ -1,8 +1,8 @@
-import { describe, it, expect, beforeEach, afterEach } from "vitest";
-import { join } from "node:path";
-import { tmpdir } from "node:os";
 import { randomUUID } from "node:crypto";
-import { existsSync, readFileSync, rmSync, mkdirSync } from "node:fs";
+import { existsSync, mkdirSync, readFileSync, rmSync } from "node:fs";
+import { tmpdir } from "node:os";
+import { join } from "node:path";
+import { afterEach, beforeEach, describe, expect, it } from "vitest";
 
 const TEST_DIR = join(tmpdir(), `forge-force-skip-test-${randomUUID()}`);
 
@@ -68,6 +68,8 @@ describe("checkShipGateWithForceSkip audit coupling", () => {
 
     expect(result.allowed).toBe(true);
     expect(result.forceSkipped).toBe(true);
-    expect(result.reasons.some((r: string) => r.includes("audit") || r.includes("Audit"))).toBe(true);
+    expect(result.reasons.some((r: string) => r.includes("audit") || r.includes("Audit"))).toBe(
+      true,
+    );
   });
 });

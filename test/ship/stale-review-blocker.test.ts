@@ -1,4 +1,4 @@
-import { describe, it, expect, beforeAll } from "vitest";
+import { beforeAll, describe, expect, it } from "vitest";
 
 describe("checkShipGateWithFreshness blocks stale review", () => {
   let checkShipGateWithFreshness: typeof import("../../src/ship.js").checkShipGateWithFreshness;

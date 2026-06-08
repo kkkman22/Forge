@@ -1,4 +1,4 @@
-import { describe, it, expect, beforeAll } from "vitest";
+import { beforeAll, describe, expect, it } from "vitest";
 import type { Requirement } from "../../src/spec.js";
 
 describe("validateTestability enhanced checks", () => {
