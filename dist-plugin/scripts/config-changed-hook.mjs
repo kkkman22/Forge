@@ -67,14 +67,21 @@ async function main() {
     process.exit(0);
   }
 
-  function safeMatches(filePath, pattern) {
-    if (typeof filePath !== "string") return false;
-    if (filePath.includes("\0")) return false;
-    return resolve(filePath).endsWith(pattern);
+  /**
+   * Safe path matcher: resolves the path (eliminates "..") and checks
+   * if it ends with the watched pattern. Rejects null bytes.
+   */
+  function safeMatches(f, pattern) {
+    if (typeof f !== "string") return false;
+    if (f.includes("\0")) return false;
+    const resolved = resolve(f);
+    return resolved.endsWith(pattern);
   }
 
-  function sanitizeFilename(filePath) {
-    return filePath.replace(/[\x00-\x1f\x7f]/g, "").trim();
+  /** Sanitize filenames for display in additionalContext. */
+  function sanitizeFilename(f) {
+    // Strip control characters and normalize whitespace
+    return f.replace(/[\x00-\x1f\x7f]/g, "").trim();
   }
 
   // Match changed files against watched patterns

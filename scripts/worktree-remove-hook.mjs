@@ -24,7 +24,7 @@ const PROJECT_ROOT = process.env.FORGE_PROJECT_ROOT
   : process.cwd();
 const PROGRESS_DIR = join(PROJECT_ROOT, ".forge", "progress");
 const WORKTREES_FILE = join(PROGRESS_DIR, "worktrees.json");
-const LOCK_FILE = `${WORKTREES_FILE}.lock`;
+const LOCK_FILE = WORKTREES_FILE + ".lock";
 
 function acquireLock(maxRetries = 10, delayMs = 100) {
   for (let i = 0; i < maxRetries; i++) {
@@ -33,14 +33,13 @@ function acquireLock(maxRetries = 10, delayMs = 100) {
       return true;
     } catch {
       if (i < maxRetries - 1) {
+        // Simple synchronous delay
         const start = Date.now();
-        while (Date.now() - start < delayMs) {
-          // brief synchronous backoff before retrying lock acquisition
-        }
+        while (Date.now() - start < delayMs) { /* spin */ }
       }
     }
   }
-  return false;
+  return false; // fail-open: proceed without lock after timeout
 }
 
 function releaseLock() {
