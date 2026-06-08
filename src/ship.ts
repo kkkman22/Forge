@@ -358,9 +358,8 @@ export function checkShipGateWithChecklist(
 /**
  * Extended ship gate with Review Freshness check.
  *
- * Adds a non-blocking freshness warning: if the review was performed at a
- * different commit and project code has changed since, a warning is appended
- * to the reasons. This does NOT block ship — it is advisory only.
+ * Blocks ship when review is stale due to non-.forge/ code changes.
+ * If only .forge/ files changed, review is still considered fresh.
  * @public
  */
 export function checkShipGateWithFreshness(
@@ -378,7 +377,8 @@ export function checkShipGateWithFreshness(
   const freshness = checkReviewFreshness(review.reviewedAtCommit, currentHead, changedFiles);
   if (!freshness.fresh) {
     const fileList = freshness.changedFiles ? ` [${freshness.changedFiles.join(", ")}]` : "";
-    result.reasons.push(`⚠️ Review freshness: ${freshness.reason}${fileList}`);
+    result.reasons.push(`⛔ Review stale: ${freshness.reason}${fileList}`);
+    result.allowed = false;
   }
 
   return result;
