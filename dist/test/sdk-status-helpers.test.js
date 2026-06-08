@@ -9,7 +9,7 @@
  * **Validates: Requirements 6.1, 6.2, 6.5**
  */
 import { beforeEach, describe, expect, it, vi } from "vitest";
-import { clearLoopFieldsOnShutdown, getPhaseFromStatus, getTierFromStatus, initializeLoopFields, safeReadStatusFile, safeUpdateIterationStatus, safeWriteStatusFile, } from "../src/sdk-status-helpers.js";
+import { clearLoopFieldsOnShutdown, getPhaseFromStatus, getTierFromStatus, getWorkNatureFromStatus, initializeLoopFields, safeReadStatusFile, safeUpdateIterationStatus, safeWriteStatusFile, } from "../src/sdk-status-helpers.js";
 // ---------------------------------------------------------------------------
 // Helpers
 // ---------------------------------------------------------------------------
@@ -283,6 +283,83 @@ describe("clearLoopFieldsOnShutdown", () => {
         const io = createIO({ read: vi.fn(() => "") });
         // Should not throw even with empty content
         expect(() => clearLoopFieldsOnShutdown(io, true)).not.toThrow();
+    });
+});
+// ---------------------------------------------------------------------------
+// 8. getWorkNatureFromStatus
+// ---------------------------------------------------------------------------
+describe("getWorkNatureFromStatus", () => {
+    it("extracts work_nature from quoted value", () => {
+        const content = buildStatus({ work_nature: "refactor", tier: "standard" });
+        expect(getWorkNatureFromStatus(content)).toBe("refactor");
+    });
+    it("extracts work_nature from unquoted value", () => {
+        const content = "---\nwork_nature: bugfix\ntier: light\n---\n";
+        expect(getWorkNatureFromStatus(content)).toBe("bugfix");
+    });
+    it("returns undefined when work_nature is absent", () => {
+        const content = buildStatus({ tier: "standard" });
+        expect(getWorkNatureFromStatus(content)).toBeUndefined();
+    });
+    it("returns undefined for empty string", () => {
+        expect(getWorkNatureFromStatus("")).toBeUndefined();
+    });
+    it("handles all valid values", () => {
+        for (const wn of ["feature", "refactor", "bugfix"]) {
+            const content = buildStatus({ work_nature: wn });
+            expect(getWorkNatureFromStatus(content)).toBe(wn);
+        }
+    });
+});
+// ---------------------------------------------------------------------------
+// 9. initializeLoopFields with workNature
+// ---------------------------------------------------------------------------
+describe("initializeLoopFields with workNature", () => {
+    it("uses standard sequence when no workNature provided (backward compat)", () => {
+        const io = createIO();
+        initializeLoopFields(io, "run-1", "standard");
+        const written = io.write.mock.calls[0][0];
+        expect(written).toContain("plan,build,review,test,ship");
+        expect(written).not.toContain("work_nature");
+    });
+    it("uses refactor_standard sequence for refactor + standard", () => {
+        const io = createIO();
+        initializeLoopFields(io, "run-2", "standard", "refactor");
+        const written = io.write.mock.calls[0][0];
+        expect(written).toContain("refactor-scan");
+        expect(written).toContain("refactor-apply");
+        expect(written).toContain('work_nature: "refactor"');
+    });
+    it("uses fix_light sequence for bugfix + light", () => {
+        const io = createIO();
+        initializeLoopFields(io, "run-3", "light", "bugfix");
+        const written = io.write.mock.calls[0][0];
+        expect(written).toContain("fix-apply");
+        expect(written).toContain("review");
+        expect(written).toContain('work_nature: "bugfix"');
+    });
+    it("uses fix_standard sequence for bugfix + standard", () => {
+        const io = createIO();
+        initializeLoopFields(io, "run-4", "standard", "bugfix");
+        const written = io.write.mock.calls[0][0];
+        expect(written).toContain("fix-analyze");
+        expect(written).toContain("fix-apply");
+        expect(written).toContain('work_nature: "bugfix"');
+    });
+    it("uses standard sequence for feature + standard (identity mapping)", () => {
+        const io = createIO();
+        initializeLoopFields(io, "run-5", "standard", "feature");
+        const written = io.write.mock.calls[0][0];
+        expect(written).toContain("plan,build,review,test,ship");
+        expect(written).toContain('work_nature: "feature"');
+    });
+    it("uses refactor_light sequence for refactor + light", () => {
+        const io = createIO();
+        initializeLoopFields(io, "run-6", "light", "refactor");
+        const written = io.write.mock.calls[0][0];
+        expect(written).toContain("refactor-apply");
+        expect(written).toContain("review");
+        expect(written).not.toContain("refactor-scan");
     });
 });
 //# sourceMappingURL=sdk-status-helpers.test.js.map

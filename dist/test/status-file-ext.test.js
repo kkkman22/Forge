@@ -21,6 +21,7 @@ mode: "autonomous"
 loop_run_id: "a1b2c3d4"
 loop_iteration: 3
 skill_sequence: "plan,build,review,test,ship"
+work_nature: "refactor"
 ---
 body content
 `;
@@ -29,6 +30,7 @@ body content
         expect(fields.loopRunId).toBe("a1b2c3d4");
         expect(fields.loopIteration).toBe(3);
         expect(fields.skillSequence).toEqual(["plan", "build", "review", "test", "ship"]);
+        expect(fields.workNature).toBe("refactor");
     });
     it("returns empty object for content without frontmatter", () => {
         const fields = extractLoopFields("just plain text");
@@ -244,6 +246,58 @@ phase: "router"
         const result = updateIterationStatus(content, "plan", 0);
         expect(result).toContain('phase: "plan"');
         expect(result).toContain("loop_iteration: 0");
+    });
+});
+// ---------------------------------------------------------------------------
+// work_nature in Loop fields
+// ---------------------------------------------------------------------------
+describe("work_nature in Loop fields", () => {
+    it("extractLoopFields extracts work_nature", () => {
+        const content = `---
+mode: "autonomous"
+loop_run_id: "run-1"
+loop_iteration: 0
+skill_sequence: "refactor-scan,refactor-apply,review,test,ship"
+work_nature: "refactor"
+---
+body`;
+        const fields = extractLoopFields(content);
+        expect(fields.workNature).toBe("refactor");
+    });
+    it("extractLoopFields returns undefined for missing work_nature", () => {
+        const content = `---
+mode: "autonomous"
+loop_run_id: "run-1"
+---
+body`;
+        const fields = extractLoopFields(content);
+        expect(fields.workNature).toBeUndefined();
+    });
+    it("writeLoopFields writes work_nature", () => {
+        const content = `---
+mode: "autonomous"
+loop_run_id: "run-1"
+---
+body`;
+        const result = writeLoopFields(content, { workNature: "bugfix" });
+        expect(result).toContain('work_nature: "bugfix"');
+        expect(result).toContain('mode: "autonomous"');
+    });
+    it("writeLoopFields creates frontmatter with work_nature when missing", () => {
+        const result = writeLoopFields("plain text", { workNature: "refactor" });
+        expect(result).toContain('work_nature: "refactor"');
+    });
+    it("clearLoopFields removes work_nature", () => {
+        const content = `---
+mode: "autonomous"
+loop_run_id: "run-1"
+work_nature: "bugfix"
+---
+body`;
+        const result = clearLoopFields(content);
+        expect(result).not.toContain("work_nature");
+        // Non-loop fields preserved
+        expect(result).toContain("body");
     });
 });
 //# sourceMappingURL=status-file-ext.test.js.map
