@@ -34,9 +34,15 @@ export const PhaseSchema = z.enum([
   "debug",
   "fix",
   "refactor",
+  "refactor-scan",
+  "refactor-apply",
+  "fix-analyze",
+  "fix-apply",
 ]);
 
 export const TierSchema = z.enum(["light", "standard", "full"]);
+
+export const WorkNatureSchema = z.enum(["feature", "refactor", "bugfix"]);
 
 export const LoopFieldsSchema = z
   .object({
@@ -57,6 +63,7 @@ export const StatusFileSchema = z
     tier: TierSchema.optional(),
     task_type: z.string().optional(),
     project_phase: z.string().optional(),
+    work_nature: WorkNatureSchema.optional(),
     phase: PhaseSchema.optional(),
     hints: z.string().optional(),
     assumptions: z.array(z.string()).optional(),
@@ -134,6 +141,7 @@ const FIELD_SCHEMAS: Record<string, z.ZodTypeAny> = {
   tier: TierSchema,
   task_type: z.string(),
   project_phase: z.string(),
+  work_nature: WorkNatureSchema,
   phase: PhaseSchema,
   hints: z.string(),
   assumptions: z.array(z.string()),
