@@ -1,32 +1,30 @@
 ---
-current_task: "audit-remediate-p0p1"
-tier: "full"
-phase: "decide"
-updated: "2026-06-06"
-branch: "forge/audit-remediate-p0p1"
+current_task: "audit-remediate-0608"
+tier: "standard"
+phase: "build"
+updated: "2026-06-08"
+branch: "forge/audit-remediate-0608"
 ---
 
 # 项目状态
 
-## 当前任务：audit-remediate-p0p1
+## 当前任务：audit-remediate-0608
 
-修复 FORGE_CODE_AUDIT_2026-06-06.md 审核报告中的 P0/P1 问题（10 项）。
+修复 2026-06-08 项目审核报告中经源码核实确认的 7 项问题。
 
 ### 范围
 
-**P0（必须修复）**：
-1. P0-1: `forge_read` 可绕过项目根路径约束读取任意本地文件
-2. P0-2: `forge_exec` 声称禁止变更但没有硬性只读/只测命令边界
+**P1（必须修复）**：
+1. REQ-01: fallback-ladder 测试使用真实 .forge/reviews/，需改为 tmpdir()
+2. REQ-02: checkShipGateWithForceSkip 审计不耦合 recordForceSkip
+3. REQ-03: stale review 仅 warning 不阻断 ship
+4. REQ-04: branch coverage 78.99% < 79% + workflow-naming 测试失败
 
-**P1（发布前修复）**：
-3. P1-1: `src/` 与 tracked `dist/` 大面积漂移
-4. P1-2: dispatcher allowlist 与 registry 漂移
-5. P1-3: Router intent dictionary 在 Node ESM runtime 中失效
-6. P1-4: plugin dist 缺少 `hooks/` 和 `.mcp.json`
-7. P1-5: coverage gate 失败（branches 78.96% < 79%）
-8. P1-6: npm package `postinstall` 副作用
-9. P1-7: tag publish job 未依赖完整质量门禁
-10. P1-8: Stop hook 127 多层 hook 配置漂移
+**P2（应该修复）**：
+5. REQ-05: validateTestability() 仅用单一 regex
+6. REQ-06: MCP legacy script mode 无 deprecation 警告
 
-- Tier: full
-- Sequence: decide → spec → plan → build → review → test → ship → learn
+- Tier: standard
+- Sequence: build → review → test → ship
+- Spec: .forge/specs/audit-remediate-0608/requirements.md
+- Plan: .forge/specs/audit-remediate-0608/tasks.md (approved)

@@ -86,7 +86,17 @@ const draftFrontmatterArb: fc.Arbitrary<SpecFrontmatter> = fc
   }));
 
 /** Verifiable assertion keywords for enhanced testability check. */
-const verifiableFragments = ["返回", "等于", "包含", "失败", "成功", "通过", "拒绝", "exit", "状态码"];
+const verifiableFragments = [
+  "返回",
+  "等于",
+  "包含",
+  "失败",
+  "成功",
+  "通过",
+  "拒绝",
+  "exit",
+  "状态码",
+];
 
 /** A valid scenario in "当...则..." format with a verifiable result. */
 const validScenarioArb: fc.Arbitrary<string> = fc
@@ -132,7 +142,9 @@ const untestableScenarioArb: fc.Arbitrary<string> = fc
   .filter((s) => {
     const resultMatch = s.match(/则(.+)/);
     if (!resultMatch) return true;
-    return !/返回|等于|包含|不存在|exit|状态码|失败|成功|拒绝|通过|为\b|显示|输出|抛出|退出码|不为|为空|非空/.test(resultMatch[1]);
+    return !/返回|等于|包含|不存在|exit|状态码|失败|成功|拒绝|通过|为\b|显示|输出|抛出|退出码|不为|为空|非空/.test(
+      resultMatch[1],
+    );
   });
 
 /** A requirement with NO valid testable scenarios (negative case). */

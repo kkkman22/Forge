@@ -108,10 +108,10 @@ describe("Preservation: checkShipGateWithFreshness", () => {
         expect(result.allowed).toBe(true);
         expect(result.reasons).toHaveLength(0);
     });
-    it("stale review with non-forge changes → allowed but with warning", () => {
+    it("stale review with non-forge changes → blocked", () => {
         const result = checkShipGateWithFreshness(passedReview, passedTest, completeProgress, "def5678", ["src/ship.ts"]);
-        // Freshness warning is non-blocking
-        expect(result.allowed).toBe(true);
+        // Stale review now blocks ship per REQ-03
+        expect(result.allowed).toBe(false);
         expect(result.reasons.length).toBeGreaterThan(0);
     });
     it("stale review with only .forge/ changes → allowed, no warning", () => {
