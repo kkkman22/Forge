@@ -1,4 +1,6 @@
+import { randomUUID } from "node:crypto";
 import { mkdirSync, rmSync, writeFileSync } from "node:fs";
+import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
@@ -14,7 +16,7 @@ import { runSubagentsWithConcurrency } from "../../src/subagent-runner.js";
 
 const mockedRunner = runSubagentsWithConcurrency as unknown as ReturnType<typeof vi.fn>;
 
-const tempDir = join(process.cwd(), ".forge", "reviews");
+const tempDir = join(tmpdir(), `forge-fallback-ladder-${randomUUID()}`, ".forge", "reviews");
 
 function makeInvocation(i: number): SubagentInvocation {
   return {

@@ -85,10 +85,23 @@ const draftFrontmatterArb: fc.Arbitrary<SpecFrontmatter> = fc
     date,
   }));
 
-/** A valid scenario in "当...则..." format. */
+/** Verifiable assertion keywords for enhanced testability check. */
+const verifiableFragments = [
+  "返回",
+  "等于",
+  "包含",
+  "失败",
+  "成功",
+  "通过",
+  "拒绝",
+  "exit",
+  "状态码",
+];
+
+/** A valid scenario in "当...则..." format with a verifiable result. */
 const validScenarioArb: fc.Arbitrary<string> = fc
-  .tuple(nonEmptyStringArb, nonEmptyStringArb)
-  .map(([condition, result]) => `当${condition}，则${result}`);
+  .tuple(nonEmptyStringArb, fc.constantFrom(...verifiableFragments), nonEmptyStringArb)
+  .map(([condition, verb, rest]) => `当${condition}，则${verb}${rest}`);
 
 /** A requirement with at least one valid scenario. */
 const validRequirementArb: fc.Arbitrary<Requirement> = fc
@@ -122,15 +135,24 @@ const draftSpecArb: fc.Arbitrary<SpecDocument> = fc
 /** A requirement with valid "当...则..." scenarios (positive case). */
 const testableRequirementArb: fc.Arbitrary<Requirement> = validRequirementArb;
 
-/** A requirement with NO valid "当...则..." scenarios (negative case). */
+/** A scenario in "当...则..." format WITHOUT a verifiable result keyword. */
+const untestableScenarioArb: fc.Arbitrary<string> = fc
+  .tuple(nonEmptyStringArb, nonEmptyStringArb)
+  .map(([condition, result]) => `当${condition}，则${result}`)
+  .filter((s) => {
+    const resultMatch = s.match(/则(.+)/);
+    if (!resultMatch) return true;
+    return !/返回|等于|包含|不存在|exit|状态码|失败|成功|拒绝|通过|为\b|显示|输出|抛出|退出码|不为|为空|非空/.test(
+      resultMatch[1],
+    );
+  });
+
+/** A requirement with NO valid testable scenarios (negative case). */
 const untestableRequirementArb: fc.Arbitrary<Requirement> = fc
   .tuple(
     nonEmptyStringArb,
     nonEmptyStringArb,
-    fc.array(
-      nonEmptyStringArb.filter((s) => !/当.+则.+/.test(s)),
-      { minLength: 0, maxLength: 3 },
-    ),
+    fc.array(untestableScenarioArb, { minLength: 1, maxLength: 3 }),
   )
   .map(([title, description, scenarios]) => ({ title, description, scenarios }));
 

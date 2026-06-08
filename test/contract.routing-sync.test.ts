@@ -219,3 +219,17 @@ describe("Command sequences match SKILL.md structure", () => {
     expect(claudeMd).toMatch(/plan.*→.*build.*→.*review.*→.*test.*→.*ship/i);
   });
 });
+
+// ---------------------------------------------------------------------------
+// work_nature field in router Status Update
+// ---------------------------------------------------------------------------
+
+describe("Router status update includes work_nature field", () => {
+  it("router instructions mention work_nature in Status Update section", () => {
+    expect(routerSkill).toContain("work_nature");
+  });
+
+  it("router instructions list valid work_nature values", () => {
+    expect(routerSkill).toContain("feature/refactor/bugfix");
+  });
+});

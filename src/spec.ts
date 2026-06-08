@@ -179,18 +179,43 @@ export function createImportedSpec(
  * Validate that every requirement has at least one testable scenario.
  *
  * Per SKILL.md §4.1, each scenario must use the "当...则..." format.
- * Returns true if ALL requirements have ≥1 scenario matching the pattern.
+ * Enhanced: 当...则... scenarios must also contain a verifiable assertion
+ * keyword (e.g., 返回, 等于, 包含, 失败) in the expected result clause.
+ * Non-当则 format scenarios pass without enhanced check (backward compat).
+ * Returns true if ALL requirements have ≥1 testable scenario.
  */
 export function validateTestability(requirements: Requirement[]): boolean {
   if (requirements.length === 0) {
     return false;
   }
 
-  const scenarioPattern = /当.+则.+/;
-
   return requirements.every(
-    (req) => req.scenarios.length > 0 && req.scenarios.some((s) => scenarioPattern.test(s)),
+    (req) => req.scenarios.length > 0 && req.scenarios.some((s) => isScenarioTestable(s)),
   );
+}
+
+/** Keywords indicating a verifiable assertion in the expected result. */
+const VERIFIABLE_KEYWORDS =
+  /返回|等于|包含|不存在|exit|状态码|失败|成功|拒绝|通过|为\b|显示|输出|抛出|退出码|不为|为空|非空/;
+
+/**
+ * Check whether a single scenario is testable.
+ * - Non-当则 format: passes (backward compat)
+ * - 当...则... format: must have a verifiable assertion in the result clause
+ */
+function isScenarioTestable(scenario: string): boolean {
+  const scenarioPattern = /当.+则.+/;
+  if (!scenarioPattern.test(scenario)) {
+    return true; // backward compat: non-当则 format passes
+  }
+
+  const resultMatch = scenario.match(/则(.+)/);
+  if (!resultMatch) {
+    return false;
+  }
+
+  const result = resultMatch[1].trim();
+  return VERIFIABLE_KEYWORDS.test(result);
 }
 
 /**

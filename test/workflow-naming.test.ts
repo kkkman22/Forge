@@ -4,10 +4,15 @@ import { join } from "node:path";
 import { describe, expect, it } from "vitest";
 
 describe("Forge saved workflow naming", () => {
-  it("uses forge-review.js instead of generic multi-agent-review.js", () => {
+  it("uses forge-review.js as the production dispatch target", () => {
     expect(existsSync(join(process.cwd(), ".claude", "workflows", "forge-review.js"))).toBe(true);
+  });
+
+  it("allows multi-agent-review.js as experimental-only workflow", () => {
+    // Per workflow-fallback-ladder.md: generic names are experimental only,
+    // MUST NOT be production dispatch targets — but may exist on disk.
     expect(existsSync(join(process.cwd(), ".claude", "workflows", "multi-agent-review.js"))).toBe(
-      false,
+      true,
     );
   });
 

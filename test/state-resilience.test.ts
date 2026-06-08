@@ -25,6 +25,7 @@ describe("STATUS_DEFAULTS", () => {
     const requiredFields: (keyof StatusFields)[] = [
       "current_task",
       "tier",
+      "work_nature",
       "phase",
       "task_type",
       "project_phase",
@@ -41,6 +42,7 @@ describe("STATUS_DEFAULTS", () => {
   it("has expected default values", () => {
     expect(STATUS_DEFAULTS.current_task).toBe("");
     expect(STATUS_DEFAULTS.tier).toBe("standard");
+    expect(STATUS_DEFAULTS.work_nature).toBe("feature");
     expect(STATUS_DEFAULTS.phase).toBe("router");
     expect(STATUS_DEFAULTS.task_type).toBe("fullstack");
     expect(STATUS_DEFAULTS.project_phase).toBe("iteration");
@@ -118,6 +120,7 @@ Some body`;
     const content = `---
 current_task: "test-task"
 tier: "full"
+work_nature: "refactor"
 phase: "review"
 task_type: "backend"
 project_phase: "greenfield"
@@ -134,6 +137,7 @@ Body text`;
 
     expect(parsed.current_task).toBe("test-task");
     expect(parsed.tier).toBe("full");
+    expect(parsed.work_nature).toBe("refactor");
     expect(parsed.phase).toBe("review");
     expect(parsed.task_type).toBe("backend");
     expect(parsed.project_phase).toBe("greenfield");
@@ -157,6 +161,34 @@ Body`;
     // Zod schema validates tier against enum; invalid value falls back to default
     expect(parsed.tier).toBe("standard");
     expect(warnings.length).toBeGreaterThan(0);
+  });
+
+  it("parses work_nature: refactor from frontmatter", () => {
+    const content = `---
+current_task: "test"
+tier: "standard"
+work_nature: "refactor"
+phase: "build"
+---
+Body`;
+    const { parsed } = parseStatusFileGraceful(content);
+    expect(parsed.work_nature).toBe("refactor");
+  });
+
+  it("defaults work_nature to feature when absent", () => {
+    const content = `---
+current_task: "test"
+tier: "standard"
+phase: "build"
+---
+Body`;
+    const { parsed } = parseStatusFileGraceful(content);
+    expect(parsed.work_nature).toBe("feature");
+  });
+
+  it("defaults work_nature to feature for empty content", () => {
+    const { parsed } = parseStatusFileGraceful(undefined);
+    expect(parsed.work_nature).toBe("feature");
   });
 });
 

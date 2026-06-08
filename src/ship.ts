@@ -136,6 +136,13 @@ export interface ShipOptions {
   forceSkipReason?: string;
 }
 
+/** Context for audit recording during force-skip. @public */
+export interface ShipGateContext {
+  cwd?: string;
+  commitHash?: string;
+  user?: string;
+}
+
 // ---------------------------------------------------------------------------
 // Review freshness check (design Properties 1-4)
 // ---------------------------------------------------------------------------
@@ -260,11 +267,35 @@ export function checkShipGateWithForceSkip(
   test: TestResult,
   progress: ProgressResult,
   options: ShipOptions,
+  context?: ShipGateContext,
 ): ShipGateResult {
   if (options.forceSkipReview) {
     if (!options.forceSkipReason || options.forceSkipReason.trim().length === 0) {
       throw new Error("--force-skip-review requires --reason='<non-empty>'");
     }
+
+    // Audit coupling: programmatically bind recordForceSkip
+    if (context?.cwd && context?.commitHash) {
+      try {
+        recordForceSkip(
+          context.commitHash,
+          options.forceSkipReason,
+          context.user || "unknown",
+          context.cwd,
+        );
+      } catch (err) {
+        const msg = err instanceof Error ? err.message : String(err);
+        return {
+          allowed: true,
+          reasons: [
+            `SKIPPED-BY-FORCE: ${options.forceSkipReason}`,
+            `⚠️ Audit recording failed: ${msg}`,
+          ],
+          forceSkipped: true,
+        };
+      }
+    }
+
     return {
       allowed: true,
       reasons: [`SKIPPED-BY-FORCE: ${options.forceSkipReason}`],
@@ -279,15 +310,22 @@ export function checkShipGateWithForceSkip(
  *
  * Writes an entry to `.forge/findings/force-skip-review-<date>.md` with
  * commit hash, reason, user, and timestamp.
+ * @param baseDir - Optional base directory for the .forge/findings path.
+ *   Defaults to current working directory.
  * @public
  */
-export function recordForceSkip(commitHash: string, reason: string, user: string): void {
+export function recordForceSkip(
+  commitHash: string,
+  reason: string,
+  user: string,
+  baseDir?: string,
+): void {
   const sanitizedReason = reason.replace(/[\r\n]/g, " ").slice(0, 500);
   const sanitizedUser = user.replace(/[\r\n\])#]/g, "").slice(0, 100);
   const sanitizedHash = commitHash.replace(/[^a-f0-9]/g, "").slice(0, 40);
 
   const date = new Date().toISOString().slice(0, 10);
-  const dir = ".forge/findings";
+  const dir = baseDir ? join(baseDir, ".forge/findings") : ".forge/findings";
   const filePath = join(dir, `force-skip-review-${date}.md`);
 
   mkdirSync(dir, { recursive: true });
@@ -325,9 +363,8 @@ export function checkShipGateWithChecklist(
 /**
  * Extended ship gate with Review Freshness check.
  *
- * Adds a non-blocking freshness warning: if the review was performed at a
- * different commit and project code has changed since, a warning is appended
- * to the reasons. This does NOT block ship — it is advisory only.
+ * Blocks ship when review is stale due to non-.forge/ code changes.
+ * If only .forge/ files changed, review is still considered fresh.
  * @public
  */
 export function checkShipGateWithFreshness(
@@ -345,7 +382,8 @@ export function checkShipGateWithFreshness(
   const freshness = checkReviewFreshness(review.reviewedAtCommit, currentHead, changedFiles);
   if (!freshness.fresh) {
     const fileList = freshness.changedFiles ? ` [${freshness.changedFiles.join(", ")}]` : "";
-    result.reasons.push(`⚠️ Review freshness: ${freshness.reason}${fileList}`);
+    result.reasons.push(`⛔ Review stale: ${freshness.reason}${fileList}`);
+    result.allowed = false;
   }
 
   return result;

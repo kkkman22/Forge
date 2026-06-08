@@ -259,9 +259,8 @@ export function detectWorkNature(description: string): WorkNature {
  * - refactor + light → "refactor_light", refactor + standard/full → "refactor_standard"
  * - bugfix + light → "fix_light", bugfix + standard/full → "fix_standard"
  *
- * @visibleForTesting Currently only used in tests. May be connected to
- * production call points in the future when the Skill Scheduler consumes
- * work-nature routing directly.
+ * Consumed by `sdk-status-helpers.initializeLoopFields()` for WorkNature-aware
+ * sequence selection.
  */
 export function getWorkNatureSequenceKey(workNature: WorkNature, tier: Tier): string {
   if (workNature === "feature") {
