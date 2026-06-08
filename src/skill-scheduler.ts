@@ -254,11 +254,10 @@ export function determineNextSkill(input: SchedulerInput): SchedulerResult {
  * Returns the ordered list of SKILL phases that should be executed.
  * Falls back to the standard sequence for unknown tiers.
  *
- * @visibleForTesting Currently only used in tests. May be connected to
- * production call points in the future when the SdkDriver queries
- * sequences directly from the Skill Scheduler.
+ * Consumed by `sdk-status-helpers.initializeLoopFields()` and
+ * `sdk-status-helpers.getLoopSkillSequence()`.
  *
- * @param tier - The routing tier (light, standard, full).
+ * @param tier - The routing tier (light, standard, full, refactor_light, etc.).
  * @returns Ordered array of SKILL phases.
  */
 export function getCommandSequence(tier: string): SkillPhase[] {
@@ -298,10 +297,6 @@ const COMMITABLE_PHASES = new Set<string>([
  * - **router** → no commit (only produces routing analysis)
  * - **learn** → no commit (only produces knowledge updates)
  * - Any phase with `success=false` → no commit
- *
- * @visibleForTesting Currently only used in tests. May be connected to
- * production call points in the future when the SdkDriver delegates
- * commit decisions to the Skill Scheduler.
  *
  * **Validates: Requirements 11.1, 11.3, 11.4, 11.5**
  *
