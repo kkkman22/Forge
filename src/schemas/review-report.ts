@@ -26,6 +26,7 @@ export const SeverityCountSchema = z.number().int().min(0);
 
 /** Review report production methodology. */
 export const MethodologySchema = z.enum([
+  "saved-workflow",
   "subagent-parallel",
   "subagent-serial",
   "ci-evidence",

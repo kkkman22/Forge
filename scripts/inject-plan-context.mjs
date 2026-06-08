@@ -16,7 +16,7 @@
  *
  * Fail-open: errors produce no output rather than blocking the user.
  */
-import { readdirSync, readFileSync, statSync } from "node:fs";
+import { existsSync, readdirSync, readFileSync, statSync } from "node:fs";
 import { join } from "node:path";
 import { shouldSkipForSubagent } from "./lib/hook-stdin-router.mjs";
 
@@ -32,8 +32,23 @@ const MAX_TOTAL_CHARS = 8000; // ~2000 tokens
 
 const args = process.argv.slice(2);
 const phaseIdx = args.indexOf("--phase");
-const phase = phaseIdx !== -1 ? args[phaseIdx + 1] : null;
+const explicitPhase = phaseIdx !== -1 ? args[phaseIdx + 1] : null;
 const compact = args.includes("--compact");
+
+function readStatusContext() {
+  if (!existsSync(".forge/status.md")) return { phase: null, currentPackage: null };
+  const status = readFileSync(".forge/status.md", "utf-8");
+  const phaseMatch = status.match(/^phase:\s*"?([^"\n]*)"?\s*$/m);
+  const packageMatch = status.match(/^current_package:\s*"?([^"\n]*)"?\s*$/m);
+  return {
+    phase: phaseMatch?.[1]?.trim() || null,
+    currentPackage: packageMatch?.[1]?.trim() || null,
+  };
+}
+
+const statusContext = readStatusContext();
+const phase = explicitPhase ?? statusContext.phase;
+const currentPackage = statusContext.currentPackage;
 
 // ---------------------------------------------------------------------------
 // Plan filtering
@@ -112,12 +127,54 @@ function extractHead(content) {
     : body;
 }
 
+function extractExecutionPackages(content) {
+  const section = content.match(/## Execution Packages[\s\S]*?```json\n([\s\S]*?)```/);
+  if (!section) return [];
+  try {
+    const parsed = JSON.parse(section[1]);
+    return Array.isArray(parsed.execution_packages) ? parsed.execution_packages : [];
+  } catch {
+    return [];
+  }
+}
+
+function extractPackageBuildTasks(content, packageId) {
+  if (!packageId) return extractBuildTasks(content);
+  const packages = extractExecutionPackages(content);
+  const pkg = packages.find((candidate) => candidate && candidate.id === packageId);
+  if (!pkg || !Array.isArray(pkg.tasks)) return extractBuildTasks(content);
+
+  const bodyStart = content.indexOf("---", 4);
+  const body = bodyStart === -1 ? content : content.slice(bodyStart + 3);
+  const taskIds = new Set(pkg.tasks);
+  const lines = body.split("\n");
+  const filtered = [];
+  let include = false;
+
+  for (const line of lines) {
+    const heading = line.match(/^###\s+([^\s]+)\s+/);
+    if (heading) {
+      include = taskIds.has(heading[1]);
+      if (include) filtered.push(line);
+      continue;
+    }
+    if (include && line.match(/^- \[ \]/)) {
+      filtered.push(compact ? line.replace(/\s*_.+$/, "") : line);
+    }
+  }
+
+  const result = filtered.join("\n");
+  return result.length > MAX_CHARS_PER_PLAN
+    ? result.slice(0, MAX_CHARS_PER_PLAN) + "\n[... truncated]"
+    : result;
+}
+
 function extractForPhase(content, phase) {
   if (!phase) return extractHead(content);
 
   switch (phase) {
     case "build":
-      return extractBuildTasks(content);
+      return extractPackageBuildTasks(content, currentPackage);
     case "review":
       return extractReviewContext(content);
     case "test":
@@ -159,7 +216,7 @@ try {
   if (active.length === 0) process.exit(0);
 
   let output = "=== Forge Context ===\n";
-  if (phase) output += `[phase: ${phase}${compact ? " compact" : ""}]\n`;
+  if (phase) output += `[phase: ${phase}${currentPackage ? ` package: ${currentPackage}` : ""}${compact ? " compact" : ""}]\n`;
   let total = output.length;
   for (let i = 0; i < active.length; i++) {
     const chunk = `\n--- ${active[i].path} ---\n${active[i].body}\n`;

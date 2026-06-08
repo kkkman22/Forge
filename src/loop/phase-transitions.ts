@@ -28,6 +28,25 @@ export type Phase =
 /** Possible outcomes of a review phase. */
 export type ReviewResult = "passed" | "failed-p0" | "failed-p1" | "not-run";
 
+export interface PackageTransitionInput {
+  tier: Tier;
+  currentPhase: Phase;
+  reviewResult?: ReviewResult;
+  currentPackage: string | null;
+  completedPackages: string[];
+  packageIds: string[];
+  packageDependencies?: Record<string, string[]>;
+}
+
+export interface PackageTransitionResult {
+  phase: Phase;
+  currentPackage: string | null;
+  completedPackages: string[];
+  nextPackage: string | null;
+  completed: boolean;
+  reason?: string;
+}
+
 // ---------------------------------------------------------------------------
 // Transition table
 // ---------------------------------------------------------------------------
@@ -125,4 +144,109 @@ export function getNextPhase(currentPhase: Phase, tier: Tier, reviewResult?: Rev
   }
 
   return next;
+}
+
+/**
+ * Determine package-aware loop state after the current phase completes.
+ *
+ * Build/review/test run package-scoped when execution packages exist. Ship and
+ * learn stay feature-scoped after all packages have completed.
+ */
+export function getNextPackageTransition(input: PackageTransitionInput): PackageTransitionResult {
+  const packageIds = input.packageIds;
+  if (packageIds.length === 0 || input.currentPackage === null) {
+    const phase = getNextPhase(input.currentPhase, input.tier, input.reviewResult);
+    return {
+      phase,
+      currentPackage: input.currentPackage,
+      completedPackages: unique(input.completedPackages),
+      nextPackage: null,
+      completed: phase === "completed",
+    };
+  }
+
+  const completedPackages = unique(input.completedPackages);
+  const currentPackage = input.currentPackage;
+  const dependencies = input.packageDependencies?.[currentPackage] ?? [];
+  const missingDependencies = dependencies.filter((id) => !completedPackages.includes(id));
+  if (missingDependencies.length > 0) {
+    return {
+      phase: "halted",
+      currentPackage,
+      completedPackages,
+      nextPackage: findNextIncompletePackage(packageIds, completedPackages, currentPackage),
+      completed: false,
+      reason: `Package ${currentPackage} depends on incomplete package(s): ${missingDependencies.join(", ")}`,
+    };
+  }
+
+  if (input.currentPhase === "review") {
+    const nextPhase = getNextPhase(input.currentPhase, input.tier, input.reviewResult);
+    return {
+      phase: nextPhase,
+      currentPackage,
+      completedPackages,
+      nextPackage: findNextIncompletePackage(packageIds, completedPackages, currentPackage),
+      completed: false,
+    };
+  }
+
+  if (input.currentPhase === "build") {
+    return {
+      phase: "review",
+      currentPackage,
+      completedPackages,
+      nextPackage: findNextIncompletePackage(packageIds, completedPackages, currentPackage),
+      completed: false,
+    };
+  }
+
+  if (input.currentPhase === "test") {
+    const newlyCompleted = unique([...completedPackages, currentPackage]);
+    const nextPackage = findNextIncompletePackage(packageIds, newlyCompleted, null);
+    if (nextPackage) {
+      return {
+        phase: "build",
+        currentPackage: nextPackage,
+        completedPackages: newlyCompleted,
+        nextPackage: findNextIncompletePackage(packageIds, newlyCompleted, nextPackage),
+        completed: false,
+      };
+    }
+    return {
+      phase: "ship",
+      currentPackage: null,
+      completedPackages: newlyCompleted,
+      nextPackage: null,
+      completed: true,
+    };
+  }
+
+  const nextPhase = getNextPhase(input.currentPhase, input.tier, input.reviewResult);
+  return {
+    phase: nextPhase,
+    currentPackage,
+    completedPackages,
+    nextPackage: findNextIncompletePackage(packageIds, completedPackages, currentPackage),
+    completed: nextPhase === "completed",
+  };
+}
+
+function unique(values: string[]): string[] {
+  return [...new Set(values)];
+}
+
+function findNextIncompletePackage(
+  packageIds: string[],
+  completedPackages: string[],
+  currentPackage: string | null,
+): string | null {
+  const completed = new Set(completedPackages);
+  const currentIndex = currentPackage === null ? -1 : packageIds.indexOf(currentPackage);
+  const afterCurrent = packageIds.slice(Math.max(0, currentIndex + 1));
+  const beforeCurrent = packageIds.slice(0, Math.max(0, currentIndex + 1));
+  return (
+    [...afterCurrent, ...beforeCurrent].find((id) => !completed.has(id) && id !== currentPackage) ??
+    null
+  );
 }

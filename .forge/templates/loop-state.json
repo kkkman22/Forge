@@ -13,5 +13,11 @@
   "createdAt": "2026-01-01T00:00:00.000Z",
   "phaseHistory": [],
   "lastReviewResult": "not-run",
-  "haltReason": ""
+  "haltReason": "",
+  "packageState": {
+    "currentPackage": "",
+    "completedPackages": [],
+    "nextPackage": "",
+    "packageCount": 0
+  }
 }

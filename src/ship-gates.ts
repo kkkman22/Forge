@@ -101,6 +101,7 @@ function parseReviewReportFrontmatter(content: string): ParsedReviewReport | nul
 }
 
 const VALID_METHODOLOGIES: readonly string[] = [
+  "saved-workflow",
   "subagent-parallel",
   "subagent-serial",
   "ci-evidence",
@@ -593,7 +594,7 @@ export function evaluateFallbackLadder(conditions: FallbackLadderConditions): {
     conditions.concurrencyBridgeAvailable;
 
   if (l0Met) {
-    return { level: "L0", methodology: "subagent-parallel" };
+    return { level: "L0", methodology: "saved-workflow" };
   }
 
   // L1/L2: subagent available
@@ -799,5 +800,51 @@ export function runAllGates(input: RunAllGatesInput): ShipGateReport {
     gates,
     allPassed,
     skipGate,
+  };
+}
+
+// ---------------------------------------------------------------------------
+// Package completion gate
+// ---------------------------------------------------------------------------
+
+export interface PackageCompletionInput {
+  executionPackages: Array<{ id: string; tasks: string[] }>;
+  completedPackages: string[];
+  severity?: "block" | "warn";
+}
+
+/**
+ * Check that all execution packages are complete before feature-scoped ship.
+ * Package-scoped review/test may still use this with severity="warn".
+ */
+export function checkPackageCompletionGate(input: PackageCompletionInput): GateResult {
+  const completed = new Set(input.completedPackages);
+  const incomplete = input.executionPackages
+    .map((pkg) => pkg.id)
+    .filter((id) => !completed.has(id));
+
+  if (incomplete.length === 0) {
+    return {
+      gate: "progress",
+      passed: true,
+      reason: `All ${input.executionPackages.length} execution package(s) completed.`,
+    };
+  }
+
+  const reason = `Incomplete execution package(s): ${incomplete.join(", ")}`;
+  if (input.severity === "warn") {
+    return {
+      gate: "progress",
+      passed: true,
+      reason: `Package completion warning: ${reason}`,
+      details: { incompleteTasks: incomplete.map((id) => `package:${id}`) },
+    };
+  }
+
+  return {
+    gate: "progress",
+    passed: false,
+    reason,
+    details: { incompleteTasks: incomplete.map((id) => `package:${id}`) },
   };
 }

@@ -28,6 +28,14 @@ export interface LoopStatusFields {
   skillSequence?: string[];
 }
 
+/** Package-related StatusFile extension fields. */
+export interface PackageStatusFields {
+  currentPackage?: string;
+  completedPackages?: string[];
+  nextPackage?: string;
+  packageCount?: number;
+}
+
 /** PUA-related StatusFile extension fields. */
 export interface PuaStatusFields {
   /** Current pressure level (L0-L4). */
@@ -53,6 +61,13 @@ const LOOP_FIELD_PATTERNS: readonly RegExp[] = [
   /^loop_run_id:\s/,
   /^loop_iteration:\s/,
   /^skill_sequence:\s/,
+];
+
+const PACKAGE_FIELD_PATTERNS: readonly RegExp[] = [
+  /^current_package:\s/,
+  /^completed_packages:\s/,
+  /^next_package:\s/,
+  /^package_count:\s/,
 ];
 
 /** Valid execution mode values. */
@@ -471,4 +486,71 @@ export function clearPuaFields(statusContent: string): string {
   const filtered = lines.filter((line) => !PUA_FIELD_PATTERN.test(line));
 
   return buildContent(filtered, parsed.body, parsed.leadingWhitespace);
+}
+
+// ---------------------------------------------------------------------------
+// Package status fields
+// ---------------------------------------------------------------------------
+
+/** Extract package-related fields from StatusFile content. */
+export function extractPackageFields(statusContent: string): PackageStatusFields {
+  const result: PackageStatusFields = {};
+  const parsed = parseFrontmatter(statusContent);
+  if (!parsed) return result;
+
+  const currentMatch = parsed.frontmatter.match(/^current_package:\s*"?([^"\n]*)"?\s*$/m);
+  if (currentMatch?.[1]?.trim()) result.currentPackage = currentMatch[1].trim();
+
+  const completedMatch = parsed.frontmatter.match(/^completed_packages:\s*"?([^"\n]*)"?\s*$/m);
+  if (completedMatch?.[1]?.trim()) {
+    result.completedPackages = completedMatch[1]
+      .split(",")
+      .map((item) => item.trim())
+      .filter((item) => item.length > 0);
+  }
+
+  const nextMatch = parsed.frontmatter.match(/^next_package:\s*"?([^"\n]*)"?\s*$/m);
+  if (nextMatch?.[1]?.trim()) result.nextPackage = nextMatch[1].trim();
+
+  const countMatch = parsed.frontmatter.match(/^package_count:\s*(\d+)\s*$/m);
+  if (countMatch) result.packageCount = Number.parseInt(countMatch[1], 10);
+
+  return result;
+}
+
+/** Write package-related fields into StatusFile content. */
+export function writePackageFields(statusContent: string, fields: PackageStatusFields): string {
+  const parsed = parseFrontmatter(statusContent);
+  const lines = parsed ? getFrontmatterLines(parsed.frontmatter) : [];
+  const body = parsed ? parsed.body : statusContent.trimStart();
+  const leadingWhitespace = parsed ? parsed.leadingWhitespace : "";
+
+  if (fields.currentPackage !== undefined) {
+    setField(lines, /^current_package:\s/, `current_package: "${fields.currentPackage}"`);
+  }
+  if (fields.completedPackages !== undefined) {
+    setField(
+      lines,
+      /^completed_packages:\s/,
+      `completed_packages: "${fields.completedPackages.join(",")}"`,
+    );
+  }
+  if (fields.nextPackage !== undefined) {
+    setField(lines, /^next_package:\s/, `next_package: "${fields.nextPackage}"`);
+  }
+  if (fields.packageCount !== undefined) {
+    setField(lines, /^package_count:\s/, `package_count: ${fields.packageCount}`);
+  }
+
+  return buildContent(lines, body, leadingWhitespace);
+}
+
+/** Remove package-related fields while preserving other StatusFile fields. */
+export function clearPackageFields(statusContent: string): string {
+  const parsed = parseFrontmatter(statusContent);
+  if (!parsed) return statusContent;
+  const lines = getFrontmatterLines(parsed.frontmatter).filter(
+    (line) => !PACKAGE_FIELD_PATTERNS.some((pattern) => pattern.test(line)),
+  );
+  return buildContent(lines, parsed.body, parsed.leadingWhitespace);
 }

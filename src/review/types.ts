@@ -41,7 +41,12 @@ export interface ReviewReportFrontmatter {
   p2_count: number;
   p3_count: number;
   /** How the review report was produced. Default: subagent-parallel. */
-  methodology?: "subagent-parallel" | "subagent-serial" | "ci-evidence" | "unavailable";
+  methodology?:
+    | "saved-workflow"
+    | "subagent-parallel"
+    | "subagent-serial"
+    | "ci-evidence"
+    | "unavailable";
 }
 
 export interface QualityGateResult {

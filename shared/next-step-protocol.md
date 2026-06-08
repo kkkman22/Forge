@@ -60,6 +60,8 @@ description: "Phase auto-advance protocol — 阶段间自动推进的运行时�
 | spec | AskUserQuestion: 确认锁定/修改/拒绝 |
 | plan | AskUserQuestion: 批准/修改/拒绝 |
 | ship | AskUserQuestion: Merge/PR/Keep/Discard |
+| package split | AskUserQuestion: 按建议拆分/调整边界/保留但生成执行包 |
+| package-boundary resume | AskUserQuestion: 继续当前包/重新选择活跃包/暂停恢复 |
 
 用户做出选择后，**立即**自动推进到下一阶段，不再二次确认。
 
