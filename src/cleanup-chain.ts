@@ -41,6 +41,8 @@ export async function runCleanupChain(ctx: CleanupContext): Promise<void> {
     if (ctx.worktreePath && ctx.worktreeCleanupAction === "remove") {
       execFileSync("git", ["worktree", "remove", ctx.worktreePath], {
         stdio: "pipe",
+        timeout: 30000,
+        killSignal: "SIGTERM",
       });
     }
   } catch (e) {

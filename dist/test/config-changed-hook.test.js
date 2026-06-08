@@ -164,5 +164,16 @@ describe("config-changed-hook.mjs", () => {
         // Should mention both changes
         expect(output.additionalContext).toContain("配置已变更");
     });
+    it("sanitizes control characters from changed file names", () => {
+        const result = runHook(["evil\nname/.forge/config.md", "bad\0path/.claude/settings.json"]);
+        expect(result.exitCode).toBe(0);
+        const output = parseOutput(result.stdout);
+        expect(output).not.toBeNull();
+        const hasControlCharacter = [...output.additionalContext].some((char) => {
+            const codePoint = char.codePointAt(0) ?? 0;
+            return codePoint < 32 || codePoint === 127;
+        });
+        expect(hasControlCharacter).toBe(false);
+    });
 });
 //# sourceMappingURL=config-changed-hook.test.js.map

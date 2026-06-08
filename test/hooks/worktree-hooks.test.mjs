@@ -38,10 +38,10 @@ function runCreate(env = {}) {
   }
 }
 
-function runRemove(env = {}) {
+function runRemove(env = {}, cwd = TMPDIR) {
   try {
     const stdout = execSync(`node "${REMOVE_SCRIPT}"`, {
-      cwd: TMPDIR,
+      cwd,
       encoding: "utf-8",
       timeout: 5000,
       env: { ...process.env, ...env },
@@ -53,7 +53,11 @@ function runRemove(env = {}) {
 }
 
 function readWorktreesJson() {
-  const p = join(TMPDIR, ".forge", "progress", "worktrees.json");
+  return readWorktreesJsonFrom(TMPDIR);
+}
+
+function readWorktreesJsonFrom(root) {
+  const p = join(root, ".forge", "progress", "worktrees.json");
   if (!existsSync(p)) return null;
   return JSON.parse(readFileSync(p, "utf-8"));
 }
@@ -173,6 +177,35 @@ describe("worktree-remove-hook.mjs", () => {
   test("exits 0 when no env vars", () => {
     const result = runRemove();
     assert.equal(result.exitCode, 0);
+  });
+
+  test("uses FORGE_PROJECT_ROOT instead of cwd when provided", () => {
+    const projectRoot = join(TMPDIR, "project-root");
+    const otherCwd = join(TMPDIR, "other-cwd");
+    mkdirSync(join(projectRoot, ".forge", "progress"), { recursive: true });
+    mkdirSync(otherCwd, { recursive: true });
+    writeFileSync(
+      join(projectRoot, ".forge", "progress", "worktrees.json"),
+      JSON.stringify({
+        worktrees: [
+          { path: "/tmp/wt-a", branch: "feature/a", created: "2026-05-30" },
+          { path: "/tmp/wt-b", branch: "feature/b", created: "2026-05-30" },
+        ],
+      }),
+    );
+
+    const result = runRemove(
+      {
+        FORGE_PROJECT_ROOT: projectRoot,
+        WORKTREE_PATH: "/tmp/wt-a",
+      },
+      otherCwd,
+    );
+
+    assert.equal(result.exitCode, 0);
+    const data = readWorktreesJsonFrom(projectRoot);
+    assert.equal(data.worktrees.length, 1);
+    assert.equal(data.worktrees[0].path, "/tmp/wt-b");
   });
 
   after(() => {
