@@ -314,7 +314,12 @@ export function checkShipGateWithForceSkip(
  *   Defaults to current working directory.
  * @public
  */
-export function recordForceSkip(commitHash: string, reason: string, user: string, baseDir?: string): void {
+export function recordForceSkip(
+  commitHash: string,
+  reason: string,
+  user: string,
+  baseDir?: string,
+): void {
   const sanitizedReason = reason.replace(/[\r\n]/g, " ").slice(0, 500);
   const sanitizedUser = user.replace(/[\r\n\])#]/g, "").slice(0, 100);
   const sanitizedHash = commitHash.replace(/[^a-f0-9]/g, "").slice(0, 40);
