@@ -26,6 +26,8 @@ export interface LoopStatusFields {
   loopIteration?: number;
   /** Ordered skill sequence from routing (e.g. ["plan","build","review","test","ship"]). */
   skillSequence?: string[];
+  /** Work nature: feature, refactor, or bugfix. */
+  workNature?: string;
 }
 
 /** Package-related StatusFile extension fields. */
@@ -61,6 +63,7 @@ const LOOP_FIELD_PATTERNS: readonly RegExp[] = [
   /^loop_run_id:\s/,
   /^loop_iteration:\s/,
   /^skill_sequence:\s/,
+  /^work_nature:\s/,
 ];
 
 const PACKAGE_FIELD_PATTERNS: readonly RegExp[] = [
@@ -217,6 +220,15 @@ export function extractLoopFields(statusContent: string): LoopStatusFields {
     }
   }
 
+  // Extract work_nature
+  const workNatureMatch = parsed.frontmatter.match(/^work_nature:\s*"?([^"\n]*)"?\s*$/m);
+  if (workNatureMatch) {
+    const value = workNatureMatch[1].trim();
+    if (value) {
+      result.workNature = value;
+    }
+  }
+
   return result;
 }
 
@@ -249,6 +261,9 @@ export function writeLoopFields(statusContent: string, fields: LoopStatusFields)
     if (fields.skillSequence !== undefined) {
       newLines.push(`skill_sequence: "${fields.skillSequence.join(",")}"`);
     }
+    if (fields.workNature !== undefined) {
+      newLines.push(`work_nature: "${fields.workNature}"`);
+    }
 
     if (newLines.length === 0) {
       return statusContent;
@@ -272,6 +287,9 @@ export function writeLoopFields(statusContent: string, fields: LoopStatusFields)
   }
   if (fields.skillSequence !== undefined) {
     setField(lines, /^skill_sequence:\s/, `skill_sequence: "${fields.skillSequence.join(",")}"`);
+  }
+  if (fields.workNature !== undefined) {
+    setField(lines, /^work_nature:\s/, `work_nature: "${fields.workNature}"`);
   }
 
   return buildContent(lines, parsed.body, parsed.leadingWhitespace);
