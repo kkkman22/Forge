@@ -27,6 +27,7 @@ const ALLOW_LIST: ReadonlyArray<string> = [
   "plan",
   "recap",
   "refactor",
+  "replay",
   "resume",
   "review",
   "review-comment-bitbucket",

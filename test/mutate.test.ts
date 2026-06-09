@@ -24,10 +24,14 @@ vi.mock("node:child_process", () => ({
 const mockFsWriteFile = vi.fn();
 const mockFsMkdir = vi.fn();
 const mockFsReadFile = vi.fn();
+const mockFsAppendFile = vi.fn();
+const mockFsExists = vi.fn((..._args: unknown[]) => false);
 vi.mock("node:fs", () => ({
   mkdirSync: (...args: unknown[]) => mockFsMkdir(...args),
   writeFileSync: (...args: unknown[]) => mockFsWriteFile(...args),
   readFileSync: (...args: unknown[]) => mockFsReadFile(...args),
+  appendFileSync: (...args: unknown[]) => mockFsAppendFile(...args),
+  existsSync: (...args: unknown[]) => mockFsExists(...args),
 }));
 
 // Mock node:path for artifact path construction
@@ -41,9 +45,13 @@ vi.mock("node:path", async (importOriginal) => {
 
 // Import after mocking
 import {
+  collectMutationTargets,
   collectTargetGlobs,
   computeMutationScore,
+  evaluateMutationVerdict,
+  FIRST_PARTY_MUTATION_TARGET_GROUPS,
   generateStrykerConfig,
+  parseMutationArgs,
   runMutation,
 } from "../src/mutate.js";
 
@@ -176,6 +184,83 @@ describe("collectTargetGlobs", () => {
     ]);
     const globs = collectTargetGlobs(enabled);
     expect(globs).toEqual(["src/auth.ts", "src/shared.ts", "src/cart.ts"]);
+  });
+});
+
+describe("first-party mutation targets", () => {
+  it("defines explicit reviewable target groups for critical Forge modules", () => {
+    expect(FIRST_PARTY_MUTATION_TARGET_GROUPS.gate_core.mode).toBe("required");
+    expect(FIRST_PARTY_MUTATION_TARGET_GROUPS.gate_core.globs).toEqual(
+      expect.arrayContaining(["src/ship-gates.ts", "src/ship.ts"]),
+    );
+    expect(FIRST_PARTY_MUTATION_TARGET_GROUPS.validators.mode).toBe("required");
+    expect(FIRST_PARTY_MUTATION_TARGET_GROUPS.workflow_artifacts.mode).toBe("advisory");
+  });
+
+  it("collects selected first-party groups before pack targets and deduplicates", () => {
+    const enabled = makeEnabledPacks([makePackEntry("pms", ["src/ship.ts", "src/domain.ts"])]);
+
+    const targets = collectMutationTargets(enabled, { targetGroups: ["gate_core"] });
+
+    expect(targets.targetedGlobs[0]).toBe("src/ship-gates.ts");
+    expect(targets.targetedGlobs).toContain("src/domain.ts");
+    expect(targets.targetedGlobs.filter((glob) => glob === "src/ship.ts")).toHaveLength(1);
+    expect(targets.required).toBe(true);
+    expect(targets.targetGroups).toEqual(["gate_core"]);
+  });
+});
+
+describe("parseMutationArgs", () => {
+  it("parses selected first-party target groups for mutate run", () => {
+    const parsed = parseMutationArgs([
+      "run",
+      "--target-group",
+      "gate_core",
+      "--target-group=workflow_artifacts",
+      "--threshold",
+      "90",
+      "--required",
+    ]);
+
+    expect(parsed.command).toBe("run");
+    expect(parsed.targetGroups).toEqual(["gate_core", "workflow_artifacts"]);
+    expect(parsed.threshold).toBe(90);
+    expect(parsed.required).toBe(true);
+  });
+});
+
+describe("tiered mutation verdict", () => {
+  it("fails required target groups below threshold", () => {
+    expect(
+      evaluateMutationVerdict({
+        mutationScore: 60,
+        threshold: 80,
+        required: true,
+        targetCount: 2,
+      }),
+    ).toBe("fail");
+  });
+
+  it("warns advisory target groups below threshold", () => {
+    expect(
+      evaluateMutationVerdict({
+        mutationScore: 60,
+        threshold: 80,
+        required: false,
+        targetCount: 2,
+      }),
+    ).toBe("warn");
+  });
+
+  it("warns when no targets are configured instead of passing", () => {
+    expect(
+      evaluateMutationVerdict({
+        mutationScore: 100,
+        threshold: 80,
+        required: true,
+        targetCount: 0,
+      }),
+    ).toBe("warn");
   });
 });
 
@@ -320,6 +405,8 @@ describe("runMutation", () => {
     mockExecFileSync.mockReset();
     mockFsWriteFile.mockReset();
     mockFsMkdir.mockReset();
+    mockFsAppendFile.mockReset();
+    mockFsExists.mockClear();
   });
 
   it("returns warn with empty globs (no-op)", async () => {

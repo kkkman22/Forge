@@ -32,6 +32,9 @@ HELP
   exit 0
 fi
 
+SCRIPT_DIR="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd)"
+BUNDLE_ROOT="$(cd "$SCRIPT_DIR/../.." && pwd)"
+DOCTOR_MODULE="$BUNDLE_ROOT/dist/src/doctor.js"
 ROOT="${FORGE_ROOT:-$(git rev-parse --show-toplevel 2>/dev/null || echo .)}"
 cd "$ROOT"
 
@@ -201,9 +204,23 @@ echo ""
 echo "📊 Summary: $PASS passed, $WARN warnings, $FAIL failures"
 
 if [[ "${1:-}" == "--json" ]]; then
+  HEALTH_JSON="null"
+  if [[ -f "$DOCTOR_MODULE" ]]; then
+    CURRENT_HEAD="$(git rev-parse HEAD 2>/dev/null || echo HEAD)"
+    HEALTH_JSON=$(
+      node --input-type=module - "$ROOT" "$CURRENT_HEAD" "$DOCTOR_MODULE" 2>/dev/null <<'NODE' || echo "null"
+const [projectRoot, currentHead, modulePath] = process.argv.slice(2);
+const { pathToFileURL } = await import("node:url");
+const { buildHealthSnapshot } = await import(pathToFileURL(modulePath).href);
+
+const snapshot = buildHealthSnapshot({ projectRoot, currentHead });
+process.stdout.write(JSON.stringify(snapshot));
+NODE
+    )
+  fi
   # Build structured JSON output
   VERSION_JSON="{\"currentVersion\":\"${CC_VERSION:-null}\",\"minimumVersion\":\"2.1.163\",\"maximumVersion\":null,\"verifiedLatest\":\"2.1.163\",\"verdict\":\"$([ -n \"$CC_VERSION\" ] && echo pass || echo unknown)\"}"
-  echo "{\"version\":$VERSION_JSON,\"diagnosticMode\":{\"active\":$DIAGNOSTIC_MODE_ACTIVE,\"env\":\"FORGE_DIAGNOSTIC_MODE\"},\"checks\":[$JSON_ITEMS],\"summary\":{\"pass\":$PASS,\"warn\":$WARN,\"fail\":$FAIL}}"
+  echo "{\"version\":$VERSION_JSON,\"diagnosticMode\":{\"active\":$DIAGNOSTIC_MODE_ACTIVE,\"env\":\"FORGE_DIAGNOSTIC_MODE\"},\"checks\":[$JSON_ITEMS],\"summary\":{\"pass\":$PASS,\"warn\":$WARN,\"fail\":$FAIL},\"health\":$HEALTH_JSON}"
 fi
 
 [[ $FAIL -eq 0 ]]

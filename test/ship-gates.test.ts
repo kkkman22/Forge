@@ -9,13 +9,14 @@
  */
 
 import { describe, expect, it } from "vitest";
+import { type EvidenceArtifact, writeEvidenceArtifact } from "../src/evidence-artifact.js";
 import type { GateName, GateResult, P1Fixlist, SkipGateOptions } from "../src/ship-gates.js";
-
 // We import the module dynamically so the tests can be written first
 // and fail until implementations are added.
 import {
   buildSkipGateAnnotation,
   checkFallbackLadderGate,
+  checkPolicyProfileArtifactGate,
   checkProgressGate,
   checkReviewGate,
   checkTestGate,
@@ -79,6 +80,92 @@ describe("checkTestGate — failure scenarios", () => {
     const result = checkTestGate("/tmp/forge-test-empty-tests");
     expect(result.gate).toBe("test");
     expect(result.passed).toBe(false);
+  });
+});
+
+describe("checkPolicyProfileArtifactGate", () => {
+  function artifact(overrides: Partial<EvidenceArtifact>): EvidenceArtifact {
+    const base: EvidenceArtifact = {
+      schema_version: 1,
+      artifact_id: "artifact-1",
+      kind: "review",
+      topic: "topic-a",
+      run_id: "run-1",
+      trace_id: "run-1",
+      commit: "head-1",
+      command: "npm run check",
+      exit_code: 0,
+      input_hash: "hash-1",
+      result: "pass",
+      producer: "vitest",
+      created_at: "2026-06-09T01:00:00.000Z",
+    };
+    return Object.assign(base, overrides);
+  }
+
+  it("enterprise blocks ship when required mutation and test artifacts are missing", () => {
+    const { mkdtempSync, rmSync } = require("node:fs") as typeof import("node:fs");
+    const { join } = require("node:path") as typeof import("node:path");
+    const { tmpdir } = require("node:os") as typeof import("node:os");
+    const root = mkdtempSync(join(tmpdir(), "forge-policy-gate-test-"));
+    try {
+      writeEvidenceArtifact(root, artifact({ kind: "review" }));
+
+      const result = checkPolicyProfileArtifactGate(root, "topic-a", "head-1", "enterprise");
+
+      expect(result.gate).toBe("policy");
+      expect(result.passed).toBe(false);
+      expect(result.reason).toContain("required test artifact is missing");
+      expect(result.reason).toContain("required mutation artifact is missing");
+    } finally {
+      rmSync(root, { recursive: true, force: true });
+    }
+  });
+
+  it("team passes with fresh review and test artifacts", () => {
+    const { mkdtempSync, rmSync } = require("node:fs") as typeof import("node:fs");
+    const { join } = require("node:path") as typeof import("node:path");
+    const { tmpdir } = require("node:os") as typeof import("node:os");
+    const root = mkdtempSync(join(tmpdir(), "forge-policy-gate-test-"));
+    try {
+      writeEvidenceArtifact(root, artifact({ kind: "review" }));
+      writeEvidenceArtifact(root, artifact({ artifact_id: "test-1", kind: "test" }));
+
+      const result = checkPolicyProfileArtifactGate(root, "topic-a", "head-1", "team");
+
+      expect(result.gate).toBe("policy");
+      expect(result.passed).toBe(true);
+    } finally {
+      rmSync(root, { recursive: true, force: true });
+    }
+  });
+
+  it("blocks stale required artifacts unless an explicit force ship artifact exists", () => {
+    const { mkdtempSync, rmSync } = require("node:fs") as typeof import("node:fs");
+    const { join } = require("node:path") as typeof import("node:path");
+    const { tmpdir } = require("node:os") as typeof import("node:os");
+    const root = mkdtempSync(join(tmpdir(), "forge-policy-gate-test-"));
+    try {
+      writeEvidenceArtifact(root, artifact({ kind: "review", commit: "old" }));
+      writeEvidenceArtifact(root, artifact({ artifact_id: "test-1", kind: "test", commit: "old" }));
+
+      expect(checkPolicyProfileArtifactGate(root, "topic-a", "head-1", "team").passed).toBe(false);
+
+      writeEvidenceArtifact(
+        root,
+        artifact({
+          artifact_id: "force-ship-1",
+          kind: "ship_gate",
+          commit: "head-1",
+          command: "forge ship topic-a --force",
+          input_hash: "force-hash",
+        }),
+      );
+
+      expect(checkPolicyProfileArtifactGate(root, "topic-a", "head-1", "team").passed).toBe(true);
+    } finally {
+      rmSync(root, { recursive: true, force: true });
+    }
   });
 });
 
@@ -487,6 +574,50 @@ describe("persistGateResults", () => {
       expect(content.gates).toHaveLength(3);
     } finally {
       rmSync(tmpDir, { recursive: true, force: true });
+    }
+  });
+
+  it("writes immutable ship_gate evidence artifact for persisted gates", () => {
+    const { mkdtempSync, existsSync, readFileSync, rmSync } =
+      require("node:fs") as typeof import("node:fs");
+    const { join } = require("node:path") as typeof import("node:path");
+    const { tmpdir } = require("node:os") as typeof import("node:os");
+
+    const root = mkdtempSync(join(tmpdir(), "forge-gate-artifact-test-"));
+    try {
+      const report = {
+        runId: "20260529-143000",
+        feature: "test-feature",
+        timestamp: "2026-05-29T14:30:00Z",
+        gates: [
+          { gate: "review" as GateName, passed: true, reason: "ok" },
+          { gate: "test" as GateName, passed: true, reason: "ok" },
+          { gate: "progress" as GateName, passed: true, reason: "ok" },
+        ],
+        allPassed: true,
+        skipGate: null,
+      };
+
+      const result = persistGateResults(report, join(root, ".forge", "ship"), {
+        commit: "head-1",
+        createdAt: "2026-06-09T04:00:00.000Z",
+      });
+
+      expect(result.reportPath).toBe(join(root, ".forge", "ship", "20260529-143000-gates.json"));
+      expect(result.artifactPath).toBeDefined();
+      expect(existsSync(result.artifactPath!)).toBe(true);
+
+      const artifact = JSON.parse(readFileSync(result.artifactPath!, "utf-8"));
+      expect(artifact.kind).toBe("ship_gate");
+      expect(artifact.topic).toBe("test-feature");
+      expect(artifact.run_id).toBe("20260529-143000");
+      expect(artifact.commit).toBe("head-1");
+      expect(artifact.result).toBe("pass");
+
+      const index = readFileSync(join(root, ".forge", "artifacts", "index.jsonl"), "utf-8");
+      expect(index).toContain('"kind":"ship_gate"');
+    } finally {
+      rmSync(root, { recursive: true, force: true });
     }
   });
 });

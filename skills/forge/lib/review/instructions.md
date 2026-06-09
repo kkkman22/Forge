@@ -1,6 +1,6 @@
 ---
 description: "Use when running `/forge review`, build completes, or code changes need quality gate before ship"
-updated: 2026-06-05
+updated: 2026-06-09
 
 dispatch_mode: fork
 allowed_tools:
@@ -318,13 +318,15 @@ Post-Review Step 4: 自动 /simplify + commit + 验证
 
 ## 10. Review Report Format
 
-`.forge/reviews/<topic>.md`。YAML frontmatter（topic/date/result/reviewed_at_commit/p0-p3_count/methodology/layers）+ 正文。methodology 缺省 `subagent-parallel`。
+`.forge/reviews/<topic>.md`。YAML frontmatter（topic/date/result/reviewed_at_commit/evidence_artifact_id/p0-p3_count/methodology/layers）+ 正文。methodology 缺省 `subagent-parallel`。
+
+评审报告是 human-readable view。写入报告前必须调用 `persistReviewEvidenceArtifact()` 生成 `.forge/artifacts/<run-id>/<artifact-id>.json`，并把返回的 artifact id 写入 frontmatter 的 `evidence_artifact_id`。`result: pass` 的评审报告没有 artifact 引用时视为 drift，不能作为 ship 证据。
 
 → 详见 references/review-report-format.md（完整 Frontmatter 模板）
 
 ## 11. Execution Flow
 
-1. **前置检查**（§15）→ 1.5. **Diff Context Preparation**（§2.0，写入 `.forge/reviews/.diff-context.md`）→ 2. **并行启动 Subagent**（prompt 包含 diff context 引用）→ 3. **状态确认** → 4. **合并管线** → 5. **质量门** → 6. **P0/P1 判定** → 7. **输出报告**（写入 frontmatter 时执行 `git rev-parse HEAD` 记录 `reviewed_at_commit`）→ 8. **生成 P1 Fix Checklist**（§9，存在 P0/P1 时）→ 9. **Post-Review Pipeline**（§8b）
+1. **前置检查**（§15）→ 1.5. **Diff Context Preparation**（§2.0，写入 `.forge/reviews/.diff-context.md`）→ 2. **并行启动 Subagent**（prompt 包含 diff context 引用）→ 3. **状态确认** → 4. **合并管线** → 5. **质量门** → 6. **P0/P1 判定** → 7. **输出报告**（写入 frontmatter 时执行 `git rev-parse HEAD` 记录 `reviewed_at_commit`，再写 `evidence_artifact_id`）→ 8. **生成 P1 Fix Checklist**（§9，存在 P0/P1 时）→ 9. **Post-Review Pipeline**（§8b）
 
 **Step 1.1 状态确认**：主动跟踪每个 Subagent，不假设"启动即完成"。**完成判定只看两件事**：(a) 框架返回的 `status` 字段是否 `success`；(b) `output` 末尾是否带有 sentinel `<!-- review-final -->`（详见 references/final-report-contract.md）。**禁止**主 Agent 阅读或解析 subagent 的自然语言 `result` 文本来判断"是否完成"——历史事故中 subagent 把中间话（"Now let me check..."）作为 result 返回时，主 Agent 误判为"还在跑"并 idle 等待永远不来的通知。
 

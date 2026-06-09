@@ -9,6 +9,8 @@
  * **Validates: Requirements 3.1, 3.2, 3.3, 3.4, 3.5, 3.6, 3.7, 3.8, 3.9, 3.10, 3.11**
  */
 
+import { getSchedulerSequence } from "./workflow-graph.js";
+
 // ---------------------------------------------------------------------------
 // Types
 // ---------------------------------------------------------------------------
@@ -60,35 +62,6 @@ export interface SchedulerResult {
   /** Human-readable explanation for the transition. */
   reason: string;
 }
-
-// ---------------------------------------------------------------------------
-// Constants
-// ---------------------------------------------------------------------------
-
-/**
- * Command sequences per tier for the SKILL scheduler.
- *
- * These differ from the Router's `COMMAND_SEQUENCES` — the Scheduler omits
- * `decide` and `spec` because it handles only SKILL execution phases. The
- * Router owns the full interactive workflow (including decision and
- * specification), while the Scheduler picks up from `plan` onward.
- *
- * @see src/router.ts COMMAND_SEQUENCES
- */
-const SKILL_COMMAND_SEQUENCES: Record<string, SkillPhase[]> = {
-  light: ["build-light", "review"],
-  standard: ["plan", "build", "review", "test", "ship"],
-  full: ["plan", "build", "review", "test", "ship", "learn"],
-  // Refactor workflow sequences
-  refactor_light: ["refactor-apply", "review"],
-  refactor_standard: ["refactor-scan", "refactor-apply", "review", "test", "ship"],
-  // Bug-fix workflow sequences
-  fix_light: ["fix-apply", "review"],
-  fix_standard: ["fix-analyze", "fix-apply", "review", "test", "ship"],
-};
-
-/** Default command sequence when tier is unknown. */
-const DEFAULT_SEQUENCE: SkillPhase[] = SKILL_COMMAND_SEQUENCES.standard;
 
 // ---------------------------------------------------------------------------
 // Public API
@@ -261,9 +234,7 @@ export function determineNextSkill(input: SchedulerInput): SchedulerResult {
  * @returns Ordered array of SKILL phases.
  */
 export function getCommandSequence(tier: string): SkillPhase[] {
-  return Object.hasOwn(SKILL_COMMAND_SEQUENCES, tier)
-    ? SKILL_COMMAND_SEQUENCES[tier]
-    : DEFAULT_SEQUENCE;
+  return getSchedulerSequence(tier) as SkillPhase[];
 }
 
 // ---------------------------------------------------------------------------

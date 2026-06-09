@@ -251,6 +251,33 @@ export interface ExecResult {
   timedOut: boolean;
 }
 
+export interface LegacyTypedReplacementWarning {
+  code: "LEGACY_TYPED_REPLACEMENT_AVAILABLE";
+  replacement: "forge_docs_drift" | "forge_dist_sync";
+  message: string;
+}
+
+export function legacyTypedReplacementWarning(
+  command: string,
+): LegacyTypedReplacementWarning | null {
+  const normalized = normalizeCommand(command);
+  if (normalized === "npm run docs:check") {
+    return {
+      code: "LEGACY_TYPED_REPLACEMENT_AVAILABLE",
+      replacement: "forge_docs_drift",
+      message: "Typed MCP capability available: use forge_docs_drift instead of forge_exec.",
+    };
+  }
+  if (normalized === "node scripts/check-dist-sync.mjs") {
+    return {
+      code: "LEGACY_TYPED_REPLACEMENT_AVAILABLE",
+      replacement: "forge_dist_sync",
+      message: "Typed MCP capability available: use forge_dist_sync instead of forge_exec.",
+    };
+  }
+  return null;
+}
+
 /**
  * Execute a shell command in a child subprocess with timeout support.
  *
@@ -593,8 +620,16 @@ export function registerForgeExec(server: McpServer, root?: ResolvedRoot): void 
             rtkAvailable,
           )
         : trimCommandOutput(trackedResult.stdout, trackedResult.stderr, trackedResult.exitCode);
+      const legacyWarning = legacyTypedReplacementWarning(command);
       return {
-        content: [{ type: "text" as const, text: trimmed }],
+        content: [
+          {
+            type: "text" as const,
+            text: legacyWarning
+              ? `[${legacyWarning.code}] ${legacyWarning.message}\n${trimmed}`
+              : trimmed,
+          },
+        ],
         isError: trackedResult.exitCode !== 0,
       };
     },

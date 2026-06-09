@@ -1,5 +1,6 @@
 import { existsSync, readFileSync } from "node:fs";
 import { resolve } from "node:path";
+import { getWorkflowRoutingSsot } from "../../workflow-graph.js";
 import { loadConfigWithDefaults } from "../config.js";
 import type { RendererFn } from "../types.js";
 import { createRendererRegistry } from "./renderer-registry.js";
@@ -17,6 +18,10 @@ export function loadSsotData(rootDir: string): Map<string, unknown> {
   const ssotData = new Map<string, unknown>();
 
   for (const entry of config.docs.ssot_sources) {
+    if (entry.topic === "routing") {
+      ssotData.set(entry.topic, getWorkflowRoutingSsot());
+      continue;
+    }
     const sourcePath = resolve(rootDir, entry.source);
     try {
       if (existsSync(sourcePath)) {

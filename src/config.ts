@@ -3,6 +3,16 @@ export interface ReviewConfig {
   subagent_concurrency: number;
 }
 
+export type PolicyProfile = "solo" | "team" | "enterprise";
+
+export interface PolicyProfileConfig {
+  policy_profile: PolicyProfile;
+  diagnostics: Array<{
+    code: "INVALID_POLICY_PROFILE";
+    message: string;
+  }>;
+}
+
 /** Parse review concurrency config. Priority: env > config.md > default(3). @public */
 export function parseReviewConfig(configContent: string | undefined): ReviewConfig {
   const DEFAULT_CONCURRENCY = 3;
@@ -36,4 +46,24 @@ export function parseReviewConfig(configContent: string | undefined): ReviewConf
   }
 
   return { subagent_concurrency: DEFAULT_CONCURRENCY };
+}
+
+export function parsePolicyProfileConfig(configContent: string | undefined): PolicyProfileConfig {
+  const diagnostics: PolicyProfileConfig["diagnostics"] = [];
+  const fallback: PolicyProfileConfig = { policy_profile: "team", diagnostics };
+  if (!configContent) return fallback;
+
+  const match = configContent.match(/^\s*policy_profile:\s*"?([a-zA-Z_-]+)"?\s*$/m);
+  if (!match) return fallback;
+
+  const value = match[1];
+  if (value === "solo" || value === "team" || value === "enterprise") {
+    return { policy_profile: value, diagnostics };
+  }
+
+  const message = `policy_profile invalid in config.md (${value}); falling back to team`;
+  diagnostics.push({ code: "INVALID_POLICY_PROFILE", message });
+  // biome-ignore lint/suspicious/noConsole: config parser warning is intentional (no logger access)
+  console.warn(message);
+  return fallback;
 }

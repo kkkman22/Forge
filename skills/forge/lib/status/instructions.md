@@ -1,5 +1,6 @@
 ---
 description: "Use when user runs `/forge status`, wants to see what tasks are in flight, or needs to know which phase a task currently sits in"
+updated: 2026-06-09
 
 dispatch_mode: inline
 allowed_tools:
@@ -31,6 +32,8 @@ Progress files: !`ls .forge/progress/*.md 2>/dev/null || echo "none"`
 
 ## 2. 数据来源
 
+**共享健康模型**：优先调用 `buildHealthSnapshot({ projectRoot, currentHead })` 读取 workflow graph、policy profile、artifact freshness 和 next-step blockers，再用 `renderStatusSummary(snapshot)` 生成 concise status 输出。`.forge/status.md` / `.forge/progress/` 的直接读取仅作为低层数据源或 fallback，不再作为独立状态逻辑。
+
 **单任务模式**：
 
 | 数据 | 来源文件 | 读取字段 |
@@ -40,6 +43,8 @@ Progress files: !`ls .forge/progress/*.md 2>/dev/null || echo "none"`
 | 当前阶段 | `.forge/status.md` | YAML frontmatter: `phase` |
 | 最近更新时间 | `.forge/status.md` | YAML frontmatter: `updated` |
 | 任务进度 | `.forge/progress/<topic>.md` | 已完成/进行中/阻塞任务列表 |
+| Policy Profile | `.forge/config.md` + health model | `policy_profile` |
+| Next Step | workflow graph + health model | allowed/blocked edge and reasons |
 
 **多任务模式**：调用 `listActiveTasks(io, forgeRoot)` 扫描 `.forge/status.md` + `.forge/status/*.md`，返回所有活跃任务的汇总表。为每个活跃任务分别读取 `.forge/progress/<topic>.md` 展示进度详情。
 

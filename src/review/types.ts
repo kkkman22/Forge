@@ -36,6 +36,8 @@ export interface ReviewReportFrontmatter {
   result: "pass" | "fail" | "blocked" | "incomplete";
   /** Commit hash at the time of review. Optional for backward compatibility. */
   reviewed_at_commit?: string;
+  /** Immutable evidence artifact id backing this review verdict. */
+  evidence_artifact_id?: string;
   p0_count: number;
   p1_count: number;
   p2_count: number;

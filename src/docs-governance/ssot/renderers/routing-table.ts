@@ -1,8 +1,11 @@
 import type { DocPath, RenderInput, RenderResult } from "../../types.js";
 
 interface RoutingEntry {
+  key?: string;
   tier: string;
+  tier_zh?: string;
   condition: string;
+  condition_zh?: string;
   sequence: string[];
 }
 
@@ -22,22 +25,30 @@ export function routingTableRenderer(input: RenderInput): RenderResult {
     };
   }
 
-  const unique = dedupAndSort(source, (e) => e.tier);
+  const unique = dedupPreserveOrder(source, (e) => e.key ?? e.tier);
 
   if (unique.length === 0) {
     return { markdown: "_No routing entries._", diagnostics: [] };
   }
 
+  const locale = input.args.locale === "zh" ? "zh" : "en";
+  const headers =
+    locale === "zh"
+      ? ["| 档位 | 判定条件 | 命令序列 |", "|------|---------|----------|"]
+      : ["| Tier | Condition | Command Sequence |", "|---|---|---|"];
   const lines = [
-    "| Tier | Condition | Command Sequence |",
-    "|---|---|---|",
-    ...unique.map((e) => `| ${e.tier} | ${e.condition} | ${e.sequence.join(" → ")} |`),
+    ...headers,
+    ...unique.map((e) => {
+      const tier = locale === "zh" ? (e.tier_zh ?? e.tier) : e.tier;
+      const condition = locale === "zh" ? (e.condition_zh ?? e.condition) : e.condition;
+      return `| **${tier}** | ${condition} | \`${e.sequence.join(" → ")}\` |`;
+    }),
   ];
 
   return { markdown: lines.join("\n"), diagnostics: [] };
 }
 
-function dedupAndSort<T>(items: T[], keyFn: (item: T) => string): T[] {
+function dedupPreserveOrder<T>(items: T[], keyFn: (item: T) => string): T[] {
   const seen = new Set<string>();
   const unique: T[] = [];
   for (const item of items) {
@@ -47,9 +58,5 @@ function dedupAndSort<T>(items: T[], keyFn: (item: T) => string): T[] {
       unique.push(item);
     }
   }
-  return unique.sort((a, b) => {
-    const ka = keyFn(a);
-    const kb = keyFn(b);
-    return ka < kb ? -1 : ka > kb ? 1 : 0;
-  });
+  return unique;
 }
