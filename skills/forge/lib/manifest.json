@@ -1,6 +1,6 @@
 {
   "version": 1,
-  "generated_at": "2026-06-09T05:26:10.471Z",
+  "generated_at": "2026-06-09T05:46:57.107Z",
   "subs": {
     "abort": {
       "instructions": {
@@ -652,12 +652,12 @@
     "status": {
       "instructions": {
         "path": "status/instructions.md",
-        "sha256": "93cb27100e6a5d9b72ad509df13c1620e3c6541c77b100d257b48d273b7739bf"
+        "sha256": "fb4d9908417d8a0d09146ea3bfe9502fc6f706f722bad04ec89d342a2de3d4b4"
       },
       "references": [
         {
           "path": "status/references/function-contracts.md",
-          "sha256": "722d46f3369eaf93f1b1cd7a332b5d09c3bf59a0ca8da34d9fcd1f106cf10935"
+          "sha256": "96d0ead30b1df15c33bf6abd19d4ca2f7dee532b0b22ff3ece1d8b661fa74beb"
         }
       ]
     },

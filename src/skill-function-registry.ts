@@ -364,6 +364,18 @@ export const SKILL_FUNCTION_REGISTRY: readonly SkillFunctionEntry[] = [
     skills: ["forge/lib/router/instructions.md"],
     parameterNames: ["io", "forgeRoot", "taskName", "content"],
   },
+  {
+    module: "doctor.ts",
+    functionName: "buildHealthSnapshot",
+    skills: ["forge/lib/status/instructions.md"],
+    parameterNames: ["options"],
+  },
+  {
+    module: "doctor.ts",
+    functionName: "renderStatusSummary",
+    skills: ["forge/lib/status/instructions.md"],
+    parameterNames: ["snapshot"],
+  },
 
   // --- forge-abort/SKILL.md (multi-task) ---
   {

@@ -53,7 +53,7 @@ export function parsePolicyProfileConfig(configContent: string | undefined): Pol
   const fallback: PolicyProfileConfig = { policy_profile: "team", diagnostics };
   if (!configContent) return fallback;
 
-  const match = configContent.match(/^\s*policy_profile:\s*([a-zA-Z_-]+)\s*$/m);
+  const match = configContent.match(/^\s*policy_profile:\s*"?([a-zA-Z_-]+)"?\s*$/m);
   if (!match) return fallback;
 
   const value = match[1];
