@@ -30,4 +30,29 @@ describe("plugin dist contract", () => {
       .reduce((sum, group) => sum + (Array.isArray(group.hooks) ? group.hooks.length : 0), 0);
     expect(hookCount).toBeGreaterThan(0);
   });
+
+  it("contains Forge runtime worker scripts", () => {
+    expect(existsSync(join(PLUGIN_DIST, "scripts/forge-hook-dispatch.mjs"))).toBe(true);
+    expect(existsSync(join(PLUGIN_DIST, "scripts/forge-phase-worker.mjs"))).toBe(true);
+    expect(existsSync(join(PLUGIN_DIST, "scripts/forge-sync-runtime.mjs"))).toBe(true);
+  });
+
+  it("packages the /forge phase worker runtime contract", async () => {
+    const fs = await import("node:fs/promises");
+    const content = await fs.readFile(join(PLUGIN_DIST, "skills/forge/SKILL.md"), "utf-8");
+
+    expect(content).toContain("Phase Worker Runtime");
+    expect(content).toContain("No manual new Claude Code window");
+    expect(content).toContain("forge-phase-worker.mjs");
+    expect(content).toContain("forge-sync-runtime.mjs");
+  });
+
+  it("packages an automatic runtime sync hook", async () => {
+    const fs = await import("node:fs/promises");
+    const content = await fs.readFile(join(PLUGIN_DIST, "hooks/hooks.json"), "utf-8");
+
+    expect(content).toContain("forge-sync-runtime.mjs");
+    expect(content).toContain("--repair");
+    expect(content).toContain("CLAUDE_PLUGIN_ROOT");
+  });
 });

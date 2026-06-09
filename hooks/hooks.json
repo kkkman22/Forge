@@ -32,6 +32,15 @@
         "hooks": [
           {
             "type": "command",
+            "command": "node \"${CLAUDE_PLUGIN_ROOT:-}/scripts/forge-sync-runtime.mjs\" --repair 2>/dev/null || node scripts/forge-sync-runtime.mjs --repair 2>/dev/null || node forge/scripts/forge-sync-runtime.mjs --repair 2>/dev/null || node ~/.claude/skills/forge/scripts/forge-sync-runtime.mjs --repair 2>/dev/null || true",
+            "timeout": 5
+          }
+        ]
+      },
+      {
+        "hooks": [
+          {
+            "type": "command",
             "command": "node scripts/check-companions.mjs 2>/dev/null || node forge/scripts/check-companions.mjs 2>/dev/null || node ~/.claude/skills/forge/scripts/check-companions.mjs 2>/dev/null || true",
             "timeout": 3
           }
