@@ -1,10 +1,10 @@
-import { mkdirSync, mkdtempSync, rmSync } from "node:fs";
+import { mkdirSync, mkdtempSync, rmSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { afterEach, describe, expect, it } from "vitest";
 import { writeEvidenceArtifact } from "../../src/evidence-artifact.js";
 import { legacyTypedReplacementWarning } from "../../src/mcp/tools/forge-exec.js";
-import { registerTypedCapabilityTools, TYPED_CAPABILITY_TOOL_NAMES, } from "../../src/mcp/tools/typed-capabilities.js";
+import { preferredTypedCapabilitiesForConsumer, registerTypedCapabilityTools, TYPED_CAPABILITY_TOOL_NAMES, validateTypedCapabilityOutput, } from "../../src/mcp/tools/typed-capabilities.js";
 const tempRoots = [];
 function tempRoot() {
     const root = mkdtempSync(join(tmpdir(), "forge-mcp-typed-test-"));
@@ -30,6 +30,11 @@ function artifact(overrides = {}) {
         created_at: "2026-06-09T01:00:00.000Z",
         ...overrides,
     };
+}
+function writeForgeFile(root, relPath, content) {
+    const fullPath = join(root, ".forge", relPath);
+    mkdirSync(join(fullPath, ".."), { recursive: true });
+    writeFileSync(fullPath, content, "utf-8");
 }
 describe("typed MCP capabilities", () => {
     it("registers all typed capability tools", () => {
@@ -61,6 +66,55 @@ describe("typed MCP capabilities", () => {
             kind: "review",
             result: "pass",
         }));
+        expect(validateTypedCapabilityOutput("forge_artifact_query", parsed).success).toBe(true);
+    });
+    it("returns schema-shaped review context JSON", async () => {
+        const root = tempRoot();
+        writeForgeFile(root, "status.md", '---\ncurrent_task: "topic-a"\ntier: "standard"\nphase: "build"\n---\n');
+        const handlers = new Map();
+        const fakeServer = {
+            registerTool: (name, _schema, handler) => {
+                handlers.set(name, handler);
+            },
+        };
+        registerTypedCapabilityTools(fakeServer, { path: root });
+        const result = (await handlers.get("forge_review_context")?.({ currentHead: "head-1" }));
+        const parsed = JSON.parse(result.content[0].text);
+        expect(parsed.health.task.id).toBe("topic-a");
+        expect(parsed.diff.status).toBe("unknown");
+        expect(validateTypedCapabilityOutput("forge_review_context", parsed).success).toBe(true);
+    });
+    it("rejects typed outputs that do not match the tool schema", () => {
+        const result = validateTypedCapabilityOutput("forge_docs_drift", {
+            schema_version: 2,
+            status: "pass",
+            command: "npm run docs:check",
+            exit_code: 0,
+            stdout_tail: "",
+            stderr_tail: "",
+        });
+        expect(result.success).toBe(false);
+    });
+    it("declares typed capability preferences for migrated consumers", () => {
+        expect(preferredTypedCapabilitiesForConsumer("doctor")).toEqual([
+            "forge_review_context",
+            "forge_artifact_query",
+            "forge_dist_sync",
+            "forge_docs_drift",
+        ]);
+        expect(preferredTypedCapabilitiesForConsumer("status")).toEqual([
+            "forge_review_context",
+            "forge_artifact_query",
+        ]);
+        expect(preferredTypedCapabilitiesForConsumer("review")).toEqual([
+            "forge_review_context",
+            "forge_diff_summary",
+        ]);
+        expect(preferredTypedCapabilitiesForConsumer("ship")).toEqual([
+            "forge_artifact_query",
+            "forge_dist_sync",
+            "forge_docs_drift",
+        ]);
     });
     it("warns when forge_exec is used for checks with typed replacements", () => {
         expect(legacyTypedReplacementWarning("npm run docs:check")).toEqual({
