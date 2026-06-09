@@ -3,7 +3,7 @@ title: Router Selection Guide
 category: reference
 audience:
 - maintainer
-updated: '2026-05-17'
+updated: 2026-06-09
 owner: forge-maintainers
 ---
 
@@ -13,11 +13,13 @@ owner: forge-maintainers
 
 Forge uses a three-tier routing system that selects an execution path based on task complexity:
 
+<!-- ssot:begin topic=routing render=routing-table locale=en -->
 | Tier | Condition | Command Sequence |
-|------|-----------|-----------------|
-| **Light** | Files affected ≤ 1 and changes ≤ 20 lines | `build → review` |
+|---|---|---|
+| **Light** | Files affected <= 1 and changes <= 20 lines | `build → review` |
 | **Standard** | Clear requirements or existing Spec | `plan → build → review → test → ship` |
 | **Full** | New service / new database / auth changes / unclear requirements | `decide → spec → plan → build → review → test → ship → learn` |
+<!-- ssot:end topic=routing -->
 
 ## Routing Decision Flow
 

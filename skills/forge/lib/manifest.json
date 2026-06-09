@@ -1,6 +1,6 @@
 {
   "version": 1,
-  "generated_at": "2026-06-08T15:39:59.551Z",
+  "generated_at": "2026-06-09T09:37:24.116Z",
   "subs": {
     "abort": {
       "instructions": {
@@ -467,6 +467,13 @@
         }
       ]
     },
+    "replay": {
+      "instructions": {
+        "path": "replay/instructions.md",
+        "sha256": "90809ddf54d48b828f32437f0faa0459c5de48b5cdbbb38b9de7320a620e442d"
+      },
+      "references": []
+    },
     "resume": {
       "instructions": {
         "path": "resume/instructions.md",
@@ -494,7 +501,7 @@
     "review": {
       "instructions": {
         "path": "review/instructions.md",
-        "sha256": "38b1247969b4fe3080a6df4c92636748a94f90a11bf471abdaeef880776aefea"
+        "sha256": "cd8df197c91babea81ebb77650cf1b9e14035786c8a42f5b1ae8556695f52849"
       },
       "references": [
         {
@@ -551,7 +558,7 @@
         },
         {
           "path": "review/references/review-report-format.md",
-          "sha256": "7bb92b3a36f40475856e85b1467712f55bfaafc18f779820abee0bc5ba2cafad"
+          "sha256": "896f3dbc054206882ecc6d520efae7e9642fcc4b542298818fa9f0f345747da8"
         },
         {
           "path": "review/references/subagent-return-protocol.md",
@@ -645,12 +652,12 @@
     "status": {
       "instructions": {
         "path": "status/instructions.md",
-        "sha256": "93cb27100e6a5d9b72ad509df13c1620e3c6541c77b100d257b48d273b7739bf"
+        "sha256": "fb4d9908417d8a0d09146ea3bfe9502fc6f706f722bad04ec89d342a2de3d4b4"
       },
       "references": [
         {
           "path": "status/references/function-contracts.md",
-          "sha256": "722d46f3369eaf93f1b1cd7a332b5d09c3bf59a0ca8da34d9fcd1f106cf10935"
+          "sha256": "96d0ead30b1df15c33bf6abd19d4ca2f7dee532b0b22ff3ece1d8b661fa74beb"
         }
       ]
     },
@@ -669,7 +676,7 @@
     "test": {
       "instructions": {
         "path": "test/instructions.md",
-        "sha256": "4a3094727ad65b331c2d3dc67bee91c9b107e93e1b628b58a2cd26547cb8e4a8"
+        "sha256": "20ba86ea9694a157eef7f8aaf1bac97a1e2b0ed726d07bd42ed44a7c638ef706"
       },
       "references": [
         {

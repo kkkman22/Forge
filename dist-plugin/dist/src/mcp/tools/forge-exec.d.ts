@@ -48,6 +48,12 @@ export interface ExecResult {
     exitCode: number;
     timedOut: boolean;
 }
+export interface LegacyTypedReplacementWarning {
+    code: "LEGACY_TYPED_REPLACEMENT_AVAILABLE";
+    replacement: "forge_docs_drift" | "forge_dist_sync";
+    message: string;
+}
+export declare function legacyTypedReplacementWarning(command: string): LegacyTypedReplacementWarning | null;
 /**
  * Execute a shell command in a child subprocess with timeout support.
  *

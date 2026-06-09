@@ -4,7 +4,7 @@
  * Spawns the compiled server as a child process, communicates via the MCP SDK
  * client transport, and verifies:
  *   - Server starts and responds to MCP initialize handshake
- *   - tools/list returns exactly 3 tools (forge_exec, forge_git, forge_read)
+ *   - tools/list returns core MCP tools plus typed Forge capability tools
  *   - tools/call for forge_exec with `echo hello` returns "hello"
  *
  * **Validates: Requirements 1.1–1.4, 1.6**
@@ -39,7 +39,9 @@ describe("forge-context MCP server integration", () => {
             // Ignore cleanup errors
         }
     });
-    it("starts, registers 4 tools, and executes forge_exec", { timeout: 15000 }, async () => {
+    it("starts, registers core and typed tools, and executes forge_exec", {
+        timeout: 15000,
+    }, async () => {
         // 1. Create client transport pointing to the compiled server
         transport = new StdioClientTransport({
             command: "node",
@@ -52,11 +54,22 @@ describe("forge-context MCP server integration", () => {
         });
         // 2. Connect — this sends initialize + initialized handshake
         await client.connect(transport);
-        // 3. List tools — verify exactly 4 tools registered
+        // 3. List tools — verify core tools and typed capability tools are registered
         const toolsResult = await client.listTools();
         const toolNames = toolsResult.tools.map((t) => t.name).sort();
-        expect(toolNames).toEqual(["forge_exec", "forge_git", "forge_read", "forge_read_cached"]);
-        expect(toolsResult.tools).toHaveLength(4);
+        expect(toolNames).toEqual([
+            "forge_artifact_query",
+            "forge_check_command",
+            "forge_diff_summary",
+            "forge_dist_sync",
+            "forge_docs_drift",
+            "forge_exec",
+            "forge_git",
+            "forge_read",
+            "forge_read_cached",
+            "forge_review_context",
+        ]);
+        expect(toolsResult.tools).toHaveLength(10);
         // 4. Call forge_exec with `echo hello`
         const callResult = await client.callTool({
             name: "forge_exec",

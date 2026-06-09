@@ -18,6 +18,7 @@ import { registerForgeExec } from "./tools/forge-exec.js";
 import { registerForgeGit } from "./tools/forge-git.js";
 import { registerForgeRead } from "./tools/forge-read.js";
 import { registerForgeReadCached } from "./tools/forge-read-cached.js";
+import { registerTypedCapabilityTools } from "./tools/typed-capabilities.js";
 // ---------------------------------------------------------------------------
 // Error handling — log to stderr (stdout is reserved for MCP protocol)
 // ---------------------------------------------------------------------------
@@ -44,6 +45,7 @@ registerForgeExec(server, root);
 registerForgeGit(server, root);
 registerForgeRead(server, root);
 registerForgeReadCached(server, root);
+registerTypedCapabilityTools(server, root);
 // ---------------------------------------------------------------------------
 // Graceful shutdown — prevents orphan processes when Claude Code exits
 // ---------------------------------------------------------------------------

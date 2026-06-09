@@ -14,8 +14,13 @@
  */
 
 import { existsSync, mkdirSync, readdirSync, writeFileSync } from "node:fs";
-import { join } from "node:path";
+import { dirname, join } from "node:path";
 import { type BaselineResolution, resolveBaseline } from "./baseline-resolver.js";
+import {
+  type EvidenceArtifact,
+  hashEvidenceInput,
+  writeEvidenceArtifact,
+} from "./evidence-artifact.js";
 import type { VerdictValue } from "./verdict-parser.js";
 
 // ---------------------------------------------------------------------------
@@ -41,6 +46,12 @@ export interface VerifyOptions {
   claim: FalsifiableClaim;
   /** Optional explicit baseline git ref. */
   baselineRef?: string;
+  /** Current commit hash for immutable evidence artifacts. */
+  currentCommit?: string;
+  /** Producer label for evidence artifacts. */
+  producer?: string;
+  /** Test hook for deterministic timestamps. */
+  createdAt?: string;
 }
 
 /** Result of a verify run. */
@@ -57,6 +68,10 @@ export interface VerifyResult {
   baselineResolution: BaselineResolution;
   /** Path to the output directory. */
   outputDir: string;
+  /** Immutable evidence artifact id, when one was written. */
+  evidenceArtifactId?: string;
+  /** Immutable evidence artifact path, when one was written. */
+  evidenceArtifactPath?: string;
 }
 
 // ---------------------------------------------------------------------------
@@ -74,6 +89,9 @@ export async function runVerify(options: VerifyOptions): Promise<VerifyResult> {
   const cwd = options.cwd ?? process.cwd();
   const forgeDir = options.forgeDir ?? join(cwd, ".forge");
   const outputDir = join(forgeDir, "findings", topic, "verify-this");
+  const createdAt = options.createdAt ?? new Date().toISOString();
+  const runId = makeVerifyRunId(createdAt);
+  const evidenceArtifactId = `${runId}-verify`;
 
   // Ensure output directories exist
   for (const sub of ["", "baseline", "treatment", "diff"]) {
@@ -87,33 +105,48 @@ export async function runVerify(options: VerifyOptions): Promise<VerifyResult> {
   // Step 2: Validate claim fields [R1.3]
   const missingFields = validateClaim(claim);
   if (missingFields.length > 0) {
-    writeInconclusiveVerdict(
-      outputDir,
-      topic,
+    return writeInconclusiveResult(
+      {
+        forgeDir,
+        outputDir,
+        topic,
+        runId,
+        evidenceArtifactId,
+        currentCommit: options.currentCommit ?? "unknown",
+        producer: options.producer ?? "forge-verify",
+        createdAt,
+      },
+      {
+        baselineFiles: listFiles(join(outputDir, "baseline")),
+        treatmentFiles: listFiles(join(outputDir, "treatment")),
+        baselineResolution: { ref: null, strategy: "none" },
+      },
       `Missing required claim fields: ${missingFields.join(", ")}`,
     );
-    return {
-      verdict: "INCONCLUSIVE",
-      inconclusiveReason: `Missing required claim fields: ${missingFields.join(", ")}`,
-      baselineFiles: listFiles(join(outputDir, "baseline")),
-      treatmentFiles: listFiles(join(outputDir, "treatment")),
-      baselineResolution: { ref: null, strategy: "none" },
-      outputDir,
-    };
   }
 
   // Step 3: Resolve baseline [R1.10]
   const baselineResolution = await resolveBaseline(topic, baselineRef, { cwd, forgeDir });
 
   if (baselineResolution.strategy === "none") {
-    return {
-      verdict: "INCONCLUSIVE",
-      inconclusiveReason: "no baseline reference available",
-      baselineFiles: listFiles(join(outputDir, "baseline")),
-      treatmentFiles: listFiles(join(outputDir, "treatment")),
-      baselineResolution,
-      outputDir,
-    };
+    return writeInconclusiveResult(
+      {
+        forgeDir,
+        outputDir,
+        topic,
+        runId,
+        evidenceArtifactId,
+        currentCommit: options.currentCommit ?? "unknown",
+        producer: options.producer ?? "forge-verify",
+        createdAt,
+      },
+      {
+        baselineFiles: listFiles(join(outputDir, "baseline")),
+        treatmentFiles: listFiles(join(outputDir, "treatment")),
+        baselineResolution,
+      },
+      "no baseline reference available",
+    );
   }
 
   // Steps 4–7: In a full implementation, these would capture artifacts,
@@ -124,26 +157,46 @@ export async function runVerify(options: VerifyOptions): Promise<VerifyResult> {
 
   // No artifacts captured → INCONCLUSIVE [R1.6]
   if (baselineFiles.length === 0 || treatmentFiles.length === 0) {
-    return {
-      verdict: "INCONCLUSIVE",
-      inconclusiveReason: "no artifacts captured (no capture commands configured)",
-      baselineFiles,
-      treatmentFiles,
-      baselineResolution,
-      outputDir,
-    };
+    return writeInconclusiveResult(
+      {
+        forgeDir,
+        outputDir,
+        topic,
+        runId,
+        evidenceArtifactId,
+        currentCommit: options.currentCommit ?? baselineResolution.ref ?? "unknown",
+        producer: options.producer ?? "forge-verify",
+        createdAt,
+      },
+      {
+        baselineFiles,
+        treatmentFiles,
+        baselineResolution,
+      },
+      "no artifacts captured (no capture commands configured)",
+    );
   }
 
   // This path would require actual metric comparison logic
   // For now, we can't determine VERIFIED/NOT_VERIFIED without comparison
-  return {
-    verdict: "INCONCLUSIVE",
-    inconclusiveReason: "metric comparison not yet implemented",
-    baselineFiles,
-    treatmentFiles,
-    baselineResolution,
-    outputDir,
-  };
+  return writeInconclusiveResult(
+    {
+      forgeDir,
+      outputDir,
+      topic,
+      runId,
+      evidenceArtifactId,
+      currentCommit: options.currentCommit ?? baselineResolution.ref ?? "unknown",
+      producer: options.producer ?? "forge-verify",
+      createdAt,
+    },
+    {
+      baselineFiles,
+      treatmentFiles,
+      baselineResolution,
+    },
+    "metric comparison not yet implemented",
+  );
 }
 
 // ---------------------------------------------------------------------------
@@ -173,11 +226,87 @@ function renderClaimMd(topic: string, claim: FalsifiableClaim): string {
   ].join("\n");
 }
 
-function writeInconclusiveVerdict(outputDir: string, topic: string, reason: string): void {
+interface VerifyEvidenceContext {
+  forgeDir: string;
+  outputDir: string;
+  topic: string;
+  runId: string;
+  evidenceArtifactId: string;
+  currentCommit: string;
+  producer: string;
+  createdAt: string;
+}
+
+interface VerifyEvidenceFiles {
+  baselineFiles: readonly string[];
+  treatmentFiles: readonly string[];
+  baselineResolution: BaselineResolution;
+}
+
+function writeInconclusiveResult(
+  context: VerifyEvidenceContext,
+  files: VerifyEvidenceFiles,
+  reason: string,
+): VerifyResult {
+  const artifactPath = writeVerifyEvidenceArtifact(context, files, reason);
+  writeInconclusiveVerdict(context.outputDir, context.topic, reason, context.evidenceArtifactId);
+
+  const result: VerifyResult = {
+    verdict: "INCONCLUSIVE",
+    inconclusiveReason: reason,
+    baselineFiles: files.baselineFiles,
+    treatmentFiles: files.treatmentFiles,
+    baselineResolution: files.baselineResolution,
+    outputDir: context.outputDir,
+    evidenceArtifactId: context.evidenceArtifactId,
+  };
+  if (artifactPath) result.evidenceArtifactPath = artifactPath;
+  return result;
+}
+
+function writeVerifyEvidenceArtifact(
+  context: VerifyEvidenceContext,
+  files: VerifyEvidenceFiles,
+  reason: string,
+): string | null {
+  const artifact: EvidenceArtifact = {
+    schema_version: 1,
+    artifact_id: context.evidenceArtifactId,
+    kind: "verify",
+    topic: context.topic,
+    run_id: context.runId,
+    trace_id: context.runId,
+    commit: context.currentCommit,
+    command: `forge verify ${context.topic}`,
+    exit_code: 1,
+    stdout_tail: reason,
+    input_hash: hashEvidenceInput({
+      topic: context.topic,
+      reason,
+      baselineResolution: files.baselineResolution,
+      baselineFiles: files.baselineFiles,
+      treatmentFiles: files.treatmentFiles,
+    }),
+    result: "inconclusive",
+    producer: context.producer,
+    created_at: context.createdAt,
+  };
+
+  const writeResult = writeEvidenceArtifact(dirname(context.forgeDir), artifact);
+  return writeResult.ok ? writeResult.path : null;
+}
+
+function writeInconclusiveVerdict(
+  outputDir: string,
+  topic: string,
+  reason: string,
+  evidenceArtifactId: string,
+): void {
   const verdictContent = [
     "---",
     `verdict: "INCONCLUSIVE"`,
     `topic: "${topic}"`,
+    `evidence_artifact_id: "${evidenceArtifactId}"`,
     'claim_path: "claim.md"',
     "baseline_snapshot: null",
     "treatment_snapshot: null",
@@ -190,8 +319,16 @@ function writeInconclusiveVerdict(outputDir: string, topic: string, reason: stri
     `## Reason`,
     "",
     reason,
+    "",
+    `Evidence artifact: ${evidenceArtifactId}`,
   ].join("\n");
   writeFileSync(join(outputDir, "verdict.md"), verdictContent);
+}
+
+function makeVerifyRunId(createdAt: string): string {
+  const prefix = createdAt.replace(/\D/g, "").slice(0, 14) || Date.now().toString(36);
+  const suffix = Math.random().toString(36).slice(2, 8);
+  return `${prefix}-${suffix}`;
 }
 
 function listFiles(dir: string): readonly string[] {

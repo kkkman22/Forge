@@ -2,7 +2,7 @@
 title: Docs Governance Reference
 category: reference
 audience: [maintainer, contributor]
-updated: 2026-06-06
+updated: 2026-06-09
 owner: forge-maintainers
 mirror_of: reference-docs-governance.md
 ---
@@ -111,7 +111,7 @@ The `docs/_ssot/` directory stores JSON-formatted SSOT data:
 ### Embed Directives
 
 ```markdown
-<!-- ssot:begin topic=commands render=count -->35<!-- ssot:end topic=commands -->
+<!-- ssot:begin topic=commands render=count -->36<!-- ssot:end topic=commands -->
 ```
 
 - `topic`: Data source topic name

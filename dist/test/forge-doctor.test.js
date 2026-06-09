@@ -7,10 +7,35 @@
  * - Each check item has id, status, message, and optional fixHint
  */
 import { execFile } from "node:child_process";
+import { mkdirSync, mkdtempSync, rmSync, writeFileSync } from "node:fs";
+import { tmpdir } from "node:os";
+import { join } from "node:path";
 import { promisify } from "node:util";
-import { describe, expect, it } from "vitest";
+import { afterEach, describe, expect, it } from "vitest";
 const execFileAsync = promisify(execFile);
 const DOCTOR = ".claude-plugin/bin/forge-doctor";
+const STATUS = ".claude-plugin/bin/forge-status";
+const tempRoots = [];
+function tempForgeRoot() {
+    const root = mkdtempSync(join(tmpdir(), "forge-status-bin-test-"));
+    tempRoots.push(root);
+    mkdirSync(join(root, ".forge"), { recursive: true });
+    writeFileSync(join(root, ".forge", "status.md"), [
+        "---",
+        'current_task: "typed-mcp-capabilities"',
+        'tier: "standard"',
+        'phase: "test"',
+        "---",
+        "",
+    ].join("\n"), "utf-8");
+    writeFileSync(join(root, ".forge", "config.md"), ["---", 'policy_profile: "enterprise"', "---", ""].join("\n"), "utf-8");
+    return root;
+}
+afterEach(() => {
+    for (const root of tempRoots.splice(0)) {
+        rmSync(root, { recursive: true, force: true });
+    }
+});
 describe("forge-doctor", () => {
     it("--help exits 0 and mentions version, plugin, MCP", async () => {
         const { stdout } = await execFileAsync("bash", [DOCTOR, "--help"], { timeout: 5000 });
@@ -68,6 +93,52 @@ describe("forge-doctor", () => {
             expect(w.fixHint).toBeDefined();
             expect(w.fixHint.length).toBeGreaterThan(0);
         }
+    });
+    it("--json includes shared health snapshot when Forge status exists", async () => {
+        const root = tempForgeRoot();
+        const { stdout } = await execFileAsync("bash", [DOCTOR, "--json"], {
+            timeout: 10000,
+            env: { ...process.env, FORGE_ROOT: root },
+        }).catch((err) => ({ stdout: err.stdout }));
+        const lines = stdout.split("\n");
+        const jsonLine = lines.find((l) => l.trim().startsWith("{") && l.includes('"version"'));
+        const parsed = JSON.parse(jsonLine);
+        expect(parsed.health.task.id).toBe("typed-mcp-capabilities");
+        expect(parsed.health.policyProfile).toBe("enterprise");
+        expect(parsed.health.nextStep).toMatchObject({
+            phase: "ship",
+            edge: "test -> ship",
+            allowed: false,
+        });
+    });
+});
+describe("forge-status", () => {
+    it("--json uses the shared health snapshot model", async () => {
+        const root = tempForgeRoot();
+        const { stdout } = await execFileAsync("bash", [STATUS, "--json"], {
+            timeout: 10000,
+            env: { ...process.env, FORGE_ROOT: root },
+        });
+        const parsed = JSON.parse(stdout);
+        expect(parsed.task.id).toBe("typed-mcp-capabilities");
+        expect(parsed.task.phase).toBe("test");
+        expect(parsed.policyProfile).toBe("enterprise");
+        expect(parsed.nextStep).toMatchObject({
+            phase: "ship",
+            allowed: false,
+            edge: "test -> ship",
+        });
+        expect(parsed.nextStep.reasons.map((r) => r.code)).toContain("MISSING_ARTIFACT");
+    });
+    it("text output includes profile and next-step explanation", async () => {
+        const root = tempForgeRoot();
+        const { stdout } = await execFileAsync("bash", [STATUS], {
+            timeout: 10000,
+            env: { ...process.env, FORGE_ROOT: root },
+        });
+        expect(stdout).toContain("Profile: enterprise");
+        expect(stdout).toContain("Next: ship blocked");
+        expect(stdout).toContain("MISSING_ARTIFACT");
     });
 });
 //# sourceMappingURL=forge-doctor.test.js.map

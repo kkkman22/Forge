@@ -21,5 +21,9 @@ describe("allowlist", () => {
         const result = validateTopic("charter");
         expect(result).toEqual({ ok: true, value: "charter" });
     });
+    it('should accept "replay" as valid subcommand', () => {
+        const result = validateTopic("replay");
+        expect(result).toEqual({ ok: true, value: "replay" });
+    });
 });
 //# sourceMappingURL=allowlist.test.js.map

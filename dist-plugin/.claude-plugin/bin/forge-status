@@ -16,16 +16,48 @@ Options:
 Reads .forge/status.md and .forge/progress/<task>.md to display:
   1. Current task name and tier
   2. Current phase
-  3. Task progress (completed/total)
-  4. Branch name
+  3. Active policy profile
+  4. Next phase and blockers from the shared Forge health model
 HELP
   exit 0
 fi
 
+SCRIPT_DIR="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd)"
+BUNDLE_ROOT="$(cd "$SCRIPT_DIR/../.." && pwd)"
+DOCTOR_MODULE="$BUNDLE_ROOT/dist/src/doctor.js"
 ROOT="${FORGE_ROOT:-$(git rev-parse --show-toplevel 2>/dev/null || echo .)}"
 cd "$ROOT"
 
 STATUS_FILE=".forge/status.md"
+
+if [[ -f "$DOCTOR_MODULE" ]]; then
+  current_head="$(git rev-parse HEAD 2>/dev/null || echo HEAD)"
+  mode="text"
+  if [[ "${1:-}" == "--json" ]]; then
+    mode="json"
+  elif [[ "${1:-}" == "--short" ]]; then
+    mode="short"
+  fi
+
+  node --input-type=module - "$ROOT" "$current_head" "$mode" "$DOCTOR_MODULE" <<'NODE'
+const [projectRoot, currentHead, mode, modulePath] = process.argv.slice(2);
+const { pathToFileURL } = await import("node:url");
+const { buildHealthSnapshot, renderStatusSummary } = await import(pathToFileURL(modulePath).href);
+
+const snapshot = buildHealthSnapshot({ projectRoot, currentHead });
+
+if (mode === "json") {
+  process.stdout.write(`${JSON.stringify(snapshot)}\n`);
+} else if (mode === "short") {
+  const next = snapshot.nextStep.phase ?? "(none)";
+  const state = snapshot.nextStep.allowed ? "allowed" : "blocked";
+  process.stdout.write(`Task: ${snapshot.task.id} | Phase: ${snapshot.task.phase ?? "unknown"} | Profile: ${snapshot.policyProfile} | Next: ${next} ${state}\n`);
+} else {
+  process.stdout.write(renderStatusSummary(snapshot));
+}
+NODE
+  exit 0
+fi
 
 if [[ ! -f "$STATUS_FILE" ]]; then
   echo "No active Forge task found. Run /forge <task-description> to start."
@@ -33,10 +65,10 @@ if [[ ! -f "$STATUS_FILE" ]]; then
 fi
 
 # Parse frontmatter fields
-current_task=$(grep '^current_task:' "$STATUS_FILE" | sed 's/current_task: *"\{0,1\}//;s/"\{0,1\} *$//')
-tier=$(grep '^tier:' "$STATUS_FILE" | sed 's/tier: *"\{0,1\}//;s/"\{0,1\} *$//')
-phase=$(grep '^phase:' "$STATUS_FILE" | sed 's/phase: *"\{0,1\}//;s/"\{0,1\} *$//')
-branch=$(grep '^branch:' "$STATUS_FILE" | sed 's/branch: *"\{0,1\}//;s/"\{0,1\} *$//')
+current_task=$(grep '^current_task:' "$STATUS_FILE" | sed 's/current_task: *"\{0,1\}//;s/"\{0,1\} *$//' || true)
+tier=$(grep '^tier:' "$STATUS_FILE" | sed 's/tier: *"\{0,1\}//;s/"\{0,1\} *$//' || true)
+phase=$(grep '^phase:' "$STATUS_FILE" | sed 's/phase: *"\{0,1\}//;s/"\{0,1\} *$//' || true)
+branch=$(grep '^branch:' "$STATUS_FILE" | sed 's/branch: *"\{0,1\}//;s/"\{0,1\} *$//' || true)
 
 if [[ "${1:-}" == "--json" ]]; then
   echo "{\"task\":\"$current_task\",\"tier\":\"$tier\",\"phase\":\"$phase\",\"branch\":\"$branch\"}"

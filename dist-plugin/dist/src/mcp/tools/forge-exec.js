@@ -219,6 +219,24 @@ function splitSimpleCommand(command) {
     const parts = command.trim().split(/\s+/);
     return { bin: parts[0], args: parts.slice(1) };
 }
+export function legacyTypedReplacementWarning(command) {
+    const normalized = normalizeCommand(command);
+    if (normalized === "npm run docs:check") {
+        return {
+            code: "LEGACY_TYPED_REPLACEMENT_AVAILABLE",
+            replacement: "forge_docs_drift",
+            message: "Typed MCP capability available: use forge_docs_drift instead of forge_exec.",
+        };
+    }
+    if (normalized === "node scripts/check-dist-sync.mjs") {
+        return {
+            code: "LEGACY_TYPED_REPLACEMENT_AVAILABLE",
+            replacement: "forge_dist_sync",
+            message: "Typed MCP capability available: use forge_dist_sync instead of forge_exec.",
+        };
+    }
+    return null;
+}
 /**
  * Execute a shell command in a child subprocess with timeout support.
  *
@@ -504,8 +522,16 @@ export function registerForgeExec(server, root) {
         const trimmed = rtkAvailable
             ? await trimWithFallback(trackedResult.stdout, trackedResult.stderr, trackedResult.exitCode, rtkAvailable)
             : trimCommandOutput(trackedResult.stdout, trackedResult.stderr, trackedResult.exitCode);
+        const legacyWarning = legacyTypedReplacementWarning(command);
         return {
-            content: [{ type: "text", text: trimmed }],
+            content: [
+                {
+                    type: "text",
+                    text: legacyWarning
+                        ? `[${legacyWarning.code}] ${legacyWarning.message}\n${trimmed}`
+                        : trimmed,
+                },
+            ],
             isError: trackedResult.exitCode !== 0,
         };
     });

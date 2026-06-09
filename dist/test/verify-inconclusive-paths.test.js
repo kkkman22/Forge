@@ -9,10 +9,11 @@
  *
  * **Validates: Requirements R1.3, R1.6, R1.10, R14.9**
  */
-import { mkdirSync, readFileSync, rmSync, writeFileSync } from "node:fs";
+import { existsSync, mkdirSync, readFileSync, rmSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { afterEach, describe, expect, it } from "vitest";
+import { queryEvidenceArtifacts } from "../src/evidence-artifact.js";
 import { runVerify } from "../src/verify.js";
 // ---------------------------------------------------------------------------
 // Helpers
@@ -49,6 +50,29 @@ describe("verify inconclusive paths", () => {
         expect(result.verdict).toBe("INCONCLUSIVE");
         expect(result.inconclusiveReason).toContain("condition");
     });
+    it("missing claim field writes verify evidence artifact and verdict cites it", async () => {
+        const dir = makeTmp("missing-artifact");
+        const forgeDir = join(dir, ".forge");
+        const opts = {
+            topic: "test",
+            cwd: dir,
+            forgeDir,
+            currentCommit: "head-verify-1",
+            claim: { condition: "", metric: "p95 latency", threshold: "<=200ms" },
+        };
+        const result = await runVerify(opts);
+        expect(result.verdict).toBe("INCONCLUSIVE");
+        expect(result.evidenceArtifactId).toBeDefined();
+        expect(result.evidenceArtifactPath).toBeDefined();
+        expect(existsSync(result.evidenceArtifactPath)).toBe(true);
+        const artifact = queryEvidenceArtifacts(dir, { topic: "test", kind: "verify" })[0];
+        expect(artifact.artifact_id).toBe(result.evidenceArtifactId);
+        expect(artifact.commit).toBe("head-verify-1");
+        expect(artifact.result).toBe("inconclusive");
+        const verdict = readFileSync(join(forgeDir, "findings", "test", "verify-this", "verdict.md"), "utf-8");
+        expect(verdict).toContain(`evidence_artifact_id: "${result.evidenceArtifactId}"`);
+        expect(verdict).toContain(`Evidence artifact: ${result.evidenceArtifactId}`);
+    });
     it("missing metric field → INCONCLUSIVE [R1.3]", async () => {
         const dir = makeTmp("missing-metric");
         const opts = {
@@ -84,6 +108,26 @@ describe("verify inconclusive paths", () => {
         const result = await runVerify(opts);
         expect(result.verdict).toBe("INCONCLUSIVE");
         expect(result.inconclusiveReason).toContain("baseline");
+    });
+    it("baseline resolution failure writes verdict.md and verify evidence artifact", async () => {
+        const dir = makeTmp("no-baseline-artifact");
+        const forgeDir = join(dir, ".forge");
+        const opts = {
+            topic: "test",
+            cwd: dir,
+            forgeDir,
+            currentCommit: "head-verify-2",
+            claim: { condition: "test", metric: "pass rate", threshold: "100%" },
+        };
+        const result = await runVerify(opts);
+        expect(result.verdict).toBe("INCONCLUSIVE");
+        expect(result.evidenceArtifactId).toBeDefined();
+        const verdictPath = join(forgeDir, "findings", "test", "verify-this", "verdict.md");
+        expect(existsSync(verdictPath)).toBe(true);
+        expect(readFileSync(verdictPath, "utf-8")).toContain("no baseline reference available");
+        const artifacts = queryEvidenceArtifacts(dir, { topic: "test", kind: "verify" });
+        expect(artifacts).toHaveLength(1);
+        expect(artifacts[0].result).toBe("inconclusive");
     });
     it("writes claim.md before aborting [R1.2]", async () => {
         const dir = makeTmp("claim-written");

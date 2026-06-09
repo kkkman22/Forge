@@ -9,15 +9,24 @@
  */
 
 import { mkdirSync, readdirSync, readFileSync, writeFileSync } from "node:fs";
-import { join } from "node:path";
+import { basename, dirname, join } from "node:path";
+import {
+  type EvidenceArtifact,
+  type EvidenceArtifactKind,
+  hashEvidenceInput,
+  isArtifactFreshForCommit,
+  queryEvidenceArtifacts,
+  writeEvidenceArtifact,
+} from "./evidence-artifact.js";
 import type { Methodology } from "./schemas/review-report.js";
+import { getPolicyGateRequirements, type PolicyProfile } from "./workflow-graph.js";
 
 // ---------------------------------------------------------------------------
 // Types
 // ---------------------------------------------------------------------------
 
 /** Name of a specific gate. */
-export type GateName = "review" | "test" | "progress";
+export type GateName = "review" | "test" | "progress" | "policy";
 
 /** Structured result of a single gate check. */
 export interface GateResult {
@@ -64,6 +73,23 @@ export interface ShipGateReport {
   gates: GateResult[];
   allPassed: boolean;
   skipGate: string | null;
+}
+
+export interface PersistGateResultsOptions {
+  projectRoot?: string;
+  commit?: string;
+  producer?: string;
+  command?: string;
+  exitCode?: number;
+  stdoutTail?: string;
+  stderrTail?: string;
+  createdAt?: string;
+}
+
+export interface PersistGateResultsResult {
+  reportPath: string;
+  artifactPath?: string;
+  artifactError?: string;
 }
 
 // ---------------------------------------------------------------------------
@@ -399,6 +425,78 @@ export function checkTestGate(testResultsDir: string, configCICheck?: string): G
   };
 }
 
+export function checkPolicyProfileArtifactGate(
+  projectRoot: string,
+  topic: string,
+  currentHead: string,
+  policyProfile: PolicyProfile,
+  options: { changedFiles?: readonly string[]; testInputHash?: string } = {},
+): GateResult {
+  const requiredKinds = requiredArtifactKinds(policyProfile);
+  const failures: string[] = [];
+  const forceArtifact = latestForceShipArtifact(projectRoot, topic);
+
+  for (const kind of requiredKinds) {
+    const latest = queryEvidenceArtifacts(projectRoot, { topic, kind })[0];
+    if (!latest) {
+      failures.push(`required ${kind} artifact is missing`);
+      continue;
+    }
+    if (latest.result !== "pass") {
+      failures.push(`latest ${kind} artifact result is ${latest.result}`);
+    }
+    const freshness = isArtifactFreshForCommit(latest, currentHead, {
+      changedFiles: kind === "review" ? options.changedFiles : undefined,
+      inputHash: kind === "test" ? options.testInputHash : undefined,
+    });
+    if (!freshness.fresh) {
+      if (!forceArtifact) {
+        failures.push(freshness.reason);
+      }
+    }
+  }
+
+  if (failures.length > 0) {
+    return {
+      gate: "policy",
+      passed: false,
+      reason: failures.join("; "),
+      details: { incompleteTasks: failures },
+    };
+  }
+
+  return {
+    gate: "policy",
+    passed: true,
+    reason: `${policyProfile} policy artifact requirements satisfied.`,
+  };
+}
+
+function latestForceShipArtifact(projectRoot: string, topic: string): EvidenceArtifact | null {
+  return (
+    queryEvidenceArtifacts(projectRoot, { topic, kind: "ship_gate" }).find(
+      (artifact) =>
+        artifact.result === "pass" &&
+        /\b--force\b|\bforce\b|forced|force-skip/i.test(artifact.command),
+    ) ?? null
+  );
+}
+
+function requiredArtifactKinds(policyProfile: PolicyProfile): EvidenceArtifactKind[] {
+  const gates = getPolicyGateRequirements(policyProfile, "ship");
+  const requiredKinds: EvidenceArtifactKind[] = [];
+  if (gates.review === "basic" || gates.review === "required" || gates.review === "full") {
+    requiredKinds.push("review");
+  }
+  if (gates.test === "required" || gates.test === "full") {
+    requiredKinds.push("test");
+  }
+  if (gates.mutation === "required" || gates.mutation === "full") {
+    requiredKinds.push("mutation");
+  }
+  return requiredKinds;
+}
+
 // ---------------------------------------------------------------------------
 // Task 5: checkProgressGate (GREEN)
 // ---------------------------------------------------------------------------
@@ -642,10 +740,53 @@ export function checkFallbackLadderGate(methodology: Methodology): GateResult {
  *
  * Creates the directory if it does not exist.
  */
-export function persistGateResults(report: ShipGateReport, shipDir: string): void {
+export function persistGateResults(
+  report: ShipGateReport,
+  shipDir: string,
+  options: PersistGateResultsOptions = {},
+): PersistGateResultsResult {
   mkdirSync(shipDir, { recursive: true });
   const filePath = join(shipDir, `${report.runId}-gates.json`);
   writeFileSync(filePath, `${JSON.stringify(report, null, 2)}\n`, "utf-8");
+
+  const projectRoot = options.projectRoot ?? inferProjectRootFromShipDir(shipDir);
+  if (!projectRoot) {
+    return { reportPath: filePath };
+  }
+
+  const artifactId = `${report.runId}-ship-gate`;
+  const artifact: EvidenceArtifact = {
+    schema_version: 1,
+    artifact_id: artifactId,
+    kind: "ship_gate",
+    topic: report.feature,
+    run_id: report.runId,
+    trace_id: report.runId,
+    commit: options.commit ?? "unknown",
+    command: options.command ?? `forge ship ${report.feature}`,
+    exit_code: options.exitCode ?? (report.allPassed ? 0 : 1),
+    input_hash: hashEvidenceInput(report),
+    result: report.allPassed ? "pass" : "blocked",
+    producer: options.producer ?? "forge-ship",
+    created_at: options.createdAt ?? report.timestamp,
+  };
+  if (options.stdoutTail !== undefined) artifact.stdout_tail = options.stdoutTail;
+  if (options.stderrTail !== undefined) artifact.stderr_tail = options.stderrTail;
+
+  const writeResult = writeEvidenceArtifact(projectRoot, artifact);
+
+  if (!writeResult.ok) {
+    return { reportPath: filePath, artifactError: writeResult.message };
+  }
+
+  return { reportPath: filePath, artifactPath: writeResult.path };
+}
+
+function inferProjectRootFromShipDir(shipDir: string): string | null {
+  if (basename(shipDir) !== "ship") return null;
+  const forgeDir = dirname(shipDir);
+  if (basename(forgeDir) !== ".forge") return null;
+  return dirname(forgeDir);
 }
 
 // ---------------------------------------------------------------------------

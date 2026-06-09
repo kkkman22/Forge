@@ -3,6 +3,7 @@
  */
 
 export * from "./core.js";
+export * from "./evidence.js";
 export * from "./evolution.js";
 export * from "./fallback.js";
 export * from "./frontmatter.js";

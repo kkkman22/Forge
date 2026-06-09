@@ -12,6 +12,11 @@ import { execFileSync } from "node:child_process";
 import { mkdirSync, readFileSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
 import { stringify as yamlStringify } from "yaml";
+import {
+  type EvidenceWriteResult,
+  hashEvidenceInput,
+  writeEvidenceArtifact,
+} from "./evidence-artifact.js";
 import type { EnabledPacks } from "./pack/types.js";
 
 // ---------------------------------------------------------------------------
@@ -21,11 +26,15 @@ import type { EnabledPacks } from "./pack/types.js";
 export interface MutationArtifact {
   filePath: string;
   summary: MutationSummary;
+  evidenceArtifactId?: string;
+  evidenceArtifactPath?: string;
 }
 
 export interface MutationSummary {
   packSource: string;
   targetedGlobs: string[];
+  targetGroups?: string[];
+  required?: boolean;
   total: number;
   killed: number;
   survived: number;
@@ -33,13 +42,101 @@ export interface MutationSummary {
   runtimeErrors: number;
   mutationScore: number;
   threshold: number;
-  verdict: "pass" | "warn";
+  verdict: MutationVerdict;
   durationMs: number;
 }
 
 export interface RunMutationOptions {
   projectRoot: string;
   threshold?: number;
+  targetGroups?: string[];
+  required?: boolean;
+  currentCommit?: string;
+  runId?: string;
+  createdAt?: string;
+}
+
+export interface MutationCommandOptions {
+  command: "run" | "kill-survivors" | "report";
+  targetGroups: string[];
+  threshold?: number;
+  required: boolean;
+}
+
+export type MutationGateMode = "required" | "advisory";
+export type MutationVerdict = "pass" | "warn" | "fail";
+
+export interface MutationTargetGroup {
+  mode: MutationGateMode;
+  globs: string[];
+}
+
+export interface MutationTargetSelection {
+  targetGroups: string[];
+  targetedGlobs: string[];
+  required: boolean;
+}
+
+export const FIRST_PARTY_MUTATION_TARGET_GROUPS: Record<string, MutationTargetGroup> = {
+  gate_core: {
+    mode: "required",
+    globs: ["src/ship-gates.ts", "src/ship.ts", "src/review/quality-gate.ts"],
+  },
+  validators: {
+    mode: "required",
+    globs: ["src/mcp/tools/path-validator.ts", "src/spec-validation.ts"],
+  },
+  workflow_artifacts: {
+    mode: "advisory",
+    globs: ["src/workflow-graph.ts", "src/evidence-artifact.ts"],
+  },
+};
+
+export function parseMutationArgs(args: string[]): MutationCommandOptions {
+  const [first = "run", ...rest] = args;
+  const command =
+    first === "kill-survivors" || first === "report" || first === "run" ? first : "run";
+  const tokens = first === command ? rest : args;
+  const targetGroups: string[] = [];
+  let threshold: number | undefined;
+  let required = false;
+
+  for (let i = 0; i < tokens.length; i++) {
+    const token = tokens[i];
+    if (token === "--target-group") {
+      const value = tokens[i + 1];
+      if (value) {
+        targetGroups.push(value);
+        i++;
+      }
+      continue;
+    }
+    if (token.startsWith("--target-group=")) {
+      const value = token.slice("--target-group=".length);
+      if (value) targetGroups.push(value);
+      continue;
+    }
+    if (token === "--threshold") {
+      const value = Number(tokens[i + 1]);
+      if (Number.isFinite(value)) {
+        threshold = value;
+        i++;
+      }
+      continue;
+    }
+    if (token.startsWith("--threshold=")) {
+      const value = Number(token.slice("--threshold=".length));
+      if (Number.isFinite(value)) threshold = value;
+      continue;
+    }
+    if (token === "--required") {
+      required = true;
+    }
+  }
+
+  const parsed: MutationCommandOptions = { command, targetGroups, required };
+  if (threshold !== undefined) parsed.threshold = threshold;
+  return parsed;
 }
 
 interface StrykerMutant {
@@ -116,6 +213,38 @@ export function collectTargetGlobs(enabled: EnabledPacks): string[] {
   }
 
   return result;
+}
+
+export function collectMutationTargets(
+  enabled: EnabledPacks,
+  options: { targetGroups?: string[] } = {},
+): MutationTargetSelection {
+  const seen = new Set<string>();
+  const targetedGlobs: string[] = [];
+  let required = false;
+
+  const addGlob = (glob: string) => {
+    if (!seen.has(glob)) {
+      seen.add(glob);
+      targetedGlobs.push(glob);
+    }
+  };
+
+  const targetGroups = options.targetGroups ?? [];
+  for (const groupName of targetGroups) {
+    const group = FIRST_PARTY_MUTATION_TARGET_GROUPS[groupName];
+    if (!group) continue;
+    if (group.mode === "required") required = true;
+    for (const glob of group.globs) {
+      addGlob(glob);
+    }
+  }
+
+  for (const glob of collectTargetGlobs(enabled)) {
+    addGlob(glob);
+  }
+
+  return { targetGroups, targetedGlobs, required };
 }
 
 // ---------------------------------------------------------------------------
@@ -206,6 +335,17 @@ export function computeMutationScore(
   };
 }
 
+export function evaluateMutationVerdict(input: {
+  mutationScore: number;
+  threshold: number;
+  required: boolean;
+  targetCount: number;
+}): MutationVerdict {
+  if (input.targetCount === 0) return "warn";
+  if (input.mutationScore >= input.threshold) return "pass";
+  return input.required ? "fail" : "warn";
+}
+
 // ---------------------------------------------------------------------------
 // Artifact writing
 // ---------------------------------------------------------------------------
@@ -239,6 +379,39 @@ function writeArtifact(projectRoot: string, summary: MutationSummary): string {
   return filePath;
 }
 
+export function persistMutationEvidenceArtifact(
+  projectRoot: string,
+  summary: MutationSummary,
+  options: {
+    runId?: string;
+    artifactId?: string;
+    commit?: string;
+    createdAt?: string;
+  } = {},
+): EvidenceWriteResult {
+  const createdAt = options.createdAt ?? new Date().toISOString();
+  const runId = options.runId ?? `mutation-${createdAt.replace(/\D/g, "").slice(0, 14)}`;
+  const artifactId = options.artifactId ?? `${runId}-mutation`;
+  const topic = summary.targetGroups?.[0] ?? summary.packSource.split(",")[0]?.trim() ?? "mutation";
+  const inputHash = hashEvidenceInput(summary);
+
+  return writeEvidenceArtifact(projectRoot, {
+    schema_version: 1,
+    artifact_id: artifactId,
+    kind: "mutation",
+    topic,
+    run_id: runId,
+    trace_id: runId,
+    commit: options.commit ?? "unknown",
+    command: `forge mutate run${summary.targetGroups?.length ? ` --target-group ${summary.targetGroups.join(" --target-group ")}` : ""}`,
+    exit_code: summary.verdict === "fail" ? 1 : 0,
+    input_hash: inputHash,
+    result: summary.verdict,
+    producer: "forge-mutate",
+    created_at: createdAt,
+  });
+}
+
 // ---------------------------------------------------------------------------
 // Main entry point
 // ---------------------------------------------------------------------------
@@ -256,8 +429,10 @@ export async function runMutation(
   const projectRoot = options.projectRoot;
   const startTime = Date.now();
 
-  // Collect globs from enabled packs
-  const targetedGlobs = collectTargetGlobs(enabled);
+  // Collect globs from selected first-party groups and enabled packs.
+  const selection = collectMutationTargets(enabled, { targetGroups: options.targetGroups });
+  const targetedGlobs = selection.targetedGlobs;
+  const required = options.required ?? selection.required;
 
   // No globs → no-op with warn
   if (targetedGlobs.length === 0) {
@@ -267,6 +442,8 @@ export async function runMutation(
     const summary: MutationSummary = {
       packSource,
       targetedGlobs: [],
+      targetGroups: selection.targetGroups,
+      required,
       total: 0,
       killed: 0,
       survived: 0,
@@ -279,7 +456,21 @@ export async function runMutation(
     };
 
     const filePath = writeArtifact(projectRoot, summary);
-    return { filePath, summary };
+    const evidence = persistMutationEvidenceArtifact(projectRoot, summary, {
+      runId: options.runId,
+      commit: options.currentCommit,
+      createdAt: options.createdAt,
+    });
+    return {
+      filePath,
+      summary,
+      ...(evidence.ok
+        ? {
+            evidenceArtifactId: summaryArtifactId(evidence.path),
+            evidenceArtifactPath: evidence.path,
+          }
+        : {}),
+    };
   }
 
   // Generate stryker config
@@ -316,6 +507,8 @@ export async function runMutation(
     const summary: MutationSummary = {
       packSource,
       targetedGlobs,
+      targetGroups: selection.targetGroups,
+      required,
       total: 0,
       killed: 0,
       survived: 0,
@@ -327,7 +520,21 @@ export async function runMutation(
       durationMs,
     };
     const filePath = writeArtifact(projectRoot, summary);
-    return { filePath, summary };
+    const evidence = persistMutationEvidenceArtifact(projectRoot, summary, {
+      runId: options.runId,
+      commit: options.currentCommit,
+      createdAt: options.createdAt,
+    });
+    return {
+      filePath,
+      summary,
+      ...(evidence.ok
+        ? {
+            evidenceArtifactId: summaryArtifactId(evidence.path),
+            evidenceArtifactPath: evidence.path,
+          }
+        : {}),
+    };
   }
 
   // Compute score
@@ -336,11 +543,18 @@ export async function runMutation(
   const packSource = enabled.order.join(", ");
 
   const mutationScore = scores.mutationScore;
-  const verdict: "pass" | "warn" = mutationScore >= threshold ? "pass" : "warn";
+  const verdict = evaluateMutationVerdict({
+    mutationScore,
+    threshold,
+    required,
+    targetCount: targetedGlobs.length,
+  });
 
   const summary: MutationSummary = {
     packSource,
     targetedGlobs,
+    targetGroups: selection.targetGroups,
+    required,
     total: scores.total,
     killed: scores.killed,
     survived: scores.survived,
@@ -353,5 +567,24 @@ export async function runMutation(
   };
 
   const filePath = writeArtifact(projectRoot, summary);
-  return { filePath, summary };
+  const evidence = persistMutationEvidenceArtifact(projectRoot, summary, {
+    runId: options.runId,
+    commit: options.currentCommit,
+    createdAt: options.createdAt,
+  });
+  return {
+    filePath,
+    summary,
+    ...(evidence.ok
+      ? {
+          evidenceArtifactId: summaryArtifactId(evidence.path),
+          evidenceArtifactPath: evidence.path,
+        }
+      : {}),
+  };
+}
+
+function summaryArtifactId(path: string): string {
+  const name = path.split("/").pop() ?? "";
+  return name.endsWith(".json") ? name.slice(0, -".json".length) : name;
 }

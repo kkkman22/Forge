@@ -3,7 +3,7 @@ title: 'Router 选择指南'
 category: reference
 audience:
 - maintainer
-updated: '2026-05-17'
+updated: 2026-06-09
 owner: forge-maintainers
 ---
 
@@ -13,11 +13,13 @@ owner: forge-maintainers
 
 Forge 使用三级路由系统，根据任务复杂度选择执行路径：
 
-| Tier | Condition | Command Sequence |
-|------|-----------|-----------------|
-| **Light** | 影响文件 ≤ 1 且改动 ≤ 20 行 | `build → review` |
-| **Standard** | 需求明确或已有 Spec | `plan → build → review → test → ship` |
-| **Full** | 新服务 / 新数据库 / 认证变更 / 需求模糊 | `decide → spec → plan → build → review → test → ship → learn` |
+<!-- ssot:begin topic=routing render=routing-table locale=zh -->
+| 档位 | 判定条件 | 命令序列 |
+|------|---------|----------|
+| **轻量路径** | 影响文件 ≤ 1 且改动 ≤ 20 行 | `build → review` |
+| **标准路径** | 需求明确或已有 Spec | `plan → build → review → test → ship` |
+| **全量路径** | 新服务 / 新数据库 / 认证变更 / 需求模糊 | `decide → spec → plan → build → review → test → ship → learn` |
+<!-- ssot:end topic=routing -->
 
 ## 路由判定流程
 

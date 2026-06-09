@@ -339,6 +339,12 @@ export const SKILL_FUNCTION_REGISTRY: readonly SkillFunctionEntry[] = [
     parameterNames: ["input", "now", "sequenceInDay"],
   },
   {
+    module: "review.ts",
+    functionName: "persistReviewEvidenceArtifact",
+    skills: ["forge/lib/review/instructions.md"],
+    parameterNames: ["projectRoot", "frontmatter", "options"],
+  },
+  {
     module: "truncation-detection.ts",
     functionName: "detectTruncation",
     skills: ["forge/lib/review/instructions.md"],
@@ -357,6 +363,18 @@ export const SKILL_FUNCTION_REGISTRY: readonly SkillFunctionEntry[] = [
     functionName: "writeTaskStatus",
     skills: ["forge/lib/router/instructions.md"],
     parameterNames: ["io", "forgeRoot", "taskName", "content"],
+  },
+  {
+    module: "doctor.ts",
+    functionName: "buildHealthSnapshot",
+    skills: ["forge/lib/status/instructions.md"],
+    parameterNames: ["options"],
+  },
+  {
+    module: "doctor.ts",
+    functionName: "renderStatusSummary",
+    skills: ["forge/lib/status/instructions.md"],
+    parameterNames: ["snapshot"],
   },
 
   // --- forge-abort/SKILL.md (multi-task) ---
@@ -624,6 +642,12 @@ export const SKILL_FUNCTION_REGISTRY: readonly SkillFunctionEntry[] = [
     functionName: "detectCiCommandDrift",
     skills: ["forge/lib/test/instructions.md"],
     parameterNames: ["frontmatter", "packageJsonRaw"],
+  },
+  {
+    module: "test-engine.ts",
+    functionName: "persistTestEvidenceArtifact",
+    skills: ["forge/lib/test/instructions.md"],
+    parameterNames: ["projectRoot", "input"],
   },
 
   // --- MCP Tools ---

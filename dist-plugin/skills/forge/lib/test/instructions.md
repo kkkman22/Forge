@@ -12,7 +12,7 @@ allowed_tools:
 
 > **Trigger**: Step 4 of Standard path, Step 6 of Full path, or user input `/forge test`
 > **Responsibility**: Systematic three-layer verification ensuring code passes at unit test, browser QA, and pre-completion checklist levels
-> **Output Path**: `.forge/progress/<topic>.md`（update verification status）
+> **Output Path**: `.forge/progress/<topic>.md`（update verification status）and `.forge/artifacts/<run-id>/<artifact-id>.json`（immutable `test` evidence）
 
 ---
 
@@ -133,7 +133,7 @@ IF 本次执行是从 conversation summary 恢复（上下文压缩后继续）�
 2. **Layer 1**：运行项目测试套件。失败 → 停止
 3. **Layer 2**：Web 项目执行浏览器级 QA，否则跳过
 4. **Layer 3**：逐项检查 7 项清单
-5. **输出结果**：汇总三层验证结果，更新 Progress
+5. **输出结果**：调用 `persistTestEvidenceArtifact()` 写入 immutable `test` artifact；汇总三层验证结果，更新 Progress，并在最终输出中引用 artifact id
 6. **自动推进（铁律）**：通过后**立即调用** `Skill(skill="forge", args="ship")`，不输出确认提示。仅输出 `✅ test 完成 → 自动进入 ship`，然后直接调用 Skill（→ 详见 shared/next-step-protocol.md）。未通过 → 停止，输出失败详情。
 
 ---
@@ -170,7 +170,7 @@ $ /forge test
 ━━━ Layer 1 — 单元测试 ━━━  npx vitest run → 42/42 ✅
 ━━━ Layer 2 — 浏览器级 QA ━━━  非 Web 项目，跳过
 ━━━ Layer 3 — 完成前验证清单 ━━━  ✅ 1-7 全部通过
-✅ 验证通过 → /forge ship
+✅ 验证通过 | evidence_artifact_id: <artifact-id> → /forge ship
 ```
 
 **Failing variant**: Layer 1 → 2 failed · 列出失败测试名 · ❌ 修复后重跑 /forge test。

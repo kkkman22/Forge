@@ -128,7 +128,13 @@ describe("platform-gate: property tests", () => {
     });
     // Property 9: URL case-insensitivity - Bitbucket.Org equals bitbucket.org
     it("Property 9: URL case-insensitivity", { timeout: 30000 }, () => {
-        fc.assert(fc.property(fc.stringMatching(/^[a-z0-9-]+$/), fc.stringMatching(/^[a-z]+$/), (subdomain, tld) => {
+        const validHostLabel = fc
+            .stringMatching(/^[a-z0-9-]+$/)
+            .filter((label) => label.length > 0 &&
+            !label.startsWith("-") &&
+            !label.endsWith("-") &&
+            !label.startsWith("xn--"));
+        fc.assert(fc.property(validHostLabel, fc.stringMatching(/^[a-z]+$/), (subdomain, tld) => {
             const url1 = `https://${subdomain.toLowerCase()}.${tld.toLowerCase()}`;
             const url2 = `https://${subdomain.toUpperCase()}.${tld.toUpperCase()}`;
             expect(isSameHost(url1, url2)).toBe(true);
