@@ -19,12 +19,14 @@ Provide the current task, branch state, or run status commands directly.
 
 ```text
 /forge status
+/forge replay <topic>
 /forge ship
 ```
 
 ## What Forge Will Do
 
 - Status shows task, phase, profile, and next step.
+- Replay shows the topic's stage files, ship records, and immutable evidence artifacts.
 - Doctor shows a fuller health snapshot.
 - Ship checks review, test, progress, artifact, and related gates.
 - If evidence is stale or missing, Forge reports the blocker and source.
@@ -40,3 +42,13 @@ Provide the current task, branch state, or run status commands directly.
 - The next step is not blocked by required gates.
 - Every pass claim has fresh command or artifact evidence.
 - Delivery records trace back to review/test/ship evidence.
+
+## Evidence Chain Replay
+
+When status, doctor, or ship reports missing, stale, or contradictory evidence, run:
+
+```text
+/forge replay <topic>
+```
+
+Replay inspects stage files, ship records, and `.forge/artifacts/index.jsonl` without mutating them. Its output distinguishes `[fact]`, `[missing]`, and superseded artifacts that remain visible for auditability.

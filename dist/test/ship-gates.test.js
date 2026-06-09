@@ -458,6 +458,44 @@ describe("persistGateResults", () => {
             rmSync(tmpDir, { recursive: true, force: true });
         }
     });
+    it("writes immutable ship_gate evidence artifact for persisted gates", () => {
+        const { mkdtempSync, existsSync, readFileSync, rmSync } = require("node:fs");
+        const { join } = require("node:path");
+        const { tmpdir } = require("node:os");
+        const root = mkdtempSync(join(tmpdir(), "forge-gate-artifact-test-"));
+        try {
+            const report = {
+                runId: "20260529-143000",
+                feature: "test-feature",
+                timestamp: "2026-05-29T14:30:00Z",
+                gates: [
+                    { gate: "review", passed: true, reason: "ok" },
+                    { gate: "test", passed: true, reason: "ok" },
+                    { gate: "progress", passed: true, reason: "ok" },
+                ],
+                allPassed: true,
+                skipGate: null,
+            };
+            const result = persistGateResults(report, join(root, ".forge", "ship"), {
+                commit: "head-1",
+                createdAt: "2026-06-09T04:00:00.000Z",
+            });
+            expect(result.reportPath).toBe(join(root, ".forge", "ship", "20260529-143000-gates.json"));
+            expect(result.artifactPath).toBeDefined();
+            expect(existsSync(result.artifactPath)).toBe(true);
+            const artifact = JSON.parse(readFileSync(result.artifactPath, "utf-8"));
+            expect(artifact.kind).toBe("ship_gate");
+            expect(artifact.topic).toBe("test-feature");
+            expect(artifact.run_id).toBe("20260529-143000");
+            expect(artifact.commit).toBe("head-1");
+            expect(artifact.result).toBe("pass");
+            const index = readFileSync(join(root, ".forge", "artifacts", "index.jsonl"), "utf-8");
+            expect(index).toContain('"kind":"ship_gate"');
+        }
+        finally {
+            rmSync(root, { recursive: true, force: true });
+        }
+    });
 });
 // ---------------------------------------------------------------------------
 // Integration: GateResult type contract (RED)

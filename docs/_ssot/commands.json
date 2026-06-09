@@ -168,6 +168,13 @@
     "summary": "Use when running /forge refactor (DEPRECATED — use /forge build with work_nature=refactor instead)."
   },
   {
+    "name": "/forge replay",
+    "tier": "all",
+    "stage": "auxiliary",
+    "dispatch_mode": "inline",
+    "summary": "Use when running `/forge replay <topic>` to inspect the evidence chain for a task."
+  },
+  {
     "name": "/forge resume",
     "tier": "all",
     "stage": "auxiliary",

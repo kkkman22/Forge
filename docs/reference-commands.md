@@ -3,7 +3,7 @@ title: 'Forge 命令速查与路由详解'
 category: reference
 audience:
 - maintainer
-updated: '2026-06-01'
+updated: 2026-06-09
 owner: forge-maintainers
 ---
 
@@ -30,6 +30,7 @@ owner: forge-maintainers
 | `/forge resume` | 辅助 | 五问题恢复上次会话上下文，支持 `--from-pr` 跨会话恢复 | 所有 |
 | `/forge debug` | 辅助 | 四阶段结构化根因分析 | 所有 |
 | `/forge verify` | 验证 | 证据化三态验证（VERIFIED/NOT_VERIFIED/INCONCLUSIVE） | 所有 |
+| `/forge replay` | 辅助 | 回放任务证据链，区分 fact/missing/superseded | 所有 |
 | `/forge accept` | 验收 | 运行场景脚本并记录验收结果 | 所有 |
 | `/forge grill` | 需求 | 苏格拉底式需求澄清，生成决策树 | 所有 |
 | `/forge storm` | 探索 | 头脑风暴，多视角发散思考 | 所有 |

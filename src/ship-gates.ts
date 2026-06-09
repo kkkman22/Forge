@@ -9,11 +9,13 @@
  */
 
 import { mkdirSync, readdirSync, readFileSync, writeFileSync } from "node:fs";
-import { join } from "node:path";
+import { basename, dirname, join } from "node:path";
 import {
+  type EvidenceArtifact,
   type EvidenceArtifactKind,
   isArtifactFreshForCommit,
   queryEvidenceArtifacts,
+  writeEvidenceArtifact,
 } from "./evidence-artifact.js";
 import type { Methodology } from "./schemas/review-report.js";
 import { getPolicyGateRequirements, type PolicyProfile } from "./workflow-graph.js";
@@ -70,6 +72,23 @@ export interface ShipGateReport {
   gates: GateResult[];
   allPassed: boolean;
   skipGate: string | null;
+}
+
+export interface PersistGateResultsOptions {
+  projectRoot?: string;
+  commit?: string;
+  producer?: string;
+  command?: string;
+  exitCode?: number;
+  stdoutTail?: string;
+  stderrTail?: string;
+  createdAt?: string;
+}
+
+export interface PersistGateResultsResult {
+  reportPath: string;
+  artifactPath?: string;
+  artifactError?: string;
 }
 
 // ---------------------------------------------------------------------------
@@ -703,10 +722,51 @@ export function checkFallbackLadderGate(methodology: Methodology): GateResult {
  *
  * Creates the directory if it does not exist.
  */
-export function persistGateResults(report: ShipGateReport, shipDir: string): void {
+export function persistGateResults(
+  report: ShipGateReport,
+  shipDir: string,
+  options: PersistGateResultsOptions = {},
+): PersistGateResultsResult {
   mkdirSync(shipDir, { recursive: true });
   const filePath = join(shipDir, `${report.runId}-gates.json`);
   writeFileSync(filePath, `${JSON.stringify(report, null, 2)}\n`, "utf-8");
+
+  const projectRoot = options.projectRoot ?? inferProjectRootFromShipDir(shipDir);
+  if (!projectRoot) {
+    return { reportPath: filePath };
+  }
+
+  const artifactId = `${report.runId}-ship-gate`;
+  const artifact: EvidenceArtifact = {
+    schema_version: 1,
+    artifact_id: artifactId,
+    kind: "ship_gate",
+    topic: report.feature,
+    run_id: report.runId,
+    commit: options.commit ?? "unknown",
+    result: report.allPassed ? "pass" : "blocked",
+    producer: options.producer ?? "forge-ship",
+    created_at: options.createdAt ?? report.timestamp,
+  };
+  if (options.command !== undefined) artifact.command = options.command;
+  if (options.exitCode !== undefined) artifact.exit_code = options.exitCode;
+  if (options.stdoutTail !== undefined) artifact.stdout_tail = options.stdoutTail;
+  if (options.stderrTail !== undefined) artifact.stderr_tail = options.stderrTail;
+
+  const writeResult = writeEvidenceArtifact(projectRoot, artifact);
+
+  if (!writeResult.ok) {
+    return { reportPath: filePath, artifactError: writeResult.message };
+  }
+
+  return { reportPath: filePath, artifactPath: writeResult.path };
+}
+
+function inferProjectRootFromShipDir(shipDir: string): string | null {
+  if (basename(shipDir) !== "ship") return null;
+  const forgeDir = dirname(shipDir);
+  if (basename(forgeDir) !== ".forge") return null;
+  return dirname(forgeDir);
 }
 
 // ---------------------------------------------------------------------------
