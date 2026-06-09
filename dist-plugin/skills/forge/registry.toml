@@ -194,6 +194,14 @@ allowed_tools = ["Read", "Write"]
 description = "Use when running /forge refactor (DEPRECATED — use /forge build with work_nature=refactor instead)"
 summary = "Use when running /forge refactor (DEPRECATED — use /forge build with work_nature=refactor instead)."
 
+[replay]
+dispatch_mode = "inline"
+tier = "all"
+stage = "auxiliary"
+allowed_tools = ["Read", "Glob", "Grep", "Bash"]
+description = "Use when running `/forge replay <topic>` to inspect the evidence chain for a task"
+summary = "Use when running `/forge replay <topic>` to inspect the evidence chain for a task."
+
 [resume]
 dispatch_mode = "inline"
 tier = "all"
