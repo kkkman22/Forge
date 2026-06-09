@@ -152,11 +152,13 @@ Forge plugin 自带 `forge-context` first-party MCP server，为 `/forge review`
 
 ### 三维路由
 
+<!-- ssot:begin topic=routing render=routing-table locale=zh -->
 | 档位 | 判定条件 | 命令序列 |
 |------|---------|----------|
-| **轻量路径** | 影响 ≤1 文件，改动 ≤20 行 | `build → review` |
-| **标准路径** | 需求明确或有现成 Spec | `plan → build → review → test → ship` |
-| **全量路径** | 新服务/数据库/认证变更或需求模糊 | `decide → spec → plan → build → review → test → ship → learn` |
+| **轻量路径** | 影响文件 ≤ 1 且改动 ≤ 20 行 | `build → review` |
+| **标准路径** | 需求明确或已有 Spec | `plan → build → review → test → ship` |
+| **全量路径** | 新服务 / 新数据库 / 认证变更 / 需求模糊 | `decide → spec → plan → build → review → test → ship → learn` |
+<!-- ssot:end topic=routing -->
 
 ---
 
@@ -220,7 +222,7 @@ bash scripts/pre-push-ci-check.sh
 
 **技术栈**：TypeScript 5.9（strict）、305 个 TypeScript 模块、Vitest 4.1、fast-check 4.7（属性测试）、Biome 2.4（lint + format）。运行时依赖：`@anthropic-ai/claude-agent-sdk`、`@modelcontextprotocol/sdk`、`commander`、`minimatch`、`yaml`、`zod`。
 
-**测试策略**：7508 个测试（632 个测试文件）验证不变量。覆盖率 ~89% statements。
+**测试策略**：7509 个测试（633 个测试文件）验证不变量。覆盖率 ~89% statements。
 
 
 ---

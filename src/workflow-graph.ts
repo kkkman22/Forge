@@ -49,6 +49,15 @@ export interface WorkflowGraph {
   profiles: WorkflowProfile[];
 }
 
+export interface WorkflowRoutingSsotEntry {
+  key: WorkflowTier;
+  tier: string;
+  tier_zh: string;
+  condition: string;
+  condition_zh: string;
+  sequence: string[];
+}
+
 export interface WorkflowDiagnostic {
   code:
     | "DUPLICATE_PHASE_ID"
@@ -453,4 +462,40 @@ export function renderWorkflowSsot(graph: WorkflowGraph = DEFAULT_WORKFLOW_GRAPH
     ),
   ];
   return `${lines.join("\n")}\n`;
+}
+
+export function getWorkflowRoutingSsot(
+  graph: WorkflowGraph = DEFAULT_WORKFLOW_GRAPH,
+): WorkflowRoutingSsotEntry[] {
+  const labels: Record<WorkflowTier, Omit<WorkflowRoutingSsotEntry, "key" | "sequence">> = {
+    light: {
+      tier: "Light",
+      tier_zh: "轻量路径",
+      condition: "Files affected <= 1 and changes <= 20 lines",
+      condition_zh: "影响文件 ≤ 1 且改动 ≤ 20 行",
+    },
+    standard: {
+      tier: "Standard",
+      tier_zh: "标准路径",
+      condition: "Clear requirements or existing Spec",
+      condition_zh: "需求明确或已有 Spec",
+    },
+    full: {
+      tier: "Full",
+      tier_zh: "全量路径",
+      condition: "New service / new database / auth changes / unclear requirements",
+      condition_zh: "新服务 / 新数据库 / 认证变更 / 需求模糊",
+    },
+  };
+  const order: WorkflowTier[] = ["light", "standard", "full"];
+  return order.map((key) => {
+    const profile = graph.profiles.find(
+      (candidate) => candidate.id === key && candidate.workNature === "feature",
+    );
+    return {
+      key,
+      ...labels[key],
+      sequence: [...(profile?.routerPhases ?? getRouterSequence(key))],
+    };
+  });
 }

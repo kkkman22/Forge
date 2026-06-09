@@ -31,7 +31,7 @@
 - [Forge 架构与状态保护](reference-architecture.md) — 2026-05-12
 - [Policy Profiles 指南 (EN)](best-practices/policy-profiles.en.md) / [Policy Profiles 指南 (中)](best-practices/policy-profiles.md) — 2026-06-09
 - [Review 配置指南 (EN)](best-practices/review-configuration.en.md) / [Review 配置指南 (中)](best-practices/review-configuration.md) — 2026-05-17
-- [Router 选择指南 (EN)](best-practices/router-selection.en.md) / [Router 选择指南 (中)](best-practices/router-selection.md) — 2026-05-17
+- [Router 选择指南 (EN)](best-practices/router-selection.en.md) / [Router 选择指南 (中)](best-practices/router-selection.md) — 2026-06-09
 - [SKILL 编写指南 (EN)](best-practices/skill-authoring.en.md) / [SKILL 编写指南 (中)](best-practices/skill-authoring.md) — 2026-05-17
 - [Worktree 使用指南 (EN)](best-practices/worktree-usage.en.md) / [Worktree 使用指南 (中)](best-practices/worktree-usage.md) — 2026-05-17
 - [opusplan 模式指南](opusplan-guide.md) — 2026-05-12

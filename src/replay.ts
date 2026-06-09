@@ -9,6 +9,7 @@ export type ReplayStage =
   | "plan"
   | "build"
   | "review"
+  | "test"
   | "findings"
   | "debug"
   | "ship"
@@ -23,6 +24,7 @@ export interface ReplayEntry {
   path?: string;
   artifactId?: string;
   artifactKind?: string;
+  citedArtifactIds?: string[];
   result?: string;
   summary: string;
   superseded?: boolean;
@@ -40,6 +42,7 @@ const STAGE_LABELS: Record<ReplayStage, string> = {
   plan: "Plan",
   build: "Build",
   review: "Review",
+  test: "Test",
   findings: "Findings",
   debug: "Debug",
   ship: "Ship",
@@ -91,7 +94,9 @@ export function buildEvidenceReplay(topic: string, forgeRoot: string): EvidenceR
         ]),
   );
 
-  entries.push(...artifactEntries(projectRoot, topic));
+  const artifacts = queryEvidenceArtifacts(projectRoot, { topic });
+  entries.push(...testArtifactStageEntries(artifacts));
+  entries.push(...artifactEntries(artifacts));
 
   return { topic, entries: sortReplayEntries(entries) };
 }
@@ -108,11 +113,14 @@ export function renderReplayTimeline(replay: EvidenceReplay): string {
         ? `${entry.artifactId} ${entry.artifactKind}`
         : (entry.artifactId ?? entry.path ?? "");
     const result = entry.result ? ` ${entry.result}` : "";
+    const cites = entry.citedArtifactIds?.length
+      ? `; cites ${entry.citedArtifactIds.join(", ")}`
+      : "";
     const superseded = entry.superseded ? " (superseded)" : "";
     const supersedes = entry.supersedes ? `; supersedes ${entry.supersedes}` : "";
     const targetText = target ? ` ${target}` : "";
     lines.push(
-      `- [${marker}] ${label}${targetText}${result}${superseded}: ${entry.summary}${supersedes}`,
+      `- [${marker}] ${label}${targetText}${result}${superseded}: ${entry.summary}${cites}${supersedes}`,
     );
   }
 
@@ -122,7 +130,11 @@ export function renderReplayTimeline(replay: EvidenceReplay): string {
 function stageFileToEntry(stage: ReplayStage, file: StageFileEntry): ReplayEntry {
   const status = typeof file.frontmatter.status === "string" ? file.frontmatter.status : undefined;
   const artifactId =
-    typeof file.frontmatter.artifact_id === "string" ? file.frontmatter.artifact_id : undefined;
+    typeof file.frontmatter.artifact_id === "string"
+      ? file.frontmatter.artifact_id
+      : typeof file.frontmatter.evidence_artifact_id === "string"
+        ? file.frontmatter.evidence_artifact_id
+        : undefined;
   const summary = file.firstSection || `${STAGE_LABELS[stage]} evidence found`;
   return {
     stage,
@@ -130,13 +142,13 @@ function stageFileToEntry(stage: ReplayStage, file: StageFileEntry): ReplayEntry
     source: "document",
     path: file.path,
     artifactId,
+    citedArtifactIds: artifactId ? [artifactId] : undefined,
     result: status,
     summary,
   };
 }
 
-function artifactEntries(projectRoot: string, topic: string): ReplayEntry[] {
-  const artifacts = queryEvidenceArtifacts(projectRoot, { topic });
+function artifactEntries(artifacts: EvidenceArtifact[]): ReplayEntry[] {
   const supersededIds = new Set(
     artifacts
       .map((artifact) => artifact.supersedes)
@@ -146,6 +158,21 @@ function artifactEntries(projectRoot: string, topic: string): ReplayEntry[] {
   return artifacts.map((artifact) => artifactToEntry(artifact, supersededIds));
 }
 
+function testArtifactStageEntries(artifacts: EvidenceArtifact[]): ReplayEntry[] {
+  return artifacts
+    .filter((artifact) => artifact.kind === "test")
+    .map((artifact) => ({
+      stage: "test" as const,
+      timestamp: artifact.created_at,
+      source: "artifact" as const,
+      artifactId: artifact.artifact_id,
+      artifactKind: artifact.kind,
+      citedArtifactIds: [artifact.artifact_id],
+      result: artifact.result,
+      summary: `Test evidence artifact from ${artifact.producer} at ${artifact.commit}`,
+    }));
+}
+
 function artifactToEntry(artifact: EvidenceArtifact, supersededIds: Set<string>): ReplayEntry {
   return {
     stage: "artifact",
@@ -153,6 +180,7 @@ function artifactToEntry(artifact: EvidenceArtifact, supersededIds: Set<string>)
     source: "artifact",
     artifactId: artifact.artifact_id,
     artifactKind: artifact.kind,
+    citedArtifactIds: [artifact.artifact_id],
     result: artifact.result,
     summary: `${artifact.kind} artifact from ${artifact.producer} at ${artifact.commit}`,
     superseded: supersededIds.has(artifact.artifact_id),
@@ -178,6 +206,17 @@ function scanShipRecords(topic: string, forgeRoot: string): ReplayEntry[] {
       if (typeof parsed === "object" && parsed !== null && "allPassed" in parsed) {
         result = (parsed as { allPassed?: boolean }).allPassed ? "pass" : "fail";
       }
+      const citedArtifactIds = extractShipArtifactIds(parsed);
+      entries.push({
+        stage: "ship",
+        timestamp: safeMtime(fullPath),
+        source: "document",
+        path: path.join("ship", name),
+        citedArtifactIds: citedArtifactIds.length > 0 ? citedArtifactIds : undefined,
+        result,
+        summary: result ? `Ship gate result: ${result}` : "Ship evidence found",
+      });
+      continue;
     } catch (_err: unknown) {
       result = undefined;
     }
@@ -192,6 +231,33 @@ function scanShipRecords(topic: string, forgeRoot: string): ReplayEntry[] {
     });
   }
   return entries;
+}
+
+function extractShipArtifactIds(parsed: unknown): string[] {
+  if (typeof parsed !== "object" || parsed === null) return [];
+  const record = parsed as Record<string, unknown>;
+  const ids = new Set<string>();
+  collectStrings(record.gateArtifacts, ids);
+  collectStrings(record.artifact_ids, ids);
+  collectStrings(record.evidence_artifact_ids, ids);
+  collectStrings(record.evidenceArtifactIds, ids);
+  collectStrings(record.gate_artifact_ids, ids);
+  collectStrings(record.artifacts, ids);
+  return [...ids];
+}
+
+function collectStrings(value: unknown, ids: Set<string>): void {
+  if (typeof value === "string" && value.length > 0) {
+    ids.add(value);
+    return;
+  }
+  if (Array.isArray(value)) {
+    for (const item of value) collectStrings(item, ids);
+    return;
+  }
+  if (typeof value === "object" && value !== null) {
+    for (const item of Object.values(value)) collectStrings(item, ids);
+  }
 }
 
 function safeMtime(filePath: string): string | null {
@@ -220,6 +286,7 @@ function stageRank(stage: ReplayStage): number {
     "plan",
     "build",
     "review",
+    "test",
     "findings",
     "debug",
     "ship",
