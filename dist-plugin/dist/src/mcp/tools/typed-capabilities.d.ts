@@ -328,10 +328,9 @@ export declare function validateTypedCapabilityOutput(toolName: TypedCapabilityT
     };
 }>;
 export declare function preferredTypedCapabilitiesForConsumer(consumer: TypedCapabilityConsumer): TypedCapabilityToolName[];
-interface ToolServer {
+export interface ToolServer {
     registerTool: unknown;
 }
 export declare function registerTypedCapabilityTools(server: ToolServer, root?: {
     path: string;
 }): void;
-export {};

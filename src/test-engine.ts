@@ -103,7 +103,7 @@ import {
 } from "./evidence-artifact.js";
 import type { FailureContext } from "./failure-sink.js";
 
-type EvidenceWriteFailure = Extract<EvidenceWriteResult, { ok: false }>;
+export type EvidenceWriteFailure = Extract<EvidenceWriteResult, { ok: false }>;
 
 export interface TestLayerFailedInput {
   topic: string;

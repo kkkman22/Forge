@@ -235,7 +235,7 @@ type ToolHandler = (input: Record<string, unknown>) => Promise<{
   isError?: boolean;
 }>;
 
-interface ToolServer {
+export interface ToolServer {
   registerTool: unknown;
 }
 

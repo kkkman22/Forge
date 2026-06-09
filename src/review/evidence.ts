@@ -6,7 +6,7 @@ import {
 } from "../evidence-artifact.js";
 import type { ReviewReportFrontmatter } from "./types.js";
 
-type EvidenceWriteFailure = Extract<EvidenceWriteResult, { ok: false }>;
+export type EvidenceWriteFailure = Extract<EvidenceWriteResult, { ok: false }>;
 
 export type ReviewEvidenceWriteResult =
   | { ok: true; artifactId: string; path: string; indexPath: string }
