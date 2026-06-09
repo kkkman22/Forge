@@ -31,7 +31,10 @@
     "worktree-create-hook.mjs",
     "config-changed-hook.mjs",
     "permission-denied-hook.mjs",
-    "worktree-remove-hook.mjs"
+    "worktree-remove-hook.mjs",
+    "forge-hook-dispatch.mjs",
+    "forge-phase-worker.mjs",
+    "forge-sync-runtime.mjs"
   ],
   "cc_compiled_js": [
     "state.js",
@@ -69,7 +72,10 @@
     "worktree-create-hook.mjs",
     "config-changed-hook.mjs",
     "permission-denied-hook.mjs",
-    "worktree-remove-hook.mjs"
+    "worktree-remove-hook.mjs",
+    "forge-hook-dispatch.mjs",
+    "forge-phase-worker.mjs",
+    "forge-sync-runtime.mjs"
   ],
   "plugin_compiled_js": [
     "check-sandbox.js",

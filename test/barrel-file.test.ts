@@ -180,9 +180,9 @@ describe("barrel file does not expose internal modules", () => {
   });
 
   // Verify the total number of value exports
-  it("has exactly 132 value exports", () => {
+  it("has exactly 140 value exports", () => {
     const valueExports = Object.keys(exports).filter((key) => typeof exports[key] !== "undefined");
-    expect(valueExports).toHaveLength(132);
+    expect(valueExports).toHaveLength(140);
     expect(valueExports.sort()).toEqual([
       "CLASSIFICATION_MAP",
       "CliError",
@@ -197,8 +197,11 @@ describe("barrel file does not expose internal modules", () => {
       "allEntriesVerified",
       "archiveTaskStatus",
       "buildCatalog",
+      "buildCliSdkWorkerArgs",
+      "buildFailureWorkerSummary",
       "buildSkipGateAnnotation",
       "buildSubagentInvocations",
+      "buildSubagentWorkerInvocation",
       "buildVerificationCriteria",
       "canParseTestOutput",
       "checkContradictions",
@@ -230,6 +233,7 @@ describe("barrel file does not expose internal modules", () => {
       "deserializeSubagentSummary",
       "deserializeTestOutput",
       "detectPlanFormat",
+      "detectRuntimeConfigDrift",
       "determineVerificationStrategy",
       "dispatchKnowledgeEvent",
       "evaluateFallbackLadder",
@@ -258,6 +262,7 @@ describe("barrel file does not expose internal modules", () => {
       "mergeSkillLists",
       "migrateToMultiTask",
       "normalizeInput",
+      "normalizeWorkerSummary",
       "parseChecklist",
       "parseEvolvedRulesSummary",
       "parseFailureSummary",
@@ -281,10 +286,13 @@ describe("barrel file does not expose internal modules", () => {
       "renderInlineGrillConfirmPrompt",
       "renderPendingAdvisoryNotice",
       "renderSpecHealthAdvisory",
+      "repairRuntimeConfig",
       "resolveStatusPath",
       "runAllGates",
       "runBranchGate",
+      "runCliSdkWorker",
       "runGlossaryCheck",
+      "runSubagentWorker",
       "runSubagentsInParallel",
       "runSubagentsWithConcurrency",
       "scanForPlaceholders",

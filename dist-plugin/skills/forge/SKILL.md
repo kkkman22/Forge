@@ -14,6 +14,14 @@ skeleton_exempt_legacy: true
 
 Forge's sole registered skill. All 36 sub-skills live under `skills/forge/lib/<sub>/instructions.md` and are dispatched through the 10-step chokepoint in `src/forge-dispatcher.ts`. Users invoke via `/forge <sub>` (direct) or `/forge <description>` (router-analyzed).
 
+## 1.1 Phase Worker Runtime
+
+Standard and Full workflows may isolate phase execution behind internal workers, but `/forge` remains the only user-facing entry. No manual new Claude Code window, context-mode command, worker command, or sync command is required during normal execution.
+
+The runtime is artifact-first: detailed logs and reports go under `.forge/`, while workers return bounded summaries to the main conversation. Subagent workers cover review/research-style work; CLI/SDK workers use packaged scripts such as `scripts/forge-phase-worker.mjs` for phase-level isolation.
+
+Runtime config drift is checked and repairable through the packaged `scripts/forge-sync-runtime.mjs` shim. Source mode points to project scripts; marketplace mode points to plugin-root scripts so the Claude Code marketplace package stays self-contained.
+
 ## 2. Subcommand Listing
 
 ### Light Tier

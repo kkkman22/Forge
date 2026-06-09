@@ -28,6 +28,7 @@ function loadHooksConfig() {
  * These snapshots capture the exact command strings and structure of every
  * non-frozen-check hook in hooks.json. The fix MUST NOT alter any of these.
  */
+const PLUGIN_ROOT_EXPR = "$" + "{CLAUDE_PLUGIN_ROOT:-}";
 const EXPECTED_SESSION_START_HOOKS = [
     {
         hooks: [
@@ -52,6 +53,15 @@ const EXPECTED_SESSION_START_HOOKS = [
             {
                 type: "command",
                 command: "node scripts/bootstrap-check.mjs 2>/dev/null || node forge/scripts/bootstrap-check.mjs 2>/dev/null || node ~/.claude/skills/forge/scripts/bootstrap-check.mjs 2>/dev/null || true",
+                timeout: 5,
+            },
+        ],
+    },
+    {
+        hooks: [
+            {
+                type: "command",
+                command: `node "${PLUGIN_ROOT_EXPR}/scripts/forge-sync-runtime.mjs" --repair 2>/dev/null || node scripts/forge-sync-runtime.mjs --repair 2>/dev/null || node forge/scripts/forge-sync-runtime.mjs --repair 2>/dev/null || node ~/.claude/skills/forge/scripts/forge-sync-runtime.mjs --repair 2>/dev/null || true`,
                 timeout: 5,
             },
         ],
