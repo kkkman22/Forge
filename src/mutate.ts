@@ -9,9 +9,11 @@
  */
 
 import { execFileSync } from "node:child_process";
+import { createHash } from "node:crypto";
 import { mkdirSync, readFileSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
 import { stringify as yamlStringify } from "yaml";
+import { type EvidenceWriteResult, writeEvidenceArtifact } from "./evidence-artifact.js";
 import type { EnabledPacks } from "./pack/types.js";
 
 // ---------------------------------------------------------------------------
@@ -21,6 +23,8 @@ import type { EnabledPacks } from "./pack/types.js";
 export interface MutationArtifact {
   filePath: string;
   summary: MutationSummary;
+  evidenceArtifactId?: string;
+  evidenceArtifactPath?: string;
 }
 
 export interface MutationSummary {
@@ -44,6 +48,16 @@ export interface RunMutationOptions {
   threshold?: number;
   targetGroups?: string[];
   required?: boolean;
+  currentCommit?: string;
+  runId?: string;
+  createdAt?: string;
+}
+
+export interface MutationCommandOptions {
+  command: "run" | "kill-survivors" | "report";
+  targetGroups: string[];
+  threshold?: number;
+  required: boolean;
 }
 
 export type MutationGateMode = "required" | "advisory";
@@ -74,6 +88,53 @@ export const FIRST_PARTY_MUTATION_TARGET_GROUPS: Record<string, MutationTargetGr
     globs: ["src/workflow-graph.ts", "src/evidence-artifact.ts"],
   },
 };
+
+export function parseMutationArgs(args: string[]): MutationCommandOptions {
+  const [first = "run", ...rest] = args;
+  const command =
+    first === "kill-survivors" || first === "report" || first === "run" ? first : "run";
+  const tokens = first === command ? rest : args;
+  const targetGroups: string[] = [];
+  let threshold: number | undefined;
+  let required = false;
+
+  for (let i = 0; i < tokens.length; i++) {
+    const token = tokens[i];
+    if (token === "--target-group") {
+      const value = tokens[i + 1];
+      if (value) {
+        targetGroups.push(value);
+        i++;
+      }
+      continue;
+    }
+    if (token.startsWith("--target-group=")) {
+      const value = token.slice("--target-group=".length);
+      if (value) targetGroups.push(value);
+      continue;
+    }
+    if (token === "--threshold") {
+      const value = Number(tokens[i + 1]);
+      if (Number.isFinite(value)) {
+        threshold = value;
+        i++;
+      }
+      continue;
+    }
+    if (token.startsWith("--threshold=")) {
+      const value = Number(token.slice("--threshold=".length));
+      if (Number.isFinite(value)) threshold = value;
+      continue;
+    }
+    if (token === "--required") {
+      required = true;
+    }
+  }
+
+  const parsed: MutationCommandOptions = { command, targetGroups, required };
+  if (threshold !== undefined) parsed.threshold = threshold;
+  return parsed;
+}
 
 interface StrykerMutant {
   id: string;
@@ -315,6 +376,37 @@ function writeArtifact(projectRoot: string, summary: MutationSummary): string {
   return filePath;
 }
 
+export function persistMutationEvidenceArtifact(
+  projectRoot: string,
+  summary: MutationSummary,
+  options: {
+    runId?: string;
+    artifactId?: string;
+    commit?: string;
+    createdAt?: string;
+  } = {},
+): EvidenceWriteResult {
+  const createdAt = options.createdAt ?? new Date().toISOString();
+  const runId = options.runId ?? `mutation-${createdAt.replace(/\D/g, "").slice(0, 14)}`;
+  const artifactId = options.artifactId ?? `${runId}-mutation`;
+  const topic = summary.targetGroups?.[0] ?? summary.packSource.split(",")[0]?.trim() ?? "mutation";
+  const inputHash = createHash("sha256").update(JSON.stringify(summary)).digest("hex");
+
+  return writeEvidenceArtifact(projectRoot, {
+    schema_version: 1,
+    artifact_id: artifactId,
+    kind: "mutation",
+    topic,
+    run_id: runId,
+    commit: options.commit ?? "unknown",
+    command: `forge mutate run${summary.targetGroups?.length ? ` --target-group ${summary.targetGroups.join(" --target-group ")}` : ""}`,
+    input_hash: inputHash,
+    result: summary.verdict,
+    producer: "forge-mutate",
+    created_at: createdAt,
+  });
+}
+
 // ---------------------------------------------------------------------------
 // Main entry point
 // ---------------------------------------------------------------------------
@@ -359,7 +451,21 @@ export async function runMutation(
     };
 
     const filePath = writeArtifact(projectRoot, summary);
-    return { filePath, summary };
+    const evidence = persistMutationEvidenceArtifact(projectRoot, summary, {
+      runId: options.runId,
+      commit: options.currentCommit,
+      createdAt: options.createdAt,
+    });
+    return {
+      filePath,
+      summary,
+      ...(evidence.ok
+        ? {
+            evidenceArtifactId: summaryArtifactId(evidence.path),
+            evidenceArtifactPath: evidence.path,
+          }
+        : {}),
+    };
   }
 
   // Generate stryker config
@@ -409,7 +515,21 @@ export async function runMutation(
       durationMs,
     };
     const filePath = writeArtifact(projectRoot, summary);
-    return { filePath, summary };
+    const evidence = persistMutationEvidenceArtifact(projectRoot, summary, {
+      runId: options.runId,
+      commit: options.currentCommit,
+      createdAt: options.createdAt,
+    });
+    return {
+      filePath,
+      summary,
+      ...(evidence.ok
+        ? {
+            evidenceArtifactId: summaryArtifactId(evidence.path),
+            evidenceArtifactPath: evidence.path,
+          }
+        : {}),
+    };
   }
 
   // Compute score
@@ -442,5 +562,24 @@ export async function runMutation(
   };
 
   const filePath = writeArtifact(projectRoot, summary);
-  return { filePath, summary };
+  const evidence = persistMutationEvidenceArtifact(projectRoot, summary, {
+    runId: options.runId,
+    commit: options.currentCommit,
+    createdAt: options.createdAt,
+  });
+  return {
+    filePath,
+    summary,
+    ...(evidence.ok
+      ? {
+          evidenceArtifactId: summaryArtifactId(evidence.path),
+          evidenceArtifactPath: evidence.path,
+        }
+      : {}),
+  };
+}
+
+function summaryArtifactId(path: string): string {
+  const name = path.split("/").pop() ?? "";
+  return name.endsWith(".json") ? name.slice(0, -".json".length) : name;
 }

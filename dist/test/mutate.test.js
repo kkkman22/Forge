@@ -21,10 +21,14 @@ vi.mock("node:child_process", () => ({
 const mockFsWriteFile = vi.fn();
 const mockFsMkdir = vi.fn();
 const mockFsReadFile = vi.fn();
+const mockFsAppendFile = vi.fn();
+const mockFsExists = vi.fn((..._args) => false);
 vi.mock("node:fs", () => ({
     mkdirSync: (...args) => mockFsMkdir(...args),
     writeFileSync: (...args) => mockFsWriteFile(...args),
     readFileSync: (...args) => mockFsReadFile(...args),
+    appendFileSync: (...args) => mockFsAppendFile(...args),
+    existsSync: (...args) => mockFsExists(...args),
 }));
 // Mock node:path for artifact path construction
 vi.mock("node:path", async (importOriginal) => {
@@ -35,7 +39,7 @@ vi.mock("node:path", async (importOriginal) => {
     };
 });
 // Import after mocking
-import { collectMutationTargets, collectTargetGlobs, computeMutationScore, evaluateMutationVerdict, FIRST_PARTY_MUTATION_TARGET_GROUPS, generateStrykerConfig, runMutation, } from "../src/mutate.js";
+import { collectMutationTargets, collectTargetGlobs, computeMutationScore, evaluateMutationVerdict, FIRST_PARTY_MUTATION_TARGET_GROUPS, generateStrykerConfig, parseMutationArgs, runMutation, } from "../src/mutate.js";
 // ---------------------------------------------------------------------------
 // Helpers
 // ---------------------------------------------------------------------------
@@ -173,6 +177,23 @@ describe("first-party mutation targets", () => {
         expect(targets.targetedGlobs.filter((glob) => glob === "src/ship.ts")).toHaveLength(1);
         expect(targets.required).toBe(true);
         expect(targets.targetGroups).toEqual(["gate_core"]);
+    });
+});
+describe("parseMutationArgs", () => {
+    it("parses selected first-party target groups for mutate run", () => {
+        const parsed = parseMutationArgs([
+            "run",
+            "--target-group",
+            "gate_core",
+            "--target-group=workflow_artifacts",
+            "--threshold",
+            "90",
+            "--required",
+        ]);
+        expect(parsed.command).toBe("run");
+        expect(parsed.targetGroups).toEqual(["gate_core", "workflow_artifacts"]);
+        expect(parsed.threshold).toBe(90);
+        expect(parsed.required).toBe(true);
     });
 });
 describe("tiered mutation verdict", () => {
@@ -331,6 +352,8 @@ describe("runMutation", () => {
         mockExecFileSync.mockReset();
         mockFsWriteFile.mockReset();
         mockFsMkdir.mockReset();
+        mockFsAppendFile.mockReset();
+        mockFsExists.mockClear();
     });
     it("returns warn with empty globs (no-op)", async () => {
         const enabled = makeEnabledPacks([]);
