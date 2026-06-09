@@ -28,6 +28,7 @@ import { readFileSync } from "node:fs";
 import { PromptDefenseError } from "./forge-error.js";
 import { scanInput } from "./prompt-defense.js";
 import { intentsToHints, matchIntents, parseIntentDictionary } from "./router-intents.js";
+import { getRouterSequence } from "./workflow-graph.js";
 
 // ---------------------------------------------------------------------------
 // Tier (complexity dimension) — determines WHICH commands to run
@@ -111,27 +112,6 @@ export interface ClassificationResult {
   /** Explicit assumptions surfaced during routing analysis. */
   assumptions: string[];
 }
-
-// ---------------------------------------------------------------------------
-// Command sequences per tier (unchanged)
-// ---------------------------------------------------------------------------
-
-/**
- * Command sequences for each tier in the complete interactive workflow.
- *
- * The `full` sequence includes `decide` and `spec` phases because the Router
- * is responsible for the entire interactive workflow — from initial decision
- * and specification through to learning. The Skill Scheduler uses a separate
- * set of sequences that omit these early phases, since it only handles SKILL
- * execution (plan → build → review → test → ship → learn).
- *
- * @see src/skill-scheduler.ts SKILL_COMMAND_SEQUENCES
- */
-const COMMAND_SEQUENCES: Record<Tier, string[]> = {
-  light: ["build", "review"],
-  standard: ["plan", "build", "review", "test", "ship"],
-  full: ["decide", "spec", "plan", "build", "review", "test", "ship", "learn"],
-};
 
 // ---------------------------------------------------------------------------
 // Intent dictionary loader (lazy, cached)
@@ -755,7 +735,7 @@ export function classifyTask(
   rawDescription?: string,
 ): ClassificationResult {
   const { tier, reason } = classifyTier(signals, userOverride, projectContext);
-  const commandSequence = COMMAND_SEQUENCES[tier];
+  const commandSequence = getRouterSequence(tier);
   const hints = generateHints(taskType, projectPhase, commandSequence);
 
   let suppressIntent = false;

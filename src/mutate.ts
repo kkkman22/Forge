@@ -26,6 +26,8 @@ export interface MutationArtifact {
 export interface MutationSummary {
   packSource: string;
   targetedGlobs: string[];
+  targetGroups?: string[];
+  required?: boolean;
   total: number;
   killed: number;
   survived: number;
@@ -33,14 +35,45 @@ export interface MutationSummary {
   runtimeErrors: number;
   mutationScore: number;
   threshold: number;
-  verdict: "pass" | "warn";
+  verdict: MutationVerdict;
   durationMs: number;
 }
 
 export interface RunMutationOptions {
   projectRoot: string;
   threshold?: number;
+  targetGroups?: string[];
+  required?: boolean;
 }
+
+export type MutationGateMode = "required" | "advisory";
+export type MutationVerdict = "pass" | "warn" | "fail";
+
+export interface MutationTargetGroup {
+  mode: MutationGateMode;
+  globs: string[];
+}
+
+export interface MutationTargetSelection {
+  targetGroups: string[];
+  targetedGlobs: string[];
+  required: boolean;
+}
+
+export const FIRST_PARTY_MUTATION_TARGET_GROUPS: Record<string, MutationTargetGroup> = {
+  gate_core: {
+    mode: "required",
+    globs: ["src/ship-gates.ts", "src/ship.ts", "src/review/quality-gate.ts"],
+  },
+  validators: {
+    mode: "required",
+    globs: ["src/mcp/tools/path-validator.ts", "src/spec-validation.ts"],
+  },
+  workflow_artifacts: {
+    mode: "advisory",
+    globs: ["src/workflow-graph.ts", "src/evidence-artifact.ts"],
+  },
+};
 
 interface StrykerMutant {
   id: string;
@@ -116,6 +149,38 @@ export function collectTargetGlobs(enabled: EnabledPacks): string[] {
   }
 
   return result;
+}
+
+export function collectMutationTargets(
+  enabled: EnabledPacks,
+  options: { targetGroups?: string[] } = {},
+): MutationTargetSelection {
+  const seen = new Set<string>();
+  const targetedGlobs: string[] = [];
+  let required = false;
+
+  const addGlob = (glob: string) => {
+    if (!seen.has(glob)) {
+      seen.add(glob);
+      targetedGlobs.push(glob);
+    }
+  };
+
+  const targetGroups = options.targetGroups ?? [];
+  for (const groupName of targetGroups) {
+    const group = FIRST_PARTY_MUTATION_TARGET_GROUPS[groupName];
+    if (!group) continue;
+    if (group.mode === "required") required = true;
+    for (const glob of group.globs) {
+      addGlob(glob);
+    }
+  }
+
+  for (const glob of collectTargetGlobs(enabled)) {
+    addGlob(glob);
+  }
+
+  return { targetGroups, targetedGlobs, required };
 }
 
 // ---------------------------------------------------------------------------
@@ -206,6 +271,17 @@ export function computeMutationScore(
   };
 }
 
+export function evaluateMutationVerdict(input: {
+  mutationScore: number;
+  threshold: number;
+  required: boolean;
+  targetCount: number;
+}): MutationVerdict {
+  if (input.targetCount === 0) return "warn";
+  if (input.mutationScore >= input.threshold) return "pass";
+  return input.required ? "fail" : "warn";
+}
+
 // ---------------------------------------------------------------------------
 // Artifact writing
 // ---------------------------------------------------------------------------
@@ -256,8 +332,10 @@ export async function runMutation(
   const projectRoot = options.projectRoot;
   const startTime = Date.now();
 
-  // Collect globs from enabled packs
-  const targetedGlobs = collectTargetGlobs(enabled);
+  // Collect globs from selected first-party groups and enabled packs.
+  const selection = collectMutationTargets(enabled, { targetGroups: options.targetGroups });
+  const targetedGlobs = selection.targetedGlobs;
+  const required = options.required ?? selection.required;
 
   // No globs → no-op with warn
   if (targetedGlobs.length === 0) {
@@ -267,6 +345,8 @@ export async function runMutation(
     const summary: MutationSummary = {
       packSource,
       targetedGlobs: [],
+      targetGroups: selection.targetGroups,
+      required,
       total: 0,
       killed: 0,
       survived: 0,
@@ -316,6 +396,8 @@ export async function runMutation(
     const summary: MutationSummary = {
       packSource,
       targetedGlobs,
+      targetGroups: selection.targetGroups,
+      required,
       total: 0,
       killed: 0,
       survived: 0,
@@ -336,11 +418,18 @@ export async function runMutation(
   const packSource = enabled.order.join(", ");
 
   const mutationScore = scores.mutationScore;
-  const verdict: "pass" | "warn" = mutationScore >= threshold ? "pass" : "warn";
+  const verdict = evaluateMutationVerdict({
+    mutationScore,
+    threshold,
+    required,
+    targetCount: targetedGlobs.length,
+  });
 
   const summary: MutationSummary = {
     packSource,
     targetedGlobs,
+    targetGroups: selection.targetGroups,
+    required,
     total: scores.total,
     killed: scores.killed,
     survived: scores.survived,

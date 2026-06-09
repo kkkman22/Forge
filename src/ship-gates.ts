@@ -10,14 +10,20 @@
 
 import { mkdirSync, readdirSync, readFileSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
+import {
+  type EvidenceArtifactKind,
+  isArtifactFreshForCommit,
+  queryEvidenceArtifacts,
+} from "./evidence-artifact.js";
 import type { Methodology } from "./schemas/review-report.js";
+import { getPolicyGateRequirements, type PolicyProfile } from "./workflow-graph.js";
 
 // ---------------------------------------------------------------------------
 // Types
 // ---------------------------------------------------------------------------
 
 /** Name of a specific gate. */
-export type GateName = "review" | "test" | "progress";
+export type GateName = "review" | "test" | "progress" | "policy";
 
 /** Structured result of a single gate check. */
 export interface GateResult {
@@ -397,6 +403,61 @@ export function checkTestGate(testResultsDir: string, configCICheck?: string): G
     reason: `Could not determine test status from: ${latestPath}`,
     details: { untestedFiles: [] },
   };
+}
+
+export function checkPolicyProfileArtifactGate(
+  projectRoot: string,
+  topic: string,
+  currentHead: string,
+  policyProfile: PolicyProfile,
+): GateResult {
+  const requiredKinds = requiredArtifactKinds(policyProfile);
+  const failures: string[] = [];
+
+  for (const kind of requiredKinds) {
+    const latest = queryEvidenceArtifacts(projectRoot, { topic, kind })[0];
+    if (!latest) {
+      failures.push(`required ${kind} artifact is missing`);
+      continue;
+    }
+    if (latest.result !== "pass") {
+      failures.push(`latest ${kind} artifact result is ${latest.result}`);
+    }
+    const freshness = isArtifactFreshForCommit(latest, currentHead);
+    if (!freshness.fresh) {
+      failures.push(freshness.reason);
+    }
+  }
+
+  if (failures.length > 0) {
+    return {
+      gate: "policy",
+      passed: false,
+      reason: failures.join("; "),
+      details: { incompleteTasks: failures },
+    };
+  }
+
+  return {
+    gate: "policy",
+    passed: true,
+    reason: `${policyProfile} policy artifact requirements satisfied.`,
+  };
+}
+
+function requiredArtifactKinds(policyProfile: PolicyProfile): EvidenceArtifactKind[] {
+  const gates = getPolicyGateRequirements(policyProfile, "ship");
+  const requiredKinds: EvidenceArtifactKind[] = [];
+  if (gates.review === "basic" || gates.review === "required" || gates.review === "full") {
+    requiredKinds.push("review");
+  }
+  if (gates.test === "required" || gates.test === "full") {
+    requiredKinds.push("test");
+  }
+  if (gates.mutation === "required" || gates.mutation === "full") {
+    requiredKinds.push("mutation");
+  }
+  return requiredKinds;
 }
 
 // ---------------------------------------------------------------------------

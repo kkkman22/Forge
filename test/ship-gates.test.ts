@@ -9,13 +9,14 @@
  */
 
 import { describe, expect, it } from "vitest";
+import { type EvidenceArtifact, writeEvidenceArtifact } from "../src/evidence-artifact.js";
 import type { GateName, GateResult, P1Fixlist, SkipGateOptions } from "../src/ship-gates.js";
-
 // We import the module dynamically so the tests can be written first
 // and fail until implementations are added.
 import {
   buildSkipGateAnnotation,
   checkFallbackLadderGate,
+  checkPolicyProfileArtifactGate,
   checkProgressGate,
   checkReviewGate,
   checkTestGate,
@@ -79,6 +80,60 @@ describe("checkTestGate — failure scenarios", () => {
     const result = checkTestGate("/tmp/forge-test-empty-tests");
     expect(result.gate).toBe("test");
     expect(result.passed).toBe(false);
+  });
+});
+
+describe("checkPolicyProfileArtifactGate", () => {
+  function artifact(overrides: Partial<EvidenceArtifact>): EvidenceArtifact {
+    return {
+      schema_version: 1,
+      artifact_id: "artifact-1",
+      kind: "review",
+      topic: "topic-a",
+      run_id: "run-1",
+      commit: "head-1",
+      result: "pass",
+      producer: "vitest",
+      created_at: "2026-06-09T01:00:00.000Z",
+      ...overrides,
+    };
+  }
+
+  it("enterprise blocks ship when required mutation and test artifacts are missing", () => {
+    const { mkdtempSync, rmSync } = require("node:fs") as typeof import("node:fs");
+    const { join } = require("node:path") as typeof import("node:path");
+    const { tmpdir } = require("node:os") as typeof import("node:os");
+    const root = mkdtempSync(join(tmpdir(), "forge-policy-gate-test-"));
+    try {
+      writeEvidenceArtifact(root, artifact({ kind: "review" }));
+
+      const result = checkPolicyProfileArtifactGate(root, "topic-a", "head-1", "enterprise");
+
+      expect(result.gate).toBe("policy");
+      expect(result.passed).toBe(false);
+      expect(result.reason).toContain("required test artifact is missing");
+      expect(result.reason).toContain("required mutation artifact is missing");
+    } finally {
+      rmSync(root, { recursive: true, force: true });
+    }
+  });
+
+  it("team passes with fresh review and test artifacts", () => {
+    const { mkdtempSync, rmSync } = require("node:fs") as typeof import("node:fs");
+    const { join } = require("node:path") as typeof import("node:path");
+    const { tmpdir } = require("node:os") as typeof import("node:os");
+    const root = mkdtempSync(join(tmpdir(), "forge-policy-gate-test-"));
+    try {
+      writeEvidenceArtifact(root, artifact({ kind: "review" }));
+      writeEvidenceArtifact(root, artifact({ artifact_id: "test-1", kind: "test" }));
+
+      const result = checkPolicyProfileArtifactGate(root, "topic-a", "head-1", "team");
+
+      expect(result.gate).toBe("policy");
+      expect(result.passed).toBe(true);
+    } finally {
+      rmSync(root, { recursive: true, force: true });
+    }
   });
 });
 
