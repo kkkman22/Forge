@@ -6,6 +6,7 @@ import {
   type EvidenceArtifact,
   isArtifactFreshForCommit,
   queryEvidenceArtifacts,
+  validateArtifactBackedVerdict,
   validateEvidenceArtifact,
   writeEvidenceArtifact,
 } from "../src/evidence-artifact.js";
@@ -22,6 +23,32 @@ afterEach(() => {
   for (const root of tempRoots.splice(0)) {
     rmSync(root, { recursive: true, force: true });
   }
+});
+
+describe("validateArtifactBackedVerdict", () => {
+  it("rejects pass verdicts without an artifact reference", () => {
+    const diagnostics = validateArtifactBackedVerdict(
+      "---\nresult: pass\n---\n# Verdict\n\nPassed.",
+    );
+
+    expect(diagnostics).toContainEqual({
+      code: "MISSING_ARTIFACT_REFERENCE",
+      message: "pass verdicts must reference artifact_id or evidence_artifact_id",
+    });
+  });
+
+  it("accepts pass verdicts with artifact_id or evidence_artifact_id", () => {
+    expect(
+      validateArtifactBackedVerdict("---\nresult: pass\nartifact_id: review-1\n---\n"),
+    ).toEqual([]);
+    expect(
+      validateArtifactBackedVerdict("---\nresult: pass\nevidence_artifact_id: verify-1\n---\n"),
+    ).toEqual([]);
+  });
+
+  it("does not require artifact references for non-pass verdicts", () => {
+    expect(validateArtifactBackedVerdict("---\nresult: fail\n---\n")).toEqual([]);
+  });
 });
 
 function artifact(overrides: Partial<EvidenceArtifact> = {}): EvidenceArtifact {

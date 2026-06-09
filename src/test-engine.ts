@@ -96,7 +96,10 @@ export function validatePreCompletionChecklist(state: ChecklistState): Checklist
 // Failure-sink driver helper
 // ---------------------------------------------------------------------------
 
+import { type EvidenceWriteResult, writeEvidenceArtifact } from "./evidence-artifact.js";
 import type { FailureContext } from "./failure-sink.js";
+
+type EvidenceWriteFailure = Extract<EvidenceWriteResult, { ok: false }>;
 
 export interface TestLayerFailedInput {
   topic: string;
@@ -115,4 +118,54 @@ export function buildTestLayerFailedContext(input: TestLayerFailedInput): Failur
     situation: `${input.failedLayer} 验证失败${cases}`,
     rootCause: `${input.failedLayer} 失败${cases}`,
   };
+}
+
+export type TestEvidenceWriteResult =
+  | { ok: true; artifactId: string; path: string; indexPath: string }
+  | EvidenceWriteFailure;
+
+export interface PersistTestEvidenceArtifactInput {
+  topic: string;
+  commit: string;
+  command: string;
+  exitCode: number;
+  stdoutTail?: string;
+  stderrTail?: string;
+  inputHash?: string;
+  artifactId?: string;
+  runId?: string;
+  createdAt?: string;
+  producer?: string;
+}
+
+export function persistTestEvidenceArtifact(
+  projectRoot: string,
+  input: PersistTestEvidenceArtifactInput,
+): TestEvidenceWriteResult {
+  const createdAt = input.createdAt ?? new Date().toISOString();
+  const artifactId =
+    input.artifactId ?? `test-${safeSegment(input.topic)}-${safeSegment(createdAt)}`;
+  const result = writeEvidenceArtifact(projectRoot, {
+    schema_version: 1,
+    artifact_id: artifactId,
+    kind: "test",
+    topic: input.topic,
+    run_id: input.runId ?? artifactId,
+    commit: input.commit,
+    command: input.command,
+    exit_code: input.exitCode,
+    stdout_tail: input.stdoutTail,
+    stderr_tail: input.stderrTail,
+    input_hash: input.inputHash,
+    result: input.exitCode === 0 ? "pass" : "fail",
+    producer: input.producer ?? "forge-test",
+    created_at: createdAt,
+  });
+
+  return result.ok ? { ...result, artifactId } : result;
+}
+
+function safeSegment(value: string): string {
+  const normalized = value.replace(/[^a-zA-Z0-9._-]+/g, "-").replace(/^-+|-+$/g, "");
+  return normalized.length > 0 ? normalized : "artifact";
 }

@@ -47,6 +47,11 @@ export interface EvidenceArtifactDiagnostic {
   message: string;
 }
 
+export interface ArtifactBackedVerdictDiagnostic {
+  code: "MISSING_ARTIFACT_REFERENCE";
+  message: string;
+}
+
 export type EvidenceWriteResult =
   | { ok: true; path: string; indexPath: string }
   | { ok: false; code: "INVALID_ARTIFACT" | "ARTIFACT_ALREADY_EXISTS"; message: string };
@@ -201,6 +206,23 @@ export function isArtifactFreshForCommit(
   };
 }
 
+export function validateArtifactBackedVerdict(content: string): ArtifactBackedVerdictDiagnostic[] {
+  if (!hasPassResult(content)) {
+    return [];
+  }
+
+  if (/(^|\n)\s*(artifact_id|evidence_artifact_id):\s*"?[a-zA-Z0-9._-]+"?\s*(\n|$)/.test(content)) {
+    return [];
+  }
+
+  return [
+    {
+      code: "MISSING_ARTIFACT_REFERENCE",
+      message: "pass verdicts must reference artifact_id or evidence_artifact_id",
+    },
+  ];
+}
+
 function indexRecord(artifact: EvidenceArtifact, path: string): Record<string, string> {
   return {
     artifact_id: artifact.artifact_id,
@@ -238,6 +260,10 @@ function readArtifact(path: string): EvidenceArtifact | null {
 
 function isSafePathSegment(value: string): boolean {
   return /^[a-zA-Z0-9._-]+$/.test(value) && !value.includes("..");
+}
+
+function hasPassResult(content: string): boolean {
+  return /(^|\n)\s*result:\s*"?pass"?\s*(\n|$)/.test(content);
 }
 
 function stableJson(value: EvidenceArtifact): string {
