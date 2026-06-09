@@ -21,18 +21,22 @@ function writeDoc(root, relPath, content) {
     writeFileSync(fullPath, content, "utf-8");
 }
 function artifact(overrides = {}) {
-    return {
+    const base = {
         schema_version: 1,
         artifact_id: "review-new",
         kind: "review",
         topic: "topic-a",
         run_id: "run-1",
+        trace_id: "run-1",
         commit: "abc123",
+        command: "npm run check",
+        exit_code: 0,
+        input_hash: "hash-1",
         result: "pass",
         producer: "vitest",
         created_at: "2026-06-09T02:00:00.000Z",
-        ...overrides,
     };
+    return Object.assign(base, overrides);
 }
 describe("evidence chain replay", () => {
     it("builds a timeline from stage files and artifacts with explicit missing stages", () => {

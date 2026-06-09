@@ -77,12 +77,26 @@ describe("evidence artifact schema", () => {
     expect(validateEvidenceArtifact(artifact())).toEqual([]);
   });
 
-  it("rejects records without commit or timestamp", () => {
+  it("rejects records without required provenance fields", () => {
     const diagnostics = validateEvidenceArtifact(
-      artifact({ commit: "", created_at: "" }) as EvidenceArtifact,
+      artifact({
+        trace_id: "",
+        commit: "",
+        command: "",
+        exit_code: undefined as unknown as number,
+        input_hash: "",
+        created_at: "",
+      }) as EvidenceArtifact,
     );
     expect(diagnostics.map((d) => d.code)).toEqual(
-      expect.arrayContaining(["MISSING_COMMIT", "MISSING_TIMESTAMP"]),
+      expect.arrayContaining([
+        "MISSING_TRACE_ID",
+        "MISSING_COMMIT",
+        "MISSING_COMMAND",
+        "MISSING_EXIT_CODE",
+        "MISSING_INPUT_HASH",
+        "MISSING_TIMESTAMP",
+      ]),
     );
   });
 
@@ -163,6 +177,32 @@ describe("immutable artifact writer and index", () => {
     expect(isArtifactFreshForCommit(artifact({ commit: "abc123" }), "def456")).toEqual({
       fresh: false,
       reason: "artifact commit abc123 does not match current HEAD def456",
+    });
+  });
+
+  it("keeps review fresh across .forge-only changes", () => {
+    expect(
+      isArtifactFreshForCommit(artifact({ kind: "review", commit: "old" }), "head", {
+        changedFiles: [".forge/status.md", ".forge/reviews/topic.md"],
+      }),
+    ).toEqual({
+      fresh: true,
+      reason: "review remains fresh because only .forge/ state changed",
+    });
+  });
+
+  it("keeps test fresh when command input hash matches", () => {
+    expect(
+      isArtifactFreshForCommit(
+        artifact({ kind: "test", commit: "old", input_hash: "same" }),
+        "head",
+        {
+          inputHash: "same",
+        },
+      ),
+    ).toEqual({
+      fresh: true,
+      reason: "test input hash matches current command input",
     });
   });
 });

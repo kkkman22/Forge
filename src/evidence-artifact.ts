@@ -1,3 +1,4 @@
+import { createHash } from "node:crypto";
 import { appendFileSync, existsSync, mkdirSync, readFileSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
 
@@ -18,13 +19,13 @@ export interface EvidenceArtifact {
   kind: EvidenceArtifactKind;
   topic: string;
   run_id: string;
-  trace_id?: string;
+  trace_id: string;
   commit: string;
-  command?: string;
-  exit_code?: number;
+  command: string;
+  exit_code: number;
   stdout_tail?: string;
   stderr_tail?: string;
-  input_hash?: string;
+  input_hash: string;
   result: EvidenceArtifactResult;
   producer: string;
   created_at: string;
@@ -37,7 +38,11 @@ export interface EvidenceArtifactDiagnostic {
     | "MISSING_ARTIFACT_ID"
     | "MISSING_TOPIC"
     | "MISSING_RUN_ID"
+    | "MISSING_TRACE_ID"
     | "MISSING_COMMIT"
+    | "MISSING_COMMAND"
+    | "MISSING_EXIT_CODE"
+    | "MISSING_INPUT_HASH"
     | "MISSING_TIMESTAMP"
     | "MISSING_PRODUCER"
     | "INVALID_KIND"
@@ -61,6 +66,11 @@ export interface EvidenceArtifactQuery {
   kind?: EvidenceArtifactKind;
   commit?: string;
   run_id?: string;
+}
+
+export interface ArtifactFreshnessContext {
+  changedFiles?: readonly string[];
+  inputHash?: string;
 }
 
 const VALID_KINDS = new Set<EvidenceArtifactKind>([
@@ -106,8 +116,20 @@ export function validateEvidenceArtifact(artifact: EvidenceArtifact): EvidenceAr
   } else if (!isSafePathSegment(artifact.run_id)) {
     diagnostics.push({ code: "UNSAFE_RUN_ID", message: "run_id must be a safe path segment" });
   }
+  if (!artifact.trace_id) {
+    diagnostics.push({ code: "MISSING_TRACE_ID", message: "trace_id is required" });
+  }
   if (!artifact.commit) {
     diagnostics.push({ code: "MISSING_COMMIT", message: "commit is required" });
+  }
+  if (!artifact.command) {
+    diagnostics.push({ code: "MISSING_COMMAND", message: "command is required" });
+  }
+  if (typeof artifact.exit_code !== "number" || !Number.isFinite(artifact.exit_code)) {
+    diagnostics.push({ code: "MISSING_EXIT_CODE", message: "exit_code is required" });
+  }
+  if (!artifact.input_hash) {
+    diagnostics.push({ code: "MISSING_INPUT_HASH", message: "input_hash is required" });
   }
   if (!artifact.created_at) {
     diagnostics.push({ code: "MISSING_TIMESTAMP", message: "created_at is required" });
@@ -129,6 +151,10 @@ export function validateEvidenceArtifact(artifact: EvidenceArtifact): EvidenceAr
   }
 
   return diagnostics;
+}
+
+export function hashEvidenceInput(value: unknown): string {
+  return createHash("sha256").update(JSON.stringify(value)).digest("hex");
 }
 
 export function writeEvidenceArtifact(
@@ -196,9 +222,19 @@ export function queryEvidenceArtifacts(
 export function isArtifactFreshForCommit(
   artifact: EvidenceArtifact,
   currentHead: string,
+  context: ArtifactFreshnessContext = {},
 ): { fresh: boolean; reason: string } {
   if (artifact.commit === currentHead) {
     return { fresh: true, reason: "artifact commit matches current HEAD" };
+  }
+  if (artifact.kind === "review" && context.changedFiles !== undefined) {
+    const projectFiles = context.changedFiles.filter((file) => !file.startsWith(".forge/"));
+    if (projectFiles.length === 0) {
+      return { fresh: true, reason: "review remains fresh because only .forge/ state changed" };
+    }
+  }
+  if (artifact.kind === "test" && context.inputHash && artifact.input_hash === context.inputHash) {
+    return { fresh: true, reason: "test input hash matches current command input" };
   }
   return {
     fresh: false,

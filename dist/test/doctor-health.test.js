@@ -22,18 +22,22 @@ function writeForgeFile(root, relPath, content) {
     writeFileSync(fullPath, content, "utf-8");
 }
 function artifact(overrides) {
-    return {
+    const base = {
         schema_version: 1,
         artifact_id: "artifact-1",
         kind: "review",
         topic: "topic-a",
         run_id: "run-1",
+        trace_id: "run-1",
         commit: "head-1",
+        command: "npm run check",
+        exit_code: 0,
+        input_hash: "hash-1",
         result: "pass",
         producer: "vitest",
         created_at: "2026-06-09T01:00:00.000Z",
-        ...overrides,
     };
+    return Object.assign(base, overrides);
 }
 describe("doctor health snapshot", () => {
     it("reports unknown instead of pass when status is missing", () => {

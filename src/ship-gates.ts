@@ -13,6 +13,7 @@ import { basename, dirname, join } from "node:path";
 import {
   type EvidenceArtifact,
   type EvidenceArtifactKind,
+  hashEvidenceInput,
   isArtifactFreshForCommit,
   queryEvidenceArtifacts,
   writeEvidenceArtifact,
@@ -429,9 +430,11 @@ export function checkPolicyProfileArtifactGate(
   topic: string,
   currentHead: string,
   policyProfile: PolicyProfile,
+  options: { changedFiles?: readonly string[]; testInputHash?: string } = {},
 ): GateResult {
   const requiredKinds = requiredArtifactKinds(policyProfile);
   const failures: string[] = [];
+  const forceArtifact = latestForceShipArtifact(projectRoot, topic);
 
   for (const kind of requiredKinds) {
     const latest = queryEvidenceArtifacts(projectRoot, { topic, kind })[0];
@@ -442,9 +445,14 @@ export function checkPolicyProfileArtifactGate(
     if (latest.result !== "pass") {
       failures.push(`latest ${kind} artifact result is ${latest.result}`);
     }
-    const freshness = isArtifactFreshForCommit(latest, currentHead);
+    const freshness = isArtifactFreshForCommit(latest, currentHead, {
+      changedFiles: kind === "review" ? options.changedFiles : undefined,
+      inputHash: kind === "test" ? options.testInputHash : undefined,
+    });
     if (!freshness.fresh) {
-      failures.push(freshness.reason);
+      if (!forceArtifact) {
+        failures.push(freshness.reason);
+      }
     }
   }
 
@@ -462,6 +470,16 @@ export function checkPolicyProfileArtifactGate(
     passed: true,
     reason: `${policyProfile} policy artifact requirements satisfied.`,
   };
+}
+
+function latestForceShipArtifact(projectRoot: string, topic: string): EvidenceArtifact | null {
+  return (
+    queryEvidenceArtifacts(projectRoot, { topic, kind: "ship_gate" }).find(
+      (artifact) =>
+        artifact.result === "pass" &&
+        /\b--force\b|\bforce\b|forced|force-skip/i.test(artifact.command),
+    ) ?? null
+  );
 }
 
 function requiredArtifactKinds(policyProfile: PolicyProfile): EvidenceArtifactKind[] {
@@ -743,13 +761,15 @@ export function persistGateResults(
     kind: "ship_gate",
     topic: report.feature,
     run_id: report.runId,
+    trace_id: report.runId,
     commit: options.commit ?? "unknown",
+    command: options.command ?? `forge ship ${report.feature}`,
+    exit_code: options.exitCode ?? (report.allPassed ? 0 : 1),
+    input_hash: hashEvidenceInput(report),
     result: report.allPassed ? "pass" : "blocked",
     producer: options.producer ?? "forge-ship",
     created_at: options.createdAt ?? report.timestamp,
   };
-  if (options.command !== undefined) artifact.command = options.command;
-  if (options.exitCode !== undefined) artifact.exit_code = options.exitCode;
   if (options.stdoutTail !== undefined) artifact.stdout_tail = options.stdoutTail;
   if (options.stderrTail !== undefined) artifact.stderr_tail = options.stderrTail;
 

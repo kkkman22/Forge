@@ -85,18 +85,22 @@ describe("checkTestGate — failure scenarios", () => {
 
 describe("checkPolicyProfileArtifactGate", () => {
   function artifact(overrides: Partial<EvidenceArtifact>): EvidenceArtifact {
-    return {
+    const base: EvidenceArtifact = {
       schema_version: 1,
       artifact_id: "artifact-1",
       kind: "review",
       topic: "topic-a",
       run_id: "run-1",
+      trace_id: "run-1",
       commit: "head-1",
+      command: "npm run check",
+      exit_code: 0,
+      input_hash: "hash-1",
       result: "pass",
       producer: "vitest",
       created_at: "2026-06-09T01:00:00.000Z",
-      ...overrides,
     };
+    return Object.assign(base, overrides);
   }
 
   it("enterprise blocks ship when required mutation and test artifacts are missing", () => {
@@ -131,6 +135,34 @@ describe("checkPolicyProfileArtifactGate", () => {
 
       expect(result.gate).toBe("policy");
       expect(result.passed).toBe(true);
+    } finally {
+      rmSync(root, { recursive: true, force: true });
+    }
+  });
+
+  it("blocks stale required artifacts unless an explicit force ship artifact exists", () => {
+    const { mkdtempSync, rmSync } = require("node:fs") as typeof import("node:fs");
+    const { join } = require("node:path") as typeof import("node:path");
+    const { tmpdir } = require("node:os") as typeof import("node:os");
+    const root = mkdtempSync(join(tmpdir(), "forge-policy-gate-test-"));
+    try {
+      writeEvidenceArtifact(root, artifact({ kind: "review", commit: "old" }));
+      writeEvidenceArtifact(root, artifact({ artifact_id: "test-1", kind: "test", commit: "old" }));
+
+      expect(checkPolicyProfileArtifactGate(root, "topic-a", "head-1", "team").passed).toBe(false);
+
+      writeEvidenceArtifact(
+        root,
+        artifact({
+          artifact_id: "force-ship-1",
+          kind: "ship_gate",
+          commit: "head-1",
+          command: "forge ship topic-a --force",
+          input_hash: "force-hash",
+        }),
+      );
+
+      expect(checkPolicyProfileArtifactGate(root, "topic-a", "head-1", "team").passed).toBe(true);
     } finally {
       rmSync(root, { recursive: true, force: true });
     }

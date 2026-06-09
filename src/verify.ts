@@ -16,7 +16,11 @@
 import { existsSync, mkdirSync, readdirSync, writeFileSync } from "node:fs";
 import { dirname, join } from "node:path";
 import { type BaselineResolution, resolveBaseline } from "./baseline-resolver.js";
-import { type EvidenceArtifact, writeEvidenceArtifact } from "./evidence-artifact.js";
+import {
+  type EvidenceArtifact,
+  hashEvidenceInput,
+  writeEvidenceArtifact,
+} from "./evidence-artifact.js";
 import type { VerdictValue } from "./verdict-parser.js";
 
 // ---------------------------------------------------------------------------
@@ -244,7 +248,7 @@ function writeInconclusiveResult(
   files: VerifyEvidenceFiles,
   reason: string,
 ): VerifyResult {
-  const artifactPath = writeVerifyEvidenceArtifact(context, reason);
+  const artifactPath = writeVerifyEvidenceArtifact(context, files, reason);
   writeInconclusiveVerdict(context.outputDir, context.topic, reason, context.evidenceArtifactId);
 
   const result: VerifyResult = {
@@ -262,6 +266,7 @@ function writeInconclusiveResult(
 
 function writeVerifyEvidenceArtifact(
   context: VerifyEvidenceContext,
+  files: VerifyEvidenceFiles,
   reason: string,
 ): string | null {
   const artifact: EvidenceArtifact = {
@@ -270,9 +275,18 @@ function writeVerifyEvidenceArtifact(
     kind: "verify",
     topic: context.topic,
     run_id: context.runId,
+    trace_id: context.runId,
     commit: context.currentCommit,
     command: `forge verify ${context.topic}`,
+    exit_code: 1,
     stdout_tail: reason,
+    input_hash: hashEvidenceInput({
+      topic: context.topic,
+      reason,
+      baselineResolution: files.baselineResolution,
+      baselineFiles: files.baselineFiles,
+      treatmentFiles: files.treatmentFiles,
+    }),
     result: "inconclusive",
     producer: context.producer,
     created_at: context.createdAt,

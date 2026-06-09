@@ -96,7 +96,11 @@ export function validatePreCompletionChecklist(state: ChecklistState): Checklist
 // Failure-sink driver helper
 // ---------------------------------------------------------------------------
 
-import { type EvidenceWriteResult, writeEvidenceArtifact } from "./evidence-artifact.js";
+import {
+  type EvidenceWriteResult,
+  hashEvidenceInput,
+  writeEvidenceArtifact,
+} from "./evidence-artifact.js";
 import type { FailureContext } from "./failure-sink.js";
 
 type EvidenceWriteFailure = Extract<EvidenceWriteResult, { ok: false }>;
@@ -151,12 +155,20 @@ export function persistTestEvidenceArtifact(
     kind: "test",
     topic: input.topic,
     run_id: input.runId ?? artifactId,
+    trace_id: input.runId ?? artifactId,
     commit: input.commit,
     command: input.command,
     exit_code: input.exitCode,
     stdout_tail: input.stdoutTail,
     stderr_tail: input.stderrTail,
-    input_hash: input.inputHash,
+    input_hash:
+      input.inputHash ??
+      hashEvidenceInput({
+        topic: input.topic,
+        command: input.command,
+        stdoutTail: input.stdoutTail,
+        stderrTail: input.stderrTail,
+      }),
     result: input.exitCode === 0 ? "pass" : "fail",
     producer: input.producer ?? "forge-test",
     created_at: createdAt,

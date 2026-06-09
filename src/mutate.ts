@@ -9,11 +9,14 @@
  */
 
 import { execFileSync } from "node:child_process";
-import { createHash } from "node:crypto";
 import { mkdirSync, readFileSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
 import { stringify as yamlStringify } from "yaml";
-import { type EvidenceWriteResult, writeEvidenceArtifact } from "./evidence-artifact.js";
+import {
+  type EvidenceWriteResult,
+  hashEvidenceInput,
+  writeEvidenceArtifact,
+} from "./evidence-artifact.js";
 import type { EnabledPacks } from "./pack/types.js";
 
 // ---------------------------------------------------------------------------
@@ -390,7 +393,7 @@ export function persistMutationEvidenceArtifact(
   const runId = options.runId ?? `mutation-${createdAt.replace(/\D/g, "").slice(0, 14)}`;
   const artifactId = options.artifactId ?? `${runId}-mutation`;
   const topic = summary.targetGroups?.[0] ?? summary.packSource.split(",")[0]?.trim() ?? "mutation";
-  const inputHash = createHash("sha256").update(JSON.stringify(summary)).digest("hex");
+  const inputHash = hashEvidenceInput(summary);
 
   return writeEvidenceArtifact(projectRoot, {
     schema_version: 1,
@@ -398,8 +401,10 @@ export function persistMutationEvidenceArtifact(
     kind: "mutation",
     topic,
     run_id: runId,
+    trace_id: runId,
     commit: options.commit ?? "unknown",
     command: `forge mutate run${summary.targetGroups?.length ? ` --target-group ${summary.targetGroups.join(" --target-group ")}` : ""}`,
+    exit_code: summary.verdict === "fail" ? 1 : 0,
     input_hash: inputHash,
     result: summary.verdict,
     producer: "forge-mutate",
