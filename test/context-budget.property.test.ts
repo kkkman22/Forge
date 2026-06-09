@@ -22,6 +22,7 @@ import type {
 import {
   CLASSIFICATION_MAP,
   classifySource,
+  computeContextBudgetThresholds,
   serializeExploreSummary,
   serializeGitDiff,
   serializeGitStatus,
@@ -382,5 +383,29 @@ describe("Feature: context-budget-management, Property 6: Subagent summary forma
     };
     const result = serializeSubagentSummary(summary);
     expect(result).toContain("performance concern");
+  });
+});
+
+describe("Feature: model-window-aware context thresholds", () => {
+  it("invalid ratios fall back to defaults", () => {
+    const result = computeContextBudgetThresholds({
+      contextWindowTokens: 100_000,
+      warningRatio: -1,
+      compactRatio: 0,
+      criticalRatio: 1.5,
+    });
+
+    expect(result.warningTokens).toBe(30_000);
+    expect(result.compactTokens).toBe(50_000);
+    expect(result.criticalTokens).toBe(70_000);
+  });
+
+  it("uses configured budget default when no inputs are provided", () => {
+    const result = computeContextBudgetThresholds({});
+
+    expect(result.source).toBe("configured-budget");
+    expect(result.warningTokens).toBe(30_000);
+    expect(result.compactTokens).toBe(50_000);
+    expect(result.criticalTokens).toBe(70_000);
   });
 });

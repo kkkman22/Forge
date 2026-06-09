@@ -51,6 +51,60 @@ export function classifySource(source: string): InformationLifecycle | undefined
 }
 
 // ---------------------------------------------------------------------------
+// Model-window-aware thresholds
+// ---------------------------------------------------------------------------
+
+/** @public */
+export interface ContextWindowBudgetInput {
+  configuredBudgetTokens?: number;
+  contextWindowTokens?: number;
+  warningRatio?: number;
+  compactRatio?: number;
+  criticalRatio?: number;
+}
+
+/** @public */
+export interface ContextBudgetThresholds {
+  warningTokens: number;
+  compactTokens: number;
+  criticalTokens: number;
+  source: "context-window" | "configured-budget";
+}
+
+const DEFAULT_CONFIGURED_BUDGET_TOKENS = 100_000;
+const DEFAULT_WARNING_RATIO = 0.3;
+const DEFAULT_COMPACT_RATIO = 0.5;
+const DEFAULT_CRITICAL_RATIO = 0.7;
+
+function validPositiveInteger(value: number | undefined): number | undefined {
+  return typeof value === "number" && Number.isFinite(value) && value > 0 ? value : undefined;
+}
+
+function validRatio(value: number | undefined, fallback: number): number {
+  return typeof value === "number" && Number.isFinite(value) && value > 0 && value < 1
+    ? value
+    : fallback;
+}
+
+/** @public */
+export function computeContextBudgetThresholds(
+  input: ContextWindowBudgetInput,
+): ContextBudgetThresholds {
+  const contextWindowTokens = validPositiveInteger(input.contextWindowTokens);
+  const configuredBudgetTokens =
+    validPositiveInteger(input.configuredBudgetTokens) ?? DEFAULT_CONFIGURED_BUDGET_TOKENS;
+  const baseTokens = contextWindowTokens ?? configuredBudgetTokens;
+  const source = contextWindowTokens ? "context-window" : "configured-budget";
+
+  return {
+    warningTokens: Math.ceil(baseTokens * validRatio(input.warningRatio, DEFAULT_WARNING_RATIO)),
+    compactTokens: Math.ceil(baseTokens * validRatio(input.compactRatio, DEFAULT_COMPACT_RATIO)),
+    criticalTokens: Math.ceil(baseTokens * validRatio(input.criticalRatio, DEFAULT_CRITICAL_RATIO)),
+    source,
+  };
+}
+
+// ---------------------------------------------------------------------------
 // Explore_Summarizer
 // ---------------------------------------------------------------------------
 

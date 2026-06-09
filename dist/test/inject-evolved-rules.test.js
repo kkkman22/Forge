@@ -15,13 +15,14 @@ function createTempDir() {
     mkdirSync(join(dir, ".forge", "knowledge"), { recursive: true });
     return dir;
 }
-function runScript(cwd, stdinPayload) {
+function runScript(cwd, stdinPayload, env = {}) {
     try {
         const stdout = execFileSync("node", [SCRIPT_PATH], {
             cwd,
             encoding: "utf-8",
             timeout: 5000,
             input: stdinPayload,
+            env: { ...process.env, ...env },
         });
         return { stdout, exitCode: 0 };
     }
@@ -67,6 +68,17 @@ describe("inject-evolved-rules.mjs", () => {
         expect(json.additionalContext).toContain("R1: Test");
         expect(json.additionalContext).toContain("R1 content here");
         expect(json.hookSpecificOutput.reloadSkills).toBe(true);
+    });
+    it("FORGE_DIAGNOSTIC_MODE=1 → exit 0, stdout zero bytes, no hook payload", () => {
+        tempDir = createTempDir();
+        writeFileSync(join(tempDir, RULES_FILE), "### R1: Test\n**Content**: should not appear");
+        const mainStdin = JSON.stringify({
+            session_id: "s1",
+            hook_event_name: "SessionStart",
+        });
+        const result = runScript(tempDir, mainStdin, { FORGE_DIAGNOSTIC_MODE: "1" });
+        expect(result.exitCode).toBe(0);
+        expect(result.stdout).toBe("");
     });
     it("file > 4KB → additionalContext is truncated", () => {
         tempDir = createTempDir();

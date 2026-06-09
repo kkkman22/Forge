@@ -50,6 +50,17 @@ export interface PuaStatusFields {
   puaFailurePattern?: string;
 }
 
+/** Diagnostic execution metadata persisted in StatusFile frontmatter. */
+export interface ExecutionMetadata {
+  claude_version?: string;
+  dispatch_mode?: "inline" | "agents" | "auto";
+  diagnostic_mode?: boolean;
+  tier?: "light" | "standard" | "full";
+  branch?: string;
+  forge_flags?: string[];
+  recorded_at?: string;
+}
+
 // ---------------------------------------------------------------------------
 // Constants
 // ---------------------------------------------------------------------------
@@ -73,8 +84,29 @@ const PACKAGE_FIELD_PATTERNS: readonly RegExp[] = [
   /^package_count:\s/,
 ];
 
+const EXECUTION_METADATA_FIELD_PATTERNS: readonly RegExp[] = [
+  /^execution_claude_version:\s/,
+  /^execution_dispatch_mode:\s/,
+  /^execution_diagnostic_mode:\s/,
+  /^execution_tier:\s/,
+  /^execution_branch:\s/,
+  /^execution_forge_flags:\s/,
+  /^execution_recorded_at:\s/,
+];
+
 /** Valid execution mode values. */
 const VALID_MODES: ReadonlySet<string> = new Set(["interactive", "autonomous"]);
+
+const VALID_DISPATCH_MODES: ReadonlySet<string> = new Set(["inline", "agents", "auto"]);
+const VALID_TIERS: ReadonlySet<string> = new Set(["light", "standard", "full"]);
+const ALLOWED_FORGE_FLAGS: ReadonlySet<string> = new Set([
+  "FORGE_DIAGNOSTIC_MODE",
+  "FORGE_REVIEW_CONCURRENCY",
+  "FORGE_REVIEW_DISPATCH_MODE",
+  "FORGE_DECIDE_DISPATCH_MODE",
+  "FORGE_ROOT",
+]);
+const SECRET_KEY_PATTERN = /(KEY|TOKEN|SECRET|PASSWORD|AUTH)/i;
 
 /** Regex matching any PUA field line (pua_ prefix). */
 const PUA_FIELD_PATTERN = /^pua_\w+:\s/;
@@ -160,6 +192,39 @@ function setField(lines: string[], pattern: RegExp, newLine: string): string[] {
     lines.push(newLine);
   }
   return lines;
+}
+
+function quoteYaml(value: string): string {
+  return `"${value.replace(/\\/g, "\\\\").replace(/"/g, '\\"')}"`;
+}
+
+function parseQuotedString(frontmatter: string, field: string): string | undefined {
+  const match = frontmatter.match(new RegExp(`^${field}:\\s*"?([^"\\n]*)"?\\s*$`, "m"));
+  const value = match?.[1]?.trim();
+  return value ? value : undefined;
+}
+
+function sanitizeForgeFlags(flags: string[] | undefined): string[] | undefined {
+  if (!flags) return undefined;
+  const result = flags
+    .filter((flag) => ALLOWED_FORGE_FLAGS.has(flag))
+    .filter((flag) => !SECRET_KEY_PATTERN.test(flag));
+  return result.length > 0 ? Array.from(new Set(result)) : undefined;
+}
+
+function sanitizeExecutionMetadata(metadata: ExecutionMetadata): ExecutionMetadata {
+  const result: ExecutionMetadata = {};
+  if (metadata.claude_version) result.claude_version = metadata.claude_version;
+  if (metadata.dispatch_mode && VALID_DISPATCH_MODES.has(metadata.dispatch_mode)) {
+    result.dispatch_mode = metadata.dispatch_mode;
+  }
+  if (metadata.diagnostic_mode !== undefined) result.diagnostic_mode = metadata.diagnostic_mode;
+  if (metadata.tier && VALID_TIERS.has(metadata.tier)) result.tier = metadata.tier;
+  if (metadata.branch) result.branch = metadata.branch;
+  const forgeFlags = sanitizeForgeFlags(metadata.forge_flags);
+  if (forgeFlags) result.forge_flags = forgeFlags;
+  if (metadata.recorded_at) result.recorded_at = metadata.recorded_at;
+  return result;
 }
 
 // ---------------------------------------------------------------------------
@@ -316,6 +381,122 @@ export function clearLoopFields(statusContent: string): string {
   const filtered = lines.filter((line) => !isLoopFieldLine(line));
 
   return buildContent(filtered, parsed.body, parsed.leadingWhitespace);
+}
+
+// ---------------------------------------------------------------------------
+// Execution metadata fields
+// ---------------------------------------------------------------------------
+
+export function extractExecutionMetadata(statusContent: string): ExecutionMetadata {
+  const result: ExecutionMetadata = {};
+  const parsed = parseFrontmatter(statusContent);
+  if (!parsed) return result;
+
+  const claudeVersion = parseQuotedString(parsed.frontmatter, "execution_claude_version");
+  if (claudeVersion) result.claude_version = claudeVersion;
+
+  const dispatchMode = parseQuotedString(parsed.frontmatter, "execution_dispatch_mode");
+  if (dispatchMode && VALID_DISPATCH_MODES.has(dispatchMode)) {
+    result.dispatch_mode = dispatchMode as ExecutionMetadata["dispatch_mode"];
+  }
+
+  const diagnosticMode = parseQuotedString(parsed.frontmatter, "execution_diagnostic_mode");
+  if (diagnosticMode === "true") result.diagnostic_mode = true;
+  if (diagnosticMode === "false") result.diagnostic_mode = false;
+
+  const tier = parseQuotedString(parsed.frontmatter, "execution_tier");
+  if (tier && VALID_TIERS.has(tier)) {
+    result.tier = tier as ExecutionMetadata["tier"];
+  }
+
+  const branch = parseQuotedString(parsed.frontmatter, "execution_branch");
+  if (branch) result.branch = branch;
+
+  const flags = parseQuotedString(parsed.frontmatter, "execution_forge_flags");
+  if (flags) {
+    result.forge_flags = flags
+      .split(",")
+      .map((flag) => flag.trim())
+      .filter((flag) => ALLOWED_FORGE_FLAGS.has(flag))
+      .filter((flag) => !SECRET_KEY_PATTERN.test(flag));
+  }
+
+  const recordedAt = parseQuotedString(parsed.frontmatter, "execution_recorded_at");
+  if (recordedAt) result.recorded_at = recordedAt;
+
+  return result;
+}
+
+export function writeExecutionMetadata(statusContent: string, metadata: ExecutionMetadata): string {
+  const sanitized = sanitizeExecutionMetadata(metadata);
+  const parsed = parseFrontmatter(statusContent);
+  const lines = parsed ? getFrontmatterLines(parsed.frontmatter) : [];
+  const body = parsed ? parsed.body : statusContent.trimStart();
+  const leadingWhitespace = parsed ? parsed.leadingWhitespace : "";
+
+  if (sanitized.claude_version !== undefined) {
+    setField(
+      lines,
+      /^execution_claude_version:\s/,
+      `execution_claude_version: ${quoteYaml(sanitized.claude_version)}`,
+    );
+  }
+  if (sanitized.dispatch_mode !== undefined) {
+    setField(
+      lines,
+      /^execution_dispatch_mode:\s/,
+      `execution_dispatch_mode: ${quoteYaml(sanitized.dispatch_mode)}`,
+    );
+  }
+  if (sanitized.diagnostic_mode !== undefined) {
+    setField(
+      lines,
+      /^execution_diagnostic_mode:\s/,
+      `execution_diagnostic_mode: ${sanitized.diagnostic_mode ? "true" : "false"}`,
+    );
+  }
+  if (sanitized.tier !== undefined) {
+    setField(lines, /^execution_tier:\s/, `execution_tier: ${quoteYaml(sanitized.tier)}`);
+  }
+  if (sanitized.branch !== undefined) {
+    setField(lines, /^execution_branch:\s/, `execution_branch: ${quoteYaml(sanitized.branch)}`);
+  }
+  if (sanitized.forge_flags !== undefined) {
+    setField(
+      lines,
+      /^execution_forge_flags:\s/,
+      `execution_forge_flags: ${quoteYaml(sanitized.forge_flags.join(","))}`,
+    );
+  }
+  if (sanitized.recorded_at !== undefined) {
+    setField(
+      lines,
+      /^execution_recorded_at:\s/,
+      `execution_recorded_at: ${quoteYaml(sanitized.recorded_at)}`,
+    );
+  }
+
+  return buildContent(lines, body, leadingWhitespace);
+}
+
+export function clearExecutionMetadata(statusContent: string): string {
+  const parsed = parseFrontmatter(statusContent);
+  if (!parsed) return statusContent;
+  const lines = getFrontmatterLines(parsed.frontmatter).filter(
+    (line) => !EXECUTION_METADATA_FIELD_PATTERNS.some((pattern) => pattern.test(line)),
+  );
+  return buildContent(lines, parsed.body, parsed.leadingWhitespace);
+}
+
+export function collectExecutionMetadataFromEnv(
+  env: NodeJS.ProcessEnv = process.env,
+): ExecutionMetadata {
+  const forge_flags = sanitizeForgeFlags(Object.keys(env));
+  const metadata: ExecutionMetadata = {
+    diagnostic_mode: env.FORGE_DIAGNOSTIC_MODE === "1",
+  };
+  if (forge_flags) metadata.forge_flags = forge_flags;
+  return metadata;
 }
 
 /**

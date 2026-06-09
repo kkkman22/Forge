@@ -7,7 +7,7 @@
  * **Validates: Requirements 6.1, 6.2, 6.3, 6.4, 6.5, 6.6**
  */
 import { describe, expect, it } from "vitest";
-import { clearLoopFields, extractLoopFields, updateIterationStatus, writeLoopFields, } from "../src/status-file-ext.js";
+import { clearLoopFields, collectExecutionMetadataFromEnv, extractExecutionMetadata, extractLoopFields, updateIterationStatus, writeExecutionMetadata, writeLoopFields, } from "../src/status-file-ext.js";
 // ---------------------------------------------------------------------------
 // extractLoopFields
 // ---------------------------------------------------------------------------
@@ -298,6 +298,58 @@ body`;
         expect(result).not.toContain("work_nature");
         // Non-loop fields preserved
         expect(result).toContain("body");
+    });
+});
+describe("execution metadata fields", () => {
+    it("roundtrips allowlisted execution metadata through status frontmatter", () => {
+        const content = `---
+current_task: "task"
+tier: "standard"
+phase: "build"
+---
+body
+`;
+        const result = writeExecutionMetadata(content, {
+            claude_version: "2.1.169",
+            dispatch_mode: "agents",
+            diagnostic_mode: true,
+            tier: "standard",
+            branch: "forge/claude-2-1-169-inspired-hardening",
+            forge_flags: ["FORGE_REVIEW_CONCURRENCY", "FORGE_DIAGNOSTIC_MODE"],
+            recorded_at: "2026-06-09T00:00:00.000Z",
+        });
+        const metadata = extractExecutionMetadata(result);
+        expect(metadata).toEqual({
+            claude_version: "2.1.169",
+            dispatch_mode: "agents",
+            diagnostic_mode: true,
+            tier: "standard",
+            branch: "forge/claude-2-1-169-inspired-hardening",
+            forge_flags: ["FORGE_REVIEW_CONCURRENCY", "FORGE_DIAGNOSTIC_MODE"],
+            recorded_at: "2026-06-09T00:00:00.000Z",
+        });
+        expect(result).toContain("body");
+    });
+    it("returns defaults for older status files without metadata", () => {
+        const metadata = extractExecutionMetadata(`---
+current_task: "old"
+tier: "standard"
+---
+body`);
+        expect(metadata).toEqual({});
+    });
+    it("collects only allowlisted FORGE flags and excludes secrets", () => {
+        const metadata = collectExecutionMetadataFromEnv({
+            FORGE_DIAGNOSTIC_MODE: "1",
+            FORGE_REVIEW_CONCURRENCY: "3",
+            FORGE_API_TOKEN: "secret",
+            ANTHROPIC_API_KEY: "secret",
+            RANDOM_ENV: "ignored",
+        });
+        expect(metadata.diagnostic_mode).toBe(true);
+        expect(metadata.forge_flags).toEqual(["FORGE_DIAGNOSTIC_MODE", "FORGE_REVIEW_CONCURRENCY"]);
+        expect(JSON.stringify(metadata)).not.toContain("secret");
+        expect(JSON.stringify(metadata)).not.toContain("ANTHROPIC_API_KEY");
     });
 });
 //# sourceMappingURL=status-file-ext.test.js.map

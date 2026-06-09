@@ -4,7 +4,7 @@ category: reference
 audience:
   - daily-developer
   - maintainer
-updated: 2026-06-05
+updated: 2026-06-09
 owner: forge-maintainers
 ---
 
@@ -40,6 +40,25 @@ Forge requires Claude Code CLI v2.1.163 or later for full functionality.
 | **Stop/SubagentStop `additionalContext`** | **v2.1.163** | **R2** | **Falls back to stdout reminder** |
 | **Resume session id consistency** | **v2.1.163** | **R4** | **Session namespace may diverge across hook/Bash/MCP** |
 | **Hook `if` Bash expansion fix** | **v2.1.163** | **R8** | **Incorrect Bash expansion in conditions** |
+| `--safe-mode` | v2.1.169 | Operator guidance | Forge uses `FORGE_DIAGNOSTIC_MODE` for optional injection suppression |
+| `/cd` | v2.1.169 | Operator guidance | Workdir changes remain user controlled |
+| `disableBundledSkills` | v2.1.169 | Compatibility note | Forge does not require bundled-skill disablement |
+| `claude agents --json --all`, `id`, `state` | v2.1.169 | Forge implemented | Inline fallback when agents dispatch is unavailable |
+| Context-window-scaled CLAUDE.md warning | v2.1.169 | Forge helper/docs | Falls back to configured `context_budget` |
+| Background sessions preserve flags | v2.1.169 | Forge metadata persistence | Missing metadata is treated as legacy status |
+
+## v2.1.169 Assessment
+
+Assessment source: Claude Code v2.1.169 changelog dated 2026-06-08.
+
+| Capability | Forge Action | Degradation |
+|------------|--------------|-------------|
+| Claude Code `--safe-mode` | Documented as operator troubleshooting. Forge diagnostic mode is separate: `FORGE_DIAGNOSTIC_MODE=1` keeps `/forge` callable while suppressing optional SessionStart injections such as evolved rules and session title hints. | Normal Forge behavior when env var is absent |
+| `/cd` command | Operator guidance only; Forge still relies on the current process workdir and worktree checks. | User manually changes directory |
+| `disableBundledSkills` | Compatibility note only; Forge does not depend on disabling bundled skills. | No Forge behavior change |
+| `claude agents --json --all` plus JSON `id` and `state` | Dispatcher preserves `id`/`state`, treats non-completed states as failed for orchestration, and can pass `--all`. | Inline subagent fallback |
+| Context-window-scaled CLAUDE.md warning | Forge exposes model-window-aware threshold helpers when a context window is configured or inferable. Token estimates such as `Math.ceil(text.length / 4)` are conservative approximations; actual tokenization depends on the model and runtime. Forge does not read Claude's live context percentage without a verified API. | Uses configured `.forge/config.md` `context_budget` |
+| Background session flag preservation | Forge records allowlisted execution metadata such as Claude version, dispatch mode, diagnostic mode, tier, branch, and selected `FORGE_*` flag names for resume/debug context. | Old status files parse with empty metadata |
 
 ## v2.1.163 New Capabilities
 

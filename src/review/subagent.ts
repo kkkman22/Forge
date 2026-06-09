@@ -31,6 +31,9 @@ const REVIEW_AGENT_MAX_TURNS: Record<ReviewAgentType, number> = {
   "frontend-check": 10,
 };
 
+export const WORKTREE_EDIT_PREFLIGHT =
+  "Before editing files, verify you are operating in the intended worktree. If Forge policy reports shared-checkout edits are blocked, enter or request the assigned worktree before attempting edits.";
+
 const FINAL_REPORT_CONTRACT = `Final-Report Contract (HARD):
 Your last assistant message MUST be a Markdown report block with this exact shape:
   1. A heading like "## Layer N — <Title>" matching your role.
