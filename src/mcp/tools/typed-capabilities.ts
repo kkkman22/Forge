@@ -152,6 +152,11 @@ const HealthCheckSchema = z
   })
   .strict();
 
+const ProgressHealthCheckSchema = HealthCheckSchema.extend({
+  total: z.number(),
+  completed: z.number(),
+}).strict();
+
 const HealthSnapshotSchema = z
   .object({
     task: z
@@ -162,6 +167,21 @@ const HealthSnapshotSchema = z
       })
       .strict(),
     policyProfile: z.enum(["solo", "team", "enterprise"]),
+    branch: HealthCheckSchema,
+    worktree: HealthCheckSchema,
+    spec: HealthCheckSchema,
+    plan: HealthCheckSchema,
+    progress: ProgressHealthCheckSchema,
+    freshness: z
+      .object({
+        review: HealthCheckSchema,
+        test: HealthCheckSchema,
+      })
+      .strict(),
+    shipGate: HealthCheckSchema,
+    distSync: HealthCheckSchema,
+    docsDrift: HealthCheckSchema,
+    toolHealth: HealthCheckSchema,
     gates: z.record(z.string(), HealthCheckSchema),
     artifacts: z.record(z.string(), z.string()),
     nextStep: z

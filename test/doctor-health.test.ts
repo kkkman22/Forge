@@ -54,6 +54,71 @@ describe("doctor health snapshot", () => {
     );
   });
 
+  it("includes the full status explainability dimensions", () => {
+    const root = tempRoot();
+    writeForgeFile(
+      root,
+      "status.md",
+      '---\ncurrent_task: "topic-a"\ntier: "standard"\nphase: "test"\n---\n',
+    );
+    writeForgeFile(root, "specs/topic-a/requirements.md", '---\nstatus: "locked"\n---\n');
+    writeForgeFile(root, "plans/topic-a.md", '---\nstatus: "approved"\n---\n');
+    writeForgeFile(root, "progress/topic-a.md", "- [x] first\n- [ ] second\n");
+    writeEvidenceArtifact(root, artifact({ kind: "review", commit: "head-1" }));
+    writeEvidenceArtifact(
+      root,
+      artifact({
+        artifact_id: "test-1",
+        kind: "test",
+        commit: "old-head",
+      }),
+    );
+    writeEvidenceArtifact(
+      root,
+      artifact({
+        artifact_id: "ship-1",
+        kind: "ship_gate",
+        commit: "head-1",
+        result: "blocked",
+      }),
+    );
+
+    const snapshot = buildHealthSnapshot({
+      projectRoot: root,
+      currentHead: "head-1",
+      generatedAt: "2026-06-09T00:00:00.000Z",
+    });
+
+    expect(snapshot.branch.status).toBe("unknown");
+    expect(snapshot.worktree.status).toBe("unknown");
+    expect(snapshot.spec).toEqual(
+      expect.objectContaining({
+        status: "pass",
+        message: "Spec status is locked",
+        source: ".forge/specs/topic-a/requirements.md",
+      }),
+    );
+    expect(snapshot.plan).toEqual(
+      expect.objectContaining({
+        status: "pass",
+        message: "Plan status is approved",
+      }),
+    );
+    expect(snapshot.progress).toEqual(
+      expect.objectContaining({
+        status: "warn",
+        total: 2,
+        completed: 1,
+      }),
+    );
+    expect(snapshot.freshness.review.status).toBe("pass");
+    expect(snapshot.freshness.test.status).toBe("fail");
+    expect(snapshot.shipGate.status).toBe("fail");
+    expect(snapshot.distSync.status).toBe("unknown");
+    expect(snapshot.docsDrift.status).toBe("unknown");
+    expect(snapshot.toolHealth.status).toBe("unknown");
+  });
+
   it("explains enterprise ship blockers from missing and stale artifacts", () => {
     const root = tempRoot();
     writeForgeFile(
