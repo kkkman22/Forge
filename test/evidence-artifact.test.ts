@@ -1,4 +1,4 @@
-import { mkdtempSync, readFileSync, rmSync } from "node:fs";
+import { mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { afterEach, describe, expect, it } from "vitest";
@@ -110,6 +110,33 @@ describe("evidence artifact schema", () => {
       expect.arrayContaining(["INVALID_KIND", "INVALID_RESULT"]),
     );
   });
+
+  it("rejects invalid identifiers and missing required fields", () => {
+    const diagnostics = validateEvidenceArtifact({
+      ...artifact(),
+      schema_version: 2,
+      artifact_id: "../bad",
+      topic: "",
+      run_id: "bad/segment",
+      producer: "",
+    } as unknown as EvidenceArtifact);
+
+    expect(diagnostics.map((d) => d.code)).toEqual(
+      expect.arrayContaining([
+        "INVALID_SCHEMA_VERSION",
+        "UNSAFE_ARTIFACT_ID",
+        "MISSING_TOPIC",
+        "UNSAFE_RUN_ID",
+        "MISSING_PRODUCER",
+      ]),
+    );
+
+    expect(
+      validateEvidenceArtifact(artifact({ artifact_id: "", run_id: "" }) as EvidenceArtifact).map(
+        (d) => d.code,
+      ),
+    ).toEqual(expect.arrayContaining(["MISSING_ARTIFACT_ID", "MISSING_RUN_ID"]));
+  });
 });
 
 describe("immutable artifact writer and index", () => {
@@ -167,6 +194,38 @@ describe("immutable artifact writer and index", () => {
     expect(queryEvidenceArtifacts(root, { commit: "abc123" }).map((a) => a.artifact_id)).toEqual([
       "old",
     ]);
+    expect(queryEvidenceArtifacts(root, { topic: "other" })).toEqual([]);
+    expect(queryEvidenceArtifacts(root, { kind: "mutation" })).toEqual([]);
+    expect(queryEvidenceArtifacts(root, { run_id: "missing-run" })).toEqual([]);
+  });
+
+  it("ignores malformed index records and invalid artifact files", () => {
+    const root = tempRoot();
+    const artifactDir = join(root, ".forge", "artifacts", "run-1");
+    mkdirSync(artifactDir, { recursive: true });
+    writeFileSync(join(artifactDir, "not-json.json"), "{", "utf-8");
+    writeFileSync(join(artifactDir, "primitive.json"), "123", "utf-8");
+    writeFileSync(
+      join(artifactDir, "invalid-artifact.json"),
+      JSON.stringify({ ...artifact(), artifact_id: "" }),
+      "utf-8",
+    );
+    writeEvidenceArtifact(root, artifact({ artifact_id: "valid" }));
+    writeFileSync(
+      join(root, ".forge", "artifacts", "index.jsonl"),
+      [
+        "",
+        "{",
+        JSON.stringify({ notPath: true }),
+        JSON.stringify({ path: join(artifactDir, "not-json.json") }),
+        JSON.stringify({ path: join(artifactDir, "primitive.json") }),
+        JSON.stringify({ path: join(artifactDir, "invalid-artifact.json") }),
+        JSON.stringify({ path: join(artifactDir, "valid.json") }),
+      ].join("\n"),
+      "utf-8",
+    );
+
+    expect(queryEvidenceArtifacts(root).map((a) => a.artifact_id)).toEqual(["valid"]);
   });
 
   it("marks same-commit artifacts fresh and older commit artifacts stale", () => {
@@ -204,5 +263,22 @@ describe("immutable artifact writer and index", () => {
       fresh: true,
       reason: "test input hash matches current command input",
     });
+  });
+
+  it("marks reviews stale when project files changed and tests stale when input hash differs", () => {
+    expect(
+      isArtifactFreshForCommit(artifact({ kind: "review", commit: "old" }), "head", {
+        changedFiles: [".forge/status.md", "src/app.ts"],
+      }).fresh,
+    ).toBe(false);
+    expect(
+      isArtifactFreshForCommit(
+        artifact({ kind: "test", commit: "old", input_hash: "old-hash" }),
+        "head",
+        {
+          inputHash: "new-hash",
+        },
+      ).fresh,
+    ).toBe(false);
   });
 });

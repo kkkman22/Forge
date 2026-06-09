@@ -1,3 +1,4 @@
+import { execFileSync } from "node:child_process";
 import { mkdirSync, mkdtempSync, rmSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
@@ -51,6 +52,45 @@ function writeForgeFile(root: string, relPath: string, content: string): void {
   writeFileSync(fullPath, content, "utf-8");
 }
 
+type RegisteredHandler = (input: Record<string, unknown>) => Promise<{
+  content: Array<{ text: string }>;
+  isError?: boolean;
+}>;
+
+function collectHandlers(root?: string): Map<string, RegisteredHandler> {
+  const handlers = new Map<string, RegisteredHandler>();
+  const fakeServer = {
+    registerTool: (name: string, _schema: unknown, handler: RegisteredHandler) => {
+      handlers.set(name, handler);
+    },
+  };
+  registerTypedCapabilityTools(fakeServer, root ? { path: root } : undefined);
+  return handlers;
+}
+
+function parseToolResult(result: { content: Array<{ text: string }> }): unknown {
+  return JSON.parse(result.content[0].text);
+}
+
+function writePackageScripts(root: string): void {
+  writeFileSync(
+    join(root, "package.json"),
+    JSON.stringify(
+      {
+        scripts: {
+          typecheck: "node -e \"console.log('typecheck ok')\"",
+          test: "node -e \"console.log('test ok')\"",
+          "docs:check": "node -e \"console.log('docs ok')\"",
+          check: "node -e \"console.log('check ok')\"",
+        },
+      },
+      null,
+      2,
+    ),
+    "utf-8",
+  );
+}
+
 describe("typed MCP capabilities", () => {
   it("registers all typed capability tools", () => {
     const registered: string[] = [];
@@ -63,6 +103,12 @@ describe("typed MCP capabilities", () => {
     registerTypedCapabilityTools(fakeServer, { path: "/repo" });
 
     expect(registered.sort()).toEqual([...TYPED_CAPABILITY_TOOL_NAMES].sort());
+  });
+
+  it("registers tools against the current working directory by default", () => {
+    const handlers = collectHandlers();
+
+    expect([...handlers.keys()].sort()).toEqual([...TYPED_CAPABILITY_TOOL_NAMES].sort());
   });
 
   it("returns schema-shaped artifact query JSON", async () => {
@@ -98,6 +144,23 @@ describe("typed MCP capabilities", () => {
     expect(validateTypedCapabilityOutput("forge_artifact_query", parsed).success).toBe(true);
   });
 
+  it("ignores non-string artifact filters and invalid evidence kinds", async () => {
+    const root = tempRoot();
+    writeEvidenceArtifact(root, artifact());
+    const handlers = collectHandlers(root);
+
+    const result = await handlers.get("forge_artifact_query")?.({
+      topic: 123,
+      kind: "not-a-kind",
+      commit: ["head-1"],
+      run_id: false,
+    });
+    const parsed = parseToolResult(result!);
+
+    expect(validateTypedCapabilityOutput("forge_artifact_query", parsed).success).toBe(true);
+    expect((parsed as { artifacts: unknown[] }).artifacts).toHaveLength(1);
+  });
+
   it("returns schema-shaped review context JSON", async () => {
     const root = tempRoot();
     writeForgeFile(
@@ -126,6 +189,114 @@ describe("typed MCP capabilities", () => {
     expect(parsed.health.task.id).toBe("topic-a");
     expect(parsed.diff.status).toBe("unknown");
     expect(validateTypedCapabilityOutput("forge_review_context", parsed).success).toBe(true);
+  });
+
+  it("runs typed check profiles and maps each profile to its command", async () => {
+    const root = tempRoot();
+    writePackageScripts(root);
+    const handlers = collectHandlers(root);
+    const checkCommand = handlers.get("forge_check_command");
+
+    for (const [profile, command] of [
+      ["typecheck", "npm run typecheck"],
+      ["test", "npm test"],
+      ["docs", "npm run docs:check"],
+      ["check", "npm run check"],
+    ] as const) {
+      const parsed = parseToolResult((await checkCommand?.({ profile }))!);
+      expect(parsed).toEqual(
+        expect.objectContaining({
+          schema_version: 1,
+          profile,
+          command,
+          exit_code: 0,
+          status: "pass",
+          timed_out: false,
+        }),
+      );
+      expect(validateTypedCapabilityOutput("forge_check_command", parsed).success).toBe(true);
+    }
+  });
+
+  it("returns failing typed check output for unknown profiles", async () => {
+    const root = tempRoot();
+    writePackageScripts(root);
+    const handlers = collectHandlers(root);
+
+    const parsed = parseToolResult(
+      (await handlers.get("forge_check_command")?.({ profile: "unknown" }))!,
+    );
+
+    expect(parsed).toEqual(
+      expect.objectContaining({
+        schema_version: 1,
+        profile: "unknown",
+        command: "npm run check",
+        status: "pass",
+      }),
+    );
+  });
+
+  it("reports git diff summaries and dist-sync status for clean and dirty repos", async () => {
+    const root = tempRoot();
+    execFileSync("git", ["init"], { cwd: root, stdio: "ignore" });
+    execFileSync("git", ["config", "user.email", "test@example.com"], { cwd: root });
+    execFileSync("git", ["config", "user.name", "Test User"], { cwd: root });
+    writeFileSync(join(root, "tracked.txt"), "before\n", "utf-8");
+    mkdirSync(join(root, "dist"), { recursive: true });
+    writeFileSync(join(root, "dist", "bundle.js"), "old\n", "utf-8");
+    execFileSync("git", ["add", "."], { cwd: root });
+    execFileSync("git", ["commit", "-m", "initial"], { cwd: root, stdio: "ignore" });
+
+    const handlers = collectHandlers(root);
+    let distSync = parseToolResult((await handlers.get("forge_dist_sync")?.({}))!);
+    expect(distSync).toEqual(expect.objectContaining({ schema_version: 1, status: "pass" }));
+
+    writeFileSync(join(root, "tracked.txt"), "before\nafter\n", "utf-8");
+    writeFileSync(join(root, "dist", "bundle.js"), "new\n", "utf-8");
+
+    const diff = parseToolResult((await handlers.get("forge_diff_summary")?.({}))!);
+    expect(diff).toEqual(expect.objectContaining({ schema_version: 1, status: "pass" }));
+    expect(
+      (diff as { summary: { files: Array<{ filePath: string }> } }).summary.files.some(
+        (file) => file.filePath === "tracked.txt",
+      ),
+    ).toBe(true);
+
+    distSync = parseToolResult((await handlers.get("forge_dist_sync")?.({}))!);
+    expect(distSync).toEqual(expect.objectContaining({ schema_version: 1, status: "fail" }));
+  });
+
+  it("returns docs drift pass and fail statuses", async () => {
+    const root = tempRoot();
+    writePackageScripts(root);
+    const handlers = collectHandlers(root);
+
+    const pass = parseToolResult((await handlers.get("forge_docs_drift")?.({}))!);
+    expect(pass).toEqual(
+      expect.objectContaining({
+        schema_version: 1,
+        status: "pass",
+        command: "npm run docs:check",
+        exit_code: 0,
+      }),
+    );
+
+    writeFileSync(
+      join(root, "package.json"),
+      JSON.stringify({ scripts: { "docs:check": 'node -e "process.exit(1)"' } }, null, 2),
+      "utf-8",
+    );
+
+    const fail = parseToolResult((await handlers.get("forge_docs_drift")?.({}))!);
+    expect(fail).toEqual(
+      expect.objectContaining({
+        schema_version: 1,
+        status: "fail",
+        command: "npm run docs:check",
+        exit_code: 1,
+      }),
+    );
   });
 
   it("rejects typed outputs that do not match the tool schema", () => {
