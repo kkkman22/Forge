@@ -1,5 +1,7 @@
+import { readFileSync } from "node:fs";
+import { join } from "node:path";
 import { describe, expect, it } from "vitest";
-import { DEFAULT_WORKFLOW_GRAPH, getPolicyGateRequirements, getRouterSequence, getSchedulerSequence, renderWorkflowSsot, validateWorkflowGraph, } from "../src/workflow-graph.js";
+import { DEFAULT_WORKFLOW_GRAPH, getPolicyGateRequirements, getRouterSequence, getSchedulerSequence, getWorkflowRoutingSsot, renderWorkflowSsot, validateWorkflowGraph, } from "../src/workflow-graph.js";
 describe("workflow graph DSL", () => {
     it("derives router command sequences from the graph", () => {
         expect(getRouterSequence("light")).toEqual(["build", "review"]);
@@ -133,6 +135,27 @@ describe("workflow graph DSL", () => {
         expect(rendered).toContain("| Tier/Profile | Router Sequence | Scheduler Sequence |");
         expect(rendered).toContain("| standard | plan -> build -> review -> test -> ship |");
         expect(rendered).toContain("| fix_standard |");
+    });
+    it("keeps public docs and skill routing sequences in sync with the graph", () => {
+        const generatedTargets = [
+            "README.md",
+            "docs/best-practices/router-selection.md",
+            "docs/best-practices/router-selection.en.md",
+        ];
+        const skillTargets = ["skills/forge/SKILL.md"];
+        for (const file of generatedTargets) {
+            const content = readFileSync(join(process.cwd(), file), "utf-8");
+            expect(content).toContain("ssot:begin topic=routing");
+            for (const entry of getWorkflowRoutingSsot()) {
+                expect(content).toContain(`\`${entry.sequence.join(" → ")}\``);
+            }
+        }
+        for (const file of skillTargets) {
+            const content = readFileSync(join(process.cwd(), file), "utf-8");
+            for (const entry of getWorkflowRoutingSsot()) {
+                expect(content).toContain(`\`${entry.sequence.join(" → ")}\``);
+            }
+        }
     });
 });
 //# sourceMappingURL=workflow-graph.test.js.map
