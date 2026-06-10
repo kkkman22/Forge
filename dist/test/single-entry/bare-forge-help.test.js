@@ -51,5 +51,12 @@ describe("R1.3: bare /forge lists all 29 subcommands in 4 tiers", () => {
             expect(content, `missing tier heading: ${heading}`).toMatch(new RegExp(`##.*${heading}`, "i"));
         }
     });
+    it("documents automatic phase worker runtime behind the /forge entry", () => {
+        const content = readFileSync(SKILL_PATH, "utf-8");
+        expect(content).toContain("Phase Worker Runtime");
+        expect(content).toContain("No manual new Claude Code window");
+        expect(content).toContain("forge-phase-worker.mjs");
+        expect(content).toContain("forge-sync-runtime.mjs");
+    });
 });
 //# sourceMappingURL=bare-forge-help.test.js.map

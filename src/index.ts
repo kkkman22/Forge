@@ -19,6 +19,15 @@
 // ---------------------------------------------------------------------------
 import { CliError } from "./cli-error.js";
 import { ForgeError } from "./forge-error.js";
+import {
+  buildCliSdkWorkerArgs,
+  buildFailureWorkerSummary,
+  buildSubagentWorkerInvocation,
+  normalizeWorkerSummary,
+  runCliSdkWorker,
+  runSubagentWorker,
+} from "./phase-worker-runtime.js";
+import { detectRuntimeConfigDrift, repairRuntimeConfig } from "./runtime-config-sync.js";
 // SDK modules removed in Wave 3 (loop-native-fusion)
 import {
   installSkill,
@@ -302,8 +311,12 @@ export type {
 // Status (consolidated: state + status-manager + status-resolver)
 export {
   archiveTaskStatus,
+  buildCliSdkWorkerArgs,
+  buildFailureWorkerSummary,
+  buildSubagentWorkerInvocation,
   CliError,
   checkVersionCompatibility,
+  detectRuntimeConfigDrift,
   ForgeError,
   getMostRecentActiveTask,
   hasTaskName,
@@ -314,6 +327,7 @@ export {
   type ManagedTaskEntry,
   mergeSkillLists,
   migrateToMultiTask,
+  normalizeWorkerSummary,
   parseStatusEntries,
   type ReconstructedState,
   type ResolvedStatus,
@@ -321,7 +335,10 @@ export {
   readTaskStatus,
   reconstructStateFromGit,
   removeTaskEntry,
+  repairRuntimeConfig,
   resolveStatusPath,
+  runCliSdkWorker,
+  runSubagentWorker,
   type SkillManifest,
   type SkillPhase,
   type SkillValidationResult,

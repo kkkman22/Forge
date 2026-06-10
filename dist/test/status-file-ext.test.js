@@ -7,7 +7,7 @@
  * **Validates: Requirements 6.1, 6.2, 6.3, 6.4, 6.5, 6.6**
  */
 import { describe, expect, it } from "vitest";
-import { clearLoopFields, collectExecutionMetadataFromEnv, extractExecutionMetadata, extractLoopFields, updateIterationStatus, writeExecutionMetadata, writeLoopFields, } from "../src/status-file-ext.js";
+import { clearExecutionMetadata, clearLoopFields, collectExecutionMetadataFromEnv, extractExecutionMetadata, extractLoopFields, updateIterationStatus, writeExecutionMetadata, writeLoopFields, } from "../src/status-file-ext.js";
 // ---------------------------------------------------------------------------
 // extractLoopFields
 // ---------------------------------------------------------------------------
@@ -350,6 +350,61 @@ body`);
         expect(metadata.forge_flags).toEqual(["FORGE_DIAGNOSTIC_MODE", "FORGE_REVIEW_CONCURRENCY"]);
         expect(JSON.stringify(metadata)).not.toContain("secret");
         expect(JSON.stringify(metadata)).not.toContain("ANTHROPIC_API_KEY");
+    });
+    it("creates frontmatter for execution metadata when missing", () => {
+        const result = writeExecutionMetadata("# Status\n", {
+            claude_version: "2.1.169",
+            dispatch_mode: "inline",
+            diagnostic_mode: false,
+        });
+        expect(result).toContain('execution_claude_version: "2.1.169"');
+        expect(result).toContain('execution_dispatch_mode: "inline"');
+        expect(result).toContain("execution_diagnostic_mode: false");
+        expect(result).toContain("# Status");
+        expect(extractExecutionMetadata(result)).toEqual({
+            claude_version: "2.1.169",
+            dispatch_mode: "inline",
+            diagnostic_mode: false,
+        });
+    });
+    it("filters invalid execution metadata values and deduplicates allowed flags", () => {
+        const result = writeExecutionMetadata("---\ncurrent_task: demo\n---\nbody\n", {
+            dispatch_mode: "invalid",
+            tier: "oversized",
+            forge_flags: [
+                "FORGE_ROOT",
+                "FORGE_ROOT",
+                "FORGE_TOKEN",
+                "RANDOM_ENV",
+                "FORGE_DECIDE_DISPATCH_MODE",
+            ],
+        });
+        expect(result).not.toContain("execution_dispatch_mode");
+        expect(result).not.toContain("execution_tier");
+        expect(result).not.toContain("FORGE_TOKEN");
+        expect(extractExecutionMetadata(result).forge_flags).toEqual([
+            "FORGE_ROOT",
+            "FORGE_DECIDE_DISPATCH_MODE",
+        ]);
+    });
+    it("clearExecutionMetadata removes only execution metadata fields", () => {
+        const result = clearExecutionMetadata(`---
+current_task: demo
+execution_claude_version: "2.1.169"
+execution_dispatch_mode: "agents"
+execution_diagnostic_mode: true
+execution_tier: "full"
+execution_branch: "forge/demo"
+execution_forge_flags: "FORGE_ROOT"
+execution_recorded_at: "2026-06-09T00:00:00.000Z"
+---
+body`);
+        expect(result).toContain("current_task: demo");
+        expect(result).toContain("body");
+        expect(result).not.toContain("execution_");
+    });
+    it("clearExecutionMetadata leaves content without frontmatter unchanged", () => {
+        expect(clearExecutionMetadata("plain status")).toBe("plain status");
     });
 });
 //# sourceMappingURL=status-file-ext.test.js.map
