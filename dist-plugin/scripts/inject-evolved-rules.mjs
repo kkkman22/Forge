@@ -178,6 +178,7 @@ function readEvolvedRulesWithCache(cwd) {
 
 (async () => {
   try {
+    if (process.env.FORGE_DIAGNOSTIC_MODE === "1") process.exit(0);
     if (await shouldSkipForSubagent()) process.exit(0);
 
     const cwd = process.cwd();

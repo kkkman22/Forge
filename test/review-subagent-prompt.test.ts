@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { buildReviewSubagents } from "../src/review";
+import { buildReviewSubagents, WORKTREE_EDIT_PREFLIGHT } from "../src/review";
 
 describe("buildReviewSubagents prompt diff-context", () => {
   const ctx = {
@@ -59,6 +59,12 @@ describe("buildReviewSubagents prompt diff-context", () => {
     const frontend = invocations.find((i) => i.agentType === "frontend-check");
     expect(frontend).toBeDefined();
     expect(frontend!.prompt).toContain("components/App.vue");
+  });
+
+  it("read-only review prompts do not inject editable worktree preflight", () => {
+    for (const inv of invocations) {
+      expect(inv.prompt).not.toContain(WORKTREE_EDIT_PREFLIGHT);
+    }
   });
 });
 

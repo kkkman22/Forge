@@ -3,6 +3,7 @@ status: draft
 feature: runtime-worker-context-control
 layout: design
 created: 2026-06-10
+updated: 2026-06-10
 ---
 # Design Document
 

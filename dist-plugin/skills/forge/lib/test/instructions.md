@@ -1,5 +1,6 @@
 ---
 description: "Use when user runs `/forge test`, after build completes, or needs verification that behavior matches the locked spec"
+updated: 2026-06-09
 
 dispatch_mode: fork
 allowed_tools:

@@ -3,6 +3,7 @@ status: draft
 feature: runtime-worker-context-control
 layout: requirements
 created: 2026-06-10
+updated: 2026-06-10
 tier: full
 ---
 # Requirements Document

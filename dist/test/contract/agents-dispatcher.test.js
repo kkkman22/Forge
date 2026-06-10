@@ -133,6 +133,28 @@ describe("agents-dispatcher (R5)", () => {
         });
         expect(capturedArgs).toContain("--effort=high");
     });
+    it("includes --all when includeAll is specified", async () => {
+        const { buildAgentArgs } = await import(MODULE_PATH);
+        const args = buildAgentArgs({
+            agentType: "spec-check",
+            prompt: "Collect all sessions",
+            workdir: tmpDir,
+            includeAll: true,
+        });
+        expect(args).toContain("--all");
+    });
+    it("prepends worktree edit preflight before truncation-sensitive prompt text", async () => {
+        const { buildAgentArgs, WORKTREE_EDIT_PREFLIGHT } = await import(MODULE_PATH);
+        const args = buildAgentArgs({
+            agentType: "forge-build",
+            prompt: "x".repeat(5000),
+            workdir: tmpDir,
+            requiresWorktreePreflight: true,
+        });
+        const promptArg = args.find((arg) => arg.startsWith("--prompt=")) ?? "";
+        expect(promptArg).toContain(WORKTREE_EDIT_PREFLIGHT);
+        expect(promptArg.length).toBeLessThanOrEqual("--prompt=".length + 4096);
+    });
     it("omits --effort flag when effort is not specified", async () => {
         const { dispatch } = await import(MODULE_PATH);
         let capturedArgs = [];
@@ -287,6 +309,85 @@ describe("agents-dispatcher (R5)", () => {
         expect(result.agent).toBe("spec-check");
         expect(result.findings).toEqual(agentOutput.findings);
         expect(result.duration_ms).toBe(5000);
+    });
+    it("preserves Claude agents JSON id and state fields", async () => {
+        const { dispatch } = await import(MODULE_PATH);
+        MOCK_EXEC_FILE.mockImplementation((_cmd, _args, _opts, cb) => {
+            cb(null, JSON.stringify({
+                id: "agent-session-123",
+                state: "completed",
+                agent: "spec-check",
+                status: "completed",
+                findings: [],
+            }));
+        });
+        const result = await dispatch({
+            agentType: "spec-check",
+            prompt: "Review spec",
+            workdir: tmpDir,
+        });
+        expect(result.id).toBe("agent-session-123");
+        expect(result.state).toBe("completed");
+        expect(result.status).toBe("completed");
+    });
+    it.each([
+        "blocked",
+        "running",
+        "just-dispatched",
+        "unknown-state",
+    ])("maps non-completed state %s to failed dispatch result", async (state) => {
+        const { dispatch } = await import(MODULE_PATH);
+        MOCK_EXEC_FILE.mockImplementation((_cmd, _args, _opts, cb) => {
+            cb(null, JSON.stringify({
+                id: `agent-${state}`,
+                state,
+                agent: "quality-check",
+                status: "completed",
+            }));
+        });
+        const result = await dispatch({
+            agentType: "quality-check",
+            prompt: "Review quality",
+            workdir: tmpDir,
+        });
+        expect(result.status).toBe("failed");
+        expect(result.state).toBe(state);
+        expect(result.diagnostic).toContain("non-completed state");
+    });
+    it("passes execFile timeout and reports timeout diagnostics", async () => {
+        const { dispatch } = await import(MODULE_PATH);
+        let capturedOpts = {};
+        MOCK_EXEC_FILE.mockImplementation((_cmd, _args, opts, cb) => {
+            capturedOpts = opts;
+            const err = new Error("Command timed out");
+            err.killed = true;
+            err.signal = "SIGTERM";
+            cb(err);
+        });
+        const result = await dispatch({
+            agentType: "security-check",
+            prompt: "Review security",
+            workdir: tmpDir,
+            timeoutMs: 1234,
+        });
+        expect(capturedOpts.timeout).toBe(1234);
+        expect(capturedOpts.killSignal).toBe("SIGTERM");
+        expect(result.status).toBe("failed");
+        expect(result.duration_ms).toBeGreaterThanOrEqual(0);
+        expect(result.diagnostic).toContain("timeout after 1234ms");
+    });
+    it("returns parse diagnostic for malformed JSON stdout", async () => {
+        const { dispatch } = await import(MODULE_PATH);
+        MOCK_EXEC_FILE.mockImplementation((_cmd, _args, _opts, cb) => {
+            cb(null, "not json {{{");
+        });
+        const result = await dispatch({
+            agentType: "critic",
+            prompt: "Review",
+            workdir: tmpDir,
+        });
+        expect(result.status).toBe("failed");
+        expect(result.diagnostic).toMatch(/parse/i);
     });
     it("records duration_ms even when not returned by agent", async () => {
         const { dispatch } = await import(MODULE_PATH);

@@ -10,6 +10,7 @@
 import { existsSync, readFileSync } from "node:fs";
 import { resolve } from "node:path";
 import { describe, expect, it } from "vitest";
+import { computeContextBudgetThresholds } from "../src/context-budget.js";
 const ROOT = resolve(import.meta.dirname, "..");
 const readSkill = (name) => readFileSync(resolve(ROOT, "skills", "forge", "lib", name, "instructions.md"), "utf-8");
 const readSkillWithRefs = (name, ...refFiles) => {
@@ -95,6 +96,30 @@ describe("Contract: forge-decide/SKILL.md context budget section", () => {
     it("preserves OWASP/STRIDE references", () => {
         expect(content).toContain("OWASP");
         expect(content).toContain("STRIDE");
+    });
+});
+describe("Contract: model-window-aware context budget thresholds", () => {
+    it.each([
+        [100_000, 30_000, 50_000, 70_000],
+        [200_000, 60_000, 100_000, 140_000],
+        [1_000_000, 300_000, 500_000, 700_000],
+    ])("derives thresholds from %i token context windows", (window, warning, compact, critical) => {
+        const result = computeContextBudgetThresholds({ contextWindowTokens: window });
+        expect(result).toEqual({
+            warningTokens: warning,
+            compactTokens: compact,
+            criticalTokens: critical,
+            source: "context-window",
+        });
+    });
+    it("falls back to configured budget when context window is unknown", () => {
+        const result = computeContextBudgetThresholds({ configuredBudgetTokens: 80_000 });
+        expect(result).toEqual({
+            warningTokens: 24_000,
+            compactTokens: 40_000,
+            criticalTokens: 56_000,
+            source: "configured-budget",
+        });
     });
 });
 //# sourceMappingURL=context-budget-contract.test.js.map

@@ -87,6 +87,9 @@ describe("forge-doctor", () => {
     expect(typeof parsed.summary.pass).toBe("number");
     expect(typeof parsed.summary.warn).toBe("number");
     expect(typeof parsed.summary.fail).toBe("number");
+
+    expect(parsed.diagnosticMode).toBeDefined();
+    expect(typeof parsed.diagnosticMode.active).toBe("boolean");
   });
 
   it("check items include all expected categories", async () => {

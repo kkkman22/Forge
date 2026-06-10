@@ -3,6 +3,7 @@ status: draft
 feature: runtime-worker-context-control
 layout: tasks
 created: 2026-06-10
+updated: 2026-06-10
 spec_ref: ".forge/specs/runtime-worker-context-control/requirements.md"
 ---
 # Tasks

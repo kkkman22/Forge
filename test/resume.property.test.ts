@@ -266,3 +266,26 @@ describe("Property 16: Resume 五问题完整输出", () => {
     );
   });
 });
+
+describe("resume execution metadata summary", () => {
+  it("includes compact execution metadata when present", () => {
+    const output = generateResumeOutput({
+      plan: { objective: "Ship metadata persistence", tasks: ["Task 1", "Task 2"] },
+      progress: { completedTasks: [], inProgressTasks: ["Task 1"], blockers: [] },
+      findings: { findings: [] },
+      executionMetadata: {
+        claude_version: "2.1.169",
+        dispatch_mode: "agents",
+        diagnostic_mode: true,
+        tier: "standard",
+        branch: "forge/claude-2-1-169-inspired-hardening",
+      },
+    });
+
+    expect(output.questions[1].answer).toContain("metadata:");
+    expect(output.questions[1].answer).toContain("claude=2.1.169");
+    expect(output.questions[1].answer).toContain("dispatch=agents");
+    expect(output.questions[1].answer).toContain("diagnostic=true");
+    expect(output.questions[1].answer).toContain("branch=forge/claude-2-1-169-inspired-hardening");
+  });
+});

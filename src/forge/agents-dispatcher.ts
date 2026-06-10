@@ -27,7 +27,23 @@ export interface DispatchOptions {
   workdir: string;
   /** Optional effort level for the agent. */
   effort?: "low" | "medium" | "high" | "xhigh";
+  /** Child process timeout in milliseconds. */
+  timeoutMs?: number;
+  /** Collect all background sessions/results when supported by Claude Code. */
+  includeAll?: boolean;
+  /** Prepend Forge worktree edit preflight for agents that may edit files. */
+  requiresWorktreePreflight?: boolean;
 }
+
+/** Claude background agent state reported by `claude agents --json`. @public */
+export type AgentState =
+  | "completed"
+  | "failed"
+  | "blocked"
+  | "running"
+  | "just-dispatched"
+  | "unknown"
+  | (string & {});
 
 /** Result returned by a single subagent dispatch. @public */
 export interface DispatchResult {
@@ -35,11 +51,22 @@ export interface DispatchResult {
   agent: string;
   /** Whether the dispatch completed or failed. */
   status: "completed" | "failed";
+  /** Background session id reported by Claude Code. */
+  id?: string;
+  /** Background session state reported by Claude Code. */
+  state?: AgentState;
   /** Structured findings from the agent (on success). */
   findings?: unknown[];
   /** Wall-clock duration in milliseconds. */
   duration_ms?: number;
+  /** Short diagnostic reason for failed dispatches. */
+  diagnostic?: string;
 }
+
+export const WORKTREE_EDIT_PREFLIGHT =
+  "Before editing files, verify you are operating in the intended worktree. If Forge policy reports shared-checkout edits are blocked, enter or request the assigned worktree before attempting edits.";
+
+const DEFAULT_AGENT_TIMEOUT_MS = 15 * 60 * 1000;
 
 // ---------------------------------------------------------------------------
 // Config helper
@@ -90,14 +117,47 @@ export function buildAgentArgs(opts: DispatchOptions): string[] {
   const args = ["agents", `--agent-type=${opts.agentType}`, `--workdir=${opts.workdir}`];
 
   // Prompt is passed as a flag; truncate at 4096 chars for safety.
-  const truncatedPrompt = opts.prompt.length > 4096 ? opts.prompt.slice(0, 4096) : opts.prompt;
+  const prompt = opts.requiresWorktreePreflight
+    ? `${WORKTREE_EDIT_PREFLIGHT}\n\n${opts.prompt}`
+    : opts.prompt;
+  const truncatedPrompt = prompt.length > 4096 ? prompt.slice(0, 4096) : prompt;
   args.push(`--prompt=${truncatedPrompt}`);
 
   if (opts.effort) {
     args.push(`--effort=${opts.effort}`);
   }
+  if (opts.includeAll) {
+    args.push("--all");
+  }
 
   return args;
+}
+
+function normalizeDispatchResult(
+  parsed: Record<string, unknown>,
+  fallbackAgent: string,
+  elapsed: number | undefined,
+): DispatchResult {
+  const state = typeof parsed.state === "string" ? (parsed.state as AgentState) : undefined;
+  const parsedStatus = parsed.status === "completed" ? "completed" : "failed";
+  const status =
+    parsedStatus === "completed" && (state === undefined || state === "completed")
+      ? "completed"
+      : "failed";
+  const diagnostic =
+    parsedStatus === "completed" && state !== undefined && state !== "completed"
+      ? `non-completed state: ${state}`
+      : undefined;
+
+  return {
+    agent: (parsed.agent as string) ?? fallbackAgent,
+    status,
+    id: typeof parsed.id === "string" ? parsed.id : undefined,
+    state,
+    findings: Array.isArray(parsed.findings) ? parsed.findings : undefined,
+    duration_ms: typeof parsed.duration_ms === "number" ? parsed.duration_ms : elapsed,
+    diagnostic,
+  };
 }
 
 // ---------------------------------------------------------------------------
@@ -119,38 +179,55 @@ export function buildAgentArgs(opts: DispatchOptions): string[] {
 export async function dispatch(opts: DispatchOptions): Promise<DispatchResult> {
   const args = buildAgentArgs(opts);
   const startTime = Date.now();
+  const timeoutMs = opts.timeoutMs ?? DEFAULT_AGENT_TIMEOUT_MS;
 
   return new Promise<DispatchResult>((resolve) => {
-    execFile("claude", args, { cwd: opts.workdir }, (err, stdout) => {
-      const elapsed = Date.now() - startTime;
+    execFile(
+      "claude",
+      args,
+      { cwd: opts.workdir, timeout: timeoutMs, killSignal: "SIGTERM" },
+      (err, stdout) => {
+        const elapsed = Date.now() - startTime;
 
-      if (err) {
-        // Command not found or non-zero exit — signal failure for inline fallback.
-        resolve({
-          agent: opts.agentType,
-          status: "failed",
-        });
-        return;
-      }
+        if (err) {
+          const maybeTimeout = err as NodeJS.ErrnoException & {
+            killed?: boolean;
+            signal?: string;
+          };
+          if (maybeTimeout.killed || maybeTimeout.signal === "SIGTERM") {
+            resolve({
+              agent: opts.agentType,
+              status: "failed",
+              duration_ms: elapsed,
+              diagnostic: `timeout after ${timeoutMs}ms`,
+            });
+            return;
+          }
+          // Command not found or non-zero exit — signal failure for inline fallback.
+          resolve({
+            agent: opts.agentType,
+            status: "failed",
+            findings: undefined,
+            duration_ms: undefined,
+          });
+          return;
+        }
 
-      // Attempt to parse JSON from stdout.
-      try {
-        const parsed = JSON.parse(stdout ?? "{}") as Record<string, unknown>;
-        resolve({
-          agent: (parsed.agent as string) ?? opts.agentType,
-          status: parsed.status === "completed" ? "completed" : "failed",
-          findings: Array.isArray(parsed.findings) ? parsed.findings : undefined,
-          duration_ms: typeof parsed.duration_ms === "number" ? parsed.duration_ms : elapsed,
-        });
-      } catch (_err: unknown) {
-        // JSON parse failure — treat as failed dispatch.
-        resolve({
-          agent: opts.agentType,
-          status: "failed",
-          duration_ms: elapsed,
-        });
-      }
-    });
+        // Attempt to parse JSON from stdout.
+        try {
+          const parsed = JSON.parse(stdout ?? "{}") as Record<string, unknown>;
+          resolve(normalizeDispatchResult(parsed, opts.agentType, elapsed));
+        } catch (_err: unknown) {
+          // JSON parse failure — treat as failed dispatch.
+          resolve({
+            agent: opts.agentType,
+            status: "failed",
+            duration_ms: elapsed,
+            diagnostic: "parse error: malformed JSON from claude agents",
+          });
+        }
+      },
+    );
   });
 }
 
@@ -193,13 +270,7 @@ export async function collectResults(
     try {
       const content = readFileSync(filePath, "utf-8");
       const parsed = JSON.parse(content) as Record<string, unknown>;
-
-      results.push({
-        agent: (parsed.agent as string) ?? entry.replace(/\.json$/, ""),
-        status: parsed.status === "completed" ? "completed" : "failed",
-        findings: Array.isArray(parsed.findings) ? parsed.findings : undefined,
-        duration_ms: typeof parsed.duration_ms === "number" ? parsed.duration_ms : undefined,
-      });
+      results.push(normalizeDispatchResult(parsed, entry.replace(/\.json$/, ""), undefined));
     } catch (_err: unknown) {
       // Skip malformed JSON files gracefully.
     }

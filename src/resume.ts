@@ -15,6 +15,8 @@
  *   **Validates: Requirements 12.2**
  */
 
+import type { ExecutionMetadata } from "./status-file-ext.js";
+
 // ---------------------------------------------------------------------------
 // Types
 // ---------------------------------------------------------------------------
@@ -50,6 +52,7 @@ export interface ProjectState {
     nextPackage?: string;
     packageCount?: number;
   };
+  executionMetadata?: ExecutionMetadata;
 }
 
 export interface ResumeQuestion {
@@ -103,7 +106,9 @@ export function generateResumeOutput(state: ProjectState): ResumeOutput {
       ? state.progress.inProgressTasks.join("、")
       : "未找到进行中的任务";
   const packageSummary = formatPackageSummary(state.packages);
-  const q2Answer = packageSummary ? `${q2Base}\n${packageSummary}` : q2Base;
+  const metadataSummary = formatExecutionMetadataSummary(state.executionMetadata);
+  const q2Details = [packageSummary, metadataSummary].filter(Boolean);
+  const q2Answer = q2Details.length > 0 ? `${q2Base}\n${q2Details.join("\n")}` : q2Base;
 
   // Q3: What do we know?
   const q3Answer =
@@ -146,6 +151,20 @@ function formatPackageSummary(packages: ProjectState["packages"]): string {
   if (packages.nextPackage) parts.push(`next_package=${packages.nextPackage}`);
   if (packages.packageCount !== undefined) parts.push(`package_count=${packages.packageCount}`);
   return parts.join("; ");
+}
+
+function formatExecutionMetadataSummary(metadata: ExecutionMetadata | undefined): string {
+  if (!metadata) return "";
+  const parts: string[] = [];
+  if (metadata.claude_version) parts.push(`claude=${metadata.claude_version}`);
+  if (metadata.dispatch_mode) parts.push(`dispatch=${metadata.dispatch_mode}`);
+  if (metadata.diagnostic_mode !== undefined) parts.push(`diagnostic=${metadata.diagnostic_mode}`);
+  if (metadata.tier) parts.push(`tier=${metadata.tier}`);
+  if (metadata.branch) parts.push(`branch=${metadata.branch}`);
+  if (metadata.forge_flags && metadata.forge_flags.length > 0) {
+    parts.push(`forge_flags=${metadata.forge_flags.join(",")}`);
+  }
+  return parts.length > 0 ? `metadata: ${parts.join("; ")}` : "";
 }
 
 /**

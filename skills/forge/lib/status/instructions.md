@@ -1,5 +1,6 @@
 ---
 description: "Use when user runs `/forge status`, wants to see what tasks are in flight, or needs to know which phase a task currently sits in"
+updated: 2026-06-09
 
 dispatch_mode: inline
 allowed_tools:

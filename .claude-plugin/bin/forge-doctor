@@ -25,6 +25,7 @@ Checks:
   8. MCP server registration
   9. Git branch protection
   10. Plugin enabled check (manual step)
+  11. Forge diagnostic mode status
 
 Run 'forge-doctor --json' for structured output with fixHint per item.
 HELP
@@ -38,6 +39,10 @@ ROOT="${FORGE_ROOT:-$(git rev-parse --show-toplevel 2>/dev/null || echo .)}"
 cd "$ROOT"
 
 PASS=0; FAIL=0; WARN=0
+DIAGNOSTIC_MODE_ACTIVE=false
+if [[ "${FORGE_DIAGNOSTIC_MODE:-}" == "1" ]]; then
+  DIAGNOSTIC_MODE_ACTIVE=true
+fi
 
 # JSON output accumulator
 JSON_ITEMS=""
@@ -185,6 +190,15 @@ echo ""
 echo "📋 Plugin Status"
 check "Plugin enabled (verify manually: /plugin list --enabled)" warn "plugin-enabled" "In Claude Code, run '/plugin list --enabled' and confirm 'forge' appears"
 
+# --- 10. Forge diagnostic mode ---
+echo ""
+echo "📋 Diagnostic Mode"
+if [[ "$DIAGNOSTIC_MODE_ACTIVE" == "true" ]]; then
+  check "FORGE_DIAGNOSTIC_MODE active (optional injections disabled)" warn "diagnostic-mode" "Unset FORGE_DIAGNOSTIC_MODE to restore normal SessionStart injections"
+else
+  check "FORGE_DIAGNOSTIC_MODE inactive" pass "diagnostic-mode"
+fi
+
 # --- Summary ---
 echo ""
 echo "📊 Summary: $PASS passed, $WARN warnings, $FAIL failures"
@@ -206,7 +220,7 @@ NODE
   fi
   # Build structured JSON output
   VERSION_JSON="{\"currentVersion\":\"${CC_VERSION:-null}\",\"minimumVersion\":\"2.1.163\",\"maximumVersion\":null,\"verifiedLatest\":\"2.1.163\",\"verdict\":\"$([ -n \"$CC_VERSION\" ] && echo pass || echo unknown)\"}"
-  echo "{\"version\":$VERSION_JSON,\"checks\":[$JSON_ITEMS],\"summary\":{\"pass\":$PASS,\"warn\":$WARN,\"fail\":$FAIL},\"health\":$HEALTH_JSON}"
+  echo "{\"version\":$VERSION_JSON,\"diagnosticMode\":{\"active\":$DIAGNOSTIC_MODE_ACTIVE,\"env\":\"FORGE_DIAGNOSTIC_MODE\"},\"checks\":[$JSON_ITEMS],\"summary\":{\"pass\":$PASS,\"warn\":$WARN,\"fail\":$FAIL},\"health\":$HEALTH_JSON}"
 fi
 
 [[ $FAIL -eq 0 ]]

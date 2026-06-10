@@ -61,4 +61,5 @@ export {
   runReviewFallbackLadder,
   runReviewWithTruncationHandling,
   SEVERITY_RANK,
+  WORKTREE_EDIT_PREFLIGHT,
 } from "./review/index.js";
