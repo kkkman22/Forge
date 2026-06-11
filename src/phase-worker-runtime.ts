@@ -1,6 +1,7 @@
 import { execFile } from "node:child_process";
 import { existsSync, mkdirSync, readFileSync } from "node:fs";
 import { dirname } from "node:path";
+import { validateHooksPresence } from "./hook-validator.js";
 import type { SubagentInvocation, SubagentResult } from "./types.js";
 
 export type ForgePhase =
@@ -194,6 +195,7 @@ export async function runSubagentWorker(
   request: PhaseWorkerRequest,
   options: { agentType: string; executor: SubagentWorkerExecutor },
 ): Promise<PhaseWorkerSummary> {
+  validateHooksPresence(request.projectRoot);
   const invocation = buildSubagentWorkerInvocation(request, options.agentType);
   const result = await options.executor(invocation);
 
@@ -258,6 +260,7 @@ export async function runCliSdkWorker(
     executor?: CliSdkWorkerExecutor;
   },
 ): Promise<PhaseWorkerSummary> {
+  validateHooksPresence(request.projectRoot);
   mkdirSync(dirname(request.artifactPath), { recursive: true });
   const args = buildCliSdkWorkerArgs(request, options.script);
   const executor = options.executor ?? defaultCliExecutor;
