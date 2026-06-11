@@ -43,9 +43,6 @@ export function validateHooksPresence(
     !Array.isArray((parsed as Record<string, unknown>).PreToolUse) ||
     (parsed as Record<string, unknown[]>).PreToolUse.length === 0
   ) {
-    throw new HooksProtectionMissingError(
-      "PreToolUse section missing in hooks.json",
-      projectRoot,
-    );
+    throw new HooksProtectionMissingError("PreToolUse section missing in hooks.json", projectRoot);
   }
 }
