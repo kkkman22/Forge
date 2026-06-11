@@ -285,10 +285,10 @@ Produce a structured analysis of this session's execution quality across four di
 Extract actionable knowledge across all five dimensions: Problem Pattern, Solution, Pitfall Record, Decision Rationale, Reusable Pattern. Each dimension must be covered — no omissions.
 
 ### G3: Knowledge Document Generation
-Produce properly formatted knowledge documents with correct YAML frontmatter and five-section body. Documents must follow the exact format spec.
+Produce properly formatted knowledge documents with correct YAML frontmatter and five-section body. Documents must follow the exact format spec. Internally calls `generateKnowledgeDocument(extraction, template)` to render the document body and `validateKnowledgeFrontmatter(frontmatter)` to enforce required fields (title, tags, date, confidence range 0.3–0.9). Context budget snapshots are serialized via `serializeContextBudgetReport(report)` for session logs.
 
 ### G4: Pattern Lifecycle Management
-Identify high-frequency patterns, promote them to instincts when thresholds are met, manage pattern staleness and decay, and distill error-prevention rules from accumulated data.
+Identify high-frequency patterns, promote them to instincts when thresholds are met, manage pattern staleness and decay, and distill error-prevention rules from accumulated data. Core lifecycle functions: `maintainKnowledgeBase(kb, config)` enforces the 20-document cap and auto-cleans confidence < 0.3 entries; `findStaleOrDecayedPatterns(kb)` detects patterns with outdated confidence or zero recent adoption; `archivePatternByName(name)` moves a superseded pattern to archive; `buildPatternUpgradeDrafts(patterns)` generates proposed upgrades for high-confidence patterns; `proposeStaleTerms(glossary, sessionData)` identifies glossary terms no longer in active use.
 
 ### G5: Knowledge Base Health
 Maintain the knowledge base within configured limits, enforce confidence thresholds, merge overlapping entries, and ensure maintenance invariants hold at all times. Run integrity lint (cross-file reference validation, orphan detection, contradiction detection) and regenerate the Layer A catalog index. Solutions 写入完成后，hooks.json PostToolUse 自动触发 integrity lint（`scripts/knowledge-hook-dispatch.mjs`），findings 写入 `.forge/findings/integrity-<timestamp>.md`。
@@ -300,10 +300,10 @@ Ensure knowledge flows back into plan, build, and debug phases. Track adoption a
 Detect scenarios where SKILL.md guidance was inapplicable. Record for review but never auto-modify SKILL.md.
 
 ### G8: Session Epilogue
-Produce a session episode, run evolution aggregation, archive task artifacts, and update status.
+Produce a session episode, run evolution aggregation, archive task artifacts, and update status. Episode generation calls `buildEpisodeFromSession(sessionData)` to produce the ≤20-line session episode document. Prompt configuration is loaded via `getLearnPromptConfig(config)` which returns dimension-specific extraction prompts.
 
 ### G9: 规则蒸馏 (Rule Distillation)
-Distill error-prevention rules from accumulated knowledge entries when confidence and frequency thresholds are met. Proposed rules follow the Evolved Rules protocol (`.forge/knowledge/evolved-rules.md`). 内部使用 `runGlossaryCheck({ phase: 'learn' })` 检测术语冲突。
+Distill error-prevention rules from accumulated knowledge entries when confidence and frequency thresholds are met. Proposed rules follow the Evolved Rules protocol (`.forge/knowledge/evolved-rules.md`). 内部使用 `runGlossaryCheck({ phase: 'learn' })` 检测术语冲突。 Evolution report is produced by `generateEvolutionReport(evolutions, rules)` and rendered for user review via `renderEvolutionReport(report)`. Term lifecycle is managed by `extractSessionTermCandidates(sessionData)` for candidate discovery, `mergeTerm(target, source)` for deduplication, and `archiveTerm(name)` for retirement.
 
 ### G10: Gate Feedback Analysis
 Analyze Reframing Gate and Clarification Gate feedback logs (`.forge/progress/*-reframing.jsonl` and `*-clarification.jsonl`) to identify high-value question patterns. When a question dimension shows `outcome_changed=true` in > 50% of cases with ≥ 3 samples, propose it as an evolved-rule via §5.2 Self-Evolution Protocol.
