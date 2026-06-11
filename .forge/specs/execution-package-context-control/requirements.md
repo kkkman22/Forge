@@ -1,5 +1,5 @@
 ---
-status: draft
+status: completed
 feature: execution-package-context-control
 layout: requirements
 created: 2026-06-07

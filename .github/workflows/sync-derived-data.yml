@@ -64,7 +64,11 @@ jobs:
       - name: Sync dist bundle
         run: bash scripts/build-dist.sh
 
-      # 7. Commit all changes (if any)
+      # 7. Mark merged specs as completed
+      - name: Mark completed specs
+        run: node scripts/mark-specs-completed.mjs
+
+      # 8. Commit all changes (if any)
       - name: Commit derived data updates
         run: |
           git config user.name "github-actions[bot]"
@@ -80,6 +84,6 @@ jobs:
             echo "No derived data changes to commit."
           fi
 
-      # 8. Verify non-volatile sync results
+      # 9. Verify non-volatile sync results
       - name: Verify help baseline after sync
         run: node scripts/record-help-baseline.mjs --check

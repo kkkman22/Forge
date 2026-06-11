@@ -1,5 +1,5 @@
 ---
-status: draft
+status: completed
 feature: runtime-worker-context-control
 layout: requirements
 created: 2026-06-10

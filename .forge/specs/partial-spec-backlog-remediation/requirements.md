@@ -1,5 +1,5 @@
 ---
-status: locked
+status: completed
 feature: partial-spec-backlog-remediation
 layout: requirements
 created: 2026-06-07
