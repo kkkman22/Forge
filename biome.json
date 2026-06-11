@@ -58,6 +58,24 @@
     },
     {
       "includes": [
+        "src/accept-gate.ts",
+        "src/failure-sink.ts",
+        "src/mcp/tools/forge-read.ts",
+        "src/pack/config.ts",
+        "src/pack/loader.ts",
+        "src/pua-state-manager.ts",
+        "src/state-machine/validator.ts"
+      ],
+      "linter": {
+        "rules": {
+          "suspicious": {
+            "noConsole": "off"
+          }
+        }
+      }
+    },
+    {
+      "includes": [
         "src/docs-governance/index-generator/generator.ts",
         "src/docs-governance/index-generator/format.ts",
         "src/docs-governance/ssot/renderers/*.ts"
