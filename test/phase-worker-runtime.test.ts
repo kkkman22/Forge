@@ -16,6 +16,12 @@ describe("phase-worker-runtime", () => {
   beforeEach(() => {
     root = join(tmpdir(), `forge-phase-worker-${Date.now()}`);
     mkdirSync(root, { recursive: true });
+    // Set up minimal hooks.json for validateHooksPresence
+    mkdirSync(join(root, "hooks"), { recursive: true });
+    writeFileSync(
+      join(root, "hooks", "hooks.json"),
+      JSON.stringify({ PreToolUse: [{ matcher: "Write|Edit" }] }),
+    );
   });
 
   afterEach(() => {

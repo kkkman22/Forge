@@ -1,11 +1,15 @@
 /**
- * Tests for HooksProtectionMissingError.
+ * Tests for HooksProtectionMissingError and validateHooksPresence.
  *
  * **Validates: v2.4 Requirement 1.1, 1.2**
  */
 
-import { describe, expect, it } from "vitest";
+import { existsSync, mkdirSync, rmSync, writeFileSync } from "node:fs";
+import { tmpdir } from "node:os";
+import { join } from "node:path";
+import { afterEach, beforeEach, describe, expect, it } from "vitest";
 import { ForgeError, HooksProtectionMissingError } from "../src/forge-error.js";
+import { validateHooksPresence } from "../src/hook-validator.js";
 
 describe("HooksProtectionMissingError", () => {
   it("is instanceof ForgeError", () => {
@@ -61,5 +65,56 @@ describe("HooksProtectionMissingError", () => {
     expect(err.code).not.toBe("PROMPT_DEFENSE_REJECTED");
     expect(err.code).not.toBe("SCHEMA_VALIDATION_FAILED");
     expect(err.code).not.toBe("EVENT_LOG_REPLAY_MISMATCH");
+  });
+});
+
+describe("validateHooksPresence", () => {
+  let root: string;
+
+  beforeEach(() => {
+    root = join(tmpdir(), `forge-hook-val-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`);
+    mkdirSync(join(root, "hooks"), { recursive: true });
+  });
+
+  afterEach(() => {
+    rmSync(root, { recursive: true, force: true });
+  });
+
+  it("throws HooksProtectionMissingError when hooks.json does not exist", () => {
+    expect(() => validateHooksPresence(root)).toThrow(HooksProtectionMissingError);
+    expect(() => validateHooksPresence(root)).toThrow("not found");
+  });
+
+  it("throws when PreToolUse section is missing", () => {
+    writeFileSync(join(root, "hooks", "hooks.json"), JSON.stringify({ PostToolUse: [] }));
+
+    expect(() => validateHooksPresence(root)).toThrow(HooksProtectionMissingError);
+    expect(() => validateHooksPresence(root)).toThrow("PreToolUse");
+  });
+
+  it("throws when PreToolUse is an empty array", () => {
+    writeFileSync(join(root, "hooks", "hooks.json"), JSON.stringify({ PreToolUse: [] }));
+
+    expect(() => validateHooksPresence(root)).toThrow(HooksProtectionMissingError);
+  });
+
+  it("throws when hooks.json is invalid JSON", () => {
+    writeFileSync(join(root, "hooks", "hooks.json"), "{not-json");
+
+    expect(() => validateHooksPresence(root)).toThrow(HooksProtectionMissingError);
+    expect(() => validateHooksPresence(root)).toThrow("parse failed");
+  });
+
+  it("passes silently when hooks.json has valid PreToolUse", () => {
+    writeFileSync(
+      join(root, "hooks", "hooks.json"),
+      JSON.stringify({ PreToolUse: [{ matcher: "Write|Edit" }] }),
+    );
+
+    expect(() => validateHooksPresence(root)).not.toThrow();
+  });
+
+  it("skips validation when options.skipValidation is true", () => {
+    expect(() => validateHooksPresence(root, { skipValidation: true })).not.toThrow();
   });
 });

@@ -104,6 +104,8 @@ Uncommitted: !`git status --short 2>/dev/null | head -10 || echo "clean"`
 
 **Gate 拦截自动沉淀**：门禁拦截时调用 `buildShipGateBlockArtifacts(topic, tier, reason, situation, now, seq)`（`src/ship.ts`）生成 episode + Evolution 标记（target=`forge-ship#ship_gate_blocked`）。`reason` 推导：未提交工作树 → `uncommitted` → outcome=`partial`；checklist 未验证 → `checklist_failed` → outcome=`failure`。写入失败降级为 `console.warn`。
 
+**函数调用**：`checkShipGateWithFreshness(review, test, progress, reviewedCommit, currentHead, changedFiles)` — 扩展 `checkShipGate` 的门禁检查，集成 `checkReviewFreshness` 逻辑，一步完成门禁 + 新鲜度校验。返回 `{ allowed, reasons, freshnessWarning }`
+
 **函数调用**：`checkReviewFreshness(reviewedCommit, currentHead, changedFiles)`
 - 参数：`reviewedCommit` — 从 review 报告 frontmatter 的 `reviewed_at_commit` 字段读取（`string | undefined`）；`currentHead` — `git rev-parse HEAD` 输出；`changedFiles` — `git diff --name-only` 输出
 - 返回：`{ fresh: boolean, reason: string, changedFiles?: string[] }`

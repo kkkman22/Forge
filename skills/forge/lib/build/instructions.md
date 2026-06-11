@@ -113,6 +113,8 @@ Build 阶段中途执行 `git rebase` / `git pull` / `git merge` 同步 main 时
 
 **函数调用**: `runBranchGate({ skill: "build", ... })` — 调用 `src/branch-gate.ts` 统一调度层；参数从 `.forge/status.md` 和 git state 读取；返回 `BranchGateResult`；按 result.kind 处理（详见 §1.5）
 
+**函数调用**: `checkBuildGate(config)` — 检查 build 前置门禁（Spec 锁定、Plan 批准、目录完整性）；`checkBranchTopicGate(branch, featureBranch)` — 验证分支命名是否符合 `feature/<topic>` 或 `forge/<topic>` 模式；`detectUnshippedBranches(gitLogFn)` — 扫描本地未合并的 feature 分支并输出警告
+
 → Branch Gate auto-switch / unshipped-branch warning / lightweight exception 详见 references/branch-gate.md
 
 ---
