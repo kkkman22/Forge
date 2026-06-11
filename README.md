@@ -164,7 +164,7 @@ Forge plugin 自带 `forge-context` first-party MCP server，为 `/forge review`
 
 ## 安全
 
-Forge 从第一天起把安全视为工程纪律。五层防御：工具调用 Hook 冻结区硬阻断、Shell 注入预防、输入威胁检测、依赖供应链审计、145 property-based 不变量测试。敏感区域按"冻结/受保护/开放"分级保护。详见 [docs/reference-security.md](docs/reference-security.md)。
+Forge 从第一天起把安全视为工程纪律。五层防御：工具调用 Hook 冻结区硬阻断、Shell 注入预防、输入威胁检测、依赖供应链审计、140 property-based 不变量测试。敏感区域按"冻结/受保护/开放"分级保护。详见 [docs/reference-security.md](docs/reference-security.md)。
 
 ---
 
@@ -220,9 +220,9 @@ bash scripts/pre-push-ci-check.sh
 
 `bump-version.mjs` 会自动同步 `package.json`、`.claude-plugin/plugin.json`、`dist-plugin/` 三个位置的版本号，并重建 dist 包。`pre-push-ci-check.sh` 在推送前检查版本一致性、shell 脚本、JSON 有效性和 bundle 完整性。
 
-**技术栈**：TypeScript 5.9（strict）、308 个 TypeScript 模块、Vitest 4.1、fast-check 4.7（属性测试）、Biome 2.4（lint + format）。运行时依赖：`@anthropic-ai/claude-agent-sdk`、`@modelcontextprotocol/sdk`、`commander`、`minimatch`、`yaml`、`zod`。
+**技术栈**：TypeScript 5.9（strict）、299 个 TypeScript 模块、Vitest 4.1、fast-check 4.7（属性测试）、Biome 2.4（lint + format）。运行时依赖：`@anthropic-ai/claude-agent-sdk`、`@modelcontextprotocol/sdk`、`commander`、`minimatch`、`yaml`、`zod`。
 
-**测试策略**：7597 个测试（635 个测试文件）验证不变量。覆盖率 ~87% statements。
+**测试策略**：7456 个测试（618 个测试文件）验证不变量。覆盖率 ~87% statements。
 
 
 ---
