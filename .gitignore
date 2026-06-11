@@ -12,6 +12,7 @@ reports/mutation/
 .claude/
 .forge/debug/
 .forge/archive/
+.codex/
 
 # Forge frontend-check login state cache
 .forge/cache/
