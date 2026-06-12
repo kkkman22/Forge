@@ -23,26 +23,15 @@ actual_test_files=$(find test -name '*.test.ts' | wc -l | tr -d ' ')
 # ---------- 3. Count property test files in test/ ----------
 actual_pbt_files=$(find test -name '*.property.test.ts' | wc -l | tr -d ' ')
 
-# ---------- 4. Extract total test count from vitest JSON output ----------
-# Use --outputFile to avoid stdout pollution from other reporters / hooks.
-VITEST_OUTPUT=$(mktemp)
-export VITEST_OUTPUT
-npx vitest run --reporter=json --outputFile="${VITEST_OUTPUT}" >/dev/null 2>&1 || true
-
-actual_tests=$(node -e "
-  const fs = require('fs');
-  try {
-    const raw = fs.readFileSync(process.env.VITEST_OUTPUT, 'utf-8');
-    const j = JSON.parse(raw);
-    console.log(j.numTotalTests);
-  } catch(e) {
-    console.error('Failed to parse vitest JSON output:', e.message);
-    process.exit(1);
-  }
-" 2>&1) || true
-
-rm -f "${VITEST_OUTPUT}"
-unset VITEST_OUTPUT
+# ---------- 4. Count tests via `vitest list` (collect-only, no execution) ----------
+# IMPORTANT: do NOT use `vitest run` here. The full `npm run check` already runs
+# the suite once (step 3); re-running it here (a) doubles push latency and
+# (b) has deadlocked on the tool-health-writer concurrency test when invoked a
+# second time in the same check. `vitest list` enumerates tests without executing
+# them, so it cannot hang and is fast. It counts collected test definitions
+# (it.each / parameterized rows are NOT expanded), so the README total is
+# calibrated to this collection count, not to vitest's numTotalTests.
+actual_tests=$(npx vitest list 2>/dev/null | grep -c .) || actual_tests=""
 
 if [[ -z "${actual_tests}" ]] || ! [[ "${actual_tests}" =~ ^[0-9]+$ ]]; then
   echo "ERROR: Could not extract total test count from vitest JSON output."
