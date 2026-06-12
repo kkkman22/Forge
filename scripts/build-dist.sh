@@ -231,7 +231,6 @@ cp -r "${FORGE_ROOT}/skills" "${PLUGIN_DIST}/skills"
 cp -r "${FORGE_ROOT}/agents" "${PLUGIN_DIST}/agents"
 cp -r "${FORGE_ROOT}/commands" "${PLUGIN_DIST}/commands"
 cp -r "${FORGE_ROOT}/templates" "${PLUGIN_DIST}/templates"
-cp -r "${FORGE_ROOT}/locales" "${PLUGIN_DIST}/locales"
 cp -r "${FORGE_ROOT}/hooks" "${PLUGIN_DIST}/hooks"
 if [ -f "${FORGE_ROOT}/.mcp.json" ]; then
   cp "${FORGE_ROOT}/.mcp.json" "${PLUGIN_DIST}/.mcp.json"
