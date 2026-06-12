@@ -4,7 +4,8 @@
 # check-readme-metrics.sh — README 指标校准检查
 #
 # 从源码和 vitest 输出中提取实际指标，与 README.md 中的声明进行比较。
-# 如果任何指标不一致，以非零状态退出并报告差异。
+# 本地（含 pre-push hook）：发现 drift 时自动重写 README 并通过，绝不阻断 push。
+# CI（CI=true）：drift 视为失败，作为 PR 安全网（自动重写对 CI 临时检出无意义）。
 #
 # 用法：
 #   bash scripts/check-readme-metrics.sh
@@ -42,7 +43,9 @@ fi
 # ---------- 5. Extract README claims ----------
 readme_modules=$(grep -oE '[0-9]+ 个 TypeScript 模块' README.md | head -1 | grep -oE '^[0-9]+' || true)
 readme_test_files=$(grep -oE '[0-9]+ 个测试文件' README.md | head -1 | grep -oE '^[0-9]+' || true)
-readme_pbt_files=$(grep -oE '[0-9]+ (个为 fast-check|property-based)' README.md | head -1 | grep -oE '^[0-9]+' || true)
+readme_pbt_full=$(grep -oE '[0-9]+ (个为 fast-check|property-based)' README.md | head -1 || true)
+readme_pbt_files=$(printf '%s' "${readme_pbt_full}" | grep -oE '^[0-9]+' || true)
+pbt_suffix=$(printf '%s' "${readme_pbt_full}" | sed -E 's/^[0-9]+//' || true)
 readme_tests=$(grep -oE '[0-9]+ 个测试（' README.md | head -1 | grep -oE '^[0-9]+' || true)
 
 # Validate that all README claims were extracted
@@ -53,34 +56,65 @@ for var_name in readme_modules readme_test_files readme_pbt_files readme_tests; 
   fi
 done
 
-# ---------- 6. Compare and report ----------
+# ---------- 6. Compare; auto-sync README locally, fail strictly in CI ----------
+# Locally (incl. the pre-push hook) we rewrite drifted numbers in-place so a
+# stale metric never blocks a push — commit README.md to persist the change. In
+# CI (CI=true) the checkout is ephemeral, so auto-syncing is pointless and drift
+# stays a hard failure to guard PRs.
 echo "README Metrics Check"
 echo "===================="
 
-compare() {
-  local label="$1"
-  local readme_val="$2"
-  local actual_val="$3"
+DRIFT=0
+SYNC_FAIL=0
+
+# sync_metric <label> <readme_val> <actual_val> <suffix>
+# <suffix> is the literal substring immediately AFTER the number in README
+# (e.g. " 个 TypeScript 模块"). Rewrites the first "<digits><suffix>" match.
+sync_metric() {
+  local label="$1" readme_val="$2" actual_val="$3" suffix="$4"
 
   if [[ "${readme_val}" -eq "${actual_val}" ]]; then
-    printf "%-20s README says %s, actual %s ✓\n" "${label}:" "${readme_val}" "${actual_val}"
+    printf "%-20s README %s, actual %s ✓\n" "${label}:" "${readme_val}" "${actual_val}"
+    return
+  fi
+
+  DRIFT=$((DRIFT + 1))
+  if [[ "${CI:-}" == "true" ]]; then
+    printf "%-20s README %s, actual %s ✗\n" "${label}:" "${readme_val}" "${actual_val}"
+    return
+  fi
+
+  # Slurp mode (-0) + single substitution (no /g) = first match only.
+  perl -0 -i -pe "s/\\d+\\Q${suffix}\\E/${actual_val}${suffix}/" README.md
+  local after
+  after=$(grep -oE "[0-9]+${suffix}" README.md | head -1 | grep -oE '^[0-9]+' || true)
+  if [[ "${after}" == "${actual_val}" ]]; then
+    printf "%-20s README %s → %s (auto-synced)\n" "${label}:" "${readme_val}" "${actual_val}"
   else
-    printf "%-20s README says %s, actual %s ✗\n" "${label}:" "${readme_val}" "${actual_val}"
-    DRIFT=$((DRIFT + 1))
+    SYNC_FAIL=$((SYNC_FAIL + 1))
+    printf "%-20s README %s, actual %s — auto-sync FAILED, update manually\n" "${label}:" "${readme_val}" "${actual_val}"
   fi
 }
 
-compare "TypeScript modules" "${readme_modules}" "${actual_modules}"
-compare "Test files" "${readme_test_files}" "${actual_test_files}"
-compare "Property tests" "${readme_pbt_files}" "${actual_pbt_files}"
-compare "Total tests" "${readme_tests}" "${actual_tests}"
+sync_metric "TypeScript modules" "${readme_modules}"    "${actual_modules}"    " 个 TypeScript 模块"
+sync_metric "Test files"         "${readme_test_files}" "${actual_test_files}" " 个测试文件"
+sync_metric "Property tests"     "${readme_pbt_files}"  "${actual_pbt_files}"  "${pbt_suffix}"
+sync_metric "Total tests"        "${readme_tests}"      "${actual_tests}"      " 个测试（"
 
 echo ""
 
 if [[ "${DRIFT}" -gt 0 ]]; then
-  echo "FAIL: ${DRIFT} metric(s) out of date. Update README.md."
-  exit 1
-else
-  echo "All metrics match ✓"
+  if [[ "${CI:-}" == "true" ]]; then
+    echo "FAIL: ${DRIFT} metric(s) out of date. Update README.md."
+    exit 1
+  fi
+  if [[ "${SYNC_FAIL}" -gt 0 ]]; then
+    echo "WARN: ${SYNC_FAIL} metric(s) could not be auto-synced — update README.md manually."
+  fi
+  echo "Auto-synced ${DRIFT} metric(s) in README.md (working tree). Commit to persist:"
+  echo "  git add README.md && git commit"
   exit 0
 fi
+
+echo "All metrics match ✓"
+exit 0
