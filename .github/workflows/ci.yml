@@ -192,12 +192,9 @@ jobs:
           cache: npm
           registry-url: https://registry.npmjs.org
       - run: npm ci
-      - name: Full check suite
-        run: npm run check
-      - name: Coverage gate
-        run: npm run test:coverage
-      - name: Security audit
-        run: npm audit --registry=https://registry.npmjs.org --audit-level=high
+      # Compile + build MUST precede the full check suite because
+      # npm run check includes compiled-runtime smoke tests that import
+      # from dist/src/ — which is gitignored and only exists after tsc.
       - name: Compile TypeScript
         run: npx tsc
       - name: Build and verify bundles
@@ -205,6 +202,12 @@ jobs:
           bash scripts/build-dist.sh
           node scripts/check-dist-sync.mjs
           node scripts/check-bundle-sync.mjs
+      - name: Full check suite
+        run: npm run check
+      - name: Coverage gate
+        run: npm run test:coverage
+      - name: Security audit
+        run: npm audit --registry=https://registry.npmjs.org --audit-level=high
       - name: Generate release checklist
         run: node scripts/generate-release-checklist.mjs --output release-checklist.json
       - name: Upload release checklist

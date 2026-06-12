@@ -380,7 +380,11 @@ function main() {
   if (doCommit) {
     console.log("\n正在提交...");
     try {
-      gitExec("add package.json .claude-plugin/plugin.json dist/claude-code/bundles/forge/ dist/claude-code/bundles/.manifest.sha256 dist-plugin/ CHANGELOG.md");
+      // NOTE: dist/claude-code/bundles/ is gitignored (never tracked), so it must
+      // NOT be in the add list — including it makes git add exit non-zero and the
+      // commit silently never runs. Commit set matches historical release commits
+      // (see e.g. v3.3.0 750948a3): version files + dist-plugin + CHANGELOG.
+      gitExec("add package.json .claude-plugin/plugin.json dist-plugin/ CHANGELOG.md");
       gitExec(`commit -m "chore: bump version to ${newVersion}\n\nCo-Authored-By: Claude Opus 4.8 <noreply@anthropic.com>"`);
       const sha = gitExec("rev-parse --short HEAD");
       console.log(`  ✓ committed as ${sha}`);
