@@ -11,6 +11,109 @@ Entries follow [Keep a Changelog](https://keepachangelog.com/) with Forge-specif
 
 ## [Unreleased]
 
+## [3.4.0] - 2026-06-12
+
+### Fixed
+
+- **[SECURITY]** **security**: audit remediate P0/P1 — allowlist hardening, MCP security, dist sync, CI gates (#76)
+- **[SECURITY]** **security**: remediate 10 audit verification findings (#75)
+- **[SECURITY]** **security**: execSync → execFileSync + token exposure fix (#67)
+
+### Added
+
+- **githooks**: auto-sync README metrics in pre-commit so origin self-corrects
+- **check**: auto-sync README metrics locally instead of blocking push
+- **githooks**: add progress heartbeat to pre-push check
+- **spec-lifecycle**: auto-mark specs as completed post-merge
+- add runtime phase worker context control
+- harden claude agents compatibility
+- require complete evidence artifact provenance
+- close workflow ssot and replay evidence gaps
+- expand doctor health snapshot
+- validate typed MCP capability outputs
+- wire status commands to health snapshot
+- produce review and test evidence artifacts
+- write mutation evidence artifacts
+- persist evidence artifacts and replay command
+- implement evolution spec foundations
+- **sdk-status-helpers**: add workNature-aware sequence selection (T4)
+- **status-file-ext**: add work_nature to Loop fields extract/write/clear (T3)
+- **state**: add work_nature to StatusFields with 'feature' default (T2)
+- **schema**: add work_nature field and extend PhaseSchema for WorkNature phases (T1)
+- **mcp**: add deprecation warning to forge_read script mode (REQ-06)
+- **spec**: enhance validateTestability with verifiable assertion check (REQ-05)
+- **ship**: block ship on stale review for non-.forge/ changes (REQ-03)
+- **ship**: bind recordForceSkip to checkShipGateWithForceSkip (REQ-02)
+- **execution-package**: introduce execution package context control (#85)
+- **hooks**: restore partial spec remediation (#84)
+- partial spec backlog remediation
+- complete long-term audit evolution targets
+- Claude Code 2.1.163 infrastructure hardening (#65)
+- project charter system — anchor engineering constraints across specs (#64)
+- adopt 8 GSD Core patterns — injection defense, context trimming, scientific debugging (#63)
+- **review**: CE-Inspired review enhancement (Phase 1/2/3) (#62)
+- **decide,spec**: add Reframing Gate & Clarification Gate for divergent thinking (#61)
+- adopt superpowers best practices — CSO, rationalization, adversarial stance, plan gate, session hook (#59)
+- **charter**: project charter for cross-spec engineering consistency (#58)
+- **review**: CE-Inspired Review Enhancement — confidence anchoring, adversarial-check, validation pass, autofix (#57)
+- **learn**: integrate gate feedback log analysis into learn workflow (#55)
+- **decide,spec**: add Reframing Gate and Clarification Gate for divergent thinking (#54)
+- adopt 2.1.158-161 borrows (hooks lifecycle, OTEL dims, spec audit, dead code cleanup) (#52)
+- **deps**: adopt Claude Code 2.1.162 fixes — bump decide-teams CLI floor + MCP timeout (#51)
+- **mcp**: add graceful shutdown to prevent orphan processes (#50)
+- integrate 6 Matt Pocock skills-inspired enhancements (#49)
+- **security-check**: add executable config-file dimension to Layer 3
+
+### Changed
+
+- **readme**: bump test count 7423 -> 7430
+- remove i18n/locale infrastructure
+- remove dead workflows-integration skeleton code
+- sync README metrics
+- update README metrics (624 test files, 7451 tests)
+- **router**: add work_nature to status update fields + contract test (T6)
+- **scripts**: migrate hook scanners to ESM syntax (#82)
+- add partial spec remediation plan
+- add audit remediation acceptance report
+- split 4 large modules (P2-6) + manifest-driven build-dist.sh (P3-3) (#78)
+- Phase 3 infrastructure improvements — shadow cleanup, CJK tokens, parity check, metrics (#74)
+- **learn**: extract validation and feedback-analysis sub-modules (#70)
+- regex caching + O(n³) → O(n) glossary conflict detection (#71)
+- extract shared gate protocol for decide & spec (#60)
+- extract shared gate protocol for decide and spec (#56)
+- update README metrics to current values
+- remove dead observability code + hooks test cleanup (#53)
+- remove dead observability code (logger + performance-tracker) (#46)
+- **hooks**: convert 17 hooks to args[] exec form + register 6 lifecycle hooks (#45)
+- **readme**: update module/test metrics (267 modules, 7130 tests)
+
+### Fixed
+
+- **build**: drop stale locales copy from plugin dist bundle
+- **check**: avoid re-running vitest in readme-metrics (pre-push hang)
+- format hook-validator and rebuild skill manifest SHAs
+- spec audit verification — hooks validation, SKILL.md sync, lint config (#92)
+- expose typedoc referenced types
+- **ci**: track multi-agent-review.js in git
+- lint imports + update property tests for enhanced testability (REQ-05)
+- **test**: update workflow-naming assertion + stale review preservation test (REQ-04)
+- **test**: isolate fallback-ladder test from real .forge/reviews/ (REQ-01)
+- restore resume phase coverage test + sync hook comment improvements (#86)
+- shellcheck SC2155 — separate declare and export
+- pre-push hook PATH, README metrics sync, ignore runtime artifacts
+- make trace ids deterministic under rapid generation
+- **audit**: remediate P2/P3 findings — HMAC, command counts, smoke tests, deps, CI (#77)
+- **error-handling**: eliminate 149 empty catch blocks (#68)
+- **cli**: remove empty bin + correct Forge Loop docs (#69)
+- audit PR1 — test stability (tsx pin + race condition fix) (#66)
+- **ci**: use CI-matching INDEX.md with only git-tracked specs
+- **handoff**: section regex over-match & sync-derived-data gitignore conflict (#44)
+- **pre-push-ci-check**: add --help with "Usage:" for scripts-help gate
+- **bump-version**: make --help exit 0 with "Usage:" for scripts-help gate
+- **pre-commit**: stop grep -c doubling "0" on zero matches
+- **dist-resync**: clean stale dist/{src,test,scripts} before tsc to avoid TS5055
+- **ci**: resolve three CI failures on main (#41)
+
 ## [3.3.1] - 2026-06-05
 
 ### Added
