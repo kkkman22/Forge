@@ -1,0 +1,29 @@
+# Progress — code-slim-0612
+
+> 全项目代码精简与重构（等价 refactor）。3 Execution Packages，每 Package 一次 build→review→test→ship。
+
+---
+
+## Package 1 / Wave 1（低风险）
+
+### T1: 删除 deprecated.ts — ✅ completed (commit pending)
+
+**R2 Handoff Block**
+- **task_id**: T1
+- **completed**:
+  - DELETE `src/deprecated.ts`（152 行 v2.4→v2.5 shim，契约已到期 v3.4.0）
+  - DELETE `dist/src/deprecated.{js,d.ts,js.map}`（dist 为 gitignored，未跟踪）
+  - MODIFY `test/barrel-file.test.ts`：移除 `:13` `import * as deprecated` + section 4（原 :331-366）deprecated re-export 断言块
+  - `:185` `toHaveLength(140)` **不变**（deprecated 不在 barrel `src/index.ts`，删除不影响 barrel export 计数）
+- **not_completed**: （无）
+- **commands_executed**:
+  - `grep -rn "from.*deprecated" src/` → 仅 comment（RED 覆盖确认，AC-1.1）
+  - `npx tsc --noEmit` → OK
+  - `npx vitest run test/barrel-file.test.ts` → 34 passed（基线 40 − section 4 的 6 个 = 34）
+  - `node scripts/check-dist-sync.mjs` → OK（296 src matched with dist）
+  - `npm run check` → 全绿（tsc+biome+vitest+public-api+dist-sync+skill/doc 校验）
+- **issues_found**:
+  - `check-dist-sync.mjs` 用 `git ls-files`（读**索引**非工作树）；`rm` 删工作树后索引仍跟踪 → 误报 drift；需 `git add` 暂存删除使索引更新。dist 为 gitignored 未跟踪文件。
+- **procedure_compliance**: RED（基线 40 passed）→ GREEN（删 + 34 passed）→ REFACTOR；INV-5（tsc+vitest）✓；INV-6（dist-sync）✓；INV-1~4 未触碰公开契约/安全控制/scripts dist 路径/安全测试。
+
+**Commit**: `refactor: remove deprecated.ts v2.4→v2.5 migration shim (contract expired at v3.4.0)`
