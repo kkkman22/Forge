@@ -261,6 +261,112 @@ describe("Property 22: Debug 假设完整性", () => {
 });
 
 // ---------------------------------------------------------------------------
+// Property 22b: Debug 假设科学性 (Spec 5 — falsificationTest + blindSpots)
+// ---------------------------------------------------------------------------
+
+describe("Property 22b: Debug 假设科学性 (strict mode)", () => {
+  it("strict mode: hypothesis with falsificationTest + blindSpots passes", () => {
+    fc.assert(
+      fc.property(validHypothesisArb, (hypothesis) => {
+        const strict: Hypothesis = {
+          ...hypothesis,
+          falsificationTest: "swap parameter order and check result",
+          blindSpots: ["may be a different root cause upstream"],
+        };
+        const result = validateHypothesis(strict, { strict: true });
+        expect(result.valid).toBe(true);
+        expect(result.errors).toHaveLength(0);
+      }),
+      { numRuns: 50 },
+    );
+  });
+
+  it("strict mode: missing falsificationTest fails", () => {
+    fc.assert(
+      fc.property(validHypothesisArb, (hypothesis) => {
+        const { falsificationTest: _, ...withoutFalsification } = {
+          ...hypothesis,
+          blindSpots: ["something"],
+        };
+        const result = validateHypothesis(withoutFalsification, { strict: true });
+        expect(result.valid).toBe(false);
+        expect(result.errors.some((e) => e.includes("证伪"))).toBe(true);
+      }),
+      { numRuns: 50 },
+    );
+  });
+
+  it("strict mode: empty falsificationTest fails", () => {
+    fc.assert(
+      fc.property(validHypothesisArb, (hypothesis) => {
+        const result = validateHypothesis(
+          { ...hypothesis, falsificationTest: "  ", blindSpots: ["x"] },
+          { strict: true },
+        );
+        expect(result.valid).toBe(false);
+        expect(result.errors.some((e) => e.includes("证伪"))).toBe(true);
+      }),
+      { numRuns: 50 },
+    );
+  });
+
+  it("strict mode: missing blindSpots fails", () => {
+    fc.assert(
+      fc.property(validHypothesisArb, (hypothesis) => {
+        const { blindSpots: _, ...withoutBlindSpots } = {
+          ...hypothesis,
+          falsificationTest: "some test",
+        };
+        const result = validateHypothesis(withoutBlindSpots, { strict: true });
+        expect(result.valid).toBe(false);
+        expect(result.errors.some((e) => e.includes("盲点"))).toBe(true);
+      }),
+      { numRuns: 50 },
+    );
+  });
+
+  it("strict mode: empty blindSpots array fails", () => {
+    fc.assert(
+      fc.property(validHypothesisArb, (hypothesis) => {
+        const result = validateHypothesis(
+          { ...hypothesis, falsificationTest: "test", blindSpots: [] },
+          { strict: true },
+        );
+        expect(result.valid).toBe(false);
+        expect(result.errors.some((e) => e.includes("盲点"))).toBe(true);
+      }),
+      { numRuns: 50 },
+    );
+  });
+
+  it("non-strict mode (default): missing falsificationTest + blindSpots still passes", () => {
+    fc.assert(
+      fc.property(validHypothesisArb, (hypothesis) => {
+        const result = validateHypothesis(hypothesis);
+        expect(result.valid).toBe(true);
+        expect(result.errors).toHaveLength(0);
+      }),
+      { numRuns: 50 },
+    );
+  });
+
+  it("non-strict mode: hypothesis with falsificationTest + blindSpots also passes", () => {
+    fc.assert(
+      fc.property(validHypothesisArb, (hypothesis) => {
+        const strict: Hypothesis = {
+          ...hypothesis,
+          falsificationTest: "disprove by checking X",
+          blindSpots: ["upstream dependency", "concurrency"],
+        };
+        const result = validateHypothesis(strict);
+        expect(result.valid).toBe(true);
+      }),
+      { numRuns: 50 },
+    );
+  });
+});
+
+// ---------------------------------------------------------------------------
 // Debug phase transitions
 // ---------------------------------------------------------------------------
 

@@ -20,6 +20,10 @@
  * Property 22: Debug 假设完整性
  *   - Every hypothesis must have: description, verifyCommand, expectedOutcome
  *   - Incomplete hypotheses are rejected
+ *
+ * Property 22b: Debug 假设科学性 (Spec 5 gsd-core-adoption)
+ *   - Strict mode requires falsificationTest + blindSpots
+ *   - Non-strict mode (default) preserves backward compat with 3-field hypotheses
  */
 
 // ---------------------------------------------------------------------------
@@ -40,17 +44,20 @@ export interface ErrorContext {
 }
 
 export interface Hypothesis {
-  /** Description of the hypothesis. */
   description: string;
-  /** Command to verify this hypothesis. */
   verifyCommand: string;
-  /** What we expect to see if the hypothesis is correct. */
   expectedOutcome: string;
+  falsificationTest?: string;
+  blindSpots?: string[];
 }
 
 export interface HypothesisValidation {
   valid: boolean;
   errors: string[];
+}
+
+export interface HypothesisValidationOptions {
+  strict?: boolean;
 }
 
 export type HypothesisResult = "confirmed" | "rejected";
@@ -99,7 +106,10 @@ export const DEBUG_PHASES: DebugPhase[] = ["collect", "pattern", "hypothesize", 
  *   - verifyCommand: non-empty
  *   - expectedOutcome: non-empty
  */
-export function validateHypothesis(hypothesis: Hypothesis): HypothesisValidation {
+export function validateHypothesis(
+  hypothesis: Hypothesis,
+  options?: HypothesisValidationOptions,
+): HypothesisValidation {
   const errors: string[] = [];
 
   if (!hypothesis.description || hypothesis.description.trim().length === 0) {
@@ -112,6 +122,15 @@ export function validateHypothesis(hypothesis: Hypothesis): HypothesisValidation
 
   if (!hypothesis.expectedOutcome || hypothesis.expectedOutcome.trim().length === 0) {
     errors.push("预期结果不能为空");
+  }
+
+  if (options?.strict) {
+    if (!hypothesis.falsificationTest || hypothesis.falsificationTest.trim().length === 0) {
+      errors.push("证伪测试不能为空（strict 模式要求）");
+    }
+    if (!hypothesis.blindSpots || hypothesis.blindSpots.length === 0) {
+      errors.push("盲点列表不能为空（strict 模式要求）");
+    }
   }
 
   return {

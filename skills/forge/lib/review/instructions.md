@@ -1,6 +1,6 @@
 ---
 description: "Use when running `/forge review`, build completes, or code changes need quality gate before ship"
-updated: 2026-06-09
+updated: 2026-06-12
 
 dispatch_mode: fork
 allowed_tools:
@@ -190,13 +190,81 @@ if (!result.allowed) {
 
 **动态选择**：认证代码 → security 深度 OWASP；DB schema → quality 加迁移检查；API 变更 → spec 加兼容性检查；前端 UI → quality 加可访问性；仅重构 → spec 快速扫描。
 
-**Layer 1 — Spec 对齐**：需求覆盖、场景覆盖、Scope Creep、Delta "不变"文件、Spec Leak 再扫、Spec Health Check。方法：读 Spec → 逐条对照代码 → 逐条对照测试 → 扫描 Scope Creep → 检查 Delta → 调用 detectSpecLeak() 对 spec 再扫一次（防止开发过程倒灌，findings 报告为 P1）。If spec health verdict=degraded, add "spec re-validation" sub-item to Layer 1 checklist.
+**Layer 1 — Spec 对齐**：需求覆盖、场景覆盖、Scope Creep、Delta "不变"文件、Spec Leak 再扫、Spec Health Check、**四级制品验证 (L1-L4) + 状态矩阵 + Must-Haves Merge**（§3a）。方法：读 Spec → 逐条对照代码 → 逐条对照测试 → 扫描 Scope Creep → 检查 Delta → 调用 detectSpecLeak() 对 spec 再扫一次（防止开发过程倒灌，findings 报告为 P1） → 对每个声称"已实现"的需求执行 L1-L4 验证 → 比对 Plan vs Spec Must-Haves。If spec health verdict=degraded, add "spec re-validation" sub-item to Layer 1 checklist.
 
 **Layer 2 — 代码质量**：命名一致性（调用 `runGlossaryCheck({ phase: 'review' })` 检查同一概念在多 finding 中的命名一致性）、错误处理、性能热点（N+1/未分页/同步阻塞）、测试覆盖率、代码重复、可维护性（>50行/嵌套>3层）。Commit order vs dependency graph consistency: when Plan contains dependsOn fields, verify commit sequence matches topological order (severe reversal → P2 finding).
 
 **Layer 3 — 安全与风险**：硬编码密钥、注入风险（SQL/XSS/命令/路径遍历）、不安全依赖、权限边界、敏感数据泄露。
 
 **Layer 4 — Frontend Check**（条件触发）：Vue3 WCAG 无障碍、Core Web Vitals、路由稳定性、Console 告警。三档降级策略：Tier A 静态 grep（必跑）→ Tier B cmux browser + axe-core（条件跑）→ Tier C chrome-devtools MCP（条件跑）。→ 详见 agents/frontend-check.md
+
+## 3a. Enhanced Artifact Verification (L3/L4) — Layer 1 扩展
+
+> 来源：gsd-core v1.4.4 goal-backward-verification + 4-level-artifact-verification（Spec 3/8 合并）
+> 适用场景：Standard/Full 路径下 Layer 1 spec-check 必须执行；Light 路径可选。
+
+spec-check agent 在完成需求覆盖 + 场景覆盖 + Scope Creep 基础检查后，**必须**对每个声称"已实现"的需求执行四级制品验证（L1-L4），并根据结果分配状态矩阵。
+
+### 四级验证协议
+
+| Level | 检查内容 | 方法 | 失败 → 状态 |
+|-------|---------|------|------------|
+| **L1 Exists** | 文件/函数/类是否存在于代码中 | `fs.existsSync` / Grep 搜索符号名 | MISSING |
+| **L2 Substantive** | 非桩代码：无 `return null` / `return {}` / `TODO` / `FIXME` / `not-implemented` / 硬编码值 | Grep 桩模式 + 行数检查 | STUB |
+| **L3 Wired** | 被调用方存在且连接：导入链 + 调用链可追溯 | 检查 5 种 wiring path（见下） | ORPHANED |
+| **L4 Data-Flow** | 端到端数据可追溯：用户输入 → 处理 → 存储 → 输出，无硬编码覆盖 | 链路追踪，检查 hardcoded override | HOLLOW |
+
+### L3 Wired — 五种接线路径
+
+spec-check agent 对每个已实现需求，验证至少一条接线路径完整：
+
+| 路径 | 起点 → 终点 | 验证方法 |
+|------|-----------|---------|
+| Component → API | UI 组件 import 并调用了 API 函数 | Grep import + function call |
+| API → DB | API handler 调用了 DB 查询/写入函数 | 追踪 handler 函数体 |
+| Form → Handler | 表单提交绑定了处理函数（onSubmit / @submit） | Grep 表单绑定 |
+| State → Render | 状态变更触发重新渲染（watch / computed / reactive） | 检查 reactive 链 |
+| Event → Action | 用户事件绑定了 action（onClick / @click / dispatch） | Grep 事件绑定 |
+
+**判定规则**：需求声称实现但无法找到任何接线路径 → 标记 ORPHANED，报 P1 finding。
+
+### L4 Data-Flow — 端到端追踪
+
+对核心数据链路（非辅助功能），验证数据从入口到出口完整流转：
+
+1. **追踪起点**：用户输入 / API 请求 / 事件触发
+2. **追踪终点**：数据库写入 / API 响应 / UI 渲染
+3. **检查项**：
+   - 中间环节无硬编码覆盖（如 `return MOCK_DATA` 绕过真实查询）
+   - 无 dead branch（条件分支永远不执行）
+   - 无 silent swallow（catch 后 return 默认值，无日志）
+
+**判定规则**：接线完整但数据流断裂 → 标记 HOLLOW，报 P1 finding。
+
+### 状态矩阵
+
+每个需求/场景的验证结果映射到以下状态：
+
+| 状态 | 含义 | L1-L4 结果 | Finding |
+|------|------|-----------|---------|
+| **VERIFIED** | 完全验证 | L1✓ L2✓ L3✓ L4✓ | 无 |
+| **HOLLOW** | 接线完整但无数据流 | L1✓ L2✓ L3✓ L4✗ | P1 |
+| **ORPHANED** | 代码存在但未接线 | L1✓ L2✓ L3✗ | P1 |
+| **STUB** | 桩代码实现 | L1✓ L2✗ | P0（声称完成） |
+| **MISSING** | 代码不存在 | L1✗ | P0（声称完成） |
+
+spec-check 输出中，每个需求附带 `{requirement_id, status, evidence}` 三元组。STUB/MISSING 如果需求标记为"已完成"则升级为 P0。
+
+### Must-Haves Merge Rule
+
+spec-check agent 对比 Plan（`.forge/plans/<topic>.md`）与 Spec（`.forge/specs/<topic>/requirements.md`）的 Must-Haves 清单：
+
+1. **提取 Spec Must-Haves**：requirements.md 中标记为 P0/P1 的需求
+2. **提取 Plan 任务列表**：Plan 中所有任务
+3. **比对**：每个 Spec Must-Have 至少有一个 Plan 任务覆盖
+4. **违规**：Spec Must-Have 在 Plan 中无对应任务 → 报 P1 finding（`scope_reduction: <requirement_id> missing from plan`）
+
+**不可降级原则**：Plan 不得缩减 Spec 的 Must-Haves 范围。如果 Plan 的任务集合是 Spec Must-Haves 的真子集，判定为 scope reduction，阻断 ship。
 
 ## 4. Severity Classification
 
