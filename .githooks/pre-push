@@ -25,9 +25,35 @@ if [ "$target_main" -eq 0 ]; then
 fi
 
 echo "[pre-push] target=$guard_branch detected (remote=$remote)"
-echo "[pre-push] running: npm run check"
+echo "[pre-push] running full check: typecheck → lint → test suite → integrity scripts"
+echo "[pre-push] expect ~2 min; output arrives in bursts — long silences are normal, not a hang."
 
-if ! npm run check; then
+# Run the check in the background so we can emit a heartbeat. Git hooks run with
+# stdout detached from a TTY, so tsc/vitest suppress their live progress spinners;
+# the heartbeat below proves the check is still alive during those silent stretches.
+npm run check &
+check_pid=$!
+cleanup() {
+  kill "$check_pid" 2>/dev/null || true
+  wait "$check_pid" 2>/dev/null || true
+}
+trap cleanup EXIT INT TERM
+
+elapsed=0
+while kill -0 "$check_pid" 2>/dev/null; do
+  sleep 15 || true
+  if kill -0 "$check_pid" 2>/dev/null; then
+    elapsed=$((elapsed + 15))
+    printf '  ⏳ still running... %ss elapsed\n' "$elapsed"
+  fi
+done
+
+# Capture the check's exit status without letting `set -e` abort the hook on failure.
+status=0
+wait "$check_pid" || status=$?
+trap - EXIT INT TERM
+
+if [ "$status" -ne 0 ]; then
   echo ""
   echo "❌ pre-push blocked: npm run check failed"
   echo "   Fix and retry, or skip temporarily: git push --no-verify"
