@@ -51,3 +51,14 @@
 - **procedure_compliance**: RED（140@34）→ GREEN（删 :12，仍 140@34）→ REFACTOR；INV-5 ✓；INV-6 ✓；INV-1~3 未触碰。
 
 **Commit**: `refactor: remove idempotent barrel re-export in error-recovery/index.ts` + `chore(dist): resync compiled test output`
+
+---
+
+### Review P0 fix: 移除 ./deprecated exports 悬空 — ✅ completed
+
+L4 adversarial 报 P0：`deprecated.ts` 是 `package.json` 声明的公开 subpath（`./deprecated`），T1 删文件后 exports 条目悬空。经 debug 深查（.forge/debug/code-slim-deprecated-exports.md）：包未发布（npm 404）、零消费者、自我标注 v2.5.0 移除已逾期至 v3.4.0。用户 gated_auto 确认"移除 exports 条目"。
+
+- 移除 `package.json` `"./deprecated"` exports 条目
+- 删 `src/index.ts:9-11` 悬空文档（解 L1 P3）
+- CHANGELOG [Unreleased] ### Removed 登记
+- 验证：dist:resync（无变化）+ check-public-api exit 0 + npm run check 全绿

@@ -7,9 +7,6 @@
  * error-recovery, orphan-detector, process-registry, backlog, episode,
  * pattern-stats, branch-lifecycle) are intentionally excluded.
  *
- * For deprecated symbols, import from `forge-loop/deprecated` or directly
- * from the source module.
- *
  * **Validates: Requirements 3.1–3.11, 10.1–10.4**
  */
 

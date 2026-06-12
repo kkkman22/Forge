@@ -3,8 +3,7 @@
   "version": "3.4.0",
   "private": false,
   "exports": {
-    ".": "./dist/src/index.js",
-    "./deprecated": "./dist/src/deprecated.js"
+    ".": "./dist/src/index.js"
   },
   "files": [
     "dist/src/",
