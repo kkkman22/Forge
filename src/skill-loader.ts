@@ -59,11 +59,6 @@ export interface SkillManifest {
   forgeVersion: string;
   /** Phases this SKILL participates in. */
   phases: SkillPhase[];
-  /** Optional i18n configuration. */
-  i18n?: {
-    defaultLocale: string;
-    supportedLocales: string[];
-  };
 }
 
 /**

@@ -70,6 +70,7 @@ grouped by status (active, deferred, completed, archived).`);
 
 const VALID_STATUSES = new Set([
   "draft", "approved", "in_progress", "completed", "deferred", "archived", "locked",
+  "partial", "dormant", "superseded", "obsolete",
 ]);
 
 const ISO_DATE_RE = /^\d{4}-\d{2}-\d{2}$/;
@@ -308,6 +309,10 @@ function generateIndex(specs, archivedSpecs) {
     in_progress: specs.filter((s) => s.status === "in_progress").length,
     locked: locked.length,
     completed: completed.length,
+    partial: specs.filter((s) => s.status === "partial").length,
+    dormant: specs.filter((s) => s.status === "dormant").length,
+    superseded: specs.filter((s) => s.status === "superseded").length,
+    obsolete: specs.filter((s) => s.status === "obsolete").length,
     deferred: deferred.length,
     archived: archivedSpecs.length,
   };
@@ -330,6 +335,10 @@ function generateIndex(specs, archivedSpecs) {
   lines.push(`| in_progress | ${stats.in_progress} |`);
   lines.push(`| locked | ${stats.locked} |`);
   lines.push(`| completed | ${stats.completed} |`);
+  lines.push(`| partial | ${stats.partial} |`);
+  lines.push(`| dormant | ${stats.dormant} |`);
+  lines.push(`| superseded | ${stats.superseded} |`);
+  lines.push(`| obsolete | ${stats.obsolete} |`);
   lines.push(`| deferred | ${stats.deferred} |`);
   lines.push(`| archived | ${stats.archived} |`);
   lines.push("");
