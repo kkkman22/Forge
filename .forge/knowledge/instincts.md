@@ -57,3 +57,19 @@ Hook 脚本中：(1) 用 `case` 语句精确匹配 allowlist，不用 `grep -qE`
 **防御步骤**：(a) 启动 N 个 subagent 后立即校验显式返回 agentId 数量；(b) 数量 < N 时直接采用内联 tool result 文本，**禁止**事后 grep `tasks/` 反向补 ID；(c) 仅对确认异步的 agentId 调 TaskOutput；(d) 内联内容明显不完整（只有读文件痕迹、无评审结论）时**重试**该 layer 而非接受残缺结果。
 
 落点：`.claude/agents/forge-review.md` §Agent Tool ID Defense。
+
+### 删除公开源文件必须三件套：package.json exports + barrel + CHANGELOG
+
+**Confidence_Score**: 0.85
+**Tags**: refactor, deletion, public-api, package.json
+**来源**: code-slim-0612 P1-Wave1
+
+删除公开源文件时，三处必须同步检查：(1) `package.json` `exports` 条目是否引用该文件路径——有则一并删除；(2) barrel `src/index.ts` 是否 re-export 该模块——有则移除；(3) `CHANGELOG.md` `[Unreleased] ### Removed` 登记。漏任何一项均会导致 P0（dangling subpath / 404 解析 / 用户不知情）。Review L4 adversarial 最容易捕获此类问题。
+
+### check-dist-sync.mjs 读 git 索引非工作树——rm 后须 git add
+
+**Confidence_Score**: 0.8
+**Tags**: tool-quirks, dist-sync, git, refactor
+**来源**: code-slim-0612 P1-Wave1
+
+`check-dist-sync.mjs` 使用 `git ls-files` 读 git 索引而非工作树。`rm` 删除文件后索引仍跟踪旧路径 → 误报 drift。删除文件后必须 `git add <path>` 暂存删除使索引更新，dist-sync 才能正确通过。此外 dist 模型双轨：`dist/src/*` gitignored / `dist/test/*` tracked，跨任务未运行 dist:resync 会导致 tracked dist 滞后。

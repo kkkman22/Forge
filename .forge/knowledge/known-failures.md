@@ -200,6 +200,19 @@ retention：>100 条触发自动归档到 `.forge/archive/known-failures-<date>.
   verification_command: "grep -A3 'catch (err)' src/spec-migration.ts | grep -E 'featureName|featureDir.split' || echo 'no derived rollback (PASS)'"
 ```
 
+- pattern_id: dangling-exports-subpath-after-source-deletion
+  severity: P0
+  first_seen: "2026-06-13"
+  last_seen: "2026-06-13"
+  occurrence_count: 1
+  first_seen_commit: 8529b468
+  last_seen_commit: 8529b468
+  signature: "删除公开源文件（如 deprecated.ts）但未同步移除 package.json exports 中对应的 subpath 条目。Node.js --experimental-specifier-resolution 或 consumers 按 exports map 解析时得到 404/MODULE_NOT_FOUND。"
+  fix_required: "删除公开源文件时必须三件套：(1) grep package.json exports map 移除对应条目；(2) 检查 barrel src/index.ts 是否 re-export 该模块；(3) CHANGELOG.md [Unreleased] ### Removed 登记。Review adversarial layer 重点检查 exports map 一致性。"
+  source_review: ".forge/reviews/code-slim-0612.md (P0-S1)"
+  detection_signal: "git log 显示 DELETE src/*.ts 但 package.json exports 未变更；`node -e \"require('./deprecated')\"` 报 MODULE_NOT_FOUND"
+  verification_command: "node -e \"const p=require('./package.json'); Object.keys(p.exports||{}).forEach(k => { try { require.resolve(k) } catch(e) { console.log('DANGLING:', k) } })\""
+
 ---
 
 <!-- Append-only convention: new entries appended above this marker; existing entries only update last_seen / last_seen_commit / occurrence_count. -->
