@@ -27,11 +27,19 @@ export type GateResult =
 export interface CmuxGateOpts {
   env?: NodeJS.ProcessEnv;
   statSync?: typeof StatSyncFn;
+  /** Monotonic clock for TTL expiry (defaults to Date.now). Injectable for tests. */
+  now?: () => number;
 }
 
 const ALLOWED_SOCKET_PREFIXES = ["/tmp/", "/var/tmp/"];
 
+/** How long a sticky-unavailable latch holds before re-probing. A transient
+ * outage (socket briefly down) should not permanently disable cmux-gated subs
+ * for the whole process lifetime. */
+const STICKY_TTL_MS = 60_000;
+
 let stickyUnavailable = false;
+let stickySinceMs = 0;
 
 function blocked(reason: GateBlockReason): GateResult {
   return {
@@ -43,8 +51,21 @@ function blocked(reason: GateBlockReason): GateResult {
   };
 }
 
-function cmuxAvailableShim(env: NodeJS.ProcessEnv, statSync: typeof StatSyncFn): GateResult {
-  if (stickyUnavailable) return blocked("sticky_unavailable");
+function cmuxAvailableShim(
+  env: NodeJS.ProcessEnv,
+  statSync: typeof StatSyncFn,
+  now: () => number,
+): GateResult {
+  if (stickyUnavailable) {
+    // Expire the latch after TTL so a transient outage can self-heal once the
+    // socket recovers, instead of permanently blocking for the process lifetime.
+    if (now() - stickySinceMs >= STICKY_TTL_MS) {
+      stickyUnavailable = false;
+      stickySinceMs = 0;
+    } else {
+      return blocked("sticky_unavailable");
+    }
+  }
 
   const integration = env.CMUX_INTEGRATION ?? "";
   if (integration === "off") return blocked("integration_off");
@@ -75,9 +96,13 @@ export function checkCmuxGate(sub: string, opts?: CmuxGateOpts): GateResult {
 
   const env = opts?.env ?? process.env;
   const statSync = opts?.statSync ?? fsStatSync;
-  const result = cmuxAvailableShim(env, statSync);
+  const now = opts?.now ?? (() => Date.now());
+  const result = cmuxAvailableShim(env, statSync, now);
 
   if (!result.ok) {
+    if (!stickyUnavailable) {
+      stickySinceMs = now();
+    }
     stickyUnavailable = true;
   }
   return result;
@@ -85,4 +110,5 @@ export function checkCmuxGate(sub: string, opts?: CmuxGateOpts): GateResult {
 
 export function __resetGateForTest(): void {
   stickyUnavailable = false;
+  stickySinceMs = 0;
 }

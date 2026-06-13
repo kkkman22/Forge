@@ -117,4 +117,64 @@ describe("cmux-gate", () => {
     expect(r.ok).toBe(false);
     if (!r.ok) expect(r.reason).toBe("socket_path_invalid");
   });
+
+  // P4 FIX: stickyUnavailable must self-heal. A single transient socket_missing
+  // permanently returned SKILL_UNAVAILABLE for the whole process lifetime,
+  // even after the socket recovered. Sticky should expire (TTL) so a transient
+  // outage doesn't permanently disable cmux-gated subs.
+  it("sticky self-heals after TTL expires (transient outage recovers)", () => {
+    let now = 1_000_000;
+    const clock = () => now;
+    const statSpy = vi.fn().mockImplementation(statEnoent);
+
+    // t0: socket down → blocked, latches sticky.
+    const r0 = checkCmuxGate("forge-cmux-sidebar-sync", {
+      env: {},
+      statSync: statSpy as any,
+      now: clock,
+    });
+    expect(r0.ok).toBe(false);
+    expect(statSpy).toHaveBeenCalledTimes(1);
+
+    // t1 (before TTL): still sticky-short-circuited, no new stat.
+    const r1 = checkCmuxGate("forge-cmux-browser-qa", {
+      env: {},
+      statSync: statSpy as any,
+      now: clock,
+    });
+    expect(r1.ok).toBe(false);
+    if (!r1.ok) expect(r1.reason).toBe("sticky_unavailable");
+    expect(statSpy).toHaveBeenCalledTimes(1);
+
+    // socket recovers, AND TTL has elapsed → re-probe succeeds → go.
+    statSpy.mockReturnValue(makeStatSocket());
+    now += 61_000; // default TTL 60s
+    const r2 = checkCmuxGate("forge-cmux-loop-signals", {
+      env: {},
+      statSync: statSpy as any,
+      now: clock,
+    });
+    expect(r2.ok).toBe(true);
+    if (r2.ok) expect(r2.gate_result).toBe("go");
+    expect(statSpy).toHaveBeenCalledTimes(2);
+  });
+
+  it("sticky still short-circuits within TTL (performance preserved)", () => {
+    let now = 5_000_000;
+    const statSpy = vi.fn().mockImplementation(statEnoent);
+    checkCmuxGate("forge-cmux-sidebar-sync", {
+      env: {},
+      statSync: statSpy as any,
+      now: () => now,
+    });
+    now += 10_000; // well within 60s TTL
+    const r = checkCmuxGate("forge-cmux-browser-qa", {
+      env: {},
+      statSync: statSpy as any,
+      now: () => now,
+    });
+    expect(r.ok).toBe(false);
+    if (!r.ok) expect(r.reason).toBe("sticky_unavailable");
+    expect(statSpy).toHaveBeenCalledTimes(1);
+  });
 });
