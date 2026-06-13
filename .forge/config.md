@@ -24,6 +24,13 @@ context_budget: 100000                  # Context token budget for compact-safe 
 post_push_verify_enabled: true
 build.use_goal: true    # true=使用 /goal 循环（推荐），false=旧 persistent-loop TDD 循环
 ci_check_command: "npm run check"
+# cmux integration (cmux-integration R11.9) — all optional, no required fields.
+# cmux is env-detected (CMUX_WORKSPACE_ID); these flags tune behavior when cmux is present.
+cmux_integration: auto              # auto (default) | on | off — on+unavailable emits a one-time warning
+cmux_notification_budget: 6         # Max mirror notifications per agent turn (default 6)
+cmux_review_notify: true            # Surface P0/P1 review findings as cmux notifications
+cmux_session_idle_minutes: 10       # Minutes of idle before cmux session-idle signal
+cmux_respawn_budget: 3              # Max mirror respawn attempts per session (default 3)
 docs.grace_period_until: "2026-06-01"
 docs.ssot_sources:
   - topic: "commands"

@@ -19,7 +19,7 @@ if [[ "${1:-}" == "--iterations" && -n "${2:-}" ]]; then
   ITERATIONS="$2"
 fi
 
-TOPIC_FILE=".kiro/specs/forge-decide-agent-teams/poc-topics.md"
+TOPIC_FILE=".forge/specs/forge-decide-agent-teams/poc-topics.md"
 OUT_DIR=".forge/runs/decide-poc"
 mkdir -p "$OUT_DIR"
 
