@@ -102,7 +102,7 @@ const ALLOWED_STATUSES: ReadonlySet<AdrStatus> = new Set<AdrStatus>([
  * Items may be quoted (single or double) or bare; surrounding whitespace
  * is trimmed.
  */
-function parseInlineArray(value: string): string[] | null {
+export function parseInlineArray(value: string): string[] | null {
   const trimmed = value.trim();
   if (!trimmed.startsWith("[") || !trimmed.endsWith("]")) {
     return null;
@@ -178,7 +178,7 @@ function extractListOrInline(frontmatter: string, fieldName: string): string[] |
  * trimmed string. Leaves the value unchanged when the quotes do not match
  * or when the string is too short.
  */
-function stripSurroundingQuotes(value: string): string {
+export function stripSurroundingQuotes(value: string): string {
   if (value.length < 2) return value;
   const first = value[0];
   const last = value[value.length - 1];
@@ -189,7 +189,7 @@ function stripSurroundingQuotes(value: string): string {
 }
 
 /** Escape regex special characters for safe use as a literal field name. */
-function escapeFieldName(name: string): string {
+export function escapeFieldName(name: string): string {
   return name.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
 }
 
@@ -198,7 +198,7 @@ function escapeFieldName(name: string): string {
  *   - null or empty string → undefined
  *   - otherwise → trimmed value
  */
-function optionalString(value: string | null): string | undefined {
+export function optionalString(value: string | null): string | undefined {
   if (value === null) return undefined;
   const trimmed = value.trim();
   return trimmed === "" ? undefined : trimmed;
@@ -381,7 +381,7 @@ export function nextAdrId(existing: AdrEntry[]): string {
  * Kept intentionally minimal — for Forge's use case (~dozens of ADRs, short
  * titles), more elaborate tokenization is not worth the complexity.
  */
-function tokenize(text: string): Set<string> {
+export function tokenize(text: string): Set<string> {
   const tokens = text
     .toLowerCase()
     .split(/[^\p{L}\p{N}_]+/u)

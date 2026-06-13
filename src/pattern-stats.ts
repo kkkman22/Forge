@@ -306,7 +306,7 @@ export function findUpgradableEpisodes(
  * a canonical header and round-trip preservation is defined at the
  * pattern-array level, not at the frontmatter level.
  */
-function stripFrontmatter(content: string): { body: string } {
+export function stripFrontmatter(content: string): { body: string } {
   const trimmed = content.trimStart();
   if (!trimmed.startsWith("---")) return { body: content };
   const rest = trimmed.slice(3);
@@ -320,7 +320,7 @@ function stripFrontmatter(content: string): { body: string } {
 }
 
 /** Partition the body text at the `## Archived` sentinel. */
-function splitActiveArchived(body: string): { active: string; archived: string } {
+export function splitActiveArchived(body: string): { active: string; archived: string } {
   const lines = body.split("\n");
   for (let i = 0; i < lines.length; i += 1) {
     if (lines[i].trimEnd() === ARCHIVED_SENTINEL) {
@@ -417,7 +417,7 @@ function finalizePattern(acc: PatternAccumulator): Pattern | null {
 }
 
 /** Parse a comma / fullwidth-comma separated tag list. */
-function parseTagList(raw: string | undefined): string[] {
+export function parseTagList(raw: string | undefined): string[] {
   if (raw === undefined || raw.length === 0) return [];
   return raw
     .split(/[,、]/)
@@ -425,7 +425,7 @@ function parseTagList(raw: string | undefined): string[] {
     .filter((s) => s.length > 0);
 }
 
-function parseNumber(raw: string | undefined, fallback: number): number {
+export function parseNumber(raw: string | undefined, fallback: number): number {
   if (raw === undefined || raw.length === 0) return fallback;
   const n = Number(raw);
   return Number.isFinite(n) ? n : fallback;
@@ -473,7 +473,7 @@ function appendPatternLines(lines: string[], pattern: Pattern): void {
  * decimal point; fractional values use JavaScript's default numeric
  * serialization.
  */
-function formatNumber(n: number): string {
+export function formatNumber(n: number): string {
   if (!Number.isFinite(n)) return "0";
   if (Number.isInteger(n)) return String(n);
   return String(n);
@@ -488,7 +488,7 @@ function formatNumber(n: number): string {
  * The root cause is normalized to lowercase and collapsed to up to three
  * significant tokens so minor wording differences still group together.
  */
-function buildClusterKey(skill: string, rootCause: string): string {
+export function buildClusterKey(skill: string, rootCause: string): string {
   const tokens = rootCause
     .toLowerCase()
     .replace(/[^a-z0-9\s\u4e00-\u9fff]/g, " ")

@@ -113,7 +113,7 @@ function parseSimpleYaml(yaml: string): Record<string, unknown> | null {
   return Object.keys(result).length > 0 ? result : null;
 }
 
-function parseYamlValue(value: string): unknown {
+export function parseYamlValue(value: string): unknown {
   if (value === "" || value === "null" || value === "~") return null;
   if (value === "true") return true;
   if (value === "false") return false;
@@ -136,13 +136,13 @@ function parseYamlValue(value: string): unknown {
   return value;
 }
 
-function normalizeVerdict(raw: string): VerdictValue {
+export function normalizeVerdict(raw: string): VerdictValue {
   const trimmed = raw.trim().toUpperCase();
   if (VALID_VERDICTS.has(trimmed)) return trimmed as VerdictValue;
   return "INCONCLUSIVE";
 }
 
-function parseStringArray(value: unknown): readonly string[] {
+export function parseStringArray(value: unknown): readonly string[] {
   if (!Array.isArray(value)) return [];
   return value.filter((v): v is string => typeof v === "string");
 }
