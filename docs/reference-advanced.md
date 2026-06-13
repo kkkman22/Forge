@@ -159,6 +159,7 @@ cmux 0.64 起为 Claude Code 工作流原生提供以下能力，Forge 不再造
 | Session Restore on Quit（Claude Code 会话恢复） | 0.64.0 | 关闭最后一个窗口后重启不丢上下文，Forge 会话连续性自动受益 |
 | `cmux top` JSON 状态快照 | 0.64.0 | `/forge status` / `/forge debug` 可调用以获取 surface / 未读 / 孤儿 dev server 信息（opt-in） |
 | **多窗口隔离 `--window`** | 0.64.8 | `scripts/cmux-mirror/{cli.mjs, push.sh, hook-notify.sh}` 自动在 `CMUX_WINDOW_ID` 存在时附加；零配置 |
+| **`cmux reorder-workspaces` 自动置顶** | 0.64.10 | Mirror_Daemon 启动时把当前 workspace（`CMUX_WORKSPACE_ID`）reorder 到组首；Zero-Impact（无 ref / cmux 缺该命令时静默 no-op）；`lib/workspace-reorder.mjs` 经 `--help` 离线探测支持 |
 | `cmux config doctor` 离线 cmux.json 校验 | 0.64.3 | `scripts/bootstrap-check.mjs` SessionStart 顺手校验，advisory 不阻断 |
 | `agent_resume_approvals` resume 预批准 | 0.64.10 | `templates/cmux.json` 顶层字段；`/forge resume` 不再被 cmux 拦截 |
 | `cmux notification jump-to-unread` | 0.64.5 | frozen-zone 拦截通知附跳转；`hook-notify.sh` 自动调用 |
