@@ -330,7 +330,7 @@ function parseLegacyGlossary(
 // ---------------------------------------------------------------------------
 
 /** Parse simple YAML frontmatter (key: value pairs, key: [list] syntax). */
-function parseFrontmatter(yaml: string): Record<string, string | string[] | null> {
+export function parseFrontmatter(yaml: string): Record<string, string | string[] | null> {
   const result: Record<string, string | string[] | null> = {};
   for (const line of yaml.split("\n")) {
     const match = line.match(/^(\w+):\s*(.*)/);
@@ -401,7 +401,7 @@ function parseFrontmatterExtended(yaml: string): Record<string, unknown> | null 
 }
 
 /** Strip `.md` extension from filename to get context name. */
-function fileNameToContext(filename: string): string {
+export function fileNameToContext(filename: string): string {
   return filename.replace(/\.md$/, "");
 }
 
@@ -417,7 +417,7 @@ async function listMdFiles(dir: string, fs: FileSystem): Promise<string[]> {
 }
 
 /** Split markdown content by `### ` headings, preserving the heading. */
-function splitByH3(content: string): string[] {
+export function splitByH3(content: string): string[] {
   const parts = content.split(/\n(?=### )/);
   return parts.filter((p) => p.trim().length > 0);
 }

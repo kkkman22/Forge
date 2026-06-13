@@ -284,7 +284,7 @@ interface RuleSourceRef {
   source: string;
 }
 
-function extractInstinctSources(content: string): SourceRef[] {
+export function extractInstinctSources(content: string): SourceRef[] {
   const results: SourceRef[] = [];
   const _headingRe = /^###\s+(.+)$/gm;
   const sourceRe = /\*\*来源\*\*:\s*(.+)$/m;
@@ -352,7 +352,7 @@ function extractFailureSources(content: string): SourceRef[] {
   return results;
 }
 
-function resolveSource(
+export function resolveSource(
   source: string,
   solutionTopics: Set<string>,
   sessionFiles: string[],
@@ -380,7 +380,7 @@ function resolveSource(
   return false;
 }
 
-function normalizeSource(source: string): string {
+export function normalizeSource(source: string): string {
   return source
     .toLowerCase()
     .replace(/\.md$/, "")
