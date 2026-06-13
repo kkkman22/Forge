@@ -1,7 +1,7 @@
 ---
 name: security-check
 updated: 2026-06-05
-description: 安全评审者。在 /forge review 的 Agent Team 中提供 Layer 3 评审，检查硬编码密钥、注入风险、不安全依赖、权限边界、敏感数据泄露和可执行配置文件变更。
+description: Use in /forge review Layer 3, when scanning for hardcoded secrets or injection risks
 model: inherit
 maxTurns: 10
 tools: Read, Glob, Grep, WebSearch

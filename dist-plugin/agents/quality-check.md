@@ -1,7 +1,7 @@
 ---
 name: quality-check
 updated: 2026-06-05
-description: 代码质量评审者。在 /forge review 的 Agent Team 中提供 Layer 2 评审，检查命名一致性、错误处理、性能、测试覆盖率、代码重复和可维护性。
+description: Use in /forge review Layer 2, when checking code quality of changed files
 model: sonnet
 maxTurns: 12
 tools: Read, Glob, Grep
