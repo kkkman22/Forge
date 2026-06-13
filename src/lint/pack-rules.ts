@@ -39,7 +39,7 @@ export interface PackLintRule {
 //     - plain_value
 // ---------------------------------------------------------------------------
 
-function stripQuotes(value: string): string {
+export function stripQuotes(value: string): string {
   if (
     (value.startsWith('"') && value.endsWith('"')) ||
     (value.startsWith("'") && value.endsWith("'"))
@@ -55,7 +55,7 @@ interface ParsedLine {
   content: string;
 }
 
-function parseLine(rawLine: string): ParsedLine | null {
+export function parseLine(rawLine: string): ParsedLine | null {
   const line = rawLine.replace(/\t/g, "  ").trimEnd();
   if (line.trim() === "" || line.trim().startsWith("#")) return null;
 
@@ -282,7 +282,7 @@ export function loadPackLintRules(
   return rules;
 }
 
-function parsePatterns(raw: unknown): PackLintPattern[] {
+export function parsePatterns(raw: unknown): PackLintPattern[] {
   if (!Array.isArray(raw)) return [];
 
   const patterns: PackLintPattern[] = [];

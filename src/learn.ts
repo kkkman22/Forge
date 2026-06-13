@@ -211,7 +211,7 @@ function collectGlossaryNamesAndAliases(glossary: Glossary): string[] {
  * Format a `Date` as an ISO date (YYYY-MM-DD) in UTC. Using UTC keeps
  * output deterministic across developer timezones.
  */
-function toIsoDate(date: Date): string {
+export function toIsoDate(date: Date): string {
   return date.toISOString().slice(0, 10);
 }
 

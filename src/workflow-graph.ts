@@ -270,7 +270,11 @@ export const DEFAULT_WORKFLOW_GRAPH: WorkflowGraph = {
   ],
 };
 
-function transition(from: string, to: string, allowRecoveryLoop = false): WorkflowTransition {
+export function transition(
+  from: string,
+  to: string,
+  allowRecoveryLoop = false,
+): WorkflowTransition {
   return {
     from,
     to,

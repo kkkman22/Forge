@@ -272,7 +272,7 @@ function indexRecord(artifact: EvidenceArtifact, path: string): Record<string, s
   };
 }
 
-function safeParseIndexRecord(line: string): { path: string } | null {
+export function safeParseIndexRecord(line: string): { path: string } | null {
   try {
     const parsed: unknown = JSON.parse(line);
     if (typeof parsed !== "object" || parsed === null) return null;
@@ -294,7 +294,7 @@ function readArtifact(path: string): EvidenceArtifact | null {
   }
 }
 
-function isSafePathSegment(value: string): boolean {
+export function isSafePathSegment(value: string): boolean {
   return /^[a-zA-Z0-9._-]+$/.test(value) && !value.includes("..");
 }
 
