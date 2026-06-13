@@ -4,6 +4,22 @@ import { markUnavailable } from "./availability.mjs";
 const DEFAULT_TIMEOUT_MS = 5000;
 const SAFE_WINDOW_ID = /^[A-Za-z0-9._:-]{1,64}$/;
 
+/**
+ * Build cmux CLI args for a JSON-RPC method call (R1.4).
+ * cmux 0.64.x routes generic RPC through `cmux rpc <method> <json-params>`;
+ * a bare `cmux <method>` is "Unknown command". This envelope is shared by both
+ * dispatch sites (sync-once one-shot + mirror daemon).
+ * @param {{ method: string, params?: unknown }} cmd
+ * @returns {string[]}
+ */
+export function buildRpcArgs(cmd) {
+  const args = ["rpc", cmd.method];
+  if (cmd.params !== undefined) {
+    args.push(JSON.stringify(cmd.params));
+  }
+  return args;
+}
+
 function resolveWindowId(opts) {
   const candidate = opts.windowId ?? process.env.CMUX_WINDOW_ID ?? "";
   if (!candidate) return null;

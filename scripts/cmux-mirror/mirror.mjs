@@ -10,7 +10,7 @@ import { cmuxAvailable } from "./lib/availability.mjs";
 import { loadCapabilities, hasCapability } from "./lib/capabilities.mjs";
 import { readForgeState } from "./lib/reader.mjs";
 import { emitCommands } from "./lib/emitter.mjs";
-import { runCli } from "./lib/cli.mjs";
+import { runCli, buildRpcArgs } from "./lib/cli.mjs";
 import { createSessionTracker } from "./lib/session.mjs";
 import { createPushServer } from "./lib/push-server.mjs";
 import { readEventsSince } from "./lib/events.mjs";
@@ -48,12 +48,7 @@ async function dispatchCommands(commands) {
   for (const cmd of commands) {
     if (!hasCapability(cmd.method)) continue;
     try {
-      const args = [];
-      // Build cmux CLI args from method + params
-      args.push(cmd.method);
-      if (cmd.params) {
-        args.push(JSON.stringify(cmd.params));
-      }
+      const args = buildRpcArgs(cmd);
       await runCli(args, { timeoutMs: 2000 });
     } catch {
       // Best-effort dispatch (R13.5)
