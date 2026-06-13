@@ -37,14 +37,19 @@ describe("Zero-Impact regression (R6)", () => {
         const result = await runCli(["status"]);
         expect(result).toBeNull();
     });
-    it("R6.4b: templates/cmux.json layouts subtree structure preserved", () => {
+    it("R6.4b: templates/cmux.json command structure preserved (real cmux schema)", () => {
         const cmuxJsonPath = resolve(__dirname, "../../templates/cmux.json");
         const content = readFileSync(cmuxJsonPath, "utf-8");
         const parsed = JSON.parse(content);
-        const expectedKeys = ["workflow", "loop-monitor", "dev"];
-        expect(Object.keys(parsed.layouts).sort()).toEqual(expectedKeys.sort());
-        for (const key of expectedKeys) {
-            expect(parsed.layouts[key]).toHaveProperty("panes");
+        // Real cmux schema: commands[].workspace.layout, not a top-level `layouts` map.
+        expect(parsed).not.toHaveProperty("layouts");
+        const commands = (parsed.commands ?? []);
+        const byName = new Map(commands.map((c) => [c.name, c]));
+        for (const name of ["Forge Workflow", "Forge Loop Monitor", "Forge Dev"]) {
+            const cmd = byName.get(name);
+            expect(cmd, `missing command ${name}`).toBeDefined();
+            expect(typeof cmd?.workspace).toBe("object");
+            expect(cmd?.workspace).toHaveProperty("layout");
         }
     });
     it("R6.2: runCli args are byte-identical when CMUX_WINDOW_ID absent", async () => {

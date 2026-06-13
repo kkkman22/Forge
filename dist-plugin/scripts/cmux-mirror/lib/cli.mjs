@@ -3,6 +3,30 @@ import { markUnavailable } from "./availability.mjs";
 
 const DEFAULT_TIMEOUT_MS = 5000;
 const SAFE_WINDOW_ID = /^[A-Za-z0-9._:-]{1,64}$/;
+// Q3: confine the RPC method name. Every real cmux method (set_status,
+// set_progress, notification.create, sidebar_state, browser.*, log) matches
+// this; shell-meta / whitespace / path chars are rejected so a caller can't
+// smuggle extra argv past the `rpc` envelope.
+const SAFE_METHOD = /^[a-zA-Z0-9_.]+$/;
+
+/**
+ * Build cmux CLI args for a JSON-RPC method call (R1.4).
+ * cmux 0.64.x routes generic RPC through `cmux rpc <method> <json-params>`;
+ * a bare `cmux <method>` is "Unknown command". This envelope is shared by both
+ * dispatch sites (sync-once one-shot + mirror daemon).
+ * @param {{ method: string, params?: unknown }} cmd
+ * @returns {string[]}
+ */
+export function buildRpcArgs(cmd) {
+  if (typeof cmd.method !== "string" || !SAFE_METHOD.test(cmd.method)) {
+    throw new Error(`buildRpcArgs: invalid RPC method: ${String(cmd.method)}`);
+  }
+  const args = ["rpc", cmd.method];
+  if (cmd.params !== undefined) {
+    args.push(JSON.stringify(cmd.params));
+  }
+  return args;
+}
 
 function resolveWindowId(opts) {
   const candidate = opts.windowId ?? process.env.CMUX_WINDOW_ID ?? "";

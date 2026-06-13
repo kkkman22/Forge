@@ -8,9 +8,13 @@ vi.mock("../../scripts/cmux-mirror/lib/availability.mjs", () => ({
     markUnavailable: vi.fn(),
     isStickyUnavailable: vi.fn(() => false),
 }));
-vi.mock("../../scripts/cmux-mirror/lib/cli.mjs", () => ({
-    runCli: vi.fn(() => Promise.resolve({ exitCode: 0, stdout: "", stderr: "" })),
-}));
+vi.mock("../../scripts/cmux-mirror/lib/cli.mjs", async (importOriginal) => {
+    const actual = (await importOriginal());
+    return {
+        ...actual,
+        runCli: vi.fn(() => Promise.resolve({ exitCode: 0, stdout: "", stderr: "" })),
+    };
+});
 import { cmuxAvailable } from "../../scripts/cmux-mirror/lib/availability.mjs";
 import { runCli } from "../../scripts/cmux-mirror/lib/cli.mjs";
 import { syncOnce } from "../../scripts/cmux-mirror/sync-once.mjs";

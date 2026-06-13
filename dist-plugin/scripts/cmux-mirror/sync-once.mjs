@@ -10,7 +10,7 @@ import { shouldSkipForSubagent } from "../lib/hook-stdin-router.mjs";
 import { cmuxAvailable } from "./lib/availability.mjs";
 import { readForgeState } from "./lib/reader.mjs";
 import { emitCommands } from "./lib/emitter.mjs";
-import { runCli } from "./lib/cli.mjs";
+import { runCli, buildRpcArgs } from "./lib/cli.mjs";
 import { tryConsumeRespawn } from "./lib/respawn.mjs";
 
 const MAX_RESPAWNS = 3;
@@ -86,10 +86,7 @@ export async function syncOnce({
     let commandsEmitted = 0;
     for (const cmd of commands) {
       try {
-        const args = [cmd.method];
-        if (cmd.params) {
-          args.push(JSON.stringify(cmd.params));
-        }
+        const args = buildRpcArgs(cmd);
         await runCli(args, { timeoutMs: 2000 });
         commandsEmitted++;
       } catch {
