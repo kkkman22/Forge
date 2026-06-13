@@ -9,4 +9,3 @@ export * from "./git-scanner.js";
 export * from "./reconciler.js";
 export * from "./serde.js";
 export * from "./types.js";
-export { PHASE_SEQUENCES, TEST_FILE_PATTERNS } from "./types.js";

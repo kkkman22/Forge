@@ -11,6 +11,10 @@ Entries follow [Keep a Changelog](https://keepachangelog.com/) with Forge-specif
 
 ## [Unreleased]
 
+### Removed
+
+- **refactor**: remove `forge-loop/deprecated` public subpath export (v2.4→v2.5 migration shim; `@deprecated` since v2.5.0, retired at v3.4.0). Package is unpublished with no consumers; completes the overdue deprecation. See ADR-0008.
+
 ## [3.4.0] - 2026-06-12
 
 ### Fixed

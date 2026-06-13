@@ -1,30 +1,62 @@
 ---
-current_task: "audit-remediate-0608"
-tier: "standard"
-phase: "build"
-updated: "2026-06-08"
-branch: "forge/audit-remediate-0608"
+current_task: "code-slim-0612"
+tier: "full"
+work_nature: "refactor"
+task_type: "infra"
+project_phase: "refactor"
+phase: "complete"
+spec: ".forge/specs/code-slim-0612/"
+updated: "2026-06-13"
+current_package: "P3-Wave3"
+completed_tasks: "T1, T2, P0fix, T4, T6"
+review_result: "pass (P2+P3 package-scoped)"
+reviewed_at_commit: "ebb1fc8f"
+next_phase: "none (full sequence done)"
+decision: ".forge/decisions/2026-06-12-code-slim.md"
+adr: "ADR-0008"
+branch: "forge/code-slim-0612"
+hints: "behavior-preservation,refactor-scan,test-gate,backward-compat"
+execution_strategy: "full + 按模块拆子任务（decide/spec 先产出整体清单与优先级，再逐模块 build→review→test）"
 ---
 
 # 项目状态
 
-## 当前任务：audit-remediate-0608
+## 当前任务：code-slim-0612
 
-修复 2026-06-08 项目审核报告中经源码核实确认的 7 项问题。
+对整个项目做代码精简与重构（等价重构，不改对外行为）。
 
-### 范围
+### 硬约束（来自用户任务描述）
 
-**P1（必须修复）**：
-1. REQ-01: fallback-ladder 测试使用真实 .forge/reviews/，需改为 tmpdir()
-2. REQ-02: checkShipGateWithForceSkip 审计不耦合 recordForceSkip
-3. REQ-03: stale review 仅 warning 不阻断 ship
-4. REQ-04: branch coverage 78.99% < 79% + workflow-naming 测试失败
+- 现有功能行为**完全不变**
+- 所有测试**继续通过**（`npm run check` = tsc + biome + vitest + readme-metrics）
+- 公开 API / CLI 行为**不变**
+- 仅：移除冗余代码、简化内部实现、清理死代码与重复逻辑
+- 不新增功能，不改变对外行为
 
-**P2（应该修复）**：
-5. REQ-05: validateTestability() 仅用单一 regex
-6. REQ-06: MCP legacy script mode 无 deprecation 警告
+### 路由决策
 
-- Tier: standard
-- Sequence: build → review → test → ship
-- Spec: .forge/specs/audit-remediate-0608/requirements.md
-- Plan: .forge/specs/audit-remediate-0608/tasks.md (approved)
+- Tier: **full**（需求模糊 + 超大范围）
+- work_nature: refactor
+- 执行策略：Full + **按模块拆子任务**
+- Sequence: `decide → spec → plan → build → review → test → ship → learn`（每个模块子任务独立走 build→review→test）
+
+### 范围（项目扫描基线）
+
+- src/: 172 个顶层 .ts 文件 + 子目录 ~16K 行（最大模块 mcp/2884、docs-governance/2825、review-comment-bitbucket/1559、error-recovery/1200、review/1049）
+- test/: 626 个测试文件（行为保持的安全网）
+- scripts/: 156 个脚本文件
+- 技术栈: TypeScript / JavaScript / Shell
+
+### 假设（基于实际扫描）
+
+1. 技术栈 TypeScript 主导（src/172 文件 ~16K 行），辅 Shell/JS scripts 156 个
+2. 范围超大，无法单分支单任务完成 → 按模块拆分
+3. 测试保护网充足（626 测试 + `npm run check` 全量门禁），支持等价重构
+4. 棕地成熟项目（v3.4.0）
+
+### 提示标签（下游 skill 读取）
+
+- `behavior-preservation`：每个改动须有测试/行为等价证据
+- `refactor-scan`：先扫描识别死代码/重复/冗余，产出清单再动手
+- `test-gate`：每步以测试全绿为安全网
+- `backward-compat`：公开 API/CLI 签名与行为不变

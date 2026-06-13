@@ -9,7 +9,6 @@
  * **Validates: Requirements 3.1–3.11, 10.1–10.4**
  */
 import { describe, expect, it } from "vitest";
-import * as deprecated from "../src/deprecated.js";
 import * as barrel from "../src/index.js";
 // ---------------------------------------------------------------------------
 // 1. Expected public value exports exist (Requirement 10.1, 10.2)
@@ -286,35 +285,6 @@ describe("barrel file does not expose internal modules", () => {
             "validateSpecLocked",
             "writeTaskStatus",
         ]);
-    });
-});
-// ---------------------------------------------------------------------------
-// 4. Deprecated re-exports still accessible (backward compatibility)
-// ---------------------------------------------------------------------------
-describe("deprecated re-exports provide backward compatibility", () => {
-    const dep = deprecated;
-    it("re-exports parseGitLog from error-recovery", () => {
-        expect(dep.parseGitLog).toBeDefined();
-        expect(typeof dep.parseGitLog).toBe("function");
-    });
-    it("re-exports ProcessRegistry from process-registry", () => {
-        expect(dep.ProcessRegistry).toBeDefined();
-        expect(typeof dep.ProcessRegistry).toBe("function");
-    });
-    it("re-exports cleanupOrphans from orphan-detector", () => {
-        expect(dep.cleanupOrphans).toBeDefined();
-        expect(typeof dep.cleanupOrphans).toBe("function");
-    });
-    it("re-exports parseBacklog from backlog", () => {
-        expect(dep.parseBacklog).toBeDefined();
-        expect(typeof dep.parseBacklog).toBe("function");
-    });
-    it("re-exports renderEpisode from episode", () => {
-        expect(dep.renderEpisode).toBeDefined();
-        expect(typeof dep.renderEpisode).toBe("function");
-    });
-    it("branch-lifecycle exports retired (Wave 3)", () => {
-        expect(dep.checkBranchTopicGate).toBeUndefined();
     });
 });
 //# sourceMappingURL=barrel-file.test.js.map

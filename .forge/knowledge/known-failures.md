@@ -200,6 +200,32 @@ retention：>100 条触发自动归档到 `.forge/archive/known-failures-<date>.
   verification_command: "grep -A3 'catch (err)' src/spec-migration.ts | grep -E 'featureName|featureDir.split' || echo 'no derived rollback (PASS)'"
 ```
 
+- pattern_id: dangling-exports-subpath-after-source-deletion
+  severity: P0
+  first_seen: "2026-06-13"
+  last_seen: "2026-06-13"
+  occurrence_count: 1
+  first_seen_commit: 8529b468
+  last_seen_commit: 8529b468
+  signature: "删除公开源文件（如 deprecated.ts）但未同步移除 package.json exports 中对应的 subpath 条目。Node.js --experimental-specifier-resolution 或 consumers 按 exports map 解析时得到 404/MODULE_NOT_FOUND。"
+  fix_required: "删除公开源文件时必须三件套：(1) grep package.json exports map 移除对应条目；(2) 检查 barrel src/index.ts 是否 re-export 该模块；(3) CHANGELOG.md [Unreleased] ### Removed 登记。Review adversarial layer 重点检查 exports map 一致性。"
+  source_review: ".forge/reviews/code-slim-0612.md (P0-S1)"
+  detection_signal: "git log 显示 DELETE src/*.ts 但 package.json exports 未变更；`node -e \"require('./deprecated')\"` 报 MODULE_NOT_FOUND"
+  verification_command: "node -e \"const p=require('./package.json'); Object.keys(p.exports||{}).forEach(k => { try { require.resolve(k) } catch(e) { console.log('DANGLING:', k) } })\""
+
+- pattern_id: concurrent-session-git-collision
+  severity: P1
+  first_seen: "2026-06-13"
+  last_seen: "2026-06-13"
+  occurrence_count: 1
+  first_seen_commit: 6fbe3f8a
+  last_seen_commit: 35f053a8
+  signature: "另一进程/会话并发操作同一 git 工作树：外部 commit（6fbe3f8a，标题含另一会话的 'fix session issues'）在本会话期间 reset 了分支 HEAD（reset HEAD~1 丢弃 P2 checkpoint）、rewrote ancestry（已删除文件复活）、清空暂存区。导致 build 产出的改动落在错误分支的工作树上，dist-sync 误报 drift（leftover 文件），ancestry 在两次 git merge-base 查询间翻转。"
+  fix_required: "检测到任一并发信号（reflog 出现非本会话 commit/reset/checkout；merge-base --is-ancestor 结果翻转；已 commit SHA 片刻后 not in HEAD；暂存区莫名清空）→ 立即 (1) git diff > /tmp/work.patch 存当前改动；(2) 停止一切 git 写操作；(3) 让用户停掉另一会话；(4) 重新建立 ground truth（重读 branch/HEAD/ancestry，勿沿用旧假设——用 git ls-tree/git cat-file -e 而非 git show，后者对 index-vs-HEAD 状态有误导性报错）；(5) 正确分支 git apply patch → 重新 verify + commit。"
+  source_review: ".forge/progress/code-slim-0612.md T6 R2 handoff (session-collision note)"
+  detection_signal: "git reflog 含本会话未发起的 commit/reset/checkout 且时间戳在会话期间；git merge-base --is-ancestor <c> HEAD 在两次查询间结果变化；git show HEAD:<path> 报 'exists on disk but not in HEAD' 但 git ls-tree -r HEAD 列出该 path（index/HEAD 状态在变动）"
+  verification_command: "git reflog -5 | grep -iE 'commit|reset|checkout' && echo '---check ancestry stability---' && git merge-base --is-ancestor <suspect-commit> HEAD && echo 'ancestor=YES' || echo 'ancestor=NO (rerun to detect flip)'"
+
 ---
 
 <!-- Append-only convention: new entries appended above this marker; existing entries only update last_seen / last_seen_commit / occurrence_count. -->
