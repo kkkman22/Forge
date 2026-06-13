@@ -3,7 +3,7 @@ title: 'Forge 高级功能参考'
 category: advanced
 audience:
 - maintainer
-updated: 2026-06-05
+updated: 2026-06-13
 owner: forge-maintainers
 ---
 
@@ -148,7 +148,7 @@ cmux 自 0.63 起原生支持 Claude Code Teams（`cmux claude-teams`）。Forge
 bash scripts/cmux-mirror/install-template.sh .
 ```
 
-**推荐 cmux 最低版本**：0.64.3（启用命令面板 `commands` 字段）。强烈推荐 0.64.10 起（启用 `agent_resume_approvals` + `cmux reorder-workspaces` 批量）。
+**推荐 cmux 最低版本**：0.64.3（启用命令面板 `commands` 字段）。强烈推荐 0.64.10 起（启用 `agent_resume_approvals` + `cmux reorder-workspaces` 批量）；0.64.11 起额外启用 Agent Hibernation（多并行 Subagent 场景被动受益）。本复审时 cmux 最新为 0.64.15。
 
 ### 0.64+ 原生能力（Forge 直接复用）
 
@@ -162,6 +162,8 @@ cmux 0.64 起为 Claude Code 工作流原生提供以下能力，Forge 不再造
 | `cmux config doctor` 离线 cmux.json 校验 | 0.64.3 | `scripts/bootstrap-check.mjs` SessionStart 顺手校验，advisory 不阻断 |
 | `agent_resume_approvals` resume 预批准 | 0.64.10 | `templates/cmux.json` 顶层字段；`/forge resume` 不再被 cmux 拦截 |
 | `cmux notification jump-to-unread` | 0.64.5 | frozen-zone 拦截通知附跳转；`hook-notify.sh` 自动调用 |
+| Agent Hibernation（空闲 agent 休眠） | 0.64.11 | `/forge decide`（四视角）/`review`（三层）/`build` DAG 多并行 Subagent pane 时，空闲 agent 自动休眠降 CPU/内存、按需恢复；被动受益，零配置 |
+| `cmux.com/llms.txt` 文档索引 | 0.64.0 | cmux 官方命令面的 agent-consumable 索引（每个文档页有 `.md`/`.txt` 变体）；cmux skill 作者可指向它获取最新命令面，减少 `references/cmux*.md` 静态副本漂移 |
 
 ### 卸载
 
