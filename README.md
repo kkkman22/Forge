@@ -135,6 +135,8 @@ Forge plugin 自带 `forge-context` first-party MCP server，为 `/forge review`
 | `/forge test` | 运行完整验证套件 | 标准、全量 |
 | `/forge ship` | 门禁检查 + 交付 | 标准、全量 |
 | `/forge decide` | 四视角前置决策 | 全量 |
+
+> **Note**: `/forge decide` 目前在评估 Agent Teams 模式，请参考 `.forge/specs/forge-decide-agent-teams/` 了解 PoC 进展。
 | `/forge learn` | 五维度经验沉淀 | 全量 |
 | `/forge spec` | 将需求固化为可锁定规格 | 全量 |
 | `/forge verify` | 证据化三态验证 | 所有 |
