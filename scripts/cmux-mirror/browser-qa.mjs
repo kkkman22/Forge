@@ -5,10 +5,16 @@
  * Three-state verdict: pass / fail / inconclusive.
  */
 
-import { existsSync, writeFileSync } from "node:fs";
+import { existsSync, mkdirSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
 import { cmuxAvailable } from "./lib/availability.mjs";
 import { runCli } from "./lib/cli.mjs";
+import {
+  buildConsoleArgs,
+  buildErrorsArgs,
+  buildScreenshotArgs,
+  injectSurface,
+} from "./lib/browser-q-actions.mjs";
 
 const QA_STEPS = [
   { name: "navigate", args: ["browser", "navigate", "about:blank"] },
@@ -99,7 +105,88 @@ export async function runBrowserQa({
   return result;
 }
 
-// CLI entry point
+/**
+ * Collect read-only browser QA diagnostics: screenshot + console log + JS errors.
+ * Writes artifacts under `<forgeDir>/findings/<topic>/browser-qa/`.
+ *
+ * Grounded on `cmux browser` CLI (0.64.8 screenshot, 0.64.15 console/errors).
+ * Zero-Impact: no-op when cmux is unavailable or forgeDir is missing; each step
+ * degrades independently ("unsupported" / "failed" / "error") without aborting
+ * the others. Never throws.
+ *
+ * @param {{ forgeDir?: string, topic?: string, surface?: string, runCli?: Function }} opts
+ * @returns {Promise<{ collected: string[], skipped: Array<{kind:string,reason:string,stderr?:string}>, dir: string|null, timestamp: string }>}
+ */
+export async function collectBrowserDiagnostics({
+  forgeDir = ".forge",
+  topic = "default",
+  surface,
+  runCli: run = runCli,
+} = {}) {
+  const result = {
+    collected: [],
+    skipped: [],
+    dir: null,
+    timestamp: new Date().toISOString(),
+  };
+
+  try {
+    if (!cmuxAvailable()) return result;
+    if (!existsSync(forgeDir)) return result;
+
+    const dir = join(forgeDir, "findings", topic, "browser-qa");
+    mkdirSync(dir, { recursive: true });
+    result.dir = dir;
+
+    const shotPath = join(dir, "screenshot.png");
+    // Each step: argv tail from a builder, the artifact filename, and whether
+    // we capture cmux stdout into a file (screenshot writes via --out itself).
+    const steps = [
+      { kind: "screenshot", args: buildScreenshotArgs({ outPath: shotPath }), capture: null },
+      { kind: "console", args: buildConsoleArgs(), capture: "console.txt" },
+      { kind: "errors", args: buildErrorsArgs(), capture: "errors.txt" },
+    ];
+
+    for (const step of steps) {
+      try {
+        const cliResult = await run(injectSurface(step.args, surface), {
+          timeoutMs: 10000,
+        });
+
+        if (cliResult === null) {
+          result.skipped.push({ kind: step.kind, reason: "no_cmux" });
+          continue;
+        }
+        if (cliResult.exitCode !== 0) {
+          const errText = (cliResult.stderr ?? "") + (cliResult.stdout ?? "");
+          if (/unknown command|not found|unsupported/i.test(errText)) {
+            result.skipped.push({ kind: step.kind, reason: "unsupported" });
+          } else {
+            result.skipped.push({
+              kind: step.kind,
+              reason: "failed",
+              stderr: (cliResult.stderr ?? "").slice(0, 200),
+            });
+          }
+          continue;
+        }
+
+        if (step.capture) {
+          writeFileSync(join(dir, step.capture), cliResult.stdout ?? "");
+        }
+        result.collected.push(step.kind);
+      } catch {
+        result.skipped.push({ kind: step.kind, reason: "error" });
+      }
+    }
+  } catch {
+    // R8.8-style: never throw
+  }
+
+  return result;
+}
+
+// CLI entry point (runBrowserQa)
 const args = process.argv.slice(2);
 if (args.length > 0 && args[0] !== "--test") {
   const forgeDir = args[0] || ".forge";
