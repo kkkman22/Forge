@@ -552,6 +552,10 @@ function readGit(projectRoot: string, args: string[]): string | null {
       cwd: projectRoot,
       encoding: "utf-8",
       stdio: ["ignore", "pipe", "ignore"],
+      // process-lifecycle-management R5: every git call gets a 30s timeout +
+      // SIGTERM killSignal so a hung git cannot block forge doctor forever.
+      timeout: 30_000,
+      killSignal: "SIGTERM",
     }).trim();
   } catch (_err: unknown) {
     return null;
