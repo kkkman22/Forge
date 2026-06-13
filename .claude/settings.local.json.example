@@ -1,0 +1,21 @@
+// 个人配置覆盖示例 — 复制为 settings.local.json 后修改。
+// 本文件不被 git 追踪；优先级高于 .claude/settings.json，但低于 flagSettings / policySettings。
+//
+// Settings 合并顺序（源码 src/utils/settings/constants.ts:SETTING_SOURCES）：
+//   userSettings ← projectSettings ← localSettings ← flagSettings ← policySettings
+//                                      ↑
+//                       本文件（settings.local.json）
+// 即 localSettings 覆盖 projectSettings，但 flagSettings（命令行 --settings）和
+// policySettings（企业托管配置）还能进一步覆盖 local —— local 不是最高优先级。
+{
+  "spinnerVerbs": {
+    "mode": "replace",
+    "verbs": ["Forging", "Refining", "Crafting"]
+  },
+  "outputStyle": "Explanatory",
+  "permissions": {
+    "allow": [
+      // 在此添加你个人常用的允许规则（将与团队共享规则合并）
+    ]
+  }
+}

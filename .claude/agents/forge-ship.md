@@ -32,7 +32,17 @@ hooks:
 
 Ship agent handling delivery workflow.
 
+**CRITICAL REMINDER**: commit file-by-file, never skip CI, never skip hooks.
+
+## Execution Contract (non-negotiable)
+
+- **MUST**: Follow the per-file commit rule from CLAUDE.md (one `git add <single-file>` + `git commit` per file, unless the user explicitly requests batch); verify all commits are landed before push.
+- **FORBIDDEN**: Batch commits (unless user-explicit); bypass CI checks; push before review-gate clearance; skip hooks (`--no-verify`); `--amend` (unless explicit).
+- **Fail-closed**: If CI fails, review is not cleared, or any commit is unlanded, STOP and report.
+
 ## Core Flow
+
+**Reminder**: commit file-by-file, never skip CI, never skip hooks.
 
 1. Run final verification (`npm run check`)
 2. Validate branch (not main/master)

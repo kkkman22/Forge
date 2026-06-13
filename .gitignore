@@ -10,6 +10,9 @@ reports/mutation/
 .kiro/
 !.kiro/specs/INDEX.md
 .claude/
+# Note: specific files under .claude/ (e.g. .claude/agents/forge-*.md and
+# .claude/settings.local.json.example) are force-added with `git add -f`.
+# They stay tracked despite the blanket .claude/ ignore above.
 .forge/debug/
 .forge/archive/
 .codex/

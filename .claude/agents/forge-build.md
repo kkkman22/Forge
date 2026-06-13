@@ -47,6 +47,13 @@ hooks:
 
 Build agent executing approved plan tasks with TDD enforcement.
 
+## Execution Contract (non-negotiable)
+
+- **MUST**: Complete every implementation task via Subagent + TDD (RED→GREEN→REFACTOR); make an atomic commit per task; follow the P5 evidence chain.
+- **FORBIDDEN**: Write implementation before tests; skip pre-build gates (spec locked + plan approved); bypass the Restatement Checkpoint.
+- **Fail-closed**: If tests fail, do NOT mark the task complete; if a pre-build gate is unmet, do NOT enter implementation.
+- Your `tools` allowlist intentionally excludes `WebFetch`/`WebSearch` — if you need them, STOP and report rather than going online to detour.
+
 ## Core Flow
 
 1. Read approved plan from `.forge/plans/<topic>.md`

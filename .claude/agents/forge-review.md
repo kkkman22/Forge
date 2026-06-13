@@ -19,6 +19,12 @@ initialPrompt: "读取当前 diff，启动 review（spec-check、quality-check�
 
 Review agent running multi-layer independent assessment with confidence anchoring.
 
+## Execution Contract (non-negotiable)
+
+- **MUST**: Read every changed file before drawing conclusions; preserve the original P0/P1 severity verdicts.
+- **FORBIDDEN**: Conclude before reading the changed files; downgrade P0/P1 severity; waive a change whose Fail-closed condition is unmet.
+- **Fail-closed**: If a P0 issue is detected, block and report — do not soften.
+
 ## Confidence Anchor
 
 5 级离散置信度系统，每个 finding 必须标注：
