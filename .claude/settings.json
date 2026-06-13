@@ -37,9 +37,28 @@
             "timeout": 5
           }
         ]
+      },
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "node scripts/forge-hook-dispatch.mjs SessionStart 2>/dev/null || node forge/scripts/forge-hook-dispatch.mjs SessionStart 2>/dev/null || node ~/.claude/skills/forge/scripts/forge-hook-dispatch.mjs SessionStart 2>/dev/null || true",
+            "timeout": 5
+          }
+        ]
       }
     ],
-    "UserPromptSubmit": [],
+    "UserPromptSubmit": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "node scripts/forge-hook-dispatch.mjs UserPromptSubmit 2>/dev/null || node forge/scripts/forge-hook-dispatch.mjs UserPromptSubmit 2>/dev/null || node ~/.claude/skills/forge/scripts/forge-hook-dispatch.mjs UserPromptSubmit 2>/dev/null || true",
+            "timeout": 5
+          }
+        ]
+      }
+    ],
     "PreToolUse": [
       {
         "matcher": "Write|Edit|Bash",
@@ -113,7 +132,17 @@
         ]
       }
     ],
-    "Stop": [],
+    "Stop": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "node scripts/forge-hook-dispatch.mjs Stop 2>/dev/null || node forge/scripts/forge-hook-dispatch.mjs Stop 2>/dev/null || node ~/.claude/skills/forge/scripts/forge-hook-dispatch.mjs Stop 2>/dev/null || true",
+            "timeout": 5
+          }
+        ]
+      }
+    ],
     "TeammateIdle": [
       {
         "hooks": [
@@ -130,6 +159,28 @@
           {
             "type": "command",
             "command": "echo '✅ 团队任务已完成。负责人请汇总队友输出并检查是否需要合并发现。'"
+          }
+        ]
+      }
+    ],
+    "PreCompact": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "node scripts/forge-hook-dispatch.mjs PreCompact 2>/dev/null || node forge/scripts/forge-hook-dispatch.mjs PreCompact 2>/dev/null || node ~/.claude/skills/forge/scripts/forge-hook-dispatch.mjs PreCompact 2>/dev/null || true",
+            "timeout": 5
+          }
+        ]
+      }
+    ],
+    "PostCompact": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "node scripts/forge-hook-dispatch.mjs PostCompact 2>/dev/null || node forge/scripts/forge-hook-dispatch.mjs PostCompact 2>/dev/null || node ~/.claude/skills/forge/scripts/forge-hook-dispatch.mjs PostCompact 2>/dev/null || true",
+            "timeout": 5
           }
         ]
       }
