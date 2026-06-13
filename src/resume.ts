@@ -193,6 +193,26 @@ function findNextTask(planTasks: string[], progress: ProgressContext): string | 
 // State reconstruction integration (State Resilience Layer 3)
 // ---------------------------------------------------------------------------
 
+import { parseGitStatus } from "./error-recovery/change-detector.js";
+import {
+  buildRecoveryReport,
+  type CommitTaskMatch,
+  classifyInterruption,
+  extractCommitPatterns,
+  filterCommitsSince,
+  findDependencyGaps,
+  findPhaseInconsistencies,
+  findProgressInconsistencies,
+  type GitCommitEntry,
+  type GitScanResult,
+  type InterruptionClassification,
+  matchCommitsToTasks,
+  type ProgressTaskEntry,
+  parseGitLog,
+  type RecoveryReport,
+  type TaskCommitPattern,
+  type UncommittedChangeResult,
+} from "./error-recovery/index.js";
 import { parseStatusFileGraceful, type StatusFields } from "./state.js";
 import { type ReconstructedState, reconstructStateFromGit } from "./status-resolver.js";
 
@@ -245,3 +265,145 @@ export function recoverPhase(
     reconstruction,
   };
 }
+
+// ---------------------------------------------------------------------------
+// Recovery priority chain (error-recovery-strategy R7)
+// ---------------------------------------------------------------------------
+//
+// R7 requires /forge resume to execute an 8-step recovery priority chain in a
+// fixed order, collecting ALL inconsistencies into a single Recovery_Report
+// rather than stopping at the first one found. The detection primitives already
+// exist as pure functions in src/error-recovery/; this orchestrator wires them
+// in the spec-mandated order and produces the report.
+
+/** Inputs to the recovery chain. Callers gather raw git/file state and pass it
+ * in — the chain itself is deterministic and side-effect free. */
+export interface RecoveryChainInput {
+  /** Raw `git log` output (any format `parseGitLog` accepts). Step 3. */
+  gitLogRaw: string;
+  /** Raw `git status --porcelain` output. Step 4. */
+  gitStatusRaw: string;
+  /** The Status_Document frontmatter phase (from .forge/status.md). Step 6. */
+  currentPhase: string;
+  /** The Forge tier used to derive the legal phase sequence. Step 6. */
+  tier: "lightweight" | "standard" | "full";
+  /** The current task/topic name (from Status_Document). Header field. */
+  taskName: string;
+  /** Progress_Document task entries (parsed from .forge/progress/<topic>.md). Step 5. */
+  progressEntries: ProgressTaskEntry[];
+  /** The ordered task ids from the plan (for dependency-gap detection). Step 5. */
+  taskOrder: string[];
+  /** The plan markdown (to extract commit→task patterns). Step 3. */
+  planContent: string;
+  /** Optional: commit SHA marking where the current run started (filters git
+   * log to only this run's commits). Step 3. */
+  runStartCommit?: string;
+}
+
+/** The 8 steps of the recovery chain, in fixed order (R7.1). */
+export const RECOVERY_CHAIN_STEPS = [
+  "read-status-document",
+  "read-interim-log",
+  "scan-git-log",
+  "check-git-status",
+  "reconcile-progress",
+  "reconcile-phase",
+  "classify-interruption",
+  "generate-report",
+] as const;
+
+export type RecoveryChainStep = (typeof RECOVERY_CHAIN_STEPS)[number];
+
+/**
+ * Execute the 8-step recovery priority chain and return a Recovery_Report.
+ *
+ * Order is fixed per error-recovery-strategy R7.1:
+ *   1. read Status_Document — caller-supplied via currentPhase/tier
+ *   2. read Interim_Log — folded into git log scan (steps 2+3 share git data)
+ *   3. scan git log for commit→task matching
+ *   4. check git status for uncommitted changes
+ *   5. reconcile Progress_Document against git log
+ *   6. reconcile phase against progress
+ *   7. classify interruption point
+ *   8. generate Recovery_Report (collects all inconsistencies; never stops
+ *      early — R7.2)
+ *
+ * This function is pure: it applies no fixes. R7.3/R7.4 (present + apply fixes
+ * after user confirmation) are the caller's responsibility.
+ */
+export function runRecoveryChain(input: RecoveryChainInput): RecoveryReport {
+  // Steps 1–2: Status_Document + Interim_Log are caller-supplied (currentPhase,
+  // progressEntries). No I/O here — the chain is deterministic.
+
+  // Step 3: scan git log for commit matching.
+  let commits: GitCommitEntry[] = parseGitLog(input.gitLogRaw);
+  if (input.runStartCommit) {
+    commits = filterCommitsSince(commits, input.runStartCommit);
+  }
+  const patterns: TaskCommitPattern[] = extractCommitPatterns(input.planContent);
+  const matches: CommitTaskMatch[] = matchCommitsToTasks(commits, patterns);
+
+  // Step 4: check git status for uncommitted changes.
+  const changedFiles = parseGitStatus(input.gitStatusRaw);
+  const uncommittedResult: UncommittedChangeResult = {
+    changes: changedFiles,
+    relevantChanges: changedFiles,
+    isClean: changedFiles.length === 0,
+  };
+
+  // Step 5: reconcile Progress_Document against git log.
+  const progressInconsistencies = findProgressInconsistencies(matches, input.progressEntries);
+  const dependencyGaps = findDependencyGaps(
+    progressInconsistencies,
+    input.progressEntries,
+    input.taskOrder,
+  );
+
+  // Step 6: reconcile phase against progress.
+  const allTasksCompleted =
+    input.taskOrder.length > 0 &&
+    input.progressEntries.length >= input.taskOrder.length &&
+    input.taskOrder.every((id) =>
+      input.progressEntries.some((e) => e.taskId === id && e.completed),
+    );
+  const phaseInconsistency = findPhaseInconsistencies(
+    allTasksCompleted,
+    input.currentPhase as ForgePhaseLike,
+    input.tier,
+  );
+
+  // Step 7: classify the interruption point.
+  const gitScanResult: GitScanResult = {
+    commits,
+    matches,
+    noNewCommits: commits.length === 0,
+  };
+  const classification: InterruptionClassification = classifyInterruption(
+    uncommittedResult,
+    gitScanResult,
+    progressInconsistencies,
+    phaseInconsistency,
+    null,
+  );
+
+  // Step 8: generate the Recovery_Report — collects EVERY inconsistency,
+  // never stops at the first (R7.2).
+  return buildRecoveryReport(
+    {
+      taskName: input.taskName,
+      tier: input.tier,
+      phase: input.currentPhase as ForgePhaseLike,
+      lastUpdate: new Date().toISOString(),
+      interruptionCategory: classification.category,
+    },
+    progressInconsistencies,
+    phaseInconsistency,
+    classification,
+    uncommittedResult,
+    dependencyGaps,
+  );
+}
+
+// ForgePhase is re-exported by the error-recovery barrel as a string union;
+// alias to avoid importing the full type for the single cast sites above.
+type ForgePhaseLike = Parameters<typeof findPhaseInconsistencies>[1];

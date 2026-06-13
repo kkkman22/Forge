@@ -1,6 +1,6 @@
 {
   "version": 1,
-  "generated_at": "2026-06-13T14:40:10.996Z",
+  "generated_at": "2026-06-13T15:16:14.928Z",
   "subs": {
     "abort": {
       "instructions": {
@@ -477,7 +477,7 @@
     "resume": {
       "instructions": {
         "path": "resume/instructions.md",
-        "sha256": "247aa89533bd0f0a8e08c9ce2eb831227a5bf386c90bbbd6a409406a3f1d8ed7"
+        "sha256": "13bb578ea1fef6e5bd4ae1e3724c3a1883dfafe59e78007f7d57fe773f7f95fd"
       },
       "references": [
         {
@@ -495,6 +495,10 @@
         {
           "path": "resume/references/output-format.md",
           "sha256": "ec12e0763c7e82d499df968eb57a49fba38cfadbad5541c5556a6026172ff7b0"
+        },
+        {
+          "path": "resume/references/recovery-priority-chain.md",
+          "sha256": "ff4af4cb5fbad16ca6e76d6fcb97412f526124e2453985edbd1f38f00328e09d"
         }
       ]
     },
