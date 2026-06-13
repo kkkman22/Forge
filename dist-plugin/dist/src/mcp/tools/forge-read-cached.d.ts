@@ -23,5 +23,8 @@ export interface ReadCachedResult {
 export declare function handleReadCached(index: ReadCacheIndex, path: string, startLine?: number, endLine?: number): Promise<ReadCachedResult>;
 /**
  * Register the `forge_read_cached` tool on the given MCP server.
+ *
+ * `sessionId` overrides the derived per-project id (useful for tests). When an
+ * external `index` is provided it is used directly and no persistence occurs.
  */
-export declare function registerForgeReadCached(server: McpServer, root?: ResolvedRoot, index?: ReadCacheIndex): void;
+export declare function registerForgeReadCached(server: McpServer, root?: ResolvedRoot, index?: ReadCacheIndex, sessionId?: string): void;

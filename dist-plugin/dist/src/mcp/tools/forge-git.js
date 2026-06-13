@@ -13,7 +13,7 @@
  */
 import { z } from "zod";
 import { parseDiffStat, parseStatusPorcelain } from "../trimmers/git.js";
-import { execCommand } from "./forge-exec.js";
+import { containsShellMetachars, execCommand } from "./forge-exec.js";
 // ---------------------------------------------------------------------------
 // Serialization helpers (match context-budget.ts format)
 // ---------------------------------------------------------------------------
@@ -164,6 +164,20 @@ export function registerForgeGit(server, root) {
             "anthropic/maxResultSizeChars": 200_000,
         },
     }, async ({ subcommand, args }) => {
+        // Defense-in-depth: `args` is caller-controlled (MCP client / model) and is
+        // interpolated into a command string that execCommand routes through
+        // /bin/sh -c whenever it contains shell operators. Reject any operator
+        // before it reaches the subprocess layer. Benign git arguments
+        // (HEAD~1, --oneline -20) contain no operators and pass through.
+        if (args) {
+            const metacharReason = containsShellMetachars(args);
+            if (metacharReason) {
+                return {
+                    content: [{ type: "text", text: metacharReason }],
+                    isError: true,
+                };
+            }
+        }
         const extraArgs = args ? ` ${args}` : "";
         switch (subcommand) {
             case "diff": {

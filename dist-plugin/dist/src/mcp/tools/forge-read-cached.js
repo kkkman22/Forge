@@ -10,6 +10,7 @@
  *
  * Layer 1 of the five-layer context explosion defense.
  */
+import { createHash } from "node:crypto";
 import { readFile } from "node:fs/promises";
 import { resolve as resolvePath } from "node:path";
 import { z } from "zod";
@@ -67,11 +68,34 @@ const TOOL_DESCRIPTION = [
     "NOT for: batch analysis (use forge_read instead).",
 ].join("\n");
 /**
- * Register the `forge_read_cached` tool on the given MCP server.
+ * Derive a stable, per-project session id from the resolved root path so caches
+ * are isolated per project instead of collapsing every project into a single
+ * shared "mcp-default" file (which caused cross-project hash collisions and
+ * made the cache useless across projects). Falls back to the process pid when
+ * no root is bound.
  */
-export function registerForgeReadCached(server, root, index) {
+function deriveSessionId(root) {
+    if (root?.path) {
+        return createHash("sha1").update(root.path).digest("hex").slice(0, 16);
+    }
+    return `proc-${process.pid}`;
+}
+/**
+ * Register the `forge_read_cached` tool on the given MCP server.
+ *
+ * `sessionId` overrides the derived per-project id (useful for tests). When an
+ * external `index` is provided it is used directly and no persistence occurs.
+ */
+export function registerForgeReadCached(server, root, index, sessionId) {
     // Track whether an external index was provided (for testing)
     const externalIndex = index;
+    const resolvedSessionId = sessionId ?? deriveSessionId(root);
+    // Serialize reads that share a session index. The read path is a
+    // load → read → update → persist cycle that overwrites the whole cache file;
+    // without serialization, concurrent reads clobber each other's entries.
+    // This in-process promise chain makes overlapping reads run one at a time
+    // while preserving async semantics for the caller.
+    let readChain = Promise.resolve();
     server.tool("forge_read_cached", TOOL_DESCRIPTION, {
         path: z.string().describe("File path to read"),
         start_line: z.number().optional().describe("Start line (1-indexed)"),
@@ -93,12 +117,24 @@ export function registerForgeReadCached(server, root, index) {
         else {
             resolvedPath = filePath;
         }
-        // Load persisted index or use external index (for testing)
-        const cacheIndex = externalIndex ?? (await loadOrCreateIndex("mcp-default"));
-        const result = await handleReadCached(cacheIndex, resolvedPath, start_line, end_line);
-        return {
-            content: [{ type: "text", text: result.content }],
+        // Serialize per-session read-modify-write to avoid lost updates. Each
+        // call attaches to the tail of the chain; the result is threaded back
+        // through the same promise so callers still await their own outcome.
+        const run = async () => {
+            const cacheIndex = externalIndex ?? (await loadOrCreateIndex(resolvedSessionId));
+            const result = await handleReadCached(cacheIndex, resolvedPath, start_line, end_line);
+            return { content: [{ type: "text", text: result.content }] };
         };
+        if (externalIndex) {
+            // External (test) index — no persistence, but still serialize to keep
+            // concurrent updates to the shared in-memory index consistent.
+            const result = run();
+            readChain = readChain.then(() => result, () => result);
+            return result;
+        }
+        const result = readChain.then(run, run);
+        readChain = result;
+        return result;
     });
 }
 //# sourceMappingURL=forge-read-cached.js.map
