@@ -119,7 +119,8 @@ function detectSpecName(cwd) {
   try {
     const entries = readdirSync(specsPath, { withFileTypes: true });
     const specDirs = entries
-      .filter((e) => e.isDirectory())
+      // Skip underscore-prefixed dirs (_archived, _templates) — not active specs
+      .filter((e) => e.isDirectory() && !e.name.startsWith("_"))
       .map((e) => e.name);
     if (specDirs.length === 1) return specDirs[0];
     // Multiple specs with no lock → ambiguous, return null
