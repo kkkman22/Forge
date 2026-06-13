@@ -323,14 +323,14 @@ function migratePlansFile(featureDir: string, feature: string): string | null {
 // Internal helpers
 // ---------------------------------------------------------------------------
 
-function extractSection(body: string, heading: string): string {
+export function extractSection(body: string, heading: string): string {
   const escaped = heading.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
   const regex = new RegExp(`(?:^|\\n)## ${escaped}[ \\t]*\\n([\\s\\S]*?)(?=\\n## |$)`, "");
   const match = body.match(regex);
   return match?.[1]?.trim() ?? "";
 }
 
-function extractSubsection(text: string, heading: string): string {
+export function extractSubsection(text: string, heading: string): string {
   const escaped = heading.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
   const regex = new RegExp(`(?:^|\\n)### ${escaped}[ \\t]*\\n([\\s\\S]*?)(?=\\n#{2,3} |$)`, "");
   const match = text.match(regex);

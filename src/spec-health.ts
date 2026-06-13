@@ -107,7 +107,7 @@ const GHERKIN_KEYWORDS = new Set([
   "Examples",
 ]);
 
-function computeGlossaryMissCount(specContent: string, registry: GlossaryRegistry): number {
+export function computeGlossaryMissCount(specContent: string, registry: GlossaryRegistry): number {
   const matches = specContent.matchAll(TECH_TERM_RE);
   let missCount = 0;
   for (const m of matches) {
@@ -124,7 +124,7 @@ function computeGlossaryMissCount(specContent: string, registry: GlossaryRegistr
 // Recommendation generation
 // ---------------------------------------------------------------------------
 
-function generateRecommendations(
+export function generateRecommendations(
   dims: Record<SpecHealthDimension, DimensionScore>,
   verdict: HealthVerdict,
 ): HealthRecommendation[] {
