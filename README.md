@@ -164,7 +164,7 @@ Forge plugin 自带 `forge-context` first-party MCP server，为 `/forge review`
 
 ## 安全
 
-Forge 从第一天起把安全视为工程纪律。五层防御：工具调用 Hook 冻结区硬阻断、Shell 注入预防、输入威胁检测、依赖供应链审计、138 property-based 不变量测试。敏感区域按"冻结/受保护/开放"分级保护。详见 [docs/reference-security.md](docs/reference-security.md)。
+Forge 从第一天起把安全视为工程纪律。五层防御：工具调用 Hook 冻结区硬阻断、Shell 注入预防、输入威胁检测、依赖供应链审计、140 property-based 不变量测试。敏感区域按"冻结/受保护/开放"分级保护。详见 [docs/reference-security.md](docs/reference-security.md)。
 
 ---
 
@@ -222,7 +222,7 @@ bash scripts/pre-push-ci-check.sh
 
 **技术栈**：TypeScript 5.9（strict）、293 个 TypeScript 模块、Vitest 4.1、fast-check 4.7（属性测试）、Biome 2.4（lint + format）。运行时依赖：`@anthropic-ai/claude-agent-sdk`、`@modelcontextprotocol/sdk`、`commander`、`minimatch`、`yaml`、`zod`。
 
-**测试策略**：7477 个测试（618 个测试文件）验证不变量。覆盖率 ~87% statements。
+**测试策略**：7498 个测试（620 个测试文件）验证不变量。覆盖率 ~87% statements。
 
 
 ---
