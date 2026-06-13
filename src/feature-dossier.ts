@@ -83,7 +83,7 @@ function emptyStages(): Record<StageName, StageFileEntry[]> {
   };
 }
 
-function escapeRegExp(str: string): string {
+export function escapeRegExp(str: string): string {
   return str.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
 }
 
@@ -353,12 +353,12 @@ export function buildDossier(input: {
   };
 }
 
-function extractStatus(fm: Record<string, unknown>): string | null {
+export function extractStatus(fm: Record<string, unknown>): string | null {
   if (typeof fm.status === "string") return fm.status;
   return null;
 }
 
-function escapeTableCell(s: string): string {
+export function escapeTableCell(s: string): string {
   return s.replace(/\|/g, "\\|").replace(/\n/g, " ");
 }
 

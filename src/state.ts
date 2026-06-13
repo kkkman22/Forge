@@ -746,7 +746,7 @@ function parseTasksBlock(raw: string): TaskStatusEntry[] {
   return entries;
 }
 
-function isCompleteEntry(entry: Partial<TaskStatusEntry>): entry is TaskStatusEntry {
+export function isCompleteEntry(entry: Partial<TaskStatusEntry>): entry is TaskStatusEntry {
   return (
     typeof entry.taskName === "string" &&
     typeof entry.tier === "string" &&

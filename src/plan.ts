@@ -853,7 +853,7 @@ const WORD_CHAR_CLASS = "[\\p{L}\\p{N}_]";
 /**
  * Escape a literal string so it can be safely embedded into a RegExp.
  */
-function escapeForRegExp(value: string): string {
+export function escapeForRegExp(value: string): string {
   return value.replace(REGEX_META_CHARS_REGEX, "\\$&");
 }
 
