@@ -30,7 +30,7 @@ import { pathReadable } from "./utils/fs.js";
 // Internal: legacy spec.md parser
 // ---------------------------------------------------------------------------
 
-function parseLegacySpec(text: string): SpecDocument {
+export function parseLegacySpec(text: string): SpecDocument {
   const fmMatch = text.match(/^---\n([\s\S]*?)\n---/);
   const fm: SpecFrontmatter = fmMatch
     ? {
@@ -107,7 +107,7 @@ function parseLegacySpec(text: string): SpecDocument {
   };
 }
 
-function extractListItems(text: string): string[] {
+export function extractListItems(text: string): string[] {
   return text
     .split("\n")
     .map((l) => l.replace(/^[-*]\s*/, "").trim())
