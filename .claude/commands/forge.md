@@ -53,7 +53,7 @@ allowed-tools: Read, Glob, Grep, Skill
 
 1. 读取 `.forge/status.md` 检查是否有进行中的任务
 2. 读取 `.forge/config.md` 获取项目配置
-3. 调用 `Skill(forge-router)` 进行任务分析和档位建议
+3. 主 agent **Read** `skills/forge/lib/router/instructions.md` 后内联执行路由分析（router 是 `dispatch_mode: inline` 的文档型 skill，不通过 `Skill()` 调用）
 4. 用户确认或覆盖档位后，按命令序列依次调用对应的 forge skill
 
 **示例**：
