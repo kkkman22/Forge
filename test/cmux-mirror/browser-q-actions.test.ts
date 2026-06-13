@@ -10,6 +10,8 @@ vi.mock("../../scripts/cmux-mirror/lib/availability.mjs", () => ({
   cmuxAvailable: vi.fn(() => true),
 }));
 
+import { collectBrowserDiagnostics } from "../../scripts/cmux-mirror/browser-qa.mjs";
+import { cmuxAvailable } from "../../scripts/cmux-mirror/lib/availability.mjs";
 import {
   buildConsoleArgs,
   buildErrorsArgs,
@@ -17,8 +19,6 @@ import {
   buildScreenshotArgs,
   injectSurface,
 } from "../../scripts/cmux-mirror/lib/browser-q-actions.mjs";
-import { collectBrowserDiagnostics } from "../../scripts/cmux-mirror/browser-qa.mjs";
-import { cmuxAvailable } from "../../scripts/cmux-mirror/lib/availability.mjs";
 import { runCli } from "../../scripts/cmux-mirror/lib/cli.mjs";
 
 const mockedRunCli = vi.mocked(runCli);
@@ -64,19 +64,15 @@ describe("injectSurface: optional surface handle", () => {
 
   it("inserts `--surface <handle>` right after `browser`", () => {
     const args = injectSurface(buildScreenshotArgs({ outPath: "/x.png" }), "surface:1");
-    expect(args).toEqual([
-      "browser",
-      "--surface",
-      "surface:1",
-      "screenshot",
-      "--out",
-      "/x.png",
-    ]);
+    expect(args).toEqual(["browser", "--surface", "surface:1", "screenshot", "--out", "/x.png"]);
   });
 
   it("leaves non-browser argv untouched", () => {
-    expect(injectSurface(["reorder-workspaces", "--order", "workspace:1"], "surface:1"))
-      .toEqual(["reorder-workspaces", "--order", "workspace:1"]);
+    expect(injectSurface(["reorder-workspaces", "--order", "workspace:1"], "surface:1")).toEqual([
+      "reorder-workspaces",
+      "--order",
+      "workspace:1",
+    ]);
   });
 });
 
@@ -113,9 +109,7 @@ describe("collectBrowserDiagnostics: read-only QA artifacts (R8 enhancement)", (
     expect(readFileSync(join(res.dir!, "errors.txt"), "utf-8")).toBe("[error] none");
 
     // The screenshot call must target the findings dir (cmux writes the PNG itself).
-    const shotCall = mockedRunCli.mock.calls.find((c) =>
-      (c[0] as string[]).includes("screenshot"),
-    );
+    const shotCall = mockedRunCli.mock.calls.find((c) => (c[0] as string[]).includes("screenshot"));
     expect(shotCall?.[0]).toEqual(
       expect.arrayContaining(["screenshot", "--out", join(res.dir!, "screenshot.png")]),
     );

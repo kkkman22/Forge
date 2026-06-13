@@ -79,7 +79,9 @@ function layoutViolations(node: LayoutNode, path: string, out: string[]): void {
     }
     surfaces.forEach((s, i) => {
       if (s.type !== "terminal" && s.type !== "browser") {
-        out.push(`${path}.pane.surfaces[${i}].type must be terminal|browser, got ${JSON.stringify(s.type)}`);
+        out.push(
+          `${path}.pane.surfaces[${i}].type must be terminal|browser, got ${JSON.stringify(s.type)}`,
+        );
       }
     });
     return;
@@ -129,7 +131,9 @@ describe("templates/cmux.json — real cmux schema conformance", () => {
   it("defines the three R9.2 Forge workspace commands by name", () => {
     const config = parseConfig();
     const names = (config.commands ?? []).map((c) => c.name);
-    expect(names).toEqual(expect.arrayContaining(["Forge Workflow", "Forge Loop Monitor", "Forge Dev"]));
+    expect(names).toEqual(
+      expect.arrayContaining(["Forge Workflow", "Forge Loop Monitor", "Forge Dev"]),
+    );
   });
 
   it("every Forge command is a valid workspace layout command (no label/action drift)", () => {
@@ -200,7 +204,8 @@ describe("templates/cmux.json — real cmux schema conformance", () => {
   it("preserves agent_resume_approvals (cmux 0.64.10 feature)", () => {
     const config = parseConfig();
     expect(Array.isArray(config.agent_resume_approvals)).toBe(true);
-    expect((config.agent_resume_approvals ?? []).length).toBeGreaterThan(0);
+    const approvals = config.agent_resume_approvals as unknown[] | undefined;
+    expect((approvals ?? []).length).toBeGreaterThan(0);
   });
 
   doctorIt("passes `cmux config doctor --path` when cmux is installed (R9.9)", () => {

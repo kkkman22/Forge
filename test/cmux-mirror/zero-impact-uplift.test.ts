@@ -53,14 +53,16 @@ describe("Zero-Impact regression (R6)", () => {
     const parsed = JSON.parse(content);
     // Real cmux schema: commands[].workspace.layout, not a top-level `layouts` map.
     expect(parsed).not.toHaveProperty("layouts");
-    const byName = new Map(
-      (parsed.commands ?? []).map((c: { name?: string }) => [c.name, c]),
-    );
+    const commands = (parsed.commands ?? []) as Array<{
+      name?: string;
+      workspace?: unknown;
+    }>;
+    const byName = new Map(commands.map((c) => [c.name, c]));
     for (const name of ["Forge Workflow", "Forge Loop Monitor", "Forge Dev"]) {
       const cmd = byName.get(name);
       expect(cmd, `missing command ${name}`).toBeDefined();
-      expect(typeof cmd.workspace).toBe("object");
-      expect(cmd.workspace).toHaveProperty("layout");
+      expect(typeof cmd?.workspace).toBe("object");
+      expect(cmd?.workspace).toHaveProperty("layout");
     }
   });
 

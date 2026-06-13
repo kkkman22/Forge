@@ -13,14 +13,14 @@ vi.mock("../../scripts/cmux-mirror/lib/availability.mjs", () => ({
   cmuxAvailable: vi.fn(() => true),
 }));
 
+import { runCli } from "../../scripts/cmux-mirror/lib/cli.mjs";
 import {
+  __resetReorderForTest,
+  __setReorderSupportedForTest,
   buildReorderArgs,
   probeReorderSupported,
   raiseActiveWorkspace,
-  __resetReorderForTest,
-  __setReorderSupportedForTest,
 } from "../../scripts/cmux-mirror/lib/workspace-reorder.mjs";
-import { runCli } from "../../scripts/cmux-mirror/lib/cli.mjs";
 
 const mockedRunCli = vi.mocked(runCli);
 
@@ -38,11 +38,7 @@ describe("buildReorderArgs: cmux reorder-workspaces argv (0.64.10+)", () => {
 
   it("joins multiple refs with commas (batch leading order)", () => {
     const args = buildReorderArgs({ orderRefs: ["workspace:11", "workspace:1"] });
-    expect(args).toEqual([
-      "reorder-workspaces",
-      "--order",
-      "workspace:11,workspace:1",
-    ]);
+    expect(args).toEqual(["reorder-workspaces", "--order", "workspace:11,workspace:1"]);
   });
 
   it("appends --dry-run when requested (resolved-index preview, no apply)", () => {

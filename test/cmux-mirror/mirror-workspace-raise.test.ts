@@ -2,6 +2,7 @@ import { mkdirSync, mkdtempSync, rmSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+import type { MirrorDaemonStartResult } from "./types.js";
 
 // Mock the raise so we can assert the daemon calls it without touching cmux.
 // vi.hoisted lifts the reference above the hoisted vi.mock factory (avoids TDZ).
@@ -49,16 +50,14 @@ describe("mirror: raises active workspace on startup (cmux 0.64.10+)", () => {
     process.env.CMUX_WORKSPACE_ID = "workspace:7";
     const forgeDir = seedForge();
 
-    const result = await createMirrorDaemon({
+    const result = (await createMirrorDaemon({
       forgeDir,
       socketDir: dir,
       cmuxAvailable: true,
-    });
+    })) as MirrorDaemonStartResult;
 
     expect(raiseMock).toHaveBeenCalledTimes(1);
-    expect(raiseMock).toHaveBeenCalledWith(
-      expect.objectContaining({ activeRef: "workspace:7" }),
-    );
+    expect(raiseMock).toHaveBeenCalledWith(expect.objectContaining({ activeRef: "workspace:7" }));
     if (result.started) await result.shutdown();
   });
 
@@ -66,11 +65,11 @@ describe("mirror: raises active workspace on startup (cmux 0.64.10+)", () => {
     delete process.env.CMUX_WORKSPACE_ID;
     const forgeDir = seedForge();
 
-    const result = await createMirrorDaemon({
+    const result = (await createMirrorDaemon({
       forgeDir,
       socketDir: dir,
       cmuxAvailable: true,
-    });
+    })) as MirrorDaemonStartResult;
 
     // Daemon delegates the no-op decision to raiseActiveWorkspace itself.
     expect(raiseMock).toHaveBeenCalledWith(expect.objectContaining({ activeRef: "" }));
