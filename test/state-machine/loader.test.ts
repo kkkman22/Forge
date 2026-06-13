@@ -148,4 +148,79 @@ invariants: []
     expect(def.transitions[0].guards).toBeUndefined();
     expect(def.transitions[0].sideEffects).toBeUndefined();
   });
+
+  // --- P2 CRITICAL FIX: robustness on missing/mal-typed fields ---
+  it("treats missing `invariants` as empty (does not crash)", () => {
+    // `invariants` is optional; omitting it must NOT throw a TypeError.
+    const yaml = `
+name: test
+description: no invariants key at all
+states:
+  - name: A
+    description: a
+initial: A
+transitions: []
+`;
+    const def = loadStateMachineDefinition(yaml);
+    expect(def.invariants).toEqual([]);
+  });
+
+  it("accepts null `invariants` as empty", () => {
+    const yaml = `
+name: test
+description: null invariants
+states:
+  - name: A
+    description: a
+initial: A
+transitions: []
+invariants: null
+`;
+    const def = loadStateMachineDefinition(yaml);
+    expect(def.invariants).toEqual([]);
+  });
+
+  it("throws a structured error (not TypeError) when `transitions` is non-array", () => {
+    const yaml = `
+name: test
+description: transitions is a string
+states:
+  - name: A
+    description: a
+initial: A
+transitions: not-an-array
+invariants: []
+`;
+    let thrown: unknown;
+    try {
+      loadStateMachineDefinition(yaml);
+    } catch (e) {
+      thrown = e;
+    }
+    expect(thrown).toBeInstanceOf(Error);
+    expect(thrown).not.toBeInstanceOf(TypeError);
+    expect((thrown as Error).message).toMatch(/transitions/);
+  });
+
+  it("throws a structured error (not TypeError) when `invariants` is non-array", () => {
+    const yaml = `
+name: test
+description: invariants is a number
+states:
+  - name: A
+    description: a
+initial: A
+transitions: []
+invariants: 42
+`;
+    let thrown: unknown;
+    try {
+      loadStateMachineDefinition(yaml);
+    } catch (e) {
+      thrown = e;
+    }
+    expect(thrown).toBeInstanceOf(Error);
+    expect(thrown).not.toBeInstanceOf(TypeError);
+    expect((thrown as Error).message).toMatch(/invariants/);
+  });
 });

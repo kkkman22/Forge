@@ -64,6 +64,19 @@ export function loadStateMachineDefinition(
     throw new Error(`${prefix}states must be a non-empty array`);
   }
 
+  // `transitions` is a required field (presence checked above), but its type
+  // must be validated too — a non-array value (e.g. `transitions: "foo"`)
+  // would otherwise crash on `.map()` with an opaque TypeError.
+  if (!Array.isArray(obj.transitions)) {
+    throw new Error(`${prefix}transitions must be an array`);
+  }
+  // `invariants` is optional and defaults to empty. A null/missing value is
+  // treated as "no invariants"; any other non-array type is a malformed input.
+  const rawInvariants = obj.invariants;
+  if (rawInvariants !== undefined && rawInvariants !== null && !Array.isArray(rawInvariants)) {
+    throw new Error(`${prefix}invariants must be an array when present`);
+  }
+
   return {
     name: obj.name as string,
     description: obj.description as string,
@@ -80,7 +93,7 @@ export function loadStateMachineDefinition(
       guards: t.guards as string[] | undefined,
       sideEffects: t.side_effects as string[] | undefined,
     })),
-    invariants: (obj.invariants as Array<{ expression: string; description: string }>).map(
+    invariants: ((rawInvariants ?? []) as Array<{ expression: string; description: string }>).map(
       (inv) => ({
         expression: inv.expression,
         description: inv.description,
