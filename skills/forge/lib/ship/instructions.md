@@ -102,6 +102,11 @@ Uncommitted: !`git status --short 2>/dev/null | head -10 || echo "clean"`
 - 文件存在 + 无 P0/P1 → 通过
 - 通过后删除 pending-findings 文件（已消费）
 
+**Gate 4b — Backlog Capture（forge-review-fix-optimization R6.1/R6.2/R6.4/R6.6）**：Gate 4 通过后，把 review 报告里**未修复的 P2/P3** finding 追加到 `.forge/backlog.md`（不阻断 ship——P2/P3 允许延后）。
+- **实现**：`appendToBacklog(parseBacklog(read(".forge/backlog.md") ?? generateBacklogHeader()), newEntries)`（`src/backlog.ts`）。`appendToBacklog` 自动去重（R6.2，按 finding fingerprint id），文件不存在时先写 `generateBacklogHeader()`（R6.6）。
+- **newEntries 构造**：每条含 `{id, severity: "P2"|"P3", filePath, lineNumber, description, sourceReview: ".forge/reviews/<topic>.md", originTask: <current task>, capturedDate: <ISO today>, resolved: false}`（R6.4 打日期 + originTask 标签）。
+- 仅取 review 报告中**状态非 fixed/verified** 的 P2/P3；P0/P1 已被 Gate 4 阻断，不会进 backlog。
+
 **Gate 拦截自动沉淀**：门禁拦截时调用 `buildShipGateBlockArtifacts(topic, tier, reason, situation, now, seq)`（`src/ship.ts`）生成 episode + Evolution 标记（target=`forge-ship#ship_gate_blocked`）。`reason` 推导：未提交工作树 → `uncommitted` → outcome=`partial`；checklist 未验证 → `checklist_failed` → outcome=`failure`。写入失败降级为 `console.warn`。
 
 **函数调用**：`checkShipGateWithFreshness(review, test, progress, reviewedCommit, currentHead, changedFiles)` — 扩展 `checkShipGate` 的门禁检查，集成 `checkReviewFreshness` 逻辑，一步完成门禁 + 新鲜度校验。返回 `{ allowed, reasons, freshnessWarning }`
