@@ -104,7 +104,7 @@ function extractFrontmatter(content: string): Record<string, unknown> | null {
   return parseSimpleYaml(yamlStr);
 }
 
-function parseSimpleYaml(yaml: string): Record<string, unknown> | null {
+export function parseSimpleYaml(yaml: string): Record<string, unknown> | null {
   const result: Record<string, unknown> = {};
   const lines = yaml.split("\n");
   let currentKey: string | null = null;
@@ -169,7 +169,7 @@ function parseSimpleYaml(yaml: string): Record<string, unknown> | null {
   return Object.keys(result).length > 0 ? result : null;
 }
 
-function parseYamlValue(value: string): unknown {
+export function parseYamlValue(value: string): unknown {
   if (value === "" || value === "null" || value === "~") return null;
   if (value === "true") return true;
   if (value === "false") return false;

@@ -218,17 +218,17 @@ function makeArtifact(
   };
 }
 
-function extractEndpoint(text: string): string | null {
+export function extractEndpoint(text: string): string | null {
   const match = text.match(/(?:endpoint|url|api)\s+(?:is\s+)?(\/?\S+)/i);
   return match ? match[1] : null;
 }
 
-function extractMethod(text: string): string {
+export function extractMethod(text: string): string {
   const match = text.match(/\b(GET|POST|PUT|DELETE|PATCH)\b/i);
   return match ? match[1].toUpperCase() : "GET";
 }
 
-function extractCommand(text: string): string | null {
+export function extractCommand(text: string): string | null {
   const match = text.match(/(?:run|execute)\s+['"`](.+?)['"`]/i);
   return match ? match[1] : null;
 }

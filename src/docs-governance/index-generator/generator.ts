@@ -78,7 +78,7 @@ function formatEnglishEntry(pair: DocPair): string {
   return `- ${links} — ${updated}`;
 }
 
-function catLabelEn(cat: Category): string {
+export function catLabelEn(cat: Category): string {
   const labels: Record<Category, string> = {
     "getting-started": "Getting Started",
     "daily-use": "Daily Use",

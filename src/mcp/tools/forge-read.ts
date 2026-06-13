@@ -113,7 +113,7 @@ export function buildSandboxEnv(
   return base;
 }
 
-function buildPermissionArgs(allowedPaths: string[]): string[] {
+export function buildPermissionArgs(allowedPaths: string[]): string[] {
   const flags = process.allowedNodeEnvironmentFlags;
   const permissionFlag = flags.has("--permission")
     ? "--permission"
@@ -132,7 +132,7 @@ interface AllowedReadFile {
   realPath: string;
 }
 
-function resolveAllowedReadFiles(paths: string[], cwd?: string): AllowedReadFile[] {
+export function resolveAllowedReadFiles(paths: string[], cwd?: string): AllowedReadFile[] {
   const root = cwd ? resolve(cwd) : process.cwd();
   return paths.map((p) => {
     const resolved = resolve(root, p);

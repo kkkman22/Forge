@@ -1,6 +1,11 @@
 import { describe, expect, it } from "vitest";
 import { renderFrontmatter, renderRequirementsMarkdown } from "../src/spec-bundle-io.js";
-const fm = { feature: "test-feature", status: "locked", date: "2026-06-14", workflow_variant: "requirements-first" };
+const fm = {
+    feature: "test-feature",
+    status: "locked",
+    date: "2026-06-14",
+    workflow_variant: "requirements-first",
+};
 describe("renderFrontmatter (branch coverage)", () => {
     it("renders basic frontmatter", () => {
         const out = renderFrontmatter(fm);
