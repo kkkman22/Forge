@@ -131,4 +131,60 @@ describe("inject-evolved-rules.mjs", () => {
     expect(result.exitCode).toBe(0);
     expect(result.stdout.length).toBe(0);
   });
+
+  it(".kiro/specs/ 仅含 _archived 归档目录 → specName 为 null，不设 _archived 标题", () => {
+    tempDir = createTempDir();
+    writeFileSync(join(tempDir, RULES_FILE), "### R1: Test\n**Content**: x");
+    mkdirSync(join(tempDir, ".kiro", "specs", "_archived"), { recursive: true });
+    const result = runScript(
+      tempDir,
+      JSON.stringify({ session_id: "s1", hook_event_name: "SessionStart" }),
+    );
+    expect(result.exitCode).toBe(0);
+    const json = JSON.parse(result.stdout);
+    expect(json.hookSpecificOutput?.sessionTitle ?? null).toBeNull();
+  });
+
+  it(".kiro/specs/ 含 _archived + 一个真实 spec → 选真实 spec，忽略 _archived", () => {
+    tempDir = createTempDir();
+    writeFileSync(join(tempDir, RULES_FILE), "### R1: Test\n**Content**: x");
+    mkdirSync(join(tempDir, ".kiro", "specs", "_archived"), { recursive: true });
+    mkdirSync(join(tempDir, ".kiro", "specs", "real-feature"), { recursive: true });
+    const result = runScript(
+      tempDir,
+      JSON.stringify({ session_id: "s1", hook_event_name: "SessionStart" }),
+    );
+    expect(result.exitCode).toBe(0);
+    const json = JSON.parse(result.stdout);
+    expect(json.hookSpecificOutput.sessionTitle).toBe("Forge: real-feature");
+  });
+
+  it(".kiro/specs/ 含多个 _ 前缀目录 (_archived + _templates) → specName 为 null", () => {
+    tempDir = createTempDir();
+    writeFileSync(join(tempDir, RULES_FILE), "### R1: Test\n**Content**: x");
+    mkdirSync(join(tempDir, ".kiro", "specs", "_archived"), { recursive: true });
+    mkdirSync(join(tempDir, ".kiro", "specs", "_templates"), { recursive: true });
+    const result = runScript(
+      tempDir,
+      JSON.stringify({ session_id: "s1", hook_event_name: "SessionStart" }),
+    );
+    expect(result.exitCode).toBe(0);
+    const json = JSON.parse(result.stdout);
+    expect(json.hookSpecificOutput?.sessionTitle ?? null).toBeNull();
+  });
+
+  it(".forge/state/spec-lock 优先于 .kiro/specs/ 推断 (含 _archived 时仍生效)", () => {
+    tempDir = createTempDir();
+    writeFileSync(join(tempDir, RULES_FILE), "### R1: Test\n**Content**: x");
+    mkdirSync(join(tempDir, ".kiro", "specs", "_archived"), { recursive: true });
+    mkdirSync(join(tempDir, ".forge", "state"), { recursive: true });
+    writeFileSync(join(tempDir, ".forge", "state", "spec-lock"), "locked-spec");
+    const result = runScript(
+      tempDir,
+      JSON.stringify({ session_id: "s1", hook_event_name: "SessionStart" }),
+    );
+    expect(result.exitCode).toBe(0);
+    const json = JSON.parse(result.stdout);
+    expect(json.hookSpecificOutput.sessionTitle).toBe("Forge: locked-spec");
+  });
 });
