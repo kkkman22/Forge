@@ -23,7 +23,11 @@ describe("context-budget: SubagentSummary serialize/deserialize (branches)", () 
         expect(text).toContain("(none)");
     });
     it("serializes blockingReason for BLOCKED status", () => {
-        const text = serializeSubagentSummary({ ...sub, status: "BLOCKED", blockingReason: "missing dep" });
+        const text = serializeSubagentSummary({
+            ...sub,
+            status: "BLOCKED",
+            blockingReason: "missing dep",
+        });
         expect(text).toContain("BLOCKED");
         expect(text).toContain("missing dep");
     });
