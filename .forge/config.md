@@ -27,10 +27,10 @@ ci_check_command: "npm run check"
 # cmux integration (cmux-integration R11.9) — all optional, no required fields.
 # cmux is env-detected (CMUX_WORKSPACE_ID); these flags tune behavior when cmux is present.
 cmux_integration: auto              # auto (default) | on | off — on+unavailable emits a one-time warning
-cmux_notification_budget: 6         # Max mirror notifications per agent turn (default 6)
-cmux_review_notify: true            # Surface P0/P1 review findings as cmux notifications
-cmux_session_idle_minutes: 10       # Minutes of idle before cmux session-idle signal
-cmux_respawn_budget: 3              # Max mirror respawn attempts per session (default 3)
+cmux_notification_budget: 5         # 每个会话的桌面通知上限，正整数或 0，默认 5
+cmux_review_notify: on              # on | off; 是否发送评审聚合通知，默认 on
+cmux_session_idle_minutes: 15       # 会话空闲超时（分钟），正整数，默认 15
+cmux_respawn_budget: 3              # Mirror_Daemon 崩溃后自动重启上限，正整数或 0，默认 3
 docs.grace_period_until: "2026-06-01"
 docs.ssot_sources:
   - topic: "commands"
