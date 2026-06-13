@@ -372,6 +372,21 @@ Post-Review Step 4: 自动 /simplify + commit + 验证
 
 每步骤完成后输出 `✅ <步骤> 完成`，遵循 §2.7 不暂停询问。
 
+## 8c. Sycophancy Detection（re-review 反讨好检查）
+
+在 re-review（implementer 声称已修复 P0/P1 后的复审）时，必须检测 implementer 是否只是**口头同意**而实际修复不匹配或缺失。**判断方法**：比较 reviewer 要求的修复点 vs implementer 实际修改的代码 diff，**忽略口头声明**——只看代码改了什么。
+
+四种模式及其判定：
+
+| 模式 | 现象 | 判定 |
+|------|------|------|
+| 纯赞同无技术描述 | implementer 回复"你说得对"、"好点子"、"感谢指出"、"完全同意"等纯赞同，但无任何技术说明，且代码 diff 为空 | **P3**（态度问题，无实际修复） |
+| 口头同意但修复不匹配 | implementer 声称已修复，但实际 diff 改的是**另一个点**或修复方向与 finding 描述不一致 | **P1**（声称与事实矛盾，阻断 ship） |
+| 口头同意但修复不完整 | implementer 声称已修复，diff 方向正确但只覆盖了 finding 的一部分（如多行问题只改了一行） | **P1**（部分修复，阻断 ship） |
+| 技术回应 + 实际修复 | implementer 用技术语言说明修改逻辑，且 diff 与 finding 完全对应 | **✅ 通过** |
+
+**禁止表达**：reviewer 自身也不得使用"你说得对"、"好点子"、"感谢指出"、"完全同意"及任何纯赞同不包含技术内容的回复（CLAUDE.md §2.6 反讨好纪律）。
+
 ## 9. P1 Fix Checklist
 
 评审完成后，若存在 P0/P1 finding，则创建 `.forge/reviews/<topic>-checklist.md` 追踪修复状态。
