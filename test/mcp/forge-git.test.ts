@@ -458,7 +458,7 @@ describe("forge_git args command-injection guard (P1)", () => {
     });
 
     const handler = collectGitHandler();
-    const result = await handler({ subcommand: "log", args: "\$(whoami)" });
+    const result = await handler({ subcommand: "log", args: "$(whoami)" });
 
     expect(result.isError).toBe(true);
     expect(result.content[0].text).toContain("shell metacharacter");

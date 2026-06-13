@@ -11,8 +11,8 @@
  * Layer 1 of the five-layer context explosion defense.
  */
 
-import { readFile } from "node:fs/promises";
 import { createHash } from "node:crypto";
+import { readFile } from "node:fs/promises";
 import { resolve as resolvePath } from "node:path";
 import type { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { z } from "zod";
@@ -177,7 +177,10 @@ export function registerForgeReadCached(
         // External (test) index — no persistence, but still serialize to keep
         // concurrent updates to the shared in-memory index consistent.
         const result = run();
-        readChain = readChain.then(() => result, () => result);
+        readChain = readChain.then(
+          () => result,
+          () => result,
+        );
         return result;
       }
 
