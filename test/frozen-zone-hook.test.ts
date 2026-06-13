@@ -1,8 +1,14 @@
-import { mkdirSync, rmSync, writeFileSync } from "node:fs";
+import { existsSync, mkdirSync, readdirSync, readFileSync, rmSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import type { HookInput } from "@anthropic-ai/claude-agent-sdk";
-import { createFrozenZoneHook } from "../src/frozen-zone-hook.js";
+import {
+  createFrozenZoneHook,
+  createFrozenZonePostToolUseHook,
+  type FrozenDiagnostic,
+  renderPostHocViolation,
+  writeFrozenBreachRecord,
+} from "../src/frozen-zone-hook.js";
 
 // ---------------------------------------------------------------------------
 // Helpers
@@ -199,5 +205,144 @@ describe("Frozen zone hook independence from SDK sandbox", () => {
     expect(typeof hookOutput.permissionDecisionReason).toBe("string");
 
     rmSync(tmpDir, { recursive: true, force: true });
+  });
+});
+
+// ---------------------------------------------------------------------------
+// PostToolUse defence-in-depth (frozen-zone-structured-feedback R3)
+// ---------------------------------------------------------------------------
+
+describe("createFrozenZonePostToolUseHook (R3 defence-in-depth)", () => {
+  let tmpDir: string;
+
+  beforeEach(() => {
+    tmpDir = makeTmpDir();
+  });
+
+  afterEach(() => {
+    rmSync(tmpDir, { recursive: true, force: true });
+  });
+
+  it("overwrites tool output with a revert prompt when a frozen-zone write slipped through (R3.1/R3.2)", async () => {
+    const specPath = join(tmpDir, ".forge", "specs", "locked-spec.md");
+    writeFileSync(specPath, "---\nstatus: locked\n---\n# Locked\n");
+    const hook = createFrozenZonePostToolUseHook(tmpDir);
+
+    const result = await hook(
+      {
+        hookEventName: "PostToolUse",
+        tool_name: "Write",
+        tool_input: { file_path: specPath },
+      } as unknown as HookInput,
+      "post-tool-1",
+      { signal: new AbortController().signal },
+    );
+
+    const output = result as {
+      hookSpecificOutput?: {
+        hookEventName?: string;
+        updatedToolOutput?: string;
+        additionalContext?: string;
+      };
+    };
+    expect(output.hookSpecificOutput?.hookEventName).toBe("PostToolUse");
+    // R3.2: the marker prefix is required.
+    expect(output.hookSpecificOutput?.updatedToolOutput).toContain(
+      "⚠ Post-hoc frozen-zone violation detected",
+    );
+    expect(output.hookSpecificOutput?.updatedToolOutput).toContain(specPath);
+    expect(output.hookSpecificOutput?.updatedToolOutput).toContain("Revert");
+  });
+
+  it("writes a breach audit record to .forge/runs/<stamp>-frozen-breach.md (R3.3)", async () => {
+    const planPath = join(tmpDir, ".forge", "plans", "approved-plan.md");
+    writeFileSync(planPath, "---\nstatus: approved\n---\n# Plan\n");
+    const hook = createFrozenZonePostToolUseHook(tmpDir);
+
+    await hook(
+      {
+        hookEventName: "PostToolUse",
+        tool_name: "Edit",
+        tool_input: { file_path: planPath, old_string: "a", new_string: "b" },
+      } as unknown as HookInput,
+      "post-tool-2",
+      { signal: new AbortController().signal },
+    );
+
+    // R3.3: the audit record exists.
+    const runsDir = join(tmpDir, ".forge", "runs");
+    const breachFiles = existsSync(runsDir)
+      ? readdirSync(runsDir).filter((f) => f.endsWith("-frozen-breach.md"))
+      : [];
+    expect(breachFiles.length).toBe(1);
+    const body = readFileSync(join(runsDir, breachFiles[0]), "utf-8");
+    expect(body).toContain(planPath);
+    expect(body).toContain('tool_name: "Edit"');
+    expect(body).toContain("frozen-plan");
+    expect(body).toContain("PLAN_APPROVED");
+  });
+
+  it("returns empty for non-Write-class tools (R3.1 scoping)", async () => {
+    const hook = createFrozenZonePostToolUseHook(tmpDir);
+    const result = await hook(
+      {
+        hookEventName: "PostToolUse",
+        tool_name: "Read",
+        tool_input: { file_path: "/tmp/anything" },
+      } as unknown as HookInput,
+      "post-tool-3",
+      { signal: new AbortController().signal },
+    );
+    expect(result).toEqual({});
+  });
+
+  it("returns empty for a non-frozen file (no false positive)", async () => {
+    const specPath = join(tmpDir, ".forge", "specs", "draft-spec.md");
+    writeFileSync(specPath, "---\nstatus: draft\n---\n# Draft\n");
+    const hook = createFrozenZonePostToolUseHook(tmpDir);
+    const result = await hook(
+      {
+        hookEventName: "PostToolUse",
+        tool_name: "Write",
+        tool_input: { file_path: specPath },
+      } as unknown as HookInput,
+      "post-tool-4",
+      { signal: new AbortController().signal },
+    );
+    expect(result).toEqual({});
+  });
+});
+
+describe("renderPostHocViolation + writeFrozenBreachRecord (R3 units)", () => {
+  it("renderPostHocViolation includes the marker + revert instruction", () => {
+    const diag: FrozenDiagnostic = {
+      path: ".forge/specs/x.md",
+      category: "frozen-spec",
+      reason_code: "SPEC_LOCKED",
+      reason_text: 'status "locked" forbids modification',
+      unlock_instruction: "move the spec to draft via /forge spec.",
+    };
+    const out = renderPostHocViolation(diag);
+    expect(out).toContain("⚠ Post-hoc frozen-zone violation detected");
+    expect(out).toContain(".forge/specs/x.md");
+    expect(out).toContain("Revert");
+  });
+
+  it("writeFrozenBreachRecord returns null on a non-writable root (best-effort, no throw)", () => {
+    // Point at a path whose parent cannot be created (root-level forbidden).
+    const result = writeFrozenBreachRecord("/nonexistent-root-zzz/.forge", {
+      attemptedPath: "x",
+      toolName: "Write",
+      toolInput: {},
+      diagnostic: {
+        path: "x",
+        category: "frozen-spec",
+        reason_code: "SPEC_LOCKED",
+        reason_text: "test",
+        unlock_instruction: "test",
+      },
+      detectedAt: "2026-06-14T00:00:00.000Z",
+    });
+    expect(result).toBeNull();
   });
 });

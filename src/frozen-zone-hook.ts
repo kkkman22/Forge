@@ -12,10 +12,12 @@
  *     model context minimal while giving the agent actionable guidance.
  */
 
-import { existsSync, readFileSync } from "node:fs";
+import { existsSync, mkdirSync, readFileSync, writeFileSync } from "node:fs";
+import { join } from "node:path";
 import type {
   HookCallback,
   HookJSONOutput,
+  PostToolUseHookSpecificOutput,
   PreToolUseHookSpecificOutput,
 } from "@anthropic-ai/claude-agent-sdk";
 import { extractStatus, isFrozenZonePath } from "./check-frozen.js";
@@ -157,5 +159,159 @@ export function createFrozenZoneHook(_cwd: string): HookCallback {
     }
 
     return {};
+  };
+}
+
+// ---------------------------------------------------------------------------
+// PostToolUse defence-in-depth (frozen-zone-structured-feedback R3)
+// ---------------------------------------------------------------------------
+//
+// If a Write/Edit/MultiEdit somehow bypassed the PreToolUse deny (parallel
+// tools, rare race), this PostToolUse hook detects the breach after the fact,
+// overwrites the tool's success output with a Frozen_Diagnostic revert prompt,
+// and writes an audit record. It does NOT undo the write (R3.4) — reporting
+// only; reversal is the user's job or /rewind's.
+
+/** Input shape for the breach-audit writer. */
+export interface FrozenBreachRecord {
+  /** Absolute or project-relative path that was written. */
+  attemptedPath: string;
+  /** Tool that performed the write (Write / Edit / MultiEdit). */
+  toolName: string;
+  /** Raw tool_input (serialized to JSON in the audit record). */
+  toolInput: Record<string, unknown>;
+  /** The structured diagnostic explaining why the path is frozen. */
+  diagnostic: FrozenDiagnostic;
+  /** ISO timestamp of the breach detection. */
+  detectedAt: string;
+}
+
+/**
+ * Render a Frozen_Diagnostic as the post-hoc revert prompt (R3.2).
+ * Prefixed with the spec-mandated marker so the model recognizes the breach.
+ */
+export function renderPostHocViolation(diag: FrozenDiagnostic): string {
+  return `⚠ Post-hoc frozen-zone violation detected: ${diag.path} [${diag.category}|${diag.reason_code}] — ${diag.reason_text}. This write should not have succeeded. Revert the change (the PreToolUse hook is the authority; this is defence-in-depth). To unlock legitimately: ${diag.unlock_instruction}`;
+}
+
+/**
+ * Write a breach audit record to `.forge/runs/<timestamp>-frozen-breach.md`
+ * (R3.3). Best-effort: never throws (a failed audit log must not crash the hook).
+ * @param forgeRoot absolute path to the .forge directory's parent
+ * @param record the breach record
+ * @returns the path written, or null if the write failed
+ */
+export function writeFrozenBreachRecord(
+  forgeRoot: string,
+  record: FrozenBreachRecord,
+): string | null {
+  try {
+    // forgeRoot is the project root (parent of .forge/). Per R3.3 the audit
+    // record lives at .forge/runs/<stamp>-frozen-breach.md.
+    const runsDir = join(forgeRoot, ".forge", "runs");
+    mkdirSync(runsDir, { recursive: true });
+    // Timestamp safe for filenames (no colons).
+    const stamp = record.detectedAt.replace(/[:.]/g, "-");
+    const filePath = join(runsDir, `${stamp}-frozen-breach.md`);
+    const body = [
+      "---",
+      `attempted_path: "${record.attemptedPath}"`,
+      `tool_name: "${record.toolName}"`,
+      `detected_at: "${record.detectedAt}"`,
+      `category: "${record.diagnostic.category}"`,
+      `reason_code: "${record.diagnostic.reason_code}"`,
+      "---",
+      "",
+      "# Post-hoc Frozen-Zone Breach",
+      "",
+      `A write to a frozen-zone file slipped past the PreToolUse deny hook`,
+      `(parallel tools or a rare race). The write was NOT auto-reverted; the`,
+      `operator must revert manually or via /rewind.`,
+      "",
+      "## Details",
+      "",
+      `- **Path**: \`${record.attemptedPath}\``,
+      `- **Tool**: \`${record.toolName}\``,
+      `- **Category**: ${record.diagnostic.category}`,
+      `- **Reason code**: ${record.diagnostic.reason_code}`,
+      `- **Reason**: ${record.diagnostic.reason_text}`,
+      `- **Detected at**: ${record.detectedAt}`,
+      "",
+      "## Tool input",
+      "",
+      "```json",
+      JSON.stringify(record.toolInput, null, 2),
+      "```",
+      "",
+      "## Recommended action",
+      "",
+      record.diagnostic.unlock_instruction,
+      "",
+    ].join("\n");
+    writeFileSync(filePath, body, "utf-8");
+    return filePath;
+  } catch {
+    // R3.3 is best-effort; a failed audit log must not crash the hook.
+    return null;
+  }
+}
+
+/**
+ * Create a PostToolUse defence-in-depth hook for the frozen zone (R3).
+ *
+ * After a Write/Edit/MultiEdit executes, re-checks the target path; if it is
+ * frozen (locked/approved) yet the write succeeded, overwrites the tool output
+ * with a revert prompt (R3.1/R3.2) and writes a breach audit record (R3.3).
+ * Does NOT undo the write (R3.4).
+ *
+ * @param forgeRoot absolute path to the project root (parent of .forge/)
+ */
+export function createFrozenZonePostToolUseHook(forgeRoot: string): HookCallback {
+  return async (input, _toolUseId, _options): Promise<HookJSONOutput> => {
+    const postInput = input as {
+      tool_name?: string;
+      tool_input?: Record<string, unknown>;
+    };
+
+    const toolName = postInput.tool_name ?? "";
+    // R3.1: scope to Write-class tools.
+    if (toolName !== "Write" && toolName !== "Edit" && toolName !== "MultiEdit") {
+      return {};
+    }
+
+    const toolInput = postInput.tool_input ?? {};
+    const filePath = (toolInput.file_path ?? toolInput.path ?? "") as string;
+    if (!filePath) return {};
+
+    // Re-check against the frozen zone.
+    if (!isFrozenZonePath(filePath)) return {};
+    if (!existsSync(filePath)) return {};
+
+    const content = readFileSync(filePath, "utf-8");
+    const status = extractStatus(content);
+    const frozenStatuses = ["locked", "approved"];
+    if (!status || !frozenStatuses.includes(status)) return {};
+
+    // Breach detected: build the diagnostic, overwrite tool output, audit.
+    const diagnostic = buildFrozenDiagnostic(filePath, status);
+    const detectedAt = new Date().toISOString();
+
+    // R3.3: write the audit record (best-effort).
+    writeFrozenBreachRecord(forgeRoot, {
+      attemptedPath: filePath,
+      toolName,
+      toolInput,
+      diagnostic,
+      detectedAt,
+    });
+
+    // R3.1/R3.2: overwrite the tool's success message with the revert prompt.
+    const postOutput: PostToolUseHookSpecificOutput = {
+      hookEventName: "PostToolUse",
+      updatedToolOutput: renderPostHocViolation(diagnostic),
+      additionalContext:
+        "Defence-in-depth: the PreToolUse frozen-zone hook should have blocked this. Revert the change; do not retry.",
+    };
+    return { hookSpecificOutput: postOutput };
   };
 }

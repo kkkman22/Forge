@@ -8,11 +8,7 @@ import { describe, expect, it } from "vitest";
 const ROOT = resolve(import.meta.dirname, "..");
 // Files known to call execFileSync("git", ...). If a new file starts calling
 // git, add it here so the contract covers it.
-const GIT_CALLING_FILES = [
-    "src/doctor.ts",
-    "src/baseline-resolver.ts",
-    "src/cleanup-chain.ts",
-];
+const GIT_CALLING_FILES = ["src/doctor.ts", "src/baseline-resolver.ts", "src/cleanup-chain.ts"];
 describe("process-lifecycle-management R5: git calls have timeout + SIGTERM", () => {
     it("every execFileSync('git', ...) call site has a timeout option within 6 lines", () => {
         const violations = [];
