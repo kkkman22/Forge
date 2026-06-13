@@ -7,7 +7,7 @@ export default defineConfig({
     include: ["test/**/*.test.ts", "packs/**/*.test.ts", "skills/**/*.test.ts"],
     testTimeout: 5000,
     pool: "threads",
-    maxWorkers: 2,
+    maxWorkers: 4,
     fileParallelism: true,
     coverage: {
       provider: "v8",
