@@ -73,3 +73,11 @@ Hook 脚本中：(1) 用 `case` 语句精确匹配 allowlist，不用 `grep -qE`
 **来源**: code-slim-0612 P1-Wave1
 
 `check-dist-sync.mjs` 使用 `git ls-files` 读 git 索引而非工作树。`rm` 删除文件后索引仍跟踪旧路径 → 误报 drift。删除文件后必须 `git add <path>` 暂存删除使索引更新，dist-sync 才能正确通过。此外 dist 模型双轨：`dist/src/*` gitignored / `dist/test/*` tracked，跨任务未运行 dist:resync 会导致 tracked dist 滞后。
+
+### 删除模块前必须验证三重边界：barrel re-export + skill 引用 + 调用链深度
+
+**Confidence_Score**: 0.85
+**Tags**: refactor, dead-code, barrel, skill-references, call-chain
+**来源**: code-slim-0612 P2-Wave2
+
+判断模块是否可安全删除需验证三重边界：(1) **Barrel re-export**：grep `src/index.ts` 是否 re-export 该模块——如果是，删除会改变公共 API（违反 INV-1）；(2) **Skill/instructions 引用**：grep `skills/` 是否有 `instructions.md` 引用该模块——skill 行为依赖代码存在但无显式 import；(3) **调用链深度**：零直接 caller 不够，需追踪二级调用（A→B→C，B 零外部 caller 但 C 被 scripts/ 调用 → B 非死代码）。错误案例：Explore agent 报 renderer-registry.ts 死代码，实际被 ssot-loader.ts 调用，而 ssot-loader 被 scripts/ 使用。
