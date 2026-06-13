@@ -14,6 +14,19 @@ function tempRoot(): string {
   return root;
 }
 
+// Create the worker runtime assets under <root>/scripts/ so readRuntimeSyncHealth
+// can find them (source-mode layout). Satisfies runtime-worker-context-control R7.4.
+function writeWorkerRuntimeAssets(root: string): void {
+  mkdirSync(join(root, "scripts"), { recursive: true });
+  for (const rel of [
+    "forge-hook-dispatch.mjs",
+    "forge-phase-worker.mjs",
+    "forge-sync-runtime.mjs",
+  ]) {
+    writeFileSync(join(root, "scripts", rel), "// runtime asset\n", "utf-8");
+  }
+}
+
 afterEach(() => {
   for (const root of tempRoots.splice(0)) {
     rmSync(root, { recursive: true, force: true });
@@ -182,5 +195,21 @@ describe("doctor health snapshot", () => {
     expect(rendered).toContain("Profile: enterprise");
     expect(rendered).toContain("Next: ship blocked");
     expect(rendered).toContain("MISSING_ARTIFACT");
+  });
+
+  it("runtimeSync fails when worker runtime assets are missing (R7.4)", () => {
+    const root = tempRoot(); // scripts/ not populated → all assets missing
+    const snapshot = buildHealthSnapshot({ projectRoot: root, currentHead: "head-1" });
+    expect(snapshot.runtimeSync.status).toBe("fail");
+    expect(snapshot.runtimeSync.message).toContain("Missing worker runtime assets");
+    expect(snapshot.runtimeSync.message).toContain("forge-hook-dispatch.mjs");
+  });
+
+  it("runtimeSync passes when all worker runtime assets are present (R7.4)", () => {
+    const root = tempRoot();
+    writeWorkerRuntimeAssets(root);
+    const snapshot = buildHealthSnapshot({ projectRoot: root, currentHead: "head-1" });
+    expect(snapshot.runtimeSync.status).toBe("pass");
+    expect(snapshot.runtimeSync.message).toContain("All worker runtime assets present");
   });
 });

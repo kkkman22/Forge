@@ -53,6 +53,7 @@ export interface ForgeHealthSnapshot {
   shipGate: HealthCheck;
   distSync: HealthCheck;
   docsDrift: HealthCheck;
+  runtimeSync: HealthCheck;
   toolHealth: HealthCheck;
   gates: Record<string, HealthCheck>;
   artifacts: Partial<Record<EvidenceArtifactKind, string>>;
@@ -191,7 +192,15 @@ function buildTaskScopedChecks(
   currentHead: string,
 ): Pick<
   ForgeHealthSnapshot,
-  "spec" | "plan" | "progress" | "freshness" | "shipGate" | "distSync" | "docsDrift" | "toolHealth"
+  | "spec"
+  | "plan"
+  | "progress"
+  | "freshness"
+  | "shipGate"
+  | "distSync"
+  | "docsDrift"
+  | "runtimeSync"
+  | "toolHealth"
 > {
   return {
     spec: readSpecHealth(projectRoot, topic),
@@ -210,6 +219,7 @@ function buildTaskScopedChecks(
       "docs drift state skipped by default; run typed forge_docs_drift for full check",
       "typed-capability:forge_docs_drift",
     ),
+    runtimeSync: readRuntimeSyncHealth(projectRoot),
     toolHealth: readToolHealth(projectRoot),
   };
 }
@@ -400,6 +410,37 @@ function skippedCheck(message: string, source: string): HealthCheck {
     status: "unknown",
     message,
     source,
+  };
+}
+
+// Worker runtime scripts that must be present for Forge hooks/phase-worker to
+// function. Source mode expects them at <projectRoot>/scripts/; marketplace
+// mode ships them in dist-plugin/scripts/. Satisfies runtime-worker-context-
+// control R7.4 (forge doctor reports missing worker runtime assets).
+const WORKER_RUNTIME_ASSETS = [
+  "scripts/forge-hook-dispatch.mjs",
+  "scripts/forge-phase-worker.mjs",
+  "scripts/forge-sync-runtime.mjs",
+] as const;
+
+function readRuntimeSyncHealth(projectRoot: string): HealthCheck {
+  const missing: string[] = [];
+  for (const rel of WORKER_RUNTIME_ASSETS) {
+    if (!existsSync(path.join(projectRoot, rel))) {
+      missing.push(rel);
+    }
+  }
+  if (missing.length === 0) {
+    return {
+      status: "pass",
+      message: "All worker runtime assets present",
+      source: "scripts/forge-*-runtime.mjs",
+    };
+  }
+  return {
+    status: "fail",
+    message: `Missing worker runtime assets: ${missing.join(", ")}. Run the runtime sync (repairRuntimeConfig) or reinstall the plugin to restore them.`,
+    source: "scripts/forge-*-runtime.mjs",
   };
 }
 
