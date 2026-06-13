@@ -14,6 +14,8 @@ export interface StopWhenState {
   totalIterations: number;
   consecutiveFailures: number;
   lastSuccessCommit: string;
+  /** Cumulative count of successful commits. When present, drives commit-count; falls back to the binary lastSuccessCommit check otherwise. */
+  successCommitCount?: number;
   phase: string;
   haltReason: string;
 }
@@ -105,7 +107,12 @@ export function evaluateStopWhen(condition: string, state: StopWhenState): StopW
 
     case "commit-count": {
       const target = parsed.value as number;
-      const current = state.lastSuccessCommit !== "" ? 1 : 0;
+      // Prefer the cumulative counter when the driver tracks it, so that
+      // commit-count:N for N>1 is reachable. Fall back to the legacy binary
+      // check (non-empty lastSuccessCommit ⇒ 1) for callers that haven't
+      // adopted successCommitCount yet — keeps commit-count:1 working.
+      const current =
+        state.successCommitCount ?? (state.lastSuccessCommit !== "" ? 1 : 0);
       if (current >= target) {
         return {
           shouldStop: true,

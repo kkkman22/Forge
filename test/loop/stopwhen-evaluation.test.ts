@@ -106,6 +106,37 @@ describe("stopWhen Evaluation", () => {
       });
       expect(result.shouldStop).toBe(false);
     });
+
+    // P3 FIX: commit-count:N for N>1 must be reachable. Previously current
+    // was derived as `lastSuccessCommit !== "" ? 1 : 0`, capping at 1, so
+    // commit-count:3 could never fire — a silent dead feature.
+    it("stops when successCommitCount reaches target (N=3)", async () => {
+      const { evaluateStopWhen } = await loadModule();
+      const result = evaluateStopWhen("commit-count:3", {
+        ...BASE_STATE,
+        successCommitCount: 3,
+      });
+      expect(result.shouldStop).toBe(true);
+      expect(result.reason).toContain("3/3");
+    });
+
+    it("does not stop when successCommitCount below target (N=3, have 2)", async () => {
+      const { evaluateStopWhen } = await loadModule();
+      const result = evaluateStopWhen("commit-count:3", {
+        ...BASE_STATE,
+        successCommitCount: 2,
+      });
+      expect(result.shouldStop).toBe(false);
+    });
+
+    it("stops when successCommitCount exceeds target (N=2, have 5)", async () => {
+      const { evaluateStopWhen } = await loadModule();
+      const result = evaluateStopWhen("commit-count:2", {
+        ...BASE_STATE,
+        successCommitCount: 5,
+      });
+      expect(result.shouldStop).toBe(true);
+    });
   });
 
   // ── empty / no condition ─────────────────────────────────────────────
