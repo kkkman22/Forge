@@ -202,7 +202,7 @@ export async function loadSpecBundle(
 // writeSpecBundle
 // ---------------------------------------------------------------------------
 
-function renderFrontmatter(fm: SpecFileFrontmatter): string {
+export function renderFrontmatter(fm: SpecFileFrontmatter): string {
   const lines = ["---"];
   lines.push(`feature: ${fm.feature}`);
   lines.push(`status: ${fm.status}`);
@@ -217,7 +217,7 @@ function renderFrontmatter(fm: SpecFileFrontmatter): string {
   return lines.join("\n");
 }
 
-function renderRequirementsMarkdown(req: RequirementsDocument): string {
+export function renderRequirementsMarkdown(req: RequirementsDocument): string {
   const parts: string[] = [];
   parts.push(renderFrontmatter(req.frontmatter));
   parts.push("");
@@ -292,7 +292,7 @@ function renderRequirementsMarkdown(req: RequirementsDocument): string {
   return parts.join("\n");
 }
 
-function renderDesignMarkdown(doc: DesignDocument): string {
+export function renderDesignMarkdown(doc: DesignDocument): string {
   const parts: string[] = [];
   parts.push(renderFrontmatter(doc.frontmatter));
   parts.push("");
@@ -365,7 +365,7 @@ function renderDesignMarkdown(doc: DesignDocument): string {
   return parts.join("\n");
 }
 
-function renderTasksMarkdown(doc: TasksSeedDocument): string {
+export function renderTasksMarkdown(doc: TasksSeedDocument): string {
   const parts: string[] = [];
   parts.push(renderFrontmatter(doc.frontmatter));
   parts.push("");
