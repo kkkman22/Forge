@@ -15,7 +15,6 @@ import { cmuxAvailable } from "../../scripts/cmux-mirror/lib/availability.mjs";
 import {
   buildConsoleArgs,
   buildErrorsArgs,
-  buildFocusWebviewArgs,
   buildScreenshotArgs,
   injectSurface,
 } from "../../scripts/cmux-mirror/lib/browser-q-actions.mjs";
@@ -50,10 +49,6 @@ describe("browser-q-actions: argv builders (grounded on `cmux browser --help`)",
   it("buildErrorsArgs emits `browser errors list` (0.64.15 view-action)", () => {
     expect(buildErrorsArgs()).toEqual(["browser", "errors", "list"]);
   });
-
-  it("buildFocusWebviewArgs emits `browser focus-webview` (0.64.13 focus primitive)", () => {
-    expect(buildFocusWebviewArgs()).toEqual(["browser", "focus-webview"]);
-  });
 });
 
 describe("injectSurface: optional surface handle", () => {
@@ -74,6 +69,14 @@ describe("injectSurface: optional surface handle", () => {
       "workspace:1",
     ]);
   });
+
+  it("rejects a surface containing whitespace, shell-meta, or traversal (S2)", () => {
+    const base = buildConsoleArgs();
+    expect(() => injectSurface(base, "surface:1 --out=/x")).toThrow();
+    expect(() => injectSurface(base, "surface 1")).toThrow();
+    expect(() => injectSurface(base, "surface:1\nrm")).toThrow();
+    expect(() => injectSurface(base, "../escape")).toThrow();
+  });
 });
 
 describe("collectBrowserDiagnostics: read-only QA artifacts (R8 enhancement)", () => {
@@ -88,6 +91,14 @@ describe("collectBrowserDiagnostics: read-only QA artifacts (R8 enhancement)", (
     const res = await collectBrowserDiagnostics({ forgeDir: join(TMP_DIR, "nope") });
     expect(res.collected).toEqual([]);
     expect(res.dir).toBeNull();
+  });
+
+  it("rejects a traversal/absolute topic and falls back under forgeDir (S1)", async () => {
+    mkdirSync(TMP_DIR, { recursive: true });
+    const res = await collectBrowserDiagnostics({ forgeDir: TMP_DIR, topic: "../../etc" });
+    // dir MUST stay inside TMP_DIR/findings — never escape to an ancestor.
+    expect(res.dir?.startsWith(join(TMP_DIR, "findings"))).toBe(true);
+    expect(res.dir?.includes("..")).toBe(false);
   });
 
   it("writes console/errors artifacts and passes the screenshot --out into the findings dir", async () => {

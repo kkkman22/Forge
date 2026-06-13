@@ -48,15 +48,13 @@ export function buildErrorsArgs() {
   return ["browser", "errors", "list"];
 }
 
-/** `cmux browser focus-webview` — 0.64.13 focus primitive (pre-interaction). */
-export function buildFocusWebviewArgs() {
-  return ["browser", "focus-webview"];
-}
+const SAFE_SURFACE = /^[A-Za-z0-9._:-]{1,64}$/;
 
 /**
  * Insert `--surface <handle>` right after the leading `browser` token.
  * Returns the input array unchanged when no surface is given or the args are
- * not a browser command.
+ * not a browser command. Throws on an invalid surface (S2: a caller-supplied
+ * surface must not pollute the argv with extra flags / shell-meta).
  * @param {string[]} args
  * @param {string} [surface]
  * @returns {string[]}
@@ -64,5 +62,8 @@ export function buildFocusWebviewArgs() {
 export function injectSurface(args, surface) {
   if (!surface) return args;
   if (args[0] !== "browser") return args;
+  if (typeof surface !== "string" || !SAFE_SURFACE.test(surface)) {
+    throw new Error(`injectSurface: invalid surface handle: ${String(surface)}`);
+  }
   return ["browser", "--surface", surface, ...args.slice(1)];
 }

@@ -22,6 +22,10 @@ const QA_STEPS = [
   { name: "screenshot", args: ["browser", "screenshot"] },
 ];
 
+// S1: confine the `topic` path segment in collectBrowserDiagnostics so a
+// caller-supplied topic cannot traverse out of forgeDir.
+const SAFE_TOPIC = /^[A-Za-z0-9._-]{1,64}$/;
+
 /**
  * Run browser QA sequence (R8.1–R8.9).
  * Returns { verdict, failures, steps, timestamp }.
@@ -134,7 +138,15 @@ export async function collectBrowserDiagnostics({
     if (!cmuxAvailable()) return result;
     if (!existsSync(forgeDir)) return result;
 
-    const dir = join(forgeDir, "findings", topic, "browser-qa");
+    // S1: confine `topic` so a caller-supplied value cannot escape forgeDir via
+    // path traversal (e.g. "../../etc" or an absolute path). Fall back to
+    // "default" on any violation — never throw (preserves the never-throws R8.8
+    // contract). outPath is already guarded in buildScreenshotArgs; this closes
+    // the asymmetry on the `topic` segment of the same path.
+    const safeTopic =
+      typeof topic === "string" && SAFE_TOPIC.test(topic) ? topic : "default";
+
+    const dir = join(forgeDir, "findings", safeTopic, "browser-qa");
     mkdirSync(dir, { recursive: true });
     result.dir = dir;
 

@@ -222,7 +222,7 @@ bash scripts/pre-push-ci-check.sh
 
 **技术栈**：TypeScript 5.9（strict）、293 个 TypeScript 模块、Vitest 4.1、fast-check 4.7（属性测试）、Biome 2.4（lint + format）。运行时依赖：`@anthropic-ai/claude-agent-sdk`、`@modelcontextprotocol/sdk`、`commander`、`minimatch`、`yaml`、`zod`。
 
-**测试策略**：7443 个测试（617 个测试文件）验证不变量。覆盖率 ~87% statements。
+**测试策略**：7446 个测试（617 个测试文件）验证不变量。覆盖率 ~87% statements。
 
 
 ---

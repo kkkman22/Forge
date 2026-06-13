@@ -36,6 +36,18 @@ describe("buildRpcArgs: cmux 0.64.x rpc envelope", () => {
     const args = buildRpcArgs({ method: "set_progress" });
     expect(args).toEqual(["rpc", "set_progress"]);
   });
+
+  it("accepts dotted method names (notification.create / browser.open)", () => {
+    expect(buildRpcArgs({ method: "notification.create" })).toEqual(["rpc", "notification.create"]);
+    expect(buildRpcArgs({ method: "browser.open" })[1]).toBe("browser.open");
+  });
+
+  it("rejects a method containing shell-meta / whitespace / path chars (Q3)", () => {
+    expect(() => buildRpcArgs({ method: "set_status; rm -rf /" })).toThrow();
+    expect(() => buildRpcArgs({ method: "set status" })).toThrow();
+    expect(() => buildRpcArgs({ method: "../rpc/leak" })).toThrow();
+    expect(() => buildRpcArgs({ method: "" })).toThrow();
+  });
 });
 
 describe("sync-once dispatch: every command is routed through `cmux rpc`", () => {
