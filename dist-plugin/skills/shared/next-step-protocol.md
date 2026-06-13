@@ -49,6 +49,7 @@ Forge 不尝试自动触发 compact（技术上不可行）。而是：
 4. 成功完成时：输出一行摘要，然后**立即调用** `Skill(skill="forge", args="<next>")` 执行下一阶段
 5. 失败/阻断时：输出问题清单，**停止**，等待用户决定
 6. 用户传入 `--no-advance` 参数时，不自动推进，仅输出摘要
+7. **禁止**使用 AskUserQuestion 询问 context 预算相关决策（是否 /clear、是否 /compact、是否继续）。context 预算检查仅输出建议文字（如 `📊 建议执行 /compact 再继续`），由用户自行决定。只有累积 Read >150 KB 时才强制停止并输出 `⛔ MUST /clear + /forge resume`
 
 ## 需要用户决策的阶段
 
