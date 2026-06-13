@@ -458,6 +458,8 @@ Post-Review Step 4: 自动 /simplify + commit + 验证
 
 → 函数签名详见 references/function-contracts.md
 
+**Compact-Safe 模式（ce-inspired R10）**：当 context 接近上限（默认 100K tokens，阈值见 `.forge/config.md` 的 `context_budget`）时，自动降级为 compact-safe 模式而非失败或输出残缺。实现：`decideCompactSafe(currentTokens, contextBudget)`（`src/review/compact-safe.ts`）→ `{compactSafe, threshold}`。激活后：跳过 Validation Pass；仅启用 spec-check + security-check（`filterToCompactSafeLayers` 跳过 quality + adversarial）；merge 用简化去重 `compactSafeDedup`（仅按 file+line，不 normalize）；报告开头标注 `renderCompactSafeBanner()` + 每个 finding 用 `formatCompactSafeFinding`（仅 ID/severity/title/file:line）。**confidence gate 严格性不变**（R10.4）。也可用 `--compact-safe` CLI flag 强制启用。
+
 ## 17. Known AI Failure Modes
 
 | # | Failure Mode | Correct Approach |
