@@ -70,7 +70,7 @@ grouped by status (active, deferred, completed, archived).`);
 
 const VALID_STATUSES = new Set([
   "draft", "approved", "in_progress", "completed", "deferred", "archived", "locked",
-  "partial", "dormant", "superseded", "obsolete",
+  "partial", "dormant", "superseded", "obsolete", "retired-partial",
 ]);
 
 const ISO_DATE_RE = /^\d{4}-\d{2}-\d{2}$/;
@@ -298,8 +298,11 @@ function generateIndex(specs, archivedSpecs) {
   const completed = specs.filter((s) => s.status === "completed")
     .sort((a, b) => a.name.localeCompare(b.name));
 
+  const retired = specs.filter((s) => s.status === "retired-partial")
+    .sort((a, b) => a.name.localeCompare(b.name));
+
   const other = specs.filter((s) =>
-    !["draft", "approved", "in_progress", "deferred", "completed", "locked"].includes(s.status)
+    !["draft", "approved", "in_progress", "deferred", "completed", "locked", "retired-partial"].includes(s.status)
   ).sort((a, b) => a.name.localeCompare(b.name));
 
   // Stats
@@ -315,6 +318,7 @@ function generateIndex(specs, archivedSpecs) {
     obsolete: specs.filter((s) => s.status === "obsolete").length,
     deferred: deferred.length,
     archived: archivedSpecs.length,
+    "retired-partial": retired.length,
   };
 
   const lines = [];
@@ -341,6 +345,7 @@ function generateIndex(specs, archivedSpecs) {
   lines.push(`| obsolete | ${stats.obsolete} |`);
   lines.push(`| deferred | ${stats.deferred} |`);
   lines.push(`| archived | ${stats.archived} |`);
+  lines.push(`| retired-partial | ${stats["retired-partial"]} |`);
   lines.push("");
 
   // Active specs
@@ -380,6 +385,22 @@ function generateIndex(specs, archivedSpecs) {
     lines.push("|------|------|---------|");
 
     for (const s of [...completed, ...other]) {
+      lines.push(`| ${s.name} | ${s.status} | ${s.updated || ""} |`);
+    }
+    lines.push("");
+  }
+
+  // Retired-partial specs (honestly retired: core ACs delivered, remainder
+  // obsoleted by a later spec or blocked on an unstable external API)
+  if (retired.length > 0) {
+    lines.push("## 已退役 Spec (Retired-Partial)");
+    lines.push("");
+    lines.push("> 已交付核心 AC，剩余 AC 被后续 spec 取代或受外部未稳定 API 阻塞。详见各 spec 的 `status_note`。");
+    lines.push("");
+    lines.push("| 名称 | 状态 | 最后更新 |");
+    lines.push("|------|------|---------|");
+
+    for (const s of retired) {
       lines.push(`| ${s.name} | ${s.status} | ${s.updated || ""} |`);
     }
     lines.push("");
