@@ -88,6 +88,36 @@ describe("createFrozenZoneHook", () => {
         const output = result;
         expect(output.hookSpecificOutput?.permissionDecision).toBe("deny");
     });
+    it("emits structured Frozen_Diagnostic fields for a locked spec (R1/R2)", async () => {
+        const specPath = join(tmpDir, ".forge", "specs", "locked-spec.md");
+        writeFileSync(specPath, "---\nstatus: locked\n---\n# Locked\n");
+        const result = await hook(makeHookInput("Write", specPath), "tool-use-r1", {
+            signal: new AbortController().signal,
+        });
+        const output = result;
+        // R2.1/R2.3: systemMessage includes category + unlock instruction.
+        expect(output.hookSpecificOutput?.permissionDecision).toBe("deny");
+        const reason = output.hookSpecificOutput?.permissionDecisionReason ?? "";
+        expect(reason).toContain("frozen-spec");
+        expect(reason).toContain("SPEC_LOCKED");
+        expect(reason).toContain(specPath);
+        expect(reason).toContain("/forge spec"); // unlock instruction
+        // R2.4: additionalContext surfaces the suggested alternative + status.md reminder.
+        const ctx = output.hookSpecificOutput?.additionalContext ?? "";
+        expect(ctx).toContain(".forge/findings/");
+        expect(ctx).toContain(".forge/status.md");
+    });
+    it("classifies an approved plan as frozen-plan with PLAN_APPROVED (R1.4)", async () => {
+        const planPath = join(tmpDir, ".forge", "plans", "approved-plan.md");
+        writeFileSync(planPath, "---\nstatus: approved\n---\n# Plan\n");
+        const result = await hook(makeHookInput("Edit", planPath), "tool-use-plan", {
+            signal: new AbortController().signal,
+        });
+        const output = result;
+        const reason = output.hookSpecificOutput?.permissionDecisionReason ?? "";
+        expect(reason).toContain("frozen-plan");
+        expect(reason).toContain("PLAN_APPROVED");
+    });
 });
 // ---------------------------------------------------------------------------
 // Hook coexistence with SDK sandbox
