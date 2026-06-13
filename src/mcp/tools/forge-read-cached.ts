@@ -12,6 +12,7 @@
  */
 
 import { readFile } from "node:fs/promises";
+import { createHash } from "node:crypto";
 import { resolve as resolvePath } from "node:path";
 import type { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { z } from "zod";
@@ -102,15 +103,41 @@ const TOOL_DESCRIPTION = [
 ].join("\n");
 
 /**
+ * Derive a stable, per-project session id from the resolved root path so caches
+ * are isolated per project instead of collapsing every project into a single
+ * shared "mcp-default" file (which caused cross-project hash collisions and
+ * made the cache useless across projects). Falls back to the process pid when
+ * no root is bound.
+ */
+function deriveSessionId(root?: ResolvedRoot): string {
+  if (root?.path) {
+    return createHash("sha1").update(root.path).digest("hex").slice(0, 16);
+  }
+  return `proc-${process.pid}`;
+}
+
+/**
  * Register the `forge_read_cached` tool on the given MCP server.
+ *
+ * `sessionId` overrides the derived per-project id (useful for tests). When an
+ * external `index` is provided it is used directly and no persistence occurs.
  */
 export function registerForgeReadCached(
   server: McpServer,
   root?: ResolvedRoot,
   index?: ReadCacheIndex,
+  sessionId?: string,
 ): void {
   // Track whether an external index was provided (for testing)
   const externalIndex = index;
+  const resolvedSessionId = sessionId ?? deriveSessionId(root);
+
+  // Serialize reads that share a session index. The read path is a
+  // load → read → update → persist cycle that overwrites the whole cache file;
+  // without serialization, concurrent reads clobber each other's entries.
+  // This in-process promise chain makes overlapping reads run one at a time
+  // while preserving async semantics for the caller.
+  let readChain: Promise<unknown> = Promise.resolve();
 
   server.tool(
     "forge_read_cached",
@@ -137,13 +164,26 @@ export function registerForgeReadCached(
         resolvedPath = filePath;
       }
 
-      // Load persisted index or use external index (for testing)
-      const cacheIndex = externalIndex ?? (await loadOrCreateIndex("mcp-default"));
-      const result = await handleReadCached(cacheIndex, resolvedPath, start_line, end_line);
-
-      return {
-        content: [{ type: "text" as const, text: result.content }],
+      // Serialize per-session read-modify-write to avoid lost updates. Each
+      // call attaches to the tail of the chain; the result is threaded back
+      // through the same promise so callers still await their own outcome.
+      const run = async (): Promise<{ content: Array<{ type: "text"; text: string }> }> => {
+        const cacheIndex = externalIndex ?? (await loadOrCreateIndex(resolvedSessionId));
+        const result = await handleReadCached(cacheIndex, resolvedPath, start_line, end_line);
+        return { content: [{ type: "text" as const, text: result.content }] };
       };
+
+      if (externalIndex) {
+        // External (test) index — no persistence, but still serialize to keep
+        // concurrent updates to the shared in-memory index consistent.
+        const result = run();
+        readChain = readChain.then(() => result, () => result);
+        return result;
+      }
+
+      const result = readChain.then(run, run);
+      readChain = result;
+      return result;
     },
   );
 }
