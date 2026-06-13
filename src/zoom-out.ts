@@ -417,7 +417,7 @@ export function formatAutoZoomOutInjection(
  * surrounding whitespace. If the field is missing, the original raw
  * frontmatter is returned unchanged.
  */
-function replacePhaseLine(raw: string, newPhase: string): string {
+export function replacePhaseLine(raw: string, newPhase: string): string {
   const lines = raw.split("\n");
   for (let i = 0; i < lines.length; i++) {
     const line = lines[i];
@@ -434,7 +434,7 @@ function replacePhaseLine(raw: string, newPhase: string): string {
  * Append a new `<field>: <value>` line to the frontmatter raw block.
  * Ensures the insertion preserves the original trailing newline shape.
  */
-function appendFrontmatterField(raw: string, field: string, value: string): string {
+export function appendFrontmatterField(raw: string, field: string, value: string): string {
   const endsWithNewline = raw.endsWith("\n");
   const base = endsWithNewline ? raw : `${raw}\n`;
   return `${base}${field}: ${value}${endsWithNewline ? "" : ""}`;
@@ -444,7 +444,7 @@ function appendFrontmatterField(raw: string, field: string, value: string): stri
  * Remove a single-line `<field>: ...` entry from the frontmatter raw
  * block. No-op if the field is absent.
  */
-function removeFrontmatterField(raw: string, field: string): string {
+export function removeFrontmatterField(raw: string, field: string): string {
   const escaped = field.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
   const lines = raw.split("\n");
   const pattern = new RegExp(`^${escaped}:\\s*`);

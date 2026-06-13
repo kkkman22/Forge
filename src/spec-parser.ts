@@ -133,7 +133,7 @@ function extractListItems(text: string): string[] {
 // Internal: EARS clause extraction
 // ---------------------------------------------------------------------------
 
-function extractEarsClauses(text: string): EarsClause[] {
+export function extractEarsClauses(text: string): EarsClause[] {
   const clauses: EarsClause[] = [];
   const lines = text.split("\n");
 
@@ -179,7 +179,7 @@ function extractEarsClauses(text: string): EarsClause[] {
 const VERIFY_BY_RE = /\[Verify-By:\s*(\w+)\]/i;
 const EVIDENCE_RE = /\[Evidence:\s*([^\]]+)\]/i;
 
-function extractAnnotations(shall: string): {
+export function extractAnnotations(shall: string): {
   verifyBy: string | undefined;
   evidence: string | undefined;
   cleanedShall: string;
