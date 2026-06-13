@@ -1,6 +1,6 @@
 {
   "version": 1,
-  "generated_at": "2026-06-13T01:27:19.008Z",
+  "generated_at": "2026-06-13T07:39:47.974Z",
   "subs": {
     "abort": {
       "instructions": {
@@ -272,7 +272,7 @@
     "forge-cmux-browser-qa": {
       "instructions": {
         "path": "forge-cmux-browser-qa/instructions.md",
-        "sha256": "accaad4603f1f5d1bbf25a7c62dab136ee57b6388d9808ce0b30a43ce633ad40"
+        "sha256": "ae72bac77a5c09f8aea575f73e87fe8f1f7677f3f1f21889401d06e85d7c7e4b"
       },
       "references": []
     },

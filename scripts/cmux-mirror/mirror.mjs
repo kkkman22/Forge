@@ -10,7 +10,8 @@ import { cmuxAvailable } from "./lib/availability.mjs";
 import { loadCapabilities, hasCapability } from "./lib/capabilities.mjs";
 import { readForgeState } from "./lib/reader.mjs";
 import { emitCommands } from "./lib/emitter.mjs";
-import { runCli } from "./lib/cli.mjs";
+import { runCli, buildRpcArgs } from "./lib/cli.mjs";
+import { raiseActiveWorkspace } from "./lib/workspace-reorder.mjs";
 import { createSessionTracker } from "./lib/session.mjs";
 import { createPushServer } from "./lib/push-server.mjs";
 import { readEventsSince } from "./lib/events.mjs";
@@ -48,12 +49,7 @@ async function dispatchCommands(commands) {
   for (const cmd of commands) {
     if (!hasCapability(cmd.method)) continue;
     try {
-      const args = [];
-      // Build cmux CLI args from method + params
-      args.push(cmd.method);
-      if (cmd.params) {
-        args.push(JSON.stringify(cmd.params));
-      }
+      const args = buildRpcArgs(cmd);
       await runCli(args, { timeoutMs: 2000 });
     } catch {
       // Best-effort dispatch (R13.5)
@@ -179,6 +175,15 @@ export async function createMirrorDaemon({
 
   // Step 9: Initial sync
   await handleStateChange("startup");
+
+  // Raise the active Forge workspace to the front of its group (cmux 0.64.10+).
+  // Zero-Impact: no-op when not running inside cmux (no CMUX_WORKSPACE_ID) or
+  // when cmux lacks the `reorder-workspaces` command. The active ref is the
+  // cmux workspace this daemon's pane lives in (per templates/cmux.json).
+  await raiseActiveWorkspace({
+    activeRef: process.env.CMUX_WORKSPACE_ID ?? "",
+    windowId: process.env.CMUX_WINDOW_ID,
+  });
 
   // Step 10-12: Signal handling, event loop
   const shutdown = async () => {
