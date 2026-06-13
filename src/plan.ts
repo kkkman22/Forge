@@ -541,7 +541,7 @@ export function validateDependencies(
  * Detect cycles in task dependencies using Kahn's algorithm.
  * Returns an error message if a cycle is found, null otherwise.
  */
-function detectCycleInTasks(
+export function detectCycleInTasks(
   tasks: Array<{ taskNumber: number; dependsOn?: number[] }>,
 ): string | null {
   const inDegree = new Map<number, number>();
@@ -594,7 +594,7 @@ function detectCycleInTasks(
  * Validate that tasks are in topological order: dependencies appear before dependents.
  * Returns an error message if ordering is violated, null otherwise.
  */
-function validateTopologicalOrder(
+export function validateTopologicalOrder(
   tasks: Array<{ taskNumber: number; dependsOn?: number[] }>,
 ): string | null {
   const position = new Map<number, number>();

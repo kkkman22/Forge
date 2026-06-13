@@ -252,7 +252,7 @@ interface TermAccumulator {
  * Parse the body (everything after the closing frontmatter delimiter) into
  * an ordered list of `GlossaryTerm` entries.
  */
-function parseTerms(body: string): GlossaryTerm[] {
+export function parseTerms(body: string): GlossaryTerm[] {
   const terms: GlossaryTerm[] = [];
   const lines = body.split("\n");
   let current: TermAccumulator | null = null;
@@ -396,7 +396,7 @@ function parseTerms(body: string): GlossaryTerm[] {
  *     content inside the archived section (they would be dropped by
  *     `parseTerms` since "Archived" fails the term-block requirements)
  */
-function splitBodyByArchiveSentinel(body: string): { active: string; archived: string } {
+export function splitBodyByArchiveSentinel(body: string): { active: string; archived: string } {
   const lines = body.split("\n");
   for (let i = 0; i < lines.length; i += 1) {
     if (lines[i].trimEnd() === ARCHIVED_SENTINEL) {
@@ -667,7 +667,7 @@ export function archiveTerm(glossary: Glossary, termName: string): Glossary {
 const MS_PER_DAY = 24 * 60 * 60 * 1000;
 
 /** Case- and whitespace-insensitive normalization used for name lookups. */
-function normalize(value: string): string {
+export function normalize(value: string): string {
   return value.trim().toLowerCase();
 }
 
@@ -676,7 +676,7 @@ function normalize(value: string): string {
  * preserving the order of first appearance. Comparison is
  * case-insensitive; the first surface form wins.
  */
-function mergeAliases(existing: string[] | undefined, incoming: string[]): string[] {
+export function mergeAliases(existing: string[] | undefined, incoming: string[]): string[] {
   const out: string[] = [];
   const seen = new Set<string>();
 
