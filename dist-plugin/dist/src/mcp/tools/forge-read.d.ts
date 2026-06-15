@@ -24,6 +24,13 @@ export declare function validateScript(script: string): string | null;
  * to prevent resource exhaustion from malicious or buggy scripts.
  */
 export declare function buildSandboxEnv(language: "javascript" | "shell", paths: string[]): Record<string, string | undefined>;
+export declare function buildPermissionArgs(allowedPaths: string[]): string[];
+interface AllowedReadFile {
+    inputPath: string;
+    resolvedPath: string;
+    realPath: string;
+}
+export declare function resolveAllowedReadFiles(paths: string[], cwd?: string): AllowedReadFile[];
 export interface ReadExecResult {
     stdout: string;
     stderr: string;

@@ -119,6 +119,21 @@ Uses `src/loop/stopwhen.ts`:
 
 Evaluate via `evaluateStopWhen(condition, state)` before each iteration.
 
+## 7b. Events_NDJSON 事件流（cmux-integration R14）
+
+Loop 的每次状态转换 SHALL 通过 `src/event-writer.ts` 的 `writeEvent()` 写入 `.forge/runs/<run_id>/events.ndjson`（append-only NDJSON），供 Mirror_Daemon / `/forge learn --from-runs` / `/forge debug` 消费。
+
+| 事件 | 触发点 | 必填字段 |
+|------|--------|---------|
+| `session_started` | Loop 启动时 | `objective`, `max_iterations`, `stop_when`, `worktree_mode` |
+| `iter_started` | 每次迭代开始 | `iteration` (正整数) |
+| `iter_committed` | commit 成功后 | `iteration`, `commit_sha`, `subject` |
+| `iter_rolled_back` | three-strike rollback 后 | `iteration`, `reason` |
+| `circuit_breaker_tripped` | consecutiveFailures ≥ 3 | `consecutive_failures` |
+| `loop_terminated` | stopWhen 或中止 | `reason` (`natural`/`interrupted`/`error`), `total_iterations`, `total_commits` |
+
+**实现**：`writeEvent({ ts: ISO, type, run_id, schema_version: 1, ...fields }, forgeRoot)`。写入是 best-effort（失败仅 warn，不阻断 loop）。`objective`/`subject`/`reason` 字段 SHALL 经 redaction（`src/secret-redactor.ts`）后再写入（R14.8）。
+
 ## 8. Autonomous Mode Presets
 
 All confirmation points use presets — no human prompts:

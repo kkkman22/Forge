@@ -458,6 +458,10 @@ Post-Review Step 4: 自动 /simplify + commit + 验证
 
 → 函数签名详见 references/function-contracts.md
 
+**Compact-Safe 模式（ce-inspired R10）**：当 context 接近上限（默认 100K tokens，阈值见 `.forge/config.md` 的 `context_budget`）时，自动降级为 compact-safe 模式而非失败或输出残缺。实现：`decideCompactSafe(currentTokens, contextBudget)`（`src/review/compact-safe.ts`）→ `{compactSafe, threshold}`。激活后：跳过 Validation Pass；仅启用 spec-check + security-check（`filterToCompactSafeLayers` 跳过 quality + adversarial）；merge 用简化去重 `compactSafeDedup`（仅按 file+line，不 normalize）；报告开头标注 `renderCompactSafeBanner()` + 每个 finding 用 `formatCompactSafeFinding`（仅 ID/severity/title/file:line）。**confidence gate 严格性不变**（R10.4）。也可用 `--compact-safe` CLI flag 强制启用。
+
+**Validation Pass（ce-inspired R5，Full tier 默认启用）**：三层 review merge 后、ship 前的可选独立验证环节。`.forge/config.md` 的 `review_enable_validation: true`（默认）+ Full tier 时启用；Standard/Light 跳过；`--no-validation` 强制跳过。为每个存活的 P0/P1 finding spawn 独立 `validation-pass` agent（`agents/validation-pass.md`，model sonnet/inherit by severity），**只传 title/severity/file/line/evidence，不传 reviewer identity**（R5.3 无承诺效应）。agent 返回 `{confirmed, reason, adjusted_confidence}`（R5.4）。forge-review 用 `applyValidationResult`（`src/review/validation-pass.ts`）应用降级：P0 未确认→P1、P1 未确认→P2，均标注 `↓ validation: <reason>`（R5.5/R5.6）；P2/P3 未确认不改 severity。结果逐行写入 `.forge/progress/<slug>-review-validation.jsonl`（`serializeValidationRecord`，R5.8 供 /forge learn 追溯）。
+
 ## 17. Known AI Failure Modes
 
 | # | Failure Mode | Correct Approach |

@@ -1,6 +1,6 @@
 {
   "version": 1,
-  "generated_at": "2026-06-13T14:40:10.996Z",
+  "generated_at": "2026-06-15T09:27:55.751Z",
   "subs": {
     "abort": {
       "instructions": {
@@ -372,7 +372,7 @@
     "loop": {
       "instructions": {
         "path": "loop/instructions.md",
-        "sha256": "938fc2d2a9cb2be889c58c74e2e71e8ff689ee7c9f5fd85fc1ec2ac4444ddcbd"
+        "sha256": "adf11e514012fc871bbe2f063a24029dfcdcdc2f9ec2515fb7c37f4418d441ac"
       },
       "references": []
     },
@@ -398,7 +398,7 @@
     "plan": {
       "instructions": {
         "path": "plan/instructions.md",
-        "sha256": "554f145726cfd39692338883f4f26206551d135f1be855cedd179e9b9b75d154"
+        "sha256": "e3f66ab07fe4c97a71e60d06a28b64a60d9980beb962d1365bd28bcaf604b9eb"
       },
       "references": [
         {
@@ -477,7 +477,7 @@
     "resume": {
       "instructions": {
         "path": "resume/instructions.md",
-        "sha256": "247aa89533bd0f0a8e08c9ce2eb831227a5bf386c90bbbd6a409406a3f1d8ed7"
+        "sha256": "13bb578ea1fef6e5bd4ae1e3724c3a1883dfafe59e78007f7d57fe773f7f95fd"
       },
       "references": [
         {
@@ -495,13 +495,17 @@
         {
           "path": "resume/references/output-format.md",
           "sha256": "ec12e0763c7e82d499df968eb57a49fba38cfadbad5541c5556a6026172ff7b0"
+        },
+        {
+          "path": "resume/references/recovery-priority-chain.md",
+          "sha256": "ff4af4cb5fbad16ca6e76d6fcb97412f526124e2453985edbd1f38f00328e09d"
         }
       ]
     },
     "review": {
       "instructions": {
         "path": "review/instructions.md",
-        "sha256": "e688c3056048c58c6e777eba1dfd7692d2d00fa5f12b5553bc1d62fd518f1191"
+        "sha256": "32d34458387dd57ac8348c8d358dc030650d7a9c82babbeba9a96024b8f2fbbe"
       },
       "references": [
         {
@@ -592,7 +596,7 @@
     "ship": {
       "instructions": {
         "path": "ship/instructions.md",
-        "sha256": "18291fb776dca04b8e6370016e580703c6bde23560e3392d22d5cd429830741a"
+        "sha256": "f1b86b4ca7b23c12fa2e03b830ab804df3c17ad1f5a0629547facab8c7c5ccaf"
       },
       "references": [
         {

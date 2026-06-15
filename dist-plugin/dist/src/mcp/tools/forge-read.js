@@ -95,7 +95,7 @@ export function buildSandboxEnv(language, paths) {
     }
     return base;
 }
-function buildPermissionArgs(allowedPaths) {
+export function buildPermissionArgs(allowedPaths) {
     const flags = process.allowedNodeEnvironmentFlags;
     const permissionFlag = flags.has("--permission")
         ? "--permission"
@@ -106,7 +106,7 @@ function buildPermissionArgs(allowedPaths) {
         return [];
     return [permissionFlag, ...allowedPaths.map((p) => `--allow-fs-read=${p}`)];
 }
-function resolveAllowedReadFiles(paths, cwd) {
+export function resolveAllowedReadFiles(paths, cwd) {
     const root = cwd ? resolve(cwd) : process.cwd();
     return paths.map((p) => {
         const resolved = resolve(root, p);

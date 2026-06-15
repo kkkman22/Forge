@@ -570,7 +570,7 @@ function parseTasksBlock(raw) {
     }
     return entries;
 }
-function isCompleteEntry(entry) {
+export function isCompleteEntry(entry) {
     return (typeof entry.taskName === "string" &&
         typeof entry.tier === "string" &&
         typeof entry.phase === "string" &&

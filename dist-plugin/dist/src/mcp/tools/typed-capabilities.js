@@ -162,6 +162,7 @@ const HealthSnapshotSchema = z
     shipGate: HealthCheckSchema,
     distSync: HealthCheckSchema,
     docsDrift: HealthCheckSchema,
+    runtimeSync: HealthCheckSchema,
     toolHealth: HealthCheckSchema,
     gates: z.record(z.string(), HealthCheckSchema),
     artifacts: z.record(z.string(), z.string()),

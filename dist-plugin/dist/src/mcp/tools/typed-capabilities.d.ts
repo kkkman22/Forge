@@ -185,6 +185,11 @@ export declare function validateTypedCapabilityOutput(toolName: TypedCapabilityT
             message: string;
             source?: string | undefined;
         };
+        runtimeSync: {
+            status: "unknown" | "warn" | "pass" | "fail";
+            message: string;
+            source?: string | undefined;
+        };
         toolHealth: {
             status: "unknown" | "warn" | "pass" | "fail";
             message: string;
@@ -283,6 +288,11 @@ export declare function validateTypedCapabilityOutput(toolName: TypedCapabilityT
             source?: string | undefined;
         };
         docsDrift: {
+            status: "unknown" | "warn" | "pass" | "fail";
+            message: string;
+            source?: string | undefined;
+        };
+        runtimeSync: {
             status: "unknown" | "warn" | "pass" | "fail";
             message: string;
             source?: string | undefined;

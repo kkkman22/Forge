@@ -61,8 +61,8 @@ Branch: !`git branch --show-current`
 3. 如果不存在 interim 文件，读取正式会话日志作为补充信息。
 
 **恢复后的首次 Restatement**：通过 AskUserQuestion 选择继续 build 后，派发第一个 Subagent 前**立即执行 Restatement Checkpoint**。
-
 **SKILL Reload（必读）**：恢复后执行任何阶段前：读 `status.md` phase → 读 `skills/forge-{phase}/SKILL.md` → 按步骤执行。适用于所有阶段。Restatement 仅限 build。
+**Recovery Priority Chain（R7）**：恢复时**先**执行 8 步恢复优先级链（读 status → 读 interim → 扫 git log → 查 git status → 对账 progress → 对账 phase → 分类中断点 → 生成 Recovery_Report），收集**全部**不一致后一次性呈现，不在第一个不一致处停下。纯函数 `runRecoveryChain(input)`（`src/resume.ts`）；编排细节与调用约定 → [references/recovery-priority-chain.md](references/recovery-priority-chain.md)。零不一致时进入下方 Five-Question 自动定位。
 
 ### Five-Question Mapping
 | Question | Data Source |

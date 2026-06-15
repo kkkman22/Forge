@@ -82,6 +82,15 @@ if (!result.allowed) {
 
 列出所有需创建/修改的文件。标注 `CREATE` 或 `MODIFY`，说明原因。测试文件与源文件成对。
 
+### Step 2.5: Backlog Overlap Check（forge-review-fix-optimization R6.3）
+
+File Mapping 完成后，检查 `.forge/backlog.md`（若存在）是否有与本计划受影响文件路径重叠的未解决 P2/P3 条目。
+
+**实现**：纯函数 `findOverlappingEntries(entries, affectedFiles)`（`src/backlog.ts`）——传入 `parseBacklog(read(".forge/backlog.md"))` 与本计划 File Mapping 的文件列表，返回重叠条目。
+
+- 若有重叠：在计划开头的 "已知背景" 段列出每条（severity / filePath / description / originTask），提示这些历史 P2/P3 可在本任务中顺手解决（R6.5：解决后调 `resolveEntry` 标记）。
+- 若无 `.forge/backlog.md` 或无重叠：跳过，不阻塞计划。
+
 ### Step 3: Task Breakdown
 
 根据是否有 design.md 选择格式：
