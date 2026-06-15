@@ -25,7 +25,7 @@ export declare function validateScript(script: string): string | null;
  */
 export declare function buildSandboxEnv(language: "javascript" | "shell", paths: string[]): Record<string, string | undefined>;
 export declare function buildPermissionArgs(allowedPaths: string[]): string[];
-interface AllowedReadFile {
+export interface AllowedReadFile {
     inputPath: string;
     resolvedPath: string;
     realPath: string;
