@@ -103,8 +103,6 @@ export function routeForAutofix(findings: ReviewFinding[]): AutofixRouting {
       case "gated_auto":
         gated.push(f);
         break;
-      case "manual":
-      case "advisory":
       default:
         excluded.push(f);
         break;

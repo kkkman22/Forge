@@ -72,6 +72,7 @@ describe("availability: CMUX_WORKSPACE_ID detection (R1.1)", () => {
         __resetForTest();
         const orig = { ...process.env };
         process.env.CMUX_WORKSPACE_ID = "";
+        process.env.CMUX_INTEGRATION = "auto";
         delete process.env.CMUX_SOCKET_PATH;
         try {
             expect(cmuxAvailable()).toBe(false);
