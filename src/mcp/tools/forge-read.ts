@@ -126,7 +126,7 @@ export function buildPermissionArgs(allowedPaths: string[]): string[] {
   return [permissionFlag, ...allowedPaths.map((p) => `--allow-fs-read=${p}`)];
 }
 
-interface AllowedReadFile {
+export interface AllowedReadFile {
   inputPath: string;
   resolvedPath: string;
   realPath: string;

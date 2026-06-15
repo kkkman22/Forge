@@ -274,7 +274,7 @@ export function lintKnowledgeIntegrity(input: IntegrityInput): IntegrityFinding[
 // Internal helpers
 // ---------------------------------------------------------------------------
 
-interface SourceRef {
+export interface SourceRef {
   patternName: string;
   source: string;
 }

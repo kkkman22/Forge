@@ -49,7 +49,7 @@ export function stripQuotes(value: string): string {
   return value;
 }
 
-interface ParsedLine {
+export interface ParsedLine {
   indent: number;
   isDash: boolean;
   content: string;
