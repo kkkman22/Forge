@@ -1,7 +1,10 @@
 #!/usr/bin/env node
 
 /**
- * @deprecated Superseded by CLAUDE_AUTOCOMPACT_PCT_OVERRIDE=60 (global auto-compact).
+ * @deprecated Superseded by CLAUDE_CODE_AUTO_COMPACT_WINDOW + CLAUDE_AUTOCOMPACT_PCT_OVERRIDE
+ * (global auto-compact). Both variables must be set together — PCT alone has no effect on
+ * a default local session (see code.claude.com/docs/en/env-vars). forge init writes
+ * WINDOW=1000000 + PCT=60 for GLM-5.2 1M contexts (regenerative-checkpoint D9).
  * This script is retained for backward compatibility but the primary budget
  * management is now handled by Claude Code's built-in auto-compact mechanism.
  *

@@ -358,6 +358,16 @@ if [[ -f "${FORGE_ROOT}/templates/triage-state.json" ]]; then
   fi
 fi
 
+# --- Copy checkpoint template (idempotent) — regenerative-checkpoint R1 ---
+# checkpoint.md 是再生式 checkpoint 的结构化载体，compact 时由 PostCompact hook
+# 读取并预算化注入。缺失时 PostCompact 降级到 grep 拼 progress fallback。
+if [[ -f "${FORGE_ROOT}/templates/checkpoint.md" ]]; then
+  if [[ ! -f "${PROJECT_ROOT}/.forge/checkpoint.md" ]]; then
+    cp "${FORGE_ROOT}/templates/checkpoint.md" \
+      "${PROJECT_ROOT}/.forge/checkpoint.md"
+  fi
+fi
+
 # 将技术栈转为 YAML 数组格式
 IFS=',' read -ra stack_array <<< "${tech_stack}"
 stack_yaml=""
@@ -757,7 +767,12 @@ if command -v node &>/dev/null; then
     const envVars = {
       'ENABLE_PROMPT_CACHING_1H': 'true',
       'MCP_CONNECTION_NONBLOCKING': 'true',
-      'CLAUDE_CODE_SUBPROCESS_ENV_SCRUB': 'true'
+      'CLAUDE_CODE_SUBPROCESS_ENV_SCRUB': 'true',
+      // regenerative-checkpoint D9: GLM-5.2 1M compact 配置（省额优先）
+      // 两变量必须配合：单独 PCT 对默认本地会话无效（官方 env-vars 文档）。
+      // idempotent：用户已设不同值则跳过（settings.env[key] === undefined 判断）。
+      'CLAUDE_CODE_AUTO_COMPACT_WINDOW': '1000000',
+      'CLAUDE_AUTOCOMPACT_PCT_OVERRIDE': '60'
     };
 
     let added = 0;
@@ -794,7 +809,7 @@ if command -v node &>/dev/null; then
       ;;
   esac
 else
-  warn "未检测到 node 命令，跳过环境变量配置。建议手动添加 ENABLE_PROMPT_CACHING_1H、MCP_CONNECTION_NONBLOCKING、CLAUDE_CODE_SUBPROCESS_ENV_SCRUB 到 .claude/settings.json 的 env 部分。"
+  warn "未检测到 node 命令，跳过环境变量配置。建议手动添加 ENABLE_PROMPT_CACHING_1H、MCP_CONNECTION_NONBLOCKING、CLAUDE_CODE_SUBPROCESS_ENV_SCRUB、CLAUDE_CODE_AUTO_COMPACT_WINDOW、CLAUDE_AUTOCOMPACT_PCT_OVERRIDE 到 .claude/settings.json 的 env 部分。"
 fi
 
 # --- Install cmux workspace layout (idempotent) ---
