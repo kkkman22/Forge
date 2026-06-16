@@ -41,7 +41,7 @@ Last commit: !`git log --oneline -1 2>/dev/null || echo "no commits"`
 ## 2. Initialization (`/forge loop "goal"`)
 
 1. **Pre-flight**: git repo check · clean tree (skip with `--worktree`/`--resume`) · `.forge/` exists · no active `loop_run_id` in status.md (warn + cleanup if found)
-2. **Create state**: Copy `.forge/templates/loop-state.json` → `.forge/loop-state.json`. Fill: `id` (UUID), `goal` (user input), `createdAt` (ISO now), `tier` (from `--tier` or auto-detect)
+2. **Create state**: Copy `.forge/templates/loop-state.json` → `.forge/loop-state.json`. Fill: `id` (UUID), `goal` (user input), `createdAt` (ISO now), `tier` (from `--tier` or auto-detect), `commitNarrativePath` (`.forge/runs/<id>/commit-narrative.md`)
 3. **Branch**: Create `forge/loop-<slug>` from current branch (or reuse with `--resume`)
 4. **Update status.md**: Set `mode: "autonomous"`, `loop_run_id: <id>`, `phase: "build"`
 5. **Enter iteration loop** (§4)
@@ -166,6 +166,8 @@ Commit format: `forge(<phase>): <summary>`
 | **Error** | Keep `loop_run_id` + `phase` for resume. Clear other loop fields. |
 
 **Mission Summary** (on any shutdown): total wall-clock · total iterations · phases completed · token budget used · known-failures matched.
+
+**关键改动复述段**（理解腐烂对策，loop-engineering-adoption R3）：摘录 `.forge/runs/<id>/commit-narrative.md` 的关键节（≤5 条），每条输出 `what` + `why` 两要素，控制在能让没参与的人 30 秒内理解。**WHEN 关键改动超过 5 条**，输出 `⚠️ 建议人工逐条复核——loop 产出了 N 个改动，请确认你仍理解每一处的意图`，提示用户对抗认知投降（论文 §07 第三笔代价）。commit-narrative.md 不存在（如手动 build 非 loop）则跳过本段。
 
 ## 11. Platform Compatibility
 
