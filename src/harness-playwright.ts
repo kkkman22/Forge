@@ -10,6 +10,14 @@
 export interface PlaywrightHarnessOptions {
   appUrl: string;
   designerSpecPath?: string;
+  /**
+   * Optional path to write a full-page screenshot after navigation.
+   * When provided and Playwright is available, a PNG is written here and
+   * the absolute path is echoed back in the result. Used by adversarial-check
+   * behavioral verification (loop-engineering-adoption R1) to capture
+   * confidence:100 mechanical evidence.
+   */
+  screenshotPath?: string;
 }
 
 export interface PlaywrightHarnessResult {
@@ -42,9 +50,26 @@ export async function runPlaywrightHarness(
       const page = await browser.newPage();
       await page.goto(opts.appUrl, { waitUntil: "networkidle", timeout: 10000 });
       const snapshot = await page.accessibility.snapshot();
+
+      // Behavioral verification: capture a screenshot when a path is requested.
+      // This is the mechanical-evidence capture used by adversarial-check (R1).
+      // Screenshot is isolated in its own try: a screenshot failure (disk full,
+      // unwritable path) MUST NOT discard the already-captured accessibility
+      // snapshot — the snapshot is the primary signal, screenshot is bonus.
+      let screenshotPath: string | undefined;
+      if (opts.screenshotPath) {
+        try {
+          await page.screenshot({ path: opts.screenshotPath, fullPage: true });
+          screenshotPath = opts.screenshotPath;
+        } catch {
+          // screenshot failed but snapshot is intact; report ok without screenshotPath
+        }
+      }
+
       return {
         ok: true,
         snapshot: JSON.stringify(snapshot, null, 2),
+        screenshotPath,
       };
     } finally {
       await browser.close();

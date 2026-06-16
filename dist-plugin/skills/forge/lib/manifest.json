@@ -1,6 +1,6 @@
 {
   "version": 1,
-  "generated_at": "2026-06-15T09:51:05.115Z",
+  "generated_at": "2026-06-16T05:24:54.990Z",
   "subs": {
     "abort": {
       "instructions": {
@@ -41,7 +41,7 @@
     "build": {
       "instructions": {
         "path": "build/instructions.md",
-        "sha256": "df73d76eb6c43a4a15ec3d459273d5249e38f6795b17670c28487ff15795ee65"
+        "sha256": "77231f59110792ce756d75a53f39bb2fcb41321717b6f8b04aec0455780c7634"
       },
       "references": [
         {
@@ -71,6 +71,10 @@
         {
           "path": "build/references/cmux.md",
           "sha256": "3dc6da0695a73dc84b4dfd00043b08996ed2b31e9726cb4474e948ab6b13a649"
+        },
+        {
+          "path": "build/references/commit-narrative.md",
+          "sha256": "f772346dfc7d17b21577e875e89d7f71245e3914c78fe808661e90a85d196c8b"
         },
         {
           "path": "build/references/context-budget.md",
@@ -324,7 +328,7 @@
     "learn": {
       "instructions": {
         "path": "learn/instructions.md",
-        "sha256": "22b0316039edb6789f90ef0230d41e93dde706ce2e1db00ce91ae496acfaab27"
+        "sha256": "a8823bd2d8d7a0382bb26eec1718de9e5111a12bd70bcdacf4273fa0a552dab8"
       },
       "references": [
         {
@@ -372,7 +376,7 @@
     "loop": {
       "instructions": {
         "path": "loop/instructions.md",
-        "sha256": "adf11e514012fc871bbe2f063a24029dfcdcdc2f9ec2515fb7c37f4418d441ac"
+        "sha256": "1a0a059388a104e6ca89f1a81cae620d31d92b10b730547ea5e877bb0e3b889d"
       },
       "references": []
     },
@@ -692,6 +696,13 @@
           "sha256": "65da991ec4f403af59bbbfd75be8b31632768ed0f171f445a28493d8442cf927"
         }
       ]
+    },
+    "triage": {
+      "instructions": {
+        "path": "triage/instructions.md",
+        "sha256": "051f49ea1b5ee5ed61e31cf0dca7a4b65e46bfc07c2c79a8193e6409f4b9fafa"
+      },
+      "references": []
     },
     "verify": {
       "instructions": {

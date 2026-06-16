@@ -40,3 +40,5 @@ apps/forge-loop-desktop/src-tauri/resources/node/bin/nodedist/
 .forge/specs/
 .forge/runs/
 .forge/findings/
+.forge/triage-inbox.md
+.forge/state/

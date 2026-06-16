@@ -67,6 +67,18 @@ describe("UI harness adapter graceful failure", () => {
     expect(result.reason).toBeDefined();
   });
 
+  it("playwright adapter accepts screenshotPath option and degrades gracefully", async () => {
+    const { runPlaywrightHarness } = await import("../src/harness-playwright.js");
+    const result = await runPlaywrightHarness({
+      appUrl: "http://localhost:1",
+      screenshotPath: "/tmp/forge-screenshot.png",
+    });
+    // Playwright not installed in CI → graceful degradation, never throws
+    expect(result.ok).toBe(false);
+    expect(result.reason).toBeDefined();
+    // screenshotPath option must be accepted without error even when not installed
+  });
+
   it("cdp adapter returns failure when no browser connected", async () => {
     const { runCdpHarness } = await import("../src/harness-cdp.js");
     const result = await runCdpHarness({

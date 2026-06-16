@@ -336,6 +336,10 @@ Deviation stops do NOT violate the No-Confirmation iron law (§2.7 / §6.0.1). N
 
 每个 Subagent 在原子提交前输出三段式摘要（变更 / 未触碰 / 关注点）。属于 Structured_Output，豁免散文压缩。→ 详见 references/change-summary.md
 
+### 6.8 Commit Narrative（理解腐烂对策）
+
+每个 build 原子提交前，向 `.forge/runs/<run_id>/commit-narrative.md` 追加一节：`commit_sha` + `subject` + `what`（改了什么）+ `why`（为什么）。在 commit 上下文最丰富时生成，事后不从 git log 重构。对抗理解腐烂（loop-engineering-adoption R3）。→ 详见 references/commit-narrative.md
+
 ### 6.7 Dependency Discipline
 
 添加新依赖前 4 项确认（现有技术栈 / 大小 / 维护活跃 / 许可证）。每个依赖都是负债，不添加是默认。→ 详见 references/dependency-discipline.md

@@ -32,6 +32,8 @@ cmux_review_notify: on              # on | off; 是否发送评审聚合通知�
 cmux_session_idle_minutes: 15       # 会话空闲超时（分钟），正整数，默认 15
 cmux_respawn_budget: 3              # Mirror_Daemon 崩溃后自动重启上限，正整数或 0，默认 3
 docs.grace_period_until: "2026-06-01"
+docs:
+  max_count: 35                     # 文档配额上限，ADR-0042 从默认 30 调高，授权 forge-triage.md 新增
 docs.ssot_sources:
   - topic: "commands"
     source: "docs/_ssot/commands.json"

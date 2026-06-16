@@ -161,6 +161,42 @@ Any tool invocation with `duration_ms > 30000` (30 seconds) is flagged as a **pe
 
 ---
 
+## §0.7b Understanding Confirmation（理解腐烂对策）
+
+> **Spec: loop-engineering-adoption R3, design.md D7** — 对抗理解腐烂（Understanding Rot）。
+> 论文 §07："循环交付你没写的代码越快，'实际存在的东西'和'你真正理解的东西'的差距就越大。"
+
+### 触发条件
+
+当 `/forge learn` 从 `.forge/runs/<id>/` 提取经验时（即有 loop 或 build run 产出），**且** `.forge/runs/<id>/commit-narrative.md` 存在，执行理解确认。
+
+无 commit-narrative.md（手动 build 非 loop、或旧 run 无叙事）→ 跳过本节，不阻断 learn。
+
+### 确认流程
+
+1. **读 commit-narrative.md**，取出本次 run 的关键改动列表。
+2. **向用户提示理解确认**：
+
+   ```
+   🧠 理解确认（对抗理解腐烂）
+   本次 run 产出了 N 个改动。请用一句话复述任意一条改动的"为什么这么改"。
+   （如果复述不出，说明你的理解地图可能落后于代码现状，需要更新。）
+   ```
+
+3. **判定**：
+   - 用户复述出至少一条 → 标记 `understanding: confirmed`，继续 learn 流程。
+   - 用户复述不出 / 表示不确定 → 标记 `understanding: map-needs-update`，在 session 文档写入 `⚠️ 理解地图需更新：本次 run 的改动尚未被完全理解，建议逐条核对 commit-narrative.md`。
+
+### 语义
+
+理解确认**不阻断** learn 的知识提取（那部分照常进行）。它的唯一目的是：在 loop 跑顺、人可能"认知投降"时，强迫人停下来确认自己还跟得上。这是一个 safety valve，不是 gate。
+
+### AFK 模式
+
+`/forge learn` 在 autonomous / AFK 模式下（无人交互）→ 跳过确认交互，只在 session 文档写 `understanding: unverified(afk)`，不阻断。
+
+---
+
 ## §0.8 Gate Feedback Analysis (Reframing / Clarification Logs)
 
 > **Precondition**: Gate logs exist in `.forge/progress/` as `*-reframing.jsonl` or `*-clarification.jsonl`.

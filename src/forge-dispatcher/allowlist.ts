@@ -37,6 +37,7 @@ const ALLOW_LIST: ReadonlyArray<string> = [
   "status",
   "storm",
   "test",
+  "triage",
   "verify",
   "zoom-out",
 ] as const;

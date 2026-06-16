@@ -31,6 +31,7 @@ const EXPECTED_MODES = {
     ship: "fork",
     test: "fork",
     loop: "fork",
+    triage: "fork",
     router: "inline",
     status: "inline",
     resume: "inline",
