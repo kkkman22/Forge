@@ -1,6 +1,6 @@
 ---
 description: "Use when user runs `/forge learn`, task completes, or needs to convert session experience into persistent knowledge assets"
-updated: 2026-06-05
+updated: 2026-06-16
 context: fork
 
 dispatch_mode: fork
@@ -661,3 +661,27 @@ When user triggers `/forge learn`, follow this dispatch protocol:
 ## Saved Workflow Backend
 
 Forge learn may use a saved workflow backend for parallel five-dimension extraction when workflows are enabled. The saved workflow is an optional L0 backend; fallback remains the existing subagent/single-agent learn flow.
+
+## Periodic Cron Install（regenerative-checkpoint R5/D7）
+
+`/forge learn` 支持 opt-in 定时触发 `--deep` 收敛：
+
+```
+/forge learn --install     # 安装 cron 定时触发（用 config 的 learn.cron 表达式）
+/forge learn --uninstall   # 卸载定时触发
+/forge learn --status      # 显示上次收敛时间 + 知识库健康度
+```
+
+**`--install` 流程**（调用 `buildCronInstallSpec` from `src/loop/install-cron-skill.ts`）：
+
+1. 读 `.forge/config.md` 的 `learn:` 块（`enabled` / `cron` / `interval_days`），用 `resolveCronConfig` 解析（默认 `enabled: false` / `cron: "0 9 * * 1"` / `interval_days: 7`）。
+2. 若 `enabled: false` → 输出指引（"在 .forge/config.md 设 learn.enabled: true 后重试 --install"），**不阻断**手动 `/forge learn --deep`。
+3. 用 `validateCronExpression` 校验 cron 表达式。
+4. 用 `buildCronInstallSpec({ skillName: "learn", cron, prompt: "/forge learn --deep" })` 生成 CronCreate 调用约定。
+5. 调用 CC 的 `CronCreate` 工具安装定时触发。
+
+**`--uninstall`**：移除已安装的 cron（label: `forge-learn`）。
+
+**`--status`**：读 `.forge/state/last-learn-at`（上次 --deep 时间）+ 知识库行数/字节健康度。
+
+⚠️ **硬限制**：本地 cron 需 Claude Code 进程活着——机器关了、CC 退了就漏触发。不承诺关机运行（对齐 loop-engineering-adoption AC8）。
