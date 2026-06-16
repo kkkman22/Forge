@@ -131,7 +131,7 @@ memory: project
 
 1. **探测 harness 可用性**：用 `detectProjectHarness("ui")`（前端）或 `detectProjectHarness("cli")`（逻辑/服务）判断项目有哪些可执行的验证基建。
 2. **IF 前端变更 AND harness 可用**：
-   - 启动/复用 dev server（`buildStartCommand(port)` + `withDevServer`）
+   - **复用优先**：若 dev server 已在运行（`detectProjectHarness` 探测到），直接复用，不重启——避免每次 review 重启 dev server 的开销。仅在没有运行中的 dev server 时才 `buildStartCommand(port)` + `withDevServer` 启动。
    - `runPlaywrightHarness({ appUrl, screenshotPath })` 导航到受影响路由，查 DOM accessibility snapshot + 截图
    - 产出 `confidence: 100` 的行为证据（截图路径 + snapshot 断言写进 finding.evidence）
 3. **ELIF 逻辑/服务变更**：

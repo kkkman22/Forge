@@ -1,17 +1,19 @@
 /**
- * Tests for triage MCP adapter — graceful degradation pattern.
+ * Tests for triage MCP adapter — stub contract + graceful degradation shape.
  *
- * Covers [loop-engineering-adoption R2]:
- *   - Jira sprint fetch returns null when MCP unavailable (stub → graceful)
- *   - Bitbucket PR fetch returns null when MCP unavailable (stub → graceful)
- *   - Git fallback findings shape is well-formed
- *   - Tool-name configuration is accepted without error
+ * NOTE: The adapter is currently a stub (returns null, awaiting real MCP
+ * wiring). These tests pin the *stub contract* — that the public surface
+ * (option shapes, tool-name mapping, return-null-on-unavailable) is stable
+ * for the triage skill to code against. The multi-source degradation chain
+ * (parallel fetch, per-source skip, full git fallback) is orchestrated by
+ * the triage skill instructions, not by this adapter, and is exercised
+ * end-to-end via `/forge triage`, not here.
  *
- * **Validates: loop-engineering-adoption R2-AC3 (degradation chain)**
+ * **Pins: loop-engineering-adoption R2 adapter contract.**
  */
 import { describe, expect, it } from "vitest";
 import { tryFetchBitbucketPRs, tryFetchJiraSprint, } from "../src/triage-mcp-adapter.js";
-describe("triage MCP adapter — graceful degradation [R2-AC3]", () => {
+describe("triage MCP adapter — stub contract (returns null until MCP wired)", () => {
     it("jira sprint fetch returns null when MCP unavailable (stub)", async () => {
         const result = await tryFetchJiraSprint({
             assignee: "current-user",
@@ -38,7 +40,7 @@ describe("triage MCP adapter — graceful degradation [R2-AC3]", () => {
         await expect(tryFetchBitbucketPRs({ toolNames: {} })).resolves.toBeNull();
     });
 });
-describe("triage finding type shapes [R2-AC4]", () => {
+describe("triage finding type shapes (compile-time shape pin)", () => {
     it("JiraFinding type is assignable with required fields", () => {
         const finding = {
             source: "jira-sprint",

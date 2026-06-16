@@ -53,10 +53,17 @@ export async function runPlaywrightHarness(
 
       // Behavioral verification: capture a screenshot when a path is requested.
       // This is the mechanical-evidence capture used by adversarial-check (R1).
+      // Screenshot is isolated in its own try: a screenshot failure (disk full,
+      // unwritable path) MUST NOT discard the already-captured accessibility
+      // snapshot — the snapshot is the primary signal, screenshot is bonus.
       let screenshotPath: string | undefined;
       if (opts.screenshotPath) {
-        await page.screenshot({ path: opts.screenshotPath, fullPage: true });
-        screenshotPath = opts.screenshotPath;
+        try {
+          await page.screenshot({ path: opts.screenshotPath, fullPage: true });
+          screenshotPath = opts.screenshotPath;
+        } catch {
+          // screenshot failed but snapshot is intact; report ok without screenshotPath
+        }
       }
 
       return {

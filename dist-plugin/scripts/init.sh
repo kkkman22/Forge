@@ -387,6 +387,13 @@ triage:
     bitbucket_tools:
       list_prs: ""
       get_pr: ""
+  high_risk_globs:
+    - "*.vue"
+    - "*.tsx"
+    - "*.jsx"
+    - "src/**/route*"
+    - "src/**/server*"
+  behavioral_diff_threshold: 100
 $(if [[ ${#PACKS[@]} -gt 0 ]]; then
   echo "packs:"
   for p in "${PACKS[@]}"; do echo "  - ${p}"; done
