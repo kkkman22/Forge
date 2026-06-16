@@ -37,7 +37,7 @@ owner: forge-maintainers
 /forge triage --status      # 显示 last_triage_at + inbox 统计
 ```
 
-`--install` 用 Claude Code 的 `CronCreate` 安装定时触发。cron 表达式在 `.forge/config.md` 的 `triage.cron` 配置，**完全由你自定义**（默认 `"0 9 * * *"` 只是示例，可改成任意时间）。
+`--install` 用 Claude Code 的 `CronCreate` 安装定时触发，通过统一的 `installCronSkill`（`src/loop/install-cron-skill.ts`，regenerative-checkpoint R5/D7）——`/forge learn --install` 与 `/forge triage --install` 共用同一套 `--install/--uninstall/--status` 框架。cron 表达式在 `.forge/config.md` 的 `triage.cron` 配置，**完全由你自定义**（默认 `"0 9 * * *"` 只是示例，可改成任意时间）。
 
 `triage.enabled: false`（config 默认值）**只挡 `--install`**，**不挡手动 `/forge triage`**。即不想要定时打扰，也能随时手动跑。
 
