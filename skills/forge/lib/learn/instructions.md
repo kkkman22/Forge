@@ -30,6 +30,17 @@ disallowedTools: ["Bash(git push *)"]
 
 **核心原则**：完成即沉淀。每次开发都是一次学习机会，不沉淀的经验等于没有发生过。
 
+## Mode Dispatch
+
+`/forge learn` 有两种模式，按参数路由：
+
+| 调用 | 模式 | 行为 |
+|------|------|------|
+| `/forge learn`（无参数） | **提取模式**（默认） | 五维度提取 + solutions/instincts/known-failures 沉淀（下方主流程）。只增不减。 |
+| `/forge learn --deep` | **收敛模式**（regenerative-checkpoint R4） | 对账 raw trajectory + 去重 + 压缩 + 验证 + prune 知识库。→ 详见 `references/deep-reconciliation.md` |
+
+**`--deep` 模式**（regenerative-checkpoint R4，借鉴 MiMo-Code `/dream`）：周期性收敛知识库——不是提取新知识，而是让已有知识**更紧凑、更准确、无冗余**。流程：读 CC transcript JSONL（`~/.claude/projects/<slug>/*.jsonl`）+ `.forge/` 文件轨迹对账 → 搜用户原话关键词（always/never/decided 等）验证候选事实 → 去重/合并/压缩 → 验证路径(Glob)/函数名(Grep) → prune 过时条目 → 密度上限（单个 knowledge 文件 ≤200 行/10KB） → 输出收敛报告。判定 `--deep` 后**跳过下方提取主流程**，直接执行 `references/deep-reconciliation.md` 的收敛流程。
+
 ## Auto_Memory Boundary
 
 > 引用 `skills/shared/native-command-matrix.md` 获取完整配置
