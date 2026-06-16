@@ -15,6 +15,11 @@ ci_check_command: ""        # 项目的完整 CI 检查命令（如 "npm run che
 findings_retention_days: 30  # .forge/findings/ 研究产物 retention，默认 30 天
 post_push_verify_enabled: true  # ship 后跑一次 ci_check_command 并可选留痕
 build.use_goal: true    # true=使用 /goal 循环（推荐），false=旧 persistent-loop TDD 循环
+# Review/decide subagent 超时（分钟），按路由 Tier 区分，避免大任务误降级、小任务空等。
+# 整组缺失时所有 Tier 回退 15min（向后兼容）；单 Tier 缺失或非法时回退该 Tier 默认值。
+review.agent_timeout_minutes.light: 5       # Light tier（≤1 文件 / ≤20 行），默认 5 分钟
+review.agent_timeout_minutes.standard: 15   # Standard tier（明确需求），默认 15 分钟
+review.agent_timeout_minutes.full: 30       # Full tier（新服务/认证变更），默认 30 分钟
 # cmux 可选集成（全部 optional，不影响 Forge 核心行为）
 # cmux_integration: auto    # auto | on | off; auto=检测到 cmux 则启用，默认 auto
 # cmux_notification_budget: 5  # 每个会话的桌面通知上限，正整数或 0，默认 5
