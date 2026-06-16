@@ -41,6 +41,9 @@ docs/api/
 
 apps/forge-loop-desktop/src-tauri/resources/node/bin/nodedist/
 .forge/specs/
+
+# Local git worktrees (project-local isolation — using-git-worktrees skill)
+.worktrees/
 .forge/runs/
 .forge/findings/
 .forge/triage-inbox.md
