@@ -44,11 +44,12 @@ Forge 的 loop 是任务驱动（用户给 goal，loop 跑完）。triage 补齐
 /forge triage --status      # 显示 last_triage_at + inbox 统计
 ```
 
-`--install` 用 `CronCreate` 安装：
+`--install` 通过统一安装器 `installCronSkill`（`src/loop/install-cron-skill.ts`，regenerative-checkpoint R5/D7）安装——与 `/forge learn --install` 共用同一套框架：
 
-```
-CronCreate({ cron: "<triage.cron>", prompt: "/forge triage", recurring: true })
-```
+1. 读 `.forge/config.md` 的 `triage:` 块，用 `resolveCronConfig` 解析（默认 `enabled: false` / `cron: "0 9 * * *"`）。
+2. `enabled: false` → 输出指引，不阻断手动 `/forge triage`。
+3. 用 `validateCronExpression` 校验 cron 表达式。
+4. `buildCronInstallSpec({ skillName: "triage", cron, prompt: "/forge triage" })` → `CronCreate` 安装。
 
 **触发 prompt 是具名 skill `/forge triage`，不是指令墙**（论文 §04 零件一原则：逻辑变了改 skill，不动 cron）。
 

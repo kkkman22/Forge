@@ -170,6 +170,7 @@ Read task list → per task: **Closure-First Probes** (→ references/closure-pr
 - Wave 内任务可并行（`max_parallel_agents` 默认 6）
 - Wave 间串行（前 wave 全部完成才进入下一 wave）
 - **Wave 间持久化**：每个 wave 完成后持久化 P0/P1 findings。若 context 较高且还有后续 wave，建议用户执行 `/compact`。详见 `skills/shared/next-step-protocol.md` §Context Compact 策略
+- **Wave 间 checkpoint-writer**（regenerative-checkpoint R2/D4）：每个 wave 完成后，用 Task tool fire-and-forget spawn checkpoint-writer 更新 `.forge/checkpoint.md`。主 agent 不阻塞等待——spawn 后立即继续下一 wave。writer 读 prior checkpoint + `.forge/status.md` + `.forge/progress/`，增量更新各 section（EXACT-FORM 精确值逐字节保留）。这是 GLM-5.2 600K compact 场景下保证 compact 时 checkpoint 新鲜的关键防线（D9）。
 - HTTP 429 降级阶梯：第 1 次并发减半 → 第 2 次降至 2 → 第 3 次串行（1 agent）
 - 不含 wave 块时退化为单任务串行模式
 
@@ -411,7 +412,7 @@ Trimmer 函数签名详见 references/function-contracts.md
 
 Build 全部任务完成且 Final Validation 通过后，**必须立即自动调用下一阶段**，不得停下来等待用户确认。
 
-**成功时**：输出一行摘要，然后**立即调用** `Skill(skill="forge", args="review")`。
+**成功时**：先 fire-and-forget spawn checkpoint-writer（regenerative-checkpoint R2）记录 build 产出状态到 `.forge/checkpoint.md`（§4 当前工作 = build 产出摘要 / §6 已发现问题与修复 / §8 设计决策），然后输出一行摘要，再**立即调用** `Skill(skill="forge", args="review")`。checkpoint-writer 不阻塞——spawn 后即推进 review。
 
 ```
 ✅ build 完成 → 自动进入 review

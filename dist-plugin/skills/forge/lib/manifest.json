@@ -1,6 +1,6 @@
 {
   "version": 1,
-  "generated_at": "2026-06-16T05:51:07.557Z",
+  "generated_at": "2026-06-16T16:12:02.437Z",
   "subs": {
     "abort": {
       "instructions": {
@@ -41,7 +41,7 @@
     "build": {
       "instructions": {
         "path": "build/instructions.md",
-        "sha256": "77231f59110792ce756d75a53f39bb2fcb41321717b6f8b04aec0455780c7634"
+        "sha256": "b0a85c60b345faf9cd5e42621a4284f5dcdbb165c0c38b1e4af93f214aaeeb29"
       },
       "references": [
         {
@@ -63,6 +63,10 @@
         {
           "path": "build/references/change-summary.md",
           "sha256": "3730ad1e4673a0253c0ebc734cc00b7cff64c8eb81e5092853986ec6a13cee45"
+        },
+        {
+          "path": "build/references/checkpoint-writer.md",
+          "sha256": "f734f334f9c68c721a5af12e591d251d06495372a5f98d65d833dd138e4061cd"
         },
         {
           "path": "build/references/closure-probes.md",
@@ -328,9 +332,13 @@
     "learn": {
       "instructions": {
         "path": "learn/instructions.md",
-        "sha256": "a8823bd2d8d7a0382bb26eec1718de9e5111a12bd70bcdacf4273fa0a552dab8"
+        "sha256": "7ddf40a447d357d16309376c2c0b99790f49d0c2a3fa4baada99a87966027e5a"
       },
       "references": [
+        {
+          "path": "learn/references/deep-reconciliation.md",
+          "sha256": "ee4cfd731fdf6921bf6054ae4e2ec009397dbfab109c463e3ce8abeccac3535f"
+        },
         {
           "path": "learn/references/examples.md",
           "sha256": "5dfcd1994ad79763bf5b85b0245ac90608296a36e6803839623cbf74856043c7"
@@ -509,7 +517,7 @@
     "review": {
       "instructions": {
         "path": "review/instructions.md",
-        "sha256": "32d34458387dd57ac8348c8d358dc030650d7a9c82babbeba9a96024b8f2fbbe"
+        "sha256": "78a453c925d8a4ff45c5644ecc3187ea4973f853f6025681e56c0c41fa64b900"
       },
       "references": [
         {
@@ -700,7 +708,7 @@
     "triage": {
       "instructions": {
         "path": "triage/instructions.md",
-        "sha256": "051f49ea1b5ee5ed61e31cf0dca7a4b65e46bfc07c2c79a8193e6409f4b9fafa"
+        "sha256": "62210218060af29c481aab99d4c1da215597936ab10fd4716fa3d1c14837a8cf"
       },
       "references": []
     },

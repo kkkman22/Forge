@@ -1,6 +1,6 @@
 ---
 description: "Use when user runs `/forge learn`, task completes, or needs to convert session experience into persistent knowledge assets"
-updated: 2026-06-05
+updated: 2026-06-16
 context: fork
 
 dispatch_mode: fork
@@ -29,6 +29,17 @@ disallowedTools: ["Bash(git push *)"]
 `/forge learn` 是 Forge 工作流的知识沉淀阶段——把一次性的开发经验转化为可复用的知识资产。它以 Subagent 模式从五个维度提取知识，将解决方案文档化，将高频模式写入直觉库，并自动维护知识库的健康度。
 
 **核心原则**：完成即沉淀。每次开发都是一次学习机会，不沉淀的经验等于没有发生过。
+
+## Mode Dispatch
+
+`/forge learn` 有两种模式，按参数路由：
+
+| 调用 | 模式 | 行为 |
+|------|------|------|
+| `/forge learn`（无参数） | **提取模式**（默认） | 五维度提取 + solutions/instincts/known-failures 沉淀（下方主流程）。只增不减。 |
+| `/forge learn --deep` | **收敛模式**（regenerative-checkpoint R4） | 对账 raw trajectory + 去重 + 压缩 + 验证 + prune 知识库。→ 详见 `references/deep-reconciliation.md` |
+
+**`--deep` 模式**（regenerative-checkpoint R4，借鉴 MiMo-Code `/dream`）：周期性收敛知识库——不是提取新知识，而是让已有知识**更紧凑、更准确、无冗余**。流程：读 CC transcript JSONL（`~/.claude/projects/<slug>/*.jsonl`）+ `.forge/` 文件轨迹对账 → 搜用户原话关键词（always/never/decided 等）验证候选事实 → 去重/合并/压缩 → 验证路径(Glob)/函数名(Grep) → prune 过时条目 → 密度上限（单个 knowledge 文件 ≤200 行/10KB） → 输出收敛报告。判定 `--deep` 后**跳过下方提取主流程**，直接执行 `references/deep-reconciliation.md` 的收敛流程。
 
 ## Auto_Memory Boundary
 
@@ -650,3 +661,27 @@ When user triggers `/forge learn`, follow this dispatch protocol:
 ## Saved Workflow Backend
 
 Forge learn may use a saved workflow backend for parallel five-dimension extraction when workflows are enabled. The saved workflow is an optional L0 backend; fallback remains the existing subagent/single-agent learn flow.
+
+## Periodic Cron Install（regenerative-checkpoint R5/D7）
+
+`/forge learn` 支持 opt-in 定时触发 `--deep` 收敛：
+
+```
+/forge learn --install     # 安装 cron 定时触发（用 config 的 learn.cron 表达式）
+/forge learn --uninstall   # 卸载定时触发
+/forge learn --status      # 显示上次收敛时间 + 知识库健康度
+```
+
+**`--install` 流程**（调用 `buildCronInstallSpec` from `src/loop/install-cron-skill.ts`）：
+
+1. 读 `.forge/config.md` 的 `learn:` 块（`enabled` / `cron` / `interval_days`），用 `resolveCronConfig` 解析（默认 `enabled: false` / `cron: "0 9 * * 1"` / `interval_days: 7`）。
+2. 若 `enabled: false` → 输出指引（"在 .forge/config.md 设 learn.enabled: true 后重试 --install"），**不阻断**手动 `/forge learn --deep`。
+3. 用 `validateCronExpression` 校验 cron 表达式。
+4. 用 `buildCronInstallSpec({ skillName: "learn", cron, prompt: "/forge learn --deep" })` 生成 CronCreate 调用约定。
+5. 调用 CC 的 `CronCreate` 工具安装定时触发。
+
+**`--uninstall`**：移除已安装的 cron（label: `forge-learn`）。
+
+**`--status`**：读 `.forge/state/last-learn-at`（上次 --deep 时间）+ 知识库行数/字节健康度。
+
+⚠️ **硬限制**：本地 cron 需 Claude Code 进程活着——机器关了、CC 退了就漏触发。不承诺关机运行（对齐 loop-engineering-adoption AC8）。
