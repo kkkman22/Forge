@@ -113,6 +113,50 @@ memory: project
 
 ---
 
+## Behavioral Verification（行为验证）
+
+> 对抗性审查不只"读 diff"——对高风险变更，**动手跑代码**，把"看起来对"升级为"跑起来对"。这是 Loop Engineering §05 的核心：评判器要会动手，不只会上眼。
+> **Spec: loop-engineering-adoption R1, design.md D1/D2/D3/D4**
+
+### 何时触发
+
+读 `.forge/config.md` 的 `triage.high_risk_globs` 和 `triage.behavioral_diff_threshold`（配置缺失用默认值）。变更命中以下任一 → 执行行为验证：
+
+- diff 命中高风险 glob：`*.vue` / `*.tsx` / `*.jsx`（前端组件）、`src/**/route*` / `src/**/server*`（路由/服务入口）
+- 行为性 diff 行数 ≥ `behavioral_diff_threshold`（默认 100）
+
+未命中 → 跳过行为验证，按常规 4 种技术做静态对抗审查。
+
+### 执行链
+
+1. **探测 harness 可用性**：用 `detectProjectHarness("ui")`（前端）或 `detectProjectHarness("cli")`（逻辑/服务）判断项目有哪些可执行的验证基建。
+2. **IF 前端变更 AND harness 可用**：
+   - 启动/复用 dev server（`buildStartCommand(port)` + `withDevServer`）
+   - `runPlaywrightHarness({ appUrl, screenshotPath })` 导航到受影响路由，查 DOM accessibility snapshot + 截图
+   - 产出 `confidence: 100` 的行为证据（截图路径 + snapshot 断言写进 finding.evidence）
+3. **ELIF 逻辑/服务变更**：
+   - 从 diff 解析受影响文件 → 定位关联 `*.test.*` / `*.spec.*`
+   - **只跑关联测试子集**（非 `ci_check_command` 全量）
+   - pass → 该路径行为验证通过；fail → `confidence: 100`（机械证伪）+ P0/P1 finding
+4. **ELSE（harness 不可用 / CI 无 GUI / Playwright 未装）**：
+   - 回退静态推理，该 finding `confidence` 降为 ≤ 50
+   - 输出中标注 `behavioral_verification: skipped(<reason>)`，reason ∈ `harness-unavailable` / `no-gui-in-ci` / `playwright-not-installed`
+   - **回退不阻断 review**
+
+### Confidence 语义（D4）
+
+| 来源 | confidence | 含义 |
+|---|---|---|
+| 行为验证跑出结果（截图/DOM 断言/测试 pass） | **100** | 机械验证，确定性证据 |
+| 行为验证跑出证伪（测试 fail） | **100** | 机械证伪，确定性问题 |
+| 回退到静态推理 | ≤ 50 | 推理性，可能被 confidence gate 抑制 |
+
+### 证据落盘
+
+行为验证的截图存 `.forge/runs/<run_id>/` 或临时目录，**不进 git**。在 finding.evidence 中引用路径，review 报告里以 `behavioral_verification` 字段标注执行情况。
+
+---
+
 ## Turn Budget Discipline (IRON-LAW)
 
 你最多有 `maxTurns` 个 turn。Turn 预算分配：
@@ -134,6 +178,7 @@ memory: project
    - Trace cross-component boundaries for composition failures
    - Construct abuse scenarios based on user-facing behavior
    - (Deep only) Map cascade chains through call graph
+   - **Behavioral Verification** (when high-risk trigger hits): execute dynamic verification per §Behavioral Verification — run tests / launch dev server / capture DOM + screenshot, producing confidence:100 mechanical evidence
 4. **For each finding**: Construct explicit failure scenario with steps
 5. **Output**: JSON code block + Markdown report
 
