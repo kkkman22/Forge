@@ -97,6 +97,17 @@ for (const line of fs.readFileSync(process.argv[1],'utf8').split('\n')) {
 
 ---
 
+## Phase 6 — 记录触发时间
+
+收敛完成后，写入 `.forge/state/last-learn-at`（ISO 8601 时间戳），供 `--status` 和 cron 防抖读取：
+
+```bash
+mkdir -p .forge/state
+date -u +%Y-%m-%dT%H:%M:%SZ > .forge/state/last-learn-at
+```
+
+---
+
 ## 输出格式
 
 收敛完成后输出报告：

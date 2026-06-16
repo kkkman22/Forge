@@ -387,6 +387,7 @@ ci_check_command: "${ci_check_cmd}"
 learn:
   enabled: false              # 只控制 --install；不影响手动 /forge learn 或 /forge learn --deep
   cron: "0 9 * * 1"           # 用户自定义（示例：每周一 9 点跑 --deep 收敛）
+  interval_days: 7            # cron 触发最小间隔（防抖，对齐 installCronSkill）
   deep_interval_days: 7       # --deep 对账最近 N 天的轨迹
   deep_max_lines: 200         # 单个 knowledge 文件行数上限（收敛密度约束）
   deep_max_bytes: 10240       # 单个 knowledge 文件字节上限（10KB）

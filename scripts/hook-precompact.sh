@@ -167,11 +167,9 @@ EOF
 # regenerative-checkpoint R3: inject checkpoint.md content when it's the source,
 # otherwise inject the legacy grep-assembled progress/findings + staleness warning.
 if [ "$snapshot_source" = "checkpoint" ]; then
-  cat >> "$SNAPSHOT_FILE" <<EOF
-
-## Session Checkpoint (from .forge/checkpoint.md)
-${checkpoint_content}
-EOF
+  # P1 security fix: use printf instead of unquoted heredoc to avoid shell
+  # expansion of backticks/$() in checkpoint content (injection hardening).
+  printf '\n## Session Checkpoint (from .forge/checkpoint.md)\n%s\n' "$checkpoint_content" >> "$SNAPSHOT_FILE"
 else
   cat >> "$SNAPSHOT_FILE" <<EOF
 

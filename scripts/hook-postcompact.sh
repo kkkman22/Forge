@@ -33,7 +33,20 @@ fi
 snapshot_source=$(grep '^snapshot_source=' "$SNAPSHOT_FILE" 2>/dev/null | head -1 | sed 's/snapshot_source=//' | tr -cd 'a-zA-Z0-9_-' || true)
 
 # Output the snapshot content.
-cat "$SNAPSHOT_FILE"
+# regenerative-checkpoint R3/P1-fix: when source=checkpoint, apply section-aware
+# budget truncation via compact-inject.mjs so large checkpoints don't flood the
+# rebuilt context (D9: GLM-5.2 600K compact). Falls back to raw cat on any error.
+if [ "$snapshot_source" = "checkpoint" ] && [ -f ".forge/checkpoint.md" ]; then
+  # Resolve compact-inject.mjs relative to this hook script (handles plugin install paths).
+  inject_script="$(cd "$(dirname "$0")" && pwd)/compact-inject.mjs"
+  if [ -f "$inject_script" ] && command -v node >/dev/null 2>&1; then
+    node "$inject_script" ".forge/checkpoint.md" 11000 2>/dev/null || cat "$SNAPSHOT_FILE"
+  else
+    cat "$SNAPSHOT_FILE"
+  fi
+else
+  cat "$SNAPSHOT_FILE"
+fi
 
 # regenerative-checkpoint R3: seam framing — anchor the agent that preserved
 # messages below are real history (not pseudo-content), so it resumes the task
