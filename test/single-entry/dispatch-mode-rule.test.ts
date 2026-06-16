@@ -33,6 +33,7 @@ const EXPECTED_MODES: Record<string, string> = {
   ship: "fork",
   test: "fork",
   loop: "fork",
+  triage: "fork",
   router: "inline",
   status: "inline",
   resume: "inline",

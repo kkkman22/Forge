@@ -1,6 +1,6 @@
 {
   "version": 1,
-  "generated_at": "2026-06-16T04:52:11.846Z",
+  "generated_at": "2026-06-16T05:06:31.199Z",
   "subs": {
     "abort": {
       "instructions": {
@@ -696,6 +696,13 @@
           "sha256": "65da991ec4f403af59bbbfd75be8b31632768ed0f171f445a28493d8442cf927"
         }
       ]
+    },
+    "triage": {
+      "instructions": {
+        "path": "triage/instructions.md",
+        "sha256": "051f49ea1b5ee5ed61e31cf0dca7a4b65e46bfc07c2c79a8193e6409f4b9fafa"
+      },
+      "references": []
     },
     "verify": {
       "instructions": {

@@ -238,6 +238,13 @@
     "summary": "Use when user runs `/forge test`, after build completes, or needs verification that behavior matches the locked spec."
   },
   {
+    "name": "/forge triage",
+    "tier": "all",
+    "stage": "auxiliary",
+    "dispatch_mode": "fork",
+    "summary": "Use when user runs `/forge triage`, wants automated discovery of what to work on, or needs a periodic scan of Jira sprint / Bitbucket / git for actionable items. The 'discovery' action of loop engineering."
+  },
+  {
     "name": "/forge verify",
     "tier": "all",
     "stage": "verification",

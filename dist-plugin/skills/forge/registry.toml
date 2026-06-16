@@ -274,6 +274,14 @@ allowed_tools = ["Read", "Bash", "Write"]
 description = "Use when user runs `/forge test`, after build completes, or needs verification that behavior matches the locked spec"
 summary = "Use when user runs `/forge test`, after build completes, or needs verification that behavior matches the locked spec."
 
+[triage]
+dispatch_mode = "fork"
+tier = "all"
+stage = "auxiliary"
+allowed_tools = ["Read", "Write", "Bash", "Glob", "Grep", "CronCreate", "CronDelete", "CronList"]
+description = "Use when user runs `/forge triage`, wants automated discovery of what to work on, or needs a periodic scan of Jira sprint / Bitbucket / git for actionable items. The 'discovery' action of loop engineering."
+summary = "Use when user runs `/forge triage`, wants automated discovery of what to work on, or needs a periodic scan of Jira sprint / Bitbucket / git for actionable items. The 'discovery' action of loop engineering."
+
 [verify]
 dispatch_mode = "inline"
 tier = "all"

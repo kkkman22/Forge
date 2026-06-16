@@ -2,7 +2,7 @@
 title: Docs Governance 参考手册
 category: reference
 audience: [maintainer, contributor]
-updated: 2026-06-09
+updated: 2026-06-16
 owner: forge-maintainers
 mirror_of: reference-docs-governance.en.md
 ---
@@ -119,7 +119,7 @@ staleness.critical_days: 180                # 过时严重天数
 ### 嵌入指令
 
 ```markdown
-<!-- ssot:begin topic=commands render=count -->36<!-- ssot:end topic=commands -->
+<!-- ssot:begin topic=commands render=count -->37<!-- ssot:end topic=commands -->
 ```
 
 - `topic`: 数据源主题名

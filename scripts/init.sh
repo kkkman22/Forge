@@ -343,6 +343,21 @@ if [[ -f "${FORGE_ROOT}/templates/sandbox.json" ]]; then
   fi
 fi
 
+# --- Copy triage templates (idempotent) + ensure state dir ---
+mkdir -p "${PROJECT_ROOT}/.forge/state"
+if [[ -f "${FORGE_ROOT}/templates/triage-inbox.md" ]]; then
+  if [[ ! -f "${PROJECT_ROOT}/.forge/triage-inbox.md" ]]; then
+    cp "${FORGE_ROOT}/templates/triage-inbox.md" \
+      "${PROJECT_ROOT}/.forge/triage-inbox.md"
+  fi
+fi
+if [[ -f "${FORGE_ROOT}/templates/triage-state.json" ]]; then
+  if [[ ! -f "${PROJECT_ROOT}/.forge/state/triage-state.json" ]]; then
+    cp "${FORGE_ROOT}/templates/triage-state.json" \
+      "${PROJECT_ROOT}/.forge/state/triage-state.json"
+  fi
+fi
+
 # 将技术栈转为 YAML 数组格式
 IFS=',' read -ra stack_array <<< "${tech_stack}"
 stack_yaml=""
@@ -359,6 +374,19 @@ $(printf '%b' "${stack_yaml}" | sed '/^$/d')
 security_level: ${security_level}
 knowledge_limit: 20
 ci_check_command: "${ci_check_cmd}"
+triage:
+  enabled: false
+  cron: "0 9 * * *"
+  sources: [jira-sprint, bitbucket-pr, bitbucket-branch, git]
+  stale_days: 5
+  assignee: ""
+  mcp:
+    jira_tools:
+      get_sprint_issues: "jira_get_sprint_issues"
+      search: "jira_search"
+    bitbucket_tools:
+      list_prs: ""
+      get_pr: ""
 $(if [[ ${#PACKS[@]} -gt 0 ]]; then
   echo "packs:"
   for p in "${PACKS[@]}"; do echo "  - ${p}"; done
