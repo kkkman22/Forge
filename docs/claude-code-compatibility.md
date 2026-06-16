@@ -4,7 +4,7 @@ category: reference
 audience:
   - daily-developer
   - maintainer
-updated: 2026-06-09
+updated: 2026-06-16
 owner: forge-maintainers
 ---
 
@@ -25,6 +25,8 @@ Forge requires Claude Code CLI v2.1.163 or later for full functionality.
 | `worktree.baseRef` | v2.1.139 | R7 | Default branch used |
 | MessageDisplay hook | v2.1.139 | R2 | No output folding |
 | PreCompact/PostCompact hooks | v2.1.139 | R13 | No snapshot/restore on compact |
+| PreCompact/PostCompact `transcript_path` | v2.1.139 | regenerative-checkpoint | No checkpoint.md read on compact; falls back to grep-based snapshot |
+| `CLAUDE_CODE_AUTO_COMPACT_WINDOW` + `CLAUDE_AUTOCOMPACT_PCT_OVERRIDE` | v2.1.139 | regenerative-checkpoint D9 | Default local session compacts at context limit, not configured pct; both vars must be set together |
 | CwdChanged/FileChanged hooks | v2.1.139 | R16 | No branch/file monitoring |
 | `disallowedTools` frontmatter | v2.1.139 | R3 | No tool restriction |
 | `userConfig` in plugin.json | v2.1.153 | R10 | Default values used |
@@ -107,6 +109,7 @@ When a feature is unavailable, Forge degrades gracefully:
 5. **Version gate** — If `claude --version` is unavailable, bootstrap outputs soft diagnostic only
 6. **Stop additionalContext** — If not supported, Stop hooks output legacy stdout reminders
 7. **Session id** — If hook/Bash/MCP sources disagree, resolver logs warning but continues
+8. **Checkpoint on compact** — If `.forge/checkpoint.md` is missing or stale (mtime beyond `checkpoint_stale_secs`, default 3600s), PreCompact hook falls back to the legacy grep-based snapshot (progress/findings) and emits a staleness warning. PostCompact always appends seam framing regardless of source. Compaction is never blocked.
 
 ## bin/ Commands
 

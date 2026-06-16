@@ -19,7 +19,7 @@
 ## Reference
 
 - [CI UltraReview — 操作手册](ci-ultrareview-usage.md) — 2026-05-12
-- [Claude Code 兼容性参考](claude-code-compatibility.md) — 2026-06-09
+- [Claude Code 兼容性参考](claude-code-compatibility.md) — 2026-06-16
 - [Docs Governance](docs-governance.md) — 2026-05-24
 - [Docs Governance 参考手册 (EN)](reference-docs-governance.en.md) / [Docs Governance 参考手册 (中)](reference-docs-governance.md) — 2026-06-16
 - [Forge Slimming 迁移指南](slimming-migration.md) — 2026-05-17
