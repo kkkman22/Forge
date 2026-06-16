@@ -1,6 +1,6 @@
 {
   "version": 1,
-  "generated_at": "2026-06-16T14:42:21.652Z",
+  "generated_at": "2026-06-16T15:33:19.131Z",
   "subs": {
     "abort": {
       "instructions": {
@@ -66,7 +66,7 @@
         },
         {
           "path": "build/references/checkpoint-writer.md",
-          "sha256": "088fc7eca6953264e9184b5a3fb6ddca3ad187be581480765c4dcfe9545bfc4a"
+          "sha256": "f734f334f9c68c721a5af12e591d251d06495372a5f98d65d833dd138e4061cd"
         },
         {
           "path": "build/references/closure-probes.md",
@@ -332,12 +332,12 @@
     "learn": {
       "instructions": {
         "path": "learn/instructions.md",
-        "sha256": "e2930fff6b6ea78cd04d6edc5d5ffb426226e9a76477cb971fa4e8d30966694e"
+        "sha256": "7ddf40a447d357d16309376c2c0b99790f49d0c2a3fa4baada99a87966027e5a"
       },
       "references": [
         {
           "path": "learn/references/deep-reconciliation.md",
-          "sha256": "7b86102f3ad2da7c715601fb18eed30f67c46b38100081c791c57641ef765ab1"
+          "sha256": "ee4cfd731fdf6921bf6054ae4e2ec009397dbfab109c463e3ce8abeccac3535f"
         },
         {
           "path": "learn/references/examples.md",
@@ -708,7 +708,7 @@
     "triage": {
       "instructions": {
         "path": "triage/instructions.md",
-        "sha256": "051f49ea1b5ee5ed61e31cf0dca7a4b65e46bfc07c2c79a8193e6409f4b9fafa"
+        "sha256": "62210218060af29c481aab99d4c1da215597936ab10fd4716fa3d1c14837a8cf"
       },
       "references": []
     },

@@ -7,10 +7,10 @@
  */
 import { describe, expect, it } from "vitest";
 import {
-  validateCronExpression,
-  resolveCronConfig,
   buildCronInstallSpec,
+  resolveCronConfig,
   shouldDebounceSpawn,
+  validateCronExpression,
 } from "../../src/loop/install-cron-skill.js";
 
 describe("validateCronExpression", () => {

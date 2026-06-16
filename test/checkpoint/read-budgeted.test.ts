@@ -10,7 +10,7 @@
  * (section-aware so GLM-5.2 600K compact can still inject a usable skeleton).
  */
 import { describe, expect, it } from "vitest";
-import { readBudgetedSectionAware, estimateTokens } from "../../src/checkpoint/read-budgeted.js";
+import { estimateTokens, readBudgetedSectionAware } from "../../src/checkpoint/read-budgeted.js";
 
 // Minimal 3-section checkpoint fixture (real one has 11; logic is the same).
 // Body lines are padded so the full fixture exceeds small budgets (triggers truncation).
@@ -24,7 +24,10 @@ const FIXTURE = [
   "阶段：build",
   "",
   "> 实现登录功能",
-  ...Array.from({ length: 40 }, (_, i) => `细节行 ${i}: 需要足够内容来撑大 fixture 以触发截断逻辑测试。`),
+  ...Array.from(
+    { length: 40 },
+    (_, i) => `细节行 ${i}: 需要足够内容来撑大 fixture 以触发截断逻辑测试。`,
+  ),
   "",
   "## §2 下一步具体动作",
   "_单一下一步。_",
