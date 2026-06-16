@@ -36,6 +36,13 @@ export interface ResolvedCronConfig {
 /** @public */
 export type CronAction = "install" | "uninstall" | "status";
 
+/**
+ * Minimum gap (ms) between two cron-triggered skill spawns, to debounce rapid
+ * re-triggers. Aligned with MiMo-Code auto-dream.ts MIN_SPAWN_GAP (10s).
+ * Checked by shouldDebounceSpawn against a last-trigger timestamp.
+ */
+export const MIN_SPAWN_GAP_MS = 10_000;
+
 /** @public */
 export interface CronInstallSpec {
   tool: "CronCreate";
@@ -54,7 +61,7 @@ const CRON_FIELD_RANGES: ReadonlyArray<[number, number]> = [
   [0, 23], // hour
   [1, 31], // day of month
   [1, 12], // month
-  [0, 7], // day of week (0 and 7 both = Sunday)
+  [0, 7], // day of week (0 and 7 both = Sunday; 0-6 is the canonical range, 7 is the Sunday alias)
 ];
 
 /**
@@ -143,4 +150,20 @@ export function buildCronInstallSpec(input: {
     cron: input.cron,
     prompt: input.prompt,
   };
+}
+
+/**
+ * Debounce check: returns true if a cron-triggered spawn should be skipped
+ * because the last trigger was within MIN_SPAWN_GAP_MS. Prevents rapid
+ * re-triggers (e.g. cron firing twice, or manual + cron collision).
+ *
+ * @param lastTriggerMs - timestamp (ms) of last spawn, or undefined if never.
+ * @param nowMs - current timestamp (ms), defaults to Date.now().
+ */
+export function shouldDebounceSpawn(
+  lastTriggerMs: number | undefined,
+  nowMs: number = Date.now(),
+): boolean {
+  if (lastTriggerMs === undefined) return false;
+  return nowMs - lastTriggerMs < MIN_SPAWN_GAP_MS;
 }

@@ -10,7 +10,7 @@
  * (section-aware so GLM-5.2 600K compact can still inject a usable skeleton).
  */
 import { describe, expect, it } from "vitest";
-import { readBudgetedSectionAware } from "../../src/checkpoint/read-budgeted.js";
+import { readBudgetedSectionAware, estimateTokens } from "../../src/checkpoint/read-budgeted.js";
 
 // Minimal 3-section checkpoint fixture (real one has 11; logic is the same).
 // Body lines are padded so the full fixture exceeds small budgets (triggers truncation).
@@ -95,5 +95,54 @@ describe("readBudgetedSectionAware", () => {
     const result = readBudgetedSectionAware(FIXTURE, 350);
     // §1 header always kept (it's the first section).
     expect(result.text).toContain("## §1 当前阶段与意图");
+  });
+
+  // P3-2 coverage: minimal skeleton path (skeletonTokens >= budget)
+  it("returns minimal skeleton (headers + italic, no body) when skeleton alone exceeds budget", () => {
+    // Budget so tiny that even preamble + headers + italic exceed it.
+    // FIXTURE preamble + 3 headers + 6 italic lines ≈ 150 chars ≈ 38 tokens.
+    // Use budget=10 to force skeleton-exceeds-budget path.
+    const result = readBudgetedSectionAware(FIXTURE, 10);
+    expect(result.truncated).toBe(true);
+    // Headers preserved (skeleton is hard lower bound).
+    expect(result.text).toContain("## §1");
+    // Italic instruction preserved.
+    expect(result.text).toContain("_当前 Forge 阶段");
+    // Body content dropped (阶段：build is body, not italic/header).
+    expect(result.text).not.toContain("阶段：build");
+  });
+
+  // P3-2 coverage: italic lines preserved but body excluded when truncated
+  it("preserves italic instructions but excludes body when truncating", () => {
+    const result = readBudgetedSectionAware(FIXTURE, 300);
+    expect(result.truncated).toBe(true);
+    // Italic lines always kept.
+    expect(result.text).toContain("_当前 Forge 阶段");
+    expect(result.text).toContain("_单一下一步。_");
+  });
+
+  // P3-2 coverage: estimateTokens direct test (was only indirect)
+  it("estimateTokens returns 0 for empty, positive for non-empty", () => {
+    expect(estimateTokens("")).toBe(0);
+    expect(estimateTokens("hello world test")).toBeGreaterThan(0);
+    // ~4 chars/token: 15 chars → ceil(15/4) = 4
+    expect(estimateTokens("hello world test")).toBe(4);
+  });
+
+  // P3-2 coverage: index lines preserved in skeleton
+  it("preserves index lines (- See ...) in skeleton when body truncated", () => {
+    const withIndex = [
+      "# Checkpoint",
+      "",
+      "## §9 待迁移知识",
+      "_候选提升。_",
+      "_预算：~1500 tokens_",
+      "- See solutions/foo.md (123 tokens) — reusable pattern",
+      ...Array.from({ length: 60 }, (_, i) => `body detail ${i}`),
+      "",
+    ].join("\n");
+    const result = readBudgetedSectionAware(withIndex, 200);
+    expect(result.truncated).toBe(true);
+    expect(result.text).toContain("- See solutions/foo.md");
   });
 });

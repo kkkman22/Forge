@@ -65,6 +65,8 @@ specific details, Read .forge/checkpoint.md (full) or .forge/progress/ rather
 than asking the user to restate.
 SEAM
 
+# Remove the snapshot — it is a one-shot pre-compact artifact, not reusable
+# (the next compaction generates a fresh one via hook-precompact.sh).
 rm -f "$SNAPSHOT_FILE"
 
 log_event "postcompact_restore" "slug=${slug:-unknown} source=${snapshot_source:-unknown}"

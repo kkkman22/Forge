@@ -777,6 +777,8 @@ if command -v node &>/dev/null; then
       'CLAUDE_CODE_SUBPROCESS_ENV_SCRUB': 'true',
       // regenerative-checkpoint D9: GLM-5.2 1M compact 配置（省额优先）
       // 两变量必须配合：单独 PCT 对默认本地会话无效（官方 env-vars 文档）。
+      // WINDOW=1000000: 1M window (GLM-5.2); enables proactive compact mode.
+      // PCT=60: compact at 60% of window = 600K (save-quota-first).
       // idempotent：用户已设不同值则跳过（settings.env[key] === undefined 判断）。
       'CLAUDE_CODE_AUTO_COMPACT_WINDOW': '1000000',
       'CLAUDE_AUTOCOMPACT_PCT_OVERRIDE': '60'

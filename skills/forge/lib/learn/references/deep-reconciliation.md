@@ -34,6 +34,10 @@
 
 ## 收敛流程
 
+### Phase 0 — 防抖检查
+
+若由 cron 触发（非手动），先检查防抖：读 `.forge/state/last-learn-at`（ISO 时间戳）。若距今 < `MIN_SPAWN_GAP_MS`（10s，`src/loop/install-cron-skill.ts` 的 `shouldDebounceSpawn`），跳过本次触发并输出 `⏭️ learn --deep debounced (last run <10s ago)`，避免 cron 重复触发或手动+cron 碰撞。
+
 ### Phase 1 — 定位数据
 
 1. Glob `~/.claude/projects/<slug>/*.jsonl`，按 mtime 过滤最近 `deep_interval_days` 天。

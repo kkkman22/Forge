@@ -10,6 +10,7 @@ import {
   validateCronExpression,
   resolveCronConfig,
   buildCronInstallSpec,
+  shouldDebounceSpawn,
 } from "../../src/loop/install-cron-skill.js";
 
 describe("validateCronExpression", () => {
@@ -80,5 +81,44 @@ describe("buildCronInstallSpec", () => {
     });
     expect(spec.action).toBe("uninstall");
     expect(spec.label).toContain("triage");
+  });
+
+  // P3-3 coverage: step values
+  it("validates step values (*/N, range/N)", () => {
+    expect(validateCronExpression("*/15 * * * *")).toBe(true);
+    expect(validateCronExpression("0-30/5 * * * *")).toBe(true);
+    expect(validateCronExpression("1-10/2 * * * *")).toBe(true);
+  });
+
+  // P3-3 coverage: reversed range rejected
+  it("rejects reversed ranges (e.g. 5-1)", () => {
+    expect(validateCronExpression("5-1 * * * *")).toBe(false);
+  });
+
+  // P3-3 coverage: partial config block (cron without enabled)
+  it("resolves partial config block (cron present, enabled absent → default)", () => {
+    const result = resolveCronConfig({
+      configBlock: { cron: "0 0 * * *" },
+      defaults: { enabled: false, cron: "0 9 * * *", intervalDays: 1 },
+    });
+    expect(result.cron).toBe("0 0 * * *");
+    expect(result.enabled).toBe(false); // falls back to default
+  });
+});
+
+// P2: shouldDebounceSpawn (MIN_SPAWN_GAP)
+describe("shouldDebounceSpawn", () => {
+  it("returns false when never triggered before", () => {
+    expect(shouldDebounceSpawn(undefined)).toBe(false);
+  });
+
+  it("returns true when last trigger was within MIN_SPAWN_GAP_MS", () => {
+    const now = 1_000_000;
+    expect(shouldDebounceSpawn(now - 5_000, now)).toBe(true); // 5s ago < 10s
+  });
+
+  it("returns false when last trigger was beyond MIN_SPAWN_GAP_MS", () => {
+    const now = 1_000_000;
+    expect(shouldDebounceSpawn(now - 15_000, now)).toBe(false); // 15s ago > 10s
   });
 });

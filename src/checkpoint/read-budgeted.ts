@@ -28,15 +28,25 @@ export interface BudgetedReadResult {
 // Token estimation
 // ---------------------------------------------------------------------------
 
+/** Chars-per-token heuristic for mixed CJK + ASCII. Conservative (over-estimates). */
+const CHARS_PER_TOKEN = 4;
+
+/** Safety margin applied to partial-body truncation (leave headroom vs exact budget). */
+const TRUNCATION_SAFETY_MARGIN = 0.95;
+
+/** Minimum remaining budget (tokens) below which partial-body truncation is skipped (not worth it). */
+const MIN_PARTIAL_BODY_TOKENS = 20;
+
 /**
  * Rough token estimate: ~4 chars per token for mixed CJK + ASCII.
- * Matches the heuristic used elsewhere in Forge (src/loop/token-estimate).
- * Over-estimation is the safe direction here (truncates sooner → less risk
- * of exceeding the real budget).
+ * Conservative — over-estimation is the safe direction here (truncates sooner
+ * → less risk of exceeding the real budget). NOTE: this is a standalone
+ * heuristic local to this module; it does not import src/loop/token-estimate
+ * (which serves a different consumer). Keep them aligned by convention.
  */
 export function estimateTokens(text: string): number {
   if (!text) return 0;
-  return Math.ceil(text.length / 4);
+  return Math.ceil(text.length / CHARS_PER_TOKEN);
 }
 
 // ---------------------------------------------------------------------------
@@ -129,7 +139,7 @@ export function readBudgetedSectionAware(body: string, budgetTokens: number): Bu
   // Case: no sections (flat text). Just truncate at budget.
   if (sections.length === 0) {
     const ratio = budgetTokens / totalTokens;
-    const cutLen = Math.floor(body.length * ratio * 0.95);
+    const cutLen = Math.floor(body.length * ratio * TRUNCATION_SAFETY_MARGIN);
     const truncatedText = body.slice(0, cutLen);
     return {
       text: truncatedText + truncationHint(budgetTokens, totalTokens),
@@ -146,6 +156,10 @@ export function readBudgetedSectionAware(body: string, budgetTokens: number): Bu
   const skeletonTokens = estimateTokens(skeletonParts.join("\n"));
 
   // If even the skeleton exceeds budget, return headers + italic only (no body at all).
+  // NOTE: the skeleton is a hard lower bound — it is returned even though it exceeds
+  // the budget, because headers + italic instructions are the minimum viable structure
+  // the agent needs to orient. Callers should not assume `truncated:true` means "fits
+  // exactly within budget" when skeletonTokens >= budgetTokens.
   if (skeletonTokens >= budgetTokens) {
     const minimalSkeleton = [
       ...preamble,
@@ -159,6 +173,10 @@ export function readBudgetedSectionAware(body: string, budgetTokens: number): Bu
   }
 
   // Greedily fill sections: skeleton first, then body lines per section.
+  // NOTE: `used` accumulates per-chunk estimates; the final text is out.join("\n")
+  // which adds (n-1) separator bytes. This slightly under-counts vs the joined
+  // string, but TRUNCATION_SAFETY_MARGIN absorbs the discrepancy. Acceptable for
+  // an estimator whose purpose is "don't flood context", not byte-exact accounting.
   const out: string[] = [...preamble];
   let used = estimateTokens(out.join("\n"));
 
@@ -175,11 +193,11 @@ export function readBudgetedSectionAware(body: string, budgetTokens: number): Bu
       out.push(fullBody);
       used += bodyTokens;
     } else {
-      // Partial body: fill remaining budget (95% to leave margin).
+      // Partial body: fill remaining budget (safety margin leaves headroom).
       const remaining = budgetTokens - used;
-      if (remaining > 20) {
+      if (remaining > MIN_PARTIAL_BODY_TOKENS) {
         const ratio = remaining / bodyTokens;
-        const cutLen = Math.floor(fullBody.length * ratio * 0.95);
+        const cutLen = Math.floor(fullBody.length * ratio * TRUNCATION_SAFETY_MARGIN);
         const lastNewline = fullBody.lastIndexOf("\n", cutLen);
         const clean = lastNewline > 0 ? fullBody.slice(0, lastNewline) : fullBody.slice(0, cutLen);
         out.push(clean);

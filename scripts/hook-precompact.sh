@@ -24,6 +24,9 @@ if [ -f ".forge/config.md" ]; then
   [ -n "$_val" ] && CHECKPOINT_STALE_SECS="$_val"
 fi
 
+# Events log: dated by script-start UTC. PreCompact and PostCompact for the same
+# compaction may land in different files if it straddles midnight UTC — acceptable
+# (events carry their own ISO timestamps for correlation).
 log_event() {
   local event="$1" detail="${2:-}"
   mkdir -p .forge/runs
@@ -88,7 +91,7 @@ if [ -f "$CHECKPOINT_FILE" ]; then
     log_event "precompact_checkpoint" "source=checkpoint age=${checkpoint_age}s"
   else
     snapshot_source="fallback"
-    checkpoint_warning="⚠️ checkpoint.md 过旧（$((checkpoint_age / 60))min ago > ${CHECKPOINT_STALE_SECS}s threshold），使用 fallback snapshot，建议检查 checkpoint-writer 是否正常触发"
+    checkpoint_warning="⚠️ checkpoint.md stale ($((checkpoint_age / 60))min ago > ${CHECKPOINT_STALE_SECS}s threshold) — using fallback snapshot. Check if checkpoint-writer is triggering properly. (checkpoint.md 过旧，使用 fallback，建议检查 checkpoint-writer)"
     log_event "precompact_checkpoint_stale" "age=${checkpoint_age}s threshold=${CHECKPOINT_STALE_SECS}s — falling back to grep"
   fi
 else
