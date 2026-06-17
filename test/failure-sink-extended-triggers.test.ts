@@ -58,6 +58,11 @@ const newTriggers: Array<{
     skill: "forge-loop",
     situation: "熔断器触发，连续错误超限",
   },
+  {
+    trigger: "replan_triggered",
+    skill: "forge-plan",
+    situation: "动态重规划触发，剩余计划假设被证伪",
+  },
 ];
 
 describe("failure-sink extended triggers — buildFailureEpisode", () => {
@@ -73,7 +78,7 @@ describe("failure-sink extended triggers — buildFailureEpisode", () => {
     });
   }
 
-  it("all 5 new triggers produce distinct lesson text", () => {
+  it("all 6 new triggers produce distinct lesson text", () => {
     const lessons = newTriggers.map(
       ({ trigger, skill, situation }, i) =>
         buildFailureEpisode(makeCtx({ trigger, skill, situation }), FIXED_NOW, i + 1).lesson,
