@@ -49,6 +49,25 @@ Read spec frontmatter `health` field. If spec_hash matches current content, reus
 - `verdict=degraded` + autonomous → write advisory to `.forge/findings/spec-health-advisory-<topic>.md`, continue
 - `verdict=marginal` → output warning, continue
 
+### §1.7 Pre-flight: Replan Gate（dynamic-replan-loop R3）
+
+读 `.forge/status.md` 的 `replan_pending` 字段（passthrough，非强制 schema）。**WHEN `replan_pending === "true"`**，进入**增量重规划模式**（而非首次 plan）：
+
+0. **熔断检查**：读 status.md 的 `replan_count`（passthrough，整数，缺失当 0）。**WHEN `replan_count >= 3`**：停止重规划，输出告警"replan 已达上限（3 次），疑似 agent 系统性误判 failure_class，需人工介入方向"，不进入下方步骤（防 DoS，与 three-strike 解耦——three-strike 因 success 会重置计数，不能单独兜底 replan 循环）。
+1. **读 `invalidated_assumptions`**：从 status.md 取被证伪的假设清单（由 debug Phase 5 在 `failure_class: assumption_invalidated` 时写入 status.md）。
+2. **取剩余未完成 task**：用 `filterRemainingTasks(tasks)`（`src/spec-bundle.ts`）过滤出 `status !== "completed"` 的 task（pending/in-progress/blocked/failed）。**已完成 task 不参与重规划、不回滚**（增量非全量）。
+3. **修订剩余 task**：对照 `invalidated_assumptions`，重设计受影响的剩余 task 的顺序/拆分/方案。未受影响的剩余 task 保持原样。
+4. **写回计划**：修订后的剩余 task 写回 `.forge/plans/<topic>.md`，frontmatter 加 `replan_of: "<original-plan-ref>"` + `invalidated_assumptions: [...]`，**显著标注为 replan 版本**。
+5. **等用户批准**（plan phase 批准门禁，Step 5）：replan 版本需用户 review 后才继续 build。这是计划层批准，**不是**违反 No-Mid-build-Confirmation（该铁律管 build 内中途确认，不管 plan 批准）。
+6. **批准后清空 `replan_pending` + 递增 `replan_count`**：用户批准修订计划后，清空 status.md 的 `replan_pending` 和 `invalidated_assumptions`，`replan_count` 递增 1，回到 build。
+7. **叙事落盘（可选，R4）**：若 `.forge/runs/<run_id>/commit-narrative.md` 存在（loop-engineering-adoption R3），追加一节：`why: <invalidated_assumptions>` + `what: <剩余 task 修订摘要>`。不存在则跳过（解耦）。
+
+**约束**：增量 replan 受 plan phase 既有门禁约束——Spec Lock（不偏离已批准 spec）、frozen-zone 保护（已完成 task 不回滚）。不静默改方向（Step 5 用户批准）。
+
+`replan_pending` 非 true 或缺失 → 正常首次 plan 流程（Step 1 起），本节不生效。
+
+**`replan_pending` 写入端**：由 debug skill Phase 5（`failure_class: assumption_invalidated` 时）写 status.md（详见 debug skill instructions Phase 5 step 8）。scheduler `determineNextSkill` 的 debug 分支仅做路由决策（纯函数，不写文件），replan 信号通过 status.md 文件传递给 plan phase。
+
 ## 2. Five-Step Planning Process
 
 ### Step 1: Research

@@ -141,8 +141,22 @@ Then apply fix:
 2. Confirm original symptom no longer reproduces
 3. Confirm no regression (all previously passing tests still pass)
 4. Set debug file status to `"resolved"`
-5. Interactive mode: prompt `/forge learn`
-6. Autonomous mode: skip prompt
+5. **Fill `failure_class`** (dynamic-replan-loop R1) — classify the root cause:
+   - `fixable_bug`（默认）: 根因是代码 bug，已修复。
+   - `assumption_invalidated`: 根因是**剩余计划依赖的假设已失效**——debug 可能修了当前点，但剩余 task 仍基于失效假设。典型场景：依赖的接口/服务不存在、方案与现有架构冲突、前提数据结构已被改写。判此值时**必须**填 `invalidated_assumptions: string[]`（被证伪的假设，回查 router `assumptions` 或 status.md `### 假设` 章节）。
+   - `environmental`: 根因是环境/依赖问题（缺依赖、权限不足），通常不靠改计划解决。
+6. Interactive mode: prompt `/forge learn`
+7. Autonomous mode: skip prompt
+8. **Propagate replan signal to status.md (dynamic-replan-loop R4-AC1)** — WHEN `failure_class: assumption_invalidated`:
+   - Write `replan_pending: "true"` into `.forge/status.md` frontmatter (passthrough field).
+   - Write `invalidated_assumptions: [<the invalidated assumptions>]` into `.forge/status.md` frontmatter.
+   - This is the signal the plan phase §1.7 reads to enter incremental replan mode. Without it the replan loop never triggers.
+   - WHEN `failure_class` is `fixable_bug` or `environmental`: do NOT set `replan_pending` (leave it absent or `"false"`).
+   - Note: `invalidated_assumptions` contains assumption descriptions that will be mirrored to tracked files (status.md, plan). Keep them technical and free of secrets/hostnames (run through `redactSecrets` if uncertain).
+
+**保守判定（铁律，R1-AC4）**: 无法明确判定时**默认 `fixable_bug`**。误判为 `assumption_invalidated` 会不必要地打乱已批准计划，代价高于漏判（漏判最坏是连锁返工，three-strike 会再拦）。`off_by_one`/`null_propagation`/`logic_error` 等普通代码 bug 一律归 `fixable_bug`，不归 `assumption_invalidated`。
+
+**Replan 熔断（dynamic-replan-loop，防 DoS）**: status.md 的 `replan_count` 字段（passthrough，plan §1.7 每次重规划后 +1）累计达到 3 时，debug SHALL 不再写 `replan_pending: "true"`，改为输出告警提示人工介入（防止 agent 系统性误判 failure_class 导致循环消耗额度）。three-strike 因 success 会重置计数，不能单独兜底 replan 循环。
 
 After resolution, hooks.json PostToolUse automatically triggers integrity lint (same as forge-learn).
 
@@ -159,6 +173,8 @@ created: "2026-06-05T10:30:00Z"
 status: "in-progress"  # in-progress | resolved | abandoned
 root_cause: ""  # fill when root cause found
 resolution: ""  # fill when fix applied
+failure_class: "fixable_bug"  # dynamic-replan-loop R1: fixable_bug | assumption_invalidated | environmental（默认 fixable_bug）
+invalidated_assumptions: []  # 仅 failure_class: assumption_invalidated 时填：被证伪的假设清单
 ---
 
 # Current Focus

@@ -1,6 +1,6 @@
 {
   "version": 1,
-  "generated_at": "2026-06-17T12:30:21.983Z",
+  "generated_at": "2026-06-17T14:07:51.586Z",
   "subs": {
     "abort": {
       "instructions": {
@@ -197,7 +197,7 @@
     "debug": {
       "instructions": {
         "path": "debug/instructions.md",
-        "sha256": "edcfb5f300f76ba3a3962df63e211ad9a3a6538799f225ec36227ea4197e24a0"
+        "sha256": "8584462d183f24382aa9db187cb40079fa838413aa255d3792300a883574cbaa"
       },
       "references": [
         {
@@ -410,7 +410,7 @@
     "plan": {
       "instructions": {
         "path": "plan/instructions.md",
-        "sha256": "e3f66ab07fe4c97a71e60d06a28b64a60d9980beb962d1365bd28bcaf604b9eb"
+        "sha256": "17dd9f043e474c5cf257815fe32924116e3671db58ac41b749b316881559f9d9"
       },
       "references": [
         {
