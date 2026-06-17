@@ -13,63 +13,64 @@ export interface UiSnapshot {
   text: string;
 }
 
+// F9: module-level constant (was: re-sorted on every call).
+// Ordered by length DESC so the longest matching prefix wins
+// (e.g. "跳转到" before "跳转", avoiding "跳转到" → "到").
+const FILLER_PREFIXES = [
+  "跳转到",
+  "跳转",
+  "显示",
+  "出现",
+  "看到",
+  "应当",
+  "应该",
+  "shall",
+  "should",
+  "show",
+  "display",
+  "see",
+].sort((a, b) => b.length - a.length);
+
+const FILLER_EXACT = new Set([
+  "跳转到",
+  "跳转",
+  "显示",
+  "出现",
+  "看到",
+  "应当",
+  "应该",
+  "应",
+  "且",
+  "并",
+  "和",
+  "shall",
+  "should",
+  "show",
+  "display",
+  "see",
+  "the",
+  "a",
+]);
+
 /**
  * Extract assertion keywords from a THEN clause.
  * Splits on Chinese conjunctions (且/并/和/以及) and whitespace,
- * drops connective/filler tokens (跳转到/显示/出现/应当/应该/should/show/...).
+ * drops connective/filler tokens (跳转到/显示/应当/should/...).
  */
 export function extractThenKeywords(thenClause: string): string[] {
   if (!thenClause) return [];
-  // Split on Chinese + ASCII conjunctions and whitespace.
   const raw = thenClause
     .split(/[且并和以及,\s，、]+/u)
     .map((t) => t.trim())
     .filter((t) => t.length > 0);
-  // Drop leading verbs / fillers that carry no assertion content.
-  // Order by length DESC so the longest matching prefix wins
-  // (e.g. "跳转到" before "跳转", avoiding "跳转到" → "到").
-  const fillerPrefixes = [
-    "跳转到",
-    "跳转",
-    "显示",
-    "出现",
-    "看到",
-    "应当",
-    "应该",
-    "shall",
-    "should",
-    "show",
-    "display",
-    "see",
-  ].sort((a, b) => b.length - a.length);
-  const fillerExact = new Set([
-    "跳转到",
-    "跳转",
-    "显示",
-    "出现",
-    "看到",
-    "应当",
-    "应该",
-    "应",
-    "且",
-    "并",
-    "和",
-    "shall",
-    "should",
-    "show",
-    "display",
-    "see",
-    "the",
-    "a",
-  ]);
   const keywords: string[] = [];
   for (let token of raw) {
     // First: if the whole token is a filler (e.g. "显示", "跳转"), drop it.
-    if (fillerExact.has(token.toLowerCase())) continue;
+    if (FILLER_EXACT.has(token.toLowerCase())) continue;
     // Then: strip the single longest matching filler PREFIX once
     // (e.g. "跳转到/dashboard" → "/dashboard"). Use >= so a prefix equal
     // to the whole token also strips (leaving "" which is then dropped).
-    for (const prefix of fillerPrefixes) {
+    for (const prefix of FILLER_PREFIXES) {
       if (token.startsWith(prefix)) {
         token = token.slice(prefix.length);
         break; // only the longest prefix
@@ -77,7 +78,7 @@ export function extractThenKeywords(thenClause: string): string[] {
     }
     token = token.trim();
     if (token.length === 0) continue;
-    if (fillerExact.has(token.toLowerCase())) continue;
+    if (FILLER_EXACT.has(token.toLowerCase())) continue;
     keywords.push(token);
   }
   return keywords;

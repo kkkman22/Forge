@@ -215,20 +215,16 @@ export class AgentBrowserCliClient implements AgentBrowserClient {
    */
   async fill(sessionId: string, ref: string, value: string): Promise<void> {
     validateRef(ref);
-    await runExecFile(
-      "agent-browser",
-      ["--session", sessionId, "fill", `@${ref}`, value],
-      { timeoutMs: this.actionTimeoutMs },
-    );
+    await runExecFile("agent-browser", ["--session", sessionId, "fill", `@${ref}`, value], {
+      timeoutMs: this.actionTimeoutMs,
+    });
   }
 
   async screenshot(sessionId: string, destPath: string): Promise<void> {
     validatePath(destPath);
-    await runExecFile(
-      "agent-browser",
-      ["--session", sessionId, "screenshot", destPath],
-      { timeoutMs: this.snapshotTimeoutMs },
-    );
+    await runExecFile("agent-browser", ["--session", sessionId, "screenshot", destPath], {
+      timeoutMs: this.snapshotTimeoutMs,
+    });
   }
 
   async close(sessionId: string): Promise<void> {
@@ -238,22 +234,22 @@ export class AgentBrowserCliClient implements AgentBrowserClient {
   }
 }
 
-function validateRef(ref: string): void {
+export function validateRef(ref: string): void {
   if (!/^e\d+$/.test(ref)) {
     throw new Error(`validateRef: invalid ref: ${ref}`);
   }
 }
 
-function validatePath(p: string): void {
+export function validatePath(p: string): void {
   // Reject path traversal sequences — instinct: multi-char sequence check.
-  if (/\.\./.test(p) || !/^[/a-zA-Z0-9_.\-/]+$/.test(p)) {
+  if (/\.\./.test(p) || !/^[a-zA-Z0-9_.\-/:]+$/.test(p)) {
     throw new Error(`validatePath: invalid destPath: ${p}`);
   }
 }
 
 /** Parse the REAL agent-browser --json envelope into the Snapshot interface.
  *  Envelope: {success, data:{origin, refs:{e1:{name,role}}, snapshot}, error}. */
-function parseSnapshotJson(raw: string): Snapshot {
+export function parseSnapshotJson(raw: string): Snapshot {
   const obj = JSON.parse(raw) as {
     success?: boolean;
     data?: {

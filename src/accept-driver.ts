@@ -82,7 +82,11 @@ export const apiRunner: Runner = {
 
     try {
       const method = extractMethod(scenario.when);
-      const url = endpoint;
+      // endpoint may be a relative path (e.g. /api/login); resolve to full URL.
+      const base = ctx.appUrl ?? "http://localhost:5173";
+      const url = /^https?:\/\//i.test(endpoint)
+        ? endpoint
+        : `${base}${endpoint.startsWith("/") ? "" : "/"}${endpoint}`;
       const d = buildCurlArgs(method, url);
       const result = await execDescriptor(d);
 
@@ -232,8 +236,10 @@ export const agentBrowserRunner: Runner = {
 
       // screenshot evidence
       const shotPath = `${ctx.outputDir}/${scenario.id}/screenshot.png`;
+      let shotOk = false;
       try {
         await client.screenshot(sessionId, shotPath);
+        shotOk = true;
       } catch {
         // non-fatal — verdict still computable from snapshot
       }
@@ -248,7 +254,11 @@ export const agentBrowserRunner: Runner = {
         scenario,
         ctx,
         verdict,
-        verdict === "PASS" ? [shotPath] : [shotPath, redactSnapshot(snap.url)],
+        shotOk
+          ? verdict === "PASS"
+            ? [shotPath]
+            : [shotPath, redactSnapshot(snap.url)]
+          : [redactSnapshot(snap.url)],
         verdict === "FAIL" ? `THEN not satisfied: ${scenario.then}` : undefined,
       );
     } catch (e) {
@@ -307,11 +317,12 @@ async function actWithRetry(
       return false;
     }
   }
+  // Unreachable: loop always returns or continues; kept as type-safety fallback.
   return false;
 }
 
 /** Extract a likely action keyword (button label) from a WHEN clause. */
-function extractActionKeyword(whenText: string): string | null {
+export function extractActionKeyword(whenText: string): string | null {
   // "点击 登录按钮" / "click 登录" → take the trailing noun after the verb.
   const m = whenText.match(/(?:点击|click|按下|tap)\s*([^\s,，。]+)/i);
   if (m && m[1]) return m[1].replace(/按钮$/, "");
@@ -409,7 +420,7 @@ export async function runScenario(
 ): Promise<ScenarioArtifact> {
   const runner = RUNNERS.find((r) => r.supports(scenario));
   if (!runner) {
-    return makeArtifact(scenario, ctx, "SKIP", [], "no runner available");
+    return makeArtifact(scenario, ctx, "INCONCLUSIVE", [], "no runner available for scenario type");
   }
   return runner.run(scenario, ctx);
 }
@@ -463,7 +474,7 @@ export function renderAcceptanceReport(result: AcceptanceRunResult): string {
     "",
     "## Summary",
     "",
-    `Run: ${total}/${total} scenarios`,
+    `Run: ${total} scenario${total === 1 ? "" : "s"}${result.summary.skip > 0 ? ` (${result.summary.skip} skipped, --all to show)` : ""}`,
     "",
     `| Verdict | Count |`,
     `|---------|-------|`,
@@ -492,13 +503,15 @@ export function renderAcceptanceReport(result: AcceptanceRunResult): string {
       lines.push("");
       lines.push("> 这不是失败——是当前环境无法验证，不阻断 ship。");
     }
-    // R5-AC2: render Given/When/Then original text.
+    // R5-AC2: render Given/When/Then original text; highlight the Then clause on FAIL.
     if (s.givenWhenThen) {
       lines.push("");
       lines.push("**Scenario**:");
       lines.push("");
       for (const line of s.givenWhenThen.split("\n")) {
-        lines.push(`> ${line}`);
+        const isThen = /^\s*(Then|那么)/i.test(line);
+        const emphasize = s.verdict === "FAIL" && isThen;
+        lines.push(emphasize ? `> **${line}** ← 未满足` : `> ${line}`);
       }
     }
     if (s.failureReason) {
@@ -533,9 +546,9 @@ function verdictMarker(v: Verdict): string {
     case "FAIL":
       return "❌";
     case "INCONCLUSIVE":
-      return "⚠️";
+      return "❔";
     case "WARN":
-      return "⚠️";
+      return "🟡";
     default:
       return "⏭️";
   }
@@ -547,8 +560,22 @@ function nextHint(s: ScenarioArtifact): string {
     return "确认 agent-browser 已安装、dev server 已启动，或改用 Playwright e2e。";
   }
   if (s.verdict === "FAIL") {
-    if (/跳转|jump|redirect|dashboard/i.test(s.failureReason ?? "")) {
+    const reason = s.failureReason ?? "";
+    // UI jump/redirect failures
+    if (/跳转|jump|redirect|dashboard|navigation/i.test(reason)) {
       return "UI 跳转未发生，检查路由守卫/鉴权返回。";
+    }
+    // Assertion mismatch (THEN not satisfied)
+    if (/THEN not satisfied|assertion|snapshot/i.test(reason)) {
+      return "THEN 预期与实际页面不符：核对断言关键词、或用 /forge test 跑单元层定位。";
+    }
+    // API http code mismatch
+    if (/http|code|401|403|500|api/i.test(reason)) {
+      return "API 返回码不符：检查路由/鉴权中间件，或用 /forge test 跑单元层。";
+    }
+    // CLI exit code
+    if (/exit|command|cli|stderr/i.test(reason)) {
+      return "CLI 命令失败：查看 stderr evidence 块，确认命令与依赖。";
     }
     return "核对 THEN 预期与实际 snapshot 差异；用 /forge test 跑单元层定位。";
   }
@@ -604,6 +631,9 @@ function shellEscape(s: string): string {
 }
 
 export function buildCurlCommand(method: string, url: string): string {
+  if (!/^https?:\/\//i.test(url)) {
+    throw new Error(`buildCurlArgs: invalid url: ${url}`);
+  }
   const safeMethod = /^[A-Z]+$/i.test(method) ? method.toUpperCase() : "GET";
   return `curl -s -o /dev/null -w "%{http_code}" -X ${safeMethod} ${shellEscape(url)}`;
 }
@@ -648,6 +678,9 @@ export function buildCurlArgs(
   executable: string;
   args: string[];
 } {
+  if (!/^https?:\/\//i.test(url)) {
+    throw new Error(`buildCurlArgs: invalid url: ${url}`);
+  }
   const safeMethod = /^[A-Z]+$/i.test(method) ? method.toUpperCase() : "GET";
   // -s silent, -o /dev/null discard body, -w http_code, -X method.
   return {
@@ -656,30 +689,23 @@ export function buildCurlArgs(
   };
 }
 
-async function execCommand(cmd: string): Promise<ExecResult> {
-  // Backward-compat path: when called with a legacy curl string, parse via descriptor.
-  // New callers should use execDescriptor directly.
-  if (cmd.startsWith("curl")) {
-    // Reconstruct minimal descriptor from the legacy string is fragile; use execDescriptor.
-    return { stdout: "200", stderr: "" };
-  }
-  return { stdout: "", stderr: "" };
-}
-
 /**
  * Execute a {executable, args} descriptor via execFile (no shell).
  * [T3.2] Replaces the placeholder. Instinct: execFileSync-style descriptor.
  */
-export async function execDescriptor(d: {
-  executable: string;
-  args: string[];
-}): Promise<ExecResult> {
+export async function execDescriptor(
+  d: {
+    executable: string;
+    args: string[];
+  },
+  timeoutMs = 15_000,
+): Promise<ExecResult> {
   const { execFile } = await import("node:child_process");
   return new Promise((resolve, reject) => {
     execFile(
       d.executable,
       d.args,
-      { encoding: "utf8", timeout: 15_000, maxBuffer: 10 * 1024 * 1024 },
+      { encoding: "utf8", timeout: timeoutMs, maxBuffer: 10 * 1024 * 1024 },
       (err: Error | null, stdout: string, stderr: string) => {
         if (err) reject(err);
         else resolve({ stdout, stderr });

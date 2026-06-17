@@ -36,7 +36,7 @@ describe("renderAcceptanceReport — three-state markers (R5-AC1)", () => {
     const out = renderAcceptanceReport(r);
     expect(out).toContain("✅");
     expect(out).toContain("❌");
-    expect(out).toContain("⚠️");
+    expect(out).toContain("❔"); // INCONCLUSIVE marker (WARN uses 🟡)
   });
 
   it("INCONCLUSIVE carries the 'not a failure' suffix (R5-AC1)", () => {
@@ -89,6 +89,6 @@ describe("renderAcceptanceReport — summary (R5-AC5, R5-AC6)", () => {
     const out = renderAcceptanceReport(r);
     expect(out).toContain("Blocks Ship");
     expect(out).toMatch(/YES|NO/);
-    expect(out).toMatch(/Run:\s*2\/2/);
+    expect(out).toMatch(/Run:\s*2 scenario/);
   });
 });
