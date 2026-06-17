@@ -1,10 +1,13 @@
-import { describe, expect, it } from "vitest";
+import { createServer, type Server } from "node:http";
+import { writeFileSync, mkdirSync } from "node:fs";
+import { join } from "node:path";
 import { execFileSync } from "node:child_process";
-import { buildOpenArgs } from "../../src/agent-browser-client.js";
+import { afterAll, beforeAll, describe, expect, it } from "vitest";
+import { AgentBrowserCliClient } from "../../src/agent-browser-client.js";
 
-// @smoke contract test for agentic acceptance.
+// @smoke — REAL end-to-end acceptance against agent-browser + a local fixture.
 // Runs ONLY when agent-browser is installed; otherwise skips (no CI failure).
-// T5.1
+// Verified contract: --session global flag, snapshot -i --json, @refs, fill value in argv.
 
 function agentBrowserAvailable(): boolean {
   try {
@@ -17,30 +20,64 @@ function agentBrowserAvailable(): boolean {
 
 const hasAgentBrowser = agentBrowserAvailable();
 
-describe.skipIf(!hasAgentBrowser)("@smoke agent-browser end-to-end login", () => {
-  it("buildOpenArgs descriptor is valid for real agent-browser open", () => {
-    // Contract: the descriptor we hand to execFile must be exactly what
-    // agent-browser expects. This guards against CLI arg drift.
-    const d = buildOpenArgs("http://localhost:5173/login", "smoke-1");
-    expect(d.executable).toBe("agent-browser");
-    expect(d.args).toEqual(["open", "http://localhost:5173/login", "--session", "smoke-1"]);
-  });
+let server: Server;
+let baseUrl = "";
 
-  it("real agent-browser open+screenshot against a static page", async () => {
-    // This is the true end-to-end smoke: start agent-browser, open a page,
-    // confirm we get a snapshot back. Requires a reachable URL.
-    // Skipped in CI without the binary; locally confirms the full chain.
-    const { AgentBrowserCliClient } = await import("../../src/agent-browser-client.js");
-    const client = new AgentBrowserCliClient();
+const LOGIN_HTML = `<!DOCTYPE html><html><head><title>Login</title></head>
+<body><h1>Login</h1>
+<form id="f" action="/welcome.html">
+  <input id="user" placeholder="username" autocomplete="off">
+  <input id="pass" type="password" placeholder="password" autocomplete="off">
+  <button type="submit">Sign In</button>
+</form></body></html>`;
+const WELCOME_HTML =
+  '<!DOCTYPE html><html><head><title>Dashboard</title></head><body><h1>Welcome admin</h1></body></html>';
+
+beforeAll(async () => {
+  if (!hasAgentBrowser) return;
+  server = createServer((req, res) => {
+    res.setHeader("Content-Type", "text/html; charset=utf-8");
+    if (req.url?.startsWith("/welcome")) {
+      res.end(WELCOME_HTML);
+    } else {
+      res.end(LOGIN_HTML);
+    }
+  });
+  await new Promise<void>((r) => server.listen(0, "127.0.0.1", r));
+  const addr = server.address();
+  if (addr && typeof addr === "object") baseUrl = `http://127.0.0.1:${addr.port}`;
+});
+
+afterAll(async () => {
+  if (server) await new Promise<void>((r) => server.close(() => r()));
+});
+
+describe.skipIf(!hasAgentBrowser)("@smoke real agent-browser login acceptance", () => {
+  it("open→fill→click→resnapshot yields PASS (jump to welcome + Welcome admin)", async () => {
+    const c = new AgentBrowserCliClient();
     const sid = `smoke-${Date.now()}`;
     try {
-      await client.open("https://example.com", sid);
-      const snap = await client.snapshot(sid);
-      expect(snap).toBeDefined();
-      expect(typeof snap.url).toBe("string");
+      await c.open(`${baseUrl}/login.html`, sid);
+      const s1 = await c.snapshot(sid);
+      expect(s1.refs.some((r) => r.role === "button")).toBe(true);
+
+      const userInput = s1.refs.find((r) => r.role === "textbox");
+      expect(userInput).toBeDefined();
+      await c.fill(sid, userInput!.ref, "admin");
+
+      const btn = s1.refs.find((r) => r.role === "button");
+      await c.click(sid, btn!.ref);
+
+      // allow navigation
+      await new Promise((r) => setTimeout(r, 1500));
+      const s2 = await c.snapshot(sid);
+
+      const jumped = s2.url.includes("welcome");
+      const showed = s2.text.includes("Welcome admin");
+      expect(jumped && showed).toBe(true);
     } finally {
       try {
-        await client.close(sid);
+        await c.close(sid);
       } catch {
         // best effort
       }
@@ -48,13 +85,8 @@ describe.skipIf(!hasAgentBrowser)("@smoke agent-browser end-to-end login", () =>
   }, 30_000);
 });
 
-// Always-run guard so the suite has at least one assertion when skipped.
 describe("@smoke availability probe", () => {
-  it("reports agent-browser availability (informational)", () => {
+  it("reports agent-browser availability", () => {
     expect(typeof hasAgentBrowser).toBe("boolean");
-    if (!hasAgentBrowser) {
-      // eslint-disable-next-line no-console
-      console.log("[smoke] agent-browser not installed — smoke tests skipped (expected in CI).");
-    }
   });
 });

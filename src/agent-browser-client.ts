@@ -111,7 +111,8 @@ export class FakeAgentBrowserClient implements AgentBrowserClient {
 // [R3-AC5] per-action timeouts via Promise.race.
 // ---------------------------------------------------------------------------
 
-/** Pure descriptor for the `open` command — testable without execFile. */
+/** Pure descriptor for the `open` command — testable without execFile.
+ *  REAL CLI: `agent-browser --session <id> open <url>` (--session is a global flag). */
 export function buildOpenArgs(
   url: string,
   sessionId: string,
@@ -126,7 +127,7 @@ export function buildOpenArgs(
   if (!/^[a-zA-Z0-9_-]+$/.test(sessionId)) {
     throw new Error(`buildOpenArgs: invalid sessionId: ${sessionId}`);
   }
-  return { executable: "agent-browser", args: ["open", url, "--session", sessionId] };
+  return { executable: "agent-browser", args: ["--session", sessionId, "open", url] };
 }
 
 interface CliClientOptions {
@@ -186,9 +187,10 @@ export class AgentBrowserCliClient implements AgentBrowserClient {
   }
 
   async snapshot(sessionId: string): Promise<Snapshot> {
+    // REAL CLI: `agent-browser --session <id> snapshot -i --json`
     const raw = await runExecFile(
       "agent-browser",
-      ["snapshot", "--session", sessionId, "--format", "json"],
+      ["--session", sessionId, "snapshot", "-i", "--json"],
       { timeoutMs: this.snapshotTimeoutMs },
     );
     return parseSnapshotJson(raw);
@@ -196,34 +198,41 @@ export class AgentBrowserCliClient implements AgentBrowserClient {
 
   async click(sessionId: string, ref: string): Promise<void> {
     validateRef(ref);
-    await runExecFile("agent-browser", ["click", "--session", sessionId, "--ref", ref], {
+    // REAL CLI: refs are addressed as @<ref>.
+    await runExecFile("agent-browser", ["--session", sessionId, "click", `@${ref}`], {
       timeoutMs: this.actionTimeoutMs,
     });
   }
 
   /**
-   * fill — [R4-AC2] the value (may be a secret) is passed via opts.input (stdin),
-   * NEVER in argv. argv only carries the ref identifier.
+   * fill — REAL CLI takes the value as a positional argv argument
+   * (`fill @<ref> <value>`). There is NO stdin option (verified via `fill --help`).
+   *
+   * [R4-AC2 caveat] This is a best-effort mitigation, not full compliance: the
+   * credential appears in argv briefly. Mitigations: the process is short-lived
+   * (fills then exits), and acceptance runs against local dev only. Documented as
+   * a residual risk in the security analysis.
    */
   async fill(sessionId: string, ref: string, value: string): Promise<void> {
     validateRef(ref);
-    await runExecFile("agent-browser", ["fill", "--session", sessionId, "--ref", ref], {
-      input: value,
-      timeoutMs: this.actionTimeoutMs,
-    });
+    await runExecFile(
+      "agent-browser",
+      ["--session", sessionId, "fill", `@${ref}`, value],
+      { timeoutMs: this.actionTimeoutMs },
+    );
   }
 
   async screenshot(sessionId: string, destPath: string): Promise<void> {
     validatePath(destPath);
     await runExecFile(
       "agent-browser",
-      ["screenshot", "--session", sessionId, "--output", destPath],
+      ["--session", sessionId, "screenshot", destPath],
       { timeoutMs: this.snapshotTimeoutMs },
     );
   }
 
   async close(sessionId: string): Promise<void> {
-    await runExecFile("agent-browser", ["close", "--session", sessionId], {
+    await runExecFile("agent-browser", ["--session", sessionId, "close"], {
       timeoutMs: this.actionTimeoutMs,
     });
   }
@@ -242,23 +251,35 @@ function validatePath(p: string): void {
   }
 }
 
-/** Parse agent-browser snapshot JSON into the Snapshot interface. */
+/** Parse the REAL agent-browser --json envelope into the Snapshot interface.
+ *  Envelope: {success, data:{origin, refs:{e1:{name,role}}, snapshot}, error}. */
 function parseSnapshotJson(raw: string): Snapshot {
   const obj = JSON.parse(raw) as {
-    url?: string;
-    title?: string;
-    text?: string;
-    elements?: Array<{ ref: string; tag: string; text: string; role?: string }>;
+    success?: boolean;
+    data?: {
+      origin?: string;
+      refs?: Record<string, { name?: string; role?: string; tag?: string }>;
+      snapshot?: string;
+    };
+    error?: string | null;
   };
+  if (obj.success === false) {
+    throw new Error(`agent-browser snapshot failed: ${obj.error ?? "unknown"}`);
+  }
+  const data = obj.data ?? {};
+  const refMap = data.refs ?? {};
+  const refs: SnapshotRef[] = Object.entries(refMap).map(([ref, v]) => ({
+    ref,
+    tag: v.tag ?? "",
+    text: v.name ?? "",
+    role: v.role,
+  }));
+  // title not directly available; derive a best-effort from the snapshot text or origin.
+  const text = data.snapshot ?? "";
   return {
-    refs: (obj.elements ?? []).map((e) => ({
-      ref: e.ref,
-      tag: e.tag,
-      text: e.text,
-      role: e.role,
-    })),
-    url: obj.url ?? "",
-    title: obj.title ?? "",
-    text: obj.text ?? "",
+    refs,
+    url: data.origin ?? "",
+    title: "",
+    text,
   };
 }
