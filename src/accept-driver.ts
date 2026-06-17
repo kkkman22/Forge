@@ -137,12 +137,14 @@ export function aggregateVerdicts(artifacts: readonly ScenarioArtifact[]): {
   fail: number;
   skip: number;
   warn: number;
+  inconclusive: number;
   blocksShip: boolean;
 } {
   let pass = 0;
   let fail = 0;
   let skip = 0;
   let warn = 0;
+  let inconclusive = 0;
 
   for (const a of artifacts) {
     switch (a.verdict) {
@@ -158,10 +160,14 @@ export function aggregateVerdicts(artifacts: readonly ScenarioArtifact[]): {
       case "WARN":
         warn++;
         break;
+      case "INCONCLUSIVE":
+        inconclusive++;
+        break;
     }
   }
 
-  return { pass, fail, skip, warn, blocksShip: fail > 0 };
+  // [Spec R2-AC3] INCONCLUSIVE does NOT increment fail and does NOT block ship.
+  return { pass, fail, skip, warn, inconclusive, blocksShip: fail > 0 };
 }
 
 export function renderAcceptanceReport(result: AcceptanceRunResult): string {
