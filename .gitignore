@@ -42,6 +42,9 @@ docs/api/
 apps/forge-loop-desktop/src-tauri/resources/node/bin/nodedist/
 .forge/specs/
 
+# Acceptance evidence (screenshots/snapshots may contain secrets) — R4-AC3
+.forge/acceptance/
+
 # Local git worktrees (project-local isolation — using-git-worktrees skill)
 .worktrees/
 .forge/runs/
