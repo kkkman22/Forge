@@ -123,6 +123,21 @@ export interface TaskSeed {
   verified_at?: string;
 }
 
+/**
+ * Filter tasks down to those still remaining (not yet completed).
+ *
+ * Used by incremental replan (dynamic-replan-loop R3): when a debug finds
+ * that remaining-plan assumptions are invalidated, replan revises only the
+ * still-unfinished tasks. `status !== "completed"` covers pending, in-progress,
+ * blocked, and failed — all are eligible for revision. Completed tasks are
+ * never returned (they represent committed work that is not rolled back).
+ *
+ * **Validates: dynamic-replan-loop R3-AC2.**
+ */
+export function filterRemainingTasks(tasks: readonly TaskSeed[]): TaskSeed[] {
+  return tasks.filter((t) => t.status !== "completed");
+}
+
 export interface Wave {
   wave: number;
   tasks: string[];
