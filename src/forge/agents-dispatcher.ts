@@ -89,7 +89,7 @@ const DEFAULT_AGENT_TIMEOUT_MS = 15 * 60 * 1000;
  * Used as the fallback for a *specific* tier when `review.agent_timeout_minutes.<tier>`
  * is present in config but the value for that tier is missing or invalid. When the
  * entire `review.agent_timeout_minutes.*` family is absent, all tiers fall back to
- * {@link DEFAULT_AGENT_TIMEOUT_MS} (15 min) to preserve backward compatibility.
+ * `DEFAULT_AGENT_TIMEOUT_MS` (15 min) to preserve backward compatibility.
  *
  * @see resolveAgentTimeoutMs
  */
@@ -141,12 +141,12 @@ export function parseDispatchMode(
  *
  * Fallback ladder (in order):
  * 1. Configured value for the tier, if a positive integer.
- * 2. {@link TIER_DEFAULT_TIMEOUT_MS} for the tier, if any tier-level config
+ * 2. `TIER_DEFAULT_TIMEOUT_MS` for the tier, if any tier-level config
  *    is present but this tier's value is missing or invalid.
- * 3. {@link DEFAULT_AGENT_TIMEOUT_MS} (15 min) when the entire
+ * 3. `DEFAULT_AGENT_TIMEOUT_MS` (15 min) when the entire
  *    `review.agent_timeout_minutes.*` family is absent — preserves the
  *    pre-existing fixed 15-minute behaviour (backward compatibility).
- * 4. {@link TIER_DEFAULT_TIMEOUT_MS}.standard (15 min) when the tier itself
+ * 4. `TIER_DEFAULT_TIMEOUT_MS`.standard (15 min) when the tier itself
  *    is unrecognised or undefined.
  *
  * @param tier  Current routing tier from `.forge/status.md` ("light"|"standard"|"full").
