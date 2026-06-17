@@ -6,8 +6,42 @@ import type {
   Verdict,
 } from "./accept.js";
 import { resolvePlaceholder } from "./accept-credentials.js";
+import { isUrlAllowed, redactSnapshot } from "./accept-security.js";
 import type { AgentBrowserClient, Snapshot } from "./agent-browser-client.js";
 import { evaluateUiVerdict } from "./evaluate-ui-verdict.js";
+
+/** Default navigation allowlist — localhost + loopback only. [R4-AC5] */
+const DEFAULT_URL_ALLOWLIST = ["localhost", "127.0.0.1"];
+
+/**
+ * Verify the agent-browser binary's SHA256 against the configured pin. [R4-AC6]
+ * Empty/missing pin → dev-mode allow (ok=true). Non-empty mismatch → fail-closed.
+ */
+async function verifyAgentBrowserPin(): Promise<{ ok: boolean; reason: string }> {
+  try {
+    const { readFileSync } = await import("node:fs");
+    const { execFileSync } = await import("node:child_process");
+    const { join } = await import("node:path");
+    const { createHash } = await import("node:crypto");
+    const binPath = execFileSync("which", ["agent-browser"], { encoding: "utf-8" }).trim();
+    const buf = readFileSync(binPath);
+    const actual = createHash("sha256").update(buf).digest("hex");
+    const cfgPath = join(process.cwd(), ".forge", "config.md");
+    let configuredPin = "";
+    try {
+      const cfg = readFileSync(cfgPath, "utf8");
+      const m = cfg.match(/agent_browser_pin_sha256:\s*"?([a-f0-9]*)"?\s*$/m);
+      configuredPin = m?.[1] ?? "";
+    } catch {
+      // config absent — dev mode, allow
+    }
+    if (!configuredPin) return { ok: true, reason: "no pin configured (dev mode)" };
+    if (actual === configuredPin) return { ok: true, reason: "pin matches" };
+    return { ok: false, reason: `sha256 mismatch (expected ${configuredPin.slice(0, 12)}…)` };
+  } catch (e) {
+    return { ok: false, reason: `pin check error: ${String((e as Error).message ?? e)}` };
+  }
+}
 
 // ---------------------------------------------------------------------------
 // Runner Interface
@@ -99,6 +133,30 @@ export const agentBrowserRunner: Runner = {
     }
     const appUrl = ctx.appUrl ?? "http://localhost:5173";
 
+    // P0-1 [R4-AC5] URL allowlist — abort to INCONCLUSIVE if appUrl is outside allowlist.
+    const allowlistHosts = DEFAULT_URL_ALLOWLIST;
+    if (!isUrlAllowed(appUrl, allowlistHosts)) {
+      return makeArtifact(
+        scenario,
+        ctx,
+        "INCONCLUSIVE",
+        [],
+        `URL not in allowlist: ${appUrl} (allowed hosts: ${allowlistHosts.join(",")})`,
+      );
+    }
+
+    // P0-2 [R4-AC6] agent-browser binary pin verification — fail-closed on mismatch.
+    const pin = await verifyAgentBrowserPin();
+    if (!pin.ok) {
+      return makeArtifact(
+        scenario,
+        ctx,
+        "INCONCLUSIVE",
+        [],
+        `agent-browser binary not verified: ${pin.reason}`,
+      );
+    }
+
     // Wall-clock guard for the whole scenario. [R3-AC5]
     const sessionId = `forge-${scenario.id}-${Date.now()}`;
     let timedOut = false;
@@ -120,10 +178,12 @@ export const agentBrowserRunner: Runner = {
       // Values may be {{PLACEHOLDER}} secrets resolved from env [R4-AC1, R4-AC2].
       const textboxes = snap.refs.filter((r) => r.role === "textbox");
       const fillValues = extractFillValues(ctxText);
-      for (let i = 0; i < textboxes.length; i++) {
-        const tbRef = textboxes[i].ref;
-        // Resolve a value: prefer the i-th extracted value, else fallback "admin".
-        const raw = fillValues[i] ?? "admin";
+      const valueByKey = indexFillValuesByKey(fillValues);
+      for (const tb of textboxes) {
+        const tbRef = tb.ref;
+        // P1-3: match value by the textbox's label (用户名/密码/username/password),
+        // not by index — DOM order need not equal scenario text order.
+        const raw = matchValueForTextbox(tb.text, fillValues, valueByKey);
         const resolved = resolvePlaceholder(raw, process.env as Record<string, string | undefined>);
         if (resolved === null) {
           // missing secret → INCONCLUSIVE, do not leak raw placeholder
@@ -136,8 +196,10 @@ export const agentBrowserRunner: Runner = {
           );
         }
         const val = resolved;
-        const ref = tbRef;
-        await actWithRetry(client, sessionId, ref, () => client.fill(sessionId, ref, val));
+        const tbLabel = tb.text;
+        await actWithRetry(client, sessionId, tbRef, tbLabel, (r) =>
+          client.fill(sessionId, r, val),
+        );
       }
       // click action button: pick ref by a keyword from WHEN (e.g. "登录").
       const clickKw = extractActionKeyword(whenText) ?? "登录";
@@ -147,8 +209,8 @@ export const agentBrowserRunner: Runner = {
         clickedRef = snap.refs.find((r) => r.tag === "button")?.ref ?? null;
       }
       if (clickedRef) {
-        const clickOk = await actWithRetry(client, sessionId, clickedRef, () =>
-          client.click(sessionId, clickedRef!),
+        const clickOk = await actWithRetry(client, sessionId, clickedRef, clickKw, (r) =>
+          client.click(sessionId, r),
         );
         if (!clickOk) {
           return makeArtifact(
@@ -186,7 +248,7 @@ export const agentBrowserRunner: Runner = {
         scenario,
         ctx,
         verdict,
-        verdict === "PASS" ? [shotPath] : [shotPath, snap.url],
+        verdict === "PASS" ? [shotPath] : [shotPath, redactSnapshot(snap.url)],
         verdict === "FAIL" ? `THEN not satisfied: ${scenario.then}` : undefined,
       );
     } catch (e) {
@@ -214,20 +276,32 @@ export const agentBrowserRunner: Runner = {
  * act = exec + re-snapshot is composed by the caller; here we only retry the exec.
  * Returns true if the action eventually succeeded.
  */
+/**
+ * Run an action with up to MAX_REF_RETRIES retries on stale-ref errors.
+ * P1-2/F1: on stale, re-snapshot AND re-locate the ref by text keyword before
+ * retrying (a stale ref id may change after page mutation). F2: narrower match
+ * to avoid retrying unrecoverable errors.
+ * The act factory receives the CURRENT ref so retry can use the relocated one.
+ */
 async function actWithRetry(
   client: AgentBrowserClient,
   sessionId: string,
-  _ref: string,
-  act: () => Promise<void>,
+  initialRef: string,
+  relocateKeyword: string | null,
+  act: (ref: string) => Promise<void>,
 ): Promise<boolean> {
+  let ref = initialRef;
   for (let attempt = 0; attempt <= MAX_REF_RETRIES; attempt++) {
     try {
-      await act();
+      await act(ref);
       return true;
     } catch (e) {
       const msg = String((e as Error).message ?? e);
-      if (attempt < MAX_REF_RETRIES && /stale|ref|not found/i.test(msg)) {
-        await client.snapshot(sessionId); // refresh refs before retry
+      const isStale = /stale element|ref not found|not attached|element.*not found/i.test(msg);
+      if (attempt < MAX_REF_RETRIES && isStale && relocateKeyword) {
+        const fresh = await client.snapshot(sessionId);
+        const relocated = findRefByText(fresh.refs, relocateKeyword);
+        if (relocated) ref = relocated;
         continue;
       }
       return false;
@@ -248,6 +322,32 @@ function extractActionKeyword(whenText: string): string | null {
  * Extract fill values (usernames/passwords) from the scenario G/W text.
  * Recognizes "用户名 X", "密码 Y", "{{VAR}}" patterns. Returns ordered values.
  */
+/**
+ * P1-3: match a fill value to a textbox by its visible label, not by index.
+ */
+function matchValueForTextbox(
+  label: string,
+  fillValues: string[],
+  valueByKey: Record<string, string>,
+): string {
+  const low = label.toLowerCase();
+  if (/用户名|username|user|email|邮箱/.test(low) && valueByKey.username) {
+    return valueByKey.username;
+  }
+  if (/密码|password|pwd/.test(low) && valueByKey.password) {
+    return valueByKey.password;
+  }
+  return fillValues[0] ?? "admin";
+}
+
+/** Build a {username,password} map from extracted fill values (by order). */
+function indexFillValuesByKey(fillValues: string[]): Record<string, string> {
+  const key: Record<string, string> = {};
+  if (fillValues[0]) key.username = fillValues[0];
+  if (fillValues[1]) key.password = fillValues[1];
+  return key;
+}
+
 function extractFillValues(text: string): string[] {
   const values: string[] = [];
   // "用户名 admin" / "username admin" / "密码 {{PASS}}"

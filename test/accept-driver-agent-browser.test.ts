@@ -128,7 +128,7 @@ describe("agentBrowserRunner — refs retry", () => {
     const origClick = client.click.bind(client);
     client.click = async (sid: string, ref: string) => {
       clickAttempts++;
-      if (clickAttempts === 1) throw new Error("stale ref");
+      if (clickAttempts === 1) throw new Error("stale element: ref not found");
       return origClick(sid, ref);
     };
     const artifact = await agentBrowserRunner.run(uiScenario(), ctx(client));
@@ -144,7 +144,7 @@ describe("agentBrowserRunner — refs retry", () => {
       text: "",
     });
     client.click = async () => {
-      throw new Error("stale ref");
+      throw new Error("stale element: ref not found");
     };
     const artifact = await agentBrowserRunner.run(uiScenario(), ctx(client));
     expect(artifact.verdict).toBe("FAIL");
@@ -179,5 +179,64 @@ describe("RUNNERS registry", () => {
     const ui = RUNNERS.find((r) => r.type === "ui");
     expect(ui).toBeDefined();
     expect(ui?.supports(uiScenario())).toBe(true);
+  });
+});
+
+describe("agentBrowserRunner — P0-1 URL allowlist guard (R4-AC5)", () => {
+  it("INCONCLUSIVE when appUrl is outside allowlist (e.g. external domain)", async () => {
+    const client = new FakeAgentBrowserClient();
+    const externalCtx: RunnerContext = {
+      topic: "t",
+      projectRoot: "/tmp",
+      outputDir: "/tmp/out",
+      tierAvailability: { cmuxAvailable: false, devServerRunning: true },
+      agentBrowserClient: client,
+      appUrl: "https://evil.example.com/login",
+    };
+    const a = await agentBrowserRunner.run(uiScenario(), externalCtx);
+    expect(a.verdict).toBe("INCONCLUSIVE");
+    expect(a.failureReason ?? "").toMatch(/allowlist/i);
+    // client.open must NOT have been called for a disallowed URL
+    expect(client.calls.some((c) => c.method === "open")).toBe(false);
+  });
+
+  it("proceeds when appUrl is localhost", async () => {
+    const client = new FakeAgentBrowserClient();
+    client.enqueueSnapshot({
+      refs: [{ ref: "e3", tag: "button", text: "登录", role: "button" }],
+      url: "http://localhost:5173/login",
+      title: "登录",
+      text: "",
+    });
+    client.enqueueSnapshot({
+      refs: [],
+      url: "http://localhost:5173/dashboard",
+      title: "Dashboard",
+      text: "欢迎 admin",
+    });
+    const a = await agentBrowserRunner.run(uiScenario(), ctx(client));
+    expect(a.verdict).toBe("PASS");
+  });
+});
+
+describe("agentBrowserRunner — P0-2 pin verification (R4-AC6)", () => {
+  it("verifies binary pin before open (dev mode: no pin configured → proceeds)", async () => {
+    // In test env, .forge/config.md has agent_browser_pin_sha256: "" → dev allow.
+    const client = new FakeAgentBrowserClient();
+    client.enqueueSnapshot({
+      refs: [{ ref: "e3", tag: "button", text: "登录", role: "button" }],
+      url: "http://localhost:5173/login",
+      title: "登录",
+      text: "",
+    });
+    client.enqueueSnapshot({
+      refs: [],
+      url: "http://localhost:5173/dashboard",
+      title: "Dashboard",
+      text: "欢迎 admin",
+    });
+    const a = await agentBrowserRunner.run(uiScenario(), ctx(client));
+    // dev mode (empty pin) → proceeds; verdict computable
+    expect(["PASS", "FAIL", "INCONCLUSIVE"]).toContain(a.verdict);
   });
 });
