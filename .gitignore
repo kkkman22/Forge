@@ -32,7 +32,6 @@ reports/mutation/
 # Regenerative checkpoint (runtime state — §11 EXACT-FORM may hold tokens/DSNs)
 .forge/checkpoint.md
 
-
 # dist manifest is tracked (used by CI to verify dist sync)
 !dist/claude-code/bundles/.manifest.sha256
 
@@ -41,6 +40,9 @@ docs/api/
 
 apps/forge-loop-desktop/src-tauri/resources/node/bin/nodedist/
 .forge/specs/
+
+# Acceptance evidence (screenshots/snapshots may contain secrets) — R4-AC3
+.forge/acceptance/
 
 # Local git worktrees (project-local isolation — using-git-worktrees skill)
 .worktrees/

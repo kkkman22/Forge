@@ -9,7 +9,7 @@ function artifactArb(): fc.Arbitrary<ScenarioArtifact> {
     source: fc.constantFrom("explicit", "derived"),
     givenWhenThen: fc.string(),
     executedAt: fc.string(),
-    verdict: fc.constantFrom("PASS", "FAIL", "SKIP", "WARN"),
+    verdict: fc.constantFrom("PASS", "FAIL", "SKIP", "WARN", "INCONCLUSIVE"),
     evidence: fc.array(fc.string()),
     failureReason: fc.option(fc.string()),
   });
@@ -28,14 +28,23 @@ describe("aggregateVerdicts — property", () => {
     fc.assert(
       fc.property(fc.array(artifactArb()), (artifacts) => {
         const result = aggregateVerdicts(artifacts);
-        expect(result.pass + result.fail + result.skip + result.warn).toBe(artifacts.length);
+        expect(result.pass + result.fail + result.skip + result.warn + result.inconclusive).toBe(
+          artifacts.length,
+        );
       }),
     );
   });
 
   it("empty input → zero counts", () => {
     const result = aggregateVerdicts([]);
-    expect(result).toEqual({ pass: 0, fail: 0, skip: 0, warn: 0, blocksShip: false });
+    expect(result).toEqual({
+      pass: 0,
+      fail: 0,
+      skip: 0,
+      warn: 0,
+      inconclusive: 0,
+      blocksShip: false,
+    });
   });
 
   it("any FAIL → blocksShip true", () => {
@@ -79,7 +88,7 @@ describe("renderAcceptanceReport — property", () => {
     const result: AcceptanceRunResult = {
       topic: "test-topic",
       scenarios: [],
-      summary: { pass: 0, fail: 0, skip: 0, warn: 0, blocksShip: false },
+      summary: { pass: 0, fail: 0, skip: 0, warn: 0, inconclusive: 0, blocksShip: false },
     };
     const report = renderAcceptanceReport(result);
     expect(report).toContain("test-topic");

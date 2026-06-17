@@ -1,6 +1,6 @@
 export type ScenarioSource = "explicit" | "derived";
 export type ScenarioType = "api" | "ui" | "cli" | "mixed" | "unknown";
-export type Verdict = "PASS" | "FAIL" | "SKIP" | "WARN";
+export type Verdict = "PASS" | "FAIL" | "SKIP" | "WARN" | "INCONCLUSIVE";
 
 export interface Scenario {
   id: string;
@@ -32,6 +32,7 @@ export interface AcceptanceRunResult {
     fail: number;
     skip: number;
     warn: number;
+    inconclusive: number;
     blocksShip: boolean;
   };
 }

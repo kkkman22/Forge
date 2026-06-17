@@ -18,6 +18,7 @@
 
 ## Reference
 
+- [Acceptance Verification — Onboarding](acceptance-onboarding.md) — 2026-06-17
 - [CI UltraReview — 操作手册](ci-ultrareview-usage.md) — 2026-05-12
 - [Claude Code 兼容性参考](claude-code-compatibility.md) — 2026-06-16
 - [Docs Governance](docs-governance.md) — 2026-05-24

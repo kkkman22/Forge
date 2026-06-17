@@ -1,7 +1,8 @@
 /**
  * UI harness orchestrator — selects and runs the appropriate tier.
  *
- * 4-tier priority: project > cmux-browser > playwright > cdp
+ * 4-tier priority: project > agent-browser > playwright > cdp  [Spec R3-AC1]
+ * (cmux-browser tier removed — superseded by agent-browser. [R3-AC2])
  * All tiers fail → INCONCLUSIVE [R6.8]
  *
  * **Validates: Requirements R6.2, R6.5, R6.6, R6.8**
@@ -9,12 +10,12 @@
 
 import { mkdirSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
+import { AgentBrowserCliClient } from "./agent-browser-client.js";
 import { runCdpHarness } from "./harness-cdp.js";
-import { runCmuxBrowserHarness } from "./harness-cmux-browser.js";
-import { detectCmuxAvailable, detectProjectHarness } from "./harness-detector.js";
+import { detectAgentBrowser, detectProjectHarness } from "./harness-detector.js";
 import { runPlaywrightHarness } from "./harness-playwright.js";
 
-export type UiControllerTier = "project" | "cmux-browser" | "playwright" | "cdp";
+export type UiControllerTier = "project" | "agent-browser" | "playwright" | "cdp";
 
 export interface UiHarnessOptions {
   topic: string;
@@ -48,27 +49,34 @@ export async function runUiHarness(opts: UiHarnessOptions): Promise<UiHarnessVer
   }
   attempted.push({ tier: "project", reason: "No project UI harness found" });
 
-  // Tier 2: cmux-browser
-  const cmuxAvailable = await detectCmuxAvailable();
-  if (cmuxAvailable) {
-    const result = await runCmuxBrowserHarness({
-      appUrl: opts.appUrl,
-      designerSpecPath: opts.designerSpecPath,
-    });
-    if (result.ok) {
+  // Tier 2: agent-browser (snapshot+refs CLI) [Spec R3-AC1, R3-AC4]
+  const agentBrowserAvailable = await detectAgentBrowser();
+  if (agentBrowserAvailable) {
+    try {
+      const client = new AgentBrowserCliClient();
+      const sessionId = `forge-harness-${opts.topic}-${Date.now()}`;
+      await client.open(opts.appUrl, sessionId);
+      const snap = await client.snapshot(sessionId);
+      await client.close(sessionId);
+      // Page reachable + returned a snapshot → VERIFIED.
+      attempted.push({
+        tier: "agent-browser",
+        reason: `snapshot ok (${snap.refs.length} refs, ${snap.url})`,
+      });
       return writeResult(artifactsDir, {
         verdict: "VERIFIED",
-        controllerUsed: "cmux-browser",
+        controllerUsed: "agent-browser",
         controllersAttempted: attempted,
         artifactsDir,
       });
+    } catch (e) {
+      attempted.push({
+        tier: "agent-browser",
+        reason: `execution failed: ${String((e as Error).message ?? e)}`,
+      });
     }
-    attempted.push({
-      tier: "cmux-browser",
-      reason: result.reason ?? "cmux browser execution failed",
-    });
   } else {
-    attempted.push({ tier: "cmux-browser", reason: "cmux not available" });
+    attempted.push({ tier: "agent-browser", reason: "not installed" });
   }
 
   // Tier 3: playwright

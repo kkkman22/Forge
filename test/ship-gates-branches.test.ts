@@ -182,7 +182,7 @@ describe("aggregateVerdicts (accept-driver branch coverage)", () => {
 
   it("empty input → all zeros, blocksShip=false", () => {
     const r = aggregateVerdicts([]);
-    expect(r).toEqual({ pass: 0, fail: 0, skip: 0, warn: 0, blocksShip: false });
+    expect(r).toEqual({ pass: 0, fail: 0, skip: 0, warn: 0, inconclusive: 0, blocksShip: false });
   });
 });
 
