@@ -7,7 +7,7 @@ import type {
 } from "./accept.js";
 import { resolvePlaceholder } from "./accept-credentials.js";
 import { isUrlAllowed, redactSnapshot } from "./accept-security.js";
-import type { AgentBrowserClient, Snapshot } from "./agent-browser-client.js";
+import { AgentBrowserCliClient, type AgentBrowserClient, type Snapshot } from "./agent-browser-client.js";
 import { evaluateUiVerdict } from "./evaluate-ui-verdict.js";
 
 /** Default navigation allowlist — localhost + loopback only. [R4-AC5] */
@@ -150,15 +150,18 @@ export const agentBrowserRunner: Runner = {
     }
 
     // P0-2 [R4-AC6] agent-browser binary pin verification — fail-closed on mismatch.
-    const pin = await verifyAgentBrowserPin();
-    if (!pin.ok) {
-      return makeArtifact(
-        scenario,
-        ctx,
-        "INCONCLUSIVE",
-        [],
-        `agent-browser binary not verified: ${pin.reason}`,
-      );
+    // Only verify when using the real CLI client (Fake in tests has no binary).
+    if (client instanceof AgentBrowserCliClient) {
+      const pin = await verifyAgentBrowserPin();
+      if (!pin.ok) {
+        return makeArtifact(
+          scenario,
+          ctx,
+          "INCONCLUSIVE",
+          [],
+          `agent-browser binary not verified: ${pin.reason}`,
+        );
+      }
     }
 
     // Wall-clock guard for the whole scenario. [R3-AC5]
@@ -666,7 +669,8 @@ function evaluateCliVerdict(
   return "PASS";
 }
 
-interface ExecResult {
+/** @internal */
+export interface ExecResult {
   stdout: string;
   stderr: string;
 }

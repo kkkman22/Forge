@@ -47,7 +47,8 @@ export interface AgentBrowserClient {
 // FakeAgentBrowserClient — deterministic in-memory implementation for tests.
 // ---------------------------------------------------------------------------
 
-type CallRecord = {
+/** @internal */
+export type CallRecord = {
   method: "open" | "snapshot" | "click" | "fill" | "screenshot" | "close";
   args: unknown[];
 };
@@ -130,7 +131,8 @@ export function buildOpenArgs(
   return { executable: "agent-browser", args: ["--session", sessionId, "open", url] };
 }
 
-interface CliClientOptions {
+/** @internal */
+export interface CliClientOptions {
   openTimeoutMs?: number;
   snapshotTimeoutMs?: number;
   actionTimeoutMs?: number;
