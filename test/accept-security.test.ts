@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { redactSnapshot, isUrlAllowed } from "../src/accept-security.js";
+import { isUrlAllowed, redactSnapshot } from "../src/accept-security.js";
 
 // Verifies spec R4-AC4 (redaction) and R4-AC5 (url allowlist).
 // T1.3 RED → GREEN
@@ -61,7 +61,9 @@ describe("isUrlAllowed", () => {
   });
 
   it("allows an explicitly declared dev domain", () => {
-    expect(isUrlAllowed("http://myapp.test:4000", ["localhost", "127.0.0.1", "myapp.test"])).toBe(true);
+    expect(isUrlAllowed("http://myapp.test:4000", ["localhost", "127.0.0.1", "myapp.test"])).toBe(
+      true,
+    );
   });
 
   it("rejects malformed url", () => {

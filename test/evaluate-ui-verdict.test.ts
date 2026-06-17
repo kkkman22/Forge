@@ -53,10 +53,7 @@ describe("evaluateUiVerdict", () => {
       ),
     ).toBe("PASS");
     expect(
-      evaluateUiVerdict(
-        { url: "/dashboard", title: "", text: "" },
-        "跳转 dashboard 且 显示 欢迎",
-      ),
+      evaluateUiVerdict({ url: "/dashboard", title: "", text: "" }, "跳转 dashboard 且 显示 欢迎"),
     ).toBe("FAIL");
   });
 

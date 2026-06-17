@@ -1,8 +1,8 @@
 import { describe, expect, it } from "vitest";
 import type { Scenario, ScenarioArtifact } from "../src/accept.js";
-import { agentBrowserRunner, RUNNERS } from "../src/accept-driver.js";
-import { FakeAgentBrowserClient, type AgentBrowserClient } from "../src/agent-browser-client.js";
 import type { RunnerContext } from "../src/accept-driver.js";
+import { agentBrowserRunner, RUNNERS } from "../src/accept-driver.js";
+import { type AgentBrowserClient, FakeAgentBrowserClient } from "../src/agent-browser-client.js";
 
 // Verifies spec R1-AC1, R1-AC2, R1-AC3, R1-AC4, R3-AC6.
 // T2.3 RED → GREEN

@@ -10,8 +10,8 @@
 
 import { mkdirSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
-import { runCdpHarness } from "./harness-cdp.js";
 import { AgentBrowserCliClient } from "./agent-browser-client.js";
+import { runCdpHarness } from "./harness-cdp.js";
 import { detectAgentBrowser, detectProjectHarness } from "./harness-detector.js";
 import { runPlaywrightHarness } from "./harness-playwright.js";
 

@@ -33,7 +33,11 @@ describe("AgentBrowserCliClient.open", () => {
   it("calls execFile with the descriptor args", async () => {
     execFileMock.mockImplementation((...rest: unknown[]) => {
       if (rest.length === 0) return;
-      const cb = rest[rest.length - 1] as (err: Error | null, stdout: string, stderr: string) => void;
+      const cb = rest[rest.length - 1] as (
+        err: Error | null,
+        stdout: string,
+        stderr: string,
+      ) => void;
       cb(null, "", "");
     });
     const c = new AgentBrowserCliClient();
@@ -56,7 +60,11 @@ describe("AgentBrowserCliClient.open", () => {
   it("rejects on non-zero exit (stderr propagated)", async () => {
     execFileMock.mockImplementation((...rest: unknown[]) => {
       if (rest.length === 0) return;
-      const cb = rest[rest.length - 1] as (err: Error | null, stdout: string, stderr: string) => void;
+      const cb = rest[rest.length - 1] as (
+        err: Error | null,
+        stdout: string,
+        stderr: string,
+      ) => void;
       cb(new Error("agent-browser not found"), "", "spawn error");
     });
     const c = new AgentBrowserCliClient();
@@ -70,13 +78,19 @@ describe("AgentBrowserCliClient.fill — credentials via stdin not argv", () => 
   it("passes value through input (stdin), never in args", async () => {
     execFileMock.mockImplementation((...rest: unknown[]) => {
       if (rest.length === 0) return;
-      const cb = rest[rest.length - 1] as (err: Error | null, stdout: string, stderr: string) => void;
+      const cb = rest[rest.length - 1] as (
+        err: Error | null,
+        stdout: string,
+        stderr: string,
+      ) => void;
       cb(null, "", "");
     });
     const c = new AgentBrowserCliClient();
     await c.fill("s1", "e2", "supersecret-password");
     // find the call that has the fill args
-    const fillCall = execFileMock.mock.calls.find((cl: unknown[]) => Array.isArray(cl[1]) && (cl[1] as string[])[0] === "fill");
+    const fillCall = execFileMock.mock.calls.find(
+      (cl: unknown[]) => Array.isArray(cl[1]) && (cl[1] as string[])[0] === "fill",
+    );
     expect(fillCall).toBeDefined();
     const args = fillCall![1] as string[];
     const opts = fillCall![2] as { input?: string };
@@ -94,13 +108,15 @@ describe("AgentBrowserCliClient.snapshot — parses agent-browser JSON", () => {
       url: "http://localhost:5173/dashboard",
       title: "Dashboard",
       text: "Welcome admin",
-      elements: [
-        { ref: "e1", tag: "button", text: "Logout", role: "button" },
-      ],
+      elements: [{ ref: "e1", tag: "button", text: "Logout", role: "button" }],
     });
     execFileMock.mockImplementation((...rest: unknown[]) => {
       if (rest.length === 0) return;
-      const cb = rest[rest.length - 1] as (err: Error | null, stdout: string, stderr: string) => void;
+      const cb = rest[rest.length - 1] as (
+        err: Error | null,
+        stdout: string,
+        stderr: string,
+      ) => void;
       cb(null, json, "");
     });
     const c = new AgentBrowserCliClient();

@@ -39,10 +39,7 @@ describe("aggregateVerdicts — INCONCLUSIVE semantics", () => {
   });
 
   it("all-INCONCLUSIVE does not block ship", () => {
-    const result = aggregateVerdicts([
-      artifact("INCONCLUSIVE"),
-      artifact("INCONCLUSIVE"),
-    ]);
+    const result = aggregateVerdicts([artifact("INCONCLUSIVE"), artifact("INCONCLUSIVE")]);
     expect(result.inconclusive).toBe(2);
     expect(result.fail).toBe(0);
     expect(result.blocksShip).toBe(false);

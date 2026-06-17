@@ -4,9 +4,9 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 const { execFileMock } = vi.hoisted(() => ({ execFileMock: vi.fn() }));
 vi.mock("node:child_process", () => ({ execFile: execFileMock }));
 
-import { apiRunner, cliRunner, buildCurlArgs } from "../src/accept-driver.js";
 import type { Scenario, ScenarioArtifact } from "../src/accept.js";
 import type { RunnerContext } from "../src/accept-driver.js";
+import { apiRunner, buildCurlArgs, cliRunner } from "../src/accept-driver.js";
 
 // Verifies T3.2: execCommand actually executes (no placeholder 200).
 // api/cli runners produce real PASS/FAIL from real stdout.

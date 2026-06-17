@@ -13,7 +13,10 @@ const PLACEHOLDER_RE = /\{\{([A-Z0-9_]+)\}\}/g;
  * Returns the substituted string, or null if a referenced var is missing.
  * Non-placeholder literals pass through unchanged.
  */
-export function resolvePlaceholder(value: string, env: Record<string, string | undefined>): string | null {
+export function resolvePlaceholder(
+  value: string,
+  env: Record<string, string | undefined>,
+): string | null {
   let missing = false;
   const out = value.replace(PLACEHOLDER_RE, (_m, name: string) => {
     const v = env[name];

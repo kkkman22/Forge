@@ -5,7 +5,11 @@ import { aggregateVerdicts, renderAcceptanceReport } from "../src/accept-driver.
 // Verifies spec R5-AC1..AC6: three-state report rendering.
 // T4.2 RED → GREEN
 
-function artifact(id: string, verdict: ScenarioArtifact["verdict"], extra: Partial<ScenarioArtifact> = {}): ScenarioArtifact {
+function artifact(
+  id: string,
+  verdict: ScenarioArtifact["verdict"],
+  extra: Partial<ScenarioArtifact> = {},
+): ScenarioArtifact {
   return {
     scenarioId: id,
     source: "explicit",

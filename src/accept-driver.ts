@@ -5,9 +5,9 @@ import type {
   ScenarioType,
   Verdict,
 } from "./accept.js";
+import { resolvePlaceholder } from "./accept-credentials.js";
 import type { AgentBrowserClient, Snapshot } from "./agent-browser-client.js";
 import { evaluateUiVerdict } from "./evaluate-ui-verdict.js";
-import { resolvePlaceholder } from "./accept-credentials.js";
 
 // ---------------------------------------------------------------------------
 // Runner Interface
@@ -95,13 +95,7 @@ export const agentBrowserRunner: Runner = {
       );
     }
     if (!ctx.tierAvailability.devServerRunning) {
-      return makeArtifact(
-        scenario,
-        ctx,
-        "INCONCLUSIVE",
-        [],
-        "dev server not running",
-      );
+      return makeArtifact(scenario, ctx, "INCONCLUSIVE", [], "dev server not running");
     }
     const appUrl = ctx.appUrl ?? "http://localhost:5173";
 
@@ -547,7 +541,10 @@ interface ExecResult {
  * Build a curl descriptor for the API runner — pure function, no shell string.
  * Instinct: descriptor + execFile (reject strategy). [T3.2]
  */
-export function buildCurlArgs(method: string, url: string): {
+export function buildCurlArgs(
+  method: string,
+  url: string,
+): {
   executable: string;
   args: string[];
 } {

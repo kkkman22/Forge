@@ -7,7 +7,7 @@
  * browser is started. Instinct: external commands via descriptor + execFile.
  */
 
-import { execFile, type ExecFileOptionsWithStringEncoding } from "node:child_process";
+import { type ExecFileOptionsWithStringEncoding, execFile } from "node:child_process";
 
 /**
  * execFile options extended with `input` (stdin write). Node supports `input`
@@ -81,7 +81,8 @@ export class FakeAgentBrowserClient implements AgentBrowserClient {
   async snapshot(_sessionId: string): Promise<Snapshot> {
     this.calls.push({ method: "snapshot", args: [_sessionId] });
     if (this.queue.length > 0) {
-      return this.queue.shift()!;
+      const next = this.queue.shift();
+      if (next) return next;
     }
     return { ...DEFAULT_SNAPSHOT, url: this.openUrl || DEFAULT_SNAPSHOT.url };
   }
@@ -111,7 +112,10 @@ export class FakeAgentBrowserClient implements AgentBrowserClient {
 // ---------------------------------------------------------------------------
 
 /** Pure descriptor for the `open` command — testable without execFile. */
-export function buildOpenArgs(url: string, sessionId: string): {
+export function buildOpenArgs(
+  url: string,
+  sessionId: string,
+): {
   executable: string;
   args: string[];
 } {
@@ -192,11 +196,9 @@ export class AgentBrowserCliClient implements AgentBrowserClient {
 
   async click(sessionId: string, ref: string): Promise<void> {
     validateRef(ref);
-    await runExecFile(
-      "agent-browser",
-      ["click", "--session", sessionId, "--ref", ref],
-      { timeoutMs: this.actionTimeoutMs },
-    );
+    await runExecFile("agent-browser", ["click", "--session", sessionId, "--ref", ref], {
+      timeoutMs: this.actionTimeoutMs,
+    });
   }
 
   /**
@@ -205,11 +207,10 @@ export class AgentBrowserCliClient implements AgentBrowserClient {
    */
   async fill(sessionId: string, ref: string, value: string): Promise<void> {
     validateRef(ref);
-    await runExecFile(
-      "agent-browser",
-      ["fill", "--session", sessionId, "--ref", ref],
-      { input: value, timeoutMs: this.actionTimeoutMs },
-    );
+    await runExecFile("agent-browser", ["fill", "--session", sessionId, "--ref", ref], {
+      input: value,
+      timeoutMs: this.actionTimeoutMs,
+    });
   }
 
   async screenshot(sessionId: string, destPath: string): Promise<void> {
@@ -222,11 +223,9 @@ export class AgentBrowserCliClient implements AgentBrowserClient {
   }
 
   async close(sessionId: string): Promise<void> {
-    await runExecFile(
-      "agent-browser",
-      ["close", "--session", sessionId],
-      { timeoutMs: this.actionTimeoutMs },
-    );
+    await runExecFile("agent-browser", ["close", "--session", sessionId], {
+      timeoutMs: this.actionTimeoutMs,
+    });
   }
 }
 

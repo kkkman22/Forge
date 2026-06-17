@@ -1,9 +1,9 @@
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
-import { resolvePlaceholder, resolveSecrets } from "../src/accept-credentials.js";
-import { agentBrowserRunner } from "../src/accept-driver.js";
-import { FakeAgentBrowserClient, type AgentBrowserClient } from "../src/agent-browser-client.js";
 import type { Scenario, ScenarioArtifact } from "../src/accept.js";
+import { resolvePlaceholder, resolveSecrets } from "../src/accept-credentials.js";
 import type { RunnerContext } from "../src/accept-driver.js";
+import { agentBrowserRunner } from "../src/accept-driver.js";
+import { type AgentBrowserClient, FakeAgentBrowserClient } from "../src/agent-browser-client.js";
 
 // Verifies spec R4-AC1 (placeholder creds) and R4-AC2 (stdin not argv).
 // T4.3 RED → GREEN
@@ -24,9 +24,7 @@ describe("resolvePlaceholder (pure)", () => {
   });
 
   it("handles multiple placeholders in one string", () => {
-    expect(
-      resolvePlaceholder("{{USER}}:{{PASS}}", { USER: "u", PASS: "p" }),
-    ).toBe("u:p");
+    expect(resolvePlaceholder("{{USER}}:{{PASS}}", { USER: "u", PASS: "p" })).toBe("u:p");
   });
 });
 

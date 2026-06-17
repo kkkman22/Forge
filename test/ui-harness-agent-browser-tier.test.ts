@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
-import { runUiHarness, type UiControllerTier } from "../src/ui-harness.js";
 import { detectAgentBrowser } from "../src/harness-detector.js";
+import { runUiHarness, type UiControllerTier } from "../src/ui-harness.js";
 
 // Verifies spec R3-AC1 (tier order), R3-AC2 (cmux removed), R3-AC4 (detect + fallback).
 // T3.1 RED → GREEN

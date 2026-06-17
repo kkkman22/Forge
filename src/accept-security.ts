@@ -22,9 +22,8 @@ export function redactSnapshot(text: string): string {
   let out = text;
   // Header form: "<Name>: <value>" → "Name: [REDACTED]"
   // Preserve the original separator so the structural shape is unchanged.
-  out = out.replace(
-    /((?:set-)?cookie|authorization)\s*:\s*[^\n\r,;]*/gi,
-    (m) => m.replace(/\s*:\s*[^\n\r,;]*$/i, ": [REDACTED]"),
+  out = out.replace(/((?:set-)?cookie|authorization)\s*:\s*[^\n\r,;]*/gi, (m) =>
+    m.replace(/\s*:\s*[^\n\r,;]*$/i, ": [REDACTED]"),
   );
   // Standalone "bearer <value>" token form.
   out = out.replace(/\bbearer\s+\S+/gi, "bearer [REDACTED]");

@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 import {
-  FakeAgentBrowserClient,
   type AgentBrowserClient,
+  FakeAgentBrowserClient,
   type SnapshotRef,
 } from "../src/agent-browser-client.js";
 
@@ -45,13 +45,7 @@ describe("AgentBrowserClient interface + FakeAgentBrowserClient", () => {
     await c.fill("s1", "e2", "admin");
     await c.click("s1", "e3");
     await c.close("s1");
-    expect(c.calls.map((x) => x.method)).toEqual([
-      "open",
-      "snapshot",
-      "fill",
-      "click",
-      "close",
-    ]);
+    expect(c.calls.map((x) => x.method)).toEqual(["open", "snapshot", "fill", "click", "close"]);
   });
 
   it("Fake can be scripted to return a custom snapshot", async () => {

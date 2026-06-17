@@ -42,7 +42,26 @@ export function extractThenKeywords(thenClause: string): string[] {
     "display",
     "see",
   ].sort((a, b) => b.length - a.length);
-  const fillerExact = new Set(["跳转到", "跳转", "显示", "出现", "看到", "应当", "应该", "应", "且", "并", "和", "shall", "should", "show", "display", "see", "the", "a"]);
+  const fillerExact = new Set([
+    "跳转到",
+    "跳转",
+    "显示",
+    "出现",
+    "看到",
+    "应当",
+    "应该",
+    "应",
+    "且",
+    "并",
+    "和",
+    "shall",
+    "should",
+    "show",
+    "display",
+    "see",
+    "the",
+    "a",
+  ]);
   const keywords: string[] = [];
   for (let token of raw) {
     // First: if the whole token is a filler (e.g. "显示", "跳转"), drop it.
@@ -77,10 +96,7 @@ function snapshotSatisfies(snapshot: UiSnapshot, keyword: string): boolean {
   return new RegExp(escaped, "i").test(hay);
 }
 
-export function evaluateUiVerdict(
-  snapshot: UiSnapshot,
-  thenClause: string,
-): "PASS" | "FAIL" {
+export function evaluateUiVerdict(snapshot: UiSnapshot, thenClause: string): "PASS" | "FAIL" {
   const keywords = extractThenKeywords(thenClause);
   // Empty assertion → nothing to violate → PASS.
   if (keywords.length === 0) return "PASS";
