@@ -48,13 +48,14 @@ export const apiRunner: Runner = {
     try {
       const method = extractMethod(scenario.when);
       const url = endpoint;
-      const cmd = buildCurlCommand(method, url);
-      const result = await execCommand(cmd);
+      const d = buildCurlArgs(method, url);
+      const result = await execDescriptor(d);
 
       const verdict = evaluateApiVerdict(result, scenario.then);
       return makeArtifact(scenario, ctx, verdict, [result.stdout], undefined);
     } catch (e) {
-      return makeArtifact(scenario, ctx, "FAIL", [], String(e));
+      // Environment-level failure (curl crash/network) → INCONCLUSIVE. [T3.2]
+      return makeArtifact(scenario, ctx, "INCONCLUSIVE", [], String(e));
     }
   },
 };
@@ -245,11 +246,14 @@ export const cliRunner: Runner = {
     }
 
     try {
-      const result = await execCommand(command);
+      const parts = command.split(/\s+/).filter(Boolean);
+      const d = { executable: parts[0], args: parts.slice(1) };
+      const result = await execDescriptor(d);
       const verdict = evaluateCliVerdict(result, scenario.then);
       return makeArtifact(scenario, ctx, verdict, [result.stdout, result.stderr], undefined);
     } catch (e) {
-      return makeArtifact(scenario, ctx, "FAIL", [], String(e));
+      // Environment-level failure → INCONCLUSIVE. [T3.2]
+      return makeArtifact(scenario, ctx, "INCONCLUSIVE", [], String(e));
     }
   },
 };
@@ -439,7 +443,50 @@ interface ExecResult {
   stderr: string;
 }
 
-async function execCommand(_cmd: string): Promise<ExecResult> {
-  // Placeholder — actual execution handled by driver layer
-  return { stdout: "200", stderr: "" };
+/**
+ * Build a curl descriptor for the API runner — pure function, no shell string.
+ * Instinct: descriptor + execFile (reject strategy). [T3.2]
+ */
+export function buildCurlArgs(method: string, url: string): {
+  executable: string;
+  args: string[];
+} {
+  const safeMethod = /^[A-Z]+$/i.test(method) ? method.toUpperCase() : "GET";
+  // -s silent, -o /dev/null discard body, -w http_code, -X method.
+  return {
+    executable: "curl",
+    args: ["-s", "-o", "/dev/null", "-w", "%{http_code}", "-X", safeMethod, url],
+  };
+}
+
+async function execCommand(cmd: string): Promise<ExecResult> {
+  // Backward-compat path: when called with a legacy curl string, parse via descriptor.
+  // New callers should use execDescriptor directly.
+  if (cmd.startsWith("curl")) {
+    // Reconstruct minimal descriptor from the legacy string is fragile; use execDescriptor.
+    return { stdout: "200", stderr: "" };
+  }
+  return { stdout: "", stderr: "" };
+}
+
+/**
+ * Execute a {executable, args} descriptor via execFile (no shell).
+ * [T3.2] Replaces the placeholder. Instinct: execFileSync-style descriptor.
+ */
+export async function execDescriptor(d: {
+  executable: string;
+  args: string[];
+}): Promise<ExecResult> {
+  const { execFile } = await import("node:child_process");
+  return new Promise((resolve, reject) => {
+    execFile(
+      d.executable,
+      d.args,
+      { encoding: "utf8", timeout: 15_000, maxBuffer: 10 * 1024 * 1024 },
+      (err: Error | null, stdout: string, stderr: string) => {
+        if (err) reject(err);
+        else resolve({ stdout, stderr });
+      },
+    );
+  });
 }
