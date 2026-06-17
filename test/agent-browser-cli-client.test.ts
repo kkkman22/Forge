@@ -109,6 +109,6 @@ describe("AgentBrowserCliClient.click / get url / screenshot / close", () => {
     const clickCall = execFileMock.mock.calls.find(
       (cl: unknown[]) => Array.isArray(cl[1]) && (cl[1] as string[]).includes("click"),
     );
-    expect((clickCall![1] as string[])).toEqual(["--session", "s1", "click", "@e5"]);
+    expect(clickCall![1] as string[]).toEqual(["--session", "s1", "click", "@e5"]);
   });
 });

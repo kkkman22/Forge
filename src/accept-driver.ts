@@ -108,7 +108,7 @@ export const apiRunner: Runner = {
 function findRefByText(refs: Snapshot["refs"], keyword: string): string | null {
   const kw = keyword.trim().toLowerCase();
   for (const r of refs) {
-    if (r.text && r.text.toLowerCase().includes(kw)) return r.ref;
+    if (r.text?.toLowerCase().includes(kw)) return r.ref;
   }
   return null;
 }
@@ -325,7 +325,7 @@ async function actWithRetry(
 export function extractActionKeyword(whenText: string): string | null {
   // "点击 登录按钮" / "click 登录" → take the trailing noun after the verb.
   const m = whenText.match(/(?:点击|click|按下|tap)\s*([^\s,，。]+)/i);
-  if (m && m[1]) return m[1].replace(/按钮$/, "");
+  if (m?.[1]) return m[1].replace(/按钮$/, "");
   return null;
 }
 
@@ -363,6 +363,7 @@ function extractFillValues(text: string): { key: string; value: string }[] {
   const pairs: { key: string; value: string }[] = [];
   const re = /(用户名|username|密码|password|pwd)\s+([^\s,，。、]+)/gi;
   let m: RegExpExecArray | null;
+  // biome-ignore lint/suspicious/noAssignInExpressions: standard regex exec loop pattern
   while ((m = re.exec(text)) !== null) {
     if (m[1] && m[2]) {
       const low = m[1].toLowerCase();

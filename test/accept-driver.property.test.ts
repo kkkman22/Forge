@@ -28,14 +28,23 @@ describe("aggregateVerdicts — property", () => {
     fc.assert(
       fc.property(fc.array(artifactArb()), (artifacts) => {
         const result = aggregateVerdicts(artifacts);
-        expect(result.pass + result.fail + result.skip + result.warn + result.inconclusive).toBe(artifacts.length);
+        expect(result.pass + result.fail + result.skip + result.warn + result.inconclusive).toBe(
+          artifacts.length,
+        );
       }),
     );
   });
 
   it("empty input → zero counts", () => {
     const result = aggregateVerdicts([]);
-    expect(result).toEqual({ pass: 0, fail: 0, skip: 0, warn: 0, inconclusive: 0, blocksShip: false });
+    expect(result).toEqual({
+      pass: 0,
+      fail: 0,
+      skip: 0,
+      warn: 0,
+      inconclusive: 0,
+      blocksShip: false,
+    });
   });
 
   it("any FAIL → blocksShip true", () => {

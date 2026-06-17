@@ -1,3 +1,4 @@
+// biome-ignore-all lint/suspicious/noThenProperty: `then` is a Gherkin field, not a promise
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
 // Mock child_process so no real curl/commands run.

@@ -1,3 +1,4 @@
+// biome-ignore-all lint/suspicious/noThenProperty: `then` is a Gherkin field, not a promise
 import { describe, expect, it } from "vitest";
 import type { Scenario, ScenarioArtifact } from "../src/accept.js";
 import type { RunnerContext } from "../src/accept-driver.js";

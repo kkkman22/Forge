@@ -1,7 +1,7 @@
-import { createServer, type Server } from "node:http";
-import { writeFileSync, mkdirSync } from "node:fs";
-import { join } from "node:path";
 import { execFileSync } from "node:child_process";
+import { mkdirSync, writeFileSync } from "node:fs";
+import { createServer, type Server } from "node:http";
+import { join } from "node:path";
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
 import { AgentBrowserCliClient } from "../../src/agent-browser-client.js";
 
@@ -31,7 +31,7 @@ const LOGIN_HTML = `<!DOCTYPE html><html><head><title>Login</title></head>
   <button type="submit">Sign In</button>
 </form></body></html>`;
 const WELCOME_HTML =
-  '<!DOCTYPE html><html><head><title>Dashboard</title></head><body><h1>Welcome admin</h1></body></html>';
+  "<!DOCTYPE html><html><head><title>Dashboard</title></head><body><h1>Welcome admin</h1></body></html>";
 
 beforeAll(async () => {
   if (!hasAgentBrowser) return;
