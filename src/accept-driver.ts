@@ -330,10 +330,13 @@ export function aggregateVerdicts(artifacts: readonly ScenarioArtifact[]): {
 }
 
 export function renderAcceptanceReport(result: AcceptanceRunResult): string {
+  const total = result.scenarios.length;
   const lines: string[] = [
     `# Acceptance Report — ${result.topic}`,
     "",
     "## Summary",
+    "",
+    `Run: ${total}/${total} scenarios`,
     "",
     `| Verdict | Count |`,
     `|---------|-------|`,
@@ -341,6 +344,7 @@ export function renderAcceptanceReport(result: AcceptanceRunResult): string {
     `| FAIL    | ${result.summary.fail} |`,
     `| SKIP    | ${result.summary.skip} |`,
     `| WARN    | ${result.summary.warn} |`,
+    `| INCONCLUSIVE | ${result.summary.inconclusive} |`,
     "",
     `**Blocks Ship**: ${result.summary.blocksShip ? "YES" : "NO"}`,
     "",
@@ -349,16 +353,79 @@ export function renderAcceptanceReport(result: AcceptanceRunResult): string {
   ];
 
   for (const s of result.scenarios) {
-    lines.push(`### ${s.scenarioId}`);
-    lines.push(`- **Verdict**: ${s.verdict}`);
-    lines.push(`- **Source**: ${s.source}`);
+    const marker = verdictMarker(s.verdict);
+    // R5-AC3: PASS collapses to a single line.
+    if (s.verdict === "PASS" || s.verdict === "SKIP" || s.verdict === "WARN") {
+      lines.push(`- ${marker} \`${s.scenarioId}\` — ${s.verdict}`);
+      continue;
+    }
+    // FAIL / INCONCLUSIVE expand with detail.
+    lines.push(`### ${marker} ${s.scenarioId} — ${s.verdict}`);
+    if (s.verdict === "INCONCLUSIVE") {
+      lines.push("");
+      lines.push("> 这不是失败——是当前环境无法验证，不阻断 ship。");
+    }
+    // R5-AC2: render Given/When/Then original text.
+    if (s.givenWhenThen) {
+      lines.push("");
+      lines.push("**Scenario**:");
+      lines.push("");
+      for (const line of s.givenWhenThen.split("\n")) {
+        lines.push(`> ${line}`);
+      }
+    }
     if (s.failureReason) {
-      lines.push(`- **Failure Reason**: ${s.failureReason}`);
+      lines.push("");
+      lines.push(`- **Reason**: ${s.failureReason}`);
+    }
+    // R5-AC4: Next → heuristic hint.
+    lines.push("");
+    lines.push(`- **Next →** ${nextHint(s)}`);
+    // R5-AC3: evidence folded in <details>.
+    if (s.evidence.length > 0) {
+      lines.push("");
+      lines.push("<details><summary>Evidence</summary>");
+      lines.push("");
+      for (const e of s.evidence) {
+        lines.push(`- ${e}`);
+      }
+      lines.push("");
+      lines.push("</details>");
     }
     lines.push("");
   }
 
   return lines.join("\n");
+}
+
+/** R5-AC1 visual marker per verdict. */
+function verdictMarker(v: Verdict): string {
+  switch (v) {
+    case "PASS":
+      return "✅";
+    case "FAIL":
+      return "❌";
+    case "INCONCLUSIVE":
+      return "⚠️";
+    case "WARN":
+      return "⚠️";
+    default:
+      return "⏭️";
+  }
+}
+
+/** R5-AC4 heuristic next-step hint per scenario type/verdict. */
+function nextHint(s: ScenarioArtifact): string {
+  if (s.verdict === "INCONCLUSIVE") {
+    return "确认 agent-browser 已安装、dev server 已启动，或改用 Playwright e2e。";
+  }
+  if (s.verdict === "FAIL") {
+    if (/跳转|jump|redirect|dashboard/i.test(s.failureReason ?? "")) {
+      return "UI 跳转未发生，检查路由守卫/鉴权返回。";
+    }
+    return "核对 THEN 预期与实际 snapshot 差异；用 /forge test 跑单元层定位。";
+  }
+  return "—";
 }
 
 // ---------------------------------------------------------------------------
