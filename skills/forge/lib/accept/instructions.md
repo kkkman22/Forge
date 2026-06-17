@@ -1,5 +1,6 @@
 ---
 description: "Use when /forge ship runs on a spec with acceptance_eval true, user runs /forge accept explicitly, or /forge ship --with-acceptance flag is provided"
+updated: 2026-06-17
 deliverable_exempt: true
 dispatch_mode: fork
 allowed_tools:
@@ -47,11 +48,20 @@ Parse spec scenarios (explicit Gherkin or derived from acceptance criteria), cla
 ### Step 3: Execute Runners
 
 1. For each selected scenario, `runScenario(scenario, ctx)`:
-   - API → curl-based HTTP assertion
-   - UI → cmux browser + axe-core (skip if Tier B unavailable)
-   - CLI → bash execution with stdout/stderr capture
-   - Mixed → sequential API + UI (Phase 2)
+   - API → real curl execution (execDescriptor), HTTP code assertion; crash → INCONCLUSIVE
+   - UI → **agent-browser** (Vercel CLI, snapshot+refs) drives the page per Given/When/Then;
+     falls back through ui-harness tiers: project(playwright.config e2e) → agent-browser → playwright → cdp → INCONCLUSIVE.
+     **Prerequisite**: user must install agent-browser (`which agent-browser`) and have dev server running.
+     Credentials use `{{VAR}}` placeholders resolved from env (never in argv).
+   - CLI → real bash execution (execDescriptor), stdout/stderr capture; crash → INCONCLUSIVE
+   - Mixed → sequential API + UI (Phase 2, not yet implemented)
 2. Collect `ScenarioArtifact` per scenario
+
+### Three-State Verdict
+
+- **PASS** ✅ — scenario's THEN satisfied.
+- **FAIL** ❌ — THEN not satisfied; `blocksShip = true`.
+- **INCONCLUSIVE** ⚠️ — environment unavailable (agent-browser not installed / dev server down / crash / timeout). Does NOT block ship, counted separately. Not a failure — the run could not verify.
 
 ### Step 4: Aggregate & Report
 
