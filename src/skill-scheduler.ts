@@ -9,6 +9,7 @@
  * **Validates: Requirements 3.1, 3.2, 3.3, 3.4, 3.5, 3.6, 3.7, 3.8, 3.9, 3.10, 3.11**
  */
 
+import type { FailureClass } from "./debug.js";
 import { getSchedulerSequence } from "./workflow-graph.js";
 
 // ---------------------------------------------------------------------------
@@ -53,6 +54,24 @@ export interface SchedulerInput {
   reviewFixAttempts: number;
   /** Maximum allowed review-fix loop iterations before circuit breaker. */
   maxReviewFixAttempts: number;
+  /**
+   * Debug file `status` field (dynamic-replan-loop R2). Populated by the
+   * caller from `.forge/debug/<slug>.md` frontmatter. Present only when the
+   * current phase is "debug".
+   */
+  debugStatus?: string;
+  /**
+   * Debug file `failure_class` field (dynamic-replan-loop R1/R2). Drives
+   * build-vs-plan routing when debugStatus is "resolved".
+   */
+  debugFailureClass?: FailureClass;
+  /**
+   * Assumptions invalidated by the debug (dynamic-replan-loop R2). Present
+   * only when debugFailureClass is "assumption_invalidated"; used by the
+   * downstream plan phase for incremental replan. The caller also mirrors
+   * these into status.md as a passthrough `invalidated_assumptions` field.
+   */
+  debugInvalidatedAssumptions?: string[];
 }
 
 /** Result of the scheduler's phase determination. */
@@ -207,6 +226,34 @@ export function determineNextSkill(input: SchedulerInput): SchedulerResult {
       return { nextPhase: "fix-apply", reason: "Incomplete fix tasks remain, continuing apply" };
     }
     return { nextPhase: "review", reason: "All fix tasks complete, proceeding to review" };
+  }
+
+  // Debug phase (dynamic-replan-loop R2) — formal handoff by failure_class.
+  // Previously missing entirely: debug was a fork side-path with no scheduler
+  // branch, so control returned to build via implicit context recovery.
+  // Conservative: missing/unknown debug fields → build (never blocks).
+  if (currentPhase === "debug") {
+    if (input.debugStatus === "abandoned") {
+      return { nextPhase: "aborted", reason: "Debug abandoned, aborting task" };
+    }
+    if (input.debugStatus === "resolved") {
+      if (input.debugFailureClass === "assumption_invalidated") {
+        return {
+          nextPhase: "plan",
+          reason: "Debug resolved but remaining-plan assumptions invalidated — incremental replan",
+        };
+      }
+      if (input.debugFailureClass === "environmental") {
+        return {
+          nextPhase: "build",
+          reason:
+            "Debug resolved (environmental root cause) — needs human env intervention, resuming build",
+        };
+      }
+      return { nextPhase: "build", reason: "Debug resolved (fixable bug), resuming build" };
+    }
+    // debugStatus missing/unrecognized → conservative build (never blocks)
+    return { nextPhase: "build", reason: "Debug phase with unresolved status — resuming build" };
   }
 
   // Completed / aborted — terminal states
