@@ -70,3 +70,21 @@ describe("isUrlAllowed", () => {
     expect(isUrlAllowed("not-a-url", allowlist)).toBe(false);
   });
 });
+
+describe("redactSnapshot — JWT/PEM/x-api-key (P1-C)", () => {
+  it("redacts JWT tokens (eyJ marker)", () => {
+    const out = redactSnapshot("token eyJhbGci.eyJzdWIi.SflKxwRJSMeKKF2QT4f");
+    expect(out).toContain("[REDACTED-JWT]");
+    expect(out).not.toContain("eyJhbGci");
+  });
+  it("redacts PEM private key blocks", () => {
+    const pem = "-----BEGIN RSA PRIVATE KEY-----\nMIIEpAIBAAK\n-----END RSA PRIVATE KEY-----";
+    const out = redactSnapshot(pem);
+    expect(out).toContain("[REDACTED-PEM]");
+    expect(out).not.toContain("MIIEpAIBAAK");
+  });
+  it("redacts x-api-key / sessionid headers", () => {
+    expect(redactSnapshot("x-api-key: abc123secret")).toMatch(/x-api-key.*REDACTED/);
+    expect(redactSnapshot("sessionid: sid_xyz")).toContain("[REDACTED]");
+  });
+});

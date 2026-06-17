@@ -27,6 +27,15 @@ export function redactSnapshot(text: string): string {
   );
   // Standalone "bearer <value>" token form.
   out = out.replace(/\bbearer\s+\S+/gi, "bearer [REDACTED]");
+  // JWT inline tokens (eyJ... header marker).
+  out = out.replace(/\beyJ[A-Za-z0-9_-]*\.?[A-Za-z0-9_-]*\.?[A-Za-z0-9_-]*/g, "[REDACTED-JWT]");
+  // PEM private key blocks.
+  out = out.replace(
+    /-----BEGIN [A-Z ]*PRIVATE KEY-----[\s\S]*?-----END [A-Z ]*PRIVATE KEY-----/g,
+    "[REDACTED-PEM]",
+  );
+  // x-api-key / x-csrf-token / sessionid header form.
+  out = out.replace(/(x-api-key|x-csrf-token|sessionid)\s*:\s*[^\n\r,;]*/gi, "$1: [REDACTED]");
   // key=value (or key:value) form for credential-ish keys → "key=[REDACTED]".
   out = out.replace(
     /((?:password|passwd|pwd|secret|token|access_token|refresh_token|api[_-]?key))\s*[:=]\s*[^\n\r,;\s]+/gi,

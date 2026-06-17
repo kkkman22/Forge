@@ -30,7 +30,7 @@ async function verifyAgentBrowserPin(): Promise<{ ok: boolean; reason: string }>
     let configuredPin = "";
     try {
       const cfg = readFileSync(cfgPath, "utf8");
-      const m = cfg.match(/agent_browser_pin_sha256:\s*"?([a-f0-9]*)"?\s*$/m);
+      const m = cfg.match(/agent_browser_pin_sha256:\s*"?([a-f0-9]+)"?\s*$/m);
       configuredPin = m?.[1] ?? "";
     } catch {
       // config absent — dev mode, allow
@@ -338,7 +338,7 @@ export function extractActionKeyword(whenText: string): string | null {
  */
 function matchValueForTextbox(
   label: string,
-  fillValues: string[],
+  fillValues: { key: string; value: string }[],
   valueByKey: Record<string, string>,
 ): string {
   const low = label.toLowerCase();
@@ -348,26 +348,29 @@ function matchValueForTextbox(
   if (/密码|password|pwd/.test(low) && valueByKey.password) {
     return valueByKey.password;
   }
-  return fillValues[0] ?? "admin";
+  return fillValues[0]?.value ?? "admin";
 }
 
 /** Build a {username,password} map from extracted fill values (by order). */
-function indexFillValuesByKey(fillValues: string[]): Record<string, string> {
-  const key: Record<string, string> = {};
-  if (fillValues[0]) key.username = fillValues[0];
-  if (fillValues[1]) key.password = fillValues[1];
-  return key;
+function indexFillValuesByKey(pairs: { key: string; value: string }[]): Record<string, string> {
+  const map: Record<string, string> = {};
+  for (const p of pairs) map[p.key] = p.value;
+  return map;
 }
 
-function extractFillValues(text: string): string[] {
-  const values: string[] = [];
-  // "用户名 admin" / "username admin" / "密码 {{PASS}}"
-  const re = /(?:用户名|username|密码|password|pwd)\s+([^\s,，。、]+)/gi;
+/** Extract (key, value) pairs. P1-B: keyed, not positional. */
+function extractFillValues(text: string): { key: string; value: string }[] {
+  const pairs: { key: string; value: string }[] = [];
+  const re = /(用户名|username|密码|password|pwd)\s+([^\s,，。、]+)/gi;
   let m: RegExpExecArray | null;
   while ((m = re.exec(text)) !== null) {
-    if (m[1]) values.push(m[1]);
+    if (m[1] && m[2]) {
+      const low = m[1].toLowerCase();
+      const key = /密码|password|pwd/.test(low) ? "password" : "username";
+      pairs.push({ key, value: m[2] });
+    }
   }
-  return values;
+  return pairs;
 }
 
 // ---------------------------------------------------------------------------
