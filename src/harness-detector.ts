@@ -100,3 +100,19 @@ export async function detectProjectHarness(
     return null;
   }
 }
+
+/**
+ * Detect if the Vercel agent-browser CLI is installed/resolvable.
+ * [Spec R3-AC4] Tries `which agent-browser`; returns false (never throws) when
+ * absent, triggering tier fallback to playwright.
+ *
+ * Instinct: execFileSync descriptor + reject-on-error (no throw propagation).
+ */
+export async function detectAgentBrowser(): Promise<boolean> {
+  try {
+    execFileSync("which", ["agent-browser"], { encoding: "utf-8", timeout: 3000 });
+    return true;
+  } catch (_err: unknown) {
+    return false;
+  }
+}
