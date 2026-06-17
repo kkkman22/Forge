@@ -1,6 +1,6 @@
 {
   "version": 1,
-  "generated_at": "2026-06-17T12:30:21.983Z",
+  "generated_at": "2026-06-17T13:24:12.939Z",
   "subs": {
     "abort": {
       "instructions": {
@@ -197,7 +197,7 @@
     "debug": {
       "instructions": {
         "path": "debug/instructions.md",
-        "sha256": "edcfb5f300f76ba3a3962df63e211ad9a3a6538799f225ec36227ea4197e24a0"
+        "sha256": "06aca3ca81aef5172fcbb2b00ea2fed8d265221ff413b837b3833bcd0cafdbbf"
       },
       "references": [
         {

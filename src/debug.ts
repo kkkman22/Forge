@@ -77,11 +77,54 @@ export interface DebugEscalationResult {
 
 export type DebugPhase = "collect" | "pattern" | "hypothesize" | "fix";
 
+/**
+ * Debug resolution classification (dynamic-replan-loop R1).
+ *
+ * - `fixable_bug`: root cause is a code bug, debug fixed it → return to build.
+ * - `assumption_invalidated`: root cause is that remaining-plan assumptions no
+ *   longer hold (e.g. a depended-upon interface doesn't exist, the approach
+ *   conflicts with the existing architecture). Triggers incremental replan.
+ * - `environmental`: root cause is environment/dependency (missing dep,
+ *   insufficient permissions). Typically not solved by re-planning; needs
+ *   human intervention.
+ *
+ * Conservative default: when undeterminable, classify as `fixable_bug`
+ * (avoids false-positive replan triggers that disrupt an approved plan).
+ */
+export type FailureClass = "fixable_bug" | "assumption_invalidated" | "environmental";
+
+/** The set of recognized failure-class string values. */
+const FAILURE_CLASS_VALUES: ReadonlySet<FailureClass> = new Set([
+  "fixable_bug",
+  "assumption_invalidated",
+  "environmental",
+]);
+
 export interface DebugSession {
   phase: DebugPhase;
   errorContext: ErrorContext;
   hypotheses: Hypothesis[];
   results: HypothesisResult[];
+  /** Debug resolution classification (dynamic-replan-loop R1). */
+  failureClass?: FailureClass;
+  /** Assumptions invalidated by the debug — present only when failureClass is assumption_invalidated. */
+  invalidatedAssumptions?: string[];
+}
+
+/**
+ * Parse a raw `failure_class` frontmatter value into a FailureClass.
+ *
+ * Conservative (dynamic-replan-loop R1-AC4 / design D4): any missing, empty,
+ * or unrecognized value resolves to `fixable_bug`. This prevents a malformed
+ * debug file from spuriously triggering an incremental replan.
+ */
+export function parseFailureClass(raw: string | undefined): FailureClass {
+  if (!raw) return "fixable_bug";
+  const trimmed = raw.trim();
+  if (FAILURE_CLASS_VALUES.has(trimmed as FailureClass)) {
+    return trimmed as FailureClass;
+  }
+  return "fixable_bug";
 }
 
 // ---------------------------------------------------------------------------
