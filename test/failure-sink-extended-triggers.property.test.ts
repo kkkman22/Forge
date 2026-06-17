@@ -24,6 +24,7 @@ const ALL_TRIGGERS: FailureTrigger[] = [
   "test_layer_failed",
   "conflict_validation_failed",
   "loop_circuit_broken",
+  "replan_triggered",
 ];
 
 const triggerArb = fc.constantFrom(...ALL_TRIGGERS);

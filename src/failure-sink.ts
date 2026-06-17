@@ -41,7 +41,8 @@ export type FailureTrigger =
   | "grill_abandoned"
   | "test_layer_failed"
   | "conflict_validation_failed"
-  | "loop_circuit_broken";
+  | "loop_circuit_broken"
+  | "replan_triggered";
 
 /**
  * Context collected at the failure site. Callers build this record
@@ -104,6 +105,8 @@ function lessonFor(trigger: FailureTrigger): string {
       return "冲突解决后验证未通过，提示合并策略或测试覆盖不足";
     case "loop_circuit_broken":
       return "Forge Loop 熔断暴露循环目标可能不可达或方法未收敛";
+    case "replan_triggered":
+      return "动态重规划触发——剩余计划的假设被证伪，方向已修正";
   }
 }
 
