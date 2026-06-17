@@ -28,8 +28,9 @@ Runs your spec's acceptance scenarios (Given/When/Then) against the **real runni
 
 1. **Install agent-browser** (Vercel, snapshot+refs CLI):
    ```bash
-   npm i -g @vercel-labs/agent-browser   # or per its install docs
-   which agent-browser                    # must resolve
+   npm i -g agent-browser
+   which agent-browser          # must resolve (v0.28+ verified by smoke)
+   agent-browser --version
    ```
    Forge does NOT bundle any browser dependency (constitution R6.5). If absent, UI scenarios report INCONCLUSIVE (no false PASS).
 
@@ -52,7 +53,7 @@ Runs your spec's acceptance scenarios (Given/When/Then) against the **real runni
    export FORGE_E2E_USER=admin
    export FORGE_E2E_PASSWORD=your-test-password
    ```
-   Secrets flow to agent-browser via **stdin, never argv** (R4-AC2). Evidence (screenshots/snapshots) is redacted and gitignored (R4-AC3/AC4).
+   Credentials appear in agent-browser argv briefly (its CLI has no stdin option; verified). This is a best-effort mitigation of R4-AC2: the process is short-lived and acceptance runs against local dev only. Evidence (screenshots/snapshots) is redacted and gitignored (R4-AC3/AC4).
 
 ## Run it
 
