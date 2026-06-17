@@ -402,5 +402,132 @@ describe("agents-dispatcher (R5)", () => {
         expect(result.status).toBe("completed");
         expect(result.duration_ms).toBeGreaterThanOrEqual(0);
     });
+    // -----------------------------------------------------------------------
+    // 8. Per-tier agent timeout resolution (spec: review-agent-timeout-dynamic)
+    // -----------------------------------------------------------------------
+    it("resolveAgentTimeoutMs returns per-tier configured values", async () => {
+        const { resolveAgentTimeoutMs } = await import(MODULE_PATH);
+        const config = [
+            "review.agent_timeout_minutes.light: 5",
+            "review.agent_timeout_minutes.standard: 15",
+            "review.agent_timeout_minutes.full: 30",
+        ].join("\n");
+        expect(resolveAgentTimeoutMs("light", config)).toBe(5 * 60 * 1000);
+        expect(resolveAgentTimeoutMs("standard", config)).toBe(15 * 60 * 1000);
+        expect(resolveAgentTimeoutMs("full", config)).toBe(30 * 60 * 1000);
+    });
+    it("resolveAgentTimeoutMs falls back to per-tier default when a single tier is missing", async () => {
+        const { resolveAgentTimeoutMs } = await import(MODULE_PATH);
+        // Only 'full' configured; light/standard fall back to defaults.
+        const config = "review.agent_timeout_minutes.full: 45";
+        expect(resolveAgentTimeoutMs("light", config)).toBe(5 * 60 * 1000);
+        expect(resolveAgentTimeoutMs("standard", config)).toBe(15 * 60 * 1000);
+        expect(resolveAgentTimeoutMs("full", config)).toBe(45 * 60 * 1000);
+    });
+    it("resolveAgentTimeoutMs falls back to 15min for all tiers when config field absent (backward compat)", async () => {
+        const { resolveAgentTimeoutMs } = await import(MODULE_PATH);
+        // No review.agent_timeout_minutes.* anywhere — current behaviour preserved.
+        const config = "review.subagent_concurrency: 3\nreview_dispatch_mode: agents\n";
+        expect(resolveAgentTimeoutMs("light", config)).toBe(15 * 60 * 1000);
+        expect(resolveAgentTimeoutMs("standard", config)).toBe(15 * 60 * 1000);
+        expect(resolveAgentTimeoutMs("full", config)).toBe(15 * 60 * 1000);
+    });
+    it("resolveAgentTimeoutMs falls back to per-tier default for non-positive / non-integer values", async () => {
+        const { resolveAgentTimeoutMs } = await import(MODULE_PATH);
+        const config = [
+            "review.agent_timeout_minutes.light: 0",
+            "review.agent_timeout_minutes.standard: -5",
+            "review.agent_timeout_minutes.full: abc",
+        ].join("\n");
+        expect(resolveAgentTimeoutMs("light", config)).toBe(5 * 60 * 1000);
+        expect(resolveAgentTimeoutMs("standard", config)).toBe(15 * 60 * 1000);
+        expect(resolveAgentTimeoutMs("full", config)).toBe(30 * 60 * 1000);
+    });
+    it("resolveAgentTimeoutMs falls back to standard default when tier is unknown", async () => {
+        const { resolveAgentTimeoutMs } = await import(MODULE_PATH);
+        // Unknown tier + no config at all → standard default (15min).
+        expect(resolveAgentTimeoutMs("unknown", "")).toBe(15 * 60 * 1000);
+        // Unknown tier + config present → still standard default.
+        const config = "review.agent_timeout_minutes.full: 30";
+        expect(resolveAgentTimeoutMs("nonsense-tier", config)).toBe(15 * 60 * 1000);
+    });
+    it("resolveAgentTimeoutMs falls back to standard default when tier is undefined", async () => {
+        const { resolveAgentTimeoutMs } = await import(MODULE_PATH);
+        expect(resolveAgentTimeoutMs(undefined, "")).toBe(15 * 60 * 1000);
+    });
+    // -----------------------------------------------------------------------
+    // 9. dispatch integrates per-tier timeout from config (spec: review-agent-timeout-dynamic)
+    // -----------------------------------------------------------------------
+    it("dispatch uses resolved per-tier timeout when opts.timeoutMs is not set", async () => {
+        const { dispatch } = await import(MODULE_PATH);
+        let capturedOpts = {};
+        MOCK_EXEC_FILE.mockImplementation((_cmd, _args, opts, cb) => {
+            capturedOpts = opts;
+            cb(null, '{"status":"completed"}');
+        });
+        const config = "review.agent_timeout_minutes.full: 25\n";
+        await dispatch({
+            agentType: "quality-check",
+            prompt: "Review",
+            workdir: tmpDir,
+            tier: "full",
+            configContent: config,
+        });
+        // full=25min configured; dispatch should pass that to execFile.
+        expect(capturedOpts.timeout).toBe(25 * 60 * 1000);
+    });
+    it("dispatch honours explicit opts.timeoutMs over config resolution (override)", async () => {
+        const { dispatch } = await import(MODULE_PATH);
+        let capturedOpts = {};
+        MOCK_EXEC_FILE.mockImplementation((_cmd, _args, opts, cb) => {
+            capturedOpts = opts;
+            cb(null, '{"status":"completed"}');
+        });
+        await dispatch({
+            agentType: "quality-check",
+            prompt: "Review",
+            workdir: tmpDir,
+            tier: "full",
+            configContent: "review.agent_timeout_minutes.full: 30\n",
+            timeoutMs: 7000, // explicit override wins
+        });
+        expect(capturedOpts.timeout).toBe(7000);
+    });
+    it("dispatch reports the resolved timeout in failure diagnostics", async () => {
+        const { dispatch } = await import(MODULE_PATH);
+        MOCK_EXEC_FILE.mockImplementation((_cmd, _args, _opts, cb) => {
+            const err = new Error("timed out");
+            err.killed = true;
+            err.signal = "SIGTERM";
+            cb(err);
+        });
+        const result = await dispatch({
+            agentType: "security-check",
+            prompt: "Review",
+            workdir: tmpDir,
+            tier: "light",
+            configContent: "review.agent_timeout_minutes.light: 8\n",
+        });
+        // light=8min resolved; diagnostic must echo that, not the legacy 15min.
+        expect(result.diagnostic).toBe(`timeout after ${8 * 60 * 1000}ms`);
+    });
+    // Backward compatibility: callers that predate this feature pass neither
+    // tier nor configContent. They must keep seeing the legacy 15-minute timeout
+    // so existing projects see no behaviour change on upgrade (Req4).
+    it("dispatch uses legacy 15min timeout when caller passes neither tier nor configContent", async () => {
+        const { dispatch } = await import(MODULE_PATH);
+        let capturedOpts = {};
+        MOCK_EXEC_FILE.mockImplementation((_cmd, _args, opts, cb) => {
+            capturedOpts = opts;
+            cb(null, '{"status":"completed"}');
+        });
+        // Minimal DispatchOptions — no tier, no configContent, no timeoutMs.
+        await dispatch({
+            agentType: "spec-check",
+            prompt: "Review",
+            workdir: tmpDir,
+        });
+        expect(capturedOpts.timeout).toBe(15 * 60 * 1000);
+    });
 });
 //# sourceMappingURL=agents-dispatcher.test.js.map

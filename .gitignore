@@ -32,7 +32,6 @@ reports/mutation/
 # Regenerative checkpoint (runtime state — §11 EXACT-FORM may hold tokens/DSNs)
 .forge/checkpoint.md
 
-
 # dist manifest is tracked (used by CI to verify dist sync)
 !dist/claude-code/bundles/.manifest.sha256
 

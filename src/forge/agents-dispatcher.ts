@@ -27,8 +27,23 @@ export interface DispatchOptions {
   workdir: string;
   /** Optional effort level for the agent. */
   effort?: "low" | "medium" | "high" | "xhigh";
-  /** Child process timeout in milliseconds. */
+  /**
+   * Explicit child process timeout in milliseconds. When set, this overrides
+   * any per-tier resolution from {@link resolveAgentTimeoutMs}.
+   */
   timeoutMs?: number;
+  /**
+   * Current routing tier ("light"|"standard"|"full"), read from
+   * `.forge/status.md` by the caller. When {@link timeoutMs} is not set, the
+   * timeout is resolved per-tier via {@link resolveAgentTimeoutMs} using
+   * {@link configContent}.
+   */
+  tier?: string;
+  /**
+   * Raw text content of `.forge/config.md`, supplied by the caller so this
+   * module stays IO-free. Used only when {@link timeoutMs} is not set.
+   */
+  configContent?: string;
   /** Collect all background sessions/results when supported by Claude Code. */
   includeAll?: boolean;
   /** Prepend Forge worktree edit preflight for agents that may edit files. */
@@ -68,6 +83,22 @@ export const WORKTREE_EDIT_PREFLIGHT =
 
 const DEFAULT_AGENT_TIMEOUT_MS = 15 * 60 * 1000;
 
+/**
+ * Per-tier default agent timeouts in milliseconds.
+ *
+ * Used as the fallback for a *specific* tier when `review.agent_timeout_minutes.<tier>`
+ * is present in config but the value for that tier is missing or invalid. When the
+ * entire `review.agent_timeout_minutes.*` family is absent, all tiers fall back to
+ * `DEFAULT_AGENT_TIMEOUT_MS` (15 min) to preserve backward compatibility.
+ *
+ * @see resolveAgentTimeoutMs
+ */
+const TIER_DEFAULT_TIMEOUT_MS: Record<string, number> = {
+  light: 5 * 60 * 1000,
+  standard: 15 * 60 * 1000,
+  full: 30 * 60 * 1000,
+};
+
 // ---------------------------------------------------------------------------
 // Config helper
 // ---------------------------------------------------------------------------
@@ -100,6 +131,53 @@ export function parseDispatchMode(
     }
   }
   return "inline";
+}
+
+/**
+ * Resolve the agent dispatch timeout for a routing tier from `.forge/config.md`.
+ *
+ * Reads the per-tier flat fields `review.agent_timeout_minutes.light|standard|full`
+ * (values in whole minutes) and returns the matching timeout in milliseconds.
+ *
+ * Fallback ladder (in order):
+ * 1. Configured value for the tier, if a positive integer.
+ * 2. `TIER_DEFAULT_TIMEOUT_MS` for the tier, if any tier-level config
+ *    is present but this tier's value is missing or invalid.
+ * 3. `DEFAULT_AGENT_TIMEOUT_MS` (15 min) when the entire
+ *    `review.agent_timeout_minutes.*` family is absent — preserves the
+ *    pre-existing fixed 15-minute behaviour (backward compatibility).
+ * 4. `TIER_DEFAULT_TIMEOUT_MS`.standard (15 min) when the tier itself
+ *    is unrecognised or undefined.
+ *
+ * @param tier  Current routing tier from `.forge/status.md` ("light"|"standard"|"full").
+ * @param configContent  Raw text content of `.forge/config.md`.
+ * @returns Timeout in milliseconds.
+ * @public
+ */
+export function resolveAgentTimeoutMs(tier: string | undefined, configContent: string): number {
+  // Unknown / undefined tier → standard default, regardless of config.
+  if (tier === undefined || !(tier in TIER_DEFAULT_TIMEOUT_MS)) {
+    return TIER_DEFAULT_TIMEOUT_MS.standard;
+  }
+
+  // Detect whether ANY review.agent_timeout_minutes.<tier> field exists.
+  // If the whole family is absent, fall back to the legacy fixed default
+  // so existing projects see no behaviour change on upgrade.
+  const familyPresent = /\n\s*review\.agent_timeout_minutes\.[a-z]+:/m.test(`\n${configContent}`);
+  if (!familyPresent) {
+    return DEFAULT_AGENT_TIMEOUT_MS;
+  }
+
+  // Family is present — read this tier's value, falling back to its per-tier default.
+  const fieldName = `review.agent_timeout_minutes.${tier}`;
+  const match = configContent.match(new RegExp(`^\\s*${fieldName}:\\s*(\\S+)`, "m"));
+  if (match) {
+    const minutes = Number(match[1]);
+    if (Number.isInteger(minutes) && minutes > 0) {
+      return minutes * 60 * 1000;
+    }
+  }
+  return TIER_DEFAULT_TIMEOUT_MS[tier];
 }
 
 // ---------------------------------------------------------------------------
@@ -179,7 +257,11 @@ function normalizeDispatchResult(
 export async function dispatch(opts: DispatchOptions): Promise<DispatchResult> {
   const args = buildAgentArgs(opts);
   const startTime = Date.now();
-  const timeoutMs = opts.timeoutMs ?? DEFAULT_AGENT_TIMEOUT_MS;
+  // Explicit timeoutMs wins; otherwise resolve per-tier from config.
+  // resolveAgentTimeoutMs handles undefined tier / empty config by falling
+  // back to the standard default (== DEFAULT_AGENT_TIMEOUT_MS, 15min),
+  // preserving backward compatibility for callers that pass neither.
+  const timeoutMs = opts.timeoutMs ?? resolveAgentTimeoutMs(opts.tier, opts.configContent ?? "");
 
   return new Promise<DispatchResult>((resolve) => {
     execFile(

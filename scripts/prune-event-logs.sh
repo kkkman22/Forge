@@ -183,4 +183,17 @@ if [[ -d "${FINDINGS_DIR}" ]]; then
   fi
 fi
 
+# Chain session-journal pruning (spec: session-journal-retention).
+# prune-sessions.sh is a sibling script with the same --dry-run contract.
+# Its own exit status is informational; we keep our exit 0 regardless, since
+# the event-logs pruning above already succeeded.
+CHAIN_FLAG=""
+if [[ "${DRY_RUN}" == "yes" ]]; then
+  CHAIN_FLAG="--dry-run"
+fi
+if [[ -f "scripts/prune-sessions.sh" ]]; then
+  echo ""
+  bash scripts/prune-sessions.sh ${CHAIN_FLAG} || true
+fi
+
 exit 0

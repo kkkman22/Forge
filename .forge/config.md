@@ -8,7 +8,14 @@ security_level: 1
 knowledge_limit: 20
 max_parallel_agents: 6    # Range: 1-10, default 6
 review.subagent_concurrency: 3  # Range: 1-10; default 3; env FORGE_REVIEW_CONCURRENCY overrides
+# Review/decide subagent 超时（分钟），按路由 Tier 区分。整组缺失→全 Tier 15min（向后兼容）。
+review.agent_timeout_minutes.light: 5       # Light tier 默认 5 分钟
+review.agent_timeout_minutes.standard: 15   # Standard tier 默认 15 分钟
+review.agent_timeout_minutes.full: 30       # Full tier 默认 30 分钟
 findings_retention_days: 30
+# 会话摘要 retention（spec: session-journal-retention）。由 scripts/prune-sessions.sh 执行。
+session_retention_days: 90   # sessions/*.md 的 mtime 保留天数，正整数，默认 90
+session_keep_recent: 5       # 无论是否过期，按 mtime 保留最近 N 条，正整数，默认 5
 review_dispatch_mode: inline           # inline | agents
 decide_dispatch_mode: auto              # inline | agents | auto — auto: full tier→agents, standard/light→inline
 output_conciseness_hook: on            # on | off
