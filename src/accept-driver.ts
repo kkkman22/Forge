@@ -7,6 +7,7 @@ import type {
 } from "./accept.js";
 import type { AgentBrowserClient, Snapshot } from "./agent-browser-client.js";
 import { evaluateUiVerdict } from "./evaluate-ui-verdict.js";
+import { resolvePlaceholder } from "./accept-credentials.js";
 
 // ---------------------------------------------------------------------------
 // Runner Interface
@@ -118,14 +119,31 @@ export const agentBrowserRunner: Runner = {
       // first snapshot
       let snap = await client.snapshot(sessionId);
 
-      // act: fill username field + click the action button described in WHEN.
+      // act: fill form fields + click the action button described in WHEN.
       const whenText = scenario.when;
-      // Best-effort: fill any textbox (username) — value derived elsewhere; here just exercise.
-      const usernameRef = snap.refs.find((r) => r.role === "textbox")?.ref ?? null;
-      if (usernameRef) {
-        await actWithRetry(client, sessionId, usernameRef, () =>
-          client.fill(sessionId, usernameRef, "admin"),
-        );
+      const ctxText = `${scenario.given}\n${scenario.when}`;
+      // Best-effort: fill textboxes with values extracted from the scenario text.
+      // Values may be {{PLACEHOLDER}} secrets resolved from env [R4-AC1, R4-AC2].
+      const textboxes = snap.refs.filter((r) => r.role === "textbox");
+      const fillValues = extractFillValues(ctxText);
+      for (let i = 0; i < textboxes.length; i++) {
+        const tbRef = textboxes[i].ref;
+        // Resolve a value: prefer the i-th extracted value, else fallback "admin".
+        const raw = fillValues[i] ?? "admin";
+        const resolved = resolvePlaceholder(raw, process.env as Record<string, string | undefined>);
+        if (resolved === null) {
+          // missing secret → INCONCLUSIVE, do not leak raw placeholder
+          return makeArtifact(
+            scenario,
+            ctx,
+            "INCONCLUSIVE",
+            [],
+            `missing secret placeholder in scenario`,
+          );
+        }
+        const val = resolved;
+        const ref = tbRef;
+        await actWithRetry(client, sessionId, ref, () => client.fill(sessionId, ref, val));
       }
       // click action button: pick ref by a keyword from WHEN (e.g. "登录").
       const clickKw = extractActionKeyword(whenText) ?? "登录";
@@ -230,6 +248,21 @@ function extractActionKeyword(whenText: string): string | null {
   const m = whenText.match(/(?:点击|click|按下|tap)\s*([^\s,，。]+)/i);
   if (m && m[1]) return m[1].replace(/按钮$/, "");
   return null;
+}
+
+/**
+ * Extract fill values (usernames/passwords) from the scenario G/W text.
+ * Recognizes "用户名 X", "密码 Y", "{{VAR}}" patterns. Returns ordered values.
+ */
+function extractFillValues(text: string): string[] {
+  const values: string[] = [];
+  // "用户名 admin" / "username admin" / "密码 {{PASS}}"
+  const re = /(?:用户名|username|密码|password|pwd)\s+([^\s,，。、]+)/gi;
+  let m: RegExpExecArray | null;
+  while ((m = re.exec(text)) !== null) {
+    if (m[1]) values.push(m[1]);
+  }
+  return values;
 }
 
 // ---------------------------------------------------------------------------
