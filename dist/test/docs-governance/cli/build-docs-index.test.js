@@ -135,6 +135,10 @@ describe("build-docs-index core logic", () => {
 // ─────────────────────────────────────────────────────────────
 describe("build-docs-index CLI integration", () => {
     beforeAll(() => {
+        // Clean any leftover from a prior interrupted run before recreating,
+        // mirroring check-docs-index.test.ts — a stale TMP_DIR would pollute
+        // assertions that assume a fresh directory.
+        rmSync(TMP_DIR, { recursive: true, force: true });
         mkdirSync(TMP_DIR, { recursive: true });
     });
     afterAll(() => {
