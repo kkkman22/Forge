@@ -107,3 +107,10 @@ process.stdin.on("error", () => gracefulShutdown("stdin error"));
 
 const transport = new StdioServerTransport();
 await server.connect(transport);
+
+// Emit a readiness marker AFTER the transport is live. Signal handlers are
+// registered above and the stdio reader is now pumping, so the process is in a
+// stable state — tests and supervisors can wait on this line before sending
+// SIGTERM/SIGINT instead of racing against a fixed sleep.
+// biome-ignore lint/suspicious/noConsole: readiness marker for tests/supervisors
+console.error(`[forge-context] ready (pid=${process.pid})`);

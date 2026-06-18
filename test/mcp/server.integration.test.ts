@@ -18,6 +18,18 @@ import { afterEach, describe, expect, it } from "vitest";
 
 const SERVER_PATH = resolve("dist/src/mcp/server.js");
 
+/**
+ * Marker the server writes to stderr once it has fully started — i.e. the
+ * stdio transport is live and pumping. By the time this line appears, the
+ * SIGTERM/SIGINT/stdin handlers are registered AND `server.connect()` has
+ * settled, so the process is in a stable state ready to be signaled. Waiting
+ * on this marker makes shutdown tests deterministic instead of racing the
+ * init window between the earlier "resolved project root" line and the
+ * transport becoming ready (which can leave SIGTERM killing the process
+ * with a null exit code).
+ */
+const READY_MARKER = "[forge-context] ready";
+
 /** Wait for a child process to exit, returning its exit code. */
 function waitForExit(child: ChildProcess, timeoutMs = 5000): Promise<number | null> {
   return new Promise((resolve, reject) => {
@@ -29,6 +41,31 @@ function waitForExit(child: ChildProcess, timeoutMs = 5000): Promise<number | nu
     child.on("exit", (code) => {
       clearTimeout(timer);
       resolve(code);
+    });
+  });
+}
+
+/**
+ * Resolve once the server has fully started — signalled by the
+ * `[forge-context] ready` stderr line emitted after `server.connect()`.
+ * Fails loudly (rather than hanging) if the marker never arrives or the
+ * process exits first.
+ */
+function waitForReady(child: ChildProcess, timeoutMs = 5000): Promise<void> {
+  return new Promise((resolve, reject) => {
+    const timer = setTimeout(() => {
+      reject(new Error(`Server did not emit "${READY_MARKER}" within ${timeoutMs}ms`));
+    }, timeoutMs);
+
+    child.stderr?.on("data", (chunk: Buffer) => {
+      if (chunk.includes(READY_MARKER)) {
+        clearTimeout(timer);
+        resolve();
+      }
+    });
+    child.on("exit", () => {
+      clearTimeout(timer);
+      reject(new Error("Server exited before signalling ready"));
     });
   });
 }
@@ -99,9 +136,8 @@ describe("forge-context MCP server integration", () => {
       stdio: ["pipe", "pipe", "pipe"],
     });
 
-    // Wait for server to start (it writes to stderr on startup)
-    await new Promise((resolve) => setTimeout(resolve, 500));
-
+    // Wait until the server has registered its signal handlers, then signal it.
+    await waitForReady(child);
     child.kill("SIGTERM");
 
     const exitCode = await waitForExit(child);
@@ -113,8 +149,8 @@ describe("forge-context MCP server integration", () => {
       stdio: ["pipe", "pipe", "pipe"],
     });
 
-    // Wait for server to start
-    await new Promise((resolve) => setTimeout(resolve, 500));
+    // Wait until the server is ready before simulating parent exit.
+    await waitForReady(child);
 
     // Close stdin — simulates parent process exit
     child.stdin!.end();
