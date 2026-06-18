@@ -1,46 +1,39 @@
-# Context Budget Management — 五层上下文防御体系
+# Context Budget Management — 安全执行 + 内容隔离 + 上下文预算
 
-> 解决 Forge 在标准/全量路径下的上下文爆炸问题。通过五层防御将单阶段 context 从 ~280 KB 降至 ~60 KB。
+> 解决 Forge 在标准/全量路径下的上下文爆炸问题。Forge MCP 不再承担压缩职责（已移交 Headroom）；本文件描述 Forge 保留的**安全执行边界**、**内容隔离**和**上下文预算监控**。
+>
+> 定位变更：历史上的"五层上下文防御体系"中，Layer 1（Read 去重缓存 `forge_read_cached`）已移除——其职责由 Headroom 的对话压缩间接覆盖。压缩不再是 Forge 的工作；Forge 守住"什么内容该进上下文 / 执行是否安全"。
 
-## 五层防御概览
+## 压缩职责分工（Forge vs Headroom）
+
+Forge MCP 与 Headroom **零功能重叠，互补不冗余**：
+
+| 层 | 谁负责 | 做什么 |
+|----|--------|--------|
+| 对话历史压缩 | **Headroom**（wrap 模式） | 压缩对话历史 + tool 输出 + 模型写回。实测（v0.26.0）：失败输出 `router:protected:error_output` 零压缩、diff `router:noop` 零压缩、Structured Output 压 ~50%（有 CCR 兜底） |
+| 安全执行 | **Forge MCP**（`forge_exec`） | 只读 allowlist + 防 shell 注入 + 进程树清理（超时杀子进程）。Headroom 是压缩器，不碰命令执行安全 |
+| 内容隔离 | **Forge MCP**（`forge_read`） | 沙箱内结构化分析（imports/contains/line_count/json_keys），文件原文**根本不进上下文**——比"压缩后进"更彻底 |
+| 确定性输出 | **Forge MCP**（`forge_git`/typed-capabilities） | 结构化 JSON，可被下游反序列化解析；Headroom 的压缩是非确定性的，Forge 无法解析压缩后的输出 |
+
+> Forge 不自带压缩算法。`forge_exec` 的 `trimCommandOutput` 仅作为 **Headroom 未启用时的 fallback**（成功输出 >30 行裁剪关键行）；用户运行 `headroom wrap claude` 时，成功输出原样过，由 Headroom 在 HTTP 层压。
+
+## 上下文预算监控（四层运行时防护）
 
 ```
-Layer 1: Read 去重缓存 ─────────── 消除重复读取（-40% Read）
-  forge_read_cached MCP tool + Read Dedup Iron Law
-
-Layer 2: 阶段隔离 ──────────────── 消除跨阶段累积（-50% 总累积）
+Layer 1: 阶段隔离 ──────────────── 消除跨阶段累积（-50% 总累积）
   Phase Boundary Gate + /clear + /forge resume
 
-Layer 3: Subagent 文件化返回 ────── 减少 agent 结果占用（-80% agent 返回）
+Layer 2: Subagent 文件化返回 ────── 减少 agent 结果占用（-80% agent 返回）
   Write to .forge/reviews/ + 800 char 摘要返回
 
-Layer 4: Resume 上下文最小化 ────── 减少恢复时的加载量
+Layer 3: Resume 上下文最小化 ────── 减少恢复时的加载量
   --phase 参数按阶段过滤注入内容
 
-Layer 5: Read 预算监控 ──────────── 运行时防护
+Layer 4: Read 预算监控 ──────────── 运行时防护
   PostToolUse hook + 阈值预警
 ```
 
-## Layer 1: Read 去重缓存
-
-### 工具
-
-- **`forge_read_cached` MCP tool**：首次返回完整内容，后续未修改返回 `[cached]` 消息，已修改返回 diff
-- **Read Dedup Iron Law**：同一文件 Read ≤2 次/session，第 2 次起必须用 `forge_read_cached` 或 `Grep`
-
-### 使用指引
-
-```
-首次读取 → 使用 Read 工具（正常）
-回顾已读文件 → 使用 forge_read_cached(path)
-搜索特定片段 → 使用 Grep(path, pattern)
-```
-
-### 降级策略
-
-`forge_read_cached` 不可用时：手动控制同一文件 Read ≤2 次，用 Grep 替代全量重读。
-
-## Layer 2: 阶段隔离
+## Layer 1: 阶段隔离
 
 ### Phase Boundary Gate
 
@@ -61,7 +54,7 @@ Layer 5: Read 预算监控 ──────────── 运行时防护
 .forge/status.md            — 当前阶段 + 分支
 ```
 
-## Layer 3: Subagent 文件化返回
+## Layer 2: Subagent 文件化返回
 
 ### 返回协议
 
@@ -83,7 +76,7 @@ report: .forge/reviews/<layer>-<timestamp>.md
 
 → 详见 `skills/forge/lib/review/references/subagent-return-protocol.md`
 
-## Layer 4: Resume 上下文最小化
+## Layer 3: Resume 上下文最小化
 
 ### 按阶段最小加载清单
 
@@ -101,7 +94,7 @@ report: .forge/reviews/<layer>-<timestamp>.md
 `--phase test`/`--phase ship`：仅 task 标题
 `--compact`：去掉行内描述
 
-## Layer 5: Read 预算监控 + 精细化工具
+## Layer 4: Read 预算监控
 
 ### PostToolUse Hook
 
@@ -110,14 +103,13 @@ report: .forge/reviews/<layer>-<timestamp>.md
 - >150 KB → ⛔ 强制建议 /clear
 - fail-open：不阻断任何工具调用
 
-### 精细化 MCP 工具（已有）
+### MCP 工具（安全 + 隔离职责）
 
-| 工具 | 用途 | 替代 |
+| 工具 | 职责 | 替代 |
 |------|------|------|
-| `forge_exec` | Bash 输出裁剪（≤30 行自动截断） | 直接 Bash |
-| `forge_git` | Git 查询摘要化 | 直接 git |
-| `forge_read` | 批量文件分析（脚本处理） | 批量 Read |
-| `forge_read_cached` | 单文件读取 + 去重缓存 | 重复 Read |
+| `forge_exec` | 安全执行只读命令 + Iron Law 失败放行（成功输出 >30 行时 fallback 裁剪） | 直接 Bash |
+| `forge_git` | Git 查询摘要化（确定性输出，可反序列化） | 直接 git |
+| `forge_read` | 沙箱结构化文件分析（imports/contains/line_count，原文不进上下文） | 批量 Read |
 
 ---
 
@@ -135,6 +127,8 @@ report: .forge/reviews/<layer>-<timestamp>.md
 | Git status | >30 files | 200 | MUST replace with categorized summary |
 | Command output | >100 lines | 200 | MUST keep last 20 lines + error/warning patterns |
 
+> 注：当用户运行 `headroom wrap claude` 时，Iron Law 的失败输出保护由两层独立保障——forge_exec 的 `formatFailureOutput`（进程层）+ Headroom 的 `router:protected:error_output`（HTTP 层实测零压缩）。两者互不依赖。
+
 ## Structured Output Exemption
 
 All Structured_Output formats are **exempt** from truncation:
@@ -143,6 +137,8 @@ All Structured_Output formats are **exempt** from truncation:
 - Restatement summaries
 - Closure-First Probe results
 - Review reports
+
+> ⚠️ Headroom 注意：实测中 Structured Output（如 R2 Handoff Block）会被 Headroom 的 `router:tool_result:text` 压缩 ~50%，删除部分验证元数据（`procedure_compliance`/`INV-*`），但核心进展字段保留，且末尾附 CCR hash 可检索原文。影响有限，不采取特殊措施（code fence 伪装已实测无效，`DISABLE_KOMPRESS` 得不偿失）。
 
 ## Context Exhaustion Detection Rules
 
