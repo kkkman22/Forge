@@ -873,14 +873,14 @@ else
   info "未检测到 pip/pip3，跳过 code-review-graph（grep 回退方案可用）"
 fi
 
-# --- b. Headroom + RTK（API 压缩 + Shell 压缩）---
+# --- b. Headroom（API 级压缩，wrap 模式）---
 if [[ -n "${pip_cmd}" ]]; then
-  install_companion "Headroom + RTK" \
-    "API 级全量压缩 + Shell 输出压缩" \
+  install_companion "Headroom" \
+    "API 级全量压缩（对话历史 + tool 输出 + 模型写回）" \
     "${pip_cmd} install 'headroom-ai[all]'" \
-    "forge_exec 将使用内置 trimmer 回退方案"
+    "forge_exec 将使用内置 trimmer 回退方案（成功输出裁剪）；失败输出 Iron Law 由 formatFailureOutput 或 Headroom protected:error_output 兜底"
 else
-  info "未检测到 pip/pip3，跳过 Headroom + RTK（内置 trimmer 回退方案可用）"
+  info "未检测到 pip/pip3，跳过 Headroom（内置 trimmer 回退方案可用）"
 fi
 
 # --- c. context-mode（大输出沙箱）---
@@ -892,7 +892,7 @@ if command -v npm &>/dev/null; then
   install_companion "context-mode" \
     "大输出沙箱（BM25 索引）" \
     "npm install -g context-mode" \
-    "大输出由 forge_exec + RTK/trimmer 处理"
+    "大输出由 forge_exec + trimmer 处理"
 else
   info "未检测到 npm，跳过 context-mode（forge_exec 回退方案可用）"
 fi
@@ -912,7 +912,7 @@ echo ""
 info "Token 优化工具安装完成："
 echo "  工具                  | 状态"
 echo "  --------------------- | ------"
-for tool in "code-review-graph" "rtk" "headroom" "context-mode"; do
+for tool in "code-review-graph" "headroom" "context-mode"; do
   if command -v "${tool}" &>/dev/null; then
     echo "  ${tool}          | ✅ 已安装"
   else

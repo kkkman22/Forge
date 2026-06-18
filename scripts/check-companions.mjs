@@ -9,7 +9,6 @@
  *
  * Currently detects:
  *   - code-review-graph (CRG) — code knowledge graph
- *   - rtk (Rust Token Killer) — CLI output compression
  *   - headroom — API-level prompt compression
  *   - context-mode — large output sandbox
  *
@@ -33,12 +32,6 @@ const COMPANIONS = [
     description: "Code knowledge graph (AST-level queries)",
   },
   {
-    name: "rtk",
-    detectCommand: ["rtk", ["--version"]],
-    label: "RTK",
-    description: "Rust Token Killer (CLI output compression)",
-  },
-  {
     name: "headroom",
     detectCommand: ["headroom", ["--version"]],
     label: "Headroom",
@@ -60,7 +53,7 @@ const COMPANIONS = [
  * Check if a tool is available by running its detection command.
  * Timeout: 3 seconds per tool.
  *
- * @param {string} executable - Command name to run (e.g. "rtk")
+ * @param {string} executable - Command name to run (e.g. "headroom")
  * @param {string[]} args - Arguments for the detection command
  * @returns {Promise<boolean>} true if tool responded successfully
  */
