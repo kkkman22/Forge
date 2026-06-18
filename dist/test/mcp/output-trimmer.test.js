@@ -10,7 +10,7 @@
  * **Validates: Requirements 2.3, 2.4, 2.5**
  */
 import { describe, expect, it } from "vitest";
-import { trimCommandOutput } from "../../src/mcp/trimmers/output.js";
+import { formatFailureOutput, trimCommandOutput } from "../../src/mcp/trimmers/output.js";
 // Helper: generate N lines of plain output
 function makeLines(n, prefix = "line") {
     return Array.from({ length: n }, (_, i) => `${prefix} ${i + 1}`).join("\n");
@@ -110,6 +110,23 @@ describe("trimCommandOutput", () => {
             const result = trimCommandOutput("", stderr, 1);
             expect(result).toContain("STDERR:");
             expect(result).toContain(stderr);
+        });
+    });
+    // -----------------------------------------------------------------------
+    // formatFailureOutput (Iron Law helper — exported for direct testing)
+    // -----------------------------------------------------------------------
+    describe("formatFailureOutput", () => {
+        it("returns stdout unchanged when no stderr", () => {
+            const result = formatFailureOutput("command output", "");
+            expect(result).toBe("command output");
+        });
+        it("appends stderr under STDERR header when present", () => {
+            const result = formatFailureOutput("out", "boom");
+            expect(result).toBe("out\n\nSTDERR:\nboom");
+        });
+        it("preserves empty stdout with stderr-only failure", () => {
+            const result = formatFailureOutput("", "fatal");
+            expect(result).toBe("\n\nSTDERR:\nfatal");
         });
     });
     // -----------------------------------------------------------------------

@@ -1,12 +1,17 @@
 /**
- * Integration tests for the five-layer context explosion defense system.
+ * Integration tests for the context explosion defense system.
  *
- * Verifies end-to-end behavior across all layers:
- * - Layer 1: Read cache dedup
- * - Layer 2: Phase boundary budget thresholds
- * - Layer 3: Subagent file-based return
- * - Layer 4: Phase-aware plan injection
- * - Layer 5: Read budget tracking
+ * Verifies end-to-end behavior across remaining layers (numbering aligned
+ * with skills/forge/lib/build/references/context-budget.md):
+ * - Layer 2: Subagent file-based return
+ * - Layer 3: Phase-aware plan injection (Resume minimization)
+ * - Layer 4: Read budget tracking
+ *
+ * Note: The former "Layer 1: Read cache dedup" (forge_read_cached) and its
+ * budget-accumulator test were removed — forge_read_cached deleted, read
+ * dedup delegated to Headroom's conversation compression. Layer 1 (phase
+ * isolation / Phase Boundary Gate) is exercised elsewhere; this file covers
+ * Layers 2-4.
  *
  * @vitest-environment node
  */
@@ -14,8 +19,6 @@ import { mkdir, readFile, rm, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
-import { createIndex, lookup } from "../src/mcp/read-cache.js";
-import { handleReadCached } from "../src/mcp/tools/forge-read-cached.js";
 const tmpRoot = join(tmpdir(), `forge-integration-${process.pid}`);
 describe("context-explosion-defense integration", () => {
     beforeEach(async () => {
@@ -24,67 +27,7 @@ describe("context-explosion-defense integration", () => {
     afterEach(async () => {
         await rm(tmpRoot, { recursive: true, force: true });
     });
-    describe("Layer 1: Read cache dedup", () => {
-        it("first read returns full content, second returns cached", async () => {
-            const index = createIndex("integration-test");
-            const filePath = join(tmpRoot, "layer1.txt");
-            await writeFile(filePath, "original content for integration test\n");
-            // First read — full content
-            const r1 = await handleReadCached(index, filePath);
-            expect(r1.cached).toBe(false);
-            expect(r1.content).toContain("original content");
-            // Second read — cached
-            const r2 = await handleReadCached(index, filePath);
-            expect(r2.cached).toBe(true);
-            expect(r2.content).toContain("[cached]");
-            expect(r2.content).toContain("unchanged");
-        });
-        it("detects file modification and returns new content", async () => {
-            const index = createIndex("integration-test");
-            const filePath = join(tmpRoot, "layer1-mod.txt");
-            await writeFile(filePath, "version 1\n");
-            await handleReadCached(index, filePath);
-            // Modify
-            await writeFile(filePath, "version 2 modified\n");
-            const r = await handleReadCached(index, filePath);
-            expect(r.cached).toBe(false);
-            expect(r.content).toContain("version 2");
-        });
-        it("cache index tracks multiple files", async () => {
-            const index = createIndex("integration-test");
-            const f1 = join(tmpRoot, "multi-1.txt");
-            const f2 = join(tmpRoot, "multi-2.txt");
-            await writeFile(f1, "file one\n");
-            await writeFile(f2, "file two\n");
-            await handleReadCached(index, f1);
-            await handleReadCached(index, f2);
-            expect(Object.keys(index.entries)).toHaveLength(2);
-            expect(lookup(index, f1)).not.toBeNull();
-            expect(lookup(index, f2)).not.toBeNull();
-        });
-    });
-    describe("Layer 2: Phase boundary budget", () => {
-        it("budget tracker accumulates read sizes", async () => {
-            const index = createIndex("budget-test");
-            const totalExpected = 10;
-            // Read 10 files of ~1KB each
-            for (let i = 0; i < totalExpected; i++) {
-                const f = join(tmpRoot, `budget-${i}.txt`);
-                await writeFile(f, `x`.repeat(1024));
-                await handleReadCached(index, f);
-            }
-            // Verify all entries tracked
-            expect(Object.keys(index.entries)).toHaveLength(totalExpected);
-            // Verify total char count accumulated
-            let totalChars = 0;
-            for (const entry of Object.values(index.entries)) {
-                totalChars += entry.charCount;
-            }
-            // Each file ~1024 chars, first read returns full content
-            expect(totalChars).toBeGreaterThanOrEqual(totalExpected * 1000);
-        });
-    });
-    describe("Layer 3: Subagent file-based return format", () => {
+    describe("Layer 2: Subagent file-based return format", () => {
         it("generates valid 800-char summary format", () => {
             const summary = [
                 "status: fail",
@@ -115,7 +58,7 @@ describe("context-explosion-defense integration", () => {
             expect(shouldReadReport).toBe(false);
         });
     });
-    describe("Layer 4: Phase-aware plan injection", () => {
+    describe("Layer 3: Phase-aware plan injection (Resume minimization)", () => {
         it("build phase filters to incomplete tasks", async () => {
             const planContent = `---
 status: approved
@@ -143,7 +86,7 @@ Some description text
             expect(filtered.join("\n")).not.toContain("Some description");
         });
     });
-    describe("Layer 5: Read budget tracking", () => {
+    describe("Layer 4: Read budget tracking", () => {
         it("track-read-budget script creates budget file", async () => {
             const { execFile } = await import("node:child_process");
             const { promisify } = await import("node:util");

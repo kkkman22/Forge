@@ -4,7 +4,7 @@
  * Covers:
  *   - validatePaths from forge-read.ts (existing)
  *   - validateSinglePath from shared path-validator (new)
- *   - Prefix attack detection (forge-read-cached.ts vulnerability)
+ *   - Prefix attack detection (originally surfaced in the read-cache tool)
  *   - Symlink escape documentation
  *
  * **Validates: T2 — Path traversal hardening**

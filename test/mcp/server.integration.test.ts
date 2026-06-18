@@ -113,10 +113,9 @@ describe("forge-context MCP server integration", () => {
       "forge_exec",
       "forge_git",
       "forge_read",
-      "forge_read_cached",
       "forge_review_context",
     ]);
-    expect(toolsResult.tools).toHaveLength(10);
+    expect(toolsResult.tools).toHaveLength(9);
 
     // 4. Call forge_exec with `echo hello`
     const callResult = await client.callTool({
