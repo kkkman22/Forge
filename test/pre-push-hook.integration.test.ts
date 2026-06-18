@@ -45,6 +45,7 @@ describe("pre-push hook", () => {
     // verdict (observed during v3.5.0 release). Assert the deadline is actually
     // wired in — not just that the word "timeout" appears in a comment.
     expect(content).toContain("FORGE_PRE_PUSH_TIMEOUT");
+    // biome-ignore lint/suspicious/noTemplateCurlyInString: matching shell parameter expansion in source file
     expect(content).toContain('pre_push_timeout="${FORGE_PRE_PUSH_TIMEOUT:-300}"');
     // The deadline must be ENFORCED in the loop and trigger a kill + verdict.
     expect(content).toMatch(/\[ "\$elapsed" -ge "\$pre_push_timeout" \]/);

@@ -72,8 +72,16 @@ function runBuildIndex(docsDir: string): void {
 // Tests
 // ─────────────────────────────────────────────────────────────
 
-describe("check-docs-index CLI", () => {
+// Each it spawns `npx tsx` (cold start ~2s) up to 3x via execSync, so the
+// default 5s testTimeout is too tight under pre-push/CI load. 15s matches
+// the per-test timeout already used in build-docs-index.test.ts.
+describe("check-docs-index CLI", { timeout: 15_000 }, () => {
   beforeAll(() => {
+    // Clean any leftover from a prior interrupted run before recreating.
+    // Without this, a stale `new-file-test/` (with api.md + a matching INDEX)
+    // from a crashed/killed run would make the "new file" drift test see
+    // in-sync output (exit 0) instead of detecting the drift.
+    rmSync(TMP_DIR, { recursive: true, force: true });
     mkdirSync(TMP_DIR, { recursive: true });
   });
 
