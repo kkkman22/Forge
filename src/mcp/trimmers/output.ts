@@ -10,8 +10,6 @@
  * of successful large outputs is delegated to Headroom's HTTP-layer proxy when the
  * user runs `headroom wrap claude`. This trimmer remains as a fallback for the
  * Headroom-absent path (direct API connection).
- *
- * **Validates: Requirements 2.3, 2.4, 2.5**
  */
 
 // ---------------------------------------------------------------------------
@@ -36,8 +34,11 @@ const TAIL_LINES = 5;
 
 /**
  * Format failure output — Iron Law: never compressed, always complete.
+ *
+ * Exported so the Iron Law behavior can be unit-tested independently of
+ * trimCommandOutput's success-path logic.
  */
-function formatFailureOutput(stdout: string, stderr: string): string {
+export function formatFailureOutput(stdout: string, stderr: string): string {
   return stderr ? `${stdout}\n\nSTDERR:\n${stderr}` : stdout;
 }
 
@@ -52,7 +53,7 @@ function formatFailureOutput(stdout: string, stderr: string): string {
  * `headroom wrap claude`, successful large outputs pass through unchanged here
  * and are compressed at the HTTP layer by Headroom's `router:tool_result:text`
  * (failed outputs are further protected by Headroom's `router:protected:error_output`,
- * which zero-compresses them in实测).
+ * which zero-compresses them in practice).
  *
  * @param stdout - Standard output from the command
  * @param stderr - Standard error from the command

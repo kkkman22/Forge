@@ -1,15 +1,17 @@
 /**
  * Integration tests for the context explosion defense system.
  *
- * Verifies end-to-end behavior across remaining layers:
- * - Layer 3: Subagent file-based return
- * - Layer 4: Phase-aware plan injection
- * - Layer 5: Read budget tracking
+ * Verifies end-to-end behavior across remaining layers (numbering aligned
+ * with skills/forge/lib/build/references/context-budget.md):
+ * - Layer 2: Subagent file-based return
+ * - Layer 3: Phase-aware plan injection (Resume minimization)
+ * - Layer 4: Read budget tracking
  *
- * Note: Layer 1 (Read cache dedup) was removed — forge_read_cached deleted,
- * compression delegated to Headroom. Layer 2 (Phase boundary budget) used
- * the read-cache index and was removed with it; budget tracking is covered
- * independently by Layer 5.
+ * Note: The former "Layer 1: Read cache dedup" (forge_read_cached) and its
+ * budget-accumulator test were removed — forge_read_cached deleted, read
+ * dedup delegated to Headroom's conversation compression. Layer 1 (phase
+ * isolation / Phase Boundary Gate) is exercised elsewhere; this file covers
+ * Layers 2-4.
  *
  * @vitest-environment node
  */
@@ -25,7 +27,7 @@ describe("context-explosion-defense integration", () => {
     afterEach(async () => {
         await rm(tmpRoot, { recursive: true, force: true });
     });
-    describe("Layer 3: Subagent file-based return format", () => {
+    describe("Layer 2: Subagent file-based return format", () => {
         it("generates valid 800-char summary format", () => {
             const summary = [
                 "status: fail",
@@ -56,7 +58,7 @@ describe("context-explosion-defense integration", () => {
             expect(shouldReadReport).toBe(false);
         });
     });
-    describe("Layer 4: Phase-aware plan injection", () => {
+    describe("Layer 3: Phase-aware plan injection (Resume minimization)", () => {
         it("build phase filters to incomplete tasks", async () => {
             const planContent = `---
 status: approved
@@ -84,7 +86,7 @@ Some description text
             expect(filtered.join("\n")).not.toContain("Some description");
         });
     });
-    describe("Layer 5: Read budget tracking", () => {
+    describe("Layer 4: Read budget tracking", () => {
         it("track-read-budget script creates budget file", async () => {
             const { execFile } = await import("node:child_process");
             const { promisify } = await import("node:util");
