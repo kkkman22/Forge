@@ -19,7 +19,7 @@ import type { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { z } from "zod";
 import { getDescendants, killProcessTree } from "../../process-tree-cleaner.js";
 import type { ResolvedRoot } from "../project-root.js";
-import { isRtkAvailable, trimCommandOutput, trimWithFallback } from "../trimmers/output.js";
+import { trimCommandOutput } from "../trimmers/output.js";
 
 // ---------------------------------------------------------------------------
 // Deny-rule helpers
@@ -583,16 +583,14 @@ export function registerForgeExec(server: McpServer, root?: ResolvedRoot): void 
         };
       }
 
-      // 4. Trim output — RTK-first with fallback to legacy trimmer
-      const rtkAvailable = await isRtkAvailable();
-      const trimmed = rtkAvailable
-        ? await trimWithFallback(
-            trackedResult.stdout,
-            trackedResult.stderr,
-            trackedResult.exitCode,
-            rtkAvailable,
-          )
-        : trimCommandOutput(trackedResult.stdout, trackedResult.stderr, trackedResult.exitCode);
+      // 4. Trim output — failure passthrough (Iron Law) + key-line fallback for large success output.
+      // Large success output compression is delegated to Headroom (HTTP layer) when present;
+      // this trimmer is the Headroom-absent fallback.
+      const trimmed = trimCommandOutput(
+        trackedResult.stdout,
+        trackedResult.stderr,
+        trackedResult.exitCode,
+      );
       const legacyWarning = legacyTypedReplacementWarning(command);
       return {
         content: [
