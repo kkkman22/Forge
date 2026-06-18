@@ -38,4 +38,17 @@ describe("pre-push hook", () => {
     const content = readFileSync(HOOK, "utf-8");
     expect(content.startsWith("#!/usr/bin/env bash")).toBe(true);
   });
+
+  it("guards npm run check with a timeout so it cannot hang without a verdict", () => {
+    const content = readFileSync(HOOK, "utf-8");
+    // Without a cap, a stalled check leaves the push hanging with no pass/fail
+    // verdict (observed during v3.5.0 release). Assert the deadline is actually
+    // wired in — not just that the word "timeout" appears in a comment.
+    expect(content).toContain("FORGE_PRE_PUSH_TIMEOUT");
+    expect(content).toContain('pre_push_timeout="${FORGE_PRE_PUSH_TIMEOUT:-300}"');
+    // The deadline must be ENFORCED in the loop and trigger a kill + verdict.
+    expect(content).toMatch(/\[ "\$elapsed" -ge "\$pre_push_timeout" \]/);
+    expect(content).toMatch(/timed_out=1/);
+    expect(content).toContain("timed out after");
+  });
 });

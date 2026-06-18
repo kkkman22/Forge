@@ -31,6 +31,13 @@ echo "[pre-push] expect ~2 min; output arrives in bursts — long silences are n
 # Run the check in the background so we can emit a heartbeat. Git hooks run with
 # stdout detached from a TTY, so tsc/vitest suppress their live progress spinners;
 # the heartbeat below proves the check is still alive during those silent stretches.
+#
+# Hard cap: without a deadline a stalled check leaves the push hanging with no
+# pass/fail verdict (observed during the v3.5.0 release — output was truncated
+# mid-vitest with neither "blocked" nor "passed"). FORGE_PRE_PUSH_TIMEOUT bounds
+# the run; on expiry we kill the check and emit an explicit timeout verdict.
+pre_push_timeout="${FORGE_PRE_PUSH_TIMEOUT:-300}"
+
 npm run check &
 check_pid=$!
 cleanup() {
@@ -40,18 +47,37 @@ cleanup() {
 trap cleanup EXIT INT TERM
 
 elapsed=0
+timed_out=0
 while kill -0 "$check_pid" 2>/dev/null; do
+  if [ "$elapsed" -ge "$pre_push_timeout" ]; then
+    timed_out=1
+    break
+  fi
   sleep 15 || true
   if kill -0 "$check_pid" 2>/dev/null; then
     elapsed=$((elapsed + 15))
-    printf '  ⏳ still running... %ss elapsed\n' "$elapsed"
+    printf '  ⏳ still running... %ss elapsed (cap %ss)\n' "$elapsed" "$pre_push_timeout"
   fi
 done
+
+# If we broke out of the loop due to the deadline, kill the check and record it.
+if [ "$timed_out" -eq 1 ]; then
+  kill "$check_pid" 2>/dev/null || true
+  wait "$check_pid" 2>/dev/null || true
+fi
 
 # Capture the check's exit status without letting `set -e` abort the hook on failure.
 status=0
 wait "$check_pid" || status=$?
 trap - EXIT INT TERM
+
+if [ "$timed_out" -eq 1 ]; then
+  echo ""
+  echo "❌ pre-push: npm run check timed out after ${pre_push_timeout}s (no verdict produced)"
+  echo "   Re-run locally to see the failure, or skip temporarily: git push --no-verify"
+  echo "   Raise the cap via FORGE_PRE_PUSH_TIMEOUT=<seconds> if the suite legitimately needs longer."
+  exit 1
+fi
 
 if [ "$status" -ne 0 ]; then
   echo ""
