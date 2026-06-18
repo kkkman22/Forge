@@ -3,20 +3,29 @@
  *
  * Compression strategy:
  *   - Non-zero exit code → full output (Forge iron rule: failure output is never compressed)
- *   - Exit 0 + RTK available → RTK intelligent compression
- *   - Exit 0 + RTK unavailable → key line extraction fallback (trimCommandOutput)
+ *   - Exit 0 + ≤30 lines → full output
+ *   - Exit 0 + >30 lines → key line extraction (trimCommandOutput)
  *
- * **Validates: Requirements 2.3, 2.4, 2.5**
+ * Forge no longer ships a compression engine (RTK integration removed); compression
+ * of successful large outputs is delegated to Headroom's HTTP-layer proxy when the
+ * user runs `headroom wrap claude`. This trimmer remains as a fallback for the
+ * Headroom-absent path (direct API connection).
  */
 /**
- * Check if the RTK (Rust Token Killer) binary is available in PATH.
- * Result is cached for the process lifetime.
+ * Format failure output — Iron Law: never compressed, always complete.
+ *
+ * Exported so the Iron Law behavior can be unit-tested independently of
+ * trimCommandOutput's success-path logic.
  */
-export declare function isRtkAvailable(): Promise<boolean>;
+export declare function formatFailureOutput(stdout: string, stderr: string): string;
 /**
  * Trim command output based on exit code and line count.
  *
- * Fallback compression engine when RTK is unavailable.
+ * Fallback compression for Headroom-absent environments. When the user runs
+ * `headroom wrap claude`, successful large outputs pass through unchanged here
+ * and are compressed at the HTTP layer by Headroom's `router:tool_result:text`
+ * (failed outputs are further protected by Headroom's `router:protected:error_output`,
+ * which zero-compresses them in practice).
  *
  * @param stdout - Standard output from the command
  * @param stderr - Standard error from the command
@@ -24,19 +33,3 @@ export declare function isRtkAvailable(): Promise<boolean>;
  * @returns Trimmed or full output string
  */
 export declare function trimCommandOutput(stdout: string, stderr: string, exitCode: number): string;
-/**
- * Trim command output with RTK-first, fallback-to-legacy strategy.
- *
- * Compression ladder:
- *   1. Non-zero exit → full output (Iron Law, always)
- *   2. Short output (≤30 lines) → return as-is
- *   3. RTK available → RTK compression (intelligent noise removal)
- *   4. RTK unavailable / failed → trimCommandOutput fallback
- *
- * @param stdout - Standard output from the command
- * @param stderr - Standard error from the command
- * @param exitCode - Process exit code
- * @param rtkAvailable - Whether RTK binary was detected in PATH
- * @returns Trimmed or full output string
- */
-export declare function trimWithFallback(stdout: string, stderr: string, exitCode: number, rtkAvailable: boolean): Promise<string>;

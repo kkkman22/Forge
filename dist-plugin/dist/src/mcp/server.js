@@ -2,7 +2,7 @@
 /**
  * forge-context MCP Server entry point.
  *
- * Registers four tools (forge_exec, forge_git, forge_read, forge_read_cached)
+ * Registers three tools (forge_exec, forge_git, forge_read)
  * and connects via StdioServerTransport for communication with Claude Code.
  *
  * Includes graceful shutdown handling (SIGTERM, SIGINT, stdin EOF) to prevent
@@ -17,7 +17,6 @@ import { logResolvedRoot, resolveProjectRoot } from "./project-root.js";
 import { registerForgeExec } from "./tools/forge-exec.js";
 import { registerForgeGit } from "./tools/forge-git.js";
 import { registerForgeRead } from "./tools/forge-read.js";
-import { registerForgeReadCached } from "./tools/forge-read-cached.js";
 import { registerTypedCapabilityTools } from "./tools/typed-capabilities.js";
 // ---------------------------------------------------------------------------
 // Error handling — log to stderr (stdout is reserved for MCP protocol)
@@ -44,7 +43,6 @@ logResolvedRoot(root);
 registerForgeExec(server, root);
 registerForgeGit(server, root);
 registerForgeRead(server, root);
-registerForgeReadCached(server, root);
 registerTypedCapabilityTools(server, root);
 // ---------------------------------------------------------------------------
 // Graceful shutdown — prevents orphan processes when Claude Code exits

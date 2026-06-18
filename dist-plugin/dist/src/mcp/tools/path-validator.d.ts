@@ -2,7 +2,7 @@
  * Shared path validation for MCP tools.
  *
  * Provides `validateSinglePath` and `validatePaths` used by forge-read.ts
- * and forge-read-cached.ts to prevent path traversal attacks.
+ * to prevent path traversal attacks.
  *
  * Uses `resolve()` + `relative()` to handle symlinks and edge cases
  * that `startsWith()` alone cannot catch (prefix attack).
@@ -29,6 +29,6 @@ export declare function validateSinglePath(inputPath: string, projectRoot: strin
  * Validate that all paths resolve within the project root.
  * Returns an error message if any path escapes, or null if all are safe.
  *
- * Reusable by both forge-read.ts and forge-read-cached.ts.
+ * Reusable across MCP tools that read files within the project root.
  */
 export declare function validatePaths(paths: string[], projectRoot: string): string | null;
