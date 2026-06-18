@@ -1,5 +1,5 @@
 import * as fc from "fast-check";
-import { describe, expect, it, vi } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import type { SubagentInvocation, SubagentResult } from "../../src/types.js";
 
 vi.mock("../../src/subagent-runner.js", () => ({
@@ -30,6 +30,42 @@ const subagentResultArb = fc.record({
 });
 
 describe("fallback-ladder property tests", () => {
+  // The fallback ladder emits user-facing console.warn on every L0/L1/L2
+  // degradation (src/review/fallback.ts). With numRuns:200 these flood stderr
+  // and make `npm run check` (pre-push) output unreadable. Silence the
+  // expected warnings during this suite; restored in afterEach.
+  let warnSpy: ReturnType<typeof vi.spyOn>;
+
+  beforeEach(() => {
+    warnSpy = vi.spyOn(console, "warn").mockImplementation(() => {});
+  });
+
+  afterEach(() => {
+    warnSpy.mockRestore();
+  });
+
+  it("silences console.warn during fallback degradation (test hygiene)", async () => {
+    // Drive the ladder all the way to L3 (unavailable) so every warn path fires.
+    vi.clearAllMocks();
+    (runSubagentsWithConcurrency as ReturnType<typeof vi.fn>).mockResolvedValue({
+      succeeded: [],
+      failed: ARBITRARY_AGENT_TYPES.map((agentType) => ({ agentType, error: "fail" })),
+    });
+    const invocations = ARBITRARY_AGENT_TYPES.map(makeInvocation);
+    const executor = async (inv: SubagentInvocation): Promise<SubagentResult> => ({
+      status: "failure",
+      agentType: inv.agentType,
+      error: "fail",
+    });
+
+    await runReviewFallbackLadder({ invocations, executor });
+
+    // The ladder MUST have warned (degradation happened) ...
+    expect(warnSpy).toHaveBeenCalled();
+    // ... but nothing reached the real stderr (spy swallowed it).
+    expect(warnSpy.mock.calls.length).toBeGreaterThan(0);
+  });
+
   it("retry never exceeds 1 — runSubagentsWithConcurrency called at most twice", async () => {
     await fc.assert(
       fc.asyncProperty(

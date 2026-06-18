@@ -31,27 +31,88 @@ echo "[pre-push] expect ~2 min; output arrives in bursts — long silences are n
 # Run the check in the background so we can emit a heartbeat. Git hooks run with
 # stdout detached from a TTY, so tsc/vitest suppress their live progress spinners;
 # the heartbeat below proves the check is still alive during those silent stretches.
+#
+# Hard cap: without a deadline a stalled check leaves the push hanging with no
+# pass/fail verdict (observed during the v3.5.0 release — output was truncated
+# mid-vitest with neither "blocked" nor "passed"). FORGE_PRE_PUSH_TIMEOUT bounds
+# the run; on expiry we kill the check and emit an explicit timeout verdict.
+pre_push_timeout="${FORGE_PRE_PUSH_TIMEOUT:-300}"
+# Validate: a non-numeric / huge value would make `[ -ge ]` error under `set -e`
+# and abort the hook with a cryptic "integer expression expected" (values beyond
+# LONG_MAX overflow strtol). Bound to 1-9 digits (max ~1e9s ≈ 31 years) and > 0.
+# Regex idiom mirrors scripts/cmux-mirror/hook-notify.sh, tightened with a digit
+# cap so an overflowing value can't slip through and silently disable the cap.
+if [[ ! "$pre_push_timeout" =~ ^[0-9]{1,9}$ ]] || [ "$pre_push_timeout" -le 0 ]; then
+  echo "[pre-push] invalid FORGE_PRE_PUSH_TIMEOUT='${FORGE_PRE_PUSH_TIMEOUT}', using default 300" >&2
+  pre_push_timeout=300
+fi
+
+# Kill a process and all its descendants by walking the PPID chain.
+# macOS has no setsid, and background jobs share the hook's process group
+# (job control is off in non-interactive shells), so a negative-PID kill would
+# signal the hook's own group — unsafe. pgrep -P walks only true descendants.
+kill_tree() {
+  local pid=$1 sig=${2:-TERM}
+  for child in $(pgrep -P "$pid" 2>/dev/null); do
+    kill_tree "$child" "$sig"
+  done
+  kill -"$sig" "$pid" 2>/dev/null || true
+}
+
+# Send TERM to the check tree, give it a brief grace period, then escalate to
+# KILL so a SIGTERM-ignoring vitest worker can't make `wait` block past the
+# deadline (which would re-introduce the hang the timeout exists to prevent).
+terminate_check_tree() {
+  kill_tree "$check_pid" TERM
+  local grace=0
+  while kill -0 "$check_pid" 2>/dev/null && [ "$grace" -lt 5 ]; do
+    sleep 0.2 || true
+    grace=$((grace + 1))
+  done
+  if kill -0 "$check_pid" 2>/dev/null; then
+    kill_tree "$check_pid" KILL
+  fi
+  wait "$check_pid" 2>/dev/null || true
+}
+
 npm run check &
 check_pid=$!
 cleanup() {
-  kill "$check_pid" 2>/dev/null || true
-  wait "$check_pid" 2>/dev/null || true
+  terminate_check_tree
 }
 trap cleanup EXIT INT TERM
 
 elapsed=0
+timed_out=0
 while kill -0 "$check_pid" 2>/dev/null; do
+  if [ "$elapsed" -ge "$pre_push_timeout" ]; then
+    timed_out=1
+    break
+  fi
   sleep 15 || true
   if kill -0 "$check_pid" 2>/dev/null; then
     elapsed=$((elapsed + 15))
-    printf '  ⏳ still running... %ss elapsed\n' "$elapsed"
+    printf '  ⏳ still running... %ss elapsed (cap %ss)\n' "$elapsed" "$pre_push_timeout"
   fi
 done
+
+# If we broke out of the loop due to the deadline, terminate the check tree and record it.
+if [ "$timed_out" -eq 1 ]; then
+  terminate_check_tree
+fi
 
 # Capture the check's exit status without letting `set -e` abort the hook on failure.
 status=0
 wait "$check_pid" || status=$?
 trap - EXIT INT TERM
+
+if [ "$timed_out" -eq 1 ]; then
+  echo ""
+  echo "❌ pre-push: npm run check timed out after ${pre_push_timeout}s (no verdict produced)"
+  echo "   Re-run locally to see the failure, or skip temporarily: git push --no-verify"
+  echo "   Raise the cap via FORGE_PRE_PUSH_TIMEOUT=<seconds> if the suite legitimately needs longer."
+  exit 1
+fi
 
 if [ "$status" -ne 0 ]; then
   echo ""
