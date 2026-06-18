@@ -3,7 +3,7 @@ title: Forge Quick Start Guide
 category: getting-started
 audience:
 - maintainer
-updated: '2026-06-01'
+updated: 2026-06-18
 owner: forge-maintainers
 ---
 
@@ -15,7 +15,7 @@ owner: forge-maintainers
 
 ## Prerequisites
 
-- **Claude Code** ≥ 2.1.153
+- **Claude Code** ≥ 2.1.163
   - Check: `claude --version`
 - **Node.js** ≥ 20 (only needed for Forge Loop)
   - Check: `node --version`

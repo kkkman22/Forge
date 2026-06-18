@@ -40,14 +40,14 @@ Critical 的定义：无需用户交互即可触发的远程代码执行、凭�
 | 前一个 minor 版本 | ✅ 关键安全修复 | 仅 critical / high 漏洞 backport |
 | 更早版本 | ❌ 不再维护 | 请升级到受支持版本 |
 
-Forge 遵循 SemVer。安全修复通常以 patch 版本发布（例如 v2.3.1 → v2.3.2）。
+Forge 遵循 SemVer。安全修复通常以 patch 版本发布（例如 v3.4.0 → v3.4.1）。
 
 ## CVE / GHSA Record Format
 
 每个被分配 CVE 或 GitHub Security Advisory 编号的漏洞都会在 `CHANGELOG.md` 的对应版本条目中以 `[SECURITY]` 前缀记录。格式如下：
 
 ```markdown
-## [v2.3.1] — YYYY-MM-DD
+## [v3.4.1] — YYYY-MM-DD
 
 ### Fixed
 - [SECURITY] CVE-YYYY-NNNNN / GHSA-xxxx-yyyy-zzzz

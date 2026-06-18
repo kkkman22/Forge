@@ -2,7 +2,7 @@
 
 ## Getting Started
 
-- [Forge 快速入门指南](quick-start.md) / [Forge 快速入门指南 (EN)](quick-start.en.md) — getting-started — 2026-06-01
+- [Forge 快速入门指南](quick-start.md) / [Forge 快速入门指南 (EN)](quick-start.en.md) — getting-started — 2026-06-18
 - [修复 Bug 任务流](flows/fix-bug.md) / [修复 Bug 任务流 (EN)](flows/fix-bug.en.md) — getting-started — 2026-06-09
 - [探索模糊需求任务流](flows/explore-requirement.md) / [探索模糊需求任务流 (EN)](flows/explore-requirement.en.md) — getting-started — 2026-06-09
 - [构建明确功能任务流](flows/build-feature.md) / [构建明确功能任务流 (EN)](flows/build-feature.en.md) — getting-started — 2026-06-09

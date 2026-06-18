@@ -6,8 +6,8 @@ Thanks for your interest in Forge! This guide covers setup, architecture, coding
 
 ```bash
 # Clone
-git clone https://github.com/anthropics/forge.git
-cd forge
+git clone https://github.com/kkkman22/Forge.git
+cd Forge
 
 # Install (requires Node.js >= 20)
 npm ci
@@ -16,23 +16,26 @@ npm ci
 npm run check
 ```
 
-**Toolchain**: Node.js >= 20, npm, Biome (lint + format), Vitest + fast-check (testing).
+**Toolchain**: Node.js >= 20, npm, Biome 2.4 (lint + format), Vitest 4.1 + fast-check 4.7 (testing), TypeScript 5.9 (strict).
 
 ## Architecture Overview
 
-Forge is a **pure-function codebase** — `src/` exports composable functions with no side effects. State lives in `.forge/` files on disk; modules read/write via explicit parameters.
+Forge is a **pure-function codebase** — `src/` exports composable functions with no side effects. State lives in `.forge/` files on disk; modules read/write via explicit parameters. ADR-0004 之后所有子命令由统一 skill `forge` 内部分发。
 
 ```
-src/               # Pure functions (no global state, no I/O in logic)
+src/               # Pure functions (305 TypeScript modules, no global state, no I/O in logic)
   *.ts             # Domain modules (scheduler, validator, builder, etc.)
+  docs-governance/ # 5-layer docs governance system
   logger/          # Structured logging (only side-effect module)
-skills/            # 16 SKILL.md files — AI behavior contracts
-agents/            # 10 Agent role definitions (.md)
-commands/          # Forge CLI command entry points
-hooks/             # Claude Code hooks (pre-tool-use, post-prompt)
-templates/         # File templates (CLAUDE.md, config.md, etc.)
-scripts/           # Shell scripts (init, build-dist, install-dist)
-test/              # Property-based tests (*.property.test.ts) + unit tests
+commands/          # /forge unified entry (forge.md → routes to skills/forge/SKILL.md)
+skills/            # Unified `forge` SKILL (skills/forge/SKILL.md) — 37 subcommands dispatched internally
+  forge/lib/       # Sub-skill libraries (decide-teams, review, triage, accept, etc.)
+agents/            # 13 Agent role definitions (.md): product/architect/security/designer/critic/spec-check/quality-check/...
+.claude/agents/    # 22 plugin agents incl. forge-build/forge-plan/forge-review/forge-ship/forge-decide-* subcommand agents
+hooks/             # Claude Code hooks (pre-tool-use, post-prompt, phase transition guard)
+templates/         # File templates (CLAUDE.md, config.md, charter, sandbox, ADR, etc.)
+scripts/           # Shell + JS scripts (init, build-dist, install-dist, docs governance)
+test/              # Property-based tests (*.property.test.ts) + unit tests (~679 files)
 ```
 
 ### Data Flow
@@ -270,7 +273,7 @@ PR 描述中必须引用对应 ADR 的编号（`ADR-NNNN`），否则 review 会
 
 ## Questions?
 
-Open an [Issue](https://github.com/anthropics/forge/issues) for discussion.
+Open an [Issue](https://github.com/kkkman22/Forge/issues) for discussion.
 
 ## Testing Plugin Changes Locally
 

@@ -14,24 +14,47 @@
 | v2.2.1 | 2026-04-28 | 上线前深度审核修复（H1-H6、M1-M11、L9/L14/L15） |
 | v2.3 | 2026-04-28 | Loop × Skills 融合、平台抽象层、i18n、可观测性 |
 | v2.4 | 2026-05 | Subagent 迁移、上下文预算、错误恢复、Plugin 分发、MCP Server |
-| v2.5 | 2026-05 | 瘦身——recap/resume/abort/learn/review 委托官方原语 |
+| v2.5 | 2026-05-17 | 瘦身——recap/resume/abort/learn/review 委托官方原语 |
+| v2.6 | 2026-05-18 | skill 归位 + 数量精简（SST=22），使用率度量管线 |
+| v2.7 | 2026-05-25 | skill consolidation 收尾、Plugin marketplace 发布就绪 |
+| v3.0 | 2026-05-26 | 主版本——多 Agent 工作流架构 + 沙箱策略系统引入 |
+| v3.1 | 2026-05-30 | 多 Agent 编排基础设施、Resilience Layer、Ship Gates、Spec Lifecycle、上下文爆炸五层防御 |
+| v3.2 | 2026-05-31 | Release Automation、RTK 压缩引擎、项目级配置（零全局副作用） |
+| v3.3 | 2026-06-01 | Loop native fusion——淘汰 legacy SDK loop，原生调度 + git rollback + 三击检测 |
+| v3.3.1 | 2026-06-05 | Claude Code 2.1.163 兼容门禁、doctor 结构化健康快照、SubagentStop 反馈 |
+| v3.4 | 2026-06-12 | 审计整改 P0/P1（allowlist/MCP/dist/CI）、项目宪章系统、8 GSD Core 模式、CE-Inspired review |
 
 ---
 
-## v2.6 — skill 归位 + 数量精简（进行中）
+## v3.x — 借鉴与再生（已完成的主线）
 
-> **战略定位**：Forge 站在 Claude Code 官方原语之上，只保留方法论差异化。
+> **战略定位**：v3.0 引入多 Agent 工作流 + 沙箱策略系统。v3.1–v3.4 在此之上叠加弹性层、发布门禁、Loop native fusion、审计整改与外部方法论借鉴。
 
 ### 已完成
 
-- ✅ **`forge-mutate` 归位到 pack** — `pack_conditional` frontmatter，仅在 pack 声明 `mutation_critical_modules` 时激活
-- ✅ **`forge-accept` / `forge-verify` / `forge-ship` 职责明确化** — Gate 边界澄清 + 校验脚本
-- ✅ **Skill 数量达标** — SST=22（目标 18-22），plugin.json 对齐真实命令集
-- ✅ **使用率度量管线** — 已部署，正在收集数据
+- ✅ **v3.1 多 Agent 编排 + Resilience Layer** — Ship Gates、Spec Lifecycle、Context Explosion Defense 五层、Hooks v2.1.153 全生命周期、`/goal` TDD 模式、Decide auto-dispatch
+- ✅ **v3.1 Constitution 铁律补强** — §2.7 No Confirmation Between Steps、§2.8 Scripts as Black Box、§3.1 review fallback ladder（L0→L1→L2→L3，L3 阻断 ship）
+- ✅ **v3.2 Release Automation** — `bump-version.mjs` 一键发版，RTK 压缩引擎 + fallback ladder，配置全量迁移到项目级（零全局副作用），`bash-ban-raw` hook
+- ✅ **v3.3 Loop native fusion** — 淘汰 legacy loop/SDK 系统（Wave 3），原生调度策略 + cache-aware scheduler、`stopWhen` 条件终止、三击检测 + git rollback、loop state JSON schema（26 tests）
+- ✅ **v3.3.1 Claude Code 2.1.163 门禁** — semver 兼容性检查（`src/compatibility.ts`）、`requiredMinimumVersion` managed setting、`forge-doctor` 扩展为 plugin/hooks/commands/bin/MCP 多维健康检查 + `--json` 结构化输出、SubagentStop additionalContext 反馈
+- ✅ **v3.4 审计整改 + 方法论借鉴**
+  - [SECURITY] P0/P1 审计整改（allowlist 加固、MCP 安全、dist sync、CI gates）
+  - 项目宪章系统（`.forge/charter.md`）—— 跨 spec 锚定工程约束
+  - 8 GSD Core 模式借鉴（注入防御、上下文裁剪、科学调试）
+  - CE-Inspired Review（confidence anchoring、adversarial-check、validation pass、autofix）
+  - Reframing Gate / Clarification Gate（decide/spec 发散思维门）
+  - superpowers best practices 借鉴（CSO、rationalization、adversarial stance、plan gate、session hook）
+- ✅ **Loop Engineering 橙皮书借鉴（#98）** — 行为验证 + `/forge triage` 自动发现 + 理解腐烂对策；`/forge triage` 作为 Loop Engineering 的 discovery 动作
+- ✅ **再生式 Checkpoint（#99）** — 长会话状态保全（借鉴 MiMo-Code）
+- ✅ **review per-tier 动态 agent timeout（#100）** — 按 tier 动态分配 review agent 超时预算，避免轻量任务空耗 / 重任务超时
+- ✅ **session journal 保留策略（#101）** — `scripts/prune-sessions.sh` + `scripts/prune-event-logs.sh` 限制 `.forge/knowledge/sessions/` 无限增长
+- ✅ **agentic UI 验收（#102）** — `/forge accept` 接入 agent-browser 驱动，端到端功能验收（UI 操作→截图→verdict）；新增 `docs/acceptance-onboarding.md`、三态 verdict（pass/inconclusive/fail）、tier fallback、token 经济
+- ✅ **动态重规划闭环（#103）** — failure_class 分类 + scheduler debug 分支 + 增量 replan，失败后按类别触发局部重规划而非整体重来
 
-### 待评估（阻塞于 14 天使用率数据窗口）
+### 进行中 / 待评估
 
-- ⏳ **`forge-refactor` + `forge-fix` + `forge-fix-conflicts` 整合评估** — 三者命令序列相近，考虑合并为 `forge-maintenance` 单 skill 的三个子命令
+- ⏳ **`forge-decide-agent-teams` PoC 收尾** — `.forge/specs/forge-decide-agent-teams/` 已 approved，11 个任务跑完得出 adopt/keep/hybrid 决策；当前停滞需要 close 或 ship
+- ⏳ **`forge-refactor` / `forge-fix` / `forge-fix-conflicts` 整合评估** — 三者命令序列相近，仍待基于使用率数据决定是否合并为 `forge-maintenance` 子命令
 - ⏳ **`forge-grill` / `forge-zoom-out` 使用率评估** — 跟踪实际调用频次，若低则并入 `decide` / `debug`
 
 ### 保持观察（v2.2.1 遗留低风险项）
@@ -74,9 +97,9 @@
 
 ---
 
-## 长期 — v3.0（社区与生态）
+## 长期 — v4.0（社区与生态）
 
-面向社区开放，构建可扩展的 AI 编码工作流生态。
+面向社区开放，构建可扩展的 AI 编码工作流生态。v3.0 已落地多 Agent 工作流 + 沙箱策略系统，v4.0 聚焦生态与平台扩展。
 
 - **Agent Teams 分层 adoption（Tier 1 / 2 / 3，长期跟踪）**
 
@@ -138,7 +161,7 @@
 2. **TDD 铁律** — Plan 阶段强制嵌入 TDD 步骤 + hooks 强制执行
 3. **Spec 锁定 + frozen zone 分级保护**（locked/approved/open 三级 + `FrozenZoneViolation`）
 4. **五维度结构化 learn** — 跨项目经验库 + ADR
-5. **Property-based Testing 文化** — 133 个 PBT 文件
+5. **Property-based Testing 文化** — 140 个 PBT 文件
 6. **三层独立评审中的 Spec-alignment 层**
 7. **Forge Loop 的工程纪律** — Git 事务、熔断器、指数退避、完成摘要、PUA 引擎
 8. **Domain Pack 机制** — PMS pack 作为示例

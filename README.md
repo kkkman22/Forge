@@ -6,7 +6,7 @@
 
 > **统一 `/forge` 入口 + <!-- ssot:begin topic=commands render=count -->37<!-- ssot:end topic=commands --> 个内部子命令覆盖完整开发生命周期，三维路由自动匹配复杂度，统一状态系统跨会话感知。**
 >
-> 前置条件：Claude Code ≥ 2.1.153 | [安装指南](docs/quick-start.md)
+> 前置条件：Claude Code ≥ 2.1.163 | [安装指南](docs/quick-start.md)
 > 完整兼容性矩阵和降级策略见 [docs/claude-code-compatibility.md](docs/claude-code-compatibility.md)
 
 ---
@@ -129,28 +129,29 @@ Forge plugin 自带 `forge-context` first-party MCP server，为 `/forge review`
 | 命令 | 说明 | 路径 |
 |------|------|------|
 | `/forge` | 入口，三维路由分析任务 | 所有 |
+| `/forge decide` | 四视角前置决策 | 全量 |
+| `/forge spec` | 将需求固化为可锁定规格 | 全量 |
 | `/forge plan` | 将 Spec 拆解为原子任务 | 标准、全量 |
 | `/forge build` | 按计划 TDD 实现代码 | 所有 |
 | `/forge review` | 三层独立评审 | 所有 |
 | `/forge test` | 运行完整验证套件 | 标准、全量 |
 | `/forge ship` | 门禁检查 + 交付 | 标准、全量 |
-| `/forge decide` | 四视角前置决策 | 全量 |
-
-> **Note**: `/forge decide` 目前在评估 Agent Teams 模式，请参考 `.forge/specs/forge-decide-agent-teams/` 了解 PoC 进展。
 | `/forge learn` | 五维度经验沉淀 | 全量 |
-| `/forge spec` | 将需求固化为可锁定规格 | 全量 |
 | `/forge verify` | 证据化三态验证 | 所有 |
 | `/forge replay` | 回放任务证据链 | 所有 |
-| `/forge accept` | 场景验收执行 | 所有 |
+| `/forge accept` | 场景验收执行（支持 agent-browser agentic UI 验收） | 所有 |
 | `/forge debug` | 四阶段结构化根因分析 | 所有 |
-| `/forge status` | 查看当前任务状态 | 所有 |
-| `/forge resume` | 会话恢复 | 所有 |
+| `/forge triage` | 自动发现可执行项（Loop Engineering discovery） | 所有 |
 | `/forge grill` | 苏格拉底式需求澄清 | 所有 |
-| `/forge storm` | 头脑风暴 | 所有 |
+| `/forge storm` | 头脑风暴 / DDD 前置 | 所有 |
 | `/forge recap` | 会话摘要与上下文回顾 | 所有 |
 | `/forge loop` | 带工程纪律的自主循环 | 所有 |
+| `/forge charter` | 项目宪章（cross-spec 工程约束锚点） | 所有 |
+| `/forge status` | 查看当前任务状态 | 所有 |
+| `/forge resume` | 会话恢复 | 所有 |
 
 > 完整子命令速查表和三维路由详解 → [docs/reference-commands.md](docs/reference-commands.md)
+> ADR-0004 之后，所有子命令由统一 skill `forge` 内部分发，`commands/` 仅保留入口占位。
 
 ### 三维路由
 
@@ -224,7 +225,7 @@ bash scripts/pre-push-ci-check.sh
 
 **技术栈**：TypeScript 5.9（strict）、305 个 TypeScript 模块、Vitest 4.1、fast-check 4.7（属性测试）、Biome 2.4（lint + format）。运行时依赖：`@anthropic-ai/claude-agent-sdk`、`@modelcontextprotocol/sdk`、`commander`、`minimatch`、`yaml`、`zod`。
 
-**测试策略**：8247 个测试（679 个测试文件）验证不变量。覆盖率 ~87% statements。
+**测试策略**：8248 个测试（679 个测试文件）验证不变量。覆盖率 ~87% statements。
 
 
 ---
