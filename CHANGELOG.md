@@ -11,6 +11,59 @@ Entries follow [Keep a Changelog](https://keepachangelog.com/) with Forge-specif
 
 ## [Unreleased]
 
+## [3.5.0] - 2026-06-18
+
+### Added
+
+- 动态重规划闭环 (failure_class + scheduler debug 分支 + 增量 replan) (#103)
+- **accept**: agentic UI acceptance via agent-browser (端到端功能验收) (#102)
+- **knowledge**: session journal retention (#101)
+- **review**: per-tier dynamic agent timeout (#100)
+- regenerative checkpoint — 长会话状态保全（借鉴 MiMo-Code） (#99)
+- Loop Engineering 橙皮书借鉴采纳 (行为验证 + triage + 理解腐烂对策) (#98)
+- **specs**: forge-decide-agent-teams R6.3 README note + cmux-integration R14 loop event emission wiring
+- **review**: Validation Pass downgrade logic + pipeline wiring (ce-inspired R5)
+- **review**: stable R-NNN finding IDs (ce-inspired-review-enhancement R8)
+- **review**: autofix route classifier + router (ce-inspired-review-enhancement R9)
+- **review**: compact-safe mode for context-budget exhaustion (ce-inspired-review-enhancement R10)
+- **zone-registry**: TS Zone_Registry loader for programmatic hooks (frozen-zone-structured-feedback R4)
+- **frozen-zone**: PostToolUse defence-in-depth hook + breach audit (frozen-zone-structured-feedback R3)
+- **hooks**: emit auto-resume as hookSpecificOutput JSON (session-resume-check R3)
+- **plan,ship**: wire Backlog_Manager into /forge plan + ship (forge-review-fix-optimization R6)
+- **cmux**: data-contract layer for diff-review + extension-sidebar drafts (R2)
+- **frozen-zone**: structured FrozenDiagnostic in PreToolUse hook (frozen-zone-structured-feedback R1/R2)
+- **specs**: honest-retire ce-inspired/loop-skills/cmux-integration + cmux config flags + decide-teams poc-topics
+- **resume**: wire recovery engine into /forge resume via runRecoveryChain (error-recovery-strategy R7)
+- **doctor**: add runtimeSync health check for worker runtime assets (runtime-worker-context-control R7.4)
+- **review**: add Sycophancy Detection check for re-review (build-subagent-protocol R9)
+- **agents**: add Execution Contract sections to 4 forge agents (ccbp R2/R3/R11)
+- **cmux**: 0.64.x integration — compat fix, schema conformance, reorder-workspaces, browser QA (#95)
+
+### Changed
+
+- refresh README/ROADMAP/SECURITY/CONTRIBUTING to v3.4 + #100-#103 reality
+- increase vitest maxWorkers 2→4 (test suite 8000+ tests runs in 38s vs 300s+ timeout)
+- code-slim-0612 — behavior-preserving code slimming (P1+P2+P3) (#93)
+
+### Fixed
+
+- **mcp**: eliminate SIGTERM shutdown race in integration test (#104)
+- **docs**: export SourceRef/ParsedLine/AllowedReadFile types for TypeDoc
+- autofix-router noUselessSwitchCase lint + availability test CMUX_INTEGRATION isolation
+- **doctor**: add 30s timeout + SIGTERM to git calls (process-lifecycle-management R5)
+- **config**: align cmux_* flag defaults with templates/config.md canonical values
+- **agents**: rewrite 3 review-agent descriptions in canonical source (agent-description-cso R2)
+- **agents**: rewrite 3 review-agent descriptions to CSO 'Use in Layer N' form (agent-description-cso R2)
+- **specs**: regenerate INDEX.md + support retired-partial status
+- 6 audit bugs (2 critical cmd-injection + loader crash; 4 high) (#97)
+- **hooks**: exclude _-prefixed dirs from sessionTitle spec detection (#96)
+- resolve 4 session issues from code-slim-0612 (#94)
+- **ci**: compile before check in publish job; fix release tooling
+
+### Removed
+
+- **refactor**: remove `forge-loop/deprecated` public subpath export (v2.4→v2.5 migration shim; `@deprecated` since v2.5.0, retired at v3.4.0). Package is unpublished with no consumers; completes the overdue deprecation. See ADR-0008.
+
 ### Removed
 
 - **refactor**: remove `forge-loop/deprecated` public subpath export (v2.4→v2.5 migration shim; `@deprecated` since v2.5.0, retired at v3.4.0). Package is unpublished with no consumers; completes the overdue deprecation. See ADR-0008.
