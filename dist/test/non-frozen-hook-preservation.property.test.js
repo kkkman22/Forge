@@ -93,6 +93,16 @@ const EXPECTED_USER_PROMPT_SUBMIT_HOOKS = [
             },
         ],
     },
+    // Usage metrics recorder (spec metrics-hook-wiring): non-blocking, privacy-safe
+    // (records only the /forge <sub> name, never the prompt body).
+    {
+        hooks: [
+            {
+                type: "command",
+                command: "node scripts/record-prompt-metrics.mjs 2>/dev/null || node forge/scripts/record-prompt-metrics.mjs 2>/dev/null || node ~/.claude/skills/forge/scripts/record-prompt-metrics.mjs 2>/dev/null || true",
+            },
+        ],
+    },
 ];
 const EXPECTED_POST_TOOL_USE_HOOKS = [
     {
