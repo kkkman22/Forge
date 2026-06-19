@@ -51,6 +51,11 @@ apps/forge-loop-desktop/src-tauri/resources/node/bin/nodedist/
 .forge/triage-inbox.md
 .forge/state/
 
+# Usage metrics recorded by the UserPromptSubmit hook (per-user usage data;
+# aggregate locally via scripts/aggregate-metrics.mjs). See spec
+# metrics-hook-wiring.
+.forge/.metrics/
+
 # Tool-health runtime event log (append-only; the tracked .md holds only the
 # stable summary + skip-trace counters). See chore/split-tool-health-log-from-md.
 .forge/knowledge/tool-health.log
