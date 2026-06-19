@@ -11,6 +11,7 @@
 import * as fc from "fast-check";
 import { describe, expect, it } from "vitest";
 import { classifyTask, detectWorkNature, getWorkNatureSequenceKey, } from "../src/router.js";
+import { getRouterSequence } from "../src/workflow-graph.js";
 // ---------------------------------------------------------------------------
 // Generators
 // ---------------------------------------------------------------------------
@@ -251,13 +252,41 @@ describe("Property 35: classifyTask work_nature field", () => {
             expect(result.work_nature).toBe("feature");
         }), { numRuns: 40 });
     });
-    it("work_nature does not affect tier classification", () => {
+    it("work_nature does not affect tier classification (but may affect commandSequence)", () => {
         fc.assert(fc.property(taskSignalsArb, workNatureArb, workNatureArb, (signals, n1, n2) => {
             const r1 = classifyTask(signals, undefined, undefined, "fullstack", "iteration", n1);
             const r2 = classifyTask(signals, undefined, undefined, "fullstack", "iteration", n2);
+            // Tier is derived purely from TaskSignals, independent of workNature.
             expect(r1.tier).toBe(r2.tier);
-            expect(r1.commandSequence).toEqual(r2.commandSequence);
         }), { numRuns: 50 });
+    });
+    // NOTE (audit-remediate-0619复核): 初版审计报告 P0-1 认为 router 丢失 workNature
+    // 导致 router/scheduler 序列不一致。经 workflow-graph 核实：getRouterSequence 返回
+    // 的是 routerPhases（路由阶段），对 feature/refactor/bugfix 在同 tier 下**设计为相同**
+    // （如 light tier 三者均为 ['build','review']）；workNature 的差异体现在
+    // schedulerPhases（skill-scheduler.getCommandSequence），由 sdk-status-helpers 使用。
+    // 因此 router 用 getRouterSequence(tier) 不传 workNature 是符合设计的——routerPhases
+    // 本就不依赖 workNature。下方断言固化这一设计契约，防止误"修复"。
+    it("classifyTask commandSequence equals getRouterSequence(tier) (routerPhases are workNature-agnostic by design)", () => {
+        fc.assert(fc.property(tierArb, workNatureArb, (tier, nature) => {
+            const seq = classifyTask({
+                filesAffected: 1,
+                linesChanged: 5,
+                hasExistingSpec: true,
+                hasNewService: false,
+                hasNewDatabase: false,
+                hasAuthChanges: false,
+                isVagueRequirement: false,
+                hasClearRequirements: true,
+            }, tier, undefined, "fullstack", "iteration", nature).commandSequence;
+            // routerPhases are identical across workNature within a tier.
+            // getRouterSequence(tier) is exactly what classifyTask uses, and it
+            // equals getRouterSequence(tier, nature) for all combos that have a
+            // dedicated profile; for combos without one (e.g. full+bugfix) both
+            // calls fall back to the same default, so classifyTask's choice of
+            // getRouterSequence(tier) is the canonical, correct call.
+            expect(seq).toEqual(getRouterSequence(tier));
+        }), { numRuns: 30 });
     });
 });
 //# sourceMappingURL=router-worknature.property.test.js.map

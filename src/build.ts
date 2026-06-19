@@ -411,15 +411,21 @@ export function validateRedGate(evidence: RedGateEvidence): RedGateResult {
     return { valid: false, reason: "missing expected_failure_reason field" };
   }
 
-  // Check if output indicates test PASSED
-  const _outputLower = evidence.actual_output.toLowerCase();
-  for (const _indicator of SUCCESS_INDICATORS) {
-    if (/passed/i.test(evidence.actual_output) && !/failed/i.test(evidence.actual_output)) {
-      return {
-        valid: false,
-        reason: "RED test PASSED — test may not assert missing behavior. Rewrite the test.",
-      };
-    }
+  // Check if output indicates test PASSED. SUCCESS_INDICATORS are matched as
+  // case-insensitive regexes (REQ-02 audit-remediate-0619): previously the
+  // for-loop body only ran a hardcoded `/passed/i`, leaving patterns like
+  // "PASS" or "Tests:.*passed" unused. A success signal present alongside
+  // failure-y noise (e.g. "PASS  Error fetching telemetry") still means the
+  // test went green → RED evidence is invalid.
+  const hasSuccessIndicator = SUCCESS_INDICATORS.some((ind) =>
+    new RegExp(ind, "i").test(evidence.actual_output),
+  );
+  const hasFailKeyword = /failed/i.test(evidence.actual_output);
+  if (hasSuccessIndicator && !hasFailKeyword) {
+    return {
+      valid: false,
+      reason: "RED test PASSED — test may not assert missing behavior. Rewrite the test.",
+    };
   }
 
   // Check if output contains at least one failure indicator

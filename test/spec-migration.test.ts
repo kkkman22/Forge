@@ -235,4 +235,50 @@ Test rollback path for feature/dirname mismatch.
       cleanup();
     }
   });
+
+  // REQ-03 (audit-remediate-0619): the failure branch must emit a
+  // spec_migration_failed event via event-writer. Before the fix it used
+  // `require("./event-writer.js")`, which throws ReferenceError at runtime in
+  // native ESM — so the event was never written (and the error was swallowed
+  // by the surrounding best-effort catch). This test pins the corrected
+  // behavior: when migration fails AND eventsPath is provided, the failure
+  // event is recorded to disk.
+  it("writes spec_migration_failed event on rollback when eventsPath is provided", () => {
+    const root = createTestDir();
+    try {
+      const featureDir = join(root, "auth");
+      mkdirSync(featureDir, { recursive: true });
+      // ANL-04 conflict: same `当 X 时` with two different shall → P0 finding → rollback
+      const spec = `---
+feature: authentication
+status: locked
+date: 2026-05-20
+---
+
+# 目的
+
+Trigger rollback with event.
+
+## 需求
+
+### 需求 1: Conflict
+
+- 当 用户输入相同条件 则 系统应当 返回 A
+- 当 用户输入相同条件 则 系统应当 返回 B
+`;
+      writeFileSync(join(featureDir, "spec.md"), spec);
+
+      const eventsPath = join(root, "events.jsonl");
+      const result = migrateLegacySpec(featureDir, eventsPath);
+      expect(result.success).toBe(false);
+
+      // The failure event must have been written (not swallowed by a require
+      // ReferenceError). This is the core assertion of REQ-03.
+      expect(existsSync(eventsPath)).toBe(true);
+      const events = readFileSync(eventsPath, "utf-8");
+      expect(events).toContain("spec_migration_failed");
+    } finally {
+      cleanup();
+    }
+  });
 });
