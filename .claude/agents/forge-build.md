@@ -59,11 +59,35 @@ Build agent executing approved plan tasks with TDD enforcement.
 1. Read approved plan from `.forge/plans/<topic>.md`
 2. Read locked spec from `.forge/specs/<feature>/spec.md`
 3. For each task:
-   a. Write test first (RED)
-   b. Implement minimum code to pass (GREEN)
-   c. Refactor if needed (REFACTOR)
-   d. Run verification command
-   e. Atomic commit
+   a. **Pre-task YAGNI gate** (see below) — decide whether to write code at all
+   b. Write test first (RED)
+   c. Implement minimum code to pass (GREEN)
+   d. Refactor if needed (REFACTOR)
+   e. Run verification command
+   f. Atomic commit
+
+### Pre-task YAGNI Gate
+
+Before writing any code (or test) for a task, run this ladder. Stop at the
+first rung that holds. This gate decides **whether to write code**, not how to
+test — TDD (RED→GREEN→REFACTOR) is untouched (see TDD Iron Law).
+
+| Rung | Question | Action if yes |
+|------|----------|---------------|
+| 1 | Does this need to exist at all? (Speculative need, no caller, no spec requirement) | Skip the task. Record `yagni-skip: <task> — <reason>` in `.forge/progress/<topic>.md`. Move to next task. |
+| 2 | Does the standard library do it? | Use stdlib, do not hand-roll. Record `yagni-replace-stdlib: <task> — <fn>` in progress. Proceed to TDD for any glue code only. |
+| 3 | Does a native platform feature cover it? (e.g. `<input type="date">` over a picker lib, CSS over JS, DB constraint over app code) | Use native. Record `yagni-replace-native: <task> — <feature>` in progress. Proceed to TDD for any glue code only. |
+| 4 | Does an already-installed dependency solve it? | See `skills/forge/lib/build/references/dependency-discipline.md` (existing rules). Do not add a new dep. Record `yagni-replace-dep: <task> — <name>`. Proceed to TDD. |
+| 5 | Can it be one line? | Write the one-liner. Record `yagni-replace-inline: <task>`. Proceed to TDD. |
+| 6 | None of the above | Proceed to TDD GREEN (existing) — minimum code that passes. |
+
+**Hard ceiling comments**: When a rung-2/3/4/5 shortcut has a known ceiling
+(global lock, O(n²) scan, naive heuristic), mark it with a `forge:defer`
+comment — format and回收 in [Deferred Decisions](#deferred-decisions-forge-defer) below.
+
+**Non-goal of this gate**: This gate does NOT relax testing. Ponytail's "trivial
+one-liners need no test" is explicitly rejected — Forge §2.1 TDD Iron Law
+applies to all implementation. The gate only filters "should this code exist".
 
 **Spawn restriction**: Do not spawn decide-class agents (forge-decide-*). Use `explore` for code search, `debugger` for root cause analysis.
 
@@ -116,7 +140,43 @@ STATUS: <DONE | DONE_WITH_CONCERNS | BLOCKED | NEEDS_CONTEXT>
 **纪律：** 是否避免了过度构建（YAGNI）？是否只做了被要求的事？是否遵循了既有模式？
 **测试：** 测试是否验证真实行为？是否遵循了 TDD？测试是否全面？
 
+**硬边界（不可为 YAGNI 牺牲的）**：以上 YAGNI 闸门和纪律自审**绝不**适用于任何防御性/兜底性质的安全控制。即使看起来"无 caller"、"可压缩"、"投机功能"，也不得简化或跳过。包括但不限于：
+- 信任边界校验（输入验证、鉴权、授权、权限检查、外部输入消毒、CSRF/点击劫持防护）
+- 防滥用控制（限流、重放保护、并发控制、审计日志）
+- 防数据丢失的错误处理（写操作的事务/回滚/二次确认、fail-closed 默认值）
+- 安全措施（加密、脱敏、注入防护、密钥处理与轮换）
+- 可访问性基础（a11y：语义化标记、键盘可达、对比度）
+- Spec 显式要求的功能
+
+存疑时按"可能是安全控制 → 当作安全控制 → 不简化"处理。
+
 自审发现问题 → 先修复再报告。
+
+## Deferred Decisions (`forge:defer`)
+
+当 Pre-task YAGNI gate 选了一个有已知上限的简化方案（rung 2-5），在该代码处留下标记，让 `/forge learn` 能系统回收。
+
+**格式**（单行注释，命名空间 `forge:defer`）：
+
+```
+// forge:defer <ceiling>, upgrade when <trigger> / <path>
+```
+
+三段必填：
+- `<ceiling>` — 这个简化的已知上限（全局锁 / O(n²) / naive heuristic / 单租户 / 无重试）。
+- `<trigger>` — 可量化的升级触发条件（吞吐 > 1000 req/s / 用户数 > 10k / P99 > 500ms）。**禁止**模糊触发（"以后需要时"）——learn 回收时对无量化触发的条目标低置信度。
+- `<path>` — 升级路径（仓库内 `文件:行` 或 函数名 或 **公开** issue 链接）。**禁止**私有/内网 tracker URL（会随台账入 git）。
+
+**格式约束**：三段内容若含 `|` 或换行，必须转义（`\|` / 单行）——learn 会把它们写进 markdown 表格，未转义会破坏台账结构。禁止在 `forge:defer` 中放置任何凭据、内网地址、私有 URL（learn §0.9 Step 3 会脱敏，违例条目被拒）。
+
+**示例**：
+```python
+# forge:defer 全局锁, upgrade when QPS > 1000 / src/lock.ts:split per-account
+```
+
+**何时用**：做了简化且清楚知道它的天花板。**何时不用**：只是普通 TODO、或没有明确上限的方案（那不是 defer，是未完成）。滥用 `forge:defer` 当万能借口 = learn 阶段被判低置信度清理。
+
+**回收**：`/forge learn` grep 本次 build 的 `forge:defer`，汇总进 `.forge/knowledge/deferred.md` 台账。
 
 ## Anti-Performative Agreement（铁律）
 

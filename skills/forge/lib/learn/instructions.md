@@ -323,6 +323,57 @@ type: gate-analysis
 
 ---
 
+## §0.9 Deferred Decisions Sweep (`forge:defer` 回收)
+
+> **Precondition**: 本次 build 产出了代码变更（非纯文档/配置任务）。
+> 若本次 learn 无 build run（如手动知识整理、`--from-chats`），跳过本节。
+
+### Step 1: 定位本次 build 涉及的文件
+
+从 `.forge/runs/<id>/commit-narrative.md` 或 `.forge/progress/<topic>.md` 取本次 build 改动的文件列表。若两者都没有，用 `git diff <base>...HEAD --name-only`。
+
+### Step 2: grep `forge:defer` 注释
+
+```bash
+git diff <base>...HEAD -z --name-only | xargs -0 grep -n "forge:defer"
+```
+
+（`-z`/`-0` 处理含空格/特殊字符的文件名，防 shell 拼接注入。）
+
+解析每条命中，提取三段：`<ceiling>, upgrade when <trigger> / <path>`。
+
+### Step 3: 写入台账（含脱敏）
+
+把解析结果追加到 `.forge/knowledge/deferred.md` 的台账表：
+
+| 日期 | Feature | 文件:行 | Ceiling | 升级触发 | 升级路径 |
+
+日期用本次 learn 的 UTC 日期；Feature 从 `.forge/status.md` 当前 topic 取。
+
+**脱敏规则（强制，写入前逐条检查）**：deferred.md 受 git 跟踪并可能推送远端，`forge:defer` 的三段内容（尤其 `<path>`）必须脱敏：
+- **凭据/密钥**：命中以下模式之一 → 拒绝写入该条，输出 `⚠️ defer entry at <file>:<line> contains疑似凭据，已跳过台账`：
+  - 固定前缀 token：`AKIA[0-9A-Z]{16}`（AWS）、`xox[bpas]-`（Slack）、`gh[posur]_[A-Za-z0-9]{36}`（GitHub PAT）、`glpat-`（GitLab）、`sk_live_`/`rk_live_`（Stripe）、`Bearer `、`eyJ`（JWT 起始）。
+  - PEM 块：`-----BEGIN`。
+  - 长 hex/base64 串（≥32 字符的连续 `[0-9a-fA-F]` 或 base64）。
+  - 赋值式：`password=`、`token=`、`secret=`、`api_key=`、`apikey=`。
+- **内网/私有地址**：`<path>` 若是 URL，只允许公开 issue tracker（`github.com`/`gitlab.com`/公共域）；私有 host（`internal.*`/`10.*`/`192.168.*`/`*.local`/`*.corp`）/ 内部仓库路径 → 替换为 `<private-ref>` 占位。
+- **绝对路径**：转为仓库相对路径（`<absolute>/src/...` → `src/...`）。
+- **markdown 转义**：三段内容含 `|` 或换行 → 转义为 `\|` / `<br>`，防破坏表格。
+
+### Step 4: 置信度降级
+
+对每条新增条目检查 `<trigger>` 是否可量化（QPS / 用户数 / 延迟 / 数据量等具体阈值）：
+- **可量化** → 该条目保留，confidence 0.5。
+- **模糊**（"以后需要时" / "量大时" / 无阈值）→ 在台账行的升级触发列标注 `⚠️ fuzzy`，confidence 设 0.2。后续由 `maintainKnowledgeBase`（见 G4 Pattern Lifecycle Management）按 confidence < 0.3 自动清理。
+
+### Step 5: Skip 逻辑
+
+- 本次 build 无代码变更 → skip
+- grep 无 `forge:defer` 命中 → 输出一行 `⏭️ 本次 build 无延迟决策标记。` 并 skip
+- **绝不**因 deferred.md 不存在而阻断 learn 流程（首次运行时创建）
+
+---
+
 ## Goals
 
 ### G1: Execution Quality Assessment
