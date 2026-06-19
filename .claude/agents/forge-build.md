@@ -75,16 +75,15 @@ test — TDD (RED→GREEN→REFACTOR) is untouched (see TDD Iron Law).
 | Rung | Question | Action if yes |
 |------|----------|---------------|
 | 1 | Does this need to exist at all? (Speculative need, no caller, no spec requirement) | Skip the task. Record `yagni-skip: <task> — <reason>` in `.forge/progress/<topic>.md`. Move to next task. |
-| 2 | Does the standard library do it? | Use stdlib, do not hand-roll. Record `yagni-replace: <task> — stdlib <fn>` in progress. Proceed to TDD for any glue code only. |
-| 3 | Does a native platform feature cover it? (e.g. `<input type="date">` over a picker lib, CSS over JS, DB constraint over app code) | Use native. Record `yagni-replace: <task> — native <feature>` in progress. Proceed to TDD for any glue code only. |
-| 4 | Does an already-installed dependency solve it? | See `skills/forge/lib/build/references/dependency-discipline.md` (existing rules). Do not add a new dep. Record `yagni-replace: <task> — existing dep <name>`. Proceed to TDD. |
-| 5 | Can it be one line? | Write the one-liner. Proceed to TDD. |
+| 2 | Does the standard library do it? | Use stdlib, do not hand-roll. Record `yagni-replace-stdlib: <task> — <fn>` in progress. Proceed to TDD for any glue code only. |
+| 3 | Does a native platform feature cover it? (e.g. `<input type="date">` over a picker lib, CSS over JS, DB constraint over app code) | Use native. Record `yagni-replace-native: <task> — <feature>` in progress. Proceed to TDD for any glue code only. |
+| 4 | Does an already-installed dependency solve it? | See `skills/forge/lib/build/references/dependency-discipline.md` (existing rules). Do not add a new dep. Record `yagni-replace-dep: <task> — <name>`. Proceed to TDD. |
+| 5 | Can it be one line? | Write the one-liner. Record `yagni-replace-inline: <task>`. Proceed to TDD. |
 | 6 | None of the above | Proceed to TDD GREEN (existing) — minimum code that passes. |
 
 **Hard ceiling comments**: When a rung-2/3/4/5 shortcut has a known ceiling
 (global lock, O(n²) scan, naive heuristic), mark it with a `forge:defer`
-comment naming the ceiling and the upgrade path:
-`// forge:defer <ceiling>, upgrade when <trigger> / <path>`.
+comment — format and回收 in [Deferred Decisions](#deferred-decisions-forge-defer) below.
 
 **Non-goal of this gate**: This gate does NOT relax testing. Ponytail's "trivial
 one-liners need no test" is explicitly rejected — Forge §2.1 TDD Iron Law
@@ -166,7 +165,9 @@ STATUS: <DONE | DONE_WITH_CONCERNS | BLOCKED | NEEDS_CONTEXT>
 三段必填：
 - `<ceiling>` — 这个简化的已知上限（全局锁 / O(n²) / naive heuristic / 单租户 / 无重试）。
 - `<trigger>` — 可量化的升级触发条件（吞吐 > 1000 req/s / 用户数 > 10k / P99 > 500ms）。**禁止**模糊触发（"以后需要时"）——learn 回收时对无量化触发的条目标低置信度。
-- `<path>` — 升级路径（文件:行 或 函数名 或 issue 链接）。
+- `<path>` — 升级路径（仓库内 `文件:行` 或 函数名 或 **公开** issue 链接）。**禁止**私有/内网 tracker URL（会随台账入 git）。
+
+**格式约束**：三段内容若含 `|` 或换行，必须转义（`\|` / 单行）——learn 会把它们写进 markdown 表格，未转义会破坏台账结构。禁止在 `forge:defer` 中放置任何凭据、内网地址、私有 URL（learn §0.9 Step 3 会脱敏，违例条目被拒）。
 
 **示例**：
 ```python

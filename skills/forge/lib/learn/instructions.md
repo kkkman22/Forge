@@ -352,7 +352,10 @@ git diff <base>...HEAD -z --name-only | xargs -0 grep -n "forge:defer"
 
 **脱敏规则（强制，写入前逐条检查）**：deferred.md 受 git 跟踪并可能推送远端，`forge:defer` 的三段内容（尤其 `<path>`）必须脱敏：
 - **凭据/密钥**：命中以下模式之一 → 拒绝写入该条，输出 `⚠️ defer entry at <file>:<line> contains疑似凭据，已跳过台账`：
-  - AWS 风格（`AKIA[0-9A-Z]{16}`）、`-----BEGIN`、长 hex/base64 串（≥32 字符的连续 `[0-9a-fA-F]` 或 base64）、`password=`、`token=`、`secret=`、`api_key=`。
+  - 固定前缀 token：`AKIA[0-9A-Z]{16}`（AWS）、`xox[bpas]-`（Slack）、`gh[posur]_[A-Za-z0-9]{36}`（GitHub PAT）、`glpat-`（GitLab）、`sk_live_`/`rk_live_`（Stripe）、`Bearer `、`eyJ`（JWT 起始）。
+  - PEM 块：`-----BEGIN`。
+  - 长 hex/base64 串（≥32 字符的连续 `[0-9a-fA-F]` 或 base64）。
+  - 赋值式：`password=`、`token=`、`secret=`、`api_key=`、`apikey=`。
 - **内网/私有地址**：`<path>` 若是 URL，只允许公开 issue tracker（`github.com`/`gitlab.com`/公共域）；私有 host（`internal.*`/`10.*`/`192.168.*`/`*.local`/`*.corp`）/ 内部仓库路径 → 替换为 `<private-ref>` 占位。
 - **绝对路径**：转为仓库相对路径（`<absolute>/src/...` → `src/...`）。
 - **markdown 转义**：三段内容含 `|` 或换行 → 转义为 `\|` / `<br>`，防破坏表格。
