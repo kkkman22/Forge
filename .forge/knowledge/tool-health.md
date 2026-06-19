@@ -108,3 +108,5 @@ prune-sessions: 2026-06-18T14:27:37Z pruned=0 protected_hits=0 retention_days=90
 prune-sessions: 2026-06-18T14:27:37Z pruned=0 protected_hits=0 retention_days=90 keep_recent=5 dry_run=no
 prune-sessions: 2026-06-18T14:32:07Z pruned=0 protected_hits=0 retention_days=90 keep_recent=5 dry_run=no
 prune-sessions: 2026-06-18T14:32:08Z pruned=0 protected_hits=0 retention_days=90 keep_recent=5 dry_run=no
+prune-sessions: 2026-06-18T14:38:13Z pruned=0 protected_hits=0 retention_days=90 keep_recent=5 dry_run=no
+prune-sessions: 2026-06-18T14:38:13Z pruned=0 protected_hits=0 retention_days=90 keep_recent=5 dry_run=no

@@ -10,10 +10,14 @@
 
 import { mkdirSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
-import { AgentBrowserCliClient } from "./agent-browser-client.js";
-import { runCdpHarness } from "./harness-cdp.js";
+import { AgentBrowserCliClient, type AgentBrowserClient } from "./agent-browser-client.js";
+import { type CdpHarnessOptions, type CdpHarnessResult, runCdpHarness } from "./harness-cdp.js";
 import { detectAgentBrowser, detectProjectHarness } from "./harness-detector.js";
-import { runPlaywrightHarness } from "./harness-playwright.js";
+import {
+  type PlaywrightHarnessOptions,
+  type PlaywrightHarnessResult,
+  runPlaywrightHarness,
+} from "./harness-playwright.js";
 
 export type UiControllerTier = "project" | "agent-browser" | "playwright" | "cdp";
 
@@ -22,6 +26,28 @@ export interface UiHarnessOptions {
   appUrl: string;
   designerSpecPath?: string;
   forgeDir?: string;
+  /**
+   * Test seam: override agent-browser availability detection.
+   * Default = real `detectAgentBrowser` (shells out to `which agent-browser`).
+   * Production callers never set this.
+   */
+  detectAgentBrowser?: () => Promise<boolean>;
+  /**
+   * Test seam: factory for the agent-browser client.
+   * Default = `() => new AgentBrowserCliClient()` (launches real headless Chrome).
+   * Production callers never set this.
+   */
+  agentBrowserClientFactory?: () => AgentBrowserClient;
+  /**
+   * Test seam: override the Playwright tier adapter.
+   * Default = real `runPlaywrightHarness`.
+   */
+  playwrightRunner?: (opts: PlaywrightHarnessOptions) => Promise<PlaywrightHarnessResult>;
+  /**
+   * Test seam: override the CDP tier adapter.
+   * Default = real `runCdpHarness`.
+   */
+  cdpRunner?: (opts: CdpHarnessOptions) => Promise<CdpHarnessResult>;
 }
 
 export interface UiHarnessVerdict {
@@ -35,6 +61,13 @@ export async function runUiHarness(opts: UiHarnessOptions): Promise<UiHarnessVer
   const attempted: { tier: UiControllerTier; reason: string }[] = [];
   const forgeDir = opts.forgeDir ?? join(process.cwd(), ".forge");
   const artifactsDir = join(forgeDir, "findings", opts.topic, "ui-harness");
+
+  // Test seams — default to the real implementations. Production code never
+  // injects these; tests pass fakes to avoid launching real browsers.
+  const detectAb = opts.detectAgentBrowser ?? detectAgentBrowser;
+  const makeClient = opts.agentBrowserClientFactory ?? (() => new AgentBrowserCliClient());
+  const runPlaywright = opts.playwrightRunner ?? runPlaywrightHarness;
+  const runCdp = opts.cdpRunner ?? runCdpHarness;
 
   // Tier 1: Project harness
   const projectHarness = await detectProjectHarness("ui");
@@ -50,10 +83,10 @@ export async function runUiHarness(opts: UiHarnessOptions): Promise<UiHarnessVer
   attempted.push({ tier: "project", reason: "No project UI harness found" });
 
   // Tier 2: agent-browser (snapshot+refs CLI) [Spec R3-AC1, R3-AC4]
-  const agentBrowserAvailable = await detectAgentBrowser();
+  const agentBrowserAvailable = await detectAb();
   if (agentBrowserAvailable) {
     try {
-      const client = new AgentBrowserCliClient();
+      const client = makeClient();
       const sessionId = `forge-harness-${opts.topic}-${Date.now()}`;
       await client.open(opts.appUrl, sessionId);
       const snap = await client.snapshot(sessionId);
@@ -80,7 +113,7 @@ export async function runUiHarness(opts: UiHarnessOptions): Promise<UiHarnessVer
   }
 
   // Tier 3: playwright
-  const pwResult = await runPlaywrightHarness({
+  const pwResult = await runPlaywright({
     appUrl: opts.appUrl,
     designerSpecPath: opts.designerSpecPath,
   });
@@ -95,7 +128,7 @@ export async function runUiHarness(opts: UiHarnessOptions): Promise<UiHarnessVer
   attempted.push({ tier: "playwright", reason: pwResult.reason ?? "Playwright execution failed" });
 
   // Tier 4: CDP
-  const cdpResult = await runCdpHarness({ appUrl: opts.appUrl });
+  const cdpResult = await runCdp({ appUrl: opts.appUrl });
   if (cdpResult.ok) {
     return writeResult(artifactsDir, {
       verdict: "VERIFIED",
