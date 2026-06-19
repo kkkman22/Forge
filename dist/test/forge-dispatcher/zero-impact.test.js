@@ -65,8 +65,8 @@ describe("Zero-Impact: non-cmux subs unaffected by migration", () => {
                 expect(sha, `${sub} sha256 should match manifest`).toBe(manifest.subs[sub].instructions.sha256);
             }
         }
-        // 34 non-cmux subs (37 total - 3 cmux)
-        expect(nonCmuxCount).toBe(34);
+        // 35 non-cmux subs (38 total - 3 cmux)
+        expect(nonCmuxCount).toBe(35);
     });
     it("gate adds zero overhead: non-cmux subs never probe cmux", () => {
         let probeCount = 0;

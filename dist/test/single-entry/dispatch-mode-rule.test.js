@@ -50,6 +50,7 @@ const EXPECTED_MODES = {
     "forge-cmux-loop-signals": "inline",
     charter: "fork",
     replay: "inline",
+    continue: "inline",
 };
 describe("R3.5: dispatch_mode governance", () => {
     // The on-disk lib frontmatter is the enforced source of truth — this always
