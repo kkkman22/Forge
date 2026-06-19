@@ -50,3 +50,7 @@ apps/forge-loop-desktop/src-tauri/resources/node/bin/nodedist/
 .forge/findings/
 .forge/triage-inbox.md
 .forge/state/
+
+# Tool-health runtime event log (append-only; the tracked .md holds only the
+# stable summary + skip-trace counters). See chore/split-tool-health-log-from-md.
+.forge/knowledge/tool-health.log

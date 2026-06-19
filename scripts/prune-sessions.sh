@@ -179,10 +179,11 @@ done <<< "${STALE}"
 echo "prune-sessions: pruned=${PRUNED_COUNT}, protected_hits=${PROTECTED_HIT_COUNT}"
 
 # ---------------------------------------------------------------------------
-# Append a summary line to tool-health.md (best-effort, never fatal)
+# Append a summary line to tool-health.log (best-effort, never fatal)
+# Event log is gitignored; the tracked tool-health.md holds only the summary.
 # ---------------------------------------------------------------------------
 
-HEALTH_FILE=".forge/knowledge/tool-health.md"
+HEALTH_FILE=".forge/knowledge/tool-health.log"
 SUMMARY="prune-sessions: $(date -u +%Y-%m-%dT%H:%M:%SZ) pruned=${PRUNED_COUNT} protected_hits=${PROTECTED_HIT_COUNT} retention_days=${RETENTION_DAYS} keep_recent=${KEEP_RECENT} dry_run=${DRY_RUN}"
 if [[ "${DRY_RUN}" != "yes" ]]; then
   mkdir -p "$(dirname "${HEALTH_FILE}")" 2>/dev/null || true

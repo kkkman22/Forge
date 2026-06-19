@@ -390,18 +390,21 @@ function artifactStateHealth(
 }
 
 function readToolHealth(projectRoot: string): HealthCheck {
-  const source = path.join(projectRoot, ".forge", "knowledge", "tool-health.md");
+  // The event log (.log) is the true "is tooling running" signal — it's
+  // appended on every prune/CI-scan. The tracked .md holds only the stable
+  // summary + skip-trace counters, whose presence proves nothing about liveness.
+  const source = path.join(projectRoot, ".forge", "knowledge", "tool-health.log");
   if (!existsSync(source)) {
     return {
       status: "unknown",
-      message: "Tool health record missing",
-      source: ".forge/knowledge/tool-health.md",
+      message: "Tool health log not yet generated",
+      source: ".forge/knowledge/tool-health.log",
     };
   }
   return {
     status: "pass",
-    message: "Tool health record present",
-    source: ".forge/knowledge/tool-health.md",
+    message: "Tool health log present",
+    source: ".forge/knowledge/tool-health.log",
   };
 }
 
