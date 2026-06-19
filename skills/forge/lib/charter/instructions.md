@@ -36,6 +36,8 @@ Charter 位于 `.forge/` 开放区（AI 可自由创建/修改）。
 
 当任何下游 skill（decide/spec/plan）检测到新决策与 charter invariant 矛盾时，提供三选一：
 
+> **下游消费者**：decide / spec / plan（做决策时对照 invariant）+ build（§2.5 Charter Grounding，写代码时注入摘要，知情不裁决）+ review（spec-check Check Item 7 Charter Compliance）。
+
 | 选项 | 行为 |
 |------|------|
 | (A) 修改 charter | 更新 invariant，可能触发 major bump |
