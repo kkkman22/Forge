@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 
-import { appendFileSync, existsSync } from "node:fs";
+import { appendFileSync, mkdirSync } from "node:fs";
 import { resolve, dirname } from "node:path";
 import { fileURLToPath } from "node:url";
 import { execFileSync } from "node:child_process";
@@ -150,10 +150,11 @@ function fetchRunLogs(repo, runId) {
  * @param {{ scanned_runs: number, failed_runs: number, matched_patterns: Array<{ run_id: number, pattern: string, log_line: string }>, pattern_counts: Record<string, number> }} summary
  */
 function writeHealthFile(summary) {
-  const healthPath = resolve(ROOT, ".forge", "knowledge", "tool-health.md");
-  if (!existsSync(healthPath)) {
-    return;
-  }
+  const healthPath = resolve(ROOT, ".forge", "knowledge", "tool-health.log");
+  // The event log is gitignored and lazily created on first write — ensure
+  // the parent dir exists, then append. (Previously refused to create the
+  // file because the tracked .md was seed-only; that no longer applies.)
+  mkdirSync(dirname(healthPath), { recursive: true });
 
   const timestamp = new Date().toISOString();
   const lines = [

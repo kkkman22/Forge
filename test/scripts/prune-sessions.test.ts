@@ -246,10 +246,10 @@ describe("prune-sessions.sh (spec: session-journal-retention)", () => {
   });
 
   // -------------------------------------------------------------------------
-  // tool-health.md audit summary is written on real run (Req4 AC2)
+  // tool-health.log audit summary is written on real run (Req4 AC2)
   // -------------------------------------------------------------------------
 
-  it("appends a summary line to tool-health.md on a real run", () => {
+  it("appends a summary line to tool-health.log on a real run", () => {
     const dir = scaffold({ retention: 10, keep: 1 });
     // Two expired files so one is pruned (keep_recent=1 saves the newer).
     const stale = join(dir, "2026-01-01-stale.md");
@@ -262,13 +262,13 @@ describe("prune-sessions.sh (spec: session-journal-retention)", () => {
 
     run();
 
-    const health = join(workdir, ".forge", "knowledge", "tool-health.md");
+    const health = join(workdir, ".forge", "knowledge", "tool-health.log");
     expect(existsSync(health)).toBe(true);
     const lines = execFileSync("cat", [health], { encoding: "utf-8" }).trim().split("\n");
     expect(lines[lines.length - 1]).toMatch(/prune-sessions:.*pruned=1.*dry_run=no/);
   });
 
-  it("does NOT write tool-health.md on dry-run", () => {
+  it("does NOT write tool-health.log on dry-run", () => {
     const dir = scaffold({ retention: 10, keep: 5 });
     const p = join(dir, "2026-01-01-stale.md");
     writeFileSync(p, "# stale\n");
@@ -276,7 +276,7 @@ describe("prune-sessions.sh (spec: session-journal-retention)", () => {
 
     run(["--dry-run"]);
 
-    const health = join(workdir, ".forge", "knowledge", "tool-health.md");
+    const health = join(workdir, ".forge", "knowledge", "tool-health.log");
     expect(existsSync(health)).toBe(false);
   });
 });
