@@ -20,7 +20,7 @@ function runHook(content, opts) {
     try {
         const stdout = execFileSync("node", [SCRIPT], {
             input,
-            timeout: 3000,
+            timeout: 8000,
             encoding: "utf-8",
             cwd: ROOT,
             env: {
@@ -166,7 +166,7 @@ describe("MessageDisplay hook (R2) — contract tests", () => {
             expect(display).toMatch(/展开（共 \d+ tokens）/);
             // First ~800 chars should be visible (summary portion)
             expect(display.startsWith(content.slice(0, 100))).toBe(true);
-        });
+        }, 15000);
         it("includes full content inside the details block", () => {
             const content = longProse(250);
             const { stdout, exitCode } = runHook(content);

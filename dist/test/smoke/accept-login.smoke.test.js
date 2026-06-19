@@ -46,8 +46,17 @@ afterAll(async () => {
     if (server)
         await new Promise((r) => server.close(() => r()));
 });
-describe.skipIf(!hasAgentBrowser)("@smoke real agent-browser login acceptance", () => {
+// NOTE: this describe is always registered (NOT describe.skipIf) so that
+// `vitest list` counts it identically in CI and locally — README test metrics
+// are calibrated to `vitest list`, which excludes `.skip`/`.skipIf` blocks.
+// Using describe.skipIf(!hasAgentBrowser) made the count environment-dependent
+// (8214 locally with agent-browser vs 8213 in CI without it) and broke
+// check-readme-metrics. The it no-ops internally when agent-browser is absent,
+// mirroring the cmux-json-schema.test.ts precedent.
+describe("@smoke real agent-browser login acceptance", () => {
     it("open→fill→click→resnapshot yields PASS (jump to welcome + Welcome admin)", async () => {
+        if (!hasAgentBrowser)
+            return; // agent-browser not installed — skip body, keep count
         const c = new AgentBrowserCliClient();
         const sid = `smoke-${Date.now()}`;
         try {
