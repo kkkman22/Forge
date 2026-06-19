@@ -37,6 +37,7 @@ Agent(prompt, skills=["forge-test"], permissionMode="acceptEdits", maxTurns=20)
 - Self-check 清单
 - 禁止事项
 - **Framework API 验证**
+- **Charter grounding 摘要**（若 `.forge/charter.md` status:active）：核心架构边界 + 与本任务相关的 INV-NNN 列表。charter 不存在 / 非 active 时跳过此项，不产生空字段。详见 build instructions.md §2.5。
 
 ## Framework API 验证
 

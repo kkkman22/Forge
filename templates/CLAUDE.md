@@ -119,7 +119,7 @@ build 阶段主 Agent 必须执行周期性 Restatement Checkpoint：每完成 N
 
 ## 5. Charter（项目宪章）
 
-`.forge/charter.md` 工程策略锚定（架构边界、技术基线、不可变量）。`/forge charter init/update/check/show` 管理生命周期。`status: active` 时下游 skill（decide/spec/plan/review）自动读取摘要（≤500 tokens）作为 grounding 约束；不存在或 `draft` 时正常执行不阻断。
+`.forge/charter.md` 工程策略锚定（架构边界、技术基线、不可变量）。`/forge charter init/update/check/show` 管理生命周期。`status: active` 时下游 skill（decide/spec/plan/build/review）自动读取摘要（≤500 tokens）作为 grounding 约束；不存在或 `draft` 时正常执行不阻断。build 阶段在 §2.5 Charter Grounding 注入，知情不裁决（裁决仍由 review 的 spec-check 负责）。
 
 ## 6. Self-Evolution Protocol
 
