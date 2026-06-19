@@ -58,10 +58,14 @@ export function getDecideSubagents(context: DecideContext): SubagentConfig[] {
  */
 export function buildDecideRound1Subagents(context: DecideContext): SubagentInvocation[] {
   const members = getDecideSubagents(context);
+  const contextSection =
+    context.contextFiles && context.contextFiles.length > 0
+      ? `\nRelevant artifacts (spec/research files this task declared):\n${context.contextFiles.map((f) => `- ${f}`).join("\n")}`
+      : "";
 
   return members.map((member) => ({
     agentType: member.agent,
-    prompt: `[${member.role}] 分析任务：${context.taskDescription}。涉及文件：${context.involvedFiles.join(", ")}。请控制在 ${MAX_PERSPECTIVE_TOKENS} tokens 以内。`,
+    prompt: `[${member.role}] 分析任务：${context.taskDescription}。涉及文件：${context.involvedFiles.join(", ")}。请控制在 ${MAX_PERSPECTIVE_TOKENS} tokens 以内。${contextSection}`,
     permissionMode: "default" as const,
     maxTurns: 10,
   }));
