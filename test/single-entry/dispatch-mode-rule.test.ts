@@ -52,6 +52,7 @@ const EXPECTED_MODES: Record<string, string> = {
   "forge-cmux-loop-signals": "inline",
   charter: "fork",
   replay: "inline",
+  continue: "inline",
 };
 
 describe("R3.5: dispatch_mode governance", () => {

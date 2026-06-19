@@ -8,6 +8,7 @@ const ALLOW_LIST: ReadonlyArray<string> = [
   "build",
   "build-light",
   "charter",
+  "continue",
   "control-cli",
   "control-ui",
   "debug",

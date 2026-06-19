@@ -1,6 +1,7 @@
 ---
 name: "source-command-forge"
 description: "Forge 统一入口。支持子命令直接调用和任务描述路由两种模式。"
+updated: 2026-06-19
 ---
 
 # source-command-forge
@@ -31,6 +32,7 @@ Use this skill when the user asks to run the migrated source command `forge`.
 | `loop` | `forge-loop` | 自主执行引擎 |
 | `status` | `forge-status` | 状态查询 |
 | `resume` | `forge-resume` | 会话恢复 |
+| `continue` | `forge-continue` | 阶段推进器（无需记忆命令序列） |
 | `abort` | `forge-abort` | 任务中止 |
 | `refactor` | `forge-refactor` | 重构引擎 |
 | `fix` | `forge-fix` | 修复引擎 |

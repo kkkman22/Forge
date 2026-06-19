@@ -42,6 +42,14 @@ allowed_tools = ["Read", "Write", "Glob", "Grep", "Bash"]
 description = "Create, update, check, and display the project charter (.forge/charter.md). Use when user runs /forge charter <sub>."
 summary = "Create, update, check, and display the project charter (.forge/charter.md). Use when user runs /forge charter <sub>."
 
+[continue]
+dispatch_mode = "inline"
+tier = "all"
+stage = "auxiliary"
+allowed_tools = ["Read", "Bash"]
+description = "Use when user runs `/forge continue` — advance the current task to its next workflow phase without memorizing the phase sequence"
+summary = "Use when user runs `/forge continue` — advance the current task to its next workflow phase without memorizing the phase sequence."
+
 [control-cli]
 dispatch_mode = "inline"
 tier = "all"
