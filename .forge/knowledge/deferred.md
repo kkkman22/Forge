@@ -9,6 +9,8 @@ confidence: 0.5
 
 > 由 `/forge learn` 自动维护。回收 build agent 在代码中留下的 `forge:defer` 注释。
 > 每条代表一个"有已知上限的简化"——现在不需要，但升级触发条件到来时要动手。
+>
+> 注：frontmatter 的 `date` 是本台账文件的创建日期；下表"日期"列记录每条 defer 条目的回收日期，两者语义不同。
 
 ## 台账
 

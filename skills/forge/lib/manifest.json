@@ -1,6 +1,6 @@
 {
   "version": 1,
-  "generated_at": "2026-06-19T01:59:43.497Z",
+  "generated_at": "2026-06-19T02:16:44.003Z",
   "subs": {
     "abort": {
       "instructions": {
@@ -332,7 +332,7 @@
     "learn": {
       "instructions": {
         "path": "learn/instructions.md",
-        "sha256": "33cf361b1cc9f6d3a2876425b6fecdbe26fdf514a3d7da7da6f654e6222ebf36"
+        "sha256": "d9f8fc72a7c78c30dfb47a985ad0a5962772f92501c1219259b508816a9f9b08"
       },
       "references": [
         {

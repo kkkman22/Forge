@@ -335,12 +335,14 @@ type: gate-analysis
 ### Step 2: grep `forge:defer` 注释
 
 ```bash
-grep -rn "forge:defer" <changed-files>
+git diff <base>...HEAD -z --name-only | xargs -0 grep -n "forge:defer"
 ```
+
+（`-z`/`-0` 处理含空格/特殊字符的文件名，防 shell 拼接注入。）
 
 解析每条命中，提取三段：`<ceiling>, upgrade when <trigger> / <path>`。
 
-### Step 3: 写入台账
+### Step 3: 写入台账（含脱敏）
 
 把解析结果追加到 `.forge/knowledge/deferred.md` 的台账表：
 
@@ -348,11 +350,18 @@ grep -rn "forge:defer" <changed-files>
 
 日期用本次 learn 的 UTC 日期；Feature 从 `.forge/status.md` 当前 topic 取。
 
+**脱敏规则（强制，写入前逐条检查）**：deferred.md 受 git 跟踪并可能推送远端，`forge:defer` 的三段内容（尤其 `<path>`）必须脱敏：
+- **凭据/密钥**：命中以下模式之一 → 拒绝写入该条，输出 `⚠️ defer entry at <file>:<line> contains疑似凭据，已跳过台账`：
+  - AWS 风格（`AKIA[0-9A-Z]{16}`）、`-----BEGIN`、长 hex/base64 串（≥32 字符的连续 `[0-9a-fA-F]` 或 base64）、`password=`、`token=`、`secret=`、`api_key=`。
+- **内网/私有地址**：`<path>` 若是 URL，只允许公开 issue tracker（`github.com`/`gitlab.com`/公共域）；私有 host（`internal.*`/`10.*`/`192.168.*`/`*.local`/`*.corp`）/ 内部仓库路径 → 替换为 `<private-ref>` 占位。
+- **绝对路径**：转为仓库相对路径（`<absolute>/src/...` → `src/...`）。
+- **markdown 转义**：三段内容含 `|` 或换行 → 转义为 `\|` / `<br>`，防破坏表格。
+
 ### Step 4: 置信度降级
 
 对每条新增条目检查 `<trigger>` 是否可量化（QPS / 用户数 / 延迟 / 数据量等具体阈值）：
 - **可量化** → 该条目保留，confidence 0.5。
-- **模糊**（"以后需要时" / "量大时" / 无阈值）→ 在台账行的升级触发列标注 `⚠️ fuzzy`，confidence 设 0.2。后续由 `maintainKnowledgeBase` 按 §4.2（confidence < 0.3 自动清理）处理。
+- **模糊**（"以后需要时" / "量大时" / 无阈值）→ 在台账行的升级触发列标注 `⚠️ fuzzy`，confidence 设 0.2。后续由 `maintainKnowledgeBase`（见 G4 Pattern Lifecycle Management）按 confidence < 0.3 自动清理。
 
 ### Step 5: Skip 逻辑
 
