@@ -97,6 +97,26 @@ node scripts/prepare-diff-context.mjs
 
 使用 Agent tool 独立启动，无需 Agent Team。
 
+### §2.0a Context Files Resolution（spec context-injection-activation）
+
+启动 subagent 前，解析本任务声明的 context 文件清单（spec/research），注入到 spec-check/quality-check/security-check 的 prompt。这让评审 agent 在判断前能 Read 相关 spec/conventions，而非仅盲扫 diff。
+
+调用 `resolveContextFiles(planContextFiles, jsonlPath)`（`src/context-injection-wiring.ts`，已通过 `src/index.ts` 导出）：
+- `planContextFiles` = 当前 plan frontmatter 的 `context_files`（用 `parsePlanContextFiles(readFileSync(planPath))` 解析）
+- `jsonlPath` = `.forge/runs/<runId>/context.jsonl`（若存在；不存在则退化为仅 plan 来源）
+- 返回去重后的文件路径列表
+
+将结果作为 `ReviewSubagentContext.contextFiles` 传入 `buildReviewSubagents`。清单为空时（plan 无 `context_files` 且无 jsonl）跳过注入，退化为现状行为。
+
+```ts
+import { resolveContextFiles, parsePlanContextFiles } from "./index.js";
+const planFiles = parsePlanContextFiles(readFileSync(planPath, "utf-8"));
+const contextFiles = resolveContextFiles(planFiles, ".forge/runs/<runId>/context.jsonl");
+buildReviewSubagents({ hasSpec, specPath, changedFiles, contextFiles });
+```
+
+**只注入文件路径清单，不注入正文**——agent 用 Read 按需读取（受 4096 字符 prompt 截断约束）。
+
 ### §2.0b Sandbox Advisory Checkpoint
 
 Phase 1 advisory: **does not block**, only warns.

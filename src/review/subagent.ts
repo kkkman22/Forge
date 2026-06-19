@@ -19,6 +19,15 @@ export interface ReviewSubagentContext {
   hasSpec: boolean;
   specPath?: string;
   changedFiles: string[];
+  /**
+   * Merged context file list (plan frontmatter `context_files` +
+   * `.forge/runs/<runId>/context.jsonl`, deduplicated via
+   * `mergeContextSources`). When present and non-empty, each diff-context
+   * review agent (spec/quality/security) gets a "Relevant artifacts" section
+   * listing these paths to Read before judging, rather than blindly scanning
+   * the diff. Spec: context-injection-activation.
+   */
+  contextFiles?: string[];
 }
 
 /** Review agent types that have per-agent maxTurns configuration. */
@@ -52,17 +61,25 @@ Insufficient evidence for a finding → omit it rather than spend turns investig
 
 ${FINAL_REPORT_CONTRACT}`;
 
-function buildPrompt(task: string): string {
-  return `${DIFF_CONTEXT_PREAMBLE}\n${task}`;
+function buildPrompt(task: string, contextFiles?: string[]): string {
+  const contextSection =
+    contextFiles && contextFiles.length > 0
+      ? `\nRelevant artifacts (Read these before judging — they are the spec/research files this task declared):\n${contextFiles.map((f) => `- ${f}`).join("\n")}\n`
+      : "";
+  return `${DIFF_CONTEXT_PREAMBLE}\n${task}${contextSection}`;
 }
 
 export function buildReviewSubagents(context: ReviewSubagentContext): SubagentInvocation[] {
   const invocations: SubagentInvocation[] = [];
+  const { contextFiles } = context;
 
   if (context.hasSpec) {
     invocations.push({
       agentType: "spec-check",
-      prompt: buildPrompt(`Review spec alignment. Spec path: ${context.specPath ?? "unknown"}.`),
+      prompt: buildPrompt(
+        `Review spec alignment. Spec path: ${context.specPath ?? "unknown"}.`,
+        contextFiles,
+      ),
       permissionMode: "default",
       maxTurns: REVIEW_AGENT_MAX_TURNS["spec-check"],
     });
@@ -70,14 +87,14 @@ export function buildReviewSubagents(context: ReviewSubagentContext): SubagentIn
 
   invocations.push({
     agentType: "quality-check",
-    prompt: buildPrompt("Review code quality."),
+    prompt: buildPrompt("Review code quality.", contextFiles),
     permissionMode: "default",
     maxTurns: REVIEW_AGENT_MAX_TURNS["quality-check"],
   });
 
   invocations.push({
     agentType: "security-check",
-    prompt: buildPrompt("Review security and risk."),
+    prompt: buildPrompt("Review security and risk.", contextFiles),
     permissionMode: "default",
     maxTurns: REVIEW_AGENT_MAX_TURNS["security-check"],
   });

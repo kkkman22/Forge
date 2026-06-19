@@ -11,6 +11,14 @@ import type { GlossaryTerm } from "../glossary.js";
 export interface DecideContext {
   taskDescription: string;
   involvedFiles: string[];
+  /**
+   * Merged context file list (plan frontmatter `context_files` +
+   * `.forge/runs/<runId>/context.jsonl`, deduplicated). When present and
+   * non-empty, Round 1 decide agents receive a "Relevant artifacts" section
+   * so their analysis is grounded in actual spec/research files rather than
+   * only the task description. Spec: context-injection-activation.
+   */
+  contextFiles?: string[];
 }
 
 export interface TeamMember {

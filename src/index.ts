@@ -110,6 +110,17 @@ export {
   serializeTestOutput,
   type TestOutputSummary,
 } from "./context-budget.js";
+// Context injection — subagent context.jsonl wiring (spec context-injection-activation)
+export {
+  appendContextEntry,
+  type ContextEntry,
+  mergeContextSources,
+  readContextEntries,
+} from "./context-injection.js";
+export {
+  parsePlanContextFiles,
+  resolveContextFiles,
+} from "./context-injection-wiring.js";
 // Fix checklist
 export {
   allEntriesVerified,

@@ -131,3 +131,73 @@ describe("buildReviewSubagents prompt — final-report contract", () => {
     }
   });
 });
+
+describe("buildReviewSubagents context-file injection (spec context-injection-activation)", () => {
+  it("injects contextFiles into quality-check prompt when provided", () => {
+    const ctx = {
+      hasSpec: false,
+      changedFiles: ["src/x.ts"],
+      contextFiles: [".forge/specs/auth/requirements.md", ".forge/specs/auth/design.md"],
+    };
+    const invocations = buildReviewSubagents(ctx);
+    const quality = invocations.find((i) => i.agentType === "quality-check");
+    expect(quality).toBeDefined();
+    expect(quality!.prompt).toContain("requirements.md");
+    expect(quality!.prompt).toContain("design.md");
+  });
+
+  it("injects contextFiles into security-check prompt when provided", () => {
+    const ctx = {
+      hasSpec: false,
+      changedFiles: ["src/x.ts"],
+      contextFiles: [".forge/specs/auth/threat-model.md"],
+    };
+    const invocations = buildReviewSubagents(ctx);
+    const security = invocations.find((i) => i.agentType === "security-check");
+    expect(security).toBeDefined();
+    expect(security!.prompt).toContain("threat-model.md");
+  });
+
+  it("injects contextFiles into spec-check prompt alongside spec path", () => {
+    const ctx = {
+      hasSpec: true,
+      specPath: ".kiro/specs/example/spec.md",
+      changedFiles: ["src/x.ts"],
+      contextFiles: [".forge/specs/auth/conventions.md"],
+    };
+    const invocations = buildReviewSubagents(ctx);
+    const spec = invocations.find((i) => i.agentType === "spec-check");
+    expect(spec).toBeDefined();
+    expect(spec!.prompt).toContain("conventions.md");
+  });
+
+  it("does not inject a context section when contextFiles is absent", () => {
+    const ctx = { hasSpec: false, changedFiles: ["src/x.ts"] };
+    const invocations = buildReviewSubagents(ctx);
+    const quality = invocations.find((i) => i.agentType === "quality-check");
+    expect(quality).toBeDefined();
+    expect(quality!.prompt).not.toMatch(/Relevant artifacts|contextFiles/i);
+  });
+
+  it("does not inject a context section when contextFiles is empty", () => {
+    const ctx = { hasSpec: false, changedFiles: ["src/x.ts"], contextFiles: [] };
+    const invocations = buildReviewSubagents(ctx);
+    const quality = invocations.find((i) => i.agentType === "quality-check");
+    expect(quality).toBeDefined();
+    expect(quality!.prompt).not.toMatch(/Relevant artifacts|contextFiles/i);
+  });
+
+  it("frontend-check prompt is unaffected by contextFiles", () => {
+    const ctx = {
+      hasSpec: false,
+      changedFiles: ["src/App.vue"],
+      contextFiles: [".forge/specs/ui/conventions.md"],
+    };
+    const invocations = buildReviewSubagents(ctx);
+    const frontend = invocations.find((i) => i.agentType === "frontend-check");
+    expect(frontend).toBeDefined();
+    // frontend-check keeps its dedicated prompt; context injection is for
+    // spec/quality/security agents that consume the diff-context preamble.
+    expect(frontend!.prompt).toContain("App.vue");
+  });
+});
