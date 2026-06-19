@@ -70,6 +70,19 @@ export const SKILL_FUNCTION_REGISTRY: readonly SkillFunctionEntry[] = [
     skills: ["forge/lib/build/instructions.md"],
     parameterNames: ["topic", "tier", "situation", "rootCause", "now", "sequenceInDay"],
   },
+  // --- context-injection-wiring (spec context-injection-activation) ---
+  {
+    module: "context-injection-wiring.ts",
+    functionName: "resolveContextFiles",
+    skills: ["forge/lib/review/instructions.md", "forge/lib/decide/instructions.md"],
+    parameterNames: ["planContextFiles", "jsonlPath"],
+  },
+  {
+    module: "context-injection-wiring.ts",
+    functionName: "parsePlanContextFiles",
+    skills: ["forge/lib/review/instructions.md", "forge/lib/decide/instructions.md"],
+    parameterNames: ["planContent"],
+  },
   {
     module: "branch-gate.ts",
     functionName: "checkBranchTopicGate",
