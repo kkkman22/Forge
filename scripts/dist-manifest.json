@@ -34,7 +34,8 @@
     "worktree-remove-hook.mjs",
     "forge-hook-dispatch.mjs",
     "forge-phase-worker.mjs",
-    "forge-sync-runtime.mjs"
+    "forge-sync-runtime.mjs",
+    "record-prompt-metrics.mjs"
   ],
   "cc_compiled_js": [
     "state.js",
@@ -75,7 +76,8 @@
     "worktree-remove-hook.mjs",
     "forge-hook-dispatch.mjs",
     "forge-phase-worker.mjs",
-    "forge-sync-runtime.mjs"
+    "forge-sync-runtime.mjs",
+    "record-prompt-metrics.mjs"
   ],
   "plugin_compiled_js": [
     "check-sandbox.js",

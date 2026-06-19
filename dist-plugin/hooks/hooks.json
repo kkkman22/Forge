@@ -67,6 +67,14 @@
             ]
           }
         ]
+      },
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "node scripts/record-prompt-metrics.mjs 2>/dev/null || node forge/scripts/record-prompt-metrics.mjs 2>/dev/null || node ~/.claude/skills/forge/scripts/record-prompt-metrics.mjs 2>/dev/null || true"
+          }
+        ]
       }
     ],
     "PreToolUse": [
