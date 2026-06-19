@@ -163,6 +163,37 @@ AI 代码异味检测 [R2.1, R2.2]。以下四类模式必须扫描：
 
 **降级**：若 deslop 执行抛出未捕获异常、超过 60 秒预算、或输出无法解析为四列 schema → 在 Markdown 输出末尾标注 `deslop: skipped`，其余五维度继续 [R2.7]。
 
+### 8. Deletions (Code That Should Not Exist)
+
+扫描 diff 找本不该写的代码，输出 delete-list。与 Deslop（维度 7）正交：Deslop 管"写了但有异味"，Deletions 管"本不该写"。同一行可能两者都标。
+
+**5 标签**：
+
+| Tag | Meaning | Replacement |
+|-----|---------|-------------|
+| `delete:` | 死代码、无用的灵活性、投机功能 | nothing |
+| `stdlib:` | 手写但标准库已提供 | 指明标准库函数名 |
+| `native:` | 依赖/代码做了平台已做的事 | 指明原生特性 |
+| `yagni:` | 单实现的接口、无人设置的配置、单调用者的层 | 内联/删除 |
+| `shrink:` | 同逻辑更少行 | 给出更短形式 |
+
+**输出格式**（追加在 `## Layer 2 — Code Quality` 报告末尾，作为 JSON findings 的补充）：
+
+```markdown
+### Deletions
+
+| Location | Tag | Finding | Replacement |
+|----------|-----|---------|-------------|
+| L12-38 | stdlib | 27-line EmailValidator | `'@' in email`，真实验证靠确认邮件 |
+| L4 | native | moment.js for one format call | `Intl.DateTimeFormat`，0 deps |
+
+net: -30 lines possible.
+```
+
+**无可删项**：输出 `Lean already. Ship.` 并省略表格。
+
+**扫描成本**：Deletions 主要靠 grep 模式（import 标准库已有的东西、interface 但单 implementation、无 caller 的导出），不显著增加 Read 预算。
+
 ---
 
 ## Check Method
