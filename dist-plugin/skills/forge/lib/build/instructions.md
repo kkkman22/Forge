@@ -117,6 +117,37 @@ Build 阶段中途执行 `git rebase` / `git pull` / `git merge` 同步 main 时
 
 → Branch Gate auto-switch / unshipped-branch warning / lightweight exception 详见 references/branch-gate.md
 
+### §2.5 Charter Grounding（写代码前注入工程约束）
+
+Pre-build Checks 通过后、进入 Execution Paths 前，读取项目宪章作为 grounding 约束。**这是内容可见性增强，不是新增门禁**——charter 不通过不阻断 build（与 §2 的流程门禁不同）。
+
+读取 `.forge/charter.md`，按 frontmatter `status` 分支：
+
+| `status` | 行为 |
+|----------|------|
+| `active` | 注入 ≤500 tokens grounding 摘要（格式见下），主流程与 subagent prompt 均可见 |
+| `draft` | 标注 `ℹ No active charter`，继续 build（不注入） |
+| `deprecated` | 不读取，继续 build |
+| 文件不存在 | 静默跳过，继续 build |
+
+**Grounding 摘要格式**（≤500 tokens，格式同 `charter/instructions.md` §5）：
+
+```
+项目宪章约束（build 阶段 grounding）：
+- 核心问题：{一句话}
+- 架构边界：{模块列表 + 通信契约}
+- INV-001: {标题}
+- INV-002: {标题}
+实现时遵守以上约束。
+```
+
+**冲突处理**：若任务本身与某个 INV-NNN 冲突（例如 invariant 禁止 API 层直接访问数据层，但任务恰好要加这种调用），subagent **不得自行阻断**，而是：
+- 继续实现任务
+- 在三段式变更摘要（Execution Discipline）的"关注点"区记录冲突：`⚠ Charter INV-NNN 冲突：{描述}`
+- 由后续 `/forge review` 的 spec-check（Check Item 7 Charter Compliance）裁决
+
+> Charter 的设计哲学是"做决策时对照 invariant"（decide/spec/plan/review 阶段），build 阶段注入 grounding 是为了让 subagent 在写代码时**知情**，而非在写代码时**裁决**。裁决仍由 review 阶段负责。
+
 ---
 
 ## 3. Execution Paths

@@ -1,6 +1,6 @@
 {
   "version": 1,
-  "generated_at": "2026-06-19T14:57:21.603Z",
+  "generated_at": "2026-06-19T15:11:17.695Z",
   "subs": {
     "abort": {
       "instructions": {
@@ -41,7 +41,7 @@
     "build": {
       "instructions": {
         "path": "build/instructions.md",
-        "sha256": "4db6a2ccb80dee6e14782d11a6cd47e9e346da51b1b826eaed3a30615b4dc346"
+        "sha256": "4474e4d31f196fec0a374a74661e00d134e4d74b09378faaafd14ce69644e3f0"
       },
       "references": [
         {
@@ -122,7 +122,7 @@
         },
         {
           "path": "build/references/subagent-orchestration.md",
-          "sha256": "25f36ebe3e9e13e50a8f90d8819ffd2d5d46115812312035f7d3c1abe5f3c908"
+          "sha256": "93c030c224c5b9760bcfde180457f18d0d89299888559de1a07d097a4db61233"
         },
         {
           "path": "build/references/tdd-rules.md",
@@ -145,7 +145,7 @@
     "charter": {
       "instructions": {
         "path": "charter/instructions.md",
-        "sha256": "908c49a48df568beacffc288e4d42eeb6e03dbcc507ce47f45761a5454a691c7"
+        "sha256": "9fd503ddd226f72ed7783485cafd2cab158103e1a605a0d3b809214a6ad25985"
       },
       "references": [
         {
