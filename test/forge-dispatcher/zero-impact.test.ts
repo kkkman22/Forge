@@ -72,8 +72,8 @@ describe("Zero-Impact: non-cmux subs unaffected by migration", () => {
         );
       }
     }
-    // 34 non-cmux subs (37 total - 3 cmux)
-    expect(nonCmuxCount).toBe(34);
+    // 35 non-cmux subs (38 total - 3 cmux)
+    expect(nonCmuxCount).toBe(35);
   });
 
   it("gate adds zero overhead: non-cmux subs never probe cmux", () => {
