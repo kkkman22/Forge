@@ -22,14 +22,14 @@ function wForge(rel, content) {
     writeFileSync(full, content, "utf-8");
 }
 describe("buildHealthSnapshot: tool health + worktree branches", () => {
-    it("reports tool health unknown when no tool-health.md", () => {
+    it("reports tool health unknown when no tool-health.log", () => {
         wForge("status.md", '---\ncurrent_task: "x"\ntier: "standard"\nphase: "build"\n---\n');
         const snap = buildHealthSnapshot({ projectRoot: tmp, currentHead: "h" });
         expect(snap.toolHealth.status).toBe("unknown");
     });
-    it("reports tool health pass when tool-health.md exists", () => {
+    it("reports tool health pass when tool-health.log exists", () => {
         wForge("status.md", '---\ncurrent_task: "x"\ntier: "standard"\nphase: "build"\n---\n');
-        wForge("knowledge/tool-health.md", "# Tool Health\n");
+        wForge("knowledge/tool-health.log", "# Tool Health\n");
         const snap = buildHealthSnapshot({ projectRoot: tmp, currentHead: "h" });
         expect(snap.toolHealth.status).toBe("pass");
     });
