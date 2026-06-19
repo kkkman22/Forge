@@ -62,4 +62,33 @@ describe("validateRedGate", () => {
     const result = validateRedGate(evidence);
     expect(result.valid).toBe(true);
   });
+
+  // REQ-02 (audit-remediate-0619): SUCCESS_INDICATORS must actually be matched.
+  // Before the fix, the for-loop variable `_indicator` was unused and only the
+  // hardcoded `/passed/i` ran; patterns like "PASS" / "Tests:.*passed" never
+  // triggered the success branch. This test pins the corrected behavior: a
+  // success indicator (PASS) co-occurring with a failure indicator (Error)
+  // must be treated as a PASSED test (invalid RED evidence), because the
+  // success signal is what a green test would emit.
+  it("rejects when actual_output shows PASS via SUCCESS_INDICATORS (even with Error present)", () => {
+    const evidence: RedGateEvidence = {
+      command: "npx vitest run test.ts",
+      actual_output: "PASS  Error fetching telemetry (non-fatal)",
+      expected_failure_reason: "function not defined",
+    };
+    const result = validateRedGate(evidence);
+    expect(result.valid).toBe(false);
+    expect(result.reason).toContain("PASSED");
+  });
+
+  it("rejects when actual_output matches 'Tests:.*passed' SUCCESS_INDICATOR pattern", () => {
+    const evidence: RedGateEvidence = {
+      command: "npx vitest run test.ts",
+      actual_output: "Tests  3 passed",
+      expected_failure_reason: "function not defined",
+    };
+    const result = validateRedGate(evidence);
+    expect(result.valid).toBe(false);
+    expect(result.reason).toContain("PASSED");
+  });
 });
