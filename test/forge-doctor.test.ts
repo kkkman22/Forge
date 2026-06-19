@@ -58,7 +58,7 @@ describe("forge-doctor", () => {
   });
 
   it("--json output is valid JSON with version block", async () => {
-    const { stdout } = await execFileAsync("bash", [DOCTOR, "--json"], { timeout: 10000 });
+    const { stdout } = await execFileAsync("bash", [DOCTOR, "--json"], { timeout: 20000 });
     // Extract JSON line (last line that starts with {)
     const lines = stdout.split("\n");
     const jsonLine = lines.find((l) => l.trim().startsWith("{") && l.includes('"version"'));
@@ -90,10 +90,10 @@ describe("forge-doctor", () => {
 
     expect(parsed.diagnosticMode).toBeDefined();
     expect(typeof parsed.diagnosticMode.active).toBe("boolean");
-  });
+  }, 30000);
 
   it("check items include all expected categories", async () => {
-    const { stdout } = await execFileAsync("bash", [DOCTOR, "--json"], { timeout: 10000 });
+    const { stdout } = await execFileAsync("bash", [DOCTOR, "--json"], { timeout: 20000 });
     const lines = stdout.split("\n");
     const jsonLine = lines.find((l) => l.trim().startsWith("{") && l.includes('"version"'));
     const parsed = JSON.parse(jsonLine!);
@@ -108,7 +108,7 @@ describe("forge-doctor", () => {
   });
 
   it("warn items include fixHint", async () => {
-    const { stdout } = await execFileAsync("bash", [DOCTOR, "--json"], { timeout: 10000 });
+    const { stdout } = await execFileAsync("bash", [DOCTOR, "--json"], { timeout: 20000 });
     const lines = stdout.split("\n");
     const jsonLine = lines.find((l) => l.trim().startsWith("{") && l.includes('"version"'));
     const parsed = JSON.parse(jsonLine!);

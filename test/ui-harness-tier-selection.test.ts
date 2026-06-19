@@ -14,11 +14,20 @@ import { readFileSync } from "node:fs";
 import { describe, expect, it } from "vitest";
 import { runUiHarness } from "../src/ui-harness.js";
 
+// Stubs injected into runUiHarness so NO real browser/network side-effect fires.
+// These tests assert orchestration logic only (tier walk + verdict shape).
+const noBrowser = {
+  detectAgentBrowser: async () => false,
+  playwrightRunner: async () => ({ ok: false, reason: "stub: playwright unavailable" }),
+  cdpRunner: async () => ({ ok: false, reason: "stub: cdp unavailable" }),
+};
+
 describe("UI harness tier selection [R6.2, R6.8]", () => {
   it("returns a valid verdict with attempted controllers", async () => {
     const result = await runUiHarness({
       topic: "test-ui-tier",
       appUrl: "http://localhost:1",
+      ...noBrowser,
     });
 
     expect(["INCONCLUSIVE", "VERIFIED", "NOT_VERIFIED"]).toContain(result.verdict);
@@ -29,6 +38,7 @@ describe("UI harness tier selection [R6.2, R6.8]", () => {
     const result = await runUiHarness({
       topic: "test-ui-attempted",
       appUrl: "http://localhost:1",
+      ...noBrowser,
     });
 
     for (const attempt of result.controllersAttempted) {
@@ -43,6 +53,7 @@ describe("UI harness tier selection [R6.2, R6.8]", () => {
       runUiHarness({
         topic: "test-ui-invalid",
         appUrl: "",
+        ...noBrowser,
       }),
     ).resolves.toBeDefined();
   });
