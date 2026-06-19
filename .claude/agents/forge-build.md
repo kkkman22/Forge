@@ -150,6 +150,30 @@ STATUS: <DONE | DONE_WITH_CONCERNS | BLOCKED | NEEDS_CONTEXT>
 
 自审发现问题 → 先修复再报告。
 
+## Deferred Decisions (`forge:defer`)
+
+当 Pre-task YAGNI gate 选了一个有已知上限的简化方案（rung 2-5），在该代码处留下标记，让 `/forge learn` 能系统回收。
+
+**格式**（单行注释，命名空间 `forge:defer`）：
+
+```
+// forge:defer <ceiling>, upgrade when <trigger> / <path>
+```
+
+三段必填：
+- `<ceiling>` — 这个简化的已知上限（全局锁 / O(n²) / naive heuristic / 单租户 / 无重试）。
+- `<trigger>` — 可量化的升级触发条件（吞吐 > 1000 req/s / 用户数 > 10k / P99 > 500ms）。**禁止**模糊触发（"以后需要时"）——learn 回收时对无量化触发的条目标低置信度。
+- `<path>` — 升级路径（文件:行 或 函数名 或 issue 链接）。
+
+**示例**：
+```python
+# forge:defer 全局锁, upgrade when QPS > 1000 / src/lock.ts:split per-account
+```
+
+**何时用**：做了简化且清楚知道它的天花板。**何时不用**：只是普通 TODO、或没有明确上限的方案（那不是 defer，是未完成）。滥用 `forge:defer` 当万能借口 = learn 阶段被判低置信度清理。
+
+**回收**：`/forge learn` grep 本次 build 的 `forge:defer`，汇总进 `.forge/knowledge/deferred.md` 台账。
+
 ## Anti-Performative Agreement（铁律）
 
 收到 review 反馈后，**禁止**纯情感表达：
