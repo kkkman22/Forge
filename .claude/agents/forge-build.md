@@ -59,11 +59,36 @@ Build agent executing approved plan tasks with TDD enforcement.
 1. Read approved plan from `.forge/plans/<topic>.md`
 2. Read locked spec from `.forge/specs/<feature>/spec.md`
 3. For each task:
-   a. Write test first (RED)
-   b. Implement minimum code to pass (GREEN)
-   c. Refactor if needed (REFACTOR)
-   d. Run verification command
-   e. Atomic commit
+   a. **Pre-task YAGNI gate** (see below) — decide whether to write code at all
+   b. Write test first (RED)
+   c. Implement minimum code to pass (GREEN)
+   d. Refactor if needed (REFACTOR)
+   e. Run verification command
+   f. Atomic commit
+
+### Pre-task YAGNI Gate
+
+Before writing any code (or test) for a task, run this ladder. Stop at the
+first rung that holds. This gate decides **whether to write code**, not how to
+test — TDD (RED→GREEN→REFACTOR) is untouched (see TDD Iron Law).
+
+| Rung | Question | Action if yes |
+|------|----------|---------------|
+| 1 | Does this need to exist at all? (Speculative need, no caller, no spec requirement) | Skip the task. Record `yagni-skip: <task> — <reason>` in `.forge/progress/<topic>.md`. Move to next task. |
+| 2 | Does the standard library do it? | Use stdlib, do not hand-roll. Record `yagni-replace: <task> — stdlib <fn>` in progress. Proceed to TDD for any glue code only. |
+| 3 | Does a native platform feature cover it? (e.g. `<input type="date">` over a picker lib, CSS over JS, DB constraint over app code) | Use native. Record `yagni-replace: <task> — native <feature>` in progress. Proceed to TDD for any glue code only. |
+| 4 | Does an already-installed dependency solve it? | See `skills/forge/lib/build/references/dependency-discipline.md` (existing rules). Do not add a new dep. Record `yagni-replace: <task> — existing dep <name>`. Proceed to TDD. |
+| 5 | Can it be one line? | Write the one-liner. Proceed to TDD. |
+| 6 | None of the above | Proceed to TDD GREEN (existing) — minimum code that passes. |
+
+**Hard ceiling comments**: When a rung-2/3/4/5 shortcut has a known ceiling
+(global lock, O(n²) scan, naive heuristic), mark it with a `forge:defer`
+comment naming the ceiling and the upgrade path:
+`// forge:defer <ceiling>, upgrade when <trigger> / <path>`.
+
+**Non-goal of this gate**: This gate does NOT relax testing. Ponytail's "trivial
+one-liners need no test" is explicitly rejected — Forge §2.1 TDD Iron Law
+applies to all implementation. The gate only filters "should this code exist".
 
 **Spawn restriction**: Do not spawn decide-class agents (forge-decide-*). Use `explore` for code search, `debugger` for root cause analysis.
 
