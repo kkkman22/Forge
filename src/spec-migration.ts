@@ -11,7 +11,7 @@
 
 import { existsSync, readFileSync, renameSync, unlinkSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
-
+import { writeEvent } from "./event-writer.js";
 import { analyzeRequirements } from "./spec-analyze.js";
 import type {
   DesignDocument,
@@ -224,11 +224,11 @@ export function migrateLegacySpec(featureDir: string, eventsPath?: string): Migr
     return { success: true };
   } catch (err) {
     // Emit failure event
+    // REQ-03 (audit-remediate-0619): use a static import instead of require().
+    // The previous `require("./event-writer.js")` threw ReferenceError in
+    // native ESM at runtime, so the failure event was never emitted.
     if (eventsPath) {
       try {
-        const { writeEvent } = require("./event-writer.js") as {
-          writeEvent: typeof import("./event-writer.js").writeEvent;
-        };
         writeEvent(eventsPath, "spec_migration_failed", { error: String(err) });
       } catch (_err: unknown) {
         /* best effort */
