@@ -323,6 +323,45 @@ type: gate-analysis
 
 ---
 
+## §0.9 Deferred Decisions Sweep (`forge:defer` 回收)
+
+> **Precondition**: 本次 build 产出了代码变更（非纯文档/配置任务）。
+> 若本次 learn 无 build run（如手动知识整理、`--from-chats`），跳过本节。
+
+### Step 1: 定位本次 build 涉及的文件
+
+从 `.forge/runs/<id>/commit-narrative.md` 或 `.forge/progress/<topic>.md` 取本次 build 改动的文件列表。若两者都没有，用 `git diff <base>...HEAD --name-only`。
+
+### Step 2: grep `forge:defer` 注释
+
+```bash
+grep -rn "forge:defer" <changed-files>
+```
+
+解析每条命中，提取三段：`<ceiling>, upgrade when <trigger> / <path>`。
+
+### Step 3: 写入台账
+
+把解析结果追加到 `.forge/knowledge/deferred.md` 的台账表：
+
+| 日期 | Feature | 文件:行 | Ceiling | 升级触发 | 升级路径 |
+
+日期用本次 learn 的 UTC 日期；Feature 从 `.forge/status.md` 当前 topic 取。
+
+### Step 4: 置信度降级
+
+对每条新增条目检查 `<trigger>` 是否可量化（QPS / 用户数 / 延迟 / 数据量等具体阈值）：
+- **可量化** → 该条目保留，confidence 0.5。
+- **模糊**（"以后需要时" / "量大时" / 无阈值）→ 在台账行的升级触发列标注 `⚠️ fuzzy`，confidence 设 0.2。后续由 `maintainKnowledgeBase` 按 §4.2（confidence < 0.3 自动清理）处理。
+
+### Step 5: Skip 逻辑
+
+- 本次 build 无代码变更 → skip
+- grep 无 `forge:defer` 命中 → 输出一行 `⏭️ 本次 build 无延迟决策标记。` 并 skip
+- **绝不**因 deferred.md 不存在而阻断 learn 流程（首次运行时创建）
+
+---
+
 ## Goals
 
 ### G1: Execution Quality Assessment
