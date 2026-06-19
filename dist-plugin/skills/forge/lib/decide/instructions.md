@@ -134,6 +134,15 @@ Round 0 完成后，将 grill findings 注入 Round 1 所有 subagent 的上下�
 - `replaced_by` 非空 → 不纳入搜索结果
 - `status: deferred` → 纳入但在输出中标注 "（暂缓）"
 
+**Context Files Injection（spec context-injection-activation）**: 启动 Round 1 视角 subagent 前，解析本任务声明的 context 文件清单（spec/research），注入到各视角 prompt，让 product/architect/security 的分析基于实际制品而非仅任务描述。
+
+调用 `resolveContextFiles(planContextFiles, jsonlPath)`（`src/context-injection-wiring.ts`，已通过 `src/index.ts` 导出）：
+- `planContextFiles` = 当前 plan frontmatter 的 `context_files`（用 `parsePlanContextFiles(readFileSync(planPath))` 解析；无 plan 时为空数组）
+- `jsonlPath` = `.forge/runs/<runId>/context.jsonl`（若存在）
+- 返回去重后的文件路径列表
+
+将结果作为 `DecideContext.contextFiles` 传入 `buildDecideRound1Subagents`。清单为空时跳过注入，退化为现状行为。**只注入文件路径清单，不注入正文**（agent 用 Read 按需读取）。
+
 **Default Members** (3, always participate):
 
 | Subagent Name | Definition File | Responsibility |

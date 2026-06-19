@@ -140,9 +140,9 @@ describe("barrel file does not expose internal modules", () => {
         expect(exports.checkBranchTopicGate).toBeUndefined();
     });
     // Verify the total number of value exports
-    it("has exactly 140 value exports", () => {
+    it("has exactly 145 value exports", () => {
         const valueExports = Object.keys(exports).filter((key) => typeof exports[key] !== "undefined");
-        expect(valueExports).toHaveLength(140);
+        expect(valueExports).toHaveLength(145);
         expect(valueExports.sort()).toEqual([
             "CLASSIFICATION_MAP",
             "CliError",
@@ -155,6 +155,7 @@ describe("barrel file does not expose internal modules", () => {
             "TRACE_ID_PATTERN",
             "VALID_TRANSITIONS",
             "allEntriesVerified",
+            "appendContextEntry",
             "archiveTaskStatus",
             "buildCatalog",
             "buildCliSdkWorkerArgs",
@@ -219,6 +220,7 @@ describe("barrel file does not expose internal modules", () => {
             "lintKnowledgeIntegrity",
             "listActiveTasks",
             "loadSkillsFromDir",
+            "mergeContextSources",
             "mergeSkillLists",
             "migrateToMultiTask",
             "normalizeInput",
@@ -229,10 +231,12 @@ describe("barrel file does not expose internal modules", () => {
             "parseFixRecoveryGitLog",
             "parseHealthCache",
             "parseP1Fixlist",
+            "parsePlanContextFiles",
             "parseReviewConfig",
             "parseSolutionFrontmatter",
             "parseStatusEntries",
             "persistGateResults",
+            "readContextEntries",
             "readTaskStatus",
             "reconstructStateFromGit",
             "recordForceSkip",
@@ -247,6 +251,7 @@ describe("barrel file does not expose internal modules", () => {
             "renderPendingAdvisoryNotice",
             "renderSpecHealthAdvisory",
             "repairRuntimeConfig",
+            "resolveContextFiles",
             "resolveStatusPath",
             "runAllGates",
             "runBranchGate",
