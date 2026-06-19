@@ -1,6 +1,6 @@
 {
   "version": 1,
-  "generated_at": "2026-06-19T15:18:07.764Z",
+  "generated_at": "2026-06-19T15:28:40.325Z",
   "subs": {
     "abort": {
       "instructions": {
@@ -153,6 +153,13 @@
           "sha256": "fbd9accd6322f38f32588d91054ec78e61d9b1dea5aec355d6cd93d5bc2038a7"
         }
       ]
+    },
+    "continue": {
+      "instructions": {
+        "path": "continue/instructions.md",
+        "sha256": "fe79c600be7aad5b22df0cdaa74157ebdf664128e7013a85f79a4dfa02776fc0"
+      },
+      "references": []
     },
     "control-cli": {
       "instructions": {

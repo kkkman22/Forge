@@ -89,6 +89,15 @@ export interface SchedulerResult {
 /**
  * Determine the next SKILL phase to execute based on current state.
  *
+ * **Note (spec forge-continue-command):** This richer 13-state scheduler is
+ * currently a NON-PRODUCTION path — it has no callers in `src/` outside its
+ * own definition and property tests. The runtime phase-advance path used by
+ * `/forge loop` and `/forge continue` is the simpler table-driven
+ * `getNextPhase` in `src/loop/phase-transitions.ts` (the workflow-graph SSOT).
+ * This function is retained because its property tests
+ * (`test/skill-scheduler.property.test.ts`) guard the transition-graph
+ * invariants regardless of whether it has a production caller.
+ *
  * Implements the scheduler state machine:
  * - phase missing or "router" → router
  * - router completed → plan

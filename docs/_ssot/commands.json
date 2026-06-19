@@ -35,6 +35,13 @@
     "summary": "Create, update, check, and display the project charter (.forge/charter.md). Use when user runs /forge charter <sub>."
   },
   {
+    "name": "/forge continue",
+    "tier": "all",
+    "stage": "auxiliary",
+    "dispatch_mode": "inline",
+    "summary": "Use when user runs `/forge continue` — advance the current task to its next workflow phase without memorizing the phase sequence."
+  },
+  {
     "name": "/forge control-cli",
     "tier": "all",
     "stage": "auxiliary",
