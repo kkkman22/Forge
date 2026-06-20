@@ -1,5 +1,21 @@
 export type ScenarioSource = "explicit" | "derived";
-export type ScenarioType = "api" | "ui" | "cli" | "mixed" | "unknown";
+/**
+ * Scenario execution type (ADR-0006).
+ *
+ * Layered additions (Req2): unit / component / contract are the three cheap
+ * delegate layers. api/ui/cli run as real end-to-end (curl/browser/shell);
+ * mixed is retained for back-compat with parsed legacy specs but no runner
+ * serves it; unknown is the pre-classification default.
+ */
+export type ScenarioType =
+  | "unit"
+  | "component"
+  | "contract"
+  | "api"
+  | "ui"
+  | "cli"
+  | "mixed"
+  | "unknown";
 export type Verdict = "PASS" | "FAIL" | "SKIP" | "WARN" | "INCONCLUSIVE";
 
 export interface Scenario {
@@ -22,6 +38,12 @@ export interface ScenarioArtifact {
   verdict: Verdict;
   evidence: readonly string[];
   failureReason?: string;
+  /**
+   * Scenario type (ADR-0006), used by aggregateVerdicts to group per pyramid
+   * layer. Optional for back-compat with artifacts produced before the layered
+   * model; artifacts without a type are not counted in any layer.
+   */
+  type?: ScenarioType;
 }
 
 export interface AcceptanceRunResult {
@@ -34,6 +56,14 @@ export interface AcceptanceRunResult {
     warn: number;
     inconclusive: number;
     blocksShip: boolean;
+    /** Req5 AC4: per-layer health + pyramid shape surfaced in the artifact. */
+    layerHealth?: {
+      unit: { pass: number; fail: number; inconclusive: number };
+      component: { pass: number; fail: number; inconclusive: number };
+      contract: { pass: number; fail: number; inconclusive: number };
+      e2e: { pass: number; fail: number; inconclusive: number };
+    };
+    pyramidShape?: string;
   };
 }
 
