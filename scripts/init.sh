@@ -56,7 +56,6 @@ check_cc_version || exit 1
 # ---------- Parse --pack / --recipe flags ----------
 PACKS=()
 RECIPES=()
-NON_INTERACTIVE=false
 remaining_args=()
 while [[ $# -gt 0 ]]; do
   case "$1" in
@@ -73,7 +72,9 @@ while [[ $# -gt 0 ]]; do
       RECIPES+=("$2"); shift 2
       ;;
     --non-interactive)
-      NON_INTERACTIVE=true; shift
+      # Consumed for test/non-interactive invocations; recipe mode exits before
+      # any prompt regardless, so no state needs to be stored.
+      shift
       ;;
     --help|-h)
       echo "Usage: scripts/init.sh [OPTIONS]"
