@@ -91,9 +91,19 @@ export const apiRunner: Runner = {
       const url = /^https?:\/\//i.test(endpoint)
         ? endpoint
         : `${base}${endpoint.startsWith("/") ? "" : "/"}${endpoint}`;
-      const d = buildCurlArgs(method, url);
+      // Req4: when the THEN clause asserts on data.<path>, keep the body so
+      // evaluateApiVerdictWithBody can check field values (not just status).
+      const wantsBody = /data\.\w/i.test(scenario.then);
+      const d = buildCurlArgs(method, url, { assertBody: wantsBody });
       const result = await execDescriptor(d);
 
+      if (wantsBody) {
+        const apiResult = evaluateApiVerdictWithBody(result, scenario.then);
+        // Req4 AC6: never write the full body to the artifact — only the
+        // matched path:value summary (may contain sensitive data otherwise).
+        const evidence = apiResult.bodySummary ? [apiResult.bodySummary] : [];
+        return makeArtifact(scenario, ctx, apiResult.verdict, evidence, apiResult.failureReason);
+      }
       const verdict = evaluateApiVerdict(result, scenario.then);
       return makeArtifact(scenario, ctx, verdict, [result.stdout], undefined);
     } catch (e) {
@@ -797,6 +807,133 @@ function evaluateApiVerdict(
   return "PASS";
 }
 
+// ---------------------------------------------------------------------------
+// API body assertions (ADR-0006 Req4) — pure helpers
+// ---------------------------------------------------------------------------
+
+/** Split curl output (when body is retained) into body + trailing status. */
+export function splitBodyAndStatus(stdout: string): { body: string; status: string | null } {
+  // curl -w "%{http_code}" appends the 3-digit code at the very end.
+  const m = stdout.match(/^(.*?)(\d{3})$/s);
+  if (!m) return { body: stdout, status: null };
+  const status = m[2];
+  const body = m[1];
+  // When only the status is present (body discarded), body is empty.
+  if (body === "") return { body: "", status };
+  return { body, status };
+}
+
+/** Match a dotted JSONPath (e.g. "data.role", "data.items.0.id") against parsed JSON. */
+export function matchJsonPath(
+  obj: unknown,
+  path: string,
+): { ok: true; value: unknown } | { ok: false; reason: string } {
+  const segments = path.split(".");
+  let cur: unknown = obj;
+  for (const seg of segments) {
+    if (cur === null || cur === undefined) {
+      return { ok: false, reason: `path "${path}" unreachable at "${seg}"` };
+    }
+    if (typeof cur !== "object") {
+      return { ok: false, reason: `path "${path}" hit non-object at "${seg}"` };
+    }
+    cur = (cur as Record<string, unknown>)[seg];
+  }
+  if (cur === undefined) {
+    return { ok: false, reason: `path "${path}" not found` };
+  }
+  return { ok: true, value: cur };
+}
+
+export interface BodyMatch {
+  path: string;
+  value: unknown;
+}
+
+/**
+ * Redact a parsed body to only the matched path:value pairs (Req4 AC6).
+ * The full body is never written to the artifact — only the assertion-relevant
+ * fields, so sensitive fields (tokens, passwords) are not leaked.
+ */
+export function redactBody(_body: unknown, matches: readonly BodyMatch[]): string {
+  return matches.map((m) => `${m.path}:${JSON.stringify(m.value)}`).join(", ");
+}
+
+export interface ApiVerdictResult {
+  verdict: Verdict;
+  failureReason?: string;
+  /** Req4 AC6: only matched path:value pairs, never the full body. */
+  bodySummary?: string;
+}
+
+/** Parse a `data.<path> shall be <value>` assertion from a THEN clause. */
+function parseBodyAssertion(assertion: string): { path: string; expected: string } | null {
+  // Matches: data.role shall be "admin"  /  data.role shall be 'admin'
+  //         data.status shall be active  /  data.count shall be 3
+  const m = assertion.match(/data\.([\w.]+)\s+shall\s+be\s+["']?([^"'\s,.]+)["']?/i);
+  if (!m) return null;
+  return { path: `data.${m[1]}`, expected: m[2] };
+}
+
+/**
+ * Evaluate an API verdict supporting both status-code and response-body
+ * assertions (Req4 AC2-AC5). Pure; throws never.
+ */
+export function evaluateApiVerdictWithBody(
+  result: { stdout: string; stderr: string },
+  assertion: string,
+): ApiVerdictResult {
+  const bodyAssertion = parseBodyAssertion(assertion);
+  const statusMatch = assertion.match(/(\d{3})/);
+
+  // AC4: status-only path (no body assertion) → back-compat.
+  if (!bodyAssertion) {
+    if (statusMatch && !result.stdout.includes(statusMatch[1])) {
+      return { verdict: "FAIL", failureReason: `status ${statusMatch[1]} not in stdout` };
+    }
+    return { verdict: "PASS" };
+  }
+
+  // Body assertion path: split body from status, parse JSON, match path.
+  const { body, status } = splitBodyAndStatus(result.stdout);
+
+  // AC3: if a status is also asserted, it must match too.
+  if (statusMatch && status !== statusMatch[1]) {
+    return {
+      verdict: "FAIL",
+      failureReason: `status ${statusMatch[1]} expected, got ${status ?? "none"}`,
+    };
+  }
+
+  let parsed: unknown;
+  try {
+    parsed = body.length > 0 ? JSON.parse(body) : null;
+  } catch {
+    // AC5: non-JSON body → FAIL + reason, no throw.
+    return { verdict: "FAIL", failureReason: "response body is not valid JSON" };
+  }
+
+  const matched = matchJsonPath(parsed, bodyAssertion.path);
+  if (!matched.ok) {
+    return { verdict: "FAIL", failureReason: matched.reason };
+  }
+
+  // Normalize both sides to strings for comparison (expected is already a string).
+  const actual = String(matched.value);
+  if (actual !== bodyAssertion.expected) {
+    return {
+      verdict: "FAIL",
+      failureReason: `${bodyAssertion.path}: expected "${bodyAssertion.expected}", got "${actual}"`,
+    };
+  }
+
+  // AC6: record only the matched path:value, never the full body.
+  return {
+    verdict: "PASS",
+    bodySummary: redactBody(parsed, [{ path: bodyAssertion.path, value: matched.value }]),
+  };
+}
+
 function evaluateCliVerdict(
   result: { stdout: string; stderr: string },
   assertion: string,
@@ -819,10 +956,15 @@ export interface ExecResult {
 /**
  * Build a curl descriptor for the API runner — pure function, no shell string.
  * Instinct: descriptor + execFile (reject strategy). [T3.2]
+ *
+ * opts.assertBody (Req4 AC1): when true, curl keeps the response body so
+ * evaluateApiVerdictWithBody can assert on data.<path> fields. Default false
+ * discards the body (back-compat with status-only assertions).
  */
 export function buildCurlArgs(
   method: string,
   url: string,
+  opts?: { assertBody?: boolean },
 ): {
   executable: string;
   args: string[];
@@ -831,6 +973,13 @@ export function buildCurlArgs(
     throw new Error(`buildCurlArgs: invalid url: ${url}`);
   }
   const safeMethod = /^[A-Z]+$/i.test(method) ? method.toUpperCase() : "GET";
+  if (opts?.assertBody) {
+    // Keep the body, still append http_code via -w for status assertion.
+    return {
+      executable: "curl",
+      args: ["-s", "-w", "%{http_code}", "-X", safeMethod, url],
+    };
+  }
   // -s silent, -o /dev/null discard body, -w http_code, -X method.
   return {
     executable: "curl",
