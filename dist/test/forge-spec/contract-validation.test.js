@@ -4,7 +4,7 @@ function makeAC(overrides = {}) {
     return {
         id: "1.1",
         text: "WHEN foo THEN bar SHALL baz",
-        verifyBy: "vitest",
+        verifyBy: "vitest:unit",
         evidence: "test/foo.test.ts passes",
         ...overrides,
     };
@@ -24,7 +24,7 @@ describe("contract-validator", () => {
             const spec = makeSpecMD([makeAC()]);
             const result = extractAcceptanceCriteria(spec);
             expect(result).toHaveLength(1);
-            expect(result[0].verifyBy).toBe("vitest");
+            expect(result[0].verifyBy).toBe("vitest:unit");
             expect(result[0].evidence).toBe("test/foo.test.ts passes");
         });
         it("returns entries with missing fields as empty strings", () => {
@@ -54,11 +54,17 @@ describe("contract-validator", () => {
             expect(result.valid).toBe(false);
             expect(result.errors.some((e) => e.includes("Evidence"))).toBe(true);
         });
-        it("fails when Verify-By is not in whitelist", () => {
+        it("fails when Verify-By is not in layered whitelist", () => {
             const spec = makeSpecMD([makeAC({ verifyBy: "jest" })]);
             const result = validateContract(spec);
             expect(result.valid).toBe(false);
             expect(result.errors.some((e) => e.includes("whitelist") || e.includes("Verify-By"))).toBe(true);
+        });
+        it("fails when Verify-By uses legacy flat grammar without :layer (Req1)", () => {
+            const spec = makeSpecMD([makeAC({ verifyBy: "vitest" })]);
+            const result = validateContract(spec);
+            expect(result.valid).toBe(false);
+            expect(result.errors.some((e) => /legacy flat grammar/i.test(e))).toBe(true);
         });
         it("fails when Evidence contains placeholder (TBD / 待补)", () => {
             const spec = makeSpecMD([makeAC({ evidence: "TBD" })]);
@@ -72,12 +78,27 @@ describe("contract-validator", () => {
             expect(result.valid).toBe(true);
             expect(result.legacySkipped).toBe(true);
         });
-        it("accepts all whitelist Verify-By values", () => {
-            const whitelist = ["vitest", "bash", "forge_git", "forge_exec", "manual"];
+        it("accepts all layered whitelist Verify-By values (Req1 AC1)", () => {
+            const whitelist = [
+                "vitest:unit",
+                "vitest:component",
+                "bash:contract",
+                "forge_exec:e2e",
+                "manual",
+            ];
             for (const v of whitelist) {
                 const spec = makeSpecMD([makeAC({ verifyBy: v })]);
                 const result = validateContract(spec);
                 expect(result.valid, `Verify-By="${v}" should be valid`).toBe(true);
+            }
+        });
+        it("legacy flat values pass only under contract_legacy: true grandfathering (NFR-2)", () => {
+            const legacyWhitelist = ["vitest", "bash", "forge_git", "forge_exec", "manual"];
+            for (const v of legacyWhitelist) {
+                const spec = makeSpecMD([makeAC({ verifyBy: v })], true);
+                const result = validateContract(spec);
+                expect(result.valid, `legacy Verify-By="${v}" should pass under grandfathering`).toBe(true);
+                expect(result.legacySkipped).toBe(true);
             }
         });
     });

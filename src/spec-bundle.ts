@@ -47,7 +47,22 @@ export interface EarsClause {
   when: string;
   shall: string;
   raw: string;
-  verifyBy?: "vitest" | "bash" | "forge_git" | "forge_exec" | "manual";
+  /**
+   * Verify-By layer (ADR-0006). Layered grammar is enforced by the contract
+   * gate; legacy flat values are retained for grandfathered (`contract_legacy`)
+   * specs and parsed-but-not-valid new specs.
+   */
+  verifyBy?:
+    | "vitest:unit"
+    | "vitest:component"
+    | "bash:contract"
+    | "forge_exec:e2e"
+    | "manual"
+    // legacy flat values (grandfathered only)
+    | "vitest"
+    | "bash"
+    | "forge_git"
+    | "forge_exec";
   evidence?: string;
 }
 

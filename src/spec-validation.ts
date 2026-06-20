@@ -4,13 +4,13 @@
  * Validates: Requirements 11, 12
  */
 
+import { validateVerifyBy } from "./contract-validator.js";
 import type { RequirementsDocument, SpecBundle } from "./spec-bundle.js";
 
 // ---------------------------------------------------------------------------
 // Contract Gate (Requirement 11)
 // ---------------------------------------------------------------------------
 
-const VALID_VERIFY_BY = ["vitest", "bash", "forge_git", "forge_exec", "manual"];
 const PLACEHOLDER_EVIDENCE = ["TODO", "TBD", "待补充", "待确认", ""];
 
 export interface ContractGateFinding {
@@ -35,11 +35,14 @@ export function validateContractGate(bundle: SpecBundle): ContractGateResult {
   const findings: ContractGateFinding[] = [];
 
   for (const clause of req.earsCriteria) {
-    if (!clause.verifyBy || !VALID_VERIFY_BY.includes(clause.verifyBy)) {
+    // Req1 AC1: Verify-By must use the layered grammar (vitest:unit / ... / manual).
+    // Shared pure fn keeps this gate and scripts/check-spec-contract.sh in lockstep.
+    const vbError = validateVerifyBy(clause.verifyBy ?? "");
+    if (vbError) {
       findings.push({
         line: clause.line,
         severity: "P0",
-        message: `Missing or invalid verifyBy at line ${clause.line}: "${clause.raw}"`,
+        message: `${vbError} at line ${clause.line}: "${clause.raw}"`,
       });
     }
 
