@@ -110,17 +110,18 @@ export {
   serializeTestOutput,
   type TestOutputSummary,
 } from "./context-budget.js";
+
 // Context injection — subagent context.jsonl wiring (spec context-injection-activation)
-export {
+// Consolidated into the bottom re-export block (kept under the 20-statement
+// barrel budget; see scripts/check-public-api.mjs).
+import {
   appendContextEntry,
   type ContextEntry,
   mergeContextSources,
   readContextEntries,
 } from "./context-injection.js";
-export {
-  parsePlanContextFiles,
-  resolveContextFiles,
-} from "./context-injection-wiring.js";
+import { parsePlanContextFiles, resolveContextFiles } from "./context-injection-wiring.js";
+
 // Fix checklist
 export {
   allEntriesVerified,
@@ -318,11 +319,13 @@ export type {
 // SKILL plugin mechanism (consolidated: skill-loader + skill-validator)
 // Status (consolidated: state + status-manager + status-resolver)
 export {
+  appendContextEntry,
   archiveTaskStatus,
   buildCliSdkWorkerArgs,
   buildFailureWorkerSummary,
   buildSubagentWorkerInvocation,
   CliError,
+  type ContextEntry,
   checkVersionCompatibility,
   detectRuntimeConfigDrift,
   ForgeError,
@@ -333,17 +336,21 @@ export {
   listActiveTasks,
   loadSkillsFromDir,
   type ManagedTaskEntry,
+  mergeContextSources,
   mergeSkillLists,
   migrateToMultiTask,
   normalizeWorkerSummary,
+  parsePlanContextFiles,
   parseStatusEntries,
   type ReconstructedState,
   type ResolvedStatus,
   type ResolverContext,
+  readContextEntries,
   readTaskStatus,
   reconstructStateFromGit,
   removeTaskEntry,
   repairRuntimeConfig,
+  resolveContextFiles,
   resolveStatusPath,
   runCliSdkWorker,
   runSubagentWorker,
