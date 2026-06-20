@@ -45,6 +45,12 @@ allowed_tools:
 
 运行项目测试套件（`forge_exec` + trim fallback），确认 0 failures。未通过 → 报告详情，修复后重跑 `/forge test`。
 
+> **ADR-0006 layered routing**: 当 spec AC 声明 `Verify-By: vitest:unit` /
+> `vitest:component` / `bash:contract` 时，对应的测试由 delegate runner 路由到项目的
+> `test:unit` / `test:component` / `test:contract` 命令（Layer 1 即覆盖三层）。
+> 项目无对应套件时 delegate 返回 `INCONCLUSIVE` + `/forge init --recipe` 指引，
+> 而非静默跳过。组件层脚手架（MSW/vitest）由 recipe 生成到用户项目，Forge 包零依赖（R6.5）。
+
 ### Layer 2 — Browser-Level QA (Conditional)
 
 仅 Web 项目（检测前端框架/`.html`/`.tsx`/`.vue` 等）。读取 Spec 场景 → 模拟操作 → 截图 → 对比预期。非 Web → 跳过。

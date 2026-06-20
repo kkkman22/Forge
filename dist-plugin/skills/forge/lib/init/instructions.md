@@ -9,9 +9,21 @@ allowed_tools:
 
 # /forge init — 项目初始化
 
-> **触发方式**：用户输入 `/forge init [--pack <name>]`
+> **触发方式**：用户输入 `/forge init [--pack <name>]` 或 `/forge init --recipe <name>`
 > **职责**：调用 `init.sh` 完成项目初始化（创建 `.forge/` 目录、复制 agent 角色、生成 CLAUDE.md 项目宪法）
 > **输出路径**：init.sh 交互式输出
+
+### `--recipe <name>` — 测试栈脚手架（ADR-0006 Req6）
+
+`/forge init --recipe <name>` 向**用户项目本地**生成组件测试栈配置（MSW/vitest），
+**Forge 包零依赖增量**（守 R6.5）。可用 recipe：`vue3-vitest-msw`、`react-vitest-msw`。
+
+- 生成后**不自动 install**，只打印 `<pkg manager> add -D <deps>` 指引（由用户执行）。
+- 自动探测包管理器（pnpm-lock.yaml / yarn.lock / package-lock.json / packageManager 字段）。
+- 已存在的文件**跳过并报告冲突**，提示手动合并（不静默覆盖）。
+- 未知 recipe → 非零退出 + 列出可用 recipe。
+
+详见各 recipe 目录的 `README.md`（测试哲学、handler 复用边界、数据驱动分支范式、自定义请求层适配）。
 
 ---
 
