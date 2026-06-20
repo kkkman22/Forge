@@ -723,7 +723,7 @@ export function classifyPyramid(counts: {
 }
 
 export interface PyramidConfig {
-  /** Max ratio of non-@critical e2e scenarios before the gate fires. */
+  /** Max ratio of non-`@critical` e2e scenarios before the gate fires. */
   e2eRatioThreshold: number;
   /** When false, the ratio gate degrades to advisory (never blocks). */
   strictPyramid: boolean;
@@ -732,7 +732,7 @@ export interface PyramidConfig {
 /**
  * Shared e2e-heavy detector (Req5 signal + Req7 gate reuse the same logic).
  * Pure; deterministic; no IO. Counts api/ui/cli/mixed as the e2e layer and
- * excludes @critical e2e from the ratio (Req7 AC4).
+ * excludes the `@critical`-tagged e2e from the ratio (Req7 AC4).
  */
 export function isE2eHeavy(
   scenarios: readonly { type: ScenarioType; tags: readonly string[] }[],
