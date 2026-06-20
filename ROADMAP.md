@@ -23,6 +23,7 @@
 | v3.3 | 2026-06-01 | Loop native fusion——淘汰 legacy SDK loop，原生调度 + git rollback + 三击检测 |
 | v3.3.1 | 2026-06-05 | Claude Code 2.1.163 兼容门禁、doctor 结构化健康快照、SubagentStop 反馈 |
 | v3.4 | 2026-06-12 | 审计整改 P0/P1（allowlist/MCP/dist/CI）、项目宪章系统、8 GSD Core 模式、CE-Inspired review |
+| v3.5 | 2026-06-18 | 动态重规划闭环、agentic UI 验收、session journal 保留、review per-tier timeout、regenerative checkpoint |
 
 ---
 
@@ -50,6 +51,17 @@
 - ✅ **session journal 保留策略（#101）** — `scripts/prune-sessions.sh` + `scripts/prune-event-logs.sh` 限制 `.forge/knowledge/sessions/` 无限增长
 - ✅ **agentic UI 验收（#102）** — `/forge accept` 接入 agent-browser 驱动，端到端功能验收（UI 操作→截图→verdict）；新增 `docs/acceptance-onboarding.md`、三态 verdict（pass/inconclusive/fail）、tier fallback、token 经济
 - ✅ **动态重规划闭环（#103）** — failure_class 分类 + scheduler debug 分支 + 增量 replan，失败后按类别触发局部重规划而非整体重来
+- ✅ **mcp SIGTERM 关闭竞态修复（#104）** — 消除 MCP integration test 中 SIGTERM 关闭竞态
+- ✅ **mcp 压缩委托 Headroom（#107）** — 移除 RTK 压缩引擎 + `forge_read_cached`，压缩统一委托给 Headroom
+- ✅ **ui-harness 测试隔离（#108）** — ui-harness 测试不再启动真实浏览器
+- ✅ **tool-health 日志拆分（#109）** — tool-health event log 从 tracked summary 中拆分，便于独立保留/清理
+- ✅ **usage metrics hook（#112）** — UserPromptSubmit hook 接入 usage metrics recorder，记录每次 prompt token 消耗
+- ✅ **charter 注入 build（#113）** — charter grounding 注入 build 阶段（§2.5），restatement checkpoint 重读 charter invariants
+- ✅ **context-injection 激活（#114）** — context-injection scaffold 接入 `/forge review` 与 `/forge decide`，按 taskType 注入相关上下文
+- ✅ **`/forge continue` 阶段推进器（#115）** — 交互式推进当前任务下一阶段，跨会话阶段续接
+- ✅ **`forge:defer` 延迟决策回收** — build 期标记 `forge:defer` + `deferred.md` 台账；learn §0.9 sweep 步骤回收
+- ✅ **review Deletions 维度（Dim 8）** — quality-check 新增"本不该写的代码"扫描维度，产出 delete-list
+- ✅ **Ponytail YAGNI 纪律采纳** — forge-build agent Pre-task YAGNI gate + hard-boundaries 自检清单
 
 ### 进行中 / 待评估
 

@@ -149,6 +149,7 @@ Forge plugin 自带 `forge-context` first-party MCP server，为 `/forge review`
 | `/forge charter` | 项目宪章（cross-spec 工程约束锚点） | 所有 |
 | `/forge status` | 查看当前任务状态 | 所有 |
 | `/forge resume` | 会话恢复 | 所有 |
+| `/forge continue` | 交互式推进当前任务下一阶段 | 所有 |
 
 > 完整子命令速查表和三维路由详解 → [docs/reference-commands.md](docs/reference-commands.md)
 > ADR-0004 之后，所有子命令由统一 skill `forge` 内部分发，`commands/` 仅保留入口占位。
@@ -225,7 +226,7 @@ bash scripts/pre-push-ci-check.sh
 
 **技术栈**：TypeScript 5.9（strict）、303 个 TypeScript 模块、Vitest 4.1、fast-check 4.7（属性测试）、Biome 2.4（lint + format）。运行时依赖：`@anthropic-ai/claude-agent-sdk`、`@modelcontextprotocol/sdk`、`commander`、`minimatch`、`yaml`、`zod`。
 
-**测试策略**：8270 个测试（679 个测试文件）验证不变量。覆盖率 ~87% statements。
+**测试策略**：8290 个测试（679 个测试文件）验证不变量。覆盖率 ~87% statements。
 
 
 ---

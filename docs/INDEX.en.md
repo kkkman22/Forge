@@ -28,7 +28,7 @@
 - [Forge — 项目宪法详细内容](forge-constitution-detail.md) — 2026-06-05
 - [Forge 再生式 Checkpoint](forge-checkpoint.md) — 2026-06-16
 - [Forge 初次接触者引导 (EN)](onboarding-beginner.en.md) / [Forge 初次接触者引导 (中)](onboarding-beginner.md) — 2026-06-19
-- [Forge 命令速查与路由详解](reference-commands.md) — 2026-06-09
+- [Forge 命令速查与路由详解](reference-commands.md) — 2026-06-20
 - [Forge 安全与信任](reference-security.md) — 2026-05-12
 - [Forge 日常开发者引导 (EN)](onboarding-daily.en.md) / [Forge 日常开发者引导 (中)](onboarding-daily.md) — 2026-05-12
 - [Forge 架构与状态保护](reference-architecture.md) — 2026-05-12

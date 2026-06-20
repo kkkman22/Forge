@@ -3,7 +3,7 @@ title: 'Forge 命令速查与路由详解'
 category: reference
 audience:
 - maintainer
-updated: 2026-06-09
+updated: 2026-06-20
 owner: forge-maintainers
 ---
 
@@ -18,6 +18,10 @@ owner: forge-maintainers
 | 命令 | 阶段 | 说明 | 适用路径 |
 |------|------|------|---------|
 | `/forge` | 入口 | 三维路由，分析任务复杂度并建议档位 | 所有 |
+| `/forge init` | 初始化 | 项目首次初始化（生成 AGENTS.md、`.forge/` 结构、hooks） | 所有 |
+| `/forge continue` | 辅助 | 交互式推进当前任务的下一阶段（跨会话阶段推进器） | 所有 |
+| `/forge charter` | 约束 | 项目宪章管理（init/update/check/show），跨 spec 锚定工程约束 | 所有 |
+| `/forge triage` | 需求 | Loop Engineering discovery：自动发现可执行项、识别理解腐烂 | 所有 |
 | `/forge decide` | 决策 | 四视角前置决策（产品/架构/安全/设计） | 全量 |
 | `/forge spec` | 规格 | 将需求固化为可锁定的规格文档，支持从外部文件导入 | 全量 |
 | `/forge plan` | 规划 | 将 Spec 拆解为含 TDD 步骤的原子任务 | 标准、全量 |
@@ -49,6 +53,9 @@ owner: forge-maintainers
 | `/forge review-comment-bitbucket` | 评审 | Bitbucket PR 评论发布 | 所有 |
 | `/forge loop` | 执行 | 带工程纪律的自主循环执行 | 所有 |
 | `/forge router` | 辅助 | 路由器行为调试 | 所有 |
+| `/forge forge-cmux-browser-qa` | 辅助 | cmux 集成：浏览器 QA 联动 | 所有 |
+| `/forge forge-cmux-loop-signals` | 辅助 | cmux 集成：loop 信号侧栏同步 | 所有 |
+| `/forge forge-cmux-sidebar-sync` | 辅助 | cmux 集成：sidebar 状态同步 | 所有 |
 
 ## 三维路由
 
