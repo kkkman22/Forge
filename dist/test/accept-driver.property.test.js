@@ -33,6 +33,13 @@ describe("aggregateVerdicts — property", () => {
             warn: 0,
             inconclusive: 0,
             blocksShip: false,
+            layerHealth: {
+                unit: { pass: 0, fail: 0, inconclusive: 0 },
+                component: { pass: 0, fail: 0, inconclusive: 0 },
+                contract: { pass: 0, fail: 0, inconclusive: 0 },
+                e2e: { pass: 0, fail: 0, inconclusive: 0 },
+            },
+            pyramidShape: "empty",
         });
     });
     it("any FAIL → blocksShip true", () => {

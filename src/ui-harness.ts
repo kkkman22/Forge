@@ -85,12 +85,13 @@ export async function runUiHarness(opts: UiHarnessOptions): Promise<UiHarnessVer
   // Tier 2: agent-browser (snapshot+refs CLI) [Spec R3-AC1, R3-AC4]
   const agentBrowserAvailable = await detectAb();
   if (agentBrowserAvailable) {
+    const client = makeClient();
+    const sessionId = `forge-harness-${opts.topic}-${Date.now()}`;
+    let opened = false;
     try {
-      const client = makeClient();
-      const sessionId = `forge-harness-${opts.topic}-${Date.now()}`;
       await client.open(opts.appUrl, sessionId);
+      opened = true;
       const snap = await client.snapshot(sessionId);
-      await client.close(sessionId);
       // Page reachable + returned a snapshot → VERIFIED.
       attempted.push({
         tier: "agent-browser",
@@ -107,6 +108,17 @@ export async function runUiHarness(opts: UiHarnessOptions): Promise<UiHarnessVer
         tier: "agent-browser",
         reason: `execution failed: ${String((e as Error).message ?? e)}`,
       });
+    } finally {
+      // close() MUST run even when snapshot/open throws — otherwise the
+      // agent-browser daemon forked by `open` is orphaned and leaks one
+      // process + socket per failed run. (Regression: 251 daemons observed.)
+      if (opened) {
+        try {
+          await client.close(sessionId);
+        } catch {
+          // close failure is non-fatal; the tier already recorded its result.
+        }
+      }
     }
   } else {
     attempted.push({ tier: "agent-browser", reason: "not installed" });

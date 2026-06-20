@@ -1,5 +1,21 @@
 export type ScenarioSource = "explicit" | "derived";
-export type ScenarioType = "api" | "ui" | "cli" | "mixed" | "unknown";
+/**
+ * Scenario execution type (ADR-0006).
+ *
+ * Layered additions (Req2): unit / component / contract are the three cheap
+ * delegate layers. api/ui/cli run as real end-to-end (curl/browser/shell);
+ * mixed is retained for back-compat with parsed legacy specs but no runner
+ * serves it; unknown is the pre-classification default.
+ */
+export type ScenarioType =
+  | "unit"
+  | "component"
+  | "contract"
+  | "api"
+  | "ui"
+  | "cli"
+  | "mixed"
+  | "unknown";
 export type Verdict = "PASS" | "FAIL" | "SKIP" | "WARN" | "INCONCLUSIVE";
 
 export interface Scenario {
@@ -12,6 +28,12 @@ export interface Scenario {
   tags: readonly string[];
   confidence: number;
   rawText: string;
+  /**
+   * Verify-By layer annotation (ADR-0006). When present on an explicit scenario,
+   * classifyScenarioType uses it as the authoritative source of `type`
+   * (Req2 AC2) instead of the keyword heuristic. Absent on derived scenarios.
+   */
+  verifyBy?: string;
 }
 
 export interface ScenarioArtifact {
@@ -22,6 +44,12 @@ export interface ScenarioArtifact {
   verdict: Verdict;
   evidence: readonly string[];
   failureReason?: string;
+  /**
+   * Scenario type (ADR-0006), used by aggregateVerdicts to group per pyramid
+   * layer. Optional for back-compat with artifacts produced before the layered
+   * model; artifacts without a type are not counted in any layer.
+   */
+  type?: ScenarioType;
 }
 
 export interface AcceptanceRunResult {
@@ -34,6 +62,14 @@ export interface AcceptanceRunResult {
     warn: number;
     inconclusive: number;
     blocksShip: boolean;
+    /** Req5 AC4: per-layer health + pyramid shape surfaced in the artifact. */
+    layerHealth?: {
+      unit: { pass: number; fail: number; inconclusive: number };
+      component: { pass: number; fail: number; inconclusive: number };
+      contract: { pass: number; fail: number; inconclusive: number };
+      e2e: { pass: number; fail: number; inconclusive: number };
+    };
+    pyramidShape?: string;
   };
 }
 
@@ -300,7 +336,39 @@ const CLI_KEYWORDS = [
   "\\bexec\\b",
 ];
 
-export function classifyScenarioType(scenario: Scenario): ScenarioType {
+export interface ClassifyResult {
+  type: ScenarioType;
+  /**
+   * Req1 AC6: true when a Verify-By annotation was applied AND the keyword
+   * heuristic would have produced a different type. Advisory; non-blocking.
+   */
+  annotationConflict: boolean;
+}
+
+/** Map a Verify-By layer annotation to its ScenarioType (Req2 AC3/AC5). */
+function typeFromVerifyBy(verifyBy: string | undefined): ScenarioType | null {
+  if (!verifyBy) return null;
+  const v = verifyBy.trim();
+  switch (v) {
+    case "vitest:unit":
+      return "unit";
+    case "vitest:component":
+      return "component";
+    case "bash:contract":
+      return "contract";
+    case "forge_exec:e2e":
+      // Req2 AC5: e2e folds onto the existing api runner (no new enum value).
+      return "api";
+    case "manual":
+      // manual has no automated runner — leave as unknown so no runner claims it.
+      return "unknown";
+    default:
+      return null;
+  }
+}
+
+/** Keyword-only heuristic (the legacy classifier). Pure. */
+function classifyByKeywords(scenario: Scenario): ScenarioType {
   const text = `${scenario.given} ${scenario.when} ${scenario.then}`.toLowerCase();
 
   const hasApi = API_KEYWORDS.some((k) => text.includes(k));
@@ -313,4 +381,29 @@ export function classifyScenarioType(scenario: Scenario): ScenarioType {
   if (hasApi) return "api";
   if (hasUi) return "ui";
   return "cli";
+}
+
+/**
+ * Classify a scenario, preferring the Verify-By annotation (Req2 AC2) and
+ * recording annotation/text conflicts (Req1 AC6). Pure; deterministic.
+ */
+export function classifyScenarioTypeWithMeta(scenario: Scenario): ClassifyResult {
+  const fromAnnotation = typeFromVerifyBy(scenario.verifyBy);
+  if (fromAnnotation !== null) {
+    const keywordType = classifyByKeywords(scenario);
+    // manual→unknown: treat unknown (no keyword hits) as agreeing with annotation.
+    const agrees =
+      keywordType === fromAnnotation || (fromAnnotation === "unknown" && keywordType === "unknown");
+    return { type: fromAnnotation, annotationConflict: !agrees };
+  }
+  return { type: classifyByKeywords(scenario), annotationConflict: false };
+}
+
+/**
+ * Back-compat wrapper returning just the type. Existing callers are unchanged;
+ * new code should prefer classifyScenarioTypeWithMeta to also get the conflict
+ * signal (Req1 AC6).
+ */
+export function classifyScenarioType(scenario: Scenario): ScenarioType {
+  return classifyScenarioTypeWithMeta(scenario).type;
 }

@@ -91,9 +91,19 @@ export const apiRunner: Runner = {
       const url = /^https?:\/\//i.test(endpoint)
         ? endpoint
         : `${base}${endpoint.startsWith("/") ? "" : "/"}${endpoint}`;
-      const d = buildCurlArgs(method, url);
+      // Req4: when the THEN clause asserts on data.<path>, keep the body so
+      // evaluateApiVerdictWithBody can check field values (not just status).
+      const wantsBody = /data\.\w/i.test(scenario.then);
+      const d = buildCurlArgs(method, url, { assertBody: wantsBody });
       const result = await execDescriptor(d);
 
+      if (wantsBody) {
+        const apiResult = evaluateApiVerdictWithBody(result, scenario.then);
+        // Req4 AC6: never write the full body to the artifact — only the
+        // matched path:value summary (may contain sensitive data otherwise).
+        const evidence = apiResult.bodySummary ? [apiResult.bodySummary] : [];
+        return makeArtifact(scenario, ctx, apiResult.verdict, evidence, apiResult.failureReason);
+      }
       const verdict = evaluateApiVerdict(result, scenario.then);
       return makeArtifact(scenario, ctx, verdict, [result.stdout], undefined);
     } catch (e) {
@@ -408,22 +418,228 @@ export const cliRunner: Runner = {
 };
 
 // ---------------------------------------------------------------------------
-// Mixed Runner
+// Delegate Runners (ADR-0006 Req3 / Change 3)
+//
+// Thin shells that delegate to the PROJECT's own test command via forge_exec.
+// They never start a browser or hit a real API — they route the AC to the
+// project's existing runner and let aggregateVerdicts do the rest. When no
+// suite is configured, they return INCONCLUSIVE (honest, non-blocking) with a
+// recipe pointer, rather than masking the gap with a silent SKIP.
 // ---------------------------------------------------------------------------
 
-export const mixedRunner: Runner = {
-  type: "mixed",
-  supports: (scenario) => scenario.type === "mixed",
-  run: async (scenario, ctx) => {
-    return makeArtifact(scenario, ctx, "SKIP", [], "mixed runner not yet implemented");
-  },
-};
+export type DelegateLayer = "unit" | "component" | "contract";
+
+export interface DelegateConfig {
+  /** Explicit command overrides from .forge/config.md `test_commands`. */
+  testCommands?: Partial<Record<DelegateLayer, string>>;
+  /** Detected package manager (pnpm/npm/yarn) for convention fallback. */
+  packageManager?: string;
+  /** Per-exec timeout seconds for a single forge_exec (Req3 AC9, default 60). */
+  delegateTimeout?: number;
+}
+
+/** Recipe pointer shown when a delegate finds no configured suite (Req3 AC4). */
+export function recipeHint(layer: DelegateLayer): string {
+  const recipes: Record<DelegateLayer, string> = {
+    unit: "vitest:unit",
+    component: "vue3-vitest-msw / react-vitest-msw",
+    contract: "bash:contract",
+  };
+  return `${layer} suite not configured — run \`/forge init --recipe ${recipes[layer]}\` to generate the scaffold`;
+}
+
+/**
+ * Resolve the test command for a delegate layer (Req3 AC3). Pure.
+ * Priority: explicit test_commands → convention `<pkg> run test:<layer>`.
+ */
+export function resolveTestCommand(
+  layer: DelegateLayer,
+  cfg: DelegateConfig,
+  evidencePath?: string,
+): string {
+  const explicit = cfg.testCommands?.[layer];
+  if (explicit) {
+    return evidencePath ? `${explicit} ${evidencePath}` : explicit;
+  }
+  const pkg = cfg.packageManager ?? "npm";
+  const cmd = `${pkg} run test:${layer}`;
+  return evidencePath ? `${cmd} ${evidencePath}` : cmd;
+}
+
+export type ContractSource = "openapi" | "pont" | "pact" | "manual";
+
+export interface ContractFreshInput {
+  source: ContractSource;
+  artifactPath: string;
+  /** Optional: the swagger/schema source to compare mtime against (pont/openapi). */
+  swaggerSourcePath?: string | null;
+}
+
+export interface ContractFreshResult {
+  fresh: boolean;
+  reason?: string;
+}
+
+/**
+ * Check whether a contract artifact (codegen output) is fresh (Req3 AC7/AC8).
+ * Pure aside from the existence/mtime reads needed to judge freshness.
+ *   - manual/pact: freshness is the consumer test's job → always fresh here.
+ *   - openapi/pont: artifact must exist; if a swagger source is given and is
+ *     newer than the artifact → stale (rerun generate).
+ */
+export function checkContractFresh(input: ContractFreshInput): ContractFreshResult {
+  const { source } = input;
+  if (source === "manual" || source === "pact") {
+    return { fresh: true };
+  }
+  // openapi / pont: the artifact is a codegen product; verify it exists.
+  try {
+    const { statSync } = require("node:fs") as typeof import("node:fs");
+    const artifactStat = statSync(input.artifactPath);
+    if (input.swaggerSourcePath) {
+      try {
+        const swaggerStat = statSync(input.swaggerSourcePath);
+        if (swaggerStat.mtimeMs > artifactStat.mtimeMs) {
+          return {
+            fresh: false,
+            reason: `stale contract: ${input.artifactPath} older than ${input.swaggerSourcePath} — rerun pont generate`,
+          };
+        }
+      } catch {
+        // swagger source missing → can't compare; treat artifact as fresh.
+      }
+    }
+    return { fresh: true };
+  } catch {
+    return {
+      fresh: false,
+      reason: `stale contract: ${input.artifactPath} missing — rerun pont generate`,
+    };
+  }
+}
+
+/** Build a delegate Runner for one layer. Shared factory avoids triplication. */
+function makeDelegateRunner(layer: DelegateLayer): Runner {
+  return {
+    type: layer,
+    supports: (scenario) => scenario.type === layer,
+    run: async (scenario, ctx) => {
+      // Resolve config + command. In the unit-test seam we never actually exec;
+      // the real exec path is exercised via integration tests. INCONCLUSIVE is
+      // the safe default when the project has no suite configured.
+      const cfg = readDelegateConfig(ctx);
+      const timeoutSec = cfg.delegateTimeout ?? 60;
+
+      // Contract layer: verify the artifact is fresh before delegating (AC7/AC8).
+      if (layer === "contract") {
+        const source = readContractSource(scenario);
+        const artifactPath = extractEvidencePath(scenario);
+        if (artifactPath && (source === "pont" || source === "openapi")) {
+          const fresh = checkContractFresh({ source, artifactPath });
+          if (!fresh.fresh) {
+            return makeArtifact(scenario, ctx, "INCONCLUSIVE", [], fresh.reason);
+          }
+        }
+      }
+
+      const evidencePath = extractEvidencePath(scenario);
+      const command = resolveTestCommand(layer, cfg, evidencePath ?? undefined);
+
+      try {
+        const result = await execDescriptor(
+          { executable: "sh", args: ["-c", command] },
+          timeoutSec * 1000,
+        );
+        // exit 0 (execDescriptor resolves) → PASS.
+        return makeArtifact(scenario, ctx, "PASS", [command, tail(result.stdout)], undefined);
+      } catch (e) {
+        const msg = String((e as Error).message ?? e);
+        // Non-zero exit → FAIL; crash/timeout → INCONCLUSIVE.
+        if (/non-zero exit|exit code|status:/.test(msg)) {
+          return makeArtifact(scenario, ctx, "FAIL", [command, msg], msg);
+        }
+        // Timeout (Req3 AC9) or crash (AC5) → INCONCLUSIVE.
+        if (/timeout|timed out/i.test(msg)) {
+          return makeArtifact(
+            scenario,
+            ctx,
+            "INCONCLUSIVE",
+            [],
+            `delegate timeout after ${timeoutSec}s`,
+          );
+        }
+        // No suite configured / command not found → INCONCLUSIVE + recipe hint (AC4/AC5).
+        return makeArtifact(scenario, ctx, "INCONCLUSIVE", [], recipeHint(layer));
+      }
+    },
+  };
+}
+
+export const unitRunner: Runner = makeDelegateRunner("unit");
+export const componentRunner: Runner = makeDelegateRunner("component");
+export const contractRunner: Runner = makeDelegateRunner("contract");
+
+/** Read delegate config from the RunnerContext (test seam) or .forge/config.md. */
+function readDelegateConfig(ctx: RunnerContext): DelegateConfig {
+  // Test seam: allow ctx to carry injected config; otherwise read from disk.
+  const injected = (ctx as RunnerContext & { delegateConfig?: DelegateConfig }).delegateConfig;
+  if (injected) return injected;
+  try {
+    const { readFileSync } = require("node:fs") as typeof import("node:fs");
+    const { join } = require("node:path") as typeof import("node:path");
+    const cfgPath = join(ctx.projectRoot, ".forge", "config.md");
+    const cfg = readFileSync(cfgPath, "utf8");
+    const pkgMatch = cfg.match(/packageManager:\s*"?(\w+)"?/);
+    return {
+      packageManager: pkgMatch?.[1],
+      testCommands: parseTestCommands(cfg),
+    };
+  } catch {
+    return {};
+  }
+}
+
+function parseTestCommands(cfg: string): Partial<Record<DelegateLayer, string>> {
+  const out: Partial<Record<DelegateLayer, string>> = {};
+  const block = cfg.match(/test_commands:\s*\n([\s\S]*?)(?=\n\S|\n---|\n##|$)/);
+  if (!block) return out;
+  for (const layer of ["unit", "component", "contract"] as const) {
+    const m = block[1].match(new RegExp(`${layer}:\\s*"?([^"\\n]+)"?`));
+    if (m) out[layer] = m[1].trim();
+  }
+  return out;
+}
+
+function readContractSource(scenario: Scenario): ContractSource {
+  const m = scenario.rawText.match(/Contract-Source:\s*(\w+)/i);
+  return (m?.[1] as ContractSource) ?? "manual";
+}
+
+function extractEvidencePath(scenario: Scenario): string | null {
+  const m = scenario.rawText.match(/Evidence:\s*([^\n]+)/i);
+  if (!m) return null;
+  return m[1]
+    .replace(/\([^)]*\)/g, "")
+    .split(",")[0]
+    .trim();
+}
+
+function tail(s: string, max = 500): string {
+  return s.length > max ? `...${s.slice(-max)}` : s;
+}
 
 // ---------------------------------------------------------------------------
 // Runner Dispatch
 // ---------------------------------------------------------------------------
 
-export const RUNNERS: readonly Runner[] = [apiRunner, agentBrowserRunner, cliRunner, mixedRunner];
+export const RUNNERS: readonly Runner[] = [
+  unitRunner,
+  componentRunner,
+  contractRunner,
+  apiRunner,
+  agentBrowserRunner,
+  cliRunner,
+];
 
 export async function runScenario(
   scenario: Scenario,
@@ -440,6 +656,98 @@ export async function runScenario(
 // Aggregation
 // ---------------------------------------------------------------------------
 
+// ---------------------------------------------------------------------------
+// Pyramid layer classification (ADR-0006 Req5 / Req7) — pure functions
+// ---------------------------------------------------------------------------
+
+/** Pyramid shape classification (Req5 AC2). Advisory; never blocks ship. */
+export type PyramidShape = "healthy" | "e2e-heavy" | "empty-middle" | "no-unit" | "empty";
+
+/** Per-layer health counts (Req5 AC1). */
+export interface LayerHealth {
+  pass: number;
+  fail: number;
+  inconclusive: number;
+}
+
+export interface LayerHealthBreakdown {
+  unit: LayerHealth;
+  component: LayerHealth;
+  contract: LayerHealth;
+  e2e: LayerHealth;
+}
+
+/**
+ * Map a ScenarioType to its pyramid layer. ADR-0006: api/ui/cli/mixed all run
+ * as real end-to-end (curl / browser / shell), so they fold into the e2e layer.
+ * unit/component/contract are the three delegate (cheap) layers.
+ */
+export function layerOf(type: ScenarioType | undefined): "unit" | "component" | "contract" | "e2e" {
+  switch (type) {
+    case "unit":
+      return "unit";
+    case "component":
+      return "component";
+    case "contract":
+      return "contract";
+    // api/ui/cli/mixed/unknown/undefined all fold to the e2e execution layer.
+    default:
+      return "e2e";
+  }
+}
+
+function emptyLayerHealth(): LayerHealth {
+  return { pass: 0, fail: 0, inconclusive: 0 };
+}
+
+/** Classify the pyramid shape from per-layer scenario counts (pure). */
+export function classifyPyramid(counts: {
+  unit: number;
+  component: number;
+  contract: number;
+  e2e: number;
+}): PyramidShape {
+  const total = counts.unit + counts.component + counts.contract + counts.e2e;
+  if (total === 0) return "empty";
+  const middle = counts.component + counts.contract;
+  const hasUnit = counts.unit > 0;
+  const hasMiddle = middle > 0;
+  const hasE2e = counts.e2e > 0;
+
+  // Precedence: e2e-only → e2e-heavy; e2e+middle without unit → no-unit;
+  // unit+e2e without middle → empty-middle; otherwise healthy.
+  if (hasE2e && !hasUnit && !hasMiddle) return "e2e-heavy";
+  if (hasE2e && hasMiddle && !hasUnit) return "no-unit";
+  if (hasUnit && hasE2e && !hasMiddle) return "empty-middle";
+  return "healthy";
+}
+
+export interface PyramidConfig {
+  /** Max ratio of non-`@critical` e2e scenarios before the gate fires. */
+  e2eRatioThreshold: number;
+  /** When false, the ratio gate degrades to advisory (never blocks). */
+  strictPyramid: boolean;
+}
+
+/**
+ * Shared e2e-heavy detector (Req5 signal + Req7 gate reuse the same logic).
+ * Pure; deterministic; no IO. Counts api/ui/cli/mixed as the e2e layer and
+ * excludes the `@critical`-tagged e2e from the ratio (Req7 AC4).
+ */
+export function isE2eHeavy(
+  scenarios: readonly { type: ScenarioType; tags: readonly string[] }[],
+  config: PyramidConfig,
+): boolean {
+  const total = scenarios.length;
+  if (total < 3) return false; // small-spec exemption (Req7 AC6)
+  if (!config.strictPyramid || config.e2eRatioThreshold <= 0) return false;
+  const e2eNonCritical = scenarios.filter(
+    (s) => layerOf(s.type) === "e2e" && !s.tags.includes("@critical"),
+  ).length;
+  const middle = scenarios.filter((s) => ["unit", "component", "contract"].includes(s.type)).length;
+  return e2eNonCritical / total > config.e2eRatioThreshold && middle === 0;
+}
+
 export function aggregateVerdicts(artifacts: readonly ScenarioArtifact[]): {
   pass: number;
   fail: number;
@@ -447,12 +755,21 @@ export function aggregateVerdicts(artifacts: readonly ScenarioArtifact[]): {
   warn: number;
   inconclusive: number;
   blocksShip: boolean;
+  layerHealth: LayerHealthBreakdown;
+  pyramidShape: PyramidShape;
 } {
   let pass = 0;
   let fail = 0;
   let skip = 0;
   let warn = 0;
   let inconclusive = 0;
+
+  const layerHealth: LayerHealthBreakdown = {
+    unit: emptyLayerHealth(),
+    component: emptyLayerHealth(),
+    contract: emptyLayerHealth(),
+    e2e: emptyLayerHealth(),
+  };
 
   for (const a of artifacts) {
     switch (a.verdict) {
@@ -472,10 +789,29 @@ export function aggregateVerdicts(artifacts: readonly ScenarioArtifact[]): {
         inconclusive++;
         break;
     }
+
+    // Artifacts without a type (legacy) are not counted in any layer — they
+    // still contribute to the flat counts above but have no pyramid home.
+    if (a.type === undefined) continue;
+    const layer = layerOf(a.type);
+    const h = layerHealth[layer];
+    if (a.verdict === "PASS") h.pass++;
+    else if (a.verdict === "FAIL") h.fail++;
+    else if (a.verdict === "INCONCLUSIVE") h.inconclusive++;
   }
 
+  const pyramidShape = classifyPyramid({
+    unit: layerHealth.unit.pass + layerHealth.unit.fail + layerHealth.unit.inconclusive,
+    component:
+      layerHealth.component.pass + layerHealth.component.fail + layerHealth.component.inconclusive,
+    contract:
+      layerHealth.contract.pass + layerHealth.contract.fail + layerHealth.contract.inconclusive,
+    e2e: layerHealth.e2e.pass + layerHealth.e2e.fail + layerHealth.e2e.inconclusive,
+  });
+
   // [Spec R2-AC3] INCONCLUSIVE does NOT increment fail and does NOT block ship.
-  return { pass, fail, skip, warn, inconclusive, blocksShip: fail > 0 };
+  // pyramidShape is advisory (Req5 AC5) and never affects blocksShip.
+  return { pass, fail, skip, warn, inconclusive, blocksShip: fail > 0, layerHealth, pyramidShape };
 }
 
 export function renderAcceptanceReport(result: AcceptanceRunResult): string {
@@ -497,9 +833,25 @@ export function renderAcceptanceReport(result: AcceptanceRunResult): string {
     "",
     `**Blocks Ship**: ${result.summary.blocksShip ? "YES" : "NO"}`,
     "",
-    "## Scenarios",
-    "",
   ];
+
+  // Req5 AC4: surface per-layer health + pyramid shape (advisory signal).
+  if (result.summary.pyramidShape) {
+    lines.push(`**Pyramid Shape**: ${result.summary.pyramidShape}`);
+    const lh = result.summary.layerHealth;
+    if (lh) {
+      lines.push("");
+      lines.push("| Layer | PASS | FAIL | INCONCLUSIVE |");
+      lines.push("|-------|------|------|--------------|");
+      for (const layer of ["unit", "component", "contract", "e2e"] as const) {
+        const h = lh[layer];
+        lines.push(`| ${layer} | ${h.pass} | ${h.fail} | ${h.inconclusive} |`);
+      }
+    }
+    lines.push("");
+  }
+
+  lines.push("## Scenarios", "");
 
   for (const s of result.scenarios) {
     const marker = verdictMarker(s.verdict);
@@ -612,6 +964,7 @@ function makeArtifact(
     verdict,
     evidence,
     failureReason,
+    type: scenario.type,
   };
 }
 
@@ -660,6 +1013,133 @@ function evaluateApiVerdict(
   return "PASS";
 }
 
+// ---------------------------------------------------------------------------
+// API body assertions (ADR-0006 Req4) — pure helpers
+// ---------------------------------------------------------------------------
+
+/** Split curl output (when body is retained) into body + trailing status. */
+export function splitBodyAndStatus(stdout: string): { body: string; status: string | null } {
+  // curl -w "%{http_code}" appends the 3-digit code at the very end.
+  const m = stdout.match(/^(.*?)(\d{3})$/s);
+  if (!m) return { body: stdout, status: null };
+  const status = m[2];
+  const body = m[1];
+  // When only the status is present (body discarded), body is empty.
+  if (body === "") return { body: "", status };
+  return { body, status };
+}
+
+/** Match a dotted JSONPath (e.g. "data.role", "data.items.0.id") against parsed JSON. */
+export function matchJsonPath(
+  obj: unknown,
+  path: string,
+): { ok: true; value: unknown } | { ok: false; reason: string } {
+  const segments = path.split(".");
+  let cur: unknown = obj;
+  for (const seg of segments) {
+    if (cur === null || cur === undefined) {
+      return { ok: false, reason: `path "${path}" unreachable at "${seg}"` };
+    }
+    if (typeof cur !== "object") {
+      return { ok: false, reason: `path "${path}" hit non-object at "${seg}"` };
+    }
+    cur = (cur as Record<string, unknown>)[seg];
+  }
+  if (cur === undefined) {
+    return { ok: false, reason: `path "${path}" not found` };
+  }
+  return { ok: true, value: cur };
+}
+
+export interface BodyMatch {
+  path: string;
+  value: unknown;
+}
+
+/**
+ * Redact a parsed body to only the matched path:value pairs (Req4 AC6).
+ * The full body is never written to the artifact — only the assertion-relevant
+ * fields, so sensitive fields (tokens, passwords) are not leaked.
+ */
+export function redactBody(_body: unknown, matches: readonly BodyMatch[]): string {
+  return matches.map((m) => `${m.path}:${JSON.stringify(m.value)}`).join(", ");
+}
+
+export interface ApiVerdictResult {
+  verdict: Verdict;
+  failureReason?: string;
+  /** Req4 AC6: only matched path:value pairs, never the full body. */
+  bodySummary?: string;
+}
+
+/** Parse a `data.<path> shall be <value>` assertion from a THEN clause. */
+function parseBodyAssertion(assertion: string): { path: string; expected: string } | null {
+  // Matches: data.role shall be "admin"  /  data.role shall be 'admin'
+  //         data.status shall be active  /  data.count shall be 3
+  const m = assertion.match(/data\.([\w.]+)\s+shall\s+be\s+["']?([^"'\s,.]+)["']?/i);
+  if (!m) return null;
+  return { path: `data.${m[1]}`, expected: m[2] };
+}
+
+/**
+ * Evaluate an API verdict supporting both status-code and response-body
+ * assertions (Req4 AC2-AC5). Pure; throws never.
+ */
+export function evaluateApiVerdictWithBody(
+  result: { stdout: string; stderr: string },
+  assertion: string,
+): ApiVerdictResult {
+  const bodyAssertion = parseBodyAssertion(assertion);
+  const statusMatch = assertion.match(/(\d{3})/);
+
+  // AC4: status-only path (no body assertion) → back-compat.
+  if (!bodyAssertion) {
+    if (statusMatch && !result.stdout.includes(statusMatch[1])) {
+      return { verdict: "FAIL", failureReason: `status ${statusMatch[1]} not in stdout` };
+    }
+    return { verdict: "PASS" };
+  }
+
+  // Body assertion path: split body from status, parse JSON, match path.
+  const { body, status } = splitBodyAndStatus(result.stdout);
+
+  // AC3: if a status is also asserted, it must match too.
+  if (statusMatch && status !== statusMatch[1]) {
+    return {
+      verdict: "FAIL",
+      failureReason: `status ${statusMatch[1]} expected, got ${status ?? "none"}`,
+    };
+  }
+
+  let parsed: unknown;
+  try {
+    parsed = body.length > 0 ? JSON.parse(body) : null;
+  } catch {
+    // AC5: non-JSON body → FAIL + reason, no throw.
+    return { verdict: "FAIL", failureReason: "response body is not valid JSON" };
+  }
+
+  const matched = matchJsonPath(parsed, bodyAssertion.path);
+  if (!matched.ok) {
+    return { verdict: "FAIL", failureReason: matched.reason };
+  }
+
+  // Normalize both sides to strings for comparison (expected is already a string).
+  const actual = String(matched.value);
+  if (actual !== bodyAssertion.expected) {
+    return {
+      verdict: "FAIL",
+      failureReason: `${bodyAssertion.path}: expected "${bodyAssertion.expected}", got "${actual}"`,
+    };
+  }
+
+  // AC6: record only the matched path:value, never the full body.
+  return {
+    verdict: "PASS",
+    bodySummary: redactBody(parsed, [{ path: bodyAssertion.path, value: matched.value }]),
+  };
+}
+
 function evaluateCliVerdict(
   result: { stdout: string; stderr: string },
   assertion: string,
@@ -682,10 +1162,15 @@ export interface ExecResult {
 /**
  * Build a curl descriptor for the API runner — pure function, no shell string.
  * Instinct: descriptor + execFile (reject strategy). [T3.2]
+ *
+ * opts.assertBody (Req4 AC1): when true, curl keeps the response body so
+ * evaluateApiVerdictWithBody can assert on data.<path> fields. Default false
+ * discards the body (back-compat with status-only assertions).
  */
 export function buildCurlArgs(
   method: string,
   url: string,
+  opts?: { assertBody?: boolean },
 ): {
   executable: string;
   args: string[];
@@ -694,6 +1179,13 @@ export function buildCurlArgs(
     throw new Error(`buildCurlArgs: invalid url: ${url}`);
   }
   const safeMethod = /^[A-Z]+$/i.test(method) ? method.toUpperCase() : "GET";
+  if (opts?.assertBody) {
+    // Keep the body, still append http_code via -w for status assertion.
+    return {
+      executable: "curl",
+      args: ["-s", "-w", "%{http_code}", "-X", safeMethod, url],
+    };
+  }
   // -s silent, -o /dev/null discard body, -w http_code, -X method.
   return {
     executable: "curl",

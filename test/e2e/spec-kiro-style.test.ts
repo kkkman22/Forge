@@ -169,7 +169,7 @@ OAuth integration
         intro: "",
         glossary: [],
         userStories: [],
-        earsCriteria: [makeEars("用户登录", "返回 token", "vitest", "auth.test.ts")],
+        earsCriteria: [makeEars("用户登录", "返回 token", "vitest:unit", "auth.test.ts")],
         nonFunctional: [],
         outOfScope: [],
       },

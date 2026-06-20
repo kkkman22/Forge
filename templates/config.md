@@ -18,6 +18,14 @@ session_retention_days: 90   # .forge/knowledge/sessions/*.md 的 mtime 保留�
 session_keep_recent: 5       # 无论是否过期，按 mtime 保留最近 N 条，正整数，默认 5
 post_push_verify_enabled: true  # ship 后跑一次 ci_check_command 并可选留痕
 build.use_goal: true    # true=使用 /goal 循环（推荐），false=旧 persistent-loop TDD 循环
+# 分层测试金字塔（ADR-0006）。delegate runner 命令映射 + E2E 比例门禁。
+# test_commands:                # delegate runner 命令覆盖（缺省按包管理器探测 test:unit/component/contract）
+#   unit: "pnpm run test:unit"
+#   component: "pnpm run test:component"
+#   contract: "pnpm run test:contract"
+# delegate_timeout: 60          # 单次 forge_exec delegate 超时秒数，默认 60
+e2e_ratio_threshold: 0.3   # 金字塔比例门禁：非 @critical 的 E2E AC 占比上限，默认 0.3
+strict_pyramid: true       # false=门禁降级为警告（不阻断），默认 true
 # Review/decide subagent 超时（分钟），按路由 Tier 区分，避免大任务误降级、小任务空等。
 # 整组缺失时所有 Tier 回退 15min（向后兼容）；单 Tier 缺失或非法时回退该 Tier 默认值。
 review.agent_timeout_minutes.light: 5       # Light tier（≤1 文件 / ≤20 行），默认 5 分钟

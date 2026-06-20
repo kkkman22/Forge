@@ -53,8 +53,9 @@ check_cc_version() {
 
 check_cc_version || exit 1
 
-# ---------- Parse --pack flags ----------
+# ---------- Parse --pack / --recipe flags ----------
 PACKS=()
+RECIPES=()
 remaining_args=()
 while [[ $# -gt 0 ]]; do
   case "$1" in
@@ -64,6 +65,17 @@ while [[ $# -gt 0 ]]; do
       fi
       PACKS+=("$2"); shift 2
       ;;
+    --recipe)
+      if [[ -z "${2:-}" ]]; then
+        echo "❌ --recipe requires a name" >&2; exit 1
+      fi
+      RECIPES+=("$2"); shift 2
+      ;;
+    --non-interactive)
+      # Consumed for test/non-interactive invocations; recipe mode exits before
+      # any prompt regardless, so no state needs to be stored.
+      shift
+      ;;
     --help|-h)
       echo "Usage: scripts/init.sh [OPTIONS]"
       echo ""
@@ -71,9 +83,13 @@ while [[ $# -gt 0 ]]; do
       echo "Creates .forge/ structure, .claude/ agents, CLAUDE.md, config, and hooks."
       echo ""
       echo "Options:"
-      echo "  --pack <name>  Enable a domain pack during init (repeatable)"
-      echo "                 Available: pms"
-      echo "  --help, -h     Show this help message"
+      echo "  --pack <name>     Enable a domain pack during init (repeatable)"
+      echo "                    Available: pms"
+      echo "  --recipe <name>   Generate a test-stack recipe into THIS project (ADR-0006 Req6)"
+      echo "                    Available: vue3-vitest-msw, react-vitest-msw"
+      echo "                    Does NOT auto-install deps; prints the install command."
+      echo "  --non-interactive Skip prompts (use defaults)."
+      echo "  --help, -h        Show this help message"
       echo ""
       echo "Interactive: prompts for project name, tech stack, and security level."
       exit 0
@@ -134,6 +150,90 @@ detect_forge_root() {
 
 FORGE_ROOT="$(detect_forge_root)"
 PROJECT_ROOT="$(pwd)"
+
+# ============================================================================
+# Recipe generation (ADR-0006 Req6) — runs early when --recipe is passed,
+# independent of the interactive init flow. Generates test-stack scaffold
+# (MSW/vitest) into the USER project; Forge installs nothing (R6.5).
+# ============================================================================
+if [[ ${#RECIPES[@]} -gt 0 ]]; then
+  RECIPES_BASE="${FORGE_ROOT}/templates/recipes"
+
+  # Detect the project's package manager for the install hint (Req6 AC10).
+  detect_pkg_manager() {
+    if [[ -f "${PROJECT_ROOT}/pnpm-lock.yaml" ]]; then echo "pnpm"
+    elif [[ -f "${PROJECT_ROOT}/yarn.lock" ]]; then echo "yarn"
+    elif [[ -f "${PROJECT_ROOT}/package-lock.json" ]]; then echo "npm"
+    elif [[ -f "${PROJECT_ROOT}/bun.lockb" ]]; then echo "bun"
+    else
+      # fall back to packageManager field, else npm
+      local pm=""
+      if [[ -f "${PROJECT_ROOT}/package.json" ]]; then
+        pm=$(node -e "try{console.log(require('./package.json').packageManager||'')}catch{}" 2>/dev/null || true)
+      fi
+      case "$pm" in
+        pnpm*) echo "pnpm" ;; yarn*) echo "yarn" ;; npm*) echo "npm" ;;
+        *) echo "npm" ;;
+      esac
+    fi
+  }
+
+  PKG_MANAGER="$(detect_pkg_manager)"
+
+  for recipe_name in "${RECIPES[@]}"; do
+    recipe_dir="${RECIPES_BASE}/${recipe_name}"
+    # Req6 AC12: unknown recipe → non-zero exit + list available.
+    if [[ ! -d "$recipe_dir" ]]; then
+      error "recipe '${recipe_name}' not found in templates/recipes/."
+      echo "  Available recipes:" >&2
+      if [[ -d "$RECIPES_BASE" ]]; then
+        for d in "$RECIPES_BASE"/*/; do
+          [[ -d "$d" ]] && echo "  - $(basename "$d")" >&2
+        done
+      fi
+      exit 1
+    fi
+
+    info "Generating recipe '${recipe_name}' into ${PROJECT_ROOT}..."
+    conflicts=()
+    # Copy each file, skipping + reporting conflicts (Req6 AC13).
+    while IFS= read -r -d '' f; do
+      rel="${f#${recipe_dir}/}"
+      dest="${PROJECT_ROOT}/${rel}"
+      if [[ -e "$dest" ]]; then
+        # conflict → skip, report, hint manual merge (AC13)
+        conflicts+=("$rel")
+        continue
+      fi
+      mkdir -p "$(dirname "$dest")"
+      cp "$f" "$dest"
+    done < <(find "$recipe_dir" -type f -not -name '.gitkeep' -print0)
+
+    # Install hint (Req6 AC9): print the command, never execute it.
+    snippet=""
+    if [[ -f "$recipe_dir/package.devDeps.snippet" ]]; then
+      snippet=$(tr '\n' ' ' < "$recipe_dir/package.devDeps.snippet" | sed 's/  */ /g' | sed 's/^ //;s/ $//')
+    fi
+    case "$PKG_MANAGER" in
+      pnpm|yarn|bun) hint="${PKG_MANAGER} add -D ${snippet}" ;;
+      *) hint="npm install -D ${snippet}" ;;
+    esac
+
+    success "recipe '${recipe_name}' generated."
+    echo ""
+    echo -e "  ${BLUE}Next →${NC} install the devDependencies yourself (Forge will NOT):"
+    echo -e "      ${CYAN}${hint}${NC}"
+    if [[ ${#conflicts[@]} -gt 0 ]]; then
+      warn "The following files already existed and were SKIPPED (manual merge needed):"
+      for c in "${conflicts[@]}"; do echo "    - ${c}"; done
+      echo "  Compare your existing config against the recipe's — incompatible combos"
+      echo "  (e.g. jsdom vs happy-dom) can break the example tests."
+    fi
+  done
+
+  # --recipe is a dedicated mode: generate and exit (no full interactive init).
+  exit 0
+fi
 
 # ---------- 欢迎信息 ----------
 echo ""

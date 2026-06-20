@@ -53,9 +53,9 @@ function makeBundle(opts?: {
 
 // T-15: Contract Gate
 describe("validateContractGate", () => {
-  it("passes when all EARS have verifyBy and evidence", () => {
+  it("passes when all EARS have layered verifyBy and evidence", () => {
     const bundle = makeBundle({
-      earsOverrides: { verifyBy: "vitest", evidence: "test passes" },
+      earsOverrides: { verifyBy: "vitest:unit", evidence: "test passes" },
     });
     const result = validateContractGate(bundle);
     expect(result.pass).toBe(true);
@@ -68,9 +68,17 @@ describe("validateContractGate", () => {
     expect(result.findings[0].severity).toBe("P0");
   });
 
+  it("fails P0 when verifyBy uses legacy flat grammar (Req1)", () => {
+    const bundle = makeBundle({
+      earsOverrides: { verifyBy: "vitest", evidence: "test passes" },
+    });
+    const result = validateContractGate(bundle);
+    expect(result.pass).toBe(false);
+  });
+
   it("fails P0 when evidence is placeholder", () => {
     const bundle = makeBundle({
-      earsOverrides: { verifyBy: "vitest", evidence: "TODO" },
+      earsOverrides: { verifyBy: "vitest:unit", evidence: "TODO" },
     });
     const result = validateContractGate(bundle);
     expect(result.pass).toBe(false);
