@@ -23,8 +23,7 @@
 // 更新文件:
 //   - package.json
 //   - .claude-plugin/plugin.json
-//   - dist-plugin/.claude-plugin/plugin.json (如存在)
-//   - dist/ dist-plugin/ (自动 rebuild)
+//   - dist/ (自动 rebuild; dist-plugin 不再跟踪，由 build-dist.sh 按需生成)
 //   - CHANGELOG.md (自动从 conventional commits 生成变更条目)
 // ============================================================================
 
@@ -38,7 +37,6 @@ const ROOT = join(dirname(fileURLToPath(import.meta.url)), "..");
 const VERSION_FILES = [
   "package.json",
   ".claude-plugin/plugin.json",
-  "dist-plugin/.claude-plugin/plugin.json",
 ];
 
 const BUMP_LEVELS = ["patch", "minor", "major"];
@@ -380,11 +378,12 @@ function main() {
   if (doCommit) {
     console.log("\n正在提交...");
     try {
-      // NOTE: dist/claude-code/bundles/ is gitignored (never tracked), so it must
-      // NOT be in the add list — including it makes git add exit non-zero and the
-      // commit silently never runs. Commit set matches historical release commits
-      // (see e.g. v3.3.0 750948a3): version files + dist-plugin + CHANGELOG.
-      gitExec("add package.json .claude-plugin/plugin.json dist-plugin/ CHANGELOG.md");
+      // NOTE: dist-plugin/ is gitignored (rebuilt on demand by build-dist.sh);
+      // dist/claude-code/bundles/ likewise never tracked. Including either in the
+      // add list makes git add exit non-zero and the commit silently never runs.
+      // dist-plugin/.claude-plugin/plugin.json version is synced by build-dist.sh
+      // on the next build (it reads package.json as the source of truth).
+      gitExec("add package.json .claude-plugin/plugin.json CHANGELOG.md");
       gitExec(`commit -m "chore: bump version to ${newVersion}\n\nCo-Authored-By: Claude Opus 4.8 <noreply@anthropic.com>"`);
       const sha = gitExec("rev-parse --short HEAD");
       console.log(`  ✓ committed as ${sha}`);

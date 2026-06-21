@@ -128,39 +128,30 @@ function checkCompleteness(scripts) {
   return missing;
 }
 
-// ── Layer 2: Freshness ───────────────────────────────────────────────
-function checkFreshness() {
-  // In CI, build-dist.sh just ran — freshness check is meaningless (zip is non-deterministic)
+// ── Layer 2: Build presence ──────────────────────────────────────────
+function checkBuildPresence() {
+  // dist/ and dist-plugin/ are gitignored and rebuilt on demand, so a git-diff
+  // freshness check no longer applies. Instead, verify the build outputs exist
+  // on disk — a missing dist-plugin/ means build-dist.sh was never run and the
+  // dist-plugin-dependent tests would fail.
   if (process.env.CI === "true") {
-    log("bundle-sync: freshness check SKIPPED (CI environment — dist just rebuilt)");
+    log("bundle-sync: build-presence check SKIPPED (CI environment — dist just rebuilt)");
     return null;
   }
-  try {
-    execSync("git diff --exit-code -- dist/ dist-plugin/", {
-      encoding: "utf-8",
-      stdio: "pipe",
-    });
-    return null; // clean
-  } catch (e) {
-    const diff = e.stdout || "";
-    if (!diff.trim()) return null; // no actual diff
-
-    // Parse diff stat for summary
-    const files = diff
-      .split("\n")
-      .filter((l) => l.startsWith("diff --git"))
-      .map((l) => l.replace(/^diff --git a\/.* b\//, ""));
-
-    log("❌ bundle-sync: freshness check FAILED\n");
-    log("── Dist packages are STALE (source changed but dist not rebuilt) ──");
-    for (const f of files) {
-      log(`  ${f}`);
+  const missing = [];
+  if (!existsSync(PLUGIN_DIST)) missing.push(PLUGIN_DIST);
+  if (missing.length > 0) {
+    log("❌ bundle-sync: build-presence check FAILED\n");
+    log("── dist-plugin/ not built (gitignored, required by tests) ──");
+    for (const m of missing) {
+      log(`  ${m}`);
     }
     log("");
-    log("Fix: bash scripts/build-dist.sh && git add dist/ dist-plugin/");
+    log("Fix: bash scripts/build-dist.sh");
     log("");
-    return files;
+    return missing;
   }
+  return null;
 }
 
 // ── Main ─────────────────────────────────────────────────────────────
@@ -185,16 +176,16 @@ function main() {
   const missing = checkCompleteness(scripts);
   totalIssues += missing.length;
 
-  // Layer 2: Freshness
-  log("bundle-sync: checking dist freshness (git diff)...");
-  const stale = checkFreshness();
+  // Layer 2: Build presence (dist-plugin exists on disk)
+  log("bundle-sync: checking dist-plugin build presence...");
+  const stale = checkBuildPresence();
   if (stale) totalIssues += stale.length;
 
   if (totalIssues > 0) {
     process.exit(1);
   }
 
-  log(`bundle-sync: OK — ${scripts.size} scripts verified, dist packages fresh`);
+  log(`bundle-sync: OK — ${scripts.size} scripts verified, dist-plugin present`);
   process.exit(0);
 }
 

@@ -76,7 +76,9 @@ jobs:
           if ! git diff --quiet; then
             # Remove compiled TypeScript output before staging
             # These are regenerated on-demand by CI and should not be tracked in git.
-            rm -rf dist/src dist/scripts dist/locales dist/test dist/workflows
+            # dist-plugin/ is also gitignored now (rebuilt by build-dist.sh);
+            # removing it keeps the on-disk state clean post-commit.
+            rm -rf dist/src dist/scripts dist/locales dist/test dist/workflows dist-plugin
             git add -A
             git commit -m "ci: sync derived data [skip ci]"
             git push

@@ -75,6 +75,18 @@ terminate_check_tree() {
   wait "$check_pid" 2>/dev/null || true
 }
 
+# dist-plugin/ is gitignored and rebuilt on demand, but several tests in
+# `npm run check` read it from disk (plugin-dist contract/smoke, hard-gate
+# presence). A fresh clone has no dist-plugin until build-dist.sh runs, so
+# build it here when missing. Incremental dev keeps the prior build.
+if [[ ! -d dist-plugin ]]; then
+  echo "[pre-push] building dist-plugin (gitignored, required by tests)..."
+  bash scripts/build-dist.sh >/dev/null 2>&1 || {
+    echo "[pre-push] build-dist.sh failed — run it manually to see errors"
+    exit 1
+  }
+fi
+
 npm run check &
 check_pid=$!
 cleanup() {
