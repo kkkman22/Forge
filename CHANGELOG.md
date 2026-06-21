@@ -11,6 +11,68 @@ Entries follow [Keep a Changelog](https://keepachangelog.com/) with Forge-specif
 
 ## [Unreleased]
 
+## [3.6.0] - 2026-06-21
+
+### Added
+
+- Layered Test Pyramid (ADR-0006) — four-layer verification model (#116)
+- **continue**: add /forge continue interactive phase advancer (#115)
+- **context**: activate context-injection scaffold + wire into review/decide (#114)
+- **charter**: inject charter grounding into build phase (§2.5) (#113)
+- **metrics**: wire UserPromptSubmit hook to usage metrics recorder (#112)
+- **learn**: add §0.9 forge:defer sweep step
+- **build**: add forge:defer marker spec + deferred.md ledger
+- **review**: add Deletions dimension (Dim 8) to quality-check
+- **build**: add hard-boundaries checklist to Self-Review
+- **build**: add Pre-task YAGNI gate to forge-build agent
+
+### Changed
+
+- **knowledge**: distill worktree base = origin/main lesson
+- **learn**: extract mcp-compression-delegation lessons to knowledge base
+- **mcp**: delegate compression to Headroom, remove RTK + forge_read_cached (#107)
+
+### Fixed
+
+- **barrel**: consolidate context-injection exports under 20-statement budget
+- **spec**: delegate spec-bundle-io render fns to spec-render SSOT (P0-6)
+- **spec-migration**: use static import for writeEvent instead of require (P1-5)
+- **build**: wire SUCCESS_INDICATORS in validateRedGate, drop dead vars (P0-2->P2)
+- **review**: address remaining P2/P3 findings (non-blocking hardening)
+- **review**: address P1/P2 findings from Layer 2 + Layer 3 review
+- **review**: restore quality-check.md symlink, apply Dim 8 to source
+- **test**: stop ui-harness tests from launching real browsers (#108)
+- **test**: harden docs-governance CLI tests (dirty TMP_DIR + tight timeout)
+- **hooks**: bound pre-push check with timeout + silence fallback-ladder test noise (#106)
+
+### Added
+
+- **continue**: `/forge continue` 交互式阶段推进器，跨会话推进当前任务的下一阶段 (#115)
+- **context**: 激活 context-injection scaffold 并接入 `/forge review` 与 `/forge decide`，按 taskType 注入相关上下文 (#114)
+- **charter**: 将 charter grounding 注入 build 阶段（§2.5），主 Agent 每个 restatement checkpoint 重读 charter invariants (#113)
+- **metrics**: UserPromptSubmit hook 接入 usage metrics recorder，记录每次 prompt 的 token 消耗 (#112)
+- **build**: `forge:defer` 延迟决策标记 + `deferred.md` 台账；learn §0.9 sweep 步骤在 learn 阶段回收这些决策
+- **review**: quality-check 新增 Deletions 维度（Dim 8），扫描"本不该写"的代码并产出 delete-list
+- **build**: forge-build agent 引入 Pre-task YAGNI gate + hard-boundaries 自检清单（Ponytail YAGNI 纪律采纳）
+- **knowledge**: 提炼 worktree base = origin/main 教训与 mcp-compression-delegation 经验到 knowledge base
+
+### Changed
+
+- **mcp**: 将压缩委托给 Headroom，移除 RTK 压缩引擎 + `forge_read_cached` (#107)
+- **spec**: spec-bundle-io 的渲染函数委托给 spec-render SSOT，消除重复实现 (P0-6)
+- **review**: address P1/P2 findings from Layer 2 + Layer 3 review + 后续 P2/P3 非阻断加固
+- **tool-health**: 将 tool-health event log 从 tracked summary 中拆分 (#109)
+
+### Fixed
+
+- **hooks**: 为 pre-push 检查加超时上限并静默 fallback-ladder 测试噪声 (#106)
+- **mcp**: 消除 integration test 中的 SIGTERM 关闭竞态（已在 3.5.0，本次补登记）
+- **build**: 在 `validateRedGate` 接入 SUCCESS_INDICATORS，移除死变量 (P0-2→P2)
+- **spec-migration**: writeEvent 改用静态 import 而非 require (P1-5)
+- **router**: 固定 workNature-agnostic routerPhases 契约测试 (P0-1，非 bug)
+- **test**: ui-harness 测试不再启动真实浏览器 (#108)
+- **test**: 加固 docs-governance CLI 测试（dirty TMP_DIR + tight timeout）
+
 ### Added
 
 - **continue**: `/forge continue` 交互式阶段推进器，跨会话推进当前任务的下一阶段 (#115)
