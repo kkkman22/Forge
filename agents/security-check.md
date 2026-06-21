@@ -1,8 +1,9 @@
 ---
 name: security-check
-updated: 2026-06-05
+updated: 2026-06-21
 description: Use in /forge review Layer 3, when scanning for hardcoded secrets or injection risks
 model: inherit
+model_tier: capable
 maxTurns: 10
 tools: Read, Glob, Grep, WebSearch
 disallowedTools: [Bash, Write, Edit, Agent]

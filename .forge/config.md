@@ -134,3 +134,26 @@ bash scripts/build-dist.sh  # 分发包同步校验
 - `legacy`：使用旧 `skills/forge-X/SKILL.md` 路径（v2.4 兼容；需配合 `git revert` 物理迁移才能真正生效；本字段仅声明意图，dispatcher 在 collapsed 路径下统一处理）
 
 > v2.5 起 `legacy` 模式仅在迁移期保留为 advisory。完整 dispatcher 实现见 ADR-0004。
+
+## Review Model Tier Map
+
+`review_model_tier_map`：review subagent 的模型分级（tier）到实际模型名的映射（spec `review-model-tier`）。
+
+每个 review agent 的 frontmatter 声明 `model_tier`（cheap|standard|capable|inherit），dispatch 时经此映射解析为实际模型名。**不支持时 fail-open 回退 inherit，不阻断 review**（成本优化是 best-effort，可用性优先）。
+
+```yaml
+review_model_tier_map:
+  cheap: "haiku"       # spec-check：机械对照需求
+  standard: "sonnet"   # quality-check / validation-pass：六维质量判断、确认类工作
+  capable: "inherit"   # security-check：深度安全推理（inherit = 主 agent 同款）
+  inherit: "inherit"   # 显式 opt-out
+```
+
+| Field | Description |
+|------|------|
+| `cheap` | 机械对照类工作（spec-check）的便宜模型 |
+| `standard` | 质量判断/确认类工作的中等模型 |
+| `capable` | 深度推理类工作（security-check）的强模型；`inherit` 表示用主 agent 同款 |
+| `inherit` | 显式 opt-out，等同 `model: inherit` 旧行为 |
+
+缺省时使用内置默认（cheap=haiku / standard=sonnet / capable=inherit / inherit=inherit）。Compact-Safe 模式跳过的是 layer（quality/adversarial），**不**降级保留 layer 的 model_tier。

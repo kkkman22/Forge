@@ -1,8 +1,9 @@
 ---
 name: spec-check
-updated: 2026-06-05
+updated: 2026-06-21
 description: Use in /forge review Layer 1, when verifying implementation matches locked spec
 model: inherit
+model_tier: cheap
 maxTurns: 15
 tools: Read, Glob, Grep
 disallowedTools: [Bash, Write, Edit, Agent]
