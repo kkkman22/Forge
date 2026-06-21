@@ -59,3 +59,13 @@ apps/forge-loop-desktop/src-tauri/resources/node/bin/nodedist/
 # Tool-health runtime event log (append-only; the tracked .md holds only the
 # stable summary + skip-trace counters). See chore/split-tool-health-log-from-md.
 .forge/knowledge/tool-health.log
+
+# CI benchmark output (regenerated each run by sync-derived-data.yml and
+# consumed by scripts/append-baseline.mjs; not a source artifact).
+bench-result.json
+
+# Vitest default output dir (runtime artifact; ship-gates reads .forge/test-results/).
+test-results/
+
+# Claude Code run-continuation session cache (local runtime state).
+.omo/
