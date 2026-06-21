@@ -180,19 +180,20 @@ Review 声明"✅ 新增 agent / skill / hook / template / config 文件"之前�
 **铁律**：每次评审的**第一步**必须调用 `forge_git(subcommand="diff-content", args="${BASE}...HEAD")` 工具获取已截断的 diff patch 作为唯一的变更上下文。在拿到 diff 之前，**严禁**使用 Read/Glob/Grep。如果 `forge_git` 工具不可用（MCP server 未启动），降级为单次 `Bash("git diff ${BASE}...HEAD | head -1500")`。
 
 1. **Step 0（强制首步）**：调用 `forge_git(subcommand="diff-content")` 拿到 diff patch
-2. **Step 0.5（可选次步）**：在确定的精确路径下，按需执行 `## Step 0.5 — Optional Context Read`（见下文）
-3. **基于 diff 内容分析变更**（不做额外 Read）
+2. **Step 0.1（强制次步）**：`Read skills/forge/lib/review/references/shared-vocabulary.md` 加载共享词汇（Two-Phase / JSON schema / Known-failures YAML / Return Protocol / Findings-Only / Confidence_Anchor）。该 Read 计入 Read 预算。
+3. **Step 0.5（可选）**：在确定的精确路径下，按需执行 `## Step 0.5 — Optional Context Read`（见下文）
+4. **基于 diff 内容分析变更**（不做额外 Read）
    - 从 diff 中识别每个文件的变更意图
    - 从文件头/路径中确认变更范围
-4. 逐条对照 diff 中的变更，确认每个需求有对应实现（依据 Step 0.5 提取的 contract 表，若有）
-5. **仅对存疑的验收标准**，用 Read 读取具体文件验证（**上限 3 次 Read**）
-6. 扫描变更文件列表，识别不在 Spec 中的新增功能（scope creep）
-7. 扫描实现 R-x 的函数，应用 Stub Detection（Check Item 3a）
-8. 如果是棕地项目，检查 Delta "不变"列表中的文件是否被修改
-9. 对声明的新增文件执行主分支存在性验证（Check Item 5）
-10. 对 Pack/Loader 类变更验证 integration test 存在性（Check Item 6）
+5. 逐条对照 diff 中的变更，确认每个需求有对应实现（依据 Step 0.5 提取的 contract 表，若有）
+6. **仅对存疑的验收标准**，用 Read 读取具体文件验证（**上限 3 次深查 Read**，与 Step 0.1 的共享词汇 Read 合计 ≤ 4 次）
+7. 扫描变更文件列表，识别不在 Spec 中的新增功能（scope creep）
+8. 扫描实现 R-x 的函数，应用 Stub Detection（Check Item 3a）
+9. 如果是棕地项目，检查 Delta "不变"列表中的文件是否被修改
+10. 对声明的新增文件执行主分支存在性验证（Check Item 5）
+11. 对 Pack/Loader 类变更验证 integration test 存在性（Check Item 6）
 
-**Read 预算**：除 Step 0 的 forge_git 调用外，整个评审过程最多 3 次 Read 调用（包含 Step 0.5 的 optional Read，若执行）。超出则停止 Read，基于已有信息产出结论。
+**Read 预算**：除 Step 0 的 forge_git 调用外，整个评审过程最多 4 次 Read 调用（1 次 Step 0.1 共享词汇 + 最多 3 次存疑项深查，含 Step 0.5 的 optional Read 若执行）。超出则停止 Read，基于已有信息产出结论。
 
 **禁止行为**：
 - ❌ 跳过 Step 0 直接 Read 变更文件
@@ -227,7 +228,7 @@ Review 声明"✅ 新增 agent / skill / hook / template / config 文件"之前�
    - For each entry, check if the current diff contains patterns matching the `signature` field. If matched and no fix evidence in diff → output P1 issue: `known-failure recurrence — pattern <pattern_id>, last seen at <last_seen>`.
    - 若 known-failures.md 不存在 → silent skip。
 
-**预算**：Step 0.5 在最坏情况（Path A + Path B 都执行）消耗 2 次 Read（Glob 调用数 = 0），与 forge_git 首步合计占用 3 turns，剩余 ≥ 7 turns 给主流程 + final-report turn。
+**预算**：Step 0.5 在最坏情况（Path A + Path B 都执行）消耗 2 次 Read（Glob 调用数 = 0），与 forge_git 首步 + Step 0.1 共享词汇 Read 合计占用 4 turns，剩余 ≥ 6 turns 给主流程 + final-report turn。
 
 > 与 quality-check / security-check 的 `Step 0.5 — Known-failures Recurrence Detection (optional)` 同模式：可选执行 + 精确路径 + silent skip。
 

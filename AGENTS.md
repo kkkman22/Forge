@@ -128,6 +128,7 @@ build 阶段主 Agent 必须执行周期性 Restatement Checkpoint：每完成 N
 每个 `/forge` 命令调用构成 Session_Boundary。阶段间上下文交接通过 `.forge/` 目录文件系统进行，而非对话历史。建议 `/forge` 命令之间开启新会话。
 
 **Subagent 隔离**：每个 Subagent 有独立上下文。**会话恢复**：`/forge resume` 从 `.forge/progress/` 和 `.forge/knowledge/sessions/` 读取。**并发控制**：`max_parallel_agents` 默认 6。HTTP 429 降级：第 1 次并发减半 → 第 2 次降至 2 → 第 3 次串行。降级记录到 `.forge/knowledge/tool-health.md`。新会话重置并发数。上下文超 100K tokens 时记录建议开启新会话提示（不阻断）。
+→ 详见 docs/forge-constitution-detail.md §6（会话拓扑三节点：主流程同窗 / on-ramp / 跨会话桥；smart zone 100K 保守 / ~120K SOTA 参考；handoff=fork vs compact=continue）
 
 ---
 

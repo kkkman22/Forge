@@ -1,6 +1,6 @@
 ---
 description: "Use when user runs `/forge triage`, wants automated discovery of what to work on, or needs a periodic scan of Jira sprint / Bitbucket / git for actionable items. The 'discovery' action of loop engineering."
-updated: 2026-06-16
+updated: 2026-06-21
 
 dispatch_mode: fork
 allowed_tools:
@@ -142,6 +142,10 @@ triage **只发现、写 inbox**，**不自动启动 build**。
 对每个 high severity 发现，`suggested_action` 建议下一步（开 worktree 进 build / 手动排查 / 标记 skip），但**保留人工复核点**（论文 §09 清单第六条）。用户决定哪些值得动手。
 
 inbox 条目的 `status`：`open` → `in-progress`（用户开始处理）→ `done` / `skip`。
+
+### 被拒需求去重 / Rejected-Requests Dedup
+
+写入 inbox 前，先查 `.forge/knowledge/out-of-scope/`（被拒需求库）。**命中**相似项的发现，`suggested_action` 设为 `skip` 并注明引用的拒绝结论，避免把已被否的需求重新拉回流程。详见 docs/forge-constitution-detail.md §4 Domain Document Three-Way Split。
 
 ---
 

@@ -3,7 +3,7 @@ title: 'Forge — 项目宪法详细内容'
 category: reference
 audience:
 - maintainer
-updated: 2026-06-05
+updated: 2026-06-21
 owner: forge-maintainers
 ---
 
@@ -286,6 +286,22 @@ SKILL 定义的输出格式 > 简洁性约束。当 SKILL 要求特定输出（�
 - `/forge build` 执行时自动搜索 Knowledge Base 中的历史踩坑记录
 - 知识不是写完就放着——它必须在后续任务中被主动检索和应用
 
+### Domain Document Three-Way Split
+
+> 借鉴 mattpocock/skills domain-modeling + triage。Forge 的领域文档分三类，职责严格隔离，避免"知识大杂烩"。
+
+| 类别 | 路径 | 内容 | 禁止 |
+|------|------|------|------|
+| **Glossary（术语表）** | `.forge/glossary.md` | 纯术语定义 | 实现细节、spec、scratch |
+| **Decisions（决策记录）** | `.forge/decisions/`（ADR） | 架构决策 | 非 ADR 内容 |
+| **Rejected Requests（被拒需求库）** | `.forge/knowledge/out-of-scope/` | 被明确拒绝的需求 + 拒绝理由 | 当前在做的需求 |
+
+**ADR 创建门控（三条件全满足才建）**：① 难以逆转 ② 没背景会让人困惑 ③ 是真实权衡的结果。缺一条即跳过——不是每个决定都值得 ADR，过度记录稀释信号。
+
+**Rejected-Requests 库的防重复评估作用**：`/forge decide` 和 `/forge triage` 评估需求时，**先查 `.forge/knowledge/out-of-scope/`**，命中相似项则直接引用其拒绝结论，不重复评估。需求被明确拒绝时写入该库，并在原决策处链接。惰性创建——有内容写了才建文件。
+
+此三分与 §4.1 的五维度知识提取共存：五维度是"经验"，三分是"领域结构"，互不替代。
+
 ---
 
 ## §5 Self-Evolution Protocol
@@ -315,6 +331,44 @@ The following are NOT valid rule candidates:
 - General best practices Claude already knows
 - Raw knowledge data (belongs in knowledge files, not rules)
 - Standards enforced by existing tools (e.g. Biome code style)
+
+---
+
+## §6 Session Boundaries（详细）
+
+> AGENTS.md §6 是 canonical 简版；本节是其详细镜像。
+
+### Session Topology（会话拓扑）
+
+> 借鉴 mattpocock/skills ask-matt router 的会话拓扑视角。Forge 的会话不只是"边界"，还有**拓扑结构**——哪些阶段必须同窗、哪些必须换窗。
+
+| 节点类型 | 含义 | Forge 对应 |
+|---------|------|-----------|
+| **主流程（同窗）** | 必须在不中断的 context 窗口内连续完成的阶段 | `decide → spec → plan` 应同窗完成，保持决策一致性 |
+| **On-ramp（入口匝道）** | 汇聚到主流程的入口 | triage 把杂乱需求整理成 agent-ready issue，进 `/forge build` |
+| **跨会话桥（换窗）** | 必须开新会话的节点 | 每个 `/forge build` task 建议开全新会话，避免旧 context 污染 |
+
+**铁律：主流程阶段（decide/spec/plan）若被中途打断换窗，必须通过 `.forge/progress/` 文件系统交接，不得依赖对话历史。** 与 AGENTS.md §6 "阶段间上下文交接通过 `.forge/` 目录文件系统进行"一致。
+
+### Smart Zone 阈值
+
+模型仍在"锐利推理区"的 context 窗口区间。
+
+| 阈值 | 值 | 来源 |
+|------|-----|------|
+| **保守阈值（强制记录）** | 100K tokens | `.forge/config.md` `context_budget: 100000` |
+| **SOTA 参考** | ~120K tokens | mattpocock/skills ask-matt 引用 |
+
+逼近 100K 时记录"建议开启新会话"提示（**不阻断**，与 AGENTS.md §6 一致）。120K 是当前 SOTA 模型的参考区间，旧模型更低。两个数字不冲突：100K 是 Forge 的保守操作线，120K 是理解上限的参照。
+
+### Handoff vs Compact
+
+| 操作 | 语义 | Forge 对应 |
+|------|------|-----------|
+| **Handoff（fork）** | 开**新**会话，通过文件引用旧 context | `/forge resume` 从 `.forge/progress/` 读取 |
+| **Compact（continue）** | **同**会话内摘要压缩 | 上下文未超限时持续 |
+
+优先 Handoff（文件交接可靠、无信息损失风险）；Compact 仅在接近 smart zone 且无法开新会话时用。
 
 ---
 
@@ -406,3 +460,75 @@ Three-strike 触发时（连续 3 次失败），`shouldClearGoal()` 自动清�
 - /goal 不可用 → 退回 prompt 约束
 - MessageDisplay hook 不触发 → 输出原样显示
 - bin/ 不自动 PATH → 使用长路径调用
+
+---
+
+## Skill Craft 参考
+
+> 借鉴 mattpocock/skills v1.0.0–v1.0.1 的 skill 工艺。本节是 Forge 的 skill 设计词汇与自审清单，供写新 skill / 维护现有 skill 时参照。
+
+### User-Invoked vs Model-Invoked（调用方二分）
+
+每个 skill 按调用方分两类，二者的 **load 代价**不同：
+
+| 类型 | 谁能触发 | 代价 | Forge 现状 |
+|------|---------|------|-----------|
+| **Model-invoked** | agent 自主触发 **或** 人手输 | **Context load**：description 每轮占窗口 | `skills/forge/lib/*` 全部 |
+| **User-invoked** | **只能**人手输 | **Cognitive load**：人得记住它存在 | `source-command-forge`（`/forge` 入口） |
+
+**调用约束（铁律）**：user-invoked skill **可以**调用 model-invoked skill；user-invoked skill **永远不能**调用另一个 user-invoked skill（后者无 description，agent 够不到它）。
+
+**Description 写法分化**：
+
+| 类型 | description 写法 | 示例 |
+|------|----------------|------|
+| Model-invoked | 保留**富触发短语**（"Use when the user wants…, mentions…"） | spec-check: "需求实现验证、场景覆盖检查" |
+| User-invoked | 写成**人的一句话摘要**，**剥离**触发词列表 | forge 入口：一句话说明是统一入口 |
+
+#### Forge Skill Invocation 盘点（截至 2026-06-21）
+
+| 位置 | 类型 | 说明 |
+|------|------|------|
+| `.agents/skills/source-command-forge/` | **User-invoked** | `/forge` 统一入口 router，唯一 user-invoked skill |
+| `skills/forge/lib/*`（40 个） | **Model-invoked** | 各阶段引擎（build/review/debug/plan…），通过 `/forge <子命令>` 路由分发 |
+| `.claude/agents/*`（22 个） | **Model-invoked（subagent）** | decide 多角色 + review 三层 checker + orchestrator |
+
+> 注：Forge 当前**未使用** Claude 的 `disable-model-invocation: true` frontmatter 字段（多 harness 兼容）。二分通过约定（user-invoked 即 source-command-forge 一个）表达，不绑死 Claude 专有字段。
+
+### Completion Criterion（完成判据两属性）
+
+> 治"过早完成"——agent 注意力从"做好当前步"滑向"做完它"。两个属性对抗它。
+
+| 属性 | 含义 |
+|------|------|
+| **Clarity** | 能否区分 done / not-done？模糊边界（"达成理解"）必然被滑过 |
+| **Demand** | 要求多少工作量？"每个被改的 model 都 account for"（高 demand）vs"产出变更清单"（低 demand） |
+
+**防御顺序（铁律）**：**先磨利边界**（便宜、本地），只有当边界无法磨利 **且** 真的观察到抢跑时，才**把后续步骤藏起来（拆分）**。不要一上来就拆分——磨利边界通常足够。
+
+### Skill Failure Modes（自审词汇表）
+
+写完 skill 后用这五个词自检。每种失败都有明确判据：
+
+| 失败模式 | 定义 | 判据 |
+|---------|------|------|
+| **Premature Completion** | 步骤没真做完就跳下一步 | 见 Completion Criterion |
+| **Duplication** | 同一含义有多个 source of truth | 改一处要改多处 |
+| **Sediment** | 旧内容沉淀，因为加比删安全 | 这是没修剪纪律的默认宿命 |
+| **Sprawl** | skill 单纯太长（即便每行都 live） | 用 information hierarchy 下沉 |
+| **No-Op** | 模型默认就会做的事，写了等于白写 | **No-Op 测试**：这行 vs 模型默认，行为有变吗？无变即 no-op，删 |
+
+> No-Op 测试**不适用于** `<IRON-LAW>` 铁律——铁律的价值是**阻断语义**（违反即违规），不是"提示默认行为"。自检时所有铁律豁免。
+
+### Leading Words（引导词）
+
+> 用模型预训练里**已存在**的紧凑词锚定整片行为，省 token 又提一致性（Leitwort 技术）。
+
+**选取原则**：**优先用预训练已有的词**（零定义成本）；自创词也可，但要付定义成本。一个强 leading word 可能只需在 skill 里用**一次**即可锚定。
+
+| Leading Word | 锚定的行为 | Forge 落点 |
+|-------------|-----------|-----------|
+| `tight` | 快、确定性、低开销（fast, deterministic, low-overhead 三词压成一个） | `/forge debug` 回路 |
+| `red-capable` | 回路能驱动真实 bug 代码路径并断言用户确切症状，修复后变 green | `/forge debug` Phase 1 gate |
+
+**反例**：不要为每个概念都造词。Leading word 是"高复用 + 预训练已有"的少数精选词，不是命名约定。

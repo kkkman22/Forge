@@ -25,7 +25,7 @@
 - [Docs Governance 参考手册 (EN)](reference-docs-governance.en.md) / [Docs Governance 参考手册 (中)](reference-docs-governance.md) — 2026-06-19
 - [Forge Slimming 迁移指南](slimming-migration.md) — 2026-05-17
 - [Forge triage 自动发现](forge-triage.md) — 2026-06-16
-- [Forge — 项目宪法详细内容](forge-constitution-detail.md) — 2026-06-05
+- [Forge — 项目宪法详细内容](forge-constitution-detail.md) — 2026-06-21
 - [Forge 再生式 Checkpoint](forge-checkpoint.md) — 2026-06-16
 - [Forge 初次接触者引导 (EN)](onboarding-beginner.en.md) / [Forge 初次接触者引导 (中)](onboarding-beginner.md) — 2026-06-19
 - [Forge 命令速查与路由详解](reference-commands.md) — 2026-06-20

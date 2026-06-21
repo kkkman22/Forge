@@ -1,6 +1,6 @@
 ---
 description: "Use when user says debug this, reports a regression, or after three consecutive build failures trigger the three-strike reroute"
-updated: 2026-06-05
+updated: 2026-06-21
 context: fork
 
 dispatch_mode: fork
@@ -31,8 +31,9 @@ allowed_tools:
 
 **Iron Laws**:
 1. Phase 1 incomplete → no fix proposals allowed. Non-negotiable.
-2. No Structured Reasoning Checkpoint → no fix applied. Violates Three-Strike rule.
-3. Same hypothesis fails 3 times consecutively → stop, question architecture.
+2. No tight red-capable loop → no Phase 2 hypothesis generation. Build the loop first (see Phase 1 gate below).
+3. No Structured Reasoning Checkpoint → no fix applied. Violates Three-Strike rule.
+4. Same hypothesis fails 3 times consecutively → stop, question architecture.
 
 **Not For**:
 - Known root-cause simple fixes (use `/forge fix`)
@@ -55,7 +56,7 @@ Default severity: warn. `--cross-branch` sets `severityOverride: warn` for cross
 | `find_root_cause_only` | User wants diagnosis only | Phases 1-3, no fix |
 | `find_and_fix` | Default | Full Phases 1-5 |
 | `tdd_mode` | TDD fix needed | Phase 4 uses RED→GREEN→REFACTOR |
-| `symptoms_prefilled` | Three-Strike triggered | Skip Phase 1 (symptoms already in context) |
+| `symptoms_prefilled` | Three-Strike triggered | Skip Phase 1 (symptoms already in context). Three consecutive same-direction failures **are themselves a red-capable signal**, so they satisfy the Phase 1→2 red-capable gate (see Phase 1). |
 
 ---
 
@@ -74,7 +75,15 @@ Gather all observable error behavior:
 
 **Write Rule**: Symptoms are **IMMUTABLE** after Phase 1. No modifications allowed in later phases.
 
-**Iron Law**: Phase 1 incomplete → cannot propose fixes. This is non-negotiable.
+**Phase 1→2 Gate — Tight Red-Capable Loop (铁律)**: Before entering Phase 2 (Hypothesis Generation), you must produce a **tight red-capable loop**: one named command (script path / test invocation / curl) that you have run **at least once**, and that is `red-capable` — it drives the real bug code path and asserts the user's exact symptom, going red on the bug. The loop must be **fast**, **deterministic** (or high-repro-rate for intermittent bugs — record the rate), and **agent-runnable**.
+
+> Staring at code without a red-capable loop is the failure mode this gate exists to prevent. If you catch yourself hypothesizing before a red-capable command exists — **stop**, go build the loop.
+
+**Loop construction tools** (try in order until one goes red on the bug): failing test · curl/HTTP replay · CLI snapshot · headless browser replay · trace replay · throwaway harness · fuzz · bisect harness · differential loop · human-in-the-loop bash. Treat the loop as a product — make it faster, sharper, more deterministic.
+
+**No loop possible**: If the bug genuinely resists a tight loop, you must **explicitly declare so**, list the reproduction attempts already made, and request from the user one of: environment access, a captured artifact, or temporary instrumentation permission. **Do not** continue to hypothesis generation without this declaration.
+
+**Iron Law**: Phase 1 incomplete → cannot propose fixes. This is non-negotiable. (Separately, no red-capable loop → cannot enter Phase 2 — see gate above.)
 
 ### Phase 2 — Hypothesis Generation
 
@@ -288,7 +297,7 @@ elif 3 internal trace attempts with no progress:
 ## 7. Execution Flow
 
 1. **Pre-flight**: Branch gate check
-2. **Phase 1**: Symptom gathering (no fix proposals) → write Symptoms (immutable)
+2. **Phase 1**: Symptom gathering (no fix proposals) → write Symptoms (immutable) → **gate**: no tight red-capable loop, no Phase 2
 3. **Phase 2**: Generate ≥2 falsifiable hypotheses → write Hypotheses (append-only)
 4. **Phase 3**: Test one hypothesis at a time → write Evidence/Eliminated (append-only)
 5. **Phase 4**: Fill Structured Reasoning Checkpoint → apply minimal fix (TDD optional)
@@ -313,7 +322,7 @@ elif 3 internal trace attempts with no progress:
 - **All hypotheses fail** → Back to Phase 2 with expanded scope. Consider architecture-level hypotheses.
 - **No `.forge/` directory** → Run `/forge init` first.
 - **Context overflow** → Debug reads too many files, context fills up. Use subagent for exploration, return only findings.
-- **symptoms_prefilled mode** → Skip Phase 1, go directly to Phase 2. Symptoms from Three-Strike context are pre-filled.
+- **symptoms_prefilled mode** → Skip Phase 1, go directly to Phase 2. Symptoms from Three-Strike context are pre-filled. The Phase 1→2 red-capable gate is **satisfied**: 3 consecutive same-direction failures constitute a red-capable signal (the loop is the failing build/test run itself).
 
 ---
 
@@ -321,7 +330,7 @@ elif 3 internal trace attempts with no progress:
 
 Three-Strike (§2.4 of CLAUDE.md) is the **trigger mechanism**; Scientific Method is the **methodology**. Relationship:
 
-- Three-Strike fires after 3 consecutive same-direction failures → enters `/forge debug` with `symptoms_prefilled` mode
+- Three-Strike fires after 3 consecutive same-direction failures → enters `/forge debug` with `symptoms_prefilled` mode (the 3 failures satisfy the Phase 1→2 red-capable gate, so Phase 1 symptom gathering is skipped)
 - Within debug, same hypothesis tested 3 times → stops that direction (inner Three-Strike)
 - Inner Three-Strike fires → question architecture, generate fundamentally different hypotheses
 - Both levels share the same `.forge/debug/{slug}.md` session file
