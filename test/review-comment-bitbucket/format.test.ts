@@ -71,15 +71,21 @@ describe("formatFinding property tests", () => {
         expect(result.comment_text).toContain("```suggestion");
         expect(result.comment_text).toContain(finding.suggestion);
 
-        // The suggestion should be between the fence lines
+        // The suggestion should be between the fence lines. The fence length is
+        // adaptive (>= 3 backticks) — it grows when message/suggestion contain a
+        // backtick run, so match the opening/closing fence by regex, not a fixed
+        // 3-backtick literal (otherwise message with "```" shrinks the property).
+        const fenceOpen = /^`{3,}suggestion$/;
+        const fenceClose = /^`{3,}$/;
         const lines = result.comment_text.split("\n");
         let inSuggestionBlock = false;
         let foundSuggestion = false;
 
         for (const line of lines) {
-          if (line.trim() === "```suggestion") {
+          const trimmed = line.trim();
+          if (fenceOpen.test(trimmed)) {
             inSuggestionBlock = true;
-          } else if (inSuggestionBlock && line.trim() === "```") {
+          } else if (inSuggestionBlock && fenceClose.test(trimmed)) {
             inSuggestionBlock = false;
           } else if (inSuggestionBlock && line === finding.suggestion) {
             foundSuggestion = true;
