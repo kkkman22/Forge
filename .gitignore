@@ -1,7 +1,11 @@
 node_modules/
+# Compiled TypeScript output — regenerated on-demand by CI and local tsc.
+# build-dist.sh copies the needed subset into dist/claude-code/bundles/.
 dist/src/
 dist/scripts/
 dist/locales/
+dist/test/
+dist/workflows/
 dist/claude-code/bundles/
 .DS_Store
 *.tsbuildinfo
