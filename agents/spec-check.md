@@ -291,6 +291,7 @@ fix_required: <fix suggestion>
 | 1 | P1 | 需求 2 场景 S3 | ❌ 未实现 | 缺少异步导出逻辑 |
 | 2 | P2 | 超出 Spec | ⚠️ Scope creep | 添加了未要求的缓存层 |
 | 3 | — | 需求 1 场景 S1 | ✅ 已实现 | — |
+| 4 | P2 | 需求 3 场景 S2 | ❓ unverifiable | 代码在 src/legacy.ts 未被本次 diff 触及，交 controller 复核 |
 
 <!-- REPORT_START -->
 ## Layer 1: spec-check Review
@@ -334,6 +335,34 @@ No spec alignment issues found.
 | **Evidence is placeholder (TBD/待补)** | **P1** |
 | **Charter invariant violated** (Charter Compliance, §7) | **P1** |
 | **Verify-By: vitest but test has empty assertion** | **P0** |
+| **Requirement maps to code outside the diff (unverifiable)** | **P2** |
+
+---
+
+## Unverifiable Verdict Decision Flow
+
+对每个需求点，按以下决策树选择 verdict（spec `review-unverifiable-verdict`）：
+
+```
+需求点对应的代码路径能否从 Spec / 需求描述中定位？
+├── 否 → 标 `fail`（P1，需求未被实现到任何文件）
+└── 是 → 该路径是否在本次 diff 触及的文件内？
+    ├── 是 → 正常执行 pass / fail 评审
+    └── 否 → 该文件是否存在？
+        ├── 不存在 → 标 `fail`（P1，声称实现但文件缺失）
+        └── 存在（未被 diff 改动）→ 标 `unverifiable`（P2）
+```
+
+**标记 `unverifiable` 后的铁律：**
+
+- **禁止**继续对该需求点发起额外的 Read / Glob / Grep 调用。Turn 预算留给 diff 内的需求点。
+- **必须**在 `unverifiable_reason` 写清：哪个需求点、对应哪个未改动文件、哪一行。
+- **必须**在 `suggested_fix` 写明："Controller 须亲自 Read `<file>:<line>` 复核 `<需求点>`"。
+- Structured JSON finding 须含 `verdict: "unverifiable"`、`unverifiable_reason`（非空）、`severity: "P2"`。缺省 verdict 的 finding 按 `fail` 处理（保守，向后兼容）。
+
+**关于 Adversarial Stance 的澄清：**
+
+`unverifiable` 不违反 Adversarial Stance 铁律。不信任 implementer ≠ 必须亲自读完所有相关代码。spec-check 的职责边界是 **本次 diff**；跨文件复核是 controller 的 Independent Verification 职责（见 review/instructions.md）。把职责交还 controller 是分工，不是偷懒。
 
 ---
 

@@ -1,6 +1,6 @@
 {
   "version": 1,
-  "generated_at": "2026-06-21T04:42:31.589Z",
+  "generated_at": "2026-06-21T04:46:15.195Z",
   "subs": {
     "abort": {
       "instructions": {
@@ -524,7 +524,7 @@
     "review": {
       "instructions": {
         "path": "review/instructions.md",
-        "sha256": "49e8aa9fb2275bd8eaadfc36532b4d7b52756222c4af28121d78b09295ab4217"
+        "sha256": "f54e95570e1d0a625272f87422faa6483863a52ab84f56a1c7c24853d55b1411"
       },
       "references": [
         {

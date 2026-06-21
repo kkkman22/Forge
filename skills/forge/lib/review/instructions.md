@@ -319,6 +319,19 @@ P0/P1 只能 `gated_auto`/`manual`；P2 可 `safe_auto`；P3 默认 `advisory`�
 
 去重 + 跨评审者一致性验证 + 6 项报告质量自检。→ 详见 references/dedup-pipeline.md、references/quality-gate.md
 
+## 7.1 Independent Verification（铁律）
+
+收到三层 review 结果后，controller 必须独立验证，不因一层 pass 就假定其他层也没问题：
+
+1. **不信任任何单层结论**：三层独立，一层 pass 不代表其他层也 pass
+2. **验证 reviewer 的证据**：reviewer 报 P0/P1 时，检查其 `file:line` 引用是否指向实际存在的代码
+3. **交叉比对**：spec-check 报"已实现" + quality-check 报"测试充分" ≠ 安全无虞
+4. **盲点感知**：如果三层都报"无问题"但变更涉及安全相关代码（权限、认证、文件操作），主动触发深度安全审查。reviewer 全绿 + 变更 > 200 行 = 高风险信号
+5. **接收 `unverifiable` finding 时，controller 必须亲自 Read 对应的未改动文件**（spec `review-unverifiable-verdict`），对照需求点复核，不得跳过：
+   - 复核后确认未实现 → 升级为 `P1` 并加入最终 finding
+   - 复核后确认已实现 → 在最终报告标注 `verified-by-controller` 并保留 `P2 advisory` 痕迹（可审计）
+   - **所有 `unverifiable` finding 不得直接计入"三层全绿"判定**：即便只有 unverifiable 没有 fail，controller 仍须完成复核后才能标记 review 通过（`computeAllGreen` 在存在 unverifiable 时返回非全绿）
+
 ## 7b. Evolution 沉淀（新模式 / 已知失败命中）
 
 评审收尾时调用 `buildReviewEvolutionArtifacts(input, now, seq)`（`src/review.ts`）产出两类产物：`newPatternSituation` 非空 → 写 failure episode 到 `sessions/` 并在 review 报告末尾追加 Evolution 标记（target=`forge-review#new_review_pattern`）；`matchedFailurePattern` 非空 → 驱动层按返回的 `patternUpdate` 调 `updatePatternStats(pattern, "success")`。所有写入失败降级为 `console.warn`，不阻断 ship 判定。
