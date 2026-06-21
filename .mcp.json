@@ -2,7 +2,7 @@
   "mcpServers": {
     "forge-context": {
       "command": "node",
-      "args": ["dist/src/mcp/server.js"],
+      "args": ["dist/forge-context.mjs"],
       "timeout": 15000
     }
   }

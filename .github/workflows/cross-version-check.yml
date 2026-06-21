@@ -27,6 +27,8 @@ jobs:
       - run: npm ci
       - name: Compile TypeScript
         run: npx tsc
+      - name: Build dist-plugin (required by plugin-dist/hard-gate/release tests)
+        run: bash scripts/build-dist.sh
       - run: npm test
 
   scan-ci-logs:

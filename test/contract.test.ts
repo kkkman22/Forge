@@ -1002,8 +1002,11 @@ describe("Contract: forge-context MCP server declared in .mcp.json", () => {
     expect(json.mcpServers["forge-context"].command).toBe("node");
   });
 
-  it("forge-context args reference dist/src/mcp/server.js", () => {
-    expect(json.mcpServers["forge-context"].args[0]).toContain("dist/src/mcp/server.js");
+  it("forge-context args reference the bundled server dist/forge-context.mjs", () => {
+    const argPath = json.mcpServers["forge-context"].args[0];
+    // The marketplace-install path resolves to the self-contained bundle
+    // (inlines @modelcontextprotocol/sdk + zod + ajv), not the tsc output.
+    expect(argPath).toBe("dist/forge-context.mjs");
   });
 });
 

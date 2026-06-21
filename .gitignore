@@ -1,8 +1,22 @@
 node_modules/
+# Compiled TypeScript output — regenerated on-demand by CI and local tsc.
+# build-dist.sh copies the needed subset into dist/claude-code/bundles/.
 dist/src/
 dist/scripts/
 dist/locales/
+dist/test/
+dist/workflows/
 dist/claude-code/bundles/
+
+# Exception: ship the bundled forge-context MCP server as a single self-contained
+# file so marketplace install (root .mcp.json → dist/forge-context.mjs) works
+# with zero compilation and zero node_modules. Rebuilt by scripts/bundle-mcp.mjs.
+!dist/forge-context.mjs
+
+# dist-plugin is rebuilt on demand by build-dist.sh; not a source of truth
+# (marketplace reads repo root via source: "./", not dist-plugin).
+dist-plugin/
+
 .DS_Store
 *.tsbuildinfo
 coverage/
@@ -59,3 +73,13 @@ apps/forge-loop-desktop/src-tauri/resources/node/bin/nodedist/
 # Tool-health runtime event log (append-only; the tracked .md holds only the
 # stable summary + skip-trace counters). See chore/split-tool-health-log-from-md.
 .forge/knowledge/tool-health.log
+
+# CI benchmark output (regenerated each run by sync-derived-data.yml and
+# consumed by scripts/append-baseline.mjs; not a source artifact).
+bench-result.json
+
+# Vitest default output dir (runtime artifact; ship-gates reads .forge/test-results/).
+test-results/
+
+# Claude Code run-continuation session cache (local runtime state).
+.omo/

@@ -803,7 +803,7 @@ echo "  • 大变更集（≥15 文件）评审可能截断"
 echo "  • lock 文件、生成文件可能挤占预算"
 echo ""
 
-mcp_server_path="${FORGE_ROOT}/dist/src/mcp/server.js"
+mcp_server_path="${FORGE_ROOT}/dist/forge-context.mjs"
 
 if [ -f "$mcp_server_path" ]; then
   if command -v node &>/dev/null; then

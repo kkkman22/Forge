@@ -135,6 +135,14 @@ if [[ -d "${FORGE_ROOT}/dist/src/mcp" ]]; then
   cp -r "${FORGE_ROOT}/dist/src/mcp"/. "${CC_BUNDLE}/dist/src/mcp/"
 fi
 
+# Bundle the forge-context MCP server into a single self-contained file.
+# This is what the marketplace-install path (.mcp.json → dist/forge-context.mjs)
+# resolves to — it inlines @modelcontextprotocol/sdk + zod + ajv so the server
+# runs with zero node_modules. Requires tsc output (dist/src/mcp/server.js).
+if [[ -f "${FORGE_ROOT}/dist/src/mcp/server.js" ]]; then
+  node "${SCRIPT_DIR}/bundle-mcp.mjs"
+fi
+
 # 写入版本号
 echo "${VERSION}" > "${CC_BUNDLE}/VERSION"
 
