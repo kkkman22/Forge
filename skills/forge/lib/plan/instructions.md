@@ -270,6 +270,39 @@ Frontmatter 字段：`topic`, `status` (draft/approved), `date`, `spec_ref`, `fo
 
 两种格式模板（Lightweight + Full）的完整结构 → 详见 references/plan-document-format.md
 
+## 7.5. Producing Global Constraints & Interfaces
+
+`/forge plan` 生成 plan 草稿时**主动**产出 `## Global Constraints` 块和每个 Task 的 `Interfaces` 子块（spec `plan-global-constraints-and-interfaces`）。这两个块让 plan 自包含跨任务约束与 per-task 接口契约，implementer/reviewer 不必跨文档推导。
+
+### Global Constraints 内容来源
+
+按优先级从以下来源提取跨任务约束，**逐字抄录**进 Global Constraints 表（不写"见 spec §3"这类引用）：
+
+1. **`.forge/charter.md`**（status: active）— 项目级 invariant（模块边界、命名、安全级别）
+2. **`.forge/config.md`** — 运行时版本、依赖上限、命名配置
+3. **spec 的 Non-Functional Requirements** — 性能、超时、文案、i18n
+4. **design.md 的技术选型** — 框架版本、库选择、API 风格
+5. **package.json / 现有依赖** — 实际版本上下限
+
+无跨任务约束时保留块并填 `None`（显式声明，不省略）。
+
+### Interfaces 内容来源
+
+每个 Task 的 `Interfaces` 子块含 `Consumes`（本 task 依赖的接口）和 `Produces`（本 task 产出的接口），每条条目四字段：`name` / `signature` / `provider`（哪个 task 或 existing）/ `file`。无依赖产出时显式填 `None`。
+
+来源：
+1. **design.md 的 Components and Interfaces 段** — 主要来源
+2. **现有代码的类型定义**（provider: existing 的接口）
+3. **File Mapping 的跨 task 依赖** — 若 Task A 改的文件被 Task B 读，提取接口契约
+
+### 增量 replan 维护
+
+增量 replan 时，若新增 task 涉及新接口，**必须**更新 Interfaces 块；若新增跨任务约束，**必须**更新 Global Constraints 块。
+
+### 与 review 的交互
+
+两个块的存在**不阻断** plan approve（向后兼容历史 plan）。但 spec-check reviewer 可将缺失块标为 `P3 advisory`（建议改进，不阻断 ship）。
+
 ---
 
 ## 8. Execution Flow
