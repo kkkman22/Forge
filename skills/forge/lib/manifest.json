@@ -1,6 +1,6 @@
 {
   "version": 1,
-  "generated_at": "2026-06-21T04:46:15.195Z",
+  "generated_at": "2026-06-21T04:55:02.127Z",
   "subs": {
     "abort": {
       "instructions": {
@@ -41,7 +41,7 @@
     "build": {
       "instructions": {
         "path": "build/instructions.md",
-        "sha256": "4474e4d31f196fec0a374a74661e00d134e4d74b09378faaafd14ce69644e3f0"
+        "sha256": "e73cfd512d927aed0e2c0fdc419911e6cbe9a427222bb0a36f94ae4fb62ffb58"
       },
       "references": [
         {
@@ -107,6 +107,10 @@
         {
           "path": "build/references/no-mid-build-confirmation.md",
           "sha256": "f8ca85a16025427d52f09707a4298f40a9f510a1797c389eb0d3a977e1ec8cd8"
+        },
+        {
+          "path": "build/references/plan-preflight.md",
+          "sha256": "adf1b8e2d4769b398d336efe9d5e8ef0ebaea7a933410374f1a87cfe3687b067"
         },
         {
           "path": "build/references/refactor-method-library.md",

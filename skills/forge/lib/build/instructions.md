@@ -108,6 +108,7 @@ Build 阶段中途执行 `git rebase` / `git pull` / `git merge` 同步 main 时
 | 2 | **Plan Gate** — scan `.forge/plans/` status | Not `"approved"` | → `/forge plan` |
 | 3 | **Dir Integrity** — `.forge/` subdirs exist | Missing | → `/forge init` |
 | 4 | **Branch Gate** — `runBranchGate` 统一 hook | Not on `feature/<topic>` or `forge/<topic>` | → Auto-switch / Block |
+| 5 | **Plan Self-Consistency** — `runPlanPreflight` | plan 文档检测到内部冲突或自带违规（详见 references/plan-preflight.md） | → `/forge plan` |
 
 **Rejection Output**: `🚫 Build 前置检查未通过 — 命名：<检查> 证据：<文件状态> 建议：<路由> 重入：<条件>`. Multiple failures → list all. Autonomous → JSON.
 
@@ -115,7 +116,10 @@ Build 阶段中途执行 `git rebase` / `git pull` / `git merge` 同步 main 时
 
 **函数调用**: `checkBuildGate(config)` — 检查 build 前置门禁（Spec 锁定、Plan 批准、目录完整性）；`checkBranchTopicGate(branch, featureBranch)` — 验证分支命名是否符合 `feature/<topic>` 或 `forge/<topic>` 模式；`detectUnshippedBranches(gitLogFn)` — 扫描本地未合并的 feature 分支并输出警告
 
+**函数调用**: `runPlanPreflight({ planText, verifyWhitelist? })` — 解析 `.forge/plans/<topic>.md` 文本，按 references/plan-preflight.md 的 9 项规则（R2 内部冲突 5 项 + R3 自带违规 4 项）执行纯文本检查；返回 `PreflightResult`（pass/fail）；`kind === "fail"` 时按 §2 Rejection Output 规范一次列全所有 violations（每项含规则编号/涉及 Task/证据），路由回 `/forge plan`；Light tier 无 plan 时跳过。误报可用 `<!-- preflight-exempt: <规则编号> reason: <...> -->` 注释豁免（R4）。
+
 → Branch Gate auto-switch / unshipped-branch warning / lightweight exception 详见 references/branch-gate.md
+→ Plan Self-Consistency 检测规则、关键词模式、豁免机制详见 references/plan-preflight.md
 
 ### §2.5 Charter Grounding（写代码前注入工程约束）
 
