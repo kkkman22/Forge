@@ -78,7 +78,7 @@ const MID_STEP_CONFIRMATION_PATTERNS = [
 ];
 
 /** A parsed task block from the plan. */
-interface ParsedTask {
+export interface ParsedTask {
   id: string;
   title: string;
   body: string;
