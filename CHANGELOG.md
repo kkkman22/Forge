@@ -11,6 +11,42 @@ Entries follow [Keep a Changelog](https://keepachangelog.com/) with Forge-specif
 
 ## [Unreleased]
 
+### Added
+
+- **skill-craft**: adopt mattpocock/skills skill-craft improvements (9-point spec `mattpocock-skill-craft-borrow`) (#121)
+  - User-invoked vs model-invoked skill split + skill invocation inventory (R1)
+  - Session topology (main-flow/on-ramp/cross-session) + smart zone (100K conservative / ~120K SOTA) + handoff(fork) vs compact(continue) (R2)
+  - Domain document three-way split: glossary / ADR / rejected-requests (out-of-scope) library (R3)
+  - `/forge debug` Phase 1→2 tight red-capable loop gate (R4, no new phase number; three-strike context satisfies the gate)
+  - Completion Criterion two-attribute model (clarity + demand) for premature-completion defense (R5)
+  - Skill Failure Modes self-audit vocabulary (premature completion / duplication / sediment / sprawl / no-op) (R6)
+  - Leading Words vocabulary (tight / red-capable) for token-efficient behavior anchoring (R9)
+- **review**: extract `shared-vocabulary.md` SSOT (Two-Phase / JSON schema / Known-failures YAML / Return Protocol / Findings-Only / Confidence_Anchor); 3 checkers load via Step 0.1 Read (R8)
+
+### Changed
+
+- **debug**: tighten existing Phase 1 (Symptom Gathering) completion criteria — red-capable loop now a hard exit gate before Phase 2 (R4)
+- **review**: 3 checkers' Read budget raised 3→4 (1 shared-vocab Read + 3 deep-checks) to absorb the shared vocabulary load (R8)
+- **decide / triage**: query rejected-requests library before evaluation; rejected requests written to `.forge/knowledge/out-of-scope/` (R3)
+
+### Added (中文)
+
+- **skill-craft**: 借鉴 mattpocock/skills 的 skill 工艺改进(9 点 spec `mattpocock-skill-craft-borrow`)(#121)
+  - User-invoked vs model-invoked skill 二分 + skill 调用盘点(R1)
+  - 会话拓扑(主流程/on-ramp/跨会话桥)+ smart zone(100K 保守 / ~120K SOTA 参考)+ handoff(fork) vs compact(continue)(R2)
+  - 领域文档三分:glossary / ADR / 被拒需求库(out-of-scope)(R3)
+  - `/forge debug` Phase 1→2 tight red-capable 回路门禁(R4,不新增 Phase 编号;三连失败上下文满足门禁)
+  - Completion Criterion 两属性模型(clarity + demand)治"过早完成"(R5)
+  - Skill Failure Modes 自审词汇表(premature completion / duplication / sediment / sprawl / no-op)(R6)
+  - Leading Words 词汇表(tight / red-capable)省 token 锚定行为(R9)
+- **review**: 抽取 `shared-vocabulary.md` 单源(Two-Phase / JSON schema / Known-failures YAML / Return Protocol / Findings-Only / Confidence_Anchor);3 checker 通过 Step 0.1 Read 加载(R8)
+
+### Changed (中文)
+
+- **debug**: 收紧现有 Phase 1(Symptom Gathering)完成判定——red-capable 回路成为 Phase 2 前置硬门禁(R4)
+- **review**: 3 checker Read 预算从 3 提升至 4(1 次 shared-vocab Read + 3 次深查)吸收共享词汇加载(R8)
+- **decide / triage**: 评估前查被拒需求库;被拒需求写入 `.forge/knowledge/out-of-scope/`(R3)
+
 ## [3.6.0] - 2026-06-21
 
 ### Added

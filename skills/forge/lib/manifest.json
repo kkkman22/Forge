@@ -1,6 +1,6 @@
 {
   "version": 1,
-  "generated_at": "2026-06-21T05:36:21.550Z",
+  "generated_at": "2026-06-21T10:16:05.004Z",
   "subs": {
     "abort": {
       "instructions": {
@@ -208,7 +208,7 @@
     "debug": {
       "instructions": {
         "path": "debug/instructions.md",
-        "sha256": "8584462d183f24382aa9db187cb40079fa838413aa255d3792300a883574cbaa"
+        "sha256": "de864d8dac1755baa7e1526b119fc486da44e46fd032f9a3a37f13bee65100ac"
       },
       "references": [
         {
@@ -224,7 +224,7 @@
     "decide": {
       "instructions": {
         "path": "decide/instructions.md",
-        "sha256": "b048f698f0a0689ae40e432309aba0c83daacbb3b8cb721fe99bd5b5fe74739b"
+        "sha256": "3f34234c1d3bfb1713e4c6d08b86be0cb0fc140690d920ce3d4c4351fc2ad927"
       },
       "references": [
         {
@@ -588,6 +588,10 @@
           "sha256": "896f3dbc054206882ecc6d520efae7e9642fcc4b542298818fa9f0f345747da8"
         },
         {
+          "path": "review/references/shared-vocabulary.md",
+          "sha256": "79047a6496f9aacda737f7b12b1ca8094ecf41c51e49ccd74f398e9794a5679a"
+        },
+        {
           "path": "review/references/subagent-return-protocol.md",
           "sha256": "118d08c64d413c0270710bdaabbcd816d1df2d17ec3cee8ad3f7033ee1d344fc"
         }
@@ -719,7 +723,7 @@
     "triage": {
       "instructions": {
         "path": "triage/instructions.md",
-        "sha256": "62210218060af29c481aab99d4c1da215597936ab10fd4716fa3d1c14837a8cf"
+        "sha256": "948f8ba5dec0afd89b41d4a78f9787dafdaa05d897bb56b3746525a13d69de39"
       },
       "references": []
     },

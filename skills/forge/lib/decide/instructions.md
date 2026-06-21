@@ -1,7 +1,7 @@
 ---
 description: "Use when starting a full-tier task, facing irreversible technical choices, or needing threat modeling before implementation"
 context: fork
-updated: 2026-06-05
+updated: 2026-06-21
 
 dispatch_mode: fork
 allowed_tools:
@@ -69,6 +69,12 @@ allowed_tools:
 Skill 启动时先展示与当前任务最相关的历史 ADR，帮助用户感知已有决策、避免重复讨论、发现需要 `supersedes` 的旧决策。完整流程：
 
 → 详见 references/adr-output.md §历史 ADR 提示
+
+## 被拒需求库查询 / Rejected-Requests Check
+
+Skill 启动时同时查 `.forge/knowledge/out-of-scope/`（被拒需求库）。**命中**相似项时直接引用其拒绝结论，不重复评估；**未命中**则正常评估。需求在本轮被明确拒绝时，写入 `.forge/knowledge/out-of-scope/`（惰性创建——有内容才建），含拒绝理由 + 日期。
+
+> 与"历史 ADR 提示"互补：ADR 是**已做的决策**，out-of-scope 是**已拒的需求**。两者共同防止重复讨论。详见 docs/forge-constitution-detail.md §4 Domain Document Three-Way Split。
 
 ---
 

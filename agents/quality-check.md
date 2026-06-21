@@ -204,16 +204,17 @@ net: -30 lines possible.
 **铁律**：每次评审的**第一步**必须调用 `forge_git(subcommand="diff-content", args="${BASE}...HEAD")` 工具获取已截断的 diff patch 作为唯一的变更上下文。在拿到 diff 之前，**严禁**使用 Read/Glob/Grep。如果 `forge_git` 工具不可用（MCP server 未启动），降级为单次 `Bash("git diff ${BASE}...HEAD | head -1500")`。
 
 1. **Step 0（强制首步）**：调用 `forge_git(subcommand="diff-content")` 拿到 diff patch
-2. **基于 diff 内容逐文件分析**全部维度的质量问题
-3. 对 diff 中可见的代码直接判断命名、错误处理、性能、重复等问题
-4. **仅对存疑项**用 Read 深入验证（**上限 3 次 Read**）：
+2. **Step 0.1（强制次步）**：`Read skills/forge/lib/review/references/shared-vocabulary.md` 加载共享词汇（Two-Phase / JSON schema / Known-failures YAML / Return Protocol / Findings-Only / Confidence_Anchor）。该 Read 计入 Read 预算。
+3. **基于 diff 内容逐文件分析**全部维度的质量问题
+4. 对 diff 中可见的代码直接判断命名、错误处理、性能、重复等问题
+5. **仅对存疑项**用 Read 深入验证（**上限 3 次深查 Read**，与 Step 0.1 合计 ≤ 4 次）：
    - 需要看函数完整上下文才能判断的性能问题
    - 需要确认是否有对应测试的新增逻辑
    - 需要确认重复代码是否已有公共函数
-5. 应用 Deslop 检测（Check Item 7）扫描 diff 中的 AI 代码异味
-6. 产出结构化输出
+6. 应用 Deslop 检测（Check Item 7）扫描 diff 中的 AI 代码异味
+7. 产出结构化输出
 
-**Read 预算**：除 Step 0 的 forge_git 调用外，整个评审过程最多 3 次 Read 调用。超出则停止 Read，基于已有信息产出结论。
+**Read 预算**：除 Step 0 的 forge_git 调用外，整个评审过程最多 4 次 Read 调用（1 次 Step 0.1 共享词汇 + 最多 3 次存疑项深查）。超出则停止 Read，基于已有信息产出结论。
 
 **禁止行为**：
 - ❌ 跳过 Step 0 直接 Read 变更文件
