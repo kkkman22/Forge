@@ -29,7 +29,7 @@
 
 import { readFileSync, writeFileSync, existsSync, unlinkSync } from "node:fs";
 import { execFileSync, execSync } from "node:child_process";
-import { join, dirname } from "node:path";
+import { join, dirname, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 
 const ROOT = join(dirname(fileURLToPath(import.meta.url)), "..");
@@ -143,9 +143,12 @@ function generateChangelogFromCommits(fromRef, toRef = "HEAD") {
 /**
  * Extract the changelog body for a given version from CHANGELOG.md.
  * Returns the content between ## [version] and the next ## [ header.
+ *
+ * @param {string} version - e.g. "3.6.0"
+ * @param {string} [changelogPath] - optional override (defaults to ROOT/CHANGELOG.md);
+ *   accepted so the function is unit-testable with a temp fixture.
  */
-function extractChangelogSection(version) {
-  const changelogPath = join(ROOT, "CHANGELOG.md");
+export function extractChangelogSection(version, changelogPath = join(ROOT, "CHANGELOG.md")) {
   if (!existsSync(changelogPath)) return null;
 
   const content = readFileSync(changelogPath, "utf-8");
@@ -163,6 +166,22 @@ function extractChangelogSection(version) {
     : content.slice(bodyStart, nextHeader);
 
   return body.trim() || null;
+}
+
+/**
+ * Build the summary line for the GitHub Release outcome.
+ *
+ * Pre-fix behavior printed "GitHub Release: ✅" unconditionally whenever --tag
+ * was passed, even when the try/catch above had caught a failure. That made the
+ * summary lie about a failed release. This pure function is extracted so the
+ * regression is unit-testable.
+ *
+ * @param {{ doTag: boolean, releaseCreated: boolean }} state
+ * @returns {string} the line to print (empty string when --tag not requested)
+ */
+export function formatReleaseSummary({ doTag, releaseCreated }) {
+  if (!doTag) return "";
+  return releaseCreated ? "  GitHub Release: ✅" : "  GitHub Release: ❌ (见上方错误，可手动创建)";
 }
 
 /**
@@ -232,6 +251,10 @@ function preflightChecks(newVersion, doTag) {
 
 function main() {
   const args = process.argv.slice(2);
+
+  // Tracked across the release step so the final summary reports the real
+  // outcome instead of an unconditional ✅ (see formatReleaseSummary).
+  let releaseCreated = false;
 
   if (args.includes("--help") || args.includes("-h")) {
     console.log("Usage: node scripts/bump-version.mjs <version | patch | minor | major> [--commit] [--tag]");
@@ -447,8 +470,13 @@ function main() {
       try { unlinkSync(notesFile); } catch {}
 
       console.log(`  ✓ GitHub Release ${tagName} 已创建`);
+      releaseCreated = true;
     } catch (e) {
-      console.error(`  ⚠️ GitHub Release 创建失败: ${e.message}`);
+      // Include error type + stack; bare e.message hid the root cause on a
+      // prior release ("changelogBody is not defined" with no stack).
+      const errType = e?.constructor?.name ?? "Error";
+      console.error(`  ⚠️ GitHub Release 创建失败 [${errType}]: ${e?.message ?? e}`);
+      if (e?.stack) console.error(`    ${e.stack.split("\n").slice(1, 4).join("\n    ")}`);
       console.error(`  可手动创建: gh release create ${tagName} --title "${tagName}"`);
       // 不 exit — release 失败不阻断，tag 已推送
     }
@@ -459,8 +487,16 @@ function main() {
   console.log(`  版本: ${currentVersion} → ${newVersion}`);
   if (doCommit) console.log("  commit: ✅");
   if (doTag) console.log(`  tag: v${newVersion} ✅`);
-  if (doTag) console.log("  GitHub Release: ✅");
+  if (doTag) console.log(formatReleaseSummary({ doTag, releaseCreated }));
   if (!doCommit) console.log("  提示: 加 --commit 自动提交，加 --tag 创建 tag + push + release");
 }
 
-main();
+// Only run main() when executed directly (e.g. `node scripts/bump-version.mjs`),
+// not when imported as a module for unit testing. This is the standard CLI
+// guard and lets the helper functions be tested without import-time side effects.
+// Resolve argv[1] to an absolute path first so it works regardless of whether
+// the process was launched with a relative or absolute script path.
+const invokedAsEntry = process.argv[1] && fileURLToPath(import.meta.url) === resolve(process.argv[1]);
+if (invokedAsEntry) {
+  main();
+}
