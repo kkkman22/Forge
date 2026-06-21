@@ -1,6 +1,6 @@
 {
   "version": 1,
-  "generated_at": "2026-06-21T03:59:24.749Z",
+  "generated_at": "2026-06-21T05:04:20.568Z",
   "subs": {
     "abort": {
       "instructions": {
@@ -41,7 +41,7 @@
     "build": {
       "instructions": {
         "path": "build/instructions.md",
-        "sha256": "4474e4d31f196fec0a374a74661e00d134e4d74b09378faaafd14ce69644e3f0"
+        "sha256": "e73cfd512d927aed0e2c0fdc419911e6cbe9a427222bb0a36f94ae4fb62ffb58"
       },
       "references": [
         {
@@ -107,6 +107,10 @@
         {
           "path": "build/references/no-mid-build-confirmation.md",
           "sha256": "f8ca85a16025427d52f09707a4298f40a9f510a1797c389eb0d3a977e1ec8cd8"
+        },
+        {
+          "path": "build/references/plan-preflight.md",
+          "sha256": "adf1b8e2d4769b398d336efe9d5e8ef0ebaea7a933410374f1a87cfe3687b067"
         },
         {
           "path": "build/references/refactor-method-library.md",
@@ -417,7 +421,7 @@
     "plan": {
       "instructions": {
         "path": "plan/instructions.md",
-        "sha256": "17dd9f043e474c5cf257815fe32924116e3671db58ac41b749b316881559f9d9"
+        "sha256": "a70f21cbf6624568360c315ec011272983f90727146d2f67151c2282fc1d4a2e"
       },
       "references": [
         {
@@ -442,7 +446,7 @@
         },
         {
           "path": "plan/references/plan-document-format.md",
-          "sha256": "a339a5929aeee98abddef2eab74106ec11ef33b951ad6d4ddb1892ee37366c52"
+          "sha256": "9e4258869d69ab2a7aa37a2678f9cc1186030e942ecf986dbd0f40a617923d81"
         },
         {
           "path": "plan/references/plan-split-wizard.md",
@@ -524,7 +528,7 @@
     "review": {
       "instructions": {
         "path": "review/instructions.md",
-        "sha256": "85c6a372882341be0b7136ec94c046ca35314b451a0abc1b493c7ba086bc17fe"
+        "sha256": "f54e95570e1d0a625272f87422faa6483863a52ab84f56a1c7c24853d55b1411"
       },
       "references": [
         {

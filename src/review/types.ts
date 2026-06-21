@@ -8,6 +8,18 @@ export type Severity = "P0" | "P1" | "P2" | "P3";
 
 export type FixRoute = "safe_auto" | "gated_auto" | "manual" | "advisory";
 
+/**
+ * Verdict on a single finding (spec `review-unverifiable-verdict`).
+ *
+ * - `pass` / `fail`: the reviewer verified the requirement against the diff.
+ * - `unverifiable`: the requirement maps to code outside this diff (file exists
+ *   but was not touched). The reviewer defers cross-file verification to the
+ *   controller rather than reading unrelated files or guessing.
+ *
+ * Absent on legacy findings; merge treats absence as `fail` (conservative).
+ */
+export type Verdict = "pass" | "fail" | "unverifiable";
+
 export interface ReviewFinding {
   severity: Severity;
   confidence: number;
@@ -17,6 +29,10 @@ export interface ReviewFinding {
   description: string;
   suggestion: string;
   reviewer: string;
+  /** Spec review-unverifiable-verdict. Absent on legacy findings → treated as `fail`. */
+  verdict?: Verdict;
+  /** Required when verdict === "unverifiable": which requirement/file is deferred. */
+  unverifiable_reason?: string;
 }
 
 export interface MergedFinding extends ReviewFinding {

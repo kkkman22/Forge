@@ -1,8 +1,9 @@
 ---
 name: quality-check
-updated: 2026-06-05
+updated: 2026-06-21
 description: Use in /forge review Layer 2, when checking code quality of changed files
 model: sonnet
+model_tier: standard
 maxTurns: 12
 tools: Read, Glob, Grep
 disallowedTools: [Bash, Write, Edit, Agent]

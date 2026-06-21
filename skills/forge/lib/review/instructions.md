@@ -145,6 +145,16 @@ if (!result.allowed) {
 
 **启动**：标准/全量路径按 `review.subagent_concurrency` 配置启动（默认 3，范围 1-10；可通过 `FORGE_REVIEW_CONCURRENCY` 环境变量覆盖），使用 `runSubagentsWithConcurrency`；轻量/无 Spec 模式仅 quality-check + security-check。**Layer 4**：检测到 `src/**/*.vue` 或 `package.json` 含 `vue` 时并行启动 frontend-check agent。**SDK 抽风时**（命中 `Error: No task found with ID` 等 task registry purge 现象，详见 `.forge/findings/agent-sdk-task-id-purge-2.1.143.md`）可临时设 `FORGE_REVIEW_CONCURRENCY=1` 完全串行。
 
+**Model Tier 解析（强制，spec `review-model-tier`）**：dispatch 每个 subagent 前，必须：
+
+1. 读取目标 agent frontmatter 的 `model_tier`（缺省视为 `inherit`，并显示 `⚠ <agent> 缺少 model_tier，按 inherit 处理`）
+2. 从 `.forge/config.md#review_model_tier_map` 解析 tier → 实际 model 名（缺省用内置默认 cheap=haiku/standard=sonnet/capable=inherit/inherit=inherit），使用 `resolveModelTier({ tier, tierMap, harnessSupports })`（`src/review/model-tier.ts`）
+3. 把解析结果传入 dispatch 调用
+4. 在主 agent 输出显示每个 subagent 的解析结果，格式 `<agent>: <tier> → <model>`（如 `spec-check: cheap → haiku`），便于成本审计
+5. 若解析 fell_back（`kind === "fallback"`），额外显示 `⚠ model_tier <tier> → <requested> 不被支持，回退 inherit`，**继续** dispatch（不阻断）
+
+**Compact-Safe 模式交互**：compact-safe 跳过的是 layer（quality/adversarial），**不**降级保留 layer 的 model_tier。被保留的 spec-check/security-check 仍按各自 tier 选模型。
+
 **容错**：`Promise.allSettled` 等待。单个失败不阻断；全部失败则终止。失败 Layer 标注"评审失败"。
 
 **Findings-Only 收集（Write-and-Discard）**：每个 Subagent 返回 findings-only 格式（severity table + `<!-- review-final -->` sentinel）。编排层收到后立即：
@@ -308,6 +318,19 @@ P0/P1 只能 `gated_auto`/`manual`；P2 可 `safe_auto`；P3 默认 `advisory`�
 ## 7. Deduplication & Quality Gate
 
 去重 + 跨评审者一致性验证 + 6 项报告质量自检。→ 详见 references/dedup-pipeline.md、references/quality-gate.md
+
+## 7.1 Independent Verification（铁律）
+
+收到三层 review 结果后，controller 必须独立验证，不因一层 pass 就假定其他层也没问题：
+
+1. **不信任任何单层结论**：三层独立，一层 pass 不代表其他层也 pass
+2. **验证 reviewer 的证据**：reviewer 报 P0/P1 时，检查其 `file:line` 引用是否指向实际存在的代码
+3. **交叉比对**：spec-check 报"已实现" + quality-check 报"测试充分" ≠ 安全无虞
+4. **盲点感知**：如果三层都报"无问题"但变更涉及安全相关代码（权限、认证、文件操作），主动触发深度安全审查。reviewer 全绿 + 变更 > 200 行 = 高风险信号
+5. **接收 `unverifiable` finding 时，controller 必须亲自 Read 对应的未改动文件**（spec `review-unverifiable-verdict`），对照需求点复核，不得跳过：
+   - 复核后确认未实现 → 升级为 `P1` 并加入最终 finding
+   - 复核后确认已实现 → 在最终报告标注 `verified-by-controller` 并保留 `P2 advisory` 痕迹（可审计）
+   - **所有 `unverifiable` finding 不得直接计入"三层全绿"判定**：即便只有 unverifiable 没有 fail，controller 仍须完成复核后才能标记 review 通过（`computeAllGreen` 在存在 unverifiable 时返回非全绿）
 
 ## 7b. Evolution 沉淀（新模式 / 已知失败命中）
 
@@ -480,7 +503,7 @@ Post-Review Step 4: 自动 /simplify + commit + 验证
 
 **Compact-Safe 模式（ce-inspired R10）**：当 context 接近上限（默认 100K tokens，阈值见 `.forge/config.md` 的 `context_budget`）时，自动降级为 compact-safe 模式而非失败或输出残缺。实现：`decideCompactSafe(currentTokens, contextBudget)`（`src/review/compact-safe.ts`）→ `{compactSafe, threshold}`。激活后：跳过 Validation Pass；仅启用 spec-check + security-check（`filterToCompactSafeLayers` 跳过 quality + adversarial）；merge 用简化去重 `compactSafeDedup`（仅按 file+line，不 normalize）；报告开头标注 `renderCompactSafeBanner()` + 每个 finding 用 `formatCompactSafeFinding`（仅 ID/severity/title/file:line）。**confidence gate 严格性不变**（R10.4）。也可用 `--compact-safe` CLI flag 强制启用。
 
-**Validation Pass（ce-inspired R5，Full tier 默认启用）**：三层 review merge 后、ship 前的可选独立验证环节。`.forge/config.md` 的 `review_enable_validation: true`（默认）+ Full tier 时启用；Standard/Light 跳过；`--no-validation` 强制跳过。为每个存活的 P0/P1 finding spawn 独立 `validation-pass` agent（`agents/validation-pass.md`，model sonnet/inherit by severity），**只传 title/severity/file/line/evidence，不传 reviewer identity**（R5.3 无承诺效应）。agent 返回 `{confirmed, reason, adjusted_confidence}`（R5.4）。forge-review 用 `applyValidationResult`（`src/review/validation-pass.ts`）应用降级：P0 未确认→P1、P1 未确认→P2，均标注 `↓ validation: <reason>`（R5.5/R5.6）；P2/P3 未确认不改 severity。结果逐行写入 `.forge/progress/<slug>-review-validation.jsonl`（`serializeValidationRecord`，R5.8 供 /forge learn 追溯）。
+**Validation Pass（ce-inspired R5，Full tier 默认启用）**：三层 review merge 后、ship 前的可选独立验证环节。`.forge/config.md` 的 `review_enable_validation: true`（默认）+ Full tier 时启用；Standard/Light 跳过；`--no-validation` 强制跳过。为每个存活的 P0/P1 finding spawn 独立 `validation-pass` agent（`agents/validation-pass.md`，model 按 `model_tier: standard` 经 `review_model_tier_map` 解析），**只传 title/severity/file/line/evidence，不传 reviewer identity**（R5.3 无承诺效应）。severity 仅影响 confidence 降级逻辑（R5.5/R5.6），不影响 model 选择。agent 返回 `{confirmed, reason, adjusted_confidence}`（R5.4）。forge-review 用 `applyValidationResult`（`src/review/validation-pass.ts`）应用降级：P0 未确认→P1、P1 未确认→P2，均标注 `↓ validation: <reason>`（R5.5/R5.6）；P2/P3 未确认不改 severity。结果逐行写入 `.forge/progress/<slug>-review-validation.jsonl`（`serializeValidationRecord`，R5.8 供 /forge learn 追溯）。
 
 ## 17. Known AI Failure Modes
 
