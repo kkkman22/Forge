@@ -117,7 +117,7 @@ Plugin 安装后，以下命令可直接在终端使用：
 Forge plugin 自带 `forge-context` first-party MCP server，为 `/forge review` 提供智能 diff 截断和上下文优化。
 
 - **零网络**：通过 stdio 在本地运行，不发起任何外部请求
-- **零配置**：marketplace 安装后自动启用，源仓库用户由 init.sh 配置
+- **零依赖**：server 以自包含 bundle 形式随仓库分发（`dist/forge-context.mjs`），marketplace 安装后无需 `npm install` 或编译即可启用；源仓库用户由 init.sh 配置
 - **智能优先级**：源码 > 配置 > 测试 > 生成文件 > lock，确保关键变更进入 token 预算
 
 > 实测效果：`/forge review` 19 文件变更场景 token 消耗从 700K+ 降至 <200K。

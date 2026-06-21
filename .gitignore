@@ -7,6 +7,16 @@ dist/locales/
 dist/test/
 dist/workflows/
 dist/claude-code/bundles/
+
+# Exception: ship the bundled forge-context MCP server as a single self-contained
+# file so marketplace install (root .mcp.json → dist/forge-context.mjs) works
+# with zero compilation and zero node_modules. Rebuilt by scripts/bundle-mcp.mjs.
+!dist/forge-context.mjs
+
+# dist-plugin is rebuilt on demand by build-dist.sh; not a source of truth
+# (marketplace reads repo root via source: "./", not dist-plugin).
+dist-plugin/
+
 .DS_Store
 *.tsbuildinfo
 coverage/
