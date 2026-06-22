@@ -150,4 +150,87 @@ describe("runtime-config-sync", () => {
     expect(report.mode).toBe("marketplace");
     expect(content).toContain(`${pluginRoot}/scripts/forge-hook-dispatch.mjs`);
   });
+
+  // Regression: v3.4.0–v3.6.0 wrote 15 hook entries in the unsupported
+  // {"args":[...]} form into user projects' .claude/settings.json. Claude Code
+  // /doctor rejects these ("type: Invalid input") and they never fire. The
+  // runtime sync (which runs on every SessionStart) must surface these as
+  // drift so users learn the plugin upgrade alone won't fix their project.
+  it("detects broken args-form hooks copied into .claude/settings.json", () => {
+    writeFileSync(
+      settingsPath,
+      JSON.stringify(
+        {
+          hooks: {
+            PostToolUse: [
+              {
+                matcher: "Write|Edit",
+                hooks: [{ timeout: 5, args: ["node", "scripts/rebuild-feature-dossier.mjs"] }],
+              },
+            ],
+            ConfigChange: [
+              {
+                hooks: [{ timeout: 3, args: ["node", "scripts/config-changed-hook.mjs"] }],
+              },
+            ],
+          },
+        },
+        null,
+        2,
+      ),
+    );
+
+    const report = detectRuntimeConfigDrift({
+      projectRoot: root,
+      mode: "source",
+    });
+
+    // The two broken args-form hooks must be reported with their event + command.
+    expect(report.brokenArgsHooks).toHaveLength(2);
+    expect(report.brokenArgsHooks.map((h) => h.event)).toEqual(
+      expect.arrayContaining(["PostToolUse", "ConfigChange"]),
+    );
+    expect(report.brokenArgsHooks.map((h) => h.command)).toEqual(
+      expect.arrayContaining([
+        "node scripts/rebuild-feature-dossier.mjs",
+        "node scripts/config-changed-hook.mjs",
+      ]),
+    );
+    // The 5 required dispatcher shims are ALSO missing in this fixture, so
+    // drift must be true — but brokenArgsHooks is a separate signal.
+    expect(report.drift).toBe(true);
+  });
+
+  it("does not flag valid type:command hooks as broken args-form", () => {
+    writeFileSync(
+      settingsPath,
+      JSON.stringify(
+        {
+          hooks: {
+            PostToolUse: [
+              {
+                matcher: "Write|Edit",
+                hooks: [
+                  {
+                    type: "command",
+                    command: "node scripts/rebuild-feature-dossier.mjs 2>/dev/null || true",
+                    timeout: 5,
+                  },
+                ],
+              },
+            ],
+          },
+        },
+        null,
+        2,
+      ),
+    );
+
+    const report = detectRuntimeConfigDrift({
+      projectRoot: root,
+      mode: "source",
+    });
+
+    expect(report.brokenArgsHooks).toEqual([]);
+  });
 });

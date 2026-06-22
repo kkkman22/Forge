@@ -69,11 +69,29 @@ function detect(root, mode) {
     if (!serialized.includes(`@forge-runtime:${event}`)) missingHookEvents.push(event);
     else if (!serialized.includes(commandFor(mode, event))) staleHookEvents.push(event);
   }
+  // Scan ALL hook events for the unsupported args[] form — Forge v3.4.0–v3.6.0
+  // wrote 15 such entries into user projects and a plugin upgrade alone cannot
+  // repair them (init.sh skips hooks sync when a "hooks" key exists).
+  const brokenArgsHooks = [];
+  for (const [event, groups] of Object.entries(hooks)) {
+    if (!Array.isArray(groups)) continue;
+    for (const group of groups) {
+      const groupHooks =
+        group && typeof group === "object" && Array.isArray(group.hooks) ? group.hooks : [];
+      for (const hook of groupHooks) {
+        if (hook && typeof hook === "object" && Array.isArray(hook.args) && hook.args.length > 0) {
+          brokenArgsHooks.push({ event, command: hook.args.join(" ") });
+        }
+      }
+    }
+  }
   return {
     mode,
-    drift: missingHookEvents.length > 0 || staleHookEvents.length > 0,
+    drift:
+      missingHookEvents.length > 0 || staleHookEvents.length > 0 || brokenArgsHooks.length > 0,
     missingHookEvents,
     staleHookEvents,
+    brokenArgsHooks,
     settingsPath: path,
   };
 }
@@ -108,6 +126,19 @@ async function main() {
 
   if (args.json) {
     process.stdout.write(`${JSON.stringify(report)}\n`);
+  } else if (report.brokenArgsHooks && report.brokenArgsHooks.length > 0) {
+    // Migration warning for projects polluted by Forge v3.4.0–v3.6.0.
+    // Upgrading the plugin alone does NOT repair these because init.sh skips
+    // hooks sync when a "hooks" key already exists — they are snapshot copies.
+    const events = [...new Set(report.brokenArgsHooks.map((h) => h.event))];
+    process.stdout.write(
+      `⚠️  Forge detected ${report.brokenArgsHooks.length} hook(s) in .claude/settings.json using the unsupported "args" form (events: ${events.join(", ")}).\n` +
+        `   Claude Code /doctor rejects these ("type: Invalid input") and they never fire.\n` +
+        `   This was a Forge bug fixed in v3.6.1. To repair your project:\n` +
+        `     1. Delete the "hooks" key in .claude/settings.json\n` +
+        `     2. Re-run: forge init\n` +
+        `   (Upgrading the plugin alone is NOT enough — the broken entries are a snapshot copy.)\n`,
+    );
   } else if (report.drift) {
     process.stdout.write(
       `Forge runtime drift detected: missing=${report.missingHookEvents.join(",") || "none"} stale=${report.staleHookEvents.join(",") || "none"}\n`,

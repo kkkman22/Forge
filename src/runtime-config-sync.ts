@@ -9,11 +9,26 @@ export interface RuntimeConfigSyncOptions {
   settingsPath?: string;
 }
 
+export interface BrokenArgsHook {
+  /** Hook event name, e.g. "PostToolUse" / "ConfigChange". */
+  event: string;
+  /** Reconstructed command string (the args array joined), for the warning. */
+  command: string;
+}
+
 export interface RuntimeConfigDriftReport {
   mode: RuntimeConfigMode;
   drift: boolean;
   missingHookEvents: string[];
   staleHookEvents: string[];
+  /**
+   * Hook entries that use the unsupported `{"args":[...]}` form. Claude Code
+   * /doctor rejects these ("type: Invalid input") and they never fire. Surfaced
+   * separately from missing/stale so callers can emit a targeted migration
+   * warning — these are snapshot copies in the user's project that a plugin
+   * upgrade alone cannot repair.
+   */
+  brokenArgsHooks: BrokenArgsHook[];
   settingsPath: string;
 }
 
@@ -74,6 +89,41 @@ function containsForgeMarker(entries: unknown[], event: RequiredHookEvent): bool
   return entries.some((entry) => JSON.stringify(entry).includes(`@forge-runtime:${event}`));
 }
 
+/**
+ * Scan all hook entries for the unsupported `{"args":[...]}` form.
+ *
+ * Claude Code /doctor rejects args-form entries with "type: Invalid input" and
+ * they silently never fire. Forge v3.4.0–v3.6.0 wrote 15 such entries into user
+ * projects' .claude/settings.json via init.sh; because init.sh skips hooks
+ * sync when a "hooks" key already exists, upgrading the plugin alone does not
+ * repair them. This scan surfaces them so the runtime-sync CLI can emit a
+ * migration warning on every SessionStart.
+ */
+function findBrokenArgsHooks(hooks: Record<string, unknown[]>): BrokenArgsHook[] {
+  const broken: BrokenArgsHook[] = [];
+  for (const [event, groups] of Object.entries(hooks)) {
+    if (!Array.isArray(groups)) continue;
+    for (const group of groups) {
+      const groupHooks =
+        group &&
+        typeof group === "object" &&
+        Array.isArray((group as Record<string, unknown>).hooks)
+          ? ((group as Record<string, unknown>).hooks as unknown[])
+          : [];
+      for (const hook of groupHooks) {
+        if (!hook || typeof hook !== "object") continue;
+        const entry = hook as Record<string, unknown>;
+        if (Array.isArray(entry.args) && entry.args.length > 0) {
+          // Reconstruct the command for the warning message.
+          const command = entry.args.filter((a) => typeof a === "string").join(" ");
+          broken.push({ event, command });
+        }
+      }
+    }
+  }
+  return broken;
+}
+
 /** Detect drift between Forge runtime hook shims and the requested runtime mode. @public */
 export function detectRuntimeConfigDrift(
   options: RuntimeConfigSyncOptions,
@@ -95,11 +145,14 @@ export function detectRuntimeConfigDrift(
     }
   }
 
+  const brokenArgsHooks = findBrokenArgsHooks(hooks);
+
   return {
     mode: options.mode,
-    drift: missingHookEvents.length > 0 || staleHookEvents.length > 0,
+    drift: missingHookEvents.length > 0 || staleHookEvents.length > 0 || brokenArgsHooks.length > 0,
     missingHookEvents,
     staleHookEvents,
+    brokenArgsHooks,
     settingsPath: path,
   };
 }
