@@ -1085,12 +1085,38 @@ fi
 # ============================================================================
 info "Step 7/7：安装 Token 优化工具"
 
-# Helper: detect pip command
-detect_pip() {
-  if command -v pip &>/dev/null; then echo "pip"
-  elif command -v pip3 &>/dev/null; then echo "pip3"
-  else echo ""
+# Helper: detect the best Python installer for companion tools.
+# Priority: uvx > pipx > pip (with python3 >= 3.10 version gate).
+# Rationale: code-review-graph and headroom-ai declare `Requires-Python >=3.10`.
+# A bare `pip` check only verifies PATH presence — on systems whose default
+# pip points at Python < 3.10 (e.g. a conda 3.9 base), `pip install` hit PyPI's
+# version rejection and printed a misleading "install failed". uvx/pipx carry
+# their own isolated environments (uvx is what the CRG MCP uses at runtime),
+# so they sidestep the system-Python version entirely. Returns a record on
+# stdout as `<tool>:<install-prefix>` where <install-prefix> is the command
+# prefix to place before the package name, or empty when nothing usable.
+detect_python_installer() {
+  if command -v uvx &>/dev/null; then
+    echo "uvx:uvx --quiet"
+    return
   fi
+  if command -v pipx &>/dev/null; then
+    echo "pipx:pipx install"
+    return
+  fi
+  # Fall back to pip, but only if its underlying Python meets >= 3.10.
+  local py_major py_minor py_version_out
+  if py_version_out=$(python3 --version 2>/dev/null); then
+    py_major=$(echo "$py_version_out" | sed -nE 's/^Python ([0-9]+)\.([0-9]+).*/\1/p')
+    py_minor=$(echo "$py_version_out" | sed -nE 's/^Python ([0-9]+)\.([0-9]+).*/\2/p')
+    if [[ "${py_major:-0}" -gt 3 || ( "${py_major:-0}" -eq 3 && "${py_minor:-0}" -ge 10 ) ]]; then
+      if command -v pip &>/dev/null; then echo "pip:pip install"; return; fi
+      if command -v pip3 &>/dev/null; then echo "pip:pip3 install"; return; fi
+    else
+      warn "默认 Python 版本 ${py_major:-?}.${py_minor:-?} < 3.10，code-review-graph / headroom-ai 需要 >= 3.10。建议：安装 uvx（brew install uv）或升级默认 Python（如 python3.14 -m pip install）。companion 工具为 best-effort，Forge 将使用内置回退方案。"
+    fi
+  fi
+  echo ""
 }
 
 # Helper: install a companion tool with graceful, non-aborting failure.
@@ -1119,19 +1145,31 @@ install_companion() {
 }
 
 # --- a. code-review-graph（代码知识图谱）---
-pip_cmd=$(detect_pip)
-if [[ -n "${pip_cmd}" ]]; then
-  install_companion "code-review-graph" \
-    "代码知识图谱" \
-    "${pip_cmd} install code-review-graph" \
-    "Explore agent 将使用 grep 回退方案" || true
-  # Initialize CRG if installed
-  if command -v code-review-graph &>/dev/null; then
-    code-review-graph install --platform claude-code 2>/dev/null || true
-    code-review-graph build 2>/dev/null || true
+py_installer=$(detect_python_installer)
+py_tool="${py_installer%%:*}"
+py_prefix="${py_installer#*:}"
+if [[ -n "${py_tool}" ]]; then
+  if [[ "${py_tool}" == "uvx" ]]; then
+    # uvx runs packages in an isolated env on first invocation; pre-fetch so the
+    # first real call is fast. CRG's post-install/build steps assume a shared
+    # install, so they are skipped under uvx (best-effort, grep fallback remains).
+    install_companion "code-review-graph" \
+      "代码知识图谱（via uvx）" \
+      "uvx --quiet --from code-review-graph code-review-graph --version" \
+      "Explore agent 将使用 grep 回退方案" || true
+  else
+    install_companion "code-review-graph" \
+      "代码知识图谱" \
+      "${py_prefix} code-review-graph" \
+      "Explore agent 将使用 grep 回退方案" || true
+    # Initialize CRG if installed
+    if command -v code-review-graph &>/dev/null; then
+      code-review-graph install --platform claude-code 2>/dev/null || true
+      code-review-graph build 2>/dev/null || true
+    fi
   fi
 else
-  info "未检测到 pip/pip3，跳过 code-review-graph（grep 回退方案可用）"
+  info "未检测到可用的 Python 安装器（uvx/pipx/pip>=3.10），跳过 code-review-graph（grep 回退方案可用）"
 fi
 
 # --- b. Headroom（API 级压缩，wrap 模式）---
@@ -1141,13 +1179,20 @@ fi
 # uses `headroom wrap <cmd>` (API-level compression that proxies requests and
 # needs no heavyweight deps). Keeping the install lean avoids multi-minute
 # builds and the disk hit reported by users on reinstall.
-if [[ -n "${pip_cmd}" ]]; then
-  install_companion "Headroom" \
-    "API 级全量压缩（对话历史 + tool 输出 + 模型写回）" \
-    "${pip_cmd} install headroom-ai" \
-    "forge_exec 将使用内置 trimmer 回退方案（成功输出裁剪）；失败输出 Iron Law 由 formatFailureOutput 或 Headroom protected:error_output 兜底" || true
+if [[ -n "${py_tool}" ]]; then
+  if [[ "${py_tool}" == "uvx" ]]; then
+    install_companion "Headroom" \
+      "API 级全量压缩（via uvx，对话历史 + tool 输出 + 模型写回）" \
+      "uvx --quiet --from headroom-ai headroom --version" \
+      "forge_exec 将使用内置 trimmer 回退方案（成功输出裁剪）；失败输出 Iron Law 由 formatFailureOutput 或 Headroom protected:error_output 兜底" || true
+  else
+    install_companion "Headroom" \
+      "API 级全量压缩（对话历史 + tool 输出 + 模型写回）" \
+      "${py_prefix} headroom-ai" \
+      "forge_exec 将使用内置 trimmer 回退方案（成功输出裁剪）；失败输出 Iron Law 由 formatFailureOutput 或 Headroom protected:error_output 兜底" || true
+  fi
 else
-  info "未检测到 pip/pip3，跳过 Headroom（内置 trimmer 回退方案可用）"
+  info "未检测到可用的 Python 安装器（uvx/pipx/pip>=3.10），跳过 Headroom（内置 trimmer 回退方案可用）"
 fi
 
 # --- c. context-mode（大输出沙箱）---

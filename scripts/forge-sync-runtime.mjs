@@ -49,12 +49,14 @@ function readSettings(path) {
   }
 }
 
-function commandFor(mode, event) {
-  const base =
-    mode === "marketplace"
-      ? "${CLAUDE_PLUGIN_ROOT}/scripts/forge-hook-dispatch.mjs"
-      : "${CLAUDE_PROJECT_DIR}/scripts/forge-hook-dispatch.mjs";
-  return `node ${base} ${event} # @forge-runtime:${event}`;
+/**
+ * Build the source-mode Forge runtime hook command for an event. Marketplace
+ * mode never reaches here: detect/repair short-circuit before calling this,
+ * because the plugin's hooks/hooks.json is the sole hook source and
+ * `${CLAUDE_PLUGIN_ROOT}` is rejected at project-settings scope.
+ */
+function commandFor(event) {
+  return `node \${CLAUDE_PROJECT_DIR}/scripts/forge-hook-dispatch.mjs ${event} # @forge-runtime:${event}`;
 }
 
 function detect(root, mode) {
@@ -80,7 +82,7 @@ function detect(root, mode) {
     const entries = Array.isArray(hooks[event]) ? hooks[event] : [];
     const serialized = JSON.stringify(entries);
     if (!serialized.includes(`@forge-runtime:${event}`)) missingHookEvents.push(event);
-    else if (!serialized.includes(commandFor(mode, event))) staleHookEvents.push(event);
+    else if (!serialized.includes(commandFor(event))) staleHookEvents.push(event);
   }
   return {
     mode,
@@ -104,7 +106,7 @@ function repair(root, mode) {
     const preserved = entries.filter((entry) => !JSON.stringify(entry).includes(`@forge-runtime:${event}`));
     settings.hooks[event] = [
       ...preserved,
-      { hooks: [{ type: "command", command: commandFor(mode, event), timeout: 5 }] },
+      { hooks: [{ type: "command", command: commandFor(event), timeout: 5 }] },
     ];
   }
   mkdirSync(dirname(path), { recursive: true });

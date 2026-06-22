@@ -47,7 +47,7 @@ mkdir -p "${FAKE_PLUGIN}/agents"
 # pip/npm/claude/git/code-review-graph are stubbed to instant no-ops so Step 7
 # companion installs neither block nor write hooks into project settings.
 mkdir -p "${TMP}/fakebin"
-for bin in pip pip3 npm claude git code-review-graph; do
+for bin in pip pip3 npm claude git code-review-graph uvx pipx; do
   cat > "${TMP}/fakebin/${bin}" <<'EOF'
 #!/usr/bin/env bash
 exit 0
@@ -60,7 +60,7 @@ export PATH="${TMP}/fakebin:${PATH}"
 # Drive init.sh in MARKETPLACE mode.
 yes "" 2>/dev/null | CLAUDE_PLUGIN_ROOT="${FAKE_PLUGIN}" bash "$INIT_SH" --non-interactive >"${TMP}/out.log" 2>&1 &
 INIT_PID=$!
-( sleep 30; kill -TERM "$INIT_PID" 2>/dev/null || true ) &
+( sleep 90; kill -TERM "$INIT_PID" 2>/dev/null || true ) &
 WATCHDOG=$!
 wait "$INIT_PID" || true
 kill "$WATCHDOG" 2>/dev/null || true
