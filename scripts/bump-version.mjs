@@ -140,6 +140,140 @@ function generateChangelogFromCommits(fromRef, toRef = "HEAD") {
   return sections.length > 0 ? sections.join("\n\n") : null;
 }
 
+// Canonical Keep a Changelog section ordering. Entries that don't match are
+// appended in encounter order so we never silently drop a section.
+const SECTION_ORDER = [
+  "### Added",
+  "### Changed",
+  "### Deprecated",
+  "### Removed",
+  "### Fixed",
+  "### Security",
+];
+
+/**
+ * Parse a changelog body into an ordered map of section → entry lines.
+ * A section is a line starting with `### `; entries are the bullet lines that
+ * follow it until the next section (blank lines and indentation preserved).
+ * @param {string|null} body
+ * @returns {Map<string, string[]>}
+ */
+function parseSections(body) {
+  const sections = new Map();
+  if (!body) return sections;
+  let current = null;
+  for (const line of body.split("\n")) {
+    const m = line.match(/^###\s+(.+?)\s*$/);
+    if (m) {
+      current = `### ${m[1]}`;
+      if (!sections.has(current)) sections.set(current, []);
+    } else if (current !== null) {
+      sections.get(current).push(line);
+    }
+  }
+  // Trim trailing empty lines per section.
+  for (const [k, v] of sections) {
+    while (v.length > 0 && v[v.length - 1].trim() === "") v.pop();
+  }
+  return sections;
+}
+
+/**
+ * Extract PR/commit refs (`#NNN`) from a changelog entry line.
+ * Used to detect when an auto-generated terse summary describes the same PR a
+ * manual detailed entry already covers, so the duplicate can be dropped.
+ * @param {string} line
+ * @returns {Set<string>}
+ */
+function extractRefs(line) {
+  return new Set((line.match(/#\d+/g) || []).map((r) => r));
+}
+
+/**
+ * Merge auto-generated changelog entries with manual [Unreleased] entries.
+ *
+ * Bug this fixes (v3.6.1 release): the old code concatenated the two bodies,
+ * producing DUPLICATE section headers (two `### Fixed`) when both sources
+ * described the same change. extractChangelogSection() then picked the first
+ * (the terse auto-gen summary), burying the detailed manual block — including
+ * critical user-facing migration notes.
+ *
+ * Merge rules:
+ * 1. Collapse duplicate sections: one `### Fixed`, not two.
+ * 2. Manual entries win: when a manual entry references a PR (`#NNN`) that an
+ *    auto-gen entry also references, drop the auto-gen entry (the manual one is
+ *    always more detailed — the author wrote it deliberately).
+ * 3. Auto-gen entries for PRs NOT in the manual block are preserved (they
+ *    capture changes the author forgot to document manually).
+ * 4. Emit sections in canonical Keep a Changelog order.
+ *
+ * @param {string|null} autoEntries - from generateChangelogFromCommits()
+ * @param {string|null} manualEntries - hand-written under [Unreleased]
+ * @returns {string|null} merged body, or null if both inputs are null/empty
+ */
+export function mergeChangelogEntries(autoEntries, manualEntries) {
+  if (!autoEntries && !manualEntries) return null;
+  if (!autoEntries) return manualEntries;
+  if (!manualEntries) return autoEntries;
+
+  const auto = parseSections(autoEntries);
+  const manual = parseSections(manualEntries);
+
+  // Collect every PR/commit ref mentioned in ANY manual entry, across all
+  // sections — a manual Added entry about #119 should still suppress a terse
+  // auto-gen Fixed line about #119.
+  const manualRefs = new Set();
+  for (const lines of manual.values()) {
+    for (const line of lines) {
+      if (line.trim().startsWith("-")) {
+        for (const r of extractRefs(line)) manualRefs.add(r);
+      }
+    }
+  }
+
+  const merged = new Map(manual);
+  for (const [section, lines] of auto) {
+    if (!merged.has(section)) {
+      // Section only in auto-gen — keep it whole.
+      merged.set(section, lines);
+      continue;
+    }
+    // Section in both: keep manual lines, append auto-gen lines whose refs are
+    // NOT already covered by a manual entry.
+    const kept = [];
+    for (const line of lines) {
+      const isBullet = line.trim().startsWith("-");
+      if (!isBullet) continue; // skip blank/non-bullet lines
+      const refs = extractRefs(line);
+      const covered = refs.size > 0 && [...refs].every((r) => manualRefs.has(r));
+      if (!covered) kept.push(line);
+    }
+    if (kept.length > 0) {
+      merged.get(section).push("", ...kept);
+    }
+  }
+
+  // Emit in canonical order; unknown sections appended in encounter order.
+  const ordered = [];
+  const seen = new Set();
+  for (const header of SECTION_ORDER) {
+    if (merged.has(header)) {
+      ordered.push(header, "", ...merged.get(header));
+      seen.add(header);
+    }
+  }
+  for (const [header, lines] of merged) {
+    if (!seen.has(header)) {
+      ordered.push(header, "", ...lines);
+      seen.add(header);
+    }
+  }
+
+  // Collapse 3+ consecutive blank lines (from section joins) to 2.
+  const body = ordered.join("\n").replace(/\n{3,}/g, "\n\n").trim();
+  return body || null;
+}
+
 /**
  * Extract the changelog body for a given version from CHANGELOG.md.
  * Returns the content between ## [version] and the next ## [ header.
@@ -372,15 +506,12 @@ function main() {
         const lastTag = `v${currentVersion}`;
         const autoEntries = generateChangelogFromCommits(lastTag);
 
-        // Merge: auto-generated as base, manual entries appended if present
-        let changelogBody;
-        if (autoEntries && manualEntries) {
-          changelogBody = autoEntries + "\n\n" + manualEntries;
-        } else if (autoEntries) {
-          changelogBody = autoEntries;
-        } else if (manualEntries) {
-          changelogBody = manualEntries;
-        } else {
+        // Merge auto-gen + manual entries: collapse duplicate sections and drop
+        // terse auto-gen lines whose PR ref is already covered by a detailed
+        // manual entry (so a hand-written ⚠️ migration note never gets buried
+        // by a one-line summary of the same PR). See mergeChangelogEntries().
+        const changelogBody = mergeChangelogEntries(autoEntries, manualEntries);
+        if (!changelogBody) {
           console.log("\n  ⚠️ CHANGELOG.md [Unreleased] 为空且无新提交 — 跳过 changelog 更新");
         }
 
