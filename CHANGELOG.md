@@ -11,6 +11,27 @@ Entries follow [Keep a Changelog](https://keepachangelog.com/) with Forge-specif
 
 ## [Unreleased]
 
+## [3.7.0] - 2026-06-22
+
+### Added
+
+- **init**: parameterize init.sh for non-TTY + AskUserQuestion fallback (#125)
+### Changed
+
+- **changelog**: restore detailed migration note in [3.6.1]
+### Fixed
+
+- **hooks**: resolve script paths under plugin install (#125)
+  - **hooks/hooks.json**: every hook command referenced project-relative paths (`scripts/X.mjs`, `forge/scripts/X.mjs`, `~/.claude/skills/forge/scripts/X.mjs`), but plugin install places scripts at `${CLAUDE_PLUGIN_ROOT}/scripts/` — none of the three fallback paths resolved. The 7 `Stop` hooks had no `|| true` and threw a visible `MODULE_NOT_FOUND` on every Claude turn; other hooks silently no-op'd behind `|| true`.
+  - All script-referencing hooks now lead with `node "${CLAUDE_PLUGIN_ROOT:-}/scripts/X.mjs"` (the plugin path, expanded by Claude Code at hook runtime), then keep the existing 3-path fallback chain, then `|| true`. Mirrors the already-correct `forge-sync-runtime.mjs` SessionStart hook. Protection hooks (frozen-zone `check-frozen.sh`, `check-sandbox.js`, `hook-task-completed.sh`) intentionally keep their non-zero exit-code propagation and are exempt from `|| true`.
+  - Empirically verified: simulating a plugin install (CWD = bare project, `CLAUDE_PLUGIN_ROOT` = plugin cache) reproduces the original `Cannot find module '<project>/scripts/stop-incomplete-tasks.mjs'` under the old command and resolves cleanly (exit 0) under the new command.
+  - **⚠️ Migration for existing plugin installs**: the fix lands in `hooks/hooks.json` inside the plugin package, so reinstalling/updating the Forge plugin picks it up automatically — no project-side action required. Projects that copied `hooks.json` into `.claude/settings.json` via `forge init` (v3.4.0–v3.6.0 path) still carry the old project-relative paths; re-running `forge init` after deleting the `"hooks"` key refreshes them (same migration channel as #122).
+
+- **marketplace-install**: hook config + companion install robustness (#126) (#127)
+- **init**: marketplace mode skips writing hooks into project settings.json (#126) (#126)
+- **hooks**: resolve script paths under plugin install (#125) (#124)
+- **bump-version**: merge auto-gen + manual changelog entries without duplicates (#123)
+
 ### Fixed
 
 - **hooks**: resolve script paths under plugin install (#125)
