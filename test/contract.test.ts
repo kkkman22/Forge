@@ -570,20 +570,29 @@ describe("Contract: hooks.json structure validation", () => {
   ] as const;
 
   for (const [eventName, scriptPath] of requiredLifecycleHooks) {
-    it(`hooks.json contains ${eventName} lifecycle hook using args`, () => {
+    it(`hooks.json contains ${eventName} lifecycle hook referencing ${scriptPath}`, () => {
       const groups = hooks.hooks[eventName] as Array<{
-        hooks?: Array<{ args?: string[]; command?: string }>;
+        hooks?: Array<{ args?: string[]; command?: string; type?: string }>;
       }>;
 
       expect(groups, `${eventName} hook is not registered`).toBeDefined();
       expect(groups.length, `${eventName} hook has no handlers`).toBeGreaterThan(0);
 
-      const hasArgsHandler = groups.some((group) =>
+      // Claude Code requires {type:"command", command:"..."}; the older args[]
+      // form is rejected by /doctor. Assert the script is referenced via the
+      // command field of a valid hook entry.
+      const hasCommandHandler = groups.some((group) =>
         group.hooks?.some(
-          (handler) => Array.isArray(handler.args) && handler.args.includes(scriptPath),
+          (handler) =>
+            handler.type === "command" &&
+            typeof handler.command === "string" &&
+            handler.command.includes(scriptPath),
         ),
       );
-      expect(hasArgsHandler, `${eventName} must reference ${scriptPath} via args`).toBe(true);
+      expect(
+        hasCommandHandler,
+        `${eventName} must reference ${scriptPath} via a command entry`,
+      ).toBe(true);
     });
   }
 
@@ -595,13 +604,19 @@ describe("Contract: hooks.json structure validation", () => {
         for (const [hi, handler] of (
           group.hooks as Array<{ type?: string; command?: string; args?: string[] }>
         ).entries()) {
-          // Accept two formats: command string (type+command) or args[] exec form
+          // Claude Code's /doctor requires every hook entry to be
+          // {type:"command", command:"<shell string>"}. The args[] exec form
+          // is NOT supported and surfaces as "type: Invalid input". Enforce
+          // the single supported format and forbid args.
           const isCommand = handler.type === "command" && typeof handler.command === "string";
-          const isArgs = Array.isArray(handler.args) && handler.args.length > 0;
           expect(
-            isCommand || isArgs,
-            `${eventName} matcher group [${gi}] hook [${hi}] must have either {type:"command", command} or {args[]}`,
+            isCommand,
+            `${eventName} matcher group [${gi}] hook [${hi}] must be {type:"command", command:"..."} — got type=${handler.type}, command=${typeof handler.command}, args=${handler.args ? "present" : "absent"}`,
           ).toBe(true);
+          expect(
+            handler.args,
+            `${eventName} matcher group [${gi}] hook [${hi}] uses unsupported args[] form — convert to {type:"command", command}`,
+          ).toBeUndefined();
         }
       }
     }

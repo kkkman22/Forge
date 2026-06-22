@@ -939,8 +939,15 @@ detect_pip() {
   fi
 }
 
-# Helper: install a companion tool with graceful failure
+# Helper: install a companion tool with graceful, non-aborting failure.
 # Usage: install_companion <name> <description> <install_command> [fallback_msg]
+#
+# IMPORTANT: this function returns 1 on failure. Under `set -euo pipefail`
+# (set at the top of this script), an unguarded `install_companion ...` call
+# would therefore ABORT init.sh entirely — the remaining companion tools and
+# the final completion banner never run, and the process exits 1. Every caller
+# MUST guard with `|| true` (see Step 7 call sites). Companion installs are
+# best-effort: Forge always falls back to its built-in trimmer/grep fallbacks.
 install_companion() {
   local name="$1"
   local desc="$2"
@@ -963,7 +970,7 @@ if [[ -n "${pip_cmd}" ]]; then
   install_companion "code-review-graph" \
     "代码知识图谱" \
     "${pip_cmd} install code-review-graph" \
-    "Explore agent 将使用 grep 回退方案"
+    "Explore agent 将使用 grep 回退方案" || true
   # Initialize CRG if installed
   if command -v code-review-graph &>/dev/null; then
     code-review-graph install --platform claude-code 2>/dev/null || true
@@ -974,11 +981,17 @@ else
 fi
 
 # --- b. Headroom（API 级压缩，wrap 模式）---
+# NOTE: install the bare `headroom-ai` package, NOT `headroom-ai[all]`. The
+# `[all]` extra pulls torch / transformers / onnxruntime / scipy / pandas
+# (~2.5 GB) for local-model inference, which Forge never invokes — Forge only
+# uses `headroom wrap <cmd>` (API-level compression that proxies requests and
+# needs no heavyweight deps). Keeping the install lean avoids multi-minute
+# builds and the disk hit reported by users on reinstall.
 if [[ -n "${pip_cmd}" ]]; then
   install_companion "Headroom" \
     "API 级全量压缩（对话历史 + tool 输出 + 模型写回）" \
-    "${pip_cmd} install 'headroom-ai[all]'" \
-    "forge_exec 将使用内置 trimmer 回退方案（成功输出裁剪）；失败输出 Iron Law 由 formatFailureOutput 或 Headroom protected:error_output 兜底"
+    "${pip_cmd} install headroom-ai" \
+    "forge_exec 将使用内置 trimmer 回退方案（成功输出裁剪）；失败输出 Iron Law 由 formatFailureOutput 或 Headroom protected:error_output 兜底" || true
 else
   info "未检测到 pip/pip3，跳过 Headroom（内置 trimmer 回退方案可用）"
 fi
@@ -992,7 +1005,7 @@ if command -v npm &>/dev/null; then
   install_companion "context-mode" \
     "大输出沙箱（BM25 索引）" \
     "npm install -g context-mode" \
-    "大输出由 forge_exec + trimmer 处理"
+    "大输出由 forge_exec + trimmer 处理" || true
 else
   info "未检测到 npm，跳过 context-mode（forge_exec 回退方案可用）"
 fi
@@ -1002,7 +1015,7 @@ if command -v claude &>/dev/null; then
   install_companion "Caveman" \
     "回复压缩（去除客套话）" \
     "claude plugin marketplace add JuliusBrussee/caveman" \
-    "§2.6 Output Conciseness 规则继续生效"
+    "§2.6 Output Conciseness 规则继续生效" || true
 else
   info "未检测到 claude 命令，跳过 Caveman（§2.6 Output Conciseness 规则继续生效）"
 fi

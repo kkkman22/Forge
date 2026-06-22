@@ -237,14 +237,16 @@ describe("hooks.json contract: Stop/SubagentStop additionalContext", () => {
     expect(config.hooks.StopFailure).toBeDefined();
     expect(Array.isArray(config.hooks.StopFailure)).toBe(true);
 
-    const stopFailureHookArgs = config.hooks.StopFailure.flatMap(
-      (group: { hooks?: Array<{ args?: string[] }> }) =>
-        (group.hooks ?? []).map((h: { args?: string[] }) => h.args ?? []),
+    // Claude Code requires {type:"command", command:"..."}; verify the
+    // stop-additional-context script is referenced via a command entry (the
+    // older args[] form is rejected by /doctor and never fires).
+    const stopFailureCommands = config.hooks.StopFailure.flatMap(
+      (group: { hooks?: Array<{ command?: string }> }) =>
+        (group.hooks ?? []).map((h: { command?: string }) => h.command ?? ""),
     );
-    const hasAdditionalContextHook = stopFailureHookArgs.some(
-      (args: string[]) =>
-        Array.isArray(args) &&
-        args.some((a: unknown) => typeof a === "string" && a.includes("stop-additional-context")),
+    const hasAdditionalContextHook = stopFailureCommands.some(
+      (command: string) =>
+        typeof command === "string" && command.includes("stop-additional-context"),
     );
     expect(hasAdditionalContextHook).toBe(true);
   });

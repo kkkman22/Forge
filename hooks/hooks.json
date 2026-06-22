@@ -59,12 +59,9 @@
       {
         "hooks": [
           {
-            "timeout": 5,
-            "args": [
-              "node",
-              "scripts/cmux-mirror/sync-once.mjs",
-              ".forge"
-            ]
+            "type": "command",
+            "command": "node scripts/cmux-mirror/sync-once.mjs .forge 2>/dev/null || node forge/scripts/cmux-mirror/sync-once.mjs .forge 2>/dev/null || node ~/.claude/skills/forge/scripts/cmux-mirror/sync-once.mjs .forge 2>/dev/null || true",
+            "timeout": 5
           }
         ]
       },
@@ -135,11 +132,9 @@
         "matcher": "Write|Edit",
         "hooks": [
           {
-            "timeout": 5,
-            "args": [
-              "node",
-              "scripts/check-context-boundary.mjs"
-            ]
+            "type": "command",
+            "command": "node scripts/check-context-boundary.mjs 2>/dev/null || node forge/scripts/check-context-boundary.mjs 2>/dev/null || node ~/.claude/skills/forge/scripts/check-context-boundary.mjs 2>/dev/null || true",
+            "timeout": 5
           }
         ]
       },
@@ -180,12 +175,9 @@
         "if": "Write(.forge/**)|Edit(.forge/**)",
         "hooks": [
           {
-            "timeout": 5,
-            "args": [
-              "node",
-              "scripts/cmux-mirror/sync-once.mjs",
-              ".forge"
-            ]
+            "type": "command",
+            "command": "node scripts/cmux-mirror/sync-once.mjs .forge 2>/dev/null || node forge/scripts/cmux-mirror/sync-once.mjs .forge 2>/dev/null || node ~/.claude/skills/forge/scripts/cmux-mirror/sync-once.mjs .forge 2>/dev/null || true",
+            "timeout": 5
           }
         ]
       },
@@ -194,11 +186,9 @@
         "if": "Write(.forge/**)|Edit(.forge/**)",
         "hooks": [
           {
-            "timeout": 5,
-            "args": [
-              "node",
-              "scripts/rebuild-feature-dossier.mjs"
-            ]
+            "type": "command",
+            "command": "node scripts/rebuild-feature-dossier.mjs 2>/dev/null || node forge/scripts/rebuild-feature-dossier.mjs 2>/dev/null || node ~/.claude/skills/forge/scripts/rebuild-feature-dossier.mjs 2>/dev/null || true",
+            "timeout": 5
           }
         ]
       },
@@ -207,11 +197,9 @@
         "if": "Write(.forge/**)|Edit(.forge/**)",
         "hooks": [
           {
-            "timeout": 5,
-            "args": [
-              "node",
-              "scripts/knowledge-hook-dispatch.mjs"
-            ]
+            "type": "command",
+            "command": "node scripts/knowledge-hook-dispatch.mjs 2>/dev/null || node forge/scripts/knowledge-hook-dispatch.mjs 2>/dev/null || node ~/.claude/skills/forge/scripts/knowledge-hook-dispatch.mjs 2>/dev/null || true",
+            "timeout": 5
           }
         ]
       },
@@ -231,11 +219,9 @@
         "if": "Write(.forge/reviews/.diff-context.md)|Edit(.forge/reviews/.diff-context.md)",
         "hooks": [
           {
-            "timeout": 5,
-            "args": [
-              "node",
-              "scripts/check-diff-context-integrity.mjs"
-            ]
+            "type": "command",
+            "command": "node scripts/check-diff-context-integrity.mjs 2>/dev/null || node forge/scripts/check-diff-context-integrity.mjs 2>/dev/null || node ~/.claude/skills/forge/scripts/check-diff-context-integrity.mjs 2>/dev/null || true",
+            "timeout": 5
           }
         ]
       }
@@ -318,11 +304,9 @@
       {
         "hooks": [
           {
-            "timeout": 5,
-            "args": [
-              "bash",
-              "scripts/hook-precompact.sh"
-            ]
+            "type": "command",
+            "command": "bash scripts/hook-precompact.sh 2>/dev/null || bash forge/scripts/hook-precompact.sh 2>/dev/null || bash ~/.claude/skills/forge/scripts/hook-precompact.sh 2>/dev/null || true",
+            "timeout": 5
           }
         ]
       }
@@ -331,11 +315,9 @@
       {
         "hooks": [
           {
-            "timeout": 5,
-            "args": [
-              "bash",
-              "scripts/hook-postcompact.sh"
-            ]
+            "type": "command",
+            "command": "bash scripts/hook-postcompact.sh 2>/dev/null || bash forge/scripts/hook-postcompact.sh 2>/dev/null || bash ~/.claude/skills/forge/scripts/hook-postcompact.sh 2>/dev/null || true",
+            "timeout": 5
           }
         ]
       }
@@ -363,13 +345,9 @@
       {
         "hooks": [
           {
-            "timeout": 3,
-            "args": [
-              "node",
-              "scripts/task-created-hook.mjs"
-            ]
-
-
+            "type": "command",
+            "command": "node scripts/task-created-hook.mjs 2>/dev/null || node forge/scripts/task-created-hook.mjs 2>/dev/null || node ~/.claude/skills/forge/scripts/task-created-hook.mjs 2>/dev/null || true",
+            "timeout": 3
           }
         ]
       }
@@ -378,13 +356,9 @@
       {
         "hooks": [
           {
-            "timeout": 3,
-            "args": [
-              "node",
-              "scripts/worktree-create-hook.mjs"
-            ]
-
-
+            "type": "command",
+            "command": "node scripts/worktree-create-hook.mjs 2>/dev/null || node forge/scripts/worktree-create-hook.mjs 2>/dev/null || node ~/.claude/skills/forge/scripts/worktree-create-hook.mjs 2>/dev/null || true",
+            "timeout": 3
           }
         ]
       }
@@ -393,22 +367,18 @@
       {
         "hooks": [
           {
-            "timeout": 3,
-            "args": [
-              "node",
-              "scripts/stop-failure-hook.mjs"
-            ]
+            "type": "command",
+            "command": "node scripts/stop-failure-hook.mjs 2>/dev/null || node forge/scripts/stop-failure-hook.mjs 2>/dev/null || node ~/.claude/skills/forge/scripts/stop-failure-hook.mjs 2>/dev/null || true",
+            "timeout": 3
           }
         ]
       },
       {
         "hooks": [
           {
-            "timeout": 5,
-            "args": [
-              "node",
-              "scripts/stop-additional-context.mjs"
-            ]
+            "type": "command",
+            "command": "node scripts/stop-additional-context.mjs 2>/dev/null || node forge/scripts/stop-additional-context.mjs 2>/dev/null || node ~/.claude/skills/forge/scripts/stop-additional-context.mjs 2>/dev/null || true",
+            "timeout": 5
           }
         ]
       }
@@ -417,11 +387,9 @@
       {
         "hooks": [
           {
-            "timeout": 3,
-            "args": [
-              "node",
-              "scripts/config-changed-hook.mjs"
-            ]
+            "type": "command",
+            "command": "node scripts/config-changed-hook.mjs 2>/dev/null || node forge/scripts/config-changed-hook.mjs 2>/dev/null || node ~/.claude/skills/forge/scripts/config-changed-hook.mjs 2>/dev/null || true",
+            "timeout": 3
           }
         ]
       }
@@ -430,11 +398,9 @@
       {
         "hooks": [
           {
-            "timeout": 3,
-            "args": [
-              "node",
-              "scripts/permission-denied-hook.mjs"
-            ]
+            "type": "command",
+            "command": "node scripts/permission-denied-hook.mjs 2>/dev/null || node forge/scripts/permission-denied-hook.mjs 2>/dev/null || node ~/.claude/skills/forge/scripts/permission-denied-hook.mjs 2>/dev/null || true",
+            "timeout": 3
           }
         ]
       }
@@ -443,11 +409,9 @@
       {
         "hooks": [
           {
-            "timeout": 3,
-            "args": [
-              "node",
-              "scripts/worktree-remove-hook.mjs"
-            ]
+            "type": "command",
+            "command": "node scripts/worktree-remove-hook.mjs 2>/dev/null || node forge/scripts/worktree-remove-hook.mjs 2>/dev/null || node ~/.claude/skills/forge/scripts/worktree-remove-hook.mjs 2>/dev/null || true",
+            "timeout": 3
           }
         ]
       }
