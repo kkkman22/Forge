@@ -1210,6 +1210,12 @@ describe("Contract: stop hooks should not block", () => {
       hooks?: Array<{ type?: string; command?: string; args?: string[] }>;
     }>;
     const invalidHooks: string[] = [];
+    // Each Stop hook is a multi-arm fallback chain whose arms all invoke the
+    // same script under different roots:
+    //   node "${CLAUDE_PLUGIN_ROOT:-}/scripts/X.mjs" ... || node scripts/X.mjs ... || ...
+    // Extract every `scripts/<name>` reference and require at least one to
+    // exist in the repo, and forbid stale inline-loop / pure-shell commands.
+    const scriptRefRe = /scripts\/[A-Za-z0-9_./-]+\.(?:mjs|sh|js)/g;
     for (const group of stopGroups) {
       for (const hook of group.hooks ?? []) {
         if (hook.args) {
@@ -1224,14 +1230,16 @@ describe("Contract: stop hooks should not block", () => {
           invalidHooks.push(`stale-persistent-loop:${hook.command}`);
           continue;
         }
-        const match = hook.command.match(/^(node|bash) (scripts\/[A-Za-z0-9_./-]+)(?:\s.*)?$/);
-        if (!match) {
+        const refs = [...hook.command.matchAll(scriptRefRe)].map((m) => m[0]);
+        if (refs.length === 0) {
           invalidHooks.push(`inline-shell:${hook.command}`);
           continue;
         }
-        const scriptPath = resolve(ROOT, match[2]);
+        // At least one referenced script must resolve in the repo. All arms
+        // reference the same filename, so check the first.
+        const scriptPath = resolve(ROOT, refs[0]);
         if (!existsSync(scriptPath)) {
-          invalidHooks.push(`missing-script:${match[2]}`);
+          invalidHooks.push(`missing-script:${refs[0]}`);
         }
       }
     }
