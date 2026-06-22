@@ -59,6 +59,19 @@ function commandFor(mode, event) {
 
 function detect(root, mode) {
   const path = settingsPath(root);
+  // Marketplace mode: the plugin's own hooks/hooks.json is the sole source of
+  // runtime hooks, and Claude Code rejects ${CLAUDE_PLUGIN_ROOT} at project
+  // scope. Project settings.json is never expected to carry Forge shims in
+  // marketplace mode, so drift is reported as false unconditionally.
+  if (mode === "marketplace") {
+    return {
+      mode,
+      drift: false,
+      missingHookEvents: [],
+      staleHookEvents: [],
+      settingsPath: path,
+    };
+  }
   const settings = readSettings(path);
   const hooks = settings.hooks || {};
   const missingHookEvents = [];
@@ -79,6 +92,10 @@ function detect(root, mode) {
 }
 
 function repair(root, mode) {
+  // Marketplace mode short-circuits: the plugin's hooks/hooks.json provides
+  // every runtime hook, and writing ${CLAUDE_PLUGIN_ROOT} into project
+  // settings.json is rejected by Claude Code. Leave project settings untouched.
+  if (mode === "marketplace") return;
   const path = settingsPath(root);
   const settings = readSettings(path);
   settings.hooks ||= {};

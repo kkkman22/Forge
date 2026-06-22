@@ -44,14 +44,15 @@ function readSettings(path: string): Record<string, unknown> {
   }
 }
 
+/**
+ * Build the source-mode Forge runtime hook command for an event. Marketplace
+ * mode never reaches here: detect/repair short-circuit before calling this,
+ * because the plugin's hooks/hooks.json is the sole hook source and
+ * `${CLAUDE_PLUGIN_ROOT}` is rejected at project-settings scope.
+ */
 function hookCommand(mode: RuntimeConfigMode, event: RequiredHookEvent): string {
   const projectDir = "$" + "{CLAUDE_PROJECT_DIR}";
-  const pluginRoot = "$" + "{CLAUDE_PLUGIN_ROOT}";
-  const dispatcher =
-    mode === "source"
-      ? `${projectDir}/scripts/forge-hook-dispatch.mjs`
-      : `${pluginRoot}/scripts/forge-hook-dispatch.mjs`;
-  return `node ${dispatcher} ${event} # @forge-runtime:${event}`;
+  return `node ${projectDir}/scripts/forge-hook-dispatch.mjs ${event} # @forge-runtime:${event}`;
 }
 
 function getHooks(settings: Record<string, unknown>): Record<string, unknown[]> {
@@ -74,11 +75,32 @@ function containsForgeMarker(entries: unknown[], event: RequiredHookEvent): bool
   return entries.some((entry) => JSON.stringify(entry).includes(`@forge-runtime:${event}`));
 }
 
-/** Detect drift between Forge runtime hook shims and the requested runtime mode. @public */
+/**
+ * Detect drift between Forge runtime hook shims and the requested runtime mode.
+ *
+ * Marketplace mode is a no-op for drift purposes: the plugin's own
+ * `hooks/hooks.json` is the sole source of runtime hooks, and Claude Code
+ * rejects `${CLAUDE_PLUGIN_ROOT}` literals at project-settings scope. We
+ * therefore never expect project settings.json to carry Forge runtime shims
+ * in marketplace mode, and report `drift: false` unconditionally.
+ *
+ * @public
+ */
 export function detectRuntimeConfigDrift(
   options: RuntimeConfigSyncOptions,
 ): RuntimeConfigDriftReport {
   const path = settingsPathFor(options);
+
+  if (options.mode === "marketplace") {
+    return {
+      mode: "marketplace",
+      drift: false,
+      missingHookEvents: [],
+      staleHookEvents: [],
+      settingsPath: path,
+    };
+  }
+
   const settings = readSettings(path);
   const hooks = getHooks(settings);
   const missingHookEvents: string[] = [];
@@ -123,9 +145,22 @@ function removeMarkedEntries(entries: unknown[], event: RequiredHookEvent): unkn
   return entries.filter((entry) => !JSON.stringify(entry).includes(`@forge-runtime:${event}`));
 }
 
-/** Repair Forge-managed runtime hook shims without deleting user-managed hooks. @public */
+/**
+ * Repair Forge-managed runtime hook shims without deleting user-managed hooks.
+ *
+ * Marketplace mode short-circuits to a no-op: the plugin's `hooks/hooks.json`
+ * provides every runtime hook, and writing `${CLAUDE_PLUGIN_ROOT}` shims into
+ * the project settings.json is rejected by Claude Code. Project settings is
+ * left untouched.
+ *
+ * @public
+ */
 export function repairRuntimeConfig(options: RuntimeConfigSyncOptions): RuntimeConfigRepairResult {
   const before = detectRuntimeConfigDrift(options);
+  if (options.mode === "marketplace") {
+    return { ...before, changed: false };
+  }
+
   const path = settingsPathFor(options);
   const settings = readSettings(path);
   const hooks = getHooks(settings);
