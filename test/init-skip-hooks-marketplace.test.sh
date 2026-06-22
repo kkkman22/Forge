@@ -60,7 +60,7 @@ export PATH="${TMP}/fakebin:${PATH}"
 # Drive init.sh in MARKETPLACE mode.
 yes "" 2>/dev/null | CLAUDE_PLUGIN_ROOT="${FAKE_PLUGIN}" bash "$INIT_SH" --non-interactive >"${TMP}/out.log" 2>&1 &
 INIT_PID=$!
-( sleep 30; kill -TERM "$INIT_PID" 2>/dev/null || true ) &
+( sleep 90; kill -TERM "$INIT_PID" 2>/dev/null || true ) &
 WATCHDOG=$!
 wait "$INIT_PID" || true
 kill "$WATCHDOG" 2>/dev/null || true

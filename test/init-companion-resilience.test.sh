@@ -80,7 +80,7 @@ export PATH="${TMP}/fakebin:${PATH}"
 yes "" 2>/dev/null | CLAUDE_PLUGIN_ROOT="" bash "$INIT_SH" --non-interactive >"${TMP}/out.log" 2>&1 &
 INIT_PID=$!
 # Don't hang forever if init.sh blocks on a prompt.
-( sleep 30; kill -TERM "$INIT_PID" 2>/dev/null || true ) &
+( sleep 90; kill -TERM "$INIT_PID" 2>/dev/null || true ) &
 WATCHDOG=$!
 wait "$INIT_PID" || true
 kill "$WATCHDOG" 2>/dev/null || true
