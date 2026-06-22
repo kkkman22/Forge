@@ -3,7 +3,7 @@ title: 'Forge 快速入门指南'
 category: getting-started
 audience:
 - maintainer
-updated: 2026-06-18
+updated: 2026-06-22
 owner: forge-maintainers
 ---
 
@@ -64,6 +64,9 @@ bash /tmp/forge/scripts/install-dist.sh
 ```
 
 > Plugin 用户使用 `/forge init`，clone 用户也可使用 `bash forge/scripts/init.sh`，两者等价。
+> 在 Claude Code 内，`/forge init` 会通过 AskUserQuestion 逐项采集项目名/技术栈/安全级别等配置；
+> 终端用户直接 `bash scripts/init.sh` 则走原生 `read` 交互，也支持 `--name`/`--stack`/`--security`
+> 等 flags 实现完全非交互（CI 友好）。详见 `scripts/init.sh --help`。
 > 预期输出：`.forge/` 目录创建完成，包含 `config.md` 和 `status.md`。
 
 ### 步骤 3：验证安装

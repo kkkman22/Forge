@@ -142,7 +142,7 @@ summary = "Use when user starts full-tier task, says grill me, replies dig deepe
 dispatch_mode = "inline"
 tier = "all"
 stage = "auxiliary"
-allowed_tools = ["Bash", "Read"]
+allowed_tools = ["Bash", "Read", "AskUserQuestion"]
 description = "Use when user runs `/forge init`, project has no .forge/ directory, or plugin is installed but project not yet initialized"
 summary = "Use when user runs `/forge init`, project has no .forge/ directory, or plugin is installed but project not yet initialized."
 
