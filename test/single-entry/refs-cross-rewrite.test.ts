@@ -1,41 +1,19 @@
-import { readFileSync } from "node:fs";
+import { readdirSync, readFileSync } from "node:fs";
 import { resolve } from "node:path";
 import { glob } from "glob";
 import { describe, expect, it } from "vitest";
 
 const ROOT = resolve(import.meta.dirname, "..", "..");
 
-const VALID_SUBS = new Set([
-  "abort",
-  "accept",
-  "build",
-  "build-light",
-  "control-cli",
-  "control-ui",
-  "debug",
-  "decide",
-  "decide-teams",
-  "fix",
-  "fix-conflicts",
-  "grill",
-  "learn",
-  "loop",
-  "mutate",
-  "pack",
-  "plan",
-  "recap",
-  "refactor",
-  "resume",
-  "review",
-  "router",
-  "ship",
-  "spec",
-  "status",
-  "storm",
-  "test",
-  "verify",
-  "zoom-out",
-]);
+// Discover the actual set of lib subs from disk rather than hard-coding a list
+// that drifts as new subs are added. A cross-ref to any real sub directory
+// (e.g. ../charter/, ../init/) is by definition valid.
+const LIB_DIR = resolve(ROOT, "skills", "forge", "lib");
+const VALID_SUBS = new Set(
+  readdirSync(LIB_DIR, { withFileTypes: true })
+    .filter((entry) => entry.isDirectory())
+    .map((entry) => entry.name),
+);
 
 describe("R4.2: cross-sub references rewritten to lib structure", () => {
   it("no ../forge-<sub> pattern remains in lib/", async () => {
