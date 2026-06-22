@@ -53,10 +53,22 @@ check_cc_version() {
 
 check_cc_version || exit 1
 
-# ---------- Parse --pack / --recipe flags ----------
+# ---------- Parse flags ----------
+# Parameterized init (ADR: AskUserQuestion fallback in the init SKILL passes
+# answers via these flags so init.sh never needs a TTY inside Claude Code).
+# Each `opt_*` var is empty by default; the Step-1 read sites fall back to:
+#   1. opt_* value (flag)  →  2. NON_INTERACTIVE default  →  3. interactive read
 PACKS=()
 RECIPES=()
 remaining_args=()
+NON_INTERACTIVE=0
+opt_name=""
+opt_stack=""
+opt_security=""
+opt_ci_command=""
+opt_no_ultrareview=0
+opt_bday_cutoff=""
+opt_bday_tz=""
 while [[ $# -gt 0 ]]; do
   case "$1" in
     --pack)
@@ -72,9 +84,40 @@ while [[ $# -gt 0 ]]; do
       RECIPES+=("$2"); shift 2
       ;;
     --non-interactive)
-      # Consumed for test/non-interactive invocations; recipe mode exits before
-      # any prompt regardless, so no state needs to be stored.
+      # Skip all read prompts: use flag values where provided, defaults otherwise.
+      # Still accepted by --recipe (no-op there since recipe mode exits before prompts).
+      NON_INTERACTIVE=1
       shift
+      ;;
+    --name)
+      if [[ -z "${2:-}" ]]; then echo "❌ --name requires a value" >&2; exit 1; fi
+      opt_name="$2"; shift 2
+      ;;
+    --stack)
+      if [[ -z "${2:-}" ]]; then echo "❌ --stack requires a value" >&2; exit 1; fi
+      opt_stack="$2"; shift 2
+      ;;
+    --security)
+      if [[ -z "${2:-}" ]]; then echo "❌ --security requires 1|2|3" >&2; exit 1; fi
+      case "$2" in 1|2|3) opt_security="$2"; shift 2 ;; *) echo "❌ --security must be 1, 2, or 3" >&2; exit 1 ;; esac
+      ;;
+    --ci-command)
+      if [[ -z "${2:-}" ]]; then echo "❌ --ci-command requires a value" >&2; exit 1; fi
+      opt_ci_command="$2"; shift 2
+      ;;
+    --no-ultrareview)
+      opt_no_ultrareview=1; shift
+      ;;
+    --bday-cutoff)
+      if [[ -z "${2:-}" ]]; then echo "❌ --bday-cutoff requires an hour 0-23" >&2; exit 1; fi
+      case "$2" in
+        ''|*[!0-9]*) echo "❌ --bday-cutoff must be a number" >&2; exit 1 ;;
+        *) opt_bday_cutoff="$2"; shift 2 ;;
+      esac
+      ;;
+    --bday-tz)
+      if [[ -z "${2:-}" ]]; then echo "❌ --bday-tz requires an IANA zone" >&2; exit 1; fi
+      opt_bday_tz="$2"; shift 2
       ;;
     --help|-h)
       echo "Usage: scripts/init.sh [OPTIONS]"
@@ -88,7 +131,15 @@ while [[ $# -gt 0 ]]; do
       echo "  --recipe <name>   Generate a test-stack recipe into THIS project (ADR-0006 Req6)"
       echo "                    Available: vue3-vitest-msw, react-vitest-msw"
       echo "                    Does NOT auto-install deps; prints the install command."
-      echo "  --non-interactive Skip prompts (use defaults)."
+      echo "  --name <s>        Project name (skips the prompt)."
+      echo "  --stack <s>       Tech stack, comma-separated (skips the 1-7 menu)."
+      echo "  --security <1|2|3> Security level: 1=标准, 2=高, 3=最高."
+      echo "  --ci-command <s>  CI check command (e.g. 'npm run check')."
+      echo "  --no-ultrareview  Skip installing .github/workflows/ultrareview.yml."
+      echo "  --bday-cutoff <n> PMS only: business-day cutoff hour 0-23 (default 4)."
+      echo "  --bday-tz <zone>  PMS only: IANA timezone (default Asia/Shanghai)."
+      echo "  --non-interactive Skip all prompts: use --name/--stack/--security/etc. values"
+      echo "                    when given, otherwise defaults. Required for non-TTY runs."
       echo "  --help, -h        Show this help message"
       echo ""
       echo "Interactive: prompts for project name, tech stack, and security level."
@@ -246,74 +297,127 @@ echo ""
 # ---------- 检查是否已初始化 ----------
 if [[ -d "${PROJECT_ROOT}/.forge" ]]; then
   warn ".forge/ 目录已存在。重新初始化将覆盖配置文件。"
-  read -rp "是否继续？(y/N) " confirm
-  if [[ "${confirm}" != "y" && "${confirm}" != "Y" ]]; then
-    info "已取消初始化。"
-    exit 0
+  if [[ "${NON_INTERACTIVE:-0}" == "1" ]]; then
+    info "--non-interactive：自动继续（覆盖配置文件）。"
+  else
+    read -rp "是否继续？(y/N) " confirm
+    if [[ "${confirm}" != "y" && "${confirm}" != "Y" ]]; then
+      info "已取消初始化。"
+      exit 0
+    fi
   fi
 fi
 
 # ============================================================================
-# Step 1：交互式收集配置
+# Step 1：收集配置（flag > --non-interactive 默认 > 交互式 read）
 # ============================================================================
+# 每个 prompt 站点遵循同一优先级：
+#   1. --flag 值（opt_*）   2. NON_INTERACTIVE 默认   3. 交互式 read
+# 这让 /forge init 在 Claude Code 内可经由 AskUserQuestion → flags 无 TTY 运行，
+# 同时保留终端用户的纯 read 交互体验（NON_INTERACTIVE=0 且无 flag 时行为不变）。
+
+# 安全级别 → 中文 label 映射（flag 路径与 prompt 路径共用）。
+derive_security_label() {
+  case "$1" in
+    1) echo "标准" ;;
+    2) echo "高" ;;
+    3) echo "最高" ;;
+    *) echo "标准" ;;
+  esac
+}
+
 echo ""
 info "Step 1/7：收集项目信息"
 echo ""
 
 # --- 项目名称（自动检测） ---
 default_name="$(basename "${PROJECT_ROOT}")"
-read -rep "$(echo -e "${BLUE}?${NC}") 项目名称 [${default_name}]: " project_name
-project_name="${project_name:-${default_name}}"
+if [[ -n "${opt_name}" ]]; then
+  project_name="${opt_name}"
+elif [[ "${NON_INTERACTIVE:-0}" == "1" ]]; then
+  project_name="${default_name}"
+else
+  read -rep "$(echo -e "${BLUE}?${NC}") 项目名称 [${default_name}]: " project_name
+  project_name="${project_name:-${default_name}}"
+fi
 
 # --- 技术栈 ---
-echo ""
-echo "  常见技术栈组合："
-echo "    1) TypeScript + React + Node.js"
-echo "    2) TypeScript + Vue + Node.js"
-echo "    3) Python + FastAPI"
-echo "    4) Python + Django"
-echo "    5) Go + Gin"
-echo "    6) Java + Spring Boot"
-echo "    7) 自定义"
-echo ""
-read -rp "$(echo -e "${BLUE}?${NC}") 选择技术栈 [1-7] 或直接输入: " stack_choice
-
-case "${stack_choice}" in
-  1|"") tech_stack="TypeScript, React, Node.js" ;;
-  2)    tech_stack="TypeScript, Vue, Node.js" ;;
-  3)    tech_stack="Python, FastAPI" ;;
-  4)    tech_stack="Python, Django" ;;
-  5)    tech_stack="Go, Gin" ;;
-  6)    tech_stack="Java, Spring Boot" ;;
-  7)
-    read -rep "$(echo -e "${BLUE}?${NC}") 请输入技术栈（逗号分隔）: " tech_stack
-    ;;
-  *)    tech_stack="${stack_choice}" ;;
-esac
+if [[ -n "${opt_stack}" ]]; then
+  tech_stack="${opt_stack}"
+else
+  echo ""
+  echo "  常见技术栈组合："
+  echo "    1) TypeScript + React + Node.js"
+  echo "    2) TypeScript + Vue + Node.js"
+  echo "    3) Python + FastAPI"
+  echo "    4) Python + Django"
+  echo "    5) Go + Gin"
+  echo "    6) Java + Spring Boot"
+  echo "    7) 自定义"
+  echo ""
+  if [[ "${NON_INTERACTIVE:-0}" == "1" ]]; then
+    tech_stack="TypeScript, React, Node.js"
+    info "--non-interactive：技术栈默认为 \"${tech_stack}\""
+  else
+    read -rp "$(echo -e "${BLUE}?${NC}") 选择技术栈 [1-7] 或直接输入: " stack_choice
+    case "${stack_choice}" in
+      1|"") tech_stack="TypeScript, React, Node.js" ;;
+      2)    tech_stack="TypeScript, Vue, Node.js" ;;
+      3)    tech_stack="Python, FastAPI" ;;
+      4)    tech_stack="Python, Django" ;;
+      5)    tech_stack="Go, Gin" ;;
+      6)    tech_stack="Java, Spring Boot" ;;
+      7)
+        read -rep "$(echo -e "${BLUE}?${NC}") 请输入技术栈（逗号分隔）: " tech_stack
+        ;;
+      *)    tech_stack="${stack_choice}" ;;
+    esac
+  fi
+fi
 
 # --- 安全级别 ---
-echo ""
-echo "  安全级别："
-echo "    1) 标准 — 常规 Web 应用（默认）"
-echo "    2) 高 — 涉及支付、个人信息"
-echo "    3) 最高 — 金融、医疗、政府系统"
-echo ""
-read -rp "$(echo -e "${BLUE}?${NC}") 安全级别 [1-3]: " security_choice
-
-case "${security_choice}" in
-  1|"") security_level=1; security_label="标准" ;;
-  2)    security_level=2; security_label="高" ;;
-  3)    security_level=3; security_label="最高" ;;
-  *)    security_level=1; security_label="标准" ;;
-esac
+if [[ -n "${opt_security}" ]]; then
+  security_level="${opt_security}"
+  security_label="$(derive_security_label "${opt_security}")"
+else
+  echo ""
+  echo "  安全级别："
+  echo "    1) 标准 — 常规 Web 应用（默认）"
+  echo "    2) 高 — 涉及支付、个人信息"
+  echo "    3) 最高 — 金融、医疗、政府系统"
+  echo ""
+  if [[ "${NON_INTERACTIVE:-0}" == "1" ]]; then
+    security_level=1
+    security_label="标准"
+    info "--non-interactive：安全级别默认为 标准（Level 1）"
+  else
+    read -rp "$(echo -e "${BLUE}?${NC}") 安全级别 [1-3]: " security_choice
+    case "${security_choice}" in
+      1|"") security_level=1; security_label="标准" ;;
+      2)    security_level=2; security_label="高" ;;
+      3)    security_level=3; security_label="最高" ;;
+      *)    security_level=1; security_label="标准" ;;
+    esac
+  fi
+fi
 
 # --- CI AI 评审 ---
-echo ""
-echo "  CI AI 评审（claude ultrareview）："
-echo "    启用后会在 PR 推送时自动触发 AI 代码评审。"
-echo "    需要在 GitHub 仓库 Settings > Secrets 中添加 ANTHROPIC_API_KEY。"
-echo ""
-read -rp "$(echo -e "${BLUE}?${NC}") 是否启用 CI AI 评审？[y/N] " enable_ultrareview
+if [[ "${opt_no_ultrareview}" == "1" ]]; then
+  enable_ultrareview=""
+  info "--no-ultrareview：跳过 CI AI 评审安装。"
+else
+  echo ""
+  echo "  CI AI 评审（claude ultrareview）："
+  echo "    启用后会在 PR 推送时自动触发 AI 代码评审。"
+  echo "    需要在 GitHub 仓库 Settings > Secrets 中添加 ANTHROPIC_API_KEY。"
+  echo ""
+  if [[ "${NON_INTERACTIVE:-0}" == "1" ]]; then
+    enable_ultrareview=""
+    info "--non-interactive：默认跳过 CI AI 评审（用 --ultrareview 待补；当前请手动配置）。"
+  else
+    read -rp "$(echo -e "${BLUE}?${NC}") 是否启用 CI AI 评审？[y/N] " enable_ultrareview
+  fi
+fi
 
 if [[ "$enable_ultrareview" =~ ^[Yy] ]]; then
   FORGE_ROOT="$(cd "$(dirname "$0")/.." && pwd)"
@@ -328,19 +432,26 @@ if [[ "$enable_ultrareview" =~ ^[Yy] ]]; then
 fi
 
 # --- CI 检查命令 ---
-echo ""
-echo "  CI 检查命令（ci_check_command）："
-echo "    运行所有 CI 检查的单条命令（如 npm run check）。"
-echo "    build 全量测试和 test 验证清单将使用此命令，确保本地验证与 CI 一致。"
-echo "    如果留空，将按 verify_commands 列表逐条执行。"
-echo ""
 detected_default="$(node scripts/suggest-ci-command.mjs 2>/dev/null || echo "")"
-if [ -n "$detected_default" ]; then
-  echo "    检测到 package.json 中已定义：$detected_default"
-  read -rep "$(echo -e "${BLUE}?${NC}") CI 检查命令 [$detected_default]: " ci_check_cmd
-  ci_check_cmd="${ci_check_cmd:-$detected_default}"
+if [[ -n "${opt_ci_command}" ]]; then
+  ci_check_cmd="${opt_ci_command}"
+elif [[ "${NON_INTERACTIVE:-0}" == "1" ]]; then
+  ci_check_cmd="${detected_default}"
+  info "--non-interactive：CI 检查命令默认为 \"${ci_check_cmd:-（未检测到，留空）}\""
 else
-  read -rep "$(echo -e "${BLUE}?${NC}") CI 检查命令（留空跳过）: " ci_check_cmd
+  echo ""
+  echo "  CI 检查命令（ci_check_command）："
+  echo "    运行所有 CI 检查的单条命令（如 npm run check）。"
+  echo "    build 全量测试和 test 验证清单将使用此命令，确保本地验证与 CI 一致。"
+  echo "    如果留空，将按 verify_commands 列表逐条执行。"
+  echo ""
+  if [ -n "$detected_default" ]; then
+    echo "    检测到 package.json 中已定义：$detected_default"
+    read -rep "$(echo -e "${BLUE}?${NC}") CI 检查命令 [$detected_default]: " ci_check_cmd
+    ci_check_cmd="${ci_check_cmd:-$detected_default}"
+  else
+    read -rep "$(echo -e "${BLUE}?${NC}") CI 检查命令（留空跳过）: " ci_check_cmd
+  fi
 fi
 
 # ---------- 输入清洗（防止 shell 注入） ----------
@@ -351,6 +462,11 @@ sanitize() {
 project_name="$(sanitize "${project_name}")"
 tech_stack="$(sanitize "${tech_stack}")"
 ci_check_cmd="$(sanitize "${ci_check_cmd}")"
+# bday_cutoff is validated numeric at flag-parse time; sanitize the tz string
+# since it is interpolated into the config.md heredoc below.
+if [[ -n "${opt_bday_tz:-}" ]]; then
+  opt_bday_tz="$(sanitize "${opt_bday_tz}")"
+fi
 
 echo ""
 success "配置确认："
@@ -364,6 +480,35 @@ if [[ -z "${project_name}" ]]; then
   error "项目名称清洗后为空，请使用合法字符（字母、数字、连字符、下划线）。"
   exit 1
 fi
+
+# --- PMS business-day clock (resolved here so the Step-2 heredoc is the only writer) ---
+# Priority per setting: --bday-* flag > --non-interactive default > interactive read.
+# Only relevant when --pack pms is present; left empty otherwise so the heredoc branch
+# stays inert. (Previously this was collected in Step 8 and written via a second node -e
+# rewrite — that dual-write is now collapsed into the single heredoc path.)
+bday_cutoff=""
+bday_tz=""
+for p in "${PACKS[@]+"${PACKS[@]}"}"; do
+  if [[ "$p" == "pms" ]]; then
+    if [[ -n "${opt_bday_cutoff}" ]]; then
+      bday_cutoff="${opt_bday_cutoff}"
+    elif [[ "${NON_INTERACTIVE:-0}" == "1" ]]; then
+      bday_cutoff="4"
+    else
+      read -rep "$(echo -e "${BLUE}?${NC}") 营业日切日时间（小时 0-23）[4]: " bday_cutoff
+      bday_cutoff="${bday_cutoff:-4}"
+    fi
+    if [[ -n "${opt_bday_tz}" ]]; then
+      bday_tz="${opt_bday_tz}"
+    elif [[ "${NON_INTERACTIVE:-0}" == "1" ]]; then
+      bday_tz="Asia/Shanghai"
+    else
+      read -rep "$(echo -e "${BLUE}?${NC}") 时区（IANA） [Asia/Shanghai]: " bday_tz
+      bday_tz="${bday_tz:-Asia/Shanghai}"
+    fi
+    break
+  fi
+done
 
 # ============================================================================
 # Step 2：创建 .forge/ 目录结构
@@ -1052,36 +1197,11 @@ if [[ ${#PACKS[@]} -gt 0 ]]; then
     fi
 
     # PMS-specific setup
+    # NOTE: business-day collection now happens in Step 1 (so the config.md heredoc
+    # is the single writer); this block only prepares .forge/custom/pms/ and prints
+    # the welcome banner. bday_cutoff / bday_tz are already resolved here.
     if [[ "${pack_name}" == "pms" ]]; then
-      echo ""
-      info "PMS Pack 配置"
-      echo "  PMS Pack 需要营业日时钟（Business Day Clock）配置："
-      echo ""
-
-      read -rep "$(echo -e "${BLUE}?${NC}") 营业日切日时间（小时 0-23）[4]: " bday_cutoff
-      bday_cutoff="${bday_cutoff:-4}"
-
-      read -rep "$(echo -e "${BLUE}?${NC}") 时区（IANA） [Asia/Shanghai]: " bday_tz
-      bday_tz="${bday_tz:-Asia/Shanghai}"
-
-      # Create .forge/custom/ for project-specific overrides
       mkdir -p "${PROJECT_ROOT}/.forge/custom/pms"
-
-      # Re-write config.md with business_day settings
-      # (The config.md was already written in Step 2; now we update the frontmatter)
-      if command -v node &>/dev/null; then
-        node -e "
-          const fs = require('fs');
-          const path = '${PROJECT_ROOT}/.forge/config.md';
-          let content = fs.readFileSync(path, 'utf-8');
-          // Add packs and business_day settings to frontmatter
-          if (!content.includes('packs:')) {
-            content = content.replace('---\\n', '---\\npacks:\\n  - pms\\n');
-          }
-          content = content.replace('---\\n', '---\\nbusiness_day_cutoff_hour: ${bday_cutoff}\\nbusiness_day_timezone: \"${bday_tz}\"\\n');
-          fs.writeFileSync(path, content);
-        " 2>/dev/null || warn "无法自动更新 config.md frontmatter，请手动添加 business_day 配置"
-      fi
 
       success "PMS Pack 已启用"
       echo ""
