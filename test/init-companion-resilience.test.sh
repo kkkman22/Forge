@@ -45,6 +45,25 @@ echo "fake pip: forced failure" >&2
 exit 1
 EOF
 
+# uvx/pipx absent (no isolated-env installer) so detect_python_installer falls
+# through to the pip branch, which is stubbed to fail above.
+cat > "${TMP}/fakebin/uvx" <<'EOF'
+#!/usr/bin/env bash
+exit 1
+EOF
+cat > "${TMP}/fakebin/pipx" <<'EOF'
+#!/usr/bin/env bash
+exit 1
+EOF
+
+# python3 reports 3.9 so detect_python_installer's version gate (< 3.10) also
+# rejects pip — every companion install is forced to its fallback path.
+cat > "${TMP}/fakebin/python3" <<'EOF'
+#!/usr/bin/env bash
+if [[ "${1:-}" == "--version" ]]; then echo "Python 3.9.18"; exit 0; fi
+exit 0
+EOF
+
 # npm that always fails (exercises context-mode path).
 cat > "${TMP}/fakebin/npm" <<'EOF'
 #!/usr/bin/env bash

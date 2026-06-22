@@ -47,7 +47,7 @@ mkdir -p "${FAKE_PLUGIN}/agents"
 # pip/npm/claude/git/code-review-graph are stubbed to instant no-ops so Step 7
 # companion installs neither block nor write hooks into project settings.
 mkdir -p "${TMP}/fakebin"
-for bin in pip pip3 npm claude git code-review-graph; do
+for bin in pip pip3 npm claude git code-review-graph uvx pipx; do
   cat > "${TMP}/fakebin/${bin}" <<'EOF'
 #!/usr/bin/env bash
 exit 0

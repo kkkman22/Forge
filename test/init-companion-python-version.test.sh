@@ -94,6 +94,10 @@ assert 'grep -q "Forge 初始化完成" "${TMP}/out.log"' \
   "A: init must reach completion banner"
 assert '[[ -f "${TMP}/uvx-calls.log" ]]' \
   "A: uvx must be invoked for companion installs"
+assert 'grep -q -- "--from code-review-graph" "${TMP}/uvx-calls.log"' \
+  "A: uvx must be invoked with --from code-review-graph (correct package routing)"
+assert 'grep -q -- "--from headroom-ai" "${TMP}/uvx-calls.log"' \
+  "A: uvx must be invoked with --from headroom-ai (package != command)"
 assert '! grep -q "PIP_CALLED" "${TMP}/out.log"' \
   "A: pip must NOT be called when uvx is available"
 UVX_A_TMP="$TMP"
