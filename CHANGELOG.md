@@ -24,7 +24,12 @@ Entries follow [Keep a Changelog](https://keepachangelog.com/) with Forge-specif
 
 ### Fixed
 
-- **init**: repair Claude Code hooks schema + init.sh resilience (#122)
+- **init/hooks**: repair Claude Code hooks schema + init.sh resilience (#122)
+  - **hooks/hooks.json**: 15 of 41 hook entries used the unsupported `{"args":[...]}` form, which `/doctor` rejects with `type: Invalid input` and the hooks silently never fired. Converted all 15 to the schema-valid `{"type":"command","command":"..."}` form (matching the 26 already-valid hooks).
+  - **scripts/init.sh**: `install_companion()` returns 1 on failure; under `set -euo pipefail` the first failed `pip`/`npm` install aborted the whole script before the completion banner. All 4 call sites now guarded with `|| true` (companion installs are best-effort; Forge falls back to built-in trimmer/grep).
+  - **scripts/init.sh**: `headroom-ai[all]` pulled ~2.5 GB (torch/transformers/onnxruntime/scipy). Forge only uses `headroom wrap` (API-level compression), so the `[all]` extra is unnecessary. Now installs bare `headroom-ai`.
+  - **runtime-sync**: `forge-sync-runtime.mjs` (runs on every SessionStart) now scans for `args`-form hooks in `.claude/settings.json` and prints a targeted migration warning — the only channel that reaches already-polluted projects automatically.
+  - **⚠️ Migration for existing projects**: upgrading the Forge plugin alone does NOT fix `.claude/settings.json` in projects already initialized by v3.4.0–v3.6.0, because `init.sh` skips hooks sync when a `"hooks"` key already exists (init.sh:728) and the broken entries are a snapshot copy. **Affected users must either (a) delete the `"hooks"` key from `.claude/settings.json` and re-run `forge init`, or (b) manually convert the 15 `args`-form entries to `{type:"command", command:"..."}`.** New projects get the fix automatically. If you see the `⚠️ Forge detected N hook(s)...` warning on session start, follow its numbered steps.
 - **bump-version**: report true GitHub Release outcome in summary (#118)
 
 ### Added
@@ -98,6 +103,15 @@ Entries follow [Keep a Changelog](https://keepachangelog.com/) with Forge-specif
 - **debug**: 收紧现有 Phase 1(Symptom Gathering)完成判定——red-capable 回路成为 Phase 2 前置硬门禁(R4)
 - **review**: 3 checker Read 预算从 3 提升至 4(1 次 shared-vocab Read + 3 次深查)吸收共享词汇加载(R8)
 - **decide / triage**: 评估前查被拒需求库;被拒需求写入 `.forge/knowledge/out-of-scope/`(R3)
+
+### Fixed (中文)
+
+- **init/hooks**: 修复 Claude Code hooks schema + init.sh 韧性 (#122)
+  - **hooks/hooks.json**: 41 条 hook 中有 15 条用了不支持的 `{"args":[...]}` 写法,被 `/doctor` 报 `type: Invalid input` 且永不触发。已全部转为合法的 `{"type":"command","command":"..."}`(与另外 26 条有效 hook 一致)。
+  - **scripts/init.sh**: `install_companion()` 失败时返回 1,在 `set -euo pipefail` 下第一个 `pip`/`npm` 安装失败就会中止整个脚本,跑不到完成横幅。4 个调用点已全部加 `|| true`(companion 安装是 best-effort,Forge 会回退到内置 trimmer/grep)。
+  - **scripts/init.sh**: `headroom-ai[all]` 会拉取 ~2.5GB(torch/transformers/onnxruntime/scipy)。Forge 只用 `headroom wrap`(API 级压缩),不需要 `[all]` 的本地模型依赖。现改为安装裸 `headroom-ai`。
+  - **runtime-sync**: `forge-sync-runtime.mjs`(每次 SessionStart 运行)现在会扫描 `.claude/settings.json` 里的 `args` 写法 hook 并打印迁移警告——这是唯一能自动触达已污染项目的通道。
+  - **⚠️ 老项目迁移说明**: 仅升级 Forge 插件**不能**修复 v3.4.0–v3.6.0 已初始化项目里的 `.claude/settings.json`,因为 `init.sh` 检测到已有 `"hooks"` 键就跳过同步(init.sh:728),坏 hook 是快照拷贝。**受影响用户必须 (a) 删除 `.claude/settings.json` 的 `"hooks"` 键后重跑 `forge init`,或 (b) 手动把 15 条 `args` 写法改成 `{type:"command", command:"..."}`。** 新项目自动拿到修复版。如果你在开新会话时看到 `⚠️ Forge detected N hook(s)...` 警告,按它给的编号步骤操作即可。
 
 ## [3.6.0] - 2026-06-21
 
