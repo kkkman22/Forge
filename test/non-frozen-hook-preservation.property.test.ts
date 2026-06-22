@@ -47,12 +47,19 @@ function loadHooksConfig(): HooksConfig {
 }
 
 // ---------------------------------------------------------------------------
-// Snapshot of expected non-frozen hook state (observed on UNFIXED code)
+// Snapshot of expected non-frozen hook state
 // ---------------------------------------------------------------------------
 
 /**
  * These snapshots capture the exact command strings and structure of every
- * non-frozen-check hook in hooks.json. The fix MUST NOT alter any of these.
+ * non-frozen-check hook in hooks.json.
+ *
+ * NOTE: these snapshots were intentionally updated when the 15 `args[]`-form
+ * hooks were converted to the Claude-Code-valid `{type:"command", command}`
+ * form (the `args` form was rejected by /doctor with "type: Invalid input"
+ * and never fired). The snapshots now encode the fixed, schema-valid format.
+ * Any future change to a non-frozen hook's behavior or command string must
+ * update the snapshot here deliberately — never silently.
  */
 
 const PLUGIN_ROOT_EXPR = "$" + "{CLAUDE_PLUGIN_ROOT:-}";
@@ -122,8 +129,10 @@ const EXPECTED_USER_PROMPT_SUBMIT_HOOKS: HookMatcher[] = [
   {
     hooks: [
       {
+        type: "command",
+        command:
+          "node scripts/cmux-mirror/sync-once.mjs .forge 2>/dev/null || node forge/scripts/cmux-mirror/sync-once.mjs .forge 2>/dev/null || node ~/.claude/skills/forge/scripts/cmux-mirror/sync-once.mjs .forge 2>/dev/null || true",
         timeout: 5,
-        args: ["node", "scripts/cmux-mirror/sync-once.mjs", ".forge"],
       },
     ],
   },
@@ -168,8 +177,10 @@ const EXPECTED_POST_TOOL_USE_HOOKS: HookMatcher[] = [
     if: "Write(.forge/**)|Edit(.forge/**)",
     hooks: [
       {
+        type: "command",
+        command:
+          "node scripts/cmux-mirror/sync-once.mjs .forge 2>/dev/null || node forge/scripts/cmux-mirror/sync-once.mjs .forge 2>/dev/null || node ~/.claude/skills/forge/scripts/cmux-mirror/sync-once.mjs .forge 2>/dev/null || true",
         timeout: 5,
-        args: ["node", "scripts/cmux-mirror/sync-once.mjs", ".forge"],
       },
     ],
   },
@@ -178,8 +189,10 @@ const EXPECTED_POST_TOOL_USE_HOOKS: HookMatcher[] = [
     if: "Write(.forge/**)|Edit(.forge/**)",
     hooks: [
       {
+        type: "command",
+        command:
+          "node scripts/rebuild-feature-dossier.mjs 2>/dev/null || node forge/scripts/rebuild-feature-dossier.mjs 2>/dev/null || node ~/.claude/skills/forge/scripts/rebuild-feature-dossier.mjs 2>/dev/null || true",
         timeout: 5,
-        args: ["node", "scripts/rebuild-feature-dossier.mjs"],
       },
     ],
   },
@@ -188,8 +201,10 @@ const EXPECTED_POST_TOOL_USE_HOOKS: HookMatcher[] = [
     if: "Write(.forge/**)|Edit(.forge/**)",
     hooks: [
       {
+        type: "command",
+        command:
+          "node scripts/knowledge-hook-dispatch.mjs 2>/dev/null || node forge/scripts/knowledge-hook-dispatch.mjs 2>/dev/null || node ~/.claude/skills/forge/scripts/knowledge-hook-dispatch.mjs 2>/dev/null || true",
         timeout: 5,
-        args: ["node", "scripts/knowledge-hook-dispatch.mjs"],
       },
     ],
   },
@@ -217,8 +232,10 @@ const EXPECTED_POST_TOOL_USE_HOOKS: HookMatcher[] = [
     if: "Write(.forge/reviews/.diff-context.md)|Edit(.forge/reviews/.diff-context.md)",
     hooks: [
       {
+        type: "command",
+        command:
+          "node scripts/check-diff-context-integrity.mjs 2>/dev/null || node forge/scripts/check-diff-context-integrity.mjs 2>/dev/null || node ~/.claude/skills/forge/scripts/check-diff-context-integrity.mjs 2>/dev/null || true",
         timeout: 5,
-        args: ["node", "scripts/check-diff-context-integrity.mjs"],
       },
     ],
   },
