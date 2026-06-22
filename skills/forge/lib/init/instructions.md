@@ -59,8 +59,8 @@ allowed_tools:
 Claude Code 的 Bash 工具 stdin 不是 TTY，裸 `read` 会卡住或拿到空值。因此在 CC 内
 **默认**通过 `AskUserQuestion` 逐项采集配置，再把答案拼成 flags 传给 init.sh。
 
-每次一个问题（house 风格，见 `lib/charter/references/subcommands.md`；YAML 块样式
-见 `lib/ship/references/delivery-options.md:5-20`）。**已有 `--pack <name>`、
+每次一个问题（house 风格，见 `../charter/references/subcommands.md`；YAML 块样式
+见 `../ship/references/delivery-options.md:5-20`）。**已有 `--pack <name>`、
 `--recipe <name>` 等用户显式参数时照常透传，不重复询问。**
 
 **Q1 — 项目名称**
