@@ -867,6 +867,14 @@ info "Step 5/7：安装 Forge Hooks"
 settings_file="${PROJECT_ROOT}/.claude/settings.json"
 hooks_source="${FORGE_ROOT}/hooks/hooks.json"
 
+# Marketplace 模式（plugin 安装）：插件自带的 hooks/hooks.json 是 hook 的
+# 唯一来源，且 Claude Code 拒绝在项目级 settings.json 展开
+# ${CLAUDE_PLUGIN_ROOT}。项目侧不应再写一份 hooks——仅 env 由后续步骤写入。
+# 判定条件与 detect_forge_root() 的「情况 0」保持一致。
+if [[ -n "${CLAUDE_PLUGIN_ROOT:-}" ]] && [[ -d "${CLAUDE_PLUGIN_ROOT}/agents" ]]; then
+  info "插件模式：hooks 由插件 hooks/hooks.json 提供，跳过写入项目 settings.json"
+else
+
 if [[ -f "${hooks_source}" ]]; then
   if [[ -f "${settings_file}" ]]; then
     # settings.json already exists — check if hooks are already present
@@ -928,6 +936,7 @@ if [[ -f "${hooks_source}" ]]; then
 else
   warn "未找到 hooks.json，跳过 Hooks 安装"
 fi
+fi  # end marketplace-mode guard (Step 5)
 
 # ============================================================================
 # Step 6：配置 forge-context MCP Server（智能 diff 截断）
