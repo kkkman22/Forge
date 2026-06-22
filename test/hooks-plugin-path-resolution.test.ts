@@ -25,12 +25,16 @@ const hooksFile = JSON.parse(readFileSync(hooksPath, "utf-8")) as {
   hooks: Record<string, Array<{ hooks: Array<{ command?: string }> }>>;
 };
 
-const PLUGIN_ROOT_EXPR = "${CLAUDE_PLUGIN_ROOT:-}";
+// Shell variable expansion expression matched literally in hook commands.
+// Built via concatenation so biome's noTemplateCurlyInString rule doesn't fire
+// on what is intentionally a literal `${...}` shell token, not a JS template.
+const PLUGIN_ROOT_EXPR = "$" + "{CLAUDE_PLUGIN_ROOT:-}";
 
 /** Commands that intentionally do not reference a scripts/ file (pure shell). */
 function referencesScriptFile(command: string): boolean {
-  return /scripts\/[\w./-]+\.(?:mjs|sh|js)\b/.test(command)
-    || /dist\/src\/[\w./-]+\.js\b/.test(command);
+  return (
+    /scripts\/[\w./-]+\.(?:mjs|sh|js)\b/.test(command) || /dist\/src\/[\w./-]+\.js\b/.test(command)
+  );
 }
 
 /**
@@ -60,7 +64,7 @@ describe("Plugin path resolution: hooks/hooks.json", () => {
     }
   }
 
-  it("every command that references a scripts/ or dist/src/ file leads with ${CLAUDE_PLUGIN_ROOT}", () => {
+  it("every command that references a scripts/ or dist/src/ file leads with $CLAUDE_PLUGIN_ROOT", () => {
     const violations: string[] = [];
     for (const { loc, command } of allCommands) {
       if (!referencesScriptFile(command)) continue;
@@ -90,7 +94,7 @@ describe("Plugin path resolution: hooks/hooks.json", () => {
     expect(violations, violations.join("\n\n")).toEqual([]);
   });
 
-  it("Stop hooks specifically all resolve via ${CLAUDE_PLUGIN_ROOT} AND fall back with || true", () => {
+  it("Stop hooks specifically all resolve via $CLAUDE_PLUGIN_ROOT AND fall back with || true", () => {
     // The original bug was most visible on Stop (7 visible errors). Lock it down
     // explicitly so a future edit cannot regress just the Stop section.
     const stopGroups = hooksFile.hooks.Stop ?? [];

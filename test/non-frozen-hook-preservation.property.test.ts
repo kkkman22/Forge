@@ -76,8 +76,7 @@ const EXPECTED_SESSION_START_HOOKS: HookMatcher[] = [
     hooks: [
       {
         type: "command",
-        command:
-          `bash "${PLUGIN_ROOT_EXPR}/scripts/auto-resume.sh" 2>/dev/null || bash scripts/auto-resume.sh 2>/dev/null || bash forge/scripts/auto-resume.sh 2>/dev/null || bash ~/.claude/skills/forge/scripts/auto-resume.sh 2>/dev/null || true`,
+        command: `bash "${PLUGIN_ROOT_EXPR}/scripts/auto-resume.sh" 2>/dev/null || bash scripts/auto-resume.sh 2>/dev/null || bash forge/scripts/auto-resume.sh 2>/dev/null || bash ~/.claude/skills/forge/scripts/auto-resume.sh 2>/dev/null || true`,
         timeout: 5,
       },
     ],
@@ -86,8 +85,7 @@ const EXPECTED_SESSION_START_HOOKS: HookMatcher[] = [
     hooks: [
       {
         type: "command",
-        command:
-          `node "${PLUGIN_ROOT_EXPR}/scripts/inject-evolved-rules.mjs" 2>/dev/null || node scripts/inject-evolved-rules.mjs 2>/dev/null || node forge/scripts/inject-evolved-rules.mjs 2>/dev/null || node ~/.claude/skills/forge/scripts/inject-evolved-rules.mjs 2>/dev/null || true`,
+        command: `node "${PLUGIN_ROOT_EXPR}/scripts/inject-evolved-rules.mjs" 2>/dev/null || node scripts/inject-evolved-rules.mjs 2>/dev/null || node forge/scripts/inject-evolved-rules.mjs 2>/dev/null || node ~/.claude/skills/forge/scripts/inject-evolved-rules.mjs 2>/dev/null || true`,
         timeout: 5,
       },
     ],
@@ -96,8 +94,7 @@ const EXPECTED_SESSION_START_HOOKS: HookMatcher[] = [
     hooks: [
       {
         type: "command",
-        command:
-          `node "${PLUGIN_ROOT_EXPR}/scripts/bootstrap-check.mjs" 2>/dev/null || node scripts/bootstrap-check.mjs 2>/dev/null || node forge/scripts/bootstrap-check.mjs 2>/dev/null || node ~/.claude/skills/forge/scripts/bootstrap-check.mjs 2>/dev/null || true`,
+        command: `node "${PLUGIN_ROOT_EXPR}/scripts/bootstrap-check.mjs" 2>/dev/null || node scripts/bootstrap-check.mjs 2>/dev/null || node forge/scripts/bootstrap-check.mjs 2>/dev/null || node ~/.claude/skills/forge/scripts/bootstrap-check.mjs 2>/dev/null || true`,
         timeout: 5,
       },
     ],
@@ -115,8 +112,7 @@ const EXPECTED_SESSION_START_HOOKS: HookMatcher[] = [
     hooks: [
       {
         type: "command",
-        command:
-          `node "${PLUGIN_ROOT_EXPR}/scripts/check-companions.mjs" 2>/dev/null || node scripts/check-companions.mjs 2>/dev/null || node forge/scripts/check-companions.mjs 2>/dev/null || node ~/.claude/skills/forge/scripts/check-companions.mjs 2>/dev/null || true`,
+        command: `node "${PLUGIN_ROOT_EXPR}/scripts/check-companions.mjs" 2>/dev/null || node scripts/check-companions.mjs 2>/dev/null || node forge/scripts/check-companions.mjs 2>/dev/null || node ~/.claude/skills/forge/scripts/check-companions.mjs 2>/dev/null || true`,
         timeout: 3,
       },
     ],
@@ -128,8 +124,7 @@ const EXPECTED_USER_PROMPT_SUBMIT_HOOKS: HookMatcher[] = [
     hooks: [
       {
         type: "command",
-        command:
-          `node "${PLUGIN_ROOT_EXPR}/scripts/inject-plan-context.mjs" 2>/dev/null || node scripts/inject-plan-context.mjs 2>/dev/null || node forge/scripts/inject-plan-context.mjs 2>/dev/null || node ~/.claude/skills/forge/scripts/inject-plan-context.mjs 2>/dev/null || true`,
+        command: `node "${PLUGIN_ROOT_EXPR}/scripts/inject-plan-context.mjs" 2>/dev/null || node scripts/inject-plan-context.mjs 2>/dev/null || node forge/scripts/inject-plan-context.mjs 2>/dev/null || node ~/.claude/skills/forge/scripts/inject-plan-context.mjs 2>/dev/null || true`,
       },
     ],
   },
@@ -137,8 +132,7 @@ const EXPECTED_USER_PROMPT_SUBMIT_HOOKS: HookMatcher[] = [
     hooks: [
       {
         type: "command",
-        command:
-          `node "${PLUGIN_ROOT_EXPR}/scripts/cmux-mirror/sync-once.mjs" .forge 2>/dev/null || node scripts/cmux-mirror/sync-once.mjs .forge 2>/dev/null || node forge/scripts/cmux-mirror/sync-once.mjs .forge 2>/dev/null || node ~/.claude/skills/forge/scripts/cmux-mirror/sync-once.mjs .forge 2>/dev/null || true`,
+        command: `node "${PLUGIN_ROOT_EXPR}/scripts/cmux-mirror/sync-once.mjs" .forge 2>/dev/null || node scripts/cmux-mirror/sync-once.mjs .forge 2>/dev/null || node forge/scripts/cmux-mirror/sync-once.mjs .forge 2>/dev/null || node ~/.claude/skills/forge/scripts/cmux-mirror/sync-once.mjs .forge 2>/dev/null || true`,
         timeout: 5,
       },
     ],
@@ -149,8 +143,7 @@ const EXPECTED_USER_PROMPT_SUBMIT_HOOKS: HookMatcher[] = [
     hooks: [
       {
         type: "command",
-        command:
-          `node "${PLUGIN_ROOT_EXPR}/scripts/record-prompt-metrics.mjs" 2>/dev/null || node scripts/record-prompt-metrics.mjs 2>/dev/null || node forge/scripts/record-prompt-metrics.mjs 2>/dev/null || node ~/.claude/skills/forge/scripts/record-prompt-metrics.mjs 2>/dev/null || true`,
+        command: `node "${PLUGIN_ROOT_EXPR}/scripts/record-prompt-metrics.mjs" 2>/dev/null || node scripts/record-prompt-metrics.mjs 2>/dev/null || node forge/scripts/record-prompt-metrics.mjs 2>/dev/null || node ~/.claude/skills/forge/scripts/record-prompt-metrics.mjs 2>/dev/null || true`,
       },
     ],
   },
@@ -162,8 +155,7 @@ const EXPECTED_POST_TOOL_USE_HOOKS: HookMatcher[] = [
     hooks: [
       {
         type: "command",
-        command:
-          `bash "${PLUGIN_ROOT_EXPR}/scripts/hook-check-frozen-post.sh" 2>/dev/null || bash scripts/hook-check-frozen-post.sh 2>/dev/null || bash forge/scripts/hook-check-frozen-post.sh 2>/dev/null || bash ~/.claude/skills/forge/scripts/hook-check-frozen-post.sh 2>/dev/null || true`,
+        command: `bash "${PLUGIN_ROOT_EXPR}/scripts/hook-check-frozen-post.sh" 2>/dev/null || bash scripts/hook-check-frozen-post.sh 2>/dev/null || bash forge/scripts/hook-check-frozen-post.sh 2>/dev/null || bash ~/.claude/skills/forge/scripts/hook-check-frozen-post.sh 2>/dev/null || true`,
         timeout: 5,
       },
     ],
@@ -185,8 +177,7 @@ const EXPECTED_POST_TOOL_USE_HOOKS: HookMatcher[] = [
     hooks: [
       {
         type: "command",
-        command:
-          `node "${PLUGIN_ROOT_EXPR}/scripts/cmux-mirror/sync-once.mjs" .forge 2>/dev/null || node scripts/cmux-mirror/sync-once.mjs .forge 2>/dev/null || node forge/scripts/cmux-mirror/sync-once.mjs .forge 2>/dev/null || node ~/.claude/skills/forge/scripts/cmux-mirror/sync-once.mjs .forge 2>/dev/null || true`,
+        command: `node "${PLUGIN_ROOT_EXPR}/scripts/cmux-mirror/sync-once.mjs" .forge 2>/dev/null || node scripts/cmux-mirror/sync-once.mjs .forge 2>/dev/null || node forge/scripts/cmux-mirror/sync-once.mjs .forge 2>/dev/null || node ~/.claude/skills/forge/scripts/cmux-mirror/sync-once.mjs .forge 2>/dev/null || true`,
         timeout: 5,
       },
     ],
@@ -197,8 +188,7 @@ const EXPECTED_POST_TOOL_USE_HOOKS: HookMatcher[] = [
     hooks: [
       {
         type: "command",
-        command:
-          `node "${PLUGIN_ROOT_EXPR}/scripts/rebuild-feature-dossier.mjs" 2>/dev/null || node scripts/rebuild-feature-dossier.mjs 2>/dev/null || node forge/scripts/rebuild-feature-dossier.mjs 2>/dev/null || node ~/.claude/skills/forge/scripts/rebuild-feature-dossier.mjs 2>/dev/null || true`,
+        command: `node "${PLUGIN_ROOT_EXPR}/scripts/rebuild-feature-dossier.mjs" 2>/dev/null || node scripts/rebuild-feature-dossier.mjs 2>/dev/null || node forge/scripts/rebuild-feature-dossier.mjs 2>/dev/null || node ~/.claude/skills/forge/scripts/rebuild-feature-dossier.mjs 2>/dev/null || true`,
         timeout: 5,
       },
     ],
@@ -209,8 +199,7 @@ const EXPECTED_POST_TOOL_USE_HOOKS: HookMatcher[] = [
     hooks: [
       {
         type: "command",
-        command:
-          `node "${PLUGIN_ROOT_EXPR}/scripts/knowledge-hook-dispatch.mjs" 2>/dev/null || node scripts/knowledge-hook-dispatch.mjs 2>/dev/null || node forge/scripts/knowledge-hook-dispatch.mjs 2>/dev/null || node ~/.claude/skills/forge/scripts/knowledge-hook-dispatch.mjs 2>/dev/null || true`,
+        command: `node "${PLUGIN_ROOT_EXPR}/scripts/knowledge-hook-dispatch.mjs" 2>/dev/null || node scripts/knowledge-hook-dispatch.mjs 2>/dev/null || node forge/scripts/knowledge-hook-dispatch.mjs 2>/dev/null || node ~/.claude/skills/forge/scripts/knowledge-hook-dispatch.mjs 2>/dev/null || true`,
         timeout: 5,
       },
     ],
@@ -220,8 +209,7 @@ const EXPECTED_POST_TOOL_USE_HOOKS: HookMatcher[] = [
     hooks: [
       {
         type: "command",
-        command:
-          `node "${PLUGIN_ROOT_EXPR}/scripts/check-context-boundary.mjs" PostToolUse "$TOOL_INPUT_FILE" 2>/dev/null || node scripts/check-context-boundary.mjs PostToolUse "$TOOL_INPUT_FILE" 2>/dev/null || node forge/scripts/check-context-boundary.mjs PostToolUse "$TOOL_INPUT_FILE" 2>/dev/null || true`,
+        command: `node "${PLUGIN_ROOT_EXPR}/scripts/check-context-boundary.mjs" PostToolUse "$TOOL_INPUT_FILE" 2>/dev/null || node scripts/check-context-boundary.mjs PostToolUse "$TOOL_INPUT_FILE" 2>/dev/null || node forge/scripts/check-context-boundary.mjs PostToolUse "$TOOL_INPUT_FILE" 2>/dev/null || true`,
         continueOnBlock: true,
         timeout: 5,
       },
@@ -241,8 +229,7 @@ const EXPECTED_POST_TOOL_USE_HOOKS: HookMatcher[] = [
     hooks: [
       {
         type: "command",
-        command:
-          `node "${PLUGIN_ROOT_EXPR}/scripts/check-diff-context-integrity.mjs" 2>/dev/null || node scripts/check-diff-context-integrity.mjs 2>/dev/null || node forge/scripts/check-diff-context-integrity.mjs 2>/dev/null || node ~/.claude/skills/forge/scripts/check-diff-context-integrity.mjs 2>/dev/null || true`,
+        command: `node "${PLUGIN_ROOT_EXPR}/scripts/check-diff-context-integrity.mjs" 2>/dev/null || node scripts/check-diff-context-integrity.mjs 2>/dev/null || node forge/scripts/check-diff-context-integrity.mjs 2>/dev/null || node ~/.claude/skills/forge/scripts/check-diff-context-integrity.mjs 2>/dev/null || true`,
         timeout: 5,
       },
     ],
@@ -331,8 +318,7 @@ const EXPECTED_TASK_COMPLETED_HOOKS: HookMatcher[] = [
     hooks: [
       {
         type: "command",
-        command:
-          `bash "${PLUGIN_ROOT_EXPR}/scripts/hook-task-completed.sh" 2>&1 || bash scripts/hook-task-completed.sh 2>&1 || bash forge/scripts/hook-task-completed.sh 2>&1 || bash ~/.claude/skills/forge/scripts/hook-task-completed.sh 2>&1`,
+        command: `bash "${PLUGIN_ROOT_EXPR}/scripts/hook-task-completed.sh" 2>&1 || bash scripts/hook-task-completed.sh 2>&1 || bash forge/scripts/hook-task-completed.sh 2>&1 || bash ~/.claude/skills/forge/scripts/hook-task-completed.sh 2>&1`,
         timeout: 10,
       },
     ],
