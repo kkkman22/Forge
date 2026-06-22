@@ -1,7 +1,7 @@
 {
   "name": "forge",
   "description": "Unified AI coding workflow framework - single /forge slash command with 38 internal subcommands, TDD, spec-driven planning, and automated review.",
-  "version": "3.6.0",
+  "version": "3.6.1",
   "requiredMinimumVersion": "2.1.163",
   "workflows": [
     "./workflows"
