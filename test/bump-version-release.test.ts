@@ -7,6 +7,8 @@ import { afterEach, beforeEach, describe, expect, it } from "vitest";
 import {
   extractChangelogSection,
   formatReleaseSummary,
+  isRebaseConflict,
+  isRecoverablePushError,
   mergeChangelogEntries,
 } from "../scripts/bump-version.mjs";
 
@@ -178,6 +180,72 @@ describe("bump-version.mjs release helpers", () => {
       expect((merged!.match(/### Fixed/g) || []).length).toBe(1);
       expect(merged).toContain("manual feature detail (#119)");
       expect(merged).not.toContain("auto feature (#119)");
+    });
+  });
+
+  // Regression: bump-version --tag exits(1) on any push failure, so a
+  // recoverable "remote ahead" (CI sync-derived-data racing the release)
+  // aborts before Step 6 can create the GitHub Release — observed on the
+  // v3.7.1 and v3.8.0 releases. The recovery path classifies the push error
+  // to decide whether a `pull --rebase` + retag + retry can fix it.
+  describe("isRecoverablePushError", () => {
+    it("returns true for non-fast-forward / fetch-first rejections", () => {
+      // Real stderr from a rejected push (the v3.7.1/v3.8.0 failure mode).
+      const err = new Error("push failed");
+      (err as Error & { stderr?: string }).stderr =
+        "! [rejected]        main -> main (fetch first)";
+      expect(isRecoverablePushError(err)).toBe(true);
+    });
+
+    it("returns true for explicit non-fast-forward message", () => {
+      const err = new Error("Updates were rejected because the remote contains work");
+      expect(isRecoverablePushError(err)).toBe(true);
+    });
+
+    it("returns false for network / connection errors", () => {
+      const err = new Error(
+        "LibreSSL SSL_connect: SSL_ERROR_SYSCALL in connection to github.com:443",
+      );
+      expect(isRecoverablePushError(err)).toBe(false);
+    });
+
+    it("returns false for authentication failures", () => {
+      const err = new Error("Permission denied (publickey)");
+      expect(isRecoverablePushError(err)).toBe(false);
+    });
+
+    it("returns false for already-existing tag", () => {
+      const err = new Error("tag v3.8.0 already exists");
+      expect(isRecoverablePushError(err)).toBe(false);
+    });
+
+    it("returns false for errors with no message/stderr", () => {
+      expect(isRecoverablePushError(new Error(""))).toBe(false);
+      expect(isRecoverablePushError({} as Error)).toBe(false);
+    });
+  });
+
+  describe("isRebaseConflict", () => {
+    it("returns true when rebase hits a content conflict", () => {
+      const err = new Error("rebase failed");
+      (err as Error & { stderr?: string }).stderr =
+        "CONFLICT (content): Merge conflict in scripts/init.sh";
+      expect(isRebaseConflict(err)).toBe(true);
+    });
+
+    it("returns true for 'could not apply' patch failures", () => {
+      const err = new Error("error: could not apply abc1234...");
+      expect(isRebaseConflict(err)).toBe(true);
+    });
+
+    it("returns false for a clean rebase (no conflict markers)", () => {
+      const err = new Error("Successfully rebased and updated refs");
+      expect(isRebaseConflict(err)).toBe(false);
+    });
+
+    it("returns false for network errors during pull", () => {
+      const err = new Error("SSL_ERROR_SYSCALL");
+      expect(isRebaseConflict(err)).toBe(false);
     });
   });
 });
