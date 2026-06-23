@@ -24,8 +24,13 @@ export interface AgentLinkIssue {
   message: string;
 }
 
-/** 虚拟文件,用于测试注入假文件而不污染真实目录。 */
-interface VirtualFs {
+/**
+ * 虚拟文件,用于测试注入假文件而不污染真实目录。
+ *
+ * 作为 `validateAgentLinks` 的 `vfs` 参数类型(测试专用),
+ * 导出以便 typedoc 文档能解析对该类型的引用。
+ */
+export interface VirtualFs {
   /** 虚拟的普通文件(非 symlink),模拟"应为 symlink 却是实体"的情况。 */
   virtualFiles?: string[];
   /** 虚拟 symlink:file → target(目标不存在则触发 BROKEN_TARGET)。 */
