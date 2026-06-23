@@ -63,6 +63,16 @@ Same as forge-plan §1.6. Verify locked spec is still healthy before build start
 
 默认严重度：block。可通过 `severityOverride` 覆盖。
 
+### §1.6.1 Pre-flight: 活跃计划 phase 同步（spec `planning-with-files-borrow` R3）
+
+build 启动时（读 `.forge/status.md` 确认 phase 后），同步活跃计划指针的 phase 字段：
+
+```bash
+node scripts/set-active-plan.mjs --phase build
+```
+
+这更新 `.forge/state/active-plan.json` 的 `phase` 为 `build`（plan_path/spec_ref/pinned_at 保留）。若指针不存在（plan approve 未设置或走轻量路径），脚本静默跳过，不阻断。后续阶段切换（review/test/ship）由各 SKILL 启动时同样调用 `--phase <phase>` 同步。
+
 ## 1a. Nature Mode 路由
 
 Build 启动时读取 `.forge/status.md` → 提取 `work_nature` 字段 → 按值路由：
