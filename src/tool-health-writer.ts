@@ -104,7 +104,13 @@ export function formatToolHealthLine(record: ToolHealthRecord): string {
   return `${ts} · ${record.subcommand} · ${record.event} · ${record.details}\n`;
 }
 
-function acquireLockSync(lockPath: string, opts: AppendOptions): void {
+/**
+ * Acquire an exclusive `.lock` file using `O_CREAT|O_EXCL`, spinning with
+ * jittered sleeps until won or the deadline expires. Exported so other
+ * low-frequency append paths (e.g. audit-log) can share one concurrency
+ * primitive instead of introducing a second.
+ */
+export function acquireLockSync(lockPath: string, opts: AppendOptions): void {
   const timeoutMs = opts.timeoutMs ?? DEFAULT_TIMEOUT_MS;
   const sleepBaseMs = opts.sleepBaseMs ?? DEFAULT_SLEEP_BASE_MS;
   const staleLockMs = opts.staleLockMs ?? DEFAULT_STALE_LOCK_MS;
@@ -142,7 +148,8 @@ function acquireLockSync(lockPath: string, opts: AppendOptions): void {
   }
 }
 
-function releaseLockSync(lockPath: string): void {
+/** Release the `.lock` file. Exported to pair with {@link acquireLockSync}. */
+export function releaseLockSync(lockPath: string): void {
   try {
     unlinkSync(lockPath);
   } catch (_err: unknown) {

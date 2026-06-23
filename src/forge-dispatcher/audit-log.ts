@@ -1,8 +1,20 @@
 import { createHmac, randomBytes } from "node:crypto";
-import { chmodSync, existsSync, mkdirSync, readFileSync, writeFileSync } from "node:fs";
-import { appendFile, mkdir } from "node:fs/promises";
+import {
+  appendFileSync,
+  chmodSync,
+  existsSync,
+  mkdirSync,
+  readFileSync,
+  writeFileSync,
+} from "node:fs";
+import { mkdir } from "node:fs/promises";
 import { homedir } from "node:os";
 import { resolve } from "node:path";
+import {
+  acquireLockSync,
+  releaseLockSync,
+  ToolHealthLockTimeoutError,
+} from "../tool-health-writer.js";
 import type { GateBlockReason } from "./cmux-gate.js";
 
 export type { GateBlockReason } from "./cmux-gate.js";
@@ -118,10 +130,31 @@ export async function appendAuditLog(entry: AuditEntry, opts?: AuditOpts): Promi
   const logPath = resolve(dir, "dispatch.log");
   const line = JSON.stringify(entry);
 
+  // Serialise concurrent writers via the shared O_EXCL .lock primitive
+  // (same one tool-health-writer uses, CHANGELOG F8). POSIX O_APPEND is atomic
+  // only up to PIPE_BUF; audit entries are variable-length JSON, so concurrent
+  // /forge subprocesses could otherwise tear/interleave records. The lock is a
+  // short blocking sync call inside this async function — acceptable because
+  // audit writes are infrequent and the critical section is a single line.
+  // On lock timeout we degrade to the existing fail-soft behaviour (warn,
+  // skip the write) rather than blocking dispatch.
   try {
-    await appendFile(logPath, `${line}\n`);
+    acquireLockSync(`${logPath}.lock`, { timeoutMs: 5_000 });
+  } catch (_err: unknown) {
+    if (_err instanceof ToolHealthLockTimeoutError) {
+      // biome-ignore lint/suspicious/noConsole: audit degradation warning is intentional
+      console.warn(`[forge-audit] lock timeout on ${logPath}, skipping write`);
+      return;
+    }
+    throw _err;
+  }
+
+  try {
+    appendFileSync(logPath, `${line}\n`);
   } catch (_err: unknown) {
     // biome-ignore lint/suspicious/noConsole: audit degradation warning is intentional
     console.warn(`[forge-audit] cannot write audit log: ${logPath}`);
+  } finally {
+    releaseLockSync(`${logPath}.lock`);
   }
 }
