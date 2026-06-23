@@ -124,7 +124,7 @@ function main() {
 
   // 收集库中所有 agent
   const allFiles = readdirSync(AGENTS_DIR)
-    .filter((f) => f.endsWith(".md"))
+    .filter((f) => f.endsWith(".md") && f !== "README.md")
     .map((f) => join(AGENTS_DIR, f));
   const allContents = allFiles.map((f) => readFileSync(f, "utf8"));
   const entities = extractEntities(allContents);

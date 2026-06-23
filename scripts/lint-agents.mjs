@@ -134,7 +134,7 @@ function main() {
   const files =
     fileArgs.length > 0
       ? fileArgs.map((a) => (a.startsWith("/") ? a : resolve(process.cwd(), a))).filter((p) => existsSync(p))
-      : readdirSync(AGENTS_DIR).filter((f) => f.endsWith(".md")).map((f) => join(AGENTS_DIR, f));
+      : readdirSync(AGENTS_DIR).filter((f) => f.endsWith(".md") && f !== "README.md").map((f) => join(AGENTS_DIR, f));
 
   if (files.length === 0) {
     console.log("No agent files to lint.");
