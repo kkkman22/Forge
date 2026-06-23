@@ -36,6 +36,12 @@ export interface AuditEntry {
 
 export interface AuditOpts {
   auditDir?: string;
+  /** Lock deadline passed to acquireLockSync (default 5_000). Test seam. */
+  lockTimeoutMs?: number;
+  /** Lock spin sleep base passed to acquireLockSync (test seam). */
+  lockSleepBaseMs?: number;
+  /** Stale-lock threshold passed to acquireLockSync (test seam). */
+  lockStaleMs?: number;
 }
 
 export interface SecretOpts {
@@ -136,14 +142,35 @@ export async function appendAuditLog(entry: AuditEntry, opts?: AuditOpts): Promi
   // /forge subprocesses could otherwise tear/interleave records. The lock is a
   // short blocking sync call inside this async function — acceptable because
   // audit writes are infrequent and the critical section is a single line.
-  // On lock timeout we degrade to the existing fail-soft behaviour (warn,
-  // skip the write) rather than blocking dispatch.
   try {
-    acquireLockSync(`${logPath}.lock`, { timeoutMs: 5_000 });
+    acquireLockSync(`${logPath}.lock`, {
+      timeoutMs: opts?.lockTimeoutMs ?? 5_000,
+      sleepBaseMs: opts?.lockSleepBaseMs,
+      staleLockMs: opts?.lockStaleMs,
+    });
   } catch (_err: unknown) {
     if (_err instanceof ToolHealthLockTimeoutError) {
+      // Lock timeout: the entry could not be appended. Dropping it silently
+      // would break the HMAC chain for all subsequent records (each entry's
+      // prev_hmac chains to the previous line) AND leave no trace that a gap
+      // occurred. Write a gap-marker line so the gap is auditable. This write
+      // is itself unlocked (the lock is precisely what we could not acquire),
+      // accepted as best-effort since the timeout case is rare and a visible
+      // gap beats a silent hole. [F-05]
       // biome-ignore lint/suspicious/noConsole: audit degradation warning is intentional
-      console.warn(`[forge-audit] lock timeout on ${logPath}, skipping write`);
+      console.warn(`[forge-audit] lock timeout on ${logPath}, writing gap marker`);
+      const gap = JSON.stringify({
+        _gap: true,
+        ts: entry.ts,
+        reason: "lock_timeout",
+        dropped_hmac: entry.hmac,
+      });
+      try {
+        appendFileSync(logPath, `${gap}\n`);
+      } catch {
+        // biome-ignore lint/suspicious/noConsole: audit degradation warning is intentional
+        console.warn(`[forge-audit] cannot write gap marker to ${logPath}`);
+      }
       return;
     }
     throw _err;

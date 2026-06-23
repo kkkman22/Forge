@@ -1,4 +1,4 @@
-import { existsSync, mkdirSync, readFileSync, rmSync } from "node:fs";
+import { existsSync, mkdirSync, readFileSync, rmSync, writeFileSync } from "node:fs";
 import { resolve } from "node:path";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { appendAuditLog, type GateBlockReason } from "../../src/forge-dispatcher/audit-log.js";
@@ -220,5 +220,64 @@ describe("R2.7: audit log concurrency [REQ-06]", () => {
     await appendAuditLog(makeEntry(0), { auditDir: CONCURRENCY_DIR });
     expect(spy).toHaveBeenCalled();
     spy.mockRestore();
+  });
+});
+
+// ---------------------------------------------------------------------------
+// F-05: lock-timeout writes a gap marker instead of silent drop
+// ---------------------------------------------------------------------------
+
+describe("audit log gap marker on lock timeout [F-05]", () => {
+  const GAP_DIR = resolve(import.meta.dirname, "..", "__audit_gap__");
+  const makeEntry = (i: number) => ({
+    ts: "2026-06-23T00:00:00Z",
+    sub: "build",
+    topic_hash: `gap-entry-${i}`,
+    lib_hash: "lh",
+    tools_granted: ["Read"],
+    dispatch_mode: "inline",
+    outcome: "success" as const,
+    prev_hmac: "",
+    hmac: `hmac-${i}`,
+    gate_result: "n_a" as const,
+    cmux_available: null as boolean | null,
+    gate_reason: null as GateBlockReason | null,
+  });
+
+  beforeEach(() => {
+    rmSync(GAP_DIR, { recursive: true, force: true });
+    mkdirSync(GAP_DIR, { recursive: true });
+  });
+  afterEach(() => {
+    rmSync(GAP_DIR, { recursive: true, force: true });
+  });
+
+  it("on lock timeout, writes a gap-marker line instead of silently dropping", async () => {
+    // plant a live lock so acquireLockSync cannot win → times out.
+    // The lock holds the test process's own PID → isPidAliveDefault returns true.
+    const logPath = resolve(GAP_DIR, "dispatch.log");
+    writeFileSync(`${logPath}.lock`, String(process.pid));
+
+    const warnSpy = vi.spyOn(console, "warn").mockImplementation(() => {});
+    try {
+      await appendAuditLog(makeEntry(0), {
+        auditDir: GAP_DIR,
+        lockTimeoutMs: 50,
+        lockSleepBaseMs: 1,
+        lockStaleMs: 60_000,
+      });
+    } finally {
+      warnSpy.mockRestore();
+    }
+
+    // the actual entry was NOT written (lock never acquired), but a gap marker
+    // is, so the gap is auditable rather than silently lost.
+    const raw = readFileSync(logPath, "utf-8");
+    expect(raw).toContain("_gap");
+    expect(raw).toMatch(/lock[_-]?timeout|lock timeout/i);
+    // the gap marker records which entry was dropped (for traceability), but
+    // the dropped entry's full content must NOT have been appended.
+    expect(raw).toContain('"dropped_hmac":"hmac-0"');
+    expect(raw).not.toContain("gap-entry-0"); // full entry body not present
   });
 });
