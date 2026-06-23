@@ -1,0 +1,1 @@
+../../agents/critic.md
