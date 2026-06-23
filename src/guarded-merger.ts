@@ -158,13 +158,42 @@ function parseProgressTasks(content: string): ProgressTask[] {
     .map((line) => {
       const isCompleted = line.includes("[x]") || line.includes("[X]");
       const textMatch = line.match(/- \[.\]\s*(\S+):\s*(.*)/);
+      const rawText = textMatch?.[2] ?? line.trim();
+      const { text, completedAt } = extractProgressTimestamp(rawText, isCompleted);
       return {
         id: textMatch?.[1] ?? String(Math.random()),
         status: isCompleted ? ("completed" as const) : ("pending" as const),
-        text: textMatch?.[2] ?? line.trim(),
-        completedAt: isCompleted ? Date.now() : 0,
+        text,
+        completedAt,
       };
     });
+}
+
+/**
+ * Extract a real completion timestamp from a progress line's text tail.
+ *
+ * Recognises an optional trailing `@ <epoch-ms>` marker (e.g.
+ * "Done @ 1717000000000"). When present and the task is completed, the parsed
+ * epoch-ms is used as the deterministic completion time. When absent, the
+ * timestamp falls back to sentinel `0` — never `Date.now()` — so that tie-break
+ * is reproducible and does not silently prefer whichever side happened to be
+ * parsed last.
+ *
+ * The `@ ...` marker is stripped from the returned text so it does not leak
+ * into merge output.
+ */
+function extractProgressTimestamp(
+  text: string,
+  isCompleted: boolean,
+): { text: string; completedAt: number } {
+  const match = text.match(/\s@\s(\d+)\s*$/);
+  if (!match) {
+    // No real timestamp — deterministic sentinel, NOT Date.now().
+    return { text, completedAt: isCompleted ? 0 : 0 };
+  }
+  const completedAt = Number.parseInt(match[1], 10);
+  const stripped = text.slice(0, match.index).trimEnd();
+  return { text: stripped, completedAt: Number.isFinite(completedAt) ? completedAt : 0 };
 }
 
 function resolveProgressConflict(ours: ProgressTask, theirs: ProgressTask): ProgressTask {
