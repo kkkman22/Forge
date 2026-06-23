@@ -1,0 +1,1 @@
+../../agents/adversarial-check.md
