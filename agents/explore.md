@@ -22,7 +22,27 @@ disallowedTools: Write, Edit
 - `/forge build` 的 Closure-First 探针：验证文件/目录是否存在、定位代码入口点
 - `/forge debug` 的根因分析：追踪调用链、查找相关代码
 
-## Think in Code (Batch Analysis First)
+## 代码探索策略（Fallback Ladder）
+
+当 `scripts/check-companions.mjs` 检测到 CRG 可用时，优先使用 CRG 工具。不可用时回退到 Think in Code batch 脚本。
+
+### L0: CRG 可用（~100 tokens/query）
+
+| 场景 | CRG 工具 | 说明 |
+|------|---------|------|
+| 查代码定义/结构 | `query_graph_tool` | AST 级精确查询 |
+| 查调用链 | `traverse_graph_tool` | 函数调用关系追踪 |
+| 查影响范围 | `get_impact_radius_tool` | blast-radius 分析（替代手动 grep 追踪） |
+| 获取最小上下文 | `get_minimal_context_tool` | ~100 tokens 获取聚焦上下文 |
+| 检测变更 | `detect_changes_tool` | 自动计算变更影响范围 |
+
+CRG 使用优先：先 `get_minimal_context_tool` 获取概览 → 再按需 `query_graph_tool` 深入。
+
+### L1: CRG 不可用（~3K tokens/batch）
+
+回退到现有 Think in Code batch 脚本（见下方 Pre-built Scripts）。
+
+
 
 当目标目录下文件 > 5 个时，**禁止逐个 Read**。用 Bash 脚本批量提取结构信息，让上下文只接收结论。
 

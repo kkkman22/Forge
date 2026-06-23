@@ -61,21 +61,31 @@ function commandFor(event) {
 
 function detect(root, mode) {
   const path = settingsPath(root);
-  // Marketplace mode: the plugin's own hooks/hooks.json is the sole source of
-  // runtime hooks, and Claude Code rejects ${CLAUDE_PLUGIN_ROOT} at project
-  // scope. Project settings.json is never expected to carry Forge shims in
-  // marketplace mode, so drift is reported as false unconditionally.
+  const settings = readSettings(path);
+  const hooks = settings.hooks || {};
+
   if (mode === "marketplace") {
+    // Marketplace mode: the plugin's own hooks/hooks.json is the sole source
+    // of runtime hooks, and Claude Code rejects ${CLAUDE_PLUGIN_ROOT} at
+    // project scope. We never *expect* project settings.json to carry Forge
+    // shims — but older Forge versions injected them, so leftover
+    // @forge-runtime markers count as drift that repair() will clean up.
+    const staleHookEvents = [];
+    for (const event of REQUIRED) {
+      const entries = Array.isArray(hooks[event]) ? hooks[event] : [];
+      if (JSON.stringify(entries).includes(`@forge-runtime:${event}`)) {
+        staleHookEvents.push(event);
+      }
+    }
     return {
       mode,
-      drift: false,
+      drift: staleHookEvents.length > 0,
       missingHookEvents: [],
-      staleHookEvents: [],
+      staleHookEvents,
       settingsPath: path,
     };
   }
-  const settings = readSettings(path);
-  const hooks = settings.hooks || {};
+
   const missingHookEvents = [];
   const staleHookEvents = [];
   for (const event of REQUIRED) {
@@ -94,11 +104,33 @@ function detect(root, mode) {
 }
 
 function repair(root, mode) {
-  // Marketplace mode short-circuits: the plugin's hooks/hooks.json provides
-  // every runtime hook, and writing ${CLAUDE_PLUGIN_ROOT} into project
-  // settings.json is rejected by Claude Code. Leave project settings untouched.
-  if (mode === "marketplace") return;
   const path = settingsPath(root);
+  const preDetect = detect(root, mode);
+
+  // Marketplace mode: in the common case there are no legacy shims to clean,
+  // so the file is left byte-for-byte untouched. Only when detect() reports
+  // leftover @forge-runtime markers do we rewrite the file to strip them.
+  if (mode === "marketplace") {
+    if (!preDetect.drift) return;
+    const settings = readSettings(path);
+    settings.hooks ||= {};
+    for (const event of REQUIRED) {
+      const entries = Array.isArray(settings.hooks[event]) ? settings.hooks[event] : [];
+      const preserved = entries.filter((entry) => !JSON.stringify(entry).includes(`@forge-runtime:${event}`));
+      if (preserved.length > 0) {
+        settings.hooks[event] = preserved;
+      } else {
+        delete settings.hooks[event];
+      }
+    }
+    if (Object.keys(settings.hooks).length === 0) {
+      delete settings.hooks;
+    }
+    mkdirSync(dirname(path), { recursive: true });
+    writeFileSync(path, `${JSON.stringify(settings, null, 2)}\n`);
+    return;
+  }
+
   const settings = readSettings(path);
   settings.hooks ||= {};
   for (const event of REQUIRED) {
@@ -108,6 +140,9 @@ function repair(root, mode) {
       ...preserved,
       { hooks: [{ type: "command", command: commandFor(event), timeout: 5 }] },
     ];
+  }
+  if (Object.keys(settings.hooks).length === 0) {
+    delete settings.hooks;
   }
   mkdirSync(dirname(path), { recursive: true });
   writeFileSync(path, `${JSON.stringify(settings, null, 2)}\n`);

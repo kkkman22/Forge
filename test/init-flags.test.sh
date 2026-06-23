@@ -133,6 +133,29 @@ output=$(yes "" 2>/dev/null | bash "$INIT_SH" --non-interactive 2>&1 || true)
 assert 'echo "$output" | grep -q "Forge 初始化完成"' "F6b: --non-interactive alone reaches completion banner"
 rm -rf "$TMP"
 
+# --- F7: --ci-command preserves shell operators (&&, ||) verbatim ---
+# Regression: sanitize() previously stripped & | ; ! from the character class,
+# turning "pnpm build && pnpm test" into "pnpm build  pnpm test". Downstream
+# contract (build/instructions.md "execute as-is") requires ci_check_command
+# to survive init.sh untouched.
+TMP=$(mk_project)
+cd "$TMP"
+output=$(bash "$INIT_SH" \
+  --non-interactive \
+  --name "amp-proj" \
+  --stack "TypeScript" \
+  --security 1 \
+  --ci-command "pnpm build && pnpm test" \
+  --no-ultrareview \
+  2>&1) || true
+# YAML frontmatter line (key: "value")
+assert 'grep -q "^ci_check_command: \"pnpm build && pnpm test\"" "$TMP/.forge/config.md"' \
+  "F7: --ci-command preserves && in YAML frontmatter"
+# Markdown code block line (no indent inside the ```bash fence)
+assert 'grep -q "^pnpm build && pnpm test$" "$TMP/.forge/config.md"' \
+  "F7: --ci-command preserves && in code block"
+rm -rf "$TMP"
+
 echo ""
 echo "── T-INIT-FLAGS result: $pass passed, $fail failed ──"
 [ $fail -eq 0 ]

@@ -454,10 +454,13 @@ else
   fi
 fi
 
-# ---------- 输入清洗（防止 shell 注入） ----------
-# 移除换行符和 shell 元字符
+# ---------- 输入清洗（防 heredoc/YAML 注入） ----------
+# 只剥离在 bash heredoc（未加引号 << CONFIGEOF）中会触发展开的字符
+# （` $ \）和会破坏 YAML 引号配对的引号。保留 & | ; ! 等合法 shell
+# 操作符——config.md 是数据文件（AI/Node 读取，不被 shell 执行），
+# ci_check_command 下游契约要求 execute as-is（build/instructions.md）。
 sanitize() {
-  printf '%s' "$1" | tr -d '\n\r' | sed 's/[`$|;&!\\]//g' | sed "s/['\"]//g"
+  printf '%s' "$1" | tr -d '\n\r' | sed 's/[`$\\]//g' | sed "s/['\"]//g"
 }
 project_name="$(sanitize "${project_name}")"
 tech_stack="$(sanitize "${tech_stack}")"
@@ -1057,9 +1060,12 @@ if command -v node &>/dev/null; then
     *"added"*)
       added=$(echo "${env_result}" | node -e "process.stdout.write(JSON.parse(require('fs').readFileSync(0,'utf-8')).added)" 2>/dev/null || echo "?")
       skipped=$(echo "${env_result}" | node -e "process.stdout.write(JSON.parse(require('fs').readFileSync(0,'utf-8')).skipped)" 2>/dev/null || echo "?")
-      if [[ "${added}" -gt 0 ]]; then
+      # Guard against non-numeric fallback ("?"): when env_result isn't clean
+      # JSON, `[[ "?" -gt 0 ]]` throws a syntax error. env vars are already
+      # written by this point; the count only drives the success message.
+      if [[ "${added}" =~ ^[0-9]+$ && "${added}" -gt 0 ]]; then
         skip_msg=""
-        if [[ "${skipped}" -gt 0 ]]; then
+        if [[ "${skipped}" =~ ^[0-9]+$ && "${skipped}" -gt 0 ]]; then
           skip_msg="（${skipped} 项已存在，跳过）"
         fi
         success "${added} 项环境变量已写入 settings.json ${skip_msg}"
@@ -1305,6 +1311,69 @@ echo ""
 echo "    📄 .claude/settings.json — Forge Hooks + MCP 配置"
 echo "    📄 CLAUDE.md        — 项目宪法"
 echo "    📄 .forge/config.md — 项目配置"
+echo ""
+echo -e "  ${CYAN}═══ 能力最大化检查 ═══${NC}"
+echo ""
+
+# --- 1. Forge 插件安装状态 ---
+# 读 ~/.claude/plugins/installed_plugins.json 查 forge@forge-official（scope=user）。
+# 三态：已全局装 / 本次插件运行(CLAUDE_PLUGIN_ROOT 设) / 未装(引导)。
+forge_plugin_installed=0
+installed_json="${HOME}/.claude/plugins/installed_plugins.json"
+if [[ -f "${installed_json}" ]] && command -v node &>/dev/null; then
+  if node -e "
+    const p = JSON.parse(require('fs').readFileSync('${installed_json}','utf8')).plugins || {};
+    const entries = p['forge@forge-official'] || [];
+    process.exit(entries.some(e => e.scope === 'user') ? 0 : 1);
+  " 2>/dev/null; then
+    forge_plugin_installed=1
+  fi
+fi
+if [[ "${forge_plugin_installed}" == "1" ]]; then
+  echo -e "  ✅ Forge 插件        — 已安装（/forge 命令、hooks、subagent）"
+elif [[ -n "${CLAUDE_PLUGIN_ROOT:-}" ]]; then
+  echo -e "  ✅ Forge 插件        — 本次由插件运行（scope=local）"
+else
+  echo -e "  ${YELLOW}⚠️${NC} Forge 插件        — 未全局安装。能力最大化需安装："
+  echo -e "     ${CYAN}claude plugin marketplace add https://github.com/kkkman22/Forge${NC}"
+  echo -e "     ${CYAN}claude plugin install forge${NC}"
+fi
+
+# --- 2. forge-context MCP 批准状态 ---
+# .mcp.json 已在 Step 6 写入，但 Claude Code 要求项目级 MCP 显式批准才加载。
+# 无法自动批准（破坏信任模型），只能引导客户重启会话 + 点同意。
+if [[ -f "${PROJECT_ROOT}/.mcp.json" ]] && grep -q "forge-context" "${PROJECT_ROOT}/.mcp.json" 2>/dev/null; then
+  echo -e "  ${YELLOW}⚠️${NC} forge-context MCP — 已配置，需重启会话并批准才能加载"
+  echo -e "     重启 Claude Code → 启动时点 Approve（不批准也能用，仅 review 大变更可能截断）"
+fi
+
+# --- 3. companion 工具状态（4 个，best-effort）---
+echo ""
+echo "  companion 工具（token 优化，未装有 fallback）："
+# code-review-graph / headroom / context-mode：command -v 检测（对齐 check-companions.mjs）
+for tool in "code-review-graph:CRG:代码知识图谱" "headroom:Headroom:API 级压缩" "context-mode:context-mode:大输出沙箱"; do
+  name="${tool%%:*}"; rest="${tool#*:}"; label="${rest%%:*}"; desc="${rest#*:}"
+  if command -v "${name}" &>/dev/null; then
+    echo -e "  ✅ ${label}（${desc}）"
+  else
+    echo -e "  ${YELLOW}⚠️${NC} ${label}（${desc}）— 未安装"
+  fi
+done
+# Caveman：Claude 插件无 CLI 命令，读 installed_plugins.json 查 caveman@caveman
+caveman_installed=0
+if [[ -f "${installed_json}" ]] && command -v node &>/dev/null; then
+  if node -e "
+    const p = JSON.parse(require('fs').readFileSync('${installed_json}','utf8')).plugins || {};
+    process.exit((p['caveman@caveman'] || []).length > 0 ? 0 : 1);
+  " 2>/dev/null; then
+    caveman_installed=1
+  fi
+fi
+if [[ "${caveman_installed}" == "1" ]]; then
+  echo -e "  ✅ Caveman（回复压缩）"
+else
+  echo -e "  ${YELLOW}⚠️${NC} Caveman（回复压缩）— 未安装"
+fi
 echo ""
 echo "  下一步："
 echo "    输入 /forge 并描述你的任务，开始第一个开发任务。"

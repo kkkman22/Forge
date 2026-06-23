@@ -1,6 +1,6 @@
 ---
 name: frontend-check
-description: "Audit Vue3 frontend for WCAG accessibility, Core Web Vitals, router stability, and console warnings. Use when /forge review runs on a project with Vue or .vue files, when router applies a11y-check or responsive-check hints, or when user explicitly requests a frontend audit."
+description: "Vue3 前端审计专家。审计 WCAG 无障碍、Core Web Vitals、路由稳定性和控制台告警。当 /forge review 运行在含 Vue 或 .vue 文件的项目、路由应用 a11y-check 或 responsive-check 提示、或用户显式请求前端审计时使用。"
 model: sonnet
 allowedTools: "Bash(cmux browser:*), mcp_chrome-devtools_*, Read, Grep, Bash(control_bash_process:*)"
 ---

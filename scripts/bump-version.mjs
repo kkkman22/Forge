@@ -319,6 +319,105 @@ export function formatReleaseSummary({ doTag, releaseCreated }) {
 }
 
 /**
+ * Classify a `git push` failure as recoverable via `pull --rebase` + retry.
+ *
+ * The non-fast-forward family ("fetch first" / "non-fast-forward" / rejected
+ * because the remote moved ahead) is recoverable: a rebase realigns the
+ * local commits onto the new remote tip, then the push succeeds. This is the
+ * failure mode that CI's `sync derived data` job triggers when it lands a
+ * commit between `bump-version --commit` and the push step — observed on the
+ * v3.7.1 and v3.8.0 releases, where the resulting exit(1) also skipped the
+ * GitHub Release step.
+ *
+ * Network errors, auth failures, and "tag already exists" are NOT
+ * recoverable by rebase — retrying wastes a cycle.
+ *
+ * @param {Error & {stderr?: string}} error - the exception from execSync
+ * @returns {boolean} true if a pull --rebase + retry is likely to fix it
+ */
+export function isRecoverablePushError(error) {
+  const text = `${error?.message ?? ""} ${error?.stderr ?? ""}`;
+  // "fetch first" / "non-fast-forward" / "rejected" (Updates were rejected
+  // because the remote contains work) all indicate the remote moved ahead —
+  // a pull --rebase realigns and the push retries successfully.
+  return /fetch first|non-fast-forward|rejected/i.test(text);
+}
+
+/**
+ * Classify a `git pull --rebase` failure as a merge conflict (unrecoverable
+ * without human intervention). When true, bump-version must NOT auto-abort
+ * the rebase (that could lose work) — it exits and asks the user to resolve.
+ *
+ * @param {Error & {stderr?: string}} error - the exception from execSync
+ * @returns {boolean} true if the rebase stopped on a conflict
+ */
+export function isRebaseConflict(error) {
+  const text = `${error?.message ?? ""} ${error?.stderr ?? ""}`;
+  return /conflict|could not apply/i.test(text);
+}
+
+/**
+ * Push the commit + tag with one rebase-and-retry recovery.
+ *
+ * The CI `sync derived data` job can land a commit on origin/main between the
+ * local `bump-version --commit` and this push, producing a non-fast-forward
+ * rejection. Rather than exit(1) (which historically also skipped the GitHub
+ * Release step), this pulls --rebase onto the new tip, retags (rebase changes
+ * the commit SHA, so the tag must move to the new HEAD), and retries once.
+ *
+ * Recovery is bounded: a rebase conflict, a second push failure, or an
+ * unrecoverable error (network/auth) all return { ok: false } and the caller
+ * exits with a manual-recovery hint.
+ *
+ * @param {string} tagName - e.g. "v3.8.0"
+ * @returns {{ ok: boolean, rebased: boolean, message: string }}
+ */
+function pushWithRecover(tagName) {
+  // First attempt.
+  try {
+    gitExec("push");
+    gitExec(`push origin ${tagName}`);
+    return { ok: true, rebased: false, message: "" };
+  } catch (e) {
+    if (!isRecoverablePushError(e)) {
+      return { ok: false, rebased: false, message: e.message };
+    }
+    console.log("  ℹ 远程有新提交，尝试 rebase 恢复...");
+  }
+
+  // Recover: pull --rebase onto the current branch's upstream tip.
+  const branch = gitExec("rev-parse --abbrev-ref HEAD");
+  try {
+    gitExec(`pull --rebase origin ${branch}`);
+  } catch (e) {
+    if (isRebaseConflict(e)) {
+      return { ok: false, rebased: false, message: `rebase 冲突，需人工解决: ${e.message}` };
+    }
+    return { ok: false, rebased: false, message: `pull --rebase 失败: ${e.message}` };
+  }
+
+  // Rebase rewrote the commit SHA → retag onto the new HEAD, or the tag
+  // dangles pointing at a commit no longer on the branch.
+  try {
+    gitExec(`tag -d ${tagName}`);
+    gitExec(`tag -a ${tagName} -m "${tagName}"`);
+    console.log(`  ↳ tag ${tagName} 重打指向 rebase 后的 HEAD`);
+  } catch (e) {
+    return { ok: false, rebased: true, message: `重打 tag 失败: ${e.message}` };
+  }
+
+  // Retry the push with the rebased commits + moved tag.
+  try {
+    gitExec("push");
+    gitExec(`push origin ${tagName}`);
+    console.log(`  ✓ rebase 恢复成功，commit + tag ${tagName} 已推送`);
+    return { ok: true, rebased: true, message: "" };
+  } catch (e) {
+    return { ok: false, rebased: true, message: `重推仍失败: ${e.message}` };
+  }
+}
+
+/**
  * Preflight checks before bumping version.
  * Collects all failures and reports them at once.
  */
@@ -564,13 +663,21 @@ function main() {
   if (doTag) {
     const tagName = `v${newVersion}`;
     console.log("\n正在推送到 remote...");
-    try {
-      gitExec("push");
-      gitExec(`push origin ${tagName}`);
-      console.log(`  ✓ commit + tag ${tagName} 已推送`);
-    } catch (e) {
-      console.error(`  ⚠️ push 失败: ${e.message}`);
+
+    // pushWithRecover retries once via pull --rebase + retag when the remote
+    // moved ahead (e.g. CI sync-derived-data racing the release). Returning
+    // ok:false here exits — but only after the recovery attempt, and without
+    // skipping Step 6 on success.
+    const pushResult = pushWithRecover(tagName);
+    if (!pushResult.ok) {
+      console.error(`  ⚠️ push 失败: ${pushResult.message}`);
+      console.error(
+        `  可手动处理: git pull --rebase origin main && git push origin main && git push origin ${tagName}`,
+      );
       process.exit(1);
+    }
+    if (pushResult.rebased) {
+      console.log(`  ℹ 提示: rebase 改变了 commit，tag ${tagName} 已重打；如已广播版本号请告知协作者重新 fetch`);
     }
 
     // Step 6: Create GitHub Release (if gh available)

@@ -102,7 +102,7 @@ describe("runtime-config-sync", () => {
     expect(report.staleHookEvents).toContain("PreCompact");
   });
 
-  it("marketplace mode repair is a no-op (plugin hooks.json is the source of truth)", () => {
+  it("marketplace mode repair is a no-op when settings.json is clean (plugin hooks.json is the source of truth)", () => {
     // Marketplace installs must NOT write Forge runtime shims into the project
     // settings.json: Claude Code rejects ${CLAUDE_PLUGIN_ROOT} at project scope,
     // and the plugin's own hooks/hooks.json already provides every hook.
@@ -117,6 +117,56 @@ describe("runtime-config-sync", () => {
     const content = readFileSync(settingsPath, "utf-8");
     expect(content).not.toContain("@forge-runtime");
     expect(content).not.toContain("$" + "{CLAUDE_PLUGIN_ROOT}");
+  });
+
+  it("marketplace mode repair CLEANS legacy @forge-runtime shims left by older Forge versions", () => {
+    // Regression: 336801e0 stopped ADDING shims in marketplace mode but never
+    // removed shims that older versions (using ${CLAUDE_PLUGIN_ROOT}) had
+    // already injected. Projects that init'd under an old Forge then upgraded
+    // kept stale shims that Claude Code rejects on every Stop/SessionStart,
+    // because repair()/detect() short-circuited before touching them.
+    const pluginRoot = "$" + "{CLAUDE_PLUGIN_ROOT}";
+    const staleSettings = {
+      hooks: {
+        SessionStart: [
+          {
+            hooks: [
+              {
+                type: "command",
+                command: `node ${pluginRoot}/scripts/forge-hook-dispatch.mjs SessionStart # @forge-runtime:SessionStart`,
+                timeout: 5,
+              },
+            ],
+          },
+        ],
+        Stop: [
+          {
+            hooks: [
+              {
+                type: "command",
+                command: `node ${pluginRoot}/scripts/forge-hook-dispatch.mjs Stop # @forge-runtime:Stop`,
+                timeout: 5,
+              },
+            ],
+          },
+        ],
+      },
+    };
+    writeFileSync(settingsPath, JSON.stringify(staleSettings, null, 2));
+
+    const result = repairRuntimeConfig({
+      projectRoot: root,
+      mode: "marketplace",
+    });
+
+    expect(result.changed).toBe(true);
+    const parsed = JSON.parse(readFileSync(settingsPath, "utf-8"));
+    // All @forge-runtime shims removed across every event...
+    expect(JSON.stringify(parsed)).not.toContain("@forge-runtime");
+    expect(JSON.stringify(parsed)).not.toContain(pluginRoot);
+    // ...and empty hook arrays are dropped (no leftover skeleton).
+    const hooks = parsed.hooks || {};
+    expect(Object.keys(hooks).length).toBe(0);
   });
 
   it("marketplace mode reports no drift even on an empty settings.json", () => {
@@ -153,10 +203,10 @@ describe("runtime-config-sync", () => {
     expect(content).toContain(`${projectDir}/scripts/forge-hook-dispatch.mjs`);
   });
 
-  it("script auto mode is a no-op when plugin root is present", () => {
-    // Marketplace mode: the script must NOT touch project settings.json.
-    // Claude Code rejects ${CLAUDE_PLUGIN_ROOT} at project scope; the plugin's
-    // hooks/hooks.json is the sole source of hooks.
+  it("script auto mode leaves a clean settings.json untouched when plugin root is present", () => {
+    // Marketplace mode: the script must NOT ADD Forge runtime shims.
+    // A settings.json with no @forge-runtime markers is left byte-for-byte
+    // untouched.
     const pre = JSON.stringify({ env: { FOO: "bar" } }, null, 2);
     writeFileSync(settingsPath, `${pre}\n`);
 
@@ -176,5 +226,40 @@ describe("runtime-config-sync", () => {
     expect(content).toBe(`${pre}\n`);
     expect(content).not.toContain("@forge-runtime");
     expect(content).not.toContain("$" + "{CLAUDE_PLUGIN_ROOT}");
+  });
+
+  it("script auto mode cleans legacy @forge-runtime shims when plugin root is present", () => {
+    // Regression for 336801e0: a settings.json carrying shims from an older
+    // Forge (with ${CLAUDE_PLUGIN_ROOT}) must be cleaned, not left untouched.
+    const pluginRoot = "$" + "{CLAUDE_PLUGIN_ROOT}";
+    const staleSettings = {
+      hooks: {
+        Stop: [
+          {
+            hooks: [
+              {
+                type: "command",
+                command: `node ${pluginRoot}/scripts/forge-hook-dispatch.mjs Stop # @forge-runtime:Stop`,
+                timeout: 5,
+              },
+            ],
+          },
+        ],
+      },
+    };
+    writeFileSync(settingsPath, JSON.stringify(staleSettings, null, 2));
+
+    const script = join(import.meta.dirname, "..", "scripts", "forge-sync-runtime.mjs");
+    const output = execFileSync(process.execPath, [script, "--repair", "--json"], {
+      cwd: root,
+      encoding: "utf-8",
+      env: { ...process.env, CLAUDE_PLUGIN_ROOT: "/tmp/forge-plugin" },
+    });
+
+    const report = JSON.parse(output);
+    expect(report.mode).toBe("marketplace");
+    const content = readFileSync(settingsPath, "utf-8");
+    expect(content).not.toContain("@forge-runtime");
+    expect(content).not.toContain(pluginRoot);
   });
 });
