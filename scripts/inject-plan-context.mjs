@@ -22,11 +22,15 @@ import { shouldSkipForSubagent } from "./lib/hook-stdin-router.mjs";
 
 const PLANS_DIR = ".forge/plans";
 const SPECS_DIR = ".forge/specs";
+const PROGRESS_DIR = ".forge/progress";
+const CONFIG_FILE = ".forge/config.md";
 const ACTIVE_PLAN_FILE = ".forge/state/active-plan.json";
 const MAX_PLANS = 3;
 const MAX_LINES_PER_PLAN = 50;
 const MAX_CHARS_PER_PLAN = 2000;
 const MAX_TOTAL_CHARS = 8000; // ~2000 tokens
+const PROGRESS_WINDOW_DEFAULT = 5; // R4: 最近 N 条任务
+const PROGRESS_BYTE_CAP = 64 * 1024; // R4: 单文件 64KB 上限
 
 // ---------------------------------------------------------------------------
 // CLI arg parsing
@@ -105,6 +109,71 @@ function tryReadActivePlanPointer() {
     // File missing, symlink broken, or realpath failed — degrade.
     return null;
   }
+}
+
+// ---------------------------------------------------------------------------
+// R4: progress rolling window injection + 64KB cap
+// ---------------------------------------------------------------------------
+
+/** Read context.progress_window from .forge/config.md (default 5). */
+function readProgressWindow() {
+  if (!existsSync(CONFIG_FILE)) return PROGRESS_WINDOW_DEFAULT;
+  try {
+    const config = readFileSync(CONFIG_FILE, "utf-8");
+    const match = config.match(/^context\.progress_window:\s*(\d+)/m);
+    const n = match ? parseInt(match[1], 10) : PROGRESS_WINDOW_DEFAULT;
+    return Number.isFinite(n) && n > 0 ? n : PROGRESS_WINDOW_DEFAULT;
+  } catch {
+    return PROGRESS_WINDOW_DEFAULT;
+  }
+}
+
+/**
+ * Derive the progress slug from a plan path (e.g. ".forge/plans/feature-x.md" → "feature-x").
+ */
+function planPathToSlug(planPath) {
+  const base = planPath.split("/").pop() || "";
+  return base.replace(/\.md$/i, "");
+}
+
+/**
+ * Inject the active plan's progress summary: last N task lines, capped at 64KB,
+ * with a truncation annotation. Read-only — never deletes/modifies progress files.
+ *
+ * Returns a string to append to output, or "" if no progress to inject.
+ */
+function injectProgressSummary(planPath) {
+  const slug = planPathToSlug(planPath);
+  const progressFile = join(PROGRESS_DIR, `${slug}.md`);
+  if (!existsSync(progressFile)) return "";
+
+  let content;
+  try {
+    content = readFileSync(progressFile, "utf-8");
+  } catch {
+    return "";
+  }
+
+  // R4.AC4: 64KB byte cap — truncate oversized content before parsing.
+  if (Buffer.byteLength(content, "utf-8") > PROGRESS_BYTE_CAP) {
+    content = content.slice(0, PROGRESS_BYTE_CAP);
+  }
+
+  // R4.AC4: linear scan with line-start anchor — no backtracking regex.
+  const taskLines = content.split("\n").filter((line) => /^- \[[ x]\]/.test(line));
+  if (taskLines.length === 0) return "";
+
+  const window = readProgressWindow();
+  const truncated = taskLines.length > window;
+  const recent = truncated ? taskLines.slice(-window) : taskLines;
+
+  let summary = "\n--- progress (recent) ---\n";
+  summary += recent.join("\n");
+  if (truncated) {
+    summary += `\n[仅显示最近 ${window} 条，完整见 ${progressFile}]`;
+  }
+  summary += "\n";
+  return summary;
 }
 
 // ---------------------------------------------------------------------------
@@ -252,6 +321,8 @@ try {
         if (phase)
           output += `[phase: ${phase}${currentPackage ? ` package: ${currentPackage}` : ""}${compact ? " compact" : ""}]\n`;
         output += `\n--- ${path} ---\n${body}\n`;
+        // R4: append progress rolling-window summary (last N tasks, 64KB cap).
+        output += injectProgressSummary(path);
         // Respect total budget even for single-pointer injection.
         if (output.length > MAX_TOTAL_CHARS) {
           output = output.slice(0, MAX_TOTAL_CHARS) + "\n[... truncated due to token budget]\n";

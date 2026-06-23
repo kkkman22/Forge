@@ -7,7 +7,7 @@
  * **Validates: Requirement 8 (Plan injection)**
  */
 import { execFileSync } from "node:child_process";
-import { mkdirSync, mkdtempSync, rmSync, writeFileSync } from "node:fs";
+import { existsSync, mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { afterEach, describe, expect, it } from "vitest";
@@ -370,8 +370,106 @@ describe("inject-plan-context.mjs (R3 active-plan pointer)", () => {
 /** Compute a relative path from base to target (for crafting ../ traversal in tests). */
 function relativePath(base: string, target: string): string {
   const { relative } = require("node:path");
-  let rel = relative(base, target);
+  const rel = relative(base, target);
   // prefix with the relative path; inject a .. if already relative-safe
   return rel.startsWith(".") ? rel : `./${rel}`;
 }
 
+// ============================================================================
+// Requirement 4: progress injection rolling window + 64KB cap
+// spec: .forge/specs/planning-with-files-borrow/requirements.md#R4
+// ============================================================================
+
+function writeProgress(plansDir: string, slug: string, content: string): void {
+  const progressDir = join(plansDir, ".forge", "progress");
+  mkdirSync(progressDir, { recursive: true });
+  writeFileSync(join(progressDir, `${slug}.md`), content);
+}
+
+describe("inject-plan-context.mjs (R4 progress rolling window)", () => {
+  let tempDir: string;
+
+  afterEach(() => {
+    if (tempDir) {
+      try {
+        rmSync(tempDir, { recursive: true, force: true });
+      } catch {
+        // Best effort
+      }
+    }
+  });
+
+  // R4.AC1/AC2 — progress 超 N 条时只注入最近 N 条 + 截断标注
+  it("injects only the last N progress tasks and annotates truncation", () => {
+    tempDir = createTempPlansDir();
+    writePlan(tempDir, "feature-x.md", "status: approved", "Feature X body");
+    writeActivePlan(tempDir, { plan_path: ".forge/plans/feature-x.md", phase: "build" });
+    // 8 个任务,N 默认 5
+    const tasks = Array.from({ length: 8 }, (_, i) => `- [x] completed task ${i + 1}`).join("\n");
+    writeProgress(tempDir, "feature-x", tasks);
+
+    const output = runScript(tempDir);
+    // 应注入 progress 段
+    expect(output).toMatch(/progress|Progress/);
+    // 只含最近 5 条(task 4-8),不含 task 1-3
+    expect(output).toContain("task 8");
+    expect(output).toContain("task 4");
+    expect(output).not.toContain("task 1\n");
+    expect(output).not.toContain("task 3\n");
+    // 截断标注
+    expect(output).toMatch(/仅显示最近|完整见/);
+  });
+
+  // R4.AC1 — progress 少于 N 条时全部注入(无截断标注)
+  it("injects all progress tasks when fewer than N exist (no truncation note)", () => {
+    tempDir = createTempPlansDir();
+    writePlan(tempDir, "feature-y.md", "status: approved", "Feature Y body");
+    writeActivePlan(tempDir, { plan_path: ".forge/plans/feature-y.md", phase: "build" });
+    writeProgress(tempDir, "feature-y", "- [x] only task\n");
+
+    const output = runScript(tempDir);
+    expect(output).toContain("only task");
+    expect(output).not.toMatch(/仅显示最近/);
+  });
+
+  // R4.AC4 — 64KB 上限:超大 progress 截断不崩溃
+  it("caps progress at 64KB and does not crash on oversized content", () => {
+    tempDir = createTempPlansDir();
+    writePlan(tempDir, "big.md", "status: approved", "Big plan body");
+    writeActivePlan(tempDir, { plan_path: ".forge/plans/big.md", phase: "build" });
+    // 100KB 的 progress(超 64KB 上限)
+    const huge = "- [x] " + "A".repeat(100 * 1024) + "\n";
+    writeProgress(tempDir, "big", huge);
+
+    const output = runScript(tempDir);
+    // 不崩溃,且注入的内容被截断(不超 64KB)
+    expect(output.length).toBeLessThan(100 * 1024);
+  });
+
+  // R4.AC6 — 不删 progress 文件(注入后文件仍在)
+  it("never deletes progress files (only truncates injection)", () => {
+    tempDir = createTempPlansDir();
+    writePlan(tempDir, "feature-z.md", "status: approved", "Feature Z body");
+    writeActivePlan(tempDir, { plan_path: ".forge/plans/feature-z.md", phase: "build" });
+    writeProgress(tempDir, "feature-z", "- [x] task one\n- [ ] task two\n");
+    const progressPath = join(tempDir, ".forge", "progress", "feature-z.md");
+
+    runScript(tempDir);
+    // 文件必须仍存在(完整内容)
+    expect(existsSync(progressPath)).toBe(true);
+    expect(readFileSync(progressPath, "utf-8")).toContain("task one");
+    expect(readFileSync(progressPath, "utf-8")).toContain("task two");
+  });
+
+  // R4.AC1 — 无活跃 plan 指针时不注入 progress(依赖 R3)
+  it("does not inject progress when no active-plan pointer exists", () => {
+    tempDir = createTempPlansDir();
+    writePlan(tempDir, "lonely.md", "status: approved", "Lonely plan");
+    writeProgress(tempDir, "lonely", "- [x] orphan progress task\n");
+    // 不写 active-plan.json
+
+    const output = runScript(tempDir);
+    // 走 legacy 路径,不注入 progress(R4 仅在指针模式下生效)
+    expect(output).not.toContain("orphan progress task");
+  });
+});
