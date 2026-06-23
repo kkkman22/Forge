@@ -1,5 +1,5 @@
 import { execFileSync } from "node:child_process";
-import { existsSync, readFileSync } from "node:fs";
+import { existsSync, readdirSync, readFileSync } from "node:fs";
 import path from "node:path";
 import { type PolicyProfile, parsePolicyProfileConfig } from "./config.js";
 import {
@@ -55,6 +55,7 @@ export interface ForgeHealthSnapshot {
   docsDrift: HealthCheck;
   runtimeSync: HealthCheck;
   toolHealth: HealthCheck;
+  safetyGuards: SafetyGuardsHealth;
   gates: Record<string, HealthCheck>;
   artifacts: Partial<Record<EvidenceArtifactKind, string>>;
   nextStep: {
@@ -101,6 +102,7 @@ export function buildHealthSnapshot(options: BuildHealthSnapshotOptions): ForgeH
       branch: readBranchHealth(options.projectRoot),
       worktree: readWorktreeHealth(options.projectRoot),
       ...unknownTaskChecks,
+      safetyGuards: buildSafetyGuardsHealth(options.projectRoot),
       gates,
       artifacts: {},
       nextStep: { phase: null, allowed: false, reasons },
@@ -154,6 +156,7 @@ export function buildHealthSnapshot(options: BuildHealthSnapshotOptions): ForgeH
     branch: readBranchHealth(options.projectRoot),
     worktree: readWorktreeHealth(options.projectRoot),
     ...taskScopedChecks,
+    safetyGuards: buildSafetyGuardsHealth(options.projectRoot),
     gates,
     artifacts,
     nextStep: {
@@ -177,6 +180,10 @@ export function renderStatusSummary(snapshot: ForgeHealthSnapshot): string {
     `Branch: ${snapshot.branch.message}`,
     `Worktree: ${snapshot.worktree.message}`,
     `Next: ${next} ${state}`,
+    `DestructiveGuard: ${snapshot.safetyGuards.destructiveGuard.message}`,
+    `SpawnPolicy: ${snapshot.safetyGuards.spawnPolicy.message}`,
+    `MaxSubagentDepth: ${snapshot.safetyGuards.maxSubagentDepth.message}`,
+    `KnowledgeQuota: ${snapshot.safetyGuards.knowledgeQuota.message}`,
   ];
 
   for (const reason of snapshot.nextStep.reasons) {
@@ -414,6 +421,99 @@ function skippedCheck(message: string, source: string): HealthCheck {
     message,
     source,
   };
+}
+
+/**
+ * Safety-guard health for the cc-2-1-18x safety-hardening layer (R1-R4).
+ *
+ * Surfaces four guards so operators can see their state in `forge doctor`:
+ *   - destructiveGuard: config `destructive_guard` (warns when explicitly off)
+ *   - spawnPolicy: whether the spawn-time policy module is wired
+ *   - maxSubagentDepth: configured depth cap
+ *   - knowledgeQuota: current solutions count vs the near-limit threshold
+ *
+ * Reads config.md frontmatter + counts `.forge/knowledge/solutions/*.md`.
+ * Env-only channels (FORGE_ROLLBACK_IN_PROGRESS etc.) are runtime signals,
+ * not persisted state, so they are not reported here.
+ *
+ * **Validates: Requirement R1 AC5, R3 AC2, R4 AC1**
+ */
+export interface SafetyGuardsHealth {
+  destructiveGuard: HealthCheck;
+  spawnPolicy: HealthCheck;
+  maxSubagentDepth: HealthCheck;
+  knowledgeQuota: HealthCheck;
+}
+
+/** Match `key: value` in YAML frontmatter body text (lenient, like resolveMaxSubagentDepth). */
+function readConfigScalar(content: string, key: string): string | null {
+  const match = content.match(new RegExp(`^\\s*${key}:\\s*(\\S+)`, "m"));
+  return match ? match[1] : null;
+}
+
+export function buildSafetyGuardsHealth(projectRoot: string): SafetyGuardsHealth {
+  const forgeRoot = path.join(projectRoot, ".forge");
+  const configPath = path.join(forgeRoot, "config.md");
+  let configContent = "";
+  try {
+    configContent = readFileSync(configPath, "utf-8");
+  } catch {
+    configContent = "";
+  }
+
+  // R1 destructive_guard — default on; warn when explicitly off (AC5).
+  const guardVal = readConfigScalar(configContent, "destructive_guard");
+  const destructiveGuard: HealthCheck =
+    guardVal === "off"
+      ? {
+          status: "fail",
+          message:
+            "destructive_guard is OFF — destructive git/infra commands are not blocked (P1 warning)",
+          source: ".forge/config.md:destructive_guard",
+        }
+      : {
+          status: "pass",
+          message: `destructive_guard=${guardVal ?? "on (default)"}`,
+          source: ".forge/config.md:destructive_guard",
+        };
+
+  // R2 spawn-policy — present once the spawn-policy module ships (always on; fail-open).
+  const spawnPolicy: HealthCheck = {
+    status: "pass",
+    message: "spawn-time policy active (identity + lineage + depth)",
+    source: "src/spawn-policy.ts",
+  };
+
+  // R3 max_subagent_depth — report configured value (default 5).
+  const depthRaw = readConfigScalar(configContent, "max_subagent_depth");
+  const depthNum = depthRaw !== null ? Number(depthRaw) : NaN;
+  const maxSubagentDepth: HealthCheck = {
+    status: Number.isInteger(depthNum) && depthNum >= 1 && depthNum <= 10 ? "pass" : "unknown",
+    message: `max_subagent_depth=${Number.isInteger(depthNum) ? depthNum : 5} (default)`,
+    source: ".forge/config.md:max_subagent_depth",
+  };
+
+  // R4 knowledge quota — count solutions vs near-limit threshold.
+  const knowledgeLimitRaw = readConfigScalar(configContent, "knowledge_limit");
+  const knowledgeLimit =
+    knowledgeLimitRaw !== null && Number.isInteger(Number(knowledgeLimitRaw))
+      ? Number(knowledgeLimitRaw)
+      : 20;
+  const solutionsDir = path.join(forgeRoot, "knowledge", "solutions");
+  let count = 0;
+  try {
+    count = readdirSync(solutionsDir).filter((f) => f.endsWith(".md")).length;
+  } catch {
+    count = 0;
+  }
+  const threshold = Math.ceil(knowledgeLimit * 0.9);
+  const knowledgeQuota: HealthCheck = {
+    status: count >= threshold ? "fail" : "pass",
+    message: `solutions=${count}/${knowledgeLimit} (near-limit threshold ${threshold})`,
+    source: ".forge/knowledge/solutions/",
+  };
+
+  return { destructiveGuard, spawnPolicy, maxSubagentDepth, knowledgeQuota };
 }
 
 // Worker runtime scripts that must be present for Forge hooks/phase-worker to

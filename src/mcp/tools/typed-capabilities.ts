@@ -183,6 +183,14 @@ const HealthSnapshotSchema = z
     docsDrift: HealthCheckSchema,
     runtimeSync: HealthCheckSchema,
     toolHealth: HealthCheckSchema,
+    safetyGuards: z
+      .object({
+        destructiveGuard: HealthCheckSchema,
+        spawnPolicy: HealthCheckSchema,
+        maxSubagentDepth: HealthCheckSchema,
+        knowledgeQuota: HealthCheckSchema,
+      })
+      .strict(),
     gates: z.record(z.string(), HealthCheckSchema),
     artifacts: z.record(z.string(), z.string()),
     nextStep: z
