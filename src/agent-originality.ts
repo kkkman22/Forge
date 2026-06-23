@@ -98,10 +98,7 @@ export function jaccard(a: Set<string>, b: Set<string>): number {
  * @param text agent 文件全文
  * @param entities 要中性化的实体集合(转小写)
  */
-export function agentToShingles(
-  text: string,
-  entities: Set<string>
-): Set<string> {
+export function agentToShingles(text: string, entities: Set<string>): Set<string> {
   const body = stripFrontmatter(text);
   const neutralized = neutralizeEntities(body, entities);
   return shingles(tokenize(neutralized));
@@ -126,9 +123,7 @@ export interface OriginalityResult {
  * @param filesContents Map<文件路径, 文件全文>
  * @returns 工具名集合(转小写)
  */
-export function extractToolEntities(
-  filesContents: Map<string, string>
-): Set<string> {
+export function extractToolEntities(filesContents: Map<string, string>): Set<string> {
   const tools = new Set<string>();
   for (const content of filesContents.values()) {
     const fmMatch = content.match(/^---\n([\s\S]*?)\n---/);
@@ -147,16 +142,17 @@ export function extractToolEntities(
 /**
  * 从 agent 文件的 `name` frontmatter 提取 agent 名,用于中性化。
  */
-export function extractNameEntities(
-  filesContents: Map<string, string>
-): Set<string> {
+export function extractNameEntities(filesContents: Map<string, string>): Set<string> {
   const names = new Set<string>();
   for (const content of filesContents.values()) {
     const fmMatch = content.match(/^---\n([\s\S]*?)\n---/);
     if (!fmMatch) continue;
     const nameMatch = fmMatch[1].match(/^name:\s*(.+)$/m);
     if (!nameMatch) continue;
-    const name = nameMatch[1].trim().replace(/^["']|["']$/g, "").toLowerCase();
+    const name = nameMatch[1]
+      .trim()
+      .replace(/^["']|["']$/g, "")
+      .toLowerCase();
     if (name) names.add(name);
   }
   return names;

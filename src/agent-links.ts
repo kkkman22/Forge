@@ -8,8 +8,8 @@
  * @see scripts/check-agent-links.mjs
  */
 
-import { lstatSync, readlinkSync, readdirSync, existsSync } from "node:fs";
-import { join, dirname, resolve } from "node:path";
+import { existsSync, lstatSync, readdirSync, readlinkSync } from "node:fs";
+import { dirname, join, resolve } from "node:path";
 
 /** 期望的 symlink 目标相对路径前缀(.claude/agents/<x>.md → ../../agents/<x>.md)。 */
 export const EXPECTED_TARGET_PREFIX = "../../agents/";
@@ -82,15 +82,20 @@ export function resolveSymlinkTarget(path: string): string | null {
  */
 export function validateAgentLinks(
   claudeAgentsDir: string,
+  // agentsDir 保留为 API 对称(symlink 目标已是固定 ../../agents/ 前缀,
+  // 存在性校验用 resolve+existsSync 完成);当前未直接使用,故 biome 忽略。
+  // biome-ignore lint/correctness/noUnusedFunctionParameters: API symmetry
   agentsDir: string,
-  vfs: VirtualFs = {}
+  vfs: VirtualFs = {},
 ): AgentLinkIssue[] {
   const issues: AgentLinkIssue[] = [];
 
   // 收集所有待校验文件:真实文件 + 虚拟文件 + 虚拟 symlink key
   const realFiles = listClaudeAgents(claudeAgentsDir);
   const virtualSymlinkFiles = vfs.virtualSymlinks ? Object.keys(vfs.virtualSymlinks) : [];
-  const allFiles = [...new Set([...realFiles, ...(vfs.virtualFiles ?? []), ...virtualSymlinkFiles])];
+  const allFiles = [
+    ...new Set([...realFiles, ...(vfs.virtualFiles ?? []), ...virtualSymlinkFiles]),
+  ];
 
   for (const file of allFiles) {
     const fullPath = join(claudeAgentsDir, file);

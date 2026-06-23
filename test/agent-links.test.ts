@@ -1,10 +1,10 @@
 import { describe, expect, it } from "vitest";
 import {
-  listClaudeAgents,
+  type AgentLinkIssue,
   isSymlink,
+  listClaudeAgents,
   resolveSymlinkTarget,
   validateAgentLinks,
-  type AgentLinkIssue,
 } from "../src/agent-links.js";
 
 describe("listClaudeAgents", () => {
@@ -60,38 +60,30 @@ describe("validateAgentLinks", () => {
   });
 
   it("flags a regular file (not symlink) as error", () => {
-    const issues: AgentLinkIssue[] = validateAgentLinks(
-      ".claude/agents",
-      "agents",
-      { virtualFiles: ["evil-regular.md"] }
-    );
+    const issues: AgentLinkIssue[] = validateAgentLinks(".claude/agents", "agents", {
+      virtualFiles: ["evil-regular.md"],
+    });
     const regularFileIssues = issues.filter(
-      (i) => i.file === "evil-regular.md" && i.code === "NOT_SYMLINK"
+      (i) => i.file === "evil-regular.md" && i.code === "NOT_SYMLINK",
     );
     expect(regularFileIssues).toHaveLength(1);
   });
 
   it("flags a broken symlink (target missing) as error", () => {
     // target 路径格式正确(../../agents/broken.md)但 agents/broken.md 不存在
-    const issues: AgentLinkIssue[] = validateAgentLinks(
-      ".claude/agents",
-      "agents",
-      { virtualSymlinks: { "broken.md": "../../agents/broken.md" } }
-    );
-    const brokenIssues = issues.filter(
-      (i) => i.file === "broken.md" && i.code === "BROKEN_TARGET"
-    );
+    const issues: AgentLinkIssue[] = validateAgentLinks(".claude/agents", "agents", {
+      virtualSymlinks: { "broken.md": "../../agents/broken.md" },
+    });
+    const brokenIssues = issues.filter((i) => i.file === "broken.md" && i.code === "BROKEN_TARGET");
     expect(brokenIssues).toHaveLength(1);
   });
 
   it("flags a symlink with wrong target path as error", () => {
-    const issues: AgentLinkIssue[] = validateAgentLinks(
-      ".claude/agents",
-      "agents",
-      { virtualSymlinks: { "wrong.md": "../../somewhere-else/wrong.md" } }
-    );
+    const issues: AgentLinkIssue[] = validateAgentLinks(".claude/agents", "agents", {
+      virtualSymlinks: { "wrong.md": "../../somewhere-else/wrong.md" },
+    });
     const wrongTargetIssues = issues.filter(
-      (i) => i.file === "wrong.md" && i.code === "WRONG_TARGET"
+      (i) => i.file === "wrong.md" && i.code === "WRONG_TARGET",
     );
     expect(wrongTargetIssues).toHaveLength(1);
   });

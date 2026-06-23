@@ -100,7 +100,7 @@ function escapeRegex(s: string): string {
 export function lintAgentText(
   fileName: string,
   text: string,
-  recommendedSections: string[] = DEFAULT_RECOMMENDED_SECTIONS
+  recommendedSections: string[] = DEFAULT_RECOMMENDED_SECTIONS,
 ): LintIssue[] {
   const issues: LintIssue[] = [];
 

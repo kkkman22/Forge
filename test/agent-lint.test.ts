@@ -1,14 +1,14 @@
 import { describe, expect, it } from "vitest";
 import {
+  countWords,
+  extractBody,
   extractFrontmatter,
   getFrontmatterField,
-  extractBody,
   hasCRLF,
-  countWords,
   hasSection,
   lintAgentText,
-  REQUIRED_FRONTMATTER,
   MIN_BODY_WORDS,
+  REQUIRED_FRONTMATTER,
 } from "../src/agent-lint.js";
 
 describe("extractFrontmatter", () => {

@@ -1,12 +1,12 @@
 import { describe, expect, it } from "vitest";
 import {
-  tokenize,
-  shingles,
-  jaccard,
-  stripFrontmatter,
-  neutralizeEntities,
   DEFAULT_FAIL_THRESHOLD,
   DEFAULT_WARN_THRESHOLD,
+  jaccard,
+  neutralizeEntities,
+  shingles,
+  stripFrontmatter,
+  tokenize,
 } from "../src/agent-originality.js";
 
 describe("stripFrontmatter", () => {
@@ -35,7 +35,7 @@ describe("neutralizeEntities", () => {
   it("replaces known entity strings with placeholder", () => {
     const result = neutralizeEntities(
       "spec-check uses Read and Grep tools",
-      new Set(["spec-check", "read", "grep"])
+      new Set(["spec-check", "read", "grep"]),
     );
     expect(result).not.toContain("spec-check");
     expect(result).not.toContain("read");
