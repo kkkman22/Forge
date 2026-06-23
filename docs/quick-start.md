@@ -40,7 +40,7 @@ Forge 把 AI 编码约束成一条**可验证的阶段流水线**。记住这一
 2. **门禁强制纪律**：Stop 完成 gate 会检查未完成任务并提示续做（**prompt-only**——agent 可忽略，非技术阻断）；review 发现 P0/P1 会阻断 ship。
 3. **路由分档**：Light（≤1 文件）/ Standard（明确需求）/ Full（新服务/模糊需求）三档，复杂度决定流程轻重。
 
-> 完整的三级路由、subagent 并行评审、ADR、知识库自演化等重型机制见 [onboarding-advanced](./onboarding-advanced.md)。上手阶段只需上面的闭环。
+> 完整的进阶机制(路由分档细节、多角色评审、决策记录、知识库自演化等)见 [onboarding-advanced](./onboarding-advanced.md)。上手阶段只需上面的闭环。
 
 ---
 

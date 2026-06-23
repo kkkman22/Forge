@@ -143,6 +143,28 @@ describe("stop-incomplete-tasks.mjs (R1 completion gate)", () => {
     expect(stdout).toMatch(/task b/);
   });
 
+  // R1.AC1 — 阶段已知时跳过 frontmatter phase 不匹配的 progress 文件
+  it("skips progress files whose frontmatter phase differs from current phase", () => {
+    tempDir = createTempForge(
+      {
+        // 此文件标记为 build 阶段，与当前 status phase=review 不匹配
+        "build-phase.md": "---\nphase: build\n---\n\n- [ ] build task\n",
+        // 此文件标记为 review 阶段，匹配
+        "review-phase.md": "---\nphase: review\n---\n\n- [ ] review task\n",
+        // 此文件无 phase 字段，仍纳入（向后兼容，不漏任务）
+        "no-phase.md": "- [ ] no-phase task\n",
+      },
+      'phase: "review"',
+    );
+    const { stdout } = runScript(tempDir);
+    // 匹配的 review 任务应出现
+    expect(stdout).toMatch(/review task/);
+    // 无 phase 标记的任务仍出现（向后兼容）
+    expect(stdout).toMatch(/no-phase task/);
+    // build 阶段任务应被过滤掉
+    expect(stdout).not.toMatch(/build task/);
+  });
+
   // R1.AC7 — prompt-only 声明（代码注释或 docs 标注 agent 可忽略）
   it("documents prompt-only nature in source (comment mentioning agent can ignore)", () => {
     // 读源码确认有 prompt-only 注释（非运行时行为，静态检查）

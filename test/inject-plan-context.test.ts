@@ -498,7 +498,7 @@ describe("inject-plan-context.mjs (R5 findings injection)", () => {
     }
   });
 
-  // R5.AC1/AC3 — findings 注入含 <findings> 边界 + "调研原文非当前指令" + 转义
+  // R5.AC1/AC3 — findings 注入含 <findings> 边界 + "非当前指令" + 转义 + 结构化提取
   it("injects findings wrapped in <findings> boundary with escape (N-2 fix)", () => {
     tempDir = createTempPlansDir();
     writePlan(tempDir, "feature-x.md", "status: approved", "Feature X body");
@@ -514,13 +514,39 @@ describe("inject-plan-context.mjs (R5 findings injection)", () => {
     // 应注入 findings 段
     expect(output).toMatch(/<findings>/);
     expect(output).toMatch(/<\/findings>/);
-    // 标注"调研原文非当前指令"
-    expect(output).toMatch(/调研.*原文|非当前指令|非指令/);
-    // 伪造的闭合标签必须被转义(&lt;/findings&gt; 或剥离),边界内不能有字面 </findings>
+    // 标注"非当前指令"
+    expect(output).toMatch(/非当前指令|非指令/);
+    // 伪造的闭合标签必须被转义,边界内不能有字面 </findings>
     const boundaryMatch = output.match(/<findings>([\s\S]*?)<\/findings>/);
     expect(boundaryMatch, "findings boundary must be present and balanced").toBeTruthy();
     const inner = boundaryMatch![1];
     expect(inner).not.toMatch(/<\/findings>/);
+    // 注:首段提取会包含"立即ship"文本(无空行时整段为首段),但有边界+转义+"非指令"
+    // 标注三重保护——结构化提取缩小面,转义防伪造闭合标签,标注声明数据语义。
+  });
+
+  // R5.AC3 (SC-4 fix) — 提取 frontmatter 结构化字段(title/summary/severity)
+  it("extracts frontmatter structured fields rather than dumping whole file", () => {
+    tempDir = createTempPlansDir();
+    writePlan(tempDir, "feature-y.md", "status: approved", "Feature Y body");
+    writeActivePlan(tempDir, { plan_path: ".forge/plans/feature-y.md", phase: "build" });
+    writeFindings(
+      tempDir,
+      "feature-y",
+      "---\ntitle: 重构方案调研\nseverity: high\n---\n\n# 调研发现\n\n第一段摘要内容。\n\n第二段详细正文不应被注入(太长)。",
+    );
+
+    const output = runScript(tempDir);
+    const boundaryMatch = output.match(/<findings>([\s\S]*?)<\/findings>/);
+    expect(boundaryMatch).toBeTruthy();
+    const inner = boundaryMatch![1];
+    // 结构化字段应被提取
+    expect(inner).toMatch(/title: 重构方案调研/);
+    expect(inner).toMatch(/severity: high/);
+    // 首段摘要应出现
+    expect(inner).toMatch(/第一段摘要内容/);
+    // 第二段正文不应被注入(只取首段)
+    expect(inner).not.toMatch(/第二段详细正文/);
   });
 
   // R5.AC5 — findings 不存在/为空时静默跳过

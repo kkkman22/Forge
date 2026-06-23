@@ -63,11 +63,23 @@ try {
   }
 
   // Collect incomplete task lines across all progress files.
+  // R1.AC1: when the current phase is known, prefer progress files whose
+  // frontmatter `phase:` matches; files without a phase marker are still
+  // included (backward compat — avoid silently dropping tasks). When phase is
+  // unknown, scan all files unconditionally.
+  const currentPhase = readCurrentPhase();
+  const phaseKnown = currentPhase !== null;
   const incompleteLines = [];
-  const phaseKnown = readCurrentPhase() !== null;
 
   for (const file of files) {
     const content = readFileSync(join(PROGRESS_DIR, file), "utf-8");
+    // If phase is known and this file declares a phase, only include on match.
+    if (phaseKnown) {
+      const fm = content.match(/^---\n([\s\S]*?)\n---/);
+      const filePhase = fm?.[1]?.match(/^phase:\s*["']?([^\s"']+)["']?\s*$/m)?.[1];
+      // File declares a phase that differs from current → skip its tasks.
+      if (filePhase && filePhase !== currentPhase) continue;
+    }
     const lines = content.split("\n");
     for (const line of lines) {
       if (/^- \[ \]/.test(line)) {
