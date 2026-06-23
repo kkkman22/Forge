@@ -11,6 +11,12 @@ Entries follow [Keep a Changelog](https://keepachangelog.com/) with Forge-specif
 
 ## [Unreleased]
 
+## [3.8.0] - 2026-06-23
+
+### Added
+
+- **init**: capability checklist at completion (plugin + MCP + companions)
+
 ## [3.7.1] - 2026-06-23
 
 ### Fixed
