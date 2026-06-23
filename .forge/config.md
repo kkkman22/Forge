@@ -28,6 +28,7 @@ review_confidence_threshold: 75         # Confidence gate threshold (0-100). Fin
 review_enable_adversarial: true         # Enable adversarial-check agent (Full tier default, Standard conditional)
 review_enable_validation: true          # Enable validation pass (Full tier only)
 context_budget: 100000                  # Context token budget for compact-safe mode threshold
+context.progress_window: 5              # progress 注入滚动窗口(最近 N 条任务),正整数,默认 5
 post_push_verify_enabled: true
 build.use_goal: true    # true=使用 /goal 循环（推荐），false=旧 persistent-loop TDD 循环
 ci_check_command: "npm run check"
