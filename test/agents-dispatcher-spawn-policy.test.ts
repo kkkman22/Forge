@@ -58,21 +58,23 @@ const lineageWithAgent: LineageEntry[] = [
 ];
 
 describe("evaluateSpawnPolicy", () => {
-  it("returns null when lineage/depth omitted (backward compat)", () => {
-    expect(evaluateSpawnPolicy(baseOpts(), "")).toBeNull();
-    expect(evaluateSpawnPolicy(baseOpts({ lineage: [] }), "")).toBeNull();
-    expect(evaluateSpawnPolicy(baseOpts({ depth: 1 }), "")).toBeNull();
+  it("P1-7: fails secure (block) when lineage omitted, not skip", () => {
+    const decision = evaluateSpawnPolicy(baseOpts(), "");
+    expect(decision.allowed).toBe(false);
+    expect(decision.verdict).toBe("blocked");
+    expect(decision.rule).toBe("missing-lineage");
+    // depth alone without lineage also fails secure
+    expect(evaluateSpawnPolicy(baseOpts({ depth: 1 }), "").verdict).toBe("blocked");
   });
 
-  it("blocks when lineage ancestor disallows Agent", () => {
+  it("blocks when lineage ancestor disallows a spawn tool", () => {
     const decision = evaluateSpawnPolicy(
       baseOpts({ agentType: "child", lineage: lineageWithAgent, depth: 1 }),
       "",
     );
-    expect(decision).not.toBeNull();
-    expect(decision!.allowed).toBe(false);
-    expect(decision!.verdict).toBe("blocked");
-    expect(decision!.rule).toBe("Agent-spawn-forbidden");
+    expect(decision.allowed).toBe(false);
+    expect(decision.verdict).toBe("blocked");
+    expect(decision.rule).toBe("spawn-tool-forbidden");
   });
 
   it("allows when lineage has no Agent and depth within limit", () => {

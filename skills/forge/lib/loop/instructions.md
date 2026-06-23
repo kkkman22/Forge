@@ -1,5 +1,6 @@
 ---
 description: "Use when user runs /forge loop, wants unattended execution, or needs background completion of queued tasks"
+updated: 2026-06-23
 
 dispatch_mode: fork
 allowed_tools:
@@ -102,7 +103,7 @@ Uses `src/loop/three-strike.ts`:
 | Failure | `recordFailure(state)` → increment `consecutiveFailures` |
 | Check | `shouldHalt(state)` → true when `consecutiveFailures ≥ 3` |
 | Halt | Set `phase: "halted"`, `haltReason: computeHaltReason(...)` |
-| Rollback | If `shouldRollback(state)` → `git reset --hard <lastSuccessCommit>` |
+| Rollback | If `shouldRollback(state)` → **先签发 rollback nonce**(`node -e "require('./dist/src/destructive-nonce.js').issueRollbackNonce(process.cwd())"` 或等价),再 `git reset --hard <lastSuccessCommit>`。nonce 在 destructive-guard 放行后即焚(单次有效),确保回滚畅通且不可被伪造复用。 |
 | Success | `recordSuccess(state, commitHash)` → reset to 0, update `lastSuccessCommit` |
 
 On halt: output summary → stop. User can `/forge loop continue <id>` after manual fix.

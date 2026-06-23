@@ -73,6 +73,7 @@ describe("agents-dispatcher (R5)", () => {
       agentType: "spec-check",
       prompt: "Review spec completeness",
       workdir: tmpDir,
+      lineage: [],
     };
     const result = await mod.dispatch(opts);
 
@@ -99,6 +100,7 @@ describe("agents-dispatcher (R5)", () => {
       agentType: "spec-check",
       prompt: "test",
       workdir: tmpDir,
+      lineage: [],
     });
 
     expect(result.status).toBe("failed");
@@ -120,6 +122,7 @@ describe("agents-dispatcher (R5)", () => {
       agentType: "quality-check",
       prompt: "test quality",
       workdir: tmpDir,
+      lineage: [],
     });
 
     expect(result.status).toBe("failed");
@@ -145,6 +148,7 @@ describe("agents-dispatcher (R5)", () => {
       agentType: "security-check",
       prompt: "Scan for vulnerabilities",
       workdir: "/tmp/project",
+      lineage: [],
     });
 
     // Should call 'claude' with 'agents' subcommand and appropriate flags
@@ -173,6 +177,7 @@ describe("agents-dispatcher (R5)", () => {
       agentType: "architect",
       prompt: "Design review",
       workdir: tmpDir,
+      lineage: [],
       effort: "high",
     });
 
@@ -186,6 +191,7 @@ describe("agents-dispatcher (R5)", () => {
       agentType: "spec-check",
       prompt: "Collect all sessions",
       workdir: tmpDir,
+      lineage: [],
       includeAll: true,
     });
 
@@ -199,6 +205,7 @@ describe("agents-dispatcher (R5)", () => {
       agentType: "forge-build",
       prompt: "x".repeat(5000),
       workdir: tmpDir,
+      lineage: [],
       requiresWorktreePreflight: true,
     });
 
@@ -222,6 +229,7 @@ describe("agents-dispatcher (R5)", () => {
       agentType: "architect",
       prompt: "Design review",
       workdir: tmpDir,
+      lineage: [],
     });
 
     const effortArg = capturedArgs.find((a) => a.startsWith("--effort"));
@@ -330,6 +338,7 @@ describe("agents-dispatcher (R5)", () => {
       agentType: "product",
       prompt: "Product analysis",
       workdir: tmpDir,
+      lineage: [],
     });
 
     expect(result).toEqual({
@@ -391,6 +400,7 @@ describe("agents-dispatcher (R5)", () => {
       agentType: "spec-check",
       prompt: "Review spec",
       workdir: tmpDir,
+      lineage: [],
     });
 
     expect(result.status).toBe("completed");
@@ -421,6 +431,7 @@ describe("agents-dispatcher (R5)", () => {
       agentType: "spec-check",
       prompt: "Review spec",
       workdir: tmpDir,
+      lineage: [],
     });
 
     expect(result.id).toBe("agent-session-123");
@@ -454,6 +465,7 @@ describe("agents-dispatcher (R5)", () => {
       agentType: "quality-check",
       prompt: "Review quality",
       workdir: tmpDir,
+      lineage: [],
     });
 
     expect(result.status).toBe("failed");
@@ -484,6 +496,7 @@ describe("agents-dispatcher (R5)", () => {
       agentType: "security-check",
       prompt: "Review security",
       workdir: tmpDir,
+      lineage: [],
       timeoutMs: 1234,
     });
 
@@ -507,6 +520,7 @@ describe("agents-dispatcher (R5)", () => {
       agentType: "critic",
       prompt: "Review",
       workdir: tmpDir,
+      lineage: [],
     });
 
     expect(result.status).toBe("failed");
@@ -526,6 +540,7 @@ describe("agents-dispatcher (R5)", () => {
       agentType: "critic",
       prompt: "Criticize",
       workdir: tmpDir,
+      lineage: [],
     });
 
     expect(result.status).toBe("completed");
@@ -617,6 +632,7 @@ describe("agents-dispatcher (R5)", () => {
       agentType: "quality-check",
       prompt: "Review",
       workdir: tmpDir,
+      lineage: [],
       tier: "full",
       configContent: config,
     });
@@ -645,6 +661,7 @@ describe("agents-dispatcher (R5)", () => {
       agentType: "quality-check",
       prompt: "Review",
       workdir: tmpDir,
+      lineage: [],
       tier: "full",
       configContent: "review.agent_timeout_minutes.full: 30\n",
       timeoutMs: 7000, // explicit override wins
@@ -669,6 +686,7 @@ describe("agents-dispatcher (R5)", () => {
       agentType: "security-check",
       prompt: "Review",
       workdir: tmpDir,
+      lineage: [],
       tier: "light",
       configContent: "review.agent_timeout_minutes.light: 8\n",
     });
@@ -701,6 +719,7 @@ describe("agents-dispatcher (R5)", () => {
       agentType: "spec-check",
       prompt: "Review",
       workdir: tmpDir,
+      lineage: [],
     });
 
     expect(capturedOpts.timeout).toBe(15 * 60 * 1000);

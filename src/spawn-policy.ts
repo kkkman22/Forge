@@ -55,8 +55,17 @@ export interface SpawnContext {
   maxDepth: number;
 }
 
-/** Tool-name sentinel meaning "this level may not spawn children". */
-const AGENT_TOOL = "Agent";
+/**
+ * Known subagent spawn tool names (P1-7). A lineage level whose
+ * `disallowedTools` contains any of these forbids spawning children.
+ * Maintain as CC evolves (Agent / Task / dispatch_agent …).
+ */
+export const SPAWN_TOOL_NAMES: ReadonlySet<string> = new Set([
+  "Agent",
+  "Task",
+  "dispatch_agent",
+  "spawn_agent",
+]);
 
 // ---------------------------------------------------------------------------
 // Core judgment
@@ -81,16 +90,18 @@ export function checkSpawnPolicy(ctx: SpawnContext): SpawnPolicyDecision {
     };
   }
 
-  // 2. Lineage: any ancestor disallowing Agent blocks spawning children.
+  // 2. Lineage: any ancestor disallowing a spawn tool blocks spawning children.
   for (const entry of ctx.lineage) {
-    if (entry.disallowed.has(AGENT_TOOL)) {
-      return {
-        allowed: false,
-        verdict: "blocked",
-        rule: "Agent-spawn-forbidden",
-        blockedAt: entry.agent,
-        reason: `spawn 被阻断: 祖先 ${entry.agent} 的 disallowedTools 含 Agent,该层级禁止再 spawn 子 agent。`,
-      };
+    for (const tool of SPAWN_TOOL_NAMES) {
+      if (entry.disallowed.has(tool)) {
+        return {
+          allowed: false,
+          verdict: "blocked",
+          rule: "spawn-tool-forbidden",
+          blockedAt: entry.agent,
+          reason: `spawn 被阻断: 祖先 ${entry.agent} 的 disallowedTools 含 ${tool},该层级禁止再 spawn 子 agent。`,
+        };
+      }
     }
   }
 

@@ -10,7 +10,12 @@
 
 import * as fc from "fast-check";
 import { describe, expect, it } from "vitest";
-import { checkSpawnPolicy, type LineageEntry, type SpawnContext } from "../src/spawn-policy.js";
+import {
+  checkSpawnPolicy,
+  type LineageEntry,
+  SPAWN_TOOL_NAMES,
+  type SpawnContext,
+} from "../src/spawn-policy.js";
 
 // ---------------------------------------------------------------------------
 // Lineage fixtures
@@ -41,8 +46,24 @@ describe("checkSpawnPolicy — R2 Agent-spawn-forbidden", () => {
     const result = checkSpawnPolicy(ctx("quality-check", NO_SPAWN_LINEAGE, 1));
     expect(result.allowed).toBe(false);
     expect(result.verdict).toBe("blocked");
-    expect(result.rule).toBe("Agent-spawn-forbidden");
+    expect(result.rule).toBe("spawn-tool-forbidden");
     expect(result.blockedAt).toBe("spec-check");
+  });
+
+  it("P1-7: blocks spawn for any spawn-tool-name in SPAWN_TOOL_NAMES", () => {
+    // Task / dispatch_agent — alternative CC spawn tool names
+    const taskLineage: LineageEntry[] = [{ agent: "worker", disallowed: new Set(["Task"]) }];
+    expect(checkSpawnPolicy(ctx("child", taskLineage, 1)).rule).toBe("spawn-tool-forbidden");
+
+    const dispatchLineage: LineageEntry[] = [
+      { agent: "worker", disallowed: new Set(["dispatch_agent"]) },
+    ];
+    expect(checkSpawnPolicy(ctx("child", dispatchLineage, 1)).rule).toBe("spawn-tool-forbidden");
+  });
+
+  it("SPAWN_TOOL_NAMES includes Agent and Task", () => {
+    expect(SPAWN_TOOL_NAMES.has("Agent")).toBe(true);
+    expect(SPAWN_TOOL_NAMES.has("Task")).toBe(true);
   });
 
   it("AC3: allows spawn when lineage has no Agent prohibition", () => {

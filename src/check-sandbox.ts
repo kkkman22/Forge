@@ -11,7 +11,8 @@
 
 import { existsSync, readFileSync } from "node:fs";
 import { resolve } from "node:path";
-import { checkDestructiveCommand, contextFromEnv } from "./destructive-guard.js";
+import { checkDestructive } from "./destructive-guard.js";
+import { contextFromNonce } from "./destructive-nonce.js";
 import { checkFileAccess, checkNetworkAccess, type PermissionPolicy } from "./sandbox-policy.js";
 
 // ---------------------------------------------------------------------------
@@ -172,11 +173,12 @@ export function checkSandboxAccess(
       }
     }
 
-    // Destructive-command guard (short-circuit deny).
-    // Context is assembled from env tokens (FORGE_ROLLBACK_IN_PROGRESS /
-    // FORGE_ALLOW_DESTRUCTIVE / FORGE_DESTRUCTIVE_GUARD) so the hook honours
-    // Forge's own rollback path without file-I/O single points of failure.
-    const destructive = checkDestructiveCommand(command, contextFromEnv(process.env));
+    // Destructive-command guard (v2: nonce + config, short-circuit deny).
+    // Context assembled from trusted nonce files + config.md destructive_guard,
+    // so the hook honours Forge's own rollback path (nonce-verified) and
+    // config.md `off` propagates here without env-only bypass (P0-2/P0-3/P0-5).
+    const projectRoot = process.cwd();
+    const destructive = checkDestructive(command, contextFromNonce(process.env, projectRoot));
     if (!destructive.allowed) {
       return { allowed: false, reason: `🛑 Destructive guard: ${destructive.reason}` };
     }

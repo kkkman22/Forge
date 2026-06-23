@@ -76,7 +76,35 @@ remaining *command-level / orchestration-level* gaps:
 | Retry watchdog, stream-stall, TUI | Not adopted | Out of Forge's skill-orchestration layer; Forge delegates to native runtime. |
 | Agent Teams | Not adopted | ADR-locked; ROADMAP Tier judgement unchanged. |
 
-Spec: `.forge/specs/cc-2-1-18x-safety-hardening/`.
+### v2 revision (post-review hardening)
+
+The v1 implementation was reviewed and **5 P0 issues** were found (rule bypass
+via shell syntax, forgeable bypass tokens, guard not wired to real dispatch,
+config-off not propagating, guard inactive by default). v2 reworked:
+
+- **Rule engine** → shell normalization (`normalizeCommand`): strips quotes /
+  `env` / absolute paths / git global flags / `bash -c` wrappers before matching,
+  so `git reset --hard=1`, `env git reset --hard`, `bash -c 'git reset --hard'`
+  etc. all collapse to the canonical form and are denied.
+- **Bypass channel** → nonce + HMAC (`src/destructive-nonce.ts`): the loop
+  rollback skill issues a one-time nonce to `.forge/.rollback-nonce` before
+  `git reset --hard`; the guard validates + burns it. Writing `~/.zshenv` no
+  longer disables the guard (P0-2/P0-3 fix).
+- **R2 scope** → declared as a `dispatch()` function contract (review/decide
+  spawn via SDK Agent tool, not via `dispatch()`); spawn-tool-name set
+  (`Agent`/`Task`/`dispatch_agent`); missing lineage → fail-secure.
+- **R3** → `depth >= maxDepth` boundary; max-depth-exceeded recorded to
+  tool-health.
+- **Doctor** → reports sandbox-active state + bypass-env-set warning.
+
+**Sandbox activation caveat (P1-1):** the destructive guard only runs when
+Forge is started with `--sandbox` (the PreToolUse hook is gated on
+`.forge/.sandbox-active.json`). In the default (non-sandbox) configuration the
+guard is **not on the attack path** — `forge doctor` reports this as `unknown`
+status. Operators wanting pre-emptive destructive-command blocking must run
+with `--sandbox`.
+
+Spec: `.forge/specs/cc-2-1-18x-safety-hardening/` (v2).
 
 ## v2.1.169 Assessment
 

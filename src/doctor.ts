@@ -462,20 +462,43 @@ export function buildSafetyGuardsHealth(projectRoot: string): SafetyGuardsHealth
   }
 
   // R1 destructive_guard — default on; warn when explicitly off (AC5).
+  // Also surface whether the guard is actually active (sandbox mode) and
+  // whether bypass env tokens are set without matching nonce files (P0-3/P1-1).
   const guardVal = readConfigScalar(configContent, "destructive_guard");
-  const destructiveGuard: HealthCheck =
-    guardVal === "off"
-      ? {
-          status: "fail",
-          message:
-            "destructive_guard is OFF — destructive git/infra commands are not blocked (P1 warning)",
-          source: ".forge/config.md:destructive_guard",
-        }
-      : {
-          status: "pass",
-          message: `destructive_guard=${guardVal ?? "on (default)"}`,
-          source: ".forge/config.md:destructive_guard",
-        };
+  const sandboxActive = existsSync(path.join(forgeRoot, ".sandbox-active.json"));
+  const bypassEnvSet =
+    Boolean(process.env.FORGE_ROLLBACK_NONCE) || Boolean(process.env.FORGE_ALLOW_DESTRUCTIVE);
+
+  let destructiveGuard: HealthCheck;
+  if (guardVal === "off") {
+    destructiveGuard = {
+      status: "fail",
+      message:
+        "destructive_guard is OFF — destructive git/infra commands are not blocked (P1 warning)",
+      source: ".forge/config.md:destructive_guard",
+    };
+  } else if (!sandboxActive) {
+    // P1-1: guard only runs under --sandbox (PreToolUse hook gated on .sandbox-active.json).
+    destructiveGuard = {
+      status: "unknown",
+      message: "destructive_guard inactive (sandbox not enabled — run with --sandbox to activate)",
+      source: ".forge/.sandbox-active.json",
+    };
+  } else if (bypassEnvSet) {
+    // P0-3: env bypass tokens set — potential forgery if no nonce file backs them.
+    destructiveGuard = {
+      status: "warn",
+      message:
+        "bypass env (FORGE_ROLLBACK_NONCE / FORGE_ALLOW_DESTRUCTIVE) set — verify a nonce file backs it",
+      source: "process.env",
+    };
+  } else {
+    destructiveGuard = {
+      status: "pass",
+      message: `destructive_guard=${guardVal ?? "on (default)"} (sandbox active)`,
+      source: ".forge/config.md:destructive_guard",
+    };
+  }
 
   // R2 spawn-policy — present once the spawn-policy module ships (always on; fail-open).
   const spawnPolicy: HealthCheck = {

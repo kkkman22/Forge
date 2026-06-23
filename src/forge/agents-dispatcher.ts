@@ -218,37 +218,54 @@ export function resolveMaxSubagentDepth(configContent: string): number {
  * tool-health rather than blocking dispatch.
  *
  * @internal — exported for dispatcher wiring tests.
+ *
+ * P1-7 fix: when lineage is omitted the policy is fail-secure (block) rather
+ * than skip — a caller that forgets to supply the trusted lineage cannot
+ * silently bypass the spawn guard. `depth` alone may be absent (defaults to 0).
  */
 export function evaluateSpawnPolicy(
   opts: DispatchOptions,
   configContent: string,
-): SpawnPolicyDecision | null {
-  if (opts.lineage === undefined || opts.depth === undefined) {
-    return null;
+): SpawnPolicyDecision {
+  // Missing lineage → fail-secure: callers must supply the trusted lineage.
+  const lineage = opts.lineage;
+  if (lineage === undefined) {
+    return {
+      allowed: false,
+      verdict: "blocked",
+      rule: "missing-lineage",
+      reason:
+        "spawn-policy: lineage not supplied (fail-secure); dispatch caller must pass trusted lineage.",
+    };
   }
   return checkSpawnPolicy({
     subagentIdentity: opts.agentType,
-    lineage: opts.lineage,
-    depth: opts.depth,
+    lineage,
+    depth: opts.depth ?? 0,
     maxDepth: resolveMaxSubagentDepth(configContent),
   });
 }
 
 /**
- * Best-effort tool-health log for a spawn-policy evaluation error (fail-open).
+ * Best-effort tool-health log for a spawn-policy event (fail-open or depth).
  * Writes are swallowed — a logging failure must NOT block dispatch (NFR-2).
  */
-function appendSpawnPolicyError(agentType: string, err: unknown): void {
+function appendSpawnPolicyEvent(agentType: string, event: string, detail: string): void {
   try {
-    const msg = err instanceof Error ? err.message : String(err);
     appendToolHealthRecord(join(process.cwd(), ".forge/knowledge/tool-health.md"), {
       subcommand: "dispatch",
-      event: "spawn-policy-error",
-      details: `agent=${agentType} err=${msg}`,
+      event,
+      details: `agent=${agentType} ${detail}`,
     });
   } catch {
     // Swallow: logging is best-effort; never block the dispatch path.
   }
+}
+
+/** Back-compat alias for fail-open error logging. */
+function appendSpawnPolicyError(agentType: string, err: unknown): void {
+  const msg = err instanceof Error ? err.message : String(err);
+  appendSpawnPolicyEvent(agentType, "spawn-policy-error", `err=${msg}`);
 }
 
 // ---------------------------------------------------------------------------
@@ -331,7 +348,11 @@ export async function dispatch(opts: DispatchOptions): Promise<DispatchResult> {
   // never blocked by the policy layer itself (availability-first, NFR-2).
   try {
     const decision = evaluateSpawnPolicy(opts, opts.configContent ?? "");
-    if (decision !== null && !decision.allowed) {
+    if (!decision.allowed) {
+      // P1-2: record max-depth-exceeded to tool-health for post-hoc tracing.
+      if (decision.verdict === "max-depth-exceeded") {
+        appendSpawnPolicyEvent(opts.agentType, "max-depth-exceeded", decision.reason);
+      }
       return {
         agent: opts.agentType,
         status: "failed",

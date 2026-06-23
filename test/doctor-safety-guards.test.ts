@@ -30,6 +30,11 @@ function writeConfig(root: string, body: string): void {
   writeFileSync(join(root, ".forge", "config.md"), `---\n${body}\n---\n`, "utf-8");
 }
 
+/** Create the sandbox-active marker so the destructive guard is considered active. */
+function enableSandbox(root: string): void {
+  writeFileSync(join(root, ".forge", ".sandbox-active.json"), "{}", "utf-8");
+}
+
 function writeSolutions(root: string, count: number): void {
   const dir = join(root, ".forge", "knowledge", "solutions");
   mkdirSync(dir, { recursive: true });
@@ -45,9 +50,10 @@ afterEach(() => {
 });
 
 describe("buildSafetyGuardsHealth — R1 destructive_guard", () => {
-  it("passes when guard is on (default)", () => {
+  it("passes when guard is on (default) and sandbox active", () => {
     const root = tempRoot();
     writeConfig(root, "project: X");
+    enableSandbox(root);
     const guards = buildSafetyGuardsHealth(root);
     expect(guards.destructiveGuard.status).toBe("pass");
     expect(guards.destructiveGuard.message).toContain("on");
@@ -56,14 +62,25 @@ describe("buildSafetyGuardsHealth — R1 destructive_guard", () => {
   it("fails with P1 warning when explicitly off (AC5)", () => {
     const root = tempRoot();
     writeConfig(root, "destructive_guard: off");
+    enableSandbox(root);
     const guards = buildSafetyGuardsHealth(root);
     expect(guards.destructiveGuard.status).toBe("fail");
     expect(guards.destructiveGuard.message).toContain("OFF");
   });
 
-  it("passes when explicitly on", () => {
+  it("reports unknown when sandbox not active (guard inactive, P1-1)", () => {
+    const root = tempRoot();
+    writeConfig(root, "project: X");
+    // no .sandbox-active.json
+    const guards = buildSafetyGuardsHealth(root);
+    expect(guards.destructiveGuard.status).toBe("unknown");
+    expect(guards.destructiveGuard.message).toContain("inactive");
+  });
+
+  it("passes when explicitly on and sandbox active", () => {
     const root = tempRoot();
     writeConfig(root, "destructive_guard: on");
+    enableSandbox(root);
     const guards = buildSafetyGuardsHealth(root);
     expect(guards.destructiveGuard.status).toBe("pass");
   });

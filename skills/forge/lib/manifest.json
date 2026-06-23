@@ -1,6 +1,6 @@
 {
   "version": 1,
-  "generated_at": "2026-06-23T02:06:06.484Z",
+  "generated_at": "2026-06-23T12:13:54.573Z",
   "subs": {
     "abort": {
       "instructions": {
@@ -395,7 +395,7 @@
     "loop": {
       "instructions": {
         "path": "loop/instructions.md",
-        "sha256": "1a0a059388a104e6ca89f1a81cae620d31d92b10b730547ea5e877bb0e3b889d"
+        "sha256": "89eaeb899b5131798539751f039bcc76a43deba01a0cc983fd9e26e1f1b4cd86"
       },
       "references": []
     },
