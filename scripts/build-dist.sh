@@ -60,6 +60,43 @@ echo ""
 echo "=== Forge 分发包构建 ==="
 echo ""
 
+# ---------- 确保 dist/src 是最新编译产物 ----------
+# build-dist.sh 只 cp 已存在的 dist/src/*.js（见下方 -f 守卫），不自己编译。
+# 但多个调用方不预先跑 tsc：pre-push hook、smoke-install、README 安装流、
+# bump-version --commit。这些会产出残缺 bundle（缺 check-frozen.js / MCP server）。
+# 条件编译：dist/src 陈旧才跑 tsc；已是最新则跳过（CI 零额外开销）。
+# tsc 失败则阻断构建（fail-fast，不产出残缺 bundle）。
+compile_if_stale() {
+  # dist/src 不存在 → 必须编译
+  if [[ ! -d "${FORGE_ROOT}/dist/src" ]]; then
+    info "dist/src 不存在，正在编译 TypeScript..."
+    return 0
+  fi
+  # 取 dist/src 下最旧的 .js（ls -t 倒序，tail -1 即最旧）。跨平台兼容
+  # （BSD/GNU find 的 -printf 不通用）。无 .js 则视为必须编译。
+  local oldest_dist
+  oldest_dist=$(ls -t "${FORGE_ROOT}"/dist/src/*.js 2>/dev/null | tail -1) || true
+  if [[ -z "${oldest_dist}" ]]; then
+    info "dist/src 无 .js 产物，正在编译 TypeScript..."
+    return 0
+  fi
+  # 找是否有比最旧 dist 产物更新的 .ts 源文件。find -newer 跨 BSD/GNU 兼容。
+  if find "${FORGE_ROOT}/src" -name '*.ts' -newer "${oldest_dist}" -print -quit 2>/dev/null | grep -q .; then
+    info "src/ 有改动早于 dist/src/，正在重新编译..."
+    return 0
+  fi
+  info "dist/src 已是最新，跳过编译"
+  return 1
+}
+
+if compile_if_stale; then
+  if ! npx tsc; then
+    error "TypeScript 编译失败，终止构建（不产出残缺 bundle）"
+    exit 1
+  fi
+  success "TypeScript 编译完成"
+fi
+
 # ---------- 提取版本号 ----------
 VERSION=$(node -e "console.log(require('${FORGE_ROOT}/package.json').version)" 2>/dev/null || echo "unknown")
 info "版本: ${VERSION}"
