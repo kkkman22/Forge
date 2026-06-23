@@ -251,3 +251,127 @@ describe("inject-plan-context.mjs", () => {
     expect(output).not.toContain("_another desc");
   });
 });
+
+// ============================================================================
+// Requirement 3: active-plan.json pointer + realpath path-traversal guard
+// spec: .forge/specs/planning-with-files-borrow/requirements.md#R3
+// ============================================================================
+
+function writeActivePlan(
+  plansDir: string,
+  pointer: { plan_path: string; spec_ref?: string; phase?: string; pinned_at?: string },
+): void {
+  const stateDir = join(plansDir, ".forge", "state");
+  mkdirSync(stateDir, { recursive: true });
+  writeFileSync(join(stateDir, "active-plan.json"), JSON.stringify(pointer, null, 2));
+}
+
+describe("inject-plan-context.mjs (R3 active-plan pointer)", () => {
+  let tempDir: string;
+
+  afterEach(() => {
+    if (tempDir) {
+      try {
+        rmSync(tempDir, { recursive: true, force: true });
+      } catch {
+        // Best effort
+      }
+    }
+  });
+
+  // R3.AC3 — active-plan.json 存在时优先读它(而非 mtime 排序)
+  it("prefers active-plan.json pointer over mtime sorting", () => {
+    tempDir = createTempPlansDir();
+    // 两个 plan,older-plan 内容不同;指针指向 older-plan
+    writePlan(tempDir, "newer-plan.md", "status: approved", "Newer plan body");
+    writePlan(tempDir, "older-plan.md", "status: approved", "Older plan body (pointed)");
+    writeActivePlan(tempDir, {
+      plan_path: ".forge/plans/older-plan.md",
+      phase: "build",
+      pinned_at: "2026-06-23",
+    });
+
+    const output = runScript(tempDir);
+    // 指针指向的 older-plan 应被注入(单一权威源)
+    expect(output).toContain("Older plan body (pointed)");
+    // 不应同时注入 newer-plan(指针是唯一源,非全量)
+    expect(output).not.toContain("Newer plan body");
+  });
+
+  // R3.AC4 — active-plan.json 缺失时退化为 mtime(向后兼容)
+  it("falls back to mtime sorting when active-plan.json is missing", () => {
+    tempDir = createTempPlansDir();
+    writePlan(tempDir, "feature-x.md", 'status: "approved"', "Feature X body");
+    // 不写 active-plan.json
+
+    const output = runScript(tempDir);
+    expect(output).toContain("=== Forge Context ===");
+    expect(output).toContain("feature-x.md");
+  });
+
+  // R3.AC3 — path traversal via .. 被拒绝(退化,不注入越界文件)
+  it("rejects plan_path with .. traversal and degrades gracefully", () => {
+    tempDir = createTempPlansDir();
+    // 在 tempDir 外放一个敏感文件
+    const secretDir = mkdtempSync(join(tmpdir(), "forge-secret-"));
+    writeFileSync(join(secretDir, "secret.md"), "SECRET CONTENT LEAK");
+    writePlan(tempDir, "legit.md", "status: approved", "Legit plan");
+    // 指针试图穿越到 tempDir 外
+    writeActivePlan(tempDir, {
+      plan_path: `${relativePath(tempDir, secretDir)}/secret.md`,
+    });
+
+    const output = runScript(tempDir);
+    // 敏感内容绝不能被注入
+    expect(output).not.toContain("SECRET CONTENT LEAK");
+    rmSync(secretDir, { recursive: true, force: true });
+  });
+
+  // R3.AC3 — path traversal via symlink 被拒绝(realpath 物理校验,N-3 fix)
+  it("rejects plan_path that is a symlink escaping .forge/plans/", () => {
+    tempDir = createTempPlansDir();
+    const { symlinkSync } = require("node:fs");
+    // 外部敏感文件
+    const secretDir = mkdtempSync(join(tmpdir(), "forge-symlink-secret-"));
+    writeFileSync(join(secretDir, "secret-via-symlink.md"), "SYMLINK SECRET LEAK");
+    // 在 plans/ 下建 symlink 指向外部
+    try {
+      symlinkSync(
+        join(secretDir, "secret-via-symlink.md"),
+        join(tempDir, ".forge", "plans", "evil.md"),
+      );
+    } catch {
+      // 某些环境不允许 symlink,跳过此测试
+      rmSync(secretDir, { recursive: true, force: true });
+      return;
+    }
+    writeActivePlan(tempDir, { plan_path: ".forge/plans/evil.md" });
+
+    const output = runScript(tempDir);
+    // symlink 逃逸的敏感内容绝不能被注入(realpath 校验应拒绝)
+    expect(output).not.toContain("SYMLINK SECRET LEAK");
+    rmSync(secretDir, { recursive: true, force: true });
+  });
+
+  // R3.AC3 — 合法 plan_path 在 .forge/plans/ 内正常注入
+  it("injects plan when plan_path is legitimately inside .forge/plans/", () => {
+    tempDir = createTempPlansDir();
+    writePlan(tempDir, "feature-y.md", "status: approved", "Feature Y legit body");
+    writeActivePlan(tempDir, {
+      plan_path: ".forge/plans/feature-y.md",
+      phase: "build",
+    });
+
+    const output = runScript(tempDir);
+    expect(output).toContain("Feature Y legit body");
+  });
+});
+
+/** Compute a relative path from base to target (for crafting ../ traversal in tests). */
+function relativePath(base: string, target: string): string {
+  const { relative } = require("node:path");
+  let rel = relative(base, target);
+  // prefix with the relative path; inject a .. if already relative-safe
+  return rel.startsWith(".") ? rel : `./${rel}`;
+}
+

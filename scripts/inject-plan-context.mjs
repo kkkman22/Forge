@@ -16,11 +16,13 @@
  *
  * Fail-open: errors produce no output rather than blocking the user.
  */
-import { existsSync, readdirSync, readFileSync, statSync } from "node:fs";
-import { join } from "node:path";
+import { existsSync, readdirSync, readFileSync, realpathSync, statSync } from "node:fs";
+import { join, relative, resolve } from "node:path";
 import { shouldSkipForSubagent } from "./lib/hook-stdin-router.mjs";
 
 const PLANS_DIR = ".forge/plans";
+const SPECS_DIR = ".forge/specs";
+const ACTIVE_PLAN_FILE = ".forge/state/active-plan.json";
 const MAX_PLANS = 3;
 const MAX_LINES_PER_PLAN = 50;
 const MAX_CHARS_PER_PLAN = 2000;
@@ -58,6 +60,51 @@ function isActive(content) {
   const fm = content.match(/^---\n([\s\S]*?)\n---/);
   if (!fm) return false;
   return /^status:\s*["']?(active|approved)["']?/m.test(fm[1]);
+}
+
+// ---------------------------------------------------------------------------
+// R3: active-plan.json pointer (single source of truth) + realpath guard
+// ---------------------------------------------------------------------------
+
+/**
+ * Read .forge/state/active-plan.json and return the pointed plan content.
+ *
+ * Security (N-3 fix): uses fs.realpathSync() to resolve the PHYSICAL path and
+ * verify it falls inside .forge/plans/. path.resolve() only does lexical
+ * normalization (collapses ..) and does NOT resolve symlinks — a symlink inside
+ * .forge/plans/ pointing to /etc/passwd would pass a lexical startsWith check
+ * but is rejected by realpath, which produces the true filesystem location.
+ *
+ * Returns null when: pointer missing, malformed, path escapes, or file unreadable
+ * (caller falls back to legacy mtime scan).
+ */
+function tryReadActivePlanPointer() {
+  if (!existsSync(ACTIVE_PLAN_FILE)) return null;
+  let pointer;
+  try {
+    pointer = JSON.parse(readFileSync(ACTIVE_PLAN_FILE, "utf-8"));
+  } catch {
+    return null;
+  }
+  if (!pointer || typeof pointer.plan_path !== "string") return null;
+
+  const planPath = pointer.plan_path;
+  try {
+    // Physical path resolution — resolves symlinks, rejects traversal.
+    const realPlan = realpathSync(resolve(planPath));
+    const realPlansRoot = realpathSync(resolve(PLANS_DIR));
+    // Ensure the resolved plan lives inside the resolved plans dir.
+    const rel = relative(realPlansRoot, realPlan);
+    if (rel.startsWith("..") || resolve(realPlansRoot, rel) !== realPlan) {
+      // Escaped .forge/plans/ — refuse, degrade to legacy scan.
+      return null;
+    }
+    const content = readFileSync(realPlan, "utf-8");
+    return { content, path: planPath };
+  } catch {
+    // File missing, symlink broken, or realpath failed — degrade.
+    return null;
+  }
 }
 
 // ---------------------------------------------------------------------------
@@ -192,6 +239,30 @@ function extractForPhase(content, phase) {
 try {
   if (await shouldSkipForSubagent()) process.exit(0);
 
+  // R3: active-plan.json pointer takes precedence (single source of truth).
+  // When present and valid, inject ONLY the pointed plan; otherwise fall back
+  // to the legacy mtime-scan path (backward compatible).
+  const pointerActive = tryReadActivePlanPointer();
+  if (pointerActive !== null) {
+    const { content, path } = pointerActive;
+    if (isActive(content)) {
+      const body = phase ? extractForPhase(content, phase) : extractHead(content);
+      if (body.length > 0) {
+        let output = "=== Forge Context ===\n";
+        if (phase)
+          output += `[phase: ${phase}${currentPackage ? ` package: ${currentPackage}` : ""}${compact ? " compact" : ""}]\n`;
+        output += `\n--- ${path} ---\n${body}\n`;
+        // Respect total budget even for single-pointer injection.
+        if (output.length > MAX_TOTAL_CHARS) {
+          output = output.slice(0, MAX_TOTAL_CHARS) + "\n[... truncated due to token budget]\n";
+        }
+        process.stdout.write(output);
+      }
+    }
+    process.exit(0);
+  }
+
+  // Legacy path: no active-plan.json — scan plans/ by mtime (backward compat).
   let entries;
   try {
     entries = readdirSync(PLANS_DIR)
