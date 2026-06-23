@@ -11,6 +11,15 @@ Entries follow [Keep a Changelog](https://keepachangelog.com/) with Forge-specif
 
 ## [Unreleased]
 
+## [3.7.1] - 2026-06-23
+
+### Fixed
+
+- **runtime-sync**: clean legacy @forge-runtime shims in marketplace mode
+- **init**: preserve shell operators in ci_check_command; guard env-count arithmetic
+- **ci**: keep release-checklist evidence, drop only npm publish (#129)
+- **ci**: remove npm publish job (#128)
+
 ## [3.7.0] - 2026-06-22
 
 ### Added
