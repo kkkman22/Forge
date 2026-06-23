@@ -243,9 +243,18 @@ describe("normalizeCommand", () => {
     ]);
   });
 
-  it("expands bash -c / sh -c wrappers", () => {
-    expect(normalizeCommand("bash -c 'git reset --hard'")).toEqual(["git", "reset", "--hard"]);
-    expect(normalizeCommand("sh -c 'git reset --hard'")).toEqual(["git", "reset", "--hard"]);
+  it("v3: bash -c / sh -c wrappers are complex (fail-closed, not expanded)", () => {
+    // v3 no longer expands wrappers — isComplexCommand catches them → checkDestructive denies.
+    expect(checkDestructive("bash -c 'git reset --hard'", NO_MARK).allowed).toBe(false);
+    expect(checkDestructive("sh -c 'git reset --hard'", NO_MARK).allowed).toBe(false);
+  });
+
+  it("v3: shell metacharacter commands are denied (fail-closed)", () => {
+    expect(checkDestructive("git reset --hard;", NO_MARK).allowed).toBe(false);
+    expect(checkDestructive("git reset --hard&&ls", NO_MARK).allowed).toBe(false);
+    expect(checkDestructive("git reset --hard|cat", NO_MARK).allowed).toBe(false);
+    expect(checkDestructive("git reset --'hard'", NO_MARK).allowed).toBe(false);
+    expect(checkDestructive("$(git reset --hard)", NO_MARK).allowed).toBe(false);
   });
 
   it("handles --hard=1 form (git accepts it)", () => {

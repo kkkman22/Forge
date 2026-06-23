@@ -17,7 +17,7 @@
  */
 
 import { createHmac, randomBytes } from "node:crypto";
-import { existsSync, mkdirSync, readFileSync, statSync, unlinkSync, writeFileSync } from "node:fs";
+import { existsSync, mkdirSync, readFileSync, renameSync, writeFileSync } from "node:fs";
 import { dirname, join } from "node:path";
 import type { DestructiveContext } from "./destructive-guard.js";
 
@@ -25,26 +25,36 @@ const ROLLBACK_NONCE_FILE = ".rollback-nonce";
 const ALLOW_NONCE_FILE = ".allow-destructive-nonce";
 
 /**
- * Derive a per-project HMAC secret. Stable across hook processes within a
- * session (config path + mtime), not knowable from env alone.
+ * v3: HMAC secret source. Does NOT derive from repo-readable/mutable file
+ * attributes (config.md mtime — a runaway agent can stat+recompute). Instead
+ * uses a one-time random `.forge/.guard-secret` (0600, auto-generated on first
+ * use, stable thereafter). FORGE_DESTRUCTIVE_SECRET env remains an explicit
+ * override.
  */
-function projectSecret(projectRoot: string): string {
+function getGuardSecret(projectRoot: string): string {
   const explicit = process.env.FORGE_DESTRUCTIVE_SECRET;
   if (explicit && explicit.trim() !== "") return explicit;
 
-  const configPath = join(projectRoot, ".forge", "config.md");
-  let mtime = 0;
+  const secretPath = join(projectRoot, ".forge", ".guard-secret");
   try {
-    mtime = statSync(configPath).mtimeMs;
+    return readFileSync(secretPath, "utf-8").trim();
   } catch {
-    mtime = 0;
+    // First use: generate a random secret, write 0600, return it.
+    const generated = randomBytes(32).toString("hex");
+    try {
+      mkdirSync(dirname(secretPath), { recursive: true });
+      writeFileSync(secretPath, generated, { mode: 0o600, encoding: "utf-8" });
+    } catch {
+      // If we can't persist, fall back to ephemeral random (still not derivable
+      // from repo state; nonce just won't survive a process restart).
+    }
+    return generated;
   }
-  return `forge:${projectRoot}:${mtime}`;
 }
 
 /** Compute HMAC of a nonce using the project secret. */
 function hmacOf(nonce: string, projectRoot: string): string {
-  return createHmac("sha256", projectSecret(projectRoot)).update(nonce).digest("hex");
+  return createHmac("sha256", getGuardSecret(projectRoot)).update(nonce).digest("hex");
 }
 
 /** Write a nonce file: `<nonce>\n<hmac>`. Returns the nonce. */
@@ -70,6 +80,13 @@ export function issueAllowNonce(projectRoot: string): string {
 /**
  * Validate a nonce file: file exists + HMAC matches + (optionally) the env
  * carries the same nonce. Burns the file on success. Returns true if valid.
+ *
+ * v3 hardening (AC3a b/c): atomic burn via `rename` to a `.consumed/`
+ * directory. rename is atomic on POSIX, so it doubles as a concurrency lock —
+ * two hook processes racing on the same nonce: only the first rename succeeds,
+ * the second gets ENOENT and returns false (no double-consume). If rename
+ * fails for any reason, we treat the nonce as NOT consumed → return false
+ * (fail-secure: refuse the bypass rather than risk replay).
  */
 function consumeNonce(
   projectRoot: string,
@@ -78,9 +95,22 @@ function consumeNonce(
 ): boolean {
   const filePath = join(projectRoot, ".forge", filename);
   if (!existsSync(filePath)) return false;
+
+  // Atomic burn: rename nonce → .consumed/<filename>. If rename fails (already
+  // consumed by a concurrent process, or permission), refuse this bypass.
+  const consumedDir = join(projectRoot, ".forge", ".consumed");
+  const consumedPath = join(consumedDir, filename);
+  try {
+    mkdirSync(consumedDir, { recursive: true });
+    renameSync(filePath, consumedPath);
+  } catch {
+    return false; // fail-secure: rename failed → not consumed → deny
+  }
+
+  // Read the renamed (now-consumed) file for HMAC verification.
   let content: string;
   try {
-    content = readFileSync(filePath, "utf-8");
+    content = readFileSync(consumedPath, "utf-8");
   } catch {
     return false;
   }
@@ -91,12 +121,6 @@ function consumeNonce(
   if (hmacOf(nonce, projectRoot) !== hmac) return false;
   // If env carries a nonce, it must match the file (belt-and-suspenders).
   if (envNonce !== undefined && envNonce !== "" && envNonce !== nonce) return false;
-  // Burn after reading (single-use).
-  try {
-    unlinkSync(filePath);
-  } catch {
-    // best-effort; a stale nonce is harmless once HMAC is consumed
-  }
   return true;
 }
 

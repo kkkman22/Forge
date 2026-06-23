@@ -43,84 +43,94 @@ export interface DestructiveRule {
 }
 
 // ---------------------------------------------------------------------------
-// Shell normalization engine (P0-1 fix)
+// Shell normalization (v3 — narrow + fail-closed)
 // ---------------------------------------------------------------------------
 
-/** Wrappers that prefix a real command and should be stripped. */
-const WRAPPER_SHELLS = new Set(["env", "bash", "sh", "zsh", "dash"]);
+/**
+ * Shell metacharacters that make a command "complex". Presence of any → the
+ * guard cannot safely reduce it to a bare destructive command → fail-closed
+ * (deny). This is the v3 fix for the v2 rule-bypass via `;` `&` `|` `$()`:
+ * rather than try to parse every shell variant (unwinnable), we refuse any
+ * command form we can't reduce to a bare command.
+ */
+export const SHELL_METACHARS: ReadonlySet<string> = new Set([
+  ";",
+  "&",
+  "|",
+  "`",
+  "$",
+  "(",
+  ")",
+  ">",
+  "<",
+  "\\",
+  "&&",
+  "||",
+  "\n",
+]);
 
-/** git global flags that may precede the subcommand. */
-function isGitGlobalFlag(token: string): boolean {
-  return (
-    token === "--no-pager" ||
-    token === "--no-color" ||
-    token.startsWith("-c") ||
-    token.startsWith("--git-dir") ||
-    token.startsWith("--work-tree") ||
-    token.startsWith("-C") ||
-    token.startsWith("-G") ||
-    token.startsWith("--namespace")
-  );
+/** Wrapper shells that prefix a real command — treated as complex (fail-closed). */
+const WRAPPER_SHELLS = new Set(["bash", "sh", "zsh", "dash", "exec"]);
+
+/**
+ * Whether a command is "complex" — i.e. cannot be safely reduced to a bare
+ * destructive command for whitelist matching. v3 fail-closed gate.
+ *
+ * Triggers: any shell metacharacter, embedded/embedded quotes, shell wrappers
+ * (bash -c / sh -c), or command substitution.
+ */
+export function isComplexCommand(command: string): boolean {
+  if (!command) return false;
+  // 1. Raw metacharacters anywhere (covers ; & | ` > < \ and newline).
+  for (const ch of command) {
+    if (SHELL_METACHARS.has(ch)) return true;
+  }
+  // 2. Command substitution / arithmetic expansion markers.
+  if (command.includes("$(") || command.includes("${")) return true;
+  // 3. Embedded quotes inside a token (e.g. --'hard', --h"ar"d) — surrounding
+  //    quotes on a whole token are fine (stripped), but mid-token quotes signal
+  //    an attempt to break exact matching.
+  for (const tok of command.trim().split(/\s+/)) {
+    if (tok.length > 1) {
+      const inner = tok.slice(1, -1);
+      if (inner.includes('"') || inner.includes("'")) return true;
+    }
+  }
+  // 4. Shell wrappers (bash -c, sh -c) — complex by definition.
+  const firstTwo = command.trim().split(/\s+/).slice(0, 2);
+  if (firstTwo.length >= 2 && WRAPPER_SHELLS.has(firstTwo[0]) && firstTwo[1] === "-c") {
+    return true;
+  }
+  return false;
 }
 
 /**
- * Normalize a shell command string into canonical tokens for rule matching.
- *
- * Transforms: strip quotes → expand bash -c/sh -c wrappers → strip env/
- * absolute-path prefixes → strip git global flags before the subcommand.
- *
- * Conservative: when in doubt returns fewer tokens (no rule matches → allow,
- * never a false deny).
+ * Narrow normalization (v3): only strip `env` prefix and absolute-path basename.
+ * Does NOT expand bash -c, does NOT strip embedded quotes — those are caught by
+ * isComplexCommand (fail-closed) before this runs.
  */
 export function normalizeCommand(command: string): string[] {
   if (!command || command.trim() === "") return [];
-
-  // 1. Split + strip surrounding quotes.
   let tokens = command
     .trim()
     .split(/\s+/)
-    .map(stripQuotes)
+    .map(stripSurroundingQuotes)
     .filter((t) => t.length > 0);
-
-  // 2. Expand `bash -c '...'` / `sh -c '...'` wrappers.
-  tokens = expandShellWrapper(tokens);
-
-  // 3. Strip leading `env` / absolute-path prefixes.
   tokens = stripLeadingPrefixes(tokens);
-
-  // 4. Strip git global flags that precede the subcommand.
   tokens = stripGitGlobalFlags(tokens);
-
   return tokens;
 }
 
-function stripQuotes(token: string): string {
+/** Strip a matching pair of surrounding quotes from a whole token (safe, unambiguous). */
+function stripSurroundingQuotes(token: string): string {
   if (
-    (token.startsWith('"') && token.endsWith('"')) ||
-    (token.startsWith("'") && token.endsWith("'"))
+    token.length >= 2 &&
+    ((token.startsWith('"') && token.endsWith('"')) ||
+      (token.startsWith("'") && token.endsWith("'")))
   ) {
     return token.slice(1, -1);
   }
   return token;
-}
-
-function expandShellWrapper(tokens: string[]): string[] {
-  if (tokens.length >= 3 && WRAPPER_SHELLS.has(tokens[0]) && tokens[1] === "-c") {
-    // Join the wrapper args back into a string, strip outer quotes, then
-    // re-normalize the inner command. The inner command was likely a single
-    // quoted arg that whitespace-split broke into token fragments each
-    // carrying stray quote chars — re-joining + stripQuotes on the whole
-    // restores it before the recursive normalize re-splits cleanly.
-    let inner = tokens.slice(2).join(" ").trim();
-    if (
-      (inner.startsWith('"') && inner.endsWith('"')) ||
-      (inner.startsWith("'") && inner.endsWith("'"))
-    ) {
-      inner = inner.slice(1, -1);
-    }
-    return normalizeCommand(inner);
-  }
-  return tokens;
 }
 
 function stripLeadingPrefixes(tokens: string[]): string[] {
@@ -138,6 +148,20 @@ function stripLeadingPrefixes(tokens: string[]): string[] {
     break;
   }
   return result;
+}
+
+/** git global flags that may precede the subcommand (no shell metachar risk). */
+function isGitGlobalFlag(token: string): boolean {
+  return (
+    token === "--no-pager" ||
+    token === "--no-color" ||
+    token.startsWith("-c") ||
+    token.startsWith("--git-dir") ||
+    token.startsWith("--work-tree") ||
+    token.startsWith("-C") ||
+    token.startsWith("-G") ||
+    token.startsWith("--namespace")
+  );
 }
 
 function stripGitGlobalFlags(tokens: string[]): string[] {
@@ -252,6 +276,18 @@ export function checkDestructive(command: string, ctx: DestructiveContext): Dest
       reason: "destructive guard disabled",
       verdict: "allow-bypass",
       bypassReason: "guard-disabled",
+    };
+  }
+
+  // v3 fail-closed: complex command forms (shell metacharacters, embedded
+  // quotes, bash -c wrappers) cannot be safely reduced to a bare destructive
+  // command → deny. This closes the v2 bypass via `;` `&` `|` `$()` etc.
+  if (isComplexCommand(command)) {
+    return {
+      allowed: false,
+      reason:
+        "破坏性命令护栏不支持该命令形态(含 shell 元字符/嵌入引号/wrapper)。请用裸命令(如 `git reset --hard <ref>`),或签发 rollback/allow nonce 后以 nonce 放行。",
+      verdict: "deny",
     };
   }
 
