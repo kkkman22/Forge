@@ -359,7 +359,6 @@ function classifyTier(
  * HINT_RULES is imported at the top; the ADDITIVE invariant is documented there.
  */
 
-
 /**
  * Generate hints for a given task type, project phase, and command sequence.
  * Only returns hints whose command appears in the active command sequence.

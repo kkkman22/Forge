@@ -10,8 +10,8 @@
  * **Validates: Requirements R7.6, R7.7, R7.8, R7.9**
  */
 
-import { describe, expect, it } from "vitest";
 import fc from "fast-check";
+import { describe, expect, it } from "vitest";
 import {
   mergeInstinctsOrFailures,
   mergeProgressFile,
@@ -105,7 +105,9 @@ describe("guarded-merger: mergeProgressFile tie-break by real timestamp [REQ-01]
         const ours = `- [x] task-x: ${s}`;
         const r1 = mergeProgressFile(ours, "");
         const r2 = mergeProgressFile(ours, "");
-        return r1.resolvedContent === r2.resolvedContent && r1.warnings.length === r2.warnings.length;
+        return (
+          r1.resolvedContent === r2.resolvedContent && r1.warnings.length === r2.warnings.length
+        );
       }),
     );
   });
@@ -127,7 +129,11 @@ describe("guarded-merger: parse failure warns, no random id [REQ-02]", () => {
     expect(r1.warnings).toEqual(r2.warnings);
     // a warning flags the unparseable line
     expect(r1.warnings.length).toBeGreaterThan(0);
-    expect(r1.warnings.some((w) => w.toLowerCase().includes("unparseable") || w.toLowerCase().includes("parse"))).toBe(true);
+    expect(
+      r1.warnings.some(
+        (w) => w.toLowerCase().includes("unparseable") || w.toLowerCase().includes("parse"),
+      ),
+    ).toBe(true);
   });
 
   it("progress: two identical well-formed tasks merge to ONE entry (not duplicated by random id)", () => {
@@ -158,7 +164,10 @@ describe("guarded-merger: parse failure warns, no random id [REQ-02]", () => {
       fc.property(fc.string({ minLength: 0, maxLength: 40 }), (s) => {
         const r1 = mergeProgressFile(s, s);
         const r2 = mergeProgressFile(s, s);
-        return r1.resolvedContent === r2.resolvedContent && JSON.stringify(r1.warnings) === JSON.stringify(r2.warnings);
+        return (
+          r1.resolvedContent === r2.resolvedContent &&
+          JSON.stringify(r1.warnings) === JSON.stringify(r2.warnings)
+        );
       }),
     );
   });

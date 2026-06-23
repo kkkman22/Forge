@@ -25,7 +25,10 @@ export function redactSecrets(text: string): string {
   // (e) PEM private key block — redact FIRST so its multiline body is removed
   // before single-line patterns can match fragments inside it. Certificates
   // (BEGIN CERTIFICATE) are public and intentionally NOT matched here.
-  result = result.replace(/-----BEGIN [A-Z ]*PRIVATE KEY-----[\s\S]*?-----END [A-Z ]*PRIVATE KEY-----/g, "***");
+  result = result.replace(
+    /-----BEGIN [A-Z ]*PRIVATE KEY-----[\s\S]*?-----END [A-Z ]*PRIVATE KEY-----/g,
+    "***",
+  );
 
   // (a) Bearer/Basic tokens — with or without "Authorization:" prefix
   result = result.replace(/((?:Authorization\s*:\s*)?(?:Bearer|Basic)\s+)\S+/gi, "$1***");
