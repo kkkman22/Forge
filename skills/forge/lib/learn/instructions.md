@@ -589,6 +589,16 @@ Existing 5-dimension documents remain valid. Only newly created documents use du
 - Confidence_Score < 0.3 patterns are automatically deleted
 - Invariant: document count ≤ limit ∧ no low-confidence patterns
 
+#### Near-Limit Pre-Write Check (R4)
+Before writing a new `solutions/<topic>.md`, count existing documents and emit a near-limit warning when the base reaches 90% of `knowledge_limit`:
+```
+threshold = ceil(knowledge_limit * 0.9)   # default 0.9 → 18/20
+count = glob('.forge/knowledge/solutions/*.md').length
+if count >= threshold:
+    emit "[knowledge-near-limit] 知识库逼近上限: 当前 {count}/{knowledge_limit} (阈值 {threshold})。建议执行清理 (Confidence<0.3 自动清理) 或提升 instincts,而非等超限被动清理。"
+```
+The warning is **advisory** (non-blocking) — the write still proceeds. Pure logic lives in `src/knowledge-quota.ts` (`checkKnowledgeNearLimit`); this step performs the file count and renders its decision. When `count < threshold`, emit nothing (zero noise).
+
 ### Error-Prevention Rules (evolved-rules.md)
 - Maximum 15 rules
 - Only add rules where absence would cause Claude to err — not a knowledge dump

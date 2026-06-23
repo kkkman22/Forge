@@ -11,6 +11,7 @@
 
 import { existsSync, readFileSync } from "node:fs";
 import { resolve } from "node:path";
+import { checkDestructiveCommand, contextFromEnv } from "./destructive-guard.js";
 import { checkFileAccess, checkNetworkAccess, type PermissionPolicy } from "./sandbox-policy.js";
 
 // ---------------------------------------------------------------------------
@@ -169,6 +170,15 @@ export function checkSandboxAccess(
           reason: `Network access denied: "${command}" involves network operation but endpoint could not be extracted`,
         };
       }
+    }
+
+    // Destructive-command guard (short-circuit deny).
+    // Context is assembled from env tokens (FORGE_ROLLBACK_IN_PROGRESS /
+    // FORGE_ALLOW_DESTRUCTIVE / FORGE_DESTRUCTIVE_GUARD) so the hook honours
+    // Forge's own rollback path without file-I/O single points of failure.
+    const destructive = checkDestructiveCommand(command, contextFromEnv(process.env));
+    if (!destructive.allowed) {
+      return { allowed: false, reason: `🛑 Destructive guard: ${destructive.reason}` };
     }
 
     return { allowed: true, reason: "" };

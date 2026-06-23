@@ -94,6 +94,7 @@ stack:
 security_level: 2
 knowledge_limit: 30
 max_parallel_agents: 4
+max_subagent_depth: 3
 ---
 Config body`;
 
@@ -104,6 +105,7 @@ Config body`;
     expect(parsed.security_level).toBe(2);
     expect(parsed.knowledge_limit).toBe(30);
     expect(parsed.max_parallel_agents).toBe(4);
+    expect(parsed.max_subagent_depth).toBe(3);
     expect(warnings).toEqual([]);
   });
 

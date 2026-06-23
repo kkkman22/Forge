@@ -129,6 +129,7 @@ export interface ConfigFields {
   security_level: number;
   knowledge_limit: number;
   max_parallel_agents: number;
+  max_subagent_depth: number;
 }
 
 export const CONFIG_DEFAULTS: ConfigFields = {
@@ -137,6 +138,7 @@ export const CONFIG_DEFAULTS: ConfigFields = {
   security_level: 1,
   knowledge_limit: 20,
   max_parallel_agents: 6,
+  max_subagent_depth: 5,
 };
 
 /**
@@ -173,6 +175,8 @@ export function parseConfigGraceful(content: string | undefined): {
   if (knowledgeLimit !== null) rawFields.knowledge_limit = knowledgeLimit;
   const maxParallelAgents = extractNumericField(fm.raw, "max_parallel_agents");
   if (maxParallelAgents !== null) rawFields.max_parallel_agents = maxParallelAgents;
+  const maxSubagentDepth = extractNumericField(fm.raw, "max_subagent_depth");
+  if (maxSubagentDepth !== null) rawFields.max_subagent_depth = maxSubagentDepth;
 
   const { value, errors } = safeParseConfigFile(rawFields);
 
@@ -182,6 +186,8 @@ export function parseConfigGraceful(content: string | undefined): {
   if (knowledgeLimit === null) warnings.push("Config missing 'knowledge_limit', defaulting to 20");
   if (maxParallelAgents === null)
     warnings.push("Config missing 'max_parallel_agents', defaulting to 6");
+  if (maxSubagentDepth === null)
+    warnings.push("Config missing 'max_subagent_depth', defaulting to 5");
 
   const parsed: ConfigFields = {
     project: (value.project as string | undefined) ?? CONFIG_DEFAULTS.project,
@@ -191,6 +197,8 @@ export function parseConfigGraceful(content: string | undefined): {
       (value.knowledge_limit as number | undefined) ?? CONFIG_DEFAULTS.knowledge_limit,
     max_parallel_agents:
       (value.max_parallel_agents as number | undefined) ?? CONFIG_DEFAULTS.max_parallel_agents,
+    max_subagent_depth:
+      (value.max_subagent_depth as number | undefined) ?? CONFIG_DEFAULTS.max_subagent_depth,
   };
 
   if (errors.length > 0) {

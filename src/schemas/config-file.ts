@@ -33,6 +33,8 @@ export const ConfigFileSchema = z
     max_parallel_agents: z.number().int().min(1).max(10).optional(),
     restatement_interval: z.number().int().min(2).max(10).optional(),
     event_log_retention_days: z.number().int().positive().optional(),
+    max_subagent_depth: z.number().int().min(1).max(10).optional(),
+    destructive_guard: z.enum(["on", "off"]).optional(),
   })
   .passthrough();
 
@@ -86,4 +88,6 @@ const FIELD_SCHEMAS: Record<string, z.ZodTypeAny> = {
   max_parallel_agents: z.number().int().min(1).max(10),
   restatement_interval: z.number().int().min(2).max(10),
   event_log_retention_days: z.number().int().positive(),
+  max_subagent_depth: z.number().int().min(1).max(10),
+  destructive_guard: z.enum(["on", "off"]),
 };
