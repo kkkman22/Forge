@@ -11,6 +11,17 @@ Entries follow [Keep a Changelog](https://keepachangelog.com/) with Forge-specif
 
 ## [Unreleased]
 
+### Changed
+
+- **sandbox-policy**: declare authoritative default-semantics via exported
+  `SANDBOX_DEFAULT_SEMANTICS` constant. Phase 1 declarative config
+  (`SandboxConfig`) is default-allow (advisory mode); legacy
+  `FileSystemPolicy`/`NetworkPolicy` are default-deny, scoped to the runtime
+  enforcement layer only (`check-sandbox.ts`, `sdk-sandbox-policy.ts`). The
+  dual track is slated for removal post Phase 1 enforcement-layer migration —
+  new consumers must use the Phase 1 API and not introduce fresh dependencies
+  on the legacy default-deny types.
+
 ## [3.8.0] - 2026-06-23
 
 ### Added

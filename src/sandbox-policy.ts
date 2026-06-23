@@ -24,12 +24,48 @@ export {
   resolveProfile,
 } from "./sandbox-phased.js";
 
+/**
+ * Authoritative default-semantics declaration [REQ-04].
+ *
+ * This module exposes TWO default semantics that are easy to confuse:
+ *   - **Phase 1** (`SandboxConfig` + `checkFilesystemPolicy`/`checkNetworkPolicy`,
+ *     re-exported above): **default-allow** (unmatched → allowed). This is the
+ *     AUTHORITATIVE semantics for advisory-mode declarative config and what all
+ *     NEW consumers should use.
+ *   - **Legacy** (`FileSystemPolicy`/`NetworkPolicy` + `checkFileAccess`/
+ *     `checkNetworkAccess`/`buildDefaultPolicy`, below): **default-deny**
+ *     (unmatched → denied). Scoped to the RUNTIME ENFORCEMENT layer only
+ *     (`check-sandbox.ts` PreToolUse hook + `sdk-sandbox-policy.ts` startup
+ *     validation), where default-deny is the correct hardening posture.
+ *
+ * The trap: mixing the two and assuming the wrong default — e.g. consuming
+ * Phase 1 `SandboxConfig` while expecting unmatched paths to be denied, or
+ * consuming legacy types while expecting them to allow. This declaration makes
+ * the authoritative choice explicit and machine-checkable, and records the
+ * migration cutoff so the dual track does not persist indefinitely.
+ */
+export const SANDBOX_DEFAULT_SEMANTICS = {
+  /** The authoritative (advisory-mode) default semantics for new consumers. */
+  authoritative: "default-allow" as const,
+  /** The legacy runtime-enforcement default semantics. */
+  legacySemantics: "default-deny" as const,
+  /** Where the legacy default-deny semantics legitimately applies. */
+  legacyScope: "runtime enforcement layer (check-sandbox.ts, sdk-sandbox-policy.ts)",
+  /**
+   * Migration cutoff: legacy types/functions are slated for removal once all
+   * runtime-enforcement consumers move to Phase 1 declarative config. New code
+   * must not introduce fresh dependencies on the legacy default-deny API.
+   */
+  migrationCutoff: "post Phase 1 enforcement-layer migration (tracked separately)",
+} as const;
+
 // ---------------------------------------------------------------------------
 // Types (legacy — used by runtime enforcement layer: check-sandbox.ts, sdk-sandbox-policy.ts)
 //
 // NOTE: These types use default-deny semantics (unmatched → denied).
 // Phase 1 types (SandboxConfig + SandboxCheckResult, re-exported above) use
-// default-allow semantics (unmatched → allowed) for advisory mode.
+// default-allow semantics (unmatched → allowed) for advisory mode. See
+// SANDBOX_DEFAULT_SEMANTICS above for the authoritative declaration.
 // Migrating consumers must account for this behavioral difference.
 // ---------------------------------------------------------------------------
 

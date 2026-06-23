@@ -253,3 +253,23 @@ describe("buildDefaultPolicy", () => {
     ).toBe(false);
   });
 });
+
+// ---------------------------------------------------------------------------
+// REQ-04 (T4): default-semantics declaration — eliminate dual-track trap
+// ---------------------------------------------------------------------------
+
+describe("sandbox default-semantics declaration [REQ-04]", () => {
+  it("exports an authoritative default-semantics declaration", async () => {
+    const mod = await import("../src/sandbox-policy.js");
+    expect(mod.SANDBOX_DEFAULT_SEMANTICS).toBeDefined();
+    const decl = mod.SANDBOX_DEFAULT_SEMANTICS;
+    // the authoritative (advisory) semantics is Phase 1 default-allow
+    expect(decl.authoritative).toBe("default-allow");
+    // legacy default-deny is scoped to the runtime enforcement layer only
+    expect(decl.legacySemantics).toBe("default-deny");
+    expect(decl.legacyScope).toMatch(/runtime enforcement/i);
+    // a migration cutoff milestone is declared (non-empty)
+    expect(typeof decl.migrationCutoff).toBe("string");
+    expect(decl.migrationCutoff.length).toBeGreaterThan(0);
+  });
+});
