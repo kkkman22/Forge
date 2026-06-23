@@ -156,9 +156,57 @@ function main(): void {
   process.exit(0);
 }
 
+/**
+ * Determine whether the current module is the Node CLI entry point.
+ *
+ * The raw comparison `import.meta.url === \`file://${process.argv[1]}\`` fails
+ * on Windows: drive letters, backslash separators, and URL-encoding
+ * differences prevent equality, so the CLI hook silently skips `main()`.
+ *
+ * Comparison is done via normalised plain path strings rather than
+ * platform-dependent `path.resolve()` / `pathToFileURL()`, which on a POSIX
+ * process mis-handle a Windows argv (treating `C:\...` as a relative filename
+ * and URL-encoding the backslashes). String normalisation is stable across
+ * platforms:
+ *   1. strip the `file://` host prefix from `import.meta.url`;
+ *   2. convert argv backslashes to forward slashes (the Windows separator);
+ *   3. Windows-style paths: strip the drive letter and compare
+ *      case-insensitively (Windows paths are case-insensitive).
+ *
+ * @param importMetaUrl  The value of `import.meta.url`.
+ * @param argv1          The value of `process.argv[1]`, or `undefined`.
+ * @returns `true` iff `argv1` refers to the same file as `importMetaUrl`.
+ *
+ * **Validates: Requirement REQ-05** — cross-platform entry-point detection.
+ */
+export function isMainEntry(importMetaUrl: string, argv1: string | undefined): boolean {
+  if (!argv1) return false;
+  // argv backslashes → forward slashes (Windows separator).
+  const argvPath = argv1.replace(/\\/g, "/");
+  // Strip the "file://" two-slash prefix; the remainder keeps its leading
+  // slashes (e.g. "/C:/..." on Windows, "/Users/..." on POSIX).
+  const urlPath = importMetaUrl.replace(/^file:\/\//, "");
+  // Windows-style paths carry a drive letter (X:). Normalise both sides to
+  // a drive-less, lowercase, leading-slash-stripped form so that
+  // "/C:/Users/..." (from file URL) matches "C:/Users/..." (from argv) and
+  // Windows case-insensitivity is respected.
+  const norm = (p: string): string => {
+    // strip an optional leading slash + drive letter, then any remaining
+    // leading slash, then lowercase (Windows paths are case-insensitive).
+    const withoutDrive = p.replace(/^\/?[A-Za-z]:/, "");
+    return withoutDrive.replace(/^\//, "").toLowerCase();
+  };
+  const isWindowsStyle = /^[A-Za-z]:\//.test(argvPath) || /\/[A-Za-z]:\//.test(urlPath);
+  if (isWindowsStyle) {
+    return norm(urlPath) === norm(argvPath);
+  }
+  // POSIX: compare absolute paths directly.
+  return urlPath === argvPath;
+}
+
 // Only run the CLI side-effects when this module is the entry point.
 // When imported (e.g. by unit tests), skip `main()` to avoid calling
 // `process.exit()` on import.
-if (import.meta.url === `file://${process.argv[1]}`) {
+if (isMainEntry(import.meta.url, process.argv[1])) {
   main();
 }
