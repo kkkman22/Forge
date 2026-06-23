@@ -232,6 +232,14 @@ IF Plan_Structure_Check 触发（`checkPlanStructure` 返回 `triggered: true`�
 
 批准 → `status: approved`；修改意见 → 回到 Self-Check；拒绝 → 保持 `draft`。
 
+**批准后必须设置活跃计划指针**（spec `planning-with-files-borrow` R3）：plan frontmatter 改为 `status: approved` 后，立即运行：
+
+```bash
+node scripts/set-active-plan.mjs .forge/plans/<topic>.md
+```
+
+这会写入 `.forge/state/active-plan.json`（plan_path / spec_ref / phase / pinned_at），作为 inject-plan-context.mjs 的单一权威注入源。不设置则 build 阶段退化为旧 mtime 扫描（向后兼容，但 R3 单一权威计划机制不生效）。spec_ref 从 plan frontmatter 自动提取并校验落在 `.forge/specs/` 内。
+
 Plan frontmatter 可含 `monolith_acknowledged: true`（用户明确知悉未拆分风险），此字段由 Step 4a 自动追加。
 
 ---
