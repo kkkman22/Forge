@@ -22,13 +22,16 @@
 export function redactSecrets(text: string): string {
   let result = text;
 
-  // (e) PEM private key block — redact FIRST so its multiline body is removed
-  // before single-line patterns can match fragments inside it. Certificates
-  // (BEGIN CERTIFICATE) are public and intentionally NOT matched here.
-  result = result.replace(
-    /-----BEGIN [A-Z ]*PRIVATE KEY-----[\s\S]*?-----END [A-Z ]*PRIVATE KEY-----/g,
-    "***",
-  );
+  // (e) PEM/PGP private key block — redact FIRST so its multiline body is
+  // removed before single-line patterns can match fragments inside it.
+  // Covers RSA/EC/OPENSSH/ENCRYPTED PRIVATE KEY and PGP PRIVATE KEY BLOCK.
+  // Certificates (BEGIN CERTIFICATE) are public and intentionally NOT matched.
+  // Two passes: complete BEGIN..END block first, then a header-only fallback
+  // for a key truncated before its END footer (log line-limit, partial paste)
+  // so the base64 body does not leak.
+  const PRIV_KEY = "[A-Z ]*(?:PRIVATE KEY(?: BLOCK)?)";
+  result = result.replace(new RegExp(`-----BEGIN ${PRIV_KEY}-----[\\s\\S]*?-----END ${PRIV_KEY}-----`, "g"), "***");
+  result = result.replace(new RegExp(`-----BEGIN ${PRIV_KEY}-----[^\\n]*\\n(?:[A-Za-z0-9+/= \\t]*\\n)*[A-Za-z0-9+/= \\t]+`), "***");
 
   // (a) Bearer/Basic tokens — with or without "Authorization:" prefix
   result = result.replace(/((?:Authorization\s*:\s*)?(?:Bearer|Basic)\s+)\S+/gi, "$1***");
@@ -51,9 +54,11 @@ export function redactSecrets(text: string): string {
   // (d) Custom auth headers: X-API-Key/X-Auth-Token/Api-Key: value
   result = result.replace(/(X-API-Key|X-Auth-Token|Api-Key)(\s*:\s*)\S+/gi, "$1$2***");
 
-  // (f) Bare JWT — three dot-separated base64url segments starting with eyJ.
-  // Anchored on the eyJ prefix to avoid false positives on arbitrary text.
-  result = result.replace(/eyJ[A-Za-z0-9_-]+\.eyJ[A-Za-z0-9_-]+\.[A-Za-z0-9_-]+/g, "***");
+  // (f) Bare JWT — three dot-separated base64url segments. The header segment
+  // is anchored on the eyJ prefix (a base64url-encoded "{" JSON object) to
+  // avoid false positives; the payload segment may start with any base64url
+  // char (a payload whose first JSON key is "" base64-encodes to eyI, not eyJ).
+  result = result.replace(/eyJ[A-Za-z0-9_-]+\.[A-Za-z0-9_-]+\.[A-Za-z0-9_-]+/g, "***");
 
   return result;
 }
