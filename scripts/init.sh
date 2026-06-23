@@ -454,10 +454,13 @@ else
   fi
 fi
 
-# ---------- 输入清洗（防止 shell 注入） ----------
-# 移除换行符和 shell 元字符
+# ---------- 输入清洗（防 heredoc/YAML 注入） ----------
+# 只剥离在 bash heredoc（未加引号 << CONFIGEOF）中会触发展开的字符
+# （` $ \）和会破坏 YAML 引号配对的引号。保留 & | ; ! 等合法 shell
+# 操作符——config.md 是数据文件（AI/Node 读取，不被 shell 执行），
+# ci_check_command 下游契约要求 execute as-is（build/instructions.md）。
 sanitize() {
-  printf '%s' "$1" | tr -d '\n\r' | sed 's/[`$|;&!\\]//g' | sed "s/['\"]//g"
+  printf '%s' "$1" | tr -d '\n\r' | sed 's/[`$\\]//g' | sed "s/['\"]//g"
 }
 project_name="$(sanitize "${project_name}")"
 tech_stack="$(sanitize "${tech_stack}")"
@@ -1057,9 +1060,12 @@ if command -v node &>/dev/null; then
     *"added"*)
       added=$(echo "${env_result}" | node -e "process.stdout.write(JSON.parse(require('fs').readFileSync(0,'utf-8')).added)" 2>/dev/null || echo "?")
       skipped=$(echo "${env_result}" | node -e "process.stdout.write(JSON.parse(require('fs').readFileSync(0,'utf-8')).skipped)" 2>/dev/null || echo "?")
-      if [[ "${added}" -gt 0 ]]; then
+      # Guard against non-numeric fallback ("?"): when env_result isn't clean
+      # JSON, `[[ "?" -gt 0 ]]` throws a syntax error. env vars are already
+      # written by this point; the count only drives the success message.
+      if [[ "${added}" =~ ^[0-9]+$ && "${added}" -gt 0 ]]; then
         skip_msg=""
-        if [[ "${skipped}" -gt 0 ]]; then
+        if [[ "${skipped}" =~ ^[0-9]+$ && "${skipped}" -gt 0 ]]; then
           skip_msg="（${skipped} 项已存在，跳过）"
         fi
         success "${added} 项环境变量已写入 settings.json ${skip_msg}"
