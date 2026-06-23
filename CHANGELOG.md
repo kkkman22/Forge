@@ -17,6 +17,7 @@ Entries follow [Keep a Changelog](https://keepachangelog.com/) with Forge-specif
 
 - **runtime-sync**: clean legacy @forge-runtime shims in marketplace mode
 - **init**: preserve shell operators in ci_check_command; guard env-count arithmetic
+- **build-dist**: compile TypeScript conditionally before bundling — build-dist.sh previously copied a pre-existing dist/src/ without compiling, so non-CI callers (pre-push hook, smoke-install, README install flow, bump-version --commit) produced partial bundles missing compiled JS; now compiles only when dist/src is stale (zero overhead when fresh)
 - **ci**: keep release-checklist evidence, drop only npm publish (#129)
 - **ci**: remove npm publish job (#128)
 
