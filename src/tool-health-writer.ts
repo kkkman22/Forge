@@ -57,9 +57,9 @@ export interface AppendOptions {
   /**
    * Predicate reporting whether a given PID is still alive. Used during
    * stale-lock recovery to avoid stealing a lock whose holder is merely slow
-   * (debugger pause, NFS stall) rather than crashed. Defaults to
-   * {@link isPidAliveDefault} (non-destructive signal-0 probe). Injected in
-   * tests so the live/dead branch can be exercised deterministically.
+   * (debugger pause, NFS stall) rather than crashed. Defaults to a
+   * non-destructive signal-0 probe (process.kill(pid, 0)). Injected in tests
+   * so the live/dead branch can be exercised deterministically.
    */
   pidAliveCheck?: (pid: number) => boolean;
 }
