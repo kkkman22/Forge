@@ -30,23 +30,19 @@
 
 import { existsSync, readdirSync, readFileSync } from "node:fs";
 import { join } from "node:path";
+import { escapeAngleBrackets, parseStatusPhase, parseFrontmatterPhase } from "./lib/injection-helpers.mjs";
 
 const CWD = process.cwd();
 const PROGRESS_DIR = join(CWD, ".forge", "progress");
 const STATUS_FILE = join(CWD, ".forge", "status.md");
 
-/** Escape literal angle brackets so injected content cannot forge boundary tags (N-1 fix). */
-function escapeAngleBrackets(content) {
-  return content.replace(/</g, "&lt;").replace(/>/g, "&gt;");
-}
+// Shared helpers (Q4/Q5 fix — single source for escape + phase parsing).
 
 /** Read current phase from .forge/status.md. Returns null if unknown. */
 function readCurrentPhase() {
   if (!existsSync(STATUS_FILE)) return null;
   try {
-    const content = readFileSync(STATUS_FILE, "utf-8");
-    const match = content.match(/^phase:\s*["']?([^\s"']+)["']?\s*$/m);
-    return match ? match[1] : null;
+    return parseStatusPhase(readFileSync(STATUS_FILE, "utf-8"));
   } catch {
     return null;
   }
@@ -75,8 +71,7 @@ try {
     const content = readFileSync(join(PROGRESS_DIR, file), "utf-8");
     // If phase is known and this file declares a phase, only include on match.
     if (phaseKnown) {
-      const fm = content.match(/^---\n([\s\S]*?)\n---/);
-      const filePhase = fm?.[1]?.match(/^phase:\s*["']?([^\s"']+)["']?\s*$/m)?.[1];
+      const filePhase = parseFrontmatterPhase(content);
       // File declares a phase that differs from current → skip its tasks.
       if (filePhase && filePhase !== currentPhase) continue;
     }

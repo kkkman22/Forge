@@ -125,6 +125,16 @@ describe("set-active-plan.mjs (R3 writer)", () => {
     expect(readPointer(tempDir)).toBeNull();
   });
 
+  // P3-1 fix: 拒绝目录作为 plan_path(传 .forge/plans 本身应被拒)
+  it("refuses a directory as plan_path (must be a file inside .forge/plans/)", () => {
+    tempDir = createTempForge();
+    writePlan(tempDir, "real.md", "status: approved", "Body");
+    // 传 plans 目录本身(rel === "" 即 target == root)
+    const { exitCode } = runScript(tempDir, [".forge/plans"]);
+    expect(exitCode).toBe(0);
+    expect(readPointer(tempDir)).toBeNull();
+  });
+
   // 安全:realpath 校验——拒绝 plans 目录外的路径
   it("refuses plan_path outside .forge/plans/ (path traversal guard)", () => {
     tempDir = createTempForge();

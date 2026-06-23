@@ -19,6 +19,7 @@
 import { existsSync, readdirSync, readFileSync, realpathSync, statSync } from "node:fs";
 import { join, relative, resolve } from "node:path";
 import { shouldSkipForSubagent } from "./lib/hook-stdin-router.mjs";
+import { escapeAngleBrackets, parseStatusPhase, truncateToBytes } from "./lib/injection-helpers.mjs";
 
 const PLANS_DIR = ".forge/plans";
 const SPECS_DIR = ".forge/specs";
@@ -45,10 +46,9 @@ const compact = args.includes("--compact");
 function readStatusContext() {
   if (!existsSync(".forge/status.md")) return { phase: null, currentPackage: null };
   const status = readFileSync(".forge/status.md", "utf-8");
-  const phaseMatch = status.match(/^phase:\s*"?([^"\n]*)"?\s*$/m);
-  const packageMatch = status.match(/^current_package:\s*"?([^"\n]*)"?\s*$/m);
+  const packageMatch = status.match(/^current_package:\s*["']?([^"'\n]+)["']?\s*$/m);
   return {
-    phase: phaseMatch?.[1]?.trim() || null,
+    phase: parseStatusPhase(status),
     currentPackage: packageMatch?.[1]?.trim() || null,
   };
 }
@@ -166,9 +166,11 @@ function injectProgressSummary(planPath) {
     return "";
   }
 
-  // R4.AC4: 64KB byte cap — truncate oversized content before parsing.
+  // R4.AC4: 64KB byte cap — truncate oversized content before parsing (SC-9: annotate).
+  let progressByteTruncated = false;
   if (Buffer.byteLength(content, "utf-8") > PROGRESS_BYTE_CAP) {
     content = truncateToBytes(content, PROGRESS_BYTE_CAP);
+    progressByteTruncated = true;
   }
 
   // R4.AC4: linear scan with line-start anchor — no backtracking regex.
@@ -184,6 +186,9 @@ function injectProgressSummary(planPath) {
   if (truncated) {
     summary += `\n[仅显示最近 ${window} 条，完整见 ${progressFile}]`;
   }
+  if (progressByteTruncated) {
+    summary += `\n[progress 文件超 64KB，已按字节截断，部分任务可能未显示]`;
+  }
   summary += "\n";
   return summary;
 }
@@ -192,25 +197,7 @@ function injectProgressSummary(planPath) {
 // R5: findings injection with boundary escape (N-2 fix)
 // ---------------------------------------------------------------------------
 
-/** Escape literal angle brackets to prevent boundary-tag forgery (N-2 fix). */
-function escapeAngleBrackets(content) {
-  return content.replace(/</g, "&lt;").replace(/>/g, "&gt;");
-}
-
-/**
- * Truncate a string to a byte budget (Q2 fix). String.prototype.slice counts
- * UTF-16 code units, not bytes — for CJK (3 bytes/char UTF-8) a 65536-char
- * slice yields ~196KB, defeating the cap. This truncates on the byte buffer
- * and walks back to a valid UTF-8 boundary so multi-byte sequences aren't split.
- */
-function truncateToBytes(content, byteCap) {
-  const buf = Buffer.from(content, "utf-8");
-  if (buf.length <= byteCap) return content;
-  let cut = byteCap;
-  // Walk back to a UTF-8 char boundary (continuation bytes start with 10xxxxxx = 0x80-0xBF).
-  while (cut > 0 && (buf[cut] & 0xc0) === 0x80) cut--;
-  return buf.subarray(0, cut).toString("utf-8");
-}
+// escapeAngleBrackets + truncateToBytes imported from ./lib/injection-helpers.mjs (Q5 fix — shared with stop-incomplete-tasks.mjs).
 
 /**
  * Inject the active plan's findings summary, wrapped in a <findings> boundary
@@ -231,8 +218,9 @@ function injectFindingsSummary(planPath) {
     return "";
   }
 
-  // R5.AC4: 64KB byte cap.
-  if (Buffer.byteLength(content, "utf-8") > PROGRESS_BYTE_CAP) {
+  // R5.AC4: 64KB byte cap (SC-9: annotate if truncated).
+  const findingsByteTruncated = Buffer.byteLength(content, "utf-8") > PROGRESS_BYTE_CAP;
+  if (findingsByteTruncated) {
     content = truncateToBytes(content, PROGRESS_BYTE_CAP);
   }
 
@@ -255,6 +243,9 @@ function injectFindingsSummary(planPath) {
   if (Object.keys(fields).length === 0 && !bodyFirstParagraph) {
     // Nothing extractable — return empty (don't inject empty boundary).
     return "";
+  }
+  if (findingsByteTruncated) {
+    summary += "[findings 文件超 64KB，已按字节截断]\n";
   }
   summary += "</findings>\n";
   return summary;

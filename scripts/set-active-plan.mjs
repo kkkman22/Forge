@@ -59,15 +59,18 @@ inside .forge/plans/ (path-traversal guard). Fail-open: exits 0 on any error.
   process.exit(0);
 }
 
-/** Resolve a path physically and verify it falls inside an allowed root dir. */
+/**
+ * Resolve a path physically and verify it falls strictly inside an allowed root
+ * dir (not the root itself — P3-1 fix: reject directory-as-plan_path). Uses
+ * realpath so symlink/.. traversal is resolved to the true location (N-3).
+ */
 function resolvesInside(targetPath, allowedRoot) {
   try {
     const realTarget = realpathSync(resolve(targetPath));
     const realRoot = realpathSync(resolve(allowedRoot));
     const rel = relative(realRoot, realTarget);
-    // Reject if it escapes (starts with ..) or is on another volume (absolute).
-    if (rel.startsWith("..") || rel === "") return rel === "";
-    return !rel.startsWith("..") && resolve(realRoot, rel) === realTarget;
+    // Must be a strict descendant (non-empty, not escaping, same volume).
+    return rel !== "" && !rel.startsWith("..") && !rel.startsWith("/");
   } catch {
     return false;
   }

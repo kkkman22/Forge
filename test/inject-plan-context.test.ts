@@ -7,9 +7,17 @@
  * **Validates: Requirement 8 (Plan injection)**
  */
 import { execFileSync } from "node:child_process";
-import { existsSync, mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from "node:fs";
+import {
+  existsSync,
+  mkdirSync,
+  mkdtempSync,
+  readFileSync,
+  rmSync,
+  symlinkSync,
+  writeFileSync,
+} from "node:fs";
 import { tmpdir } from "node:os";
-import { join } from "node:path";
+import { join, relative } from "node:path";
 import { afterEach, describe, expect, it } from "vitest";
 
 const SCRIPT_PATH = join(process.cwd(), "scripts", "inject-plan-context.mjs");
@@ -318,7 +326,7 @@ describe("inject-plan-context.mjs (R3 active-plan pointer)", () => {
     writePlan(tempDir, "legit.md", "status: approved", "Legit plan");
     // 指针试图穿越到 tempDir 外
     writeActivePlan(tempDir, {
-      plan_path: `${relativePath(tempDir, secretDir)}/secret.md`,
+      plan_path: `${relative(tempDir, secretDir)}/secret.md`,
     });
 
     const output = runScript(tempDir);
@@ -328,23 +336,31 @@ describe("inject-plan-context.mjs (R3 active-plan pointer)", () => {
   });
 
   // R3.AC3 — path traversal via symlink 被拒绝(realpath 物理校验,N-3 fix)
-  it("rejects plan_path that is a symlink escaping .forge/plans/", () => {
+  // Q10 fix: 无 symlink 权限的环境显式标记跳过,不静默通过
+  const canSymlink = (() => {
+    try {
+      const probe = mkdtempSync(join(tmpdir(), "forge-symlink-probe-"));
+      const target = join(probe, "t");
+      const link = join(probe, "l");
+      writeFileSync(target, "x");
+      symlinkSync(target, link);
+      rmSync(probe, { recursive: true, force: true });
+      return true;
+    } catch {
+      return false;
+    }
+  })();
+
+  (canSymlink ? it : it.skip)("rejects plan_path that is a symlink escaping .forge/plans/", () => {
     tempDir = createTempPlansDir();
-    const { symlinkSync } = require("node:fs");
     // 外部敏感文件
     const secretDir = mkdtempSync(join(tmpdir(), "forge-symlink-secret-"));
     writeFileSync(join(secretDir, "secret-via-symlink.md"), "SYMLINK SECRET LEAK");
     // 在 plans/ 下建 symlink 指向外部
-    try {
-      symlinkSync(
-        join(secretDir, "secret-via-symlink.md"),
-        join(tempDir, ".forge", "plans", "evil.md"),
-      );
-    } catch {
-      // 某些环境不允许 symlink,跳过此测试
-      rmSync(secretDir, { recursive: true, force: true });
-      return;
-    }
+    symlinkSync(
+      join(secretDir, "secret-via-symlink.md"),
+      join(tempDir, ".forge", "plans", "evil.md"),
+    );
     writeActivePlan(tempDir, { plan_path: ".forge/plans/evil.md" });
 
     const output = runScript(tempDir);
@@ -366,14 +382,6 @@ describe("inject-plan-context.mjs (R3 active-plan pointer)", () => {
     expect(output).toContain("Feature Y legit body");
   });
 });
-
-/** Compute a relative path from base to target (for crafting ../ traversal in tests). */
-function relativePath(base: string, target: string): string {
-  const { relative } = require("node:path");
-  const rel = relative(base, target);
-  // prefix with the relative path; inject a .. if already relative-safe
-  return rel.startsWith(".") ? rel : `./${rel}`;
-}
 
 // ============================================================================
 // Requirement 4: progress injection rolling window + 64KB cap
@@ -444,6 +452,23 @@ describe("inject-plan-context.mjs (R4 progress rolling window)", () => {
     const output = runScript(tempDir);
     // 不崩溃,且注入的内容被截断(不超 64KB)
     expect(output.length).toBeLessThan(100 * 1024);
+  });
+
+  // Q10 fix: CJK 内容按字节截断(非字符),output 受全局预算限制
+  it("caps CJK progress by bytes not UTF-16 code units (Q2/Q10)", () => {
+    tempDir = createTempPlansDir();
+    writePlan(tempDir, "cjk.md", "status: approved", "CJK plan");
+    writeActivePlan(tempDir, { plan_path: ".forge/plans/cjk.md", phase: "build" });
+    // 中文每字 UTF-8 3 字节。30000 字 ≈ 90KB,超 64KB。全局 MAX_TOTAL_CHARS(8000)
+    // 会进一步截断 output,但 progress 段本身不应把 90KB 全灌入(经字节截断)。
+    const huge = "- [x] " + "测".repeat(30000) + "\n";
+    writeProgress(tempDir, "cjk", huge);
+
+    const output = runScript(tempDir);
+    // output 受全局 8000 字符预算限制,远小于原始 90KB
+    expect(output.length).toBeLessThan(10000);
+    // 全局预算截断标记应出现(token budget)
+    expect(output).toMatch(/truncated.*budget|budget.*truncated|\[\.\.\./);
   });
 
   // R4.AC6 — 不删 progress 文件(注入后文件仍在)

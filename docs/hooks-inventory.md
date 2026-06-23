@@ -17,10 +17,12 @@ owner: forge-maintainers
 
 | 类型 | 判据 | 行为契约 |
 |------|------|----------|
-| **Hint-Type** | 阻断**不是**设计意图。钩子用于注入上下文/记录/提示 | 必须 `exit 0` + `{"hookSpecificOutput":{"additionalContext":"..."}}` stdout。**绝不** `exit 2` 或非零退出。最坏情况是提示丢失,agent 流转不停 |
+| **Hint-Type** | 阻断**不是**设计意图。钩子用于注入上下文/记录/提示 | 必须 `exit 0`,通过 stdout 输出提示(纯文本 Claude Code 直接消费,或 `{"hookSpecificOutput":{"additionalContext":"..."}}` JSON 结构化形式)。**绝不** `exit 2` 或非零退出。最坏情况是提示丢失,agent 流转不停 |
 | **Gate-Type** | 阻断**是**设计意图。钩子用于安全/冻结区/完整性强制 | 必须 `exit 2` 阻断工具调用(PreToolUse)或有明确阻断理由。阻断理由:安全/冻结区/沙箱/完整性 |
 
 **核心原则**:提示型钩子永不应意外阻断 agent;门禁型钩子的阻断必须是有意为之且理由明确。两者不可混用——一个钩子要么永远 exit 0(Hint),要么在违规时 exit 2(Gate)。
+
+**转义假设声明(S-5)**:Hint-Type 钩子注入文件内容时用的 `<>`→`&lt;&gt;` 转义是**软防御**——依赖下游模型不在指令解析层还原 HTML 实体,这是合理但不可证明的假设,与 R1 prompt-only 模型一致,非密码学保证。
 
 ## 分类清单
 
@@ -45,9 +47,11 @@ owner: forge-maintainers
 
 **SessionStart**:`auto-resume.sh`、`inject-evolved-rules.mjs`、`bootstrap-check.mjs`、`forge-sync-runtime.mjs`、`check-companions.mjs`、`forge-hook-dispatch.mjs`
 
-**UserPromptSubmit**:`inject-plan-context.mjs`、`cmux-mirror/sync-once.mjs`、`record-prompt-metrics.mjs`、`forge-hook-dispatch.mjs`
+**UserPromptSubmit**:`inject-plan-context.mjs`(R3 active-plan 指针 + R4 progress 窗口 + R5 findings 注入,单一权威注入入口)、`cmux-mirror/sync-once.mjs`、`record-prompt-metrics.mjs`、`forge-hook-dispatch.mjs`
 
-**PreToolUse**:`inject-plan-context.mjs`(plan 上下文注入)、`check-context-boundary.mjs`(advisory 模式)、`bash-ban-raw.mjs`(advisory)
+**PreToolUse**:`check-context-boundary.mjs`(advisory 模式)、`bash-ban-raw.mjs`(advisory)
+
+> **注(SC-5)**:`inject-plan-context.mjs` 仅在 UserPromptSubmit 注册,不在 PreToolUse。R5 的 findings 注入通过 UserPromptSubmit(每轮提示时)回流 build 阶段,不在每次 Write/Edit 重复触发(避免高频重复注入增噪)。`.claude/settings.json`(本地运行时)在 PreToolUse 注册了 inject,但插件分发 `hooks.json` 不含——两者为不同运行时。
 
 **PostToolUse**:`hook-check-frozen-post.sh`、`cmux-mirror/sync-once.mjs`、`rebuild-feature-dossier.mjs`(advisory)、`knowledge-hook-dispatch.mjs`(advisory)、`check-context-boundary.mjs`、`check-diff-context-integrity.mjs`(advisory)、`track-read-budget.mjs`、`track-tool-duration.mjs`、`phase-transition-guard.sh`
 
