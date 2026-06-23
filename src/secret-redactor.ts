@@ -30,8 +30,16 @@ export function redactSecrets(text: string): string {
   // for a key truncated before its END footer (log line-limit, partial paste)
   // so the base64 body does not leak.
   const PRIV_KEY = "[A-Z ]*(?:PRIVATE KEY(?: BLOCK)?)";
-  result = result.replace(new RegExp(`-----BEGIN ${PRIV_KEY}-----[\\s\\S]*?-----END ${PRIV_KEY}-----`, "g"), "***");
-  result = result.replace(new RegExp(`-----BEGIN ${PRIV_KEY}-----[^\\n]*\\n(?:[A-Za-z0-9+/= \\t]*\\n)*[A-Za-z0-9+/= \\t]+`), "***");
+  result = result.replace(
+    new RegExp(`-----BEGIN ${PRIV_KEY}-----[\\s\\S]*?-----END ${PRIV_KEY}-----`, "g"),
+    "***",
+  );
+  result = result.replace(
+    new RegExp(
+      `-----BEGIN ${PRIV_KEY}-----[^\\n]*\\n(?:[A-Za-z0-9+/= \\t]*\\n)*[A-Za-z0-9+/= \\t]+`,
+    ),
+    "***",
+  );
 
   // (a) Bearer/Basic tokens — with or without "Authorization:" prefix
   result = result.replace(/((?:Authorization\s*:\s*)?(?:Bearer|Basic)\s+)\S+/gi, "$1***");
