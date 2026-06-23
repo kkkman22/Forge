@@ -4,7 +4,7 @@ category: reference
 audience:
   - daily-developer
   - maintainer
-updated: 2026-06-16
+updated: 2026-06-23
 owner: forge-maintainers
 ---
 
@@ -48,6 +48,35 @@ Forge requires Claude Code CLI v2.1.163 or later for full functionality.
 | `claude agents --json --all`, `id`, `state` | v2.1.169 | Forge implemented | Inline fallback when agents dispatch is unavailable |
 | Context-window-scaled CLAUDE.md warning | v2.1.169 | Forge helper/docs | Falls back to configured `context_budget` |
 | Background sessions preserve flags | v2.1.169 | Forge metadata persistence | Missing metadata is treated as legacy status |
+| Destructive git command interception | v2.1.183 | **Forge implemented (R1)** | `src/destructive-guard.ts` + check-sandbox wiring; bypass via `FORGE_ROLLBACK_IN_PROGRESS` |
+| Subagent spawn-time policy | v2.1.178/.186 | **Forge implemented (R2)** | `src/spawn-policy.ts`; blocks spawn when lineage disallows `Agent` |
+| Subagent depth limit (5 levels) | v2.1.181 | **Forge implemented (R3)** | `max_subagent_depth` config (default 5); dispatcher explicit param |
+| Memory near-limit compaction reminder | v2.1.186 | **Forge implemented (R4)** | `src/knowledge-quota.ts`; 90% advisory warning in `/forge learn` |
+| Retry watchdog (`CLAUDE_CODE_RETRY_WATCHDOG`) | v2.1.186 | Not adopted | Forge §2.4 three-strike + circuit breaker is a stronger equivalent |
+| Stream-stall hint (20s threshold) | v2.1.185 | Not adopted | TUI-layer; Forge delegates to native + Headroom compression |
+| Agent Teams / tmux teammate panes | v2.1.178/.186 | Not adopted | ROADMAP Tier 1/2/3 judgement stands; review/build never re-migrate to Teams |
+| `/config key=value` direct set | v2.1.181 | Not adopted | config.md is frozen-zone; design philosophy is non-mutable config |
+
+## v2.1.18x Assessment (2.1.181 / .183 / .186)
+
+Assessment source: Claude Code 2.1.181 / 2.1.183 / 2.1.186 changelogs.
+
+These releases hardened Claude Code's *command-level safety rails* and
+*subagent orchestration guards*. Forge already covers the same scenarios at
+the *process-discipline level* (§2.2 branch isolation, §2.4 three-strike +
+git rollback, frozen-zone, three-layer review). This assessment closed the
+remaining *command-level / orchestration-level* gaps:
+
+| Capability | Forge Action | Rationale |
+|------------|--------------|-----------|
+| Destructive command content-level interception | **Adopted (R1)** | Forge's rollback is *post-hoc* (git transaction); this adds *pre-emptive* blocking. Bypass via env tokens avoids the file-I/O single point of failure that would DoS Forge loop's own `git reset --hard` rollback. |
+| Subagent spawn-time authorization | **Adopted (R2)** | `disallowedTools: [Agent]` in review agents (spec/quality/security-check) was static-only; spawn-time check closes the "forbidden child spawns child" gap. |
+| Subagent depth hard cap | **Adopted (R3)** | No explicit depth limit existed; prevents decide/review nesting explosion. |
+| Knowledge near-limit warning | **Adopted (R4)** | Existing cleanup was passive (over-limit only); adds 90% pre-write advisory. |
+| Retry watchdog, stream-stall, TUI | Not adopted | Out of Forge's skill-orchestration layer; Forge delegates to native runtime. |
+| Agent Teams | Not adopted | ADR-locked; ROADMAP Tier judgement unchanged. |
+
+Spec: `.forge/specs/cc-2-1-18x-safety-hardening/`.
 
 ## v2.1.169 Assessment
 
