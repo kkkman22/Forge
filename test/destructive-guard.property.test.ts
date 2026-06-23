@@ -271,6 +271,24 @@ describe("normalizeCommand", () => {
     expect(checkDestructive("sudo ls -la", NO_MARK).allowed).toBe(true);
   });
 
+  it("v4.1: git global flag value forms are denied (-C/--git-dir/--work-tree/-G/--namespace)", () => {
+    // v4 P0 fix: flags taking a space-separated value must swallow that value,
+    // else the value shifts into cmd[1] and breaks rule matching.
+    expect(checkDestructive("git -C . reset --hard", NO_MARK).allowed).toBe(false);
+    expect(checkDestructive("git -C .. reset --hard", NO_MARK).allowed).toBe(false);
+    expect(checkDestructive("git -C subdir clean -fd", NO_MARK).allowed).toBe(false);
+    expect(checkDestructive("git -C . checkout -- important.txt", NO_MARK).allowed).toBe(false);
+    expect(checkDestructive("git -C . stash drop", NO_MARK).allowed).toBe(false);
+    expect(checkDestructive("git --git-dir /x reset --hard", NO_MARK).allowed).toBe(false);
+    expect(checkDestructive("git --git-dir /x --work-tree /y reset --hard", NO_MARK).allowed).toBe(
+      false,
+    );
+    expect(checkDestructive("git -G pat reset --hard", NO_MARK).allowed).toBe(false);
+    expect(checkDestructive("git --namespace ns reset --hard", NO_MARK).allowed).toBe(false);
+    // inline = form still denied
+    expect(checkDestructive("git -C=/tmp reset --hard", NO_MARK).allowed).toBe(false);
+  });
+
   it("handles --hard=1 form (git accepts it)", () => {
     const norm = normalizeCommand("git reset --hard=1");
     // normalization should keep --hard recognizable (rule matches on contains)

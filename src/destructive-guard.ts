@@ -190,6 +190,30 @@ function isGitGlobalFlag(token: string): boolean {
   );
 }
 
+/**
+ * v4.1 fix: git global flags that consume the NEXT token as their value (when
+ * not written inline as `flag=value`). stripGitGlobalFlags must skip both the
+ * flag and its value, or the value token shifts into cmd[1] and breaks rule
+ * matching (v4 P0: `git -C . reset --hard` escaped because `.` became cmd[1]).
+ *
+ * Covers: -c (config), -C (run-as-path), -G (grep), --git-dir, --work-tree,
+ * --namespace. Note case sensitivity: -c (lower) vs -C (upper) are distinct.
+ */
+const GIT_FLAGS_TAKING_VALUE: ReadonlySet<string> = new Set([
+  "-c",
+  "-C",
+  "-G",
+  "--git-dir",
+  "--work-tree",
+  "--namespace",
+]);
+
+/** Whether a flag token consumes the next token as its value (no inline `=`). */
+function flagTakesNextToken(token: string): boolean {
+  if (token.includes("=")) return false;
+  return GIT_FLAGS_TAKING_VALUE.has(token);
+}
+
 function stripGitGlobalFlags(tokens: string[]): string[] {
   if (tokens[0] !== "git" || tokens.length < 2) return tokens;
   const subcmd: string[] = [];
@@ -197,8 +221,8 @@ function stripGitGlobalFlags(tokens: string[]): string[] {
   while (i < tokens.length) {
     const t = tokens[i];
     if (isGitGlobalFlag(t)) {
-      // -c without inline `=` consumes the next token as its value.
-      if ((t === "-c" || t.startsWith("-c")) && !t.includes("=") && i + 1 < tokens.length) {
+      // Flag that takes next token as value (e.g. -C PATH, --git-dir PATH).
+      if (flagTakesNextToken(t) && i + 1 < tokens.length) {
         i += 2;
       } else {
         i += 1;
