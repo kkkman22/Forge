@@ -24,20 +24,12 @@ export function mergeProgressFile(ours: string, theirs: string): GuardedMergeRes
 
   const merged = new Map<string, ProgressTask>();
   for (const task of ourTasks) {
-    if (task.id === UNPARSEABLE_ID) {
-      warnings.push(`unparseable progress line isolated: ${task.text}`);
-      isolated.push(task.text);
-      continue;
-    }
+    if (isolateIfUnparseable(task, "progress", isolated, warnings)) continue;
     merged.set(task.id, task);
   }
 
   for (const task of theirTasks) {
-    if (task.id === UNPARSEABLE_ID) {
-      warnings.push(`unparseable progress line isolated: ${task.text}`);
-      isolated.push(task.text);
-      continue;
-    }
+    if (isolateIfUnparseable(task, "progress", isolated, warnings)) continue;
     const existing = merged.get(task.id);
     if (!existing) {
       merged.set(task.id, task);
@@ -55,7 +47,7 @@ export function mergeProgressFile(ours: string, theirs: string): GuardedMergeRes
     (t) => `- [${t.status === "completed" ? "x" : " "}] ${t.id}: ${t.text}`,
   );
   // Isolated unparseable lines preserved verbatim so no data is silently lost.
-  for (const iso of isolated) lines.push(iso);
+  flushIsolated(isolated, lines);
 
   return {
     resolvedContent: lines.join("\n"),
@@ -78,20 +70,12 @@ export function mergeInstinctsOrFailures(ours: string, theirs: string): GuardedM
 
   const merged = new Map<string, KnowledgeEntry>();
   for (const entry of ourEntries) {
-    if (entry.id === UNPARSEABLE_ID) {
-      warnings.push(`unparseable knowledge line isolated: ${entry.text}`);
-      isolated.push(entry.text);
-      continue;
-    }
+    if (isolateIfUnparseable(entry, "knowledge", isolated, warnings)) continue;
     merged.set(entry.id, entry);
   }
 
   for (const entry of theirEntries) {
-    if (entry.id === UNPARSEABLE_ID) {
-      warnings.push(`unparseable knowledge line isolated: ${entry.text}`);
-      isolated.push(entry.text);
-      continue;
-    }
+    if (isolateIfUnparseable(entry, "knowledge", isolated, warnings)) continue;
     const existing = merged.get(entry.id);
     if (!existing) {
       merged.set(entry.id, entry);
@@ -106,7 +90,7 @@ export function mergeInstinctsOrFailures(ours: string, theirs: string): GuardedM
   const lines = Array.from(merged.values()).map(
     (e) => `${e.id}: confidence=${e.confidence} count=${e.occurredCount} | ${e.text}`,
   );
-  for (const iso of isolated) lines.push(iso);
+  flushIsolated(isolated, lines);
 
   return {
     resolvedContent: lines.join("\n"),
@@ -166,6 +150,30 @@ export function reassignAdrId(theirs: string, nextId: number): GuardedMergeResul
  * surfaced via a warning so format drift is visible.
  */
 const UNPARSEABLE_ID = "__unparseable__";
+
+/**
+ * If `item` carries the unparseable sentinel id, record a locatable warning,
+ * stash its text for verbatim preservation, and signal the caller to skip it
+ * (return true). Otherwise return false and the caller proceeds normally.
+ *
+ * Shared by both merge functions so the isolation policy lives in one place.
+ */
+function isolateIfUnparseable<T extends { id: string; text: string }>(
+  item: T,
+  label: string,
+  isolated: string[],
+  warnings: string[],
+): boolean {
+  if (item.id !== UNPARSEABLE_ID) return false;
+  warnings.push(`unparseable ${label} line isolated: ${item.text}`);
+  isolated.push(item.text);
+  return true;
+}
+
+/** Append isolated lines verbatim to the output so no data is silently lost. */
+function flushIsolated(isolated: string[], lines: string[]): void {
+  for (const iso of isolated) lines.push(iso);
+}
 
 interface ProgressTask {
   id: string;
