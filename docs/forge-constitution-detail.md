@@ -3,7 +3,7 @@ title: 'Forge — 项目宪法详细内容'
 category: reference
 audience:
 - maintainer
-updated: 2026-06-21
+updated: 2026-06-23
 owner: forge-maintainers
 ---
 
@@ -235,6 +235,25 @@ SKILL 定义的输出格式 > 简洁性约束。当 SKILL 要求特定输出（�
 **例外**：internal-only / one-off 类脚本（记录在 `scripts/.help-exempt`）无此约束。
 
 **脚本分类**：每个脚本文件头声明 `# category: user-facing` / `internal-only` / `one-off`。由 `scripts/validate-scripts-help.mjs` 校验。
+
+### §2.9 Hook 二分:Hint-Type / Gate-Type
+
+> **Requirement 2 (planning-with-files-borrow)** [出处: planning-with-files "Always exits 0"]
+>
+> 借鉴 planning-with-files 的 exit-zero 哲学,所有 Forge hook 按阻断是否为设计意图二分。完整清单见 `docs/hooks-inventory.md`。
+
+**判据**:阻断是否为该钩子的设计意图。
+
+| 类型 | 判据 | 行为契约 |
+|------|------|----------|
+| **Hint-Type**(提示型) | 阻断不是设计意图。用于注入上下文/记录/提示 | 必须 `exit 0` + stdout `{"hookSpecificOutput":{"additionalContext":"..."}}`。绝不 `exit 2`。最坏情况是提示丢失,agent 流转不停 |
+| **Gate-Type**(门禁型) | 阻断是设计意图。用于安全/冻结区/完整性强制 | 必须 `exit 2` 阻断(PreToolUse)且有明确理由:安全/冻结区/沙箱/完整性 |
+
+**核心纪律**:
+- Hint-Type 钩子永不应意外阻断 agent(exit-zero convention)。
+- Gate-Type 钩子的阻断必须有意为之且理由明确,不得有"提示型钩子意外阻断"。
+- 与 §2.6 Output Conciseness 共存:Hint-Type 提示简洁(≤200 tokens);Gate-Type 阻断消息含命中检查 + 证据 + 建议路由 + 重入条件。
+- 新增 hook 必须在 `docs/hooks-inventory.md` 登记类型。
 
 ---
 
