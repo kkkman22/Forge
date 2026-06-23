@@ -310,7 +310,7 @@ When user triggers `/forge decide`, follow this dispatch protocol:
 ### Reference
 
 - Fallback ladder: `@.claude/rules/workflow-fallback-ladder.md`
-- Dispatcher: `src/workflow-dispatcher.ts`
+- Dispatcher: `src/forge/agents-dispatcher.ts`
 
 ## Common Rationalizations
 

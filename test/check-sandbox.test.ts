@@ -213,3 +213,67 @@ describe("checkSandboxAccess", () => {
     expect(result.reason).toContain("tool input");
   });
 });
+
+// ---------------------------------------------------------------------------
+// Destructive-command guard integration (v2+ R1)
+// ---------------------------------------------------------------------------
+
+describe("checkSandboxAccess — destructive guard", () => {
+  beforeEach(() => {
+    mkdirSync(resolve(PROJECT_ROOT, ".forge"), { recursive: true });
+    writeFileSync(ACTIVE_CONFIG_PATH, JSON.stringify(defaultRuntimeConfig));
+  });
+
+  afterEach(() => {
+    rmSync(PROJECT_ROOT, { recursive: true, force: true });
+  });
+
+  it("denies a destructive git reset --hard via Bash tool", () => {
+    const result = checkSandboxAccess(
+      "Bash",
+      JSON.stringify({ command: "git reset --hard" }),
+      ACTIVE_CONFIG_PATH,
+    );
+    expect(result.allowed).toBe(false);
+    expect(result.reason).toContain("Destructive guard");
+  });
+
+  it("denies git clean -fd via Bash tool", () => {
+    const result = checkSandboxAccess(
+      "Bash",
+      JSON.stringify({ command: "git clean -fd" }),
+      ACTIVE_CONFIG_PATH,
+    );
+    expect(result.allowed).toBe(false);
+  });
+
+  it("allows a non-destructive git command via Bash tool", () => {
+    const result = checkSandboxAccess(
+      "Bash",
+      JSON.stringify({ command: "git status" }),
+      ACTIVE_CONFIG_PATH,
+    );
+    expect(result.allowed).toBe(true);
+  });
+
+  it("R1-AC5: config.md destructive_guard:off propagates to hook (allows destructive)", () => {
+    writeFileSync(resolve(PROJECT_ROOT, ".forge/config.md"), "---\ndestructive_guard: off\n---\n");
+    const result = checkSandboxAccess(
+      "Bash",
+      JSON.stringify({ command: "git reset --hard" }),
+      ACTIVE_CONFIG_PATH,
+    );
+    expect(result.allowed).toBe(true);
+  });
+
+  it("combined: sandbox allow + destructive deny → overall deny (short-circuit)", () => {
+    // git reset --hard is allowed by sandbox profile (no fs/network hit) but
+    // denied by destructive guard → overall deny.
+    const result = checkSandboxAccess(
+      "Bash",
+      JSON.stringify({ command: "git reset --hard" }),
+      ACTIVE_CONFIG_PATH,
+    );
+    expect(result.allowed).toBe(false);
+  });
+});

@@ -73,6 +73,20 @@ export const SHELL_METACHARS: ReadonlySet<string> = new Set([
 const WRAPPER_SHELLS = new Set(["bash", "sh", "zsh", "dash", "exec"]);
 
 /**
+ * v4 strict whitelist: the only command prefixes a destructive command may
+ * start with (after env/absolute-path stripping). Any other cmd[0] → the
+ * command is not a bare destructive command → fail-closed deny. This is the
+ * closed rule that prevents wrapper-prefix bypass (exec/sudo/nice/VAR=...).
+ */
+export const DESTRUCTIVE_TOOL_NAMES: ReadonlySet<string> = new Set([
+  "git",
+  "terraform",
+  "tofu",
+  "pulumi",
+  "cdk",
+]);
+
+/**
  * Whether a command is "complex" — i.e. cannot be safely reduced to a bare
  * destructive command for whitelist matching. v3 fail-closed gate.
  *
@@ -100,6 +114,18 @@ export function isComplexCommand(command: string): boolean {
   const firstTwo = command.trim().split(/\s+/).slice(0, 2);
   if (firstTwo.length >= 2 && WRAPPER_SHELLS.has(firstTwo[0]) && firstTwo[1] === "-c") {
     return true;
+  }
+  // 5. v4 wrapper-prefix detection (closes exec/sudo/nice/VAR=/bash-without-c
+  //    bypass): normalize (strip env/absolute-path), then if cmd[0] is NOT a
+  //    destructive tool BUT a destructive tool name appears as a later token,
+  //    the command wraps a destructive command behind an unrecognized prefix →
+  //    fail-closed. Bare non-destructive commands (ls, npm) have no destructive
+  //    tool token anywhere → not complex → allowed.
+  const norm = normalizeCommand(command);
+  if (norm.length > 0 && !DESTRUCTIVE_TOOL_NAMES.has(norm[0])) {
+    if (norm.slice(1).some((t) => DESTRUCTIVE_TOOL_NAMES.has(t))) {
+      return true;
+    }
   }
   return false;
 }
@@ -295,6 +321,19 @@ export function checkDestructive(command: string, ctx: DestructiveContext): Dest
   if (normalized.length === 0) {
     return ALLOW;
   }
+
+  // v4 fail-closed (wrapper-prefix bypass fix): after stripping env/absolute-path
+  // prefixes, if cmd[0] is NOT a known destructive tool, the command either (a)
+  // is non-destructive (ls, npm — allow, harmless) or (b) wraps a destructive
+  // command behind an unrecognized prefix (exec/sudo/nice/VAR=/bash-without-c).
+  // We cannot tell (a) from (b) without parsing every possible wrapper, so we
+  // apply the destructive-tool whitelist ONLY when the raw command looks like it
+  // references a destructive tool. The wrapper check lives in isComplexCommand
+  // (which sees the raw command, including prefixes like `exec git`).
+  //
+  // Concretely: if cmd[0] is a destructive tool, proceed to rule matching.
+  // Otherwise, allow (non-destructive) — wrapper bypasses are caught by
+  // isComplexCommand's reference-scan below.
 
   let matched: DestructiveRule | undefined;
   for (const rule of DESTRUCTIVE_RULES) {

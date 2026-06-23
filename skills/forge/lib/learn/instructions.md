@@ -693,7 +693,7 @@ When user triggers `/forge learn`, follow this dispatch protocol:
 ### Reference
 
 - Fallback ladder: `@.claude/rules/workflow-fallback-ladder.md`
-- Dispatcher: `src/workflow-dispatcher.ts`
+- Dispatcher: `src/forge/agents-dispatcher.ts`
 
 ## Edge Cases
 

@@ -257,6 +257,20 @@ describe("normalizeCommand", () => {
     expect(checkDestructive("$(git reset --hard)", NO_MARK).allowed).toBe(false);
   });
 
+  it("v4: wrapper-prefix commands are denied (exec/sudo/nice/VAR=/bash-without-c)", () => {
+    // These have no metachar and aren't bash -c, but wrap a destructive command
+    // behind an unrecognized prefix → must be fail-closed denied.
+    expect(checkDestructive("exec git reset --hard", NO_MARK).allowed).toBe(false);
+    expect(checkDestructive("sudo git reset --hard", NO_MARK).allowed).toBe(false);
+    expect(checkDestructive("FOO=bar git reset --hard", NO_MARK).allowed).toBe(false);
+    expect(checkDestructive("bash git reset --hard", NO_MARK).allowed).toBe(false);
+    expect(checkDestructive("nice git reset --hard", NO_MARK).allowed).toBe(false);
+    expect(checkDestructive("nohup git reset --hard", NO_MARK).allowed).toBe(false);
+    expect(checkDestructive("command git reset --hard", NO_MARK).allowed).toBe(false);
+    // Non-destructive commands with unrecognized prefixes still allowed (no destructive tool token).
+    expect(checkDestructive("sudo ls -la", NO_MARK).allowed).toBe(true);
+  });
+
   it("handles --hard=1 form (git accepts it)", () => {
     const norm = normalizeCommand("git reset --hard=1");
     // normalization should keep --hard recognizable (rule matches on contains)

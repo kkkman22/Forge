@@ -177,7 +177,7 @@ export function checkSandboxAccess(
     // Context assembled from trusted nonce files + config.md destructive_guard,
     // so the hook honours Forge's own rollback path (nonce-verified) and
     // config.md `off` propagates here without env-only bypass (P0-2/P0-3/P0-5).
-    const projectRoot = process.cwd();
+    const projectRoot = config.projectRoot;
     const destructive = checkDestructive(command, contextFromNonce(process.env, projectRoot));
     if (!destructive.allowed) {
       return { allowed: false, reason: `🛑 Destructive guard: ${destructive.reason}` };
