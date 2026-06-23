@@ -183,9 +183,11 @@ export function isMainEntry(importMetaUrl: string, argv1: string | undefined): b
   if (!argv1) return false;
   // argv backslashes → forward slashes (Windows separator).
   const argvPath = argv1.replace(/\\/g, "/");
-  // Strip the "file://" two-slash prefix; the remainder keeps its leading
-  // slashes (e.g. "/C:/..." on Windows, "/Users/..." on POSIX).
-  const urlPath = importMetaUrl.replace(/^file:\/\//, "");
+  // Strip the "file://" two-slash prefix, then decode percent-encoding.
+  // import.meta.url percent-encodes spaces/non-ASCII (e.g. "/Users/my%20dir/...")
+  // while process.argv[1] carries the raw path ("/Users/my dir/..."), so a raw
+  // comparison fails on encoded segments. decodeURIComponent closes that gap.
+  const urlPath = decodeURIComponent(importMetaUrl.replace(/^file:\/\//, ""));
   // Windows-style paths carry a drive letter (X:). Normalise both sides to
   // a drive-less, lowercase, leading-slash-stripped form so that
   // "/C:/Users/..." (from file URL) matches "C:/Users/..." (from argv) and

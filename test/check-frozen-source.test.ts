@@ -69,16 +69,25 @@ describe("isMainEntry — cross-platform entry-point detection [REQ-05]", () => 
     expect(isMainEntry(moduleUrl, argv1)).toBe(true);
   });
 
-  it("windows: matches relative argv path", () => {
+  it("windows: relative argv path does not resolve (returns false)", () => {
+    // isMainEntry does no cwd resolution; a relative argv cannot match an
+    // absolute moduleUrl. Pin the concrete result instead of a tautological
+    // typeof check.
     const moduleUrl = "file:///C:/Users/king/Forge/dist/check-frozen.js";
     const argv1 = ".\\dist\\check-frozen.js";
-    // relative path resolves against cwd; isMainEntry normalises both sides
-    // — here we only assert it does not crash and returns a boolean.
-    expect(typeof isMainEntry(moduleUrl, argv1)).toBe("boolean");
+    expect(isMainEntry(moduleUrl, argv1)).toBe(false);
   });
 
   it("handles missing argv1 gracefully", () => {
     const moduleUrl = "file:///Users/king/code/Forge/dist/check-frozen.js";
     expect(isMainEntry(moduleUrl, undefined)).toBe(false);
+  });
+
+  it("posix: matches despite URL-encoded spaces in import.meta.url [F-09]", () => {
+    // import.meta.url percent-encodes a space as %20; argv carries the raw
+    // space. The two must still compare equal.
+    const moduleUrl = "file:///Users/my%20user/Forge/dist/check-frozen.js";
+    const argv1 = "/Users/my user/Forge/dist/check-frozen.js";
+    expect(isMainEntry(moduleUrl, argv1)).toBe(true);
   });
 });
