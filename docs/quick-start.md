@@ -3,7 +3,7 @@ title: 'Forge 快速入门指南'
 category: getting-started
 audience:
 - maintainer
-updated: 2026-06-22
+updated: 2026-06-23
 owner: forge-maintainers
 ---
 
@@ -19,6 +19,28 @@ owner: forge-maintainers
   - 检查：`node --version`
 
 预计时间：**5 分钟**
+
+---
+
+## Forge 是什么：最小可用闭环
+
+Forge 把 AI 编码约束成一条**可验证的阶段流水线**。记住这一个循环就懂了 Forge：
+
+```
+  decide ─→ spec ─→ plan ─→ build ─→ review ─→ test ─→ ship
+   (需求)    (规格)   (计划)   (实现)    (评审)    (验证)   (发布)
+                ↑                              │
+                └──────── P0/P1 阻断 ──────────┘
+                  （评审发现问题 → 回 build 修复）
+```
+
+**三句话理解**：
+
+1. **阶段流水线**：每个命令产出一个文件工件（spec → `.forge/specs/`，plan → `.forge/plans/`，依此类推），阶段间通过文件交接，不靠对话记忆。
+2. **门禁强制纪律**：Stop 完成 gate 会检查未完成任务并提示续做（**prompt-only**——agent 可忽略，非技术阻断）；review 发现 P0/P1 会阻断 ship。
+3. **路由分档**：Light（≤1 文件）/ Standard（明确需求）/ Full（新服务/模糊需求）三档，复杂度决定流程轻重。
+
+> 完整的三级路由、subagent 并行评审、ADR、知识库自演化等重型机制见 [onboarding-advanced](./onboarding-advanced.md)。上手阶段只需上面的闭环。
 
 ---
 
