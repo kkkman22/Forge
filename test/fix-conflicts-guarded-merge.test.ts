@@ -111,6 +111,59 @@ describe("guarded-merger: mergeProgressFile tie-break by real timestamp [REQ-01]
   });
 });
 
+// --- REQ-02 (T2): no Math.random() fallback id; parse failure warns ---
+
+describe("guarded-merger: parse failure warns, no random id [REQ-02]", () => {
+  it("progress: unparseable line yields warning, not a random id duplicate", () => {
+    // line without ': ' separator → id regex won't match
+    const ours = "- [x] malformed-line-without-separator";
+    const theirs = "- [x] malformed-line-without-separator";
+
+    const r1 = mergeProgressFile(ours, theirs);
+    const r2 = mergeProgressFile(ours, theirs);
+
+    // reproducible: no Math.random non-determinism
+    expect(r1.resolvedContent).toEqual(r2.resolvedContent);
+    expect(r1.warnings).toEqual(r2.warnings);
+    // a warning flags the unparseable line
+    expect(r1.warnings.length).toBeGreaterThan(0);
+    expect(r1.warnings.some((w) => w.toLowerCase().includes("unparseable") || w.toLowerCase().includes("parse"))).toBe(true);
+  });
+
+  it("progress: two identical well-formed tasks merge to ONE entry (not duplicated by random id)", () => {
+    const ours = "- [x] task-a: Do A";
+    const theirs = "- [x] task-a: Do A";
+
+    const result = mergeProgressFile(ours, theirs);
+    const occurrences = result.resolvedContent.split("task-a").length - 1;
+    // same task_id must dedupe to a single entry, not duplicate
+    expect(occurrences).toBe(1);
+  });
+
+  it("knowledge: unparseable line yields warning, not a random id duplicate", () => {
+    // line without leading '<id>:' → id regex won't match
+    const ours = "just some text without id colon";
+    const theirs = "just some text without id colon";
+
+    const r1 = mergeInstinctsOrFailures(ours, theirs);
+    const r2 = mergeInstinctsOrFailures(ours, theirs);
+
+    expect(r1.resolvedContent).toEqual(r2.resolvedContent);
+    expect(r1.warnings).toEqual(r2.warnings);
+    expect(r1.warnings.length).toBeGreaterThan(0);
+  });
+
+  it("mergeProgressFile + mergeInstinctsOrFailures fully deterministic across runs (property)", () => {
+    fc.assert(
+      fc.property(fc.string({ minLength: 0, maxLength: 40 }), (s) => {
+        const r1 = mergeProgressFile(s, s);
+        const r2 = mergeProgressFile(s, s);
+        return r1.resolvedContent === r2.resolvedContent && JSON.stringify(r1.warnings) === JSON.stringify(r2.warnings);
+      }),
+    );
+  });
+});
+
 describe("guarded-merger: mergeInstinctsOrFailures [R7.7]", () => {
   it("merges entries by id: confidence=max, count=sum", () => {
     const ours = "pattern-1: confidence=0.5 count=3 | Always check null";
