@@ -11,6 +11,34 @@ Entries follow [Keep a Changelog](https://keepachangelog.com/) with Forge-specif
 
 ## [Unreleased]
 
+### Fixed
+
+- **guarded-merger**: tie-break now uses real `completed_at` parsed from the
+  line (trailing `@ <epoch-ms>`), removing non-deterministic `Date.now()`;
+  parse failures warn + isolate instead of falling back to `Math.random()` id.
+- **secret-redactor**: cover PEM/PGP private key blocks (incl. header-only
+  truncated keys), bare JWTs (incl. non-`eyJ` payloads), and lowercase JSON
+  secret fields.
+- **check-frozen**: cross-platform CLI entry-point detection (`isMainEntry`)
+  with URL-decode — no longer silently skips `main()` on Windows or
+  space-containing paths.
+- **audit-log**: serialise concurrent writes via the shared `O_EXCL` lock
+  (reused from tool-health-writer); on lock timeout write a gap marker
+  instead of silently dropping a record (HMAC-chain traceability).
+- **tool-health-writer**: PID-aware stale-lock recovery — a live holder's lock
+  is no longer force-removed, preventing torn records from a slow peer.
+
+### Changed
+
+- **sandbox-policy**: declare authoritative default-semantics via exported
+  `SANDBOX_DEFAULT_SEMANTICS` constant + one-shot runtime deprecation on the
+  legacy default-deny API (CI-visible misuse detection). Phase 1 declarative
+  config (`SandboxConfig`) is default-allow (advisory); legacy types are
+  default-deny, scoped to the runtime enforcement layer only. The dual track
+  is slated for removal post Phase 1 enforcement-layer migration.
+- **router**: `HINT_RULES` externalised into `router-hint-rules.ts` (pure data
+  module); `generateHints` behaviour unchanged (golden-snapshot equivalence).
+
 ## [3.8.0] - 2026-06-23
 
 ### Added

@@ -10,6 +10,7 @@
  * **Validates: Requirements R7.6, R7.7, R7.8, R7.9**
  */
 
+import fc from "fast-check";
 import { describe, expect, it } from "vitest";
 import {
   mergeInstinctsOrFailures,
@@ -55,6 +56,120 @@ describe("guarded-merger: mergeProgressFile [R7.6]", () => {
     const ours = "- [x] task-a: Done A";
     const result = mergeProgressFile(ours, "");
     expect(result.resolvedContent).toContain("task-a");
+  });
+});
+
+// --- REQ-01 (T1): tie-break by real completed_at parsed from content ---
+
+describe("guarded-merger: mergeProgressFile tie-break by real timestamp [REQ-01]", () => {
+  it("newer real timestamp wins when both completed (theirs newer)", () => {
+    // ours older (1000), theirs newer (2000) — both carry explicit @ ts
+    const ours = "- [x] task-a: Our version @ 1000";
+    const theirs = "- [x] task-a: Their version @ 2000";
+
+    const result = mergeProgressFile(ours, theirs);
+
+    // tie-break must pick theirs (newer real timestamp), not ours
+    expect(result.resolvedContent).toContain("Their version");
+    expect(result.resolvedContent).not.toContain("Our version");
+    expect(result.warnings.some((w) => w.includes("theirs wins"))).toBe(true);
+  });
+
+  it("newer real timestamp wins when both completed (ours newer)", () => {
+    const ours = "- [x] task-a: Our version @ 3000";
+    const theirs = "- [x] task-a: Their version @ 1000";
+
+    const result = mergeProgressFile(ours, theirs);
+
+    expect(result.resolvedContent).toContain("Our version");
+    expect(result.resolvedContent).not.toContain("Their version");
+  });
+
+  it("backward compat: both completed without timestamp → deterministic ours-first", () => {
+    // no @ ts → sentinel 0 on both → deterministic rule (ours first), reproducible
+    const ours = "- [x] task-a: Our version";
+    const theirs = "- [x] task-a: Their version";
+
+    const r1 = mergeProgressFile(ours, theirs);
+    const r2 = mergeProgressFile(ours, theirs);
+
+    // reproducible (no Date.now non-determinism)
+    expect(r1.resolvedContent).toEqual(r2.resolvedContent);
+    // ours wins deterministically when equal sentinel
+    expect(r1.resolvedContent).toContain("Our version");
+  });
+
+  it("mergeProgressFile is deterministic — same input always same output (property)", () => {
+    fc.assert(
+      fc.property(fc.string({ minLength: 1, maxLength: 50 }), (s) => {
+        const ours = `- [x] task-x: ${s}`;
+        const r1 = mergeProgressFile(ours, "");
+        const r2 = mergeProgressFile(ours, "");
+        return (
+          r1.resolvedContent === r2.resolvedContent && r1.warnings.length === r2.warnings.length
+        );
+      }),
+    );
+  });
+});
+
+// --- REQ-02 (T2): no Math.random() fallback id; parse failure warns ---
+
+describe("guarded-merger: parse failure warns, no random id [REQ-02]", () => {
+  it("progress: unparseable line yields warning, not a random id duplicate", () => {
+    // line without ': ' separator → id regex won't match
+    const ours = "- [x] malformed-line-without-separator";
+    const theirs = "- [x] malformed-line-without-separator";
+
+    const r1 = mergeProgressFile(ours, theirs);
+    const r2 = mergeProgressFile(ours, theirs);
+
+    // reproducible: no Math.random non-determinism
+    expect(r1.resolvedContent).toEqual(r2.resolvedContent);
+    expect(r1.warnings).toEqual(r2.warnings);
+    // a warning flags the unparseable line
+    expect(r1.warnings.length).toBeGreaterThan(0);
+    expect(
+      r1.warnings.some(
+        (w) => w.toLowerCase().includes("unparseable") || w.toLowerCase().includes("parse"),
+      ),
+    ).toBe(true);
+  });
+
+  it("progress: two identical well-formed tasks merge to ONE entry (not duplicated by random id)", () => {
+    const ours = "- [x] task-a: Do A";
+    const theirs = "- [x] task-a: Do A";
+
+    const result = mergeProgressFile(ours, theirs);
+    const occurrences = result.resolvedContent.split("task-a").length - 1;
+    // same task_id must dedupe to a single entry, not duplicate
+    expect(occurrences).toBe(1);
+  });
+
+  it("knowledge: unparseable line yields warning, not a random id duplicate", () => {
+    // line without leading '<id>:' → id regex won't match
+    const ours = "just some text without id colon";
+    const theirs = "just some text without id colon";
+
+    const r1 = mergeInstinctsOrFailures(ours, theirs);
+    const r2 = mergeInstinctsOrFailures(ours, theirs);
+
+    expect(r1.resolvedContent).toEqual(r2.resolvedContent);
+    expect(r1.warnings).toEqual(r2.warnings);
+    expect(r1.warnings.length).toBeGreaterThan(0);
+  });
+
+  it("mergeProgressFile + mergeInstinctsOrFailures fully deterministic across runs (property)", () => {
+    fc.assert(
+      fc.property(fc.string({ minLength: 0, maxLength: 40 }), (s) => {
+        const r1 = mergeProgressFile(s, s);
+        const r2 = mergeProgressFile(s, s);
+        return (
+          r1.resolvedContent === r2.resolvedContent &&
+          JSON.stringify(r1.warnings) === JSON.stringify(r2.warnings)
+        );
+      }),
+    );
   });
 });
 

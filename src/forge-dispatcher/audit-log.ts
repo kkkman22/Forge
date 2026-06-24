@@ -1,8 +1,20 @@
 import { createHmac, randomBytes } from "node:crypto";
-import { chmodSync, existsSync, mkdirSync, readFileSync, writeFileSync } from "node:fs";
-import { appendFile, mkdir } from "node:fs/promises";
+import {
+  appendFileSync,
+  chmodSync,
+  existsSync,
+  mkdirSync,
+  readFileSync,
+  writeFileSync,
+} from "node:fs";
+import { mkdir } from "node:fs/promises";
 import { homedir } from "node:os";
 import { resolve } from "node:path";
+import {
+  acquireLockSync,
+  releaseLockSync,
+  ToolHealthLockTimeoutError,
+} from "../tool-health-writer.js";
 import type { GateBlockReason } from "./cmux-gate.js";
 
 export type { GateBlockReason } from "./cmux-gate.js";
@@ -24,6 +36,12 @@ export interface AuditEntry {
 
 export interface AuditOpts {
   auditDir?: string;
+  /** Lock deadline passed to acquireLockSync (default 5_000). Test seam. */
+  lockTimeoutMs?: number;
+  /** Lock spin sleep base passed to acquireLockSync (test seam). */
+  lockSleepBaseMs?: number;
+  /** Stale-lock threshold passed to acquireLockSync (test seam). */
+  lockStaleMs?: number;
 }
 
 export interface SecretOpts {
@@ -118,10 +136,52 @@ export async function appendAuditLog(entry: AuditEntry, opts?: AuditOpts): Promi
   const logPath = resolve(dir, "dispatch.log");
   const line = JSON.stringify(entry);
 
+  // Serialise concurrent writers via the shared O_EXCL .lock primitive
+  // (same one tool-health-writer uses, CHANGELOG F8). POSIX O_APPEND is atomic
+  // only up to PIPE_BUF; audit entries are variable-length JSON, so concurrent
+  // /forge subprocesses could otherwise tear/interleave records. The lock is a
+  // short blocking sync call inside this async function — acceptable because
+  // audit writes are infrequent and the critical section is a single line.
   try {
-    await appendFile(logPath, `${line}\n`);
+    acquireLockSync(`${logPath}.lock`, {
+      timeoutMs: opts?.lockTimeoutMs ?? 5_000,
+      sleepBaseMs: opts?.lockSleepBaseMs,
+      staleLockMs: opts?.lockStaleMs,
+    });
+  } catch (_err: unknown) {
+    if (_err instanceof ToolHealthLockTimeoutError) {
+      // Lock timeout: the entry could not be appended. Dropping it silently
+      // would break the HMAC chain for all subsequent records (each entry's
+      // prev_hmac chains to the previous line) AND leave no trace that a gap
+      // occurred. Write a gap-marker line so the gap is auditable. This write
+      // is itself unlocked (the lock is precisely what we could not acquire),
+      // accepted as best-effort since the timeout case is rare and a visible
+      // gap beats a silent hole. [F-05]
+      // biome-ignore lint/suspicious/noConsole: audit degradation warning is intentional
+      console.warn(`[forge-audit] lock timeout on ${logPath}, writing gap marker`);
+      const gap = JSON.stringify({
+        _gap: true,
+        ts: entry.ts,
+        reason: "lock_timeout",
+        dropped_hmac: entry.hmac,
+      });
+      try {
+        appendFileSync(logPath, `${gap}\n`);
+      } catch {
+        // biome-ignore lint/suspicious/noConsole: audit degradation warning is intentional
+        console.warn(`[forge-audit] cannot write gap marker to ${logPath}`);
+      }
+      return;
+    }
+    throw _err;
+  }
+
+  try {
+    appendFileSync(logPath, `${line}\n`);
   } catch (_err: unknown) {
     // biome-ignore lint/suspicious/noConsole: audit degradation warning is intentional
     console.warn(`[forge-audit] cannot write audit log: ${logPath}`);
+  } finally {
+    releaseLockSync(`${logPath}.lock`);
   }
 }

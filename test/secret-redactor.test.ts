@@ -153,3 +153,126 @@ describe("secret-redactor: combined and edge cases", () => {
     expect(result).not.toContain(": key");
   });
 });
+
+// ---------------------------------------------------------------------------
+// Pattern (e): PEM private key block [REQ-03]
+// ---------------------------------------------------------------------------
+
+describe("secret-redactor: PEM private key block [REQ-03]", () => {
+  it("redacts RSA private key block", () => {
+    const pem = [
+      "-----BEGIN RSA PRIVATE KEY-----",
+      "MIIEpAIBAAKCAQEA1234567890abcdefghijklmnopqrstuvwxyz",
+      "MIIEpAIBAAKCAQEA0987654321zyxwvutsrqponmlkjihgfedcba",
+      "-----END RSA PRIVATE KEY-----",
+    ].join("\n");
+    const result = redactSecrets(pem);
+    expect(result).not.toContain("1234567890");
+    expect(result).not.toContain("MIIEpAIBAAKCAQEA");
+    expect(result).toContain("***");
+  });
+
+  it("redacts EC private key block", () => {
+    const pem = "-----BEGIN EC PRIVATE KEY-----\nMHQCAQEEIB\n-----END EC PRIVATE KEY-----";
+    const result = redactSecrets(pem);
+    expect(result).not.toContain("MHQCAQEEIB");
+    expect(result).toContain("***");
+  });
+
+  it("redacts generic PRIVATE KEY block", () => {
+    const pem = "-----BEGIN PRIVATE KEY-----\nMIIBVwIBADANBgk\n-----END PRIVATE KEY-----";
+    const result = redactSecrets(pem);
+    expect(result).not.toContain("MIIBVwIBADANBgk");
+    expect(result).toContain("***");
+  });
+
+  it("preserves non-private-key BEGIN blocks", () => {
+    const cert = "-----BEGIN CERTIFICATE-----\nMIIDhTCCAm2gAwIB\n-----END CERTIFICATE-----";
+    const result = redactSecrets(cert);
+    // certificates are public; not redacted
+    expect(result).toContain("MIIDhTCCAm2gAwIB");
+  });
+});
+
+// ---------------------------------------------------------------------------
+// Pattern (f): Bare JWT (three-segment eyJ...) [REQ-03]
+// ---------------------------------------------------------------------------
+
+describe("secret-redactor: bare JWT [REQ-03]", () => {
+  it("redacts bare JWT token", () => {
+    const jwt =
+      "eyJhbGciOiJIUzI1NiJ9.eyJzdWIiOiIxMjM0In0.SflKxwRJSMeKKF2QT4fwpMeJf36POk6yJV_adQssw5c";
+    const result = redactSecrets(jwt);
+    expect(result).not.toContain("SflKxwRJSMeKKF2QT4fwpMeJf36POk6yJV_adQssw5c");
+    expect(result).toContain("***");
+  });
+
+  it("redacts JWT embedded in log line", () => {
+    const line = `auth succeeded with token eyJhbGciOiJIUzI1NiJ9.eyJzdWIiOiIxIn0.abc123_-signatureXYZ`;
+    const result = redactSecrets(line);
+    expect(result).not.toContain("abc123_-signatureXYZ");
+    expect(result).toContain("***");
+  });
+
+  it("does not redact non-JWT eyJ strings", () => {
+    // single segment — not a JWT (needs three dot-separated base64url segments)
+    expect(redactSecrets("eyJnot a jwt")).toBe("eyJnot a jwt");
+  });
+});
+
+// ---------------------------------------------------------------------------
+// Pattern (g): lowercase JSON secret fields [REQ-03]
+// ---------------------------------------------------------------------------
+
+describe("secret-redactor: lowercase JSON secret fields [REQ-03]", () => {
+  it("redacts lowercase apikey field", () => {
+    expect(redactSecrets('{"apikey": "sk-12345"}')).toBe('{"apikey": "***"}');
+  });
+
+  it("redacts snake_case api_key field", () => {
+    expect(redactSecrets('{"api_key": "sk-67890"}')).toBe('{"api_key": "***"}');
+  });
+
+  it("redacts lowercase secret field", () => {
+    expect(redactSecrets('{"secret": "my-secret-value"}')).toBe('{"secret": "***"}');
+  });
+
+  it("redacts private_key field", () => {
+    expect(redactSecrets('{"private_key": "-----BEGIN-----"}')).toBe('{"private_key": "***"}');
+  });
+});
+
+// ---------------------------------------------------------------------------
+// Review hardening: PEM without footer / PGP / JWT edges [F-03/F-07/F-08]
+// ---------------------------------------------------------------------------
+
+describe("secret-redactor: PEM/PGP/JWT hardening [review F-03/F-07/F-08]", () => {
+  it("F-03: redacts PEM private key truncated before END footer", () => {
+    // key body dumped across a line-limit truncation — no END trailer
+    const truncated = "-----BEGIN RSA PRIVATE KEY-----\nMIIEpAIBAAKCAQEAVERYSECRETBASE64BODY";
+    const result = redactSecrets(truncated);
+    expect(result).not.toContain("VERYSECRETBASE64BODY");
+    expect(result).toContain("***");
+  });
+
+  it("F-07: redacts PGP private key block", () => {
+    const pgp =
+      "-----BEGIN PGP PRIVATE KEY BLOCK-----\nlQYGBg0\n-----END PGP PRIVATE KEY BLOCK-----";
+    const result = redactSecrets(pgp);
+    expect(result).not.toContain("lQYGBg0");
+    expect(result).toContain("***");
+  });
+
+  it("F-08: redacts JWT whose payload does not start with eyJ", () => {
+    // payload first key is empty string → base64 "eyI..." not "eyJ"
+    const jwt = "eyJhbGciOiJub25lIn0.eyIiOjF9.signature";
+    const result = redactSecrets(jwt);
+    expect(result).not.toContain("eyIiOjF9");
+    expect(result).toContain("***");
+  });
+
+  it("F-08: still does not redact a non-JWT single eyJ token", () => {
+    // three segments required; this is one segment
+    expect(redactSecrets("just eyJfoobar here")).toBe("just eyJfoobar here");
+  });
+});

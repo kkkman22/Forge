@@ -227,3 +227,57 @@ describe("ToolHealthWriter: 5-process concurrent append safety (R12.7)", () => {
     expect(seen).toEqual(expected);
   }, 30_000);
 });
+
+// ---------------------------------------------------------------------------
+// F-06: stale-lock PID awareness — do not steal a live holder's lock
+// ---------------------------------------------------------------------------
+
+describe("stale lock PID awareness [F-06]", () => {
+  let dir: string;
+  beforeEach(() => {
+    dir = mkdtempSync(join(tmpdir(), "th-pid-"));
+  });
+  afterEach(() => {
+    rmSync(dir, { recursive: true, force: true });
+  });
+
+  it("does NOT force-remove a stale lock whose holder PID is still alive", () => {
+    const lockPath = join(dir, "live.lock");
+    // plant a stale lock owned by a "live" PID (the current process)
+    writeFileSync(lockPath, String(process.pid));
+    // backdate mtime beyond staleLockMs
+    const old = new Date(Date.now() - 60_000);
+    utimesSync(lockPath, old, old);
+
+    // injected probe says the holder PID is alive
+    expect(() =>
+      appendToolHealthRecord(join(dir, "live"), sampleRecord(), {
+        timeoutMs: 50,
+        sleepBaseMs: 1,
+        staleLockMs: 10,
+        pidAliveCheck: () => true,
+      }),
+    ).toThrow(ToolHealthLockTimeoutError);
+    // the live lock must still exist (not stolen)
+    expect(existsSync(lockPath)).toBe(true);
+  });
+
+  it("force-removes a stale lock whose holder PID is dead", () => {
+    const lockPath = join(dir, "dead.lock");
+    writeFileSync(lockPath, "99999"); // almost certainly dead PID
+    const old = new Date(Date.now() - 60_000);
+    utimesSync(lockPath, old, old);
+
+    const line = appendToolHealthRecord(join(dir, "dead"), sampleRecord(), {
+      timeoutMs: 1_000,
+      staleLockMs: 10,
+      pidAliveCheck: () => false,
+    });
+    expect(line).toMatch(/review · 429-degrade/);
+    expect(existsSync(lockPath)).toBe(false);
+  });
+});
+
+function sampleRecord() {
+  return { subcommand: "review", event: "429-degrade", details: "f06" };
+}

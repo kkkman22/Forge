@@ -29,8 +29,10 @@ import {
   constants as FS,
   mkdirSync,
   openSync,
+  readFileSync,
   statSync,
   unlinkSync,
+  writeFileSync,
 } from "node:fs";
 import { dirname } from "node:path";
 
@@ -52,6 +54,14 @@ export interface AppendOptions {
   sleepBaseMs?: number;
   /** Stale-lock threshold: lock file older than this is force-removed (default 30_000). */
   staleLockMs?: number;
+  /**
+   * Predicate reporting whether a given PID is still alive. Used during
+   * stale-lock recovery to avoid stealing a lock whose holder is merely slow
+   * (debugger pause, NFS stall) rather than crashed. Defaults to a
+   * non-destructive signal-0 probe (process.kill(pid, 0)). Injected in tests
+   * so the live/dead branch can be exercised deterministically.
+   */
+  pidAliveCheck?: (pid: number) => boolean;
 }
 
 export class ToolHealthLockTimeoutError extends Error {
@@ -104,15 +114,26 @@ export function formatToolHealthLine(record: ToolHealthRecord): string {
   return `${ts} · ${record.subcommand} · ${record.event} · ${record.details}\n`;
 }
 
-function acquireLockSync(lockPath: string, opts: AppendOptions): void {
+/**
+ * Acquire an exclusive `.lock` file using `O_CREAT|O_EXCL`, spinning with
+ * jittered sleeps until won or the deadline expires. Exported so other
+ * low-frequency append paths (e.g. audit-log) can share one concurrency
+ * primitive instead of introducing a second.
+ */
+export function acquireLockSync(lockPath: string, opts: AppendOptions): void {
   const timeoutMs = opts.timeoutMs ?? DEFAULT_TIMEOUT_MS;
   const sleepBaseMs = opts.sleepBaseMs ?? DEFAULT_SLEEP_BASE_MS;
   const staleLockMs = opts.staleLockMs ?? DEFAULT_STALE_LOCK_MS;
+  const pidAliveCheck = opts.pidAliveCheck ?? isPidAliveDefault;
   const deadline = Date.now() + timeoutMs;
 
   while (true) {
     try {
       const fd = openSync(lockPath, FS.O_WRONLY | FS.O_CREAT | FS.O_EXCL, 0o644);
+      // Write our PID so a later contender can tell whether we are still alive
+      // before force-removing a stale lock (avoids stealing a live-but-slow
+      // holder's lock — TOCTOU hardening, F-06).
+      writeFileSync(fd, String(process.pid));
       closeSync(fd);
       return;
     } catch (err) {
@@ -122,12 +143,16 @@ function acquireLockSync(lockPath: string, opts: AppendOptions): void {
         const stat = statSync(lockPath);
         const age = Date.now() - stat.mtimeMs;
         if (age > staleLockMs) {
-          try {
-            unlinkSync(lockPath);
-          } catch (_err: unknown) {
-            // Race: peer removed it; loop and retry.
+          // Only steal if the recorded holder PID is actually dead. A live
+          // PID means the holder is slow (debugger/NFS), not crashed — wait.
+          if (!isLockHolderAlive(lockPath, pidAliveCheck)) {
+            try {
+              unlinkSync(lockPath);
+            } catch (_err: unknown) {
+              // Race: peer removed it; loop and retry.
+            }
+            continue;
           }
-          continue;
         }
       } catch (_err: unknown) {
         // Race: peer removed it; loop and retry.
@@ -142,7 +167,39 @@ function acquireLockSync(lockPath: string, opts: AppendOptions): void {
   }
 }
 
-function releaseLockSync(lockPath: string): void {
+/**
+ * Read the holder PID from a lock file and ask `pidAliveCheck` whether it is
+ * still alive. A lock with no/unparseable PID is treated as dead (removable),
+ * preserving backward compatibility with lock files written before PID was
+ * recorded.
+ */
+function isLockHolderAlive(lockPath: string, pidAliveCheck: (pid: number) => boolean): boolean {
+  try {
+    const pid = Number.parseInt(readFileSync(lockPath, "utf-8").trim(), 10);
+    if (!Number.isFinite(pid) || pid <= 0) return false;
+    return pidAliveCheck(pid);
+  } catch {
+    return false;
+  }
+}
+
+/**
+ * Default PID liveness probe: a non-destructive signal-0 check via
+ * `process.kill`. Returns false for a dead/non-existent PID (throws ESRCH).
+ * Note: PID reuse across machines/containers can produce false "alive", but
+ * this is strictly safer than the prior mtime-only heuristic.
+ */
+function isPidAliveDefault(pid: number): boolean {
+  try {
+    process.kill(pid, 0);
+    return true;
+  } catch {
+    return false;
+  }
+}
+
+/** Release the `.lock` file. Exported to pair with {@link acquireLockSync}. */
+export function releaseLockSync(lockPath: string): void {
   try {
     unlinkSync(lockPath);
   } catch (_err: unknown) {

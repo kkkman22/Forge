@@ -7,7 +7,7 @@
  * **Validates: Requirements 1, 2, 3, 5**
  */
 
-import { describe, expect, it } from "vitest";
+import { describe, expect, it, vi } from "vitest";
 import {
   buildDefaultPolicy,
   checkFileAccess,
@@ -251,5 +251,62 @@ describe("buildDefaultPolicy", () => {
     expect(
       checkFileAccess("/projects/my-app/.forge/.sandbox-active.json", policy.fileSystem).allowed,
     ).toBe(false);
+  });
+});
+
+// ---------------------------------------------------------------------------
+// REQ-04 (T4): default-semantics declaration — eliminate dual-track trap
+// ---------------------------------------------------------------------------
+
+describe("sandbox default-semantics declaration [REQ-04]", () => {
+  it("exports an authoritative default-semantics declaration", async () => {
+    const mod = await import("../src/sandbox-policy.js");
+    expect(mod.SANDBOX_DEFAULT_SEMANTICS).toBeDefined();
+    const decl = mod.SANDBOX_DEFAULT_SEMANTICS;
+    // the authoritative (advisory) semantics is Phase 1 default-allow
+    expect(decl.authoritative).toBe("default-allow");
+    // legacy default-deny is scoped to the runtime enforcement layer only
+    expect(decl.legacySemantics).toBe("default-deny");
+    expect(decl.legacyScope).toMatch(/runtime enforcement/i);
+    // a migration cutoff milestone is declared (non-empty)
+    expect(typeof decl.migrationCutoff).toBe("string");
+    expect(decl.migrationCutoff.length).toBeGreaterThan(0);
+  });
+});
+
+// ---------------------------------------------------------------------------
+// REQ-04 (F-01): CI-visible misuse detection — legacy API emits deprecation
+// ---------------------------------------------------------------------------
+
+describe("sandbox legacy API misuse detection [REQ-04 / F-01]", () => {
+  it("calling a legacy default-deny function emits a CI-visible deprecation warning", async () => {
+    // re-import to get a fresh module so the one-shot flag resets cleanly
+    vi.resetModules();
+    const mod = await import("../src/sandbox-policy.js");
+    const warnSpy = vi.spyOn(console, "warn").mockImplementation(() => {});
+    try {
+      // invoke a legacy default-deny function (the runtime-enforcement API)
+      mod.checkFileAccess("/some/path", { allow: [], deny: [] });
+      const calls = warnSpy.mock.calls.map((c) => String(c[0]));
+      expect(
+        calls.some((m) => /legacy|default-deny|deprecat/i.test(m)),
+        `expected a legacy/deprecation warning, got: ${JSON.stringify(calls)}`,
+      ).toBe(true);
+    } finally {
+      warnSpy.mockRestore();
+    }
+  });
+
+  it("the deprecation warning points consumers to the Phase 1 API", async () => {
+    vi.resetModules();
+    const mod = await import("../src/sandbox-policy.js");
+    const warnSpy = vi.spyOn(console, "warn").mockImplementation(() => {});
+    try {
+      mod.buildDefaultPolicy("/proj");
+      const joined = warnSpy.mock.calls.map((c) => String(c[0])).join(" ");
+      expect(joined).toMatch(/SandboxConfig|Phase 1|default-allow/i);
+    } finally {
+      warnSpy.mockRestore();
+    }
   });
 });
