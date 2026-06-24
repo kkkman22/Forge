@@ -1,0 +1,184 @@
+{
+  "build|backend|greenfield": {
+    "subcommand": "build",
+    "dispatchMode": "fork",
+    "resolvedLibPath": "forge/lib/build/instructions.md",
+    "allowedTools": [
+      "Agent",
+      "Bash",
+      "Edit",
+      "Glob",
+      "Grep",
+      "Read",
+      "Write"
+    ],
+    "hasUntrustedPreamble": true,
+    "hintTags": [
+      "migration-safety"
+    ]
+  },
+  "build|docs|iteration": {
+    "subcommand": "build",
+    "dispatchMode": "fork",
+    "resolvedLibPath": "forge/lib/build/instructions.md",
+    "allowedTools": [
+      "Agent",
+      "Bash",
+      "Edit",
+      "Glob",
+      "Grep",
+      "Read",
+      "Write"
+    ],
+    "hasUntrustedPreamble": true,
+    "hintTags": []
+  },
+  "review|fullstack|iteration": {
+    "subcommand": "review",
+    "dispatchMode": "fork",
+    "resolvedLibPath": "forge/lib/review/instructions.md",
+    "allowedTools": [
+      "Agent",
+      "Bash",
+      "Read"
+    ],
+    "hasUntrustedPreamble": true,
+    "hintTags": [
+      "backward-compat"
+    ]
+  },
+  "test|backend|refactor": {
+    "subcommand": "test",
+    "dispatchMode": "fork",
+    "resolvedLibPath": "forge/lib/test/instructions.md",
+    "allowedTools": [
+      "Bash",
+      "Read",
+      "Write"
+    ],
+    "hasUntrustedPreamble": true,
+    "hintTags": [
+      "characterization-tests",
+      "integration-test"
+    ]
+  },
+  "ship|fullstack|greenfield": {
+    "subcommand": "ship",
+    "dispatchMode": "fork",
+    "resolvedLibPath": "forge/lib/ship/instructions.md",
+    "allowedTools": [
+      "Bash",
+      "Read",
+      "Write"
+    ],
+    "hasUntrustedPreamble": true,
+    "hintTags": []
+  },
+  "plan|fullstack|greenfield": {
+    "subcommand": "plan",
+    "dispatchMode": "fork",
+    "resolvedLibPath": "forge/lib/plan/instructions.md",
+    "allowedTools": [
+      "Bash",
+      "Glob",
+      "Grep",
+      "Read",
+      "Write"
+    ],
+    "hasUntrustedPreamble": true,
+    "hintTags": [
+      "scaffold-first"
+    ]
+  },
+  "decide|infra|greenfield": {
+    "subcommand": "decide",
+    "dispatchMode": "fork",
+    "resolvedLibPath": "forge/lib/decide/instructions.md",
+    "allowedTools": [
+      "Agent",
+      "Bash",
+      "Read"
+    ],
+    "hasUntrustedPreamble": true,
+    "hintTags": [
+      "cost-estimate",
+      "tech-stack-review"
+    ]
+  },
+  "spec|data|greenfield": {
+    "subcommand": "spec",
+    "dispatchMode": "fork",
+    "resolvedLibPath": "forge/lib/spec/instructions.md",
+    "allowedTools": [
+      "Bash",
+      "Glob",
+      "Grep",
+      "Read",
+      "Write"
+    ],
+    "hasUntrustedPreamble": true,
+    "hintTags": []
+  },
+  "learn|docs|iteration": {
+    "subcommand": "learn",
+    "dispatchMode": "fork",
+    "resolvedLibPath": "forge/lib/learn/instructions.md",
+    "allowedTools": [
+      "Agent",
+      "Bash",
+      "Edit",
+      "Glob",
+      "Grep",
+      "Read",
+      "WebSearch",
+      "Write"
+    ],
+    "hasUntrustedPreamble": true,
+    "hintTags": []
+  },
+  "status|frontend|bugfix": {
+    "subcommand": "status",
+    "dispatchMode": "inline",
+    "resolvedLibPath": "forge/lib/status/instructions.md",
+    "allowedTools": [
+      "Bash",
+      "Read"
+    ],
+    "hasUntrustedPreamble": true,
+    "hintTags": []
+  },
+  "debug|backend|bugfix": {
+    "subcommand": "debug",
+    "dispatchMode": "fork",
+    "resolvedLibPath": "forge/lib/debug/instructions.md",
+    "allowedTools": [
+      "Agent",
+      "Bash",
+      "Edit",
+      "Glob",
+      "Grep",
+      "Read",
+      "WebSearch",
+      "Write"
+    ],
+    "hasUntrustedPreamble": true,
+    "hintTags": []
+  },
+  "learn|backend|refactor": {
+    "subcommand": "learn",
+    "dispatchMode": "fork",
+    "resolvedLibPath": "forge/lib/learn/instructions.md",
+    "allowedTools": [
+      "Agent",
+      "Bash",
+      "Edit",
+      "Glob",
+      "Grep",
+      "Read",
+      "WebSearch",
+      "Write"
+    ],
+    "hasUntrustedPreamble": true,
+    "hintTags": []
+  }
+}

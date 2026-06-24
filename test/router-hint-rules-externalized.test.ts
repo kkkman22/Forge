@@ -50,7 +50,7 @@ describe("HINT_RULES externalisation preserves generateHints output [REQ-07]", (
     }
   });
 
-  it("hints remain ADDITIVE (empty command sequence → no hints dropped from full)", () => {
+  it("hints remain ADDITIVE (single command tags ⊆ full-sequence tags, frontend)", () => {
     // Invariant from router.ts: hints never remove commands. A superset command
     // sequence must produce a superset of hints.
     const frontendHintsSingle = generateHints("frontend", "greenfield", ["review"]);
@@ -58,6 +58,25 @@ describe("HINT_RULES externalisation preserves generateHints output [REQ-07]", (
     const allTags = new Set(frontendHintsAll.map((h) => h.tag));
     for (const h of frontendHintsSingle) {
       expect(allTags.has(h.tag)).toBe(true);
+    }
+  });
+
+  it("ADDITIVE invariant holds across every taskType × phase (REQ-02)", () => {
+    // Every single-command hint tag must appear in the full-sequence tag set.
+    // This catches a regression where an override-semantic change would drop a
+    // hint when the command list grows.
+    for (const tt of TASK_TYPES) {
+      for (const ph of PHASES) {
+        const allTags = new Set(generateHints(tt, ph, ALL_COMMANDS).map((h) => h.tag));
+        for (const cmd of ALL_COMMANDS) {
+          const singleTags = generateHints(tt, ph, [cmd]).map((h) => h.tag);
+          for (const tag of singleTags) {
+            expect(allTags.has(tag), `${tt}|${ph}|${cmd}: tag '${tag}' dropped in full seq`).toBe(
+              true,
+            );
+          }
+        }
+      }
     }
   });
 });
