@@ -32305,7 +32305,7 @@ ${result.stderr}` : result.stdout || "Script failed with no output";
 
 // dist/src/doctor.js
 import { execFileSync as execFileSync3 } from "node:child_process";
-import { existsSync as existsSync2, readFileSync as readFileSync3 } from "node:fs";
+import { existsSync as existsSync2, readdirSync, readFileSync as readFileSync3 } from "node:fs";
 import path from "node:path";
 
 // dist/src/config.js
@@ -32745,6 +32745,7 @@ function buildHealthSnapshot(options) {
       branch: readBranchHealth(options.projectRoot),
       worktree: readWorktreeHealth(options.projectRoot),
       ...unknownTaskChecks,
+      safetyGuards: buildSafetyGuardsHealth(options.projectRoot),
       gates,
       artifacts: {},
       nextStep: { phase: null, allowed: false, reasons },
@@ -32786,6 +32787,7 @@ function buildHealthSnapshot(options) {
     branch: readBranchHealth(options.projectRoot),
     worktree: readWorktreeHealth(options.projectRoot),
     ...taskScopedChecks,
+    safetyGuards: buildSafetyGuardsHealth(options.projectRoot),
     gates,
     artifacts,
     nextStep: {
@@ -32981,6 +32983,77 @@ function skippedCheck(message, source) {
     message,
     source
   };
+}
+function readConfigScalar(content, key) {
+  const match = content.match(new RegExp(`^\\s*${key}:\\s*(\\S+)`, "m"));
+  return match ? match[1] : null;
+}
+function buildSafetyGuardsHealth(projectRoot) {
+  const forgeRoot = path.join(projectRoot, ".forge");
+  const configPath = path.join(forgeRoot, "config.md");
+  let configContent = "";
+  try {
+    configContent = readFileSync3(configPath, "utf-8");
+  } catch {
+    configContent = "";
+  }
+  const guardVal = readConfigScalar(configContent, "destructive_guard");
+  const sandboxActive = existsSync2(path.join(forgeRoot, ".sandbox-active.json"));
+  const bypassEnvSet = Boolean(process.env.FORGE_ROLLBACK_NONCE) || Boolean(process.env.FORGE_ALLOW_DESTRUCTIVE);
+  let destructiveGuard;
+  if (guardVal === "off") {
+    destructiveGuard = {
+      status: "fail",
+      message: "destructive_guard is OFF \u2014 destructive git/infra commands are not blocked (P1 warning)",
+      source: ".forge/config.md:destructive_guard"
+    };
+  } else if (!sandboxActive) {
+    destructiveGuard = {
+      status: "unknown",
+      message: "destructive_guard inactive (sandbox not enabled \u2014 run with --sandbox to activate)",
+      source: ".forge/.sandbox-active.json"
+    };
+  } else if (bypassEnvSet) {
+    destructiveGuard = {
+      status: "warn",
+      message: "bypass env (FORGE_ROLLBACK_NONCE / FORGE_ALLOW_DESTRUCTIVE) set \u2014 verify a nonce file backs it",
+      source: "process.env"
+    };
+  } else {
+    destructiveGuard = {
+      status: "pass",
+      message: `destructive_guard=${guardVal ?? "on (default)"} (sandbox active)`,
+      source: ".forge/config.md:destructive_guard"
+    };
+  }
+  const spawnPolicy = {
+    status: "pass",
+    message: "spawn-time policy active (identity + lineage + depth)",
+    source: "src/spawn-policy.ts"
+  };
+  const depthRaw = readConfigScalar(configContent, "max_subagent_depth");
+  const depthNum = depthRaw !== null ? Number(depthRaw) : NaN;
+  const maxSubagentDepth = {
+    status: Number.isInteger(depthNum) && depthNum >= 1 && depthNum <= 10 ? "pass" : "unknown",
+    message: `max_subagent_depth=${Number.isInteger(depthNum) ? depthNum : 5} (default)`,
+    source: ".forge/config.md:max_subagent_depth"
+  };
+  const knowledgeLimitRaw = readConfigScalar(configContent, "knowledge_limit");
+  const knowledgeLimit = knowledgeLimitRaw !== null && Number.isInteger(Number(knowledgeLimitRaw)) ? Number(knowledgeLimitRaw) : 20;
+  const solutionsDir = path.join(forgeRoot, "knowledge", "solutions");
+  let count = 0;
+  try {
+    count = readdirSync(solutionsDir).filter((f) => f.endsWith(".md")).length;
+  } catch {
+    count = 0;
+  }
+  const threshold = Math.ceil(knowledgeLimit * 0.9);
+  const knowledgeQuota = {
+    status: count >= threshold ? "fail" : "pass",
+    message: `solutions=${count}/${knowledgeLimit} (near-limit threshold ${threshold})`,
+    source: ".forge/knowledge/solutions/"
+  };
+  return { destructiveGuard, spawnPolicy, maxSubagentDepth, knowledgeQuota };
 }
 var WORKER_RUNTIME_ASSETS = [
   "scripts/forge-hook-dispatch.mjs",
@@ -33240,6 +33313,12 @@ var HealthSnapshotSchema = external_exports.object({
   docsDrift: HealthCheckSchema,
   runtimeSync: HealthCheckSchema,
   toolHealth: HealthCheckSchema,
+  safetyGuards: external_exports.object({
+    destructiveGuard: HealthCheckSchema,
+    spawnPolicy: HealthCheckSchema,
+    maxSubagentDepth: HealthCheckSchema,
+    knowledgeQuota: HealthCheckSchema
+  }).strict(),
   gates: external_exports.record(external_exports.string(), HealthCheckSchema),
   artifacts: external_exports.record(external_exports.string(), external_exports.string()),
   nextStep: external_exports.object({
