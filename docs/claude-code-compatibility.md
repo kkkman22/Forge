@@ -4,7 +4,7 @@ category: reference
 audience:
   - daily-developer
   - maintainer
-updated: 2026-06-23
+updated: 2026-06-24
 owner: forge-maintainers
 ---
 
@@ -104,7 +104,21 @@ guard is **not on the attack path** — `forge doctor` reports this as `unknown`
 status. Operators wanting pre-emptive destructive-command blocking must run
 with `--sandbox`.
 
-Spec: `.forge/specs/cc-2-1-18x-safety-hardening/` (v2).
+**Auxiliary guard, not a security boundary (v5 declaration):** the destructive
+guard uses enumeration-based whitelist + fail-closed matching. It catches the
+common bare destructive commands (`git reset --hard`, `git clean -fd`, etc.),
+their env/path/global-flag/case variants, and refuses complex shell forms
+(metacharacters, wrappers, embedded quotes). However, enumeration cannot be
+exhaustive — git aliases (`hub`), future flag additions, or novel wrapper
+tools may escape. **This guard is an auxiliary safety net, not a hardened
+security boundary.** Forge's real protection against destructive operations is
+its process-level discipline: branch isolation (§2.2), frozen-zone three-tier
+protection, three-layer review, git-transaction rollback, and three-strike
+reroute (§2.4). The guard adds defense-in-depth on top of these, not in place
+of them. Known limitation: non-whitelisted git wrappers (`hub reset --hard`)
+are not caught.
+
+Spec: `.forge/specs/cc-2-1-18x-safety-hardening/` (v5).
 
 ## v2.1.169 Assessment
 

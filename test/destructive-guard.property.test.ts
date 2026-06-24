@@ -289,6 +289,20 @@ describe("normalizeCommand", () => {
     expect(checkDestructive("git -C=/tmp reset --hard", NO_MARK).allowed).toBe(false);
   });
 
+  it("v5: git --exec-path / --config-env flags denied (P0-1 flag completeness)", () => {
+    expect(checkDestructive("git --exec-path=/p reset --hard", NO_MARK).allowed).toBe(false);
+    expect(checkDestructive("git --config-env=k=e reset --hard", NO_MARK).allowed).toBe(false);
+  });
+
+  it("v5: case-insensitive tool names denied (P0-2 macOS case-insensitive FS)", () => {
+    expect(checkDestructive("GIT reset --hard", NO_MARK).allowed).toBe(false);
+    expect(checkDestructive("Git reset --hard", NO_MARK).allowed).toBe(false);
+    expect(checkDestructive("GIT CLEAN -FD", NO_MARK).allowed).toBe(false);
+    expect(checkDestructive("TERRAFORM destroy", NO_MARK).allowed).toBe(false);
+    expect(checkDestructive("TOFU destroy", NO_MARK).allowed).toBe(false);
+    expect(checkDestructive("GIT STATUS", NO_MARK).allowed).toBe(true);
+  });
+
   it("handles --hard=1 form (git accepts it)", () => {
     const norm = normalizeCommand("git reset --hard=1");
     // normalization should keep --hard recognizable (rule matches on contains)

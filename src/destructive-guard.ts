@@ -144,7 +144,12 @@ export function normalizeCommand(command: string): string[] {
     .filter((t) => t.length > 0);
   tokens = stripLeadingPrefixes(tokens);
   tokens = stripGitGlobalFlags(tokens);
-  return tokens;
+  // v5 P0-2 fix: lowercase all tokens so rule matching is case-insensitive.
+  // macOS APFS is case-insensitive → `GIT reset --hard` resolves to the same
+  // binary. git subcommands/flags are themselves case-insensitive. Refs
+  // (HEAD~1, origin/main) are not inspected by any rule, so lowercasing them
+  // is harmless.
+  return tokens.map((t) => t.toLowerCase());
 }
 
 /** Strip a matching pair of surrounding quotes from a whole token (safe, unambiguous). */
@@ -186,7 +191,9 @@ function isGitGlobalFlag(token: string): boolean {
     token.startsWith("--work-tree") ||
     token.startsWith("-C") ||
     token.startsWith("-G") ||
-    token.startsWith("--namespace")
+    token.startsWith("--namespace") ||
+    token.startsWith("--exec-path") ||
+    token.startsWith("--config-env")
   );
 }
 
