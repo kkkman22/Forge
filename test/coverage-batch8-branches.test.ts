@@ -19,6 +19,12 @@ function baseSnapshot(overrides: Record<string, unknown> = {}): ForgeHealthSnaps
     docsDrift: { status: "unknown", message: "skipped" },
     runtimeSync: { status: "pass", message: "all assets present" },
     toolHealth: { status: "pass", message: "healthy" },
+    safetyGuards: {
+      destructiveGuard: { status: "pass", message: "on" },
+      spawnPolicy: { status: "pass", message: "active" },
+      maxSubagentDepth: { status: "pass", message: "5" },
+      knowledgeQuota: { status: "pass", message: "0/20" },
+    },
     gates: {},
     artifacts: {},
     nextStep: { phase: "review", allowed: true, reasons: [] },

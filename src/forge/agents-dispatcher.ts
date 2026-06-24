@@ -12,6 +12,8 @@
 import { execFile } from "node:child_process";
 import { readdirSync, readFileSync } from "node:fs";
 import { join } from "node:path";
+import { checkSpawnPolicy, type LineageEntry, type SpawnPolicyDecision } from "../spawn-policy.js";
+import { appendToolHealthRecord } from "../tool-health-writer.js";
 
 // ---------------------------------------------------------------------------
 // Types
@@ -48,6 +50,13 @@ export interface DispatchOptions {
   includeAll?: boolean;
   /** Prepend Forge worktree edit preflight for agents that may edit files. */
   requiresWorktreePreflight?: boolean;
+  /**
+   * Spawn lineage (leader → ... → current parent) for spawn-time policy
+   * (spec R2/R3). When omitted, spawn-policy is skipped (backward compat).
+   */
+  lineage?: LineageEntry[];
+  /** Current chain depth (leader=0). Pairs with {@link lineage}. */
+  depth?: number;
 }
 
 /** Claude background agent state reported by `claude agents --json`. @public */
@@ -180,6 +189,85 @@ export function resolveAgentTimeoutMs(tier: string | undefined, configContent: s
   return TIER_DEFAULT_TIMEOUT_MS[tier];
 }
 
+/** Default max subagent nesting depth (spec R3). */
+export const DEFAULT_MAX_SUBAGENT_DEPTH = 5;
+
+/**
+ * Resolve the max subagent depth from `.forge/config.md` content.
+ * Reads `max_subagent_depth` (1-10); falls back to {@link DEFAULT_MAX_SUBAGENT_DEPTH}
+ * when absent or invalid. Pure: accepts the raw config text.
+ *
+ * **Validates: Requirement R3 AC2**
+ */
+export function resolveMaxSubagentDepth(configContent: string): number {
+  const match = configContent.match(/^\s*max_subagent_depth:\s*(\S+)/m);
+  if (match) {
+    const n = Number(match[1]);
+    if (Number.isInteger(n) && n >= 1 && n <= 10) {
+      return n;
+    }
+  }
+  return DEFAULT_MAX_SUBAGENT_DEPTH;
+}
+
+/**
+ * Evaluate spawn-time policy for a dispatch (spec R2/R3).
+ *
+ * Returns `null` when lineage/depth are not supplied (backward compat — no
+ * policy check). Fail-open: errors are caught by the caller and logged to
+ * tool-health rather than blocking dispatch.
+ *
+ * @internal — exported for dispatcher wiring tests.
+ *
+ * P1-7 fix: when lineage is omitted the policy is fail-secure (block) rather
+ * than skip — a caller that forgets to supply the trusted lineage cannot
+ * silently bypass the spawn guard. `depth` alone may be absent (defaults to 0).
+ */
+export function evaluateSpawnPolicy(
+  opts: DispatchOptions,
+  configContent: string,
+): SpawnPolicyDecision {
+  // Missing lineage → fail-secure: callers must supply the trusted lineage.
+  const lineage = opts.lineage;
+  if (lineage === undefined) {
+    return {
+      allowed: false,
+      verdict: "blocked",
+      rule: "missing-lineage",
+      reason:
+        "spawn-policy: lineage not supplied (fail-secure); dispatch caller must pass trusted lineage.",
+    };
+  }
+  return checkSpawnPolicy({
+    subagentIdentity: opts.agentType,
+    lineage,
+    depth: opts.depth ?? 0,
+    maxDepth: resolveMaxSubagentDepth(configContent),
+  });
+}
+
+/**
+ * Best-effort tool-health log for a spawn-policy event (fail-open or depth).
+ * Writes are swallowed — a logging failure must NOT block dispatch (NFR-2).
+ */
+function appendSpawnPolicyEvent(agentType: string, event: string, detail: string): void {
+  try {
+    appendToolHealthRecord(join(process.cwd(), ".forge/knowledge/tool-health.md"), {
+      subcommand: "dispatch",
+      event,
+      details: `agent=${agentType} ${detail}`,
+    });
+  } catch {
+    // Swallow: logging is best-effort; never block the dispatch path.
+  }
+}
+
+/** Back-compat alias for fail-open error logging. */
+function appendSpawnPolicyError(agentType: string, err: unknown): void {
+  const msg = err instanceof Error ? err.message : String(err);
+  appendSpawnPolicyEvent(agentType, "spawn-policy-error", `err=${msg}`);
+}
+
 // ---------------------------------------------------------------------------
 // CLI argument builder (exported for testability)
 // ---------------------------------------------------------------------------
@@ -255,6 +343,27 @@ function normalizeDispatchResult(
  * @public
  */
 export async function dispatch(opts: DispatchOptions): Promise<DispatchResult> {
+  // Spawn-time policy (spec R2/R3). Fail-open: an internal error is logged to
+  // tool-health and the dispatch proceeds, so review/decide orchestration is
+  // never blocked by the policy layer itself (availability-first, NFR-2).
+  try {
+    const decision = evaluateSpawnPolicy(opts, opts.configContent ?? "");
+    if (!decision.allowed) {
+      // P1-2: record max-depth-exceeded to tool-health for post-hoc tracing.
+      if (decision.verdict === "max-depth-exceeded") {
+        appendSpawnPolicyEvent(opts.agentType, "max-depth-exceeded", decision.reason);
+      }
+      return {
+        agent: opts.agentType,
+        status: "failed",
+        diagnostic: `spawn-policy ${decision.verdict}: ${decision.reason}`,
+      };
+    }
+  } catch (err) {
+    // Fail-open: log and continue. (tool-health write is best-effort.)
+    appendSpawnPolicyError(opts.agentType, err);
+  }
+
   const args = buildAgentArgs(opts);
   const startTime = Date.now();
   // Explicit timeoutMs wins; otherwise resolve per-tier from config.

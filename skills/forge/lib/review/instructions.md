@@ -573,7 +573,7 @@ When user triggers `/forge review`, follow this dispatch protocol for workflow e
 ### Reference
 
 - Fallback ladder: `@.claude/rules/workflow-fallback-ladder.md`
-- Dispatcher module: `src/workflow-dispatcher.ts`
+- Dispatcher module: `src/forge/agents-dispatcher.ts`
 - Audit writer module: `src/workflow-audit-writer.ts`
 
 ## 4.5 Known-failures Accumulation

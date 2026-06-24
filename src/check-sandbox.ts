@@ -11,6 +11,8 @@
 
 import { existsSync, readFileSync } from "node:fs";
 import { resolve } from "node:path";
+import { checkDestructive } from "./destructive-guard.js";
+import { contextFromNonce } from "./destructive-nonce.js";
 import { checkFileAccess, checkNetworkAccess, type PermissionPolicy } from "./sandbox-policy.js";
 
 // ---------------------------------------------------------------------------
@@ -169,6 +171,16 @@ export function checkSandboxAccess(
           reason: `Network access denied: "${command}" involves network operation but endpoint could not be extracted`,
         };
       }
+    }
+
+    // Destructive-command guard (v2: nonce + config, short-circuit deny).
+    // Context assembled from trusted nonce files + config.md destructive_guard,
+    // so the hook honours Forge's own rollback path (nonce-verified) and
+    // config.md `off` propagates here without env-only bypass (P0-2/P0-3/P0-5).
+    const projectRoot = config.projectRoot;
+    const destructive = checkDestructive(command, contextFromNonce(process.env, projectRoot));
+    if (!destructive.allowed) {
+      return { allowed: false, reason: `🛑 Destructive guard: ${destructive.reason}` };
     }
 
     return { allowed: true, reason: "" };

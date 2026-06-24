@@ -4,7 +4,7 @@ category: reference
 audience:
   - daily-developer
   - maintainer
-updated: 2026-06-16
+updated: 2026-06-24
 owner: forge-maintainers
 ---
 
@@ -48,6 +48,77 @@ Forge requires Claude Code CLI v2.1.163 or later for full functionality.
 | `claude agents --json --all`, `id`, `state` | v2.1.169 | Forge implemented | Inline fallback when agents dispatch is unavailable |
 | Context-window-scaled CLAUDE.md warning | v2.1.169 | Forge helper/docs | Falls back to configured `context_budget` |
 | Background sessions preserve flags | v2.1.169 | Forge metadata persistence | Missing metadata is treated as legacy status |
+| Destructive git command interception | v2.1.183 | **Forge implemented (R1)** | `src/destructive-guard.ts` + check-sandbox wiring; bypass via `FORGE_ROLLBACK_IN_PROGRESS` |
+| Subagent spawn-time policy | v2.1.178/.186 | **Forge implemented (R2)** | `src/spawn-policy.ts`; blocks spawn when lineage disallows `Agent` |
+| Subagent depth limit (5 levels) | v2.1.181 | **Forge implemented (R3)** | `max_subagent_depth` config (default 5); dispatcher explicit param |
+| Memory near-limit compaction reminder | v2.1.186 | **Forge implemented (R4)** | `src/knowledge-quota.ts`; 90% advisory warning in `/forge learn` |
+| Retry watchdog (`CLAUDE_CODE_RETRY_WATCHDOG`) | v2.1.186 | Not adopted | Forge §2.4 three-strike + circuit breaker is a stronger equivalent |
+| Stream-stall hint (20s threshold) | v2.1.185 | Not adopted | TUI-layer; Forge delegates to native + Headroom compression |
+| Agent Teams / tmux teammate panes | v2.1.178/.186 | Not adopted | ROADMAP Tier 1/2/3 judgement stands; review/build never re-migrate to Teams |
+| `/config key=value` direct set | v2.1.181 | Not adopted | config.md is frozen-zone; design philosophy is non-mutable config |
+
+## v2.1.18x Assessment (2.1.181 / .183 / .186)
+
+Assessment source: Claude Code 2.1.181 / 2.1.183 / 2.1.186 changelogs.
+
+These releases hardened Claude Code's *command-level safety rails* and
+*subagent orchestration guards*. Forge already covers the same scenarios at
+the *process-discipline level* (§2.2 branch isolation, §2.4 three-strike +
+git rollback, frozen-zone, three-layer review). This assessment closed the
+remaining *command-level / orchestration-level* gaps:
+
+| Capability | Forge Action | Rationale |
+|------------|--------------|-----------|
+| Destructive command content-level interception | **Adopted (R1)** | Forge's rollback is *post-hoc* (git transaction); this adds *pre-emptive* blocking. Bypass via env tokens avoids the file-I/O single point of failure that would DoS Forge loop's own `git reset --hard` rollback. |
+| Subagent spawn-time authorization | **Adopted (R2)** | `disallowedTools: [Agent]` in review agents (spec/quality/security-check) was static-only; spawn-time check closes the "forbidden child spawns child" gap. |
+| Subagent depth hard cap | **Adopted (R3)** | No explicit depth limit existed; prevents decide/review nesting explosion. |
+| Knowledge near-limit warning | **Adopted (R4)** | Existing cleanup was passive (over-limit only); adds 90% pre-write advisory. |
+| Retry watchdog, stream-stall, TUI | Not adopted | Out of Forge's skill-orchestration layer; Forge delegates to native runtime. |
+| Agent Teams | Not adopted | ADR-locked; ROADMAP Tier judgement unchanged. |
+
+### v2 revision (post-review hardening)
+
+The v1 implementation was reviewed and **5 P0 issues** were found (rule bypass
+via shell syntax, forgeable bypass tokens, guard not wired to real dispatch,
+config-off not propagating, guard inactive by default). v2 reworked:
+
+- **Rule engine** → shell normalization (`normalizeCommand`): strips quotes /
+  `env` / absolute paths / git global flags / `bash -c` wrappers before matching,
+  so `git reset --hard=1`, `env git reset --hard`, `bash -c 'git reset --hard'`
+  etc. all collapse to the canonical form and are denied.
+- **Bypass channel** → nonce + HMAC (`src/destructive-nonce.ts`): the loop
+  rollback skill issues a one-time nonce to `.forge/.rollback-nonce` before
+  `git reset --hard`; the guard validates + burns it. Writing `~/.zshenv` no
+  longer disables the guard (P0-2/P0-3 fix).
+- **R2 scope** → declared as a `dispatch()` function contract (review/decide
+  spawn via SDK Agent tool, not via `dispatch()`); spawn-tool-name set
+  (`Agent`/`Task`/`dispatch_agent`); missing lineage → fail-secure.
+- **R3** → `depth >= maxDepth` boundary; max-depth-exceeded recorded to
+  tool-health.
+- **Doctor** → reports sandbox-active state + bypass-env-set warning.
+
+**Sandbox activation caveat (P1-1):** the destructive guard only runs when
+Forge is started with `--sandbox` (the PreToolUse hook is gated on
+`.forge/.sandbox-active.json`). In the default (non-sandbox) configuration the
+guard is **not on the attack path** — `forge doctor` reports this as `unknown`
+status. Operators wanting pre-emptive destructive-command blocking must run
+with `--sandbox`.
+
+**Auxiliary guard, not a security boundary (v5 declaration):** the destructive
+guard uses enumeration-based whitelist + fail-closed matching. It catches the
+common bare destructive commands (`git reset --hard`, `git clean -fd`, etc.),
+their env/path/global-flag/case variants, and refuses complex shell forms
+(metacharacters, wrappers, embedded quotes). However, enumeration cannot be
+exhaustive — git aliases (`hub`), future flag additions, or novel wrapper
+tools may escape. **This guard is an auxiliary safety net, not a hardened
+security boundary.** Forge's real protection against destructive operations is
+its process-level discipline: branch isolation (§2.2), frozen-zone three-tier
+protection, three-layer review, git-transaction rollback, and three-strike
+reroute (§2.4). The guard adds defense-in-depth on top of these, not in place
+of them. Known limitation: non-whitelisted git wrappers (`hub reset --hard`)
+are not caught.
+
+Spec: `.forge/specs/cc-2-1-18x-safety-hardening/` (v5).
 
 ## v2.1.169 Assessment
 
