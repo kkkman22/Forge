@@ -11,6 +11,88 @@ Entries follow [Keep a Changelog](https://keepachangelog.com/) with Forge-specif
 
 ## [Unreleased]
 
+## [3.9.0] - 2026-06-25
+
+### Added
+
+- **security**: adversarial injection corpus + bypass-rate gate (L7)
+- **dashboard**: dogfooding behavior KPI aggregator (L8 foundation)
+- **dispatcher**: structural assembly fingerprint snapshot tests (L3)
+- **doctor**: surface safety guards in forge doctor (T-09)
+- **safety**: destructive-guard + spawn-policy + knowledge-quota (R1-R4)
+- **install**: ADR-0011 agent 选择性安装暂不实现(前瞻决策)
+- **agents**: spec#3 AGENT-TEMPLATE + vibe + 铁律内嵌
+- **agents**: spec#2 查重 + lint 门禁,接入 npm run check
+- **agents**: check-agent-links symlink 完整性门禁 (spec#1 收尾)
+- **agents**: 回流 11 个 forge-* agent 到 agents/ 并中文化 description
+- **agents**: 补全 4 个过时子集的方法论内容
+- **agents**: ADR-0010 统一架构改为 symlink,排除 .codex
+- **i18n**: ADR-0009 治理文档与 agent 元数据源语言定为中文
+- **active-plan**: R3 writer — set-active-plan.mjs + SKILL wiring (SC-1 P0 fix)
+- **inject**: findings injection with boundary escape and structured extraction (R5)
+- **inject**: progress rolling window with 64KB cap and linear scan (R4)
+- **inject**: active-plan pointer with realpath path-traversal guard (R3)
+- **stop-gate**: upgrade stop-incomplete-tasks to structured restate instruction (R1)
+### Changed
+
+- **sandbox-policy**: declare authoritative default-semantics via exported
+  `SANDBOX_DEFAULT_SEMANTICS` constant + one-shot runtime deprecation on the
+  legacy default-deny API (CI-visible misuse detection). Phase 1 declarative
+  config (`SandboxConfig`) is default-allow (advisory); legacy types are
+  default-deny, scoped to the runtime enforcement layer only. The dual track
+  is slated for removal post Phase 1 enforcement-layer migration.
+- **router**: `HINT_RULES` externalised into `router-hint-rules.ts` (pure data
+  module); `generateHints` behaviour unchanged (golden-snapshot equivalence).
+
+- **safety**: v3 — whitelist + fail-closed + nonce hardening (P0-1 final fix)
+- **safety**: v2 rework — normalization engine + nonce bypass (P0 fixes)
+- **compat**: document CC 2.1.18x safety-hardening adoption (T-10)
+- **tool-health**: fix typedoc link to non-exported isPidAliveDefault [ci]
+- **review**: persist review + test evidence for external-review-remediate-tabbit
+- **changelog**: external-review-remediate-tabbit fixes + formatting [REQ-01..07 / F-01..09]
+- address review P2/P3 findings (Q4-Q10, SC-5/6/9, S-5, P3-1, RR-1)
+- **guarded-merger**: extract isolation helper (review F-02)
+- **agents**: .claude/agents/ 全部改为 symlink 指向 agents/
+- **router**: externalise HINT_RULES into a data module [REQ-07]
+- **quick-start**: minimal loop diagram with progressive disclosure (R6)
+- **hooks**: add Hint/Gate hook inventory and binary classification (R2)
+### Fixed
+
+- **guarded-merger**: tie-break now uses real `completed_at` parsed from the
+  line (trailing `@ <epoch-ms>`), removing non-deterministic `Date.now()`;
+  parse failures warn + isolate instead of falling back to `Math.random()` id.
+- **secret-redactor**: cover PEM/PGP private key blocks (incl. header-only
+  truncated keys), bare JWTs (incl. non-`eyJ` payloads), and lowercase JSON
+  secret fields.
+- **check-frozen**: cross-platform CLI entry-point detection (`isMainEntry`)
+  with URL-decode — no longer silently skips `main()` on Windows or
+  space-containing paths.
+- **audit-log**: serialise concurrent writes via the shared `O_EXCL` lock
+  (reused from tool-health-writer); on lock timeout write a gap marker
+  instead of silently dropping a record (HMAC-chain traceability).
+- **tool-health-writer**: PID-aware stale-lock recovery — a live holder's lock
+  is no longer force-removed, preventing torn records from a slow peer.
+
+- **safety**: v5 — flag completeness + case-insensitive + auxiliary declaration
+- **safety**: v4.1 — git global flag value-swallow (P0 -C/--git-dir bypass)
+- **safety**: v4 — wrapper-prefix whitelist + P1 test/ref cleanup
+- **audit-log**: write gap marker on lock timeout instead of silent drop [F-05]
+- **tool-health**: PID-aware stale-lock recovery, don't steal live locks [F-06]
+- **sandbox-policy**: one-shot runtime deprecation for legacy default-deny API [F-01]
+- **docs**: export VirtualFs 修复 typedoc 警告 + sync dist
+- **check-frozen**: decode URL-encoded paths + pin relative-argv test [F-04/F-09]
+- **secret-redactor**: PEM header-only fallback, PGP, JWT payload edge [F-03/F-07/F-08]
+- **agents**: review P2 修复 — 补全 symlink + vibe + README + 门禁排除
+- **inject,stop**: address review P1 findings (Q2/SC-2/SC-4/SC-7)
+- **sandbox-policy**: declare authoritative default-semantics, eliminate dual-track trap [REQ-04]
+- **audit-log**: serialise concurrent writes via shared O_EXCL lock [REQ-06]
+- **check-frozen**: cross-platform CLI entry-point detection [REQ-05]
+- **secret-redactor**: cover PEM blocks, bare JWT, lowercase JSON fields [REQ-03]
+- **guarded-merger**: warn on parse failure, remove Math.random() id fallback [REQ-02]
+- **guarded-merger**: parse real completed_at timestamp, remove Date.now() tie-break [REQ-01]
+- **bump-version**: recover from remote-ahead push via rebase + retag
+- **stop-gate**: restore R1 structured restate implementation
+
 ### Fixed
 
 - **guarded-merger**: tie-break now uses real `completed_at` parsed from the
