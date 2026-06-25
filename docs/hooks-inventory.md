@@ -3,9 +3,11 @@ title: 'Hooks Inventory — Hint/Gate 二分清单'
 category: reference
 audience:
 - maintainer
-updated: 2026-06-23
+updated: 2026-06-25
 owner: forge-maintainers
 ---
+
+[← 返回索引](./INDEX.md)
 
 # Hooks Inventory — Hint/Gate 二分清单
 
