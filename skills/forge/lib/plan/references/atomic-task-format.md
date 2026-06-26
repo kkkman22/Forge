@@ -146,8 +146,10 @@ Plans created before this rule (no `Expected:` fields) are grandfathered: the se
 - `packs/<name>/contexts/` → 要求 `loadContexts(enabledPacks)` 测试
 - `packs/<name>/glossary/` → 要求 `loadGlossary(enabledPacks)` 测试
 - `packs/<name>/banned-patterns.yaml` → 要求 `loadBannedPatterns(enabledPacks)` 测试
-- `packs/<name>/state-machines/` → 要求 `loadStateMachineDefinitions(enabledPacks)` 测试
+- `packs/<name>/state-machines/` → 要求 `loadStateMachineDefinitions(enabledPacks)` 测试 **（未实现 — pms-pack-v1 R4.5 规划的 registry loader 从未交付；见下方说明）**
 - `packs/<name>/lint-rules/` → 要求 `loadPackLintRules(enabledPacks)` 测试
+
+> **⚠️ state-machines 例外（未实现）**：上表中 `loadStateMachineDefinitions(enabledPacks)` 是 `pms-pack-v1` spec R4.5 规划的 registry loader，但**从未交付**——`src/state-machine/` 只导出单文件的 `loadStateMachineDefinition(yaml, path)`（单数），没有 pack-aware 的复数 loader，`src/pack/loader.ts` 也不消费 `state_machines` category。因此当 Plan 的 `files` 含 `packs/<name>/state-machines/` 时，**不要套用本规则生成调 `loadStateMachineDefinitions` 的测试**（该函数不存在，编译会失败）。可选做法：用单数 API 写手写 integration test（读 yaml + `loadStateMachineDefinition` + `validateDefinition`），或先补齐 R4.5 的 loader 再适用本规则。追踪：`.forge/decisions/2026-06-26-arch-review-remediate-0626.md`（T-01 反转）+ 待定 spec（state-machine 接线 vs 退役）。
 
 ### 为什么 Zero-Pack 测试不够
 
