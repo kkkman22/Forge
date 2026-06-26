@@ -473,3 +473,42 @@ spec 三件套已按 Round 7 指令修订 REQ-04（第七次），重审核对�
 1. **设 decide 预算**：单 REQ decide 轮数硬上限（建议 ≤4 轮），超限强制转 PoC（TDD 实测）。
 2. **P0 安全收紧类 spec 引入人类 sanity check**：打破 AI-审-AI 共享盲区。
 3. **格式枚举类问题优先 spike corpus**：不要用推理解决经验事实问题（Round 5 的教训）。
+
+---
+
+## Build 阶段执行记录（2026-06-26）
+
+### T-05（P0 hotfix）— ✅ 已交付
+
+`fix(ship-gates): close severity parsing P0`（commit bceaa7a5）。
+- RED：3 测试文件 8 fail（P0 真实复现：嵌套报告被读成 0 放行）。
+- GREEN：`src/review/severity-parser.ts`（extractSeverity + hasAnySeverityField）+ ship-gates.ts/fallback.ts 改造。
+- 验证：新测试 34 pass + 既有回归 122 pass；tsc/biome/dist-sync（316 matched）全过。
+- 与 7 轮 decide 收敛的 spec 完全一致。
+
+### T-01（删 state-machine）— ⚠️ 判断反转，撤销执行
+
+**build 实证推翻了 spec 的 T-01 前提**：state-machine **不是零引用孤岛死代码**。
+
+原判断链（架构报告 P0-1 + Round 1-7 + spec）的盲区：判定"孤岛"时只 grep 了 `src/` 内部 `import`，忽略了 `packs/`（数据目录）+ 测试通过 `src/state-machine/index.js` 公开 API 的使用链。
+
+build 阶段实证：
+- `grep -rln "from.*state-machine" src/ scripts/` 确实 0 import（这是原判断依据）。
+- 但 `test/pms-pack/integration.test.ts` 和 `test/pack/zero-pack-invariant.test.ts` 通过 `loadStateMachineDefinition`/`validateDefinition`/`deriveStatePropertyTests` 使用 state-machine 引擎。
+- `packs/pms/` 下有 **5 个真实状态机 yaml**（folio/room-status/housekeeping-task/reservation 等），pms-pack 集成测试加载验证它们。
+- `src/pack/types.ts:22` 的 `"state_machines"` 字符串是 pack 类型系统的 category，是被忽略的线索。
+- 实测：`vitest run test/pms-pack/integration.test.ts test/pack/zero-pack-invariant.test.ts` → **32 pass**，证明 state-machine 是 pms pack 系统的活依赖。
+
+**结论**：state-machine 是 pms pack 系统的核心引擎，删除会破坏 pack 运行时验证。**T-01 撤销，不执行删除。** 若未来要退役 state-machine，须先迁移 pms pack 的状态机验证路径。
+
+**教训**：判定死代码不能只看 `src/` 内 import，必须扫 `packs/`/`rules/` 等数据目录 + 测试通过公开 API 的使用链。`code-slim-0612` 当初也声明"无死代码"，与此结论一致（它检查过 pack 维度）。
+
+### T-06（spec status 巡检脚本）— ✅ 已交付
+
+`feat(scripts): spec status inventory linter`（commit）。
+- `scripts/check-spec-status.mjs` + 5 测试（RED→GREEN 全绿）。
+- 真实巡检立即暴露 spec 库漂移：447 spec 文件、25 缺失 status、71 warning（quoted 变体如 `"draft"`、unrecognized 值如 `obsolete`/`retired-partial`/`in_progress`）——证明本工具有现实价值。
+
+### 实现期额外发现（脚本开发）
+
+Node ESM parser 在 shebang + 注释含 `` ` `` 反引号包 `{...}` 花括号时会抛 `SyntaxError: Unexpected token '.'`（位置追踪 bug）。规避：注释中不要用反引号包裹花括号字面量。已记录在脚本注释规范。
