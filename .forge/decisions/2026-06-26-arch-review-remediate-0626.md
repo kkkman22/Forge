@@ -512,3 +512,46 @@ build 阶段实证：
 ### 实现期额外发现（脚本开发）
 
 Node ESM parser 在 shebang + 注释含 `` ` `` 反引号包 `{...}` 花括号时会抛 `SyntaxError: Unexpected token '.'`（位置追踪 bug）。规避：注释中不要用反引号包裹花括号字面量。已记录在脚本注释规范。
+
+---
+
+## Deferred 任务重启结果（2026-06-26 第二轮 build）
+
+T-02/T-03/T-08 经首次 build 标记 deferred 后重启，**逐个做 build 阶段实证**（沿用 T-01 教训：refactor 类 spec 判断不可全信）。结论分化：
+
+### T-02（拆 plan.ts）— ✅ 交付（PR #141）
+
+实证修正了 spec 的 3 处错误：
+1. **5 模块而非 4**：execution-package 与 task-graph-bridge 零内部耦合，独立成模块。
+2. **TaskGraph 不下沉**：`src/task-graph.ts:36` 已定义 TaskGraph（零依赖），下沉到 types.ts 会让 task-graph.ts 反向依赖 plan → 成环。
+3. **madge 未安装**：循环检测改用 `tsc --noEmit`（已能报 import cycle）。
+
+**项目惯例发现**：`moduleResolution: bundler` + 显式 `.js` 需保留 `plan.ts` re-export shim（对齐 decide 模式），非裸目录 barrel。
+
+拆成 types(150)/format(213)/task-graph-bridge(112)/execution-package(344)/validate(344) + plan.ts shim(80)，均 ≤400 行。**验证**：tsc 无环 / 全量 8901 测试零回归 / check-public-api OK / dist-sync 321 matched。
+
+### T-03（.forge 路径常量）— ⚠️ 实证后撤销，保持 deferred
+
+实证推翻 spec 价值假设（与 T-01 同款"spec 计数高估价值"）：
+- 93 文件 / 351 命中，但**真实形态是点状用法**：80+ 文件仅 1-2 处 `path.join(root, ".forge", ...)`，抽局部常量是**负收益**（一处用一次，常量化反成噪音）。
+- 唯一重度重复的 doctor.ts（28 处）**已有 `forgeRoot` 局部常量**，且 28 处里大量是 `source: ".forge/status.md"` 这种**给用户看的展示字符串**（非路径构造，不能常量化）。
+- 真正值得动的仅 doctor.ts ~5 处路径构造——投入产出比极低。
+
+**结论**：spec 基于表面计数（39/103/351）高估价值，实证发现真实收益点极少。**撤销，保持 deferred。**
+
+### T-08（dist sync 减噪）— ⚠️ spec 诊断部分不成立，撤销
+
+实证发现 sync 机制**已是 spec 想要的合并式**：
+- `.github/workflows/sync-derived-data.yml` 配置 `on: push: branches: [main]`——每次 PR merge 后跑**一次合并的 sync commit**（非 spec 说的"每改一次一条"）。
+- 159 次 sync 是"每 PR merge 一次"的自然累积（近 50 提交 11 次），噪音真实但**机制本身已合并式**。
+- 进一步降频（每 N PR 才 sync）会让 README/dist 短暂漂移，与 dist-sync-guard R1 冲突。
+
+**结论**：spec 想优化的"每改一次一条"前提不存在，**实质已达成，撤销。**
+
+### 重启的元结论
+
+T-01（撤销）/T-03（撤销）/T-08（撤销）/T-02（交付但修正 3 处）——**4 个 refactor 任务里 3 个实证后不该做或前提不成立**。这再次验证 `dead-code-assertion-gate` spec 的核心论点：**refactor 类任务的 spec 判断必须 build 阶段实证，AI 生成的 spec（含计数/价值评估）系统性偏乐观**。这也印证 product 在 Round 7 对"AI-审-AI 回音壁"的判断——价值评估同属共享盲区。
+
+### T-01 文档数字修正
+
+前文 T-01 段记"packs/pms 5 个 yaml"是事实漂移，实测为 **4 个**（folio/room-status/housekeeping-task/reservation）。已在此修正，dead-code-assertion-gate spec 用正确数字。
