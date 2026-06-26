@@ -1,6 +1,6 @@
 {
   "version": 1,
-  "generated_at": "2026-06-26T22:35:22.036Z",
+  "generated_at": "2026-06-26T23:20:11.632Z",
   "subs": {
     "abort": {
       "instructions": {
@@ -426,7 +426,7 @@
       "references": [
         {
           "path": "plan/references/atomic-task-format.md",
-          "sha256": "eae926c9e727be2f723d6202b883ba9f9b7c7317274f57d60bf5775e19f5dacd"
+          "sha256": "fa6b732541c3a6ccb962ddd6572ef3f29f758f4edd8e2a4a43fc66850bcfc8d4"
         },
         {
           "path": "plan/references/dependency-rules.md",
