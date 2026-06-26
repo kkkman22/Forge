@@ -10,6 +10,7 @@ import type { Methodology } from "../schemas/review-report.js";
 import { runSubagentsWithConcurrency } from "../subagent-runner.js";
 import type { SubagentInvocation, SubagentResult } from "../types.js";
 import { splitFrontmatterAndBody } from "./frontmatter.js";
+import { extractSeverity, hasAnySeverityField } from "./severity-parser.js";
 import { processReviewTruncation } from "./subagent.js";
 
 export interface FallbackLadderInput {
@@ -300,17 +301,24 @@ function tryParseCiEvidence(
     const content = readFileSync(path, "utf-8");
     const { fm } = splitFrontmatterAndBody(content);
 
-    const severity_counts: Record<string, number> = {};
-    if (fm.p0_count !== undefined) severity_counts.p0 = Number(fm.p0_count);
-    if (fm.p1_count !== undefined) severity_counts.p1 = Number(fm.p1_count);
-    if (fm.p2_count !== undefined) severity_counts.p2 = Number(fm.p2_count);
-    if (fm.p3_count !== undefined) severity_counts.p3 = Number(fm.p3_count);
-
-    if (Object.keys(severity_counts).length === 0) {
+    // T-05 (REQ-04): preserve L2→L3 downgrade semantics. A CI evidence file
+    // with NO severity info at all must return null (→ downgrade to L3,
+    // conservative), NOT be collapsed to {0,0,0,0} (which would read as
+    // "0 findings → pass L2"). hasAnySeverityField distinguishes the two.
+    if (!hasAnySeverityField(fm)) {
       return null;
     }
 
-    return { severity_counts, raw: content };
+    const severity = extractSeverity(fm);
+    return {
+      severity_counts: {
+        p0: severity.p0,
+        p1: severity.p1,
+        p2: severity.p2,
+        p3: severity.p3,
+      },
+      raw: content,
+    };
   } catch (_err: unknown) {
     return null;
   }

@@ -18,6 +18,8 @@ import {
   queryEvidenceArtifacts,
   writeEvidenceArtifact,
 } from "./evidence-artifact.js";
+import { splitFrontmatterAndBody } from "./review/frontmatter.js";
+import { extractSeverity } from "./review/severity-parser.js";
 import type { Methodology } from "./schemas/review-report.js";
 import { getPolicyGateRequirements, type PolicyProfile } from "./workflow-graph.js";
 
@@ -105,25 +107,41 @@ interface ParsedReviewReport {
 
 /**
  * Extract frontmatter fields from review report content.
+ *
+ * T-05 (REQ-04, P0 fix): uses splitFrontmatterAndBody (parseYaml) instead of
+ * ad-hoc regex, so nested `severity_counts` reports (block/flow YAML, lower/
+ * new_/upper case) are read correctly. The outer try/catch turns any
+ * YAMLParseError from malformed frontmatter into a structured fail-closed
+ * block (caller returns passed:false) rather than crashing the ship command.
  */
 function parseReviewReportFrontmatter(content: string): ParsedReviewReport | null {
-  const match = content.match(/^---\r?\n([\s\S]*?)\r?\n---/);
-  if (!match) return null;
+  let fm: Record<string, unknown>;
+  let fmText: string;
+  try {
+    const parsed = splitFrontmatterAndBody(content);
+    fm = parsed.fm;
+    fmText = parsed.fmText;
+  } catch (err: unknown) {
+    // Round 6 availability P0 + Round 7 observability: malformed YAML must
+    // not crash ship; log so failures are debuggable, then signal parse failure.
+    // biome-ignore lint/suspicious/noConsole: ship-gate diagnostic in gate context without logger
+    console.error("[ship-gates] severity parse failed:", err);
+    return null;
+  }
 
-  const fmText = match[1];
-  const p0Match = fmText.match(/^p0_count:\s*(\d+)/m);
-  const p1Match = fmText.match(/^p1_count:\s*(\d+)/m);
+  // No frontmatter block at all → unparseable (fail-closed upstream).
+  if (fmText === "") return null;
+
   const methodMatch = fmText.match(/^methodology:\s*(\S+)/m);
   const resultMatch = fmText.match(/^result:\s*(\S+)/m);
 
-  if (!p0Match && !p1Match && !methodMatch && !resultMatch) return null;
-
-  const p0Count = p0Match ? Number.parseInt(p0Match[1], 10) : 0;
-  const p1Count = p1Match ? Number.parseInt(p1Match[1], 10) : 0;
-  const methodRaw = methodMatch?.[1] ?? "subagent-parallel";
+  const severity = extractSeverity(fm);
+  const methodRaw =
+    (fm.methodology as string | undefined) ?? methodMatch?.[1] ?? "subagent-parallel";
   const methodology = isValidMethodology(methodRaw) ? methodRaw : "subagent-parallel";
+  const result = (fm.result as string | undefined) ?? resultMatch?.[1] ?? "incomplete";
 
-  return { p0Count, p1Count, methodology, result: resultMatch?.[1] ?? "incomplete" };
+  return { p0Count: severity.p0, p1Count: severity.p1, methodology, result };
 }
 
 const VALID_METHODOLOGIES: readonly string[] = [
