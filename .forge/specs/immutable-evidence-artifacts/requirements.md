@@ -1,6 +1,6 @@
 ---
 feature: "immutable-evidence-artifacts"
-status: "completed"
+status: completed
 date: "2026-06-08"
 workflow_variant: "requirements-first"
 kind: "feature"

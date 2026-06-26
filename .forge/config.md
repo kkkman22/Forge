@@ -43,6 +43,19 @@ cmux_respawn_budget: 3              # Mirror_Daemon 崩溃后自动重启上限�
 # Releaser fills the actual SHA256 on release; empty disables the pin check.
 agent_browser_pin_sha256: ""
 docs.grace_period_until: "2026-06-01"
+# Root-level .md whitelist (check-docs-root-whitelist). Must list every allowed
+# root .md; absence falls back to DEFAULT_WHITELIST only.
+root_whitelist:
+  - "README.md"
+  - "CHANGELOG.md"
+  - "SECURITY.md"
+  - "CONTRIBUTING.md"
+  - "ROADMAP.md"
+  - "AGENTS.md"
+  - "CLAUDE.md"
+  - "LICENSE.md"
+  - "Forge-架构审核报告.md"
+  - "复核情况说明.md"
 docs:
   max_count: 35                     # 文档配额上限，ADR-0042 从默认 30 调高，授权 forge-triage.md 新增
 docs.ssot_sources:
