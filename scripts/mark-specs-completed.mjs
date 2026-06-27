@@ -24,6 +24,8 @@ import { readFile, writeFile } from "node:fs/promises";
 import { existsSync } from "node:fs";
 import { join } from "node:path";
 import { execSync } from "node:child_process";
+// Coverage gate — reuses the same vet logic as the standalone CLI.
+import { checkSpecCloseCoverage, COVERAGE_RESULT } from "./check-spec-close-coverage.mjs";
 
 // ---------------------------------------------------------------------------
 // Paths
@@ -109,6 +111,30 @@ function updateStatusInFrontmatter(content, newStatus) {
 }
 
 // ---------------------------------------------------------------------------
+// Coverage gate skip (mirrors check-dist-sync.mjs:92-108 convention)
+// ---------------------------------------------------------------------------
+
+function coverageGateSkipped() {
+  if (process.env.FORGE_SKIP_SPEC_COMPLETION_COVERAGE === "1") {
+    console.log("⚠️  spec-close-coverage: SKIPPED (FORGE_SKIP_SPEC_COMPLETION_COVERAGE=1)");
+    return true;
+  }
+  try {
+    // Use ROOT as cwd — consistent with the slug-extraction git log in main(),
+    // so the skip tag is read from the same repo being processed (not the
+    // caller's cwd, which may be a different repo in tests/CI).
+    const msg = execSync("git log -1 --format=%B", { encoding: "utf-8", cwd: ROOT }).trim();
+    if (msg.includes("[spec-close-coverage-skip]")) {
+      console.log("⚠️  spec-close-coverage: SKIPPED ([spec-close-coverage-skip] in commit message)");
+      return true;
+    }
+  } catch (e) {
+    if (e.stderr) console.error(`git log failed: ${e.stderr.slice(0, 200)}`);
+  }
+  return false;
+}
+
+// ---------------------------------------------------------------------------
 // Main
 // ---------------------------------------------------------------------------
 
@@ -176,6 +202,29 @@ async function main() {
     if (newContent === content) {
       console.log(`  Spec "${slug}" status pattern not matched for replacement. Skipping.`);
       continue;
+    }
+
+    // Coverage gate (fires ONLY on the transition TO completed — the 52
+    // already-completed specs are excluded by the COMPLETABLE_STATUSES guard
+    // above, so this is non-retroactive). A hollow requirements.md blocks
+    // the flip entirely; an undone tasks.md only warns.
+    if (!coverageGateSkipped()) {
+      const verdict = checkSpecCloseCoverage(slug, SPECS_DIR);
+      if (verdict.result === COVERAGE_RESULT.BLOCK) {
+        console.error(`  ✗ Spec "${slug}": BLOCKED from completion by coverage gate.`);
+        console.error(`    ${verdict.reason}`);
+        console.error(
+          `    Override (emergency only): set FORGE_SKIP_SPEC_COMPLETION_COVERAGE=1 or add [spec-close-coverage-skip] to the commit message.`,
+        );
+        // Hard exit (mirrors check-dist-sync.mjs): a hollow spec being closed
+        // is a defect — abort the whole batch so the CI step fails and the
+        // [skip ci] sync commit is not produced.
+        process.exit(1);
+      }
+      if (verdict.result === COVERAGE_RESULT.PASS_WITH_WARNING) {
+        console.log(`  ⚠️  Spec "${slug}": coverage WARNING.`);
+        console.log(`    ${verdict.reason}`);
+      }
     }
 
     if (dryRun) {

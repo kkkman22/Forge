@@ -1,6 +1,6 @@
 {
   "version": 1,
-  "generated_at": "2026-06-26T23:20:11.632Z",
+  "generated_at": "2026-06-27T01:10:17.464Z",
   "subs": {
     "abort": {
       "instructions": {
@@ -623,7 +623,7 @@
     "ship": {
       "instructions": {
         "path": "ship/instructions.md",
-        "sha256": "f1b86b4ca7b23c12fa2e03b830ab804df3c17ad1f5a0629547facab8c7c5ccaf"
+        "sha256": "e3498542dd60fb6f29a37fecfce293ea7c859190bbdb2c60d8260f0ea9b419f7"
       },
       "references": [
         {
