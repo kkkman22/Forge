@@ -183,9 +183,15 @@ Ship 成功交付后，**主动将匹配 spec 的 status 更新为 `completed`**
 
 1. 从当前 feature branch 名称提取 spec slug（匹配 `forge/|feature/|spec/` 前缀后的部分）
 2. 读取 `.forge/specs/<slug>/requirements.md` 的 frontmatter
-3. 如果 status ∈ {`locked`, `in_progress`, `approved`} → 更新为 `completed`
-4. 如果 status ∈ {`completed`, `archived`, `draft`, `deferred`} → 保持不变
-5. 运行 `node scripts/rebuild-spec-index.mjs --incremental` 同步 INDEX.md
+3. 如果 status ∈ {`locked`, `in_progress`, `approved`}，**先运行覆盖门禁**：
+   `node scripts/check-spec-close-coverage.mjs <slug>`
+   - **exit 0** → 通过（含"产出可能在别处"的软警告），继续步骤 4
+   - **exit 1** → requirements.md 是空壳（无 SHALL/REQ），**不得**标 completed。补齐需求声明后再 ship，或用 `FORGE_SKIP_SPEC_COMPLETION_COVERAGE=1` 紧急跳过（需 PR 说明理由）
+4. 通过门禁后，更新 `.forge/specs/<slug>/requirements.md` 的 status → `completed`
+5. 如果 status ∈ {`completed`, `archived`, `draft`, `deferred`} → 保持不变
+6. 运行 `node scripts/rebuild-spec-index.mjs --incremental` 同步 INDEX.md
+
+> **双保险说明**：本步骤是 agent 软约束；即使漏跑，merge 进 main 后 CI 的 `mark-specs-completed.mjs` 会用同一门禁兜底校验（硬阻断）。门禁只防增量——历史已 completed 的 spec 不会被回溯校验。
 
 输出格式：
 ```
