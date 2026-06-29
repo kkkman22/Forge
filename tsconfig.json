@@ -14,5 +14,5 @@
     "types": ["vitest/globals"]
   },
   "include": ["src/**/*.ts", "test/**/*.ts", "test/**/*.d.ts", "scripts/cmux-mirror/lib/**/*.mjs"],
-  "exclude": ["node_modules", "dist", "test/tool-health-writer/concurrent-append-worker.ts"]
+  "exclude": ["node_modules", "dist", "dist-domain", "src/domain/**", "test/tool-health-writer/concurrent-append-worker.ts"]
 }

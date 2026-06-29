@@ -32,7 +32,7 @@ jobs:
       - name: Verify docs generation
         run: npm run docs
       - name: Compile TypeScript
-        run: npx tsc
+        run: npx tsc -p tsconfig.build.json
       - name: Build dist bundle
         run: bash scripts/build-dist.sh
       - run: npm run test:coverage
@@ -201,7 +201,7 @@ jobs:
       # npm run check includes compiled-runtime smoke tests that import
       # from dist/src/ — which is gitignored and only exists after tsc.
       - name: Compile TypeScript
-        run: npx tsc
+        run: npx tsc -p tsconfig.build.json
       - name: Build and verify bundles
         run: |
           bash scripts/build-dist.sh
@@ -266,7 +266,7 @@ jobs:
           fi
           echo "Commands check passed: $count commands"
       - name: Compile TypeScript
-        run: npx tsc
+        run: npx tsc -p tsconfig.build.json
       - name: Build plugin dist package
         run: bash scripts/build-dist.sh
       - name: Verify command count in docs

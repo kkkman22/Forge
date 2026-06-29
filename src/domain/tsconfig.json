@@ -1,0 +1,16 @@
+{
+  "compilerOptions": {
+    "composite": true,
+    "declaration": true,
+    "outDir": "../../dist-domain",
+    "rootDir": "../..",
+    "strict": true,
+    "target": "ES2022",
+    "module": "NodeNext",
+    "moduleResolution": "NodeNext",
+    "esModuleInterop": true,
+    "skipLibCheck": true,
+    "types": ["node"]
+  },
+  "include": ["./**/*.ts", "../state-machine/**/*.ts"]
+}

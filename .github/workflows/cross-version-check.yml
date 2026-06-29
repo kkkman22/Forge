@@ -26,7 +26,7 @@ jobs:
           cache: npm
       - run: npm ci
       - name: Compile TypeScript
-        run: npx tsc
+        run: npx tsc -p tsconfig.build.json
       - name: Build dist-plugin (required by plugin-dist/hard-gate/release tests)
         run: bash scripts/build-dist.sh
       - run: npm test

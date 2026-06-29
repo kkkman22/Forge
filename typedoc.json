@@ -6,7 +6,7 @@
   "tsconfig": "tsconfig.json",
   "name": "Forge Loop",
   "excludeInternal": true,
-  "exclude": ["test/**/*.ts"],
+  "exclude": ["test/**/*.ts", "src/domain/**"],
   "treatWarningsAsErrors": true,
   "validation": {
     "notExported": true,
@@ -36,7 +36,8 @@
     "@visibleForTesting",
     "@context",
     "@file",
-    "@module"
+    "@module",
+    "@non-production"
   ],
   "ignoredHighlightLanguages": ["gitignore", "markdown"],
   "externalSymbolLinkMappings": {
