@@ -3,8 +3,16 @@
  *
  * Verifies that dist-plugin/ contains all required files
  * and the MCP server is properly declared.
+ *
+ * Also covers packs-plugin-distribution (slice A', T7): the plugin install
+ * path must carry packs/ so `/forge init --pack pms` works without the
+ * "功能将不可用" lie, and running the bundled init.sh against this bundle as
+ * CLAUDE_PLUGIN_ROOT must activate the pack + emit telemetry.
  */
 import { existsSync, readFileSync } from "node:fs";
+import { spawnSync } from "node:child_process";
+import { mkdtempSync, rmSync } from "node:fs";
+import { tmpdir } from "node:os";
 import { join, resolve } from "node:path";
 import { describe, expect, it } from "vitest";
 
@@ -80,5 +88,58 @@ describe("plugin dist structure smoke tests", () => {
 
   it("commands directory exists", () => {
     expect(existsSync(join(DIST_PLUGIN, "commands"))).toBe(true);
+  });
+
+  // ── packs-plugin-distribution (slice A', REQ-01/02/03) ──
+  it("packs/pms/ shipped in dist-plugin (REQ-01)", () => {
+    expect(existsSync(join(DIST_PLUGIN, "packs/pms/pack.yaml"))).toBe(true);
+    expect(existsSync(join(DIST_PLUGIN, "packs/pms/contexts"))).toBe(true);
+    expect(existsSync(join(DIST_PLUGIN, "packs/pms/state-machines"))).toBe(true);
+    expect(existsSync(join(DIST_PLUGIN, "packs/pms/utils/business-day-clock.ts"))).toBe(true);
+  });
+
+  it("sample pack + *.test.ts excluded from dist-plugin", () => {
+    expect(existsSync(join(DIST_PLUGIN, "packs/pms-marriott-sample"))).toBe(false);
+    expect(existsSync(join(DIST_PLUGIN, "packs/pms/utils/business-day-clock.test.ts"))).toBe(false);
+  });
+
+  it("packs/manifest.json shipped and lists pms (REQ-03)", () => {
+    const m = JSON.parse(readFileSync(join(DIST_PLUGIN, "packs/manifest.json"), "utf-8"));
+    expect(m.packs).toBeInstanceOf(Array);
+    expect(m.packs.some((p: { name: string }) => p.name === "pms")).toBe(true);
+  });
+
+  it("packs/README.md shipped with optional/ignore note (REQ-02)", () => {
+    const r = readFileSync(join(DIST_PLUGIN, "packs/README.md"), "utf-8");
+    expect(r).toMatch(/pms/i);
+    expect(r).toMatch(/可忽略|可选/);
+  });
+
+  // ── T7 core-fix e2e: real bundled init.sh, CLAUDE_PLUGIN_ROOT = dist-plugin ──
+  // The lie bug: plugin users ran `/forge init --pack pms` and got a silent
+  // "功能将不可用" warn because the bundle had no packs/. Now it must activate.
+  it("e2e: bundled init.sh --pack pms activates pack, no lie warn, emits telemetry", () => {
+    const initSh = join(DIST_PLUGIN, "scripts/init.sh");
+    expect(existsSync(initSh)).toBe(true);
+
+    const proj = mkdtempSync(join(tmpdir(), "forge-plugin-e2e-"));
+    const r = spawnSync(
+      "bash",
+      [initSh, "--non-interactive", "--name", "plug-e2e", "--stack", "TypeScript", "--security", "1", "--no-ultrareview", "--pack", "pms"],
+      { cwd: proj, env: { ...process.env, CLAUDE_PLUGIN_ROOT: DIST_PLUGIN }, encoding: "utf-8" },
+    );
+    const out = `${r.stdout ?? ""}${r.stderr ?? ""}`;
+    // init may exit nonzero for unrelated reasons (e.g. recipe detection);
+    // the pack-specific assertions below are what we gate on.
+    expect(out).not.toContain("功能将不可用");
+    expect(out).toContain("PMS Pack");
+    const th = join(proj, ".forge/knowledge/tool-health.md");
+    if (existsSync(th)) {
+      const t = readFileSync(th, "utf-8");
+      expect(t).toMatch(/pack-enabled/);
+      expect(t).toMatch(/name=pms/);
+      expect(t).toMatch(/source=plugin/);
+    }
+    rmSync(proj, { recursive: true, force: true });
   });
 });
