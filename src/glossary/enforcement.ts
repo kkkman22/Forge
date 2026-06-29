@@ -18,12 +18,11 @@
 import path from "node:path";
 import type { Glossary, GlossaryTerm } from "../glossary.js";
 import { parseGlossary, renderGlossary } from "../glossary.js";
-import { INITIAL_GLOSSARY_TERMS } from "../glossary-driver.js";
-import { DEFAULT_GLOSSARY_PATH } from "../glossary-driver.js";
-import type { FileSystem } from "../pack/types.js";
+import { DEFAULT_GLOSSARY_PATH, INITIAL_GLOSSARY_TERMS } from "../glossary-driver.js";
 import { loadEnabledPacks } from "../pack/runtime.js";
-import { loadGlossary } from "./registry.js";
+import type { FileSystem } from "../pack/types.js";
 import { mergeGlossaries } from "./merge.js";
+import { loadGlossary } from "./registry.js";
 
 /**
  * Result of loading the enforcement glossary.

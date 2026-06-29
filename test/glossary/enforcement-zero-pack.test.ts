@@ -2,8 +2,8 @@ import path from "node:path";
 import { describe, expect, it, vi } from "vitest";
 import { loadEnforcementGlossary } from "../../src/glossary/enforcement.js";
 import { mergeGlossaries } from "../../src/glossary/merge.js";
-import type { FileSystem } from "../../src/pack/types.js";
 import type { Glossary } from "../../src/glossary.js";
+import type { FileSystem } from "../../src/pack/types.js";
 
 /**
  * REQ-5 / INV-1 — Zero-Pack invariance for the glossary enforcement bridge.

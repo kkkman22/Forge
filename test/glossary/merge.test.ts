@@ -81,7 +81,11 @@ describe("mergeGlossaries", () => {
   it("maps GlossaryEntry fields to GlossaryTerm", () => {
     const flat = flatGlossary([]);
     const result = mergeGlossaries(flat, [
-      packEntry("Folio", "guest bill", { aliases: ["Bill"], updated: "2026-03-03", source: "pms-pack" }),
+      packEntry("Folio", "guest bill", {
+        aliases: ["Bill"],
+        updated: "2026-03-03",
+        source: "pms-pack",
+      }),
     ]);
     const appended = result.terms[0];
     expect(appended.term).toBe("Folio");

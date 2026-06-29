@@ -165,7 +165,9 @@ describe("loadEnforcementGlossary", () => {
       [path.join(PACKS_DIR, "pms", "pack.yaml")]: pmsPackYaml(),
     };
     const fs = createCountingFs(files);
-    const result = await loadEnforcementGlossary(REPOS_ROOT, fs, { now: new Date("2026-06-29T00:00:00Z") });
+    const result = await loadEnforcementGlossary(REPOS_ROOT, fs, {
+      now: new Date("2026-06-29T00:00:00Z"),
+    });
     // seeded with the core terms
     expect(result.glossary.terms.length).toBeGreaterThanOrEqual(12);
     expect(result.packTermCount).toBe(0); // no pack enabled
