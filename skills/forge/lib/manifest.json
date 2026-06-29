@@ -1,6 +1,6 @@
 {
   "version": 1,
-  "generated_at": "2026-06-29T08:28:03.494Z",
+  "generated_at": "2026-06-29T09:23:27.701Z",
   "subs": {
     "abort": {
       "instructions": {
@@ -41,7 +41,7 @@
     "build": {
       "instructions": {
         "path": "build/instructions.md",
-        "sha256": "61145622b13ec512ca649d841143f35bff1b80ba6461374aaa75dbaf18e7033d"
+        "sha256": "1dd3411b9f009dd9dc3da2e103a2e1098e0d233d30e94a19bfa3aa32f732c919"
       },
       "references": [
         {
@@ -224,7 +224,7 @@
     "decide": {
       "instructions": {
         "path": "decide/instructions.md",
-        "sha256": "d196e987438eb6fc41032b7a54c110c9c8943496680d516fda178050c8750d5a"
+        "sha256": "c7def7b59393a5632002df8c31d22064b36402c914cbbd8fc17fae85ff13f276"
       },
       "references": [
         {
@@ -421,12 +421,12 @@
     "plan": {
       "instructions": {
         "path": "plan/instructions.md",
-        "sha256": "e11b75f2101fde2c5ba3dec6e966ff28e47c845e718609c1af87904884c5ef3b"
+        "sha256": "f237bff6c221b7aad0554ae0eda292bbdb770e9b4a6bd2b9b6bd8772b353e04a"
       },
       "references": [
         {
           "path": "plan/references/atomic-task-format.md",
-          "sha256": "fa6b732541c3a6ccb962ddd6572ef3f29f758f4edd8e2a4a43fc66850bcfc8d4"
+          "sha256": "0d6d18496e9c1b2b0560217b3c85531bb8ab5eadafb6321dde2a2c8c3f1dd642"
         },
         {
           "path": "plan/references/dependency-rules.md",
@@ -528,7 +528,7 @@
     "review": {
       "instructions": {
         "path": "review/instructions.md",
-        "sha256": "3a82809cee5ca804aba75160dceb3dc1a3f5ffc6a3254adfec4398e59628a121"
+        "sha256": "b4d0bccca84342ed92f6c42986f485ff93afd53529700cc481e04032d896d174"
       },
       "references": [
         {

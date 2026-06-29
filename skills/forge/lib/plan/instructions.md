@@ -68,6 +68,24 @@ Read spec frontmatter `health` field. If spec_hash matches current content, reus
 
 **`replan_pending` 写入端**：由 debug skill Phase 5（`failure_class: assumption_invalidated` 时）写 status.md（详见 debug skill instructions Phase 5 step 8）。scheduler `determineNextSkill` 的 debug 分支仅做路由决策（纯函数，不写文件），replan 信号通过 status.md 文件传递给 plan phase。
 
+### §1.8 Pre-flight: Domain Knowledge Injection（spec domain-knowledge-threading REQ-5）
+
+plan 入口解析项目启用的 domain pack，注入结构化领域知识摘要，使 plan 输出反映实际领域（contexts/glossary/state-machines）而非通用指导。
+
+1. 调用 `loadEnabledPacks(rootDir, fs)`（从 `src/index.ts` 导入）。
+2. **IF `enabled.order.length === 0`** → 跳过本节（Zero-Pack；当前行为不变，INV-1）。
+3. **ELSE** 调用 `composeDomainKnowledgeBundle(enabled, fs)`，将以下**结构化摘要**注入工作上下文（**非全文**，agent 按需 Read 提供的路径）：
+   - **Contexts**：每个 bounded context 的 `name` + `responsibility`（一行），来自 `bundle.contexts`。
+   - **Glossary terms**：术语清单（含 aliases），来自 `bundle.glossaryTerms`。这些是 **advisory 只读**——强制执行仍走 `runGlossaryCheck` 对照扁平 `.forge/glossary.md`（spec REQ-6）。
+   - **State machines**：每个状态机的 `name` + transition 数，来自 `bundle.stateMachines`，附 `sourcePath` 供 agent 按需读取 YAML。
+4. 注入**摘要**而非全文。仅在某个 task 需要细节时，agent 通过提供的路径 Read 完整文件。
+
+**State-Machine-aware Task Breakdown（R4.5.5，pms-pack-v1 R4 #5）**：Step 3 Task Breakdown 时，当某个 plan task 的 `files` 触及的模块路径匹配某个 `LoadedStateMachine`（匹配约定：task 文件路径含 machine 的 `definition.name` 作为路径段或子串，例如 `reservation` 在 `src/domain/reservation/`），该 task step **必须**：
+  - 引用该状态机的真实 transitions/invariants（Read 其 `sourcePath`）；
+  - **禁止**臆造 YAML 中不存在的转换。
+
+无匹配时，Task Breakdown 按现状进行。该约定保守（偏好假阴性而非假阳性）——漏匹配仅意味着 plan 按现状进行。
+
 ## 2. Five-Step Planning Process
 
 ### Step 1: Research

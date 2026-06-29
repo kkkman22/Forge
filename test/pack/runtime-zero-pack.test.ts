@@ -1,7 +1,7 @@
 import path from "node:path";
 import { describe, expect, it, vi } from "vitest";
-import { loadEnabledPacks } from "../../src/pack/runtime.js";
 import { composeDomainKnowledgeBundle } from "../../src/pack/domain-bundle.js";
+import { loadEnabledPacks } from "../../src/pack/runtime.js";
 import type { FileSystem } from "../../src/pack/types.js";
 
 /**

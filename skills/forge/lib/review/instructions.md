@@ -52,6 +52,18 @@ Diff stat: !`git diff --stat HEAD~1 2>/dev/null || echo "no diff"`
 
 **Not For**：无代码变更（纯文档/配置）、build 未完成。
 
+### §1.4 Domain Knowledge Injection（spec domain-knowledge-threading REQ-5）
+
+review 入口解析项目启用的 domain pack，注入结构化领域知识摘要，使 spec-check/quality-check/security-check 三层评审基于实际领域（contexts/glossary/state-machines）而非仅 diff 描述。
+
+1. 调用 `loadEnabledPacks(rootDir, fs)`（从 `src/index.ts` 导入）。
+2. **IF `enabled.order.length === 0`** → 跳过本节（Zero-Pack；当前行为不变，INV-1）。
+3. **ELSE** 调用 `composeDomainKnowledgeBundle(enabled, fs)`，将以下**结构化摘要**注入评审 subagent 的上下文（**非全文**，agent 按需 Read 提供的路径）：
+   - **Contexts**：每个 bounded context 的 `name` + `responsibility`（一行），来自 `bundle.contexts`。
+   - **Glossary terms**：术语清单（含 aliases），来自 `bundle.glossaryTerms`。这些是 **advisory 只读**——强制执行仍走 `runGlossaryCheck` 对照扁平 `.forge/glossary.md`（spec REQ-6）。
+   - **State machines**：每个状态机的 `name` + transition 数，来自 `bundle.stateMachines`，附 `sourcePath` 供 agent 按需读取 YAML。
+4. 注入**摘要**而非全文。仅在某个评审视角需要细节时，agent 通过提供的路径 Read 完整文件。
+
 ### §1.5 Pre-flight: Branch Gate
 
 调用 `runBranchGate({ skill: "review", mode, currentBranch, currentTask, pendingDeliveries, alreadyCheckedThisPhase, isCleanTree })`：
