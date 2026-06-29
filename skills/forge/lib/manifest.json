@@ -1,6 +1,6 @@
 {
   "version": 1,
-  "generated_at": "2026-06-29T10:34:50.460Z",
+  "generated_at": "2026-06-29T12:48:54.884Z",
   "subs": {
     "abort": {
       "instructions": {
@@ -224,7 +224,7 @@
     "decide": {
       "instructions": {
         "path": "decide/instructions.md",
-        "sha256": "062f2ff45b8034bb53a41f271d17b82d3610fc5a1971f10d7f4038e4154dcf44"
+        "sha256": "5f28dbd8d2005aceadae074af91d3518c67028fd16993892f09439e42a3743fc"
       },
       "references": [
         {
@@ -241,7 +241,7 @@
         },
         {
           "path": "decide/references/function-contracts.md",
-          "sha256": "313c9386f61793acbeb9ab5f27f6e3c48b616d735c44a014bb8f2628f1a8ee79"
+          "sha256": "c13ac53f63106e71eabebf22994f3cd0a8fec2b6d0e47d565faa39140f35a6b8"
         },
         {
           "path": "decide/references/perspective-formats.md",
@@ -325,7 +325,7 @@
         },
         {
           "path": "grill/references/function-contracts.md",
-          "sha256": "e448cee1cadbac70e3e07492b627e0f92ee64701b6127be248fe79052d7fdd7d"
+          "sha256": "c615d7e8d2b3552c6b0880af099570b4c54b9648c970ffe4c372406714dc25ec"
         },
         {
           "path": "grill/references/question-strategies.md",
@@ -364,7 +364,7 @@
         },
         {
           "path": "learn/references/function-contracts.md",
-          "sha256": "813957f79604b6b89e25aafe3e016a2969d7edf9ea37a4af4210fcfb04c72efb"
+          "sha256": "e8135b9cf4779affccdbb643a5def97e5ef55c04808de2f7cabc16f5ad16cb79"
         },
         {
           "path": "learn/references/knowledge-backflow.md",
@@ -421,7 +421,7 @@
     "plan": {
       "instructions": {
         "path": "plan/instructions.md",
-        "sha256": "74117e4b00c5065f882cbeea1572beef68bb196a0cedb99687f44f6dda24bd03"
+        "sha256": "7ce3f3839c7206dfa828c80059ca5d71968e5211cbf8d0e47d60789f55a6cd0b"
       },
       "references": [
         {
@@ -647,7 +647,7 @@
     "spec": {
       "instructions": {
         "path": "spec/instructions.md",
-        "sha256": "3ca9f2f1960d51ee428bae74e6954a78ccb1606a21dc5d205ff6dbf92d6e7e4c"
+        "sha256": "b6704de4492c0b118e4e698ae25951ebb6180e960eec849cc4c6b4e6e308be42"
       },
       "references": [
         {
@@ -660,7 +660,7 @@
         },
         {
           "path": "spec/references/function-contracts.md",
-          "sha256": "6eb5dc795b3dcc0057c7a16c0c83d5049ba25ba804d00451c2b2002b770181f5"
+          "sha256": "0b208957a8333a6314bdbb5594c84ddfe76e8dcfa7fd03d66d05019d222bb066"
         },
         {
           "path": "spec/references/import-mode.md",

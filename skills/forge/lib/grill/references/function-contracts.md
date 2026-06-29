@@ -44,7 +44,7 @@
 
 - **参数**：
   - `tree` — 决策树中涉及的所有术语
-  - `glossary` — `.forge/glossary.md` 中的术语定义
+  - `glossary` — `loadEnforcementGlossary(rootDir, fs)` 返回：扁平 `.forge/glossary.md`（主权源）合并 enabled pack glossary 术语（只读补充）。扁平文件是写入主权源。
 - **返回**：冲突/缺失术语列表
 - **用途**：在追问结束前检查是否有未定义或冲突的术语，提示用户补充
 

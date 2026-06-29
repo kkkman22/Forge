@@ -106,6 +106,19 @@ export const SKILL_FUNCTION_REGISTRY: readonly SkillFunctionEntry[] = [
     ],
     parameterNames: ["enabledPacks", "fs"],
   },
+  // --- glossary enforcement bridge (spec glossary-enforcement-bridge REQ-4) ---
+  {
+    module: "glossary/enforcement.ts",
+    functionName: "loadEnforcementGlossary",
+    skills: [
+      "forge/lib/spec/instructions.md",
+      "forge/lib/decide/instructions.md",
+      "forge/lib/plan/instructions.md",
+      "forge/lib/grill/instructions.md",
+      "forge/lib/learn/instructions.md",
+    ],
+    parameterNames: ["rootDir", "fs"],
+  },
   {
     module: "branch-gate.ts",
     functionName: "checkBranchTopicGate",

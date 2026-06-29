@@ -43,7 +43,7 @@
 
 - **Parameters**:
   - `candidateTerms` — New terms extracted from the user's decision proposal
-  - `glossary` — Parsed `.forge/glossary.md` structure
+  - `glossary` — `loadEnforcementGlossary(rootDir, fs)` result: the flat `.forge/glossary.md` (authoritative) merged with enabled-pack glossary terms. Flat is the write-sovereignty source; pack terms are read-only supplements.
 - **Returns**: Conflict list (empty when no conflicts); each entry carries the existing definition and the candidate
 - **Purpose**: Run before Round 1 kicks off; non-empty conflicts pause the Round and trigger `renderDecideGlossaryConflictPrompt`
 

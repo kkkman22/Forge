@@ -182,7 +182,7 @@ RIGHT（垂直切片）:
 
 任务命名优先使用 `.forge/glossary.md` 定义的规范术语；如发现同义词/别名，自动替换为 canonical term，保持跨 skill 命名一致。
 
-Glossary Hook: Task Breakdown 后调用 `runGlossaryCheck({ phase: 'plan' })` 检查 task title 术语一致性。启动时如 spec frontmatter 含 `pending_glossary_advisories`，调用 `renderPendingAdvisoryNotice(paths)` 显示 advisory 列表。
+Glossary Hook: Task Breakdown 后调用 `runGlossaryCheck({ phase: 'plan' })`（glossary 参数来自 `loadEnforcementGlossary(rootDir, fs)`：扁平 `.forge/glossary.md` 主权源 + enabled pack 术语只读补充）检查 task title 术语一致性。启动时如 spec frontmatter 含 `pending_glossary_advisories`，调用 `renderPendingAdvisoryNotice(paths)` 显示 advisory 列表。
 
 ### Step 3.5: 依赖识别
 

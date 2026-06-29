@@ -70,7 +70,7 @@
 
 - **参数**：
   - `sessionData` — 会话数据
-  - `glossary` — 当前术语表
+  - `glossary` — `loadEnforcementGlossary(rootDir, fs)` 返回的 enforcement glossary（扁平 `.forge/glossary.md` 主权源 + enabled pack 术语只读补充）
 - **返回**：候选术语列表
 - **用途**：从会话数据中提取潜在的术语候选项
 
@@ -79,7 +79,7 @@
 ## `proposeStaleTerms(glossary, now, maxAgeDays)`
 
 - **参数**：
-  - `glossary` — 当前术语表
+  - `glossary` — `loadEnforcementGlossary(rootDir, fs)` 返回的 enforcement glossary（扁平 `.forge/glossary.md` 主权源 + enabled pack 术语只读补充）
   - `now` — 当前时间戳
   - `maxAgeDays` — 最大存活天数
 - **返回**：过期术语提议列表
@@ -144,7 +144,7 @@
 ## `mergeTerm(glossary, candidate, strategy)`
 
 - **参数**：
-  - `glossary` — 当前术语表
+  - `glossary` — `loadEnforcementGlossary(rootDir, fs)` 返回的 enforcement glossary（扁平 `.forge/glossary.md` 主权源 + enabled pack 术语只读补充）
   - `candidate` — 候选术语
   - `strategy` — 合并策略
 - **返回**：更新后的术语表
@@ -155,7 +155,7 @@
 ## `archiveTerm(glossary, termName)`
 
 - **参数**：
-  - `glossary` — 当前术语表
+  - `glossary` — `loadEnforcementGlossary(rootDir, fs)` 返回的 enforcement glossary（扁平 `.forge/glossary.md` 主权源 + enabled pack 术语只读补充）
   - `termName` — 术语名称
 - **返回**：更新后的术语表
 - **用途**：从术语表中归档指定术语

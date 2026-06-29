@@ -245,7 +245,7 @@ After Round 2 Critic output:
 
 ## 3. Four-Perspective Evaluation
 
-四视角输出格式（product / architect / security / designer）、Glossary alignment check（内部使用 `runGlossaryCheck({ phase: 'decide' })`，检测同义词、禁用词、语义矛盾、关系验证 4 种冲突类型）、UI 触发判定信号：
+四视角输出格式（product / architect / security / designer）、Glossary alignment check（内部使用 `runGlossaryCheck({ phase: 'decide' })`，glossary 参数来自 `loadEnforcementGlossary(rootDir, fs)`：扁平 `.forge/glossary.md` 主权源 + enabled pack 术语只读补充；检测同义词、禁用词、语义矛盾、关系验证 4 种冲突类型）、UI 触发判定信号：
 
 → 详见 references/perspective-formats.md
 
