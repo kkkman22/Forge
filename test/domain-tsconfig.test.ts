@@ -9,10 +9,11 @@
  *
  * category: contract
  */
-import { describe, expect, it } from "vitest";
+
+import { execSync } from "node:child_process";
 import { existsSync, readFileSync } from "node:fs";
 import { resolve } from "node:path";
-import { execSync } from "node:child_process";
+import { describe, expect, it } from "vitest";
 
 const ROOT = resolve(__dirname, "..");
 const DOMAIN_TSCONFIG = resolve(ROOT, "src/domain/tsconfig.json");

@@ -109,7 +109,11 @@ function checkSkip() {
 
 function collectFileList() {
   const srcFiles = getTrackedFiles(["src/"])
-    .filter((f) => f.endsWith(".ts") && !f.endsWith(".d.ts"));
+    .filter((f) => f.endsWith(".ts") && !f.endsWith(".d.ts"))
+    // src/domain/ is an in-repo reference domain with its own tsconfig; the main
+    // build intentionally does NOT compile it (INV-1, domain-example-reference-impl
+    // REQ-01), so it must be absent from dist/src — not a drift signal.
+    .filter((f) => !f.startsWith("src/domain/"));
   const distFiles = getDiskDistFiles();
   return { srcFiles, distFiles };
 }
