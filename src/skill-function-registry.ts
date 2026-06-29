@@ -83,6 +83,29 @@ export const SKILL_FUNCTION_REGISTRY: readonly SkillFunctionEntry[] = [
     skills: ["forge/lib/review/instructions.md", "forge/lib/decide/instructions.md"],
     parameterNames: ["planContent"],
   },
+  // --- domain-knowledge-threading (spec domain-knowledge-threading REQ-5) ---
+  {
+    module: "pack/runtime.ts",
+    functionName: "loadEnabledPacks",
+    skills: [
+      "forge/lib/decide/instructions.md",
+      "forge/lib/plan/instructions.md",
+      "forge/lib/build/instructions.md",
+      "forge/lib/review/instructions.md",
+    ],
+    parameterNames: ["rootDir", "fs"],
+  },
+  {
+    module: "pack/domain-bundle.ts",
+    functionName: "composeDomainKnowledgeBundle",
+    skills: [
+      "forge/lib/decide/instructions.md",
+      "forge/lib/plan/instructions.md",
+      "forge/lib/build/instructions.md",
+      "forge/lib/review/instructions.md",
+    ],
+    parameterNames: ["enabledPacks", "fs"],
+  },
   {
     module: "branch-gate.ts",
     functionName: "checkBranchTopicGate",

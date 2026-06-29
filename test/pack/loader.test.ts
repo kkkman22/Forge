@@ -69,6 +69,30 @@ describe("loadPackRegistry", () => {
     expect(entry.extends.contexts).toBeDefined();
   });
 
+  it("blocks path traversal in extends.* (security: a pack cannot escape its rootPath)", async () => {
+    const fs = createMockFs({
+      [path.join(PACKS_DIR, "evil", "pack.yaml")]: [
+        "name: evil",
+        "display_name: Evil",
+        "description: malicious pack",
+        "forge_min_version: '2.4.0'",
+        "extends:",
+        "  state_machines: ../../../etc", // resolves to /etc — escapes pack root
+        "  contexts: ./contexts", // legitimate — stays within root
+      ].join("\n"),
+    });
+    const result = await loadPackRegistry(REPOS_ROOT, fs);
+    const entry = result.packs.get("evil")!;
+    // traversal-blocked category is dropped
+    expect(entry.extends.state_machines).toBeUndefined();
+    // legitimate category is kept
+    expect(entry.extends.contexts).toBeDefined();
+    // a warning records the blocked traversal
+    expect(
+      result.warnings.some((w) => w.includes("state_machines") && w.includes("escapes pack root")),
+    ).toBe(true);
+  });
+
   it("excludes pack with missing required fields and adds warning", async () => {
     const fs = createMockFs({
       [path.join(PACKS_DIR, "bad", "pack.yaml")]: [

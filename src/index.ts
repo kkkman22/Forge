@@ -111,6 +111,7 @@ export {
   type TestOutputSummary,
 } from "./context-budget.js";
 
+import { loadContexts } from "./context/registry.js";
 // Context injection — subagent context.jsonl wiring (spec context-injection-activation)
 // Consolidated into the bottom re-export block (kept under the 20-statement
 // barrel budget; see scripts/check-public-api.mjs).
@@ -121,6 +122,11 @@ import {
   readContextEntries,
 } from "./context-injection.js";
 import { parsePlanContextFiles, resolveContextFiles } from "./context-injection-wiring.js";
+import { loadGlossary } from "./glossary/registry.js";
+// Domain knowledge threading (pack system wiring — spec domain-knowledge-threading)
+import { composeDomainKnowledgeBundle, type DomainKnowledgeBundle } from "./pack/domain-bundle.js";
+import { type LoadEnabledPacksResult, loadEnabledPacks } from "./pack/runtime.js";
+import { type LoadedStateMachine, loadStateMachineDefinitions } from "./state-machine/index.js";
 
 // Fix checklist
 export {
@@ -327,14 +333,22 @@ export {
   CliError,
   type ContextEntry,
   checkVersionCompatibility,
+  composeDomainKnowledgeBundle,
+  type DomainKnowledgeBundle,
   detectRuntimeConfigDrift,
   ForgeError,
   getMostRecentActiveTask,
   hasTaskName,
   installSkill,
   isMultiTaskMode,
+  type LoadEnabledPacksResult,
+  type LoadedStateMachine,
   listActiveTasks,
+  loadContexts,
+  loadEnabledPacks,
+  loadGlossary,
   loadSkillsFromDir,
+  loadStateMachineDefinitions,
   type ManagedTaskEntry,
   mergeContextSources,
   mergeSkillLists,

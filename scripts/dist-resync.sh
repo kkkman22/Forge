@@ -34,8 +34,11 @@ echo "==> Cleaning stale compiled output + .tsbuildinfo cache..."
 rm -rf dist/src dist/test dist/scripts
 rm -f .tsbuildinfo tsconfig.tsbuildinfo
 
-echo "==> Running tsc..."
-npx tsc
+# Use tsconfig.build.json (excludes src/domain/** + test/**) so the in-repo
+# domain reference code is NOT emitted to dist — matches build-dist.sh, ci.yml,
+# and cross-version-check.yml (slice A INV-3 / domain-not-in-dist gate).
+echo "==> Running tsc (tsconfig.build.json)..."
+npx tsc -p tsconfig.build.json
 
 echo "==> Checking dist/ changes..."
 CHANGES=$(git status --porcelain dist/ || true)

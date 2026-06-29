@@ -179,9 +179,9 @@ describe("barrel file does not expose internal modules", () => {
   });
 
   // Verify the total number of value exports
-  it("has exactly 145 value exports", () => {
+  it("has exactly 150 value exports", () => {
     const valueExports = Object.keys(exports).filter((key) => typeof exports[key] !== "undefined");
-    expect(valueExports).toHaveLength(145);
+    expect(valueExports).toHaveLength(150);
     expect(valueExports.sort()).toEqual([
       "CLASSIFICATION_MAP",
       "CliError",
@@ -221,6 +221,7 @@ describe("barrel file does not expose internal modules", () => {
       "checkVersionCompatibility",
       "classifySource",
       "classifyVerdict",
+      "composeDomainKnowledgeBundle",
       "computeAmbiguityScore",
       "computeInputFilePaths",
       "computeSpecHash",
@@ -258,7 +259,11 @@ describe("barrel file does not expose internal modules", () => {
       "isValidTransition",
       "lintKnowledgeIntegrity",
       "listActiveTasks",
+      "loadContexts",
+      "loadEnabledPacks",
+      "loadGlossary",
       "loadSkillsFromDir",
+      "loadStateMachineDefinitions",
       "mergeContextSources",
       "mergeSkillLists",
       "migrateToMultiTask",
