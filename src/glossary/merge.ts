@@ -54,7 +54,10 @@ export function mergeGlossaries(flat: Glossary, packEntries: GlossaryEntry[]): G
 
   const appended: GlossaryTerm[] = [];
   for (const entry of packEntries) {
-    // Skip if the pack entry's term OR any alias is already covered by flat.
+    // Skip if the pack entry's term OR any alias is already covered (by flat OR
+    // by a higher-priority pack entry appended earlier in this loop). Updating
+    // `covered` as we append dedupes pack-vs-pack collisions — two packs defining
+    // the same term produce one appended entry, not duplicates.
     const keys = [normalize(entry.term), ...entry.aliases.map((a) => normalize(a))];
     if (keys.some((k) => covered.has(k))) continue;
 
@@ -65,6 +68,8 @@ export function mergeGlossaries(flat: Glossary, packEntries: GlossaryEntry[]): G
       last_updated: entry.updated,
       source_session: entry.source ?? entry.sourceLayer,
     });
+    // Record the appended entry's keys so later pack entries collide with it.
+    for (const k of keys) covered.add(k);
   }
 
   if (appended.length === 0) return flat; // identity — no allocation (Zero-Pack)

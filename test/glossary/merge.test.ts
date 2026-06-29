@@ -106,4 +106,27 @@ describe("mergeGlossaries", () => {
     const result = mergeGlossaries(flat, [packEntry("A", "packA"), packEntry("B", "packB")]);
     expect(result).toBe(flat); // nothing appended → identity
   });
+
+  it("dedupes pack-vs-pack term collisions (only first appended)", () => {
+    // Two packs define the same term name in different contexts — must produce
+    // ONE appended entry, not duplicates (quality review P2-1).
+    const flat = flatGlossary([flatTerm("Tier", "档位")]);
+    const result = mergeGlossaries(flat, [
+      packEntry("Guest", "pms definition"),
+      packEntry("Guest", "pos conflicting definition"),
+    ]);
+    const guestTerms = result.terms.filter((t) => t.term === "Guest");
+    expect(guestTerms).toHaveLength(1); // deduped, not duplicated
+    expect(guestTerms[0].definition).toBe("pms definition"); // first wins
+  });
+
+  it("dedupes a pack alias that collides with a sibling pack term", () => {
+    const flat = flatGlossary([]);
+    const result = mergeGlossaries(flat, [
+      packEntry("Guest", "pms", { aliases: ["Visitor"] }),
+      packEntry("Visitor", "pos"), // alias-collides with the appended Guest
+    ]);
+    const names = result.terms.map((t) => t.term);
+    expect(names).toEqual(["Guest"]); // Visitor skipped (covered by Guest's alias)
+  });
 });
