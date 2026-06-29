@@ -16,10 +16,11 @@
  * temp fixture (CC bundle + plugin dist + hooks.json) so the whole layer wiring
  * is validated, not just an isolated function.
  */
-import { describe, expect, it } from "vitest";
+
 import { spawnSync } from "node:child_process";
-import { mkdirSync, rmSync, writeFileSync, existsSync, renameSync } from "node:fs";
+import { existsSync, mkdirSync, renameSync, rmSync, writeFileSync } from "node:fs";
 import { resolve } from "node:path";
+import { describe, expect, it } from "vitest";
 
 const REPO_ROOT = resolve(__dirname, "..");
 const CHECK_SCRIPT = resolve(REPO_ROOT, "scripts/check-bundle-sync.mjs");
@@ -56,7 +57,7 @@ function buildFixture(opts: { withPacks: boolean; withManifest: boolean }): Fixt
     for (const bundle of [ccBundle, pluginDist]) {
       const pmsDir = resolve(bundle, "packs/pms");
       mkdirSync(pmsDir, { recursive: true });
-      writeFileSync(resolve(pmsDir, "pack.yaml"), "name: pms\nforge_min_version: \"2.4.0\"\n");
+      writeFileSync(resolve(pmsDir, "pack.yaml"), 'name: pms\nforge_min_version: "2.4.0"\n');
     }
   }
   if (opts.withManifest) {
