@@ -26,9 +26,10 @@ import { validateDefinition } from "./validator.js";
 /**
  * Minimal filesystem contract this loader needs (structurally compatible with
  * `FileSystem` from `src/pack/types.ts`). Defined locally to keep the
- * state-machine module pack-agnostic.
+ * state-machine module pack-agnostic. Exported so typedoc can document the
+ * function signature that references it.
  */
-interface RegistryFileSystem {
+export interface RegistryFileSystem {
   readdir(path: string): Promise<string[]>;
   readFile(path: string): Promise<string>;
 }
@@ -37,7 +38,7 @@ interface RegistryFileSystem {
  * Minimal view of a pack entry this loader reads. Structurally compatible with
  * the `PackEntry.extends` shape from `src/pack/types.ts`.
  */
-interface RegistryPackEntry {
+export interface RegistryPackEntry {
   name: string;
   extends: { state_machines?: string };
 }
@@ -46,7 +47,7 @@ interface RegistryPackEntry {
  * Minimal enabled-packs contract this loader needs (structurally compatible
  * with `EnabledPacks` from `src/pack/types.ts`).
  */
-interface RegistryEnabledPacks {
+export interface RegistryEnabledPacks {
   order: string[];
   entries: RegistryPackEntry[];
 }
