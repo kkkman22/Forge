@@ -154,6 +154,75 @@ function checkBuildPresence() {
   return null;
 }
 
+// ── Layer 3: Packs integrity ────────────────────────────────────────
+// REQ-04 (packs-plugin-distribution slice A'). Verify that every pack listed
+// in the bundle's packs/manifest.json actually exists and is non-empty in BOTH
+// dist packages (CC bundle + plugin dist). manifest.json is the single source
+// of truth for which packs shipped with this Forge version; a bundle that
+// declares a pack but lacks it is drift that init.sh would otherwise surface
+// only as a runtime warn. If manifest.json is absent (old bundle / dev state
+// with no packs shipped), Layer 3 warns and does not block — graceful, mirrors
+// the existing "hooks.json not found → skip" behavior.
+function readPacksManifest(bundleDir) {
+  const manifestPath = resolve(bundleDir, "packs", "manifest.json");
+  if (!existsSync(manifestPath)) return null;
+  try {
+    const raw = execSync(`cat "${manifestPath}"`, { encoding: "utf-8" });
+    return JSON.parse(raw);
+  } catch {
+    return null;
+  }
+}
+
+function checkPacksIntegrity() {
+  const missing = [];
+  // Mirror Layer 1: assert in BOTH bundles (plugin installs ship from
+  // dist-plugin, so a pack missing there breaks /forge init --pack just as
+  // much as missing in CC bundle).
+  for (const [bundleLabel, bundleDir] of [
+    ["CC bundle", CC_BUNDLE],
+    ["Plugin dist", PLUGIN_DIST],
+  ]) {
+    const manifest = readPacksManifest(bundleDir);
+    if (manifest === null) {
+      // Graceful: no manifest → no packs shipped with this bundle, skip.
+      // Don't warn per-bundle to avoid noise when neither bundle has packs.
+      continue;
+    }
+    if (!manifest.packs || !Array.isArray(manifest.packs)) {
+      missing.push({ pack: "<invalid manifest.json>", bundle: bundleLabel, path: `${bundleDir}/packs/manifest.json` });
+      continue;
+    }
+    for (const entry of manifest.packs) {
+      if (!entry || typeof entry.name !== "string" || typeof entry.path !== "string") continue;
+      const packPath = resolve(bundleDir, entry.path);
+      // Non-empty = at least one regular file (catches empty-dir stubs)
+      const isEmpty = !existsSync(packPath) || (() => {
+        try {
+          return execSync(`find "${packPath}" -type f | head -1`, { encoding: "utf-8" }).trim() === "";
+        } catch {
+          return true;
+        }
+      })();
+      if (isEmpty) {
+        missing.push({ pack: entry.name, bundle: bundleLabel, path: packPath });
+      }
+    }
+  }
+
+  if (missing.length > 0) {
+    log("❌ bundle-sync: packs-integrity check FAILED\n");
+    log("── Packs declared in manifest.json but MISSING/EMPTY in dist ──");
+    for (const m of missing) {
+      log(`  ${m.pack} — missing/empty in ${m.bundle} (${m.path})`);
+    }
+    log("");
+    log("Fix: bash scripts/build-dist.sh");
+    log("");
+  }
+  return missing;
+}
+
 // ── Main ─────────────────────────────────────────────────────────────
 function main() {
   if (checkSkip()) {
@@ -181,11 +250,16 @@ function main() {
   const stale = checkBuildPresence();
   if (stale) totalIssues += stale.length;
 
+  // Layer 3: Packs integrity (manifest-declared packs exist & non-empty in both bundles)
+  log("bundle-sync: checking packs integrity (manifest.json)...");
+  const missingPacks = checkPacksIntegrity();
+  totalIssues += missingPacks.length;
+
   if (totalIssues > 0) {
     process.exit(1);
   }
 
-  log(`bundle-sync: OK — ${scripts.size} scripts verified, dist-plugin present`);
+  log(`bundle-sync: OK — ${scripts.size} scripts verified, dist-plugin present, packs intact`);
   process.exit(0);
 }
 

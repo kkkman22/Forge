@@ -114,12 +114,122 @@ info "构建 Claude Code 分发包..."
 CC_BUNDLE="${FORGE_ROOT}/dist/claude-code/bundles/forge"
 mkdir -p "${CC_BUNDLE}"
 
+# ---------- Packs（领域知识包，REQ-01/02/03 切片 A'）----------
+# 正式 pack 用显式 allowlist 拷贝（非 cp -r packs 全量）：
+# pms-marriott-sample 是含具体公司名的教学素材，不该进通用 bundle；
+# 未来新增正式 pack 时显式加数组——这是有意摩擦点，防 sample/实验 pack 误入。
+# allowlist 是 pack-plugin-distribution (slice A') 的单一真相源，与
+# check-bundle-sync.mjs Layer 3、init.sh manifest 校验共享同一集合语义。
+PACK_ALLOWLIST=("pms")
+
+# copy_packs <bundle_dir> — 拷贝 allowlist 内的 pack，排除 *.test.ts。
+# 可运行源码（business-day-clock.ts）以源码形态拷贝，非预编译——它是
+# 参考实现，需用户 tsconfig 编译接入，用户会改（REQ-01）。
+copy_packs() {
+  local dest_bundle="$1"
+  local packs_dir="${dest_bundle}/packs"
+  mkdir -p "${packs_dir}"
+  for name in "${PACK_ALLOWLIST[@]}"; do
+    local src="${FORGE_ROOT}/packs/${name}"
+    if [[ ! -d "${src}" ]]; then
+      info "packs/${name} 在 allowlist 但源不存在，跳过"
+      continue
+    fi
+    cp -r "${src}" "${packs_dir}/${name}"
+    # 排除测试文件（test 文件进 bundle 无意义，增加噪音）
+    find "${packs_dir}/${name}" -name '*.test.ts' -delete 2>/dev/null || true
+  done
+}
+
+# gen_packs_manifest <bundle_dir> — 生成 packs/manifest.json（漂移围栏单一真相源）。
+# schema（design §2.2）：generated_at + forge_version + packs[](name/forge_min_version/path)。
+# forge_min_version 读自各 pack.yaml（无此字段则 null）；forge_version 读自 package.json。
+# 依赖环境变量 PACKS_SRC_DIR（pack 源目录）、FORGE_PKG_JSON（package.json 路径）、
+# PACK_ALLOWLIST_CSV（逗号分隔的 allowlist）—— 调用前已 export。
+gen_packs_manifest() {
+  local dest_bundle="$1"
+  local packs_dir="${dest_bundle}/packs"
+  node -e "
+    const fs = require('fs');
+    const path = require('path');
+    const forgeVersion = JSON.parse(fs.readFileSync(process.env.FORGE_PKG_JSON, 'utf8')).version || 'unknown';
+    function readMinVersion(packDir) {
+      const p = path.join(packDir, 'pack.yaml');
+      if (!fs.existsSync(p)) return null;
+      const m = fs.readFileSync(p, 'utf8').match(/^forge_min_version:\s*[\"']?([^\"'\n#]+)[\"']?\s*\$/m);
+      return m ? m[1].trim() : null;
+    }
+    const allowlist = String(process.env.PACK_ALLOWLIST_CSV).split(',').filter(Boolean);
+    const packs = allowlist.map(name => {
+      const dir = path.join(process.env.PACKS_SRC_DIR, name);
+      return {
+        name,
+        forge_min_version: fs.existsSync(dir) ? readMinVersion(dir) : null,
+        path: 'packs/' + name
+      };
+    });
+    const manifest = {
+      generated_at: new Date().toISOString(),
+      forge_version: forgeVersion,
+      packs
+    };
+    fs.writeFileSync(path.join('${packs_dir}', 'manifest.json'), JSON.stringify(manifest, null, 2) + '\n');
+  "
+  success "packs/manifest.json 已生成"
+}
+
+# gen_packs_readme <bundle_dir> — 生成 packs/README.md。
+# 让非目标行业用户明确 pack 是可选领域知识，可忽略（REQ-02）。
+gen_packs_readme() {
+  local dest_bundle="$1"
+  local packs_dir="${dest_bundle}/packs"
+  cat > "${packs_dir}/README.md" <<PACKS_EOF
+# Forge 领域知识包（Packs）
+
+本目录包含随 Forge 分发的领域知识包（pack）。**这些 pack 是可选的领域知识，非目标行业可忽略**，不影响 Forge 核心功能。
+
+## 所含 pack
+
+| 名称 | 定位 | 含可运行代码 |
+|------|------|-------------|
+PACKS_EOF
+  for name in "${PACK_ALLOWLIST[@]}"; do
+    local desc=""
+    case "${name}" in
+      pms) desc="酒店前台管理系统（PMS）领域知识包" ;;
+      *)   desc="领域知识包" ;;
+    esac
+    local has_code="否"
+    [[ -f "${packs_dir}/${name}/utils/business-day-clock.ts" ]] && has_code="是"
+    echo "| ${name} | ${desc} | ${has_code} |" >> "${packs_dir}/README.md"
+  done
+  cat >> "${packs_dir}/README.md" <<'PACKS_EOF'
+
+## 说明
+
+- pack 是**可选领域知识**：非目标行业可直接忽略本目录，Forge 不会引用它。
+- 标注「含可运行代码」的 pack（如 pms 的 `utils/business-day-clock.ts`）以**源码形态**分发，需在你的项目 `tsconfig` 中编译接入，可按需修改。
+- 启用 pack：在项目中运行 \`/forge init --pack <name>\`。
+PACKS_EOF
+  success "packs/README.md 已生成"
+}
+
 # 复制核心文件
 cp -r "${FORGE_ROOT}/skills" "${CC_BUNDLE}/skills"
 cp -r "${FORGE_ROOT}/agents" "${CC_BUNDLE}/agents"
 cp -r "${FORGE_ROOT}/commands" "${CC_BUNDLE}/commands"
 cp -r "${FORGE_ROOT}/hooks" "${CC_BUNDLE}/hooks"
 cp -r "${FORGE_ROOT}/templates" "${CC_BUNDLE}/templates"
+
+# Packs 进 CC bundle（REQ-01/02/03）
+PACK_ALLOWLIST_CSV="$(IFS=,; echo "${PACK_ALLOWLIST[*]}")"
+export PACK_ALLOWLIST_CSV
+export PACKS_SRC_DIR="${FORGE_ROOT}/packs"
+export FORGE_PKG_JSON="${FORGE_ROOT}/package.json"
+copy_packs "${CC_BUNDLE}"
+gen_packs_manifest "${CC_BUNDLE}"
+gen_packs_readme "${CC_BUNDLE}"
+
 mkdir -p "${CC_BUNDLE}/scripts"
 cp "${FORGE_ROOT}/scripts/init.sh" "${CC_BUNDLE}/scripts/init.sh"
 chmod +x "${CC_BUNDLE}/scripts/init.sh"
@@ -277,6 +387,15 @@ cp -r "${FORGE_ROOT}/agents" "${PLUGIN_DIST}/agents"
 cp -r "${FORGE_ROOT}/commands" "${PLUGIN_DIST}/commands"
 cp -r "${FORGE_ROOT}/templates" "${PLUGIN_DIST}/templates"
 cp -r "${FORGE_ROOT}/hooks" "${PLUGIN_DIST}/hooks"
+
+# Packs 进 plugin dist（REQ-01/02/03，切片 A'）
+# plugin 安装从 dist-plugin/forge-plugin-{VERSION}.zip 走，必须同样含 packs
+# 才能让 /forge init --pack pms 在 plugin 场景真正工作（check-bundle-sync
+# Layer 1 同时校验 CC + Plugin 两份 bundle，此处与之一致）。
+copy_packs "${PLUGIN_DIST}"
+gen_packs_manifest "${PLUGIN_DIST}"
+gen_packs_readme "${PLUGIN_DIST}"
+
 if [ -f "${FORGE_ROOT}/.mcp.json" ]; then
   cp "${FORGE_ROOT}/.mcp.json" "${PLUGIN_DIST}/.mcp.json"
 fi

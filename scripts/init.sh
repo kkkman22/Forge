@@ -75,6 +75,13 @@ while [[ $# -gt 0 ]]; do
       if [[ -z "${2:-}" ]]; then
         echo "❌ --pack requires a pack name" >&2; exit 1
       fi
+      # SECURITY: pack name is interpolated into node -e (manifest check) and
+      # file paths below. Validate against a strict allowlist charset to close
+      # an injection sink — reject anything outside ^[a-z0-9-]+$. (Review S-001.)
+      if ! [[ "$2" =~ ^[a-z0-9-]+$ ]]; then
+        echo "❌ --pack 名含非法字符（仅允许小写字母/数字/连字符）: $2" >&2
+        exit 1
+      fi
       PACKS+=("$2"); shift 2
       ;;
     --recipe)
@@ -1256,6 +1263,28 @@ if [[ ${#PACKS[@]} -gt 0 ]]; then
       continue
     fi
 
+    # Manifest 校验（REQ-05，packs-plugin-distribution 切片 A'）
+    # build-dist 生成的 packs/manifest.json 是 bundle 内 pack 集合的真相源。
+    # clone 仓库无 manifest.json 时跳过校验（保持 clone 场景兼容，INV-1）。
+    # pack 不在清单 → graceful warn，照常配置（不阻断 init）。
+    pack_manifest="${FORGE_ROOT}/packs/manifest.json"
+    if [[ -f "${pack_manifest}" ]]; then
+      if ! node -e "
+        const fs = require('fs');
+        const m = JSON.parse(fs.readFileSync('${pack_manifest}', 'utf8'));
+        const listed = Array.isArray(m.packs) && m.packs.some(p => p && p.name === '${pack_name}');
+        process.exit(listed ? 0 : 1);
+      " 2>/dev/null; then
+        warn "Pack \"${pack_name}\" 未随此 Forge 版本分发（manifest 未声明）。配置已记录，请确认 pack 与当前 Forge 版本匹配。"
+      fi
+    fi
+
+    # Determine pack distribution source for telemetry (plugin vs clone)
+    pack_source="clone"
+    if [[ -n "${CLAUDE_PLUGIN_ROOT:-}" ]] && [[ "${FORGE_ROOT}" == "${CLAUDE_PLUGIN_ROOT}" ]]; then
+      pack_source="plugin"
+    fi
+
     # PMS-specific setup
     # NOTE: business-day collection now happens in Step 1 (so the config.md heredoc
     # is the single writer); this block only prepares .forge/custom/pms/ and prints
@@ -1279,6 +1308,15 @@ if [[ ${#PACKS[@]} -gt 0 ]]; then
       echo "  详见：packs/pms/README.md"
       echo "  自定义覆盖：.forge/custom/pms/"
       echo ""
+    fi
+
+    # --pack 使用埋点（REQ-06，为下次分发决策攒数据）
+    # 复用 tool-health.md 现有格式，失败（.forge/ 不可写）静默跳过，不阻断。
+    if [[ -d "${PROJECT_ROOT}/.forge/knowledge" ]]; then
+      printf '%s · pack-enabled · name=%s · source=%s\n' \
+        "$(node -e "console.log(new Date().toISOString())" 2>/dev/null || date -u +%Y-%m-%dT%H:%M:%S.%3NZ)" \
+        "${pack_name}" "${pack_source}" \
+        >> "${PROJECT_ROOT}/.forge/knowledge/tool-health.md" 2>/dev/null || true
     fi
 
     success "Pack \"${pack_name}\" 配置完成"
