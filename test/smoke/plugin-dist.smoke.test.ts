@@ -118,6 +118,9 @@ describe("plugin dist structure smoke tests", () => {
   // ── T7 core-fix e2e: real bundled init.sh, CLAUDE_PLUGIN_ROOT = dist-plugin ──
   // The lie bug: plugin users ran `/forge init --pack pms` and got a silent
   // "功能将不可用" warn because the bundle had no packs/. Now it must activate.
+  // Heavy e2e: spawns the bundled init.sh which runs a full init (npm install
+  // detection, scaffold, pack config). ~4s in isolation, more under full-suite
+  // concurrency. Generous timeout keeps it deterministic (review Q-009).
   it("e2e: bundled init.sh --pack pms activates pack, no lie warn, emits telemetry", () => {
     const initSh = join(DIST_PLUGIN, "scripts/init.sh");
     expect(existsSync(initSh)).toBe(true);
@@ -154,5 +157,5 @@ describe("plugin dist structure smoke tests", () => {
     expect(t).toMatch(/name=pms/);
     expect(t).toMatch(/source=plugin/);
     rmSync(proj, { recursive: true, force: true });
-  });
+  }, 30000);
 });
