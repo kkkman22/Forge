@@ -1,6 +1,6 @@
 {
   "version": 1,
-  "generated_at": "2026-06-29T12:48:54.884Z",
+  "generated_at": "2026-06-29T13:11:42.569Z",
   "subs": {
     "abort": {
       "instructions": {
@@ -41,7 +41,7 @@
     "build": {
       "instructions": {
         "path": "build/instructions.md",
-        "sha256": "fc49c4bc2d56d5b76d2b42f463eeebdc14ec0544f67e52686a7c5398e94beaed"
+        "sha256": "fb9ac06e39d709f25a635990d879c8462e939f89713e7c9cbe54d18470a7889c"
       },
       "references": [
         {
@@ -241,7 +241,7 @@
         },
         {
           "path": "decide/references/function-contracts.md",
-          "sha256": "c13ac53f63106e71eabebf22994f3cd0a8fec2b6d0e47d565faa39140f35a6b8"
+          "sha256": "817b2cf9dff09ac3d71c58606195d5cc9e0e340ffc9a20938028094ba27ff436"
         },
         {
           "path": "decide/references/perspective-formats.md",
@@ -528,7 +528,7 @@
     "review": {
       "instructions": {
         "path": "review/instructions.md",
-        "sha256": "58776db05db4e72415b39f5fbe3549c59583a2604fba1c83090faecbd7f788f4"
+        "sha256": "a818bb2faefbefb0e39535434523c0314f5ae87146efae30f40c8f223c68e106"
       },
       "references": [
         {

@@ -236,7 +236,7 @@ if (!result.allowed) {
 
 **Layer 1 — Spec 对齐**：需求覆盖、场景覆盖、Scope Creep、Delta "不变"文件、Spec Leak 再扫、Spec Health Check、**四级制品验证 (L1-L4) + 状态矩阵 + Must-Haves Merge**（§3a）。方法：读 Spec → 逐条对照代码 → 逐条对照测试 → 扫描 Scope Creep → 检查 Delta → 调用 detectSpecLeak() 对 spec 再扫一次（防止开发过程倒灌，findings 报告为 P1） → 对每个声称"已实现"的需求执行 L1-L4 验证 → 比对 Plan vs Spec Must-Haves。If spec health verdict=degraded, add "spec re-validation" sub-item to Layer 1 checklist.
 
-**Layer 2 — 代码质量**：命名一致性（调用 `runGlossaryCheck({ phase: 'review' })` 检查同一概念在多 finding 中的命名一致性）、错误处理、性能热点（N+1/未分页/同步阻塞）、测试覆盖率、代码重复、可维护性（>50行/嵌套>3层）。Commit order vs dependency graph consistency: when Plan contains dependsOn fields, verify commit sequence matches topological order (severe reversal → P2 finding).
+**Layer 2 — 代码质量**：命名一致性（调用 `runGlossaryCheck({ phase: 'review' })`，glossary 参数来自 `loadEnforcementGlossary(rootDir, fs)`：扁平 `.forge/glossary.md` 主权源 + enabled pack 术语只读补充；检查同一概念在多 finding 中的命名一致性）、错误处理、性能热点（N+1/未分页/同步阻塞）、测试覆盖率、代码重复、可维护性（>50行/嵌套>3层）。Commit order vs dependency graph consistency: when Plan contains dependsOn fields, verify commit sequence matches topological order (severe reversal → P2 finding).
 
 **Layer 3 — 安全与风险**：硬编码密钥、注入风险（SQL/XSS/命令/路径遍历）、不安全依赖、权限边界、敏感数据泄露。
 

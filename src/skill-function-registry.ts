@@ -115,6 +115,8 @@ export const SKILL_FUNCTION_REGISTRY: readonly SkillFunctionEntry[] = [
       "forge/lib/decide/instructions.md",
       "forge/lib/plan/instructions.md",
       "forge/lib/grill/instructions.md",
+      "forge/lib/build/instructions.md",
+      "forge/lib/review/instructions.md",
       "forge/lib/learn/instructions.md",
     ],
     parameterNames: ["rootDir", "fs"],
