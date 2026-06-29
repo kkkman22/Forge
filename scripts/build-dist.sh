@@ -90,7 +90,9 @@ compile_if_stale() {
 }
 
 if compile_if_stale; then
-  if ! npx tsc; then
+  # Use the build tsconfig so src/domain/ (the @non-production reference domain,
+  # excluded from the main build per INV-1/INV-3) is NOT emitted into dist/src.
+  if ! npx tsc -p tsconfig.build.json; then
     error "TypeScript 编译失败，终止构建（不产出残缺 bundle）"
     exit 1
   fi
