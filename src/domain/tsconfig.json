@@ -3,14 +3,14 @@
     "composite": true,
     "declaration": true,
     "outDir": "../../dist-domain",
-    "rootDir": ".",
+    "rootDir": "../..",
     "strict": true,
     "target": "ES2022",
     "module": "NodeNext",
     "moduleResolution": "NodeNext",
     "esModuleInterop": true,
     "skipLibCheck": true,
-    "types": []
+    "types": ["node"]
   },
-  "include": ["./**/*.ts"]
+  "include": ["./**/*.ts", "../state-machine/**/*.ts"]
 }
