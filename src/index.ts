@@ -123,6 +123,9 @@ import {
 } from "./context-injection.js";
 import { parsePlanContextFiles, resolveContextFiles } from "./context-injection-wiring.js";
 import { loadGlossary } from "./glossary/registry.js";
+// Glossary enforcement bridge (spec glossary-enforcement-bridge — slice C)
+import { type EnforcementGlossary, loadEnforcementGlossary } from "./glossary/enforcement.js";
+import { mergeGlossaries } from "./glossary/merge.js";
 // Domain knowledge threading (pack system wiring — spec domain-knowledge-threading)
 import { composeDomainKnowledgeBundle, type DomainKnowledgeBundle } from "./pack/domain-bundle.js";
 import { type LoadEnabledPacksResult, loadEnabledPacks } from "./pack/runtime.js";
@@ -336,6 +339,7 @@ export {
   composeDomainKnowledgeBundle,
   type DomainKnowledgeBundle,
   detectRuntimeConfigDrift,
+  type EnforcementGlossary,
   ForgeError,
   getMostRecentActiveTask,
   hasTaskName,
@@ -346,11 +350,13 @@ export {
   listActiveTasks,
   loadContexts,
   loadEnabledPacks,
+  loadEnforcementGlossary,
   loadGlossary,
   loadSkillsFromDir,
   loadStateMachineDefinitions,
   type ManagedTaskEntry,
   mergeContextSources,
+  mergeGlossaries,
   mergeSkillLists,
   migrateToMultiTask,
   normalizeWorkerSummary,
