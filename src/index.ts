@@ -121,6 +121,12 @@ import {
   readContextEntries,
 } from "./context-injection.js";
 import { parsePlanContextFiles, resolveContextFiles } from "./context-injection-wiring.js";
+// Domain knowledge threading (pack system wiring — spec domain-knowledge-threading)
+import { composeDomainKnowledgeBundle, type DomainKnowledgeBundle } from "./pack/domain-bundle.js";
+import { loadEnabledPacks, type LoadEnabledPacksResult } from "./pack/runtime.js";
+import { loadContexts } from "./context/registry.js";
+import { loadGlossary } from "./glossary/registry.js";
+import { loadStateMachineDefinitions, type LoadedStateMachine } from "./state-machine/index.js";
 
 // Fix checklist
 export {
@@ -327,14 +333,22 @@ export {
   CliError,
   type ContextEntry,
   checkVersionCompatibility,
+  composeDomainKnowledgeBundle,
   detectRuntimeConfigDrift,
+  type DomainKnowledgeBundle,
   ForgeError,
   getMostRecentActiveTask,
   hasTaskName,
   installSkill,
   isMultiTaskMode,
   listActiveTasks,
+  loadContexts,
+  loadEnabledPacks,
+  loadGlossary,
   loadSkillsFromDir,
+  loadStateMachineDefinitions,
+  type LoadedStateMachine,
+  type LoadEnabledPacksResult,
   type ManagedTaskEntry,
   mergeContextSources,
   mergeSkillLists,
