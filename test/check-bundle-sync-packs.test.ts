@@ -18,7 +18,7 @@
  */
 
 import { spawnSync } from "node:child_process";
-import { existsSync, mkdirSync, renameSync, rmSync, writeFileSync } from "node:fs";
+import { mkdirSync, rmSync, writeFileSync } from "node:fs";
 import { resolve } from "node:path";
 import { describe, expect, it } from "vitest";
 
@@ -140,7 +140,3 @@ describe("check-bundle-sync.mjs Layer 3 — packs integrity (REQ-04)", () => {
     expect(true).toBe(true);
   });
 });
-
-// Suppress unused-import lint for existsSync/renameSync retained for future assertions.
-void existsSync;
-void renameSync;

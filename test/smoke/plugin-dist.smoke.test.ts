@@ -145,13 +145,14 @@ describe("plugin dist structure smoke tests", () => {
     // the pack-specific assertions below are what we gate on.
     expect(out).not.toContain("功能将不可用");
     expect(out).toContain("PMS Pack");
+    // Telemetry is mandatory in the plugin e2e (pack_source is deterministically
+    // 'plugin' here). An unconditional assert closes the vacuous-pass gap (Q-003).
     const th = join(proj, ".forge/knowledge/tool-health.md");
-    if (existsSync(th)) {
-      const t = readFileSync(th, "utf-8");
-      expect(t).toMatch(/pack-enabled/);
-      expect(t).toMatch(/name=pms/);
-      expect(t).toMatch(/source=plugin/);
-    }
+    expect(existsSync(th), `telemetry file missing: ${th}`).toBe(true);
+    const t = readFileSync(th, "utf-8");
+    expect(t).toMatch(/pack-enabled/);
+    expect(t).toMatch(/name=pms/);
+    expect(t).toMatch(/source=plugin/);
     rmSync(proj, { recursive: true, force: true });
   });
 });

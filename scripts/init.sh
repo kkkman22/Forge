@@ -75,6 +75,13 @@ while [[ $# -gt 0 ]]; do
       if [[ -z "${2:-}" ]]; then
         echo "❌ --pack requires a pack name" >&2; exit 1
       fi
+      # SECURITY: pack name is interpolated into node -e (manifest check) and
+      # file paths below. Validate against a strict allowlist charset to close
+      # an injection sink — reject anything outside ^[a-z0-9-]+$. (Review S-001.)
+      if ! [[ "$2" =~ ^[a-z0-9-]+$ ]]; then
+        echo "❌ --pack 名含非法字符（仅允许小写字母/数字/连字符）: $2" >&2
+        exit 1
+      fi
       PACKS+=("$2"); shift 2
       ;;
     --recipe)

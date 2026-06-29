@@ -57,7 +57,6 @@ YAML
   mkdir -p "${bundle}/packs/pms/contexts"
   echo "# reservations" > "${bundle}/packs/pms/contexts/reservations.md"
   if [[ "${with_manifest}" == "yes" ]]; then
-    cat > "${bundle}/packs/packs.manifest.json.dummy" 2>/dev/null || true
     cat > "${bundle}/packs/manifest.json" <<'JSON'
 {
   "generated_at": "2026-06-27T12:00:00.000Z",
@@ -96,7 +95,7 @@ cd "${PROJ}"
 out=$(CLAUDE_PLUGIN_ROOT="${BUNDLE}" bash "${BUNDLE}/scripts/init.sh" \
   --non-interactive --name "drift-proj" --stack "TypeScript" --security 1 \
   --no-ultrareview --pack pms 2>&1) || true
-assert 'echo "$out" | grep -qiE "未随此 Forge 版本分发|manifest"' "D2: pack not in manifest → graceful warn"
+assert 'echo "$out" | grep -qiE "未随此 Forge 版本分发"' "D2: pack not in manifest → graceful warn"
 rm -rf "${PROJ}" "${BUNDLE}"
 
 # --- D3: telemetry — successful enable writes tool-health.md record ---
@@ -123,6 +122,25 @@ out=$(env -u CLAUDE_PLUGIN_ROOT bash "${BUNDLE}/scripts/init.sh" \
 assert '! echo "$out" | grep -q "功能将不可用"' "D4 (INV-1): clone scenario does NOT warn 不可用"
 assert 'echo "$out" | grep -q "PMS Pack"' "D4 (INV-1): clone scenario activates PMS pack"
 rm -rf "${PROJ}" "${BUNDLE}"
+
+# --- D5 (SECURITY, S-001): malicious --pack value is rejected (RCE sink closed) ---
+# Regression guard for the pack_name command-injection fix. A payload that
+# would inject into the node -e manifest check must be rejected at parse time.
+BUNDLE=$(mk_plugin_bundle)
+seed_packs "${BUNDLE}" yes
+PROJ=$(mk_project)
+cd "${PROJ}"
+set +e
+out=$(CLAUDE_PLUGIN_ROOT="${BUNDLE}" bash "${BUNDLE}/scripts/init.sh" \
+  --non-interactive --name "sec-proj" --stack "TypeScript" --security 1 \
+  --no-ultrareview --pack "pms'); var cp=require('child_process'); cp.execSync('touch /tmp/forge-rce-marker'); var _=(' " \
+  2>&1)
+exit_code=$?
+set -e
+assert '[ $exit_code -ne 0 ]' "D5 (S-001): malicious --pack rejected (non-zero exit)"
+assert 'echo "$out" | grep -q "非法字符"' "D5 (S-001): malicious --pack shows 非法字符 error"
+assert '! [ -f /tmp/forge-rce-marker ]' "D5 (S-001): NO RCE marker file created (injection blocked)"
+rm -rf "${PROJ}" "${BUNDLE}" /tmp/forge-rce-marker
 
 echo ""
 echo "── T-INIT-PACK-DISTRIBUTION result: $pass passed, $fail failed ──"
