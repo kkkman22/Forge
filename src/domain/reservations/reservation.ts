@@ -29,12 +29,12 @@ interface LoadedTransition {
   to: string;
 }
 
-interface ReservationMachine {
+interface ReservationMachineLookup {
   /** Find the legal target state for (from, event); null if no such transition. */
   lookupTransition(from: string, event: string): LoadedTransition | null;
 }
 
-function loadReservationMachine(): ReservationMachine {
+function loadReservationMachine(): ReservationMachineLookup {
   // Resolve the yaml relative to this module so it works regardless of CWD
   // (e.g. under vitest from repo root, or standalone tsc -p src/domain).
   const here = dirname(fileURLToPath(import.meta.url));

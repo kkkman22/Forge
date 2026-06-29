@@ -39,7 +39,8 @@ src/domain/
 Tests live in `test/` (the project vitest config collects `test/**`, not
 `src/domain/**`): `reservation-transitions`, `reservation-values`,
 `reservation-service`, `reservation.scenarios` (BDD), and
-`reservation-state-properties.generated` (derived from yaml).
+`reservation-state-properties.generated` (derived from yaml — the generated
+body is adapted for compilation; see that file's `@generated` header).
 
 ## How it works
 
