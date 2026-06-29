@@ -183,8 +183,6 @@ gen_packs_manifest() {
 gen_packs_readme() {
   local dest_bundle="$1"
   local packs_dir="${dest_bundle}/packs"
-  local allowlist_csv
-  allowlist_csv=$(IFS=,; echo "${PACK_ALLOWLIST[*]}")
   cat > "${packs_dir}/README.md" <<PACKS_EOF
 # Forge 领域知识包（Packs）
 
@@ -224,7 +222,8 @@ cp -r "${FORGE_ROOT}/hooks" "${CC_BUNDLE}/hooks"
 cp -r "${FORGE_ROOT}/templates" "${CC_BUNDLE}/templates"
 
 # Packs 进 CC bundle（REQ-01/02/03）
-export PACK_ALLOWLIST_CSV="$(IFS=,; echo "${PACK_ALLOWLIST[*]}")"
+PACK_ALLOWLIST_CSV="$(IFS=,; echo "${PACK_ALLOWLIST[*]}")"
+export PACK_ALLOWLIST_CSV
 export PACKS_SRC_DIR="${FORGE_ROOT}/packs"
 export FORGE_PKG_JSON="${FORGE_ROOT}/package.json"
 copy_packs "${CC_BUNDLE}"
