@@ -47,8 +47,11 @@ jobs:
         run: node scripts/record-help-baseline.mjs
 
       # 4. Sync dist: tsc compilation
+      # Use tsconfig.build.json (excludes src/domain/** + test/**) for consistency
+      # with dist-resync.sh / build-dist.sh / ci.yml — keeps the in-repo domain
+      # reference code out of dist and avoids emitting a throwaway dist/test.
       - name: Sync tsc output
-        run: rm -rf dist/src dist/test dist/scripts && rm -f tsconfig.tsbuildinfo && npx tsc
+        run: rm -rf dist/src dist/test dist/scripts && rm -f tsconfig.tsbuildinfo && npx tsc -p tsconfig.build.json
 
       - name: Sync command count declarations
         run: node scripts/gen-plugin-commands.mjs --stamp-count --allow-stamp
