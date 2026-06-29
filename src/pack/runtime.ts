@@ -11,9 +11,9 @@
  */
 
 import path from "node:path";
-import type { EnabledPacks, FileSystem } from "./types.js";
-import { loadPackRegistry } from "./loader.js";
 import { parseEnabledPacks } from "./config.js";
+import { loadPackRegistry } from "./loader.js";
+import type { EnabledPacks, FileSystem } from "./types.js";
 
 /**
  * Result of loading enabled packs from a project's `.forge/config.md`.

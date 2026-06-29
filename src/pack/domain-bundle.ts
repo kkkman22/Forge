@@ -10,13 +10,10 @@
  * @module pack/domain-bundle
  */
 
-import type { ContextEntry, EnabledPacks, FileSystem, GlossaryEntry } from "./types.js";
 import { loadContexts } from "../context/registry.js";
 import { loadGlossary } from "../glossary/registry.js";
-import {
-  loadStateMachineDefinitions,
-  type LoadedStateMachine,
-} from "../state-machine/registry.js";
+import { type LoadedStateMachine, loadStateMachineDefinitions } from "../state-machine/registry.js";
+import type { ContextEntry, EnabledPacks, FileSystem, GlossaryEntry } from "./types.js";
 
 /**
  * Flattened, injectable view of a project's enabled-pack domain knowledge.

@@ -1,7 +1,7 @@
 import path from "node:path";
 import { describe, expect, it, vi } from "vitest";
-import { loadStateMachineDefinitions } from "../../src/state-machine/registry.js";
 import type { EnabledPacks, FileSystem, PackEntry } from "../../src/pack/types.js";
+import { loadStateMachineDefinitions } from "../../src/state-machine/registry.js";
 
 /**
  * In-memory FileSystem stub (same pattern as test/pack/loader.test.ts).

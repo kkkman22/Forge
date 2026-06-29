@@ -9,14 +9,47 @@
  * seam previously documented as "未实现" in
  * `skills/forge/lib/plan/references/atomic-task-format.md`.
  *
+ * **Module independence**: the state-machine module stays pack-agnostic. This
+ * loader defines structurally-compatible local input types rather than
+ * importing from `src/pack/types.ts`, so the state-machine project compiles
+ * standalone (it does not pull in the pack layer). The real `EnabledPacks` /
+ * `FileSystem` from `src/pack/types.ts` satisfy these contracts structurally.
+ *
  * @module state-machine/registry
  */
 
 import path from "node:path";
-import type { EnabledPacks, FileSystem } from "../pack/types.js";
-import type { StateMachineDefinition } from "./types.js";
 import { loadStateMachineDefinition } from "./loader.js";
+import type { StateMachineDefinition } from "./types.js";
 import { validateDefinition } from "./validator.js";
+
+/**
+ * Minimal filesystem contract this loader needs (structurally compatible with
+ * `FileSystem` from `src/pack/types.ts`). Defined locally to keep the
+ * state-machine module pack-agnostic.
+ */
+interface RegistryFileSystem {
+  readdir(path: string): Promise<string[]>;
+  readFile(path: string): Promise<string>;
+}
+
+/**
+ * Minimal view of a pack entry this loader reads. Structurally compatible with
+ * the `PackEntry.extends` shape from `src/pack/types.ts`.
+ */
+interface RegistryPackEntry {
+  name: string;
+  extends: { state_machines?: string };
+}
+
+/**
+ * Minimal enabled-packs contract this loader needs (structurally compatible
+ * with `EnabledPacks` from `src/pack/types.ts`).
+ */
+interface RegistryEnabledPacks {
+  order: string[];
+  entries: RegistryPackEntry[];
+}
 
 /**
  * A state-machine definition loaded from an enabled pack, with provenance.
@@ -64,8 +97,8 @@ export interface LoadStateMachineDefinitionsResult {
  * ```
  */
 export async function loadStateMachineDefinitions(
-  enabledPacks: EnabledPacks,
-  fs: FileSystem,
+  enabledPacks: RegistryEnabledPacks,
+  fs: RegistryFileSystem,
 ): Promise<LoadStateMachineDefinitionsResult> {
   const machines: LoadedStateMachine[] = [];
   const errors: string[] = [];
