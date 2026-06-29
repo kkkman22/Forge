@@ -9,9 +9,9 @@
  * "功能将不可用" lie, and running the bundled init.sh against this bundle as
  * CLAUDE_PLUGIN_ROOT must activate the pack + emit telemetry.
  */
-import { existsSync, readFileSync } from "node:fs";
+
 import { spawnSync } from "node:child_process";
-import { mkdtempSync, rmSync } from "node:fs";
+import { existsSync, mkdtempSync, readFileSync, rmSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join, resolve } from "node:path";
 import { describe, expect, it } from "vitest";
@@ -125,7 +125,19 @@ describe("plugin dist structure smoke tests", () => {
     const proj = mkdtempSync(join(tmpdir(), "forge-plugin-e2e-"));
     const r = spawnSync(
       "bash",
-      [initSh, "--non-interactive", "--name", "plug-e2e", "--stack", "TypeScript", "--security", "1", "--no-ultrareview", "--pack", "pms"],
+      [
+        initSh,
+        "--non-interactive",
+        "--name",
+        "plug-e2e",
+        "--stack",
+        "TypeScript",
+        "--security",
+        "1",
+        "--no-ultrareview",
+        "--pack",
+        "pms",
+      ],
       { cwd: proj, env: { ...process.env, CLAUDE_PLUGIN_ROOT: DIST_PLUGIN }, encoding: "utf-8" },
     );
     const out = `${r.stdout ?? ""}${r.stderr ?? ""}`;
