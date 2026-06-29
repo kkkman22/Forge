@@ -155,4 +155,52 @@ describe("loadStateMachineDefinitions", () => {
     const layers = result.machines.map((m) => m.sourceLayer).sort();
     expect(layers).toEqual(["pack:ecom", "pack:pms"]);
   });
+
+  it("surfaces a warning when a declared state_machines dir is unreadable", async () => {
+    const fs = createMockFs({});
+    // readdir throws for the declared dir (ENOENT / EACCES) — the mock returns
+    // [] for unknown dirs by default, so force a rejection on this specific call.
+    (fs.readdir as ReturnType<typeof vi.fn>).mockRejectedValueOnce(new Error("ENOENT"));
+    const enabled = enabledWith([{ name: "pms", stateMachinesDir: "./state-machines" }]);
+    const result = await loadStateMachineDefinitions(enabled, fs);
+    expect(result.machines).toEqual([]);
+    expect(result.errors).toEqual([]); // non-fatal, not an error
+    expect(result.warnings.length).toBe(1);
+    expect(result.warnings[0]).toContain("state-machines dir");
+    expect(result.warnings[0]).toContain("unreadable");
+  });
+
+  it("propagates non-blocking validator warnings (ST004 unreachable state)", async () => {
+    // A machine with an unreachable non-terminal state triggers ST004 (warning).
+    const dir = "/packs/pms/state-machines";
+    const withUnreachable = [
+      "name: partial",
+      'description: "has unreachable state"',
+      "states:",
+      "  - name: Start",
+      "    description: begin",
+      "  - name: Done",
+      "    terminal: true",
+      "    description: end",
+      "  - name: Orphan", // unreachable non-terminal
+      "    description: nobody transitions here",
+      "initial: Start",
+      "transitions:",
+      "  - from: Start",
+      "    to: Done",
+      "    event: Finish",
+      "invariants: []",
+    ].join("\n");
+    const fs = createMockFs({
+      [path.join(dir, "partial.yaml")]: withUnreachable,
+    });
+    const enabled = enabledWith([{ name: "pms", stateMachinesDir: "./state-machines" }]);
+    const result = await loadStateMachineDefinitions(enabled, fs);
+    // still loaded (warnings don't block)
+    expect(result.machines.map((m) => m.definition.name)).toEqual(["partial"]);
+    expect(result.errors).toEqual([]);
+    // ST004 warning surfaced, not dropped
+    expect(result.warnings.length).toBeGreaterThanOrEqual(1);
+    expect(result.warnings.some((w) => w.includes("partial.yaml"))).toBe(true);
+  });
 });

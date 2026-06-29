@@ -9,6 +9,7 @@
 
 import path from "node:path";
 import { parse as parseYaml } from "yaml";
+import { isWithinBase } from "./resolver.js";
 import type { FileSystem, PackEntry, PackManifest, PackRegistry } from "./types.js";
 
 // ---------------------------------------------------------------------------
@@ -129,7 +130,18 @@ export async function loadPackRegistry(reposRoot: string, fs: FileSystem): Promi
     if (manifest.extends && typeof manifest.extends === "object") {
       for (const [cat, relPath] of Object.entries(manifest.extends)) {
         if (typeof relPath === "string") {
-          resolvedExtends[cat] = path.resolve(rootPath, relPath);
+          const resolved = path.resolve(rootPath, relPath);
+          // Path-traversal guard: a pack's extends.* category must stay within
+          // the pack's own rootPath. A malicious pack.yaml cannot point
+          // state_machines/contexts/glossary at ../../etc — such a category is
+          // dropped and a warning is recorded (does not throw; Zero_Pack safety).
+          if (!isWithinBase(resolved, rootPath)) {
+            warnings.push(
+              `pack: ${name} extends.${cat} path "${relPath}" escapes pack root — skipped (path traversal blocked)`,
+            );
+            continue;
+          }
+          resolvedExtends[cat] = resolved;
         }
       }
     }

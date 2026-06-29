@@ -16,8 +16,16 @@ import type { EnabledPacks } from "./types.js";
 // Helpers
 // ---------------------------------------------------------------------------
 
-/** Return true if `resolved` starts with `expectedBase` (both absolute). */
-function isWithinBase(resolved: string, expectedBase: string): boolean {
+/**
+ * Return true if `resolved` starts with `expectedBase` (both absolute).
+ *
+ * Exported so the pack loader can guard `extends.*` path resolution against
+ * traversal (a malicious pack.yaml setting `extends.state_machines: ../../../etc`
+ * must not escape the pack's rootPath). This closes the path-traversal gap that
+ * the production callers (loadStateMachineDefinitions / loadContexts /
+ * loadGlossary) inherit from `loadPackRegistry`.
+ */
+export function isWithinBase(resolved: string, expectedBase: string): boolean {
   const normBase = expectedBase.endsWith(path.sep) ? expectedBase : expectedBase + path.sep;
   return resolved === expectedBase || resolved.startsWith(normBase);
 }

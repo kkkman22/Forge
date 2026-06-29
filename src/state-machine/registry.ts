@@ -72,6 +72,8 @@ export interface LoadStateMachineDefinitionsResult {
   machines: LoadedStateMachine[];
   /** Validation/parse errors (malformed YAML degrades gracefully, not thrown). */
   errors: string[];
+  /** Non-blocking diagnostics: unreadable declared dirs, validator warnings (ST004). */
+  warnings: string[];
 }
 
 /**
@@ -103,6 +105,7 @@ export async function loadStateMachineDefinitions(
 ): Promise<LoadStateMachineDefinitionsResult> {
   const machines: LoadedStateMachine[] = [];
   const errors: string[] = [];
+  const warnings: string[] = [];
 
   for (const entry of enabledPacks.entries) {
     const dir = entry.extends.state_machines;
@@ -111,8 +114,15 @@ export async function loadStateMachineDefinitions(
     let files: string[];
     try {
       files = (await fs.readdir(dir)).filter((f) => f.endsWith(".yaml")).sort();
-    } catch (_err: unknown) {
-      continue; // unreadable dir — skip silently
+    } catch (err: unknown) {
+      // A declared state_machines dir that cannot be read is almost always an
+      // operator mistake (typo'd relative path, dangling symlink). Surface it
+      // as a non-blocking warning so it is diagnosable rather than silently
+      // yielding zero machines (Zero_Pack safety preserved — never throws).
+      warnings.push(
+        `state-machines dir ${dir} unreadable for pack ${entry.name}: ${err instanceof Error ? err.message : String(err)} — skipped`,
+      );
+      continue;
     }
 
     for (const file of files) {
@@ -127,6 +137,11 @@ export async function loadStateMachineDefinitions(
           );
           continue;
         }
+        // Propagate non-blocking validator warnings (e.g. ST004 unreachable state)
+        // so they are not silently dropped.
+        for (const w of report.warnings) {
+          warnings.push(`state-machine ${filePath}: ${w.message}`);
+        }
         machines.push({
           definition,
           sourcePath: filePath,
@@ -140,5 +155,5 @@ export async function loadStateMachineDefinitions(
     }
   }
 
-  return { machines, errors };
+  return { machines, errors, warnings };
 }
