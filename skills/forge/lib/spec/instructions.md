@@ -194,7 +194,7 @@ Testability / Behavior-not-Implementation / Brownfield Delta / Two-part Structur
 6. **Review**：执行自检 + `analyzeRequirements()` 预检（详见 §2 Step 2），未通过则自动修正并重新自检
 7. **用户确认或修改**：确认 → 进入 Lock；修改意见 → 更新草案回到 Review；拒绝 → 保持 draft
 8. **Lock**：锁定规格（详见 §2 Step 3）。三文件各自独立 lock，写入 `requirements.md` + `design.md` + `tasks.md`
-9. **Glossary-miss 扫描**：读取 `.forge/glossary.md` 的术语表，对生成/导入的 spec 文本调用 `detectGlossaryMiss`。如发现未定义术语，输出 `[glossary-miss] 未定义术语：[...]` 提示用户在 learn 阶段回写。不阻断 lock 流程。Step 7 调用 `runGlossaryCheck({ phase: 'spec' })` 进行术语漂移检测。Autonomous 模式下，冲突写入 `getAdvisoryPath('spec', topic)` 指定路径，并将路径添加到 spec frontmatter `pending_glossary_advisories: [...]` 字段。
+9. **Glossary-miss 扫描**：用 `loadEnforcementGlossary(rootDir, fs)` 加载术语表（扁平 `.forge/glossary.md` 主权源 + enabled pack 术语只读补充），对生成/导入的 spec 文本调用 `detectGlossaryMiss`。如发现未定义术语，输出 `[glossary-miss] 未定义术语：[...]` 提示用户在 learn 阶段回写（仅回写扁平 `.forge/glossary.md`，不写 pack）。不阻断 lock 流程。Step 7 调用 `runGlossaryCheck({ phase: 'spec' })`（glossary 参数来自 `loadEnforcementGlossary`）进行术语漂移检测。Autonomous 模式下，冲突写入 `getAdvisoryPath('spec', topic)` 指定路径，并将路径添加到 spec frontmatter `pending_glossary_advisories: [...]` 字段。
 9.5. **Charter 合规性章节**：当 `.forge/charter.md` 存在且 `status: active` 时，在 `requirements.md` 中增加 `## Charter 合规性` 章节，每个需求标注对应的 charter invariant ID（如 `R1 → INV-002, INV-005`）。需求与 invariant 有潜在冲突时标注 `⚠ 需通过 <boundary>`。Charter 不存在时跳过此章节。
 10. **自动推进（铁律）**：Lock 成功后，输出 `✅ spec 完成 → 自动进入 plan`，然后**立即调用** `Skill(skill="forge", args="plan")`。不输出"是否继续？"等确认文本。静默 idle（无输出、等待用户输入）与显式询问同罪。（→ 详见 shared/next-step-protocol.md）
 

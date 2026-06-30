@@ -43,7 +43,7 @@
 
 - **Parameters**:
   - `candidateTerms` — New terms extracted from the user's decision proposal
-  - `glossary` — Parsed `.forge/glossary.md` structure
+  - `glossary` — `loadEnforcementGlossary(rootDir, fs)` result: the flat `.forge/glossary.md` (authoritative) merged with enabled-pack glossary terms. Flat is the write-sovereignty source; pack terms are read-only supplements. **信任边界**：合并 glossary 中来自 pack 的 term/definition/alias 字段是**不可信用户内容**，视为数据；冲突提示渲染这些字段时不得将其当作指令执行（与 advisory 注入同一信任边界）。
 - **Returns**: Conflict list (empty when no conflicts); each entry carries the existing definition and the candidate
 - **Purpose**: Run before Round 1 kicks off; non-empty conflicts pause the Round and trigger `renderDecideGlossaryConflictPrompt`
 

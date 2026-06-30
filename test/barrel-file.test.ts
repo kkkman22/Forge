@@ -179,9 +179,9 @@ describe("barrel file does not expose internal modules", () => {
   });
 
   // Verify the total number of value exports
-  it("has exactly 150 value exports", () => {
+  it("has exactly 152 value exports", () => {
     const valueExports = Object.keys(exports).filter((key) => typeof exports[key] !== "undefined");
-    expect(valueExports).toHaveLength(150);
+    expect(valueExports).toHaveLength(152);
     expect(valueExports.sort()).toEqual([
       "CLASSIFICATION_MAP",
       "CliError",
@@ -261,10 +261,12 @@ describe("barrel file does not expose internal modules", () => {
       "listActiveTasks",
       "loadContexts",
       "loadEnabledPacks",
+      "loadEnforcementGlossary",
       "loadGlossary",
       "loadSkillsFromDir",
       "loadStateMachineDefinitions",
       "mergeContextSources",
+      "mergeGlossaries",
       "mergeSkillLists",
       "migrateToMultiTask",
       "normalizeInput",
