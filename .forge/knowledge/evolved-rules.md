@@ -145,7 +145,7 @@ This file keeps only rules that still need top-of-session reminders.
 **Added**: 2026-05-23
 **Confidence**: 0.85
 **Last_triggered**: 2026-05-23
-**Infra_Ref**: `.claude/agents/spec-check.md` Check Item: "rename ≠ merge for double-implementation"
+**Infra_Ref**: `.claude/agents/spec-check.md` Check Item: "rename ≠ merge for double-implementation" + `scripts/check-unused-module.mjs`（删除 src 模块/函数前必须先跑,有引用即 exit 1；删除前验证约定见 skills/forge/lib/build/instructions.md §2 Pre-build Checks 段末）
 
 ### R13: 平台能力声明必须先验证再写入
 

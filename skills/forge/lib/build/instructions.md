@@ -145,6 +145,8 @@ Build 阶段中途执行 `git rebase` / `git pull` / `git merge` 同步 main 时
 → Branch Gate auto-switch / unshipped-branch warning / lightweight exception 详见 references/branch-gate.md
 → Plan Self-Consistency 检测规则、关键词模式、豁免机制详见 references/plan-preflight.md
 
+**删除前验证约定(dead-code gate)**:执行任何"删除 src 模块/目录"的任务前,必须先跑 `node scripts/check-unused-module.mjs <target>`。`exit 1`(有引用)时,迁移消费者或撤销删除主张——**不得**强行 `git rm`(参见 `arch-review-remediate-0626` T-01 误判 state-machine 为孤岛的案例,已由 `gap-remediate-0630` T-04 fixture 永久锚定)。`[unused-check-skip]` commit-msg 或 `FORGE_SKIP_UNUSED_CHECK=1` 仅限紧急 hotfix,且须在 commit 说明留理由。
+
 ### §2.5 Charter Grounding（写代码前注入工程约束）
 
 Pre-build Checks 通过后、进入 Execution Paths 前，读取项目宪章作为 grounding 约束。**这是内容可见性增强，不是新增门禁**——charter 不通过不阻断 build（与 §2 的流程门禁不同）。
