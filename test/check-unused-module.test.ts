@@ -18,7 +18,7 @@
 import { spawnSync } from "node:child_process";
 import { mkdirSync, mkdtempSync, rmSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
-import { resolve, join } from "node:path";
+import { join, resolve } from "node:path";
 import { describe, expect, it } from "vitest";
 
 const REPO_ROOT = resolve(__dirname, "..");
@@ -28,7 +28,10 @@ const CHECK_SCRIPT = resolve(REPO_ROOT, "scripts/check-unused-module.mjs");
  * Run the check script against the real repo root.
  * Returns { status, stdout, stderr }.
  */
-function runCheck(args: string[] = [], envOverride: NodeJS.ProcessEnv = {}): {
+function runCheck(
+  args: string[] = [],
+  envOverride: NodeJS.ProcessEnv = {},
+): {
   status: number | null;
   stdout: string;
   stderr: string;
