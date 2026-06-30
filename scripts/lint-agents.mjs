@@ -26,6 +26,18 @@ const AGENTS_DIR = join(ROOT, "agents");
 const TEMPLATE_PATH = join(ROOT, "templates", "AGENT-TEMPLATE.md");
 const REQUIRED_FRONTMATTER = ["name", "description"];
 const DEFAULT_SECTIONS = ["Identity", "Mission", "Critical Rules"];
+// 角色 → 必填字段(与 src/agent-lint.ts ROLE_RULES 镜像;字段名 camelCase)。
+const ROLE_RULES = [
+  { role: "review", match: /^(spec-check|quality-check|security-check)\.md$/i, requiredFields: ["disallowedTools"] },
+  { role: "decide", match: /^forge-decide-.*\.md$/i, requiredFields: ["effort"] },
+];
+function resolveAgentRole(fileName) {
+  const base = fileName.split("/").pop();
+  for (const rule of ROLE_RULES) {
+    if (rule.match.test(base)) return rule.role;
+  }
+  return null;
+}
 const MIN_BODY_WORDS = 50;
 
 function showHelp() {
@@ -100,6 +112,18 @@ function lintFile(fileName, text, sections) {
   for (const field of REQUIRED_FRONTMATTER) {
     if (getFmField(fm, field) === null) {
       issues.push({ file: fileName, severity: "ERROR", code: `MISSING_${field.toUpperCase()}`, message: `frontmatter 缺少: ${field}` });
+    }
+  }
+  // 角色专属必填字段(review → disallowedTools, decide → effort)
+  const role = resolveAgentRole(fileName);
+  if (role !== null) {
+    const rule = ROLE_RULES.find((r) => r.role === role);
+    if (rule) {
+      for (const field of rule.requiredFields) {
+        if (getFmField(fm, field) === null) {
+          issues.push({ file: fileName, severity: "ERROR", code: `ROLE_MISSING_${field.toUpperCase()}`, message: `${role} 类 agent 缺少: ${field}` });
+        }
+      }
     }
   }
   const body = extractBody(text);
