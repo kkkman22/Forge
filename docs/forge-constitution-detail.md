@@ -3,7 +3,7 @@ title: 'Forge — 项目宪法详细内容'
 category: reference
 audience:
 - maintainer
-updated: 2026-06-23
+updated: 2026-06-30
 owner: forge-maintainers
 ---
 
@@ -504,13 +504,13 @@ Three-strike 触发时（连续 3 次失败），`shouldClearGoal()` 自动清�
 | Model-invoked | 保留**富触发短语**（"Use when the user wants…, mentions…"） | spec-check: "需求实现验证、场景覆盖检查" |
 | User-invoked | 写成**人的一句话摘要**，**剥离**触发词列表 | forge 入口：一句话说明是统一入口 |
 
-#### Forge Skill Invocation 盘点（截至 2026-06-21）
+#### Forge Skill Invocation 盘点（截至 2026-06-30）
 
 | 位置 | 类型 | 说明 |
 |------|------|------|
 | `.agents/skills/source-command-forge/` | **User-invoked** | `/forge` 统一入口 router，唯一 user-invoked skill |
-| `skills/forge/lib/*`（40 个） | **Model-invoked** | 各阶段引擎（build/review/debug/plan…），通过 `/forge <子命令>` 路由分发 |
-| `.claude/agents/*`（22 个） | **Model-invoked（subagent）** | decide 多角色 + review 三层 checker + orchestrator |
+| `skills/forge/lib/*`（38 个） | **Model-invoked** | 各阶段引擎（build/review/debug/plan…），通过 `/forge <子命令>` 路由分发 |
+| `.claude/agents/*`（24 个 agent 定义，symlink → `agents/`） | **Model-invoked（subagent）** | decide 多角色 + review 三层 checker + adversarial-check / validation-pass |
 
 > 注：Forge 当前**未使用** Claude 的 `disable-model-invocation: true` frontmatter 字段（多 harness 兼容）。二分通过约定（user-invoked 即 source-command-forge 一个）表达，不绑死 Claude 专有字段。
 

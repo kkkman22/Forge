@@ -25,11 +25,11 @@
 - [Docs Governance 参考手册](reference-docs-governance.md) / [Docs Governance 参考手册 (EN)](reference-docs-governance.en.md) — reference — 2026-06-19
 - [Forge Slimming 迁移指南](slimming-migration.md) — reference — 2026-05-17
 - [Forge triage 自动发现](forge-triage.md) — reference — 2026-06-16
-- [Forge — 项目宪法详细内容](forge-constitution-detail.md) — reference — 2026-06-23
+- [Forge — 项目宪法详细内容](forge-constitution-detail.md) — reference — 2026-06-30
 - [Forge 再生式 Checkpoint](forge-checkpoint.md) — reference — 2026-06-16
 - [Forge 初次接触者引导](onboarding-beginner.md) / [Forge 初次接触者引导 (EN)](onboarding-beginner.en.md) — reference — 2026-06-19
 - [Forge 命令速查与路由详解](reference-commands.md) — reference — 2026-06-20
-- [Forge 安全与信任](reference-security.md) — reference — 2026-05-12
+- [Forge 安全与信任](reference-security.md) — reference — 2026-06-30
 - [Forge 日常开发者引导](onboarding-daily.md) / [Forge 日常开发者引导 (EN)](onboarding-daily.en.md) — reference — 2026-05-12
 - [Forge 架构与状态保护](reference-architecture.md) — reference — 2026-05-12
 - [Hooks Inventory — Hint/Gate 二分清单](hooks-inventory.md) — reference — 2026-06-25

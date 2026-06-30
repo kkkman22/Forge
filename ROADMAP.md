@@ -24,12 +24,16 @@
 | v3.3.1 | 2026-06-05 | Claude Code 2.1.163 兼容门禁、doctor 结构化健康快照、SubagentStop 反馈 |
 | v3.4 | 2026-06-12 | 审计整改 P0/P1（allowlist/MCP/dist/CI）、项目宪章系统、8 GSD Core 模式、CE-Inspired review |
 | v3.5 | 2026-06-18 | 动态重规划闭环、agentic UI 验收、session journal 保留、review per-tier timeout、regenerative checkpoint |
+| v3.6 | 2026-06-21 | 分层测试金字塔（ADR-0006）、/forge continue 阶段推进器、context-injection 激活、charter/build 注入、forge:defer 台账、Dim 8 Deletions、YAGNI gate、mcp 压缩委托 Headroom |
+| v3.7 | 2026-06-22 | hooks 脚本路径在 plugin install 下解析修复、init.sh non-TTY + AskUserQuestion fallback、skill-craft 借鉴（mattpocock 9 点 + superpowers v6 SDD lessons） |
+| v3.8 | 2026-06-23 | init capability checklist（plugin + MCP + companions） |
+| v3.9 | 2026-06-25 | agents/ 大重构（symlink 统一 + AGENT-TEMPLATE + 铁律内嵌）、safety v2-v5 加固、adversarial injection corpus + bypass-rate gate（L7）、shared-vocabulary SSOT、guarded-merger/audit-log/secret-redactor 并发与边界修复 |
 
 ---
 
 ## v3.x — 借鉴与再生（已完成的主线）
 
-> **战略定位**：v3.0 引入多 Agent 工作流 + 沙箱策略系统。v3.1–v3.4 在此之上叠加弹性层、发布门禁、Loop native fusion、审计整改与外部方法论借鉴。
+> **战略定位**：v3.0 引入多 Agent 工作流 + 沙箱策略系统。v3.1–v3.5 在此之上叠加弹性层、发布门禁、Loop native fusion、审计整改与外部方法论借鉴；v3.6–v3.9 收尾 agent 体系（symlink 统一 + 铁律内嵌）、引入分层测试金字塔与 skill-craft 工艺借鉴、并完成 safety v2-v5 多轮加固与 adversarial injection gate。
 
 ### 已完成
 
@@ -62,6 +66,27 @@
 - ✅ **`forge:defer` 延迟决策回收** — build 期标记 `forge:defer` + `deferred.md` 台账；learn §0.9 sweep 步骤回收
 - ✅ **review Deletions 维度（Dim 8）** — quality-check 新增"本不该写的代码"扫描维度，产出 delete-list
 - ✅ **Ponytail YAGNI 纪律采纳** — forge-build agent Pre-task YAGNI gate + hard-boundaries 自检清单
+- ✅ **v3.6 分层测试金字塔 + 阶段推进（#112-#116）**
+  - Layered Test Pyramid（ADR-0006）四层验证模型
+  - `/forge continue` 交互式阶段推进器，跨会话推进下一阶段（#115）
+  - context-injection scaffold 激活，按 taskType 注入 review/decide（#114）
+  - charter grounding 注入 build 阶段 §2.5，restatement checkpoint 重读 charter invariants（#113）
+  - UserPromptSubmit hook 接入 usage metrics recorder（#112）
+  - `forge:defer` 延迟决策标记 + deferred.md 台账 + learn §0.9 sweep 回收
+  - mcp 压缩委托给 Headroom，移除 RTK 压缩引擎 + `forge_read_cached`（#107）
+- ✅ **v3.7 hooks/install 韧性 + skill-craft 借鉴（#119-#127）**
+  - hooks 脚本路径在 plugin install 下解析修复（`CLAUDE_PLUGIN_ROOT` 优先 + 三路 fallback）（#125-#127）
+  - init.sh non-TTY + AskUserQuestion fallback（#125）
+  - skill-craft 借鉴 mattpocock/skills 9 点改进（spec `mattpocock-skill-craft-borrow`）：user/model-invoked 二分、会话拓扑、领域文档三分、red-capable loop gate、Completion Criterion 双属性、Skill Failure Modes 词汇表、Leading Words
+  - superpowers v6.0.0 SDD lessons 借鉴（unverifiable verdict / plan pre-flight / model tier / plan constraints）（#119）
+- ✅ **v3.8 init capability checklist** — init 完成时给出 plugin + MCP + companions 能力核对清单
+- ✅ **v3.9 agents 大重构 + safety 加固**
+  - agents/ 体系：11 个 forge-* agent 回流并中文化 description、`.claude/agents/` 全部改为 symlink 指向 `agents/`（ADR-0010）、AGENT-TEMPLATE + 铁律内嵌（spec #2/#3）、symlink 完整性门禁（spec #1）、查重 + lint 门禁接入 `npm run check`
+  - safety v2-v5 系列加固：destructive-guard + spawn-policy + knowledge-quota（R1-R4）、normalization engine + nonce bypass、whitelist + fail-closed + flag 完整性、wrapper-prefix whitelist、git global flag value-swallow（-C/--git-dir bypass）修复
+  - adversarial injection corpus + bypass-rate gate（L7）、dogfooding behavior KPI aggregator（L8 foundation）、structural assembly fingerprint snapshot tests（L3）
+  - shared-vocabulary SSOT 抽取（Two-Phase / JSON schema / Known-failures YAML / Return Protocol / Findings-Only / Confidence_Anchor），3 checker 通过 Step 0.1 Read 加载（R8）
+  - 并发与边界修复：guarded-merger 用真实 `completed_at` 解析 + 移除 `Date.now()`/`Math.random()` 非确定性、audit-log 共享 O_EXCL 锁串行化 + 锁超时写 gap marker、secret-redactor 覆盖 PEM/PGP/JWT、check-frozen 跨平台 CLI 入口检测 + URL 解码
+  - ADR-0009（治理文档与 agent 元数据源语言定中文）、ADR-0011（agent 选择性安装暂不实现，前瞻决策）
 
 ### 进行中 / 待评估
 
@@ -73,11 +98,11 @@
 
 | # | 问题 | 位置 | 说明 |
 |---|------|------|------|
-| L-10 | `stop_condition_met` 不增加 `currentIteration` | orchestrator.ts | stop 后循环立即终止，实际影响有限 |
 | L-11 | router.ts 与 skill-scheduler.ts full 档位序列不一致 | router.ts, skill-scheduler.ts | 注释说明是设计意图 |
 | L-12 | 孤儿导出函数 | router.ts, skill-scheduler.ts | 仅测试中使用 |
-| L-13 | brownfield 提升逻辑被困 light 分支 | router.ts | brownfield 仅 light→standard |
-| L-16 | AtomicTask 缺少 dependsOn 字段 | plan.ts | 无法表达任务间依赖 |
+| L-13 | brownfield tier-boost 范围 | router.ts | brownfield + `hasAuthChanges`/`touchesExistingModules` 触发 standard→full boost（v3.x 后已非 light→standard） |
+
+> **已关闭的遗留项**：L-10（`stop_condition_met`/`currentIteration`，随 v3.3 loop native fusion 淘汰 legacy `orchestrator.ts` 失效）、L-16（`AtomicTask.dependsOn` 已在 `task-graph.ts` + `plan/validate.ts` 实现，含 R25 拓扑校验）。
 
 ### 明确保留（不动）
 
@@ -173,7 +198,7 @@
 2. **TDD 铁律** — Plan 阶段强制嵌入 TDD 步骤 + hooks 强制执行
 3. **Spec 锁定 + frozen zone 分级保护**（locked/approved/open 三级 + `FrozenZoneViolation`）
 4. **五维度结构化 learn** — 跨项目经验库 + ADR
-5. **Property-based Testing 文化** — 140 个 PBT 文件
+5. **Property-based Testing 文化** — 147 个 PBT 文件（`.property.test.ts`）
 6. **三层独立评审中的 Spec-alignment 层**
 7. **Forge Loop 的工程纪律** — Git 事务、熔断器、指数退避、完成摘要、PUA 引擎
 8. **Domain Pack 机制** — PMS pack 作为示例
