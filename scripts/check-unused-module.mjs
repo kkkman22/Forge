@@ -112,53 +112,12 @@ function buildNeedles(mod) {
 // ---------------------------------------------------------------------------
 
 /**
- * Grep a set of files for any of the needles. Returns hit objects.
- * Uses ripgrep when available (fast), else falls back to node fs scan.
+ * Is this line a comment line (its `from`/`require`/symbol text would be prose)?
+ * Shared by scanImports and scanTestPublicApiUsage to avoid divergence.
  */
-function grepFiles(files, needles, { stripComments = false } = {}) {
-  const hits = [];
-  const patterns = needles.map((n) => n.replace(/[.*+?^${}()|[\]\\]/g, "\\$&"));
-  const combined = patterns.join("|");
-  for (const file of files) {
-    let content;
-    try {
-      content = fs.readFileSync(file, "utf-8");
-    } catch {
-      continue;
-    }
-    const lines = content.split("\n");
-    for (let i = 0; i < lines.length; i++) {
-      const line = lines[i];
-      if (stripComments) {
-        // Strip `//` line comments for the import test (keeps string literals).
-        const c = line.indexOf("//");
-        if (c >= 0 && !isInsideString(line, c)) continue;
-      }
-      for (const needle of needles) {
-        if (line.includes(needle)) {
-          hits.push({ file, line: i + 1, text: line.trim(), needle });
-          break; // one hit per line is enough
-        }
-      }
-    }
-  }
-  return hits;
-}
-
-/** Crude check: is index `i` inside a quoted string on this line? */
-function isInsideString(line, i) {
-  let inStr = false;
-  let quote = "";
-  for (let k = 0; k < i; k++) {
-    const ch = line[k];
-    if (inStr) {
-      if (ch === quote) inStr = false;
-    } else if (ch === '"' || ch === "'" || ch === "`") {
-      inStr = true;
-      quote = ch;
-    }
-  }
-  return inStr;
+function isCommentLine(line) {
+  const trimmed = line.trim();
+  return trimmed.startsWith("//") || trimmed.startsWith("*") || trimmed.startsWith("/*");
 }
 
 /** Collect files under a repo dir matching given extensions (on-disk). */
@@ -209,8 +168,7 @@ function scanImports(scope /* "src" | "scripts" */) {
     for (let i = 0; i < lines.length; i++) {
       const line = lines[i];
       // Skip comment lines — their `from`/`require` text is prose, not a real import.
-      const trimmed = line.trim();
-      if (trimmed.startsWith("//") || trimmed.startsWith("*") || trimmed.startsWith("/*")) continue;
+      if (isCommentLine(line)) continue;
       if (!/(\bfrom\s+["']|require\s*\(\s*["']|import\s*\(.*["'])/.test(line)) continue;
       for (const needle of scanImports._needles) {
         if (line.includes(needle)) {
@@ -259,7 +217,7 @@ function scanTestPublicApiUsage(mod) {
       // usage of an exported symbol on a non-import line
       for (const sym of exportNeedles) {
         const re = new RegExp(`\\b${sym.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")}\\b`);
-        if (re.test(line) && !/^\s*(\/\/|\/\*|\*)/.test(line)) {
+        if (re.test(line) && !isCommentLine(line)) {
           hits.push({ file, line: i + 1, text: line.trim(), needle: sym, via: "symbol" });
           break;
         }
