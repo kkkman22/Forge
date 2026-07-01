@@ -123,7 +123,10 @@ describe("check-spec-status.mjs — T-09 directory-level counting", () => {
 
   it("requirements.md status wins as representative (rogue design/tasks ignored)", () => {
     mkdirSync(join(tmpRoot, "spec-b"), { recursive: true });
-    writeFileSync(join(tmpRoot, "spec-b", "requirements.md"), `---\nstatus: completed\nname: spec-b\n---\nbody`);
+    writeFileSync(
+      join(tmpRoot, "spec-b", "requirements.md"),
+      `---\nstatus: completed\nname: spec-b\n---\nbody`,
+    );
     writeFileSync(join(tmpRoot, "spec-b", "design.md"), `---\nstatus: locked\n---\nbody`);
     writeFileSync(join(tmpRoot, "spec-b", "tasks.md"), `---\nstatus: approved\n---\nbody`);
     const { stdout } = runScript([tmpRoot]);
@@ -138,7 +141,10 @@ describe("check-spec-status.mjs — T-09 directory-level counting", () => {
 
   it("excludes _archived/ from the main distribution", () => {
     mkdirSync(join(tmpRoot, "_archived", "old"), { recursive: true });
-    writeFileSync(join(tmpRoot, "_archived", "old", "requirements.md"), `---\nstatus: archived\n---\nbody`);
+    writeFileSync(
+      join(tmpRoot, "_archived", "old", "requirements.md"),
+      `---\nstatus: archived\n---\nbody`,
+    );
     const { stdout } = runScript([tmpRoot]);
     const archivedLine = stdout.match(/^\s*archived:\s*(\d+)/m);
     const archivedCount = archivedLine ? Number(archivedLine[1]) : 0;
@@ -152,7 +158,10 @@ describe("check-spec-status.mjs — T-11 rogue status field guard", () => {
     const tmpRoot = mkdtempSync(join(tmpdir(), "forge-spec-status-t11-"));
     try {
       mkdirSync(join(tmpRoot, "spec-c"), { recursive: true });
-      writeFileSync(join(tmpRoot, "spec-c", "requirements.md"), `---\nstatus: approved\nname: spec-c\n---\nbody`);
+      writeFileSync(
+        join(tmpRoot, "spec-c", "requirements.md"),
+        `---\nstatus: approved\nname: spec-c\n---\nbody`,
+      );
       writeFileSync(join(tmpRoot, "spec-c", "design.md"), `---\nstatus: locked\n---\nbody`);
       writeFileSync(join(tmpRoot, "spec-c", "tasks.md"), `---\nstatus: approved\n---\nbody`);
       const { stdout } = runScript([tmpRoot]);

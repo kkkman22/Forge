@@ -1,6 +1,5 @@
 ---
 name: ponytail-adoption
-status: draft
 feature: ponytail-adoption
 layout: tasks
 created: "2026-06-18"

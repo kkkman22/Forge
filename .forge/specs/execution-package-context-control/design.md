@@ -1,5 +1,4 @@
 ---
-status: draft
 feature: execution-package-context-control
 layout: design
 created: 2026-06-07

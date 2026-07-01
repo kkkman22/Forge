@@ -1,6 +1,5 @@
 ---
 feature: plan-global-constraints-and-interfaces
-status: locked
 date: 2026-06-21
 layout: tasks
 created: 2026-06-21

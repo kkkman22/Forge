@@ -1,6 +1,5 @@
 ---
 feature: "user-task-flow-docs"
-status: draft
 date: "2026-06-08"
 workflow_variant: "requirements-first"
 kind: "feature"

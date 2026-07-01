@@ -1,5 +1,4 @@
 ---
-status: locked
 feature: partial-spec-backlog-remediation
 layout: design
 created: 2026-06-07
