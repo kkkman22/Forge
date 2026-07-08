@@ -3,7 +3,7 @@ title: 'Forge 安全与信任'
 category: reference
 audience:
 - maintainer
-updated: '2026-05-12'
+updated: 2026-06-30
 owner: forge-maintainers
 ---
 
@@ -11,7 +11,7 @@ owner: forge-maintainers
 
 # Forge 安全与信任
 
-Forge 从第一天起把安全视为工程纪律。防御分层落在代码、工具调用、输入解析、依赖管理四个面。
+Forge 从第一天起把安全视为工程纪律。防御分层落在工具调用、Shell 注入预防、输入威胁检测、依赖供应链、不变量验证五个面。
 
 ## 安全机制分层
 
@@ -21,7 +21,7 @@ Forge 从第一天起把安全视为工程纪律。防御分层落在代码、�
 | 2. Shell 注入预防 | Git transaction 白名单构造器 | `src/git-transaction.ts` |
 | 3. 输入威胁检测 | Prompt injection `scanInput` | `src/prompt-defense.ts` |
 | 4. 依赖供应链 | 精确版本锁定 + npm audit CI | `package.json` + `.github/workflows/` |
-| 5. 不变量验证 | 109 property-based test 文件 | `test/*.property.test.ts` |
+| 5. 不变量验证 | 147 property-based test 文件 | `test/*.property.test.ts` |
 
 ## 安全审计与 CVE 追溯
 
