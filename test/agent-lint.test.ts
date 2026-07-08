@@ -9,6 +9,8 @@ import {
   lintAgentText,
   MIN_BODY_WORDS,
   REQUIRED_FRONTMATTER,
+  ROLE_RULES,
+  resolveAgentRole,
 } from "../src/agent-lint.js";
 
 describe("extractFrontmatter", () => {
@@ -152,5 +154,82 @@ describe("constants", () => {
   });
   it("MIN_BODY_WORDS is 50", () => {
     expect(MIN_BODY_WORDS).toBe(50);
+  });
+});
+
+describe("role-based frontmatter (ROLE_RULES)", () => {
+  // review-agent: spec-check/quality-check/security-check → disallowedTools
+  const reviewAgentOk = `---
+name: spec-check
+description: "review"
+disallowedTools: [Bash, Write, Edit, Agent]
+---
+
+## Identity
+body content here with enough words to be long enough for the check to pass it.`;
+
+  const reviewAgentMissing = `---
+name: spec-check
+description: "review"
+---
+
+## Identity
+body content here with enough words to be long enough for the check to pass it.`;
+
+  // decide-agent: forge-decide-* → effort
+  const decideAgentOk = `---
+name: forge-decide-product
+description: "decide"
+effort: xhigh
+---
+
+## Identity
+body content here with enough words to be long enough for the check to pass it.`;
+
+  const decideAgentMissing = `---
+name: forge-decide-product
+description: "decide"
+---
+
+## Identity
+body content here with enough words to be long enough for the check to pass it.`;
+
+  it("resolveAgentRole classifies spec-check as review", () => {
+    expect(resolveAgentRole("spec-check.md")).toBe("review");
+  });
+  it("resolveAgentRole classifies forge-decide-* as decide", () => {
+    expect(resolveAgentRole("forge-decide-product.md")).toBe("decide");
+  });
+  it("resolveAgentRole returns null for unclassified agents", () => {
+    expect(resolveAgentRole("architect.md")).toBeNull();
+  });
+
+  it("errors when review-agent missing disallowedTools", () => {
+    const issues = lintAgentText("spec-check.md", reviewAgentMissing);
+    const roleIssue = issues.filter((i) => i.code === "ROLE_MISSING_DISALLOWEDTOOLS");
+    expect(roleIssue).toHaveLength(1);
+    expect(roleIssue[0].severity).toBe("ERROR");
+  });
+  it("passes review-agent with disallowedTools", () => {
+    const issues = lintAgentText("spec-check.md", reviewAgentOk);
+    const roleIssue = issues.filter((i) => i.code.startsWith("ROLE_"));
+    expect(roleIssue).toEqual([]);
+  });
+  it("errors when decide-agent missing effort", () => {
+    const issues = lintAgentText("forge-decide-product.md", decideAgentMissing);
+    const roleIssue = issues.filter((i) => i.code === "ROLE_MISSING_EFFORT");
+    expect(roleIssue).toHaveLength(1);
+    expect(roleIssue[0].severity).toBe("ERROR");
+  });
+  it("passes decide-agent with effort", () => {
+    const issues = lintAgentText("forge-decide-product.md", decideAgentOk);
+    const roleIssue = issues.filter((i) => i.code.startsWith("ROLE_"));
+    expect(roleIssue).toEqual([]);
+  });
+  it("does not apply role rules to unclassified agents", () => {
+    // architect.md has no role → no ROLE_ issue even without disallowedTools/effort
+    const issues = lintAgentText("architect.md", reviewAgentMissing);
+    const roleIssue = issues.filter((i) => i.code.startsWith("ROLE_"));
+    expect(roleIssue).toEqual([]);
   });
 });

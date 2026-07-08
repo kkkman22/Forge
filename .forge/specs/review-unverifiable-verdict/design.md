@@ -1,6 +1,5 @@
 ---
 feature: review-unverifiable-verdict
-status: locked
 date: 2026-06-21
 layout: design
 created: 2026-06-21

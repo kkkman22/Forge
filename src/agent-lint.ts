@@ -24,6 +24,47 @@ export interface LintIssue {
 /** 必填 frontmatter 字段(ERROR)。 */
 export const REQUIRED_FRONTMATTER = ["name", "description"];
 
+/**
+ * 角色 → 必填 frontmatter 字段(ERROR)。
+ *
+ * 角色按文件名归类,字段名用项目实际约定的 camelCase(非 kebab-case):
+ *   - review 类(spec-check/quality-check/security-check)→ disallowedTools
+ *     (硬隔离:禁止 Bash/Write/Edit/Agent,防 review agent 自行改代码)
+ *   - decide 类(forge-decide-*)→ effort
+ *     (decide 视角必须声明推理投入档位)
+ *
+ * 注:forge-build/plan/review 的 memory/initialPrompt 暂不强制为 ERROR
+ * —— forge-ship 等同前缀 agent 职责不同(跑门禁非自主循环),强制会误伤。
+ * 已实测现有 review/decide agent 全部合规。
+ */
+export interface RoleRule {
+  role: string;
+  match: RegExp;
+  requiredFields: string[];
+}
+
+export const ROLE_RULES: RoleRule[] = [
+  {
+    role: "review",
+    match: /^(spec-check|quality-check|security-check)\.md$/i,
+    requiredFields: ["disallowedTools"],
+  },
+  {
+    role: "decide",
+    match: /^forge-decide-.*\.md$/i,
+    requiredFields: ["effort"],
+  },
+];
+
+/** 根据文件名解析 agent 角色;未匹配返回 null。 */
+export function resolveAgentRole(fileName: string): string | null {
+  const base = fileName.split("/").pop() ?? fileName;
+  for (const rule of ROLE_RULES) {
+    if (rule.match.test(base)) return rule.role;
+  }
+  return null;
+}
+
 /** 推荐 section(WARN),从 AGENT-TEMPLATE 动态读取的默认值。 */
 export const DEFAULT_RECOMMENDED_SECTIONS = ["Identity", "Mission", "Critical Rules"];
 
@@ -136,6 +177,24 @@ export function lintAgentText(
         code: `MISSING_${field.toUpperCase()}`,
         message: `frontmatter 缺少必填字段: ${field}`,
       });
+    }
+  }
+
+  // 2b. 角色专属必填字段(review → disallowedTools, decide → effort)
+  const role = resolveAgentRole(fileName);
+  if (role !== null) {
+    const rule = ROLE_RULES.find((r) => r.role === role);
+    if (rule) {
+      for (const field of rule.requiredFields) {
+        if (getFrontmatterField(fm, field) === null) {
+          issues.push({
+            file: fileName,
+            severity: "ERROR",
+            code: `ROLE_MISSING_${field.toUpperCase()}`,
+            message: `${role} 类 agent 缺少必填字段: ${field}`,
+          });
+        }
+      }
     }
   }
 

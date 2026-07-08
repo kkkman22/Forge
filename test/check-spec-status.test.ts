@@ -98,3 +98,79 @@ describe("check-spec-status.mjs — status distribution scan", () => {
     expect(status).toBe(0);
   });
 });
+
+// ── T-09 (gap-remediate-0630): directory-level counting ──
+describe("check-spec-status.mjs — T-09 directory-level counting", () => {
+  let tmpRoot: string;
+
+  beforeEach(() => {
+    tmpRoot = mkdtempSync(join(tmpdir(), "forge-spec-status-t09-"));
+  });
+  afterEach(() => {
+    rmSync(tmpRoot, { recursive: true, force: true });
+  });
+
+  it("counts per-DIRECTORY not per-file: a spec with 3 files counts once", () => {
+    mkdirSync(join(tmpRoot, "spec-a"), { recursive: true });
+    for (const f of ["requirements.md", "design.md", "tasks.md"]) {
+      writeFileSync(join(tmpRoot, "spec-a", f), `---\nstatus: locked\nname: spec-a\n---\nbody`);
+    }
+    const { stdout } = runScript([tmpRoot]);
+    const lockedLine = stdout.match(/^\s*locked:\s*(\d+)/m);
+    expect(lockedLine, "locked count line present").not.toBeNull();
+    expect(Number(lockedLine![1])).toBe(1); // not 3
+  });
+
+  it("requirements.md status wins as representative (rogue design/tasks ignored)", () => {
+    mkdirSync(join(tmpRoot, "spec-b"), { recursive: true });
+    writeFileSync(
+      join(tmpRoot, "spec-b", "requirements.md"),
+      `---\nstatus: completed\nname: spec-b\n---\nbody`,
+    );
+    writeFileSync(join(tmpRoot, "spec-b", "design.md"), `---\nstatus: locked\n---\nbody`);
+    writeFileSync(join(tmpRoot, "spec-b", "tasks.md"), `---\nstatus: approved\n---\nbody`);
+    const { stdout } = runScript([tmpRoot]);
+    const completedLine = stdout.match(/^\s*completed:\s*(\d+)/m);
+    expect(completedLine).not.toBeNull();
+    expect(Number(completedLine![1])).toBe(1);
+    // locked must still be 0 here (spec-b's design=locked must NOT count)
+    const lockedLine = stdout.match(/^\s*locked:\s*(\d+)/m);
+    const lockedCount = lockedLine ? Number(lockedLine[1]) : 0;
+    expect(lockedCount).toBe(0);
+  });
+
+  it("excludes _archived/ from the main distribution", () => {
+    mkdirSync(join(tmpRoot, "_archived", "old"), { recursive: true });
+    writeFileSync(
+      join(tmpRoot, "_archived", "old", "requirements.md"),
+      `---\nstatus: archived\n---\nbody`,
+    );
+    const { stdout } = runScript([tmpRoot]);
+    const archivedLine = stdout.match(/^\s*archived:\s*(\d+)/m);
+    const archivedCount = archivedLine ? Number(archivedLine[1]) : 0;
+    expect(archivedCount).toBe(0); // _archived excluded from main counts
+  });
+});
+
+// ── T-11 (gap-remediate-0630): rogue status field regression guard ──
+describe("check-spec-status.mjs — T-11 rogue status field guard", () => {
+  it("flags design.md/tasks.md carrying a status field as rogue", () => {
+    const tmpRoot = mkdtempSync(join(tmpdir(), "forge-spec-status-t11-"));
+    try {
+      mkdirSync(join(tmpRoot, "spec-c"), { recursive: true });
+      writeFileSync(
+        join(tmpRoot, "spec-c", "requirements.md"),
+        `---\nstatus: approved\nname: spec-c\n---\nbody`,
+      );
+      writeFileSync(join(tmpRoot, "spec-c", "design.md"), `---\nstatus: locked\n---\nbody`);
+      writeFileSync(join(tmpRoot, "spec-c", "tasks.md"), `---\nstatus: approved\n---\nbody`);
+      const { stdout } = runScript([tmpRoot]);
+      // rogue status field must be surfaced (warning) for design.md + tasks.md
+      expect(stdout).toMatch(/rogue status/i);
+      expect(stdout).toContain("spec-c/design.md");
+      expect(stdout).toContain("spec-c/tasks.md");
+    } finally {
+      rmSync(tmpRoot, { recursive: true, force: true });
+    }
+  });
+});

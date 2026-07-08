@@ -1,5 +1,4 @@
 ---
-status: draft
 feature: execution-package-context-control
 layout: tasks
 created: 2026-06-07

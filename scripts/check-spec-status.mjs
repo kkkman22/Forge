@@ -52,22 +52,69 @@ function parseStatus(content) {
   return { status: m ? m[1] : null, hasFrontmatter: true };
 }
 
-/** Recursively collect spec markdown files. */
-function collectSpecFiles(root) {
+/**
+ * Files where a `status:` field is LEGITIMATE (the single source of truth is
+ * requirements.md per spec-lifecycle §2; design.md/tasks.md must NOT carry one).
+ */
+const STATUS_ALLOWED_FILE = "requirements.md";
+
+/**
+ * Collect immediate spec directories (each dir = one spec). Excludes `_archived/`.
+ * A spec dir is any direct child of root containing at least one spec markdown file.
+ */
+function collectSpecDirs(root) {
   const out = [];
   if (!fs.existsSync(root)) return out;
-  function walk(dir) {
-    for (const entry of fs.readdirSync(dir, { withFileTypes: true })) {
-      const full = path.join(dir, entry.name);
-      if (entry.isDirectory()) {
-        walk(full);
-      } else if (SPEC_FILE_NAMES.has(entry.name) && entry.name.endsWith(".md")) {
-        out.push(full);
-      }
+  for (const entry of fs.readdirSync(root, { withFileTypes: true })) {
+    if (!entry.isDirectory()) continue;
+    if (entry.name === "_archived") continue; // excluded from main distribution
+    const dir = path.join(root, entry.name);
+    // Nested specs (e.g. _archived handled above; deeper nesting treated as own dir)
+    const hasSpecFile = fs
+      .readdirSync(dir, { withFileTypes: true })
+      .some((e) => e.isFile() && SPEC_FILE_NAMES.has(e.name));
+    if (hasSpecFile) out.push(dir);
+  }
+  return out;
+}
+
+/**
+ * Resolve a single representative status for a spec dir + detect rogue status
+ * fields in design.md/tasks.md.
+ *
+ * Representative status precedence: requirements.md (source of truth) →
+ * tasks.md → design.md (fallback when requirements has none).
+ * Rogue: design.md/tasks.md carrying a `status:` field (must be reported).
+ */
+function resolveSpecStatus(dir) {
+  const rel = (f) => path.join(dir, f);
+  const read = (f) => (fs.existsSync(rel(f)) ? fs.readFileSync(rel(f), "utf-8") : null);
+  const req = read("requirements.md");
+  const des = read("design.md");
+  const tas = read("tasks.md");
+
+  const rogueFiles = [];
+  // design.md / tasks.md must NOT carry status (only requirements.md may)
+  for (const [name, content] of [["design.md", des], ["tasks.md", tas]]) {
+    if (content === null) continue;
+    const fm = content.match(/^---\r?\n([\s\S]*?)\r?\n---/);
+    if (fm && /^status:\s*\S+/m.test(fm[1])) {
+      rogueFiles.push(`${path.basename(dir)}/${name}`);
     }
   }
-  walk(root);
-  return out;
+
+  let status = null;
+  let hasFrontmatter = false;
+  for (const content of [req, tas, des]) {
+    if (content === null) continue;
+    const parsed = parseStatus(content);
+    if (parsed.hasFrontmatter) hasFrontmatter = true;
+    if (parsed.status !== null) {
+      status = parsed.status;
+      break; // requirements.md wins (first in precedence list)
+    }
+  }
+  return { status, hasFrontmatter, rogueFiles };
 }
 
 function main() {
@@ -80,24 +127,34 @@ function main() {
   const positional = args.filter((a) => !a.startsWith("-"));
   const specsDir = positional[0] ? path.resolve(positional[0]) : DEFAULT_SPECS_DIR;
 
-  const files = collectSpecFiles(specsDir);
+  const dirs = collectSpecDirs(specsDir);
   const distribution = new Map();
   const warnings = [];
   let missingCount = 0;
+  let rogueCount = 0;
 
-  for (const file of files) {
-    const content = fs.readFileSync(file, "utf-8");
-    const { status, hasFrontmatter } = parseStatus(content);
-    const rel = path.relative(specsDir, file);
+  for (const dir of dirs) {
+    const rel = path.relative(specsDir, dir);
+    const { status, hasFrontmatter, rogueFiles } = resolveSpecStatus(dir);
+
+    // Rogue status fields in design.md/tasks.md (REQ-07 single source of truth)
+    for (const rf of rogueFiles) {
+      rogueCount += 1;
+      warnings.push(`${rf}: rogue status field (status only allowed in requirements.md)`);
+    }
 
     if (!hasFrontmatter || status === null) {
       missingCount += 1;
       warnings.push(`${rel}: missing status field`);
       if (wantFix && hasFrontmatter) {
-        const fixed = content.replace(/^---\r?\n/, `---\nstatus: draft\n`);
-        if (fixed !== content) {
-          fs.writeFileSync(file, fixed);
-          console.log(`fixed: ${rel} (backfilled status: draft)`);
+        const reqPath = path.join(dir, "requirements.md");
+        if (fs.existsSync(reqPath)) {
+          const content = fs.readFileSync(reqPath, "utf-8");
+          const fixed = content.replace(/^---\r?\n/, `---\nstatus: draft\n`);
+          if (fixed !== content) {
+            fs.writeFileSync(reqPath, fixed);
+            console.log(`fixed: ${rel}/requirements.md (backfilled status: draft)`);
+          }
         }
       }
     } else {
@@ -108,11 +165,11 @@ function main() {
     }
   }
 
-  // Report distribution
+  // Report distribution (directory-level)
   console.log(`Spec status inventory - ${specsDir}`);
-  console.log(`Scanned ${files.length} spec file(s).`);
-  if (distribution.size === 0 && files.length === 0) {
-    console.log("(no spec files found)");
+  console.log(`Scanned ${dirs.length} spec dir(s).`);
+  if (distribution.size === 0 && dirs.length === 0) {
+    console.log("(no spec dirs found)");
   } else {
     const sorted = [...distribution.entries()].sort((a, b) => b[1] - a[1]);
     for (const [status, count] of sorted) {
@@ -121,6 +178,9 @@ function main() {
   }
   if (missingCount > 0) {
     console.log(`  (missing status): ${missingCount}`);
+  }
+  if (rogueCount > 0) {
+    console.log(`  (rogue status fields): ${rogueCount}`);
   }
 
   if (warnings.length > 0) {

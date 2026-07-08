@@ -1,5 +1,4 @@
 ---
-status: approved
 feature: partial-spec-backlog-remediation
 layout: tasks
 created: 2026-06-07

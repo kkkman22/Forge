@@ -1,6 +1,5 @@
 ---
 feature: plan-pre-flight-check
-status: locked
 date: 2026-06-21
 layout: design
 created: 2026-06-21
