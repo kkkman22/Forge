@@ -1,62 +1,42 @@
 ---
-current_task: "code-slim-0612"
-tier: "full"
-work_nature: "refactor"
+current_task: "zcode-p1-base-integration"
+tier: "light"
+work_nature: "feature"
 task_type: "infra"
-project_phase: "refactor"
-phase: "complete"
-spec: ".forge/specs/code-slim-0612/"
-updated: "2026-06-13"
-current_package: "P3-Wave3"
-completed_tasks: "T1, T2, P0fix, T4, T6"
-review_result: "pass (P2+P3 package-scoped)"
-reviewed_at_commit: "ebb1fc8f"
-next_phase: "none (full sequence done)"
-decision: ".forge/decisions/2026-06-12-code-slim.md"
-adr: "ADR-0008"
-branch: "forge/code-slim-0612"
-hints: "behavior-preservation,refactor-scan,test-gate,backward-compat"
-execution_strategy: "full + 按模块拆子任务（decide/spec 先产出整体清单与优先级，再逐模块 build→review→test）"
+project_phase: "build"
+phase: "in_progress"
+spec: ".forge/specs/zcode-p1-base-integration/"
+updated: "2026-07-09"
+current_task_index: "T4"
+completed_tasks: "spec-locked"
+review_result: "pending"
+next_phase: "build T1-T11 → review → ship"
+branch: "forge/zcode-p1-base-integration"
+hints: "dual-platform-transparent,fail-safe-claude,zcode-schema-whitelist,no-revive-v2-voided"
+execution_strategy: "light (build→review); T4→T5→T6 (R2 chain) + T1→T2→T3 (R1 chain) parallel; T7/T8/T9 verify; T10 evidence; T11 aggregate gate"
 ---
 
 # 项目状态
 
-## 当前任务：code-slim-0612
+## 当前任务：zcode-p1-base-integration
 
-对整个项目做代码精简与重构（等价重构，不改对外行为）。
+Forge→ZCode 适配 P1 基础接入。依据《Forge×ZCode 结合方案》v2 §8 P1。spec 已锁定（6 Requirement / 32 AC / 11 Task）。
 
-### 硬约束（来自用户任务描述）
+### P1 范围
 
-- 现有功能行为**完全不变**
-- 所有测试**继续通过**（`npm run check` = tsc + biome + vitest + readme-metrics）
-- 公开 API / CLI 行为**不变**
-- 仅：移除冗余代码、简化内部实现、清理死代码与重复逻辑
-- 不新增功能，不改变对外行为
+1. R1 工作区配置生成（`/forge init --platform zcode` 生成 `.zcode/config.json` + Stop hook）
+2. R2 hook stdout JSON 平台裁剪（ZCode 下仅白名单 key，Claude 侧不变）
+3. R3 evolved-rules SessionStart 注入验证（回归脚本 + 证据）
+4. R4 `${CLAUDE_*}` 模板变量展开验证（回归脚本 + 证据）
+5. R5 agent 加载验证（24 角色，回归脚本 + 证据）
+6. R6 双平台透明聚合回归（byte-equal + 快照双守）
 
-### 路由决策
+### 硬约束
 
-- Tier: **full**（需求模糊 + 超大范围）
-- work_nature: refactor
-- 执行策略：Full + **按模块拆子任务**
-- Sequence: `decide → spec → plan → build → review → test → ship → learn`（每个模块子任务独立走 build→review→test）
+- 双平台共享源码，改动对 Claude Code 透明
+- 不撤销 v2 结论（不改 bash / 不建 shim / 不复活 12 失败诊断）
+- node 可用，mjs 零改动，`${CLAUDE_PLUGIN_ROOT}` 原生展开
 
-### 范围（项目扫描基线）
+### 下一动作
 
-- src/: 172 个顶层 .ts 文件 + 子目录 ~16K 行（最大模块 mcp/2884、docs-governance/2825、review-comment-bitbucket/1559、error-recovery/1200、review/1049）
-- test/: 626 个测试文件（行为保持的安全网）
-- scripts/: 156 个脚本文件
-- 技术栈: TypeScript / JavaScript / Shell
-
-### 假设（基于实际扫描）
-
-1. 技术栈 TypeScript 主导（src/172 文件 ~16K 行），辅 Shell/JS scripts 156 个
-2. 范围超大，无法单分支单任务完成 → 按模块拆分
-3. 测试保护网充足（626 测试 + `npm run check` 全量门禁），支持等价重构
-4. 棕地成熟项目（v3.4.0）
-
-### 提示标签（下游 skill 读取）
-
-- `behavior-preservation`：每个改动须有测试/行为等价证据
-- `refactor-scan`：先扫描识别死代码/重复/冗余，产出清单再动手
-- `test-gate`：每步以测试全绿为安全网
-- `backward-compat`：公开 API/CLI 签名与行为不变
+T4 平台探测共享判定（R2 基础，T5/T6 依赖它）。

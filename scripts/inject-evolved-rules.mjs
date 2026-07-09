@@ -15,6 +15,7 @@ import { readFileSync, statSync, readdirSync, writeFileSync } from "node:fs";
 import { resolve } from "node:path";
 import { shouldSkipForSubagent } from "./lib/hook-stdin-router.mjs";
 import { getCachePath, migrateOldCache } from "./lib/plugin-data-path.mjs";
+import { pruneHookOutput } from "./lib/zcode-platform.mjs";
 
 const RULES_PATH = ".forge/knowledge/evolved-rules.md";
 const SPEC_LOCK_PATH = ".forge/state/spec-lock";
@@ -205,7 +206,7 @@ function readEvolvedRulesWithCache(cwd) {
       output.hookSpecificOutput.sessionTitle = `Forge: ${specName}`;
     }
 
-    process.stdout.write(JSON.stringify(output));
+    process.stdout.write(JSON.stringify(pruneHookOutput(output, "SessionStart")));
   } catch (err) {
     // Failure path: stderr diagnostic + exit 0
     if (err instanceof Error && err.message) {
