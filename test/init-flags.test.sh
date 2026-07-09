@@ -156,6 +156,78 @@ assert 'grep -q "^pnpm build && pnpm test$" "$TMP/.forge/config.md"' \
   "F7: --ci-command preserves && in code block"
 rm -rf "$TMP"
 
+# --- F8: --platform zcode generates .zcode/config.json (R1 AC2-7) ---
+TMP=$(mk_project)
+cd "$TMP"
+output=$(bash "$INIT_SH" \
+  --non-interactive \
+  --name "zc-proj" \
+  --stack "TypeScript" \
+  --security 1 \
+  --no-ultrareview \
+  --platform zcode \
+  2>&1) || true
+assert '[[ -f "$TMP/.zcode/config.json" ]]' "F8: --platform zcode creates .zcode/config.json"
+assert 'grep -q "\"enabled\": true" "$TMP/.zcode/config.json"' "F8: hooks.enabled is true"
+assert 'grep -q "\"Stop\"" "$TMP/.zcode/config.json"' "F8: Stop event registered"
+assert 'grep -q "CLAUDE_PLUGIN_ROOT" "$TMP/.zcode/config.json"' "F8: command uses CLAUDE_PLUGIN_ROOT (no hardcode)"
+assert 'grep -q "stop-additional-context" "$TMP/.zcode/config.json"' "F8: command points to status-injection script"
+# valid JSON
+assert 'node -e "JSON.parse(require(\"fs\").readFileSync(\"$TMP/.zcode/config.json\",\"utf8\"))" 2>/dev/null' "F8: .zcode/config.json is valid JSON"
+# completion output mentions it
+assert 'echo "$output" | grep -q ".zcode/config.json"' "F8: completion banner lists .zcode/config.json"
+rm -rf "$TMP"
+
+# --- F8b: idempotent — existing .zcode/config.json not overwritten (R1 AC5) ---
+TMP=$(mk_project)
+cd "$TMP"
+mkdir -p "$TMP/.zcode"
+echo '{"existing": true}' > "$TMP/.zcode/config.json"
+output=$(bash "$INIT_SH" \
+  --non-interactive \
+  --name "zc-idem" \
+  --stack "TypeScript" \
+  --security 1 \
+  --no-ultrareview \
+  --platform zcode \
+  2>&1) || true
+assert 'grep -q "\"existing\": true" "$TMP/.zcode/config.json"' "F8b: existing .zcode/config.json preserved (idempotent)"
+assert 'echo "$output" | grep -q "已存在"' "F8b: warns about existing config"
+rm -rf "$TMP"
+
+# --- F8c: no --platform → no .zcode created (R1 AC1, R6.1 transparency) ---
+TMP=$(mk_project)
+cd "$TMP"
+output=$(bash "$INIT_SH" \
+  --non-interactive \
+  --name "no-plat" \
+  --stack "TypeScript" \
+  --security 1 \
+  --no-ultrareview \
+  2>&1) || true
+assert '! [[ -d "$TMP/.zcode" ]]' "F8c: no --platform → no .zcode directory"
+rm -rf "$TMP"
+
+# --- F8d: --platform unknown warns + ignores (non-blocking) ---
+TMP=$(mk_project)
+cd "$TMP"
+output=$(bash "$INIT_SH" \
+  --non-interactive \
+  --name "unk-plat" \
+  --stack "TypeScript" \
+  --security 1 \
+  --no-ultrareview \
+  --platform unknownOS \
+  2>&1) || true
+assert 'echo "$output" | grep -qi "unknown"' "F8d: unknown platform warns"
+assert '! [[ -d "$TMP/.zcode" ]]' "F8d: unknown platform → no .zcode created"
+rm -rf "$TMP"
+
+# --- F8e: --help lists --platform ---
+output=$(bash "$INIT_SH" --help 2>&1)
+assert 'echo "$output" | grep -q "\-\-platform"' "F8e: --help mentions --platform"
+assert 'echo "$output" | grep -q "zcode"' "F8e: --help mentions zcode"
+
 echo ""
 echo "── T-INIT-FLAGS result: $pass passed, $fail failed ──"
 [ $fail -eq 0 ]

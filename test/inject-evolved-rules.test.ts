@@ -188,3 +188,45 @@ describe("inject-evolved-rules.mjs", () => {
     expect(json.hookSpecificOutput.sessionTitle).toBe("Forge: locked-spec");
   });
 });
+
+describe("inject-evolved-rules.mjs — ZCode platform pruning", () => {
+  let tempDir: string;
+
+  afterEach(() => {
+    if (tempDir) {
+      try {
+        rmSync(tempDir, { recursive: true, force: true });
+      } catch {
+        // Best effort
+      }
+    }
+  });
+
+  it("ZCode signal present → output keys ⊆ whitelist (no hookSpecificOutput)", () => {
+    tempDir = createTempDir();
+    writeFileSync(join(tempDir, RULES_FILE), "### R1: Test\n**Content**: do x");
+    const result = runScript(
+      tempDir,
+      JSON.stringify({ session_id: "s1", hook_event_name: "SessionStart" }),
+      { ZCODE_PLUGIN_ROOT: "/x/forge/3.9.0" },
+    );
+    expect(result.exitCode).toBe(0);
+    const json = JSON.parse(result.stdout);
+    expect(Object.keys(json).sort()).toEqual(["additionalContext"]);
+    expect(json).not.toHaveProperty("hookSpecificOutput");
+    expect(json.additionalContext).toContain("do x");
+  });
+
+  it("no ZCode signal (Claude path) → hookSpecificOutput.reloadSkills preserved", () => {
+    tempDir = createTempDir();
+    writeFileSync(join(tempDir, RULES_FILE), "### R1: Test\n**Content**: do x");
+    const result = runScript(
+      tempDir,
+      JSON.stringify({ session_id: "s1", hook_event_name: "SessionStart" }),
+    );
+    expect(result.exitCode).toBe(0);
+    const json = JSON.parse(result.stdout);
+    expect(json.hookSpecificOutput.reloadSkills).toBe(true);
+    expect(json.hookSpecificOutput.hookEventName).toBe("SessionStart");
+  });
+});

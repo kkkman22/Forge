@@ -69,6 +69,7 @@ opt_ci_command=""
 opt_no_ultrareview=0
 opt_bday_cutoff=""
 opt_bday_tz=""
+opt_platform=""
 while [[ $# -gt 0 ]]; do
   case "$1" in
     --pack)
@@ -126,6 +127,16 @@ while [[ $# -gt 0 ]]; do
       if [[ -z "${2:-}" ]]; then echo "❌ --bday-tz requires an IANA zone" >&2; exit 1; fi
       opt_bday_tz="$2"; shift 2
       ;;
+    --platform)
+      # Target platform for workspace-level config generation.
+      # Currently only "zcode" is supported (generates .zcode/config.json).
+      # Unknown values warn + are ignored (non-blocking); absence = Claude Code (default, no-op).
+      if [[ -z "${2:-}" ]]; then echo "❌ --platform requires a value" >&2; exit 1; fi
+      case "$2" in
+        zcode) opt_platform="$2"; shift 2 ;;
+        *) warn "--platform '$2' unknown (supported: zcode); ignoring" >&2; shift 2 ;;
+      esac
+      ;;
     --help|-h)
       echo "Usage: scripts/init.sh [OPTIONS]"
       echo ""
@@ -145,6 +156,9 @@ while [[ $# -gt 0 ]]; do
       echo "  --no-ultrareview  Skip installing .github/workflows/ultrareview.yml."
       echo "  --bday-cutoff <n> PMS only: business-day cutoff hour 0-23 (default 4)."
       echo "  --bday-tz <zone>  PMS only: IANA timezone (default Asia/Shanghai)."
+      echo "  --platform <name> Target platform for workspace-level config."
+      echo "                    Supported: zcode (generates .zcode/config.json with a Stop hook"
+      echo "                    injecting .forge/status.md as compact compensation)."
       echo "  --non-interactive Skip all prompts: use --name/--stack/--security/etc. values"
       echo "                    when given, otherwise defaults. Required for non-TTY runs."
       echo "  --help, -h        Show this help message"
@@ -779,6 +793,52 @@ FAILURESEOF
 success ".forge/ 目录结构创建完成"
 
 # ============================================================================
+# Step Z (conditional, after Step 2/7): ZCode 工作区配置生成（--platform zcode）
+# ============================================================================
+# 仅当 --platform zcode 时执行。生成 .zcode/config.json，注册一条 Stop hook
+# 注入 .forge/status.md 摘要，作为 ZCode 不支持 PreCompact 的最小 compact 补偿。
+# 不传 --platform 时完全跳过（Claude Code 侧零影响）。
+# 复用插件已有的 stop-additional-context.mjs（读 Forge 状态 → additionalContext）。
+if [[ "${opt_platform}" == "zcode" ]]; then
+  info "Step Z (conditional)：生成 ZCode 工作区配置 (.zcode/config.json)"
+
+  zcode_config="${PROJECT_ROOT}/.zcode/config.json"
+
+  if [[ -f "${zcode_config}" ]]; then
+    # Idempotent: 不覆盖已有配置（与 .claude/settings.json 幂等策略一致，见 Step 5）。
+    warn ".zcode/config.json 已存在，跳过（避免覆盖）。如需 Stop 状态注入，请手动合并到 hooks.events.Stop。"
+  else
+    mkdir -p "${PROJECT_ROOT}/.zcode"
+
+    # Stop hook 命令用 fallback chain 解析到插件脚本（与 hooks.json 风格一致）。
+    # ${CLAUDE_PLUGIN_ROOT} 在 ZCode plugin hook 下原生展开（v2 §7.3 实测）。
+    # 2>/dev/null + || true 容错：无 .forge/ 或脚本缺失时静默通过，不阻断会话。
+    cat > "${zcode_config}" <<'ZCODEEOF'
+{
+  "hooks": {
+    "enabled": true,
+    "events": {
+      "Stop": [
+        {
+          "hooks": [
+            {
+              "type": "command",
+              "command": "node \"${CLAUDE_PLUGIN_ROOT:-}/scripts/stop-additional-context.mjs\" 2>/dev/null || node scripts/stop-additional-context.mjs 2>/dev/null || true",
+              "timeout": 5
+            }
+          ]
+        }
+      ]
+    }
+  }
+}
+ZCODEEOF
+
+    success ".zcode/config.json 已生成（Stop 注入 .forge/status.md 摘要，compact 补偿）"
+  fi
+fi
+
+# ============================================================================
 # Step 3：复制 7 个 Subagent 角色文件
 # ============================================================================
 info "Step 3/7：复制 Agent 角色文件到 .claude/agents/"
@@ -1349,6 +1409,9 @@ echo ""
 echo "    📄 .claude/settings.json — Forge Hooks + MCP 配置"
 echo "    📄 CLAUDE.md        — 项目宪法"
 echo "    📄 .forge/config.md — 项目配置"
+if [[ "${opt_platform}" == "zcode" ]]; then
+  echo "    📄 .zcode/config.json — ZCode Stop hook（status.md 注入，compact 补偿）"
+fi
 echo ""
 echo -e "  ${CYAN}═══ 能力最大化检查 ═══${NC}"
 echo ""
