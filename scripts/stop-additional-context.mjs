@@ -14,6 +14,7 @@
 
 import { existsSync, readFileSync, readdirSync } from "node:fs";
 import { join } from "node:path";
+import { pruneHookOutput } from "./lib/zcode-platform.mjs";
 
 // ---------------------------------------------------------------------------
 // Constants
@@ -292,11 +293,20 @@ async function main() {
     const decision = buildStopContext(input, state);
 
     if (decision.shouldEmit && decision.additionalContext) {
-      const output = {
-        hookSpecificOutput: {
+      // Emit additionalContext at top level (ZCode whitelist) AND inside
+      // hookSpecificOutput (Claude Code reads it there). pruneHookOutput drops
+      // hookSpecificOutput on ZCode (non-whitelisted), keeping top-level
+      // additionalContext; on Claude it returns the object unchanged so the
+      // hookSpecificOutput shape is preserved.
+      const output = pruneHookOutput(
+        {
           additionalContext: decision.additionalContext,
+          hookSpecificOutput: {
+            additionalContext: decision.additionalContext,
+          },
         },
-      };
+        "Stop",
+      );
       process.stdout.write(JSON.stringify(output) + "\n");
     }
 

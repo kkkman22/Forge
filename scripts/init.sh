@@ -793,14 +793,14 @@ FAILURESEOF
 success ".forge/ 目录结构创建完成"
 
 # ============================================================================
-# Step Z (conditional): ZCode 工作区配置生成（--platform zcode）
+# Step Z (conditional, after Step 2/7): ZCode 工作区配置生成（--platform zcode）
 # ============================================================================
 # 仅当 --platform zcode 时执行。生成 .zcode/config.json，注册一条 Stop hook
 # 注入 .forge/status.md 摘要，作为 ZCode 不支持 PreCompact 的最小 compact 补偿。
 # 不传 --platform 时完全跳过（Claude Code 侧零影响）。
 # 复用插件已有的 stop-additional-context.mjs（读 Forge 状态 → additionalContext）。
 if [[ "${opt_platform}" == "zcode" ]]; then
-  info "Step Z：生成 ZCode 工作区配置 (.zcode/config.json)"
+  info "Step Z (conditional)：生成 ZCode 工作区配置 (.zcode/config.json)"
 
   zcode_config="${PROJECT_ROOT}/.zcode/config.json"
 

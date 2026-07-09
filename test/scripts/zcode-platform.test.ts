@@ -172,5 +172,14 @@ describe("zcode-platform", () => {
       const { zcodeWhitelist } = await importFresh();
       expect(zcodeWhitelist("PostToolUse")).toContain("updatedToolOutput");
     });
+
+    it("pruneHookOutput with unknown event falls back to universal-only on ZCode", async () => {
+      process.env.ZCODE_PLUGIN_ROOT = "/x/forge/3.9.0";
+      const { pruneHookOutput } = await importFresh();
+      const output = { additionalContext: "ctx", foo: "bar", baz: 1 };
+      const result = pruneHookOutput(output, "TotallyUnknownEvent");
+      expect(Object.keys(result).sort()).toEqual(["additionalContext"]);
+      expect(result.additionalContext).toBe("ctx");
+    });
   });
 });
