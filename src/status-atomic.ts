@@ -25,8 +25,8 @@
  * @public
  */
 
-import { acquireLockSync, releaseLockSync, type AppendOptions } from "./tool-health-writer.js";
 import type { StatusManagerIO } from "./status-manager.js";
+import { type AppendOptions, acquireLockSync, releaseLockSync } from "./tool-health-writer.js";
 
 /** Held-lock registry for exit cleanup. */
 const heldLocks = new Set<string>();

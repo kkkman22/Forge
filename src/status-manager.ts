@@ -12,8 +12,8 @@
 import { basename } from "node:path";
 
 import { extractStringField, parseFrontmatter } from "./frontmatter.js";
-import { isMultiTaskMode, slugify } from "./status-resolver.js";
 import { writeStatusAtomic } from "./status-atomic.js";
+import { isMultiTaskMode, slugify } from "./status-resolver.js";
 import type { AppendOptions } from "./tool-health-writer.js";
 
 // ---------------------------------------------------------------------------

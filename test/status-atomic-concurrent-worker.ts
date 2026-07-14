@@ -6,8 +6,9 @@
  *
  * Args: <forgeRoot> <targetPath> <incrementCount>
  */
+
+import { existsSync, mkdirSync, readFileSync, renameSync, writeFileSync } from "node:fs";
 import { writeStatusAtomic } from "../src/status-atomic.js";
-import { existsSync, readFileSync, mkdirSync, writeFileSync, renameSync } from "node:fs";
 
 const [, , forgeRootArg, targetArg, countArg] = process.argv;
 if (!forgeRootArg || !targetArg || !countArg) {

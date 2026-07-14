@@ -11,11 +11,20 @@
  *  - Exit cleanup: held locks are released via process.on('exit').
  *  - Atomicity: the target file is never left half-written (tmp+rename).
  */
-import { afterEach, beforeEach, describe, expect, it } from "vitest";
+
 import { execFileSync } from "node:child_process";
-import { existsSync, mkdtempSync, rmSync, writeFileSync, readFileSync, renameSync, mkdirSync } from "node:fs";
+import {
+  existsSync,
+  mkdirSync,
+  mkdtempSync,
+  readFileSync,
+  renameSync,
+  rmSync,
+  writeFileSync,
+} from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
+import { afterEach, beforeEach, describe, expect, it } from "vitest";
 
 const REPO_ROOT = join(import.meta.dirname, "..");
 
@@ -61,10 +70,15 @@ describe("writeStatusAtomic: lock-protected atomic write (P1-1)", () => {
     const target = join(forgeRoot, "status.md");
     const { writeStatusAtomic } = await import("../src/status-atomic.js");
     writeStatusAtomic(forgeRoot, target, () => "count: 1\n", realFsIO);
-    writeStatusAtomic(forgeRoot, target, (prev) => {
-      const n = Number.parseInt(prev.match(/count: (\d+)/)?.[1] ?? "0", 10);
-      return `count: ${n + 1}\n`;
-    }, realFsIO);
+    writeStatusAtomic(
+      forgeRoot,
+      target,
+      (prev) => {
+        const n = Number.parseInt(prev.match(/count: (\d+)/)?.[1] ?? "0", 10);
+        return `count: ${n + 1}\n`;
+      },
+      realFsIO,
+    );
     expect(readFileSync(target, "utf-8")).toBe("count: 2\n");
   });
 
