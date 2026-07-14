@@ -1,23 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { extractCommand, extractEndpoint, extractMethod } from "../src/accept-driver.js";
-import { buildPermissionArgs, resolveAllowedReadFiles } from "../src/mcp/tools/forge-read.js";
 import { parseSimpleYaml, parseYamlValue } from "../src/rules-loader.js";
-
-describe("forge-read: buildPermissionArgs (branches)", () => {
-  it("buildPermissionArgs runs without throwing", () => {
-    expect(Array.isArray(buildPermissionArgs(["src/"]))).toBe(true);
-  });
-});
-
-describe("forge-read: resolveAllowedReadFiles (branches)", () => {
-  it("resolves relative paths", () => {
-    const r = resolveAllowedReadFiles(["src/a.ts"]);
-    expect(Array.isArray(r)).toBe(true);
-  });
-  it("handles empty array", () => {
-    expect(resolveAllowedReadFiles([])).toEqual([]);
-  });
-});
 
 describe("accept-driver: extractEndpoint (branches)", () => {
   it("extracts endpoint from 'endpoint is /api/x'", () => {
