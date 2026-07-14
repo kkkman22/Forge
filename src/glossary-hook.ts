@@ -7,7 +7,9 @@ import {
   filterCandidates,
 } from "./glossary-extractor.js";
 import type { DecisionTree, DecisionTreeNode } from "./grill.js";
-import type { SessionData } from "./learn.js";
+// P3-2: import SessionData from the shared leaf module (was from learn.js,
+// which created a learn ↔ glossary-hook back-edge).
+import type { SessionData } from "./session-types.js";
 
 // ---------------------------------------------------------------------------
 // Types
@@ -59,7 +61,7 @@ export type GlossaryCheckInput = {
         kind: "review_findings";
         findings: Array<{ description: string }>;
       }
-    | { kind: "session"; data: import("./learn.js").SessionData }
+    | { kind: "session"; data: import("./session-types.js").SessionData }
     | { kind: "commit_message"; message: string };
   glossary: import("./glossary.js").Glossary;
   now: Date;

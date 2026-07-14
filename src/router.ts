@@ -41,13 +41,15 @@ export type Tier = "light" | "standard" | "full";
 // TaskType (domain dimension) — determines HOW each command behaves
 // ---------------------------------------------------------------------------
 
-export type TaskType = "frontend" | "backend" | "fullstack" | "data" | "infra" | "docs";
+// P3-2: TaskType/ProjectPhase/RouteHint moved to router-types.ts to break the
+// router ↔ {hint-rules,intents} barrel cycle. Re-exported here for backward
+// compatibility; imported for local use below.
+export type { ProjectPhase, RouteHint, TaskType } from "./router-types.js";
+import type { ProjectPhase, RouteHint, TaskType } from "./router-types.js";
 
 // ---------------------------------------------------------------------------
 // ProjectPhase (lifecycle dimension) — determines WHAT to emphasize
 // ---------------------------------------------------------------------------
-
-export type ProjectPhase = "greenfield" | "iteration" | "refactor" | "bugfix";
 
 // ---------------------------------------------------------------------------
 // WorkNature (work-nature dimension) — determines WHICH command sequence
@@ -82,21 +84,6 @@ export interface ProjectContext {
 // ---------------------------------------------------------------------------
 // Outputs
 // ---------------------------------------------------------------------------
-
-/**
- * A behavioral hint injected into the command sequence based on task type
- * and project phase. Downstream skills read these to adjust their behavior.
- */
-export interface RouteHint {
-  /** Which command this hint applies to. */
-  command: string;
-  /** Short machine-readable tag for the hint. */
-  tag: string;
-  /** Human-readable description of the behavioral adjustment. */
-  description: string;
-  /** Origin of this hint. Defaults to 'taskType' when serialized. */
-  source?: "taskType" | "projectPhase" | "workNature" | "intent";
-}
 
 export interface ClassificationResult {
   tier: Tier;

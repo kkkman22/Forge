@@ -12,7 +12,9 @@
  *   - Empty triggers[] or emit_hints[] = error (R3-5 / R3-6)
  */
 
-import type { RouteHint } from "./router.js";
+// P3-2: import shared type from the leaf module (was from router.js, which
+// created a router ↔ intents back-edge).
+import type { RouteHint } from "./router-types.js";
 
 // ---------------------------------------------------------------------------
 // Internal types
