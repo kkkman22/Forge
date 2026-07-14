@@ -71,32 +71,6 @@ export interface ExecutionMetadata {
 /** YAML frontmatter delimiter. */
 const FRONTMATTER_DELIMITER = "---";
 
-/** Field names in the YAML frontmatter that correspond to Loop fields. */
-const LOOP_FIELD_PATTERNS: readonly RegExp[] = [
-  /^mode:\s/,
-  /^loop_run_id:\s/,
-  /^loop_iteration:\s/,
-  /^skill_sequence:\s/,
-  /^work_nature:\s/,
-];
-
-const PACKAGE_FIELD_PATTERNS: readonly RegExp[] = [
-  /^current_package:\s/,
-  /^completed_packages:\s/,
-  /^next_package:\s/,
-  /^package_count:\s/,
-];
-
-const EXECUTION_METADATA_FIELD_PATTERNS: readonly RegExp[] = [
-  /^execution_claude_version:\s/,
-  /^execution_dispatch_mode:\s/,
-  /^execution_diagnostic_mode:\s/,
-  /^execution_tier:\s/,
-  /^execution_branch:\s/,
-  /^execution_forge_flags:\s/,
-  /^execution_recorded_at:\s/,
-];
-
 /** Valid execution mode values. */
 const VALID_MODES: ReadonlySet<string> = new Set(["interactive", "autonomous"]);
 
@@ -113,6 +87,153 @@ const SECRET_KEY_PATTERN = /(KEY|TOKEN|SECRET|PASSWORD|AUTH)/i;
 
 /** Regex matching any PUA field line (pua_ prefix). */
 const PUA_FIELD_PATTERN = /^pua_\w+:\s/;
+
+// ---------------------------------------------------------------------------
+// Generic field codec (P2-4) — one engine drives extract/write/clear for all 4
+// families. Each family declares a FieldSpec table describing yamlKey + kind +
+// optional validator. The 12 family-specific functions become table lookups.
+// ---------------------------------------------------------------------------
+
+/** Encoding kinds supported by the generic codec. */
+type FieldKind = "string" | "number" | "boolean" | "csv";
+
+/** Descriptor for one field in a family codec table. */
+interface FieldSpec<TFields, K extends keyof TFields> {
+  /** Property name in the typed result object. */
+  key: K;
+  /** YAML frontmatter key. */
+  yamlKey: string;
+  /** Encoding/decoding kind. */
+  kind: FieldKind;
+  /** Optional validator: return false to reject a parsed value. */
+  accept?: (raw: string) => boolean;
+}
+
+/** Extract the raw string for a yaml key (quoted or unquoted), or undefined. */
+function extractRaw(frontmatter: string, yamlKey: string): string | undefined {
+  const escaped = yamlKey.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+  const m = frontmatter.match(new RegExp(`^${escaped}:\\s*"?([^"\\n]*)"?\\s*$`, "m"));
+  const v = m?.[1]?.trim();
+  return v ? v : undefined;
+}
+
+/** Encode a value to its YAML line form per kind. */
+function encodeField(yamlKey: string, kind: FieldKind, value: unknown): string {
+  switch (kind) {
+    case "number":
+      return `${yamlKey}: ${value as number}`;
+    case "boolean":
+      return `${yamlKey}: ${value ? "true" : "false"}`;
+    case "csv":
+      return `${yamlKey}: "${(value as string[]).join(",")}"`;
+    default:
+      return `${yamlKey}: "${value as string}"`;
+  }
+}
+
+/** Decode a raw string to the kind's typed value, applying accept() if given. */
+function decodeField(
+  frontmatter: string,
+  spec: FieldSpec<Record<string, unknown>, string>,
+): unknown {
+  const raw = extractRaw(frontmatter, spec.yamlKey);
+  if (raw === undefined) return undefined;
+  switch (spec.kind) {
+    case "number": {
+      if (!/^\d+$/.test(raw)) return undefined;
+      return Number.parseInt(raw, 10);
+    }
+    case "boolean":
+      if (raw === "true") return true;
+      if (raw === "false") return false;
+      return undefined;
+    case "csv":
+      return raw
+        .split(",")
+        .map((s) => s.trim())
+        .filter((s) => s !== "");
+    default:
+      if (spec.accept && !spec.accept(raw)) return undefined;
+      return raw;
+  }
+}
+
+/**
+ * Generic extract: read all fields described by the spec table from
+ * frontmatter into a typed result object.
+ */
+function extractFields<TFields>(
+  statusContent: string,
+  specs: ReadonlyArray<FieldSpec<TFields, keyof TFields>>,
+): TFields {
+  const result = {} as TFields;
+  const parsed = parseFrontmatter(statusContent);
+  if (!parsed) return result;
+  for (const spec of specs) {
+    const decoded = decodeField(
+      parsed.frontmatter,
+      spec as FieldSpec<Record<string, unknown>, string>,
+    );
+    if (decoded !== undefined) {
+      // For csv, also reject empty arrays to match prior behavior (only set if non-empty).
+      if (spec.kind === "csv" && Array.isArray(decoded) && decoded.length === 0) continue;
+      (result as Record<string, unknown>)[spec.key as string] = decoded;
+    }
+  }
+  return result;
+}
+
+/**
+ * Generic write: encode all defined fields from the values object into the
+ * frontmatter (creating frontmatter if absent). Preserves unrelated fields.
+ */
+function writeFields<TFields>(
+  statusContent: string,
+  values: TFields,
+  specs: ReadonlyArray<FieldSpec<TFields, keyof TFields>>,
+): string {
+  const parsed = parseFrontmatter(statusContent);
+  const escapedKey = (k: string): RegExp =>
+    new RegExp(`^${k.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")}:\\s`);
+  const valuesMap = values as unknown as Record<string, unknown>;
+
+  if (!parsed) {
+    const newLines: string[] = [];
+    for (const spec of specs) {
+      const v = valuesMap[spec.key as string];
+      if (v !== undefined) newLines.push(encodeField(spec.yamlKey, spec.kind, v));
+    }
+    if (newLines.length === 0) return statusContent;
+    const trimmed = statusContent.trimStart();
+    return `${FRONTMATTER_DELIMITER}\n${newLines.join("\n")}\n${FRONTMATTER_DELIMITER}\n${trimmed}`;
+  }
+
+  const lines = getFrontmatterLines(parsed.frontmatter);
+  for (const spec of specs) {
+    const v = valuesMap[spec.key as string];
+    if (v !== undefined)
+      setField(lines, escapedKey(spec.yamlKey), encodeField(spec.yamlKey, spec.kind, v));
+  }
+  return buildContent(lines, parsed.body, parsed.leadingWhitespace);
+}
+
+/**
+ * Generic clear: remove all lines matching any of the spec's yamlKeys.
+ */
+function clearFields<TFields>(
+  statusContent: string,
+  specs: ReadonlyArray<FieldSpec<TFields, keyof TFields>>,
+): string {
+  const parsed = parseFrontmatter(statusContent);
+  if (!parsed) return statusContent;
+  const patterns = specs.map(
+    (s) => new RegExp(`^${s.yamlKey.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")}:\\s`),
+  );
+  const lines = getFrontmatterLines(parsed.frontmatter).filter(
+    (line) => !patterns.some((p) => p.test(line)),
+  );
+  return buildContent(lines, parsed.body, parsed.leadingWhitespace);
+}
 
 // ---------------------------------------------------------------------------
 // Internal helpers
@@ -151,13 +272,6 @@ function buildContent(frontmatterLines: string[], body: string, leadingWhitespac
  */
 function getFrontmatterLines(frontmatter: string): string[] {
   return frontmatter.split("\n").filter((line) => line.trim() !== "");
-}
-
-/**
- * Check if a frontmatter line matches any Loop field pattern.
- */
-function isLoopFieldLine(line: string): boolean {
-  return LOOP_FIELD_PATTERNS.some((pattern) => pattern.test(line));
 }
 
 /**
@@ -214,6 +328,49 @@ function sanitizeExecutionMetadata(metadata: ExecutionMetadata): ExecutionMetada
 }
 
 // ---------------------------------------------------------------------------
+// Codec tables (P2-4) — declarative field specs per family
+// ---------------------------------------------------------------------------
+
+const LOOP_CODEC: ReadonlyArray<FieldSpec<LoopStatusFields, keyof LoopStatusFields>> = [
+  { key: "mode", yamlKey: "mode", kind: "string", accept: (v) => VALID_MODES.has(v) },
+  { key: "loopRunId", yamlKey: "loop_run_id", kind: "string" },
+  { key: "loopIteration", yamlKey: "loop_iteration", kind: "number" },
+  { key: "skillSequence", yamlKey: "skill_sequence", kind: "csv" },
+  { key: "workNature", yamlKey: "work_nature", kind: "string" },
+];
+
+const PUA_CODEC: ReadonlyArray<FieldSpec<PuaStatusFields, keyof PuaStatusFields>> = [
+  {
+    key: "puaPressureLevel",
+    yamlKey: "pua_pressure_level",
+    kind: "string",
+    accept: (v) => VALID_PRESSURE_LEVELS.has(v),
+  },
+  { key: "puaMethodology", yamlKey: "pua_methodology", kind: "string" },
+  { key: "puaChainIndex", yamlKey: "pua_chain_index", kind: "number" },
+  { key: "puaFailurePattern", yamlKey: "pua_failure_pattern", kind: "string" },
+];
+
+const PACKAGE_CODEC: ReadonlyArray<FieldSpec<PackageStatusFields, keyof PackageStatusFields>> = [
+  { key: "currentPackage", yamlKey: "current_package", kind: "string" },
+  { key: "completedPackages", yamlKey: "completed_packages", kind: "csv" },
+  { key: "nextPackage", yamlKey: "next_package", kind: "string" },
+  { key: "packageCount", yamlKey: "package_count", kind: "number" },
+];
+
+// ExecutionMetadata has bespoke sanitize/validation on write, so only clear is
+// table-driven; extract/write keep their specialized logic.
+const EXECUTION_CODEC_KEYS: ReadonlyArray<FieldSpec<ExecutionMetadata, keyof ExecutionMetadata>> = [
+  { key: "claude_version", yamlKey: "execution_claude_version", kind: "string" },
+  { key: "dispatch_mode", yamlKey: "execution_dispatch_mode", kind: "string" },
+  { key: "diagnostic_mode", yamlKey: "execution_diagnostic_mode", kind: "boolean" },
+  { key: "tier", yamlKey: "execution_tier", kind: "string" },
+  { key: "branch", yamlKey: "execution_branch", kind: "string" },
+  { key: "forge_flags", yamlKey: "execution_forge_flags", kind: "csv" },
+  { key: "recorded_at", yamlKey: "execution_recorded_at", kind: "string" },
+];
+
+// ---------------------------------------------------------------------------
 // Public API
 // ---------------------------------------------------------------------------
 
@@ -228,59 +385,7 @@ function sanitizeExecutionMetadata(metadata: ExecutionMetadata): ExecutionMetada
  * @returns Extracted Loop status fields.
  */
 export function extractLoopFields(statusContent: string): LoopStatusFields {
-  const result: LoopStatusFields = {};
-
-  const parsed = parseFrontmatter(statusContent);
-  if (!parsed) {
-    return result;
-  }
-
-  // Extract mode
-  const modeMatch = parsed.frontmatter.match(/^mode:\s*"?([^"\n]*)"?\s*$/m);
-  if (modeMatch) {
-    const value = modeMatch[1].trim();
-    if (VALID_MODES.has(value)) {
-      result.mode = value as ExecutionMode;
-    }
-  }
-
-  // Extract loop_run_id
-  const runIdMatch = parsed.frontmatter.match(/^loop_run_id:\s*"?([^"\n]*)"?\s*$/m);
-  if (runIdMatch) {
-    const value = runIdMatch[1].trim();
-    if (value) {
-      result.loopRunId = value;
-    }
-  }
-
-  // Extract loop_iteration
-  const iterMatch = parsed.frontmatter.match(/^loop_iteration:\s*(\d+)\s*$/m);
-  if (iterMatch) {
-    result.loopIteration = Number.parseInt(iterMatch[1], 10);
-  }
-
-  // Extract skill_sequence (comma-separated string → string[])
-  const seqMatch = parsed.frontmatter.match(/^skill_sequence:\s*"?([^"\n]*)"?\s*$/m);
-  if (seqMatch) {
-    const value = seqMatch[1].trim();
-    if (value) {
-      result.skillSequence = value
-        .split(",")
-        .map((s) => s.trim())
-        .filter((s) => s !== "");
-    }
-  }
-
-  // Extract work_nature
-  const workNatureMatch = parsed.frontmatter.match(/^work_nature:\s*"?([^"\n]*)"?\s*$/m);
-  if (workNatureMatch) {
-    const value = workNatureMatch[1].trim();
-    if (value) {
-      result.workNature = value;
-    }
-  }
-
-  return result;
+  return extractFields(statusContent, LOOP_CODEC);
 }
 
 /**
@@ -295,55 +400,7 @@ export function extractLoopFields(statusContent: string): LoopStatusFields {
  * @returns Updated StatusFile content string.
  */
 export function writeLoopFields(statusContent: string, fields: LoopStatusFields): string {
-  const parsed = parseFrontmatter(statusContent);
-
-  if (!parsed) {
-    // No frontmatter — create one with the Loop fields
-    const newLines: string[] = [];
-    if (fields.mode !== undefined) {
-      newLines.push(`mode: "${fields.mode}"`);
-    }
-    if (fields.loopRunId !== undefined) {
-      newLines.push(`loop_run_id: "${fields.loopRunId}"`);
-    }
-    if (fields.loopIteration !== undefined) {
-      newLines.push(`loop_iteration: ${fields.loopIteration}`);
-    }
-    if (fields.skillSequence !== undefined) {
-      newLines.push(`skill_sequence: "${fields.skillSequence.join(",")}"`);
-    }
-    if (fields.workNature !== undefined) {
-      newLines.push(`work_nature: "${fields.workNature}"`);
-    }
-
-    if (newLines.length === 0) {
-      return statusContent;
-    }
-
-    const trimmed = statusContent.trimStart();
-    const fm = newLines.join("\n");
-    return `${FRONTMATTER_DELIMITER}\n${fm}\n${FRONTMATTER_DELIMITER}\n${trimmed}`;
-  }
-
-  const lines = getFrontmatterLines(parsed.frontmatter);
-
-  if (fields.mode !== undefined) {
-    setField(lines, /^mode:\s/, `mode: "${fields.mode}"`);
-  }
-  if (fields.loopRunId !== undefined) {
-    setField(lines, /^loop_run_id:\s/, `loop_run_id: "${fields.loopRunId}"`);
-  }
-  if (fields.loopIteration !== undefined) {
-    setField(lines, /^loop_iteration:\s/, `loop_iteration: ${fields.loopIteration}`);
-  }
-  if (fields.skillSequence !== undefined) {
-    setField(lines, /^skill_sequence:\s/, `skill_sequence: "${fields.skillSequence.join(",")}"`);
-  }
-  if (fields.workNature !== undefined) {
-    setField(lines, /^work_nature:\s/, `work_nature: "${fields.workNature}"`);
-  }
-
-  return buildContent(lines, parsed.body, parsed.leadingWhitespace);
+  return writeFields(statusContent, fields, LOOP_CODEC);
 }
 
 /**
@@ -357,16 +414,7 @@ export function writeLoopFields(statusContent: string, fields: LoopStatusFields)
  * @returns Updated StatusFile content string with Loop fields removed.
  */
 export function clearLoopFields(statusContent: string): string {
-  const parsed = parseFrontmatter(statusContent);
-
-  if (!parsed) {
-    return statusContent;
-  }
-
-  const lines = getFrontmatterLines(parsed.frontmatter);
-  const filtered = lines.filter((line) => !isLoopFieldLine(line));
-
-  return buildContent(filtered, parsed.body, parsed.leadingWhitespace);
+  return clearFields(statusContent, LOOP_CODEC);
 }
 
 // ---------------------------------------------------------------------------
@@ -466,12 +514,7 @@ export function writeExecutionMetadata(statusContent: string, metadata: Executio
 }
 
 export function clearExecutionMetadata(statusContent: string): string {
-  const parsed = parseFrontmatter(statusContent);
-  if (!parsed) return statusContent;
-  const lines = getFrontmatterLines(parsed.frontmatter).filter(
-    (line) => !EXECUTION_METADATA_FIELD_PATTERNS.some((pattern) => pattern.test(line)),
-  );
-  return buildContent(lines, parsed.body, parsed.leadingWhitespace);
+  return clearFields(statusContent, EXECUTION_CODEC_KEYS);
 }
 
 export function collectExecutionMetadataFromEnv(
@@ -541,47 +584,7 @@ const VALID_PRESSURE_LEVELS: ReadonlySet<string> = new Set(["L0", "L1", "L2", "L
  * @returns Extracted PUA status fields.
  */
 export function extractPuaFields(statusContent: string): PuaStatusFields {
-  const result: PuaStatusFields = {};
-
-  const parsed = parseFrontmatter(statusContent);
-  if (!parsed) {
-    return result;
-  }
-
-  // Extract pua_pressure_level
-  const levelMatch = parsed.frontmatter.match(/^pua_pressure_level:\s*"?([^"\n]*)"?\s*$/m);
-  if (levelMatch) {
-    const value = levelMatch[1].trim();
-    if (VALID_PRESSURE_LEVELS.has(value)) {
-      result.puaPressureLevel = value as PressureLevel;
-    }
-  }
-
-  // Extract pua_methodology
-  const methodMatch = parsed.frontmatter.match(/^pua_methodology:\s*"?([^"\n]*)"?\s*$/m);
-  if (methodMatch) {
-    const value = methodMatch[1].trim();
-    if (value) {
-      result.puaMethodology = value;
-    }
-  }
-
-  // Extract pua_chain_index
-  const chainMatch = parsed.frontmatter.match(/^pua_chain_index:\s*(\d+)\s*$/m);
-  if (chainMatch) {
-    result.puaChainIndex = Number.parseInt(chainMatch[1], 10);
-  }
-
-  // Extract pua_failure_pattern
-  const patternMatch = parsed.frontmatter.match(/^pua_failure_pattern:\s*"?([^"\n]*)"?\s*$/m);
-  if (patternMatch) {
-    const value = patternMatch[1].trim();
-    if (value) {
-      result.puaFailurePattern = value;
-    }
-  }
-
-  return result;
+  return extractFields(statusContent, PUA_CODEC);
 }
 
 /**
@@ -599,53 +602,7 @@ export function extractPuaFields(statusContent: string): PuaStatusFields {
  * @returns Updated StatusFile content string.
  */
 export function writePuaFields(statusContent: string, fields: PuaStatusFields): string {
-  const parsed = parseFrontmatter(statusContent);
-
-  if (!parsed) {
-    // No frontmatter — create one with the PUA fields
-    const newLines: string[] = [];
-    if (fields.puaPressureLevel !== undefined) {
-      newLines.push(`pua_pressure_level: "${fields.puaPressureLevel}"`);
-    }
-    if (fields.puaMethodology !== undefined) {
-      newLines.push(`pua_methodology: "${fields.puaMethodology}"`);
-    }
-    if (fields.puaChainIndex !== undefined) {
-      newLines.push(`pua_chain_index: ${fields.puaChainIndex}`);
-    }
-    if (fields.puaFailurePattern !== undefined) {
-      newLines.push(`pua_failure_pattern: "${fields.puaFailurePattern}"`);
-    }
-
-    if (newLines.length === 0) {
-      return statusContent;
-    }
-
-    const trimmed = statusContent.trimStart();
-    const fm = newLines.join("\n");
-    return `${FRONTMATTER_DELIMITER}\n${fm}\n${FRONTMATTER_DELIMITER}\n${trimmed}`;
-  }
-
-  const lines = getFrontmatterLines(parsed.frontmatter);
-
-  if (fields.puaPressureLevel !== undefined) {
-    setField(lines, /^pua_pressure_level:\s/, `pua_pressure_level: "${fields.puaPressureLevel}"`);
-  }
-  if (fields.puaMethodology !== undefined) {
-    setField(lines, /^pua_methodology:\s/, `pua_methodology: "${fields.puaMethodology}"`);
-  }
-  if (fields.puaChainIndex !== undefined) {
-    setField(lines, /^pua_chain_index:\s/, `pua_chain_index: ${fields.puaChainIndex}`);
-  }
-  if (fields.puaFailurePattern !== undefined) {
-    setField(
-      lines,
-      /^pua_failure_pattern:\s/,
-      `pua_failure_pattern: "${fields.puaFailurePattern}"`,
-    );
-  }
-
-  return buildContent(lines, parsed.body, parsed.leadingWhitespace);
+  return writeFields(statusContent, fields, PUA_CODEC);
 }
 
 /**
@@ -661,16 +618,14 @@ export function writePuaFields(statusContent: string, fields: PuaStatusFields): 
  * @returns Updated StatusFile content string with PUA fields removed.
  */
 export function clearPuaFields(statusContent: string): string {
+  // Keep the broad /^pua_\w+:/ clear (not the 4-key codec table) so unknown
+  // pua_* fields are also removed — prior behavior.
   const parsed = parseFrontmatter(statusContent);
-
-  if (!parsed) {
-    return statusContent;
-  }
-
-  const lines = getFrontmatterLines(parsed.frontmatter);
-  const filtered = lines.filter((line) => !PUA_FIELD_PATTERN.test(line));
-
-  return buildContent(filtered, parsed.body, parsed.leadingWhitespace);
+  if (!parsed) return statusContent;
+  const lines = getFrontmatterLines(parsed.frontmatter).filter(
+    (line) => !PUA_FIELD_PATTERN.test(line),
+  );
+  return buildContent(lines, parsed.body, parsed.leadingWhitespace);
 }
 
 // ---------------------------------------------------------------------------
@@ -679,63 +634,15 @@ export function clearPuaFields(statusContent: string): string {
 
 /** Extract package-related fields from StatusFile content. */
 export function extractPackageFields(statusContent: string): PackageStatusFields {
-  const result: PackageStatusFields = {};
-  const parsed = parseFrontmatter(statusContent);
-  if (!parsed) return result;
-
-  const currentMatch = parsed.frontmatter.match(/^current_package:\s*"?([^"\n]*)"?\s*$/m);
-  if (currentMatch?.[1]?.trim()) result.currentPackage = currentMatch[1].trim();
-
-  const completedMatch = parsed.frontmatter.match(/^completed_packages:\s*"?([^"\n]*)"?\s*$/m);
-  if (completedMatch?.[1]?.trim()) {
-    result.completedPackages = completedMatch[1]
-      .split(",")
-      .map((item) => item.trim())
-      .filter((item) => item.length > 0);
-  }
-
-  const nextMatch = parsed.frontmatter.match(/^next_package:\s*"?([^"\n]*)"?\s*$/m);
-  if (nextMatch?.[1]?.trim()) result.nextPackage = nextMatch[1].trim();
-
-  const countMatch = parsed.frontmatter.match(/^package_count:\s*(\d+)\s*$/m);
-  if (countMatch) result.packageCount = Number.parseInt(countMatch[1], 10);
-
-  return result;
+  return extractFields(statusContent, PACKAGE_CODEC);
 }
 
 /** Write package-related fields into StatusFile content. */
 export function writePackageFields(statusContent: string, fields: PackageStatusFields): string {
-  const parsed = parseFrontmatter(statusContent);
-  const lines = parsed ? getFrontmatterLines(parsed.frontmatter) : [];
-  const body = parsed ? parsed.body : statusContent.trimStart();
-  const leadingWhitespace = parsed ? parsed.leadingWhitespace : "";
-
-  if (fields.currentPackage !== undefined) {
-    setField(lines, /^current_package:\s/, `current_package: "${fields.currentPackage}"`);
-  }
-  if (fields.completedPackages !== undefined) {
-    setField(
-      lines,
-      /^completed_packages:\s/,
-      `completed_packages: "${fields.completedPackages.join(",")}"`,
-    );
-  }
-  if (fields.nextPackage !== undefined) {
-    setField(lines, /^next_package:\s/, `next_package: "${fields.nextPackage}"`);
-  }
-  if (fields.packageCount !== undefined) {
-    setField(lines, /^package_count:\s/, `package_count: ${fields.packageCount}`);
-  }
-
-  return buildContent(lines, body, leadingWhitespace);
+  return writeFields(statusContent, fields, PACKAGE_CODEC);
 }
 
 /** Remove package-related fields while preserving other StatusFile fields. */
 export function clearPackageFields(statusContent: string): string {
-  const parsed = parseFrontmatter(statusContent);
-  if (!parsed) return statusContent;
-  const lines = getFrontmatterLines(parsed.frontmatter).filter(
-    (line) => !PACKAGE_FIELD_PATTERNS.some((pattern) => pattern.test(line)),
-  );
-  return buildContent(lines, parsed.body, parsed.leadingWhitespace);
+  return clearFields(statusContent, PACKAGE_CODEC);
 }

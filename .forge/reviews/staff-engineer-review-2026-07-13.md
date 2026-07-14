@@ -208,4 +208,4 @@ node "${CLAUDE_PLUGIN_ROOT:-}/scripts/X.mjs" || node scripts/X.mjs || node forge
 
 - token 公式统一(最高杠杆)已落地。
 - ~~frontmatter 四套解析器收口~~ → **✅ 已完成**。5 个共享同一关注点的解析器(status-file-ext/execution-mode/spec-parser/spec-bugfix/spec-bundle-io)合并到权威 `frontmatter.ts` + 适配器 `parseFrontmatterPreservingLeading` + 共享 helper `extractSpecFrontmatterYaml`/`extractSpecField`。3 个不同域解析器(docs-governance Zod / glossary map / review yaml)确认为不同关注点,保留。192 测试绿。
-- status 4-family(Loop/Execution/Pua/Package)codec 收敛:**延迟**。各 family 字段编码不同(带引号串/数字/逗号串),generic codec 收益纯整洁性、回归风险高(12 测试文件);已被点名的"自己的 parseFrontmatter"已随 frontmatter 收口移除,故剩余重复不阻塞。
+- ~~status 4-family(Loop/Execution/Pua/Package)codec 收敛~~ → **✅ 已完成**。generic codec 引擎(extractFields/writeFields/clearFields 按 FieldSpec 表驱动)替换 12 个 extract/write/clear 函数的重复体;Loop/Pua/Package 全表驱动,Execution 写仍保留 bespoke sanitize(读 + clear 表驱动)。删除 3 个冗余 FIELD_PATTERNS 常量 + isLoopFieldLine。导出签名不变,390+ 测试绿。
