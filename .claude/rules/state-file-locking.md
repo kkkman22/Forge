@@ -19,27 +19,35 @@ Append-only files do NOT need locking:
 
 ## Lock Mechanism
 
-When modifying protected state files:
+Protected `.forge/` state files are written exclusively through
+`writeStatusAtomic(forgeRoot, targetPath, transformFn, io)` in
+`src/status-atomic.ts`. It reuses the proven lock primitive from
+`src/tool-health-writer.ts` (`acquireLockSync` / `releaseLockSync`). Do **not**
+hand-roll a second locking scheme — there is exactly one real implementation.
 
-1. **Lock file**: {target_file}.lock containing {PID}:{timestamp}
-2. **Acquire**: Attempt exclusive creation (O_CREAT | O_EXCL | O_WRONLY). If exists (EEXIST), check staleness (mtime > 10s → safe break).
-3. **Retry**: Up to 10 times, 100ms interval. Handle: EPERM, EBUSY, EAGAIN, EINTR, EIO, ENOENT, ESTALE.
-4. **Timeout**: After 1s, log warning and proceed without lock (fail-open).
-5. **Release**: Delete lock file on completion, remove from held-locks registry.
-6. **Cleanup**: process.on('exit') cleans all held locks (even process.exit(1) fires this — handler must be synchronous).
+The full RMW cycle is:
+  `acquireLockSync(<target>.lock)` → `io.read(<target>)` → `transformFn(prev)` →
+  `io.write(<target>.tmp, next)` → `io.move(<tmp>, <target>)` →
+  `releaseLockSync(<target>.lock)`
 
-## Read-Modify-Write Atomicity
-
-**Iron Law**: Never use read-then-write without holding the lock across the entire cycle.
-
-Correct:
-  lock → read → transform → write → unlock
-
-Wrong:
-  read → [gap] → write  ← lost-update race condition possible
-
-All state file updates must use the readModifyWrite pattern:
-  acquireLock → readFileSync → transformFn → writeFileSync → releaseLock
+Constants (real implementation — there is no separate config):
+1. **Lock file**: `<target_file>.lock` containing the holder PID.
+2. **Acquire**: `openSync(O_CREAT | O_EXCL | O_WRONLY)`. On `EEXIST`, probe the
+   recorded holder PID via `process.kill(pid, 0)` — only steal if the PID is
+   dead AND the lock is older than the stale threshold (fail-safe, not
+   fail-open).
+3. **Spin**: jittered sleep (base 5ms, jittered up to 2×) until won or the
+   deadline expires.
+4. **Timeout**: 5s total deadline. On expiry, throw
+   `ToolHealthLockTimeoutError` (fail-closed — a status write that cannot get a
+   lock fails loudly rather than racing).
+5. **Stale threshold**: 30s. A lock older than 30s whose holder PID is dead is
+   force-removed.
+6. **Atomicity**: content lands in `<target>.tmp` then `rename`d onto the
+   target (POSIX atomic rename) — readers never observe a half-written file.
+7. **Cleanup**: `process.on('exit' | 'SIGINT' | 'SIGTERM')` releases all held
+   locks via the `heldLocks` registry in `status-atomic.ts` (even
+   `process.exit(1)` fires `exit`).
 
 ## Knuth Invariant — Protect Existing Content
 
