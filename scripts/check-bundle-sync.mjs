@@ -240,28 +240,24 @@ function checkPacksIntegrity() {
 const PARITY_ASSERTIONS = [
   {
     mjs: "scripts/compact-inject.mjs",
-    ts: "src/checkpoint/read-budgeted.ts",
+    ts: "src/token-estimate.ts",
     checks: [
       {
-        name: "token formula CHARS_PER_TOKEN",
-        // mjs: Math.ceil(text.length / 4) ; ts: const CHARS_PER_TOKEN = 4
+        name: "token formula LATIN_CHARS_PER_TOKEN",
+        // mjs: Math.ceil(text.length / 4) — Latin baseline (compact-inject is a
+        //   self-contained hook, cannot CJK-weight without dist; uses the Latin
+        //   ratio as the conservative base).
+        // ts:  const LATIN_CHARS_PER_TOKEN = 4 — the canonical Latin ratio.
+        // These must match so the hook's rough size hint agrees with the
+        // canonical estimator's Latin component.
         extractMjs: (t) => {
           const m = t.match(/Math\.ceil\(\s*text\.length\s*\/\s*(\d+)\s*\)/);
           return m ? `/${m[1]}` : null;
         },
         extractTs: (t) => {
-          const m = t.match(/CHARS_PER_TOKEN\s*=\s*(\d+)/);
+          const m = t.match(/LATIN_CHARS_PER_TOKEN\s*=\s*(\d+)/);
           return m ? `/${m[1]}` : null;
         },
-      },
-      {
-        name: "default budget BUDGET_TOKENS",
-        extractMjs: (t) => {
-          const m = t.match(/BUDGET_TOKENS\s*=\s*Number\.parseInt\([^,]+,\s*10\)/);
-          const d = t.match(/process\.argv\[\d+\]\s*\?\?\s*"(\d+)"/);
-          return m && d ? d[1] : null;
-        },
-        extractTs: () => null, // no default in ts; skip (mjs-only default)
       },
     ],
   },

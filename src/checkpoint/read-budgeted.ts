@@ -28,8 +28,12 @@ export interface BudgetedReadResult {
 // Token estimation
 // ---------------------------------------------------------------------------
 
-/** Chars-per-token heuristic for mixed CJK + ASCII. Conservative (over-estimates). */
-const CHARS_PER_TOKEN = 4;
+// P2-4: token-estimate.ts is the single source of truth for token counting.
+// Previously this module used a local `length/4` formula that diverged from
+// token-estimate.ts's CJK-weighted estimate by up to 2.67× for Chinese
+// content — causing CJK checkpoints to under-count and miss truncation
+// thresholds. Now both share one CJK-aware implementation.
+import { tokenEstimate } from "../token-estimate.js";
 
 /** Safety margin applied to partial-body truncation (leave headroom vs exact budget). */
 const TRUNCATION_SAFETY_MARGIN = 0.95;
@@ -38,15 +42,11 @@ const TRUNCATION_SAFETY_MARGIN = 0.95;
 const MIN_PARTIAL_BODY_TOKENS = 20;
 
 /**
- * Rough token estimate: ~4 chars per token for mixed CJK + ASCII.
- * Conservative — over-estimation is the safe direction here (truncates sooner
- * → less risk of exceeding the real budget). NOTE: this is a standalone
- * heuristic local to this module; it does not import src/loop/token-estimate
- * (which serves a different consumer). Keep them aligned by convention.
+ * Token estimate delegating to the canonical {@link tokenEstimate} (CJK-aware).
+ * Kept as a named export for backward compatibility with existing callers.
  */
 export function estimateTokens(text: string): number {
-  if (!text) return 0;
-  return Math.ceil(text.length / CHARS_PER_TOKEN);
+  return tokenEstimate(text);
 }
 
 // ---------------------------------------------------------------------------

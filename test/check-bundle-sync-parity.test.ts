@@ -23,26 +23,26 @@ function extractMjsTokenDivisor(text: string): string | null {
   return m ? `/${m[1]}` : null;
 }
 
-/** Extract the CHARS_PER_TOKEN constant from read-budgeted.ts. */
+/** Extract the LATIN_CHARS_PER_TOKEN constant from token-estimate.ts. */
 function extractTsTokenDivisor(text: string): string | null {
-  const m = text.match(/CHARS_PER_TOKEN\s*=\s*(\d+)/);
+  const m = text.match(/LATIN_CHARS_PER_TOKEN\s*=\s*(\d+)/);
   return m ? `/${m[1]}` : null;
 }
 
 describe("check-bundle-sync Layer 4: src↔scripts parity (P1-3)", () => {
-  it("compact-inject.mjs token formula matches read-budgeted.ts CHARS_PER_TOKEN", () => {
+  it("compact-inject.mjs token formula matches token-estimate.ts LATIN_CHARS_PER_TOKEN", () => {
     const mjs = readFileSync(
       resolve(REPO_ROOT, "scripts/compact-inject.mjs"),
       "utf-8",
     );
     const ts = readFileSync(
-      resolve(REPO_ROOT, "src/checkpoint/read-budgeted.ts"),
+      resolve(REPO_ROOT, "src/token-estimate.ts"),
       "utf-8",
     );
     const mjsVal = extractMjsTokenDivisor(mjs);
     const tsVal = extractTsTokenDivisor(ts);
     expect(mjsVal, "compact-inject.mjs must use Math.ceil(text.length / N)").not.toBeNull();
-    expect(tsVal, "read-budgeted.ts must define CHARS_PER_TOKEN = N").not.toBeNull();
+    expect(tsVal, "token-estimate.ts must define LATIN_CHARS_PER_TOKEN = N").not.toBeNull();
     expect(mjsVal).toBe(tsVal);
   });
 
@@ -76,5 +76,22 @@ describe("check-bundle-sync Layer 4: src↔scripts parity (P1-3)", () => {
         `${file} should import from ../dist/src/ (P1-3 thin-shell)`,
       ).toBe(true);
     }
+  });
+
+  it("P2-4: read-budgeted.ts delegates to token-estimate.ts (single token source)", () => {
+    // The local CHARS_PER_TOKEN / length/4 formula was removed; estimateTokens
+    // now delegates to the canonical CJK-aware tokenEstimate.
+    const ts = readFileSync(
+      resolve(REPO_ROOT, "src/checkpoint/read-budgeted.ts"),
+      "utf-8",
+    );
+    expect(
+      ts.includes('from "../token-estimate.js"'),
+      "read-budgeted.ts must import tokenEstimate from token-estimate.ts",
+    ).toBe(true);
+    expect(
+      ts.includes("const CHARS_PER_TOKEN"),
+      "read-budgeted.ts must not define a local CHARS_PER_TOKEN (P2-4 unified)",
+    ).toBe(false);
   });
 });
