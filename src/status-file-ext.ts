@@ -11,6 +11,9 @@
 
 import type { ExecutionMode } from "./execution-mode.js";
 import type { PressureLevel } from "./pua-engine.js";
+// P2-4: delegate frontmatter parsing to the authoritative module + adapter
+// (was a private character-identical clone of frontmatter.ts).
+import { parseFrontmatterPreservingLeading } from "./frontmatter.js";
 
 // ---------------------------------------------------------------------------
 // Types
@@ -119,33 +122,16 @@ const PUA_FIELD_PATTERN = /^pua_\w+:\s/;
  * Parse YAML frontmatter from StatusFile content.
  * Returns the frontmatter block (without delimiters) and the body after it.
  * Returns null if no valid frontmatter is found.
+ *
+ * P2-4: delegates to the authoritative `parseFrontmatterPreservingLeading` in
+ * frontmatter.ts (was a private clone).
  */
 function parseFrontmatter(content: string): {
   frontmatter: string;
   body: string;
   leadingWhitespace: string;
 } | null {
-  const trimmed = content.trimStart();
-  const leadingWhitespace = content.slice(0, content.length - trimmed.length);
-
-  if (!trimmed.startsWith(FRONTMATTER_DELIMITER)) {
-    return null;
-  }
-
-  const afterFirst = trimmed.slice(FRONTMATTER_DELIMITER.length);
-  const closingIndex = afterFirst.indexOf(`\n${FRONTMATTER_DELIMITER}`);
-  if (closingIndex === -1) {
-    return null;
-  }
-
-  const frontmatter = afterFirst.slice(0, closingIndex);
-  const afterClosing = afterFirst.slice(closingIndex + 1 + FRONTMATTER_DELIMITER.length);
-
-  // Body starts after the closing delimiter line
-  const bodyStart = afterClosing.indexOf("\n");
-  const body = bodyStart === -1 ? "" : afterClosing.slice(bodyStart + 1);
-
-  return { frontmatter, body, leadingWhitespace };
+  return parseFrontmatterPreservingLeading(content);
 }
 
 /**
