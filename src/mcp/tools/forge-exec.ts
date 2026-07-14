@@ -176,6 +176,56 @@ export function isCommandAllowed(command: string): boolean {
 }
 
 // ---------------------------------------------------------------------------
+// Git-argument denylist (P2-1)
+// ---------------------------------------------------------------------------
+//
+// `forge_git` interpolates a caller-controlled `args` string into git
+// subcommands (diff / log / status). Shell-metachar detection catches
+// chaining/substitution, but several git flags enable arbitrary file
+// read/write or code execution without any shell operator and slip past the
+// metachar guard:
+//   --no-index <a> <b>   dumps arbitrary files (no git repo needed)
+//   --output <path>      writes git output to an arbitrary path
+//   -O / --output-indicator  alias forms of --output
+//   --ext-diff           invokes an external diff driver (config-controlled RCE)
+//   -c key=val           injects git config (core.pager etc.) — safe only when
+//                        placed before the subcommand; `git log -c ...` is a
+//                        no-op for config, but block defensively.
+//
+// forge_exec's allowlist already blocks `--output` on its own git branch
+// (line ~172); this shared validator extends the same protection to the
+// forge_git `args` path, which bypasses isCommandAllowed entirely.
+
+const BLOCKED_GIT_FLAGS: readonly string[] = [
+  "--no-index",
+  "--output",
+  "--output-indicator",
+  "--ext-diff",
+  "-c",
+  "-O",
+];
+
+/**
+ * Reject git arguments that enable arbitrary read/write/execution even though
+ * they contain no shell metacharacter. Returns a human-readable rejection
+ * reason, or null if the args pass the denylist.
+ *
+ * Exported so forge_git and forge_exec share one source of truth for git-arg
+ * safety.
+ * @public
+ */
+export function validateGitArgs(args: string): string | null {
+  const tokens = args.trim().split(/\s+/);
+  for (const tok of tokens) {
+    const bare = tok.startsWith("--") ? tok.split("=")[0] : tok;
+    if (BLOCKED_GIT_FLAGS.includes(bare) || BLOCKED_GIT_FLAGS.includes(tok)) {
+      return `git argument denied (file read/write / config injection vector): ${tok}`;
+    }
+  }
+  return null;
+}
+
+// ---------------------------------------------------------------------------
 // Shell metachar detection (defense-in-depth)
 // ---------------------------------------------------------------------------
 
