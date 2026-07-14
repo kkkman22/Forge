@@ -152,7 +152,7 @@ function extractSpecCoverage(
   planText: string,
 ): { requirement: string; hasCoveringTask: boolean }[] {
   const rows: { requirement: string; hasCoveringTask: boolean }[] = [];
-  const tableRe = /^\|\s*(Requirement[^|]*|需求[^|]*)\s*\|([^|]*)\|/gmu;
+  const _tableRe = /^\|\s*(Requirement[^|]*|需求[^|]*)\s*\|([^|]*)\|/gmu;
   let inCoverageTable = false;
   for (const line of planText.split("\n")) {
     if (/^##.*Spec Coverage/i.test(line) || /^##.*需求覆盖/i.test(line)) {

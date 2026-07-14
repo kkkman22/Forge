@@ -90,7 +90,7 @@ describe("T6: Reservation repository + Application Service (REQ-05/06)", () => {
       const result = await service.confirmReservation("res-1", { paymentCaptured: true });
       expect(result.events.some((e) => e.type === "ReservationConfirmed")).toBe(true);
       // State persisted.
-      expect((await service["repo"].findById("res-1"))?.state).toBe("Confirmed");
+      expect((await service.repo.findById("res-1"))?.state).toBe("Confirmed");
     });
 
     it("findConfirmed queries confirmed reservations", async () => {
@@ -108,7 +108,7 @@ describe("T6: Reservation repository + Application Service (REQ-05/06)", () => {
         checkOutDate: new Date("2026-07-03"),
       });
       await service.confirmReservation("res-1", { paymentCaptured: true });
-      const confirmed = await service["repo"].findConfirmed();
+      const confirmed = await service.repo.findConfirmed();
       expect(confirmed.map((r) => r.id)).toEqual(["res-1"]);
     });
   });

@@ -1,5 +1,9 @@
 import * as fs from "node:fs";
 import * as path from "node:path";
+// P3-5: redact secrets from error messages before persisting to
+// .forge/findings/. The Bitbucket client may surface token-bearing error
+// text; without redaction it lands on disk in plaintext.
+import { redactSecrets } from "../secret-redactor.js";
 import type { ToolFailure } from "./types.js";
 
 export async function recordPartialFailures(
@@ -23,7 +27,9 @@ export async function recordPartialFailures(
     await fs.promises.mkdir(findingsDir, { recursive: true });
 
     for (const failure of failures) {
-      const entry = `## Tool Failure\n- finding_hash: ${failure.finding_hash}\n- tool_name: ${failure.tool_name}\n- error_message: ${failure.error_message}\n- timestamp: ${new Date(failure.timestamp).toISOString()}\n\n`;
+      // P3-5: redact before persisting — error_message may carry tokens.
+      const safeError = redactSecrets(failure.error_message);
+      const entry = `## Tool Failure\n- finding_hash: ${failure.finding_hash}\n- tool_name: ${failure.tool_name}\n- error_message: ${safeError}\n- timestamp: ${new Date(failure.timestamp).toISOString()}\n\n`;
       await fs.promises.appendFile(errorFilePath, entry, "utf-8");
     }
   } catch (e) {

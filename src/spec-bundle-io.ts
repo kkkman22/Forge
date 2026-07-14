@@ -19,7 +19,10 @@ import type {
   TasksSeedDocument,
 } from "./spec-bundle.js";
 import { specDocumentToBundle } from "./spec-bundle.js";
+// P2-4: shared spec-frontmatter helpers (was inlined regex here).
 import {
+  extractSpecField,
+  extractSpecFrontmatterYaml,
   parseDesignMarkdown,
   parseRequirementsMarkdown,
   parseTasksMarkdown,
@@ -36,12 +39,13 @@ import { pathReadable } from "./utils/fs.js";
 // ---------------------------------------------------------------------------
 
 export function parseLegacySpec(text: string): SpecDocument {
-  const fmMatch = text.match(/^---\n([\s\S]*?)\n---/);
-  const fm: SpecFrontmatter = fmMatch
+  // P2-4: delegate delimiter split + field extraction to shared helpers.
+  const yaml = extractSpecFrontmatterYaml(text);
+  const fm: SpecFrontmatter = yaml
     ? {
-        feature: fmMatch[1].match(/feature:\s*(.+)/)?.[1]?.trim() ?? "unknown",
-        status: (fmMatch[1].match(/status:\s*(.+)/)?.[1]?.trim() as "draft" | "locked") ?? "draft",
-        date: fmMatch[1].match(/date:\s*(.+)/)?.[1]?.trim() ?? "",
+        feature: extractSpecField(yaml, "feature") ?? "unknown",
+        status: (extractSpecField(yaml, "status") as "draft" | "locked") ?? "draft",
+        date: extractSpecField(yaml, "date") ?? "",
       }
     : { feature: "unknown", status: "draft", date: "" };
 

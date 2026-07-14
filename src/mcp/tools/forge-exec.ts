@@ -125,6 +125,34 @@ const ALLOWED_GIT_SUBCOMMANDS: ReadonlySet<string> = new Set([
   "ls-tree",
 ]);
 
+/**
+ * Flags that cause a runner binary (vitest/npx/biome) to load and execute an
+ * attacker-controlled module — defeating the "readonly" promise of the
+ * allowlist. P2-2: the prefix-match branches conceded arbitrary trailing
+ * args; `vitest run --config /tmp/x.mjs` loads x.mjs as a module and runs its
+ * top-level code → RCE.
+ *
+ * Matched as bare flag (== / startsWith "--flag=") so both `--config x` and
+ * `--config=x` forms are rejected.
+ */
+const BLOCKED_RUNNER_FLAGS: ReadonlySet<string> = new Set([
+  "--config",
+  "-c",
+  "--loader",
+  "--project",
+  "--config-path",
+  "--extends",
+]);
+
+function hasBlockedRunnerFlag(parts: string[]): boolean {
+  return parts.some((p) => {
+    if (p.startsWith("--") && p.includes("=")) {
+      return BLOCKED_RUNNER_FLAGS.has(p.split("=")[0]);
+    }
+    return BLOCKED_RUNNER_FLAGS.has(p);
+  });
+}
+
 function normalizeCommand(command: string): string {
   return command.trim().replace(/\s+/g, " ");
 }
@@ -150,11 +178,16 @@ export function isCommandAllowed(command: string): boolean {
   }
 
   if (bin === "npx") {
-    return parts.length >= 3 && parts[1] === "vitest" && parts[2] === "run";
+    return (
+      parts.length >= 3 &&
+      parts[1] === "vitest" &&
+      parts[2] === "run" &&
+      !hasBlockedRunnerFlag(parts)
+    );
   }
 
   if (bin === "vitest") {
-    return parts.length >= 2 && parts[1] === "run";
+    return parts.length >= 2 && parts[1] === "run" && !hasBlockedRunnerFlag(parts);
   }
 
   if (bin === "tsc") {
@@ -162,7 +195,12 @@ export function isCommandAllowed(command: string): boolean {
   }
 
   if (bin === "biome") {
-    return parts.length >= 2 && parts[1] === "check" && !parts.includes("--write");
+    return (
+      parts.length >= 2 &&
+      parts[1] === "check" &&
+      !parts.includes("--write") &&
+      !hasBlockedRunnerFlag(parts)
+    );
   }
 
   if (bin === "git") {
@@ -173,6 +211,56 @@ export function isCommandAllowed(command: string): boolean {
   }
 
   return false;
+}
+
+// ---------------------------------------------------------------------------
+// Git-argument denylist (P2-1)
+// ---------------------------------------------------------------------------
+//
+// `forge_git` interpolates a caller-controlled `args` string into git
+// subcommands (diff / log / status). Shell-metachar detection catches
+// chaining/substitution, but several git flags enable arbitrary file
+// read/write or code execution without any shell operator and slip past the
+// metachar guard:
+//   --no-index <a> <b>   dumps arbitrary files (no git repo needed)
+//   --output <path>      writes git output to an arbitrary path
+//   -O / --output-indicator  alias forms of --output
+//   --ext-diff           invokes an external diff driver (config-controlled RCE)
+//   -c key=val           injects git config (core.pager etc.) — safe only when
+//                        placed before the subcommand; `git log -c ...` is a
+//                        no-op for config, but block defensively.
+//
+// forge_exec's allowlist already blocks `--output` on its own git branch
+// (line ~172); this shared validator extends the same protection to the
+// forge_git `args` path, which bypasses isCommandAllowed entirely.
+
+const BLOCKED_GIT_FLAGS: readonly string[] = [
+  "--no-index",
+  "--output",
+  "--output-indicator",
+  "--ext-diff",
+  "-c",
+  "-O",
+];
+
+/**
+ * Reject git arguments that enable arbitrary read/write/execution even though
+ * they contain no shell metacharacter. Returns a human-readable rejection
+ * reason, or null if the args pass the denylist.
+ *
+ * Exported so forge_git and forge_exec share one source of truth for git-arg
+ * safety.
+ * @public
+ */
+export function validateGitArgs(args: string): string | null {
+  const tokens = args.trim().split(/\s+/);
+  for (const tok of tokens) {
+    const bare = tok.startsWith("--") ? tok.split("=")[0] : tok;
+    if (BLOCKED_GIT_FLAGS.includes(bare) || BLOCKED_GIT_FLAGS.includes(tok)) {
+      return `git argument denied (file read/write / config injection vector): ${tok}`;
+    }
+  }
+  return null;
 }
 
 // ---------------------------------------------------------------------------

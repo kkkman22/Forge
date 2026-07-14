@@ -21,6 +21,24 @@ export interface ParsedFrontmatter {
   body: string;
 }
 
+/**
+ * Parsed frontmatter that additionally captures the leading whitespace trimmed
+ * off the start, so callers can round-trip-preserve the original prefix.
+ *
+ * P2-4: this shape is what status-file-ext.ts and execution-mode.ts previously
+ * each maintained as a private clone. Consolidated here as the single adapter
+ * over {@link parseFrontmatter}.
+ * @public
+ */
+export interface ParsedFrontmatterWithLeading {
+  /** Raw frontmatter text between delimiters (same as {@link ParsedFrontmatter.raw}). */
+  frontmatter: string;
+  /** Body content after the closing delimiter. */
+  body: string;
+  /** Leading whitespace that was trimmed from the content start. */
+  leadingWhitespace: string;
+}
+
 // ---------------------------------------------------------------------------
 // Constants
 // ---------------------------------------------------------------------------
@@ -89,6 +107,30 @@ export function parseFrontmatter(content: string): ParsedFrontmatter | null {
   const body = bodyStart === -1 ? "" : afterClosing.slice(bodyStart + 1);
 
   return { raw, body };
+}
+
+/**
+ * Parse frontmatter while preserving the leading whitespace of the original
+ * content (so callers that rewrite the file can re-prepend it exactly).
+ *
+ * Returns `{ frontmatter, body, leadingWhitespace } | null`. This is the
+ * consolidated adapter replacing the private clones in status-file-ext.ts and
+ * execution-mode.ts (P2-4). `frontmatter` here is the raw text between
+ * delimiters (same value as {@link ParsedFrontmatter.raw}, named to match the
+ * legacy callers' field).
+ * @public
+ */
+export function parseFrontmatterPreservingLeading(
+  content: string,
+): ParsedFrontmatterWithLeading | null {
+  const leadingWhitespace = content.slice(0, content.length - content.trimStart().length);
+  const parsed = parseFrontmatter(content);
+  if (parsed === null) return null;
+  return {
+    frontmatter: parsed.raw,
+    body: parsed.body,
+    leadingWhitespace,
+  };
 }
 
 /**

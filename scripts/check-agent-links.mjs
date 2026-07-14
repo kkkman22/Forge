@@ -21,13 +21,17 @@
  */
 
 import { execSync } from "node:child_process";
-import { lstatSync, readlinkSync, readdirSync, existsSync } from "node:fs";
-import { join, dirname, resolve } from "node:path";
+import { existsSync, readdirSync } from "node:fs";
+import { join, resolve } from "node:path";
+
+// P1-3: thin shell. The validation logic (isSymlink / resolveSymlinkTarget /
+// validateAgentLinks) lives in src/agent-links.ts (tested). This CLI imports
+// the compiled dist so there is one implementation.
+import { validateAgentLinks } from "../dist/src/agent-links.js";
 
 const ROOT = resolve(import.meta.dirname, "..");
 const CLAUDE_AGENTS_DIR = join(ROOT, ".claude", "agents");
 const AGENTS_DIR = join(ROOT, "agents");
-const EXPECTED_PREFIX = "../../agents/";
 
 // ── Logging ──────────────────────────────────────────────────────────
 function log(msg) {
@@ -56,67 +60,12 @@ function checkSkip() {
 }
 
 // ── Validation ───────────────────────────────────────────────────────
-function isSymlink(p) {
-  try {
-    return lstatSync(p).isSymbolicLink();
-  } catch {
-    return false;
-  }
-}
-
-function readLink(p) {
-  try {
-    return readlinkSync(p);
-  } catch {
-    return null;
-  }
-}
-
 function validate() {
   if (!existsSync(CLAUDE_AGENTS_DIR)) {
     logError(`✗ .claude/agents/ 不存在: ${CLAUDE_AGENTS_DIR}`);
     return [{ file: ".claude/agents/", code: "DIR_MISSING", message: "目录不存在" }];
   }
-
-  const files = readdirSync(CLAUDE_AGENTS_DIR)
-    .filter((f) => f.endsWith(".md") && f !== "README.md")
-    .sort();
-
-  const issues = [];
-  for (const file of files) {
-    const fullPath = join(CLAUDE_AGENTS_DIR, file);
-    const expectedTarget = `${EXPECTED_PREFIX}${file}`;
-
-    if (!isSymlink(fullPath)) {
-      issues.push({
-        file,
-        code: "NOT_SYMLINK",
-        message: `应为 symlink,实际是普通文件 — 改 agents/ 后运行: rm .claude/agents/${file} && ln -s ${expectedTarget} .claude/agents/${file}`,
-      });
-      continue;
-    }
-
-    const target = readLink(fullPath);
-    if (target !== expectedTarget) {
-      issues.push({
-        file,
-        code: "WRONG_TARGET",
-        message: `symlink 目标错误: 期望 ${expectedTarget}, 实际 ${target}`,
-      });
-      continue;
-    }
-
-    const resolvedTarget = resolve(dirname(fullPath), target);
-    if (!existsSync(resolvedTarget)) {
-      issues.push({
-        file,
-        code: "BROKEN_TARGET",
-        message: `symlink 目标不存在: ${target} (agents/${file} 缺失)`,
-      });
-    }
-  }
-
-  return issues;
+  return validateAgentLinks(CLAUDE_AGENTS_DIR);
 }
 
 // ── Main ─────────────────────────────────────────────────────────────

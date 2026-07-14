@@ -17,7 +17,7 @@ import { z } from "zod";
 import type { GitDiffSummary, GitStatusSummary } from "../../context-budget.js";
 import type { ResolvedRoot } from "../project-root.js";
 import { parseDiffStat, parseStatusPorcelain } from "../trimmers/git.js";
-import { containsShellMetachars, execCommand } from "./forge-exec.js";
+import { containsShellMetachars, execCommand, validateGitArgs } from "./forge-exec.js";
 
 // ---------------------------------------------------------------------------
 // Serialization helpers (match context-budget.ts format)
@@ -200,6 +200,15 @@ export function registerForgeGit(server: McpServer, root?: ResolvedRoot): void {
         if (metacharReason) {
           return {
             content: [{ type: "text" as const, text: metacharReason }],
+            isError: true,
+          };
+        }
+        // P2-1: reject git flags that enable arbitrary file read/write or
+        // config injection despite containing no shell metacharacter.
+        const gitArgReason = validateGitArgs(args);
+        if (gitArgReason) {
+          return {
+            content: [{ type: "text" as const, text: gitArgReason }],
             isError: true,
           };
         }

@@ -32,6 +32,11 @@ function createInMemoryIO(files: Record<string, string> = {}): StatusManagerIO {
       delete store[src];
     },
     mkdirp: () => {},
+    // No-op locks: the in-memory store is single-threaded within one test, so
+    // RMW is already serial. Real-fs O_EXCL locking is exercised separately
+    // by test/status-atomic.test.ts (5-process concurrent worker).
+    acquireLock: () => {},
+    releaseLock: () => {},
   };
 }
 

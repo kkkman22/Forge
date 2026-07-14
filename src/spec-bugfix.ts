@@ -12,6 +12,8 @@ import type {
   SpecFileFrontmatter,
   WorkflowVariant,
 } from "./spec-bundle.js";
+// P2-4: shared spec-frontmatter helpers (was a duplicate of spec-parser's logic).
+import { extractSpecField, extractSpecFrontmatterYaml } from "./spec-parser.js";
 
 // ---------------------------------------------------------------------------
 // Parse result types
@@ -243,15 +245,15 @@ export function runBugfixSelfChecks(bundle: SpecBundle): BugfixCheckResult {
 // ---------------------------------------------------------------------------
 
 function parseFrontmatter(text: string): SpecFileFrontmatter | ParseError[] {
-  const match = text.match(/^---\n([\s\S]*?)\n---/);
-  if (!match) return [{ message: "Missing YAML frontmatter" }];
+  // P2-4: delegate delimiter split + field extraction to shared helpers.
+  const yaml = extractSpecFrontmatterYaml(text);
+  if (yaml === null) return [{ message: "Missing YAML frontmatter" }];
 
-  const yaml = match[1];
-  const feature = yaml.match(/feature:\s*(.+)/)?.[1]?.trim();
-  const status = yaml.match(/status:\s*(.+)/)?.[1]?.trim();
-  const date = yaml.match(/date:\s*(.+)/)?.[1]?.trim();
-  const wv = yaml.match(/workflow_variant:\s*(.+)/)?.[1]?.trim() ?? "requirements-first";
-  const kind = yaml.match(/kind:\s*(.+)/)?.[1]?.trim() as "feature" | "bugfix" | undefined;
+  const feature = extractSpecField(yaml, "feature");
+  const status = extractSpecField(yaml, "status");
+  const date = extractSpecField(yaml, "date");
+  const wv = extractSpecField(yaml, "workflow_variant") ?? "requirements-first";
+  const kind = extractSpecField(yaml, "kind") as "feature" | "bugfix" | undefined;
 
   if (!feature || !status || !date) {
     return [{ message: "Missing required frontmatter fields" }];

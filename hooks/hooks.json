@@ -5,7 +5,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "bash \"${CLAUDE_PLUGIN_ROOT:-}/scripts/auto-resume.sh\" 2>/dev/null || bash scripts/auto-resume.sh 2>/dev/null || bash forge/scripts/auto-resume.sh 2>/dev/null || bash ~/.claude/skills/forge/scripts/auto-resume.sh 2>/dev/null || true",
+            "command": "bash \"${CLAUDE_PLUGIN_ROOT:-}/scripts/auto-resume.sh\" 2>/dev/null || bash ~/.claude/skills/forge/scripts/auto-resume.sh 2>/dev/null || true",
             "timeout": 5
           }
         ]
@@ -14,7 +14,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "node \"${CLAUDE_PLUGIN_ROOT:-}/scripts/inject-evolved-rules.mjs\" 2>/dev/null || node scripts/inject-evolved-rules.mjs 2>/dev/null || node forge/scripts/inject-evolved-rules.mjs 2>/dev/null || node ~/.claude/skills/forge/scripts/inject-evolved-rules.mjs 2>/dev/null || true",
+            "command": "node \"${CLAUDE_PLUGIN_ROOT:-}/scripts/inject-evolved-rules.mjs\" 2>/dev/null || node ~/.claude/skills/forge/scripts/inject-evolved-rules.mjs 2>/dev/null || true",
             "timeout": 5
           }
         ]
@@ -23,7 +23,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "node \"${CLAUDE_PLUGIN_ROOT:-}/scripts/bootstrap-check.mjs\" 2>/dev/null || node scripts/bootstrap-check.mjs 2>/dev/null || node forge/scripts/bootstrap-check.mjs 2>/dev/null || node ~/.claude/skills/forge/scripts/bootstrap-check.mjs 2>/dev/null || true",
+            "command": "node \"${CLAUDE_PLUGIN_ROOT:-}/scripts/bootstrap-check.mjs\" 2>/dev/null || node ~/.claude/skills/forge/scripts/bootstrap-check.mjs 2>/dev/null || true",
             "timeout": 5
           }
         ]
@@ -32,7 +32,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "node \"${CLAUDE_PLUGIN_ROOT:-}/scripts/forge-sync-runtime.mjs\" --repair 2>/dev/null || node scripts/forge-sync-runtime.mjs --repair 2>/dev/null || node forge/scripts/forge-sync-runtime.mjs --repair 2>/dev/null || node ~/.claude/skills/forge/scripts/forge-sync-runtime.mjs --repair 2>/dev/null || true",
+            "command": "node \"${CLAUDE_PLUGIN_ROOT:-}/scripts/forge-sync-runtime.mjs\" --repair 2>/dev/null || node ~/.claude/skills/forge/scripts/forge-sync-runtime.mjs --repair 2>/dev/null || true",
             "timeout": 5
           }
         ]
@@ -41,7 +41,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "node \"${CLAUDE_PLUGIN_ROOT:-}/scripts/check-companions.mjs\" 2>/dev/null || node scripts/check-companions.mjs 2>/dev/null || node forge/scripts/check-companions.mjs 2>/dev/null || node ~/.claude/skills/forge/scripts/check-companions.mjs 2>/dev/null || true",
+            "command": "node \"${CLAUDE_PLUGIN_ROOT:-}/scripts/check-companions.mjs\" 2>/dev/null || node ~/.claude/skills/forge/scripts/check-companions.mjs 2>/dev/null || true",
             "timeout": 3
           }
         ]
@@ -52,7 +52,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "node \"${CLAUDE_PLUGIN_ROOT:-}/scripts/inject-plan-context.mjs\" 2>/dev/null || node scripts/inject-plan-context.mjs 2>/dev/null || node forge/scripts/inject-plan-context.mjs 2>/dev/null || node ~/.claude/skills/forge/scripts/inject-plan-context.mjs 2>/dev/null || true"
+            "command": "node \"${CLAUDE_PLUGIN_ROOT:-}/scripts/inject-plan-context.mjs\" 2>/dev/null || node ~/.claude/skills/forge/scripts/inject-plan-context.mjs 2>/dev/null || true"
           }
         ]
       },
@@ -60,7 +60,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "node \"${CLAUDE_PLUGIN_ROOT:-}/scripts/cmux-mirror/sync-once.mjs\" .forge 2>/dev/null || node scripts/cmux-mirror/sync-once.mjs .forge 2>/dev/null || node forge/scripts/cmux-mirror/sync-once.mjs .forge 2>/dev/null || node ~/.claude/skills/forge/scripts/cmux-mirror/sync-once.mjs .forge 2>/dev/null || true",
+            "command": "node \"${CLAUDE_PLUGIN_ROOT:-}/scripts/cmux-mirror/sync-once.mjs\" .forge 2>/dev/null || node ~/.claude/skills/forge/scripts/cmux-mirror/sync-once.mjs .forge 2>/dev/null || true",
             "timeout": 5
           }
         ]
@@ -69,7 +69,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "node \"${CLAUDE_PLUGIN_ROOT:-}/scripts/record-prompt-metrics.mjs\" 2>/dev/null || node scripts/record-prompt-metrics.mjs 2>/dev/null || node forge/scripts/record-prompt-metrics.mjs 2>/dev/null || node ~/.claude/skills/forge/scripts/record-prompt-metrics.mjs 2>/dev/null || true"
+            "command": "node \"${CLAUDE_PLUGIN_ROOT:-}/scripts/record-prompt-metrics.mjs\" 2>/dev/null || node ~/.claude/skills/forge/scripts/record-prompt-metrics.mjs 2>/dev/null || true"
           }
         ]
       }
@@ -91,7 +91,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "bash \"${CLAUDE_PLUGIN_ROOT:-}/scripts/hook-check-frozen.sh\" \"$TOOL_INPUT_FILE\" 2>/dev/null || bash scripts/hook-check-frozen.sh \"$TOOL_INPUT_FILE\" 2>/dev/null || bash forge/scripts/hook-check-frozen.sh \"$TOOL_INPUT_FILE\" 2>/dev/null || bash ~/.claude/skills/forge/scripts/hook-check-frozen.sh \"$TOOL_INPUT_FILE\" 2>/dev/null",
+            "command": "bash \"${CLAUDE_PLUGIN_ROOT:-}/scripts/hook-check-frozen.sh\" \"$TOOL_INPUT_FILE\" 2>/dev/null || bash ~/.claude/skills/forge/scripts/hook-check-frozen.sh \"$TOOL_INPUT_FILE\" 2>/dev/null",
             "timeout": 5
           }
         ]
@@ -101,7 +101,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "echo \"$TOOL_INPUT\" | grep -oE '\\.forge/(specs|plans)/[a-zA-Z0-9_.-]+|\\.forge/config\\.md' | sort -u | while read -r f; do bash \"${CLAUDE_PLUGIN_ROOT:-}/scripts/hook-check-frozen.sh\" \"$f\" 2>/dev/null || bash scripts/hook-check-frozen.sh \"$f\" 2>/dev/null || bash forge/scripts/hook-check-frozen.sh \"$f\" 2>/dev/null || bash ~/.claude/skills/forge/scripts/hook-check-frozen.sh \"$f\" 2>/dev/null; done",
+            "command": "echo \"$TOOL_INPUT\" | grep -oE '\\.forge/(specs|plans)/[a-zA-Z0-9_.-]+|\\.forge/config\\.md' | sort -u | while read -r f; do bash \"${CLAUDE_PLUGIN_ROOT:-}/scripts/hook-check-frozen.sh\" \"$f\" 2>/dev/null || bash ~/.claude/skills/forge/scripts/hook-check-frozen.sh \"$f\" 2>/dev/null; done",
             "timeout": 5
           }
         ]
@@ -112,7 +112,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "node \"${CLAUDE_PLUGIN_ROOT:-}/dist/src/check-sandbox.js\" Write \"$TOOL_INPUT_FILE\" 2>/dev/null || node dist/src/check-sandbox.js Write \"$TOOL_INPUT_FILE\" 2>/dev/null || node forge/dist/src/check-sandbox.js Write \"$TOOL_INPUT_FILE\" 2>/dev/null || node ~/.claude/skills/forge/dist/src/check-sandbox.js Write \"$TOOL_INPUT_FILE\" 2>/dev/null || true",
+            "command": "node \"${CLAUDE_PLUGIN_ROOT:-}/dist/src/check-sandbox.js\" Write \"$TOOL_INPUT_FILE\" 2>/dev/null || node forge/dist/src/check-sandbox.js Write \"$TOOL_INPUT_FILE\" 2>/dev/null || node ~/.claude/skills/forge/dist/src/check-sandbox.js Write \"$TOOL_INPUT_FILE\" 2>/dev/null || true",
             "timeout": 5
           }
         ]
@@ -123,7 +123,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "if [ -f .forge/.sandbox-active.json ]; then node \"${CLAUDE_PLUGIN_ROOT:-}/dist/src/check-sandbox.js\" Bash \"$TOOL_INPUT_FILE\" 2>/dev/null || node dist/src/check-sandbox.js Bash \"$TOOL_INPUT_FILE\" 2>/dev/null || node forge/dist/src/check-sandbox.js Bash \"$TOOL_INPUT_FILE\" 2>/dev/null || node ~/.claude/skills/forge/dist/src/check-sandbox.js Bash \"$TOOL_INPUT_FILE\" 2>/dev/null || true; fi",
+            "command": "if [ -f .forge/.sandbox-active.json ]; then node \"${CLAUDE_PLUGIN_ROOT:-}/dist/src/check-sandbox.js\" Bash \"$TOOL_INPUT_FILE\" 2>/dev/null || node forge/dist/src/check-sandbox.js Bash \"$TOOL_INPUT_FILE\" 2>/dev/null || node ~/.claude/skills/forge/dist/src/check-sandbox.js Bash \"$TOOL_INPUT_FILE\" 2>/dev/null || true; fi",
             "timeout": 5
           }
         ]
@@ -133,7 +133,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "node \"${CLAUDE_PLUGIN_ROOT:-}/scripts/check-context-boundary.mjs\" 2>/dev/null || node scripts/check-context-boundary.mjs 2>/dev/null || node forge/scripts/check-context-boundary.mjs 2>/dev/null || node ~/.claude/skills/forge/scripts/check-context-boundary.mjs 2>/dev/null || true",
+            "command": "node \"${CLAUDE_PLUGIN_ROOT:-}/scripts/check-context-boundary.mjs\" 2>/dev/null || node ~/.claude/skills/forge/scripts/check-context-boundary.mjs 2>/dev/null || true",
             "timeout": 5
           }
         ]
@@ -143,7 +143,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "node \"${CLAUDE_PLUGIN_ROOT:-}/scripts/bash-ban-raw.mjs\" 2>/dev/null || node scripts/bash-ban-raw.mjs 2>/dev/null || node forge/scripts/bash-ban-raw.mjs 2>/dev/null || node ~/.claude/skills/forge/scripts/bash-ban-raw.mjs 2>/dev/null || true",
+            "command": "node \"${CLAUDE_PLUGIN_ROOT:-}/scripts/bash-ban-raw.mjs\" 2>/dev/null || node ~/.claude/skills/forge/scripts/bash-ban-raw.mjs 2>/dev/null || true",
             "timeout": 2
           }
         ]
@@ -155,7 +155,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "bash \"${CLAUDE_PLUGIN_ROOT:-}/scripts/hook-check-frozen-post.sh\" 2>/dev/null || bash scripts/hook-check-frozen-post.sh 2>/dev/null || bash forge/scripts/hook-check-frozen-post.sh 2>/dev/null || bash ~/.claude/skills/forge/scripts/hook-check-frozen-post.sh 2>/dev/null || true",
+            "command": "bash \"${CLAUDE_PLUGIN_ROOT:-}/scripts/hook-check-frozen-post.sh\" 2>/dev/null || bash ~/.claude/skills/forge/scripts/hook-check-frozen-post.sh 2>/dev/null || true",
             "timeout": 5
           }
         ]
@@ -176,7 +176,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "node \"${CLAUDE_PLUGIN_ROOT:-}/scripts/cmux-mirror/sync-once.mjs\" .forge 2>/dev/null || node scripts/cmux-mirror/sync-once.mjs .forge 2>/dev/null || node forge/scripts/cmux-mirror/sync-once.mjs .forge 2>/dev/null || node ~/.claude/skills/forge/scripts/cmux-mirror/sync-once.mjs .forge 2>/dev/null || true",
+            "command": "node \"${CLAUDE_PLUGIN_ROOT:-}/scripts/cmux-mirror/sync-once.mjs\" .forge 2>/dev/null || node ~/.claude/skills/forge/scripts/cmux-mirror/sync-once.mjs .forge 2>/dev/null || true",
             "timeout": 5
           }
         ]
@@ -187,7 +187,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "node \"${CLAUDE_PLUGIN_ROOT:-}/scripts/rebuild-feature-dossier.mjs\" 2>/dev/null || node scripts/rebuild-feature-dossier.mjs 2>/dev/null || node forge/scripts/rebuild-feature-dossier.mjs 2>/dev/null || node ~/.claude/skills/forge/scripts/rebuild-feature-dossier.mjs 2>/dev/null || true",
+            "command": "node \"${CLAUDE_PLUGIN_ROOT:-}/scripts/rebuild-feature-dossier.mjs\" 2>/dev/null || node ~/.claude/skills/forge/scripts/rebuild-feature-dossier.mjs 2>/dev/null || true",
             "timeout": 5
           }
         ]
@@ -198,7 +198,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "node \"${CLAUDE_PLUGIN_ROOT:-}/scripts/knowledge-hook-dispatch.mjs\" 2>/dev/null || node scripts/knowledge-hook-dispatch.mjs 2>/dev/null || node forge/scripts/knowledge-hook-dispatch.mjs 2>/dev/null || node ~/.claude/skills/forge/scripts/knowledge-hook-dispatch.mjs 2>/dev/null || true",
+            "command": "node \"${CLAUDE_PLUGIN_ROOT:-}/scripts/knowledge-hook-dispatch.mjs\" 2>/dev/null || node ~/.claude/skills/forge/scripts/knowledge-hook-dispatch.mjs 2>/dev/null || true",
             "timeout": 5
           }
         ]
@@ -208,7 +208,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "node \"${CLAUDE_PLUGIN_ROOT:-}/scripts/check-context-boundary.mjs\" PostToolUse \"$TOOL_INPUT_FILE\" 2>/dev/null || node scripts/check-context-boundary.mjs PostToolUse \"$TOOL_INPUT_FILE\" 2>/dev/null || node forge/scripts/check-context-boundary.mjs PostToolUse \"$TOOL_INPUT_FILE\" 2>/dev/null || true",
+            "command": "node \"${CLAUDE_PLUGIN_ROOT:-}/scripts/check-context-boundary.mjs\" PostToolUse \"$TOOL_INPUT_FILE\" 2>/dev/null || true",
             "continueOnBlock": true,
             "timeout": 5
           }
@@ -220,7 +220,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "node \"${CLAUDE_PLUGIN_ROOT:-}/scripts/check-diff-context-integrity.mjs\" 2>/dev/null || node scripts/check-diff-context-integrity.mjs 2>/dev/null || node forge/scripts/check-diff-context-integrity.mjs 2>/dev/null || node ~/.claude/skills/forge/scripts/check-diff-context-integrity.mjs 2>/dev/null || true",
+            "command": "node \"${CLAUDE_PLUGIN_ROOT:-}/scripts/check-diff-context-integrity.mjs\" 2>/dev/null || node ~/.claude/skills/forge/scripts/check-diff-context-integrity.mjs 2>/dev/null || true",
             "timeout": 5
           }
         ]
@@ -231,7 +231,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "node \"${CLAUDE_PLUGIN_ROOT:-}/scripts/stop-incomplete-tasks.mjs\" 2>/dev/null || node scripts/stop-incomplete-tasks.mjs 2>/dev/null || node forge/scripts/stop-incomplete-tasks.mjs 2>/dev/null || node ~/.claude/skills/forge/scripts/stop-incomplete-tasks.mjs 2>/dev/null || true"
+            "command": "node \"${CLAUDE_PLUGIN_ROOT:-}/scripts/stop-incomplete-tasks.mjs\" 2>/dev/null || node ~/.claude/skills/forge/scripts/stop-incomplete-tasks.mjs 2>/dev/null || true"
           }
         ]
       },
@@ -239,7 +239,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "node \"${CLAUDE_PLUGIN_ROOT:-}/scripts/stop-pending-rules.mjs\" 2>/dev/null || node scripts/stop-pending-rules.mjs 2>/dev/null || node forge/scripts/stop-pending-rules.mjs 2>/dev/null || node ~/.claude/skills/forge/scripts/stop-pending-rules.mjs 2>/dev/null || true",
+            "command": "node \"${CLAUDE_PLUGIN_ROOT:-}/scripts/stop-pending-rules.mjs\" 2>/dev/null || node ~/.claude/skills/forge/scripts/stop-pending-rules.mjs 2>/dev/null || true",
             "timeout": 5
           }
         ]
@@ -248,7 +248,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "node \"${CLAUDE_PLUGIN_ROOT:-}/scripts/record-evolved-rule-violation.mjs\" 2>/dev/null || node scripts/record-evolved-rule-violation.mjs 2>/dev/null || node forge/scripts/record-evolved-rule-violation.mjs 2>/dev/null || node ~/.claude/skills/forge/scripts/record-evolved-rule-violation.mjs 2>/dev/null || true",
+            "command": "node \"${CLAUDE_PLUGIN_ROOT:-}/scripts/record-evolved-rule-violation.mjs\" 2>/dev/null || node ~/.claude/skills/forge/scripts/record-evolved-rule-violation.mjs 2>/dev/null || true",
             "timeout": 5
           }
         ]
@@ -257,7 +257,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "node \"${CLAUDE_PLUGIN_ROOT:-}/scripts/flag-stale-evolved-rules.mjs\" 2>/dev/null || node scripts/flag-stale-evolved-rules.mjs 2>/dev/null || node forge/scripts/flag-stale-evolved-rules.mjs 2>/dev/null || node ~/.claude/skills/forge/scripts/flag-stale-evolved-rules.mjs 2>/dev/null || true",
+            "command": "node \"${CLAUDE_PLUGIN_ROOT:-}/scripts/flag-stale-evolved-rules.mjs\" 2>/dev/null || node ~/.claude/skills/forge/scripts/flag-stale-evolved-rules.mjs 2>/dev/null || true",
             "timeout": 5
           }
         ]
@@ -266,7 +266,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "node \"${CLAUDE_PLUGIN_ROOT:-}/scripts/cmux-mirror/sync-once.mjs\" .forge 2>/dev/null || node scripts/cmux-mirror/sync-once.mjs .forge 2>/dev/null || node forge/scripts/cmux-mirror/sync-once.mjs .forge 2>/dev/null || node ~/.claude/skills/forge/scripts/cmux-mirror/sync-once.mjs .forge 2>/dev/null || true",
+            "command": "node \"${CLAUDE_PLUGIN_ROOT:-}/scripts/cmux-mirror/sync-once.mjs\" .forge 2>/dev/null || node ~/.claude/skills/forge/scripts/cmux-mirror/sync-once.mjs .forge 2>/dev/null || true",
             "timeout": 5
           }
         ]
@@ -275,7 +275,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "node \"${CLAUDE_PLUGIN_ROOT:-}/scripts/stop-phase-verify.mjs\" 2>/dev/null || node scripts/stop-phase-verify.mjs 2>/dev/null || node forge/scripts/stop-phase-verify.mjs 2>/dev/null || node ~/.claude/skills/forge/scripts/stop-phase-verify.mjs 2>/dev/null || true",
+            "command": "node \"${CLAUDE_PLUGIN_ROOT:-}/scripts/stop-phase-verify.mjs\" 2>/dev/null || node ~/.claude/skills/forge/scripts/stop-phase-verify.mjs 2>/dev/null || true",
             "timeout": 3
           }
         ]
@@ -284,7 +284,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "node \"${CLAUDE_PLUGIN_ROOT:-}/scripts/stop-additional-context.mjs\" 2>/dev/null || node scripts/stop-additional-context.mjs 2>/dev/null || node forge/scripts/stop-additional-context.mjs 2>/dev/null || node ~/.claude/skills/forge/scripts/stop-additional-context.mjs 2>/dev/null || true",
+            "command": "node \"${CLAUDE_PLUGIN_ROOT:-}/scripts/stop-additional-context.mjs\" 2>/dev/null || node ~/.claude/skills/forge/scripts/stop-additional-context.mjs 2>/dev/null || true",
             "timeout": 5
           }
         ]
@@ -305,7 +305,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "bash \"${CLAUDE_PLUGIN_ROOT:-}/scripts/hook-precompact.sh\" 2>/dev/null || bash scripts/hook-precompact.sh 2>/dev/null || bash forge/scripts/hook-precompact.sh 2>/dev/null || bash ~/.claude/skills/forge/scripts/hook-precompact.sh 2>/dev/null || true",
+            "command": "bash \"${CLAUDE_PLUGIN_ROOT:-}/scripts/hook-precompact.sh\" 2>/dev/null || bash ~/.claude/skills/forge/scripts/hook-precompact.sh 2>/dev/null || true",
             "timeout": 5
           }
         ]
@@ -316,7 +316,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "bash \"${CLAUDE_PLUGIN_ROOT:-}/scripts/hook-postcompact.sh\" 2>/dev/null || bash scripts/hook-postcompact.sh 2>/dev/null || bash forge/scripts/hook-postcompact.sh 2>/dev/null || bash ~/.claude/skills/forge/scripts/hook-postcompact.sh 2>/dev/null || true",
+            "command": "bash \"${CLAUDE_PLUGIN_ROOT:-}/scripts/hook-postcompact.sh\" 2>/dev/null || bash ~/.claude/skills/forge/scripts/hook-postcompact.sh 2>/dev/null || true",
             "timeout": 5
           }
         ]
@@ -327,7 +327,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "bash \"${CLAUDE_PLUGIN_ROOT:-}/scripts/hook-task-completed.sh\" 2>&1 || bash scripts/hook-task-completed.sh 2>&1 || bash forge/scripts/hook-task-completed.sh 2>&1 || bash ~/.claude/skills/forge/scripts/hook-task-completed.sh 2>&1",
+            "command": "bash \"${CLAUDE_PLUGIN_ROOT:-}/scripts/hook-task-completed.sh\" 2>&1 || bash ~/.claude/skills/forge/scripts/hook-task-completed.sh 2>&1",
             "timeout": 10
           }
         ]
@@ -346,7 +346,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "node \"${CLAUDE_PLUGIN_ROOT:-}/scripts/task-created-hook.mjs\" 2>/dev/null || node scripts/task-created-hook.mjs 2>/dev/null || node forge/scripts/task-created-hook.mjs 2>/dev/null || node ~/.claude/skills/forge/scripts/task-created-hook.mjs 2>/dev/null || true",
+            "command": "node \"${CLAUDE_PLUGIN_ROOT:-}/scripts/task-created-hook.mjs\" 2>/dev/null || node ~/.claude/skills/forge/scripts/task-created-hook.mjs 2>/dev/null || true",
             "timeout": 3
           }
         ]
@@ -357,7 +357,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "node \"${CLAUDE_PLUGIN_ROOT:-}/scripts/worktree-create-hook.mjs\" 2>/dev/null || node scripts/worktree-create-hook.mjs 2>/dev/null || node forge/scripts/worktree-create-hook.mjs 2>/dev/null || node ~/.claude/skills/forge/scripts/worktree-create-hook.mjs 2>/dev/null || true",
+            "command": "node \"${CLAUDE_PLUGIN_ROOT:-}/scripts/worktree-create-hook.mjs\" 2>/dev/null || node ~/.claude/skills/forge/scripts/worktree-create-hook.mjs 2>/dev/null || true",
             "timeout": 3
           }
         ]
@@ -368,7 +368,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "node \"${CLAUDE_PLUGIN_ROOT:-}/scripts/stop-failure-hook.mjs\" 2>/dev/null || node scripts/stop-failure-hook.mjs 2>/dev/null || node forge/scripts/stop-failure-hook.mjs 2>/dev/null || node ~/.claude/skills/forge/scripts/stop-failure-hook.mjs 2>/dev/null || true",
+            "command": "node \"${CLAUDE_PLUGIN_ROOT:-}/scripts/stop-failure-hook.mjs\" 2>/dev/null || node ~/.claude/skills/forge/scripts/stop-failure-hook.mjs 2>/dev/null || true",
             "timeout": 3
           }
         ]
@@ -377,7 +377,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "node \"${CLAUDE_PLUGIN_ROOT:-}/scripts/stop-additional-context.mjs\" 2>/dev/null || node scripts/stop-additional-context.mjs 2>/dev/null || node forge/scripts/stop-additional-context.mjs 2>/dev/null || node ~/.claude/skills/forge/scripts/stop-additional-context.mjs 2>/dev/null || true",
+            "command": "node \"${CLAUDE_PLUGIN_ROOT:-}/scripts/stop-additional-context.mjs\" 2>/dev/null || node ~/.claude/skills/forge/scripts/stop-additional-context.mjs 2>/dev/null || true",
             "timeout": 5
           }
         ]
@@ -388,7 +388,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "node \"${CLAUDE_PLUGIN_ROOT:-}/scripts/config-changed-hook.mjs\" 2>/dev/null || node scripts/config-changed-hook.mjs 2>/dev/null || node forge/scripts/config-changed-hook.mjs 2>/dev/null || node ~/.claude/skills/forge/scripts/config-changed-hook.mjs 2>/dev/null || true",
+            "command": "node \"${CLAUDE_PLUGIN_ROOT:-}/scripts/config-changed-hook.mjs\" 2>/dev/null || node ~/.claude/skills/forge/scripts/config-changed-hook.mjs 2>/dev/null || true",
             "timeout": 3
           }
         ]
@@ -399,7 +399,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "node \"${CLAUDE_PLUGIN_ROOT:-}/scripts/permission-denied-hook.mjs\" 2>/dev/null || node scripts/permission-denied-hook.mjs 2>/dev/null || node forge/scripts/permission-denied-hook.mjs 2>/dev/null || node ~/.claude/skills/forge/scripts/permission-denied-hook.mjs 2>/dev/null || true",
+            "command": "node \"${CLAUDE_PLUGIN_ROOT:-}/scripts/permission-denied-hook.mjs\" 2>/dev/null || node ~/.claude/skills/forge/scripts/permission-denied-hook.mjs 2>/dev/null || true",
             "timeout": 3
           }
         ]
@@ -410,7 +410,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "node \"${CLAUDE_PLUGIN_ROOT:-}/scripts/worktree-remove-hook.mjs\" 2>/dev/null || node scripts/worktree-remove-hook.mjs 2>/dev/null || node forge/scripts/worktree-remove-hook.mjs 2>/dev/null || node ~/.claude/skills/forge/scripts/worktree-remove-hook.mjs 2>/dev/null || true",
+            "command": "node \"${CLAUDE_PLUGIN_ROOT:-}/scripts/worktree-remove-hook.mjs\" 2>/dev/null || node ~/.claude/skills/forge/scripts/worktree-remove-hook.mjs 2>/dev/null || true",
             "timeout": 3
           }
         ]

@@ -18,6 +18,9 @@ export async function createPushServer({ socketPath, dispatch, maxPerSecond = 20
   let eventCount = 0;
   let windowStart = Date.now();
   let listening = true;
+  // P3-4: bound the per-connection line buffer so a malicious/huge client
+  // can't exhaust daemon memory. 1MB is generous for NDJSON event lines.
+  const MAX_BUFFER_BYTES = 1 * 1024 * 1024;
 
   const server = createServer((client) => {
     clients.add(client);
@@ -26,6 +29,12 @@ export async function createPushServer({ socketPath, dispatch, maxPerSecond = 20
     let buffer = "";
     client.on("data", (data) => {
       buffer += data.toString();
+      // P3-4: cap buffer growth — drop the connection if a single line exceeds
+      // the bound (legitimate NDJSON events are tiny).
+      if (Buffer.byteLength(buffer, "utf-8") > MAX_BUFFER_BYTES) {
+        client.destroy();
+        return;
+      }
       const lines = buffer.split("\n");
       buffer = lines.pop() ?? "";
 
@@ -50,6 +59,15 @@ export async function createPushServer({ socketPath, dispatch, maxPerSecond = 20
       }
     });
   });
+
+  // P3-4: remove a stale socket from a crashed prior instance before
+  // listening, else listen() fails with EADDRINUSE and the push channel
+  // silently dies on daemon restart.
+  try {
+    unlinkSync(socketPath);
+  } catch {
+    /* not present — fine */
+  }
 
   await new Promise((resolve, reject) => {
     server.listen(socketPath, () => resolve(undefined));

@@ -45,17 +45,35 @@ export interface ParseResult<T> {
 // Internal: frontmatter parser
 // ---------------------------------------------------------------------------
 
-function parseFrontmatter(text: string): SpecFileFrontmatter | ParseError[] {
+/**
+ * Extract the raw YAML text between `---` delimiters (P2-4 shared helper).
+ * Returns null if no valid frontmatter block is found. Shared by spec-parser
+ * and spec-bugfix (was duplicated as `text.match(/^---\n([\s\S]*?)\n---/)`).
+ * @public
+ */
+export function extractSpecFrontmatterYaml(text: string): string | null {
   const match = text.match(/^---\n([\s\S]*?)\n---/);
-  if (!match) {
+  return match ? match[1] : null;
+}
+
+/**
+ * Extract a single string field from raw spec YAML (P2-4 shared helper).
+ * Regex-escapes the key (the prior inline clones did not — latent bug fixed).
+ * @public
+ */
+export function extractSpecField(yaml: string, key: string): string | undefined {
+  const escaped = key.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+  const m = yaml.match(new RegExp(`^${escaped}:\\s*(.+)$`, "m"));
+  return m?.[1]?.trim();
+}
+
+function parseFrontmatter(text: string): SpecFileFrontmatter | ParseError[] {
+  const yaml = extractSpecFrontmatterYaml(text);
+  if (yaml === null) {
     return [{ message: "Missing YAML frontmatter" }];
   }
 
-  const yaml = match[1];
-  const getValue = (key: string): string | undefined => {
-    const m = yaml.match(new RegExp(`^${key}:\\s*(.+)$`, "m"));
-    return m?.[1]?.trim();
-  };
+  const getValue = (key: string): string | undefined => extractSpecField(yaml, key);
 
   const feature = getValue("feature");
   const status = getValue("status");

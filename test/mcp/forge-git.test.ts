@@ -500,3 +500,50 @@ describe("forge_git args command-injection guard (P1)", () => {
     expect(result.content[0].text).toContain("abc1234");
   });
 });
+
+describe("forge_git git-arg denylist (P2-1: --no-index / --output / -c)", () => {
+  afterEach(() => {
+    vi.restoreAllMocks();
+  });
+
+  // Each denylisted arg contains no shell metacharacter, so it would slip
+  // past containsShellMetachars — the dedicated git-arg denylist must reject.
+  const DENYLISTED = [
+    { args: "--no-index /etc/passwd /dev/null", why: "arbitrary file read" },
+    { args: "--output=/tmp/evil", why: "arbitrary path write (--output=)" },
+    { args: "--output /tmp/evil", why: "arbitrary path write (--output space)" },
+    { args: "-O /tmp/evil", why: "output-indicator alias" },
+    { args: "--ext-diff", why: "external diff executor" },
+    { args: "-c core.pager=evil", why: "config injection" },
+  ] as const;
+
+  for (const { args, why } of DENYLISTED) {
+    it(`rejects ${JSON.stringify(args)} (${why})`, async () => {
+      let spawnCalled = false;
+      mockedExecFile.mockImplementation(() => {
+        spawnCalled = true;
+        return {};
+      });
+
+      const handler = collectGitHandler();
+      const result = await handler({ subcommand: "diff-content", args });
+
+      expect(result.isError).toBe(true);
+      expect(spawnCalled).toBe(false);
+    });
+  }
+
+  it("rejects --output on `log` subcommand too", async () => {
+    let spawnCalled = false;
+    mockedExecFile.mockImplementation(() => {
+      spawnCalled = true;
+      return {};
+    });
+
+    const handler = collectGitHandler();
+    const result = await handler({ subcommand: "log", args: "--output=/tmp/evil" });
+
+    expect(result.isError).toBe(true);
+    expect(spawnCalled).toBe(false);
+  });
+});

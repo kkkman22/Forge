@@ -12,7 +12,9 @@
 import { basename } from "node:path";
 
 import { extractStringField, parseFrontmatter } from "./frontmatter.js";
+import { writeStatusAtomic } from "./status-atomic.js";
 import { isMultiTaskMode, slugify } from "./status-resolver.js";
+import type { AppendOptions } from "./tool-health-writer.js";
 
 // ---------------------------------------------------------------------------
 // Types
@@ -37,6 +39,15 @@ export interface StatusManagerIO {
   listDir: (path: string) => string[];
   move: (src: string, dest: string) => void;
   mkdirp: (path: string) => void;
+  /**
+   * Optional lock acquisition seam. Production IO binds this to the real
+   * `acquireLockSync` (O_CREAT|O_EXCL). Tests with an in-memory IO may omit it
+   * (writeStatusAtomic falls back to the real primitive) or inject a no-op to
+   * keep the test off the real filesystem.
+   */
+  acquireLock?: (lockPath: string, opts: AppendOptions) => void;
+  /** Optional lock release seam, paired with {@link acquireLock}. */
+  releaseLock?: (lockPath: string) => void;
 }
 
 const TERMINAL_PHASES = new Set(["completed", "aborted"]);
@@ -96,7 +107,7 @@ export function writeTaskStatus(
       const taskId = slugify(taskName);
       const statusDir = `${forgeRoot}/status`;
       io.mkdirp(statusDir);
-      io.write(`${statusDir}/${taskId}.md`, content);
+      writeStatusAtomic(forgeRoot, `${statusDir}/${taskId}.md`, () => content, io);
     } else {
       // Check if this write would create a second active task — auto-migrate
       const legacyPath = `${forgeRoot}/status.md`;
@@ -113,11 +124,11 @@ export function writeTaskStatus(
           const taskId = slugify(taskName);
           const statusDir = `${forgeRoot}/status`;
           io.mkdirp(statusDir);
-          io.write(`${statusDir}/${taskId}.md`, content);
+          writeStatusAtomic(forgeRoot, `${statusDir}/${taskId}.md`, () => content, io);
           return;
         }
       }
-      io.write(`${forgeRoot}/status.md`, content);
+      writeStatusAtomic(forgeRoot, `${forgeRoot}/status.md`, () => content, io);
     }
   } catch (_err: unknown) {
     // Graceful degradation — spec R2.5: log warning and continue without crashing
@@ -218,10 +229,10 @@ export function migrateToMultiTask(io: StatusManagerIO, forgeRoot: string): void
   const taskId = slugify(existingTask);
   const statusDir = `${forgeRoot}/status`;
   io.mkdirp(statusDir);
-  io.write(`${statusDir}/${taskId}.md`, legacyContent);
+  writeStatusAtomic(forgeRoot, `${statusDir}/${taskId}.md`, () => legacyContent, io);
 
   // Clear legacy file with empty frontmatter
-  io.write(legacyPath, "---\n---\n");
+  writeStatusAtomic(forgeRoot, legacyPath, () => "---\n---\n", io);
 }
 
 // ---------------------------------------------------------------------------

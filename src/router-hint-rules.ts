@@ -12,7 +12,9 @@
  * Pure data module, zero IO, no runtime logic.
  */
 
-import type { ProjectPhase, RouteHint, TaskType } from "./router.js";
+// P3-2: import shared types from the leaf module (was from router.js, which
+// created a router ↔ hint-rules back-edge).
+import type { ProjectPhase, RouteHint, TaskType } from "./router-types.js";
 
 export interface HintRule {
   /** Match any of these task types (empty = match all). */

@@ -1,0 +1,135 @@
+/**
+ * Status atomic write — the single funnel for status.md / status/*.md writes.
+ *
+ * P1-1: prior to this module, `writeTaskStatus` did an unlocked
+ * read-modify-write (`io.read → transform → io.write`) on `.forge/status.md`.
+ * With `max_parallel_agents` defaulting to 6, two parallel subagents both
+ * reading the same file then writing lost updates (last-write-wins overwrote
+ * the prior write). The Iron Law in `.claude/rules/state-file-locking.md`
+ * requires the lock to span the entire RMW cycle.
+ *
+ * This module reuses the real filesystem lock primitive already proven in
+ * `tool-health-writer.ts` (`acquireLockSync` — O_CREAT|O_EXCL, PID-aware
+ * stale-break, jittered spin, 5s timeout / 30s stale). The docstring there
+ * explicitly invites reuse ("Exported so other low-frequency append paths
+ * can share one concurrency primitive").
+ *
+ * Atomicity on the write side: content is written to `<target>.tmp` then
+ * renamed onto the target (rename is atomic on POSIX), so a reader never
+ * observes a half-written file.
+ *
+ * Exit cleanup: held locks are tracked in a module-level Set and released via
+ * `process.on('exit')` + SIGINT/SIGTERM handlers — honouring the rule doc's
+ * promise that even `process.exit(1)` cleans held locks.
+ *
+ * @public
+ */
+
+import type { StatusManagerIO } from "./status-manager.js";
+import { type AppendOptions, acquireLockSync, releaseLockSync } from "./tool-health-writer.js";
+
+/** Held-lock registry for exit cleanup. */
+const heldLocks = new Set<string>();
+
+let exitHandlersInstalled = false;
+
+function installExitHandlers(): void {
+  if (exitHandlersInstalled) return;
+  exitHandlersInstalled = true;
+  const releaseAll = (): void => {
+    for (const lockPath of heldLocks) {
+      try {
+        releaseLockSync(lockPath);
+      } catch {
+        // Already gone — nothing to do.
+      }
+    }
+    heldLocks.clear();
+  };
+  process.on("exit", releaseAll);
+  process.on("SIGINT", () => {
+    releaseAll();
+    process.exit(130);
+  });
+  process.on("SIGTERM", () => {
+    releaseAll();
+    process.exit(143);
+  });
+}
+
+/**
+ * Lock-protected, atomic read-modify-write of a status file.
+ *
+ * Contract:
+ *   acquireLock(target.lock) → read(target) → transform(prev) →
+ *   write(target.tmp, next) → move(target.tmp, target) → releaseLock
+ *
+ * The lock path is derived from the target path (`<target>.lock`) and uses
+ * the real filesystem (not the injected `io` seam), because `acquireLockSync`
+ * needs true O_CREAT|O_EXCL atomicity that a mock `io` cannot provide. This
+ * is correct for production (real fs) and for the concurrent test (real tmp
+ * fs across child processes). The injected `io` governs only the data
+ * read/write/move of the target file itself.
+ *
+ * @param forgeRoot - `.forge/` directory path (kept for API symmetry; lock is
+ *   keyed on `targetPath`, not `forgeRoot`).
+ * @param targetPath - Absolute path to the status file being written.
+ * @param transform - Pure function: prior content (or "" if absent) → next
+ *   content. Throwing aborts the write but still releases the lock.
+ * @param io - I/O seam for read/write/move of the target.
+ * @param lockOpts - Optional lock tuning (timeout / stale threshold). Defaults
+ *   to the tool-health primitives (5s timeout, 30s stale).
+ * @public
+ */
+export function writeStatusAtomic(
+  forgeRoot: string,
+  targetPath: string,
+  transform: (prev: string) => string,
+  io: StatusManagerIO,
+  lockOpts: AppendOptions = {},
+): void {
+  void forgeRoot; // API symmetry; lock keyed on targetPath.
+  installExitHandlers();
+
+  const lockPath = `${targetPath}.lock`;
+  // Production callers pass an `io` whose lock/unlock drive the real fs via
+  // acquireLockSync/releaseLockSync. Tests may inject a no-op lock so the
+  // in-memory IO doesn't touch the real filesystem. The real lock primitive
+  // is the source of truth; this indirection only swaps the *binding*.
+  const acquire = io.acquireLock ?? ((p: string, opts: AppendOptions) => acquireLockSync(p, opts));
+  const release = io.releaseLock ?? ((p: string) => releaseLockSync(p));
+  acquire(lockPath, lockOpts);
+  heldLocks.add(lockPath);
+  try {
+    let prev = "";
+    try {
+      prev = io.exists(targetPath) ? io.read(targetPath) : "";
+    } catch {
+      // First write / missing file → empty prior.
+      prev = "";
+    }
+    const next = transform(prev);
+    const tmpPath = `${targetPath}.tmp`;
+    io.write(tmpPath, next);
+    io.move(tmpPath, targetPath);
+  } finally {
+    release(lockPath);
+    heldLocks.delete(lockPath);
+  }
+}
+
+/**
+ * Release all locks currently held by this process. Exported for tests and
+ * for explicit shutdown paths. Safe to call when nothing is held.
+ * @public
+ */
+export function releaseAllStatusLocks(): void {
+  for (const lockPath of heldLocks) {
+    try {
+      releaseLockSync(lockPath);
+    } catch {
+      // Already gone.
+    }
+  }
+  heldLocks.clear();
+}

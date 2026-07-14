@@ -9,6 +9,10 @@
  * **Validates: Requirements 1.1, 1.2, 1.3, 1.4, 1.5, 1.6, 1.7**
  */
 
+// P2-4: delegate frontmatter parsing to the authoritative module + adapter
+// (was a private character-identical clone of frontmatter.ts).
+import { parseFrontmatterPreservingLeading } from "./frontmatter.js";
+
 // ---------------------------------------------------------------------------
 // Types
 // ---------------------------------------------------------------------------
@@ -106,27 +110,8 @@ function parseFrontmatter(content: string): {
   body: string;
   leadingWhitespace: string;
 } | null {
-  const trimmed = content.trimStart();
-  const leadingWhitespace = content.slice(0, content.length - trimmed.length);
-
-  if (!trimmed.startsWith(FRONTMATTER_DELIMITER)) {
-    return null;
-  }
-
-  const afterFirst = trimmed.slice(FRONTMATTER_DELIMITER.length);
-  const closingIndex = afterFirst.indexOf(`\n${FRONTMATTER_DELIMITER}`);
-  if (closingIndex === -1) {
-    return null;
-  }
-
-  const frontmatter = afterFirst.slice(0, closingIndex);
-  const afterClosing = afterFirst.slice(closingIndex + 1 + FRONTMATTER_DELIMITER.length);
-
-  // Body starts after the closing delimiter line
-  const bodyStart = afterClosing.indexOf("\n");
-  const body = bodyStart === -1 ? "" : afterClosing.slice(bodyStart + 1);
-
-  return { frontmatter, body, leadingWhitespace };
+  // P2-4: delegate to the authoritative adapter (was a private clone).
+  return parseFrontmatterPreservingLeading(content);
 }
 
 /**

@@ -251,3 +251,70 @@ describe("hooks.json contract: Stop/SubagentStop additionalContext", () => {
     expect(hasAdditionalContextHook).toBe(true);
   });
 });
+
+describe("stop-additional-context.mjs — ZCode platform output shape", () => {
+  it("ZCode signal → top-level additionalContext preserved (whitelist)", () => {
+    const { execFileSync } = require("node:child_process");
+    const { resolve } = require("node:path");
+    const { mkdirSync, mkdtempSync, rmSync, writeFileSync } = require("node:fs");
+    const { tmpdir } = require("node:os");
+
+    const SCRIPT = resolve(__dirname, "../scripts/stop-additional-context.mjs");
+    const tmp = mkdtempSync(require("node:path").join(tmpdir(), "forge-stop-zcode-"));
+    try {
+      // Minimal status.md that triggers missing_verification (phase set, no evidence)
+      mkdirSync(require("node:path").join(tmp, ".forge"), { recursive: true });
+      writeFileSync(
+        require("node:path").join(tmp, ".forge", "status.md"),
+        '---\nphase: "build"\nspec: ".forge/specs/x/"\n---\n',
+      );
+      const stdin = JSON.stringify({ hook_event_name: "Stop", session_id: "s1" });
+      const stdout = execFileSync("node", [SCRIPT], {
+        cwd: tmp,
+        input: stdin,
+        encoding: "utf8",
+        timeout: 5000,
+        env: { ...process.env, ZCODE_PLUGIN_ROOT: "/x/forge/3.9.0" },
+      });
+      const json = JSON.parse(stdout);
+      expect(Object.keys(json).sort()).toEqual(["additionalContext"]);
+      expect(json).not.toHaveProperty("hookSpecificOutput");
+      expect(typeof json.additionalContext).toBe("string");
+      expect(json.additionalContext.length).toBeGreaterThan(0);
+    } finally {
+      rmSync(tmp, { recursive: true, force: true });
+    }
+  });
+
+  it("no ZCode signal (Claude) → hookSpecificOutput.additionalContext preserved", () => {
+    const { execFileSync } = require("node:child_process");
+    const { resolve } = require("node:path");
+    const { mkdirSync, mkdtempSync, rmSync, writeFileSync } = require("node:fs");
+    const { tmpdir } = require("node:os");
+
+    const SCRIPT = resolve(__dirname, "../scripts/stop-additional-context.mjs");
+    const tmp = mkdtempSync(require("node:path").join(tmpdir(), "forge-stop-claude-"));
+    try {
+      mkdirSync(require("node:path").join(tmp, ".forge"), { recursive: true });
+      writeFileSync(
+        require("node:path").join(tmp, ".forge", "status.md"),
+        '---\nphase: "build"\nspec: ".forge/specs/x/"\n---\n',
+      );
+      const stdin = JSON.stringify({ hook_event_name: "Stop", session_id: "s1" });
+      const stdout = execFileSync("node", [SCRIPT], {
+        cwd: tmp,
+        input: stdin,
+        encoding: "utf8",
+        timeout: 5000,
+        env: { ...process.env },
+      });
+      const json = JSON.parse(stdout);
+      // Claude path: top-level + hookSpecificOutput both present (unchanged)
+      expect(json.hookSpecificOutput).toBeDefined();
+      expect(json.hookSpecificOutput.additionalContext).toBeDefined();
+      expect(json.additionalContext).toBeDefined();
+    } finally {
+      rmSync(tmp, { recursive: true, force: true });
+    }
+  });
+});

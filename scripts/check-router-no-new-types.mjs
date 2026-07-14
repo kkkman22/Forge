@@ -20,16 +20,16 @@ const __dirname = dirname(fileURLToPath(import.meta.url));
 const ROOT = resolve(__dirname, "..");
 const ROUTER_PATH = resolve(ROOT, "src/router.ts");
 
-// Baseline: these are the allowed exported types/interfaces in router.ts
+// Baseline: the allowed exported types/interfaces DEFINED directly in router.ts.
+// P3-2: TaskType, ProjectPhase, RouteHint moved to router-types.ts (re-exported
+// via `export type {...} from`, which this AST scan does not count as a
+// definition). Only the 6 still defined inline in router.ts remain.
 const BASELINE_TYPES = new Set([
   "Tier",
-  "TaskType",
-  "ProjectPhase",
   "WorkNature",
   "TaskSignals",
   "ProjectType",
   "ProjectContext",
-  "RouteHint",
   "ClassificationResult",
 ]);
 
