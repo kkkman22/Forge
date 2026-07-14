@@ -31277,6 +31277,22 @@ var ALLOWED_GIT_SUBCOMMANDS = /* @__PURE__ */ new Set([
   "ls-files",
   "ls-tree"
 ]);
+var BLOCKED_RUNNER_FLAGS = /* @__PURE__ */ new Set([
+  "--config",
+  "-c",
+  "--loader",
+  "--project",
+  "--config-path",
+  "--extends"
+]);
+function hasBlockedRunnerFlag(parts) {
+  return parts.some((p) => {
+    if (p.startsWith("--") && p.includes("=")) {
+      return BLOCKED_RUNNER_FLAGS.has(p.split("=")[0]);
+    }
+    return BLOCKED_RUNNER_FLAGS.has(p);
+  });
+}
 function normalizeCommand(command) {
   return command.trim().replace(/\s+/g, " ");
 }
@@ -31297,16 +31313,16 @@ function isCommandAllowed(command) {
     return false;
   }
   if (bin === "npx") {
-    return parts.length >= 3 && parts[1] === "vitest" && parts[2] === "run";
+    return parts.length >= 3 && parts[1] === "vitest" && parts[2] === "run" && !hasBlockedRunnerFlag(parts);
   }
   if (bin === "vitest") {
-    return parts.length >= 2 && parts[1] === "run";
+    return parts.length >= 2 && parts[1] === "run" && !hasBlockedRunnerFlag(parts);
   }
   if (bin === "tsc") {
     return parts.length === 2 && parts[1] === "--noEmit";
   }
   if (bin === "biome") {
-    return parts.length >= 2 && parts[1] === "check" && !parts.includes("--write");
+    return parts.length >= 2 && parts[1] === "check" && !parts.includes("--write") && !hasBlockedRunnerFlag(parts);
   }
   if (bin === "git") {
     if (parts.length < 2)
@@ -31317,6 +31333,24 @@ function isCommandAllowed(command) {
     return !parts.some((part) => part === "--output" || part.startsWith("--output="));
   }
   return false;
+}
+var BLOCKED_GIT_FLAGS = [
+  "--no-index",
+  "--output",
+  "--output-indicator",
+  "--ext-diff",
+  "-c",
+  "-O"
+];
+function validateGitArgs(args) {
+  const tokens = args.trim().split(/\s+/);
+  for (const tok of tokens) {
+    const bare = tok.startsWith("--") ? tok.split("=")[0] : tok;
+    if (BLOCKED_GIT_FLAGS.includes(bare) || BLOCKED_GIT_FLAGS.includes(tok)) {
+      return `git argument denied (file read/write / config injection vector): ${tok}`;
+    }
+  }
+  return null;
 }
 var SHELL_METACHAR_PATTERNS = [
   { pattern: /\$\(/, label: "$()" },
@@ -31798,6 +31832,13 @@ function registerForgeGit(server2, root2) {
           isError: true
         };
       }
+      const gitArgReason = validateGitArgs(args);
+      if (gitArgReason) {
+        return {
+          content: [{ type: "text", text: gitArgReason }],
+          isError: true
+        };
+      }
     }
     const extraArgs = args ? ` ${args}` : "";
     switch (subcommand) {
@@ -31875,8 +31916,7 @@ ${result.stderr}` : result.stdout;
 }
 
 // dist/src/mcp/tools/forge-read.js
-import { execFile as execFile2 } from "node:child_process";
-import { readFileSync, realpathSync as realpathSync2 } from "node:fs";
+import { readFileSync } from "node:fs";
 import { resolve as resolve3 } from "node:path";
 
 // dist/src/mcp/tools/path-validator.js
@@ -31916,227 +31956,6 @@ function validatePaths(paths, projectRoot) {
 }
 
 // dist/src/mcp/tools/forge-read.js
-var DEFAULT_TIMEOUT_MS = 3e4;
-var DANGEROUS_SCRIPT_PATTERNS = [
-  { pattern: /child_process/, label: "child_process" },
-  { pattern: /process\.exit/, label: "process.exit" },
-  { pattern: /eval\s*\(/, label: "eval()" },
-  { pattern: /Function\s*\(/, label: "Function()" },
-  { pattern: /writeFileSync/, label: "writeFileSync" },
-  { pattern: /writeFile\b/, label: "writeFile" },
-  { pattern: /appendFileSync/, label: "appendFileSync" },
-  { pattern: /appendFile\b/, label: "appendFile" },
-  { pattern: /unlinkSync/, label: "unlinkSync" },
-  { pattern: /unlink\b/, label: "unlink" },
-  { pattern: /rmSync/, label: "rmSync" },
-  { pattern: /rmdir\b/, label: "rmdir" },
-  { pattern: /renameSync/, label: "renameSync" },
-  { pattern: /rename\b/, label: "rename" },
-  { pattern: /chmodSync/, label: "chmodSync" },
-  { pattern: /chownSync/, label: "chownSync" },
-  { pattern: /execSync/, label: "execSync" },
-  { pattern: /spawnSync/, label: "spawnSync" },
-  { pattern: /execFileSync/, label: "execFileSync" },
-  { pattern: /mkdirSync/, label: "mkdirSync" },
-  { pattern: /mkdir\b/, label: "mkdir" },
-  // P0-1 fix: block ALL filesystem access, dynamic imports, and runtime reflection
-  { pattern: /require\s*\(\s*['"]fs/, label: "require('fs')" },
-  { pattern: /require\s*\(\s*['"]node:fs/, label: "require('node:fs')" },
-  { pattern: /import\s*\(/, label: "import()" },
-  { pattern: /Buffer\b/, label: "Buffer" },
-  { pattern: /WebAssembly\b/, label: "WebAssembly" },
-  { pattern: /process\.binding/, label: "process.binding" },
-  { pattern: /process\.env/, label: "process.env" }
-];
-function validateScript(script) {
-  for (const { pattern, label } of DANGEROUS_SCRIPT_PATTERNS) {
-    if (pattern.test(script)) {
-      return `Script contains dangerous pattern: ${label}`;
-    }
-  }
-  return null;
-}
-var SANDBOX_MAX_HEAP_MB = 256;
-function buildSandboxEnv(language, paths) {
-  const base = {
-    PATH: process.env.PATH,
-    NODE_ENV: process.env.NODE_ENV,
-    FORGE_FILES: JSON.stringify(paths)
-  };
-  if (language === "javascript") {
-    base.NODE_OPTIONS = [
-      `--max-old-space-size=${SANDBOX_MAX_HEAP_MB}`
-      // Disable network access via --dns-result-order and policy
-      // Note: --experimental-network-imports is NOT set
-    ].join(" ");
-  }
-  return base;
-}
-function buildPermissionArgs(allowedPaths) {
-  const flags = process.allowedNodeEnvironmentFlags;
-  const permissionFlag = flags.has("--permission") ? "--permission" : flags.has("--experimental-permission") ? "--experimental-permission" : null;
-  if (!permissionFlag || !flags.has("--allow-fs-read"))
-    return [];
-  return [permissionFlag, ...allowedPaths.map((p) => `--allow-fs-read=${p}`)];
-}
-function resolveAllowedReadFiles(paths, cwd) {
-  const root2 = cwd ? resolve3(cwd) : process.cwd();
-  return paths.map((p) => {
-    const resolved = resolve3(root2, p);
-    let realPath = resolved;
-    try {
-      realPath = realpathSync2(resolved);
-    } catch {
-    }
-    return { inputPath: p, resolvedPath: resolved, realPath };
-  });
-}
-function buildJavascriptSandboxScript(script, allowedFiles) {
-  const fileAliases = allowedFiles.flatMap((file2) => [
-    { alias: file2.inputPath, realPath: file2.realPath },
-    { alias: file2.resolvedPath, realPath: file2.realPath },
-    { alias: file2.realPath, realPath: file2.realPath }
-  ]);
-  return `
-const { readFileSync } = require("node:fs");
-const { Script, createContext } = require("node:vm");
-
-const userScript = ${JSON.stringify(script)};
-const fileAliases = ${JSON.stringify(fileAliases)};
-const fileContentsByRealPath = Object.create(null);
-for (const entry of fileAliases) {
-  if (!Object.prototype.hasOwnProperty.call(fileContentsByRealPath, entry.realPath)) {
-    fileContentsByRealPath[entry.realPath] = readFileSync(entry.realPath, "utf-8");
-  }
-}
-const fileMap = Object.create(null);
-for (const entry of fileAliases) {
-  fileMap[entry.alias] = fileContentsByRealPath[entry.realPath];
-}
-
-const setupScript = \`
-const __forge_file_map = Object.freeze(${JSON.stringify("__FORGE_FILE_MAP__")});
-const __forge_files = Object.freeze(${JSON.stringify(allowedFiles.map((file2) => file2.inputPath))});
-globalThis.__forge_stdout = [];
-globalThis.__forge_stderr = [];
-function __forge_format(value) {
-  if (typeof value === "string") return value;
-  if (typeof value === "undefined") return "undefined";
-  try { return JSON.stringify(value); } catch { return String(value); }
-}
-function __forge_readFile(inputPath, encoding = "utf-8") {
-  if (encoding !== "utf-8" && encoding !== "utf8") {
-    throw new Error("Unsupported encoding for forge_read readFile(): " + String(encoding));
-  }
-  const key = String(inputPath);
-  if (!Object.prototype.hasOwnProperty.call(__forge_file_map, key)) {
-    throw new Error("Path not listed in FORGE_FILES: " + key);
-  }
-  return __forge_file_map[key];
-}
-globalThis.FORGE_FILES = __forge_files;
-globalThis.readFile = __forge_readFile;
-globalThis.console = Object.freeze({
-  log(...args) { globalThis.__forge_stdout.push(args.map(__forge_format).join(" ") + "\\\\n"); },
-  error(...args) { globalThis.__forge_stderr.push(args.map(__forge_format).join(" ") + "\\\\n"); },
-  warn(...args) { globalThis.__forge_stderr.push(args.map(__forge_format).join(" ") + "\\\\n"); }
-});
-Object.freeze(globalThis.FORGE_FILES);
-Object.freeze(globalThis.readFile);
-Object.freeze(globalThis.console);
-\`;
-
-const context = createContext(Object.create(null), { codeGeneration: { strings: false, wasm: false } });
-new Script(setupScript.replace(${JSON.stringify(JSON.stringify("__FORGE_FILE_MAP__"))}, JSON.stringify(fileMap)), {
-  filename: "forge-read-setup.js",
-}).runInContext(context, { timeout: 1000 });
-
-let thrown = null;
-try {
-  new Script(userScript, { filename: "forge-read-user-script.js" }).runInContext(context, { timeout: 1000 });
-} catch (err) {
-  thrown = err;
-}
-
-const serialized = new Script(
-  "JSON.stringify({ stdout: globalThis.__forge_stdout.join(''), stderr: globalThis.__forge_stderr.join('') })",
-).runInContext(context, { timeout: 1000 });
-const output = JSON.parse(serialized);
-if (output.stdout) process.stdout.write(output.stdout);
-if (output.stderr) process.stderr.write(output.stderr);
-if (thrown) {
-  console.error(thrown && thrown.stack ? thrown.stack : String(thrown));
-  process.exitCode = 1;
-}
-`;
-}
-function execReadScript(script, language, paths, timeoutMs, options) {
-  return new Promise((finish) => {
-    if (language === "shell") {
-      finish({
-        stdout: "",
-        stderr: "forge_read shell mode is disabled; use javascript mode only",
-        exitCode: 1,
-        timedOut: false
-      });
-      return;
-    }
-    const rootPath = options?.cwd ? resolve3(options.cwd) : process.cwd();
-    const pathError = validatePaths(paths, rootPath);
-    if (pathError) {
-      finish({
-        stdout: "",
-        stderr: pathError,
-        exitCode: 1,
-        timedOut: false
-      });
-      return;
-    }
-    const env = buildSandboxEnv(language, paths);
-    const allowedFiles = resolveAllowedReadFiles(paths, rootPath);
-    const allowedPaths = allowedFiles.map((file2) => file2.realPath);
-    const sandboxScript = buildJavascriptSandboxScript(script, allowedFiles);
-    const cmd = process.execPath;
-    const args = [
-      ...buildPermissionArgs(allowedPaths),
-      "--no-addons",
-      "--disable-proto=throw",
-      "-e",
-      sandboxScript
-    ];
-    const child = execFile2(cmd, args, {
-      timeout: timeoutMs,
-      maxBuffer: 10 * 1024 * 1024,
-      env,
-      ...options?.cwd ? { cwd: options.cwd } : {}
-    }, (error51, stdout, stderr) => {
-      if (error51 && "killed" in error51 && error51.killed) {
-        finish({
-          stdout: String(stdout),
-          stderr: String(stderr),
-          exitCode: 1,
-          timedOut: true
-        });
-        return;
-      }
-      const exitCode = error51 ? Number(error51.code) || 1 : 0;
-      finish({
-        stdout: String(stdout),
-        stderr: String(stderr),
-        exitCode,
-        timedOut: false
-      });
-    });
-    if (!child) {
-      finish({
-        stdout: "",
-        stderr: "Failed to spawn subprocess",
-        exitCode: 1,
-        timedOut: false
-      });
-    }
-  });
-}
 function readStructuredFiles(paths, rootPath) {
   return paths.map((path2) => ({
     path: path2,
@@ -32210,13 +32029,11 @@ async function runStructuredReadOperation(input, options) {
 var TOOL_DESCRIPTION3 = [
   "Analyze multiple files through structured, safe read operations.",
   "",
-  "Primary operations:",
+  "Operations:",
   "- imports: extract import/export/require module specifiers",
   "- contains: return whether each file contains query without echoing file contents",
   "- line_count: count lines per file",
   "- json_keys: list top-level keys in JSON object files",
-  "",
-  "Legacy compatibility: javascript script mode still runs in a restricted VM with FORGE_FILES/readFile(path).",
   "",
   "Use for: batch structural analysis, dependency graphs, code metrics.",
   "NOT for: file mutations or interactive commands."
@@ -32226,79 +32043,28 @@ function registerForgeRead(server2, root2) {
     description: TOOL_DESCRIPTION3,
     inputSchema: {
       paths: external_exports.array(external_exports.string()).describe("File paths to analyze"),
-      operation: external_exports.enum(["imports", "contains", "line_count", "json_keys"]).optional().describe("Structured safe read operation; preferred over script mode"),
-      query: external_exports.string().optional().describe("Query string for contains operation"),
-      script: external_exports.string().optional().describe("Legacy analysis script code"),
-      language: external_exports.enum(["javascript"]).default("javascript").describe("Legacy script language (javascript only; shell mode is disabled)")
+      operation: external_exports.enum(["imports", "contains", "line_count", "json_keys"]).describe("Structured safe read operation (required)"),
+      query: external_exports.string().optional().describe("Query string for contains operation")
     },
     _meta: {
       "anthropic/maxResultSizeChars": 2e5
     }
-  }, async ({ paths, operation, query, script, language }) => {
-    if (operation) {
-      const result2 = await runStructuredReadOperation({ operation, paths, query }, root2 ? { cwd: root2.path } : void 0);
-      return {
-        content: [{ type: "text", text: result2.output }],
-        isError: result2.ok ? void 0 : true
-      };
-    }
-    if (typeof script !== "string") {
-      return {
-        content: [
-          { type: "text", text: "forge_read requires operation or legacy script" }
-        ],
-        isError: true
-      };
-    }
-    if (root2) {
-      const pathError = validatePaths(paths, root2.path);
-      if (pathError) {
-        return {
-          content: [{ type: "text", text: pathError }],
-          isError: true
-        };
-      }
-    }
-    if (language === "javascript") {
-      const scriptError = validateScript(script);
-      if (scriptError) {
-        return {
-          content: [{ type: "text", text: scriptError }],
-          isError: true
-        };
-      }
-    }
-    const readOpts = root2 ? { cwd: root2.path } : void 0;
-    const result = await execReadScript(script, language, paths, DEFAULT_TIMEOUT_MS, readOpts);
-    if (result.timedOut) {
+  }, async ({ paths, operation, query }) => {
+    if (!operation) {
       return {
         content: [
           {
             type: "text",
-            text: `Script timed out after ${DEFAULT_TIMEOUT_MS}ms`
+            text: "forge_read requires `operation` (imports/contains/line_count/json_keys). Script mode has been removed."
           }
         ],
         isError: true
       };
     }
-    if (result.exitCode !== 0) {
-      const errOutput = result.stderr ? `${result.stdout}
-
-STDERR:
-${result.stderr}` : result.stdout || "Script failed with no output";
-      return {
-        content: [{ type: "text", text: errOutput }],
-        isError: true
-      };
-    }
+    const result = await runStructuredReadOperation({ operation, paths, query }, root2 ? { cwd: root2.path } : void 0);
     return {
-      content: [
-        { type: "text", text: result.stdout },
-        {
-          type: "text",
-          text: "\u26A0\uFE0F Script mode is deprecated. Use structured operations (imports/contains/line_count/json_keys) instead."
-        }
-      ]
+      content: [{ type: "text", text: result.output }],
+      isError: result.ok ? void 0 : true
     };
   });
 }
