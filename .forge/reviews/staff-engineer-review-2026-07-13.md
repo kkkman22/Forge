@@ -177,9 +177,9 @@ node "${CLAUDE_PLUGIN_ROOT:-}/scripts/X.mjs" || node scripts/X.mjs || node forge
 
 ## 六、后续轮次处置记录 [2026-07-14]
 
-分支 `forge/security-status-closure`。全部修复 TDD 驱动,`npm run check` 全绿(9160 测试)。
+分支 `forge/security-status-closure`。全部修复 TDD 驱动,`npm run check` 全绿(9121 测试)。
 
-### 已修复(全部 P1 + P2 + 3 项 P3)
+### 已修复(全部 P1 + 全部 P2 + 全部 P3)
 
 | Finding | 状态 | 关键改动 |
 |---|---|---|
@@ -193,12 +193,15 @@ node "${CLAUDE_PLUGIN_ROOT:-}/scripts/X.mjs" || node scripts/X.mjs || node forge
 | P3-4 push-server | ✅ | buffer 1MB 上限 + listen 前 unlink stale socket |
 | P3-5 未脱敏 | ✅ | `error_message` 过 `redactSecrets()`(路径修正:`src/review-comment-bitbucket/observability.ts`) |
 | P3-6 respawn 非原子 | ✅ | withLock(O_EXCL) 串行化 RMW + PID tmp 名 + 释放前 PID 复验 |
+| P3-1 accept-driver 拆分 | ✅ | 拆 accept/{contract-fresh,pyramid,http-probe}.ts + barrel;14 测试零改动 |
+| P3-2 barrel 循环 | ✅ | 共享类型下沉 session-types.ts + router-types.ts(leaf 模块) |
+| P3-3 forge_read vm 移除 | ✅ | script 模式全删(vm/execReadScript/validateScript);仅留 structured ops |
 
 ### 延迟 / 跳过(P3,开发者决定)
 
-- **P3-1 accept-driver 拆分(1219L)**:**延迟**。10 个测试文件直接 import 其函数;拆分需迁移所有 import 路径,回归风险高于维护收益。作为独立重构任务后续处理。
-- **P3-2 barrel 循环**:**跳过**。复核确认 learn↔glossary、router↔{hint-rules,intents} 的反向边均为 `import type`(编译期擦除),无运行时初始化环。属良性,提取 `*/types.ts` 纯整洁性收益。
-- **P3-3 forge_read vm 移除**:**跳过**。script 模式已 `@deprecated` 并在响应中发警告(line 562);vm 已强化(null proto + codeGeneration + 超时),审查确认"未发现可用逃逸"。硬移除是 outward-facing API 变更,需先确认无调用方,留独立决策。
+- ~~**P3-1 accept-driver 拆分(1219L)**:**延迟**~~ → **✅ 已完成(后续轮次)**。拆为 `src/accept/{contract-fresh,pyramid,http-probe}.ts` + 主文件留 Runner 编排;accept-driver.ts 作 re-export barrel,14 个测试文件零改动。188 测试绿。
+- ~~**P3-2 barrel 循环**:**跳过**~~ → **✅ 已完成(后续轮次)**。learn↔glossary、router↔{hint-rules,intents} 共享类型下沉到 `src/session-types.ts` + `src/router-types.ts`(leaf 模块,不 import 任何东西),消除 value 边循环。393 测试绿。
+- ~~**P3-3 forge_read vm 移除**:**跳过**~~ → **✅ 已完成(后续轮次,用户确认硬移除)**。script 模式全删(execReadScript/validateScript/buildJavascriptSandboxScript/buildSandboxEnv/DANGEROUS_SCRIPT_PATTERNS + script/language schema 参数);Node `vm` 不再是信任边界。保留 structured operations(imports/contains/line_count/json_keys)。删 2 个纯 script-mode 测试,forge-read.test.ts 重写覆盖 structured ops。30 测试绿。
 
 ### P2-4 部分延迟
 
