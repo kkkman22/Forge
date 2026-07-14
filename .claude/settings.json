@@ -15,7 +15,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "bash scripts/auto-resume.sh 2>/dev/null || bash forge/scripts/auto-resume.sh 2>/dev/null || bash ~/.claude/skills/forge/scripts/auto-resume.sh 2>/dev/null || true",
+            "command": "bash scripts/auto-resume.sh 2>/dev/null || bash ~/.claude/skills/forge/scripts/auto-resume.sh 2>/dev/null || true",
             "timeout": 5
           }
         ]
@@ -33,7 +33,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "node scripts/inject-evolved-rules.mjs 2>/dev/null || node forge/scripts/inject-evolved-rules.mjs 2>/dev/null || node ~/.claude/skills/forge/scripts/inject-evolved-rules.mjs 2>/dev/null || true",
+            "command": "node scripts/inject-evolved-rules.mjs 2>/dev/null || node ~/.claude/skills/forge/scripts/inject-evolved-rules.mjs 2>/dev/null || true",
             "timeout": 5
           }
         ]
@@ -42,7 +42,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "node scripts/forge-hook-dispatch.mjs SessionStart 2>/dev/null || node forge/scripts/forge-hook-dispatch.mjs SessionStart 2>/dev/null || node ~/.claude/skills/forge/scripts/forge-hook-dispatch.mjs SessionStart 2>/dev/null || true",
+            "command": "node scripts/forge-hook-dispatch.mjs SessionStart 2>/dev/null || node ~/.claude/skills/forge/scripts/forge-hook-dispatch.mjs SessionStart 2>/dev/null || true",
             "timeout": 5
           }
         ]
@@ -53,7 +53,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "node scripts/forge-hook-dispatch.mjs UserPromptSubmit 2>/dev/null || node forge/scripts/forge-hook-dispatch.mjs UserPromptSubmit 2>/dev/null || node ~/.claude/skills/forge/scripts/forge-hook-dispatch.mjs UserPromptSubmit 2>/dev/null || true",
+            "command": "node scripts/forge-hook-dispatch.mjs UserPromptSubmit 2>/dev/null || node ~/.claude/skills/forge/scripts/forge-hook-dispatch.mjs UserPromptSubmit 2>/dev/null || true",
             "timeout": 5
           }
         ]
@@ -65,7 +65,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "node scripts/inject-plan-context.mjs 2>/dev/null || node forge/scripts/inject-plan-context.mjs 2>/dev/null || node ~/.claude/skills/forge/scripts/inject-plan-context.mjs 2>/dev/null || true",
+            "command": "node scripts/inject-plan-context.mjs 2>/dev/null || node ~/.claude/skills/forge/scripts/inject-plan-context.mjs 2>/dev/null || true",
             "timeout": 5
           }
         ]
@@ -137,7 +137,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "node scripts/forge-hook-dispatch.mjs Stop 2>/dev/null || node forge/scripts/forge-hook-dispatch.mjs Stop 2>/dev/null || node ~/.claude/skills/forge/scripts/forge-hook-dispatch.mjs Stop 2>/dev/null || true",
+            "command": "node scripts/forge-hook-dispatch.mjs Stop 2>/dev/null || node ~/.claude/skills/forge/scripts/forge-hook-dispatch.mjs Stop 2>/dev/null || true",
             "timeout": 5
           }
         ]
@@ -168,7 +168,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "node scripts/forge-hook-dispatch.mjs PreCompact 2>/dev/null || node forge/scripts/forge-hook-dispatch.mjs PreCompact 2>/dev/null || node ~/.claude/skills/forge/scripts/forge-hook-dispatch.mjs PreCompact 2>/dev/null || true",
+            "command": "node scripts/forge-hook-dispatch.mjs PreCompact 2>/dev/null || node ~/.claude/skills/forge/scripts/forge-hook-dispatch.mjs PreCompact 2>/dev/null || true",
             "timeout": 5
           }
         ]
@@ -179,7 +179,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "node scripts/forge-hook-dispatch.mjs PostCompact 2>/dev/null || node forge/scripts/forge-hook-dispatch.mjs PostCompact 2>/dev/null || node ~/.claude/skills/forge/scripts/forge-hook-dispatch.mjs PostCompact 2>/dev/null || true",
+            "command": "node scripts/forge-hook-dispatch.mjs PostCompact 2>/dev/null || node ~/.claude/skills/forge/scripts/forge-hook-dispatch.mjs PostCompact 2>/dev/null || true",
             "timeout": 5
           }
         ]
