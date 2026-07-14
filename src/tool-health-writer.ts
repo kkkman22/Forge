@@ -146,6 +146,15 @@ export function acquireLockSync(lockPath: string, opts: AppendOptions): void {
           // Only steal if the recorded holder PID is actually dead. A live
           // PID means the holder is slow (debugger/NFS), not crashed — wait.
           if (!isLockHolderAlive(lockPath, pidAliveCheck)) {
+            // P2-3e: narrow the TOCTOU window. Between isLockHolderAlive and
+            // unlink, a peer could win O_EXCL (having written a fresh PID). Re-
+            // stat the mtime; if it changed, the lock was recycled — don't
+            // unlink (would steal the peer's fresh lock). Loop+retry instead.
+            const statAfter = statSync(lockPath);
+            if (statAfter.mtimeMs !== stat.mtimeMs) {
+              // Lock was recycled by a peer mid-check — don't steal, retry.
+              continue;
+            }
             try {
               unlinkSync(lockPath);
             } catch (_err: unknown) {

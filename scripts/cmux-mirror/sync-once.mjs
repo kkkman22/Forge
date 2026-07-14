@@ -4,7 +4,7 @@
  * 9-step flow: availability → forge-dir check → lock → respawn → read → emit → diff → dispatch → snapshot.
  */
 
-import { existsSync, readFileSync, writeFileSync, renameSync, unlinkSync } from "node:fs";
+import { existsSync, readFileSync, writeFileSync, renameSync, unlinkSync, openSync, closeSync } from "node:fs";
 import { join } from "node:path";
 import { shouldSkipForSubagent } from "../lib/hook-stdin-router.mjs";
 import { cmuxAvailable } from "./lib/availability.mjs";
@@ -35,24 +35,80 @@ export async function syncOnce({
     return { synced: false, commandsEmitted: 0, reason: "forge_dir_missing" };
   }
 
-  // Step 3: Acquire lock (prevent concurrent sync)
+  // Step 3: Acquire lock atomically (P2-3a: was existsSync+writeFileSync
+  // TOCTOU — both procs entered the critical section → duplicate cmux dispatch).
+  // Now O_CREAT|O_EXCL: only one writer wins. Loser either bails (fresh lock)
+  // or steals (stale lock whose holder PID is dead). Lock stores PID for the
+  // liveness probe.
   const lockPath = join(snapshotDir, LOCK_FILE);
-  if (existsSync(lockPath)) {
+  // 5s staleness matches the prior lock convention (lock content was a
+  // timestamp; stale = older than 5s). We write PID now, but keep 5s so the
+  // existing lock semantics + tests are preserved.
+  const LOCK_STALE_MS = 5_000;
+  let acquired = false;
+  for (let attempt = 0; attempt < 10 && !acquired; attempt++) {
     try {
-      const lockContent = readFileSync(lockPath, "utf-8").trim();
-      const lockAge = Date.now() - parseInt(lockContent, 10);
-      if (lockAge < 5000) {
-        return { synced: false, commandsEmitted: 0, reason: "locked" };
+      const fd = openSync(lockPath, "wx", 0o644); // O_CREAT|O_EXCL|O_WRONLY
+      writeFileSync(fd, `${process.pid}`);
+      closeSync(fd);
+      acquired = true;
+    } catch (err) {
+      if (err.code !== "EEXIST") {
+        return { synced: false, commandsEmitted: 0, reason: "lock_failed" };
       }
-    } catch {
-      // Stale or corrupt lock — proceed
+      // Lock exists — check staleness before stealing.
+      try {
+        let lockContent = "";
+        try {
+          lockContent = readFileSync(lockPath, "utf-8").trim();
+        } catch {
+          // corrupt/unreadable — steal
+        }
+        // Lock content is either a bare timestamp (legacy) or a PID. A
+        // timestamp older than LOCK_STALE_MS → stale. A PID → check liveness.
+        const num = parseInt(lockContent, 10);
+        const isPlausiblePid = num > 0 && num < 4_000_000; // PIDs are < ~4M
+        let stale = false;
+        if (isPlausiblePid) {
+          // PID-form lock — stale if the holder process is dead.
+          try {
+            process.kill(num, 0); // throws if dead
+            // alive — not stale
+          } catch {
+            stale = true;
+          }
+        } else {
+          // Legacy timestamp-form lock — stale if older than LOCK_STALE_MS.
+          // (mtime reflects when the file was written; for legacy locks the
+          // content timestamp approximates this, but we use mtime for accuracy.)
+          const { statSync } = await import("node:fs");
+          stale = Date.now() - statSync(lockPath).mtimeMs > LOCK_STALE_MS;
+          // If the content is a large timestamp (legacy), also honor it:
+          if (Number.isFinite(num) && num > 4_000_000) {
+            stale = stale || Date.now() - num > LOCK_STALE_MS;
+          }
+        }
+        if (stale) {
+          try {
+            unlinkSync(lockPath);
+          } catch {
+            // race — peer removed it; retry will O_EXCL
+          }
+        }
+      } catch {
+        // stat failed — retry
+      }
+      if (!acquired) {
+        const { Atomics } = globalThis;
+        if (Atomics) {
+          const sab = new SharedArrayBuffer(4);
+          Atomics.wait(new Int32Array(sab), 0, 0, 100);
+        }
+      }
     }
   }
-
-  try {
-    writeFileSync(lockPath, Date.now().toString());
-  } catch {
-    return { synced: false, commandsEmitted: 0, reason: "lock_failed" };
+  if (!acquired) {
+    return { synced: false, commandsEmitted: 0, reason: "locked" };
   }
 
   try {
@@ -105,11 +161,15 @@ export async function syncOnce({
 
     return { synced: true, commandsEmitted };
   } finally {
-    // Release lock
+    // Release lock — P2-3a: re-verify we still own it (PID match) before
+    // unlinking, so we don't delete a peer's freshly-acquired lock.
     try {
-      unlinkSync(lockPath);
+      const currentPid = parseInt(readFileSync(lockPath, "utf-8").trim(), 10);
+      if (currentPid === process.pid) {
+        unlinkSync(lockPath);
+      }
     } catch {
-      // Lock cleanup failure — non-fatal, will expire
+      // Lock gone or corrupt — non-fatal, will expire via staleness.
     }
   }
 }

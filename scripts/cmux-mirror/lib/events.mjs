@@ -37,8 +37,18 @@ export async function readEventsSince(path, cursor, { schemaVersion } = {}) {
     // This ensures the file descriptor is always closed.
 
     const content = Buffer.concat(chunks).toString("utf-8");
-    const newCursor = cursor + totalRead;
-    const lines = content.split("\n");
+    // P2-3b: only advance the cursor to the last complete line (last "\n").
+    // Advancing to EOF (size) lost the torn tail line forever — once the writer
+    // finished that line, the next read started AFTER it, so it was never
+    // parsed. Now the partial tail stays below the cursor for next pass.
+    const lastNewline = content.lastIndexOf("\n");
+    if (lastNewline === -1) {
+      // No complete line yet — don't advance cursor; wait for more data.
+      return { events: [], cursor };
+    }
+    const complete = content.slice(0, lastNewline + 1);
+    const newCursor = cursor + Buffer.byteLength(complete, "utf-8");
+    const lines = complete.split("\n");
     const events = [];
 
     for (const line of lines) {

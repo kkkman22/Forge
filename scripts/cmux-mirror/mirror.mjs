@@ -116,30 +116,51 @@ export async function createMirrorDaemon({
 
   // State change handler
   let shuttingDown = false;
+  // P2-3d: single-flight guard. handleStateChange is async with await points
+  // (readEventsSince, dispatchCommands). The debouncer's setTimeout can't
+  // await it, so a second notification during the first's await window would
+  // re-enter → same events consumed twice, currentState RMW lost. The guard
+  // serializes: if a run is in flight, mark pending and re-run once it lands.
+  let runInFlight = false;
+  let pendingRun = false;
 
   async function handleStateChange(_changedPath) {
     if (shuttingDown) return;
-
+    if (runInFlight) {
+      // Another run is mid-await — coalesce: run once more after it finishes.
+      pendingRun = true;
+      return;
+    }
+    runInFlight = true;
     try {
-      const nextState = readForgeState(forgeDir);
+      do {
+        pendingRun = false;
+        try {
+          const nextState = readForgeState(forgeDir);
 
-      // Check events
-      if (existsSync(eventsPath)) {
-        const { events } = await readEventsSince(eventsPath, eventCursor);
-        eventCursor = statSync(eventsPath).size;
-        for (const event of events) {
-          session.onEvent("default", event.type);
+          // Check events — P2-3b: use the cursor returned by readEventsSince (which
+          // only advances to the last complete line). The prior statSync(size) leap
+          // past torn tail lines made event loss deterministic.
+          if (existsSync(eventsPath)) {
+            const { events, cursor } = await readEventsSince(eventsPath, eventCursor);
+            eventCursor = cursor;
+            for (const event of events) {
+              session.onEvent("default", event.type);
+            }
+          }
+
+          // Emit commands if state changed
+          const commands = emitCommands(currentState, nextState);
+          if (commands.length > 0) {
+            currentState = nextState;
+            await dispatchCommands(commands);
+          }
+        } catch {
+          // Best-effort sync (R13.5)
         }
-      }
-
-      // Emit commands if state changed
-      const commands = emitCommands(currentState, nextState);
-      if (commands.length > 0) {
-        currentState = nextState;
-        await dispatchCommands(commands);
-      }
-    } catch {
-      // Best-effort sync (R13.5)
+      } while (pendingRun && !shuttingDown);
+    } finally {
+      runInFlight = false;
     }
   }
 
