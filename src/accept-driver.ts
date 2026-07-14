@@ -1,3 +1,15 @@
+// P3-1: extracted sub-modules (contract-fresh / pyramid / http-probe).
+import { checkContractFresh, readContractSource } from "./accept/contract-fresh.js";
+import {
+  buildCurlArgs,
+  evaluateApiVerdict,
+  evaluateApiVerdictWithBody,
+  evaluateCliVerdict,
+  execDescriptor,
+  extractCommand,
+  extractEndpoint,
+  extractMethod,
+} from "./accept/http-probe.js";
 import type {
   AcceptanceRunResult,
   Scenario,
@@ -13,38 +25,6 @@ import {
   type Snapshot,
 } from "./agent-browser-client.js";
 import { evaluateUiVerdict } from "./evaluate-ui-verdict.js";
-// P3-1: extracted sub-modules (contract-fresh / pyramid / http-probe).
-import {
-  checkContractFresh,
-  readContractSource,
-  type ContractFreshInput,
-  type ContractFreshResult,
-  type ContractSource,
-} from "./accept/contract-fresh.js";
-import {
-  aggregateVerdicts,
-  classifyPyramid,
-  isE2eHeavy,
-  layerOf,
-  type LayerHealth,
-  type LayerHealthBreakdown,
-  type PyramidConfig,
-  type PyramidShape,
-} from "./accept/pyramid.js";
-import {
-  buildCurlArgs,
-  buildCurlCommand,
-  evaluateApiVerdict,
-  evaluateApiVerdictWithBody,
-  evaluateCliVerdict,
-  execDescriptor,
-  extractCommand,
-  extractEndpoint,
-  extractMethod,
-  type ApiVerdictResult,
-  type BodyMatch,
-  type ExecResult,
-} from "./accept/http-probe.js";
 
 /** Default navigation allowlist — localhost + loopback only. [R4-AC5] */
 const DEFAULT_URL_ALLOWLIST = ["localhost", "127.0.0.1"];

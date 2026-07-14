@@ -45,6 +45,7 @@ export type Tier = "light" | "standard" | "full";
 // router ↔ {hint-rules,intents} barrel cycle. Re-exported here for backward
 // compatibility; imported for local use below.
 export type { ProjectPhase, RouteHint, TaskType } from "./router-types.js";
+
 import type { ProjectPhase, RouteHint, TaskType } from "./router-types.js";
 
 // ---------------------------------------------------------------------------

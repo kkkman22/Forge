@@ -65,16 +65,18 @@ import {
   parseEvolutionMarkers,
 } from "./evolution-marker.js";
 import { findStaleterms, type Glossary, type GlossaryTerm } from "./glossary.js";
+
 // P3-2: SessionData moved to session-types.ts to break the learn ↔
 // glossary-hook barrel cycle. Re-exported here for backward compatibility.
 export type { SessionData } from "./session-types.js";
-import type { SessionData } from "./session-types.js";
+
 import {
   DEFAULT_EXTRACTION_RULES,
   extractCandidates,
   filterCandidates,
   type TermCandidate,
 } from "./glossary-extractor.js";
+import type { SessionData } from "./session-types.js";
 
 export { renderGlossaryConflictPrompt, runGlossaryCheck } from "./glossary-hook.js";
 

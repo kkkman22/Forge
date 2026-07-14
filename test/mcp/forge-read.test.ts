@@ -63,10 +63,7 @@ describe("runStructuredReadOperation", () => {
   });
 
   it("imports: extracts import/require specifiers", async () => {
-    writeFileSync(
-      join(tmpRoot, "a.ts"),
-      'import { x } from "./b.js";\nconst c = require("c");\n',
-    );
+    writeFileSync(join(tmpRoot, "a.ts"), 'import { x } from "./b.js";\nconst c = require("c");\n');
     const result = await runStructuredReadOperation(
       { operation: "imports", paths: ["a.ts"] },
       { cwd: tmpRoot },
