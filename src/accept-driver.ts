@@ -13,6 +13,38 @@ import {
   type Snapshot,
 } from "./agent-browser-client.js";
 import { evaluateUiVerdict } from "./evaluate-ui-verdict.js";
+// P3-1: extracted sub-modules (contract-fresh / pyramid / http-probe).
+import {
+  checkContractFresh,
+  readContractSource,
+  type ContractFreshInput,
+  type ContractFreshResult,
+  type ContractSource,
+} from "./accept/contract-fresh.js";
+import {
+  aggregateVerdicts,
+  classifyPyramid,
+  isE2eHeavy,
+  layerOf,
+  type LayerHealth,
+  type LayerHealthBreakdown,
+  type PyramidConfig,
+  type PyramidShape,
+} from "./accept/pyramid.js";
+import {
+  buildCurlArgs,
+  buildCurlCommand,
+  evaluateApiVerdict,
+  evaluateApiVerdictWithBody,
+  evaluateCliVerdict,
+  execDescriptor,
+  extractCommand,
+  extractEndpoint,
+  extractMethod,
+  type ApiVerdictResult,
+  type BodyMatch,
+  type ExecResult,
+} from "./accept/http-probe.js";
 
 /** Default navigation allowlist — localhost + loopback only. [R4-AC5] */
 const DEFAULT_URL_ALLOWLIST = ["localhost", "127.0.0.1"];
@@ -466,57 +498,15 @@ export function resolveTestCommand(
   return evidencePath ? `${cmd} ${evidencePath}` : cmd;
 }
 
-export type ContractSource = "openapi" | "pont" | "pact" | "manual";
-
-export interface ContractFreshInput {
-  source: ContractSource;
-  artifactPath: string;
-  /** Optional: the swagger/schema source to compare mtime against (pont/openapi). */
-  swaggerSourcePath?: string | null;
-}
-
-export interface ContractFreshResult {
-  fresh: boolean;
-  reason?: string;
-}
-
-/**
- * Check whether a contract artifact (codegen output) is fresh (Req3 AC7/AC8).
- * Pure aside from the existence/mtime reads needed to judge freshness.
- *   - manual/pact: freshness is the consumer test's job → always fresh here.
- *   - openapi/pont: artifact must exist; if a swagger source is given and is
- *     newer than the artifact → stale (rerun generate).
- */
-export function checkContractFresh(input: ContractFreshInput): ContractFreshResult {
-  const { source } = input;
-  if (source === "manual" || source === "pact") {
-    return { fresh: true };
-  }
-  // openapi / pont: the artifact is a codegen product; verify it exists.
-  try {
-    const { statSync } = require("node:fs") as typeof import("node:fs");
-    const artifactStat = statSync(input.artifactPath);
-    if (input.swaggerSourcePath) {
-      try {
-        const swaggerStat = statSync(input.swaggerSourcePath);
-        if (swaggerStat.mtimeMs > artifactStat.mtimeMs) {
-          return {
-            fresh: false,
-            reason: `stale contract: ${input.artifactPath} older than ${input.swaggerSourcePath} — rerun pont generate`,
-          };
-        }
-      } catch {
-        // swagger source missing → can't compare; treat artifact as fresh.
-      }
-    }
-    return { fresh: true };
-  } catch {
-    return {
-      fresh: false,
-      reason: `stale contract: ${input.artifactPath} missing — rerun pont generate`,
-    };
-  }
-}
+// P3-1: contract-fresh symbols (ContractSource/ContractFreshInput/
+// ContractFreshResult/checkContractFresh) moved to ./accept/contract-fresh.js.
+// Re-exported here for backward compatibility with existing importers.
+export type {
+  ContractFreshInput,
+  ContractFreshResult,
+  ContractSource,
+} from "./accept/contract-fresh.js";
+export { checkContractFresh } from "./accept/contract-fresh.js";
 
 /** Build a delegate Runner for one layer. Shared factory avoids triplication. */
 function makeDelegateRunner(layer: DelegateLayer): Runner {
@@ -610,11 +600,6 @@ function parseTestCommands(cfg: string): Partial<Record<DelegateLayer, string>> 
   return out;
 }
 
-function readContractSource(scenario: Scenario): ContractSource {
-  const m = scenario.rawText.match(/Contract-Source:\s*(\w+)/i);
-  return (m?.[1] as ContractSource) ?? "manual";
-}
-
 function extractEvidencePath(scenario: Scenario): string | null {
   const m = scenario.rawText.match(/Evidence:\s*([^\n]+)/i);
   if (!m) return null;
@@ -660,159 +645,16 @@ export async function runScenario(
 // Pyramid layer classification (ADR-0006 Req5 / Req7) — pure functions
 // ---------------------------------------------------------------------------
 
-/** Pyramid shape classification (Req5 AC2). Advisory; never blocks ship. */
-export type PyramidShape = "healthy" | "e2e-heavy" | "empty-middle" | "no-unit" | "empty";
-
-/** Per-layer health counts (Req5 AC1). */
-export interface LayerHealth {
-  pass: number;
-  fail: number;
-  inconclusive: number;
-}
-
-export interface LayerHealthBreakdown {
-  unit: LayerHealth;
-  component: LayerHealth;
-  contract: LayerHealth;
-  e2e: LayerHealth;
-}
-
-/**
- * Map a ScenarioType to its pyramid layer. ADR-0006: api/ui/cli/mixed all run
- * as real end-to-end (curl / browser / shell), so they fold into the e2e layer.
- * unit/component/contract are the three delegate (cheap) layers.
- */
-export function layerOf(type: ScenarioType | undefined): "unit" | "component" | "contract" | "e2e" {
-  switch (type) {
-    case "unit":
-      return "unit";
-    case "component":
-      return "component";
-    case "contract":
-      return "contract";
-    // api/ui/cli/mixed/unknown/undefined all fold to the e2e execution layer.
-    default:
-      return "e2e";
-  }
-}
-
-function emptyLayerHealth(): LayerHealth {
-  return { pass: 0, fail: 0, inconclusive: 0 };
-}
-
-/** Classify the pyramid shape from per-layer scenario counts (pure). */
-export function classifyPyramid(counts: {
-  unit: number;
-  component: number;
-  contract: number;
-  e2e: number;
-}): PyramidShape {
-  const total = counts.unit + counts.component + counts.contract + counts.e2e;
-  if (total === 0) return "empty";
-  const middle = counts.component + counts.contract;
-  const hasUnit = counts.unit > 0;
-  const hasMiddle = middle > 0;
-  const hasE2e = counts.e2e > 0;
-
-  // Precedence: e2e-only → e2e-heavy; e2e+middle without unit → no-unit;
-  // unit+e2e without middle → empty-middle; otherwise healthy.
-  if (hasE2e && !hasUnit && !hasMiddle) return "e2e-heavy";
-  if (hasE2e && hasMiddle && !hasUnit) return "no-unit";
-  if (hasUnit && hasE2e && !hasMiddle) return "empty-middle";
-  return "healthy";
-}
-
-export interface PyramidConfig {
-  /** Max ratio of non-`@critical` e2e scenarios before the gate fires. */
-  e2eRatioThreshold: number;
-  /** When false, the ratio gate degrades to advisory (never blocks). */
-  strictPyramid: boolean;
-}
-
-/**
- * Shared e2e-heavy detector (Req5 signal + Req7 gate reuse the same logic).
- * Pure; deterministic; no IO. Counts api/ui/cli/mixed as the e2e layer and
- * excludes the `@critical`-tagged e2e from the ratio (Req7 AC4).
- */
-export function isE2eHeavy(
-  scenarios: readonly { type: ScenarioType; tags: readonly string[] }[],
-  config: PyramidConfig,
-): boolean {
-  const total = scenarios.length;
-  if (total < 3) return false; // small-spec exemption (Req7 AC6)
-  if (!config.strictPyramid || config.e2eRatioThreshold <= 0) return false;
-  const e2eNonCritical = scenarios.filter(
-    (s) => layerOf(s.type) === "e2e" && !s.tags.includes("@critical"),
-  ).length;
-  const middle = scenarios.filter((s) => ["unit", "component", "contract"].includes(s.type)).length;
-  return e2eNonCritical / total > config.e2eRatioThreshold && middle === 0;
-}
-
-export function aggregateVerdicts(artifacts: readonly ScenarioArtifact[]): {
-  pass: number;
-  fail: number;
-  skip: number;
-  warn: number;
-  inconclusive: number;
-  blocksShip: boolean;
-  layerHealth: LayerHealthBreakdown;
-  pyramidShape: PyramidShape;
-} {
-  let pass = 0;
-  let fail = 0;
-  let skip = 0;
-  let warn = 0;
-  let inconclusive = 0;
-
-  const layerHealth: LayerHealthBreakdown = {
-    unit: emptyLayerHealth(),
-    component: emptyLayerHealth(),
-    contract: emptyLayerHealth(),
-    e2e: emptyLayerHealth(),
-  };
-
-  for (const a of artifacts) {
-    switch (a.verdict) {
-      case "PASS":
-        pass++;
-        break;
-      case "FAIL":
-        fail++;
-        break;
-      case "SKIP":
-        skip++;
-        break;
-      case "WARN":
-        warn++;
-        break;
-      case "INCONCLUSIVE":
-        inconclusive++;
-        break;
-    }
-
-    // Artifacts without a type (legacy) are not counted in any layer — they
-    // still contribute to the flat counts above but have no pyramid home.
-    if (a.type === undefined) continue;
-    const layer = layerOf(a.type);
-    const h = layerHealth[layer];
-    if (a.verdict === "PASS") h.pass++;
-    else if (a.verdict === "FAIL") h.fail++;
-    else if (a.verdict === "INCONCLUSIVE") h.inconclusive++;
-  }
-
-  const pyramidShape = classifyPyramid({
-    unit: layerHealth.unit.pass + layerHealth.unit.fail + layerHealth.unit.inconclusive,
-    component:
-      layerHealth.component.pass + layerHealth.component.fail + layerHealth.component.inconclusive,
-    contract:
-      layerHealth.contract.pass + layerHealth.contract.fail + layerHealth.contract.inconclusive,
-    e2e: layerHealth.e2e.pass + layerHealth.e2e.fail + layerHealth.e2e.inconclusive,
-  });
-
-  // [Spec R2-AC3] INCONCLUSIVE does NOT increment fail and does NOT block ship.
-  // pyramidShape is advisory (Req5 AC5) and never affects blocksShip.
-  return { pass, fail, skip, warn, inconclusive, blocksShip: fail > 0, layerHealth, pyramidShape };
-}
+// P3-1: pyramid symbols (PyramidShape/LayerHealth/LayerHealthBreakdown/layerOf/
+// classifyPyramid/PyramidConfig/isE2eHeavy/aggregateVerdicts) moved to
+// ./accept/pyramid.js. Re-exported here for backward compatibility.
+export type {
+  LayerHealth,
+  LayerHealthBreakdown,
+  PyramidConfig,
+  PyramidShape,
+} from "./accept/pyramid.js";
+export { aggregateVerdicts, classifyPyramid, isE2eHeavy, layerOf } from "./accept/pyramid.js";
 
 export function renderAcceptanceReport(result: AcceptanceRunResult): string {
   const total = result.scenarios.length;
@@ -968,252 +810,21 @@ function makeArtifact(
   };
 }
 
-export function extractEndpoint(text: string): string | null {
-  const match = text.match(/(?:endpoint|url|api)\s+(?:is\s+)?(\/?\S+)/i);
-  return match ? match[1] : null;
-}
-
-export function extractMethod(text: string): string {
-  const match = text.match(/\b(GET|POST|PUT|DELETE|PATCH)\b/i);
-  return match ? match[1].toUpperCase() : "GET";
-}
-
-export function extractCommand(text: string): string | null {
-  const match = text.match(/(?:run|execute)\s+['"`](.+?)['"`]/i);
-  return match ? match[1] : null;
-}
-
-/**
- * Shell-escape a string by wrapping in single quotes and escaping any
- * embedded single quotes using the standard `'\''` idiom.
- * Strips newlines to prevent multi-command injection.
- */
-function shellEscape(s: string): string {
-  const sanitized = s.replace(/[\r\n]/g, "");
-  // Replace embedded single quotes with '\'' (end quote, escaped quote, reopen quote)
-  return `'${sanitized.replace(/'/g, "'\\''")}'`;
-}
-
-export function buildCurlCommand(method: string, url: string): string {
-  if (!/^https?:\/\//i.test(url)) {
-    throw new Error(`buildCurlArgs: invalid url: ${url}`);
-  }
-  const safeMethod = /^[A-Z]+$/i.test(method) ? method.toUpperCase() : "GET";
-  return `curl -s -o /dev/null -w "%{http_code}" -X ${safeMethod} ${shellEscape(url)}`;
-}
-
-function evaluateApiVerdict(
-  result: { stdout: string; stderr: string },
-  assertion: string,
-): Verdict {
-  const statusMatch = assertion.match(/(\d{3})/);
-  if (statusMatch && !result.stdout.includes(statusMatch[1])) {
-    return "FAIL";
-  }
-  return "PASS";
-}
-
-// ---------------------------------------------------------------------------
-// API body assertions (ADR-0006 Req4) — pure helpers
-// ---------------------------------------------------------------------------
-
-/** Split curl output (when body is retained) into body + trailing status. */
-export function splitBodyAndStatus(stdout: string): { body: string; status: string | null } {
-  // curl -w "%{http_code}" appends the 3-digit code at the very end.
-  const m = stdout.match(/^(.*?)(\d{3})$/s);
-  if (!m) return { body: stdout, status: null };
-  const status = m[2];
-  const body = m[1];
-  // When only the status is present (body discarded), body is empty.
-  if (body === "") return { body: "", status };
-  return { body, status };
-}
-
-/** Match a dotted JSONPath (e.g. "data.role", "data.items.0.id") against parsed JSON. */
-export function matchJsonPath(
-  obj: unknown,
-  path: string,
-): { ok: true; value: unknown } | { ok: false; reason: string } {
-  const segments = path.split(".");
-  let cur: unknown = obj;
-  for (const seg of segments) {
-    if (cur === null || cur === undefined) {
-      return { ok: false, reason: `path "${path}" unreachable at "${seg}"` };
-    }
-    if (typeof cur !== "object") {
-      return { ok: false, reason: `path "${path}" hit non-object at "${seg}"` };
-    }
-    cur = (cur as Record<string, unknown>)[seg];
-  }
-  if (cur === undefined) {
-    return { ok: false, reason: `path "${path}" not found` };
-  }
-  return { ok: true, value: cur };
-}
-
-export interface BodyMatch {
-  path: string;
-  value: unknown;
-}
-
-/**
- * Redact a parsed body to only the matched path:value pairs (Req4 AC6).
- * The full body is never written to the artifact — only the assertion-relevant
- * fields, so sensitive fields (tokens, passwords) are not leaked.
- */
-export function redactBody(_body: unknown, matches: readonly BodyMatch[]): string {
-  return matches.map((m) => `${m.path}:${JSON.stringify(m.value)}`).join(", ");
-}
-
-export interface ApiVerdictResult {
-  verdict: Verdict;
-  failureReason?: string;
-  /** Req4 AC6: only matched path:value pairs, never the full body. */
-  bodySummary?: string;
-}
-
-/** Parse a `data.<path> shall be <value>` assertion from a THEN clause. */
-function parseBodyAssertion(assertion: string): { path: string; expected: string } | null {
-  // Matches: data.role shall be "admin"  /  data.role shall be 'admin'
-  //         data.status shall be active  /  data.count shall be 3
-  const m = assertion.match(/data\.([\w.]+)\s+shall\s+be\s+["']?([^"'\s,.]+)["']?/i);
-  if (!m) return null;
-  return { path: `data.${m[1]}`, expected: m[2] };
-}
-
-/**
- * Evaluate an API verdict supporting both status-code and response-body
- * assertions (Req4 AC2-AC5). Pure; throws never.
- */
-export function evaluateApiVerdictWithBody(
-  result: { stdout: string; stderr: string },
-  assertion: string,
-): ApiVerdictResult {
-  const bodyAssertion = parseBodyAssertion(assertion);
-  const statusMatch = assertion.match(/(\d{3})/);
-
-  // AC4: status-only path (no body assertion) → back-compat.
-  if (!bodyAssertion) {
-    if (statusMatch && !result.stdout.includes(statusMatch[1])) {
-      return { verdict: "FAIL", failureReason: `status ${statusMatch[1]} not in stdout` };
-    }
-    return { verdict: "PASS" };
-  }
-
-  // Body assertion path: split body from status, parse JSON, match path.
-  const { body, status } = splitBodyAndStatus(result.stdout);
-
-  // AC3: if a status is also asserted, it must match too.
-  if (statusMatch && status !== statusMatch[1]) {
-    return {
-      verdict: "FAIL",
-      failureReason: `status ${statusMatch[1]} expected, got ${status ?? "none"}`,
-    };
-  }
-
-  let parsed: unknown;
-  try {
-    parsed = body.length > 0 ? JSON.parse(body) : null;
-  } catch {
-    // AC5: non-JSON body → FAIL + reason, no throw.
-    return { verdict: "FAIL", failureReason: "response body is not valid JSON" };
-  }
-
-  const matched = matchJsonPath(parsed, bodyAssertion.path);
-  if (!matched.ok) {
-    return { verdict: "FAIL", failureReason: matched.reason };
-  }
-
-  // Normalize both sides to strings for comparison (expected is already a string).
-  const actual = String(matched.value);
-  if (actual !== bodyAssertion.expected) {
-    return {
-      verdict: "FAIL",
-      failureReason: `${bodyAssertion.path}: expected "${bodyAssertion.expected}", got "${actual}"`,
-    };
-  }
-
-  // AC6: record only the matched path:value, never the full body.
-  return {
-    verdict: "PASS",
-    bodySummary: redactBody(parsed, [{ path: bodyAssertion.path, value: matched.value }]),
-  };
-}
-
-function evaluateCliVerdict(
-  result: { stdout: string; stderr: string },
-  assertion: string,
-): Verdict {
-  if (assertion.includes("exit") && assertion.includes("0")) {
-    return "PASS";
-  }
-  if (assertion.toLowerCase().includes("stdout") && assertion.includes("contain")) {
-    return result.stdout.length > 0 ? "PASS" : "FAIL";
-  }
-  return "PASS";
-}
-
-/** @internal */
-export interface ExecResult {
-  stdout: string;
-  stderr: string;
-}
-
-/**
- * Build a curl descriptor for the API runner — pure function, no shell string.
- * Instinct: descriptor + execFile (reject strategy). [T3.2]
- *
- * opts.assertBody (Req4 AC1): when true, curl keeps the response body so
- * evaluateApiVerdictWithBody can assert on data.<path> fields. Default false
- * discards the body (back-compat with status-only assertions).
- */
-export function buildCurlArgs(
-  method: string,
-  url: string,
-  opts?: { assertBody?: boolean },
-): {
-  executable: string;
-  args: string[];
-} {
-  if (!/^https?:\/\//i.test(url)) {
-    throw new Error(`buildCurlArgs: invalid url: ${url}`);
-  }
-  const safeMethod = /^[A-Z]+$/i.test(method) ? method.toUpperCase() : "GET";
-  if (opts?.assertBody) {
-    // Keep the body, still append http_code via -w for status assertion.
-    return {
-      executable: "curl",
-      args: ["-s", "-w", "%{http_code}", "-X", safeMethod, url],
-    };
-  }
-  // -s silent, -o /dev/null discard body, -w http_code, -X method.
-  return {
-    executable: "curl",
-    args: ["-s", "-o", "/dev/null", "-w", "%{http_code}", "-X", safeMethod, url],
-  };
-}
-
-/**
- * Execute a {executable, args} descriptor via execFile (no shell).
- * [T3.2] Replaces the placeholder. Instinct: execFileSync-style descriptor.
- */
-export async function execDescriptor(
-  d: {
-    executable: string;
-    args: string[];
-  },
-  timeoutMs = 15_000,
-): Promise<ExecResult> {
-  const { execFile } = await import("node:child_process");
-  return new Promise((resolve, reject) => {
-    execFile(
-      d.executable,
-      d.args,
-      { encoding: "utf8", timeout: timeoutMs, maxBuffer: 10 * 1024 * 1024 },
-      (err: Error | null, stdout: string, stderr: string) => {
-        if (err) reject(err);
-        else resolve({ stdout, stderr });
-      },
-    );
-  });
-}
+// P3-1: http-probe symbols (extract*/buildCurl*/evaluate*Verdict*/execDescriptor/
+// splitBodyAndStatus/matchJsonPath/redactBody/BodyMatch/ApiVerdictResult/ExecResult)
+// moved to ./accept/http-probe.js. Re-exported here for backward compatibility
+// with existing importers (apiRunner/cliRunner/makeDelegateRunner + tests).
+export type { ApiVerdictResult, BodyMatch, ExecResult } from "./accept/http-probe.js";
+export {
+  buildCurlArgs,
+  buildCurlCommand,
+  evaluateApiVerdictWithBody,
+  evaluateCliVerdict,
+  execDescriptor,
+  extractCommand,
+  extractEndpoint,
+  extractMethod,
+  matchJsonPath,
+  redactBody,
+  splitBodyAndStatus,
+} from "./accept/http-probe.js";
