@@ -61,7 +61,7 @@ export function parseModelTierMap(raw: string | undefined | null): Record<ModelT
     // match `tier: "value"` or `tier: value` (value non-empty)
     const re = new RegExp(`${tier}\\s*:\\s*"?([^"\\n\\r]+)"?`);
     const m = raw.match(re);
-    if (m && m[1] && m[1].trim()) {
+    if (m?.[1]?.trim()) {
       out[tier] = m[1].trim();
     }
   }

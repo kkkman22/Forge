@@ -50,7 +50,7 @@ function readSettings(path: string): Record<string, unknown> {
  * because the plugin's hooks/hooks.json is the sole hook source and
  * `${CLAUDE_PLUGIN_ROOT}` is rejected at project-settings scope.
  */
-function hookCommand(mode: RuntimeConfigMode, event: RequiredHookEvent): string {
+function hookCommand(_mode: RuntimeConfigMode, event: RequiredHookEvent): string {
   const projectDir = "$" + "{CLAUDE_PROJECT_DIR}";
   return `node ${projectDir}/scripts/forge-hook-dispatch.mjs ${event} # @forge-runtime:${event}`;
 }
