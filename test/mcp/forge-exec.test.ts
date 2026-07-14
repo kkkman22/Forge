@@ -552,4 +552,30 @@ describe("isCommandAllowed — readonly allowlist", () => {
   it("rejects bash", () => {
     expect(isCommandAllowed("bash -c 'rm -rf /'")).toBe(false);
   });
+
+  // P2-2: runner binaries (vitest/npx/biome) use prefix matching that concedes
+  // arbitrary trailing args. Flags like --config / -c / --loader cause the
+  // binary to load+execute an attacker-controlled module → RCE.
+  it("rejects vitest run --config <attacker module> (P2-2)", () => {
+    expect(isCommandAllowed("vitest run --config /tmp/x.mjs")).toBe(false);
+    expect(isCommandAllowed("vitest run --config=/tmp/x.mjs")).toBe(false);
+  });
+  it("rejects npx vitest run -c <attacker module> (P2-2)", () => {
+    expect(isCommandAllowed("npx vitest run -c /tmp/x.mjs")).toBe(false);
+  });
+  it("rejects vitest run --loader <module> (P2-2)", () => {
+    expect(isCommandAllowed("vitest run --loader /tmp/x.mjs")).toBe(false);
+  });
+  it("rejects npx vitest run --project <path> (P2-2)", () => {
+    expect(isCommandAllowed("npx vitest run --project /tmp/x")).toBe(false);
+  });
+  it("rejects biome check with config-load flags (P2-2)", () => {
+    expect(isCommandAllowed("biome check --config-path /tmp/x")).toBe(false);
+  });
+  // Regression: benign trailing args still allowed.
+  it("still allows vitest run with benign path args (P2-2)", () => {
+    expect(isCommandAllowed("vitest run test/foo.test.ts")).toBe(true);
+    expect(isCommandAllowed("npx vitest run test/bar.test.ts")).toBe(true);
+    expect(isCommandAllowed("biome check src/ test/")).toBe(true);
+  });
 });

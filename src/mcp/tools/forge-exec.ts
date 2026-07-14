@@ -125,6 +125,34 @@ const ALLOWED_GIT_SUBCOMMANDS: ReadonlySet<string> = new Set([
   "ls-tree",
 ]);
 
+/**
+ * Flags that cause a runner binary (vitest/npx/biome) to load and execute an
+ * attacker-controlled module — defeating the "readonly" promise of the
+ * allowlist. P2-2: the prefix-match branches conceded arbitrary trailing
+ * args; `vitest run --config /tmp/x.mjs` loads x.mjs as a module and runs its
+ * top-level code → RCE.
+ *
+ * Matched as bare flag (== / startsWith "--flag=") so both `--config x` and
+ * `--config=x` forms are rejected.
+ */
+const BLOCKED_RUNNER_FLAGS: ReadonlySet<string> = new Set([
+  "--config",
+  "-c",
+  "--loader",
+  "--project",
+  "--config-path",
+  "--extends",
+]);
+
+function hasBlockedRunnerFlag(parts: string[]): boolean {
+  return parts.some((p) => {
+    if (p.startsWith("--") && p.includes("=")) {
+      return BLOCKED_RUNNER_FLAGS.has(p.split("=")[0]);
+    }
+    return BLOCKED_RUNNER_FLAGS.has(p);
+  });
+}
+
 function normalizeCommand(command: string): string {
   return command.trim().replace(/\s+/g, " ");
 }
@@ -150,11 +178,16 @@ export function isCommandAllowed(command: string): boolean {
   }
 
   if (bin === "npx") {
-    return parts.length >= 3 && parts[1] === "vitest" && parts[2] === "run";
+    return (
+      parts.length >= 3 &&
+      parts[1] === "vitest" &&
+      parts[2] === "run" &&
+      !hasBlockedRunnerFlag(parts)
+    );
   }
 
   if (bin === "vitest") {
-    return parts.length >= 2 && parts[1] === "run";
+    return parts.length >= 2 && parts[1] === "run" && !hasBlockedRunnerFlag(parts);
   }
 
   if (bin === "tsc") {
@@ -162,7 +195,12 @@ export function isCommandAllowed(command: string): boolean {
   }
 
   if (bin === "biome") {
-    return parts.length >= 2 && parts[1] === "check" && !parts.includes("--write");
+    return (
+      parts.length >= 2 &&
+      parts[1] === "check" &&
+      !parts.includes("--write") &&
+      !hasBlockedRunnerFlag(parts)
+    );
   }
 
   if (bin === "git") {
