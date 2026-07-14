@@ -11,9 +11,9 @@
  *   - verify the extraction logic would catch a known drift (regression guard)
  */
 
-import { describe, expect, it } from "vitest";
 import { readFileSync } from "node:fs";
 import { resolve } from "node:path";
+import { describe, expect, it } from "vitest";
 
 const REPO_ROOT = resolve(import.meta.dirname, "..");
 
@@ -31,14 +31,8 @@ function extractTsTokenDivisor(text: string): string | null {
 
 describe("check-bundle-sync Layer 4: src↔scripts parity (P1-3)", () => {
   it("compact-inject.mjs token formula matches token-estimate.ts LATIN_CHARS_PER_TOKEN", () => {
-    const mjs = readFileSync(
-      resolve(REPO_ROOT, "scripts/compact-inject.mjs"),
-      "utf-8",
-    );
-    const ts = readFileSync(
-      resolve(REPO_ROOT, "src/token-estimate.ts"),
-      "utf-8",
-    );
+    const mjs = readFileSync(resolve(REPO_ROOT, "scripts/compact-inject.mjs"), "utf-8");
+    const ts = readFileSync(resolve(REPO_ROOT, "src/token-estimate.ts"), "utf-8");
     const mjsVal = extractMjsTokenDivisor(mjs);
     const tsVal = extractTsTokenDivisor(ts);
     expect(mjsVal, "compact-inject.mjs must use Math.ceil(text.length / N)").not.toBeNull();
@@ -50,10 +44,7 @@ describe("check-bundle-sync Layer 4: src↔scripts parity (P1-3)", () => {
     // If someone edits read-budgeted.ts to CHARS_PER_TOKEN = 3 but forgets
     // compact-inject.mjs, the extracts must diverge.
     const fakeTs = "const CHARS_PER_TOKEN = 3;\n";
-    const realMjs = readFileSync(
-      resolve(REPO_ROOT, "scripts/compact-inject.mjs"),
-      "utf-8",
-    );
+    const realMjs = readFileSync(resolve(REPO_ROOT, "scripts/compact-inject.mjs"), "utf-8");
     expect(extractMjsTokenDivisor(realMjs)).not.toBe(extractTsTokenDivisor(fakeTs));
   });
 
@@ -81,10 +72,7 @@ describe("check-bundle-sync Layer 4: src↔scripts parity (P1-3)", () => {
   it("P2-4: read-budgeted.ts delegates to token-estimate.ts (single token source)", () => {
     // The local CHARS_PER_TOKEN / length/4 formula was removed; estimateTokens
     // now delegates to the canonical CJK-aware tokenEstimate.
-    const ts = readFileSync(
-      resolve(REPO_ROOT, "src/checkpoint/read-budgeted.ts"),
-      "utf-8",
-    );
+    const ts = readFileSync(resolve(REPO_ROOT, "src/checkpoint/read-budgeted.ts"), "utf-8");
     expect(
       ts.includes('from "../token-estimate.js"'),
       "read-budgeted.ts must import tokenEstimate from token-estimate.ts",
