@@ -10,10 +10,10 @@
  */
 
 import type { ExecutionMode } from "./execution-mode.js";
-import type { PressureLevel } from "./pua-engine.js";
 // P2-4: delegate frontmatter parsing to the authoritative module + adapter
 // (was a private character-identical clone of frontmatter.ts).
 import { parseFrontmatterPreservingLeading } from "./frontmatter.js";
+import type { PressureLevel } from "./pua-engine.js";
 
 // ---------------------------------------------------------------------------
 // Types

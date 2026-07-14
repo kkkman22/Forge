@@ -190,6 +190,7 @@ node "${CLAUDE_PLUGIN_ROOT:-}/scripts/X.mjs" || node scripts/X.mjs || node forge
 | P2-2 forge_exec 参数 | ✅ | runner-flag denylist(`--config`/`-c`/`--loader`/`--project`) |
 | P2-3 并发群(5 子项) | ✅ | a 锁 O_EXCL+PID;b cursor lastIndexOf(\n);c event-writer 加锁+8KB 截断;d 单飞守卫;e 偷锁 mtime 复验 |
 | P2-4 token 矛盾 | ✅ | `read-budgeted.ts` 改用 `tokenEstimate`(CJK 加权);`compact-inject` 经 Layer 4 断言对齐 |
+| P2-4 frontmatter 收口 | ✅ | 5 个同关注点解析器合并到 `frontmatter.ts` 适配器 + spec 共享 helper;3 个不同域保留 |
 | P3-4 push-server | ✅ | buffer 1MB 上限 + listen 前 unlink stale socket |
 | P3-5 未脱敏 | ✅ | `error_message` 过 `redactSecrets()`(路径修正:`src/review-comment-bitbucket/observability.ts`) |
 | P3-6 respawn 非原子 | ✅ | withLock(O_EXCL) 串行化 RMW + PID tmp 名 + 释放前 PID 复验 |
@@ -206,4 +207,5 @@ node "${CLAUDE_PLUGIN_ROOT:-}/scripts/X.mjs" || node scripts/X.mjs || node forge
 ### P2-4 部分延迟
 
 - token 公式统一(最高杠杆)已落地。
-- frontmatter 四套解析器收口 + status 四模块 owner 收敛:**延迟**。属大重构(4 处 bypass + 756L status-file-ext 四族三连),留独立轮次。
+- ~~frontmatter 四套解析器收口~~ → **✅ 已完成**。5 个共享同一关注点的解析器(status-file-ext/execution-mode/spec-parser/spec-bugfix/spec-bundle-io)合并到权威 `frontmatter.ts` + 适配器 `parseFrontmatterPreservingLeading` + 共享 helper `extractSpecFrontmatterYaml`/`extractSpecField`。3 个不同域解析器(docs-governance Zod / glossary map / review yaml)确认为不同关注点,保留。192 测试绿。
+- status 4-family(Loop/Execution/Pua/Package)codec 收敛:**延迟**。各 family 字段编码不同(带引号串/数字/逗号串),generic codec 收益纯整洁性、回归风险高(12 测试文件);已被点名的"自己的 parseFrontmatter"已随 frontmatter 收口移除,故剩余重复不阻塞。

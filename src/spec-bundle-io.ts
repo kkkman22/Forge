@@ -18,10 +18,11 @@ import type {
   SpecFileFrontmatter,
   TasksSeedDocument,
 } from "./spec-bundle.js";
-// P2-4: shared spec-frontmatter helpers (was inlined regex here).
-import { extractSpecField, extractSpecFrontmatterYaml } from "./spec-parser.js";
 import { specDocumentToBundle } from "./spec-bundle.js";
+// P2-4: shared spec-frontmatter helpers (was inlined regex here).
 import {
+  extractSpecField,
+  extractSpecFrontmatterYaml,
   parseDesignMarkdown,
   parseRequirementsMarkdown,
   parseTasksMarkdown,
