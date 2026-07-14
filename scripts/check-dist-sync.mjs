@@ -17,6 +17,12 @@ import { createHash } from "node:crypto";
 import fs from "node:fs";
 import path from "node:path";
 
+// P1-3: thin shell. The path-mapping helpers (srcToExpectedDist /
+// distToExpectedSrc) live in src/dist-sync.ts (tested). This CLI imports them
+// so there is one source of truth; the tsc/sha256 orchestration below is
+// script-specific and stays here.
+import { srcToExpectedDist, distToExpectedSrc } from "../dist/src/dist-sync.js";
+
 const TEMP_OUTDIR = ".forge/.dist-sync-check";
 
 function log(msg) {
@@ -69,24 +75,6 @@ function getDiskDistFiles() {
   return walkDir(path.resolve("dist/src"), [".js", ".d.ts"])
     .filter((f) => !f.endsWith(".map"))
     .map((f) => f.replace(/\\/g, "/"));
-}
-
-function srcToExpectedDist(srcPath) {
-  if (!srcPath.startsWith("src/")) return [];
-  if (!srcPath.endsWith(".ts") || srcPath.endsWith(".d.ts")) return [];
-  const relative = srcPath.slice(4, -3);
-  return [`dist/src/${relative}.js`, `dist/src/${relative}.d.ts`];
-}
-
-function distToExpectedSrc(distPath) {
-  if (!distPath.startsWith("dist/src/")) return null;
-  if (distPath.endsWith(".map")) return null;
-  let ext = null;
-  if (distPath.endsWith(".js")) ext = ".js";
-  else if (distPath.endsWith(".d.ts")) ext = ".d.ts";
-  if (!ext) return null;
-  const relative = distPath.slice(9, -ext.length);
-  return `src/${relative}.ts`;
 }
 
 function checkSkip() {

@@ -4,8 +4,12 @@
  *
  * Layer 1 (completeness): Parse hooks/hooks.json, extract all referenced
  *   runtime scripts, verify each exists in both dist packages.
- * Layer 2 (freshness): Run `git diff --exit-code -- dist/ dist-plugin/`
- *   to detect stale committed dist after a source change.
+ * Layer 2 (build presence): dist-plugin/ exists on disk.
+ * Layer 3 (packs integrity): manifest-declared packs exist & non-empty.
+ * Layer 4 (src↔scripts parity): for .mjs scripts that intentionally cannot
+ *   import dist (bootstrap-critical / self-contained-by-contract), assert the
+ *   shared constants/regexes match their src/*.ts counterpart. Catches drift
+ *   where tests cover src but CI/hooks run the .mjs mirror. P1-3.
  *
  * Exit 0 if clean, exit 1 if drift found.
  * Skippable via FORGE_SKIP_BUNDLE_SYNC=1 or [bundle-sync-skip] in commit message.
@@ -14,7 +18,7 @@
  */
 
 import { execSync } from "node:child_process";
-import { existsSync } from "node:fs";
+import { existsSync, readFileSync } from "node:fs";
 import { resolve } from "node:path";
 
 const CC_BUNDLE = "dist/claude-code/bundles/forge";
@@ -223,6 +227,70 @@ function checkPacksIntegrity() {
   return missing;
 }
 
+// ── Layer 4: src↔scripts parity (P1-3) ────────────────────────────────
+//
+// For .mjs scripts that intentionally inline logic (bootstrap-critical or
+// self-contained-by-contract), assert the shared constants match their
+// src/*.ts counterpart. A mismatch means src was edited + tests passed, but
+// the running .mjs still uses the old value → silent drift.
+//
+// Each entry: { mjs, ts, checks: [{ name, extract }] } where extract(text)
+// returns the canonical form of the shared value from the file text. The two
+// extracts must be equal.
+const PARITY_ASSERTIONS = [
+  {
+    mjs: "scripts/compact-inject.mjs",
+    ts: "src/checkpoint/read-budgeted.ts",
+    checks: [
+      {
+        name: "token formula CHARS_PER_TOKEN",
+        // mjs: Math.ceil(text.length / 4) ; ts: const CHARS_PER_TOKEN = 4
+        extractMjs: (t) => {
+          const m = t.match(/Math\.ceil\(\s*text\.length\s*\/\s*(\d+)\s*\)/);
+          return m ? `/${m[1]}` : null;
+        },
+        extractTs: (t) => {
+          const m = t.match(/CHARS_PER_TOKEN\s*=\s*(\d+)/);
+          return m ? `/${m[1]}` : null;
+        },
+      },
+      {
+        name: "default budget BUDGET_TOKENS",
+        extractMjs: (t) => {
+          const m = t.match(/BUDGET_TOKENS\s*=\s*Number\.parseInt\([^,]+,\s*10\)/);
+          const d = t.match(/process\.argv\[\d+\]\s*\?\?\s*"(\d+)"/);
+          return m && d ? d[1] : null;
+        },
+        extractTs: () => null, // no default in ts; skip (mjs-only default)
+      },
+    ],
+  },
+];
+
+function checkScriptSrcParity() {
+  const issues = [];
+  for (const entry of PARITY_ASSERTIONS) {
+    const mjsPath = resolve(process.cwd(), entry.mjs);
+    const tsPath = resolve(process.cwd(), entry.ts);
+    if (!existsSync(mjsPath) || !existsSync(tsPath)) continue;
+    const mjsText = readFileSync(mjsPath, "utf-8");
+    const tsText = readFileSync(tsPath, "utf-8");
+    for (const check of entry.checks) {
+      const mjsVal = check.extractMjs(mjsText);
+      const tsVal = check.extractTs(tsText);
+      if (tsVal === null) continue; // mjs-only or unparseable — skip
+      if (mjsVal !== tsVal) {
+        issues.push({
+          file: entry.mjs,
+          check: check.name,
+          message: `parity drift: mjs="${mjsVal}" ts="${tsVal}" — edit src/${entry.ts.split("/").pop()} then sync ${entry.mjs}`,
+        });
+      }
+    }
+  }
+  return issues;
+}
+
 // ── Main ─────────────────────────────────────────────────────────────
 function main() {
   if (checkSkip()) {
@@ -255,11 +323,25 @@ function main() {
   const missingPacks = checkPacksIntegrity();
   totalIssues += missingPacks.length;
 
+  // Layer 4: src↔scripts parity (P1-3) — shared constants match across .mjs/.ts
+  log("bundle-sync: checking src↔scripts parity (non-thin-shell mirrors)...");
+  const parityIssues = checkScriptSrcParity();
+  if (parityIssues.length > 0) {
+    for (const p of parityIssues) {
+      logError(`  [${p.check}] ${p.file}`);
+      logError(`      ${p.message}`);
+    }
+    log("");
+  }
+  totalIssues += parityIssues.length;
+
   if (totalIssues > 0) {
     process.exit(1);
   }
 
-  log(`bundle-sync: OK — ${scripts.size} scripts verified, dist-plugin present, packs intact`);
+  log(
+    `bundle-sync: OK — ${scripts.size} scripts verified, dist-plugin present, packs intact, src↔scripts parity clean`,
+  );
   process.exit(0);
 }
 

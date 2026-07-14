@@ -26,12 +26,23 @@
 import { readFileSync, readdirSync, existsSync } from "node:fs";
 import { join, resolve, relative } from "node:path";
 
+// P1-3: thin shell. The pure logic (shingle/jaccard/neutralize/extract*) lives
+// in src/agent-originality.ts (17 tests). This CLI imports the compiled dist so
+// there is exactly one implementation; the prior self-contained mirror had
+// drifted risk (tests covered src, CI ran the mirror).
+import {
+  DEFAULT_FAIL_THRESHOLD,
+  DEFAULT_WARN_THRESHOLD,
+  agentToShingles,
+  extractNameEntities,
+  extractToolEntities,
+  jaccard,
+} from "../dist/src/agent-originality.js";
+
 const ROOT = resolve(import.meta.dirname, "..");
 const AGENTS_DIR = join(ROOT, "agents");
-const SHINGLE_K = 8;
-const FAIL = parseFloat(process.env.ORIGINALITY_FAIL ?? "0.4");
-const WARN = parseFloat(process.env.ORIGINALITY_WARN ?? "0.2");
-const ENTITY_PLACEHOLDER = "__ent__";
+const FAIL = parseFloat(process.env.ORIGINALITY_FAIL ?? String(DEFAULT_FAIL_THRESHOLD));
+const WARN = parseFloat(process.env.ORIGINALITY_WARN ?? String(DEFAULT_WARN_THRESHOLD));
 
 function showHelp() {
   console.log(`Usage: node scripts/check-agent-originality.mjs [files...]
@@ -51,63 +62,12 @@ Options:
   --help, -h    Show this help message`);
 }
 
-// ── core (mirrors src/agent-originality.ts; tested there) ──
-function stripFrontmatter(text) {
-  if (!text.startsWith("---")) return text;
-  const parts = text.split(/^---$/m);
-  if (parts.length < 3) return text;
-  return parts.slice(2).join("---");
-}
-
-function tokenize(text) {
-  return text.toLowerCase().replace(/[^a-z0-9\s]/g, " ").split(/\s+/).filter(Boolean);
-}
-
-function neutralizeEntities(text, entities) {
-  if (entities.size === 0) return text;
-  const escaped = [...entities].map((e) => e.replace(/[.*+?^${}()|[\]\\]/g, "\\$&"));
-  const re = new RegExp(`\\b(${escaped.join("|")})\\b`, "gi");
-  return text.replace(re, ENTITY_PLACEHOLDER);
-}
-
-function shingles(words, k = SHINGLE_K) {
-  const result = new Set();
-  if (words.length < k) return result;
-  for (let i = 0; i <= words.length - k; i++) result.add(words.slice(i, i + k).join(" "));
-  return result;
-}
-
-function jaccard(a, b) {
-  if (a.size === 0 || b.size === 0) return 0;
-  let inter = 0;
-  const [small, large] = a.size <= b.size ? [a, b] : [b, a];
-  for (const item of small) if (large.has(item)) inter++;
-  const union = a.size + b.size - inter;
-  return union === 0 ? 0 : inter / union;
-}
-
-function agentToShingles(text, entities) {
-  return shingles(tokenize(neutralizeEntities(stripFrontmatter(text), entities)));
-}
-
-// 从 frontmatter 提取 name 和 tools,作为中性化实体
+// ── adapter: merge name + tool entities (ts exposes two extractors) ──
 function extractEntities(allContents) {
-  const entities = new Set();
-  for (const content of allContents) {
-    const fmMatch = content.match(/^---\n([\s\S]*?)\n---/);
-    if (!fmMatch) continue;
-    const fm = fmMatch[1];
-    const nameMatch = fm.match(/^name:\s*(.+)$/m);
-    if (nameMatch) entities.add(nameMatch[1].trim().replace(/^["']|["']$/g, "").toLowerCase());
-    const toolsMatch = fm.match(/^tools:\s*(.+)$/m);
-    if (toolsMatch) {
-      for (const t of toolsMatch[1].split(",")) {
-        const trimmed = t.trim().toLowerCase();
-        if (trimmed) entities.add(trimmed);
-      }
-    }
-  }
-  return entities;
+  // ts extractors take a Map<path, content>; the CLI has an array. Wrap it.
+  const map = new Map();
+  for (let i = 0; i < allContents.length; i++) map.set(`agent-${i}.md`, allContents[i]);
+  return new Set([...extractNameEntities(map), ...extractToolEntities(map)]);
 }
 
 // ── main ──
