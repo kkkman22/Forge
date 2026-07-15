@@ -33,7 +33,10 @@ if [ $exit_code -eq 0 ]; then
     line_count=$(wc -l < "$tmpfile" | tr -d ' ')
     if [ "$line_count" -gt 30 ]; then
         echo "Output truncated: ${line_count} lines → summary:"
-        grep -E '(pass|fail|error|warn|coverage|✓|✗|PASS|FAIL|[0-9]+ tests?)' "$tmpfile" | tail -15
+        # grep may have zero matches (exit 1) — under pipefail that would abort
+        # the script before printing the last-5-lines footer. || true keeps the
+        # summary-best-effort and always reaches the footer.
+        grep -E '(pass|fail|error|warn|coverage|✓|✗|PASS|FAIL|[0-9]+ tests?)' "$tmpfile" | tail -15 || true
         echo "--- last 5 lines ---"
         tail -5 "$tmpfile"
     else
