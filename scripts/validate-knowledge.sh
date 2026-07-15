@@ -1,4 +1,5 @@
 #!/usr/bin/env bash
+set -uo pipefail
 # category: user-facing
 # ============================================================================
 # forge validate-knowledge — 知识库健康检查

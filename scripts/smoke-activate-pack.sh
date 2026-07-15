@@ -1,4 +1,5 @@
 #!/usr/bin/env bash
+set -euo pipefail
 # category: user-facing
 # ============================================================================
 # smoke-activate-pack.sh — Pack activation for smoke tests (CI-only)

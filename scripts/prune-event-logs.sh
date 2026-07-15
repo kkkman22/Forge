@@ -1,4 +1,5 @@
 #!/usr/bin/env bash
+set -uo pipefail
 # category: user-facing
 # ============================================================================
 # prune-event-logs.sh — Remove expired forge-loop run directories.

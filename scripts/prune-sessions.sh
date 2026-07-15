@@ -1,4 +1,5 @@
 #!/usr/bin/env bash
+set -uo pipefail
 # category: user-facing
 # ============================================================================
 # prune-sessions.sh — Remove expired .forge/knowledge/sessions/*.md journals.

@@ -1,4 +1,5 @@
 #!/usr/bin/env bash
+set -uo pipefail
 # hook-postcompact.sh — Restore snapshot after compaction, inject to context
 #
 # regenerative-checkpoint R3 Task 6: output the snapshot (from hook-precompact.sh,

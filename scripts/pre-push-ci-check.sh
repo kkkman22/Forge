@@ -1,4 +1,5 @@
 #!/usr/bin/env bash
+set -uo pipefail
 # category: user-facing
 # ============================================================================
 # pre-push-ci-check.sh — 本地 pre-push 快速检查

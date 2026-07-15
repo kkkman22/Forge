@@ -1,4 +1,5 @@
 #!/bin/bash
+set -euo pipefail
 # category: internal-only
 # hook-check-frozen.sh — Wrapper for frozen-zone protection hooks.
 #

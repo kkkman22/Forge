@@ -1,4 +1,5 @@
 #!/usr/bin/env bash
+set -euo pipefail
 # hook-precompact.sh — Save rich .forge/ state snapshot before compaction
 # NEVER exits with code 2 (blocking compaction is catastrophic)
 #

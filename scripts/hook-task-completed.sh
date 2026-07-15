@@ -1,4 +1,5 @@
 #!/usr/bin/env bash
+set -euo pipefail
 # ============================================================================
 # hook-task-completed.sh — Agent Teams TaskCompleted gate.
 #
