@@ -31277,21 +31277,72 @@ var ALLOWED_GIT_SUBCOMMANDS = /* @__PURE__ */ new Set([
   "ls-files",
   "ls-tree"
 ]);
-var BLOCKED_RUNNER_FLAGS = /* @__PURE__ */ new Set([
-  "--config",
-  "-c",
-  "--loader",
-  "--project",
-  "--config-path",
-  "--extends"
+var MODULE_LOAD_FLAGS = /* @__PURE__ */ new Map([
+  ["--reporter", /* @__PURE__ */ new Set(["default", "json", "dot", "junit", "tap", "verbose", "basic", "html", "github-actions"])],
+  ["--coverage.provider", /* @__PURE__ */ new Set(["v8", "istanbul"])],
+  ["--coverage.customProviderModule", /* @__PURE__ */ new Set()],
+  // always reject — no builtin, only module paths
+  ["--environment", /* @__PURE__ */ new Set(["node", "jsdom", "happy-dom", "edge-runtime"])]
 ]);
-function hasBlockedRunnerFlag(parts) {
-  return parts.some((p) => {
+var RUNNER_BOOL_FLAGS = /* @__PURE__ */ new Set([
+  "--coverage",
+  "--silent",
+  "--hideSkippedTests",
+  "--no-color"
+]);
+var RUNNER_VALUE_FLAGS = /* @__PURE__ */ new Set([
+  "--testNamePattern",
+  "-t",
+  "--dir",
+  "--root"
+]);
+var BIOME_VALUE_FLAGS = /* @__PURE__ */ new Set([
+  "--diagnostic-level",
+  "--max-diagnostics",
+  "--reporter"
+]);
+var CODE_EXTENSIONS = /\.(mjs|cjs|ts|js|mts|cts)$/;
+function checkRunnerFlags(parts) {
+  for (let i = 0; i < parts.length; i++) {
+    const p = parts[i];
     if (p.startsWith("--") && p.includes("=")) {
-      return BLOCKED_RUNNER_FLAGS.has(p.split("=")[0]);
+      const [flag, value] = splitFlagValue(p);
+      if (!isAllowedFlagValue(flag, value))
+        return false;
+      continue;
     }
-    return BLOCKED_RUNNER_FLAGS.has(p);
-  });
+    if (MODULE_LOAD_FLAGS.has(p)) {
+      const value = parts[i + 1];
+      if (value === void 0 || !isAllowedFlagValue(p, value))
+        return false;
+      i++;
+      continue;
+    }
+    if (RUNNER_VALUE_FLAGS.has(p) || BIOME_VALUE_FLAGS.has(p)) {
+      if (parts[i + 1] === void 0)
+        return false;
+      i++;
+      continue;
+    }
+    if (RUNNER_BOOL_FLAGS.has(p))
+      continue;
+    if (p.startsWith("-"))
+      return false;
+  }
+  return true;
+}
+function splitFlagValue(token) {
+  const eq = token.indexOf("=");
+  return [token.slice(0, eq), token.slice(eq + 1)];
+}
+function isAllowedFlagValue(flag, value) {
+  const allowed = MODULE_LOAD_FLAGS.get(flag);
+  if (allowed !== void 0) {
+    return allowed.has(value);
+  }
+  if (value.includes("/") || CODE_EXTENSIONS.test(value))
+    return false;
+  return true;
 }
 function normalizeCommand(command) {
   return command.trim().replace(/\s+/g, " ");
@@ -31313,16 +31364,20 @@ function isCommandAllowed(command) {
     return false;
   }
   if (bin === "npx") {
-    return parts.length >= 3 && parts[1] === "vitest" && parts[2] === "run" && !hasBlockedRunnerFlag(parts);
+    return parts.length >= 3 && parts[1] === "vitest" && parts[2] === "run" && checkRunnerFlags(parts.slice(3));
   }
   if (bin === "vitest") {
-    return parts.length >= 2 && parts[1] === "run" && !hasBlockedRunnerFlag(parts);
+    return parts.length >= 2 && parts[1] === "run" && checkRunnerFlags(parts.slice(2));
   }
   if (bin === "tsc") {
     return parts.length === 2 && parts[1] === "--noEmit";
   }
   if (bin === "biome") {
-    return parts.length >= 2 && parts[1] === "check" && !parts.includes("--write") && !hasBlockedRunnerFlag(parts);
+    if (parts.length < 2 || parts[1] !== "check")
+      return false;
+    if (parts.includes("--write"))
+      return false;
+    return checkRunnerFlags(parts.slice(2));
   }
   if (bin === "git") {
     if (parts.length < 2)
@@ -31330,7 +31385,8 @@ function isCommandAllowed(command) {
     const sub = parts[1];
     if (!ALLOWED_GIT_SUBCOMMANDS.has(sub))
       return false;
-    return !parts.some((part) => part === "--output" || part.startsWith("--output="));
+    const reason = validateGitArgs(parts.slice(2).join(" "));
+    return reason === null;
   }
   return false;
 }

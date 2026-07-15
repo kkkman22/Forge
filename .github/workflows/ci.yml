@@ -49,6 +49,8 @@ jobs:
         run: node scripts/check-dist-sync.mjs
       - name: Verify bundle sync
         run: node scripts/check-bundle-sync.mjs
+      - name: Verify MCP context bundle freshness
+        run: node scripts/bundle-mcp.mjs --check
       - name: Install shellcheck
         run: sudo apt-get update -qq && sudo apt-get install -y -qq shellcheck
       - name: Shellcheck scripts

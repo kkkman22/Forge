@@ -303,25 +303,29 @@ fi
 echo "${VERSION}" > "${CC_BUNDLE}/VERSION"
 
 # 生成安装指引
-cat > "${CC_BUNDLE}/INSTALL.md" << 'EOF'
+# Audit P2: INSTALL.md 计数之前写死 13/7, 实际为 1/24。动态计数避免漂移。
+SKILL_COUNT=$(find "${CC_BUNDLE}" -name 'SKILL.md' | wc -l | tr -d ' ')
+AGENT_COUNT=$(find "${CC_BUNDLE}" -path '*agents*' -name '*.md' ! -name 'README.md' | wc -l | tr -d ' ')
+
+cat > "${CC_BUNDLE}/INSTALL.md" << EOF
 # Forge for Claude Code — 安装指南
 
 ## 快速安装
 
-```bash
+\`\`\`bash
 git clone https://github.com/kkkman22/Forge.git ~/.claude/skills/forge
-```
+\`\`\`
 
 ## 初始化项目
 
-```bash
+\`\`\`bash
 # 在项目根目录运行
 ~/.claude/skills/forge/scripts/init.sh
-```
+\`\`\`
 
 ## 使用
 
-在 Claude Code 中输入 `/forge` 并描述任务即可。
+在 Claude Code 中输入 \`/forge\` 并描述任务即可。
 
 ## 前置条件
 
@@ -330,17 +334,17 @@ git clone https://github.com/kkkman22/Forge.git ~/.claude/skills/forge
 
 ## 文件结构
 
-```
+\`\`\`
 ~/.claude/skills/forge/
-├── skills/          # 13 个 SKILL.md
-├── agents/          # 7 个 Subagent 角色
+├── skills/          # ${SKILL_COUNT} 个 SKILL.md
+├── agents/          # ${AGENT_COUNT} 个 Subagent 角色
 ├── commands/        # Forge Command 入口
 ├── hooks/           # Claude Code Hooks
 ├── templates/       # 文件模板
 ├── scripts/
 │   ├── init.sh                # 项目初始化脚本
 │   └── validate-knowledge.sh  # 知识库健康检查
-```
+\`\`\`
 EOF
 
 success "Claude Code 分发包构建完成: dist/claude-code/bundles/forge/"
