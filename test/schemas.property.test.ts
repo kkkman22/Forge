@@ -53,6 +53,7 @@ const loopFieldsArb = fc.record(
 
 const statusFileArb = fc.record(
   {
+    schemaVersion: fc.integer({ min: 1, max: 5 }),
     current_task: fc.string({ maxLength: 80 }),
     tier: tierArb,
     task_type: fc.stringMatching(/^[a-z_]+$/),
@@ -97,7 +98,10 @@ describe("schemas — round-trip", () => {
         const wireForm = JSON.parse(JSON.stringify(sample));
         const { value, errors } = safeParseStatusFile(wireForm);
         expect(errors).toEqual([]);
-        expect(value).toEqual(sample);
+        // schemaVersion defaults to 1 when absent; account for the default
+        // fill so the round-trip holds for samples that omit it.
+        const expected = { schemaVersion: 1, ...sample };
+        expect(value).toEqual(expected);
       }),
       { numRuns: 50 },
     );
