@@ -44,15 +44,22 @@ success() { echo -e "${GREEN}✅${NC} $1"; }
 
 # ---------- Manifest reader ----------
 # Read a JSON array from the manifest and iterate over its entries.
-# Usage: manifest_each "key" "callback_script_name"
+# Usage: manifest_each "key" "callback_fn_name"
+#
+# Audit P1: was `eval "$2" "\"${item}\""` which re-interprets manifest entries
+# through the shell (quote/space/backslash/newline injection). Switched to a
+# direct function call — the callback name is always a hard-coded literal at the
+# call site, and the item is passed as a single positional arg with no second
+# shell-interpretation pass.
 manifest_each() {
   local key="$1"
+  local callback_fn="$2"
   node -e "
     const m = JSON.parse(require('fs').readFileSync('${MANIFEST}', 'utf8'));
     const items = m['${key}'] || [];
     items.forEach(i => console.log(i));
   " | while IFS= read -r item; do
-    eval "$2" "\"${item}\""
+    "${callback_fn}" "${item}"
   done
 }
 
