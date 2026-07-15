@@ -279,8 +279,20 @@ export function migrateToMultiTask(io: StatusManagerIO, forgeRoot: string): void
 // archiveTaskStatus
 // ---------------------------------------------------------------------------
 
+/** @public */
+export type ArchiveResult =
+  | { ok: true; path: string }
+  | { ok: false; code: "invalid-date" | "io-error" | "not-found"; error?: unknown };
+
 /**
  * Archive a task's status file to .forge/archive/<date>-<task-id>/status.md.
+ *
+ * Audit P2: was `void` with a catch-all that silently swallowed every error
+ * (invalid date, missing file, disk failure, permission error alike) — callers
+ * could not distinguish success from failure. Now returns a discriminated
+ * {@link ArchiveResult} and emits a structured warning on failure instead of a
+ * silent TODO. Callers that ignore the return value are unaffected (the single
+ * existing caller discards it).
  * @public
  */
 export function archiveTaskStatus(
@@ -288,21 +300,27 @@ export function archiveTaskStatus(
   forgeRoot: string,
   taskName: string,
   date: string,
-): void {
-  try {
-    if (!/^\d{4}-\d{2}-\d{2}$/.test(date)) {
-      throw new Error(`Invalid archive date format: "${date}" — expected YYYY-MM-DD`);
-    }
-    const taskId = slugify(taskName);
-    const srcPath = `${forgeRoot}/status/${taskId}.md`;
-    if (!io.exists(srcPath)) return;
+): ArchiveResult {
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(date)) {
+    return { ok: false, code: "invalid-date", error: new Error(`Invalid archive date format: "${date}" — expected YYYY-MM-DD`) };
+  }
+  const taskId = slugify(taskName);
+  const srcPath = `${forgeRoot}/status/${taskId}.md`;
+  if (!io.exists(srcPath)) {
+    return { ok: false, code: "not-found", error: new Error(`status file not found: ${srcPath}`) };
+  }
 
-    const archiveDir = `${forgeRoot}/archive/${date}-${taskId}`;
+  const archiveDir = `${forgeRoot}/archive/${date}-${taskId}`;
+  const destPath = `${archiveDir}/status.md`;
+  try {
     io.mkdirp(archiveDir);
-    io.move(srcPath, `${archiveDir}/status.md`);
-  } catch (_err: unknown) {
-    // Graceful degradation — spec R2.5: log warning and continue without crashing
-    // TODO: integrate with logging when available
+    io.move(srcPath, destPath);
+    return { ok: true, path: destPath };
+  } catch (err: unknown) {
+    // Structured warning instead of silent swallow (spec R2.5: log + continue).
+    const msg = err instanceof Error ? err.message : String(err);
+    console.warn(`[archiveTaskStatus] io-error archiving "${taskName}" to ${destPath}: ${msg}`);
+    return { ok: false, code: "io-error", error: err };
   }
 }
 

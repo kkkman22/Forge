@@ -323,13 +323,58 @@ describe("Property 11: Abort isolation", () => {
     };
     const io = createInMemoryIO(files);
 
-    archiveTaskStatus(io, FORGE_ROOT, "task-a", "2026-04-30");
+    const result = archiveTaskStatus(io, FORGE_ROOT, "task-a", "2026-04-30");
 
     // task-a should be moved to archive
     expect(io.exists(`${STATUS_DIR}/task-a.md`)).toBe(false);
     expect(io.exists(`${FORGE_ROOT}/archive/2026-04-30-task-a/status.md`)).toBe(true);
     // task-b should be untouched
     expect(io.read(`${STATUS_DIR}/task-b.md`)).toContain("task-b");
+    // Audit P2: returns a discriminated result, not void
+    expect(result.ok).toBe(true);
+  });
+});
+
+// ---------------------------------------------------------------------------
+// Audit P2: archiveTaskStatus returns a discriminated result (no silent swallow)
+// ---------------------------------------------------------------------------
+
+describe("Audit P2: archiveTaskStatus result", () => {
+  it("returns ok on successful archive", () => {
+    const io = createInMemoryIO({ [`${STATUS_DIR}/task-a.md`]: makeStatusContent("task-a", "build") });
+    const result = archiveTaskStatus(io, FORGE_ROOT, "task-a", "2026-04-30");
+    expect(result.ok).toBe(true);
+    if (result.ok) {
+      expect(result.path).toContain("2026-04-30-task-a");
+    }
+  });
+
+  it("returns invalid-date error (not silent swallow)", () => {
+    const io = createInMemoryIO({ [`${STATUS_DIR}/task-a.md`]: makeStatusContent("task-a", "build") });
+    const result = archiveTaskStatus(io, FORGE_ROOT, "task-a", "bad-date");
+    expect(result.ok).toBe(false);
+    if (!result.ok) {
+      expect(result.code).toBe("invalid-date");
+    }
+  });
+
+  it("returns not-found when the task status file is absent", () => {
+    const io = createInMemoryIO({});
+    const result = archiveTaskStatus(io, FORGE_ROOT, "missing-task", "2026-04-30");
+    expect(result.ok).toBe(false);
+    if (!result.ok) {
+      expect(result.code).toBe("not-found");
+    }
+  });
+
+  it("returns io-error when move fails (not silent swallow)", () => {
+    const io = createInMemoryIO({ [`${STATUS_DIR}/task-a.md`]: makeStatusContent("task-a", "build") });
+    io.move = () => { throw new Error("disk full"); };
+    const result = archiveTaskStatus(io, FORGE_ROOT, "task-a", "2026-04-30");
+    expect(result.ok).toBe(false);
+    if (!result.ok) {
+      expect(result.code).toBe("io-error");
+    }
   });
 });
 
