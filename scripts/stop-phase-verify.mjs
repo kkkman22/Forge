@@ -12,7 +12,15 @@
  *
  * Usage: node scripts/stop-phase-verify.mjs
  *
- * Exit codes: 0 (always — fail-open)
+ * Exit codes:
+ *   0 — allow session end (phase completed, no status, or parse error)
+ *   2 — BLOCK session end (audit P1 iron-law: phase active but no verify
+ *       artifact found). Set FORGE_VERIFY_WARN_ONLY=1 to revert to warn-only.
+ *
+ * Audit P1 (verification-run-command iron-law): was fail-open (exit 0 always),
+ * making the "no verification = cannot claim done" iron-law advisory only.
+ * Now blocks session end when a phase is active AND no verify artifact exists,
+ * unless FORGE_VERIFY_WARN_ONLY=1.
  */
 
 import { existsSync, readFileSync } from "node:fs";
@@ -61,7 +69,14 @@ try {
   const phase = phaseMatch[1].trim();
 
   if (phase && phase !== "completed" && phase !== "") {
-    console.log(`⚠️ Phase: ${phase} — did you verify your last change? Run the relevant test/lint command before stopping.`);
+    // Audit P1: check for a verify artifact. If the phase is active but no
+    // verification was run, block session end (iron-law: verification-run-command).
+    const verifyArtifact = existsSync(join(CWD, ".forge", "verify-artifact.json"))
+      || existsSync(join(CWD, ".forge", "reviews", "test-verdict.md"));
+    const warnOnly = process.env.FORGE_VERIFY_WARN_ONLY === "1";
+
+    const msg = `⚠️ Phase "${phase}" is active — did you verify your last change? Run the relevant test/lint command (npm run typecheck && npm test) before stopping.`;
+    console.error(msg);
 
     // Desktop notification (interactive only)
     if (isInteractive()) {
@@ -74,6 +89,11 @@ try {
         },
       };
       console.log(JSON.stringify(notification));
+    }
+
+    if (!verifyArtifact && !warnOnly) {
+      console.error("BLOCKED: no verify artifact found. Run verification, or set FORGE_VERIFY_WARN_ONLY=1 to allow.");
+      process.exit(2);
     }
   }
 } catch {
