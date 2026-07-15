@@ -1,7 +1,7 @@
 /**
  * Secret redactor for Forge artifacts and logs.
  *
- * Applies 7 regex patterns to redact sensitive values:
+ * Applies 8 regex pattern groups to redact sensitive values:
  *   (a) Bearer/Basic tokens (with or without "Authorization:" prefix)
  *   (b) JSON secret fields (token, access_token, refresh_token, apikey, api_key,
  *       secret, private_key) — case-insensitive to cover lowercase JSON
@@ -9,6 +9,8 @@
  *   (d) Custom auth header values (X-API-Key, X-Auth-Token, Api-Key)
  *   (e) PEM private key blocks (-----BEGIN ... PRIVATE KEY----- ... END)
  *   (f) Bare JWT tokens (eyJ...\.eyJ...\.[A-Za-z0-9_-]+ three-segment form)
+ *   (g) Bare vendor tokens in free text: OpenAI sk-, GitHub ghp_, AWS AKIA
+ *   (h) Bare DSNs with embedded passwords: postgres/mysql/mongodb, Sentry-style
  *
  * **Validates: Requirement R12.11**
  */
@@ -67,6 +69,24 @@ export function redactSecrets(text: string): string {
   // avoid false positives; the payload segment may start with any base64url
   // char (a payload whose first JSON key is "" base64-encodes to eyI, not eyJ).
   result = result.replace(/eyJ[A-Za-z0-9_-]+\.[A-Za-z0-9_-]+\.[A-Za-z0-9_-]+/g, "***");
+
+  // (g) Audit P2: bare vendor tokens & DSNs in free text (no context anchor).
+  // The context-bound patterns above (JSON field / env assign / Bearer prefix)
+  // miss these in loose error strings that flow into git-tracked artifacts.
+  //   - OpenAI secret keys: sk-proj... / sk-... (20+ alphanumerics)
+  //   - GitHub PATs: ghp_ / gho_ / ghs_ / ghu_ / ghr_ / glr_ (36+ chars)
+  //   - AWS access-key IDs: AKIA followed by 16 uppercase alphanumerics
+  result = result.replace(/sk-(?:proj-)?[A-Za-z0-9_-]{20,}/g, "***");
+  result = result.replace(/gh[pousrl]_[A-Za-z0-9]{36,}/g, "***");
+  result = result.replace(/AKIA[0-9A-Z]{16}/g, "***");
+
+  // (h) Audit P2: bare connection strings with embedded credentials.
+  //   - Postgres/MySQL DSN: scheme://user:password@host — redact the
+  //     user:password@ segment.
+  //   - Sentry-style DSN: https://<pubkey>:<secret>@host/<id> or
+  //     https://<pubkey>@host/<id> (ingest DSNs carry no colon-secret).
+  result = result.replace(/(postgres(?:ql)?|mysql|mongodb(?:\+srv)?:\/\/)[^\s@"']+:[^\s@"']+@/gi, "$1***@");
+  result = result.replace(/(https?:\/\/)[A-Za-z0-9_-]+(?::[A-Za-z0-9_-]+)?@[\w.-]+\/\d+/gi, "$1***@");
 
   return result;
 }

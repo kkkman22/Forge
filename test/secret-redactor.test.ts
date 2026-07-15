@@ -276,3 +276,37 @@ describe("secret-redactor: PEM/PGP/JWT hardening [review F-03/F-07/F-08]", () =>
     expect(redactSecrets("just eyJfoobar here")).toBe("just eyJfoobar here");
   });
 });
+
+// Audit P2: bare vendor tokens / DSNs in free text (no context anchor).
+// The 7 context-bound patterns miss these — error strings flow into
+// git-tracked tool-health.md / metrics.md.
+describe("secret-redactor: bare vendor tokens & DSNs [audit P2]", () => {
+  it("redacts bare OpenAI key (sk-...)", () => {
+    const out = redactSecrets("error: invalid key sk-projabcdefghijklmnopqrstuvwxyz0123456789XYZ");
+    expect(out).not.toContain("sk-proj");
+    expect(out).toContain("***");
+  });
+  it("redacts bare GitHub PAT (ghp_...)", () => {
+    const out = redactSecrets("leaked token ghp_1234567890abcdefghijklmnopqrstuvwxyz1234");
+    expect(out).not.toContain("ghp_");
+    expect(out).toContain("***");
+  });
+  it("redacts bare AWS access key id (AKIA...)", () => {
+    const out = redactSecrets("creds AKIAIOSFODNN7EXAMPLE in chat");
+    expect(out).not.toContain("AKIA");
+    expect(out).toContain("***");
+  });
+  it("redacts bare Postgres DSN with password", () => {
+    const out = redactSecrets("db postgres://user:secretpass@host:5432/db");
+    expect(out).not.toContain("secretpass");
+    expect(out).toContain("***");
+  });
+  it("redacts bare Sentry DSN", () => {
+    const out = redactSecrets("dsn https://abc123def456@sentry.io/987654");
+    expect(out).not.toContain("abc123def456");
+    expect(out).toContain("***");
+  });
+  it("does not redact benign sk-free text", () => {
+    expect(redactSecrets("the sky is blue today")).toBe("the sky is blue today");
+  });
+});
