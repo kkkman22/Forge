@@ -105,6 +105,9 @@ function buildRegex(pattern: string): { regex: RegExp; matchedLiteral: string | 
       regex.test("a".repeat(100));
       return { regex, matchedLiteral: null };
     } catch (_err: unknown) {
+      // Invalid regex pattern — skip this rule (legitimate fail-soft: an
+      // unparseable pattern cannot match anything; returning null lets the
+      // caller continue with the remaining rules).
       return null;
     }
   }

@@ -131,9 +131,12 @@ export function writeTaskStatus(
       }
       writeStatusAtomic(forgeRoot, `${forgeRoot}/status.md`, () => content, io);
     }
-  } catch (_err: unknown) {
-    // Graceful degradation — spec R2.5: log warning and continue without crashing
-    // TODO: integrate with logging when available
+  } catch (err: unknown) {
+    // Graceful degradation — spec R2.5: log warning and continue without crashing.
+    // Audit P2: was a silent swallow (TODO: integrate with logging). Now emits
+    // a structured stderr warning so status-write failures are diagnosable.
+    const msg = err instanceof Error ? err.message : String(err);
+    process.stderr.write(`[writeTaskStatus] failed to write status for "${taskName}": ${msg}\n`);
   }
 }
 
