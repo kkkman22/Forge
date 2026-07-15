@@ -1,7 +1,7 @@
 import { createConnection, type Socket } from "node:net";
 import { afterEach, beforeAll, describe, expect, it } from "vitest";
-import { createMockSocket, type MockSocketResult } from "./mock-socket";
 import { canListen } from "../helpers/capability-probe";
+import { createMockSocket, type MockSocketResult } from "./mock-socket";
 
 let mock: MockSocketResult | null = null;
 // Audit P1: skip the whole suite in sandboxes that forbid listen() (EPERM).

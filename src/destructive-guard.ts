@@ -293,8 +293,9 @@ const isGitPushForce = (cmd: readonly string[]): boolean => {
       bare === "-f" ||
       bare === "--force-with-lease" ||
       bare === "--force-with-lease=" || // prefix form
-      bare === "--no-verify"
-    ) || t.startsWith("--force-with-lease=");
+      bare === "--no-verify" ||
+      t.startsWith("--force-with-lease=")
+    );
   });
 };
 

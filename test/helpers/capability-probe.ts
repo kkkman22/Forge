@@ -7,10 +7,10 @@
  * These probes let such tests `describe.skip` gracefully instead of failing.
  */
 
+import { execFileSync } from "node:child_process";
 import { createServer } from "node:net";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
-import { execFileSync } from "node:child_process";
 
 let _canListen: boolean | null = null;
 

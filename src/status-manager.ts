@@ -14,8 +14,8 @@ import { basename, dirname } from "node:path";
 import { extractStringField, parseFrontmatter } from "./frontmatter.js";
 import { writeStatusAtomic } from "./status-atomic.js";
 import { isMultiTaskMode, slugify } from "./status-resolver.js";
-import { acquireLockSync, releaseLockSync } from "./tool-health-writer.js";
 import type { AppendOptions } from "./tool-health-writer.js";
+import { acquireLockSync, releaseLockSync } from "./tool-health-writer.js";
 
 // ---------------------------------------------------------------------------
 // Types
@@ -216,7 +216,12 @@ export function getMostRecentActiveTask(
  * window between them — two concurrent `/forge` migrations could both read the
  * legacy status.md and produce duplicate/phantom task files.
  */
-function withForgeLock<T>(io: StatusManagerIO, forgeRoot: string, lockName: string, fn: () => T): T {
+function withForgeLock<T>(
+  io: StatusManagerIO,
+  forgeRoot: string,
+  lockName: string,
+  fn: () => T,
+): T {
   const lockPath = `${dirname(forgeRoot)}/.${lockName}.lock`;
   const acquire = io.acquireLock ?? ((p: string, opts: AppendOptions) => acquireLockSync(p, opts));
   const release = io.releaseLock ?? ((p: string) => releaseLockSync(p));
@@ -302,7 +307,11 @@ export function archiveTaskStatus(
   date: string,
 ): ArchiveResult {
   if (!/^\d{4}-\d{2}-\d{2}$/.test(date)) {
-    return { ok: false, code: "invalid-date", error: new Error(`Invalid archive date format: "${date}" — expected YYYY-MM-DD`) };
+    return {
+      ok: false,
+      code: "invalid-date",
+      error: new Error(`Invalid archive date format: "${date}" — expected YYYY-MM-DD`),
+    };
   }
   const taskId = slugify(taskName);
   const srcPath = `${forgeRoot}/status/${taskId}.md`;
@@ -319,7 +328,9 @@ export function archiveTaskStatus(
   } catch (err: unknown) {
     // Structured warning instead of silent swallow (spec R2.5: log + continue).
     const msg = err instanceof Error ? err.message : String(err);
-    console.warn(`[archiveTaskStatus] io-error archiving "${taskName}" to ${destPath}: ${msg}`);
+    process.stderr.write(
+      `[archiveTaskStatus] io-error archiving "${taskName}" to ${destPath}: ${msg}\n`,
+    );
     return { ok: false, code: "io-error", error: err };
   }
 }

@@ -85,8 +85,14 @@ export function redactSecrets(text: string): string {
   //     user:password@ segment.
   //   - Sentry-style DSN: https://<pubkey>:<secret>@host/<id> or
   //     https://<pubkey>@host/<id> (ingest DSNs carry no colon-secret).
-  result = result.replace(/(postgres(?:ql)?|mysql|mongodb(?:\+srv)?:\/\/)[^\s@"']+:[^\s@"']+@/gi, "$1***@");
-  result = result.replace(/(https?:\/\/)[A-Za-z0-9_-]+(?::[A-Za-z0-9_-]+)?@[\w.-]+\/\d+/gi, "$1***@");
+  result = result.replace(
+    /(postgres(?:ql)?|mysql|mongodb(?:\+srv)?:\/\/)[^\s@"']+:[^\s@"']+@/gi,
+    "$1***@",
+  );
+  result = result.replace(
+    /(https?:\/\/)[A-Za-z0-9_-]+(?::[A-Za-z0-9_-]+)?@[\w.-]+\/\d+/gi,
+    "$1***@",
+  );
 
   return result;
 }

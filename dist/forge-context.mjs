@@ -31278,7 +31278,20 @@ var ALLOWED_GIT_SUBCOMMANDS = /* @__PURE__ */ new Set([
   "ls-tree"
 ]);
 var MODULE_LOAD_FLAGS = /* @__PURE__ */ new Map([
-  ["--reporter", /* @__PURE__ */ new Set(["default", "json", "dot", "junit", "tap", "verbose", "basic", "html", "github-actions"])],
+  [
+    "--reporter",
+    /* @__PURE__ */ new Set([
+      "default",
+      "json",
+      "dot",
+      "junit",
+      "tap",
+      "verbose",
+      "basic",
+      "html",
+      "github-actions"
+    ])
+  ],
   ["--coverage.provider", /* @__PURE__ */ new Set(["v8", "istanbul"])],
   ["--coverage.customProviderModule", /* @__PURE__ */ new Set()],
   // always reject — no builtin, only module paths

@@ -141,7 +141,20 @@ const ALLOWED_GIT_SUBCOMMANDS: ReadonlySet<string> = new Set([
  * code extension (.mjs/.cjs/.ts/.js) is rejected (those load attacker code).
  */
 const MODULE_LOAD_FLAGS: ReadonlyMap<string, ReadonlySet<string>> = new Map([
-  ["--reporter", new Set(["default", "json", "dot", "junit", "tap", "verbose", "basic", "html", "github-actions"])],
+  [
+    "--reporter",
+    new Set([
+      "default",
+      "json",
+      "dot",
+      "junit",
+      "tap",
+      "verbose",
+      "basic",
+      "html",
+      "github-actions",
+    ]),
+  ],
   ["--coverage.provider", new Set(["v8", "istanbul"])],
   ["--coverage.customProviderModule", new Set<string>()], // always reject — no builtin, only module paths
   ["--environment", new Set(["node", "jsdom", "happy-dom", "edge-runtime"])],

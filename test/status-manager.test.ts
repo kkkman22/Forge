@@ -283,8 +283,12 @@ describe("Audit P1: migration transactionality", () => {
     const legacyContent = makeStatusContent("legacy-task", "build");
     const lockCalls: string[] = [];
     const io = createInMemoryIO({ [STATUS_FILE]: legacyContent });
-    io.acquireLock = (lockPath: string) => { lockCalls.push(lockPath); };
-    io.releaseLock = (lockPath: string) => { lockCalls.push(`release:${lockPath}`); };
+    io.acquireLock = (lockPath: string) => {
+      lockCalls.push(lockPath);
+    };
+    io.releaseLock = (lockPath: string) => {
+      lockCalls.push(`release:${lockPath}`);
+    };
 
     migrateToMultiTask(io, FORGE_ROOT);
 
@@ -341,7 +345,9 @@ describe("Property 11: Abort isolation", () => {
 
 describe("Audit P2: archiveTaskStatus result", () => {
   it("returns ok on successful archive", () => {
-    const io = createInMemoryIO({ [`${STATUS_DIR}/task-a.md`]: makeStatusContent("task-a", "build") });
+    const io = createInMemoryIO({
+      [`${STATUS_DIR}/task-a.md`]: makeStatusContent("task-a", "build"),
+    });
     const result = archiveTaskStatus(io, FORGE_ROOT, "task-a", "2026-04-30");
     expect(result.ok).toBe(true);
     if (result.ok) {
@@ -350,7 +356,9 @@ describe("Audit P2: archiveTaskStatus result", () => {
   });
 
   it("returns invalid-date error (not silent swallow)", () => {
-    const io = createInMemoryIO({ [`${STATUS_DIR}/task-a.md`]: makeStatusContent("task-a", "build") });
+    const io = createInMemoryIO({
+      [`${STATUS_DIR}/task-a.md`]: makeStatusContent("task-a", "build"),
+    });
     const result = archiveTaskStatus(io, FORGE_ROOT, "task-a", "bad-date");
     expect(result.ok).toBe(false);
     if (!result.ok) {
@@ -368,8 +376,12 @@ describe("Audit P2: archiveTaskStatus result", () => {
   });
 
   it("returns io-error when move fails (not silent swallow)", () => {
-    const io = createInMemoryIO({ [`${STATUS_DIR}/task-a.md`]: makeStatusContent("task-a", "build") });
-    io.move = () => { throw new Error("disk full"); };
+    const io = createInMemoryIO({
+      [`${STATUS_DIR}/task-a.md`]: makeStatusContent("task-a", "build"),
+    });
+    io.move = () => {
+      throw new Error("disk full");
+    };
     const result = archiveTaskStatus(io, FORGE_ROOT, "task-a", "2026-04-30");
     expect(result.ok).toBe(false);
     if (!result.ok) {
