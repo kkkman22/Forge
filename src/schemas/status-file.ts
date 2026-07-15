@@ -59,6 +59,10 @@ export const LoopFieldsSchema = z
 
 export const StatusFileSchema = z
   .object({
+    // Audit P2: schema version for future migrations (other state files like
+    // glossary/failure-sink already carry schema_version; status did not).
+    // Defaults to 1; .passthrough() keeps old files without it parseable.
+    schemaVersion: z.number().int().default(1),
     current_task: z.string().optional(),
     tier: TierSchema.optional(),
     task_type: z.string().optional(),
