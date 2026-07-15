@@ -82,10 +82,14 @@ describe("writeStatusAtomic: lock-protected atomic write (P1-1)", () => {
     expect(readFileSync(target, "utf-8")).toBe("count: 2\n");
   });
 
-  it("5-process concurrent increment: no lost updates", () => {
+  it("5-process concurrent increment: no lost updates", { timeout: 120_000 }, () => {
     // Spawn 5 child processes, each incrementing a shared counter PER_PROC
     // times through writeStatusAtomic. Without locking, classic last-write-
     // wins loses updates. With locking, the final count == 5 * PER_PROC.
+    //
+    // Audit P1: 5 × `npx tsx` cold starts are slow on CI (esp. Node 20);
+    // the default 5s vitest timeout fires before all workers finish. Raised
+    // to 120s (each worker has its own 60s execFileSync cap internally).
     const PER_PROC = 40;
     const target = join(forgeRoot, "status.md");
     writeFileSync(target, "count: 0\n", "utf-8");

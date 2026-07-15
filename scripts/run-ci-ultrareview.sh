@@ -1,4 +1,5 @@
 #!/usr/bin/env bash
+set -euo pipefail
 # run-ci-ultrareview.sh — Wrapper for claude ultrareview --json with Forge conventions
 #
 # Usage: scripts/run-ci-ultrareview.sh <pr-number-or-url>

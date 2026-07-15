@@ -1,4 +1,5 @@
 #!/usr/bin/env bash
+set -euo pipefail
 # category: internal-only
 # ============================================================================
 # check-skill-function-refs.sh — CI check for SKILL.md ↔ src/ function sync

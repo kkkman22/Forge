@@ -1193,7 +1193,12 @@ detect_python_installer() {
 }
 
 # Helper: install a companion tool with graceful, non-aborting failure.
-# Usage: install_companion <name> <description> <install_command> [fallback_msg]
+# Usage: install_companion <name> <description> <fallback_msg> -- <executable> [args...]
+#
+# Audit P1: was `eval "${install_cmd}"` which re-interprets the install command
+# string through the shell. Now the executable and its args are passed as
+# positional params after a `--` separator — executed directly via
+# `"$executable" "$@"` with no second shell-interpretation pass.
 #
 # IMPORTANT: this function returns 1 on failure. Under `set -euo pipefail`
 # (set at the top of this script), an unguarded `install_companion ...` call
@@ -1204,11 +1209,16 @@ detect_python_installer() {
 install_companion() {
   local name="$1"
   local desc="$2"
-  local install_cmd="$3"
-  local fallback="${4:-Fallback 方案可用}"
+  local fallback="${3:-Fallback 方案可用}"
+  shift 3
+  # Remaining args after the 3 named params are the executable + its args.
+  if [[ $# -eq 0 ]]; then
+    warn "${name} 安装失败：未提供可执行命令。${fallback}"
+    return 1
+  fi
 
   info "正在安装 ${name}（${desc}）..."
-  if eval "${install_cmd}" 2>&1; then
+  if "$@" 2>&1; then
     success "${name} 已安装"
     return 0
   else
@@ -1228,13 +1238,13 @@ if [[ -n "${py_tool}" ]]; then
     # install, so they are skipped under uvx (best-effort, grep fallback remains).
     install_companion "code-review-graph" \
       "代码知识图谱（via uvx）" \
-      "uvx --quiet --from code-review-graph code-review-graph --version" \
-      "Explore agent 将使用 grep 回退方案" || true
+      "Explore agent 将使用 grep 回退方案" \
+      -- uvx --quiet --from code-review-graph code-review-graph --version || true
   else
     install_companion "code-review-graph" \
       "代码知识图谱" \
-      "${py_prefix} code-review-graph" \
-      "Explore agent 将使用 grep 回退方案" || true
+      "Explore agent 将使用 grep 回退方案" \
+      -- ${py_prefix} code-review-graph || true
     # Initialize CRG if installed
     if command -v code-review-graph &>/dev/null; then
       code-review-graph install --platform claude-code 2>/dev/null || true
@@ -1256,13 +1266,13 @@ if [[ -n "${py_tool}" ]]; then
   if [[ "${py_tool}" == "uvx" ]]; then
     install_companion "Headroom" \
       "API 级全量压缩（via uvx，对话历史 + tool 输出 + 模型写回）" \
-      "uvx --quiet --from headroom-ai headroom --version" \
-      "forge_exec 将使用内置 trimmer 回退方案（成功输出裁剪）；失败输出 Iron Law 由 formatFailureOutput 或 Headroom protected:error_output 兜底" || true
+      "forge_exec 将使用内置 trimmer 回退方案（成功输出裁剪）；失败输出 Iron Law 由 formatFailureOutput 或 Headroom protected:error_output 兜底" \
+      -- uvx --quiet --from headroom-ai headroom --version || true
   else
     install_companion "Headroom" \
       "API 级全量压缩（对话历史 + tool 输出 + 模型写回）" \
-      "${py_prefix} headroom-ai" \
-      "forge_exec 将使用内置 trimmer 回退方案（成功输出裁剪）；失败输出 Iron Law 由 formatFailureOutput 或 Headroom protected:error_output 兜底" || true
+      "forge_exec 将使用内置 trimmer 回退方案（成功输出裁剪）；失败输出 Iron Law 由 formatFailureOutput 或 Headroom protected:error_output 兜底" \
+      -- ${py_prefix} headroom-ai || true
   fi
 else
   info "未检测到可用的 Python 安装器（uvx/pipx/pip>=3.10），跳过 Headroom（内置 trimmer 回退方案可用）"
@@ -1276,8 +1286,8 @@ if command -v npm &>/dev/null; then
   fi
   install_companion "context-mode" \
     "大输出沙箱（BM25 索引）" \
-    "npm install -g context-mode" \
-    "大输出由 forge_exec + trimmer 处理" || true
+    "大输出由 forge_exec + trimmer 处理" \
+    -- npm install -g context-mode || true
 else
   info "未检测到 npm，跳过 context-mode（forge_exec 回退方案可用）"
 fi
@@ -1286,8 +1296,8 @@ fi
 if command -v claude &>/dev/null; then
   install_companion "Caveman" \
     "回复压缩（去除客套话）" \
-    "claude plugin marketplace add JuliusBrussee/caveman" \
-    "§2.6 Output Conciseness 规则继续生效" || true
+    "§2.6 Output Conciseness 规则继续生效" \
+    -- claude plugin marketplace add JuliusBrussee/caveman || true
 else
   info "未检测到 claude 命令，跳过 Caveman（§2.6 Output Conciseness 规则继续生效）"
 fi

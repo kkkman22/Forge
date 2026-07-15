@@ -49,6 +49,8 @@ jobs:
         run: node scripts/check-dist-sync.mjs
       - name: Verify bundle sync
         run: node scripts/check-bundle-sync.mjs
+      - name: Verify MCP context bundle freshness
+        run: node scripts/bundle-mcp.mjs --check
       - name: Install shellcheck
         run: sudo apt-get update -qq && sudo apt-get install -y -qq shellcheck
       - name: Shellcheck scripts
@@ -190,6 +192,10 @@ jobs:
     if: startsWith(github.ref, 'refs/tags/v')
     needs: [check, security-audit, e2e, plugin-validate]
     runs-on: ubuntu-latest
+    env:
+      # Audit P2: a tagged release commit must NEVER bypass dist-sync, even if
+      # it carries [dist-sync-skip]. This makes both skip signals no-ops here.
+      FORGE_DIST_SYNC_STRICT: "1"
     steps:
       - uses: actions/checkout@v5
       - uses: actions/setup-node@v6

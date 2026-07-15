@@ -1,0 +1,11 @@
+# Scripts exempt from the pipefail requirement (scripts/check-shell-pipefail.mjs).
+#
+# These scripts are intentionally best-effort / fail-soft: they use `grep | sed`
+# pipelines where grep legitimately matches zero lines, and their ERR trap
+# (trap 'exit 0' ERR) is designed to swallow mid-script errors. Adding
+# `pipefail` would make every zero-match grep abort the pipeline, breaking the
+# script's fail-soft contract. They DO set `set -u` (unset-variable guard).
+
+# hook scripts: never block compaction (trap 'exit 0' ERR design)
+scripts/hook-precompact.sh
+scripts/hook-postcompact.sh

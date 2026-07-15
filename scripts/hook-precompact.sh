@@ -8,7 +8,13 @@
 # is missing or stale (mtime beyond threshold). D9 makes this mtime check a
 # critical defense — GLM-5.2 1M compact triggers late (600K), so a stale
 # checkpoint loses a lot of state; the fallback + warning mitigates this.
+#
+# Audit P1: exempt from pipefail (see scripts/.pipefail-exempt). This script is
+# best-effort fail-soft — many `grep | sed` pipelines legitimately match zero
+# lines, and the ERR trap (trap 'exit 0' ERR) must swallow those to never block
+# compaction. pipefail would abort on the first zero-match grep.
 set -u
+trap 'exit 0' ERR
 trap 'exit 0' ERR
 
 STATUS_FILE=".forge/status.md"

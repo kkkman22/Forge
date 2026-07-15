@@ -46,6 +46,8 @@ export interface StateFileValidation {
 
 /** Structured StatusFile fields with all fields guaranteed present. */
 export interface StatusFields {
+  /** Schema version for future migrations (audit P2). Defaults to 1. */
+  schemaVersion: number;
   current_task: string;
   tier: string;
   work_nature: string;
@@ -76,6 +78,7 @@ export interface ReviewReportFields {
 // ---------------------------------------------------------------------------
 
 export const STATUS_DEFAULTS: StatusFields = {
+  schemaVersion: 1,
   current_task: "",
   tier: "standard",
   work_nature: "feature",
@@ -147,6 +150,8 @@ export function parseStatusFileGraceful(content: string | undefined): {
   const { value: schemaValue, errors } = safeParseStatusFile(rawFields);
 
   const parsed: StatusFields = {
+    schemaVersion:
+      (schemaValue.schemaVersion as number | undefined) ?? STATUS_DEFAULTS.schemaVersion,
     current_task: (schemaValue.current_task as string | undefined) ?? STATUS_DEFAULTS.current_task,
     tier: (schemaValue.tier as string | undefined) ?? STATUS_DEFAULTS.tier,
     work_nature: (schemaValue.work_nature as string | undefined) ?? STATUS_DEFAULTS.work_nature,

@@ -1,4 +1,5 @@
 #!/bin/bash
+set -uo pipefail
 # category: internal-only
 # ============================================================================
 # run-with-cleanup.sh — 运行命令，退出时自动清理孤儿 vitest/node 进程

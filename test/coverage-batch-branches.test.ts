@@ -52,15 +52,16 @@ describe("deriveTopicFromPath (all regex branches)", () => {
 describe("detectDrifts (drift detection branches)", () => {
   it("detects trailing-digit drift (foo vs foo1)", () => {
     const drifts = detectDrifts(["foo", "foo1"]);
-    expect(drifts.length).toBeGreaterThan(0);
+    // Audit P2: was toBeGreaterThan(0) — assert the actual pair, not just non-empty.
+    expect(drifts).toContainEqual({ topicA: "foo", topicB: "foo1", reason: "trailing-digit" });
   });
   it("detects plural drift (bar vs bars)", () => {
     const drifts = detectDrifts(["bar", "bars"]);
-    expect(drifts.length).toBeGreaterThan(0);
+    expect(drifts).toContainEqual({ topicA: "bar", topicB: "bars", reason: "plural-form" });
   });
   it("detects separator drift (a_b vs a-b)", () => {
     const drifts = detectDrifts(["a_b", "a-b"]);
-    expect(drifts.length).toBeGreaterThan(0);
+    expect(drifts).toContainEqual({ topicA: "a_b", topicB: "a-b", reason: "separator" });
   });
   it("no drift for unique topics", () => {
     expect(detectDrifts(["alpha", "beta", "gamma"])).toEqual([]);

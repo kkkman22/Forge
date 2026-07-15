@@ -1,0 +1,34 @@
+name: mutation
+
+# Audit P2: Stryker was in devDeps but never executed — mutation testing was
+# theater. This nightly job runs Stryker against the 3 highest-risk modules
+# (router / status-manager / forge-exec) configured in stryker.conf.json.
+# Fails the job when mutation score drops below the break threshold (50).
+
+on:
+  schedule:
+    # 03:00 UTC daily
+    - cron: "0 3 * * *"
+  workflow_dispatch:
+
+jobs:
+  mutation:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-node@v6
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - name: Compile TypeScript
+        run: npx tsc -p tsconfig.build.json
+      - name: Run Stryker
+        run: npm run mutation
+      - name: Upload mutation report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: mutation-report
+          path: reports/mutation/
+          retention-days: 14

@@ -1,4 +1,5 @@
 #!/usr/bin/env bash
+set -uo pipefail
 # category: user-facing
 # ============================================================================
 # update-vendor-axe.sh — Download axe-core minified bundle

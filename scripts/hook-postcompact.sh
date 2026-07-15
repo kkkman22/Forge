@@ -5,6 +5,9 @@
 # which may be checkpoint.md-sourced or legacy grep fallback) followed by a
 # seam-framing block that tells the agent the preserved messages are real
 # history and to resume directly without recapping.
+#
+# Audit P1: exempt from pipefail (see scripts/.pipefail-exempt). Best-effort
+# fail-soft design with ERR trap.
 set -u
 trap 'exit 0' ERR
 

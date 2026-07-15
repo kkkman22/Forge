@@ -125,32 +125,124 @@ const ALLOWED_GIT_SUBCOMMANDS: ReadonlySet<string> = new Set([
   "ls-tree",
 ]);
 
+// ---------------------------------------------------------------------------
+// Runner-flag ALLOWLIST (audit P1 — was a denylist that missed --reporter)
+// ---------------------------------------------------------------------------
+//
+// A denylist can never be exhaustive: vitest `--reporter` / `--coverage.*` /
+// `--environment` all load a module via `await import(path)` → RCE. The prior
+// BLOCKED_RUNNER_FLAGS set missed exactly those. Switched to an allowlist:
+// every flag not in these maps is rejected, and module-loading flags may only
+// take an enumerated builtin name — never a path or file extension.
+
 /**
- * Flags that cause a runner binary (vitest/npx/biome) to load and execute an
- * attacker-controlled module — defeating the "readonly" promise of the
- * allowlist. P2-2: the prefix-match branches conceded arbitrary trailing
- * args; `vitest run --config /tmp/x.mjs` loads x.mjs as a module and runs its
- * top-level code → RCE.
- *
- * Matched as bare flag (== / startsWith "--flag=") so both `--config x` and
- * `--config=x` forms are rejected.
+ * Flags whose value names a module/file the runner will import.
+ * Only the enumerated builtin identifiers are allowed; any path, slash, or
+ * code extension (.mjs/.cjs/.ts/.js) is rejected (those load attacker code).
  */
-const BLOCKED_RUNNER_FLAGS: ReadonlySet<string> = new Set([
-  "--config",
-  "-c",
-  "--loader",
-  "--project",
-  "--config-path",
-  "--extends",
+const MODULE_LOAD_FLAGS: ReadonlyMap<string, ReadonlySet<string>> = new Map([
+  [
+    "--reporter",
+    new Set([
+      "default",
+      "json",
+      "dot",
+      "junit",
+      "tap",
+      "verbose",
+      "basic",
+      "html",
+      "github-actions",
+    ]),
+  ],
+  ["--coverage.provider", new Set(["v8", "istanbul"])],
+  ["--coverage.customProviderModule", new Set<string>()], // always reject — no builtin, only module paths
+  ["--environment", new Set(["node", "jsdom", "happy-dom", "edge-runtime"])],
 ]);
 
-function hasBlockedRunnerFlag(parts: string[]): boolean {
-  return parts.some((p) => {
+/** Boolean flags (no value accepted). */
+const RUNNER_BOOL_FLAGS: ReadonlySet<string> = new Set([
+  "--coverage",
+  "--silent",
+  "--hideSkippedTests",
+  "--no-color",
+]);
+
+/** Value flags whose value is a path/selector (test files, globs) — allowed but
+ * the value is still subject to the path-safety check in checkRunnerFlags. */
+const RUNNER_VALUE_FLAGS: ReadonlySet<string> = new Set([
+  "--testNamePattern",
+  "-t",
+  "--dir",
+  "--root",
+]);
+
+/** Biome `check` value flags that take a non-module value (lint level, count). */
+const BIOME_VALUE_FLAGS: ReadonlySet<string> = new Set([
+  "--diagnostic-level",
+  "--max-diagnostics",
+  "--reporter",
+]);
+
+const CODE_EXTENSIONS = /\.(mjs|cjs|ts|js|mts|cts)$/;
+
+/**
+ * Check runner (vitest/npx-vitest/biome) flags against the allowlist.
+ * Returns false if any flag is unknown or carries a module-path value.
+ */
+function checkRunnerFlags(parts: string[]): boolean {
+  for (let i = 0; i < parts.length; i++) {
+    const p = parts[i];
+
+    // --flag=value form
     if (p.startsWith("--") && p.includes("=")) {
-      return BLOCKED_RUNNER_FLAGS.has(p.split("=")[0]);
+      const [flag, value] = splitFlagValue(p);
+      if (!isAllowedFlagValue(flag, value)) return false;
+      continue;
     }
-    return BLOCKED_RUNNER_FLAGS.has(p);
-  });
+
+    // module-load flags take the NEXT token as value
+    if (MODULE_LOAD_FLAGS.has(p)) {
+      const value = parts[i + 1];
+      if (value === undefined || !isAllowedFlagValue(p, value)) return false;
+      i++; // consume value
+      continue;
+    }
+
+    // biome/vitest value flags
+    if (RUNNER_VALUE_FLAGS.has(p) || BIOME_VALUE_FLAGS.has(p)) {
+      if (parts[i + 1] === undefined) return false; // value required
+      i++; // consume value, value is a selector/path (benign for readonly)
+      continue;
+    }
+
+    // boolean flags
+    if (RUNNER_BOOL_FLAGS.has(p)) continue;
+
+    // unknown flag starting with -- or single-dash short → reject (allowlist)
+    if (p.startsWith("-")) return false;
+  }
+  return true;
+}
+
+function splitFlagValue(token: string): [string, string] {
+  const eq = token.indexOf("=");
+  return [token.slice(0, eq), token.slice(eq + 1)];
+}
+
+/**
+ * A module-load flag value is allowed only if it is an enumerated builtin name.
+ * Any path (contains `/`), file extension, or unknown value is rejected.
+ */
+function isAllowedFlagValue(flag: string, value: string): boolean {
+  const allowed = MODULE_LOAD_FLAGS.get(flag);
+  if (allowed !== undefined) {
+    // module-load flag: only enumerated builtins
+    return allowed.has(value);
+  }
+  // non-module value flag: reject if it looks like a code module
+  if (value.includes("/") || CODE_EXTENSIONS.test(value)) return false;
+  return true;
 }
 
 function normalizeCommand(command: string): string {
@@ -182,12 +274,12 @@ export function isCommandAllowed(command: string): boolean {
       parts.length >= 3 &&
       parts[1] === "vitest" &&
       parts[2] === "run" &&
-      !hasBlockedRunnerFlag(parts)
+      checkRunnerFlags(parts.slice(3))
     );
   }
 
   if (bin === "vitest") {
-    return parts.length >= 2 && parts[1] === "run" && !hasBlockedRunnerFlag(parts);
+    return parts.length >= 2 && parts[1] === "run" && checkRunnerFlags(parts.slice(2));
   }
 
   if (bin === "tsc") {
@@ -195,19 +287,19 @@ export function isCommandAllowed(command: string): boolean {
   }
 
   if (bin === "biome") {
-    return (
-      parts.length >= 2 &&
-      parts[1] === "check" &&
-      !parts.includes("--write") &&
-      !hasBlockedRunnerFlag(parts)
-    );
+    if (parts.length < 2 || parts[1] !== "check") return false;
+    if (parts.includes("--write")) return false;
+    return checkRunnerFlags(parts.slice(2));
   }
 
   if (bin === "git") {
     if (parts.length < 2) return false;
     const sub = parts[1];
     if (!ALLOWED_GIT_SUBCOMMANDS.has(sub)) return false;
-    return !parts.some((part) => part === "--output" || part.startsWith("--output="));
+    // audit P1: reuse the single source of truth (validateGitArgs) instead of
+    // the asymmetric local --output-only check that missed --no-index.
+    const reason = validateGitArgs(parts.slice(2).join(" "));
+    return reason === null;
   }
 
   return false;

@@ -578,4 +578,50 @@ describe("isCommandAllowed — readonly allowlist", () => {
     expect(isCommandAllowed("npx vitest run test/bar.test.ts")).toBe(true);
     expect(isCommandAllowed("biome check src/ test/")).toBe(true);
   });
+
+  // P1-audit: --reporter / --coverage.* load attacker modules via import.
+  // denylist missed these; allowlist model must reject module-path values.
+  it("rejects vitest run --reporter <attacker module> (audit P1)", () => {
+    expect(isCommandAllowed("vitest run --reporter /tmp/evil.mjs")).toBe(false);
+    expect(isCommandAllowed("vitest run --reporter=/tmp/evil.mjs")).toBe(false);
+  });
+  it("rejects npx vitest run --reporter <attacker module> (audit P1)", () => {
+    expect(isCommandAllowed("npx vitest run --reporter /tmp/evil.mjs")).toBe(false);
+  });
+  it("allows vitest run --reporter with builtin reporter names (audit P1)", () => {
+    expect(isCommandAllowed("vitest run --reporter json")).toBe(true);
+    expect(isCommandAllowed("vitest run --reporter=dot")).toBe(true);
+    expect(isCommandAllowed("vitest run --reporter default")).toBe(true);
+    expect(isCommandAllowed("npx vitest run --reporter verbose")).toBe(true);
+  });
+  it("rejects vitest run --coverage.customProviderModule <module> (audit P1)", () => {
+    expect(isCommandAllowed("vitest run --coverage.customProviderModule /tmp/x.mjs")).toBe(false);
+    expect(isCommandAllowed("vitest run --coverage.customProviderModule=/tmp/x.mjs")).toBe(false);
+  });
+  it("rejects vitest run --coverage.provider <module-ish> (audit P1)", () => {
+    expect(isCommandAllowed("vitest run --coverage.provider /tmp/x.mjs")).toBe(false);
+  });
+  it("rejects vitest run --environment <attacker module> (audit P1)", () => {
+    expect(isCommandAllowed("vitest run --environment /tmp/evil.mjs")).toBe(false);
+    expect(isCommandAllowed("vitest run --environment=/tmp/evil.mjs")).toBe(false);
+  });
+  it("allows vitest run --coverage (builtin boolean flag) (audit P1)", () => {
+    expect(isCommandAllowed("vitest run --coverage")).toBe(true);
+  });
+
+  // P1-audit: forge_exec git branch only blocked --output, not --no-index.
+  // --no-index diffs arbitrary files (no repo needed) → secret exfiltration.
+  it("rejects git diff --no-index <arbitrary file> (audit P1)", () => {
+    expect(isCommandAllowed("git diff --no-index /dev/null ~/.ssh/id_rsa")).toBe(false);
+    expect(isCommandAllowed("git diff --no-index /dev/null .env")).toBe(false);
+  });
+  it("still allows git diff with benign args (audit P1)", () => {
+    expect(isCommandAllowed("git diff")).toBe(true);
+    expect(isCommandAllowed("git status")).toBe(true);
+    expect(isCommandAllowed("git log")).toBe(true);
+  });
+  it("rejects git --output write to arbitrary path (P2-1 regression)", () => {
+    expect(isCommandAllowed("git diff --output /tmp/x")).toBe(false);
+    expect(isCommandAllowed("git log --output=/tmp/x")).toBe(false);
+  });
 });

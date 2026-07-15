@@ -44,15 +44,22 @@ success() { echo -e "${GREEN}✅${NC} $1"; }
 
 # ---------- Manifest reader ----------
 # Read a JSON array from the manifest and iterate over its entries.
-# Usage: manifest_each "key" "callback_script_name"
+# Usage: manifest_each "key" "callback_fn_name"
+#
+# Audit P1: was `eval "$2" "\"${item}\""` which re-interprets manifest entries
+# through the shell (quote/space/backslash/newline injection). Switched to a
+# direct function call — the callback name is always a hard-coded literal at the
+# call site, and the item is passed as a single positional arg with no second
+# shell-interpretation pass.
 manifest_each() {
   local key="$1"
+  local callback_fn="$2"
   node -e "
     const m = JSON.parse(require('fs').readFileSync('${MANIFEST}', 'utf8'));
     const items = m['${key}'] || [];
     items.forEach(i => console.log(i));
   " | while IFS= read -r item; do
-    eval "$2" "\"${item}\""
+    "${callback_fn}" "${item}"
   done
 }
 
@@ -296,25 +303,29 @@ fi
 echo "${VERSION}" > "${CC_BUNDLE}/VERSION"
 
 # 生成安装指引
-cat > "${CC_BUNDLE}/INSTALL.md" << 'EOF'
+# Audit P2: INSTALL.md 计数之前写死 13/7, 实际为 1/24。动态计数避免漂移。
+SKILL_COUNT=$(find "${CC_BUNDLE}" -name 'SKILL.md' | wc -l | tr -d ' ')
+AGENT_COUNT=$(find "${CC_BUNDLE}" -path '*agents*' -name '*.md' ! -name 'README.md' | wc -l | tr -d ' ')
+
+cat > "${CC_BUNDLE}/INSTALL.md" << EOF
 # Forge for Claude Code — 安装指南
 
 ## 快速安装
 
-```bash
+\`\`\`bash
 git clone https://github.com/kkkman22/Forge.git ~/.claude/skills/forge
-```
+\`\`\`
 
 ## 初始化项目
 
-```bash
+\`\`\`bash
 # 在项目根目录运行
 ~/.claude/skills/forge/scripts/init.sh
-```
+\`\`\`
 
 ## 使用
 
-在 Claude Code 中输入 `/forge` 并描述任务即可。
+在 Claude Code 中输入 \`/forge\` 并描述任务即可。
 
 ## 前置条件
 
@@ -323,17 +334,17 @@ git clone https://github.com/kkkman22/Forge.git ~/.claude/skills/forge
 
 ## 文件结构
 
-```
+\`\`\`
 ~/.claude/skills/forge/
-├── skills/          # 13 个 SKILL.md
-├── agents/          # 7 个 Subagent 角色
+├── skills/          # ${SKILL_COUNT} 个 SKILL.md
+├── agents/          # ${AGENT_COUNT} 个 Subagent 角色
 ├── commands/        # Forge Command 入口
 ├── hooks/           # Claude Code Hooks
 ├── templates/       # 文件模板
 ├── scripts/
 │   ├── init.sh                # 项目初始化脚本
 │   └── validate-knowledge.sh  # 知识库健康检查
-```
+\`\`\`
 EOF
 
 success "Claude Code 分发包构建完成: dist/claude-code/bundles/forge/"

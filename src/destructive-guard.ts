@@ -279,6 +279,26 @@ const isGitCleanForce = (cmd: readonly string[]): boolean => {
 const isGitStashDrop = (cmd: readonly string[]): boolean =>
   isGit(cmd) && cmd[1] === "stash" && cmd[2] === "drop";
 
+/**
+ * `git push --force` / `-f` / `--force-with-lease` / `--no-verify` — rewrites
+ * shared history or bypasses CI protection. Audit P1: prior rules only covered
+ * reset/checkout-discard/clean/stash-drop; force-push was an open gap.
+ */
+const isGitPushForce = (cmd: readonly string[]): boolean => {
+  if (!isGit(cmd) || cmd[1] !== "push") return false;
+  return cmd.slice(2).some((t) => {
+    const bare = t.startsWith("--") && t.includes("=") ? t.split("=")[0] : t;
+    return (
+      bare === "--force" ||
+      bare === "-f" ||
+      bare === "--force-with-lease" ||
+      bare === "--force-with-lease=" || // prefix form
+      bare === "--no-verify" ||
+      t.startsWith("--force-with-lease=")
+    );
+  });
+};
+
 /** infra destroy tools (terraform / tofu / pulumi / cdk). */
 const INFRA_TOOLS = new Set(["terraform", "tofu", "pulumi", "cdk"]);
 
@@ -313,6 +333,7 @@ export const DESTRUCTIVE_RULES: ReadonlyArray<DestructiveRule> = [
   { id: "git-checkout-discard", matches: isGitCheckoutDiscard, category: "git" },
   { id: "git-clean-force", matches: isGitCleanForce, category: "git" },
   { id: "git-stash-drop", matches: isGitStashDrop, category: "git" },
+  { id: "git-push-force", matches: isGitPushForce, category: "git" },
   { id: "infra-destroy", matches: isInfraDestroy, category: "infra" },
 ];
 

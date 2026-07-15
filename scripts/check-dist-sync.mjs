@@ -78,6 +78,12 @@ function getDiskDistFiles() {
 }
 
 function checkSkip() {
+  // Audit P2: in STRICT mode (set by the release-evidence CI job) the skip
+  // signals are ignored — a tagged release commit carrying [dist-sync-skip]
+  // must not silently disable the dist-freshness guard.
+  if (process.env.FORGE_DIST_SYNC_STRICT === "1") {
+    return false;
+  }
   if (process.env.FORGE_SKIP_DIST_SYNC === "1") {
     log("⚠️  dist-sync: SKIPPED (FORGE_SKIP_DIST_SYNC=1)");
     return true;
@@ -135,13 +141,17 @@ function detectOrphans(distFiles, srcSet) {
 function detectCompilationMismatch(_srcFiles, distSet) {
   const mismatch = [];
 
-  // Ensure tsc compiles cleanly first
-  try {
-    execSync("npx tsc --noEmit", { encoding: "utf-8", stdio: "pipe" });
-  } catch (e) {
-    logError("❌ dist-sync: tsc --noEmit failed. Fix TypeScript errors first.");
-    logError(e.stdout || e.message);
-    return { mismatch, tscFailed: true };
+  // Ensure tsc compiles cleanly first. Skip when the caller already ran
+  // typecheck (e.g. `npm run check` starts with `tsc --noEmit`) — set
+  // FORGE_DIST_SYNC_SKIP_TYPECHECK=1 to avoid the redundant ~3s compile.
+  if (process.env.FORGE_DIST_SYNC_SKIP_TYPECHECK !== "1") {
+    try {
+      execSync("npx tsc --noEmit", { encoding: "utf-8", stdio: "pipe" });
+    } catch (e) {
+      logError("❌ dist-sync: tsc --noEmit failed. Fix TypeScript errors first.");
+      logError(e.stdout || e.message);
+      return { mismatch, tscFailed: true };
+    }
   }
 
   // Create temp outdir

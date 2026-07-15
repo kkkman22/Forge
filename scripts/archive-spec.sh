@@ -1,4 +1,5 @@
 #!/usr/bin/env bash
+set -euo pipefail
 # category: user-facing
 # ============================================================================
 # archive-spec.sh — Archive a completed spec and optionally purge CC state.
