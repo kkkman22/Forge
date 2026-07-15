@@ -78,6 +78,12 @@ function getDiskDistFiles() {
 }
 
 function checkSkip() {
+  // Audit P2: in STRICT mode (set by the release-evidence CI job) the skip
+  // signals are ignored — a tagged release commit carrying [dist-sync-skip]
+  // must not silently disable the dist-freshness guard.
+  if (process.env.FORGE_DIST_SYNC_STRICT === "1") {
+    return false;
+  }
   if (process.env.FORGE_SKIP_DIST_SYNC === "1") {
     log("⚠️  dist-sync: SKIPPED (FORGE_SKIP_DIST_SYNC=1)");
     return true;
