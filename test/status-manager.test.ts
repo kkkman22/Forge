@@ -275,6 +275,43 @@ describe("Property 10: Migration data preservation", () => {
 });
 
 // ---------------------------------------------------------------------------
+// Audit P1: migration must hold a directory-level lock and be idempotent
+// ---------------------------------------------------------------------------
+
+describe("Audit P1: migration transactionality", () => {
+  it("acquires a migration lock to serialize concurrent migrations", () => {
+    const legacyContent = makeStatusContent("legacy-task", "build");
+    const lockCalls: string[] = [];
+    const io = createInMemoryIO({ [STATUS_FILE]: legacyContent });
+    io.acquireLock = (lockPath: string) => { lockCalls.push(lockPath); };
+    io.releaseLock = (lockPath: string) => { lockCalls.push(`release:${lockPath}`); };
+
+    migrateToMultiTask(io, FORGE_ROOT);
+
+    // A directory-level migration lock must have been acquired + released.
+    expect(lockCalls.some((p) => p.includes("migrate"))).toBe(true);
+    expect(lockCalls.some((p) => p.startsWith("release:"))).toBe(true);
+  });
+
+  it("is idempotent: target task file not overwritten if it already exists", () => {
+    const legacyContent = makeStatusContent("task-x", "build");
+    // Pre-existing target file (e.g. a prior partial migration) with different content.
+    const existingTarget = `${STATUS_DIR}/task-x.md`;
+    const io = createInMemoryIO({
+      [STATUS_FILE]: legacyContent,
+      [existingTarget]: "# pre-existing, must not be clobbered",
+    });
+
+    migrateToMultiTask(io, FORGE_ROOT);
+
+    // The pre-existing file must survive — migration must not blindly overwrite.
+    expect(io.read(existingTarget)).toBe("# pre-existing, must not be clobbered");
+    // Legacy status.md still cleared (migration completes).
+    expect(io.read(STATUS_FILE)).toBe("---\n---\n");
+  });
+});
+
+// ---------------------------------------------------------------------------
 // Property 11: Abort isolation
 // ---------------------------------------------------------------------------
 
