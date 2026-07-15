@@ -148,6 +148,30 @@ describe("checkDestructive — P0-1 infra destroy normalization", () => {
 });
 
 // ---------------------------------------------------------------------------
+// Audit P1: git push --force / -f / --no-verify — rewrite shared history,
+// bypass CI. Must be caught unconditionally (even without sandbox-active).
+// ---------------------------------------------------------------------------
+
+describe("checkDestructive — audit P1: git push --force", () => {
+  const forcePushCmds = [
+    "git push --force",
+    "git push --force origin main",
+    "git push -f origin main",
+    "git push --force-with-lease", // still history rewrite, guard it
+    "git push --no-verify",
+    "git push --no-verify origin main",
+    "git push --force --no-verify",
+    "env git push --force",
+    "/usr/bin/git push -f",
+  ];
+  it.each(forcePushCmds)("denies %p (audit P1)", (cmd) => {
+    const result = checkDestructive(cmd, NO_MARK);
+    expect(result.allowed).toBe(false);
+    expect(result.verdict).toBe("deny");
+  });
+});
+
+// ---------------------------------------------------------------------------
 // Bypass under rollback-active (AC2) — git rules only
 // ---------------------------------------------------------------------------
 
@@ -195,7 +219,7 @@ describe("checkDestructive — false-positive property", () => {
       "git branch --show-current",
       "git add file.txt",
       "git commit -m msg",
-      "git push",
+      "git push origin main", // plain push (no force) is allowed
       "git pull",
       "git fetch",
       "git stash list",

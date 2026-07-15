@@ -147,6 +147,17 @@
             "timeout": 2
           }
         ]
+      },
+      {
+        "_audit_p1": "Unconditional destructive guard (audit P1). check-sandbox only fires when .forge/.sandbox-active.json exists — so in normal runs git reset --hard / push --force / clean -fd had no interceptor. This hook calls the same checkDestructive authority with guardEnabled=true always.",
+        "matcher": "Bash",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "node \"${CLAUDE_PLUGIN_ROOT:-}/scripts/check-destructive.mjs\" 2>/dev/null || node ~/.claude/skills/forge/scripts/check-destructive.mjs 2>/dev/null || true",
+            "timeout": 2
+          }
+        ]
       }
     ],
     "PostToolUse": [
