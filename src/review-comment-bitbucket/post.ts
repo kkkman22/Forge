@@ -531,9 +531,7 @@ function extractForgeTasks(raw: BitbucketTaskResponse[], prefix: string): TaskRe
         // resolved and trigger a spurious reopen under autoReopenRegressed.
         // Default to "OPEN" — a skipped duplicate is harmless, a false reopen
         // is noise the user didn't ask for.
-        status: VALID_TASK_STATUSES.has(rawStatus)
-          ? (rawStatus as "OPEN" | "RESOLVED")
-          : "OPEN",
+        status: VALID_TASK_STATUSES.has(rawStatus) ? (rawStatus as "OPEN" | "RESOLVED") : "OPEN",
         marker_hash: markerHash ?? undefined,
       };
     })

@@ -75,9 +75,7 @@ const _progressTaskEntry = () =>
     .map((e) => ({ ...e, completionTime: e.completionTime ?? null }));
 
 const forgeTier = () =>
-  fc.constantFrom("light", "standard", "full") as fc.Arbitrary<
-    "light" | "standard" | "full"
-  >;
+  fc.constantFrom("light", "standard", "full") as fc.Arbitrary<"light" | "standard" | "full">;
 const forgePhase = () =>
   fc.constantFrom(
     "decide",

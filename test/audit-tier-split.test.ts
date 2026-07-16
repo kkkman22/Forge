@@ -16,8 +16,8 @@ import { describe, expect, it } from "vitest";
 
 import {
   deserializeRecoveryReport,
+  type ForgeTier,
   findPhaseInconsistencies,
-  ForgeTier,
   getNextPhase,
   getPhaseSequence,
   PHASE_SEQUENCES,

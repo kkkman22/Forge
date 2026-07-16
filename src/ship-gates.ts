@@ -143,9 +143,8 @@ function parseReviewReportFrontmatter(content: string): ParsedReviewReport | nul
   // merely by omitting the field. Fail-closed: treat unknown/absent as
   // "unavailable" so checkFallbackLadderGate blocks it.
   const methodRaw = (fm.methodology as string | undefined) ?? methodMatch?.[1];
-  const methodology: Methodology = methodRaw !== undefined && isValidMethodology(methodRaw)
-    ? methodRaw
-    : "unavailable";
+  const methodology: Methodology =
+    methodRaw !== undefined && isValidMethodology(methodRaw) ? methodRaw : "unavailable";
   const result = (fm.result as string | undefined) ?? resultMatch?.[1] ?? "incomplete";
 
   return { p0Count: severity.p0, p1Count: severity.p1, methodology, result };

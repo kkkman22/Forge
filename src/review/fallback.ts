@@ -2,6 +2,22 @@
  * Fallback ladder implementation (R1, R2, R3, R5) and truncation-triggered retry.
  *
  * @module review/fallback
+ *
+ * @remark L0–L3 numbering (audit P3-2, 2026-07-16): this module's ladder and
+ * the gate-facing ladder in `.claude/rules/workflow-fallback-ladder.md` /
+ * `src/ship-gates.ts` use the **same L0–L3 labels but different mappings**.
+ * They are two distinct ladders, not one:
+ *
+ *   This module (review-execution ladder):
+ *     L0 = subagent-parallel → L1 = subagent-serial → L2 = ci-evidence → L3 = unavailable
+ *
+ *   Gate / doc ladder (ship-gates.ts `evaluateFallbackLadder`, workflow-fallback-ladder.md):
+ *     L0 = saved-workflow → L1 = subagent-parallel → L2 = subagent-serial → L3 = unavailable
+ *
+ * The gate ladder has an extra saved-workflow rung (L0) that this execution
+ * ladder doesn't model, so `ci-evidence` (L2 here) has no column in the doc
+ * table. When reading either, cross-check against `Methodology` values, not
+ * the L-number alone. Both agree only on the terminal: L3 = unavailable blocks ship.
  */
 
 import { readFileSync } from "node:fs";

@@ -246,7 +246,9 @@ describe("audit P2-5: missing methodology must not default to a trusted ladder r
 
       const result = checkReviewGate(join(tmpDir, "reviews"), "def5678");
       expect(result.passed).toBe(false);
-      expect(result.reason.toLowerCase()).toMatch(/methodology|unavailable|hard.?gate|l3|main agent/);
+      expect(result.reason.toLowerCase()).toMatch(
+        /methodology|unavailable|hard.?gate|l3|main agent/,
+      );
     } finally {
       rmSync(tmpDir, { recursive: true, force: true });
     }
@@ -264,9 +266,15 @@ describe("audit P2-5: missing methodology must not default to a trusted ladder r
       mkdirSync(join(tmpDir, "reviews"), { recursive: true });
       writeFileSync(
         join(tmpDir, "reviews", "20260529-review.md"),
-        ["---", "p0_count: 0", "p1_count: 0", "methodology: bogus-method", "result: pass", "---", "# Review"].join(
-          "\n",
-        ),
+        [
+          "---",
+          "p0_count: 0",
+          "p1_count: 0",
+          "methodology: bogus-method",
+          "result: pass",
+          "---",
+          "# Review",
+        ].join("\n"),
       );
 
       const result = checkReviewGate(join(tmpDir, "reviews"), "def5678");
@@ -362,16 +370,30 @@ describe("audit P2-2: P1 gate must not trust self-attested allFixed without git 
       mkdirSync(join(tmpDir, "reviews"), { recursive: true });
       writeFileSync(
         join(tmpDir, "reviews", "20260529-review.md"),
-        ["---", "p0_count: 0", "p1_count: 1", "methodology: subagent-parallel", "result: fail", "---", "# Review"].join(
-          "\n",
-        ),
+        [
+          "---",
+          "p0_count: 0",
+          "p1_count: 1",
+          "methodology: subagent-parallel",
+          "result: fail",
+          "---",
+          "# Review",
+        ].join("\n"),
       );
       // Self-attested allFixed:true with NO git verification hook.
       writeFileSync(
         join(tmpDir, "reviews", "20260529-p1-fixlist.json"),
         JSON.stringify({
           runId: "20260529",
-          p1Issues: [{ id: "P1-001", title: "Error handling", file: "src/a.ts", line: 42, fixCommit: "abc1234" }],
+          p1Issues: [
+            {
+              id: "P1-001",
+              title: "Error handling",
+              file: "src/a.ts",
+              line: 42,
+              fixCommit: "abc1234",
+            },
+          ],
           allFixed: true,
         }),
       );
@@ -399,15 +421,23 @@ describe("audit P2-2: P1 gate must not trust self-attested allFixed without git 
       mkdirSync(join(tmpDir, "reviews"), { recursive: true });
       writeFileSync(
         join(tmpDir, "reviews", "20260529-review.md"),
-        ["---", "p0_count: 0", "p1_count: 1", "methodology: subagent-parallel", "result: fail", "---", "# Review"].join(
-          "\n",
-        ),
+        [
+          "---",
+          "p0_count: 0",
+          "p1_count: 1",
+          "methodology: subagent-parallel",
+          "result: fail",
+          "---",
+          "# Review",
+        ].join("\n"),
       );
       writeFileSync(
         join(tmpDir, "reviews", "20260529-p1-fixlist.json"),
         JSON.stringify({
           runId: "20260529",
-          p1Issues: [{ id: "P1-001", title: "Error handling", file: "src/a.ts", line: 42, fixCommit: null }],
+          p1Issues: [
+            { id: "P1-001", title: "Error handling", file: "src/a.ts", line: 42, fixCommit: null },
+          ],
           allFixed: false,
         }),
       );

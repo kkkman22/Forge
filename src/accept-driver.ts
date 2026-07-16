@@ -19,12 +19,12 @@ import type {
 } from "./accept.js";
 import { resolvePlaceholder } from "./accept-credentials.js";
 import { isUrlAllowed, redactSnapshot } from "./accept-security.js";
-import { isComplexCommand } from "./destructive-guard.js";
 import {
   AgentBrowserCliClient,
   type AgentBrowserClient,
   type Snapshot,
 } from "./agent-browser-client.js";
+import { isComplexCommand } from "./destructive-guard.js";
 import { evaluateUiVerdict } from "./evaluate-ui-verdict.js";
 
 /** Default navigation allowlist — localhost + loopback only. [R4-AC5] */

@@ -1,6 +1,6 @@
 ---
-updated: 2026-06-18
-rule_count: 14
+updated: 2026-07-16
+rule_count: 15
 max_rules: 15
 ---
 
@@ -166,6 +166,16 @@ This file keeps only rules that still need top-of-session reminders.
 **Confidence**: 0.9
 **Last_triggered**: 2026-06-18
 **Infra_Ref**: `.githooks/pre-commit` §README metrics auto-sync (line 29-44)
+
+### R15: 状态一致性 / 门禁 / 外部副作用路径，异常输入必须 fail-closed
+
+**Content**: 在**状态一致性**（status-atomic / status-manager）、**门禁**（ship-gates / review methodology）、**外部副作用**（bitbucket post 评论 / 任务）这三类路径上，遇到异常或缺失输入时**必须 fail-closed**（抛错中止 / 阻断），**禁止**静默降级为"安全空值"或"最可信默认值"后继续执行。区分两类降级：降级到**更严**（zone-registry 回退默认规则、nonce 重新生成）是正确的；降级到**丢数据 / 放行**（read 失败吞成空串后覆盖原文件、fixlist 自称 allFixed 无 git 验证即放行、fetch 失败当空继续灌评论、methodology 缺失默认 subagent-parallel）是缺陷。判据：若异常输入被吞后，后续动作会**覆盖已有数据 / 绕过门禁 / 对外重复副作用**，则必须中止而非继续。锁超时（ToolHealthLockTimeoutError）属于不可恢复的 P1 状态一致性失败，必须上抛给调用方决策，不得降级为 stderr 警告。
+**Prevents**: SR-1 fail-open 四连（P2-1 status-atomic clobber、P2-2 ship-gate fixlist 绕过、P2-4 bitbucket 重复灌评论、P2-5 methodology fail-open、P2-6 status-manager 不阻断）—— 同根因：异常/缺失输入被静默降级为安全空值后继续，与项目自身 fail-closed 纪律（state-file-locking Knuth Invariant、review HARD-GATE）冲突
+**Source**: 2026-07-16 全量审核 `.forge/audits/2026-07-16-full-project-audit.md` §系统性风险 SR-1
+**Added**: 2026-07-16
+**Confidence**: 0.9
+**Last_triggered**: 2026-07-16
+**Infra_Ref**: `src/status-atomic.ts` (read-fail abort)、`src/ship-gates.ts` (methodology/fixlist fail-closed)、`src/review-comment-bitbucket/post.ts` (fetch-fail abort)、`src/status-manager.ts` (lock-timeout propagate)
 
 ---
 
