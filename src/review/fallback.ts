@@ -3,7 +3,7 @@
  *
  * @module review/fallback
  *
- * @remark L0–L3 numbering (audit P3-2, 2026-07-16): this module's ladder and
+ * @remarks L0–L3 numbering (audit P3-2, 2026-07-16): this module's ladder and
  * the gate-facing ladder in `.claude/rules/workflow-fallback-ladder.md` /
  * `src/ship-gates.ts` use the **same L0–L3 labels but different mappings**.
  * They are two distinct ladders, not one:
