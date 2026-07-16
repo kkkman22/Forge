@@ -63,6 +63,44 @@ describe("postReviewToBitbucket — disabled-by-config branch", () => {
   });
 });
 
+describe("audit P3-3: disable reason consistency between metrics and return value", () => {
+  it("config.enabled=false (no CLI flag) → return reason matches the persisted skip reason (platform-disabled-by-config)", async () => {
+    const bb = mockClient();
+    const r = await postReviewToBitbucket(
+      "review.md",
+      "pr-1",
+      { ...DEFAULT_CONFIG, enabled: false },
+      CTX,
+      bb as never,
+      [P0],
+    );
+    expect(r.posted).toBe(false);
+    if (!r.posted) {
+      // Before the fix: metrics said "platform-disabled-by-config" but the
+      // return value said "disabled-by-cli" — observability contradicted itself.
+      // A pure config disable (no --no-post-comments argv) is platform-driven.
+      expect(r.reason).toBe("platform-disabled-by-config");
+    }
+  });
+
+  it("config.enabled=false via --no-post-comments argv → return reason disabled-by-cli", async () => {
+    const bb = mockClient();
+    const r = await postReviewToBitbucket(
+      "review.md",
+      "pr-1",
+      { ...DEFAULT_CONFIG, enabled: true },
+      CTX,
+      bb as never,
+      [P0],
+      { argv: ["--no-post-comments"] },
+    );
+    expect(r.posted).toBe(false);
+    if (!r.posted) {
+      expect(r.reason).toBe("disabled-by-cli");
+    }
+  });
+});
+
 describe("postReviewToBitbucket — fetch-rejection branches (fail-closed: audit P2-4)", () => {
   it("aborts (does not post) when list_pr_tasks rejects", async () => {
     const bb = mockClient({ list_pr_tasks: vi.fn().mockRejectedValue(new Error("network")) });

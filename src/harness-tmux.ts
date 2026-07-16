@@ -8,6 +8,7 @@
  */
 
 import { execFileSync, spawnSync } from "node:child_process";
+import { isComplexCommand } from "./destructive-guard.js";
 
 export interface TmuxHarnessOptions {
   targetCommand: string;
@@ -25,6 +26,19 @@ export interface TmuxHarnessResult {
 
 export function runTmuxHarness(opts: TmuxHarnessOptions): TmuxHarnessResult {
   try {
+    // Audit P1-1 (2026-07-16): the targetCommand is spliced into `bash -c`
+    // below. Reject shell metacharacters / command substitution up front so a
+    // command like `echo hi; rm -rf ~` can never reach the shell. This harness
+    // is currently dead code (runCliHarness has no production wiring), but
+    // guarding now ensures re-wiring can't activate a latent injection surface
+    // (SR-2: defense should not be concentrated on one execution face).
+    if (isComplexCommand(opts.targetCommand)) {
+      return {
+        ok: false,
+        reason: `refused: targetCommand contains shell metacharacters/operators (injection guard): "${opts.targetCommand}"`,
+      };
+    }
+
     // Check if tmux is available
     try {
       execFileSync("which", ["tmux"], { encoding: "utf-8", timeout: 3000 });

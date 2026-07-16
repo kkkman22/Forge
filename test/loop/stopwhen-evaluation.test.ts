@@ -212,4 +212,26 @@ describe("stopWhen Evaluation", () => {
       expect(parseStopCondition("max-iterations:-1")).toBeNull();
     });
   });
+
+  // ── audit P3-1: malformed condition must not silently no-op ─────────
+
+  describe("audit P3-1: unrecognized condition surfaces a warning", () => {
+    it("a typo'd condition (max-iteration:5 instead of max-iterations) is flagged, not silently ignored", async () => {
+      const { evaluateStopWhen } = await loadModule();
+      const result = evaluateStopWhen("max-iteration:5", BASE_STATE);
+      // Must not stop (safe default), but must surface a warning so the user's
+      // stop intent isn't silently lost. Before the fix, reason was "" and the
+      // condition never fired with no signal at all.
+      expect(result.shouldStop).toBe(false);
+      expect(result.reason).not.toBe("");
+      expect(result.reason.toLowerCase()).toMatch(/unrecognized|invalid|unknown|max-iteration/);
+    });
+
+    it("a condition with a bad value (max-iterations:abc) is flagged", async () => {
+      const { evaluateStopWhen } = await loadModule();
+      const result = evaluateStopWhen("max-iterations:abc", BASE_STATE);
+      expect(result.shouldStop).toBe(false);
+      expect(result.reason).not.toBe("");
+    });
+  });
 });
