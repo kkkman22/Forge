@@ -125,3 +125,53 @@ describe("writeStatusAtomic: lock-protected atomic write (P1-1)", () => {
     expect(existsSync(`${target}.lock`)).toBe(false);
   });
 });
+
+// ---------------------------------------------------------------------------
+// Audit P2-1 (2026-07-16): exists=true but read throws must NOT clobber.
+// ---------------------------------------------------------------------------
+
+describe("writeStatusAtomic: read-failure must abort, not clobber (audit P2-1)", () => {
+  let forgeRoot: string;
+
+  beforeEach(() => {
+    forgeRoot = makeTmpForgeRoot();
+    mkdirSync(forgeRoot, { recursive: true });
+  });
+  afterEach(() => {
+    rmSync(join(forgeRoot, "..", ".."), { recursive: true, force: true });
+  });
+
+  it("preserves existing content when io.read throws (fail-closed, not fail-open)", async () => {
+    const target = join(forgeRoot, "status.md");
+    // Seed real existing content that must survive a failed read.
+    writeFileSync(target, "tier: light\nphase: build\ntopic: precious\n", "utf-8");
+
+    // IO that reports the file as existing but fails to read it (perm flip /
+    // IO error / EMFILE). write/move use the real fs so that, under the OLD
+    // fail-open code, the clobber would actually land on disk. Lock is no-op
+    // to keep the test off the real lockfile primitive.
+    const readFailIO = {
+      exists: () => true,
+      dirExists: () => true,
+      read: () => {
+        throw new Error("EACCES: permission denied");
+      },
+      write: (p: string, c: string) => writeFileSync(p, c, "utf-8"),
+      listDir: () => [] as string[],
+      move: (src: string, dest: string) => renameSync(src, dest),
+      mkdirp: () => {},
+      acquireLock: () => {},
+      releaseLock: () => {},
+    };
+
+    const { writeStatusAtomic } = await import("../src/status-atomic.js");
+    // Before the fix, the read error was swallowed into prev="" and the write
+    // proceeded, clobbering the existing content with the transform output.
+    // Fail-closed = the error propagates so the caller can decide, and the
+    // file is left untouched.
+    expect(() => writeStatusAtomic(forgeRoot, target, () => "GARBAGE", readFailIO)).toThrow();
+
+    // The original content survives (no clobber).
+    expect(readFileSync(target, "utf-8")).toBe("tier: light\nphase: build\ntopic: precious\n");
+  });
+});

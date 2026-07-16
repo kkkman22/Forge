@@ -165,8 +165,30 @@ export async function postReviewToBitbucket(
     });
   }
 
-  const rawTasks = rawTasksResult.status === "fulfilled" ? rawTasksResult.value : [];
-  const rawPr = rawPrResult.status === "fulfilled" ? rawPrResult.value : { active_comments: [] };
+  // Audit P2-4 (2026-07-16): fail-closed. If we cannot see the current tasks /
+  // comments on the PR (transient API error, timeout, 5xx), the reconcile would
+  // treat the PR as empty and re-post every finding — duplicating tasks and
+  // comments, doubling on each retry. The resilience design must not manufacture
+  // spam. Abort instead of posting against an unknown baseline.
+  if (rawTasksResult.status === "rejected" || rawPrResult.status === "rejected") {
+    const reason: PostFailureReason = "current-state-fetch-failed";
+    await persistMetrics(baseDir, ctx, {
+      posted: false,
+      post_enabled: true,
+      gate_skipped_reason: null,
+      creates: 0,
+      dones: 0,
+      reopens: 0,
+      skips: 0,
+      partial_failures: failures.length,
+      set_review_status_called: false,
+      total_duration_ms: Date.now() - startTime,
+    });
+    return { posted: false, reason };
+  }
+
+  const rawTasks = rawTasksResult.value;
+  const rawPr = rawPrResult.value;
 
   const prefix = config.comment_marker_prefix;
   const existingTasks = extractForgeTasks(rawTasks, prefix);

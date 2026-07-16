@@ -225,6 +225,58 @@ describe("checkFallbackLadderGate", () => {
 // P1 Fixlist parsing (Task 6 RED)
 // ---------------------------------------------------------------------------
 
+describe("audit P2-5: missing methodology must not default to a trusted ladder rung", () => {
+  it("review report that omits methodology → blocked (fail-closed, not defaulted to subagent-parallel)", async () => {
+    const { mkdtempSync, writeFileSync, rmSync, mkdirSync } =
+      require("node:fs") as typeof import("node:fs");
+    const { join } = require("node:path") as typeof import("node:path");
+    const { tmpdir } = require("node:os") as typeof import("node:os");
+    const { checkReviewGate } = await import("../src/ship-gates.js");
+
+    const tmpDir = mkdtempSync(join(tmpdir(), "forge-meth-p25-"));
+    try {
+      mkdirSync(join(tmpDir, "reviews"), { recursive: true });
+      // No methodology field at all. Before the fix this defaulted to
+      // "subagent-parallel" (the most-trusted rung), so a main-agent-written
+      // report could pass the HARD-GATE merely by omitting the field.
+      writeFileSync(
+        join(tmpDir, "reviews", "20260529-review.md"),
+        ["---", "p0_count: 0", "p1_count: 0", "result: pass", "---", "# Review"].join("\n"),
+      );
+
+      const result = checkReviewGate(join(tmpDir, "reviews"), "def5678");
+      expect(result.passed).toBe(false);
+      expect(result.reason.toLowerCase()).toMatch(/methodology|unavailable|hard.?gate|l3|main agent/);
+    } finally {
+      rmSync(tmpDir, { recursive: true, force: true });
+    }
+  });
+
+  it("review report with an invalid methodology value → blocked (not coerced to a trusted rung)", async () => {
+    const { mkdtempSync, writeFileSync, rmSync, mkdirSync } =
+      require("node:fs") as typeof import("node:fs");
+    const { join } = require("node:path") as typeof import("node:path");
+    const { tmpdir } = require("node:os") as typeof import("node:os");
+    const { checkReviewGate } = await import("../src/ship-gates.js");
+
+    const tmpDir = mkdtempSync(join(tmpdir(), "forge-meth-p25-invalid-"));
+    try {
+      mkdirSync(join(tmpDir, "reviews"), { recursive: true });
+      writeFileSync(
+        join(tmpDir, "reviews", "20260529-review.md"),
+        ["---", "p0_count: 0", "p1_count: 0", "methodology: bogus-method", "result: pass", "---", "# Review"].join(
+          "\n",
+        ),
+      );
+
+      const result = checkReviewGate(join(tmpDir, "reviews"), "def5678");
+      expect(result.passed).toBe(false);
+    } finally {
+      rmSync(tmpDir, { recursive: true, force: true });
+    }
+  });
+});
+
 describe("parseP1Fixlist", () => {
   it("valid JSON → returns P1Fixlist", () => {
     const content = JSON.stringify({
@@ -297,8 +349,81 @@ describe("updateFixlistWithCommits", () => {
 // Task 6: P1 Fix Checklist integration tests
 // ---------------------------------------------------------------------------
 
+describe("audit P2-2: P1 gate must not trust self-attested allFixed without git verification", () => {
+  it("rejects a fixlist whose allFixed=true when no gitLogFn is provided (fail-closed)", async () => {
+    const { mkdtempSync, writeFileSync, rmSync, mkdirSync } =
+      require("node:fs") as typeof import("node:fs");
+    const { join } = require("node:path") as typeof import("node:path");
+    const { tmpdir } = require("node:os") as typeof import("node:os");
+    const { checkReviewGate } = await import("../src/ship-gates.js");
+
+    const tmpDir = mkdtempSync(join(tmpdir(), "forge-fixlist-p22-"));
+    try {
+      mkdirSync(join(tmpDir, "reviews"), { recursive: true });
+      writeFileSync(
+        join(tmpDir, "reviews", "20260529-review.md"),
+        ["---", "p0_count: 0", "p1_count: 1", "methodology: subagent-parallel", "result: fail", "---", "# Review"].join(
+          "\n",
+        ),
+      );
+      // Self-attested allFixed:true with NO git verification hook.
+      writeFileSync(
+        join(tmpDir, "reviews", "20260529-p1-fixlist.json"),
+        JSON.stringify({
+          runId: "20260529",
+          p1Issues: [{ id: "P1-001", title: "Error handling", file: "src/a.ts", line: 42, fixCommit: "abc1234" }],
+          allFixed: true,
+        }),
+      );
+
+      // No gitLogFn → the gate must NOT trust the self-attested allFixed.
+      // Before the fix this returned passed:true, letting un-verified P1
+      // fixes through to ship (CLAUDE.md §3.3 violation).
+      const result = checkReviewGate(join(tmpDir, "reviews"), "def5678");
+      expect(result.passed).toBe(false);
+      expect(result.reason).toMatch(/fix|P1|verif/i);
+    } finally {
+      rmSync(tmpDir, { recursive: true, force: true });
+    }
+  });
+
+  it("still passes when gitLogFn independently confirms all P1 fixes", async () => {
+    const { mkdtempSync, writeFileSync, rmSync, mkdirSync } =
+      require("node:fs") as typeof import("node:fs");
+    const { join } = require("node:path") as typeof import("node:path");
+    const { tmpdir } = require("node:os") as typeof import("node:os");
+    const { checkReviewGate } = await import("../src/ship-gates.js");
+
+    const tmpDir = mkdtempSync(join(tmpdir(), "forge-fixlist-p22-ok-"));
+    try {
+      mkdirSync(join(tmpDir, "reviews"), { recursive: true });
+      writeFileSync(
+        join(tmpDir, "reviews", "20260529-review.md"),
+        ["---", "p0_count: 0", "p1_count: 1", "methodology: subagent-parallel", "result: fail", "---", "# Review"].join(
+          "\n",
+        ),
+      );
+      writeFileSync(
+        join(tmpDir, "reviews", "20260529-p1-fixlist.json"),
+        JSON.stringify({
+          runId: "20260529",
+          p1Issues: [{ id: "P1-001", title: "Error handling", file: "src/a.ts", line: 42, fixCommit: null }],
+          allFixed: false,
+        }),
+      );
+
+      const mockGitLog = (file: string) =>
+        file === "src/a.ts" ? ["abc1234 [fix P1] Error handling"] : [];
+      const result = checkReviewGate(join(tmpDir, "reviews"), "def5678", mockGitLog);
+      expect(result.passed).toBe(true);
+    } finally {
+      rmSync(tmpDir, { recursive: true, force: true });
+    }
+  });
+});
+
 describe("P1 Fix Checklist integration", () => {
-  it("checkReviewGate with P1 fixlist on disk and all fixed → passed", () => {
+  it("checkReviewGate with P1 fixlist on disk and all fixed → passed (with git verification)", () => {
     const { mkdtempSync, writeFileSync, rmSync, mkdirSync } =
       require("node:fs") as typeof import("node:fs");
     const { join } = require("node:path") as typeof import("node:path");
@@ -322,7 +447,8 @@ describe("P1 Fix Checklist integration", () => {
         ].join("\n"),
       );
 
-      // Write fixlist with allFixed=true
+      // Write fixlist with allFixed=true. Audit P2-2: allFixed is only trusted
+      // when gitLogFn is supplied to corroborate the fix commits.
       writeFileSync(
         join(tmpDir, "reviews", "20260529-p1-fixlist.json"),
         JSON.stringify({
@@ -340,7 +466,10 @@ describe("P1 Fix Checklist integration", () => {
         }),
       );
 
-      const result = checkReviewGate(join(tmpDir, "reviews"), "def5678");
+      // Provide a gitLogFn that confirms the fix commit for src/a.ts.
+      const mockGitLog = (file: string) =>
+        file === "src/a.ts" ? ["abc1234 [fix P1] Error handling"] : [];
+      const result = checkReviewGate(join(tmpDir, "reviews"), "def5678", mockGitLog);
       expect(result.passed).toBe(true);
     } finally {
       rmSync(tmpDir, { recursive: true, force: true });

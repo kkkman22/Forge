@@ -85,7 +85,8 @@ export type PostFailureReason =
   | GateSkipReason
   | "disabled-by-cli"
   | "review-markdown-not-found"
-  | "parse-error";
+  | "parse-error"
+  | "current-state-fetch-failed";
 
 export type PostResult =
   | { posted: false; reason: PostFailureReason }

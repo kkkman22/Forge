@@ -63,8 +63,8 @@ describe("postReviewToBitbucket — disabled-by-config branch", () => {
   });
 });
 
-describe("postReviewToBitbucket — fetch-rejection branches (allSettled resilience)", () => {
-  it("records partial failure when list_pr_tasks rejects", async () => {
+describe("postReviewToBitbucket — fetch-rejection branches (fail-closed: audit P2-4)", () => {
+  it("aborts (does not post) when list_pr_tasks rejects", async () => {
     const bb = mockClient({ list_pr_tasks: vi.fn().mockRejectedValue(new Error("network")) });
     const r = await postReviewToBitbucket(
       "review.md",
@@ -75,11 +75,13 @@ describe("postReviewToBitbucket — fetch-rejection branches (allSettled resilie
       [P0],
       { baseDir: undefined },
     );
-    // Still posts (allSettled resilience); the rejection is a partial failure.
-    expect(r.posted).toBe(true);
+    // Audit P2-4: cannot see existing tasks → must NOT post (would duplicate).
+    expect(r.posted).toBe(false);
+    expect(bb.create_pr_task).not.toHaveBeenCalled();
+    expect(bb.add_comment).not.toHaveBeenCalled();
   });
 
-  it("records partial failure when get_pull_request rejects", async () => {
+  it("aborts (does not post) when get_pull_request rejects", async () => {
     const bb = mockClient({ get_pull_request: vi.fn().mockRejectedValue(new Error("500")) });
     const r = await postReviewToBitbucket(
       "review.md",
@@ -90,10 +92,11 @@ describe("postReviewToBitbucket — fetch-rejection branches (allSettled resilie
       [P0],
       { baseDir: undefined },
     );
-    expect(r.posted).toBe(true);
+    expect(r.posted).toBe(false);
+    expect(bb.add_comment).not.toHaveBeenCalled();
   });
 
-  it("records partial failure when both fetch calls reject", async () => {
+  it("aborts (does not post) when both fetch calls reject", async () => {
     const bb = mockClient({
       list_pr_tasks: vi.fn().mockRejectedValue(new Error("e1")),
       get_pull_request: vi.fn().mockRejectedValue(new Error("e2")),
@@ -107,7 +110,9 @@ describe("postReviewToBitbucket — fetch-rejection branches (allSettled resilie
       [P0],
       { baseDir: undefined },
     );
-    expect(r.posted).toBe(true);
+    expect(r.posted).toBe(false);
+    expect(bb.create_pr_task).not.toHaveBeenCalled();
+    expect(bb.add_comment).not.toHaveBeenCalled();
   });
 });
 

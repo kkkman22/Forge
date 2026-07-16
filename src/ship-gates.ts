@@ -136,9 +136,16 @@ function parseReviewReportFrontmatter(content: string): ParsedReviewReport | nul
   const resultMatch = fmText.match(/^result:\s*(\S+)/m);
 
   const severity = extractSeverity(fm);
-  const methodRaw =
-    (fm.methodology as string | undefined) ?? methodMatch?.[1] ?? "subagent-parallel";
-  const methodology = isValidMethodology(methodRaw) ? methodRaw : "subagent-parallel";
+  // Audit P2-5 (2026-07-16): a missing or unrecognized methodology must NOT
+  // default to a trusted ladder rung. Previously an absent field silently
+  // became "subagent-parallel" (the most-trusted rung), so a main-agent-written
+  // report — exactly what the HARD-GATE exists to prevent — could pass ship
+  // merely by omitting the field. Fail-closed: treat unknown/absent as
+  // "unavailable" so checkFallbackLadderGate blocks it.
+  const methodRaw = (fm.methodology as string | undefined) ?? methodMatch?.[1];
+  const methodology: Methodology = methodRaw !== undefined && isValidMethodology(methodRaw)
+    ? methodRaw
+    : "unavailable";
   const result = (fm.result as string | undefined) ?? resultMatch?.[1] ?? "incomplete";
 
   return { p0Count: severity.p0, p1Count: severity.p1, methodology, result };
@@ -312,10 +319,23 @@ export function checkReviewGate(
         }
 
         if (fixlist?.allFixed) {
+          // Audit P2-2 (2026-07-16): a self-attested allFixed is only credible
+          // when corroborated by git. Without a gitLogFn there is no way to
+          // confirm the fix commits actually exist, so a hand-edited or stale
+          // fixlist could bypass the CLAUDE.md §3.3 "P0/P1 blocks ship" rule.
+          // Fail-closed: require git verification rather than trusting the flag.
+          if (gitLogFn) {
+            return {
+              gate: "review",
+              passed: true,
+              reason: `All ${report.p1Count} P1 issue(s) marked as fixed in fixlist (git-verified available).`,
+              details: { p0Count: 0, p1Count: report.p1Count },
+            };
+          }
           return {
             gate: "review",
-            passed: true,
-            reason: `All ${report.p1Count} P1 issue(s) marked as fixed in fixlist.`,
+            passed: false,
+            reason: `P1 fixlist claims allFixed but no git verification was provided. Re-run /forge review with commit verification or provide gitLogFn.`,
             details: { p0Count: 0, p1Count: report.p1Count },
           };
         }
