@@ -75,8 +75,8 @@ const _progressTaskEntry = () =>
     .map((e) => ({ ...e, completionTime: e.completionTime ?? null }));
 
 const forgeTier = () =>
-  fc.constantFrom("lightweight", "standard", "full") as fc.Arbitrary<
-    "lightweight" | "standard" | "full"
+  fc.constantFrom("light", "standard", "full") as fc.Arbitrary<
+    "light" | "standard" | "full"
   >;
 const forgePhase = () =>
   fc.constantFrom(
@@ -415,7 +415,7 @@ describe("Feature: error-recovery-strategy, Property 8: phase inconsistency dete
 
 describe("Feature: error-recovery-strategy, Property 9: next phase computation", () => {
   it("returns correct next phase or null", () => {
-    const tiers: Array<"lightweight" | "standard" | "full"> = ["lightweight", "standard", "full"];
+    const tiers: Array<"light" | "standard" | "full"> = ["light", "standard", "full"];
 
     for (const tier of tiers) {
       const seq = PHASE_SEQUENCES[tier];
@@ -430,11 +430,11 @@ describe("Feature: error-recovery-strategy, Property 9: next phase computation",
     }
 
     // Non-existent phase returns null
-    expect(getNextPhase("learn", "lightweight")).toBeNull();
+    expect(getNextPhase("learn", "light")).toBeNull();
   });
 
   it("getPhaseSequence returns correct sequences for all tiers", () => {
-    expect(getPhaseSequence("lightweight")).toEqual(["build", "review"]);
+    expect(getPhaseSequence("light")).toEqual(["build", "review"]);
     expect(getPhaseSequence("standard")).toEqual(["plan", "build", "review", "test", "ship"]);
     expect(getPhaseSequence("full")).toEqual([
       "decide",

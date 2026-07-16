@@ -55,7 +55,7 @@ const phaseInconsistency = () =>
 const header = () =>
   fc.record({
     taskName: fc.string({ minLength: 1, maxLength: 30 }),
-    tier: fc.constantFrom("lightweight", "standard", "full"),
+    tier: fc.constantFrom("light", "standard", "full"),
     phase: fc.constantFrom("decide", "spec", "plan", "build", "review", "test", "ship", "learn"),
     lastUpdate: fc.string({ minLength: 1, maxLength: 30 }),
     interruptionCategory: fc.constantFrom(

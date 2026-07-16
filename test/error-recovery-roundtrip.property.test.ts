@@ -49,7 +49,7 @@ const recoveryReport = (): fc.Arbitrary<RecoveryReport> =>
   fc.record({
     header: fc.record({
       taskName: safeStr(1, 30).filter((s) => s.length > 0),
-      tier: fc.constantFrom("lightweight", "standard", "full"),
+      tier: fc.constantFrom("light", "standard", "full"),
       phase: fc.constantFrom("decide", "spec", "plan", "build", "review", "test", "ship", "learn"),
       lastUpdate: safeStr(1, 30).filter((s) => s.length > 0),
       interruptionCategory: fc.constantFrom(
