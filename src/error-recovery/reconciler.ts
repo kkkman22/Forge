@@ -126,8 +126,14 @@ export function getNextPhase(currentPhase: ForgePhase, tier: ForgeTier): ForgePh
  * Detect phase inconsistency.
  *
  * Returns "behind" when all tasks are completed but phase hasn't advanced,
- * "ahead" when tasks are incomplete but phase is beyond expected position,
- * or null when consistent.
+ * "ahead" when tasks are incomplete but the phase has moved past the build
+ * (execution) anchor into a post-build phase (review/test/ship/learn), or null
+ * when consistent.
+ *
+ * Audit P2-3 (2026-07-16): incomplete tasks at build or a pre-build phase
+ * (plan/spec/decide) is the normal in-progress/interrupt state and is treated
+ * as consistent — it must not be flagged "ahead", which previously caused a
+ * default revert of a healthy build→plan on resume.
  *
  * @internal
  */
@@ -140,6 +146,14 @@ export function findPhaseInconsistencies(
   const phaseIdx = seq.indexOf(currentPhase);
   if (phaseIdx < 0) return null;
 
+  // Audit P2-3 (2026-07-16): "build" is the execution anchor. Incomplete
+  // tasks at build or any pre-build phase (plan/spec/decide) is the normal
+  // in-progress / interrupt state, NOT an inconsistency — flagging it "ahead"
+  // caused the engine to default-revert a healthy build→plan. "Ahead" is only
+  // genuine when we've moved PAST build (into review/test/ship/learn) with
+  // tasks still incomplete, i.e. something skipped build completion.
+  const buildIdx = seq.indexOf("build");
+
   if (allTasksCompleted) {
     const next = phaseIdx + 1;
     if (next < seq.length) {
@@ -150,16 +164,14 @@ export function findPhaseInconsistencies(
         evidence: `All tasks completed but phase is still "${currentPhase}", expected "${seq[next]}"`,
       };
     }
-  } else {
-    if (phaseIdx > 0) {
-      const prevPhase = seq[phaseIdx - 1];
-      return {
-        currentPhase,
-        expectedPhase: prevPhase,
-        direction: "ahead",
-        evidence: `Tasks incomplete but phase is "${currentPhase}", expected still at "${prevPhase}"`,
-      };
-    }
+  } else if (buildIdx >= 0 && phaseIdx > buildIdx) {
+    const prevPhase = seq[phaseIdx - 1];
+    return {
+      currentPhase,
+      expectedPhase: prevPhase,
+      direction: "ahead",
+      evidence: `Tasks incomplete but phase is "${currentPhase}", expected still at "${prevPhase}"`,
+    };
   }
 
   return null;

@@ -381,6 +381,36 @@ describe("Feature: error-recovery-strategy, Property 7: dependency gap detection
 // Property 8: Phase inconsistency detection (both directions)
 // ---------------------------------------------------------------------------
 
+describe("audit P2-3: phase-ahead must not fire mid-build (the common interrupt case)", () => {
+  it("incomplete tasks at the build phase is consistent, not 'ahead'", () => {
+    // The canonical resume scenario: standard tier, interrupted mid-build,
+    // tasks half-done. Before the fix this reported "ahead" and the engine
+    // defaulted to reverting build→plan, corrupting a normal in-progress run.
+    for (const tier of ["light", "standard", "full"] as const) {
+      const result = findPhaseInconsistencies(false, "build", tier);
+      expect(result).toBeNull();
+    }
+  });
+
+  it("incomplete tasks at a pre-build phase (plan/spec/decide) is consistent", () => {
+    // Planning phases legitimately have incomplete tasks (needs still being
+    // refined). Must not be flagged as ahead.
+    expect(findPhaseInconsistencies(false, "plan", "standard")).toBeNull();
+    expect(findPhaseInconsistencies(false, "spec", "full")).toBeNull();
+    expect(findPhaseInconsistencies(false, "decide", "full")).toBeNull();
+  });
+
+  it("incomplete tasks at a POST-build phase (review/test/ship) IS ahead", () => {
+    // Genuinely suspicious: we reached review/test/ship with tasks still
+    // incomplete — something skipped build completion. This should still fire.
+    expect(findPhaseInconsistencies(false, "review", "standard")?.direction).toBe("ahead");
+    expect(findPhaseInconsistencies(false, "test", "standard")?.direction).toBe("ahead");
+    expect(findPhaseInconsistencies(false, "ship", "standard")?.direction).toBe("ahead");
+    // light tier: review comes right after build → still ahead when incomplete
+    expect(findPhaseInconsistencies(false, "review", "light")?.direction).toBe("ahead");
+  });
+});
+
 describe("Feature: error-recovery-strategy, Property 8: phase inconsistency detection", () => {
   it("detects behind, ahead, or consistent state", () => {
     fc.assert(
@@ -389,6 +419,7 @@ describe("Feature: error-recovery-strategy, Property 8: phase inconsistency dete
 
         // Phase must be in the tier's sequence for any result
         const seq = PHASE_SEQUENCES[tier];
+        const buildIdx = seq.indexOf("build");
 
         if (allCompleted) {
           const idx = seq.indexOf(phase);
@@ -397,8 +428,9 @@ describe("Feature: error-recovery-strategy, Property 8: phase inconsistency dete
             expect(result?.direction).toBe("behind");
           }
         } else {
+          // Audit P2-3: "ahead" only when past the build (execution) phase.
           const idx = seq.indexOf(phase);
-          if (idx > 0) {
+          if (idx > buildIdx) {
             expect(result).not.toBeNull();
             expect(result?.direction).toBe("ahead");
           }
