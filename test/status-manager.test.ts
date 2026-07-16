@@ -237,6 +237,39 @@ describe("Example: writeTaskStatus graceful degradation", () => {
 });
 
 // ---------------------------------------------------------------------------
+// Audit P2-6 (2026-07-16): lock-timeout must propagate, not be swallowed.
+// ---------------------------------------------------------------------------
+
+describe("audit P2-6: writeTaskStatus must surface lock-contention failures", () => {
+  it("re-throws ToolHealthLockTimeoutError so the caller knows state was not persisted", async () => {
+    const { ToolHealthLockTimeoutError } = await import("../src/tool-health-writer.js");
+    const io: StatusManagerIO = {
+      exists: () => false,
+      dirExists: () => false,
+      read: () => "",
+      write: () => {},
+      listDir: () => [],
+      move: () => {},
+      mkdirp: () => {},
+      // Simulate real lock contention: acquireLock throws after exhausting
+      // retries. This is a P1 state-consistency failure — the status write did
+      // NOT land, so the caller must not proceed as if it did.
+      acquireLock: () => {
+        throw new ToolHealthLockTimeoutError("/project/.forge/status.md", 5000);
+      },
+      releaseLock: () => {},
+    };
+
+    // Before the fix, this was caught and degraded to a stderr warning; the
+    // caller had no signal the write failed and would advance the phase on
+    // stale state. Fail-closed: propagate so callers can decide.
+    expect(() => writeTaskStatus(io, FORGE_ROOT, "my-task", "content")).toThrow(
+      ToolHealthLockTimeoutError,
+    );
+  });
+});
+
+// ---------------------------------------------------------------------------
 // Property 7: Router multi-task routing
 // ---------------------------------------------------------------------------
 

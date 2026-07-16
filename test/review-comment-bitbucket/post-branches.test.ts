@@ -63,8 +63,46 @@ describe("postReviewToBitbucket — disabled-by-config branch", () => {
   });
 });
 
-describe("postReviewToBitbucket — fetch-rejection branches (allSettled resilience)", () => {
-  it("records partial failure when list_pr_tasks rejects", async () => {
+describe("audit P3-3: disable reason consistency between metrics and return value", () => {
+  it("config.enabled=false (no CLI flag) → return reason matches the persisted skip reason (platform-disabled-by-config)", async () => {
+    const bb = mockClient();
+    const r = await postReviewToBitbucket(
+      "review.md",
+      "pr-1",
+      { ...DEFAULT_CONFIG, enabled: false },
+      CTX,
+      bb as never,
+      [P0],
+    );
+    expect(r.posted).toBe(false);
+    if (!r.posted) {
+      // Before the fix: metrics said "platform-disabled-by-config" but the
+      // return value said "disabled-by-cli" — observability contradicted itself.
+      // A pure config disable (no --no-post-comments argv) is platform-driven.
+      expect(r.reason).toBe("platform-disabled-by-config");
+    }
+  });
+
+  it("config.enabled=false via --no-post-comments argv → return reason disabled-by-cli", async () => {
+    const bb = mockClient();
+    const r = await postReviewToBitbucket(
+      "review.md",
+      "pr-1",
+      { ...DEFAULT_CONFIG, enabled: true },
+      CTX,
+      bb as never,
+      [P0],
+      { argv: ["--no-post-comments"] },
+    );
+    expect(r.posted).toBe(false);
+    if (!r.posted) {
+      expect(r.reason).toBe("disabled-by-cli");
+    }
+  });
+});
+
+describe("postReviewToBitbucket — fetch-rejection branches (fail-closed: audit P2-4)", () => {
+  it("aborts (does not post) when list_pr_tasks rejects", async () => {
     const bb = mockClient({ list_pr_tasks: vi.fn().mockRejectedValue(new Error("network")) });
     const r = await postReviewToBitbucket(
       "review.md",
@@ -75,11 +113,13 @@ describe("postReviewToBitbucket — fetch-rejection branches (allSettled resilie
       [P0],
       { baseDir: undefined },
     );
-    // Still posts (allSettled resilience); the rejection is a partial failure.
-    expect(r.posted).toBe(true);
+    // Audit P2-4: cannot see existing tasks → must NOT post (would duplicate).
+    expect(r.posted).toBe(false);
+    expect(bb.create_pr_task).not.toHaveBeenCalled();
+    expect(bb.add_comment).not.toHaveBeenCalled();
   });
 
-  it("records partial failure when get_pull_request rejects", async () => {
+  it("aborts (does not post) when get_pull_request rejects", async () => {
     const bb = mockClient({ get_pull_request: vi.fn().mockRejectedValue(new Error("500")) });
     const r = await postReviewToBitbucket(
       "review.md",
@@ -90,10 +130,11 @@ describe("postReviewToBitbucket — fetch-rejection branches (allSettled resilie
       [P0],
       { baseDir: undefined },
     );
-    expect(r.posted).toBe(true);
+    expect(r.posted).toBe(false);
+    expect(bb.add_comment).not.toHaveBeenCalled();
   });
 
-  it("records partial failure when both fetch calls reject", async () => {
+  it("aborts (does not post) when both fetch calls reject", async () => {
     const bb = mockClient({
       list_pr_tasks: vi.fn().mockRejectedValue(new Error("e1")),
       get_pull_request: vi.fn().mockRejectedValue(new Error("e2")),
@@ -107,7 +148,9 @@ describe("postReviewToBitbucket — fetch-rejection branches (allSettled resilie
       [P0],
       { baseDir: undefined },
     );
-    expect(r.posted).toBe(true);
+    expect(r.posted).toBe(false);
+    expect(bb.create_pr_task).not.toHaveBeenCalled();
+    expect(bb.add_comment).not.toHaveBeenCalled();
   });
 });
 

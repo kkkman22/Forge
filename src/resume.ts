@@ -285,8 +285,11 @@ export interface RecoveryChainInput {
   gitStatusRaw: string;
   /** The Status_Document frontmatter phase (from .forge/status.md). Step 6. */
   currentPhase: string;
-  /** The Forge tier used to derive the legal phase sequence. Step 6. */
-  tier: "lightweight" | "standard" | "full";
+  /** The Forge tier used to derive the legal phase sequence. Step 6.
+   *
+   * Audit P1-2 (2026-07-16): canonical value is `"light"` (matches
+   * Status_Document schema); was previously `"lightweight"`. */
+  tier: "light" | "standard" | "full";
   /** The current task/topic name (from Status_Document). Header field. */
   taskName: string;
   /** Progress_Document task entries (parsed from .forge/progress/<topic>.md). Step 5. */

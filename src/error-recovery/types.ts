@@ -148,8 +148,29 @@ export type ForgePhase =
   | "ship"
   | "learn";
 
-/** @internal Forge workflow tiers. */
-export type ForgeTier = "lightweight" | "standard" | "full";
+/**
+ * @internal Forge workflow tiers.
+ *
+ * Canonical value is `"light"` — matches the Status_Document schema
+ * (`schemas/status-file.ts` TierSchema), router, workflow-graph, and doctor.
+ * Audit P1-2 (2026-07-16): this was previously `"lightweight"`, which split
+ * from the project-standard `"light"` and crashed `/forge resume` via
+ * `PHASE_SEQUENCES["light"]` → `undefined.indexOf()`.
+ */
+export type ForgeTier = "light" | "standard" | "full";
+
+/**
+ * @internal Runtime allowlist of valid ForgeTier values, for fail-closed
+ * validation of deserialized tier strings (see serde.ts).
+ */
+export const VALID_FORGE_TIERS: readonly ForgeTier[] = ["light", "standard", "full"];
+
+/**
+ * @internal Type guard: is `value` a canonical ForgeTier?
+ */
+export function isForgeTier(value: string): value is ForgeTier {
+  return value === "light" || value === "standard" || value === "full";
+}
 
 /**
  * @internal
@@ -260,9 +281,15 @@ export interface TaskSegmentationInfo {
 // Constants
 // ---------------------------------------------------------------------------
 
-/** @internal Phase sequences for each tier. */
+/**
+ * @internal Phase sequences for each tier.
+ *
+ * Audit P1-2 (2026-07-16): the `light` key was previously `lightweight`,
+ * which diverged from the canonical Status_Document tier value `"light"` and
+ * caused `PHASE_SEQUENCES["light"]` to be undefined on the resume path.
+ */
 export const PHASE_SEQUENCES: Record<ForgeTier, ForgePhase[]> = {
-  lightweight: ["build", "review"],
+  light: ["build", "review"],
   standard: ["plan", "build", "review", "test", "ship"],
   full: ["decide", "spec", "plan", "build", "review", "test", "ship", "learn"],
 };

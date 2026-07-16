@@ -8,6 +8,7 @@
  */
 
 import { spawn } from "node:child_process";
+import { isComplexCommand } from "./destructive-guard.js";
 
 export interface PtyHarnessOptions {
   targetCommand: string;
@@ -28,6 +29,20 @@ export async function runPtyHarness(opts: PtyHarnessOptions): Promise<PtyHarness
     const timeout = opts.timeout ?? 30000;
     const chunks: string[] = [];
     const errChunks: string[] = [];
+
+    // Audit P3-latent-A (2026-07-16): targetCommand is spliced into `bash -c`.
+    // Reject shell metacharacters / command substitution up front (injection
+    // guard). Currently dead code, but guard now so re-wiring stays safe (SR-2).
+    if (isComplexCommand(opts.targetCommand)) {
+      resolve({
+        ok: false,
+        reason: `refused: targetCommand contains shell metacharacters/operators (injection guard): "${opts.targetCommand}"`,
+        stdout: "",
+        stderr: "",
+        exitCode: null,
+      });
+      return;
+    }
 
     try {
       const proc = spawn("bash", ["-c", opts.targetCommand], {

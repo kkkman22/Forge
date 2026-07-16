@@ -177,6 +177,59 @@ describe("Unit: p0_p1_strategy=both creates task + comment", () => {
   });
 });
 
+describe("audit P2-4: current-state fetch failure must abort, not duplicate-post", () => {
+  it("aborts with no creates when list_pr_tasks rejects (transient API error)", async () => {
+    const bb = mockBitbucketClient();
+    // Simulate a transient Bitbucket API failure during the fetch of existing
+    // tasks. Before the fix, allSettled degraded this to [] and the reconcile
+    // proceeded as if the PR had no existing tasks → every finding re-posted.
+    bb.list_pr_tasks.mockRejectedValueOnce(new Error("HTTP 503 upstream timeout"));
+
+    const result = await postReviewToBitbucket(
+      "test-fixture",
+      "pr-1",
+      DEFAULT_CONFIG,
+      {
+        remoteUrl: "https://bitbucket.org/org/repo",
+        mcpBaseUrl: "https://bitbucket.org",
+        mcpConfigured: true,
+        runId: "run-1",
+      },
+      bb,
+      [P0_FINDING, P1_FINDING],
+    );
+
+    // Fail-closed: the post must NOT proceed without a reliable view of what's
+    // already on the PR. No tasks/comments created.
+    expect(result.posted).toBe(false);
+    expect(bb.create_pr_task).not.toHaveBeenCalled();
+    expect(bb.add_comment).not.toHaveBeenCalled();
+    expect(bb.set_review_status).not.toHaveBeenCalled();
+  });
+
+  it("aborts with no creates when get_pull_request rejects (transient API error)", async () => {
+    const bb = mockBitbucketClient();
+    bb.get_pull_request.mockRejectedValueOnce(new Error("HTTP 500"));
+
+    const result = await postReviewToBitbucket(
+      "test-fixture",
+      "pr-1",
+      DEFAULT_CONFIG,
+      {
+        remoteUrl: "https://bitbucket.org/org/repo",
+        mcpBaseUrl: "https://bitbucket.org",
+        mcpConfigured: true,
+        runId: "run-1",
+      },
+      bb,
+      [P2_FINDING],
+    );
+
+    expect(result.posted).toBe(false);
+    expect(bb.add_comment).not.toHaveBeenCalled();
+  });
+});
+
 describe("Unit: p0_p1_strategy=pr-task creates only task", () => {
   it("P0 finding creates 1 pr_task, no comment", async () => {
     const bb = mockBitbucketClient();

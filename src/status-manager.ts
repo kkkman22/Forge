@@ -15,7 +15,11 @@ import { extractStringField, parseFrontmatter } from "./frontmatter.js";
 import { writeStatusAtomic } from "./status-atomic.js";
 import { isMultiTaskMode, slugify } from "./status-resolver.js";
 import type { AppendOptions } from "./tool-health-writer.js";
-import { acquireLockSync, releaseLockSync } from "./tool-health-writer.js";
+import {
+  acquireLockSync,
+  releaseLockSync,
+  ToolHealthLockTimeoutError,
+} from "./tool-health-writer.js";
 
 // ---------------------------------------------------------------------------
 // Types
@@ -132,6 +136,16 @@ export function writeTaskStatus(
       writeStatusAtomic(forgeRoot, `${forgeRoot}/status.md`, () => content, io);
     }
   } catch (err: unknown) {
+    // Audit P2-6 (2026-07-16): distinguish unrecoverable state-consistency
+    // failures from ordinary IO hiccups. A lock timeout
+    // (ToolHealthLockTimeoutError) means the status write did NOT land — the
+    // caller would otherwise advance the phase on stale state, a P1-level
+    // consistency violation. Propagate it so callers can decide. Other errors
+    // (e.g. a missing dir, transient write fault) keep the spec R2.5 graceful-
+    // degradation contract: log to stderr and continue without crashing.
+    if (err instanceof ToolHealthLockTimeoutError) {
+      throw err;
+    }
     // Graceful degradation — spec R2.5: log warning and continue without crashing.
     // Audit P2: was a silent swallow (TODO: integrate with logging). Now emits
     // a structured stderr warning so status-write failures are diagnosable.

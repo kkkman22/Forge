@@ -101,12 +101,16 @@ export function writeStatusAtomic(
   acquire(lockPath, lockOpts);
   heldLocks.add(lockPath);
   try {
+    // Audit P2-1 (2026-07-16): distinguish "file absent" (legitimate empty
+    // prior, e.g. first write) from "file exists but read failed" (a real IO
+    // error — permission flip / EMFILE / disk fault). Previously both were
+    // swallowed into prev="" and the write proceeded, so a read failure on an
+    // existing status.md clobbered its contents. Fail-closed per the
+    // state-file-locking Knuth Invariant: an unreadable-but-present file must
+    // abort the write and propagate the error, not silently overwrite.
     let prev = "";
-    try {
-      prev = io.exists(targetPath) ? io.read(targetPath) : "";
-    } catch {
-      // First write / missing file → empty prior.
-      prev = "";
+    if (io.exists(targetPath)) {
+      prev = io.read(targetPath); // throws on real IO error → aborts, lock released in finally
     }
     const next = transform(prev);
     const tmpPath = `${targetPath}.tmp`;

@@ -11,6 +11,7 @@ import type {
   BitbucketTaskResponse,
   CommentRecord,
   Finding,
+  GateSkipReason,
   PostContext,
   PostFailureReason,
   PostResult,
@@ -66,11 +67,37 @@ export async function postReviewToBitbucket(
   const baseDir = options?.baseDir;
 
   // 0. CLI overrides
+  // Audit P3-3 (2026-07-16): capture whether the config was already disabled
+  // before CLI overrides, so the skip reason is attributed correctly. A config
+  // disable (platform_override:"none" etc.) is platform-driven; only an actual
+  // --no-post-comments argv is CLI-driven. Previously the metrics recorded
+  // "platform-disabled-by-config" while the return value said "disabled-by-cli"
+  // regardless of cause — observability contradicted itself.
+  const configDisabledBeforeArgv = !config.enabled;
   if (options?.argv) {
     config = applyCliOverrides(config, options.argv);
   }
   if (!config.enabled) {
-    const reason: PostFailureReason = "platform-disabled-by-config";
+    const disabledByCli = configDisabledBeforeArgv === false;
+    // recordSkip traces platform/gate-level skips; a CLI flag disable is not a
+    // gate skip, so only trace the platform-driven case (matches GateSkipReason).
+    if (disabledByCli) {
+      const reason: PostFailureReason = "disabled-by-cli";
+      await persistMetrics(baseDir, ctx, {
+        posted: false,
+        post_enabled: false,
+        gate_skipped_reason: reason,
+        creates: 0,
+        dones: 0,
+        reopens: 0,
+        skips: 0,
+        partial_failures: 0,
+        set_review_status_called: false,
+        total_duration_ms: Date.now() - startTime,
+      });
+      return { posted: false, reason };
+    }
+    const reason: GateSkipReason = "platform-disabled-by-config";
     await persistSideEffects(baseDir, () => recordSkip(reviewMarkdownPath, reason, ctx));
     await persistMetrics(baseDir, ctx, {
       posted: false,
@@ -84,7 +111,7 @@ export async function postReviewToBitbucket(
       set_review_status_called: false,
       total_duration_ms: Date.now() - startTime,
     });
-    return { posted: false, reason: "disabled-by-cli" as PostFailureReason };
+    return { posted: false, reason };
   }
 
   // 1. Platform gate
@@ -165,8 +192,30 @@ export async function postReviewToBitbucket(
     });
   }
 
-  const rawTasks = rawTasksResult.status === "fulfilled" ? rawTasksResult.value : [];
-  const rawPr = rawPrResult.status === "fulfilled" ? rawPrResult.value : { active_comments: [] };
+  // Audit P2-4 (2026-07-16): fail-closed. If we cannot see the current tasks /
+  // comments on the PR (transient API error, timeout, 5xx), the reconcile would
+  // treat the PR as empty and re-post every finding — duplicating tasks and
+  // comments, doubling on each retry. The resilience design must not manufacture
+  // spam. Abort instead of posting against an unknown baseline.
+  if (rawTasksResult.status === "rejected" || rawPrResult.status === "rejected") {
+    const reason: PostFailureReason = "current-state-fetch-failed";
+    await persistMetrics(baseDir, ctx, {
+      posted: false,
+      post_enabled: true,
+      gate_skipped_reason: null,
+      creates: 0,
+      dones: 0,
+      reopens: 0,
+      skips: 0,
+      partial_failures: failures.length,
+      set_review_status_called: false,
+      total_duration_ms: Date.now() - startTime,
+    });
+    return { posted: false, reason };
+  }
+
+  const rawTasks = rawTasksResult.value;
+  const rawPr = rawPrResult.value;
 
   const prefix = config.comment_marker_prefix;
   const existingTasks = extractForgeTasks(rawTasks, prefix);
@@ -477,9 +526,12 @@ function extractForgeTasks(raw: BitbucketTaskResponse[], prefix: string): TaskRe
       return {
         task_id: String(t.id),
         text,
-        status: VALID_TASK_STATUSES.has(rawStatus)
-          ? (rawStatus as "OPEN" | "RESOLVED")
-          : "RESOLVED",
+        // Audit P3-3 (2026-07-16): an unrecognized task status previously
+        // defaulted to "RESOLVED", which could mark a genuinely OPEN task as
+        // resolved and trigger a spurious reopen under autoReopenRegressed.
+        // Default to "OPEN" — a skipped duplicate is harmless, a false reopen
+        // is noise the user didn't ask for.
+        status: VALID_TASK_STATUSES.has(rawStatus) ? (rawStatus as "OPEN" | "RESOLVED") : "OPEN",
         marker_hash: markerHash ?? undefined,
       };
     })

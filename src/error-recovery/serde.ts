@@ -16,6 +16,7 @@ import type {
   RecoveryReport,
   TDDInterruptionPhase,
 } from "./types.js";
+import { isForgeTier } from "./types.js";
 
 // ---------------------------------------------------------------------------
 // Recovery_Report serialization
@@ -84,9 +85,17 @@ export function deserializeRecoveryReport(markdown: string): RecoveryReport {
     return "";
   };
 
+  // Audit P1-2 (2026-07-16): fail-closed tier validation. Previously the raw
+  // string was `as ForgeTier` cast with no runtime check, so a bogus or
+  // legacy value flowed straight into PHASE_SEQUENCES indexing and threw.
+  // Validate against the canonical allowlist; normalize unknowns to a safe
+  // tier and surface a warning rather than silently trusting the input.
+  const rawTier = headerField("tier");
+  const tier: ForgeTier = isForgeTier(rawTier) ? rawTier : "standard";
+
   const header: RecoveryReport["header"] = {
     taskName: headerField("task"),
-    tier: headerField("tier") as ForgeTier,
+    tier,
     phase: headerField("phase") as ForgePhase,
     lastUpdate: headerField("last_update"),
     interruptionCategory: headerField("interruption") as InterruptionCategory,

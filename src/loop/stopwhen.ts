@@ -79,7 +79,15 @@ export function evaluateStopWhen(condition: string, state: StopWhenState): StopW
 
   const parsed = parseStopCondition(condition);
   if (!parsed) {
-    return { shouldStop: false, reason: "" };
+    // Audit P3-1 (2026-07-16): a non-empty condition that failed to parse is
+    // almost certainly a typo (e.g. "max-iteration:5" missing the 's', or
+    // "max-iterations:abc"). Don't stop (safe default) but surface a warning
+    // so the user's stop intent isn't silently lost — three-strike is the
+    // ultimate backstop, but a silent no-op hides the misconfiguration.
+    return {
+      shouldStop: false,
+      reason: `unrecognized stop condition "${condition}" — expected max-iterations:N, phase-reached:<phase>, or commit-count:N`,
+    };
   }
 
   switch (parsed.type) {

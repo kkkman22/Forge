@@ -8,6 +8,16 @@ Cross-reference: ADR `.forge/decisions/2026-05-18-review-fallback-ladder.md`
 
 Applies to: `forge-review`, `forge-decide`, `forge-learn`.
 
+> **⚠️ Numbering note (audit P3-2, 2026-07-16):** This is the **gate-facing**
+> ladder (consumed by `src/ship-gates.ts` `evaluateFallbackLadder`). The
+> **review-execution** ladder in `src/review/fallback.ts` reuses the same L0–L3
+> labels but maps them differently:
+> L0=subagent-parallel → L1=subagent-serial → L2=ci-evidence → L3=unavailable.
+> That ladder has no `saved-workflow` rung, and its `ci-evidence` (L2) has no
+> column in the table below. When reconciling a `methodology` value, key on the
+> **methodology string**, not the L-number. Both ladders agree only on the
+> terminal: L3 = `unavailable` blocks ship.
+
 | Level | Trigger Condition | methodology Field | Blocks Ship |
 |-------|-------------------|-------------------|-------------|
 | L0 | Interactive mode + `CLAUDE_CODE_WORKFLOWS=1` + `tengu_workflows_enabled` gate ON + workflow file exists + `node --check` passes + concurrency bridge probe passes | `saved-workflow` | No |
