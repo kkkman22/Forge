@@ -40,6 +40,22 @@ claude plugin install forge
 
 > 完整快速入门指南（含 3 种安装方式、故障排除、端到端示例）→ [docs/quick-start.md](docs/quick-start.md)
 
+### 日常开发：90% 场景只需 7 个命令
+
+安装后，绝大多数工作流由这 7 个核心命令覆盖，无需记忆全部子命令：
+
+| 命令 | 用途 |
+|------|------|
+| `/forge` | **统一入口**——描述任务，自动路由到合适档位（推荐起步） |
+| `/forge plan` | 将需求/Spec 拆解为原子任务清单 |
+| `/forge build` | 按计划 TDD 实现代码 |
+| `/forge review` | 三层独立评审（spec / quality / security） |
+| `/forge test` | 运行完整验证套件 |
+| `/forge ship` | 门禁检查 + 合并/发版交付 |
+| `/forge learn` | 完成后沉淀经验到知识库 |
+
+> 其余 31 个命令（decide / spec / loop / grill / debug 等）在特定场景按需触发，三维路由会自动建议。完整速查表 → [docs/reference-commands.md](docs/reference-commands.md)
+
 ---
 
 ## 选择任务流
