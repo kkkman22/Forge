@@ -19,8 +19,13 @@
  * observes a half-written file.
  *
  * Exit cleanup: held locks are tracked in a module-level Set and released via
- * `process.on('exit')` + SIGINT/SIGTERM handlers — honouring the rule doc's
- * promise that even `process.exit(1)` cleans held locks.
+ * the `process.on('exit')` handler. As library code (reachable from the public
+ * `writeTaskStatus` export) this module MUST NOT call `process.exit` — doing so
+ * would kill a host process that imported Forge as a library (audit P1 #3). It
+ * therefore does not register SIGINT/SIGTERM handlers that force-exit; on
+ * signal-driven termination Node runs the 'exit' handler before stopping, which
+ * releases the locks. Any lock file left behind by a hard kill is recovered by
+ * the `acquireLockSync` PID-aware stale-break on the next write.
  *
  * @public
  */
@@ -31,12 +36,12 @@ import { type AppendOptions, acquireLockSync, releaseLockSync } from "./tool-hea
 /** Held-lock registry for exit cleanup. */
 const heldLocks = new Set<string>();
 
-let exitHandlersInstalled = false;
+let exitHandlerInstalled = false;
 
-function installExitHandlers(): void {
-  if (exitHandlersInstalled) return;
-  exitHandlersInstalled = true;
-  const releaseAll = (): void => {
+function installExitHandler(): void {
+  if (exitHandlerInstalled) return;
+  exitHandlerInstalled = true;
+  process.on("exit", () => {
     for (const lockPath of heldLocks) {
       try {
         releaseLockSync(lockPath);
@@ -45,15 +50,6 @@ function installExitHandlers(): void {
       }
     }
     heldLocks.clear();
-  };
-  process.on("exit", releaseAll);
-  process.on("SIGINT", () => {
-    releaseAll();
-    process.exit(130);
-  });
-  process.on("SIGTERM", () => {
-    releaseAll();
-    process.exit(143);
   });
 }
 
@@ -89,7 +85,7 @@ export function writeStatusAtomic(
   lockOpts: AppendOptions = {},
 ): void {
   void forgeRoot; // API symmetry; lock keyed on targetPath.
-  installExitHandlers();
+  installExitHandler();
 
   const lockPath = `${targetPath}.lock`;
   // Production callers pass an `io` whose lock/unlock drive the real fs via

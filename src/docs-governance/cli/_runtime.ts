@@ -1,8 +1,3 @@
-import {
-  formatDiagnostics,
-  formatGitHubAnnotations,
-  formatNdjson,
-} from "../reporter/diagnostic.js";
 import { severityToExitCode } from "../reporter/exit-code.js";
 import type { DiagnosticRecord } from "../types.js";
 import { ExitCode } from "../types.js";
@@ -28,32 +23,4 @@ export function computeExitResult(main: () => DiagnosticRecord[]): ExitResult {
     exitCode: severityToExitCode(diagnostics),
     diagnostics,
   };
-}
-
-export async function run(
-  main: () => Promise<DiagnosticRecord[]>,
-  options?: { json?: boolean },
-): Promise<never> {
-  let diagnostics: DiagnosticRecord[] = [];
-  try {
-    diagnostics = await main();
-  } catch (err) {
-    const msg = err instanceof Error ? err.message : String(err);
-    process.stderr.write(`${msg}\n`);
-    process.exit(ExitCode.INTERNAL);
-  }
-
-  if (options?.json) {
-    process.stdout.write(`${formatNdjson(diagnostics)}\n`);
-  } else {
-    const output = formatDiagnostics(diagnostics);
-    process.stdout.write(`${output}\n`);
-  }
-
-  if (process.env.CI === "true") {
-    const annotations = formatGitHubAnnotations(diagnostics);
-    if (annotations) process.stdout.write(`${annotations}\n`);
-  }
-
-  process.exit(severityToExitCode(diagnostics));
 }
