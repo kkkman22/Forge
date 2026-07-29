@@ -47,6 +47,7 @@ docs.grace_period_until: "2026-06-01"
 # root .md; absence falls back to DEFAULT_WHITELIST only.
 root_whitelist:
   - "README.md"
+  - "README.en.md"
   - "CHANGELOG.md"
   - "SECURITY.md"
   - "CONTRIBUTING.md"
