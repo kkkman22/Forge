@@ -58,7 +58,7 @@ root_whitelist:
   - "Forge-架构审核报告.md"
   - "复核情况说明.md"
 docs:
-  max_count: 35                     # 文档配额上限，ADR-0042 从默认 30 调高，授权 forge-triage.md 新增
+  max_count: 37                     # 文档配额上限,ADR-0042 调到 35;2026-07-26 审计整改 +2(审计报告/整改报告)调到 37
 docs.ssot_sources:
   - topic: "commands"
     source: "docs/_ssot/commands.json"
