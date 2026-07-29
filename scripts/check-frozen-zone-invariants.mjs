@@ -4,7 +4,8 @@
 // Validates that src/ core modules are not modified by the current PR.
 // Usage: node scripts/check-frozen-zone-invariants.mjs
 
-import { execSync } from "node:child_process";
+import { execFileSync } from "node:child_process";
+import { readFileSync } from "node:fs";
 
 const FROZEN_PATHS = [
   "src/run-manager.ts",
@@ -26,10 +27,12 @@ let ok = true;
 // Check 1: No diff on frozen src/ modules
 try {
   const baseBranch = process.env.GITHUB_BASE_REF || "main";
-  const diff = execSync(`git diff origin/${baseBranch}...HEAD --stat -- ${FROZEN_PATHS.join(" ")}`, {
-    cwd: root,
-    encoding: "utf-8",
-  }).trim();
+  // execFileSync array form (no shell) — audit P3 #10 exec-form principle.
+  const diff = execFileSync(
+    "git",
+    ["diff", `origin/${baseBranch}...HEAD`, "--stat", "--", ...FROZEN_PATHS],
+    { cwd: root, encoding: "utf-8" },
+  ).trim();
 
   if (diff) {
     console.error(`FAIL: frozen zone modules modified:\n${diff}`);
@@ -44,11 +47,8 @@ try {
 
 // Check 2: FrozenZoneViolation public API unchanged
 try {
-  const src = execSync(`grep -n 'class FrozenZoneViolation' src/frozen-zone.ts`, {
-    cwd: root,
-    encoding: "utf-8",
-  });
-  if (!src.includes("FrozenZoneViolation")) {
+  const src = readFileSync(`${root}src/frozen-zone.ts`, "utf-8");
+  if (!src.includes("class FrozenZoneViolation")) {
     console.error("FAIL: FrozenZoneViolation class not found");
     ok = false;
   }

@@ -17,7 +17,7 @@
  * @see check-dist-sync.mjs (TypeScript compilation sync — sibling concern)
  */
 
-import { execSync } from "node:child_process";
+import { execFileSync, execSync } from "node:child_process";
 import { existsSync, readFileSync } from "node:fs";
 import { resolve } from "node:path";
 
@@ -56,7 +56,7 @@ function checkSkip() {
 
 // ── Extract script names from hooks.json ─────────────────────────────
 function extractHookScripts(hooksPath) {
-  const raw = execSync(`cat "${hooksPath}"`, { encoding: "utf-8" });
+  const raw = readFileSync(hooksPath, "utf-8");
   const hooks = JSON.parse(raw);
 
   const scripts = new Set();
@@ -171,7 +171,7 @@ function readPacksManifest(bundleDir) {
   const manifestPath = resolve(bundleDir, "packs", "manifest.json");
   if (!existsSync(manifestPath)) return null;
   try {
-    const raw = execSync(`cat "${manifestPath}"`, { encoding: "utf-8" });
+    const raw = readFileSync(manifestPath, "utf-8");
     return JSON.parse(raw);
   } catch {
     return null;
@@ -203,7 +203,9 @@ function checkPacksIntegrity() {
       // Non-empty = at least one regular file (catches empty-dir stubs)
       const isEmpty = !existsSync(packPath) || (() => {
         try {
-          return execSync(`find "${packPath}" -type f | head -1`, { encoding: "utf-8" }).trim() === "";
+          // execFileSync array form (no shell) — audit P3 #10 exec-form principle
+          const out = execFileSync("find", [packPath, "-type", "f"], { encoding: "utf-8" });
+          return out.trim() === "";
         } catch {
           return true;
         }

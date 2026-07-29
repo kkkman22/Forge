@@ -69,8 +69,11 @@ function resolveNewVersion(currentVersion, input) {
   return null;
 }
 
-function gitExec(cmd) {
-  return execSync(`git ${cmd}`, { encoding: "utf-8", cwd: ROOT }).trim();
+// execFileSync array form (no shell) — audit P3 #10 exec-form principle.
+// Each arg is a separate array element so values containing spaces (commit
+// messages, tag names) are never re-parsed by a shell.
+function gitExec(...args) {
+  return execFileSync("git", args, { encoding: "utf-8", cwd: ROOT }).trim();
 }
 
 /**
@@ -376,7 +379,7 @@ function pushWithRecover(tagName) {
   // First attempt.
   try {
     gitExec("push");
-    gitExec(`push origin ${tagName}`);
+    gitExec("push", "origin", tagName);
     return { ok: true, rebased: false, message: "" };
   } catch (e) {
     if (!isRecoverablePushError(e)) {
@@ -386,9 +389,9 @@ function pushWithRecover(tagName) {
   }
 
   // Recover: pull --rebase onto the current branch's upstream tip.
-  const branch = gitExec("rev-parse --abbrev-ref HEAD");
+  const branch = gitExec("rev-parse", "--abbrev-ref", "HEAD");
   try {
-    gitExec(`pull --rebase origin ${branch}`);
+    gitExec("pull", "--rebase", "origin", branch);
   } catch (e) {
     if (isRebaseConflict(e)) {
       return { ok: false, rebased: false, message: `rebase 冲突，需人工解决: ${e.message}` };
@@ -399,8 +402,8 @@ function pushWithRecover(tagName) {
   // Rebase rewrote the commit SHA → retag onto the new HEAD, or the tag
   // dangles pointing at a commit no longer on the branch.
   try {
-    gitExec(`tag -d ${tagName}`);
-    gitExec(`tag -a ${tagName} -m "${tagName}"`);
+    gitExec("tag", "-d", tagName);
+    gitExec("tag", "-a", tagName, "-m", tagName);
     console.log(`  ↳ tag ${tagName} 重打指向 rebase 后的 HEAD`);
   } catch (e) {
     return { ok: false, rebased: true, message: `重打 tag 失败: ${e.message}` };
@@ -409,7 +412,7 @@ function pushWithRecover(tagName) {
   // Retry the push with the rebased commits + moved tag.
   try {
     gitExec("push");
-    gitExec(`push origin ${tagName}`);
+    gitExec("push", "origin", tagName);
     console.log(`  ✓ rebase 恢复成功，commit + tag ${tagName} 已推送`);
     return { ok: true, rebased: true, message: "" };
   } catch (e) {
@@ -438,7 +441,7 @@ function preflightChecks(newVersion, doTag) {
   // 2. Tag must not already exist
   try {
     const tagName = `v${newVersion}`;
-    execSync(`git rev-parse "${tagName}" --verify`, { encoding: "utf-8", cwd: ROOT, stdio: ["pipe", "pipe", "pipe"] });
+    execFileSync("git", ["rev-parse", tagName, "--verify"], { encoding: "utf-8", cwd: ROOT, stdio: ["pipe", "pipe", "pipe"] });
     errors.push(`tag ${tagName} 已存在 — 使用 git tag -d ${tagName} 删除后重试`);
   } catch {
     // tag doesn't exist — good
@@ -447,7 +450,7 @@ function preflightChecks(newVersion, doTag) {
   // 3. No tracked build artifacts in dist/
   const trackedPaths = ["dist/src/", "dist/scripts/", "dist/locales/"];
   try {
-    const tracked = execSync(`git ls-files ${trackedPaths.join(" ")}`, { encoding: "utf-8", cwd: ROOT, stdio: ["pipe", "pipe", "pipe"] }).trim();
+    const tracked = execFileSync("git", ["ls-files", ...trackedPaths], { encoding: "utf-8", cwd: ROOT, stdio: ["pipe", "pipe", "pipe"] }).trim();
     if (tracked) {
       const fileCount = tracked.split("\n").filter(Boolean).length;
       errors.push(
@@ -636,9 +639,13 @@ function main() {
       // add list makes git add exit non-zero and the commit silently never runs.
       // dist-plugin/.claude-plugin/plugin.json version is synced by build-dist.sh
       // on the next build (it reads package.json as the source of truth).
-      gitExec("add package.json .claude-plugin/plugin.json CHANGELOG.md");
-      gitExec(`commit -m "chore: bump version to ${newVersion}\n\nCo-Authored-By: Claude Opus 4.8 <noreply@anthropic.com>"`);
-      const sha = gitExec("rev-parse --short HEAD");
+      gitExec("add", "package.json", ".claude-plugin/plugin.json", "CHANGELOG.md");
+      gitExec(
+        "commit",
+        "-m",
+        `chore: bump version to ${newVersion}\n\nCo-Authored-By: Claude Opus 4.8 <noreply@anthropic.com>`,
+      );
+      const sha = gitExec("rev-parse", "--short", "HEAD");
       console.log(`  ✓ committed as ${sha}`);
     } catch (e) {
       console.error(`  ⚠️ commit 失败: ${e.message}`);
@@ -651,7 +658,7 @@ function main() {
     const tagName = `v${newVersion}`;
     console.log(`\n正在创建 tag ${tagName}...`);
     try {
-      gitExec(`tag -a ${tagName} -m "${tagName}"`);
+      gitExec("tag", "-a", tagName, "-m", tagName);
       console.log(`  ✓ tag ${tagName} 已创建`);
     } catch (e) {
       console.error(`  ⚠️ tag 创建失败: ${e.message}`);
@@ -683,7 +690,7 @@ function main() {
     // Step 6: Create GitHub Release (if gh available)
     console.log(`\n正在创建 GitHub Release ${tagName}...`);
     try {
-      const repoUrl = gitExec("remote get-url origin");
+      const repoUrl = gitExec("remote", "get-url", "origin");
       const compareUrl = repoUrl
         .replace(/\.git$/, "")
         .replace(/^git@github\.com:/, "https://github.com/");
