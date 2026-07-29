@@ -5,7 +5,7 @@
  * **Validates: Requirements R4.2**
  */
 
-import type { SkillManifest } from "./skill-loader.js";
+import type { SkillManifest } from "./skill-types.js";
 
 /** Result of manifest validation. @public */
 export interface ValidationResult {
