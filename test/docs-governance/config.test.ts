@@ -54,7 +54,7 @@ describe("loadConfigWithDefaults", () => {
   it("falls back to defaults when config is empty", () => {
     const config = loadConfigWithDefaults("");
     expect(config.docs.max_count).toBe(30);
-    expect(config.docs.root_whitelist).toHaveLength(8);
+    expect(config.docs.root_whitelist).toHaveLength(9);
     expect(config.docs.ssot_sources).toHaveLength(4);
     expect(config.staleness.warning_days).toBe(90);
     expect(config.staleness.critical_days).toBe(180);
@@ -135,6 +135,6 @@ describe("loadConfigWithDefaults", () => {
       "root_whitelist: not-an-array",
     );
     const config = loadConfigWithDefaults(invalid);
-    expect(config.docs.root_whitelist).toHaveLength(8); // default
+    expect(config.docs.root_whitelist).toHaveLength(9); // default (incl. README.en.md)
   });
 });

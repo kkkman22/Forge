@@ -18,6 +18,7 @@
 
 ## Reference
 
+- [2026-07-26 审计整改完成报告](audit/2026-07-26-remediation-report.md) — reference — 2026-07-29
 - [Acceptance Verification — Onboarding](acceptance-onboarding.md) — reference — 2026-06-17
 - [CI UltraReview — 操作手册](ci-ultrareview-usage.md) — reference — 2026-05-12
 - [Claude Code 兼容性参考](claude-code-compatibility.md) — reference — 2026-06-24
@@ -32,6 +33,7 @@
 - [Forge 安全与信任](reference-security.md) — reference — 2026-06-30
 - [Forge 日常开发者引导](onboarding-daily.md) / [Forge 日常开发者引导 (EN)](onboarding-daily.en.md) — reference — 2026-05-12
 - [Forge 架构与状态保护](reference-architecture.md) — reference — 2026-05-12
+- [Forge 项目全面审计报告 + Roadmap 建议（2026-07-26）](audit/2026-07-26-project-audit-and-roadmap.md) — reference — 2026-07-29
 - [Hooks Inventory — Hint/Gate 二分清单](hooks-inventory.md) — reference — 2026-06-25
 - [Policy Profiles 指南](best-practices/policy-profiles.md) / [Policy Profiles 指南 (EN)](best-practices/policy-profiles.en.md) — reference — 2026-06-09
 - [Review 配置指南](best-practices/review-configuration.md) / [Review 配置指南 (EN)](best-practices/review-configuration.en.md) — reference — 2026-05-17

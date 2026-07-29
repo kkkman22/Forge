@@ -40,6 +40,22 @@ claude plugin install forge
 
 > 完整快速入门指南（含 3 种安装方式、故障排除、端到端示例）→ [docs/quick-start.md](docs/quick-start.md)
 
+### 日常开发：90% 场景只需 7 个命令
+
+安装后，绝大多数工作流由这 7 个核心命令覆盖，无需记忆全部子命令：
+
+| 命令 | 用途 |
+|------|------|
+| `/forge` | **统一入口**——描述任务，自动路由到合适档位（推荐起步） |
+| `/forge plan` | 将需求/Spec 拆解为原子任务清单 |
+| `/forge build` | 按计划 TDD 实现代码 |
+| `/forge review` | 三层独立评审（spec / quality / security） |
+| `/forge test` | 运行完整验证套件 |
+| `/forge ship` | 门禁检查 + 合并/发版交付 |
+| `/forge learn` | 完成后沉淀经验到知识库 |
+
+> 其余 31 个命令（decide / spec / loop / grill / debug 等）在特定场景按需触发，三维路由会自动建议。完整速查表 → [docs/reference-commands.md](docs/reference-commands.md)
+
 ---
 
 ## 选择任务流
@@ -57,6 +73,7 @@ claude plugin install forge
 | 架构参考 | [docs/reference-architecture.md](docs/reference-architecture.md) | 深入了解 .forge/ 目录结构和状态保护 |
 | 高级功能参考 | [docs/reference-advanced.md](docs/reference-advanced.md) | Forge Loop、cmux、Domain Pack、Token 效率 |
 | 兼容性参考 | [docs/claude-code-compatibility.md](docs/claude-code-compatibility.md) | Claude Code 版本兼容性和降级策略 |
+| API 参考 | [GitHub Pages](https://kkkman22.github.io/Forge/) | typedoc 生成的源码 API 文档（CI 自动发布，不入库） |
 
 ---
 
@@ -224,7 +241,7 @@ bash scripts/pre-push-ci-check.sh
 
 `bump-version.mjs` 会自动同步 `package.json`、`.claude-plugin/plugin.json`、`dist-plugin/` 三个位置的版本号，并重建 dist 包。`pre-push-ci-check.sh` 在推送前检查版本一致性、shell 脚本、JSON 有效性和 bundle 完整性。
 
-**技术栈**：TypeScript 5.9（strict）、340 个 TypeScript 模块、Vitest 4.1、fast-check 4.7（属性测试）、Biome 2.4（lint + format）。运行时依赖：`@anthropic-ai/claude-agent-sdk`、`@modelcontextprotocol/sdk`、`commander`、`minimatch`、`yaml`、`zod`。
+**技术栈**：TypeScript 5.9（strict）、369 个 TypeScript 模块、Vitest 4.1、fast-check 4.7（属性测试）、Biome 2.4（lint + format）。运行时依赖：`@anthropic-ai/claude-agent-sdk`、`@modelcontextprotocol/sdk`、`commander`、`minimatch`、`yaml`、`zod`。
 
 **测试策略**：9178 个测试（740 个测试文件）验证不变量。覆盖率 ~87% statements。
 

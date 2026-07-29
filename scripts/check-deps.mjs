@@ -60,6 +60,7 @@ const NAME_ALLOWLIST = new Set([
   "typescript",
   "vitest",
   "tsx", // Dev dep — pinned for test runner stability (ADR in PR #66)
+  "madge", // Dev dep — circular-dependency gate (scripts/check-circular-deps.mjs)
 ]);
 
 /**

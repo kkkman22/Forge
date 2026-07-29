@@ -21,39 +21,17 @@ import {
   ToolHealthLockTimeoutError,
 } from "./tool-health-writer.js";
 
-// ---------------------------------------------------------------------------
-// Types
-// ---------------------------------------------------------------------------
+// Re-export the shared status types so existing `import { StatusManagerIO } from
+// "./status-manager.js"` callers keep working. Canonical definitions live in
+// `status-types.ts` (dependency-free leaf) to break the status-manager ↔
+// status-atomic cycle.
+export type { ManagedTaskEntry, StatusManagerIO } from "./status-types.js";
 
-/** @public */
-export interface ManagedTaskEntry {
-  taskId: string;
-  taskName: string;
-  phase: string;
-  tier?: string;
-  updated?: string;
-  filePath: string;
-}
+import type { ManagedTaskEntry, StatusManagerIO } from "./status-types.js";
 
-/** @public */
-export interface StatusManagerIO {
-  exists: (path: string) => boolean;
-  dirExists: (path: string) => boolean;
-  read: (path: string) => string;
-  write: (path: string, content: string) => void;
-  listDir: (path: string) => string[];
-  move: (src: string, dest: string) => void;
-  mkdirp: (path: string) => void;
-  /**
-   * Optional lock acquisition seam. Production IO binds this to the real
-   * `acquireLockSync` (O_CREAT|O_EXCL). Tests with an in-memory IO may omit it
-   * (writeStatusAtomic falls back to the real primitive) or inject a no-op to
-   * keep the test off the real filesystem.
-   */
-  acquireLock?: (lockPath: string, opts: AppendOptions) => void;
-  /** Optional lock release seam, paired with {@link acquireLock}. */
-  releaseLock?: (lockPath: string) => void;
-}
+// ---------------------------------------------------------------------------
+// Types — see status-types.ts for the canonical IO + entry definitions.
+// ---------------------------------------------------------------------------
 
 const TERMINAL_PHASES = new Set(["completed", "aborted"]);
 

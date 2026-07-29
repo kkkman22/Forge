@@ -3,6 +3,7 @@ import type { Config, DiagnosticRecord, DocPath, SsotRegistryEntry } from "./typ
 
 const DEFAULT_ROOT_WHITELIST = [
   "README.md",
+  "README.en.md",
   "CHANGELOG.md",
   "SECURITY.md",
   "CONTRIBUTING.md",

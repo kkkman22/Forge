@@ -6,7 +6,7 @@ import {
   extractCandidates,
   filterCandidates,
 } from "./glossary-extractor.js";
-import type { DecisionTree, DecisionTreeNode } from "./grill.js";
+import type { DecisionTree, DecisionTreeNode } from "./grill/types.js";
 // P3-2: import SessionData from the shared leaf module (was from learn.js,
 // which created a learn ↔ glossary-hook back-edge).
 import type { SessionData } from "./session-types.js";

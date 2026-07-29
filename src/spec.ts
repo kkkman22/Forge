@@ -41,37 +41,14 @@ export {
 } from "./spec-validation.js";
 
 // ---------------------------------------------------------------------------
-// Types
+// Types — document-level types live in spec-types.ts (dependency-free leaf) to
+// break the spec ↔ spec-bundle cycle. Re-exported here so existing
+// `import { SpecDocument } from "./spec.js"` callers keep working.
 // ---------------------------------------------------------------------------
 
-export interface SpecFrontmatter {
-  feature: string;
-  status: "draft" | "locked";
-  date: string;
-  /** External spec source path (import mode only). */
-  importSource?: string;
-}
+export type { DeltaSection, Requirement, SpecDocument, SpecFrontmatter } from "./spec-types.js";
 
-export interface Requirement {
-  title: string;
-  description: string;
-  scenarios: string[]; // Each scenario in "当...则..." format
-}
-
-export interface DeltaSection {
-  added: string[]; // 新增
-  modified: string[]; // 修改
-  unchanged: string[]; // 不变
-}
-
-export interface SpecDocument {
-  frontmatter: SpecFrontmatter;
-  purpose: string;
-  requirements: Requirement[];
-  exclusions: string[]; // 不做什么
-  delta?: DeltaSection; // Only for brownfield
-  isBrownfield: boolean;
-}
+import type { DeltaSection, Requirement, SpecDocument } from "./spec-types.js";
 
 // ---------------------------------------------------------------------------
 // Result type for confirmSpec

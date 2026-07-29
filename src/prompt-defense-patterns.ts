@@ -38,7 +38,7 @@
  * `ADR-NNNN` document before the change lands.
  */
 
-import type { ThreatSeverity, ThreatType } from "./prompt-defense.js";
+import type { ThreatSeverity, ThreatType } from "./prompt-defense-types.js";
 
 // ---------------------------------------------------------------------------
 // Pattern contract

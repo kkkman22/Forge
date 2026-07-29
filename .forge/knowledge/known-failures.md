@@ -1,5 +1,5 @@
 ---
-updated: "2026-05-16"
+updated: 2026-07-29
 schema_version: 1
 ---
 
@@ -16,6 +16,8 @@ retention：>100 条触发自动归档到 `.forge/archive/known-failures-<date>.
 ```yaml
 - pattern_id: tauri-child-process-zombie-on-parent-exit
   severity: P1
+  status: archived
+  archived_reason: "apps/forge-loop-desktop (Tauri) 已从仓库移除，本模式不再适用。保留以备未来重新引入桌面端时复用。"
   first_seen: "2026-05-19"
   last_seen: "2026-05-19"
   occurrence_count: 1
@@ -29,6 +31,8 @@ retention：>100 条触发自动归档到 `.forge/archive/known-failures-<date>.
 
 - pattern_id: macos-dmg-not-notarized-gatekeeper-blocks-launch
   severity: P1
+  status: archived
+  archived_reason: "apps/forge-loop-desktop (Tauri) 已从仓库移除，本模式不再适用。保留以备未来重新引入桌面端时复用。"
   first_seen: "2026-05-19"
   last_seen: "2026-05-19"
   occurrence_count: 1
@@ -42,6 +46,8 @@ retention：>100 条触发自动归档到 `.forge/archive/known-failures-<date>.
 
 - pattern_id: pmset-disablesleep-not-recovered-after-crash
   severity: P1
+  status: archived
+  archived_reason: "apps/forge-loop-desktop (Tauri) 已从仓库移除，本模式不再适用。保留以备未来重新引入桌面端时复用。"
   first_seen: "2026-05-19"
   last_seen: "2026-05-19"
   occurrence_count: 1
@@ -55,6 +61,8 @@ retention：>100 条触发自动归档到 `.forge/archive/known-failures-<date>.
 
 - pattern_id: bundled-node-path-with-spaces-spawn-fails
   severity: P2
+  status: archived
+  archived_reason: "apps/forge-loop-desktop (Tauri) 已从仓库移除，本模式不再适用。保留以备未来重新引入桌面端时复用。"
   first_seen: "2026-05-19"
   last_seen: "2026-05-19"
   occurrence_count: 1

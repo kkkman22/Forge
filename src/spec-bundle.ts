@@ -10,7 +10,7 @@
  * Validates: Requirement 1 (三文件目录结构)
  */
 
-import type { SpecDocument } from "./spec.js";
+import type { SpecDocument } from "./spec-types.js";
 
 // ---------------------------------------------------------------------------
 // Primitive types

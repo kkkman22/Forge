@@ -22,44 +22,17 @@
 
 import { PATTERNS } from "./prompt-defense-patterns.js";
 
-// ---------------------------------------------------------------------------
-// Threat taxonomy
-// ---------------------------------------------------------------------------
+// Re-export the shared threat taxonomy so existing `import { ThreatType } from
+// "./prompt-defense.js"` callers keep working. The canonical definitions live
+// in `prompt-defense-types.ts` (a dependency-free leaf) to break the
+// prompt-defense ↔ prompt-defense-patterns cycle.
+export type { ThreatSeverity, ThreatType } from "./prompt-defense-types.js";
 
-/**
- * Category of input threat detected by the scanner.
- *
- *  - `instruction_override`: attempts to negate, replace, or disregard the
- *    prior system / developer instructions ("ignore all previous
- *    instructions").
- *  - `jailbreak`: named jailbreak prompts or unrestricted-mode keywords
- *    ("DAN", "developer mode", "bypass restrictions").
- *  - `role_switching`: attempts to change the assistant's persona or role
- *    ("you are now …", "act as …", "pretend to be …").
- *  - `context_manipulation`: injection of fake control markers that
- *    impersonate system / assistant turns (`<|system|>`, `[system]`,
- *    ```` ```system ````).
- *  - `encoding_attack`: instructions to decode and execute obfuscated
- *    payloads (base64, rot13, hex).
- *  - `pii_exposure`: occurrence of personally identifiable information or
- *    secrets (emails, SSNs, API keys, PEM private keys, JWTs).
- */
-export type ThreatType =
-  | "instruction_override"
-  | "jailbreak"
-  | "role_switching"
-  | "context_manipulation"
-  | "encoding_attack"
-  | "pii_exposure";
+import type { ThreatSeverity, ThreatType } from "./prompt-defense-types.js";
 
-/**
- * Severity level of a detected threat.
- *
- * Ordered from most to least critical. Downstream routing uses this field
- * to decide between outright rejection (`critical`), warning hints
- * (`high` / `medium`) and silent accumulation (`low`).
- */
-export type ThreatSeverity = "critical" | "high" | "medium" | "low";
+// ---------------------------------------------------------------------------
+// Threat taxonomy — see prompt-defense-types.ts for the canonical definitions.
+// ---------------------------------------------------------------------------
 
 // ---------------------------------------------------------------------------
 // Result shapes

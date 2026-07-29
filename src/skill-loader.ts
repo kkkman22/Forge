@@ -3,28 +3,20 @@ import path from "node:path";
 
 import { checkVersionCompatibility, validateManifest } from "./skill-validator.js";
 
+// Re-export the shared SKILL types so existing `import { SkillManifest } from
+// "./skill-loader.js"` callers keep working. Canonical definitions live in
+// `skill-types.ts` (dependency-free leaf) to break the skill-loader ↔
+// skill-validator cycle.
+export type { InstallResult, SkillManifest, SkillPhase } from "./skill-types.js";
+
+import type { InstallResult, SkillManifest } from "./skill-types.js";
+
 /**
  * SkillManifest type and skill loading/merging utilities.
  *
  * Design reference: community-ecosystem § SKILL Plugin Mechanism
  * **Validates: Requirements R4.1, R4.3**
  */
-
-/** Phase names that a SKILL can participate in. @public */
-export type SkillPhase =
-  | "decide"
-  | "spec"
-  | "plan"
-  | "build"
-  | "build-light"
-  | "review"
-  | "test"
-  | "ship"
-  | "learn"
-  | "debug"
-  | "fix"
-  | "refactor"
-  | "loop";
 
 const VALID_PHASES: ReadonlySet<string> = new Set<string>([
   "decide",
@@ -44,22 +36,6 @@ const VALID_PHASES: ReadonlySet<string> = new Set<string>([
 
 /** Maximum manifest file size in bytes (64KB). */
 const MAX_MANIFEST_SIZE = 65_536;
-
-/** Manifest describing a SKILL plugin. @public */
-export interface SkillManifest {
-  /** Unique SKILL name (e.g., "forge-deploy"). */
-  name: string;
-  /** Semantic version of the SKILL. */
-  version: string;
-  /** One-line description. */
-  description: string;
-  /** Author identifier. */
-  author: string;
-  /** Minimum Forge version required (semver range). */
-  forgeVersion: string;
-  /** Phases this SKILL participates in. */
-  phases: SkillPhase[];
-}
 
 /**
  * Scan directory entries and load manifests from subdirectories
@@ -123,13 +99,6 @@ export function mergeSkillLists(
     }
   }
   return merged;
-}
-
-/** Result of skill installation. */
-export interface InstallResult {
-  success: boolean;
-  skillName?: string;
-  message: string;
 }
 
 /**

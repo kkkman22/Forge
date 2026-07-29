@@ -1,0 +1,59 @@
+name: Deploy API docs
+
+# Publishes the typedoc-generated API reference to GitHub Pages instead of
+# committing the 25MB of HTML into the repo (audit §3.5 P2 #6). The typedoc
+# output (`docs/api`) is gitignored on main; this workflow regenerates it on
+# every main push and deploys it as a Pages artifact, so the reference stays
+# public without bloating .git history.
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+# GITHUB_TOKEN permissions for Pages deployment
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+# Only one deployment at a time; a new push cancels the in-flight run.
+concurrency:
+  group: deploy-api-docs
+  cancel-in-progress: true
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+          cache: "npm"
+
+      - run: npm ci
+
+      - name: Configure GitHub Pages
+        id: pages
+        uses: actions/configure-pages@v5
+
+      - name: Generate typedoc API reference
+        run: npm run docs
+
+      - name: Upload Pages artifact
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: docs/api
+
+  deploy:
+    needs: build
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - name: Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v4

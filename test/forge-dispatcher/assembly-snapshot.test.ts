@@ -13,7 +13,7 @@
 
 import { readFileSync } from "node:fs";
 import { resolve } from "node:path";
-import { describe, expect, it } from "vitest";
+import { afterEach, beforeEach, describe, expect, it } from "vitest";
 import {
   type AssemblyFingerprint,
   extractFingerprint,
@@ -103,6 +103,20 @@ async function buildFingerprint(sub: string, taskType: TaskType, phase: ProjectP
 }
 
 describe("Assembly snapshot [REQ-01, R3]: structural fingerprint stable per sub", () => {
+  // Defense-in-depth alongside test/setup/env-isolation.ts: resolveLibPath
+  // falls back to CLAUDE_PLUGIN_ROOT, which a plugin host (context-mode cache)
+  // may set to a path that does not exist in this checkout. Strip it for the
+  // duration of this suite and restore the host value afterwards.
+  let savedPluginRoot: string | undefined;
+  beforeEach(() => {
+    savedPluginRoot = process.env.CLAUDE_PLUGIN_ROOT;
+    delete process.env.CLAUDE_PLUGIN_ROOT;
+  });
+  afterEach(() => {
+    if (savedPluginRoot === undefined) delete process.env.CLAUDE_PLUGIN_ROOT;
+    else process.env.CLAUDE_PLUGIN_ROOT = savedPluginRoot;
+  });
+
   for (const { sub, taskType, phase } of REPRESENTATIVE_SUBS) {
     const key = `${sub}|${taskType}|${phase}`;
 
