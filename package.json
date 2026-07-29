@@ -27,7 +27,7 @@
     "typecheck": "tsc --noEmit",
     "lint:rules": "node scripts/lint-evolved-rules.mjs",
     "check:strict": "bash scripts/check-skill-function-refs.sh --strict",
-    "check": "tsc --noEmit && biome check src/ test/ && vitest run && node scripts/sync-command-registry.mjs --check && node scripts/check-public-api.mjs && node scripts/check-domain-safety.mjs && bash scripts/check-readme-metrics.sh && bash scripts/check-skill-function-refs.sh --strict && bash scripts/validate-skill-descriptions.sh && bash scripts/validate-skill-length.sh && bash scripts/validate-skill-skeleton.sh && bash scripts/check-evolution-marker-zones.sh && node scripts/validate-scripts-help.mjs && node scripts/check-shell-pipefail.mjs && node scripts/lint-evolved-rules.mjs && node scripts/verify-evolved-rule-infra-refs.mjs && FORGE_DIST_SYNC_SKIP_TYPECHECK=1 node scripts/check-dist-sync.mjs && node scripts/bundle-mcp.mjs --check && node scripts/normalize-hook-paths.mjs --check && node scripts/lint-agents.mjs && node scripts/check-agent-originality.mjs && node scripts/check-agent-links.mjs && bash scripts/check-doc-links.sh && bash scripts/check-doc-structure.sh && npm run docs:check && node scripts/check-unused-module.mjs && node scripts/check-circular-deps.mjs",
+    "check": "node scripts/run-checks.mjs",
     "dist:resync": "bash scripts/dist-resync.sh",
     "docs": "typedoc",
     "dossier:rebuild": "node scripts/rebuild-feature-dossier.mjs",

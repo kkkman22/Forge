@@ -32,6 +32,7 @@
 - [Forge 安全与信任](reference-security.md) — 2026-06-30
 - [Forge 日常开发者引导 (EN)](onboarding-daily.en.md) / [Forge 日常开发者引导 (中)](onboarding-daily.md) — 2026-05-12
 - [Forge 架构与状态保护](reference-architecture.md) — 2026-05-12
+- [Forge 项目全面审计报告 + Roadmap 建议（2026-07-26）](audit/2026-07-26-project-audit-and-roadmap.md) — 2026-07-29
 - [Hooks Inventory — Hint/Gate 二分清单](hooks-inventory.md) — 2026-06-25
 - [Policy Profiles 指南 (EN)](best-practices/policy-profiles.en.md) / [Policy Profiles 指南 (中)](best-practices/policy-profiles.md) — 2026-06-09
 - [Review 配置指南 (EN)](best-practices/review-configuration.en.md) / [Review 配置指南 (中)](best-practices/review-configuration.md) — 2026-05-17
