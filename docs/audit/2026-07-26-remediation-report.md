@@ -24,12 +24,12 @@ owner: forge-maintainers
 | 6 | P2 | docs/api gh-pages 发布 | ✅ 完成 | `abcea40c` |
 | 7 | P2 | README.en.md + 双语策略 | ✅ 完成 | `57922dae` |
 | 8 | P2 | 分支/worktree 扫除 | ✅ 完成（28→17 分支） | `61df1bb5` |
-| 9 | P2 | god file 拆分 | ⏳ 边界就绪，独立紧随 PR | — |
+| 9 | P2 | god file 拆分 | ✅ 完成（5 个文件 800-1028→47-262 行） | `a8ca38d1`+ |
 | 10 | P3 | scripts execSync→execFileSync | ✅ 完成（审计点名 3 处） | `4627db77` |
 | 11 | P3 | known-failures Tauri 清理 | ✅ 完成（4 条 archived） | `9cf6edbc` |
 | 12 | P3 | README 7 命令速查 | ✅ 完成 | `9cf6edbc` |
 
-**11/12 项完成。仅 god file 拆分（#9）作为独立紧随 PR**——拆分边界分析已完成（见下文），因属纯结构性重构且审计 roadmap 自身将其归入 v3.11，独立 PR 风险隔离更佳。
+**12/12 项全部完成。** god file 拆分（#9）沿 `plan/`+`learn/`+`accept/`+`context-budget/` 先例完成，5 个文件全部降至 < 500 行，公共 API 零变化。
 
 ## 关键验收数据
 
@@ -40,19 +40,21 @@ owner: forge-maintainers
 - **分支数**: 28 → 17（删 13 已合并，保留 8 unmerged + 7 worktree + main）。
 - **`npm run check`**: 全绿（27 步等价覆盖，含新 madge 门禁）。
 
-## #9 god file 拆分边界（就绪，紧随 PR）
+## #9 god file 拆分（已完成，5/5）
 
-精确拆分边界已完成分析（执行顺序按风险升序）：
+5 个 god file 全部沿 `plan/`+`learn/`+`accept/` 先例拆分，建 `foo/` 子目录 + re-export barrel，importer 零改动，公共 API 零变化：
 
-| 文件 | 行数 | 子模块 | 留原文件 | 共享状态 | 风险 |
-|------|------|--------|---------|---------|------|
-| context-budget.ts | 797→~60 | classification/explore/review/test-output/git/subagent/budget-report | re-export barrel | 无（7 独立对） | 极低 |
-| pua-engine.ts | 811→~50 | types/prompt-content/pressure-routing/failure-detection/pressure-prompt | re-export barrel | 顺序: types→content→其余 | 低（不在 barrel） |
-| ship-gates.ts | 1028→~120 | review-gate/test-progress-gates/policy-artifact-gate/fallback-ladder/persist | types+runAllGates | runAllGates 回 import 4 gates | 低 |
-| learn.ts | 831→~90 | glossary-writeback/episode-lifecycle/evolution-report | re-export preamble | toIsoDate 跨簇（peer import） | 中 |
-| accept-driver.ts | 821→~150 | ui-runner/delegate-runners/report(+shared artifact) | RunnerContext/RUNNERS/runScenario | makeArtifact→shared artifact.ts | 中 |
+| 文件 | 拆分前→后 | 子模块 | 共享状态处理 |
+|------|-----------|--------|-------------|
+| context-budget.ts | 797→64 | classification/explore/review/test-output/git/subagent/budget-report | 无（7 独立 serialize/deserialize 对） |
+| pua-engine.ts | 811→47 | types/prompt-content/pressure-routing/failure-detection/pressure-prompt | types.ts leaf；pressure-prompt→prompt-content→types |
+| ship-gates.ts | 1028→234 | types/review-gate/test-progress-gates/policy-artifact-gate/fallback-ladder/persist | types.ts leaf（GateName/GateResult/ShipGateReport/SkipGateOptions） |
+| learn.ts | 831→102 | glossary-writeback/episode-lifecycle/evolution-report（+既有 validation/feedback-analysis） | toIsoDate 置 glossary-writeback，episode-lifecycle peer import |
+| accept-driver.ts | 821→188 | artifact(leaf)/ui-runner/delegate-runners/report（+既有 contract-fresh/pyramid/http-probe） | makeArtifact+RunnerContext/Runner → artifact.ts leaf |
 
-**硬约束**: `src/index.ts` barrel 在 20/20（不可加新 export 行）；`barrel-file.test.ts` 锁定 152 value exports（re-export 保持）。模式：建 `foo/` 子目录，foo.ts 变 re-export barrel，importer 零改动（precedent: PR #141 plan.ts 拆分、P3-1 accept-driver 部分拆分）。
+**关键经验**：拆分中 ship-gates 首次出现 barrel↔submodule 环（submodule 回 import barrel 的类型）——修复方式是把共享类型提到 `<name>/types.ts` leaf，后续 learn/accept 拆分预先应用此模式（toIsoDate→peer import、makeArtifact→artifact leaf），全程 0 新环。
+
+**硬约束保持**：`src/index.ts` barrel 仍 20/20；`barrel-file.test.ts` 152 value exports 锁定通过；`check-public-api.mjs` 全绿。
 
 ## 保持项（未改动，审计 §6）
 
