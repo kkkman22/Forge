@@ -18,6 +18,7 @@
 
 ## Reference
 
+- [2026-07-26 审计整改完成报告](audit/2026-07-26-remediation-report.md) — reference — 2026-07-29
 - [Acceptance Verification — Onboarding](acceptance-onboarding.md) — reference — 2026-06-17
 - [CI UltraReview — 操作手册](ci-ultrareview-usage.md) — reference — 2026-05-12
 - [Claude Code 兼容性参考](claude-code-compatibility.md) — reference — 2026-06-24
