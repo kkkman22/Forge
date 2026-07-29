@@ -5,6 +5,7 @@ export default defineConfig({
     globals: true,
     environment: "node",
     include: ["test/**/*.test.ts", "packs/**/*.test.ts", "skills/**/*.test.ts"],
+    setupFiles: ["test/setup/env-isolation.ts"],
     testTimeout: 5000,
     pool: "threads",
     maxWorkers: 4,
