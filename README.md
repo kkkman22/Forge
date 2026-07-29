@@ -73,6 +73,7 @@ claude plugin install forge
 | 架构参考 | [docs/reference-architecture.md](docs/reference-architecture.md) | 深入了解 .forge/ 目录结构和状态保护 |
 | 高级功能参考 | [docs/reference-advanced.md](docs/reference-advanced.md) | Forge Loop、cmux、Domain Pack、Token 效率 |
 | 兼容性参考 | [docs/claude-code-compatibility.md](docs/claude-code-compatibility.md) | Claude Code 版本兼容性和降级策略 |
+| API 参考 | [GitHub Pages](https://kkkman22.github.io/Forge/) | typedoc 生成的源码 API 文档（CI 自动发布，不入库） |
 
 ---
 
