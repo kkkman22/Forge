@@ -47,12 +47,17 @@ jobs:
         run: npm run docs
 
       - name: Upload Pages artifact
+        if: github.ref == 'refs/heads/main'
         uses: actions/upload-pages-artifact@v4
         with:
           path: docs/api
 
+  # Deploy only on main: the github-pages environment has branch-protection
+  # rules that reject deploys from feature branches, so on PR/feature branches
+  # we only validate the build (above) and skip the deploy step.
   deploy:
     needs: build
+    if: github.ref == 'refs/heads/main'
     runs-on: ubuntu-latest
     environment:
       name: github-pages
