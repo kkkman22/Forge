@@ -10,6 +10,7 @@ import {
 import { mkdir } from "node:fs/promises";
 import { homedir } from "node:os";
 import { resolve } from "node:path";
+import { getHostAdapter } from "../host/detect";
 import {
   acquireLockSync,
   releaseLockSync,
@@ -52,10 +53,12 @@ const SECRET_FILE_NAME = ".audit-secret";
 
 /**
  * Resolve the default directory for the audit secret file.
- * Uses CLAUDE_PLUGIN_DATA if set, otherwise falls back to ~/.claude/plugins/data/forge/.
+ * Sources pluginData from the injected HostAdapter (Zcode-aware: prefers
+ * ZCODE_PLUGIN_DATA, falls back to the CLAUDE_* var Zcode compat-injects);
+ * when the host injects none, falls back to ~/.claude/plugins/data/forge/.
  */
 function resolveDefaultSecretDir(): string {
-  const pluginData = process.env.CLAUDE_PLUGIN_DATA;
+  const pluginData = getHostAdapter().paths().pluginData;
   if (pluginData) return resolve(pluginData, "forge");
   return resolve(homedir(), ".claude", "plugins", "data", "forge");
 }
@@ -116,7 +119,7 @@ export function computeHmac(
 function resolveAuditDir(opts?: AuditOpts): string {
   if (opts?.auditDir) return opts.auditDir;
 
-  const pluginData = process.env.CLAUDE_PLUGIN_DATA;
+  const pluginData = getHostAdapter().paths().pluginData;
   if (pluginData) return resolve(pluginData, "forge", "audit");
 
   return resolve(homedir(), ".claude", "plugins", "data", "forge", "audit");
