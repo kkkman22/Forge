@@ -1,0 +1,14 @@
+{
+  "name": "forge-official",
+  "description": "Forge official marketplace — Claude Code + Zcode dual-platform unified AI coding workflow framework.",
+  "pluginRoot": ".",
+  "plugins": [
+    {
+      "name": "forge",
+      "source": { "source": "github", "repo": "kkkman22/Forge", "path": ".", "ref": "main" },
+      "description": "Unified AI coding workflow framework — /forge single entry, TDD, spec-driven, automated review. Claude Code + Zcode, GLM-5.2 Long Horizon optimized.",
+      "category": "development",
+      "tags": ["workflow", "tdd", "spec-driven", "zcode", "claude-code", "glm-5.2"]
+    }
+  ]
+}

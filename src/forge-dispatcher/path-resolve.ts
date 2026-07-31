@@ -1,5 +1,6 @@
 import { realpathSync } from "node:fs";
 import { isAbsolute, normalize, resolve } from "node:path";
+import { getHostAdapter } from "../host/detect";
 
 export interface PathOk {
   ok: true;
@@ -28,8 +29,11 @@ export function resolveLibPath(sub: string, opts?: PathResolveOpts): PathResolve
     return { ok: false, code: "E_PATH_INVALID", reason: "traversal or absolute" };
   }
 
+  // Plugin root: explicit caller opt wins; otherwise source from the injected
+  // HostAdapter (capability-driven, Zcode-aware). Under a Claude host this
+  // reads CLAUDE_PLUGIN_ROOT — byte-equal to the pre-P2 direct env read.
   const pluginRoot =
-    opts && "pluginRoot" in opts ? opts.pluginRoot : process.env.CLAUDE_PLUGIN_ROOT;
+    opts && "pluginRoot" in opts ? opts.pluginRoot : getHostAdapter().paths().pluginRoot;
   const cwd = opts?.cwd ?? process.cwd();
   const root = pluginRoot ?? cwd;
   const normalizedRoot = normalize(root);
