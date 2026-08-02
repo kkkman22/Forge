@@ -32,4 +32,5 @@ export type {
   Platform,
   SubagentTier,
 } from "./types";
+export { type ForgeTier, shouldIsolateWorker } from "./worker-isolation";
 export { ZcodeAdapter } from "./zcode-adapter";

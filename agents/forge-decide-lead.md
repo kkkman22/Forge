@@ -44,7 +44,7 @@ initialPrompt: |
 
 ### Step 2: 并行派发 Teammates
 
-使用 TeamCreate 创建团队，然后通过 Agent tool 并行派发 5 个 viewpoint teammate：
+使用 TeamCreate 创建团队，然后通过宿主 subagent 派发原语（Claude Code 的 Agent tool / Zcode 的 Agent tool）并行派发 5 个 viewpoint teammate：
 
 | Teammate | subagent_type | 视角 |
 |----------|--------------|------|
