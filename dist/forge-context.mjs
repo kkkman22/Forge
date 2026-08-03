@@ -31091,6 +31091,246 @@ var ProcessRegistry = class _ProcessRegistry {
 
 // dist/src/mcp/project-root.js
 import { normalize, resolve, sep } from "node:path";
+
+// dist/src/session-id.js
+function resolveSessionId(sources) {
+  let value;
+  let source;
+  if (sources.hookSessionId && sources.hookSessionId.length > 0) {
+    value = sources.hookSessionId;
+    source = "hook";
+  } else if (sources.envClaudeCodeSessionId && sources.envClaudeCodeSessionId.length > 0) {
+    value = sources.envClaudeCodeSessionId;
+    source = "CLAUDE_CODE_SESSION_ID";
+  } else if (sources.envLegacyClaudeSessionId && sources.envLegacyClaudeSessionId.length > 0) {
+    value = sources.envLegacyClaudeSessionId;
+    source = "CLAUDE_SESSION_ID";
+  } else {
+    value = `pid-${sources.processPid}`;
+    source = "pid-fallback";
+  }
+  const presentIds = [];
+  if (sources.hookSessionId && sources.hookSessionId.length > 0) {
+    presentIds.push({ value: sources.hookSessionId, source: "hook" });
+  }
+  if (sources.envClaudeCodeSessionId && sources.envClaudeCodeSessionId.length > 0) {
+    presentIds.push({ value: sources.envClaudeCodeSessionId, source: "CLAUDE_CODE_SESSION_ID" });
+  }
+  if (sources.envLegacyClaudeSessionId && sources.envLegacyClaudeSessionId.length > 0) {
+    presentIds.push({ value: sources.envLegacyClaudeSessionId, source: "CLAUDE_SESSION_ID" });
+  }
+  if (presentIds.length <= 1) {
+    return { value, source, consistent: true };
+  }
+  const mismatch = [];
+  const firstValue = presentIds[0].value;
+  for (let i = 1; i < presentIds.length; i++) {
+    if (presentIds[i].value !== firstValue) {
+      mismatch.push(`${presentIds[i].source}="${presentIds[i].value}" differs from ${presentIds[0].source}="${firstValue}"`);
+    }
+  }
+  return {
+    value,
+    source,
+    consistent: mismatch.length === 0,
+    mismatch: mismatch.length > 0 ? mismatch : void 0
+  };
+}
+
+// dist/src/host/capabilities.js
+var CLAUDE_CAPABILITIES = Object.freeze({
+  contextWindow: 2e5,
+  maxOutput: 64e3,
+  supportsLongHorizon: false,
+  supportsReasoningEffort: false,
+  supportsThinkingMode: false,
+  contextCacheEfficiency: 0.5
+});
+var GLM52_CAPABILITIES = Object.freeze({
+  contextWindow: 1e6,
+  maxOutput: 128e3,
+  supportsLongHorizon: true,
+  supportsReasoningEffort: true,
+  supportsThinkingMode: true,
+  contextCacheEfficiency: 0.85
+});
+
+// dist/src/host/governance.js
+var BUDGET_FACTOR = 0.8;
+var SLICE_FACTOR = 0.9;
+var LARGE_CONTEXT_THRESHOLD = 5e5;
+var SMALL_CONTEXT_PARALLEL = 6;
+var LARGE_CONTEXT_PARALLEL = 8;
+var REASONING_EFFORT_MAP = Object.freeze({
+  decide: "max",
+  spec: "max",
+  plan: "high",
+  build: "medium",
+  review: "high",
+  ship: "medium"
+});
+function deriveGovernance(cap, override) {
+  const w = cap.contextWindow;
+  const derivedBudget = Math.floor(w * BUDGET_FACTOR);
+  const ov = override.contextBudgetOverride;
+  const contextBudget = typeof ov === "number" && Number.isFinite(ov) && ov > 0 ? Math.floor(ov) : derivedBudget;
+  const isLargeContext = w >= LARGE_CONTEXT_THRESHOLD;
+  const maxParallelAgents = typeof override.maxParallelAgents === "number" && override.maxParallelAgents > 0 ? override.maxParallelAgents : isLargeContext ? LARGE_CONTEXT_PARALLEL : SMALL_CONTEXT_PARALLEL;
+  return Object.freeze({
+    contextBudget,
+    sliceThreshold: Math.floor(derivedBudget * SLICE_FACTOR),
+    workerIsolation: cap.supportsLongHorizon ? "optional" : "required",
+    maxParallelAgents,
+    decideDispatchMode: isLargeContext ? "inline-lean" : "auto",
+    // Per-phase reasoning effort only when the model supports the knob.
+    reasoningEffort: cap.supportsReasoningEffort ? REASONING_EFFORT_MAP : void 0
+  });
+}
+
+// dist/src/host/claude-adapter.js
+var CLAUDE_HOOK_EVENTS = /* @__PURE__ */ new Set([
+  "SessionStart",
+  "UserPromptSubmit",
+  "PreToolUse",
+  "PermissionRequest",
+  "PostToolUse",
+  "PostToolUseFailure",
+  "Stop",
+  "PreCompact",
+  "PostCompact",
+  "SubagentStop",
+  "TaskStart",
+  "TaskCompleted",
+  "TaskFailed",
+  "WorktreeCreate",
+  "WorktreeEnter",
+  "WorktreeLeave",
+  "TeammateIdle"
+]);
+function envStr(name) {
+  const v = process.env[name];
+  return typeof v === "string" && v.length > 0 ? v : null;
+}
+var ClaudeAdapter = class {
+  override;
+  constructor(override = {}) {
+    this.override = override;
+  }
+  platform = "claude-code";
+  paths() {
+    return {
+      pluginRoot: envStr("CLAUDE_PLUGIN_ROOT"),
+      pluginData: envStr("CLAUDE_PLUGIN_DATA"),
+      projectDir: envStr("CLAUDE_PROJECT_DIR")
+    };
+  }
+  sessionId() {
+    const resolved = resolveSessionId({
+      envClaudeCodeSessionId: envStr("CLAUDE_CODE_SESSION_ID") ?? void 0,
+      envLegacyClaudeSessionId: envStr("CLAUDE_SESSION_ID") ?? void 0,
+      processPid: process.pid
+    });
+    return resolved.value;
+  }
+  hostVersion() {
+    return { name: "claude-code", version: envStr("CLAUDE_CODE_VERSION") };
+  }
+  hookEvents() {
+    return CLAUDE_HOOK_EVENTS;
+  }
+  subagentTier() {
+    return "workspace";
+  }
+  modelCapabilities() {
+    return CLAUDE_CAPABILITIES;
+  }
+  governance() {
+    return deriveGovernance(CLAUDE_CAPABILITIES, this.override);
+  }
+};
+
+// dist/src/host/zcode-adapter.js
+var ZCODE_HOOK_EVENTS = /* @__PURE__ */ new Set([
+  "SessionStart",
+  "UserPromptSubmit",
+  "PreToolUse",
+  "PermissionRequest",
+  "PostToolUse",
+  "PostToolUseFailure",
+  "Stop"
+]);
+function envStr2(name) {
+  const v = process.env[name];
+  return typeof v === "string" && v.length > 0 ? v : null;
+}
+function zcodeOrClaude(zcodeKey, claudeKey) {
+  return envStr2(zcodeKey) ?? envStr2(claudeKey);
+}
+var ZcodeAdapter = class {
+  override;
+  constructor(override = {}) {
+    this.override = override;
+  }
+  platform = "zcode";
+  paths() {
+    return {
+      pluginRoot: zcodeOrClaude("ZCODE_PLUGIN_ROOT", "CLAUDE_PLUGIN_ROOT"),
+      pluginData: zcodeOrClaude("ZCODE_PLUGIN_DATA", "CLAUDE_PLUGIN_DATA"),
+      projectDir: zcodeOrClaude("ZCODE_PROJECT_DIR", "CLAUDE_PROJECT_DIR")
+    };
+  }
+  sessionId() {
+    const zcodeSession = envStr2("ZCODE_SESSION_ID");
+    if (zcodeSession)
+      return zcodeSession;
+    const resolved = resolveSessionId({
+      envClaudeCodeSessionId: envStr2("CLAUDE_CODE_SESSION_ID") ?? void 0,
+      envLegacyClaudeSessionId: envStr2("CLAUDE_SESSION_ID") ?? void 0,
+      processPid: process.pid
+    });
+    return resolved.value;
+  }
+  hostVersion() {
+    return { name: "zcode", version: envStr2("ZCODE_VERSION") };
+  }
+  hookEvents() {
+    return ZCODE_HOOK_EVENTS;
+  }
+  subagentTier() {
+    return "global-only";
+  }
+  modelCapabilities() {
+    return GLM52_CAPABILITIES;
+  }
+  governance() {
+    return deriveGovernance(GLM52_CAPABILITIES, this.override);
+  }
+};
+
+// dist/src/host/detect.js
+var ZCODE_HOST_SIGNALS = [
+  "ZCODE_PLUGIN_ROOT",
+  "ZCODE_PROJECT_DIR",
+  "ZCODE_SESSION_ID",
+  "ZCODE_PLUGIN_DATA"
+];
+function isNonEmpty(v) {
+  return typeof v === "string" && v.length > 0;
+}
+function detectPlatform() {
+  const isZcode = ZCODE_HOST_SIGNALS.some((name) => isNonEmpty(process.env[name]));
+  return isZcode ? "zcode" : "claude-code";
+}
+var _instance = null;
+var _override = {};
+function getHostAdapter() {
+  if (_instance)
+    return _instance;
+  _instance = detectPlatform() === "zcode" ? new ZcodeAdapter(_override) : new ClaudeAdapter(_override);
+  return _instance;
+}
+
+// dist/src/mcp/project-root.js
 function containsTraversal(p) {
   const segments = p.split(sep);
   if (segments.includes(".."))
@@ -31100,7 +31340,15 @@ function containsTraversal(p) {
   return normSegments.includes("..");
 }
 function resolveProjectRoot(env = process.env) {
-  const raw = (env.CLAUDE_PROJECT_DIR ?? "").trim();
+  if (env !== process.env) {
+    const raw2 = (env.CLAUDE_PROJECT_DIR ?? "").trim();
+    if (!raw2)
+      return { path: process.cwd(), source: "cwd" };
+    if (containsTraversal(raw2))
+      return { path: process.cwd(), source: "cwd" };
+    return { path: resolve(raw2), source: "env" };
+  }
+  const raw = (getHostAdapter().paths().projectDir ?? "").trim();
   if (!raw) {
     return { path: process.cwd(), source: "cwd" };
   }
@@ -32356,244 +32604,6 @@ function extractStringField(frontmatter, fieldName) {
   const regex = getCachedRegex(`str:${fieldName}`, () => new RegExp(`^${escaped}:\\s*"?([^"\\n]*)"?\\s*$`, "m"));
   const match = frontmatter.match(regex);
   return match ? match[1].trim() : null;
-}
-
-// dist/src/host/capabilities.js
-var CLAUDE_CAPABILITIES = Object.freeze({
-  contextWindow: 2e5,
-  maxOutput: 64e3,
-  supportsLongHorizon: false,
-  supportsReasoningEffort: false,
-  supportsThinkingMode: false,
-  contextCacheEfficiency: 0.5
-});
-var GLM52_CAPABILITIES = Object.freeze({
-  contextWindow: 1e6,
-  maxOutput: 128e3,
-  supportsLongHorizon: true,
-  supportsReasoningEffort: true,
-  supportsThinkingMode: true,
-  contextCacheEfficiency: 0.85
-});
-
-// dist/src/session-id.js
-function resolveSessionId(sources) {
-  let value;
-  let source;
-  if (sources.hookSessionId && sources.hookSessionId.length > 0) {
-    value = sources.hookSessionId;
-    source = "hook";
-  } else if (sources.envClaudeCodeSessionId && sources.envClaudeCodeSessionId.length > 0) {
-    value = sources.envClaudeCodeSessionId;
-    source = "CLAUDE_CODE_SESSION_ID";
-  } else if (sources.envLegacyClaudeSessionId && sources.envLegacyClaudeSessionId.length > 0) {
-    value = sources.envLegacyClaudeSessionId;
-    source = "CLAUDE_SESSION_ID";
-  } else {
-    value = `pid-${sources.processPid}`;
-    source = "pid-fallback";
-  }
-  const presentIds = [];
-  if (sources.hookSessionId && sources.hookSessionId.length > 0) {
-    presentIds.push({ value: sources.hookSessionId, source: "hook" });
-  }
-  if (sources.envClaudeCodeSessionId && sources.envClaudeCodeSessionId.length > 0) {
-    presentIds.push({ value: sources.envClaudeCodeSessionId, source: "CLAUDE_CODE_SESSION_ID" });
-  }
-  if (sources.envLegacyClaudeSessionId && sources.envLegacyClaudeSessionId.length > 0) {
-    presentIds.push({ value: sources.envLegacyClaudeSessionId, source: "CLAUDE_SESSION_ID" });
-  }
-  if (presentIds.length <= 1) {
-    return { value, source, consistent: true };
-  }
-  const mismatch = [];
-  const firstValue = presentIds[0].value;
-  for (let i = 1; i < presentIds.length; i++) {
-    if (presentIds[i].value !== firstValue) {
-      mismatch.push(`${presentIds[i].source}="${presentIds[i].value}" differs from ${presentIds[0].source}="${firstValue}"`);
-    }
-  }
-  return {
-    value,
-    source,
-    consistent: mismatch.length === 0,
-    mismatch: mismatch.length > 0 ? mismatch : void 0
-  };
-}
-
-// dist/src/host/governance.js
-var BUDGET_FACTOR = 0.8;
-var SLICE_FACTOR = 0.9;
-var LARGE_CONTEXT_THRESHOLD = 5e5;
-var SMALL_CONTEXT_PARALLEL = 6;
-var LARGE_CONTEXT_PARALLEL = 8;
-var REASONING_EFFORT_MAP = Object.freeze({
-  decide: "max",
-  spec: "max",
-  plan: "high",
-  build: "medium",
-  review: "high",
-  ship: "medium"
-});
-function deriveGovernance(cap, override) {
-  const w = cap.contextWindow;
-  const derivedBudget = Math.floor(w * BUDGET_FACTOR);
-  const ov = override.contextBudgetOverride;
-  const contextBudget = typeof ov === "number" && Number.isFinite(ov) && ov > 0 ? Math.floor(ov) : derivedBudget;
-  const isLargeContext = w >= LARGE_CONTEXT_THRESHOLD;
-  const maxParallelAgents = typeof override.maxParallelAgents === "number" && override.maxParallelAgents > 0 ? override.maxParallelAgents : isLargeContext ? LARGE_CONTEXT_PARALLEL : SMALL_CONTEXT_PARALLEL;
-  return Object.freeze({
-    contextBudget,
-    sliceThreshold: Math.floor(derivedBudget * SLICE_FACTOR),
-    workerIsolation: cap.supportsLongHorizon ? "optional" : "required",
-    maxParallelAgents,
-    decideDispatchMode: isLargeContext ? "inline-lean" : "auto",
-    // Per-phase reasoning effort only when the model supports the knob.
-    reasoningEffort: cap.supportsReasoningEffort ? REASONING_EFFORT_MAP : void 0
-  });
-}
-
-// dist/src/host/claude-adapter.js
-var CLAUDE_HOOK_EVENTS = /* @__PURE__ */ new Set([
-  "SessionStart",
-  "UserPromptSubmit",
-  "PreToolUse",
-  "PermissionRequest",
-  "PostToolUse",
-  "PostToolUseFailure",
-  "Stop",
-  "PreCompact",
-  "PostCompact",
-  "SubagentStop",
-  "TaskStart",
-  "TaskCompleted",
-  "TaskFailed",
-  "WorktreeCreate",
-  "WorktreeEnter",
-  "WorktreeLeave",
-  "TeammateIdle"
-]);
-function envStr(name) {
-  const v = process.env[name];
-  return typeof v === "string" && v.length > 0 ? v : null;
-}
-var ClaudeAdapter = class {
-  override;
-  constructor(override = {}) {
-    this.override = override;
-  }
-  platform = "claude-code";
-  paths() {
-    return {
-      pluginRoot: envStr("CLAUDE_PLUGIN_ROOT"),
-      pluginData: envStr("CLAUDE_PLUGIN_DATA"),
-      projectDir: envStr("CLAUDE_PROJECT_DIR")
-    };
-  }
-  sessionId() {
-    const resolved = resolveSessionId({
-      envClaudeCodeSessionId: envStr("CLAUDE_CODE_SESSION_ID") ?? void 0,
-      envLegacyClaudeSessionId: envStr("CLAUDE_SESSION_ID") ?? void 0,
-      processPid: process.pid
-    });
-    return resolved.value;
-  }
-  hostVersion() {
-    return { name: "claude-code", version: envStr("CLAUDE_CODE_VERSION") };
-  }
-  hookEvents() {
-    return CLAUDE_HOOK_EVENTS;
-  }
-  subagentTier() {
-    return "workspace";
-  }
-  modelCapabilities() {
-    return CLAUDE_CAPABILITIES;
-  }
-  governance() {
-    return deriveGovernance(CLAUDE_CAPABILITIES, this.override);
-  }
-};
-
-// dist/src/host/zcode-adapter.js
-var ZCODE_HOOK_EVENTS = /* @__PURE__ */ new Set([
-  "SessionStart",
-  "UserPromptSubmit",
-  "PreToolUse",
-  "PermissionRequest",
-  "PostToolUse",
-  "PostToolUseFailure",
-  "Stop"
-]);
-function envStr2(name) {
-  const v = process.env[name];
-  return typeof v === "string" && v.length > 0 ? v : null;
-}
-function zcodeOrClaude(zcodeKey, claudeKey) {
-  return envStr2(zcodeKey) ?? envStr2(claudeKey);
-}
-var ZcodeAdapter = class {
-  override;
-  constructor(override = {}) {
-    this.override = override;
-  }
-  platform = "zcode";
-  paths() {
-    return {
-      pluginRoot: zcodeOrClaude("ZCODE_PLUGIN_ROOT", "CLAUDE_PLUGIN_ROOT"),
-      pluginData: zcodeOrClaude("ZCODE_PLUGIN_DATA", "CLAUDE_PLUGIN_DATA"),
-      projectDir: zcodeOrClaude("ZCODE_PROJECT_DIR", "CLAUDE_PROJECT_DIR")
-    };
-  }
-  sessionId() {
-    const zcodeSession = envStr2("ZCODE_SESSION_ID");
-    if (zcodeSession)
-      return zcodeSession;
-    const resolved = resolveSessionId({
-      envClaudeCodeSessionId: envStr2("CLAUDE_CODE_SESSION_ID") ?? void 0,
-      envLegacyClaudeSessionId: envStr2("CLAUDE_SESSION_ID") ?? void 0,
-      processPid: process.pid
-    });
-    return resolved.value;
-  }
-  hostVersion() {
-    return { name: "zcode", version: envStr2("ZCODE_VERSION") };
-  }
-  hookEvents() {
-    return ZCODE_HOOK_EVENTS;
-  }
-  subagentTier() {
-    return "global-only";
-  }
-  modelCapabilities() {
-    return GLM52_CAPABILITIES;
-  }
-  governance() {
-    return deriveGovernance(GLM52_CAPABILITIES, this.override);
-  }
-};
-
-// dist/src/host/detect.js
-var ZCODE_HOST_SIGNALS = [
-  "ZCODE_PLUGIN_ROOT",
-  "ZCODE_PROJECT_DIR",
-  "ZCODE_SESSION_ID",
-  "ZCODE_PLUGIN_DATA"
-];
-function isNonEmpty(v) {
-  return typeof v === "string" && v.length > 0;
-}
-function detectPlatform() {
-  const isZcode = ZCODE_HOST_SIGNALS.some((name) => isNonEmpty(process.env[name]));
-  return isZcode ? "zcode" : "claude-code";
-}
-var _instance = null;
-var _override = {};
-function getHostAdapter() {
-  if (_instance)
-    return _instance;
-  _instance = detectPlatform() === "zcode" ? new ZcodeAdapter(_override) : new ClaudeAdapter(_override);
-  return _instance;
 }
 
 // dist/src/workflow-graph.js

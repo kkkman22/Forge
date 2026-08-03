@@ -25,10 +25,31 @@ export type ForgeTier = "light" | "standard" | "full";
  * @returns true when the caller should isolate the phase behind a worker.
  */
 export function shouldIsolateWorker(governance: GovernancePolicy, tier: ForgeTier): boolean {
-  // Light tier is by definition a single small change — no worker boundary.
+  // Light tier is by definition a small change — no worker boundary.
   if (tier === "light") return false;
 
   // capability-driven: required → always isolate on standard/full;
   // optional → caller may inline (return false, do not force isolation).
   return governance.workerIsolation === "required";
+}
+
+/** Worker execution strategy, derived capability-driven from governance + tier. */
+export type WorkerStrategy = "isolate" | "inline";
+
+/**
+ * Pick the worker execution strategy for a phase.
+ *
+ * Consumes {@link shouldIsolateWorker} so the capability-driven decision has a
+ * real caller (phase-worker-runtime dispatch). Returns "isolate" when the
+ * phase should run behind a worker boundary, "inline" when it should run in
+ * the main agent (Long Horizon retains cross-task judgement → skip the fork).
+ *
+ * @param governance - derived governance policy.
+ * @param tier - routing tier.
+ */
+export function selectWorkerStrategy(
+  governance: GovernancePolicy,
+  tier: ForgeTier,
+): WorkerStrategy {
+  return shouldIsolateWorker(governance, tier) ? "isolate" : "inline";
 }
