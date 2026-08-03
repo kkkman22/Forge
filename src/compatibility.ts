@@ -43,6 +43,41 @@ export interface ClaudeVersionCheck {
 }
 
 // ---------------------------------------------------------------------------
+// Host-aware gating (P2 zcode-p2-native-architecture)
+// ---------------------------------------------------------------------------
+
+import { getHostAdapter } from "./host/detect.js";
+
+/**
+ * Check the Claude Code version against a range, but bypass the hard `fail`
+ * gate on non-Claude hosts (e.g. Zcode has no Claude CLI to version-check).
+ *
+ * On the Claude host this is byte-equal to {@link checkClaudeVersion}. On Zcode
+ * a `fail` verdict is downgraded to an informational `warn` — the Claude semver
+ * gate does not apply, but the version (if any) is still surfaced for display.
+ *
+ * **Validates: requirement R4-AC3.**
+ */
+export function checkHostVersion(
+  current: string | null,
+  range: ClaudeVersionRange,
+): ClaudeVersionCheck {
+  const result = checkClaudeVersion(current, range);
+  if (result.verdict !== "fail") return result;
+
+  // Only the Claude host applies the Claude semver gate.
+  if (getHostAdapter().platform === "claude-code") return result;
+
+  // Zcode (or any non-Claude host): downgrade fail → warn (informational).
+  return {
+    ...result,
+    verdict: "warn",
+    reason: `Host reports Claude Code ${current ?? "(unknown)"}, but the Claude semver gate is not applied on this host. Version surfaced for display only.`,
+    fixHint: undefined,
+  };
+}
+
+// ---------------------------------------------------------------------------
 // Default range
 // ---------------------------------------------------------------------------
 

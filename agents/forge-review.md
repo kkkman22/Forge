@@ -275,9 +275,9 @@ When user runs `/forge review --autofix`, apply automated fixes based on `autofi
 Write full report to `.forge/reviews/<topic>-<timestamp>.md`.
 Return summary to caller.
 
-## Agent Tool ID Defense（防御铁律）
+## Subagent Dispatch ID Defense（防御铁律）
 
-并行启动 N 个 subagent 后，Agent tool 可能走两种返回路径：
+并行启动 N 个 subagent 后，宿主 subagent 派发原语（Agent tool）可能走两种返回路径：
 
 - **异步路径**：返回 `Async agent launched successfully` + `agentId`，需后续 TaskOutput 拉取
 - **内联路径**：subagent 提前完成（如只读了文件就退出），结果直接塞进 tool result，**不返回 agentId**

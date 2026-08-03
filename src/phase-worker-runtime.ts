@@ -2,6 +2,12 @@ import { execFile } from "node:child_process";
 import { existsSync, mkdirSync, readFileSync } from "node:fs";
 import { dirname } from "node:path";
 import { validateHooksPresence } from "./hook-validator.js";
+import { getHostAdapter } from "./host/detect.js";
+import {
+  type ForgeTier,
+  selectWorkerStrategy,
+  type WorkerStrategy,
+} from "./host/worker-isolation.js";
 import type { SubagentInvocation, SubagentResult } from "./types.js";
 
 export type ForgePhase =
@@ -287,4 +293,22 @@ export async function runCliSdkWorker(
   } catch {
     return buildFailureWorkerSummary(request, "cli-sdk", "cli-sdk worker summary file is invalid");
   }
+}
+
+/**
+ * Resolve the worker execution strategy for a phase, capability-driven.
+ *
+ * Consumes the host adapter's governance + the routing tier to decide whether
+ * the caller should spawn an isolated worker ("isolate") or run inline in the
+ * main agent ("inline"). This wires {@link selectWorkerStrategy} into the
+ * phase-worker module so the capability-driven decision has a real consumer.
+ *
+ * GLM-5.2 Long Horizon: even Full tier may inline (judgement retained across
+ * the fork boundary). Claude (200K, no Long Horizon): Full/Standard isolate.
+ *
+ * @param tier - Forge routing tier (light/standard/full).
+ * @returns "isolate" (spawn worker) or "inline" (run in main agent).
+ */
+export function resolvePhaseWorkerStrategy(tier: ForgeTier): WorkerStrategy {
+  return selectWorkerStrategy(getHostAdapter().governance(), tier);
 }

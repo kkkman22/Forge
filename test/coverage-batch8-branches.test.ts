@@ -27,6 +27,14 @@ function baseSnapshot(overrides: Record<string, unknown> = {}): ForgeHealthSnaps
     },
     gates: {},
     artifacts: {},
+    governance: {
+      contextBudget: 160000,
+      sliceThreshold: 144000,
+      workerIsolation: "required",
+      maxParallelAgents: 6,
+      decideDispatchMode: "auto",
+      reasoningEffort: undefined,
+    },
     nextStep: { phase: "review", allowed: true, reasons: [] },
     generatedAt: "2026-06-14T00:00:00.000Z",
   };

@@ -21,6 +21,7 @@ import {
   buildFailureWorkerSummary,
   buildSubagentWorkerInvocation,
   normalizeWorkerSummary,
+  resolvePhaseWorkerStrategy,
   runCliSdkWorker,
   runSubagentWorker,
 } from "./phase-worker-runtime.js";

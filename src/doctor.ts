@@ -8,6 +8,7 @@ import {
   queryEvidenceArtifacts,
 } from "./evidence-artifact.js";
 import { extractStringField, parseFrontmatter } from "./frontmatter.js";
+import { type GovernancePolicy, getHostAdapter } from "./host/index.js";
 import { getPolicyGateRequirements, getRouterSequence } from "./workflow-graph.js";
 
 export type HealthStatus = "pass" | "warn" | "fail" | "unknown";
@@ -58,6 +59,14 @@ export interface ForgeHealthSnapshot {
   safetyGuards: SafetyGuardsHealth;
   gates: Record<string, HealthCheck>;
   artifacts: Partial<Record<EvidenceArtifactKind, string>>;
+  /**
+   * Capability-driven governance (P2 zcode-p2-native-architecture). Derived
+   * from the injected host adapter's model capabilities — contextBudget,
+   * sliceThreshold, workerIsolation, maxParallelAgents, decideDispatchMode,
+   * reasoningEffort. Surfaced so `forge-status --json` exposes the real
+   * derived thresholds to agents/tools (replacing hardcoded config reads).
+   */
+  governance: GovernancePolicy;
   nextStep: {
     phase: string | null;
     allowed: boolean;
@@ -105,6 +114,7 @@ export function buildHealthSnapshot(options: BuildHealthSnapshotOptions): ForgeH
       safetyGuards: buildSafetyGuardsHealth(options.projectRoot),
       gates,
       artifacts: {},
+      governance: getHostAdapter().governance(),
       nextStep: { phase: null, allowed: false, reasons },
       generatedAt: options.generatedAt ?? new Date().toISOString(),
     };
@@ -159,6 +169,7 @@ export function buildHealthSnapshot(options: BuildHealthSnapshotOptions): ForgeH
     safetyGuards: buildSafetyGuardsHealth(options.projectRoot),
     gates,
     artifacts,
+    governance: getHostAdapter().governance(),
     nextStep: {
       phase: nextPhase,
       allowed: reasons.length === 0 && nextPhase !== null,
@@ -184,6 +195,9 @@ export function renderStatusSummary(snapshot: ForgeHealthSnapshot): string {
     `SpawnPolicy: ${snapshot.safetyGuards.spawnPolicy.message}`,
     `MaxSubagentDepth: ${snapshot.safetyGuards.maxSubagentDepth.message}`,
     `KnowledgeQuota: ${snapshot.safetyGuards.knowledgeQuota.message}`,
+    `ContextBudget: ${snapshot.governance.contextBudget} (slice@${snapshot.governance.sliceThreshold})`,
+    `WorkerIsolation: ${snapshot.governance.workerIsolation}`,
+    `MaxParallelAgents: ${snapshot.governance.maxParallelAgents}`,
   ];
 
   for (const reason of snapshot.nextStep.reasons) {

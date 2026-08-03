@@ -29,6 +29,7 @@
 - [Forge — 项目宪法详细内容](forge-constitution-detail.md) — reference — 2026-06-30
 - [Forge 再生式 Checkpoint](forge-checkpoint.md) — reference — 2026-06-16
 - [Forge 初次接触者引导](onboarding-beginner.md) / [Forge 初次接触者引导 (EN)](onboarding-beginner.en.md) — reference — 2026-06-19
+- [Forge 双平台适配 (Claude Code + Zcode) 与架构精简重构方案](zcode-dual-platform-adaptation.md) — reference — 2026-07-31
 - [Forge 命令速查与路由详解](reference-commands.md) — reference — 2026-06-20
 - [Forge 安全与信任](reference-security.md) — reference — 2026-06-30
 - [Forge 日常开发者引导](onboarding-daily.md) / [Forge 日常开发者引导 (EN)](onboarding-daily.en.md) — reference — 2026-05-12

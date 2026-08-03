@@ -193,6 +193,26 @@ const HealthSnapshotSchema = z
       .strict(),
     gates: z.record(z.string(), HealthCheckSchema),
     artifacts: z.record(z.string(), z.string()),
+    governance: z
+      .object({
+        contextBudget: z.number(),
+        sliceThreshold: z.number(),
+        workerIsolation: z.enum(["required", "optional"]),
+        maxParallelAgents: z.number(),
+        decideDispatchMode: z.enum(["auto", "inline-lean"]),
+        reasoningEffort: z
+          .object({
+            decide: z.enum(["max"]),
+            spec: z.enum(["max"]),
+            plan: z.enum(["high"]),
+            build: z.enum(["medium"]),
+            review: z.enum(["high"]),
+            ship: z.enum(["medium"]),
+          })
+          .nullable()
+          .optional(),
+      })
+      .strict(),
     nextStep: z
       .object({
         phase: z.string().nullable(),

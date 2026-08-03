@@ -1,0 +1,43 @@
+{
+  "name": "forge",
+  "version": "3.9.0",
+  "description": "Unified AI coding workflow framework — /forge single entry, 38 subcommands, TDD, spec-driven, automated review. Claude Code + Zcode dual-platform, GLM-5.2 Long Horizon optimized.",
+  "author": { "name": "Forge contributors", "url": "https://github.com/kkkman22/Forge" },
+  "license": "MIT",
+  "homepage": "https://github.com/kkkman22/Forge",
+  "keywords": [
+    "workflow",
+    "tdd",
+    "spec-driven",
+    "code-review",
+    "ci",
+    "zcode",
+    "glm-5.2",
+    "long-horizon"
+  ],
+  "commands": "./commands",
+  "skills": "./skills",
+  "agents": "./agents",
+  "hooks": "./hooks/hooks.json",
+  "mcpServers": "./.mcp.json",
+  "userConfig": {
+    "max_parallel_agents": {
+      "type": "number",
+      "title": "Max Parallel Agents",
+      "default": 6,
+      "description": "1-10, GLM-5.2 path defaults 8 (capability-driven when contextWindow >= 500K)"
+    },
+    "safety_level": {
+      "type": "string",
+      "title": "Safety Level",
+      "default": "1",
+      "description": "Safety strictness (1=strictest, 3=most relaxed)"
+    },
+    "context_budget_override": {
+      "type": "number",
+      "title": "Context Budget Override (0=auto-derive)",
+      "default": 0,
+      "description": "0 → capability-driven (0.8 × contextWindow); non-zero overrides the derived budget"
+    }
+  }
+}
