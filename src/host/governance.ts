@@ -15,7 +15,7 @@
  *
  * **Validates: requirements R2-AC2..AC10.**
  */
-import type { GovernancePolicy, ModelCapabilities, ReasoningEffortMap } from "./capabilities";
+import type { GovernancePolicy, ModelCapabilities, ReasoningEffortMap } from "./capabilities.js";
 
 // ---------------------------------------------------------------------------
 // Derivation constants (single source for thresholds)

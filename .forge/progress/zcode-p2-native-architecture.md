@@ -25,7 +25,8 @@ capability-driven 治理派生**：一套内核，运行期注入 Adapter；治�
 
 `npm run check` **EXIT=0**（tsc + biome + vitest + readme/docs/dist/bundle 全过）。
 `node scripts/zcode-p1-verify.mjs` **全 PASS**（P1 透明回归未回滚）。
-新增 host 测试 **74 个**（types/adapters/governance/detect/path-resolve/compatibility/V13/manifest）。
+新增 host 测试 **72 个**（10 个文件：types/adapters/governance/detect/path-resolve/audit-log/
+no-direct-claude-env 守卫/compatibility/V13/manifest）。
 
 ## REQ 覆盖
 
@@ -34,7 +35,7 @@ capability-driven 治理派生**：一套内核，运行期注入 Adapter；治�
 | R1 HostAdapter 抽象 | ✅ | `src/host/types.ts`（接口）+ Claude/Zcode 两实现，结构性属性 + 模型能力契约（Claude 200K / GLM-5.2 1M） |
 | R2 capability-driven 派生 | ✅ | `src/host/governance.ts` `deriveGovernance`；三场景契约（Claude 160K / GLM-5.2 800K / 未来 1M）；config override；铁律边界不动 |
 | R3 探测 + 失败安全 | ✅ | `src/host/detect.ts`；信号清单与 P1 `zcode-platform.mjs` 逐字一致；单例 + reset |
-| R4 CLAUDE_* 收敛 | ✅ | `path-resolve.ts` → adapter.paths()；session-id 由 adapter 持有；`checkHostVersion()` Zcode 旁路 |
+| R4 CLAUDE_* 收敛 | ✅ **完全闭合** | path-resolve/session-id/audit-log 全部经 adapter；`checkHostVersion()` Zcode 旁路；**grep 守卫锁住内核直读 CLAUDE_* 为 0** |
 | R5 Zcode 产物 | ✅ | `.zcode-plugin/plugin.json`（userConfig 三项）+ `marketplace.json`；Claude manifest 不变 |
 | R6 透明回归 + V13 | ✅ | `capability-adaptation.test.ts`（未来 Claude 1M 零代码自适应）；P1 verify 继承 |
 

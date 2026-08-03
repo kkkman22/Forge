@@ -1,6 +1,6 @@
 import { realpathSync } from "node:fs";
 import { isAbsolute, normalize, resolve } from "node:path";
-import { getHostAdapter } from "../host/detect";
+import { getHostAdapter } from "../host/detect.js";
 
 export interface PathOk {
   ok: true;

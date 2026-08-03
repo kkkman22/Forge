@@ -14,16 +14,16 @@ export {
   type ModelCapabilities,
   type ReasoningEffortMap,
   type WorkerIsolation,
-} from "./capabilities";
-export { ClaudeAdapter } from "./claude-adapter";
+} from "./capabilities.js";
+export { ClaudeAdapter } from "./claude-adapter.js";
 export {
   configureHostAdapter,
   detectPlatform,
   getHostAdapter,
   resetHostAdapter,
   ZCODE_HOST_SIGNALS,
-} from "./detect";
-export { deriveGovernance, type GovernanceOverride } from "./governance";
+} from "./detect.js";
+export { deriveGovernance, type GovernanceOverride } from "./governance.js";
 export type {
   HookEvent,
   HostAdapter,
@@ -31,6 +31,6 @@ export type {
   HostVersion,
   Platform,
   SubagentTier,
-} from "./types";
-export { type ForgeTier, shouldIsolateWorker } from "./worker-isolation";
-export { ZcodeAdapter } from "./zcode-adapter";
+} from "./types.js";
+export { type ForgeTier, shouldIsolateWorker } from "./worker-isolation.js";
+export { ZcodeAdapter } from "./zcode-adapter.js";

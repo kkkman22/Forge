@@ -10,7 +10,7 @@ import {
 import { mkdir } from "node:fs/promises";
 import { homedir } from "node:os";
 import { resolve } from "node:path";
-import { getHostAdapter } from "../host/detect";
+import { getHostAdapter } from "../host/detect.js";
 import {
   acquireLockSync,
   releaseLockSync,

@@ -12,7 +12,7 @@
  *
  * **Validates: requirements R1-AC1, R1-AC4.**
  */
-import type { GovernancePolicy, ModelCapabilities } from "./capabilities";
+import type { GovernancePolicy, ModelCapabilities } from "./capabilities.js";
 
 // ---------------------------------------------------------------------------
 // Structural types (platform-driven)

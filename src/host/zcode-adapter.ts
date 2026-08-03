@@ -11,10 +11,14 @@
  * **Validates: requirements R1-AC2, R1-AC5, R1-AC7 (Zcode).**
  */
 
-import { resolveSessionId } from "../session-id";
-import { GLM52_CAPABILITIES, type GovernancePolicy, type ModelCapabilities } from "./capabilities";
-import { deriveGovernance, type GovernanceOverride } from "./governance";
-import type { HookEvent, HostAdapter, HostPaths, HostVersion, SubagentTier } from "./types";
+import { resolveSessionId } from "../session-id.js";
+import {
+  GLM52_CAPABILITIES,
+  type GovernancePolicy,
+  type ModelCapabilities,
+} from "./capabilities.js";
+import { deriveGovernance, type GovernanceOverride } from "./governance.js";
+import type { HookEvent, HostAdapter, HostPaths, HostVersion, SubagentTier } from "./types.js";
 
 // ---------------------------------------------------------------------------
 // Zcode 7-event subset (no PreCompact/SubagentStop/Task*/Worktree*/TeammateIdle)

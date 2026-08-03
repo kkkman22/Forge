@@ -15,10 +15,10 @@
  * **Validates: requirements R3-AC1..AC7.**
  */
 
-import { ClaudeAdapter } from "./claude-adapter";
-import type { GovernanceOverride } from "./governance";
-import type { HostAdapter, Platform } from "./types";
-import { ZcodeAdapter } from "./zcode-adapter";
+import { ClaudeAdapter } from "./claude-adapter.js";
+import type { GovernanceOverride } from "./governance.js";
+import type { HostAdapter, Platform } from "./types.js";
+import { ZcodeAdapter } from "./zcode-adapter.js";
 
 // ---------------------------------------------------------------------------
 // Signal list — MUST match scripts/lib/zcode-platform.mjs ZCODE_ENV_SIGNALS

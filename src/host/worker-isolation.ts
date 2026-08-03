@@ -12,7 +12,7 @@
  *
  * **Validates: design.md R7 — worker isolation consumer integration.**
  */
-import type { GovernancePolicy } from "./capabilities";
+import type { GovernancePolicy } from "./capabilities.js";
 
 /** Forge routing tier, mirrors the constitution three-tier routing. */
 export type ForgeTier = "light" | "standard" | "full";

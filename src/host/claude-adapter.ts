@@ -11,10 +11,14 @@
  * **Validates: requirements R1-AC1, R1-AC2, R1-AC5, R1-AC6, R1-AC7 (Claude).**
  */
 
-import { resolveSessionId } from "../session-id";
-import { CLAUDE_CAPABILITIES, type GovernancePolicy, type ModelCapabilities } from "./capabilities";
-import { deriveGovernance, type GovernanceOverride } from "./governance";
-import type { HookEvent, HostAdapter, HostPaths, HostVersion, SubagentTier } from "./types";
+import { resolveSessionId } from "../session-id.js";
+import {
+  CLAUDE_CAPABILITIES,
+  type GovernancePolicy,
+  type ModelCapabilities,
+} from "./capabilities.js";
+import { deriveGovernance, type GovernanceOverride } from "./governance.js";
+import type { HookEvent, HostAdapter, HostPaths, HostVersion, SubagentTier } from "./types.js";
 
 // ---------------------------------------------------------------------------
 // Claude full hook event set (superset of the Zcode 7-event subset)

@@ -46,7 +46,7 @@ export interface ClaudeVersionCheck {
 // Host-aware gating (P2 zcode-p2-native-architecture)
 // ---------------------------------------------------------------------------
 
-import { getHostAdapter } from "./host/detect";
+import { getHostAdapter } from "./host/detect.js";
 
 /**
  * Check the Claude Code version against a range, but bypass the hard `fail`
