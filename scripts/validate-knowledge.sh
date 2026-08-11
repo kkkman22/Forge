@@ -14,7 +14,7 @@ set -uo pipefail
 # 用法：
 #   bash forge/scripts/validate-knowledge.sh [--forge-root <path>]
 #
-# 默认 forge-root 为当前目录下的 .forge/
+# 默认 forge-root 为当前目录下的 .tinkerman/
 # ============================================================================
 
 set -euo pipefail
@@ -29,7 +29,7 @@ PASS=0
 FAIL=0
 WARN=0
 
-FORGE_ROOT=".forge"
+FORGE_ROOT=".tinkerman"
 
 while [[ $# -gt 0 ]]; do
   case "$1" in
@@ -38,7 +38,7 @@ while [[ $# -gt 0 ]]; do
       echo ""
       echo "Validate Forge knowledge base health."
       echo "Checks: document limits, confidence thresholds, frontmatter completeness."
-      echo "  --forge-root <path>  Path to .forge/ directory (default: .forge)"
+      echo "  --forge-root <path>  Path to .tinkerman/ directory (default: .forge)"
       exit 0
       ;;
     --forge-root) FORGE_ROOT="$2"; shift 2 ;;
@@ -52,12 +52,12 @@ check_warn() { echo -e "${YELLOW}⚠️${NC} $1"; WARN=$((WARN+1)); }
 
 # ---------- 前置检查 ----------
 if [[ ! -d "${FORGE_ROOT}" ]]; then
-  echo -e "${RED}❌ .forge/ 目录不存在。请先运行 forge init。${NC}"
+  echo -e "${RED}❌ .tinkerman/ 目录不存在。请先运行 forge init。${NC}"
   exit 1
 fi
 
 if [[ ! -d "${FORGE_ROOT}/knowledge" ]]; then
-  echo -e "${RED}❌ .forge/knowledge/ 目录不存在。${NC}"
+  echo -e "${RED}❌ .tinkerman/knowledge/ 目录不存在。${NC}"
   exit 1
 fi
 

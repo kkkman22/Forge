@@ -10,21 +10,21 @@ allowed_tools:
 
 ## Current Context
 
-!`cat .forge/status.md 2>/dev/null || echo "no status file"`
+!`cat .tinkerman/status.md 2>/dev/null || echo "no status file"`
 Branch: !`git branch --show-current`
-Progress files: !`ls .forge/progress/*.md 2>/dev/null || echo "none"`
+Progress files: !`ls .tinkerman/progress/*.md 2>/dev/null || echo "none"`
 
 # /tinkerman status — Status Query
 
 > **触发方式**：用户输入 `/tinkerman status`
-> **职责**：读取 `.forge/status.md` 和 `progress/` 展示当前项目状态
+> **职责**：读取 `.tinkerman/status.md` 和 `progress/` 展示当前项目状态
 > **输出路径**：无文件输出，仅终端展示
 
 ---
 
 ## 1. Overview
 
-`/tinkerman status` 是一个只读命令——它不修改任何状态，只读取 `.forge/` 下的状态文件并以结构化格式展示当前项目的工作状态。帮助开发者快速了解"我在哪里、在做什么、做到哪了"。
+`/tinkerman status` 是一个只读命令——它不修改任何状态，只读取 `.tinkerman/` 下的状态文件并以结构化格式展示当前项目的工作状态。帮助开发者快速了解"我在哪里、在做什么、做到哪了"。
 
 ---
 
@@ -32,21 +32,21 @@ Progress files: !`ls .forge/progress/*.md 2>/dev/null || echo "none"`
 
 ## 2. 数据来源
 
-**共享健康模型**：优先调用 `buildHealthSnapshot({ projectRoot, currentHead })` 读取 workflow graph、policy profile、artifact freshness 和 next-step blockers，再用 `renderStatusSummary(snapshot)` 生成 concise status 输出。`.forge/status.md` / `.forge/progress/` 的直接读取仅作为低层数据源或 fallback，不再作为独立状态逻辑。
+**共享健康模型**：优先调用 `buildHealthSnapshot({ projectRoot, currentHead })` 读取 workflow graph、policy profile、artifact freshness 和 next-step blockers，再用 `renderStatusSummary(snapshot)` 生成 concise status 输出。`.tinkerman/status.md` / `.tinkerman/progress/` 的直接读取仅作为低层数据源或 fallback，不再作为独立状态逻辑。
 
 **单任务模式**：
 
 | 数据 | 来源文件 | 读取字段 |
 |------|---------|---------|
-| 当前任务 | `.forge/status.md` | YAML frontmatter: `current_task` |
-| 当前档位 | `.forge/status.md` | YAML frontmatter: `tier` |
-| 当前阶段 | `.forge/status.md` | YAML frontmatter: `phase` |
-| 最近更新时间 | `.forge/status.md` | YAML frontmatter: `updated` |
-| 任务进度 | `.forge/progress/<topic>.md` | 已完成/进行中/阻塞任务列表 |
-| Policy Profile | `.forge/config.md` + health model | `policy_profile` |
+| 当前任务 | `.tinkerman/status.md` | YAML frontmatter: `current_task` |
+| 当前档位 | `.tinkerman/status.md` | YAML frontmatter: `tier` |
+| 当前阶段 | `.tinkerman/status.md` | YAML frontmatter: `phase` |
+| 最近更新时间 | `.tinkerman/status.md` | YAML frontmatter: `updated` |
+| 任务进度 | `.tinkerman/progress/<topic>.md` | 已完成/进行中/阻塞任务列表 |
+| Policy Profile | `.tinkerman/config.md` + health model | `policy_profile` |
 | Next Step | workflow graph + health model | allowed/blocked edge and reasons |
 
-**多任务模式**：调用 `listActiveTasks(io, forgeRoot)` 扫描 `.forge/status.md` + `.forge/status/*.md`，返回所有活跃任务的汇总表。为每个活跃任务分别读取 `.forge/progress/<topic>.md` 展示进度详情。
+**多任务模式**：调用 `listActiveTasks(io, forgeRoot)` 扫描 `.tinkerman/status.md` + `.tinkerman/status/*.md`，返回所有活跃任务的汇总表。为每个活跃任务分别读取 `.tinkerman/progress/<topic>.md` 展示进度详情。
 
 ---
 
@@ -89,7 +89,7 @@ bash scripts/summarize-frozen-events.sh --days=7
 
 ## Gotchas
 - **Stale status**: Status says "in progress" but work completed hours ago → misleading → always cross-check with git log
-- **Missing status file**: New project has no .forge/status.md → status returns nothing → create initial status file
+- **Missing status file**: New project has no .tinkerman/status.md → status returns nothing → create initial status file
 - **Phase value unexpected**: Custom phase value not in expected range → status display breaks → handle gracefully with fallback
 - **Clone + Plugin conflict**: Both `~/.claude/skills/tinkerman/` and `~/.claude/plugins/forge/` exist → warn user → plugin takes precedence
 
@@ -105,16 +105,16 @@ bash scripts/summarize-frozen-events.sh --days=7
 
 ## 4. 边界情况处理
 
-### 4.1 无 `.forge/` 目录
+### 4.1 无 `.tinkerman/` 目录
 
 ```
-⚠️ 未检测到 .forge/ 目录。请先运行 /tinkerman init 初始化项目。
+⚠️ 未检测到 .tinkerman/ 目录。请先运行 /tinkerman init 初始化项目。
 ```
 
 ### 4.2 无 status.md
 
 ```
-ℹ️ 未找到 .forge/status.md。当前没有活跃的任务。
+ℹ️ 未找到 .tinkerman/status.md。当前没有活跃的任务。
 运行 /tinkerman 开始新任务。
 ```
 

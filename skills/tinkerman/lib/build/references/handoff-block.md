@@ -3,7 +3,7 @@ updated: 2026-08-11
 ---
 # Handoff Block — R2 原子任务交接
 
-> 由 forge-build SKILL.md §3.6 引用。每完成一个原子任务并准备 commit 前，build agent 必须在 `.forge/progress/<topic>.md` 对应任务条目下追加一份 handoff block。
+> 由 forge-build SKILL.md §3.6 引用。每完成一个原子任务并准备 commit 前，build agent 必须在 `.tinkerman/progress/<topic>.md` 对应任务条目下追加一份 handoff block。
 
 ## 5 字段格式
 

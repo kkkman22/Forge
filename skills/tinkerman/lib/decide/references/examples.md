@@ -12,7 +12,7 @@ Task: "Add batch export functionality to the order system"
 - **安全视角**：检查权限控制、敏感字段脱敏、导出日志审计
 - **设计视角**：不触发（纯后端，无 UI 变更）
 
-Output: `.forge/decisions/2025-01-15-order-batch-export.md`
+Output: `.tinkerman/decisions/2025-01-15-order-batch-export.md`
 
 ## Example 2: UI-Involved Task (Four Perspectives)
 
@@ -23,7 +23,7 @@ Task: "Redesign the user settings page"
 - **安全视角**：检查敏感设置修改流程安全性
 - **设计视角**：**触发** — 评估页面布局、表单可用性、WCAG、设计系统一致性
 
-Output: `.forge/decisions/2025-01-15-user-settings-redesign.md`
+Output: `.tinkerman/decisions/2025-01-15-user-settings-redesign.md`
 
 ## 决策文档完整结构示例
 

@@ -43,7 +43,7 @@ const CATEGORY_KEYWORDS: Record<string, string[]> = {
 
 export function runRecap(opts?: RecapOptions): RecapReport {
   const window = opts?.window ?? "7d";
-  const forgeDir = opts?.forgeDir ?? join(process.cwd(), ".forge");
+  const forgeDir = opts?.forgeDir ?? join(process.cwd(), ".tinkerman");
   const { since, until } = parseWindow(window);
 
   const commits = parseGitLog(since);

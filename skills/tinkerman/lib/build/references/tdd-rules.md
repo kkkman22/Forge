@@ -12,7 +12,7 @@ updated: 2026-08-11
 - **In-Subagent TDD**: Each Subagent independently executes the full TDD cycle. Code written before tests → delete code, restart from tests. Do not retain, reference, or read deleted code.
 - **Run at every step**: RED confirms failure, GREEN confirms pass, REFACTOR confirms no regression. Test passing at RED stage = test was written wrong.
 - **Tests accommodating code ≠ code satisfying requirements**. Writing code first then adding tests is the former.
-- **Dead Code Hygiene**: REFACTOR 完成后，扫描是否产生了孤儿代码（未使用的 import、未调用的函数或方法、未引用的类型定义、未使用的变量）。发现孤儿代码时记录到 `.forge/findings/<topic>.md`，不自行删除——删除需要确认代码确实不再被需要。
+- **Dead Code Hygiene**: REFACTOR 完成后，扫描是否产生了孤儿代码（未使用的 import、未调用的函数或方法、未引用的类型定义、未使用的变量）。发现孤儿代码时记录到 `.tinkerman/findings/<topic>.md`，不自行删除——删除需要确认代码确实不再被需要。
 
 ## Simplicity Check
 

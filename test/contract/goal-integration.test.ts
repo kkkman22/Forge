@@ -11,7 +11,7 @@ import {
 } from "../../src/forge/goal-integration";
 
 const ROOT = resolve(__dirname, "../..");
-const THREE_STRIKE_PATH = resolve(ROOT, ".forge/state/three-strike-counter.json");
+const THREE_STRIKE_PATH = resolve(ROOT, ".tinkerman/state/three-strike-counter.json");
 
 describe("goal-integration (R4)", () => {
   describe("buildGoalCondition", () => {
@@ -35,7 +35,7 @@ describe("goal-integration (R4)", () => {
   describe("shouldClearGoal", () => {
     beforeEach(() => {
       // Ensure the state directory exists and clean up any leftover file
-      const dir = resolve(ROOT, ".forge/state");
+      const dir = resolve(ROOT, ".tinkerman/state");
       if (!existsSync(dir)) {
         mkdirSync(dir, { recursive: true });
       }

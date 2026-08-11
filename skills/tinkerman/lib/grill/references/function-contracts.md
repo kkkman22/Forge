@@ -47,7 +47,7 @@ updated: 2026-08-11
 
 - **参数**：
   - `tree` — 决策树中涉及的所有术语
-  - `glossary` — `loadEnforcementGlossary(rootDir, fs)` 返回：扁平 `.forge/glossary.md`（主权源）合并 enabled pack glossary 术语（只读补充）。扁平文件是写入主权源。
+  - `glossary` — `loadEnforcementGlossary(rootDir, fs)` 返回：扁平 `.tinkerman/glossary.md`（主权源）合并 enabled pack glossary 术语（只读补充）。扁平文件是写入主权源。
 - **返回**：冲突/缺失术语列表
 - **用途**：在追问结束前检查是否有未定义或冲突的术语，提示用户补充
 
@@ -67,7 +67,7 @@ updated: 2026-08-11
 - **参数**：
   - `tree` — 完整的决策树（追问完成后）
 - **返回**：新术语候选列表（含定义建议）
-- **用途**：从追问过程中提取应写入 `.forge/glossary.md` 的新术语
+- **用途**：从追问过程中提取应写入 `.tinkerman/glossary.md` 的新术语
 
 ---
 

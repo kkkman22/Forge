@@ -4,7 +4,7 @@ import { parse as parseYaml } from "yaml";
 import { parseReviewFrontmatter, isReviewComplete } from "./reviews.mjs";
 
 /**
- * Read .forge/ state and compose CanonicalSidebarPayload.
+ * Read .tinkerman/ state and compose CanonicalSidebarPayload.
  * Pure function: same dir content → same output (R2.1).
  */
 
@@ -63,7 +63,7 @@ function readReviewState(reviewsDir, taskName) {
 }
 
 /**
- * Read Forge state from a .forge/ directory.
+ * Read Forge state from a .tinkerman/ directory.
  * Returns CanonicalSidebarPayload.
  */
 export function readForgeState(forgeDir) {

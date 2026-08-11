@@ -67,8 +67,8 @@ describe("rollback nonce (AC2)", () => {
     const root = tempRoot();
     // Write a nonce file with a bogus HMAC (attacker without the secret).
     const fs = require("node:fs");
-    const filePath = join(root, ".forge", ".rollback-nonce");
-    fs.mkdirSync(join(root, ".forge"), { recursive: true });
+    const filePath = join(root, ".tinkerman", ".rollback-nonce");
+    fs.mkdirSync(join(root, ".tinkerman"), { recursive: true });
     fs.writeFileSync(filePath, "fakeNonce\nbogusHmac\n", "utf-8");
     const ctx = contextFromNonce({}, root);
     expect(ctx.rollbackActive).toBe(false);
@@ -105,8 +105,8 @@ describe("nonce hardening (AC3a)", () => {
     issueRollbackNonce(root);
     // Simulate config.md mtime change (v2 would have broken here).
     const fs = require("node:fs");
-    const configPath = join(root, ".forge", "config.md");
-    fs.mkdirSync(join(root, ".forge"), { recursive: true });
+    const configPath = join(root, ".tinkerman", "config.md");
+    fs.mkdirSync(join(root, ".tinkerman"), { recursive: true });
     fs.writeFileSync(configPath, "---\nproject: X\n---\n", "utf-8");
     // nonce must still validate (secret is from .guard-secret, not config mtime)
     const ctx = contextFromNonce({}, root);
@@ -130,8 +130,8 @@ describe("nonce hardening (AC3a)", () => {
     issueRollbackNonce(root);
     contextFromNonce({}, root);
     // original file gone, consumed file present
-    expect(existsSync(join(root, ".forge", ".rollback-nonce"))).toBe(false);
-    expect(existsSync(join(root, ".forge", ".consumed", ".rollback-nonce"))).toBe(true);
+    expect(existsSync(join(root, ".tinkerman", ".rollback-nonce"))).toBe(false);
+    expect(existsSync(join(root, ".tinkerman", ".consumed", ".rollback-nonce"))).toBe(true);
   });
 
   it("(c) concurrency: second concurrent consume of same nonce → false", () => {
@@ -159,9 +159,9 @@ describe("guardEnabledFromConfig (AC5)", () => {
   it("disabled when config.md destructive_guard: off", () => {
     const root = tempRoot();
     const fs = require("node:fs");
-    fs.mkdirSync(join(root, ".forge"), { recursive: true });
+    fs.mkdirSync(join(root, ".tinkerman"), { recursive: true });
     fs.writeFileSync(
-      join(root, ".forge", "config.md"),
+      join(root, ".tinkerman", "config.md"),
       "---\ndestructive_guard: off\n---\n",
       "utf-8",
     );
@@ -172,9 +172,9 @@ describe("guardEnabledFromConfig (AC5)", () => {
   it("enabled when config.md destructive_guard: on", () => {
     const root = tempRoot();
     const fs = require("node:fs");
-    fs.mkdirSync(join(root, ".forge"), { recursive: true });
+    fs.mkdirSync(join(root, ".tinkerman"), { recursive: true });
     fs.writeFileSync(
-      join(root, ".forge", "config.md"),
+      join(root, ".tinkerman", "config.md"),
       "---\ndestructive_guard: on\n---\n",
       "utf-8",
     );

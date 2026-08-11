@@ -5,7 +5,7 @@
  * The extractor runs over free-form text (spec drafts, plan bodies,
  * session notes) and returns a list of `TermCandidate` values that
  * downstream skills can filter, rank, and present to the user before
- * merging into `.forge/glossary.md`.
+ * merging into `.tinkerman/glossary.md`.
  *
  * Heuristics are intentionally simple and language-agnostic:
  *

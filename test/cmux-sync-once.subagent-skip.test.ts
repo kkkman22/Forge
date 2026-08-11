@@ -14,16 +14,16 @@ const SCRIPT_PATH = join(process.cwd(), "scripts", "cmux-mirror", "sync-once.mjs
 
 function createTempForgeDir(): string {
   const dir = mkdtempSync(join(tmpdir(), "forge-cmux-test-"));
-  mkdirSync(join(dir, ".forge"), { recursive: true });
-  mkdirSync(join(dir, ".forge", "knowledge"), { recursive: true });
+  mkdirSync(join(dir, ".tinkerman"), { recursive: true });
+  mkdirSync(join(dir, ".tinkerman", "knowledge"), { recursive: true });
   // Minimal state file so forge-dir check passes
-  writeFileSync(join(dir, ".forge", "status.md"), "---\ncurrent_task: test\n---\n");
+  writeFileSync(join(dir, ".tinkerman", "status.md"), "---\ncurrent_task: test\n---\n");
   return dir;
 }
 
 function runScript(cwd: string, stdinPayload: string | undefined): string {
   try {
-    return execFileSync("node", [SCRIPT_PATH, ".forge"], {
+    return execFileSync("node", [SCRIPT_PATH, ".tinkerman"], {
       cwd,
       encoding: "utf-8",
       timeout: 5000,
@@ -58,8 +58,8 @@ describe("cmux sync-once subagent skip", () => {
 
     const output = runScript(tempDir, subagentStdin);
     expect(output.length).toBe(0);
-    expect(existsSync(join(tempDir, ".forge", ".cmux-sync.lock"))).toBe(false);
-    expect(existsSync(join(tempDir, ".forge", ".cmux-snapshot.json"))).toBe(false);
+    expect(existsSync(join(tempDir, ".tinkerman", ".cmux-sync.lock"))).toBe(false);
+    expect(existsSync(join(tempDir, ".tinkerman", ".cmux-snapshot.json"))).toBe(false);
   });
 
   it("main-agent stdin (no agent_id) allows normal syncOnce flow", () => {

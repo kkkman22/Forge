@@ -38,7 +38,7 @@ Forge 路由器从三个维度分析任务：
 
 ### Step 1：分析任务描述
 
-**复杂度信号**（决定档位）：影响范围（文件数/行数）· 需求清晰度（是否有锁定 Spec）· 系统影响（新服务/新库/认证变更）· 现有资产（`.forge/specs/`）。
+**复杂度信号**（决定档位）：影响范围（文件数/行数）· 需求清晰度（是否有锁定 Spec）· 系统影响（新服务/新库/认证变更）· 现有资产（`.tinkerman/specs/`）。
 
 **任务类型信号**：frontend（UI/样式/路由）· backend（API/DB/中间件）· fullstack（前后端交叉）· data（管道/ETL/报表）· infra（CI/CD/部署/云资源）· docs（文档/README）。
 
@@ -118,7 +118,7 @@ Forge 路由器从三个维度分析任务：
 
 ## 5. Status Update
 
-路由完成后更新 `.forge/status.md`（单任务）或 `.forge/status/<task-id>.md`（多任务，调用 `writeTaskStatus`）。字段：`current_task`, `tier`, `work_nature`（feature/refactor/bugfix，默认 feature）, `task_type`, `project_phase`, `phase`, `hints`（逗号分隔标签）, `assumptions`（可选数组）, `updated`。下游 SKILL 必须读取 `hints` 调整行为。
+路由完成后更新 `.tinkerman/status.md`（单任务）或 `.tinkerman/status/<task-id>.md`（多任务，调用 `writeTaskStatus`）。字段：`current_task`, `tier`, `work_nature`（feature/refactor/bugfix，默认 feature）, `task_type`, `project_phase`, `phase`, `hints`（逗号分隔标签）, `assumptions`（可选数组）, `updated`。下游 SKILL 必须读取 `hints` 调整行为。
 
 ---
 

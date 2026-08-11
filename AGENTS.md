@@ -86,7 +86,7 @@ build 阶段主 Agent 必须执行周期性 Restatement Checkpoint：每完成 N
 
 ### 3.1 Execution-Assessment Separation
 
-写代码的 Agent 不评审自己的代码。`/tinkerman review` 使用独立 Subagent（spec-check、quality-check、security-check）。评审者只对照 Spec 和代码质量标准。且**不允许**主 Agent 在 subagent 全部失败后自行顶替评审。Subagent 不可用时按 `forge-review` SKILL §2.5 fallback ladder 处理（L0→L1→L2→L3），L3 阻断 ship。详见 ADR `.forge/decisions/2026-05-18-review-fallback-ladder.md`。
+写代码的 Agent 不评审自己的代码。`/tinkerman review` 使用独立 Subagent（spec-check、quality-check、security-check）。评审者只对照 Spec 和代码质量标准。且**不允许**主 Agent 在 subagent 全部失败后自行顶替评审。Subagent 不可用时按 `forge-review` SKILL §2.5 fallback ladder 处理（L0→L1→L2→L3），L3 阻断 ship。详见 ADR `.tinkerman/decisions/2026-05-18-review-fallback-ladder.md`。
 
 ### 3.2 Three-Layer Review
 
@@ -117,7 +117,7 @@ build 阶段主 Agent 必须执行周期性 Restatement Checkpoint：每完成 N
 
 ### 4.2 Knowledge Base Limit
 
-知识库文档数量上限 **20** 个（可在 `.forge/config.md` 配置）。超出上限时按置信度排序清理。**Confidence < 0.3 的模式自动清理**。高频模式写入 `instincts.md` 时附带 Confidence Score（0.3 - 0.9）。
+知识库文档数量上限 **20** 个（可在 `.tinkerman/config.md` 配置）。超出上限时按置信度排序清理。**Confidence < 0.3 的模式自动清理**。高频模式写入 `instincts.md` 时附带 Confidence Score（0.3 - 0.9）。
 
 ### 4.3 Knowledge Backflow
 
@@ -130,7 +130,7 @@ build 阶段主 Agent 必须执行周期性 Restatement Checkpoint：每完成 N
 
 ### 5.1 Evolved Rules
 
-会话开始时读取 `.forge/knowledge/evolved-rules.md`，将其规则视为项目特定的错误预防指令。
+会话开始时读取 `.tinkerman/knowledge/evolved-rules.md`，将其规则视为项目特定的错误预防指令。
 
 ### 5.2-5.6
 
@@ -141,9 +141,9 @@ build 阶段主 Agent 必须执行周期性 Restatement Checkpoint：每完成 N
 
 ## 6. Session Boundaries
 
-每个 `/tinkerman` 命令调用构成 Session_Boundary。阶段间上下文交接通过 `.forge/` 目录文件系统进行，而非对话历史。建议 `/tinkerman` 命令之间开启新会话。
+每个 `/tinkerman` 命令调用构成 Session_Boundary。阶段间上下文交接通过 `.tinkerman/` 目录文件系统进行，而非对话历史。建议 `/tinkerman` 命令之间开启新会话。
 
-**Subagent 隔离**：每个 Subagent 有独立上下文。**会话恢复**：`/tinkerman resume` 从 `.forge/progress/` 和 `.forge/knowledge/sessions/` 读取。**并发控制**：`max_parallel_agents` 默认 6。HTTP 429 降级：第 1 次并发减半 → 第 2 次降至 2 → 第 3 次串行。降级记录到 `.forge/knowledge/tool-health.md`。新会话重置并发数。上下文超 100K tokens 时记录建议开启新会话提示（不阻断）。
+**Subagent 隔离**：每个 Subagent 有独立上下文。**会话恢复**：`/tinkerman resume` 从 `.tinkerman/progress/` 和 `.tinkerman/knowledge/sessions/` 读取。**并发控制**：`max_parallel_agents` 默认 6。HTTP 429 降级：第 1 次并发减半 → 第 2 次降至 2 → 第 3 次串行。降级记录到 `.tinkerman/knowledge/tool-health.md`。新会话重置并发数。上下文超 100K tokens 时记录建议开启新会话提示（不阻断）。
 → 详见 docs/tinkerman-constitution-detail.md §6（会话拓扑三节点：主流程同窗 / on-ramp / 跨会话桥；smart zone 100K 保守 / ~120K SOTA 参考；handoff=fork vs compact=continue）
 
 ---

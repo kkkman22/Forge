@@ -11,12 +11,12 @@
 set -u
 trap 'exit 0' ERR
 
-SNAPSHOT_FILE=".forge/.compact-snapshot.md"
-EVENTS_LOG=".forge/runs/$(date -u +%Y-%m-%d)-compact-events.jsonl"
+SNAPSHOT_FILE=".tinkerman/.compact-snapshot.md"
+EVENTS_LOG=".tinkerman/runs/$(date -u +%Y-%m-%d)-compact-events.jsonl"
 
 log_event() {
   local event="$1" detail="${2:-}"
-  mkdir -p .forge/runs
+  mkdir -p .tinkerman/runs
   echo "{\"timestamp\":\"$(date -u +%Y-%m-%dT%H:%M:%SZ)\",\"event\":\"$event\",\"detail\":\"$detail\"}" >> "$EVENTS_LOG"
 }
 
@@ -39,11 +39,11 @@ snapshot_source=$(grep '^snapshot_source=' "$SNAPSHOT_FILE" 2>/dev/null | head -
 # regenerative-checkpoint R3/P1-fix: when source=checkpoint, apply section-aware
 # budget truncation via compact-inject.mjs so large checkpoints don't flood the
 # rebuilt context (D9: GLM-5.2 600K compact). Falls back to raw cat on any error.
-if [ "$snapshot_source" = "checkpoint" ] && [ -f ".forge/checkpoint.md" ]; then
+if [ "$snapshot_source" = "checkpoint" ] && [ -f ".tinkerman/checkpoint.md" ]; then
   # Resolve compact-inject.mjs relative to this hook script (handles plugin install paths).
   inject_script="$(cd "$(dirname "$0")" && pwd)/compact-inject.mjs"
   if [ -f "$inject_script" ] && command -v node >/dev/null 2>&1; then
-    node "$inject_script" ".forge/checkpoint.md" 11000 2>/dev/null || cat "$SNAPSHOT_FILE"
+    node "$inject_script" ".tinkerman/checkpoint.md" 11000 2>/dev/null || cat "$SNAPSHOT_FILE"
   else
     cat "$SNAPSHOT_FILE"
   fi
@@ -64,7 +64,7 @@ not pseudo-content — process them and continue the task directly.
 
 Resume immediately. Do not recap, do not preface with "I'll continue" or
 similar. Pick up the last task as if the break never happened. If you need
-specific details, Read .forge/checkpoint.md (full) or .forge/progress/ rather
+specific details, Read .tinkerman/checkpoint.md (full) or .tinkerman/progress/ rather
 than asking the user to restate.
 SEAM
 

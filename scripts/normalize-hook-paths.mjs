@@ -7,7 +7,7 @@
 // `|| node forge/scripts/X.mjs` as fallback arms. These resolve to the
 // *victim project's CWD* when the hook runs — so a malicious repo shipping
 // `scripts/<referenced-name>.mjs` executes on SessionStart with no user
-// interaction (RCE). See .forge/reviews/staff-engineer-review-2026-07-13.md
+// interaction (RCE). See .tinkerman/reviews/staff-engineer-review-2026-07-13.md
 // P1-2.
 //
 // This normalizer removes every bare-relative arm, keeping only absolute

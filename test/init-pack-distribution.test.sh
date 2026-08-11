@@ -10,7 +10,7 @@
 #   D2 (manifest guard): when pack is present but NOT listed in manifest.json
 #       → init warns "未随此 Forge 版本分发" but still configures (graceful).
 #   D3 (telemetry): after a successful --pack pms enable, the project's
-#       .forge/knowledge/tool-health.md contains a `· pack-enabled ·` record
+#       .tinkerman/knowledge/tool-health.md contains a `· pack-enabled ·` record
 #       with name=pms and source=plugin|clone.
 #   D4 (INV-1 regression): git clone scenario (no CLAUDE_PLUGIN_ROOT, packs/
 #       present in repo) still enables the pack without the "不可用" warning.
@@ -106,9 +106,9 @@ cd "${PROJ}"
 out=$(CLAUDE_PLUGIN_ROOT="${BUNDLE}" bash "${BUNDLE}/scripts/init.sh" \
   --non-interactive --name "telem-proj" --stack "TypeScript" --security 1 \
   --no-ultrareview --pack pms 2>&1) || true
-assert 'grep -q "pack-enabled" "${PROJ}/.forge/knowledge/tool-health.md"' "D3: tool-health.md has pack-enabled record"
-assert 'grep -q "name=pms" "${PROJ}/.forge/knowledge/tool-health.md"' "D3: pack-enabled record carries name=pms"
-assert 'grep -qE "source=(plugin|clone)" "${PROJ}/.forge/knowledge/tool-health.md"' "D3: pack-enabled record carries source"
+assert 'grep -q "pack-enabled" "${PROJ}/.tinkerman/knowledge/tool-health.md"' "D3: tool-health.md has pack-enabled record"
+assert 'grep -q "name=pms" "${PROJ}/.tinkerman/knowledge/tool-health.md"' "D3: pack-enabled record carries name=pms"
+assert 'grep -qE "source=(plugin|clone)" "${PROJ}/.tinkerman/knowledge/tool-health.md"' "D3: pack-enabled record carries source"
 rm -rf "${PROJ}" "${BUNDLE}"
 
 # --- D4 (INV-1): clone scenario still works (no CLAUDE_PLUGIN_ROOT) ---

@@ -2,7 +2,7 @@
  * Runtime enabled-packs loader (spec domain-knowledge-threading REQ-1).
  *
  * The pack discovery chain (`loadPackRegistry` → `parseEnabledPacks`) exists as
- * pure functions but had **no production caller that reads `.forge/config.md`
+ * pure functions but had **no production caller that reads `.tinkerman/config.md`
  * from disk**. This module is that caller — it composes the two pure functions
  * behind a single injectable-`FileSystem` entry point so phase skills can
  * resolve the project's enabled packs in one call.
@@ -16,7 +16,7 @@ import { loadPackRegistry } from "./loader.js";
 import type { EnabledPacks, FileSystem } from "./types.js";
 
 /**
- * Result of loading enabled packs from a project's `.forge/config.md`.
+ * Result of loading enabled packs from a project's `.tinkerman/config.md`.
  */
 export interface LoadEnabledPacksResult {
   /** Resolved, validated enabled packs (empty when none configured). */
@@ -28,15 +28,15 @@ export interface LoadEnabledPacksResult {
 }
 
 /**
- * Read `.forge/config.md`, discover packs, and return a validated
+ * Read `.tinkerman/config.md`, discover packs, and return a validated
  * {@link EnabledPacks}.
  *
  * Composes the existing pure functions {@link loadPackRegistry} +
  * {@link parseEnabledPacks}. `customLayerRoot` resolves to
- * `<rootDir>/.forge/custom`.
+ * `<rootDir>/.tinkerman/custom`.
  *
  * Behavior:
- * - `.forge/config.md` absent → warning + empty enabled (non-fatal; the repo
+ * - `.tinkerman/config.md` absent → warning + empty enabled (non-fatal; the repo
  *   may not be Forge-initialized).
  * - `packs:` field absent → empty enabled, no errors (Zero-Pack path).
  * - Declared pack not in registry → error lists available packs (delegated to
@@ -59,9 +59,9 @@ export async function loadEnabledPacks(
   fs: FileSystem,
 ): Promise<LoadEnabledPacksResult> {
   const warnings: string[] = [];
-  const customLayerRoot = path.join(rootDir, ".forge", "custom");
+  const customLayerRoot = path.join(rootDir, ".tinkerman", "custom");
 
-  const configPath = path.join(rootDir, ".forge", "config.md");
+  const configPath = path.join(rootDir, ".tinkerman", "config.md");
   let configContent: string;
   try {
     configContent = await fs.readFile(configPath);
@@ -69,7 +69,7 @@ export async function loadEnabledPacks(
     return {
       enabled: { order: [], entries: [], customLayerRoot },
       errors: [],
-      warnings: [`.forge/config.md not found at ${configPath}`],
+      warnings: [`.tinkerman/config.md not found at ${configPath}`],
     };
   }
 

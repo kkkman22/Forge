@@ -191,10 +191,10 @@ describe("Preservation: getProtectionZone() classification", () => {
     );
   });
 
-  it(".forge/ prefix is stripped before classification", () => {
+  it(".tinkerman/ prefix is stripped before classification", () => {
     fc.assert(
       fc.property(frozenPathArb, (path) => {
-        expect(getProtectionZone(`.forge/${path}`)).toBe("frozen");
+        expect(getProtectionZone(`.tinkerman/${path}`)).toBe("frozen");
       }),
       { numRuns: 50 },
     );

@@ -81,7 +81,7 @@ describe("hooks.json: sync-once entries (R2.7)", () => {
     const syncOnceArgsHooks = allHooks.filter((h) => h.args && isSyncOnce(h));
     for (const h of syncOnceArgsHooks) {
       expect(h.args).toContain("scripts/cmux-mirror/sync-once.mjs");
-      expect(h.args).toContain(".forge");
+      expect(h.args).toContain(".tinkerman");
     }
   });
 });

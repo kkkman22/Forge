@@ -51,7 +51,7 @@ export const DEFAULT_LINTER_KEYWORDS: string[] = [
  *   3. Severity calibrated: P0/P1 are not used for style-only issues
  *   4. Line number accuracy: all line numbers are positive integers
  *   5. No linter overlap: no findings that are purely formatting issues
- *   6. Protected files: no findings suggesting deletion of .forge/ files
+ *   6. Protected files: no findings suggesting deletion of .tinkerman/ files
  */
 export function runReportQualityGate(
   findings: MergedFinding[],
@@ -92,9 +92,9 @@ export function runReportQualityGate(
 
   const noProtectedFileSuggestions = findings.every(
     (f) =>
-      !f.suggestion.toLowerCase().includes("删除 .forge/") &&
-      !f.suggestion.toLowerCase().includes("delete .forge/") &&
-      !f.filePath.startsWith(".forge/"),
+      !f.suggestion.toLowerCase().includes("删除 .tinkerman/") &&
+      !f.suggestion.toLowerCase().includes("delete .tinkerman/") &&
+      !f.filePath.startsWith(".tinkerman/"),
   );
   items.push({ name: "受保护文件", passed: noProtectedFileSuggestions });
 

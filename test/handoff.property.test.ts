@@ -176,7 +176,7 @@ describe("Property 36: Handoff paths", () => {
     fc.assert(
       fc.property(transitionArb, ([from, to]) => {
         const path = handoffPath(from, to);
-        expect(path).toBe(`.forge/handoffs/${from}-to-${to}.md`);
+        expect(path).toBe(`.tinkerman/handoffs/${from}-to-${to}.md`);
         expect(path.endsWith(".md")).toBe(true);
       }),
       { numRuns: 20 },
@@ -185,15 +185,15 @@ describe("Property 36: Handoff paths", () => {
 
   it("priorHandoffPaths for build includes decide→spec, spec→plan, plan→build", () => {
     const paths = priorHandoffPaths("build");
-    expect(paths).toContain(".forge/handoffs/decide-to-spec.md");
-    expect(paths).toContain(".forge/handoffs/spec-to-plan.md");
-    expect(paths).toContain(".forge/handoffs/plan-to-build.md");
-    expect(paths).not.toContain(".forge/handoffs/build-to-review.md");
+    expect(paths).toContain(".tinkerman/handoffs/decide-to-spec.md");
+    expect(paths).toContain(".tinkerman/handoffs/spec-to-plan.md");
+    expect(paths).toContain(".tinkerman/handoffs/plan-to-build.md");
+    expect(paths).not.toContain(".tinkerman/handoffs/build-to-review.md");
   });
 
   it("priorHandoffPaths for spec includes only decide→spec", () => {
     const paths = priorHandoffPaths("spec");
-    expect(paths).toEqual([".forge/handoffs/decide-to-spec.md"]);
+    expect(paths).toEqual([".tinkerman/handoffs/decide-to-spec.md"]);
   });
 
   it("priorHandoffPaths for learn includes all transitions", () => {

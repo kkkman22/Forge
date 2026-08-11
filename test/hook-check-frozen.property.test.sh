@@ -115,7 +115,7 @@ while [[ $i -lt 60 ]]; do
   LONG_PATH="${LONG_PATH}${LONG_SEGMENT}"
   i=$((i + 1))
 done
-LONG_PATH="${LONG_PATH}.forge/config.md"
+LONG_PATH="${LONG_PATH}.tinkerman/config.md"
 
 unset ZONE_REGISTRY_CACHE 2>/dev/null || true
 result=$(run_classify "$LONG_PATH")
@@ -148,7 +148,7 @@ echo "=== 3. Special characters ==="
 
 # Spaces
 unset ZONE_REGISTRY_CACHE 2>/dev/null || true
-result=$(run_classify "path with spaces/.forge/config.md")
+result=$(run_classify "path with spaces/.tinkerman/config.md")
 rc="${result%%$'\t'*}"
 out="${result#*$'\t'}"
 assert_no_crash "spaces in path no crash" "$out" "$rc"
@@ -156,7 +156,7 @@ assert_valid_output "spaces in path valid output" "$out"
 
 # Unicode
 unset ZONE_REGISTRY_CACHE 2>/dev/null || true
-result=$(run_classify ".forge/specs/éèê/spec.md")
+result=$(run_classify ".tinkerman/specs/éèê/spec.md")
 rc="${result%%$'\t'*}"
 out="${result#*$'\t'}"
 assert_no_crash "unicode path no crash" "$out" "$rc"
@@ -164,7 +164,7 @@ assert_valid_output "unicode path valid output" "$out"
 
 # Chinese characters
 unset ZONE_REGISTRY_CACHE 2>/dev/null || true
-result=$(run_classify ".forge/specs/规格/spec.md")
+result=$(run_classify ".tinkerman/specs/规格/spec.md")
 rc="${result%%$'\t'*}"
 out="${result#*$'\t'}"
 assert_no_crash "CJK path no crash" "$out" "$rc"
@@ -172,7 +172,7 @@ assert_valid_output "CJK path valid output" "$out"
 
 # Single quotes in path
 unset ZONE_REGISTRY_CACHE 2>/dev/null || true
-result=$(run_classify "it's/.forge/config.md")
+result=$(run_classify "it's/.tinkerman/config.md")
 rc="${result%%$'\t'*}"
 out="${result#*$'\t'}"
 assert_no_crash "single quotes path no crash" "$out" "$rc"
@@ -180,7 +180,7 @@ assert_valid_output "single quotes path valid output" "$out"
 
 # Double quotes in path (embedded literal)
 unset ZONE_REGISTRY_CACHE 2>/dev/null || true
-result=$(run_classify 'a"b/.forge/config.md')
+result=$(run_classify 'a"b/.tinkerman/config.md')
 rc="${result%%$'\t'*}"
 out="${result#*$'\t'}"
 assert_no_crash "double quotes path no crash" "$out" "$rc"
@@ -188,7 +188,7 @@ assert_valid_output "double quotes path valid output" "$out"
 
 # Backslashes (classify_path normalizes them)
 unset ZONE_REGISTRY_CACHE 2>/dev/null || true
-result=$(run_classify 'deep\\nested\\.forge\\config.md')
+result=$(run_classify 'deep\\nested\\.tinkerman\\config.md')
 rc="${result%%$'\t'*}"
 out="${result#*$'\t'}"
 assert_no_crash "backslash path no crash" "$out" "$rc"
@@ -197,7 +197,7 @@ assert_valid_output "backslash path valid output" "$out"
 # Newline embedded in path segment (unlikely but should not crash)
 unset ZONE_REGISTRY_CACHE 2>/dev/null || true
 NL=$'\n'
-result=$(run_classify "before${NL}after/.forge/config.md")
+result=$(run_classify "before${NL}after/.tinkerman/config.md")
 rc="${result%%$'\t'*}"
 out="${result#*$'\t'}"
 assert_no_crash "newline in path no crash" "$out" "$rc"
@@ -206,7 +206,7 @@ assert_valid_output "newline in path valid output" "$out"
 # Tab character in path
 unset ZONE_REGISTRY_CACHE 2>/dev/null || true
 TAB=$'\t'
-result=$(run_classify "before${TAB}after/.forge/config.md")
+result=$(run_classify "before${TAB}after/.tinkerman/config.md")
 rc="${result%%$'\t'*}"
 out="${result#*$'\t'}"
 assert_no_crash "tab in path no crash" "$out" "$rc"
@@ -214,7 +214,7 @@ assert_valid_output "tab in path valid output" "$out"
 
 # Dollar sign and variable-like patterns
 unset ZONE_REGISTRY_CACHE 2>/dev/null || true
-result=$(run_classify '$HOME/.forge/config.md')
+result=$(run_classify '$HOME/.tinkerman/config.md')
 rc="${result%%$'\t'*}"
 out="${result#*$'\t'}"
 assert_no_crash "dollar sign path no crash" "$out" "$rc"
@@ -222,7 +222,7 @@ assert_valid_output "dollar sign path valid output" "$out"
 
 # Semicolons (command injection attempt)
 unset ZONE_REGISTRY_CACHE 2>/dev/null || true
-result=$(run_classify '.forge/config.md;echo pwned')
+result=$(run_classify '.tinkerman/config.md;echo pwned')
 rc="${result%%$'\t'*}"
 out="${result#*$'\t'}"
 assert_no_crash "semicolon path no crash" "$out" "$rc"
@@ -230,20 +230,20 @@ assert_valid_output "semicolon path valid output" "$out"
 
 # Pipe character
 unset ZONE_REGISTRY_CACHE 2>/dev/null || true
-result=$(run_classify '.forge/config.md|cat')
+result=$(run_classify '.tinkerman/config.md|cat')
 rc="${result%%$'\t'*}"
 out="${result#*$'\t'}"
 assert_no_crash "pipe path no crash" "$out" "$rc"
 assert_valid_output "pipe path valid output" "$out"
 
 # ---------------------------------------------------------------------------
-# 4. Path with multiple .forge/ segments
+# 4. Path with multiple .tinkerman/ segments
 # ---------------------------------------------------------------------------
 
-echo "=== 4. Multiple .forge/ segments ==="
+echo "=== 4. Multiple .tinkerman/ segments ==="
 
 unset ZONE_REGISTRY_CACHE 2>/dev/null || true
-result=$(run_classify "foo/.forge/bar/.forge/config.md")
+result=$(run_classify "foo/.tinkerman/bar/.tinkerman/config.md")
 rc="${result%%$'\t'*}"
 out="${result#*$'\t'}"
 assert_no_crash "nested .forge segments no crash" "$out" "$rc"
@@ -251,7 +251,7 @@ assert_valid_output "nested .forge segments valid output" "$out"
 
 # .forge inside .forge
 unset ZONE_REGISTRY_CACHE 2>/dev/null || true
-result=$(run_classify ".forge/.forge/config.md")
+result=$(run_classify ".tinkerman/.tinkerman/config.md")
 rc="${result%%$'\t'*}"
 out="${result#*$'\t'}"
 assert_no_crash ".forge inside .forge no crash" "$out" "$rc"
@@ -259,7 +259,7 @@ assert_valid_output ".forge inside .forge valid output" "$out"
 
 # Three levels
 unset ZONE_REGISTRY_CACHE 2>/dev/null || true
-result=$(run_classify "a/.forge/b/.forge/c/.forge/specs/test/spec.md")
+result=$(run_classify "a/.tinkerman/b/.tinkerman/c/.tinkerman/specs/test/spec.md")
 rc="${result%%$'\t'*}"
 out="${result#*$'\t'}"
 assert_no_crash "triple .forge no crash" "$out" "$rc"
@@ -272,7 +272,7 @@ assert_valid_output "triple .forge valid output" "$out"
 echo "=== 5. Path traversal ==="
 
 unset ZONE_REGISTRY_CACHE 2>/dev/null || true
-result=$(run_classify ".forge/../.forge/config.md")
+result=$(run_classify ".tinkerman/../.tinkerman/config.md")
 rc="${result%%$'\t'*}"
 out="${result#*$'\t'}"
 assert_no_crash "dotdot .forge no crash" "$out" "$rc"
@@ -296,7 +296,7 @@ assert_valid_output "traversal into .forge valid output" "$out"
 
 # Mixed traversal
 unset ZONE_REGISTRY_CACHE 2>/dev/null || true
-result=$(run_classify ".forge/specs/../../.forge/plans/x.md")
+result=$(run_classify ".tinkerman/specs/../../.tinkerman/plans/x.md")
 rc="${result%%$'\t'*}"
 out="${result#*$'\t'}"
 assert_no_crash "mixed traversal no crash" "$out" "$rc"
@@ -311,7 +311,7 @@ echo "=== 6. Null-byte-like handling ==="
 # Bash cannot hold null bytes in variables, so test with literal NUL string
 # representation and the string "\\0" which some tools produce.
 unset ZONE_REGISTRY_CACHE 2>/dev/null || true
-result=$(run_classify $'.forge/config\\0.md')
+result=$(run_classify $'.tinkerman/config\\0.md')
 rc="${result%%$'\t'*}"
 out="${result#*$'\t'}"
 assert_no_crash "escaped null in path no crash" "$out" "$rc"
@@ -319,7 +319,7 @@ assert_valid_output "escaped null in path valid output" "$out"
 
 # Literal \\x00 as text
 unset ZONE_REGISTRY_CACHE 2>/dev/null || true
-result=$(run_classify '.forge/config\x00.md')
+result=$(run_classify '.tinkerman/config\x00.md')
 rc="${result%%$'\t'*}"
 out="${result#*$'\t'}"
 assert_no_crash "hex null string no crash" "$out" "$rc"
@@ -370,7 +370,7 @@ assert_valid_output "root path valid output" "$out"
 
 # Just / with .forge suffix
 unset ZONE_REGISTRY_CACHE 2>/dev/null || true
-result=$(run_classify "/.forge/config.md")
+result=$(run_classify "/.tinkerman/config.md")
 rc="${result%%$'\t'*}"
 out="${result#*$'\t'}"
 assert_no_crash "root .forge no crash" "$out" "$rc"

@@ -2,7 +2,7 @@
  * Glossary merge bridge (spec glossary-enforcement-bridge REQ-1).
  *
  * Closes the advisory/enforcement split left by slice B's REQ-6: enforcement
- * (`runGlossaryCheck`) previously saw only the flat `.forge/glossary.md`. This pure
+ * (`runGlossaryCheck`) previously saw only the flat `.tinkerman/glossary.md`. This pure
  * function merges the flat (authoritative) glossary with enabled-pack glossary
  * entries into one `Glossary` so conflict detection covers the full domain
  * vocabulary.
@@ -28,7 +28,7 @@ import type { GlossaryEntry } from "../pack/types.js";
  * - When nothing is appended, the input `flat` is returned by reference (Zero-Pack
  *   identity — no allocation).
  *
- * @param flat         The authoritative flat glossary (from `.forge/glossary.md`).
+ * @param flat         The authoritative flat glossary (from `.tinkerman/glossary.md`).
  * @param packEntries  Glossary entries from enabled packs (read-only supplements).
  * @returns A merged `Glossary` (flat + appended pack terms). `flat` unchanged when
  *          `packEntries` is empty or fully covered.

@@ -2,7 +2,7 @@
 // file-changed-hook.mjs — FileChanged hook for spec-lock/progress monitoring (R16)
 //
 // Reads JSON input from stdin (Claude Code hook protocol).
-// Monitors .forge/state/spec-lock and .forge/progress/<active>.md for changes.
+// Monitors .tinkerman/state/spec-lock and .tinkerman/progress/<active>.md for changes.
 // When a relevant file changes, outputs a systemMessage with active spec info.
 // Never blocks — always exits 0.
 //
@@ -21,7 +21,7 @@ function findForgeRoot(cwd) {
 
   let dir = cwd;
   for (let i = 0; i < 10; i++) {
-    if (existsSync(join(dir, ".forge"))) return dir;
+    if (existsSync(join(dir, ".tinkerman"))) return dir;
     const parent = join(dir, "..");
     if (parent === dir) break;
     dir = parent;
@@ -30,7 +30,7 @@ function findForgeRoot(cwd) {
 }
 
 function parseStatusYaml(statusContent) {
-  // Simple frontmatter parser for .forge/status.md
+  // Simple frontmatter parser for .tinkerman/status.md
   const frontmatterMatch = statusContent.match(
     /^---\s*\n([\s\S]*?)\n---/,
   );
@@ -50,7 +50,7 @@ function parseStatusYaml(statusContent) {
 }
 
 function getActiveTask(forgeRoot) {
-  const statusPath = join(forgeRoot, ".forge", "status.md");
+  const statusPath = join(forgeRoot, ".tinkerman", "status.md");
   if (!existsSync(statusPath)) return null;
 
   try {
@@ -64,13 +64,13 @@ function getActiveTask(forgeRoot) {
 
 function isSpecLockFile(filePath, forgeRoot) {
   if (!forgeRoot) return false;
-  const expected = join(forgeRoot, ".forge", "state", "spec-lock");
+  const expected = join(forgeRoot, ".tinkerman", "state", "spec-lock");
   return filePath === expected;
 }
 
 function isActiveProgressFile(filePath, forgeRoot, activeTask) {
   if (!forgeRoot || !activeTask) return false;
-  const expected = join(forgeRoot, ".forge", "progress", `${activeTask}.md`);
+  const expected = join(forgeRoot, ".tinkerman", "progress", `${activeTask}.md`);
   return filePath === expected;
 }
 

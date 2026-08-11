@@ -14,7 +14,7 @@ function simulateArchive(
   slug: string,
   date: string,
 ): { archived: FileEntry[]; mapping: Map<string, string> } {
-  const prefix = `.forge/archive/${date}-${slug}/`;
+  const prefix = `.tinkerman/archive/${date}-${slug}/`;
   const mapping = new Map<string, string>();
   const archived: FileEntry[] = [];
 
@@ -42,7 +42,7 @@ describe("Property 6: Archive Structure Preservation", () => {
         ),
         (slug, { date }, files) => {
           const { archived, mapping } = simulateArchive(files, slug, date);
-          const prefix = `.forge/archive/${date}-${slug}/`;
+          const prefix = `.tinkerman/archive/${date}-${slug}/`;
 
           expect(archived.length).toBe(files.length);
           for (let i = 0; i < files.length; i++) {

@@ -15,9 +15,9 @@ When cmux is installed, Forge build progress is reflected in the cmux sidebar as
 
 ## How It Works
 
-1. Build starts → `sdk-driver.ts` appends `{"type": "build_start", ...}` to `.forge/events.ndjson`
+1. Build starts → `sdk-driver.ts` appends `{"type": "build_start", ...}` to `.tinkerman/events.ndjson`
 2. Each task completion appends `{"type": "task_complete", ...}`
-3. `sync-once.mjs` hooks detect `.forge/` file changes
+3. `sync-once.mjs` hooks detect `.tinkerman/` file changes
 4. State diff → cmux CLI commands (set_status, set_progress, sidebar_state)
 
 ## Events_NDJSON Schema
@@ -29,7 +29,7 @@ When cmux is installed, Forge build progress is reflected in the cmux sidebar as
 
 ## Zero-Impact
 
-Without cmux, events are still written to `.forge/events.ndjson` (useful for auditing). No cmux CLI calls are made.
+Without cmux, events are still written to `.tinkerman/events.ndjson` (useful for auditing). No cmux CLI calls are made.
 
 ## Related Files
 

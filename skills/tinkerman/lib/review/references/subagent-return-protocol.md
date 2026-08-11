@@ -14,18 +14,18 @@ status: <pass|fail>
 findings: <total_count>
 p0: <count>
 p1: <count>
-report: .forge/reviews/<layer>-<YYYYMMDD-HHmmss>.md
+report: .tinkerman/reviews/<layer>-<YYYYMMDD-HHmmss>.md
 ```
 
 ## 报告文件
 
-完整报告 Write 到 `.forge/reviews/<layer>-<timestamp>.md`。
+完整报告 Write 到 `.tinkerman/reviews/<layer>-<timestamp>.md`。
 
 ### 命名约定
 
 - `<layer>`: `spec-check` | `quality-check` | `security-check`
 - `<timestamp>`: `YYYYMMDD-HHmmss` 格式（UTC）
-- 示例：`.forge/reviews/spec-check-20260530-071500.md`
+- 示例：`.tinkerman/reviews/spec-check-20260530-071500.md`
 
 ### 报告内容结构
 
@@ -56,7 +56,7 @@ report: .forge/reviews/<layer>-<YYYYMMDD-HHmmss>.md
 1. **解析摘要**（status / findings / p0 / p1 / report_path）
 2. **p0 > 0 或 p1 > 0** → `Read report_path` 获取完整详情
 3. **p0 = 0 且 p1 = 0** → **不读取**报告文件，仅基于摘要
-4. 综合评审报告仍输出到 `.forge/reviews/<timestamp>-combined.md`
+4. 综合评审报告仍输出到 `.tinkerman/reviews/<timestamp>-combined.md`
 
 ## 向后兼容
 

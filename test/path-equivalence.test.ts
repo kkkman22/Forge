@@ -16,20 +16,20 @@ describe("extractPathExpressionsFromBash", () => {
 
   it("extracts $HOME path from double-quoted string", async () => {
     const { extractPathExpressionsFromBash } = await import("../src/path-equivalence.js");
-    const paths = extractPathExpressionsFromBash('echo "$HOME/.forge/config.md"');
-    expect(paths).toContainEqual(expect.stringContaining("$HOME/.forge/config.md"));
+    const paths = extractPathExpressionsFromBash('echo "$HOME/.tinkerman/config.md"');
+    expect(paths).toContainEqual(expect.stringContaining("$HOME/.tinkerman/config.md"));
   });
 
   it("extracts literal path from subshell without executing", async () => {
     const { extractPathExpressionsFromBash } = await import("../src/path-equivalence.js");
-    const paths = extractPathExpressionsFromBash("$(echo ~/.forge/config.md)");
-    expect(paths.some((p) => p.includes(".forge/config.md"))).toBe(true);
+    const paths = extractPathExpressionsFromBash("$(echo ~/.tinkerman/config.md)");
+    expect(paths.some((p) => p.includes(".tinkerman/config.md"))).toBe(true);
   });
 
   it("extracts backtick paths", async () => {
     const { extractPathExpressionsFromBash } = await import("../src/path-equivalence.js");
-    const paths = extractPathExpressionsFromBash("echo `cat ~/.forge/config.md`");
-    expect(paths.some((p) => p.includes(".forge/config.md"))).toBe(true);
+    const paths = extractPathExpressionsFromBash("echo `cat ~/.tinkerman/config.md`");
+    expect(paths.some((p) => p.includes(".tinkerman/config.md"))).toBe(true);
   });
 
   it("returns empty array for commands with no paths", async () => {
@@ -40,23 +40,23 @@ describe("extractPathExpressionsFromBash", () => {
 });
 
 describe("canonicalizePathExpression", () => {
-  it("~/.forge/config.md normalizes with homeDir", async () => {
+  it("~/.tinkerman/config.md normalizes with homeDir", async () => {
     const { canonicalizePathExpression } = await import("../src/path-equivalence.js");
-    const result = canonicalizePathExpression("~/.forge/config.md", OPTS);
-    expect(result.normalized).toBe("/Users/x/.forge/config.md");
+    const result = canonicalizePathExpression("~/.tinkerman/config.md", OPTS);
+    expect(result.normalized).toBe("/Users/x/.tinkerman/config.md");
     expect(result.highRiskUnresolved).toBe(false);
   });
 
-  it("$HOME/.forge/config.md normalizes with homeDir", async () => {
+  it("$HOME/.tinkerman/config.md normalizes with homeDir", async () => {
     const { canonicalizePathExpression } = await import("../src/path-equivalence.js");
-    const result = canonicalizePathExpression("$HOME/.forge/config.md", OPTS);
-    expect(result.normalized).toBe("/Users/x/.forge/config.md");
+    const result = canonicalizePathExpression("$HOME/.tinkerman/config.md", OPTS);
+    expect(result.normalized).toBe("/Users/x/.tinkerman/config.md");
   });
 
-  it("${" + "HOME}/.forge/config.md normalizes with homeDir", async () => {
+  it("${" + "HOME}/.tinkerman/config.md normalizes with homeDir", async () => {
     const { canonicalizePathExpression } = await import("../src/path-equivalence.js");
-    const result = canonicalizePathExpression("${" + "HOME}/.forge/config.md", OPTS);
-    expect(result.normalized).toBe("/Users/x/.forge/config.md");
+    const result = canonicalizePathExpression("${" + "HOME}/.tinkerman/config.md", OPTS);
+    expect(result.normalized).toBe("/Users/x/.tinkerman/config.md");
   });
 
   it("relative path with .. resolves against cwd", async () => {
@@ -68,14 +68,14 @@ describe("canonicalizePathExpression", () => {
   it("high-risk frozen-zone path that cannot be resolved → highRiskUnresolved true", async () => {
     const { canonicalizePathExpression } = await import("../src/path-equivalence.js");
     // Quoted path with unknown variable + frozen-zone signal
-    const result = canonicalizePathExpression("'$UNKNOWN/.forge/config.md'", OPTS);
+    const result = canonicalizePathExpression("'$UNKNOWN/.tinkerman/config.md'", OPTS);
     expect(result.highRiskUnresolved).toBe(true);
   });
 
   it("raw is preserved", async () => {
     const { canonicalizePathExpression } = await import("../src/path-equivalence.js");
-    const result = canonicalizePathExpression("~/.forge/config.md", OPTS);
-    expect(result.raw).toBe("~/.forge/config.md");
+    const result = canonicalizePathExpression("~/.tinkerman/config.md", OPTS);
+    expect(result.raw).toBe("~/.tinkerman/config.md");
   });
 });
 
@@ -84,8 +84,8 @@ describe("pathsEquivalent", () => {
     const { canonicalizePathExpression, pathsEquivalent } = await import(
       "../src/path-equivalence.js"
     );
-    const a = canonicalizePathExpression("~/.forge/config.md", OPTS);
-    const b = canonicalizePathExpression("/Users/x/.forge/config.md", OPTS);
+    const a = canonicalizePathExpression("~/.tinkerman/config.md", OPTS);
+    const b = canonicalizePathExpression("/Users/x/.tinkerman/config.md", OPTS);
     expect(pathsEquivalent(a, b)).toBe(true);
   });
 

@@ -11,7 +11,7 @@ allowed_tools:
 # /tinkerman test --cli — CLI Harness
 
 > **Trigger**: `/tinkerman test --cli` or forge-test auto-detects CLI target
-> **Output**: `.forge/findings/<topic>/cli-harness/`
+> **Output**: `.tinkerman/findings/<topic>/cli-harness/`
 
 ## 1. Overview
 
@@ -38,7 +38,7 @@ Priority order — first available wins:
 2. Execute target command in selected harness
 3. Optionally feed input script line-by-line
 4. Capture stdout/stderr + exit code
-5. Write artifacts to `.forge/findings/<topic>/cli-harness/`
+5. Write artifacts to `.tinkerman/findings/<topic>/cli-harness/`
 6. Return `HarnessVerdict` (VERIFIED / NOT_VERIFIED / INCONCLUSIVE)
 
 ## 4. Artifacts [R5.3]

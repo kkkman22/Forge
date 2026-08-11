@@ -38,7 +38,7 @@ function makeDiag(overrides: Partial<DiagnosticRecord> = {}): DiagnosticRecord {
   return {
     script: SCRIPT_NAME,
     severity: "error",
-    file: ".forge/config.md" as any,
+    file: ".tinkerman/config.md" as any,
     message: "test diagnostic",
     ...overrides,
   };
@@ -158,7 +158,7 @@ describe("check-docs-quota CLI logic", () => {
     it("checkQuota accepts --allow-grow with valid ADR", () => {
       const files = ["docs/a.md", "docs/b.md"];
       const diags = checkQuota(files, baseConfig(1), {
-        allowGrow: ".forge/decisions/ADR-001-quota-raise.md",
+        allowGrow: ".tinkerman/decisions/ADR-001-quota-raise.md",
       });
       expect(diags.every((d) => d.code !== "QUOTA_ALLOW_GROW_NO_ADR")).toBe(true);
     });

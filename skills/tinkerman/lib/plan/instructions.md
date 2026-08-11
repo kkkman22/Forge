@@ -15,7 +15,7 @@ allowed_tools:
 
 > **触发方式**：标准路径的第一步，全量路径的第三步，或用户直接输入 `/tinkerman plan`
 > **职责**：将锁定的 Spec 拆解为包含 TDD 步骤的原子任务，生成可直接执行的开发计划
-> **输出路径**：`.forge/specs/<topic>/tasks.md`（三文件单源）。Legacy 回退：`.forge/plans/<topic>.md`
+> **输出路径**：`.tinkerman/specs/<topic>/tasks.md`（三文件单源）。Legacy 回退：`.tinkerman/plans/<topic>.md`
 
 ---
 
@@ -23,7 +23,7 @@ allowed_tools:
 
 五步流程（Research → File Mapping → Task Breakdown → Self-Check → User Approval）将锁定的 Spec 转化为原子任务列表。每个任务包含文件路径、TDD 步骤、完整代码、验证命令和提交信息。
 
-**三文件单源**：plan 阶段不再向 `.forge/plans/<topic>.md` 写入独立文件。而是直接读取并就地升级 `.forge/specs/<topic>/tasks.md`（draft → locked），补全任务编号、JSON wave 块、估时、status 字段、DoD。运行时调用 `lockPlan(doc)`（`src/plan.ts`），传入解析得到的 `TasksSeedDocument`；它内部会调用 `upgradeTasksSeed` 补 wave/status，最终 frontmatter `status` 从 draft 切到 locked。当 `tasks.md` 不存在但 `plans/<topic>.md` 存在时，作为兼容回退以 plans 文件为只读种子合成 tasks.md。
+**三文件单源**：plan 阶段不再向 `.tinkerman/plans/<topic>.md` 写入独立文件。而是直接读取并就地升级 `.tinkerman/specs/<topic>/tasks.md`（draft → locked），补全任务编号、JSON wave 块、估时、status 字段、DoD。运行时调用 `lockPlan(doc)`（`src/plan.ts`），传入解析得到的 `TasksSeedDocument`；它内部会调用 `upgradeTasksSeed` 补 wave/status，最终 frontmatter `status` 从 draft 切到 locked。当 `tasks.md` 不存在但 `plans/<topic>.md` 存在时，作为兼容回退以 plans 文件为只读种子合成 tasks.md。
 
 **核心原则**：计划中不允许任何模糊内容。写不出完整代码说明还没想清楚，回去重新研究。
 
@@ -46,21 +46,21 @@ allowed_tools:
 Read spec frontmatter `health` field. If spec_hash matches current content, reuse cached score. Otherwise, call `checkSpecHealth` to recompute.
 
 - `verdict=degraded` + interactive → prompt user: 1) return to spec 2) trigger grill 3) force continue
-- `verdict=degraded` + autonomous → write advisory to `.forge/findings/spec-health-advisory-<topic>.md`, continue
+- `verdict=degraded` + autonomous → write advisory to `.tinkerman/findings/spec-health-advisory-<topic>.md`, continue
 - `verdict=marginal` → output warning, continue
 
 ### §1.7 Pre-flight: Replan Gate（dynamic-replan-loop R3）
 
-读 `.forge/status.md` 的 `replan_pending` 字段（passthrough，非强制 schema）。**WHEN `replan_pending === "true"`**，进入**增量重规划模式**（而非首次 plan）：
+读 `.tinkerman/status.md` 的 `replan_pending` 字段（passthrough，非强制 schema）。**WHEN `replan_pending === "true"`**，进入**增量重规划模式**（而非首次 plan）：
 
 0. **熔断检查**：读 status.md 的 `replan_count`（passthrough，整数，缺失当 0）。**WHEN `replan_count >= 3`**：停止重规划，输出告警"replan 已达上限（3 次），疑似 agent 系统性误判 failure_class，需人工介入方向"，不进入下方步骤（防 DoS，与 three-strike 解耦——three-strike 因 success 会重置计数，不能单独兜底 replan 循环）。
 1. **读 `invalidated_assumptions`**：从 status.md 取被证伪的假设清单（由 debug Phase 5 在 `failure_class: assumption_invalidated` 时写入 status.md）。
 2. **取剩余未完成 task**：用 `filterRemainingTasks(tasks)`（`src/spec-bundle.ts`）过滤出 `status !== "completed"` 的 task（pending/in-progress/blocked/failed）。**已完成 task 不参与重规划、不回滚**（增量非全量）。
 3. **修订剩余 task**：对照 `invalidated_assumptions`，重设计受影响的剩余 task 的顺序/拆分/方案。未受影响的剩余 task 保持原样。
-4. **写回计划**：修订后的剩余 task 写回 `.forge/plans/<topic>.md`，frontmatter 加 `replan_of: "<original-plan-ref>"` + `invalidated_assumptions: [...]`，**显著标注为 replan 版本**。
+4. **写回计划**：修订后的剩余 task 写回 `.tinkerman/plans/<topic>.md`，frontmatter 加 `replan_of: "<original-plan-ref>"` + `invalidated_assumptions: [...]`，**显著标注为 replan 版本**。
 5. **等用户批准**（plan phase 批准门禁，Step 5）：replan 版本需用户 review 后才继续 build。这是计划层批准，**不是**违反 No-Mid-build-Confirmation（该铁律管 build 内中途确认，不管 plan 批准）。
 6. **批准后清空 `replan_pending` + 递增 `replan_count`**：用户批准修订计划后，清空 status.md 的 `replan_pending` 和 `invalidated_assumptions`，`replan_count` 递增 1，回到 build。
-7. **叙事落盘（可选，R4）**：若 `.forge/runs/<run_id>/commit-narrative.md` 存在（loop-engineering-adoption R3），追加一节：`why: <invalidated_assumptions>` + `what: <剩余 task 修订摘要>`。不存在则跳过（解耦）。
+7. **叙事落盘（可选，R4）**：若 `.tinkerman/runs/<run_id>/commit-narrative.md` 存在（loop-engineering-adoption R3），追加一节：`why: <invalidated_assumptions>` + `what: <剩余 task 修订摘要>`。不存在则跳过（解耦）。
 
 **约束**：增量 replan 受 plan phase 既有门禁约束——Spec Lock（不偏离已批准 spec）、frozen-zone 保护（已完成 task 不回滚）。不静默改方向（Step 5 用户批准）。
 
@@ -76,7 +76,7 @@ plan 入口解析项目启用的 domain pack，注入结构化领域知识摘要
 2. **IF `enabled.order.length === 0`** → 跳过本节（Zero-Pack；当前行为不变，INV-1）。
 3. **ELSE** 调用 `composeDomainKnowledgeBundle(enabled, fs)`，将以下**结构化摘要**注入工作上下文（**非全文**，agent 按需 Read 提供的路径）：
    - **Contexts**：每个 bounded context 的 `name` + `responsibility`（一行），来自 `bundle.contexts`。
-   - **Glossary terms**：术语清单（含 aliases），来自 `bundle.glossaryTerms`。这些是 **advisory 只读**——强制执行仍走 `runGlossaryCheck` 对照扁平 `.forge/glossary.md`（spec REQ-6）。
+   - **Glossary terms**：术语清单（含 aliases），来自 `bundle.glossaryTerms`。这些是 **advisory 只读**——强制执行仍走 `runGlossaryCheck` 对照扁平 `.tinkerman/glossary.md`（spec REQ-6）。
    - **State machines**：每个状态机的 `name` + transition 数，来自 `bundle.stateMachines`，附 `sourcePath` 供 agent 按需读取 YAML。
 4. 注入**摘要**而非全文。仅在某个 task 需要细节时，agent 通过提供的路径 Read 完整文件。
 
@@ -104,7 +104,7 @@ plan 入口解析项目启用的 domain pack，注入结构化领域知识摘要
 
 Phase 1 advisory: **does not block**, only warns.
 
-**Before reading .forge/ or project files**, call `checkFilesystemPolicy(targetPath, 'read', sandboxConfig)`:
+**Before reading .tinkerman/ or project files**, call `checkFilesystemPolicy(targetPath, 'read', sandboxConfig)`:
 
 ```
 import { loadSandboxConfig, checkFilesystemPolicy } from "./sandbox-policy.js";
@@ -115,7 +115,7 @@ if (!result.allowed) {
 }
 ```
 
-**Trigger**: Any `Read` tool call targeting `.forge/` or project source files during research.
+**Trigger**: Any `Read` tool call targeting `.tinkerman/` or project source files during research.
 
 ### Step 2: File Mapping
 
@@ -123,12 +123,12 @@ if (!result.allowed) {
 
 ### Step 2.5: Backlog Overlap Check（forge-review-fix-optimization R6.3）
 
-File Mapping 完成后，检查 `.forge/backlog.md`（若存在）是否有与本计划受影响文件路径重叠的未解决 P2/P3 条目。
+File Mapping 完成后，检查 `.tinkerman/backlog.md`（若存在）是否有与本计划受影响文件路径重叠的未解决 P2/P3 条目。
 
-**实现**：纯函数 `findOverlappingEntries(entries, affectedFiles)`（`src/backlog.ts`）——传入 `parseBacklog(read(".forge/backlog.md"))` 与本计划 File Mapping 的文件列表，返回重叠条目。
+**实现**：纯函数 `findOverlappingEntries(entries, affectedFiles)`（`src/backlog.ts`）——传入 `parseBacklog(read(".tinkerman/backlog.md"))` 与本计划 File Mapping 的文件列表，返回重叠条目。
 
 - 若有重叠：在计划开头的 "已知背景" 段列出每条（severity / filePath / description / originTask），提示这些历史 P2/P3 可在本任务中顺手解决（R6.5：解决后调 `resolveEntry` 标记）。
-- 若无 `.forge/backlog.md` 或无重叠：跳过，不阻塞计划。
+- 若无 `.tinkerman/backlog.md` 或无重叠：跳过，不阻塞计划。
 
 ### Step 3: Task Breakdown
 
@@ -141,7 +141,7 @@ File Mapping 完成后，检查 `.forge/backlog.md`（若存在）是否有与�
 #### Vertical Slice 约束
 
 每个 task 必须是一个 **Tracer Bullet**：贯穿所有相关层的端到端垂直切片。
-参考 `.forge/glossary.md` 中 `Vertical Slice` 的定义。
+参考 `.tinkerman/glossary.md` 中 `Vertical Slice` 的定义。
 
 WRONG（水平切片）:
   Task 1: 设计数据库 schema
@@ -180,9 +180,9 @@ RIGHT（垂直切片）:
 
 **默认**：`AFK`。仅在明确满足 HITL 触发条件时标记 `HITL`。
 
-任务命名优先使用 `.forge/glossary.md` 定义的规范术语；如发现同义词/别名，自动替换为 canonical term，保持跨 skill 命名一致。
+任务命名优先使用 `.tinkerman/glossary.md` 定义的规范术语；如发现同义词/别名，自动替换为 canonical term，保持跨 skill 命名一致。
 
-Glossary Hook: Task Breakdown 后调用 `runGlossaryCheck({ phase: 'plan' })`（glossary 参数来自 `loadEnforcementGlossary(rootDir, fs)`：扁平 `.forge/glossary.md` 主权源 + enabled pack 术语只读补充）检查 task title 术语一致性。启动时如 spec frontmatter 含 `pending_glossary_advisories`，调用 `renderPendingAdvisoryNotice(paths)` 显示 advisory 列表。
+Glossary Hook: Task Breakdown 后调用 `runGlossaryCheck({ phase: 'plan' })`（glossary 参数来自 `loadEnforcementGlossary(rootDir, fs)`：扁平 `.tinkerman/glossary.md` 主权源 + enabled pack 术语只读补充）检查 task title 术语一致性。启动时如 spec frontmatter 含 `pending_glossary_advisories`，调用 `renderPendingAdvisoryNotice(paths)` 显示 advisory 列表。
 
 ### Step 3.5: 依赖识别
 
@@ -224,7 +224,7 @@ Glossary Hook: Task Breakdown 后调用 `runGlossaryCheck({ phase: 'plan' })`（
 | Dependencies | 无循环依赖，拓扑排序正确 |
 | Dependency Graph Validity | `validateGraph(toTaskGraph(tasks))` 通过；循环依赖自动修正 |
 | Plan Structure | Split_Trigger 任一命中 → 警告 + 等待用户选择 → 详见 references/plan-split-wizard.md |
-| Charter Boundary | 当 `.forge/charter.md` 存在且 `status: active` 时，验证 plan 中的文件变更不违反 charter boundaries（模块间通信约束、层级访问限制）。违规任务标注 `⚠ Charter boundary conflict: <invariant-id>` |
+| Charter Boundary | 当 `.tinkerman/charter.md` 存在且 `status: active` 时，验证 plan 中的文件变更不违反 charter boundaries（模块间通信约束、层级访问限制）。违规任务标注 `⚠ Charter boundary conflict: <invariant-id>` |
 
 未通过则自动修正并重新自检。
 
@@ -255,10 +255,10 @@ IF Plan_Structure_Check 触发（`checkPlanStructure` 返回 `triggered: true`�
 **批准后必须设置活跃计划指针**（spec `planning-with-files-borrow` R3）：plan frontmatter 改为 `status: approved` 后，立即运行：
 
 ```bash
-node scripts/set-active-plan.mjs .forge/plans/<topic>.md
+node scripts/set-active-plan.mjs .tinkerman/plans/<topic>.md
 ```
 
-这会写入 `.forge/state/active-plan.json`（plan_path / spec_ref / phase / pinned_at），作为 inject-plan-context.mjs 的单一权威注入源。不设置则 build 阶段退化为旧 mtime 扫描（向后兼容，但 R3 单一权威计划机制不生效）。spec_ref 从 plan frontmatter 自动提取并校验落在 `.forge/specs/` 内。
+这会写入 `.tinkerman/state/active-plan.json`（plan_path / spec_ref / phase / pinned_at），作为 inject-plan-context.mjs 的单一权威注入源。不设置则 build 阶段退化为旧 mtime 扫描（向后兼容，但 R3 单一权威计划机制不生效）。spec_ref 从 plan frontmatter 自动提取并校验落在 `.tinkerman/specs/` 内。
 
 Plan frontmatter 可含 `monolith_acknowledged: true`（用户明确知悉未拆分风险），此字段由 Step 4a 自动追加。
 
@@ -292,7 +292,7 @@ Plan frontmatter 可含 `monolith_acknowledged: true`（用户明确知悉未拆
 
 ## 7. Plan Document Format
 
-输出路径：`.forge/plans/<topic>.md`（kebab-case）
+输出路径：`.tinkerman/plans/<topic>.md`（kebab-case）
 
 Frontmatter 字段：`topic`, `status` (draft/approved), `date`, `spec_ref`, `format` (lightweight/full)
 
@@ -306,8 +306,8 @@ Frontmatter 字段：`topic`, `status` (draft/approved), `date`, `spec_ref`, `fo
 
 按优先级从以下来源提取跨任务约束，**逐字抄录**进 Global Constraints 表（不写"见 spec §3"这类引用）：
 
-1. **`.forge/charter.md`**（status: active）— 项目级 invariant（模块边界、命名、安全级别）
-2. **`.forge/config.md`** — 运行时版本、依赖上限、命名配置
+1. **`.tinkerman/charter.md`**（status: active）— 项目级 invariant（模块边界、命名、安全级别）
+2. **`.tinkerman/config.md`** — 运行时版本、依赖上限、命名配置
 3. **spec 的 Non-Functional Requirements** — 性能、超时、文案、i18n
 4. **design.md 的技术选型** — 框架版本、库选择、API 风格
 5. **package.json / 现有依赖** — 实际版本上下限
@@ -335,7 +335,7 @@ Frontmatter 字段：`topic`, `status` (draft/approved), `date`, `spec_ref`, `fo
 
 ## 8. Execution Flow
 
-1. **Pre-check**: `.forge/` 存在？Spec 状态？
+1. **Pre-check**: `.tinkerman/` 存在？Spec 状态？
 2. **Research**: 搜索 knowledge/、读 Spec、派发 explore agent
 3. **File Mapping**: 列出所有创建/修改文件
 4. **Task Breakdown**: 拆解为原子任务
@@ -343,7 +343,7 @@ Frontmatter 字段：`topic`, `status` (draft/approved), `date`, `spec_ref`, `fo
 6. **User Approval**: 批准/修改/拒绝
 7. **自动推进（铁律）**: 批准后**立即调用** `Skill(skill="forge", args="build")`。不输出"是否继续？""开始build？"等确认文本。仅输出 `✅ plan 完成 → 自动进入 build`，然后直接调用 Skill。静默 idle（无输出、等待用户输入）与显式询问同罪。（→ 详见 shared/next-step-protocol.md）
 
-**Pre-check 详情**：`.forge/` 不存在 → prompt `/tinkerman init`。Full path 要求 Spec locked；Standard path 无 Spec 时直接生成 Plan（`spec_ref: "none"`）。
+**Pre-check 详情**：`.tinkerman/` 不存在 → prompt `/tinkerman init`。Full path 要求 Spec locked；Standard path 无 Spec 时直接生成 Plan（`spec_ref: "none"`）。
 
 ---
 
@@ -357,7 +357,7 @@ Frontmatter 字段：`topic`, `status` (draft/approved), `date`, `spec_ref`, `fo
 | Existing plan (approved) | 提示先改 status 为 draft |
 | Self-check fails 3 times | 停止自动修正，呈现给用户 |
 | No knowledge/ history | 跳过，输出提示 |
-| No `.forge/` directory | Prompt `/tinkerman init` |
+| No `.tinkerman/` directory | Prompt `/tinkerman init` |
 
 ---
 

@@ -33,8 +33,8 @@ describe("classify", () => {
   });
 
   // Domain C (highest priority after excluded)
-  it("classifies .forge/ as domain C", () => {
-    expect(classify(".forge/status.md")).toBe("C");
+  it("classifies .tinkerman/ as domain C", () => {
+    expect(classify(".tinkerman/status.md")).toBe("C");
   });
 
   it("classifies .kiro/specs/ as domain C", () => {
@@ -89,10 +89,10 @@ describe("classify", () => {
   });
 
   // Priority conflicts — C beats B beats A beats D
-  it(".forge/ in path beats docs/", () => {
-    // .forge/ is domain C, but docs/ is domain A — C has priority
-    // A file at .forge/whatever.md would be C, not A
-    expect(classify(".forge/archive/audit.md")).toBe("C");
+  it(".tinkerman/ in path beats docs/", () => {
+    // .tinkerman/ is domain C, but docs/ is domain A — C has priority
+    // A file at .tinkerman/whatever.md would be C, not A
+    expect(classify(".tinkerman/archive/audit.md")).toBe("C");
   });
 
   // UNCLASSIFIED

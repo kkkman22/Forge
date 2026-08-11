@@ -29,7 +29,7 @@ Activated automatically during `/tinkerman test` when cmux browser capabilities 
 
 ## Artifact
 
-Results written to `.forge/.cmux-browser-qa.json`.
+Results written to `.tinkerman/.cmux-browser-qa.json`.
 
 ## Diagnostics Collection (cmux 0.64.8–0.64.15)
 
@@ -43,7 +43,7 @@ after `runBrowserQa` to preserve evidence on failure:
 | Console log | `cmux browser console list` | 0.64.15 view-action | `console.txt` (from stdout) |
 | JS errors | `cmux browser errors list` | 0.64.15 view-action | `errors.txt` (from stdout) |
 
-Artifacts land under `.forge/findings/<topic>/browser-qa/`. Each step degrades
+Artifacts land under `.tinkerman/findings/<topic>/browser-qa/`. Each step degrades
 independently — a missing view-action (older cmux) is recorded as `skipped`
 without aborting the others. Pass `surface` to target a specific browser surface
 (most subcommands require one per `cmux browser --help`).

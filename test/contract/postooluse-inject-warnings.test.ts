@@ -60,20 +60,20 @@ function setupForgeEnv(opts: {
   contextOwnership?: string;
   contextMap?: string;
 }) {
-  // .forge/config.md
-  const configPath = fixture(".forge", "config.md");
+  // .tinkerman/config.md
+  const configPath = fixture(".tinkerman", "config.md");
   writeFileSync(
     configPath,
     opts.configContent ?? `---\npostooluse_inject_warnings: on\n---\n\n# Test config`,
   );
 
   if (opts.contextOwnership) {
-    writeFileSync(fixture(".forge", "context-ownership.yaml"), opts.contextOwnership);
+    writeFileSync(fixture(".tinkerman", "context-ownership.yaml"), opts.contextOwnership);
   }
 
   if (opts.contextMap) {
-    mkdirSync(fixture(".forge", "custom", "contexts"), { recursive: true });
-    writeFileSync(fixture(".forge", "custom", "contexts", "_map.yaml"), opts.contextMap);
+    mkdirSync(fixture(".tinkerman", "custom", "contexts"), { recursive: true });
+    writeFileSync(fixture(".tinkerman", "custom", "contexts", "_map.yaml"), opts.contextMap);
   }
 }
 
@@ -82,7 +82,7 @@ function setupForgeEnv(opts: {
 describe("PostToolUse inject warnings hook (R15)", () => {
   beforeEach(() => {
     if (existsSync(FIXTURE_DIR)) rmSync(FIXTURE_DIR, { recursive: true });
-    mkdirSync(fixture(".forge"), { recursive: true });
+    mkdirSync(fixture(".tinkerman"), { recursive: true });
   });
 
   afterEach(() => {
@@ -96,7 +96,7 @@ describe("PostToolUse inject warnings hook (R15)", () => {
     const input = {
       tool_name: "Edit",
       tool_input: {
-        file_path: fixture(".forge", "config.md"),
+        file_path: fixture(".tinkerman", "config.md"),
       },
       tool_response: "The file has been edited successfully.",
     };
@@ -122,7 +122,7 @@ describe("PostToolUse inject warnings hook (R15)", () => {
     const input = {
       tool_name: "Write",
       tool_input: {
-        file_path: fixture(".forge", "config.md"),
+        file_path: fixture(".tinkerman", "config.md"),
       },
       tool_response: "File written successfully.",
     };
@@ -163,7 +163,7 @@ describe("PostToolUse inject warnings hook (R15)", () => {
     const input = {
       tool_name: "Bash",
       tool_input: {
-        command: "cat .forge/config.md",
+        command: "cat .tinkerman/config.md",
       },
       tool_response: "---\npostooluse_inject_warnings: on\n---",
     };
@@ -179,7 +179,7 @@ describe("PostToolUse inject warnings hook (R15)", () => {
     const input = {
       tool_name: "Read",
       tool_input: {
-        file_path: fixture(".forge", "config.md"),
+        file_path: fixture(".tinkerman", "config.md"),
       },
       tool_response: "---\npostooluse_inject_warnings: on\n---",
     };
@@ -198,7 +198,7 @@ describe("PostToolUse inject warnings hook (R15)", () => {
     const input = {
       tool_name: "Edit",
       tool_input: {
-        file_path: fixture(".forge", "config.md"),
+        file_path: fixture(".tinkerman", "config.md"),
       },
       tool_response: "The file has been edited successfully.",
     };
@@ -219,7 +219,7 @@ describe("PostToolUse inject warnings hook (R15)", () => {
     const input = {
       tool_name: "Edit",
       tool_input: {
-        file_path: fixture(".forge", "config.md"),
+        file_path: fixture(".tinkerman", "config.md"),
       },
       tool_response: "Edited.",
     };
@@ -241,7 +241,7 @@ describe("PostToolUse inject warnings hook (R15)", () => {
     const input = {
       tool_name: "Write",
       tool_input: {
-        file_path: fixture(".forge", "config.md"),
+        file_path: fixture(".tinkerman", "config.md"),
       },
       tool_response: "Original response text",
     };
@@ -338,7 +338,7 @@ describe("PostToolUse inject warnings hook (R15)", () => {
     const input = {
       tool_name: "MultiEdit",
       tool_input: {
-        file_path: fixture(".forge", "config.md"),
+        file_path: fixture(".tinkerman", "config.md"),
       },
       tool_response: "Multi-edit applied.",
     };
@@ -355,16 +355,16 @@ describe("PostToolUse inject warnings hook (R15)", () => {
   // AC12: Frozen spec files (with status:locked)
   it("injects warning when Edit touches a locked spec file", () => {
     setupForgeEnv({});
-    mkdirSync(fixture(".forge", "specs", "my-feature"), { recursive: true });
+    mkdirSync(fixture(".tinkerman", "specs", "my-feature"), { recursive: true });
     writeFileSync(
-      fixture(".forge", "specs", "my-feature", "spec.md"),
+      fixture(".tinkerman", "specs", "my-feature", "spec.md"),
       "---\nstatus: locked\n---\n\n# My Feature Spec",
     );
 
     const input = {
       tool_name: "Edit",
       tool_input: {
-        file_path: fixture(".forge", "specs", "my-feature", "spec.md"),
+        file_path: fixture(".tinkerman", "specs", "my-feature", "spec.md"),
       },
       tool_response: "Spec edited.",
     };
@@ -382,16 +382,16 @@ describe("PostToolUse inject warnings hook (R15)", () => {
   // AC13: Frozen plan files (with status:approved)
   it("injects warning when Write touches an approved plan file", () => {
     setupForgeEnv({});
-    mkdirSync(fixture(".forge", "plans"), { recursive: true });
+    mkdirSync(fixture(".tinkerman", "plans"), { recursive: true });
     writeFileSync(
-      fixture(".forge", "plans", "my-plan.md"),
+      fixture(".tinkerman", "plans", "my-plan.md"),
       "---\nstatus: approved\n---\n\n# My Plan",
     );
 
     const input = {
       tool_name: "Write",
       tool_input: {
-        file_path: fixture(".forge", "plans", "my-plan.md"),
+        file_path: fixture(".tinkerman", "plans", "my-plan.md"),
       },
       tool_response: "Plan written.",
     };
@@ -413,7 +413,7 @@ describe("PostToolUse inject warnings hook (R15)", () => {
     const input = {
       tool_name: "NotebookEdit",
       tool_input: {
-        notebook_path: fixture(".forge", "config.md"),
+        notebook_path: fixture(".tinkerman", "config.md"),
       },
       tool_response: "Notebook edited.",
     };

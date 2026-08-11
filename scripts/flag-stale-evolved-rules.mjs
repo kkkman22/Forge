@@ -2,9 +2,9 @@
 /**
  * Stale Evolved Rules Flagger.
  *
- * Scans `.forge/knowledge/evolved-rules.md` for rules that have not been
+ * Scans `.tinkerman/knowledge/evolved-rules.md` for rules that have not been
  * triggered for >= 5 sessions (where "session" = a directory under
- * `.forge/runs/` with mtime later than the rule's `Last_triggered` date).
+ * `.tinkerman/runs/` with mtime later than the rule's `Last_triggered` date).
  *
  * Updates the frontmatter `stale_flags:` list accordingly.
  *
@@ -30,8 +30,8 @@ import {
     writeStaleFlagsToFrontmatter,
 } from "../dist/src/evolved-rules-staleness.js";
 
-const RULES_FILE = path.join(process.cwd(), ".forge", "knowledge", "evolved-rules.md");
-const RUNS_DIR = path.join(process.cwd(), ".forge", "runs");
+const RULES_FILE = path.join(process.cwd(), ".tinkerman", "knowledge", "evolved-rules.md");
+const RUNS_DIR = path.join(process.cwd(), ".tinkerman", "runs");
 
 function main() {
   const dryRun = process.argv.includes("--dry-run");
@@ -51,7 +51,7 @@ function main() {
   const [, frontmatter, body] = frontmatterMatch;
   const rules = parseRules(body);
 
-  // Collect mtimes of all subdirs under .forge/runs/
+  // Collect mtimes of all subdirs under .tinkerman/runs/
   const runDirMtimes = [];
   if (existsSync(RUNS_DIR)) {
     try {

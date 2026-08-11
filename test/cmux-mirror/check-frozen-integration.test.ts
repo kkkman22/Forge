@@ -18,12 +18,12 @@ describe("check-frozen: hook-notify integration (R6.1, R11.10.b)", () => {
     }
   });
 
-  it("isFrozenZonePath identifies frozen zone paths (.forge/specs/, .forge/plans/)", async () => {
+  it("isFrozenZonePath identifies frozen zone paths (.tinkerman/specs/, .tinkerman/plans/)", async () => {
     const { isFrozenZonePath } = await import("../../src/check-frozen.js");
-    expect(isFrozenZonePath(".forge/specs/my-spec.md")).toBe(true);
-    expect(isFrozenZonePath(".forge/plans/my-plan.md")).toBe(true);
-    expect(isFrozenZonePath(".forge/config.md")).toBe(true);
-    expect(isFrozenZonePath(".forge/status.md")).toBe(false);
+    expect(isFrozenZonePath(".tinkerman/specs/my-spec.md")).toBe(true);
+    expect(isFrozenZonePath(".tinkerman/plans/my-plan.md")).toBe(true);
+    expect(isFrozenZonePath(".tinkerman/config.md")).toBe(true);
+    expect(isFrozenZonePath(".tinkerman/status.md")).toBe(false);
     expect(isFrozenZonePath("src/main.ts")).toBe(false);
   });
 

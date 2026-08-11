@@ -1,6 +1,6 @@
 /**
  * Pattern Confidence Lifecycle — types, parser, renderer, and statistics
- * updates for the patterns stored in `.forge/knowledge/instincts.md`.
+ * updates for the patterns stored in `.tinkerman/knowledge/instincts.md`.
  *
  * Each pattern carries a Beta-distribution-backed confidence score so the
  * learn skill can surface decayed (low confidence, enough samples) and
@@ -103,7 +103,7 @@ const ARCHIVED_SENTINEL = "## Archived";
 // ---------------------------------------------------------------------------
 
 /**
- * Parse the contents of `.forge/knowledge/instincts.md` into a list of
+ * Parse the contents of `.tinkerman/knowledge/instincts.md` into a list of
  * patterns.
  *
  * Accepts both:

@@ -1,6 +1,6 @@
 /**
  * ConfigStore module — pure functions for reading and writing the `lang`
- * field in `.forge/config.md` frontmatter, and for parsing/merging log
+ * field in `.tinkerman/config.md` frontmatter, and for parsing/merging log
  * configuration from config files and CLI parameters.
  *
  * Reuses `parseFrontmatter()` and `extractStringField()` from `frontmatter.ts`
@@ -212,7 +212,7 @@ export function parseConfigGraceful(content: string | undefined): {
 // ---------------------------------------------------------------------------
 
 /**
- * Log configuration parsed from `.forge/config.md` frontmatter.
+ * Log configuration parsed from `.tinkerman/config.md` frontmatter.
  * All fields are nullable — `null` indicates the field was not present
  * or had an invalid value.
  */

@@ -3,7 +3,7 @@
 /**
  * Tests for duration_ms tracking in check-context-boundary.mjs
  *
- * Validates: PostToolUse mode extracts duration_ms and appends to .forge/runs/
+ * Validates: PostToolUse mode extracts duration_ms and appends to .tinkerman/runs/
  * Fail-open: exits 0 on any condition.
  */
 
@@ -42,7 +42,7 @@ function runHook(toolInputFile, mode = "PostToolUse") {
 }
 
 function findRunLog() {
-  const runsDir = join(TMPDIR, ".forge", "runs");
+  const runsDir = join(TMPDIR, ".tinkerman", "runs");
   if (!existsSync(runsDir)) return null;
   // Find the most recent directory
   const dirs = readdirSync(runsDir)
@@ -61,7 +61,7 @@ function findRunLog() {
 describe("duration_ms tracking", () => {
   before(() => {
     rmSync(TMPDIR, { recursive: true, force: true });
-    mkdirSync(join(TMPDIR, ".forge", "runs"), { recursive: true });
+    mkdirSync(join(TMPDIR, ".tinkerman", "runs"), { recursive: true });
   });
 
   test("does not crash when PostToolUse with no duration_ms", () => {

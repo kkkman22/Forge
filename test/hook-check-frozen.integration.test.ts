@@ -35,7 +35,7 @@ describe("Integration: PreToolUse structured hook", () => {
   it("denies write to frozen config.md with valid JSON", () => {
     const { stdout, exitCode } = runHook("scripts/hook-check-frozen-structured.sh", {
       tool_name: "Write",
-      tool_input: { file_path: ".forge/config.md" },
+      tool_input: { file_path: ".tinkerman/config.md" },
     });
 
     expect(exitCode).toBe(0);
@@ -58,7 +58,7 @@ describe("Integration: PreToolUse structured hook", () => {
   it("denies write to approved plan with frozen-plan category", () => {
     const { stdout, exitCode } = runHook("scripts/hook-check-frozen-structured.sh", {
       tool_name: "Edit",
-      tool_input: { file_path: ".forge/plans/frozen-zone-structured-feedback.md" },
+      tool_input: { file_path: ".tinkerman/plans/frozen-zone-structured-feedback.md" },
     });
 
     expect(exitCode).toBe(0);
@@ -71,7 +71,7 @@ describe("Integration: PostToolUse defence-in-depth hook", () => {
   it("detects breach on frozen config.md", () => {
     const { stdout, exitCode } = runHook("scripts/hook-check-frozen-post.sh", {
       tool_name: "Write",
-      tool_input: { file_path: ".forge/config.md" },
+      tool_input: { file_path: ".tinkerman/config.md" },
       tool_response: { success: true },
     });
 
@@ -96,7 +96,7 @@ describe("Integration: PostToolUse defence-in-depth hook", () => {
   it("skips when tool_response.success is false", () => {
     const { stdout, exitCode } = runHook("scripts/hook-check-frozen-post.sh", {
       tool_name: "Write",
-      tool_input: { file_path: ".forge/config.md" },
+      tool_input: { file_path: ".tinkerman/config.md" },
       tool_response: { success: false },
     });
 
@@ -106,12 +106,12 @@ describe("Integration: PostToolUse defence-in-depth hook", () => {
 });
 
 describe("Integration: audit logging", () => {
-  const logDir = resolve(ROOT, ".forge", "runs");
+  const logDir = resolve(ROOT, ".tinkerman", "runs");
 
   it("log_event writes JSONL entry", () => {
     runHook("scripts/hook-check-frozen-structured.sh", {
       tool_name: "Write",
-      tool_input: { file_path: ".forge/config.md" },
+      tool_input: { file_path: ".tinkerman/config.md" },
     });
 
     // Verify log was written (at least one new line)

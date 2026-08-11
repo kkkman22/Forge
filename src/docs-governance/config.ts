@@ -49,7 +49,7 @@ function makeWarning(field: string, reason: string, fallback: string): Diagnosti
   return {
     script: "config",
     severity: "warning",
-    file: ".forge/config.md" as DocPath,
+    file: ".tinkerman/config.md" as DocPath,
     message: `Field "${field}" ${reason}; falling back to ${fallback}`,
     code: "CONFIG_FIELD_INVALID",
   };

@@ -46,7 +46,7 @@ describe("Unit: partial_failures append to same-day file without overwriting", (
 
     const errorFilePath = path.join(
       tmpDir,
-      ".forge",
+      ".tinkerman",
       "findings",
       `comment-channel-error-${dateStr}.md`,
     );
@@ -65,7 +65,7 @@ describe("Unit: metrics.md appends line with all 10 fields", () => {
 
   beforeEach(() => {
     tmpDir = fs.mkdtempSync(path.join(os.tmpdir(), "observability-test-"));
-    fs.mkdirSync(path.join(tmpDir, ".forge", "knowledge"), { recursive: true });
+    fs.mkdirSync(path.join(tmpDir, ".tinkerman", "knowledge"), { recursive: true });
   });
 
   afterEach(() => {
@@ -89,7 +89,7 @@ describe("Unit: metrics.md appends line with all 10 fields", () => {
       tmpDir,
     );
 
-    const metricsPath = path.join(tmpDir, ".forge", "knowledge", "metrics.md");
+    const metricsPath = path.join(tmpDir, ".tinkerman", "knowledge", "metrics.md");
     expect(fs.existsSync(metricsPath)).toBe(true);
 
     const content = fs.readFileSync(metricsPath, "utf-8");
@@ -138,7 +138,7 @@ describe("Unit: metrics.md appends line with all 10 fields", () => {
       tmpDir,
     );
 
-    const metricsPath = path.join(tmpDir, ".forge", "knowledge", "metrics.md");
+    const metricsPath = path.join(tmpDir, ".tinkerman", "knowledge", "metrics.md");
     const content = fs.readFileSync(metricsPath, "utf-8");
 
     const lines = content.split("\n").filter((l) => l.length > 0);
@@ -153,7 +153,7 @@ describe("Unit: posted=false path writes metrics with gate_skipped_reason", () =
 
   beforeEach(() => {
     tmpDir = fs.mkdtempSync(path.join(os.tmpdir(), "observability-test-"));
-    fs.mkdirSync(path.join(tmpDir, ".forge", "knowledge"), { recursive: true });
+    fs.mkdirSync(path.join(tmpDir, ".tinkerman", "knowledge"), { recursive: true });
   });
 
   afterEach(() => {
@@ -177,7 +177,7 @@ describe("Unit: posted=false path writes metrics with gate_skipped_reason", () =
       tmpDir,
     );
 
-    const metricsPath = path.join(tmpDir, ".forge", "knowledge", "metrics.md");
+    const metricsPath = path.join(tmpDir, ".tinkerman", "knowledge", "metrics.md");
     const content = fs.readFileSync(metricsPath, "utf-8");
 
     expect(content).toContain("post_enabled=false");
@@ -194,8 +194,8 @@ describe("Unit: posted=true but all partial-failed writes metrics correctly", ()
 
   beforeEach(() => {
     tmpDir = fs.mkdtempSync(path.join(os.tmpdir(), "observability-test-"));
-    fs.mkdirSync(path.join(tmpDir, ".forge", "findings"), { recursive: true });
-    fs.mkdirSync(path.join(tmpDir, ".forge", "knowledge"), { recursive: true });
+    fs.mkdirSync(path.join(tmpDir, ".tinkerman", "findings"), { recursive: true });
+    fs.mkdirSync(path.join(tmpDir, ".tinkerman", "knowledge"), { recursive: true });
   });
 
   afterEach(() => {
@@ -237,7 +237,7 @@ describe("Unit: posted=true but all partial-failed writes metrics correctly", ()
       tmpDir,
     );
 
-    const metricsPath = path.join(tmpDir, ".forge", "knowledge", "metrics.md");
+    const metricsPath = path.join(tmpDir, ".tinkerman", "knowledge", "metrics.md");
     const content = fs.readFileSync(metricsPath, "utf-8");
 
     expect(content).toContain("post_enabled=true");
@@ -246,7 +246,7 @@ describe("Unit: posted=true but all partial-failed writes metrics correctly", ()
 
     const errorFilePath = path.join(
       tmpDir,
-      ".forge",
+      ".tinkerman",
       "findings",
       `comment-channel-error-${now.toISOString().split("T")[0]}.md`,
     );

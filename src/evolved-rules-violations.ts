@@ -51,7 +51,7 @@ export interface TriggerReport {
  * negatives (under-count) to false positives (which would artificially keep
  * retired rules "fresh").
  *
- * Reference: `.forge/knowledge/evolved-rules.md`
+ * Reference: `.tinkerman/knowledge/evolved-rules.md`
  */
 export const DEFAULT_SIGNALS: readonly RuleSignal[] = [
   // R1 — Implicit Idle Is Also a Block

@@ -49,8 +49,12 @@ describe("renderStatusSummary (branch coverage)", () => {
           phase: null,
           allowed: false,
           reasons: [
-            { code: "MISSING_ARTIFACT", source: ".forge/reviews/x.md", detail: "review missing" },
-            { code: "STATUS_UNKNOWN", source: ".forge/status.md", detail: "no status" },
+            {
+              code: "MISSING_ARTIFACT",
+              source: ".tinkerman/reviews/x.md",
+              detail: "review missing",
+            },
+            { code: "STATUS_UNKNOWN", source: ".tinkerman/status.md", detail: "no status" },
           ],
         },
       }),

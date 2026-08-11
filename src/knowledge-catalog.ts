@@ -1,6 +1,6 @@
 /**
  * Knowledge Catalog — Layer A progressive index (~50 lines) for
- * `.forge/knowledge/`.
+ * `.tinkerman/knowledge/`.
  *
  * Motivation
  * ----------
@@ -310,10 +310,10 @@ export function renderCatalog(input: CatalogInput): string {
   // Pointers
   lines.push("## Deep reads");
   lines.push("");
-  lines.push("- Full patterns: `.forge/knowledge/instincts.md`");
-  lines.push("- Full solutions: `.forge/knowledge/solutions/*.md`");
-  lines.push("- Failure modes: `.forge/knowledge/known-failures.md`");
-  lines.push("- Evolved rules: `.forge/knowledge/evolved-rules.md`");
+  lines.push("- Full patterns: `.tinkerman/knowledge/instincts.md`");
+  lines.push("- Full solutions: `.tinkerman/knowledge/solutions/*.md`");
+  lines.push("- Failure modes: `.tinkerman/knowledge/known-failures.md`");
+  lines.push("- Evolved rules: `.tinkerman/knowledge/evolved-rules.md`");
   lines.push("");
 
   return lines.join("\n");

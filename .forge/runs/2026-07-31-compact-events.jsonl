@@ -1,0 +1,24 @@
+{"timestamp":"2026-07-31T13:54:26Z","event":"postcompact_restore","detail":"slug=zcode-p1-base-integration source=fallback"}
+{"timestamp":"2026-07-31T13:54:26Z","event":"precompact_checkpoint_missing","detail":"checkpoint.md not found — using legacy grep snapshot"}
+{"timestamp":"2026-07-31T13:54:26Z","event":"precompact_snapshot","detail":"slug=zcode-p1-base-integration phase=review_passed source=fallback completed=0 pending=0"}
+{"timestamp":"2026-07-31T13:56:47Z","event":"postcompact_restore","detail":"slug=zcode-p1-base-integration source=fallback"}
+{"timestamp":"2026-07-31T13:56:47Z","event":"precompact_checkpoint_missing","detail":"checkpoint.md not found — using legacy grep snapshot"}
+{"timestamp":"2026-07-31T13:56:47Z","event":"precompact_snapshot","detail":"slug=zcode-p1-base-integration phase=review_passed source=fallback completed=0 pending=0"}
+{"timestamp":"2026-07-31T14:06:37Z","event":"postcompact_restore","detail":"slug=zcode-p1-base-integration source=fallback"}
+{"timestamp":"2026-07-31T14:06:37Z","event":"precompact_checkpoint_missing","detail":"checkpoint.md not found — using legacy grep snapshot"}
+{"timestamp":"2026-07-31T14:06:38Z","event":"precompact_snapshot","detail":"slug=zcode-p1-base-integration phase=review_passed source=fallback completed=0 pending=0"}
+{"timestamp":"2026-07-31T14:10:37Z","event":"postcompact_restore","detail":"slug=zcode-p1-base-integration source=fallback"}
+{"timestamp":"2026-07-31T14:10:37Z","event":"precompact_checkpoint_missing","detail":"checkpoint.md not found — using legacy grep snapshot"}
+{"timestamp":"2026-07-31T14:10:37Z","event":"precompact_snapshot","detail":"slug=zcode-p1-base-integration phase=review_passed source=fallback completed=0 pending=0"}
+{"timestamp":"2026-07-31T14:12:36Z","event":"postcompact_restore","detail":"slug=zcode-p1-base-integration source=fallback"}
+{"timestamp":"2026-07-31T14:12:36Z","event":"precompact_checkpoint_missing","detail":"checkpoint.md not found — using legacy grep snapshot"}
+{"timestamp":"2026-07-31T14:12:36Z","event":"precompact_snapshot","detail":"slug=zcode-p1-base-integration phase=review_passed source=fallback completed=0 pending=0"}
+{"timestamp":"2026-07-31T14:14:41Z","event":"postcompact_restore","detail":"slug=zcode-p1-base-integration source=fallback"}
+{"timestamp":"2026-07-31T14:14:42Z","event":"precompact_checkpoint_missing","detail":"checkpoint.md not found — using legacy grep snapshot"}
+{"timestamp":"2026-07-31T14:14:42Z","event":"precompact_snapshot","detail":"slug=zcode-p1-base-integration phase=review_passed source=fallback completed=0 pending=0"}
+{"timestamp":"2026-07-31T14:17:54Z","event":"postcompact_restore","detail":"slug=zcode-p1-base-integration source=fallback"}
+{"timestamp":"2026-07-31T14:17:54Z","event":"precompact_checkpoint_missing","detail":"checkpoint.md not found — using legacy grep snapshot"}
+{"timestamp":"2026-07-31T14:17:54Z","event":"precompact_snapshot","detail":"slug=zcode-p1-base-integration phase=review_passed source=fallback completed=0 pending=0"}
+{"timestamp":"2026-07-31T14:34:34Z","event":"postcompact_restore","detail":"slug=zcode-p1-base-integration source=fallback"}
+{"timestamp":"2026-07-31T14:34:34Z","event":"precompact_checkpoint_missing","detail":"checkpoint.md not found — using legacy grep snapshot"}
+{"timestamp":"2026-07-31T14:34:34Z","event":"precompact_snapshot","detail":"slug=zcode-p1-base-integration phase=review_passed source=fallback completed=0 pending=0"}

@@ -1,5 +1,5 @@
 /**
- * ToolHealthWriter — append-only writer for `.forge/knowledge/tool-health.md`
+ * ToolHealthWriter — append-only writer for `.tinkerman/knowledge/tool-health.md`
  * with file-lock-based concurrency safety (R12.7).
  *
  * Why a lock?
@@ -20,7 +20,7 @@
  *
  * See:
  *   - .kiro/specs/workflows-integration/requirements.md §Requirement 12.7
- *   - .forge/reviews/workflows-integration.md F8
+ *   - .tinkerman/reviews/workflows-integration.md F8
  */
 
 import {

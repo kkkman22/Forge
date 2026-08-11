@@ -1,7 +1,7 @@
 /**
  * Ship gate I/O functions — file-system aware gate checks.
  *
- * These pure functions read from .forge/ directories and produce
+ * These pure functions read from .tinkerman/ directories and produce
  * structured GateResult objects. They complement the existing
  * checkShipGate() in ship.ts which operates on already-parsed inputs.
  *
@@ -52,7 +52,7 @@ export interface P1FixlistEntry {
   fixCommit: string | null;
 }
 
-/** P1 Fix Checklist persisted to .forge/reviews/<run-id>-p1-fixlist.json. */
+/** P1 Fix Checklist persisted to .tinkerman/reviews/<run-id>-p1-fixlist.json. */
 export interface P1Fixlist {
   runId: string;
   p1Issues: P1FixlistEntry[];
@@ -67,7 +67,7 @@ export interface SkipGateOptions {
   isInteractive: boolean;
 }
 
-/** Persisted gate results written to .forge/ship/<run-id>-gates.json. */
+/** Persisted gate results written to .tinkerman/ship/<run-id>-gates.json. */
 export interface ShipGateReport {
   runId: string;
   feature: string;
@@ -217,7 +217,7 @@ function safeParseP1Fixlist(content: string): P1Fixlist | null {
 // ---------------------------------------------------------------------------
 
 /**
- * Check the review gate by scanning .forge/reviews/ for the latest report.
+ * Check the review gate by scanning .tinkerman/reviews/ for the latest report.
  *
  * Flow:
  *   1. Find latest review report in reviewDir
@@ -228,7 +228,7 @@ function safeParseP1Fixlist(content: string): P1Fixlist | null {
  *   6. For each unfixed P1 in fixlist, search git log for [fix P1] commits
  *   7. All P1 fixed (or no P1) → passed
  *
- * @param reviewDir - Path to .forge/reviews/
+ * @param reviewDir - Path to .tinkerman/reviews/
  * @param _latestCommitHash - Current HEAD commit hash (reserved for freshness check)
  * @param gitLogFn - Optional function to search git log for fix commits
  */
@@ -243,7 +243,7 @@ export function checkReviewGate(
     return {
       gate: "review",
       passed: false,
-      reason: "No review report found in .forge/reviews/. Run /tinkerman review first.",
+      reason: "No review report found in .tinkerman/reviews/. Run /tinkerman review first.",
     };
   }
 
@@ -365,13 +365,13 @@ export function checkReviewGate(
 // ---------------------------------------------------------------------------
 
 /**
- * Check the test gate by reading .forge/test-results/.
+ * Check the test gate by reading .tinkerman/test-results/.
  *
  * Looks for the latest test result file. If it contains passing indicators,
  * the gate passes. If configCICheck is provided, it is noted but the actual
  * execution is left to the caller (to keep this function pure/synchronous).
  *
- * @param testResultsDir - Path to .forge/test-results/
+ * @param testResultsDir - Path to .tinkerman/test-results/
  * @param configCICheck - Optional CI check command from config.md
  */
 export function checkTestGate(testResultsDir: string, configCICheck?: string): GateResult {
@@ -394,7 +394,7 @@ export function checkTestGate(testResultsDir: string, configCICheck?: string): G
     return {
       gate: "test",
       passed: false,
-      reason: "No test results found in .forge/test-results/. Run tests first.",
+      reason: "No test results found in .tinkerman/test-results/. Run tests first.",
     };
   }
 
@@ -539,14 +539,14 @@ function requiredArtifactKinds(policyProfile: PolicyProfile): EvidenceArtifactKi
 // ---------------------------------------------------------------------------
 
 /**
- * Check the progress gate by reading .forge/progress/<feature>.md.
+ * Check the progress gate by reading .tinkerman/progress/<feature>.md.
  *
  * Per design:
  *   - All tasks completed → passed
  *   - Has in_progress tasks → passed + warning (non-blocking)
  *   - No progress file → passed + warning (lightweight path)
  *
- * @param progressDir - Path to .forge/progress/
+ * @param progressDir - Path to .tinkerman/progress/
  * @param featureName - Name of the current feature
  */
 export function checkProgressGate(progressDir: string, featureName: string): GateResult {
@@ -773,7 +773,7 @@ export function checkFallbackLadderGate(methodology: Methodology): GateResult {
 // ---------------------------------------------------------------------------
 
 /**
- * Persist gate results to .forge/ship/<run-id>-gates.json.
+ * Persist gate results to .tinkerman/ship/<run-id>-gates.json.
  *
  * Creates the directory if it does not exist.
  */
@@ -822,7 +822,7 @@ export function persistGateResults(
 function inferProjectRootFromShipDir(shipDir: string): string | null {
   if (basename(shipDir) !== "ship") return null;
   const forgeDir = dirname(shipDir);
-  if (basename(forgeDir) !== ".forge") return null;
+  if (basename(forgeDir) !== ".tinkerman") return null;
   return dirname(forgeDir);
 }
 

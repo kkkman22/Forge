@@ -7,7 +7,7 @@ updated: 2026-08-11
 
 ## Output Path
 
-`.forge/plans/<topic>.md`（`<topic>` 为 kebab-case，如 `user-notification`）
+`.tinkerman/plans/<topic>.md`（`<topic>` 为 kebab-case，如 `user-notification`）
 
 ## YAML Frontmatter
 
@@ -16,7 +16,7 @@ updated: 2026-08-11
 topic: "<主题>"
 status: "draft" | "approved"
 date: "YYYY-MM-DD"
-spec_ref: ".forge/specs/<feature>/spec.md"
+spec_ref: ".tinkerman/specs/<feature>/spec.md"
 format: "lightweight" | "full"
 ---
 ```
@@ -45,12 +45,12 @@ format: "lightweight"
 
 | Constraint | Value | Source | Applies To |
 |------------|-------|--------|------------|
-| Node 版本下限 | ≥ 20.0.0 | `.forge/config.md#runtime` | All Tasks |
+| Node 版本下限 | ≥ 20.0.0 | `.tinkerman/config.md#runtime` | All Tasks |
 | 依赖上限 | react ≤ 18.2.0 | `package.json` | All Tasks |
-| 命名约定 | 新增 hook 用 `use` 前缀 | `.forge/charter.md#naming` | Task 1, Task 3 |
+| 命名约定 | 新增 hook 用 `use` 前缀 | `.tinkerman/charter.md#naming` | Task 1, Task 3 |
 | 错误文案 | 用户态错误含 i18n key | spec NFR-3 | All Tasks |
 | 超时取值 | 网络请求 3000ms | spec NFR-5 | Task 2 |
-| Charter invariant | 不跨模块直接 import | `.forge/charter.md#boundaries` | All Tasks |
+| Charter invariant | 不跨模块直接 import | `.tinkerman/charter.md#boundaries` | All Tasks |
 
 ## Design Reference Index
 | Anchor | Summary |
@@ -91,7 +91,7 @@ format: "lightweight"
 topic: "user-notification"
 status: "draft"
 date: "2025-01-15"
-spec_ref: ".forge/specs/user-notification/spec.md"
+spec_ref: ".tinkerman/specs/user-notification/spec.md"
 ---
 
 ## Objective
@@ -102,9 +102,9 @@ spec_ref: ".forge/specs/user-notification/spec.md"
 
 | Constraint | Value | Source | Applies To |
 |------------|-------|--------|------------|
-| Node 版本下限 | ≥ 20.0.0 | `.forge/config.md#runtime` | All Tasks |
-| 命名约定 | 新增 hook 用 `use` 前缀 | `.forge/charter.md#naming` | All Tasks |
-| Charter invariant | 不跨模块直接 import | `.forge/charter.md#boundaries` | All Tasks |
+| Node 版本下限 | ≥ 20.0.0 | `.tinkerman/config.md#runtime` | All Tasks |
+| 命名约定 | 新增 hook 用 `use` 前缀 | `.tinkerman/charter.md#naming` | All Tasks |
+| Charter invariant | 不跨模块直接 import | `.tinkerman/charter.md#boundaries` | All Tasks |
 
 ## Research Findings
 <研究阶段的发现：历史经验、现有代码分析、技术选型依据>

@@ -15,7 +15,7 @@ const tempRoots: string[] = [];
 function tempRoot(): string {
   const root = mkdtempSync(join(tmpdir(), "zone-registry-test-"));
   tempRoots.push(root);
-  mkdirSync(join(root, ".forge"), { recursive: true });
+  mkdirSync(join(root, ".tinkerman"), { recursive: true });
   return root;
 }
 
@@ -28,9 +28,9 @@ afterEach(() => {
 });
 
 describe("loadZoneRegistry (frozen-zone-structured-feedback R4.1/R4.2)", () => {
-  it("falls back to DEFAULT_ZONE_RULES when .forge/config.md is missing (R4.2)", () => {
+  it("falls back to DEFAULT_ZONE_RULES when .tinkerman/config.md is missing (R4.2)", () => {
     const root = tempRoot();
-    rmSync(join(root, ".forge", "config.md"), { force: true });
+    rmSync(join(root, ".tinkerman", "config.md"), { force: true });
     const rules = loadZoneRegistry(root);
     expect(rules).toHaveLength(DEFAULT_ZONE_RULES.length);
     expect(rules.some((r) => r.pattern === "specs/")).toBe(true);
@@ -41,7 +41,7 @@ describe("loadZoneRegistry (frozen-zone-structured-feedback R4.1/R4.2)", () => {
   it("falls back to defaults when config.md has no frozen_zone field (field optional)", () => {
     const root = tempRoot();
     writeFileSync(
-      join(root, ".forge", "config.md"),
+      join(root, ".tinkerman", "config.md"),
       '---\nproject: "demo"\ntier: "standard"\n---\n# config\n',
     );
     const rules = loadZoneRegistry(root);
@@ -51,7 +51,7 @@ describe("loadZoneRegistry (frozen-zone-structured-feedback R4.1/R4.2)", () => {
   it("parses the frozen_zone frontmatter list into rules (R4.1 single source of truth)", () => {
     const root = tempRoot();
     writeFileSync(
-      join(root, ".forge", "config.md"),
+      join(root, ".tinkerman", "config.md"),
       [
         "---",
         "project: demo",
@@ -75,7 +75,7 @@ describe("loadZoneRegistry (frozen-zone-structured-feedback R4.1/R4.2)", () => {
 
   it("falls back to defaults on unparseable frontmatter (R4.2)", () => {
     const root = tempRoot();
-    writeFileSync(join(root, ".forge", "config.md"), "this is not yaml frontmatter at all");
+    writeFileSync(join(root, ".tinkerman", "config.md"), "this is not yaml frontmatter at all");
     const rules = loadZoneRegistry(root);
     expect(rules).toHaveLength(DEFAULT_ZONE_RULES.length);
   });
@@ -84,7 +84,7 @@ describe("loadZoneRegistry (frozen-zone-structured-feedback R4.1/R4.2)", () => {
 describe("loadZoneRegistryCached (R4.5 in-process cache)", () => {
   it("returns the same parsed result on repeated calls with the same root", () => {
     const root = tempRoot();
-    writeFileSync(join(root, ".forge", "config.md"), "---\nfrozen_zone:\n  - specs/\n---\n");
+    writeFileSync(join(root, ".tinkerman", "config.md"), "---\nfrozen_zone:\n  - specs/\n---\n");
     const first = loadZoneRegistryCached(root);
     const second = loadZoneRegistryCached(root);
     expect(second).toBe(first); // same reference → cache hit
@@ -93,8 +93,8 @@ describe("loadZoneRegistryCached (R4.5 in-process cache)", () => {
   it("re-parses when the forgeRoot changes (cache invalidates)", () => {
     const rootA = tempRoot();
     const rootB = tempRoot();
-    writeFileSync(join(rootA, ".forge", "config.md"), "---\nfrozen_zone:\n  - specs/\n---\n");
-    writeFileSync(join(rootB, ".forge", "config.md"), "---\nfrozen_zone:\n  - plans/\n---\n");
+    writeFileSync(join(rootA, ".tinkerman", "config.md"), "---\nfrozen_zone:\n  - specs/\n---\n");
+    writeFileSync(join(rootB, ".tinkerman", "config.md"), "---\nfrozen_zone:\n  - plans/\n---\n");
     const a = loadZoneRegistryCached(rootA);
     const b = loadZoneRegistryCached(rootB);
     expect(a).not.toBe(b);

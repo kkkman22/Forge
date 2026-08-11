@@ -34,7 +34,7 @@ function writeToolInputFile(tempDir: string, filePath: string, content: string):
 }
 
 function writeOwnershipMap(tempDir: string, map: Record<string, string>): void {
-  const forgeDir = path.join(tempDir, ".forge");
+  const forgeDir = path.join(tempDir, ".tinkerman");
   fs.mkdirSync(forgeDir, { recursive: true });
   const lines = Object.entries(map).map(([k, v]) => `${k}: ${v}`);
   fs.writeFileSync(path.join(forgeDir, "context-ownership.yaml"), `${lines.join("\n")}\n`);
@@ -174,7 +174,7 @@ describe("check-context-boundary.mjs hook", () => {
   // --- No context map (no ownership map) ---
 
   it("allows all imports when no ownership map exists (exit 0)", () => {
-    // No .forge/context-ownership.yaml created
+    // No .tinkerman/context-ownership.yaml created
 
     const inputPath = writeToolInputFile(
       tempDir,

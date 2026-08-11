@@ -22,7 +22,7 @@ updated: 2026-08-11
 
 | 触发条件 | 自问 | 交互处理 | 自主处理 |
 |----------|------|----------|----------|
-| **Chesterton's Fence**：删除或大幅修改现有代码 | 我理解这段代码为什么被写成这样吗？git blame 的上下文是什么？ | 解释原因 → 确认修改 | 记录到 `.forge/findings/`（原因 + 修改理由）→ 继续执行 |
+| **Chesterton's Fence**：删除或大幅修改现有代码 | 我理解这段代码为什么被写成这样吗？git blame 的上下文是什么？ | 解释原因 → 确认修改 | 记录到 `.tinkerman/findings/`（原因 + 修改理由）→ 继续执行 |
 
 ## Common Rationalizations
 

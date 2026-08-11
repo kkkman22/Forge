@@ -5,7 +5,7 @@
  * 报告能正确阻断/放行，闭合原 P0（嵌套漏读）+ Round 4（?? 链/大写）+
  * Round 5（NaN）+ Round 6（异常逃逸）。
  *
- * 对应 spec: .forge/specs/arch-review-remediate-0626 REQ-04。
+ * 对应 spec: .tinkerman/specs/arch-review-remediate-0626 REQ-04。
  * 这些测试在 ship-gates.ts 改用 splitFrontmatterAndBody + extractSeverity 前应失败（RED）。
  */
 

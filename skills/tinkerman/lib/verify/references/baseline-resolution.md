@@ -30,7 +30,7 @@ updated: 2026-08-11
 
 ### Level 4: Last treatment snapshot
 
-- 前提：`.forge/findings/<topic>/verify-this/treatment/` 存在且非空
+- 前提：`.tinkerman/findings/<topic>/verify-this/treatment/` 存在且非空
 - 解析：读目录中最新的 artifact 作为 baseline
 - 成功 → `{ ref: null, strategy: "last-treatment", snapshotDir: "<path>" }`
 - 失败 → `{ ref: null, strategy: "none" }` → INCONCLUSIVE

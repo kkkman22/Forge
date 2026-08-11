@@ -1,7 +1,7 @@
 /**
  * Sandbox Profile — configuration management for SDK native sandbox.
  *
- * Loads .forge/sandbox.json (v1 or v2 format), resolves named profiles,
+ * Loads .tinkerman/sandbox.json (v1 or v2 format), resolves named profiles,
  * and converts Forge configuration to SDK SandboxSettings.
  */
 
@@ -73,7 +73,7 @@ export const FORGE_LOOP_TOOLS: readonly string[] = [
 const DEFAULT_BUILDER_PROFILE: SandboxProfile = {
   fileSystem: {
     allow: ["."],
-    deny: [".forge/sandbox.json", ".forge/.sandbox-active.json"],
+    deny: [".tinkerman/sandbox.json", ".tinkerman/.sandbox-active.json"],
   },
   network: {
     mode: "restricted",
@@ -86,12 +86,12 @@ const DEFAULT_BUILDER_PROFILE: SandboxProfile = {
 // ---------------------------------------------------------------------------
 
 /**
- * Load a sandbox profile from .forge/sandbox.json.
+ * Load a sandbox profile from .tinkerman/sandbox.json.
  * Supports v1 (auto-upgrade) and v2 formats.
  * Returns default builder profile when no config file exists.
  */
 export function loadSandboxProfile(cwd: string, profileName?: string): SandboxProfile {
-  const configPath = join(cwd, ".forge", "sandbox.json");
+  const configPath = join(cwd, ".tinkerman", "sandbox.json");
 
   if (!existsSync(configPath)) {
     return { ...DEFAULT_BUILDER_PROFILE };

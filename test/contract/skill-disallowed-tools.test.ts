@@ -133,10 +133,13 @@ describe("Contract: skill disallowed-tools matrix (R3)", () => {
   // --- ADR existence ---
 
   it("matrix ADR file exists", () => {
-    const adrPath = resolve(ROOT, ".forge/decisions/2026-05-28-skill-disallowed-tools-matrix.md");
+    const adrPath = resolve(
+      ROOT,
+      ".tinkerman/decisions/2026-05-28-skill-disallowed-tools-matrix.md",
+    );
     expect(
       existsSync(adrPath),
-      "Missing ADR: .forge/decisions/2026-05-28-skill-disallowed-tools-matrix.md",
+      "Missing ADR: .tinkerman/decisions/2026-05-28-skill-disallowed-tools-matrix.md",
     ).toBe(true);
   });
 

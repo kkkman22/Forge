@@ -13,7 +13,7 @@ export interface DecideContext {
   involvedFiles: string[];
   /**
    * Merged context file list (plan frontmatter `context_files` +
-   * `.forge/runs/<runId>/context.jsonl`, deduplicated). When present and
+   * `.tinkerman/runs/<runId>/context.jsonl`, deduplicated). When present and
    * non-empty, Round 1 decide agents receive a "Relevant artifacts" section
    * so their analysis is grounded in actual spec/research files rather than
    * only the task description. Spec: context-injection-activation.

@@ -242,8 +242,8 @@ export function resolveSlug(meta) {
   const branchMatch = meta.branch.match(/^(?:forge|feature|spec)\/([a-z0-9-]+)/);
   if (branchMatch) return { slug: branchMatch[1], resolutionPath: "branch" };
 
-  // 3. PR description link: .forge/specs/slug/
-  const descMatch = meta.description.match(/\.forge\/specs\/([a-z0-9-]+)\//);
+  // 3. PR description link: .tinkerman/specs/slug/
+  const descMatch = meta.description.match(/\.tinkerman\/specs\/([a-z0-9-]+)\//);
   if (descMatch) return { slug: descMatch[1], resolutionPath: "description" };
 
   // 4. & 5. (decisions + interactive) require FS access — handled in main flow
@@ -254,7 +254,7 @@ export function resolveSlug(meta) {
 // Cache
 // ---------------------------------------------------------------------------
 
-const CACHE_FILE = ".forge/.pr-slug-cache.json";
+const CACHE_FILE = ".tinkerman/.pr-slug-cache.json";
 const CACHE_TTL_MS = 7 * 24 * 60 * 60 * 1000;
 
 export async function readCache(forgeRoot, key) {
@@ -281,7 +281,7 @@ export async function writeCache(forgeRoot, key, entry) {
       cache = JSON.parse(data);
     } catch { /* empty or missing — start fresh */ }
     cache[key] = entry;
-    const dir = join(forgeRoot, ".forge");
+    const dir = join(forgeRoot, ".tinkerman");
     await mkdir(dir, { recursive: true });
     await writeFile(join(forgeRoot, CACHE_FILE), JSON.stringify(cache, null, 2) + "\n");
   } catch { /* silent — cache write failure is non-blocking */ }
@@ -310,35 +310,35 @@ export async function loadContextBundle(slug, opts) {
   };
 
   // Spec directory
-  const specDir = join(root, ".forge", "specs", slug);
+  const specDir = join(root, ".tinkerman", "specs", slug);
   try {
     const files = await readdir(specDir);
     result.specFiles = files.filter((f) => f.endsWith(".md")).map((f) => join(specDir, f));
   } catch {
-    result.missing.push(`.forge/specs/${slug}/`);
+    result.missing.push(`.tinkerman/specs/${slug}/`);
   }
 
   // Plan file
-  const planPath = join(root, ".forge", "plans", `${slug}.md`);
+  const planPath = join(root, ".tinkerman", "plans", `${slug}.md`);
   try {
     await access(planPath);
     result.planFile = planPath;
   } catch {
-    result.missing.push(`.forge/plans/${slug}.md`);
+    result.missing.push(`.tinkerman/plans/${slug}.md`);
   }
 
   // Progress file
-  const progressPath = join(root, ".forge", "progress", `${slug}.md`);
+  const progressPath = join(root, ".tinkerman", "progress", `${slug}.md`);
   try {
     await access(progressPath);
     result.progressFile = progressPath;
   } catch {
-    result.missing.push(`.forge/progress/${slug}.md`);
+    result.missing.push(`.tinkerman/progress/${slug}.md`);
   }
 
   // Infer phase from progress or status
   try {
-    const statusContent = await readFile(join(root, ".forge", "status.md"), "utf-8");
+    const statusContent = await readFile(join(root, ".tinkerman", "status.md"), "utf-8");
     const phaseMatch = statusContent.match(/^phase:\s*"?(.+?)"?\s*$/m);
     if (phaseMatch) result.phase = phaseMatch[1].trim();
   } catch { /* no status file */ }
@@ -362,7 +362,7 @@ function yamlSafe(str) {
 
 export async function updateStatus(slug, metadata, opts = {}) {
   const root = opts.forgeRoot ?? process.cwd();
-  const statusPath = join(root, ".forge", "status.md");
+  const statusPath = join(root, ".tinkerman", "status.md");
   const timestamp = new Date().toISOString();
   const safeSlug = yamlSafe(slug);
   const safeBranch = yamlSafe(metadata.branch);
@@ -432,7 +432,7 @@ export async function writeRunReport(params) {
   const { forgeRoot, target, host, number: prNumber, success, fallbackUsed, slug, resolutionPath, startedAt, metadata, bundle, warnings } = params;
   const finishedAt = new Date().toISOString();
   const ts = startedAt.replace(/[:.]/g, "-");
-  const runsDir = join(forgeRoot ?? process.cwd(), ".forge", "runs");
+  const runsDir = join(forgeRoot ?? process.cwd(), ".tinkerman", "runs");
   await mkdir(runsDir, { recursive: true });
 
   const report = [
@@ -546,7 +546,7 @@ async function main() {
     // Interactive fallback — list available specs
     const specs = await listAvailableSpecs(forgeRoot);
     if (specs.length === 0) {
-      process.stderr.write(`${msg}\nNo specs found in .forge/specs/.\n`);
+      process.stderr.write(`${msg}\nNo specs found in .tinkerman/specs/.\n`);
       process.exit(1);
     }
     process.stdout.write(`${msg}\nAvailable specs:\n${specs.map((s, i) => `  ${i + 1}. ${s}`).join("\n")}\n`);
@@ -619,9 +619,9 @@ async function main() {
   }
 }
 
-// Helper: resolve slug from .forge/decisions/
+// Helper: resolve slug from .tinkerman/decisions/
 async function resolveSlugFromDecisions(forgeRoot, prNumber, prUrl) {
-  const decDir = join(forgeRoot, ".forge", "decisions");
+  const decDir = join(forgeRoot, ".tinkerman", "decisions");
   try {
     const files = await readdir(decDir);
     for (const f of files) {
@@ -639,7 +639,7 @@ async function resolveSlugFromDecisions(forgeRoot, prNumber, prUrl) {
 // Helper: list available specs
 async function listAvailableSpecs(forgeRoot) {
   try {
-    const entries = await readdir(join(forgeRoot, ".forge", "specs"));
+    const entries = await readdir(join(forgeRoot, ".tinkerman", "specs"));
     return entries.filter((e) => !e.startsWith("."));
   } catch {
     return [];

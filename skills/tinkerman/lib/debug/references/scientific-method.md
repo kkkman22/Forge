@@ -10,7 +10,7 @@ updated: 2026-08-11
 - Describe observable error behavior
 - Collect error messages, stack traces, logs
 - Determine reproduction conditions
-- Write to `.forge/debug/{slug}.md` → Symptoms section
+- Write to `.tinkerman/debug/{slug}.md` → Symptoms section
 - **Symptoms are IMMUTABLE after gathering** — never overwrite
 
 ## Phase 2 — Hypothesis Generation
@@ -22,7 +22,7 @@ Each hypothesis must include:
 - **Predicted observable result**: what we'd see if hypothesis is true
 - **Falsification test**: what we'd do to disprove it
 
-Write to `.forge/debug/{slug}.md` → Hypotheses section (append-only).
+Write to `.tinkerman/debug/{slug}.md` → Hypotheses section (append-only).
 
 ## Phase 3 — Hypothesis Testing
 
@@ -59,7 +59,7 @@ Prefer TDD mode: write failing test first, then fix, then refactor.
 
 ## Debug Session File Format
 
-Create `.forge/debug/{slug}.md`:
+Create `.tinkerman/debug/{slug}.md`:
 
 ```markdown
 ---
@@ -104,7 +104,7 @@ resolution: ""
 
 ## Debug Knowledge Base
 
-Maintain `.forge/debug/knowledge-base.md` (append-only):
+Maintain `.tinkerman/debug/knowledge-base.md` (append-only):
 
 ```markdown
 ## [Date] Pattern Name

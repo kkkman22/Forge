@@ -67,7 +67,7 @@ Agent Teams 版 `/tinkerman decide` 的 PoC 实现。使用 Claude Code 原生 A
 
 ### Step 3: 初始化运行记录
 
-写入 `.forge/runs/<timestamp>-decide-teams-run.md`：
+写入 `.tinkerman/runs/<timestamp>-decide-teams-run.md`：
 
 ```yaml
 ---
@@ -89,12 +89,12 @@ Agent(subagent_type="forge-decide-lead", prompt=<topic + metadata>)
 
 ### Step 5: 记录完成
 
-追加 `.forge/runs/<timestamp>-decide-teams-run.md`：
+追加 `.tinkerman/runs/<timestamp>-decide-teams-run.md`：
 
 ```yaml
 finished_at: "<ISO timestamp>"
 status: completed | partial | failed
-adr_path: ".forge/decisions/<date>-<slug>.md"
+adr_path: ".tinkerman/decisions/<date>-<slug>.md"
 ```
 
 ### Step 6: 汇报
@@ -125,5 +125,5 @@ adr_path: ".forge/decisions/<date>-<slug>.md"
 
 ## 2. Deliverable
 
-- `.forge/runs/<timestamp>-decide-teams-run.md` 运行记录
-- `.forge/decisions/<date>-<slug>.md` 最终 ADR（由 team-lead 写入）
+- `.tinkerman/runs/<timestamp>-decide-teams-run.md` 运行记录
+- `.tinkerman/decisions/<date>-<slug>.md` 最终 ADR（由 team-lead 写入）

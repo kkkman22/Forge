@@ -26,7 +26,7 @@ updated: 2026-08-11
 
 **职责**：扫描代码库，识别优化点，按方法库分类，输出候选清单。
 
-**产出**：`.forge/findings/refactor-scan.md`
+**产出**：`.tinkerman/findings/refactor-scan.md`
 
 **流程**：
 1. 读取任务描述，确定重构范围

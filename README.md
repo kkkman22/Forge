@@ -18,7 +18,7 @@ updated: 2026-08-11
 
 - **<!-- ssot:begin topic=commands render=count -->38<!-- ssot:end topic=commands --> 个命令**覆盖从需求分析到代码交付的完整周期
 - **三维路由**自动匹配任务复杂度（轻量/标准/全量）
-- **统一状态**目录 `.forge/`，跨命令状态感知和会话恢复
+- **统一状态**目录 `.tinkerman/`，跨命令状态感知和会话恢复
 - **按需加载**，单次会话约 10K tokens
 - **TDD 强制** + 三层独立评审，保障代码质量
 
@@ -57,7 +57,7 @@ claude plugin install forge
 | 命令速查 | [docs/reference-commands.md](docs/reference-commands.md) | 查看全部 <!-- ssot:begin topic=commands render=count -->38<!-- ssot:end topic=commands --> 个命令和路由详解 |
 | Policy Profiles | [docs/best-practices/policy-profiles.md](docs/best-practices/policy-profiles.md) | 在 solo/team/enterprise 流程成本之间选择 |
 | 安全参考 | [docs/reference-security.md](docs/reference-security.md) | 了解安全机制分层和审计 |
-| 架构参考 | [docs/reference-architecture.md](docs/reference-architecture.md) | 深入了解 .forge/ 目录结构和状态保护 |
+| 架构参考 | [docs/reference-architecture.md](docs/reference-architecture.md) | 深入了解 .tinkerman/ 目录结构和状态保护 |
 | 高级功能参考 | [docs/reference-advanced.md](docs/reference-advanced.md) | Forge Loop、cmux、Domain Pack、Token 效率 |
 | 兼容性参考 | [docs/claude-code-compatibility.md](docs/claude-code-compatibility.md) | Claude Code 版本兼容性和降级策略 |
 
@@ -69,7 +69,7 @@ claude plugin install forge
 |------|----------------|-----------------|---------------|
 | 触发时机 | Spec 验收场景执行 | 证据化三态验证收尾 | 最终交付前合规/合并/release |
 | 主要责任 | 运行场景脚本并记录验收结果 | 汇总所有证据、产出三态结论 | 综合前置门禁、执行合并/tag |
-| 典型输出 | `.forge/acceptance/<scenario>.md` | `.forge/findings/<topic>/verify-this/` | PR merge + tag + CHANGELOG |
+| 典型输出 | `.tinkerman/acceptance/<scenario>.md` | `.tinkerman/findings/<topic>/verify-this/` | PR merge + tag + CHANGELOG |
 | 下游接续 | → `/tinkerman verify` 或 `/tinkerman ship --with-acceptance` | → `/tinkerman ship` | Release 完成 |
 
 ---
@@ -109,7 +109,7 @@ Plugin 安装后，以下命令可直接在终端使用：
 
 | 命令 | 说明 |
 |------|------|
-| `forge-doctor` | 项目健康检查（`.forge/` 结构、配置、hooks） |
+| `forge-doctor` | 项目健康检查（`.tinkerman/` 结构、配置、hooks） |
 | `forge-status` | 显示当前任务状态（tier/phase/progress） |
 | `forge-restate` | 触发 restatement checkpoint（可选 `--check` 工具） |
 

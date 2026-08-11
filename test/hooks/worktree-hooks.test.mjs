@@ -3,7 +3,7 @@
 /**
  * Tests for scripts/worktree-create-hook.mjs and worktree-remove-hook.mjs
  *
- * Validates: worktree tracking in .forge/progress/worktrees.json
+ * Validates: worktree tracking in .tinkerman/progress/worktrees.json
  * Fail-open: exits 0 on any condition.
  */
 
@@ -57,7 +57,7 @@ function readWorktreesJson() {
 }
 
 function readWorktreesJsonFrom(root) {
-  const p = join(root, ".forge", "progress", "worktrees.json");
+  const p = join(root, ".tinkerman", "progress", "worktrees.json");
   if (!existsSync(p)) return null;
   return JSON.parse(readFileSync(p, "utf-8"));
 }
@@ -98,20 +98,20 @@ describe("worktree-create-hook.mjs", () => {
     assert.equal(result.exitCode, 0);
   });
 
-  test("auto-creates .forge/progress/ if missing", () => {
-    rmSync(join(TMPDIR, ".forge"), { recursive: true, force: true });
+  test("auto-creates .tinkerman/progress/ if missing", () => {
+    rmSync(join(TMPDIR, ".tinkerman"), { recursive: true, force: true });
     const result = runCreate({
       WORKTREE_PATH: "/tmp/test-wt-3",
       WORKTREE_BRANCH: "feature/test-3",
     });
     assert.equal(result.exitCode, 0);
-    assert.ok(existsSync(join(TMPDIR, ".forge", "progress", "worktrees.json")));
+    assert.ok(existsSync(join(TMPDIR, ".tinkerman", "progress", "worktrees.json")));
   });
 
   test("handles corrupted worktrees.json gracefully", () => {
-    mkdirSync(join(TMPDIR, ".forge", "progress"), { recursive: true });
+    mkdirSync(join(TMPDIR, ".tinkerman", "progress"), { recursive: true });
     writeFileSync(
-      join(TMPDIR, ".forge", "progress", "worktrees.json"),
+      join(TMPDIR, ".tinkerman", "progress", "worktrees.json"),
       "not json{{{"
     );
     const result = runCreate({
@@ -135,9 +135,9 @@ describe("worktree-remove-hook.mjs", () => {
   });
 
   beforeEach(() => {
-    mkdirSync(join(TMPDIR, ".forge", "progress"), { recursive: true });
+    mkdirSync(join(TMPDIR, ".tinkerman", "progress"), { recursive: true });
     writeFileSync(
-      join(TMPDIR, ".forge", "progress", "worktrees.json"),
+      join(TMPDIR, ".tinkerman", "progress", "worktrees.json"),
       JSON.stringify({
         worktrees: [
           { path: "/tmp/wt-a", branch: "feature/a", created: "2026-05-30" },
@@ -167,7 +167,7 @@ describe("worktree-remove-hook.mjs", () => {
   });
 
   test("exits 0 when no worktrees.json exists", () => {
-    rmSync(join(TMPDIR, ".forge", "progress", "worktrees.json"), { force: true });
+    rmSync(join(TMPDIR, ".tinkerman", "progress", "worktrees.json"), { force: true });
     const result = runRemove({
       WORKTREE_PATH: "/tmp/wt-a",
     });
@@ -182,10 +182,10 @@ describe("worktree-remove-hook.mjs", () => {
   test("uses FORGE_PROJECT_ROOT instead of cwd when provided", () => {
     const projectRoot = join(TMPDIR, "project-root");
     const otherCwd = join(TMPDIR, "other-cwd");
-    mkdirSync(join(projectRoot, ".forge", "progress"), { recursive: true });
+    mkdirSync(join(projectRoot, ".tinkerman", "progress"), { recursive: true });
     mkdirSync(otherCwd, { recursive: true });
     writeFileSync(
-      join(projectRoot, ".forge", "progress", "worktrees.json"),
+      join(projectRoot, ".tinkerman", "progress", "worktrees.json"),
       JSON.stringify({
         worktrees: [
           { path: "/tmp/wt-a", branch: "feature/a", created: "2026-05-30" },

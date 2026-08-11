@@ -449,7 +449,7 @@ describe("Property 7: 棕地 Spec 包含 Delta 章节", () => {
 
 const importSourceArb: fc.Arbitrary<string> = fc
   .tuple(
-    fc.constantFrom(".forge/inbox/", "docs/", "specs/"),
+    fc.constantFrom(".tinkerman/inbox/", "docs/", "specs/"),
     nonEmptyStringArb,
     fc.constantFrom(".md", ".txt"),
   )

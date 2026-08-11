@@ -5,7 +5,7 @@
  * 入参自防 null + hasAnySeverityField 降级谓词。
  *
  * 这些测试在 src/review/severity-parser.ts 实现前应全部失败（RED）。
- * 对应 spec: .forge/specs/arch-review-remediate-0626 REQ-04。
+ * 对应 spec: .tinkerman/specs/arch-review-remediate-0626 REQ-04。
  */
 
 import { describe, expect, it } from "vitest";

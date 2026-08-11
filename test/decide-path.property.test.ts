@@ -2,7 +2,7 @@
  * Property 4: 决策文档路径格式
  *
  * Uses fast-check to generate date and topic strings, verifying that the output
- * path strictly matches `.forge/decisions/<YYYY-MM-DD>-<topic>.md`.
+ * path strictly matches `.tinkerman/decisions/<YYYY-MM-DD>-<topic>.md`.
  *
  * **Validates: Requirements 2.6**
  */
@@ -157,8 +157,8 @@ const topicArb: fc.Arbitrary<string> = fc
 // Regex for full path validation
 // ---------------------------------------------------------------------------
 
-/** Full path must match: .forge/decisions/YYYY-MM-DD-<kebab-topic>.md */
-const PATH_REGEX = /^\.forge\/decisions\/\d{4}-\d{2}-\d{2}-.+\.md$/;
+/** Full path must match: .tinkerman/decisions/YYYY-MM-DD-<kebab-topic>.md */
+const PATH_REGEX = /^\.tinkerman\/decisions\/\d{4}-\d{2}-\d{2}-.+\.md$/;
 
 /** Kebab-case: only lowercase letters, digits, and hyphens; no leading/trailing hyphens. */
 const KEBAB_REGEX = /^[a-z0-9]+(-[a-z0-9]+)*$/;
@@ -168,7 +168,7 @@ const KEBAB_REGEX = /^[a-z0-9]+(-[a-z0-9]+)*$/;
 // ---------------------------------------------------------------------------
 
 describe("Property 4: 决策文档路径格式", () => {
-  it("output path matches .forge/decisions/<YYYY-MM-DD>-<topic>.md (Req 2.6)", () => {
+  it("output path matches .tinkerman/decisions/<YYYY-MM-DD>-<topic>.md (Req 2.6)", () => {
     fc.assert(
       fc.property(dateArb, topicArb, (date, topic) => {
         const path = generateDecisionPath(date, topic);
@@ -184,8 +184,8 @@ describe("Property 4: 决策文档路径格式", () => {
         const path = generateDecisionPath(date, topic);
 
         // Extract the date portion from the path
-        // Path format: .forge/decisions/YYYY-MM-DD-<topic>.md
-        const afterPrefix = path.replace(".forge/decisions/", "");
+        // Path format: .tinkerman/decisions/YYYY-MM-DD-<topic>.md
+        const afterPrefix = path.replace(".tinkerman/decisions/", "");
         const datePart = afterPrefix.substring(0, 10); // YYYY-MM-DD
 
         const [yearStr, monthStr, dayStr] = datePart.split("-");
@@ -210,8 +210,8 @@ describe("Property 4: 决策文档路径格式", () => {
         const path = generateDecisionPath(date, topic);
 
         // Extract the topic portion from the path
-        // Path format: .forge/decisions/YYYY-MM-DD-<topic>.md
-        const afterPrefix = path.replace(".forge/decisions/", "");
+        // Path format: .tinkerman/decisions/YYYY-MM-DD-<topic>.md
+        const afterPrefix = path.replace(".tinkerman/decisions/", "");
         // Remove the date (10 chars) and the separator hyphen (1 char)
         const topicWithExt = afterPrefix.substring(11);
         // Remove .md extension
@@ -223,12 +223,12 @@ describe("Property 4: 决策文档路径格式", () => {
     );
   });
 
-  it("path always starts with .forge/decisions/ and ends with .md", () => {
+  it("path always starts with .tinkerman/decisions/ and ends with .md", () => {
     fc.assert(
       fc.property(dateArb, topicArb, (date, topic) => {
         const path = generateDecisionPath(date, topic);
 
-        expect(path.startsWith(".forge/decisions/")).toBe(true);
+        expect(path.startsWith(".tinkerman/decisions/")).toBe(true);
         expect(path.endsWith(".md")).toBe(true);
       }),
       { numRuns: 50 },

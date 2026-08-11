@@ -47,11 +47,11 @@ export async function clearGoal(): Promise<void> {
  * Check whether the three-strike counter indicates the goal should be cleared.
  * Returns true when the counter file exists and count >= 3.
  *
- * @param stateRoot - Root directory containing `.forge/state/`. Defaults to `process.cwd()`.
+ * @param stateRoot - Root directory containing `.tinkerman/state/`. Defaults to `process.cwd()`.
  */
 export async function shouldClearGoal(stateRoot?: string): Promise<boolean> {
   const base = stateRoot ?? process.cwd();
-  const statePath = resolve(base, ".forge/state/three-strike-counter.json");
+  const statePath = resolve(base, ".tinkerman/state/three-strike-counter.json");
   if (!existsSync(statePath)) {
     return false;
   }

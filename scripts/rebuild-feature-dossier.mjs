@@ -6,7 +6,7 @@
 //   node rebuild-feature-dossier.mjs --all            — bulk rebuild
 //   node rebuild-feature-dossier.mjs --from-path <p>  — Hook mode (silent)
 //
-// Exit codes: 0 success / 1 failure / 2 no .forge/
+// Exit codes: 0 success / 1 failure / 2 no .tinkerman/
 
 import { writeFileSync, mkdirSync, existsSync } from "node:fs";
 import { resolve, join } from "node:path";
@@ -60,12 +60,12 @@ if (args.length === 0) {
 }
 
 // ---------------------------------------------------------------------------
-// Locate .forge/
+// Locate .tinkerman/
 // ---------------------------------------------------------------------------
 
 const forgeRoot = findForgeRoot();
 if (!forgeRoot) {
-	console.error("Error: No .forge/ directory found. Run 'forge init' first.");
+	console.error("Error: No .tinkerman/ directory found. Run 'forge init' first.");
 	process.exit(2);
 }
 
@@ -110,7 +110,7 @@ function rebuildTopic(topic, silent = false) {
 
 	if (!silent) {
 		console.log(
-			`dossier: wrote .forge/features/${topic}.md (${doc.frontmatter.stage_count} stages, ${doc.frontmatter.total_files} files)`,
+			`dossier: wrote .tinkerman/features/${topic}.md (${doc.frontmatter.stage_count} stages, ${doc.frontmatter.total_files} files)`,
 		);
 	}
 
@@ -142,15 +142,15 @@ function serializeDossier(doc) {
 }
 
 // ---------------------------------------------------------------------------
-// Find .forge/ root
+// Find .tinkerman/ root
 // ---------------------------------------------------------------------------
 
 function findForgeRoot() {
 	// Check CWD and parents
 	let dir = process.cwd();
 	for (let i = 0; i < 10; i++) {
-		if (existsSync(join(dir, ".forge"))) {
-			return join(dir, ".forge");
+		if (existsSync(join(dir, ".tinkerman"))) {
+			return join(dir, ".tinkerman");
 		}
 		const parent = resolve(dir, "..");
 		if (parent === dir) break;
@@ -170,7 +170,7 @@ if (args[0] === "--from-path" || process.env.TOOL_INPUT_FILE) {
 		process.exit(0);
 	}
 
-	// Normalize: strip leading .forge/ if present
+	// Normalize: strip leading .tinkerman/ if present
 	const relPath = inputPath
 		.replace(/^\.forge\//, "")
 		.replace(/^\.\/\.forge\//, "");

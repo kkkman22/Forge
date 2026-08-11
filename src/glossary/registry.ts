@@ -3,7 +3,7 @@
  *
  * Reads glossary markdown files from enabled packs and the custom layer,
  * builds a `GlossaryRegistry` keyed by `context::term` and by term name.
- * Supports backward compatibility with the legacy single-file `.forge/glossary.md`.
+ * Supports backward compatibility with the legacy single-file `.tinkerman/glossary.md`.
  *
  * **Validates: R1 Glossary loading, R2 Backward compat, R3 Custom override**
  */
@@ -22,7 +22,7 @@ import type { EnabledPacks, FileSystem, GlossaryEntry, GlossaryRegistry } from "
  *
  * Backward compat: when `enabledPacks.order` is empty AND
  * `customLayerRoot/glossary/` doesn't exist, falls back to reading
- * `.forge/glossary.md` as the `_shared` context.
+ * `.tinkerman/glossary.md` as the `_shared` context.
  */
 export async function loadGlossary(
   enabledPacks: EnabledPacks,
@@ -272,7 +272,7 @@ function addEntry(
 }
 
 /**
- * Parse legacy single-file `.forge/glossary.md` as `_shared` context.
+ * Parse legacy single-file `.tinkerman/glossary.md` as `_shared` context.
  *
  * Legacy format uses `### <Term>` headings with inline definition paragraphs.
  */

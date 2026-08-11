@@ -108,15 +108,15 @@ describe("state.ts path + zone utilities (branches)", () => {
     expect(hasYamlFrontmatter("no frontmatter")).toBe(false);
     expect(hasYamlFrontmatter("")).toBe(false);
   });
-  it("normalizeForgePath strips to .forge/-relative", () => {
-    expect(normalizeForgePath("project/.forge/specs/x/spec.md")).toBe("specs/x/spec.md");
-    expect(normalizeForgePath(".forge/config.md")).toBe("config.md");
+  it("normalizeForgePath strips to .tinkerman/-relative", () => {
+    expect(normalizeForgePath("project/.tinkerman/specs/x/spec.md")).toBe("specs/x/spec.md");
+    expect(normalizeForgePath(".tinkerman/config.md")).toBe("config.md");
   });
   it("normalizeForgePath handles backslash separators", () => {
-    expect(normalizeForgePath("project\\.forge\\specs\\x")).toContain("specs/x");
+    expect(normalizeForgePath("project\\.tinkerman\\specs\\x")).toContain("specs/x");
   });
   it("normalizeForgePath handles .. sequences", () => {
-    const r = normalizeForgePath(".forge/specs/../specs/x/spec.md");
+    const r = normalizeForgePath(".tinkerman/specs/../specs/x/spec.md");
     expect(r).toContain("specs/x");
   });
   it("getProtectionZone returns frozen for specs/plans/config", () => {

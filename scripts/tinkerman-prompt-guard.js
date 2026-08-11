@@ -1,9 +1,9 @@
 #!/usr/bin/env node
 /**
- * forge-prompt-guard.js — PreToolUse hook for Write/Edit targeting .forge/
+ * forge-prompt-guard.js — PreToolUse hook for Write/Edit targeting .tinkerman/
  * Fail-open design: always exits 0, outputs warnings to stderr as JSON.
  * Trigger: PreToolUse matcher "Write|Edit"
- * Activation: target path contains ".forge/"
+ * Activation: target path contains ".tinkerman/"
  * Exemption: CLAUDE_CODE_ENTRYPOINT env var set (native read-before-edit)
  */
 "use strict";
@@ -60,10 +60,10 @@ async function main() {
     const toolName = input.tool_name || input.tool || "";
     const toolInput = input.tool_input || input.params || {};
 
-    // Only activate for Write/Edit on .forge/ paths
+    // Only activate for Write/Edit on .tinkerman/ paths
     if (toolName !== "Write" && toolName !== "Edit") { process.exit(0); return; }
     const targetPath = toolInput.file_path || toolInput.path || "";
-    if (!targetPath.includes(".forge/")) { process.exit(0); return; }
+    if (!targetPath.includes(".tinkerman/")) { process.exit(0); return; }
 
     const content = toolInput.content || toolInput.new_string || "";
     if (!content) { process.exit(0); return; }

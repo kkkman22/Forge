@@ -48,7 +48,7 @@ export interface CompactSafeDecision {
  * @param currentTokens caller-supplied estimate of current context tokens
  *   (e.g. from Claude Code's context-usage signal, or a heuristic summing
  *   loaded-file sizes). 0/undefined -> never compact-safe (unknown budget).
- * @param threshold the context_budget threshold (from .forge/config.md); falls
+ * @param threshold the context_budget threshold (from .tinkerman/config.md); falls
  *   back to DEFAULT_COMPACT_SAFE_THRESHOLD (100K) when omitted.
  */
 export function decideCompactSafe(

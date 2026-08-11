@@ -3,7 +3,7 @@ import { resolve } from "node:path";
 import { describe, expect, it } from "vitest";
 
 const ROOT = resolve(import.meta.dirname, "..", "..");
-const ADR_PATH = resolve(ROOT, ".forge/decisions/ADR-0004-skills-collapse-and-dispatcher.md");
+const ADR_PATH = resolve(ROOT, ".tinkerman/decisions/ADR-0004-skills-collapse-and-dispatcher.md");
 
 describe("R6.1: ADR-0004 exists and has correct frontmatter", () => {
   it("ADR-0004 file exists", () => {
@@ -40,7 +40,7 @@ describe("R6.1: ADR-0004 exists and has correct frontmatter", () => {
 describe("R6.2: ADR-0003 updated with supersedes note", () => {
   const ADR3_PATH = resolve(
     ROOT,
-    ".forge/decisions/ADR-0003-single-entry-command-consolidation.md",
+    ".tinkerman/decisions/ADR-0003-single-entry-command-consolidation.md",
   );
 
   it("ADR-0003 contains update note referencing ADR-0004", () => {

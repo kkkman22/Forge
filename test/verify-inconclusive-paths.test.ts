@@ -49,7 +49,7 @@ describe("verify inconclusive paths", () => {
     const opts: VerifyOptions = {
       topic: "test",
       cwd: dir,
-      forgeDir: join(dir, ".forge"),
+      forgeDir: join(dir, ".tinkerman"),
       claim: { condition: "", metric: "p95 latency", threshold: "≤200ms" },
     };
 
@@ -60,7 +60,7 @@ describe("verify inconclusive paths", () => {
 
   it("missing claim field writes verify evidence artifact and verdict cites it", async () => {
     const dir = makeTmp("missing-artifact");
-    const forgeDir = join(dir, ".forge");
+    const forgeDir = join(dir, ".tinkerman");
     const opts: VerifyOptions = {
       topic: "test",
       cwd: dir,
@@ -94,7 +94,7 @@ describe("verify inconclusive paths", () => {
     const opts: VerifyOptions = {
       topic: "test",
       cwd: dir,
-      forgeDir: join(dir, ".forge"),
+      forgeDir: join(dir, ".tinkerman"),
       claim: { condition: "under load", metric: "", threshold: "≤200ms" },
     };
 
@@ -108,7 +108,7 @@ describe("verify inconclusive paths", () => {
     const opts: VerifyOptions = {
       topic: "test",
       cwd: dir,
-      forgeDir: join(dir, ".forge"),
+      forgeDir: join(dir, ".tinkerman"),
       claim: { condition: "under load", metric: "p95 latency", threshold: "" },
     };
 
@@ -122,7 +122,7 @@ describe("verify inconclusive paths", () => {
     const opts: VerifyOptions = {
       topic: "test",
       cwd: dir,
-      forgeDir: join(dir, ".forge"),
+      forgeDir: join(dir, ".tinkerman"),
       claim: { condition: "test", metric: "pass rate", threshold: "100%" },
     };
 
@@ -133,7 +133,7 @@ describe("verify inconclusive paths", () => {
 
   it("baseline resolution failure writes verdict.md and verify evidence artifact", async () => {
     const dir = makeTmp("no-baseline-artifact");
-    const forgeDir = join(dir, ".forge");
+    const forgeDir = join(dir, ".tinkerman");
     const opts: VerifyOptions = {
       topic: "test",
       cwd: dir,
@@ -157,7 +157,7 @@ describe("verify inconclusive paths", () => {
 
   it("writes claim.md before aborting [R1.2]", async () => {
     const dir = makeTmp("claim-written");
-    const forgeDir = join(dir, ".forge");
+    const forgeDir = join(dir, ".tinkerman");
     const opts: VerifyOptions = {
       topic: "test",
       cwd: dir,
@@ -175,7 +175,7 @@ describe("verify inconclusive paths", () => {
 
   it("first run persists treatment as baseline [R14.9]", async () => {
     const dir = makeTmp("first-run");
-    const forgeDir = join(dir, ".forge");
+    const forgeDir = join(dir, ".tinkerman");
 
     // Create a fake treatment to simulate what a first run would produce
     const treatmentDir = join(forgeDir, "findings", "test", "verify-this", "treatment");

@@ -52,8 +52,8 @@ function mockBitbucketClient() {
 
 function createTmpForgeDir(): string {
   const dir = mkdtempSync(join(tmpdir(), "forge-rcb-"));
-  mkdirSync(join(dir, ".forge", "knowledge"), { recursive: true });
-  mkdirSync(join(dir, ".forge", "findings"), { recursive: true });
+  mkdirSync(join(dir, ".tinkerman", "knowledge"), { recursive: true });
+  mkdirSync(join(dir, ".tinkerman", "findings"), { recursive: true });
   return dir;
 }
 
@@ -90,10 +90,10 @@ describe("Integration: post.ts wires side-effect modules", () => {
 
     expect(result.posted).toBe(false);
     // daily skip file
-    const findingsFiles = readdirSync(join(tmpDir, ".forge", "findings"));
+    const findingsFiles = readdirSync(join(tmpDir, ".tinkerman", "findings"));
     expect(findingsFiles.some((f) => f.startsWith("comment-channel-skipped-"))).toBe(true);
     // tool-health counter
-    const healthPath = join(tmpDir, ".forge", "knowledge", "tool-health.md");
+    const healthPath = join(tmpDir, ".tinkerman", "knowledge", "tool-health.md");
     expect(existsSync(healthPath)).toBe(true);
     const health = readFileSync(healthPath, "utf-8");
     expect(health).toContain("platform-disabled-by-config count=1");
@@ -119,7 +119,7 @@ describe("Integration: post.ts wires side-effect modules", () => {
       { baseDir: tmpDir },
     );
 
-    const metricsPath = join(tmpDir, ".forge", "knowledge", "metrics.md");
+    const metricsPath = join(tmpDir, ".tinkerman", "knowledge", "metrics.md");
     expect(existsSync(metricsPath)).toBe(true);
     const metrics = readFileSync(metricsPath, "utf-8");
     expect(metrics).toContain("run_id=run-skip-metrics");
@@ -145,7 +145,7 @@ describe("Integration: post.ts wires side-effect modules", () => {
       { baseDir: tmpDir },
     );
 
-    const metricsPath = join(tmpDir, ".forge", "knowledge", "metrics.md");
+    const metricsPath = join(tmpDir, ".tinkerman", "knowledge", "metrics.md");
     const metrics = readFileSync(metricsPath, "utf-8");
     expect(metrics).toContain("run_id=run-metrics-001");
     expect(metrics).toContain("post_enabled=true");
@@ -183,10 +183,10 @@ describe("Integration: post.ts wires side-effect modules", () => {
       { baseDir: tmpDir },
     );
 
-    const findingsFiles = readdirSync(join(tmpDir, ".forge", "findings"));
+    const findingsFiles = readdirSync(join(tmpDir, ".tinkerman", "findings"));
     const errorFile = findingsFiles.find((f) => f.startsWith("comment-channel-error-"));
     expect(errorFile).toBeDefined();
-    const content = readFileSync(join(tmpDir, ".forge", "findings", errorFile!), "utf-8");
+    const content = readFileSync(join(tmpDir, ".tinkerman", "findings", errorFile!), "utf-8");
     expect(content).toContain("finding_hash:");
     expect(content).toContain("tool_name: create_pr_task");
     expect(content).toContain("error_message: rate limited");
@@ -261,7 +261,7 @@ describe("Integration: post.ts wires side-effect modules", () => {
       { baseDir: tmpDir },
     );
 
-    const metricsPath = join(tmpDir, ".forge", "knowledge", "metrics.md");
+    const metricsPath = join(tmpDir, ".tinkerman", "knowledge", "metrics.md");
     expect(existsSync(metricsPath)).toBe(true);
     const metrics = readFileSync(metricsPath, "utf-8");
     expect(metrics).toContain("run_id=run-parse-metrics");
@@ -288,7 +288,7 @@ describe("Integration: post.ts wires side-effect modules", () => {
     expect(result.posted).toBe(false);
     expect(bb.create_pr_task).not.toHaveBeenCalled();
     // metrics should still be written
-    const metricsPath = join(tmpDir, ".forge", "knowledge", "metrics.md");
+    const metricsPath = join(tmpDir, ".tinkerman", "knowledge", "metrics.md");
     expect(existsSync(metricsPath)).toBe(true);
     expect(readFileSync(metricsPath, "utf-8")).toContain("run_id=run-cli-001");
   });

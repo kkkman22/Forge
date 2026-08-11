@@ -57,12 +57,12 @@ function createCountingFs(files: Record<string, string | null>): FileSystem & {
 }
 
 const REPOS_ROOT = "/repos";
-const CONFIG_PATH = path.join(REPOS_ROOT, ".forge", "config.md");
-const GLOSSARY_PATH = path.join(REPOS_ROOT, ".forge", "glossary.md");
+const CONFIG_PATH = path.join(REPOS_ROOT, ".tinkerman", "config.md");
+const GLOSSARY_PATH = path.join(REPOS_ROOT, ".tinkerman", "glossary.md");
 const PACKS_DIR = path.join(REPOS_ROOT, "packs");
 
 function flatGlossaryMd(): string {
-  // Flat glossary format: ## headings + **定义**/**别名** lines (see .forge/glossary.md).
+  // Flat glossary format: ## headings + **定义**/**别名** lines (see .tinkerman/glossary.md).
   return [
     "---",
     "schema_version: 2",
@@ -159,7 +159,7 @@ describe("loadEnforcementGlossary", () => {
     expect(tierTerms).toHaveLength(1);
   });
 
-  it("seeds flat glossary when .forge/glossary.md is absent", async () => {
+  it("seeds flat glossary when .tinkerman/glossary.md is absent", async () => {
     const files: Record<string, string | null> = {
       [CONFIG_PATH]: "---\nproject: Forge\n---\nbody",
       [path.join(PACKS_DIR, "pms", "pack.yaml")]: pmsPackYaml(),

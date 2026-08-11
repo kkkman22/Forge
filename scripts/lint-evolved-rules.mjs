@@ -8,7 +8,7 @@
 import fs from "node:fs";
 import path from "node:path";
 
-const RULES_FILE = path.join(import.meta.dirname, "..", ".forge", "knowledge", "evolved-rules.md");
+const RULES_FILE = path.join(import.meta.dirname, "..", ".tinkerman", "knowledge", "evolved-rules.md");
 
 function main() {
   if (!fs.existsSync(RULES_FILE)) {

@@ -56,7 +56,7 @@ export interface SchedulerInput {
   maxReviewFixAttempts: number;
   /**
    * Debug file `status` field (dynamic-replan-loop R2). Populated by the
-   * caller from `.forge/debug/<slug>.md` frontmatter. Present only when the
+   * caller from `.tinkerman/debug/<slug>.md` frontmatter. Present only when the
    * current phase is "debug".
    */
   debugStatus?: string;

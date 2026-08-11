@@ -36,13 +36,13 @@ export interface DispatchOptions {
   timeoutMs?: number;
   /**
    * Current routing tier ("light"|"standard"|"full"), read from
-   * `.forge/status.md` by the caller. When {@link timeoutMs} is not set, the
+   * `.tinkerman/status.md` by the caller. When {@link timeoutMs} is not set, the
    * timeout is resolved per-tier via {@link resolveAgentTimeoutMs} using
    * {@link configContent}.
    */
   tier?: string;
   /**
-   * Raw text content of `.forge/config.md`, supplied by the caller so this
+   * Raw text content of `.tinkerman/config.md`, supplied by the caller so this
    * module stays IO-free. Used only when {@link timeoutMs} is not set.
    */
   configContent?: string;
@@ -116,14 +116,14 @@ const VALID_DISPATCH_MODES = ["inline", "agents", "auto"] as const;
 type DispatchMode = (typeof VALID_DISPATCH_MODES)[number];
 
 /**
- * Parse dispatch mode from `.forge/config.md` frontmatter.
+ * Parse dispatch mode from `.tinkerman/config.md` frontmatter.
  *
  * Looks for `review_dispatch_mode` or `decide_dispatch_mode` depending on the
  * `context` parameter. Returns `"inline"` as the safe default when the field
  * is absent or unrecognised.
  *
  * @param context  Either `"review"` or `"decide"`.
- * @param configContent  Raw text content of `.forge/config.md`.
+ * @param configContent  Raw text content of `.tinkerman/config.md`.
  * @returns The resolved dispatch mode.
  * @public
  */
@@ -143,7 +143,7 @@ export function parseDispatchMode(
 }
 
 /**
- * Resolve the agent dispatch timeout for a routing tier from `.forge/config.md`.
+ * Resolve the agent dispatch timeout for a routing tier from `.tinkerman/config.md`.
  *
  * Reads the per-tier flat fields `review.agent_timeout_minutes.light|standard|full`
  * (values in whole minutes) and returns the matching timeout in milliseconds.
@@ -158,8 +158,8 @@ export function parseDispatchMode(
  * 4. `TIER_DEFAULT_TIMEOUT_MS`.standard (15 min) when the tier itself
  *    is unrecognised or undefined.
  *
- * @param tier  Current routing tier from `.forge/status.md` ("light"|"standard"|"full").
- * @param configContent  Raw text content of `.forge/config.md`.
+ * @param tier  Current routing tier from `.tinkerman/status.md` ("light"|"standard"|"full").
+ * @param configContent  Raw text content of `.tinkerman/config.md`.
  * @returns Timeout in milliseconds.
  * @public
  */
@@ -193,7 +193,7 @@ export function resolveAgentTimeoutMs(tier: string | undefined, configContent: s
 export const DEFAULT_MAX_SUBAGENT_DEPTH = 5;
 
 /**
- * Resolve the max subagent depth from `.forge/config.md` content.
+ * Resolve the max subagent depth from `.tinkerman/config.md` content.
  * Reads `max_subagent_depth` (1-10); falls back to {@link DEFAULT_MAX_SUBAGENT_DEPTH}
  * when absent or invalid. Pure: accepts the raw config text.
  *
@@ -252,7 +252,7 @@ export function evaluateSpawnPolicy(
  */
 function appendSpawnPolicyEvent(agentType: string, event: string, detail: string): void {
   try {
-    appendToolHealthRecord(join(process.cwd(), ".forge/knowledge/tool-health.md"), {
+    appendToolHealthRecord(join(process.cwd(), ".tinkerman/knowledge/tool-health.md"), {
       subcommand: "dispatch",
       event,
       details: `agent=${agentType} ${detail}`,
@@ -427,14 +427,14 @@ export async function dispatch(opts: DispatchOptions): Promise<DispatchResult> {
 // ---------------------------------------------------------------------------
 
 /**
- * Read all agent result JSON files from `.forge/agent-results/<runId>/`.
+ * Read all agent result JSON files from `.tinkerman/agent-results/<runId>/`.
  *
  * Each `<agent>.json` file is parsed and returned as a DispatchResult.
  * Malformed files are silently skipped. Returns an empty array when the
  * directory does not exist.
  *
  * @param runId  The run identifier (directory name under agent-results).
- * @param projectRoot  The project root directory containing `.forge/`.
+ * @param projectRoot  The project root directory containing `.tinkerman/`.
  * @returns Array of parsed DispatchResult objects.
  * @public
  */
@@ -442,7 +442,7 @@ export async function collectResults(
   runId: string,
   projectRoot: string,
 ): Promise<DispatchResult[]> {
-  const resultsDir = join(projectRoot, ".forge", "agent-results", runId);
+  const resultsDir = join(projectRoot, ".tinkerman", "agent-results", runId);
 
   let entries: string[];
   try {

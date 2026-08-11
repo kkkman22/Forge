@@ -114,16 +114,16 @@ describe("extractStatus", () => {
 // ---------------------------------------------------------------------------
 
 describe("isFrozenZonePath", () => {
-  it("returns true for .forge/specs/ paths", () => {
-    expect(isFrozenZonePath(".forge/specs/my-spec/requirements.md")).toBe(true);
+  it("returns true for .tinkerman/specs/ paths", () => {
+    expect(isFrozenZonePath(".tinkerman/specs/my-spec/requirements.md")).toBe(true);
   });
 
-  it("returns true for .forge/plans/ paths", () => {
-    expect(isFrozenZonePath(".forge/plans/my-plan.md")).toBe(true);
+  it("returns true for .tinkerman/plans/ paths", () => {
+    expect(isFrozenZonePath(".tinkerman/plans/my-plan.md")).toBe(true);
   });
 
-  it("returns true for .forge/config.md", () => {
-    expect(isFrozenZonePath(".forge/config.md")).toBe(true);
+  it("returns true for .tinkerman/config.md", () => {
+    expect(isFrozenZonePath(".tinkerman/config.md")).toBe(true);
   });
 
   it("returns false for regular source paths", () => {

@@ -10,7 +10,7 @@
 A dogfood reference domain that demonstrates how to build a DDD aggregate that
 **consumes the `src/state-machine/` engine** as its transition truth source. It
 exists to resolve two sunk costs (see
-`.forge/decisions/2026-06-27-domain-example-reference-impl.md`):
+`.tinkerman/decisions/2026-06-27-domain-example-reference-impl.md`):
 
 1. **state-machine engine** — was an orphan (no real production consumer). The
    `Reservation` aggregate is its first load-bearing importer.

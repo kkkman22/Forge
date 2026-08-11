@@ -13,7 +13,7 @@
  *      when the env is set (the mechanism ZCode uses to inject it).
  *
  * Real ZCode-host expansion must be verified manually — see
- * .forge/specs/zcode-p1-base-integration/evidence-r4-template-vars.md.
+ * .tinkerman/specs/zcode-p1-base-integration/evidence-r4-template-vars.md.
  */
 import { readFileSync } from "node:fs";
 import { execFileSync } from "node:child_process";

@@ -28,7 +28,7 @@ cmux browser open http://localhost:5173
 SURFACE=$(cmux browser identify | jq -r '.focused_surface_id')
 
 # Login state handling
-STATE_CACHE=".forge/cache/login-state-${PROJECT}.json"
+STATE_CACHE=".tinkerman/cache/login-state-${PROJECT}.json"
 if [ -f "$STATE_CACHE" ]; then
   cmux browser $SURFACE state load "$STATE_CACHE"
 fi
@@ -49,12 +49,12 @@ for URL in "${KEY_URLS[@]}"; do
 
   # Run axe-core audit
   cmux browser $SURFACE eval "JSON.stringify(await axe.run())" \
-    > ".forge/reviews/assets/axe-${PAGE_NAME}.json"
+    > ".tinkerman/reviews/assets/axe-${PAGE_NAME}.json"
 
   # Capture artifacts
-  cmux browser $SURFACE screenshot --out ".forge/reviews/assets/${PAGE_NAME}.png"
-  cmux browser $SURFACE console list > ".forge/reviews/assets/console-${PAGE_NAME}.log"
-  cmux browser $SURFACE errors list > ".forge/reviews/assets/errors-${PAGE_NAME}.log"
+  cmux browser $SURFACE screenshot --out ".tinkerman/reviews/assets/${PAGE_NAME}.png"
+  cmux browser $SURFACE console list > ".tinkerman/reviews/assets/console-${PAGE_NAME}.log"
+  cmux browser $SURFACE errors list > ".tinkerman/reviews/assets/errors-${PAGE_NAME}.log"
 done
 
 # Save login state for future runs

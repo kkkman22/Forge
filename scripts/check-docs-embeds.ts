@@ -6,7 +6,7 @@
  * against existing files. Reports mismatches with unified diff output.
  *
  * Pre-commit context: only runs when staged files touch docs/, docs/_ssot/,
- *   or .forge/config.md.
+ *   or .tinkerman/config.md.
  * CI context: always runs.
  *
  * Flags:
@@ -108,7 +108,7 @@ function shouldRun(rootDir: string): boolean {
       (f) =>
         f.startsWith("docs/") ||
         f.startsWith("docs/_ssot/") ||
-        f === ".forge/config.md",
+        f === ".tinkerman/config.md",
     );
   } catch {
     // Cannot determine staged files — run anyway

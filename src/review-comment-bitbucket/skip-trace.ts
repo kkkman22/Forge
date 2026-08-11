@@ -28,7 +28,7 @@ export async function recordSkip(
     let baseDir = path.dirname(reviewMarkdownPath);
     let foundForge = false;
     while (baseDir !== path.dirname(baseDir)) {
-      if (fs.existsSync(path.join(baseDir, ".forge"))) {
+      if (fs.existsSync(path.join(baseDir, ".tinkerman"))) {
         foundForge = true;
         break;
       }
@@ -42,7 +42,7 @@ export async function recordSkip(
 
     const now = new Date();
     const dateStr = now.toISOString().split("T")[0];
-    const findingsDir = path.join(baseDir, ".forge", "findings");
+    const findingsDir = path.join(baseDir, ".tinkerman", "findings");
     const skipFilePath = path.join(findingsDir, `comment-channel-skipped-${dateStr}.md`);
 
     await fs.promises.mkdir(findingsDir, { recursive: true });
@@ -59,7 +59,7 @@ export async function recordSkip(
     let baseDir = path.dirname(reviewMarkdownPath);
     let foundForge = false;
     while (baseDir !== path.dirname(baseDir)) {
-      if (fs.existsSync(path.join(baseDir, ".forge"))) {
+      if (fs.existsSync(path.join(baseDir, ".tinkerman"))) {
         foundForge = true;
         break;
       }
@@ -71,7 +71,7 @@ export async function recordSkip(
       return;
     }
 
-    const knowledgeDir = path.join(baseDir, ".forge", "knowledge");
+    const knowledgeDir = path.join(baseDir, ".tinkerman", "knowledge");
     const healthPath = path.join(knowledgeDir, "tool-health.md");
 
     await fs.promises.mkdir(knowledgeDir, { recursive: true });

@@ -50,7 +50,7 @@ describe("Post-Push Verify [R8.1, R8.2, R8.5]", () => {
 
   it("writes artifact on failure when forgeDir provided", async () => {
     testDir = join(tmpdir(), `forge-ppv-${Date.now()}`);
-    const forgeDir = join(testDir, ".forge");
+    const forgeDir = join(testDir, ".tinkerman");
     mkdirSync(forgeDir, { recursive: true });
 
     const result = await executePostPushVerify("test-artifact", false, {
@@ -69,7 +69,7 @@ describe("Post-Push Verify [R8.1, R8.2, R8.5]", () => {
 
   it("does not write artifact on success", async () => {
     testDir = join(tmpdir(), `forge-ppv-ok-${Date.now()}`);
-    const forgeDir = join(testDir, ".forge");
+    const forgeDir = join(testDir, ".tinkerman");
     mkdirSync(forgeDir, { recursive: true });
 
     await executePostPushVerify("test-no-artifact", false, {

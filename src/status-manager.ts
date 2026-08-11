@@ -4,9 +4,9 @@
  * Provides high-level operations for reading, writing, listing, and
  * managing task status files in both single-task and multi-task modes.
  *
- * Mode detection is based on the existence of the .forge/status/ directory.
- * In single-task mode, all operations target .forge/status.md.
- * In multi-task mode, each task gets its own file under .forge/status/.
+ * Mode detection is based on the existence of the .tinkerman/status/ directory.
+ * In single-task mode, all operations target .tinkerman/status.md.
+ * In multi-task mode, each task gets its own file under .tinkerman/status/.
  */
 
 import { basename, dirname } from "node:path";
@@ -64,7 +64,7 @@ const TERMINAL_PHASES = new Set(["completed", "aborted"]);
 /**
  * Read status for a specific task.
  *
- * Priority: .forge/status/<task-id>.md → .forge/status.md → empty string
+ * Priority: .tinkerman/status/<task-id>.md → .tinkerman/status.md → empty string
  * @public
  */
 export function readTaskStatus(io: StatusManagerIO, forgeRoot: string, taskName: string): string {
@@ -94,8 +94,8 @@ export function readTaskStatus(io: StatusManagerIO, forgeRoot: string, taskName:
 /**
  * Write status for a specific task.
  *
- * In multi-task mode, writes to .forge/status/<task-id>.md.
- * In single-task mode, writes to .forge/status.md.
+ * In multi-task mode, writes to .tinkerman/status/<task-id>.md.
+ * In single-task mode, writes to .tinkerman/status.md.
  * Write failures are logged and do not crash.
  * @public
  */
@@ -161,7 +161,7 @@ export function writeTaskStatus(
 /**
  * List all active tasks (phase is not "completed" or "aborted").
  *
- * Scans both .forge/status.md and .forge/status/*.md.
+ * Scans both .tinkerman/status.md and .tinkerman/status/*.md.
  * @public
  */
 export function listActiveTasks(io: StatusManagerIO, forgeRoot: string): ManagedTaskEntry[] {
@@ -256,8 +256,8 @@ function withForgeLock<T>(
  * Steps (all under a directory-level migration lock):
  *   1. Read current_task from legacy status.md
  *   2. Slugify to get task-id
- *   3. Create .forge/status/ directory
- *   4. Copy legacy content to .forge/status/<task-id>.md (idempotent: skip if
+ *   3. Create .tinkerman/status/ directory
+ *   4. Copy legacy content to .tinkerman/status/<task-id>.md (idempotent: skip if
  *      the target already exists — a prior partial migration's file survives)
  *   5. Clear legacy status.md (preserve empty frontmatter)
  *
@@ -307,7 +307,7 @@ export type ArchiveResult =
   | { ok: false; code: "invalid-date" | "io-error" | "not-found"; error?: unknown };
 
 /**
- * Archive a task's status file to .forge/archive/<date>-<task-id>/status.md.
+ * Archive a task's status file to .tinkerman/archive/<date>-<task-id>/status.md.
  *
  * Audit P2: was `void` with a catch-all that silently swallowed every error
  * (invalid date, missing file, disk failure, permission error alike) — callers

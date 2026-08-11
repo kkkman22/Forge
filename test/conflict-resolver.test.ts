@@ -5,7 +5,7 @@ describe("resolveConflicts", () => {
   it("resolves all guarded conflicts automatically", async () => {
     const { resolveConflicts } = await import("../src/conflict-resolver.js");
     const result = await resolveConflicts(
-      [".forge/progress/auth.md", ".forge/reviews/auth.md"],
+      [".tinkerman/progress/auth.md", ".tinkerman/reviews/auth.md"],
       "autonomous",
       {
         statusContent: "current_task: auth\n",
@@ -16,13 +16,13 @@ describe("resolveConflicts", () => {
     );
     expect(result.allResolved).toBe(true);
     expect(result.frozenRefused).toBe(false);
-    expect(result.resolvedPaths).toContain(".forge/progress/auth.md");
-    expect(result.resolvedPaths).toContain(".forge/reviews/auth.md");
+    expect(result.resolvedPaths).toContain(".tinkerman/progress/auth.md");
+    expect(result.resolvedPaths).toContain(".tinkerman/reviews/auth.md");
   });
 
   it("refuses frozen conflicts in autonomous mode", async () => {
     const { resolveConflicts } = await import("../src/conflict-resolver.js");
-    const result = await resolveConflicts([".forge/specs/auth/spec.md"], "autonomous", {
+    const result = await resolveConflicts([".tinkerman/specs/auth/spec.md"], "autonomous", {
       statusContent: "current_task: auth\n",
       repoRoot: "/tmp/test",
       readFileContent: async () => "status: locked",
@@ -30,19 +30,19 @@ describe("resolveConflicts", () => {
     });
     expect(result.allResolved).toBe(false);
     expect(result.frozenRefused).toBe(true);
-    expect(result.refusedPaths).toContain(".forge/specs/auth/spec.md");
+    expect(result.refusedPaths).toContain(".tinkerman/specs/auth/spec.md");
   });
 
   it("resolves open conflicts with ours strategy", async () => {
     const { resolveConflicts } = await import("../src/conflict-resolver.js");
-    const result = await resolveConflicts([".forge/findings/note.md"], "autonomous", {
+    const result = await resolveConflicts([".tinkerman/findings/note.md"], "autonomous", {
       statusContent: "",
       repoRoot: "/tmp/test",
       readFileContent: async () => "our content",
       writeFileContent: async () => {},
     });
     expect(result.allResolved).toBe(true);
-    expect(result.resolvedPaths).toContain(".forge/findings/note.md");
+    expect(result.resolvedPaths).toContain(".tinkerman/findings/note.md");
   });
 
   it("leaves source conflicts unresolved", async () => {
@@ -60,7 +60,7 @@ describe("resolveConflicts", () => {
   it("handles mixed zones: guarded resolved, frozen refused, source skipped", async () => {
     const { resolveConflicts } = await import("../src/conflict-resolver.js");
     const result = await resolveConflicts(
-      [".forge/progress/auth.md", ".forge/specs/auth/spec.md", "src/main.ts"],
+      [".tinkerman/progress/auth.md", ".tinkerman/specs/auth/spec.md", "src/main.ts"],
       "autonomous",
       {
         statusContent: "current_task: auth\n",
@@ -69,8 +69,8 @@ describe("resolveConflicts", () => {
         writeFileContent: async () => {},
       },
     );
-    expect(result.resolvedPaths).toContain(".forge/progress/auth.md");
-    expect(result.refusedPaths).toContain(".forge/specs/auth/spec.md");
+    expect(result.resolvedPaths).toContain(".tinkerman/progress/auth.md");
+    expect(result.refusedPaths).toContain(".tinkerman/specs/auth/spec.md");
     expect(result.refusedPaths).toContain("src/main.ts");
     expect(result.allResolved).toBe(false);
     expect(result.frozenRefused).toBe(true);
@@ -80,18 +80,21 @@ describe("resolveConflicts", () => {
 describe("buildFrozenRefusalPrompt", () => {
   it("generates 3-option prompt for frozen paths", async () => {
     const { buildFrozenRefusalPrompt } = await import("../src/conflict-resolver.js");
-    const prompt = buildFrozenRefusalPrompt([".forge/specs/auth/spec.md"]);
+    const prompt = buildFrozenRefusalPrompt([".tinkerman/specs/auth/spec.md"]);
     expect(prompt).toContain("手动解决");
     expect(prompt).toContain("解锁后合并");
     expect(prompt).toContain("中止合并");
-    expect(prompt).toContain(".forge/specs/auth/spec.md");
+    expect(prompt).toContain(".tinkerman/specs/auth/spec.md");
   });
 
   it("handles multiple frozen paths", async () => {
     const { buildFrozenRefusalPrompt } = await import("../src/conflict-resolver.js");
-    const prompt = buildFrozenRefusalPrompt([".forge/specs/auth/spec.md", ".forge/config.md"]);
-    expect(prompt).toContain(".forge/specs/auth/spec.md");
-    expect(prompt).toContain(".forge/config.md");
+    const prompt = buildFrozenRefusalPrompt([
+      ".tinkerman/specs/auth/spec.md",
+      ".tinkerman/config.md",
+    ]);
+    expect(prompt).toContain(".tinkerman/specs/auth/spec.md");
+    expect(prompt).toContain(".tinkerman/config.md");
   });
 });
 
@@ -145,25 +148,25 @@ describe("validateConflictResolution", () => {
 describe("classifyConflictZone", () => {
   it("classifies frozen paths", async () => {
     const { classifyConflictZone } = await import("../src/conflict-resolver.js");
-    expect(classifyConflictZone(".forge/specs/auth/spec.md", "")).toBe("frozen");
-    expect(classifyConflictZone(".forge/config.md", "")).toBe("frozen");
-    expect(classifyConflictZone(".forge/plans/auth.md", "")).toBe("frozen");
+    expect(classifyConflictZone(".tinkerman/specs/auth/spec.md", "")).toBe("frozen");
+    expect(classifyConflictZone(".tinkerman/config.md", "")).toBe("frozen");
+    expect(classifyConflictZone(".tinkerman/plans/auth.md", "")).toBe("frozen");
   });
 
   it("classifies guarded paths", async () => {
     const { classifyConflictZone } = await import("../src/conflict-resolver.js");
-    expect(classifyConflictZone(".forge/progress/auth.md", "")).toBe("guarded");
-    expect(classifyConflictZone(".forge/reviews/auth.md", "")).toBe("guarded");
-    expect(classifyConflictZone(".forge/knowledge/instincts.md", "")).toBe("guarded");
-    expect(classifyConflictZone(".forge/decisions/ADR-001.md", "")).toBe("guarded");
-    expect(classifyConflictZone(".forge/knowledge/known-failures.md", "")).toBe("guarded");
-    expect(classifyConflictZone(".forge/knowledge/solutions/x.md", "")).toBe("guarded");
+    expect(classifyConflictZone(".tinkerman/progress/auth.md", "")).toBe("guarded");
+    expect(classifyConflictZone(".tinkerman/reviews/auth.md", "")).toBe("guarded");
+    expect(classifyConflictZone(".tinkerman/knowledge/instincts.md", "")).toBe("guarded");
+    expect(classifyConflictZone(".tinkerman/decisions/ADR-001.md", "")).toBe("guarded");
+    expect(classifyConflictZone(".tinkerman/knowledge/known-failures.md", "")).toBe("guarded");
+    expect(classifyConflictZone(".tinkerman/knowledge/solutions/x.md", "")).toBe("guarded");
   });
 
   it("classifies open paths", async () => {
     const { classifyConflictZone } = await import("../src/conflict-resolver.js");
-    expect(classifyConflictZone(".forge/findings/x.md", "")).toBe("open");
-    expect(classifyConflictZone(".forge/debug/y.md", "")).toBe("open");
+    expect(classifyConflictZone(".tinkerman/findings/x.md", "")).toBe("open");
+    expect(classifyConflictZone(".tinkerman/debug/y.md", "")).toBe("open");
   });
 
   it("classifies source paths", async () => {
@@ -174,8 +177,8 @@ describe("classifyConflictZone", () => {
 
   it("delegates to conflict-classifier for all paths", async () => {
     const { classifyConflictZone } = await import("../src/conflict-resolver.js");
-    expect(classifyConflictZone(".forge/plans/auth.md", "")).toBe("frozen");
-    expect(classifyConflictZone(".forge/knowledge/solutions/x.md", "")).toBe("guarded");
+    expect(classifyConflictZone(".tinkerman/plans/auth.md", "")).toBe("frozen");
+    expect(classifyConflictZone(".tinkerman/knowledge/solutions/x.md", "")).toBe("guarded");
   });
 });
 
@@ -222,14 +225,18 @@ describe("applyGuardedMerge", () => {
 describe("parseConflictedPaths", () => {
   it("extracts conflicted file paths from git stderr", async () => {
     const { parseConflictedPaths } = await import("../src/conflict-resolver.js");
-    const gitOutput = `Auto-merging .forge/progress/auth.md
-CONFLICT (content): Merge conflict in .forge/progress/auth.md
-Auto-merging .forge/reviews/auth.md
-CONFLICT (content): Merge conflict in .forge/reviews/auth.md
+    const gitOutput = `Auto-merging .tinkerman/progress/auth.md
+CONFLICT (content): Merge conflict in .tinkerman/progress/auth.md
+Auto-merging .tinkerman/reviews/auth.md
+CONFLICT (content): Merge conflict in .tinkerman/reviews/auth.md
 Auto-merging src/index.ts
 CONFLICT (content): Merge conflict in src/index.ts`;
     const paths = parseConflictedPaths(gitOutput);
-    expect(paths).toEqual([".forge/progress/auth.md", ".forge/reviews/auth.md", "src/index.ts"]);
+    expect(paths).toEqual([
+      ".tinkerman/progress/auth.md",
+      ".tinkerman/reviews/auth.md",
+      "src/index.ts",
+    ]);
   });
 
   it("returns empty array when no conflicts", async () => {
@@ -239,8 +246,8 @@ CONFLICT (content): Merge conflict in src/index.ts`;
 
   it("deduplicates paths", async () => {
     const { parseConflictedPaths } = await import("../src/conflict-resolver.js");
-    const output = `CONFLICT: Merge conflict in .forge/progress/a.md\nCONFLICT: Merge conflict in .forge/progress/a.md`;
+    const output = `CONFLICT: Merge conflict in .tinkerman/progress/a.md\nCONFLICT: Merge conflict in .tinkerman/progress/a.md`;
     const paths = parseConflictedPaths(output);
-    expect(paths).toEqual([".forge/progress/a.md"]);
+    expect(paths).toEqual([".tinkerman/progress/a.md"]);
   });
 });

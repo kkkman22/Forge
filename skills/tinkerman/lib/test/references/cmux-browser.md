@@ -29,7 +29,7 @@ When cmux is installed, `/tinkerman test` can use `cmux browser` commands for br
 
 ## Artifact
 
-On completion, writes `.forge/.cmux-browser-qa.json` containing `{ verdict, failures, steps, timestamp }`.
+On completion, writes `.tinkerman/.cmux-browser-qa.json` containing `{ verdict, failures, steps, timestamp }`.
 
 ## Requirements (R8)
 

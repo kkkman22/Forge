@@ -40,8 +40,8 @@ function runScript(opts: {
 
   // Write config if provided
   if (opts.configYaml !== undefined) {
-    mkdirSync(fixture(".forge"), { recursive: true });
-    writeFileSync(fixture(".forge", "config.md"), opts.configYaml);
+    mkdirSync(fixture(".tinkerman"), { recursive: true });
+    writeFileSync(fixture(".tinkerman", "config.md"), opts.configYaml);
   }
 
   try {
@@ -110,7 +110,7 @@ const SAMPLE_ULTRAREVIEW_OUTPUT = {
 describe("ultrareview-fallback.mjs (R9)", () => {
   beforeEach(() => {
     if (existsSync(FIXTURE_DIR)) rmSync(FIXTURE_DIR, { recursive: true });
-    mkdirSync(fixture(".forge"), { recursive: true });
+    mkdirSync(fixture(".tinkerman"), { recursive: true });
   });
 
   afterEach(() => {
@@ -336,9 +336,9 @@ describe("ultrareview-fallback.mjs (R9)", () => {
   });
 
   describe("handles missing config file", () => {
-    it("exits 1 when .forge/config.md does not exist", () => {
+    it("exits 1 when .tinkerman/config.md does not exist", () => {
       // Remove .forge dir to simulate missing config
-      rmSync(fixture(".forge"), { recursive: true, force: true });
+      rmSync(fixture(".tinkerman"), { recursive: true, force: true });
 
       const mockScript = mockClaueOutputJson(SAMPLE_ULTRAREVIEW_OUTPUT);
 

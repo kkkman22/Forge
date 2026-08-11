@@ -33,7 +33,7 @@ When no packs are enabled and no custom `banned-patterns.yaml` exists, the detec
 
 ## Customization
 
-Add project-specific banned patterns in `.forge/custom/banned-patterns.yaml`:
+Add project-specific banned patterns in `.tinkerman/custom/banned-patterns.yaml`:
 
 ```yaml
 schema_version: 1

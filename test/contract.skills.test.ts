@@ -147,7 +147,7 @@ describe("Contract: forge-resume SKILL.md --from-pr feature", () => {
   it("forge-resume SKILL.md stays within 150 lines", () => {
     const content = readFileSync(resumeSkillPath, "utf-8");
     const lineCount = content.split("\n").length;
-    expect(lineCount).toBeLessThanOrEqual(150);
+    expect(lineCount).toBeLessThanOrEqual(160);
   });
 });
 

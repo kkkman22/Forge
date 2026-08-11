@@ -45,7 +45,7 @@ export interface QualityGateItem {
   passed: boolean;
 }
 
-/** YAML frontmatter of a review report written to .forge/reviews/<topic>.md */
+/** YAML frontmatter of a review report written to .tinkerman/reviews/<topic>.md */
 export interface ReviewReportFrontmatter {
   topic: string;
   date: string;

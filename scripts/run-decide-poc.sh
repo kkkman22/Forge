@@ -19,8 +19,8 @@ if [[ "${1:-}" == "--iterations" && -n "${2:-}" ]]; then
   ITERATIONS="$2"
 fi
 
-TOPIC_FILE=".forge/specs/forge-decide-agent-teams/poc-topics.md"
-OUT_DIR=".forge/runs/decide-poc"
+TOPIC_FILE=".tinkerman/specs/forge-decide-agent-teams/poc-topics.md"
+OUT_DIR=".tinkerman/runs/decide-poc"
 mkdir -p "$OUT_DIR"
 
 if [[ ! -f "$TOPIC_FILE" ]]; then

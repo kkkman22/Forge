@@ -33,9 +33,9 @@ describe("plugin-data backward compatibility", () => {
     process.env.CLAUDE_PLUGIN_DATA = pluginDataDir;
     const { getPluginDataDir, getCachePath, migrateOldCache } = await importFresh();
 
-    // Simulate old cache location: .forge/.cache/evolved-rules-cache.json
+    // Simulate old cache location: .tinkerman/.cache/evolved-rules-cache.json
     const projectDir = join(testTmpDir, "project");
-    const oldCacheDir = join(projectDir, ".forge", ".cache");
+    const oldCacheDir = join(projectDir, ".tinkerman", ".cache");
     mkdirSync(oldCacheDir, { recursive: true });
 
     const oldData = { rules: ["old-rule"], compiledAt: "2026-01-01" };
@@ -61,7 +61,7 @@ describe("plugin-data backward compatibility", () => {
     const { getCachePath, migrateOldCache } = await importFresh();
 
     const projectDir = join(testTmpDir, "project");
-    const oldCacheDir = join(projectDir, ".forge", ".cache");
+    const oldCacheDir = join(projectDir, ".tinkerman", ".cache");
     mkdirSync(oldCacheDir, { recursive: true });
 
     writeFileSync(

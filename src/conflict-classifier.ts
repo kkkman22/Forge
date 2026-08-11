@@ -1,10 +1,10 @@
 // Conflict classifier — zone-based path classification for merge conflicts.
 //
 // Four zones with priority chain (first match wins):
-//   1. frozen: .forge/config.md, .forge/specs/{topic}/spec.md, .forge/plans/{topic}.md
-//   2. guarded: .forge/progress, .forge/reviews, knowledge files, ADRs
+//   1. frozen: .tinkerman/config.md, .tinkerman/specs/{topic}/spec.md, .tinkerman/plans/{topic}.md
+//   2. guarded: .tinkerman/progress, .tinkerman/reviews, knowledge files, ADRs
 //   3. open: other .forge files
-//   4. source: anything outside .forge/
+//   4. source: anything outside .tinkerman/
 //
 // Total function [R13.1]: for any path, returns a valid Zone
 // Deterministic [R13.2]: classify(normalize(p)) === classify(p)
@@ -14,25 +14,25 @@
 export type Zone = "frozen" | "guarded" | "open" | "source";
 
 const FROZEN_PATTERNS = [
-  /^\.forge\/config\.md$/,
-  /^\.forge\/specs\/[^/]+\/spec\.md$/,
-  /^\.forge\/specs\/[^/]+\/requirements\.md$/,
-  /^\.forge\/specs\/[^/]+\/design\.md$/,
-  /^\.forge\/specs\/[^/]+\/tasks\.md$/,
-  /^\.forge\/specs\/[^/]+\/bugfix\.md$/,
-  /^\.forge\/plans\/[^/]+\.md$/,
+  /^\.tinkerman\/config\.md$/,
+  /^\.tinkerman\/specs\/[^/]+\/spec\.md$/,
+  /^\.tinkerman\/specs\/[^/]+\/requirements\.md$/,
+  /^\.tinkerman\/specs\/[^/]+\/design\.md$/,
+  /^\.tinkerman\/specs\/[^/]+\/tasks\.md$/,
+  /^\.tinkerman\/specs\/[^/]+\/bugfix\.md$/,
+  /^\.tinkerman\/plans\/[^/]+\.md$/,
 ];
 
 const GUARDED_PATTERNS = [
-  /^\.forge\/progress\//,
-  /^\.forge\/reviews\//,
-  /^\.forge\/knowledge\/instincts\.md$/,
-  /^\.forge\/knowledge\/known-failures\.md$/,
-  /^\.forge\/knowledge\/solutions\//,
-  /^\.forge\/decisions\/ADR-\d+.*\.md$/,
+  /^\.tinkerman\/progress\//,
+  /^\.tinkerman\/reviews\//,
+  /^\.tinkerman\/knowledge\/instincts\.md$/,
+  /^\.tinkerman\/knowledge\/known-failures\.md$/,
+  /^\.tinkerman\/knowledge\/solutions\//,
+  /^\.tinkerman\/decisions\/ADR-\d+.*\.md$/,
 ];
 
-const FORGE_PREFIX = ".forge/";
+const FORGE_PREFIX = ".tinkerman/";
 
 /**
  * Normalize a path: strip trailing slashes, then strip leading "./".
@@ -69,7 +69,7 @@ export function classify(path: string): Zone {
     if (pattern.test(p)) return "guarded";
   }
 
-  // Everything else under .forge/ is open
+  // Everything else under .tinkerman/ is open
   return "open";
 }
 

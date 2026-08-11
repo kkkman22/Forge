@@ -14,7 +14,7 @@
  *     {@link buildZoomOutPrompt};
  *   - writing the pause / resume status transitions returned by
  *     {@link pauseForZoomOut} and {@link resumeFromZoomOut} back to
- *     the `.forge/status.md` file;
+ *     the `.tinkerman/status.md` file;
  *   - rendering the validated {@link ZoomOutOutput} with
  *     {@link renderZoomOut} into the user-visible reply.
  *
@@ -30,7 +30,7 @@
  *     both English and Chinese (`zoom out`, `放大视角`, `讲整体`,
  *     `/tinkerman zoom-out`).
  *
- * The skill never writes to `.forge/` other than the transient
+ * The skill never writes to `.tinkerman/` other than the transient
  * `phase` field on the active status file. See `skills/tinkerman-zoom-out/
  * SKILL.md` for the workflow and boundary with `forge-debug`.
  *

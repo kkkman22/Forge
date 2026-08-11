@@ -4,7 +4,7 @@
  * track-tool-duration.mjs — PostToolUse hook for duration_ms extraction.
  *
  * Reads the tool result from the PostToolUse hook input, extracts timing
- * metadata, and appends a JSONL entry to `.forge/runs/<date>-tool-durations.jsonl`.
+ * metadata, and appends a JSONL entry to `.tinkerman/runs/<date>-tool-durations.jsonl`.
  *
  * Usage (hooks.json PostToolUse):
  *   node scripts/track-tool-duration.mjs "$TOOL_INPUT_FILE"
@@ -23,8 +23,8 @@ import { existsSync, readFileSync } from "node:fs";
 // ---------------------------------------------------------------------------
 
 const PROJECT_ROOT = process.cwd();
-const RUNS_DIR = join(PROJECT_ROOT, ".forge", "runs");
-const STATUS_FILE = join(PROJECT_ROOT, ".forge", "status.md");
+const RUNS_DIR = join(PROJECT_ROOT, ".tinkerman", "runs");
+const STATUS_FILE = join(PROJECT_ROOT, ".tinkerman", "status.md");
 
 // ---------------------------------------------------------------------------
 // Helpers
@@ -83,7 +83,7 @@ function parseResourceAttributes() {
 }
 
 /**
- * Read Forge phase/tier/task from `.forge/status.md` frontmatter so duration
+ * Read Forge phase/tier/task from `.tinkerman/status.md` frontmatter so duration
  * metrics can be sliced by Forge dimensions in `/tinkerman learn`. A PostToolUse
  * hook cannot mutate the parent session env, so we read the live status file
  * here instead of relying on env injection at phase/tier transitions.
@@ -148,7 +148,7 @@ async function main() {
     // Extract session ID
     const sessionId = process.env.CLAUDE_SESSION_ID || "unknown";
 
-    // Resource attributes: .forge/status.md (phase/tier/task) merged with
+    // Resource attributes: .tinkerman/status.md (phase/tier/task) merged with
     // OTEL_RESOURCE_ATTRIBUTES env (env wins on conflict).
     const envAttrs = parseResourceAttributes() || {};
     const merged = { ...readForgeContext(), ...envAttrs };
@@ -165,7 +165,7 @@ async function main() {
       resource_attributes: resourceAttributes,
     };
 
-    // Ensure .forge/runs/ exists
+    // Ensure .tinkerman/runs/ exists
     if (!existsSync(RUNS_DIR)) {
       await mkdir(RUNS_DIR, { recursive: true });
     }

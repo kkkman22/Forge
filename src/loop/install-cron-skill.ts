@@ -5,7 +5,7 @@
  * periodic skill triggers via CC's native CronCreate. Pure functions only — they produce
  * the invocation spec that skill instructions relay to the CC runtime (which owns CronCreate).
  *
- * Design ref: .forge/specs/regenerative-checkpoint/design.md §D7
+ * Design ref: .tinkerman/specs/regenerative-checkpoint/design.md §D7
  */
 
 // ---------------------------------------------------------------------------
@@ -113,7 +113,7 @@ function isValidField(field: string, min: number, max: number): boolean {
 // ---------------------------------------------------------------------------
 
 /**
- * Resolve cron config from a config block (parsed from .forge/config.md) with defaults.
+ * Resolve cron config from a config block (parsed from .tinkerman/config.md) with defaults.
  * The `enabled` flag only gates --install; manual skill invocation is never blocked.
  */
 export function resolveCronConfig(input: {

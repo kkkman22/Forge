@@ -41,7 +41,7 @@ describe("inject-evolved-rules.mjs cache", () => {
   });
 
   it("creates cache file on first run", () => {
-    const knowledgeDir = join(forgeDir, ".forge", "knowledge");
+    const knowledgeDir = join(forgeDir, ".tinkerman", "knowledge");
     mkdirSync(knowledgeDir, { recursive: true });
     writeFileSync(
       join(knowledgeDir, "evolved-rules.md"),
@@ -68,7 +68,7 @@ updated: "2026-05-30"
   });
 
   it("reads from cache on second run when source unchanged", () => {
-    const knowledgeDir = join(forgeDir, ".forge", "knowledge");
+    const knowledgeDir = join(forgeDir, ".tinkerman", "knowledge");
     mkdirSync(knowledgeDir, { recursive: true });
     writeFileSync(
       join(knowledgeDir, "evolved-rules.md"),
@@ -97,7 +97,7 @@ updated: "2026-05-30"
   });
 
   it("rebuilds cache when source file mtime changes", () => {
-    const knowledgeDir = join(forgeDir, ".forge", "knowledge");
+    const knowledgeDir = join(forgeDir, ".tinkerman", "knowledge");
     mkdirSync(knowledgeDir, { recursive: true });
     const rulesPath = join(knowledgeDir, "evolved-rules.md");
 
@@ -143,7 +143,7 @@ updated: "2026-05-30"
   });
 
   it("rebuilds cache when cache file is corrupted", () => {
-    const knowledgeDir = join(forgeDir, ".forge", "knowledge");
+    const knowledgeDir = join(forgeDir, ".tinkerman", "knowledge");
     mkdirSync(knowledgeDir, { recursive: true });
     writeFileSync(
       join(knowledgeDir, "evolved-rules.md"),
@@ -173,7 +173,7 @@ updated: "2026-05-30"
   });
 
   it("degrades gracefully when CLAUDE_PLUGIN_DATA is not writable", () => {
-    const knowledgeDir = join(forgeDir, ".forge", "knowledge");
+    const knowledgeDir = join(forgeDir, ".tinkerman", "knowledge");
     mkdirSync(knowledgeDir, { recursive: true });
     writeFileSync(
       join(knowledgeDir, "evolved-rules.md"),

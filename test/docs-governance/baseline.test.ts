@@ -9,7 +9,7 @@ describe("baseline report generation", () => {
       { path: "docs/reference-architecture.md", expected: "A" as Domain },
       { path: "README.md", expected: "D" as Domain },
       { path: "CHANGELOG.md", expected: "D" as Domain },
-      { path: ".forge/status.md", expected: "C" as Domain },
+      { path: ".tinkerman/status.md", expected: "C" as Domain },
       { path: "skills/tinkerman/SKILL.md", expected: "B" as Domain },
       { path: "src/index.ts", expected: "B" as Domain },
       { path: "node_modules/x/readme.md", expected: "EXCLUDED" },

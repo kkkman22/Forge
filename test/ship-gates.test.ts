@@ -757,12 +757,14 @@ describe("persistGateResults", () => {
         skipGate: null,
       };
 
-      const result = persistGateResults(report, join(root, ".forge", "ship"), {
+      const result = persistGateResults(report, join(root, ".tinkerman", "ship"), {
         commit: "head-1",
         createdAt: "2026-06-09T04:00:00.000Z",
       });
 
-      expect(result.reportPath).toBe(join(root, ".forge", "ship", "20260529-143000-gates.json"));
+      expect(result.reportPath).toBe(
+        join(root, ".tinkerman", "ship", "20260529-143000-gates.json"),
+      );
       expect(result.artifactPath).toBeDefined();
       expect(existsSync(result.artifactPath!)).toBe(true);
 
@@ -773,7 +775,7 @@ describe("persistGateResults", () => {
       expect(artifact.commit).toBe("head-1");
       expect(artifact.result).toBe("pass");
 
-      const index = readFileSync(join(root, ".forge", "artifacts", "index.jsonl"), "utf-8");
+      const index = readFileSync(join(root, ".tinkerman", "artifacts", "index.jsonl"), "utf-8");
       expect(index).toContain('"kind":"ship_gate"');
     } finally {
       rmSync(root, { recursive: true, force: true });

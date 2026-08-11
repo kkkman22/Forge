@@ -22,7 +22,7 @@ export interface DomainKnowledgeBundle {
   /** Bounded contexts from enabled packs (flattened from the registry map). */
   contexts: ContextEntry[];
   /** Glossary terms from enabled packs (advisory; enforcement stays on the
-   * flat `.forge/glossary.md` — see spec REQ-6). */
+   * flat `.tinkerman/glossary.md` — see spec REQ-6). */
   glossaryTerms: GlossaryEntry[];
   /** State-machine definitions from enabled packs (R4.5.5). */
   stateMachines: LoadedStateMachine[];

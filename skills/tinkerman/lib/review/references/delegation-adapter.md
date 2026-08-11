@@ -45,7 +45,7 @@ sources:
     findings_count: N
 ```
 
-**向后兼容**：原有 `.forge/reviews/*.md` 字段全部保留，`sources` 为新增字段。
+**向后兼容**：原有 `.tinkerman/reviews/*.md` 字段全部保留，`sources` 为新增字段。
 
 ## Fallback
 

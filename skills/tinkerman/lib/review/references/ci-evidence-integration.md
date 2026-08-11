@@ -9,7 +9,7 @@ updated: 2026-08-11
 
 ```bash
 PR_NUMBER=$(git log -1 --format=%s | grep -oE '#[0-9]+' | head -1 | tr -d '#')
-CI_REVIEW=".forge/reviews/${PR_NUMBER}-ci.md"
+CI_REVIEW=".tinkerman/reviews/${PR_NUMBER}-ci.md"
 [ -f "$CI_REVIEW" ] && head -100 "$CI_REVIEW"
 ```
 
@@ -38,4 +38,4 @@ CI_REVIEW=".forge/reviews/${PR_NUMBER}-ci.md"
 
 ## CI 产物只读保护
 
-`.forge/reviews/<pr>-ci.md` 不得被本地 `/tinkerman review` 修改。
+`.tinkerman/reviews/<pr>-ci.md` 不得被本地 `/tinkerman review` 修改。

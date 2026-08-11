@@ -24,14 +24,14 @@ updated: 2026-08-11
 - 每行一条 JSON：`{ type: "user"|"assistant", message: { role, content: [{type, text/tool_use/tool_result}] } }`
 - 用 Glob 定位 + 按 mtime 过滤最近 7 天（`deep_interval_days` 可配，默认 7）
 
-### 2. `.forge/` 文件轨迹（Forge 自己的沉淀）
+### 2. `.tinkerman/` 文件轨迹（Forge 自己的沉淀）
 
-- `.forge/knowledge/sessions/*.md` — 会话总结
-- `.forge/knowledge/solutions/*.md` — 解决方案
-- `.forge/knowledge/instincts.md` — 直觉模式
-- `.forge/knowledge/known-failures.md` — 已知失败
-- `.forge/decisions/*.md` — ADR
-- `.forge/runs/*.jsonl` — 事件日志
+- `.tinkerman/knowledge/sessions/*.md` — 会话总结
+- `.tinkerman/knowledge/solutions/*.md` — 解决方案
+- `.tinkerman/knowledge/instincts.md` — 直觉模式
+- `.tinkerman/knowledge/known-failures.md` — 已知失败
+- `.tinkerman/decisions/*.md` — ADR
+- `.tinkerman/runs/*.jsonl` — 事件日志
 
 ---
 
@@ -39,12 +39,12 @@ updated: 2026-08-11
 
 ### Phase 0 — 防抖检查
 
-若由 cron 触发（非手动），先检查防抖：读 `.forge/state/last-learn-at`（ISO 时间戳）。若距今 < `MIN_SPAWN_GAP_MS`（10s，`src/loop/install-cron-skill.ts` 的 `shouldDebounceSpawn`），跳过本次触发并输出 `⏭️ learn --deep debounced (last run <10s ago)`，避免 cron 重复触发或手动+cron 碰撞。
+若由 cron 触发（非手动），先检查防抖：读 `.tinkerman/state/last-learn-at`（ISO 时间戳）。若距今 < `MIN_SPAWN_GAP_MS`（10s，`src/loop/install-cron-skill.ts` 的 `shouldDebounceSpawn`），跳过本次触发并输出 `⏭️ learn --deep debounced (last run <10s ago)`，避免 cron 重复触发或手动+cron 碰撞。
 
 ### Phase 1 — 定位数据
 
 1. Glob `~/.claude/projects/<slug>/*.jsonl`，按 mtime 过滤最近 `deep_interval_days` 天。
-2. Glob `.forge/knowledge/**/*.md` + `.forge/decisions/*.md`，记录现有知识库结构。
+2. Glob `.tinkerman/knowledge/**/*.md` + `.tinkerman/decisions/*.md`，记录现有知识库结构。
 
 ### Phase 2 — 对账验证（D6：读 CC JSONL）
 
@@ -80,7 +80,7 @@ for (const line of fs.readFileSync(process.argv[1],'utf8').split('\n')) {
 " <session.jsonl> | grep -iE 'always|never|decide|rule|总是|绝不'
 ```
 
-**格式容错**（D6 风险缓解）：JSONL 字段可能随 CC 版本变化。只取已知字段（`type`/`message.role`/`content[].type`），未知字段忽略。解析失败时降级为"只对账 `.forge/` 文件轨迹"（跳过 JSONL，仍执行去重/压缩/prune）。
+**格式容错**（D6 风险缓解）：JSONL 字段可能随 CC 版本变化。只取已知字段（`type`/`message.role`/`content[].type`），未知字段忽略。解析失败时降级为"只对账 `.tinkerman/` 文件轨迹"（跳过 JSONL，仍执行去重/压缩/prune）。
 
 ### Phase 3 — 去重与合并
 
@@ -106,11 +106,11 @@ for (const line of fs.readFileSync(process.argv[1],'utf8').split('\n')) {
 
 ## Phase 6 — 记录触发时间
 
-收敛完成后，写入 `.forge/state/last-learn-at`（ISO 8601 时间戳），供 `--status` 和 cron 防抖读取：
+收敛完成后，写入 `.tinkerman/state/last-learn-at`（ISO 8601 时间戳），供 `--status` 和 cron 防抖读取：
 
 ```bash
-mkdir -p .forge/state
-date -u +%Y-%m-%dT%H:%M:%SZ > .forge/state/last-learn-at
+mkdir -p .tinkerman/state
+date -u +%Y-%m-%dT%H:%M:%SZ > .tinkerman/state/last-learn-at
 ```
 
 ---
@@ -132,7 +132,7 @@ date -u +%Y-%m-%dT%H:%M:%SZ > .forge/state/last-learn-at
 [可选] Workflow candidates: 如发现重复工作流，建议跑 /tinkerman distill（本 spec 范围外）
 ```
 
-将报告摘要写入 `.forge/knowledge/sessions/<date>-deep-reconciliation.md`。
+将报告摘要写入 `.tinkerman/knowledge/sessions/<date>-deep-reconciliation.md`。
 
 ---
 

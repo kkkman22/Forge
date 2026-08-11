@@ -8,8 +8,8 @@ updated: 2026-08-11
 **Signature**: `checkBuildGate(specStatus, planStatus)`
 
 - **Parameters**:
-  - `specStatus` — read from `status` field in `.forge/specs/<topic>/spec.md` YAML frontmatter
-  - `planStatus` — read from `status` field in `.forge/plans/<topic>.md` YAML frontmatter
+  - `specStatus` — read from `status` field in `.tinkerman/specs/<topic>/spec.md` YAML frontmatter
+  - `planStatus` — read from `status` field in `.tinkerman/plans/<topic>.md` YAML frontmatter
 - **Returns**: `{ allowed: boolean, reasons: string[] }`; when `allowed: false`, `reasons` lists all failed gates
 - **Purpose**: Programmatically verify Spec locked and Plan approved status, replacing manual per-item checks. When `allowed: false`, use §2 rejection output format
 
@@ -21,7 +21,7 @@ updated: 2026-08-11
 
 - **Parameters**:
   - `branchName` source: `git branch --show-current` output
-  - `taskTopic` source: `current_task` field in `.forge/status.md`
+  - `taskTopic` source: `current_task` field in `.tinkerman/status.md`
 - **Returns**: `{ allowed: boolean }`
   - `allowed: false` → Block build, output topic mismatch reason
   - `allowed: true` → Continue
@@ -52,7 +52,7 @@ updated: 2026-08-11
   - `pendingDeliveries` source: `PendingDeliveryRecord[]` read from persistence location
   - `currentTopic` source: current task topic
   - `currentTime` source: `Date.now()`
-  - `thresholdMs` configurable in `.forge/config.md` (default 0: any pending delivery with different topic is marked stale)
+  - `thresholdMs` configurable in `.tinkerman/config.md` (default 0: any pending delivery with different topic is marked stale)
 - **Returns**: Array of stale branch records (non-empty triggers warning)
 - **Purpose**: Detect branches with pending deliveries that have gone stale relative to the current task
 
@@ -90,7 +90,7 @@ updated: 2026-08-11
 - **Parameters**:
   - `results` — `SubagentResult[]` (return results from all research Subagents)
 - **Returns**: Merged research findings string
-- **Purpose**: Merge multiple parallel research results into unified document, write to `.forge/findings/<topic>.md`
+- **Purpose**: Merge multiple parallel research results into unified document, write to `.tinkerman/findings/<topic>.md`
 
 ---
 

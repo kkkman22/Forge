@@ -7,18 +7,18 @@ import {
 } from "../src/login-state-cache.js";
 
 describe("getCachedStatePath — property", () => {
-  it("always returns a string starting with .forge/cache/", () => {
+  it("always returns a string starting with .tinkerman/cache/", () => {
     fc.assert(
       fc.property(fc.string(), (name) => {
         const path = getCachedStatePath(name);
-        expect(path).toContain(".forge/cache/login-state-");
+        expect(path).toContain(".tinkerman/cache/login-state-");
       }),
     );
   });
 
   it("sanitizes special characters", () => {
-    expect(getCachedStatePath("my/project")).toBe(".forge/cache/login-state-my_project.json");
-    expect(getCachedStatePath("project")).toBe(".forge/cache/login-state-project.json");
+    expect(getCachedStatePath("my/project")).toBe(".tinkerman/cache/login-state-my_project.json");
+    expect(getCachedStatePath("project")).toBe(".tinkerman/cache/login-state-project.json");
   });
 });
 

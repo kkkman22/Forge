@@ -77,7 +77,7 @@ describe("Canvas XSS safety property [R13.8, R4.8]", () => {
           testDir = join(tmpdir(), `forge-canvas-xss-${Date.now()}`);
 
           // Write a fake review file
-          const forgeDir = join(testDir, ".forge");
+          const forgeDir = join(testDir, ".tinkerman");
           mkdirSync(join(forgeDir, "reviews"), { recursive: true });
           writeFileSync(join(forgeDir, "reviews", "xss-test.md"), "# Review\n\nSome content");
 
@@ -116,7 +116,7 @@ describe("Canvas XSS safety property [R13.8, R4.8]", () => {
   it("known malicious patterns produce no active scripts", async () => {
     for (const malicious of maliciousTexts) {
       testDir = join(tmpdir(), `forge-canvas-malicious-${Date.now()}`);
-      const forgeDir = join(testDir, ".forge");
+      const forgeDir = join(testDir, ".tinkerman");
       mkdirSync(join(forgeDir, "reviews"), { recursive: true });
       writeFileSync(join(forgeDir, "reviews", "malicious.md"), "# Review");
 

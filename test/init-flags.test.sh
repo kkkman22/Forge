@@ -5,7 +5,7 @@
 # Verifies `scripts/init.sh --non-interactive --name/--stack/--security/...
 #           --no-ultrareview --bday-cutoff --bday-tz`:
 #
-#   F1: all flags flow into .forge/config.md frontmatter + body correctly
+#   F1: all flags flow into .tinkerman/config.md frontmatter + body correctly
 #   F2: --no-ultrareview suppresses .github/workflows/ultrareview.yml
 #   F3: PMS --bday-* flags write business_day_* into config.md EXACTLY ONCE
 #       (regression: previously had two write paths — heredoc + node -e)
@@ -41,11 +41,11 @@ output=$(bash "$INIT_SH" \
   --ci-command "npm run check" \
   --no-ultrareview \
   2>&1) || true
-assert '[[ -f "$TMP/.forge/config.md" ]]' "F1: .forge/config.md created"
-assert 'grep -q "project: \"flag-proj\"" "$TMP/.forge/config.md"' "F1: --name → project: flag-proj"
-assert 'grep -q "TypeScript" "$TMP/.forge/config.md"' "F1: --stack → stack array contains TypeScript"
-assert 'grep -q "security_level: 2" "$TMP/.forge/config.md"' "F1: --security 2 → security_level: 2"
-assert 'grep -q "ci_check_command: \"npm run check\"" "$TMP/.forge/config.md"' "F1: --ci-command → ci_check_command"
+assert '[[ -f "$TMP/.tinkerman/config.md" ]]' "F1: .tinkerman/config.md created"
+assert 'grep -q "project: \"flag-proj\"" "$TMP/.tinkerman/config.md"' "F1: --name → project: flag-proj"
+assert 'grep -q "TypeScript" "$TMP/.tinkerman/config.md"' "F1: --stack → stack array contains TypeScript"
+assert 'grep -q "security_level: 2" "$TMP/.tinkerman/config.md"' "F1: --security 2 → security_level: 2"
+assert 'grep -q "ci_check_command: \"npm run check\"" "$TMP/.tinkerman/config.md"' "F1: --ci-command → ci_check_command"
 rm -rf "$TMP"
 
 # --- F2: --no-ultrareview suppresses the workflow file ---
@@ -74,10 +74,10 @@ output=$(bash "$INIT_SH" \
   --bday-cutoff 6 \
   --bday-tz "UTC" \
   2>&1) || true
-assert 'grep -q "business_day_cutoff_hour: 6" "$TMP/.forge/config.md"' "F3: bday cutoff written"
-assert 'grep -q "UTC" "$TMP/.forge/config.md"' "F3: bday tz written"
+assert 'grep -q "business_day_cutoff_hour: 6" "$TMP/.tinkerman/config.md"' "F3: bday cutoff written"
+assert 'grep -q "UTC" "$TMP/.tinkerman/config.md"' "F3: bday tz written"
 # The dedup guarantee: the key appears exactly once in frontmatter.
-count=$(grep -c "business_day_cutoff_hour:" "$TMP/.forge/config.md" || true)
+count=$(grep -c "business_day_cutoff_hour:" "$TMP/.tinkerman/config.md" || true)
 assert '[ "$count" -eq 1 ]' "F3: business_day_cutoff_hour written EXACTLY ONCE (got $count)"
 rm -rf "$TMP"
 
@@ -91,8 +91,8 @@ output=$(bash "$INIT_SH" \
   --security 1 \
   --no-ultrareview \
   2>&1) || true
-assert 'grep -q "Rust" "$TMP/.forge/config.md"' "F4: custom --stack value preserved verbatim"
-assert 'grep -q "Axum" "$TMP/.forge/config.md"' "F4: custom --stack second item preserved"
+assert 'grep -q "Rust" "$TMP/.tinkerman/config.md"' "F4: custom --stack value preserved verbatim"
+assert 'grep -q "Axum" "$TMP/.tinkerman/config.md"' "F4: custom --stack second item preserved"
 rm -rf "$TMP"
 
 # --- F5: --security maps to BOTH numeric level and 中文 label ---
@@ -105,8 +105,8 @@ output=$(bash "$INIT_SH" \
   --security 3 \
   --no-ultrareview \
   2>&1) || true
-assert 'grep -q "security_level: 3" "$TMP/.forge/config.md"' "F5: --security 3 → level 3"
-assert 'grep -q "最高" "$TMP/.forge/config.md"' "F5: --security 3 → label 最高"
+assert 'grep -q "security_level: 3" "$TMP/.tinkerman/config.md"' "F5: --security 3 → level 3"
+assert 'grep -q "最高" "$TMP/.tinkerman/config.md"' "F5: --security 3 → label 最高"
 # CLAUDE.md also interpolates the label
 assert '[[ -f "$TMP/CLAUDE.md" ]]' "F5: CLAUDE.md generated"
 assert 'grep -q "最高" "$TMP/CLAUDE.md"' "F5: CLAUDE.md carries the security label"
@@ -149,10 +149,10 @@ output=$(bash "$INIT_SH" \
   --no-ultrareview \
   2>&1) || true
 # YAML frontmatter line (key: "value")
-assert 'grep -q "^ci_check_command: \"pnpm build && pnpm test\"" "$TMP/.forge/config.md"' \
+assert 'grep -q "^ci_check_command: \"pnpm build && pnpm test\"" "$TMP/.tinkerman/config.md"' \
   "F7: --ci-command preserves && in YAML frontmatter"
 # Markdown code block line (no indent inside the ```bash fence)
-assert 'grep -q "^pnpm build && pnpm test$" "$TMP/.forge/config.md"' \
+assert 'grep -q "^pnpm build && pnpm test$" "$TMP/.tinkerman/config.md"' \
   "F7: --ci-command preserves && in code block"
 rm -rf "$TMP"
 

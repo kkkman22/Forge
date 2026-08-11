@@ -66,26 +66,26 @@ echo "=== classify_path tests ==="
 unset ZONE_REGISTRY_CACHE 2>/dev/null || true
 
 # T1: config.md → frozen-config
-result=$(classify_path ".forge/config.md")
+result=$(classify_path ".tinkerman/config.md")
 assert_eq "config.md is frozen-config" "frozen-config CONFIG_ROOT" "$result"
 
 # T2: approved plan → frozen-plan
-result=$(classify_path ".forge/plans/frozen-zone-structured-feedback.md")
+result=$(classify_path ".tinkerman/plans/frozen-zone-structured-feedback.md")
 assert_eq "approved plan is frozen-plan" "frozen-plan PLAN_APPROVED" "$result"
 
 # T3: non-existent spec (no status file) → none (status qualifier fails)
 unset ZONE_REGISTRY_CACHE
-result=$(classify_path ".forge/specs/nonexistent/spec.md")
+result=$(classify_path ".tinkerman/specs/nonexistent/spec.md")
 assert_eq "non-existent spec is none" "none NONE" "$result"
 
 # T4: progress file → guarded-append
 unset ZONE_REGISTRY_CACHE
-result=$(classify_path ".forge/progress/task.md")
+result=$(classify_path ".tinkerman/progress/task.md")
 assert_eq "progress is guarded-append" "guarded-append GUARDED_APPEND_VIOLATION" "$result"
 
 # T5: reviews file → guarded-append (actually guarded, depending on parse)
 unset ZONE_REGISTRY_CACHE
-result=$(classify_path ".forge/reviews/r1.md")
+result=$(classify_path ".tinkerman/reviews/r1.md")
 assert_eq "reviews is guarded-append" "guarded-append GUARDED_APPEND_VIOLATION" "$result"
 
 # T6: src file → none
@@ -95,17 +95,17 @@ assert_eq "src file is none" "none NONE" "$result"
 
 # T7: findings → none (open zone)
 unset ZONE_REGISTRY_CACHE
-result=$(classify_path ".forge/findings/note.md")
+result=$(classify_path ".tinkerman/findings/note.md")
 assert_eq "findings is none (open)" "none NONE" "$result"
 
 # T8: status.md → none (open zone)
 unset ZONE_REGISTRY_CACHE
-result=$(classify_path ".forge/status.md")
+result=$(classify_path ".tinkerman/status.md")
 assert_eq "status.md is none (open)" "none NONE" "$result"
 
 # T9: knowledge/instincts.md → guarded (file-specific rule)
 unset ZONE_REGISTRY_CACHE
-result=$(classify_path ".forge/knowledge/instincts.md")
+result=$(classify_path ".tinkerman/knowledge/instincts.md")
 assert_eq "instincts.md is guarded" "guarded-append GUARDED_APPEND_VIOLATION" "$result"
 
 # ---------------------------------------------------------------------------
@@ -115,18 +115,18 @@ assert_eq "instincts.md is guarded" "guarded-append GUARDED_APPEND_VIOLATION" "$
 echo "=== emit_frozen_diagnostic tests ==="
 
 # T10: frozen-config diagnostic
-diag=$(emit_frozen_diagnostic ".forge/config.md" "frozen-config" "CONFIG_ROOT")
+diag=$(emit_frozen_diagnostic ".tinkerman/config.md" "frozen-config" "CONFIG_ROOT")
 assert_contains "config diagnostic has category" "$diag" '"category":"frozen-config"'
 assert_contains "config diagnostic has reason_code" "$diag" '"reason_code":"CONFIG_ROOT"'
-assert_contains "config diagnostic has path" "$diag" '"path":".forge/config.md"'
+assert_contains "config diagnostic has path" "$diag" '"path":".tinkerman/config.md"'
 
 # T11: frozen-spec diagnostic with suggested alt
-diag=$(emit_frozen_diagnostic ".forge/specs/foo/spec.md" "frozen-spec" "SPEC_LOCKED")
+diag=$(emit_frozen_diagnostic ".tinkerman/specs/foo/spec.md" "frozen-spec" "SPEC_LOCKED")
 assert_contains "spec diagnostic has category" "$diag" '"category":"frozen-spec"'
 assert_contains "spec diagnostic has suggested_alt" "$diag" "suggested_alternative_path"
 
 # T12: guarded-append diagnostic
-diag=$(emit_frozen_diagnostic ".forge/progress/task.md" "guarded-append" "GUARDED_APPEND_VIOLATION")
+diag=$(emit_frozen_diagnostic ".tinkerman/progress/task.md" "guarded-append" "GUARDED_APPEND_VIOLATION")
 assert_contains "guarded diagnostic has category" "$diag" '"category":"guarded-append"'
 
 # ---------------------------------------------------------------------------
@@ -136,7 +136,7 @@ assert_contains "guarded diagnostic has category" "$diag" '"category":"guarded-a
 echo "=== PreToolUse hook tests ==="
 
 # T13: deny frozen-config
-output=$(echo '{"tool_name":"Write","tool_input":{"file_path":".forge/config.md"}}' | FORGE_STRUCTURED_FROZEN=1 bash scripts/hook-check-frozen-structured.sh 2>/dev/null)
+output=$(echo '{"tool_name":"Write","tool_input":{"file_path":".tinkerman/config.md"}}' | FORGE_STRUCTURED_FROZEN=1 bash scripts/hook-check-frozen-structured.sh 2>/dev/null)
 assert_contains "PreToolUse denies config.md" "$output" '"deny"'
 assert_contains "PreToolUse has systemMessage" "$output" "systemMessage"
 
@@ -148,11 +148,11 @@ assert_exit "PreToolUse allows src file" 0 "$exit_code"
 assert_eq "PreToolUse allow produces no output" "" "$output"
 
 # T15: deny approved plan
-output=$(echo '{"tool_name":"Edit","tool_input":{"file_path":".forge/plans/frozen-zone-structured-feedback.md"}}' | FORGE_STRUCTURED_FROZEN=1 bash scripts/hook-check-frozen-structured.sh 2>/dev/null)
+output=$(echo '{"tool_name":"Edit","tool_input":{"file_path":".tinkerman/plans/frozen-zone-structured-feedback.md"}}' | FORGE_STRUCTURED_FROZEN=1 bash scripts/hook-check-frozen-structured.sh 2>/dev/null)
 assert_contains "PreToolUse denies approved plan" "$output" '"deny"'
 
 # T16: allow unknown tool type
-output=$(echo '{"tool_name":"Read","tool_input":{"file_path":".forge/config.md"}}' | FORGE_STRUCTURED_FROZEN=1 bash scripts/hook-check-frozen-structured.sh 2>/dev/null)
+output=$(echo '{"tool_name":"Read","tool_input":{"file_path":".tinkerman/config.md"}}' | FORGE_STRUCTURED_FROZEN=1 bash scripts/hook-check-frozen-structured.sh 2>/dev/null)
 exit_code=$?
 assert_exit "PreToolUse allows Read tool" 0 "$exit_code"
 
@@ -163,7 +163,7 @@ assert_exit "PreToolUse allows Read tool" 0 "$exit_code"
 echo "=== PostToolUse hook tests ==="
 
 # T17: breach detection on frozen file
-output=$(echo '{"tool_name":"Write","tool_input":{"file_path":".forge/config.md"},"tool_response":{"success":true}}' | FORGE_STRUCTURED_FROZEN=1 bash scripts/hook-check-frozen-post.sh 2>/dev/null)
+output=$(echo '{"tool_name":"Write","tool_input":{"file_path":".tinkerman/config.md"},"tool_response":{"success":true}}' | FORGE_STRUCTURED_FROZEN=1 bash scripts/hook-check-frozen-post.sh 2>/dev/null)
 assert_contains "PostToolUse detects breach" "$output" "frozen-zone violation"
 assert_contains "PostToolUse has updatedToolOutput" "$output" "updatedToolOutput"
 
@@ -174,7 +174,7 @@ assert_exit "PostToolUse allows open zone" 0 "$exit_code"
 assert_eq "PostToolUse open zone no output" "" "$output"
 
 # T19: skip failed tool
-output=$(echo '{"tool_name":"Write","tool_input":{"file_path":".forge/config.md"},"tool_response":{"success":false}}' | FORGE_STRUCTURED_FROZEN=1 bash scripts/hook-check-frozen-post.sh 2>/dev/null)
+output=$(echo '{"tool_name":"Write","tool_input":{"file_path":".tinkerman/config.md"},"tool_response":{"success":false}}' | FORGE_STRUCTURED_FROZEN=1 bash scripts/hook-check-frozen-post.sh 2>/dev/null)
 exit_code=$?
 assert_exit "PostToolUse skips failed tool" 0 "$exit_code"
 

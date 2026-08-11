@@ -43,7 +43,7 @@ export interface CanonicalPathResult {
 // Frozen-zone signal patterns
 // ---------------------------------------------------------------------------
 
-const HIGH_RISK_PATTERNS = [".forge/config.md", ".forge/specs/", ".forge/plans/"];
+const HIGH_RISK_PATTERNS = [".tinkerman/config.md", ".tinkerman/specs/", ".tinkerman/plans/"];
 
 function containsHighRiskSignal(path: string): boolean {
   return HIGH_RISK_PATTERNS.some((pattern) => path.includes(pattern));

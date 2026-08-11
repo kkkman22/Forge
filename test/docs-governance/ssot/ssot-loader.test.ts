@@ -21,10 +21,10 @@ afterEach(() => {
 describe("loadSsotData", () => {
   it("derives routing SSOT from the workflow graph instead of stale routing JSON", () => {
     const root = tempRoot();
-    mkdirSync(join(root, ".forge"), { recursive: true });
+    mkdirSync(join(root, ".tinkerman"), { recursive: true });
     mkdirSync(join(root, "docs", "_ssot"), { recursive: true });
     writeFileSync(
-      join(root, ".forge", "config.md"),
+      join(root, ".tinkerman", "config.md"),
       [
         "---",
         "docs:",

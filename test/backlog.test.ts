@@ -70,7 +70,7 @@ describe("partial entry handling", () => {
 - **Severity:** P2
 - **File:** src/a.ts:10
 - **Description:** Something
-- **Source Review:** .forge/reviews/a.md
+- **Source Review:** .tinkerman/reviews/a.md
 - **Origin Task:** task-a
 - **Captured:** 2026-05-01
 - **Status:** unresolved
@@ -91,7 +91,7 @@ describe("partial entry handling", () => {
 - **Severity:** P3
 - **File:** src/c.ts:30
 - **Description:** Missing docs
-- **Source Review:** .forge/reviews/b.md
+- **Source Review:** .tinkerman/reviews/b.md
 - **Origin Task:** task-b
 - **Captured:** 2026-04-28
 - **Status:** resolved
@@ -215,7 +215,7 @@ function makeEntry(id: string, filePath: string) {
     filePath,
     lineNumber: 10,
     description: "Test description",
-    sourceReview: ".forge/reviews/test.md",
+    sourceReview: ".tinkerman/reviews/test.md",
     originTask: "test-task",
     capturedDate: "2026-05-01",
     resolved: false,

@@ -68,15 +68,15 @@ export interface ResolvedStatus {
  * Resolve the status file path for a given task.
  *
  * Mode detection:
- *   - If .forge/status/ directory exists → multi mode
+ *   - If .tinkerman/status/ directory exists → multi mode
  *   - Otherwise → single mode
  *
  * Path resolution:
- *   - single mode → .forge/status.md
- *   - multi mode → .forge/status/<task-id>.md
+ *   - single mode → .tinkerman/status.md
+ *   - multi mode → .tinkerman/status/<task-id>.md
  *
  * @param ctx - Resolver context with task name and forge root
- * @param dirExists - DI function to check if .forge/status/ directory exists
+ * @param dirExists - DI function to check if .tinkerman/status/ directory exists
  * @public
  */
 export function resolveStatusPath(
@@ -106,7 +106,7 @@ export function resolveStatusPath(
 // ---------------------------------------------------------------------------
 
 /**
- * Check if multi-task mode is active based on the presence of .forge/status/ directory.
+ * Check if multi-task mode is active based on the presence of .tinkerman/status/ directory.
  *
  * @param forgeRoot - Path to the .forge directory
  * @param dirExists - DI function to check directory existence
@@ -131,7 +131,7 @@ export interface ReconstructedState {
 }
 
 /**
- * Infer current workflow phase from .forge/ file presence.
+ * Infer current workflow phase from .tinkerman/ file presence.
  *
  * Pure function — no side effects, no file writes.
  * Inference priority: reviews/ > progress/ > plans/ > router.

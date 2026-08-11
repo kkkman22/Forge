@@ -6,7 +6,7 @@ updated: 2026-08-11
 ## Directory Structure
 
 ```
-.forge/findings/<topic>/verify-this/
+.tinkerman/findings/<topic>/verify-this/
 ├── claim.md              # Falsifiable_Claim
 ├── baseline/
 │   ├── <command-1>.log   # Command invocation log

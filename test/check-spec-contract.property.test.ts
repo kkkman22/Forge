@@ -206,7 +206,7 @@ describe("validateContract — Evidence existence enforcement (AC7)", () => {
       "test passes",
       "npm run test:coverage exit 0",
       "测试覆盖 4 种 freshness 场景",
-      "运行测试前后 .forge/reviews/ 目录内容不变",
+      "运行测试前后 .tinkerman/reviews/ 目录内容不变",
     ];
     for (const ev of prose) {
       const spec = specWith(ac("1.1", "vitest:unit", ev));

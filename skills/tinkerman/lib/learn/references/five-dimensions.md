@@ -11,18 +11,18 @@ updated: 2026-08-11
 
 | Dimension | Extraction Content | Data Source |
 |-----------|-------------------|------------|
-| **Problem Pattern** | Issue type, trigger condition, impact scope | `.forge/debug/`, `.forge/progress/` (blocked items) |
-| **Solution** | Final approach, implementation rationale, selection reasoning | `.forge/plans/`, code changes, `.forge/findings/` |
-| **Pitfall Record** | Detours, failed attempts, misleading clues | `.forge/debug/`, `.forge/progress/` (failure records) |
-| **Decision Rationale** | Decision context, trade-off process, rejected alternatives | `.forge/decisions/`, `.forge/specs/` |
-| **Reusable Pattern** | Reusable code/architecture/process patterns | Code changes, `.forge/specs/`, `.forge/plans/` |
+| **Problem Pattern** | Issue type, trigger condition, impact scope | `.tinkerman/debug/`, `.tinkerman/progress/` (blocked items) |
+| **Solution** | Final approach, implementation rationale, selection reasoning | `.tinkerman/plans/`, code changes, `.tinkerman/findings/` |
+| **Pitfall Record** | Detours, failed attempts, misleading clues | `.tinkerman/debug/`, `.tinkerman/progress/` (failure records) |
+| **Decision Rationale** | Decision context, trade-off process, rejected alternatives | `.tinkerman/decisions/`, `.tinkerman/specs/` |
+| **Reusable Pattern** | Reusable code/architecture/process patterns | Code changes, `.tinkerman/specs/`, `.tinkerman/plans/` |
 
 ## Function Calls
 
 **`generateKnowledgeDocument(title, tags, date, confidence, body)`**
 - 参数：`title` — 知识标题（string）；`tags` — 标签数组（`string[]`）；`date` — 日期字符串（YYYY-MM-DD）；`confidence` — 置信度（0.3-0.9）；`body` — 五章节内容对象（含 `problem`、`solution`、`pitfalls`、`decisions`、`reusable`）
 - 返回：完整的 `KnowledgeDocument` 对象（含 frontmatter 和结构化正文）
-- 用途：从五维度提取结果生成标准格式的知识文档，写入 `.forge/knowledge/solutions/<topic>.md`
+- 用途：从五维度提取结果生成标准格式的知识文档，写入 `.tinkerman/knowledge/solutions/<topic>.md`
 
 **`validateKnowledgeFrontmatter(frontmatter)`**
 - 参数：`frontmatter` — 待验证的 frontmatter 对象（含 title、tags、date、confidence 字段）
@@ -52,4 +52,4 @@ updated: 2026-08-11
 
 知识文档包含五个章节：问题模式、解决方案、踩坑记录、决策理由、可复用模式。
 
-输出路径：`.forge/knowledge/solutions/<topic>.md`（kebab-case）。
+输出路径：`.tinkerman/knowledge/solutions/<topic>.md`（kebab-case）。

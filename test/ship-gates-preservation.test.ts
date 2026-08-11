@@ -165,13 +165,13 @@ describe("Preservation: checkShipGateWithFreshness", () => {
     expect(result.reasons.length).toBeGreaterThan(0);
   });
 
-  it("stale review with only .forge/ changes → allowed, no warning", () => {
+  it("stale review with only .tinkerman/ changes → allowed, no warning", () => {
     const result = checkShipGateWithFreshness(
       passedReview,
       passedTest,
       completeProgress,
       "def5678",
-      [".forge/status.md"],
+      [".tinkerman/status.md"],
     );
     expect(result.allowed).toBe(true);
     expect(result.reasons).toHaveLength(0);
@@ -255,8 +255,8 @@ describe("Preservation: checkReviewFreshness", () => {
     expect(result.fresh).toBe(true);
   });
 
-  it("different commit, only .forge/ changes → fresh", () => {
-    const result = checkReviewFreshness("abc1234", "def5678", [".forge/status.md"]);
+  it("different commit, only .tinkerman/ changes → fresh", () => {
+    const result = checkReviewFreshness("abc1234", "def5678", [".tinkerman/status.md"]);
     expect(result.fresh).toBe(true);
   });
 

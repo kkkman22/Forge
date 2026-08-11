@@ -81,7 +81,7 @@ describe("R2.7: audit log out of workspace", () => {
     expect(parsed2.prev_hmac).toBe("hmac1");
   });
 
-  it("does not write to .forge/ directory", async () => {
+  it("does not write to .tinkerman/ directory", async () => {
     await appendAuditLog(
       {
         ts: "2026-05-17T00:00:00Z",
@@ -100,7 +100,7 @@ describe("R2.7: audit log out of workspace", () => {
       { auditDir: TMP_DIR },
     );
 
-    const workspaceAuditDir = resolve(process.cwd(), ".forge/debug");
+    const workspaceAuditDir = resolve(process.cwd(), ".tinkerman/debug");
     expect(existsSync(resolve(workspaceAuditDir, "dispatch.log"))).toBe(false);
   });
 

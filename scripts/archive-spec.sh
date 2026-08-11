@@ -4,7 +4,7 @@ set -euo pipefail
 # ============================================================================
 # archive-spec.sh — Archive a completed spec and optionally purge CC state.
 #
-# Moves spec/plan/progress files to .forge/archive/<date>-<slug>/, then
+# Moves spec/plan/progress files to .tinkerman/archive/<date>-<slug>/, then
 # optionally runs `claude project purge` to clean Claude Code transcripts.
 #
 # Usage:
@@ -98,7 +98,7 @@ parse_args() {
 
 do_file_archive() {
   local slug="$1"
-  local archive_dir=".forge/archive/${ARCHIVE_DATE}-${slug}"
+  local archive_dir=".tinkerman/archive/${ARCHIVE_DATE}-${slug}"
 
   # Validate slug: only alphanumeric, hyphens, underscores
   # Note: bash variables cannot contain null bytes (C string limitation)
@@ -110,9 +110,9 @@ do_file_archive() {
   fi
 
   # Check at least one source exists
-  local spec_dir=".forge/specs/${slug}"
-  local plan_file=".forge/plans/${slug}.md"
-  local progress_file=".forge/progress/${slug}.md"
+  local spec_dir=".tinkerman/specs/${slug}"
+  local plan_file=".tinkerman/plans/${slug}.md"
+  local progress_file=".tinkerman/progress/${slug}.md"
 
   local found=0
   [[ -d "${spec_dir}" ]] && found=1

@@ -57,10 +57,10 @@ Merge 失败时**不再直接 abort**，而是先尝试 conflict-resolver 自动
 **Pending-Delivery 记录**：选择保留分支时，必须调用 `recordPendingDelivery(branchName, topic, timestamp)` 记录交付状态：
 
 - `branchName` 来源：`git branch --show-current` 输出
-- `topic` 来源：`.forge/status.md` 的 `current_task` 字段
+- `topic` 来源：`.tinkerman/status.md` 的 `current_task` 字段
 - `timestamp` 来源：`Date.now()`
 
-返回的 `PendingDeliveryRecord` 追加到 `.forge/status.md` 或配置指定的持久化位置。下次 `/tinkerman build` 启动时，`detectUnshippedBranches` 和 `detectStaleBranches` 将读取这些记录并展示警告。
+返回的 `PendingDeliveryRecord` 追加到 `.tinkerman/status.md` 或配置指定的持久化位置。下次 `/tinkerman build` 启动时，`detectUnshippedBranches` 和 `detectStaleBranches` 将读取这些记录并展示警告。
 
 ## Option 4: Discard
 
@@ -68,7 +68,7 @@ Merge 失败时**不再直接 abort**，而是先尝试 conflict-resolver 自动
 
 ## Autonomous Mode Configuration
 
-在 `.forge/config.md` frontmatter 中可配置 `ship_default_method` 控制自主模式的交付行为：
+在 `.tinkerman/config.md` frontmatter 中可配置 `ship_default_method` 控制自主模式的交付行为：
 
 | Value | Behavior |
 |-------|----------|

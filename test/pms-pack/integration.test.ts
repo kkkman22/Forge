@@ -178,7 +178,7 @@ describe("PMS Pack — Accept gate with PMS packs", () => {
         body: "## Scenarios\n- scenario 1",
       },
       enabledPacks: enabled,
-      acceptanceArtifactPath: ".forge/acceptance/latest.md",
+      acceptanceArtifactPath: ".tinkerman/acceptance/latest.md",
       artifactContent: "---\nverdict: fail\nfail: 2\npass: 3\n---",
     };
     const decision = shouldBlockShip(input);

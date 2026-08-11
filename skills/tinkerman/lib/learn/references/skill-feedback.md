@@ -18,6 +18,6 @@ updated: 2026-08-11
 
 ## Handling Rule
 
-不适用的场景记录到 `.forge/knowledge/skill-feedback.md`（含涉及命令、场景、建议、频次）。同一类反馈频次 ≥ 3 时提醒用户审阅 SKILL.md。
+不适用的场景记录到 `.tinkerman/knowledge/skill-feedback.md`（含涉及命令、场景、建议、频次）。同一类反馈频次 ≥ 3 时提醒用户审阅 SKILL.md。
 
 **不自动修改** SKILL.md——只记录和提醒。

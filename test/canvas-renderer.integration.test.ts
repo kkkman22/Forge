@@ -13,7 +13,7 @@ import { renderCanvas } from "../src/canvas-renderer.js";
 let testDir: string;
 
 function setup(cwd: string, topic: string): void {
-  const reviewsDir = join(cwd, ".forge", "reviews");
+  const reviewsDir = join(cwd, ".tinkerman", "reviews");
   mkdirSync(reviewsDir, { recursive: true });
   writeFileSync(join(reviewsDir, `${topic}.md`), "# Review\n\nFindings here");
 }
@@ -36,7 +36,7 @@ describe("Canvas renderer integration [R4.1, R4.4]", () => {
     const result = await renderCanvas({
       topic: "test",
       cwd: testDir,
-      forgeDir: join(testDir, ".forge"),
+      forgeDir: join(testDir, ".tinkerman"),
       findings: {
         spec: [{ severity: "P1", file: "a.ts", issue: "Missing spec", suggestion: "Add spec" }],
         quality: [{ severity: "P2", file: "b.ts", issue: "Dup code", suggestion: "Extract" }],
@@ -58,13 +58,13 @@ describe("Canvas renderer integration [R4.1, R4.4]", () => {
 
   it("blocks when review file missing [R4.7]", async () => {
     testDir = join(tmpdir(), `forge-canvas-noreview-${Date.now()}`);
-    mkdirSync(join(testDir, ".forge", "reviews"), { recursive: true });
+    mkdirSync(join(testDir, ".tinkerman", "reviews"), { recursive: true });
 
     await expect(
       renderCanvas({
         topic: "nonexistent",
         cwd: testDir,
-        forgeDir: join(testDir, ".forge"),
+        forgeDir: join(testDir, ".tinkerman"),
         findings: { spec: [], quality: [], security: [] },
       }),
     ).rejects.toThrow("Run /tinkerman review first");
@@ -87,7 +87,7 @@ describe("Canvas renderer integration [R4.1, R4.4]", () => {
     await renderCanvas({
       topic: "perf",
       cwd: testDir,
-      forgeDir: join(testDir, ".forge"),
+      forgeDir: join(testDir, ".tinkerman"),
       findings: {
         spec: makeFindings(17),
         quality: makeFindings(17),

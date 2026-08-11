@@ -1,7 +1,7 @@
 /**
  * Zod schema for plan frontmatter.
  *
- * Captures the well-known fields that callers read from `.forge/plans/*.md`:
+ * Captures the well-known fields that callers read from `.tinkerman/plans/*.md`:
  *
  *   - `format`:        `"full"` | `"lightweight"` — chooses the validator
  *   - `status`:        `"draft"` | `"approved"` | similar lifecycle string

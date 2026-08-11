@@ -21,7 +21,7 @@ updated: 2026-08-11
 
 ### Step 1: 写入 Interim 状态（必须成功后再做其他操作）
 
-写入 `.forge/knowledge/sessions/<date>-<topic>-interim.md`：
+写入 `.tinkerman/knowledge/sessions/<date>-<topic>-interim.md`：
 
 ```yaml
 ---
@@ -38,7 +38,7 @@ completed_tasks: "<K>"
 <已完成的任务名称，每行一个>
 
 ## Key Findings
-<从 .forge/findings/<topic>.md 复制>
+<从 .tinkerman/findings/<topic>.md 复制>
 
 ## Active Constraints
 <剩余任务的阻塞项或特殊注意事项>
@@ -49,7 +49,7 @@ completed_tasks: "<K>"
 
 ### Step 2: 更新 Status 文件
 
-更新 `.forge/status.md`：`phase` 保持 `"build"` 不变，添加字段 `exhaustion_pending: "true"`，更新 `updated` 时间戳。
+更新 `.tinkerman/status.md`：`phase` 保持 `"build"` 不变，添加字段 `exhaustion_pending: "true"`，更新 `updated` 时间戳。
 
 ### Step 3: 输出 Handoff 并自动恢复
 

@@ -1,0 +1,150 @@
+{"timestamp":"2026-06-22T10:09:17Z","event":"postcompact_restore","detail":"slug=code-slim-0612 source=fallback"}
+{"timestamp":"2026-06-22T10:09:17Z","event":"precompact_checkpoint_missing","detail":"checkpoint.md not found — using legacy grep snapshot"}
+{"timestamp":"2026-06-22T10:09:17Z","event":"precompact_snapshot","detail":"slug=code-slim-0612 phase=complete source=fallback completed=0
+0 pending=0
+0"}
+{"timestamp":"2026-06-22T10:10:10Z","event":"postcompact_restore","detail":"slug=code-slim-0612 source=fallback"}
+{"timestamp":"2026-06-22T10:10:10Z","event":"precompact_checkpoint_missing","detail":"checkpoint.md not found — using legacy grep snapshot"}
+{"timestamp":"2026-06-22T10:10:10Z","event":"precompact_snapshot","detail":"slug=code-slim-0612 phase=complete source=fallback completed=0
+0 pending=0
+0"}
+{"timestamp":"2026-06-22T10:16:07Z","event":"postcompact_restore","detail":"slug=code-slim-0612 source=fallback"}
+{"timestamp":"2026-06-22T10:16:07Z","event":"precompact_checkpoint_missing","detail":"checkpoint.md not found — using legacy grep snapshot"}
+{"timestamp":"2026-06-22T10:16:08Z","event":"precompact_snapshot","detail":"slug=code-slim-0612 phase=complete source=fallback completed=0
+0 pending=0
+0"}
+{"timestamp":"2026-06-22T10:17:17Z","event":"postcompact_restore","detail":"slug=code-slim-0612 source=fallback"}
+{"timestamp":"2026-06-22T10:17:17Z","event":"precompact_checkpoint_missing","detail":"checkpoint.md not found — using legacy grep snapshot"}
+{"timestamp":"2026-06-22T10:17:17Z","event":"precompact_snapshot","detail":"slug=code-slim-0612 phase=complete source=fallback completed=0
+0 pending=0
+0"}
+{"timestamp":"2026-06-22T11:47:35Z","event":"postcompact_restore","detail":"slug=code-slim-0612 source=fallback"}
+{"timestamp":"2026-06-22T11:47:35Z","event":"precompact_checkpoint_missing","detail":"checkpoint.md not found — using legacy grep snapshot"}
+{"timestamp":"2026-06-22T11:47:35Z","event":"precompact_snapshot","detail":"slug=code-slim-0612 phase=complete source=fallback completed=0
+0 pending=0
+0"}
+{"timestamp":"2026-06-22T11:49:05Z","event":"postcompact_restore","detail":"slug=code-slim-0612 source=fallback"}
+{"timestamp":"2026-06-22T11:49:05Z","event":"precompact_checkpoint_missing","detail":"checkpoint.md not found — using legacy grep snapshot"}
+{"timestamp":"2026-06-22T11:49:05Z","event":"precompact_snapshot","detail":"slug=code-slim-0612 phase=complete source=fallback completed=0
+0 pending=0
+0"}
+{"timestamp":"2026-06-22T12:00:38Z","event":"postcompact_restore","detail":"slug=code-slim-0612 source=fallback"}
+{"timestamp":"2026-06-22T12:00:38Z","event":"precompact_checkpoint_missing","detail":"checkpoint.md not found — using legacy grep snapshot"}
+{"timestamp":"2026-06-22T12:00:38Z","event":"precompact_snapshot","detail":"slug=code-slim-0612 phase=complete source=fallback completed=0
+0 pending=0
+0"}
+{"timestamp":"2026-06-22T12:03:55Z","event":"postcompact_restore","detail":"slug=code-slim-0612 source=fallback"}
+{"timestamp":"2026-06-22T12:03:55Z","event":"precompact_checkpoint_missing","detail":"checkpoint.md not found — using legacy grep snapshot"}
+{"timestamp":"2026-06-22T12:03:55Z","event":"precompact_snapshot","detail":"slug=code-slim-0612 phase=complete source=fallback completed=0
+0 pending=0
+0"}
+{"timestamp":"2026-06-22T12:05:57Z","event":"postcompact_restore","detail":"slug=code-slim-0612 source=fallback"}
+{"timestamp":"2026-06-22T12:05:57Z","event":"precompact_checkpoint_missing","detail":"checkpoint.md not found — using legacy grep snapshot"}
+{"timestamp":"2026-06-22T12:05:57Z","event":"precompact_snapshot","detail":"slug=code-slim-0612 phase=complete source=fallback completed=0
+0 pending=0
+0"}
+{"timestamp":"2026-06-22T12:08:41Z","event":"postcompact_restore","detail":"slug=code-slim-0612 source=fallback"}
+{"timestamp":"2026-06-22T12:08:41Z","event":"precompact_checkpoint_missing","detail":"checkpoint.md not found — using legacy grep snapshot"}
+{"timestamp":"2026-06-22T12:08:41Z","event":"precompact_snapshot","detail":"slug=code-slim-0612 phase=complete source=fallback completed=0
+0 pending=0
+0"}
+{"timestamp":"2026-06-22T12:10:05Z","event":"postcompact_restore","detail":"slug=code-slim-0612 source=fallback"}
+{"timestamp":"2026-06-22T12:10:05Z","event":"precompact_checkpoint_missing","detail":"checkpoint.md not found — using legacy grep snapshot"}
+{"timestamp":"2026-06-22T12:10:05Z","event":"precompact_snapshot","detail":"slug=code-slim-0612 phase=complete source=fallback completed=0
+0 pending=0
+0"}
+{"timestamp":"2026-06-22T12:15:06Z","event":"postcompact_restore","detail":"slug=code-slim-0612 source=fallback"}
+{"timestamp":"2026-06-22T12:15:06Z","event":"precompact_checkpoint_missing","detail":"checkpoint.md not found — using legacy grep snapshot"}
+{"timestamp":"2026-06-22T12:15:06Z","event":"precompact_snapshot","detail":"slug=code-slim-0612 phase=complete source=fallback completed=0
+0 pending=0
+0"}
+{"timestamp":"2026-06-22T12:16:39Z","event":"postcompact_restore","detail":"slug=code-slim-0612 source=fallback"}
+{"timestamp":"2026-06-22T12:16:39Z","event":"precompact_checkpoint_missing","detail":"checkpoint.md not found — using legacy grep snapshot"}
+{"timestamp":"2026-06-22T12:16:39Z","event":"precompact_snapshot","detail":"slug=code-slim-0612 phase=complete source=fallback completed=0
+0 pending=0
+0"}
+{"timestamp":"2026-06-22T12:18:30Z","event":"postcompact_restore","detail":"slug=code-slim-0612 source=fallback"}
+{"timestamp":"2026-06-22T12:18:30Z","event":"precompact_checkpoint_missing","detail":"checkpoint.md not found — using legacy grep snapshot"}
+{"timestamp":"2026-06-22T12:18:30Z","event":"precompact_snapshot","detail":"slug=code-slim-0612 phase=complete source=fallback completed=0
+0 pending=0
+0"}
+{"timestamp":"2026-06-22T12:35:16Z","event":"postcompact_restore","detail":"slug=code-slim-0612 source=fallback"}
+{"timestamp":"2026-06-22T12:35:16Z","event":"precompact_checkpoint_missing","detail":"checkpoint.md not found — using legacy grep snapshot"}
+{"timestamp":"2026-06-22T12:35:16Z","event":"precompact_snapshot","detail":"slug=code-slim-0612 phase=complete source=fallback completed=0
+0 pending=0
+0"}
+{"timestamp":"2026-06-22T12:38:38Z","event":"postcompact_restore","detail":"slug=code-slim-0612 source=fallback"}
+{"timestamp":"2026-06-22T12:38:38Z","event":"precompact_checkpoint_missing","detail":"checkpoint.md not found — using legacy grep snapshot"}
+{"timestamp":"2026-06-22T12:38:38Z","event":"precompact_snapshot","detail":"slug=code-slim-0612 phase=complete source=fallback completed=0
+0 pending=0
+0"}
+{"timestamp":"2026-06-22T13:08:47Z","event":"postcompact_restore","detail":"slug=code-slim-0612 source=fallback"}
+{"timestamp":"2026-06-22T13:08:47Z","event":"precompact_checkpoint_missing","detail":"checkpoint.md not found — using legacy grep snapshot"}
+{"timestamp":"2026-06-22T13:08:47Z","event":"precompact_snapshot","detail":"slug=code-slim-0612 phase=complete source=fallback completed=0
+0 pending=0
+0"}
+{"timestamp":"2026-06-22T14:29:56Z","event":"postcompact_restore","detail":"slug=code-slim-0612 source=fallback"}
+{"timestamp":"2026-06-22T14:29:56Z","event":"precompact_checkpoint_missing","detail":"checkpoint.md not found — using legacy grep snapshot"}
+{"timestamp":"2026-06-22T14:29:56Z","event":"precompact_snapshot","detail":"slug=code-slim-0612 phase=complete source=fallback completed=0
+0 pending=0
+0"}
+{"timestamp":"2026-06-22T15:39:41Z","event":"postcompact_restore","detail":"slug=code-slim-0612 source=fallback"}
+{"timestamp":"2026-06-22T15:39:41Z","event":"precompact_checkpoint_missing","detail":"checkpoint.md not found — using legacy grep snapshot"}
+{"timestamp":"2026-06-22T15:39:41Z","event":"precompact_snapshot","detail":"slug=code-slim-0612 phase=complete source=fallback completed=0
+0 pending=0
+0"}
+{"timestamp":"2026-06-22T15:39:52Z","event":"postcompact_restore","detail":"slug=code-slim-0612 source=fallback"}
+{"timestamp":"2026-06-22T15:39:52Z","event":"precompact_checkpoint_missing","detail":"checkpoint.md not found — using legacy grep snapshot"}
+{"timestamp":"2026-06-22T15:39:52Z","event":"precompact_snapshot","detail":"slug=code-slim-0612 phase=complete source=fallback completed=0
+0 pending=0
+0"}
+{"timestamp":"2026-06-22T15:55:26Z","event":"postcompact_restore","detail":"slug=code-slim-0612 source=fallback"}
+{"timestamp":"2026-06-22T15:55:26Z","event":"precompact_checkpoint_missing","detail":"checkpoint.md not found — using legacy grep snapshot"}
+{"timestamp":"2026-06-22T15:55:26Z","event":"precompact_snapshot","detail":"slug=code-slim-0612 phase=complete source=fallback completed=0
+0 pending=0
+0"}
+{"timestamp":"2026-06-22T15:56:58Z","event":"postcompact_restore","detail":"slug=code-slim-0612 source=fallback"}
+{"timestamp":"2026-06-22T15:56:58Z","event":"precompact_checkpoint_missing","detail":"checkpoint.md not found — using legacy grep snapshot"}
+{"timestamp":"2026-06-22T15:56:59Z","event":"precompact_snapshot","detail":"slug=code-slim-0612 phase=complete source=fallback completed=0
+0 pending=0
+0"}
+{"timestamp":"2026-06-22T16:11:48Z","event":"postcompact_restore","detail":"slug=code-slim-0612 source=fallback"}
+{"timestamp":"2026-06-22T16:11:48Z","event":"precompact_checkpoint_missing","detail":"checkpoint.md not found — using legacy grep snapshot"}
+{"timestamp":"2026-06-22T16:11:48Z","event":"precompact_snapshot","detail":"slug=code-slim-0612 phase=complete source=fallback completed=0
+0 pending=0
+0"}
+{"timestamp":"2026-06-22T16:13:10Z","event":"postcompact_restore","detail":"slug=code-slim-0612 source=fallback"}
+{"timestamp":"2026-06-22T16:13:10Z","event":"precompact_checkpoint_missing","detail":"checkpoint.md not found — using legacy grep snapshot"}
+{"timestamp":"2026-06-22T16:13:10Z","event":"precompact_snapshot","detail":"slug=code-slim-0612 phase=complete source=fallback completed=0
+0 pending=0
+0"}
+{"timestamp":"2026-06-22T16:14:31Z","event":"postcompact_restore","detail":"slug=code-slim-0612 source=fallback"}
+{"timestamp":"2026-06-22T16:14:31Z","event":"precompact_checkpoint_missing","detail":"checkpoint.md not found — using legacy grep snapshot"}
+{"timestamp":"2026-06-22T16:14:31Z","event":"precompact_snapshot","detail":"slug=code-slim-0612 phase=complete source=fallback completed=0
+0 pending=0
+0"}
+{"timestamp":"2026-06-22T16:19:49Z","event":"postcompact_restore","detail":"slug=code-slim-0612 source=fallback"}
+{"timestamp":"2026-06-22T16:19:49Z","event":"precompact_checkpoint_missing","detail":"checkpoint.md not found — using legacy grep snapshot"}
+{"timestamp":"2026-06-22T16:19:49Z","event":"precompact_snapshot","detail":"slug=code-slim-0612 phase=complete source=fallback completed=0
+0 pending=0
+0"}
+{"timestamp":"2026-06-22T22:59:02Z","event":"postcompact_restore","detail":"slug=code-slim-0612 source=fallback"}
+{"timestamp":"2026-06-22T22:59:02Z","event":"precompact_checkpoint_missing","detail":"checkpoint.md not found — using legacy grep snapshot"}
+{"timestamp":"2026-06-22T22:59:02Z","event":"precompact_snapshot","detail":"slug=code-slim-0612 phase=complete source=fallback completed=0
+0 pending=0
+0"}
+{"timestamp":"2026-06-22T23:01:50Z","event":"postcompact_restore","detail":"slug=code-slim-0612 source=fallback"}
+{"timestamp":"2026-06-22T23:01:50Z","event":"precompact_checkpoint_missing","detail":"checkpoint.md not found — using legacy grep snapshot"}
+{"timestamp":"2026-06-22T23:01:50Z","event":"precompact_snapshot","detail":"slug=code-slim-0612 phase=complete source=fallback completed=0
+0 pending=0
+0"}
+{"timestamp":"2026-06-22T23:05:14Z","event":"postcompact_restore","detail":"slug=code-slim-0612 source=fallback"}
+{"timestamp":"2026-06-22T23:05:14Z","event":"precompact_checkpoint_missing","detail":"checkpoint.md not found — using legacy grep snapshot"}
+{"timestamp":"2026-06-22T23:05:14Z","event":"precompact_snapshot","detail":"slug=code-slim-0612 phase=complete source=fallback completed=0
+0 pending=0
+0"}
+{"timestamp":"2026-06-22T23:28:40Z","event":"postcompact_restore","detail":"slug=code-slim-0612 source=fallback"}
+{"timestamp":"2026-06-22T23:28:40Z","event":"precompact_checkpoint_missing","detail":"checkpoint.md not found — using legacy grep snapshot"}
+{"timestamp":"2026-06-22T23:28:40Z","event":"precompact_snapshot","detail":"slug=code-slim-0612 phase=complete source=fallback completed=0
+0 pending=0
+0"}

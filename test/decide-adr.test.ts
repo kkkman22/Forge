@@ -30,7 +30,7 @@ function makeEntry(id: string, overrides: Partial<AdrEntry> = {}): AdrEntry {
     status: "accepted",
     date: "2026-05-10",
     deciders: ["@maintainer-a"],
-    filePath: `.forge/decisions/${id}-legacy.md`,
+    filePath: `.tinkerman/decisions/${id}-legacy.md`,
     ...overrides,
   };
 }
@@ -73,9 +73,9 @@ describe("finalizeAdr — without supersedes", () => {
 
     // New entry inherits the next id.
     expect(out.newEntry.id).toBe("ADR-0003");
-    expect(out.adrFilePath).toBe(".forge/decisions/ADR-0003-adopt-zod.md");
+    expect(out.adrFilePath).toBe(".tinkerman/decisions/ADR-0003-adopt-zod.md");
     expect(out.supersessionUpdates).toEqual([]);
-    expect(out.indexFilePath).toBe(".forge/knowledge/adr-index.md");
+    expect(out.indexFilePath).toBe(".tinkerman/knowledge/adr-index.md");
 
     // The ADR file parses back to the new entry's frontmatter.
     const parsed = parseAdrFrontmatter(out.adrFileContent);
@@ -266,7 +266,7 @@ describe("renderAdrFileContent — round-trip with parseAdrFrontmatter", () => {
       status: "proposed",
       date: "2026-05-10",
       deciders: ["@maintainer-a"],
-      filePath: ".forge/decisions/ADR-0007-minimal.md",
+      filePath: ".tinkerman/decisions/ADR-0007-minimal.md",
     };
     const rendered = renderAdrFileContent(entry, "## Context\n\nBody.\n");
     const parsed = parseAdrFrontmatter(rendered);
@@ -291,7 +291,7 @@ describe("renderAdrFileContent — round-trip with parseAdrFrontmatter", () => {
       related_adrs: ["ADR-0001", "ADR-0008"],
       supersedes: "ADR-0015",
       superseded_by: "ADR-0099",
-      filePath: ".forge/decisions/ADR-0042-adopt-zod.md",
+      filePath: ".tinkerman/decisions/ADR-0042-adopt-zod.md",
     };
     const rendered = renderAdrFileContent(entry, "body");
     const parsed = parseAdrFrontmatter(rendered);

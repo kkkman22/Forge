@@ -18,8 +18,8 @@ import { readStdin } from "./lib/read-stdin.mjs";
  */
 const WATCHED_FILES = [
   {
-    pattern: ".forge/config.md",
-    message: "📝 Forge 配置已变更（{files}），建议重新读取 .forge/config.md",
+    pattern: ".tinkerman/config.md",
+    message: "📝 Forge 配置已变更（{files}），建议重新读取 .tinkerman/config.md",
   },
   {
     pattern: ".claude/settings.json",

@@ -11,13 +11,16 @@ import {
 describe("knowledge-hooks pure scheduling", () => {
   describe("hashEvent", () => {
     it("produces deterministic hash for same event", () => {
-      const event: KnowledgeEvent = { kind: "adr_written", path: ".forge/decisions/ADR-0042.md" };
+      const event: KnowledgeEvent = {
+        kind: "adr_written",
+        path: ".tinkerman/decisions/ADR-0042.md",
+      };
       expect(hashEvent(event)).toBe(hashEvent(event));
     });
 
     it("produces different hash for different events", () => {
-      const a: KnowledgeEvent = { kind: "adr_written", path: ".forge/decisions/ADR-0042.md" };
-      const b: KnowledgeEvent = { kind: "adr_written", path: ".forge/decisions/ADR-0043.md" };
+      const a: KnowledgeEvent = { kind: "adr_written", path: ".tinkerman/decisions/ADR-0042.md" };
+      const b: KnowledgeEvent = { kind: "adr_written", path: ".tinkerman/decisions/ADR-0043.md" };
       expect(hashEvent(a)).not.toBe(hashEvent(b));
     });
 

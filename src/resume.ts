@@ -234,7 +234,7 @@ export interface PhaseRecoveryResult {
  *
  * Priority:
  *   1. Parse StatusFile with graceful fallback → use phase if non-default
- *   2. Reconstruct from .forge/ file presence → suggest phase
+ *   2. Reconstruct from .tinkerman/ file presence → suggest phase
  *
  * Reconstructed state is NOT written to disk — caller must present to user
  * for confirmation.
@@ -283,7 +283,7 @@ export interface RecoveryChainInput {
   gitLogRaw: string;
   /** Raw `git status --porcelain` output. Step 4. */
   gitStatusRaw: string;
-  /** The Status_Document frontmatter phase (from .forge/status.md). Step 6. */
+  /** The Status_Document frontmatter phase (from .tinkerman/status.md). Step 6. */
   currentPhase: string;
   /** The Forge tier used to derive the legal phase sequence. Step 6.
    *
@@ -292,7 +292,7 @@ export interface RecoveryChainInput {
   tier: "light" | "standard" | "full";
   /** The current task/topic name (from Status_Document). Header field. */
   taskName: string;
-  /** Progress_Document task entries (parsed from .forge/progress/<topic>.md). Step 5. */
+  /** Progress_Document task entries (parsed from .tinkerman/progress/<topic>.md). Step 5. */
   progressEntries: ProgressTaskEntry[];
   /** The ordered task ids from the plan (for dependency-gap detection). Step 5. */
   taskOrder: string[];

@@ -5,15 +5,15 @@ import { describe, expect, it } from "vitest";
 // T4.1
 
 describe(".gitignore protects acceptance evidence", () => {
-  it("ignores .forge/acceptance/", () => {
+  it("ignores .tinkerman/acceptance/", () => {
     const gi = readFileSync(".gitignore", "utf8");
-    expect(gi).toContain(".forge/acceptance/");
+    expect(gi).toContain(".tinkerman/acceptance/");
   });
 });
 
-describe(".forge/config.md pins agent-browser", () => {
+describe(".tinkerman/config.md pins agent-browser", () => {
   it("declares agent_browser_pin_sha256 field", () => {
-    const cfg = readFileSync(".forge/config.md", "utf8");
+    const cfg = readFileSync(".tinkerman/config.md", "utf8");
     expect(cfg).toMatch(/agent_browser_pin_sha256/);
   });
 });

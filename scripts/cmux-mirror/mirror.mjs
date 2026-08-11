@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 /**
- * Mirror_Daemon — watches .forge/ state and projects to cmux.
+ * Mirror_Daemon — watches .tinkerman/ state and projects to cmux.
  * 12-step startup, fs.watch / polling dual mode, debounce 250ms.
  */
 
@@ -63,7 +63,7 @@ async function dispatchCommands(commands) {
  * @param {{ forgeDir?: string, socketDir?: string, cmuxAvailable?: boolean, forcePolling?: boolean, pollIntervalMs?: number }} opts
  */
 export async function createMirrorDaemon({
-  forgeDir = ".forge",
+  forgeDir = ".tinkerman",
   socketDir = "/tmp",
   cmuxAvailable: isAvailable = cmuxAvailable(),
   forcePolling = false,
@@ -240,7 +240,7 @@ export async function createMirrorDaemon({
 // CLI entry point
 const args = process.argv.slice(2);
 if (args.length > 0 && args[0] !== "--test") {
-  const forgeDir = args[0] || ".forge";
+  const forgeDir = args[0] || ".tinkerman";
   const socketDir = args[1] || "/tmp";
 
   createMirrorDaemon({ forgeDir, socketDir })

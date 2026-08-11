@@ -37,7 +37,7 @@ const ROOT =
   rootIndex !== -1 && args[rootIndex + 1]
     ? args[rootIndex + 1]
     : join(new URL(import.meta.url).pathname, "..", "..");
-const SPECS_DIR = join(ROOT, ".forge", "specs");
+const SPECS_DIR = join(ROOT, ".tinkerman", "specs");
 
 // ---------------------------------------------------------------------------
 // CLI
@@ -140,7 +140,7 @@ function coverageGateSkipped() {
 
 async function main() {
   if (!existsSync(SPECS_DIR)) {
-    console.log("No .forge/specs/ directory found. Skipping.");
+    console.log("No .tinkerman/specs/ directory found. Skipping.");
     return;
   }
 
@@ -175,7 +175,7 @@ async function main() {
   for (const slug of slugs) {
     const reqPath = join(SPECS_DIR, slug, "requirements.md");
     if (!existsSync(reqPath)) {
-      console.log(`  Spec "${slug}" not found in .forge/specs/. Skipping.`);
+      console.log(`  Spec "${slug}" not found in .tinkerman/specs/. Skipping.`);
       continue;
     }
 

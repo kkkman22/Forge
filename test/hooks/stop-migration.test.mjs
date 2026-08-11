@@ -43,12 +43,12 @@ function runScript(scriptPath, args = [], env = {}) {
 describe("stop-incomplete-tasks.mjs", () => {
   before(() => {
     rmSync(TMPDIR, { recursive: true, force: true });
-    mkdirSync(join(TMPDIR, ".forge", "progress"), { recursive: true });
+    mkdirSync(join(TMPDIR, ".tinkerman", "progress"), { recursive: true });
   });
 
   test("outputs incomplete task warning when tasks remain", () => {
     writeFileSync(
-      join(TMPDIR, ".forge", "progress", "test.md"),
+      join(TMPDIR, ".tinkerman", "progress", "test.md"),
       "# Progress\n- [x] Done task\n- [ ] Pending task\n- [ ] Another pending\n"
     );
     const result = runScript(join(SCRIPTS_DIR, "stop-incomplete-tasks.mjs"));
@@ -58,7 +58,7 @@ describe("stop-incomplete-tasks.mjs", () => {
 
   test("outputs completion suggestion when all done", () => {
     writeFileSync(
-      join(TMPDIR, ".forge", "progress", "test.md"),
+      join(TMPDIR, ".tinkerman", "progress", "test.md"),
       "# Progress\n- [x] Done task\n- [x] Another done\n"
     );
     const result = runScript(join(SCRIPTS_DIR, "stop-incomplete-tasks.mjs"));
@@ -67,7 +67,7 @@ describe("stop-incomplete-tasks.mjs", () => {
   });
 
   test("exits 0 silently when no progress files exist", () => {
-    rmSync(join(TMPDIR, ".forge", "progress"), { recursive: true, force: true });
+    rmSync(join(TMPDIR, ".tinkerman", "progress"), { recursive: true, force: true });
     const result = runScript(join(SCRIPTS_DIR, "stop-incomplete-tasks.mjs"));
     assert.equal(result.exitCode, 0);
   });
@@ -80,12 +80,12 @@ describe("stop-incomplete-tasks.mjs", () => {
 describe("stop-pending-rules.mjs", () => {
   before(() => {
     rmSync(TMPDIR, { recursive: true, force: true });
-    mkdirSync(join(TMPDIR, ".forge", "knowledge"), { recursive: true });
+    mkdirSync(join(TMPDIR, ".tinkerman", "knowledge"), { recursive: true });
   });
 
   test("outputs pending rules warning when PENDING rules exist", () => {
     writeFileSync(
-      join(TMPDIR, ".forge", "knowledge", "evolved-rules.md"),
+      join(TMPDIR, ".tinkerman", "knowledge", "evolved-rules.md"),
       "---\n---\n# Rules\n## R1\nStatus: PENDING\n## R2\nStatus: ACTIVE\n## R3\nStatus: PENDING\n"
     );
     const result = runScript(join(SCRIPTS_DIR, "stop-pending-rules.mjs"));
@@ -96,7 +96,7 @@ describe("stop-pending-rules.mjs", () => {
 
   test("exits 0 silently when no pending rules", () => {
     writeFileSync(
-      join(TMPDIR, ".forge", "knowledge", "evolved-rules.md"),
+      join(TMPDIR, ".tinkerman", "knowledge", "evolved-rules.md"),
       "---\n---\n# Rules\n## R1\nStatus: ACTIVE\n"
     );
     const result = runScript(join(SCRIPTS_DIR, "stop-pending-rules.mjs"));
@@ -105,7 +105,7 @@ describe("stop-pending-rules.mjs", () => {
   });
 
   test("exits 0 silently when evolved-rules.md does not exist", () => {
-    rmSync(join(TMPDIR, ".forge", "knowledge", "evolved-rules.md"), { force: true });
+    rmSync(join(TMPDIR, ".tinkerman", "knowledge", "evolved-rules.md"), { force: true });
     const result = runScript(join(SCRIPTS_DIR, "stop-pending-rules.mjs"));
     assert.equal(result.exitCode, 0);
   });
@@ -118,12 +118,12 @@ describe("stop-pending-rules.mjs", () => {
 describe("stop-phase-verify.mjs", () => {
   before(() => {
     rmSync(TMPDIR, { recursive: true, force: true });
-    mkdirSync(join(TMPDIR, ".forge"), { recursive: true });
+    mkdirSync(join(TMPDIR, ".tinkerman"), { recursive: true });
   });
 
   test("warns when phase is active (not completed)", () => {
     writeFileSync(
-      join(TMPDIR, ".forge", "status.md"),
+      join(TMPDIR, ".tinkerman", "status.md"),
       "---\nphase: \"build\"\n---\n# Status\n"
     );
     const result = runScript(join(SCRIPTS_DIR, "stop-phase-verify.mjs"));
@@ -134,7 +134,7 @@ describe("stop-phase-verify.mjs", () => {
 
   test("silent when phase is completed", () => {
     writeFileSync(
-      join(TMPDIR, ".forge", "status.md"),
+      join(TMPDIR, ".tinkerman", "status.md"),
       "---\nphase: \"completed\"\n---\n# Status\n"
     );
     const result = runScript(join(SCRIPTS_DIR, "stop-phase-verify.mjs"));
@@ -143,14 +143,14 @@ describe("stop-phase-verify.mjs", () => {
   });
 
   test("exits 0 silently when no status.md", () => {
-    rmSync(join(TMPDIR, ".forge", "status.md"), { force: true });
+    rmSync(join(TMPDIR, ".tinkerman", "status.md"), { force: true });
     const result = runScript(join(SCRIPTS_DIR, "stop-phase-verify.mjs"));
     assert.equal(result.exitCode, 0);
   });
 
   test("includes terminalSequence notification in interactive mode", () => {
     writeFileSync(
-      join(TMPDIR, ".forge", "status.md"),
+      join(TMPDIR, ".tinkerman", "status.md"),
       "---\nphase: \"build\"\n---\n# Status\n"
     );
     const result = runScript(join(SCRIPTS_DIR, "stop-phase-verify.mjs"), [], { CI: "1" });
@@ -167,18 +167,18 @@ describe("stop-phase-verify.mjs", () => {
 describe("posttooluse-status-reminder.mjs", () => {
   before(() => {
     rmSync(TMPDIR, { recursive: true, force: true });
-    mkdirSync(join(TMPDIR, ".forge"), { recursive: true });
+    mkdirSync(join(TMPDIR, ".tinkerman"), { recursive: true });
   });
 
   test("outputs reminder when status.md exists", () => {
-    writeFileSync(join(TMPDIR, ".forge", "status.md"), "---\n---\n# Status\n");
+    writeFileSync(join(TMPDIR, ".tinkerman", "status.md"), "---\n---\n# Status\n");
     const result = runScript(join(SCRIPTS_DIR, "posttooluse-status-reminder.mjs"));
     assert.equal(result.exitCode, 0);
     assert.ok(result.stdout.includes("修改"), `Expected reminder in: ${result.stdout}`);
   });
 
   test("exits 0 silently when no status.md", () => {
-    rmSync(join(TMPDIR, ".forge", "status.md"), { force: true });
+    rmSync(join(TMPDIR, ".tinkerman", "status.md"), { force: true });
     const result = runScript(join(SCRIPTS_DIR, "posttooluse-status-reminder.mjs"));
     assert.equal(result.exitCode, 0);
   });
@@ -191,12 +191,12 @@ describe("posttooluse-status-reminder.mjs", () => {
 describe("teammate-idle-phase-check.mjs", () => {
   before(() => {
     rmSync(TMPDIR, { recursive: true, force: true });
-    mkdirSync(join(TMPDIR, ".forge"), { recursive: true });
+    mkdirSync(join(TMPDIR, ".tinkerman"), { recursive: true });
   });
 
   test("warns when phase is review", () => {
     writeFileSync(
-      join(TMPDIR, ".forge", "status.md"),
+      join(TMPDIR, ".tinkerman", "status.md"),
       "---\nphase: \"review\"\n---\n# Status\n"
     );
     const result = runScript(join(SCRIPTS_DIR, "teammate-idle-phase-check.mjs"));
@@ -206,7 +206,7 @@ describe("teammate-idle-phase-check.mjs", () => {
 
   test("warns when phase is decide", () => {
     writeFileSync(
-      join(TMPDIR, ".forge", "status.md"),
+      join(TMPDIR, ".tinkerman", "status.md"),
       "---\nphase: \"decide\"\n---\n# Status\n"
     );
     const result = runScript(join(SCRIPTS_DIR, "teammate-idle-phase-check.mjs"));
@@ -216,7 +216,7 @@ describe("teammate-idle-phase-check.mjs", () => {
 
   test("silent when phase is build", () => {
     writeFileSync(
-      join(TMPDIR, ".forge", "status.md"),
+      join(TMPDIR, ".tinkerman", "status.md"),
       "---\nphase: \"build\"\n---\n# Status\n"
     );
     const result = runScript(join(SCRIPTS_DIR, "teammate-idle-phase-check.mjs"));

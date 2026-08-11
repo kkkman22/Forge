@@ -15,7 +15,7 @@ allowed_tools:
 
 > **Trigger**: `/tinkerman accept` or `/tinkerman ship --with-acceptance`
 > **Responsibility**: Run acceptance scenarios from spec against real runtime
-> **Output path**: `.forge/acceptance/<topic>/`
+> **Output path**: `.tinkerman/acceptance/<topic>/`
 
 ## 1. Overview
 
@@ -27,7 +27,7 @@ Parse spec scenarios (explicit Gherkin or derived from acceptance criteria), cla
 
 | # | Check | Block Condition | Route |
 |---|-------|-----------------|-------|
-| 1 | Spec exists | No locked spec in `.forge/specs/` | `/tinkerman spec` |
+| 1 | Spec exists | No locked spec in `.tinkerman/specs/` | `/tinkerman spec` |
 | 2 | Scenarios found | No `## Scenarios` or `## Acceptance Criteria` section | warn + skip |
 
 **Rejection Output**: `forge-accept precondition failed — name: spec evidence: no locked spec suggestion: /tinkerman spec`
@@ -36,7 +36,7 @@ Parse spec scenarios (explicit Gherkin or derived from acceptance criteria), cla
 
 ### Step 1: Parse Scenarios
 
-1. Read spec from `.forge/specs/<topic>/spec.md`
+1. Read spec from `.tinkerman/specs/<topic>/spec.md`
 2. `parseScenariosFromSpec(content)` → combined explicit + derived scenarios
    - Before parsing, run `lintScenarios(specContent, filePath)` from `src/scenario-linter.ts` — malformed scenarios (error-severity) marked as `lint-failed` and skipped (not executed)
 3. If no scenarios found → warn and exit with SKIP
@@ -69,7 +69,7 @@ Parse spec scenarios (explicit Gherkin or derived from acceptance criteria), cla
 
 1. `aggregateVerdicts(artifacts)` → summary counts **+ `layerHealth` (per-layer pass/fail/inconclusive) + `pyramidShape`** (healthy / e2e-heavy / empty-middle / no-unit / empty, advisory).
 2. `renderAcceptanceReport(result)` → Markdown (includes a per-layer health table).
-3. Write to `.forge/acceptance/<topic>/report.md`
+3. Write to `.tinkerman/acceptance/<topic>/report.md`
 
 > **Pyramid shape is advisory** (Req5 AC5) — it never affects `blocksShip`. The
 > E2E-heavy enforcement is a separate gate (`scripts/check-pyramid-ratio.sh`,
@@ -82,8 +82,8 @@ Parse spec scenarios (explicit Gherkin or derived from acceptance criteria), cla
 - **Scenarios Run**: N
 - **Verdicts**: PASS X / FAIL Y / SKIP Z / WARN W
 - **Blocks Ship**: YES/NO (per `acceptance_blocks_ship` frontmatter + FAIL count)
-- **Report Path**: `.forge/acceptance/<topic>/report.md`
-- **Evidence**: `.forge/acceptance/<topic>/<scenario-id>/`
+- **Report Path**: `.tinkerman/acceptance/<topic>/report.md`
+- **Evidence**: `.tinkerman/acceptance/<topic>/<scenario-id>/`
 
 ## References
 

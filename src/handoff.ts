@@ -6,7 +6,7 @@
  * a handoff document before transitioning, so the next stage starts with
  * full context instead of re-discovering or re-debating settled decisions.
  *
- * Handoff documents live in `.forge/handoffs/<from>-to-<to>.md`.
+ * Handoff documents live in `.tinkerman/handoffs/<from>-to-<to>.md`.
  *
  * Design principles:
  *   - Handoffs are lightweight (10-20 lines of decisions, not full specs)
@@ -114,7 +114,7 @@ export function isValidTransition(from: string, to: string): boolean {
  * Generate the file path for a handoff document.
  */
 export function handoffPath(from: string, to: string): string {
-  return `.forge/handoffs/${from}-to-${to}.md`;
+  return `.tinkerman/handoffs/${from}-to-${to}.md`;
 }
 
 /**

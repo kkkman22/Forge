@@ -11,7 +11,7 @@ describe("buildDecideRound1Subagents context-file injection (spec context-inject
   it("injects contextFiles into Round 1 prompts when provided", () => {
     const ctx: DecideContext = {
       ...baseCtx,
-      contextFiles: [".forge/specs/auth/requirements.md", ".forge/specs/auth/design.md"],
+      contextFiles: [".tinkerman/specs/auth/requirements.md", ".tinkerman/specs/auth/design.md"],
     };
     const invocations = buildDecideRound1Subagents(ctx);
     expect(invocations.length).toBeGreaterThan(0);
@@ -24,7 +24,7 @@ describe("buildDecideRound1Subagents context-file injection (spec context-inject
   it("uses a 'Relevant artifacts' label for the context section", () => {
     const ctx: DecideContext = {
       ...baseCtx,
-      contextFiles: [".forge/specs/auth/research.md"],
+      contextFiles: [".tinkerman/specs/auth/research.md"],
     };
     const invocations = buildDecideRound1Subagents(ctx);
     expect(invocations[0].prompt).toMatch(/Relevant artifacts/i);
@@ -44,7 +44,7 @@ describe("buildDecideRound1Subagents context-file injection (spec context-inject
   it("preserves the task description and involved files alongside context", () => {
     const ctx: DecideContext = {
       ...baseCtx,
-      contextFiles: [".forge/specs/auth/research.md"],
+      contextFiles: [".tinkerman/specs/auth/research.md"],
     };
     const invocations = buildDecideRound1Subagents(ctx);
     expect(invocations[0].prompt).toContain("Add JWT login");

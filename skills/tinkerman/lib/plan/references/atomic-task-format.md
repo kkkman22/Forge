@@ -152,7 +152,7 @@ Plans created before this rule (no `Expected:` fields) are grandfathered: the se
 - `packs/<name>/state-machines/` → 要求 `loadStateMachineDefinitions(enabledPacks)` 测试 **（已交付 — `src/state-machine/registry.ts`，spec domain-knowledge-threading REQ-2 / pms-pack-v1 R4.5.5）**
 - `packs/<name>/lint-rules/` → 要求 `loadPackLintRules(enabledPacks)` 测试
 
-> **✅ state-machines loader（已交付）**：`loadStateMachineDefinitions(enabledPacks, fs)`（复数，pack-aware）已在 `src/state-machine/registry.ts` 交付并通过 `src/index.ts` 导出。它遍历每个 enabled pack 的 `extends.state_machines` 目录，读 `*.yaml`，用单数 `loadStateMachineDefinition` + `validateDefinition` 校验，错误收集不抛。当 Plan 的 `files` 含 `packs/<name>/state-machines/` 时，**正常套用本规则**生成调 `loadStateMachineDefinitions` 的 integration test。历史追踪：`.forge/decisions/2026-06-26-arch-review-remediate-0626.md`（T-01 反转）+ `.forge/decisions/2026-06-27-domain-example-reference-impl.md`（slice B）。
+> **✅ state-machines loader（已交付）**：`loadStateMachineDefinitions(enabledPacks, fs)`（复数，pack-aware）已在 `src/state-machine/registry.ts` 交付并通过 `src/index.ts` 导出。它遍历每个 enabled pack 的 `extends.state_machines` 目录，读 `*.yaml`，用单数 `loadStateMachineDefinition` + `validateDefinition` 校验，错误收集不抛。当 Plan 的 `files` 含 `packs/<name>/state-machines/` 时，**正常套用本规则**生成调 `loadStateMachineDefinitions` 的 integration test。历史追踪：`.tinkerman/decisions/2026-06-26-arch-review-remediate-0626.md`（T-01 反转）+ `.tinkerman/decisions/2026-06-27-domain-example-reference-impl.md`（slice B）。
 
 ### 为什么 Zero-Pack 测试不够
 

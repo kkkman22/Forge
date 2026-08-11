@@ -3,7 +3,7 @@
  *
  * Unions `mutation_critical_modules` globs from all enabled packs,
  * generates a temp stryker.conf.json, spawns Stryker, parses JSON output,
- * computes mutation score, and writes artifact to .forge/mutation/.
+ * computes mutation score, and writes artifact to .tinkerman/mutation/.
  *
  * Sprint 2 never fails — verdict is always "pass" or "warn" (never hard error).
  */
@@ -353,7 +353,7 @@ export function evaluateMutationVerdict(input: {
 function writeArtifact(projectRoot: string, summary: MutationSummary): string {
   const timestamp = new Date().toISOString().replace(/[:.]/g, "-");
   const fileName = `mutation-${timestamp}.md`;
-  const dirPath = join(projectRoot, ".forge", "mutation");
+  const dirPath = join(projectRoot, ".tinkerman", "mutation");
   const filePath = join(dirPath, fileName);
 
   mkdirSync(dirPath, { recursive: true });
@@ -474,7 +474,7 @@ export async function runMutation(
   }
 
   // Generate stryker config
-  const configDir = join(projectRoot, ".forge", "mutation");
+  const configDir = join(projectRoot, ".tinkerman", "mutation");
   const configPath = join(configDir, "stryker.conf.json");
   const config = generateStrykerConfig(targetedGlobs, configPath);
 

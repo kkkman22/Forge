@@ -30,7 +30,7 @@ describe("conflict-classifier totality [R13.1, R7.1]", () => {
       fc.property(
         fc.oneof(
           fc.string({ maxLength: 500 }),
-          fc.constantFrom("", "/", "./", "../", ".forge/", ".forge/config.md"),
+          fc.constantFrom("", "/", "./", "../", ".tinkerman/", ".tinkerman/config.md"),
         ),
         (path) => {
           expect(() => classify(path)).not.toThrow();
@@ -74,37 +74,37 @@ describe("conflict-classifier normalization [R13.2]", () => {
 });
 
 describe("conflict-classifier zone classification [R7.1]", () => {
-  it("classifies .forge/config.md as frozen", () => {
-    expect(classify(".forge/config.md")).toBe("frozen");
+  it("classifies .tinkerman/config.md as frozen", () => {
+    expect(classify(".tinkerman/config.md")).toBe("frozen");
   });
 
-  it("classifies .forge/specs/*/spec.md as frozen (simplified)", () => {
-    expect(classify(".forge/specs/my-feature/spec.md")).toBe("frozen");
+  it("classifies .tinkerman/specs/*/spec.md as frozen (simplified)", () => {
+    expect(classify(".tinkerman/specs/my-feature/spec.md")).toBe("frozen");
   });
 
-  it("classifies .forge/plans/*.md as frozen (simplified)", () => {
-    expect(classify(".forge/plans/my-feature.md")).toBe("frozen");
+  it("classifies .tinkerman/plans/*.md as frozen (simplified)", () => {
+    expect(classify(".tinkerman/plans/my-feature.md")).toBe("frozen");
   });
 
-  it("classifies .forge/progress/* as guarded", () => {
-    expect(classify(".forge/progress/my-task.md")).toBe("guarded");
+  it("classifies .tinkerman/progress/* as guarded", () => {
+    expect(classify(".tinkerman/progress/my-task.md")).toBe("guarded");
   });
 
-  it("classifies .forge/reviews/* as guarded", () => {
-    expect(classify(".forge/reviews/my-review.md")).toBe("guarded");
+  it("classifies .tinkerman/reviews/* as guarded", () => {
+    expect(classify(".tinkerman/reviews/my-review.md")).toBe("guarded");
   });
 
-  it("classifies .forge/knowledge/instincts.md as guarded", () => {
-    expect(classify(".forge/knowledge/instincts.md")).toBe("guarded");
+  it("classifies .tinkerman/knowledge/instincts.md as guarded", () => {
+    expect(classify(".tinkerman/knowledge/instincts.md")).toBe("guarded");
   });
 
-  it("classifies .forge/decisions/ADR-001.md as guarded", () => {
-    expect(classify(".forge/decisions/ADR-001.md")).toBe("guarded");
+  it("classifies .tinkerman/decisions/ADR-001.md as guarded", () => {
+    expect(classify(".tinkerman/decisions/ADR-001.md")).toBe("guarded");
   });
 
-  it("classifies other .forge/* as open", () => {
-    expect(classify(".forge/status.md")).toBe("open");
-    expect(classify(".forge/sessions/abc.md")).toBe("open");
+  it("classifies other .tinkerman/* as open", () => {
+    expect(classify(".tinkerman/status.md")).toBe("open");
+    expect(classify(".tinkerman/sessions/abc.md")).toBe("open");
   });
 
   it("classifies non-.forge paths as source", () => {

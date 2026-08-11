@@ -32,7 +32,7 @@ const SAFE_TOPIC = /^[A-Za-z0-9._-]{1,64}$/;
  * Never throws (R8.8).
  */
 export async function runBrowserQa({
-  forgeDir = ".forge",
+  forgeDir = ".tinkerman",
   writeArtifact = false,
   steps = QA_STEPS,
 } = {}) {
@@ -122,7 +122,7 @@ export async function runBrowserQa({
  * @returns {Promise<{ collected: string[], skipped: Array<{kind:string,reason:string,stderr?:string}>, dir: string|null, timestamp: string }>}
  */
 export async function collectBrowserDiagnostics({
-  forgeDir = ".forge",
+  forgeDir = ".tinkerman",
   topic = "default",
   surface,
   runCli: run = runCli,
@@ -201,7 +201,7 @@ export async function collectBrowserDiagnostics({
 // CLI entry point (runBrowserQa)
 const args = process.argv.slice(2);
 if (args.length > 0 && args[0] !== "--test") {
-  const forgeDir = args[0] || ".forge";
+  const forgeDir = args[0] || ".tinkerman";
   if (forgeDir.includes("..")) {
     process.exit(1);
   }

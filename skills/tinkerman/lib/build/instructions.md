@@ -16,14 +16,14 @@ allowed_tools:
 ## Current Context
 
 Branch: !`git branch --show-current`
-Plan status: !`head -5 .forge/plans/*.md 2>/dev/null || echo "no plan"`
+Plan status: !`head -5 .tinkerman/plans/*.md 2>/dev/null || echo "no plan"`
 Last commit: !`git log --oneline -1 2>/dev/null || echo "no commits"`
 
 # /tinkerman build — 执行引擎
 
 > **触发方式**：标准路径第二步 / 全量路径第四步 / 轻量路径第一步 / 直接输入 `/tinkerman build`
 > **职责**：按计划以 TDD 方式逐任务实现代码，Subagent 隔离 + 原子提交
-> **输出路径**：`.forge/progress/<topic>.md`（实时进度）+ 项目代码变更
+> **输出路径**：`.tinkerman/progress/<topic>.md`（实时进度）+ 项目代码变更
 
 ---
 
@@ -45,7 +45,7 @@ build 入口解析项目启用的 domain pack，注入结构化领域知识摘�
 2. **IF `enabled.order.length === 0`** → 跳过本节（Zero-Pack；当前行为不变，INV-1）。
 3. **ELSE** 调用 `composeDomainKnowledgeBundle(enabled, fs)`，将以下**结构化摘要**注入工作上下文（**非全文**，agent 按需 Read 提供的路径）：
    - **Contexts**：每个 bounded context 的 `name` + `responsibility`（一行），来自 `bundle.contexts`。
-   - **Glossary terms**：术语清单（含 aliases），来自 `bundle.glossaryTerms`。这些是 **advisory 只读**——强制执行仍走 `runGlossaryCheck` 对照扁平 `.forge/glossary.md`（spec REQ-6）。
+   - **Glossary terms**：术语清单（含 aliases），来自 `bundle.glossaryTerms`。这些是 **advisory 只读**——强制执行仍走 `runGlossaryCheck` 对照扁平 `.tinkerman/glossary.md`（spec REQ-6）。
    - **State machines**：每个状态机的 `name` + transition 数，来自 `bundle.stateMachines`，附 `sourcePath` 供 agent 按需读取 YAML。
 4. 注入**摘要**而非全文。仅在某个 task 需要细节时，agent 通过提供的路径 Read 完整文件。
 
@@ -69,7 +69,7 @@ build 入口解析项目启用的 domain pack，注入结构化领域知识摘�
 
 **适用场景**：Full tier Phase 2 多模块并行开发、需要隔离试验性变更时。
 
-**注意**：worktree 中 `.forge/` 目录为符号链接或共享，进度文件写入仍然可见。
+**注意**：worktree 中 `.tinkerman/` 目录为符号链接或共享，进度文件写入仍然可见。
 
 ### §1.6 Pre-flight: Spec Health Check
 
@@ -79,17 +79,17 @@ Same as forge-plan §1.6. Verify locked spec is still healthy before build start
 
 ### §1.6.1 Pre-flight: 活跃计划 phase 同步（spec `planning-with-files-borrow` R3）
 
-build 启动时（读 `.forge/status.md` 确认 phase 后），同步活跃计划指针的 phase 字段：
+build 启动时（读 `.tinkerman/status.md` 确认 phase 后），同步活跃计划指针的 phase 字段：
 
 ```bash
 node scripts/set-active-plan.mjs --phase build
 ```
 
-这更新 `.forge/state/active-plan.json` 的 `phase` 为 `build`（plan_path/spec_ref/pinned_at 保留）。若指针不存在（plan approve 未设置或走轻量路径），脚本静默跳过，不阻断。后续阶段切换（review/test/ship）由各 SKILL 启动时同样调用 `--phase <phase>` 同步。
+这更新 `.tinkerman/state/active-plan.json` 的 `phase` 为 `build`（plan_path/spec_ref/pinned_at 保留）。若指针不存在（plan approve 未设置或走轻量路径），脚本静默跳过，不阻断。后续阶段切换（review/test/ship）由各 SKILL 启动时同样调用 `--phase <phase>` 同步。
 
 ## 1a. Nature Mode 路由
 
-Build 启动时读取 `.forge/status.md` → 提取 `work_nature` 字段 → 按值路由：
+Build 启动时读取 `.tinkerman/status.md` → 提取 `work_nature` 字段 → 按值路由：
 
 | work_nature | 行为 |
 |-------------|------|
@@ -105,7 +105,7 @@ Build 启动时读取 `.forge/status.md` → 提取 `work_nature` 字段 → 按
 
 ### §1b. Git Operations Conflict Hook
 
-Build 阶段中途执行 `git rebase` / `git pull` / `git merge` 同步 main 时，如果产生 `.forge/` 目录下的冲突：
+Build 阶段中途执行 `git rebase` / `git pull` / `git merge` 同步 main 时，如果产生 `.tinkerman/` 目录下的冲突：
 
 1. 解析冲突路径：`parseConflictedPaths(stderr)`
 2. 调用 `resolveConflicts(paths, mode, context)`（`src/conflict-resolver.ts`）
@@ -118,7 +118,7 @@ Build 阶段中途执行 `git rebase` / `git pull` / `git merge` 同步 main 时
 5. 部分解决 / frozen 拒绝 → 暂停 build，提示用户手动处理或运行 `/tinkerman fix-conflicts`
 6. Three-Strike：`validateConflictResolution` 连续 3 次失败 → 触发 `/tinkerman debug`
 
-**不适用场景**：非 `.forge/` 目录的源码冲突不由此 hook 处理，留给用户手动解决。
+**不适用场景**：非 `.tinkerman/` 目录的源码冲突不由此 hook 处理，留给用户手动解决。
 
 → 函数签名详见 references/function-contracts.md
 
@@ -128,19 +128,19 @@ Build 阶段中途执行 `git rebase` / `git pull` / `git merge` 同步 main 时
 
 | # | Check | Block Condition | Route |
 |---|-------|---------|-------|
-| 1 | **Spec Gate** — scan `.forge/specs/` status | Not `"locked"` (no-Spec Plan exempt) | → `/tinkerman spec` |
-| 2 | **Plan Gate** — scan `.forge/plans/` status | Not `"approved"` | → `/tinkerman plan` |
-| 3 | **Dir Integrity** — `.forge/` subdirs exist | Missing | → `/tinkerman init` |
+| 1 | **Spec Gate** — scan `.tinkerman/specs/` status | Not `"locked"` (no-Spec Plan exempt) | → `/tinkerman spec` |
+| 2 | **Plan Gate** — scan `.tinkerman/plans/` status | Not `"approved"` | → `/tinkerman plan` |
+| 3 | **Dir Integrity** — `.tinkerman/` subdirs exist | Missing | → `/tinkerman init` |
 | 4 | **Branch Gate** — `runBranchGate` 统一 hook | Not on `feature/<topic>` or `forge/<topic>` | → Auto-switch / Block |
 | 5 | **Plan Self-Consistency** — `runPlanPreflight` | plan 文档检测到内部冲突或自带违规（详见 references/plan-preflight.md） | → `/tinkerman plan` |
 
 **Rejection Output**: `🚫 Build 前置检查未通过 — 命名：<检查> 证据：<文件状态> 建议：<路由> 重入：<条件>`. Multiple failures → list all. Autonomous → JSON.
 
-**函数调用**: `runBranchGate({ skill: "build", ... })` — 调用 `src/branch-gate.ts` 统一调度层；参数从 `.forge/status.md` 和 git state 读取；返回 `BranchGateResult`；按 result.kind 处理（详见 §1.5）
+**函数调用**: `runBranchGate({ skill: "build", ... })` — 调用 `src/branch-gate.ts` 统一调度层；参数从 `.tinkerman/status.md` 和 git state 读取；返回 `BranchGateResult`；按 result.kind 处理（详见 §1.5）
 
 **函数调用**: `checkBuildGate(config)` — 检查 build 前置门禁（Spec 锁定、Plan 批准、目录完整性）；`checkBranchTopicGate(branch, featureBranch)` — 验证分支命名是否符合 `feature/<topic>` 或 `forge/<topic>` 模式；`detectUnshippedBranches(gitLogFn)` — 扫描本地未合并的 feature 分支并输出警告
 
-**函数调用**: `runPlanPreflight({ planText, verifyWhitelist? })` — 解析 `.forge/plans/<topic>.md` 文本，按 references/plan-preflight.md 的 9 项规则（R2 内部冲突 5 项 + R3 自带违规 4 项）执行纯文本检查；返回 `PreflightResult`（pass/fail）；`kind === "fail"` 时按 §2 Rejection Output 规范一次列全所有 violations（每项含规则编号/涉及 Task/证据），路由回 `/tinkerman plan`；Light tier 无 plan 时跳过。误报可用 `<!-- preflight-exempt: <规则编号> reason: <...> -->` 注释豁免（R4）。
+**函数调用**: `runPlanPreflight({ planText, verifyWhitelist? })` — 解析 `.tinkerman/plans/<topic>.md` 文本，按 references/plan-preflight.md 的 9 项规则（R2 内部冲突 5 项 + R3 自带违规 4 项）执行纯文本检查；返回 `PreflightResult`（pass/fail）；`kind === "fail"` 时按 §2 Rejection Output 规范一次列全所有 violations（每项含规则编号/涉及 Task/证据），路由回 `/tinkerman plan`；Light tier 无 plan 时跳过。误报可用 `<!-- preflight-exempt: <规则编号> reason: <...> -->` 注释豁免（R4）。
 
 → Branch Gate auto-switch / unshipped-branch warning / lightweight exception 详见 references/branch-gate.md
 → Plan Self-Consistency 检测规则、关键词模式、豁免机制详见 references/plan-preflight.md
@@ -151,7 +151,7 @@ Build 阶段中途执行 `git rebase` / `git pull` / `git merge` 同步 main 时
 
 Pre-build Checks 通过后、进入 Execution Paths 前，读取项目宪章作为 grounding 约束。**这是内容可见性增强，不是新增门禁**——charter 不通过不阻断 build（与 §2 的流程门禁不同）。
 
-读取 `.forge/charter.md`，按 frontmatter `status` 分支：
+读取 `.tinkerman/charter.md`，按 frontmatter `status` 分支：
 
 | `status` | 行为 |
 |----------|------|
@@ -188,7 +188,7 @@ Direct edit, no Subagent. Pause every 2 steps for confirmation. Verify, commit. 
 
 ### 3.2 Standard (clear requirements / has Spec)
 
-Read `build.use_goal` from `.forge/config.md` (default `true`) → route to §3.2a (/goal mode) or legacy §3.2b.
+Read `build.use_goal` from `.tinkerman/config.md` (default `true`) → route to §3.2a (/goal mode) or legacy §3.2b.
 
 任务按 Plan 中 `dependsOn` 拓扑顺序执行。依赖图由 Plan Step 3.5 生成，build 遵循拓扑排序确保依赖在依赖者之前完成。
 
@@ -197,8 +197,8 @@ Read `build.use_goal` from `.forge/config.md` (default `true`) → route to §3.
 When `build.use_goal` is `true` (default), use Claude Code's `/goal` command to drive the TDD loop natively.
 
 **启动 /goal**：
-1. 读取 `.forge/plans/<slug>.md` 或 `.kiro/specs/<spec>/tasks.md` 获取所有 task
-2. 读取 `.forge/config.md` 获取 `ci_check_command`
+1. 读取 `.tinkerman/plans/<slug>.md` 或 `.kiro/specs/<spec>/tasks.md` 获取所有 task
+2. 读取 `.tinkerman/config.md` 获取 `ci_check_command`
 3. 启动 `/goal`，目标条件：**"所有 task 标记 completed AND `ci_check_command` 通过"**
 
 **每次迭代（/goal 自动循环）**：
@@ -231,7 +231,7 @@ Read task list → per task: **Closure-First Probes** (→ references/closure-pr
 - Wave 内任务可并行（`max_parallel_agents` 默认 6）
 - Wave 间串行（前 wave 全部完成才进入下一 wave）
 - **Wave 间持久化**：每个 wave 完成后持久化 P0/P1 findings。若 context 较高且还有后续 wave，建议用户执行 `/compact`。详见 `skills/shared/next-step-protocol.md` §Context Compact 策略
-- **Wave 间 checkpoint-writer**（regenerative-checkpoint R2/D4）：每个 wave 完成后，用 Task tool fire-and-forget spawn checkpoint-writer 更新 `.forge/checkpoint.md`。主 agent 不阻塞等待——spawn 后立即继续下一 wave。writer 读 prior checkpoint + `.forge/status.md` + `.forge/progress/`，增量更新各 section（EXACT-FORM 精确值逐字节保留）。这是 GLM-5.2 600K compact 场景下保证 compact 时 checkpoint 新鲜的关键防线（D9）。
+- **Wave 间 checkpoint-writer**（regenerative-checkpoint R2/D4）：每个 wave 完成后，用 Task tool fire-and-forget spawn checkpoint-writer 更新 `.tinkerman/checkpoint.md`。主 agent 不阻塞等待——spawn 后立即继续下一 wave。writer 读 prior checkpoint + `.tinkerman/status.md` + `.tinkerman/progress/`，增量更新各 section（EXACT-FORM 精确值逐字节保留）。这是 GLM-5.2 600K compact 场景下保证 compact 时 checkpoint 新鲜的关键防线（D9）。
 - HTTP 429 降级阶梯：第 1 次并发减半 → 第 2 次降至 2 → 第 3 次串行（1 agent）
 - 不含 wave 块时退化为单任务串行模式
 
@@ -241,7 +241,7 @@ Mandatory Restatement Checkpoint (counter init 3) + Subagent Status handling + I
 
 **Phase 1**: Parallel research Subagents（`Promise.allSettled`，`max_parallel_agents` default 6）。
 - **函数调用**: `buildResearchSubagents(topics)` — 参数：从 Plan 研究问题提取的 `string[]`；返回 `SubagentInvocation[]`；用于构造并行研究 Subagent 配置
-- **函数调用**: `mergeResearchFindings(results)` — 参数：Phase 1 所有 Subagent 返回的 `SubagentResult[]`；返回合并后的研究发现字符串；写入 `.forge/findings/<topic>.md`
+- **函数调用**: `mergeResearchFindings(results)` — 参数：Phase 1 所有 Subagent 返回的 `SubagentResult[]`；返回合并后的研究发现字符串；写入 `.tinkerman/findings/<topic>.md`
 → 函数签名详见 references/function-contracts.md
 
 **Phase 2**: Module-by-module Subagent TDD。Optional Git Worktree for file overlap。Restatement counter init at Phase 2 start。→ Final Validation。→ 详见 references/subagent-orchestration.md
@@ -260,7 +260,7 @@ Read `ci_check_command` from `config.md` → execute as-is. Empty → `verify_co
 
 ## 3.6 Handoff Block（R2 — 原子任务交接）
 
-每完成一个原子任务并准备 commit 前，build agent 必须在 `.forge/progress/<topic>.md` 对应任务条目下追加 5 字段 handoff block（`task_id` / `completed` / `not_completed` / `commands_executed` / `issues_found` / `procedure_compliance`）。下一任务启动前必须读取上一任务的 handoff 作为接续输入。
+每完成一个原子任务并准备 commit 前，build agent 必须在 `.tinkerman/progress/<topic>.md` 对应任务条目下追加 5 字段 handoff block（`task_id` / `completed` / `not_completed` / `commands_executed` / `issues_found` / `procedure_compliance`）。下一任务启动前必须读取上一任务的 handoff 作为接续输入。
 
 **Carry-Over Discipline（R2.AC6）**：上一任务 `not_completed` 非空时，下一任务 plan 阶段必须显式选择 (a) 纳入当前任务、(b) 写入 Out of Scope、(c) 升级为新原子任务之一。**静默忽略 = P1**。
 
@@ -291,9 +291,9 @@ if (!result.allowed) {
 ```
 
 **Trigger**: Any `Write` or `Edit` tool call targeting `src/`, `test/`, `config/`, or other project files.
-**Skip**: `.forge/` directory writes (progress, reviews) are exempt from sandbox checks.
+**Skip**: `.tinkerman/` directory writes (progress, reviews) are exempt from sandbox checks.
 
-GREEN 阶段的代码必须是"能让测试通过的最简单实现"。REFACTOR 完成后扫描孤儿代码（未使用的 import / 未调用的函数 / 未引用的类型 / 未使用的变量），记录到 `.forge/findings/<topic>.md`，不自行删除。
+GREEN 阶段的代码必须是"能让测试通过的最简单实现"。REFACTOR 完成后扫描孤儿代码（未使用的 import / 未调用的函数 / 未引用的类型 / 未使用的变量），记录到 `.tinkerman/findings/<topic>.md`，不自行删除。
 
 → 详见 references/tdd-rules.md（Simplicity Check 示例、Rule of Three、Dead Code Hygiene 细节）
 
@@ -303,10 +303,10 @@ GREEN 阶段的代码必须是"能让测试通过的最简单实现"。REFACTOR 
 
 **5.1 Three-strike**: 3 consecutive fails → `debugger` agent (maxTurns=15): read errors → one hypothesis → minimal fix → report if 3 more. `🚫 连续失败 3 次 → debugger. 尝试 1/2/3：<原因>`
 - **函数调用**: `analyzeFixAttempts(sequence)` — 参数：当前任务的修复尝试序列 `FixAttemptSequence`；返回 `{ shouldEscalate, consecutiveFailures, escalationIndex }`；`shouldEscalate: true` 时触发 three-strike 重路由到 `/tinkerman debug`
-- **§2.4 联动 (Requirement 15)**：Three-strike 触发时同步调用 `triggerThreeStrikeReroute(history, currentFailure)`（`src/spec-pbt-derivation.ts`）→ 计算 `fail_signature = computeFailSignature(failures)` → 如果 `result.reroute === true` → 调用 `buildThreeStrikeDebugReroute(history, currentFailure, debugDir, topic)`（`src/build.ts`）→ 自动进入 `/tinkerman debug` → 写诊断模板到 `.forge/debug/<topic>.md`
+- **§2.4 联动 (Requirement 15)**：Three-strike 触发时同步调用 `triggerThreeStrikeReroute(history, currentFailure)`（`src/spec-pbt-derivation.ts`）→ 计算 `fail_signature = computeFailSignature(failures)` → 如果 `result.reroute === true` → 调用 `buildThreeStrikeDebugReroute(history, currentFailure, debugDir, topic)`（`src/build.ts`）→ 自动进入 `/tinkerman debug` → 写诊断模板到 `.tinkerman/debug/<topic>.md`
 → 函数签名详见 references/function-contracts.md
 
-**5.1a Failure 自动沉淀**: Three-strike 触发时同步调用 `buildThreeStrikeFailureArtifacts(topic, tier, situation, rootCause, now, seq)`（`src/build.ts`）→ 写 failure episode 到 `.forge/knowledge/sessions/<date>-<topic>.md` 并在 `.forge/progress/<topic>.md` 末尾追加 Evolution 标记 `target=forge-build#three_strike`。写入失败降级为 `console.warn`，不阻断重路由流程。
+**5.1a Failure 自动沉淀**: Three-strike 触发时同步调用 `buildThreeStrikeFailureArtifacts(topic, tier, situation, rootCause, now, seq)`（`src/build.ts`）→ 写 failure episode 到 `.tinkerman/knowledge/sessions/<date>-<topic>.md` 并在 `.tinkerman/progress/<topic>.md` 末尾追加 Evolution 标记 `target=forge-build#three_strike`。写入失败降级为 `console.warn`，不阻断重路由流程。
 
 **5.2 Test Failure**: GREEN failing → test bugs? impl misses conditions? → fix + rerun.
 
@@ -392,7 +392,7 @@ Deviation stops do NOT violate the No-Confirmation iron law (§2.7 / §6.0.1). N
 
 **6.0.1 No Mid-build Confirmation（铁律）**: Build 阶段内部，任务之间**绝对禁止**停下来询问用户。完成一个任务 → 一行摘要 → 立即下一个任务。唯一允许停下来的 3 种情况：Three-strike / 阻断性错误 / 分支保护。→ 详见 references/no-mid-build-confirmation.md
 
-**6.1** Test First → CLAUDE.md §2.1 | **6.2** Atomic Commits (1 per task; 可选：config `glossary_check_on_commit: true` 启用 `runGlossaryCheck({ phase: 'build' })` commit message 术语检查；glossary 参数来自 `loadEnforcementGlossary(rootDir, fs)`：扁平 `.forge/glossary.md` 主权源 + enabled pack 术语只读补充) | **6.3** Verify First → §2.3, P5 chain | **6.4** Three-strike → §2.4 | **6.5** Conciseness → §2.6 (structured outputs exempt)
+**6.1** Test First → CLAUDE.md §2.1 | **6.2** Atomic Commits (1 per task; 可选：config `glossary_check_on_commit: true` 启用 `runGlossaryCheck({ phase: 'build' })` commit message 术语检查；glossary 参数来自 `loadEnforcementGlossary(rootDir, fs)`：扁平 `.tinkerman/glossary.md` 主权源 + enabled pack 术语只读补充) | **6.3** Verify First → §2.3, P5 chain | **6.4** Three-strike → §2.4 | **6.5** Conciseness → §2.6 (structured outputs exempt)
 
 ### 6.6 Change Summary
 
@@ -400,7 +400,7 @@ Deviation stops do NOT violate the No-Confirmation iron law (§2.7 / §6.0.1). N
 
 ### 6.8 Commit Narrative（理解腐烂对策）
 
-每个 build 原子提交前，向 `.forge/runs/<run_id>/commit-narrative.md` 追加一节：`commit_sha` + `subject` + `what`（改了什么）+ `why`（为什么）。在 commit 上下文最丰富时生成，事后不从 git log 重构。对抗理解腐烂（loop-engineering-adoption R3）。→ 详见 references/commit-narrative.md
+每个 build 原子提交前，向 `.tinkerman/runs/<run_id>/commit-narrative.md` 追加一节：`commit_sha` + `subject` + `what`（改了什么）+ `why`（为什么）。在 commit 上下文最丰富时生成，事后不从 git log 重构。对抗理解腐烂（loop-engineering-adoption R3）。→ 详见 references/commit-narrative.md
 
 ### 6.7 Dependency Discipline
 
@@ -418,7 +418,7 @@ Deviation stops do NOT violate the No-Confirmation iron law (§2.7 / §6.0.1). N
 
 → 详见 references/status-updates.md §8-§10
 
-Spec/Plan not ready → §2 rejection. Subagent timeout → block → `/tinkerman resume`. Worktree conflict → pause → manual resolve. No `.forge/` → `/tinkerman init`.
+Spec/Plan not ready → §2 rejection. Subagent timeout → block → `/tinkerman resume`. Worktree conflict → pause → manual resolve. No `.tinkerman/` → `/tinkerman init`.
 
 ---
 
@@ -461,7 +461,7 @@ Trimmer 函数签名详见 references/function-contracts.md
 
 **触发信号（任一）**：auto-compact 触发并丢失任务跟踪 / 无法不重读 progress 即回忆任务编号 / Restatement 摘要 >800 tokens / 推理质量退化 / 上下文利用率 >80%。
 
-**强制序列**：(1) 写 `.forge/knowledge/sessions/<date>-<topic>-interim.md`（含 progress snapshot / key findings / active constraints / anomalies）→ (2) 更新 `.forge/status.md` 添加 `exhaustion_pending: "true"`，phase 仍为 `"build"` → (3) 输出 `⚠️ Context exhaustion detected. Interim state saved. → Continuing with /tinkerman resume`，然后立即调用：`Skill(skill="forge", args="resume")`。
+**强制序列**：(1) 写 `.tinkerman/knowledge/sessions/<date>-<topic>-interim.md`（含 progress snapshot / key findings / active constraints / anomalies）→ (2) 更新 `.tinkerman/status.md` 添加 `exhaustion_pending: "true"`，phase 仍为 `"build"` → (3) 输出 `⚠️ Context exhaustion detected. Interim state saved. → Continuing with /tinkerman resume`，然后立即调用：`Skill(skill="forge", args="resume")`。
 
 **安全限制**：单次会话 ≤5 次耗尽轮转；interim 写入失败 2 次降级为 JSON handoff；Three-strike 触发期间不执行此协议。
 
@@ -473,7 +473,7 @@ Trimmer 函数签名详见 references/function-contracts.md
 
 Build 全部任务完成且 Final Validation 通过后，**必须立即自动调用下一阶段**，不得停下来等待用户确认。
 
-**成功时**：先 fire-and-forget spawn checkpoint-writer（regenerative-checkpoint R2）记录 build 产出状态到 `.forge/checkpoint.md`（§4 当前工作 = build 产出摘要 / §6 已发现问题与修复 / §8 设计决策），然后输出一行摘要，再**立即调用** `Skill(skill="forge", args="review")`。checkpoint-writer 不阻塞——spawn 后即推进 review。
+**成功时**：先 fire-and-forget spawn checkpoint-writer（regenerative-checkpoint R2）记录 build 产出状态到 `.tinkerman/checkpoint.md`（§4 当前工作 = build 产出摘要 / §6 已发现问题与修复 / §8 设计决策），然后输出一行摘要，再**立即调用** `Skill(skill="forge", args="review")`。checkpoint-writer 不阻塞——spawn 后即推进 review。
 
 ```
 ✅ build 完成 → 自动进入 review
@@ -540,7 +540,7 @@ Build 全部任务完成且 Final Validation 通过后，自动检查并更新�
 ### STATUS: DONE_WITH_CONCERNS
 1. 读取 concerns 列表
 2. 正确性/范围疑虑 → 先修复再 review；观察性疑虑 → 记录，继续 review
-3. 判断结果写入 `.forge/status.md`
+3. 判断结果写入 `.tinkerman/status.md`
 
 ### STATUS: BLOCKED
 1. 评估：上下文不足 → 补充重派 / 需更强推理 → 升级模型 / 任务过大 → 拆分 / 计划有问题 → 升级用户
@@ -603,7 +603,7 @@ After any trimming, inject:
 ```
 <note type="context-trim">
 Budget: {budget} tokens | Omitted: {omittedList} | Plan truncation: {pct}%
-Full content available in .forge/ directory.
+Full content available in .tinkerman/ directory.
 </note>
 ```
 
@@ -612,7 +612,7 @@ Only reserve 80 tokens for the trim note when in WARNING or CRITICAL state. Do n
 
 ## Package-Aware Build Execution
 
-When the approved plan/tasks document contains `execution_packages`, `/tinkerman build` MUST execute one package at a time. If `--package <id>` is omitted, infer the next incomplete package from `.forge/status.md` and `.forge/progress/`.
+When the approved plan/tasks document contains `execution_packages`, `/tinkerman build` MUST execute one package at a time. If `--package <id>` is omitted, infer the next incomplete package from `.tinkerman/status.md` and `.tinkerman/progress/`.
 
 Package build loads only the current package, direct dependency summaries, status/config, and required task details. It MUST NOT load full completed task history unless failure diagnosis requires it. After package success: write the package summary, run package `verify_command`, update `current_package` / `completed_packages` / `next_package`, and create an atomic commit or record why commit was intentionally skipped.
 

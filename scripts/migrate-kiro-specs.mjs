@@ -1,14 +1,14 @@
 #!/usr/bin/env node
 /**
- * migrate-kiro-specs.mjs — Migrate .kiro/specs to .forge/specs format
+ * migrate-kiro-specs.mjs — Migrate .kiro/specs to .tinkerman/specs format
  *
  * Usage:
  *   node scripts/migrate-kiro-specs.mjs [--dry-run] [--batch-size N]
  *
  * Phases:
  *   1. Triage: categorize specs into satisfied/partial/abandoned/archived
- *   2. Archive: move abandoned + _archived specs to .forge/archive/
- *   3. Migrate: rewrite active specs into .forge/specs/<name>/ format
+ *   2. Archive: move abandoned + _archived specs to .tinkerman/archive/
+ *   3. Migrate: rewrite active specs into .tinkerman/specs/<name>/ format
  *   4. Update index
  */
 
@@ -20,8 +20,8 @@ import { fileURLToPath } from "node:url";
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const ROOT = join(__dirname, "..");
 const KIRO_SPECS_DIR = join(ROOT, ".kiro", "specs");
-const FORGE_SPECS_DIR = join(ROOT, ".forge", "specs");
-const FORGE_ARCHIVE_DIR = join(ROOT, ".forge", "archive", "2026-06-07-kiro-migration");
+const FORGE_SPECS_DIR = join(ROOT, ".tinkerman", "specs");
+const FORGE_ARCHIVE_DIR = join(ROOT, ".tinkerman", "archive", "2026-06-07-kiro-migration");
 
 const args = process.argv.slice(2);
 const DRY_RUN = args.includes("--dry-run");
@@ -201,7 +201,7 @@ async function migrateSpec(specDir) {
     }
     if (PARTIAL_SPECS.has(specDir)) {
       reqFrontmatter.push('partial_satisfaction: true');
-      reqFrontmatter.push(`gap_ref: ".forge/docs/partial-spec-satisfaction.md#${specDir}"`);
+      reqFrontmatter.push(`gap_ref: ".tinkerman/docs/partial-spec-satisfaction.md#${specDir}"`);
     }
 
     reqFrontmatter.push("---");
@@ -242,7 +242,7 @@ async function migrateSpec(specDir) {
       `feature: ${specDir}`,
       "layout: tasks",
       `created: ${dates.created}`,
-      `spec_ref: ".forge/specs/${specDir}/requirements.md"`,
+      `spec_ref: ".tinkerman/specs/${specDir}/requirements.md"`,
       `format: ${format}`,
       `monolith_acknowledged: ${monolith}`,
       "---",
@@ -324,7 +324,7 @@ async function main() {
       try {
         const forgeSpecDir = join(FORGE_SPECS_DIR, specDir);
         if (existsSync(forgeSpecDir)) {
-          log(`  SKIP: ${specDir} already exists in .forge/specs/`);
+          log(`  SKIP: ${specDir} already exists in .tinkerman/specs/`);
           stats.skipped++;
           continue;
         }

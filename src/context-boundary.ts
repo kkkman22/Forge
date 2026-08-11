@@ -64,7 +64,7 @@ const ESCAPE_HATCH_RE = /@forge:allow-cross-context/;
 // ---------------------------------------------------------------------------
 
 /**
- * Load ownership map from .forge/context-ownership.yaml.
+ * Load ownership map from .tinkerman/context-ownership.yaml.
  * Parses YAML map format under `mappings:` key.
  * Returns empty object when file doesn't exist or is malformed.
  */

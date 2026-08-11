@@ -20,7 +20,7 @@ created_at: "2026-05-08T10:00:00+08:00"
 ---
 ```
 
-写入 `.forge/findings/<topic>/verify-this/claim.md`。
+写入 `.tinkerman/findings/<topic>/verify-this/claim.md`。
 
 **验证**：三字段（condition / metric / threshold）任一为空 → INCONCLUSIVE，中止 artifact capture，记录缺失字段名到 verdict.md [R1.3]。
 

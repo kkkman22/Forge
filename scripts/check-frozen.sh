@@ -34,9 +34,9 @@ if [[ -z "${TARGET_FILE}" ]]; then
   exit 0
 fi
 
-# Only check files under .forge/
+# Only check files under .tinkerman/
 case "${TARGET_FILE}" in
-  .forge/specs/*|.forge/plans/*|.forge/config.md)
+  .tinkerman/specs/*|.tinkerman/plans/*|.tinkerman/config.md)
     ;;
   *)
     # Not a frozen zone file, allow

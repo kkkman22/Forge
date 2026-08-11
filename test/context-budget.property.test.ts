@@ -319,7 +319,7 @@ describe("Feature: context-budget-management, Property 5: Git output limiter thr
       ],
       totalAdded: 35,
       totalRemoved: 15,
-      fullDiffPath: ".forge/debug/last-diff.txt",
+      fullDiffPath: ".tinkerman/debug/last-diff.txt",
     };
     const result = serializeGitDiff(summary, 51);
     expect(result).toContain("a.ts");

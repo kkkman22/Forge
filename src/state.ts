@@ -2,14 +2,14 @@
  * State system — core logic extracted from the unified state system design.
  *
  * Implements:
- *   - validateStateFile:  Checks that a .forge/ state file uses .md extension
+ *   - validateStateFile:  Checks that a .tinkerman/ state file uses .md extension
  *                         and structured data uses YAML frontmatter
- *   - normalizeForgePath: Normalizes file paths to .forge/-relative form,
+ *   - normalizeForgePath: Normalizes file paths to .tinkerman/-relative form,
  *                         resolving `..` sequences, redundant separators,
  *                         and absolute path prefixes.
  *
  * Property 15: 状态文件格式统一
- *   - All state files under .forge/ must have .md extension
+ *   - All state files under .tinkerman/ must have .md extension
  *   - Structured data must use YAML frontmatter (--- delimited block at start)
  *   **Validates: Requirements 11.2**
  */
@@ -33,7 +33,7 @@ import { safeParseStatusFile } from "./schemas/status-file.js";
 // ---------------------------------------------------------------------------
 
 export interface StateFile {
-  /** File path relative to .forge/, e.g. "config.md", "specs/feature/spec.md" */
+  /** File path relative to .tinkerman/, e.g. "config.md", "specs/feature/spec.md" */
   path: string;
   /** Raw file content. */
   content: string;
@@ -267,13 +267,13 @@ const VALID_EXTENSION = ".md";
 // ---------------------------------------------------------------------------
 
 /**
- * Validate that a .forge/ state file meets the unified format requirements:
+ * Validate that a .tinkerman/ state file meets the unified format requirements:
  *
  * 1. File extension must be .md
  * 2. Structured data must use YAML frontmatter (content starts with "---")
  *
  * Per design Property 15 and Requirements 11.2:
- *   - All state files under .forge/ use .md format
+ *   - All state files under .tinkerman/ use .md format
  *   - Structured data uses YAML frontmatter
  */
 export function validateStateFile(file: StateFile): StateFileValidation {
@@ -323,20 +323,20 @@ export function hasYamlFrontmatter(content: string): boolean {
 // ---------------------------------------------------------------------------
 
 /**
- * Normalize a file path to its `.forge/`-relative form.
+ * Normalize a file path to its `.tinkerman/`-relative form.
  *
  * Steps:
  *   1. Unify separators to forward slashes (posix)
  *   2. Apply `path.posix.normalize` to resolve `..` sequences and redundant separators
- *   3. Strip everything up to and including the last `.forge/` marker
+ *   3. Strip everything up to and including the last `.tinkerman/` marker
  *   4. Remove any leading `./` or `/` from the result
  *
  * Uses lexical normalization only (no `fs.realpath`), which is correct for
  * the Hook use case where we check the path as given, not the resolved target.
  *
  * @param inputPath - Any path variant: absolute, relative, with `..`, redundant separators, etc.
- * @returns The `.forge/`-relative path (e.g. "specs/feature/spec.md"), or the
- *          normalized path as-is if it doesn't contain `.forge/`.
+ * @returns The `.tinkerman/`-relative path (e.g. "specs/feature/spec.md"), or the
+ *          normalized path as-is if it doesn't contain `.tinkerman/`.
  *
  * **Validates: Requirements 4.1, 4.2, 4.3**
  */
@@ -347,8 +347,8 @@ export function normalizeForgePath(inputPath: string): string {
   // Step 2: Resolve `..` sequences and redundant separators
   normalized = pathPosix.normalize(normalized);
 
-  // Step 3: Find the last `.forge/` marker and extract the relative portion
-  const forgeMarker = ".forge/";
+  // Step 3: Find the last `.tinkerman/` marker and extract the relative portion
+  const forgeMarker = ".tinkerman/";
   const forgeIndex = normalized.lastIndexOf(forgeMarker);
 
   if (forgeIndex !== -1) {
@@ -366,7 +366,7 @@ export function normalizeForgePath(inputPath: string): string {
 // ---------------------------------------------------------------------------
 
 /**
- * Protection zone for a .forge/ state file.
+ * Protection zone for a .tinkerman/ state file.
  *
  * - frozen:    AI must not modify (locked specs, approved plans, config)
  * - guarded:   AI may append but not delete or overwrite existing content
@@ -377,7 +377,7 @@ export type ProtectionZone = "frozen" | "guarded" | "open";
 /**
  * Frozen zone patterns — files that must not be modified when locked/approved.
  *
- * These are path prefixes relative to .forge/.
+ * These are path prefixes relative to .tinkerman/.
  * The actual freeze depends on the file's frontmatter status field.
  */
 const FROZEN_PATTERNS = ["specs/", "plans/", "config.md"] as const;
@@ -394,13 +394,13 @@ const GUARDED_PATTERNS = [
 ] as const;
 
 /**
- * Determine the protection zone of a .forge/ state file.
+ * Determine the protection zone of a .tinkerman/ state file.
  *
- * @param forgePath - Path relative to .forge/, e.g. "specs/feature/spec.md", "config.md"
+ * @param forgePath - Path relative to .tinkerman/, e.g. "specs/feature/spec.md", "config.md"
  * @returns The protection zone for this file path.
  */
 export function getProtectionZone(forgePath: string): ProtectionZone {
-  const normalized = forgePath.replace(/^\.forge\//, "");
+  const normalized = forgePath.replace(/^\.tinkerman\//, "");
 
   for (const pattern of FROZEN_PATTERNS) {
     if (normalized === pattern || normalized.startsWith(pattern)) {
@@ -430,7 +430,7 @@ export function extractFrontmatterStatus(content: string): string | null {
 }
 
 /**
- * Check whether a write operation to a .forge/ file should be blocked.
+ * Check whether a write operation to a .tinkerman/ file should be blocked.
  *
  * A write is blocked when:
  *   - The file is in the frozen zone AND its current status is "locked" or "approved"
@@ -438,7 +438,7 @@ export function extractFrontmatterStatus(content: string): string | null {
  * Guarded zone files are not blocked (append-only enforcement requires diff analysis
  * which is handled at the hook level, not here).
  *
- * @param forgePath - Path relative to .forge/
+ * @param forgePath - Path relative to .tinkerman/
  * @param currentContent - Current file content (to check frontmatter status)
  * @returns { blocked, reason } — whether the write should be blocked and why.
  */

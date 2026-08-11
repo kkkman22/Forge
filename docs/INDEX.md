@@ -1,6 +1,3 @@
----
-updated: 2026-08-11
----
 [English Version](./INDEX.en.md)
 
 ## Getting Started

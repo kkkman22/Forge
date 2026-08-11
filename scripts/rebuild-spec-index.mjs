@@ -3,10 +3,10 @@
 /**
  * rebuild-spec-index.mjs
  *
- * Scans `.forge/specs/` directory, reads frontmatter from each spec's
- * requirements.md, validates it, and generates `.forge/specs/INDEX.md`.
+ * Scans `.tinkerman/specs/` directory, reads frontmatter from each spec's
+ * requirements.md, validates it, and generates `.tinkerman/specs/INDEX.md`.
  *
- * Backward compatibility: also scans `.kiro/specs/` if `.forge/specs/` is empty.
+ * Backward compatibility: also scans `.kiro/specs/` if `.tinkerman/specs/` is empty.
  *
  * Usage:
  *   node scripts/rebuild-spec-index.mjs [--incremental] [--check] [--help]
@@ -32,9 +32,9 @@ const rootIndex = args.indexOf("--root");
 const ROOT = rootIndex !== -1 && args[rootIndex + 1]
   ? args[rootIndex + 1]
   : join(new URL(import.meta.url).pathname, "..", "..");
-const FORGE_SPECS_DIR = join(ROOT, ".forge", "specs");
+const FORGE_SPECS_DIR = join(ROOT, ".tinkerman", "specs");
 const KIRO_SPECS_DIR = join(ROOT, ".kiro", "specs");
-const FORGE_ARCHIVE_DIR = join(ROOT, ".forge", "archive");
+const FORGE_ARCHIVE_DIR = join(ROOT, ".tinkerman", "archive");
 
 // ---------------------------------------------------------------------------
 // CLI
@@ -47,7 +47,7 @@ const mode = {
 };
 
 if (mode.help) {
-  console.log(`rebuild-spec-index.mjs — Rebuild .forge/specs/INDEX.md
+  console.log(`rebuild-spec-index.mjs — Rebuild .tinkerman/specs/INDEX.md
 
 Usage:
   node scripts/rebuild-spec-index.mjs [options]
@@ -58,7 +58,7 @@ Options:
   --root <path>  Use <path> as project root instead of script location
   --help         Show this help message
 
-Scans .forge/specs/ for spec directories, reads frontmatter from each
+Scans .tinkerman/specs/ for spec directories, reads frontmatter from each
 requirements.md, validates it, and generates an INDEX.md with tables
 grouped by status (active, deferred, completed, archived).`);
   process.exit(0);
@@ -192,8 +192,8 @@ async function scanSpecs(specsDir, skipDirs) {
 }
 
 async function scanArchivedSpecs(specsDir) {
-  // Also scan .forge/archive/ for archived specs migrated from .kiro
-  const forgeArchiveDir = join(ROOT, ".forge", "archive");
+  // Also scan .tinkerman/archive/ for archived specs migrated from .kiro
+  const forgeArchiveDir = join(ROOT, ".tinkerman", "archive");
   const archiveSpecs = [];
   
   if (existsSync(forgeArchiveDir)) {
@@ -446,7 +446,7 @@ function generateIndex(specs, archivedSpecs) {
 function getChangedSpecDirs() {
   try {
     const output = execSync(
-      "git diff --name-only HEAD~1 HEAD -- .forge/specs/",
+      "git diff --name-only HEAD~1 HEAD -- .tinkerman/specs/",
       { encoding: "utf-8", cwd: ROOT }
     );
     const changedDirs = new Set();
@@ -530,7 +530,7 @@ function parseIndexTables(indexContent) {
 async function main() {
   const skipDirs = new Set(["_archived", "_template"]);
 
-  // Prefer .forge/specs/, fall back to .kiro/specs/ for backward compatibility
+  // Prefer .tinkerman/specs/, fall back to .kiro/specs/ for backward compatibility
   let specsDir = FORGE_SPECS_DIR;
   let archiveDir = FORGE_SPECS_DIR;
   if (!existsSync(FORGE_SPECS_DIR)) {

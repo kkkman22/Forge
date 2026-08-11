@@ -1,5 +1,5 @@
 /**
- * Pack config - parse project-level pack enablement from .forge/config.md.
+ * Pack config - parse project-level pack enablement from .tinkerman/config.md.
  *
  * Reads YAML frontmatter `packs:` field, validates against PackRegistry,
  * deduplicates, preserves declaration order. Errors accumulate, never throw.
@@ -34,16 +34,16 @@ function extractFrontmatter(content: string): Record<string, unknown> {
 // ---------------------------------------------------------------------------
 
 /**
- * Parse .forge/config.md frontmatter to determine enabled packs.
+ * Parse .tinkerman/config.md frontmatter to determine enabled packs.
  *
- * @param configContent - Raw .forge/config.md content
+ * @param configContent - Raw .tinkerman/config.md content
  * @param registry - Discovered PackRegistry
- * @param customLayerRoot - Absolute path to .forge/custom/
+ * @param customLayerRoot - Absolute path to .tinkerman/custom/
  * @returns Enabled packs with any validation errors
  *
  * @example
  * ```ts
- * const { enabled, errors } = parseEnabledPacks(config, registry, "/repo/.forge/custom");
+ * const { enabled, errors } = parseEnabledPacks(config, registry, "/repo/.tinkerman/custom");
  * if (errors.length > 0) console.error(errors);
  * ```
  */

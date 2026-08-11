@@ -9,7 +9,7 @@ import {
   scanStagesForTopic,
 } from "../src/feature-dossier.js";
 
-const FIXTURE_ROOT = path.join(__dirname, "fixtures", "feature-dossier", ".forge");
+const FIXTURE_ROOT = path.join(__dirname, "fixtures", "feature-dossier", ".tinkerman");
 
 // ---------------------------------------------------------------------------
 // deriveTopicFromPath

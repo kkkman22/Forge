@@ -13,7 +13,7 @@
  *   - R5.6: P1 not confirmed → downgrade to P2 + annotate.
  *   - R5.6 (clarified in the agent): P2/P3 not confirmed → severity unchanged
  *     (low-impact findings don't escalate from a failed validation).
- *   - R5.8: results serialized to .forge/progress/<slug>-review-validation.jsonl.
+ *   - R5.8: results serialized to .tinkerman/progress/<slug>-review-validation.jsonl.
  */
 
 import type { MergedFinding, Severity } from "./types.js";
@@ -116,7 +116,7 @@ export function applyValidationBatch(
 
 /**
  * Serialize validation results to a JSONL line for
- * `.forge/progress/<slug>-review-validation.jsonl` (R5.8).
+ * `.tinkerman/progress/<slug>-review-validation.jsonl` (R5.8).
  */
 export function serializeValidationRecord(slug: string, validated: ValidatedFinding): string {
   return JSON.stringify({

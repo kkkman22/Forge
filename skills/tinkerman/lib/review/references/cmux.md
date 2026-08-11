@@ -9,7 +9,7 @@ When cmux is installed, Forge review results are projected to the cmux sidebar i
 
 ## Integration Points
 
-- **Frontmatter**: Review files (`/.forge/reviews/*.md`) include `layers_status` frontmatter tracking each review layer's completion state
+- **Frontmatter**: Review files (`/.tinkerman/reviews/*.md`) include `layers_status` frontmatter tracking each review layer's completion state
 - **Notifications**: Review completion triggers a cmux notification via `hook-notify.sh`
 - **Sidebar**: Layer progress (spec-check, quality-check, security-check) displayed in sidebar
 

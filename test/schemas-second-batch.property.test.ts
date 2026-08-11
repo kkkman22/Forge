@@ -59,7 +59,7 @@ const specFileArb = fc.record(
     feature: fc.stringMatching(/^[a-z][a-z0-9-]{1,40}$/),
     status: fc.constantFrom("draft", "locked"),
     date: fc.stringMatching(/^\d{4}-\d{2}-\d{2}$/),
-    importSource: fc.stringMatching(/^\.forge\/inbox\/[a-z0-9.-]{1,40}\.md$/),
+    importSource: fc.stringMatching(/^\.tinkerman\/inbox\/[a-z0-9.-]{1,40}\.md$/),
   },
   { requiredKeys: [] },
 );

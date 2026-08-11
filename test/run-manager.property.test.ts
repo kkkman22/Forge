@@ -39,8 +39,8 @@ function stripTrailingSlashes(p: string): string {
 
 describe("Feature: audit-followup-improvements, Property 1: Path construction equivalence after unification", () => {
   /**
-   * For any valid cwd and run ID, path.join(cwd, ".forge", "runs", runId)
-   * resolves to the same filesystem location as `${cwd}/.forge/runs/${runId}/`
+   * For any valid cwd and run ID, path.join(cwd, ".tinkerman", "runs", runId)
+   * resolves to the same filesystem location as `${cwd}/.tinkerman/runs/${runId}/`
    * after normalization and trailing-slash stripping.
    *
    * **Validates: Requirements 2.1, 2.2, 2.3, 2.4, 2.5**
@@ -51,10 +51,10 @@ describe("Feature: audit-followup-improvements, Property 1: Path construction eq
         const cwdInput = addTrailingSlash ? `${cwd}/` : cwd;
 
         // New style: path.join
-        const joinedPath = path.join(cwdInput, ".forge", "runs", runId);
+        const joinedPath = path.join(cwdInput, ".tinkerman", "runs", runId);
 
         // Old style: template literal
-        const templatePath = `${cwdInput}/.forge/runs/${runId}/`;
+        const templatePath = `${cwdInput}/.tinkerman/runs/${runId}/`;
 
         // After normalization and trailing-slash stripping, they must be equal
         const normalizedJoined = stripTrailingSlashes(path.normalize(joinedPath));
@@ -67,8 +67,8 @@ describe("Feature: audit-followup-improvements, Property 1: Path construction eq
   });
 
   /**
-   * For any valid worktree path and run ID, path.join(worktreePath, ".forge", "runs", runId)
-   * resolves to the same filesystem location as `${worktreePath}.forge/runs/${runId}/`
+   * For any valid worktree path and run ID, path.join(worktreePath, ".tinkerman", "runs", runId)
+   * resolves to the same filesystem location as `${worktreePath}.tinkerman/runs/${runId}/`
    * (the old setupWorktree style which assumed a trailing slash on worktreePath)
    * after normalization and trailing-slash stripping.
    *
@@ -85,10 +85,10 @@ describe("Feature: audit-followup-improvements, Property 1: Path construction eq
           const worktreePath = addTrailingSlash ? `${basePath}/` : `${basePath}/`;
 
           // New style: path.join
-          const joinedPath = path.join(worktreePath, ".forge", "runs", runId);
+          const joinedPath = path.join(worktreePath, ".tinkerman", "runs", runId);
 
           // Old style: template literal (concatenation without separator)
-          const templatePath = `${worktreePath}.forge/runs/${runId}/`;
+          const templatePath = `${worktreePath}.tinkerman/runs/${runId}/`;
 
           const normalizedJoined = stripTrailingSlashes(path.normalize(joinedPath));
           const normalizedTemplate = stripTrailingSlashes(path.normalize(templatePath));
@@ -111,9 +111,9 @@ describe("Feature: audit-followup-improvements, Property 1: Path construction eq
     fc.assert(
       fc.property(posixPathCharArb, runIdArb, (cwd, runId) => {
         // Simulate the run directory with trailing slash (old style)
-        const runDirOld = `${cwd}/.forge/runs/${runId}/`;
+        const runDirOld = `${cwd}/.tinkerman/runs/${runId}/`;
         // Simulate the run directory without trailing slash (new style)
-        const runDirNew = path.join(cwd, ".forge", "runs", runId);
+        const runDirNew = path.join(cwd, ".tinkerman", "runs", runId);
 
         // Old style: template literal concatenation
         const oldNotesPath = `${runDirOld}notes.md`;

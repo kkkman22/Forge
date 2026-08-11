@@ -50,14 +50,14 @@ export function checkQuota(
 
   if (count >= maxCount) {
     if (options?.allowGrow) {
-      // Must be a path under .forge/decisions/
+      // Must be a path under .tinkerman/decisions/
       const adrPath = options.allowGrow;
-      if (!adrPath.startsWith(".forge/decisions/") || !adrPath.endsWith(".md")) {
+      if (!adrPath.startsWith(".tinkerman/decisions/") || !adrPath.endsWith(".md")) {
         diags.push({
           script: "check-docs-quota",
           severity: "error",
-          file: ".forge/config.md" as DocPath,
-          message: `--allow-grow requires a valid ADR path under .forge/decisions/, got: ${adrPath}`,
+          file: ".tinkerman/config.md" as DocPath,
+          message: `--allow-grow requires a valid ADR path under .tinkerman/decisions/, got: ${adrPath}`,
           code: "QUOTA_ALLOW_GROW_NO_ADR",
         });
       }
@@ -65,14 +65,14 @@ export function checkQuota(
       diags.push({
         script: "check-docs-quota",
         severity: "warning",
-        file: ".forge/config.md" as DocPath,
+        file: ".tinkerman/config.md" as DocPath,
         message: `Doc count ${count} exceeds quota ${maxCount}, but --allow-grow is active with ADR`,
       });
     } else {
       diags.push({
         script: "check-docs-quota",
         severity: "error",
-        file: ".forge/config.md" as DocPath,
+        file: ".tinkerman/config.md" as DocPath,
         message: `Doc count ${count} >= max_count ${maxCount}. Use --allow-grow with an ADR to raise the limit.`,
         code: "QUOTA_EXCEEDED",
       });
@@ -81,7 +81,7 @@ export function checkQuota(
     diags.push({
       script: "check-docs-quota",
       severity: "warning",
-      file: ".forge/config.md" as DocPath,
+      file: ".tinkerman/config.md" as DocPath,
       message: `Doc count ${count} is 1 below max_count ${maxCount}. Approaching limit.`,
     });
   }

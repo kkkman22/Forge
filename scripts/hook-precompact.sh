@@ -1,8 +1,8 @@
 #!/usr/bin/env bash
-# hook-precompact.sh — Save rich .forge/ state snapshot before compaction
+# hook-precompact.sh — Save rich .tinkerman/ state snapshot before compaction
 # NEVER exits with code 2 (blocking compaction is catastrophic)
 #
-# regenerative-checkpoint R3 Task 5: prefer .forge/checkpoint.md (structured,
+# regenerative-checkpoint R3 Task 5: prefer .tinkerman/checkpoint.md (structured,
 # EXACT-FORM safe) as the snapshot source when it exists and is fresh. Fall
 # back to the legacy grep-based progress/findings assembly when checkpoint.md
 # is missing or stale (mtime beyond threshold). D9 makes this mtime check a
@@ -17,16 +17,16 @@ set -u
 trap 'exit 0' ERR
 trap 'exit 0' ERR
 
-STATUS_FILE=".forge/status.md"
-CHECKPOINT_FILE=".forge/checkpoint.md"
-SNAPSHOT_FILE=".forge/.compact-snapshot.md"
-EVENTS_LOG=".forge/runs/$(date -u +%Y-%m-%d)-compact-events.jsonl"
+STATUS_FILE=".tinkerman/status.md"
+CHECKPOINT_FILE=".tinkerman/checkpoint.md"
+SNAPSHOT_FILE=".tinkerman/.compact-snapshot.md"
+EVENTS_LOG=".tinkerman/runs/$(date -u +%Y-%m-%d)-compact-events.jsonl"
 
 # mtime staleness threshold (seconds). checkpoint older than this is considered
 # stale → use fallback + emit warning. Default 3600s (1h), configurable.
 CHECKPOINT_STALE_SECS=3600
-if [ -f ".forge/config.md" ]; then
-  _val=$(grep '^checkpoint_stale_secs:' ".forge/config.md" 2>/dev/null | sed 's/checkpoint_stale_secs: *//' | tr -d '[:space:]')
+if [ -f ".tinkerman/config.md" ]; then
+  _val=$(grep '^checkpoint_stale_secs:' ".tinkerman/config.md" 2>/dev/null | sed 's/checkpoint_stale_secs: *//' | tr -d '[:space:]')
   [ -n "$_val" ] && CHECKPOINT_STALE_SECS="$_val"
 fi
 
@@ -35,7 +35,7 @@ fi
 # (events carry their own ISO timestamps for correlation).
 log_event() {
   local event="$1" detail="${2:-}"
-  mkdir -p .forge/runs
+  mkdir -p .tinkerman/runs
   echo "{\"timestamp\":\"$(date -u +%Y-%m-%dT%H:%M:%SZ)\",\"event\":\"$event\",\"detail\":\"$detail\"}" >> "$EVENTS_LOG"
 }
 
@@ -72,10 +72,10 @@ fi
 # --- Restate reminder config ---
 restate_reminder="off"
 restate_threshold=3
-if [ -f ".forge/config.md" ]; then
-  _val=$(grep '^forge_compact_restate_reminder:' ".forge/config.md" 2>/dev/null | sed 's/forge_compact_restate_reminder: *//' | tr -d '[:space:]')
+if [ -f ".tinkerman/config.md" ]; then
+  _val=$(grep '^forge_compact_restate_reminder:' ".tinkerman/config.md" 2>/dev/null | sed 's/forge_compact_restate_reminder: *//' | tr -d '[:space:]')
   [ -n "$_val" ] && restate_reminder="$_val"
-  _val=$(grep '^forge_compact_restate_threshold_tasks:' ".forge/config.md" 2>/dev/null | sed 's/forge_compact_restate_threshold_tasks: *//' | tr -d '[:space:]')
+  _val=$(grep '^forge_compact_restate_threshold_tasks:' ".tinkerman/config.md" 2>/dev/null | sed 's/forge_compact_restate_threshold_tasks: *//' | tr -d '[:space:]')
   [ -n "$_val" ] && restate_threshold="$_val"
 fi
 
@@ -107,14 +107,14 @@ fi
 
 
 progress_content=""
-progress_file=".forge/progress/${slug}.md"
+progress_file=".tinkerman/progress/${slug}.md"
 if [ -f "$progress_file" ]; then
   # Cap at 60 lines to stay under 10k-char hook output limit
   progress_content=$(head -60 "$progress_file" 2>/dev/null)
 fi
 
 findings_content=""
-findings_file=".forge/findings/${slug}.md"
+findings_file=".tinkerman/findings/${slug}.md"
 if [ -f "$findings_file" ]; then
   findings_content=$(head -40 "$findings_file" 2>/dev/null)
 fi
@@ -129,7 +129,7 @@ fi
 
 # Latest review result (if any)
 review_summary=""
-latest_review=$(ls -t .forge/reviews/*.md 2>/dev/null | head -1)
+latest_review=$(ls -t .tinkerman/reviews/*.md 2>/dev/null | head -1)
 if [ -n "$latest_review" ] && [ -f "$latest_review" ]; then
   review_result=$(grep '^result:' "$latest_review" 2>/dev/null | sed 's/result: *//' | head -1)
   p0=$(grep '^p0_count:' "$latest_review" 2>/dev/null | sed 's/p0_count: *//' | head -1)
@@ -149,7 +149,7 @@ fi
 restate_reminder_section=""
 if [ "$restate_reminder" = "on" ] && [ "${completed:-0}" -ge "$restate_threshold" ] 2>/dev/null; then
   restate_reminder_section="⚠️ RESTATE REMINDER: ${completed:-0} tasks completed (threshold: ${restate_threshold}).
-After compaction recovery, run restatement checkpoint first: re-read .forge/progress/ and update state."
+After compaction recovery, run restatement checkpoint first: re-read .tinkerman/progress/ and update state."
 fi
 
 cat > "$SNAPSHOT_FILE" <<EOF
@@ -178,7 +178,7 @@ EOF
 if [ "$snapshot_source" = "checkpoint" ]; then
   # P1 security fix: use printf instead of unquoted heredoc to avoid shell
   # expansion of backticks/$() in checkpoint content (injection hardening).
-  printf '\n## Session Checkpoint (from .forge/checkpoint.md)\n%s\n' "$checkpoint_content" >> "$SNAPSHOT_FILE"
+  printf '\n## Session Checkpoint (from .tinkerman/checkpoint.md)\n%s\n' "$checkpoint_content" >> "$SNAPSHOT_FILE"
 else
   cat >> "$SNAPSHOT_FILE" <<EOF
 
@@ -195,8 +195,8 @@ fi
 cat >> "$SNAPSHOT_FILE" <<EOF
 
 ## Active Constraints
-Check .forge/status.md for current phase and .forge/plans/ for remaining tasks.
-After compaction, read .forge/progress/${slug}.md for full task state.
+Check .tinkerman/status.md for current phase and .tinkerman/plans/ for remaining tasks.
+After compaction, read .tinkerman/progress/${slug}.md for full task state.
 ${restate_reminder_section:-}
 EOF
 

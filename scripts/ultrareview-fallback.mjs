@@ -7,7 +7,7 @@
  * all spec-check/quality-check/security-check subagents have failed.
  *
  * Behavior:
- *   1. Read config from .forge/config.md frontmatter (regex parse)
+ *   1. Read config from .tinkerman/config.md frontmatter (regex parse)
  *   2. If review_use_ultrareview != true → exit 1
  *   3. Execute `claude ultrareview --json`
  *   4. Parse JSON output, map findings to P0-P3 severity
@@ -27,7 +27,7 @@ import { execFileSync as nodeExecFileSync } from "node:child_process";
 // ── Config parsing ──
 
 /**
- * Parse YAML frontmatter from .forge/config.md.
+ * Parse YAML frontmatter from .tinkerman/config.md.
  * Returns a Map of key→value strings.
  */
 function parseConfigFrontmatter(configContent) {
@@ -48,7 +48,7 @@ function parseConfigFrontmatter(configContent) {
  * Read and parse config. Returns the config Map.
  */
 function readConfig(rootDir) {
-  const configPath = resolve(rootDir, ".forge/config.md");
+  const configPath = resolve(rootDir, ".tinkerman/config.md");
   try {
     const content = readFileSync(configPath, "utf-8");
     return parseConfigFrontmatter(content);
@@ -71,7 +71,7 @@ function runUltrareviewFallback(opts = {}) {
   // 1. Read config
   const config = readConfig(rootDir);
   if (!config) {
-    process.stderr.write("Error: .forge/config.md not found or unreadable.\n");
+    process.stderr.write("Error: .tinkerman/config.md not found or unreadable.\n");
     process.exit(1);
   }
 

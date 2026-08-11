@@ -117,7 +117,7 @@ describe("fetchPRMetadata", () => {
             title: "[spec:my-feature] Add widget",
             headRefName: "forge/my-feature",
             baseRefName: "main",
-            body: "See .forge/specs/my-feature/",
+            body: "See .tinkerman/specs/my-feature/",
             url: "https://github.com/org/repo/pull/1",
           }),
         );
@@ -209,11 +209,11 @@ describe("resolveSlug", () => {
     expect(result.resolutionPath).toBe("branch");
   });
 
-  it("extracts slug from .forge/specs/ link in description", () => {
+  it("extracts slug from .tinkerman/specs/ link in description", () => {
     const result = resumeModule.resolveSlug({
       title: "Some PR",
       branch: "main",
-      description: "See .forge/specs/my-feature/ for details",
+      description: "See .tinkerman/specs/my-feature/ for details",
     });
     expect(result.slug).toBe("my-feature");
     expect(result.resolutionPath).toBe("description");
@@ -223,7 +223,7 @@ describe("resolveSlug", () => {
     const result = resumeModule.resolveSlug({
       title: "[spec:title-slug] PR",
       branch: "forge/branch-slug",
-      description: ".forge/specs/desc-slug/",
+      description: ".tinkerman/specs/desc-slug/",
     });
     expect(result.slug).toBe("title-slug");
     expect(result.resolutionPath).toBe("title");

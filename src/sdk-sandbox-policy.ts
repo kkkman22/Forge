@@ -1,6 +1,6 @@
 /**
  * SDK Sandbox Policy — loads and validates the sandbox permission policy
- * from the project's `.forge/sandbox.json` configuration file.
+ * from the project's `.tinkerman/sandbox.json` configuration file.
  *
  * Extracted from `sdk-driver.ts` as part of the SDK Driver Decomposition.
  * Design reference: sdk-driver-decomposition § design.md
@@ -16,11 +16,11 @@ import { buildDefaultPolicy, type PermissionPolicy, validatePolicy } from "./san
 // ---------------------------------------------------------------------------
 
 /**
- * Load sandbox policy from .forge/sandbox.json or return default.
+ * Load sandbox policy from .tinkerman/sandbox.json or return default.
  * Validates the config and falls back to default on validation failure.
  */
 export function loadSandboxPolicy(cwd: string): PermissionPolicy {
-  const configPath = join(cwd, ".forge", "sandbox.json");
+  const configPath = join(cwd, ".tinkerman", "sandbox.json");
 
   if (existsSync(configPath)) {
     try {

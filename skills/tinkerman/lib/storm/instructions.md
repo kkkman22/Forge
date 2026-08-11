@@ -13,13 +13,13 @@ allowed_tools:
 
 > **触发方式**：`/tinkerman storm <context>` 或探索新 Bounded Context 时
 > **职责**：通过 Socratic 问答逐阶段收集领域事件、命令、聚合、策略和读模型
-> **输出路径**：`.forge/contexts/<context>/event-storm.md`
+> **输出路径**：`.tinkerman/contexts/<context>/event-storm.md`
 
 ---
 
 ## 1. Goal
 
-Produce a structured event-storm document (`.forge/contexts/<context>/event-storm.md`) that captures the domain model of a Bounded Context — events, commands, aggregates, policies, and read models — through Socratic dialogue, yielding input for `/tinkerman spec`.
+Produce a structured event-storm document (`.tinkerman/contexts/<context>/event-storm.md`) that captures the domain model of a Bounded Context — events, commands, aggregates, policies, and read models — through Socratic dialogue, yielding input for `/tinkerman spec`.
 
 **Constraints**:
 - One question per turn. Extract structured entries from natural language answers — never present a form to fill.
@@ -46,7 +46,7 @@ Produce a structured event-storm document (`.forge/contexts/<context>/event-stor
 
 ## 3. Output Format
 
-输出文件：`.forge/contexts/<context>/event-storm.md`
+输出文件：`.tinkerman/contexts/<context>/event-storm.md`
 
 ```yaml
 ---
@@ -67,7 +67,7 @@ phase_completed: <events|commands|aggregates|policies|read_models>
 **Goal**: Resume an interrupted storm session seamlessly, picking up exactly where it left off.
 
 **Constraints**:
-- Read the existing `.forge/contexts/<context>/event-storm.md` and parse its `phase_completed` frontmatter to determine resumption point.
+- Read the existing `.tinkerman/contexts/<context>/event-storm.md` and parse its `phase_completed` frontmatter to determine resumption point.
 - If the file is corrupted or malformed, inform the user and offer restart or manual fix options.
 - Approach: your choice — inspect, parse, continue.
 

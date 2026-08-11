@@ -1,0 +1,6 @@
+{"timestamp":"2026-07-09T15:51:30Z","event":"postcompact_restore","detail":"slug=code-slim-0612 source=fallback"}
+{"timestamp":"2026-07-09T15:51:30Z","event":"precompact_checkpoint_missing","detail":"checkpoint.md not found — using legacy grep snapshot"}
+{"timestamp":"2026-07-09T15:51:30Z","event":"precompact_snapshot","detail":"slug=zcode-p1-base-integration phase=in_progress source=fallback completed=0 pending=0"}
+{"timestamp":"2026-07-09T16:13:07Z","event":"postcompact_restore","detail":"slug=zcode-p1-base-integration source=fallback"}
+{"timestamp":"2026-07-09T16:13:07Z","event":"precompact_checkpoint_missing","detail":"checkpoint.md not found — using legacy grep snapshot"}
+{"timestamp":"2026-07-09T16:13:08Z","event":"precompact_snapshot","detail":"slug=zcode-p1-base-integration phase=build_complete source=fallback completed=0 pending=0"}

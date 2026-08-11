@@ -4,14 +4,14 @@
 // check-evolution-marker-zones.mjs — Evolution 标记位置合法性校验
 //
 // Evolution 标记（HTML 注释形式 `<!-- Evolution: ... -->`）只允许出现在
-// `.forge/reviews/**`、`.forge/progress/**`、`.forge/findings/**` 这三类受保
+// `.tinkerman/reviews/**`、`.tinkerman/progress/**`、`.tinkerman/findings/**` 这三类受保
 // 护区文件中。本脚本扫描冻结区 / 只读区文件，禁止标记泄漏：
 //
 //   1. `skills/**/*.md`（SKILL 冻结区 + references/）
-//   2. `.forge/config.md`（项目根配置）
+//   2. `.tinkerman/config.md`（项目根配置）
 //   3. 任何 frontmatter `status: locked` 的 spec 文件：
 //        - `.kiro/specs/*/requirements.md | design.md | tasks.md`
-//        - `.forge/specs/*/spec.md`
+//        - `.tinkerman/specs/*/spec.md`
 //
 // 用法：
 //   node scripts/check-evolution-marker-zones.mjs
@@ -99,8 +99,8 @@ function collectFrozenFiles(rootDir) {
   const skillsDir = join(rootDir, "skills");
   out.push(...walkFiles(skillsDir, (p) => p.endsWith(".md")));
 
-  // 2. .forge/config.md —— 项目根配置
-  const configPath = join(rootDir, ".forge", "config.md");
+  // 2. .tinkerman/config.md —— 项目根配置
+  const configPath = join(rootDir, ".tinkerman", "config.md");
   if (existsSafe(configPath)) out.push(configPath);
 
   // 3. 锁定的 spec 文件：frontmatter status: locked
@@ -108,7 +108,7 @@ function collectFrozenFiles(rootDir) {
     ...walkFiles(join(rootDir, ".kiro", "specs"), (p) =>
       /\/(requirements|design|tasks)\.md$/.test(p),
     ),
-    ...walkFiles(join(rootDir, ".forge", "specs"), (p) => p.endsWith("/spec.md")),
+    ...walkFiles(join(rootDir, ".tinkerman", "specs"), (p) => p.endsWith("/spec.md")),
   ];
   for (const candidate of lockedCandidates) {
     let content;
@@ -180,7 +180,7 @@ function main() {
 
   console.log(
     `FAIL: found ${violations} Evolution marker(s) in frozen / locked files. ` +
-      `Move them to .forge/reviews/**, .forge/progress/**, or .forge/findings/**.`,
+      `Move them to .tinkerman/reviews/**, .tinkerman/progress/**, or .tinkerman/findings/**.`,
   );
   process.exit(1);
 }

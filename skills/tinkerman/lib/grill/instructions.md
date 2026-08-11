@@ -13,7 +13,7 @@ allowed_tools:
 
 > **触发方式**：全量档位的可选前置步骤，或用户直接输入 `/tinkerman grill [topic]` / 回复 `grill me` / `再挖深点`
 > **职责**：通过一次一个问题的决策树追问，在 `/tinkerman decide` 之前把功能、边界、依赖、假设、非目标全部说清楚
-> **输出路径**：`.forge/findings/grill-<topic>.md`
+> **输出路径**：`.tinkerman/findings/grill-<topic>.md`
 
 ---
 
@@ -49,7 +49,7 @@ allowed_tools:
 - Questions answerable from the codebase must be resolved via explore subagent rather than asked of the user
 - Every answer application must produce a new tree (immutable, original unchanged)
 - Glossary conflicts must be detected after each answer and surfaced to the user for clarification before continuing（内部使用 `runGlossaryCheck({ phase: 'grill' })`）
-- 术语澄清时**立即更新** `.forge/glossary.md`，不要批量累积。
+- 术语澄清时**立即更新** `.tinkerman/glossary.md`，不要批量累积。
   当 grill 过程中：
   - 用户使用了一个不在 glossary 中的新术语 → 追加新条目（来源: grill）
   - 用户澄清了一个模糊术语 → 更新该条目的定义
@@ -79,7 +79,7 @@ allowed_tools:
 
 ## 4. Output
 
-**Path**: `.forge/findings/grill-<topic>.md`
+**Path**: `.tinkerman/findings/grill-<topic>.md`
 
 Four fixed sections produced by `renderGrillFindings`:
 
@@ -103,7 +103,7 @@ Four fixed sections produced by `renderGrillFindings`:
 **Goal**: Restore an interrupted grill session to the exact point of abandonment and continue seamlessly.
 
 **Constraints**:
-- On session interruption, the current decision tree must be serialized to the findings file and `.forge/status.md` phase set to `grill_abandoned`
+- On session interruption, the current decision tree must be serialized to the findings file and `.tinkerman/status.md` phase set to `grill_abandoned`
 - Resume must deserialize the tree and locate the next pending node
 - Replay of the same Q&A sequence must produce the same terminal state (`applyAnswer` is a pure function guaranteeing idempotency)
 

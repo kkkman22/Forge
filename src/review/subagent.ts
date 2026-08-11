@@ -21,7 +21,7 @@ export interface ReviewSubagentContext {
   changedFiles: string[];
   /**
    * Merged context file list (plan frontmatter `context_files` +
-   * `.forge/runs/<runId>/context.jsonl`, deduplicated via
+   * `.tinkerman/runs/<runId>/context.jsonl`, deduplicated via
    * `mergeContextSources`). When present and non-empty, each diff-context
    * review agent (spec/quality/security) gets a "Relevant artifacts" section
    * listing these paths to Read before judging, rather than blindly scanning
@@ -53,7 +53,7 @@ The orchestrator only treats your run as complete when it sees the sentinel.
 A message ending with a preamble like "Now let me check..." or "Let me verify..."
 is rejected as incomplete and your run will be retried, even if the SDK reports success.`;
 
-const DIFF_CONTEXT_PREAMBLE = `Diff context: .forge/reviews/.diff-context.md
+const DIFF_CONTEXT_PREAMBLE = `Diff context: .tinkerman/reviews/.diff-context.md
 Turn Budget: Read diff-context first → produce FINDINGS → use remaining turns for deep-dives (max 3-5 reads).
 Hard constraint: Your final turn MUST be a text block containing FINDINGS, not a tool_use call.
 If turn budget is running low (≤2 remaining), stop reading files and output partial FINDINGS immediately.

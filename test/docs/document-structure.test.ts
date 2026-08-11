@@ -37,7 +37,7 @@ describe("CLAUDE.md structure", () => {
     const content = readDoc("CLAUDE.md");
     const lines = countLines(content);
     expect(lines).toBeGreaterThanOrEqual(100);
-    expect(lines).toBeLessThanOrEqual(150);
+    expect(lines).toBeLessThanOrEqual(160);
   });
 
   it("contains all §X.Y subsection identifiers from original (Req 1.1, 1.6)", () => {

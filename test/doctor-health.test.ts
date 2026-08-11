@@ -10,7 +10,7 @@ const tempRoots: string[] = [];
 function tempRoot(): string {
   const root = mkdtempSync(join(tmpdir(), "forge-doctor-test-"));
   tempRoots.push(root);
-  mkdirSync(join(root, ".forge"), { recursive: true });
+  mkdirSync(join(root, ".tinkerman"), { recursive: true });
   return root;
 }
 
@@ -34,7 +34,7 @@ afterEach(() => {
 });
 
 function writeForgeFile(root: string, relPath: string, content: string): void {
-  const fullPath = join(root, ".forge", relPath);
+  const fullPath = join(root, ".tinkerman", relPath);
   mkdirSync(join(fullPath, ".."), { recursive: true });
   writeFileSync(fullPath, content, "utf-8");
 }
@@ -112,7 +112,7 @@ describe("doctor health snapshot", () => {
       expect.objectContaining({
         status: "pass",
         message: "Spec status is locked",
-        source: ".forge/specs/topic-a/requirements.md",
+        source: ".tinkerman/specs/topic-a/requirements.md",
       }),
     );
     expect(snapshot.plan).toEqual(
@@ -162,16 +162,16 @@ describe("doctor health snapshot", () => {
       expect.arrayContaining([
         expect.objectContaining({
           code: "STALE_ARTIFACT",
-          source: ".forge/artifacts",
+          source: ".tinkerman/artifacts",
         }),
         expect.objectContaining({
           code: "MISSING_ARTIFACT",
-          source: ".forge/artifacts",
+          source: ".tinkerman/artifacts",
           detail: "required test artifact is missing",
         }),
         expect.objectContaining({
           code: "MISSING_ARTIFACT",
-          source: ".forge/artifacts",
+          source: ".tinkerman/artifacts",
           detail: "required mutation artifact is missing",
         }),
       ]),

@@ -314,7 +314,7 @@ export function renderGlossaryConflictPrompt(
 // ---------------------------------------------------------------------------
 
 export function getAdvisoryPath(phase: GlossaryCheckPhase, topic: string): string {
-  return `.forge/findings/glossary-advisory-${phase}-${topic}.md`;
+  return `.tinkerman/findings/glossary-advisory-${phase}-${topic}.md`;
 }
 
 export function renderPendingAdvisoryNotice(paths: string[]): string {

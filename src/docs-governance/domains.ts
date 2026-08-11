@@ -12,7 +12,7 @@ export const EXCLUDED_PREFIXES = [
   "api/",
 ] as const;
 
-export const DOMAIN_C_PREFIXES = [".forge/", ".kiro/"] as const;
+export const DOMAIN_C_PREFIXES = [".tinkerman/", ".kiro/"] as const;
 
 export const DOMAIN_B_PREFIXES = [
   "skills/",

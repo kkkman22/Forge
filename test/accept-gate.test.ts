@@ -18,14 +18,14 @@ function makePacks(flags: Record<string, unknown> = {}): EnabledPacks {
         rootPath: "/packs/pms",
       },
     ],
-    customLayerRoot: "/.forge/custom",
+    customLayerRoot: "/.tinkerman/custom",
   };
 }
 
 const emptyPacks: EnabledPacks = {
   order: [],
   entries: [],
-  customLayerRoot: "/.forge/custom",
+  customLayerRoot: "/.tinkerman/custom",
 };
 
 const specWithScenarios = {
@@ -81,7 +81,7 @@ describe("shouldBlockShip", () => {
     const result = shouldBlockShip({
       spec: specWithScenarios,
       enabledPacks: makePacks({ forced_acceptance_contexts: ["reservations"] }),
-      acceptanceArtifactPath: ".forge/acceptance/topic/report.md",
+      acceptanceArtifactPath: ".tinkerman/acceptance/topic/report.md",
       artifactContent: "---\nverdicts_summary:\n  pass: 3\n  fail: 2\n  skip: 0\n---\n",
     });
     expect(result.block).toBe(true);
@@ -92,7 +92,7 @@ describe("shouldBlockShip", () => {
     const result = shouldBlockShip({
       spec: specWithScenarios,
       enabledPacks: makePacks({ forced_acceptance_contexts: ["reservations"] }),
-      acceptanceArtifactPath: ".forge/acceptance/topic/report.md",
+      acceptanceArtifactPath: ".tinkerman/acceptance/topic/report.md",
       artifactContent: "---\nverdicts_summary:\n  pass: 5\n  fail: 0\n  skip: 0\n---\n",
     });
     expect(result.block).toBe(false);

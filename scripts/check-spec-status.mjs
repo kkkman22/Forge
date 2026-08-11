@@ -3,20 +3,20 @@
 /**
  * check-spec-status.mjs - Spec status inventory linter (T-06, REQ-06).
  *
- * Scans the .forge/specs tree (requirements.md / design.md / tasks.md / spec.md)
+ * Scans the .tinkerman/specs tree (requirements.md / design.md / tasks.md / spec.md)
  * frontmatter for a status field and reports the distribution
  * (draft/approved/locked/completed/etc.) plus warnings for specs that are
  * missing or inconsistent. Read-only - never modifies spec content. Use --fix
  * to backfill ONLY missing status fields (as status: draft); existing values
  * are never overwritten.
  *
- * Spec: .forge/specs/arch-review-remediate-0626 REQ-06.
+ * Spec: .tinkerman/specs/arch-review-remediate-0626 REQ-06.
  *
  * Usage:
  *   node scripts/check-spec-status.mjs [specs-dir] [--fix] [--help]
  *
  * Options:
- *   specs-dir   Specs root to scan (default: .forge/specs)
+ *   specs-dir   Specs root to scan (default: .tinkerman/specs)
  *   --fix       Backfill missing status fields as `status: draft` (no overwrite)
  *   --help      Show this help message
  *
@@ -25,7 +25,7 @@
 import fs from "node:fs";
 import path from "node:path";
 
-const DEFAULT_SPECS_DIR = path.join(import.meta.dirname, "..", ".forge", "specs");
+const DEFAULT_SPECS_DIR = path.join(import.meta.dirname, "..", ".tinkerman", "specs");
 const SPEC_FILE_NAMES = new Set(["requirements.md", "design.md", "tasks.md", "spec.md"]);
 const VALID_STATUSES = new Set([
   "draft",

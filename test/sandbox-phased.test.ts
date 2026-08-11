@@ -313,7 +313,7 @@ describe("loadSandboxConfig", () => {
   });
 
   it("returns default config (all allowed) when no config file exists", () => {
-    const config = loadSandboxConfig(join(tmpDir, ".forge", "sandbox.json"));
+    const config = loadSandboxConfig(join(tmpDir, ".tinkerman", "sandbox.json"));
     expect(config.version).toBe(1);
     expect(config.filesystem.read).toEqual(["**"]);
     expect(config.filesystem.write).toEqual(["**"]);
@@ -325,12 +325,12 @@ describe("loadSandboxConfig", () => {
   });
 
   it("loads config from existing file", () => {
-    mkdirSync(join(tmpDir, ".forge"), { recursive: true });
+    mkdirSync(join(tmpDir, ".tinkerman"), { recursive: true });
     const configData = {
       version: 1,
       profile: "strict",
       filesystem: {
-        read: ["src/**", ".forge/**"],
+        read: ["src/**", ".tinkerman/**"],
         write: ["src/**"],
         deny: [".env", "**/*.key"],
       },
@@ -343,12 +343,12 @@ describe("loadSandboxConfig", () => {
         deny: ["sudo"],
       },
     };
-    writeFileSync(join(tmpDir, ".forge", "sandbox.json"), JSON.stringify(configData));
+    writeFileSync(join(tmpDir, ".tinkerman", "sandbox.json"), JSON.stringify(configData));
 
-    const config = loadSandboxConfig(join(tmpDir, ".forge", "sandbox.json"));
+    const config = loadSandboxConfig(join(tmpDir, ".tinkerman", "sandbox.json"));
     expect(config.version).toBe(1);
     expect(config.profile).toBe("strict");
-    expect(config.filesystem.read).toEqual(["src/**", ".forge/**"]);
+    expect(config.filesystem.read).toEqual(["src/**", ".tinkerman/**"]);
     expect(config.filesystem.write).toEqual(["src/**"]);
     expect(config.filesystem.deny).toEqual([".env", "**/*.key"]);
     expect(config.network.allow).toEqual([]);
@@ -358,10 +358,10 @@ describe("loadSandboxConfig", () => {
   });
 
   it("returns default config when JSON is malformed", () => {
-    mkdirSync(join(tmpDir, ".forge"), { recursive: true });
-    writeFileSync(join(tmpDir, ".forge", "sandbox.json"), "{ invalid json }");
+    mkdirSync(join(tmpDir, ".tinkerman"), { recursive: true });
+    writeFileSync(join(tmpDir, ".tinkerman", "sandbox.json"), "{ invalid json }");
 
-    const config = loadSandboxConfig(join(tmpDir, ".forge", "sandbox.json"));
+    const config = loadSandboxConfig(join(tmpDir, ".tinkerman", "sandbox.json"));
     expect(config.version).toBe(1);
     expect(config.filesystem.read).toEqual(["**"]);
   });
@@ -417,7 +417,7 @@ describe("Integration: full flow", () => {
   });
 
   it("load config -> check filesystem -> deny wins", () => {
-    mkdirSync(join(tmpDir, ".forge"), { recursive: true });
+    mkdirSync(join(tmpDir, ".tinkerman"), { recursive: true });
     const configData = {
       version: 1,
       profile: "default",
@@ -429,9 +429,9 @@ describe("Integration: full flow", () => {
       network: { allow: ["*"], deny: [] },
       commands: { allow: ["*"], deny: [] },
     };
-    writeFileSync(join(tmpDir, ".forge", "sandbox.json"), JSON.stringify(configData));
+    writeFileSync(join(tmpDir, ".tinkerman", "sandbox.json"), JSON.stringify(configData));
 
-    const config = loadSandboxConfig(join(tmpDir, ".forge", "sandbox.json"));
+    const config = loadSandboxConfig(join(tmpDir, ".tinkerman", "sandbox.json"));
 
     // Allowed path
     expect(checkFilesystemPolicy("src/app.ts", "write", config).allowed).toBe(true);
@@ -444,7 +444,7 @@ describe("Integration: full flow", () => {
   });
 
   it("load config -> check commands -> deny wins", () => {
-    mkdirSync(join(tmpDir, ".forge"), { recursive: true });
+    mkdirSync(join(tmpDir, ".tinkerman"), { recursive: true });
     const configData = {
       version: 1,
       profile: "default",
@@ -452,9 +452,9 @@ describe("Integration: full flow", () => {
       network: { allow: ["*"], deny: [] },
       commands: { allow: ["git", "npm", "node"], deny: ["sudo", "rm -rf /"] },
     };
-    writeFileSync(join(tmpDir, ".forge", "sandbox.json"), JSON.stringify(configData));
+    writeFileSync(join(tmpDir, ".tinkerman", "sandbox.json"), JSON.stringify(configData));
 
-    const config = loadSandboxConfig(join(tmpDir, ".forge", "sandbox.json"));
+    const config = loadSandboxConfig(join(tmpDir, ".tinkerman", "sandbox.json"));
 
     expect(checkCommandPolicy("git status", config).allowed).toBe(true);
     expect(checkCommandPolicy("npm test", config).allowed).toBe(true);
@@ -463,7 +463,7 @@ describe("Integration: full flow", () => {
   });
 
   it("load config -> check network -> deny wins", () => {
-    mkdirSync(join(tmpDir, ".forge"), { recursive: true });
+    mkdirSync(join(tmpDir, ".tinkerman"), { recursive: true });
     const configData = {
       version: 1,
       profile: "default",
@@ -471,9 +471,9 @@ describe("Integration: full flow", () => {
       network: { allow: ["api.anthropic.com"], deny: ["evil.com"] },
       commands: { allow: ["*"], deny: [] },
     };
-    writeFileSync(join(tmpDir, ".forge", "sandbox.json"), JSON.stringify(configData));
+    writeFileSync(join(tmpDir, ".tinkerman", "sandbox.json"), JSON.stringify(configData));
 
-    const config = loadSandboxConfig(join(tmpDir, ".forge", "sandbox.json"));
+    const config = loadSandboxConfig(join(tmpDir, ".tinkerman", "sandbox.json"));
 
     expect(checkNetworkPolicy("https://api.anthropic.com/v1/messages", config).allowed).toBe(true);
     expect(checkNetworkPolicy("https://evil.com/steal", config).allowed).toBe(false);
@@ -504,10 +504,10 @@ describe("Integration: full flow", () => {
   });
 
   it("invalid config structure falls back to default", () => {
-    mkdirSync(join(tmpDir, ".forge"), { recursive: true });
+    mkdirSync(join(tmpDir, ".tinkerman"), { recursive: true });
     // Valid JSON but wrong structure (missing commands section)
     writeFileSync(
-      join(tmpDir, ".forge", "sandbox.json"),
+      join(tmpDir, ".tinkerman", "sandbox.json"),
       JSON.stringify({
         version: 1,
         profile: "default",
@@ -517,7 +517,7 @@ describe("Integration: full flow", () => {
       }),
     );
 
-    const config = loadSandboxConfig(join(tmpDir, ".forge", "sandbox.json"));
+    const config = loadSandboxConfig(join(tmpDir, ".tinkerman", "sandbox.json"));
     // Should fall back to default
     expect(config.version).toBe(1);
     expect(config.filesystem.read).toEqual(["**"]);
@@ -562,7 +562,7 @@ describe("path equivalence integration in sandbox policy", () => {
     filesystem: {
       read: ["**"],
       write: ["**"],
-      deny: ["**/.forge/config.md", "**/.forge/specs/**", "**/.forge/plans/**"],
+      deny: ["**/.tinkerman/config.md", "**/.tinkerman/specs/**", "**/.tinkerman/plans/**"],
     },
   });
 
@@ -570,7 +570,7 @@ describe("path equivalence integration in sandbox policy", () => {
     filesystem: {
       read: ["**"],
       write: ["**"],
-      deny: ["**/.forge/config.md"],
+      deny: ["**/.tinkerman/config.md"],
     },
     commands: {
       allow: ["*"],
@@ -578,40 +578,45 @@ describe("path equivalence integration in sandbox policy", () => {
     },
   });
 
-  it("blocks ~/.forge/config.md write via tilde expansion", () => {
-    const result = checkFilesystemPolicy("~/.forge/config.md", "write", frozenConfig, {
+  it("blocks ~/.tinkerman/config.md write via tilde expansion", () => {
+    const result = checkFilesystemPolicy("~/.tinkerman/config.md", "write", frozenConfig, {
       cwd: "/project",
       homeDir: "/Users/x",
     });
     expect(result.allowed).toBe(false);
   });
 
-  it("blocks $HOME/.forge/config.md write via variable expansion", () => {
-    const result = checkFilesystemPolicy("$HOME/.forge/config.md", "write", frozenConfig, {
+  it("blocks $HOME/.tinkerman/config.md write via variable expansion", () => {
+    const result = checkFilesystemPolicy("$HOME/.tinkerman/config.md", "write", frozenConfig, {
       cwd: "/project",
       homeDir: "/Users/x",
     });
     expect(result.allowed).toBe(false);
   });
 
-  it("blocks ${" + "HOME}/.forge/config.md write via braced variable", () => {
-    const result = checkFilesystemPolicy("${" + "HOME}/.forge/config.md", "write", frozenConfig, {
+  it("blocks ${" + "HOME}/.tinkerman/config.md write via braced variable", () => {
+    const result = checkFilesystemPolicy(
+      "${" + "HOME}/.tinkerman/config.md",
+      "write",
+      frozenConfig,
+      {
+        cwd: "/project",
+        homeDir: "/Users/x",
+      },
+    );
+    expect(result.allowed).toBe(false);
+  });
+
+  it("blocks command accessing .tinkerman/config.md via $HOME path", () => {
+    const result = checkCommandPolicy("cat ${" + "HOME}/.tinkerman/config.md", commandDenyConfig, {
       cwd: "/project",
       homeDir: "/Users/x",
     });
     expect(result.allowed).toBe(false);
   });
 
-  it("blocks command accessing .forge/config.md via $HOME path", () => {
-    const result = checkCommandPolicy("cat ${" + "HOME}/.forge/config.md", commandDenyConfig, {
-      cwd: "/project",
-      homeDir: "/Users/x",
-    });
-    expect(result.allowed).toBe(false);
-  });
-
-  it("blocks command accessing .forge/config.md via tilde path", () => {
-    const result = checkCommandPolicy("cat ~/.forge/config.md", commandDenyConfig, {
+  it("blocks command accessing .tinkerman/config.md via tilde path", () => {
+    const result = checkCommandPolicy("cat ~/.tinkerman/config.md", commandDenyConfig, {
       cwd: "/project",
       homeDir: "/Users/x",
     });

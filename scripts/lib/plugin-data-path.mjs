@@ -83,7 +83,7 @@ export function getCachePath(filename) {
 }
 
 /**
- * Migrate old cache files from project-local .forge/.cache/ to plugin data dir.
+ * Migrate old cache files from project-local .tinkerman/.cache/ to plugin data dir.
  * Old files are preserved (not deleted). Does not overwrite existing new cache.
  *
  * @param {string} projectDir — Absolute path to the project root.
@@ -91,7 +91,7 @@ export function getCachePath(filename) {
  */
 export function migrateOldCache(projectDir) {
   const result = { migrated: 0, skipped: 0, errors: 0 };
-  const oldCacheDir = join(projectDir, ".forge", ".cache");
+  const oldCacheDir = join(projectDir, ".tinkerman", ".cache");
   if (!existsSync(oldCacheDir)) return result;
 
   const cacheFiles = [

@@ -11,7 +11,7 @@ updated: 2026-08-11
 
 1. 收集当前 context 中的 P0/P1 findings（来自 review/decide 的输出）
 2. 调用 `serializePendingFindings(findings, taskName)` 序列化为 markdown table
-3. `Write` 到 `.forge/progress/<taskName>-pending-findings.md`
+3. `Write` 到 `.tinkerman/progress/<taskName>-pending-findings.md`
 4. 写入失败 → 跳过持久化，继续推进（不阻断）
 5. 无 P0/P1 findings → 跳过此步骤
 
@@ -27,13 +27,13 @@ updated: 2026-08-11
 **Forge 策略：持久化优先，建议性 compact**
 
 Forge 不尝试自动触发 compact（技术上不可行）。而是：
-1. **持久化保护**（已实现）：在阶段切换和 wave 间将 P0/P1 写入 `.forge/progress/<task>-pending-findings.md`，确保 compact 后可恢复
+1. **持久化保护**（已实现）：在阶段切换和 wave 间将 P0/P1 写入 `.tinkerman/progress/<task>-pending-findings.md`，确保 compact 后可恢复
 2. **建议性输出**：wave/阶段完成时，若 AI 观察到 context 较高（对话轮次多、subagent 输出多），输出建议：
    ```
    📊 Wave N 完成 | 建议执行 /compact 再继续（P0/P1 已持久化）
    ```
 3. **用户决策**：用户自行决定是否 /compact。不自动阻断流程。
-4. **Compact 后恢复**：通过 `/tinkerman resume` 从 `.forge/progress/` 和 `.forge/knowledge/sessions/` 读取状态
+4. **Compact 后恢复**：通过 `/tinkerman resume` 从 `.tinkerman/progress/` 和 `.tinkerman/knowledge/sessions/` 读取状态
 
 **Inter-phase 持久化点**：
 
@@ -125,4 +125,4 @@ SKILL 执行流的最后一条指令必须是 auto-advance 调用或明确的用
 | 工作量承诺 | "接下来要做 15 个任务，是否继续？" | ❌ 违规 |
 | **隐式 idle** | 阶段完成后静默等待（无输出、无调用） | **❌ 违规（等同于显式询问）** |
 
-如果不确定下一步是什么，检查 `.forge/status.md` 的 `phase` 字段和本文件的"阶段下一步映射"表。
+如果不确定下一步是什么，检查 `.tinkerman/status.md` 的 `phase` 字段和本文件的"阶段下一步映射"表。

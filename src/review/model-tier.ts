@@ -31,7 +31,7 @@ export const DEFAULT_TIER_MAP: Record<ModelTier, string> = {
   inherit: "inherit",
 };
 
-/** Tier map shape as read from `.forge/config.md#review_model_tier_map`. */
+/** Tier map shape as read from `.tinkerman/config.md#review_model_tier_map`. */
 export type TierMap = Partial<Record<ModelTier, string>>;
 
 /** Outcome of resolving a single agent's tier. */

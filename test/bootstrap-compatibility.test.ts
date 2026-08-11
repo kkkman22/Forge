@@ -16,8 +16,8 @@ const execFileAsync = promisify(execFile);
 const SCRIPT_PATH = "scripts/bootstrap-check.mjs";
 
 describe("bootstrap-check version diagnostic", () => {
-  it("outputs nothing when .forge/config.md exists (already initialized path)", async () => {
-    // In our test environment, .forge/config.md exists
+  it("outputs nothing when .tinkerman/config.md exists (already initialized path)", async () => {
+    // In our test environment, .tinkerman/config.md exists
     const { stdout, stderr } = await execFileAsync("node", [SCRIPT_PATH], {
       timeout: 5000,
       env: { ...process.env, CLAUDE_PLUGIN_ROOT: "." },

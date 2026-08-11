@@ -2,7 +2,7 @@
 // category: internal-only
 /**
  * append-baseline.mjs — Append the latest benchmark run to
- * `.forge/knowledge/metrics.md`.
+ * `.tinkerman/knowledge/metrics.md`.
  *
  * Appends a compact single-line summary per benchmark into a section
  * named `## performance_baselines`. Older entries are truncated beyond
@@ -28,7 +28,7 @@ for (const flag of flags) {
   }
 }
 
-const METRICS_PATH = ".forge/knowledge/metrics.md";
+const METRICS_PATH = ".tinkerman/knowledge/metrics.md";
 const HEADER = "## performance_baselines";
 
 const now = new Date().toISOString();

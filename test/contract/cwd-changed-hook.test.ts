@@ -298,7 +298,7 @@ describe("FileChanged hook (R16)", () => {
   it("outputs systemMessage when spec-lock file changes", () => {
     // Create a temp .forge structure with status.md and spec-lock
     const tmpProject = join(tmpdir(), `forge-test-filechanged-${Date.now()}`);
-    const forgeDir = join(tmpProject, ".forge");
+    const forgeDir = join(tmpProject, ".tinkerman");
     const stateDir = join(forgeDir, "state");
     mkdirSync(stateDir, { recursive: true });
 
@@ -349,7 +349,7 @@ describe("FileChanged hook (R16)", () => {
 
   it("outputs systemMessage when active progress file changes", () => {
     const tmpProject = join(tmpdir(), `forge-test-filechanged-prog-${Date.now()}`);
-    const forgeDir = join(tmpProject, ".forge");
+    const forgeDir = join(tmpProject, ".tinkerman");
     const progressDir = join(forgeDir, "progress");
     mkdirSync(progressDir, { recursive: true });
 
@@ -400,7 +400,7 @@ describe("FileChanged hook (R16)", () => {
           session_id: "test-noforge",
           cwd: tmpProject,
           hook_event_name: "FileChanged",
-          file_path: join(tmpProject, ".forge", "state", "spec-lock"),
+          file_path: join(tmpProject, ".tinkerman", "state", "spec-lock"),
           event: "change",
         },
         { FORGE_ROOT: tmpProject },

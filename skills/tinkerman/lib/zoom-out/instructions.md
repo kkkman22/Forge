@@ -14,7 +14,7 @@ allowed_tools:
 
 > **触发**：任意 skill 执行中用户说 `zoom out` / `放大视角` / `讲整体`，或运行 `/tinkerman zoom-out [topic]`
 > **职责**：暂停当前 skill，调只读 explore subagent，固定三段式讲清「我在整个系统里的哪个位置」
-> **输出**：无文件输出——仅回话到对话框，不写 `.forge/` 任何文件
+> **输出**：无文件输出——仅回话到对话框，不写 `.tinkerman/` 任何文件
 
 ## 1. 概述
 
@@ -35,9 +35,9 @@ Produce a three-section architecture snapshot that tells the user exactly where 
 
 ## Constraints
 
-- Output is conversation-only: no files written to `.forge/` (except temporary `phase` / `original_phase` markers in `status.md` for pause/resume).
+- Output is conversation-only: no files written to `.tinkerman/` (except temporary `phase` / `original_phase` markers in `status.md` for pause/resume).
 - Each of the three sections must be ≤ 5 non-empty lines. Exceeding this triggers one retry; if still exceeded, truncate to 5 lines with a truncation note.
-- The only state mutation is setting `.forge/status.md` phase to `zoom_out_paused` (saving `original_phase`) and later restoring it. Everything else in `.forge/` must be identical before and after.
+- The only state mutation is setting `.tinkerman/status.md` phase to `zoom_out_paused` (saving `original_phase`) and later restoring it. Everything else in `.tinkerman/` must be identical before and after.
 - Must not trigger review / test / ship. Must not affect three-strike counters.
 - Must use a read-only explore subagent for gathering architecture context — no modifications.
 - Must restore the original skill phase after zoom-out completes (user says `continue`/`继续`, or next `/tinkerman` command auto-resumes).

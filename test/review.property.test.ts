@@ -355,12 +355,12 @@ describe("Property 20: 报告质量门", () => {
     expect(result.items.find((i) => i.name === "行号准确性")?.passed).toBe(false);
   });
 
-  it("finding targeting .forge/ file fails protected file check", () => {
+  it("finding targeting .tinkerman/ file fails protected file check", () => {
     const badFinding: MergedFinding = {
       severity: "P3",
       confidence: 0.9,
       fixRoute: "advisory",
-      filePath: ".forge/status.md",
+      filePath: ".tinkerman/status.md",
       lineNumber: 1,
       description: "unnecessary file",
       suggestion: "remove this file",

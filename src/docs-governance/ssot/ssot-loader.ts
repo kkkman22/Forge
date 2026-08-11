@@ -6,7 +6,7 @@ import type { RendererFn } from "../types.js";
 import { createRendererRegistry } from "./renderer-registry.js";
 
 export function loadSsotData(rootDir: string): Map<string, unknown> {
-  const configPath = resolve(rootDir, ".forge/config.md");
+  const configPath = resolve(rootDir, ".tinkerman/config.md");
   let raw = "";
   try {
     raw = readFileSync(configPath, "utf-8");

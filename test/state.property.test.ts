@@ -1,7 +1,7 @@
 /**
  * Property 15: 状态文件格式统一
  *
- * Uses fast-check to generate .forge/ state files, verifying that:
+ * Uses fast-check to generate .tinkerman/ state files, verifying that:
  *   - File extension is .md
  *   - Structured data uses YAML frontmatter
  *
@@ -20,7 +20,7 @@ import {
 // Generators
 // ---------------------------------------------------------------------------
 
-/** Known .forge/ subdirectories and file patterns. */
+/** Known .tinkerman/ subdirectories and file patterns. */
 const forgeSubdirs = [
   "config",
   "status",
@@ -35,7 +35,7 @@ const forgeSubdirs = [
   "debug/topic",
 ] as const;
 
-/** A valid .forge/ file path (always .md extension). */
+/** A valid .tinkerman/ file path (always .md extension). */
 const validPathArb: fc.Arbitrary<string> = fc
   .constantFrom(...forgeSubdirs)
   .map((base) => `${base}.md`);

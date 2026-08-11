@@ -17,7 +17,7 @@ updated: 2026-08-11
 2. 提取需求/场景，转化为 Forge SpecDocument 格式
 3. 复用现有五项自检（可测试性/边界清晰度/人类可读性/棕地兼容性/反漂移完整性），未通过则自动修正
 4. 展示转化结果，用户确认或修改
-5. 写入 `.forge/specs/<feature>/spec.md`，status: "locked"，frontmatter 中标注 `import_source` 原始文件路径
+5. 写入 `.tinkerman/specs/<feature>/spec.md`，status: "locked"，frontmatter 中标注 `import_source` 原始文件路径
 
 ## Conversion Rules
 
@@ -43,7 +43,7 @@ updated: 2026-08-11
 
 ## Integration
 
-导入锁定后成为标准 `.forge/specs/<feature>/spec.md`，后续 plan/build/review 流程无区别。
+导入锁定后成为标准 `.tinkerman/specs/<feature>/spec.md`，后续 plan/build/review 流程无区别。
 
 ## Edge Cases
 

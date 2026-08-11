@@ -1,5 +1,5 @@
 ---
-description: "Create, update, check, and display the project charter (.forge/charter.md). Use when user runs /tinkerman charter <sub>."
+description: "Create, update, check, and display the project charter (.tinkerman/charter.md). Use when user runs /tinkerman charter <sub>."
 updated: 2026-08-11
 context: fork
 dispatch_mode: fork
@@ -9,8 +9,8 @@ allowed_tools: [Read, Write, Glob, Grep, Bash]
 # /tinkerman charter — 项目宪章管理
 
 > **触发方式**：用户输入 `/tinkerman charter <sub>`
-> **职责**：管理 `.forge/charter.md` 项目宪章的创建、更新、校验和展示
-> **输出路径**：`.forge/charter.md`
+> **职责**：管理 `.tinkerman/charter.md` 项目宪章的创建、更新、校验和展示
+> **输出路径**：`.tinkerman/charter.md`
 
 ---
 
@@ -18,13 +18,13 @@ allowed_tools: [Read, Write, Glob, Grep, Bash]
 
 Charter 是项目的工程策略锚定物，记录核心约束、架构边界、技术选型基线和不可变量。它不是产品管理文档，而是**跨 spec 的工程一致性保证**。
 
-Charter 位于 `.forge/` 开放区（AI 可自由创建/修改）。
+Charter 位于 `.tinkerman/` 开放区（AI 可自由创建/修改）。
 
 ## 2. Subcommand Routing
 
 | 子命令 | 职责 |
 |--------|------|
-| `init` | 交互式创建 `.forge/charter.md` |
+| `init` | 交互式创建 `.tinkerman/charter.md` |
 | `update` | 交互式更新现有 charter（逐章节审视） |
 | `check` | 非交互式校验 charter 与代码库一致性 |
 | `show` | 显示当前 charter 内容 |
@@ -48,7 +48,7 @@ Charter 位于 `.forge/` 开放区（AI 可自由创建/修改）。
 
 | 条件 | 行为 |
 |------|------|
-| `.forge/charter.md` 不存在 | 下游 skill 正常执行，标注 `ℹ No active charter` |
+| `.tinkerman/charter.md` 不存在 | 下游 skill 正常执行，标注 `ℹ No active charter` |
 | `status: draft` | 不注入 grounding，提示用户激活 |
 | `status: deprecated` | 停止读取，保留文件作为历史参考 |
 
@@ -75,7 +75,7 @@ Charter 位于 `.forge/` 开放区（AI 可自由创建/修改）。
 | 新增 invariant/boundary/baseline | Minor |
 | 描述修正/理由补充 | Patch |
 
-Major bump 时自动扫描 `.forge/specs/` 和 `.forge/decisions/` 产出影响报告。
+Major bump 时自动扫描 `.tinkerman/specs/` 和 `.tinkerman/decisions/` 产出影响报告。
 
 ## 7. Constraints
 

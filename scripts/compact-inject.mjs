@@ -3,7 +3,7 @@
  * compact-inject.mjs — PostCompact budgeted injection bridge (regenerative-checkpoint R3/P1 fix).
  *
  * Called by hook-postcompact.sh when snapshot_source=checkpoint. Reads
- * .forge/checkpoint.md, applies section-aware budget truncation (same logic as
+ * .tinkerman/checkpoint.md, applies section-aware budget truncation (same logic as
  * src/checkpoint/read-budgeted.ts), outputs the (possibly truncated) checkpoint
  * body to stdout for the hook to inject.
  *
@@ -19,7 +19,7 @@
 import { readFileSync } from "node:fs";
 import { resolve } from "node:path";
 
-const CHECKPOINT_PATH = process.argv[2] ?? ".forge/checkpoint.md";
+const CHECKPOINT_PATH = process.argv[2] ?? ".tinkerman/checkpoint.md";
 const BUDGET_TOKENS = Number.parseInt(process.argv[3] ?? "11000", 10);
 
 function estimateTokens(text) {

@@ -2,7 +2,7 @@
 #
 # Forge Shared Helpers — sourced by hook scripts
 #
-# Provides common functions for reading .forge/ state files.
+# Provides common functions for reading .tinkerman/ state files.
 # Usage: source "$(dirname "$0")/lib/forge-helpers.sh"
 
 # Read a YAML frontmatter field from a .md file.

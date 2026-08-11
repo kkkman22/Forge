@@ -31,14 +31,14 @@ updated: 2026-08-11
 
 ## Known Failure Pattern Recording
 
-反复出现的失败模式（2+ 次）记录到 `.forge/knowledge/known-failures.md`（模式/触发条件/根因/解决方案/出现次数/置信度）。
+反复出现的失败模式（2+ 次）记录到 `.tinkerman/knowledge/known-failures.md`（模式/触发条件/根因/解决方案/出现次数/置信度）。
 
 - 已有相同模式则更新次数
 - build 的 Closure-First 探针和 debug Phase 2 自动搜索此文件
 
 ## Session Journal
 
-每次 learn 完成后写入 `.forge/knowledge/sessions/<date>-<topic>.md`：
+每次 learn 完成后写入 `.tinkerman/knowledge/sessions/<date>-<topic>.md`：
 
 - ≤ 20 行
 - 含：摘要 / 关键决策 / 验证结果 / 下次建议

@@ -8,7 +8,7 @@
  *   - unforgeable (attacker can't fabricate without the project secret)
  *   - not env-only (writing ~/.zshenv no longer disables the guard)
  *
- * Project secret derivation: stable per-repo value from `.forge/config.md`
+ * Project secret derivation: stable per-repo value from `.tinkerman/config.md`
  * mtime + project path (good enough for local-agent trust boundary; this is
  * not a networked threat model). For higher assurance, callers may inject a
  * secret via FORGE_DESTRUCTIVE_SECRET.
@@ -27,7 +27,7 @@ const ALLOW_NONCE_FILE = ".allow-destructive-nonce";
 /**
  * v3: HMAC secret source. Does NOT derive from repo-readable/mutable file
  * attributes (config.md mtime — a runaway agent can stat+recompute). Instead
- * uses a one-time random `.forge/.guard-secret` (0600, auto-generated on first
+ * uses a one-time random `.tinkerman/.guard-secret` (0600, auto-generated on first
  * use, stable thereafter). FORGE_DESTRUCTIVE_SECRET env remains an explicit
  * override.
  */
@@ -35,7 +35,7 @@ function getGuardSecret(projectRoot: string): string {
   const explicit = process.env.FORGE_DESTRUCTIVE_SECRET;
   if (explicit && explicit.trim() !== "") return explicit;
 
-  const secretPath = join(projectRoot, ".forge", ".guard-secret");
+  const secretPath = join(projectRoot, ".tinkerman", ".guard-secret");
   try {
     return readFileSync(secretPath, "utf-8").trim();
   } catch {
@@ -61,7 +61,7 @@ function hmacOf(nonce: string, projectRoot: string): string {
 function writeNonceFile(projectRoot: string, filename: string): string {
   const nonce = randomBytes(16).toString("hex");
   const hmac = hmacOf(nonce, projectRoot);
-  const filePath = join(projectRoot, ".forge", filename);
+  const filePath = join(projectRoot, ".tinkerman", filename);
   mkdirSync(dirname(filePath), { recursive: true });
   writeFileSync(filePath, `${nonce}\n${hmac}`, "utf-8");
   return nonce;
@@ -93,12 +93,12 @@ function consumeNonce(
   filename: string,
   envNonce: string | undefined,
 ): boolean {
-  const filePath = join(projectRoot, ".forge", filename);
+  const filePath = join(projectRoot, ".tinkerman", filename);
   if (!existsSync(filePath)) return false;
 
   // Atomic burn: rename nonce → .consumed/<filename>. If rename fails (already
   // consumed by a concurrent process, or permission), refuse this bypass.
-  const consumedDir = join(projectRoot, ".forge", ".consumed");
+  const consumedDir = join(projectRoot, ".tinkerman", ".consumed");
   const consumedPath = join(consumedDir, filename);
   try {
     mkdirSync(consumedDir, { recursive: true });
@@ -130,7 +130,7 @@ function guardEnabledFromConfig(projectRoot: string, configContent: string): boo
   let content = configContent;
   if (!content) {
     try {
-      content = readFileSync(join(projectRoot, ".forge", "config.md"), "utf-8");
+      content = readFileSync(join(projectRoot, ".tinkerman", "config.md"), "utf-8");
     } catch {
       return true; // fail-secure: default on when unreadable
     }

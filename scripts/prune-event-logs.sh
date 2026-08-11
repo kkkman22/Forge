@@ -4,8 +4,8 @@ set -uo pipefail
 # ============================================================================
 # prune-event-logs.sh — Remove expired forge-loop run directories.
 #
-# Reads `event_log_retention_days` from `.forge/config.md` frontmatter
-# (default: 30). Deletes any `.forge/runs/<runId>/` directory whose mtime
+# Reads `event_log_retention_days` from `.tinkerman/config.md` frontmatter
+# (default: 30). Deletes any `.tinkerman/runs/<runId>/` directory whose mtime
 # is older than that cutoff.
 #
 # Usage:
@@ -23,19 +23,19 @@ DRY_RUN="no"
 if [[ "${1:-}" == "--help" || "${1:-}" == "-h" ]]; then
   echo "Usage: scripts/prune-event-logs.sh [--dry-run]"
   echo ""
-  echo "Remove expired .forge/runs/ directories based on retention config."
+  echo "Remove expired .tinkerman/runs/ directories based on retention config."
   echo "  --dry-run  Report what would be deleted without actually deleting"
   exit 0
 elif [[ "${1:-}" == "--dry-run" ]]; then
   DRY_RUN="yes"
 fi
 
-CONFIG_FILE=".forge/config.md"
-RUNS_DIR=".forge/runs"
-ASSETS_DIR=".forge/reviews/assets"
-ARCHIVE_DIR=".forge/archive/reviews"
-ACCEPTANCE_DIR=".forge/acceptance"
-ACCEPTANCE_ARCHIVE=".forge/archive/acceptance"
+CONFIG_FILE=".tinkerman/config.md"
+RUNS_DIR=".tinkerman/runs"
+ASSETS_DIR=".tinkerman/reviews/assets"
+ARCHIVE_DIR=".tinkerman/archive/reviews"
+ACCEPTANCE_DIR=".tinkerman/acceptance"
+ACCEPTANCE_ARCHIVE=".tinkerman/archive/acceptance"
 
 # Default retention period, overridden by the config when present.
 RETENTION_DAYS=30
@@ -85,7 +85,7 @@ while IFS= read -r dir; do
 done <<< "${STALE_DIRS}"
 
 # ---------------------------------------------------------------------------
-# Archive stale review assets (.forge/reviews/assets/*)
+# Archive stale review assets (.tinkerman/reviews/assets/*)
 # ---------------------------------------------------------------------------
 
 if [[ -d "${ASSETS_DIR}" ]]; then
@@ -107,7 +107,7 @@ if [[ -d "${ASSETS_DIR}" ]]; then
 fi
 
 # ---------------------------------------------------------------------------
-# Archive stale acceptance results (.forge/acceptance/*)
+# Archive stale acceptance results (.tinkerman/acceptance/*)
 # ---------------------------------------------------------------------------
 
 if [[ -d "${ACCEPTANCE_DIR}" ]]; then
@@ -133,7 +133,7 @@ fi
 # Clean up stale cmux dedupe files (R6.4)
 # ---------------------------------------------------------------------------
 
-DEDUPE_DIR=".forge/.cmux-dedupe"
+DEDUPE_DIR=".tinkerman/.cmux-dedupe"
 if [[ -d "${DEDUPE_DIR}" ]]; then
   STALE_DEDUPE=$(find "${DEDUPE_DIR}" -type f -mmin +60 2>/dev/null)
   if [[ -n "${STALE_DEDUPE}" ]]; then
@@ -149,7 +149,7 @@ if [[ -d "${DEDUPE_DIR}" ]]; then
 fi
 
 # ---------------------------------------------------------------------------
-# Archive stale findings (.forge/findings/*)
+# Archive stale findings (.tinkerman/findings/*)
 # ---------------------------------------------------------------------------
 
 FINDINGS_RETENTION_DAYS=30
@@ -163,8 +163,8 @@ if [[ -f "${CONFIG_FILE}" ]]; then
   fi
 fi
 
-FINDINGS_DIR=".forge/findings"
-FINDINGS_ARCHIVE=".forge/archive/findings"
+FINDINGS_DIR=".tinkerman/findings"
+FINDINGS_ARCHIVE=".tinkerman/archive/findings"
 
 if [[ -d "${FINDINGS_DIR}" ]]; then
   STALE_FINDINGS=$(find "${FINDINGS_DIR}" -type f -mtime "+${FINDINGS_RETENTION_DAYS}" 2>/dev/null || true)

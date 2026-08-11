@@ -5,7 +5,7 @@ import { afterEach, beforeEach, describe, expect, it } from "vitest";
 import { emitCommands } from "../../scripts/cmux-mirror/lib/emitter.mjs";
 import { readForgeState } from "../../scripts/cmux-mirror/lib/reader.mjs";
 
-describe("reader: reads .forge/ state (R2.1, R2.2)", () => {
+describe("reader: reads .tinkerman/ state (R2.1, R2.2)", () => {
   let forgeDir: string;
 
   beforeEach(() => {
@@ -238,7 +238,7 @@ describe("reader-emitter roundtrip (R2.1, R2.2)", () => {
     }
   });
 
-  it("full roundtrip: .forge/ → state → commands", () => {
+  it("full roundtrip: .tinkerman/ → state → commands", () => {
     writeFileSync(
       join(forgeDir, "status.md"),
       [

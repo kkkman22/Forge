@@ -10,11 +10,11 @@ import { join } from "node:path";
 import { afterEach, describe, expect, it } from "vitest";
 
 const SCRIPT_PATH = join(process.cwd(), "scripts", "inject-evolved-rules.mjs");
-const RULES_FILE = ".forge/knowledge/evolved-rules.md";
+const RULES_FILE = ".tinkerman/knowledge/evolved-rules.md";
 
 function createTempDir(): string {
   const dir = mkdtempSync(join(tmpdir(), "forge-evolved-rules-test-"));
-  mkdirSync(join(dir, ".forge", "knowledge"), { recursive: true });
+  mkdirSync(join(dir, ".tinkerman", "knowledge"), { recursive: true });
   return dir;
 }
 
@@ -173,12 +173,12 @@ describe("inject-evolved-rules.mjs", () => {
     expect(json.hookSpecificOutput?.sessionTitle ?? null).toBeNull();
   });
 
-  it(".forge/state/spec-lock 优先于 .kiro/specs/ 推断 (含 _archived 时仍生效)", () => {
+  it(".tinkerman/state/spec-lock 优先于 .kiro/specs/ 推断 (含 _archived 时仍生效)", () => {
     tempDir = createTempDir();
     writeFileSync(join(tempDir, RULES_FILE), "### R1: Test\n**Content**: x");
     mkdirSync(join(tempDir, ".kiro", "specs", "_archived"), { recursive: true });
-    mkdirSync(join(tempDir, ".forge", "state"), { recursive: true });
-    writeFileSync(join(tempDir, ".forge", "state", "spec-lock"), "locked-spec");
+    mkdirSync(join(tempDir, ".tinkerman", "state"), { recursive: true });
+    writeFileSync(join(tempDir, ".tinkerman", "state", "spec-lock"), "locked-spec");
     const result = runScript(
       tempDir,
       JSON.stringify({ session_id: "s1", hook_event_name: "SessionStart" }),

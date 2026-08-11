@@ -151,7 +151,7 @@ export interface ShipGateContext {
 export interface ReviewFreshnessResult {
   fresh: boolean;
   reason: string;
-  /** Non-.forge/ files that changed since review. Only present when fresh=false. */
+  /** Non-.tinkerman/ files that changed since review. Only present when fresh=false. */
   changedFiles?: string[];
 }
 
@@ -161,8 +161,8 @@ export interface ReviewFreshnessResult {
  * 4 cases:
  *   1. reviewedCommit undefined → fresh (backward compat)
  *   2. reviewedCommit === currentHead → fresh
- *   3. all changed files are under .forge/ → fresh
- *   4. any changed file is outside .forge/ → not fresh
+ *   3. all changed files are under .tinkerman/ → fresh
+ *   4. any changed file is outside .tinkerman/ → not fresh
  * @public
  */
 export function checkReviewFreshness(
@@ -178,10 +178,10 @@ export function checkReviewFreshness(
     return { fresh: true, reason: "review matches current HEAD" };
   }
 
-  const nonForgeFiles = changedFiles.filter((f) => !f.startsWith(".forge/"));
+  const nonForgeFiles = changedFiles.filter((f) => !f.startsWith(".tinkerman/"));
 
   if (nonForgeFiles.length === 0) {
-    return { fresh: true, reason: "changes only in .forge/ state files" };
+    return { fresh: true, reason: "changes only in .tinkerman/ state files" };
   }
 
   return {
@@ -308,9 +308,9 @@ export function checkShipGateWithForceSkip(
 /**
  * Record a force-skip-review event to the findings file for audit trail.
  *
- * Writes an entry to `.forge/findings/force-skip-review-<date>.md` with
+ * Writes an entry to `.tinkerman/findings/force-skip-review-<date>.md` with
  * commit hash, reason, user, and timestamp.
- * @param baseDir - Optional base directory for the .forge/findings path.
+ * @param baseDir - Optional base directory for the .tinkerman/findings path.
  *   Defaults to current working directory.
  * @public
  */
@@ -325,7 +325,7 @@ export function recordForceSkip(
   const sanitizedHash = commitHash.replace(/[^a-f0-9]/g, "").slice(0, 40);
 
   const date = new Date().toISOString().slice(0, 10);
-  const dir = baseDir ? join(baseDir, ".forge/findings") : ".forge/findings";
+  const dir = baseDir ? join(baseDir, ".tinkerman/findings") : ".tinkerman/findings";
   const filePath = join(dir, `force-skip-review-${date}.md`);
 
   mkdirSync(dir, { recursive: true });
@@ -363,8 +363,8 @@ export function checkShipGateWithChecklist(
 /**
  * Extended ship gate with Review Freshness check.
  *
- * Blocks ship when review is stale due to non-.forge/ code changes.
- * If only .forge/ files changed, review is still considered fresh.
+ * Blocks ship when review is stale due to non-.tinkerman/ code changes.
+ * If only .tinkerman/ files changed, review is still considered fresh.
  * @public
  */
 export function checkShipGateWithFreshness(
@@ -487,7 +487,7 @@ function outcomeForReason(reason: ShipGateBlockReason): EpisodeOutcome {
  *     the Evolution marker target is `forge-ship#ship_gate_blocked`.
  *
  * Drivers are expected to append the episode to
- * `.forge/knowledge/sessions/<date>-<topic>.md` (Guarded zone) and the
+ * `.tinkerman/knowledge/sessions/<date>-<topic>.md` (Guarded zone) and the
  * marker to the topic's progress file (Open zone). Write failures
  * degrade to a warning per Requirement 8.12 — callers keep the
  * delivery-blocked message front and centre.
@@ -635,6 +635,6 @@ export async function runAcceptanceGate(
     triggered: true,
     summary,
     blocksShip,
-    reportPath: `.forge/reviews/${topic}-acceptance.md`,
+    reportPath: `.tinkerman/reviews/${topic}-acceptance.md`,
   };
 }

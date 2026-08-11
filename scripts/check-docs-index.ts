@@ -82,7 +82,7 @@ const result = computeExitResult(() => {
   }
 
   // 1. Walk and collect .md files
-  const mdFiles = walkMdFiles(docsDir, { relativeTo: docsDir, symlinkSafe: true, allowDotDirs: [".forge", ".kiro"], excludedPrefixes: EXCLUDED_PREFIXES });
+  const mdFiles = walkMdFiles(docsDir, { relativeTo: docsDir, symlinkSafe: true, allowDotDirs: [".tinkerman", ".kiro"], excludedPrefixes: EXCLUDED_PREFIXES });
 
   // 2. Parse frontmatter for each file
   const docs: Doc[] = [];

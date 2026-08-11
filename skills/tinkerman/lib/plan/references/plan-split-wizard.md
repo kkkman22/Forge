@@ -8,7 +8,7 @@ updated: 2026-08-11
 ## Flow
 
 1. **Identify Sprint boundaries**: Parse plan for `### Sprint N — <title>` headings
-2. **Generate sub-plans**: Create `.forge/plans/<topic>-sprint-<n>.md` for each Sprint
+2. **Generate sub-plans**: Create `.tinkerman/plans/<topic>-sprint-<n>.md` for each Sprint
 3. **Each sub-plan** contains:
    - Subset of tasks belonging to that Sprint
    - Own frontmatter with `status: draft`

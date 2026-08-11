@@ -3,7 +3,7 @@
 # zone-registry.sh — Shared Zone_Registry functions for frozen/guarded zone hooks.
 #
 # Exports:
-#   parse_zone_registry   — parse .forge/config.md into zone rules
+#   parse_zone_registry   — parse .tinkerman/config.md into zone rules
 #   classify_path         — classify a file path into zone category
 #   emit_frozen_diagnostic — output structured Frozen_Diagnostic JSON
 #   log_event             — append frozen-zone event to audit log
@@ -25,7 +25,7 @@ readonly AUDIT_LOG_MAX_BYTES=10485760  # 10 MB
 # ---------------------------------------------------------------------------
 # parse_zone_registry
 # ---------------------------------------------------------------------------
-# Reads .forge/config.md and outputs normalized zone rules on stdout.
+# Reads .tinkerman/config.md and outputs normalized zone rules on stdout.
 # Output format: <glob>\t<category>\t<reason_code>\t<qualifier>
 #
 # Cached via env var ZONE_REGISTRY_CACHE for single-turn reuse.
@@ -37,7 +37,7 @@ parse_zone_registry() {
   fi
 
   local config_file=""
-  for candidate in ".forge/config.md" "forge/.forge/config.md"; do
+  for candidate in ".tinkerman/config.md" "forge/.tinkerman/config.md"; do
     if [[ -f "$candidate" ]]; then
       config_file="$candidate"
       break
@@ -90,9 +90,9 @@ _parse_config_file() {
 
   if [[ -n "$frozen_block" ]]; then
     while IFS= read -r line; do
-      # Match lines like: - `.forge/specs/*/spec.md`（status: locked）
+      # Match lines like: - `.tinkerman/specs/*/spec.md`（status: locked）
       local raw_glob="" qualifier=""
-      if [[ "$line" =~ \`\.forge/([^\`]+)\` ]]; then
+      if [[ "$line" =~ \`\.tinkerman/([^\`]+)\` ]]; then
         raw_glob="${BASH_REMATCH[1]}"
       fi
       [[ -z "$raw_glob" ]] && continue
@@ -142,7 +142,7 @@ _parse_config_file() {
   if [[ -n "$guarded_block" ]]; then
     while IFS= read -r line; do
       local raw_glob=""
-      if [[ "$line" =~ \`\.forge/([^\`]+)\` ]]; then
+      if [[ "$line" =~ \`\.tinkerman/([^\`]+)\` ]]; then
         raw_glob="${BASH_REMATCH[1]}"
       fi
       [[ -z "$raw_glob" ]] && continue
@@ -187,10 +187,10 @@ classify_path() {
   local input_path="${1:-}"
   local forge_relative=""
 
-  # Normalize to .forge/-relative path
+  # Normalize to .tinkerman/-relative path
   forge_relative=$(_normalize_to_forge_relative "$input_path")
 
-  # Nothing to classify if not under .forge/
+  # Nothing to classify if not under .tinkerman/
   if [[ -z "$forge_relative" ]]; then
     echo "none NONE"
     return 0
@@ -245,9 +245,9 @@ _normalize_to_forge_relative() {
   local input="$1"
   # Unify separators
   input="${input//\\//}"
-  # Find .forge/ marker
-  if [[ "$input" == *".forge/"* ]]; then
-    local suffix="${input#*.forge/}"
+  # Find .tinkerman/ marker
+  if [[ "$input" == *".tinkerman/"* ]]; then
+    local suffix="${input#*.tinkerman/}"
     # Strip leading ./ or /
     suffix="${suffix#./}"
     suffix="${suffix#/}"
@@ -280,7 +280,7 @@ _read_file_status() {
   local target=""
 
   # Find the actual file
-  for candidate in ".forge/$forge_relative" "forge/.forge/$forge_relative" "$input_path"; do
+  for candidate in ".tinkerman/$forge_relative" "forge/.tinkerman/$forge_relative" "$input_path"; do
     if [[ -f "$candidate" ]]; then
       target="$candidate"
       break
@@ -333,23 +333,23 @@ emit_frozen_diagnostic() {
   case "$category" in
     frozen-spec)
       reason_text="Spec 文件已锁定，不可修改。"
-      suggested_alt=".forge/findings/$(echo "$path" | sed 's/[^a-zA-Z0-9]/-/g' | head -c 40).md"
+      suggested_alt=".tinkerman/findings/$(echo "$path" | sed 's/[^a-zA-Z0-9]/-/g' | head -c 40).md"
       unlock_instruction="将 spec.md 的 frontmatter status 改为 draft（需要用户手动操作）。"
       ;;
     frozen-plan)
       reason_text="Plan 已批准，不可修改。"
-      suggested_alt=".forge/findings/$(echo "$path" | sed 's/[^a-zA-Z0-9]/-/g' | head -c 40).md"
+      suggested_alt=".tinkerman/findings/$(echo "$path" | sed 's/[^a-zA-Z0-9]/-/g' | head -c 40).md"
       unlock_instruction="将 plan.md 的 frontmatter status 改为 draft（需要用户手动操作）。"
       ;;
     frozen-config)
-      reason_text=".forge/config.md 是项目配置根文件，不可通过 hook 自动修改。"
+      reason_text=".tinkerman/config.md 是项目配置根文件，不可通过 hook 自动修改。"
       suggested_alt=""
-      unlock_instruction="手动编辑 .forge/config.md 或通过 /tinkerman init 重新生成。"
+      unlock_instruction="手动编辑 .tinkerman/config.md 或通过 /tinkerman init 重新生成。"
       ;;
     frozen-custom)
       reason_text="此文件位于自定义冻结区，不可修改。"
       suggested_alt=""
-      unlock_instruction="检查 .forge/config.md 的 HARD-GATE 配置，或联系维护者解锁。"
+      unlock_instruction="检查 .tinkerman/config.md 的 HARD-GATE 配置，或联系维护者解锁。"
       ;;
     guarded-append)
       reason_text="受保护区文件仅允许追加，不允许覆盖或删除。"
@@ -364,7 +364,7 @@ emit_frozen_diagnostic() {
     *)
       reason_text="文件处于受保护区域。"
       suggested_alt=""
-      unlock_instruction="检查 .forge/config.md 了解保护规则。"
+      unlock_instruction="检查 .tinkerman/config.md 了解保护规则。"
       ;;
   esac
 
@@ -409,7 +409,7 @@ log_event() {
   local outcome="${5:-denied}"
 
   local runs_dir=""
-  for candidate in ".forge/runs" "forge/.forge/runs"; do
+  for candidate in ".tinkerman/runs" "forge/.tinkerman/runs"; do
     if [[ -d "$candidate" ]] || mkdir -p "$candidate" 2>/dev/null; then
       runs_dir="$candidate"
       break
@@ -484,7 +484,7 @@ guarded_append_check() {
 
   # Find the actual file
   local actual_file=""
-  for candidate in "$file_path" ".forge/$file_path" "forge/.forge/$file_path"; do
+  for candidate in "$file_path" ".tinkerman/$file_path" "forge/.tinkerman/$file_path"; do
     if [[ -f "$candidate" ]]; then
       actual_file="$candidate"
       break

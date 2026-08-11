@@ -5,7 +5,7 @@ updated: 2026-08-11
 
 ## 5. Decision Document Format
 
-Output path: `.forge/decisions/<YYYY-MM-DD>-<topic>.md`
+Output path: `.tinkerman/decisions/<YYYY-MM-DD>-<topic>.md`
 
 ```markdown
 ---
@@ -45,7 +45,7 @@ status: "confirmed"
 | Information Source | Pruning Strategy |
 |--------|---------|
 | Perspective Subagent output | Subagent_Summary_Protocol: Use only summaries for Round 2 input, ≤200 tokens/perspective |
-| Final decision document | Write-and-discard: Write full decision to `.forge/decisions/<topic>.md`, keep only decision conclusions in context |
+| Final decision document | Write-and-discard: Write full decision to `.tinkerman/decisions/<topic>.md`, keep only decision conclusions in context |
 
 **Function call**: `serializeSubagentSummary(summary)`
 - 参数：`summary` — Perspective Subagent original return value (needs to be parsed as `SubagentSummary` type)

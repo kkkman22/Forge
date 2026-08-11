@@ -3,7 +3,7 @@
  *
  * The pure parser/renderer live in `./glossary.ts`. This module adds the
  * thin driver that touches the file system: on first use it lazily creates
- * `.forge/glossary.md` seeded with the 12 core Forge terms; on subsequent
+ * `.tinkerman/glossary.md` seeded with the 12 core Forge terms; on subsequent
  * calls it parses and returns the existing file.
  *
  * Filesystem access is expressed through the small `GlossaryFs` interface
@@ -47,7 +47,7 @@ export interface GlossaryFs {
 // ---------------------------------------------------------------------------
 
 /** Default path (relative to repo root) for the glossary file. */
-export const DEFAULT_GLOSSARY_PATH = ".forge/glossary.md";
+export const DEFAULT_GLOSSARY_PATH = ".tinkerman/glossary.md";
 
 /**
  * Initial seed of 12 core Forge terms used when lazily creating the
@@ -132,7 +132,7 @@ export const INITIAL_GLOSSARY_TERMS: readonly Omit<GlossaryTerm, "last_updated">
  * Options for {@link ensureGlossaryExists}.
  *
  *   - `path` — override the default glossary file path. Defaults to
- *     `.forge/glossary.md` (relative to repo root). Callers may pass an
+ *     `.tinkerman/glossary.md` (relative to repo root). Callers may pass an
  *     absolute path.
  *   - `now`  — timestamp to stamp into the seed's `last_updated` field and
  *     the frontmatter `updated` field. Defaults to `new Date()`. Injected
@@ -144,7 +144,7 @@ export interface EnsureGlossaryOptions {
 }
 
 /**
- * Ensure `.forge/glossary.md` exists and return its parsed `Glossary`.
+ * Ensure `.tinkerman/glossary.md` exists and return its parsed `Glossary`.
  *
  * Behaviour:
  *   - When the file does not exist, seed it with the 12 preset terms in

@@ -16,7 +16,7 @@
  *   4. lintPass            — Lint passed (zero errors)
  *   5. acceptanceCriteria  — Acceptance criteria confirmed against Spec
  *   6. noTodoFixme         — No leftover TODO/FIXME in changed files
- *   7. progressUpdated     — .forge/progress/ updated with all tasks complete
+ *   7. progressUpdated     — .tinkerman/progress/ updated with all tasks complete
  */
 
 // ---------------------------------------------------------------------------

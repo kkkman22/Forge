@@ -51,21 +51,21 @@ function classifyFrozenPath(
   reason_code: FrozenReasonCode;
   suggested_alternative_path?: string;
 } {
-  if (filePath.includes(".forge/specs/")) {
+  if (filePath.includes(".tinkerman/specs/")) {
     return {
       category: "frozen-spec",
       reason_code: "SPEC_LOCKED",
-      suggested_alternative_path: `.forge/findings/${filePath.split("/").pop()?.replace(".md", "") ?? "topic"}.md`,
+      suggested_alternative_path: `.tinkerman/findings/${filePath.split("/").pop()?.replace(".md", "") ?? "topic"}.md`,
     };
   }
-  if (filePath.includes(".forge/plans/")) {
+  if (filePath.includes(".tinkerman/plans/")) {
     return {
       category: "frozen-plan",
       reason_code: "PLAN_APPROVED",
-      suggested_alternative_path: ".forge/progress/",
+      suggested_alternative_path: ".tinkerman/progress/",
     };
   }
-  if (filePath.endsWith(".forge/config.md") || filePath.includes(".forge/config")) {
+  if (filePath.endsWith(".tinkerman/config.md") || filePath.includes(".tinkerman/config")) {
     return { category: "frozen-config", reason_code: "CONFIG_ROOT" };
   }
   // Path is in the frozen zone but not a known sub-category → generic override.
@@ -82,7 +82,7 @@ function renderSystemMessage(diag: FrozenDiagnostic): string {
 
 /** Render the additionalContext with the suggested alternative + status reminder (R2.4). */
 function renderAdditionalContext(diag: FrozenDiagnostic): string {
-  const lines = ["Reminder: state changes belong in .forge/status.md, not in frozen files."];
+  const lines = ["Reminder: state changes belong in .tinkerman/status.md, not in frozen files."];
   if (diag.suggested_alternative_path) {
     lines.unshift(
       `Suggested alternative: consider writing to ${diag.suggested_alternative_path} instead.`,
@@ -99,11 +99,13 @@ function buildFrozenDiagnostic(filePath: string, status: string): FrozenDiagnost
   );
   const unlock: Record<FrozenReasonCode, string> = {
     SPEC_LOCKED:
-      "move the spec to draft status via /tinkerman spec, or record findings in .forge/findings/.",
-    PLAN_APPROVED: "re-open the plan via /tinkerman plan, or track progress in .forge/progress/.",
-    CONFIG_ROOT: "propose config changes via a new spec; do not edit .forge/config.md directly.",
+      "move the spec to draft status via /tinkerman spec, or record findings in .tinkerman/findings/.",
+    PLAN_APPROVED:
+      "re-open the plan via /tinkerman plan, or track progress in .tinkerman/progress/.",
+    CONFIG_ROOT:
+      "propose config changes via a new spec; do not edit .tinkerman/config.md directly.",
     ZONE_OVERRIDE_MISSING:
-      "add an explicit Zone_Registry override in .forge/config.md or move the file out of the frozen zone.",
+      "add an explicit Zone_Registry override in .tinkerman/config.md or move the file out of the frozen zone.",
   };
   return {
     path: filePath,
@@ -195,7 +197,7 @@ export function renderPostHocViolation(diag: FrozenDiagnostic): string {
 }
 
 /**
- * Write a breach audit record to `.forge/runs/<timestamp>-frozen-breach.md`
+ * Write a breach audit record to `.tinkerman/runs/<timestamp>-frozen-breach.md`
  * (R3.3). Best-effort: never throws (a failed audit log must not crash the hook).
  * @param forgeRoot absolute path to the .forge directory's parent
  * @param record the breach record
@@ -206,9 +208,9 @@ export function writeFrozenBreachRecord(
   record: FrozenBreachRecord,
 ): string | null {
   try {
-    // forgeRoot is the project root (parent of .forge/). Per R3.3 the audit
-    // record lives at .forge/runs/<stamp>-frozen-breach.md.
-    const runsDir = join(forgeRoot, ".forge", "runs");
+    // forgeRoot is the project root (parent of .tinkerman/). Per R3.3 the audit
+    // record lives at .tinkerman/runs/<stamp>-frozen-breach.md.
+    const runsDir = join(forgeRoot, ".tinkerman", "runs");
     mkdirSync(runsDir, { recursive: true });
     // Timestamp safe for filenames (no colons).
     const stamp = record.detectedAt.replace(/[:.]/g, "-");
@@ -264,7 +266,7 @@ export function writeFrozenBreachRecord(
  * with a revert prompt (R3.1/R3.2) and writes a breach audit record (R3.3).
  * Does NOT undo the write (R3.4).
  *
- * @param forgeRoot absolute path to the project root (parent of .forge/)
+ * @param forgeRoot absolute path to the project root (parent of .tinkerman/)
  */
 export function createFrozenZonePostToolUseHook(forgeRoot: string): HookCallback {
   return async (input, _toolUseId, _options): Promise<HookJSONOutput> => {

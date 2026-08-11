@@ -12,8 +12,8 @@ updated: 2026-08-11
    - `tsconfig.json` → TypeScript 配置
    - `Cargo.toml` → Rust 技术栈
    - `go.mod` → Go 技术栈
-2. 扫描 `.forge/decisions/` 提取已有 ADR 的架构决策
-3. 扫描 `.forge/specs/` 提取已有 spec 的约束
+2. 扫描 `.tinkerman/decisions/` 提取已有 ADR 的架构决策
+3. 扫描 `.tinkerman/specs/` 提取已有 spec 的约束
 
 ### 交互式问答
 
@@ -30,14 +30,14 @@ updated: 2026-08-11
 - 基于 `templates/charter-template.md` 模板
 - 填入扫描结果和用户确认的内容
 - Frontmatter `status: draft`（需用户后续通过 `update` 激活）
-- 写入 `.forge/charter.md`
+- 写入 `.tinkerman/charter.md`
 - 总长度不超过 150 行
 
 ## `/tinkerman charter update` — 交互式更新
 
 ### 前置检查
 
-- `.forge/charter.md` 不存在 → 提示运行 `init`，停止
+- `.tinkerman/charter.md` 不存在 → 提示运行 `init`，停止
 - 存在 → 读取并解析
 
 ### 一致性扫描
@@ -71,7 +71,7 @@ updated: 2026-08-11
 
 ### Major Bump 影响报告
 
-当版本发生 major bump：扫描 `.forge/specs/` 和 `.forge/decisions/`，标记引用了被修改/删除 invariant 的文档，输出影响报告。
+当版本发生 major bump：扫描 `.tinkerman/specs/` 和 `.tinkerman/decisions/`，标记引用了被修改/删除 invariant 的文档，输出影响报告。
 
 ## `/tinkerman charter check` — 非交互式校验
 
@@ -102,4 +102,4 @@ Exit code: 全部合规 → 0，存在违规 → 1
 
 ## `/tinkerman charter show` — 显示内容
 
-读取 `.forge/charter.md`，不存在则输出 `ℹ No charter found`。
+读取 `.tinkerman/charter.md`，不存在则输出 `ℹ No charter found`。

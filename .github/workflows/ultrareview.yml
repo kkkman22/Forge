@@ -47,14 +47,14 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: ultrareview-pr-${{ github.event.pull_request.number }}
-          path: .forge/reviews/${{ github.event.pull_request.number }}-ci.md
+          path: .tinkerman/reviews/${{ github.event.pull_request.number }}-ci.md
           retention-days: 30
 
       - name: Read review results
         if: always() && steps.check_key.outputs.has_key == 'true'
         id: read_results
         run: |
-          REVIEW_FILE=".forge/reviews/${{ github.event.pull_request.number }}-ci.md"
+          REVIEW_FILE=".tinkerman/reviews/${{ github.event.pull_request.number }}-ci.md"
           if [ -f "$REVIEW_FILE" ]; then
             # Extract severity counts from frontmatter
             P0=$(sed -n '/^severity_counts:/,/^[^ ]/p' "$REVIEW_FILE" | grep 'P0:' | awk '{print $2}' || echo "0")

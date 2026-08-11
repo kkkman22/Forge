@@ -6,7 +6,7 @@
 import { existsSync } from "node:fs";
 import { execFile } from "node:child_process";
 
-const DOCTOR_DISMISS_FILE = ".forge/.bootstrap-doctor-dismissed";
+const DOCTOR_DISMISS_FILE = ".tinkerman/.bootstrap-doctor-dismissed";
 
 // ---------------------------------------------------------------------------
 // Version diagnostic — pure function, exported for testing
@@ -70,10 +70,10 @@ export function shouldRunCmuxDoctor(env, fsExists) {
  * @returns {{ kind: "show" } | { kind: "skip", reason: "already_initialized"|"user_dismissed"|"no_plugin_context" }}
  */
 export function shouldShowBootstrap(env, fsExists) {
-  if (fsExists(`${env.cwd}/.forge/config.md`)) {
+  if (fsExists(`${env.cwd}/.tinkerman/config.md`)) {
     return { kind: "skip", reason: "already_initialized" };
   }
-  if (fsExists(`${env.cwd}/.forge/.bootstrap-dismissed`)) {
+  if (fsExists(`${env.cwd}/.tinkerman/.bootstrap-dismissed`)) {
     return { kind: "skip", reason: "user_dismissed" };
   }
   if (!env.pluginRoot || env.pluginRoot.length === 0) {
@@ -83,8 +83,8 @@ export function shouldShowBootstrap(env, fsExists) {
 }
 
 const BOOTSTRAP_TEXT = `💡 Forge plugin 已激活，但当前项目尚未初始化。
-	   运行 \`/tinkerman init\` 创建 .forge/ 目录、配置项目宪法与 7 个 Subagent。
-	   若不打算在本项目使用 Forge，可创建空文件 \`.forge/.bootstrap-dismissed\` 跳过此提示。`;
+	   运行 \`/tinkerman init\` 创建 .tinkerman/ 目录、配置项目宪法与 7 个 Subagent。
+	   若不打算在本项目使用 Forge，可创建空文件 \`.tinkerman/.bootstrap-dismissed\` 跳过此提示。`;
 
 function runDoctor(cwd) {
   return new Promise((resolve) => {

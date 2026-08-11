@@ -9,7 +9,7 @@
  *   - Stop hook: periodic staleness detection
  *   - /tinkerman learn: prompts user on session-start if stale rules exist
  *
- * Enforces `.forge/knowledge/evolved-rules.md` R1-style rule: retirement is
+ * Enforces `.tinkerman/knowledge/evolved-rules.md` R1-style rule: retirement is
  * evidence-based, not calendar-based.
  */
 
@@ -79,7 +79,7 @@ export function parseRules(fileContent: string): ParsedRule[] {
 }
 
 /**
- * Estimate sessions elapsed by counting directory entries under `.forge/runs/`
+ * Estimate sessions elapsed by counting directory entries under `.tinkerman/runs/`
  * whose mtime is strictly later than `lastTriggeredIso`.
  *
  * This is an approximation: a "session" = one run directory. Sessions without

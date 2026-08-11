@@ -16,13 +16,13 @@ commit 时是上下文最丰富的时刻——agent 刚干完，最清楚改了�
 
 ## 何时生成
 
-每个 build 原子提交（§6.2 Atomic Commits）前，紧接 §6.6 Change Summary 之后，追加一步：写 narrative 到 `.forge/runs/<run_id>/commit-narrative.md`。
+每个 build 原子提交（§6.2 Atomic Commits）前，紧接 §6.6 Change Summary 之后，追加一步：写 narrative 到 `.tinkerman/runs/<run_id>/commit-narrative.md`。
 
 ## 落盘位置与格式
 
-文件：`.forge/runs/<run_id>/commit-narrative.md`（append-only，每 commit 追加一节）。
+文件：`.tinkerman/runs/<run_id>/commit-narrative.md`（append-only，每 commit 追加一节）。
 
-`<run_id>` 从 loop-state.json 的 `id` 字段读取（loop 场景）；非 loop 场景（手动 `/tinkerman build`）用 `manual-<timestamp>`，落到 `.forge/runs/manual-<timestamp>/commit-narrative.md`。
+`<run_id>` 从 loop-state.json 的 `id` 字段读取（loop 场景）；非 loop 场景（手动 `/tinkerman build`）用 `manual-<timestamp>`，落到 `.tinkerman/runs/manual-<timestamp>/commit-narrative.md`。
 
 每节格式：
 
@@ -49,4 +49,4 @@ commit 时是上下文最丰富的时刻——agent 刚干完，最清楚改了�
 
 ## 不进 git
 
-`.forge/runs/` 在开放区（Open），是运行时产物，随 run 归档清理，不纳入版本管理。
+`.tinkerman/runs/` 在开放区（Open），是运行时产物，随 run 归档清理，不纳入版本管理。

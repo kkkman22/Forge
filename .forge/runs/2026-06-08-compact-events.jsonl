@@ -1,0 +1,92 @@
+{"timestamp":"2026-06-08T03:55:13Z","event":"postcompact_restore","detail":"slug=partial-spec-backlog-remediation"}
+{"timestamp":"2026-06-08T03:55:13Z","event":"precompact_snapshot","detail":"slug=audit-remediate-p0p1 phase=decide completed=0 pending=0"}
+{"timestamp":"2026-06-08T03:57:41Z","event":"postcompact_restore","detail":"slug=audit-remediate-p0p1"}
+{"timestamp":"2026-06-08T03:57:41Z","event":"precompact_snapshot","detail":"slug=audit-remediate-p0p1 phase=decide completed=0 pending=0"}
+{"timestamp":"2026-06-08T03:58:50Z","event":"postcompact_restore","detail":"slug=audit-remediate-p0p1"}
+{"timestamp":"2026-06-08T03:58:50Z","event":"precompact_snapshot","detail":"slug=audit-remediate-p0p1 phase=decide completed=0 pending=0"}
+{"timestamp":"2026-06-08T04:01:28Z","event":"postcompact_restore","detail":"slug=audit-remediate-p0p1"}
+{"timestamp":"2026-06-08T04:01:28Z","event":"precompact_snapshot","detail":"slug=audit-remediate-p0p1 phase=decide completed=0 pending=0"}
+{"timestamp":"2026-06-08T04:02:58Z","event":"postcompact_restore","detail":"slug=audit-remediate-p0p1"}
+{"timestamp":"2026-06-08T04:02:58Z","event":"precompact_snapshot","detail":"slug=audit-remediate-p0p1 phase=decide completed=0 pending=0"}
+{"timestamp":"2026-06-08T04:04:05Z","event":"postcompact_restore","detail":"slug=audit-remediate-p0p1"}
+{"timestamp":"2026-06-08T04:04:05Z","event":"precompact_snapshot","detail":"slug=audit-remediate-p0p1 phase=decide completed=0 pending=0"}
+{"timestamp":"2026-06-08T05:40:21Z","event":"postcompact_restore","detail":"slug=audit-remediate-p0p1"}
+{"timestamp":"2026-06-08T05:40:21Z","event":"precompact_snapshot","detail":"slug=audit-remediate-p0p1 phase=decide completed=0 pending=0"}
+{"timestamp":"2026-06-08T05:47:57Z","event":"postcompact_restore","detail":"slug=audit-remediate-p0p1"}
+{"timestamp":"2026-06-08T05:47:57Z","event":"precompact_snapshot","detail":"slug=audit-remediate-p0p1 phase=decide completed=0 pending=0"}
+{"timestamp":"2026-06-08T08:04:08Z","event":"postcompact_restore","detail":"slug=audit-remediate-p0p1"}
+{"timestamp":"2026-06-08T08:04:08Z","event":"precompact_snapshot","detail":"slug=audit-remediate-p0p1 phase=decide completed=0 pending=0"}
+{"timestamp":"2026-06-08T08:59:55Z","event":"postcompact_restore","detail":"slug=audit-remediate-p0p1"}
+{"timestamp":"2026-06-08T08:59:55Z","event":"precompact_snapshot","detail":"slug=audit-remediate-p0p1 phase=decide completed=0 pending=0"}
+{"timestamp":"2026-06-08T09:02:09Z","event":"postcompact_restore","detail":"slug=audit-remediate-p0p1"}
+{"timestamp":"2026-06-08T09:02:09Z","event":"precompact_snapshot","detail":"slug=audit-remediate-p0p1 phase=decide completed=0 pending=0"}
+{"timestamp":"2026-06-08T09:05:21Z","event":"postcompact_restore","detail":"slug=audit-remediate-p0p1"}
+{"timestamp":"2026-06-08T09:05:21Z","event":"precompact_snapshot","detail":"slug=audit-remediate-p0p1 phase=decide completed=0 pending=0"}
+{"timestamp":"2026-06-08T09:06:40Z","event":"postcompact_restore","detail":"slug=audit-remediate-p0p1"}
+{"timestamp":"2026-06-08T09:06:40Z","event":"precompact_snapshot","detail":"slug=audit-remediate-p0p1 phase=decide completed=0 pending=0"}
+{"timestamp":"2026-06-08T12:12:55Z","event":"postcompact_restore","detail":"slug=audit-remediate-p0p1"}
+{"timestamp":"2026-06-08T12:12:55Z","event":"precompact_snapshot","detail":"slug=audit-remediate-p0p1 phase=decide completed=0 pending=0"}
+{"timestamp":"2026-06-08T12:39:17Z","event":"postcompact_restore","detail":"slug=audit-remediate-p0p1"}
+{"timestamp":"2026-06-08T12:39:17Z","event":"precompact_snapshot","detail":"slug=audit-remediate-0608 phase=build completed=0 pending=0"}
+{"timestamp":"2026-06-08T12:40:50Z","event":"postcompact_restore","detail":"slug=audit-remediate-0608"}
+{"timestamp":"2026-06-08T12:40:50Z","event":"precompact_snapshot","detail":"slug=audit-remediate-0608 phase=build completed=0 pending=0"}
+{"timestamp":"2026-06-08T12:42:37Z","event":"postcompact_restore","detail":"slug=audit-remediate-0608"}
+{"timestamp":"2026-06-08T12:42:37Z","event":"precompact_snapshot","detail":"slug=audit-remediate-0608 phase=build completed=0 pending=0"}
+{"timestamp":"2026-06-08T12:49:42Z","event":"postcompact_restore","detail":"slug=audit-remediate-0608"}
+{"timestamp":"2026-06-08T12:49:42Z","event":"precompact_snapshot","detail":"slug=audit-remediate-0608 phase=build completed=0 pending=0"}
+{"timestamp":"2026-06-08T12:51:06Z","event":"postcompact_restore","detail":"slug=audit-remediate-0608"}
+{"timestamp":"2026-06-08T12:51:06Z","event":"precompact_snapshot","detail":"slug=audit-remediate-0608 phase=build completed=0 pending=0"}
+{"timestamp":"2026-06-08T12:52:43Z","event":"postcompact_restore","detail":"slug=audit-remediate-0608"}
+{"timestamp":"2026-06-08T12:52:43Z","event":"precompact_snapshot","detail":"slug=audit-remediate-0608 phase=build completed=0 pending=0"}
+{"timestamp":"2026-06-08T12:54:01Z","event":"postcompact_restore","detail":"slug=audit-remediate-0608"}
+{"timestamp":"2026-06-08T12:54:01Z","event":"precompact_snapshot","detail":"slug=audit-remediate-0608 phase=build completed=0 pending=0"}
+{"timestamp":"2026-06-08T12:57:43Z","event":"postcompact_restore","detail":"slug=audit-remediate-0608"}
+{"timestamp":"2026-06-08T12:57:43Z","event":"precompact_snapshot","detail":"slug=audit-remediate-0608 phase=build completed=0 pending=0"}
+{"timestamp":"2026-06-08T12:58:59Z","event":"postcompact_restore","detail":"slug=audit-remediate-0608"}
+{"timestamp":"2026-06-08T12:58:59Z","event":"precompact_snapshot","detail":"slug=audit-remediate-0608 phase=build completed=0 pending=0"}
+{"timestamp":"2026-06-08T13:00:44Z","event":"postcompact_restore","detail":"slug=audit-remediate-0608"}
+{"timestamp":"2026-06-08T13:00:44Z","event":"precompact_snapshot","detail":"slug=audit-remediate-0608 phase=build completed=0 pending=0"}
+{"timestamp":"2026-06-08T13:01:56Z","event":"postcompact_restore","detail":"slug=audit-remediate-0608"}
+{"timestamp":"2026-06-08T13:01:56Z","event":"precompact_snapshot","detail":"slug=audit-remediate-0608 phase=build completed=0 pending=0"}
+{"timestamp":"2026-06-08T13:03:53Z","event":"postcompact_restore","detail":"slug=audit-remediate-0608"}
+{"timestamp":"2026-06-08T13:03:53Z","event":"precompact_snapshot","detail":"slug=audit-remediate-0608 phase=build completed=0 pending=0"}
+{"timestamp":"2026-06-08T13:05:08Z","event":"postcompact_restore","detail":"slug=audit-remediate-0608"}
+{"timestamp":"2026-06-08T13:05:08Z","event":"precompact_snapshot","detail":"slug=audit-remediate-0608 phase=build completed=0 pending=0"}
+{"timestamp":"2026-06-08T13:08:46Z","event":"postcompact_restore","detail":"slug=audit-remediate-0608"}
+{"timestamp":"2026-06-08T13:08:46Z","event":"precompact_snapshot","detail":"slug=audit-remediate-0608 phase=build completed=0 pending=0"}
+{"timestamp":"2026-06-08T13:09:59Z","event":"postcompact_restore","detail":"slug=audit-remediate-0608"}
+{"timestamp":"2026-06-08T13:09:59Z","event":"precompact_snapshot","detail":"slug=audit-remediate-0608 phase=build completed=0 pending=0"}
+{"timestamp":"2026-06-08T13:11:40Z","event":"postcompact_restore","detail":"slug=audit-remediate-0608"}
+{"timestamp":"2026-06-08T13:11:40Z","event":"precompact_snapshot","detail":"slug=audit-remediate-0608 phase=build completed=0 pending=0"}
+{"timestamp":"2026-06-08T13:13:07Z","event":"postcompact_restore","detail":"slug=audit-remediate-0608"}
+{"timestamp":"2026-06-08T13:13:07Z","event":"precompact_snapshot","detail":"slug=audit-remediate-0608 phase=build completed=0 pending=0"}
+{"timestamp":"2026-06-08T13:54:37Z","event":"postcompact_restore","detail":"slug=audit-remediate-0608"}
+{"timestamp":"2026-06-08T13:54:37Z","event":"precompact_snapshot","detail":"slug=audit-remediate-0608 phase=build completed=0 pending=0"}
+{"timestamp":"2026-06-08T14:27:31Z","event":"postcompact_restore","detail":"slug=audit-remediate-0608"}
+{"timestamp":"2026-06-08T14:27:31Z","event":"precompact_snapshot","detail":"slug=audit-remediate-0608 phase=build completed=0 pending=0"}
+{"timestamp":"2026-06-08T14:29:09Z","event":"postcompact_restore","detail":"slug=audit-remediate-0608"}
+{"timestamp":"2026-06-08T14:29:10Z","event":"precompact_snapshot","detail":"slug=audit-remediate-0608 phase=build completed=0 pending=0"}
+{"timestamp":"2026-06-08T14:30:21Z","event":"postcompact_restore","detail":"slug=audit-remediate-0608"}
+{"timestamp":"2026-06-08T14:30:21Z","event":"precompact_snapshot","detail":"slug=audit-remediate-0608 phase=build completed=0 pending=0"}
+{"timestamp":"2026-06-08T14:32:10Z","event":"postcompact_restore","detail":"slug=audit-remediate-0608"}
+{"timestamp":"2026-06-08T14:32:10Z","event":"precompact_snapshot","detail":"slug=audit-remediate-0608 phase=build completed=0 pending=0"}
+{"timestamp":"2026-06-08T14:33:23Z","event":"postcompact_restore","detail":"slug=audit-remediate-0608"}
+{"timestamp":"2026-06-08T14:33:23Z","event":"precompact_snapshot","detail":"slug=audit-remediate-0608 phase=build completed=0 pending=0"}
+{"timestamp":"2026-06-08T14:35:22Z","event":"postcompact_restore","detail":"slug=audit-remediate-0608"}
+{"timestamp":"2026-06-08T14:35:22Z","event":"precompact_snapshot","detail":"slug=audit-remediate-0608 phase=build completed=0 pending=0"}
+{"timestamp":"2026-06-08T14:36:33Z","event":"postcompact_restore","detail":"slug=audit-remediate-0608"}
+{"timestamp":"2026-06-08T14:36:33Z","event":"precompact_snapshot","detail":"slug=audit-remediate-0608 phase=build completed=0 pending=0"}
+{"timestamp":"2026-06-08T14:38:11Z","event":"postcompact_restore","detail":"slug=audit-remediate-0608"}
+{"timestamp":"2026-06-08T14:38:11Z","event":"precompact_snapshot","detail":"slug=audit-remediate-0608 phase=build completed=0 pending=0"}
+{"timestamp":"2026-06-08T15:29:03Z","event":"postcompact_restore","detail":"slug=audit-remediate-0608"}
+{"timestamp":"2026-06-08T15:29:03Z","event":"precompact_snapshot","detail":"slug=audit-remediate-0608 phase=build completed=0 pending=0"}
+{"timestamp":"2026-06-08T15:30:20Z","event":"postcompact_restore","detail":"slug=audit-remediate-0608"}
+{"timestamp":"2026-06-08T15:30:20Z","event":"precompact_snapshot","detail":"slug=audit-remediate-0608 phase=build completed=0 pending=0"}
+{"timestamp":"2026-06-08T15:32:16Z","event":"postcompact_restore","detail":"slug=audit-remediate-0608"}
+{"timestamp":"2026-06-08T15:32:16Z","event":"precompact_snapshot","detail":"slug=audit-remediate-0608 phase=build completed=0 pending=0"}
+{"timestamp":"2026-06-08T15:33:31Z","event":"postcompact_restore","detail":"slug=audit-remediate-0608"}
+{"timestamp":"2026-06-08T15:33:32Z","event":"precompact_snapshot","detail":"slug=audit-remediate-0608 phase=build completed=0 pending=0"}
+{"timestamp":"2026-06-08T15:35:18Z","event":"postcompact_restore","detail":"slug=audit-remediate-0608"}
+{"timestamp":"2026-06-08T15:35:18Z","event":"precompact_snapshot","detail":"slug=audit-remediate-0608 phase=build completed=0 pending=0"}
+{"timestamp":"2026-06-08T15:36:42Z","event":"postcompact_restore","detail":"slug=audit-remediate-0608"}
+{"timestamp":"2026-06-08T15:36:42Z","event":"precompact_snapshot","detail":"slug=audit-remediate-0608 phase=build completed=0 pending=0"}

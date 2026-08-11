@@ -3,12 +3,12 @@
 #
 # Forge Auto-Resume — SessionStart Hook
 #
-# Detects unfinished tasks in .forge/status.md and automatically injects
+# Detects unfinished tasks in .tinkerman/status.md and automatically injects
 # context so the user doesn't need to manually run /tinkerman resume.
 
 set -euo pipefail
 
-FORGE_DIR=".forge"
+FORGE_DIR=".tinkerman"
 STATUS_FILE="$FORGE_DIR/status.md"
 STALE_THRESHOLD_MINUTES=120
 

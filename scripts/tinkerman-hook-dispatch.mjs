@@ -29,7 +29,7 @@ function projectRoot() {
 }
 
 function statusLine(root) {
-  const statusPath = join(root, ".forge", "status.md");
+  const statusPath = join(root, ".tinkerman", "status.md");
   if (!existsSync(statusPath)) return "Forge runtime active; no status.md found.";
   const content = readFileSync(statusPath, "utf-8");
   const phase = content.match(/^phase:\s*"?([^"\n]+)"?/m)?.[1] ?? "unknown";

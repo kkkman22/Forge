@@ -58,8 +58,8 @@ function createCountingFs(files: Record<string, string | null>): FileSystem & {
 }
 
 const REPOS_ROOT = "/repos";
-const GLOSSARY_PATH = path.join(REPOS_ROOT, ".forge", "glossary.md");
-const CONFIG_PATH = path.join(REPOS_ROOT, ".forge", "config.md");
+const GLOSSARY_PATH = path.join(REPOS_ROOT, ".tinkerman", "glossary.md");
+const CONFIG_PATH = path.join(REPOS_ROOT, ".tinkerman", "config.md");
 const PACKS_DIR = path.join(REPOS_ROOT, "packs");
 
 function flatGlossaryMd(): string {

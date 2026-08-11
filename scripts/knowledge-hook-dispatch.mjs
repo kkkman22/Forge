@@ -6,7 +6,7 @@
 //   node knowledge-hook-dispatch.mjs --event <json>      — Direct event dispatch
 //   node knowledge-hook-dispatch.mjs --check-catalog     — Catalog freshness check
 //
-// Exit codes: 0 success / 1 error / 2 no .forge/
+// Exit codes: 0 success / 1 error / 2 no .tinkerman/
 
 import { existsSync, readFileSync, writeFileSync } from "node:fs";
 import { resolve, join, basename } from "node:path";
@@ -31,7 +31,7 @@ const args = process.argv.slice(2);
 const forgeRoot = findForgeRoot();
 if (!forgeRoot) process.exit(2);
 
-// Migrate old .forge/.cache/ to plugin data dir on first run
+// Migrate old .tinkerman/.cache/ to plugin data dir on first run
 migrateOldCache(forgeRoot);
 
 // ---------------------------------------------------------------------------
@@ -183,7 +183,7 @@ function deriveEventFromPath(relPath) {
 function findForgeRoot() {
   let dir = process.cwd();
   for (let i = 0; i < 10; i++) {
-    if (existsSync(join(dir, ".forge"))) return join(dir, ".forge");
+    if (existsSync(join(dir, ".tinkerman"))) return join(dir, ".tinkerman");
     const parent = resolve(dir, "..");
     if (parent === dir) break;
     dir = parent;

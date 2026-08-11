@@ -4,7 +4,7 @@ describe("ship_merge conflict-resolver integration", () => {
   it("resolves guarded conflicts via handleMergeConflict", async () => {
     const { handleMergeConflict } = await import("../src/conflict-resolver.js");
     const result = await handleMergeConflict(
-      "Ship merge failed: CONFLICT (content): Merge conflict in .forge/progress/auth.md",
+      "Ship merge failed: CONFLICT (content): Merge conflict in .tinkerman/progress/auth.md",
       "autonomous",
       {
         statusContent: "current_task: auth\n",
@@ -14,14 +14,14 @@ describe("ship_merge conflict-resolver integration", () => {
       },
     );
     expect(result.handled).toBe(true);
-    expect(result.resolvedPaths).toContain(".forge/progress/auth.md");
+    expect(result.resolvedPaths).toContain(".tinkerman/progress/auth.md");
     expect(result.shouldAbort).toBe(false);
   });
 
   it("aborts on frozen conflict in autonomous via handleMergeConflict", async () => {
     const { handleMergeConflict } = await import("../src/conflict-resolver.js");
     const result = await handleMergeConflict(
-      "CONFLICT (content): Merge conflict in .forge/specs/auth/spec.md",
+      "CONFLICT (content): Merge conflict in .tinkerman/specs/auth/spec.md",
       "autonomous",
       {
         statusContent: "current_task: auth\n",
@@ -32,7 +32,7 @@ describe("ship_merge conflict-resolver integration", () => {
     );
     expect(result.handled).toBe(true);
     expect(result.shouldAbort).toBe(true);
-    expect(result.refusedPaths).toContain(".forge/specs/auth/spec.md");
+    expect(result.refusedPaths).toContain(".tinkerman/specs/auth/spec.md");
   });
 
   it("returns not handled when no conflict paths found", async () => {
@@ -50,7 +50,7 @@ describe("ship_merge conflict-resolver integration", () => {
   it("resolves reviews conflict and proceeds with merge", async () => {
     const { handleMergeConflict } = await import("../src/conflict-resolver.js");
     const result = await handleMergeConflict(
-      "CONFLICT (content): Merge conflict in .forge/reviews/auth.md",
+      "CONFLICT (content): Merge conflict in .tinkerman/reviews/auth.md",
       "autonomous",
       {
         statusContent: "current_task: auth\n",
@@ -60,7 +60,7 @@ describe("ship_merge conflict-resolver integration", () => {
       },
     );
     expect(result.handled).toBe(true);
-    expect(result.resolvedPaths).toContain(".forge/reviews/auth.md");
+    expect(result.resolvedPaths).toContain(".tinkerman/reviews/auth.md");
     expect(result.shouldAbort).toBe(false);
   });
 });

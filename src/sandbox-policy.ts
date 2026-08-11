@@ -290,8 +290,8 @@ export function buildDefaultPolicy(projectRoot: string): PermissionPolicy {
     fileSystem: {
       allow: [`${normalizedRoot}/**`, normalizedRoot],
       deny: [
-        `${normalizedRoot}/.forge/sandbox.json`,
-        `${normalizedRoot}/.forge/.sandbox-active.json`,
+        `${normalizedRoot}/.tinkerman/sandbox.json`,
+        `${normalizedRoot}/.tinkerman/.sandbox-active.json`,
       ],
     },
     network: {

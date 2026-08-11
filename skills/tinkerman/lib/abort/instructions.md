@@ -12,22 +12,22 @@ allowed_tools:
 
 > **Trigger**: User inputs `/tinkerman abort`
 > **Responsibility**: Safely abort the current task, archive existing state, clean up status.md, allow the user to cleanly start a new task
-> **Output Path**: `.forge/archive/<date>-<topic>/` (archive) + `.forge/status.md` (reset)
+> **Output Path**: `.tinkerman/archive/<date>-<topic>/` (archive) + `.tinkerman/status.md` (reset)
 
 ---
 
 ## 1. Overview
 
-`/tinkerman abort` 是 Forge 工作流的精简中止机制——仅归档 `.forge/status.md` 并重置 Forge-local 工作状态。
+`/tinkerman abort` 是 Forge 工作流的精简中止机制——仅归档 `.tinkerman/status.md` 并重置 Forge-local 工作状态。
 
 **核心原则**：中止不是失败，是明智的止损。已产生的工作成果归档保留，不丢弃。
 
-**Delegation_Adapter**: 会话级 abort 逻辑不在此 skill 范围内。Forge 只管 `.forge/` 状态文件的归档与重置。会话级取消由 Claude Code 平台原生处理。
+**Delegation_Adapter**: 会话级 abort 逻辑不在此 skill 范围内。Forge 只管 `.tinkerman/` 状态文件的归档与重置。会话级取消由 Claude Code 平台原生处理。
 
 > ⚠️ Slimming Notice: 此 skill 已从"会话级 abort"精简为"归档+重置"。首次使用新版本时将输出 Deprecation_Notice。
 
 **职责范围**（精简后）：
-1. 归档 `.forge/status.md` 到 `.forge/archive/<ISO-date>-<topic>/`
+1. 归档 `.tinkerman/status.md` 到 `.tinkerman/archive/<ISO-date>-<topic>/`
 2. 重置 Forge-local 工作状态（progress、status、findings 当前指针）
 
 **不在范围内**：
@@ -44,7 +44,7 @@ allowed_tools:
 
 ### Step 1: Confirm Abort
 
-**Single-task mode**: Read `.forge/status.md` and display the current task status to the user.
+**Single-task mode**: Read `.tinkerman/status.md` and display the current task status to the user.
 
 ```
 ⚠️ 即将中止当前任务
@@ -54,7 +54,7 @@ allowed_tools:
 阶段：<phase>
 
 中止后：
-  - 当前任务的所有状态文件将归档到 .forge/archive/
+  - 当前任务的所有状态文件将归档到 .tinkerman/archive/
   - status.md 将被重置
   - 你可以立即开始新任务
 
@@ -67,19 +67,19 @@ allowed_tools:
 
 ### Step 2: Archive State Files
 
-**Single-task mode**: Move all state files related to the current task to `.forge/archive/YYYY-MM-DD-<topic>/`.
+**Single-task mode**: Move all state files related to the current task to `.tinkerman/archive/YYYY-MM-DD-<topic>/`.
 
-**Multi-task mode**: Call `archiveTaskStatus(io, forgeRoot, taskName, date)` to move `.forge/status/<task-id>.md` to the archive directory. Other tasks' StatusFiles are unaffected.
+**Multi-task mode**: Call `archiveTaskStatus(io, forgeRoot, taskName, date)` to move `.tinkerman/status/<task-id>.md` to the archive directory. Other tasks' StatusFiles are unaffected.
 
 | Source | Archive Condition |
 |--------|-------------------|
-| `.forge/decisions/<topic>*` | If exists |
-| `.forge/specs/<topic>/` | If exists |
-| `.forge/plans/<topic>*` | If exists |
-| `.forge/findings/<topic>*` | If exists |
-| `.forge/progress/<topic>*` | If exists |
-| `.forge/reviews/<topic>*` | If exists |
-| `.forge/debug/<topic>*` | If exists |
+| `.tinkerman/decisions/<topic>*` | If exists |
+| `.tinkerman/specs/<topic>/` | If exists |
+| `.tinkerman/plans/<topic>*` | If exists |
+| `.tinkerman/findings/<topic>*` | If exists |
+| `.tinkerman/progress/<topic>*` | If exists |
+| `.tinkerman/reviews/<topic>*` | If exists |
+| `.tinkerman/debug/<topic>*` | If exists |
 
 归档方式：移动（不是复制）。
 
@@ -103,7 +103,7 @@ updated: 2026-08-11YYYY-MM-DD HH:mm"
 ```
 ✅ 任务已中止
 
-归档位置：.forge/archive/YYYY-MM-DD-<topic>/
+归档位置：.tinkerman/archive/YYYY-MM-DD-<topic>/
 已归档文件：<N> 个
 
 status.md 已重置。你可以使用 /tinkerman 开始新任务。
@@ -123,20 +123,20 @@ status.md 已重置。你可以使用 /tinkerman 开始新任务。
 
 | 条件 | 处理 |
 |------|------|
-| 无 `.forge/` 目录 | ⚠️ 请先运行 /tinkerman init |
+| 无 `.tinkerman/` 目录 | ⚠️ 请先运行 /tinkerman init |
 | 无进行中的任务 | ℹ️ 当前没有进行中的任务，无需中止 |
 | 用户取消中止 | ℹ️ 已取消中止。当前任务继续 |
-| 归档目录已存在 | 追加序号：`.forge/archive/YYYY-MM-DD-<topic>-2/` |
+| 归档目录已存在 | 追加序号：`.tinkerman/archive/YYYY-MM-DD-<topic>-2/` |
 
 ---
 
 ## 4. 注意事项
 
-- **abort 不会撤销代码变更**。已提交的 commit 不会被回滚。abort 只清理 `.forge/` 状态文件。
-- **abort 不会删除知识**。`.forge/knowledge/` 目录不受影响——已沉淀的知识是项目资产。
-- **归档文件可以手动恢复**。从 `.forge/archive/` 手动移回即可。
+- **abort 不会撤销代码变更**。已提交的 commit 不会被回滚。abort 只清理 `.tinkerman/` 状态文件。
+- **abort 不会删除知识**。`.tinkerman/knowledge/` 目录不受影响——已沉淀的知识是项目资产。
+- **归档文件可以手动恢复**。从 `.tinkerman/archive/` 手动移回即可。
 
 ## Gotchas
 - **Partial abort**: Only archives status but leaves working tree dirty → git stash or commit before abort → remind user to clean up
-- **Orphan progress files**: Abort doesn't delete .forge/progress/ files → stale progress confused on resume → abort should note orphan files
+- **Orphan progress files**: Abort doesn't delete .tinkerman/progress/ files → stale progress confused on resume → abort should note orphan files
 - **Double abort**: Running abort twice on same task → second abort finds nothing to abort → idempotent, just warn

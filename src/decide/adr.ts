@@ -9,7 +9,7 @@ import { parseFrontmatter } from "../frontmatter.js";
 import type { AdrSupersessionUpdate, FinalizeAdrInput, FinalizeAdrOutput } from "./types.js";
 
 /** Canonical path of the ADR index file. */
-const ADR_INDEX_PATH = ".forge/knowledge/adr-index.md";
+const ADR_INDEX_PATH = ".tinkerman/knowledge/adr-index.md";
 
 /**
  * Convert a topic string to kebab-case.
@@ -47,7 +47,7 @@ export function toKebabCase(topic: string): string {
  */
 export function generateDecisionPath(date: string, topic: string): string {
   const kebabTopic = toKebabCase(topic);
-  return `.forge/decisions/${date}-${kebabTopic}.md`;
+  return `.tinkerman/decisions/${date}-${kebabTopic}.md`;
 }
 
 /**
@@ -169,7 +169,7 @@ export function finalizeAdr(
 ): FinalizeAdrOutput {
   const id = nextAdrId(input.existingAdrs);
   const slug = toKebabCase(input.topic);
-  const adrFilePath = `.forge/decisions/${id}-${slug}.md`;
+  const adrFilePath = `.tinkerman/decisions/${id}-${slug}.md`;
 
   const newEntry: AdrEntry = {
     id,

@@ -5,7 +5,7 @@ import { buildReviewSubagents } from "../src/review.js";
 describe("buildReviewSubagents Layer 4", () => {
   const baseContext: ReviewSubagentContext = {
     hasSpec: true,
-    specPath: ".forge/specs/test/spec.md",
+    specPath: ".tinkerman/specs/test/spec.md",
     changedFiles: ["src/App.vue"],
   };
 

@@ -2,7 +2,7 @@
  * Glossary Registry — types, parser, and renderer for the Forge shared
  * domain glossary.
  *
- * The glossary lives in `.forge/glossary.md` (Open zone) and is consumed by
+ * The glossary lives in `.tinkerman/glossary.md` (Open zone) and is consumed by
  * `forge-spec`, `forge-plan`, `forge-learn`, and `forge-decide` to keep
  * naming consistent across multi-session work. This module provides the
  * pure file-format layer only: parsing a markdown document into a
@@ -54,7 +54,7 @@ import { extractNumericField, extractStringField, parseFrontmatter } from "./fro
  *
  * Optional fields:
  *   - aliases:        alternative names that map to the same term
- *   - source_session: filename in `.forge/knowledge/sessions/` that
+ *   - source_session: filename in `.tinkerman/knowledge/sessions/` that
  *                     introduced the term, when available
  */
 export interface GlossaryTerm {

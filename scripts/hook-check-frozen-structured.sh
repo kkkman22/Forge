@@ -52,9 +52,9 @@ _hook_deny_frozen() {
 
   local additional=""
   if [[ -n "$suggested_alt" ]]; then
-    additional="Consider writing to ${suggested_alt} instead. State changes go to .forge/status.md."
+    additional="Consider writing to ${suggested_alt} instead. State changes go to .tinkerman/status.md."
   else
-    additional="State changes go to .forge/status.md."
+    additional="State changes go to .tinkerman/status.md."
   fi
 
   if command -v jq >/dev/null 2>&1; then
@@ -120,7 +120,7 @@ _hook_handle_bash() {
 
   # Scan for frozen-zone paths in bash command
   local paths=""
-  paths=$(printf '%s' "$bash_cmd" | grep -oE '\.forge/(specs|plans|config\.md)[a-zA-Z0-9_./-]*' 2>/dev/null || true)
+  paths=$(printf '%s' "$bash_cmd" | grep -oE '\.tinkerman/(specs|plans|config\.md)[a-zA-Z0-9_./-]*' 2>/dev/null || true)
   [[ -z "$paths" ]] && return 0
 
   while IFS= read -r detected_path; do

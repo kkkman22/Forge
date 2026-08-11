@@ -25,8 +25,8 @@ updated: 2026-08-11
 ## `maintainKnowledgeBase(knowledgeDir, maxDocs)`
 
 - **参数**：
-  - `knowledgeDir` — `.forge/knowledge/` 目录路径
-  - `maxDocs` — 最大文档数量（来自 `.forge/config.md` 配置）
+  - `knowledgeDir` — `.tinkerman/knowledge/` 目录路径
+  - `maxDocs` — 最大文档数量（来自 `.tinkerman/config.md` 配置）
 - **返回**：清理后的文档列表
 - **用途**：当知识库超过上限时，按置信度排序清理低置信度条目（confidence < 0.3 自动清理）
 
@@ -73,7 +73,7 @@ updated: 2026-08-11
 
 - **参数**：
   - `sessionData` — 会话数据
-  - `glossary` — `loadEnforcementGlossary(rootDir, fs)` 返回的 enforcement glossary（扁平 `.forge/glossary.md` 主权源 + enabled pack 术语只读补充）
+  - `glossary` — `loadEnforcementGlossary(rootDir, fs)` 返回的 enforcement glossary（扁平 `.tinkerman/glossary.md` 主权源 + enabled pack 术语只读补充）
 - **返回**：候选术语列表
 - **用途**：从会话数据中提取潜在的术语候选项
 
@@ -82,7 +82,7 @@ updated: 2026-08-11
 ## `proposeStaleTerms(glossary, now, maxAgeDays)`
 
 - **参数**：
-  - `glossary` — `loadEnforcementGlossary(rootDir, fs)` 返回的 enforcement glossary（扁平 `.forge/glossary.md` 主权源 + enabled pack 术语只读补充）
+  - `glossary` — `loadEnforcementGlossary(rootDir, fs)` 返回的 enforcement glossary（扁平 `.tinkerman/glossary.md` 主权源 + enabled pack 术语只读补充）
   - `now` — 当前时间戳
   - `maxAgeDays` — 最大存活天数
 - **返回**：过期术语提议列表
@@ -147,7 +147,7 @@ updated: 2026-08-11
 ## `mergeTerm(glossary, candidate, strategy)`
 
 - **参数**：
-  - `glossary` — `loadEnforcementGlossary(rootDir, fs)` 返回的 enforcement glossary（扁平 `.forge/glossary.md` 主权源 + enabled pack 术语只读补充）
+  - `glossary` — `loadEnforcementGlossary(rootDir, fs)` 返回的 enforcement glossary（扁平 `.tinkerman/glossary.md` 主权源 + enabled pack 术语只读补充）
   - `candidate` — 候选术语
   - `strategy` — 合并策略
 - **返回**：更新后的术语表
@@ -158,7 +158,7 @@ updated: 2026-08-11
 ## `archiveTerm(glossary, termName)`
 
 - **参数**：
-  - `glossary` — `loadEnforcementGlossary(rootDir, fs)` 返回的 enforcement glossary（扁平 `.forge/glossary.md` 主权源 + enabled pack 术语只读补充）
+  - `glossary` — `loadEnforcementGlossary(rootDir, fs)` 返回的 enforcement glossary（扁平 `.tinkerman/glossary.md` 主权源 + enabled pack 术语只读补充）
   - `termName` — 术语名称
 - **返回**：更新后的术语表
 - **用途**：从术语表中归档指定术语

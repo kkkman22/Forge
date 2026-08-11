@@ -13,7 +13,7 @@ allowed_tools:
 **Use when** you need to produce an evidence-based three-state verdict (VERIFIED / NOT_VERIFIED / INCONCLUSIVE) for a specific deliverable or claim. This is *evidence aggregation and tri-state judgment* — collecting all available evidence and producing a falsifiable conclusion. Do not confuse with `/tinkerman accept` (running acceptance scenarios) or `/tinkerman ship` (merge + release).
 
 > **触发**：`/tinkerman verify <topic>` / bugfix tier 自动 / `/tinkerman debug` Phase 4
-> **输出**：`.forge/findings/<topic>/verify-this/`
+> **输出**：`.tinkerman/findings/<topic>/verify-this/`
 
 ## 1. Overview
 
@@ -59,7 +59,7 @@ CLI_Harness 和 UI_Harness 产出相同 schema 的 `verdict.md`，Forge_Verify �
 
 ## 7. Concurrency
 
-`.forge/.locks/<topic>.lock` 互斥锁保护并发调用。
+`.tinkerman/.locks/<topic>.lock` 互斥锁保护并发调用。
 
 ## Common Rationalizations
 

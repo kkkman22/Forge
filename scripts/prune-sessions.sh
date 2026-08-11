@@ -2,10 +2,10 @@
 set -uo pipefail
 # category: user-facing
 # ============================================================================
-# prune-sessions.sh — Remove expired .forge/knowledge/sessions/*.md journals.
+# prune-sessions.sh — Remove expired .tinkerman/knowledge/sessions/*.md journals.
 #
 # Reads `session_retention_days` (default: 90) and `session_keep_recent`
-# (default: 5) from `.forge/config.md` frontmatter.
+# (default: 5) from `.tinkerman/config.md` frontmatter.
 #
 # A session journal is pruned when BOTH conditions hold:
 #   1. Its mtime is older than `session_retention_days`, AND
@@ -14,7 +14,7 @@ set -uo pipefail
 # Protection set (never pruned regardless of age):
 #   - The `session_keep_recent` newest journals by mtime.
 #   - Any journal referenced via `source_session:` in
-#     `.forge/knowledge/solutions/*.md` (currently a best-effort grep;
+#     `.tinkerman/knowledge/solutions/*.md` (currently a best-effort grep;
 #     solutions/ does not yet populate this field, so the set is empty
 #     today but the logic is forward-compatible).
 #
@@ -33,7 +33,7 @@ DRY_RUN="no"
 if [[ "${1:-}" == "--help" || "${1:-}" == "-h" ]]; then
   echo "Usage: scripts/prune-sessions.sh [--dry-run]"
   echo ""
-  echo "Remove expired .forge/knowledge/sessions/*.md journals based on retention config."
+  echo "Remove expired .tinkerman/knowledge/sessions/*.md journals based on retention config."
   echo "Protected: newest N journals + any referenced by solutions/."
   echo "  --dry-run  Report what would be deleted without actually deleting"
   exit 0
@@ -41,9 +41,9 @@ elif [[ "${1:-}" == "--dry-run" ]]; then
   DRY_RUN="yes"
 fi
 
-CONFIG_FILE=".forge/config.md"
-SESSIONS_DIR=".forge/knowledge/sessions"
-SOLUTIONS_DIR=".forge/knowledge/solutions"
+CONFIG_FILE=".tinkerman/config.md"
+SESSIONS_DIR=".tinkerman/knowledge/sessions"
+SOLUTIONS_DIR=".tinkerman/knowledge/solutions"
 
 # Defaults, overridden by config when present.
 RETENTION_DAYS=90
@@ -184,7 +184,7 @@ echo "prune-sessions: pruned=${PRUNED_COUNT}, protected_hits=${PROTECTED_HIT_COU
 # Event log is gitignored; the tracked tool-health.md holds only the summary.
 # ---------------------------------------------------------------------------
 
-HEALTH_FILE=".forge/knowledge/tool-health.log"
+HEALTH_FILE=".tinkerman/knowledge/tool-health.log"
 SUMMARY="prune-sessions: $(date -u +%Y-%m-%dT%H:%M:%SZ) pruned=${PRUNED_COUNT} protected_hits=${PROTECTED_HIT_COUNT} retention_days=${RETENTION_DAYS} keep_recent=${KEEP_RECENT} dry_run=${DRY_RUN}"
 if [[ "${DRY_RUN}" != "yes" ]]; then
   mkdir -p "$(dirname "${HEALTH_FILE}")" 2>/dev/null || true

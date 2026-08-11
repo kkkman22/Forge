@@ -3,7 +3,7 @@
  * context into two artefacts:
  *
  *   1. A structured {@link Episode} with `outcome: "failure"`, ready
- *      to be appended to `.forge/knowledge/sessions/<date>-<topic>.md`
+ *      to be appended to `.tinkerman/knowledge/sessions/<date>-<topic>.md`
  *      by a driver.
  *   2. An Evolution marker string targeting the responsible skill,
  *      suitable for appending to a reviews / progress / findings file

@@ -1,7 +1,7 @@
 import * as fs from "node:fs";
 import * as path from "node:path";
 // P3-5: redact secrets from error messages before persisting to
-// .forge/findings/. The Bitbucket client may surface token-bearing error
+// .tinkerman/findings/. The Bitbucket client may surface token-bearing error
 // text; without redaction it lands on disk in plaintext.
 import { redactSecrets } from "../secret-redactor.js";
 import type { ToolFailure } from "./types.js";
@@ -18,7 +18,7 @@ export async function recordPartialFailures(
     const dateStr = new Date(failures[0].timestamp).toISOString().split("T")[0];
     const errorFilePath = path.join(
       baseDir,
-      ".forge",
+      ".tinkerman",
       "findings",
       `comment-channel-error-${dateStr}.md`,
     );
@@ -53,7 +53,7 @@ export async function appendRunMetrics(
   baseDir: string,
 ): Promise<void> {
   try {
-    const metricsPath = path.join(baseDir, ".forge", "knowledge", "metrics.md");
+    const metricsPath = path.join(baseDir, ".tinkerman", "knowledge", "metrics.md");
     const knowledgeDir = path.dirname(metricsPath);
 
     await fs.promises.mkdir(knowledgeDir, { recursive: true });

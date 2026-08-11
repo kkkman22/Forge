@@ -19,14 +19,14 @@ allowed_tools:
 ## Current Context
 
 Branch: !`git branch --show-current`
-Status: !`head -8 .forge/status.md 2>/dev/null || echo "no status"`
+Status: !`head -8 .tinkerman/status.md 2>/dev/null || echo "no status"`
 Last commit: !`git log --oneline -1 2>/dev/null || echo "no commits"`
 
 # /tinkerman loop — Native Fusion Loop Engine
 
 > **Trigger**: `/tinkerman loop "goal"` | `/tinkerman loop continue <id>` | `/tinkerman loop status` | `/tinkerman loop abort`
 > **Purpose**: Drive Skills end-to-end autonomously, using native Claude Code scheduling (ScheduleWakeup / CronCreate) instead of external CLI scripts.
-> **State**: `.forge/loop-state.json` (created from `.forge/templates/loop-state.json`)
+> **State**: `.tinkerman/loop-state.json` (created from `.tinkerman/templates/loop-state.json`)
 
 ---
 
@@ -41,8 +41,8 @@ Last commit: !`git log --oneline -1 2>/dev/null || echo "no commits"`
 
 ## 2. Initialization (`/tinkerman loop "goal"`)
 
-1. **Pre-flight**: git repo check · clean tree (skip with `--worktree`/`--resume`) · `.forge/` exists · no active `loop_run_id` in status.md (warn + cleanup if found)
-2. **Create state**: Copy `.forge/templates/loop-state.json` → `.forge/loop-state.json`. Fill: `id` (UUID), `goal` (user input), `createdAt` (ISO now), `tier` (from `--tier` or auto-detect), `commitNarrativePath` (`.forge/runs/<id>/commit-narrative.md`)
+1. **Pre-flight**: git repo check · clean tree (skip with `--worktree`/`--resume`) · `.tinkerman/` exists · no active `loop_run_id` in status.md (warn + cleanup if found)
+2. **Create state**: Copy `.tinkerman/templates/loop-state.json` → `.tinkerman/loop-state.json`. Fill: `id` (UUID), `goal` (user input), `createdAt` (ISO now), `tier` (from `--tier` or auto-detect), `commitNarrativePath` (`.tinkerman/runs/<id>/commit-narrative.md`)
 3. **Branch**: Create `forge/loop-<slug>` from current branch (or reuse with `--resume`)
 4. **Update status.md**: Set `mode: "autonomous"`, `loop_run_id: <id>`, `phase: "build"`
 5. **Enter iteration loop** (§4)
@@ -62,7 +62,7 @@ Phase transitions are deterministic — see `src/loop/phase-transitions.ts` (`ge
 Each iteration follows this 8-step cycle:
 
 ```
-1. Read .forge/loop-state.json → current phase
+1. Read .tinkerman/loop-state.json → current phase
 2. Evaluate stopWhen (§7) → if true, halt
 3. Call Skill(skill="forge", args="<phase>") via fresh-context subsession
 4. Parse result: success / failure / blocked
@@ -122,7 +122,7 @@ Evaluate via `evaluateStopWhen(condition, state)` before each iteration.
 
 ## 7b. Events_NDJSON 事件流（cmux-integration R14）
 
-Loop 的每次状态转换 SHALL 通过 `src/event-writer.ts` 的 `writeEvent()` 写入 `.forge/runs/<run_id>/events.ndjson`（append-only NDJSON），供 Mirror_Daemon / `/tinkerman learn --from-runs` / `/tinkerman debug` 消费。
+Loop 的每次状态转换 SHALL 通过 `src/event-writer.ts` 的 `writeEvent()` 写入 `.tinkerman/runs/<run_id>/events.ndjson`（append-only NDJSON），供 Mirror_Daemon / `/tinkerman learn --from-runs` / `/tinkerman debug` 消费。
 
 | 事件 | 触发点 | 必填字段 |
 |------|--------|---------|
@@ -161,14 +161,14 @@ Commit format: `forge(<phase>): <summary>`
 
 | Outcome | Cleanup |
 |---------|---------|
-| **Completed** | Clear loop fields from status.md. Set `phase: "idle"`. Delete `.forge/loop-state.json`. Output Mission Summary. |
+| **Completed** | Clear loop fields from status.md. Set `phase: "idle"`. Delete `.tinkerman/loop-state.json`. Output Mission Summary. |
 | **Halted** (three-strike) | Keep state files for resume. Output failure summary. |
 | **Aborted** (user) | Keep state files. Restore status.md to `phase: "idle"`. |
 | **Error** | Keep `loop_run_id` + `phase` for resume. Clear other loop fields. |
 
 **Mission Summary** (on any shutdown): total wall-clock · total iterations · phases completed · token budget used · known-failures matched.
 
-**关键改动复述段**（理解腐烂对策，loop-engineering-adoption R3）：摘录 `.forge/runs/<id>/commit-narrative.md` 的关键节（≤5 条），每条输出 `what` + `why` 两要素，控制在能让没参与的人 30 秒内理解。**WHEN 关键改动超过 5 条**，输出 `⚠️ 建议人工逐条复核——loop 产出了 N 个改动，请确认你仍理解每一处的意图`，提示用户对抗认知投降（论文 §07 第三笔代价）。commit-narrative.md 不存在（如手动 build 非 loop）则跳过本段。
+**关键改动复述段**（理解腐烂对策，loop-engineering-adoption R3）：摘录 `.tinkerman/runs/<id>/commit-narrative.md` 的关键节（≤5 条），每条输出 `what` + `why` 两要素，控制在能让没参与的人 30 秒内理解。**WHEN 关键改动超过 5 条**，输出 `⚠️ 建议人工逐条复核——loop 产出了 N 个改动，请确认你仍理解每一处的意图`，提示用户对抗认知投降（论文 §07 第三笔代价）。commit-narrative.md 不存在（如手动 build 非 loop）则跳过本段。
 
 ## 11. Platform Compatibility
 
@@ -180,11 +180,11 @@ Commit format: `forge(<phase>): <summary>`
 
 ## 12. Edge Cases
 
-- No `.forge/` → `/tinkerman init`
+- No `.tinkerman/` → `/tinkerman init`
 - Active `loop_run_id` found → warn, cleanup, option to resume
 - `--tier` invalid → error + list valid values
 - Empty goal → reject
-- Context exhaustion → write interim to `.forge/knowledge/sessions/` → `/clear` + `/tinkerman loop continue <id>`
+- Context exhaustion → write interim to `.tinkerman/knowledge/sessions/` → `/clear` + `/tinkerman loop continue <id>`
 
 ## Gotchas
 
@@ -195,4 +195,4 @@ Commit format: `forge(<phase>): <summary>`
 
 ## Package Iteration
 
-When `/tinkerman loop` runs with `execution_packages`, each loop iteration targets at most one package. Use `advanceLoopAfterPhaseSuccess({ loopState, statusContent, executionPackages, reviewResult })` after each successful phase to update `.forge/loop-state.json`, `.forge/status.md`, and the next `/tinkerman` args (`build --package <id>`, `review --package <id>`, `test --package <id>`, then feature-scoped `ship`). The loop MUST NOT depend on legacy `forge-loop-cli` or `persistent-loop.sh` as the primary orchestrator.
+When `/tinkerman loop` runs with `execution_packages`, each loop iteration targets at most one package. Use `advanceLoopAfterPhaseSuccess({ loopState, statusContent, executionPackages, reviewResult })` after each successful phase to update `.tinkerman/loop-state.json`, `.tinkerman/status.md`, and the next `/tinkerman` args (`build --package <id>`, `review --package <id>`, `test --package <id>`, then feature-scoped `ship`). The loop MUST NOT depend on legacy `forge-loop-cli` or `persistent-loop.sh` as the primary orchestrator.

@@ -42,18 +42,18 @@ function setupForgeEnv(opts: {
     "---",
   ].join("\n");
 
-  writeFileSync(fixture(".forge", "config.md"), configContent);
+  writeFileSync(fixture(".tinkerman", "config.md"), configContent);
 
   if (opts.statusCurrentTask) {
     writeFileSync(
-      fixture(".forge", "status.md"),
+      fixture(".tinkerman", "status.md"),
       `---\ncurrent_task: "${opts.statusCurrentTask}"\nphase: "build"\n---`,
     );
   }
 
   if (opts.progressContent && opts.statusCurrentTask) {
     writeFileSync(
-      fixture(".forge", "progress", `${opts.statusCurrentTask}.md`),
+      fixture(".tinkerman", "progress", `${opts.statusCurrentTask}.md`),
       opts.progressContent,
     );
   }
@@ -62,8 +62,8 @@ function setupForgeEnv(opts: {
 describe("PreCompact restate reminder", () => {
   beforeEach(() => {
     if (existsSync(FIXTURE_DIR)) rmSync(FIXTURE_DIR, { recursive: true });
-    mkdirSync(fixture(".forge", "progress"), { recursive: true });
-    mkdirSync(fixture(".forge", "runs"), { recursive: true });
+    mkdirSync(fixture(".tinkerman", "progress"), { recursive: true });
+    mkdirSync(fixture(".tinkerman", "runs"), { recursive: true });
   });
 
   afterEach(() => {
@@ -87,7 +87,7 @@ describe("PreCompact restate reminder", () => {
     const result = runHook();
     expect(result.exitCode).toBe(0);
 
-    const snapshot = readFileSync(fixture(".forge", ".compact-snapshot.md"), "utf-8");
+    const snapshot = readFileSync(fixture(".tinkerman", ".compact-snapshot.md"), "utf-8");
     expect(snapshot).toContain("RESTATE REMINDER");
     expect(snapshot).toContain("3 tasks completed");
     expect(snapshot).toContain("threshold: 3");
@@ -109,7 +109,7 @@ describe("PreCompact restate reminder", () => {
     const result = runHook();
     expect(result.exitCode).toBe(0);
 
-    const snapshot = readFileSync(fixture(".forge", ".compact-snapshot.md"), "utf-8");
+    const snapshot = readFileSync(fixture(".tinkerman", ".compact-snapshot.md"), "utf-8");
     expect(snapshot).not.toContain("RESTATE REMINDER");
   });
 
@@ -129,7 +129,7 @@ describe("PreCompact restate reminder", () => {
     const result = runHook();
     expect(result.exitCode).toBe(0);
 
-    const snapshot = readFileSync(fixture(".forge", ".compact-snapshot.md"), "utf-8");
+    const snapshot = readFileSync(fixture(".tinkerman", ".compact-snapshot.md"), "utf-8");
     expect(snapshot).not.toContain("RESTATE REMINDER");
   });
 
@@ -152,14 +152,14 @@ describe("PreCompact restate reminder", () => {
       progressContent: "- [ ] T1",
     });
     writeFileSync(
-      fixture(".forge", "status.md"),
+      fixture(".tinkerman", "status.md"),
       '---\ncurrent_task: "my-feature"\nphase: "build"\ncurrent_package: "P2"\ncompleted_packages: "P1"\nnext_package: "P3"\npackage_count: 3\n---',
     );
 
     const result = runHook();
     expect(result.exitCode).toBe(0);
 
-    const snapshot = readFileSync(fixture(".forge", ".compact-snapshot.md"), "utf-8");
+    const snapshot = readFileSync(fixture(".tinkerman", ".compact-snapshot.md"), "utf-8");
     expect(snapshot).toContain("current_package=P2");
     expect(snapshot).toContain("completed_packages=P1");
     expect(snapshot).toContain("next_package=P3");
@@ -168,7 +168,7 @@ describe("PreCompact restate reminder", () => {
 
   it("snapshot stays under 10000 characters with max caps", () => {
     // Simulate worst-case: 60-line progress + 40-line findings
-    mkdirSync(fixture(".forge", "findings"), { recursive: true });
+    mkdirSync(fixture(".tinkerman", "findings"), { recursive: true });
 
     setupForgeEnv({
       statusCurrentTask: "big-feature",
@@ -181,7 +181,7 @@ describe("PreCompact restate reminder", () => {
     });
 
     writeFileSync(
-      fixture(".forge", "findings", "big-feature.md"),
+      fixture(".tinkerman", "findings", "big-feature.md"),
       Array.from(
         { length: 40 },
         (_, i) => `### Finding ${i + 1}: A moderately long finding description with details`,
@@ -191,7 +191,7 @@ describe("PreCompact restate reminder", () => {
     const result = runHook();
     expect(result.exitCode).toBe(0);
 
-    const snapshot = readFileSync(fixture(".forge", ".compact-snapshot.md"), "utf-8");
+    const snapshot = readFileSync(fixture(".tinkerman", ".compact-snapshot.md"), "utf-8");
     expect(snapshot.length).toBeLessThan(10_000);
   });
 });

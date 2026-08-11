@@ -97,7 +97,7 @@ Body.
 
 **Content**: Rule content
 **Prevents**: Something
-**Source**: .forge/knowledge/glm-summary-ending.md
+**Source**: .tinkerman/knowledge/glm-summary-ending.md
 **Added**: 2026-05-09
 **Confidence**: 0.9
 `,

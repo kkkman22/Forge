@@ -10,16 +10,16 @@ allowed_tools:
 
 ## Current Context
 
-Phase: !`grep '^phase:' .forge/status.md 2>/dev/null || echo "no status"`
-Tier: !`grep '^tier:' .forge/status.md 2>/dev/null || echo "no tier"`
-Task: !`grep '^current_task:' .forge/status.md 2>/dev/null || echo "no task"`
-Package: !`grep '^current_package:' .forge/status.md 2>/dev/null || echo "no package"`
-Review result: !`grep '^review_result:' .forge/status.md 2>/dev/null || echo "none"`
+Phase: !`grep '^phase:' .tinkerman/status.md 2>/dev/null || echo "no status"`
+Tier: !`grep '^tier:' .tinkerman/status.md 2>/dev/null || echo "no tier"`
+Task: !`grep '^current_task:' .tinkerman/status.md 2>/dev/null || echo "no task"`
+Package: !`grep '^current_package:' .tinkerman/status.md 2>/dev/null || echo "no package"`
+Review result: !`grep '^review_result:' .tinkerman/status.md 2>/dev/null || echo "none"`
 
 # /tinkerman continue — 阶段推进器
 
 > **触发方式**：用户输入 `/tinkerman continue`
-> **职责**：读取 `.forge/status.md` 当前 phase/tier，按工作流转换表推进到下一个合法 phase，调用对应子 skill
+> **职责**：读取 `.tinkerman/status.md` 当前 phase/tier，按工作流转换表推进到下一个合法 phase，调用对应子 skill
 > **与 §2.7 No Confirmation Between Steps 的关系**：continue 是阶段推进的**程序化入口**，让用户无需记忆命令序列（plan→build→review→test→ship）。它把铁律从"靠各 skill 自觉触发下一个"升级为"单一入口显式推进"。
 > **与 `/tinkerman loop` 的区别**：loop 是无人值守后台自主模式（批量推进直到终止）；continue 是交互式逐步推进（用户每次敲一下走一步）。两者共用同一套转换逻辑（`getNextPhase`）。
 
@@ -29,7 +29,7 @@ Review result: !`grep '^review_result:' .forge/status.md 2>/dev/null || echo "no
 
 ### Step 1: 读取状态
 
-读取 `.forge/status.md`（或 `.forge/status/<task>.md` 多任务模式），提取字段：
+读取 `.tinkerman/status.md`（或 `.tinkerman/status/<task>.md` 多任务模式），提取字段：
 - `phase` — 当前阶段
 - `tier` — light / standard / full
 - `work_nature` — feature / refactor / bugfix（影响序列）

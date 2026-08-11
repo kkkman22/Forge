@@ -15,7 +15,7 @@
 
 /** Input for the near-limit check. */
 export interface KnowledgeQuotaInput {
-  /** Current solutions document count (caller counts .forge/knowledge/solutions/). */
+  /** Current solutions document count (caller counts .tinkerman/knowledge/solutions/). */
   currentCount: number;
   /** config.md `knowledge_limit` (default 20). */
   limit: number;

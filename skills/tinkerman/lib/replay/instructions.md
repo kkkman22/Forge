@@ -16,12 +16,12 @@ allowed_tools:
 
 ## Instructions
 
-Replay reconstructs what Forge knows about one topic without editing state. It joins dossier stage files, ship records, and `.forge/artifacts/index.jsonl` into a chronological timeline.
+Replay reconstructs what Forge knows about one topic without editing state. It joins dossier stage files, ship records, and `.tinkerman/artifacts/index.jsonl` into a chronological timeline.
 
 ## Execution
 
-1. Resolve `<topic>` from the first argument. If missing, read `.forge/status.md` and use `current_task`.
-2. Build the replay with `buildEvidenceReplay(topic, ".forge")`.
+1. Resolve `<topic>` from the first argument. If missing, read `.tinkerman/status.md` and use `current_task`.
+2. Build the replay with `buildEvidenceReplay(topic, ".tinkerman")`.
 3. Render it with `renderReplayTimeline(replay)`.
 4. Print the timeline. Do not modify artifacts, stage documents, or ship records.
 

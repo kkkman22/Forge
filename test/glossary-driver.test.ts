@@ -3,7 +3,7 @@
  *
  * Covers:
  *   - Integration: on an empty in-memory filesystem, the first call
- *     produces `.forge/glossary.md` containing all 12 preset terms.
+ *     produces `.tinkerman/glossary.md` containing all 12 preset terms.
  *   - Existing file is parsed and returned untouched (no overwrite).
  *
  * **Validates: Requirements 1.3, 1.10**

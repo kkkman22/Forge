@@ -3,7 +3,7 @@ updated: 2026-08-11
 ---
 # ADR 输出 / ADR Output
 
-决策被确认（`resolveDecideStatus` 返回 `confirmed`）后，Skill 在写出 `.forge/decisions/<YYYY-MM-DD>-<topic>.md` 的同时，**额外生成一条标准 ADR** 并更新 `.forge/knowledge/adr-index.md`。两个文件互补：前者是视角对话全文，后者是可检索的架构决策记录。
+决策被确认（`resolveDecideStatus` 返回 `confirmed`）后，Skill 在写出 `.tinkerman/decisions/<YYYY-MM-DD>-<topic>.md` 的同时，**额外生成一条标准 ADR** 并更新 `.tinkerman/knowledge/adr-index.md`。两个文件互补：前者是视角对话全文，后者是可检索的架构决策记录。
 
 ## 流程
 
@@ -21,18 +21,18 @@ updated: 2026-08-11
 3. 调用 `finalizeAdr(input, readExistingFile)`（来自 `src/decide.ts`）
 4. 按返回结果执行写入：
    - 写 `adrFilePath` ← `adrFileContent`（新 ADR 文件）
-   - 写 `indexFilePath`（即 `.forge/knowledge/adr-index.md`）← `indexContent`
+   - 写 `indexFilePath`（即 `.tinkerman/knowledge/adr-index.md`）← `indexContent`
    - 对每个 `supersessionUpdates[i]`，写 `filePath` ← `updatedContent`（旧 ADR 文件状态更新为 `superseded`，`superseded_by` 指向新 id）
 
 ## 约束
 
-- **文件名格式**：`.forge/decisions/ADR-NNNN-<kebab-topic>.md`（与视角对话文档 `<date>-<topic>.md` 并存，前缀不同便于区分）
+- **文件名格式**：`.tinkerman/decisions/ADR-NNNN-<kebab-topic>.md`（与视角对话文档 `<date>-<topic>.md` 并存，前缀不同便于区分）
 - **索引幂等**：`indexContent` 覆盖式写入，每个 id 只出现一次
 - **保护区语义**：ADR 文件位于 Guarded zone，可追加但不得删除；supersession 更新走 "再渲染" 而非 "编辑旧字段"，保持与 PreToolUse Hook 兼容
 
 ## 历史 ADR 提示（Round 1 启动前）
 
-1. 枚举 `.forge/decisions/` 下所有 `ADR-NNNN-*.md` 文件路径
+1. 枚举 `.tinkerman/decisions/` 下所有 `ADR-NNNN-*.md` 文件路径
 2. 调用 `loadAllAdrs(paths, readFile)`（来自 `src/adr-registry.ts`）解析 frontmatter，得到 `AdrEntry[]`
 3. 调用 `findRelatedAdrs(taskDescription, adrs, 5)` 按 Jaccard 相似度取前 5 条
 4. 以表格形式展示：`ID | Title | Status | Date | File`

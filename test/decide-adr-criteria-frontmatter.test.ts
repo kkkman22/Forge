@@ -39,7 +39,7 @@ describe("renderAdrFileContent — ADR criteria fields", () => {
     status: "accepted",
     date: "2026-05-10",
     deciders: ["@maintainer-a"],
-    filePath: ".forge/decisions/ADR-0007-x.md",
+    filePath: ".tinkerman/decisions/ADR-0007-x.md",
   };
 
   it("omits all three criteria fields when unset", () => {
@@ -141,7 +141,7 @@ describe("parseAdrFrontmatter — ADR criteria fields round-trip", () => {
       reversibility: "hard",
       surprising: true,
       trade_off_alternatives: ["Use Joi", "Use Yup", "Hand-rolled validation"],
-      filePath: ".forge/decisions/ADR-0042-adopt-zod.md",
+      filePath: ".tinkerman/decisions/ADR-0042-adopt-zod.md",
     };
     const rendered = renderAdrFileContent(entry, "## Decision\n\nUse Zod.\n");
     const parsed = parseAdrFrontmatter(rendered);
@@ -261,7 +261,7 @@ describe("finalizeAdr — ADR criteria fields propagation", () => {
       status: "accepted",
       date: "2026-05-10",
       deciders: ["@maintainer-a"],
-      filePath: `.forge/decisions/${id}-legacy.md`,
+      filePath: `.tinkerman/decisions/${id}-legacy.md`,
     };
   }
 

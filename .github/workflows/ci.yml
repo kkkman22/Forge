@@ -70,10 +70,10 @@ jobs:
         run: node --check scripts/rebuild-spec-index.mjs
       - name: Check spec index consistency
         run: |
-          if [ -d .forge/specs ]; then
+          if [ -d .tinkerman/specs ]; then
             node scripts/rebuild-spec-index.mjs --check
           else
-            echo "No .forge/specs/ directory — skipping spec index check"
+            echo "No .tinkerman/specs/ directory — skipping spec index check"
           fi
 
   security-audit:

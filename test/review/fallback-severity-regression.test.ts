@@ -4,7 +4,7 @@
  * T-05 RED: 验证 fallback 复用 extractSeverity 后，"无 severity 字段"的报告
  * 仍触发 L2→L3 降级（更保守），而非被当作"0 finding 放行 L2"。
  *
- * 对应 spec: .forge/specs/arch-review-remediate-0626 REQ-04。
+ * 对应 spec: .tinkerman/specs/arch-review-remediate-0626 REQ-04。
  * 在 fallback.ts 改用 extractSeverity + hasAnySeverityField 前应失败（RED）。
  */
 
@@ -25,7 +25,7 @@ import { runSubagentsWithConcurrency } from "../../src/subagent-runner.js";
 
 const mockedRunner = runSubagentsWithConcurrency as unknown as ReturnType<typeof vi.fn>;
 
-const tempDir = join(tmpdir(), `forge-fallback-sev-${randomUUID()}`, ".forge", "reviews");
+const tempDir = join(tmpdir(), `forge-fallback-sev-${randomUUID()}`, ".tinkerman", "reviews");
 
 function makeInvocation(i: number): SubagentInvocation {
   return {

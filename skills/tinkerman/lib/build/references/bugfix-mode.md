@@ -22,7 +22,7 @@ updated: 2026-08-11
 
 **职责**：通过读代码定位根因，产出结构化分析报告。
 
-**产出**：`.forge/findings/fix-analysis.md`
+**产出**：`.tinkerman/findings/fix-analysis.md`
 
 **5 步分析**：
 1. **Locate** — Grep/Glob → file:line
@@ -31,7 +31,7 @@ updated: 2026-08-11
 4. **Assess** — 影响面评估
 5. **Propose** — 2-3 修复方案 + 推荐
 
-**报告格式**：`.forge/findings/fix-analysis.md`（frontmatter: topic/date/status）+ Issue Location + Root Cause + Impact Assessment + Fix Proposals。
+**报告格式**：`.tinkerman/findings/fix-analysis.md`（frontmatter: topic/date/status）+ Issue Location + Root Cause + Impact Assessment + Fix Proposals。
 
 **Skip condition**: Tier=light 时跳过 analyze，直接 apply。
 
@@ -49,7 +49,7 @@ updated: 2026-08-11
 3. 影响面回归（无回归）
 4. 全量测试（全部通过）
 
-产出 `.forge/findings/fix-note.md`（frontmatter: topic/date/status:resolved + 问题描述/根因/修复方案/改动文件/验证结果/经验总结）。
+产出 `.tinkerman/findings/fix-note.md`（frontmatter: topic/date/status:resolved + 问题描述/根因/修复方案/改动文件/验证结果/经验总结）。
 
 ## 5. 日志调试升级机制
 

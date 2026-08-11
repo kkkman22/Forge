@@ -167,7 +167,7 @@ export interface ThreeStrikeFailureArtifacts {
  *     the Evolution marker target is `forge-build#three_strike`.
  *
  * The helper does no IO; drivers persist the episode to
- * `.forge/knowledge/sessions/<date>-<topic>.md` and append the marker
+ * `.tinkerman/knowledge/sessions/<date>-<topic>.md` and append the marker
  * to the topic's progress file. Both writes are advisory — failure to
  * persist should degrade to a warning per Requirement 8.12.
  *
@@ -317,7 +317,7 @@ export interface ThreeStrikeDebugRerouteResult extends ThreeStrikeResult {
  * Build three-strike debug reroute decision and write diagnostic template.
  *
  * Calls triggerThreeStrikeReroute to compute fail_signature and reroute decision.
- * If reroute === true, writes diagnostic template to .forge/debug/<topic>.md.
+ * If reroute === true, writes diagnostic template to .tinkerman/debug/<topic>.md.
  */
 export function buildThreeStrikeDebugReroute(
   history: FixFailure[],

@@ -9,7 +9,7 @@
  *   - `parsePlanContextFiles` reads the plan frontmatter `context_files`
  *     field (previously parsed by plan-file schema but never consumed).
  *   - `resolveContextFiles` merges plan frontmatter (static) with
- *     `.forge/runs/<runId>/context.jsonl` (dynamic) via `mergeContextSources`.
+ *     `.tinkerman/runs/<runId>/context.jsonl` (dynamic) via `mergeContextSources`.
  *
  * Skill instructions (review/decide) call `resolveContextFiles` to populate
  * the `contextFiles` field of `ReviewSubagentContext` / `DecideContext`, so
@@ -86,7 +86,7 @@ function stripQuotes(s: string): string {
  * usable resolution function.
  *
  * @param planContextFiles  File paths declared in plan frontmatter (static).
- * @param jsonlPath         Path to `.forge/runs/<runId>/context.jsonl`. May not
+ * @param jsonlPath         Path to `.tinkerman/runs/<runId>/context.jsonl`. May not
  *                          exist yet (returns plan files only).
  * @returns Deduplicated file path list (plan entries first).
  */

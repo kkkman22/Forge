@@ -1,5 +1,5 @@
 /**
- * Zod schema for `.forge/status.md` frontmatter.
+ * Zod schema for `.tinkerman/status.md` frontmatter.
  *
  * Provides:
  *   - `StatusFileSchema` — the canonical runtime contract

@@ -102,7 +102,7 @@ if (failures === 0) {
   console.log("✅ All P1 regression groups passed.");
   console.log("\nℹ️  R4 note: template-var expansion sim layer passed. Real ZCode-host");
   console.log("   expansion must be verified manually in a ZCode client — see");
-  console.log("   .forge/specs/zcode-p1-base-integration/evidence-r4-template-vars.md");
+  console.log("   .tinkerman/specs/zcode-p1-base-integration/evidence-r4-template-vars.md");
   process.exit(0);
 } else {
   console.log(`❌ ${failures} group(s) failed.`);

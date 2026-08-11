@@ -21,7 +21,7 @@ describe("buildGitHook", () => {
     const { buildGitHook } = await import("../src/build-git-hook.js");
     const result = await buildGitHook.runWithConflictHandling("rebase", {
       cwd: "/tmp/test",
-      simulateOutput: "CONFLICT (content): Merge conflict in .forge/progress/auth.md",
+      simulateOutput: "CONFLICT (content): Merge conflict in .tinkerman/progress/auth.md",
       ...io,
     });
     expect(result.status).toBe("conflict");
@@ -32,7 +32,7 @@ describe("buildGitHook", () => {
     const { buildGitHook } = await import("../src/build-git-hook.js");
     const result = await buildGitHook.runWithConflictHandling("merge", {
       cwd: "/tmp/test",
-      simulateOutput: "CONFLICT (content): Merge conflict in .forge/specs/auth/spec.md",
+      simulateOutput: "CONFLICT (content): Merge conflict in .tinkerman/specs/auth/spec.md",
       mode: "autonomous",
       statusContent: "current_task: auth\n",
       ...io,

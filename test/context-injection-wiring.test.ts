@@ -18,13 +18,13 @@ describe("parsePlanContextFiles (plan frontmatter consumer)", () => {
     const planContent = `---
 status: approved
 context_files:
-  - .forge/specs/auth/requirements.md
-  - .forge/specs/auth/design.md
+  - .tinkerman/specs/auth/requirements.md
+  - .tinkerman/specs/auth/design.md
 ---
 # Plan body`;
     expect(parsePlanContextFiles(planContent)).toEqual([
-      ".forge/specs/auth/requirements.md",
-      ".forge/specs/auth/design.md",
+      ".tinkerman/specs/auth/requirements.md",
+      ".tinkerman/specs/auth/design.md",
     ]);
   });
 
@@ -43,10 +43,13 @@ status: approved
   it("tolerates inline-flow context_files", () => {
     const planContent = `---
 status: approved
-context_files: [".forge/specs/a.md", ".forge/specs/b.md"]
+context_files: [".tinkerman/specs/a.md", ".tinkerman/specs/b.md"]
 ---
 body`;
-    expect(parsePlanContextFiles(planContent)).toEqual([".forge/specs/a.md", ".forge/specs/b.md"]);
+    expect(parsePlanContextFiles(planContent)).toEqual([
+      ".tinkerman/specs/a.md",
+      ".tinkerman/specs/b.md",
+    ]);
   });
 });
 
@@ -54,25 +57,25 @@ describe("resolveContextFiles (merge plan + jsonl)", () => {
   it("merges plan context_files with runtime context.jsonl, deduped", () => {
     const jsonlPath = join(TMP, "context.jsonl");
     appendContextEntry(jsonlPath, {
-      file: ".forge/specs/auth/research.md",
+      file: ".tinkerman/specs/auth/research.md",
       reason: "runtime discovery",
       task: "auth",
     });
     appendContextEntry(jsonlPath, {
-      file: ".forge/specs/auth/requirements.md", // dup with plan
+      file: ".tinkerman/specs/auth/requirements.md", // dup with plan
       reason: "also referenced",
       task: "auth",
     });
 
     const result = resolveContextFiles(
-      [".forge/specs/auth/requirements.md", ".forge/specs/auth/design.md"],
+      [".tinkerman/specs/auth/requirements.md", ".tinkerman/specs/auth/design.md"],
       jsonlPath,
     );
     // plan entries first, then non-dup jsonl entries
     expect(result).toEqual([
-      ".forge/specs/auth/requirements.md",
-      ".forge/specs/auth/design.md",
-      ".forge/specs/auth/research.md",
+      ".tinkerman/specs/auth/requirements.md",
+      ".tinkerman/specs/auth/design.md",
+      ".tinkerman/specs/auth/research.md",
     ]);
   });
 

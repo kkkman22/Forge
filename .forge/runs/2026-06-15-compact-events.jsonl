@@ -1,0 +1,40 @@
+{"timestamp":"2026-06-15T09:11:19Z","event":"postcompact_restore","detail":"slug=code-slim-0612"}
+{"timestamp":"2026-06-15T09:11:19Z","event":"precompact_snapshot","detail":"slug=code-slim-0612 phase=complete completed=0
+0 pending=0
+0"}
+{"timestamp":"2026-06-15T09:11:52Z","event":"postcompact_restore","detail":"slug=code-slim-0612"}
+{"timestamp":"2026-06-15T09:11:52Z","event":"precompact_snapshot","detail":"slug=code-slim-0612 phase=complete completed=0
+0 pending=0
+0"}
+{"timestamp":"2026-06-15T09:12:20Z","event":"postcompact_restore","detail":"slug=code-slim-0612"}
+{"timestamp":"2026-06-15T09:12:21Z","event":"precompact_snapshot","detail":"slug=code-slim-0612 phase=complete completed=0
+0 pending=0
+0"}
+{"timestamp":"2026-06-15T09:16:15Z","event":"postcompact_restore","detail":"slug=code-slim-0612"}
+{"timestamp":"2026-06-15T09:16:16Z","event":"precompact_snapshot","detail":"slug=code-slim-0612 phase=complete completed=0
+0 pending=0
+0"}
+{"timestamp":"2026-06-15T09:17:44Z","event":"postcompact_restore","detail":"slug=code-slim-0612"}
+{"timestamp":"2026-06-15T09:17:44Z","event":"precompact_snapshot","detail":"slug=code-slim-0612 phase=complete completed=0
+0 pending=0
+0"}
+{"timestamp":"2026-06-15T09:25:12Z","event":"postcompact_restore","detail":"slug=code-slim-0612"}
+{"timestamp":"2026-06-15T09:25:12Z","event":"precompact_snapshot","detail":"slug=code-slim-0612 phase=complete completed=0
+0 pending=0
+0"}
+{"timestamp":"2026-06-15T09:34:16Z","event":"postcompact_restore","detail":"slug=code-slim-0612"}
+{"timestamp":"2026-06-15T09:34:17Z","event":"precompact_snapshot","detail":"slug=code-slim-0612 phase=complete completed=0
+0 pending=0
+0"}
+{"timestamp":"2026-06-15T09:37:50Z","event":"postcompact_restore","detail":"slug=code-slim-0612"}
+{"timestamp":"2026-06-15T09:37:50Z","event":"precompact_snapshot","detail":"slug=code-slim-0612 phase=complete completed=0
+0 pending=0
+0"}
+{"timestamp":"2026-06-15T09:46:36Z","event":"postcompact_restore","detail":"slug=code-slim-0612"}
+{"timestamp":"2026-06-15T09:46:37Z","event":"precompact_snapshot","detail":"slug=code-slim-0612 phase=complete completed=0
+0 pending=0
+0"}
+{"timestamp":"2026-06-15T09:48:14Z","event":"postcompact_restore","detail":"slug=code-slim-0612"}
+{"timestamp":"2026-06-15T09:48:14Z","event":"precompact_snapshot","detail":"slug=code-slim-0612 phase=complete completed=0
+0 pending=0
+0"}

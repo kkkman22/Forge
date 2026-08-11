@@ -39,8 +39,8 @@ dispatch_mode = "fork"
 tier = "all"
 stage = "auxiliary"
 allowed_tools = ["Read", "Write", "Glob", "Grep", "Bash"]
-description = "Create, update, check, and display the project charter (.forge/charter.md). Use when user runs /tinkerman charter <sub>."
-summary = "Create, update, check, and display the project charter (.forge/charter.md). Use when user runs /tinkerman charter <sub>."
+description = "Create, update, check, and display the project charter (.tinkerman/charter.md). Use when user runs /tinkerman charter <sub>."
+summary = "Create, update, check, and display the project charter (.tinkerman/charter.md). Use when user runs /tinkerman charter <sub>."
 
 [continue]
 dispatch_mode = "inline"
@@ -143,8 +143,8 @@ dispatch_mode = "inline"
 tier = "all"
 stage = "auxiliary"
 allowed_tools = ["Bash", "Read", "AskUserQuestion"]
-description = "Use when user runs `/tinkerman init`, project has no .forge/ directory, or plugin is installed but project not yet initialized"
-summary = "Use when user runs `/tinkerman init`, project has no .forge/ directory, or plugin is installed but project not yet initialized."
+description = "Use when user runs `/tinkerman init`, project has no .tinkerman/ directory, or plugin is installed but project not yet initialized"
+summary = "Use when user runs `/tinkerman init`, project has no .tinkerman/ directory, or plugin is installed but project not yet initialized."
 
 [learn]
 dispatch_mode = "fork"

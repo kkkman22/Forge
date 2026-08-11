@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-FORGE_DIR=".forge"
+FORGE_DIR=".tinkerman"
 
 # Check .forge directory exists
 if [ ! -d "$FORGE_DIR" ]; then
@@ -59,7 +59,7 @@ fi
 # === Extensible area ===
 # Future checks:
 # - stale worktree detection (.claude/worktrees/ older than 24h)
-# - knowledge base bloat warning (.forge/knowledge/ file count near limit)
+# - knowledge base bloat warning (.tinkerman/knowledge/ file count near limit)
 # - config drift detection (config.md hash changed)
 # - CI command availability (ci_check_command tool installed?)
 

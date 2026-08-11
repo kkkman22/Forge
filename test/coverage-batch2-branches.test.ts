@@ -51,7 +51,7 @@ describe("backlog (branch coverage)", () => {
     filePath: "src/a.ts",
     lineNumber: 10,
     description: "issue",
-    sourceReview: ".forge/reviews/x.md",
+    sourceReview: ".tinkerman/reviews/x.md",
     originTask: "task-1",
     capturedDate: "2026-06-14",
     resolved: false,
@@ -100,6 +100,6 @@ describe("conflict-classifier (branch coverage)", () => {
   it("classify returns a zone for various paths", () => {
     expect(typeof classify("src/a.ts")).toBe("string");
     expect(typeof classify("test/b.ts")).toBe("string");
-    expect(typeof classify(".forge/specs/x.md")).toBe("string");
+    expect(typeof classify(".tinkerman/specs/x.md")).toBe("string");
   });
 });

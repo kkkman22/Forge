@@ -1,5 +1,5 @@
 /**
- * Contract tests for `.forge/reviews/.diff-context.md` schema fidelity.
+ * Contract tests for `.tinkerman/reviews/.diff-context.md` schema fidelity.
  *
  * Spec: forge-review-diff-context-fidelity
  * Properties validated:
@@ -17,7 +17,7 @@ import { resolve } from "node:path";
 import { describe, expect, it } from "vitest";
 
 const ROOT = resolve(import.meta.dirname, "..");
-const PATH = resolve(ROOT, ".forge/reviews/.diff-context.md");
+const PATH = resolve(ROOT, ".tinkerman/reviews/.diff-context.md");
 
 const REQUIRED_FRONTMATTER_FIELDS = [
   "base",
@@ -84,7 +84,7 @@ function matchesNarrativeAntiPattern(text: string): boolean {
   return NARRATIVE_ANTI_PATTERNS.some((re) => re.test(text));
 }
 
-describe("Contract: .forge/reviews/.diff-context.md fidelity", () => {
+describe("Contract: .tinkerman/reviews/.diff-context.md fidelity", () => {
   it("file gracefully skipped when no review in progress", () => {
     if (!existsSync(PATH)) {
       // No review running — contract checks below auto-skip via early return.

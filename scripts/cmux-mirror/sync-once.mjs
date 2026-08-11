@@ -18,12 +18,12 @@ const SNAPSHOT_FILE = ".cmux-snapshot.json";
 const LOCK_FILE = ".cmux-sync.lock";
 
 /**
- * Run a one-shot sync from .forge/ state to cmux (R2.7).
+ * Run a one-shot sync from .tinkerman/ state to cmux (R2.7).
  * Returns { synced: boolean, commandsEmitted: number, reason?: string }.
  */
 export async function syncOnce({
-  forgeDir = ".forge",
-  snapshotDir = ".forge",
+  forgeDir = ".tinkerman",
+  snapshotDir = ".tinkerman",
 } = {}) {
   // Step 1: Check cmux availability (R2.7)
   if (!cmuxAvailable()) {
@@ -178,7 +178,7 @@ export async function syncOnce({
  * Check respawn budget and optionally trigger mirror restart (R13.12).
  */
 export async function syncOnceWithRespawn(opts = {}) {
-  const respawnFile = opts.respawnFile ?? ".forge/.cmux-respawn-count";
+  const respawnFile = opts.respawnFile ?? ".tinkerman/.cmux-respawn-count";
   const result = await syncOnce(opts);
 
   if (result.reason === "cmux_unavailable" || result.reason === "forge_dir_missing") {
@@ -201,7 +201,7 @@ const args = process.argv.slice(2);
 if (args.length > 0 && args[0] !== "--test") {
   if (await shouldSkipForSubagent()) process.exit(0);
 
-  const forgeDir = args[0] || ".forge";
+  const forgeDir = args[0] || ".tinkerman";
 
   // Validate: reject path traversal
   if (forgeDir.includes("..")) {

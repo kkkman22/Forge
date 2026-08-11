@@ -9,7 +9,7 @@ on:
     branches: [main]
     paths:
       - "docs/**"
-      - ".forge/config.md"
+      - ".tinkerman/config.md"
       - "docs/_ssot/**"
       - "*.md"
       - "skills/tinkerman/lib/**"
@@ -19,7 +19,7 @@ on:
   pull_request:
     paths:
       - "docs/**"
-      - ".forge/config.md"
+      - ".tinkerman/config.md"
       - "docs/_ssot/**"
       - "*.md"
       - "skills/tinkerman/lib/**"
@@ -54,7 +54,7 @@ jobs:
 
       - name: Check grace period expiry
         run: |
-          CONFIG=".forge/config.md"
+          CONFIG=".tinkerman/config.md"
           if [ -f "$CONFIG" ]; then
             GRACE_UNTIL=$(grep -A1 'grace_period_until' "$CONFIG" 2>/dev/null | grep -oE '[0-9]{4}-[0-9]{2}-[0-9]{2}' | head -1)
             if [ -n "$GRACE_UNTIL" ]; then

@@ -47,7 +47,7 @@ Excluded from denominator:
 
 ### Artifact Format
 
-Written to `.forge/mutation/<timestamp>.md`:
+Written to `.tinkerman/mutation/<timestamp>.md`:
 
 ```yaml
 ---

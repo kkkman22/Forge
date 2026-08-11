@@ -20,7 +20,7 @@ disallowedTools: ["Bash(git push *)"]
 
 > **触发方式**：全量路径的第八步（最后一步），或用户直接输入 `/tinkerman learn`，或 `/tinkerman ship` 完成后提示触发
 > **职责**：从每次开发中提取关键经验并沉淀为可复用的知识资产，让系统越做越强
-> **输出路径**：`.forge/knowledge/solutions/<topic>.md` + `.forge/knowledge/instincts.md` + `.forge/knowledge/known-failures.md` + `.forge/knowledge/sessions/<date>-<topic>.md`
+> **输出路径**：`.tinkerman/knowledge/solutions/<topic>.md` + `.tinkerman/knowledge/instincts.md` + `.tinkerman/knowledge/known-failures.md` + `.tinkerman/knowledge/sessions/<date>-<topic>.md`
 
 ---
 
@@ -39,7 +39,7 @@ disallowedTools: ["Bash(git push *)"]
 | `/tinkerman learn`（无参数） | **提取模式**（默认） | 五维度提取 + solutions/instincts/known-failures 沉淀（下方主流程）。只增不减。 |
 | `/tinkerman learn --deep` | **收敛模式**（regenerative-checkpoint R4） | 对账 raw trajectory + 去重 + 压缩 + 验证 + prune 知识库。→ 详见 `references/deep-reconciliation.md` |
 
-**`--deep` 模式**（regenerative-checkpoint R4，借鉴 MiMo-Code `/dream`）：周期性收敛知识库——不是提取新知识，而是让已有知识**更紧凑、更准确、无冗余**。流程：读 CC transcript JSONL（`~/.claude/projects/<slug>/*.jsonl`）+ `.forge/` 文件轨迹对账 → 搜用户原话关键词（always/never/decided 等）验证候选事实 → 去重/合并/压缩 → 验证路径(Glob)/函数名(Grep) → prune 过时条目 → 密度上限（单个 knowledge 文件 ≤200 行/10KB） → 输出收敛报告。判定 `--deep` 后**跳过下方提取主流程**，直接执行 `references/deep-reconciliation.md` 的收敛流程。
+**`--deep` 模式**（regenerative-checkpoint R4，借鉴 MiMo-Code `/dream`）：周期性收敛知识库——不是提取新知识，而是让已有知识**更紧凑、更准确、无冗余**。流程：读 CC transcript JSONL（`~/.claude/projects/<slug>/*.jsonl`）+ `.tinkerman/` 文件轨迹对账 → 搜用户原话关键词（always/never/decided 等）验证候选事实 → 去重/合并/压缩 → 验证路径(Glob)/函数名(Grep) → prune 过时条目 → 密度上限（单个 knowledge 文件 ≤200 行/10KB） → 输出收敛报告。判定 `--deep` 后**跳过下方提取主流程**，直接执行 `references/deep-reconciliation.md` 的收敛流程。
 
 ## Auto_Memory Boundary
 
@@ -105,7 +105,7 @@ npx tsx scripts/check-docs-links.ts --json
 3. If any checker returns non-zero exit code, times out, or script is missing → mark "文档增量" section as `needs_attention` but do NOT block main learn flow
 4. If all three checkers complete with zero status and no critical diagnostics → mark as `clean` with UTC ISO 8601 timestamp
 
-**Session output**: Write critical-level issues into `.forge/knowledge/sessions/<session>.md` under a `## 文档治理诊断` section, each containing:
+**Session output**: Write critical-level issues into `.tinkerman/knowledge/sessions/<session>.md` under a `## 文档治理诊断` section, each containing:
 - Source detector name
 - Document relative path
 - Issue summary
@@ -116,14 +116,14 @@ This check is informational only — it enriches the learn session with document
 
 ## §0.7 Observability Data Collection (§71, §72, §74)
 
-> **Precondition**: OTEL data is available via `.forge/runs/` JSONL logs or `OTEL_EXPORTER_*` env vars.
+> **Precondition**: OTEL data is available via `.tinkerman/runs/` JSONL logs or `OTEL_EXPORTER_*` env vars.
 > If no observability data exists, **skip this entire section** with a single-line note: `⏭️ OTEL 数据不可用，跳过可观测性统计。`
 
 ### Step 1: Probe OTEL availability
 
 ```bash
 # Check if runs directory has tool-duration logs
-ls .forge/runs/*tool-durations*.jsonl 2>/dev/null
+ls .tinkerman/runs/*tool-durations*.jsonl 2>/dev/null
 # Check if OTEL exporter is configured
 echo "$OTEL_EXPORTER_OTLP_ENDPOINT"
 ```
@@ -132,7 +132,7 @@ If neither source exists → skip.
 
 ### Step 2: Extract statistics
 
-From `.forge/runs/*tool-durations*.jsonl` (or OTEL spans if available):
+From `.tinkerman/runs/*tool-durations*.jsonl` (or OTEL spans if available):
 
 | Metric | Source | Calculation |
 |--------|--------|-------------|
@@ -143,7 +143,7 @@ From `.forge/runs/*tool-durations*.jsonl` (or OTEL spans if available):
 
 ### Step 3: Write to knowledge metadata
 
-When generating knowledge documents under `.forge/knowledge/sessions/`, append an `## Observability` section:
+When generating knowledge documents under `.tinkerman/knowledge/sessions/`, append an `## Observability` section:
 
 ```yaml
 observability:
@@ -165,7 +165,7 @@ Any tool invocation with `duration_ms > 30000` (30 seconds) is flagged as a **pe
 
 ### Step 5: Skip logic
 
-- No `.forge/runs/*tool-durations*.jsonl` → skip silently
+- No `.tinkerman/runs/*tool-durations*.jsonl` → skip silently
 - No `OTEL_EXPORTER_*` env vars → skip silently
 - Empty JSONL files → skip silently
 - **Never** block the main learn flow due to missing observability data
@@ -179,7 +179,7 @@ Any tool invocation with `duration_ms > 30000` (30 seconds) is flagged as a **pe
 
 ### 触发条件
 
-当 `/tinkerman learn` 从 `.forge/runs/<id>/` 提取经验时（即有 loop 或 build run 产出），**且** `.forge/runs/<id>/commit-narrative.md` 存在，执行理解确认。
+当 `/tinkerman learn` 从 `.tinkerman/runs/<id>/` 提取经验时（即有 loop 或 build run 产出），**且** `.tinkerman/runs/<id>/commit-narrative.md` 存在，执行理解确认。
 
 无 commit-narrative.md（手动 build 非 loop、或旧 run 无叙事）→ 跳过本节，不阻断 learn。
 
@@ -210,14 +210,14 @@ Any tool invocation with `duration_ms > 30000` (30 seconds) is flagged as a **pe
 
 ## §0.8 Gate Feedback Analysis (Reframing / Clarification Logs)
 
-> **Precondition**: Gate logs exist in `.forge/progress/` as `*-reframing.jsonl` or `*-clarification.jsonl`.
+> **Precondition**: Gate logs exist in `.tinkerman/progress/` as `*-reframing.jsonl` or `*-clarification.jsonl`.
 > If no gate logs exist, **skip this entire section** with a single-line note: `⏭️ 无 Gate 反馈日志，跳过 Gate 分析。`
 
 ### Step 1: Scan Gate logs
 
 ```bash
 # Find all gate log files
-ls .forge/progress/*-reframing.jsonl .forge/progress/*-clarification.jsonl 2>/dev/null
+ls .tinkerman/progress/*-reframing.jsonl .tinkerman/progress/*-clarification.jsonl 2>/dev/null
 ```
 
 If no files found → skip.
@@ -288,13 +288,13 @@ For each high-impact dimension:
 1. **识别变更意图**：这次修改想让 agent 做什么不同的事？
 2. **构造验证场景**：写一个简短 prompt，让 agent 执行需要新行为的任务
 3. **运行验证**：带修改运行，检查 agent 行为是否如预期改变
-4. **记录结果**：在 `.forge/knowledge/skill-feedback.md` 中记录
+4. **记录结果**：在 `.tinkerman/knowledge/skill-feedback.md` 中记录
 
 **豁免条件**（commit message 注明 `[skip-skill-verify]`）：纯格式/排版修改、链接/路径修复、typo 修正、删除过时内容。
 
 ### Step 5: Write statistics summary
 
-Write aggregated stats to `.forge/knowledge/sessions/<date>-gate-stats.md`:
+Write aggregated stats to `.tinkerman/knowledge/sessions/<date>-gate-stats.md`:
 
 ```yaml
 ---
@@ -330,7 +330,7 @@ type: gate-analysis
 
 ### Step 1: 定位本次 build 涉及的文件
 
-从 `.forge/runs/<id>/commit-narrative.md` 或 `.forge/progress/<topic>.md` 取本次 build 改动的文件列表。若两者都没有，用 `git diff <base>...HEAD --name-only`。
+从 `.tinkerman/runs/<id>/commit-narrative.md` 或 `.tinkerman/progress/<topic>.md` 取本次 build 改动的文件列表。若两者都没有，用 `git diff <base>...HEAD --name-only`。
 
 ### Step 2: grep `forge:defer` 注释
 
@@ -344,11 +344,11 @@ git diff <base>...HEAD -z --name-only | xargs -0 grep -n "forge:defer"
 
 ### Step 3: 写入台账（含脱敏）
 
-把解析结果追加到 `.forge/knowledge/deferred.md` 的台账表：
+把解析结果追加到 `.tinkerman/knowledge/deferred.md` 的台账表：
 
 | 日期 | Feature | 文件:行 | Ceiling | 升级触发 | 升级路径 |
 
-日期用本次 learn 的 UTC 日期；Feature 从 `.forge/status.md` 当前 topic 取。
+日期用本次 learn 的 UTC 日期；Feature 从 `.tinkerman/status.md` 当前 topic 取。
 
 **脱敏规则（强制，写入前逐条检查）**：deferred.md 受 git 跟踪并可能推送远端，`forge:defer` 的三段内容（尤其 `<path>`）必须脱敏：
 - **凭据/密钥**：命中以下模式之一 → 拒绝写入该条，输出 `⚠️ defer entry at <file>:<line> contains疑似凭据，已跳过台账`：
@@ -389,7 +389,7 @@ Produce properly formatted knowledge documents with correct YAML frontmatter and
 Identify high-frequency patterns, promote them to instincts when thresholds are met, manage pattern staleness and decay, and distill error-prevention rules from accumulated data. Core lifecycle functions: `maintainKnowledgeBase(kb, config)` enforces the 20-document cap and auto-cleans confidence < 0.3 entries; `findStaleOrDecayedPatterns(kb)` detects patterns with outdated confidence or zero recent adoption; `archivePatternByName(name)` moves a superseded pattern to archive; `buildPatternUpgradeDrafts(patterns)` generates proposed upgrades for high-confidence patterns; `proposeStaleTerms(glossary, sessionData)` identifies glossary terms no longer in active use.
 
 ### G5: Knowledge Base Health
-Maintain the knowledge base within configured limits, enforce confidence thresholds, merge overlapping entries, and ensure maintenance invariants hold at all times. Run integrity lint (cross-file reference validation, orphan detection, contradiction detection) and regenerate the Layer A catalog index. Solutions 写入完成后，hooks.json PostToolUse 自动触发 integrity lint（`scripts/knowledge-hook-dispatch.mjs`），findings 写入 `.forge/findings/integrity-<timestamp>.md`。
+Maintain the knowledge base within configured limits, enforce confidence thresholds, merge overlapping entries, and ensure maintenance invariants hold at all times. Run integrity lint (cross-file reference validation, orphan detection, contradiction detection) and regenerate the Layer A catalog index. Solutions 写入完成后，hooks.json PostToolUse 自动触发 integrity lint（`scripts/knowledge-hook-dispatch.mjs`），findings 写入 `.tinkerman/findings/integrity-<timestamp>.md`。
 
 ### G6: Knowledge Backflow Wiring
 Ensure knowledge flows back into plan, build, and debug phases. Track adoption and adjust confidence accordingly. Record failure patterns.
@@ -401,10 +401,10 @@ Detect scenarios where SKILL.md guidance was inapplicable. Record for review but
 Produce a session episode, run evolution aggregation, archive task artifacts, and update status. Episode generation calls `buildEpisodeFromSession(sessionData)` to produce the ≤20-line session episode document. Prompt configuration is loaded via `getLearnPromptConfig(config)` which returns dimension-specific extraction prompts.
 
 ### G9: 规则蒸馏 (Rule Distillation)
-Distill error-prevention rules from accumulated knowledge entries when confidence and frequency thresholds are met. Proposed rules follow the Evolved Rules protocol (`.forge/knowledge/evolved-rules.md`). 内部使用 `runGlossaryCheck({ phase: 'learn' })` 检测术语冲突。 Evolution report is produced by `generateEvolutionReport(evolutions, rules)` and rendered for user review via `renderEvolutionReport(report)`. Term lifecycle is managed by `extractSessionTermCandidates(sessionData)` for candidate discovery, `mergeTerm(target, source)` for deduplication, and `archiveTerm(name)` for retirement.
+Distill error-prevention rules from accumulated knowledge entries when confidence and frequency thresholds are met. Proposed rules follow the Evolved Rules protocol (`.tinkerman/knowledge/evolved-rules.md`). 内部使用 `runGlossaryCheck({ phase: 'learn' })` 检测术语冲突。 Evolution report is produced by `generateEvolutionReport(evolutions, rules)` and rendered for user review via `renderEvolutionReport(report)`. Term lifecycle is managed by `extractSessionTermCandidates(sessionData)` for candidate discovery, `mergeTerm(target, source)` for deduplication, and `archiveTerm(name)` for retirement.
 
 ### G10: Gate Feedback Analysis
-Analyze Reframing Gate and Clarification Gate feedback logs (`.forge/progress/*-reframing.jsonl` and `*-clarification.jsonl`) to identify high-value question patterns. When a question dimension shows `outcome_changed=true` in > 50% of cases with ≥ 3 samples, propose it as an evolved-rule via §5.2 Self-Evolution Protocol.
+Analyze Reframing Gate and Clarification Gate feedback logs (`.tinkerman/progress/*-reframing.jsonl` and `*-clarification.jsonl`) to identify high-value question patterns. When a question dimension shows `outcome_changed=true` in > 50% of cases with ≥ 3 samples, propose it as an evolved-rule via §5.2 Self-Evolution Protocol.
 
 ---
 
@@ -413,9 +413,9 @@ Analyze Reframing Gate and Clarification Gate feedback logs (`.forge/progress/*-
 ### Knowledge Documents
 - Every knowledge document must have YAML frontmatter with title, tags, date, confidence (range 0.3–0.9)
 - Body must contain five sections: Problem Pattern, Solution, Pitfall Record, Decision Rationale, Reusable Pattern
-- Output path: `.forge/knowledge/solutions/<topic>.md` (kebab-case)
+- Output path: `.tinkerman/knowledge/solutions/<topic>.md` (kebab-case)
 - Tags overlap ≥ 50% with existing document → merge, do not create new
-- When `.forge/charter.md` exists AND `status: active`: check if new knowledge relates to charter boundary or invariant. If so, add `charter_refs: [INV-NNN]` to frontmatter
+- When `.tinkerman/charter.md` exists AND `status: active`: check if new knowledge relates to charter boundary or invariant. If so, add `charter_refs: [INV-NNN]` to frontmatter
 
 ## Dual-Track Knowledge System
 
@@ -593,7 +593,7 @@ Existing 5-dimension documents remain valid. Only newly created documents use du
 Before writing a new `solutions/<topic>.md`, count existing documents and emit a near-limit warning when the base reaches 90% of `knowledge_limit`:
 ```
 threshold = ceil(knowledge_limit * 0.9)   # default 0.9 → 18/20
-count = glob('.forge/knowledge/solutions/*.md').length
+count = glob('.tinkerman/knowledge/solutions/*.md').length
 if count >= threshold:
     emit "[knowledge-near-limit] 知识库逼近上限: 当前 {count}/{knowledge_limit} (阈值 {threshold})。建议执行清理 (Confidence<0.3 自动清理) 或提升 instincts,而非等超限被动清理。"
 ```
@@ -602,26 +602,26 @@ The warning is **advisory** (non-blocking) — the write still proceeds. Pure lo
 ### Error-Prevention Rules (evolved-rules.md)
 - Maximum 15 rules
 - Only add rules where absence would cause Claude to err — not a knowledge dump
-- Written to `.forge/knowledge/evolved-rules.md`, injected via SessionStart hook
+- Written to `.tinkerman/knowledge/evolved-rules.md`, injected via SessionStart hook
 
 ### Backflow Confidence Adjustment
 - Knowledge adopted: confidence +0.05 (cap 0.9)
 - Knowledge found ineffective: confidence -0.1 (floor 0.3)
-- Failure pattern appearing 2+ times → write to `.forge/knowledge/known-failures.md`
+- Failure pattern appearing 2+ times → write to `.tinkerman/knowledge/known-failures.md`
 
 ### SKILL Feedback
-- Record to `.forge/knowledge/skill-feedback.md`
+- Record to `.tinkerman/knowledge/skill-feedback.md`
 - Same feedback category ≥ 3 occurrences → remind user to review
 - Never auto-modify SKILL.md
 
 ### Execution Quality
 - Four dimensions: First-pass Rate, Plan Accuracy, Review Interception Rate, Debug Trigger Rate
-- Results append to `.forge/knowledge/metrics.md`
+- Results append to `.tinkerman/knowledge/metrics.md`
 - Improvement signals must feed into five-dimension extraction
 
 ### Session Episode
 - Write `sessions/<date>-<topic>.md` (≤20 lines)
-- Task artifacts archived to `.forge/archive/<date>-<topic>/`
+- Task artifacts archived to `.tinkerman/archive/<date>-<topic>/`
 - Do not archive knowledge/ or config.md
 
 ### Compaction Recovery
@@ -702,7 +702,7 @@ When user triggers `/tinkerman learn`, follow this dispatch protocol:
 | 首次执行（空知识库） | 创建 solutions/ 和 instincts.md，输出提示 |
 | 无可提取知识 | 提示本次较简单，未识别到新知识 |
 | 知识库已满 | 新文档 confidence 高于最低文档时提示替换确认 |
-| 无 `.forge/` 目录 | 提示先运行 `/tinkerman init` |
+| 无 `.tinkerman/` 目录 | 提示先运行 `/tinkerman init` |
 | 无 Gate 日志 | 跳过 Gate 分析，不影响主流程 |
 | Gate 日志格式异常 | 跳过异常条目，记录警告到 session 日志 |
 
@@ -735,14 +735,14 @@ Forge learn may use a saved workflow backend for parallel five-dimension extract
 
 **`--install` 流程**（调用 `buildCronInstallSpec` from `src/loop/install-cron-skill.ts`）：
 
-1. 读 `.forge/config.md` 的 `learn:` 块（`enabled` / `cron` / `interval_days`），用 `resolveCronConfig` 解析（默认 `enabled: false` / `cron: "0 9 * * 1"` / `interval_days: 7`）。
-2. 若 `enabled: false` → 输出指引（"在 .forge/config.md 设 learn.enabled: true 后重试 --install"），**不阻断**手动 `/tinkerman learn --deep`。
+1. 读 `.tinkerman/config.md` 的 `learn:` 块（`enabled` / `cron` / `interval_days`），用 `resolveCronConfig` 解析（默认 `enabled: false` / `cron: "0 9 * * 1"` / `interval_days: 7`）。
+2. 若 `enabled: false` → 输出指引（"在 .tinkerman/config.md 设 learn.enabled: true 后重试 --install"），**不阻断**手动 `/tinkerman learn --deep`。
 3. 用 `validateCronExpression` 校验 cron 表达式。
 4. 用 `buildCronInstallSpec({ skillName: "learn", cron, prompt: "/tinkerman learn --deep" })` 生成 CronCreate 调用约定。
 5. 调用 CC 的 `CronCreate` 工具安装定时触发。
 
 **`--uninstall`**：移除已安装的 cron（label: `forge-learn`）。
 
-**`--status`**：读 `.forge/state/last-learn-at`（上次 --deep 时间）+ 知识库行数/字节健康度。
+**`--status`**：读 `.tinkerman/state/last-learn-at`（上次 --deep 时间）+ 知识库行数/字节健康度。
 
 ⚠️ **硬限制**：本地 cron 需 Claude Code 进程活着——机器关了、CC 退了就漏触发。不承诺关机运行（对齐 loop-engineering-adoption AC8）。

@@ -65,7 +65,7 @@ Gate 完成后，将用户回答注入后续流程的 context：
 
 Gate 执行过程记录到 JSONL 日志：
 
-**路径**：`.forge/progress/{log_filename}`
+**路径**：`.tinkerman/progress/{log_filename}`
 
 **格式**：每行一条 JSON 记录：
 

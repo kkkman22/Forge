@@ -6,7 +6,7 @@
  *
  * Audit P1: the destructive guard (git reset --hard / push --force / clean -fd /
  * stash drop / infra destroy) was previously only wired through check-sandbox,
- * which short-circuits to allow when `.forge/.sandbox-active.json` is absent.
+ * which short-circuits to allow when `.tinkerman/.sandbox-active.json` is absent.
  * That meant in normal (non-sandboxed) runs, nothing intercepted these
  * history-rewriting / untracked-deleting commands.
  *

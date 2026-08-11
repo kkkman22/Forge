@@ -291,9 +291,9 @@ describe("E2E: Auto Refine", () => {
 
 describe("E2E: Auto Migration (unit-level)", () => {
   it("legacy spec detected and classified correctly", () => {
-    expect(classify(".forge/specs/auth/spec.md")).toBe("frozen");
-    expect(classify(".forge/specs/auth/requirements.md")).toBe("frozen");
-    expect(classify(".forge/specs/auth/spec.legacy.md")).toBe("open");
+    expect(classify(".tinkerman/specs/auth/spec.md")).toBe("frozen");
+    expect(classify(".tinkerman/specs/auth/requirements.md")).toBe("frozen");
+    expect(classify(".tinkerman/specs/auth/spec.legacy.md")).toBe("open");
   });
 });
 
@@ -750,6 +750,6 @@ Add null check before token generation
   });
 
   it("frozen zone covers bugfix.md", () => {
-    expect(classify(".forge/specs/auth/bugfix.md")).toBe("frozen");
+    expect(classify(".tinkerman/specs/auth/bugfix.md")).toBe("frozen");
   });
 });

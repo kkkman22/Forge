@@ -52,7 +52,7 @@ describe("buildThreeStrikeFailureArtifacts — Requirement 8.6", () => {
       FIXED_NOW,
       1,
     );
-    const parsed = parseEvolutionMarkers(markerText, ".forge/progress/widget-refactor.md");
+    const parsed = parseEvolutionMarkers(markerText, ".tinkerman/progress/widget-refactor.md");
     expect(parsed).toHaveLength(1);
     expect(parsed[0].target).toBe("forge-build#three_strike");
     expect(parsed[0].source).toBe(episode.id);

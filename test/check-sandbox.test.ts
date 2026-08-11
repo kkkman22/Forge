@@ -2,7 +2,7 @@
  * Unit tests for check-sandbox.ts
  *
  * Tests the PreToolUse hook script that enforces sandbox policy
- * by reading .forge/.sandbox-active.json and checking file/network access.
+ * by reading .tinkerman/.sandbox-active.json and checking file/network access.
  *
  * **Validates: Requirements 1.3, 1.4, 2.3, 2.4, 4.4**
  */
@@ -22,7 +22,7 @@ import {
 // ---------------------------------------------------------------------------
 
 const PROJECT_ROOT = "/tmp/test-project";
-const ACTIVE_CONFIG_PATH = resolve(PROJECT_ROOT, ".forge/.sandbox-active.json");
+const ACTIVE_CONFIG_PATH = resolve(PROJECT_ROOT, ".tinkerman/.sandbox-active.json");
 
 const defaultRuntimeConfig: SandboxRuntimeConfig = {
   projectRoot: PROJECT_ROOT,
@@ -43,7 +43,7 @@ const defaultRuntimeConfig: SandboxRuntimeConfig = {
 // ---------------------------------------------------------------------------
 
 beforeEach(() => {
-  mkdirSync(resolve(PROJECT_ROOT, ".forge"), { recursive: true });
+  mkdirSync(resolve(PROJECT_ROOT, ".tinkerman"), { recursive: true });
   writeFileSync(ACTIVE_CONFIG_PATH, JSON.stringify(defaultRuntimeConfig));
 });
 
@@ -220,7 +220,7 @@ describe("checkSandboxAccess", () => {
 
 describe("checkSandboxAccess — destructive guard", () => {
   beforeEach(() => {
-    mkdirSync(resolve(PROJECT_ROOT, ".forge"), { recursive: true });
+    mkdirSync(resolve(PROJECT_ROOT, ".tinkerman"), { recursive: true });
     writeFileSync(ACTIVE_CONFIG_PATH, JSON.stringify(defaultRuntimeConfig));
   });
 
@@ -257,7 +257,10 @@ describe("checkSandboxAccess — destructive guard", () => {
   });
 
   it("R1-AC5: config.md destructive_guard:off propagates to hook (allows destructive)", () => {
-    writeFileSync(resolve(PROJECT_ROOT, ".forge/config.md"), "---\ndestructive_guard: off\n---\n");
+    writeFileSync(
+      resolve(PROJECT_ROOT, ".tinkerman/config.md"),
+      "---\ndestructive_guard: off\n---\n",
+    );
     const result = checkSandboxAccess(
       "Bash",
       JSON.stringify({ command: "git reset --hard" }),

@@ -222,7 +222,7 @@ describe("agentBrowserRunner — P0-1 URL allowlist guard (R4-AC5)", () => {
 
 describe("agentBrowserRunner — P0-2 pin verification (R4-AC6)", () => {
   it("verifies binary pin before open (dev mode: no pin configured → proceeds)", async () => {
-    // In test env, .forge/config.md has agent_browser_pin_sha256: "" → dev allow.
+    // In test env, .tinkerman/config.md has agent_browser_pin_sha256: "" → dev allow.
     const client = new FakeAgentBrowserClient();
     client.enqueueSnapshot({
       refs: [{ ref: "e3", tag: "button", text: "登录", role: "button" }],

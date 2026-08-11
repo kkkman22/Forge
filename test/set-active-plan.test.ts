@@ -2,7 +2,7 @@
  * Unit tests for set-active-plan.mjs — active-plan.json writer (R3).
  *
  * Tests the writer script that plan-approve and build-start call to populate
- * .forge/state/active-plan.json (the single source of truth consumed by
+ * .tinkerman/state/active-plan.json (the single source of truth consumed by
  * inject-plan-context.mjs's reader).
  *
  * **Validates: Requirement 3 (R3 writer half — fixes SC-1 P0)**
@@ -14,18 +14,18 @@ import { join } from "node:path";
 import { afterEach, describe, expect, it } from "vitest";
 
 const SCRIPT_PATH = join(process.cwd(), "scripts", "set-active-plan.mjs");
-const POINTER_FILE = ".forge/state/active-plan.json";
+const POINTER_FILE = ".tinkerman/state/active-plan.json";
 
 function createTempForge(): string {
   const dir = mkdtempSync(join(tmpdir(), "forge-setactive-test-"));
-  mkdirSync(join(dir, ".forge", "plans"), { recursive: true });
-  mkdirSync(join(dir, ".forge", "specs", "feature-x"), { recursive: true });
-  mkdirSync(join(dir, ".forge", "state"), { recursive: true });
+  mkdirSync(join(dir, ".tinkerman", "plans"), { recursive: true });
+  mkdirSync(join(dir, ".tinkerman", "specs", "feature-x"), { recursive: true });
+  mkdirSync(join(dir, ".tinkerman", "state"), { recursive: true });
   return dir;
 }
 
 function writePlan(dir: string, name: string, frontmatter: string, body: string): void {
-  writeFileSync(join(dir, ".forge", "plans", name), `---\n${frontmatter}\n---\n\n${body}`);
+  writeFileSync(join(dir, ".tinkerman", "plans", name), `---\n${frontmatter}\n---\n\n${body}`);
 }
 
 function runScript(cwd: string, args: string[]): { stdout: string; exitCode: number } {
@@ -71,10 +71,10 @@ describe("set-active-plan.mjs (R3 writer)", () => {
     writePlan(
       tempDir,
       "feature-x.md",
-      'status: approved\nspec_ref: ".forge/specs/feature-x/spec.md"',
+      'status: approved\nspec_ref: ".tinkerman/specs/feature-x/spec.md"',
       "Plan body",
     );
-    const planPath = ".forge/plans/feature-x.md";
+    const planPath = ".tinkerman/plans/feature-x.md";
 
     const { exitCode } = runScript(tempDir, [planPath]);
     expect(exitCode).toBe(0);
@@ -82,7 +82,7 @@ describe("set-active-plan.mjs (R3 writer)", () => {
     const pointer = readPointer(tempDir);
     expect(pointer).not.toBeNull();
     expect(pointer!.plan_path).toBe(planPath);
-    expect(pointer!.spec_ref).toBe(".forge/specs/feature-x/spec.md");
+    expect(pointer!.spec_ref).toBe(".tinkerman/specs/feature-x/spec.md");
     expect(pointer!.phase).toBe("build");
     expect(pointer!.pinned_at).toMatch(/^\d{4}-\d{2}-\d{2}/);
   });
@@ -93,13 +93,13 @@ describe("set-active-plan.mjs (R3 writer)", () => {
     writePlan(
       tempDir,
       "feature-y.md",
-      'status: approved\nspec_ref: ".forge/specs/feature-y/spec.md"',
+      'status: approved\nspec_ref: ".tinkerman/specs/feature-y/spec.md"',
       "Body",
     );
 
-    runScript(tempDir, [".forge/plans/feature-y.md"]);
+    runScript(tempDir, [".tinkerman/plans/feature-y.md"]);
     const pointer = readPointer(tempDir);
-    expect(pointer!.spec_ref).toBe(".forge/specs/feature-y/spec.md");
+    expect(pointer!.spec_ref).toBe(".tinkerman/specs/feature-y/spec.md");
   });
 
   // R3.AC2 — build 启动 / 阶段切换时只更新 phase(保留其他字段)
@@ -107,36 +107,36 @@ describe("set-active-plan.mjs (R3 writer)", () => {
     tempDir = createTempForge();
     writePlan(tempDir, "feature-x.md", "status: approved", "Body");
     // 先写入完整指针
-    runScript(tempDir, [".forge/plans/feature-x.md"]);
+    runScript(tempDir, [".tinkerman/plans/feature-x.md"]);
     // 阶段切换到 review
     const { exitCode } = runScript(tempDir, ["--phase", "review"]);
     expect(exitCode).toBe(0);
 
     const pointer = readPointer(tempDir);
-    expect(pointer!.plan_path).toBe(".forge/plans/feature-x.md");
+    expect(pointer!.plan_path).toBe(".tinkerman/plans/feature-x.md");
     expect(pointer!.phase).toBe("review");
   });
 
   // 安全:拒绝写不存在的 plan 路径(fail-open,不写垃圾指针)
   it("refuses to set pointer for a non-existent plan path", () => {
     tempDir = createTempForge();
-    const { exitCode } = runScript(tempDir, [".forge/plans/nonexistent.md"]);
+    const { exitCode } = runScript(tempDir, [".tinkerman/plans/nonexistent.md"]);
     expect(exitCode).toBe(0); // fail-open exit 0
     expect(readPointer(tempDir)).toBeNull();
   });
 
-  // P3-1 fix: 拒绝目录作为 plan_path(传 .forge/plans 本身应被拒)
-  it("refuses a directory as plan_path (must be a file inside .forge/plans/)", () => {
+  // P3-1 fix: 拒绝目录作为 plan_path(传 .tinkerman/plans 本身应被拒)
+  it("refuses a directory as plan_path (must be a file inside .tinkerman/plans/)", () => {
     tempDir = createTempForge();
     writePlan(tempDir, "real.md", "status: approved", "Body");
     // 传 plans 目录本身(rel === "" 即 target == root)
-    const { exitCode } = runScript(tempDir, [".forge/plans"]);
+    const { exitCode } = runScript(tempDir, [".tinkerman/plans"]);
     expect(exitCode).toBe(0);
     expect(readPointer(tempDir)).toBeNull();
   });
 
   // 安全:realpath 校验——拒绝 plans 目录外的路径
-  it("refuses plan_path outside .forge/plans/ (path traversal guard)", () => {
+  it("refuses plan_path outside .tinkerman/plans/ (path traversal guard)", () => {
     tempDir = createTempForge();
     // 在 tempDir 外写个文件
     const outside = mkdtempSync(join(tmpdir(), "forge-outside-"));
@@ -159,12 +159,12 @@ describe("set-active-plan.mjs (R3 writer)", () => {
   it("is idempotent — setting same plan twice yields single valid pointer", () => {
     tempDir = createTempForge();
     writePlan(tempDir, "feature-x.md", "status: approved", "Body");
-    runScript(tempDir, [".forge/plans/feature-x.md"]);
-    runScript(tempDir, [".forge/plans/feature-x.md"]);
+    runScript(tempDir, [".tinkerman/plans/feature-x.md"]);
+    runScript(tempDir, [".tinkerman/plans/feature-x.md"]);
 
     const pointer = readPointer(tempDir);
     expect(pointer).not.toBeNull();
-    expect(pointer!.plan_path).toBe(".forge/plans/feature-x.md");
+    expect(pointer!.plan_path).toBe(".tinkerman/plans/feature-x.md");
   });
 
   // --help(black-box convention §2.8)

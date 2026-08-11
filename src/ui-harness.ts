@@ -59,7 +59,7 @@ export interface UiHarnessVerdict {
 
 export async function runUiHarness(opts: UiHarnessOptions): Promise<UiHarnessVerdict> {
   const attempted: { tier: UiControllerTier; reason: string }[] = [];
-  const forgeDir = opts.forgeDir ?? join(process.cwd(), ".forge");
+  const forgeDir = opts.forgeDir ?? join(process.cwd(), ".tinkerman");
   const artifactsDir = join(forgeDir, "findings", opts.topic, "ui-harness");
 
   // Test seams — default to the real implementations. Production code never

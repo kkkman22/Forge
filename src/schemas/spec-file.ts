@@ -1,5 +1,5 @@
 /**
- * Zod schema for `.forge/specs/<feature>/spec.md` frontmatter.
+ * Zod schema for `.tinkerman/specs/<feature>/spec.md` frontmatter.
  *
  * Mirrors `SpecFrontmatter` in `src/spec.ts`:
  *
@@ -7,7 +7,7 @@
  *   - `status`:       `"draft"` | `"locked"`
  *   - `date`:         required string (ISO date or free-form date)
  *   - `importSource`: optional path set when the spec is imported from
- *                     an external document (`.forge/inbox/`)
+ *                     an external document (`.tinkerman/inbox/`)
  *
  * Uses `.passthrough()` to allow future fields without breaking parse.
  *

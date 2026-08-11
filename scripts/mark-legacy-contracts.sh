@@ -3,10 +3,10 @@ set -euo pipefail
 
 # Mark all locked specs predating contract validation as legacy
 # Usage: mark-legacy-contracts.sh [specs-dir] [cutoff-date]
-#   specs-dir defaults to .forge/specs
+#   specs-dir defaults to .tinkerman/specs
 #   cutoff-date defaults to today (YYYY-MM-DD)
 
-specs_dir="${1:-.forge/specs}"
+specs_dir="${1:-.tinkerman/specs}"
 cutoff_date="${2:-$(date +%Y-%m-%d)}"
 marked=0
 

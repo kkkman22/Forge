@@ -311,7 +311,7 @@ function tryParseCiEvidence(
       return null;
     }
     const normalized = path.replace(/\\/g, "/");
-    if (!normalized.includes(".forge/reviews/")) {
+    if (!normalized.includes(".tinkerman/reviews/")) {
       return null;
     }
     const content = readFileSync(path, "utf-8");

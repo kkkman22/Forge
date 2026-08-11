@@ -5,7 +5,7 @@ updated: 2026-08-11
 
 > 从 `../instructions.md §6.5` 拆分。SKILL 主文件只保留一行摘要指针。
 
-从积累的知识数据中蒸馏出"错误预防规则"——Claude 在没有明确指导时会犯错的高价值模式。规则写入 `.forge/knowledge/evolved-rules.md`（最多 15 条），通过 SessionStart hook 注入上下文。
+从积累的知识数据中蒸馏出"错误预防规则"——Claude 在没有明确指导时会犯错的高价值模式。规则写入 `.tinkerman/knowledge/evolved-rules.md`（最多 15 条），通过 SessionStart hook 注入上下文。
 
 **核心原则**：只添加"没有这条规则 Claude 就会犯错"的规则——不是知识转储。
 
@@ -13,11 +13,11 @@ updated: 2026-08-11
 
 | Data Source | File Path | Extraction Content |
 |-------------|-----------|-------------------|
-| Known failure patterns | `.forge/knowledge/known-failures.md` | Failure patterns with occurrence >= 3 |
-| Instinct patterns | `.forge/knowledge/instincts.md` | Experience rules with confidence >= 0.8 |
-| SKILL feedback | `.forge/knowledge/skill-feedback.md` | Inapplicable SKILL guidance with frequency >= 3 |
-| Execution metrics | `.forge/knowledge/metrics.md` | Degradation trend across 3+ consecutive sessions |
-| Session journals | `.forge/knowledge/sessions/*.md` | Same issue appearing in 3+ sessions |
+| Known failure patterns | `.tinkerman/knowledge/known-failures.md` | Failure patterns with occurrence >= 3 |
+| Instinct patterns | `.tinkerman/knowledge/instincts.md` | Experience rules with confidence >= 0.8 |
+| SKILL feedback | `.tinkerman/knowledge/skill-feedback.md` | Inapplicable SKILL guidance with frequency >= 3 |
+| Execution metrics | `.tinkerman/knowledge/metrics.md` | Degradation trend across 3+ consecutive sessions |
+| Session journals | `.tinkerman/knowledge/sessions/*.md` | Same issue appearing in 3+ sessions |
 
 ## Distillation Algorithm
 

@@ -3,8 +3,8 @@
 /**
  * inject-evolved-rules.mjs — SessionStart hook: evolved-rules + spec-title injector.
  *
- * Reads .forge/knowledge/evolved-rules.md with a 4KB byte limit.
- * Detects active spec from .forge/state/spec-lock or .kiro/specs/ directory.
+ * Reads .tinkerman/knowledge/evolved-rules.md with a 4KB byte limit.
+ * Detects active spec from .tinkerman/state/spec-lock or .kiro/specs/ directory.
  * Outputs JSON with additionalContext + hookSpecificOutput (reloadSkills, sessionTitle).
  * Short-circuits to zero output when stdin signals subagent caller.
  * Fails open silently when file doesn't exist (stderr diagnostic + exit 0).
@@ -17,8 +17,8 @@ import { shouldSkipForSubagent } from "./lib/hook-stdin-router.mjs";
 import { getCachePath, migrateOldCache } from "./lib/plugin-data-path.mjs";
 import { pruneHookOutput } from "./lib/zcode-platform.mjs";
 
-const RULES_PATH = ".forge/knowledge/evolved-rules.md";
-const SPEC_LOCK_PATH = ".forge/state/spec-lock";
+const RULES_PATH = ".tinkerman/knowledge/evolved-rules.md";
+const SPEC_LOCK_PATH = ".tinkerman/state/spec-lock";
 const SPECS_DIR = ".kiro/specs";
 // Max source file read size (32KB — full file, extraction will trim)
 const MAX_BYTES = 32768;
@@ -103,7 +103,7 @@ function readEvolvedRules(cwd) {
 
 /**
  * Detect active spec name.
- * Priority: .forge/state/spec-lock > single spec in .kiro/specs/ > null
+ * Priority: .tinkerman/state/spec-lock > single spec in .kiro/specs/ > null
  */
 function detectSpecName(cwd) {
   // Check spec-lock first

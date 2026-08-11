@@ -1,0 +1,698 @@
+{"timestamp":"2026-06-13T00:15:11Z","event":"postcompact_restore","detail":"slug=code-slim-0612"}
+{"timestamp":"2026-06-13T00:15:11Z","event":"precompact_snapshot","detail":"slug=code-slim-0612 phase=p2-wave2-complete completed=0
+0 pending=0
+0"}
+{"timestamp":"2026-06-13T00:17:00Z","event":"postcompact_restore","detail":"slug=code-slim-0612"}
+{"timestamp":"2026-06-13T00:17:00Z","event":"precompact_snapshot","detail":"slug=code-slim-0612 phase=p2-wave2-complete completed=0
+0 pending=0
+0"}
+{"timestamp":"2026-06-13T00:20:20Z","event":"postcompact_restore","detail":"slug=code-slim-0612"}
+{"timestamp":"2026-06-13T00:20:21Z","event":"precompact_snapshot","detail":"slug=audit-remediate-0608 phase=build completed=0 pending=0"}
+{"timestamp":"2026-06-13T00:22:34Z","event":"postcompact_restore","detail":"slug=audit-remediate-0608"}
+{"timestamp":"2026-06-13T00:22:34Z","event":"precompact_snapshot","detail":"slug=audit-remediate-0608 phase=build completed=0 pending=0"}
+{"timestamp":"2026-06-13T00:29:21Z","event":"postcompact_restore","detail":"slug=audit-remediate-0608"}
+{"timestamp":"2026-06-13T00:29:21Z","event":"precompact_snapshot","detail":"slug=audit-remediate-0608 phase=build completed=0 pending=0"}
+{"timestamp":"2026-06-13T00:31:41Z","event":"postcompact_restore","detail":"slug=audit-remediate-0608"}
+{"timestamp":"2026-06-13T00:31:41Z","event":"precompact_snapshot","detail":"slug=code-slim-0612 phase=review-passed completed=0
+0 pending=0
+0"}
+{"timestamp":"2026-06-13T00:33:22Z","event":"postcompact_restore","detail":"slug=code-slim-0612"}
+{"timestamp":"2026-06-13T00:33:22Z","event":"precompact_snapshot","detail":"slug=audit-remediate-0608 phase=build completed=0 pending=0"}
+{"timestamp":"2026-06-13T00:40:48Z","event":"postcompact_restore","detail":"slug=audit-remediate-0608"}
+{"timestamp":"2026-06-13T00:40:48Z","event":"precompact_snapshot","detail":"slug=code-slim-0612 phase=review-passed completed=0
+0 pending=0
+0"}
+{"timestamp":"2026-06-13T00:49:35Z","event":"postcompact_restore","detail":"slug=code-slim-0612"}
+{"timestamp":"2026-06-13T00:49:35Z","event":"precompact_snapshot","detail":"slug=code-slim-0612 phase=p3-wave3-complete completed=0
+0 pending=0
+0"}
+{"timestamp":"2026-06-13T01:12:03Z","event":"postcompact_restore","detail":"slug=code-slim-0612"}
+{"timestamp":"2026-06-13T01:12:03Z","event":"precompact_snapshot","detail":"slug=code-slim-0612 phase=complete completed=0
+0 pending=0
+0"}
+{"timestamp":"2026-06-13T01:13:47Z","event":"postcompact_restore","detail":"slug=code-slim-0612"}
+{"timestamp":"2026-06-13T01:13:47Z","event":"precompact_snapshot","detail":"slug=code-slim-0612 phase=complete completed=0
+0 pending=0
+0"}
+{"timestamp":"2026-06-13T01:16:33Z","event":"postcompact_restore","detail":"slug=code-slim-0612"}
+{"timestamp":"2026-06-13T01:16:33Z","event":"precompact_snapshot","detail":"slug=audit-remediate-0608 phase=build completed=0 pending=0"}
+{"timestamp":"2026-06-13T02:12:35Z","event":"postcompact_restore","detail":"slug=audit-remediate-0608"}
+{"timestamp":"2026-06-13T02:12:35Z","event":"precompact_snapshot","detail":"slug=code-slim-0612 phase=complete completed=0
+0 pending=0
+0"}
+{"timestamp":"2026-06-13T06:19:34Z","event":"postcompact_restore","detail":"slug=code-slim-0612"}
+{"timestamp":"2026-06-13T06:19:34Z","event":"precompact_snapshot","detail":"slug=code-slim-0612 phase=complete completed=0
+0 pending=0
+0"}
+{"timestamp":"2026-06-13T06:30:52Z","event":"postcompact_restore","detail":"slug=code-slim-0612"}
+{"timestamp":"2026-06-13T06:30:52Z","event":"precompact_snapshot","detail":"slug=code-slim-0612 phase=complete completed=0
+0 pending=0
+0"}
+{"timestamp":"2026-06-13T07:25:02Z","event":"postcompact_restore","detail":"slug=code-slim-0612"}
+{"timestamp":"2026-06-13T07:25:02Z","event":"precompact_snapshot","detail":"slug=code-slim-0612 phase=complete completed=0
+0 pending=0
+0"}
+{"timestamp":"2026-06-13T07:34:28Z","event":"postcompact_restore","detail":"slug=code-slim-0612"}
+{"timestamp":"2026-06-13T07:34:28Z","event":"precompact_snapshot","detail":"slug=code-slim-0612 phase=complete completed=0
+0 pending=0
+0"}
+{"timestamp":"2026-06-13T07:35:41Z","event":"postcompact_restore","detail":"slug=code-slim-0612"}
+{"timestamp":"2026-06-13T07:35:41Z","event":"precompact_snapshot","detail":"slug=code-slim-0612 phase=complete completed=0
+0 pending=0
+0"}
+{"timestamp":"2026-06-13T07:37:51Z","event":"postcompact_restore","detail":"slug=code-slim-0612"}
+{"timestamp":"2026-06-13T07:37:51Z","event":"precompact_snapshot","detail":"slug=code-slim-0612 phase=complete completed=0
+0 pending=0
+0"}
+{"timestamp":"2026-06-13T08:16:07Z","event":"postcompact_restore","detail":"slug=code-slim-0612"}
+{"timestamp":"2026-06-13T08:16:07Z","event":"precompact_snapshot","detail":"slug=code-slim-0612 phase=complete completed=0
+0 pending=0
+0"}
+{"timestamp":"2026-06-13T08:18:18Z","event":"postcompact_restore","detail":"slug=code-slim-0612"}
+{"timestamp":"2026-06-13T08:18:18Z","event":"precompact_snapshot","detail":"slug=code-slim-0612 phase=complete completed=0
+0 pending=0
+0"}
+{"timestamp":"2026-06-13T09:10:39Z","event":"postcompact_restore","detail":"slug=code-slim-0612"}
+{"timestamp":"2026-06-13T09:10:39Z","event":"precompact_snapshot","detail":"slug=code-slim-0612 phase=complete completed=0
+0 pending=0
+0"}
+{"timestamp":"2026-06-13T09:12:35Z","event":"postcompact_restore","detail":"slug=code-slim-0612"}
+{"timestamp":"2026-06-13T09:12:35Z","event":"precompact_snapshot","detail":"slug=code-slim-0612 phase=complete completed=0
+0 pending=0
+0"}
+{"timestamp":"2026-06-13T09:23:23Z","event":"postcompact_restore","detail":"slug=code-slim-0612"}
+{"timestamp":"2026-06-13T09:23:23Z","event":"precompact_snapshot","detail":"slug=code-slim-0612 phase=complete completed=0
+0 pending=0
+0"}
+{"timestamp":"2026-06-13T09:35:01Z","event":"postcompact_restore","detail":"slug=code-slim-0612"}
+{"timestamp":"2026-06-13T09:35:01Z","event":"precompact_snapshot","detail":"slug=code-slim-0612 phase=complete completed=0
+0 pending=0
+0"}
+{"timestamp":"2026-06-13T11:00:20Z","event":"postcompact_restore","detail":"slug=code-slim-0612"}
+{"timestamp":"2026-06-13T11:00:20Z","event":"precompact_snapshot","detail":"slug=code-slim-0612 phase=complete completed=0
+0 pending=0
+0"}
+{"timestamp":"2026-06-13T12:09:53Z","event":"postcompact_restore","detail":"slug=code-slim-0612"}
+{"timestamp":"2026-06-13T12:09:53Z","event":"precompact_snapshot","detail":"slug=code-slim-0612 phase=complete completed=0
+0 pending=0
+0"}
+{"timestamp":"2026-06-13T12:51:51Z","event":"postcompact_restore","detail":"slug=code-slim-0612"}
+{"timestamp":"2026-06-13T12:51:52Z","event":"precompact_snapshot","detail":"slug=code-slim-0612 phase=complete completed=0
+0 pending=0
+0"}
+{"timestamp":"2026-06-13T13:23:07Z","event":"postcompact_restore","detail":"slug=code-slim-0612"}
+{"timestamp":"2026-06-13T13:23:07Z","event":"precompact_snapshot","detail":"slug=code-slim-0612 phase=complete completed=0
+0 pending=0
+0"}
+{"timestamp":"2026-06-13T13:25:02Z","event":"postcompact_restore","detail":"slug=code-slim-0612"}
+{"timestamp":"2026-06-13T13:25:02Z","event":"precompact_snapshot","detail":"slug=code-slim-0612 phase=complete completed=0
+0 pending=0
+0"}
+{"timestamp":"2026-06-13T13:27:44Z","event":"postcompact_restore","detail":"slug=code-slim-0612"}
+{"timestamp":"2026-06-13T13:27:44Z","event":"precompact_snapshot","detail":"slug=code-slim-0612 phase=complete completed=0
+0 pending=0
+0"}
+{"timestamp":"2026-06-13T13:29:44Z","event":"postcompact_restore","detail":"slug=code-slim-0612"}
+{"timestamp":"2026-06-13T13:29:44Z","event":"precompact_snapshot","detail":"slug=code-slim-0612 phase=complete completed=0
+0 pending=0
+0"}
+{"timestamp":"2026-06-13T13:30:35Z","event":"postcompact_restore","detail":"slug=code-slim-0612"}
+{"timestamp":"2026-06-13T13:30:35Z","event":"precompact_snapshot","detail":"slug=code-slim-0612 phase=complete completed=0
+0 pending=0
+0"}
+{"timestamp":"2026-06-13T13:35:13Z","event":"postcompact_restore","detail":"slug=code-slim-0612"}
+{"timestamp":"2026-06-13T13:35:13Z","event":"precompact_snapshot","detail":"slug=code-slim-0612 phase=complete completed=0
+0 pending=0
+0"}
+{"timestamp":"2026-06-13T13:47:55Z","event":"postcompact_restore","detail":"slug=code-slim-0612"}
+{"timestamp":"2026-06-13T13:47:55Z","event":"precompact_snapshot","detail":"slug=code-slim-0612 phase=complete completed=0
+0 pending=0
+0"}
+{"timestamp":"2026-06-13T13:48:59Z","event":"postcompact_restore","detail":"slug=code-slim-0612"}
+{"timestamp":"2026-06-13T13:48:59Z","event":"precompact_snapshot","detail":"slug=code-slim-0612 phase=complete completed=0
+0 pending=0
+0"}
+{"timestamp":"2026-06-13T14:35:26Z","event":"postcompact_restore","detail":"slug=code-slim-0612"}
+{"timestamp":"2026-06-13T14:35:26Z","event":"precompact_snapshot","detail":"slug=code-slim-0612 phase=complete completed=0
+0 pending=0
+0"}
+{"timestamp":"2026-06-13T14:38:20Z","event":"postcompact_restore","detail":"slug=code-slim-0612"}
+{"timestamp":"2026-06-13T14:38:21Z","event":"precompact_snapshot","detail":"slug=code-slim-0612 phase=complete completed=0
+0 pending=0
+0"}
+{"timestamp":"2026-06-13T14:39:32Z","event":"postcompact_restore","detail":"slug=code-slim-0612"}
+{"timestamp":"2026-06-13T14:39:32Z","event":"precompact_snapshot","detail":"slug=code-slim-0612 phase=complete completed=0
+0 pending=0
+0"}
+{"timestamp":"2026-06-13T14:40:38Z","event":"postcompact_restore","detail":"slug=code-slim-0612"}
+{"timestamp":"2026-06-13T14:40:38Z","event":"precompact_snapshot","detail":"slug=code-slim-0612 phase=complete completed=0
+0 pending=0
+0"}
+{"timestamp":"2026-06-13T14:43:48Z","event":"postcompact_restore","detail":"slug=code-slim-0612"}
+{"timestamp":"2026-06-13T14:43:48Z","event":"precompact_snapshot","detail":"slug=code-slim-0612 phase=complete completed=0
+0 pending=0
+0"}
+{"timestamp":"2026-06-13T14:47:14Z","event":"postcompact_restore","detail":"slug=code-slim-0612"}
+{"timestamp":"2026-06-13T14:47:14Z","event":"precompact_snapshot","detail":"slug=code-slim-0612 phase=complete completed=0
+0 pending=0
+0"}
+{"timestamp":"2026-06-13T14:54:29Z","event":"postcompact_restore","detail":"slug=code-slim-0612"}
+{"timestamp":"2026-06-13T14:54:30Z","event":"precompact_snapshot","detail":"slug=code-slim-0612 phase=complete completed=0
+0 pending=0
+0"}
+{"timestamp":"2026-06-13T14:55:38Z","event":"postcompact_restore","detail":"slug=code-slim-0612"}
+{"timestamp":"2026-06-13T14:55:38Z","event":"precompact_snapshot","detail":"slug=code-slim-0612 phase=complete completed=0
+0 pending=0
+0"}
+{"timestamp":"2026-06-13T14:57:40Z","event":"postcompact_restore","detail":"slug=code-slim-0612"}
+{"timestamp":"2026-06-13T14:57:40Z","event":"precompact_snapshot","detail":"slug=code-slim-0612 phase=complete completed=0
+0 pending=0
+0"}
+{"timestamp":"2026-06-13T14:59:40Z","event":"postcompact_restore","detail":"slug=code-slim-0612"}
+{"timestamp":"2026-06-13T14:59:40Z","event":"precompact_snapshot","detail":"slug=code-slim-0612 phase=complete completed=0
+0 pending=0
+0"}
+{"timestamp":"2026-06-13T15:02:04Z","event":"postcompact_restore","detail":"slug=code-slim-0612"}
+{"timestamp":"2026-06-13T15:02:05Z","event":"precompact_snapshot","detail":"slug=code-slim-0612 phase=complete completed=0
+0 pending=0
+0"}
+{"timestamp":"2026-06-13T15:03:34Z","event":"postcompact_restore","detail":"slug=code-slim-0612"}
+{"timestamp":"2026-06-13T15:03:35Z","event":"precompact_snapshot","detail":"slug=code-slim-0612 phase=complete completed=0
+0 pending=0
+0"}
+{"timestamp":"2026-06-13T15:12:08Z","event":"postcompact_restore","detail":"slug=code-slim-0612"}
+{"timestamp":"2026-06-13T15:12:08Z","event":"precompact_snapshot","detail":"slug=code-slim-0612 phase=complete completed=0
+0 pending=0
+0"}
+{"timestamp":"2026-06-13T15:13:22Z","event":"postcompact_restore","detail":"slug=code-slim-0612"}
+{"timestamp":"2026-06-13T15:13:22Z","event":"precompact_snapshot","detail":"slug=code-slim-0612 phase=complete completed=0
+0 pending=0
+0"}
+{"timestamp":"2026-06-13T15:16:43Z","event":"postcompact_restore","detail":"slug=code-slim-0612"}
+{"timestamp":"2026-06-13T15:16:43Z","event":"precompact_snapshot","detail":"slug=code-slim-0612 phase=complete completed=0
+0 pending=0
+0"}
+{"timestamp":"2026-06-13T15:21:48Z","event":"postcompact_restore","detail":"slug=code-slim-0612"}
+{"timestamp":"2026-06-13T15:21:48Z","event":"precompact_snapshot","detail":"slug=code-slim-0612 phase=complete completed=0
+0 pending=0
+0"}
+{"timestamp":"2026-06-13T15:22:57Z","event":"postcompact_restore","detail":"slug=code-slim-0612"}
+{"timestamp":"2026-06-13T15:22:57Z","event":"precompact_snapshot","detail":"slug=code-slim-0612 phase=complete completed=0
+0 pending=0
+0"}
+{"timestamp":"2026-06-13T15:24:25Z","event":"postcompact_restore","detail":"slug=code-slim-0612"}
+{"timestamp":"2026-06-13T15:24:25Z","event":"precompact_snapshot","detail":"slug=code-slim-0612 phase=complete completed=0
+0 pending=0
+0"}
+{"timestamp":"2026-06-13T15:28:36Z","event":"postcompact_restore","detail":"slug=code-slim-0612"}
+{"timestamp":"2026-06-13T15:28:36Z","event":"precompact_snapshot","detail":"slug=code-slim-0612 phase=complete completed=0
+0 pending=0
+0"}
+{"timestamp":"2026-06-13T15:32:48Z","event":"postcompact_restore","detail":"slug=code-slim-0612"}
+{"timestamp":"2026-06-13T15:32:48Z","event":"precompact_snapshot","detail":"slug=code-slim-0612 phase=complete completed=0
+0 pending=0
+0"}
+{"timestamp":"2026-06-13T15:40:41Z","event":"postcompact_restore","detail":"slug=code-slim-0612"}
+{"timestamp":"2026-06-13T15:40:42Z","event":"precompact_snapshot","detail":"slug=code-slim-0612 phase=complete completed=0
+0 pending=0
+0"}
+{"timestamp":"2026-06-13T15:44:12Z","event":"postcompact_restore","detail":"slug=code-slim-0612"}
+{"timestamp":"2026-06-13T15:44:12Z","event":"precompact_snapshot","detail":"slug=code-slim-0612 phase=complete completed=0
+0 pending=0
+0"}
+{"timestamp":"2026-06-13T15:46:14Z","event":"postcompact_restore","detail":"slug=code-slim-0612"}
+{"timestamp":"2026-06-13T15:46:14Z","event":"precompact_snapshot","detail":"slug=code-slim-0612 phase=complete completed=0
+0 pending=0
+0"}
+{"timestamp":"2026-06-13T15:49:45Z","event":"postcompact_restore","detail":"slug=code-slim-0612"}
+{"timestamp":"2026-06-13T15:49:45Z","event":"precompact_snapshot","detail":"slug=code-slim-0612 phase=complete completed=0
+0 pending=0
+0"}
+{"timestamp":"2026-06-13T15:50:55Z","event":"postcompact_restore","detail":"slug=code-slim-0612"}
+{"timestamp":"2026-06-13T15:50:55Z","event":"precompact_snapshot","detail":"slug=code-slim-0612 phase=complete completed=0
+0 pending=0
+0"}
+{"timestamp":"2026-06-13T15:52:17Z","event":"postcompact_restore","detail":"slug=code-slim-0612"}
+{"timestamp":"2026-06-13T15:52:17Z","event":"precompact_snapshot","detail":"slug=code-slim-0612 phase=complete completed=0
+0 pending=0
+0"}
+{"timestamp":"2026-06-13T15:56:47Z","event":"postcompact_restore","detail":"slug=code-slim-0612"}
+{"timestamp":"2026-06-13T15:56:48Z","event":"precompact_snapshot","detail":"slug=code-slim-0612 phase=complete completed=0
+0 pending=0
+0"}
+{"timestamp":"2026-06-13T16:03:59Z","event":"postcompact_restore","detail":"slug=code-slim-0612"}
+{"timestamp":"2026-06-13T16:03:59Z","event":"precompact_snapshot","detail":"slug=code-slim-0612 phase=complete completed=0
+0 pending=0
+0"}
+{"timestamp":"2026-06-13T16:05:01Z","event":"postcompact_restore","detail":"slug=code-slim-0612"}
+{"timestamp":"2026-06-13T16:05:01Z","event":"precompact_snapshot","detail":"slug=code-slim-0612 phase=complete completed=0
+0 pending=0
+0"}
+{"timestamp":"2026-06-13T16:06:20Z","event":"postcompact_restore","detail":"slug=code-slim-0612"}
+{"timestamp":"2026-06-13T16:06:20Z","event":"precompact_snapshot","detail":"slug=code-slim-0612 phase=complete completed=0
+0 pending=0
+0"}
+{"timestamp":"2026-06-13T16:07:30Z","event":"postcompact_restore","detail":"slug=code-slim-0612"}
+{"timestamp":"2026-06-13T16:07:30Z","event":"precompact_snapshot","detail":"slug=code-slim-0612 phase=complete completed=0
+0 pending=0
+0"}
+{"timestamp":"2026-06-13T16:08:13Z","event":"postcompact_restore","detail":"slug=code-slim-0612"}
+{"timestamp":"2026-06-13T16:08:13Z","event":"precompact_snapshot","detail":"slug=code-slim-0612 phase=complete completed=0
+0 pending=0
+0"}
+{"timestamp":"2026-06-13T16:08:37Z","event":"postcompact_restore","detail":"slug=code-slim-0612"}
+{"timestamp":"2026-06-13T16:08:37Z","event":"precompact_snapshot","detail":"slug=code-slim-0612 phase=complete completed=0
+0 pending=0
+0"}
+{"timestamp":"2026-06-13T16:11:23Z","event":"postcompact_restore","detail":"slug=code-slim-0612"}
+{"timestamp":"2026-06-13T16:11:23Z","event":"precompact_snapshot","detail":"slug=code-slim-0612 phase=complete completed=0
+0 pending=0
+0"}
+{"timestamp":"2026-06-13T16:12:34Z","event":"postcompact_restore","detail":"slug=code-slim-0612"}
+{"timestamp":"2026-06-13T16:12:34Z","event":"precompact_snapshot","detail":"slug=code-slim-0612 phase=complete completed=0
+0 pending=0
+0"}
+{"timestamp":"2026-06-13T16:17:51Z","event":"postcompact_restore","detail":"slug=code-slim-0612"}
+{"timestamp":"2026-06-13T16:17:51Z","event":"precompact_snapshot","detail":"slug=code-slim-0612 phase=complete completed=0
+0 pending=0
+0"}
+{"timestamp":"2026-06-13T16:22:42Z","event":"postcompact_restore","detail":"slug=code-slim-0612"}
+{"timestamp":"2026-06-13T16:22:42Z","event":"precompact_snapshot","detail":"slug=code-slim-0612 phase=complete completed=0
+0 pending=0
+0"}
+{"timestamp":"2026-06-13T16:24:44Z","event":"postcompact_restore","detail":"slug=code-slim-0612"}
+{"timestamp":"2026-06-13T16:24:44Z","event":"precompact_snapshot","detail":"slug=code-slim-0612 phase=complete completed=0
+0 pending=0
+0"}
+{"timestamp":"2026-06-13T16:27:38Z","event":"postcompact_restore","detail":"slug=code-slim-0612"}
+{"timestamp":"2026-06-13T16:27:38Z","event":"precompact_snapshot","detail":"slug=code-slim-0612 phase=complete completed=0
+0 pending=0
+0"}
+{"timestamp":"2026-06-13T16:31:20Z","event":"postcompact_restore","detail":"slug=code-slim-0612"}
+{"timestamp":"2026-06-13T16:31:20Z","event":"precompact_snapshot","detail":"slug=code-slim-0612 phase=complete completed=0
+0 pending=0
+0"}
+{"timestamp":"2026-06-13T16:32:31Z","event":"postcompact_restore","detail":"slug=code-slim-0612"}
+{"timestamp":"2026-06-13T16:32:31Z","event":"precompact_snapshot","detail":"slug=code-slim-0612 phase=complete completed=0
+0 pending=0
+0"}
+{"timestamp":"2026-06-13T16:38:11Z","event":"postcompact_restore","detail":"slug=code-slim-0612"}
+{"timestamp":"2026-06-13T16:38:11Z","event":"precompact_snapshot","detail":"slug=code-slim-0612 phase=complete completed=0
+0 pending=0
+0"}
+{"timestamp":"2026-06-13T16:40:12Z","event":"postcompact_restore","detail":"slug=code-slim-0612"}
+{"timestamp":"2026-06-13T16:40:12Z","event":"precompact_snapshot","detail":"slug=code-slim-0612 phase=complete completed=0
+0 pending=0
+0"}
+{"timestamp":"2026-06-13T16:44:02Z","event":"postcompact_restore","detail":"slug=code-slim-0612"}
+{"timestamp":"2026-06-13T16:44:03Z","event":"precompact_snapshot","detail":"slug=code-slim-0612 phase=complete completed=0
+0 pending=0
+0"}
+{"timestamp":"2026-06-13T16:48:05Z","event":"postcompact_restore","detail":"slug=code-slim-0612"}
+{"timestamp":"2026-06-13T16:48:05Z","event":"precompact_snapshot","detail":"slug=code-slim-0612 phase=complete completed=0
+0 pending=0
+0"}
+{"timestamp":"2026-06-13T16:50:38Z","event":"postcompact_restore","detail":"slug=code-slim-0612"}
+{"timestamp":"2026-06-13T16:50:38Z","event":"precompact_snapshot","detail":"slug=code-slim-0612 phase=complete completed=0
+0 pending=0
+0"}
+{"timestamp":"2026-06-13T16:51:50Z","event":"postcompact_restore","detail":"slug=code-slim-0612"}
+{"timestamp":"2026-06-13T16:51:50Z","event":"precompact_snapshot","detail":"slug=code-slim-0612 phase=complete completed=0
+0 pending=0
+0"}
+{"timestamp":"2026-06-13T16:57:01Z","event":"postcompact_restore","detail":"slug=code-slim-0612"}
+{"timestamp":"2026-06-13T16:57:01Z","event":"precompact_snapshot","detail":"slug=code-slim-0612 phase=complete completed=0
+0 pending=0
+0"}
+{"timestamp":"2026-06-13T16:59:28Z","event":"postcompact_restore","detail":"slug=code-slim-0612"}
+{"timestamp":"2026-06-13T16:59:28Z","event":"precompact_snapshot","detail":"slug=code-slim-0612 phase=complete completed=0
+0 pending=0
+0"}
+{"timestamp":"2026-06-13T17:00:35Z","event":"postcompact_restore","detail":"slug=code-slim-0612"}
+{"timestamp":"2026-06-13T17:00:35Z","event":"precompact_snapshot","detail":"slug=code-slim-0612 phase=complete completed=0
+0 pending=0
+0"}
+{"timestamp":"2026-06-13T17:05:24Z","event":"postcompact_restore","detail":"slug=code-slim-0612"}
+{"timestamp":"2026-06-13T17:05:24Z","event":"precompact_snapshot","detail":"slug=code-slim-0612 phase=complete completed=0
+0 pending=0
+0"}
+{"timestamp":"2026-06-13T17:07:08Z","event":"postcompact_restore","detail":"slug=code-slim-0612"}
+{"timestamp":"2026-06-13T17:07:08Z","event":"precompact_snapshot","detail":"slug=code-slim-0612 phase=complete completed=0
+0 pending=0
+0"}
+{"timestamp":"2026-06-13T17:09:21Z","event":"postcompact_restore","detail":"slug=code-slim-0612"}
+{"timestamp":"2026-06-13T17:09:21Z","event":"precompact_snapshot","detail":"slug=code-slim-0612 phase=complete completed=0
+0 pending=0
+0"}
+{"timestamp":"2026-06-13T17:10:45Z","event":"postcompact_restore","detail":"slug=code-slim-0612"}
+{"timestamp":"2026-06-13T17:10:45Z","event":"precompact_snapshot","detail":"slug=code-slim-0612 phase=complete completed=0
+0 pending=0
+0"}
+{"timestamp":"2026-06-13T17:11:58Z","event":"postcompact_restore","detail":"slug=code-slim-0612"}
+{"timestamp":"2026-06-13T17:11:58Z","event":"precompact_snapshot","detail":"slug=code-slim-0612 phase=complete completed=0
+0 pending=0
+0"}
+{"timestamp":"2026-06-13T17:13:01Z","event":"postcompact_restore","detail":"slug=code-slim-0612"}
+{"timestamp":"2026-06-13T17:13:01Z","event":"precompact_snapshot","detail":"slug=code-slim-0612 phase=complete completed=0
+0 pending=0
+0"}
+{"timestamp":"2026-06-13T17:14:21Z","event":"postcompact_restore","detail":"slug=code-slim-0612"}
+{"timestamp":"2026-06-13T17:14:21Z","event":"precompact_snapshot","detail":"slug=code-slim-0612 phase=complete completed=0
+0 pending=0
+0"}
+{"timestamp":"2026-06-13T17:15:38Z","event":"postcompact_restore","detail":"slug=code-slim-0612"}
+{"timestamp":"2026-06-13T17:15:38Z","event":"precompact_snapshot","detail":"slug=code-slim-0612 phase=complete completed=0
+0 pending=0
+0"}
+{"timestamp":"2026-06-13T17:17:03Z","event":"postcompact_restore","detail":"slug=code-slim-0612"}
+{"timestamp":"2026-06-13T17:17:03Z","event":"precompact_snapshot","detail":"slug=code-slim-0612 phase=complete completed=0
+0 pending=0
+0"}
+{"timestamp":"2026-06-13T17:18:16Z","event":"postcompact_restore","detail":"slug=code-slim-0612"}
+{"timestamp":"2026-06-13T17:18:16Z","event":"precompact_snapshot","detail":"slug=code-slim-0612 phase=complete completed=0
+0 pending=0
+0"}
+{"timestamp":"2026-06-13T17:20:34Z","event":"postcompact_restore","detail":"slug=code-slim-0612"}
+{"timestamp":"2026-06-13T17:20:34Z","event":"precompact_snapshot","detail":"slug=code-slim-0612 phase=complete completed=0
+0 pending=0
+0"}
+{"timestamp":"2026-06-13T17:23:20Z","event":"postcompact_restore","detail":"slug=code-slim-0612"}
+{"timestamp":"2026-06-13T17:23:20Z","event":"precompact_snapshot","detail":"slug=code-slim-0612 phase=complete completed=0
+0 pending=0
+0"}
+{"timestamp":"2026-06-13T17:26:03Z","event":"postcompact_restore","detail":"slug=code-slim-0612"}
+{"timestamp":"2026-06-13T17:26:03Z","event":"precompact_snapshot","detail":"slug=code-slim-0612 phase=complete completed=0
+0 pending=0
+0"}
+{"timestamp":"2026-06-13T17:29:09Z","event":"postcompact_restore","detail":"slug=code-slim-0612"}
+{"timestamp":"2026-06-13T17:29:09Z","event":"precompact_snapshot","detail":"slug=code-slim-0612 phase=complete completed=0
+0 pending=0
+0"}
+{"timestamp":"2026-06-13T17:30:49Z","event":"postcompact_restore","detail":"slug=code-slim-0612"}
+{"timestamp":"2026-06-13T17:30:49Z","event":"precompact_snapshot","detail":"slug=code-slim-0612 phase=complete completed=0
+0 pending=0
+0"}
+{"timestamp":"2026-06-13T17:33:29Z","event":"postcompact_restore","detail":"slug=code-slim-0612"}
+{"timestamp":"2026-06-13T17:33:29Z","event":"precompact_snapshot","detail":"slug=code-slim-0612 phase=complete completed=0
+0 pending=0
+0"}
+{"timestamp":"2026-06-13T17:35:16Z","event":"postcompact_restore","detail":"slug=code-slim-0612"}
+{"timestamp":"2026-06-13T17:35:16Z","event":"precompact_snapshot","detail":"slug=code-slim-0612 phase=complete completed=0
+0 pending=0
+0"}
+{"timestamp":"2026-06-13T17:38:15Z","event":"postcompact_restore","detail":"slug=code-slim-0612"}
+{"timestamp":"2026-06-13T17:38:15Z","event":"precompact_snapshot","detail":"slug=code-slim-0612 phase=complete completed=0
+0 pending=0
+0"}
+{"timestamp":"2026-06-13T17:40:28Z","event":"postcompact_restore","detail":"slug=code-slim-0612"}
+{"timestamp":"2026-06-13T17:40:28Z","event":"precompact_snapshot","detail":"slug=code-slim-0612 phase=complete completed=0
+0 pending=0
+0"}
+{"timestamp":"2026-06-13T17:41:36Z","event":"postcompact_restore","detail":"slug=code-slim-0612"}
+{"timestamp":"2026-06-13T17:41:36Z","event":"precompact_snapshot","detail":"slug=code-slim-0612 phase=complete completed=0
+0 pending=0
+0"}
+{"timestamp":"2026-06-13T17:44:32Z","event":"postcompact_restore","detail":"slug=code-slim-0612"}
+{"timestamp":"2026-06-13T17:44:32Z","event":"precompact_snapshot","detail":"slug=code-slim-0612 phase=complete completed=0
+0 pending=0
+0"}
+{"timestamp":"2026-06-13T17:46:55Z","event":"postcompact_restore","detail":"slug=code-slim-0612"}
+{"timestamp":"2026-06-13T17:46:55Z","event":"precompact_snapshot","detail":"slug=code-slim-0612 phase=complete completed=0
+0 pending=0
+0"}
+{"timestamp":"2026-06-13T17:52:16Z","event":"postcompact_restore","detail":"slug=code-slim-0612"}
+{"timestamp":"2026-06-13T17:52:16Z","event":"precompact_snapshot","detail":"slug=code-slim-0612 phase=complete completed=0
+0 pending=0
+0"}
+{"timestamp":"2026-06-13T17:54:52Z","event":"postcompact_restore","detail":"slug=code-slim-0612"}
+{"timestamp":"2026-06-13T17:54:52Z","event":"precompact_snapshot","detail":"slug=code-slim-0612 phase=complete completed=0
+0 pending=0
+0"}
+{"timestamp":"2026-06-13T17:59:09Z","event":"postcompact_restore","detail":"slug=code-slim-0612"}
+{"timestamp":"2026-06-13T17:59:09Z","event":"precompact_snapshot","detail":"slug=code-slim-0612 phase=complete completed=0
+0 pending=0
+0"}
+{"timestamp":"2026-06-13T18:01:57Z","event":"postcompact_restore","detail":"slug=code-slim-0612"}
+{"timestamp":"2026-06-13T18:01:57Z","event":"precompact_snapshot","detail":"slug=code-slim-0612 phase=complete completed=0
+0 pending=0
+0"}
+{"timestamp":"2026-06-13T18:03:50Z","event":"postcompact_restore","detail":"slug=code-slim-0612"}
+{"timestamp":"2026-06-13T18:03:50Z","event":"precompact_snapshot","detail":"slug=code-slim-0612 phase=complete completed=0
+0 pending=0
+0"}
+{"timestamp":"2026-06-13T18:07:10Z","event":"postcompact_restore","detail":"slug=code-slim-0612"}
+{"timestamp":"2026-06-13T18:07:10Z","event":"precompact_snapshot","detail":"slug=code-slim-0612 phase=complete completed=0
+0 pending=0
+0"}
+{"timestamp":"2026-06-13T18:09:00Z","event":"postcompact_restore","detail":"slug=code-slim-0612"}
+{"timestamp":"2026-06-13T18:09:00Z","event":"precompact_snapshot","detail":"slug=code-slim-0612 phase=complete completed=0
+0 pending=0
+0"}
+{"timestamp":"2026-06-13T18:11:04Z","event":"postcompact_restore","detail":"slug=code-slim-0612"}
+{"timestamp":"2026-06-13T18:11:05Z","event":"precompact_snapshot","detail":"slug=code-slim-0612 phase=complete completed=0
+0 pending=0
+0"}
+{"timestamp":"2026-06-13T18:14:32Z","event":"postcompact_restore","detail":"slug=code-slim-0612"}
+{"timestamp":"2026-06-13T18:14:32Z","event":"precompact_snapshot","detail":"slug=code-slim-0612 phase=complete completed=0
+0 pending=0
+0"}
+{"timestamp":"2026-06-13T18:16:42Z","event":"postcompact_restore","detail":"slug=code-slim-0612"}
+{"timestamp":"2026-06-13T18:16:42Z","event":"precompact_snapshot","detail":"slug=code-slim-0612 phase=complete completed=0
+0 pending=0
+0"}
+{"timestamp":"2026-06-13T18:19:37Z","event":"postcompact_restore","detail":"slug=code-slim-0612"}
+{"timestamp":"2026-06-13T18:19:38Z","event":"precompact_snapshot","detail":"slug=code-slim-0612 phase=complete completed=0
+0 pending=0
+0"}
+{"timestamp":"2026-06-13T18:22:11Z","event":"postcompact_restore","detail":"slug=code-slim-0612"}
+{"timestamp":"2026-06-13T18:22:11Z","event":"precompact_snapshot","detail":"slug=code-slim-0612 phase=complete completed=0
+0 pending=0
+0"}
+{"timestamp":"2026-06-13T18:24:18Z","event":"postcompact_restore","detail":"slug=code-slim-0612"}
+{"timestamp":"2026-06-13T18:24:18Z","event":"precompact_snapshot","detail":"slug=code-slim-0612 phase=complete completed=0
+0 pending=0
+0"}
+{"timestamp":"2026-06-13T18:27:07Z","event":"postcompact_restore","detail":"slug=code-slim-0612"}
+{"timestamp":"2026-06-13T18:27:07Z","event":"precompact_snapshot","detail":"slug=code-slim-0612 phase=complete completed=0
+0 pending=0
+0"}
+{"timestamp":"2026-06-13T18:29:19Z","event":"postcompact_restore","detail":"slug=code-slim-0612"}
+{"timestamp":"2026-06-13T18:29:19Z","event":"precompact_snapshot","detail":"slug=code-slim-0612 phase=complete completed=0
+0 pending=0
+0"}
+{"timestamp":"2026-06-13T18:31:30Z","event":"postcompact_restore","detail":"slug=code-slim-0612"}
+{"timestamp":"2026-06-13T18:31:30Z","event":"precompact_snapshot","detail":"slug=code-slim-0612 phase=complete completed=0
+0 pending=0
+0"}
+{"timestamp":"2026-06-13T18:32:44Z","event":"postcompact_restore","detail":"slug=code-slim-0612"}
+{"timestamp":"2026-06-13T18:32:44Z","event":"precompact_snapshot","detail":"slug=code-slim-0612 phase=complete completed=0
+0 pending=0
+0"}
+{"timestamp":"2026-06-13T18:33:55Z","event":"postcompact_restore","detail":"slug=code-slim-0612"}
+{"timestamp":"2026-06-13T18:33:55Z","event":"precompact_snapshot","detail":"slug=code-slim-0612 phase=complete completed=0
+0 pending=0
+0"}
+{"timestamp":"2026-06-13T18:37:27Z","event":"postcompact_restore","detail":"slug=code-slim-0612"}
+{"timestamp":"2026-06-13T18:37:27Z","event":"precompact_snapshot","detail":"slug=code-slim-0612 phase=complete completed=0
+0 pending=0
+0"}
+{"timestamp":"2026-06-13T18:39:30Z","event":"postcompact_restore","detail":"slug=code-slim-0612"}
+{"timestamp":"2026-06-13T18:39:30Z","event":"precompact_snapshot","detail":"slug=code-slim-0612 phase=complete completed=0
+0 pending=0
+0"}
+{"timestamp":"2026-06-13T18:40:53Z","event":"postcompact_restore","detail":"slug=code-slim-0612"}
+{"timestamp":"2026-06-13T18:40:54Z","event":"precompact_snapshot","detail":"slug=code-slim-0612 phase=complete completed=0
+0 pending=0
+0"}
+{"timestamp":"2026-06-13T18:41:57Z","event":"postcompact_restore","detail":"slug=code-slim-0612"}
+{"timestamp":"2026-06-13T18:41:57Z","event":"precompact_snapshot","detail":"slug=code-slim-0612 phase=complete completed=0
+0 pending=0
+0"}
+{"timestamp":"2026-06-13T18:46:22Z","event":"postcompact_restore","detail":"slug=code-slim-0612"}
+{"timestamp":"2026-06-13T18:46:22Z","event":"precompact_snapshot","detail":"slug=code-slim-0612 phase=complete completed=0
+0 pending=0
+0"}
+{"timestamp":"2026-06-13T18:47:52Z","event":"postcompact_restore","detail":"slug=code-slim-0612"}
+{"timestamp":"2026-06-13T18:47:52Z","event":"precompact_snapshot","detail":"slug=code-slim-0612 phase=complete completed=0
+0 pending=0
+0"}
+{"timestamp":"2026-06-13T18:52:54Z","event":"postcompact_restore","detail":"slug=code-slim-0612"}
+{"timestamp":"2026-06-13T18:52:54Z","event":"precompact_snapshot","detail":"slug=code-slim-0612 phase=complete completed=0
+0 pending=0
+0"}
+{"timestamp":"2026-06-13T18:54:56Z","event":"postcompact_restore","detail":"slug=code-slim-0612"}
+{"timestamp":"2026-06-13T18:54:56Z","event":"precompact_snapshot","detail":"slug=code-slim-0612 phase=complete completed=0
+0 pending=0
+0"}
+{"timestamp":"2026-06-13T18:56:18Z","event":"postcompact_restore","detail":"slug=code-slim-0612"}
+{"timestamp":"2026-06-13T18:56:19Z","event":"precompact_snapshot","detail":"slug=code-slim-0612 phase=complete completed=0
+0 pending=0
+0"}
+{"timestamp":"2026-06-13T18:59:57Z","event":"postcompact_restore","detail":"slug=code-slim-0612"}
+{"timestamp":"2026-06-13T18:59:58Z","event":"precompact_snapshot","detail":"slug=code-slim-0612 phase=complete completed=0
+0 pending=0
+0"}
+{"timestamp":"2026-06-13T19:02:17Z","event":"postcompact_restore","detail":"slug=code-slim-0612"}
+{"timestamp":"2026-06-13T19:02:17Z","event":"precompact_snapshot","detail":"slug=code-slim-0612 phase=complete completed=0
+0 pending=0
+0"}
+{"timestamp":"2026-06-13T19:04:51Z","event":"postcompact_restore","detail":"slug=code-slim-0612"}
+{"timestamp":"2026-06-13T19:04:51Z","event":"precompact_snapshot","detail":"slug=code-slim-0612 phase=complete completed=0
+0 pending=0
+0"}
+{"timestamp":"2026-06-13T19:07:14Z","event":"postcompact_restore","detail":"slug=code-slim-0612"}
+{"timestamp":"2026-06-13T19:07:14Z","event":"precompact_snapshot","detail":"slug=code-slim-0612 phase=complete completed=0
+0 pending=0
+0"}
+{"timestamp":"2026-06-13T19:10:00Z","event":"postcompact_restore","detail":"slug=code-slim-0612"}
+{"timestamp":"2026-06-13T19:10:00Z","event":"precompact_snapshot","detail":"slug=code-slim-0612 phase=complete completed=0
+0 pending=0
+0"}
+{"timestamp":"2026-06-13T19:13:10Z","event":"postcompact_restore","detail":"slug=code-slim-0612"}
+{"timestamp":"2026-06-13T19:13:10Z","event":"precompact_snapshot","detail":"slug=code-slim-0612 phase=complete completed=0
+0 pending=0
+0"}
+{"timestamp":"2026-06-13T19:16:06Z","event":"postcompact_restore","detail":"slug=code-slim-0612"}
+{"timestamp":"2026-06-13T19:16:06Z","event":"precompact_snapshot","detail":"slug=code-slim-0612 phase=complete completed=0
+0 pending=0
+0"}
+{"timestamp":"2026-06-13T19:18:34Z","event":"postcompact_restore","detail":"slug=code-slim-0612"}
+{"timestamp":"2026-06-13T19:18:34Z","event":"precompact_snapshot","detail":"slug=code-slim-0612 phase=complete completed=0
+0 pending=0
+0"}
+{"timestamp":"2026-06-13T19:22:00Z","event":"postcompact_restore","detail":"slug=code-slim-0612"}
+{"timestamp":"2026-06-13T19:22:00Z","event":"precompact_snapshot","detail":"slug=code-slim-0612 phase=complete completed=0
+0 pending=0
+0"}
+{"timestamp":"2026-06-13T19:24:10Z","event":"postcompact_restore","detail":"slug=code-slim-0612"}
+{"timestamp":"2026-06-13T19:24:10Z","event":"precompact_snapshot","detail":"slug=code-slim-0612 phase=complete completed=0
+0 pending=0
+0"}
+{"timestamp":"2026-06-13T19:25:16Z","event":"postcompact_restore","detail":"slug=code-slim-0612"}
+{"timestamp":"2026-06-13T19:25:16Z","event":"precompact_snapshot","detail":"slug=code-slim-0612 phase=complete completed=0
+0 pending=0
+0"}
+{"timestamp":"2026-06-13T19:26:55Z","event":"postcompact_restore","detail":"slug=code-slim-0612"}
+{"timestamp":"2026-06-13T19:26:55Z","event":"precompact_snapshot","detail":"slug=code-slim-0612 phase=complete completed=0
+0 pending=0
+0"}
+{"timestamp":"2026-06-13T19:29:30Z","event":"postcompact_restore","detail":"slug=code-slim-0612"}
+{"timestamp":"2026-06-13T19:29:31Z","event":"precompact_snapshot","detail":"slug=code-slim-0612 phase=complete completed=0
+0 pending=0
+0"}
+{"timestamp":"2026-06-13T19:31:33Z","event":"postcompact_restore","detail":"slug=code-slim-0612"}
+{"timestamp":"2026-06-13T19:31:34Z","event":"precompact_snapshot","detail":"slug=code-slim-0612 phase=complete completed=0
+0 pending=0
+0"}
+{"timestamp":"2026-06-13T19:33:57Z","event":"postcompact_restore","detail":"slug=code-slim-0612"}
+{"timestamp":"2026-06-13T19:33:57Z","event":"precompact_snapshot","detail":"slug=code-slim-0612 phase=complete completed=0
+0 pending=0
+0"}
+{"timestamp":"2026-06-13T19:35:57Z","event":"postcompact_restore","detail":"slug=code-slim-0612"}
+{"timestamp":"2026-06-13T19:35:57Z","event":"precompact_snapshot","detail":"slug=code-slim-0612 phase=complete completed=0
+0 pending=0
+0"}
+{"timestamp":"2026-06-13T19:38:10Z","event":"postcompact_restore","detail":"slug=code-slim-0612"}
+{"timestamp":"2026-06-13T19:38:10Z","event":"precompact_snapshot","detail":"slug=code-slim-0612 phase=complete completed=0
+0 pending=0
+0"}
+{"timestamp":"2026-06-13T19:40:11Z","event":"postcompact_restore","detail":"slug=code-slim-0612"}
+{"timestamp":"2026-06-13T19:40:11Z","event":"precompact_snapshot","detail":"slug=code-slim-0612 phase=complete completed=0
+0 pending=0
+0"}
+{"timestamp":"2026-06-13T19:41:35Z","event":"postcompact_restore","detail":"slug=code-slim-0612"}
+{"timestamp":"2026-06-13T19:41:35Z","event":"precompact_snapshot","detail":"slug=code-slim-0612 phase=complete completed=0
+0 pending=0
+0"}
+{"timestamp":"2026-06-13T19:43:50Z","event":"postcompact_restore","detail":"slug=code-slim-0612"}
+{"timestamp":"2026-06-13T19:43:50Z","event":"precompact_snapshot","detail":"slug=code-slim-0612 phase=complete completed=0
+0 pending=0
+0"}
+{"timestamp":"2026-06-13T19:45:47Z","event":"postcompact_restore","detail":"slug=code-slim-0612"}
+{"timestamp":"2026-06-13T19:45:47Z","event":"precompact_snapshot","detail":"slug=code-slim-0612 phase=complete completed=0
+0 pending=0
+0"}
+{"timestamp":"2026-06-13T19:47:42Z","event":"postcompact_restore","detail":"slug=code-slim-0612"}
+{"timestamp":"2026-06-13T19:47:42Z","event":"precompact_snapshot","detail":"slug=code-slim-0612 phase=complete completed=0
+0 pending=0
+0"}
+{"timestamp":"2026-06-13T19:49:46Z","event":"postcompact_restore","detail":"slug=code-slim-0612"}
+{"timestamp":"2026-06-13T19:49:46Z","event":"precompact_snapshot","detail":"slug=code-slim-0612 phase=complete completed=0
+0 pending=0
+0"}
+{"timestamp":"2026-06-13T19:51:13Z","event":"postcompact_restore","detail":"slug=code-slim-0612"}
+{"timestamp":"2026-06-13T19:51:13Z","event":"precompact_snapshot","detail":"slug=code-slim-0612 phase=complete completed=0
+0 pending=0
+0"}
+{"timestamp":"2026-06-13T19:54:23Z","event":"postcompact_restore","detail":"slug=code-slim-0612"}
+{"timestamp":"2026-06-13T19:54:23Z","event":"precompact_snapshot","detail":"slug=code-slim-0612 phase=complete completed=0
+0 pending=0
+0"}
+{"timestamp":"2026-06-13T20:00:40Z","event":"postcompact_restore","detail":"slug=code-slim-0612"}
+{"timestamp":"2026-06-13T20:00:40Z","event":"precompact_snapshot","detail":"slug=code-slim-0612 phase=complete completed=0
+0 pending=0
+0"}
+{"timestamp":"2026-06-13T20:05:50Z","event":"postcompact_restore","detail":"slug=code-slim-0612"}
+{"timestamp":"2026-06-13T20:05:51Z","event":"precompact_snapshot","detail":"slug=code-slim-0612 phase=complete completed=0
+0 pending=0
+0"}
+{"timestamp":"2026-06-13T20:54:06Z","event":"postcompact_restore","detail":"slug=code-slim-0612"}
+{"timestamp":"2026-06-13T20:54:06Z","event":"precompact_snapshot","detail":"slug=code-slim-0612 phase=complete completed=0
+0 pending=0
+0"}
+{"timestamp":"2026-06-13T21:46:05Z","event":"postcompact_restore","detail":"slug=code-slim-0612"}
+{"timestamp":"2026-06-13T21:46:05Z","event":"precompact_snapshot","detail":"slug=code-slim-0612 phase=complete completed=0
+0 pending=0
+0"}
+{"timestamp":"2026-06-13T21:46:46Z","event":"postcompact_restore","detail":"slug=code-slim-0612"}
+{"timestamp":"2026-06-13T21:46:46Z","event":"precompact_snapshot","detail":"slug=code-slim-0612 phase=complete completed=0
+0 pending=0
+0"}
+{"timestamp":"2026-06-13T21:48:20Z","event":"postcompact_restore","detail":"slug=code-slim-0612"}
+{"timestamp":"2026-06-13T21:48:20Z","event":"precompact_snapshot","detail":"slug=code-slim-0612 phase=complete completed=0
+0 pending=0
+0"}
+{"timestamp":"2026-06-13T21:49:05Z","event":"postcompact_restore","detail":"slug=code-slim-0612"}
+{"timestamp":"2026-06-13T21:49:05Z","event":"precompact_snapshot","detail":"slug=code-slim-0612 phase=complete completed=0
+0 pending=0
+0"}
+{"timestamp":"2026-06-13T21:50:28Z","event":"postcompact_restore","detail":"slug=code-slim-0612"}
+{"timestamp":"2026-06-13T21:50:28Z","event":"precompact_snapshot","detail":"slug=code-slim-0612 phase=complete completed=0
+0 pending=0
+0"}
+{"timestamp":"2026-06-13T21:53:30Z","event":"postcompact_restore","detail":"slug=code-slim-0612"}
+{"timestamp":"2026-06-13T21:53:30Z","event":"precompact_snapshot","detail":"slug=code-slim-0612 phase=complete completed=0
+0 pending=0
+0"}
+{"timestamp":"2026-06-13T21:55:18Z","event":"postcompact_restore","detail":"slug=code-slim-0612"}
+{"timestamp":"2026-06-13T21:55:18Z","event":"precompact_snapshot","detail":"slug=code-slim-0612 phase=complete completed=0
+0 pending=0
+0"}
+{"timestamp":"2026-06-13T21:56:33Z","event":"postcompact_restore","detail":"slug=code-slim-0612"}
+{"timestamp":"2026-06-13T21:56:33Z","event":"precompact_snapshot","detail":"slug=code-slim-0612 phase=complete completed=0
+0 pending=0
+0"}
+{"timestamp":"2026-06-13T21:57:14Z","event":"postcompact_restore","detail":"slug=code-slim-0612"}
+{"timestamp":"2026-06-13T21:57:14Z","event":"precompact_snapshot","detail":"slug=code-slim-0612 phase=complete completed=0
+0 pending=0
+0"}
+{"timestamp":"2026-06-13T21:58:48Z","event":"postcompact_restore","detail":"slug=code-slim-0612"}
+{"timestamp":"2026-06-13T21:58:48Z","event":"precompact_snapshot","detail":"slug=code-slim-0612 phase=complete completed=0
+0 pending=0
+0"}
+{"timestamp":"2026-06-13T22:00:06Z","event":"postcompact_restore","detail":"slug=code-slim-0612"}
+{"timestamp":"2026-06-13T22:00:06Z","event":"precompact_snapshot","detail":"slug=code-slim-0612 phase=complete completed=0
+0 pending=0
+0"}
+{"timestamp":"2026-06-13T22:05:19Z","event":"postcompact_restore","detail":"slug=code-slim-0612"}
+{"timestamp":"2026-06-13T22:05:19Z","event":"precompact_snapshot","detail":"slug=code-slim-0612 phase=complete completed=0
+0 pending=0
+0"}
+{"timestamp":"2026-06-13T22:07:17Z","event":"postcompact_restore","detail":"slug=code-slim-0612"}
+{"timestamp":"2026-06-13T22:07:17Z","event":"precompact_snapshot","detail":"slug=code-slim-0612 phase=complete completed=0
+0 pending=0
+0"}
+{"timestamp":"2026-06-13T22:08:10Z","event":"postcompact_restore","detail":"slug=code-slim-0612"}
+{"timestamp":"2026-06-13T22:08:10Z","event":"precompact_snapshot","detail":"slug=code-slim-0612 phase=complete completed=0
+0 pending=0
+0"}

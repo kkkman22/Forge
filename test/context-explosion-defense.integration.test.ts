@@ -39,7 +39,7 @@ describe("context-explosion-defense integration", () => {
         "findings: 5",
         "p0: 1",
         "p1: 2",
-        "report: .forge/reviews/spec-check-20260530-071500.md",
+        "report: .tinkerman/reviews/spec-check-20260530-071500.md",
       ].join("\n");
 
       expect(summary.length).toBeLessThan(800);
@@ -47,7 +47,7 @@ describe("context-explosion-defense integration", () => {
       expect(summary).toMatch(/^findings: \d+$/m);
       expect(summary).toMatch(/^p0: \d+$/m);
       expect(summary).toMatch(/^p1: \d+$/m);
-      expect(summary).toMatch(/^report: \.forge\/reviews\//m);
+      expect(summary).toMatch(/^report: \.tinkerman\/reviews\//m);
     });
 
     it("main agent skips report when no P0/P1", () => {
@@ -56,7 +56,7 @@ describe("context-explosion-defense integration", () => {
         "findings: 3",
         "p0: 0",
         "p1: 0",
-        "report: .forge/reviews/quality-check-20260530-071500.md",
+        "report: .tinkerman/reviews/quality-check-20260530-071500.md",
       ].join("\n");
 
       // Parse summary

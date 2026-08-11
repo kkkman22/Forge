@@ -37,7 +37,7 @@ describe("buildShipGateBlockArtifacts — Requirement 8.7", () => {
     expect(episode.situation).toBe("ship gate 拦截：存在未提交的本地修改");
     expect(episode.body).toContain("trigger: ship_gate_blocked");
 
-    const parsed = parseEvolutionMarkers(markerText, ".forge/progress/order-export.md");
+    const parsed = parseEvolutionMarkers(markerText, ".tinkerman/progress/order-export.md");
     expect(parsed).toHaveLength(1);
     expect(parsed[0].target).toBe("forge-ship#ship_gate_blocked");
     expect(parsed[0].source).toBe(episode.id);
@@ -57,7 +57,7 @@ describe("buildShipGateBlockArtifacts — Requirement 8.7", () => {
     expect(episode.id).toBe("ep-2026-05-08-002");
     expect(episode.tier).toBe("full");
 
-    const parsed = parseEvolutionMarkers(markerText, ".forge/progress/order-export.md");
+    const parsed = parseEvolutionMarkers(markerText, ".tinkerman/progress/order-export.md");
     expect(parsed[0].target).toBe("forge-ship#ship_gate_blocked");
     expect(parsed[0].description).toBe("ship gate 拦截：P1 Fix Checklist 未全部验证");
   });

@@ -157,7 +157,7 @@ export function generateExecutionPackages(
       estimated_loc: currentLoc,
       files_touched: currentFiles,
       verify_command: `npm run check`,
-      handoff_path: `.forge/runs/${runId}/packages/${id}.md`,
+      handoff_path: `.tinkerman/runs/${runId}/packages/${id}.md`,
     };
     packages.push(pkg);
     for (const taskId of current) taskToPackage.set(taskId, id);

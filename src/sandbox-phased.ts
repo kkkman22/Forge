@@ -1,7 +1,7 @@
 /**
  * Phased Sandbox Implementation — Phase 1: Declarative Configuration.
  *
- * Provides a declarative .forge/sandbox.json config format with pure function
+ * Provides a declarative .tinkerman/sandbox.json config format with pure function
  * policy checks. Phase 1 is advisory only (no enforcement).
  *
  * **Validates: Requirements 1.1, 1.2, 1.3, 1.4**
@@ -19,7 +19,7 @@ import { canonicalizePathExpression, extractPathExpressionsFromBash } from "./pa
 /**
  * Sandbox configuration for Phase 1 declarative sandbox.
  *
- * Format: .forge/sandbox.json
+ * Format: .tinkerman/sandbox.json
  */
 export interface SandboxConfig {
   version: 1;
@@ -54,7 +54,7 @@ export interface SandboxCheckResult {
 
 /**
  * Default sandbox configuration: everything allowed.
- * Used when .forge/sandbox.json does not exist or is malformed.
+ * Used when .tinkerman/sandbox.json does not exist or is malformed.
  */
 export const DEFAULT_SANDBOX_CONFIG: SandboxConfig = {
   version: 1,

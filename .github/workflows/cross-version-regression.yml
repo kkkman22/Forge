@@ -126,14 +126,14 @@ jobs:
         run: |
           set -euo pipefail
           # Spec §Design Rationale: "若 fail, CI 阻断 merge 并把对应 CC 版本
-          # 写入 .forge/knowledge/tool-health.log 标注 incompatible"
+          # 写入 .tinkerman/knowledge/tool-health.log 标注 incompatible"
           # Event log (gitignored); the tracked tool-health.md holds the summary.
-          mkdir -p .forge/knowledge
+          mkdir -p .tinkerman/knowledge
           ts=$(date -u +%Y-%m-%dT%H:%M:%SZ)
           # Append-only; no commit — this artefact is informational and would
           # be picked up by the next /tinkerman run on a developer's machine.
           # Production wiring writes via tool-health-writer.ts (.lock-protected).
           # Here we just emit a marker so the failure surface is visible.
           echo "$ts · ci-cross-version · incompatible · ref=${GITHUB_REF_NAME}" \
-            >> .forge/knowledge/tool-health.log
-          cat .forge/knowledge/tool-health.log
+            >> .tinkerman/knowledge/tool-health.log
+          cat .tinkerman/knowledge/tool-health.log

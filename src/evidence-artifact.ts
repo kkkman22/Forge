@@ -170,9 +170,9 @@ export function writeEvidenceArtifact(
     };
   }
 
-  const artifactDir = join(projectRoot, ".forge", "artifacts", artifact.run_id);
+  const artifactDir = join(projectRoot, ".tinkerman", "artifacts", artifact.run_id);
   const artifactPath = join(artifactDir, `${artifact.artifact_id}.json`);
-  const indexPath = join(projectRoot, ".forge", "artifacts", "index.jsonl");
+  const indexPath = join(projectRoot, ".tinkerman", "artifacts", "index.jsonl");
 
   if (existsSync(artifactPath)) {
     return {
@@ -193,7 +193,7 @@ export function queryEvidenceArtifacts(
   projectRoot: string,
   query: EvidenceArtifactQuery = {},
 ): EvidenceArtifact[] {
-  const indexPath = join(projectRoot, ".forge", "artifacts", "index.jsonl");
+  const indexPath = join(projectRoot, ".tinkerman", "artifacts", "index.jsonl");
   let indexContent: string;
   try {
     indexContent = readFileSync(indexPath, "utf-8");
@@ -228,9 +228,9 @@ export function isArtifactFreshForCommit(
     return { fresh: true, reason: "artifact commit matches current HEAD" };
   }
   if (artifact.kind === "review" && context.changedFiles !== undefined) {
-    const projectFiles = context.changedFiles.filter((file) => !file.startsWith(".forge/"));
+    const projectFiles = context.changedFiles.filter((file) => !file.startsWith(".tinkerman/"));
     if (projectFiles.length === 0) {
-      return { fresh: true, reason: "review remains fresh because only .forge/ state changed" };
+      return { fresh: true, reason: "review remains fresh because only .tinkerman/ state changed" };
     }
   }
   if (artifact.kind === "test" && context.inputHash && artifact.input_hash === context.inputHash) {

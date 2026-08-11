@@ -5,11 +5,11 @@ updated: 2026-08-11
 
 恢复时**先**执行 8 步恢复优先级链，收集**全部**不一致后再一次性呈现（不在第一个不一致处停下）：
 
-1. **读 Status_Document** — `.forge/status.md` frontmatter（phase / tier / current_task）。
-2. **读 Interim_Log** — `.forge/knowledge/sessions/*-interim.md`（若存在）；步骤 1–2 的结果作为后续对账的基线。
+1. **读 Status_Document** — `.tinkerman/status.md` frontmatter（phase / tier / current_task）。
+2. **读 Interim_Log** — `.tinkerman/knowledge/sessions/*-interim.md`（若存在）；步骤 1–2 的结果作为后续对账的基线。
 3. **扫描 git log** — `git log --pretty=format:"%H%x00%s%x00%ci" <run-start>..HEAD`，做 commit→task 匹配（`extractCommitPatterns` + `matchCommitsToTasks`）。
 4. **检查 git status** — `git status --porcelain` 检测未提交改动（`parseGitStatus`）。
-5. **对账 Progress_Document** — `.forge/progress/<topic>.md` 对照 git log，发现 committed-but-not-marked / dependency gap（`findProgressInconsistencies` + `findDependencyGaps`）。
+5. **对账 Progress_Document** — `.tinkerman/progress/<topic>.md` 对照 git log，发现 committed-but-not-marked / dependency gap（`findProgressInconsistencies` + `findDependencyGaps`）。
 6. **对账 phase** — all-tasks-done 但 phase 未推进 / 任务未完但 phase 超前（`findPhaseInconsistencies`）。
 7. **分类中断点** — clean-state / committed-not-progress-updated / progress-updated-not-phase-advanced / task-completed-not-committed / subagent-mid-execution（`classifyInterruption`）。
 8. **生成 Recovery_Report** — 聚合全部不一致 + 各自的 category / evidence / recommendedAction（`buildRecoveryReport`）。

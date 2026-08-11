@@ -28,7 +28,7 @@ Options:
   --repo <owner/repo>    GitHub repository (required)
   --count <N>            Number of recent runs to scan (default: 100)
   --branch <branch>      Filter to a specific branch
-  --write-health         Append findings to .forge/knowledge/tool-health.md
+  --write-health         Append findings to .tinkerman/knowledge/tool-health.md
   --help, -h             Show this help message
 
 Patterns scanned:
@@ -150,7 +150,7 @@ function fetchRunLogs(repo, runId) {
  * @param {{ scanned_runs: number, failed_runs: number, matched_patterns: Array<{ run_id: number, pattern: string, log_line: string }>, pattern_counts: Record<string, number> }} summary
  */
 function writeHealthFile(summary) {
-  const healthPath = resolve(ROOT, ".forge", "knowledge", "tool-health.log");
+  const healthPath = resolve(ROOT, ".tinkerman", "knowledge", "tool-health.log");
   // The event log is gitignored and lazily created on first write — ensure
   // the parent dir exists, then append. (Previously refused to create the
   // file because the tracked .md was seed-only; that no longer applies.)

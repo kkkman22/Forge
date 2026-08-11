@@ -69,7 +69,7 @@ function serializeEntry(entry: BacklogEntry): string {
   return `${lines.join("\n")}\n`;
 }
 
-/** @internal Serialize backlog entries to `.forge/backlog.md` format. */
+/** @internal Serialize backlog entries to `.tinkerman/backlog.md` format. */
 export function serializeBacklog(entries: BacklogEntry[]): string {
   const unresolved = entries.filter((e) => !e.resolved);
   const resolved = entries.filter((e) => e.resolved);
@@ -101,7 +101,7 @@ export function serializeBacklog(entries: BacklogEntry[]): string {
   return lines.join("\n");
 }
 
-/** @internal Parse `.forge/backlog.md` content into structured entries. */
+/** @internal Parse `.tinkerman/backlog.md` content into structured entries. */
 export function parseBacklog(content: string): BacklogEntry[] {
   const entries: BacklogEntry[] = [];
   const lines = content.split("\n");

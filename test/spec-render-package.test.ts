@@ -36,7 +36,7 @@ describe("renderTasksMarkdown execution packages", () => {
         estimated_loc: 120,
         files_touched: 3,
         verify_command: "npx vitest run test/demo.test.ts",
-        handoff_path: ".forge/runs/run-1/packages/P1.md",
+        handoff_path: ".tinkerman/runs/run-1/packages/P1.md",
       },
     ],
   };

@@ -24,7 +24,7 @@ const DEFAULT_WHITELIST = [
 ] as const;
 
 function loadWhitelistFromConfig(rootDir: string): readonly string[] {
-  const configPath = resolve(rootDir, ".forge/config.md");
+  const configPath = resolve(rootDir, ".tinkerman/config.md");
   try {
     const raw = readFileSync(configPath, "utf-8");
     // Extract YAML between frontmatter delimiters

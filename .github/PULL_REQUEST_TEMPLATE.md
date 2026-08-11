@@ -27,7 +27,7 @@
 ## Checklist
 
 - [ ] Commit messages follow Conventional Commits
-- [ ] No modifications to frozen files (`.forge/specs/*/spec.md`, `.forge/plans/*.md`) without unlock
+- [ ] No modifications to frozen files (`.tinkerman/specs/*/spec.md`, `.tinkerman/plans/*.md`) without unlock
 - [ ] New SKILL or agent files are synced to `.claude/` directory
 
 ## Skill Changes (if applicable)

@@ -3,7 +3,7 @@ updated: 2026-08-11
 ---
 # Review Report Format
 
-`.forge/reviews/<topic>.md`。YAML frontmatter + 正文。`result`：`pass`（无 P0/P1 且全部完成）/ `fail`（有 P0/P1）/ `incomplete`（有 Layer 未完成，**不允许 ship**）。
+`.tinkerman/reviews/<topic>.md`。YAML frontmatter + 正文。`result`：`pass`（无 P0/P1 且全部完成）/ `fail`（有 P0/P1）/ `incomplete`（有 Layer 未完成，**不允许 ship**）。
 
 **Frontmatter 模板**：
 ```yaml
@@ -25,7 +25,7 @@ layers:
 ---
 ```
 
-`reviewed_at_commit` 供 ship 阶段 freshness 验证使用。`evidence_artifact_id` 指向 `.forge/artifacts/<run-id>/<artifact-id>.json` 中的 immutable `review` artifact；`result: pass` 没有该引用时不得作为 ship 证据。
+`reviewed_at_commit` 供 ship 阶段 freshness 验证使用。`evidence_artifact_id` 指向 `.tinkerman/artifacts/<run-id>/<artifact-id>.json` 中的 immutable `review` artifact；`result: pass` 没有该引用时不得作为 ship 证据。
 
 ## methodology 字段语义
 

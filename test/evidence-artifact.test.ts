@@ -151,7 +151,7 @@ describe("immutable artifact writer and index", () => {
     expect(written).toContain('"artifact_id": "artifact-1"');
     expect(written.endsWith("\n")).toBe(true);
 
-    const index = readFileSync(join(root, ".forge", "artifacts", "index.jsonl"), "utf-8");
+    const index = readFileSync(join(root, ".tinkerman", "artifacts", "index.jsonl"), "utf-8");
     expect(index).toContain('"artifact_id":"artifact-1"');
     expect(index).toContain('"kind":"review"');
   });
@@ -201,7 +201,7 @@ describe("immutable artifact writer and index", () => {
 
   it("ignores malformed index records and invalid artifact files", () => {
     const root = tempRoot();
-    const artifactDir = join(root, ".forge", "artifacts", "run-1");
+    const artifactDir = join(root, ".tinkerman", "artifacts", "run-1");
     mkdirSync(artifactDir, { recursive: true });
     writeFileSync(join(artifactDir, "not-json.json"), "{", "utf-8");
     writeFileSync(join(artifactDir, "primitive.json"), "123", "utf-8");
@@ -212,7 +212,7 @@ describe("immutable artifact writer and index", () => {
     );
     writeEvidenceArtifact(root, artifact({ artifact_id: "valid" }));
     writeFileSync(
-      join(root, ".forge", "artifacts", "index.jsonl"),
+      join(root, ".tinkerman", "artifacts", "index.jsonl"),
       [
         "",
         "{",
@@ -242,11 +242,11 @@ describe("immutable artifact writer and index", () => {
   it("keeps review fresh across .forge-only changes", () => {
     expect(
       isArtifactFreshForCommit(artifact({ kind: "review", commit: "old" }), "head", {
-        changedFiles: [".forge/status.md", ".forge/reviews/topic.md"],
+        changedFiles: [".tinkerman/status.md", ".tinkerman/reviews/topic.md"],
       }),
     ).toEqual({
       fresh: true,
-      reason: "review remains fresh because only .forge/ state changed",
+      reason: "review remains fresh because only .tinkerman/ state changed",
     });
   });
 
@@ -268,7 +268,7 @@ describe("immutable artifact writer and index", () => {
   it("marks reviews stale when project files changed and tests stale when input hash differs", () => {
     expect(
       isArtifactFreshForCommit(artifact({ kind: "review", commit: "old" }), "head", {
-        changedFiles: [".forge/status.md", "src/app.ts"],
+        changedFiles: [".tinkerman/status.md", "src/app.ts"],
       }).fresh,
     ).toBe(false);
     expect(

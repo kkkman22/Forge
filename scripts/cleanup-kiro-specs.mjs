@@ -6,8 +6,8 @@
  *   node scripts/cleanup-kiro-specs.mjs [--dry-run]
  *
  * Safety checks:
- *   1. Verify every .kiro/specs/<name>/ exists in .forge/specs/<name>/
- *   2. Verify requirements.md, design.md, tasks.md are present in .forge/
+ *   1. Verify every .kiro/specs/<name>/ exists in .tinkerman/specs/<name>/
+ *   2. Verify requirements.md, design.md, tasks.md are present in .tinkerman/
  *   3. Only then delete .kiro/specs/<name>/
  *   4. Keep .kiro/specs/_archived/ intact (optional)
  */
@@ -18,7 +18,7 @@ import { join } from "node:path";
 
 const ROOT = join(new URL(import.meta.url).pathname, "..", "..");
 const KIRO_SPECS_DIR = join(ROOT, ".kiro", "specs");
-const FORGE_SPECS_DIR = join(ROOT, ".forge", "specs");
+const FORGE_SPECS_DIR = join(ROOT, ".tinkerman", "specs");
 
 const args = process.argv.slice(2);
 const DRY_RUN = args.includes("--dry-run");
@@ -46,30 +46,30 @@ async function main() {
     const kiroDir = join(KIRO_SPECS_DIR, specDir);
     const forgeDir = join(FORGE_SPECS_DIR, specDir);
 
-    // Safety check 1: .forge/specs/<name>/ must exist
+    // Safety check 1: .tinkerman/specs/<name>/ must exist
     if (!existsSync(forgeDir)) {
-      log(`  SKIP: ${specDir} — not found in .forge/specs/`);
+      log(`  SKIP: ${specDir} — not found in .tinkerman/specs/`);
       skipped++;
       continue;
     }
 
-    // Safety check 2: core files must exist in .forge/
+    // Safety check 2: core files must exist in .tinkerman/
     const requiredFiles = ["requirements.md", "design.md", "tasks.md"];
     const missing = requiredFiles.filter((f) => !existsSync(join(forgeDir, f)));
     if (missing.length > 0) {
-      log(`  SKIP: ${specDir} — missing in .forge/specs/: ${missing.join(", ")}`);
+      log(`  SKIP: ${specDir} — missing in .tinkerman/specs/: ${missing.join(", ")}`);
       skipped++;
       continue;
     }
 
-    // Safety check 3: .forge/ files must be non-empty
+    // Safety check 3: .tinkerman/ files must be non-empty
     const emptyFiles = [];
     for (const f of requiredFiles) {
       const s = await stat(join(forgeDir, f));
       if (s.size === 0) emptyFiles.push(f);
     }
     if (emptyFiles.length > 0) {
-      log(`  SKIP: ${specDir} — empty files in .forge/specs/: ${emptyFiles.join(", ")}`);
+      log(`  SKIP: ${specDir} — empty files in .tinkerman/specs/: ${emptyFiles.join(", ")}`);
       skipped++;
       continue;
     }

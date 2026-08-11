@@ -11,16 +11,16 @@ describe("resume instructions phase coverage", () => {
   const content = readFileSync(INSTRUCTIONS_PATH, "utf-8");
 
   it("mentions status.md or status/ directory", () => {
-    const hasStatusMd = content.includes(".forge/status.md");
-    const hasStatusDir = content.includes(".forge/status/");
+    const hasStatusMd = content.includes(".tinkerman/status.md");
+    const hasStatusDir = content.includes(".tinkerman/status/");
     expect(
       hasStatusMd || hasStatusDir,
-      "instructions must reference .forge/status.md or .forge/status/",
+      "instructions must reference .tinkerman/status.md or .tinkerman/status/",
     ).toBe(true);
   });
 
   it("mentions progress/ directory", () => {
-    expect(content).toContain(".forge/progress/");
+    expect(content).toContain(".tinkerman/progress/");
   });
 
   it("mentions review phase in resume context", () => {

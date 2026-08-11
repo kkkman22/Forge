@@ -92,7 +92,7 @@ export interface EnabledPacks {
   order: string[];
   /** Resolved pack entries corresponding to order. */
   entries: PackEntry[];
-  /** Absolute path to .forge/custom/ directory. */
+  /** Absolute path to .tinkerman/custom/ directory. */
   customLayerRoot: string;
 }
 

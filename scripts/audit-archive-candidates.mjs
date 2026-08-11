@@ -3,7 +3,7 @@
 /**
  * audit-archive-candidates.mjs
  *
- * Audits .forge/plans/ and .forge/specs/ to determine which entries
+ * Audits .tinkerman/plans/ and .tinkerman/specs/ to determine which entries
  * correspond to shipped features and can be archived.
  *
  * Usage:
@@ -11,7 +11,7 @@
  *
  * Modes:
  *   --dry-run   Print audit table without moving files
- *   --fix-refs  Scan docs/, README.md, .forge/features/ for references
+ *   --fix-refs  Scan docs/, README.md, .tinkerman/features/ for references
  *               to archived paths and update them
  *   (default)   Execute moves + write audit log
  */
@@ -25,7 +25,7 @@ import { join } from "node:path";
 // ---------------------------------------------------------------------------
 
 const ROOT = join(new URL(import.meta.url).pathname, "..", "..");
-const FORGE_DIR = join(ROOT, ".forge");
+const FORGE_DIR = join(ROOT, ".tinkerman");
 const PLANS_DIR = join(FORGE_DIR, "plans");
 const SPECS_DIR = join(FORGE_DIR, "specs");
 const PROGRESS_DIR = join(FORGE_DIR, "progress");
@@ -132,7 +132,7 @@ async function collectEvidence(slug, roadmapContent, changelogContent) {
     evidence.in_changelog = true;
   }
 
-  // 3. .forge/progress/ — check for files referencing this entry
+  // 3. .tinkerman/progress/ — check for files referencing this entry
   const progressFiles = await readDirSafe(PROGRESS_DIR);
   for (const pf of progressFiles) {
     if (!pf.endsWith(".md")) continue;
@@ -143,7 +143,7 @@ async function collectEvidence(slug, roadmapContent, changelogContent) {
     }
   }
 
-  // 4. .forge/status.md current_task field
+  // 4. .tinkerman/status.md current_task field
   const statusContent = await readText(STATUS_FILE);
   const currentTaskMatch = statusContent.match(/^current_task:\s*["']?(.+?)["']?\s*$/m);
   if (currentTaskMatch && currentTaskMatch[1].includes(slug)) {
@@ -333,7 +333,7 @@ async function updateCrossReferences(archivedEntries, dateStr) {
 
   const scanDirs = [
     join(ROOT, "docs"),
-    join(ROOT, ".forge", "features"),
+    join(ROOT, ".tinkerman", "features"),
   ];
   const scanFiles = [join(ROOT, "README.md")];
 
@@ -343,14 +343,14 @@ async function updateCrossReferences(archivedEntries, dateStr) {
     const archiveName = `${dateStr}-${entry.slug}`;
     if (entry.type === "spec-dir" || entry.type === "spec-file") {
       replacements.push({
-        from: `.forge/specs/${entry.name}`,
-        to: `.forge/archive/${archiveName}/specs/${entry.name}`,
+        from: `.tinkerman/specs/${entry.name}`,
+        to: `.tinkerman/archive/${archiveName}/specs/${entry.name}`,
       });
     }
     if (entry.type === "plan-file") {
       replacements.push({
-        from: `.forge/plans/${entry.name}`,
-        to: `.forge/archive/${archiveName}/plans/${entry.name}`,
+        from: `.tinkerman/plans/${entry.name}`,
+        to: `.tinkerman/archive/${archiveName}/plans/${entry.name}`,
       });
     }
   }
@@ -544,7 +544,7 @@ async function main() {
   // Write pending file for ambiguous entries
   if (ambiguousEntries.length > 0) {
     await writePendingFile(ambiguousEntries);
-    console.log(`Ambiguous entries recorded in .forge/archive/.audit-pending.md`);
+    console.log(`Ambiguous entries recorded in .tinkerman/archive/.audit-pending.md`);
   }
 
   // Cross-reference update

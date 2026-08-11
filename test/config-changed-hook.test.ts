@@ -3,13 +3,13 @@
  *
  * Validates:
  * - R1 AC1: Script runs as ConfigChange hook
- * - R1 AC2: .forge/config.md change → additionalContext output
+ * - R1 AC2: .tinkerman/config.md change → additionalContext output
  * - R1 AC3: .claude/settings.json change → additionalContext output
  * - R1 AC4: Unmatched file → silent exit (no output)
  * - R1 AC5: Fail-open — internal errors → exit 0, no blocking
  * - R1 AC6: Execution time ≤ 3s
  * - R3 AC1: WATCHED_FILES is configurable (array constant)
- * - R3 AC2: List includes .forge/config.md and .claude/settings.json
+ * - R3 AC2: List includes .tinkerman/config.md and .claude/settings.json
  * - R3 AC3: Adding to list works without core logic changes
  * - T1.5: --help output
  */
@@ -83,14 +83,14 @@ function runHookMissingField(input: Record<string, unknown>): { stdout: string; 
 }
 
 describe("config-changed-hook.mjs", () => {
-  it("outputs additionalContext when .forge/config.md changes", () => {
-    const result = runHook([".forge/config.md"]);
+  it("outputs additionalContext when .tinkerman/config.md changes", () => {
+    const result = runHook([".tinkerman/config.md"]);
     expect(result.exitCode).toBe(0);
 
     const output = parseOutput(result.stdout);
     expect(output).not.toBeNull();
     expect(output!.additionalContext).toContain("Forge 配置已变更");
-    expect(output!.additionalContext).toContain(".forge/config.md");
+    expect(output!.additionalContext).toContain(".tinkerman/config.md");
   });
 
   it("outputs additionalContext when .claude/settings.json changes", () => {
@@ -103,13 +103,13 @@ describe("config-changed-hook.mjs", () => {
   });
 
   it("outputs additionalContext with changed file names", () => {
-    const result = runHook([".forge/config.md", "src/foo.ts"]);
+    const result = runHook([".tinkerman/config.md", "src/foo.ts"]);
     expect(result.exitCode).toBe(0);
 
     const output = parseOutput(result.stdout);
     expect(output).not.toBeNull();
     // Should list the matched file
-    expect(output!.additionalContext).toContain(".forge/config.md");
+    expect(output!.additionalContext).toContain(".tinkerman/config.md");
   });
 
   it("exits silently (no output) for unmatched files", () => {
@@ -162,7 +162,7 @@ describe("config-changed-hook.mjs", () => {
 
   it("completes within 3 seconds", () => {
     const start = Date.now();
-    runHook([".forge/config.md"]);
+    runHook([".tinkerman/config.md"]);
     const elapsed = Date.now() - start;
     expect(elapsed).toBeLessThan(3000);
   });
@@ -183,7 +183,7 @@ describe("config-changed-hook.mjs", () => {
   });
 
   it("matches files by suffix (handles absolute paths)", () => {
-    const result = runHook(["/home/user/project/.forge/config.md"]);
+    const result = runHook(["/home/user/project/.tinkerman/config.md"]);
     expect(result.exitCode).toBe(0);
 
     const output = parseOutput(result.stdout);
@@ -192,7 +192,7 @@ describe("config-changed-hook.mjs", () => {
   });
 
   it("handles multiple watched files changed at once", () => {
-    const result = runHook([".forge/config.md", ".claude/settings.json"]);
+    const result = runHook([".tinkerman/config.md", ".claude/settings.json"]);
     expect(result.exitCode).toBe(0);
 
     const output = parseOutput(result.stdout);
@@ -202,7 +202,7 @@ describe("config-changed-hook.mjs", () => {
   });
 
   it("sanitizes control characters from changed file names", () => {
-    const result = runHook(["evil\nname/.forge/config.md", "bad\0path/.claude/settings.json"]);
+    const result = runHook(["evil\nname/.tinkerman/config.md", "bad\0path/.claude/settings.json"]);
     expect(result.exitCode).toBe(0);
 
     const output = parseOutput(result.stdout);

@@ -9,7 +9,7 @@ export interface FrontmatterInput {
 }
 
 const DRIFT_WARNING = `⚠️ CI 命令漂移检测
-  .forge/config.md frontmatter 未声明 ci_check_command，
+  .tinkerman/config.md frontmatter 未声明 ci_check_command，
   但检测到 package.json 中存在 "scripts.check": "npm run check"。
   本次自动使用 \`npm run check\` 执行 Layer 3，建议补齐 frontmatter：
 

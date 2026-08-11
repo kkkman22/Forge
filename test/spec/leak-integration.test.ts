@@ -65,7 +65,7 @@ describe("spec.ts leak integration", () => {
   it("re-exports detectSpecLeak from spec-leak-detector", () => {
     const findings = detectSpecLeak(
       "## Proposed Change\n\nCreate a class UserService for auth.\n",
-      ".forge/specs/user-auth/spec.md",
+      ".tinkerman/specs/user-auth/spec.md",
       bannedRegistry,
       emptyGlossary,
       "user-auth",
@@ -98,7 +98,7 @@ describe("spec.ts leak integration", () => {
   it("detectSpecLeak returns empty for clean spec text", () => {
     const findings = detectSpecLeak(
       "## Requirements\n\nWhen user submits form, show success message.\n",
-      ".forge/specs/form/spec.md",
+      ".tinkerman/specs/form/spec.md",
       bannedRegistry,
       emptyGlossary,
       "form",

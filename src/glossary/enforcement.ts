@@ -40,14 +40,14 @@ export interface EnforcementGlossary {
  * Options for {@link loadEnforcementGlossary}.
  */
 export interface LoadEnforcementGlossaryOptions {
-  /** Override the flat glossary path (default `.forge/glossary.md`). */
+  /** Override the flat glossary path (default `.tinkerman/glossary.md`). */
   glossaryPath?: string;
   /** Timestamp for the seed's `last_updated` / `updated` when seeding. */
   now?: Date;
 }
 
 /**
- * Load the enforcement glossary: flat `.forge/glossary.md` (authoritative) merged
+ * Load the enforcement glossary: flat `.tinkerman/glossary.md` (authoritative) merged
  * with enabled-pack glossary terms.
  *
  * - Flat is read (or seeded with the 12 core terms if absent) first.

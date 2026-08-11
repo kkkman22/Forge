@@ -144,18 +144,18 @@ const EXPECTED_POST_TOOL_USE_HOOKS: HookMatcher[] = [
   },
   {
     matcher: "Write|Edit",
-    if: "Write(.forge/**)|Edit(.forge/**)",
+    if: "Write(.tinkerman/**)|Edit(.tinkerman/**)",
     hooks: [
       {
         type: "command",
         command:
-          "if [ -d .forge/status ] || [ -f .forge/status.md ]; then echo '📝 代码已修改。请记得更新 .forge/progress/ 中的任务状态。'; fi",
+          "if [ -d .tinkerman/status ] || [ -f .tinkerman/status.md ]; then echo '📝 代码已修改。请记得更新 .tinkerman/progress/ 中的任务状态。'; fi",
       },
     ],
   },
   {
     matcher: "Write|Edit",
-    if: "Write(.forge/**)|Edit(.forge/**)",
+    if: "Write(.tinkerman/**)|Edit(.tinkerman/**)",
     hooks: [
       {
         type: "command",
@@ -166,7 +166,7 @@ const EXPECTED_POST_TOOL_USE_HOOKS: HookMatcher[] = [
   },
   {
     matcher: "Write|Edit",
-    if: "Write(.forge/**)|Edit(.forge/**)",
+    if: "Write(.tinkerman/**)|Edit(.tinkerman/**)",
     hooks: [
       {
         type: "command",
@@ -177,7 +177,7 @@ const EXPECTED_POST_TOOL_USE_HOOKS: HookMatcher[] = [
   },
   {
     matcher: "Write|Edit",
-    if: "Write(.forge/**)|Edit(.forge/**)",
+    if: "Write(.tinkerman/**)|Edit(.tinkerman/**)",
     hooks: [
       {
         type: "command",
@@ -198,7 +198,7 @@ const EXPECTED_POST_TOOL_USE_HOOKS: HookMatcher[] = [
     ],
   },
   // Baseline migrated by spec forge-review-diff-context-fidelity Stage 2.
-  // PostToolUse guard for .forge/reviews/.diff-context.md narrative-summary
+  // PostToolUse guard for .tinkerman/reviews/.diff-context.md narrative-summary
   // anti-pattern. Triggers exit 2 when Write/Edit produces a file missing
   // unified diff hunk markers. See:
   //   .kiro/specs/forge-review-diff-context-fidelity/{bugfix,design}.md
@@ -207,7 +207,7 @@ const EXPECTED_POST_TOOL_USE_HOOKS: HookMatcher[] = [
   // Updated 2026-06-22: plugin path `${CLAUDE_PLUGIN_ROOT}` added as primary.
   {
     matcher: "Write|Edit",
-    if: "Write(.forge/reviews/.diff-context.md)|Edit(.forge/reviews/.diff-context.md)",
+    if: "Write(.tinkerman/reviews/.diff-context.md)|Edit(.tinkerman/reviews/.diff-context.md)",
     hooks: [
       {
         type: "command",
@@ -263,7 +263,7 @@ const EXPECTED_TEAMMATE_IDLE_HOOKS: HookMatcher[] = [
       {
         type: "command",
         command:
-          "if [ -d .forge/status ]; then status_file=$(ls -t .forge/status/*.md 2>/dev/null | head -1); else status_file='.forge/status.md'; fi; phase=$(grep '^phase:' \"$status_file\" 2>/dev/null | sed 's/phase: *\"\\{0,1\\}//;s/\"\\{0,1\\} *$//'); if [ \"$phase\" = 'review' ] || [ \"$phase\" = 'decide' ]; then echo '队友空闲。请检查是否所有评审/决策维度都已完成输出，未完成的队友应继续工作。'; fi",
+          "if [ -d .tinkerman/status ]; then status_file=$(ls -t .tinkerman/status/*.md 2>/dev/null | head -1); else status_file='.tinkerman/status.md'; fi; phase=$(grep '^phase:' \"$status_file\" 2>/dev/null | sed 's/phase: *\"\\{0,1\\}//;s/\"\\{0,1\\} *$//'); if [ \"$phase\" = 'review' ] || [ \"$phase\" = 'decide' ]; then echo '队友空闲。请检查是否所有评审/决策维度都已完成输出，未完成的队友应继续工作。'; fi",
       },
     ],
   },
@@ -272,11 +272,11 @@ const EXPECTED_TEAMMATE_IDLE_HOOKS: HookMatcher[] = [
 /** The plan context injection hook — the FIRST PreToolUse entry with matcher "Write|Edit|Bash" */
 const EXPECTED_PLAN_CONTEXT_HOOK: HookMatcher = {
   matcher: "Write|Edit",
-  if: "Write(.forge/**)|Edit(.forge/**)",
+  if: "Write(.tinkerman/**)|Edit(.tinkerman/**)",
   hooks: [
     {
       type: "command",
-      command: "head -30 .forge/plans/*.md 2>/dev/null || true",
+      command: "head -30 .tinkerman/plans/*.md 2>/dev/null || true",
     },
   ],
 };
@@ -310,7 +310,7 @@ function getPlanContextHook(config: HooksConfig): HookMatcher | undefined {
   const preToolUseHooks = config.hooks.PreToolUse ?? [];
   return preToolUseHooks.find((group) =>
     group.hooks.some((h) =>
-      (h.command ?? h.args?.join(" ") ?? "").includes("head -30 .forge/plans/"),
+      (h.command ?? h.args?.join(" ") ?? "").includes("head -30 .tinkerman/plans/"),
     ),
   );
 }

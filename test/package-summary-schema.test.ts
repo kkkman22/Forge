@@ -12,12 +12,12 @@ describe("PackageSummarySchema", () => {
         {
           cmd: "npx vitest run test/a.test.ts",
           result: "pass",
-          evidence_path: ".forge/runs/a.log",
+          evidence_path: ".tinkerman/runs/a.log",
         },
       ],
       findings: { p0: 0, p1: 0, highest_risk: "none" },
       blockers: [],
-      report_path: ".forge/runs/run/packages/P1.md",
+      report_path: ".tinkerman/runs/run/packages/P1.md",
       next_action: "package:P2",
     });
 
@@ -51,10 +51,12 @@ describe("PackageSummarySchema", () => {
       package_id: "P1",
       tasks_completed: ["T-01", "T-02"],
       changed_files: { items: ["src/a.ts"], overflow_count: 2 },
-      commands: [{ cmd: "npm run check", result: "pass", evidence_path: ".forge/runs/check.log" }],
+      commands: [
+        { cmd: "npm run check", result: "pass", evidence_path: ".tinkerman/runs/check.log" },
+      ],
       findings: { p0: 0, p1: 0, highest_risk: "none" },
       blockers: [],
-      report_path: ".forge/runs/P1.md",
+      report_path: ".tinkerman/runs/P1.md",
       next_action: "package:P2",
     });
 

@@ -48,7 +48,7 @@ updated: 2026-08-11
 ## `pauseForZoomOut(statusContent)`
 
 - **参数**：
-  - `statusContent` — `.forge/status.md` 的当前内容
+  - `statusContent` — `.tinkerman/status.md` 的当前内容
 - **返回**：新 status 内容（`phase` 改为 `zoom_out_paused`，原 `phase` 存入 `original_phase`）
 - **用途**：在 zoom-out 开始前暂停当前 skill，保存原始阶段以便恢复
 

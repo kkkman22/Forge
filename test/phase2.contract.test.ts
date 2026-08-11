@@ -79,9 +79,9 @@ describe("Contract: compaction hooks", () => {
     expect(content).not.toMatch(/\breturn\s+2\b/);
   });
 
-  it(".gitignore contains .forge/.compact-snapshot.md", () => {
+  it(".gitignore contains .tinkerman/.compact-snapshot.md", () => {
     const gitignore = readFileSync(resolve(ROOT, ".gitignore"), "utf-8");
-    expect(gitignore).toContain(".forge/.compact-snapshot.md");
+    expect(gitignore).toContain(".tinkerman/.compact-snapshot.md");
   });
 });
 

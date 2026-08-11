@@ -37,8 +37,8 @@ allowed_tools:
 |------|------|---------|
 | frozen | specs (locked), plans (approved), config.md | 拒绝 → 3 选项 |
 | guarded | progress, reviews, knowledge, ADR | 语义合并 |
-| open | 其他 .forge/ 文件 | accept ours |
-| source | .forge/ 之外 | 留给用户 |
+| open | 其他 .tinkerman/ 文件 | accept ours |
+| source | .tinkerman/ 之外 | 留给用户 |
 
 ## 函数契约
 

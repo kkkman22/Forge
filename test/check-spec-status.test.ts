@@ -1,10 +1,10 @@
 /**
  * check-spec-status.mjs — snapshot + behavior tests.
  *
- * T-06 RED: spec status 巡检脚本契约。脚本扫描 .forge/specs/** frontmatter
+ * T-06 RED: spec status 巡检脚本契约。脚本扫描 .tinkerman/specs/** frontmatter
  * status 字段，输出分布 + warning（缺失/矛盾），只读不改。
  *
- * 对应 spec: .forge/specs/arch-review-remediate-0626 REQ-06。
+ * 对应 spec: .tinkerman/specs/arch-review-remediate-0626 REQ-06。
  */
 
 import { execFileSync } from "node:child_process";

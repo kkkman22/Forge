@@ -3,7 +3,7 @@
 /**
  * TeammateIdle hook: check phase and warn if review/decide is active.
  *
- * Reads .forge/status.md (or latest .forge/status/*.md) to determine
+ * Reads .tinkerman/status.md (or latest .tinkerman/status/*.md) to determine
  * current phase. If phase is "review" or "decide", outputs a warning
  * that idle teammates should continue working.
  *
@@ -20,8 +20,8 @@ import { join } from "node:path";
 const CWD = process.cwd();
 
 try {
-  const statusDir = join(CWD, ".forge", "status");
-  const statusFile = join(CWD, ".forge", "status.md");
+  const statusDir = join(CWD, ".tinkerman", "status");
+  const statusFile = join(CWD, ".tinkerman", "status.md");
 
   let targetFile;
 

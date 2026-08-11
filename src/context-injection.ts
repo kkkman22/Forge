@@ -20,7 +20,7 @@ import { appendFileSync, readFileSync } from "node:fs";
 /**
  * A single context entry recorded at runtime by a Subagent.
  *
- * Stored as one JSON line in `.forge/runs/<runId>/context.jsonl`.
+ * Stored as one JSON line in `.tinkerman/runs/<runId>/context.jsonl`.
  */
 export interface ContextEntry {
   /** File path (may include line range, e.g. "src/auth.ts:42-60"). */

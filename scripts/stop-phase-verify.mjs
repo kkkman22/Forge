@@ -3,7 +3,7 @@
 /**
  * Stop hook: verify active phase before session ends + desktop notification.
  *
- * Reads .forge/status.md and warns if the current phase is active
+ * Reads .tinkerman/status.md and warns if the current phase is active
  * (not "completed" or empty), reminding the user to verify their
  * last change. Also outputs a terminalSequence desktop notification
  * for phase transitions (suppressed in CI/non-interactive environments).
@@ -27,7 +27,7 @@ import { existsSync, readFileSync } from "node:fs";
 import { join } from "node:path";
 
 const CWD = process.cwd();
-const STATUS_FILE = join(CWD, ".forge", "status.md");
+const STATUS_FILE = join(CWD, ".tinkerman", "status.md");
 
 /** Phase emoji map for desktop notifications. */
 const PHASE_EMOJI = {
@@ -71,8 +71,8 @@ try {
   if (phase && phase !== "completed" && phase !== "") {
     // Audit P1: check for a verify artifact. If the phase is active but no
     // verification was run, block session end (iron-law: verification-run-command).
-    const verifyArtifact = existsSync(join(CWD, ".forge", "verify-artifact.json"))
-      || existsSync(join(CWD, ".forge", "reviews", "test-verdict.md"));
+    const verifyArtifact = existsSync(join(CWD, ".tinkerman", "verify-artifact.json"))
+      || existsSync(join(CWD, ".tinkerman", "reviews", "test-verdict.md"));
     const warnOnly = process.env.FORGE_VERIFY_WARN_ONLY === "1";
 
     const msg = `⚠️ Phase "${phase}" is active — did you verify your last change? Run the relevant test/lint command (npm run typecheck && npm test) before stopping.`;

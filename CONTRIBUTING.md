@@ -23,7 +23,7 @@ npm run check
 
 ## Architecture Overview
 
-Forge is a **pure-function codebase** — `src/` exports composable functions with no side effects. State lives in `.forge/` files on disk; modules read/write via explicit parameters. ADR-0004 之后所有子命令由统一 skill `forge` 内部分发。
+Forge is a **pure-function codebase** — `src/` exports composable functions with no side effects. State lives in `.tinkerman/` files on disk; modules read/write via explicit parameters. ADR-0004 之后所有子命令由统一 skill `forge` 内部分发。
 
 ```
 src/               # Pure functions (305 TypeScript modules, no global state, no I/O in logic)
@@ -44,10 +44,10 @@ test/              # Property-based tests (*.property.test.ts) + unit tests (~67
 ### Data Flow
 
 ```
-User → /tinkerman <command> → Router → Skill Scheduler → Phase functions → .forge/ files
+User → /tinkerman <command> → Router → Skill Scheduler → Phase functions → .tinkerman/ files
 ```
 
-Each phase (plan, build, review, test, ship) reads from and writes to `.forge/` directory, providing natural session boundaries.
+Each phase (plan, build, review, test, ship) reads from and writes to `.tinkerman/` directory, providing natural session boundaries.
 
 ### Key Patterns
 
@@ -117,7 +117,7 @@ chore(scope): build, CI, tooling
 
 - [ ] `npm run check` passes
 - [ ] New `src/` functions have property tests
-- [ ] No changes to frozen files (`.forge/specs/*/spec.md`, `.forge/plans/*.md`) without explicit unlock
+- [ ] No changes to frozen files (`.tinkerman/specs/*/spec.md`, `.tinkerman/plans/*.md`) without explicit unlock
 - [ ] Commit messages follow Conventional Commits
 
 ## Testing Requirements
@@ -221,7 +221,7 @@ FORGE_PRE_PUSH_BRANCH=refs/heads/release/v2 git push
 1. **PreToolUse Hooks** — Intercept Write/Edit/Bash before execution
 2. **Frozen Zone Protection** — Block writes to locked specs/plans/config
 3. **State Gate Checks** — Validate phase transitions
-4. **Inner-Layer Commit Guard** — Scan staged `.forge/` files before commit
+4. **Inner-Layer Commit Guard** — Scan staged `.tinkerman/` files before commit
 
 > **Warning**: Disabling any defense layer removes all access control. Changes to `hooks/hooks.json` or `check-frozen.ts`/`state.ts` require strict review.
 
@@ -266,7 +266,7 @@ FORGE_PRE_PUSH_BRANCH=refs/heads/release/v2 git push
 - `src/prompt-defense-patterns.ts` — 输入威胁模式库（frozen zone 保护）
 - `src/git-transaction.ts` — Shell 命令白名单 builder
 - `src/state.ts` 中的 `getProtectionZone()` — 保护区路径分类
-- `.forge/config.md` 中的"状态文件保护分区"章节
+- `.tinkerman/config.md` 中的"状态文件保护分区"章节
 
 PR 描述中必须引用对应 ADR 的编号（`ADR-NNNN`），否则 review 会要求补交。
 
@@ -298,7 +298,7 @@ After modifying skills/agents/commands, re-run `node scripts/gen-plugin-commands
 ## Creating a New Skill
 
 1. Copy `templates/SKILL-TEMPLATE.md` to `skills/tinkerman-<name>/SKILL.md`
-2. Follow the [SKILL.md Style Guide](.forge/knowledge/skill-style-guide.md) for frontmatter, section structure, and description format
+2. Follow the [SKILL.md Style Guide](.tinkerman/knowledge/skill-style-guide.md) for frontmatter, section structure, and description format
 3. Use the quick checklist at the end of the style guide as your PR self-check
 4. Run `node scripts/validate-skill-descriptions.mjs --strict` and `node scripts/validate-skill-skeleton.mjs` to verify compliance
 

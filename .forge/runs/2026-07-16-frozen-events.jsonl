@@ -1,0 +1,6 @@
+{"timestamp":"2026-07-16T03:36:26Z","session_id":"unknown","tool_name":"Edit","path":"/Users/king/code/Forge/.forge/knowledge/evolved-rules.md","category":"guarded-append","reason_code":"GUARDED_APPEND_VIOLATION","decision":"pre","outcome":"allowed"}
+{"timestamp":"2026-07-16T03:36:39Z","session_id":"unknown","tool_name":"Edit","path":"/Users/king/code/Forge/.forge/knowledge/evolved-rules.md","category":"guarded-append","reason_code":"GUARDED_APPEND_VIOLATION","decision":"pre","outcome":"allowed"}
+{"timestamp":"2026-07-16T03:41:59Z","session_id":"unknown","tool_name":"Write","path":".forge/config.md","category":"frozen-config","reason_code":"CONFIG_ROOT","decision":"pre","outcome":"denied"}
+{"timestamp":"2026-07-16T03:41:59Z","session_id":"unknown","tool_name":"Edit","path":".forge/plans/frozen-zone-structured-feedback.md","category":"frozen-plan","reason_code":"PLAN_APPROVED","decision":"pre","outcome":"denied"}
+{"timestamp":"2026-07-16T03:42:00Z","session_id":"unknown","tool_name":"Write","path":".forge/config.md","category":"frozen-config","reason_code":"CONFIG_ROOT","decision":"post","outcome":"breached"}
+{"timestamp":"2026-07-16T03:42:00Z","session_id":"unknown","tool_name":"Write","path":".forge/config.md","category":"frozen-config","reason_code":"CONFIG_ROOT","decision":"pre","outcome":"denied"}

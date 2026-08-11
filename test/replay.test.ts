@@ -20,7 +20,7 @@ afterEach(() => {
 });
 
 function writeDoc(root: string, relPath: string, content: string): void {
-  const fullPath = join(root, ".forge", relPath);
+  const fullPath = join(root, ".tinkerman", relPath);
   mkdirSync(join(fullPath, ".."), { recursive: true });
   writeFileSync(fullPath, content, "utf-8");
 }
@@ -87,7 +87,7 @@ describe("evidence chain replay", () => {
       }),
     );
 
-    const replay = buildEvidenceReplay("topic-a", join(root, ".forge"));
+    const replay = buildEvidenceReplay("topic-a", join(root, ".tinkerman"));
 
     expect(replay.entries.map((entry) => entry.stage)).toEqual(
       expect.arrayContaining(["decide", "spec", "build", "review", "ship", "artifact"]),
@@ -142,7 +142,7 @@ describe("evidence chain replay", () => {
     const root = tempRoot();
     writeEvidenceArtifact(root, artifact({ supersedes: "review-old" }));
 
-    const output = renderReplayTimeline(buildEvidenceReplay("topic-a", join(root, ".forge")));
+    const output = renderReplayTimeline(buildEvidenceReplay("topic-a", join(root, ".tinkerman")));
 
     expect(output).toContain("# Evidence Replay: topic-a");
     expect(output).toContain("[missing] Decide");

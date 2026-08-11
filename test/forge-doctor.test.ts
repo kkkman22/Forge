@@ -22,9 +22,9 @@ const tempRoots: string[] = [];
 function tempForgeRoot(): string {
   const root = mkdtempSync(join(tmpdir(), "forge-status-bin-test-"));
   tempRoots.push(root);
-  mkdirSync(join(root, ".forge"), { recursive: true });
+  mkdirSync(join(root, ".tinkerman"), { recursive: true });
   writeFileSync(
-    join(root, ".forge", "status.md"),
+    join(root, ".tinkerman", "status.md"),
     [
       "---",
       'current_task: "typed-mcp-capabilities"',
@@ -36,7 +36,7 @@ function tempForgeRoot(): string {
     "utf-8",
   );
   writeFileSync(
-    join(root, ".forge", "config.md"),
+    join(root, ".tinkerman", "config.md"),
     ["---", 'policy_profile: "enterprise"', "---", ""].join("\n"),
     "utf-8",
   );

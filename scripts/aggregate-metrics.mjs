@@ -1,14 +1,14 @@
 #!/usr/bin/env node
 
 // aggregate-metrics.mjs
-// Aggregates usage metrics from .forge/.metrics/ ndjson files.
+// Aggregates usage metrics from .tinkerman/.metrics/ ndjson files.
 // Usage: node scripts/aggregate-metrics.mjs --window 14d [--skill forge-grill,forge-zoom-out]
 
 import { readFileSync, readdirSync, existsSync } from "node:fs";
 import { join } from "node:path";
 
 const ROOT = new URL("..", import.meta.url).pathname.replace(/^\/\//, "/");
-const METRICS_DIR = join(ROOT, ".forge", ".metrics");
+const METRICS_DIR = join(ROOT, ".tinkerman", ".metrics");
 
 const args = process.argv.slice(2);
 const windowIdx = args.indexOf("--window");

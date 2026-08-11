@@ -1,0 +1,13 @@
+{
+  "slug": "token-budget-compression",
+  "archive_date": "2026-06-11",
+  "cc_project_path": "unknown",
+  "cc_purge_available": true,
+  "cc_version": "unknown",
+  "dry_run_output": "",
+  "dry_run_truncated": false,
+  "user_decision": "skipped",
+  "started_at": "2026-06-11T14:25:02Z",
+  "finished_at": "2026-06-11T14:25:02Z",
+  "purge_cc_flag": "skip"
+}

@@ -147,20 +147,20 @@ describe("resolveUpstreamFile", () => {
     const status: StatusFileContext = {
       currentTask: "2.4 inline note",
       specPath: ".kiro/specs/feature-x/spec.md",
-      planPath: ".forge/plans/feature-x.md",
-      progressPath: ".forge/progress/feature-x.md",
+      planPath: ".tinkerman/plans/feature-x.md",
+      progressPath: ".tinkerman/progress/feature-x.md",
     };
 
-    expect(resolveUpstreamFile(status)).toBe(".forge/progress/feature-x.md");
+    expect(resolveUpstreamFile(status)).toBe(".tinkerman/progress/feature-x.md");
   });
 
   it("falls back to planPath when progress is missing", () => {
     const status: StatusFileContext = {
       specPath: ".kiro/specs/feature-x/spec.md",
-      planPath: ".forge/plans/feature-x.md",
+      planPath: ".tinkerman/plans/feature-x.md",
     };
 
-    expect(resolveUpstreamFile(status)).toBe(".forge/plans/feature-x.md");
+    expect(resolveUpstreamFile(status)).toBe(".tinkerman/plans/feature-x.md");
   });
 
   it("falls back to specPath when progress and plan are missing", () => {
@@ -189,11 +189,11 @@ describe("resolveUpstreamFile", () => {
   it("skips empty progressPath but still honours a populated planPath", () => {
     const status: StatusFileContext = {
       progressPath: "",
-      planPath: ".forge/plans/feature-x.md",
+      planPath: ".tinkerman/plans/feature-x.md",
       specPath: ".kiro/specs/feature-x/spec.md",
     };
 
-    expect(resolveUpstreamFile(status)).toBe(".forge/plans/feature-x.md");
+    expect(resolveUpstreamFile(status)).toBe(".tinkerman/plans/feature-x.md");
   });
 });
 
@@ -206,7 +206,7 @@ describe("appendInlineNote", () => {
 
   it("creates the file with just the note when it does not exist yet", () => {
     const fs = createFakeFs();
-    const path = ".forge/progress/feature-x.md";
+    const path = ".tinkerman/progress/feature-x.md";
 
     appendInlineNote(fs, path, note);
 
@@ -215,7 +215,7 @@ describe("appendInlineNote", () => {
   });
 
   it("appends to an existing file and preserves prior content", () => {
-    const path = ".forge/progress/feature-x.md";
+    const path = ".tinkerman/progress/feature-x.md";
     const existing = "# Progress\n\n- Step 1\n- Step 2\n";
     const fs = createFakeFs({ [path]: existing });
 
@@ -232,7 +232,7 @@ describe("appendInlineNote", () => {
   });
 
   it("does not insert an extra blank line when the file already ends with one", () => {
-    const path = ".forge/plans/feature-x.md";
+    const path = ".tinkerman/plans/feature-x.md";
     const existing = "# Plan\n\n- Task A\n\n";
     const fs = createFakeFs({ [path]: existing });
 
@@ -254,7 +254,7 @@ describe("appendInlineNote", () => {
   });
 
   it("is idempotent in shape: two calls leave two notes with exactly one blank line between them", () => {
-    const path = ".forge/progress/feature-x.md";
+    const path = ".tinkerman/progress/feature-x.md";
     const fs = createFakeFs({ [path]: "# Progress\n" });
 
     appendInlineNote(fs, path, note);
@@ -277,24 +277,24 @@ describe("appendInlineNote", () => {
 describe("inline note pipeline — end to end", () => {
   it("writes the rendered note into the resolved upstream file", () => {
     const fs = createFakeFs({
-      ".forge/progress/feature-x.md": "# Progress\n\n- Step 1\n",
+      ".tinkerman/progress/feature-x.md": "# Progress\n\n- Step 1\n",
     });
     const status: StatusFileContext = {
       currentTask: "2.4 inline note",
       specPath: ".kiro/specs/feature-x/spec.md",
-      planPath: ".forge/plans/feature-x.md",
-      progressPath: ".forge/progress/feature-x.md",
+      planPath: ".tinkerman/plans/feature-x.md",
+      progressPath: ".tinkerman/progress/feature-x.md",
     };
 
     const upstream = resolveUpstreamFile(status);
-    expect(upstream).toBe(".forge/progress/feature-x.md");
+    expect(upstream).toBe(".tinkerman/progress/feature-x.md");
 
     const rendered = renderInlineDecisionNote(baseDecision, inlineResult);
     if (upstream !== null) {
       appendInlineNote(fs, upstream, rendered);
     }
 
-    const result = fs.store.get(".forge/progress/feature-x.md") ?? "";
+    const result = fs.store.get(".tinkerman/progress/feature-x.md") ?? "";
     expect(result).toContain("# Progress");
     expect(result).toContain("- Step 1");
     expect(result).toContain(rendered);
@@ -302,6 +302,6 @@ describe("inline note pipeline — end to end", () => {
     expect(result.indexOf("- Step 1")).toBeLessThan(result.indexOf(rendered));
     // Spec and plan were left untouched.
     expect(fs.store.has(".kiro/specs/feature-x/spec.md")).toBe(false);
-    expect(fs.store.has(".forge/plans/feature-x.md")).toBe(false);
+    expect(fs.store.has(".tinkerman/plans/feature-x.md")).toBe(false);
   });
 });

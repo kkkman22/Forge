@@ -3,14 +3,14 @@
  * Validates that the loop state template covers all required fields and
  * that field values conform to expected types and enums.
  *
- * RED: This test will fail until .forge/templates/loop-state.json is created.
+ * RED: This test will fail until .tinkerman/templates/loop-state.json is created.
  */
 
 import { readFileSync } from "node:fs";
 import { resolve } from "node:path";
 import { describe, expect, it } from "vitest";
 
-const TEMPLATE_PATH = resolve(__dirname, "../../.forge/templates/loop-state.json");
+const TEMPLATE_PATH = resolve(__dirname, "../../.tinkerman/templates/loop-state.json");
 
 /** All required top-level fields in loop state. */
 const REQUIRED_FIELDS = [

@@ -118,13 +118,20 @@ describe("resolveBaseline [R1.10]", () => {
     // No git init — simulate no git context
 
     // Create a fake treatment snapshot
-    const findingsDir = join(dir, ".forge", "findings", "test-topic", "verify-this", "treatment");
+    const findingsDir = join(
+      dir,
+      ".tinkerman",
+      "findings",
+      "test-topic",
+      "verify-this",
+      "treatment",
+    );
     mkdirSync(findingsDir, { recursive: true });
     writeFileSync(join(findingsDir, "bench.json"), "{}");
 
     const result = await resolveBaseline("test-topic", undefined, {
       cwd: dir,
-      forgeDir: join(dir, ".forge"),
+      forgeDir: join(dir, ".tinkerman"),
     });
     expect(result.strategy).toBe("last-treatment");
     expect(result.snapshotDir).toBeTruthy();
@@ -135,7 +142,7 @@ describe("resolveBaseline [R1.10]", () => {
     // No git, no snapshots
     const result = await resolveBaseline("test-topic", undefined, {
       cwd: dir,
-      forgeDir: join(dir, ".forge"),
+      forgeDir: join(dir, ".tinkerman"),
     });
     expect(result.strategy).toBe("none");
     expect(result.ref).toBeNull();

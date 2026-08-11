@@ -1,6 +1,6 @@
 export function getCachedStatePath(projectName: string): string {
   const sanitized = projectName.replace(/[^a-zA-Z0-9_-]/g, "_");
-  return `.forge/cache/login-state-${sanitized}.json`;
+  return `.tinkerman/cache/login-state-${sanitized}.json`;
 }
 
 export function isStateCacheExpired(
@@ -22,7 +22,7 @@ export function promptForManualLogin(surfaceId: string): string {
   return [
     `Login required. Please authenticate in the cmux browser surface ${surfaceId}.`,
     "After logging in, save the state with:",
-    `  cmux browser ${surfaceId} state save .forge/cache/login-state-<project>.json`,
+    `  cmux browser ${surfaceId} state save .tinkerman/cache/login-state-<project>.json`,
     "",
     "Then re-run the frontend check.",
   ].join("\n");

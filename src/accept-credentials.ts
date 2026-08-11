@@ -2,7 +2,7 @@
  * accept-credentials — placeholder resolution for acceptance scenarios. [Spec R4-AC1]
  *
  * Scenarios MUST NOT hardcode secrets; they use {{VAR}} placeholders resolved
- * at runtime from environment / .forge/secrets.env. [R4-AC2] resolved values
+ * at runtime from environment / .tinkerman/secrets.env. [R4-AC2] resolved values
  * flow through stdin to agent-browser, never via argv.
  */
 

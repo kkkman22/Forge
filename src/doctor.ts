@@ -74,7 +74,7 @@ export interface BuildHealthSnapshotOptions {
 }
 
 export function buildHealthSnapshot(options: BuildHealthSnapshotOptions): ForgeHealthSnapshot {
-  const forgeRoot = path.join(options.projectRoot, ".forge");
+  const forgeRoot = path.join(options.projectRoot, ".tinkerman");
   const status = readStatus(forgeRoot);
   const policyProfile = readPolicyProfile(forgeRoot);
   const reasons: HealthReason[] = [];
@@ -88,12 +88,12 @@ export function buildHealthSnapshot(options: BuildHealthSnapshotOptions): ForgeH
   if (!status) {
     gates.status = {
       status: "unknown",
-      message: "No .forge/status.md found",
-      source: ".forge/status.md",
+      message: "No .tinkerman/status.md found",
+      source: ".tinkerman/status.md",
     };
     reasons.push({
       code: "STATUS_UNKNOWN",
-      source: ".forge/status.md",
+      source: ".tinkerman/status.md",
       detail: "current task status is missing",
     });
     return {
@@ -113,7 +113,7 @@ export function buildHealthSnapshot(options: BuildHealthSnapshotOptions): ForgeH
   gates.status = {
     status: "pass",
     message: `Status loaded for ${status.currentTask}`,
-    source: ".forge/status.md",
+    source: ".tinkerman/status.md",
   };
 
   const sequence = getRouterSequence(status.tier);
@@ -273,15 +273,15 @@ function readWorktreeHealth(projectRoot: string): HealthCheck {
 
 function readSpecHealth(projectRoot: string, topic: string): HealthCheck {
   const paths = [
-    path.join(projectRoot, ".forge", "specs", topic, "requirements.md"),
-    path.join(projectRoot, ".forge", "specs", topic, "spec.md"),
+    path.join(projectRoot, ".tinkerman", "specs", topic, "requirements.md"),
+    path.join(projectRoot, ".tinkerman", "specs", topic, "spec.md"),
   ];
   const found = paths.find((candidate) => existsSync(candidate));
   if (!found) {
     return {
       status: "unknown",
       message: "Spec status unknown",
-      source: `.forge/specs/${topic}`,
+      source: `.tinkerman/specs/${topic}`,
     };
   }
   const status = readStatusField(found);
@@ -294,15 +294,15 @@ function readSpecHealth(projectRoot: string, topic: string): HealthCheck {
 
 function readPlanHealth(projectRoot: string, topic: string): HealthCheck {
   const candidates = [
-    path.join(projectRoot, ".forge", "plans", `${topic}.md`),
-    path.join(projectRoot, ".forge", "plan", `${topic}.md`),
+    path.join(projectRoot, ".tinkerman", "plans", `${topic}.md`),
+    path.join(projectRoot, ".tinkerman", "plan", `${topic}.md`),
   ];
   const found = candidates.find((candidate) => existsSync(candidate));
   if (!found) {
     return {
       status: "unknown",
       message: "Plan status unknown",
-      source: `.forge/plans/${topic}.md`,
+      source: `.tinkerman/plans/${topic}.md`,
     };
   }
   const status = readStatusField(found);
@@ -314,7 +314,7 @@ function readPlanHealth(projectRoot: string, topic: string): HealthCheck {
 }
 
 function readProgressHealth(projectRoot: string, topic: string): ProgressHealthCheck {
-  const source = `.forge/progress/${topic}.md`;
+  const source = `.tinkerman/progress/${topic}.md`;
   const filePath = path.join(projectRoot, source);
   if (!existsSync(filePath)) {
     return {
@@ -349,7 +349,7 @@ function artifactFreshnessHealth(
     return {
       status: "unknown",
       message: `No ${kind} artifact found`,
-      source: ".forge/artifacts",
+      source: ".tinkerman/artifacts",
     };
   }
   if (latest.result !== "pass") {
@@ -378,7 +378,7 @@ function artifactStateHealth(
     return {
       status: "unknown",
       message: `No ${kind} artifact found`,
-      source: ".forge/artifacts",
+      source: ".tinkerman/artifacts",
     };
   }
   if (latest.result !== "pass") {
@@ -400,18 +400,18 @@ function readToolHealth(projectRoot: string): HealthCheck {
   // The event log (.log) is the true "is tooling running" signal — it's
   // appended on every prune/CI-scan. The tracked .md holds only the stable
   // summary + skip-trace counters, whose presence proves nothing about liveness.
-  const source = path.join(projectRoot, ".forge", "knowledge", "tool-health.log");
+  const source = path.join(projectRoot, ".tinkerman", "knowledge", "tool-health.log");
   if (!existsSync(source)) {
     return {
       status: "unknown",
       message: "Tool health log not yet generated",
-      source: ".forge/knowledge/tool-health.log",
+      source: ".tinkerman/knowledge/tool-health.log",
     };
   }
   return {
     status: "pass",
     message: "Tool health log present",
-    source: ".forge/knowledge/tool-health.log",
+    source: ".tinkerman/knowledge/tool-health.log",
   };
 }
 
@@ -432,7 +432,7 @@ function skippedCheck(message: string, source: string): HealthCheck {
  *   - maxSubagentDepth: configured depth cap
  *   - knowledgeQuota: current solutions count vs the near-limit threshold
  *
- * Reads config.md frontmatter + counts `.forge/knowledge/solutions/*.md`.
+ * Reads config.md frontmatter + counts `.tinkerman/knowledge/solutions/*.md`.
  * Env-only channels (FORGE_ROLLBACK_IN_PROGRESS etc.) are runtime signals,
  * not persisted state, so they are not reported here.
  *
@@ -452,7 +452,7 @@ function readConfigScalar(content: string, key: string): string | null {
 }
 
 export function buildSafetyGuardsHealth(projectRoot: string): SafetyGuardsHealth {
-  const forgeRoot = path.join(projectRoot, ".forge");
+  const forgeRoot = path.join(projectRoot, ".tinkerman");
   const configPath = path.join(forgeRoot, "config.md");
   let configContent = "";
   try {
@@ -475,14 +475,14 @@ export function buildSafetyGuardsHealth(projectRoot: string): SafetyGuardsHealth
       status: "fail",
       message:
         "destructive_guard is OFF — destructive git/infra commands are not blocked (P1 warning)",
-      source: ".forge/config.md:destructive_guard",
+      source: ".tinkerman/config.md:destructive_guard",
     };
   } else if (!sandboxActive) {
     // P1-1: guard only runs under --sandbox (PreToolUse hook gated on .sandbox-active.json).
     destructiveGuard = {
       status: "unknown",
       message: "destructive_guard inactive (sandbox not enabled — run with --sandbox to activate)",
-      source: ".forge/.sandbox-active.json",
+      source: ".tinkerman/.sandbox-active.json",
     };
   } else if (bypassEnvSet) {
     // P0-3: env bypass tokens set — potential forgery if no nonce file backs them.
@@ -496,7 +496,7 @@ export function buildSafetyGuardsHealth(projectRoot: string): SafetyGuardsHealth
     destructiveGuard = {
       status: "pass",
       message: `destructive_guard=${guardVal ?? "on (default)"} (sandbox active)`,
-      source: ".forge/config.md:destructive_guard",
+      source: ".tinkerman/config.md:destructive_guard",
     };
   }
 
@@ -513,7 +513,7 @@ export function buildSafetyGuardsHealth(projectRoot: string): SafetyGuardsHealth
   const maxSubagentDepth: HealthCheck = {
     status: Number.isInteger(depthNum) && depthNum >= 1 && depthNum <= 10 ? "pass" : "unknown",
     message: `max_subagent_depth=${Number.isInteger(depthNum) ? depthNum : 5} (default)`,
-    source: ".forge/config.md:max_subagent_depth",
+    source: ".tinkerman/config.md:max_subagent_depth",
   };
 
   // R4 knowledge quota — count solutions vs near-limit threshold.
@@ -533,7 +533,7 @@ export function buildSafetyGuardsHealth(projectRoot: string): SafetyGuardsHealth
   const knowledgeQuota: HealthCheck = {
     status: count >= threshold ? "fail" : "pass",
     message: `solutions=${count}/${knowledgeLimit} (near-limit threshold ${threshold})`,
-    source: ".forge/knowledge/solutions/",
+    source: ".tinkerman/knowledge/solutions/",
   };
 
   return { destructiveGuard, spawnPolicy, maxSubagentDepth, knowledgeQuota };
@@ -645,7 +645,7 @@ function artifactGateReasons(input: {
     if (!latest) {
       reasons.push({
         code: "MISSING_ARTIFACT",
-        source: ".forge/artifacts",
+        source: ".tinkerman/artifacts",
         detail: `required ${kind} artifact is missing`,
       });
       continue;
@@ -654,7 +654,7 @@ function artifactGateReasons(input: {
     if (latest.result !== "pass") {
       reasons.push({
         code: "FAILING_ARTIFACT",
-        source: ".forge/artifacts",
+        source: ".tinkerman/artifacts",
         detail: `latest ${kind} artifact result is ${latest.result}`,
       });
     }
@@ -663,7 +663,7 @@ function artifactGateReasons(input: {
     if (!freshness.fresh) {
       reasons.push({
         code: "STALE_ARTIFACT",
-        source: ".forge/artifacts",
+        source: ".tinkerman/artifacts",
         detail: freshness.reason,
       });
     }
@@ -704,5 +704,5 @@ function relativeProjectPath(projectRoot: string, filePath: string): string {
 }
 
 function artifactSource(artifactId: string): string {
-  return `.forge/artifacts/${artifactId}`;
+  return `.tinkerman/artifacts/${artifactId}`;
 }

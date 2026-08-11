@@ -6,13 +6,13 @@ import { describe, expect, it } from "vitest";
 const ROOT = resolve(import.meta.dirname, "..", "..");
 
 const EXCLUDE_DIRS = [
-  ".forge/decisions",
+  ".tinkerman/decisions",
   ".kiro/specs",
-  ".forge/archive",
-  ".forge/reviews",
-  ".forge/findings",
-  ".forge/poc",
-  ".forge/knowledge",
+  ".tinkerman/archive",
+  ".tinkerman/reviews",
+  ".tinkerman/findings",
+  ".tinkerman/poc",
+  ".tinkerman/knowledge",
   "test/single-entry",
   "commands",
 ];

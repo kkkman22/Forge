@@ -94,7 +94,7 @@ describe("evolution-marker — parseEvolutionMarkers", () => {
       "需要补一个拆分指南",
     ].join("\n");
 
-    const markers = parseEvolutionMarkers(doc, ".forge/reviews/demo.md");
+    const markers = parseEvolutionMarkers(doc, ".tinkerman/reviews/demo.md");
     expect(markers).toHaveLength(1);
 
     const [m] = markers;
@@ -102,7 +102,7 @@ describe("evolution-marker — parseEvolutionMarkers", () => {
     expect(m.source).toBe("ep-2026-05-05-001");
     expect(m.target).toBe("forge-build#three_strike");
     expect(m.description).toBe("连续三次 TDD 失败指向任务拆分过粗\n需要补一个拆分指南");
-    expect(m.filePath).toBe(".forge/reviews/demo.md");
+    expect(m.filePath).toBe(".tinkerman/reviews/demo.md");
     expect(m.lineNumber).toBe(3);
   });
 

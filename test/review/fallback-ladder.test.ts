@@ -16,7 +16,7 @@ import { runSubagentsWithConcurrency } from "../../src/subagent-runner.js";
 
 const mockedRunner = runSubagentsWithConcurrency as unknown as ReturnType<typeof vi.fn>;
 
-const tempDir = join(tmpdir(), `forge-fallback-ladder-${randomUUID()}`, ".forge", "reviews");
+const tempDir = join(tmpdir(), `forge-fallback-ladder-${randomUUID()}`, ".tinkerman", "reviews");
 
 function makeInvocation(i: number): SubagentInvocation {
   return {

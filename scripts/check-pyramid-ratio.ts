@@ -101,7 +101,7 @@ export function parseSpecForRatio(
 function readConfig(projectRoot: string): PyramidConfig {
   const defaults: PyramidConfig = { e2eRatioThreshold: 0.3, strictPyramid: true };
   try {
-    const cfg = readFileSync(`${projectRoot}/.forge/config.md`, "utf8");
+    const cfg = readFileSync(`${projectRoot}/.tinkerman/config.md`, "utf8");
     const thr = cfg.match(/e2e_ratio_threshold:\s*([0-9.]+)/);
     const strict = cfg.match(/strict_pyramid:\s*(true|false)/i);
     if (thr) defaults.e2eRatioThreshold = Number.parseFloat(thr[1]);

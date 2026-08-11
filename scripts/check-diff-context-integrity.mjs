@@ -4,7 +4,7 @@
  * check-diff-context-integrity.mjs — PostToolUse guard for `.diff-context.md`.
  *
  * Validates that the file just written by Write/Edit at
- * `.forge/reviews/.diff-context.md` contains real unified diff hunk markers
+ * `.tinkerman/reviews/.diff-context.md` contains real unified diff hunk markers
  * (or is exempt under the empty-diff edge case). Blocks narrative-summary
  * regression at the moment of write, before the review pipeline reads the
  * malformed file.

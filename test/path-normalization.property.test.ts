@@ -3,7 +3,7 @@
  *
  * Property 6: For any file path that refers to a frozen zone location, all
  * path variants (absolute path, relative path, path with `..` traversal,
- * path with redundant separators, path with `.forge/` prefix variations)
+ * path with redundant separators, path with `.tinkerman/` prefix variations)
  * SHALL produce the same `isFrozenZonePath` result as the canonical relative form.
  *
  * **Validates: Requirements 4.1, 4.2, 4.3**
@@ -46,7 +46,7 @@ import { isFrozenZonePath } from "../src/check-frozen.js";
 // Generators
 // ---------------------------------------------------------------------------
 
-/** Frozen zone relative paths (relative to .forge/) */
+/** Frozen zone relative paths (relative to .tinkerman/) */
 const frozenRelativePathArb = fc.oneof(
   // specs/ paths
   fc
@@ -86,23 +86,23 @@ describe("Property 6: Path normalization produces consistent frozen zone judgmen
   it("normalizeForgePath produces the same result for all path variants of a frozen zone path", () => {
     fc.assert(
       fc.property(frozenRelativePathArb, (relativePath) => {
-        // Canonical form: the .forge/-relative path
+        // Canonical form: the .tinkerman/-relative path
         const canonical = normalizeForgePath(relativePath);
 
-        // Variant 1: with .forge/ prefix
-        const withForgePrefix = `.forge/${relativePath}`;
+        // Variant 1: with .tinkerman/ prefix
+        const withForgePrefix = `.tinkerman/${relativePath}`;
         expect(normalizeForgePath(withForgePrefix)).toBe(canonical);
 
         // Variant 2: absolute path
-        const absolute = `/home/user/project/.forge/${relativePath}`;
+        const absolute = `/home/user/project/.tinkerman/${relativePath}`;
         expect(normalizeForgePath(absolute)).toBe(canonical);
 
         // Variant 3: with redundant separators
-        const doubleSlash = `.forge//${relativePath}`;
+        const doubleSlash = `.tinkerman//${relativePath}`;
         expect(normalizeForgePath(doubleSlash)).toBe(canonical);
 
         // Variant 4: with ./ prefix
-        const dotSlash = `./.forge/${relativePath}`;
+        const dotSlash = `./.tinkerman/${relativePath}`;
         expect(normalizeForgePath(dotSlash)).toBe(canonical);
       }),
       { numRuns: 50 },
@@ -115,10 +115,10 @@ describe("Property 6: Path normalization produces consistent frozen zone judgmen
         // All these variants should produce the same frozen zone judgment
         const variants = [
           relativePath,
-          `.forge/${relativePath}`,
-          `/abs/path/.forge/${relativePath}`,
-          `./.forge/${relativePath}`,
-          `.forge//${relativePath}`,
+          `.tinkerman/${relativePath}`,
+          `/abs/path/.tinkerman/${relativePath}`,
+          `./.tinkerman/${relativePath}`,
+          `.tinkerman//${relativePath}`,
         ];
 
         const results = variants.map((v) => isFrozenZonePath(v));
@@ -138,8 +138,8 @@ describe("Property 6: Path normalization produces consistent frozen zone judgmen
   it("isFrozenZonePath returns consistent results for absolute vs relative paths (Req 4.3)", () => {
     fc.assert(
       fc.property(frozenRelativePathArb, absolutePrefixArb, (relativePath, absPrefix) => {
-        const relativeResult = isFrozenZonePath(`.forge/${relativePath}`);
-        const absoluteResult = isFrozenZonePath(`${absPrefix}.forge/${relativePath}`);
+        const relativeResult = isFrozenZonePath(`.tinkerman/${relativePath}`);
+        const absoluteResult = isFrozenZonePath(`${absPrefix}.tinkerman/${relativePath}`);
 
         expect(relativeResult).toBe(absoluteResult);
       }),
@@ -150,16 +150,16 @@ describe("Property 6: Path normalization produces consistent frozen zone judgmen
   it("paths with .. traversal that resolve to frozen zone are correctly identified (Req 4.2)", () => {
     // Specific .. traversal patterns that should resolve to frozen zone
     const traversalCases = [
-      // Escape and re-enter .forge/
-      ".forge/../.forge/specs/feature/spec.md",
-      ".forge/../.forge/plans/plan.md",
-      ".forge/../.forge/config.md",
+      // Escape and re-enter .tinkerman/
+      ".tinkerman/../.tinkerman/specs/feature/spec.md",
+      ".tinkerman/../.tinkerman/plans/plan.md",
+      ".tinkerman/../.tinkerman/config.md",
       // Escape a subdirectory and re-enter
-      ".forge/specs/../specs/feature/spec.md",
-      ".forge/plans/../plans/plan.md",
+      ".tinkerman/specs/../specs/feature/spec.md",
+      ".tinkerman/plans/../plans/plan.md",
       // Deeper traversal
-      ".forge/a/../specs/feature/spec.md",
-      ".forge/specs/a/b/../../feature/spec.md",
+      ".tinkerman/a/../specs/feature/spec.md",
+      ".tinkerman/specs/a/b/../../feature/spec.md",
     ];
 
     for (const path of traversalCases) {
@@ -172,9 +172,9 @@ describe("Property 6: Path normalization produces consistent frozen zone judgmen
       fc.property(nonFrozenRelativePathArb, (relativePath) => {
         const variants = [
           relativePath,
-          `.forge/${relativePath}`,
-          `/abs/path/.forge/${relativePath}`,
-          `./.forge/${relativePath}`,
+          `.tinkerman/${relativePath}`,
+          `/abs/path/.tinkerman/${relativePath}`,
+          `./.tinkerman/${relativePath}`,
         ];
 
         const results = variants.map((v) => isFrozenZonePath(v));
@@ -192,30 +192,30 @@ describe("Property 6: Path normalization produces consistent frozen zone judgmen
   // Edge cases (Req 4.6)
   // -------------------------------------------------------------------------
 
-  it("handles paths with .. that escape and re-enter .forge/", () => {
-    // .forge/../.forge/specs/x.md → should resolve to specs/x.md → frozen
-    expect(isFrozenZonePath(".forge/../.forge/specs/feature/spec.md")).toBe(true);
+  it("handles paths with .. that escape and re-enter .tinkerman/", () => {
+    // .tinkerman/../.tinkerman/specs/x.md → should resolve to specs/x.md → frozen
+    expect(isFrozenZonePath(".tinkerman/../.tinkerman/specs/feature/spec.md")).toBe(true);
 
-    // .forge/../../.forge/plans/plan.md → normalizes to ../.forge/plans/plan.md
-    // lastIndexOf(".forge/") still finds .forge/ → extracts plans/plan.md → frozen
+    // .tinkerman/../../.tinkerman/plans/plan.md → normalizes to ../.tinkerman/plans/plan.md
+    // lastIndexOf(".tinkerman/") still finds .tinkerman/ → extracts plans/plan.md → frozen
     // This is correct per Req 4.2: paths with .. traversal pointing to frozen zone are blocked
-    expect(isFrozenZonePath(".forge/../../.forge/plans/plan.md")).toBe(true);
+    expect(isFrozenZonePath(".tinkerman/../../.tinkerman/plans/plan.md")).toBe(true);
 
-    const normalized = normalizeForgePath(".forge/../../.forge/plans/plan.md");
+    const normalized = normalizeForgePath(".tinkerman/../../.tinkerman/plans/plan.md");
     expect(normalized).toBe("plans/plan.md");
     expect(getProtectionZone(normalized)).toBe("frozen");
   });
 
   it("handles double slashes in paths", () => {
-    expect(isFrozenZonePath(".forge//specs//feature//spec.md")).toBe(true);
-    expect(isFrozenZonePath(".forge///plans///plan.md")).toBe(true);
-    expect(isFrozenZonePath("//abs//path//.forge//config.md")).toBe(true);
+    expect(isFrozenZonePath(".tinkerman//specs//feature//spec.md")).toBe(true);
+    expect(isFrozenZonePath(".tinkerman///plans///plan.md")).toBe(true);
+    expect(isFrozenZonePath("//abs//path//.tinkerman//config.md")).toBe(true);
   });
 
   it("handles trailing slashes", () => {
     // specs/ with trailing slash should still be in frozen zone
-    expect(isFrozenZonePath(".forge/specs/")).toBe(true);
-    expect(isFrozenZonePath(".forge/plans/")).toBe(true);
+    expect(isFrozenZonePath(".tinkerman/specs/")).toBe(true);
+    expect(isFrozenZonePath(".tinkerman/plans/")).toBe(true);
   });
 
   it("normalizeForgePath handles empty string", () => {
@@ -223,9 +223,9 @@ describe("Property 6: Path normalization produces consistent frozen zone judgmen
     expect(result).toBe(".");
   });
 
-  it("normalizeForgePath strips .forge/ prefix correctly", () => {
-    expect(normalizeForgePath(".forge/specs/feature/spec.md")).toBe("specs/feature/spec.md");
-    expect(normalizeForgePath(".forge/config.md")).toBe("config.md");
+  it("normalizeForgePath strips .tinkerman/ prefix correctly", () => {
+    expect(normalizeForgePath(".tinkerman/specs/feature/spec.md")).toBe("specs/feature/spec.md");
+    expect(normalizeForgePath(".tinkerman/config.md")).toBe("config.md");
     expect(normalizeForgePath("specs/feature/spec.md")).toBe("specs/feature/spec.md");
   });
 });

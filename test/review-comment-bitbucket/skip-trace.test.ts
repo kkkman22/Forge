@@ -46,7 +46,7 @@ describe("Unit: daily skip file created/append", () => {
   beforeEach(() => {
     tmpDir = fs.mkdtempSync(path.join(os.tmpdir(), "skip-trace-test-"));
     reviewMarkdownPath = path.join(tmpDir, "review.md");
-    baseDir = path.join(tmpDir, ".forge");
+    baseDir = path.join(tmpDir, ".tinkerman");
     fs.mkdirSync(path.join(baseDir, "findings"), { recursive: true });
     fs.writeFileSync(reviewMarkdownPath, "# Review\n");
 
@@ -104,7 +104,7 @@ describe("Unit: tool health counter incremented per reason", () => {
   beforeEach(() => {
     tmpDir = fs.mkdtempSync(path.join(os.tmpdir(), "skip-trace-test-"));
     reviewMarkdownPath = path.join(tmpDir, "review.md");
-    baseDir = path.join(tmpDir, ".forge");
+    baseDir = path.join(tmpDir, ".tinkerman");
     fs.mkdirSync(path.join(baseDir, "knowledge"), { recursive: true });
     fs.mkdirSync(path.join(baseDir, "findings"), { recursive: true });
     fs.writeFileSync(reviewMarkdownPath, "# Review\n");
@@ -204,8 +204,8 @@ describe("Unit: skip trace makes 0 MCP tool calls", () => {
   beforeEach(() => {
     tmpDir = fs.mkdtempSync(path.join(os.tmpdir(), "skip-trace-test-"));
     reviewMarkdownPath = path.join(tmpDir, "review.md");
-    fs.mkdirSync(path.join(tmpDir, ".forge", "findings"), { recursive: true });
-    fs.mkdirSync(path.join(tmpDir, ".forge", "knowledge"), { recursive: true });
+    fs.mkdirSync(path.join(tmpDir, ".tinkerman", "findings"), { recursive: true });
+    fs.mkdirSync(path.join(tmpDir, ".tinkerman", "knowledge"), { recursive: true });
     fs.writeFileSync(reviewMarkdownPath, "# Review\n");
   });
 

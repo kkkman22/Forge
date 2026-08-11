@@ -1,6 +1,6 @@
 ---
 topic: "user-pagination"
-plan_ref: ".forge/plans/user-pagination.md"
+plan_ref: ".tinkerman/plans/user-pagination.md"
 updated: "2026-05-08"
 ---
 

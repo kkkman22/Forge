@@ -6,7 +6,7 @@
  *   - Single context glossary → loads correctly
  *   - Multi-context → separate entries
  *   - Custom override → custom wins
- *   - Backward compat → reads .forge/glossary.md as _shared
+ *   - Backward compat → reads .tinkerman/glossary.md as _shared
  *
  * **Validates: R1 Glossary loading, R2 Backward compat, R3 Custom override**
  */
@@ -216,7 +216,7 @@ describe("loadGlossary", () => {
     expect(entry?.sourceLayer).toBe("custom");
   });
 
-  it("reads .forge/glossary.md as _shared for backward compat", async () => {
+  it("reads .tinkerman/glossary.md as _shared for backward compat", async () => {
     const files: Record<string, string> = {
       "/project/.tinkerman/glossary.md": [
         "### Epic",

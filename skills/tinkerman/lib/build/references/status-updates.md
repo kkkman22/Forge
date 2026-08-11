@@ -5,7 +5,7 @@ updated: 2026-08-11
 
 ## 7. Status Updates
 
-**7.1** Progress → `.forge/progress/<topic>.md` per task. **7.2** Interim → `.forge/knowledge/sessions/<date>-<topic>-interim.md` (≤15 lines, overwrite, delete after learn/done, resume reads first). **7.3** Phase → `.forge/status.md`. **7.4** Health → `.forge/knowledge/tool-health.md`: ≥80% 🟢 / 50-79% 🟡 / <50% 🔴.
+**7.1** Progress → `.tinkerman/progress/<topic>.md` per task. **7.2** Interim → `.tinkerman/knowledge/sessions/<date>-<topic>-interim.md` (≤15 lines, overwrite, delete after learn/done, resume reads first). **7.3** Phase → `.tinkerman/status.md`. **7.4** Health → `.tinkerman/knowledge/tool-health.md`: ≥80% 🟢 / 50-79% 🟡 / <50% 🔴.
 
 | Done | phase → |
 |---|---|

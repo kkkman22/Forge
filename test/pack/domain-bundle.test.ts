@@ -77,7 +77,7 @@ function enabledWith(names: string[]): EnabledPacks {
   return {
     order: names,
     entries,
-    customLayerRoot: "/repos/.forge/custom",
+    customLayerRoot: "/repos/.tinkerman/custom",
   };
 }
 

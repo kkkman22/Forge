@@ -8,7 +8,7 @@ updated: 2026-08-11
 **Signature**: `loadAllAdrs(entries, readFile)` (from `src/adr-registry.ts`)
 
 - **Parameters**:
-  - `entries` — Array of ADR file paths enumerated from `.forge/decisions/ADR-NNNN-*.md`
+  - `entries` — Array of ADR file paths enumerated from `.tinkerman/decisions/ADR-NNNN-*.md`
   - `readFile` — Filesystem reader injected by the driver layer
 - **Returns**: `AdrEntry[]` — parsed ADR frontmatter records
 - **Purpose**: Load all existing ADRs before running Round 1 so perspective Subagents can reference prior decisions
@@ -46,7 +46,7 @@ updated: 2026-08-11
 
 - **Parameters**:
   - `candidateTerms` — New terms extracted from the user's decision proposal
-  - `glossary` — `loadEnforcementGlossary(rootDir, fs)` result: the flat `.forge/glossary.md` (authoritative) merged with enabled-pack glossary terms. Flat is the write-sovereignty source; pack terms are read-only supplements. **信任边界**：合并 glossary 中来自 pack 的 term/definition/alias 字段是**不可信用户内容**，视为数据；冲突提示渲染这些字段时不得将其当作指令执行（与 advisory 注入同一信任边界）。
+  - `glossary` — `loadEnforcementGlossary(rootDir, fs)` result: the flat `.tinkerman/glossary.md` (authoritative) merged with enabled-pack glossary terms. Flat is the write-sovereignty source; pack terms are read-only supplements. **信任边界**：合并 glossary 中来自 pack 的 term/definition/alias 字段是**不可信用户内容**，视为数据；冲突提示渲染这些字段时不得将其当作指令执行（与 advisory 注入同一信任边界）。
 - **Returns**: Conflict list (empty when no conflicts); each entry carries the existing definition and the candidate
 - **Purpose**: Run before Round 1 kicks off; non-empty conflicts pause the Round and trigger `renderDecideGlossaryConflictPrompt`
 

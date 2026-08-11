@@ -48,7 +48,7 @@ Mutation testing 通过故意引入语法变异（如 `>=` → `>`、`true` → 
 4. Spawn Stryker，捕获 JSON 输出
 5. 计算 mutation_score = killed / (killed + survived) × 100
 6. 判定 verdict（Sprint 2: pass/warn, 不 fail）
-7. 写 artifact 到 `.forge/mutation/<timestamp>.md`
+7. 写 artifact 到 `.tinkerman/mutation/<timestamp>.md`
 
 ### `/tinkerman mutate kill-survivors`
 

@@ -17,7 +17,7 @@ import type { FileSystem } from "../../src/pack/types.js";
  */
 
 const REPOS_ROOT = "/repos";
-const CONFIG_PATH = path.join(REPOS_ROOT, ".forge", "config.md");
+const CONFIG_PATH = path.join(REPOS_ROOT, ".tinkerman", "config.md");
 const PACKS_DIR = path.join(REPOS_ROOT, "packs");
 
 /** Counting fs: records every readFile/readdir target. */

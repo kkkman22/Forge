@@ -61,7 +61,7 @@ describe("browser-qa.mjs (R8.1–R8.9)", () => {
     expect(result.failures.length).toBeGreaterThan(0);
   });
 
-  it("writes verdict artifact to .forge/ (R8.5)", async () => {
+  it("writes verdict artifact to .tinkerman/ (R8.5)", async () => {
     mkdirSync(TMP_DIR, { recursive: true });
     await runBrowserQa({ forgeDir: TMP_DIR, writeArtifact: true });
 

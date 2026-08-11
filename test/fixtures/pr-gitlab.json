@@ -2,6 +2,6 @@
   "title": "Implement auth refactor (auth-v2)",
   "source_branch": "feature/auth-v2",
   "target_branch": "main",
-  "description": "Refactors the auth module.\n\nSee .forge/specs/auth-v2/ for details.",
+  "description": "Refactors the auth module.\n\nSee .tinkerman/specs/auth-v2/ for details.",
   "web_url": "https://gitlab.com/myorg/myrepo/-/merge_requests/15"
 }

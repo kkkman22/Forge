@@ -11,7 +11,7 @@ allowed_tools:
 # /tinkerman test --ui — UI Harness
 
 > **Trigger**: `/tinkerman test --ui` or forge-test auto-detects UI target
-> **Output**: `.forge/findings/<topic>/ui-harness/`
+> **Output**: `.tinkerman/findings/<topic>/ui-harness/`
 
 ## 1. Overview
 
@@ -36,7 +36,7 @@ When `designerSpecPath` exists:
 1. Read designer section from spec
 2. Generate UI assertions
 3. Execute assertions via selected tier
-4. Mismatches → `.forge/findings/<topic>/ui-harness/mismatches.md`
+4. Mismatches → `.tinkerman/findings/<topic>/ui-harness/mismatches.md`
 5. quality-check reads mismatches on session start (§4.2)
 
 ## 4. Artifacts

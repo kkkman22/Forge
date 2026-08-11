@@ -1,4 +1,4 @@
-/** Review-specific configuration parsed from .forge/config.md and env. @public */
+/** Review-specific configuration parsed from .tinkerman/config.md and env. @public */
 export interface ReviewConfig {
   subagent_concurrency: number;
 }

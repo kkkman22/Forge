@@ -2,7 +2,7 @@
  * PBT for hooks config integrity — forbids unbounded head/tail/cat injection.
  *
  * Property 4: No hook config may contain commands matching
- * `head|tail|cat .forge/(plans|progress)/.*` without a byte/line limit.
+ * `head|tail|cat .tinkerman/(plans|progress)/.*` without a byte/line limit.
  *
  * Also validates all 3 config files as static fixtures.
  */
@@ -25,8 +25,8 @@ interface HookEntry {
   timeout?: number;
 }
 
-/** Match unbounded head/tail/cat on .forge/plans or .forge/progress */
-const UNBOUNDED_FORGE_READ = /(?:head|tail|cat)\s+.*\.forge\/(?:plans|progress)\//;
+/** Match unbounded head/tail/cat on .tinkerman/plans or .tinkerman/progress */
+const UNBOUNDED_FORGE_READ = /(?:head|tail|cat)\s+.*\.tinkerman\/(?:plans|progress)\//;
 
 /** Acceptable byte limit markers (line-based limits like head -N are NOT safe on globs) */
 const HAS_LIMIT =
@@ -63,7 +63,7 @@ function extractCommands(configPath: string): { path: string; command: string }[
 }
 
 describe("hooks config integrity", () => {
-  it("no config contains unbounded head/tail/cat on .forge/plans or .forge/progress", () => {
+  it("no config contains unbounded head/tail/cat on .tinkerman/plans or .tinkerman/progress", () => {
     const violations: string[] = [];
 
     for (const configPath of CONFIG_PATHS) {
@@ -80,22 +80,22 @@ describe("hooks config integrity", () => {
 
   it("PBT: checker correctly classifies known bad vs safe commands", () => {
     const badCommands = [
-      "head -50 .forge/plans/*.md",
-      "tail -20 .forge/progress/*.md",
-      "cat .forge/plans/plan.md",
-      "head .forge/plans/test.md",
-      "tail .forge/progress/prog.md",
-      "cat .forge/plans/active.md 2>/dev/null",
+      "head -50 .tinkerman/plans/*.md",
+      "tail -20 .tinkerman/progress/*.md",
+      "cat .tinkerman/plans/plan.md",
+      "head .tinkerman/plans/test.md",
+      "tail .tinkerman/progress/prog.md",
+      "cat .tinkerman/plans/active.md 2>/dev/null",
     ];
 
     const safeCommands = [
       "echo hello",
       "node scripts/inject-plan-context.mjs",
       "cat /etc/passwd",
-      "ls -la .forge/",
+      "ls -la .tinkerman/",
       "node forge/scripts/inject-evolved-rules.mjs 2>/dev/null || true",
-      "head -c 4096 .forge/plans/plan.md",
-      "tail -c 8192 .forge/progress/prog.md",
+      "head -c 4096 .tinkerman/plans/plan.md",
+      "tail -c 8192 .tinkerman/progress/prog.md",
     ];
 
     // Bad commands must be detected (match pattern, no limit)

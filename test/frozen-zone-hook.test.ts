@@ -20,9 +20,9 @@ function makeTmpDir(): string {
     `frozen-zone-hook-test-${Date.now()}-${Math.random().toString(36).slice(2)}`,
   );
   mkdirSync(dir, { recursive: true });
-  mkdirSync(join(dir, ".forge"), { recursive: true });
-  mkdirSync(join(dir, ".forge", "specs"), { recursive: true });
-  mkdirSync(join(dir, ".forge", "plans"), { recursive: true });
+  mkdirSync(join(dir, ".tinkerman"), { recursive: true });
+  mkdirSync(join(dir, ".tinkerman", "specs"), { recursive: true });
+  mkdirSync(join(dir, ".tinkerman", "plans"), { recursive: true });
   return dir;
 }
 
@@ -62,7 +62,7 @@ describe("createFrozenZoneHook", () => {
 
   it("returns empty object for non-Write/Edit tools", async () => {
     const result = await hook(
-      makeHookInput("Read", join(tmpDir, ".forge", "specs", "test.md")),
+      makeHookInput("Read", join(tmpDir, ".tinkerman", "specs", "test.md")),
       "tool-use-2",
       { signal: new AbortController().signal },
     );
@@ -77,7 +77,7 @@ describe("createFrozenZoneHook", () => {
   });
 
   it("denies write to frozen zone spec file with locked status", async () => {
-    const specPath = join(tmpDir, ".forge", "specs", "my-spec.md");
+    const specPath = join(tmpDir, ".tinkerman", "specs", "my-spec.md");
     writeFileSync(specPath, "---\nstatus: locked\n---\n# My Spec\n");
 
     const result = await hook(makeHookInput("Write", specPath), "tool-use-4", {
@@ -92,7 +92,7 @@ describe("createFrozenZoneHook", () => {
   });
 
   it("denies edit to frozen zone plan file with approved status", async () => {
-    const planPath = join(tmpDir, ".forge", "plans", "my-plan.md");
+    const planPath = join(tmpDir, ".tinkerman", "plans", "my-plan.md");
     writeFileSync(planPath, "---\nstatus: approved\n---\n# My Plan\n");
 
     const result = await hook(makeHookInput("Edit", planPath), "tool-use-5", {
@@ -106,7 +106,7 @@ describe("createFrozenZoneHook", () => {
   });
 
   it("allows write to frozen zone file without locked/approved status", async () => {
-    const specPath = join(tmpDir, ".forge", "specs", "draft-spec.md");
+    const specPath = join(tmpDir, ".tinkerman", "specs", "draft-spec.md");
     writeFileSync(specPath, "---\nstatus: draft\n---\n# Draft\n");
 
     const result = await hook(makeHookInput("Write", specPath), "tool-use-6", {
@@ -116,7 +116,7 @@ describe("createFrozenZoneHook", () => {
   });
 
   it("uses 'path' field when 'file_path' is absent", async () => {
-    const specPath = join(tmpDir, ".forge", "specs", "spec2.md");
+    const specPath = join(tmpDir, ".tinkerman", "specs", "spec2.md");
     writeFileSync(specPath, "---\nstatus: locked\n---\n# Spec2\n");
 
     const input = {
@@ -136,7 +136,7 @@ describe("createFrozenZoneHook", () => {
   });
 
   it("emits structured Frozen_Diagnostic fields for a locked spec (R1/R2)", async () => {
-    const specPath = join(tmpDir, ".forge", "specs", "locked-spec.md");
+    const specPath = join(tmpDir, ".tinkerman", "specs", "locked-spec.md");
     writeFileSync(specPath, "---\nstatus: locked\n---\n# Locked\n");
 
     const result = await hook(makeHookInput("Write", specPath), "tool-use-r1", {
@@ -159,12 +159,12 @@ describe("createFrozenZoneHook", () => {
     expect(reason).toContain("/tinkerman spec"); // unlock instruction
     // R2.4: additionalContext surfaces the suggested alternative + status.md reminder.
     const ctx = output.hookSpecificOutput?.additionalContext ?? "";
-    expect(ctx).toContain(".forge/findings/");
-    expect(ctx).toContain(".forge/status.md");
+    expect(ctx).toContain(".tinkerman/findings/");
+    expect(ctx).toContain(".tinkerman/status.md");
   });
 
   it("classifies an approved plan as frozen-plan with PLAN_APPROVED (R1.4)", async () => {
-    const planPath = join(tmpDir, ".forge", "plans", "approved-plan.md");
+    const planPath = join(tmpDir, ".tinkerman", "plans", "approved-plan.md");
     writeFileSync(planPath, "---\nstatus: approved\n---\n# Plan\n");
 
     const result = await hook(makeHookInput("Edit", planPath), "tool-use-plan", {
@@ -187,7 +187,7 @@ describe("createFrozenZoneHook", () => {
 describe("Frozen zone hook independence from SDK sandbox", () => {
   it("hook output format matches SyncHookJSONOutput schema", async () => {
     const tmpDir = makeTmpDir();
-    const specPath = join(tmpDir, ".forge", "specs", "locked.md");
+    const specPath = join(tmpDir, ".tinkerman", "specs", "locked.md");
     writeFileSync(specPath, "---\nstatus: locked\n---\n# Locked\n");
 
     const hook = createFrozenZoneHook(tmpDir);
@@ -224,7 +224,7 @@ describe("createFrozenZonePostToolUseHook (R3 defence-in-depth)", () => {
   });
 
   it("overwrites tool output with a revert prompt when a frozen-zone write slipped through (R3.1/R3.2)", async () => {
-    const specPath = join(tmpDir, ".forge", "specs", "locked-spec.md");
+    const specPath = join(tmpDir, ".tinkerman", "specs", "locked-spec.md");
     writeFileSync(specPath, "---\nstatus: locked\n---\n# Locked\n");
     const hook = createFrozenZonePostToolUseHook(tmpDir);
 
@@ -254,8 +254,8 @@ describe("createFrozenZonePostToolUseHook (R3 defence-in-depth)", () => {
     expect(output.hookSpecificOutput?.updatedToolOutput).toContain("Revert");
   });
 
-  it("writes a breach audit record to .forge/runs/<stamp>-frozen-breach.md (R3.3)", async () => {
-    const planPath = join(tmpDir, ".forge", "plans", "approved-plan.md");
+  it("writes a breach audit record to .tinkerman/runs/<stamp>-frozen-breach.md (R3.3)", async () => {
+    const planPath = join(tmpDir, ".tinkerman", "plans", "approved-plan.md");
     writeFileSync(planPath, "---\nstatus: approved\n---\n# Plan\n");
     const hook = createFrozenZonePostToolUseHook(tmpDir);
 
@@ -270,7 +270,7 @@ describe("createFrozenZonePostToolUseHook (R3 defence-in-depth)", () => {
     );
 
     // R3.3: the audit record exists.
-    const runsDir = join(tmpDir, ".forge", "runs");
+    const runsDir = join(tmpDir, ".tinkerman", "runs");
     const breachFiles = existsSync(runsDir)
       ? readdirSync(runsDir).filter((f) => f.endsWith("-frozen-breach.md"))
       : [];
@@ -297,7 +297,7 @@ describe("createFrozenZonePostToolUseHook (R3 defence-in-depth)", () => {
   });
 
   it("returns empty for a non-frozen file (no false positive)", async () => {
-    const specPath = join(tmpDir, ".forge", "specs", "draft-spec.md");
+    const specPath = join(tmpDir, ".tinkerman", "specs", "draft-spec.md");
     writeFileSync(specPath, "---\nstatus: draft\n---\n# Draft\n");
     const hook = createFrozenZonePostToolUseHook(tmpDir);
     const result = await hook(
@@ -316,7 +316,7 @@ describe("createFrozenZonePostToolUseHook (R3 defence-in-depth)", () => {
 describe("renderPostHocViolation + writeFrozenBreachRecord (R3 units)", () => {
   it("renderPostHocViolation includes the marker + revert instruction", () => {
     const diag: FrozenDiagnostic = {
-      path: ".forge/specs/x.md",
+      path: ".tinkerman/specs/x.md",
       category: "frozen-spec",
       reason_code: "SPEC_LOCKED",
       reason_text: 'status "locked" forbids modification',
@@ -324,7 +324,7 @@ describe("renderPostHocViolation + writeFrozenBreachRecord (R3 units)", () => {
     };
     const out = renderPostHocViolation(diag);
     expect(out).toContain("⚠ Post-hoc frozen-zone violation detected");
-    expect(out).toContain(".forge/specs/x.md");
+    expect(out).toContain(".tinkerman/specs/x.md");
     expect(out).toContain("Revert");
   });
 

@@ -56,15 +56,15 @@ create_forge_env() {
   local tier="${3:-standard}"
   local topic="${4:-test-task}"
 
-  mkdir -p "$tmpdir/.forge/progress"
-  mkdir -p "$tmpdir/.forge/reviews"
-  mkdir -p "$tmpdir/.forge/plans"
-  mkdir -p "$tmpdir/.forge/test-results"
-  mkdir -p "$tmpdir/.forge/ship"
-  mkdir -p "$tmpdir/.forge/knowledge/sessions"
-  mkdir -p "$tmpdir/.forge/.stop-hook-dedupe"
+  mkdir -p "$tmpdir/.tinkerman/progress"
+  mkdir -p "$tmpdir/.tinkerman/reviews"
+  mkdir -p "$tmpdir/.tinkerman/plans"
+  mkdir -p "$tmpdir/.tinkerman/test-results"
+  mkdir -p "$tmpdir/.tinkerman/ship"
+  mkdir -p "$tmpdir/.tinkerman/knowledge/sessions"
+  mkdir -p "$tmpdir/.tinkerman/.stop-hook-dedupe"
 
-  cat > "$tmpdir/.forge/status.md" << EOF2
+  cat > "$tmpdir/.tinkerman/status.md" << EOF2
 ---
 current_task: "${topic}"
 tier: "${tier}"
@@ -76,7 +76,7 @@ EOF2
 
 run_hook() {
   local tmpdir="$1"
-  (cd "$tmpdir" && FORGE_DIR=".forge" STATUS_FILE=".forge/status.md" LOOP_STATE_FILE=".forge/loop-state.md" bash "$HOOK_SCRIPT" 2>&1) || true
+  (cd "$tmpdir" && FORGE_DIR=".tinkerman" STATUS_FILE=".tinkerman/status.md" LOOP_STATE_FILE=".tinkerman/loop-state.md" bash "$HOOK_SCRIPT" 2>&1) || true
 }
 
 echo -e "${YELLOW}=== persistent-loop.sh Test Suite ===${NC}"
@@ -86,7 +86,7 @@ echo ""
 echo "Case 5: plan-approved-build-not-started"
 tmpdir=$(setup_fixtures)
 create_forge_env "$tmpdir" "plan" "standard" "my-task"
-cat > "$tmpdir/.forge/plans/my-task.md" << 'EOF3'
+cat > "$tmpdir/.tinkerman/plans/my-task.md" << 'EOF3'
 ---
 topic: "my-task"
 status: "approved"
@@ -101,7 +101,7 @@ echo ""
 echo "Case 6: build-done-review-missing"
 tmpdir=$(setup_fixtures)
 create_forge_env "$tmpdir" "build" "standard" "my-task"
-cat > "$tmpdir/.forge/progress/my-task.md" << 'EOF4'
+cat > "$tmpdir/.tinkerman/progress/my-task.md" << 'EOF4'
 ## Tasks
 - [x] Task 1
 - [x] Task 2
@@ -116,7 +116,7 @@ echo ""
 echo "Case 7: review-pass-test-missing"
 tmpdir=$(setup_fixtures)
 create_forge_env "$tmpdir" "review" "standard" "my-task"
-cat > "$tmpdir/.forge/reviews/my-task.md" << 'EOF5'
+cat > "$tmpdir/.tinkerman/reviews/my-task.md" << 'EOF5'
 ---
 result: "pass"
 p0_count: 0
@@ -132,7 +132,7 @@ echo ""
 echo "Case 8: test-pass-ship-missing"
 tmpdir=$(setup_fixtures)
 create_forge_env "$tmpdir" "test" "standard" "my-task"
-cat > "$tmpdir/.forge/test-results/my-task.md" << 'EOF6'
+cat > "$tmpdir/.tinkerman/test-results/my-task.md" << 'EOF6'
 ---
 result: "pass"
 ---
@@ -146,7 +146,7 @@ echo ""
 echo "Case 9: ship-done-full-tier-learn-missing"
 tmpdir=$(setup_fixtures)
 create_forge_env "$tmpdir" "ship" "full" "my-task"
-cat > "$tmpdir/.forge/ship/my-task.md" << 'EOF7'
+cat > "$tmpdir/.tinkerman/ship/my-task.md" << 'EOF7'
 ---
 result: "shipped"
 ---
@@ -161,7 +161,7 @@ echo "Case 10: loop-autonomous-progress-remaining"
 tmpdir=$(setup_fixtures)
 create_forge_env "$tmpdir" "ship" "full" "my-task"
 # Override status to add mode: autonomous
-cat > "$tmpdir/.forge/status.md" << 'EOF8'
+cat > "$tmpdir/.tinkerman/status.md" << 'EOF8'
 ---
 current_task: "my-task"
 tier: "full"
@@ -170,7 +170,7 @@ mode: "autonomous"
 updated: "2026-05-08T12:00:00Z"
 ---
 EOF8
-cat > "$tmpdir/.forge/progress/my-task.md" << 'EOF9'
+cat > "$tmpdir/.tinkerman/progress/my-task.md" << 'EOF9'
 ## Tasks
 - [x] Task 1
 - [ ] Task 2
@@ -185,7 +185,7 @@ echo ""
 echo "Dedupe: dedupe-second-call-silent"
 tmpdir=$(setup_fixtures)
 create_forge_env "$tmpdir" "plan" "standard" "my-task"
-cat > "$tmpdir/.forge/plans/my-task.md" << 'EOF10'
+cat > "$tmpdir/.tinkerman/plans/my-task.md" << 'EOF10'
 ---
 topic: "my-task"
 status: "approved"
@@ -203,7 +203,7 @@ echo "Stale: stale-status-silent"
 tmpdir=$(setup_fixtures)
 create_forge_env "$tmpdir" "build" "standard" "my-task"
 # Make status file old
-touch -t 202001010000 "$tmpdir/.forge/status.md"
+touch -t 202001010000 "$tmpdir/.tinkerman/status.md"
 output=$(run_hook "$tmpdir")
 assert_empty "$output" "stale status → silent"
 teardown_fixtures "$tmpdir"
@@ -222,7 +222,7 @@ echo ""
 echo "Light tier: light-tier-early-exit"
 tmpdir=$(setup_fixtures)
 create_forge_env "$tmpdir" "plan" "light" "my-task"
-cat > "$tmpdir/.forge/plans/my-task.md" << 'EOF11'
+cat > "$tmpdir/.tinkerman/plans/my-task.md" << 'EOF11'
 ---
 topic: "my-task"
 status: "approved"
@@ -237,7 +237,7 @@ echo ""
 echo "Regression: existing-case1-p0p1-regression"
 tmpdir=$(setup_fixtures)
 create_forge_env "$tmpdir" "review" "standard" "my-task"
-cat > "$tmpdir/.forge/reviews/my-task.md" << 'EOF12'
+cat > "$tmpdir/.tinkerman/reviews/my-task.md" << 'EOF12'
 ---
 result: "fail"
 p0_count: 1
@@ -254,7 +254,7 @@ echo "Regression: existing-case3-build-exhaustion-regression"
 tmpdir=$(setup_fixtures)
 create_forge_env "$tmpdir" "build" "standard" "my-task"
 # Add exhaustion flag
-cat > "$tmpdir/.forge/status.md" << 'EOF13'
+cat > "$tmpdir/.tinkerman/status.md" << 'EOF13'
 ---
 current_task: "my-task"
 tier: "standard"
@@ -263,7 +263,7 @@ exhaustion_pending: "true"
 updated: "2026-05-08T12:00:00Z"
 ---
 EOF13
-cat > "$tmpdir/.forge/progress/my-task.md" << 'EOF14'
+cat > "$tmpdir/.tinkerman/progress/my-task.md" << 'EOF14'
 ## Tasks
 - [x] Task 1
 - [ ] Task 2

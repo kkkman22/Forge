@@ -49,7 +49,7 @@ const result = computeExitResult(() => {
   }
 
   // 1. Walk and collect .md files (exclude api/ build artifacts)
-  const mdFiles = walkMdFiles(docsDir, { relativeTo: docsDir, symlinkSafe: true, allowDotDirs: [".forge", ".kiro"], excludedPrefixes: EXCLUDED_PREFIXES })
+  const mdFiles = walkMdFiles(docsDir, { relativeTo: docsDir, symlinkSafe: true, allowDotDirs: [".tinkerman", ".kiro"], excludedPrefixes: EXCLUDED_PREFIXES })
     .filter((f) => !f.startsWith("api/"));
 
   // 2. Parse frontmatter for each file

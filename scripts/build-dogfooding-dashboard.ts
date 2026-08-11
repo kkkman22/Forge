@@ -1,10 +1,10 @@
 #!/usr/bin/env tsx
 /**
  * build-dogfooding-dashboard.ts — aggregate Forge's self-hosting (dogfooding)
- * behavior KPIs from the existing `.forge/` directory into a static Markdown
+ * behavior KPIs from the existing `.tinkerman/` directory into a static Markdown
  * dashboard.
  *
- * READ-ONLY against `.forge/` — adds no instrumentation, no hooks, no runtime
+ * READ-ONLY against `.tinkerman/` — adds no instrumentation, no hooks, no runtime
  * collection. Every KPI has an explicit methodology footnote (numerator/
  * denominator) so the numbers are auditable rather than self-reported.
  *
@@ -67,7 +67,7 @@ const SPEC_METHODOLOGY =
 /**
  * A feature counts as "complete chain" when it has a locked spec (status:
  * "locked" in requirements.md frontmatter) AND a tasks.md AND a matching ship
- * marker file under `.forge/ship/`.
+ * marker file under `.tinkerman/ship/`.
  */
 export function scanSpecs(forgeRoot: string): SpecChainKpi {
   const specsDir = join(forgeRoot, "specs");
@@ -122,7 +122,7 @@ const FINDINGS_METHODOLOGY =
 
 /**
  * Aggregates P0/P1/P2/P3 counts from the `severity_counts` YAML frontmatter of
- * review files under `.forge/reviews/`. Reviews may be in subdirectories
+ * review files under `.tinkerman/reviews/`. Reviews may be in subdirectories
  * (e.g. `<runid>/combined.md`) or standalone `.md` files.
  */
 export function scanFindings(forgeRoot: string): FindingsKpi {
@@ -159,7 +159,7 @@ const EPISODE_METHODOLOGY =
   "sessions with evidence_chain:true frontmatter; rate = withEvidence / total sessions";
 
 /**
- * Counts session files under `.forge/knowledge/sessions/` that carry an
+ * Counts session files under `.tinkerman/knowledge/sessions/` that carry an
  * `evidence_chain: true` marker in their frontmatter.
  */
 export function scanEpisodes(forgeRoot: string): EpisodesKpi {
@@ -192,7 +192,7 @@ export function renderMarkdown(kpis: DashboardKpis): string {
   const lines: string[] = [];
   lines.push("# Forge Dogfooding 仪表盘");
   lines.push("");
-  lines.push(`> 生成于 ${new Date().toISOString().slice(0, 10)} · 数据源 .forge/ · 口径见各 KPI 脚注`);
+  lines.push(`> 生成于 ${new Date().toISOString().slice(0, 10)} · 数据源 .tinkerman/ · 口径见各 KPI 脚注`);
   lines.push("");
   lines.push("## 纪律执行率");
   lines.push("");
@@ -239,10 +239,10 @@ function main(): void {
 
   const rootIdx = args.indexOf("--root");
   const forgeRoot =
-    rootIdx !== -1 && args[rootIdx + 1] ? resolve(args[rootIdx + 1]) : resolve(process.cwd(), ".forge");
+    rootIdx !== -1 && args[rootIdx + 1] ? resolve(args[rootIdx + 1]) : resolve(process.cwd(), ".tinkerman");
 
   if (!existsSync(forgeRoot)) {
-    console.error(`Error: ${forgeRoot} is not a Forge project (.forge/ not found)`);
+    console.error(`Error: ${forgeRoot} is not a Forge project (.tinkerman/ not found)`);
     process.exit(1);
   }
 
@@ -277,11 +277,11 @@ function main(): void {
 function printHelp(): void {
   console.log(`Usage: npx tsx scripts/build-dogfooding-dashboard.ts [options]
 
-Aggregate Forge dogfooding behavior KPIs from .forge/ into a static Markdown dashboard.
+Aggregate Forge dogfooding behavior KPIs from .tinkerman/ into a static Markdown dashboard.
 
 Options:
-  --output <path>   Output file path (default: .forge/dashboards/dogfooding.md)
-  --root <path>     Path to .forge/ directory (default: ./.forge)
+  --output <path>   Output file path (default: .tinkerman/dashboards/dogfooding.md)
+  --root <path>     Path to .tinkerman/ directory (default: ./.forge)
   --help, -h        Show this help message
 
 Read-only: adds no instrumentation. Every KPI carries a methodology footnote.`);

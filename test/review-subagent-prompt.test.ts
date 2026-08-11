@@ -13,19 +13,19 @@ describe("buildReviewSubagents prompt diff-context", () => {
   it("spec-check prompt contains diff-context path", () => {
     const spec = invocations.find((i) => i.agentType === "spec-check");
     expect(spec).toBeDefined();
-    expect(spec!.prompt).toContain(".forge/reviews/.diff-context.md");
+    expect(spec!.prompt).toContain(".tinkerman/reviews/.diff-context.md");
   });
 
   it("quality-check prompt contains diff-context path", () => {
     const quality = invocations.find((i) => i.agentType === "quality-check");
     expect(quality).toBeDefined();
-    expect(quality!.prompt).toContain(".forge/reviews/.diff-context.md");
+    expect(quality!.prompt).toContain(".tinkerman/reviews/.diff-context.md");
   });
 
   it("security-check prompt contains diff-context path", () => {
     const security = invocations.find((i) => i.agentType === "security-check");
     expect(security).toBeDefined();
-    expect(security!.prompt).toContain(".forge/reviews/.diff-context.md");
+    expect(security!.prompt).toContain(".tinkerman/reviews/.diff-context.md");
   });
 
   it("spec/quality/security prompts contain Turn Budget Discipline", () => {
@@ -52,7 +52,7 @@ describe("buildReviewSubagents prompt diff-context", () => {
   it("frontend-check prompt does NOT contain diff-context path", () => {
     const frontend = invocations.find((i) => i.agentType === "frontend-check");
     expect(frontend).toBeDefined();
-    expect(frontend!.prompt).not.toContain(".forge/reviews/.diff-context.md");
+    expect(frontend!.prompt).not.toContain(".tinkerman/reviews/.diff-context.md");
   });
 
   it("frontend-check prompt keeps .vue file names", () => {
@@ -137,7 +137,7 @@ describe("buildReviewSubagents context-file injection (spec context-injection-ac
     const ctx = {
       hasSpec: false,
       changedFiles: ["src/x.ts"],
-      contextFiles: [".forge/specs/auth/requirements.md", ".forge/specs/auth/design.md"],
+      contextFiles: [".tinkerman/specs/auth/requirements.md", ".tinkerman/specs/auth/design.md"],
     };
     const invocations = buildReviewSubagents(ctx);
     const quality = invocations.find((i) => i.agentType === "quality-check");
@@ -150,7 +150,7 @@ describe("buildReviewSubagents context-file injection (spec context-injection-ac
     const ctx = {
       hasSpec: false,
       changedFiles: ["src/x.ts"],
-      contextFiles: [".forge/specs/auth/threat-model.md"],
+      contextFiles: [".tinkerman/specs/auth/threat-model.md"],
     };
     const invocations = buildReviewSubagents(ctx);
     const security = invocations.find((i) => i.agentType === "security-check");
@@ -163,7 +163,7 @@ describe("buildReviewSubagents context-file injection (spec context-injection-ac
       hasSpec: true,
       specPath: ".kiro/specs/example/spec.md",
       changedFiles: ["src/x.ts"],
-      contextFiles: [".forge/specs/auth/conventions.md"],
+      contextFiles: [".tinkerman/specs/auth/conventions.md"],
     };
     const invocations = buildReviewSubagents(ctx);
     const spec = invocations.find((i) => i.agentType === "spec-check");
@@ -191,7 +191,7 @@ describe("buildReviewSubagents context-file injection (spec context-injection-ac
     const ctx = {
       hasSpec: false,
       changedFiles: ["src/App.vue"],
-      contextFiles: [".forge/specs/ui/conventions.md"],
+      contextFiles: [".tinkerman/specs/ui/conventions.md"],
     };
     const invocations = buildReviewSubagents(ctx);
     const frontend = invocations.find((i) => i.agentType === "frontend-check");

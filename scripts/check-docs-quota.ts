@@ -37,7 +37,7 @@ const rootDir = resolve(process.cwd());
 
 const result = computeExitResult((): DiagnosticRecord[] => {
   // Load config
-  const configPath = resolve(rootDir, ".forge/config.md");
+  const configPath = resolve(rootDir, ".tinkerman/config.md");
   let config;
   try {
     const raw = readFileSync(configPath, "utf-8");

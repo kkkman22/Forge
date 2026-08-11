@@ -10,10 +10,10 @@ allowed_tools:
 
 ## Current Context
 
-Phase: !`grep '^phase:' .forge/status.md 2>/dev/null || echo "no status"`
-Task: !`grep '^current_task:' .forge/status.md 2>/dev/null || echo "no task"`
-Package: !`grep '^current_package:' .forge/status.md 2>/dev/null || echo "no package"`
-Last session: !`ls -t .forge/knowledge/sessions/*.md 2>/dev/null | head -1 || echo "no sessions"`
+Phase: !`grep '^phase:' .tinkerman/status.md 2>/dev/null || echo "no status"`
+Task: !`grep '^current_task:' .tinkerman/status.md 2>/dev/null || echo "no task"`
+Package: !`grep '^current_package:' .tinkerman/status.md 2>/dev/null || echo "no package"`
+Last session: !`ls -t .tinkerman/knowledge/sessions/*.md 2>/dev/null | head -1 || echo "no sessions"`
 Branch: !`git branch --show-current`
 
 # /tinkerman resume — 会话恢复
@@ -24,11 +24,11 @@ Branch: !`git branch --show-current`
 ---
 
 ## 1. Overview
-`/tinkerman resume` 通过五个问题快速重建工作上下文——正在解决什么问题、当前在哪一步、已知发现、下一步是什么、有什么阻塞。它从 `.forge/` 状态文件中自动提取答案，让开发者在新会话中无缝继续之前的工作。
+`/tinkerman resume` 通过五个问题快速重建工作上下文——正在解决什么问题、当前在哪一步、已知发现、下一步是什么、有什么阻塞。它从 `.tinkerman/` 状态文件中自动提取答案，让开发者在新会话中无缝继续之前的工作。
 
 **核心原则**：恢复上下文的成本应该接近零。
 
-**Session Boundary Recovery**: `/tinkerman resume` 是会话边界后恢复上下文的推荐方法。从 `.forge/progress/` 读任务状态，从 `.forge/knowledge/sessions/` 读会话日志。建议 `/tinkerman` 命令间开启新 Claude Code 会话（详见 CLAUDE.md §6）。
+**Session Boundary Recovery**: `/tinkerman resume` 是会话边界后恢复上下文的推荐方法。从 `.tinkerman/progress/` 读任务状态，从 `.tinkerman/knowledge/sessions/` 读会话日志。建议 `/tinkerman` 命令间开启新 Claude Code 会话（详见 CLAUDE.md §6）。
 
 ## Delegation_Adapter
 
@@ -40,9 +40,9 @@ Branch: !`git branch --show-current`
 
 ### Prerequisite: Read Status Files
 
-**数据来源**：`.forge/status.md` 或 `.forge/status/*.md` + `.forge/knowledge/sessions/`
+**数据来源**：`.tinkerman/status.md` 或 `.tinkerman/status/*.md` + `.tinkerman/knowledge/sessions/`
 
-**单任务模式**：直接读取 `.forge/status.md`。
+**单任务模式**：直接读取 `.tinkerman/status.md`。
 
 **多任务模式**：调用 `listActiveTasks(io, forgeRoot)` 获取活跃任务列表。多个活跃任务时，显示编号列表让用户选择。仅一个活跃任务时自动恢复。
 
@@ -57,7 +57,7 @@ Branch: !`git branch --show-current`
 | `updated` | 上次更新时间 |
 
 **Session-level recovery**:
-1. 检查 `.forge/knowledge/sessions/` 中是否存在 `*-interim.md` 文件（上次会话中途中断的执行上下文）。
+1. 检查 `.tinkerman/knowledge/sessions/` 中是否存在 `*-interim.md` 文件（上次会话中途中断的执行上下文）。
 2. 如果存在 interim 文件：读取"进度快照"→ 问题 2；"关键发现"→ 问题 3；"异常记录"→ 问题 5；"活跃约束"→ 恢复后首次 Restatement 重新注入。
 3. 如果不存在 interim 文件，读取正式会话日志作为补充信息。
 
@@ -68,11 +68,11 @@ Branch: !`git branch --show-current`
 ### Five-Question Mapping
 | Question | Data Source |
 |------|---------|
-| 1. 正在解决什么问题？ | `.forge/plans/<topic>.md` 的 Objective 章节 |
-| 2. 当前在哪一步？ | `status.md` 的 `phase` + `.forge/progress/<topic>.md` 中的"进行中"任务 |
-| 3. 已知发现是什么？ | `.forge/findings/<topic>.md` |
-| 4. 下一步是什么？ | `.forge/plans/<topic>.md` 的 Task Breakdown 中的下一个任务 |
-| 5. 有什么阻塞？ | `.forge/progress/<topic>.md` 中的"阻塞"章节 |
+| 1. 正在解决什么问题？ | `.tinkerman/plans/<topic>.md` 的 Objective 章节 |
+| 2. 当前在哪一步？ | `status.md` 的 `phase` + `.tinkerman/progress/<topic>.md` 中的"进行中"任务 |
+| 3. 已知发现是什么？ | `.tinkerman/findings/<topic>.md` |
+| 4. 下一步是什么？ | `.tinkerman/plans/<topic>.md` 的 Task Breakdown 中的下一个任务 |
+| 5. 有什么阻塞？ | `.tinkerman/progress/<topic>.md` 中的"阻塞"章节 |
 
 当 status 含 package 字段时，问题 2 必须展示 `current_package`、`completed_packages`、`next_package`、`package_count`。恢复上下文只读取当前 package 和直接依赖 package summary，不重新注入已完成 package 的完整 task 历史。
 
@@ -99,7 +99,7 @@ Branch: !`git branch --show-current`
 
 Context Exhaustion Protocol 触发时（`exhaustion_pending: true` 或新鲜 interim 文件）：
 1. **跳过确认** — 耗尽协议已决定继续
-2. **先读 interim 文件** — `.forge/knowledge/sessions/` 中 `-interim.md` 含最准确状态
+2. **先读 interim 文件** — `.tinkerman/knowledge/sessions/` 中 `-interim.md` 含最准确状态
 3. **立即 Restatement** — 派发第一个 Subagent 前
 4. **SKILL Reload** — 读取当前阶段 SKILL.md 从中断步骤继续
 5. **从 `next_task_number` 恢复** — 无效时回退到 progress 扫描
@@ -121,7 +121,7 @@ Context Exhaustion Protocol 触发时（`exhaustion_pending: true` 或新鲜 int
 
 `/tinkerman resume --from-pr <url-or-number>` → 运行 `scripts/resume-from-pr.mjs` → 输出 context bundle → 按 phase 建议下一步。
 
-**Slug 推断**：title `[spec:slug]` → branch `forge/slug` → description `.forge/specs/slug/` → decisions → interactive。**`--from-pr` 与 `--spec` 互斥**。失败模式 → 详见 references/from-pr-failure-modes.md。
+**Slug 推断**：title `[spec:slug]` → branch `forge/slug` → description `.tinkerman/specs/slug/` → decisions → interactive。**`--from-pr` 与 `--spec` 互斥**。失败模式 → 详见 references/from-pr-failure-modes.md。
 
 ---
 
@@ -130,11 +130,11 @@ Context Exhaustion Protocol 触发时（`exhaustion_pending: true` 或新鲜 int
 | 条件 | 处理 |
 |------|------|
 | Context compaction 恢复 | 读取当前阶段 SKILL.md 完整内容后继续。不执行 Restatement（Restatement 仅限 build 阶段）。 |
-| 无 `.forge/` 目录 | ⚠️ 没有可恢复的工作上下文。请运行 /tinkerman init 或 /tinkerman 开始新任务 |
+| 无 `.tinkerman/` 目录 | ⚠️ 没有可恢复的工作上下文。请运行 /tinkerman init 或 /tinkerman 开始新任务 |
 | 无 Plan 文件 | ℹ️ 未找到计划文件。运行 /tinkerman 开始新任务 |
 | 无 Progress 文件 | 展示全局状态 + Plan Objective，提示"建议从 Task 1 开始执行" |
 | 所有任务已完成 | 提示"Build 阶段已完成。建议运行 /tinkerman review" |
-| StatusFile 缺失或不一致 | 调用 `recoverPhase()` → 从 .forge/ 文件结构推断当前阶段（plans/ → plan, progress/ → build, reviews/ → review），展示推断结果和置信度，通过 AskUserQuestion 让用户确认/调整/取消。**不自动写入磁盘** |
+| StatusFile 缺失或不一致 | 调用 `recoverPhase()` → 从 .tinkerman/ 文件结构推断当前阶段（plans/ → plan, progress/ → build, reviews/ → review），展示推断结果和置信度，通过 AskUserQuestion 让用户确认/调整/取消。**不自动写入磁盘** |
 
 ---
 
@@ -147,4 +147,4 @@ Context Exhaustion Protocol 触发时（`exhaustion_pending: true` 或新鲜 int
 - **Missing context/Phase skip**: reconstruct from sessions/; verify all prior phases completed
 ## 9. Events.ndjson Cursor Recovery（R4）
 
-`/tinkerman resume <run-id>` 时：读取 `.forge/runs/<run-id>/events.ndjson` → `parseEventsNdjson` 解析 → `extractLatestCursor` 获取最新游标 → 结合 `.forge/status.md` 重启 forge-loop。容错：损坏行自动跳过。
+`/tinkerman resume <run-id>` 时：读取 `.tinkerman/runs/<run-id>/events.ndjson` → `parseEventsNdjson` 解析 → `extractLatestCursor` 获取最新游标 → 结合 `.tinkerman/status.md` 重启 forge-loop。容错：损坏行自动跳过。

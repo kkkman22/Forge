@@ -1,6 +1,3 @@
----
-updated: 2026-08-11
----
 [← INDEX (中文)](./INDEX.md)
 
 ## Getting Started

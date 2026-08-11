@@ -93,7 +93,7 @@ export function checkRootWhitelist(
         script: SCRIPT_NAME,
         severity: "error",
         file: file as DocPath,
-        message: `File "${file}" is not in the root whitelist. Remove it or add it to docs.root_whitelist in .forge/config.md.`,
+        message: `File "${file}" is not in the root whitelist. Remove it or add it to docs.root_whitelist in .tinkerman/config.md.`,
         code: "ROOT_FILE_NOT_WHITELISTED",
       });
     }

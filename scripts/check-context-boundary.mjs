@@ -172,13 +172,13 @@ function findRelationship(source, target, contextMap) {
 }
 
 /**
- * Load ownership map from .forge/context-ownership.yaml.
+ * Load ownership map from .tinkerman/context-ownership.yaml.
  * Simple format: lines of `glob: contextName` or `glob:contextName`.
  * Lines starting with `#` are comments; blank lines are skipped.
  * Also supports YAML map format.
  */
 function loadOwnershipMap() {
-  const ownershipPath = resolve(PROJECT_ROOT, ".forge/context-ownership.yaml");
+  const ownershipPath = resolve(PROJECT_ROOT, ".tinkerman/context-ownership.yaml");
   if (!existsSync(ownershipPath)) {
     return null;
   }
@@ -209,7 +209,7 @@ function loadOwnershipMap() {
 
 /**
  * Load context map from _map.yaml files in pack directories.
- * Reads enabled packs from .forge/custom/enabled-packs.json if it exists.
+ * Reads enabled packs from .tinkerman/custom/enabled-packs.json if it exists.
  */
 function loadContextMap() {
   const entries = [];
@@ -217,7 +217,7 @@ function loadContextMap() {
   // 1. Load from enabled packs
   const enabledPacksPath = resolve(
     PROJECT_ROOT,
-    ".forge/custom/enabled-packs.json",
+    ".tinkerman/custom/enabled-packs.json",
   );
   if (existsSync(enabledPacksPath)) {
     try {
@@ -265,7 +265,7 @@ function loadContextMap() {
   // 3. Load custom layer (highest priority, overwrites)
   const customMapPath = resolve(
     PROJECT_ROOT,
-    ".forge/custom/contexts/_map.yaml",
+    ".tinkerman/custom/contexts/_map.yaml",
   );
   if (existsSync(customMapPath)) {
     const customEntries = [];
@@ -465,7 +465,7 @@ function formatViolationMessage(filePath, violations, escapeHatchUsed, chineseFo
 // ---------------------------------------------------------------------------
 
 /**
- * Append tool duration data to .forge/runs/<date>/tool-durations.jsonl.
+ * Append tool duration data to .tinkerman/runs/<date>/tool-durations.jsonl.
  * Only called in PostToolUse mode when duration_ms is present in tool input.
  */
 function trackDuration(toolInput) {
@@ -477,7 +477,7 @@ function trackDuration(toolInput) {
     const now = new Date();
     const dateDir = now.toISOString().slice(0, 10);
 
-    const runsDir = resolve(PROJECT_ROOT, ".forge", "runs", dateDir);
+    const runsDir = resolve(PROJECT_ROOT, ".tinkerman", "runs", dateDir);
     mkdirSync(runsDir, { recursive: true });
 
     const entry = {
@@ -512,7 +512,7 @@ function main() {
   PostToolUse mode: reads file from disk after write + tracks duration_ms.
 
   In PostToolUse mode, if the tool input contains duration_ms, it is
-  appended to .forge/runs/<date>/tool-durations.jsonl for performance analysis.
+  appended to .tinkerman/runs/<date>/tool-durations.jsonl for performance analysis.
 
   Exit codes:
     0 — allow (no violations or file not applicable)

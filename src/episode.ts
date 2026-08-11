@@ -1,6 +1,6 @@
 /**
  * Episode data model — structured representation of a single learning
- * session recorded under `.forge/knowledge/sessions/<date>-<topic>.md`.
+ * session recorded under `.tinkerman/knowledge/sessions/<date>-<topic>.md`.
  *
  * An episode captures the essential fields from a forge session:
  *

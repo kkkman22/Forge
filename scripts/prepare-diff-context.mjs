@@ -21,7 +21,7 @@ import { execSync } from "node:child_process";
 import { mkdirSync, writeFileSync } from "node:fs";
 import { dirname } from "node:path";
 
-const OUTPUT_PATH = ".forge/reviews/.diff-context.md";
+const OUTPUT_PATH = ".tinkerman/reviews/.diff-context.md";
 const EXCLUDE_GLOBS = [
   ":(exclude)*.lock",
   ":(exclude)package-lock.json",

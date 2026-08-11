@@ -15,7 +15,7 @@ describe("checkShipGateWithForceSkip audit coupling", () => {
   });
 
   beforeEach(() => {
-    mkdirSync(join(TEST_DIR, ".forge", "findings"), { recursive: true });
+    mkdirSync(join(TEST_DIR, ".tinkerman", "findings"), { recursive: true });
   });
 
   afterEach(() => {
@@ -35,7 +35,7 @@ describe("checkShipGateWithForceSkip audit coupling", () => {
     expect(result.forceSkipped).toBe(true);
 
     const today = new Date().toISOString().slice(0, 10);
-    const auditFile = join(TEST_DIR, ".forge", "findings", `force-skip-review-${today}.md`);
+    const auditFile = join(TEST_DIR, ".tinkerman", "findings", `force-skip-review-${today}.md`);
     expect(existsSync(auditFile)).toBe(true);
 
     const content = readFileSync(auditFile, "utf-8");

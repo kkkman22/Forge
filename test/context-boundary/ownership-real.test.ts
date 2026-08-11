@@ -16,8 +16,8 @@ afterEach(() => {
 });
 
 describe("loadOwnershipMap real implementation", () => {
-  it("loads mappings from .forge/context-ownership.yaml", () => {
-    const forgeDir = join(tempDir, ".forge");
+  it("loads mappings from .tinkerman/context-ownership.yaml", () => {
+    const forgeDir = join(tempDir, ".tinkerman");
     mkdirSync(forgeDir, { recursive: true });
     writeFileSync(
       join(forgeDir, "context-ownership.yaml"),
@@ -33,12 +33,12 @@ mappings:
   });
 
   it("returns empty when no ownership file exists", () => {
-    const mappings = loadOwnershipMap(tempDir, join(tempDir, ".forge/context-ownership.yaml"));
+    const mappings = loadOwnershipMap(tempDir, join(tempDir, ".tinkerman/context-ownership.yaml"));
     expect(Object.keys(mappings)).toHaveLength(0);
   });
 
   it("falls back gracefully on malformed YAML", () => {
-    const forgeDir = join(tempDir, ".forge");
+    const forgeDir = join(tempDir, ".tinkerman");
     mkdirSync(forgeDir, { recursive: true });
     writeFileSync(join(forgeDir, "context-ownership.yaml"), `:::invalid yaml {{::`);
     const mappings = loadOwnershipMap(tempDir, join(forgeDir, "context-ownership.yaml"));
@@ -46,7 +46,7 @@ mappings:
   });
 
   it("falls back when mappings field is wrong type", () => {
-    const forgeDir = join(tempDir, ".forge");
+    const forgeDir = join(tempDir, ".tinkerman");
     mkdirSync(forgeDir, { recursive: true });
     writeFileSync(
       join(forgeDir, "context-ownership.yaml"),

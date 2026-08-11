@@ -17,7 +17,7 @@ const tempRoots: string[] = [];
 function tempRoot(): string {
   const root = mkdtempSync(join(tmpdir(), "forge-mcp-typed-test-"));
   tempRoots.push(root);
-  mkdirSync(join(root, ".forge"), { recursive: true });
+  mkdirSync(join(root, ".tinkerman"), { recursive: true });
   return root;
 }
 
@@ -47,7 +47,7 @@ function artifact(overrides: Partial<EvidenceArtifact> = {}): EvidenceArtifact {
 }
 
 function writeForgeFile(root: string, relPath: string, content: string): void {
-  const fullPath = join(root, ".forge", relPath);
+  const fullPath = join(root, ".tinkerman", relPath);
   mkdirSync(join(fullPath, ".."), { recursive: true });
   writeFileSync(fullPath, content, "utf-8");
 }

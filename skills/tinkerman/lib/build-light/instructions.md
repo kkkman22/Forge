@@ -38,7 +38,7 @@ Light execution engine for light-tier tasks (≤1 file, ≤20 lines changed). Sk
 3. No pre-check gates (light path skips Spec and Plan validation)
 4. No Closure-First probes
 5. Atomic commit after each task
-6. Update `.forge/status.md` on completion
+6. Update `.tinkerman/status.md` on completion
 
 ---
 
@@ -76,7 +76,7 @@ Key rules:
 
 Reference: forge-build SKILL §7.
 
-Update `.forge/status.md` phase after each task. On all tasks complete, transition to review phase.
+Update `.tinkerman/status.md` phase after each task. On all tasks complete, transition to review phase.
 
 ## Gotchas
 - **Scope creep**: Light task grows beyond 1 file/20 lines → still treated as light, skips TDD → if change exceeds limits, re-route to standard build

@@ -45,7 +45,7 @@ Optional enrichment via `tryFetchEnrichment()`. On failure (timeout, 401, 500, o
 
 ## Output
 
-- **Path**: `.forge/reviews/<topic>.canvas.html`
+- **Path**: `.tinkerman/reviews/<topic>.canvas.html`
 - **Format**: Self-contained HTML (no external dependencies)
 - **Opened**: Directly in any browser — no server required
 

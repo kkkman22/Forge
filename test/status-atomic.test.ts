@@ -30,8 +30,8 @@ const REPO_ROOT = join(import.meta.dirname, "..");
 
 function makeTmpForgeRoot(): string {
   const dir = mkdtempSync(join(tmpdir(), "forge-status-atomic-"));
-  // status.md lives at <forgeRoot>/status.md where forgeRoot = .forge/
-  return join(dir, "project", ".forge");
+  // status.md lives at <forgeRoot>/status.md where forgeRoot = .tinkerman/
+  return join(dir, "project", ".tinkerman");
 }
 
 const realFsIO = {

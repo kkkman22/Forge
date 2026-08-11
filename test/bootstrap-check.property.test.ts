@@ -15,9 +15,9 @@ describe("shouldShowBootstrap property tests", () => {
         (pluginRoot, cwd, configExists, dismissedExists) => {
           const env = { pluginRoot, cwd };
           const fsExists = (path: string) => {
-            return path.endsWith(".forge/config.md")
+            return path.endsWith(".tinkerman/config.md")
               ? configExists
-              : path.endsWith(".forge/.bootstrap-dismissed")
+              : path.endsWith(".tinkerman/.bootstrap-dismissed")
                 ? dismissedExists
                 : false;
           };
@@ -43,9 +43,9 @@ describe("shouldShowBootstrap property tests", () => {
           expect(() => {
             const env = { pluginRoot, cwd };
             const fsExists = (path: string) => {
-              return path.endsWith(".forge/config.md")
+              return path.endsWith(".tinkerman/config.md")
                 ? configExists
-                : path.endsWith(".forge/.bootstrap-dismissed")
+                : path.endsWith(".tinkerman/.bootstrap-dismissed")
                   ? dismissedExists
                   : false;
             };

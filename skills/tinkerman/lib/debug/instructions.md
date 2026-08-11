@@ -19,7 +19,7 @@ allowed_tools:
 
 > **Trigger**: `/tinkerman build` fails 3 consecutive times (Three-Strike reroute), or user enters `/tinkerman debug`
 > **Responsibility**: Structured 5-phase scientific debugging with falsifiable hypothesis testing
-> **Output path**: `.forge/debug/{slug}.md`
+> **Output path**: `.tinkerman/debug/{slug}.md`
 
 ---
 
@@ -71,7 +71,7 @@ Gather all observable error behavior:
 4. Read spec health verdict — if marginal/degraded, include "problem may stem from ambiguous spec" as hypothesis
 5. If recommendations contain `trigger_grill`, optionally trigger grill-inline
 
-**Output**: Write `.forge/debug/{slug}.md` with the Symptoms section. Set status to `"investigating"`.
+**Output**: Write `.tinkerman/debug/{slug}.md` with the Symptoms section. Set status to `"investigating"`.
 
 **Write Rule**: Symptoms are **IMMUTABLE** after Phase 1. No modifications allowed in later phases.
 
@@ -94,7 +94,7 @@ For each symptom, propose at least **2 falsifiable hypotheses**. Each hypothesis
 
 Steps:
 1. Compare with working/normal code paths
-2. Search `.forge/debug/knowledge-base.md` for keyword matches (rank by overlap)
+2. Search `.tinkerman/debug/knowledge-base.md` for keyword matches (rank by overlap)
 3. Search `known-failures.md` and `solutions/` directories
 4. Pattern-match to narrow hypothesis space
 5. Eliminate obviously unreasonable hypotheses (record in Eliminated section)
@@ -157,8 +157,8 @@ Then apply fix:
 6. Interactive mode: prompt `/tinkerman learn`
 7. Autonomous mode: skip prompt
 8. **Propagate replan signal to status.md (dynamic-replan-loop R4-AC1)** — WHEN `failure_class: assumption_invalidated`:
-   - Write `replan_pending: "true"` into `.forge/status.md` frontmatter (passthrough field).
-   - Write `invalidated_assumptions: [<the invalidated assumptions>]` into `.forge/status.md` frontmatter.
+   - Write `replan_pending: "true"` into `.tinkerman/status.md` frontmatter (passthrough field).
+   - Write `invalidated_assumptions: [<the invalidated assumptions>]` into `.tinkerman/status.md` frontmatter.
    - This is the signal the plan phase §1.7 reads to enter incremental replan mode. Without it the replan loop never triggers.
    - WHEN `failure_class` is `fixable_bug` or `environmental`: do NOT set `replan_pending` (leave it absent or `"false"`).
    - Note: `invalidated_assumptions` contains assumption descriptions that will be mirrored to tracked files (status.md, plan). Keep them technical and free of secrets/hostnames (run through `redactSecrets` if uncertain).
@@ -173,7 +173,7 @@ After resolution, hooks.json PostToolUse automatically triggers integrity lint (
 
 ## 3. Debug Session File Format
 
-Create `.forge/debug/{slug}.md` with this structure:
+Create `.tinkerman/debug/{slug}.md` with this structure:
 
 ```markdown
 ---
@@ -239,7 +239,7 @@ Testing hypothesis H2: bcrypt.compare parameter order
 
 ## 4. Debug Knowledge Base
 
-Maintain `.forge/debug/knowledge-base.md` (append-only):
+Maintain `.tinkerman/debug/knowledge-base.md` (append-only):
 
 ```markdown
 # Debug Knowledge Base
@@ -320,7 +320,7 @@ elif 3 internal trace attempts with no progress:
 - **Cannot reproduce** → Likely race condition / environment issue. Add logging, check concurrency.
 - **Fix proposed in Phase 1** → Prohibited. Always.
 - **All hypotheses fail** → Back to Phase 2 with expanded scope. Consider architecture-level hypotheses.
-- **No `.forge/` directory** → Run `/tinkerman init` first.
+- **No `.tinkerman/` directory** → Run `/tinkerman init` first.
 - **Context overflow** → Debug reads too many files, context fills up. Use subagent for exploration, return only findings.
 - **symptoms_prefilled mode** → Skip Phase 1, go directly to Phase 2. Symptoms from Three-Strike context are pre-filled. The Phase 1→2 red-capable gate is **satisfied**: 3 consecutive same-direction failures constitute a red-capable signal (the loop is the failing build/test run itself).
 
@@ -333,7 +333,7 @@ Three-Strike (§2.4 of CLAUDE.md) is the **trigger mechanism**; Scientific Metho
 - Three-Strike fires after 3 consecutive same-direction failures → enters `/tinkerman debug` with `symptoms_prefilled` mode (the 3 failures satisfy the Phase 1→2 red-capable gate, so Phase 1 symptom gathering is skipped)
 - Within debug, same hypothesis tested 3 times → stops that direction (inner Three-Strike)
 - Inner Three-Strike fires → question architecture, generate fundamentally different hypotheses
-- Both levels share the same `.forge/debug/{slug}.md` session file
+- Both levels share the same `.tinkerman/debug/{slug}.md` session file
 
 ---
 

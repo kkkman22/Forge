@@ -30,7 +30,7 @@ updated: 2026-08-11
 
 - **参数**：
   - `io` — I/O 接口对象
-  - `forgeRoot` — `.forge/` 目录路径
+  - `forgeRoot` — `.tinkerman/` 目录路径
   - `status` — 状态对象（包含 `current_task`, `tier`, `task_type`, `project_phase`, `phase`, `hints`, `assumptions`, `updated`）
 - **返回**：无
-- **用途**：路由完成后将任务状态写入 `.forge/status.md`（单任务）或 `.forge/status/<task-id>.md`（多任务）
+- **用途**：路由完成后将任务状态写入 `.tinkerman/status.md`（单任务）或 `.tinkerman/status/<task-id>.md`（多任务）

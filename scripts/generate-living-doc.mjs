@@ -3,8 +3,8 @@
 /**
  * generate-living-doc.mjs — CLI wrapper for Forge Living Documentation.
  *
- * Scans .forge/specs/ for spec files, parses frontmatter and scenarios,
- * generates a self-contained HTML site at .forge/docs/living/.
+ * Scans .tinkerman/specs/ for spec files, parses frontmatter and scenarios,
+ * generates a self-contained HTML site at .tinkerman/docs/living/.
  *
  * Usage:
  *   node scripts/generate-living-doc.mjs [--specs-dir DIR] [--acceptance-dir DIR] [--output-dir DIR]
@@ -40,9 +40,9 @@ function parseArgs(argv) {
 }
 
 const args = parseArgs(process.argv);
-const specsDir = args.specsDir || path.join(projectRoot, ".forge", "specs");
-const acceptanceDir = args.acceptanceDir || path.join(projectRoot, ".forge", "acceptance");
-const outputDir = args.outputDir || path.join(projectRoot, ".forge", "docs", "living");
+const specsDir = args.specsDir || path.join(projectRoot, ".tinkerman", "specs");
+const acceptanceDir = args.acceptanceDir || path.join(projectRoot, ".tinkerman", "acceptance");
+const outputDir = args.outputDir || path.join(projectRoot, ".tinkerman", "docs", "living");
 
 // ---------------------------------------------------------------------------
 // Spec parsing (inlined from generator.ts logic)

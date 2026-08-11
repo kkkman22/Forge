@@ -13,7 +13,11 @@ import { describe, expect, it } from "vitest";
 import { classify } from "../src/conflict-classifier.js";
 
 describe("frozen zone refusal [R7.3, R7.4, R7.5, R14.8]", () => {
-  const frozenPaths = [".forge/config.md", ".forge/specs/auth/spec.md", ".forge/plans/auth.md"];
+  const frozenPaths = [
+    ".tinkerman/config.md",
+    ".tinkerman/specs/auth/spec.md",
+    ".tinkerman/plans/auth.md",
+  ];
 
   it("all frozen paths are correctly classified", () => {
     for (const path of frozenPaths) {
@@ -23,10 +27,10 @@ describe("frozen zone refusal [R7.3, R7.4, R7.5, R14.8]", () => {
 
   it("frozen zone is disjoint from guarded zone", () => {
     const guardedPaths = [
-      ".forge/progress/auth.md",
-      ".forge/reviews/auth.md",
-      ".forge/knowledge/instincts.md",
-      ".forge/decisions/ADR-001.md",
+      ".tinkerman/progress/auth.md",
+      ".tinkerman/reviews/auth.md",
+      ".tinkerman/knowledge/instincts.md",
+      ".tinkerman/decisions/ADR-001.md",
     ];
 
     for (const path of frozenPaths) {

@@ -40,7 +40,7 @@ let healthPath: string;
 
 beforeEach(() => {
   tmpRoot = mkdtempSync(join(tmpdir(), "tool-health-"));
-  healthPath = join(tmpRoot, ".forge", "knowledge", "tool-health.md");
+  healthPath = join(tmpRoot, ".tinkerman", "knowledge", "tool-health.md");
 });
 
 afterEach(() => {
@@ -121,7 +121,7 @@ describe("ToolHealthWriter: single append correctness", () => {
 describe("ToolHealthWriter: lock contention", () => {
   it("times out when peer holds the lock past timeoutMs", () => {
     // Pre-create the lock file to simulate a peer holding it.
-    execFileSync("mkdir", ["-p", join(tmpRoot, ".forge", "knowledge")]);
+    execFileSync("mkdir", ["-p", join(tmpRoot, ".tinkerman", "knowledge")]);
     const lockPath = `${healthPath}.lock`;
     const fd = openSync(lockPath, "w");
     closeSync(fd);
@@ -145,7 +145,7 @@ describe("ToolHealthWriter: lock contention", () => {
   });
 
   it("force-removes stale lock older than staleLockMs and proceeds", () => {
-    execFileSync("mkdir", ["-p", join(tmpRoot, ".forge", "knowledge")]);
+    execFileSync("mkdir", ["-p", join(tmpRoot, ".tinkerman", "knowledge")]);
     const lockPath = `${healthPath}.lock`;
     writeFileSync(lockPath, "");
     // Backdate the lock so it looks abandoned.

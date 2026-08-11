@@ -9,7 +9,7 @@ When cmux is installed, Forge ship phase signals completion to the cmux sidebar.
 
 ## Integration Points
 
-- **Events**: `sdk-driver.ts` writes `ship_complete` event to `.forge/events.ndjson`
+- **Events**: `sdk-driver.ts` writes `ship_complete` event to `.tinkerman/events.ndjson`
 - **Sidebar**: Phase transitions to "ship" icon (paperplane), then to "idle" or "learn"
 - **Notifications**: Ship completion triggers cmux notification
 

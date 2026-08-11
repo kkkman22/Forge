@@ -5,10 +5,10 @@
 #
 # 功能：
 #   1. 交互式收集项目配置（名称、技术栈、安全级别）
-#   2. 创建完整的 .forge/ 目录结构
+#   2. 创建完整的 .tinkerman/ 目录结构
 #   3. 复制 7 个 Subagent 角色文件到 .claude/agents/
 #   4. 生成 CLAUDE.md 项目宪法
-#   5. 写入 .forge/config.md
+#   5. 写入 .tinkerman/config.md
 #   6. 配置 tinkerman-context MCP server（如果可用）
 #
 # 用法：
@@ -141,7 +141,7 @@ while [[ $# -gt 0 ]]; do
       echo "Usage: scripts/init.sh [OPTIONS]"
       echo ""
       echo "Initialize a Forge project in the current directory."
-      echo "Creates .forge/ structure, .claude/ agents, CLAUDE.md, config, and hooks."
+      echo "Creates .tinkerman/ structure, .claude/ agents, CLAUDE.md, config, and hooks."
       echo ""
       echo "Options:"
       echo "  --pack <name>     Enable a domain pack during init (repeatable)"
@@ -158,7 +158,7 @@ while [[ $# -gt 0 ]]; do
       echo "  --bday-tz <zone>  PMS only: IANA timezone (default Asia/Shanghai)."
       echo "  --platform <name> Target platform for workspace-level config."
       echo "                    Supported: zcode (generates .zcode/config.json with a Stop hook"
-      echo "                    injecting .forge/status.md as compact compensation)."
+      echo "                    injecting .tinkerman/status.md as compact compensation)."
       echo "  --non-interactive Skip all prompts: use --name/--stack/--security/etc. values"
       echo "                    when given, otherwise defaults. Required for non-TTY runs."
       echo "  --help, -h        Show this help message"
@@ -317,7 +317,7 @@ echo ""
 
 # ---------- 检查是否已初始化 ----------
 if [[ -d "${PROJECT_ROOT}/.forge" ]]; then
-  warn ".forge/ 目录已存在。重新初始化将覆盖配置文件。"
+  warn ".tinkerman/ 目录已存在。重新初始化将覆盖配置文件。"
   if [[ "${NON_INTERACTIVE:-0}" == "1" ]]; then
     info "--non-interactive：自动继续（覆盖配置文件）。"
   else
@@ -535,25 +535,25 @@ for p in "${PACKS[@]+"${PACKS[@]}"}"; do
 done
 
 # ============================================================================
-# Step 2：创建 .forge/ 目录结构
+# Step 2：创建 .tinkerman/ 目录结构
 # ============================================================================
-info "Step 2/7：创建 .forge/ 目录结构"
+info "Step 2/7：创建 .tinkerman/ 目录结构"
 
 directories=(
-  ".forge"
-  ".forge/decisions"
-  ".forge/specs"
-  ".forge/plans"
-  ".forge/findings"
-  ".forge/progress"
-  ".forge/reviews"
-  ".forge/knowledge"
-  ".forge/knowledge/solutions"
-  ".forge/knowledge/sessions"
-  ".forge/knowledge/patterns"
-  ".forge/debug"
-  ".forge/archive"
-  ".forge/handoffs"
+  ".tinkerman"
+  ".tinkerman/decisions"
+  ".tinkerman/specs"
+  ".tinkerman/plans"
+  ".tinkerman/findings"
+  ".tinkerman/progress"
+  ".tinkerman/reviews"
+  ".tinkerman/knowledge"
+  ".tinkerman/knowledge/solutions"
+  ".tinkerman/knowledge/sessions"
+  ".tinkerman/knowledge/patterns"
+  ".tinkerman/debug"
+  ".tinkerman/archive"
+  ".tinkerman/handoffs"
 )
 
 for dir in "${directories[@]}"; do
@@ -563,12 +563,12 @@ done
 # --- 从模板复制 metrics.md 和 tool-health.md ---
 if [[ -f "${FORGE_ROOT}/templates/metrics.md" ]]; then
   sed "s/YYYY-MM-DD/$(date +%Y-%m-%d)/g" \
-    "${FORGE_ROOT}/templates/metrics.md" > "${PROJECT_ROOT}/.forge/knowledge/metrics.md"
+    "${FORGE_ROOT}/templates/metrics.md" > "${PROJECT_ROOT}/.tinkerman/knowledge/metrics.md"
 fi
 
 if [[ -f "${FORGE_ROOT}/templates/tool-health.md" ]]; then
   sed "s/YYYY-MM-DD/$(date +%Y-%m-%d)/g" \
-    "${FORGE_ROOT}/templates/tool-health.md" > "${PROJECT_ROOT}/.forge/knowledge/tool-health.md"
+    "${FORGE_ROOT}/templates/tool-health.md" > "${PROJECT_ROOT}/.tinkerman/knowledge/tool-health.md"
 fi
 
 # --- 写入 config.md ---
@@ -578,52 +578,52 @@ init_date="$(date +%Y-%m-%d)"
 if [[ -f "${FORGE_ROOT}/templates/evolved-rules.md" ]]; then
   sed -e "s/{{init_date}}/${init_date}/g" \
       -e "s/{{max_rules}}/15/g" \
-    "${FORGE_ROOT}/templates/evolved-rules.md" > "${PROJECT_ROOT}/.forge/knowledge/evolved-rules.md"
+    "${FORGE_ROOT}/templates/evolved-rules.md" > "${PROJECT_ROOT}/.tinkerman/knowledge/evolved-rules.md"
 fi
 
 # --- Copy rule-changelog.md template ---
 if [[ -f "${FORGE_ROOT}/templates/rule-changelog.md" ]]; then
   sed "s/{{init_date}}/${init_date}/g" \
-    "${FORGE_ROOT}/templates/rule-changelog.md" > "${PROJECT_ROOT}/.forge/knowledge/rule-changelog.md"
+    "${FORGE_ROOT}/templates/rule-changelog.md" > "${PROJECT_ROOT}/.tinkerman/knowledge/rule-changelog.md"
 fi
 
 # --- Copy ADR template (idempotent: don't overwrite existing) ---
 if [[ -f "${FORGE_ROOT}/templates/ADR-TEMPLATE.md" ]]; then
-  if [[ ! -f "${PROJECT_ROOT}/.forge/decisions/ADR-TEMPLATE.md" ]]; then
+  if [[ ! -f "${PROJECT_ROOT}/.tinkerman/decisions/ADR-TEMPLATE.md" ]]; then
     cp "${FORGE_ROOT}/templates/ADR-TEMPLATE.md" \
-      "${PROJECT_ROOT}/.forge/decisions/ADR-TEMPLATE.md"
+      "${PROJECT_ROOT}/.tinkerman/decisions/ADR-TEMPLATE.md"
   fi
 fi
 
 # --- Copy initial adr-index.md (idempotent: don't overwrite existing) ---
 if [[ -f "${FORGE_ROOT}/templates/adr-index.md" ]]; then
-  if [[ ! -f "${PROJECT_ROOT}/.forge/knowledge/adr-index.md" ]]; then
+  if [[ ! -f "${PROJECT_ROOT}/.tinkerman/knowledge/adr-index.md" ]]; then
     cp "${FORGE_ROOT}/templates/adr-index.md" \
-      "${PROJECT_ROOT}/.forge/knowledge/adr-index.md"
+      "${PROJECT_ROOT}/.tinkerman/knowledge/adr-index.md"
   fi
 fi
 
 # --- Copy sandbox.json template (idempotent: don't overwrite existing) ---
 if [[ -f "${FORGE_ROOT}/templates/sandbox.json" ]]; then
-  if [[ ! -f "${PROJECT_ROOT}/.forge/sandbox.json" ]]; then
+  if [[ ! -f "${PROJECT_ROOT}/.tinkerman/sandbox.json" ]]; then
     cp "${FORGE_ROOT}/templates/sandbox.json" \
-      "${PROJECT_ROOT}/.forge/sandbox.json"
-    echo "  ✓ 已安装 .forge/sandbox.json（沙箱策略配置，默认全部允许）"
+      "${PROJECT_ROOT}/.tinkerman/sandbox.json"
+    echo "  ✓ 已安装 .tinkerman/sandbox.json（沙箱策略配置，默认全部允许）"
   fi
 fi
 
 # --- Copy triage templates (idempotent) + ensure state dir ---
-mkdir -p "${PROJECT_ROOT}/.forge/state"
+mkdir -p "${PROJECT_ROOT}/.tinkerman/state"
 if [[ -f "${FORGE_ROOT}/templates/triage-inbox.md" ]]; then
-  if [[ ! -f "${PROJECT_ROOT}/.forge/triage-inbox.md" ]]; then
+  if [[ ! -f "${PROJECT_ROOT}/.tinkerman/triage-inbox.md" ]]; then
     cp "${FORGE_ROOT}/templates/triage-inbox.md" \
-      "${PROJECT_ROOT}/.forge/triage-inbox.md"
+      "${PROJECT_ROOT}/.tinkerman/triage-inbox.md"
   fi
 fi
 if [[ -f "${FORGE_ROOT}/templates/triage-state.json" ]]; then
-  if [[ ! -f "${PROJECT_ROOT}/.forge/state/triage-state.json" ]]; then
+  if [[ ! -f "${PROJECT_ROOT}/.tinkerman/state/triage-state.json" ]]; then
     cp "${FORGE_ROOT}/templates/triage-state.json" \
-      "${PROJECT_ROOT}/.forge/state/triage-state.json"
+      "${PROJECT_ROOT}/.tinkerman/state/triage-state.json"
   fi
 fi
 
@@ -631,9 +631,9 @@ fi
 # checkpoint.md 是再生式 checkpoint 的结构化载体，compact 时由 PostCompact hook
 # 读取并预算化注入。缺失时 PostCompact 降级到 grep 拼 progress fallback。
 if [[ -f "${FORGE_ROOT}/templates/checkpoint.md" ]]; then
-  if [[ ! -f "${PROJECT_ROOT}/.forge/checkpoint.md" ]]; then
+  if [[ ! -f "${PROJECT_ROOT}/.tinkerman/checkpoint.md" ]]; then
     cp "${FORGE_ROOT}/templates/checkpoint.md" \
-      "${PROJECT_ROOT}/.forge/checkpoint.md"
+      "${PROJECT_ROOT}/.tinkerman/checkpoint.md"
   fi
 fi
 
@@ -645,7 +645,7 @@ for item in "${stack_array[@]}"; do
   stack_yaml="${stack_yaml}  - \"${trimmed}\"\n"
 done
 
-cat > "${PROJECT_ROOT}/.forge/config.md" << CONFIGEOF
+cat > "${PROJECT_ROOT}/.tinkerman/config.md" << CONFIGEOF
 ---
 project: "${project_name}"
 stack:
@@ -708,42 +708,42 @@ ${ci_check_cmd}
 }
 ## 状态文件保护分区
 
-\`.forge/\` 目录下的文件按修改权限分为三个区域：
+\`.tinkerman/\` 目录下的文件按修改权限分为三个区域：
 
 ### 冻结区（Frozen）— AI 不可修改
 
 以下文件一旦进入锁定/批准状态，AI 在 build 阶段**不得修改**，除非用户明确解锁：
 
-- \`.forge/specs/*/spec.md\`（status: locked）
-- \`.forge/plans/*.md\`（status: approved）
-- \`.forge/config.md\`
+- \`.tinkerman/specs/*/spec.md\`（status: locked）
+- \`.tinkerman/plans/*.md\`（status: approved）
+- \`.tinkerman/config.md\`
 
 ### 受保护区（Guarded）— AI 可追加，不可删除或覆盖
 
 以下文件 AI 可以追加内容，但不得删除已有内容或覆盖文件（维护清理操作除外）：
 
-- \`.forge/progress/*.md\`（只能标记任务完成，不能删除任务或修改已完成的记录）
-- \`.forge/reviews/*.md\`（只能写入新评审，不能修改已有评审结果）
-- \`.forge/knowledge/instincts.md\`（只能追加或更新置信度，不能删除已有模式，除非维护清理）
-- \`.forge/knowledge/known-failures.md\`（只能追加或更新，不能删除已有失败模式，除非维护清理）
-- \`.forge/knowledge/solutions/*.md\`（只能追加或合并，不能随意删除，除非维护清理）
+- \`.tinkerman/progress/*.md\`（只能标记任务完成，不能删除任务或修改已完成的记录）
+- \`.tinkerman/reviews/*.md\`（只能写入新评审，不能修改已有评审结果）
+- \`.tinkerman/knowledge/instincts.md\`（只能追加或更新置信度，不能删除已有模式，除非维护清理）
+- \`.tinkerman/knowledge/known-failures.md\`（只能追加或更新，不能删除已有失败模式，除非维护清理）
+- \`.tinkerman/knowledge/solutions/*.md\`（只能追加或合并，不能随意删除，除非维护清理）
 
 ### 开放区（Open）— AI 可自由修改
 
 以下文件 AI 可以自由创建和修改：
 
-- \`.forge/status.md\`（状态更新）
-- \`.forge/decisions/*.md\`（决策文档）
-- \`.forge/findings/*.md\`（研究发现）
-- \`.forge/debug/*.md\`（调试记录）
-- \`.forge/knowledge/sessions/*.md\`（会话上下文）
-- \`.forge/knowledge/metrics.md\`（指标追踪）
-- \`.forge/knowledge/tool-health.md\`（工具健康度）
-- \`.forge/knowledge/skill-feedback.md\`（SKILL 反馈）
+- \`.tinkerman/status.md\`（状态更新）
+- \`.tinkerman/decisions/*.md\`（决策文档）
+- \`.tinkerman/findings/*.md\`（研究发现）
+- \`.tinkerman/debug/*.md\`（调试记录）
+- \`.tinkerman/knowledge/sessions/*.md\`（会话上下文）
+- \`.tinkerman/knowledge/metrics.md\`（指标追踪）
+- \`.tinkerman/knowledge/tool-health.md\`（工具健康度）
+- \`.tinkerman/knowledge/skill-feedback.md\`（SKILL 反馈）
 CONFIGEOF
 
 # --- 写入 status.md ---
-cat > "${PROJECT_ROOT}/.forge/status.md" << STATUSEOF
+cat > "${PROJECT_ROOT}/.tinkerman/status.md" << STATUSEOF
 ---
 current_task: ""
 tier: ""
@@ -757,7 +757,7 @@ updated: "${init_date} $(date +%H:%M)"
 STATUSEOF
 
 # --- 写入 instincts.md ---
-cat > "${PROJECT_ROOT}/.forge/knowledge/instincts.md" << INSTINCTSEOF
+cat > "${PROJECT_ROOT}/.tinkerman/knowledge/instincts.md" << INSTINCTSEOF
 ---
 updated: "${init_date}"
 ---
@@ -768,7 +768,7 @@ updated: "${init_date}"
 INSTINCTSEOF
 
 # --- 写入 known-failures.md ---
-cat > "${PROJECT_ROOT}/.forge/knowledge/known-failures.md" << FAILURESEOF
+cat > "${PROJECT_ROOT}/.tinkerman/knowledge/known-failures.md" << FAILURESEOF
 ---
 updated: "${init_date}"
 ---
@@ -790,13 +790,13 @@ updated: "${init_date}"
 -->
 FAILURESEOF
 
-success ".forge/ 目录结构创建完成"
+success ".tinkerman/ 目录结构创建完成"
 
 # ============================================================================
 # Step Z (conditional, after Step 2/7): ZCode 工作区配置生成（--platform zcode）
 # ============================================================================
 # 仅当 --platform zcode 时执行。生成 .zcode/config.json，注册一条 Stop hook
-# 注入 .forge/status.md 摘要，作为 ZCode 不支持 PreCompact 的最小 compact 补偿。
+# 注入 .tinkerman/status.md 摘要，作为 ZCode 不支持 PreCompact 的最小 compact 补偿。
 # 不传 --platform 时完全跳过（Claude Code 侧零影响）。
 # 复用插件已有的 stop-additional-context.mjs（读 Forge 状态 → additionalContext）。
 if [[ "${opt_platform}" == "zcode" ]]; then
@@ -812,7 +812,7 @@ if [[ "${opt_platform}" == "zcode" ]]; then
 
     # Stop hook 命令用 fallback chain 解析到插件脚本（与 hooks.json 风格一致）。
     # ${CLAUDE_PLUGIN_ROOT} 在 ZCode plugin hook 下原生展开（v2 §7.3 实测）。
-    # 2>/dev/null + || true 容错：无 .forge/ 或脚本缺失时静默通过，不阻断会话。
+    # 2>/dev/null + || true 容错：无 .tinkerman/ 或脚本缺失时静默通过，不阻断会话。
     cat > "${zcode_config}" <<'ZCODEEOF'
 {
   "hooks": {
@@ -834,7 +834,7 @@ if [[ "${opt_platform}" == "zcode" ]]; then
 }
 ZCODEEOF
 
-    success ".zcode/config.json 已生成（Stop 注入 .forge/status.md 摘要，compact 补偿）"
+    success ".zcode/config.json 已生成（Stop 注入 .tinkerman/status.md 摘要，compact 补偿）"
   fi
 fi
 
@@ -1357,10 +1357,10 @@ if [[ ${#PACKS[@]} -gt 0 ]]; then
 
     # PMS-specific setup
     # NOTE: business-day collection now happens in Step 1 (so the config.md heredoc
-    # is the single writer); this block only prepares .forge/custom/pms/ and prints
+    # is the single writer); this block only prepares .tinkerman/custom/pms/ and prints
     # the welcome banner. bday_cutoff / bday_tz are already resolved here.
     if [[ "${pack_name}" == "pms" ]]; then
-      mkdir -p "${PROJECT_ROOT}/.forge/custom/pms"
+      mkdir -p "${PROJECT_ROOT}/.tinkerman/custom/pms"
 
       success "PMS Pack 已启用"
       echo ""
@@ -1376,17 +1376,17 @@ if [[ ${#PACKS[@]} -gt 0 ]]; then
       echo ""
       echo "  营业日配置：切日 ${bday_cutoff}:00, 时区 ${bday_tz}"
       echo "  详见：packs/pms/README.md"
-      echo "  自定义覆盖：.forge/custom/pms/"
+      echo "  自定义覆盖：.tinkerman/custom/pms/"
       echo ""
     fi
 
     # --pack 使用埋点（REQ-06，为下次分发决策攒数据）
-    # 复用 tool-health.md 现有格式，失败（.forge/ 不可写）静默跳过，不阻断。
-    if [[ -d "${PROJECT_ROOT}/.forge/knowledge" ]]; then
+    # 复用 tool-health.md 现有格式，失败（.tinkerman/ 不可写）静默跳过，不阻断。
+    if [[ -d "${PROJECT_ROOT}/.tinkerman/knowledge" ]]; then
       printf '%s · pack-enabled · name=%s · source=%s\n' \
         "$(node -e "console.log(new Date().toISOString())" 2>/dev/null || date -u +%Y-%m-%dT%H:%M:%S.%3NZ)" \
         "${pack_name}" "${pack_source}" \
-        >> "${PROJECT_ROOT}/.forge/knowledge/tool-health.md" 2>/dev/null || true
+        >> "${PROJECT_ROOT}/.tinkerman/knowledge/tool-health.md" 2>/dev/null || true
     fi
 
     success "Pack \"${pack_name}\" 配置完成"
@@ -1402,8 +1402,8 @@ echo -e "${GREEN}║       🔥 Forge 初始化完成！               ║${NC}"
 echo -e "${GREEN}╚══════════════════════════════════════════╝${NC}"
 echo ""
 echo "  已创建："
-echo "    📁 .forge/          — 统一状态目录（含所有子目录和模板）"
-echo "    📄 .forge/sandbox.json — 沙箱策略配置（Phase 1 advisory 模式）"
+echo "    📁 .tinkerman/          — 统一状态目录（含所有子目录和模板）"
+echo "    📄 .tinkerman/sandbox.json — 沙箱策略配置（Phase 1 advisory 模式）"
 echo "    📁 .claude/agents/  — 7 个 Subagent 角色文件"
 echo "    📁 .claude/commands/ — Forge Command 入口"
 echo ""
@@ -1418,7 +1418,7 @@ echo "  | CLAUDE_CODE_SUBPROCESS_ENV_SCRUB | true | 清理子进程敏感环境�
 echo ""
 echo "    📄 .claude/settings.json — Forge Hooks + MCP 配置"
 echo "    📄 CLAUDE.md        — 项目宪法"
-echo "    📄 .forge/config.md — 项目配置"
+echo "    📄 .tinkerman/config.md — 项目配置"
 if [[ "${opt_platform}" == "zcode" ]]; then
   echo "    📄 .zcode/config.json — ZCode Stop hook（status.md 注入，compact 补偿）"
 fi
@@ -1495,8 +1495,8 @@ echo '    {"env": {"CLAUDE_CODE_EXPERIMENTAL_AGENT_TEAMS": "1"}}'
 echo "    或运行：/tinkerman config"
 echo ""
 echo "  建议添加到 .gitignore："
-echo "    .forge/debug/"
-echo "    .forge/archive/"
+echo "    .tinkerman/debug/"
+echo "    .tinkerman/archive/"
 echo ""
 echo "  ## 🔧 Worktree 高级配置"
 echo ""

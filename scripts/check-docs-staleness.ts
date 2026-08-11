@@ -163,7 +163,7 @@ const docsDir = join(rootDir, "docs");
 // Load config
 let config;
 try {
-  const configPath = join(rootDir, ".forge/config.md");
+  const configPath = join(rootDir, ".tinkerman/config.md");
   const configRaw = readFileSync(configPath, "utf-8");
   config = loadConfigWithDefaults(configRaw);
 } catch {

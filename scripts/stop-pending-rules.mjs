@@ -3,7 +3,7 @@
 /**
  * Stop hook: check for pending evolved rules.
  *
- * Scans .forge/knowledge/evolved-rules.md for PENDING status entries.
+ * Scans .tinkerman/knowledge/evolved-rules.md for PENDING status entries.
  * Outputs a warning with count if any pending rules exist.
  * Exits 0 always (fail-open).
  *
@@ -18,7 +18,7 @@ import { existsSync, readFileSync } from "node:fs";
 import { join } from "node:path";
 
 const CWD = process.cwd();
-const RULES_FILE = join(CWD, ".forge", "knowledge", "evolved-rules.md");
+const RULES_FILE = join(CWD, ".tinkerman", "knowledge", "evolved-rules.md");
 
 try {
   if (!existsSync(RULES_FILE)) {

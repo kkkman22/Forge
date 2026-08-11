@@ -1,5 +1,5 @@
 /**
- * Frozen file protection — checks if a .forge/ state file is in a frozen state.
+ * Frozen file protection — checks if a .tinkerman/ state file is in a frozen state.
  *
  * Reads the file's YAML frontmatter and checks the `status` field.
  * Exits with code 1 for "locked" or "approved" files (frozen zone).
@@ -44,13 +44,13 @@ const FROZEN_STATUSES = ["locked", "approved"];
 /**
  * Source-tree files that are hard-frozen regardless of frontmatter.
  *
- * Unlike `.forge/` state files (whose freeze is controlled by the `status`
+ * Unlike `.tinkerman/` state files (whose freeze is controlled by the `status`
  * field in their frontmatter), these files are policy-locked at the
  * repository level: any modification requires an ADR produced by
  * `/tinkerman decide`.
  *
  * Paths are matched against both the raw argv path and the
- * `.forge/`-stripped form, so callers may pass either.
+ * `.tinkerman/`-stripped form, so callers may pass either.
  *
  * **Validates: Requirement 5.10** — prompt-defense pattern library.
  */

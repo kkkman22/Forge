@@ -164,10 +164,10 @@ describe("Property 23: 状态文件保护区分类", () => {
     );
   });
 
-  it(".forge/ prefix is stripped before classification", () => {
-    expect(getProtectionZone(".forge/config.md")).toBe("frozen");
-    expect(getProtectionZone(".forge/status.md")).toBe("open");
-    expect(getProtectionZone(".forge/progress/topic.md")).toBe("guarded");
+  it(".tinkerman/ prefix is stripped before classification", () => {
+    expect(getProtectionZone(".tinkerman/config.md")).toBe("frozen");
+    expect(getProtectionZone(".tinkerman/status.md")).toBe("open");
+    expect(getProtectionZone(".tinkerman/progress/topic.md")).toBe("guarded");
   });
 });
 

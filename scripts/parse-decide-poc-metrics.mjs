@@ -19,7 +19,7 @@ if (!/^[A-Za-z0-9]([A-Za-z0-9-]*[A-Za-z0-9])?$/.test(TOPIC_ID)) {
   process.exit(1);
 }
 
-const OUT_DIR = ".forge/runs/decide-poc";
+const OUT_DIR = ".tinkerman/runs/decide-poc";
 
 function parseJsonl(filePath) {
   const content = readFileSync(filePath, "utf-8");

@@ -13,7 +13,7 @@
  *     concrete `phase` value and no existing `original_phase`.
  *   - Unit: `buildZoomOutPrompt` includes the required headings and
  *     the current-skill / topic context.
- *   - Unit: the full zoom-out workflow produces no writes to `.forge/`
+ *   - Unit: the full zoom-out workflow produces no writes to `.tinkerman/`
  *     other than the transient `phase` / `original_phase` fields —
  *     validated against an in-memory fs.
  *
@@ -324,7 +324,7 @@ describe("pauseForZoomOut / resumeFromZoomOut", () => {
 
 describe("zoom-out workflow produces no writes outside status.md", () => {
   /**
-   * Models the subset of `.forge/` that a zoom-out invocation could
+   * Models the subset of `.tinkerman/` that a zoom-out invocation could
    * touch: status.md plus the four open / guarded directories the
    * requirement forbids writing to. We snapshot the contents before
    * the workflow, run the pure pipeline end-to-end (pause → prompt →
@@ -334,19 +334,19 @@ describe("zoom-out workflow produces no writes outside status.md", () => {
     return new Map(fs);
   }
 
-  it("only .forge/status.md is mutated by pause / resume", () => {
+  it("only .tinkerman/status.md is mutated by pause / resume", () => {
     const fs = new Map<string, string>([
-      [".forge/status.md", makeStatus("build")],
-      [".forge/findings/note.md", "# prior findings\n"],
-      [".forge/decisions/ADR-0001.md", "# ADR 1\n"],
-      [".forge/knowledge/instincts.md", "# instincts\n"],
-      [".forge/progress/task.md", "# progress\n"],
+      [".tinkerman/status.md", makeStatus("build")],
+      [".tinkerman/findings/note.md", "# prior findings\n"],
+      [".tinkerman/decisions/ADR-0001.md", "# ADR 1\n"],
+      [".tinkerman/knowledge/instincts.md", "# instincts\n"],
+      [".tinkerman/progress/task.md", "# progress\n"],
     ]);
     const before = snapshot(fs);
 
     // --- pause
-    const pausedStatus = pauseForZoomOut(fs.get(".forge/status.md") ?? "");
-    fs.set(".forge/status.md", pausedStatus);
+    const pausedStatus = pauseForZoomOut(fs.get(".tinkerman/status.md") ?? "");
+    fs.set(".tinkerman/status.md", pausedStatus);
 
     // --- prompt & render cycle (all pure, no IO possible)
     const prompt = buildZoomOutPrompt({
@@ -365,16 +365,16 @@ describe("zoom-out workflow produces no writes outside status.md", () => {
     expect(rendered).toContain("## 整体位置");
 
     // --- resume
-    const resumedStatus = resumeFromZoomOut(fs.get(".forge/status.md") ?? "");
-    fs.set(".forge/status.md", resumedStatus);
+    const resumedStatus = resumeFromZoomOut(fs.get(".tinkerman/status.md") ?? "");
+    fs.set(".tinkerman/status.md", resumedStatus);
 
     // Every file other than status.md must be byte-identical.
     for (const [path, originalContent] of before) {
-      if (path === ".forge/status.md") continue;
+      if (path === ".tinkerman/status.md") continue;
       expect(fs.get(path)).toBe(originalContent);
     }
 
     // status.md, after full round-trip, returns to the pre-pause value.
-    expect(fs.get(".forge/status.md")).toBe(before.get(".forge/status.md"));
+    expect(fs.get(".tinkerman/status.md")).toBe(before.get(".tinkerman/status.md"));
   });
 });

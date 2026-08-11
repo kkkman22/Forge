@@ -205,16 +205,16 @@ describe("loadAllAdrs", () => {
 
   it("loads all valid ADR files with filePath attached", () => {
     const files: Record<string, string> = {
-      ".forge/decisions/ADR-0001-first.md": validAdr("ADR-0001", "First"),
-      ".forge/decisions/ADR-0002-second.md": validAdr("ADR-0002", "Second"),
+      ".tinkerman/decisions/ADR-0001-first.md": validAdr("ADR-0001", "First"),
+      ".tinkerman/decisions/ADR-0002-second.md": validAdr("ADR-0002", "Second"),
     };
     const result = loadAllAdrs(Object.keys(files), (p) => files[p]);
 
     expect(result).toHaveLength(2);
     expect(result[0].id).toBe("ADR-0001");
-    expect(result[0].filePath).toBe(".forge/decisions/ADR-0001-first.md");
+    expect(result[0].filePath).toBe(".tinkerman/decisions/ADR-0001-first.md");
     expect(result[1].id).toBe("ADR-0002");
-    expect(result[1].filePath).toBe(".forge/decisions/ADR-0002-second.md");
+    expect(result[1].filePath).toBe(".tinkerman/decisions/ADR-0002-second.md");
   });
 
   it("skips paths that the reader cannot resolve", () => {
@@ -409,7 +409,7 @@ describe("renderAdrIndex", () => {
     status: "accepted",
     date: "2026-05-10",
     deciders: ["@a"],
-    filePath: filePath ?? `.forge/decisions/${id}.md`,
+    filePath: filePath ?? `.tinkerman/decisions/${id}.md`,
   });
 
   it("emits the generated-by header comment as the first line", () => {
@@ -448,7 +448,7 @@ describe("renderAdrIndex", () => {
     const entry = makeEntry("ADR-0001", "Adopt Zod");
     const out = renderAdrIndex([entry]);
     expect(out).toContain(
-      "| ADR-0001 | Adopt Zod | accepted | 2026-05-10 | .forge/decisions/ADR-0001.md |",
+      "| ADR-0001 | Adopt Zod | accepted | 2026-05-10 | .tinkerman/decisions/ADR-0001.md |",
     );
   });
 

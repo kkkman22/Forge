@@ -47,7 +47,7 @@ export async function resolveBaseline(
   options: ResolveOptions = {},
 ): Promise<BaselineResolution> {
   const cwd = options.cwd ?? process.cwd();
-  const forgeDir = options.forgeDir ?? join(cwd, ".forge");
+  const forgeDir = options.forgeDir ?? join(cwd, ".tinkerman");
 
   // Level 1: Explicit --baseline <git-ref>
   if (explicit) {

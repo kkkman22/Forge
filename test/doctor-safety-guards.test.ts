@@ -22,21 +22,21 @@ const tempRoots: string[] = [];
 function tempRoot(): string {
   const root = mkdtempSync(join(tmpdir(), "forge-safety-guard-"));
   tempRoots.push(root);
-  mkdirSync(join(root, ".forge"), { recursive: true });
+  mkdirSync(join(root, ".tinkerman"), { recursive: true });
   return root;
 }
 
 function writeConfig(root: string, body: string): void {
-  writeFileSync(join(root, ".forge", "config.md"), `---\n${body}\n---\n`, "utf-8");
+  writeFileSync(join(root, ".tinkerman", "config.md"), `---\n${body}\n---\n`, "utf-8");
 }
 
 /** Create the sandbox-active marker so the destructive guard is considered active. */
 function enableSandbox(root: string): void {
-  writeFileSync(join(root, ".forge", ".sandbox-active.json"), "{}", "utf-8");
+  writeFileSync(join(root, ".tinkerman", ".sandbox-active.json"), "{}", "utf-8");
 }
 
 function writeSolutions(root: string, count: number): void {
-  const dir = join(root, ".forge", "knowledge", "solutions");
+  const dir = join(root, ".tinkerman", "knowledge", "solutions");
   mkdirSync(dir, { recursive: true });
   for (let i = 0; i < count; i++) {
     writeFileSync(join(dir, `sol-${i}.md`), `# sol ${i}\n`, "utf-8");

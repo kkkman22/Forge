@@ -26,7 +26,7 @@ allowed_tools:
 
 论文五动作之首"发现"——**让 agent 自己去找活，而不是用户把活喂给它**。
 
-Forge 的 loop 是任务驱动（用户给 goal，loop 跑完）。triage 补齐"自动发现该干什么"这一动作：定时扫描 Jira sprint 的 case 状态、Bitbucket 仓库动态、本地 git，把值得做的事写进 `.forge/triage-inbox.md`，保留人工复核点（不自动 build）。
+Forge 的 loop 是任务驱动（用户给 goal，loop 跑完）。triage 补齐"自动发现该干什么"这一动作：定时扫描 Jira sprint 的 case 状态、Bitbucket 仓库动态、本地 git，把值得做的事写进 `.tinkerman/triage-inbox.md`，保留人工复核点（不自动 build）。
 
 ---
 
@@ -39,14 +39,14 @@ Forge 的 loop 是任务驱动（用户给 goal，loop 跑完）。triage 补齐
 ### opt-in：定时触发（用户自定义时间）
 
 ```
-/tinkerman triage --install     # 安装定时触发，用 .forge/config.md 的 triage.cron 表达式
+/tinkerman triage --install     # 安装定时触发，用 .tinkerman/config.md 的 triage.cron 表达式
 /tinkerman triage --uninstall   # 卸载定时触发
 /tinkerman triage --status      # 显示 last_triage_at + inbox 统计
 ```
 
 `--install` 通过统一安装器 `installCronSkill`（`src/loop/install-cron-skill.ts`，regenerative-checkpoint R5/D7）安装——与 `/tinkerman learn --install` 共用同一套框架：
 
-1. 读 `.forge/config.md` 的 `triage:` 块，用 `resolveCronConfig` 解析（默认 `enabled: false` / `cron: "0 9 * * *"`）。
+1. 读 `.tinkerman/config.md` 的 `triage:` 块，用 `resolveCronConfig` 解析（默认 `enabled: false` / `cron: "0 9 * * *"`）。
 2. `enabled: false` → 输出指引，不阻断手动 `/tinkerman triage`。
 3. 用 `validateCronExpression` 校验 cron 表达式。
 4. `buildCronInstallSpec({ skillName: "triage", cron, prompt: "/tinkerman triage" })` → `CronCreate` 安装。
@@ -115,7 +115,7 @@ MCP **未配置**时（不是运行失败，而是用户没装），输出清晰
 
 ## 5. Triage Inbox（落盘，R2-AC4）
 
-每个值得处理的发现写入 `.forge/triage-inbox.md`（append-only，人可读 markdown，对应论文 Memory 零件）。
+每个值得处理的发现写入 `.tinkerman/triage-inbox.md`（append-only，人可读 markdown，对应论文 Memory 零件）。
 
 条目格式：
 
@@ -145,13 +145,13 @@ inbox 条目的 `status`：`open` → `in-progress`（用户开始处理）→ `
 
 ### 被拒需求去重 / Rejected-Requests Dedup
 
-写入 inbox 前，先查 `.forge/knowledge/out-of-scope/`（被拒需求库）。**命中**相似项的发现，`suggested_action` 设为 `skip` 并注明引用的拒绝结论，避免把已被否的需求重新拉回流程。详见 docs/forge-constitution-detail.md §4 Domain Document Three-Way Split。
+写入 inbox 前，先查 `.tinkerman/knowledge/out-of-scope/`（被拒需求库）。**命中**相似项的发现，`suggested_action` 设为 `skip` 并注明引用的拒绝结论，避免把已被否的需求重新拉回流程。详见 docs/forge-constitution-detail.md §4 Domain Document Three-Way Split。
 
 ---
 
 ## 7. Incremental Scan（增量扫描，R2-AC6）
 
-读 `.forge/state/triage-state.json` 的 `last_triage_at` 时间戳。只扫该时间戳之后的变更（Jira case 状态变更、Bitbucket PR 更新、git commit），**不重复报告已记录的项**。
+读 `.tinkerman/state/triage-state.json` 的 `last_triage_at` 时间戳。只扫该时间戳之后的变更（Jira case 状态变更、Bitbucket PR 更新、git commit），**不重复报告已记录的项**。
 
 triage 跑完更新 `last_triage_at` 为本次执行时间。
 
@@ -169,11 +169,11 @@ triage 跑完更新 `last_triage_at` 为本次执行时间。
 启用主力发现源：
   1. 安装 mcp-atlassian（Jira）：https://github.com/sooperset/mcp-atlassian
   2. 配置 Bitbucket MCP
-  3. 在 .forge/config.md 的 triage.mcp 块填入工具名映射
+  3. 在 .tinkerman/config.md 的 triage.mcp 块填入工具名映射
   4. 详见 docs/forge-triage.md
 ```
 
-工具名映射示例（`.forge/config.md`）：
+工具名映射示例（`.tinkerman/config.md`）：
 
 ```yaml
 triage:
@@ -192,14 +192,14 @@ triage:
 
 ## 9. Execution Flow
 
-1. **Read config**：`.forge/config.md` 的 `triage.sources` / `stale_days` / `assignee` / `mcp` 映射。
-2. **Read state**：`.forge/state/triage-state.json` 的 `last_triage_at`。
+1. **Read config**：`.tinkerman/config.md` 的 `triage.sources` / `stale_days` / `assignee` / `mcp` 映射。
+2. **Read state**：`.tinkerman/state/triage-state.json` 的 `last_triage_at`。
 3. **Fetch each enabled source**（并行）：
    - jira-sprint → `tryFetchJiraSprint`（MCP 不可用 → null → 降级）
    - bitbucket-pr / bitbucket-branch → `tryFetchBitbucketPRs`（同上）
    - git → `git log --since=<last_triage_at>`（始终可用）
 4. **Merge + dedupe**：跨源去重（同一 Jira case 可能关联 Bitbucket PR）。
-5. **Write inbox**：新发现 append 到 `.forge/triage-inbox.md`。
+5. **Write inbox**：新发现 append 到 `.tinkerman/triage-inbox.md`。
 6. **Update state**：写 `last_triage_at` = now。
 7. **Output summary**：本次发现 N 条（high/medium/low），inbox 总计 M 条 open。给出 `--install` 提示（如未装定时）。
 
@@ -209,7 +209,7 @@ triage:
 
 | Case | Handling |
 |------|----------|
-| 无 `.forge/` | 提示 `/tinkerman init` |
+| 无 `.tinkerman/` | 提示 `/tinkerman init` |
 | 无 `triage-state.json` | 创建，`last_triage_at` = 空（首次全量扫） |
 | MCP 全不可用 | 纯 git 发现源，标 `git-fallback`，不阻断 |
 | inbox 不存在 | 创建，写入标题 |

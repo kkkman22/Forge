@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 
 // metrics-recorder.mjs
-// Records skill invocation metrics to .forge/.metrics/<YYYY-MM>.ndjson
+// Records skill invocation metrics to .tinkerman/.metrics/<YYYY-MM>.ndjson
 // Called by UserPromptSubmit hook with: node scripts/metrics-recorder.mjs <skill> <source>
 // Zero runtime dependencies.
 
@@ -9,7 +9,7 @@ import { mkdirSync, appendFileSync, existsSync } from "node:fs";
 import { join } from "node:path";
 
 const ROOT = new URL("..", import.meta.url).pathname;
-const METRICS_DIR = join(ROOT, ".forge", ".metrics");
+const METRICS_DIR = join(ROOT, ".tinkerman", ".metrics");
 
 const skill = process.argv[2] || "unknown";
 const source = process.argv[3] || "manual";

@@ -68,7 +68,7 @@ describe("checkQuota", () => {
   it("accepts --allow-grow with valid ADR path", () => {
     const files = ["docs/a.md", "docs/b.md"];
     const diags = checkQuota(files, baseConfig(1), {
-      allowGrow: ".forge/decisions/ADR-0042-quota-raise.md",
+      allowGrow: ".tinkerman/decisions/ADR-0042-quota-raise.md",
     });
     // Should not have the NO_ADR error
     expect(diags.every((d) => d.code !== "QUOTA_ALLOW_GROW_NO_ADR")).toBe(true);

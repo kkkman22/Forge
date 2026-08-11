@@ -63,8 +63,8 @@ if (VERIFY_COUNT) {
     },
   ];
 
-  // Scan .forge/decisions/*.md — skip lines with (historical: annotation
-  const decisionsDir = join(ROOT, ".forge", "decisions");
+  // Scan .tinkerman/decisions/*.md — skip lines with (historical: annotation
+  const decisionsDir = join(ROOT, ".tinkerman", "decisions");
   if (existsSync(decisionsDir)) {
     for (const entry of readdirSync(decisionsDir, { withFileTypes: true })) {
       if (!entry.isFile() || !entry.name.endsWith(".md")) continue;

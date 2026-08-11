@@ -28,7 +28,7 @@ Automatically via `sync-once.mjs` hooks when Forge state files change. No manual
 ## Requirements
 
 - cmux installed and available in `$PATH`
-- `.forge/` directory present (Forge project initialized)
+- `.tinkerman/` directory present (Forge project initialized)
 
 ## Zero-Impact
 

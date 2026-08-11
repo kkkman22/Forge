@@ -16,4 +16,4 @@ updated: 2026-08-11
 
 If Spec has anti-drift declarations (primary target / non-target proxy metrics / verification material role), use primary target as the sole judgment criterion.
 
-**Status File Protection**: Observe `.forge/config.md` protection zones — 🔒 Frozen zone immutable, 🛡️ Protected zone append-only, 🟢 Open zone freely modifiable. Violation causes immediate block and report.
+**Status File Protection**: Observe `.tinkerman/config.md` protection zones — 🔒 Frozen zone immutable, 🛡️ Protected zone append-only, 🟢 Open zone freely modifiable. Violation causes immediate block and report.

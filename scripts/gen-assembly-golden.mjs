@@ -54,7 +54,7 @@ for (const { sub, taskType, phase } of REPRESENTATIVE_SUBS) {
   const toolsResult = resolveAllowedTools(libContent);
   const allowedTools = toolsResult.ok ? toolsResult.tools : [];
   const contextBlock = wrapWorkspaceContext([
-    { path: ".forge/status.md", content: "tier: standard\nphase: build" },
+    { path: ".tinkerman/status.md", content: "tier: standard\nphase: build" },
   ]);
   const hintTags = generateHints(taskType, phase, [sub]).map((h) => h.tag);
 

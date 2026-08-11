@@ -30,7 +30,7 @@ Show all discovered packs with status (enabled/available).
 
 ### `enable <name>`
 
-Add a pack to `.forge/config.md` frontmatter `packs:` list. Idempotent.
+Add a pack to `.tinkerman/config.md` frontmatter `packs:` list. Idempotent.
 
 ```
 /tinkerman pack enable pms
@@ -38,7 +38,7 @@ Add a pack to `.forge/config.md` frontmatter `packs:` list. Idempotent.
 
 ### `disable <name>`
 
-Remove a pack from `.forge/config.md` frontmatter. Idempotent.
+Remove a pack from `.tinkerman/config.md` frontmatter. Idempotent.
 
 ```
 /tinkerman pack disable pms
@@ -54,7 +54,7 @@ Show pack manifest details and category counts.
 
 ### `override <path>`
 
-Copy a pack file to `.forge/custom/<path>` for project-level customization. Refuses if destination exists unless `--force` passed.
+Copy a pack file to `.tinkerman/custom/<path>` for project-level customization. Refuses if destination exists unless `--force` passed.
 
 ```
 /tinkerman pack override glossary/folio.md

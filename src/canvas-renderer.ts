@@ -52,12 +52,12 @@ export interface CanvasResult {
  *   1. Read template files (base.html, renderer.js)
  *   2. Prepare findings data
  *   3. Embed as safe JSON island (JSON.stringify + HTML-escape)
- *   4. Write output to .forge/reviews/<topic>.canvas.html
+ *   4. Write output to .tinkerman/reviews/<topic>.canvas.html
  */
 export async function renderCanvas(options: CanvasOptions): Promise<CanvasResult> {
   const { topic, findings } = options;
   const cwd = options.cwd ?? process.cwd();
-  const forgeDir = options.forgeDir ?? join(cwd, ".forge");
+  const forgeDir = options.forgeDir ?? join(cwd, ".tinkerman");
   const templateDir = resolve(new URL(".", import.meta.url).pathname, "..", "templates", "canvas");
 
   // Check review file exists [R4.7]

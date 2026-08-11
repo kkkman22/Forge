@@ -14,7 +14,7 @@ allowed_tools:
 # /tinkerman recap — Time-Window Recap
 
 > **Trigger**: `/tinkerman recap [--since 1d|7d|YYYY-MM-DD..YYYY-MM-DD]`
-> **Output**: stdout summary + optional `.forge/recap-<window>.md`
+> **Output**: stdout summary + optional `.tinkerman/recap-<window>.md`
 
 ## 1. 概述
 
@@ -40,8 +40,8 @@ Produce a categorized recap of recent project activity over a configurable time 
    - Notice: `⚠️ [Forge Slimming] /tinkerman recap 基础层可委托给 /compact + /context（Claude Code ≥ 2.0.0）。迁移指南：docs/slimming-migration.md`
 
 **Forge 差异化上层**（standardPath 成功后）：
-- 从 `.forge/status.md` 提取当前 Spec 阶段、frozen file 列表
-- 从 `.forge/progress/` 提取未完成的 progress 项
+- 从 `.tinkerman/status.md` 提取当前 Spec 阶段、frozen file 列表
+- 从 `.tinkerman/progress/` 提取未完成的 progress 项
 - 合并输出：Native_Command 结果 + Forge 结构化摘要
 
 ## Goal
@@ -53,8 +53,8 @@ Your recap must aggregate across these sources. Approach is yours; all three mus
 | Source | Data |
 |--------|------|
 | `git log --since` | Commits, files changed, authors |
-| `.forge/knowledge/sessions/` | Session metadata |
-| `.forge/progress/` | Task completion status |
+| `.tinkerman/knowledge/sessions/` | Session metadata |
+| `.tinkerman/progress/` | Task completion status |
 
 ## Constraints
 

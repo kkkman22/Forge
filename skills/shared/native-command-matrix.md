@@ -58,7 +58,7 @@ fi
 ## Per-Session 去重机制
 
 ```
-路径: .forge/.deprecation-notice/<session_id>/<command>.lock
+路径: .tinkerman/.deprecation-notice/<session_id>/<command>.lock
 内容: 0 字节（存在性即信号）
 生命周期: SessionStart → 命令触发 O_EXCL 原子创建 → Stop hook 清理
 Fallback: /tmp/.forge-deprecation-<session_id>/<command>.lock

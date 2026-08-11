@@ -20,7 +20,7 @@
  * Glossary writeback (Requirement 1.6): the learn skill scans the session's
  * decisions / findings / reviews / progress / prior sessions for TitleCase,
  * PascalCase and contiguous CJK candidate terms that are not yet present in
- * `.forge/glossary.md`, and presents them to the user for confirmation
+ * `.tinkerman/glossary.md`, and presents them to the user for confirmation
  * before calling `mergeTerm(..., "append")`.
  *   **Validates: Requirements 1.6**
  *
@@ -93,11 +93,11 @@ import { findUpgradableEpisodes, type Pattern } from "./pattern-stats.js";
  * access to. Each entry is treated as free-form markdown / prose and is
  * concatenated with single newlines before extraction.
  *
- *   - decisions: ADR / decision document bodies (e.g. `.forge/decisions/*.md`)
- *   - findings:  finding document bodies (e.g. `.forge/findings/*.md`)
- *   - reviews:   review document bodies (e.g. `.forge/reviews/*.md`)
- *   - progress:  progress notes (e.g. `.forge/progress/*.md`)
- *   - sessions:  existing session journals (e.g. `.forge/knowledge/sessions/*.md`)
+ *   - decisions: ADR / decision document bodies (e.g. `.tinkerman/decisions/*.md`)
+ *   - findings:  finding document bodies (e.g. `.tinkerman/findings/*.md`)
+ *   - reviews:   review document bodies (e.g. `.tinkerman/reviews/*.md`)
+ *   - progress:  progress notes (e.g. `.tinkerman/progress/*.md`)
+ *   - sessions:  existing session journals (e.g. `.tinkerman/knowledge/sessions/*.md`)
  */
 /**
  * Identify candidate glossary terms surfaced by a single learn session.
@@ -303,7 +303,7 @@ export function proposeStaleTerms(
 // ---------------------------------------------------------------------------
 
 /**
- * A single phase transition recorded in `.forge/status.md` during the
+ * A single phase transition recorded in `.tinkerman/status.md` during the
  * session. The learn skill walks this history backwards to recover the
  * most relevant skill to attribute the episode to.
  *
@@ -651,7 +651,7 @@ const EVOLUTION_ARCHIVE_SEGMENT = "/archive/";
  * Behaviour:
  *   - Each root is consulted through `fs.exists` first so missing
  *     directories (typical for a fresh project) do not raise errors.
- *   - The `.forge/archive/**` subtree is skipped; archived sessions
+ *   - The `.tinkerman/archive/**` subtree is skipped; archived sessions
  *     represent historical snapshots and re-surfacing their markers
  *     would contradict the "current state only" contract (Requirement
  *     8.15).
@@ -662,7 +662,7 @@ const EVOLUTION_ARCHIVE_SEGMENT = "/archive/";
  *     `skillsRegistry` so unknown targets land in `orphans`.
  *
  * This is the driver seam the learn skill plugs into after its other
- * wrap-up steps; the file is written to `.forge/knowledge/evolution-
+ * wrap-up steps; the file is written to `.tinkerman/knowledge/evolution-
  * report.md` (open zone, always overwritten) by the caller using
  * {@link renderEvolutionReport}.
  *
@@ -704,7 +704,7 @@ export function generateEvolutionReport(
 
 /**
  * Render an {@link EvolutionReport} as the markdown content written to
- * `.forge/knowledge/evolution-report.md`.
+ * `.tinkerman/knowledge/evolution-report.md`.
  *
  * Layout (frozen by integration tests):
  *
@@ -726,7 +726,7 @@ export function generateEvolutionReport(
  * - 来源：ep-...
  *
  * ## Orphan 标记
- * - `.forge/reviews/xxx.md:42` target `forge-nonexistent`
+ * - `.tinkerman/reviews/xxx.md:42` target `forge-nonexistent`
  * ```
  *
  * Empty sections are elided to keep the report short on quiet days,

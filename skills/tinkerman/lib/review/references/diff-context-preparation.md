@@ -3,7 +3,7 @@ updated: 2026-08-11
 ---
 # Diff Context Preparation
 
-> 由 forge-review SKILL.md §2.0 引用。在启动任何 Subagent 之前，编排层必须执行 `scripts/prepare-diff-context.mjs` 写入 `.forge/reviews/.diff-context.md` 作为 Subagent prompt 的一部分。
+> 由 forge-review SKILL.md §2.0 引用。在启动任何 Subagent 之前，编排层必须执行 `scripts/prepare-diff-context.mjs` 写入 `.tinkerman/reviews/.diff-context.md` 作为 Subagent prompt 的一部分。
 
 ## 单一调用契约
 
@@ -14,7 +14,7 @@ node scripts/prepare-diff-context.mjs
 #   --dry-run   不写文件，只 print 完整内容到 stdout
 ```
 
-脚本输出 `Wrote .forge/reviews/.diff-context.md` 表示成功；非零退出码表示 git 不可用或写文件失败。
+脚本输出 `Wrote .tinkerman/reviews/.diff-context.md` 表示成功；非零退出码表示 git 不可用或写文件失败。
 
 ## 脚本内部步骤（封装细节）
 
@@ -46,7 +46,7 @@ git diff --stat ${BASE_BRANCH}...HEAD
 
 ### Step 4：写入 diff-context 文件
 
-写入 `.forge/reviews/.diff-context.md`，schema：
+写入 `.tinkerman/reviews/.diff-context.md`，schema：
 
 ```markdown
 ---

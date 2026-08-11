@@ -414,9 +414,9 @@ describe("render functions", () => {
 // ---------------------------------------------------------------------------
 
 describe("AC9 pending_glossary_advisories", () => {
-  it("getAdvisoryPath returns deterministic path under .forge/findings", () => {
+  it("getAdvisoryPath returns deterministic path under .tinkerman/findings", () => {
     const path = getAdvisoryPath("spec", "my-feature");
-    expect(path).toBe(".forge/findings/glossary-advisory-spec-my-feature.md");
+    expect(path).toBe(".tinkerman/findings/glossary-advisory-spec-my-feature.md");
   });
 
   it("getAdvisoryPath with different phase produces different path", () => {
@@ -425,8 +425,8 @@ describe("AC9 pending_glossary_advisories", () => {
 
   it("renderPendingAdvisoryNotice renders advisory list for plan startup", () => {
     const paths = [
-      ".forge/findings/glossary-advisory-spec-my-feature.md",
-      ".forge/findings/glossary-advisory-decide-my-feature.md",
+      ".tinkerman/findings/glossary-advisory-spec-my-feature.md",
+      ".tinkerman/findings/glossary-advisory-decide-my-feature.md",
     ];
     const notice = renderPendingAdvisoryNotice(paths);
     expect(notice).toContain("pending glossary advisories");

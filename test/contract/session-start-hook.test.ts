@@ -11,7 +11,7 @@ function makeTmp(): string {
 }
 
 function makeEvolvedRules(dir: string, content: string): void {
-  const knowledgeDir = join(dir, ".forge", "knowledge");
+  const knowledgeDir = join(dir, ".tinkerman", "knowledge");
   mkdirSync(knowledgeDir, { recursive: true });
   writeFileSync(join(knowledgeDir, "evolved-rules.md"), content, "utf-8");
 }
@@ -23,7 +23,7 @@ function makeSpecDir(dir: string, specName: string): void {
 }
 
 function makeSpecLock(dir: string, specName: string): void {
-  const stateDir = join(dir, ".forge", "state");
+  const stateDir = join(dir, ".tinkerman", "state");
   mkdirSync(stateDir, { recursive: true });
   writeFileSync(join(stateDir, "spec-lock"), specName, "utf-8");
 }

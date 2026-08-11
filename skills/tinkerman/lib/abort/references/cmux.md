@@ -9,7 +9,7 @@ When cmux is installed, Forge abort signals task cancellation to the cmux sideba
 
 ## Integration Points
 
-- **Events**: `sdk-driver.ts` writes `abort` event to `.forge/events.ndjson`
+- **Events**: `sdk-driver.ts` writes `abort` event to `.tinkerman/events.ndjson`
 - **Sidebar**: Phase transitions to "idle" state
 - **Notifications**: Abort triggers cmux notification
 

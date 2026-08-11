@@ -12,7 +12,7 @@ allowed_tools:
 ## Current Context
 
 Branch: !`git branch --show-current`
-Review status: !`head -3 .forge/reviews/*.md 2>/dev/null || echo "no review"`
+Review status: !`head -3 .tinkerman/reviews/*.md 2>/dev/null || echo "no review"`
 Test status: !`echo "run: npm run check"`
 Uncommitted: !`git status --short 2>/dev/null | head -10 || echo "clean"`
 
@@ -69,14 +69,14 @@ Uncommitted: !`git status --short 2>/dev/null | head -10 || echo "clean"`
 **函数调用**：`runAllGates(input)`
 - 参数：`RunAllGatesInput`（含 `reviewDir`、`testResultsDir`、`progressDir`、`featureName`、`latestCommitHash`、可选 `methodology`、`configCICheck`、`gitLogFn`、`skipOptions`）
 - 返回：`ShipGateReport`（含 `gates`、`allPassed`、`skipGate`、`runId`），按 Review → Test → Progress 顺序执行
-- 用途：从 `.forge/` 文件系统自动读取门禁数据，执行三道门禁检查。任一阻断门禁失败 → `allPassed=false`，输出 `reason` 并退出；全部通过 → `allPassed=true`，继续交付流程。这是 ship 流程的**首选门禁入口**，内部调用 `checkReviewGate`、`checkTestGate`、`checkProgressGate`
+- 用途：从 `.tinkerman/` 文件系统自动读取门禁数据，执行三道门禁检查。任一阻断门禁失败 → `allPassed=false`，输出 `reason` 并退出；全部通过 → `allPassed=true`，继续交付流程。这是 ship 流程的**首选门禁入口**，内部调用 `checkReviewGate`、`checkTestGate`、`checkProgressGate`
 
 **函数调用**：`persistGateResults(report, shipDir)`
-- 参数：`report` — `runAllGates` 返回的 `ShipGateReport`；`shipDir` — `.forge/ship/` 目录路径
-- 用途：将门禁结果持久化到 `.forge/ship/<run-id>-gates.json`，含每道门禁的 passed/reason/details 和 allPassed 汇总
+- 参数：`report` — `runAllGates` 返回的 `ShipGateReport`；`shipDir` — `.tinkerman/ship/` 目录路径
+- 用途：将门禁结果持久化到 `.tinkerman/ship/<run-id>-gates.json`，含每道门禁的 passed/reason/details 和 allPassed 汇总
 
 **函数调用**：`checkShipGate(review, test, progress)`
-- 参数：`review` — 从 `.forge/reviews/<topic>.md` frontmatter 解析的 `ReviewResult`（含 `result`、`p0_count`、`p1_count`）；`test` — 从 Layer 1 + Layer 3 验证结果构造的 `TestResult`（含 `passed`、`failedCount`）；`progress` — 从 `.forge/progress/<topic>.md` 解析的 `ProgressResult`（含 `totalTasks`、`completedTasks`）
+- 参数：`review` — 从 `.tinkerman/reviews/<topic>.md` frontmatter 解析的 `ReviewResult`（含 `result`、`p0_count`、`p1_count`）；`test` — 从 Layer 1 + Layer 3 验证结果构造的 `TestResult`（含 `passed`、`failedCount`）；`progress` — 从 `.tinkerman/progress/<topic>.md` 解析的 `ProgressResult`（含 `totalTasks`、`completedTasks`）
 - 返回：`{ allowed: boolean, reasons: string[] }`，`allowed: false` 时 `reasons` 列出所有未通过的门禁
 - 用途：程序化执行三道门禁检查（已有预解析数据时使用），替代 `runAllGates` 的文件系统读取
 
@@ -97,15 +97,15 @@ Uncommitted: !`git status --short 2>/dev/null | head -10 || echo "clean"`
 
 **三道门禁必须同时通过**。任一不通过，阻断 ship。
 
-**Gate 4 — Pending Findings Check**：检查 `.forge/progress/<task>-pending-findings.md` 是否存在且含未关闭 P0/P1：
+**Gate 4 — Pending Findings Check**：检查 `.tinkerman/progress/<task>-pending-findings.md` 是否存在且含未关闭 P0/P1：
 - 文件不存在 → 跳过检查（首次运行兼容）
 - 文件存在 + 含 P0/P1 行 → 阻断 ship，提示修复后重新 review
 - 文件存在 + 无 P0/P1 → 通过
 - 通过后删除 pending-findings 文件（已消费）
 
-**Gate 4b — Backlog Capture（forge-review-fix-optimization R6.1/R6.2/R6.4/R6.6）**：Gate 4 通过后，把 review 报告里**未修复的 P2/P3** finding 追加到 `.forge/backlog.md`（不阻断 ship——P2/P3 允许延后）。
-- **实现**：`appendToBacklog(parseBacklog(read(".forge/backlog.md") ?? generateBacklogHeader()), newEntries)`（`src/backlog.ts`）。`appendToBacklog` 自动去重（R6.2，按 finding fingerprint id），文件不存在时先写 `generateBacklogHeader()`（R6.6）。
-- **newEntries 构造**：每条含 `{id, severity: "P2"|"P3", filePath, lineNumber, description, sourceReview: ".forge/reviews/<topic>.md", originTask: <current task>, capturedDate: <ISO today>, resolved: false}`（R6.4 打日期 + originTask 标签）。
+**Gate 4b — Backlog Capture（forge-review-fix-optimization R6.1/R6.2/R6.4/R6.6）**：Gate 4 通过后，把 review 报告里**未修复的 P2/P3** finding 追加到 `.tinkerman/backlog.md`（不阻断 ship——P2/P3 允许延后）。
+- **实现**：`appendToBacklog(parseBacklog(read(".tinkerman/backlog.md") ?? generateBacklogHeader()), newEntries)`（`src/backlog.ts`）。`appendToBacklog` 自动去重（R6.2，按 finding fingerprint id），文件不存在时先写 `generateBacklogHeader()`（R6.6）。
+- **newEntries 构造**：每条含 `{id, severity: "P2"|"P3", filePath, lineNumber, description, sourceReview: ".tinkerman/reviews/<topic>.md", originTask: <current task>, capturedDate: <ISO today>, resolved: false}`（R6.4 打日期 + originTask 标签）。
 - 仅取 review 报告中**状态非 fixed/verified** 的 P2/P3；P0/P1 已被 Gate 4 阻断，不会进 backlog。
 
 **Gate 拦截自动沉淀**：门禁拦截时调用 `buildShipGateBlockArtifacts(topic, tier, reason, situation, now, seq)`（`src/ship.ts`）生成 episode + Evolution 标记（target=`forge-ship#ship_gate_blocked`）。`reason` 推导：未提交工作树 → `uncommitted` → outcome=`partial`；checklist 未验证 → `checklist_failed` → outcome=`failure`。写入失败降级为 `console.warn`。
@@ -123,7 +123,7 @@ Uncommitted: !`git status --short 2>/dev/null | head -10 || echo "clean"`
 
 - 绕过 methodology 字段检查和所有门禁
 - 在 commit message 中添加 `Reviewed-by: SKIPPED-BY-FORCE (reason: <user input>)`
-- 写入审计记录到 `.forge/findings/force-skip-review-<date>.md`，含 commit hash、reason、timestamp 和 user identity
+- 写入审计记录到 `.tinkerman/findings/force-skip-review-<date>.md`，含 commit hash、reason、timestamp 和 user identity
 
 此逃生阀**可逆**：移除 flag 即可重新启用正常门禁。滥用可通过 findings 文件追溯。
 
@@ -183,12 +183,12 @@ IF 本次执行是从 conversation summary 恢复（上下文压缩后继续）�
 Ship 成功交付后，**主动将匹配 spec 的 status 更新为 `completed`**：
 
 1. 从当前 feature branch 名称提取 spec slug（匹配 `forge/|feature/|spec/` 前缀后的部分）
-2. 读取 `.forge/specs/<slug>/requirements.md` 的 frontmatter
+2. 读取 `.tinkerman/specs/<slug>/requirements.md` 的 frontmatter
 3. 如果 status ∈ {`locked`, `in_progress`, `approved`}，**先运行覆盖门禁**：
    `node scripts/check-spec-close-coverage.mjs <slug>`
    - **exit 0** → 通过（含"产出可能在别处"的软警告），继续步骤 4
    - **exit 1** → requirements.md 是空壳（无 SHALL/REQ），**不得**标 completed。补齐需求声明后再 ship，或用 `FORGE_SKIP_SPEC_COMPLETION_COVERAGE=1` 紧急跳过（需 PR 说明理由）
-4. 通过门禁后，更新 `.forge/specs/<slug>/requirements.md` 的 status → `completed`
+4. 通过门禁后，更新 `.tinkerman/specs/<slug>/requirements.md` 的 status → `completed`
 5. 如果 status ∈ {`completed`, `archived`, `draft`, `deferred`} → 保持不变
 6. 运行 `node scripts/rebuild-spec-index.mjs --incremental` 同步 INDEX.md
 
@@ -230,7 +230,7 @@ Ship 成功交付后，**主动将匹配 spec 的 status 更新为 `completed`**
 
 ## 5. Autonomous Mode Configuration
 
-Autonomous 模式通过 `.forge/config.md` 的 `ship_default_method` 字段控制交付行为（`merge` / `push-pr` / `keep-branch` / `prompt`）。无效值安全回退到 `keep-branch` 并输出警告。
+Autonomous 模式通过 `.tinkerman/config.md` 的 `ship_default_method` 字段控制交付行为（`merge` / `push-pr` / `keep-branch` / `prompt`）。无效值安全回退到 `keep-branch` 并输出警告。
 
 → 详见 references/delivery-options.md §Autonomous Mode Configuration
 
@@ -239,7 +239,7 @@ Autonomous 模式通过 `.forge/config.md` 的 `ship_default_method` 字段控�
 ## 6. Execution Flow
 
 1. Gate checks: call `runAllGates(input)` → Review → Test → Progress (in sequence)
-2. Persist results: call `persistGateResults(report, ".forge/ship")`
+2. Persist results: call `persistGateResults(report, ".tinkerman/ship")`
 3. Not passed (`allPassed=false`) → 🚫 Block, list failed items from `report.gates`
 4. Passed → Show four delivery options
 5. Execute chosen delivery method (Merge to main 时含 conflict-resolver 自动处理，详见 references/delivery-options.md §Option 1)
@@ -251,7 +251,7 @@ Autonomous 模式通过 `.forge/config.md` 的 `ship_default_method` 字段控�
 After push/PR: run `npm run check` (fallback: `ci_check_command` from config) with 600s timeout.
 
 - **Passed**: single stdout line, no artifact [R8.5]
-- **Failed**: write `.forge/ship/<topic>-post-push-verify.md` [R8.2]
+- **Failed**: write `.tinkerman/ship/<topic>-post-push-verify.md` [R8.2]
 - **Bitbucket MCP + PR created**: add comment via `postPRComment` [R8.3]
 - Function body <= 50 lines [R8.6]
 
@@ -275,7 +275,7 @@ After push/PR: run `npm run check` (fallback: `ci_check_command` from config) wi
 | Progress 部分完成 | 🚫 Ship 阻断：列出未完成任务 |
 | Git 操作失败 | ⚠️ Merge 冲突时自动调用 `resolveConflicts`（详见 references/delivery-options.md §Option 1）；非冲突类 Git 错误列出可能原因（网络/权限），建议检查或选其他方式 |
 | gh CLI 未安装 | ⚠️ 提示安装方式，建议选其他选项 |
-| 无 `.forge/` 目录 | ⚠️ 请先运行 /tinkerman init |
+| 无 `.tinkerman/` 目录 | ⚠️ 请先运行 /tinkerman init |
 
 ---
 
@@ -311,24 +311,24 @@ $ /tinkerman ship
 
 ## Dispatch Status Check (R6)
 
-Before running ship gates (§2), read `.forge/status.md` frontmatter to check dispatch status:
+Before running ship gates (§2), read `.tinkerman/status.md` frontmatter to check dispatch status:
 
-1. Parse `.forge/status.md` YAML frontmatter
+1. Parse `.tinkerman/status.md` YAML frontmatter
 2. Extract `dispatch_chosen_level` field
 3. Decision tree:
    - `dispatch_chosen_level === 'L3'` → **ABORT** ship with error:
      ```
      🚫 Ship blocked: review/decide/learn unavailable (L3 fallback).
-     See .forge/runs/<dispatch_run_id>/dispatch.jsonl for details.
+     See .tinkerman/runs/<dispatch_run_id>/dispatch.jsonl for details.
      ```
    - `dispatch_chosen_level === 'L2'` → **WARN** but continue:
      ```
      ⚠️ Ship proceeding with subagent-serial fallback (degraded review).
      ```
    - `dispatch_chosen_level ∈ {'L0', 'L1'}` OR field missing → **CONTINUE** normally
-4. If `.forge/status.md` does not exist, treat `dispatch_chosen_level` as missing (CONTINUE, do not throw)
+4. If `.tinkerman/status.md` does not exist, treat `dispatch_chosen_level` as missing (CONTINUE, do not throw)
 
-**Single source of truth**: Only read `.forge/status.md` three fields (`dispatch_chosen_level`, `dispatch_subcommand`, `dispatch_run_id`). Do NOT parse `dispatch.jsonl` directly.
+**Single source of truth**: Only read `.tinkerman/status.md` three fields (`dispatch_chosen_level`, `dispatch_subcommand`, `dispatch_run_id`). Do NOT parse `dispatch.jsonl` directly.
 
 ## Gotchas
 - **Review bypass**: Ship without review → undetected issues → enforce review gate, no skip

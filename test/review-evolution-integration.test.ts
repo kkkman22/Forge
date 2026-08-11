@@ -47,7 +47,7 @@ describe("buildReviewEvolutionArtifacts — Requirement 8.5", () => {
 
     const marker = artefacts.markerText;
     if (!marker) throw new Error("expected marker");
-    const parsed = parseEvolutionMarkers(marker, ".forge/reviews/demo.md");
+    const parsed = parseEvolutionMarkers(marker, ".tinkerman/reviews/demo.md");
     expect(parsed).toHaveLength(1);
     expect(parsed[0].target).toBe("forge-review#new_review_pattern");
     expect(parsed[0].source).toBe(ep.id);

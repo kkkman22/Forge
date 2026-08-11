@@ -13,7 +13,7 @@ allowed_tools:
 
 > **Trigger**: Step 4 of Standard path, Step 6 of Full path, or user input `/tinkerman test`
 > **Responsibility**: Systematic three-layer verification ensuring code passes at unit test, browser QA, and pre-completion checklist levels
-> **Output Path**: `.forge/progress/<topic>.md`（update verification status）and `.forge/artifacts/<run-id>/<artifact-id>.json`（immutable `test` evidence）
+> **Output Path**: `.tinkerman/progress/<topic>.md`（update verification status）and `.tinkerman/artifacts/<run-id>/<artifact-id>.json`（immutable `test` evidence）
 
 ---
 
@@ -61,7 +61,7 @@ allowed_tools:
 
 **CI 检查命令优先级**：
 
-执行 Layer 3 清单前，读取 `.forge/config.md` YAML frontmatter 的 `ci_check_command` 字段：
+执行 Layer 3 清单前，读取 `.tinkerman/config.md` YAML frontmatter 的 `ci_check_command` 字段：
 - **如果非空**：使用 `forge_exec` 执行该命令（server-side trimming）。当 MCP 不可用时，回退到 `scripts/run-with-trim.sh` 或直接执行。覆盖清单项 1-4。从合并输出中提取各项通过/失败状态。
 - **如果为空或缺失**：为每个清单项分别运行对应命令（优先使用 `forge_exec`）。
 
@@ -72,7 +72,7 @@ allowed_tools:
 | `kind` | 处理 |
 |--------|------|
 | `has_ci_command` | 正常路径：使用 `ci_check_command` 值 |
-| `drift_with_npm_check` | 输出 `warning` 文本 → 使用 `forge_exec` 执行 `npm run check` → 在 `.forge/findings/<topic>-ci-drift.md` 记录漂移（仅首次） |
+| `drift_with_npm_check` | 输出 `warning` 文本 → 使用 `forge_exec` 执行 `npm run check` → 在 `.tinkerman/findings/<topic>-ci-drift.md` 记录漂移（仅首次） |
 | `no_check_no_field` | 走原有逐项回退（清单项 1-4 分别执行） |
 | `malformed_package_json` | 输出 `reason` 警告 → 走逐项回退 |
 
@@ -136,7 +136,7 @@ IF 本次执行是从 conversation summary 恢复（上下文压缩后继续）�
 
 ## 5. Execution Flow
 
-1. **前置检查**：`.forge/` 目录存在？有代码变更？有测试配置？
+1. **前置检查**：`.tinkerman/` 目录存在？有代码变更？有测试配置？
 2. **Layer 1**：运行项目测试套件。失败 → 停止
 3. **Layer 2**：Web 项目执行浏览器级 QA，否则跳过
 4. **Layer 3**：逐项检查 7 项清单
@@ -153,9 +153,9 @@ Triggers CLI/TUI external verification harness. Automatically triggered when:
 
 - `package.json` has non-empty `bin` field, OR
 - `--cli` flag is explicitly passed, OR
-- `.forge/config.md` has `cli_harness: true`
+- `.tinkerman/config.md` has `cli_harness: true`
 
-Execution: delegates to `../control-cli/` which selects the best available tier (project > cmux > tmux > node-pty). Output written to `.forge/findings/<topic>/cli-harness/`.
+Execution: delegates to `../control-cli/` which selects the best available tier (project > cmux > tmux > node-pty). Output written to `.tinkerman/findings/<topic>/cli-harness/`.
 
 **UI variant**: `/tinkerman test --ui` delegates to `../control-ui/` for web/Electron testing.
 
@@ -166,7 +166,7 @@ Execution: delegates to `../control-cli/` which selects the best available tier 
 | No test framework | ⚠️ 未检测到测试框架。Layer 1 无法执行 |
 | Test timeout (>5 min) | ⚠️ 可能原因：未关闭的异步操作、数据量过大、死循环 |
 | Some checklist items unverifiable | Mark as "unverifiable" not "passed", suggest configuring the corresponding tool |
-| No `.forge/` directory | ⚠️ 请先运行 /tinkerman init |
+| No `.tinkerman/` directory | ⚠️ 请先运行 /tinkerman init |
 
 ---
 

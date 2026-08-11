@@ -34,7 +34,7 @@ function createMockFs(files: Record<string, string | null>): FileSystem {
 
 const REPOS_ROOT = "/repos";
 const PACKS_DIR = path.join(REPOS_ROOT, "packs");
-const CONFIG_PATH = path.join(REPOS_ROOT, ".forge", "config.md");
+const CONFIG_PATH = path.join(REPOS_ROOT, ".tinkerman", "config.md");
 
 /** Minimal valid pms pack.yaml content. */
 function pmsPackYaml(): string {
@@ -69,8 +69,8 @@ describe("loadEnabledPacks", () => {
     expect(result.enabled.order).toEqual(["pms"]);
     expect(result.enabled.entries).toHaveLength(1);
     expect(result.errors).toEqual([]);
-    // customLayerRoot resolves to <rootDir>/.forge/custom
-    expect(result.enabled.customLayerRoot).toBe(path.join(REPOS_ROOT, ".forge", "custom"));
+    // customLayerRoot resolves to <rootDir>/.tinkerman/custom
+    expect(result.enabled.customLayerRoot).toBe(path.join(REPOS_ROOT, ".tinkerman", "custom"));
   });
 
   it("returns warning + empty enabled when config.md is absent", async () => {

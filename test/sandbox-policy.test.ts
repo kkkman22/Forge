@@ -241,15 +241,16 @@ describe("buildDefaultPolicy", () => {
 
   it("denies sandbox.json by default to prevent self-modification", () => {
     const policy = buildDefaultPolicy("/projects/my-app");
-    expect(checkFileAccess("/projects/my-app/.forge/sandbox.json", policy.fileSystem).allowed).toBe(
-      false,
-    );
+    expect(
+      checkFileAccess("/projects/my-app/.tinkerman/sandbox.json", policy.fileSystem).allowed,
+    ).toBe(false);
   });
 
   it("denies .sandbox-active.json by default", () => {
     const policy = buildDefaultPolicy("/projects/my-app");
     expect(
-      checkFileAccess("/projects/my-app/.forge/.sandbox-active.json", policy.fileSystem).allowed,
+      checkFileAccess("/projects/my-app/.tinkerman/.sandbox-active.json", policy.fileSystem)
+        .allowed,
     ).toBe(false);
   });
 });

@@ -8,9 +8,9 @@ updated: 2026-08-11
 **Signature**: `checkShipGate(review, test, progress)`
 
 - **Parameters**:
-  - `review` — `ReviewResult` parsed from `.forge/reviews/<topic>.md` frontmatter (含 `result`、`p0_count`、`p1_count`)
+  - `review` — `ReviewResult` parsed from `.tinkerman/reviews/<topic>.md` frontmatter (含 `result`、`p0_count`、`p1_count`)
   - `test` — `TestResult` constructed from Layer 1 + Layer 3 verification results (含 `passed`、`failedCount`)
-  - `progress` — `ProgressResult` parsed from `.forge/progress/<topic>.md` (含 `totalTasks`、`completedTasks`)
+  - `progress` — `ProgressResult` parsed from `.tinkerman/progress/<topic>.md` (含 `totalTasks`、`completedTasks`)
 - **Returns**: `{ allowed: boolean, reasons: string[] }`；`allowed: false` 时 `reasons` 列出所有未通过的门禁
 - **Purpose**: Programmatically verify the three ship gates, replacing manual item-by-item checks
 
@@ -57,14 +57,14 @@ updated: 2026-08-11
 ## recordPendingDelivery
 
 > ⚠️ Superseded: The original `src/branch-lifecycle.ts` module was removed in the loop/SDK architecture refactoring.
-> Pending delivery state is now tracked via `.forge/status.md` directly by the build/ship skills.
-> `detectUnshippedBranches` in `src/branch-gate.ts` reads `.forge/status.md` for unshipped detection.
+> Pending delivery state is now tracked via `.tinkerman/status.md` directly by the build/ship skills.
+> `detectUnshippedBranches` in `src/branch-gate.ts` reads `.tinkerman/status.md` for unshipped detection.
 
 **Legacy Signature**: `recordPendingDelivery(branchName, topic, timestamp)` (from deleted `src/branch-lifecycle.ts`)
 
 - **Parameters**:
   - `branchName` source: `git branch --show-current` output
-  - `topic` source: `current_task` field in `.forge/status.md`
+  - `topic` source: `current_task` field in `.tinkerman/status.md`
   - `timestamp` source: `Date.now()`
-- **Returns**: `PendingDeliveryRecord` appended to `.forge/status.md`
+- **Returns**: `PendingDeliveryRecord` appended to `.tinkerman/status.md`
 - **Purpose**: Persist pending-delivery state when the user picks "Keep branch"; later consumed by `detectUnshippedBranches` at the next `/tinkerman build` startup

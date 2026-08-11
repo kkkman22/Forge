@@ -8,7 +8,7 @@ skeleton_exempt_legacy: true
 
 # /tinkerman — Unified Dispatcher Entry Point
 
-! Current context: read `.forge/status.md` for active task, phase, and branch.
+! Current context: read `.tinkerman/status.md` for active task, phase, and branch.
 
 ## 1. Overview
 
@@ -18,7 +18,7 @@ Forge's sole registered skill. All 38 sub-skills live under `skills/tinkerman/li
 
 Standard and Full workflows may isolate phase execution behind internal workers, but `/tinkerman` remains the only user-facing entry. No manual new Claude Code window, context-mode command, worker command, or sync command is required during normal execution.
 
-The runtime is artifact-first: detailed logs and reports go under `.forge/`, while workers return bounded summaries to the main conversation. Subagent workers cover review/research-style work; CLI/SDK workers use packaged scripts such as `scripts/tinkerman-phase-worker.mjs` for phase-level isolation.
+The runtime is artifact-first: detailed logs and reports go under `.tinkerman/`, while workers return bounded summaries to the main conversation. Subagent workers cover review/research-style work; CLI/SDK workers use packaged scripts such as `scripts/tinkerman-phase-worker.mjs` for phase-level isolation.
 
 Runtime config drift is checked and repairable through the packaged `scripts/tinkerman-sync-runtime.mjs` shim. Source mode points to project scripts; marketplace mode points to plugin-root scripts so the Claude Code marketplace package stays self-contained.
 
@@ -42,7 +42,7 @@ Tier is logical, not physical — a sub can appear in multiple tiers. Routing lo
 
 Every `/tinkerman <topic>` invocation follows this sequence (implemented in `src/forge-dispatcher.ts`,不可绕过):
 
-1. **resolveDispatcherMode** — `.forge/config.md` `skills.dispatcher_mode` (default: `collapsed`)
+1. **resolveDispatcherMode** — `.tinkerman/config.md` `skills.dispatcher_mode` (default: `collapsed`)
 2. **validateTopic** — 38-sub allowlist (R2.1)
 3. **resolveLibPath** — `${CLAUDE_PLUGIN_ROOT} ?? cwd` dual-mode (R2.2)
 4. **checkIntegrity** — `manifest.json` sha256 (R2.6)
@@ -83,7 +83,7 @@ Usage: `/tinkerman decide --no-gate <topic>` or `/tinkerman spec --no-gate <topi
 
 ## 7. Configuration
 
-`.forge/config.md` → `skills.dispatcher_mode`:
+`.tinkerman/config.md` → `skills.dispatcher_mode`:
 
 | Value | Behavior |
 |-------|----------|

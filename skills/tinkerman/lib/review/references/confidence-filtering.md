@@ -8,7 +8,7 @@ updated: 2026-08-11
 | Confidence | Action |
 |--------|------|
 | ≥ 0.8 | 写入评审报告 |
-| 0.5-0.7 | 记录到 `.forge/reviews/<topic>-low-confidence.md`，不阻断 |
+| 0.5-0.7 | 记录到 `.tinkerman/reviews/<topic>-low-confidence.md`，不阻断 |
 | < 0.5 | 丢弃 |
 
 ## 评审者输出格式

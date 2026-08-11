@@ -32,14 +32,14 @@ updated: 2026-08-11
 <IRON-LAW name="tdd-delete-and-restart">所有实现任务必须遵循 **RED → GREEN → REFACTOR** 循环。**铁律**：如果发现代码先于测试编写——删除代码，从测试开始。</IRON-LAW> → 详见 docs/tinkerman-constitution-detail.md §2.1
 
 ### 2.1.1 Vertical Slice Only（铁律）
-每个 TDD 周期必须是一个 **Vertical Slice**：一条测试 → 一段实现 → 重复。禁止 Horizontal Slicing（先写全部测试再写全部实现）。详见 `.forge/glossary.md`。
+每个 TDD 周期必须是一个 **Vertical Slice**：一条测试 → 一段实现 → 重复。禁止 Horizontal Slicing（先写全部测试再写全部实现）。详见 `.tinkerman/glossary.md`。
 
 ### 2.1.2 TDD 合理化预防表
 "太简单不用测"/"先写实现再补测试"/"保留代码当参考" = 逃避铁律。STOP。→ 完整 12 行表格见 docs/tinkerman-constitution-detail.md §2.1.2
 </important>
 
 ### 2.2 Pre-build Checks
-标准和全量路径下，`/tinkerman build` 启动前必须通过三道门禁：Spec 锁定、Plan 批准、分支隔离。分支隔离门禁：每个功能在其对应的 feature 分支上开发，工作树不干净时阻断。**Reframing/Clarification Gates**：decide Round 1 前 Reframing Gate（1–3 问）+ spec Step 1 前 Clarification Gate（2–5 问）；Light 跳过 / Standard 默认（`--no-gate` 跳过）/ Full 强制；反馈 → `.forge/progress/<slug>-reframing.jsonl`/`*-clarification.jsonl`。
+标准和全量路径下，`/tinkerman build` 启动前必须通过三道门禁：Spec 锁定、Plan 批准、分支隔离。分支隔离门禁：每个功能在其对应的 feature 分支上开发，工作树不干净时阻断。**Reframing/Clarification Gates**：decide Round 1 前 Reframing Gate（1–3 问）+ spec Step 1 前 Clarification Gate（2–5 问）；Light 跳过 / Standard 默认（`--no-gate` 跳过）/ Full 强制；反馈 → `.tinkerman/progress/<slug>-reframing.jsonl`/`*-clarification.jsonl`。
 → 详见 docs/tinkerman-constitution-detail.md §2.2
 
 ### 2.3 Verification Iron Law
@@ -82,7 +82,7 @@ build 阶段主 Agent 必须执行周期性 Restatement Checkpoint：每完成 N
 ## 3. Review Discipline
 
 ### 3.1 Execution-Assessment Separation
-写代码的 Agent 不评审自己的代码。`/tinkerman review` 使用独立 Subagent。评审者只对照 Spec 和代码质量标准。**不允许**主 Agent 顶替评审。Subagent 不可用时按 fallback ladder 处理（L0→L1→L2→L3），L3 阻断 ship。详见 `.forge/decisions/2026-05-18-review-fallback-ladder.md`。
+写代码的 Agent 不评审自己的代码。`/tinkerman review` 使用独立 Subagent。评审者只对照 Spec 和代码质量标准。**不允许**主 Agent 顶替评审。Subagent 不可用时按 fallback ladder 处理（L0→L1→L2→L3），L3 阻断 ship。详见 `.tinkerman/decisions/2026-05-18-review-fallback-ladder.md`。
 
 ### 3.2 Multi-Layer Review
 
@@ -115,7 +115,7 @@ build 阶段主 Agent 必须执行周期性 Restatement Checkpoint：每完成 N
 
 ### 4.2 Knowledge Base Limit
 
-知识库文档数量上限 **20** 个（可在 `.forge/config.md` 配置）。超出上限时按置信度排序清理。**Confidence < 0.3 的模式自动清理**。高频模式写入 `instincts.md` 时附带 Confidence Score（0.3 - 0.9）。
+知识库文档数量上限 **20** 个（可在 `.tinkerman/config.md` 配置）。超出上限时按置信度排序清理。**Confidence < 0.3 的模式自动清理**。高频模式写入 `instincts.md` 时附带 Confidence Score（0.3 - 0.9）。
 
 ### 4.3 Knowledge Backflow
 `/tinkerman plan` 执行时自动搜索 Knowledge Base 中的相关经验。`/tinkerman build` 执行时自动搜索 Knowledge Base 中的历史踩坑记录。→ 详见 docs/tinkerman-constitution-detail.md §4
@@ -124,13 +124,13 @@ build 阶段主 Agent 必须执行周期性 Restatement Checkpoint：每完成 N
 
 ## 5. Charter（项目宪章）
 
-`.forge/charter.md` 工程策略锚定（架构边界、技术基线、不可变量）。`/tinkerman charter init/update/check/show` 管理生命周期。`status: active` 时下游 skill（decide/spec/plan/review）自动读取摘要（≤500 tokens）作为 grounding 约束；不存在或 `draft` 时正常执行不阻断。
+`.tinkerman/charter.md` 工程策略锚定（架构边界、技术基线、不可变量）。`/tinkerman charter init/update/check/show` 管理生命周期。`status: active` 时下游 skill（decide/spec/plan/review）自动读取摘要（≤500 tokens）作为 grounding 约束；不存在或 `draft` 时正常执行不阻断。
 
 ## 6. Self-Evolution Protocol
 
 ### 6.1 Evolved Rules
 
-会话开始时读取 `.forge/knowledge/evolved-rules.md`，将其规则视为项目特定的错误预防指令。
+会话开始时读取 `.tinkerman/knowledge/evolved-rules.md`，将其规则视为项目特定的错误预防指令。
 
 ### 6.2-6.6
 
@@ -138,9 +138,9 @@ build 阶段主 Agent 必须执行周期性 Restatement Checkpoint：每完成 N
 
 ## 7. Session Boundaries
 
-每个 `/tinkerman` 命令调用构成 Session_Boundary。阶段间上下文交接通过 `.forge/` 目录文件系统进行，而非对话历史。建议 `/tinkerman` 命令之间开启新会话。
+每个 `/tinkerman` 命令调用构成 Session_Boundary。阶段间上下文交接通过 `.tinkerman/` 目录文件系统进行，而非对话历史。建议 `/tinkerman` 命令之间开启新会话。
 
-**Subagent 隔离**：每个 Subagent 有独立上下文。**会话恢复**：`/tinkerman resume` 从 `.forge/progress/` 和 `.forge/knowledge/sessions/` 读取。**并发控制**：`max_parallel_agents` 默认 6。HTTP 429 降级：减半 → 降至 2 → 串行。**上下文预算（强制）**：Read >100KB → ⚠️ `/clear`；>150KB → ⛔ `/clear + /tinkerman resume`。<important if="context exceeds 100k tokens or session runs long">上下文超 100K tokens 时，考虑 `/clear` + `/tinkerman resume`。`.forge/` 目录在会话间传递状态。</important>
+**Subagent 隔离**：每个 Subagent 有独立上下文。**会话恢复**：`/tinkerman resume` 从 `.tinkerman/progress/` 和 `.tinkerman/knowledge/sessions/` 读取。**并发控制**：`max_parallel_agents` 默认 6。HTTP 429 降级：减半 → 降至 2 → 串行。**上下文预算（强制）**：Read >100KB → ⚠️ `/clear`；>150KB → ⛔ `/clear + /tinkerman resume`。<important if="context exceeds 100k tokens or session runs long">上下文超 100K tokens 时，考虑 `/clear` + `/tinkerman resume`。`.tinkerman/` 目录在会话间传递状态。</important>
 
 ---
 ## 项目信息

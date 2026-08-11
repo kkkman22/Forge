@@ -5,8 +5,8 @@ import { describe, expect, it } from "vitest";
 const ROOT = resolve(__dirname, "../..");
 
 describe("Config foundation (R6 + R7 + config fields)", () => {
-  describe(".forge/config.md", () => {
-    const configPath = resolve(ROOT, ".forge/config.md");
+  describe(".tinkerman/config.md", () => {
+    const configPath = resolve(ROOT, ".tinkerman/config.md");
     const content = existsSync(configPath) ? readFileSync(configPath, "utf-8") : "";
 
     const requiredFields: Array<{ field: string; expected: string }> = [

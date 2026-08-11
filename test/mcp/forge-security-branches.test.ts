@@ -102,7 +102,7 @@ describe("forge-git: formatDiffSummary (branch coverage)", () => {
       ],
       totalAdded: 5,
       totalRemoved: 4,
-      fullDiffPath: ".forge/runs/diff.txt",
+      fullDiffPath: ".tinkerman/runs/diff.txt",
     };
     const out = formatDiffSummary(summary);
     expect(out).toContain("2");

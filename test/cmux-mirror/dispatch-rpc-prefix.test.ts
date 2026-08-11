@@ -56,7 +56,7 @@ describe("sync-once dispatch: every command is routed through `cmux rpc`", () =>
 
   beforeEach(() => {
     dir = mkdtempSync(join(tmpdir(), "cmux-rpc-test-"));
-    forgeDir = join(dir, ".forge");
+    forgeDir = join(dir, ".tinkerman");
     mkdirSync(forgeDir, { recursive: true });
     vi.clearAllMocks();
   });

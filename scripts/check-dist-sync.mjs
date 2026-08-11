@@ -23,7 +23,7 @@ import path from "node:path";
 // script-specific and stays here.
 import { srcToExpectedDist, distToExpectedSrc } from "../dist/src/dist-sync.js";
 
-const TEMP_OUTDIR = ".forge/.dist-sync-check";
+const TEMP_OUTDIR = ".tinkerman/.dist-sync-check";
 
 function log(msg) {
   process.stdout.write(`${msg}\n`);

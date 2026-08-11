@@ -12,7 +12,7 @@ const SCRIPT = join(ROOT, "scripts", "prune-sessions.sh");
  * Spec: session-journal-retention
  *
  * Behavioural tests for prune-sessions.sh. Each test constructs a synthetic
- * `.forge/` tree in a temp dir, runs the script via bash, and asserts on the
+ * `.tinkerman/` tree in a temp dir, runs the script via bash, and asserts on the
  * resulting filesystem state. mtimes are set with `touch -t` (macOS + GNU
  * compatible absolute-timestamp form).
  */
@@ -42,19 +42,19 @@ describe("prune-sessions.sh (spec: session-journal-retention)", () => {
 
   /** Create the sessions dir + config with given retention/keep settings. */
   const scaffold = (opts: { retention?: number; keep?: number } = {}): string => {
-    const sessionsDir = join(workdir, ".forge", "knowledge", "sessions");
+    const sessionsDir = join(workdir, ".tinkerman", "knowledge", "sessions");
     mkdirSync(sessionsDir, { recursive: true });
     const retention = opts.retention ?? 10;
     const keep = opts.keep ?? 2;
     writeFileSync(
-      join(workdir, ".forge", "config.md"),
+      join(workdir, ".tinkerman", "config.md"),
       `---\nsession_retention_days: ${retention}\nsession_keep_recent: ${keep}\n---\n`,
     );
     return sessionsDir;
   };
 
   const sessionPath = (name: string): string =>
-    join(workdir, ".forge", "knowledge", "sessions", name);
+    join(workdir, ".tinkerman", "knowledge", "sessions", name);
 
   // -------------------------------------------------------------------------
   // Req1 + Req2: expired journals are pruned; recent ones kept
@@ -144,9 +144,9 @@ describe("prune-sessions.sh (spec: session-journal-retention)", () => {
   // -------------------------------------------------------------------------
 
   it("falls back to defaults when config fields are absent", () => {
-    const dir = join(workdir, ".forge", "knowledge", "sessions");
+    const dir = join(workdir, ".tinkerman", "knowledge", "sessions");
     mkdirSync(dir, { recursive: true });
-    writeFileSync(join(workdir, ".forge", "config.md"), "---\n---\n");
+    writeFileSync(join(workdir, ".tinkerman", "config.md"), "---\n---\n");
     // A file 1 day old: well within default retention (90), must survive.
     writeFileSync(join(dir, "2026-06-16-recent.md"), "# recent\n");
 
@@ -158,10 +158,10 @@ describe("prune-sessions.sh (spec: session-journal-retention)", () => {
   });
 
   it("warns and falls back when session_retention_days is non-positive", () => {
-    const dir = join(workdir, ".forge", "knowledge", "sessions");
+    const dir = join(workdir, ".tinkerman", "knowledge", "sessions");
     mkdirSync(dir, { recursive: true });
     writeFileSync(
-      join(workdir, ".forge", "config.md"),
+      join(workdir, ".tinkerman", "config.md"),
       "---\nsession_retention_days: 0\nsession_keep_recent: 5\n---\n",
     );
     writeFileSync(join(dir, "2026-06-16-x.md"), "# x\n");
@@ -183,7 +183,7 @@ describe("prune-sessions.sh (spec: session-journal-retention)", () => {
 
   it("protects journals referenced by solutions/ source_session", () => {
     const dir = scaffold({ retention: 10, keep: 1 });
-    const solutionsDir = join(workdir, ".forge", "knowledge", "solutions");
+    const solutionsDir = join(workdir, ".tinkerman", "knowledge", "solutions");
     mkdirSync(solutionsDir, { recursive: true });
 
     // An expired journal that is referenced — must be protected.
@@ -221,8 +221,8 @@ describe("prune-sessions.sh (spec: session-journal-retention)", () => {
   // -------------------------------------------------------------------------
 
   it("exits cleanly when sessions/ directory does not exist", () => {
-    mkdirSync(join(workdir, ".forge"), { recursive: true });
-    writeFileSync(join(workdir, ".forge", "config.md"), "---\n---\n");
+    mkdirSync(join(workdir, ".tinkerman"), { recursive: true });
+    writeFileSync(join(workdir, ".tinkerman", "config.md"), "---\n---\n");
 
     const out = run();
 
@@ -262,7 +262,7 @@ describe("prune-sessions.sh (spec: session-journal-retention)", () => {
 
     run();
 
-    const health = join(workdir, ".forge", "knowledge", "tool-health.log");
+    const health = join(workdir, ".tinkerman", "knowledge", "tool-health.log");
     expect(existsSync(health)).toBe(true);
     const lines = execFileSync("cat", [health], { encoding: "utf-8" }).trim().split("\n");
     expect(lines[lines.length - 1]).toMatch(/prune-sessions:.*pruned=1.*dry_run=no/);
@@ -276,7 +276,7 @@ describe("prune-sessions.sh (spec: session-journal-retention)", () => {
 
     run(["--dry-run"]);
 
-    const health = join(workdir, ".forge", "knowledge", "tool-health.log");
+    const health = join(workdir, ".tinkerman", "knowledge", "tool-health.log");
     expect(existsSync(health)).toBe(false);
   });
 });

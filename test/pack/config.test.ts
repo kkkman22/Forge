@@ -20,7 +20,7 @@ function makeRegistry(names: string[]): PackRegistry {
   return { packs, warnings: [] };
 }
 
-const CUSTOM_ROOT = "/repos/.forge/custom";
+const CUSTOM_ROOT = "/repos/.tinkerman/custom";
 
 describe("parseEnabledPacks", () => {
   it("returns empty enabled when packs field is absent", () => {

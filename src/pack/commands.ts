@@ -35,7 +35,7 @@ export function commandList(registry: PackRegistry, enabled: EnabledPacks): stri
 // commandEnable
 // ---------------------------------------------------------------------------
 
-/** Enable a pack by adding it to .forge/config.md frontmatter. */
+/** Enable a pack by adding it to .tinkerman/config.md frontmatter. */
 export function commandEnable(
   name: string,
   config: string,
@@ -67,7 +67,7 @@ export function commandEnable(
 // commandDisable
 // ---------------------------------------------------------------------------
 
-/** Disable a pack by removing it from .forge/config.md frontmatter. */
+/** Disable a pack by removing it from .tinkerman/config.md frontmatter. */
 export function commandDisable(
   name: string,
   config: string,

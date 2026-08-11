@@ -25,7 +25,7 @@ describe("Canvas empty reviews [R14.5, R14.7]", () => {
 
   it("shows no-findings placeholder when findings are empty", async () => {
     testDir = join(tmpdir(), `forge-canvas-empty-${Date.now()}`);
-    const forgeDir = join(testDir, ".forge");
+    const forgeDir = join(testDir, ".tinkerman");
     mkdirSync(join(forgeDir, "reviews"), { recursive: true });
     writeFileSync(join(forgeDir, "reviews", "empty.md"), "# Review");
 
@@ -42,7 +42,7 @@ describe("Canvas empty reviews [R14.5, R14.7]", () => {
 
   it("succeeds with success status when file exists but has no parsed findings", async () => {
     testDir = join(tmpdir(), `forge-canvas-noparse-${Date.now()}`);
-    const forgeDir = join(testDir, ".forge");
+    const forgeDir = join(testDir, ".tinkerman");
     mkdirSync(join(forgeDir, "reviews"), { recursive: true });
     writeFileSync(
       join(forgeDir, "reviews", "noparse.md"),

@@ -7,7 +7,7 @@ updated: 2026-08-11
 
 ## Branch State Table
 
-`git branch --show-current` → read `current_task` from `.forge/status.md` → `checkBranchTopicGate`. Auto-switch requires clean working tree.
+`git branch --show-current` → read `current_task` from `.tinkerman/status.md` → `checkBranchTopicGate`. Auto-switch requires clean working tree.
 
 | Branch State | Action |
 |---|---|
@@ -24,7 +24,7 @@ When Branch Gate detects the developer is not on a matching branch, use Claude C
 ```
 inputs:
   dirtyTree:       `git status --porcelain` non-empty
-  tier:            from .forge/status.md routing tier
+  tier:            from .tinkerman/status.md routing tier
 ```
 
 Present `AskUserQuestion` with:

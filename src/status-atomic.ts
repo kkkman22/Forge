@@ -2,7 +2,7 @@
  * Status atomic write — the single funnel for status.md / status/*.md writes.
  *
  * P1-1: prior to this module, `writeTaskStatus` did an unlocked
- * read-modify-write (`io.read → transform → io.write`) on `.forge/status.md`.
+ * read-modify-write (`io.read → transform → io.write`) on `.tinkerman/status.md`.
  * With `max_parallel_agents` defaulting to 6, two parallel subagents both
  * reading the same file then writing lost updates (last-write-wins overwrote
  * the prior write). The Iron Law in `.claude/rules/state-file-locking.md`
@@ -71,7 +71,7 @@ function installExitHandlers(): void {
  * fs across child processes). The injected `io` governs only the data
  * read/write/move of the target file itself.
  *
- * @param forgeRoot - `.forge/` directory path (kept for API symmetry; lock is
+ * @param forgeRoot - `.tinkerman/` directory path (kept for API symmetry; lock is
  *   keyed on `targetPath`, not `forgeRoot`).
  * @param targetPath - Absolute path to the status file being written.
  * @param transform - Pure function: prior content (or "" if absent) → next

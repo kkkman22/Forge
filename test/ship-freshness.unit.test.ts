@@ -26,30 +26,30 @@ describe("checkReviewFreshness — unit tests", () => {
     expect(result.fresh).toBe(true);
   });
 
-  it("different commit, empty file list → fresh (.forge/-only vacuously)", () => {
+  it("different commit, empty file list → fresh (.tinkerman/-only vacuously)", () => {
     const result = checkReviewFreshness("aaa", "bbb", []);
     expect(result).toEqual({
       fresh: true,
-      reason: "changes only in .forge/ state files",
+      reason: "changes only in .tinkerman/ state files",
     });
   });
 
-  it("different commit, only .forge/ files → fresh", () => {
+  it("different commit, only .tinkerman/ files → fresh", () => {
     const result = checkReviewFreshness("aaa", "bbb", [
-      ".forge/status.md",
-      ".forge/reviews/test.md",
+      ".tinkerman/status.md",
+      ".tinkerman/reviews/test.md",
     ]);
     expect(result).toEqual({
       fresh: true,
-      reason: "changes only in .forge/ state files",
+      reason: "changes only in .tinkerman/ state files",
     });
   });
 
-  it("different commit, mixed files → not fresh, only non-.forge/ files listed", () => {
+  it("different commit, mixed files → not fresh, only non-.tinkerman/ files listed", () => {
     const result = checkReviewFreshness("aaa", "bbb", [
-      ".forge/status.md",
+      ".tinkerman/status.md",
       "src/foo.ts",
-      ".forge/reviews/test.md",
+      ".tinkerman/reviews/test.md",
       "lib/bar.js",
     ]);
     expect(result).toEqual({

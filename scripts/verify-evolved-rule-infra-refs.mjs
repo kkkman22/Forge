@@ -2,7 +2,7 @@
 /**
  * Evolved Rules Infra_Ref Verifier.
  *
- * Each rule in `.forge/knowledge/evolved-rules.md` declares an `Infra_Ref:`
+ * Each rule in `.tinkerman/knowledge/evolved-rules.md` declares an `Infra_Ref:`
  * field pointing to the skill/hook/agent/config files that enforce it.
  * This script verifies those references still resolve — if a SKILL.md or
  * hook is refactored, we catch broken landing points before they silently
@@ -25,7 +25,7 @@ import {
     validateInfraRefs,
 } from "../dist/src/evolved-rules-infra-refs.js";
 
-const RULES_FILE = path.join(process.cwd(), ".forge", "knowledge", "evolved-rules.md");
+const RULES_FILE = path.join(process.cwd(), ".tinkerman", "knowledge", "evolved-rules.md");
 const PROJECT_ROOT = process.cwd();
 
 function main() {
@@ -76,7 +76,7 @@ function main() {
   console.error("");
   console.error("Either update the rule's Infra_Ref to match new landing location,");
   console.error("or restore the referenced infrastructure. If the rule has been");
-  console.error("retired, move it to .forge/knowledge/solutions/evolved-rules-retired.md");
+  console.error("retired, move it to .tinkerman/knowledge/solutions/evolved-rules-retired.md");
   console.error("and remove the corresponding entry from evolved-rules.md.");
   return 1;
 }

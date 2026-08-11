@@ -84,13 +84,13 @@ assert_dir_exists() {
 setup_fixtures() {
   local tmpdir
   tmpdir=$(mktemp -d)
-  mkdir -p "$tmpdir/.forge/specs/test-slug"
-  mkdir -p "$tmpdir/.forge/plans"
-  mkdir -p "$tmpdir/.forge/progress"
-  mkdir -p "$tmpdir/.forge/archive"
-  echo "test requirements" > "$tmpdir/.forge/specs/test-slug/requirements.md"
-  echo "test plan" > "$tmpdir/.forge/plans/test-slug.md"
-  echo "test progress" > "$tmpdir/.forge/progress/test-slug.md"
+  mkdir -p "$tmpdir/.tinkerman/specs/test-slug"
+  mkdir -p "$tmpdir/.tinkerman/plans"
+  mkdir -p "$tmpdir/.tinkerman/progress"
+  mkdir -p "$tmpdir/.tinkerman/archive"
+  echo "test requirements" > "$tmpdir/.tinkerman/specs/test-slug/requirements.md"
+  echo "test plan" > "$tmpdir/.tinkerman/plans/test-slug.md"
+  echo "test progress" > "$tmpdir/.tinkerman/progress/test-slug.md"
   echo "$tmpdir"
 }
 
@@ -209,13 +209,13 @@ setup_git_repo "$tmpdir"
 output=$(cd "$tmpdir" && bash "$ARCHIVE_SCRIPT" test-slug --purge-cc=skip 2>&1)
 rc=$?
 assert_exit_code "$rc" "0" "file archive exits 0"
-archive_dir="$tmpdir/.forge/archive/$(date +%Y-%m-%d)-test-slug"
+archive_dir="$tmpdir/.tinkerman/archive/$(date +%Y-%m-%d)-test-slug"
 assert_dir_exists "$archive_dir/spec" "spec directory archived"
 assert_file_exists "$archive_dir/plan.md" "plan file archived"
 assert_file_exists "$archive_dir/progress.md" "progress file archived"
 assert_file_exists "$archive_dir/archive-manifest.md" "archive manifest created"
 TOTAL=$((TOTAL + 1))
-if [[ ! -d "$tmpdir/.forge/specs/test-slug" ]]; then
+if [[ ! -d "$tmpdir/.tinkerman/specs/test-slug" ]]; then
   echo -e "  ${GREEN}PASS${NC} original spec removed"
   PASS=$((PASS + 1))
 else
@@ -262,7 +262,7 @@ output=$(cd "$tmpdir" && PATH="$mock_dir:$PATH" bash "$ARCHIVE_SCRIPT" test-slug
 rc=$?
 assert_exit_code "$rc" "0" "auto mode exits 0"
 assert_contains "$output" "CC purge" "auto mode completes purge"
-archive_dir="$tmpdir/.forge/archive/$(date +%Y-%m-%d)-test-slug"
+archive_dir="$tmpdir/.tinkerman/archive/$(date +%Y-%m-%d)-test-slug"
 manifest="$archive_dir/purge-manifest.json"
 assert_file_exists "$manifest" "manifest file created"
 manifest_content=$(cat "$manifest" 2>/dev/null || echo "")
@@ -310,7 +310,7 @@ output=$(cd "$tmpdir" && PATH="$mock_dir:$PATH" bash "$ARCHIVE_SCRIPT" test-slug
 rc=$?
 assert_exit_code "$rc" "2" "purge failure exits 2"
 assert_contains "$output" "执行失败" "purge failure shows error"
-archive_dir="$tmpdir/.forge/archive/$(date +%Y-%m-%d)-test-slug"
+archive_dir="$tmpdir/.tinkerman/archive/$(date +%Y-%m-%d)-test-slug"
 assert_dir_exists "$archive_dir" "archive dir exists despite purge failure"
 teardown_fixtures "$tmpdir"
 rm -rf "$mock_dir"
@@ -376,7 +376,7 @@ setup_git_repo "$tmpdir"
 mock_dir=$(mktemp -d)
 create_mock_claude "$mock_dir" "success"
 output=$(cd "$tmpdir" && PATH="$mock_dir:$PATH" bash "$ARCHIVE_SCRIPT" test-slug --purge-cc=auto 2>&1)
-manifest="$tmpdir/.forge/archive/$(date +%Y-%m-%d)-test-slug/purge-manifest.json"
+manifest="$tmpdir/.tinkerman/archive/$(date +%Y-%m-%d)-test-slug/purge-manifest.json"
 if [[ -f "$manifest" ]]; then
   content=$(cat "$manifest")
   for field in '"slug"' '"archive_date"' '"cc_project_path"' '"cc_purge_available"' '"dry_run_output"' '"dry_run_truncated"' '"user_decision"' '"started_at"' '"finished_at"' '"purge_cc_flag"'; do

@@ -54,7 +54,7 @@ function enabledWith(packs: Array<{ name: string; stateMachinesDir?: string }>):
   return {
     order: packs.map((p) => p.name),
     entries,
-    customLayerRoot: "/repos/.forge/custom",
+    customLayerRoot: "/repos/.tinkerman/custom",
   };
 }
 

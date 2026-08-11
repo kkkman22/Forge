@@ -7,14 +7,14 @@ import { buildHealthSnapshot } from "../src/doctor.js";
 let tmp: string;
 beforeEach(() => {
   tmp = mkdtempSync(join(tmpdir(), "doctor-fixture-"));
-  mkdirSync(join(tmp, ".forge"), { recursive: true });
+  mkdirSync(join(tmp, ".tinkerman"), { recursive: true });
 });
 afterEach(() => {
   rmSync(tmp, { recursive: true, force: true });
 });
 
 function writeForge(rel: string, content: string): void {
-  const full = join(tmp, ".forge", rel);
+  const full = join(tmp, ".tinkerman", rel);
   mkdirSync(join(full, ".."), { recursive: true });
   writeFileSync(full, content, "utf-8");
 }

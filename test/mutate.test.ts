@@ -91,7 +91,7 @@ function makeEnabledPacks(entries: PackEntry[]): EnabledPacks {
   return {
     order: entries.map((e) => e.name),
     entries,
-    customLayerRoot: "/repo/.forge/custom",
+    customLayerRoot: "/repo/.tinkerman/custom",
   };
 }
 
@@ -559,8 +559,8 @@ describe("runMutation", () => {
       threshold: 80,
     });
 
-    // Artifact path should be under .forge/mutation/
-    expect(result.filePath).toContain(".forge/mutation/");
+    // Artifact path should be under .tinkerman/mutation/
+    expect(result.filePath).toContain(".tinkerman/mutation/");
     expect(result.filePath).toContain(".md");
     expect(result.filePath).toContain("mutation-");
 

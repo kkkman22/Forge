@@ -17,13 +17,13 @@ describe("checkShipGateWithFreshness blocks stale review", () => {
   const PASSING_TEST = { passed: true };
   const COMPLETE_PROGRESS = { completedTasks: 5, totalTasks: 5 };
 
-  it("blocks ship when non-.forge/ files changed after review", () => {
+  it("blocks ship when non-.tinkerman/ files changed after review", () => {
     const result = checkShipGateWithFreshness(
       { ...PASSING_REVIEW, reviewedAtCommit: "aaa111" },
       PASSING_TEST,
       COMPLETE_PROGRESS,
       "bbb222",
-      ["src/main.ts", ".forge/status.md"],
+      ["src/main.ts", ".tinkerman/status.md"],
     );
 
     expect(result.allowed).toBe(false);
@@ -34,13 +34,13 @@ describe("checkShipGateWithFreshness blocks stale review", () => {
     ).toBe(true);
   });
 
-  it("allows ship when only .forge/ files changed", () => {
+  it("allows ship when only .tinkerman/ files changed", () => {
     const result = checkShipGateWithFreshness(
       { ...PASSING_REVIEW, reviewedAtCommit: "aaa111" },
       PASSING_TEST,
       COMPLETE_PROGRESS,
       "bbb222",
-      [".forge/status.md", ".forge/progress/tasks.md"],
+      [".tinkerman/status.md", ".tinkerman/progress/tasks.md"],
     );
 
     expect(result.allowed).toBe(true);

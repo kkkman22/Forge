@@ -31,7 +31,7 @@ describe("sync-once: one-shot sync (R2.7–R2.10)", () => {
 
   beforeEach(() => {
     dir = mkdtempSync(join(tmpdir(), "cmux-sync-test-"));
-    forgeDir = join(dir, ".forge");
+    forgeDir = join(dir, ".tinkerman");
     mkdirSync(forgeDir, { recursive: true });
     vi.clearAllMocks();
   });
@@ -59,7 +59,7 @@ describe("sync-once: one-shot sync (R2.7–R2.10)", () => {
     expect(result.commandsEmitted).toBe(0);
   });
 
-  it("R2.7: returns forge_dir_missing when .forge/ doesn't exist", async () => {
+  it("R2.7: returns forge_dir_missing when .tinkerman/ doesn't exist", async () => {
     mockedAvailable.mockReturnValue(true);
     const result = await syncOnce({ forgeDir: join(dir, "nope") });
     expect(result.synced).toBe(false);

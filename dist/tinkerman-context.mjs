@@ -32247,7 +32247,7 @@ function validateEvidenceArtifact(artifact) {
   return diagnostics;
 }
 function queryEvidenceArtifacts(projectRoot, query = {}) {
-  const indexPath = join2(projectRoot, ".forge", "artifacts", "index.jsonl");
+  const indexPath = join2(projectRoot, ".tinkerman", "artifacts", "index.jsonl");
   let indexContent;
   try {
     indexContent = readFileSync2(indexPath, "utf-8");
@@ -32281,9 +32281,9 @@ function isArtifactFreshForCommit(artifact, currentHead, context = {}) {
     return { fresh: true, reason: "artifact commit matches current HEAD" };
   }
   if (artifact.kind === "review" && context.changedFiles !== void 0) {
-    const projectFiles = context.changedFiles.filter((file2) => !file2.startsWith(".forge/"));
+    const projectFiles = context.changedFiles.filter((file2) => !file2.startsWith(".tinkerman/"));
     if (projectFiles.length === 0) {
-      return { fresh: true, reason: "review remains fresh because only .forge/ state changed" };
+      return { fresh: true, reason: "review remains fresh because only .tinkerman/ state changed" };
     }
   }
   if (artifact.kind === "test" && context.inputHash && artifact.input_hash === context.inputHash) {
@@ -32563,7 +32563,7 @@ function getPolicyGateRequirements(policyProfile, phase, workflowProfileId = "st
 
 // dist/src/doctor.js
 function buildHealthSnapshot(options) {
-  const forgeRoot = path.join(options.projectRoot, ".forge");
+  const forgeRoot = path.join(options.projectRoot, ".tinkerman");
   const status = readStatus(forgeRoot);
   const policyProfile = readPolicyProfile(forgeRoot);
   const reasons = [];
@@ -32572,12 +32572,12 @@ function buildHealthSnapshot(options) {
   if (!status) {
     gates.status = {
       status: "unknown",
-      message: "No .forge/status.md found",
-      source: ".forge/status.md"
+      message: "No .tinkerman/status.md found",
+      source: ".tinkerman/status.md"
     };
     reasons.push({
       code: "STATUS_UNKNOWN",
-      source: ".forge/status.md",
+      source: ".tinkerman/status.md",
       detail: "current task status is missing"
     });
     return {
@@ -32596,7 +32596,7 @@ function buildHealthSnapshot(options) {
   gates.status = {
     status: "pass",
     message: `Status loaded for ${status.currentTask}`,
-    source: ".forge/status.md"
+    source: ".tinkerman/status.md"
   };
   const sequence = getRouterSequence(status.tier);
   const currentIndex = sequence.indexOf(status.phase);
@@ -32696,15 +32696,15 @@ function readWorktreeHealth(projectRoot) {
 }
 function readSpecHealth(projectRoot, topic) {
   const paths = [
-    path.join(projectRoot, ".forge", "specs", topic, "requirements.md"),
-    path.join(projectRoot, ".forge", "specs", topic, "spec.md")
+    path.join(projectRoot, ".tinkerman", "specs", topic, "requirements.md"),
+    path.join(projectRoot, ".tinkerman", "specs", topic, "spec.md")
   ];
   const found = paths.find((candidate) => existsSync2(candidate));
   if (!found) {
     return {
       status: "unknown",
       message: "Spec status unknown",
-      source: `.forge/specs/${topic}`
+      source: `.tinkerman/specs/${topic}`
     };
   }
   const status = readStatusField(found);
@@ -32716,15 +32716,15 @@ function readSpecHealth(projectRoot, topic) {
 }
 function readPlanHealth(projectRoot, topic) {
   const candidates = [
-    path.join(projectRoot, ".forge", "plans", `${topic}.md`),
-    path.join(projectRoot, ".forge", "plan", `${topic}.md`)
+    path.join(projectRoot, ".tinkerman", "plans", `${topic}.md`),
+    path.join(projectRoot, ".tinkerman", "plan", `${topic}.md`)
   ];
   const found = candidates.find((candidate) => existsSync2(candidate));
   if (!found) {
     return {
       status: "unknown",
       message: "Plan status unknown",
-      source: `.forge/plans/${topic}.md`
+      source: `.tinkerman/plans/${topic}.md`
     };
   }
   const status = readStatusField(found);
@@ -32735,7 +32735,7 @@ function readPlanHealth(projectRoot, topic) {
   };
 }
 function readProgressHealth(projectRoot, topic) {
-  const source = `.forge/progress/${topic}.md`;
+  const source = `.tinkerman/progress/${topic}.md`;
   const filePath = path.join(projectRoot, source);
   if (!existsSync2(filePath)) {
     return {
@@ -32763,7 +32763,7 @@ function artifactFreshnessHealth(projectRoot, topic, kind, currentHead) {
     return {
       status: "unknown",
       message: `No ${kind} artifact found`,
-      source: ".forge/artifacts"
+      source: ".tinkerman/artifacts"
     };
   }
   if (latest.result !== "pass") {
@@ -32786,7 +32786,7 @@ function artifactStateHealth(projectRoot, topic, kind, currentHead) {
     return {
       status: "unknown",
       message: `No ${kind} artifact found`,
-      source: ".forge/artifacts"
+      source: ".tinkerman/artifacts"
     };
   }
   if (latest.result !== "pass") {
@@ -32804,18 +32804,18 @@ function artifactStateHealth(projectRoot, topic, kind, currentHead) {
   };
 }
 function readToolHealth(projectRoot) {
-  const source = path.join(projectRoot, ".forge", "knowledge", "tool-health.log");
+  const source = path.join(projectRoot, ".tinkerman", "knowledge", "tool-health.log");
   if (!existsSync2(source)) {
     return {
       status: "unknown",
       message: "Tool health log not yet generated",
-      source: ".forge/knowledge/tool-health.log"
+      source: ".tinkerman/knowledge/tool-health.log"
     };
   }
   return {
     status: "pass",
     message: "Tool health log present",
-    source: ".forge/knowledge/tool-health.log"
+    source: ".tinkerman/knowledge/tool-health.log"
   };
 }
 function skippedCheck(message, source) {
@@ -32830,7 +32830,7 @@ function readConfigScalar(content, key) {
   return match ? match[1] : null;
 }
 function buildSafetyGuardsHealth(projectRoot) {
-  const forgeRoot = path.join(projectRoot, ".forge");
+  const forgeRoot = path.join(projectRoot, ".tinkerman");
   const configPath = path.join(forgeRoot, "config.md");
   let configContent = "";
   try {
@@ -32846,13 +32846,13 @@ function buildSafetyGuardsHealth(projectRoot) {
     destructiveGuard = {
       status: "fail",
       message: "destructive_guard is OFF \u2014 destructive git/infra commands are not blocked (P1 warning)",
-      source: ".forge/config.md:destructive_guard"
+      source: ".tinkerman/config.md:destructive_guard"
     };
   } else if (!sandboxActive) {
     destructiveGuard = {
       status: "unknown",
       message: "destructive_guard inactive (sandbox not enabled \u2014 run with --sandbox to activate)",
-      source: ".forge/.sandbox-active.json"
+      source: ".tinkerman/.sandbox-active.json"
     };
   } else if (bypassEnvSet) {
     destructiveGuard = {
@@ -32864,7 +32864,7 @@ function buildSafetyGuardsHealth(projectRoot) {
     destructiveGuard = {
       status: "pass",
       message: `destructive_guard=${guardVal ?? "on (default)"} (sandbox active)`,
-      source: ".forge/config.md:destructive_guard"
+      source: ".tinkerman/config.md:destructive_guard"
     };
   }
   const spawnPolicy = {
@@ -32877,7 +32877,7 @@ function buildSafetyGuardsHealth(projectRoot) {
   const maxSubagentDepth = {
     status: Number.isInteger(depthNum) && depthNum >= 1 && depthNum <= 10 ? "pass" : "unknown",
     message: `max_subagent_depth=${Number.isInteger(depthNum) ? depthNum : 5} (default)`,
-    source: ".forge/config.md:max_subagent_depth"
+    source: ".tinkerman/config.md:max_subagent_depth"
   };
   const knowledgeLimitRaw = readConfigScalar(configContent, "knowledge_limit");
   const knowledgeLimit = knowledgeLimitRaw !== null && Number.isInteger(Number(knowledgeLimitRaw)) ? Number(knowledgeLimitRaw) : 20;
@@ -32892,7 +32892,7 @@ function buildSafetyGuardsHealth(projectRoot) {
   const knowledgeQuota = {
     status: count >= threshold ? "fail" : "pass",
     message: `solutions=${count}/${knowledgeLimit} (near-limit threshold ${threshold})`,
-    source: ".forge/knowledge/solutions/"
+    source: ".tinkerman/knowledge/solutions/"
   };
   return { destructiveGuard, spawnPolicy, maxSubagentDepth, knowledgeQuota };
 }
@@ -32976,7 +32976,7 @@ function artifactGateReasons(input) {
     if (!latest) {
       reasons.push({
         code: "MISSING_ARTIFACT",
-        source: ".forge/artifacts",
+        source: ".tinkerman/artifacts",
         detail: `required ${kind} artifact is missing`
       });
       continue;
@@ -32984,7 +32984,7 @@ function artifactGateReasons(input) {
     if (latest.result !== "pass") {
       reasons.push({
         code: "FAILING_ARTIFACT",
-        source: ".forge/artifacts",
+        source: ".tinkerman/artifacts",
         detail: `latest ${kind} artifact result is ${latest.result}`
       });
     }
@@ -32992,7 +32992,7 @@ function artifactGateReasons(input) {
     if (!freshness.fresh) {
       reasons.push({
         code: "STALE_ARTIFACT",
-        source: ".forge/artifacts",
+        source: ".tinkerman/artifacts",
         detail: freshness.reason
       });
     }
@@ -33028,7 +33028,7 @@ function relativeProjectPath(projectRoot, filePath) {
   return path.relative(projectRoot, filePath).replaceAll(path.sep, "/");
 }
 function artifactSource(artifactId) {
-  return `.forge/artifacts/${artifactId}`;
+  return `.tinkerman/artifacts/${artifactId}`;
 }
 
 // dist/src/mcp/tools/typed-capabilities.js

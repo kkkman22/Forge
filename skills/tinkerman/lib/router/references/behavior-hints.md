@@ -38,4 +38,4 @@ Hints 是叠加的（只增加检查项，不移除命令）。按 Scope 触发�
 | `error-path-audit` | backend+bugfix | review |
 | `cost-estimate` | infra+greenfield | decide |
 
-当 TaskType 与 ProjectPhase 同时匹配 Scope 时，对应 hint 会被注入到命令序列中。下游 skill 读取 `.forge/status.md` 的 `hints` 字段并据此调整行为。
+当 TaskType 与 ProjectPhase 同时匹配 Scope 时，对应 hint 会被注入到命令序列中。下游 skill 读取 `.tinkerman/status.md` 的 `hints` 字段并据此调整行为。

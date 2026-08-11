@@ -18,7 +18,7 @@ export interface SpecLayoutConfig {
 const VALID_MODES = new Set<SpecLayoutMode>(["three-file", "legacy", "experimental"]);
 
 /**
- * Parse spec layout config from .forge/config.md content.
+ * Parse spec layout config from .tinkerman/config.md content.
  * Priority: FORGE_SPEC_LAYOUT env > config.md > default ("three-file").
  */
 export function parseSpecLayoutConfig(configContent: string | undefined): SpecLayoutConfig {

@@ -15,7 +15,7 @@ allowed_tools:
 
 > **触发方式**：全量路径第二步 / 用户输入 `/tinkerman spec` / `/tinkerman spec <file-path>` 导入外部规格
 > **职责**：将需求固化为可审阅、可测试、可锁定的规格文档，锁定后成为 build 和 review 的唯一真理源
-> **输出路径**：`.forge/specs/<feature>/requirements.md` + `design.md` + `tasks.md`（三文件布局）或 `.forge/specs/<feature>/spec.md`（legacy 兼容）
+> **输出路径**：`.tinkerman/specs/<feature>/requirements.md` + `design.md` + `tasks.md`（三文件布局）或 `.tinkerman/specs/<feature>/spec.md`（legacy 兼容）
 
 ---
 
@@ -25,7 +25,7 @@ allowed_tools:
 
 **核心原则**：规格描述行为，不描述实现。写"当用户提交表单时，系统返回成功提示"，不写"调用 FormService.submit() 方法"。
 
-**三文件布局（Kiro-style）**：默认输出 `requirements.md` + `design.md` + `tasks.md` 三个文件到 `.forge/specs/<feature>/` 目录。使用 `loadSpecBundle()` 读取，`resolveSpecVariant()` 自动选择工作流变体（requirements-first / design-first / quick-plan）。聊天层可通过自然语言覆盖（如"切换到 design-first"），不引入任何新 CLI flag。
+**三文件布局（Kiro-style）**：默认输出 `requirements.md` + `design.md` + `tasks.md` 三个文件到 `.tinkerman/specs/<feature>/` 目录。使用 `loadSpecBundle()` 读取，`resolveSpecVariant()` 自动选择工作流变体（requirements-first / design-first / quick-plan）。聊天层可通过自然语言覆盖（如"切换到 design-first"），不引入任何新 CLI flag。
 
 **Not For**：单行修复 / typo 纠正 / 需求已明确且自包含的变更 / 已有外部 PM 交付完整 spec（用导入模式）
 
@@ -37,7 +37,7 @@ allowed_tools:
 /tinkerman spec path/to/external-spec.md
 ```
 
-自动读取外部文档，提取需求/场景，转化为 Forge SpecDocument 格式，复用五项自检（可测试性/边界清晰度/人类可读性/棕地兼容性/反漂移完整性），写入 `.forge/specs/<feature>/spec.md` 并在 frontmatter 标注 `import_source`。
+自动读取外部文档，提取需求/场景，转化为 Forge SpecDocument 格式，复用五项自检（可测试性/边界清晰度/人类可读性/棕地兼容性/反漂移完整性），写入 `.tinkerman/specs/<feature>/spec.md` 并在 frontmatter 标注 `import_source`。
 
 → 详见 references/import-mode.md（适用场景、转化规则、质量保证、边界情况）
 
@@ -65,7 +65,7 @@ allowed_tools:
 
 #### Charter 感知
 
-读取 `.forge/charter.md`（如果存在），避免提出 charter 已回答的问题（如技术选型、团队规模等已记录信息）。Charter 不可读或格式异常时输出警告并跳过 charter 感知（不影响 Gate 执行）。
+读取 `.tinkerman/charter.md`（如果存在），避免提出 charter 已回答的问题（如技术选型、团队规模等已记录信息）。Charter 不可读或格式异常时输出警告并跳过 charter 感知（不影响 Gate 执行）。
 
 **维度覆盖检测**：通过 charter 的 section header 匹配判断已覆盖维度（如存在 `## 技术选型` section → 跳过"依赖关系"问题；存在 `## 目标用户` → 跳过"用户价值"问题）。无对应 section header 的维度正常提问。
 
@@ -87,9 +87,9 @@ allowed_tools:
 
 | Input Source | Description |
 |--------|------|
-| `.forge/decisions/` | 决策文档（产品定义、技术方案、安全评估） |
-| `.forge/config.md` | 项目配置（技术栈、安全级别） |
-| `.forge/specs/` | 现有规格，避免重复、确保一致 |
+| `.tinkerman/decisions/` | 决策文档（产品定义、技术方案、安全评估） |
+| `.tinkerman/config.md` | 项目配置（技术栈、安全级别） |
+| `.tinkerman/specs/` | 现有规格，避免重复、确保一致 |
 | User Input | 当前需求描述 |
 
 **生成规则**：
@@ -147,7 +147,7 @@ After Step 2 Review completes:
 
 ### Step 3: Lock
 
-用户确认后：frontmatter `status` → `"locked"`，写入 `.forge/specs/<feature>/spec.md`。修改需先解锁（status → draft）重走 Review → Lock。用户不确认则保持 draft 可继续修改。
+用户确认后：frontmatter `status` → `"locked"`，写入 `.tinkerman/specs/<feature>/spec.md`。修改需先解锁（status → draft）重走 Review → Lock。用户不确认则保持 draft 可继续修改。
 
 **Contract Validation Gate**: Lock 前调用 `bash scripts/check-spec-contract.sh <spec-file>` 校验所有 Acceptance Criteria 都带分层 `Verify-By`（`vitest:unit` / `vitest:component` / `bash:contract` / `forge_exec:e2e` / `manual`）和 `Evidence`（非空无 placeholder）。校验失败 → 阻断 lock，输出缺失字段列表与合法取值。`contract_legacy: true` 的 spec 跳过校验（grandfathering，NFR-2）。可选 `--check-evidence` 对路径形态的 Evidence token 做磁盘存在性校验（AC7）。
 
@@ -183,19 +183,19 @@ Testability / Behavior-not-Implementation / Brownfield Delta / Two-part Structur
 
 ## 6. Execution Flow
 
-1. **前置检查**：`.forge/` 目录是否存在。不存在 → 提示先运行 `/tinkerman init`
+1. **前置检查**：`.tinkerman/` 目录是否存在。不存在 → 提示先运行 `/tinkerman init`
 2. **入口路由**：调用 `routeSpecEntry(argv, featureDir, outputDir, existingBundle?)`（`src/spec.ts`）按 argv 分发：
    - `mode: "import"` → 自动调用 `runImportMode(path, outputDir)` 写齐三文件并返回；
    - `mode: "bugfix"` → `detectSpecKind` 命中 `bugfix.md` 时自动调 `runBugfixOrchestration(bundle)`；
    - `mode: "feature" | "default"` → 走下面标准流程。
-3. **读取上下文**：`.forge/decisions/`（如有）→ `.forge/config.md` → `.forge/specs/`
+3. **读取上下文**：`.tinkerman/decisions/`（如有）→ `.tinkerman/config.md` → `.tinkerman/specs/`
 4. **Pre-check**：`detectSpecTriggers()` 检查迁移/Refine。`migrationNeeded === true` 时**必须立即调用** `migrateLegacySpec(featureDir)` 把 legacy `spec.md` + `plans/<topic>.md` 透明迁移成三文件后再继续。`refineTarget` 命中时调 `refineDownstream(bundle, target)`。然后 `resolveSpecVariant()` 选择变体。
 5. **Propose**：基于上下文和变体生成三文件草案（详见 §2 Step 1）
 6. **Review**：执行自检 + `analyzeRequirements()` 预检（详见 §2 Step 2），未通过则自动修正并重新自检
 7. **用户确认或修改**：确认 → 进入 Lock；修改意见 → 更新草案回到 Review；拒绝 → 保持 draft
 8. **Lock**：锁定规格（详见 §2 Step 3）。三文件各自独立 lock，写入 `requirements.md` + `design.md` + `tasks.md`
-9. **Glossary-miss 扫描**：用 `loadEnforcementGlossary(rootDir, fs)` 加载术语表（扁平 `.forge/glossary.md` 主权源 + enabled pack 术语只读补充），对生成/导入的 spec 文本调用 `detectGlossaryMiss`。如发现未定义术语，输出 `[glossary-miss] 未定义术语：[...]` 提示用户在 learn 阶段回写（仅回写扁平 `.forge/glossary.md`，不写 pack）。不阻断 lock 流程。Step 7 调用 `runGlossaryCheck({ phase: 'spec' })`（glossary 参数来自 `loadEnforcementGlossary`）进行术语漂移检测。Autonomous 模式下，冲突写入 `getAdvisoryPath('spec', topic)` 指定路径，并将路径添加到 spec frontmatter `pending_glossary_advisories: [...]` 字段。
-9.5. **Charter 合规性章节**：当 `.forge/charter.md` 存在且 `status: active` 时，在 `requirements.md` 中增加 `## Charter 合规性` 章节，每个需求标注对应的 charter invariant ID（如 `R1 → INV-002, INV-005`）。需求与 invariant 有潜在冲突时标注 `⚠ 需通过 <boundary>`。Charter 不存在时跳过此章节。
+9. **Glossary-miss 扫描**：用 `loadEnforcementGlossary(rootDir, fs)` 加载术语表（扁平 `.tinkerman/glossary.md` 主权源 + enabled pack 术语只读补充），对生成/导入的 spec 文本调用 `detectGlossaryMiss`。如发现未定义术语，输出 `[glossary-miss] 未定义术语：[...]` 提示用户在 learn 阶段回写（仅回写扁平 `.tinkerman/glossary.md`，不写 pack）。不阻断 lock 流程。Step 7 调用 `runGlossaryCheck({ phase: 'spec' })`（glossary 参数来自 `loadEnforcementGlossary`）进行术语漂移检测。Autonomous 模式下，冲突写入 `getAdvisoryPath('spec', topic)` 指定路径，并将路径添加到 spec frontmatter `pending_glossary_advisories: [...]` 字段。
+9.5. **Charter 合规性章节**：当 `.tinkerman/charter.md` 存在且 `status: active` 时，在 `requirements.md` 中增加 `## Charter 合规性` 章节，每个需求标注对应的 charter invariant ID（如 `R1 → INV-002, INV-005`）。需求与 invariant 有潜在冲突时标注 `⚠ 需通过 <boundary>`。Charter 不存在时跳过此章节。
 10. **自动推进（铁律）**：Lock 成功后，输出 `✅ spec 完成 → 自动进入 plan`，然后**立即调用** `Skill(skill="forge", args="plan")`。不输出"是否继续？"等确认文本。静默 idle（无输出、等待用户输入）与显式询问同罪。（→ 详见 shared/next-step-protocol.md）
 
 ---
@@ -236,11 +236,11 @@ Greenfield Canonical Example（`order-batch-export`）与 Brownfield Variant（�
 
 When `/tinkerman spec --living-doc` is invoked:
 
-1. Call `generateLivingDoc(specsDir, acceptanceDir)` from `src/living-doc/generator.ts` — scans `.forge/specs/` for spec files, parses frontmatter and scenarios, merges acceptance verdicts from `.forge/acceptance/`
+1. Call `generateLivingDoc(specsDir, acceptanceDir)` from `src/living-doc/generator.ts` — scans `.tinkerman/specs/` for spec files, parses frontmatter and scenarios, merges acceptance verdicts from `.tinkerman/acceptance/`
 2. Call `renderLivingDoc(data, outputDir)` from `src/living-doc/renderer.ts` — generates index.html + per-context pages + CSS
-3. Output: `✅ Living doc generated at .forge/docs/living/index.html (N scenarios)`
+3. Output: `✅ Living doc generated at .tinkerman/docs/living/index.html (N scenarios)`
 
-**Output directory**: `.forge/docs/living/`
+**Output directory**: `.tinkerman/docs/living/`
 
 **Zero-Pack behavior**: When no specs exist, `generateLivingDoc` returns empty data with 0 scenarios. `renderLivingDoc` produces a skeleton index page with zero stats. Exit 0.
 

@@ -168,7 +168,7 @@ const sourceArb = fc
     fc.constantFrom("known-failures", "instincts", "skill-feedback", "metrics", "session-journal"),
     fc.stringMatching(/^[a-zA-Z0-9_-]+$/).filter((s) => s.length >= 1 && s.length <= 20),
   )
-  .map(([file, entry]) => `.forge/knowledge/${file}.md#${entry}`);
+  .map(([file, entry]) => `.tinkerman/knowledge/${file}.md#${entry}`);
 
 /** Generate a single evolved rule with a given index. */
 function ruleArb(index: number): fc.Arbitrary<EvolvedRule> {

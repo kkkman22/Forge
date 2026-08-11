@@ -2,7 +2,7 @@
  * SpecBundle filesystem I/O — load and write three-file / legacy-single bundles.
  *
  * Provides:
- *   - loadSpecBundle(featureDir): reads .forge/specs/<feature>/ and returns SpecBundle
+ *   - loadSpecBundle(featureDir): reads .tinkerman/specs/<feature>/ and returns SpecBundle
  *   - writeSpecBundle(bundle, featureDir): writes SpecBundle to disk
  *
  * Validates: Requirements 1, 6

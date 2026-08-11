@@ -2,6 +2,6 @@
   "title": "[spec:widget-system] Add widget rendering pipeline",
   "headRefName": "forge/widget-system",
   "baseRefName": "main",
-  "body": "Implements the widget rendering pipeline.\n\nSee .forge/specs/widget-system/ for the spec.",
+  "body": "Implements the widget rendering pipeline.\n\nSee .tinkerman/specs/widget-system/ for the spec.",
   "url": "https://github.com/myorg/myrepo/pull/42"
 }

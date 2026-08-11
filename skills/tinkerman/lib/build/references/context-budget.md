@@ -27,7 +27,7 @@ Layer 1: 阶段隔离 ──────────────── 消除跨
   Phase Boundary Gate + /clear + /tinkerman resume
 
 Layer 2: Subagent 文件化返回 ────── 减少 agent 结果占用（-80% agent 返回）
-  Write to .forge/reviews/ + 800 char 摘要返回
+  Write to .tinkerman/reviews/ + 800 char 摘要返回
 
 Layer 3: Resume 上下文最小化 ────── 减少恢复时的加载量
   --phase 参数按阶段过滤注入内容
@@ -51,31 +51,31 @@ Layer 4: Read 预算监控 ──────────── 运行时防护
 ### 阶段间状态桥接
 
 ```
-.forge/progress/<topic>.md  — 任务状态
-.forge/plans/<topic>.md     — 计划（最小化读取）
-.forge/reviews/<layer>.md   — 评审结果（文件化返回）
-.forge/status.md            — 当前阶段 + 分支
+.tinkerman/progress/<topic>.md  — 任务状态
+.tinkerman/plans/<topic>.md     — 计划（最小化读取）
+.tinkerman/reviews/<layer>.md   — 评审结果（文件化返回）
+.tinkerman/status.md            — 当前阶段 + 分支
 ```
 
 ## Layer 2: Subagent 文件化返回
 
 ### 返回协议
 
-Subagent 完整报告 Write 到 `.forge/reviews/<layer>-<YYYYMMDD-HHmmss>.md`，仅返回 ≤800 chars 摘要：
+Subagent 完整报告 Write 到 `.tinkerman/reviews/<layer>-<YYYYMMDD-HHmmss>.md`，仅返回 ≤800 chars 摘要：
 
 ```
 status: <pass|fail>
 findings: <total_count>
 p0: <count>
 p1: <count>
-report: .forge/reviews/<layer>-<timestamp>.md
+report: .tinkerman/reviews/<layer>-<timestamp>.md
 ```
 
 ### 主 Agent 处理
 
 - p0>0 或 p1>0 → Read 完整报告
 - p0=0 且 p1=0 → 不读取，仅基于摘要
-- 综合报告仍输出到 `.forge/reviews/<timestamp>-combined.md`
+- 综合报告仍输出到 `.tinkerman/reviews/<timestamp>-combined.md`
 
 → 详见 `skills/tinkerman/lib/review/references/subagent-return-protocol.md`
 

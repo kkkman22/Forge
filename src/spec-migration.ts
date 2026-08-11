@@ -3,7 +3,7 @@
  *
  * migrateLegacySpec: detects legacy spec.md, splits into three files,
  * renames original to spec.legacy.md, writes migrated_from frontmatter.
- * Also handles .forge/plans/<topic>.md migration.
+ * Also handles .tinkerman/plans/<topic>.md migration.
  * Includes rollback on failure.
  *
  * Validates: Requirements 7, 8, 9
@@ -205,7 +205,7 @@ export function migrateLegacySpec(featureDir: string, eventsPath?: string): Migr
     // Rename original
     renameSync(specPath, join(featureDir, "spec.legacy.md"));
 
-    // Migrate .forge/plans/<feature>.md → .forge/specs/<feature>/tasks.md.
+    // Migrate .tinkerman/plans/<feature>.md → .tinkerman/specs/<feature>/tasks.md.
     // Capture the actual renamed path so rollback can restore it accurately
     // even when frontmatter `feature` differs from the directory name.
     plansLegacyRenamed = migratePlansFile(featureDir, feature);
@@ -265,14 +265,14 @@ export function migrateLegacySpec(featureDir: string, eventsPath?: string): Migr
 }
 
 /**
- * Migrate legacy .forge/plans/<feature>.md to the specs directory.
+ * Migrate legacy .tinkerman/plans/<feature>.md to the specs directory.
  * Parses plan task entries and merges them into the generated tasks.md.
  *
  * @returns The path of the renamed `.legacy` plans file (so the caller can
  *   undo the rename during rollback), or `null` when no plans file existed.
  */
 function migratePlansFile(featureDir: string, feature: string): string | null {
-  // featureDir is .forge/specs/<feature>/, plans are at .forge/plans/<feature>.md
+  // featureDir is .tinkerman/specs/<feature>/, plans are at .tinkerman/plans/<feature>.md
   const specRoot = join(featureDir, "..");
   const plansPath = join(specRoot, "..", "plans", `${feature}.md`);
   if (!existsSync(plansPath)) return null;

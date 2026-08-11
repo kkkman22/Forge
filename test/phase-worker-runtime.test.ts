@@ -34,8 +34,8 @@ describe("phase-worker-runtime", () => {
       runId: "run-001",
       projectRoot: root,
       prompt: "Run three-layer review.",
-      artifactPath: join(root, ".forge", "runs", "run-001", "workers", "review.md"),
-      summaryPath: join(root, ".forge", "runs", "run-001", "workers", "review.json"),
+      artifactPath: join(root, ".tinkerman", "runs", "run-001", "workers", "review.md"),
+      summaryPath: join(root, ".tinkerman", "runs", "run-001", "workers", "review.json"),
       nextAction: "test",
     };
   }
@@ -46,7 +46,7 @@ describe("phase-worker-runtime", () => {
       worker_kind: "subagent",
       status: "success",
       summary: "x".repeat(1200),
-      artifact_path: ".forge/runs/run-001/workers/review.md",
+      artifact_path: ".tinkerman/runs/run-001/workers/review.md",
       commands: [
         { cmd: "a", result: "pass", evidence_path: "a.log" },
         { cmd: "b", result: "pass", evidence_path: "b.log" },
@@ -199,7 +199,7 @@ describe("phase-worker-runtime", () => {
   it("runs a CLI/SDK worker by reading its summary file", async () => {
     const req = request();
     const executor = vi.fn().mockImplementation(async () => {
-      mkdirSync(join(root, ".forge", "runs", "run-001", "workers"), { recursive: true });
+      mkdirSync(join(root, ".tinkerman", "runs", "run-001", "workers"), { recursive: true });
       writeFileSync(req.artifactPath, "# Review\n");
       writeFileSync(
         req.summaryPath,
@@ -258,7 +258,7 @@ describe("phase-worker-runtime", () => {
   it("returns a failed CLI/SDK summary when the worker exits non-zero", async () => {
     const req = request();
     const executor = vi.fn().mockImplementation(async () => {
-      mkdirSync(join(root, ".forge", "runs", "run-001", "workers"), { recursive: true });
+      mkdirSync(join(root, ".tinkerman", "runs", "run-001", "workers"), { recursive: true });
       writeFileSync(
         req.summaryPath,
         JSON.stringify({
@@ -300,7 +300,7 @@ describe("phase-worker-runtime", () => {
   it("returns a failed CLI/SDK summary when the summary file is invalid JSON", async () => {
     const req = request();
     const executor = vi.fn().mockImplementation(async () => {
-      mkdirSync(join(root, ".forge", "runs", "run-001", "workers"), { recursive: true });
+      mkdirSync(join(root, ".tinkerman", "runs", "run-001", "workers"), { recursive: true });
       writeFileSync(req.summaryPath, "{not-json");
       return { exitCode: 0 };
     });

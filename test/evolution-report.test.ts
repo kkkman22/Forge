@@ -86,7 +86,7 @@ describe("generateEvolutionReport — Task 8.7 (aggregation)", () => {
   it("aggregates markers across reviews / progress / findings and skips archive", () => {
     const files = new Map<string, string>([
       [
-        ".forge/reviews/auth-hardening.md",
+        ".tinkerman/reviews/auth-hardening.md",
         [
           "# Review — auth-hardening",
           markerBlock(
@@ -98,7 +98,7 @@ describe("generateEvolutionReport — Task 8.7 (aggregation)", () => {
         ].join("\n\n"),
       ],
       [
-        ".forge/progress/checkout-flow.md",
+        ".tinkerman/progress/checkout-flow.md",
         [
           "# Progress — checkout-flow",
           markerBlock(
@@ -122,7 +122,7 @@ describe("generateEvolutionReport — Task 8.7 (aggregation)", () => {
         ].join("\n\n"),
       ],
       [
-        ".forge/findings/grill-auth.md",
+        ".tinkerman/findings/grill-auth.md",
         markerBlock(
           "2026-05-04",
           "grill-auth",
@@ -130,9 +130,9 @@ describe("generateEvolutionReport — Task 8.7 (aggregation)", () => {
           "Orphan marker pointing at an unknown skill",
         ),
       ],
-      // Archive entry must be ignored — it lives under .forge/archive/
+      // Archive entry must be ignored — it lives under .tinkerman/archive/
       [
-        ".forge/archive/2026-04-20-old/reviews/old.md",
+        ".tinkerman/archive/2026-04-20-old/reviews/old.md",
         markerBlock(
           "2026-04-20",
           "ep-2026-04-20-001",
@@ -143,7 +143,7 @@ describe("generateEvolutionReport — Task 8.7 (aggregation)", () => {
     ]);
 
     const fs = new InMemoryFs(files);
-    const report = generateEvolutionReport(fs, ".forge", SKILLS_REGISTRY, FIXED_NOW);
+    const report = generateEvolutionReport(fs, ".tinkerman", SKILLS_REGISTRY, FIXED_NOW);
 
     expect(report.totalMarkers).toBe(5);
     expect(report.bySkill.map((s) => s.targetSkill).sort()).toEqual([
@@ -166,7 +166,7 @@ describe("generateEvolutionReport — Task 8.7 (aggregation)", () => {
 
   it("tolerates missing directories without throwing", () => {
     const fs = new InMemoryFs(new Map());
-    const report = generateEvolutionReport(fs, ".forge", SKILLS_REGISTRY, FIXED_NOW);
+    const report = generateEvolutionReport(fs, ".tinkerman", SKILLS_REGISTRY, FIXED_NOW);
     expect(report.totalMarkers).toBe(0);
     expect(report.bySkill).toEqual([]);
     expect(report.orphans).toEqual([]);
@@ -174,14 +174,14 @@ describe("generateEvolutionReport — Task 8.7 (aggregation)", () => {
 
   it("ignores non-markdown files (binary artefacts alongside reviews)", () => {
     const files = new Map<string, string>([
-      [".forge/reviews/cover.png", "\x89PNG\r\n\x1a\nbinary-goo"],
+      [".tinkerman/reviews/cover.png", "\x89PNG\r\n\x1a\nbinary-goo"],
       [
-        ".forge/reviews/notes.md",
+        ".tinkerman/reviews/notes.md",
         markerBlock("2026-05-05", "ep-2026-05-05-001", "forge-ship", "Valid marker"),
       ],
     ]);
     const fs = new InMemoryFs(files);
-    const report = generateEvolutionReport(fs, ".forge", SKILLS_REGISTRY, FIXED_NOW);
+    const report = generateEvolutionReport(fs, ".tinkerman", SKILLS_REGISTRY, FIXED_NOW);
     expect(report.totalMarkers).toBe(1);
     expect(report.bySkill[0].targetSkill).toBe("forge-ship");
   });
@@ -195,7 +195,7 @@ describe("renderEvolutionReport — Task 8.7 (markdown output)", () => {
   it("highlights suggest_adr targets at the top and renders orphan section", () => {
     const files = new Map<string, string>([
       [
-        ".forge/reviews/big.md",
+        ".tinkerman/reviews/big.md",
         [
           markerBlock("2026-05-01", "ep-2026-05-01-001", "forge-build#t", "one"),
           markerBlock("2026-05-02", "ep-2026-05-02-001", "forge-build#t", "two"),
@@ -206,7 +206,7 @@ describe("renderEvolutionReport — Task 8.7 (markdown output)", () => {
       ],
     ]);
     const fs = new InMemoryFs(files);
-    const report = generateEvolutionReport(fs, ".forge", SKILLS_REGISTRY, FIXED_NOW);
+    const report = generateEvolutionReport(fs, ".tinkerman", SKILLS_REGISTRY, FIXED_NOW);
     const rendered = renderEvolutionReport(report);
 
     expect(rendered).toContain('generated_at: "2026-05-10T08:00:00.000Z"');
@@ -229,12 +229,12 @@ describe("renderEvolutionReport — Task 8.7 (markdown output)", () => {
     expect(rendered).toMatch(/### forge-ship \(1 条\)/);
 
     // Orphan section cites file:line and target
-    expect(rendered).toMatch(/`\.forge\/reviews\/big\.md:\d+` target `forge-unknown`/);
+    expect(rendered).toMatch(/`\.tinkerman\/reviews\/big\.md:\d+` target `forge-unknown`/);
   });
 
   it("emits a placeholder when there is nothing to report", () => {
     const fs = new InMemoryFs(new Map());
-    const report = generateEvolutionReport(fs, ".forge", SKILLS_REGISTRY, FIXED_NOW);
+    const report = generateEvolutionReport(fs, ".tinkerman", SKILLS_REGISTRY, FIXED_NOW);
     const rendered = renderEvolutionReport(report);
 
     expect(rendered).toContain("# Evolution Report");
@@ -245,14 +245,17 @@ describe("renderEvolutionReport — Task 8.7 (markdown output)", () => {
 
   it("is deterministic for the same inputs", () => {
     const files = new Map<string, string>([
-      [".forge/reviews/a.md", markerBlock("2026-05-01", "ep-2026-05-01-001", "forge-review", "x")],
+      [
+        ".tinkerman/reviews/a.md",
+        markerBlock("2026-05-01", "ep-2026-05-01-001", "forge-review", "x"),
+      ],
     ]);
     const fs = new InMemoryFs(files);
     const first = renderEvolutionReport(
-      generateEvolutionReport(fs, ".forge", SKILLS_REGISTRY, FIXED_NOW),
+      generateEvolutionReport(fs, ".tinkerman", SKILLS_REGISTRY, FIXED_NOW),
     );
     const second = renderEvolutionReport(
-      generateEvolutionReport(fs, ".forge", SKILLS_REGISTRY, FIXED_NOW),
+      generateEvolutionReport(fs, ".tinkerman", SKILLS_REGISTRY, FIXED_NOW),
     );
     expect(second).toBe(first);
   });
@@ -266,17 +269,17 @@ describe("generateEvolutionReport — Task 8.9 (no historical snapshot)", () => 
   it("drops markers from deleted files on the next run", () => {
     const initialFiles = new Map<string, string>([
       [
-        ".forge/reviews/topic-a.md",
+        ".tinkerman/reviews/topic-a.md",
         markerBlock("2026-05-01", "ep-2026-05-01-001", "forge-build", "Keep-this"),
       ],
       [
-        ".forge/progress/topic-b.md",
+        ".tinkerman/progress/topic-b.md",
         markerBlock("2026-05-02", "ep-2026-05-02-001", "forge-review", "Will-be-deleted"),
       ],
     ]);
 
     const fsBefore = new InMemoryFs(initialFiles);
-    const before = generateEvolutionReport(fsBefore, ".forge", SKILLS_REGISTRY, FIXED_NOW);
+    const before = generateEvolutionReport(fsBefore, ".tinkerman", SKILLS_REGISTRY, FIXED_NOW);
     expect(before.totalMarkers).toBe(2);
     expect(before.bySkill.map((s) => s.targetSkill).sort()).toEqual([
       "forge-build",
@@ -285,9 +288,9 @@ describe("generateEvolutionReport — Task 8.9 (no historical snapshot)", () => 
 
     // Simulate `/tinkerman learn --maintain` cleaning out the topic-b progress file.
     const afterFiles = new Map<string, string>(initialFiles);
-    afterFiles.delete(".forge/progress/topic-b.md");
+    afterFiles.delete(".tinkerman/progress/topic-b.md");
     const fsAfter = new InMemoryFs(afterFiles);
-    const after = generateEvolutionReport(fsAfter, ".forge", SKILLS_REGISTRY, FIXED_NOW);
+    const after = generateEvolutionReport(fsAfter, ".tinkerman", SKILLS_REGISTRY, FIXED_NOW);
 
     expect(after.totalMarkers).toBe(1);
     expect(after.bySkill.map((s) => s.targetSkill)).toEqual(["forge-build"]);
@@ -296,21 +299,21 @@ describe("generateEvolutionReport — Task 8.9 (no historical snapshot)", () => 
   });
 
   it("drops markers when the marker comment is edited away but the file survives", () => {
-    const markerFile = ".forge/reviews/topic-c.md";
+    const markerFile = ".tinkerman/reviews/topic-c.md";
     const before = new InMemoryFs(
       new Map([
         [markerFile, markerBlock("2026-05-03", "ep-2026-05-03-001", "forge-ship", "temp marker")],
       ]),
     );
-    expect(generateEvolutionReport(before, ".forge", SKILLS_REGISTRY, FIXED_NOW).totalMarkers).toBe(
-      1,
-    );
+    expect(
+      generateEvolutionReport(before, ".tinkerman", SKILLS_REGISTRY, FIXED_NOW).totalMarkers,
+    ).toBe(1);
 
     const after = new InMemoryFs(
       new Map([[markerFile, "# Review — topic-c\n\n(no markers anymore)\n"]]),
     );
-    expect(generateEvolutionReport(after, ".forge", SKILLS_REGISTRY, FIXED_NOW).totalMarkers).toBe(
-      0,
-    );
+    expect(
+      generateEvolutionReport(after, ".tinkerman", SKILLS_REGISTRY, FIXED_NOW).totalMarkers,
+    ).toBe(0);
   });
 });

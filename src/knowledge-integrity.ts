@@ -1,6 +1,6 @@
 /**
  * Knowledge Integrity Linter — cross-file reference validation and
- * semantic contradiction detection for `.forge/knowledge/`.
+ * semantic contradiction detection for `.tinkerman/knowledge/`.
  *
  * Motivation
  * ----------

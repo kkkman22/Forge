@@ -81,7 +81,7 @@ if ! command -v claude >/dev/null 2>&1; then
 fi
 
 # --- Configuration ---
-OUT_DIR=".forge/reviews"
+OUT_DIR=".tinkerman/reviews"
 OUT_FILE="$OUT_DIR/${PR_NUMBER}-ci.md"
 TIMEOUT="${CI_ULTRAREVIEW_TIMEOUT:-900}"
 # Merge env var and CLI flag (either enables strict mode)

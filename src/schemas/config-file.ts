@@ -1,5 +1,5 @@
 /**
- * Zod schema for `.forge/config.md` frontmatter.
+ * Zod schema for `.tinkerman/config.md` frontmatter.
  *
  * Provides the runtime contract for project configuration. Matches the
  * legacy `parseConfigFileGraceful` / `loadConfig` shape so that callers

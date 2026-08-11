@@ -1,7 +1,7 @@
 /**
  * Sandbox access checker — PreToolUse hook for sandbox policy enforcement.
  *
- * Reads .forge/.sandbox-active.json (written by SdkDriver on --sandbox startup)
+ * Reads .tinkerman/.sandbox-active.json (written by SdkDriver on --sandbox startup)
  * and checks Write/Edit/Bash tool calls against the loaded policy.
  *
  * Exit 0 = allow, exit 1 = deny (prints reason to stderr).
@@ -110,7 +110,7 @@ export interface SandboxAccessDecision {
  *
  * @param toolType - The tool name (Write, Edit, Bash, etc.)
  * @param toolInput - JSON string of the tool's input
- * @param configPath - Path to .forge/.sandbox-active.json
+ * @param configPath - Path to .tinkerman/.sandbox-active.json
  */
 export function checkSandboxAccess(
   toolType: string,
@@ -204,7 +204,7 @@ function main(): void {
 
   if (!toolType || !toolInputFile) process.exit(0);
 
-  const configPath = resolve(process.cwd(), ".forge/.sandbox-active.json");
+  const configPath = resolve(process.cwd(), ".tinkerman/.sandbox-active.json");
   const toolInput = readFileSync(toolInputFile, "utf-8");
 
   const decision = checkSandboxAccess(toolType, toolInput, configPath);

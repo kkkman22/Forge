@@ -65,7 +65,9 @@ describe("renderAcceptanceReport — FAIL detail (R5-AC2, R5-AC3, R5-AC4)", () =
 
   it("FAIL scenario includes a <details> evidence block (R5-AC3)", () => {
     const r = buildResult([
-      artifact("s-fail", "FAIL", { evidence: [".forge/acceptance/login/s-fail/screenshot.png"] }),
+      artifact("s-fail", "FAIL", {
+        evidence: [".tinkerman/acceptance/login/s-fail/screenshot.png"],
+      }),
     ]);
     const out = renderAcceptanceReport(r);
     expect(out).toContain("<details>");

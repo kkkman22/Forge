@@ -61,17 +61,17 @@
     "PreToolUse": [
       {
         "matcher": "Write|Edit",
-        "if": "Write(.forge/**)|Edit(.forge/**)",
+        "if": "Write(.tinkerman/**)|Edit(.tinkerman/**)",
         "hooks": [
           {
             "type": "command",
-            "command": "head -30 .forge/plans/*.md 2>/dev/null || true"
+            "command": "head -30 .tinkerman/plans/*.md 2>/dev/null || true"
           }
         ]
       },
       {
         "matcher": "Write|Edit|MultiEdit",
-        "if": "Write(.forge/**)|Edit(.forge/**)|MultiEdit(.forge/**)",
+        "if": "Write(.tinkerman/**)|Edit(.tinkerman/**)|MultiEdit(.tinkerman/**)",
         "hooks": [
           {
             "type": "command",
@@ -85,7 +85,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "echo \"$TOOL_INPUT\" | grep -oE '\\.forge/(specs|plans)/[a-zA-Z0-9_.-]+|\\.forge/config\\.md' | sort -u | while read -r f; do bash \"${CLAUDE_PLUGIN_ROOT:-}/scripts/hook-check-frozen.sh\" \"$f\" 2>/dev/null || bash ~/.claude/skills/tinkerman/scripts/hook-check-frozen.sh \"$f\" 2>/dev/null; done",
+            "command": "echo \"$TOOL_INPUT\" | grep -oE '\\.tinkerman/(specs|plans)/[a-zA-Z0-9_.-]+|\\.tinkerman/config\\.md' | sort -u | while read -r f; do bash \"${CLAUDE_PLUGIN_ROOT:-}/scripts/hook-check-frozen.sh\" \"$f\" 2>/dev/null || bash ~/.claude/skills/tinkerman/scripts/hook-check-frozen.sh \"$f\" 2>/dev/null; done",
             "timeout": 5
           }
         ]
@@ -107,7 +107,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "if [ -f .forge/.sandbox-active.json ]; then node \"${CLAUDE_PLUGIN_ROOT:-}/dist/src/check-sandbox.js\" Bash \"$TOOL_INPUT_FILE\" 2>/dev/null || node forge/dist/src/check-sandbox.js Bash \"$TOOL_INPUT_FILE\" 2>/dev/null || node ~/.claude/skills/tinkerman/dist/src/check-sandbox.js Bash \"$TOOL_INPUT_FILE\" 2>/dev/null || true; fi",
+            "command": "if [ -f .tinkerman/.sandbox-active.json ]; then node \"${CLAUDE_PLUGIN_ROOT:-}/dist/src/check-sandbox.js\" Bash \"$TOOL_INPUT_FILE\" 2>/dev/null || node forge/dist/src/check-sandbox.js Bash \"$TOOL_INPUT_FILE\" 2>/dev/null || node ~/.claude/skills/tinkerman/dist/src/check-sandbox.js Bash \"$TOOL_INPUT_FILE\" 2>/dev/null || true; fi",
             "timeout": 5
           }
         ]
@@ -133,7 +133,7 @@
         ]
       },
       {
-        "_audit_p1": "Unconditional destructive guard (audit P1). check-sandbox only fires when .forge/.sandbox-active.json exists — so in normal runs git reset --hard / push --force / clean -fd had no interceptor. This hook calls the same checkDestructive authority with guardEnabled=true always.",
+        "_audit_p1": "Unconditional destructive guard (audit P1). check-sandbox only fires when .tinkerman/.sandbox-active.json exists — so in normal runs git reset --hard / push --force / clean -fd had no interceptor. This hook calls the same checkDestructive authority with guardEnabled=true always.",
         "matcher": "Bash",
         "hooks": [
           {
@@ -157,17 +157,17 @@
       },
       {
         "matcher": "Write|Edit",
-        "if": "Write(.forge/**)|Edit(.forge/**)",
+        "if": "Write(.tinkerman/**)|Edit(.tinkerman/**)",
         "hooks": [
           {
             "type": "command",
-            "command": "if [ -d .forge/status ] || [ -f .forge/status.md ]; then echo '📝 代码已修改。请记得更新 .forge/progress/ 中的任务状态。'; fi"
+            "command": "if [ -d .tinkerman/status ] || [ -f .tinkerman/status.md ]; then echo '📝 代码已修改。请记得更新 .tinkerman/progress/ 中的任务状态。'; fi"
           }
         ]
       },
       {
         "matcher": "Write|Edit",
-        "if": "Write(.forge/**)|Edit(.forge/**)",
+        "if": "Write(.tinkerman/**)|Edit(.tinkerman/**)",
         "hooks": [
           {
             "type": "command",
@@ -178,7 +178,7 @@
       },
       {
         "matcher": "Write|Edit",
-        "if": "Write(.forge/**)|Edit(.forge/**)",
+        "if": "Write(.tinkerman/**)|Edit(.tinkerman/**)",
         "hooks": [
           {
             "type": "command",
@@ -189,7 +189,7 @@
       },
       {
         "matcher": "Write|Edit",
-        "if": "Write(.forge/**)|Edit(.forge/**)",
+        "if": "Write(.tinkerman/**)|Edit(.tinkerman/**)",
         "hooks": [
           {
             "type": "command",
@@ -211,7 +211,7 @@
       },
       {
         "matcher": "Write|Edit",
-        "if": "Write(.forge/reviews/.diff-context.md)|Edit(.forge/reviews/.diff-context.md)",
+        "if": "Write(.tinkerman/reviews/.diff-context.md)|Edit(.tinkerman/reviews/.diff-context.md)",
         "hooks": [
           {
             "type": "command",
@@ -264,7 +264,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "if [ -d .forge/status ]; then status_file=$(ls -t .forge/status/*.md 2>/dev/null | head -1); else status_file='.forge/status.md'; fi; phase=$(grep '^phase:' \"$status_file\" 2>/dev/null | sed 's/phase: *\"\\{0,1\\}//;s/\"\\{0,1\\} *$//'); if [ \"$phase\" = 'review' ] || [ \"$phase\" = 'decide' ]; then echo '队友空闲。请检查是否所有评审/决策维度都已完成输出，未完成的队友应继续工作。'; fi"
+            "command": "if [ -d .tinkerman/status ]; then status_file=$(ls -t .tinkerman/status/*.md 2>/dev/null | head -1); else status_file='.tinkerman/status.md'; fi; phase=$(grep '^phase:' \"$status_file\" 2>/dev/null | sed 's/phase: *\"\\{0,1\\}//;s/\"\\{0,1\\} *$//'); if [ \"$phase\" = 'review' ] || [ \"$phase\" = 'decide' ]; then echo '队友空闲。请检查是否所有评审/决策维度都已完成输出，未完成的队友应继续工作。'; fi"
           }
         ]
       }
@@ -296,7 +296,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "if [ -f .forge/status.md ]; then phase=$(grep '^phase:' .forge/status.md 2>/dev/null | sed 's/phase: *\"\\{0,1\\}//;s/\"\\{0,1\\} *$//'); if [ \"$phase\" = 'build' ]; then plan_file=$(ls -t .forge/plans/*.md 2>/dev/null | head -1); if [ -n \"$plan_file\" ]; then plan_status=$(grep '^status:' \"$plan_file\" 2>/dev/null | head -1 | sed 's/status: *\"\\{0,1\\}//;s/\"\\{0,1\\} *$//' | tr -d '[:space:]'); if [ \"$plan_status\" != 'approved' ]; then echo \"⚠️ build 阶段：plan 状态为 $plan_status（非 approved），队友任务建议等 plan 锁定后再创建\" >&2; fi; fi; fi; fi"
+            "command": "if [ -f .tinkerman/status.md ]; then phase=$(grep '^phase:' .tinkerman/status.md 2>/dev/null | sed 's/phase: *\"\\{0,1\\}//;s/\"\\{0,1\\} *$//'); if [ \"$phase\" = 'build' ]; then plan_file=$(ls -t .tinkerman/plans/*.md 2>/dev/null | head -1); if [ -n \"$plan_file\" ]; then plan_status=$(grep '^status:' \"$plan_file\" 2>/dev/null | head -1 | sed 's/status: *\"\\{0,1\\}//;s/\"\\{0,1\\} *$//' | tr -d '[:space:]'); if [ \"$plan_status\" != 'approved' ]; then echo \"⚠️ build 阶段：plan 状态为 $plan_status（非 approved），队友任务建议等 plan 锁定后再创建\" >&2; fi; fi; fi; fi"
           }
         ]
       }

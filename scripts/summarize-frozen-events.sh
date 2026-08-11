@@ -4,7 +4,7 @@
 #
 # Usage: bash scripts/summarize-frozen-events.sh [--days=N]
 #
-# Reads .forge/runs/*-frozen-events.jsonl and outputs a compact summary.
+# Reads .tinkerman/runs/*-frozen-events.jsonl and outputs a compact summary.
 set -euo pipefail
 
 DAYS="${1:---days=7}"
@@ -15,7 +15,7 @@ else
 fi
 
 runs_dir=""
-for candidate in ".forge/runs" "forge/.forge/runs"; do
+for candidate in ".tinkerman/runs" "forge/.tinkerman/runs"; do
   if [[ -d "$candidate" ]]; then
     runs_dir="$candidate"
     break

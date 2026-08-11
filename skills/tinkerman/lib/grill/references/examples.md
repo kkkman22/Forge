@@ -41,7 +41,7 @@ context — polling every N seconds, or true push?"*
 
 … loop continues until `isComplete`.
 
-**Final output** written to `.forge/findings/grill-add-batch-export-to-orders-api.md`:
+**Final output** written to `.tinkerman/findings/grill-add-batch-export-to-orders-api.md`:
 
 ```markdown
 # Grill Findings: add batch export to orders API
@@ -90,12 +90,12 @@ variant that may need its own glossary entry — picked up by
 
 ## Example 3 — Resume After Abandonment
 
-User closes the session mid-way. `.forge/status.md.phase = "grill_abandoned"`,
+User closes the session mid-way. `.tinkerman/status.md.phase = "grill_abandoned"`,
 findings file contains partial tree with mixed `pending`/`resolved` nodes.
 
 `/tinkerman resume`:
 
-1. Reads `.forge/findings/grill-<topic>.md`, reconstructs `DecisionTree`
+1. Reads `.tinkerman/findings/grill-<topic>.md`, reconstructs `DecisionTree`
 2. Calls `selectNextQuestion(tree)` → returns first still-pending node
 3. Loops exactly as a fresh session would
 

@@ -12,7 +12,7 @@ Keep worktree/index state. User manually edits conflicted file. Best for spec/pl
 ### Option 2: Unlock Then Merge
 
 1. Change file status from `locked`/`approved` to `draft`
-2. Write `.forge/debug/unlock-<timestamp>.md` audit log
+2. Write `.tinkerman/debug/unlock-<timestamp>.md` audit log
 3. Perform three-way merge
 4. After merge, user must re-lock/approve
 

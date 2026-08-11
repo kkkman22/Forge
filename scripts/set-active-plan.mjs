@@ -5,7 +5,7 @@
  *
  * **Requirement 3 (planning-with-files-borrow spec) — writer half**
  *
- * Populates `.forge/state/active-plan.json`, the pointer consumed by
+ * Populates `.tinkerman/state/active-plan.json`, the pointer consumed by
  * inject-plan-context.mjs's reader (`tryReadActivePlanPointer`). Without this
  * writer, the pointer reader is dead code in production (SC-1 P0 fix).
  *
@@ -16,15 +16,15 @@
  * Set mode extracts spec_ref from the plan's frontmatter, defaults phase to
  * "build", and stamps pinned_at. Idempotent.
  *
- * Security: validates plan_path resolves (via realpathSync) inside .forge/plans/
+ * Security: validates plan_path resolves (via realpathSync) inside .tinkerman/plans/
  * — refuses to write a pointer to a plan outside the plans dir (path traversal
  * / symlink guard, mirroring the reader's N-3 fix). Also validates spec_ref
- * falls inside .forge/specs/ (SC-3 fix).
+ * falls inside .tinkerman/specs/ (SC-3 fix).
  *
  * Fail-open: exits 0 on any error (never blocks the agent).
  *
  * Usage:
- *   node scripts/set-active-plan.mjs .forge/plans/feature-x.md
+ *   node scripts/set-active-plan.mjs .tinkerman/plans/feature-x.md
  *   node scripts/set-active-plan.mjs --phase review
  *   node scripts/set-active-plan.mjs --help
  */
@@ -32,17 +32,17 @@ import { existsSync, mkdirSync, readFileSync, realpathSync, writeFileSync } from
 import { relative, resolve } from "node:path";
 
 const CWD = process.cwd();
-const STATE_DIR = ".forge/state";
-const POINTER_FILE = ".forge/state/active-plan.json";
-const PLANS_DIR = ".forge/plans";
-const SPECS_DIR = ".forge/specs";
+const STATE_DIR = ".tinkerman/state";
+const POINTER_FILE = ".tinkerman/state/active-plan.json";
+const PLANS_DIR = ".tinkerman/plans";
+const SPECS_DIR = ".tinkerman/specs";
 
 const args = process.argv.slice(2);
 
 // --help (black-box convention §2.8)
 if (args.includes("--help") || args.includes("-h")) {
   process.stdout.write(
-    `set-active-plan.mjs — write/update .forge/state/active-plan.json (R3 pointer)
+    `set-active-plan.mjs — write/update .tinkerman/state/active-plan.json (R3 pointer)
 
 Usage:
   node scripts/set-active-plan.mjs <plan_path>        Set active plan pointer (plan approve time)
@@ -53,7 +53,7 @@ Options:
 
 The pointer is the single source of truth consumed by inject-plan-context.mjs.
 Set mode extracts spec_ref from plan frontmatter and validates plan_path resolves
-inside .forge/plans/ (path-traversal guard). Fail-open: exits 0 on any error.
+inside .tinkerman/plans/ (path-traversal guard). Fail-open: exits 0 on any error.
 `,
   );
   process.exit(0);
@@ -143,14 +143,14 @@ try {
     process.exit(0);
   }
 
-  // Validate plan exists and resolves inside .forge/plans/.
+  // Validate plan exists and resolves inside .tinkerman/plans/.
   if (!existsSync(planPath)) {
     process.stderr.write(`set-active-plan: plan not found: ${planPath}\n`);
     process.exit(0);
   }
   if (!resolvesInside(planPath, PLANS_DIR)) {
     process.stderr.write(
-      `set-active-plan: refused — ${planPath} resolves outside .forge/plans/\n`,
+      `set-active-plan: refused — ${planPath} resolves outside .tinkerman/plans/\n`,
     );
     process.exit(0);
   }
@@ -159,7 +159,7 @@ try {
   const specRef = extractSpecRef(planPath);
   if (specRef && !resolvesInsideOrUnder(specRef, SPECS_DIR)) {
     process.stderr.write(
-      `set-active-plan: refused — spec_ref ${specRef} resolves outside .forge/specs/\n`,
+      `set-active-plan: refused — spec_ref ${specRef} resolves outside .tinkerman/specs/\n`,
     );
     process.exit(0);
   }

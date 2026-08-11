@@ -61,8 +61,8 @@ describe("walkMdFiles", () => {
   });
 
   it("allowDotDirs permits specific dotdirs even when skipHidden=true", () => {
-    writeFile(".forge/spec.md");
-    const result = walkMdFiles(tmpRoot, { allowDotDirs: [".forge"] });
+    writeFile(".tinkerman/spec.md");
+    const result = walkMdFiles(tmpRoot, { allowDotDirs: [".tinkerman"] });
     expect(result.some((p) => p.endsWith("spec.md"))).toBe(true);
   });
 

@@ -87,7 +87,7 @@ export interface VerifyResult {
 export async function runVerify(options: VerifyOptions): Promise<VerifyResult> {
   const { topic, claim, baselineRef } = options;
   const cwd = options.cwd ?? process.cwd();
-  const forgeDir = options.forgeDir ?? join(cwd, ".forge");
+  const forgeDir = options.forgeDir ?? join(cwd, ".tinkerman");
   const outputDir = join(forgeDir, "findings", topic, "verify-this");
   const createdAt = options.createdAt ?? new Date().toISOString();
   const runId = makeVerifyRunId(createdAt);

@@ -1,5 +1,5 @@
 ---
-description: "Use when user runs `/tinkerman init`, project has no .forge/ directory, or plugin is installed but project not yet initialized"
+description: "Use when user runs `/tinkerman init`, project has no .tinkerman/ directory, or plugin is installed but project not yet initialized"
 updated: 2026-08-11
 dispatch_mode: inline
 allowed_tools:
@@ -11,7 +11,7 @@ allowed_tools:
 # /tinkerman init — 项目初始化
 
 > **触发方式**：用户输入 `/tinkerman init [--pack <name>]` 或 `/tinkerman init --recipe <name>`
-> **职责**：完成项目初始化（创建 `.forge/` 目录、复制 agent 角色、生成 CLAUDE.md 项目宪法）
+> **职责**：完成项目初始化（创建 `.tinkerman/` 目录、复制 agent 角色、生成 CLAUDE.md 项目宪法）
 > **实现**：所有文件操作由 `init.sh` 完成；本 SKILL 负责定位脚本并按运行环境选择采集方式
 
 ### `--recipe <name>` — 测试栈脚手架（ADR-0006 Req6）
@@ -67,7 +67,7 @@ Claude Code 的 Bash 工具 stdin 不是 TTY，裸 `read` 会卡住或拿到空�
 
 ```
 AskUserQuestion:
-  question: "项目名称（Forge 会创建 .forge/ 和 CLAUDE.md）"
+  question: "项目名称（Forge 会创建 .tinkerman/ 和 CLAUDE.md）"
   header: "Init"
   options:
     - label: "<basename>（自动检测）"   # Recommended — put first
@@ -181,7 +181,7 @@ bash "${INIT_PATH}" \
 ```
 
 - 所有 `read` 被 `--non-interactive` 跳过；答案完全由 flags 驱动。
-- `init.sh` 会自行处理 `.forge/` 已存在的覆盖确认（`--non-interactive` 下自动继续）。
+- `init.sh` 会自行处理 `.tinkerman/` 已存在的覆盖确认（`--non-interactive` 下自动继续）。
 
 ### 路径 B — 终端直跑（保留 shell 交互体验）
 
@@ -206,7 +206,7 @@ stdin 是 TTY，走 `read -rp` 原生交互。**本 SKILL 在 CC 内不使用这
 
 | 条件 | 处理 |
 |------|------|
-| `.forge/` 已存在 | init.sh 自身在 `--non-interactive` 下自动继续覆盖；非交互式终端下仍会 `read` 确认，本 SKILL 不额外拦截 |
+| `.tinkerman/` 已存在 | init.sh 自身在 `--non-interactive` 下自动继续覆盖；非交互式终端下仍会 `read` 确认，本 SKILL 不额外拦截 |
 | `--help` 参数 | 透传给 init.sh，显示帮助后退出（不走路径 A 采集） |
 | `--recipe <name>` | 透传给 init.sh（加 `--non-interactive`），不走路径 A 采集；recipe 模式早退 |
 | init.sh 非零退出 | 输出 init.sh 的 stderr，不额外处理；若为参数错误（如 `--security 4`）提示用户修正后重跑 |
@@ -227,6 +227,6 @@ stdin 是 TTY，走 `read -rp` 原生交互。**本 SKILL 在 CC 内不使用这
 ## 5. Charter 创建选项
 
 init.sh 完成后，询问用户是否创建项目宪章（默认 Yes）：
-- **选择创建**：调用 `/tinkerman charter init` 的精简版，只问 3 个问题（核心问题、主要技术选型、1–3 条 invariants），生成 `.forge/charter.md`，`status: draft`
+- **选择创建**：调用 `/tinkerman charter init` 的精简版，只问 3 个问题（核心问题、主要技术选型、1–3 条 invariants），生成 `.tinkerman/charter.md`，`status: draft`
 - **选择跳过**：正常完成，不阻断
 - 提示用户后续可通过 `/tinkerman charter update` 将 charter 激活为 `status: active`

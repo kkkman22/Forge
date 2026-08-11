@@ -6,7 +6,7 @@
  * if it fits, or a skeleton (headers + italic instructions, bodies truncated)
  * with a truncation hint if it exceeds the budget.
  *
- * Design ref: .forge/specs/regenerative-checkpoint/design.md §接口设计 + D9
+ * Design ref: .tinkerman/specs/regenerative-checkpoint/design.md §接口设计 + D9
  * (section-aware so GLM-5.2 600K compact can still inject a usable skeleton).
  */
 import { describe, expect, it } from "vitest";

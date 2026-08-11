@@ -21,7 +21,7 @@ function walkMarkdownFiles(rootDir: string): string[] {
       if (stat.isSymbolicLink()) continue;
       // Verify path stays under rootDir
       if (!resolve(fullPath).startsWith(resolvedRoot)) continue;
-      if (entry.name.startsWith(".") && entry.name !== ".forge" && entry.name !== ".kiro" && entry.name !== ".claude") continue;
+      if (entry.name.startsWith(".") && entry.name !== ".tinkerman" && entry.name !== ".kiro" && entry.name !== ".claude") continue;
       const rel = relative(rootDir, fullPath);
       if (EXCLUDED_PREFIXES.some((p) => rel.startsWith(p))) continue;
       if (stat.isDirectory()) {
@@ -76,8 +76,8 @@ function formatBaselineReport(entries: BaselineEntry[]): string {
 
 const rootDir = process.cwd();
 // Guard: verify we're in a project root
-if (!existsSync(join(rootDir, ".forge/config.md")) && !existsSync(join(rootDir, "package.json"))) {
-  console.error("Error: not in a project root (no .forge/config.md or package.json found).");
+if (!existsSync(join(rootDir, ".tinkerman/config.md")) && !existsSync(join(rootDir, "package.json"))) {
+  console.error("Error: not in a project root (no .tinkerman/config.md or package.json found).");
   process.exit(3);
 }
 const entries = generateBaseline(rootDir);

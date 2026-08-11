@@ -7,7 +7,7 @@
  *   - not shipped in dist/plugin bundles
  *   - consumes src/state-machine/ (one-way dependency; engine never imports here)
  *
- * See .forge/specs/domain-example-reference-impl/ for the spec.
+ * See .tinkerman/specs/domain-example-reference-impl/ for the spec.
  */
 
 export {};

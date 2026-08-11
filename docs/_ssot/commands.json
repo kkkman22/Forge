@@ -32,7 +32,7 @@
     "tier": "all",
     "stage": "auxiliary",
     "dispatch_mode": "fork",
-    "summary": "Create, update, check, and display the project charter (.forge/charter.md). Use when user runs /tinkerman charter <sub>."
+    "summary": "Create, update, check, and display the project charter (.tinkerman/charter.md). Use when user runs /tinkerman charter <sub>."
   },
   {
     "name": "/tinkerman continue",
@@ -123,7 +123,7 @@
     "tier": "all",
     "stage": "auxiliary",
     "dispatch_mode": "inline",
-    "summary": "Use when user runs `/tinkerman init`, project has no .forge/ directory, or plugin is installed but project not yet initialized."
+    "summary": "Use when user runs `/tinkerman init`, project has no .tinkerman/ directory, or plugin is installed but project not yet initialized."
   },
   {
     "name": "/tinkerman learn",

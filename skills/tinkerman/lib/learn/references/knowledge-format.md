@@ -17,7 +17,7 @@ confidence: 0.85
 ```
 
 - `confidence` 范围 0.3–0.9（下限 0.3：低于此值不值得记录；上限 0.9：不使用 1.0）
-- 输出路径：`.forge/knowledge/solutions/<topic>.md`（kebab-case）
+- 输出路径：`.tinkerman/knowledge/solutions/<topic>.md`（kebab-case）
 - Body 五章节：问题模式、解决方案、踩坑记录、决策理由、可复用模式
 
 ---
@@ -42,23 +42,23 @@ confidence: 0.85
 16. **Error-prevention rule distillation**: 4 data sources → threshold → exclusion → conflict → capacity → proposal → write
 17. **Context budget report**: `serializeContextBudgetReport(report)` 追加到 `sessions/<date>-<topic>.md` 附录
 18. **自动生成 Episode**：`buildEpisodeFromSession(meta, phaseHistory, situation, lesson, sequenceInDay)` 构造 schema_version=2 episode，追加到 `sessions/<date>-<topic>.md`（Guarded zone 追加，Requirement 7.9）
-19. **Evolution 聚合**：扫描 reviews/progress/findings 的 Evolution 标记，调用 `generateEvolutionReport(fs, forgeRoot, skillsRegistry)` + `renderEvolutionReport` 生成 `.forge/knowledge/evolution-report.md`（开放区，每次覆盖；不保留历史快照，当前文件状态即真相，Requirements 8.9, 8.11, 8.14, 8.15）
+19. **Evolution 聚合**：扫描 reviews/progress/findings 的 Evolution 标记，调用 `generateEvolutionReport(fs, forgeRoot, skillsRegistry)` + `renderEvolutionReport` 生成 `.tinkerman/knowledge/evolution-report.md`（开放区，每次覆盖；不保留历史快照，当前文件状态即真相，Requirements 8.9, 8.11, 8.14, 8.15）
 20. **Knowledge integrity lint**：`lintKnowledgeIntegrity(input)` 检查跨文件引用完整性、孤儿文档、语义矛盾。Findings 以 advisory 形式呈现给用户，不阻断流程
-21. **Knowledge catalog regeneration**：`buildCatalog(input)` 重新生成 `.forge/knowledge/catalog.md`（开放区，每次覆盖）。提供 ~50 行全景索引供后续 plan/build/debug 阶段低成本查询
+21. **Knowledge catalog regeneration**：`buildCatalog(input)` 重新生成 `.tinkerman/knowledge/catalog.md`（开放区，每次覆盖）。提供 ~50 行全景索引供后续 plan/build/debug 阶段低成本查询
 22. **Session layer cleanup**: Archive current session in sessions/
 23. **Re-check limits**: Ensure maintenance invariants hold
 
 ### 9.1 Task Archival (Auto After Learn)
 
-After knowledge is captured, automatically **copy** task artifacts to `.forge/archive/<date>-<topic>/`.
+After knowledge is captured, automatically **copy** task artifacts to `.tinkerman/archive/<date>-<topic>/`.
 
 | Source Path | Archive Path |
 |-------------|-------------|
-| `.forge/decisions/<topic>.md` | `archive/<date>-<topic>/decisions/` |
-| `.forge/specs/<feature>/` | `archive/<date>-<topic>/specs/` |
-| `.forge/plans/<topic>.md` | `archive/<date>-<topic>/plans/` |
-| `.forge/progress/<topic>.md` | `archive/<date>-<topic>/progress/` |
-| `.forge/reviews/<topic>.md` | `archive/<date>-<topic>/reviews/` |
-| `.forge/debug/<topic>.md` | `archive/<date>-<topic>/debug/` |
+| `.tinkerman/decisions/<topic>.md` | `archive/<date>-<topic>/decisions/` |
+| `.tinkerman/specs/<feature>/` | `archive/<date>-<topic>/specs/` |
+| `.tinkerman/plans/<topic>.md` | `archive/<date>-<topic>/plans/` |
+| `.tinkerman/progress/<topic>.md` | `archive/<date>-<topic>/progress/` |
+| `.tinkerman/reviews/<topic>.md` | `archive/<date>-<topic>/reviews/` |
+| `.tinkerman/debug/<topic>.md` | `archive/<date>-<topic>/debug/` |
 
-After archival, update `.forge/status.md` phase to `"completed"`. Do not archive knowledge/ and config.md.
+After archival, update `.tinkerman/status.md` phase to `"completed"`. Do not archive knowledge/ and config.md.

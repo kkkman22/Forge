@@ -43,7 +43,7 @@ async function verifyAgentBrowserPin(): Promise<{ ok: boolean; reason: string }>
     const binPath = execFileSync("which", ["agent-browser"], { encoding: "utf-8" }).trim();
     const buf = readFileSync(binPath);
     const actual = createHash("sha256").update(buf).digest("hex");
-    const cfgPath = join(process.cwd(), ".forge", "config.md");
+    const cfgPath = join(process.cwd(), ".tinkerman", "config.md");
     let configuredPin = "";
     try {
       const cfg = readFileSync(cfgPath, "utf8");
@@ -443,7 +443,7 @@ export const cliRunner: Runner = {
 export type DelegateLayer = "unit" | "component" | "contract";
 
 export interface DelegateConfig {
-  /** Explicit command overrides from .forge/config.md `test_commands`. */
+  /** Explicit command overrides from .tinkerman/config.md `test_commands`. */
   testCommands?: Partial<Record<DelegateLayer, string>>;
   /** Detected package manager (pnpm/npm/yarn) for convention fallback. */
   packageManager?: string;
@@ -560,7 +560,7 @@ export const unitRunner: Runner = makeDelegateRunner("unit");
 export const componentRunner: Runner = makeDelegateRunner("component");
 export const contractRunner: Runner = makeDelegateRunner("contract");
 
-/** Read delegate config from the RunnerContext (test seam) or .forge/config.md. */
+/** Read delegate config from the RunnerContext (test seam) or .tinkerman/config.md. */
 function readDelegateConfig(ctx: RunnerContext): DelegateConfig {
   // Test seam: allow ctx to carry injected config; otherwise read from disk.
   const injected = (ctx as RunnerContext & { delegateConfig?: DelegateConfig }).delegateConfig;
@@ -568,7 +568,7 @@ function readDelegateConfig(ctx: RunnerContext): DelegateConfig {
   try {
     const { readFileSync } = require("node:fs") as typeof import("node:fs");
     const { join } = require("node:path") as typeof import("node:path");
-    const cfgPath = join(ctx.projectRoot, ".forge", "config.md");
+    const cfgPath = join(ctx.projectRoot, ".tinkerman", "config.md");
     const cfg = readFileSync(cfgPath, "utf8");
     const pkgMatch = cfg.match(/packageManager:\s*"?(\w+)"?/);
     return {

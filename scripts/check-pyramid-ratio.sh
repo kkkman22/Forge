@@ -6,7 +6,7 @@
 # the cheap layers (unit/component/contract) are empty. Shares the isE2eHeavy
 # judgement with aggregateVerdicts (Req5 signal) via scripts/check-pyramid-ratio.ts.
 #
-# Config (.forge/config.md):
+# Config (.tinkerman/config.md):
 #   e2e_ratio_threshold: 0.3   # max non-@critical e2e ratio (default 0.3)
 #   strict_pyramid: true       # false → warn-only (never blocks)
 #

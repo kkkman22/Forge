@@ -86,7 +86,7 @@ async function buildFingerprint(sub: string, taskType: TaskType, phase: ProjectP
 
   // Wrap a representative workspace context with the untrusted fence.
   const contextBlock = wrapWorkspaceContext([
-    { path: ".forge/status.md", content: "tier: standard\nphase: build" },
+    { path: ".tinkerman/status.md", content: "tier: standard\nphase: build" },
   ]);
 
   const hintTags = generateHints(taskType, phase, [sub]).map((h) => h.tag);

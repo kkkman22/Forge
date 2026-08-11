@@ -71,17 +71,17 @@ describe("loadSandboxProfile — v2 format", () => {
       activeProfile: "builder",
       profiles: {
         builder: {
-          fileSystem: { allow: ["."], deny: [".forge/sandbox.json"] },
+          fileSystem: { allow: ["."], deny: [".tinkerman/sandbox.json"] },
           network: { mode: "restricted", allow: ["registry.npmjs.org"] },
         },
       },
     };
-    mkdirSync(join(tmpDir, ".forge"), { recursive: true });
-    writeFileSync(join(tmpDir, ".forge", "sandbox.json"), JSON.stringify(config));
+    mkdirSync(join(tmpDir, ".tinkerman"), { recursive: true });
+    writeFileSync(join(tmpDir, ".tinkerman", "sandbox.json"), JSON.stringify(config));
 
     const profile = loadSandboxProfile(tmpDir);
     expect(profile.fileSystem.allow).toEqual(["."]);
-    expect(profile.fileSystem.deny).toEqual([".forge/sandbox.json"]);
+    expect(profile.fileSystem.deny).toEqual([".tinkerman/sandbox.json"]);
     expect(profile.network.mode).toBe("restricted");
   });
 
@@ -100,8 +100,8 @@ describe("loadSandboxProfile — v2 format", () => {
         },
       },
     };
-    mkdirSync(join(tmpDir, ".forge"), { recursive: true });
-    writeFileSync(join(tmpDir, ".forge", "sandbox.json"), JSON.stringify(config));
+    mkdirSync(join(tmpDir, ".tinkerman"), { recursive: true });
+    writeFileSync(join(tmpDir, ".tinkerman", "sandbox.json"), JSON.stringify(config));
 
     const profile = loadSandboxProfile(tmpDir, "strict");
     expect(profile.fileSystem.allow).toEqual(["./src", "./test"]);
@@ -119,8 +119,8 @@ describe("loadSandboxProfile — v2 format", () => {
         },
       },
     };
-    mkdirSync(join(tmpDir, ".forge"), { recursive: true });
-    writeFileSync(join(tmpDir, ".forge", "sandbox.json"), JSON.stringify(config));
+    mkdirSync(join(tmpDir, ".tinkerman"), { recursive: true });
+    writeFileSync(join(tmpDir, ".tinkerman", "sandbox.json"), JSON.stringify(config));
 
     expect(() => loadSandboxProfile(tmpDir, "nonexistent")).toThrow(/nonexistent/);
   });
@@ -152,8 +152,8 @@ describe("loadSandboxProfile — v1 auto-upgrade", () => {
         allow: ["api.anthropic.com"],
       },
     };
-    mkdirSync(join(tmpDir, ".forge"), { recursive: true });
-    writeFileSync(join(tmpDir, ".forge", "sandbox.json"), JSON.stringify(config));
+    mkdirSync(join(tmpDir, ".tinkerman"), { recursive: true });
+    writeFileSync(join(tmpDir, ".tinkerman", "sandbox.json"), JSON.stringify(config));
 
     const profile = loadSandboxProfile(tmpDir);
     expect(profile.fileSystem.allow).toEqual(["./src"]);
@@ -180,7 +180,7 @@ describe("loadSandboxProfile — no config file", () => {
   it("returns default builder profile when no sandbox.json exists", () => {
     const profile = loadSandboxProfile(tmpDir);
     expect(profile.fileSystem.allow).toContain(".");
-    expect(profile.fileSystem.deny).toContain(".forge/sandbox.json");
+    expect(profile.fileSystem.deny).toContain(".tinkerman/sandbox.json");
     expect(profile.network.mode).toBe("restricted");
   });
 });

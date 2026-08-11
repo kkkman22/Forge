@@ -48,7 +48,7 @@ describe("verify artifact invariant [R13.4]", () => {
           const opts: VerifyOptions = {
             topic: "invariant-test",
             cwd: testDir,
-            forgeDir: join(testDir, ".forge"),
+            forgeDir: join(testDir, ".tinkerman"),
             claim,
           };
 

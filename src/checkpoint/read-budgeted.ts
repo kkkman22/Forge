@@ -9,7 +9,7 @@
  * the rebuilt context. Section-aware so even when the GLM-5.2 600K compact
  * budget is tight, the agent still sees the section skeleton (D9 rationale).
  *
- * Design ref: .forge/specs/regenerative-checkpoint/design.md §接口设计
+ * Design ref: .tinkerman/specs/regenerative-checkpoint/design.md §接口设计
  * Inspired by MiMo-Code's readBudgetedSectionAware (MIT, OpenCode fork).
  */
 
@@ -218,6 +218,6 @@ function truncationHint(budgetTokens: number, totalTokens: number): string {
   return (
     `\n\n⚠️ Truncated at ~${budgetTokens} tokens. ` +
     `checkpoint.md is ~${totalTokens} tokens total. ` +
-    `Read(".forge/checkpoint.md") for full content.`
+    `Read(".tinkerman/checkpoint.md") for full content.`
   );
 }

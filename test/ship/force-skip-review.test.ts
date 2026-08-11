@@ -4,7 +4,7 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 
 import { checkShipGateWithForceSkip, recordForceSkip, type ShipOptions } from "../../src/ship.js";
 
-const tempDir = join(process.cwd(), ".forge", "findings");
+const tempDir = join(process.cwd(), ".tinkerman", "findings");
 
 describe("checkShipGateWithForceSkip", () => {
   beforeEach(() => {

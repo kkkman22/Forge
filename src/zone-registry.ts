@@ -2,10 +2,10 @@
  * Zone_Registry — runtime-loadable frozen-zone rule source (frozen-zone-
  * structured-feedback R4).
  *
- * R4 requires the frozen-zone hook to read its rules from `.forge/config.md`
+ * R4 requires the frozen-zone hook to read its rules from `.tinkerman/config.md`
  * at each invocation so rule changes take effect without redeploying hook
  * scripts. This module parses the `frozen_zone` frontmatter field (a list of
- * glob patterns) from `.forge/config.md` and falls back to the hard-coded
+ * glob patterns) from `.tinkerman/config.md` and falls back to the hard-coded
  * defaults (the FROZEN_PATTERNS in state.ts) when the config is missing,
  * unparseable, or omits the field.
  *
@@ -26,7 +26,7 @@ import { extractListField, parseFrontmatter } from "./frontmatter.js";
 
 /** A single frozen-zone rule. */
 export interface ZoneRule {
-  /** Glob/path pattern relative to .forge/ (e.g. "specs/", "plans/", "config.md"). */
+  /** Glob/path pattern relative to .tinkerman/ (e.g. "specs/", "plans/", "config.md"). */
   pattern: string;
   /** Frozen-zone category (mirrors FrozenDiagnostic.category). */
   category: "frozen-spec" | "frozen-plan" | "frozen-config";
@@ -59,20 +59,20 @@ function classifyPattern(pattern: string): Pick<ZoneRule, "category" | "reason_c
 }
 
 /**
- * Load the Zone_Registry from `.forge/config.md` (R4.1).
+ * Load the Zone_Registry from `.tinkerman/config.md` (R4.1).
  *
  * Reads the `frozen_zone` frontmatter field (a YAML list of glob patterns).
  * If the file is missing, unparseable, or omits the field, falls back to
  * DEFAULT_ZONE_RULES and emits a warning to stderr (R4.2).
  *
- * @param forgeRoot absolute path to the project root (parent of .forge/)
+ * @param forgeRoot absolute path to the project root (parent of .tinkerman/)
  * @returns the active zone rules
  */
 export function loadZoneRegistry(forgeRoot: string): ZoneRule[] {
-  const configPath = join(forgeRoot, ".forge", "config.md");
+  const configPath = join(forgeRoot, ".tinkerman", "config.md");
   if (!existsSync(configPath)) {
     process.stderr.write(
-      "[zone-registry] .forge/config.md missing — falling back to default frozen-zone rules. Run /tinkerman init.\n",
+      "[zone-registry] .tinkerman/config.md missing — falling back to default frozen-zone rules. Run /tinkerman init.\n",
     );
     return [...DEFAULT_ZONE_RULES];
   }
@@ -82,7 +82,7 @@ export function loadZoneRegistry(forgeRoot: string): ZoneRule[] {
     content = readFileSync(configPath, "utf-8");
   } catch {
     process.stderr.write(
-      "[zone-registry] .forge/config.md unreadable — falling back to default frozen-zone rules.\n",
+      "[zone-registry] .tinkerman/config.md unreadable — falling back to default frozen-zone rules.\n",
     );
     return [...DEFAULT_ZONE_RULES];
   }
@@ -91,7 +91,7 @@ export function loadZoneRegistry(forgeRoot: string): ZoneRule[] {
   if (!parsed) {
     // R4.2: unparseable → default + warning.
     process.stderr.write(
-      "[zone-registry] .forge/config.md frontmatter unparseable — falling back to default frozen-zone rules.\n",
+      "[zone-registry] .tinkerman/config.md frontmatter unparseable — falling back to default frozen-zone rules.\n",
     );
     return [...DEFAULT_ZONE_RULES];
   }
@@ -114,7 +114,7 @@ let cachedRegistry: ZoneRule[] | null = null;
 let cachedForgeRoot: string | null = null;
 
 /**
- * Cached variant of loadZoneRegistry (R4.5). Parses `.forge/config.md` once
+ * Cached variant of loadZoneRegistry (R4.5). Parses `.tinkerman/config.md` once
  * per process; subsequent calls with the same forgeRoot reuse the parse.
  * A different forgeRoot invalidates the cache.
  */

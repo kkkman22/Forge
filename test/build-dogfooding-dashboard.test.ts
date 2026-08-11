@@ -1,7 +1,7 @@
 /**
  * Tests for the dogfooding-dashboard aggregation functions.
  *
- * Each scan function is a pure function: given a `.forge/` root directory,
+ * Each scan function is a pure function: given a `.tinkerman/` root directory,
  * it walks the relevant sub-tree and returns structured KPI data. Tests use
  * a minimal fixture shadow at test/__fixtures__/dogfooding-sample/.
  */

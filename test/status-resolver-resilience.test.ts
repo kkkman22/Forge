@@ -12,7 +12,7 @@ import { reconstructStateFromGit } from "../src/status-resolver.js";
 // ---------------------------------------------------------------------------
 
 describe("reconstructStateFromGit", () => {
-  it("returns 'router' when no .forge/ files exist", () => {
+  it("returns 'router' when no .tinkerman/ files exist", () => {
     const result = reconstructStateFromGit([]);
 
     expect(result.inferredPhase).toBe("router");

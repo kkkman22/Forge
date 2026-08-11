@@ -18,7 +18,7 @@ Diff stat: !`git diff --stat HEAD~1 2>/dev/null || echo "no diff"`
 # /tinkerman review — 评审引擎
 
 > **触发**：标准路径第三步 / 全量路径第五步 / 轻量路径第二步 / 直接输入 `/tinkerman review`
-> **输出**：`.forge/reviews/<topic>.md`
+> **输出**：`.tinkerman/reviews/<topic>.md`
 
 ## CLI Parameters
 
@@ -60,7 +60,7 @@ review 入口解析项目启用的 domain pack，注入结构化领域知识摘�
 2. **IF `enabled.order.length === 0`** → 跳过本节（Zero-Pack；当前行为不变，INV-1）。
 3. **ELSE** 调用 `composeDomainKnowledgeBundle(enabled, fs)`，将以下**结构化摘要**注入评审 subagent 的上下文（**非全文**，agent 按需 Read 提供的路径）：
    - **Contexts**：每个 bounded context 的 `name` + `responsibility`（一行），来自 `bundle.contexts`。
-   - **Glossary terms**：术语清单（含 aliases），来自 `bundle.glossaryTerms`。这些是 **advisory 只读**——强制执行仍走 `runGlossaryCheck` 对照扁平 `.forge/glossary.md`（spec REQ-6）。
+   - **Glossary terms**：术语清单（含 aliases），来自 `bundle.glossaryTerms`。这些是 **advisory 只读**——强制执行仍走 `runGlossaryCheck` 对照扁平 `.tinkerman/glossary.md`（spec REQ-6）。
    - **State machines**：每个状态机的 `name` + transition 数，来自 `bundle.stateMachines`，附 `sourcePath` 供 agent 按需读取 YAML。
 4. 注入**摘要**而非全文。仅在某个评审视角需要细节时，agent 通过提供的路径 Read 完整文件。
 
@@ -78,7 +78,7 @@ review 入口解析项目启用的 domain pack，注入结构化领域知识摘�
 
 ## 1b. CI 证据接入
 
-开始评审前检测 CI ultrareview 产物（`.forge/reviews/<pr>-ci.md`）。存在时读取 frontmatter 的 `severity_counts` 与 `## Findings`，在 summary 首行注明 CI 已覆盖；本地 finding 与 CI 匹配时加 `[confirmed-by-ci]` 前缀。CI 产物只读，本地评审不得修改。
+开始评审前检测 CI ultrareview 产物（`.tinkerman/reviews/<pr>-ci.md`）。存在时读取 frontmatter 的 `severity_counts` 与 `## Findings`，在 summary 首行注明 CI 已覆盖；本地 finding 与 CI 匹配时加 `[confirmed-by-ci]` 前缀。CI 产物只读，本地评审不得修改。
 
 → 详见 references/ci-evidence-integration.md（完整检测脚本、前缀规则、缺失/存在分支处理）
 
@@ -101,7 +101,7 @@ node scripts/prepare-diff-context.mjs
 - 解析 BASE_BRANCH（`git merge-base main HEAD`，fallback `HEAD~1`）
 - 取 diff stat 与原始 diff content
 - 应用智能截断（按文件优先级 + 单文件 200 行 / 总量 1500 行上限，复用 `truncateDiffContent` pure function，零 MCP 依赖）
-- 写入 `.forge/reviews/.diff-context.md`，含 frontmatter（`base/head/file_count/total_added/total_removed/truncated/source: shell_with_truncate_lib`）+ `## Diff Stat` + `## Diff Content`（含真实 unified diff hunk）
+- 写入 `.tinkerman/reviews/.diff-context.md`，含 frontmatter（`base/head/file_count/total_added/total_removed/truncated/source: shell_with_truncate_lib`）+ `## Diff Stat` + `## Diff Content`（含真实 unified diff hunk）
 
 **禁止**手工拼接 narrative summary（如 "See forge_git output" / "Key changes: -..." 等）替代真实 patch hunk。脚本输出的 `## Diff Content` 段**必须**含 unified diff hunk 标记（`@@ ... @@` / `--- a/<path>` / `+++ b/<path>`）。如脚本不可用（构建未完成等极端情况）→ fallback shell：`git diff ${BASE_BRANCH}...HEAD | head -3000` 直接写入 `## Diff Content` 段，**绝不**替换为 narrative summary。
 
@@ -117,7 +117,7 @@ node scripts/prepare-diff-context.mjs
 
 调用 `resolveContextFiles(planContextFiles, jsonlPath)`（`src/context-injection-wiring.ts`，已通过 `src/index.ts` 导出）：
 - `planContextFiles` = 当前 plan frontmatter 的 `context_files`（用 `parsePlanContextFiles(readFileSync(planPath))` 解析）
-- `jsonlPath` = `.forge/runs/<runId>/context.jsonl`（若存在；不存在则退化为仅 plan 来源）
+- `jsonlPath` = `.tinkerman/runs/<runId>/context.jsonl`（若存在；不存在则退化为仅 plan 来源）
 - 返回去重后的文件路径列表
 
 将结果作为 `ReviewSubagentContext.contextFiles` 传入 `buildReviewSubagents`。清单为空时（plan 无 `context_files` 且无 jsonl）跳过注入，退化为现状行为。
@@ -125,7 +125,7 @@ node scripts/prepare-diff-context.mjs
 ```ts
 import { resolveContextFiles, parsePlanContextFiles } from "./index.js";
 const planFiles = parsePlanContextFiles(readFileSync(planPath, "utf-8"));
-const contextFiles = resolveContextFiles(planFiles, ".forge/runs/<runId>/context.jsonl");
+const contextFiles = resolveContextFiles(planFiles, ".tinkerman/runs/<runId>/context.jsonl");
 buildReviewSubagents({ hasSpec, specPath, changedFiles, contextFiles });
 ```
 
@@ -148,7 +148,7 @@ if (!result.allowed) {
 ```
 
 **Trigger**: Any `Read` tool call targeting `src/`, `test/`, or other project files during subagent execution.
-**Skip**: `.forge/` directory reads (reviews, specs, status) are exempt from sandbox checks.
+**Skip**: `.tinkerman/` directory reads (reviews, specs, status) are exempt from sandbox checks.
 
 | Subagent | Definition File | Layer |
 |---------|--------------|------|
@@ -157,12 +157,12 @@ if (!result.allowed) {
 | security-check | `.claude/agents/security-check.md` | 3 — Security & Risk |
 | frontend-check | `.claude/agents/frontend-check.md` | 4 — Frontend (conditional) |
 
-**启动**：标准/全量路径按 `review.subagent_concurrency` 配置启动（默认 3，范围 1-10；可通过 `FORGE_REVIEW_CONCURRENCY` 环境变量覆盖），使用 `runSubagentsWithConcurrency`；轻量/无 Spec 模式仅 quality-check + security-check。**Layer 4**：检测到 `src/**/*.vue` 或 `package.json` 含 `vue` 时并行启动 frontend-check agent。**SDK 抽风时**（命中 `Error: No task found with ID` 等 task registry purge 现象，详见 `.forge/findings/agent-sdk-task-id-purge-2.1.143.md`）可临时设 `FORGE_REVIEW_CONCURRENCY=1` 完全串行。
+**启动**：标准/全量路径按 `review.subagent_concurrency` 配置启动（默认 3，范围 1-10；可通过 `FORGE_REVIEW_CONCURRENCY` 环境变量覆盖），使用 `runSubagentsWithConcurrency`；轻量/无 Spec 模式仅 quality-check + security-check。**Layer 4**：检测到 `src/**/*.vue` 或 `package.json` 含 `vue` 时并行启动 frontend-check agent。**SDK 抽风时**（命中 `Error: No task found with ID` 等 task registry purge 现象，详见 `.tinkerman/findings/agent-sdk-task-id-purge-2.1.143.md`）可临时设 `FORGE_REVIEW_CONCURRENCY=1` 完全串行。
 
 **Model Tier 解析（强制，spec `review-model-tier`）**：dispatch 每个 subagent 前，必须：
 
 1. 读取目标 agent frontmatter 的 `model_tier`（缺省视为 `inherit`，并显示 `⚠ <agent> 缺少 model_tier，按 inherit 处理`）
-2. 从 `.forge/config.md#review_model_tier_map` 解析 tier → 实际 model 名（缺省用内置默认 cheap=haiku/standard=sonnet/capable=inherit/inherit=inherit），使用 `resolveModelTier({ tier, tierMap, harnessSupports })`（`src/review/model-tier.ts`）
+2. 从 `.tinkerman/config.md#review_model_tier_map` 解析 tier → 实际 model 名（缺省用内置默认 cheap=haiku/standard=sonnet/capable=inherit/inherit=inherit），使用 `resolveModelTier({ tier, tierMap, harnessSupports })`（`src/review/model-tier.ts`）
 3. 把解析结果传入 dispatch 调用
 4. 在主 agent 输出显示每个 subagent 的解析结果，格式 `<agent>: <tier> → <model>`（如 `spec-check: cheap → haiku`），便于成本审计
 5. 若解析 fell_back（`kind === "fallback"`），额外显示 `⚠ model_tier <tier> → <requested> 不被支持，回退 inherit`，**继续** dispatch（不阻断）
@@ -172,7 +172,7 @@ if (!result.allowed) {
 **容错**：`Promise.allSettled` 等待。单个失败不阻断；全部失败则终止。失败 Layer 标注"评审失败"。
 
 **Findings-Only 收集（Write-and-Discard）**：每个 Subagent 返回 findings-only 格式（severity table + `<!-- review-final -->` sentinel）。编排层收到后立即：
-1. `Write` 完整 subagent 输出到 `.forge/reviews/<run-id>/<layer>.md`（L1-spec-check.md / L2-quality-check.md / L3-security-check.md）
+1. `Write` 完整 subagent 输出到 `.tinkerman/reviews/<run-id>/<layer>.md`（L1-spec-check.md / L2-quality-check.md / L3-security-check.md）
 2. Context 中只保留 severity 分布摘要（≤50 tokens/layer）：`L1: P0:0 P1:1 P2:0 P3:0 | L2: ... | L3: ...`
 3. `run-id` 从 `git rev-parse --short HEAD` 生成
 
@@ -185,7 +185,7 @@ if (!result.allowed) {
 1. **解析摘要**：提取 `status` / `findings` / `p0` / `p1` / `report` 字段
 2. **P0/P1 存在** → `Read report_path` 获取完整详情
 3. **P0=0 且 P1=0** → **不读取**完整报告文件，仅基于摘要生成综合结论
-4. 综合评审报告仍输出到 `.forge/reviews/<timestamp>-combined.md`
+4. 综合评审报告仍输出到 `.tinkerman/reviews/<timestamp>-combined.md`
 
 当 subagent 未遵循文件化返回协议（无 `report:` 字段）时，退化为原内联模式。
 
@@ -208,7 +208,7 @@ if (!result.allowed) {
 |---|---|---|---|---|
 | L0 | 三 subagent 并行（concurrency=N，默认 3）| 默认 | 高 | `methodology: subagent-parallel` |
 | L1 | 三 subagent 串行（concurrency=1）| L0 全失败 | 高（同上，仅速度慢）| `methodology: subagent-serial`，自动重试 1 次 |
-| L2 | CI ultrareview 异步证据 | L1 全失败 + `.forge/reviews/<pr>-ci.md` 存在 | 中 | `methodology: ci-evidence` |
+| L2 | CI ultrareview 异步证据 | L1 全失败 + `.tinkerman/reviews/<pr>-ci.md` 存在 | 中 | `methodology: ci-evidence` |
 | L3 | （无评审者）| L0+L1+L2 全部不可用 | — | `methodology: unavailable`、`result: blocked`、阻断 ship |
 
 实现入口：`src/review.ts` 的 `runReviewFallbackLadder()`。
@@ -236,7 +236,7 @@ if (!result.allowed) {
 
 **Layer 1 — Spec 对齐**：需求覆盖、场景覆盖、Scope Creep、Delta "不变"文件、Spec Leak 再扫、Spec Health Check、**四级制品验证 (L1-L4) + 状态矩阵 + Must-Haves Merge**（§3a）。方法：读 Spec → 逐条对照代码 → 逐条对照测试 → 扫描 Scope Creep → 检查 Delta → 调用 detectSpecLeak() 对 spec 再扫一次（防止开发过程倒灌，findings 报告为 P1） → 对每个声称"已实现"的需求执行 L1-L4 验证 → 比对 Plan vs Spec Must-Haves。If spec health verdict=degraded, add "spec re-validation" sub-item to Layer 1 checklist.
 
-**Layer 2 — 代码质量**：命名一致性（调用 `runGlossaryCheck({ phase: 'review' })`，glossary 参数来自 `loadEnforcementGlossary(rootDir, fs)`：扁平 `.forge/glossary.md` 主权源 + enabled pack 术语只读补充；检查同一概念在多 finding 中的命名一致性）、错误处理、性能热点（N+1/未分页/同步阻塞）、测试覆盖率、代码重复、可维护性（>50行/嵌套>3层）。Commit order vs dependency graph consistency: when Plan contains dependsOn fields, verify commit sequence matches topological order (severe reversal → P2 finding).
+**Layer 2 — 代码质量**：命名一致性（调用 `runGlossaryCheck({ phase: 'review' })`，glossary 参数来自 `loadEnforcementGlossary(rootDir, fs)`：扁平 `.tinkerman/glossary.md` 主权源 + enabled pack 术语只读补充；检查同一概念在多 finding 中的命名一致性）、错误处理、性能热点（N+1/未分页/同步阻塞）、测试覆盖率、代码重复、可维护性（>50行/嵌套>3层）。Commit order vs dependency graph consistency: when Plan contains dependsOn fields, verify commit sequence matches topological order (severe reversal → P2 finding).
 
 **Layer 3 — 安全与风险**：硬编码密钥、注入风险（SQL/XSS/命令/路径遍历）、不安全依赖、权限边界、敏感数据泄露。
 
@@ -301,7 +301,7 @@ spec-check 输出中，每个需求附带 `{requirement_id, status, evidence}` �
 
 ### Must-Haves Merge Rule
 
-spec-check agent 对比 Plan（`.forge/plans/<topic>.md`）与 Spec（`.forge/specs/<topic>/requirements.md`）的 Must-Haves 清单：
+spec-check agent 对比 Plan（`.tinkerman/plans/<topic>.md`）与 Spec（`.tinkerman/specs/<topic>/requirements.md`）的 Must-Haves 清单：
 
 1. **提取 Spec Must-Haves**：requirements.md 中标记为 P0/P1 的需求
 2. **提取 Plan 任务列表**：Plan 中所有任务
@@ -393,10 +393,10 @@ IF 本次执行是从 conversation summary 恢复（上下文压缩后继续）�
 
 1. **自动执行 `/code-review --fix`**：调用 `/code-review --fix` 对 P2/P3 问题进行自动修复
 2. **独立 commit**：fix 结果作为独立 commit：`fix(review): auto-fix P2/P3 findings from code-review`
-3. **验证修复**：运行 `ci_check_command`（`.forge/config.md` 中配置，默认 `npm run check`）验证修复未引入新问题
+3. **验证修复**：运行 `ci_check_command`（`.tinkerman/config.md` 中配置，默认 `npm run check`）验证修复未引入新问题
 4. **验证失败回退**：`npm run check` 失败时 → revert fix commit + 输出警告 + 保留 P2/P3 findings 不修复
 5. **无变化时跳过**：`/code-review --fix` 未产生 diff 时 → 跳过 fix commit，继续
-6. **记录**：fix 结果写入 `.forge/reviews/`
+6. **记录**：fix 结果写入 `.tinkerman/reviews/`
 
 `✅ Step 3 完成 — P2/P3 auto-fix`
 
@@ -446,9 +446,9 @@ Post-Review Step 4: 自动 /simplify + commit + 验证
 
 ## 9. P1 Fix Checklist
 
-评审完成后，若存在 P0/P1 finding，则创建 `.forge/reviews/<topic>-checklist.md` 追踪修复状态。
+评审完成后，若存在 P0/P1 finding，则创建 `.tinkerman/reviews/<topic>-checklist.md` 追踪修复状态。
 
-**函数调用**: `createChecklist(findings)` — 参数：评审报告中所有 P0/P1 finding 数组；返回：`ChecklistEntry[]`（每项含 findingId、severity、filePath、lineNumber、description、status="unfixed"）；用途：生成实时追踪清单写入 `.forge/reviews/<topic>-checklist.md`
+**函数调用**: `createChecklist(findings)` — 参数：评审报告中所有 P0/P1 finding 数组；返回：`ChecklistEntry[]`（每项含 findingId、severity、filePath、lineNumber、description、status="unfixed"）；用途：生成实时追踪清单写入 `.tinkerman/reviews/<topic>-checklist.md`
 
 **函数调用**: `serializeChecklist(entries)` — 参数：`ChecklistEntry[]`；返回：Markdown 表格字符串；用途：持久化 checklist 到文件
 
@@ -458,21 +458,21 @@ Post-Review Step 4: 自动 /simplify + commit + 验证
 
 ## 10. Review Report Format
 
-`.forge/reviews/<topic>.md`。YAML frontmatter（topic/date/result/reviewed_at_commit/evidence_artifact_id/p0-p3_count/methodology/layers）+ 正文。methodology 缺省 `subagent-parallel`。
+`.tinkerman/reviews/<topic>.md`。YAML frontmatter（topic/date/result/reviewed_at_commit/evidence_artifact_id/p0-p3_count/methodology/layers）+ 正文。methodology 缺省 `subagent-parallel`。
 
-评审报告是 human-readable view。写入报告前必须调用 `persistReviewEvidenceArtifact()` 生成 `.forge/artifacts/<run-id>/<artifact-id>.json`，并把返回的 artifact id 写入 frontmatter 的 `evidence_artifact_id`。`result: pass` 的评审报告没有 artifact 引用时视为 drift，不能作为 ship 证据。
+评审报告是 human-readable view。写入报告前必须调用 `persistReviewEvidenceArtifact()` 生成 `.tinkerman/artifacts/<run-id>/<artifact-id>.json`，并把返回的 artifact id 写入 frontmatter 的 `evidence_artifact_id`。`result: pass` 的评审报告没有 artifact 引用时视为 drift，不能作为 ship 证据。
 
 → 详见 references/review-report-format.md（完整 Frontmatter 模板）
 
 ## 11. Execution Flow
 
-1. **前置检查**（§15）→ 1.5. **Diff Context Preparation**（§2.0，写入 `.forge/reviews/.diff-context.md`）→ 2. **并行启动 Subagent**（prompt 包含 diff context 引用）→ 3. **状态确认** → 4. **合并管线** → 5. **质量门** → 6. **P0/P1 判定** → 7. **输出报告**（写入 frontmatter 时执行 `git rev-parse HEAD` 记录 `reviewed_at_commit`，再写 `evidence_artifact_id`）→ 8. **生成 P1 Fix Checklist**（§9，存在 P0/P1 时）→ 9. **Post-Review Pipeline**（§8b）
+1. **前置检查**（§15）→ 1.5. **Diff Context Preparation**（§2.0，写入 `.tinkerman/reviews/.diff-context.md`）→ 2. **并行启动 Subagent**（prompt 包含 diff context 引用）→ 3. **状态确认** → 4. **合并管线** → 5. **质量门** → 6. **P0/P1 判定** → 7. **输出报告**（写入 frontmatter 时执行 `git rev-parse HEAD` 记录 `reviewed_at_commit`，再写 `evidence_artifact_id`）→ 8. **生成 P1 Fix Checklist**（§9，存在 P0/P1 时）→ 9. **Post-Review Pipeline**（§8b）
 
 **Step 1.1 状态确认**：主动跟踪每个 Subagent，不假设"启动即完成"。**完成判定只看两件事**：(a) 框架返回的 `status` 字段是否 `success`；(b) `output` 末尾是否带有 sentinel `<!-- review-final -->`（详见 references/final-report-contract.md）。**禁止**主 Agent 阅读或解析 subagent 的自然语言 `result` 文本来判断"是否完成"——历史事故中 subagent 把中间话（"Now let me check..."）作为 result 返回时，主 Agent 误判为"还在跑"并 idle 等待永远不来的通知。
 
 正常完成（status=success + sentinel 存在）→ 进入管线；缺 sentinel → fallback ladder 自动重判为 `incomplete-report:missing-sentinel` 并触发 L1 重试，主 Agent 不需要也不应该自己处理；截断 → 重试 1 次；错误 → 重试 1 次；429 → 降级等待后重试；超时(180s) → 标记 `incomplete`。**不得在 Subagent 运行中合并结果**。
 
-**Step 4 自动推进（铁律）**：通过 → 先 fire-and-forget spawn checkpoint-writer（regenerative-checkpoint R2）记录 review 结果到 `.forge/checkpoint.md`（§6 已发现问题与修复 = review findings 摘要 / §8 设计决策 = review 达成的共识），然后**立即调用** `Skill(skill="forge", args="<next>")`，不输出确认提示。仅输出 `✅ review 通过 → 自动进入 <下一阶段>`，然后直接调用 Skill（→ 详见 shared/next-step-protocol.md）；未通过（存在 P0/P1）→ 输出报告和修复清单 → **立即**触发 `gated_auto` 流程（AskUserQuestion 询问用户是否自动修复全部 P0/P1）→ 用户确认后执行修复 → 修复完成自动 re-review。**禁止**输出问题清单后 idle 等待用户推动。静默 idle 与显式询问"是否继续"同罪。checkpoint-writer 不阻塞推进——spawn 后即调用 Skill。
+**Step 4 自动推进（铁律）**：通过 → 先 fire-and-forget spawn checkpoint-writer（regenerative-checkpoint R2）记录 review 结果到 `.tinkerman/checkpoint.md`（§6 已发现问题与修复 = review findings 摘要 / §8 设计决策 = review 达成的共识），然后**立即调用** `Skill(skill="forge", args="<next>")`，不输出确认提示。仅输出 `✅ review 通过 → 自动进入 <下一阶段>`，然后直接调用 Skill（→ 详见 shared/next-step-protocol.md）；未通过（存在 P0/P1）→ 输出报告和修复清单 → **立即**触发 `gated_auto` 流程（AskUserQuestion 询问用户是否自动修复全部 P0/P1）→ 用户确认后执行修复 → 修复完成自动 re-review。**禁止**输出问题清单后 idle 等待用户推动。静默 idle 与显式询问"是否继续"同罪。checkpoint-writer 不阻塞推进——spawn 后即调用 Skill。
 
 ## 12. Examples
 
@@ -481,7 +481,7 @@ Post-Review Step 4: 自动 /simplify + commit + 验证
 
 ## 13. Edge Cases
 
-无 Spec → 不启动 spec-check，Layer 1 标注"已跳过"。无代码变更 → 提示先 build。无 `.forge/` → 提示 `/tinkerman init`。输出过长 → 截断提示见文件。
+无 Spec → 不启动 spec-check，Layer 1 标注"已跳过"。无代码变更 → 提示先 build。无 `.tinkerman/` → 提示 `/tinkerman init`。输出过长 → 截断提示见文件。
 
 ## 14. Canvas Output (`--canvas`)
 
@@ -491,7 +491,7 @@ Post-Review Step 4: 自动 /simplify + commit + 验证
 
 **触发条件**：review 通过后自动生成，或用户显式指定 `--canvas`。
 
-**输出**：`.forge/reviews/<topic>.canvas.html`
+**输出**：`.tinkerman/reviews/<topic>.canvas.html`
 
 ## 15. Pre-checks
 
@@ -509,15 +509,15 @@ Post-Review Step 4: 自动 /simplify + commit + 验证
 **Context 预算（post findings-only）**：
 - 每个 layer 的 context 占用：≤50 tokens（severity 分布摘要）
 - 3 layers 合计：≤150 tokens（vs 原来 ~20k tokens）
-- 完整报告路径：`.forge/reviews/<run-id>/L1-spec-check.md` / `L2-quality-check.md` / `L3-security-check.md`
+- 完整报告路径：`.tinkerman/reviews/<run-id>/L1-spec-check.md` / `L2-quality-check.md` / `L3-security-check.md`
 
 **函数调用**: `serializeReviewSummary(reviewOutput)` — 参数：评审者 findings-only 输出（severity table）；返回：severity 分布摘要字符串（≤50 tokens）；用途：替换 context 中的 findings table
 
 → 函数签名详见 references/function-contracts.md
 
-**Compact-Safe 模式（ce-inspired R10）**：当 context 接近上限（默认 100K tokens，阈值见 `.forge/config.md` 的 `context_budget`）时，自动降级为 compact-safe 模式而非失败或输出残缺。实现：`decideCompactSafe(currentTokens, contextBudget)`（`src/review/compact-safe.ts`）→ `{compactSafe, threshold}`。激活后：跳过 Validation Pass；仅启用 spec-check + security-check（`filterToCompactSafeLayers` 跳过 quality + adversarial）；merge 用简化去重 `compactSafeDedup`（仅按 file+line，不 normalize）；报告开头标注 `renderCompactSafeBanner()` + 每个 finding 用 `formatCompactSafeFinding`（仅 ID/severity/title/file:line）。**confidence gate 严格性不变**（R10.4）。也可用 `--compact-safe` CLI flag 强制启用。
+**Compact-Safe 模式（ce-inspired R10）**：当 context 接近上限（默认 100K tokens，阈值见 `.tinkerman/config.md` 的 `context_budget`）时，自动降级为 compact-safe 模式而非失败或输出残缺。实现：`decideCompactSafe(currentTokens, contextBudget)`（`src/review/compact-safe.ts`）→ `{compactSafe, threshold}`。激活后：跳过 Validation Pass；仅启用 spec-check + security-check（`filterToCompactSafeLayers` 跳过 quality + adversarial）；merge 用简化去重 `compactSafeDedup`（仅按 file+line，不 normalize）；报告开头标注 `renderCompactSafeBanner()` + 每个 finding 用 `formatCompactSafeFinding`（仅 ID/severity/title/file:line）。**confidence gate 严格性不变**（R10.4）。也可用 `--compact-safe` CLI flag 强制启用。
 
-**Validation Pass（ce-inspired R5，Full tier 默认启用）**：三层 review merge 后、ship 前的可选独立验证环节。`.forge/config.md` 的 `review_enable_validation: true`（默认）+ Full tier 时启用；Standard/Light 跳过；`--no-validation` 强制跳过。为每个存活的 P0/P1 finding spawn 独立 `validation-pass` agent（`agents/validation-pass.md`，model 按 `model_tier: standard` 经 `review_model_tier_map` 解析），**只传 title/severity/file/line/evidence，不传 reviewer identity**（R5.3 无承诺效应）。severity 仅影响 confidence 降级逻辑（R5.5/R5.6），不影响 model 选择。agent 返回 `{confirmed, reason, adjusted_confidence}`（R5.4）。forge-review 用 `applyValidationResult`（`src/review/validation-pass.ts`）应用降级：P0 未确认→P1、P1 未确认→P2，均标注 `↓ validation: <reason>`（R5.5/R5.6）；P2/P3 未确认不改 severity。结果逐行写入 `.forge/progress/<slug>-review-validation.jsonl`（`serializeValidationRecord`，R5.8 供 /tinkerman learn 追溯）。
+**Validation Pass（ce-inspired R5，Full tier 默认启用）**：三层 review merge 后、ship 前的可选独立验证环节。`.tinkerman/config.md` 的 `review_enable_validation: true`（默认）+ Full tier 时启用；Standard/Light 跳过；`--no-validation` 强制跳过。为每个存活的 P0/P1 finding spawn 独立 `validation-pass` agent（`agents/validation-pass.md`，model 按 `model_tier: standard` 经 `review_model_tier_map` 解析），**只传 title/severity/file/line/evidence，不传 reviewer identity**（R5.3 无承诺效应）。severity 仅影响 confidence 降级逻辑（R5.5/R5.6），不影响 model 选择。agent 返回 `{confirmed, reason, adjusted_confidence}`（R5.4）。forge-review 用 `applyValidationResult`（`src/review/validation-pass.ts`）应用降级：P0 未确认→P1、P1 未确认→P2，均标注 `↓ validation: <reason>`（R5.5/R5.6）；P2/P3 未确认不改 severity。结果逐行写入 `.tinkerman/progress/<slug>-review-validation.jsonl`（`serializeValidationRecord`，R5.8 供 /tinkerman learn 追溯）。
 
 ## 17. Known AI Failure Modes
 
@@ -578,9 +578,9 @@ When user triggers `/tinkerman review`, follow this dispatch protocol for workfl
    ```
    Dispatcher records `chosen_level: L1` with `l1_trigger_reason` / `l0_failure_signature`.
 
-4. **Dispatch record always written**: `.forge/runs/<runId>/dispatch.jsonl` with all 14 fields (handled by dispatcher, not SKILL).
+4. **Dispatch record always written**: `.tinkerman/runs/<runId>/dispatch.jsonl` with all 14 fields (handled by dispatcher, not SKILL).
 
-5. **Status always updated**: `.forge/status.md` receives `dispatch_chosen_level`, `dispatch_subcommand`, `dispatch_run_id` (handled by dispatcher).
+5. **Status always updated**: `.tinkerman/status.md` receives `dispatch_chosen_level`, `dispatch_subcommand`, `dispatch_run_id` (handled by dispatcher).
 
 6. **No confirmation prompts**: Phase transitions follow §2.7 — `✅ review 完成 → 自动进入 <next>`.
 
@@ -595,12 +595,12 @@ When user triggers `/tinkerman review`, follow this dispatch protocol for workfl
 After receiving three-layer review reports, forge-review SKILL:
 
 1. Extracts all `known-failures append-block` from reviewer output
-2. Reads `.forge/knowledge/known-failures.md` (creates if missing)
+2. Reads `.tinkerman/knowledge/known-failures.md` (creates if missing)
 3. Calls `mergeKnownFailures(existing, newBlocks)` to dedup and merge
-4. Writes result back to `.forge/knowledge/known-failures.md`
+4. Writes result back to `.tinkerman/knowledge/known-failures.md`
 5. Outputs: `本次新增 N 条、更新 M 条 known-failures`
 
-Retention: >100 entries triggers auto-archive to `.forge/archive/known-failures-<date>.md`, keeping latest 80.
+Retention: >100 entries triggers auto-archive to `.tinkerman/archive/known-failures-<date>.md`, keeping latest 80.
 
 ## Read Dedup Iron Law
 

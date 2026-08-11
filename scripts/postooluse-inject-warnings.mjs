@@ -34,12 +34,12 @@ const MONITORED_TOOLS = new Set(["Edit", "Write", "MultiEdit", "NotebookEdit"]);
 // readStdin imported from ./lib/read-stdin.mjs
 
 /**
- * Find the project root by walking up from cwd looking for .forge/config.md.
+ * Find the project root by walking up from cwd looking for .tinkerman/config.md.
  */
 function findProjectRoot(startDir) {
   let dir = startDir;
   for (let i = 0; i < 10; i++) {
-    if (existsSync(join(dir, ".forge", "config.md"))) {
+    if (existsSync(join(dir, ".tinkerman", "config.md"))) {
       return dir;
     }
     const parent = dirname(dir);
@@ -54,7 +54,7 @@ function findProjectRoot(startDir) {
  */
 function isHookDisabled(projectRoot) {
   try {
-    const configPath = resolve(projectRoot, ".forge", "config.md");
+    const configPath = resolve(projectRoot, ".tinkerman", "config.md");
     if (!existsSync(configPath)) return false;
     const content = readFileSync(configPath, "utf-8");
 
@@ -84,7 +84,7 @@ function parseFrozenPaths(projectRoot) {
   const frozenPaths = [];
 
   try {
-    const configPath = resolve(projectRoot, ".forge", "config.md");
+    const configPath = resolve(projectRoot, ".tinkerman", "config.md");
     if (!existsSync(configPath)) return DEFAULT_FROZEN_PATHS;
     const content = readFileSync(configPath, "utf-8");
 
@@ -98,8 +98,8 @@ function parseFrozenPaths(projectRoot) {
     const lines = block.split("\n");
 
     for (const line of lines) {
-      // Match lines like: - `.forge/specs/*/spec.md`（status: locked）
-      const globMatch = line.match(/`\.forge\/([^`]+)`/);
+      // Match lines like: - `.tinkerman/specs/*/spec.md`（status: locked）
+      const globMatch = line.match(/`\.tinkerman\/([^`]+)`/);
       if (!globMatch) continue;
 
       const rawGlob = globMatch[1];
@@ -172,8 +172,8 @@ function checkFrozenZone(filePath, projectRoot) {
   const resolved = normalisePath(resolve(filePath));
   const projectResolved = normalisePath(resolve(projectRoot));
 
-  if (!resolved.startsWith(projectResolved + "/.forge/")) return null;
-  const forgeRelative = resolved.slice(projectResolved.length + 8);
+  if (!resolved.startsWith(projectResolved + "/.tinkerman/")) return null;
+  const forgeRelative = resolved.slice(projectResolved.length + 12);
   if (!forgeRelative) return null;
 
   const frozenPaths = parseFrozenPaths(projectRoot);
@@ -248,10 +248,10 @@ function globMatches(filePath, glob) {
 }
 
 /**
- * Load ownership map from .forge/context-ownership.yaml.
+ * Load ownership map from .tinkerman/context-ownership.yaml.
  */
 function loadOwnershipMap(projectRoot) {
-  const ownershipPath = resolve(projectRoot, ".forge", "context-ownership.yaml");
+  const ownershipPath = resolve(projectRoot, ".tinkerman", "context-ownership.yaml");
   if (!existsSync(ownershipPath)) return null;
 
   try {
@@ -288,7 +288,7 @@ function loadContextMap(projectRoot) {
   // Load from custom layer
   const customMapPath = resolve(
     projectRoot,
-    ".forge",
+    ".tinkerman",
     "custom",
     "contexts",
     "_map.yaml",

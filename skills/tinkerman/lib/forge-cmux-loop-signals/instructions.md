@@ -23,7 +23,7 @@ This skill displays Forge Loop iteration state in the cmux sidebar — running, 
 
 ## Activation
 
-Automatic when Mirror_Daemon detects Loop events in the `.forge/events.ndjson` stream.
+Automatic when Mirror_Daemon detects Loop events in the `.tinkerman/events.ndjson` stream.
 
 ## Requirements
 

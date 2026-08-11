@@ -36,7 +36,7 @@ const MD_LINK_DANGERS = [
 ];
 
 // Exclusion paths (read-path-specific)
-const EXCLUDE_PATHS = [".forge/reviews/", ".forge/knowledge/", "SECURITY.md"];
+const EXCLUDE_PATHS = [".tinkerman/reviews/", ".tinkerman/knowledge/", "SECURITY.md"];
 
 const HIGH_SEVERITY_THRESHOLD = 3;
 

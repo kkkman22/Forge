@@ -237,13 +237,13 @@ describe("agents-dispatcher (R5)", () => {
   });
 
   // -----------------------------------------------------------------------
-  // 4. Reads results from .forge/agent-results/ directory
+  // 4. Reads results from .tinkerman/agent-results/ directory
   // -----------------------------------------------------------------------
 
   it("collectResults reads JSON files from agent-results/<runId>/", async () => {
     const { collectResults } = await import(MODULE_PATH);
 
-    const runDir = join(tmpDir, ".forge", "agent-results", "run-123");
+    const runDir = join(tmpDir, ".tinkerman", "agent-results", "run-123");
     mkdirSync(runDir, { recursive: true });
 
     const result1 = {
@@ -265,7 +265,7 @@ describe("agents-dispatcher (R5)", () => {
     // Use real fs for collectResults — restore actual implementations
     const { readFileSync: _realRead, readdirSync: realReaddir } = await import("node:fs");
     MOCK_READDIR_SYNC.mockImplementation((dir: string) => {
-      if (dir === runDir || dir === join(tmpDir, ".forge", "agent-results", "run-123")) {
+      if (dir === runDir || dir === join(tmpDir, ".tinkerman", "agent-results", "run-123")) {
         return ["spec-check.json", "quality-check.json"];
       }
       return [];
@@ -301,7 +301,7 @@ describe("agents-dispatcher (R5)", () => {
   it("collectResults skips malformed JSON files gracefully", async () => {
     const { collectResults } = await import(MODULE_PATH);
 
-    const runDir = join(tmpDir, ".forge", "agent-results", "run-malformed");
+    const runDir = join(tmpDir, ".tinkerman", "agent-results", "run-malformed");
 
     MOCK_READDIR_SYNC.mockImplementation((dir: string) => {
       if (dir === runDir) return ["bad.json", "good.json"];
