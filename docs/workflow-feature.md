@@ -3,7 +3,7 @@ title: '工作流示例：新功能开发（标准路径）'
 category: reference
 audience:
 - maintainer
-updated: '2026-05-12'
+updated: 2026-08-11
 owner: forge-maintainers
 ---
 
@@ -134,7 +134,6 @@ npm run check
   → tsc --noEmit ✅
   → biome check src/ test/ ✅
   → vitest run ✅
-  → scripts/check-readme-metrics.sh ✅
 
 全部通过 ✅
 ```

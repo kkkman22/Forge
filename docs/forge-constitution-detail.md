@@ -3,7 +3,7 @@ title: 'Forge — 项目宪法详细内容'
 category: reference
 audience:
 - maintainer
-updated: 2026-06-30
+updated: 2026-08-11
 owner: forge-maintainers
 ---
 
@@ -140,7 +140,7 @@ class Calculator {
 Claude Code 在 Stop hook 连续 8 次返回 block（exit 2 或 block JSON）时会强制结束 turn。
 Forge 的 Stop hook 链（plugin.json）以"提示式 echo"为主要交互方式，**禁止使用 exit 2
 或输出 `{"continue":false}` / `{"decision":"block"}`**。该约束由 `test/contract.test.ts`
-的 `stop-hook-no-block` 套件守护，覆盖 4 个外部脚本（persistent-loop / record-evolved-rule-violation /
+的 `stop-hook-no-block` 套件守护，覆盖 3 个外部脚本（persistent-loop /
 flag-stale-evolved-rules / cmux-mirror）以及 plugin.json 中所有 Stop 段的 inline bash 命令。
 完整审计见 ADR `2026-05-16-stop-hook-block-cap-audit.md`。
 

@@ -4,7 +4,7 @@ category: reference
 audience:
   - daily-developer
   - maintainer
-updated: 2026-06-24
+updated: 2026-08-11
 owner: forge-maintainers
 ---
 
@@ -139,11 +139,7 @@ Assessment source: Claude Code v2.1.169 changelog dated 2026-06-08.
 Forge uses `requiredMinimumVersion` in plugin configuration to declare the minimum Claude Code version. On SessionStart, `scripts/bootstrap-check.mjs` validates the current version and outputs diagnostics for incompatible versions.
 
 ### 2. Stop/SubagentStop additionalContext
-`scripts/stop-additional-context.mjs` uses `hookSpecificOutput.additionalContext` to provide structured feedback when Forge detects:
-- Missing verification evidence during active phases
-- Incomplete tasks at session end
-- Auto-advance gaps (no-idle iron law)
-- Subagent failures with retry guidance
+> Removed in ADR-0009 subtraction pass (`stop-additional-context.mjs` cut — babysit-class, absorbable). See `.forge/audits/hook-audit-2026-08-11.md`.
 
 On versions < 2.1.163, Stop hooks fall back to existing stdout reminders.
 
