@@ -1,0 +1,763 @@
+{
+  "version": 1,
+  "generated_at": "2026-08-11T18:27:53.725Z",
+  "subs": {
+    "abort": {
+      "instructions": {
+        "path": "abort/instructions.md",
+        "sha256": "334ce1774c19bf412db997dcb7812106c542e113ea4ee7be3fcb23172a987b56"
+      },
+      "references": [
+        {
+          "path": "abort/references/cmux.md",
+          "sha256": "75630c747d1141cab7793bcc05e31564bc977ba0ecb57ecd752e64c57cb0c174"
+        },
+        {
+          "path": "abort/references/function-contracts.md",
+          "sha256": "54b66c75e11e09faa782bfb7dc4dff342091260c7a6b155c16815830637808c0"
+        }
+      ]
+    },
+    "accept": {
+      "instructions": {
+        "path": "accept/instructions.md",
+        "sha256": "bd58863bb2b9932111690772d32a1761a50918e26756f14e2c4852998fa5d90b"
+      },
+      "references": [
+        {
+          "path": "accept/references/boundary-with-test.md",
+          "sha256": "d258f9fb514f8a90e67c02995f79161c38858859ced8a3477fad978bd141932a"
+        },
+        {
+          "path": "accept/references/runners.md",
+          "sha256": "90296651b3b14eb65226feec0faed9f3f263b3ea743f6e6dd97164108eac5894"
+        },
+        {
+          "path": "accept/references/scenario-format.md",
+          "sha256": "4c0092da8106200e2acdae01c3be56973f46fbdb493d34a4bf587fd9b92952c9"
+        }
+      ]
+    },
+    "build": {
+      "instructions": {
+        "path": "build/instructions.md",
+        "sha256": "13344c1bc982126ba26028288276b62f6088171ee60d67f1d8fe0bd150291ded"
+      },
+      "references": [
+        {
+          "path": "build/references/anti-drift.md",
+          "sha256": "518fd695b258b76dafa72d8cb12f567e1efd0f99a68b7e1b0065d80f95265917"
+        },
+        {
+          "path": "build/references/branch-gate.md",
+          "sha256": "04dcd0b32502cf17b7b7e990fd4571c10b6e93881b232f780ee4e915c6df6b2c"
+        },
+        {
+          "path": "build/references/bugfix-method-library.md",
+          "sha256": "026aeaaabca838a5b0cd929316f331f0162c458fe9c53978261f2072aa0f499c"
+        },
+        {
+          "path": "build/references/bugfix-mode.md",
+          "sha256": "70018f153c555c81d4ba35fe2c351e1ca68c9f9b27b051c23eeda96b05c41b99"
+        },
+        {
+          "path": "build/references/change-summary.md",
+          "sha256": "3730ad1e4673a0253c0ebc734cc00b7cff64c8eb81e5092853986ec6a13cee45"
+        },
+        {
+          "path": "build/references/checkpoint-writer.md",
+          "sha256": "f734f334f9c68c721a5af12e591d251d06495372a5f98d65d833dd138e4061cd"
+        },
+        {
+          "path": "build/references/closure-probes.md",
+          "sha256": "2d8f8c9d29d0bf674639f7bcdec5890d04b3a4fa5a7710d2bb7ba06cad1fcbbd"
+        },
+        {
+          "path": "build/references/cmux.md",
+          "sha256": "3dc6da0695a73dc84b4dfd00043b08996ed2b31e9726cb4474e948ab6b13a649"
+        },
+        {
+          "path": "build/references/commit-narrative.md",
+          "sha256": "4b8af8b023b847d54eba7a048623ba4596236d53f25bcedd38e0f93712b1a3d4"
+        },
+        {
+          "path": "build/references/context-budget.md",
+          "sha256": "4b8f74525589cf744ddd668b89ad4901586e1e58a43eef6f7e6a0fd6914dbfc7"
+        },
+        {
+          "path": "build/references/context-exhaustion.md",
+          "sha256": "94a8b29a24832a0af6d731486083a30fc6a25aef262fcdfdfad02816710a7018"
+        },
+        {
+          "path": "build/references/dependency-discipline.md",
+          "sha256": "da32777261283200b4474f714d820e7ef2bc1756437b047ee17f4a4ade0f26e1"
+        },
+        {
+          "path": "build/references/failure-patterns.md",
+          "sha256": "f7cb88b54a12a2479572b9b7fbf2aecf46c0b3c7d98d0ec85ffe52ae0697d004"
+        },
+        {
+          "path": "build/references/function-contracts.md",
+          "sha256": "eac6bdab74f29807467bac309aeaffda8b9789bf6d2ae8d8c8fd103d1b2bedcb"
+        },
+        {
+          "path": "build/references/handoff-block.md",
+          "sha256": "945dac8ef0142b73106298c816bc983a03a8f6eabde402c8a7bd54c3e7369bd9"
+        },
+        {
+          "path": "build/references/no-mid-build-confirmation.md",
+          "sha256": "f8ca85a16025427d52f09707a4298f40a9f510a1797c389eb0d3a977e1ec8cd8"
+        },
+        {
+          "path": "build/references/plan-preflight.md",
+          "sha256": "0636c5672c01cac34970228a4b9498911f10a232f0f5045bcdd21bf96d609bc3"
+        },
+        {
+          "path": "build/references/refactor-method-library.md",
+          "sha256": "65fb92f166de98547ed9a56e2acc9a5ffade24c208ea74db4b7b9378b6e6897e"
+        },
+        {
+          "path": "build/references/refactor-mode.md",
+          "sha256": "223fa07260a8cbd377965657bc1e98f1394ddb4f1bcc67e70cc3fc40b25bbb55"
+        },
+        {
+          "path": "build/references/status-updates.md",
+          "sha256": "1bbeba4741e3f41854510edfa88108759aa585cfac8d4e5fc8052bd0a3301c08"
+        },
+        {
+          "path": "build/references/subagent-orchestration.md",
+          "sha256": "93c030c224c5b9760bcfde180457f18d0d89299888559de1a07d097a4db61233"
+        },
+        {
+          "path": "build/references/tdd-rules.md",
+          "sha256": "ce4ccebf7baae11e154bbf286c32ecfd47616ee089e95fd5446c1a99ef461359"
+        }
+      ]
+    },
+    "build-light": {
+      "instructions": {
+        "path": "build-light/instructions.md",
+        "sha256": "691a03861dfb4004b7539c281e457aa2ca85c9ee2d830faa100d4bd4d365c765"
+      },
+      "references": [
+        {
+          "path": "build-light/references/function-contracts.md",
+          "sha256": "08c00e7e465f6c1c74cc569db68db65bcb80c3b1c40c874cfada4a3a33ac2d97"
+        }
+      ]
+    },
+    "charter": {
+      "instructions": {
+        "path": "charter/instructions.md",
+        "sha256": "3c8087648d7df182cd7bb12c2092ce166335cfad83ab48e2f352dc0c06d03e67"
+      },
+      "references": [
+        {
+          "path": "charter/references/subcommands.md",
+          "sha256": "51c4c7fca003c20d4150d73816ed7103f6c5a213b23c91649050de0fd9f1e32b"
+        }
+      ]
+    },
+    "continue": {
+      "instructions": {
+        "path": "continue/instructions.md",
+        "sha256": "c6dec4c722f309be25f2e846b7d7e2c8c1648e667d56a3f4e4a072b1834a2d3a"
+      },
+      "references": []
+    },
+    "control-cli": {
+      "instructions": {
+        "path": "control-cli/instructions.md",
+        "sha256": "51e124865088b787b227e87838684ea8bfb2d3aa9731a10f6db57a3b214f235b"
+      },
+      "references": [
+        {
+          "path": "control-cli/references/cmux-harness.md",
+          "sha256": "bbbe026b41f5999abb29ec946b8f1a0773e9aa0a54fe531b84314693d319a9b1"
+        },
+        {
+          "path": "control-cli/references/node-pty-fallback.md",
+          "sha256": "323f4b19302257fe898501a75abaf926bbfd4c71d4af129531ef69ba43366ad3"
+        },
+        {
+          "path": "control-cli/references/tmux-harness.md",
+          "sha256": "bbb2710d456608b55e98601ad2deb5f902340e62f059be18f234d3ecc71dbc79"
+        }
+      ]
+    },
+    "control-ui": {
+      "instructions": {
+        "path": "control-ui/instructions.md",
+        "sha256": "90de10ab1d29dcb2c9b46b7e93d622f46405df733a0b9e6baadc7c908294422c"
+      },
+      "references": [
+        {
+          "path": "control-ui/references/cdp-adapter.md",
+          "sha256": "2e9306fdc9b89b5e5ffa8e1e588e238e5d389717a50f0f783829517e673b09b8"
+        },
+        {
+          "path": "control-ui/references/cmux-browser.md",
+          "sha256": "69f9a880b25119dd63dc1e56533acf88d3523f5d5cadd2fee0c37ae31332ea36"
+        },
+        {
+          "path": "control-ui/references/playwright-adapter.md",
+          "sha256": "adcd763ade6d64c416f30b3680bc1850fffe8a8aabb7d4e4391542adc37a2832"
+        }
+      ]
+    },
+    "debug": {
+      "instructions": {
+        "path": "debug/instructions.md",
+        "sha256": "e4ff95e70d49ec950eb18b8248d98ed24782c3ad79a189fd736809692e4b8290"
+      },
+      "references": [
+        {
+          "path": "debug/references/function-contracts.md",
+          "sha256": "1c80eb69d95ae6860ba925a4ed7ce7de12af8311246817440c5bab8f2fa02810"
+        },
+        {
+          "path": "debug/references/scientific-method.md",
+          "sha256": "cd0b85053a369de10c7b329c573c49118b40de418efb9515dd71ad467eb524c4"
+        }
+      ]
+    },
+    "decide": {
+      "instructions": {
+        "path": "decide/instructions.md",
+        "sha256": "55120164328c17c2d3d351d2fcab886cad8e8244125c55534b56c0a19adcdcea"
+      },
+      "references": [
+        {
+          "path": "decide/references/adr-output.md",
+          "sha256": "332704f694515d3c78fb07ec95d5ed2a6ae0bf901aa39f5b82078c118a94e172"
+        },
+        {
+          "path": "decide/references/decision-format.md",
+          "sha256": "a6979e060f01745e3e401fd1074158392d4df9fd7d3282023e723d6f8f404d7e"
+        },
+        {
+          "path": "decide/references/examples.md",
+          "sha256": "669a945655b0436dc4444df7e7d81e98b3dd62ee8145436f3703e7588c853828"
+        },
+        {
+          "path": "decide/references/function-contracts.md",
+          "sha256": "817b2cf9dff09ac3d71c58606195d5cc9e0e340ffc9a20938028094ba27ff436"
+        },
+        {
+          "path": "decide/references/perspective-formats.md",
+          "sha256": "f8c6a9f38329f57c57298a9358f37b960688ca236b37435a107fa16e7bae379e"
+        }
+      ]
+    },
+    "decide-teams": {
+      "instructions": {
+        "path": "decide-teams/instructions.md",
+        "sha256": "3d651b2b01d3e6b71799571a333ad291039b528b7b3177f0b805dcb4e8f53c96"
+      },
+      "references": []
+    },
+    "fix": {
+      "instructions": {
+        "path": "fix/instructions.md",
+        "sha256": "df1259ab82297779398ce94b35804a1759fc9b6feda69439627ae92d1de592be"
+      },
+      "references": [
+        {
+          "path": "fix/references/function-contracts.md",
+          "sha256": "daee1ec89b4b3dc965a1989c32851ec99f9a324d62e288852dd90a335013a303"
+        }
+      ]
+    },
+    "fix-conflicts": {
+      "instructions": {
+        "path": "fix-conflicts/instructions.md",
+        "sha256": "9d7d3f8578fc9492f38807621e6f3e4202dc23337a269c8574b1a46a0c016a0b"
+      },
+      "references": [
+        {
+          "path": "fix-conflicts/references/frozen-refusal-flow.md",
+          "sha256": "5e914fe375ff174fbf37afe122c4d6d05c2ef425a2632313954dc7fabda6e6f2"
+        },
+        {
+          "path": "fix-conflicts/references/guarded-merge-rules.md",
+          "sha256": "212ecf2fb40ca70fa2fc94c13e0b35ab8e2d6ac6362f0b0c9cec40bbb65a0417"
+        },
+        {
+          "path": "fix-conflicts/references/zone-classification.md",
+          "sha256": "5f8b04f505d2d79a97fb43c2ac7bb13b45e6e0e9d243cb5830e84a7cfb4d7e41"
+        }
+      ]
+    },
+    "forge-cmux-browser-qa": {
+      "instructions": {
+        "path": "forge-cmux-browser-qa/instructions.md",
+        "sha256": "bcc37edd18cc15e79dcc10a3b5809ac44e7ce2e46c2806e7747107562d824587"
+      },
+      "references": []
+    },
+    "forge-cmux-loop-signals": {
+      "instructions": {
+        "path": "forge-cmux-loop-signals/instructions.md",
+        "sha256": "45701abc2618c47d1c896a029bd49b521d796394ea0a0cde07f3719699040df4"
+      },
+      "references": []
+    },
+    "forge-cmux-sidebar-sync": {
+      "instructions": {
+        "path": "forge-cmux-sidebar-sync/instructions.md",
+        "sha256": "a11f5398dd37540438a27d5b48fcc58f057230cbbd7846e0282ee9596d82bf8b"
+      },
+      "references": []
+    },
+    "grill": {
+      "instructions": {
+        "path": "grill/instructions.md",
+        "sha256": "b3a30a232f03a779855f7757ed44b683bbd0c1cd8b5849333afc6e1561401f8b"
+      },
+      "references": [
+        {
+          "path": "grill/references/decision-tree-format.md",
+          "sha256": "a44edc725a539b861ff111b52846ec251c42b4a19304209f919bf753fa7b4afe"
+        },
+        {
+          "path": "grill/references/examples.md",
+          "sha256": "fca2d0425d4d5aef474e27980750f411e04c6006c4a30cd925936f2597be0734"
+        },
+        {
+          "path": "grill/references/function-contracts.md",
+          "sha256": "c615d7e8d2b3552c6b0880af099570b4c54b9648c970ffe4c372406714dc25ec"
+        },
+        {
+          "path": "grill/references/question-strategies.md",
+          "sha256": "15f7c364b014b234d375868b1ac3e3a2b99906a7a027153ace46102a964db553"
+        }
+      ]
+    },
+    "init": {
+      "instructions": {
+        "path": "init/instructions.md",
+        "sha256": "044dd202fb93112479a157b4cc054434f28ad470ac33f7a6bd2f25eb7841f835"
+      },
+      "references": []
+    },
+    "learn": {
+      "instructions": {
+        "path": "learn/instructions.md",
+        "sha256": "8a27c08ddfc3f7a37f3bf7d146e358d72d312208d62eecf8173be612b5d895a5"
+      },
+      "references": [
+        {
+          "path": "learn/references/deep-reconciliation.md",
+          "sha256": "f7c0b38e12fd2601bb58cdd6c1195b66dd13b275442f37ec33e0d084f2c0d973"
+        },
+        {
+          "path": "learn/references/examples.md",
+          "sha256": "845ab5449fe2cd57af6f277a37702bf66d3da24d59ec316963fd356347a66416"
+        },
+        {
+          "path": "learn/references/five-dimensions.md",
+          "sha256": "122994d9cfe2e80935ad71e3e656825f2d855d2c005e993f5dca9bc03c1ec23f"
+        },
+        {
+          "path": "learn/references/from-chats.md",
+          "sha256": "f8e7b76d5fe070f67d00eaa14d0d6e0a787f77fc2b71aabb8ce7982cbeffd5ce"
+        },
+        {
+          "path": "learn/references/function-contracts.md",
+          "sha256": "e8135b9cf4779affccdbb643a5def97e5ef55c04808de2f7cabc16f5ad16cb79"
+        },
+        {
+          "path": "learn/references/knowledge-backflow.md",
+          "sha256": "2c1dfbaac083353564cce7011304c3ca87c389383dee49c7c3845ed1ad85a1dc"
+        },
+        {
+          "path": "learn/references/knowledge-format.md",
+          "sha256": "54c240b474363916ec607fec7d8ac70ced460444744e56a42be9edaf79b70c8f"
+        },
+        {
+          "path": "learn/references/maintenance-invariants.md",
+          "sha256": "e815d90f5a8d0863ccd9731ddedeb9f5cfaed938b7691b506e71a6ed9ebddf90"
+        },
+        {
+          "path": "learn/references/quality-analysis.md",
+          "sha256": "22a46bd1c00a8b745b3ab839982454c38b499a689276b4c7b7ca5c4b3d34518f"
+        },
+        {
+          "path": "learn/references/rule-distillation.md",
+          "sha256": "619953bf70ee77260933c2d23d961b7d7fd9cc11e16235b16790a98c219c0ebf"
+        },
+        {
+          "path": "learn/references/skill-feedback.md",
+          "sha256": "ba9ded80969b54974c4c998e420fa9217915d68da82157a7b867994c55d0d060"
+        }
+      ]
+    },
+    "loop": {
+      "instructions": {
+        "path": "loop/instructions.md",
+        "sha256": "16abce12e2df8463a24cc407860e91890635676175900e7943501fd78179a7ae"
+      },
+      "references": []
+    },
+    "mutate": {
+      "instructions": {
+        "path": "mutate/instructions.md",
+        "sha256": "ef717314a9b7f5a3fe8d4d9411caa7381eb81d6bbe6d15ca5db5c461351d3266"
+      },
+      "references": [
+        {
+          "path": "mutate/references/frameworks.md",
+          "sha256": "25571f54eb4a2d8c7bedaf10eacc71e7c8eab301e270bba7794d8a6cf708c497"
+        }
+      ]
+    },
+    "pack": {
+      "instructions": {
+        "path": "pack/instructions.md",
+        "sha256": "6e9c4bb7770024ea5641c8d527ed755e2613b69bac678ffc765f867e018c2fd4"
+      },
+      "references": []
+    },
+    "plan": {
+      "instructions": {
+        "path": "plan/instructions.md",
+        "sha256": "2151f39f2e5e3da05bb88f44033faba8090352f0ce8e7ce9789c436657ee0053"
+      },
+      "references": [
+        {
+          "path": "plan/references/atomic-task-format.md",
+          "sha256": "0d6d18496e9c1b2b0560217b3c85531bb8ab5eadafb6321dde2a2c8c3f1dd642"
+        },
+        {
+          "path": "plan/references/dependency-rules.md",
+          "sha256": "440c5bbbd7ea21cc8ac4dffb4309fed227663f0316873ca21d3f4f2ce19b0e46"
+        },
+        {
+          "path": "plan/references/examples.md",
+          "sha256": "6d76a162bb69790599097bebb5754b61728014e00b7031008e57f3ba7f292b7f"
+        },
+        {
+          "path": "plan/references/function-contracts.md",
+          "sha256": "933690c06851ce9ed7a4d89a7004d869d6b4bc0490819c90b7bb1dfaaa1eb93e"
+        },
+        {
+          "path": "plan/references/lightweight-task-format.md",
+          "sha256": "4d25f160f0f50854b49434da77244e8eb27ef8076ef8d8ff22e07c3ade26eae1"
+        },
+        {
+          "path": "plan/references/plan-document-format.md",
+          "sha256": "9e4258869d69ab2a7aa37a2678f9cc1186030e942ecf986dbd0f40a617923d81"
+        },
+        {
+          "path": "plan/references/plan-split-wizard.md",
+          "sha256": "6961a2e775ac33eb42d04089b946c4ed40e77438ec35a152fe0d753e9c09d18b"
+        },
+        {
+          "path": "plan/references/prohibited-content.md",
+          "sha256": "a464084e44506539f0bd8ba9398d7202742f8882beb3f7a716e8a844e0506c88"
+        }
+      ]
+    },
+    "recap": {
+      "instructions": {
+        "path": "recap/instructions.md",
+        "sha256": "633093b4a07a53a32ed1a3013e89c506cdcda3cd777e41ccb70cd90d2fcb0d23"
+      },
+      "references": [
+        {
+          "path": "recap/references/category-heuristics.md",
+          "sha256": "2ab9c4692221c8e84361210c929abad56ba5c9d264f8b29455d6a36481f01a2e"
+        },
+        {
+          "path": "recap/references/data-sources.md",
+          "sha256": "0c87ad9d7cece2f6b591968930af6ef026f82caccfe024e81b92e62be73e1eba"
+        }
+      ]
+    },
+    "refactor": {
+      "instructions": {
+        "path": "refactor/instructions.md",
+        "sha256": "d9cd6aeecfab0f88d8656fa3d4577ce7dff3b555308e4878ae3fdf1002c35b1a"
+      },
+      "references": [
+        {
+          "path": "refactor/references/function-contracts.md",
+          "sha256": "d7174f595e902c38b8a89bb7b19c6c13cf26180bf1472339d2c5da5f4a9f2861"
+        },
+        {
+          "path": "refactor/references/method-library.md",
+          "sha256": "7e225a3f13c320ec1fd0253710f02d7e5f2df68e505c26587c44285d55432d9f"
+        }
+      ]
+    },
+    "replay": {
+      "instructions": {
+        "path": "replay/instructions.md",
+        "sha256": "afd2546566961a0ff4924adc542a1158ddfbd67d64b44d8855cc329880bfb01a"
+      },
+      "references": []
+    },
+    "resume": {
+      "instructions": {
+        "path": "resume/instructions.md",
+        "sha256": "698740df514c3f4c92e22a2c69757614392b5a23d37f923df9303cce5aefac68"
+      },
+      "references": [
+        {
+          "path": "resume/references/delegation-adapter.md",
+          "sha256": "296b1589652e7e7193fcbcc254e30c8d3f74a156fc964ae4268fd997f5c4051d"
+        },
+        {
+          "path": "resume/references/from-pr-failure-modes.md",
+          "sha256": "18a7dd5bd15db1c9dd498218a7c6395684c45d09e3f58f1577db7c6a3789b429"
+        },
+        {
+          "path": "resume/references/function-contracts.md",
+          "sha256": "2374d9ba0803637bfdb3fef36cde1ec57b4a1127528ee1572a6aed9098fc7475"
+        },
+        {
+          "path": "resume/references/output-format.md",
+          "sha256": "5d69780b2667c38c25941a0c11e48228d1316969eda7029a32b562215f015dc6"
+        },
+        {
+          "path": "resume/references/recovery-priority-chain.md",
+          "sha256": "ff4af4cb5fbad16ca6e76d6fcb97412f526124e2453985edbd1f38f00328e09d"
+        }
+      ]
+    },
+    "review": {
+      "instructions": {
+        "path": "review/instructions.md",
+        "sha256": "a7ba9a5396aa907b510d91df18f53f1098bc5e0c6d38539765122b24a5000f37"
+      },
+      "references": [
+        {
+          "path": "review/references/canvas.md",
+          "sha256": "77e4a3a05ff4c967aecf671cd247450a2e677ec0eb2569928c949c34e73a3571"
+        },
+        {
+          "path": "review/references/ci-evidence-integration.md",
+          "sha256": "1a1ee7b29aa38fe2a38002267803f936e7da863370587cf4081b31a13626126b"
+        },
+        {
+          "path": "review/references/cmux.md",
+          "sha256": "b9ec438eacac17bec63899ec17da0a2d23ecf86e5ea4d01394c01f6cbadeedb1"
+        },
+        {
+          "path": "review/references/confidence-filtering.md",
+          "sha256": "9a98e0f5cf04d27a167270e0f03a778c62dc68ae0534d7c99778f63c9ea72625"
+        },
+        {
+          "path": "review/references/dedup-pipeline.md",
+          "sha256": "89864a818f79ffecaf4264c03ae2ae7222893c7da80b65fdd4c950966864e0b5"
+        },
+        {
+          "path": "review/references/delegation-adapter.md",
+          "sha256": "2ce86e6b6741e0898f57f724082fd62c04cb272eb1d1f4871196b0f6e8f2c1ca"
+        },
+        {
+          "path": "review/references/diff-context-preparation.md",
+          "sha256": "6f1726261beaa7fd9de75a525c22bd51b7b667dcb4688a4297fbcbe2e62019cf"
+        },
+        {
+          "path": "review/references/final-report-contract.md",
+          "sha256": "13558bf67d5934eae835e4f4e8321e652f6fb4a8facda579681f4edb8aebc6e4"
+        },
+        {
+          "path": "review/references/frontend-check-patterns.md",
+          "sha256": "d72fa33991acea59d8ecdd17b3cb1070663e60eb51d5bce1c9a18d90500d8d35"
+        },
+        {
+          "path": "review/references/frontend-check-tier-b.md",
+          "sha256": "2c1671b5d9d18a3268d1fd35c1b48e92c605d9d22a921e1ffae26fbe4da6247e"
+        },
+        {
+          "path": "review/references/frontend-check-tier-c.md",
+          "sha256": "07de91a9957da031fc06b8f4a75eb00fe04a448d30bc466019ed23ecd06a555c"
+        },
+        {
+          "path": "review/references/function-contracts.md",
+          "sha256": "84df85ec3038233688442a8d02ea57c2b1f99cc6f163f96053804e5f222c069c"
+        },
+        {
+          "path": "review/references/quality-gate.md",
+          "sha256": "4a13ef25107f8b6685b1b96f51a1b50b526cedf7d202daf908eccc924f615bf7"
+        },
+        {
+          "path": "review/references/review-report-format.md",
+          "sha256": "896f3dbc054206882ecc6d520efae7e9642fcc4b542298818fa9f0f345747da8"
+        },
+        {
+          "path": "review/references/shared-vocabulary.md",
+          "sha256": "5e0f0398b4878d4eaee4f070438391a0b3224d358655652c8bbfcabf5a89e234"
+        },
+        {
+          "path": "review/references/subagent-return-protocol.md",
+          "sha256": "70c237c5a1b234be8c83594b95638cdb75c4aca5615bd9b572616c1a09999417"
+        }
+      ]
+    },
+    "review-comment-bitbucket": {
+      "instructions": {
+        "path": "review-comment-bitbucket/instructions.md",
+        "sha256": "53a3eb596eb51915832332bf088206c0136b94cb6b9ec55139e677eb0c1d5f95"
+      },
+      "references": []
+    },
+    "router": {
+      "instructions": {
+        "path": "router/instructions.md",
+        "sha256": "660a443a79d78b65e5843b688f09ba1bc8b2b80bbaaad006b7becb4f15925a5c"
+      },
+      "references": [
+        {
+          "path": "router/references/behavior-hints.md",
+          "sha256": "94e5b75bdf3813e151aa1b0f593156c90368984589ab8022d4599891bfe3857d"
+        },
+        {
+          "path": "router/references/function-contracts.md",
+          "sha256": "4ff787c9c89b6f9764787e05ae78a18070dd97eec1e61924f5247596d119a779"
+        }
+      ]
+    },
+    "ship": {
+      "instructions": {
+        "path": "ship/instructions.md",
+        "sha256": "c34a070363648bc22fc7171a1ae3fb17072f80724f7f0dffed3950df91b80091"
+      },
+      "references": [
+        {
+          "path": "ship/references/cmux.md",
+          "sha256": "a0d6b2c19b9da7c54c22972dd56fe1495642cb8285a07268a585cb00deb91e5a"
+        },
+        {
+          "path": "ship/references/delivery-options.md",
+          "sha256": "c792b438645da68ce16b6f28f174d0d57729b0d006be8e94d85aefba3c567b09"
+        },
+        {
+          "path": "ship/references/function-contracts.md",
+          "sha256": "374314658cca517dbac8b7a05fa276ac0049896b4169f977343cd20ddd40b348"
+        },
+        {
+          "path": "ship/references/gate-checks.md",
+          "sha256": "c88862e6cba2bb6056efc1dac2d0cd0cf66a872598065ce9a4c650c5806949fd"
+        }
+      ]
+    },
+    "spec": {
+      "instructions": {
+        "path": "spec/instructions.md",
+        "sha256": "643eff1821ef44f517e9163d05da9bb08f4b90bc58d525a7aed91ab88f3b4212"
+      },
+      "references": [
+        {
+          "path": "spec/references/edge-cases.md",
+          "sha256": "4a0685600d75e032498b101b765d99d0a75be2a15bc37350e91705b72f61b50b"
+        },
+        {
+          "path": "spec/references/examples.md",
+          "sha256": "31a1e174f8bfcd7b1d1d16805c0f7f6504bb8e2fde92745dba5b1aebb349f5ca"
+        },
+        {
+          "path": "spec/references/function-contracts.md",
+          "sha256": "0b208957a8333a6314bdbb5594c84ddfe76e8dcfa7fd03d66d05019d222bb066"
+        },
+        {
+          "path": "spec/references/import-mode.md",
+          "sha256": "5fc511f338206ca057404ab697f13d14293b1cfd655b02b50ffd484bef08c73f"
+        },
+        {
+          "path": "spec/references/quality-standards.md",
+          "sha256": "762dfed19a6ed2291f00a76e8e96cc0c2146cd579fbb12a8de049ed6aa91c85c"
+        },
+        {
+          "path": "spec/references/spec-format.md",
+          "sha256": "99d4f9857b3fd8e95525e76f88199b581bff479ee6cc05675a523137bf466d95"
+        },
+        {
+          "path": "spec/references/spec-leak-detector.md",
+          "sha256": "3a2c38355ed5b25d1fbbaa17140c952c4b44309b93ccc0479f108f57ec311b99"
+        }
+      ]
+    },
+    "status": {
+      "instructions": {
+        "path": "status/instructions.md",
+        "sha256": "6de836b3128d9e38a1339341a95ca416968d57f610b44759bf9b92e69fd011d2"
+      },
+      "references": [
+        {
+          "path": "status/references/function-contracts.md",
+          "sha256": "394d7afc31b9d1b233109e8658b74756e43ace1fd178c548898b26674da576e4"
+        }
+      ]
+    },
+    "storm": {
+      "instructions": {
+        "path": "storm/instructions.md",
+        "sha256": "5158f932c5517018a032dc7786046c083f7b4b9cb288db5b448ecf19c4234177"
+      },
+      "references": [
+        {
+          "path": "storm/references/example-storm.md",
+          "sha256": "4c0da70624c313a30e309152e1bcca4247caf88e7e9d8109d75b92fd5e667b25"
+        }
+      ]
+    },
+    "test": {
+      "instructions": {
+        "path": "test/instructions.md",
+        "sha256": "6e091a42a77f85d7772cceda48a842dda68b90639a46828d578d580c8b3953a1"
+      },
+      "references": [
+        {
+          "path": "test/references/cmux-browser.md",
+          "sha256": "d4f15041eb593f43a277e9f01f5e92bca3d6f00a4be44a0134da4c30713b5714"
+        },
+        {
+          "path": "test/references/function-contracts.md",
+          "sha256": "65da991ec4f403af59bbbfd75be8b31632768ed0f171f445a28493d8442cf927"
+        }
+      ]
+    },
+    "triage": {
+      "instructions": {
+        "path": "triage/instructions.md",
+        "sha256": "0f5ce310cd55a97d2506c012b3f6b62298a479bb02fd10264485f5966e67d986"
+      },
+      "references": []
+    },
+    "verify": {
+      "instructions": {
+        "path": "verify/instructions.md",
+        "sha256": "a68e7537e15dc84f468010b87fe7fac126c19277079b42dccda00f616befbdeb"
+      },
+      "references": [
+        {
+          "path": "verify/references/artifact-layout.md",
+          "sha256": "b4dc6aef7f1f395e6935c38d2dbc5217c2914e321a7a42175f38441e253f0834"
+        },
+        {
+          "path": "verify/references/baseline-resolution.md",
+          "sha256": "00f68b0dc0f11a3055d7861772d6bb03ddefbcd5c0ee46a9b76d3fd61f4c1f01"
+        },
+        {
+          "path": "verify/references/workflow.md",
+          "sha256": "d7fc8e0ac942370c95407badcc369b9d22a52536ef5632bb15a10d2ef25f94a8"
+        }
+      ]
+    },
+    "zoom-out": {
+      "instructions": {
+        "path": "zoom-out/instructions.md",
+        "sha256": "cf23be5722288a0c25a9d05a4c8c2166a26d93a0ccaa3c493b6768f0d90a6492"
+      },
+      "references": [
+        {
+          "path": "zoom-out/references/function-contracts.md",
+          "sha256": "1e0a623514d621649f2e0e8a9261e409994e1c4f7563148e3c216ccbf87d5e20"
+        }
+      ]
+    }
+  }
+}

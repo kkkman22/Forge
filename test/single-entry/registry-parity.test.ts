@@ -5,7 +5,7 @@ import { describe, expect, it } from "vitest";
 import { ALLOW_LIST } from "../../src/forge-dispatcher/allowlist.js";
 
 const ROOT = resolve(import.meta.dirname, "..", "..");
-const REGISTRY_PATH = resolve(ROOT, "skills/forge/registry.toml");
+const REGISTRY_PATH = resolve(ROOT, "skills/tinkerman/registry.toml");
 
 function parseSection(content: string, sub: string): Record<string, string> {
   const result: Record<string, string> = {};
@@ -99,7 +99,7 @@ describe("R2.5: registry as derived index", () => {
 
   it("registry allowed_tools match lib frontmatter exactly", async () => {
     const registryContent = readFileSync(REGISTRY_PATH, "utf-8");
-    const libs = await glob("skills/forge/lib/*/instructions.md", { cwd: ROOT });
+    const libs = await glob("skills/tinkerman/lib/*/instructions.md", { cwd: ROOT });
     const violations: string[] = [];
 
     for (const libPath of libs) {

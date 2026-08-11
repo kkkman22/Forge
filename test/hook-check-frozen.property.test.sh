@@ -288,7 +288,7 @@ assert_valid_output "path traversal etc valid output" "$out"
 
 # Traversal into .forge
 unset ZONE_REGISTRY_CACHE 2>/dev/null || true
-result=$(run_classify "../project/.forge/config.md")
+result=$(run_classify "../project/.tinkerman/config.md")
 rc="${result%%$'\t'*}"
 out="${result#*$'\t'}"
 assert_no_crash "traversal into .forge no crash" "$out" "$rc"
@@ -340,14 +340,14 @@ assert_valid_output "whitespace-only path valid output" "$out"
 echo "=== 7. Absolute paths ==="
 
 unset ZONE_REGISTRY_CACHE 2>/dev/null || true
-result=$(run_classify "/tmp/project/.forge/config.md")
+result=$(run_classify "/tmp/project/.tinkerman/config.md")
 rc="${result%%$'\t'*}"
 out="${result#*$'\t'}"
 assert_no_crash "absolute path config.md no crash" "$out" "$rc"
 assert_valid_output "absolute path config.md valid output" "$out"
 
 unset ZONE_REGISTRY_CACHE 2>/dev/null || true
-result=$(run_classify "/Users/dev/project/.forge/plans/my-plan.md")
+result=$(run_classify "/Users/dev/project/.tinkerman/plans/my-plan.md")
 rc="${result%%$'\t'*}"
 out="${result#*$'\t'}"
 assert_no_crash "absolute path plan no crash" "$out" "$rc"

@@ -34,7 +34,7 @@ const emptyFs: FileSystem = {
 const emptyEnabled: EnabledPacks = {
   order: [],
   entries: [],
-  customLayerRoot: "/project/.forge/custom",
+  customLayerRoot: "/project/.tinkerman/custom",
 };
 
 describe("Zero-Pack-Zero-Impact invariant", () => {

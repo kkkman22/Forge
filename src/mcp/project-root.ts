@@ -29,5 +29,5 @@ export function resolveProjectRoot(env: NodeJS.ProcessEnv = process.env): Resolv
 export function logResolvedRoot(resolved: ResolvedRoot): void {
   const tag = resolved.source === "env" ? "(env)" : "(cwd fallback)";
   // biome-ignore lint/suspicious/noConsole: diagnostic log to stderr
-  console.error(`[forge-context] resolved project root: ${resolved.path} ${tag}`);
+  console.error(`[tinkerman-context] resolved project root: ${resolved.path} ${tag}`);
 }

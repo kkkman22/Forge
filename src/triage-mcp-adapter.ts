@@ -1,5 +1,5 @@
 /**
- * Triage MCP adapter — discovery data sources for /forge triage.
+ * Triage MCP adapter — discovery data sources for /tinkerman triage.
  *
  * Connects to user-configured MCP servers (mcp-atlassian for Jira,
  * Bitbucket MCP for repo PRs/branches) to pull "what's worth acting on"

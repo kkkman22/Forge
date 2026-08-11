@@ -4,7 +4,7 @@ import { resolve } from "node:path";
 import { describe, expect, it } from "vitest";
 import { CMUX_GATED_SUBS, checkCmuxGate } from "../../src/forge-dispatcher/cmux-gate.js";
 
-const LIB_ROOT = resolve(import.meta.dirname, "../../skills/forge/lib");
+const LIB_ROOT = resolve(import.meta.dirname, "../../skills/tinkerman/lib");
 
 const NON_CMUX_SUBS = [
   "abort",

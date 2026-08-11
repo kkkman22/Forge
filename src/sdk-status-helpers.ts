@@ -205,7 +205,7 @@ export function initializeLoopFields(
  *
  * On abnormal exit (`completedNormally === false`): clears `mode`,
  * `loop_run_id`, `loop_iteration` but preserves `skill_sequence`
- * (for potential `/forge resume`).
+ * (for potential `/tinkerman resume`).
  *
  * @param io - StatusFile IO callbacks, or undefined.
  * @param completedNormally - Whether the loop completed normally.

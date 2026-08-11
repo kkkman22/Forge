@@ -24,7 +24,7 @@ import { wrapWorkspaceContext } from "../../src/forge-dispatcher/untrusted-fence
 import { dispatchForgeSubcommand } from "../../src/forge-dispatcher.js";
 import { generateHints, type ProjectPhase, type TaskType } from "../../src/router.js";
 
-const LIB_ROOT = resolve(import.meta.dirname, "../../skills/forge/lib");
+const LIB_ROOT = resolve(import.meta.dirname, "../../skills/tinkerman/lib");
 
 const GOLDEN_PATH = resolve(import.meta.dirname, "../__fixtures__/assembly-golden.json");
 const GOLDEN = JSON.parse(readFileSync(GOLDEN_PATH, "utf-8")) as Record<
@@ -94,7 +94,7 @@ async function buildFingerprint(sub: string, taskType: TaskType, phase: ProjectP
   const fp = extractFingerprint({
     subcommand: sub,
     dispatchMode,
-    resolvedLibPath: libPath.replace(LIB_ROOT, "forge/lib").replace(/^\//, ""),
+    resolvedLibPath: libPath.replace(LIB_ROOT, "tinkerman/lib").replace(/^\//, ""),
     allowedTools,
     contextBlock,
     hintTags,

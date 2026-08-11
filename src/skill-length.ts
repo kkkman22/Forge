@@ -1,8 +1,8 @@
 /**
  * Skill length validator — enforces the Progressive Disclosure discipline
- * that every `skills/forge-<name>/SKILL.md` main file stays within the
+ * that every `skills/tinkerman-<name>/SKILL.md` main file stays within the
  * configured effective-line budget (default 150). Content above the
- * budget must move to `skills/forge-<name>/references/*.md` so cold
+ * budget must move to `skills/tinkerman-<name>/references/*.md` so cold
  * knowledge loads on demand rather than front-loading into every call.
  *
  * The module is IO-free and exposes pure functions plus a thin batch
@@ -54,7 +54,7 @@ export interface SkillLengthCheck {
  *
  *   - `listSkillMdFiles(skillsDir)` — return every `*.md` file under
  *     `skillsDir` that should participate in the length check. Adapters
- *     are expected to include `skills/forge-<name>/SKILL.md` and
+ *     are expected to include `skills/tinkerman-<name>/SKILL.md` and
  *     `skills/shared/*.md` (the exempt group is reported but never
  *     fails). References under `references/` subdirectories are out of
  *     scope.

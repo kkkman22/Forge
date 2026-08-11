@@ -114,24 +114,24 @@ function rewriteCrossRefs(dir) {
     let content = readFileSync(filePath, "utf-8");
     const original = content;
 
-    // Pattern 1: ../forge-<sub>/ → ../<sub>/
-    content = content.replace(/\.\.\/forge-([a-z][a-z0-9-]*)\//g, "../$1/");
+    // Pattern 1: ../tinkerman-<sub>/ → ../<sub>/
+    content = content.replace(/\.\.\/tinkerman-([a-z][a-z0-9-]*)\//g, "../$1/");
 
-    // Pattern 2: skills/forge-<sub>/SKILL.md → ../<sub>/instructions.md
+    // Pattern 2: skills/tinkerman-<sub>/SKILL.md → ../<sub>/instructions.md
     content = content.replace(
-      /skills\/forge-([a-z][a-z0-9-]*)\/SKILL\.md/g,
+      /skills\/tinkerman-([a-z][a-z0-9-]*)\/SKILL\.md/g,
       "../$1/instructions.md",
     );
 
-    // Pattern 3: skills/forge-<sub>/references/ → ../<sub>/references/
+    // Pattern 3: skills/tinkerman-<sub>/references/ → ../<sub>/references/
     content = content.replace(
-      /skills\/forge-([a-z][a-z0-9-]*)\/references\//g,
+      /skills\/tinkerman-([a-z][a-z0-9-]*)\/references\//g,
       "../$1/references/",
     );
 
-    // Pattern 4: skills/forge-<sub>/ (generic, must run last) → ../<sub>/
+    // Pattern 4: skills/tinkerman-<sub>/ (generic, must run last) → ../<sub>/
     content = content.replace(
-      /skills\/forge-([a-z][a-z0-9-]*)\//g,
+      /skills\/tinkerman-([a-z][a-z0-9-]*)\//g,
       "../$1/",
     );
 
@@ -147,7 +147,7 @@ function rewriteCrossRefs(dir) {
 console.log(DRY_RUN ? "=== DRY RUN ===" : "=== EXECUTING MIGRATION ===");
 
 // Ensure lib directory exists
-const libDir = join(ROOT, "skills", "forge", "lib");
+const libDir = join(ROOT, "skills", "tinkerman", "lib");
 if (!existsSync(libDir)) {
   run(`mkdir -p "${libDir}"`);
 }
@@ -172,14 +172,14 @@ for (const sub of SUBS) {
   }
 
   // Step 1: git mv directory
-  run(`git mv "skills/forge-${sub}" "skills/forge/lib/${sub}"`);
+  run(`git mv "skills/tinkerman-${sub}" "skills/tinkerman/lib/${sub}"`);
 
   // Step 2: git mv SKILL.md → instructions.md
   const skillFile = join(destDir, "SKILL.md");
   const instrFile = join(destDir, "instructions.md");
 
   if (existsSync(skillFile) || DRY_RUN) {
-    run(`git mv "skills/forge/lib/${sub}/SKILL.md" "skills/forge/lib/${sub}/instructions.md"`);
+    run(`git mv "skills/tinkerman/lib/${sub}/SKILL.md" "skills/tinkerman/lib/${sub}/instructions.md"`);
   }
 
   // Step 3: Rewrite frontmatter

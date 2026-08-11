@@ -36,7 +36,7 @@ while [[ $# -gt 0 ]]; do
       echo "Usage: scripts/install-dist.sh [--target <path>] [--dry-run] [--backup]"
       echo ""
       echo "Install Forge distribution to Claude Code."
-      echo "  --target <path>  Install to custom path (default: ~/.claude/skills/forge)"
+      echo "  --target <path>  Install to custom path (default: ~/.claude/skills/tinkerman)"
       echo "  --dry-run        Show what would be installed without writing files"
       echo "  --backup         Backup existing installation before overwriting"
       exit 0
@@ -56,12 +56,12 @@ while [[ $# -gt 0 ]]; do
   esac
 done
 
-BUNDLE_DIR="${FORGE_ROOT}/dist/claude-code/bundles/forge"
+BUNDLE_DIR="${FORGE_ROOT}/dist/claude-code/bundles/tinkerman"
 
 # ---------- 路径安全校验 ----------
 # Apply default only if --target was not explicitly provided
 if [[ "${TARGET_SET}" == "false" ]]; then
-  TARGET="${HOME}/.claude/skills/forge"
+  TARGET="${HOME}/.claude/skills/tinkerman"
 fi
 
 # Reject empty TARGET (e.g. --target "")
@@ -143,5 +143,5 @@ success "安装完成: ${TARGET}"
 echo ""
 echo "  下一步："
 echo "    1. 在项目根目录运行: ${TARGET}/scripts/init.sh"
-echo "    2. 开始使用: /forge <任务描述>"
+echo "    2. 开始使用: /tinkerman <任务描述>"
 echo ""

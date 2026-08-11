@@ -167,7 +167,7 @@ describe("workflow graph DSL", () => {
       "docs/best-practices/router-selection.md",
       "docs/best-practices/router-selection.en.md",
     ];
-    const skillTargets = ["skills/forge/SKILL.md"];
+    const skillTargets = ["skills/tinkerman/SKILL.md"];
 
     for (const file of generatedTargets) {
       const content = readFileSync(join(process.cwd(), file), "utf-8");

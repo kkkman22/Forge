@@ -230,7 +230,7 @@ export function getMostRecentActiveTask(
  * survives even if forgeRoot's contents are being reorganized.
  *
  * Audit P1: migration was two independent atomic writes with a dirty-state
- * window between them — two concurrent `/forge` migrations could both read the
+ * window between them — two concurrent `/tinkerman` migrations could both read the
  * legacy status.md and produce duplicate/phantom task files.
  */
 function withForgeLock<T>(

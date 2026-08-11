@@ -9,7 +9,7 @@ describe("mirror: review observation (R15)", () => {
 
   beforeEach(() => {
     dir = mkdtempSync(join(tmpdir(), "cmux-review-observe-"));
-    forgeDir = join(dir, "forge");
+    forgeDir = join(dir, "tinkerman");
     mkdirSync(forgeDir, { recursive: true });
     mkdirSync(join(forgeDir, "progress"), { recursive: true });
     mkdirSync(join(forgeDir, "reviews"), { recursive: true });

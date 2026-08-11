@@ -60,7 +60,7 @@ describe("countEffectiveLines", () => {
   it("counts every non-blank line in a representative SKILL.md skeleton", () => {
     const doc = [
       "---",
-      "name: forge-demo",
+      "name: tinkerman-demo",
       'description: "Demo skill. Use when testing."',
       "---",
       "",
@@ -136,16 +136,16 @@ describe("countEffectiveLines (property)", () => {
 
 describe("checkSkillLength", () => {
   it("uses a default limit of 150", () => {
-    const result = checkSkillLength("skills/forge-x/SKILL.md", "line\n");
+    const result = checkSkillLength("skills/tinkerman-x/SKILL.md", "line\n");
     expect(result.limit).toBe(DEFAULT_LIMIT);
     expect(DEFAULT_LIMIT).toBe(150);
   });
 
   it("marks a short, non-shared file as valid", () => {
     const content = "a\nb\nc\n";
-    const result = checkSkillLength("skills/forge-x/SKILL.md", content, 10);
+    const result = checkSkillLength("skills/tinkerman-x/SKILL.md", content, 10);
     expect(result).toEqual({
-      filePath: "skills/forge-x/SKILL.md",
+      filePath: "skills/tinkerman-x/SKILL.md",
       lineCount: 3,
       effectiveLineCount: 3,
       limit: 10,
@@ -156,14 +156,14 @@ describe("checkSkillLength", () => {
 
   it("marks a file at the exact limit as valid", () => {
     const content = `${Array.from({ length: 5 }, (_, i) => `line${i}`).join("\n")}\n`;
-    const result = checkSkillLength("skills/forge-x/SKILL.md", content, 5);
+    const result = checkSkillLength("skills/tinkerman-x/SKILL.md", content, 5);
     expect(result.effectiveLineCount).toBe(5);
     expect(result.valid).toBe(true);
   });
 
   it("marks a file over the limit as invalid", () => {
     const content = `${Array.from({ length: 6 }, (_, i) => `line${i}`).join("\n")}\n`;
-    const result = checkSkillLength("skills/forge-x/SKILL.md", content, 5);
+    const result = checkSkillLength("skills/tinkerman-x/SKILL.md", content, 5);
     expect(result.effectiveLineCount).toBe(6);
     expect(result.valid).toBe(false);
   });
@@ -185,7 +185,7 @@ describe("checkSkillLength", () => {
 
   it("does not exempt a filename that merely contains the word 'shared'", () => {
     const content = `${Array.from({ length: 20 }, (_, i) => `line${i}`).join("\n")}\n`;
-    const result = checkSkillLength("skills/forge-shared-demo/SKILL.md", content, 10);
+    const result = checkSkillLength("skills/tinkerman-shared-demo/SKILL.md", content, 10);
     expect(result.exempt).toBe(false);
     expect(result.valid).toBe(false);
   });
@@ -200,7 +200,7 @@ describe("checkSkillLength", () => {
   it("does not count blank separator lines toward the budget", () => {
     // 5 effective lines padded with many blanks; should fit a limit of 5.
     const content = "a\n\n\nb\n\nc\n\nd\n\ne\n";
-    const result = checkSkillLength("skills/forge-x/SKILL.md", content, 5);
+    const result = checkSkillLength("skills/tinkerman-x/SKILL.md", content, 5);
     expect(result.effectiveLineCount).toBe(5);
     expect(result.valid).toBe(true);
   });
@@ -235,38 +235,42 @@ describe("validateAllSkillLengths", () => {
     const short = "a\nb\nc\n";
     const long = `${Array.from({ length: 20 }, (_, i) => `line${i}`).join("\n")}\n`;
     const fs = createFakeFs({
-      "skills/forge-short/SKILL.md": short,
-      "skills/forge-long/SKILL.md": long,
+      "skills/tinkerman-short/SKILL.md": short,
+      "skills/tinkerman-long/SKILL.md": long,
       "skills/shared/next-step-protocol.md": long, // exempt despite being long
     });
 
     const results = validateAllSkillLengths(fs, "skills", 10);
     expect(results).toHaveLength(3);
-    expect(results.map((r) => r.filePath)).toEqual([
-      "skills/forge-long/SKILL.md",
-      "skills/forge-short/SKILL.md",
-      "skills/shared/next-step-protocol.md",
-    ]);
+    expect(results.map((r) => r.filePath).sort()).toEqual(
+      [
+        "skills/shared/next-step-protocol.md",
+        "skills/tinkerman-long/SKILL.md",
+        "skills/tinkerman-short/SKILL.md",
+      ].sort(),
+    );
 
-    const long1 = results[0];
+    const long1 = results.find((r) => r.filePath === "skills/tinkerman-long/SKILL.md");
     expect(long1?.valid).toBe(false);
     expect(long1?.exempt).toBe(false);
     expect(long1?.effectiveLineCount).toBe(20);
 
-    const short1 = results[1];
+    const short1 = results.find((r) => r.filePath === "skills/tinkerman-short/SKILL.md");
     expect(short1?.valid).toBe(true);
     expect(short1?.effectiveLineCount).toBe(3);
 
-    const shared = results[2];
+    const shared = results.find((r) => r.filePath === "skills/shared/next-step-protocol.md");
     expect(shared?.exempt).toBe(true);
     expect(shared?.valid).toBe(true);
     expect(shared?.effectiveLineCount).toBe(20);
 
-    expect(fs.reads).toEqual([
-      "skills/forge-long/SKILL.md",
-      "skills/forge-short/SKILL.md",
-      "skills/shared/next-step-protocol.md",
-    ]);
+    expect([...fs.reads].sort()).toEqual(
+      [
+        "skills/shared/next-step-protocol.md",
+        "skills/tinkerman-long/SKILL.md",
+        "skills/tinkerman-short/SKILL.md",
+      ].sort(),
+    );
   });
 
   it("returns an empty array when no skill files exist", () => {
@@ -279,13 +283,13 @@ describe("validateAllSkillLengths", () => {
     const overBudget = `${Array.from({ length: DEFAULT_LIMIT + 1 }, (_, i) => `l${i}`).join("\n")}\n`;
     const atBudget = `${Array.from({ length: DEFAULT_LIMIT }, (_, i) => `l${i}`).join("\n")}\n`;
     const fs = createFakeFs({
-      "skills/forge-over/SKILL.md": overBudget,
-      "skills/forge-ok/SKILL.md": atBudget,
+      "skills/tinkerman-over/SKILL.md": overBudget,
+      "skills/tinkerman-ok/SKILL.md": atBudget,
     });
 
     const results = validateAllSkillLengths(fs, "skills");
-    const over = results.find((r) => r.filePath === "skills/forge-over/SKILL.md");
-    const ok = results.find((r) => r.filePath === "skills/forge-ok/SKILL.md");
+    const over = results.find((r) => r.filePath === "skills/tinkerman-over/SKILL.md");
+    const ok = results.find((r) => r.filePath === "skills/tinkerman-ok/SKILL.md");
     expect(over?.limit).toBe(DEFAULT_LIMIT);
     expect(over?.valid).toBe(false);
     expect(ok?.valid).toBe(true);

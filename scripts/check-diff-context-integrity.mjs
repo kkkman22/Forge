@@ -96,7 +96,7 @@ function main() {
       `\n.diff-context.md integrity check failed: ## Patch / ## Diff Content section is missing unified diff hunk markers (@@ ... @@ / --- a/ / +++ b/).\n` +
         `This violates the forge-review-diff-context-fidelity contract.\n` +
         `Use 'node scripts/prepare-diff-context.mjs' to regenerate with real patch content.\n` +
-        `See skills/forge-review/references/diff-context-preparation.md § Why Narrative Summary is Forbidden.\n`,
+        `See skills/tinkerman-review/references/diff-context-preparation.md § Why Narrative Summary is Forbidden.\n`,
     );
     process.exit(2);
   }

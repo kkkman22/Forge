@@ -144,7 +144,7 @@ export function rejectSpec(spec: SpecDocument): SpecDocument {
  * Create an imported Spec document from external source.
  *
  * Wraps externally-sourced requirements into a SpecDocument with importSource
- * tracking. Used when a developer provides a PM spec via `/forge spec <file>`.
+ * tracking. Used when a developer provides a PM spec via `/tinkerman spec <file>`.
  */
 export function createImportedSpec(
   feature: string,
@@ -395,10 +395,10 @@ export type SpecRouteResult =
 /**
  * Route spec entry based on argv and feature directory contents.
  *
- * - Import mode: `/forge spec <file.md>` → parseSpecArgs → runImportMode
+ * - Import mode: `/tinkerman spec <file.md>` → parseSpecArgs → runImportMode
  * - Bugfix mode: bugfix.md detected → runBugfixOrchestration
- * - Feature mode: `/forge spec <feature-name>` → feature flow
- * - Default: `/forge spec` → default flow
+ * - Feature mode: `/tinkerman spec <feature-name>` → feature flow
+ * - Default: `/tinkerman spec` → default flow
  */
 export function routeSpecEntry(
   argv: string[],

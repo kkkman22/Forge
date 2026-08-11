@@ -41,7 +41,7 @@ function buildFixture(opts: { withPacks: boolean; withManifest: boolean }): Fixt
     process.env.RUNNER_TEMP || process.env.TMPDIR || "/tmp",
     `forge-bsync-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`,
   );
-  const ccBundle = resolve(tmpDir, "dist/claude-code/bundles/forge");
+  const ccBundle = resolve(tmpDir, "dist/claude-code/bundles/tinkerman");
   const pluginDist = resolve(tmpDir, "dist-plugin");
   const hooksDir = resolve(tmpDir, "hooks");
 

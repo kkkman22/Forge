@@ -310,7 +310,7 @@ export {
   runSubagentsInParallel,
   runSubagentsWithConcurrency,
 } from "./subagent-runner.js";
-// Trace ID — cross-phase correlation for /forge command lifecycle
+// Trace ID — cross-phase correlation for /tinkerman command lifecycle
 export { generateTraceId, isValidTraceId, TRACE_ID_PATTERN } from "./trace-id.js";
 // Core types (migrated from loop-types.js to types.js)
 export type {

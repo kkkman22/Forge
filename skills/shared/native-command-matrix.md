@@ -1,5 +1,5 @@
 ---
-updated: "2026-05-13"
+updated: 2026-08-11
 purpose: "T2 命令委托矩阵 — 集中管理 Forge 命令与 Claude Code 官方原语的对应关系"
 ---
 
@@ -14,12 +14,12 @@ purpose: "T2 命令委托矩阵 — 集中管理 Forge 命令与 Claude Code 官
 
 | Forge 命令 | 委托的 Native_Command | 推荐最低 Claude Code 版本 | Fallback |
 |------------|----------------------|--------------------------|----------|
-| `/forge recap` | `/compact` + `/context` | 2.0+ | 遗留 recap 行为 |
-| `/forge resume` | `/resume` + Checkpointing | 2.0+ | 遗留 resume 行为 |
-| `/forge abort` | 无（纯精简） | N/A | 无 fallback |
-| `/forge learn` | Auto_Memory | 2.1.59+ | 完整遗留 learn |
-| `/forge review --delegate-quality` | `/code-review` | 2.0+ | Forge 内建 quality reviewer |
-| `/forge review --delegate-security` | `/security-review` | 2.0+ | Forge 内建 security reviewer |
+| `/tinkerman recap` | `/compact` + `/context` | 2.0+ | 遗留 recap 行为 |
+| `/tinkerman resume` | `/resume` + Checkpointing | 2.0+ | 遗留 resume 行为 |
+| `/tinkerman abort` | 无（纯精简） | N/A | 无 fallback |
+| `/tinkerman learn` | Auto_Memory | 2.1.59+ | 完整遗留 learn |
+| `/tinkerman review --delegate-quality` | `/code-review` | 2.0+ | Forge 内建 quality reviewer |
+| `/tinkerman review --delegate-security` | `/security-review` | 2.0+ | Forge 内建 security reviewer |
 
 ## 版本探测片段
 
@@ -51,7 +51,7 @@ fi
 每个 T2 受影响命令在 legacy 路径首次触发时输出到 stderr（per-session 去重）：
 
 ```
-⚠️ [Forge Slimming] /forge <cmd> 基础层可委托给 <native_cmd>（Claude Code ≥ <min_ver>）。
+⚠️ [Forge Slimming] /tinkerman <cmd> 基础层可委托给 <native_cmd>（Claude Code ≥ <min_ver>）。
 当前版本不满足，使用遗留实现。迁移指南：docs/slimming-migration.md
 ```
 

@@ -181,7 +181,7 @@ function readPacksManifest(bundleDir) {
 function checkPacksIntegrity() {
   const missing = [];
   // Mirror Layer 1: assert in BOTH bundles (plugin installs ship from
-  // dist-plugin, so a pack missing there breaks /forge init --pack just as
+  // dist-plugin, so a pack missing there breaks /tinkerman init --pack just as
   // much as missing in CC bundle).
   for (const [bundleLabel, bundleDir] of [
     ["CC bundle", CC_BUNDLE],

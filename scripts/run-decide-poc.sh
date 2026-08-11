@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-# run-decide-poc.sh — Run /forge decide in both DAG and Teams modes for comparison
+# run-decide-poc.sh — Run /tinkerman decide in both DAG and Teams modes for comparison
 # Usage: ./scripts/run-decide-poc.sh <topic-id> [--iterations N]
 
 TOPIC_ID="${1:?Usage: run-decide-poc.sh <topic-id> [--iterations N]}"
@@ -61,7 +61,7 @@ run_mode() {
     mode_flag="--mode=teams"
   fi
 
-  claude -p "/forge decide $mode_flag $TOPIC" \
+  claude -p "/tinkerman decide $mode_flag $TOPIC" \
     --output-format stream-json > "$OUT_DIR/${label}.jsonl" 2>/dev/null || {
       echo "  Warning: $mode iteration $iter exited with error" >&2
     }

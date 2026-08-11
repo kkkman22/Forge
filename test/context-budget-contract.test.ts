@@ -15,13 +15,13 @@ import { computeContextBudgetThresholds } from "../src/context-budget.js";
 const ROOT = resolve(import.meta.dirname, "..");
 
 const readSkill = (name: string) =>
-  readFileSync(resolve(ROOT, "skills", "forge", "lib", name, "instructions.md"), "utf-8");
+  readFileSync(resolve(ROOT, "skills", "tinkerman", "lib", name, "instructions.md"), "utf-8");
 
 const readSkillWithRefs = (name: string, ...refFiles: string[]) => {
   const main = readSkill(name);
   const refs = refFiles
     .map((f) => {
-      const p = resolve(ROOT, "skills", "forge", "lib", name, "references", f);
+      const p = resolve(ROOT, "skills", "tinkerman", "lib", name, "references", f);
       return existsSync(p) ? readFileSync(p, "utf-8") : "";
     })
     .join("\n");

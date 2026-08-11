@@ -2,7 +2,7 @@
  * plugin-data-path.mjs — Shared plugin data directory resolver.
  *
  * Provides a unified path to Claude Code's plugin-persistent data directory.
- * Priority: ${CLAUDE_PLUGIN_DATA}/forge/ → ~/.claude/plugins/data/forge/
+ * Priority: ${CLAUDE_PLUGIN_DATA}/tinkerman/ → ~/.claude/plugins/data/forge/
  * Falls back to null when neither is writable.
  */
 
@@ -13,7 +13,7 @@ import { homedir } from "node:os";
 /**
  * Return the plugin data root directory for Forge.
  *
- * 1. If CLAUDE_PLUGIN_DATA is set → ${CLAUDE_PLUGIN_DATA}/forge/
+ * 1. If CLAUDE_PLUGIN_DATA is set → ${CLAUDE_PLUGIN_DATA}/tinkerman/
  * 2. Otherwise → ~/.claude/plugins/data/forge/
  * 3. If directory creation fails → null (caller decides fallback strategy)
  *
@@ -32,7 +32,7 @@ export function getPluginDataDir() {
       );
       // Fall through to homedir fallback
     } else {
-      const base = join(envDir, "forge");
+      const base = join(envDir, "tinkerman");
       const abs = resolve(base);
       try {
         mkdirSync(abs, { recursive: true, mode: 0o700 });
@@ -47,7 +47,7 @@ export function getPluginDataDir() {
   }
 
   // Fallback: ~/.claude/plugins/data/forge/
-  const fallback = join(homedir(), ".claude", "plugins", "data", "forge");
+  const fallback = join(homedir(), ".claude", "plugins", "data", "tinkerman");
   const abs = resolve(fallback);
   try {
     mkdirSync(abs, { recursive: true, mode: 0o700 });

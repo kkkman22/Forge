@@ -4,11 +4,11 @@ import { describe, expect, it } from "vitest";
 import { ALLOW_LIST } from "../../src/forge-dispatcher/allowlist.js";
 
 const ROOT = resolve(import.meta.dirname, "../..");
-const REGISTRY = resolve(ROOT, "skills/forge/registry.toml");
+const REGISTRY = resolve(ROOT, "skills/tinkerman/registry.toml");
 const COMMANDS_SSOT = resolve(ROOT, "docs/_ssot/commands.json");
 const PLUGIN_JSON = resolve(ROOT, ".claude-plugin/plugin.json");
 const MARKETPLACE_JSON = resolve(ROOT, ".claude-plugin/marketplace.json");
-const SKILL_MD = resolve(ROOT, "skills/forge/SKILL.md");
+const SKILL_MD = resolve(ROOT, "skills/tinkerman/SKILL.md");
 const SYNC_SCRIPT = resolve(ROOT, "scripts/sync-command-registry.mjs");
 
 function registrySections(): string[] {
@@ -31,7 +31,7 @@ describe("long-term evolution: command registry generation chain", () => {
   it("has a single sync script for registry -> allowlist -> docs -> plugin metadata", () => {
     expect(existsSync(SYNC_SCRIPT)).toBe(true);
     const script = readFileSync(SYNC_SCRIPT, "utf-8");
-    expect(script).toContain("skills/forge/registry.toml");
+    expect(script).toContain("skills/tinkerman/registry.toml");
     expect(script).toContain("src/forge-dispatcher/allowlist.ts");
     expect(script).toContain("docs/_ssot/commands.json");
     expect(script).toContain(".claude-plugin/plugin.json");
@@ -42,7 +42,7 @@ describe("long-term evolution: command registry generation chain", () => {
   it("allowlist, docs SSOT, and plugin metadata are derived from the registry count", () => {
     const sections = registrySections();
     const commands = JSON.parse(readFileSync(COMMANDS_SSOT, "utf-8")) as Array<{ name: string }>;
-    const commandNames = commands.map((c) => c.name.replace(/^\/forge\s*/, ""));
+    const commandNames = commands.map((c) => c.name.replace(/^\/tinkerman\s*/, ""));
     const expectedCount = sections.length;
 
     expect(ALLOW_LIST).toEqual(sections);

@@ -5,7 +5,7 @@
  * and the MCP server is properly declared.
  *
  * Also covers packs-plugin-distribution (slice A', T7): the plugin install
- * path must carry packs/ so `/forge init --pack pms` works without the
+ * path must carry packs/ so `/tinkerman init --pack pms` works without the
  * "功能将不可用" lie, and running the bundled init.sh against this bundle as
  * CLAUDE_PLUGIN_ROOT must activate the pack + emit telemetry.
  */

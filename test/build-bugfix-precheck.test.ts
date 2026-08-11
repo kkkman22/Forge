@@ -2,8 +2,8 @@
  * Contract tests for Bugfix Mode pre-flight checks.
  *
  * Verifies the 3-item pre-flight check gate in bugfix-mode.md:
- * 1. Not from review output → use /forge debug
- * 2. Requires architecture change → use /forge debug (trigger ADR)
+ * 1. Not from review output → use /tinkerman debug
+ * 2. Requires architecture change → use /tinkerman debug (trigger ADR)
  * 3. Description insufficient → prompt for info, return to router
  *
  * Also validates analyze/apply/verify phases and log escalation.
@@ -16,7 +16,7 @@ import { resolve } from "node:path";
 import { beforeAll, describe, expect, it } from "vitest";
 
 const ROOT = resolve(__dirname, "..");
-const BUGFIX_MODE = resolve(ROOT, "skills/forge/lib/build/references/bugfix-mode.md");
+const BUGFIX_MODE = resolve(ROOT, "skills/tinkerman/lib/build/references/bugfix-mode.md");
 
 describe("Bugfix Mode pre-flight checks", () => {
   let content: string;

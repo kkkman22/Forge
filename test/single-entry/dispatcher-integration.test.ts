@@ -5,7 +5,7 @@ import { describe, expect, it } from "vitest";
 import { checkIntegrity } from "../../src/forge-dispatcher/integrity-check.js";
 import { resolveAllowedTools } from "../../src/forge-dispatcher/tools-resolve.js";
 
-const LIB_ROOT = resolve(import.meta.dirname, "../../skills/forge/lib");
+const LIB_ROOT = resolve(import.meta.dirname, "../../skills/tinkerman/lib");
 const MANIFEST_PATH = resolve(LIB_ROOT, "manifest.json");
 
 describe("Integration: dispatcher reads real lib (no mocks)", () => {

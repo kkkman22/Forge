@@ -60,18 +60,18 @@ describe("Contract: all skill instructions exist in collapsed lib", () => {
   ];
 
   for (const skill of expectedSkills) {
-    it(`skills/forge/lib/${skill}/instructions.md exists`, () => {
-      const skillPath = resolve(ROOT, `skills/forge/lib/${skill}/instructions.md`);
-      expect(existsSync(skillPath), `Missing: skills/forge/lib/${skill}/instructions.md`).toBe(
+    it(`skills/tinkerman/lib/${skill}/instructions.md exists`, () => {
+      const skillPath = resolve(ROOT, `skills/tinkerman/lib/${skill}/instructions.md`);
+      expect(existsSync(skillPath), `Missing: skills/tinkerman/lib/${skill}/instructions.md`).toBe(
         true,
       );
     });
   }
 
   for (const skill of expectedSkills) {
-    it(`skills/forge/lib/${skill}/instructions.md has YAML frontmatter`, () => {
+    it(`skills/tinkerman/lib/${skill}/instructions.md has YAML frontmatter`, () => {
       const content = readFileSync(
-        resolve(ROOT, `skills/forge/lib/${skill}/instructions.md`),
+        resolve(ROOT, `skills/tinkerman/lib/${skill}/instructions.md`),
         "utf-8",
       );
       expect(content.startsWith("---\n"), `${skill} instructions.md missing frontmatter`).toBe(
@@ -83,7 +83,7 @@ describe("Contract: all skill instructions exist in collapsed lib", () => {
   it("no skill has disable-model-invocation (collapsed mode, dispatcher handles it)", () => {
     for (const skill of expectedSkills) {
       const content = readFileSync(
-        resolve(ROOT, `skills/forge/lib/${skill}/instructions.md`),
+        resolve(ROOT, `skills/tinkerman/lib/${skill}/instructions.md`),
         "utf-8",
       );
       expect(content).not.toContain("disable-model-invocation: true");
@@ -154,14 +154,14 @@ describe("Contract: knowledge templates exist", () => {
 // ---------------------------------------------------------------------------
 
 describe("Contract: forge command entry point", () => {
-  it("commands/forge.md exists", () => {
-    const cmdPath = resolve(ROOT, "commands/forge.md");
-    expect(existsSync(cmdPath), "Missing: commands/forge.md").toBe(true);
+  it("commands/tinkerman.md exists", () => {
+    const cmdPath = resolve(ROOT, "commands/tinkerman.md");
+    expect(existsSync(cmdPath), "Missing: commands/tinkerman.md").toBe(true);
   });
 
-  it("commands/forge.md has name frontmatter", () => {
-    const content = readFileSync(resolve(ROOT, "commands/forge.md"), "utf-8");
-    expect(content).toContain("name: forge");
+  it("commands/tinkerman.md has name frontmatter", () => {
+    const content = readFileSync(resolve(ROOT, "commands/tinkerman.md"), "utf-8");
+    expect(content).toContain("name: tinkerman");
   });
 });
 
@@ -234,7 +234,7 @@ describe("Contract: agent files use Claude Code native frontmatter", () => {
 describe("Contract: dist bundle completeness (if built)", () => {
   const platforms = ["claude-code"];
   // After v2.5.0 (ADR-0004), 29 forge-* skills are collapsed into
-  // skills/forge/lib/<sub>/instructions.md under a single registered forge skill.
+  // skills/tinkerman/lib/<sub>/instructions.md under a single registered forge skill.
   const expectedLibSubs = [
     "router",
     "decide",
@@ -252,7 +252,7 @@ describe("Contract: dist bundle completeness (if built)", () => {
   ];
 
   for (const platform of platforms) {
-    const bundleRoot = resolve(ROOT, `dist/${platform}/bundles/forge`);
+    const bundleRoot = resolve(ROOT, `dist/${platform}/bundles/tinkerman`);
     // Only run bundle assertions when a full build-dist has been executed.
     // The dist/ directory may be partially committed to git (e.g. INSTALL.md
     // without skills/ or VERSION), which would cause false positives.  Use
@@ -260,19 +260,20 @@ describe("Contract: dist bundle completeness (if built)", () => {
     const bundleExists = existsSync(resolve(bundleRoot, "VERSION"));
 
     if (bundleExists) {
-      it(`dist/${platform} contains skills/forge/SKILL.md (single entry)`, () => {
-        const skillPath = resolve(bundleRoot, "skills/forge/SKILL.md");
-        expect(existsSync(skillPath), `Missing in ${platform} bundle: skills/forge/SKILL.md`).toBe(
-          true,
-        );
+      it(`dist/${platform} contains skills/tinkerman/SKILL.md (single entry)`, () => {
+        const skillPath = resolve(bundleRoot, "skills/tinkerman/SKILL.md");
+        expect(
+          existsSync(skillPath),
+          `Missing in ${platform} bundle: skills/tinkerman/SKILL.md`,
+        ).toBe(true);
       });
 
       for (const sub of expectedLibSubs) {
-        it(`dist/${platform} contains skills/forge/lib/${sub}/instructions.md`, () => {
-          const libPath = resolve(bundleRoot, `skills/forge/lib/${sub}/instructions.md`);
+        it(`dist/${platform} contains skills/tinkerman/lib/${sub}/instructions.md`, () => {
+          const libPath = resolve(bundleRoot, `skills/tinkerman/lib/${sub}/instructions.md`);
           expect(
             existsSync(libPath),
-            `Missing in ${platform} bundle: skills/forge/lib/${sub}/instructions.md`,
+            `Missing in ${platform} bundle: skills/tinkerman/lib/${sub}/instructions.md`,
           ).toBe(true);
         });
       }
@@ -766,7 +767,7 @@ describe("Contract: config.md evolved rules protection", () => {
 // ---------------------------------------------------------------------------
 
 describe("Contract: forge-learn SKILL.md rule distillation", () => {
-  const skillDir = resolve(ROOT, "skills/forge/lib/learn");
+  const skillDir = resolve(ROOT, "skills/tinkerman/lib/learn");
   const skillPath = resolve(skillDir, "instructions.md");
   const content = readFileSync(skillPath, "utf-8");
 
@@ -858,18 +859,18 @@ describe("Contract: CLAUDE.md and template sync", () => {
 
 describe("Contract: CLAUDE.md reference pointers resolve", () => {
   const claude = readFileSync(resolve(ROOT, "CLAUDE.md"), "utf-8");
-  const detail = readFileSync(resolve(ROOT, "docs", "forge-constitution-detail.md"), "utf-8");
+  const detail = readFileSync(resolve(ROOT, "docs", "tinkerman-constitution-detail.md"), "utf-8");
 
   it("detail doc exists and is non-empty", () => {
     expect(detail.length).toBeGreaterThan(100);
   });
 
   it("each section referenced in CLAUDE.md exists in detail doc", () => {
-    const refs = claude.match(/→ 详见 docs\/forge-constitution-detail\.md §[\d.]+/g);
+    const refs = claude.match(/→ 详见 docs\/tinkerman-constitution-detail\.md §[\d.]+/g);
     expect(refs).not.toBeNull();
     if (!refs) return;
     const sections = [...new Set(refs)].map((r) =>
-      r.replace(/→ 详见 docs\/forge-constitution-detail\.md /, ""),
+      r.replace(/→ 详见 docs\/tinkerman-constitution-detail\.md /, ""),
     );
     for (const section of sections) {
       const sectionNum = section.replace("§", "");
@@ -976,10 +977,10 @@ describe("Contract: review artifact template", () => {
 });
 
 // ---------------------------------------------------------------------------
-// 20. plugin.json mcpServers field (forge-context MCP)
+// 20. plugin.json mcpServers field (tinkerman-context MCP)
 // ---------------------------------------------------------------------------
 
-describe("Contract: forge-context MCP server declared in .mcp.json", () => {
+describe("Contract: tinkerman-context MCP server declared in .mcp.json", () => {
   const mcpPath = resolve(ROOT, ".mcp.json");
   const content = readFileSync(mcpPath, "utf-8");
   const json = JSON.parse(content);
@@ -988,19 +989,19 @@ describe("Contract: forge-context MCP server declared in .mcp.json", () => {
     expect(json.mcpServers).toBeDefined();
   });
 
-  it(".mcp.json contains forge-context entry", () => {
-    expect(json.mcpServers["forge-context"]).toBeDefined();
+  it(".mcp.json contains tinkerman-context entry", () => {
+    expect(json.mcpServers["tinkerman-context"]).toBeDefined();
   });
 
-  it("forge-context uses node as command", () => {
-    expect(json.mcpServers["forge-context"].command).toBe("node");
+  it("tinkerman-context uses node as command", () => {
+    expect(json.mcpServers["tinkerman-context"].command).toBe("node");
   });
 
-  it("forge-context args reference the bundled server dist/forge-context.mjs", () => {
-    const argPath = json.mcpServers["forge-context"].args[0];
+  it("tinkerman-context args reference the bundled server dist/tinkerman-context.mjs", () => {
+    const argPath = json.mcpServers["tinkerman-context"].args[0];
     // The marketplace-install path resolves to the self-contained bundle
     // (inlines @modelcontextprotocol/sdk + zod + ajv), not the tsc output.
-    expect(argPath).toBe("dist/forge-context.mjs");
+    expect(argPath).toBe("dist/tinkerman-context.mjs");
   });
 });
 
@@ -1031,16 +1032,17 @@ describe("Contract: SKILL references/ structure", () => {
     ],
   };
 
-  const libDir = resolve(ROOT, "skills", "forge", "lib");
+  const libDir = resolve(ROOT, "skills", "tinkerman", "lib");
 
   for (const [skill, expectedFiles] of Object.entries(skillsWithRefs)) {
-    describe(`skills/forge/lib/${skill}/references/`, () => {
+    describe(`skills/tinkerman/lib/${skill}/references/`, () => {
       for (const file of expectedFiles) {
         it(`${file} exists`, () => {
           const refPath = resolve(libDir, skill, "references", file);
-          expect(existsSync(refPath), `Missing: skills/forge/lib/${skill}/references/${file}`).toBe(
-            true,
-          );
+          expect(
+            existsSync(refPath),
+            `Missing: skills/tinkerman/lib/${skill}/references/${file}`,
+          ).toBe(true);
         });
       }
     });
@@ -1293,7 +1295,7 @@ describe("Contract: PostToolUse boundary feedback", () => {
 
   // CI drift detection in forge-test SKILL
   it("forge-test SKILL.md contains drift detection section", () => {
-    const skillPath = resolve(ROOT, "skills/forge/lib/test/instructions.md");
+    const skillPath = resolve(ROOT, "skills/tinkerman/lib/test/instructions.md");
     const content = readFileSync(skillPath, "utf-8");
     expect(content).toContain("漂移检测");
     expect(content).toContain("detectCiCommandDrift");
@@ -1410,7 +1412,7 @@ describe("CE-Inspired Review Enhancement - Phase 1", () => {
 
   it("forge-learn SKILL has dual-track templates", () => {
     const content = readFileSync(
-      resolve(__dirname, "..", "skills/forge/lib/learn/instructions.md"),
+      resolve(__dirname, "..", "skills/tinkerman/lib/learn/instructions.md"),
       "utf-8",
     );
     expect(content).toMatch(/Dual-Track Knowledge System/);
@@ -1538,7 +1540,7 @@ describe("CE-Inspired Review Enhancement - Phase 3", () => {
 
   it("review skill has new CLI parameters", () => {
     const content = readFileSync(
-      resolve(__dirname, "..", "skills/forge/lib/review/instructions.md"),
+      resolve(__dirname, "..", "skills/tinkerman/lib/review/instructions.md"),
       "utf-8",
     );
     expect(content).toMatch(/--autofix/);

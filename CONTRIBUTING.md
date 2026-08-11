@@ -1,3 +1,6 @@
+---
+updated: 2026-08-11
+---
 # Contributing to Forge
 
 Thanks for your interest in Forge! This guide covers setup, architecture, coding conventions, and PR requirements.
@@ -27,8 +30,8 @@ src/               # Pure functions (305 TypeScript modules, no global state, no
   *.ts             # Domain modules (scheduler, validator, builder, etc.)
   docs-governance/ # 5-layer docs governance system
   logger/          # Structured logging (only side-effect module)
-commands/          # /forge unified entry (forge.md → routes to skills/forge/SKILL.md)
-skills/            # Unified `forge` SKILL (skills/forge/SKILL.md) — 37 subcommands dispatched internally
+commands/          # /tinkerman unified entry (forge.md → routes to skills/tinkerman/SKILL.md)
+skills/            # Unified `forge` SKILL (skills/tinkerman/SKILL.md) — 37 subcommands dispatched internally
   forge/lib/       # Sub-skill libraries (decide-teams, review, triage, accept, etc.)
 agents/            # 13 Agent role definitions (.md): product/architect/security/designer/critic/spec-check/quality-check/...
 .claude/agents/    # 22 plugin agents incl. forge-build/forge-plan/forge-review/forge-ship/forge-decide-* subcommand agents
@@ -41,7 +44,7 @@ test/              # Property-based tests (*.property.test.ts) + unit tests (~67
 ### Data Flow
 
 ```
-User → /forge <command> → Router → Skill Scheduler → Phase functions → .forge/ files
+User → /tinkerman <command> → Router → Skill Scheduler → Phase functions → .forge/ files
 ```
 
 Each phase (plan, build, review, test, ship) reads from and writes to `.forge/` directory, providing natural session boundaries.
@@ -256,7 +259,7 @@ FORGE_PRE_PUSH_BRANCH=refs/heads/release/v2 git push
 
 ### 需要 ADR 的高敏感文件
 
-以下文件的**任何改动**必须通过 `/forge decide` 产生 ADR，记录变更理由与风险评估：
+以下文件的**任何改动**必须通过 `/tinkerman decide` 产生 ADR，记录变更理由与风险评估：
 
 - `hooks/hooks.json` — PreToolUse Hook 入口
 - `scripts/check-frozen.sh` + `src/check-frozen.ts` — 冻结区阻断逻辑
@@ -284,7 +287,7 @@ Test local changes via `--plugin-dir` without publishing to marketplace:
 claude plugin validate .
 
 # Test in a single session
-claude --plugin-dir . -p "/forge status"
+claude --plugin-dir . -p "/tinkerman status"
 
 # Or install from local path
 claude plugin install . --plugin-dir .
@@ -294,7 +297,7 @@ After modifying skills/agents/commands, re-run `node scripts/gen-plugin-commands
 
 ## Creating a New Skill
 
-1. Copy `templates/SKILL-TEMPLATE.md` to `skills/forge-<name>/SKILL.md`
+1. Copy `templates/SKILL-TEMPLATE.md` to `skills/tinkerman-<name>/SKILL.md`
 2. Follow the [SKILL.md Style Guide](.forge/knowledge/skill-style-guide.md) for frontmatter, section structure, and description format
 3. Use the quick checklist at the end of the style guide as your PR self-check
 4. Run `node scripts/validate-skill-descriptions.mjs --strict` and `node scripts/validate-skill-skeleton.mjs` to verify compliance

@@ -1,5 +1,5 @@
 /**
- * T-24: /forge fix Bugfix orchestration.
+ * T-24: /tinkerman fix Bugfix orchestration.
  *
  * Validates: Requirement 14
  */

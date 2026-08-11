@@ -344,7 +344,7 @@ emit_frozen_diagnostic() {
     frozen-config)
       reason_text=".forge/config.md 是项目配置根文件，不可通过 hook 自动修改。"
       suggested_alt=""
-      unlock_instruction="手动编辑 .forge/config.md 或通过 /forge init 重新生成。"
+      unlock_instruction="手动编辑 .forge/config.md 或通过 /tinkerman init 重新生成。"
       ;;
     frozen-custom)
       reason_text="此文件位于自定义冻结区，不可修改。"

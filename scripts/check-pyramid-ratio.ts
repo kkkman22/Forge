@@ -137,7 +137,7 @@ if (isMain) {
     console.error(
       `❌ E2E-heavy anti-pattern: e2e(non-critical) ratio ${ratio} > ${input.config.e2eRatioThreshold}, middle=${result.middle}, unit=${result.unit}`,
     );
-    console.error("   将组合下沉到 component 层 (vitest:component) — /forge init --recipe");
+    console.error("   将组合下沉到 component 层 (vitest:component) — /tinkerman init --recipe");
     process.exit(1);
   }
   console.log(

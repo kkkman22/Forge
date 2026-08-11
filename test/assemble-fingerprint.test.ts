@@ -20,7 +20,7 @@ describe("extractFingerprint [REQ-01]: structural fingerprint extraction", () =>
   const baseInput = {
     subcommand: "build",
     dispatchMode: "inline",
-    resolvedLibPath: "forge/lib/build/instructions.md",
+    resolvedLibPath: "tinkerman/lib/build/instructions.md",
     allowedTools: ["Bash", "Read", "Write", "Edit"],
     contextBlock: UNTRUSTED_PREAMBLE,
     hintTags: ["router:frontend", "router:greenfield"],
@@ -31,7 +31,7 @@ describe("extractFingerprint [REQ-01]: structural fingerprint extraction", () =>
 
     expect(fp.subcommand).toBe("build");
     expect(fp.dispatchMode).toBe("inline");
-    expect(fp.resolvedLibPath).toBe("forge/lib/build/instructions.md");
+    expect(fp.resolvedLibPath).toBe("tinkerman/lib/build/instructions.md");
     // allowedTools sorted alphabetically for stable comparison
     expect(fp.allowedTools).toEqual(["Bash", "Edit", "Read", "Write"]);
     expect(fp.hintTags).toEqual(["router:frontend", "router:greenfield"]);

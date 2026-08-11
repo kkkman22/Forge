@@ -1,4 +1,5 @@
 ---
+updated: 2026-08-11
 project: "Forge"
 stack:
   - "TypeScript"
@@ -86,7 +87,7 @@ docs.ssot_sources:
 build 阶段的全量测试和 test 阶段的验证清单必须使用以下命令，不得自行拼凑：
 
 ```bash
-npm run check    # = tsc --noEmit && biome check src/ test/ && vitest run && bash scripts/check-readme-metrics.sh
+npm run check    # 详见 package.json scripts.check（tsc + biome + vitest + 一致性校验链；ADR-0009 减法移除 check-readme-metrics）
 npm run docs     # typedoc 文档生成验证
 bash scripts/build-dist.sh  # 分发包同步校验
 ```

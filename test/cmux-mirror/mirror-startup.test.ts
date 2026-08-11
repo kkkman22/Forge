@@ -43,7 +43,7 @@ describe("mirror: startup and availability checks (R1.5–R1.10)", () => {
   });
 
   it("R1.7: startup succeeds with valid config", async () => {
-    const forgeDir = join(dir, "forge");
+    const forgeDir = join(dir, "tinkerman");
     mkdirSync(forgeDir, { recursive: true });
     mkdirSync(join(forgeDir, "progress"), { recursive: true });
     writeFileSync(
@@ -82,7 +82,7 @@ describe("mirror: debounce behavior (R1.8)", () => {
 describe("mirror: signal handling (R1.9)", () => {
   it("shutdown is idempotent", async () => {
     const { createMirrorDaemon } = await import("../../scripts/cmux-mirror/mirror.mjs");
-    const forgeDir = join(mkdtempSync(join(tmpdir(), "cmux-sig-test-")), "forge");
+    const forgeDir = join(mkdtempSync(join(tmpdir(), "cmux-sig-test-")), "tinkerman");
     mkdirSync(forgeDir, { recursive: true });
     mkdirSync(join(forgeDir, "progress"), { recursive: true });
     writeFileSync(join(forgeDir, "status.md"), ["---", 'project_phase: "idle"', "---"].join("\n"));
@@ -110,7 +110,7 @@ describe("mirror: signal handling (R1.9)", () => {
 describe("mirror: polling fallback (R1.10)", () => {
   it("falls back to polling when fs.watch unavailable", async () => {
     const { createMirrorDaemon } = await import("../../scripts/cmux-mirror/mirror.mjs");
-    const forgeDir = join(mkdtempSync(join(tmpdir(), "cmux-poll-test-")), "forge");
+    const forgeDir = join(mkdtempSync(join(tmpdir(), "cmux-poll-test-")), "tinkerman");
     mkdirSync(forgeDir, { recursive: true });
     mkdirSync(join(forgeDir, "progress"), { recursive: true });
     writeFileSync(join(forgeDir, "status.md"), ["---", 'project_phase: "build"', "---"].join("\n"));

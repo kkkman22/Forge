@@ -178,7 +178,7 @@ body content here with enough words to be long enough for the check to pass it.`
 
   // decide-agent: forge-decide-* → effort
   const decideAgentOk = `---
-name: forge-decide-product
+name: tinkerman-decide-product
 description: "decide"
 effort: xhigh
 ---
@@ -187,7 +187,7 @@ effort: xhigh
 body content here with enough words to be long enough for the check to pass it.`;
 
   const decideAgentMissing = `---
-name: forge-decide-product
+name: tinkerman-decide-product
 description: "decide"
 ---
 

@@ -7,7 +7,7 @@
 #       `claude plugin marketplace add` / `claude plugin install` guidance
 #   K2: plugin mode (CLAUDE_PLUGIN_ROOT set) → banner shows "本次由插件运行"
 #       and does NOT show the install guidance (no noise for installed users)
-#   K3: .mcp.json contains forge-context → banner shows "需重启会话并批准"
+#   K3: .mcp.json contains tinkerman-context → banner shows "需重启会话并批准"
 #   K4: banner lists all 4 companion tools (CRG/Headroom/context-mode/Caveman)
 #       regardless of install state
 #
@@ -86,14 +86,14 @@ assert '! echo "$OUT" | grep -q "claude plugin install forge"' \
   "K2: plugin mode does NOT show install guidance (no noise)"
 rm -rf "$tmp_home" "$tmp_proj" "$fake_plugin_root"
 
-# --- K3: .mcp.json with forge-context → MCP approval guidance ---
-# init.sh writes .mcp.json itself when the forge-context.mjs exists; the
-# guidance fires whenever .mcp.json contains "forge-context". Run source mode
+# --- K3: .mcp.json with tinkerman-context → MCP approval guidance ---
+# init.sh writes .mcp.json itself when the tinkerman-context.mjs exists; the
+# guidance fires whenever .mcp.json contains "tinkerman-context". Run source mode
 # (which writes .mcp.json) and check the approval line appears.
 OUT=""
 run_init_source_mode OUT
 assert 'echo "$OUT" | grep -q "需重启会话并批准"' \
-  "K3: MCP approval guidance shown when forge-context configured"
+  "K3: MCP approval guidance shown when tinkerman-context configured"
 
 # --- K4: banner lists all 4 companion tools ---
 OUT=""

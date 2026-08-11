@@ -2,7 +2,7 @@
  * Unit tests for ADR frontmatter extension fields (Requirements 2.3, 2.7).
  *
  * Task 2.6 extends the ADR frontmatter with three optional fields
- * produced by the three-question gate in `/forge decide`:
+ * produced by the three-question gate in `/tinkerman decide`:
  *   - `reversibility`:           "hard" | "soft"
  *   - `surprising`:              boolean
  *   - `trade_off_alternatives`:  string[]

@@ -69,7 +69,7 @@ function extractRules(filePath) {
       rules.push({
         type: pattern.type,
         name: match[pattern.group],
-        // Normalize to "forge/lib/..." format for registry comparison
+        // Normalize to "tinkerman/lib/..." format for registry comparison
         file: relPath.replace(/^skills\//, ""),
       });
     }
@@ -93,7 +93,7 @@ function parseRegistry() {
   const content = readFileSync(registryPath, "utf-8");
   const skillSet = new Set();
 
-  // Match entries: skills: ["forge/lib/xxx/instructions.md", ...]
+  // Match entries: skills: ["tinkerman/lib/xxx/instructions.md", ...]
   const entryRegex = /skills:\s*\[([^\]]+)\]/g;
   let entryMatch;
   while ((entryMatch = entryRegex.exec(content)) !== null) {
@@ -112,7 +112,7 @@ function parseRegistry() {
 // ---------------------------------------------------------------------------
 
 function main() {
-  const skillDir = join(ROOT, "skills/forge/lib");
+  const skillDir = join(ROOT, "skills/tinkerman/lib");
   const instructionFiles = listInstructionFiles(skillDir);
   const registry = parseRegistry();
 

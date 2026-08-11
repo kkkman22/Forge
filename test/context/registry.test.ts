@@ -6,7 +6,7 @@ import type { EnabledPacks, FileSystem, PackEntry } from "../../src/pack/types.j
 // Fixtures
 // ---------------------------------------------------------------------------
 
-const CUSTOM_ROOT = "/project/.forge/custom";
+const CUSTOM_ROOT = "/project/.tinkerman/custom";
 
 function makePackEntry(overrides: Partial<PackEntry> = {}): PackEntry {
   return {

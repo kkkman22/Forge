@@ -1,7 +1,7 @@
 /**
  * Zod schema for review report frontmatter.
  *
- * The review report summarises a `/forge review` run and gates ship. Its
+ * The review report summarises a `/tinkerman review` run and gates ship. Its
  * shape mirrors `ReviewReportFields` in `src/state.ts`:
  *
  *   - `result`: lifecycle string (`pass`, `fail`, `incomplete`, etc.)

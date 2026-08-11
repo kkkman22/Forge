@@ -458,7 +458,7 @@ export function recipeHint(layer: DelegateLayer): string {
     component: "vue3-vitest-msw / react-vitest-msw",
     contract: "bash:contract",
   };
-  return `${layer} suite not configured — run \`/forge init --recipe ${recipes[layer]}\` to generate the scaffold`;
+  return `${layer} suite not configured — run \`/tinkerman init --recipe ${recipes[layer]}\` to generate the scaffold`;
 }
 
 /**
@@ -763,17 +763,17 @@ function nextHint(s: ScenarioArtifact): string {
     }
     // Assertion mismatch (THEN not satisfied)
     if (/THEN not satisfied|assertion|snapshot/i.test(reason)) {
-      return "THEN 预期与实际页面不符：核对断言关键词、或用 /forge test 跑单元层定位。";
+      return "THEN 预期与实际页面不符：核对断言关键词、或用 /tinkerman test 跑单元层定位。";
     }
     // API http code mismatch
     if (/http|code|401|403|500|api/i.test(reason)) {
-      return "API 返回码不符：检查路由/鉴权中间件，或用 /forge test 跑单元层。";
+      return "API 返回码不符：检查路由/鉴权中间件，或用 /tinkerman test 跑单元层。";
     }
     // CLI exit code
     if (/exit|command|cli|stderr/i.test(reason)) {
       return "CLI 命令失败：查看 stderr evidence 块，确认命令与依赖。";
     }
-    return "核对 THEN 预期与实际 snapshot 差异；用 /forge test 跑单元层定位。";
+    return "核对 THEN 预期与实际 snapshot 差异；用 /tinkerman test 跑单元层定位。";
   }
   return "—";
 }

@@ -11,7 +11,7 @@ import { readFileSync } from "node:fs";
 import { resolve } from "node:path";
 import { describe, expect, it } from "vitest";
 
-const INSTRUCTIONS_PATH = resolve(__dirname, "../../skills/forge/lib/loop/instructions.md");
+const INSTRUCTIONS_PATH = resolve(__dirname, "../../skills/tinkerman/lib/loop/instructions.md");
 
 function readInstructions(): string {
   return readFileSync(INSTRUCTIONS_PATH, "utf-8");

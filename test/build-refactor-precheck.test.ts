@@ -18,7 +18,7 @@ import { resolve } from "node:path";
 import { describe, expect, it } from "vitest";
 
 const ROOT = resolve(__dirname, "..");
-const REFACTOR_MODE = resolve(ROOT, "skills/forge/lib/build/references/refactor-mode.md");
+const REFACTOR_MODE = resolve(ROOT, "skills/tinkerman/lib/build/references/refactor-mode.md");
 
 describe("Refactor Mode pre-flight checks", () => {
   let content: string;

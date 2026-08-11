@@ -154,7 +154,7 @@ export type ForgePhase =
  * Canonical value is `"light"` — matches the Status_Document schema
  * (`schemas/status-file.ts` TierSchema), router, workflow-graph, and doctor.
  * Audit P1-2 (2026-07-16): this was previously `"lightweight"`, which split
- * from the project-standard `"light"` and crashed `/forge resume` via
+ * from the project-standard `"light"` and crashed `/tinkerman resume` via
  * `PHASE_SEQUENCES["light"]` → `undefined.indexOf()`.
  */
 export type ForgeTier = "light" | "standard" | "full";

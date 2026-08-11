@@ -1,5 +1,5 @@
 /**
- * Integration test for the forge-context MCP server.
+ * Integration test for the tinkerman-context MCP server.
  *
  * Spawns the compiled server as a child process, communicates via the MCP SDK
  * client transport, and verifies:
@@ -28,7 +28,7 @@ const SERVER_PATH = resolve("dist/src/mcp/server.js");
  * transport becoming ready (which can leave SIGTERM killing the process
  * with a null exit code).
  */
-const READY_MARKER = "[forge-context] ready";
+const READY_MARKER = "[tinkerman-context] ready";
 
 /** Wait for a child process to exit, returning its exit code. */
 function waitForExit(child: ChildProcess, timeoutMs = 5000): Promise<number | null> {
@@ -47,7 +47,7 @@ function waitForExit(child: ChildProcess, timeoutMs = 5000): Promise<number | nu
 
 /**
  * Resolve once the server has fully started — signalled by the
- * `[forge-context] ready` stderr line emitted after `server.connect()`.
+ * `[tinkerman-context] ready` stderr line emitted after `server.connect()`.
  * Fails loudly (rather than hanging) if the marker never arrives or the
  * process exits first.
  */
@@ -70,7 +70,7 @@ function waitForReady(child: ChildProcess, timeoutMs = 5000): Promise<void> {
   });
 }
 
-describe("forge-context MCP server integration", () => {
+describe("tinkerman-context MCP server integration", () => {
   let client: Client;
   let transport: StdioClientTransport;
 

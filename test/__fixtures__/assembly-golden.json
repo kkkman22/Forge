@@ -2,7 +2,7 @@
   "build|backend|greenfield": {
     "subcommand": "build",
     "dispatchMode": "fork",
-    "resolvedLibPath": "forge/lib/build/instructions.md",
+    "resolvedLibPath": "tinkerman/lib/build/instructions.md",
     "allowedTools": [
       "Agent",
       "Bash",
@@ -20,7 +20,7 @@
   "build|docs|iteration": {
     "subcommand": "build",
     "dispatchMode": "fork",
-    "resolvedLibPath": "forge/lib/build/instructions.md",
+    "resolvedLibPath": "tinkerman/lib/build/instructions.md",
     "allowedTools": [
       "Agent",
       "Bash",
@@ -36,7 +36,7 @@
   "review|fullstack|iteration": {
     "subcommand": "review",
     "dispatchMode": "fork",
-    "resolvedLibPath": "forge/lib/review/instructions.md",
+    "resolvedLibPath": "tinkerman/lib/review/instructions.md",
     "allowedTools": [
       "Agent",
       "Bash",
@@ -50,7 +50,7 @@
   "test|backend|refactor": {
     "subcommand": "test",
     "dispatchMode": "fork",
-    "resolvedLibPath": "forge/lib/test/instructions.md",
+    "resolvedLibPath": "tinkerman/lib/test/instructions.md",
     "allowedTools": [
       "Bash",
       "Read",
@@ -65,7 +65,7 @@
   "ship|fullstack|greenfield": {
     "subcommand": "ship",
     "dispatchMode": "fork",
-    "resolvedLibPath": "forge/lib/ship/instructions.md",
+    "resolvedLibPath": "tinkerman/lib/ship/instructions.md",
     "allowedTools": [
       "Bash",
       "Read",
@@ -77,7 +77,7 @@
   "plan|fullstack|greenfield": {
     "subcommand": "plan",
     "dispatchMode": "fork",
-    "resolvedLibPath": "forge/lib/plan/instructions.md",
+    "resolvedLibPath": "tinkerman/lib/plan/instructions.md",
     "allowedTools": [
       "Bash",
       "Glob",
@@ -93,7 +93,7 @@
   "decide|infra|greenfield": {
     "subcommand": "decide",
     "dispatchMode": "fork",
-    "resolvedLibPath": "forge/lib/decide/instructions.md",
+    "resolvedLibPath": "tinkerman/lib/decide/instructions.md",
     "allowedTools": [
       "Agent",
       "Bash",
@@ -108,7 +108,7 @@
   "spec|data|greenfield": {
     "subcommand": "spec",
     "dispatchMode": "fork",
-    "resolvedLibPath": "forge/lib/spec/instructions.md",
+    "resolvedLibPath": "tinkerman/lib/spec/instructions.md",
     "allowedTools": [
       "Bash",
       "Glob",
@@ -122,7 +122,7 @@
   "learn|docs|iteration": {
     "subcommand": "learn",
     "dispatchMode": "fork",
-    "resolvedLibPath": "forge/lib/learn/instructions.md",
+    "resolvedLibPath": "tinkerman/lib/learn/instructions.md",
     "allowedTools": [
       "Agent",
       "Bash",
@@ -139,7 +139,7 @@
   "status|frontend|bugfix": {
     "subcommand": "status",
     "dispatchMode": "inline",
-    "resolvedLibPath": "forge/lib/status/instructions.md",
+    "resolvedLibPath": "tinkerman/lib/status/instructions.md",
     "allowedTools": [
       "Bash",
       "Read"
@@ -150,7 +150,7 @@
   "debug|backend|bugfix": {
     "subcommand": "debug",
     "dispatchMode": "fork",
-    "resolvedLibPath": "forge/lib/debug/instructions.md",
+    "resolvedLibPath": "tinkerman/lib/debug/instructions.md",
     "allowedTools": [
       "Agent",
       "Bash",
@@ -167,7 +167,7 @@
   "learn|backend|refactor": {
     "subcommand": "learn",
     "dispatchMode": "fork",
-    "resolvedLibPath": "forge/lib/learn/instructions.md",
+    "resolvedLibPath": "tinkerman/lib/learn/instructions.md",
     "allowedTools": [
       "Agent",
       "Bash",

@@ -5,7 +5,7 @@
  *   AC1: RUNNERS contains unitRunner/componentRunner/contractRunner before apiRunner.
  *   AC2: each delegate supports(scenario) by scenario.type.
  *   AC3: delegate calls forge_exec against the project test command, scoped to Evidence.
- *   AC4: no suite configured → INCONCLUSIVE + recipe guidance (/forge init --recipe).
+ *   AC4: no suite configured → INCONCLUSIVE + recipe guidance (/tinkerman init --recipe).
  *   AC5: forge_exec crash → INCONCLUSIVE.
  *   AC6: stale mixedRunner removed from RUNNERS.
  *   AC7: contractRunner supports Contract-Source (codegen artifact freshness).

@@ -1,3 +1,6 @@
+---
+updated: 2026-08-11
+---
 # Next Step Protocol
 
 完成当前阶段后，**必须立即自动调用下一阶段**，不得停下来等待用户确认。
@@ -30,7 +33,7 @@ Forge 不尝试自动触发 compact（技术上不可行）。而是：
    📊 Wave N 完成 | 建议执行 /compact 再继续（P0/P1 已持久化）
    ```
 3. **用户决策**：用户自行决定是否 /compact。不自动阻断流程。
-4. **Compact 后恢复**：通过 `/forge resume` 从 `.forge/progress/` 和 `.forge/knowledge/sessions/` 读取状态
+4. **Compact 后恢复**：通过 `/tinkerman resume` 从 `.forge/progress/` 和 `.forge/knowledge/sessions/` 读取状态
 
 **Inter-phase 持久化点**：
 
@@ -49,7 +52,7 @@ Forge 不尝试自动触发 compact（技术上不可行）。而是：
 4. 成功完成时：输出一行摘要，然后**立即调用** `Skill(skill="forge", args="<next>")` 执行下一阶段
 5. 失败/阻断时：输出问题清单，**停止**，等待用户决定
 6. 用户传入 `--no-advance` 参数时，不自动推进，仅输出摘要
-7. **禁止**使用 AskUserQuestion 询问 context 预算相关决策（是否 /clear、是否 /compact、是否继续）。context 预算检查仅输出建议文字（如 `📊 建议执行 /compact 再继续`），由用户自行决定。只有累积 Read >150 KB 时才强制停止并输出 `⛔ MUST /clear + /forge resume`
+7. **禁止**使用 AskUserQuestion 询问 context 预算相关决策（是否 /clear、是否 /compact、是否继续）。context 预算检查仅输出建议文字（如 `📊 建议执行 /compact 再继续`），由用户自行决定。只有累积 Read >150 KB 时才强制停止并输出 `⛔ MUST /clear + /tinkerman resume`
 
 ## 需要用户决策的阶段
 
@@ -72,15 +75,15 @@ Forge 不尝试自动触发 compact（技术上不可行）。而是：
 
 | 当前阶段 | 成功时下一步 | 失败/阻断时 |
 |---------|-----------|-----------|
-| /forge decide | 自动调用 /forge spec | 输出问题，停止 |
-| /forge spec | 自动调用 /forge plan | 输出问题，停止 |
-| /forge plan | 自动调用 /forge build | 输出问题，停止 |
-| /forge build | 自动调用 /forge review | 输出问题，停止 |
-| /forge build-light | 自动调用 /forge review | 输出问题，停止 |
-| /forge review (通过) | 自动调用 /forge test（标准/全量）或 /forge ship（轻量） | 输出报告 → gated_auto 询问 → 修复 → re-review |
-| /forge review (未通过，P0/P1) | 输出报告+清单 → 立即 gated_auto 询问（AskUserQuestion）→ 确认后自动修复 → re-review | 阻断性错误、Three-strike |
-| /forge test | 自动调用 /forge ship | 输出失败详情，停止 |
-| /forge ship | 自动调用 /forge learn（全量）或标记完成（标准） | 输出阻断原因，停止 |
+| /tinkerman decide | 自动调用 /tinkerman spec | 输出问题，停止 |
+| /tinkerman spec | 自动调用 /tinkerman plan | 输出问题，停止 |
+| /tinkerman plan | 自动调用 /tinkerman build | 输出问题，停止 |
+| /tinkerman build | 自动调用 /tinkerman review | 输出问题，停止 |
+| /tinkerman build-light | 自动调用 /tinkerman review | 输出问题，停止 |
+| /tinkerman review (通过) | 自动调用 /tinkerman test（标准/全量）或 /tinkerman ship（轻量） | 输出报告 → gated_auto 询问 → 修复 → re-review |
+| /tinkerman review (未通过，P0/P1) | 输出报告+清单 → 立即 gated_auto 询问（AskUserQuestion）→ 确认后自动修复 → re-review | 阻断性错误、Three-strike |
+| /tinkerman test | 自动调用 /tinkerman ship | 输出失败详情，停止 |
+| /tinkerman ship | 自动调用 /tinkerman learn（全量）或标记完成（标准） | 输出阻断原因，停止 |
 
 ## 摘要格式
 

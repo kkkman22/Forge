@@ -5,7 +5,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "bash \"${CLAUDE_PLUGIN_ROOT:-}/scripts/auto-resume.sh\" 2>/dev/null || bash ~/.claude/skills/forge/scripts/auto-resume.sh 2>/dev/null || true",
+            "command": "bash \"${CLAUDE_PLUGIN_ROOT:-}/scripts/auto-resume.sh\" 2>/dev/null || bash ~/.claude/skills/tinkerman/scripts/auto-resume.sh 2>/dev/null || true",
             "timeout": 5
           }
         ]
@@ -14,7 +14,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "node \"${CLAUDE_PLUGIN_ROOT:-}/scripts/inject-evolved-rules.mjs\" 2>/dev/null || node ~/.claude/skills/forge/scripts/inject-evolved-rules.mjs 2>/dev/null || true",
+            "command": "node \"${CLAUDE_PLUGIN_ROOT:-}/scripts/inject-evolved-rules.mjs\" 2>/dev/null || node ~/.claude/skills/tinkerman/scripts/inject-evolved-rules.mjs 2>/dev/null || true",
             "timeout": 5
           }
         ]
@@ -23,7 +23,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "node \"${CLAUDE_PLUGIN_ROOT:-}/scripts/bootstrap-check.mjs\" 2>/dev/null || node ~/.claude/skills/forge/scripts/bootstrap-check.mjs 2>/dev/null || true",
+            "command": "node \"${CLAUDE_PLUGIN_ROOT:-}/scripts/bootstrap-check.mjs\" 2>/dev/null || node ~/.claude/skills/tinkerman/scripts/bootstrap-check.mjs 2>/dev/null || true",
             "timeout": 5
           }
         ]
@@ -32,7 +32,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "node \"${CLAUDE_PLUGIN_ROOT:-}/scripts/forge-sync-runtime.mjs\" --repair 2>/dev/null || node ~/.claude/skills/forge/scripts/forge-sync-runtime.mjs --repair 2>/dev/null || true",
+            "command": "node \"${CLAUDE_PLUGIN_ROOT:-}/scripts/tinkerman-sync-runtime.mjs\" --repair 2>/dev/null || node ~/.claude/skills/tinkerman/scripts/tinkerman-sync-runtime.mjs --repair 2>/dev/null || true",
             "timeout": 5
           }
         ]
@@ -41,7 +41,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "node \"${CLAUDE_PLUGIN_ROOT:-}/scripts/check-companions.mjs\" 2>/dev/null || node ~/.claude/skills/forge/scripts/check-companions.mjs 2>/dev/null || true",
+            "command": "node \"${CLAUDE_PLUGIN_ROOT:-}/scripts/check-companions.mjs\" 2>/dev/null || node ~/.claude/skills/tinkerman/scripts/check-companions.mjs 2>/dev/null || true",
             "timeout": 3
           }
         ]
@@ -52,7 +52,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "node \"${CLAUDE_PLUGIN_ROOT:-}/scripts/cmux-mirror/sync-once.mjs\" .forge 2>/dev/null || node ~/.claude/skills/forge/scripts/cmux-mirror/sync-once.mjs .forge 2>/dev/null || true",
+            "command": "node \"${CLAUDE_PLUGIN_ROOT:-}/scripts/cmux-mirror/sync-once.mjs\" .forge 2>/dev/null || node ~/.claude/skills/tinkerman/scripts/cmux-mirror/sync-once.mjs .forge 2>/dev/null || true",
             "timeout": 5
           }
         ]
@@ -75,7 +75,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "bash \"${CLAUDE_PLUGIN_ROOT:-}/scripts/hook-check-frozen.sh\" \"$TOOL_INPUT_FILE\" 2>/dev/null || bash ~/.claude/skills/forge/scripts/hook-check-frozen.sh \"$TOOL_INPUT_FILE\" 2>/dev/null",
+            "command": "bash \"${CLAUDE_PLUGIN_ROOT:-}/scripts/hook-check-frozen.sh\" \"$TOOL_INPUT_FILE\" 2>/dev/null || bash ~/.claude/skills/tinkerman/scripts/hook-check-frozen.sh \"$TOOL_INPUT_FILE\" 2>/dev/null",
             "timeout": 5
           }
         ]
@@ -85,7 +85,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "echo \"$TOOL_INPUT\" | grep -oE '\\.forge/(specs|plans)/[a-zA-Z0-9_.-]+|\\.forge/config\\.md' | sort -u | while read -r f; do bash \"${CLAUDE_PLUGIN_ROOT:-}/scripts/hook-check-frozen.sh\" \"$f\" 2>/dev/null || bash ~/.claude/skills/forge/scripts/hook-check-frozen.sh \"$f\" 2>/dev/null; done",
+            "command": "echo \"$TOOL_INPUT\" | grep -oE '\\.forge/(specs|plans)/[a-zA-Z0-9_.-]+|\\.forge/config\\.md' | sort -u | while read -r f; do bash \"${CLAUDE_PLUGIN_ROOT:-}/scripts/hook-check-frozen.sh\" \"$f\" 2>/dev/null || bash ~/.claude/skills/tinkerman/scripts/hook-check-frozen.sh \"$f\" 2>/dev/null; done",
             "timeout": 5
           }
         ]
@@ -96,7 +96,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "node \"${CLAUDE_PLUGIN_ROOT:-}/dist/src/check-sandbox.js\" Write \"$TOOL_INPUT_FILE\" 2>/dev/null || node forge/dist/src/check-sandbox.js Write \"$TOOL_INPUT_FILE\" 2>/dev/null || node ~/.claude/skills/forge/dist/src/check-sandbox.js Write \"$TOOL_INPUT_FILE\" 2>/dev/null || true",
+            "command": "node \"${CLAUDE_PLUGIN_ROOT:-}/dist/src/check-sandbox.js\" Write \"$TOOL_INPUT_FILE\" 2>/dev/null || node forge/dist/src/check-sandbox.js Write \"$TOOL_INPUT_FILE\" 2>/dev/null || node ~/.claude/skills/tinkerman/dist/src/check-sandbox.js Write \"$TOOL_INPUT_FILE\" 2>/dev/null || true",
             "timeout": 5
           }
         ]
@@ -107,7 +107,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "if [ -f .forge/.sandbox-active.json ]; then node \"${CLAUDE_PLUGIN_ROOT:-}/dist/src/check-sandbox.js\" Bash \"$TOOL_INPUT_FILE\" 2>/dev/null || node forge/dist/src/check-sandbox.js Bash \"$TOOL_INPUT_FILE\" 2>/dev/null || node ~/.claude/skills/forge/dist/src/check-sandbox.js Bash \"$TOOL_INPUT_FILE\" 2>/dev/null || true; fi",
+            "command": "if [ -f .forge/.sandbox-active.json ]; then node \"${CLAUDE_PLUGIN_ROOT:-}/dist/src/check-sandbox.js\" Bash \"$TOOL_INPUT_FILE\" 2>/dev/null || node forge/dist/src/check-sandbox.js Bash \"$TOOL_INPUT_FILE\" 2>/dev/null || node ~/.claude/skills/tinkerman/dist/src/check-sandbox.js Bash \"$TOOL_INPUT_FILE\" 2>/dev/null || true; fi",
             "timeout": 5
           }
         ]
@@ -117,7 +117,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "node \"${CLAUDE_PLUGIN_ROOT:-}/scripts/check-context-boundary.mjs\" 2>/dev/null || node ~/.claude/skills/forge/scripts/check-context-boundary.mjs 2>/dev/null || true",
+            "command": "node \"${CLAUDE_PLUGIN_ROOT:-}/scripts/check-context-boundary.mjs\" 2>/dev/null || node ~/.claude/skills/tinkerman/scripts/check-context-boundary.mjs 2>/dev/null || true",
             "timeout": 5
           }
         ]
@@ -127,7 +127,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "node \"${CLAUDE_PLUGIN_ROOT:-}/scripts/bash-ban-raw.mjs\" 2>/dev/null || node ~/.claude/skills/forge/scripts/bash-ban-raw.mjs 2>/dev/null || true",
+            "command": "node \"${CLAUDE_PLUGIN_ROOT:-}/scripts/bash-ban-raw.mjs\" 2>/dev/null || node ~/.claude/skills/tinkerman/scripts/bash-ban-raw.mjs 2>/dev/null || true",
             "timeout": 2
           }
         ]
@@ -138,7 +138,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "node \"${CLAUDE_PLUGIN_ROOT:-}/scripts/check-destructive.mjs\" 2>/dev/null || node ~/.claude/skills/forge/scripts/check-destructive.mjs 2>/dev/null || true",
+            "command": "node \"${CLAUDE_PLUGIN_ROOT:-}/scripts/check-destructive.mjs\" 2>/dev/null || node ~/.claude/skills/tinkerman/scripts/check-destructive.mjs 2>/dev/null || true",
             "timeout": 2
           }
         ]
@@ -150,7 +150,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "bash \"${CLAUDE_PLUGIN_ROOT:-}/scripts/hook-check-frozen-post.sh\" 2>/dev/null || bash ~/.claude/skills/forge/scripts/hook-check-frozen-post.sh 2>/dev/null || true",
+            "command": "bash \"${CLAUDE_PLUGIN_ROOT:-}/scripts/hook-check-frozen-post.sh\" 2>/dev/null || bash ~/.claude/skills/tinkerman/scripts/hook-check-frozen-post.sh 2>/dev/null || true",
             "timeout": 5
           }
         ]
@@ -171,7 +171,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "node \"${CLAUDE_PLUGIN_ROOT:-}/scripts/cmux-mirror/sync-once.mjs\" .forge 2>/dev/null || node ~/.claude/skills/forge/scripts/cmux-mirror/sync-once.mjs .forge 2>/dev/null || true",
+            "command": "node \"${CLAUDE_PLUGIN_ROOT:-}/scripts/cmux-mirror/sync-once.mjs\" .forge 2>/dev/null || node ~/.claude/skills/tinkerman/scripts/cmux-mirror/sync-once.mjs .forge 2>/dev/null || true",
             "timeout": 5
           }
         ]
@@ -182,7 +182,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "node \"${CLAUDE_PLUGIN_ROOT:-}/scripts/rebuild-feature-dossier.mjs\" 2>/dev/null || node ~/.claude/skills/forge/scripts/rebuild-feature-dossier.mjs 2>/dev/null || true",
+            "command": "node \"${CLAUDE_PLUGIN_ROOT:-}/scripts/rebuild-feature-dossier.mjs\" 2>/dev/null || node ~/.claude/skills/tinkerman/scripts/rebuild-feature-dossier.mjs 2>/dev/null || true",
             "timeout": 5
           }
         ]
@@ -193,7 +193,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "node \"${CLAUDE_PLUGIN_ROOT:-}/scripts/knowledge-hook-dispatch.mjs\" 2>/dev/null || node ~/.claude/skills/forge/scripts/knowledge-hook-dispatch.mjs 2>/dev/null || true",
+            "command": "node \"${CLAUDE_PLUGIN_ROOT:-}/scripts/knowledge-hook-dispatch.mjs\" 2>/dev/null || node ~/.claude/skills/tinkerman/scripts/knowledge-hook-dispatch.mjs 2>/dev/null || true",
             "timeout": 5
           }
         ]
@@ -215,7 +215,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "node \"${CLAUDE_PLUGIN_ROOT:-}/scripts/check-diff-context-integrity.mjs\" 2>/dev/null || node ~/.claude/skills/forge/scripts/check-diff-context-integrity.mjs 2>/dev/null || true",
+            "command": "node \"${CLAUDE_PLUGIN_ROOT:-}/scripts/check-diff-context-integrity.mjs\" 2>/dev/null || node ~/.claude/skills/tinkerman/scripts/check-diff-context-integrity.mjs 2>/dev/null || true",
             "timeout": 5
           }
         ]
@@ -226,7 +226,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "node \"${CLAUDE_PLUGIN_ROOT:-}/scripts/stop-pending-rules.mjs\" 2>/dev/null || node ~/.claude/skills/forge/scripts/stop-pending-rules.mjs 2>/dev/null || true",
+            "command": "node \"${CLAUDE_PLUGIN_ROOT:-}/scripts/stop-pending-rules.mjs\" 2>/dev/null || node ~/.claude/skills/tinkerman/scripts/stop-pending-rules.mjs 2>/dev/null || true",
             "timeout": 5
           }
         ]
@@ -235,7 +235,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "node \"${CLAUDE_PLUGIN_ROOT:-}/scripts/flag-stale-evolved-rules.mjs\" 2>/dev/null || node ~/.claude/skills/forge/scripts/flag-stale-evolved-rules.mjs 2>/dev/null || true",
+            "command": "node \"${CLAUDE_PLUGIN_ROOT:-}/scripts/flag-stale-evolved-rules.mjs\" 2>/dev/null || node ~/.claude/skills/tinkerman/scripts/flag-stale-evolved-rules.mjs 2>/dev/null || true",
             "timeout": 5
           }
         ]
@@ -244,7 +244,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "node \"${CLAUDE_PLUGIN_ROOT:-}/scripts/cmux-mirror/sync-once.mjs\" .forge 2>/dev/null || node ~/.claude/skills/forge/scripts/cmux-mirror/sync-once.mjs .forge 2>/dev/null || true",
+            "command": "node \"${CLAUDE_PLUGIN_ROOT:-}/scripts/cmux-mirror/sync-once.mjs\" .forge 2>/dev/null || node ~/.claude/skills/tinkerman/scripts/cmux-mirror/sync-once.mjs .forge 2>/dev/null || true",
             "timeout": 5
           }
         ]
@@ -253,7 +253,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "node \"${CLAUDE_PLUGIN_ROOT:-}/scripts/stop-phase-verify.mjs\" 2>/dev/null || node ~/.claude/skills/forge/scripts/stop-phase-verify.mjs 2>/dev/null || true",
+            "command": "node \"${CLAUDE_PLUGIN_ROOT:-}/scripts/stop-phase-verify.mjs\" 2>/dev/null || node ~/.claude/skills/tinkerman/scripts/stop-phase-verify.mjs 2>/dev/null || true",
             "timeout": 3
           }
         ]
@@ -274,7 +274,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "bash \"${CLAUDE_PLUGIN_ROOT:-}/scripts/hook-precompact.sh\" 2>/dev/null || bash ~/.claude/skills/forge/scripts/hook-precompact.sh 2>/dev/null || true",
+            "command": "bash \"${CLAUDE_PLUGIN_ROOT:-}/scripts/hook-precompact.sh\" 2>/dev/null || bash ~/.claude/skills/tinkerman/scripts/hook-precompact.sh 2>/dev/null || true",
             "timeout": 5
           }
         ]
@@ -285,7 +285,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "bash \"${CLAUDE_PLUGIN_ROOT:-}/scripts/hook-postcompact.sh\" 2>/dev/null || bash ~/.claude/skills/forge/scripts/hook-postcompact.sh 2>/dev/null || true",
+            "command": "bash \"${CLAUDE_PLUGIN_ROOT:-}/scripts/hook-postcompact.sh\" 2>/dev/null || bash ~/.claude/skills/tinkerman/scripts/hook-postcompact.sh 2>/dev/null || true",
             "timeout": 5
           }
         ]
@@ -306,7 +306,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "node \"${CLAUDE_PLUGIN_ROOT:-}/scripts/config-changed-hook.mjs\" 2>/dev/null || node ~/.claude/skills/forge/scripts/config-changed-hook.mjs 2>/dev/null || true",
+            "command": "node \"${CLAUDE_PLUGIN_ROOT:-}/scripts/config-changed-hook.mjs\" 2>/dev/null || node ~/.claude/skills/tinkerman/scripts/config-changed-hook.mjs 2>/dev/null || true",
             "timeout": 3
           }
         ]

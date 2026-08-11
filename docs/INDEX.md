@@ -1,3 +1,6 @@
+---
+updated: 2026-08-11
+---
 [English Version](./INDEX.en.md)
 
 ## Getting Started
@@ -25,7 +28,7 @@
 - [Docs Governance 参考手册](reference-docs-governance.md) / [Docs Governance 参考手册 (EN)](reference-docs-governance.en.md) — reference — 2026-06-19
 - [Forge Slimming 迁移指南](slimming-migration.md) — reference — 2026-05-17
 - [Forge triage 自动发现](forge-triage.md) — reference — 2026-06-16
-- [Forge — 项目宪法详细内容](forge-constitution-detail.md) — reference — 2026-08-11
+- [Forge — 项目宪法详细内容](tinkerman-constitution-detail.md) — reference — 2026-08-11
 - [Forge 再生式 Checkpoint](forge-checkpoint.md) — reference — 2026-06-16
 - [Forge 初次接触者引导](onboarding-beginner.md) / [Forge 初次接触者引导 (EN)](onboarding-beginner.en.md) — reference — 2026-06-19
 - [Forge 命令速查与路由详解](reference-commands.md) — reference — 2026-06-20

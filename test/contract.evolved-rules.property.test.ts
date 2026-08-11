@@ -64,7 +64,7 @@ function formatEvolvedRules(file: EvolvedRulesFile): string {
   lines.push("");
   lines.push("# Error-Prevention Rules");
   lines.push("");
-  lines.push("Rules distilled by `/forge learn` from accumulated project knowledge.");
+  lines.push("Rules distilled by `/tinkerman learn` from accumulated project knowledge.");
   lines.push("Each rule prevents a specific, documented error pattern.");
 
   for (const rule of file.rules) {

@@ -21,7 +21,7 @@ import { extractFingerprint } from "../src/forge-dispatcher/assemble-fingerprint
 import { wrapWorkspaceContext } from "../src/forge-dispatcher/untrusted-fence.js";
 import { generateHints } from "../src/router.js";
 
-const LIB_ROOT = resolve(process.cwd(), "skills/forge/lib");
+const LIB_ROOT = resolve(process.cwd(), "skills/tinkerman/lib");
 
 const REPRESENTATIVE_SUBS = [
   { sub: "build", taskType: "backend", phase: "greenfield" },
@@ -61,7 +61,7 @@ for (const { sub, taskType, phase } of REPRESENTATIVE_SUBS) {
   golden[`${sub}|${taskType}|${phase}`] = extractFingerprint({
     subcommand: sub,
     dispatchMode,
-    resolvedLibPath: pathResult.path.replace(LIB_ROOT, "forge/lib").replace(/^\//, ""),
+    resolvedLibPath: pathResult.path.replace(LIB_ROOT, "tinkerman/lib").replace(/^\//, ""),
     allowedTools,
     contextBlock,
     hintTags,

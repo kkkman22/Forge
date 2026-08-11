@@ -3,7 +3,7 @@
 // ============================================================================
 // validate-skill-descriptions.mjs — SKILL.md description 校验器
 //
-// 扫描 skills/forge-*/SKILL.md，校验每个 frontmatter description 是否符合：
+// 扫描 skills/tinkerman-*/SKILL.md，校验每个 frontmatter description 是否符合：
 //   1. 非空
 //   2. ≤ 1024 字符
 //   3. 包含 "Use when"（大小写不敏感，允许任意空白）
@@ -234,7 +234,7 @@ function validateDescription(filePath, content) {
 }
 
 // ---------------------------------------------------------------------------
-// 文件扫描：skills/forge-*/SKILL.md
+// 文件扫描：skills/tinkerman-*/SKILL.md
 // ---------------------------------------------------------------------------
 
 function listSkillFiles(skillsDir) {

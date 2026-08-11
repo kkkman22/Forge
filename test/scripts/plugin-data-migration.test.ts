@@ -90,6 +90,6 @@ describe("plugin-data backward compatibility", () => {
     const result = getPluginDataDir();
     // Falls back to homedir path (writable on this system)
     expect(result).toBeTruthy();
-    expect(result).toMatch(/\.claude\/plugins\/data\/forge$/);
+    expect(result).toMatch(/\.claude\/plugins\/data\/tinkerman$/);
   });
 });

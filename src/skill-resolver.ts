@@ -15,7 +15,7 @@
 
 /** Result of resolving a SKILL file path for a given locale. */
 export interface SkillResolution {
-  /** Resolved file path (e.g. "skills/forge-build/SKILL.zh.md"). */
+  /** Resolved file path (e.g. "skills/tinkerman-build/SKILL.zh.md"). */
   filePath: string;
   /** Whether the resolution fell back to the default SKILL.md. */
   isFallback: boolean;
@@ -110,8 +110,8 @@ export function validateSkillName(frontmatterName: string, directoryName: string
 /**
  * Extract the locale code from a SKILL file path.
  *
- * - `skills/forge-build/SKILL.zh.md` → `"zh"`
- * - `skills/forge-build/SKILL.md`    → `"default"`
+ * - `skills/tinkerman-build/SKILL.zh.md` → `"zh"`
+ * - `skills/tinkerman-build/SKILL.md`    → `"default"`
  */
 function extractLocaleFromPath(filePath: string): string {
   const match = filePath.match(/SKILL\.([^./]+)\.md$/);

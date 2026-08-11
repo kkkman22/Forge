@@ -1,5 +1,5 @@
 // Feature: forge-slimming-plan, Property 1: Command Count SST Consistency
-// Validates that the single source of truth (skills/forge/SKILL.md subcommand listing)
+// Validates that the single source of truth (skills/tinkerman/SKILL.md subcommand listing)
 // produces consistent counts across all declaration targets.
 
 import { existsSync, readFileSync } from "node:fs";
@@ -8,7 +8,7 @@ import fc from "fast-check";
 import { describe, expect, it } from "vitest";
 
 const ROOT = join(import.meta.dirname, "..", "..");
-const SKILL_MD = join(ROOT, "skills", "forge", "SKILL.md");
+const SKILL_MD = join(ROOT, "skills", "tinkerman", "SKILL.md");
 
 const AUXILIARY_HEADING = "### Auxiliary";
 

@@ -3,7 +3,7 @@
  * with file-lock-based concurrency safety (R12.7).
  *
  * Why a lock?
- *   Multiple `/forge` subprocesses can hit `tool-health.md` at the same
+ *   Multiple `/tinkerman` subprocesses can hit `tool-health.md` at the same
  *   time (concurrent reviews, parallel teammate dispatches, etc). POSIX
  *   `O_APPEND` is atomic only up to PIPE_BUF; mixing in a user-supplied
  *   timestamp + free-form details easily exceeds that bound. We use an

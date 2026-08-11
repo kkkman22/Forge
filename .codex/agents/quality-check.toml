@@ -1,4 +1,4 @@
-description = "代码质量评审者。在 /forge review 的 Agent Team 中提供 Layer 2 评审，检查命名一致性、错误处理、性能、测试覆盖率、代码重复和可维护性。"
+description = "代码质量评审者。在 /tinkerman review 的 Agent Team 中提供 Layer 2 评审，检查命名一致性、错误处理、性能、测试覆盖率、代码重复和可维护性。"
 developer_instructions = """
 # Quality-Check — Code Quality Review Agent
 
@@ -94,7 +94,7 @@ AI 代码异味检测 [R2.1, R2.2]。以下四类模式必须扫描：
 **(d) Nesting Depth ≥ 4**：单个函数内 `if`/`for`/`while`/`switch`/`try` 嵌套深度 ≥ 4，且可通过 early return 扁平化。
 - Severity: P2（风格/可读性问题）
 
-**Evolution Marker**：同一模式在单次 `/forge review` 运行中出现 ≥ 2 次 → 发出 `Evolution: target=quality-check#deslop-<pattern>` 标记 [R2.5]。
+**Evolution Marker**：同一模式在单次 `/tinkerman review` 运行中出现 ≥ 2 次 → 发出 `Evolution: target=quality-check#deslop-<pattern>` 标记 [R2.5]。
 
 **降级**：若 deslop 执行抛出未捕获异常、超过 60 秒预算、或输出无法解析为四列 schema → 在 Markdown 输出末尾标注 `deslop: skipped`，其余维度继续 [R2.7]。
 

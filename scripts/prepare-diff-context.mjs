@@ -1,9 +1,9 @@
 #!/usr/bin/env node
 // category: internal-only
 /**
- * prepare-diff-context.mjs — Script-based Step 1.5 of /forge review.
+ * prepare-diff-context.mjs — Script-based Step 1.5 of /tinkerman review.
  *
- * Replaces the manual 4-step prompt flow in skills/forge-review/SKILL.md §2.0
+ * Replaces the manual 4-step prompt flow in skills/tinkerman-review/SKILL.md §2.0
  * with a single bash invocation. Reuses the pure `truncateDiffContent` function
  * from src/mcp/tools/forge-git.ts (compiled to dist/) for file-priority
  * truncation, with zero MCP runtime dependency.

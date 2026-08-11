@@ -63,7 +63,7 @@ export async function renderCanvas(options: CanvasOptions): Promise<CanvasResult
   // Check review file exists [R4.7]
   const reviewPath = join(forgeDir, "reviews", `${topic}.md`);
   if (!existsSync(reviewPath)) {
-    throw new Error(`Review file not found: ${reviewPath}. Run /forge review first.`);
+    throw new Error(`Review file not found: ${reviewPath}. Run /tinkerman review first.`);
   }
 
   // Load templates

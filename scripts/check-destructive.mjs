@@ -69,7 +69,7 @@ async function loadGuard() {
     process.env.CLAUDE_PLUGIN_ROOT && `${process.env.CLAUDE_PLUGIN_ROOT}/dist/src/destructive-guard.js`,
     "dist/src/destructive-guard.js",
     "forge/dist/src/destructive-guard.js",
-    join(process.env.HOME ?? "", ".claude/skills/forge/dist/src/destructive-guard.js"),
+    join(process.env.HOME ?? "", ".claude/skills/tinkerman/dist/src/destructive-guard.js"),
   ].filter(Boolean);
   for (const p of candidates) {
     try {

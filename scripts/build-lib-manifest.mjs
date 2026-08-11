@@ -6,7 +6,7 @@ import { createHash } from "node:crypto";
 import { globSync } from "glob";
 
 const ROOT = resolve(import.meta.dirname, "..");
-const LIB_DIR = join(ROOT, "skills", "forge", "lib");
+const LIB_DIR = join(ROOT, "skills", "tinkerman", "lib");
 const OUTPUT = join(LIB_DIR, "manifest.json");
 
 function sha256(filePath) {

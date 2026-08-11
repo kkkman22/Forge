@@ -1,5 +1,5 @@
 /**
- * Skill description validator — ensures every `skills/forge-X/SKILL.md`
+ * Skill description validator — ensures every `skills/tinkerman-X/SKILL.md`
  * (where `X` is any skill name) frontmatter description follows the
  * "Use when" failure-mode pattern documented in Requirements 3.1–3.5.
  *

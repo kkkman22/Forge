@@ -10,7 +10,7 @@ const MAX_RESULT_SIZE_CHARS = 200_000;
  * in their _meta annotation via source code analysis.
  * The MCP SDK registerTool() supports _meta in config (v1.29.0+).
  */
-describe("forge-context _meta maxResultSizeChars (R11)", () => {
+describe("tinkerman-context _meta maxResultSizeChars (R11)", () => {
   it("forge-git.ts contains _meta with anthropic/maxResultSizeChars", () => {
     const src = readFileSync(resolve(ROOT, "src/mcp/tools/forge-git.ts"), "utf-8");
     expect(src).toContain("anthropic/maxResultSizeChars");

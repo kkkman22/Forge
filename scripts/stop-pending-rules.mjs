@@ -32,7 +32,7 @@ try {
   const count = matches ? matches.length : 0;
 
   if (count > 0) {
-    console.log(`⚠️ 有 ${count} 条待审核的规则提案。运行 /forge learn 查看并审批。`);
+    console.log(`⚠️ 有 ${count} 条待审核的规则提案。运行 /tinkerman learn 查看并审批。`);
   }
 } catch {
   // fail-open: exit 0 on any error

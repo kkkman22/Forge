@@ -15,7 +15,7 @@ const DRIFT_WARNING = `⚠️ CI 命令漂移检测
 
       ci_check_command: "npm run check"
 
-  补齐后，未来 /forge test、/forge ship Post-Push Verify、本地 pre-push hook
+  补齐后，未来 /tinkerman test、/tinkerman ship Post-Push Verify、本地 pre-push hook
   将使用统一命令，避免再次出现"本地绿、CI 红"。`;
 
 export function detectCiCommandDrift(

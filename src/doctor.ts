@@ -544,9 +544,9 @@ export function buildSafetyGuardsHealth(projectRoot: string): SafetyGuardsHealth
 // mode ships them in dist-plugin/scripts/. Satisfies runtime-worker-context-
 // control R7.4 (forge doctor reports missing worker runtime assets).
 const WORKER_RUNTIME_ASSETS = [
-  "scripts/forge-hook-dispatch.mjs",
-  "scripts/forge-phase-worker.mjs",
-  "scripts/forge-sync-runtime.mjs",
+  "scripts/tinkerman-hook-dispatch.mjs",
+  "scripts/tinkerman-phase-worker.mjs",
+  "scripts/tinkerman-sync-runtime.mjs",
 ] as const;
 
 function readRuntimeSyncHealth(projectRoot: string): HealthCheck {

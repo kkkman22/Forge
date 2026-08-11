@@ -20,7 +20,7 @@ if [ -f "$FORGE_DIR/status.md" ]; then
     if [ -n "$task" ]; then
       task_info="，当前任务: $task"
     fi
-    messages+=("📌 上次会话停在 **$phase** 阶段${task_info}。输入 \`/forge resume\` 恢复。")
+    messages+=("📌 上次会话停在 **$phase** 阶段${task_info}。输入 \`/tinkerman resume\` 恢复。")
   fi
 fi
 
@@ -38,7 +38,7 @@ if ls "$FORGE_DIR/reviews/"*.md 1>/dev/null 2>&1; then
     if grep -qE '### P0 Issues' "$review_file" 2>/dev/null; then
       p0_block=$(sed -n '/### P0 Issues/,/### P[123] Issues/p' "$review_file" 2>/dev/null || true)
       if [ -n "$p0_block" ] && ! echo "$p0_block" | grep -qE '^\s*None\s*$'; then
-        messages+=("🔴 存在包含 P0/P1 的 review 报告，ship 被阻断。输入 \`/forge review\` 查看详情。")
+        messages+=("🔴 存在包含 P0/P1 的 review 报告，ship 被阻断。输入 \`/tinkerman review\` 查看详情。")
         break
       fi
     fi
@@ -51,7 +51,7 @@ if ls "$FORGE_DIR/plans/"*.md 1>/dev/null 2>&1; then
     status=$(grep -E '^status:' "$plan_file" 2>/dev/null | head -1 | sed 's/^status:[[:space:]]*//' || true)
     if [ "$status" = "draft" ]; then
       plan_name=$(basename "$plan_file" .md)
-      messages+=("📋 Plan \`$plan_name\` 状态为 draft，等待批准。输入 \`/forge plan\` 继续。")
+      messages+=("📋 Plan \`$plan_name\` 状态为 draft，等待批准。输入 \`/tinkerman plan\` 继续。")
     fi
   done
 fi

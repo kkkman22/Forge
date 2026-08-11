@@ -215,7 +215,7 @@ export async function runReviewWithTruncationHandling(
   } else if (assessment.action === "warn") {
     // biome-ignore lint/suspicious/noConsole: User feedback for truncation warning
     console.warn(
-      `⚠ ${assessment.truncatedCount}/${assessment.totalCount} review layers truncated — consider re-running /forge review`,
+      `⚠ ${assessment.truncatedCount}/${assessment.totalCount} review layers truncated — consider re-running /tinkerman review`,
     );
   }
 

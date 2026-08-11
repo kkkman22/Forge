@@ -1,6 +1,6 @@
 /**
  * Knowledge Quota — pure functions for the near-limit warning emitted by
- * `/forge learn` before writing a new solutions document.
+ * `/tinkerman learn` before writing a new solutions document.
  *
  * Side-effect free: the learn skill counts files on disk and passes the count
  * in; this module only decides whether the warning should fire and shapes the

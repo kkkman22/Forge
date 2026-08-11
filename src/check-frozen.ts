@@ -47,7 +47,7 @@ const FROZEN_STATUSES = ["locked", "approved"];
  * Unlike `.forge/` state files (whose freeze is controlled by the `status`
  * field in their frontmatter), these files are policy-locked at the
  * repository level: any modification requires an ADR produced by
- * `/forge decide`.
+ * `/tinkerman decide`.
  *
  * Paths are matched against both the raw argv path and the
  * `.forge/`-stripped form, so callers may pass either.
@@ -129,7 +129,7 @@ function main(): void {
     console.log(`🔒 写入被阻断：${targetFile} 属于源代码硬冻结区（prompt defense 模式库等）。`);
     // biome-ignore lint/suspicious/noConsole: check-frozen runs in hook context without logger
     console.log(
-      "修改此类文件必须通过 /forge decide 产生 ADR。请参考 CONTRIBUTING.md §需要 ADR 的高敏感文件。",
+      "修改此类文件必须通过 /tinkerman decide 产生 ADR。请参考 CONTRIBUTING.md §需要 ADR 的高敏感文件。",
     );
     notifyFrozen(targetFile);
     process.exit(1);

@@ -44,7 +44,7 @@ function makeFs(files: Record<string, string>): FileSystem {
 }
 
 function makeEnabledPacks(): EnabledPacks {
-  return { order: [], entries: [], customLayerRoot: "/project/.forge/custom" };
+  return { order: [], entries: [], customLayerRoot: "/project/.tinkerman/custom" };
 }
 
 const emptyGlossary: GlossaryRegistry = {
@@ -84,7 +84,7 @@ describe("spec.ts leak integration", () => {
       "      description: DB name in spec",
     ].join("\n");
     const fs = makeFs({
-      "/project/.forge/custom/banned-patterns.yaml": yaml,
+      "/project/.tinkerman/custom/banned-patterns.yaml": yaml,
     });
     const enabled = makeEnabledPacks();
     const registry = await loadBannedPatterns(enabled, fs);

@@ -170,8 +170,8 @@ describe("validateZoomOutOutput", () => {
 
 describe("isZoomOutTrigger", () => {
   it.each([
-    ["/forge zoom-out"],
-    ["/forge zoom-out architecture"],
+    ["/tinkerman zoom-out"],
+    ["/tinkerman zoom-out architecture"],
     ["zoom out"],
     ["Zoom Out please"],
     ["ZOOM OUT"],
@@ -186,7 +186,7 @@ describe("isZoomOutTrigger", () => {
   it.each([
     [""],
     ["zoom in"],
-    ["/forge status"],
+    ["/tinkerman status"],
     ["讲细节"],
     ["放大镜"],
     ["outzoom"],

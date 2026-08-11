@@ -34,7 +34,7 @@ describe("record-evolved-rule-violation.mjs cache path integration", () => {
     const { getCachePath } = await importFresh();
 
     const cachePath = getCachePath("rule-violations.json");
-    expect(cachePath).toBe(join(pluginDataDir, "forge", "rule-violations.json"));
+    expect(cachePath).toBe(join(pluginDataDir, "tinkerman", "rule-violations.json"));
   });
 
   it("returns null when plugin data dir unavailable", async () => {

@@ -28,7 +28,7 @@ const branchSkillArb = fc.constantFrom<BranchGateSkill>(
 
 const branchNameArb = fc.oneof(
   fc
-    .tuple(fc.constantFrom("feature", "forge"), fc.string({ minLength: 1, maxLength: 20 }))
+    .tuple(fc.constantFrom("feature", "tinkerman"), fc.string({ minLength: 1, maxLength: 20 }))
     .map(([prefix, topic]) => `${prefix}/${topic}`),
   fc.string({ minLength: 1, maxLength: 20 }),
 );

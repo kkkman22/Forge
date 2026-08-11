@@ -14,7 +14,7 @@ describe("Plugin Manifest", () => {
     expect(existsSync(pluginPath)).toBe(true);
     const content = readFileSync(pluginPath, "utf-8");
     const manifest = JSON.parse(content);
-    expect(manifest.name).toBe("forge");
+    expect(manifest.name).toBe("tinkerman");
     expect(manifest.description).toBeTruthy();
     expect(manifest.version).toBeTruthy();
     expect(manifest.license).toBe("MIT");
@@ -34,9 +34,9 @@ describe("Plugin Manifest", () => {
     expect(Object.keys(hooks.hooks).length).toBeGreaterThan(0);
   });
 
-  it("plugin.json has no hardcoded ~/.claude/skills/forge paths", () => {
+  it("plugin.json has no hardcoded ~/.claude/skills/tinkerman paths", () => {
     const content = readFileSync(pluginPath, "utf-8");
-    expect(content).not.toContain("~/.claude/skills/forge");
+    expect(content).not.toContain("~/.claude/skills/tinkerman");
   });
 
   it("marketplace.json exists and is valid JSON", () => {
@@ -45,7 +45,7 @@ describe("Plugin Manifest", () => {
     expect(manifest.name).toBeTruthy();
     expect(manifest.plugins).toBeInstanceOf(Array);
     expect(manifest.plugins.length).toBeGreaterThan(0);
-    expect(manifest.plugins[0].name).toBe("forge");
+    expect(manifest.plugins[0].name).toBe("tinkerman");
   });
 
   it("marketplace.json has required schema fields", () => {
@@ -62,7 +62,7 @@ describe("Commands Directory", () => {
   it("has exactly 1 user-facing command file (single-entry model)", () => {
     const files = readdirSync(commandsDir).filter((f) => f.endsWith(".md"));
     expect(files.length).toBe(1);
-    expect(files[0]).toBe("forge.md");
+    expect(files[0]).toBe("tinkerman.md");
   });
 
   it("every command .md has description frontmatter", () => {
@@ -73,8 +73,8 @@ describe("Commands Directory", () => {
     }
   });
 
-  it("forge.md command exists", () => {
-    expect(existsSync(join(commandsDir, "forge.md"))).toBe(true);
+  it("tinkerman.md command exists", () => {
+    expect(existsSync(join(commandsDir, "tinkerman.md"))).toBe(true);
   });
 });
 
@@ -109,7 +109,7 @@ describe("Plugin Workflows Field (R1: workflows-integration)", () => {
     expect(existsSync(mcpPath)).toBe(true);
     const mcp = JSON.parse(readFileSync(mcpPath, "utf-8"));
     expect(mcp.mcpServers).toBeDefined();
-    expect(mcp.mcpServers["forge-context"]).toBeDefined();
+    expect(mcp.mcpServers["tinkerman-context"]).toBeDefined();
 
     const hooksPath = join(ROOT, "hooks", "hooks.json");
     expect(existsSync(hooksPath)).toBe(true);
@@ -159,8 +159,8 @@ describe("Plugin Workflows Field (R1: workflows-integration)", () => {
 });
 
 describe("Plugin Asset Integrity", () => {
-  it("skills/forge/lib has >= 25 sub-skill directories", () => {
-    const libDir = join(ROOT, "skills", "forge", "lib");
+  it("skills/tinkerman/lib has >= 25 sub-skill directories", () => {
+    const libDir = join(ROOT, "skills", "tinkerman", "lib");
     const dirs = readdirSync(libDir, { withFileTypes: true })
       .filter((d) => d.isDirectory())
       .map((d) => d.name);
@@ -174,7 +174,7 @@ describe("Plugin Asset Integrity", () => {
   });
 
   it("all sub-skill directories have instructions.md", () => {
-    const libDir = join(ROOT, "skills", "forge", "lib");
+    const libDir = join(ROOT, "skills", "tinkerman", "lib");
     const dirs = readdirSync(libDir, { withFileTypes: true })
       .filter((d) => d.isDirectory())
       .map((d) => d.name);
@@ -182,7 +182,7 @@ describe("Plugin Asset Integrity", () => {
     for (const dir of dirs) {
       expect(
         existsSync(join(libDir, dir, "instructions.md")),
-        `Missing skills/forge/lib/${dir}/instructions.md`,
+        `Missing skills/tinkerman/lib/${dir}/instructions.md`,
       ).toBe(true);
     }
   });

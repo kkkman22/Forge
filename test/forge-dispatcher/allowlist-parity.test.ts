@@ -4,10 +4,10 @@ import { describe, expect, it } from "vitest";
 import { ALLOW_LIST, validateTopic } from "../../src/forge-dispatcher/allowlist.js";
 
 const FORGE_ROOT = join(import.meta.dirname, "../..");
-const REGISTRY_PATH = join(FORGE_ROOT, "skills/forge/registry.toml");
+const REGISTRY_PATH = join(FORGE_ROOT, "skills/tinkerman/registry.toml");
 const PLUGIN_JSON_PATH = join(FORGE_ROOT, ".claude-plugin/plugin.json");
 const MARKETPLACE_JSON_PATH = join(FORGE_ROOT, ".claude-plugin/marketplace.json");
-const SKILL_MD_PATH = join(FORGE_ROOT, "skills/forge/SKILL.md");
+const SKILL_MD_PATH = join(FORGE_ROOT, "skills/tinkerman/SKILL.md");
 
 function parseRegistrySections(tomlContent: string): string[] {
   const sections: string[] = [];

@@ -3,7 +3,7 @@
  *
  * Bug (reported against v3.6.0 plugin install): every hook command referenced
  * project-relative paths (`scripts/X.mjs`, `forge/scripts/X.mjs`,
- * `~/.claude/skills/forge/scripts/X.mjs`), but plugin install places scripts at
+ * `~/.claude/skills/tinkerman/scripts/X.mjs`), but plugin install places scripts at
  * `${CLAUDE_PLUGIN_ROOT}/scripts/` — none of the three fallback paths resolve.
  * `Stop` hooks had no `|| true` and threw a visible `MODULE_NOT_FOUND` on every
  * Claude turn; other hooks silently no-op'd behind `|| true`.
@@ -11,7 +11,7 @@
  * Fix: every hook command that invokes a `scripts/...` file MUST first try
  * `${CLAUDE_PLUGIN_ROOT:-}/scripts/...` (the plugin path, expanded by Claude
  * Code at hook runtime), then keep the existing 3-path fallback chain, then
- * `|| true`. This mirrors the already-correct `forge-sync-runtime.mjs` hook.
+ * `|| true`. This mirrors the already-correct `tinkerman-sync-runtime.mjs` hook.
  *
  * This test encodes the fixed invariant so the regression cannot return.
  */

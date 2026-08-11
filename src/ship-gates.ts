@@ -243,7 +243,7 @@ export function checkReviewGate(
     return {
       gate: "review",
       passed: false,
-      reason: "No review report found in .forge/reviews/. Run /forge review first.",
+      reason: "No review report found in .forge/reviews/. Run /tinkerman review first.",
     };
   }
 
@@ -334,7 +334,7 @@ export function checkReviewGate(
           return {
             gate: "review",
             passed: false,
-            reason: `P1 fixlist claims allFixed but no git verification was provided. Re-run /forge review with commit verification or provide gitLogFn.`,
+            reason: `P1 fixlist claims allFixed but no git verification was provided. Re-run /tinkerman review with commit verification or provide gitLogFn.`,
             details: { p0Count: 0, p1Count: report.p1Count },
           };
         }
@@ -346,7 +346,7 @@ export function checkReviewGate(
     return {
       gate: "review",
       passed: false,
-      reason: `Review has ${report.p1Count} P1 issue(s). Run /forge review and fix all P1 issues before shipping.`,
+      reason: `Review has ${report.p1Count} P1 issue(s). Run /tinkerman review and fix all P1 issues before shipping.`,
       details: { p0Count: 0, p1Count: report.p1Count },
     };
   }

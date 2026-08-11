@@ -52,7 +52,7 @@ function readSettings(path: string): Record<string, unknown> {
  */
 function hookCommand(_mode: RuntimeConfigMode, event: RequiredHookEvent): string {
   const projectDir = "$" + "{CLAUDE_PROJECT_DIR}";
-  return `node ${projectDir}/scripts/forge-hook-dispatch.mjs ${event} # @forge-runtime:${event}`;
+  return `node ${projectDir}/scripts/tinkerman-hook-dispatch.mjs ${event} # @forge-runtime:${event}`;
 }
 
 function getHooks(settings: Record<string, unknown>): Record<string, unknown[]> {

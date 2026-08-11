@@ -63,11 +63,11 @@ describe("buildCronInstallSpec", () => {
     const spec = buildCronInstallSpec({
       skillName: "learn",
       cron: "0 9 * * 1",
-      prompt: "/forge learn --deep",
+      prompt: "/tinkerman learn --deep",
     });
     expect(spec.tool).toBe("CronCreate");
     expect(spec.cron).toBe("0 9 * * 1");
-    expect(spec.prompt).toBe("/forge learn --deep");
+    expect(spec.prompt).toBe("/tinkerman learn --deep");
     // CronCreate needs a label/title for the scheduled task.
     expect(spec.label).toContain("learn");
   });
@@ -76,7 +76,7 @@ describe("buildCronInstallSpec", () => {
     const spec = buildCronInstallSpec({
       skillName: "triage",
       cron: "0 9 * * *",
-      prompt: "/forge triage",
+      prompt: "/tinkerman triage",
       action: "uninstall",
     });
     expect(spec.action).toBe("uninstall");

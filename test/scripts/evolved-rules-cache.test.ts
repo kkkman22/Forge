@@ -58,7 +58,7 @@ updated: "2026-05-30"
 
     runScript(forgeDir, pluginDataDir);
 
-    const cachePath = join(pluginDataDir, "forge", "evolved-rules-cache.json");
+    const cachePath = join(pluginDataDir, "tinkerman", "evolved-rules-cache.json");
     expect(existsSync(cachePath)).toBe(true);
 
     const cache = JSON.parse(readFileSync(cachePath, "utf-8"));
@@ -85,7 +85,7 @@ updated: "2026-05-30"
     // First run — creates cache
     runScript(forgeDir, pluginDataDir);
 
-    const cachePath = join(pluginDataDir, "forge", "evolved-rules-cache.json");
+    const cachePath = join(pluginDataDir, "tinkerman", "evolved-rules-cache.json");
     const firstCache = JSON.parse(readFileSync(cachePath, "utf-8"));
 
     // Second run — should read cache (same mtime)
@@ -116,7 +116,7 @@ updated: "2026-05-30"
     // First run
     runScript(forgeDir, pluginDataDir);
 
-    const cachePath = join(pluginDataDir, "forge", "evolved-rules-cache.json");
+    const cachePath = join(pluginDataDir, "tinkerman", "evolved-rules-cache.json");
     const firstCompiledAt = JSON.parse(readFileSync(cachePath, "utf-8")).compiledAt;
 
     // Update source with newer mtime
@@ -160,7 +160,7 @@ updated: "2026-05-30"
     // First run
     runScript(forgeDir, pluginDataDir);
 
-    const cachePath = join(pluginDataDir, "forge", "evolved-rules-cache.json");
+    const cachePath = join(pluginDataDir, "tinkerman", "evolved-rules-cache.json");
     // Corrupt the cache
     writeFileSync(cachePath, "{ corrupted json }}}");
 

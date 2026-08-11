@@ -61,7 +61,7 @@ const arbUniquePackEntries = fc
     return {
       order: packs.map((p) => p.name),
       entries,
-      customLayerRoot: "/project/.forge/custom",
+      customLayerRoot: "/project/.tinkerman/custom",
     };
   });
 
@@ -74,7 +74,7 @@ describe("resolvePath properties", () => {
     const empty: EnabledPacks = {
       order: [],
       entries: [],
-      customLayerRoot: "/project/.forge/custom",
+      customLayerRoot: "/project/.tinkerman/custom",
     };
     // With empty entries, custom is the only candidate
     const results = resolveAllPaths("any/path.md", empty);

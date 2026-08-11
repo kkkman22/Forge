@@ -49,10 +49,10 @@ describe("Plugin Marketplace Install (AC 13.3)", () => {
     const marketplacePath = join(ROOT, ".claude-plugin", "marketplace.json");
     const marketplace = JSON.parse(readFileSync(marketplacePath, "utf-8")) as MarketplaceManifest;
 
-    const forgePlugin = marketplace.plugins.find((p) => p.name === "forge");
-    if (!forgePlugin) throw new Error("marketplace.json missing 'forge' plugin entry");
+    const tinkermanPlugin = marketplace.plugins.find((p) => p.name === "tinkerman");
+    if (!tinkermanPlugin) throw new Error("marketplace.json missing 'tinkerman' plugin entry");
 
-    const sourcePath = resolve(ROOT, forgePlugin.source);
+    const sourcePath = resolve(ROOT, tinkermanPlugin.source);
 
     installDir = mkdtempSync(join(tmpdir(), "forge-install-"));
 
@@ -83,7 +83,7 @@ describe("Plugin Marketplace Install (AC 13.3)", () => {
   it("installed plugin.json exists and is parseable", () => {
     expect(existsSync(installedPluginPath)).toBe(true);
     const manifest = JSON.parse(readFileSync(installedPluginPath, "utf-8")) as PluginManifest;
-    expect(manifest.name).toBe("forge");
+    expect(manifest.name).toBe("tinkerman");
   });
 
   it("installed plugin.json declares workflows field with at least one entry", () => {

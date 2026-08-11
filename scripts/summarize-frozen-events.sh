@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 # category: internal-only
-# summarize-frozen-events.sh — Summarize frozen-zone audit events for /forge status.
+# summarize-frozen-events.sh — Summarize frozen-zone audit events for /tinkerman status.
 #
 # Usage: bash scripts/summarize-frozen-events.sh [--days=N]
 #

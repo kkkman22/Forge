@@ -3,7 +3,7 @@ import { resolve } from "node:path";
 import { describe, expect, it } from "vitest";
 
 const ROOT = resolve(import.meta.dirname, "..", "..");
-const SKILL_PATH = resolve(ROOT, "skills/forge/SKILL.md");
+const SKILL_PATH = resolve(ROOT, "skills/tinkerman/SKILL.md");
 
 const SUBS = [
   "abort",
@@ -39,8 +39,8 @@ const SUBS = [
 
 const TIER_HEADINGS = ["Light", "Standard", "Full", "Auxiliary"];
 
-describe("R1.3: bare /forge lists all 29 subcommands in 4 tiers", () => {
-  it("skills/forge/SKILL.md exists", () => {
+describe("R1.3: bare /tinkerman lists all 29 subcommands in 4 tiers", () => {
+  it("skills/tinkerman/SKILL.md exists", () => {
     expect(existsSync(SKILL_PATH)).toBe(true);
   });
 
@@ -62,12 +62,12 @@ describe("R1.3: bare /forge lists all 29 subcommands in 4 tiers", () => {
     }
   });
 
-  it("documents automatic phase worker runtime behind the /forge entry", () => {
+  it("documents automatic phase worker runtime behind the /tinkerman entry", () => {
     const content = readFileSync(SKILL_PATH, "utf-8");
 
     expect(content).toContain("Phase Worker Runtime");
     expect(content).toContain("No manual new Claude Code window");
-    expect(content).toContain("forge-phase-worker.mjs");
-    expect(content).toContain("forge-sync-runtime.mjs");
+    expect(content).toContain("tinkerman-phase-worker.mjs");
+    expect(content).toContain("tinkerman-sync-runtime.mjs");
   });
 });

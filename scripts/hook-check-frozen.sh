@@ -44,7 +44,7 @@ fi
 for candidate in \
   "${script_dir}/../dist/src/check-frozen.js" \
   "forge/dist/src/check-frozen.js" \
-  "$HOME/.claude/skills/forge/dist/src/check-frozen.js"; do
+  "$HOME/.claude/skills/tinkerman/dist/src/check-frozen.js"; do
   if [ -f "$candidate" ]; then
     exec node "$candidate" "$FILE"
   fi

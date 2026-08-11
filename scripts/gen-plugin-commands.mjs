@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 
-// Single-entry mode: Forge only exposes /forge as user-facing slash command.
+// Single-entry mode: Forge only exposes /tinkerman as user-facing slash command.
 // This script validates downstream count declarations and no longer generates
 // wrapper command files (commands/forge-<sub>.md).
 // Usage:
@@ -146,11 +146,11 @@ if (STAMP_COUNT) {
 
 if (DRY_RUN) {
   console.log("single-entry mode: no wrapper commands generated.");
-  console.log("Only commands/forge.md is preserved (manual edits only).");
+  console.log("Only commands/tinkerman.md is preserved (manual edits only).");
   console.log(`SST count: ${SST_COUNT} user-facing slash command(s)`);
   process.exit(0);
 }
 
 console.log("single-entry mode: no wrapper commands generated.");
-console.log("Only commands/forge.md is preserved (manual edits only).");
+console.log("Only commands/tinkerman.md is preserved (manual edits only).");
 console.log(`Done: SST count = ${SST_COUNT}`);

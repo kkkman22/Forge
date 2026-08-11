@@ -17,14 +17,14 @@ describe("commands-table renderer", () => {
   it("renders table with headers and rows", () => {
     const result = commandsTableRenderer(
       baseInput([
-        { name: "/forge build", tier: "Standard", summary: "Build" },
-        { name: "/forge plan", tier: "Standard", summary: "Plan" },
+        { name: "/tinkerman build", tier: "Standard", summary: "Build" },
+        { name: "/tinkerman plan", tier: "Standard", summary: "Plan" },
       ]),
     );
     expect(result.diagnostics).toHaveLength(0);
     expect(result.markdown).toContain("| Command | Tier | Summary |");
-    expect(result.markdown).toContain("/forge build");
-    expect(result.markdown).toContain("/forge plan");
+    expect(result.markdown).toContain("/tinkerman build");
+    expect(result.markdown).toContain("/tinkerman plan");
   });
 
   it("deduplicates by name", () => {

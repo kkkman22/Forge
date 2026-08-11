@@ -130,7 +130,7 @@ describe("forge-decide-teams: team lead agent", () => {
 });
 
 describe("forge-decide-teams: SKILL file", () => {
-  const skillPath = join(ROOT, "skills", "forge", "lib", "decide-teams", "instructions.md");
+  const skillPath = join(ROOT, "skills", "tinkerman", "lib", "decide-teams", "instructions.md");
 
   it("exists", () => {
     expect(existsSync(skillPath)).toBe(true);

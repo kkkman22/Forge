@@ -92,7 +92,7 @@ export interface SchedulerResult {
  * **Note (spec forge-continue-command):** This richer 13-state scheduler is
  * currently a NON-PRODUCTION path — it has no callers in `src/` outside its
  * own definition and property tests. The runtime phase-advance path used by
- * `/forge loop` and `/forge continue` is the simpler table-driven
+ * `/tinkerman loop` and `/tinkerman continue` is the simpler table-driven
  * `getNextPhase` in `src/loop/phase-transitions.ts` (the workflow-graph SSOT).
  * This function is retained because its property tests
  * (`test/skill-scheduler.property.test.ts`) guard the transition-graph

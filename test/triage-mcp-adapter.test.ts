@@ -7,7 +7,7 @@
  * for the triage skill to code against. The multi-source degradation chain
  * (parallel fetch, per-source skip, full git fallback) is orchestrated by
  * the triage skill instructions, not by this adapter, and is exercised
- * end-to-end via `/forge triage`, not here.
+ * end-to-end via `/tinkerman triage`, not here.
  *
  * **Pins: loop-engineering-adoption R2 adapter contract.**
  */

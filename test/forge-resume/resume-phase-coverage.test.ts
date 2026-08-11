@@ -4,7 +4,7 @@ import { describe, expect, it } from "vitest";
 
 const INSTRUCTIONS_PATH = resolve(
   import.meta.dirname,
-  "../../skills/forge/lib/resume/instructions.md",
+  "../../skills/tinkerman/lib/resume/instructions.md",
 );
 
 describe("resume instructions phase coverage", () => {

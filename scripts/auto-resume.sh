@@ -4,7 +4,7 @@
 # Forge Auto-Resume — SessionStart Hook
 #
 # Detects unfinished tasks in .forge/status.md and automatically injects
-# context so the user doesn't need to manually run /forge resume.
+# context so the user doesn't need to manually run /tinkerman resume.
 
 set -euo pipefail
 
@@ -112,7 +112,7 @@ if [ "$phase" = "review" ] || [ "$phase" = "test" ] || [ "$phase" = "ship" ]; th
   fi
 fi
 
-ctx_append "继续当前任务，或输入 /forge abort 中止。"
+ctx_append "继续当前任务，或输入 /tinkerman abort 中止。"
 
 # Emit the hookSpecificOutput JSON (R3.1). Prefer jq for correct escaping
 # (R3.2/R3.3); fall back to a sed + while-read escaper if jq is unavailable.

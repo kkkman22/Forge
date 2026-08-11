@@ -33,7 +33,7 @@ describe("T13: Marketplace Distribution Regression", () => {
       readFileSync(join(ROOT, ".claude-plugin", "marketplace.json"), "utf-8"),
     );
     expect(marketplace.plugins).toBeInstanceOf(Array);
-    const forge = marketplace.plugins.find((p: { name: string }) => p.name === "forge");
+    const forge = marketplace.plugins.find((p: { name: string }) => p.name === "tinkerman");
     expect(forge).toBeTruthy();
   });
 

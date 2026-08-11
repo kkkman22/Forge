@@ -3,10 +3,10 @@ import { resolve } from "node:path";
 import { describe, expect, it } from "vitest";
 
 const ROOT = resolve(import.meta.dirname, "..", "..");
-const SKILL_PATH = resolve(ROOT, "skills/forge/SKILL.md");
+const SKILL_PATH = resolve(ROOT, "skills/tinkerman/SKILL.md");
 
 describe("R5.1: dispatcher SKILL.md frontmatter", () => {
-  it("skills/forge/SKILL.md exists", () => {
+  it("skills/tinkerman/SKILL.md exists", () => {
     expect(existsSync(SKILL_PATH)).toBe(true);
   });
 
@@ -14,7 +14,7 @@ describe("R5.1: dispatcher SKILL.md frontmatter", () => {
     const content = readFileSync(SKILL_PATH, "utf-8");
     const fm = content.match(/^---\n([\s\S]*?)\n---/);
     expect(fm).toBeTruthy();
-    expect(fm![1]).toMatch(/name:\s*forge\b/);
+    expect(fm![1]).toMatch(/name:\s*tinkerman\b/);
   });
 
   it("frontmatter has non-empty description", () => {

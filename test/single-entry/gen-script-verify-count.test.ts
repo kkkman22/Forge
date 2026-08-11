@@ -21,7 +21,7 @@ describe("gen-plugin-commands.mjs single-entry mode (R3)", () => {
   it("--verify-count should output SST count and exit (downstream must match SST=1)", () => {
     const result = run(["--verify-count"]);
     // After downstream declarations are updated (Task 6), this should exit 0
-    // SST=1 means only commands/forge.md is user-facing
+    // SST=1 means only commands/tinkerman.md is user-facing
     const output = result.stdout + result.stderr;
     expect(output).toMatch(/SST=1/);
   });

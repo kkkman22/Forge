@@ -104,13 +104,13 @@ describe("renderInlineGrillAdvisory", () => {
     const result = renderInlineGrillAdvisory("spec_high_ambiguity");
     expect(result).toContain("spec_high_ambiguity");
     expect(result).toContain("autonomous");
-    expect(result).toContain("/forge grill");
+    expect(result).toContain("/tinkerman grill");
   });
 
   it("renders advisory with decide_requirement_disagreement reason", () => {
     const result = renderInlineGrillAdvisory("decide_requirement_disagreement");
     expect(result).toContain("decide_requirement_disagreement");
-    expect(result).toContain("/forge grill");
+    expect(result).toContain("/tinkerman grill");
   });
 
   it("renders advisory with decide_user_hesitation reason", () => {

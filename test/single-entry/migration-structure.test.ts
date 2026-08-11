@@ -37,12 +37,12 @@ const SUBS = [
 ];
 
 describe("R1.4: migration structure", () => {
-  it("legacy skills/forge-* directories must not exist", async () => {
-    const legacy = await glob("skills/forge-*/", { cwd: ROOT });
+  it("legacy skills/tinkerman-* directories must not exist", async () => {
+    const legacy = await glob("skills/tinkerman-*/", { cwd: ROOT });
     expect(legacy).toHaveLength(0);
   });
 
   it.each(SUBS)("instructions.md exists for sub %s", (sub) => {
-    expect(existsSync(resolve(ROOT, `skills/forge/lib/${sub}/instructions.md`))).toBe(true);
+    expect(existsSync(resolve(ROOT, `skills/tinkerman/lib/${sub}/instructions.md`))).toBe(true);
   });
 });

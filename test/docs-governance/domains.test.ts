@@ -43,11 +43,11 @@ describe("classify", () => {
 
   // Domain B
   it("classifies skills/ as domain B", () => {
-    expect(classify("skills/forge/SKILL.md")).toBe("B");
+    expect(classify("skills/tinkerman/SKILL.md")).toBe("B");
   });
 
   it("classifies commands/ as domain B", () => {
-    expect(classify("commands/forge.md")).toBe("B");
+    expect(classify("commands/tinkerman.md")).toBe("B");
   });
 
   it("classifies agents/ as domain B", () => {

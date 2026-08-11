@@ -40,17 +40,17 @@ describe("plugin-data-path", () => {
       const { getPluginDataDir } = await importFresh();
       const result = getPluginDataDir();
 
-      expect(result).toBe(join(customDir, "forge"));
+      expect(result).toBe(join(customDir, "tinkerman"));
       expect(existsSync(result)).toBe(true);
     });
 
-    it("falls back to ~/.claude/plugins/data/forge/ when env var is unset", async () => {
+    it("falls back to ~/.claude/plugins/data/tinkerman/ when env var is unset", async () => {
       delete process.env.CLAUDE_PLUGIN_DATA;
 
       const { getPluginDataDir } = await importFresh();
       const result = getPluginDataDir();
 
-      const expected = join(process.env.HOME || "~", ".claude", "plugins", "data", "forge");
+      const expected = join(process.env.HOME || "~", ".claude", "plugins", "data", "tinkerman");
       expect(result).toBe(expected);
     });
 
@@ -86,7 +86,7 @@ describe("plugin-data-path", () => {
       // Falls back to homedir path (which is writable), so this test
       // verifies that the invalid env var is rejected and fallback works
       expect(result).toBeTruthy();
-      expect(result).toMatch(/\.claude\/plugins\/data\/forge$/);
+      expect(result).toMatch(/\.claude\/plugins\/data\/tinkerman$/);
     });
   });
 
@@ -99,7 +99,7 @@ describe("plugin-data-path", () => {
       const { getCachePath } = await importFresh();
       const result = getCachePath("evolved-rules-cache.json");
 
-      expect(result).toBe(join(customDir, "forge", "evolved-rules-cache.json"));
+      expect(result).toBe(join(customDir, "tinkerman", "evolved-rules-cache.json"));
     });
 
     it("returns null when filename contains path traversal", async () => {

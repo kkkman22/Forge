@@ -56,7 +56,7 @@ const SECRET_FILE_NAME = ".audit-secret";
  */
 function resolveDefaultSecretDir(): string {
   const pluginData = process.env.CLAUDE_PLUGIN_DATA;
-  if (pluginData) return resolve(pluginData, "forge");
+  if (pluginData) return resolve(pluginData, "tinkerman");
   return resolve(homedir(), ".claude", "plugins", "data", "forge");
 }
 
@@ -117,7 +117,7 @@ function resolveAuditDir(opts?: AuditOpts): string {
   if (opts?.auditDir) return opts.auditDir;
 
   const pluginData = process.env.CLAUDE_PLUGIN_DATA;
-  if (pluginData) return resolve(pluginData, "forge", "audit");
+  if (pluginData) return resolve(pluginData, "tinkerman", "audit");
 
   return resolve(homedir(), ".claude", "plugins", "data", "forge", "audit");
 }
@@ -139,7 +139,7 @@ export async function appendAuditLog(entry: AuditEntry, opts?: AuditOpts): Promi
   // Serialise concurrent writers via the shared O_EXCL .lock primitive
   // (same one tool-health-writer uses, CHANGELOG F8). POSIX O_APPEND is atomic
   // only up to PIPE_BUF; audit entries are variable-length JSON, so concurrent
-  // /forge subprocesses could otherwise tear/interleave records. The lock is a
+  // /tinkerman subprocesses could otherwise tear/interleave records. The lock is a
   // short blocking sync call inside this async function — acceptable because
   // audit writes are infrequent and the critical section is a single line.
   try {

@@ -38,7 +38,7 @@ jobs:
 
       - name: Assert forge-mutate visibility in dispatch table
         run: |
-          DISPATCH=$(cat skills/forge/SKILL.md commands/forge.md 2>/dev/null)
+          DISPATCH=$(cat skills/tinkerman/SKILL.md commands/tinkerman.md 2>/dev/null)
           if ! echo "$DISPATCH" | grep -qw "mutate"; then
             echo "::error::[${{ matrix.channel }}×${{ matrix.pack }}] forge-mutate not in dispatch table"
             exit 1

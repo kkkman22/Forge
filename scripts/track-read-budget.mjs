@@ -83,7 +83,7 @@ async function main() {
     if (budget.totalChars > FORCE_THRESHOLD) {
       console.error(`⛔ Read budget exceeded: ${totalKB}KB (${budget.readCount} reads). MUST /clear before continuing.`);
     } else if (budget.totalChars > WARN_THRESHOLD) {
-      console.error(`⚠️ Read budget: ${totalKB}KB (${budget.readCount} reads). Consider /clear + /forge resume.`);
+      console.error(`⚠️ Read budget: ${totalKB}KB (${budget.readCount} reads). Consider /clear + /tinkerman resume.`);
     }
   } catch {
     // Fail-open: never block

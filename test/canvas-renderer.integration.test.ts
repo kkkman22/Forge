@@ -67,7 +67,7 @@ describe("Canvas renderer integration [R4.1, R4.4]", () => {
         forgeDir: join(testDir, ".forge"),
         findings: { spec: [], quality: [], security: [] },
       }),
-    ).rejects.toThrow("Run /forge review first");
+    ).rejects.toThrow("Run /tinkerman review first");
   });
 
   it("completes in under 5 seconds [R4.9]", async () => {

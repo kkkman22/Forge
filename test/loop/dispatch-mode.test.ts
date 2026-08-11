@@ -12,7 +12,7 @@ import { readFileSync } from "node:fs";
 import { resolve } from "node:path";
 import { describe, expect, it } from "vitest";
 
-const INSTRUCTIONS_PATH = resolve(__dirname, "../../skills/forge/lib/loop/instructions.md");
+const INSTRUCTIONS_PATH = resolve(__dirname, "../../skills/tinkerman/lib/loop/instructions.md");
 
 function readInstructions(): string {
   return readFileSync(INSTRUCTIONS_PATH, "utf-8");
@@ -92,19 +92,19 @@ describe("Loop Skill module references", () => {
 describe("Loop Skill entry routing", () => {
   const content = readInstructions();
 
-  it("documents /forge loop entry", () => {
-    expect(content).toMatch(/\/forge loop\b/);
+  it("documents /tinkerman loop entry", () => {
+    expect(content).toMatch(/\/tinkerman loop\b/);
   });
 
-  it("documents /forge loop continue entry", () => {
+  it("documents /tinkerman loop continue entry", () => {
     expect(content).toMatch(/continue/);
   });
 
-  it("documents /forge loop status entry", () => {
+  it("documents /tinkerman loop status entry", () => {
     expect(content).toMatch(/status/);
   });
 
-  it("documents /forge loop abort entry", () => {
+  it("documents /tinkerman loop abort entry", () => {
     expect(content).toMatch(/abort/);
   });
 });

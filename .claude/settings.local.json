@@ -100,7 +100,8 @@
       "Bash(echo \"Exit code: $?\")",
       "Bash(grep -n \"--agent\" /Users/king/code/Forge/src/forge-loop-cli.ts)",
       "mcp__forge-context__forge_exec",
-      "Bash(shasum -a 256 /Users/king/code/Forge/skills/forge/lib/router/instructions.md)"
+      "Bash(shasum -a 256 /Users/king/code/Forge/skills/forge/lib/router/instructions.md)",
+      "mcp__plugin_context-mode_context-mode__ctx_batch_execute"
     ]
   },
   "hooks": {

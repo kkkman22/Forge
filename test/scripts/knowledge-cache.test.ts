@@ -34,7 +34,7 @@ describe("knowledge-hook-dispatch cache path integration", () => {
     const { getCachePath } = await importFresh();
 
     const cachePath = getCachePath("knowledge-cache.json");
-    expect(cachePath).toBe(join(pluginDataDir, "forge", "knowledge-cache.json"));
+    expect(cachePath).toBe(join(pluginDataDir, "tinkerman", "knowledge-cache.json"));
   });
 
   it("knowledge cache path uses custom CLAUDE_PLUGIN_DATA", async () => {
@@ -45,7 +45,7 @@ describe("knowledge-hook-dispatch cache path integration", () => {
     const { getCachePath } = await importFresh();
     const cachePath = getCachePath("knowledge-cache.json");
 
-    expect(cachePath).toBe(join(customDir, "forge", "knowledge-cache.json"));
+    expect(cachePath).toBe(join(customDir, "tinkerman", "knowledge-cache.json"));
   });
 
   it("returns null when plugin data dir unavailable", async () => {

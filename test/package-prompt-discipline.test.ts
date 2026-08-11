@@ -10,9 +10,9 @@ function read(relPath: string): string {
 
 describe("package decision prompt discipline", () => {
   it("uses AskUserQuestion for package split, package boundary, and resume choices", () => {
-    const plan = read("skills/forge/lib/plan/instructions.md");
-    const build = read("skills/forge/lib/build/instructions.md");
-    const resume = read("skills/forge/lib/resume/instructions.md");
+    const plan = read("skills/tinkerman/lib/plan/instructions.md");
+    const build = read("skills/tinkerman/lib/build/instructions.md");
+    const resume = read("skills/tinkerman/lib/resume/instructions.md");
     const shared = read("shared/next-step-protocol.md");
 
     expect(plan).toContain("AskUserQuestion");
@@ -26,8 +26,8 @@ describe("package decision prompt discipline", () => {
   });
 
   it("does not tell users to type commands for package continuation decisions", () => {
-    const resume = read("skills/forge/lib/resume/instructions.md");
+    const resume = read("skills/tinkerman/lib/resume/instructions.md");
     expect(resume).not.toMatch(/等待用户确认/);
-    expect(resume).not.toMatch(/确认\s*→\s*从定位的任务继续 `\/forge build`/);
+    expect(resume).not.toMatch(/确认\s*→\s*从定位的任务继续 `\/tinkerman build`/);
   });
 });

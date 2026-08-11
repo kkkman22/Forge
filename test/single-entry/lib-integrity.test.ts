@@ -4,7 +4,7 @@ import { glob } from "glob";
 import { describe, expect, it } from "vitest";
 
 const ROOT = resolve(import.meta.dirname, "..", "..");
-const MANIFEST_PATH = resolve(ROOT, "skills/forge/lib/manifest.json");
+const MANIFEST_PATH = resolve(ROOT, "skills/tinkerman/lib/manifest.json");
 
 describe("R2.6: lib integrity manifest", () => {
   it("manifest.json exists", () => {
@@ -22,7 +22,7 @@ describe("R2.6: lib integrity manifest", () => {
   it("manifest contains instructions sha256 for each sub", async () => {
     const content = readFileSync(MANIFEST_PATH, "utf-8");
     const manifest = JSON.parse(content);
-    const libs = await glob("skills/forge/lib/*/instructions.md", { cwd: ROOT });
+    const libs = await glob("skills/tinkerman/lib/*/instructions.md", { cwd: ROOT });
 
     for (const libPath of libs) {
       const sub = libPath.split("/")[3];

@@ -1,5 +1,5 @@
 ---
-updated: 2026-07-16
+updated: 2026-08-11
 rule_count: 15
 max_rules: 15
 ---
@@ -55,7 +55,7 @@ This file keeps only rules that still need top-of-session reminders.
 **Added**: 2026-05-10
 **Confidence**: 0.9
 **Last_triggered**: 2026-05-10
-**Infra_Ref**: `.claude/agents/spec-check.md` Check Item 6 + `skills/forge/lib/plan/references/atomic-task-format.md` Pack Data Task Integration Test Requirement
+**Infra_Ref**: `.claude/agents/spec-check.md` Check Item 6 + `skills/tinkerman/lib/plan/references/atomic-task-format.md` Pack Data Task Integration Test Requirement
 
 ### R4: Stub With TODO 不是 Zero-Pack 合理降级
 
@@ -115,7 +115,7 @@ This file keeps only rules that still need top-of-session reminders.
 **Added**: 2026-05-17
 **Confidence**: 0.85
 **Last_triggered**: 2026-05-17
-**Infra_Ref**: `skills/forge/lib/review/instructions.md` §7 + `skills/forge/lib/test/instructions.md` §3.1
+**Infra_Ref**: `skills/tinkerman/lib/review/instructions.md` §7 + `skills/tinkerman/lib/test/instructions.md` §3.1
 
 ### R10: Wire Commits Must Show Production Caller Diff
 
@@ -125,7 +125,7 @@ This file keeps only rules that still need top-of-session reminders.
 **Added**: 2026-05-23
 **Confidence**: 0.9
 **Last_triggered**: 2026-05-23
-**Infra_Ref**: `.claude/agents/quality-check.md` + `skills/forge/lib/review/instructions.md` Check Item: "wire commits must show entry-file diff"
+**Infra_Ref**: `.claude/agents/quality-check.md` + `skills/tinkerman/lib/review/instructions.md` Check Item: "wire commits must show entry-file diff"
 
 ### R11: GREEN 必须含 typecheck，不止 vitest
 
@@ -135,7 +135,7 @@ This file keeps only rules that still need top-of-session reminders.
 **Added**: 2026-05-23
 **Confidence**: 0.9
 **Last_triggered**: 2026-05-23
-**Infra_Ref**: `skills/forge/lib/build/instructions.md` §3.5 Final Validation
+**Infra_Ref**: `skills/tinkerman/lib/build/instructions.md` §3.5 Final Validation
 
 ### R12: 重命名 ≠ 合并，双实现修复必须删一边
 
@@ -157,15 +157,15 @@ This file keeps only rules that still need top-of-session reminders.
 **Last_triggered**: 2026-05-29
 **Infra_Ref**: `skills/shared/next-step-protocol.md` §Context Compact 策略
 
-### R14: README metrics 改动被 pre-commit hook revert 时用 --no-verify
+### R14: README metrics 改动被 pre-commit hook revert 时用 --no-verify ⚠️ 已退役
 
-**Content**: 改 README.md 的测试/模块计数前，先理解 `.githooks/pre-commit` 的行为：它检测到 test/src/README 被 staged 时运行 `check-readme-metrics.sh`，该脚本会把 README 的 drifted counts **就地重写为本地 vitest list 值**再 re-stage，导致你的改动在 commit 时被静默覆盖（commit diff 为空或回退到旧值）。**检测信号**：Edit/sed 改完磁盘确认是新值，`git commit` 后 `git show HEAD:README.md` 却是旧值 + commit diff 为空。**应对**：本地与 CI 的 vitest list 计数可能因 platform `skipIf` 不一致（实测 macOS 8197 vs CI Linux 8213，差 16）。当目标是让 CI 通过时，用 `git commit --no-verify` 让 CI 环境的实际值进入 commit（CI 是发布权威门禁）。`--no-verify` 只跳过 metrics auto-sync + docs 检查，docs 检查仅在改 docs/ 时触发，用完整 `npm run check` 兜底风险可控。**根因修复方向**（独立任务）：让 `check-readme-metrics.sh` 的 actual 值跨平台稳定，或让 hook 不强制 revert 而是警告。
-**Prevents**: README metrics 改动连续失败 3 次（Edit → sed → amend 都被 hook revert），CI check 反复 fail，浪费 3 轮 4 分钟 CI 等待 + 陷入 §2.4 三击铁律
-**Source**: mcp-compression-delegation ship 阶段（PR #107）— check job 连续 3 次 fail，根因是 pre-commit hook 用本地 macOS 值覆盖 CI Linux 值
+**Content**: ⚠️ **已退役（ADR-0009 减法 pass 1 移除 `check-readme-metrics.sh` + `.githooks/pre-commit` README metrics auto-sync 段，本规则描述的机制不再存在）**。保留编号位避免 R13/R15 断裂；新生 README metrics 工作无需此规则，npm run check 不再跑 check-readme-metrics。
+**Prevents**: （历史）README metrics 改动连续失败 3 次，被 pre-commit hook revert
+**Source**: mcp-compression-delegation ship 阶段（PR #107）
 **Added**: 2026-06-18
-**Confidence**: 0.9
-**Last_triggered**: 2026-06-18
-**Infra_Ref**: `.githooks/pre-commit` §README metrics auto-sync (line 29-44)
+**Confidence**: 0.0（已退役）
+**Last_triggered**: 2026-08-11（退役）
+**Infra_Ref**: 已退役 — 机制移除（ADR-0009 pass 1）
 
 ### R15: 状态一致性 / 门禁 / 外部副作用路径，异常输入必须 fail-closed
 

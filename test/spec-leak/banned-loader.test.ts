@@ -27,7 +27,7 @@ function makePackEntry(overrides: Partial<PackEntry> = {}): PackEntry {
   };
 }
 
-const CUSTOM_ROOT = "/project/.forge/custom";
+const CUSTOM_ROOT = "/project/.tinkerman/custom";
 
 function makeEnabled(entries: PackEntry[] = [], customRoot: string = CUSTOM_ROOT): EnabledPacks {
   return {
@@ -78,7 +78,7 @@ describe("loadBannedPatterns", () => {
 
   it("returns empty registry when no packs enabled and custom file does not exist", async () => {
     const enabled = makeEnabled([]);
-    const fs = createMockFs({ "/project/.forge/custom/other.yaml": "foo: bar" });
+    const fs = createMockFs({ "/project/.tinkerman/custom/other.yaml": "foo: bar" });
 
     const registry = await loadBannedPatterns(enabled, fs);
 
@@ -129,7 +129,7 @@ describe("loadBannedPatterns", () => {
     const enabled = makeEnabled([pack1, pack2]);
 
     const fs = createMockFs({
-      "/project/.forge/custom/banned-patterns.yaml": [
+      "/project/.tinkerman/custom/banned-patterns.yaml": [
         "schema_version: 1",
         "categories:",
         "  code:",
@@ -183,7 +183,7 @@ describe("loadBannedPatterns", () => {
     ].join("\n");
 
     const fs = createMockFs({
-      "/project/.forge/custom/banned-patterns.yaml": yaml,
+      "/project/.tinkerman/custom/banned-patterns.yaml": yaml,
       "/packs/alpha/banned-patterns.yaml": yaml,
     });
 
@@ -199,7 +199,7 @@ describe("loadBannedPatterns", () => {
     const enabled = makeEnabled([pack]);
 
     const fs = createMockFs({
-      "/project/.forge/custom/banned-patterns.yaml": [
+      "/project/.tinkerman/custom/banned-patterns.yaml": [
         "schema_version: 1",
         "categories:",
         "  code:",

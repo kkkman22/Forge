@@ -123,7 +123,7 @@ const AGENT_EXPECTATIONS: AgentToolExpectation[] = [
   },
 ];
 
-const LEARN_INSTRUCTIONS = "skills/forge/lib/learn/instructions.md";
+const LEARN_INSTRUCTIONS = "skills/tinkerman/lib/learn/instructions.md";
 
 // ---------------------------------------------------------------------------
 // Tests

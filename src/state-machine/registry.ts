@@ -4,10 +4,10 @@
  * The singular {@link loadStateMachineDefinition} loads one YAML string. R4.5.5
  * requires a **plural, pack-aware** loader that reads every `*.yaml` under
  * each enabled pack's `state_machines` extends directory in one call, so
- * `/forge plan` (and other phases) can reference the real
+ * `/tinkerman plan` (and other phases) can reference the real
  * transitions/invariants of state-driven modules. This is that loader — the
  * seam previously documented as "未实现" in
- * `skills/forge/lib/plan/references/atomic-task-format.md`.
+ * `skills/tinkerman/lib/plan/references/atomic-task-format.md`.
  *
  * **Module independence**: the state-machine module stays pack-agnostic. This
  * loader defines structurally-compatible local input types rather than

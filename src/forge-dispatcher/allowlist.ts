@@ -1,5 +1,5 @@
 // AUTO-GENERATED - DO NOT EDIT
-// Source: skills/forge/registry.toml
+// Source: skills/tinkerman/registry.toml
 // Regen: node scripts/sync-command-registry.mjs
 
 const ALLOW_LIST: ReadonlyArray<string> = [

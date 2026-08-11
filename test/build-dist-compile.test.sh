@@ -62,7 +62,7 @@ assert '[[ -d "$TMP/dist/src" ]]' "C1: dist/src created by build-dist"
 assert '[[ -f "$TMP/dist/src/check-frozen.js" ]]' "C1: compiled check-frozen.js present"
 assert 'echo "$output" | grep -q "正在编译"' "C1: build logged compilation (not skipped)"
 # Bundle should carry the compiled JS (proves it wasn't a stale copy)
-assert '[[ -f "$TMP/dist/claude-code/bundles/forge/dist/src/check-frozen.js" ]]' \
+assert '[[ -f "$TMP/dist/claude-code/bundles/tinkerman/dist/src/check-frozen.js" ]]' \
   "C1: bundle includes compiled check-frozen.js"
 rm -rf "$TMP"
 

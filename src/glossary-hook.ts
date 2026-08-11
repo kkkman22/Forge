@@ -334,7 +334,7 @@ export function renderGlossaryAdvisory(result: GlossaryCheckResult): string {
   lines.push(`# Glossary Advisory: ${result.phase}`);
   lines.push("");
   lines.push(`本次 autonomous 执行检测到术语冲突 ${result.conflicts.length} 处。`);
-  lines.push("建议在交互模式下运行 `/forge learn --review-glossary` 进行人工裁定。");
+  lines.push("建议在交互模式下运行 `/tinkerman learn --review-glossary` 进行人工裁定。");
   lines.push("");
   lines.push("## 冲突清单");
   for (const conflict of result.conflicts) {

@@ -9,7 +9,7 @@ describe("R2.2: path safety — dual mode, no traversal/absolute/symlink", () =>
       const result = resolveLibPath("build", { pluginRoot: undefined, cwd: CWD });
       expect(result.ok).toBe(true);
       if (result.ok) {
-        expect(result.path).toContain("skills/forge/lib/build/instructions.md");
+        expect(result.path).toContain("skills/tinkerman/lib/build/instructions.md");
         expect(result.path).toMatch(new RegExp(`^${CWD}`));
       }
     });
@@ -41,7 +41,7 @@ describe("R2.2: path safety — dual mode, no traversal/absolute/symlink", () =>
       });
       expect(result.ok).toBe(true);
       if (result.ok) {
-        expect(result.path).toContain("skills/forge/lib/review/instructions.md");
+        expect(result.path).toContain("skills/tinkerman/lib/review/instructions.md");
         expect(result.path).toMatch(new RegExp(`^${MOCK_PLUGIN_ROOT}`));
       }
     });

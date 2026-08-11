@@ -113,14 +113,14 @@ info "清单: dist-manifest.json"
 
 # ---------- 清理旧的分发包 ----------
 info "清理旧的分发包..."
-rm -rf "${FORGE_ROOT}/dist/claude-code/bundles/forge"
+rm -rf "${FORGE_ROOT}/dist/claude-code/bundles/tinkerman"
 
 # ============================================================================
 # Claude Code 分发包
 # ============================================================================
 info "构建 Claude Code 分发包..."
 
-CC_BUNDLE="${FORGE_ROOT}/dist/claude-code/bundles/forge"
+CC_BUNDLE="${FORGE_ROOT}/dist/claude-code/bundles/tinkerman"
 mkdir -p "${CC_BUNDLE}"
 
 # ---------- Packs（领域知识包，REQ-01/02/03 切片 A'）----------
@@ -218,7 +218,7 @@ PACKS_EOF
 
 - pack 是**可选领域知识**：非目标行业可直接忽略本目录，Forge 不会引用它。
 - 标注「含可运行代码」的 pack（如 pms 的 `utils/business-day-clock.ts`）以**源码形态**分发，需在你的项目 `tsconfig` 中编译接入，可按需修改。
-- 启用 pack：在项目中运行 \`/forge init --pack <name>\`。
+- 启用 pack：在项目中运行 \`/tinkerman init --pack <name>\`。
 PACKS_EOF
   success "packs/README.md 已生成"
 }
@@ -285,14 +285,14 @@ if [[ -f "${FORGE_ROOT}/dist/src/check-frozen.js" ]]; then
   info "check-frozen.js 及其依赖已复制到分发包 dist/src/"
 fi
 
-# Copy compiled MCP server (forge-context)
+# Copy compiled MCP server (tinkerman-context)
 if [[ -d "${FORGE_ROOT}/dist/src/mcp" ]]; then
   mkdir -p "${CC_BUNDLE}/dist/src/mcp"
   cp -r "${FORGE_ROOT}/dist/src/mcp"/. "${CC_BUNDLE}/dist/src/mcp/"
 fi
 
-# Bundle the forge-context MCP server into a single self-contained file.
-# This is what the marketplace-install path (.mcp.json → dist/forge-context.mjs)
+# Bundle the tinkerman-context MCP server into a single self-contained file.
+# This is what the marketplace-install path (.mcp.json → dist/tinkerman-context.mjs)
 # resolves to — it inlines @modelcontextprotocol/sdk + zod + ajv so the server
 # runs with zero node_modules. Requires tsc output (dist/src/mcp/server.js).
 if [[ -f "${FORGE_ROOT}/dist/src/mcp/server.js" ]]; then
@@ -313,29 +313,29 @@ cat > "${CC_BUNDLE}/INSTALL.md" << EOF
 ## 快速安装
 
 \`\`\`bash
-git clone https://github.com/kkkman22/Forge.git ~/.claude/skills/forge
+git clone https://github.com/kkkman22/Forge.git ~/.claude/skills/tinkerman
 \`\`\`
 
 ## 初始化项目
 
 \`\`\`bash
 # 在项目根目录运行
-~/.claude/skills/forge/scripts/init.sh
+~/.claude/skills/tinkerman/scripts/init.sh
 \`\`\`
 
 ## 使用
 
-在 Claude Code 中输入 \`/forge\` 并描述任务即可。
+在 Claude Code 中输入 \`/tinkerman\` 并描述任务即可。
 
 ## 前置条件
 
 - Claude Code 环境
-- Claude Code 支持 Subagent（用于 /forge build、/forge decide 和 /forge review）
+- Claude Code 支持 Subagent（用于 /tinkerman build、/tinkerman decide 和 /tinkerman review）
 
 ## 文件结构
 
 \`\`\`
-~/.claude/skills/forge/
+~/.claude/skills/tinkerman/
 ├── skills/          # ${SKILL_COUNT} 个 SKILL.md
 ├── agents/          # ${AGENT_COUNT} 个 Subagent 角色
 ├── commands/        # Forge Command 入口
@@ -347,7 +347,7 @@ git clone https://github.com/kkkman22/Forge.git ~/.claude/skills/forge
 \`\`\`
 EOF
 
-success "Claude Code 分发包构建完成: dist/claude-code/bundles/forge/"
+success "Claude Code 分发包构建完成: dist/claude-code/bundles/tinkerman/"
 
 # ---------- 生成 manifest 用于 CI 同步校验 ----------
 info "生成 manifest..."
@@ -363,7 +363,7 @@ echo "=== 构建完成 ==="
 echo ""
 
 cc_count=$(find "${CC_BUNDLE}" -type f | wc -l | tr -d '[:space:]')
-echo "  dist/claude-code/bundles/forge/  — ${cc_count} 个文件"
+echo "  dist/claude-code/bundles/tinkerman/  — ${cc_count} 个文件"
 echo "  版本: ${VERSION}"
 echo ""
 
@@ -403,7 +403,7 @@ cp -r "${FORGE_ROOT}/hooks" "${PLUGIN_DIST}/hooks"
 
 # Packs 进 plugin dist（REQ-01/02/03，切片 A'）
 # plugin 安装从 dist-plugin/forge-plugin-{VERSION}.zip 走，必须同样含 packs
-# 才能让 /forge init --pack pms 在 plugin 场景真正工作（check-bundle-sync
+# 才能让 /tinkerman init --pack pms 在 plugin 场景真正工作（check-bundle-sync
 # Layer 1 同时校验 CC + Plugin 两份 bundle，此处与之一致）。
 copy_packs "${PLUGIN_DIST}"
 gen_packs_manifest "${PLUGIN_DIST}"
@@ -450,11 +450,11 @@ if [[ -d "${FORGE_ROOT}/dist/src" ]]; then
   manifest_each "plugin_compiled_js" "copy_plugin_js"
 fi
 
-# Copy compiled MCP server (forge-context)
+# Copy compiled MCP server (tinkerman-context)
 if [[ -d "${FORGE_ROOT}/dist/src/mcp" ]]; then
   mkdir -p "${PLUGIN_DIST}/dist/src/mcp"
   cp -r "${FORGE_ROOT}/dist/src/mcp"/. "${PLUGIN_DIST}/dist/src/mcp/"
-  info "forge-context MCP server (dist/src/mcp/) 已捆绑到 plugin"
+  info "tinkerman-context MCP server (dist/src/mcp/) 已捆绑到 plugin"
 fi
 ZIP_NAME="forge-plugin-${VERSION}.zip"
 (cd "${PLUGIN_DIST}" && zip -r "${FORGE_ROOT}/${ZIP_NAME}" . > /dev/null 2>&1 && mv "${FORGE_ROOT}/${ZIP_NAME}" .)

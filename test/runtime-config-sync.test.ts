@@ -67,7 +67,7 @@ describe("runtime-config-sync", () => {
     const parsed = JSON.parse(readFileSync(settingsPath, "utf-8"));
     expect(parsed.hooks.SessionStart[0].hooks[0].command).toBe("echo user hook");
     expect(JSON.stringify(parsed)).toContain("@forge-runtime:SessionStart");
-    expect(JSON.stringify(parsed)).toContain("scripts/forge-hook-dispatch.mjs");
+    expect(JSON.stringify(parsed)).toContain("scripts/tinkerman-hook-dispatch.mjs");
   });
 
   it("reports stale source shim commands", () => {
@@ -82,7 +82,7 @@ describe("runtime-config-sync", () => {
                   {
                     type: "command",
                     command:
-                      "node old/path/forge-hook-dispatch.mjs PreCompact # @forge-runtime:PreCompact",
+                      "node old/path/tinkerman-hook-dispatch.mjs PreCompact # @forge-runtime:PreCompact",
                   },
                 ],
               },
@@ -133,7 +133,7 @@ describe("runtime-config-sync", () => {
             hooks: [
               {
                 type: "command",
-                command: `node ${pluginRoot}/scripts/forge-hook-dispatch.mjs SessionStart # @forge-runtime:SessionStart`,
+                command: `node ${pluginRoot}/scripts/tinkerman-hook-dispatch.mjs SessionStart # @forge-runtime:SessionStart`,
                 timeout: 5,
               },
             ],
@@ -144,7 +144,7 @@ describe("runtime-config-sync", () => {
             hooks: [
               {
                 type: "command",
-                command: `node ${pluginRoot}/scripts/forge-hook-dispatch.mjs Stop # @forge-runtime:Stop`,
+                command: `node ${pluginRoot}/scripts/tinkerman-hook-dispatch.mjs Stop # @forge-runtime:Stop`,
                 timeout: 5,
               },
             ],
@@ -186,7 +186,7 @@ describe("runtime-config-sync", () => {
   });
 
   it("script auto mode repairs source hooks when plugin root is absent", () => {
-    const script = join(import.meta.dirname, "..", "scripts", "forge-sync-runtime.mjs");
+    const script = join(import.meta.dirname, "..", "scripts", "tinkerman-sync-runtime.mjs");
     const env = { ...process.env };
     delete env.CLAUDE_PLUGIN_ROOT;
 
@@ -200,7 +200,7 @@ describe("runtime-config-sync", () => {
     const content = readFileSync(settingsPath, "utf-8");
     const projectDir = "$" + "{CLAUDE_PROJECT_DIR}";
     expect(report.mode).toBe("source");
-    expect(content).toContain(`${projectDir}/scripts/forge-hook-dispatch.mjs`);
+    expect(content).toContain(`${projectDir}/scripts/tinkerman-hook-dispatch.mjs`);
   });
 
   it("script auto mode leaves a clean settings.json untouched when plugin root is present", () => {
@@ -210,7 +210,7 @@ describe("runtime-config-sync", () => {
     const pre = JSON.stringify({ env: { FOO: "bar" } }, null, 2);
     writeFileSync(settingsPath, `${pre}\n`);
 
-    const script = join(import.meta.dirname, "..", "scripts", "forge-sync-runtime.mjs");
+    const script = join(import.meta.dirname, "..", "scripts", "tinkerman-sync-runtime.mjs");
 
     const output = execFileSync(process.execPath, [script, "--repair", "--json"], {
       cwd: root,
@@ -239,7 +239,7 @@ describe("runtime-config-sync", () => {
             hooks: [
               {
                 type: "command",
-                command: `node ${pluginRoot}/scripts/forge-hook-dispatch.mjs Stop # @forge-runtime:Stop`,
+                command: `node ${pluginRoot}/scripts/tinkerman-hook-dispatch.mjs Stop # @forge-runtime:Stop`,
                 timeout: 5,
               },
             ],
@@ -249,7 +249,7 @@ describe("runtime-config-sync", () => {
     };
     writeFileSync(settingsPath, JSON.stringify(staleSettings, null, 2));
 
-    const script = join(import.meta.dirname, "..", "scripts", "forge-sync-runtime.mjs");
+    const script = join(import.meta.dirname, "..", "scripts", "tinkerman-sync-runtime.mjs");
     const output = execFileSync(process.execPath, [script, "--repair", "--json"], {
       cwd: root,
       encoding: "utf-8",

@@ -19,7 +19,7 @@
  * Called from:
  *   - Stop hook (weekly cadence, via date-based dedupe)
  *   - CI (--dry-run mode, reports drift only, does not fail)
- *   - /forge learn (checks stale_flags and prompts user for retirement)
+ *   - /tinkerman learn (checks stale_flags and prompts user for retirement)
  */
 
 import { existsSync, readdirSync, readFileSync, statSync, writeFileSync } from "node:fs";

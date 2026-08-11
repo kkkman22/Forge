@@ -15,8 +15,8 @@ import { promisify } from "node:util";
 import { afterEach, describe, expect, it } from "vitest";
 
 const execFileAsync = promisify(execFile);
-const DOCTOR = ".claude-plugin/bin/forge-doctor";
-const STATUS = ".claude-plugin/bin/forge-status";
+const DOCTOR = ".claude-plugin/bin/tinkerman-doctor";
+const STATUS = ".claude-plugin/bin/tinkerman-status";
 const tempRoots: string[] = [];
 
 function tempForgeRoot(): string {

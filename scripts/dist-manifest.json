@@ -23,9 +23,9 @@
     "bash-ban-raw.mjs",
     "check-destructive.mjs",
     "config-changed-hook.mjs",
-    "forge-hook-dispatch.mjs",
-    "forge-phase-worker.mjs",
-    "forge-sync-runtime.mjs"
+    "tinkerman-hook-dispatch.mjs",
+    "tinkerman-phase-worker.mjs",
+    "tinkerman-sync-runtime.mjs"
   ],
   "cc_compiled_js": [
     "state.js",
@@ -55,9 +55,9 @@
     "bash-ban-raw.mjs",
     "check-destructive.mjs",
     "config-changed-hook.mjs",
-    "forge-hook-dispatch.mjs",
-    "forge-phase-worker.mjs",
-    "forge-sync-runtime.mjs"
+    "tinkerman-hook-dispatch.mjs",
+    "tinkerman-phase-worker.mjs",
+    "tinkerman-sync-runtime.mjs"
   ],
   "plugin_compiled_js": [
     "check-sandbox.js",

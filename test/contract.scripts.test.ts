@@ -122,27 +122,30 @@ describe("Contract: scripts/ smoke tests (no-arg invocation)", () => {
 // ---------------------------------------------------------------------------
 
 describe("Contract: distribution package contains check-frozen.js", () => {
-  const distBundlePath = resolve(ROOT, "dist", "claude-code", "bundles", "forge");
+  const distBundlePath = resolve(ROOT, "dist", "claude-code", "bundles", "tinkerman");
   // Skip entire section when a full build-dist has not been run.
   // The dist/ directory may be partially committed to git.
   const distBuilt = existsSync(resolve(distBundlePath, "VERSION"));
 
-  it.skipIf(!distBuilt)("dist/claude-code/bundles/forge/dist/src/check-frozen.js exists", () => {
-    const checkFrozenPath = resolve(distBundlePath, "dist", "src", "check-frozen.js");
-    const exists = (() => {
-      try {
-        statSync(checkFrozenPath);
-        return true;
-      } catch {
-        return false;
-      }
-    })();
-    expect(
-      exists,
-      "check-frozen.js must be present in the distribution package at dist/src/check-frozen.js. " +
-        "Run scripts/build-dist.sh to generate the distribution bundle.",
-    ).toBe(true);
-  });
+  it.skipIf(!distBuilt)(
+    "dist/claude-code/bundles/tinkerman/dist/src/check-frozen.js exists",
+    () => {
+      const checkFrozenPath = resolve(distBundlePath, "dist", "src", "check-frozen.js");
+      const exists = (() => {
+        try {
+          statSync(checkFrozenPath);
+          return true;
+        } catch {
+          return false;
+        }
+      })();
+      expect(
+        exists,
+        "check-frozen.js must be present in the distribution package at dist/src/check-frozen.js. " +
+          "Run scripts/build-dist.sh to generate the distribution bundle.",
+      ).toBe(true);
+    },
+  );
 
   it.skipIf(!distBuilt)("check-frozen.js in distribution package is not empty", () => {
     const checkFrozenPath = resolve(distBundlePath, "dist", "src", "check-frozen.js");

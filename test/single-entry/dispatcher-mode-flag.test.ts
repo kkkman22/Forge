@@ -8,7 +8,7 @@ describe("R2.10: dispatcher_mode feature flag", () => {
       dispatcherMode: "collapsed",
     });
     expect(r.code).not.toBe("E_UNKNOWN_SUB");
-    expect(r.dispatchPath).toContain("skills/forge/lib/build/instructions.md");
+    expect(r.dispatchPath).toContain("skills/tinkerman/lib/build/instructions.md");
   });
 
   it("legacy mode outputs compatibility notice", async () => {

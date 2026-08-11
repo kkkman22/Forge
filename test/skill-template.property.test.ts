@@ -12,7 +12,7 @@ function validTemplate(): string {
     "disable-model-invocation: true",
     "---",
     "",
-    "# /forge example — Example",
+    "# /tinkerman example — Example",
     "",
     "## 1. Overview",
     "Some overview.",

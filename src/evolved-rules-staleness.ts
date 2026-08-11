@@ -7,7 +7,7 @@
  *
  * Used by:
  *   - Stop hook: periodic staleness detection
- *   - /forge learn: prompts user on session-start if stale rules exist
+ *   - /tinkerman learn: prompts user on session-start if stale rules exist
  *
  * Enforces `.forge/knowledge/evolved-rules.md` R1-style rule: retirement is
  * evidence-based, not calendar-based.

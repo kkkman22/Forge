@@ -7,12 +7,12 @@ const ROOT = resolve(import.meta.dirname, "..", "..");
 
 describe("R4.1: self-relative references within same sub", () => {
   it("lib must contain 29 instructions.md (Task 6 prerequisite)", async () => {
-    const libs = await glob("skills/forge/lib/*/instructions.md", { cwd: ROOT });
+    const libs = await glob("skills/tinkerman/lib/*/instructions.md", { cwd: ROOT });
     expect(libs.length).toBeGreaterThanOrEqual(29);
   });
 
   it("all references/ paths in lib are self-relative (no ../ prefix for same-sub refs)", async () => {
-    const libs = await glob("skills/forge/lib/*/instructions.md", { cwd: ROOT });
+    const libs = await glob("skills/tinkerman/lib/*/instructions.md", { cwd: ROOT });
     const violations: string[] = [];
 
     for (const libPath of libs) {
@@ -34,7 +34,7 @@ describe("R4.1: self-relative references within same sub", () => {
   });
 
   it("references/ directories exist where referenced", async () => {
-    const libs = await glob("skills/forge/lib/*/instructions.md", { cwd: ROOT });
+    const libs = await glob("skills/tinkerman/lib/*/instructions.md", { cwd: ROOT });
     const violations: string[] = [];
 
     for (const libPath of libs) {
@@ -47,7 +47,7 @@ describe("R4.1: self-relative references within same sub", () => {
         if (fullRef.includes("../")) continue;
 
         const sub = libPath.split("/")[3];
-        const fullPath = resolve(ROOT, "skills/forge/lib", sub, "references", refFile);
+        const fullPath = resolve(ROOT, "skills/tinkerman/lib", sub, "references", refFile);
 
         if (!existsSync(fullPath)) {
           violations.push(`${libPath}: references ${refFile} but file not found at ${fullPath}`);

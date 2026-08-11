@@ -17,7 +17,7 @@ import { buildGrillSuggestion, detectGrillTrigger } from "../src/grill-trigger.j
 
 describe("detectGrillTrigger", () => {
   const TRIGGER_KEYWORDS = [
-    "/forge grill",
+    "/tinkerman grill",
     "grill me",
     "grill harder",
     "dig deeper",
@@ -37,7 +37,7 @@ describe("detectGrillTrigger", () => {
   it("matches case-insensitively for ASCII keywords", () => {
     expect(detectGrillTrigger("GRILL ME")).toBe(true);
     expect(detectGrillTrigger("Dig Deeper")).toBe(true);
-    expect(detectGrillTrigger("/Forge Grill")).toBe(true);
+    expect(detectGrillTrigger("/Tinkerman Grill")).toBe(true);
   });
 
   it("returns false for unrelated input", () => {
@@ -65,9 +65,9 @@ describe("buildGrillSuggestion", () => {
     expect((suggestion as string).length).toBeGreaterThan(0);
   });
 
-  it("mentions /forge grill in the full-tier suggestion", () => {
+  it("mentions /tinkerman grill in the full-tier suggestion", () => {
     const suggestion = buildGrillSuggestion("full");
-    expect(suggestion).toContain("/forge grill");
+    expect(suggestion).toContain("/tinkerman grill");
   });
 
   it("returns null for tier=standard", () => {

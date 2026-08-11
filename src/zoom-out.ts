@@ -28,10 +28,10 @@
  *     restored verbatim.
  *   - `isZoomOutTrigger` recognises the documented trigger phrases in
  *     both English and Chinese (`zoom out`, `放大视角`, `讲整体`,
- *     `/forge zoom-out`).
+ *     `/tinkerman zoom-out`).
  *
  * The skill never writes to `.forge/` other than the transient
- * `phase` field on the active status file. See `skills/forge-zoom-out/
+ * `phase` field on the active status file. See `skills/tinkerman-zoom-out/
  * SKILL.md` for the workflow and boundary with `forge-debug`.
  *
  * **Validates: Requirements 6.3, 6.4, 6.5, 6.6, 6.8**
@@ -106,10 +106,10 @@ export const MAX_LINES_PER_SECTION = 5;
  * Trigger phrases that request a zoom-out session. Matched as
  * case-insensitive substrings so the user can prepend / append natural
  * language around them. Keep this list in sync with the "Triggers"
- * section of `skills/forge-zoom-out/SKILL.md`.
+ * section of `skills/tinkerman-zoom-out/SKILL.md`.
  */
 const ZOOM_OUT_TRIGGER_KEYWORDS: readonly string[] = [
-  "/forge zoom-out",
+  "/tinkerman zoom-out",
   "zoom out",
   "放大视角",
   "讲整体",
@@ -138,7 +138,7 @@ export function buildZoomOutPrompt(input: ZoomOutInput): string {
       : "Focused file: (not specified)";
 
   return [
-    "You are the read-only explore subagent for a `/forge zoom-out` request.",
+    "You are the read-only explore subagent for a `/tinkerman zoom-out` request.",
     "Produce a high-level architectural overview of the current focus in THREE sections.",
     "Each section must be Markdown prose with at most 5 non-empty lines — no lists, no code blocks.",
     "",

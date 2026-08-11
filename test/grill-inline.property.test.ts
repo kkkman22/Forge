@@ -93,12 +93,12 @@ describe("shouldTriggerInlineGrill properties", () => {
 });
 
 describe("renderInlineGrillAdvisory properties", () => {
-  it("output always contains the reason string and '/forge grill'", () => {
+  it("output always contains the reason string and '/tinkerman grill'", () => {
     fc.assert(
       fc.property(fc.constantFrom(...REASONS), (reason) => {
         const output = renderInlineGrillAdvisory(reason);
         expect(output).toContain(reason);
-        expect(output).toContain("/forge grill");
+        expect(output).toContain("/tinkerman grill");
       }),
     );
   });

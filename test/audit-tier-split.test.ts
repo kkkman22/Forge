@@ -4,7 +4,7 @@
  * The project's canonical tier value is "light" (status-file schema, router,
  * workflow-graph, doctor). But the error-recovery sub-module used
  * "lightweight" as its ForgeTier literal and PHASE_SEQUENCES key. When a
- * "light"-tier session is interrupted and `/forge resume` flows the canonical
+ * "light"-tier session is interrupted and `/tinkerman resume` flows the canonical
  * "light" into findPhaseInconsistencies, PHASE_SEQUENCES["light"] was
  * undefined → undefined.indexOf() threw TypeError, crashing recovery exactly
  * when the user needs it most.

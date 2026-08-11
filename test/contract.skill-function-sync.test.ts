@@ -145,7 +145,7 @@ describe("Direction 1: Registry functions exist in source modules", () => {
 // ---------------------------------------------------------------------------
 
 describe("Direction 2: SKILL.md function references have registry entries", () => {
-  const libDir = resolve(SKILLS_DIR, "forge", "lib");
+  const libDir = resolve(SKILLS_DIR, "tinkerman", "lib");
   const subDirs = existsSync(libDir)
     ? readdirSync(libDir, { withFileTypes: true })
         .filter((d) => d.isDirectory())
@@ -160,11 +160,11 @@ describe("Direction 2: SKILL.md function references have registry entries", () =
     const refs = extractFunctionReferences(content);
 
     for (const funcName of refs) {
-      it(`skills/forge/lib/${dir}/instructions.md → ${funcName} has a registry entry`, () => {
+      it(`skills/tinkerman/lib/${dir}/instructions.md → ${funcName} has a registry entry`, () => {
         const entry = SKILL_FUNCTION_REGISTRY.find((e) => e.functionName === funcName);
         expect(
           entry,
-          `"${funcName}" referenced in skills/forge/lib/${dir}/instructions.md but missing from SKILL_FUNCTION_REGISTRY. ` +
+          `"${funcName}" referenced in skills/tinkerman/lib/${dir}/instructions.md but missing from SKILL_FUNCTION_REGISTRY. ` +
             `Add an entry to src/skill-function-registry.ts.`,
         ).toBeDefined();
       });

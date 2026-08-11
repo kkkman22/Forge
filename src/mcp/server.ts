@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 /**
- * forge-context MCP Server entry point.
+ * tinkerman-context MCP Server entry point.
  *
  * Registers three tools (forge_exec, forge_git, forge_read)
  * and connects via StdioServerTransport for communication with Claude Code.
@@ -26,12 +26,12 @@ import { registerTypedCapabilityTools } from "./tools/typed-capabilities.js";
 
 process.on("unhandledRejection", (reason: unknown) => {
   // biome-ignore lint/suspicious/noConsole: top-level process error handler
-  console.error("[forge-context] Unhandled rejection:", reason);
+  console.error("[tinkerman-context] Unhandled rejection:", reason);
 });
 
 process.on("uncaughtException", (error: Error) => {
   // biome-ignore lint/suspicious/noConsole: top-level process error handler
-  console.error("[forge-context] Uncaught exception:", error);
+  console.error("[tinkerman-context] Uncaught exception:", error);
 });
 
 // ---------------------------------------------------------------------------
@@ -39,7 +39,7 @@ process.on("uncaughtException", (error: Error) => {
 // ---------------------------------------------------------------------------
 
 const server = new McpServer({
-  name: "forge-context",
+  name: "tinkerman-context",
   version: "1.0.0",
 });
 
@@ -67,7 +67,7 @@ async function gracefulShutdown(signal: string): Promise<void> {
   const forceTimer = setTimeout(() => {
     // biome-ignore lint/suspicious/noConsole: shutdown timeout
     console.error(
-      `[forge-context] Forced exit: shutdown timed out after ${FORCE_EXIT_TIMEOUT_MS}ms (${signal})`,
+      `[tinkerman-context] Forced exit: shutdown timed out after ${FORCE_EXIT_TIMEOUT_MS}ms (${signal})`,
     );
     process.exit(1);
   }, FORCE_EXIT_TIMEOUT_MS);
@@ -79,7 +79,7 @@ async function gracefulShutdown(signal: string): Promise<void> {
       const cleanupResult = await registry.shutdownAll(3000);
       // biome-ignore lint/suspicious/noConsole: shutdown diagnostic
       console.error(
-        `[forge-context] Process registry cleanup: terminated=${cleanupResult.terminated} forcedKill=${cleanupResult.forcedKill} alreadyExited=${cleanupResult.alreadyExited} errors=${cleanupResult.errors.length}`,
+        `[tinkerman-context] Process registry cleanup: terminated=${cleanupResult.terminated} forcedKill=${cleanupResult.forcedKill} alreadyExited=${cleanupResult.alreadyExited} errors=${cleanupResult.errors.length}`,
       );
     }
 
@@ -89,7 +89,7 @@ async function gracefulShutdown(signal: string): Promise<void> {
   } catch (err) {
     clearTimeout(forceTimer);
     // biome-ignore lint/suspicious/noConsole: shutdown error
-    console.error(`[forge-context] Error during shutdown (${signal}):`, err);
+    console.error(`[tinkerman-context] Error during shutdown (${signal}):`, err);
     process.exit(1);
   }
 }
@@ -111,4 +111,4 @@ await server.connect(transport);
 // stable state — tests and supervisors can wait on this line before sending
 // SIGTERM/SIGINT instead of racing against a fixed sleep.
 // biome-ignore lint/suspicious/noConsole: readiness marker for tests/supervisors
-console.error(`[forge-context] ready (pid=${process.pid})`);
+console.error(`[tinkerman-context] ready (pid=${process.pid})`);

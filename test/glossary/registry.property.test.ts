@@ -101,7 +101,7 @@ describe("loadGlossary properties", () => {
     const enabled: EnabledPacks = {
       order: [orderPack, catalogPack].map((p) => p.name),
       entries: [orderPack, catalogPack],
-      customLayerRoot: "/project/.forge/custom",
+      customLayerRoot: "/project/.tinkerman/custom",
     };
 
     const registry = await loadGlossary(enabled, fs);

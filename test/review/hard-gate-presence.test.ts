@@ -3,14 +3,14 @@ import { join, resolve } from "node:path";
 import { describe, expect, it } from "vitest";
 
 const projectRoot = resolve(import.meta.dirname, "../..");
-const instructionsPath = join(projectRoot, "skills/forge/lib/review/instructions.md");
+const instructionsPath = join(projectRoot, "skills/tinkerman/lib/review/instructions.md");
 const distPluginInstructionsPath = join(
   projectRoot,
-  "dist-plugin/skills/forge/lib/review/instructions.md",
+  "dist-plugin/skills/tinkerman/lib/review/instructions.md",
 );
 
 describe("Hard-gate presence", () => {
-  it('skills/forge/lib/review/instructions.md contains <HARD-GATE name="no-mainagent-review">', () => {
+  it('skills/tinkerman/lib/review/instructions.md contains <HARD-GATE name="no-mainagent-review">', () => {
     const content = readFileSync(instructionsPath, "utf-8");
     expect(content).toContain('<HARD-GATE name="no-mainagent-review">');
   });

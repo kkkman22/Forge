@@ -179,10 +179,10 @@ describe("phase-worker-runtime", () => {
   });
 
   it("builds CLI/SDK worker args with artifact and summary paths", () => {
-    const args = buildCliSdkWorkerArgs(request(), "scripts/forge-phase-worker.mjs");
+    const args = buildCliSdkWorkerArgs(request(), "scripts/tinkerman-phase-worker.mjs");
 
     expect(args).toEqual([
-      "scripts/forge-phase-worker.mjs",
+      "scripts/tinkerman-phase-worker.mjs",
       "--phase",
       "review",
       "--run-id",
@@ -219,7 +219,7 @@ describe("phase-worker-runtime", () => {
 
     const result = await runCliSdkWorker(req, {
       command: "node",
-      script: "scripts/forge-phase-worker.mjs",
+      script: "scripts/tinkerman-phase-worker.mjs",
       executor,
     });
 
@@ -231,7 +231,7 @@ describe("phase-worker-runtime", () => {
 
   it("runs a CLI/SDK worker with the default process executor", async () => {
     const req = request();
-    const script = join(import.meta.dirname, "..", "scripts", "forge-phase-worker.mjs");
+    const script = join(import.meta.dirname, "..", "scripts", "tinkerman-phase-worker.mjs");
 
     const result = await runCliSdkWorker(req, {
       command: process.execPath,
@@ -246,7 +246,7 @@ describe("phase-worker-runtime", () => {
   it("returns a failed CLI/SDK summary when no summary file is produced", async () => {
     const result = await runCliSdkWorker(request(), {
       command: "node",
-      script: "scripts/forge-phase-worker.mjs",
+      script: "scripts/tinkerman-phase-worker.mjs",
       executor: vi.fn().mockResolvedValue({ exitCode: 0 }),
     });
 
@@ -277,7 +277,7 @@ describe("phase-worker-runtime", () => {
 
     const result = await runCliSdkWorker(req, {
       command: "node",
-      script: "scripts/forge-phase-worker.mjs",
+      script: "scripts/tinkerman-phase-worker.mjs",
       executor,
     });
 
@@ -289,7 +289,7 @@ describe("phase-worker-runtime", () => {
   it("returns stdout in failed CLI/SDK summary when stderr is empty", async () => {
     const result = await runCliSdkWorker(request(), {
       command: "node",
-      script: "scripts/forge-phase-worker.mjs",
+      script: "scripts/tinkerman-phase-worker.mjs",
       executor: vi.fn().mockResolvedValue({ exitCode: 2, stdout: "stdout failure" }),
     });
 
@@ -307,7 +307,7 @@ describe("phase-worker-runtime", () => {
 
     const result = await runCliSdkWorker(req, {
       command: "node",
-      script: "scripts/forge-phase-worker.mjs",
+      script: "scripts/tinkerman-phase-worker.mjs",
       executor,
     });
 

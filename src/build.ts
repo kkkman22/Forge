@@ -13,7 +13,7 @@
  *   Any other combination → blocked with a specific reason.
  *
  * Consecutive failure escalation (Property 10):
- *   When the same fix fails 3 consecutive times → system stops and escalates to /forge debug.
+ *   When the same fix fails 3 consecutive times → system stops and escalates to /tinkerman debug.
  *   Fewer than 3 consecutive failures → continues normally.
  */
 
@@ -59,7 +59,7 @@ export interface EscalationResult {
 // ---------------------------------------------------------------------------
 
 /**
- * Check whether `/forge build` is allowed to proceed.
+ * Check whether `/tinkerman build` is allowed to proceed.
  *
  * Per SKILL.md §前置检查 and design Property 8:
  *   - Spec must be "locked"
@@ -72,11 +72,11 @@ export function checkBuildGate(specStatus: SpecStatus, planStatus: PlanStatus): 
   const reasons: string[] = [];
 
   if (specStatus !== "locked") {
-    reasons.push(`Spec 未锁定：当前状态为 "${specStatus}"，需要先运行 /forge spec 完成锁定`);
+    reasons.push(`Spec 未锁定：当前状态为 "${specStatus}"，需要先运行 /tinkerman spec 完成锁定`);
   }
 
   if (planStatus !== "approved") {
-    reasons.push(`Plan 未批准：当前状态为 "${planStatus}"，需要先运行 /forge plan 获得批准`);
+    reasons.push(`Plan 未批准：当前状态为 "${planStatus}"，需要先运行 /tinkerman plan 获得批准`);
   }
 
   return {
@@ -93,7 +93,7 @@ export function checkBuildGate(specStatus: SpecStatus, planStatus: PlanStatus): 
  * Analyze a sequence of fix attempts and determine if escalation is needed.
  *
  * Per SKILL.md §失败处理 and design Property 10:
- *   - 3 consecutive failures → stop and escalate to /forge debug
+ *   - 3 consecutive failures → stop and escalate to /tinkerman debug
  *   - A success resets the consecutive failure counter
  *   - Less than 3 consecutive failures → continue
  *
@@ -127,7 +127,7 @@ export function analyzeFixAttempts(sequence: FixAttemptSequence): EscalationResu
 }
 
 /**
- * Convenience function: given a sequence, should we escalate to /forge debug?
+ * Convenience function: given a sequence, should we escalate to /tinkerman debug?
  *
  * Returns true if 3 or more consecutive failures are found anywhere in the sequence.
  */
@@ -154,7 +154,7 @@ export interface ThreeStrikeFailureArtifacts {
 
 /**
  * Pure helper that constructs the failure artefacts triggered by the
- * three-strike escalation path in `/forge build`.
+ * three-strike escalation path in `/tinkerman build`.
  *
  * Behaviour (Requirement 8.6):
  *   - Builds a {@link FailureContext} with `skill = "forge-build"` and
@@ -342,7 +342,7 @@ export function buildThreeStrikeDebugReroute(
 
 ## Diagnosis
 
-(To be filled by /forge debug agent)
+(To be filled by /tinkerman debug agent)
 
 ## Root Cause
 

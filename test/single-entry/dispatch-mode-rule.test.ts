@@ -7,7 +7,7 @@ const ROOT = resolve(import.meta.dirname, "..", "..");
 
 /**
  * Expected dispatch_mode for every lib subcommand. This is the canonical
- * matrix: each skills/forge/lib/<sub>/instructions.md frontmatter MUST match.
+ * matrix: each skills/tinkerman/lib/<sub>/instructions.md frontmatter MUST match.
  *
  * Governance runs unconditionally — do NOT gate this describe on the presence
  * of a spec file. A previous version gated on .kiro/specs/.../spec.md, which
@@ -59,7 +59,7 @@ describe("R3.5: dispatch_mode governance", () => {
   // The on-disk lib frontmatter is the enforced source of truth — this always
   // runs, regardless of whether the originating spec.md still exists.
   it("every lib frontmatter dispatch_mode matches EXPECTED_MODES", async () => {
-    const libs = await glob("skills/forge/lib/*/instructions.md", { cwd: ROOT });
+    const libs = await glob("skills/tinkerman/lib/*/instructions.md", { cwd: ROOT });
     expect(libs.length, "lib count").toBe(Object.keys(EXPECTED_MODES).length);
 
     const violations: string[] = [];
@@ -91,7 +91,7 @@ describe("R3.5: dispatch_mode governance", () => {
   });
 
   it("EXPECTED_MODES has no entry absent from disk (no dead/renamed subs)", async () => {
-    const libs = await glob("skills/forge/lib/*/instructions.md", { cwd: ROOT });
+    const libs = await glob("skills/tinkerman/lib/*/instructions.md", { cwd: ROOT });
     const onDisk = new Set(libs.map((p) => p.split("/")[3]));
 
     const orphans = Object.keys(EXPECTED_MODES).filter((sub) => !onDisk.has(sub));

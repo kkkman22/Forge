@@ -52,9 +52,9 @@ export interface AdvanceLoopResult {
 /**
  * Advance native Forge loop state after a phase completes successfully.
  *
- * This is the runtime adapter used by `/forge loop`: it bridges the pure
+ * This is the runtime adapter used by `/tinkerman loop`: it bridges the pure
  * package transition table with persisted `.forge/status.md` fields and the
- * next `/forge <phase>` invocation.
+ * next `/tinkerman <phase>` invocation.
  */
 export function advanceLoopAfterPhaseSuccess(input: AdvanceLoopInput): AdvanceLoopResult {
   const packages = input.executionPackages ?? [];

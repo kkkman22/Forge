@@ -3,7 +3,7 @@
 // ============================================================================
 // validate-skill-skeleton.mjs — SKILL.md section skeleton validator
 //
-// Scans skills/forge-*/SKILL.md for required sections:
+// Scans skills/tinkerman-*/SKILL.md for required sections:
 //   1. ## N. Prerequisites
 //   2. ## N. Deliverable
 //

@@ -11,7 +11,7 @@ describe("tmux: OSC 777 passthrough (R1.3)", () => {
 
   beforeEach(() => {
     dir = mkdtempSync(join(tmpdir(), "cmux-tmux-test-"));
-    forgeDir = join(dir, "forge");
+    forgeDir = join(dir, "tinkerman");
     mkdirSync(forgeDir, { recursive: true });
     mkdirSync(join(forgeDir, "progress"), { recursive: true });
   });

@@ -83,7 +83,7 @@ export function shouldShowBootstrap(env, fsExists) {
 }
 
 const BOOTSTRAP_TEXT = `💡 Forge plugin 已激活，但当前项目尚未初始化。
-	   运行 \`/forge init\` 创建 .forge/ 目录、配置项目宪法与 7 个 Subagent。
+	   运行 \`/tinkerman init\` 创建 .forge/ 目录、配置项目宪法与 7 个 Subagent。
 	   若不打算在本项目使用 Forge，可创建空文件 \`.forge/.bootstrap-dismissed\` 跳过此提示。`;
 
 function runDoctor(cwd) {

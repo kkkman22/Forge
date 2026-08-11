@@ -223,7 +223,7 @@ describe("renderEvolutionReport — Task 8.7 (markdown output)", () => {
 
     // forge-build appears in the highlighted section with ADR hint
     expect(rendered).toMatch(/### forge-build \(3 条\)/);
-    expect(rendered).toMatch(/建议运行 `\/forge decide` 走 ADR 三问筛/);
+    expect(rendered).toMatch(/建议运行 `\/tinkerman decide` 走 ADR 三问筛/);
 
     // forge-ship appears in the normal section without ADR hint
     expect(rendered).toMatch(/### forge-ship \(1 条\)/);
@@ -283,7 +283,7 @@ describe("generateEvolutionReport — Task 8.9 (no historical snapshot)", () => 
       "forge-review",
     ]);
 
-    // Simulate `/forge learn --maintain` cleaning out the topic-b progress file.
+    // Simulate `/tinkerman learn --maintain` cleaning out the topic-b progress file.
     const afterFiles = new Map<string, string>(initialFiles);
     afterFiles.delete(".forge/progress/topic-b.md");
     const fsAfter = new InMemoryFs(afterFiles);

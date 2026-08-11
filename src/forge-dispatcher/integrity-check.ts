@@ -11,8 +11,8 @@ export interface IntegrityOpts {
 }
 
 export function checkIntegrity(libPath: string, opts?: IntegrityOpts): IntegrityResult {
-  // libPath: .../skills/forge/lib/<sub>/instructions.md
-  // libDir:  .../skills/forge/lib/
+  // libPath: .../skills/tinkerman/lib/<sub>/instructions.md
+  // libDir:  .../skills/tinkerman/lib/
   const libDir = dirname(dirname(libPath));
   const manifestPath = opts?.manifestPath ?? resolve(libDir, "manifest.json");
 

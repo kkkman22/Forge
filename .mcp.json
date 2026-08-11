@@ -1,8 +1,8 @@
 {
   "mcpServers": {
-    "forge-context": {
+    "tinkerman-context": {
       "command": "node",
-      "args": ["dist/forge-context.mjs"],
+      "args": ["dist/tinkerman-context.mjs"],
       "timeout": 15000
     }
   }

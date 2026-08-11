@@ -78,7 +78,7 @@ function makePmsEnabled(): EnabledPacks {
   return {
     order: ["pms"],
     entries: [makePmsPackEntry()],
-    customLayerRoot: "/project/.forge/custom",
+    customLayerRoot: "/project/.tinkerman/custom",
   };
 }
 

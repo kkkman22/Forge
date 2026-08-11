@@ -99,8 +99,8 @@ function buildFrozenDiagnostic(filePath: string, status: string): FrozenDiagnost
   );
   const unlock: Record<FrozenReasonCode, string> = {
     SPEC_LOCKED:
-      "move the spec to draft status via /forge spec, or record findings in .forge/findings/.",
-    PLAN_APPROVED: "re-open the plan via /forge plan, or track progress in .forge/progress/.",
+      "move the spec to draft status via /tinkerman spec, or record findings in .forge/findings/.",
+    PLAN_APPROVED: "re-open the plan via /tinkerman plan, or track progress in .forge/progress/.",
     CONFIG_ROOT: "propose config changes via a new spec; do not edit .forge/config.md directly.",
     ZONE_OVERRIDE_MISSING:
       "add an explicit Zone_Registry override in .forge/config.md or move the file out of the frozen zone.",

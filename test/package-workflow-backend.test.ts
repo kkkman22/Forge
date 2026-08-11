@@ -26,7 +26,10 @@ describe("package-aware saved workflow backend", () => {
       resolve(ROOT, ".claude/rules/workflow-fallback-ladder.md"),
       "utf-8",
     );
-    const review = readFileSync(resolve(ROOT, "skills/forge/lib/review/instructions.md"), "utf-8");
+    const review = readFileSync(
+      resolve(ROOT, "skills/tinkerman/lib/review/instructions.md"),
+      "utf-8",
+    );
     const workflow = readFileSync(resolve(ROOT, ".claude/workflows/forge-review.js"), "utf-8");
 
     expect(ladder).toContain("saved-workflow");

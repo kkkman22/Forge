@@ -3,10 +3,10 @@ import { resolve } from "node:path";
 import { describe, expect, it } from "vitest";
 
 const ROOT = resolve(import.meta.dirname, "..", "..");
-const SKILL_PATH = resolve(ROOT, "skills/forge/SKILL.md");
+const SKILL_PATH = resolve(ROOT, "skills/tinkerman/SKILL.md");
 
 describe("R5.3: dispatcher SKILL.md size ≤ 250 lines", () => {
-  it("skills/forge/SKILL.md exists", () => {
+  it("skills/tinkerman/SKILL.md exists", () => {
     expect(existsSync(SKILL_PATH)).toBe(true);
   });
 

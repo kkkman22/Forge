@@ -34,7 +34,7 @@ export function resolveLibPath(sub: string, opts?: PathResolveOpts): PathResolve
   const root = pluginRoot ?? cwd;
   const normalizedRoot = normalize(root);
 
-  const resolved = resolve(normalizedRoot, "skills/forge/lib", sub, "instructions.md");
+  const resolved = resolve(normalizedRoot, "skills/tinkerman/lib", sub, "instructions.md");
   const normalized = normalize(resolved);
 
   if (!normalized.startsWith(`${normalizedRoot}/`) && normalized !== normalizedRoot) {

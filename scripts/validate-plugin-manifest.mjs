@@ -70,7 +70,7 @@ try {
   if (existsSync(mcpPath)) {
     const mcp = JSON.parse(readFileSync(mcpPath, "utf-8"));
     if (!mcp.mcpServers) fail(".mcp.json missing 'mcpServers' field");
-    if (!mcp.mcpServers["forge-context"]) fail(".mcp.json missing 'forge-context' entry");
+    if (!mcp.mcpServers["tinkerman-context"]) fail(".mcp.json missing 'tinkerman-context' entry");
   }
 } catch (err) {
   fail(`failed to parse plugin.json: ${err.message}`);

@@ -25,7 +25,7 @@ if (process.argv.includes("--help") || process.argv.includes("-h")) {
   console.log(`Usage: scripts/validate-skill-length.mjs
 
 Validate SKILL.md effective line count (non-blank lines) against 150-line budget.
-Scans skills/forge-*/SKILL.md. skills/shared/ files are exempt.`);
+Scans skills/tinkerman-*/SKILL.md. skills/shared/ files are exempt.`);
   process.exit(0);
 }
 
@@ -70,7 +70,7 @@ function checkSkillLength(filePath, content, limit = DEFAULT_LIMIT) {
 }
 
 // ---------------------------------------------------------------------------
-// 文件枚举：skills/forge-*/SKILL.md + skills/shared/*.md
+// 文件枚举：skills/tinkerman-*/SKILL.md + skills/shared/*.md
 // ---------------------------------------------------------------------------
 
 function listSkillMdFiles(skillsDir) {

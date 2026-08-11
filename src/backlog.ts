@@ -195,7 +195,7 @@ export function appendToBacklog(
 
 /**
  * Find backlog entries whose filePath overlaps with a set of affected files.
- * Used by `/forge plan` to surface relevant backlog items.
+ * Used by `/tinkerman plan` to surface relevant backlog items.
  * @internal
  */
 export function findOverlappingEntries(

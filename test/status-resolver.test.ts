@@ -147,23 +147,26 @@ describe("resolveStatusPath", () => {
     dirExists: boolean,
   ): ResolverContext & { dirExists: boolean } => ({
     taskName,
-    forgeRoot: "/project/.forge",
+    forgeRoot: "/project/.tinkerman",
     dirExists,
   });
 
   it("resolves to status.md in single-task mode (no status/ dir)", () => {
-    const ctx: ResolverContext = { taskName: "my-feature", forgeRoot: "/project/.forge" };
+    const ctx: ResolverContext = { taskName: "my-feature", forgeRoot: "/project/.tinkerman" };
     const result = resolveStatusPath(ctx, () => false);
     expect(result.mode).toBe("single");
-    expect(result.filePath).toBe("/project/.forge/status.md");
+    expect(result.filePath).toBe("/project/.tinkerman/status.md");
     expect(result.taskId).toBe("my-feature");
   });
 
   it("resolves to status/<task-id>.md in multi-task mode", () => {
-    const ctx: ResolverContext = { taskName: "User API Pagination", forgeRoot: "/project/.forge" };
+    const ctx: ResolverContext = {
+      taskName: "User API Pagination",
+      forgeRoot: "/project/.tinkerman",
+    };
     const result = resolveStatusPath(ctx, () => true);
     expect(result.mode).toBe("multi");
-    expect(result.filePath).toBe("/project/.forge/status/user-api-pagination.md");
+    expect(result.filePath).toBe("/project/.tinkerman/status/user-api-pagination.md");
     expect(result.taskId).toBe("user-api-pagination");
   });
 });
@@ -174,10 +177,10 @@ describe("resolveStatusPath", () => {
 
 describe("isMultiTaskMode", () => {
   it("returns false when status/ directory does not exist", () => {
-    expect(isMultiTaskMode("/project/.forge", () => false)).toBe(false);
+    expect(isMultiTaskMode("/project/.tinkerman", () => false)).toBe(false);
   });
 
   it("returns true when status/ directory exists", () => {
-    expect(isMultiTaskMode("/project/.forge", () => true)).toBe(true);
+    expect(isMultiTaskMode("/project/.tinkerman", () => true)).toBe(true);
   });
 });

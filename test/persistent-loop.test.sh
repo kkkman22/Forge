@@ -93,7 +93,7 @@ status: "approved"
 ---
 EOF3
 output=$(run_hook "$tmpdir")
-assert_contains "$output" 'Skill(skill="forge", args="build")' "plan approved → inject build"
+assert_contains "$output" 'Skill(skill="tinkerman", args="build")' "plan approved → inject build"
 teardown_fixtures "$tmpdir"
 
 # --- Case 6: build → review ---
@@ -108,7 +108,7 @@ cat > "$tmpdir/.forge/progress/my-task.md" << 'EOF4'
 - [x] Task 3
 EOF4
 output=$(run_hook "$tmpdir")
-assert_contains "$output" 'Skill(skill="forge", args="review")' "build done → inject review"
+assert_contains "$output" 'Skill(skill="tinkerman", args="review")' "build done → inject review"
 teardown_fixtures "$tmpdir"
 
 # --- Case 7: review → test ---
@@ -124,7 +124,7 @@ p1_count: 0
 ---
 EOF5
 output=$(run_hook "$tmpdir")
-assert_contains "$output" 'Skill(skill="forge", args="test")' "review pass → inject test"
+assert_contains "$output" 'Skill(skill="tinkerman", args="test")' "review pass → inject test"
 teardown_fixtures "$tmpdir"
 
 # --- Case 8: test → ship ---
@@ -138,7 +138,7 @@ result: "pass"
 ---
 EOF6
 output=$(run_hook "$tmpdir")
-assert_contains "$output" 'Skill(skill="forge", args="ship")' "test pass → inject ship"
+assert_contains "$output" 'Skill(skill="tinkerman", args="ship")' "test pass → inject ship"
 teardown_fixtures "$tmpdir"
 
 # --- Case 9: ship → learn ---
@@ -152,7 +152,7 @@ result: "shipped"
 ---
 EOF7
 output=$(run_hook "$tmpdir")
-assert_contains "$output" 'Skill(skill="forge", args="learn")' "ship done full → inject learn"
+assert_contains "$output" 'Skill(skill="tinkerman", args="learn")' "ship done full → inject learn"
 teardown_fixtures "$tmpdir"
 
 # --- Case 10: loop handoff ---

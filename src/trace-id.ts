@@ -1,5 +1,5 @@
 /**
- * Trace ID — cross-phase correlation identifier for `/forge` command lifecycles.
+ * Trace ID — cross-phase correlation identifier for `/tinkerman` command lifecycles.
  *
  * Generates unique trace IDs that propagate through all phases
  * (decide → spec → plan → build → review → test → ship → learn)
@@ -25,7 +25,7 @@ const TRACE_SEQUENCE_MODULO = 0x1000000;
 let traceSequence = randomBytes(3).readUIntBE(0, 3);
 
 /**
- * Generate a unique trace ID for a `/forge` command invocation.
+ * Generate a unique trace ID for a `/tinkerman` command invocation.
  *
  * Seeds a per-process monotonic sequence with `crypto.randomBytes` (not `Math.random`).
  * A pure 24-bit random suffix has a non-negligible birthday-collision chance in

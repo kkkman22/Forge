@@ -74,7 +74,10 @@ function makePack(name: string, glossaryDir: string): PackEntry {
   };
 }
 
-function makeEnabledPacks(packs: PackEntry[], customRoot = "/project/.forge/custom"): EnabledPacks {
+function makeEnabledPacks(
+  packs: PackEntry[],
+  customRoot = "/project/.tinkerman/custom",
+): EnabledPacks {
   return {
     order: packs.map((p) => p.name),
     entries: packs,
@@ -190,7 +193,7 @@ describe("loadGlossary", () => {
         "",
         "Pack definition.",
       ].join("\n"),
-      "/project/.forge/custom/glossary/orders.md": [
+      "/project/.tinkerman/custom/glossary/orders.md": [
         "## Order",
         "---",
         "term: Order",
@@ -215,7 +218,7 @@ describe("loadGlossary", () => {
 
   it("reads .forge/glossary.md as _shared for backward compat", async () => {
     const files: Record<string, string> = {
-      "/project/.forge/glossary.md": [
+      "/project/.tinkerman/glossary.md": [
         "### Epic",
         "A large body of work.",
         "",

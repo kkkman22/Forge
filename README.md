@@ -1,10 +1,13 @@
+---
+updated: 2026-08-11
+---
 # Forge — 统一 AI 编码工作流框架
 
 [![CI](https://github.com/kkkman22/Forge/actions/workflows/ci.yml/badge.svg?branch=main)](https://github.com/kkkman22/Forge/actions/workflows/ci.yml)
 [![Security Audit](https://img.shields.io/badge/security--audit-npm%20audit%20%2B%20deps-blue)](./.github/workflows/ci.yml)
 [![License: MIT](https://img.shields.io/badge/License-MIT-green.svg)](./LICENSE)
 
-> **统一 `/forge` 入口 + <!-- ssot:begin topic=commands render=count -->38<!-- ssot:end topic=commands --> 个内部子命令覆盖完整开发生命周期，三维路由自动匹配复杂度，统一状态系统跨会话感知。**
+> **统一 `/tinkerman` 入口 + <!-- ssot:begin topic=commands render=count -->38<!-- ssot:end topic=commands --> 个内部子命令覆盖完整开发生命周期，三维路由自动匹配复杂度，统一状态系统跨会话感知。**
 >
 > 前置条件：Claude Code ≥ 2.1.163 | [安装指南](docs/quick-start.md)
 > 完整兼容性矩阵和降级策略见 [docs/claude-code-compatibility.md](docs/claude-code-compatibility.md)
@@ -29,13 +32,13 @@ claude plugin marketplace add https://github.com/kkkman22/Forge
 claude plugin install forge
 
 # 2. 初始化项目（仅首次）
-/forge init
+/tinkerman init
 
 # 3. 验证安装
-/forge status
+/tinkerman status
 
 # 4. 第一次使用
-/forge 修复 README 中的拼写错误
+/tinkerman 修复 README 中的拼写错误
 ```
 
 > 完整快速入门指南（含 3 种安装方式、故障排除、端到端示例）→ [docs/quick-start.md](docs/quick-start.md)
@@ -62,12 +65,12 @@ claude plugin install forge
 
 ## Gate Skills 对比
 
-| 维度 | `/forge accept` | `/forge verify` | `/forge ship` |
+| 维度 | `/tinkerman accept` | `/tinkerman verify` | `/tinkerman ship` |
 |------|----------------|-----------------|---------------|
 | 触发时机 | Spec 验收场景执行 | 证据化三态验证收尾 | 最终交付前合规/合并/release |
 | 主要责任 | 运行场景脚本并记录验收结果 | 汇总所有证据、产出三态结论 | 综合前置门禁、执行合并/tag |
 | 典型输出 | `.forge/acceptance/<scenario>.md` | `.forge/findings/<topic>/verify-this/` | PR merge + tag + CHANGELOG |
-| 下游接续 | → `/forge verify` 或 `/forge ship --with-acceptance` | → `/forge ship` | Release 完成 |
+| 下游接续 | → `/tinkerman verify` 或 `/tinkerman ship --with-acceptance` | → `/tinkerman ship` | Release 完成 |
 
 ---
 
@@ -85,10 +88,10 @@ claude plugin install forge
 ### 直接克隆（Forge Loop 开发者）
 
 ```bash
-git clone https://github.com/kkkman22/Forge.git ~/.claude/skills/forge
+git clone https://github.com/kkkman22/Forge.git ~/.claude/skills/tinkerman
 ```
 
-> 包含完整功能：`/forge` 命令 + Forge Loop 带工程纪律的自主执行引擎。额外需要 `npm install && npx tsc`。
+> 包含完整功能：`/tinkerman` 命令 + Forge Loop 带工程纪律的自主执行引擎。额外需要 `npm install && npx tsc`。
 
 ### 分发包安装（企业内网）
 
@@ -98,7 +101,7 @@ bash /tmp/forge/scripts/build-dist.sh
 bash /tmp/forge/scripts/install-dist.sh
 ```
 
-> 只含 `/forge` 命令，不含 Forge Loop。适合团队统一部署。
+> 只含 `/tinkerman` 命令，不含 Forge Loop。适合团队统一部署。
 
 ## bin/ 命令
 
@@ -112,15 +115,15 @@ Plugin 安装后，以下命令可直接在终端使用：
 
 所有命令支持 `--help`。
 
-### 自带 forge-context MCP
+### 自带 tinkerman-context MCP
 
-Forge plugin 自带 `forge-context` first-party MCP server，为 `/forge review` 提供智能 diff 截断和上下文优化。
+Forge plugin 自带 `tinkerman-context` first-party MCP server，为 `/tinkerman review` 提供智能 diff 截断和上下文优化。
 
 - **零网络**：通过 stdio 在本地运行，不发起任何外部请求
-- **零依赖**：server 以自包含 bundle 形式随仓库分发（`dist/forge-context.mjs`），marketplace 安装后无需 `npm install` 或编译即可启用；源仓库用户由 init.sh 配置
+- **零依赖**：server 以自包含 bundle 形式随仓库分发（`dist/tinkerman-context.mjs`），marketplace 安装后无需 `npm install` 或编译即可启用；源仓库用户由 init.sh 配置
 - **智能优先级**：源码 > 配置 > 测试 > 生成文件 > lock，确保关键变更进入 token 预算
 
-> 实测效果：`/forge review` 19 文件变更场景 token 消耗从 700K+ 降至 <200K。
+> 实测效果：`/tinkerman review` 19 文件变更场景 token 消耗从 700K+ 降至 <200K。
 
 ---
 
@@ -128,28 +131,28 @@ Forge plugin 自带 `forge-context` first-party MCP server，为 `/forge review`
 
 | 命令 | 说明 | 路径 |
 |------|------|------|
-| `/forge` | 入口，三维路由分析任务 | 所有 |
-| `/forge decide` | 四视角前置决策 | 全量 |
-| `/forge spec` | 将需求固化为可锁定规格 | 全量 |
-| `/forge plan` | 将 Spec 拆解为原子任务 | 标准、全量 |
-| `/forge build` | 按计划 TDD 实现代码 | 所有 |
-| `/forge review` | 三层独立评审 | 所有 |
-| `/forge test` | 运行完整验证套件 | 标准、全量 |
-| `/forge ship` | 门禁检查 + 交付 | 标准、全量 |
-| `/forge learn` | 五维度经验沉淀 | 全量 |
-| `/forge verify` | 证据化三态验证 | 所有 |
-| `/forge replay` | 回放任务证据链 | 所有 |
-| `/forge accept` | 场景验收执行（支持 agent-browser agentic UI 验收） | 所有 |
-| `/forge debug` | 四阶段结构化根因分析 | 所有 |
-| `/forge triage` | 自动发现可执行项（Loop Engineering discovery） | 所有 |
-| `/forge grill` | 苏格拉底式需求澄清 | 所有 |
-| `/forge storm` | 头脑风暴 / DDD 前置 | 所有 |
-| `/forge recap` | 会话摘要与上下文回顾 | 所有 |
-| `/forge loop` | 带工程纪律的自主循环 | 所有 |
-| `/forge charter` | 项目宪章（cross-spec 工程约束锚点） | 所有 |
-| `/forge status` | 查看当前任务状态 | 所有 |
-| `/forge resume` | 会话恢复 | 所有 |
-| `/forge continue` | 交互式推进当前任务下一阶段 | 所有 |
+| `/tinkerman` | 入口，三维路由分析任务 | 所有 |
+| `/tinkerman decide` | 四视角前置决策 | 全量 |
+| `/tinkerman spec` | 将需求固化为可锁定规格 | 全量 |
+| `/tinkerman plan` | 将 Spec 拆解为原子任务 | 标准、全量 |
+| `/tinkerman build` | 按计划 TDD 实现代码 | 所有 |
+| `/tinkerman review` | 三层独立评审 | 所有 |
+| `/tinkerman test` | 运行完整验证套件 | 标准、全量 |
+| `/tinkerman ship` | 门禁检查 + 交付 | 标准、全量 |
+| `/tinkerman learn` | 五维度经验沉淀 | 全量 |
+| `/tinkerman verify` | 证据化三态验证 | 所有 |
+| `/tinkerman replay` | 回放任务证据链 | 所有 |
+| `/tinkerman accept` | 场景验收执行（支持 agent-browser agentic UI 验收） | 所有 |
+| `/tinkerman debug` | 四阶段结构化根因分析 | 所有 |
+| `/tinkerman triage` | 自动发现可执行项（Loop Engineering discovery） | 所有 |
+| `/tinkerman grill` | 苏格拉底式需求澄清 | 所有 |
+| `/tinkerman storm` | 头脑风暴 / DDD 前置 | 所有 |
+| `/tinkerman recap` | 会话摘要与上下文回顾 | 所有 |
+| `/tinkerman loop` | 带工程纪律的自主循环 | 所有 |
+| `/tinkerman charter` | 项目宪章（cross-spec 工程约束锚点） | 所有 |
+| `/tinkerman status` | 查看当前任务状态 | 所有 |
+| `/tinkerman resume` | 会话恢复 | 所有 |
+| `/tinkerman continue` | 交互式推进当前任务下一阶段 | 所有 |
 
 > 完整子命令速查表和三维路由详解 → [docs/reference-commands.md](docs/reference-commands.md)
 > ADR-0004 之后，所有子命令由统一 skill `forge` 内部分发，`commands/` 仅保留入口占位。

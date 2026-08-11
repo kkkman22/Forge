@@ -84,7 +84,7 @@ function parseResourceAttributes() {
 
 /**
  * Read Forge phase/tier/task from `.forge/status.md` frontmatter so duration
- * metrics can be sliced by Forge dimensions in `/forge learn`. A PostToolUse
+ * metrics can be sliced by Forge dimensions in `/tinkerman learn`. A PostToolUse
  * hook cannot mutate the parent session env, so we read the live status file
  * here instead of relying on env injection at phase/tier transitions.
  * Returns {} when the file is absent or unreadable (fail-open).

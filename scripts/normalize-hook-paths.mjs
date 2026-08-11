@@ -13,7 +13,7 @@
 // This normalizer removes every bare-relative arm, keeping only absolute
 // invocations:
 //   - `${CLAUDE_PLUGIN_ROOT:-}/...`  (marketplace install — host-set)
-//   - `~/.claude/skills/forge/...`   (skill install fallback)
+//   - `~/.claude/skills/tinkerman/...`   (skill install fallback)
 //   - `${CLAUDE_PROJECT_DIR}/...`    (project-root absolute — always set)
 //
 // Modes:

@@ -1,6 +1,6 @@
 /**
  * Micro-Review Engine — lightweight spec alignment check run after each atomic
- * task in `/forge build`.
+ * task in `/tinkerman build`.
  *
  * Two modes:
  *   - **legacy** (planVersion="legacy", no expected_output):

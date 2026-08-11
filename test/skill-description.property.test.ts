@@ -89,7 +89,7 @@ describe("validateDescription — property-based", () => {
       fc.property(safeFillerArb, safeFillerArb, (prefix, suffix) => {
         const description = `${prefix} Use when triggered by the tests. ${suffix}`.slice(0, 1024);
         const doc = buildSkillDoc(description);
-        const result = validateDescription("skills/forge-test/SKILL.md", doc);
+        const result = validateDescription("skills/tinkerman-test/SKILL.md", doc);
 
         expect(result.valid).toBe(true);
         expect(result.errors).toEqual([]);
@@ -107,21 +107,21 @@ describe("validateDescription — property-based", () => {
 
 describe("validateDescription — unit", () => {
   it("flags missing frontmatter", () => {
-    const result = validateDescription("skills/forge-x/SKILL.md", "# Just a title\n");
+    const result = validateDescription("skills/tinkerman-x/SKILL.md", "# Just a title\n");
     expect(result.valid).toBe(false);
     expect(result.errors).toContain("缺少 frontmatter");
   });
 
   it("flags missing description field", () => {
     const doc = ["---", "name: forge-x", "---", "", "# Body"].join("\n");
-    const result = validateDescription("skills/forge-x/SKILL.md", doc);
+    const result = validateDescription("skills/tinkerman-x/SKILL.md", doc);
     expect(result.valid).toBe(false);
     expect(result.errors).toContain("description 字段缺失或为空");
   });
 
   it("flags empty description", () => {
     const doc = buildSkillDoc("");
-    const result = validateDescription("skills/forge-x/SKILL.md", doc);
+    const result = validateDescription("skills/tinkerman-x/SKILL.md", doc);
     expect(result.valid).toBe(false);
     expect(result.errors).toContain("description 字段缺失或为空");
   });
@@ -130,7 +130,7 @@ describe("validateDescription — unit", () => {
     const filler = "a".repeat(1024);
     const description = `Use when overflow. ${filler}`;
     const doc = buildSkillDoc(description);
-    const result = validateDescription("skills/forge-x/SKILL.md", doc);
+    const result = validateDescription("skills/tinkerman-x/SKILL.md", doc);
     expect(result.valid).toBe(false);
     expect(result.length).toBeGreaterThan(1024);
     expect(result.errors.some((e) => e.includes("description 超长"))).toBe(true);
@@ -140,16 +140,16 @@ describe("validateDescription — unit", () => {
     const description =
       "Processes incoming requests with a disciplined pipeline when the agent is idle.";
     const doc = buildSkillDoc(description);
-    const result = validateDescription("skills/forge-x/SKILL.md", doc);
+    const result = validateDescription("skills/tinkerman-x/SKILL.md", doc);
     expect(result.valid).toBe(false);
     expect(result.hasUseWhen).toBe(false);
     expect(result.errors).toContain('description 缺少 "Use when" 触发语');
   });
 
   it("accepts case-insensitive 'Use When' with tab whitespace", () => {
-    const description = "Runs checks. Use\tWhen the user invokes /forge check.";
+    const description = "Runs checks. Use\tWhen the user invokes /tinkerman check.";
     const doc = buildSkillDoc(description);
-    const result = validateDescription("skills/forge-x/SKILL.md", doc);
+    const result = validateDescription("skills/tinkerman-x/SKILL.md", doc);
     expect(result.valid).toBe(true);
     expect(result.hasUseWhen).toBe(true);
   });
@@ -157,15 +157,15 @@ describe("validateDescription — unit", () => {
   it("flags marketing language (Chinese)", () => {
     const description = "最好的调试工具。Use when user reports a bug.";
     const doc = buildSkillDoc(description);
-    const result = validateDescription("skills/forge-x/SKILL.md", doc);
+    const result = validateDescription("skills/tinkerman-x/SKILL.md", doc);
     expect(result.valid).toBe(false);
     expect(result.hasForbiddenPatterns).toContain("营销性语言");
   });
 
   it("flags marketing language (English)", () => {
-    const description = "The unbeatable pipeline. Use when user runs /forge run.";
+    const description = "The unbeatable pipeline. Use when user runs /tinkerman run.";
     const doc = buildSkillDoc(description);
-    const result = validateDescription("skills/forge-x/SKILL.md", doc);
+    const result = validateDescription("skills/tinkerman-x/SKILL.md", doc);
     expect(result.valid).toBe(false);
     expect(result.hasForbiddenPatterns).toContain("营销性语言");
   });
@@ -173,7 +173,7 @@ describe("validateDescription — unit", () => {
   it("flags version numbers", () => {
     const description = "Supports v1.2 rollouts. Use when deploying to staging.";
     const doc = buildSkillDoc(description);
-    const result = validateDescription("skills/forge-x/SKILL.md", doc);
+    const result = validateDescription("skills/tinkerman-x/SKILL.md", doc);
     expect(result.valid).toBe(false);
     expect(result.hasForbiddenPatterns).toContain("版本号");
   });
@@ -181,15 +181,15 @@ describe("validateDescription — unit", () => {
   it("flags concrete dates", () => {
     const description = "Active since 2026-05-05. Use when a new task arrives.";
     const doc = buildSkillDoc(description);
-    const result = validateDescription("skills/forge-x/SKILL.md", doc);
+    const result = validateDescription("skills/tinkerman-x/SKILL.md", doc);
     expect(result.valid).toBe(false);
     expect(result.hasForbiddenPatterns).toContain("具体日期");
   });
 
   it("echoes the filePath unchanged", () => {
     const doc = buildSkillDoc("Does X. Use when Y happens.");
-    const result = validateDescription("skills/forge-demo/SKILL.md", doc);
-    expect(result.filePath).toBe("skills/forge-demo/SKILL.md");
+    const result = validateDescription("skills/tinkerman-demo/SKILL.md", doc);
+    expect(result.filePath).toBe("skills/tinkerman-demo/SKILL.md");
   });
 });
 
@@ -205,23 +205,23 @@ describe("parseSkillFrontmatter", () => {
   it("extracts name and description when both are present", () => {
     const doc = [
       "---",
-      "name: forge-demo",
+      "name: tinkerman-demo",
       'description: "Does X. Use when Y."',
       "---",
       "",
       "# Body",
     ].join("\n");
     expect(parseSkillFrontmatter(doc)).toEqual({
-      name: "forge-demo",
+      name: "tinkerman-demo",
       description: "Does X. Use when Y.",
     });
   });
 
   it("returns an object with missing fields absent", () => {
-    const doc = ["---", "name: forge-demo", "---", "", "# Body"].join("\n");
+    const doc = ["---", "name: tinkerman-demo", "---", "", "# Body"].join("\n");
     const result = parseSkillFrontmatter(doc);
     expect(result).not.toBeNull();
-    expect(result?.name).toBe("forge-demo");
+    expect(result?.name).toBe("tinkerman-demo");
     expect(result?.description).toBeUndefined();
   });
 });

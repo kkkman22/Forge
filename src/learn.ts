@@ -604,7 +604,7 @@ export function getLearnPromptConfig(outcome: EpisodeOutcome): LearnPromptConfig
 // imports), and emits a single `evolution-report.md` into the open
 // zone. We intentionally do NOT keep a historical snapshot: the
 // report always reflects the current on-disk state of the marker
-// sources, so a user running `/forge learn --maintain` to prune a
+// sources, so a user running `/tinkerman learn --maintain` to prune a
 // stale marker sees it disappear from the next report without any
 // extra bookkeeping (Requirement 8.15).
 
@@ -719,7 +719,7 @@ export function generateEvolutionReport(
  * ## 🚨 建议走 ADR 的高频进化点
  * ### forge-build (3 条)
  * - 来源：ep-..., ep-...
- * - 建议运行 `/forge decide` 评估是否升级为 ADR
+ * - 建议运行 `/tinkerman decide` 评估是否升级为 ADR
  *
  * ## 一般进化候选
  * ### forge-ship (1 条)
@@ -802,7 +802,7 @@ function appendBySkillSection(
     lines.push(`- 来源：${entry.sources.join(", ")}`);
   }
   if (highlight) {
-    lines.push("- 建议运行 `/forge decide` 走 ADR 三问筛");
+    lines.push("- 建议运行 `/tinkerman decide` 走 ADR 三问筛");
   }
   lines.push("");
 }

@@ -37,10 +37,10 @@ function createFakeFs(files: Record<string, string>): FakeFs {
     store,
     reads,
     listSkillFiles: (skillsDir: string) => {
-      // Match paths shaped like `<skillsDir>/forge-*/SKILL.md`. The real
+      // Match paths shaped like `<skillsDir>/tinkerman-*/SKILL.md`. The real
       // node:fs adapter will use readdirSync; here we filter the store
       // by prefix and suffix so the behaviour matches the contract.
-      const prefix = `${skillsDir}/forge-`;
+      const prefix = `${skillsDir}/tinkerman-`;
       return [...store.keys()]
         .filter((p) => p.startsWith(prefix) && p.endsWith("/SKILL.md"))
         .sort();
@@ -81,17 +81,17 @@ describe("validateAllSkills", () => {
     const skillsDir = "skills";
     const fs = createFakeFs({
       // 1. Valid description
-      "skills/forge-alpha/SKILL.md": buildSkillDoc(
+      "skills/tinkerman-alpha/SKILL.md": buildSkillDoc(
         "forge-alpha",
-        "Runs alpha workflow. Use when user invokes /forge alpha.",
+        "Runs alpha workflow. Use when user invokes /tinkerman alpha.",
       ),
       // 2. Missing "Use when" trigger
-      "skills/forge-beta/SKILL.md": buildSkillDoc(
+      "skills/tinkerman-beta/SKILL.md": buildSkillDoc(
         "forge-beta",
         "Handles beta tasks whenever the agent is idle.",
       ),
       // 3. Contains forbidden version-number pattern
-      "skills/forge-gamma/SKILL.md": buildSkillDoc(
+      "skills/tinkerman-gamma/SKILL.md": buildSkillDoc(
         "forge-gamma",
         "Supports v1.2 deployments. Use when rolling out to staging.",
       ),
@@ -104,9 +104,9 @@ describe("validateAllSkills", () => {
     // Exactly three forge-*/SKILL.md files were scanned
     expect(results).toHaveLength(3);
     expect(results.map((r) => r.filePath)).toEqual([
-      "skills/forge-alpha/SKILL.md",
-      "skills/forge-beta/SKILL.md",
-      "skills/forge-gamma/SKILL.md",
+      "skills/tinkerman-alpha/SKILL.md",
+      "skills/tinkerman-beta/SKILL.md",
+      "skills/tinkerman-gamma/SKILL.md",
     ]);
 
     // Per-file outcomes
@@ -128,9 +128,9 @@ describe("validateAllSkills", () => {
 
     // Each file was read exactly once via the adapter
     expect(fs.reads).toEqual([
-      "skills/forge-alpha/SKILL.md",
-      "skills/forge-beta/SKILL.md",
-      "skills/forge-gamma/SKILL.md",
+      "skills/tinkerman-alpha/SKILL.md",
+      "skills/tinkerman-beta/SKILL.md",
+      "skills/tinkerman-gamma/SKILL.md",
     ]);
   });
 

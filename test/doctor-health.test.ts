@@ -19,9 +19,9 @@ function tempRoot(): string {
 function writeWorkerRuntimeAssets(root: string): void {
   mkdirSync(join(root, "scripts"), { recursive: true });
   for (const rel of [
-    "forge-hook-dispatch.mjs",
-    "forge-phase-worker.mjs",
-    "forge-sync-runtime.mjs",
+    "tinkerman-hook-dispatch.mjs",
+    "tinkerman-phase-worker.mjs",
+    "tinkerman-sync-runtime.mjs",
   ]) {
     writeFileSync(join(root, "scripts", rel), "// runtime asset\n", "utf-8");
   }
@@ -202,7 +202,7 @@ describe("doctor health snapshot", () => {
     const snapshot = buildHealthSnapshot({ projectRoot: root, currentHead: "head-1" });
     expect(snapshot.runtimeSync.status).toBe("fail");
     expect(snapshot.runtimeSync.message).toContain("Missing worker runtime assets");
-    expect(snapshot.runtimeSync.message).toContain("forge-hook-dispatch.mjs");
+    expect(snapshot.runtimeSync.message).toContain("tinkerman-hook-dispatch.mjs");
   });
 
   it("runtimeSync passes when all worker runtime assets are present (R7.4)", () => {

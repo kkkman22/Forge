@@ -68,15 +68,15 @@ export function renderInlineGrillConfirmPrompt(reason: GrillInlineReason): strin
 const ADVISORY_TEMPLATES: Record<GrillInlineReason, string> = {
   spec_high_ambiguity:
     `[Autonomous Advisory] spec_high_ambiguity detected in autonomous mode. ` +
-    `Inline grill skipped. Recommend running \`/forge grill\` interactively ` +
+    `Inline grill skipped. Recommend running \`/tinkerman grill\` interactively ` +
     `after reviewing the generated spec to resolve ambiguity.`,
   decide_requirement_disagreement:
     `[Autonomous Advisory] decide_requirement_disagreement detected in autonomous mode. ` +
-    `Inline grill skipped. Recommend running \`/forge grill\` interactively ` +
+    `Inline grill skipped. Recommend running \`/tinkerman grill\` interactively ` +
     `to resolve requirement-side disagreement between perspectives.`,
   decide_user_hesitation:
     `[Autonomous Advisory] decide_user_hesitation detected in autonomous mode. ` +
-    `Inline grill skipped. Recommend running \`/forge grill\` interactively ` +
+    `Inline grill skipped. Recommend running \`/tinkerman grill\` interactively ` +
     `when the user is available to clarify preferences.`,
 };
 

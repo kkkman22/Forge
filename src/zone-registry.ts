@@ -72,7 +72,7 @@ export function loadZoneRegistry(forgeRoot: string): ZoneRule[] {
   const configPath = join(forgeRoot, ".forge", "config.md");
   if (!existsSync(configPath)) {
     process.stderr.write(
-      "[zone-registry] .forge/config.md missing — falling back to default frozen-zone rules. Run /forge init.\n",
+      "[zone-registry] .forge/config.md missing — falling back to default frozen-zone rules. Run /tinkerman init.\n",
     );
     return [...DEFAULT_ZONE_RULES];
   }

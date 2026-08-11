@@ -1,10 +1,10 @@
 /**
- * Grill trigger detection — pure helpers for the `/forge` router entry.
+ * Grill trigger detection — pure helpers for the `/tinkerman` router entry.
  *
  * Two responsibilities:
  *
  *   1. Recognise free-form user messages that request a grill session
- *      (e.g. "grill me", "再挖深点", "/forge grill"). Detection runs
+ *      (e.g. "grill me", "再挖深点", "/tinkerman grill"). Detection runs
  *      case-insensitively and matches anywhere in the input so users
  *      can prepend / append the phrase naturally.
  *
@@ -29,10 +29,10 @@
  * informational only; all entries are checked.
  *
  * Keep this list in sync with the "Grill Trigger Detection" section of
- * `skills/forge-router/SKILL.md`.
+ * `skills/tinkerman-router/SKILL.md`.
  */
 const GRILL_TRIGGER_KEYWORDS: readonly string[] = [
-  "/forge grill",
+  "/tinkerman grill",
   "grill me",
   "grill harder",
   "dig deeper",
@@ -47,7 +47,7 @@ const GRILL_TRIGGER_KEYWORDS: readonly string[] = [
  * Return `true` when `userInput` contains any known grill trigger
  * keyword (case-insensitive substring match).
  *
- * Whitespace is not normalised, so `/forge  grill` (double space)
+ * Whitespace is not normalised, so `/tinkerman  grill` (double space)
  * will NOT match. Callers that want looser matching should pre-trim
  * or collapse whitespace before invoking this function.
  *
@@ -64,7 +64,7 @@ export function detectGrillTrigger(userInput: string): boolean {
 
 /**
  * Return a user-facing suggestion string when `tier === "full"`,
- * encouraging the user to run `/forge grill` before entering the full
+ * encouraging the user to run `/tinkerman grill` before entering the full
  * workflow. Returns `null` for `"light"` and `"standard"` because
  * those tiers don't benefit from the Socratic alignment loop.
  *
@@ -76,5 +76,5 @@ export function detectGrillTrigger(userInput: string): boolean {
  */
 export function buildGrillSuggestion(tier: "light" | "standard" | "full"): string | null {
   if (tier !== "full") return null;
-  return "💡 Full-tier task detected. Optional: run `/forge grill` first for Socratic alignment. Type 'skip' to bypass.";
+  return "💡 Full-tier task detected. Optional: run `/tinkerman grill` first for Socratic alignment. Type 'skip' to bypass.";
 }

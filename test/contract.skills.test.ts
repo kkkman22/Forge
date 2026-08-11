@@ -10,7 +10,7 @@ import { resolve } from "node:path";
 import { describe, expect, it } from "vitest";
 
 const ROOT = resolve(import.meta.dirname, "..");
-const libDir = resolve(ROOT, "skills", "forge", "lib");
+const libDir = resolve(ROOT, "skills", "tinkerman", "lib");
 
 // Discover all sub-skill directories under collapsed lib structure
 const subSkillDirs = readdirSync(libDir, { withFileTypes: true })
@@ -26,43 +26,45 @@ const instrFiles = subSkillDirs
 // Req 8.4: Each SKILL.md exists and has required structural sections
 // ---------------------------------------------------------------------------
 
-describe("Contract: skills/forge/lib/*/instructions.md structural validation", () => {
+describe("Contract: skills/tinkerman/lib/*/instructions.md structural validation", () => {
   it("at least one sub-skill directory exists", () => {
     expect(subSkillDirs.length).toBeGreaterThan(0);
   });
 
   for (const dir of subSkillDirs) {
-    it(`skills/forge/lib/${dir}/instructions.md exists`, () => {
+    it(`skills/tinkerman/lib/${dir}/instructions.md exists`, () => {
       const skillPath = resolve(libDir, dir, "instructions.md");
-      expect(existsSync(skillPath), `Missing: skills/forge/lib/${dir}/instructions.md`).toBe(true);
+      expect(existsSync(skillPath), `Missing: skills/tinkerman/lib/${dir}/instructions.md`).toBe(
+        true,
+      );
     });
   }
 });
 
-describe("Contract: skills/forge/lib/*/instructions.md has YAML frontmatter", () => {
+describe("Contract: skills/tinkerman/lib/*/instructions.md has YAML frontmatter", () => {
   for (const { dir, path: skillPath } of instrFiles) {
-    it(`skills/forge/lib/${dir}/instructions.md starts with YAML frontmatter`, () => {
+    it(`skills/tinkerman/lib/${dir}/instructions.md starts with YAML frontmatter`, () => {
       const content = readFileSync(skillPath, "utf-8");
       expect(
         content.startsWith("---\n"),
-        `skills/forge/lib/${dir}/instructions.md missing opening frontmatter delimiter`,
+        `skills/tinkerman/lib/${dir}/instructions.md missing opening frontmatter delimiter`,
       ).toBe(true);
 
       const closingIdx = content.indexOf("---", 4);
       expect(
         closingIdx,
-        `skills/forge/lib/${dir}/instructions.md missing closing frontmatter delimiter`,
+        `skills/tinkerman/lib/${dir}/instructions.md missing closing frontmatter delimiter`,
       ).toBeGreaterThan(0);
     });
 
-    it(`skills/forge/lib/${dir}/instructions.md frontmatter contains 'description' or 'name' field`, () => {
+    it(`skills/tinkerman/lib/${dir}/instructions.md frontmatter contains 'description' or 'name' field`, () => {
       const content = readFileSync(skillPath, "utf-8");
       const closingIdx = content.indexOf("---", 4);
       const frontmatter = content.slice(4, closingIdx);
       expect(frontmatter).toMatch(/^(?:name|description):\s+/m);
     });
 
-    it(`skills/forge/lib/${dir}/instructions.md frontmatter contains 'description' field`, () => {
+    it(`skills/tinkerman/lib/${dir}/instructions.md frontmatter contains 'description' field`, () => {
       const content = readFileSync(skillPath, "utf-8");
       const closingIdx = content.indexOf("---", 4);
       const frontmatter = content.slice(4, closingIdx);
@@ -71,24 +73,24 @@ describe("Contract: skills/forge/lib/*/instructions.md has YAML frontmatter", ()
   }
 });
 
-describe("Contract: skills/forge/lib/*/instructions.md contains required content sections", () => {
+describe("Contract: skills/tinkerman/lib/*/instructions.md contains required content sections", () => {
   for (const { dir, path: skillPath } of instrFiles) {
-    it(`skills/forge/lib/${dir}/instructions.md has substantive content after frontmatter`, () => {
+    it(`skills/tinkerman/lib/${dir}/instructions.md has substantive content after frontmatter`, () => {
       const content = readFileSync(skillPath, "utf-8");
       const frontmatterEnd = content.indexOf("---", content.indexOf("---") + 3);
       expect(
         frontmatterEnd,
-        `skills/forge/lib/${dir}/instructions.md has no closing frontmatter delimiter`,
+        `skills/tinkerman/lib/${dir}/instructions.md has no closing frontmatter delimiter`,
       ).toBeGreaterThan(0);
 
       const bodyContent = content.slice(frontmatterEnd + 3).trim();
       expect(
         bodyContent.length,
-        `skills/forge/lib/${dir}/instructions.md has no content after frontmatter`,
+        `skills/tinkerman/lib/${dir}/instructions.md has no content after frontmatter`,
       ).toBeGreaterThan(0);
     });
 
-    it(`skills/forge/lib/${dir}/instructions.md has a heading structure (## sections)`, () => {
+    it(`skills/tinkerman/lib/${dir}/instructions.md has a heading structure (## sections)`, () => {
       const content = readFileSync(skillPath, "utf-8");
       const frontmatterEnd = content.indexOf("---", content.indexOf("---") + 3);
       const bodyContent = content.slice(frontmatterEnd + 3);
@@ -96,11 +98,11 @@ describe("Contract: skills/forge/lib/*/instructions.md contains required content
       const hasHeadings = /^##\s+/m.test(bodyContent);
       expect(
         hasHeadings,
-        `skills/forge/lib/${dir}/instructions.md has no ## section headings after frontmatter`,
+        `skills/tinkerman/lib/${dir}/instructions.md has no ## section headings after frontmatter`,
       ).toBe(true);
     });
 
-    it(`skills/forge/lib/${dir}/instructions.md has an overview or instructions section`, () => {
+    it(`skills/tinkerman/lib/${dir}/instructions.md has an overview or instructions section`, () => {
       const content = readFileSync(skillPath, "utf-8");
       const frontmatterEnd = content.indexOf("---", content.indexOf("---") + 3);
       const bodyContent = content.slice(frontmatterEnd + 3);
@@ -108,7 +110,7 @@ describe("Contract: skills/forge/lib/*/instructions.md contains required content
       const instructionsPattern = /^##\s+(Instructions|指令|概述|\d+[.\s])/m;
       expect(
         instructionsPattern.test(bodyContent),
-        `skills/forge/lib/${dir}/instructions.md has no overview/instructions section (expected ## Instructions, ## 概述, or numbered ## heading)`,
+        `skills/tinkerman/lib/${dir}/instructions.md has no overview/instructions section (expected ## Instructions, ## 概述, or numbered ## heading)`,
       ).toBe(true);
     });
   }
@@ -119,12 +121,13 @@ describe("Contract: skills/forge/lib/*/instructions.md contains required content
 // ---------------------------------------------------------------------------
 
 describe("Contract: forge-resume SKILL.md --from-pr feature", () => {
-  const resumeSkillPath = resolve(ROOT, "skills", "forge", "lib", "resume", "instructions.md");
+  const resumeSkillPath = resolve(ROOT, "skills", "tinkerman", "lib", "resume", "instructions.md");
 
   it("forge-resume SKILL.md contains '从 PR 恢复' section", () => {
-    expect(existsSync(resumeSkillPath), "Missing: skills/forge/lib/resume/instructions.md").toBe(
-      true,
-    );
+    expect(
+      existsSync(resumeSkillPath),
+      "Missing: skills/tinkerman/lib/resume/instructions.md",
+    ).toBe(true);
     const content = readFileSync(resumeSkillPath, "utf-8");
     expect(content).toContain("从 PR 恢复");
     expect(content).toMatch(/##\s+5\.\s+从 PR 恢复|--from-pr/);
@@ -152,7 +155,7 @@ describe("Contract: forge-resume SKILL.md --from-pr feature", () => {
 // UltraReview CI awareness in forge-review
 
 describe("Contract: forge-review SKILL CI awareness", () => {
-  const skillPath = resolve(ROOT, "skills", "forge", "lib", "review", "instructions.md");
+  const skillPath = resolve(ROOT, "skills", "tinkerman", "lib", "review", "instructions.md");
   const content = readFileSync(skillPath, "utf-8");
 
   it("contains CI evidence intake section", () => {

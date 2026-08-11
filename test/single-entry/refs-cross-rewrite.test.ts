@@ -8,7 +8,7 @@ const ROOT = resolve(import.meta.dirname, "..", "..");
 // Discover the actual set of lib subs from disk rather than hard-coding a list
 // that drifts as new subs are added. A cross-ref to any real sub directory
 // (e.g. ../charter/, ../init/) is by definition valid.
-const LIB_DIR = resolve(ROOT, "skills", "forge", "lib");
+const LIB_DIR = resolve(ROOT, "skills", "tinkerman", "lib");
 const VALID_SUBS = new Set(
   readdirSync(LIB_DIR, { withFileTypes: true })
     .filter((entry) => entry.isDirectory())
@@ -16,8 +16,8 @@ const VALID_SUBS = new Set(
 );
 
 describe("R4.2: cross-sub references rewritten to lib structure", () => {
-  it("no ../forge-<sub> pattern remains in lib/", async () => {
-    const libs = await glob("skills/forge/lib/**/*.md", { cwd: ROOT });
+  it("no ../tinkerman-<sub> pattern remains in lib/", async () => {
+    const libs = await glob("skills/tinkerman/lib/**/*.md", { cwd: ROOT });
     const violations: string[] = [];
 
     for (const libPath of libs) {
@@ -34,7 +34,7 @@ describe("R4.2: cross-sub references rewritten to lib structure", () => {
   });
 
   it("all ../<sub>/ cross-references point to valid sub names", async () => {
-    const libs = await glob("skills/forge/lib/*/instructions.md", { cwd: ROOT });
+    const libs = await glob("skills/tinkerman/lib/*/instructions.md", { cwd: ROOT });
     const violations: string[] = [];
 
     for (const libPath of libs) {

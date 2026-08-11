@@ -4,12 +4,12 @@
  * sync-command-registry.mjs
  *
  * Single generation chain for Forge subcommands:
- * skills/forge/lib/<sub>/instructions.md frontmatter
- *   -> skills/forge/registry.toml
+ * skills/tinkerman/lib/<sub>/instructions.md frontmatter
+ *   -> skills/tinkerman/registry.toml
  *   -> src/forge-dispatcher/allowlist.ts
  *   -> docs/_ssot/commands.json
  *   -> .claude-plugin metadata
- *   -> skills/forge/SKILL.md derived counts
+ *   -> skills/tinkerman/SKILL.md derived counts
  *
  * Usage:
  *   node scripts/sync-command-registry.mjs
@@ -20,15 +20,15 @@ import { existsSync, readdirSync, readFileSync, writeFileSync } from "node:fs";
 import { join, resolve } from "node:path";
 
 const ROOT = resolve(import.meta.dirname, "..");
-const LIB_DIR = join(ROOT, "skills", "forge", "lib");
-const REGISTRY_PATH = join(ROOT, "skills", "forge", "registry.toml");
+const LIB_DIR = join(ROOT, "skills", "tinkerman", "lib");
+const REGISTRY_PATH = join(ROOT, "skills", "tinkerman", "registry.toml");
 const ALLOWLIST_PATH = join(ROOT, "src", "forge-dispatcher", "allowlist.ts");
 const COMMANDS_SSOT_PATH = join(ROOT, "docs", "_ssot", "commands.json");
 const PLUGIN_JSON_REL = ".claude-plugin/plugin.json";
 const MARKETPLACE_JSON_REL = ".claude-plugin/marketplace.json";
 const PLUGIN_JSON_PATH = join(ROOT, PLUGIN_JSON_REL);
 const MARKETPLACE_JSON_PATH = join(ROOT, MARKETPLACE_JSON_REL);
-const SKILL_MD_PATH = join(ROOT, "skills", "forge", "SKILL.md");
+const SKILL_MD_PATH = join(ROOT, "skills", "tinkerman", "SKILL.md");
 
 const CHECK_ONLY = process.argv.includes("--check") || process.argv.includes("--check-only");
 
@@ -145,7 +145,7 @@ function subsFromLib() {
 function generateToml(subs) {
   const lines = [
     "# AUTO-GENERATED - DO NOT EDIT",
-    "# Source: skills/forge/lib/<sub>/instructions.md frontmatter",
+    "# Source: skills/tinkerman/lib/<sub>/instructions.md frontmatter",
     "# Regen: node scripts/sync-command-registry.mjs",
     "",
   ];
@@ -166,12 +166,12 @@ function generateToml(subs) {
 
 function generateAllowlist(subs) {
   const names = subs.map((s) => s.name);
-  return `// AUTO-GENERATED - DO NOT EDIT\n// Source: skills/forge/registry.toml\n// Regen: node scripts/sync-command-registry.mjs\n\nconst ALLOW_LIST: ReadonlyArray<string> = [\n${names.map((name) => `  ${JSON.stringify(name)},`).join("\n")}\n] as const;\n\nexport type ValidatedSub = (typeof ALLOW_LIST)[number];\n\nexport interface AllowResult {\n  ok: true;\n  value: ValidatedSub;\n}\n\nexport interface RejectResult {\n  ok: false;\n  code: "E_UNKNOWN_SUB";\n  suggestion?: string;\n}\n\nexport type TopicValidationResult = AllowResult | RejectResult;\n\nfunction levenshtein(a: string, b: string): number {\n  const m = a.length;\n  const n = b.length;\n  const dp: number[][] = Array.from({ length: m + 1 }, () => Array(n + 1).fill(0));\n  for (let i = 0; i <= m; i++) dp[i][0] = i;\n  for (let j = 0; j <= n; j++) dp[0][j] = j;\n  for (let i = 1; i <= m; i++) {\n    for (let j = 1; j <= n; j++) {\n      dp[i][j] =\n        a[i - 1] === b[j - 1]\n          ? dp[i - 1][j - 1]\n          : 1 + Math.min(dp[i - 1][j], dp[i][j - 1], dp[i - 1][j - 1]);\n    }\n  }\n  return dp[m][n];\n}\n\nexport function validateTopic(topic: string): TopicValidationResult {\n  const trimmed = topic.trim();\n\n  if ((ALLOW_LIST as readonly string[]).includes(trimmed)) {\n    return { ok: true, value: trimmed as ValidatedSub };\n  }\n\n  let bestMatch = "";\n  let bestDist = Infinity;\n  for (const sub of ALLOW_LIST) {\n    const dist = levenshtein(trimmed, sub);\n    if (dist < bestDist) {\n      bestDist = dist;\n      bestMatch = sub;\n    }\n  }\n\n  return {\n    ok: false,\n    code: "E_UNKNOWN_SUB",\n    suggestion: bestDist <= 3 ? bestMatch : undefined,\n  };\n}\n\nexport { ALLOW_LIST };\n`;
+  return `// AUTO-GENERATED - DO NOT EDIT\n// Source: skills/tinkerman/registry.toml\n// Regen: node scripts/sync-command-registry.mjs\n\nconst ALLOW_LIST: ReadonlyArray<string> = [\n${names.map((name) => `  ${JSON.stringify(name)},`).join("\n")}\n] as const;\n\nexport type ValidatedSub = (typeof ALLOW_LIST)[number];\n\nexport interface AllowResult {\n  ok: true;\n  value: ValidatedSub;\n}\n\nexport interface RejectResult {\n  ok: false;\n  code: "E_UNKNOWN_SUB";\n  suggestion?: string;\n}\n\nexport type TopicValidationResult = AllowResult | RejectResult;\n\nfunction levenshtein(a: string, b: string): number {\n  const m = a.length;\n  const n = b.length;\n  const dp: number[][] = Array.from({ length: m + 1 }, () => Array(n + 1).fill(0));\n  for (let i = 0; i <= m; i++) dp[i][0] = i;\n  for (let j = 0; j <= n; j++) dp[0][j] = j;\n  for (let i = 1; i <= m; i++) {\n    for (let j = 1; j <= n; j++) {\n      dp[i][j] =\n        a[i - 1] === b[j - 1]\n          ? dp[i - 1][j - 1]\n          : 1 + Math.min(dp[i - 1][j], dp[i][j - 1], dp[i - 1][j - 1]);\n    }\n  }\n  return dp[m][n];\n}\n\nexport function validateTopic(topic: string): TopicValidationResult {\n  const trimmed = topic.trim();\n\n  if ((ALLOW_LIST as readonly string[]).includes(trimmed)) {\n    return { ok: true, value: trimmed as ValidatedSub };\n  }\n\n  let bestMatch = "";\n  let bestDist = Infinity;\n  for (const sub of ALLOW_LIST) {\n    const dist = levenshtein(trimmed, sub);\n    if (dist < bestDist) {\n      bestDist = dist;\n      bestMatch = sub;\n    }\n  }\n\n  return {\n    ok: false,\n    code: "E_UNKNOWN_SUB",\n    suggestion: bestDist <= 3 ? bestMatch : undefined,\n  };\n}\n\nexport { ALLOW_LIST };\n`;
 }
 
 function generateCommandsJson(subs) {
   const commands = subs.map((s) => ({
-    name: `/forge ${s.name}`,
+    name: `/tinkerman ${s.name}`,
     tier: s.tier,
     stage: s.stage,
     dispatch_mode: s.dispatch_mode,
@@ -188,7 +188,7 @@ function updateJsonFileContent(path, updater) {
 
 function generatePluginJson(count) {
   return updateJsonFileContent(PLUGIN_JSON_PATH, (data) => {
-    data.description = `Unified AI coding workflow framework - single /forge slash command with ${count} internal subcommands, TDD, spec-driven planning, and automated review.`;
+    data.description = `Unified AI coding workflow framework - single /tinkerman slash command with ${count} internal subcommands, TDD, spec-driven planning, and automated review.`;
   });
 }
 
@@ -196,7 +196,7 @@ function generateMarketplaceJson(count) {
   return updateJsonFileContent(MARKETPLACE_JSON_PATH, (data) => {
     data.description = `Forge official marketplace - unified AI coding workflow framework with ${count} internal subcommands, TDD, spec-driven planning, automated review, and three-tier task routing.`;
     if (Array.isArray(data.plugins) && data.plugins[0]) {
-      data.plugins[0].description = `Unified AI coding workflow framework - single /forge slash command with ${count} internal subcommands, TDD, spec-driven planning, and automated review.`;
+      data.plugins[0].description = `Unified AI coding workflow framework - single /tinkerman slash command with ${count} internal subcommands, TDD, spec-driven planning, and automated review.`;
     }
   });
 }

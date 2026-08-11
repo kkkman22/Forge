@@ -17,7 +17,10 @@ import { getCommandSequence } from "../src/skill-scheduler.js";
 
 const ROOT = resolve(import.meta.dirname, "..");
 
-const routerSkill = readFileSync(resolve(ROOT, "skills/forge/lib/router/instructions.md"), "utf-8");
+const routerSkill = readFileSync(
+  resolve(ROOT, "skills/tinkerman/lib/router/instructions.md"),
+  "utf-8",
+);
 
 const claudeMd = readFileSync(resolve(ROOT, "CLAUDE.md"), "utf-8");
 

@@ -55,12 +55,12 @@ describe("resolveForgeRoot - unit tests", () => {
     };
 
     const fs: FsProbe = {
-      isDir: (path: string) => path === "/h/.claude/skills/forge/agents",
+      isDir: (path: string) => path === "/h/.claude/skills/tinkerman/agents",
     };
 
     const result = resolveForgeRoot(input, fs);
     expect(result.kind).toBe("global");
-    expect(result).toHaveProperty("root", "/h/.claude/skills/forge");
+    expect(result).toHaveProperty("root", "/h/.claude/skills/tinkerman");
   });
 
   it("Case 4: all three missing returns not-found with checked count 3", () => {

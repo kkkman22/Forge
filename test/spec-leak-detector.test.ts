@@ -27,7 +27,7 @@ function makePackEntry(overrides: Partial<PackEntry> = {}): PackEntry {
   };
 }
 
-const CUSTOM_ROOT = "/project/.forge/custom";
+const CUSTOM_ROOT = "/project/.tinkerman/custom";
 
 function makeEnabled(entries: PackEntry[] = [], customRoot: string = CUSTOM_ROOT): EnabledPacks {
   return {
@@ -311,7 +311,7 @@ describe("loadBannedPatterns", () => {
     const enabled = makeEnabled([pack1, pack2]);
 
     const fs = createMockFs({
-      "/project/.forge/custom/banned-patterns.yaml": [
+      "/project/.tinkerman/custom/banned-patterns.yaml": [
         "schema_version: 1",
         "categories:",
         "  code:",
@@ -358,7 +358,7 @@ describe("loadBannedPatterns", () => {
     ].join("\n");
 
     const fs = createMockFs({
-      "/project/.forge/custom/banned-patterns.yaml": sameYaml,
+      "/project/.tinkerman/custom/banned-patterns.yaml": sameYaml,
       "/packs/alpha/banned-patterns.yaml": sameYaml,
     });
 

@@ -2,10 +2,10 @@ import { readFileSync } from "node:fs";
 import { resolve } from "node:path";
 import { describe, expect, it } from "vitest";
 
-const SKILL_PATH = resolve(__dirname, "../../skills/forge/lib/plan/instructions.md");
+const SKILL_PATH = resolve(__dirname, "../../skills/tinkerman/lib/plan/instructions.md");
 const DEP_RULES_PATH = resolve(
   __dirname,
-  "../../skills/forge/lib/plan/references/dependency-rules.md",
+  "../../skills/tinkerman/lib/plan/references/dependency-rules.md",
 );
 
 describe("Plan SKILL.md — Step 3.5 dependency identification", () => {

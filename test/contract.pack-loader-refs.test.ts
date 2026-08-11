@@ -2,7 +2,7 @@
  * Contract tests — Pack loader references in plan docs ↔ src/ exports.
  *
  * Validates the "Pack Data Task Integration Test Requirement" section of
- * `skills/forge/lib/plan/references/atomic-task-format.md`. That section lists,
+ * `skills/tinkerman/lib/plan/references/atomic-task-format.md`. That section lists,
  * per pack-category, the Core loader function a plan must invoke
  * (e.g. `loadContexts(enabledPacks)`). Every named loader must either:
  *
@@ -21,7 +21,7 @@ import { resolve } from "node:path";
 import { describe, expect, it } from "vitest";
 
 const ROOT = resolve(import.meta.dirname, "..");
-const DOC = resolve(ROOT, "skills/forge/lib/plan/references/atomic-task-format.md");
+const DOC = resolve(ROOT, "skills/tinkerman/lib/plan/references/atomic-task-format.md");
 const SRC = resolve(ROOT, "src");
 
 /**

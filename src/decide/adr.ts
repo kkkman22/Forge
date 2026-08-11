@@ -158,7 +158,7 @@ function mergeEntriesForIndex(
 }
 
 /**
- * Finalize an ADR at the end of `/forge decide`.
+ * Finalize an ADR at the end of `/tinkerman decide`.
  *
  * The function is pure: all IO is injected through the `readExistingFile`
  * callback. The caller writes the returned artifacts to disk.

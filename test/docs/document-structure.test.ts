@@ -60,10 +60,10 @@ describe("CLAUDE.md structure", () => {
 describe("Reference doc pointer resolution", () => {
   it("each `→ 详见` pointer resolves to a valid section heading (Req 1.2, 1.6)", () => {
     const claudeMd = readDoc("CLAUDE.md");
-    const referenceDoc = readDoc("docs/forge-constitution-detail.md");
+    const referenceDoc = readDoc("docs/tinkerman-constitution-detail.md");
 
-    // Find all `→ 详见 docs/forge-constitution-detail.md §<section>` pointers
-    const pointerRegex = /→ 详见 docs\/forge-constitution-detail\.md §([\d.]+)/g;
+    // Find all `→ 详见 docs/tinkerman-constitution-detail.md §<section>` pointers
+    const pointerRegex = /→ 详见 docs\/tinkerman-constitution-detail\.md §([\d.]+)/g;
     const matches = [...claudeMd.matchAll(pointerRegex)];
 
     expect(matches.length).toBeGreaterThan(0);

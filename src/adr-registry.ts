@@ -48,7 +48,7 @@ export type AdrStatus = "proposed" | "accepted" | "superseded" | "deprecated";
  *   - superseded_by: id of an ADR that replaces this one
  *
  * ADR three-question gate fields (Requirements 2.3, 2.7 — optional
- * extensions populated by `/forge decide` when verdict is
+ * extensions populated by `/tinkerman decide` when verdict is
  * `WRITE_ADR`). These fields are additive and never conflict with the
  * `engineering-governance-hardening` spec's ADR frontmatter schema —
  * they occupy their own key space:
@@ -275,7 +275,7 @@ export function parseAdrFrontmatter(content: string): AdrFrontmatter | null {
   }
 
   // ADR three-question gate fields (Requirements 2.3, 2.7).
-  // These are optional extensions written by `/forge decide` when
+  // These are optional extensions written by `/tinkerman decide` when
   // verdict is WRITE_ADR; they never conflict with the governance
   // spec's ADR fields.
   const reversibility = optionalString(extractStringField(fm.raw, "reversibility"));

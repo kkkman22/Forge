@@ -10,7 +10,7 @@ describe("mirror: polling fallback with MIRROR_USE_POLLING=1 (R1.10)", () => {
 
   beforeEach(() => {
     dir = mkdtempSync(join(tmpdir(), "cmux-poll-fallback-"));
-    forgeDir = join(dir, "forge");
+    forgeDir = join(dir, "tinkerman");
     mkdirSync(forgeDir, { recursive: true });
     mkdirSync(join(forgeDir, "progress"), { recursive: true });
   });

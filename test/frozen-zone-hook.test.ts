@@ -156,7 +156,7 @@ describe("createFrozenZoneHook", () => {
     expect(reason).toContain("frozen-spec");
     expect(reason).toContain("SPEC_LOCKED");
     expect(reason).toContain(specPath);
-    expect(reason).toContain("/forge spec"); // unlock instruction
+    expect(reason).toContain("/tinkerman spec"); // unlock instruction
     // R2.4: additionalContext surfaces the suggested alternative + status.md reminder.
     const ctx = output.hookSpecificOutput?.additionalContext ?? "";
     expect(ctx).toContain(".forge/findings/");
@@ -320,7 +320,7 @@ describe("renderPostHocViolation + writeFrozenBreachRecord (R3 units)", () => {
       category: "frozen-spec",
       reason_code: "SPEC_LOCKED",
       reason_text: 'status "locked" forbids modification',
-      unlock_instruction: "move the spec to draft via /forge spec.",
+      unlock_instruction: "move the spec to draft via /tinkerman spec.",
     };
     const out = renderPostHocViolation(diag);
     expect(out).toContain("⚠ Post-hoc frozen-zone violation detected");

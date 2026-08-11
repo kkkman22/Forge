@@ -2,7 +2,7 @@
 # T-06 (Wave 6) — Recipe system test (Req6).
 # category: user-facing
 #
-# Verifies /forge init --recipe <name>:
+# Verifies /tinkerman init --recipe <name>:
 #   AC1/AC2: --recipe copies templates/recipes/<name>/ into the user project.
 #   AC9:     does NOT auto-run install (only prints the command).
 #   AC10:    detects package manager (pnpm/npm/yarn) in the install hint.

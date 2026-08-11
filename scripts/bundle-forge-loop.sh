@@ -7,7 +7,7 @@ set -euo pipefail
 FORGE_ROOT="${1:-.}"
 RESOURCES_DIR="${2:-apps/forge-loop-desktop/src-tauri/resources}"
 
-DEST="${RESOURCES_DIR}/forge-loop"
+DEST="${RESOURCES_DIR}/tinkerman-loop"
 
 echo "==> Bundling forge-loop SDK from ${FORGE_ROOT}..."
 

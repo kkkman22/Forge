@@ -34,7 +34,7 @@
  *
  * **Frozen zone**: modifications to this file require an ADR per
  * Requirement 5.10. Adding, removing, or weakening a rule SHALL be gated
- * through `/forge decide` so that the rationale is captured in an
+ * through `/tinkerman decide` so that the rationale is captured in an
  * `ADR-NNNN` document before the change lands.
  */
 

@@ -196,7 +196,7 @@ export function checkReviewFreshness(
 // ---------------------------------------------------------------------------
 
 /**
- * Check whether `/forge ship` is allowed to proceed.
+ * Check whether `/tinkerman ship` is allowed to proceed.
  *
  * Per SKILL.md §2 and design Property 11:
  *   - Review must have passed (no P0/P1)

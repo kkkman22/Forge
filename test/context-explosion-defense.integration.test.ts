@@ -2,7 +2,7 @@
  * Integration tests for the context explosion defense system.
  *
  * Verifies end-to-end behavior across remaining layers (numbering aligned
- * with skills/forge/lib/build/references/context-budget.md):
+ * with skills/tinkerman/lib/build/references/context-budget.md):
  * - Layer 2: Subagent file-based return
  * - Layer 3: Phase-aware plan injection (Resume minimization)
  * - Layer 4: Read budget tracking

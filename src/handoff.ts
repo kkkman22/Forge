@@ -11,7 +11,7 @@
  * Design principles:
  *   - Handoffs are lightweight (10-20 lines of decisions, not full specs)
  *   - Handoffs accumulate (later stages can read all prior handoffs)
- *   - Handoffs survive task cancellation (not deleted by /forge abort)
+ *   - Handoffs survive task cancellation (not deleted by /tinkerman abort)
  *   - Each handoff has a fixed structure: decided / rejected / risks / artifacts / remaining
  */
 

@@ -4,7 +4,7 @@
  * Checks locations in priority order:
  *   1. Plugin root (pluginRoot/agents)
  *   2. Script-relative (scriptDir/../agents)
- *   3. Global (homeDir/.claude/skills/forge/agents)
+ *   3. Global (homeDir/.claude/skills/tinkerman/agents)
  *
  * Returns the first matching location or {kind: "not-found", checked: [...]}.
  */
@@ -44,7 +44,7 @@ export function resolveForgeRoot(input: ResolveInput, fs: FsProbe): ResolveResul
     return { kind: "script-relative", root: normalizedParent };
   }
 
-  const globalRoot = `${input.homeDir}/.claude/skills/forge`;
+  const globalRoot = `${input.homeDir}/.claude/skills/tinkerman`;
   checked.push(globalRoot);
   if (fs.isDir(`${globalRoot}/agents`)) {
     return { kind: "global", root: globalRoot };

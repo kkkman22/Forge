@@ -39,7 +39,7 @@ describe("mirror: fs.watch detects status.md changes", () => {
 
   beforeEach(() => {
     dir = mkdtempSync(join(tmpdir(), "cmux-fswatch-test-"));
-    forgeDir = join(dir, "forge");
+    forgeDir = join(dir, "tinkerman");
     mkdirSync(forgeDir, { recursive: true });
     mkdirSync(join(forgeDir, "progress"), { recursive: true });
   });

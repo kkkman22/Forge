@@ -131,7 +131,7 @@ jobs:
           mkdir -p .forge/knowledge
           ts=$(date -u +%Y-%m-%dT%H:%M:%SZ)
           # Append-only; no commit — this artefact is informational and would
-          # be picked up by the next /forge run on a developer's machine.
+          # be picked up by the next /tinkerman run on a developer's machine.
           # Production wiring writes via tool-health-writer.ts (.lock-protected).
           # Here we just emit a marker so the failure surface is visible.
           echo "$ts · ci-cross-version · incompatible · ref=${GITHUB_REF_NAME}" \

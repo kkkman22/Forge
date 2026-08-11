@@ -10,7 +10,11 @@ beforeEach(() => {
   tmp = mkdtempSync(join(tmpdir(), "doc-fix2-"));
   mkdirSync(join(tmp, ".forge"), { recursive: true });
   mkdirSync(join(tmp, "scripts"), { recursive: true });
-  for (const f of ["forge-hook-dispatch.mjs", "forge-phase-worker.mjs", "forge-sync-runtime.mjs"]) {
+  for (const f of [
+    "tinkerman-hook-dispatch.mjs",
+    "tinkerman-phase-worker.mjs",
+    "tinkerman-sync-runtime.mjs",
+  ]) {
     writeFileSync(join(tmp, "scripts", f), "// runtime\n");
   }
 });

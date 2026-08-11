@@ -62,7 +62,7 @@ cd "$TMP"
 # build-dist may exit nonzero if optional inputs absent in the copy; capture.
 build_out=$(bash "$TMP/scripts/build-dist.sh" 2>&1) || { echo "build-dist failed:"; echo "$build_out"; }
 
-CC_BUNDLE="$TMP/dist/claude-code/bundles/forge"
+CC_BUNDLE="$TMP/dist/claude-code/bundles/tinkerman"
 PLUGIN_DIST="$TMP/dist-plugin"
 
 # --- P1: pack copied into BOTH bundles with expected contents ---

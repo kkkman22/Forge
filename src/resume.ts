@@ -270,7 +270,7 @@ export function recoverPhase(
 // Recovery priority chain (error-recovery-strategy R7)
 // ---------------------------------------------------------------------------
 //
-// R7 requires /forge resume to execute an 8-step recovery priority chain in a
+// R7 requires /tinkerman resume to execute an 8-step recovery priority chain in a
 // fixed order, collecting ALL inconsistencies into a single Recovery_Report
 // rather than stopping at the first one found. The detection primitives already
 // exist as pure functions in src/error-recovery/; this orchestrator wires them

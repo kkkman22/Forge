@@ -1,4 +1,5 @@
 ---
+updated: 2026-08-11
 name: SKILL Plugin Proposal
 about: Propose a new SKILL plugin for Forge
 title: "[SKILL] "
@@ -32,7 +33,7 @@ Which Forge version(s) is this SKILL compatible with? (e.g., >=2.0.0)
 ## Example Usage
 
 ```
-/forge <command> <args>
+/tinkerman <command> <args>
 ```
 
 ## Additional Context

@@ -22,7 +22,7 @@ function makePackEntry(overrides: Partial<PackEntry> = {}): PackEntry {
   };
 }
 
-const CUSTOM_ROOT = "/project/.forge/custom";
+const CUSTOM_ROOT = "/project/.tinkerman/custom";
 
 function makeEnabled(entries: PackEntry[] = [], customRoot: string = CUSTOM_ROOT): EnabledPacks {
   return {

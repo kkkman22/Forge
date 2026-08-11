@@ -9,11 +9,11 @@
 #   3. 复制 7 个 Subagent 角色文件到 .claude/agents/
 #   4. 生成 CLAUDE.md 项目宪法
 #   5. 写入 .forge/config.md
-#   6. 配置 forge-context MCP server（如果可用）
+#   6. 配置 tinkerman-context MCP server（如果可用）
 #
 # 用法：
 #   chmod +x forge/scripts/init.sh
-#   ./forge/scripts/init.sh [--pack <name>] [--pack <name2>]
+#   ./tinkerman/scripts/init.sh [--pack <name>] [--pack <name2>]
 # ============================================================================
 
 set -euo pipefail
@@ -205,9 +205,9 @@ detect_forge_root() {
     return
   fi
 
-  # 情况 2：全局安装到 ~/.claude/skills/forge
-  if [[ -d "$HOME/.claude/skills/forge/agents" ]]; then
-    echo "$HOME/.claude/skills/forge"
+  # 情况 2：全局安装到 ~/.claude/skills/tinkerman
+  if [[ -d "$HOME/.claude/skills/tinkerman/agents" ]]; then
+    echo "$HOME/.claude/skills/tinkerman"
     return
   fi
 
@@ -216,7 +216,7 @@ detect_forge_root() {
   echo "  已检查路径：" >&2
   echo "    \${CLAUDE_PLUGIN_ROOT}=${CLAUDE_PLUGIN_ROOT:-<unset>}" >&2
   echo "    ${script_dir}/.." >&2
-  echo "    \$HOME/.claude/skills/forge" >&2
+  echo "    \$HOME/.claude/skills/tinkerman" >&2
   exit 1
 }
 
@@ -334,7 +334,7 @@ fi
 # ============================================================================
 # 每个 prompt 站点遵循同一优先级：
 #   1. --flag 值（opt_*）   2. NON_INTERACTIVE 默认   3. 交互式 read
-# 这让 /forge init 在 Claude Code 内可经由 AskUserQuestion → flags 无 TTY 运行，
+# 这让 /tinkerman init 在 Claude Code 内可经由 AskUserQuestion → flags 无 TTY 运行，
 # 同时保留终端用户的纯 read 交互体验（NON_INTERACTIVE=0 且无 flag 时行为不变）。
 
 # 安全级别 → 中文 label 映射（flag 路径与 prompt 路径共用）。
@@ -654,7 +654,7 @@ security_level: ${security_level}
 knowledge_limit: 20
 ci_check_command: "${ci_check_cmd}"
 learn:
-  enabled: false              # 只控制 --install；不影响手动 /forge learn 或 /forge learn --deep
+  enabled: false              # 只控制 --install；不影响手动 /tinkerman learn 或 /tinkerman learn --deep
   cron: "0 9 * * 1"           # 用户自定义（示例：每周一 9 点跑 --deep 收敛）
   interval_days: 7            # cron 触发最小间隔（防抖，对齐 installCronSkill）
   deep_interval_days: 7       # --deep 对账最近 N 天的轨迹
@@ -753,7 +753,7 @@ updated: "${init_date} $(date +%H:%M)"
 
 # 项目状态
 
-尚未开始任何任务。使用 \`/forge\` 开始第一个任务。
+尚未开始任何任务。使用 \`/tinkerman\` 开始第一个任务。
 STATUSEOF
 
 # --- 写入 instincts.md ---
@@ -764,7 +764,7 @@ updated: "${init_date}"
 
 # 经验模式库
 
-尚未积累经验模式。完成任务后运行 \`/forge learn\` 沉淀经验。
+尚未积累经验模式。完成任务后运行 \`/tinkerman learn\` 沉淀经验。
 INSTINCTSEOF
 
 # --- 写入 known-failures.md ---
@@ -775,7 +775,7 @@ updated: "${init_date}"
 
 # 已知失败模式
 
-尚未记录失败模式。当 \`/forge debug\` 发现反复出现的失败时，会自动记录到此文件。
+尚未记录失败模式。当 \`/tinkerman debug\` 发现反复出现的失败时，会自动记录到此文件。
 
 <!-- 格式示例：
 ### 模块导入路径在 monorepo 中解析失败
@@ -895,11 +895,11 @@ fi
 
 # --- 复制 Command 文件 ---
 mkdir -p "${PROJECT_ROOT}/.claude/commands"
-if [[ -f "${FORGE_ROOT}/commands/forge.md" ]]; then
-  cp "${FORGE_ROOT}/commands/forge.md" "${PROJECT_ROOT}/.claude/commands/forge.md"
+if [[ -f "${FORGE_ROOT}/commands/tinkerman.md" ]]; then
+  cp "${FORGE_ROOT}/commands/tinkerman.md" "${PROJECT_ROOT}/.claude/commands/tinkerman.md"
   success "Forge Command 入口已复制到 .claude/commands/"
 else
-  warn "未找到 commands/forge.md，跳过"
+  warn "未找到 commands/tinkerman.md，跳过"
 fi
 
 # ============================================================================
@@ -1009,11 +1009,11 @@ fi
 fi  # end marketplace-mode guard (Step 5)
 
 # ============================================================================
-# Step 6：配置 forge-context MCP Server（智能 diff 截断）
+# Step 6：配置 tinkerman-context MCP Server（智能 diff 截断）
 # ============================================================================
-info "Step 6/7：forge-context MCP（智能 diff 截断）"
+info "Step 6/7：tinkerman-context MCP（智能 diff 截断）"
 echo ""
-echo "forge-context MCP Server 配置到项目的 .mcp.json（项目级，不影响其他项目）。"
+echo "tinkerman-context MCP Server 配置到项目的 .mcp.json（项目级，不影响其他项目）。"
 echo ""
 echo "为什么需要："
 echo "  • Token 消耗：spec-check 单次评审 700K+ → <200K（19 文件变更实测）"
@@ -1027,13 +1027,13 @@ echo "  • 大变更集（≥15 文件）评审可能截断"
 echo "  • lock 文件、生成文件可能挤占预算"
 echo ""
 
-mcp_server_path="${FORGE_ROOT}/dist/forge-context.mjs"
+mcp_server_path="${FORGE_ROOT}/dist/tinkerman-context.mjs"
 
 if [ -f "$mcp_server_path" ]; then
   if command -v node &>/dev/null; then
     mcp_file="${PROJECT_ROOT}/.mcp.json"
 
-    # Merge forge-context into .mcp.json
+    # Merge tinkerman-context into .mcp.json
     mcp_result=$(node -e "
       const fs = require('fs');
       const mcpPath = '${mcp_file}';
@@ -1045,10 +1045,10 @@ if [ -f "$mcp_server_path" ]; then
         mcp = {};
       }
       if (!mcp.mcpServers) mcp.mcpServers = {};
-      if (mcp.mcpServers['forge-context']) {
+      if (mcp.mcpServers['tinkerman-context']) {
         process.stdout.write('SKIP');
       } else {
-        mcp.mcpServers['forge-context'] = {
+        mcp.mcpServers['tinkerman-context'] = {
           command: 'node',
           args: [serverPath],
           alwaysLoad: true
@@ -1060,17 +1060,17 @@ if [ -f "$mcp_server_path" ]; then
 
     case "${mcp_result}" in
       SKIP)
-        warn "forge-context MCP 配置已存在，跳过（避免覆盖）"
+        warn "tinkerman-context MCP 配置已存在，跳过（避免覆盖）"
         ;;
       OK)
-        success "forge-context MCP Server 已配置到 .mcp.json"
+        success "tinkerman-context MCP Server 已配置到 .mcp.json"
         ;;
       *)
         warn "MCP 配置写入失败：${mcp_result}"
         ;;
     esac
   else
-    warn "未检测到 node 命令，跳过 MCP Server 配置。请手动创建 .mcp.json 配置 forge-context。"
+    warn "未检测到 node 命令，跳过 MCP Server 配置。请手动创建 .mcp.json 配置 tinkerman-context。"
   fi
 else
   info "未找到 MCP server（${mcp_server_path}），跳过 MCP 配置（运行 npm run build 后重新初始化可启用）"
@@ -1441,7 +1441,7 @@ if [[ -f "${installed_json}" ]] && command -v node &>/dev/null; then
   fi
 fi
 if [[ "${forge_plugin_installed}" == "1" ]]; then
-  echo -e "  ✅ Forge 插件        — 已安装（/forge 命令、hooks、subagent）"
+  echo -e "  ✅ Forge 插件        — 已安装（/tinkerman 命令、hooks、subagent）"
 elif [[ -n "${CLAUDE_PLUGIN_ROOT:-}" ]]; then
   echo -e "  ✅ Forge 插件        — 本次由插件运行（scope=local）"
 else
@@ -1450,11 +1450,11 @@ else
   echo -e "     ${CYAN}claude plugin install forge${NC}"
 fi
 
-# --- 2. forge-context MCP 批准状态 ---
+# --- 2. tinkerman-context MCP 批准状态 ---
 # .mcp.json 已在 Step 6 写入，但 Claude Code 要求项目级 MCP 显式批准才加载。
 # 无法自动批准（破坏信任模型），只能引导客户重启会话 + 点同意。
-if [[ -f "${PROJECT_ROOT}/.mcp.json" ]] && grep -q "forge-context" "${PROJECT_ROOT}/.mcp.json" 2>/dev/null; then
-  echo -e "  ${YELLOW}⚠️${NC} forge-context MCP — 已配置，需重启会话并批准才能加载"
+if [[ -f "${PROJECT_ROOT}/.mcp.json" ]] && grep -q "tinkerman-context" "${PROJECT_ROOT}/.mcp.json" 2>/dev/null; then
+  echo -e "  ${YELLOW}⚠️${NC} tinkerman-context MCP — 已配置，需重启会话并批准才能加载"
   echo -e "     重启 Claude Code → 启动时点 Approve（不批准也能用，仅 review 大变更可能截断）"
 fi
 
@@ -1487,12 +1487,12 @@ else
 fi
 echo ""
 echo "  下一步："
-echo "    输入 /forge 并描述你的任务，开始第一个开发任务。"
+echo "    输入 /tinkerman 并描述你的任务，开始第一个开发任务。"
 echo ""
 echo "  推荐：启用 Agent Teams（Full tier 自动使用 5 视角协作决策）："
 echo "    在 .claude/settings.json 的 env 块中添加："
 echo '    {"env": {"CLAUDE_CODE_EXPERIMENTAL_AGENT_TEAMS": "1"}}'
-echo "    或运行：/forge config"
+echo "    或运行：/tinkerman config"
 echo ""
 echo "  建议添加到 .gitignore："
 echo "    .forge/debug/"

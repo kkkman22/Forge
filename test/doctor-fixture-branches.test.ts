@@ -56,9 +56,9 @@ describe("buildHealthSnapshot (fixture-based branch coverage)", () => {
   it("reports runtimeSync pass when worker scripts present", () => {
     writeForge("status.md", '---\ncurrent_task: "x"\ntier: "standard"\nphase: "build"\n---\n');
     for (const f of [
-      "forge-hook-dispatch.mjs",
-      "forge-phase-worker.mjs",
-      "forge-sync-runtime.mjs",
+      "tinkerman-hook-dispatch.mjs",
+      "tinkerman-phase-worker.mjs",
+      "tinkerman-sync-runtime.mjs",
     ]) {
       mkdirSync(join(tmp, "scripts"), { recursive: true });
       writeFileSync(join(tmp, "scripts", f), "// runtime\n");

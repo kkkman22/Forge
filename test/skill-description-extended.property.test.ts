@@ -170,7 +170,7 @@ describe("validateDescriptionExtended — backward compatibility", () => {
 describe("validateDescriptionExtended — new two-sentence rules", () => {
   it("accepts well-formed two-sentence description", () => {
     const doc = buildSkillDoc(
-      "Plan the implementation from a locked spec. Use when user runs /forge plan.",
+      "Plan the implementation from a locked spec. Use when user runs /tinkerman plan.",
     );
     const result = validateDescriptionExtended(doc, { mode: "error" });
     expect(result.valid).toBe(true);
@@ -187,7 +187,7 @@ describe("validateDescriptionExtended — new two-sentence rules", () => {
   });
 
   it("rejects three-sentence description in error mode", () => {
-    const doc = buildSkillDoc("Build the code. Also tests it. Use when you run /forge build.");
+    const doc = buildSkillDoc("Build the code. Also tests it. Use when you run /tinkerman build.");
     const result = validateDescriptionExtended(doc, { mode: "error" });
     expect(result.valid).toBe(false);
     expect(result.sentenceCount).toBe(3);
@@ -210,7 +210,7 @@ describe("validateDescriptionExtended — new two-sentence rules", () => {
   it("warning mode reports errors but does not block existing valid descriptions", () => {
     // A description valid under old rules but not new two-sentence rules
     const doc = buildSkillDoc(
-      "The planning engine handles spec decomposition. Use when user runs /forge plan.",
+      "The planning engine handles spec decomposition. Use when user runs /tinkerman plan.",
     );
     const result = validateDescriptionExtended(doc, { mode: "warning" });
     // Should still report the new-rule violations as warnings

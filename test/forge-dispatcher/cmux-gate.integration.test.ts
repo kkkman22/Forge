@@ -5,7 +5,7 @@ import { __resetGateForTest } from "../../src/forge-dispatcher/cmux-gate.js";
 import { checkIntegrity } from "../../src/forge-dispatcher/integrity-check.js";
 import { dispatchForgeSubcommand } from "../../src/forge-dispatcher.js";
 
-const LIB_ROOT = resolve(import.meta.dirname, "../../skills/forge/lib");
+const LIB_ROOT = resolve(import.meta.dirname, "../../skills/tinkerman/lib");
 
 describe("Integration: cmux gate with real manifest and paths", () => {
   beforeEach(() => {

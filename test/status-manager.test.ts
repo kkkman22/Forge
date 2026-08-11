@@ -44,9 +44,9 @@ function createInMemoryIO(files: Record<string, string> = {}): StatusManagerIO {
 // Helpers
 // ---------------------------------------------------------------------------
 
-const STATUS_FILE = "/project/.forge/status.md";
-const STATUS_DIR = "/project/.forge/status";
-const FORGE_ROOT = "/project/.forge";
+const STATUS_FILE = "/project/.tinkerman/status.md";
+const STATUS_DIR = "/project/.tinkerman/status";
+const FORGE_ROOT = "/project/.tinkerman";
 
 function makeStatusContent(
   task: string,
@@ -255,7 +255,7 @@ describe("audit P2-6: writeTaskStatus must surface lock-contention failures", ()
       // retries. This is a P1 state-consistency failure — the status write did
       // NOT land, so the caller must not proceed as if it did.
       acquireLock: () => {
-        throw new ToolHealthLockTimeoutError("/project/.forge/status.md", 5000);
+        throw new ToolHealthLockTimeoutError("/project/.tinkerman/status.md", 5000);
       },
       releaseLock: () => {},
     };

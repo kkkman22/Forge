@@ -50,7 +50,7 @@ describe("Feature: plugin-init-experience, Property 1: Plugin priority", () => {
           const existingDirs = [
             `${pluginRoot}/agents`,
             `${scriptDir}/agents`,
-            `${homeDir}/.claude/skills/forge/agents`,
+            `${homeDir}/.claude/skills/tinkerman/agents`,
           ];
 
           const fs = createFsProbe(existingDirs);
@@ -118,7 +118,7 @@ describe("Feature: plugin-init-experience, Property 3: Fallback order", () => {
         // pluginRoot/agents does NOT exist
         // scriptDir parent agents EXISTS
         // global agents EXISTS (but should not be used)
-        const existingDirs = [`${scriptDir}/agents`, `${homeDir}/.claude/skills/forge/agents`];
+        const existingDirs = [`${scriptDir}/agents`, `${homeDir}/.claude/skills/tinkerman/agents`];
 
         const fs = createFsProbe(existingDirs);
         const result = resolveForgeRoot(input, fs);

@@ -36,7 +36,7 @@ describe("mirror: raises active workspace on startup (cmux 0.64.10+)", () => {
   });
 
   function seedForge() {
-    const forgeDir = join(dir, "forge");
+    const forgeDir = join(dir, "tinkerman");
     mkdirSync(forgeDir, { recursive: true });
     mkdirSync(join(forgeDir, "progress"), { recursive: true });
     writeFileSync(

@@ -30,7 +30,7 @@
  *   semantic embeddings. This is intentional: it catches the most common
  *   case (same topic, opposite advice) without requiring a model call.
  *
- * **Wired into**: `/forge learn` step 1 (maintenance) — runs after
+ * **Wired into**: `/tinkerman learn` step 1 (maintenance) — runs after
  * `maintainKnowledgeBase` and before five-dimension extraction.
  */
 

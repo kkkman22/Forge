@@ -11,7 +11,7 @@ import { describe, expect, it } from "vitest";
  *
  * Allowed absolute forms only:
  *   - `${CLAUDE_PLUGIN_ROOT}/scripts/X`  (marketplace install)
- *   - `~/.claude/skills/forge/scripts/X`  (skill install fallback)
+ *   - `~/.claude/skills/tinkerman/scripts/X`  (skill install fallback)
  *
  * The source `hooks/hooks.json` and its two generated copies must all stay in
  * sync (check-bundle-sync asserts file presence; this test asserts content
@@ -20,7 +20,7 @@ import { describe, expect, it } from "vitest";
 const HOOK_FILES = [
   "hooks/hooks.json",
   "dist-plugin/hooks/hooks.json",
-  "dist/claude-code/bundles/forge/hooks/hooks.json",
+  "dist/claude-code/bundles/tinkerman/hooks/hooks.json",
 ];
 
 const REPO_ROOT = join(import.meta.dirname, "..", "..");
@@ -52,7 +52,7 @@ describe("hook path safety — no bare relative fallback branches (P1-2)", () =>
               `bare relative fallback branch in:\n  ${cmd}\n` +
                 "Remove `|| node scripts/X` / `|| bash scripts/X` / `|| node forge/scripts/X` " +
                 "arms — they resolve to the victim CWD. Keep only `${CLAUDE_PLUGIN_ROOT}` " +
-                "and `~/.claude/skills/forge` absolute arms.",
+                "and `~/.claude/skills/tinkerman` absolute arms.",
             ).toBe(false);
           }
         });

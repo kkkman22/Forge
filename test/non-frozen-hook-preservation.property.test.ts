@@ -76,7 +76,7 @@ const EXPECTED_SESSION_START_HOOKS: HookMatcher[] = [
     hooks: [
       {
         type: "command",
-        command: `bash "${PLUGIN_ROOT_EXPR}/scripts/auto-resume.sh" 2>/dev/null || bash ~/.claude/skills/forge/scripts/auto-resume.sh 2>/dev/null || true`,
+        command: `bash "${PLUGIN_ROOT_EXPR}/scripts/auto-resume.sh" 2>/dev/null || bash ~/.claude/skills/tinkerman/scripts/auto-resume.sh 2>/dev/null || true`,
         timeout: 5,
       },
     ],
@@ -85,7 +85,7 @@ const EXPECTED_SESSION_START_HOOKS: HookMatcher[] = [
     hooks: [
       {
         type: "command",
-        command: `node "${PLUGIN_ROOT_EXPR}/scripts/inject-evolved-rules.mjs" 2>/dev/null || node ~/.claude/skills/forge/scripts/inject-evolved-rules.mjs 2>/dev/null || true`,
+        command: `node "${PLUGIN_ROOT_EXPR}/scripts/inject-evolved-rules.mjs" 2>/dev/null || node ~/.claude/skills/tinkerman/scripts/inject-evolved-rules.mjs 2>/dev/null || true`,
         timeout: 5,
       },
     ],
@@ -94,7 +94,7 @@ const EXPECTED_SESSION_START_HOOKS: HookMatcher[] = [
     hooks: [
       {
         type: "command",
-        command: `node "${PLUGIN_ROOT_EXPR}/scripts/bootstrap-check.mjs" 2>/dev/null || node ~/.claude/skills/forge/scripts/bootstrap-check.mjs 2>/dev/null || true`,
+        command: `node "${PLUGIN_ROOT_EXPR}/scripts/bootstrap-check.mjs" 2>/dev/null || node ~/.claude/skills/tinkerman/scripts/bootstrap-check.mjs 2>/dev/null || true`,
         timeout: 5,
       },
     ],
@@ -103,7 +103,7 @@ const EXPECTED_SESSION_START_HOOKS: HookMatcher[] = [
     hooks: [
       {
         type: "command",
-        command: `node "${PLUGIN_ROOT_EXPR}/scripts/forge-sync-runtime.mjs" --repair 2>/dev/null || node ~/.claude/skills/forge/scripts/forge-sync-runtime.mjs --repair 2>/dev/null || true`,
+        command: `node "${PLUGIN_ROOT_EXPR}/scripts/tinkerman-sync-runtime.mjs" --repair 2>/dev/null || node ~/.claude/skills/tinkerman/scripts/tinkerman-sync-runtime.mjs --repair 2>/dev/null || true`,
         timeout: 5,
       },
     ],
@@ -112,7 +112,7 @@ const EXPECTED_SESSION_START_HOOKS: HookMatcher[] = [
     hooks: [
       {
         type: "command",
-        command: `node "${PLUGIN_ROOT_EXPR}/scripts/check-companions.mjs" 2>/dev/null || node ~/.claude/skills/forge/scripts/check-companions.mjs 2>/dev/null || true`,
+        command: `node "${PLUGIN_ROOT_EXPR}/scripts/check-companions.mjs" 2>/dev/null || node ~/.claude/skills/tinkerman/scripts/check-companions.mjs 2>/dev/null || true`,
         timeout: 3,
       },
     ],
@@ -124,7 +124,7 @@ const EXPECTED_USER_PROMPT_SUBMIT_HOOKS: HookMatcher[] = [
     hooks: [
       {
         type: "command",
-        command: `node "${PLUGIN_ROOT_EXPR}/scripts/cmux-mirror/sync-once.mjs" .forge 2>/dev/null || node ~/.claude/skills/forge/scripts/cmux-mirror/sync-once.mjs .forge 2>/dev/null || true`,
+        command: `node "${PLUGIN_ROOT_EXPR}/scripts/cmux-mirror/sync-once.mjs" .forge 2>/dev/null || node ~/.claude/skills/tinkerman/scripts/cmux-mirror/sync-once.mjs .forge 2>/dev/null || true`,
         timeout: 5,
       },
     ],
@@ -137,7 +137,7 @@ const EXPECTED_POST_TOOL_USE_HOOKS: HookMatcher[] = [
     hooks: [
       {
         type: "command",
-        command: `bash "${PLUGIN_ROOT_EXPR}/scripts/hook-check-frozen-post.sh" 2>/dev/null || bash ~/.claude/skills/forge/scripts/hook-check-frozen-post.sh 2>/dev/null || true`,
+        command: `bash "${PLUGIN_ROOT_EXPR}/scripts/hook-check-frozen-post.sh" 2>/dev/null || bash ~/.claude/skills/tinkerman/scripts/hook-check-frozen-post.sh 2>/dev/null || true`,
         timeout: 5,
       },
     ],
@@ -159,7 +159,7 @@ const EXPECTED_POST_TOOL_USE_HOOKS: HookMatcher[] = [
     hooks: [
       {
         type: "command",
-        command: `node "${PLUGIN_ROOT_EXPR}/scripts/cmux-mirror/sync-once.mjs" .forge 2>/dev/null || node ~/.claude/skills/forge/scripts/cmux-mirror/sync-once.mjs .forge 2>/dev/null || true`,
+        command: `node "${PLUGIN_ROOT_EXPR}/scripts/cmux-mirror/sync-once.mjs" .forge 2>/dev/null || node ~/.claude/skills/tinkerman/scripts/cmux-mirror/sync-once.mjs .forge 2>/dev/null || true`,
         timeout: 5,
       },
     ],
@@ -170,7 +170,7 @@ const EXPECTED_POST_TOOL_USE_HOOKS: HookMatcher[] = [
     hooks: [
       {
         type: "command",
-        command: `node "${PLUGIN_ROOT_EXPR}/scripts/rebuild-feature-dossier.mjs" 2>/dev/null || node ~/.claude/skills/forge/scripts/rebuild-feature-dossier.mjs 2>/dev/null || true`,
+        command: `node "${PLUGIN_ROOT_EXPR}/scripts/rebuild-feature-dossier.mjs" 2>/dev/null || node ~/.claude/skills/tinkerman/scripts/rebuild-feature-dossier.mjs 2>/dev/null || true`,
         timeout: 5,
       },
     ],
@@ -181,7 +181,7 @@ const EXPECTED_POST_TOOL_USE_HOOKS: HookMatcher[] = [
     hooks: [
       {
         type: "command",
-        command: `node "${PLUGIN_ROOT_EXPR}/scripts/knowledge-hook-dispatch.mjs" 2>/dev/null || node ~/.claude/skills/forge/scripts/knowledge-hook-dispatch.mjs 2>/dev/null || true`,
+        command: `node "${PLUGIN_ROOT_EXPR}/scripts/knowledge-hook-dispatch.mjs" 2>/dev/null || node ~/.claude/skills/tinkerman/scripts/knowledge-hook-dispatch.mjs 2>/dev/null || true`,
         timeout: 5,
       },
     ],
@@ -211,7 +211,7 @@ const EXPECTED_POST_TOOL_USE_HOOKS: HookMatcher[] = [
     hooks: [
       {
         type: "command",
-        command: `node "${PLUGIN_ROOT_EXPR}/scripts/check-diff-context-integrity.mjs" 2>/dev/null || node ~/.claude/skills/forge/scripts/check-diff-context-integrity.mjs 2>/dev/null || true`,
+        command: `node "${PLUGIN_ROOT_EXPR}/scripts/check-diff-context-integrity.mjs" 2>/dev/null || node ~/.claude/skills/tinkerman/scripts/check-diff-context-integrity.mjs 2>/dev/null || true`,
         timeout: 5,
       },
     ],
@@ -223,7 +223,7 @@ const EXPECTED_STOP_HOOKS: HookMatcher[] = [
     hooks: [
       {
         type: "command",
-        command: `node "${PLUGIN_ROOT_EXPR}/scripts/stop-pending-rules.mjs" 2>/dev/null || node ~/.claude/skills/forge/scripts/stop-pending-rules.mjs 2>/dev/null || true`,
+        command: `node "${PLUGIN_ROOT_EXPR}/scripts/stop-pending-rules.mjs" 2>/dev/null || node ~/.claude/skills/tinkerman/scripts/stop-pending-rules.mjs 2>/dev/null || true`,
         timeout: 5,
       },
     ],
@@ -232,7 +232,7 @@ const EXPECTED_STOP_HOOKS: HookMatcher[] = [
     hooks: [
       {
         type: "command",
-        command: `node "${PLUGIN_ROOT_EXPR}/scripts/flag-stale-evolved-rules.mjs" 2>/dev/null || node ~/.claude/skills/forge/scripts/flag-stale-evolved-rules.mjs 2>/dev/null || true`,
+        command: `node "${PLUGIN_ROOT_EXPR}/scripts/flag-stale-evolved-rules.mjs" 2>/dev/null || node ~/.claude/skills/tinkerman/scripts/flag-stale-evolved-rules.mjs 2>/dev/null || true`,
         timeout: 5,
       },
     ],
@@ -241,7 +241,7 @@ const EXPECTED_STOP_HOOKS: HookMatcher[] = [
     hooks: [
       {
         type: "command",
-        command: `node "${PLUGIN_ROOT_EXPR}/scripts/cmux-mirror/sync-once.mjs" .forge 2>/dev/null || node ~/.claude/skills/forge/scripts/cmux-mirror/sync-once.mjs .forge 2>/dev/null || true`,
+        command: `node "${PLUGIN_ROOT_EXPR}/scripts/cmux-mirror/sync-once.mjs" .forge 2>/dev/null || node ~/.claude/skills/tinkerman/scripts/cmux-mirror/sync-once.mjs .forge 2>/dev/null || true`,
         timeout: 5,
       },
     ],
@@ -250,7 +250,7 @@ const EXPECTED_STOP_HOOKS: HookMatcher[] = [
     hooks: [
       {
         type: "command",
-        command: `node "${PLUGIN_ROOT_EXPR}/scripts/stop-phase-verify.mjs" 2>/dev/null || node ~/.claude/skills/forge/scripts/stop-phase-verify.mjs 2>/dev/null || true`,
+        command: `node "${PLUGIN_ROOT_EXPR}/scripts/stop-phase-verify.mjs" 2>/dev/null || node ~/.claude/skills/tinkerman/scripts/stop-phase-verify.mjs 2>/dev/null || true`,
         timeout: 3,
       },
     ],

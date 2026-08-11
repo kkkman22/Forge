@@ -75,7 +75,7 @@ describe("logResolvedRoot", () => {
     const spy = vi.spyOn(console, "error").mockImplementation(() => {});
     logResolvedRoot({ path: "/abs/project", source: "env" });
     expect(spy).toHaveBeenCalledWith(
-      expect.stringContaining("[forge-context] resolved project root: /abs/project (env)"),
+      expect.stringContaining("[tinkerman-context] resolved project root: /abs/project (env)"),
     );
     spy.mockRestore();
   });
@@ -84,7 +84,9 @@ describe("logResolvedRoot", () => {
     const spy = vi.spyOn(console, "error").mockImplementation(() => {});
     logResolvedRoot({ path: "/some/cwd", source: "cwd" });
     expect(spy).toHaveBeenCalledWith(
-      expect.stringContaining("[forge-context] resolved project root: /some/cwd (cwd fallback)"),
+      expect.stringContaining(
+        "[tinkerman-context] resolved project root: /some/cwd (cwd fallback)",
+      ),
     );
     spy.mockRestore();
   });
