@@ -26,26 +26,6 @@ if [ -z "$STAGED" ]; then
   exit 0
 fi
 
-# ── README metrics auto-sync (test/, src/*.ts, or README staged) ──
-# check-readme-metrics.sh rewrites drifted counts in-place locally; we then
-# re-stage README so the fix lands in THIS commit (origin self-corrects — no
-# manual bump, no stale origin). Best-effort and non-blocking here; the pre-push
-# `npm run check` remains the hard gate. Adds ~24s (vitest list) ONLY when
-# test/src/README is staged, so docs/config commits stay instant.
-if echo "$STAGED" | grep -qE '^test/|^src/.*\.ts$|^README\.md$'; then
-  METRICS_LOG="/tmp/forge-readme-metrics.$$.log"
-  if bash scripts/check-readme-metrics.sh >"$METRICS_LOG" 2>&1; then
-    if ! git diff --quiet README.md 2>/dev/null; then
-      git add README.md
-      echo "📊 readme-metrics: auto-synced README counts, staged for this commit."
-    fi
-  else
-    echo "⚠️  readme-metrics: sync skipped (check error, non-blocking):"
-    sed -n '1,8p' "$METRICS_LOG"
-  fi
-  rm -f "$METRICS_LOG"
-fi
-
 # ── Lightweight path: no docs/ changes ──
 DOCS_CHANGED=$(echo "$STAGED" | grep -c "^docs/" || true)
 CONFIG_CHANGED=$(echo "$STAGED" | grep -c "^\.forge/config\.md$" || true)

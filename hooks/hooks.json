@@ -52,24 +52,8 @@
         "hooks": [
           {
             "type": "command",
-            "command": "node \"${CLAUDE_PLUGIN_ROOT:-}/scripts/inject-plan-context.mjs\" 2>/dev/null || node ~/.claude/skills/forge/scripts/inject-plan-context.mjs 2>/dev/null || true"
-          }
-        ]
-      },
-      {
-        "hooks": [
-          {
-            "type": "command",
             "command": "node \"${CLAUDE_PLUGIN_ROOT:-}/scripts/cmux-mirror/sync-once.mjs\" .forge 2>/dev/null || node ~/.claude/skills/forge/scripts/cmux-mirror/sync-once.mjs .forge 2>/dev/null || true",
             "timeout": 5
-          }
-        ]
-      },
-      {
-        "hooks": [
-          {
-            "type": "command",
-            "command": "node \"${CLAUDE_PLUGIN_ROOT:-}/scripts/record-prompt-metrics.mjs\" 2>/dev/null || node ~/.claude/skills/forge/scripts/record-prompt-metrics.mjs 2>/dev/null || true"
           }
         ]
       }
@@ -242,24 +226,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "node \"${CLAUDE_PLUGIN_ROOT:-}/scripts/stop-incomplete-tasks.mjs\" 2>/dev/null || node ~/.claude/skills/forge/scripts/stop-incomplete-tasks.mjs 2>/dev/null || true"
-          }
-        ]
-      },
-      {
-        "hooks": [
-          {
-            "type": "command",
             "command": "node \"${CLAUDE_PLUGIN_ROOT:-}/scripts/stop-pending-rules.mjs\" 2>/dev/null || node ~/.claude/skills/forge/scripts/stop-pending-rules.mjs 2>/dev/null || true",
-            "timeout": 5
-          }
-        ]
-      },
-      {
-        "hooks": [
-          {
-            "type": "command",
-            "command": "node \"${CLAUDE_PLUGIN_ROOT:-}/scripts/record-evolved-rule-violation.mjs\" 2>/dev/null || node ~/.claude/skills/forge/scripts/record-evolved-rule-violation.mjs 2>/dev/null || true",
             "timeout": 5
           }
         ]
@@ -288,15 +255,6 @@
             "type": "command",
             "command": "node \"${CLAUDE_PLUGIN_ROOT:-}/scripts/stop-phase-verify.mjs\" 2>/dev/null || node ~/.claude/skills/forge/scripts/stop-phase-verify.mjs 2>/dev/null || true",
             "timeout": 3
-          }
-        ]
-      },
-      {
-        "hooks": [
-          {
-            "type": "command",
-            "command": "node \"${CLAUDE_PLUGIN_ROOT:-}/scripts/stop-additional-context.mjs\" 2>/dev/null || node ~/.claude/skills/forge/scripts/stop-additional-context.mjs 2>/dev/null || true",
-            "timeout": 5
           }
         ]
       }
@@ -333,63 +291,12 @@
         ]
       }
     ],
-    "TaskCompleted": [
-      {
-        "hooks": [
-          {
-            "type": "command",
-            "command": "bash \"${CLAUDE_PLUGIN_ROOT:-}/scripts/hook-task-completed.sh\" 2>&1 || bash ~/.claude/skills/forge/scripts/hook-task-completed.sh 2>&1",
-            "timeout": 10
-          }
-        ]
-      }
-    ],
     "TaskCreated": [
       {
         "hooks": [
           {
             "type": "command",
             "command": "if [ -f .forge/status.md ]; then phase=$(grep '^phase:' .forge/status.md 2>/dev/null | sed 's/phase: *\"\\{0,1\\}//;s/\"\\{0,1\\} *$//'); if [ \"$phase\" = 'build' ]; then plan_file=$(ls -t .forge/plans/*.md 2>/dev/null | head -1); if [ -n \"$plan_file\" ]; then plan_status=$(grep '^status:' \"$plan_file\" 2>/dev/null | head -1 | sed 's/status: *\"\\{0,1\\}//;s/\"\\{0,1\\} *$//' | tr -d '[:space:]'); if [ \"$plan_status\" != 'approved' ]; then echo \"⚠️ build 阶段：plan 状态为 $plan_status（非 approved），队友任务建议等 plan 锁定后再创建\" >&2; fi; fi; fi; fi"
-          }
-        ]
-      },
-      {
-        "hooks": [
-          {
-            "type": "command",
-            "command": "node \"${CLAUDE_PLUGIN_ROOT:-}/scripts/task-created-hook.mjs\" 2>/dev/null || node ~/.claude/skills/forge/scripts/task-created-hook.mjs 2>/dev/null || true",
-            "timeout": 3
-          }
-        ]
-      }
-    ],
-    "WorktreeCreate": [
-      {
-        "hooks": [
-          {
-            "type": "command",
-            "command": "node \"${CLAUDE_PLUGIN_ROOT:-}/scripts/worktree-create-hook.mjs\" 2>/dev/null || node ~/.claude/skills/forge/scripts/worktree-create-hook.mjs 2>/dev/null || true",
-            "timeout": 3
-          }
-        ]
-      }
-    ],
-    "StopFailure": [
-      {
-        "hooks": [
-          {
-            "type": "command",
-            "command": "node \"${CLAUDE_PLUGIN_ROOT:-}/scripts/stop-failure-hook.mjs\" 2>/dev/null || node ~/.claude/skills/forge/scripts/stop-failure-hook.mjs 2>/dev/null || true",
-            "timeout": 3
-          }
-        ]
-      },
-      {
-        "hooks": [
-          {
-            "type": "command",
-            "command": "node \"${CLAUDE_PLUGIN_ROOT:-}/scripts/stop-additional-context.mjs\" 2>/dev/null || node ~/.claude/skills/forge/scripts/stop-additional-context.mjs 2>/dev/null || true",
-            "timeout": 5
           }
         ]
       }
@@ -400,28 +307,6 @@
           {
             "type": "command",
             "command": "node \"${CLAUDE_PLUGIN_ROOT:-}/scripts/config-changed-hook.mjs\" 2>/dev/null || node ~/.claude/skills/forge/scripts/config-changed-hook.mjs 2>/dev/null || true",
-            "timeout": 3
-          }
-        ]
-      }
-    ],
-    "PermissionDenied": [
-      {
-        "hooks": [
-          {
-            "type": "command",
-            "command": "node \"${CLAUDE_PLUGIN_ROOT:-}/scripts/permission-denied-hook.mjs\" 2>/dev/null || node ~/.claude/skills/forge/scripts/permission-denied-hook.mjs 2>/dev/null || true",
-            "timeout": 3
-          }
-        ]
-      }
-    ],
-    "WorktreeRemove": [
-      {
-        "hooks": [
-          {
-            "type": "command",
-            "command": "node \"${CLAUDE_PLUGIN_ROOT:-}/scripts/worktree-remove-hook.mjs\" 2>/dev/null || node ~/.claude/skills/forge/scripts/worktree-remove-hook.mjs 2>/dev/null || true",
             "timeout": 3
           }
         ]

@@ -34,11 +34,7 @@ jobs:
           cache: npm
       - run: npm ci
 
-      # 1. Sync README test metrics
-      - name: Sync README metrics
-        run: bash scripts/sync-readme-metrics.sh
-
-      # 2. Sync lib manifest sha256
+      # 1. Sync lib manifest sha256
       - name: Sync lib manifest
         run: node scripts/build-lib-manifest.mjs
 

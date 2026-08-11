@@ -7,18 +7,14 @@
     "hook-check-frozen.sh",
     "hook-check-frozen-post.sh",
     "hook-precompact.sh",
-    "hook-postcompact.sh",
-    "hook-task-completed.sh"
+    "hook-postcompact.sh"
   ],
   "cc_runtime_mjs": [
-    "inject-plan-context.mjs",
     "inject-evolved-rules.mjs",
     "check-context-boundary.mjs",
     "check-diff-context-integrity.mjs",
     "rebuild-feature-dossier.mjs",
-    "record-evolved-rule-violation.mjs",
     "flag-stale-evolved-rules.mjs",
-    "stop-incomplete-tasks.mjs",
     "stop-pending-rules.mjs",
     "stop-phase-verify.mjs",
     "knowledge-hook-dispatch.mjs",
@@ -26,17 +22,10 @@
     "check-companions.mjs",
     "bash-ban-raw.mjs",
     "check-destructive.mjs",
-    "stop-additional-context.mjs",
-    "stop-failure-hook.mjs",
-    "task-created-hook.mjs",
-    "worktree-create-hook.mjs",
     "config-changed-hook.mjs",
-    "permission-denied-hook.mjs",
-    "worktree-remove-hook.mjs",
     "forge-hook-dispatch.mjs",
     "forge-phase-worker.mjs",
-    "forge-sync-runtime.mjs",
-    "record-prompt-metrics.mjs"
+    "forge-sync-runtime.mjs"
   ],
   "cc_compiled_js": [
     "state.js",
@@ -48,20 +37,16 @@
     "hook-check-frozen-post.sh",
     "hook-precompact.sh",
     "hook-postcompact.sh",
-    "hook-task-completed.sh",
     "check-frozen.sh",
     "init.sh",
     "validate-knowledge.sh"
   ],
   "plugin_runtime_mjs": [
-    "inject-plan-context.mjs",
     "inject-evolved-rules.mjs",
     "check-context-boundary.mjs",
     "check-diff-context-integrity.mjs",
     "rebuild-feature-dossier.mjs",
-    "record-evolved-rule-violation.mjs",
     "flag-stale-evolved-rules.mjs",
-    "stop-incomplete-tasks.mjs",
     "stop-pending-rules.mjs",
     "stop-phase-verify.mjs",
     "knowledge-hook-dispatch.mjs",
@@ -69,17 +54,10 @@
     "check-companions.mjs",
     "bash-ban-raw.mjs",
     "check-destructive.mjs",
-    "stop-additional-context.mjs",
-    "stop-failure-hook.mjs",
-    "task-created-hook.mjs",
-    "worktree-create-hook.mjs",
     "config-changed-hook.mjs",
-    "permission-denied-hook.mjs",
-    "worktree-remove-hook.mjs",
     "forge-hook-dispatch.mjs",
     "forge-phase-worker.mjs",
-    "forge-sync-runtime.mjs",
-    "record-prompt-metrics.mjs"
+    "forge-sync-runtime.mjs"
   ],
   "plugin_compiled_js": [
     "check-sandbox.js",

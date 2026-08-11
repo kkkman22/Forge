@@ -537,18 +537,6 @@ describe("Contract: skills content validation", () => {
 // 12. CI calibration step existence
 // ---------------------------------------------------------------------------
 
-describe("Contract: CI calibration step existence", () => {
-  const ciPath = resolve(ROOT, ".github/workflows/ci.yml");
-
-  it("ci.yml contains a step referencing check-readme-metrics.sh", () => {
-    const content = readFileSync(ciPath, "utf-8");
-    expect(
-      content.includes("check-readme-metrics.sh"),
-      "CI workflow (.github/workflows/ci.yml) does not contain a step referencing check-readme-metrics.sh",
-    ).toBe(true);
-  });
-});
-
 describe("Contract: hooks.json structure validation", () => {
   const hooksPath = resolve(ROOT, "hooks/hooks.json");
   const hooks = JSON.parse(readFileSync(hooksPath, "utf-8"));
@@ -558,16 +546,7 @@ describe("Contract: hooks.json structure validation", () => {
     expect(hooks.hooks.TeammateIdle.length).toBeGreaterThan(0);
   });
 
-  it("hooks.json contains TaskCompleted hook", () => {
-    expect(hooks.hooks.TaskCompleted).toBeDefined();
-    expect(hooks.hooks.TaskCompleted.length).toBeGreaterThan(0);
-  });
-
-  const requiredLifecycleHooks = [
-    ["ConfigChange", "scripts/config-changed-hook.mjs"],
-    ["PermissionDenied", "scripts/permission-denied-hook.mjs"],
-    ["WorktreeRemove", "scripts/worktree-remove-hook.mjs"],
-  ] as const;
+  const requiredLifecycleHooks = [["ConfigChange", "scripts/config-changed-hook.mjs"]] as const;
 
   for (const [eventName, scriptPath] of requiredLifecycleHooks) {
     it(`hooks.json contains ${eventName} lifecycle hook referencing ${scriptPath}`, () => {
@@ -1176,9 +1155,7 @@ import { join } from "node:path";
 
 describe("Contract: stop hooks should not block", () => {
   const STOP_HOOK_SCRIPTS = [
-    "scripts/stop-incomplete-tasks.mjs",
     "scripts/stop-pending-rules.mjs",
-    "scripts/record-evolved-rule-violation.mjs",
     "scripts/flag-stale-evolved-rules.mjs",
     "scripts/cmux-mirror/sync-once.mjs",
     "scripts/stop-phase-verify.mjs",

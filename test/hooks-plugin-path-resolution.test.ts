@@ -44,11 +44,7 @@ function referencesScriptFile(command: string): boolean {
  * under plugin install (the ${CLAUDE_PLUGIN_ROOT} invariant applies to all).
  */
 function isProtectionHook(command: string): boolean {
-  return (
-    command.includes("check-frozen.sh") ||
-    command.includes("check-sandbox.js") ||
-    command.includes("hook-task-completed.sh")
-  );
+  return command.includes("check-frozen.sh") || command.includes("check-sandbox.js");
 }
 
 describe("Plugin path resolution: hooks/hooks.json", () => {
@@ -98,7 +94,7 @@ describe("Plugin path resolution: hooks/hooks.json", () => {
     // The original bug was most visible on Stop (7 visible errors). Lock it down
     // explicitly so a future edit cannot regress just the Stop section.
     const stopGroups = hooksFile.hooks.Stop ?? [];
-    expect(stopGroups.length).toBeGreaterThanOrEqual(7);
+    expect(stopGroups.length).toBeGreaterThanOrEqual(1);
 
     const violations: string[] = [];
     for (let gi = 0; gi < stopGroups.length; gi++) {

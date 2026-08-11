@@ -124,26 +124,8 @@ const EXPECTED_USER_PROMPT_SUBMIT_HOOKS: HookMatcher[] = [
     hooks: [
       {
         type: "command",
-        command: `node "${PLUGIN_ROOT_EXPR}/scripts/inject-plan-context.mjs" 2>/dev/null || node ~/.claude/skills/forge/scripts/inject-plan-context.mjs 2>/dev/null || true`,
-      },
-    ],
-  },
-  {
-    hooks: [
-      {
-        type: "command",
         command: `node "${PLUGIN_ROOT_EXPR}/scripts/cmux-mirror/sync-once.mjs" .forge 2>/dev/null || node ~/.claude/skills/forge/scripts/cmux-mirror/sync-once.mjs .forge 2>/dev/null || true`,
         timeout: 5,
-      },
-    ],
-  },
-  // Usage metrics recorder (spec metrics-hook-wiring): non-blocking, privacy-safe
-  // (records only the /forge <sub> name, never the prompt body).
-  {
-    hooks: [
-      {
-        type: "command",
-        command: `node "${PLUGIN_ROOT_EXPR}/scripts/record-prompt-metrics.mjs" 2>/dev/null || node ~/.claude/skills/forge/scripts/record-prompt-metrics.mjs 2>/dev/null || true`,
       },
     ],
   },
@@ -241,24 +223,7 @@ const EXPECTED_STOP_HOOKS: HookMatcher[] = [
     hooks: [
       {
         type: "command",
-        command: `node "${PLUGIN_ROOT_EXPR}/scripts/stop-incomplete-tasks.mjs" 2>/dev/null || node ~/.claude/skills/forge/scripts/stop-incomplete-tasks.mjs 2>/dev/null || true`,
-      },
-    ],
-  },
-  {
-    hooks: [
-      {
-        type: "command",
         command: `node "${PLUGIN_ROOT_EXPR}/scripts/stop-pending-rules.mjs" 2>/dev/null || node ~/.claude/skills/forge/scripts/stop-pending-rules.mjs 2>/dev/null || true`,
-        timeout: 5,
-      },
-    ],
-  },
-  {
-    hooks: [
-      {
-        type: "command",
-        command: `node "${PLUGIN_ROOT_EXPR}/scripts/record-evolved-rule-violation.mjs" 2>/dev/null || node ~/.claude/skills/forge/scripts/record-evolved-rule-violation.mjs 2>/dev/null || true`,
         timeout: 5,
       },
     ],
@@ -290,15 +255,6 @@ const EXPECTED_STOP_HOOKS: HookMatcher[] = [
       },
     ],
   },
-  {
-    hooks: [
-      {
-        type: "command",
-        command: `node "${PLUGIN_ROOT_EXPR}/scripts/stop-additional-context.mjs" 2>/dev/null || node ~/.claude/skills/forge/scripts/stop-additional-context.mjs 2>/dev/null || true`,
-        timeout: 5,
-      },
-    ],
-  },
 ];
 
 const EXPECTED_TEAMMATE_IDLE_HOOKS: HookMatcher[] = [
@@ -308,18 +264,6 @@ const EXPECTED_TEAMMATE_IDLE_HOOKS: HookMatcher[] = [
         type: "command",
         command:
           "if [ -d .forge/status ]; then status_file=$(ls -t .forge/status/*.md 2>/dev/null | head -1); else status_file='.forge/status.md'; fi; phase=$(grep '^phase:' \"$status_file\" 2>/dev/null | sed 's/phase: *\"\\{0,1\\}//;s/\"\\{0,1\\} *$//'); if [ \"$phase\" = 'review' ] || [ \"$phase\" = 'decide' ]; then echo '队友空闲。请检查是否所有评审/决策维度都已完成输出，未完成的队友应继续工作。'; fi",
-      },
-    ],
-  },
-];
-
-const EXPECTED_TASK_COMPLETED_HOOKS: HookMatcher[] = [
-  {
-    hooks: [
-      {
-        type: "command",
-        command: `bash "${PLUGIN_ROOT_EXPR}/scripts/hook-task-completed.sh" 2>&1 || bash ~/.claude/skills/forge/scripts/hook-task-completed.sh 2>&1`,
-        timeout: 10,
       },
     ],
   },
@@ -347,7 +291,6 @@ const NON_FROZEN_EVENT_TYPES = [
   "PostToolUse",
   "Stop",
   "TeammateIdle",
-  "TaskCompleted",
 ] as const;
 
 // ---------------------------------------------------------------------------
@@ -405,10 +348,6 @@ describe("Preservation: Non-frozen hooks are byte-identical to baseline", () => 
 
   it("TeammateIdle hooks are byte-identical to observed baseline", () => {
     expect(config.hooks.TeammateIdle).toEqual(EXPECTED_TEAMMATE_IDLE_HOOKS);
-  });
-
-  it("TaskCompleted hooks are byte-identical to observed baseline", () => {
-    expect(config.hooks.TaskCompleted).toEqual(EXPECTED_TASK_COMPLETED_HOOKS);
   });
 });
 
@@ -529,7 +468,6 @@ describe("Preservation: Hook structure for non-frozen hooks (property-based)", (
     const expectedTimeouts: Record<string, number> = {
       "auto-resume.sh": 5,
       "evolved-rules.md": 5,
-      "inject-plan-context": 5,
       PENDING: 5,
       "sync-once.mjs": 5,
     };

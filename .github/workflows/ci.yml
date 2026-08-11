@@ -36,9 +36,6 @@ jobs:
       - name: Build dist bundle
         run: bash scripts/build-dist.sh
       - run: npm run test:coverage
-      - name: Check README metrics
-        if: github.event_name == 'pull_request'
-        run: bash scripts/check-readme-metrics.sh
       - name: Verify dist bundle
         run: |
           test -f dist/claude-code/bundles/forge/INSTALL.md

@@ -7,7 +7,6 @@ scripts/hook-check-frozen.sh
 scripts/auto-resume.sh
 scripts/persistent-loop.sh
 scripts/run-with-trim.sh
-scripts/inject-plan-context.mjs
 
 # Internal-only: thin wrappers that delegate to .mjs
 scripts/validate-skill-descriptions.sh
@@ -17,7 +16,6 @@ scripts/check-evolution-marker-zones.sh
 scripts/check-skill-function-refs.sh
 scripts/check-no-bare-console.sh
 scripts/check-no-execsync.sh
-scripts/check-readme-metrics.sh
 
 # Internal-only: CI/build tooling, never invoked by AI
 scripts/append-baseline.mjs
