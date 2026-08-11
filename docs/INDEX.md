@@ -32,7 +32,7 @@
 - [Forge 安全与信任](reference-security.md) — reference — 2026-06-30
 - [Forge 日常开发者引导](onboarding-daily.md) / [Forge 日常开发者引导 (EN)](onboarding-daily.en.md) — reference — 2026-05-12
 - [Forge 架构与状态保护](reference-architecture.md) — reference — 2026-05-12
-- [Hooks Inventory — Hint/Gate 二分清单](hooks-inventory.md) — reference — 2026-06-25
+- [Hooks Inventory — Hint/Gate 二分清单](hooks-inventory.md) — reference — 2026-08-11
 - [Policy Profiles 指南](best-practices/policy-profiles.md) / [Policy Profiles 指南 (EN)](best-practices/policy-profiles.en.md) — reference — 2026-06-09
 - [Review 配置指南](best-practices/review-configuration.md) / [Review 配置指南 (EN)](best-practices/review-configuration.en.md) — reference — 2026-05-17
 - [Router 选择指南](best-practices/router-selection.md) / [Router 选择指南 (EN)](best-practices/router-selection.en.md) — reference — 2026-06-09

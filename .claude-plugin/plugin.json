@@ -13,11 +13,11 @@
   "license": "MIT",
   "homepage": "https://github.com/kkkman22/Forge",
   "keywords": [
-    "workflow",
-    "tdd",
-    "spec-driven",
-    "code-review",
-    "ci"
+    "brake",
+    "review",
+    "gates",
+    "lifecycle-hooks",
+    "verification"
   ],
   "userConfig": {
     "max_parallel_agents": {

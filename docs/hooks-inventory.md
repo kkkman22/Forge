@@ -3,7 +3,7 @@ title: 'Hooks Inventory — Hint/Gate 二分清单'
 category: reference
 audience:
 - maintainer
-updated: 2026-06-25
+updated: 2026-08-11
 owner: forge-maintainers
 ---
 
@@ -41,25 +41,24 @@ owner: forge-maintainers
 | `scripts/bash-ban-raw.mjs` | PreToolUse(Bash) | 禁止原始 bash(必须走 forge 封装) |
 | `scripts/check-context-boundary.mjs` | PreToolUse(Write\|Edit) / PostToolUse | context 边界强制(8 个 block 路径,强阻断) |
 | `scripts/check-diff-context-integrity.mjs` | PostToolUse | diff 完整性:防止评审上下文被篡改 |
-| `scripts/hook-task-completed.sh` | TaskCompleted | 任务完成门禁 |
 | `scripts/knowledge-hook-dispatch.mjs` | PostToolUse(Write\|Edit) | 知识库写入门禁 |
 | `scripts/rebuild-feature-dossier.mjs` | PostToolUse(Write\|Edit) | feature dossier 重建门禁 |
 
 ### Hint-Type(提示型,exit 0 + stdout)
 
+> **注(ADR-0009 减法后)**:已移除 babysit / 可吸收类 hook（stop-incomplete-tasks / inject-plan-context / record-prompt-metrics / record-evolved-rule-violation / stop-additional-context / stop-failure-hook / task-created-hook / worktree-create+remove-hook / permission-denied-hook / phase-transition-guard / hook-task-completed）。保留刹车类（frozen / prompt-guard / phase-verify）。详见 `.forge/audits/hook-audit-2026-08-11.md`。
+
 **SessionStart**:`auto-resume.sh`、`inject-evolved-rules.mjs`、`bootstrap-check.mjs`、`forge-sync-runtime.mjs`、`check-companions.mjs`、`forge-hook-dispatch.mjs`
 
-**UserPromptSubmit**:`inject-plan-context.mjs`(R3 active-plan 指针 + R4 progress 窗口 + R5 findings 注入,单一权威注入入口)、`cmux-mirror/sync-once.mjs`、`record-prompt-metrics.mjs`、`forge-hook-dispatch.mjs`
+**UserPromptSubmit**:`cmux-mirror/sync-once.mjs`、`forge-hook-dispatch.mjs`
 
 **PreToolUse**:`check-context-boundary.mjs`(advisory 模式)、`bash-ban-raw.mjs`(advisory)
 
-> **注(SC-5)**:`inject-plan-context.mjs` 仅在 UserPromptSubmit 注册,不在 PreToolUse。R5 的 findings 注入通过 UserPromptSubmit(每轮提示时)回流 build 阶段,不在每次 Write/Edit 重复触发(避免高频重复注入增噪)。`.claude/settings.json`(本地运行时)在 PreToolUse 注册了 inject,但插件分发 `hooks.json` 不含——两者为不同运行时。
+**PostToolUse**:`hook-check-frozen-post.sh`、`cmux-mirror/sync-once.mjs`、`rebuild-feature-dossier.mjs`(advisory)、`knowledge-hook-dispatch.mjs`(advisory)、`check-context-boundary.mjs`、`check-diff-context-integrity.mjs`(advisory)、`track-read-budget.mjs`、`track-tool-duration.mjs`
 
-**PostToolUse**:`hook-check-frozen-post.sh`、`cmux-mirror/sync-once.mjs`、`rebuild-feature-dossier.mjs`(advisory)、`knowledge-hook-dispatch.mjs`(advisory)、`check-context-boundary.mjs`、`check-diff-context-integrity.mjs`(advisory)、`track-read-budget.mjs`、`track-tool-duration.mjs`、`phase-transition-guard.sh`
+**Stop**:`stop-pending-rules.mjs`、`flag-stale-evolved-rules.mjs`、`cmux-mirror/sync-once.mjs`、`stop-phase-verify.mjs`、`forge-hook-dispatch.mjs`
 
-**Stop**:`stop-incomplete-tasks.mjs`(R1 completion gate,prompt-only)、`stop-pending-rules.mjs`、`record-evolved-rule-violation.mjs`、`flag-stale-evolved-rules.mjs`、`cmux-mirror/sync-once.mjs`、`stop-phase-verify.mjs`、`stop-additional-context.mjs`、`stop-failure-hook.mjs`、`forge-hook-dispatch.mjs`
-
-**TeammateIdle / TaskCreated / WorktreeCreate / StopFailure / ConfigChange / PermissionDenied / WorktreeRemove**:`task-created-hook.mjs`、`worktree-create-hook.mjs`、`worktree-remove-hook.mjs`、`config-changed-hook.mjs`、`permission-denied-hook.mjs`、`stop-failure-hook.mjs`、`stop-additional-context.mjs`
+**TeammateIdle / ConfigChange**:TeammateIdle phase 提示 shell、`config-changed-hook.mjs`
 
 **PreCompact / PostCompact**:`hook-precompact.sh`、`hook-postcompact.sh`、`forge-hook-dispatch.mjs`
 
