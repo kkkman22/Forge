@@ -17,7 +17,6 @@ const ROOT = resolve(import.meta.dirname, "..", "..");
 const EXPECTED_MODES: Record<string, string> = {
   learn: "fork",
   decide: "fork",
-  "decide-teams": "fork",
   debug: "fork",
   grill: "fork",
   init: "inline",
@@ -27,7 +26,6 @@ const EXPECTED_MODES: Record<string, string> = {
   "zoom-out": "fork",
   review: "fork",
   build: "fork",
-  "build-light": "inline",
   plan: "fork",
   spec: "fork",
   ship: "fork",

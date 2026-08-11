@@ -119,7 +119,7 @@ staleness.critical_days: 180                # 过时严重天数
 ### 嵌入指令
 
 ```markdown
-<!-- ssot:begin topic=commands render=count -->38<!-- ssot:end topic=commands -->
+<!-- ssot:begin topic=commands render=count -->36<!-- ssot:end topic=commands -->
 ```
 
 - `topic`: 数据源主题名

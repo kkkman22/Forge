@@ -26,14 +26,6 @@ allowed_tools = ["Read", "Edit", "Write", "Bash", "Agent", "Glob", "Grep"]
 description = "Use when running `/tinkerman build`, an approved plan exists, or the implementation phase of a standard or full tier task begins"
 summary = "Use when running `/tinkerman build`, an approved plan exists, or the implementation phase of a standard or full tier task begins."
 
-[build-light]
-dispatch_mode = "inline"
-tier = "light"
-stage = "implementation"
-allowed_tools = ["Read", "Edit", "Write", "Bash"]
-description = "Use when user runs `/tinkerman build` on a light-tier task, change touches 1 file and 20 lines or less, or has no spec or plan document"
-summary = "Use when user runs `/tinkerman build` on a light-tier task, change touches 1 file and 20 lines or less, or has no spec or plan document."
-
 [charter]
 dispatch_mode = "fork"
 tier = "all"
@@ -81,14 +73,6 @@ stage = "decision"
 allowed_tools = ["Read", "Agent", "Bash"]
 description = "Use when starting a full-tier task, facing irreversible technical choices, or needing threat modeling before implementation"
 summary = "Use when starting a full-tier task, facing irreversible technical choices, or needing threat modeling before implementation."
-
-[decide-teams]
-dispatch_mode = "fork"
-tier = "all"
-stage = "decision"
-allowed_tools = ["Read", "Write", "Bash", "Agent"]
-description = "Use when `/tinkerman decide` is invoked and the topic involves architecture, security, cost, or product trade-offs requiring multiple viewpoints"
-summary = "Use when `/tinkerman decide` is invoked and the topic involves architecture, security, cost, or product trade-offs requiring multiple viewpoints."
 
 [fix]
 dispatch_mode = "inline"

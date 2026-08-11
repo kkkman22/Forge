@@ -179,4 +179,4 @@ TDD = Test-Driven Development（测试驱动开发）。Forge 的 build 阶段�
 掌握以上 3 个命令后，你已能使用 Forge 处理日常小任务。下一步：
 
 - **[日常开发者路线 → onboarding-daily.md](./onboarding-daily.md)** — 学习标准工作流的完整阶段
-- **[命令速查 → reference-commands.md](./reference-commands.md)** — 查看全部 <!-- ssot:begin topic=commands render=count -->38<!-- ssot:end topic=commands --> 个命令
+- **[命令速查 → reference-commands.md](./reference-commands.md)** — 查看全部 <!-- ssot:begin topic=commands render=count -->36<!-- ssot:end topic=commands --> 个命令

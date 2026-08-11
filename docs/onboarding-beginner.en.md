@@ -181,4 +181,4 @@ Use Forge's lightweight path to fix a typo.
 Mastering these 3 commands enables you to handle daily small tasks with Forge. Next steps:
 
 - **[Daily Developer Path → onboarding-daily.en.md](./onboarding-daily.en.md)** — Learn the complete standard workflow stages
-- **[Command Reference → reference-commands.md](./reference-commands.md)** — View all <!-- ssot:begin topic=commands render=count -->38<!-- ssot:end topic=commands --> commands
+- **[Command Reference → reference-commands.md](./reference-commands.md)** — View all <!-- ssot:begin topic=commands render=count -->36<!-- ssot:end topic=commands --> commands

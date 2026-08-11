@@ -21,13 +21,6 @@
     "summary": "Use when running `/tinkerman build`, an approved plan exists, or the implementation phase of a standard or full tier task begins."
   },
   {
-    "name": "/tinkerman build-light",
-    "tier": "light",
-    "stage": "implementation",
-    "dispatch_mode": "inline",
-    "summary": "Use when user runs `/tinkerman build` on a light-tier task, change touches 1 file and 20 lines or less, or has no spec or plan document."
-  },
-  {
     "name": "/tinkerman charter",
     "tier": "all",
     "stage": "auxiliary",
@@ -68,13 +61,6 @@
     "stage": "decision",
     "dispatch_mode": "fork",
     "summary": "Use when starting a full-tier task, facing irreversible technical choices, or needing threat modeling before implementation."
-  },
-  {
-    "name": "/tinkerman decide-teams",
-    "tier": "all",
-    "stage": "decision",
-    "dispatch_mode": "fork",
-    "summary": "Use when `/tinkerman decide` is invoked and the topic involves architecture, security, cost, or product trade-offs requiring multiple viewpoints."
   },
   {
     "name": "/tinkerman fix",

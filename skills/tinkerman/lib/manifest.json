@@ -1,6 +1,6 @@
 {
   "version": 1,
-  "generated_at": "2026-08-11T18:43:24.665Z",
+  "generated_at": "2026-08-11T19:26:42.046Z",
   "subs": {
     "abort": {
       "instructions": {
@@ -134,18 +134,6 @@
         }
       ]
     },
-    "build-light": {
-      "instructions": {
-        "path": "build-light/instructions.md",
-        "sha256": "9f393bf725bf6ff47e6b4c2c338767a06fec5e2844b5f04b2799a7cdc6ad2886"
-      },
-      "references": [
-        {
-          "path": "build-light/references/function-contracts.md",
-          "sha256": "9a263bdcadf7eec8a3dd2fbcc6399d58f2f1969f308da37dbb3a9bc9f62cb1c6"
-        }
-      ]
-    },
     "charter": {
       "instructions": {
         "path": "charter/instructions.md",
@@ -224,7 +212,7 @@
     "decide": {
       "instructions": {
         "path": "decide/instructions.md",
-        "sha256": "4d7dc03abf37f53a6dac009cb49cb8e8faac95d4bcecc871abefb7892741d2dc"
+        "sha256": "660321afd832ef06746afed2b4d0569dc4a6f7cdf8a9ed237edcdccbec402d42"
       },
       "references": [
         {
@@ -248,13 +236,6 @@
           "sha256": "673cbb843b71bea5a7f1ce760e9e3e4cbad88aaa46c157a64e7054fcaeb50f05"
         }
       ]
-    },
-    "decide-teams": {
-      "instructions": {
-        "path": "decide-teams/instructions.md",
-        "sha256": "fd2c7be9ee3a52a9ca3497e0f75dfac676c9a1a9207c5bcb720643245c927ba0"
-      },
-      "references": []
     },
     "fix": {
       "instructions": {

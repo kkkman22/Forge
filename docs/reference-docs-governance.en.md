@@ -111,7 +111,7 @@ The `docs/_ssot/` directory stores JSON-formatted SSOT data:
 ### Embed Directives
 
 ```markdown
-<!-- ssot:begin topic=commands render=count -->38<!-- ssot:end topic=commands -->
+<!-- ssot:begin topic=commands render=count -->36<!-- ssot:end topic=commands -->
 ```
 
 - `topic`: Data source topic name

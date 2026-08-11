@@ -32,7 +32,6 @@ allowed_tools:
 
 1. 读取 `.tinkerman/config.md` 的 `decide_dispatch_mode` 字段（缺失时默认 `auto`）
 2. 如果为 `inline` → 使用 inline 模式（下方 §2 及后续章节）
-3. 如果为 `agents` → 使用 Agent Teams 模式（见 `../decide-teams/instructions.md`）
 4. 如果为 `auto`（或值非法/未识别）：
    a. 读取 `.tinkerman/status.md` 的 `tier` 字段（缺失时默认 `standard`）
    b. `tier=full` → 尝试 Agent Teams 模式
@@ -60,7 +59,6 @@ allowed_tools:
 
 **Not For**：轻量路径任务 / 需求已完全明确且无技术风险的变更
 
-**Alternative**: Agent Teams mode (PoC) — 评估中，见 `../decide-teams/instructions.md` 和 `.kiro/specs/forge-decide-agent-teams/`
 
 ---
 
