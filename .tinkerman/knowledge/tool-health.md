@@ -199,3 +199,5 @@ updated: 2026-08-11
 2026-08-11T19:08:06.529Z · dispatch · max-depth-exceeded · agent=deep-child subagent 嵌套深度超限: depth=5 >= maxDepth=5。请减少嵌套或调高 max_subagent_depth。
 2026-08-11T19:09:06.388Z · dispatch · max-depth-exceeded · agent=deep-child subagent 嵌套深度超限: depth=5 >= maxDepth=5。请减少嵌套或调高 max_subagent_depth。
 2026-08-11T19:10:17.829Z · dispatch · max-depth-exceeded · agent=deep-child subagent 嵌套深度超限: depth=5 >= maxDepth=5。请减少嵌套或调高 max_subagent_depth。
+2026-08-11T19:13:12.022Z · dispatch · max-depth-exceeded · agent=deep-child subagent 嵌套深度超限: depth=5 >= maxDepth=5。请减少嵌套或调高 max_subagent_depth。
+2026-08-11T19:14:08.031Z · dispatch · max-depth-exceeded · agent=deep-child subagent 嵌套深度超限: depth=5 >= maxDepth=5。请减少嵌套或调高 max_subagent_depth。
