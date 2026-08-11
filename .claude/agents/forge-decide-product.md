@@ -1,1 +1,0 @@
-../../agents/forge-decide-product.md

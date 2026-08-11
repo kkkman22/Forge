@@ -25,7 +25,6 @@ allowed_tools:
 | 值 | 行为 |
 |---|---|
 | `inline` | 始终使用 inline 模式（主 agent 内 3 视角分析） |
-| `agents` | 始终使用 Agent Teams 模式（`forge-decide-lead` + 5 视角 teammate） |
 | `auto` | 根据 tier 自动选择 |
 
 ### auto 模式分发规则

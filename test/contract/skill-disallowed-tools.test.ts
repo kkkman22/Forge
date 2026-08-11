@@ -87,31 +87,6 @@ const AGENT_EXPECTATIONS: AgentToolExpectation[] = [
     mustInclude: ["Edit", "Write", "MultiEdit", "NotebookEdit"],
   },
   {
-    file: ".claude/agents/forge-decide-arch.md",
-    label: "forge-decide-arch",
-    mustInclude: ["Edit", "Write"],
-  },
-  {
-    file: ".claude/agents/forge-decide-cost.md",
-    label: "forge-decide-cost",
-    mustInclude: ["Edit", "Write"],
-  },
-  {
-    file: ".claude/agents/forge-decide-ops.md",
-    label: "forge-decide-ops",
-    mustInclude: ["Edit", "Write"],
-  },
-  {
-    file: ".claude/agents/forge-decide-product.md",
-    label: "forge-decide-product",
-    mustInclude: ["Edit", "Write"],
-  },
-  {
-    file: ".claude/agents/forge-decide-sec.md",
-    label: "forge-decide-sec",
-    mustInclude: ["Edit", "Write"],
-  },
-  {
     file: ".claude/agents/forge-plan.md",
     label: "forge-plan",
     mustInclude: ["Edit", "Write", "MultiEdit"],

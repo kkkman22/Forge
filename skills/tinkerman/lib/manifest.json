@@ -1,6 +1,6 @@
 {
   "version": 1,
-  "generated_at": "2026-08-11T19:26:42.046Z",
+  "generated_at": "2026-08-11T19:36:32.375Z",
   "subs": {
     "abort": {
       "instructions": {
@@ -212,7 +212,7 @@
     "decide": {
       "instructions": {
         "path": "decide/instructions.md",
-        "sha256": "660321afd832ef06746afed2b4d0569dc4a6f7cdf8a9ed237edcdccbec402d42"
+        "sha256": "4f924276b51c43a0f64a30563c9ce57d9f913b568856342a6a7bf8243c5b667d"
       },
       "references": [
         {

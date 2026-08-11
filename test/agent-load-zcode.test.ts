@@ -13,7 +13,7 @@ import { resolve } from "node:path";
 import { describe, expect, it } from "vitest";
 
 const AGENTS_DIR = resolve(__dirname, "../agents");
-const EXPECTED_AGENT_COUNT = 24;
+const EXPECTED_AGENT_COUNT = 18;
 
 function agentFiles(): string[] {
   return readdirSync(AGENTS_DIR)

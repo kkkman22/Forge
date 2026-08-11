@@ -1,1 +1,0 @@
-../../agents/forge-decide-arch.md

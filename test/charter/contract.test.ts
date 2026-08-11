@@ -44,13 +44,6 @@ describe("Charter Contract", () => {
     expect(content).toContain("Charter Compliance");
   });
 
-  it("decide-lead agent includes charter grounding", () => {
-    const path = resolve(ROOT, ".claude/agents/forge-decide-lead.md");
-    expect(existsSync(path)).toBe(true);
-    const content = readFileSync(path, "utf-8");
-    expect(content).toMatch(/charter/i);
-  });
-
   it("spec skill includes charter compliance section", () => {
     const path = resolve(ROOT, "skills/tinkerman/lib/spec/instructions.md");
     const content = readFileSync(path, "utf-8");
