@@ -20,7 +20,20 @@
 
 ### Routing Principles
 
-用户覆盖优先：用户明确指定档位时，以用户为准。宁重勿轻：无法判定时，选择更重的档位。不可跳步：选定档位后，必须按序执行对应的命令序列。
+用户覆盖优先：用户明确指定档位时，以用户为准。宁重勿轻：无法判定时，选择更重的档位。**档位 Command Sequence 为建议路径**（ADR-0009 §砍#2 路由退化）：可被用户 / RouteHint 覆盖，非强制。
+
+### Non-Skippable Iron Laws（档位可覆盖，铁律不可跳）
+
+档位 Command Sequence 为建议。以下铁律为**强制硬阻断**，独立于档位，不可覆盖、不可跳：
+
+- **TDD**（§2.1）：实现任务必须 RED → GREEN → REFACTOR
+- **Verification**（§2.3）：没运行验证命令 = 不能声明通过
+- **Three-Strike**（§2.4）：连续失败 3 次必须停下进 debug
+- **Review 执行-评审分离**（§3.1）：写代码的 Agent 不评审自己的代码
+- **P0/P1 ship 阻断**（§3.3）：P0/P1 存在时 ship 被阻断
+
+> 档位放松的是「流程编排」（哪些命令、什么顺序）；铁律守住的是「可靠性下限」（每个命令的执行纪律）。模型变强，档位编排可被吸收；铁律的外部性不会被吸收（ADR-0009 Existence Test §保留 #1）。
+
 → 详见 docs/forge-constitution-detail.md §1
 
 ## 2. Execution Discipline
