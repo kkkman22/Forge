@@ -61,16 +61,6 @@
     ],
     "PreToolUse": [
       {
-        "matcher": "Write|Edit|Bash",
-        "hooks": [
-          {
-            "type": "command",
-            "command": "node scripts/inject-plan-context.mjs 2>/dev/null || node ~/.claude/skills/forge/scripts/inject-plan-context.mjs 2>/dev/null || true",
-            "timeout": 5
-          }
-        ]
-      },
-      {
         "matcher": "Write|Edit",
         "hooks": [
           {
@@ -117,16 +107,6 @@
           {
             "type": "command",
             "command": "node scripts/track-tool-duration.mjs \"$TOOL_INPUT_FILE\" 2>/dev/null || true",
-            "timeout": 3
-          }
-        ]
-      },
-      {
-        "matcher": "Write|Edit",
-        "hooks": [
-          {
-            "type": "command",
-            "command": "bash scripts/phase-transition-guard.sh 2>/dev/null || true",
             "timeout": 3
           }
         ]

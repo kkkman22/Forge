@@ -94,7 +94,7 @@ describe("Plugin path resolution: hooks/hooks.json", () => {
     // The original bug was most visible on Stop (7 visible errors). Lock it down
     // explicitly so a future edit cannot regress just the Stop section.
     const stopGroups = hooksFile.hooks.Stop ?? [];
-    expect(stopGroups.length).toBeGreaterThanOrEqual(1);
+    expect(stopGroups.length).toBeGreaterThanOrEqual(4);
 
     const violations: string[] = [];
     for (let gi = 0; gi < stopGroups.length; gi++) {
