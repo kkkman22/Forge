@@ -220,6 +220,7 @@ export {
   type IntegrityInput,
   lintKnowledgeIntegrity,
 } from "./knowledge-integrity.js";
+
 // Plan engine
 export {
   type AtomicTask,
