@@ -53,7 +53,8 @@ reports/mutation/
 docs/api/
 
 apps/forge-loop-desktop/src-tauri/resources/node/bin/nodedist/
-# .tinkerman/specs/ — tracked per ADR-0009/0011 followup (execution specs shareable across team)
+# .tinkerman/specs/
+.forge/specs/ — tracked per ADR-0009/0011 followup (execution specs shareable across team)
 
 # Acceptance evidence (screenshots/snapshots may contain secrets) — R4-AC3
 .tinkerman/acceptance/

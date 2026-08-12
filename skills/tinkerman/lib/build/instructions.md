@@ -82,7 +82,6 @@ Same as forge-plan §1.6. Verify locked spec is still healthy before build start
 build 启动时（读 `.tinkerman/status.md` 确认 phase 后），同步活跃计划指针的 phase 字段：
 
 ```bash
-node scripts/set-active-plan.mjs --phase build
 ```
 
 这更新 `.tinkerman/state/active-plan.json` 的 `phase` 为 `build`（plan_path/spec_ref/pinned_at 保留）。若指针不存在（plan approve 未设置或走轻量路径），脚本静默跳过，不阻断。后续阶段切换（review/test/ship）由各 SKILL 启动时同样调用 `--phase <phase>` 同步。

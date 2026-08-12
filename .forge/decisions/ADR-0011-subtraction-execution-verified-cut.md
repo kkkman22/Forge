@@ -132,6 +132,18 @@ router×3 / skill×4 / docs×6 / agent×3 / dispatcher+registry——**不立即
 
 **推荐顺序：批次 1（验证流程跑通）→ 批次 2（runtime hook）→ 批次 3（构建链）→ 退化 → 随 ADR-0009 各刀清理失效项**。
 
+
+### Audit Deviations (post-PR review)
+
+- hook-notify.sh: audited 🟢留 (review value), actually deleted in pass 1 (commit d9caf7f3) — no longer needed post-rename
+- stop-incomplete-tasks.mjs: audited 🔴 no batch assignment, deleted in pass 1 — confirmed correct cut (babysit class)
+- set-active-plan.mjs: audited as half-residual (writer alive, reader deleted), fully removed post-PR-review (P1-3 fix)
+- injection-helpers.mjs: both consumers deleted, lib removed post-PR-review (P2 fix)
+
+### Corrected Audit Numbers
+
+- hook-audit: 14 keep / 12 cut / 4 degrade (original) → actual: 14 keep / **13 cut** / 2 degrade (hook-notify shifted to cut)
+- ci-script-audit: 12 keep / **~15 cut** / 5 degrade (original) → actual: 12 keep / **~28 cut** (刀1-5 added skill/docs scripts) / 5 degrade
 ## Consequences
 
 ### Positive
