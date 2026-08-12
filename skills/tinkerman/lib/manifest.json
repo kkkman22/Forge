@@ -1,6 +1,6 @@
 {
   "version": 1,
-  "generated_at": "2026-08-12T04:49:27.792Z",
+  "generated_at": "2026-08-12T05:54:21.659Z",
   "subs": {
     "abort": {
       "instructions": {
@@ -21,7 +21,7 @@
     "accept": {
       "instructions": {
         "path": "accept/instructions.md",
-        "sha256": "dadf7731117900b96f6a5fd70ffffc72b5da1535c6b6009d37eaddd367929c3e"
+        "sha256": "979a1ce2cf9e3abeb41ef2bb20f032800d24169d0296ffe3014efab8c7a9a26a"
       },
       "references": [
         {
@@ -41,7 +41,7 @@
     "build": {
       "instructions": {
         "path": "build/instructions.md",
-        "sha256": "13b3df17e939fdc897fed98f582839426dfda5156cfca04618620208f7daedce"
+        "sha256": "64fdc7b4476f438c912b68297e4b52f15ceca4da67be8b4b669d9ea24d23cf98"
       },
       "references": [
         {
@@ -82,7 +82,7 @@
         },
         {
           "path": "build/references/context-budget.md",
-          "sha256": "d2d447c4e8156b78e356dd75a23c544869aeeaaaa0e13a6c1fd32dfffd32b5c3"
+          "sha256": "a93ee17d3f27e4a21594a680edb84df88c37bb0cff02b6424f189de053a3f1a7"
         },
         {
           "path": "build/references/context-exhaustion.md",
@@ -110,7 +110,7 @@
         },
         {
           "path": "build/references/plan-preflight.md",
-          "sha256": "ca1b289f192c7c273063e506ed2c3be7362e74ddbb03024a866999e56b199b06"
+          "sha256": "92504068980bb6861b487a0528559aec4d5cf876610d96f928e0cb6caa11d875"
         },
         {
           "path": "build/references/refactor-method-library.md",
@@ -509,7 +509,7 @@
     "review": {
       "instructions": {
         "path": "review/instructions.md",
-        "sha256": "9ae7a6e98236e0768447ab31267033bbae3a5ba53c8ffeafd0dec6dd88ade915"
+        "sha256": "cf72ab3b97a047ab3e30b6d49036ec29b00cc47ac300d1521469583a7283e4ee"
       },
       "references": [
         {
@@ -538,7 +538,7 @@
         },
         {
           "path": "review/references/diff-context-preparation.md",
-          "sha256": "525131d7714cff3ab34a033002a0b89b263a7ecc0f09f0e1870f165758a9aa45"
+          "sha256": "aea5b5975f877a39c913650319deeb05e1abe155216eef0e9bfaf81f27454362"
         },
         {
           "path": "review/references/final-report-contract.md",
@@ -570,7 +570,7 @@
         },
         {
           "path": "review/references/shared-vocabulary.md",
-          "sha256": "b1665828f1ec6af8eb049030050be6b3d004e4d48553e32321836bf884611427"
+          "sha256": "5c27f1bf0c24e4b15eaafd8d204ec9a40c15acf889a096f92467a9289e36c3d3"
         },
         {
           "path": "review/references/subagent-return-protocol.md",
@@ -628,7 +628,7 @@
     "spec": {
       "instructions": {
         "path": "spec/instructions.md",
-        "sha256": "513b8775b86e03646f7fa84b11bbe6dc04ef6bc72bf6b4c47e39b67b2b80911c"
+        "sha256": "f29f50b05b6959aa2e03c4f6623231509ccf3f22fb527069e44c1c66cefe6117"
       },
       "references": [
         {
@@ -688,7 +688,7 @@
     "test": {
       "instructions": {
         "path": "test/instructions.md",
-        "sha256": "d98a8d71cc85e9ead673f9d8e74d0c62b42557b0a56517adaa7cbd69bc32ffb7"
+        "sha256": "1d642263bad5eaa16bda3316bdff70d0f2949c7b86c7763b6f8dc39694ed6a8c"
       },
       "references": [
         {

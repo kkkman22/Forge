@@ -1,9 +1,0 @@
-{
-  "mcpServers": {
-    "tinkerman-context": {
-      "command": "node",
-      "args": ["dist/tinkerman-context.mjs"],
-      "timeout": 15000
-    }
-  }
-}

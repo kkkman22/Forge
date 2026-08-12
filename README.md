@@ -115,12 +115,6 @@ Plugin 安装后，以下命令可直接在终端使用：
 
 所有命令支持 `--help`。
 
-### 自带 tinkerman-context MCP
-
-Forge plugin 自带 `tinkerman-context` first-party MCP server，为 `/tinkerman review` 提供智能 diff 截断和上下文优化。
-
-- **零网络**：通过 stdio 在本地运行，不发起任何外部请求
-- **零依赖**：server 以自包含 bundle 形式随仓库分发（`dist/tinkerman-context.mjs`），marketplace 安装后无需 `npm install` 或编译即可启用；源仓库用户由 init.sh 配置
 - **智能优先级**：源码 > 配置 > 测试 > 生成文件 > lock，确保关键变更进入 token 预算
 
 > 实测效果：`/tinkerman review` 19 文件变更场景 token 消耗从 700K+ 降至 <200K。

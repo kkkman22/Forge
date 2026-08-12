@@ -255,7 +255,7 @@ Mandatory Restatement Checkpoint (counter init 3) + Subagent Status handling + I
 
 Read `ci_check_command` from `config.md` → execute as-is. Empty → `verify_commands` → AI auto-detect. Report: `[Command] → [Output] → [Claim]`.
 
-**Three-Layer Truncation**: (1) `forge_exec` MCP (2) `run-with-trim.sh` fallback (3) AI Iron Law — failure output unchanged.
+**Three-Layer Truncation**: (1) `Bash` MCP (2) `run-with-trim.sh` fallback (3) AI Iron Law — failure output unchanged.
 
 ## 3.6 Handoff Block（R2 — 原子任务交接）
 
@@ -524,11 +524,11 @@ Build 全部任务完成且 Final Validation 通过后，自动检查并更新�
 
 在同一个 session 中对同一文件的 Read 调用**不得超过 2 次**。
 
-- **第 2 次起**：必须使用 `Grep`（定向搜索）或 `forge_read`（结构化分析，文件原文不进上下文）替代完整 Read。
+- **第 2 次起**：必须使用 `Grep`（定向搜索）或 `Grep`（结构化分析，文件原文不进上下文）替代完整 Read。
 - **回顾已读文件**：使用 Grep 搜索特定片段而非全量重读。
 - **适用范围**：`/tinkerman build`、`/tinkerman review`、`/tinkerman test`。
 
-> 注：历史上的 `forge_read_cached`（Read 去重缓存）已移除——其职责由 Headroom 的对话压缩间接覆盖。本 Iron Law 的"Read ≤2 次"纪律仍然有效：减少源头输入比压缩更省 token。
+> 注：历史上的 `Grep_cached`（Read 去重缓存）已移除——其职责由 Headroom 的对话压缩间接覆盖。本 Iron Law 的"Read ≤2 次"纪律仍然有效：减少源头输入比压缩更省 token。
 
 </IRON-LAW>
 

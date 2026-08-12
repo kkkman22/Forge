@@ -5,7 +5,7 @@ updated: 2026-08-11
 
 > 解决 Forge 在标准/全量路径下的上下文爆炸问题。Forge MCP 不再承担压缩职责（已移交 Headroom）；本文件描述 Forge 保留的**安全执行边界**、**内容隔离**和**上下文预算监控**。
 >
-> 定位变更：历史上的"五层上下文防御体系"中，Layer 1（Read 去重缓存 `forge_read_cached`）已移除——其职责由 Headroom 的对话压缩间接覆盖。压缩不再是 Forge 的工作；Forge 守住"什么内容该进上下文 / 执行是否安全"。
+> 定位变更：历史上的"五层上下文防御体系"中，Layer 1（Read 去重缓存 `Grep_cached`）已移除——其职责由 Headroom 的对话压缩间接覆盖。压缩不再是 Forge 的工作；Forge 守住"什么内容该进上下文 / 执行是否安全"。
 
 ## 压缩职责分工（Forge vs Headroom）
 
@@ -14,11 +14,11 @@ Forge MCP 与 Headroom **零功能重叠，互补不冗余**：
 | 层 | 谁负责 | 做什么 |
 |----|--------|--------|
 | 对话历史压缩 | **Headroom**（wrap 模式） | 压缩对话历史 + tool 输出 + 模型写回。实测（v0.26.0）：失败输出 `router:protected:error_output` 零压缩、diff `router:noop` 零压缩、Structured Output 压 ~50%（有 CCR 兜底） |
-| 安全执行 | **Forge MCP**（`forge_exec`） | 只读 allowlist + 防 shell 注入 + 进程树清理（超时杀子进程）。Headroom 是压缩器，不碰命令执行安全 |
-| 内容隔离 | **Forge MCP**（`forge_read`） | 沙箱内结构化分析（imports/contains/line_count/json_keys），文件原文**根本不进上下文**——比"压缩后进"更彻底 |
-| 确定性输出 | **Forge MCP**（`forge_git`/typed-capabilities） | 结构化 JSON，可被下游反序列化解析；Headroom 的压缩是非确定性的，Forge 无法解析压缩后的输出 |
+| 安全执行 | **Forge MCP**（`Bash`） | 只读 allowlist + 防 shell 注入 + 进程树清理（超时杀子进程）。Headroom 是压缩器，不碰命令执行安全 |
+| 内容隔离 | **Forge MCP**（`Grep`） | 沙箱内结构化分析（imports/contains/line_count/json_keys），文件原文**根本不进上下文**——比"压缩后进"更彻底 |
+| 确定性输出 | **Forge MCP**（`Bash`/typed-capabilities） | 结构化 JSON，可被下游反序列化解析；Headroom 的压缩是非确定性的，Forge 无法解析压缩后的输出 |
 
-> Forge 不自带压缩算法。`forge_exec` 的 `trimCommandOutput` 仅作为 **Headroom 未启用时的 fallback**（成功输出 >30 行裁剪关键行）；用户运行 `headroom wrap claude` 时，成功输出原样过，由 Headroom 在 HTTP 层压。
+> Forge 不自带压缩算法。`Bash` 的 `trimCommandOutput` 仅作为 **Headroom 未启用时的 fallback**（成功输出 >30 行裁剪关键行）；用户运行 `headroom wrap claude` 时，成功输出原样过，由 Headroom 在 HTTP 层压。
 
 ## 上下文预算监控（四层运行时防护）
 
@@ -110,9 +110,9 @@ report: .tinkerman/reviews/<layer>-<timestamp>.md
 
 | 工具 | 职责 | 替代 |
 |------|------|------|
-| `forge_exec` | 安全执行只读命令 + Iron Law 失败放行（成功输出 >30 行时 fallback 裁剪） | 直接 Bash |
-| `forge_git` | Git 查询摘要化（确定性输出，可反序列化） | 直接 git |
-| `forge_read` | 沙箱结构化文件分析（imports/contains/line_count，原文不进上下文） | 批量 Read |
+| `Bash` | 安全执行只读命令 + Iron Law 失败放行（成功输出 >30 行时 fallback 裁剪） | 直接 Bash |
+| `Bash` | Git 查询摘要化（确定性输出，可反序列化） | 直接 git |
+| `Grep` | 沙箱结构化文件分析（imports/contains/line_count，原文不进上下文） | 批量 Read |
 
 ---
 
@@ -130,7 +130,7 @@ report: .tinkerman/reviews/<layer>-<timestamp>.md
 | Git status | >30 files | 200 | MUST replace with categorized summary |
 | Command output | >100 lines | 200 | MUST keep last 20 lines + error/warning patterns |
 
-> 注：当用户运行 `headroom wrap claude` 时，Iron Law 的失败输出保护由两层独立保障——forge_exec 的 `formatFailureOutput`（进程层）+ Headroom 的 `router:protected:error_output`（HTTP 层实测零压缩）。两者互不依赖。
+> 注：当用户运行 `headroom wrap claude` 时，Iron Law 的失败输出保护由两层独立保障——Bash 的 `formatFailureOutput`（进程层）+ Headroom 的 `router:protected:error_output`（HTTP 层实测零压缩）。两者互不依赖。
 
 ## Structured Output Exemption
 

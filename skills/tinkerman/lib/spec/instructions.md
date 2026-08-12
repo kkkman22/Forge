@@ -117,7 +117,7 @@ allowed_tools:
 | Reversibility | 回滚清单和挂载点清单已填写 |
 | Spec Leak Check | 无实现细节泄露（通过 detectSpecLeak 扫描，需有 banned-patterns） |
 | Scenario Lint | 所有 Gherkin 场景通过 SCN001-SCN004 规则检查 |
-| **Validation Contract** | 每条 Acceptance Criteria 附 `Verify-By`（分层白名单：`vitest:unit` / `vitest:component` / `bash:contract` / `forge_exec:e2e` / `manual`，ADR-0006）和 `Evidence`（非空字符串）|
+| **Validation Contract** | 每条 Acceptance Criteria 附 `Verify-By`（分层白名单：`vitest:unit` / `vitest:component` / `bash:contract` / `Bash:e2e` / `manual`，ADR-0006）和 `Evidence`（非空字符串）|
 
 自检未通过 → 自动修正并重新自检，直到全部通过。全部通过后提示用户确认锁定。
 
@@ -149,7 +149,7 @@ After Step 2 Review completes:
 
 用户确认后：frontmatter `status` → `"locked"`，写入 `.tinkerman/specs/<feature>/spec.md`。修改需先解锁（status → draft）重走 Review → Lock。用户不确认则保持 draft 可继续修改。
 
-**Contract Validation Gate**: Lock 前调用 `bash scripts/check-spec-contract.sh <spec-file>` 校验所有 Acceptance Criteria 都带分层 `Verify-By`（`vitest:unit` / `vitest:component` / `bash:contract` / `forge_exec:e2e` / `manual`）和 `Evidence`（非空无 placeholder）。校验失败 → 阻断 lock，输出缺失字段列表与合法取值。`contract_legacy: true` 的 spec 跳过校验（grandfathering，NFR-2）。可选 `--check-evidence` 对路径形态的 Evidence token 做磁盘存在性校验（AC7）。
+**Contract Validation Gate**: Lock 前调用 `bash scripts/check-spec-contract.sh <spec-file>` 校验所有 Acceptance Criteria 都带分层 `Verify-By`（`vitest:unit` / `vitest:component` / `bash:contract` / `Bash:e2e` / `manual`）和 `Evidence`（非空无 placeholder）。校验失败 → 阻断 lock，输出缺失字段列表与合法取值。`contract_legacy: true` 的 spec 跳过校验（grandfathering，NFR-2）。可选 `--check-evidence` 对路径形态的 Evidence token 做磁盘存在性校验（AC7）。
 
 ---
 

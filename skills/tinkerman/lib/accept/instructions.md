@@ -21,7 +21,7 @@ allowed_tools:
 
 Parse spec scenarios (explicit Gherkin or derived from acceptance criteria), classify by type, dispatch to the appropriate runner, collect pass/fail verdicts with evidence. Integrated as optional ship gate.
 
-**Scenario types (ADR-0006 layered model):** `unit | component | contract` (cheap delegate layers — routed to the project's own test command via `forge_exec`) and `api | ui | cli` (real end-to-end execution). `classifyScenarioType` prefers the scenario's `Verify-By: <layer>` annotation (authoritative) and falls back to keyword heuristic only when absent. `mixed` is retained in the union for back-compat but no runner serves it — combinatorial scenarios belong in the `component` layer.
+**Scenario types (ADR-0006 layered model):** `unit | component | contract` (cheap delegate layers — routed to the project's own test command via `Bash`) and `api | ui | cli` (real end-to-end execution). `classifyScenarioType` prefers the scenario's `Verify-By: <layer>` annotation (authoritative) and falls back to keyword heuristic only when absent. `mixed` is retained in the union for back-compat but no runner serves it — combinatorial scenarios belong in the `component` layer.
 
 ## 2. Prerequisites
 
@@ -50,7 +50,7 @@ Parse spec scenarios (explicit Gherkin or derived from acceptance criteria), cla
 ### Step 3: Execute Runners
 
 1. For each selected scenario, `runScenario(scenario, ctx)` dispatches to the first `RUNNERS` entry whose `supports(scenario)` is true:
-   - **unit / component / contract** → delegate runner: routes to the PROJECT's own test command (`test:unit` / `test:component` / `test:contract`) via `forge_exec`, scoped to the AC's `Evidence` file. No suite configured → `INCONCLUSIVE` + `/tinkerman init --recipe` pointer (not a SKIP). Contract layer checks `Contract-Source` artifact freshness first.
+   - **unit / component / contract** → delegate runner: routes to the PROJECT's own test command (`test:unit` / `test:component` / `test:contract`) via `Bash`, scoped to the AC's `Evidence` file. No suite configured → `INCONCLUSIVE` + `/tinkerman init --recipe` pointer (not a SKIP). Contract layer checks `Contract-Source` artifact freshness first.
    - **API** → real curl execution (execDescriptor); supports status-code AND `data.<path> shall be <value>` body assertions (redacted to matched path:value only). crash → INCONCLUSIVE.
    - **UI** → **agent-browser** (snapshot+refs) drives the page per Given/When/Then;
      falls back through ui-harness tiers: project(playwright.config e2e) → agent-browser → playwright → cdp → INCONCLUSIVE.

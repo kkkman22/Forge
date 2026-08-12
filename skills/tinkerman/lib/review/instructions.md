@@ -103,7 +103,7 @@ node scripts/prepare-diff-context.mjs
 - 应用智能截断（按文件优先级 + 单文件 200 行 / 总量 1500 行上限，复用 `truncateDiffContent` pure function，零 MCP 依赖）
 - 写入 `.tinkerman/reviews/.diff-context.md`，含 frontmatter（`base/head/file_count/total_added/total_removed/truncated/source: shell_with_truncate_lib`）+ `## Diff Stat` + `## Diff Content`（含真实 unified diff hunk）
 
-**禁止**手工拼接 narrative summary（如 "See forge_git output" / "Key changes: -..." 等）替代真实 patch hunk。脚本输出的 `## Diff Content` 段**必须**含 unified diff hunk 标记（`@@ ... @@` / `--- a/<path>` / `+++ b/<path>`）。如脚本不可用（构建未完成等极端情况）→ fallback shell：`git diff ${BASE_BRANCH}...HEAD | head -3000` 直接写入 `## Diff Content` 段，**绝不**替换为 narrative summary。
+**禁止**手工拼接 narrative summary（如 "See Bash (git command) output" / "Key changes: -..." 等）替代真实 patch hunk。脚本输出的 `## Diff Content` 段**必须**含 unified diff hunk 标记（`@@ ... @@` / `--- a/<path>` / `+++ b/<path>`）。如脚本不可用（构建未完成等极端情况）→ fallback shell：`git diff ${BASE_BRANCH}...HEAD | head -3000` 直接写入 `## Diff Content` 段，**绝不**替换为 narrative summary。
 
 此文件作为 Subagent prompt 的一部分传入，消除 agent 逐文件 Read 的需求。截断后 agent 可对存疑项用 Read 深入验证（最多 3-5 次）。
 
@@ -218,7 +218,7 @@ if (!result.allowed) {
 **主 Agent 在 fallback ladder 任一级失败后，禁止以以下 4 种形式接管评审**：
 
 1. 直接 Read diff 自评：调用 Read/Grep/Bash 读源码并产出 finding
-2. 调用本地工具自评：用 forge_git/forge_read 等 MCP 工具产出 finding
+2. 调用本地工具自评：用 Bash (git command)/Grep 等 MCP 工具产出 finding
 3. Skill 内联自评：通过 `Skill(forge, "review")` inline 路径再次进入 review SKILL 自评
 4. 重写已有 subagent 报告：基于残缺 subagent output 拼凑完整 review 报告
 
@@ -608,10 +608,10 @@ Retention: >100 entries triggers auto-archive to `.tinkerman/archive/known-failu
 
 在同一个 session 中对同一文件的 Read 调用**不得超过 2 次**。
 
-- **第 2 次起**：必须使用 `Grep`（定向搜索）或 `forge_read`（结构化分析，文件原文不进上下文）替代完整 Read。
+- **第 2 次起**：必须使用 `Grep`（定向搜索）或 `Grep`（结构化分析，文件原文不进上下文）替代完整 Read。
 - **回顾已读文件**：使用 Grep 搜索特定片段而非全量重读。
 
-> 注：历史上的 `forge_read_cached`（Read 去重缓存）已移除——其职责由 Headroom 的对话压缩间接覆盖。本 Iron Law 的"Read ≤2 次"纪律仍然有效：减少源头输入比压缩更省 token。
+> 注：历史上的 `Grep_cached`（Read 去重缓存）已移除——其职责由 Headroom 的对话压缩间接覆盖。本 Iron Law 的"Read ≤2 次"纪律仍然有效：减少源头输入比压缩更省 token。
 
 </IRON-LAW>
 

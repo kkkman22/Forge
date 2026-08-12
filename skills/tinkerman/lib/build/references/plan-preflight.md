@@ -12,7 +12,7 @@ updated: 2026-08-11
 | R2.AC1 | 文件操作冲突 | 某 Task `Operation: DELETE` 的文件路径，出现在后续 Task 的 File 字段或 File Mapping |
 | R2.AC2 | 依赖反向 | Task A Depends On 含 Task B，且 B Depends On 含 A（循环）；或 A 依赖编号 > 自己的 Task（顺序倒置）；或自依赖 |
 | R2.AC3 | Spec Coverage 缺口 | Spec 某 Requirement 在 plan 的 Spec Coverage 表无 Covering Task（空 cell） |
-| R2.AC4 | Verify 白名单违规 | Task Verify 字段以 `vitest`/`bash`/`forge_exec` 开头（像 verify-by 标签）但不在 `.tinkerman/config.md` 的白名单 `[vitest:unit, vitest:component, bash:contract, forge_exec:e2e, manual]` 内。自由形式的命令（如 `npx vitest run test/x.ts`）不算违规 |
+| R2.AC4 | Verify 白名单违规 | Task Verify 字段以 `vitest`/`bash`/`Bash` 开头（像 verify-by 标签）但不在 `.tinkerman/config.md` 的白名单 `[vitest:unit, vitest:component, bash:contract, Bash:e2e, manual]` 内。自由形式的命令（如 `npx vitest run test/x.ts`）不算违规 |
 | R2.AC5 | 重复 Task 标题 | 两个 Task 标题字符串完全相同（导致 handoff/commit 引用歧义） |
 
 ## plan 自带违规检测（R3）

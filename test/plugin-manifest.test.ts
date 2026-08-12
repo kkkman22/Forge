@@ -103,14 +103,7 @@ describe("Plugin Workflows Field (R1: workflows-integration)", () => {
     ).not.toThrow();
   });
 
-  it("AC 1.4: existing workflows field does not break mcpServers/hooks paths", () => {
-    // mcpServers moved to .mcp.json, hooks moved to hooks/hooks.json (refactor: zero global side effects)
-    const mcpPath = join(ROOT, ".mcp.json");
-    expect(existsSync(mcpPath)).toBe(true);
-    const mcp = JSON.parse(readFileSync(mcpPath, "utf-8"));
-    expect(mcp.mcpServers).toBeDefined();
-    expect(mcp.mcpServers["tinkerman-context"]).toBeDefined();
-
+  it("AC 1.4: hooks paths work without mcpServers", () => {
     const hooksPath = join(ROOT, "hooks", "hooks.json");
     expect(existsSync(hooksPath)).toBe(true);
     const hooks = JSON.parse(readFileSync(hooksPath, "utf-8"));

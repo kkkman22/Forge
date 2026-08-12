@@ -1,13 +1,13 @@
 #!/usr/bin/env bash
-# forge-doctor — Health check for Forge project setup.
+# tinkerman-doctor — Health check for Tinkerman project setup.
 # Checks: version compatibility, plugin health, hooks, commands, bin, MCP.
 set -euo pipefail
 
 if [[ "${1:-}" == "--help" || "${1:-}" == "-h" ]]; then
   cat <<'HELP'
-forge-doctor — Forge project health check
+tinkerman-doctor — Forge project health check
 
-Usage: forge-doctor [--fix] [--json]
+Usage: tinkerman-doctor [--fix] [--json]
 
 Options:
   --help, -h   Show this help message
@@ -16,18 +16,18 @@ Options:
 
 Checks:
   1. Claude Code version compatibility (>= 2.1.163)
-  2. .forge/ directory structure
-  3. .forge/config.md present and valid
+  2. .tinkerman/ directory structure
+  3. .tinkerman/config.md present and valid
   4. Plugin manifest (.claude-plugin/plugin.json)
-  5. Commands entry (commands/forge.md)
+  5. Commands entry (commands/tinkerman.md)
   6. Hooks configuration (hooks/hooks.json)
-  7. Bin scripts (forge-doctor, forge-status, forge-restate)
+  7. Bin scripts (tinkerman-doctor, tinkerman-status, tinkerman-restate)
   8. MCP server registration
   9. Git branch protection
   10. Plugin enabled check (manual step)
-  11. Forge diagnostic mode status
+  11. Tinkerman diagnostic mode status
 
-Run 'forge-doctor --json' for structured output with fixHint per item.
+Run 'tinkerman-doctor --json' for structured output with fixHint per item.
 HELP
   exit 0
 fi
@@ -40,7 +40,7 @@ cd "$ROOT"
 
 PASS=0; FAIL=0; WARN=0
 DIAGNOSTIC_MODE_ACTIVE=false
-if [[ "${FORGE_DIAGNOSTIC_MODE:-}" == "1" ]]; then
+if [[ "${TINKERMAN_DIAGNOSTIC_MODE:-}" == "1" ]]; then
   DIAGNOSTIC_MODE_ACTIVE=true
 fi
 
@@ -72,7 +72,7 @@ check() {
   return 0
 }
 
-echo "🔍 Forge Doctor — checking project health"
+echo "🔍 Tinkerman Doctor — checking project health"
 echo ""
 
 # --- 0. Claude Code version compatibility ---
@@ -99,12 +99,12 @@ else
 fi
 echo ""
 
-# --- 1. .forge/ directory ---
+# --- 1. .tinkerman/ directory ---
 echo "📋 Project Structure"
-if [[ -d .forge ]]; then check ".forge/ directory" pass "forge-dir"; else check ".forge/ directory (missing — run forge init)" fail "forge-dir" "Run /forge init to create .forge/ directory"; fi
+if [[ -d .tinkerman ]]; then check ".tinkerman/ directory" pass "forge-dir"; else check ".tinkerman/ directory (missing — run tinkerman init)" fail "forge-dir" "Run /tinkerman init to create .tinkerman/ directory"; fi
 
 # --- 2. config.md ---
-if [[ -f .forge/config.md ]]; then check ".forge/config.md" pass "config"; else check ".forge/config.md" fail "config" "Run /forge init to generate config"; fi
+if [[ -f .tinkerman/config.md ]]; then check ".tinkerman/config.md" pass "config"; else check ".tinkerman/config.md" fail "config" "Run /tinkerman init to generate config"; fi
 echo ""
 
 # --- 3. Plugin manifest ---
@@ -152,7 +152,7 @@ fi
 # --- 6. Bin scripts ---
 echo ""
 echo "📋 Bin Scripts"
-for cmd in forge-doctor forge-status forge-restate; do
+for cmd in tinkerman-doctor tinkerman-status tinkerman-restate; do
   if [[ -f ".claude-plugin/bin/$cmd" ]]; then
     if bash ".claude-plugin/bin/$cmd" --help &>/dev/null; then
       check "bin/$cmd (--help OK)" pass "bin-$cmd"
@@ -164,16 +164,6 @@ for cmd in forge-doctor forge-status forge-restate; do
   fi
 done
 
-# --- 7. MCP server ---
-echo ""
-echo "📋 MCP Server"
-if [[ -f dist/src/mcp/server.js ]]; then
-  check "MCP server (dist/src/mcp/server.js exists)" pass "mcp"
-elif [[ -f src/mcp/server.ts ]]; then
-  check "MCP server source (src/mcp/server.ts exists, no dist)" warn "mcp" "Run 'bash scripts/build-dist.sh' to compile MCP server"
-else
-  check "MCP server (not found)" fail "mcp" "Ensure src/mcp/server.ts or dist/src/mcp/server.js exists"
-fi
 
 # --- 8. Git branch ---
 echo ""
@@ -188,7 +178,7 @@ fi
 # --- 9. Plugin enabled (manual check) ---
 echo ""
 echo "📋 Plugin Status"
-check "Plugin enabled (verify manually: /plugin list --enabled)" warn "plugin-enabled" "In Claude Code, run '/plugin list --enabled' and confirm 'forge' appears"
+check "Plugin enabled (verify manually: /plugin list --enabled)" warn "plugin-enabled" "In Claude Code, run '/plugin list --enabled' and confirm 'tinkerman' appears"
 
 # --- 10. Forge diagnostic mode ---
 echo ""

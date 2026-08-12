@@ -43,7 +43,7 @@ allowed_tools:
 
 ### Layer 1 — Unit Tests
 
-运行项目测试套件（`forge_exec` + trim fallback），确认 0 failures。未通过 → 报告详情，修复后重跑 `/tinkerman test`。
+运行项目测试套件（`Bash` + trim fallback），确认 0 failures。未通过 → 报告详情，修复后重跑 `/tinkerman test`。
 
 > **ADR-0006 layered routing**: 当 spec AC 声明 `Verify-By: vitest:unit` /
 > `vitest:component` / `bash:contract` 时，对应的测试由 delegate runner 路由到项目的
@@ -62,8 +62,8 @@ allowed_tools:
 **CI 检查命令优先级**：
 
 执行 Layer 3 清单前，读取 `.tinkerman/config.md` YAML frontmatter 的 `ci_check_command` 字段：
-- **如果非空**：使用 `forge_exec` 执行该命令（server-side trimming）。当 MCP 不可用时，回退到 `scripts/run-with-trim.sh` 或直接执行。覆盖清单项 1-4。从合并输出中提取各项通过/失败状态。
-- **如果为空或缺失**：为每个清单项分别运行对应命令（优先使用 `forge_exec`）。
+- **如果非空**：使用 `Bash` 执行该命令（server-side trimming）。当 MCP 不可用时，回退到 `scripts/run-with-trim.sh` 或直接执行。覆盖清单项 1-4。从合并输出中提取各项通过/失败状态。
+- **如果为空或缺失**：为每个清单项分别运行对应命令（优先使用 `Bash`）。
 
 **漂移检测**：
 
@@ -72,7 +72,7 @@ allowed_tools:
 | `kind` | 处理 |
 |--------|------|
 | `has_ci_command` | 正常路径：使用 `ci_check_command` 值 |
-| `drift_with_npm_check` | 输出 `warning` 文本 → 使用 `forge_exec` 执行 `npm run check` → 在 `.tinkerman/findings/<topic>-ci-drift.md` 记录漂移（仅首次） |
+| `drift_with_npm_check` | 输出 `warning` 文本 → 使用 `Bash` 执行 `npm run check` → 在 `.tinkerman/findings/<topic>-ci-drift.md` 记录漂移（仅首次） |
 | `no_check_no_field` | 走原有逐项回退（清单项 1-4 分别执行） |
 | `malformed_package_json` | 输出 `reason` 警告 → 走逐项回退 |
 
@@ -196,10 +196,10 @@ $ /tinkerman test
 
 在同一个 session 中对同一文件的 Read 调用**不得超过 2 次**。
 
-- **第 2 次起**：必须使用 `Grep`（定向搜索）或 `forge_read`（结构化分析，文件原文不进上下文）替代完整 Read。
+- **第 2 次起**：必须使用 `Grep`（定向搜索）或 `Grep`（结构化分析，文件原文不进上下文）替代完整 Read。
 - **回顾已读文件**：使用 Grep 搜索特定片段而非全量重读。
 
-> 注：历史上的 `forge_read_cached`（Read 去重缓存）已移除——其职责由 Headroom 的对话压缩间接覆盖。本 Iron Law 的"Read ≤2 次"纪律仍然有效：减少源头输入比压缩更省 token。
+> 注：历史上的 `Grep_cached`（Read 去重缓存）已移除——其职责由 Headroom 的对话压缩间接覆盖。本 Iron Law 的"Read ≤2 次"纪律仍然有效：减少源头输入比压缩更省 token。
 
 </IRON-LAW>
 

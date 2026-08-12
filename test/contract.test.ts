@@ -977,35 +977,6 @@ describe("Contract: review artifact template", () => {
 });
 
 // ---------------------------------------------------------------------------
-// 20. plugin.json mcpServers field (tinkerman-context MCP)
-// ---------------------------------------------------------------------------
-
-describe("Contract: tinkerman-context MCP server declared in .mcp.json", () => {
-  const mcpPath = resolve(ROOT, ".mcp.json");
-  const content = readFileSync(mcpPath, "utf-8");
-  const json = JSON.parse(content);
-
-  it(".mcp.json contains mcpServers field", () => {
-    expect(json.mcpServers).toBeDefined();
-  });
-
-  it(".mcp.json contains tinkerman-context entry", () => {
-    expect(json.mcpServers["tinkerman-context"]).toBeDefined();
-  });
-
-  it("tinkerman-context uses node as command", () => {
-    expect(json.mcpServers["tinkerman-context"].command).toBe("node");
-  });
-
-  it("tinkerman-context args reference the bundled server dist/tinkerman-context.mjs", () => {
-    const argPath = json.mcpServers["tinkerman-context"].args[0];
-    // The marketplace-install path resolves to the self-contained bundle
-    // (inlines @modelcontextprotocol/sdk + zod + ajv), not the tsc output.
-    expect(argPath).toBe("dist/tinkerman-context.mjs");
-  });
-});
-
-// ---------------------------------------------------------------------------
 // 21. SKILL references/ structure
 // ---------------------------------------------------------------------------
 

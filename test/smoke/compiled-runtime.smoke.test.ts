@@ -17,19 +17,15 @@ import { describe, expect, it } from "vitest";
 
 const ROOT = resolve(import.meta.dirname, "../..");
 const DIST_ROUTER = join(ROOT, "dist/src/router.js");
-const DIST_MCP_SERVER = join(ROOT, "dist/src/mcp/server.js");
 
 describe("compiled dist/src runtime smoke tests", () => {
   it("dist/src/router.js exists", () => {
     expect(existsSync(DIST_ROUTER)).toBe(true);
   });
+});
 
-  it("dist/src/mcp/server.js exists", () => {
-    expect(existsSync(DIST_MCP_SERVER)).toBe(true);
-  });
-
-  it("router.js classifyTask returns non-empty hints in compiled ESM", () => {
-    const code = `
+it("router.js classifyTask returns non-empty hints in compiled ESM", () => {
+  const code = `
       import { classifyTask } from "${DIST_ROUTER}";
       const signals = {
         hasAuthentication: false,
@@ -51,28 +47,13 @@ describe("compiled dist/src runtime smoke tests", () => {
       console.log(JSON.stringify(hints.filter((h) => h.source === "intent")));
     `;
 
-    const output = execFileSync("node", ["--input-type=module", "-e", code], {
-      timeout: 10000,
-      encoding: "utf-8",
-    });
-
-    const hints = JSON.parse(output.trim());
-    expect(Array.isArray(hints)).toBe(true);
-    expect(hints.length).toBeGreaterThan(0);
-    expect(hints.some((h: { tag?: string }) => h.tag === "reasoning-deep")).toBe(true);
+  const output = execFileSync("node", ["--input-type=module", "-e", code], {
+    timeout: 10000,
+    encoding: "utf-8",
   });
 
-  it("mcp/server.js can be imported without errors", () => {
-    const code = `
-      import "${DIST_MCP_SERVER}";
-      console.log("OK");
-    `;
-
-    const output = execFileSync("node", ["--input-type=module", "-e", code], {
-      timeout: 10000,
-      encoding: "utf-8",
-    });
-
-    expect(output.trim()).toBe("OK");
-  });
+  const hints = JSON.parse(output.trim());
+  expect(Array.isArray(hints)).toBe(true);
+  expect(hints.length).toBeGreaterThan(0);
+  expect(hints.some((h: { tag?: string }) => h.tag === "reasoning-deep")).toBe(true);
 });

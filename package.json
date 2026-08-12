@@ -25,7 +25,7 @@
     "lint:fix": "biome check --write src/ test/",
     "format": "biome format --write src/ test/",
     "typecheck": "tsc --noEmit",
-    "check": "tsc --noEmit && biome check src/ test/ && vitest run && node scripts/check-public-api.mjs && node scripts/check-domain-safety.mjs && FORGE_DIST_SYNC_SKIP_TYPECHECK=1 node scripts/check-dist-sync.mjs && node scripts/bundle-mcp.mjs --check && npm run docs:check",
+    "check": "tsc --noEmit && biome check src/ test/ && vitest run && node scripts/check-public-api.mjs && node scripts/check-domain-safety.mjs && FORGE_DIST_SYNC_SKIP_TYPECHECK=1 node scripts/check-dist-sync.mjs && npm run docs:check",
     "dist:resync": "bash scripts/dist-resync.sh",
     "docs": "typedoc",
     "dossier:rebuild": "node scripts/rebuild-feature-dossier.mjs",

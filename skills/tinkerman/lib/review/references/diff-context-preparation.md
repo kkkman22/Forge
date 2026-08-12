@@ -40,7 +40,7 @@ git diff --stat ${BASE_BRANCH}...HEAD
 - 单文件上限 200 行，总量上限 1500 行
 - 截断后附注省略文件列表
 
-**零 MCP 依赖**：脚本通过 import compiled JS 复用截断逻辑，不调用 forge_git MCP server。这统一了原"forge_git 优先 + shell fallback"两条路径，schema 一致。
+**零 MCP 依赖**：脚本通过 import compiled JS 复用截断逻辑，不调用 Bash MCP server。这统一了原"Bash 优先 + shell fallback"两条路径，schema 一致。
 
 **Fallback**：若 `truncateDiffContent` import 失败（dist 未构建等）→ 脚本退化到 byte-cap (`rawDiff.slice(0, 200000)`) 兜底，**仍是真实 patch hunk**。
 
@@ -66,7 +66,7 @@ source: shell_with_truncate_lib
 <truncated patch content with @@ hunk markers + ---/+++ headers>
 ```
 
-frontmatter 7 字段全部必需；`source` 字段值固定为 `shell_with_truncate_lib`（明示这是脚本化路径，区别于早期"forge_git" / "shell_fallback"两条历史路径）。
+frontmatter 7 字段全部必需；`source` 字段值固定为 `shell_with_truncate_lib`（明示这是脚本化路径，区别于早期"Bash" / "shell_fallback"两条历史路径）。
 
 ## Why Narrative Summary is Forbidden
 
@@ -81,13 +81,13 @@ frontmatter 7 字段全部必需；`source` 字段值固定为 `shell_with_trunc
 ```markdown
 ## Diff Content
 
-See forge_git diff-content output. Single file change: agents/spec-check.md.
+See Bash diff-content output. Single file change: agents/spec-check.md.
 Key changes:
 - Removed background: true from frontmatter
 - Renamed Step 0.5 from "Mandatory Context Read" to "Optional Context Read..."
 ```
 
-这种 narrative pattern 会导致 review subagent 看不到具体行级别改动，进而需要重新调用 `forge_git` 自行获取真实 diff，消耗 turn 预算导致评审截断。
+这种 narrative pattern 会导致 review subagent 看不到具体行级别改动，进而需要重新调用 `Bash` 自行获取真实 diff，消耗 turn 预算导致评审截断。
 
 历史背景：subagent-foreground-truncation Stage 4 Real Smoke (commit `37b329a`, 2026-05-17) 中 quality-check 因 `.diff-context.md` 含 narrative summary 而 truncate 到单行 preamble。修复路径见 `.kiro/specs/forge-review-diff-context-fidelity/`。脚本化主路径 + 契约测试守护从根本上消除该退化模式。
 
@@ -100,4 +100,4 @@ Key changes:
 
 ## 推荐配置
 
-`scripts/init.sh` 自动配置 tinkerman-context MCP，但本脚本**不依赖** MCP 运行时 — 复用的是 compiled JS 中的 pure function。MCP 仅在主 agent 想交互式调用 `forge_git(diff-content)` 时使用，与本步骤无关。
+`scripts/init.sh` 自动配置 tinkerman-context MCP，但本脚本**不依赖** MCP 运行时 — 复用的是 compiled JS 中的 pure function。MCP 仅在主 agent 想交互式调用 `Bash(diff-content)` 时使用，与本步骤无关。

@@ -11,7 +11,7 @@ updated: 2026-08-11
 
 ## 调用约定
 
-每个 checker 在 Step 0（forge_git 之后、主检查之前）执行：
+每个 checker 在 Step 0（Bash 之后、主检查之前）执行：
 
 ```
 Read skills/tinkerman/lib/review/references/shared-vocabulary.md

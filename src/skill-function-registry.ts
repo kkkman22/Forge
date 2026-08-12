@@ -702,13 +702,6 @@ export const SKILL_FUNCTION_REGISTRY: readonly SkillFunctionEntry[] = [
   },
 
   // --- MCP Tools ---
-  {
-    module: "mcp/tools/forge-git.ts",
-    functionName: "forge_git",
-    skills: ["tinkerman/lib/review/instructions.md"],
-    parameterNames: ["subcommand", "args"],
-    mcpTool: true,
-  },
 
   // --- sandbox-phased.ts ---
   {

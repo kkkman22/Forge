@@ -50,32 +50,6 @@ describe("plugin dist structure smoke tests", () => {
     expect(missingScripts).toEqual([]);
   });
 
-  it("dist/src/mcp/server.js exists in plugin package", () => {
-    expect(existsSync(join(DIST_PLUGIN, "dist/src/mcp/server.js"))).toBe(true);
-  });
-
-  it("MCP server is declared in .mcp.json or plugin.json", () => {
-    const mcpJsonPath = join(DIST_PLUGIN, ".mcp.json");
-    const pluginJsonPath = join(DIST_PLUGIN, ".claude-plugin/plugin.json");
-
-    if (existsSync(mcpJsonPath)) {
-      const content = readFileSync(mcpJsonPath, "utf-8");
-      const mcp = JSON.parse(content);
-      expect(mcp.mcpServers ?? mcp["mcp-servers"]).toBeDefined();
-      return;
-    }
-
-    if (existsSync(pluginJsonPath)) {
-      const content = readFileSync(pluginJsonPath, "utf-8");
-      const plugin = JSON.parse(content);
-      // Plugin may declare MCP via mcpServers or similar
-      expect(plugin.mcpServers ?? plugin["mcp-servers"]).toBeDefined();
-      return;
-    }
-
-    expect.unreachable("Neither .mcp.json nor .claude-plugin/plugin.json found in dist-plugin");
-  });
-
   it("skills directory exists", () => {
     expect(existsSync(join(DIST_PLUGIN, "skills"))).toBe(true);
   });
